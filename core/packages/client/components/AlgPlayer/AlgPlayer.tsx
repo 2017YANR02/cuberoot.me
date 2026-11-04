@@ -74,6 +74,8 @@ interface Props {
   hiddenStickers?: readonly string[];
   /** Home sticker IDs whose original colors remain visible inside an outline. */
   outlinedStickers?: readonly string[];
+  /** Sim NxN: outline home stickers without changing their current mask colors. */
+  highlightedStickers?: readonly string[];
   setup?: string;
   /** NxN 预览的整体拿方；只重贴颜色，不改公式状态。 */
   orientation?: string;
@@ -181,6 +183,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         additionalStickering={props.additionalStickering}
         hiddenStickers={props.hiddenStickers}
         outlinedStickers={props.outlinedStickers}
+        highlightedStickers={props.highlightedStickers}
         onStepChange={props.onStepChange}
         highlightDaisyAlignment={props.highlightDaisyAlignment}
         startSolved={props.startSolved} autoPlay={props.autoPlay} loop={props.loop}

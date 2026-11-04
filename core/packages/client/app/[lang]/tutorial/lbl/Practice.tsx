@@ -19,8 +19,10 @@ import { stageStickerColors } from '@/lib/sim-stage-thumbnail';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import { tr, T } from '@/i18n/tr';
 import { LBL_STEPS, LESSON_STICKERING, LBL_INITIAL_VIEW } from './content';
+import { LBL_COURSE_ENTRIES } from './alg-lessons';
 import { practiceState, practiceTargetStates } from './practice-state';
 import AlgSteps from './AlgSteps';
+import ContinueButton from './ContinueButton';
 
 const practiceMoves = [
   { moves: ['R', "R'"], zh: '右边一层', en: 'Right layer', labels: ['右手上', '右手下'], english: ['Right up', 'Right down'], arrows: ['↑', '↓'] },
@@ -104,7 +106,7 @@ function Exercise({ step, index, onNext, textMoves, onTextMovesChange }: { step:
     return () => window.clearInterval(timer);
   }, [checking, colors, setup, targetStates, finalExercise]);
   const last = index === step.examples.length - 1;
-  const nextStep = LBL_STEPS[LBL_STEPS.findIndex(item => item.id === step.id) + 1];
+  const nextStep = LBL_COURSE_ENTRIES[LBL_COURSE_ENTRIES.findIndex(item => item.id === step.id) + 1];
   const actionRows = (rows: typeof practiceMoves) => rows.map(row => <div className="lbl-action-row" key={row.en}>
     <span>{tr(row)}</span>{row.moves.map((move, i) => <button className="lbl-button" type="button" key={move} onClick={() => turn(move)}><b aria-hidden="true">{row.arrows[i]}</b>{moveLabel(move)}</button>)}
   </div>);
@@ -134,7 +136,7 @@ function Exercise({ step, index, onNext, textMoves, onTextMovesChange }: { step:
     </div>
     <div className="lbl-basic-footer"><Link href={`/tutorial/lbl?step=${step.id}`} prefetch={false}><T zh="回看本节教程" en="Review this lesson" /></Link>
       {feedback === 'correct' && last ? <button className="lbl-button lbl-basic-next" type="button" onClick={reset}><T zh="再练一次" en="Try again" /></button> : <button type="button" className="lbl-button lbl-basic-next" disabled={checking} onClick={feedback === 'correct' ? onNext : () => setChecking(true)}>{checking ? tr({ zh: '等待转动完成…', en: 'Waiting for moves…' }) : feedback === 'correct' ? tr({ zh: '下一题 →', en: 'Next →' }) : tr({ zh: '检查结果', en: 'Check result' })}</button>}
-      {nextStep && <Link className="lbl-exercise-next-lesson" href={`/tutorial/lbl?step=${nextStep.id}`} prefetch={false}><T zh="下一节：" en="Next: " />{nextStep.id === 'cross' ? tr({ zh: '白色十字', en: 'White cross' }) : tr(nextStep.title)} →</Link>}
+      {nextStep && <ContinueButton href={`/tutorial/lbl?step=${nextStep.id}`} />}
     </div>
   </section>;
 }

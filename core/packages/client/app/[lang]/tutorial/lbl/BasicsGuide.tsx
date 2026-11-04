@@ -10,10 +10,6 @@ import { stageStickerColors } from '@/lib/sim-stage-thumbnail';
 import { tr, T } from '@/i18n/tr';
 import { getLblAlgGroups } from './alg-cues';
 
-export const BASIC_GUIDE_TOPICS = [
-  { id: 'layers', title: { zh: '认楼层', en: 'The layers' } },
-  { id: 'moves', title: { zh: '怎么转', en: 'How to turn' } },
-] as const;
 const colors = orientedCubeFaceColors('z2');
 const leftView: NonNullable<ICubeOptions['viewportRotations']> = [[Axis.Y, -30], [Axis.X, -25]];
 const rightScene = { x: 25 * Math.PI / 180, y: -30 * Math.PI / 180, z: 0 };
@@ -27,6 +23,10 @@ const layers = [
   // The renderer's solved-piece index is x + y * 3 + z * 9.
   colors: stageStickerColors(3, piece => Math.floor(piece / 3) % 3 === layer.height ? FM_REGULAR : FM_IGNORED, colors),
 }));
+export const BASIC_GUIDE_TOPICS = [
+  { id: 'layers', title: { zh: '认识楼层', en: 'The layers' }, colors: layers[2].colors, setup: '' },
+  { id: 'moves', title: { zh: '转动记号', en: 'Move notation' }, colors: stageStickerColors(3, null, colors), setup: 'R' },
+] as const;
 const faces = [
   { base: 'R', move: 'R', divisor: 1, layer: 2, title: { zh: '右层', en: 'Right layer' } },
   { base: 'L', move: 'L', divisor: 1, layer: 0, title: { zh: '左层', en: 'Left layer' } },
@@ -41,10 +41,6 @@ const variants = [
   { suffix: "'", title: { zh: '反着转一下', en: 'Turn the other way' }, detail: { zh: '′：逆时针 90°', en: '′: counterclockwise 90°' } },
   { suffix: '2', title: { zh: '转两下', en: 'Two quarter-turns' }, detail: { zh: '2：半圈，180°', en: '2: a half-turn, 180°' } },
 ];
-
-function ColorDot({ color }: { color: string }) {
-  return <span className="lbl-guide-color" style={{ backgroundColor: color }} aria-hidden="true" />;
-}
 
 export default function BasicsGuide({ section }: { section: typeof BASIC_GUIDE_TOPICS[number]['id'] }) {
   const [move, setMove] = useState('R');
@@ -69,7 +65,6 @@ export default function BasicsGuide({ section }: { section: typeof BASIC_GUIDE_T
             <figcaption><strong>{tr(layer.title)}</strong><span>{tr(layer.name)}</span></figcaption>
           </figure>)}
         </div>
-        <p className="lbl-guide-basement"><ColorDot color={colors.D} /><T zh="底面叫“地下室”，白色朝下。" en="The bottom face is the “basement”, with white facing down." /></p>
       </div>}
       {section === 'moves' && <div className="lbl-guide-moves">
         <div className="lbl-guide-move-preview">
@@ -81,11 +76,10 @@ export default function BasicsGuide({ section }: { section: typeof BASIC_GUIDE_T
         <div className="lbl-guide-move-copy">
           <div className="lbl-guide-face-grid" role="group" aria-label={tr({ zh: '选择要观察的面', en: 'Choose a face to watch' })}>
             {faces.map(item => <button className="lbl-button" type="button" key={item.base} aria-label={tr(item.title)} aria-pressed={face.base === item.base} onClick={() => selectMove(face.base === item.base ? move : item.move)}>
-              <VisualCube local view="iso" stickerColors={item.colors} viewportRotations={item.base === 'L' ? leftView : undefined} size={76} alt={tr(item.title)} />
+              <span className="lbl-guide-face-icon"><VisualCube local view="iso" stickerColors={item.colors} viewportRotations={item.base === 'L' ? leftView : undefined} size={76} alt={tr(item.title)} /></span>
               <span>{tr(item.title)}</span>
             </button>)}
           </div>
-          <p className="lbl-guide-direction"><T zh="顺时针 / 逆时针：正对正在转的面判断。" en="Judge clockwise or counterclockwise by looking straight at the face you are turning." /></p>
           <div className="lbl-guide-variants" role="group" aria-label={tr({ zh: '选择转动方式', en: 'Choose a turn' })}>
             {variants.map(variant => <button className="lbl-button" type="button" key={variant.suffix} aria-pressed={move === face.base + variant.suffix} onClick={() => selectMove(face.base + variant.suffix)}>
               <span><code>{face.base}{variant.suffix.replaceAll("'", '′')}</code></span>
@@ -96,8 +90,6 @@ export default function BasicsGuide({ section }: { section: typeof BASIC_GUIDE_T
       </div>}
     </div>
     {section === 'moves' && <div className="lbl-guide-extra">
-      <p><code>y / y′</code><T zh="整颗魔方左 / 右转体" en="Rotate the whole cube left / right" /></p>
-      <p><code>f / f′</code><T zh="前面两层一起压 / 提" en="Lower / lift the front two layers together" /></p>
     </div>}
   </div>;
 }

@@ -15,13 +15,27 @@ export const LESSON_STICKERING: Record<string, string> = {
 const example = (zh: string, en: string, alg: string, hintZh: string, hintEn: string, setup?: string): LblExample => ({ title: text(zh, en), hint: text(hintZh, hintEn), alg, setup });
 export const RIGHT = "R U R' U'";
 export const LEFT = "L' U' L U";
-const MIDDLE_RIGHT = `U ${RIGHT} y ${LEFT}`;
-const MIDDLE_LEFT = `U' ${LEFT} y' ${RIGHT}`;
+export const MIDDLE_RIGHT = `U ${RIGHT} y ${LEFT}`;
+export const MIDDLE_LEFT = `U' ${LEFT} y' ${RIGHT}`;
+export const MIDDLE_RIGHT_SETUP = `y (${MIDDLE_RIGHT})'`;
+export const MIDDLE_LEFT_SETUP = `y' (${MIDDLE_LEFT})'`;
+export const MIDDLE_FLIPPED_SETUP = `${MIDDLE_RIGHT} U y' ${MIDDLE_RIGHT} y'`;
+export const MIDDLE_MISPLACED_SETUP = `${MIDDLE_RIGHT} ${MIDDLE_RIGHT} y2 U2 ${MIDDLE_RIGHT} y'`;
 export const RIGHT_SUNE = "R U R' U R U2' R'";
 export const LEFT_SUNE = "L' U' L U' L' U2 L";
-export const CORNER_POSITION = "R U R' F' R U R' U' R' F R2 U' R'";
+export const CORNER_POSITION = "R U R' F' R U R' U' R' F R2 U' R' U'";
 export const EDGE_POSITION_LEFT = `${RIGHT_SUNE} U ${LEFT_SUNE} U'`;
 export const EDGE_POSITION_RIGHT = `${LEFT_SUNE} U' ${RIGHT_SUNE} U`;
+export const LBL_LEARNING_FOCUS: Record<string, Text> = {
+  daisy: text('黄色花蕊白色花瓣，处理优先级二楼>一楼和三楼>地下室', 'A yellow center with white petals. Priority: middle floor > bottom and top floors > basement.'),
+  cross: text('棱对齐颜色后一步到位', 'Match the edge color, then turn it straight into place.'),
+  corners: text('运用右公式与左公式，根据不同情况反复操作', 'Use the right and left triggers, repeating them as each case requires.'),
+  middle: text('2条核心公式去右或去左，以记忆公式为主', 'Learn the two core algorithms: insert right or insert left.'),
+  'yellow-cross': text('共2条公式，3种情况', '2 algorithms, 3 cases'),
+  'yellow-face': text('数非黄角格，认鱼头和鱼鳍，再选择鱼公式。', 'Count non-yellow corners, identify the head and fins, then choose the Sune algorithm.'),
+  'corner-position': text('一条J公式，结合状态学习', 'Learn the J algorithm in context.'),
+  'edge-position': text('左右鱼公式叠加可以调整顶棱位置', 'Combine the left and right fish algorithms to reposition the top edges.'),
+};
 export const LBL_STAGE_GOALS: Record<string, { before: Text; after: Text; summary?: Text }> = {
   structure: { before: text('认识魔方的结构', 'Learn the cube’s structure'), after: text('整体目标：六面各自同色', 'Overall goal: one color on each face') },
   daisy: {
@@ -30,7 +44,7 @@ export const LBL_STAGE_GOALS: Record<string, { before: Text; after: Text; summar
   },
   cross: {
     before: text('黄心周围的小花', 'Daisy around the yellow center'), after: text('底面白十字，侧面颜色与同色中心对齐', 'White cross below; side colors match their centers'),
-    summary: text('将小花的四个白棱翻到底面，组成白十字，侧面颜色与同色中心对齐。', 'Move the daisy’s four white edges to the bottom to form a white cross with side colors matching the centers.'),
+    summary: text('将小花侧面颜色与同色中心对齐，白棱翻到底面，组成白十字。', 'Match the daisy’s side colors with their centers, then move the white edges to the bottom to form a white cross.'),
   },
   corners: {
     before: text('白十字已好，白角未归位', 'White cross solved; corners unfinished'), after: text('白色底层及侧面第一行复原', 'White layer and bottom side rows solved'),
@@ -67,6 +81,7 @@ export const LBL_BASICS = [
   {
     id: 'corners', mask: 'corners-only', setup: '', alg: "R R' U U'", title: text('角块', 'Corners'),
     headline: text('8 个角块，每个有 3 格。', '8 corners, each with 3 facelets.'),
+    hint: text('同一个角块上的三个格，总是一起移动。', 'The three facelets on a corner always move together.'),
     next: text('认识棱块', 'Meet the edges'),
   },
   {
@@ -78,7 +93,7 @@ export const LBL_BASICS = [
 ];
 export const LBL_STEPS: Step[] = [
   {
-    id: 'structure', title: text('魔方基础', 'Cube basics'),
+    id: 'structure', title: text('入门', 'Getting started'),
     goal: text('先认识中心、棱块和角块，再开始做小花。', 'Meet the centers, edges and corners before making the daisy.'),
     paragraphs: [
       text("中心的颜色决定这一面复原后的颜色；复原后，每面九格同色。", "Each center determines its face’s solved color. A solved face has nine stickers of the same color."),
@@ -95,8 +110,8 @@ export const LBL_STEPS: Step[] = [
     paragraphs: [],
     examples: [
       example('二楼：右手上', 'Middle: lift right', "y' R", '转体，把标出的白格放到前面右侧，再右手上。', 'Rotate the cube to put the outlined white sticker on the right side of the front face, then lift with the right face.', "F2 R2 B2 L2 R' y"),
-      example('二楼：顶面挡住', 'Middle: top is occupied', 'U R', '转顶层移开挡路的花瓣，再右手上。', 'Turn the top layer to move the blocking petal out of the way, then lift with the right face.', "F2 R2 B2 L2 R' U'"),
       example('二楼：左手上', 'Middle: lift left', "y L'", '转体，把标出的白格放到前面左侧，再左手上。', 'Rotate the cube to put the outlined white sticker on the left side of the front face, then lift with the left face.', "F2 R2 B2 L2 L y'"),
+      example('二楼：顶面挡住', 'Middle: top is occupied', 'U R', '转顶层移开挡路的花瓣，再右手上。', 'Turn the top layer to move the blocking petal out of the way, then lift with the right face.', "F2 R2 B2 L2 R' U'"),
       example('三楼：压到二楼', 'Top: lower to middle', 'F R', '压前层送到二楼，再右手上。', 'Lower the front to bring it to the middle, then lift with the right face.', "F R F'"),
       example('一楼：压到二楼', 'Bottom: bring to middle', "F L'", '压前层送到二楼，再左手上。', 'Lower the front to bring it to the middle, then lift with the left face.', 'F R F U2'),
       example('地下室：上上', 'White down: half turn', "y' R2", '把这条白棱放到右层，做“上上”。', 'Put this edge in the right layer and turn the right face twice.', 'F2 R2 B2 L2 R2 y'),
@@ -109,7 +124,7 @@ export const LBL_STEPS: Step[] = [
     ],
     // Both demo and practice complete all four petals. d turns the lower two layers while keeping U fixed;
     // y' puts the aligned front edge on the right, then R2 sends it to the bottom.
-    examples: [example('对齐 → 转体 → 上上', 'Match colors → rotate → turn twice', "d y' R2 d y' R2 d2 y' R2 d y' R2", '每条白棱都先对齐，再转体放到右手边，做“上上”。', 'For each white edge, match its side color first, rotate it to the right, then turn the right face twice.', "F2 U R2 U2 B2 U L2 U'")],
+    examples: [example('完整演示', 'Complete demonstration', "d y' R2 d y' R2 d2 y' R2 d y' R2", '每条白棱都先对齐，再转体放到右手边，做“上上”。', 'For each white edge, match its side color first, rotate it to the right, then turn the right face twice.', "F2 U R2 U2 B2 U L2 U'")],
   },
   {
     id: 'corners', title: text('底层（角）', 'First-layer corners'), goal: text('复原白色底层和侧面第一行。', 'Solve the white layer and the bottom row of each side.'),
@@ -127,9 +142,10 @@ export const LBL_STEPS: Step[] = [
       text("顶层找非黄棱，放前，同时转下面两层将侧面颜色与中心对齐（形成倒 T），做公式。", "Find a top-layer edge without yellow and bring it to the front. Turn the lower two layers together to match its side color with the center (forming an upside-down T), then do the algorithm."),
     ],
     examples: [
-      { ...example('去右', 'Insert right', `U d ${MIDDLE_RIGHT}`, '转顶层放前 → 转下面两层对齐 → 右手拨 → 右公式 → 左转体 → 左公式', 'Bring the edge to the front → match colors with the lower two layers → U → right trigger → rotate left → left trigger'), sceneRot: DOCUMENT_RIGHT_VIEW, caption: text('棱心对齐', 'Match edge and center') },
-      { ...example('去左', 'Insert left', `U' d' ${MIDDLE_LEFT}`, '转顶层放前 → 转下面两层对齐 → 左手拨 → 左公式 → 右转体 → 右公式', 'Bring the edge to the front → match colors with the lower two layers → U′ → left trigger → rotate right → right trigger'), sceneRot: DOCUMENT_LEFT_VIEW, caption: text('棱心对齐', 'Match edge and center') },
-      { ...example('中层非黄棱', 'Non-yellow middle edge', `y' ${MIDDLE_RIGHT}`, '转体把它放右前方，再做本次公式取出，再根据棱块的去向选择“去右”或“去左”。', 'Rotate the cube to put it at front-right, then use this algorithm to eject it. Then choose “Insert right” or “Insert left” according to where the edge belongs.', `${MIDDLE_RIGHT} y' U ${MIDDLE_RIGHT} y' y`), sceneRot: DOCUMENT_RIGHT_VIEW, caption: text('放错或翻转', 'Misplaced or flipped') },
+      { ...example('去右', 'Insert right', MIDDLE_RIGHT, '右手拨 → 右公式 → 左转体 → 左公式', 'U → right trigger → rotate left → left trigger', MIDDLE_RIGHT_SETUP), sceneRot: DOCUMENT_RIGHT_VIEW, caption: text('棱心对齐', 'Match edge and center') },
+      { ...example('去左', 'Insert left', MIDDLE_LEFT, '左手拨 → 左公式 → 右转体 → 右公式', 'U′ → left trigger → rotate right → right trigger', MIDDLE_LEFT_SETUP), sceneRot: DOCUMENT_LEFT_VIEW, caption: text('棱心对齐', 'Match edge and center') },
+      { ...example('原地翻转', 'Flipped in place', MIDDLE_RIGHT, '假想把顶层一条棱当作目标棱，做“去右”把它放入，原来的棱就会被取到顶层。再对齐，选择“去右”或“去左”归位。', 'Imagine inserting a top edge into this slot. Do the right insertion to eject the flipped edge. Then align it and choose the right or left insertion.', MIDDLE_FLIPPED_SETUP), sceneRot: DOCUMENT_RIGHT_VIEW, caption: text('位置对，朝向错', 'Right slot, wrong orientation') },
+      { ...example('放错', 'Wrong slot', `y ${MIDDLE_RIGHT}`, '绿橙棱在橙蓝槽里。先转体把它放右前方，做“去右”把原来的棱取出。再对齐，选择“去右”或“去左”归位。', 'The green-orange edge is in the orange-blue slot. Rotate it to front-right. Use the right insertion to eject it, then align it and choose the right or left insertion.', MIDDLE_MISPLACED_SETUP), sceneRot: DOCUMENT_RIGHT_VIEW, caption: text('先取出，再归位', 'Eject, then insert') },
     ],
   },
   {
@@ -139,9 +155,9 @@ export const LBL_STEPS: Step[] = [
       text("双压、双提是前面两层一起转。", "Both f and f′ turn the front two layers together."),
     ],
     examples: [
-      example('横线', 'Line', `U F ${RIGHT} F'`, '转顶层，把两条黄色棱左右横放，做“压、右公式、提”。', 'Turn the top to hold the two yellow edges left to right, then do F, the right trigger, and F′.'),
-      example('三点半', 'L shape', `U f ${RIGHT} f'`, '转顶层，让两条黄色棱在前和右，做“双压、右公式、双提”。', 'Turn the top so the yellow edges are at front and right, then do f, the right trigger, and f′.'),
-      example('点', 'Dot', `f ${RIGHT} f'`, '先做“双压、右公式、双提”，变成竖线后，再选择“横线”继续。', 'Do f, the right trigger, and f′ to form a vertical line, then select “Line” to continue.', `(f ${RIGHT} f' U F ${RIGHT} F')'`),
+      example('横线', 'Line', `U F ${RIGHT} F'`, '转顶层，把两条黄色棱左右横放。做压，做右公式，做提。', 'Turn the top to hold the two yellow edges left to right. Do F, do the right trigger, then do F′.'),
+      example('三点半', 'L shape', `U f ${RIGHT} f'`, '转顶层，让两条黄色棱在前和右。做双压，做右公式，做双提。', 'Turn the top so the yellow edges are at front and right. Do f, do the right trigger, then do f′.'),
+      example('点', 'Dot', `f ${RIGHT} f'`, '先做双压，做右公式，做双提，变成竖线后，再选择“横线”继续。', 'First do f, do the right trigger, then do f′ to form a vertical line, then select “Line” to continue.', `(f ${RIGHT} f' U F ${RIGHT} F')'`),
     ],
   },
   {
@@ -151,8 +167,8 @@ export const LBL_STEPS: Step[] = [
       text("鱼头是顶面唯一朝黄的角；鱼鳍是侧面朝黄的角贴纸。", "The fish head is the only yellow-up corner; fins are yellow corner stickers on the sides."),
     ],
     examples: [
-      example('3灰 · 右鱼', '3 gray · Right Sune', `U ${RIGHT_SUNE}`, '三个鱼鳍朝右，先转顶层把鱼头放左前，再做右鱼公式。', 'With three fins pointing right, turn the top to put the head at front-left, then do right Sune.'),
-      example('3灰 · 左鱼', '3 gray · Left Sune', `U' ${LEFT_SUNE}`, '三个鱼鳍朝左，先转顶层把鱼头放右前，再做左鱼公式。', 'With three fins pointing left, turn the top to put the head at front-right, then do left Sune.'),
+      example('3灰 · 右鱼', '3 gray · Right Sune', `U ${RIGHT_SUNE}`, '转顶层把鱼头放左前，F面鱼鳍朝右，再做右鱼公式。', 'Turn the top to put the head at front-left, with the fin on the right of the F face, then do right Sune.'),
+      example('3灰 · 左鱼', '3 gray · Left Sune', `U' ${LEFT_SUNE}`, '转顶层把鱼头放右前，F面鱼鳍朝左，再做左鱼公式。', 'Turn the top to put the head at front-right, with the fin on the left of the F face, then do left Sune.'),
       example('2灰 · 二碰', '2 gray · Touch yellow', `U ${RIGHT_SUNE}`, '左拇指放在前面左上角，转顶层让拇指碰黄，做右鱼公式。变成鱼形后，重新数非黄格，再选择对应鱼公式。', 'Place your left thumb at the front face’s upper-left corner. Turn the top until it touches yellow, then do right Sune. Recount the non-yellow squares, then choose the matching Sune.', `(${LEFT_SUNE} U2 ${RIGHT_SUNE})' U'`),
       example('4灰 · 四不碰', '4 gray · Avoid yellow', `U' ${RIGHT_SUNE}`, '左拇指放在前面左上角，转顶层让拇指不碰黄，做右鱼公式。变成鱼形后，重新数非黄格，再选择对应鱼公式。', 'Place your left thumb at the front face’s upper-left corner. Turn the top so it does not touch yellow, then do right Sune. Recount the non-yellow squares, then choose the matching Sune.', `(${RIGHT_SUNE} U ${RIGHT_SUNE})' U`),
     ],
@@ -163,8 +179,8 @@ export const LBL_STEPS: Step[] = [
       text("先找眼", "First look for headlights"),
     ],
     examples: [
-      example('有眼 · 眼放左', 'Headlights · Hold on the left', `y ${CORNER_POSITION} U`, '先转体把眼放左，再做公式。做完转顶层，让四个角与侧面中心对齐。', 'Rotate the whole cube to put the headlights on the left, then do the algorithm. Finish by turning the top to match all four corners with the side centers.'),
-      example('无眼 · 先造眼', 'No headlights · Create a pair', CORNER_POSITION, '先做一遍公式，产生眼后，再选择“有眼 · 眼放左”继续。', 'Do the algorithm once to create headlights, then select “Headlights · Hold on the left” to continue.', `(${CORNER_POSITION} U ${CORNER_POSITION} U)'`),
+      example('有眼 · 眼放左', 'Headlights · Hold on the left', `y ${CORNER_POSITION}`, '先转体把眼放左，再做J公式。', 'Rotate the whole cube to put the headlights on the left, then do the J algorithm.', `(y ${CORNER_POSITION} U)' d`),
+      example('无眼 · 先造眼', 'No headlights · Create a pair', CORNER_POSITION, '先做一遍J公式，产生眼后，再选择“有眼 · 眼放左”继续。', 'Do the J algorithm once to create headlights, then select “Headlights · Hold on the left” to continue.', `(${CORNER_POSITION} U2 ${CORNER_POSITION} U2)'`),
     ],
   },
   {
@@ -173,8 +189,8 @@ export const LBL_STEPS: Step[] = [
       text("有墙", "If there is a wall"),
     ],
     examples: [
-      { ...example('对齐左侧', 'Matching color on the left', `y' ${EDGE_POSITION_LEFT}`, '转体把墙放后 → 右鱼 → 顶层 U → 左鱼 → 转顶层对齐', 'Rotate the cube to put the wall at the back → Right Sune → U → Left Sune → Align the top'), caption: text('右鱼 → U → 左鱼', 'Right Sune → U → left Sune') },
-      { ...example('对齐右侧', 'Matching color on the right', `y' ${EDGE_POSITION_RIGHT}`, '转体把墙放后 → 左鱼 → 顶层 U′ → 右鱼 → 转顶层对齐', 'Rotate the cube to put the wall at the back → Left Sune → U′ → Right Sune → Align the top'), caption: text('左鱼 → U′ → 右鱼', 'Left Sune → U′ → right Sune') },
+      { ...example('对色在左', 'Matching color on the left', `y' ${EDGE_POSITION_LEFT}`, '转体把墙放后 → 右鱼 → 顶层 U → 左鱼 → 转顶层对齐', 'Rotate the cube to put the wall at the back → Right Sune → U → Left Sune → Align the top'), caption: text('右鱼 → U → 左鱼', 'Right Sune → U → left Sune') },
+      { ...example('对色在右', 'Matching color on the right', `y' ${EDGE_POSITION_RIGHT}`, '转体把墙放后 → 左鱼 → 顶层 U′ → 右鱼 → 转顶层对齐', 'Rotate the cube to put the wall at the back → Left Sune → U′ → Right Sune → Align the top'), caption: text('左鱼 → U′ → 右鱼', 'Left Sune → U′ → right Sune') },
       example('无墙 · 先造墙', 'No wall · Create a wall', EDGE_POSITION_LEFT, '右鱼 → 顶层 U → 左鱼 → 转顶层对齐\n出现墙后，选择对应情况继续。', 'Right Sune → U → Left Sune → Align the top\nOnce a wall appears, choose the matching case to continue.', `(${EDGE_POSITION_LEFT} y' ${EDGE_POSITION_LEFT} y)'`),
     ],
   },
