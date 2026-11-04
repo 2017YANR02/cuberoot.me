@@ -823,6 +823,7 @@ function collapseSameAxis(alg: string, N: number): string {
 }
 
 interface Props {
+  idPrefix?: string;
   /** Only animation owns playback and physical keyboard input. */
   active?: boolean;
   world: World | null;
@@ -908,6 +909,7 @@ interface Props {
 
 export default function PlayerControls({
   active = true,
+  idPrefix,
   world, activeCube = world?.cube ?? null,
   clearFrozen, alg, setup, onAlgChange: onAlgChangeProp, onSetupChange: onSetupChangeProp,
   order, puzzleKind,
@@ -2553,6 +2555,7 @@ export default function PlayerControls({
       )}
       <div className="sim-animation-controls" hidden={!active}>
       <SimAlgEditor
+        idPrefix={idPrefix}
         moveEditing={moveEditing}
         moveEditorRef={setMoveEditorSlot}
         setup={{

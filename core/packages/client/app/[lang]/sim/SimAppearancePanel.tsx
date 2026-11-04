@@ -5,9 +5,11 @@ import { SlidersHorizontal } from '@app-foundation/icons/lucide';
 import CollapsibleSection from './CollapsibleSection';
 import SimAppearancePresets from './SimAppearancePresets';
 import PictureCubeEditor, { PictureFaceMiniNet } from './PictureCubeEditor';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type World from './engine/world';
+import type HandsRig from './engine/hands/handsRig';
+import type { HandsLoadState } from './engine/hands/handsRig';
 import { GHOST_DEFAULT_FACE_COLORS } from '@cuberoot/puzzle-render-core/engine/ghost/ghostGeometry';
 import { Slider, ValueField, OrbitPad, Toggle, resetWorldView, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR, persistPictureFaces, saveSettings, cuberLightingActive, type SimSettings, type SimBoardBg, type SliderUnit } from './SettingDrawer';
 import { CUBER_APPEARANCE } from './engine/define';
@@ -58,6 +60,27 @@ const NAIL_COLOR_PRESETS: string[] = dedupeColors([
 ]);
 /** 从自然甲切到自定义时 trigger 色块的兜底显示色(未选前);选色即覆盖。 */
 const NAIL_DEFAULT_COLOR = '#C21807';
+
+const INITIAL_HAND_LOAD: HandsLoadState = { hands: 'loading', body: 'idle' };
+const getInitialHandLoad = () => INITIAL_HAND_LOAD;
+const noHandSubscription = () => () => {};
+
+/** The rig is created imperatively after settings are applied; subscribe once it exists. */
+function useHandsLoadState(world: World | null, enabled: boolean): HandsLoadState {
+  const [rig, setRig] = useState<HandsRig | null>(null);
+  useEffect(() => {
+    if (!world || !enabled) { setRig(null); return; }
+    let frame = 0;
+    const connect = () => {
+      if (world.hands) setRig(world.hands);
+      else frame = requestAnimationFrame(connect);
+    };
+    connect();
+    return () => cancelAnimationFrame(frame);
+  }, [world, enabled]);
+  return useSyncExternalStore(rig?.subscribeLoadState ?? noHandSubscription,
+    rig?.getLoadState ?? getInitialHandLoad, getInitialHandLoad);
+}
 
 const FACE_ORDER = ['U', 'L', 'F', 'R', 'B', 'D'] as const;
 const FACE_LABELS_ZH: Record<typeof FACE_ORDER[number], string> = {
@@ -246,6 +269,11 @@ export default function SimAppearancePanel({
   // Both workspaces share this panel. simCaps decides which controls are supported
   // by the current puzzle and renderer; unsupported controls stay out of the UI.
   const caps = resolveCaps(puzzleKind, renderer);
+  const handsEnabled = caps.supports.hands && settings.hands === true;
+  const handLoad = useHandsLoadState(world, handsEnabled);
+  const loadPhase = handLoad.hands !== 'ready' ? handLoad.hands
+    : settings.fullBody ? handLoad.body : 'ready';
+  const loadingBody = handLoad.hands === 'ready' && settings.fullBody;
   const roomsActive = roomCubeActive(puzzleKind, settings.roomTheme) && caps.engineActive;
   // Rooms replace only the visible surface; keep the user's ordinary cube settings.
   if (roomsActive) Object.assign(caps.supports, {
@@ -581,58 +609,113 @@ export default function SimAppearancePanel({
             {caps.supports.hollow && (<Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} disabled={!caps.supports.hollow} title={hint(caps.supports.hollow)} />)}
             {/* 提示贴片(hint)两条路径都支持(引擎 hint / cubing.js hintFacelets)→ 不灰。 */}
             {caps.supports.hint && (<Toggle label={t('提示贴片', 'Hint facelets')} value={settings.hint} onChange={(v) => set('hint', v)} disabled={!caps.supports.hint} title={hint(caps.supports.hint)} />)}
-            {/* 手指(指法演示):双手握持,转层时腕转/弹指跟动画。仅 3x3(simCaps.hands)。 */}
-            {caps.supports.hands && (<Toggle label={t('手指', 'Hands')} value={settings.hands === true} onChange={(v) => set('hands', v)} disabled={!caps.supports.hands} title={settings.hands ? undefined : t('请先开启手指', 'Enable hands first')} />)}
-            {/* 全身人物:SMPL-X 完整人随手出场(躯干静态 + 双臂 IK 追手;拉远 Scale 看全身)。
-                依赖手指开启;资产逐机转换,缺失时静默降级。 */}
-            {caps.supports.hands && (<Toggle label={t('全身人物', 'Full body')} value={settings.fullBody === true} onChange={(v) => set('fullBody', v)} disabled={!caps.supports.hands || settings.hands !== true} title={hint(caps.supports.hands)} />)}
             {/* 箭头贴片仅 NxN 引擎生效(cube.arrow),非 NxN 拼图无此属性 → 仅 NxN 显示。
                 用户指定的唯一例外。 */}
             {caps.supports.arrow && (
               <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} disabled={roomsActive} title={hint(!roomsActive)} />
             )}
           </div>
-          {caps.supports.hands && settings.hands && settings.fullBody && (
-            <div className="sim-person-avatar">
-              <span>{t('人物头像', 'Character face')}</span>
-              {settings.bodyAvatar && <img src={settings.bodyAvatar} alt={t('当前人物头像', 'Current character face')} width={40} height={40} />}
-              <button type="button" disabled={avatarBusy} onClick={() => avatarFileRef.current?.click()}>
-                {avatarBusy ? <LoadingIndicator>{t('读取中…', 'Loading…')}</LoadingIndicator> : t('上传头像', 'Upload face')}
-              </button>
-              {settings.bodyAvatar && <button type="button" onClick={() => {
-                avatarVersion.current++; setAvatarBusy(false); setAvatarError('');
-                const next = { ...settings, bodyAvatar: '', bodyAvatarX: 50, bodyAvatarY: 50, bodyAvatarZoom: 50 };
-                if (saveSettings(next)) onSettingsChange(next);
-                else setAvatarError(t('浏览器存储不可用，无法保存更改', 'Browser storage is unavailable. Could not save changes.'));
-              }}>{t('恢复默认头像', 'Reset face')}</button>}
-              <button type="button" aria-pressed={avatarPreview} onClick={() => {
-                if (avatarPreview && world) resetWorldView(world, settings);
-                setAvatarPreview(!avatarPreview);
-              }}>{avatarPreview ? t('结束正脸预览', 'Close face preview') : t('查看正脸', 'Preview face')}</button>
-              <input ref={avatarFileRef} type="file" accept="image/png,image/jpeg,image/webp" hidden aria-label={t('上传人物头像', 'Upload character face')} onChange={handleAvatarFile} />
-              <small>{t('选择脸部居中的正面照片，自动居中裁剪，仅保存在当前浏览器', 'Choose a centered, front-facing photo. Center-cropped and saved only in this browser.')}</small>
-              {settings.bodyAvatar && <div className="sim-person-avatar-adjust">
-                <Slider label={t('头像左右', 'Face horizontal')} value={settings.bodyAvatarX} onChange={v => { setAvatarPreview(true); set('bodyAvatarX', v); }} />
-                <Slider label={t('头像上下', 'Face vertical')} value={settings.bodyAvatarY} onChange={v => { setAvatarPreview(true); set('bodyAvatarY', v); }} />
-                <Slider label={t('头像缩放', 'Face zoom')} value={settings.bodyAvatarZoom} onChange={v => { setAvatarPreview(true); set('bodyAvatarZoom', v); }} />
-                <small>{t('对照正脸预览，调整照片五官与人物眼睛、嘴的位置', 'Use the face preview to align the photo with the character’s eyes and mouth.')}</small>
-              </div>}
-              {avatarError && <small role="alert">{avatarError}</small>}
+          {caps.supports.hands && (
+            <div className="sim-hand-settings" role="group" aria-label={t('手部演示', 'Hand animation')}>
+              <Toggle label={t('手指', 'Hands')} value={settings.hands === true} onChange={(v) => set('hands', v)} />
+              {handsEnabled && <>
+                {(loadPhase === 'loading' || loadPhase === 'texturing' || loadPhase === 'error') && (
+                  <div className="sim-hand-status" role={loadPhase === 'error' ? 'status' : undefined}>
+                    {loadPhase === 'error' ? <>
+                      <span>{loadingBody ? t('人物模型加载失败', 'Could not load the character') : t('手部模型加载失败', 'Could not load the hands')}</span>
+                      <button type="button" onClick={() => world?.hands?.retryLoad()}>{t('重试', 'Retry')}</button>
+                    </> : <LoadingIndicator>
+                      {loadPhase === 'texturing' ? t('正在生成皮肤细节…', 'Preparing skin detail…')
+                        : loadingBody ? t('人物模型加载中…', 'Loading character…') : t('手部模型加载中…', 'Loading hands…')}
+                    </LoadingIndicator>}
+                  </div>
+                )}
+                <div className="sim-hand-toggles">
+                  <Toggle label={t('指甲', 'Nails')} value={settings.showNails} onChange={(v) => set('showNails', v)} />
+                  <Toggle label={t('全身人物', 'Full body')} value={settings.fullBody === true} onChange={(v) => set('fullBody', v)} />
+                  <Toggle label={t('骨架线条', 'Skeleton overlay')} value={settings.handsSkeleton} onChange={(v) => set('handsSkeleton', v)} />
+                </div>
+                {settings.showNails && (<ColorRow
+                  label={t('指甲配色', 'Nail colour')}
+                >
+                  <ModeColorSelect
+                    special={!settings.nailColor}
+                    color={settings.nailColor || NAIL_DEFAULT_COLOR}
+                    presets={NAIL_COLOR_PRESETS}
+                    specialTitle={t('自然甲', 'Natural')}
+                    specialSwatchClass="sim-swatch-nail-box"
+                    onPickColor={(c) => set('nailColor', c)}
+                    onPickSpecial={() => set('nailColor', '')}
+                    title={t('指甲配色', 'Nail colour')}
+                    t={t}
+                  />
+                  {settings.nailColor !== '' && (
+                    <>
+                      <span className="sim-face-pick">
+                        <span className="sim-swatch-label">{t('渐变', 'Tip')}</span>
+                        <ModeColorSelect
+                          special={!settings.nailColorTip}
+                          color={settings.nailColorTip || settings.nailColor}
+                          presets={NAIL_COLOR_PRESETS}
+                          specialTitle={t('无渐变', 'No gradient')}
+                          specialSwatchClass="sim-swatch-nail-off-box"
+                          onPickColor={(c) => set('nailColorTip', c)}
+                          onPickSpecial={() => set('nailColorTip', '')}
+                          title={t('渐变第二色(甲根 → 指尖)', 'Gradient tip colour (root → tip)')}
+                          t={t}
+                        />
+                      </span>
+                      <label className="sim-nail-shade">
+                        <span className="sim-swatch-label">{t('深浅', 'Depth')}</span>
+                        <input
+                          aria-label={t('甲油深浅', 'Nail colour depth')}
+                          type="range"
+                          min={0}
+                          max={100}
+                          value={settings.nailShade}
+                          onChange={(e) => set('nailShade', Number(e.target.value))}
+                        />
+                      </label>
+                    </>
+                  )}
+                </ColorRow>)}
+                {settings.fullBody && (
+                  <div className="sim-person-avatar">
+                    <span>{t('人物头像', 'Character face')}</span>
+                    {settings.bodyAvatar && <img src={settings.bodyAvatar} alt={t('当前人物头像', 'Current character face')} width={40} height={40} />}
+                    <button type="button" disabled={avatarBusy} onClick={() => avatarFileRef.current?.click()}>
+                      {avatarBusy ? <LoadingIndicator>{t('读取中…', 'Loading…')}</LoadingIndicator> : t('上传头像', 'Upload face')}
+                    </button>
+                    {settings.bodyAvatar && <button type="button" onClick={() => {
+                      avatarVersion.current++; setAvatarBusy(false); setAvatarError('');
+                      const next = { ...settings, bodyAvatar: '', bodyAvatarX: 50, bodyAvatarY: 50, bodyAvatarZoom: 50 };
+                      if (saveSettings(next)) onSettingsChange(next);
+                      else setAvatarError(t('浏览器存储不可用，无法保存更改', 'Browser storage is unavailable. Could not save changes.'));
+                    }}>{t('恢复默认头像', 'Reset face')}</button>}
+                    <button type="button" disabled={handLoad.body !== 'ready' && handLoad.body !== 'texturing'} aria-pressed={avatarPreview} onClick={() => {
+                      if (avatarPreview && world) resetWorldView(world, settings);
+                      setAvatarPreview(!avatarPreview);
+                    }}>{avatarPreview ? t('结束正脸预览', 'Close face preview') : t('查看正脸', 'Preview face')}</button>
+                    <input ref={avatarFileRef} type="file" accept="image/png,image/jpeg,image/webp" hidden aria-label={t('上传人物头像', 'Upload character face')} onChange={handleAvatarFile} />
+                    <small>{t('选择脸部居中的正面照片，自动居中裁剪，仅保存在当前浏览器', 'Choose a centered, front-facing photo. Center-cropped and saved only in this browser.')}</small>
+                    {settings.bodyAvatar && <div className="sim-person-avatar-adjust">
+                      <Slider label={t('头像左右', 'Face horizontal')} value={settings.bodyAvatarX} onChange={v => { setAvatarPreview(true); set('bodyAvatarX', v); }} />
+                      <Slider label={t('头像上下', 'Face vertical')} value={settings.bodyAvatarY} onChange={v => { setAvatarPreview(true); set('bodyAvatarY', v); }} />
+                      <Slider label={t('头像缩放', 'Face zoom')} value={settings.bodyAvatarZoom} onChange={v => { setAvatarPreview(true); set('bodyAvatarZoom', v); }} />
+                      <small>{t('对照正脸预览，调整照片五官与人物眼睛、嘴的位置', 'Use the face preview to align the photo with the character’s eyes and mouth.')}</small>
+                    </div>}
+                    {avatarError && <small role="alert">{avatarError}</small>}
+                  </div>
+                )}
+              </>}
             </div>
           )}
-          {/* 调试控件单独成行(用户要求):半转停 / 结构着色 / 骨架线条 / 挖块。组前缀「调试」标一次,
-              各控件去掉重复的「调试:」前缀。半转停 / 结构着色 为本站引擎特性,在 cubing.js 渲染的拼图上
-              为 no-op(仅存设置);骨架线条为手部 MediaPipe 风格叠加线,仅 3x3 手指开启时有效;
-              挖块为统一三选一占位(见 applySettings)。 */}
+          {/* 拼图结构调试；手部控件统一放在上方手部演示区域。 */}
           <details className="sim-puzzle-debug">
             <MoreToggle as="summary">{t('结构与调试', 'Structure & diagnostics')}</MoreToggle>
             <div className="sim-puzzle-debug-toggles">
               {caps.supports.holdPartialTurn && (<Toggle label={t('半转停', 'Hold partial turn')} value={settings.holdPartialTurn} onChange={(v) => set('holdPartialTurn', v)} disabled={!caps.supports.holdPartialTurn} title={hint(caps.supports.holdPartialTurn)} />)}
               {caps.supports.structureColor && (<Toggle label={t('结构着色', 'Structure colors')} value={settings.debugStructureColor} onChange={(v) => set('debugStructureColor', v)} disabled={!caps.supports.structureColor} title={hint(caps.supports.structureColor)} />)}
-              {/* 骨架线条:MediaPipe 风格关键点叠加,仅手指(hands)开启的拼图上可用(同 caps.supports.hands)。 */}
-              {caps.supports.handsSkeleton && (<Toggle label={t('骨架线条', 'Skeleton overlay')} value={settings.handsSkeleton} onChange={(v) => set('handsSkeleton', v)} disabled={!caps.supports.handsSkeleton} title={hint(caps.supports.handsSkeleton)} />)}
-              {/* 指甲:立体甲片显隐(mesh.visible,不拆几何),门控同骨架线条(手指相关调试)。 */}
-              {caps.supports.handsSkeleton && (<Toggle label={t('指甲', 'Nails')} value={settings.showNails} onChange={(v) => set('showNails', v)} disabled={!caps.supports.handsSkeleton} title={hint(caps.supports.handsSkeleton)} />)}
               {/* SMPL-X 全身:藏拼图与手,只看原版 SMPL-X neutral T-pose 人体(手/臂比例上游真值)。
                   资产逐机转换(convert-mano.py),缺失时开了也无效果 —— 不灰,调试自担。
                   平面拼图是唯一的例外:它根本没有 3D 场景可以站人,那不是"资产可能缺",是没地方放。 */}
@@ -862,54 +945,6 @@ export default function SimAppearancePanel({
             onBaseColorsChange={autoSavePictureBaseColors}
             t={t}
           />
-          {/* 指甲配色(甲油):自然甲 special + 甲油底色;选了底色后追加「渐变」第二色
-              (甲根→游离缘)与「深浅」滑杆(50 = 原色,低淡高深)。重涂手部立体甲片
-              顶点色(engine/hands paintNailPolish);门控同全身人物(需手指开启)。 */}
-          {caps.supports.hands && (<ColorRow
-            label={t('指甲配色', 'Nail colour')}
-            disabled={!caps.supports.hands || settings.hands !== true}
-            title={hint(caps.supports.hands)}
-          >
-            <ModeColorSelect
-              special={!settings.nailColor}
-              color={settings.nailColor || NAIL_DEFAULT_COLOR}
-              presets={NAIL_COLOR_PRESETS}
-              specialTitle={t('自然甲', 'Natural')}
-              specialSwatchClass="sim-swatch-nail-box"
-              onPickColor={(c) => set('nailColor', c)}
-              onPickSpecial={() => set('nailColor', '')}
-              title={t('指甲配色', 'Nail colour')}
-              t={t}
-            />
-            {settings.nailColor !== '' && (
-              <>
-                <span className="sim-face-pick">
-                  <span className="sim-swatch-label">{t('渐变', 'Tip')}</span>
-                  <ModeColorSelect
-                    special={!settings.nailColorTip}
-                    color={settings.nailColorTip || settings.nailColor}
-                    presets={NAIL_COLOR_PRESETS}
-                    specialTitle={t('无渐变', 'No gradient')}
-                    specialSwatchClass="sim-swatch-nail-off-box"
-                    onPickColor={(c) => set('nailColorTip', c)}
-                    onPickSpecial={() => set('nailColorTip', '')}
-                    title={t('渐变第二色(甲根 → 指尖)', 'Gradient tip colour (root → tip)')}
-                    t={t}
-                  />
-                </span>
-                <label className="sim-nail-shade" title={t('深浅:左淡右深,中间原色', 'Depth: light ↔ dark, centre = as picked')}>
-                  <span className="sim-swatch-label">{t('深浅', 'Depth')}</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={settings.nailShade}
-                    onChange={(e) => set('nailShade', Number(e.target.value))}
-                  />
-                </label>
-              </>
-            )}
-          </ColorRow>)}
           </div>
         </div>
       </section>

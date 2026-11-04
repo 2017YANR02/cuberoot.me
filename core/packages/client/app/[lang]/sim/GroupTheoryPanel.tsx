@@ -21,6 +21,7 @@ import type { PgGroupFacts } from './engine/pgBackbone';
 import type { GroupKernel } from './engine/pgBinding';
 import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
 import { EXPLORE_BOUND } from './engine/exploreBound';
+import { engineHistoryAlgorithm } from './engineHistory';
 import './group-theory-panel.css';
 
 /** Minimal structural view of an engine cube (PyraCube …, or the NxN Cube) the panel
@@ -33,12 +34,6 @@ export interface SimEngineCube {
   twister: { setup(s: string): void; push(s: string): void };
 }
 
-/** Full move string from either history shape (fixed puzzles: moves[]; NxN: exp). */
-function historyString(c: SimEngineCube): string {
-  const init = c.history.init ?? '';
-  const body = Array.isArray(c.history.moves) ? c.history.moves.join(' ') : (c.history.exp ?? '');
-  return `${init} ${body}`.trim();
-}
 function hasUnsupportedIvyTurn(puzzle: string, text: string): boolean {
   return puzzle === 'ivy' && /(?:^|\s)U'?(?:\s|$)/i.test(text);
 }
@@ -123,7 +118,7 @@ export default function GroupTheoryPanel({
 
       const refresh = () => {
         if (!cube) return;
-        const history = historyString(cube);
+        const history = engineHistoryAlgorithm(cube.history);
         const unsupported = hasUnsupportedIvyTurn(puzzle, history);
         setUnsupportedIvyU(unsupported);
         if (unsupported) {
@@ -179,8 +174,8 @@ export default function GroupTheoryPanel({
   const onSolve = useCallback(() => {
     const c = activeCube();
     const b = bindingRef.current;
-    if (!c || !b || hasUnsupportedIvyTurn(puzzle, historyString(c))) return;
-    b.rebuildFromString(historyString(c));
+    if (!c || !b || hasUnsupportedIvyTurn(puzzle, engineHistoryAlgorithm(c.history))) return;
+    b.rebuildFromString(engineHistoryAlgorithm(c.history));
     const s = b.solveString();
     if (s) c.twister.push(s); // animate the BSGS solution
   }, [activeCube, puzzle]);

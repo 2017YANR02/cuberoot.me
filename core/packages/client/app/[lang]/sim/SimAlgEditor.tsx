@@ -9,6 +9,7 @@ import { useT } from '@/hooks/useT';
 export type SimAlgHighlightSpan = { text: string; bad?: boolean; current?: boolean };
 
 type Props = {
+  idPrefix?: string;
   setup: {
     text: string;
     elementRef: RefObject<HTMLTextAreaElement | null>;
@@ -55,7 +56,7 @@ type Props = {
 /** Input presentation only: the playback controller owns drafts, validation and
  * notation conversions. Keep its DOM refs attached for caret sync and keyboards. */
 export default function SimAlgEditor({
-  setup, alg, is3x3, algStm, scramble, setupExtras, autofill, notationControls, algHelp, moveEditing, moveEditorRef,
+  idPrefix = '', setup, alg, is3x3, algStm, scramble, setupExtras, autofill, notationControls, algHelp, moveEditing, moveEditorRef,
 }: Props) {
   const t = useT();
   return (
@@ -64,7 +65,7 @@ export default function SimAlgEditor({
         <span>{t('正在预览打乱', 'Previewing scramble')}</span>
         <button type="button" onClick={scramble.onRestore} title={t('返回公式', 'Return to algorithm')}>{t('返回公式', 'Return to algorithm')}</button>
       </div>}
-      <label className="sim-field-label" htmlFor="sim-setup">{t('初始状态', 'Initial state')}</label>
+      <label className="sim-field-label" htmlFor={`${idPrefix}sim-setup`}>{t('初始状态', 'Initial state')}</label>
       <div className="sim-player-row sim-player-row--top">
         <div className="sim-player-hlwrap">
           {setup.spans && (
@@ -76,8 +77,8 @@ export default function SimAlgEditor({
           )}
           <textarea
             ref={setup.elementRef}
-            id="sim-setup"
-            aria-describedby={setup.error ? 'sim-setup-error' : undefined}
+            id={`${idPrefix}sim-setup`}
+            aria-describedby={setup.error ? `${idPrefix}sim-setup-error` : undefined}
             onFocus={setup.onFocus}
             defaultValue={setup.text}
             rows={1}
@@ -138,8 +139,8 @@ export default function SimAlgEditor({
           )}
         </div>
       )}
-      {setup.error && <p id="sim-setup-error" className="sim-input-error" role="status">{setup.error}</p>}
-      <label className="sim-field-label" htmlFor="sim-alg">{t('公式', 'Algorithm')}</label>
+      {setup.error && <p id={`${idPrefix}sim-setup-error`} className="sim-input-error" role="status">{setup.error}</p>}
+      <label className="sim-field-label" htmlFor={`${idPrefix}sim-alg`}>{t('公式', 'Algorithm')}</label>
       <div className="sim-player-row">
         <div className={'sim-player-hlwrap' + (moveEditing ? ' sim-player-hlwrap--editing' : '')}>
           <div ref={moveEditorRef} hidden={!moveEditing} className="sim-move-editor-slot" />
@@ -156,10 +157,10 @@ export default function SimAlgEditor({
             </div>
           )}
           <AlgInput
-            id="sim-alg"
+            id={`${idPrefix}sim-alg`}
             inputMode="text"
             ariaInvalid={Boolean(alg.error)}
-            ariaDescribedBy={alg.error ? 'sim-alg-error' : undefined}
+            ariaDescribedBy={alg.error ? `${idPrefix}sim-alg-error` : undefined}
             elementRef={alg.elementRef as RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
             initialText={alg.text}
             rows={1}
@@ -187,7 +188,7 @@ export default function SimAlgEditor({
         {notationControls}
       </div>
 
-      {alg.error && <p id="sim-alg-error" className="sim-input-error" role="status">{alg.error}</p>}
+      {alg.error && <p id={`${idPrefix}sim-alg-error`} className="sim-input-error" role="status">{alg.error}</p>}
       {algHelp}
     </>
   );

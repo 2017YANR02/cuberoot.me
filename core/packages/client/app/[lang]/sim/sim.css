@@ -14,6 +14,7 @@
   color: var(--foreground);
   overflow: hidden;
 }
+.sim-page[hidden] { display: none; }
 
 .sim-header {
   display: flex;
@@ -765,16 +766,19 @@
   font: inherit;
 }
 .sim-panel-title { font-size: 14px; margin: 12px; }
+.sim-drawing-toolbar { display: flex; flex-wrap: wrap; padding: 0 12px 8px; }
+.sim-drawing-error { position: fixed; bottom: 16px; left: 16px; z-index: 50; padding: 8px 12px; background: var(--popover); color: var(--foreground); }
 .sim-capture-controls { order: -1; }
 .sim-capture-controls[hidden] { display: none; }
 .sim-capture-controls > .vc-studio { padding: 0 12px 12px; }
-.sim-page[data-workspace="capture"] .sim-image-overlay > button,
-.sim-page[data-workspace="capture"] .sim-backview,
-.sim-page[data-workspace="capture"] .sim-backview-swap,
-.sim-page[data-workspace="capture"] .sim-float-close--backview { display: none; }
+.sim-page[data-draw-source="state"] .sim-image-overlay > button,
+.sim-page[data-draw-source="state"] .sim-backview,
+.sim-page[data-draw-source="state"] .sim-backview-swap,
+.sim-page[data-draw-source="state"] .sim-float-close--backview { display: none; }
 
 @media (max-width: 767px) {
   .sim-header { gap: 6px; padding: 8px; }
+  .sim-drawing-toolbar { padding-inline: 8px; }
   .sim-header-recon { display: none; }
   .sim-stage { position: relative; }
   .sim-stage-recon {

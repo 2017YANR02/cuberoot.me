@@ -39,7 +39,7 @@ import { buildForearm, makeSkinDetailTexture, HAND_SCALE, WRIST_LOCAL, type Hand
 import { loadManoHand } from "./handModelMano";
 import { paintNailPolish, type NailPolishSpec } from "./handModelGltf";
 import { SmplxBody, loadSmplxOnePiece } from "./smplxBody";
-import { bakeHandTextures, type HandBakedMaps } from "./bakeHandTexture";
+import { applyBakedSkinMaps, bakeHandTextures } from "./bakeHandTexture";
 import { addHandSkeleton, makeHandSkeletonMats, type SkeletonMatKey } from "./handSkeleton";
 import { homeLeft, homeRight, type HandPose } from "./handPoses";
 
@@ -956,16 +956,52 @@ interface HandState {
   sEvadeTarget: number;
 }
 
+export type HandLoadPhase = 'idle' | 'loading' | 'texturing' | 'ready' | 'error';
+export interface HandsLoadState {
+  readonly hands: HandLoadPhase;
+  readonly body: HandLoadPhase;
+}
+
+function disposeHandModel(model: HandModel): void {
+  // 骨架连线共享几何，只释放一次；SkinnedMesh 的骨骼纹理不由 geometry 管理。
+  for (const geo of new Set(model.meshes.map((mesh) => mesh.geometry))) geo.dispose();
+  for (const mesh of model.meshes) {
+    if (mesh instanceof THREE.SkinnedMesh) mesh.skeleton.dispose();
+  }
+  for (const mat of model.extraMats ?? []) mat.dispose();
+  model.group.removeFromParent();
+}
+
 export default class HandsRig extends THREE.Group {
-  private readonly skinMat: THREE.MeshStandardMaterial;
+  private disposed = false;
+  private readonly abort = new AbortController();
+  private readonly loadListeners = new Set<() => void>();
+  private loadState: HandsLoadState = { hands: 'loading', body: 'idle' };
+  private readonly pendingGrips = { R: new THREE.Quaternion(), L: new THREE.Quaternion() };
+
+  getLoadState = (): HandsLoadState => this.loadState;
+  subscribeLoadState = (listener: () => void): (() => void) => {
+    this.loadListeners.add(listener);
+    return () => { this.loadListeners.delete(listener); };
+  };
+  private updateLoadState(part: keyof HandsLoadState, phase: HandLoadPhase): void {
+    if (this.disposed || this.loadState[part] === phase) return;
+    this.loadState = { ...this.loadState, [part]: phase };
+    for (const listener of this.loadListeners) listener();
+  }
+  retryLoad(): void {
+    if (this.disposed) return;
+    if (this.loadState.hands === 'error') void this.initAsync();
+    else if (this.bodyWanted && this.loadState.body === 'error') this.ensureBody();
+  }
+  private readonly skinMat: THREE.MeshPhysicalMaterial;
   /** 两手各自的烘焙贴图材质(UV 布局左右不一致,各烘各的);烘焙失败为空,
    *  手退回平色 skinMat 仍可用。 */
   private readonly handMats: THREE.MeshPhysicalMaterial[] = [];
   /** MediaPipe 风格骨架叠加层材质(透明常开,fade 只驱动 opacity)。 */
   private readonly skelMats: THREE.MeshBasicMaterial[];
   private readonly skelMatMap: Record<SkeletonMatKey, THREE.MeshBasicMaterial>;
-  /** GLTF 手模异步加载,完成前为 null —— 所有姿态/手势入口 null 守卫 no-op,
-   *  加载完成后若开关已开则从 fade=0 淡入。 */
+  /** 手模异步加载，完成前记录握姿并等待播放，完成后从 fade=0 淡入。 */
   private hands: Record<HandSide, HandState> | null = null;
   private cube: HandsCubeLike | null = null;
   /** SMPL-X 全身(设置「全身人物」;懒加载,onepiece 单网格傀儡 —— 肘臂腕手
@@ -1000,17 +1036,15 @@ export default class HandsRig extends THREE.Group {
     this.name = "handsRig";
     // 皮肤(前臂 + 烘焙失败时的手部回退):物理材质 + 顶点血色(几何侧烘)+
     // 程序噪声 bump/roughness(毛孔颗粒);手本体正常路径用 initAsync 里的
-    // 烘焙贴图材质(handMats)。sheen 给轮廓软绒光(皮肤次表面近似)。
+    // 烘焙贴图材质(handMats)。低强度高光保留皮肤油脂感，不用织物 sheen 模拟透光。
     const detail = makeSkinDetailTexture();
     const skin = new THREE.MeshPhysicalMaterial({
       color: 0xd9af94, // 降饱和肤色 —— 偏橘的高饱和基色是「橘蜡假人」主因(评审 #8)
       roughness: 0.85, // 有 roughnessMap 时为乘数:0.85 × 贴图(均值 ~0.66)≈ 实效 0.56
       metalness: 0,
       vertexColors: true,
-      // sheen 别高:每个体块的轮廓缘光会把拼球结构一个个勾出来(「葡萄串」)。
-      sheen: 0.15,
-      sheenRoughness: 0.6,
-      sheenColor: new THREE.Color(0xffdfca),
+      ior: 1.4,
+      specularIntensity: 0.75,
     });
     skin.bumpMap = detail;
     skin.bumpScale = 0.55;
@@ -1022,13 +1056,14 @@ export default class HandsRig extends THREE.Group {
     this.skelMatMap = makeHandSkeletonMats();
     this.skelMats = Object.values(this.skelMatMap);
     this.setSkeletonVisible(false);
-    // MANO 手模异步加载(逐机转换 gitignored 资产)。缺失打 warn,手指开关
-    // 成为空操作 —— 内置 generic-hand 已退役(2026-07-11 用户拍板),无回退。
+    // MANO 手模异步加载；缺失时由设置反馈并提供重试。
     void this.initAsync();
 
-    // 手专属补光:layer 1(魔方在默认 layer 0,不受影响;手网格同时在 0+1,
-    // 场景主光照到手,补光只照手)。左前暖 + 右下冷,把背光侧从死黑里捞出来。
-    const fillA = new THREE.DirectionalLight(0xfff0e2, Math.PI * 0.22);
+    // 手部补光使用 layer 1。柔和的半球漫射
+    // 保留背光侧肤色，左前主光交代关节曲面；不依赖魔方塑料材质的低强度灯光。
+    const sky = new THREE.HemisphereLight(0xfff4eb, 0x746a63, Math.PI * 0.22);
+    sky.layers.set(1);
+    const fillA = new THREE.DirectionalLight(0xfff0e2, Math.PI * 0.30);
     fillA.position.set(-SIZE * 3, SIZE * 1.5, SIZE * 3);
     fillA.layers.set(1);
     // 下方冷补光压低(0.16→0.08):拉开明暗比,减少「均匀照亮」的蜡感(评审 #10)。
@@ -1042,10 +1077,10 @@ export default class HandsRig extends THREE.Group {
     rim.layers.set(1);
     // 前侧低强度暖 rim:产品主视角(正面)吃不到后上 rim,补一盏让正面握持
     // 视角的指缘也有暖轮廓(评审 #10②)。
-    const rimFront = new THREE.DirectionalLight(0xffcaa6, Math.PI * 0.12);
+    const rimFront = new THREE.DirectionalLight(0xffcaa6, Math.PI * 0.08);
     rimFront.position.set(-SIZE * 2, SIZE * 1.2, SIZE * 3);
     rimFront.layers.set(1);
-    this.add(fillA, fillB, rim, rimFront);
+    this.add(sky, fillA, fillB, rim, rimFront);
 
     this.visible = false;
   }
@@ -1053,50 +1088,48 @@ export default class HandsRig extends THREE.Group {
   /** 加载两只 MANO 手 → 烘焙皮肤贴图 → 建前臂 / 骨架叠加 / HandState。魔方
    *  右侧 = 解剖学右手(side=-1 语义只剩 splay 镜像);左侧 = 镜像资产。 */
   private async initAsync(): Promise<void> {
-    let right: HandModel, left: HandModel;
+    this.updateLoadState('hands', 'loading');
     // MANO 资产是逐机转换的 gitignored 文件(授权数据不入公开仓库):缺失时
     // 手部功能整体不可用(内置 generic-hand 已退役,无回退)。
-    try {
-      [right, left] = await Promise.all([
-        loadManoHand(-1, this.skinMat),
-        loadManoHand(1, this.skinMat),
-      ]);
-    } catch (e) {
-      console.warn("[sim hands] MANO 资产缺失(scripts/convert-mano.py 逐机转换),手部不可用:", e);
+    const loaded = await Promise.allSettled([
+      loadManoHand(-1, this.skinMat, this.abort.signal),
+      loadManoHand(1, this.skinMat, this.abort.signal),
+    ]);
+    const [r, l] = loaded;
+    if (this.disposed || r.status === 'rejected' || l.status === 'rejected') {
+      for (const result of loaded) if (result.status === 'fulfilled') disposeHandModel(result.value);
+      if (!this.disposed) {
+        this.updateLoadState('hands', 'error');
+        console.warn('[sim hands] Hand model load failed:', loaded.find(result => result.status === 'rejected'));
+      }
       return;
     }
+    const right = r.value, left = l.value;
+    this.updateLoadState('hands', 'texturing');
     // 程序化皮肤贴图烘焙(albedo/bump/roughness + 指甲)。必须在入场景 / 摆
     // home 姿态之前(烘焙契约:绑定姿态 + group 无父级)。UV 布局左右手不一致
     // (实测 max diff 0.042),两手各烘各的。失败非致命:退回平色 skinMat。
-    const mkBakedMat = (maps: HandBakedMaps): THREE.MeshPhysicalMaterial => new THREE.MeshPhysicalMaterial({
-      color: 0xffffff, // 基础肤色已画进 albedo(0xd9af94 × 斑驳),别再乘一层
-      roughness: 1.0,  // roughnessMap 画的是物理值,权威;皮肤 ~0.6 / 甲面 ~0.34
-      metalness: 0,
-      vertexColors: true, // 血色/掌背明暗仍走顶点色(低频),与贴图相乘复合
-      sheen: 0.15,
-      sheenRoughness: 0.6,
-      sheenColor: new THREE.Color(0xffdfca),
-      map: maps.albedo,
-      bumpMap: maps.bump,
-      bumpScale: 0.7,
-      roughnessMap: maps.rough,
-    });
     // MANO 同路径烘焙(转换器 @2 起给盒式投影无重叠 UV 图集 —— 烘焙器在 3D
     // 域求值特征,对图集布局无要求,只要求单射)。
     try {
       for (const model of [right, left]) {
-        const mat = mkBakedMat(await bakeHandTextures(model));
+        const maps = await bakeHandTextures(model, 1024, this.abort.signal);
+        if (this.disposed) {
+          maps.albedo.dispose(); maps.bump.dispose(); maps.rough.dispose();
+          break;
+        }
+        const mat = this.skinMat.clone();
+        applyBakedSkinMaps(mat, maps);
         model.meshes[0].material = mat;
         this.handMats.push(mat);
       }
     } catch (e) {
-      console.error("[sim hands] skin texture bake failed:", e);
+      if (!this.disposed) console.warn("[sim hands] skin texture bake failed:", e);
     }
-    // 加载层自建材质(甲片等,HandModel.extraMats 契约):入 handMats 统一
-    // fade/dispose。结构断言兼容尚未携带该字段的加载层。
-    for (const model of [right, left]) {
-      const extra = (model as { extraMats?: THREE.MeshPhysicalMaterial[] }).extraMats;
-      if (extra) this.handMats.push(...extra);
+    if (this.disposed) {
+      disposeHandModel(right);
+      disposeHandModel(left);
+      return;
     }
     this.add(right.group, left.group);
     // 前臂:@4 起已在转换期缝进手网格(单一网格 —— 腕缝几何/法线/贴图天然
@@ -1133,6 +1166,7 @@ export default class HandsRig extends THREE.Group {
       R: this.initHandState(right, homeR, rArm ? rArm.group : null, elbowAnchor(homeR)),
       L: this.initHandState(left, homeL, lArm ? lArm.group : null, elbowAnchor(homeL)),
     };
+    this.setGrips(this.pendingGrips.R, this.pendingGrips.L);
     for (const s of ["R", "L"] as const) {
       for (const m of this.hands[s].model.meshes) m.layers.enable(1);
     }
@@ -1142,14 +1176,18 @@ export default class HandsRig extends THREE.Group {
     // 加载期间开关已开 → 从 0 重新淡入(否则 fade 早到 1,手会瞬间蹦出来)。
     if (this.enabled) {
       this.fade = 0;
-      for (const mat of this.fadeMats()) mat.transparent = true;
+      for (const mat of this.fadeMats()) { mat.transparent = true; mat.opacity = 0; }
     }
+    this.updateLoadState('hands', 'ready');
   }
 
   /** 随 fade 开合的实体材质(骨架叠加线另算,常开 transparent 只驱动 opacity)。
    *  handMats 异步烘焙后才入列,动态取。 */
   private fadeMats(): THREE.Material[] {
-    return [this.skinMat, ...this.handMats];
+    return [this.skinMat, ...this.handMats,
+      ...(this.hands?.R.model.extraMats ?? []), ...(this.hands?.L.model.extraMats ?? []),
+      ...(this.body ? [this.body.mat] : []),
+    ];
   }
 
   /** onepiece 全身渲染时隐藏活手皮肤网格:傀儡手区表面与活手逐点重合,双显 =
@@ -1166,7 +1204,7 @@ export default class HandsRig extends THREE.Group {
 
   /** 设置「全身人物」(SimSettings.fullBody 驱动):SMPL-X 全身随手出场。
    *  首开惰性 fetch + 建体(onepiece 单网格 ~8.7MB 一次,30 天强缓存);资产
-   *  缺失静默降级(开关无效果)。依赖手模就位(unitScale / 傀儡常量预算 /
+   *  缺失时保留手模并提供重试。依赖手模就位(unitScale / 傀儡常量预算 /
    *  home 放置),手未加载完时由 initAsync 尾部回放。 */
   setFullBody(want: boolean): void {
     this.bodyWanted = want;
@@ -1180,12 +1218,13 @@ export default class HandsRig extends THREE.Group {
   }
 
   private ensureBody(): void {
-    if (this.body || this.bodyLoading || !this.hands) return;
+    if (this.disposed || this.body || this.bodyLoading || !this.hands) return;
     this.bodyLoading = true;
-    void loadSmplxOnePiece()
+    this.updateLoadState('body', 'loading');
+    void loadSmplxOnePiece(this.abort.signal)
       .then((data) => {
         const hands = this.hands;
-        if (!hands) { this.bodyLoading = false; return; }
+        if (this.disposed || !hands) { this.bodyLoading = false; return; }
         const body = new SmplxBody(data, { R: hands.R.model, L: hands.L.model }, this.skinMat);
         // home 姿一次放置:两侧肘目标 = home 腕点 + 前臂轴向 × 身体前臂长
         const elbowTarget = (side: HandSide): THREE.Vector3 => {
@@ -1200,15 +1239,27 @@ export default class HandsRig extends THREE.Group {
         body.visible = this.bodyWanted;
         this.add(body);
         this.body = body;
+        body.mat.opacity = this.fade * this.fade * (3 - 2 * this.fade);
+        body.mat.transparent = this.fade < 1;
         body.setAvatar(this.avatarSrc, ...this.avatarPlacement);
         this.bodyLoading = false;
         this.syncLiveSkin();                     // 傀儡接管手区,活手皮肤退场
+        this.lastActivityAt = performance.now();
+        this.updateLoadState('body', 'texturing');
         // 全身贴图异步烘焙(基肤 + 双手皱纹;烘完热替换,失败留平色可用)
-        void body.bakeTextures().catch((e: unknown) => console.info("[sim hands] body texture bake failed:", e));
+        void body.bakeTextures(this.abort.signal)
+          .catch((e: unknown) => { if (!this.disposed) console.warn("[sim hands] body texture bake failed:", e); })
+          .finally(() => {
+            this.lastActivityAt = performance.now();
+            this.updateLoadState('body', 'ready');
+          });
       })
       .catch((e: unknown) => {
         this.bodyLoading = false;
-        console.info("[sim hands] SMPL-X 全身资产不可用(scripts/convert-mano.py 转换后可用):", e);
+        if (!this.disposed) {
+          this.updateLoadState('body', 'error');
+          console.warn('[sim hands] Full body load failed:', e);
+        }
       });
   }
 
@@ -1304,44 +1355,7 @@ export default class HandsRig extends THREE.Group {
 
   /** 握姿全清回 home(挂/摘 cube 或瞬时跳步前的硬复位)。 */
   private resetGrips(): void {
-    const hands = this.hands;
-    if (!hands) return;
-    for (const side of ["R", "L"] as const) {
-      const h = hands[side];
-      h.grip.identity();
-      h.recoverT = 1;
-      h.weldAxis = null;
-      h.weldAngle = 0;
-      h.weldRawAngle = 0;
-      h.weldWhole = false;
-      h.flickFinger = null;
-      h.flickFinger2 = null;
-      h.flickAxis = null;
-      h.flickStyle = null;
-      h.flickAmount = 0;
-      h.flickDecay = 0;
-      h.reachT = 0;
-      h.reachTarget = 0;
-      h.pinFinger = null;
-      h.pinReachT = 0;
-      h.pinReachTarget = 0;
-      h.dodge = 0;
-      h.dodgeTarget = 0;
-      h.indexEvade = 0;
-      h.indexEvadeTarget = 0;
-      h.lowEvade = 0;
-      h.lowEvadeTarget = 0;
-      h.midEvade = 0;
-      h.midEvadeTarget = 0;
-      h.bEvade = 0;
-      h.bEvadeTarget = 0;
-      h.fEvade = 0;
-      h.fEvadeTarget = 0;
-      h.sEvade = 0;
-      h.sEvadeTarget = 0;
-    }
-    this.regripFlag = false;
-    this.pendingHint = null;
+    this.setGrips(HandsRig._qIdent, HandsRig._qIdent);
   }
 
   /**
@@ -1350,9 +1364,13 @@ export default class HandsRig extends THREE.Group {
    * 把「当前显示偏移 ∘ 旧 grip」折算成相对新 grip 的回位余量,切换瞬间画面连续。
    */
   regrip(name: GripName, only?: HandSide): void {
-    const hands = this.hands;
-    if (!hands) return;
     const target = gripQuat(name);
+    const hands = this.hands;
+    if (!hands) {
+      for (const side of only ? [only] : (["R", "L"] as const)) this.pendingGrips[side].copy(target);
+      return;
+    }
+    this.settleCompletedGesture();
     const q = HandsRig._qTmp;
     let any = false;
     for (const side of only ? [only] : (["R", "L"] as const)) {
@@ -1387,10 +1405,16 @@ export default class HandsRig extends THREE.Group {
 
   /** 瞬时设定两手握姿基座(跳步 / 拖进度条的静态摆位,配 simulateGrips)。 */
   setGrips(qR: THREE.Quaternion, qL: THREE.Quaternion): void {
+    this.pendingGrips.R.copy(qR);
+    this.pendingGrips.L.copy(qL);
+    this.active = null;
+    this.pendingHint = null;
+    this.regripFlag = false;
+    this.lastActivityAt = performance.now();
     const hands = this.hands;
     if (!hands) return;
-    hands.R.grip.copy(qR);
-    hands.L.grip.copy(qL);
+    hands.R.grip.copy(this.pendingGrips.R);
+    hands.L.grip.copy(this.pendingGrips.L);
     for (const side of ["R", "L"] as const) {
       const h = hands[side];
       h.recoverT = 1;
@@ -1429,7 +1453,15 @@ export default class HandsRig extends THREE.Group {
 
   /** 换握动画进行中(播放循环用它闸住下一步;普通 weld 回位不算)。 */
   get isRegripping(): boolean {
-    return this.regripFlag;
+    return this.enabled && this.regripFlag;
+  }
+
+  /** 播放轮询可能先于下一渲染帧，先提交已 drop 的手势再选下一招。 */
+  private settleCompletedGesture(): void {
+    if (!this.active || !this.cube) return;
+    if (!Object.values(this.cube.table.groups).every(groups => groups.every(group => group.angle === 0))) return;
+    this.endGesture();
+    this.active = null;
   }
 
   /** 转前提示(prepareTwist 登记,tick 建手势时按 (axis,cls,dir) 匹配消费):
@@ -1473,7 +1505,10 @@ export default class HandsRig extends THREE.Group {
   prepareTwist(axis: Axis, layers: number[], dir: 1 | -1, quarters = 1, push = false, pin?: PinSpec): boolean {
     const hands = this.hands;
     const cube = this.cube;
-    if (!hands || !cube || !this.enabled) return false;
+    if (!cube || !this.enabled || this.disposed) return false;
+    if (!hands) return this.loadState.hands !== 'error';
+    this.settleCompletedGesture();
+    if (this.isRegripping || this.isReachRetreating) return true;
     const cls = classifyLayers(layers, cube.order);
     const g = classifyHandGesture(axis, cls, dir, this.gripNames(), { quarters, push });
     this.pendingHint = { axis, cls, dir, quarters, push, at: performance.now() };
@@ -1481,8 +1516,13 @@ export default class HandsRig extends THREE.Group {
     // 的回撤未完时,下一步 y.high 必须等 —— 回撤走廊在 U 带扫掠环带内侧
     // (半径 ~107U < 96√2),层再次转动会犁到回撤中的指链(真实播放 oracle
     // U2'→U'p 实测 11U;F/S 族「decay 段吃 evade」先例是小幅姿态可解,这里
-    // 是结构性重叠只能等,decay ≤ RECOVER_MS)。同手连发(U 接 U2)不闸:
-    // beginGesture 直接重置本手 decay,r3 基线行为不变。
+    // 是结构性重叠只能等,decay ≤ RECOVER_MS)。同手接续也等原有回撤结束，
+    // 避免 beginGesture 清零幅度使指尖瞬跳；无冲突的对侧手仍可接续。
+    const actingHands = g.kind === 'weld' ? g.hands : [g.hand];
+    if (actingHands.some(side => hands[side].flickDecay > 0)) {
+      this.lastActivityAt = performance.now();
+      return true;
+    }
     if (axis === "y" && cls === "high" && g.kind === "flick") {
       const other = hands[g.hand === "R" ? "L" : "R"];
       if (other.flickDecay > 0 && other.flickAxis === "y" && other.flickStyle === "hook" && other.flickFinger === "index") {
@@ -1579,6 +1619,7 @@ export default class HandsRig extends THREE.Group {
   }
 
   setEnabled(on: boolean): void {
+    if (this.disposed) return;
     // visible 无条件跟 on 拉起(不能挂在 enabled-diff 后面:dt=0 帧曾把
     // visible 误置 false,若 enabled 未变就再也拉不起来)。
     if (on) this.visible = true;
@@ -1981,7 +2022,8 @@ export default class HandsRig extends THREE.Group {
 
   private endGesture(): void {
     const hands = this.hands;
-    if (!hands) return;
+    const gesture = this.active?.gesture;
+    if (!hands || !gesture) return;
     for (const side of ["R", "L"] as const) {
       const h = hands[side];
       if (h.weldAxis) {
@@ -2006,7 +2048,7 @@ export default class HandsRig extends THREE.Group {
         // FTN @pin 钉指:weld 提交即收指(与回位并行;收指闸挡下一步)。
         if (h.pinFinger) h.pinReachTarget = 0;
       }
-      if (h.flickFinger) {
+      if (gesture.kind === 'flick' && gesture.hand === side && h.flickFinger) {
         h.flickDecay = 1;
         // flickAmount 保留为残留幅度,由 flickDecay 衰减。
         // topPush:flickAmount 保留提交原角(退场姿态由 applyHand 的 effRaw
@@ -2651,12 +2693,17 @@ export default class HandsRig extends THREE.Group {
     h.model.poseCorrective?.();
   }
 
-  /** 释放几何/材质(rig 与 world 同生命周期,当前无人调用;备完整性)。 */
+  /** 页面卸载时取消未完成加载，并释放本 rig 拥有的 GPU 资源。 */
   dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.abort.abort();
+    this.loadListeners.clear();
+    this.enabled = false;
+    this.visible = false;
     if (this.hands) {
-      for (const side of ["R", "L"] as const) {
-        for (const m of this.hands[side].model.meshes) m.geometry.dispose();
-      }
+      for (const side of ["R", "L"] as const) disposeHandModel(this.hands[side].model);
+      this.hands = null;
     }
     this.skinMat.bumpMap?.dispose();
     this.skinMat.dispose();
@@ -2668,5 +2715,9 @@ export default class HandsRig extends THREE.Group {
     }
     for (const m of this.skelMats) m.dispose();
     this.body?.dispose();
+    this.body = null;
+    this.handMats.length = 0;
+    this.clear();
+    this.removeFromParent();
   }
 }

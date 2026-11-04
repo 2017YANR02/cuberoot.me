@@ -76,6 +76,9 @@ export function nailFrame(
 }
 
 const clamp01 = (x: number): number => (x < 0 ? 0 : x > 1 ? 1 : x);
+// 顶点色必须在线性空间。自然甲与甲油共用，避免自然甲被当成线性值而泛白。
+const srgbToLinear = (x: number): number => x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+const NAIL_ROOT_COLOR = [srgbToLinear(0.851), srgbToLinear(0.686) * 0.91, srgbToLinear(0.580) * 0.86];
 const sstep = (a: number, b: number, x: number): number => {
   const t = clamp01((x - a) / (b - a));
   return t * t * (3 - 2 * t);
@@ -110,7 +113,7 @@ const NAIL_HALFW_K: Record<FingerName, number> = { thumb: 0.50, index: 0.67, mid
 const NAIL_T0 = 0.40, NAIL_REACH = 1.15;
 /** 悬出段下弧深度(前缘高 = (1-DIP)×脊高):太小=平板翘出,太大=又贴回帽面。 */
 const NAIL_TIP_DIP = 0.45;
-const NAIL_TH = 0.55 * U;
+const NAIL_TH = 0.22 * U;
 
 /**
  * 立体甲片薄壳(2026-07-08 用户规格:指甲要有薄薄的厚度、是立体结构):
@@ -168,14 +171,15 @@ function buildNailGeometry(args: {
       // 方圆甲轮廓:|q|^2.7 让中段近等宽、只在两端圆角收窄。旧 (1-q²)^(1/2.2)
       // 从中点就开始收,两端尖 → 读成水滴/血滴(2026-07-10 用户抓的)。
       const w2 = Math.pow(1 - Math.pow(Math.abs(q), 2.7), 1 / 2.4);
-      const free = sstep(qTip - 0.15, qTip + 0.45, q);
-      const lun = sstep(-0.45, -0.68, q) * 0.5; // 半月对比调淡(强白斑读成大理石纹)
       // 甲根带渐变融入肤色(r6):甲根埋皮后,可见白界 = 低模皮肤多边形剪影
       // 压在甲板上的折线(撕纸感,踩过)。把甲根两行的颜色 lerp 到肤色,白甲
       // 的视觉边界改为甲板自身 q 向解析渐变(平滑弧),皮∩甲折线隐进同色里。
       const rootBlend = sstep(-0.70, -0.92, q);
       for (let j = 0; j < NC; j++) {
         const w = -1 + (2 * j) / (NC - 1);
+        // 月牙与游离缘随横向弯曲，避免横贯整个甲面的白色直条。
+        const free = sstep(0.80 - 0.12 * w * w, 0.97 - 0.06 * w * w, q);
+        const lun = (1 - sstep(-0.78, -0.48, q + 0.24 * w * w)) * (1 - rootBlend);
         const u = args.uCenter + w * w2 * args.halfWAt(sAbs);
         // 埋皮 ramp 只留窄边(侧缘最外一列 / 甲根最后两行):可见轮廓 =
         // 「皮 ∩ 甲」交线,宽软坡会让交线随皮面噪声大幅横移,读成锯齿 blob(踩过)
@@ -190,13 +194,13 @@ function buildNailGeometry(args: {
         // 边缘轻微压暗(下卷面),甲底略暗。
         const groove = Math.max(0, 1 - 0.15 * tuckK - 0.10 * sinkK);
         const shade = (layer === 0 ? 1 : 0.9) * groove;
-        let r = (0.93 + 0.05 * lun + 0.06 * free) * shade;
-        let g = (0.80 + 0.08 * lun + 0.15 * free) * shade;
-        let b = (0.76 + 0.08 * lun + 0.15 * free) * shade;
+        let r = srgbToLinear(0.84 + 0.025 * lun + 0.09 * free) * shade;
+        let g = srgbToLinear(0.65 + 0.045 * lun + 0.22 * free) * shade;
+        let b = srgbToLinear(0.60 + 0.05 * lun + 0.23 * free) * shade;
         // 甲根带 lerp 到肤色(bakeVertexTint 远端血色的近似值)
-        r += (1.0 - r) * rootBlend;
-        g += (0.84 - g) * rootBlend;
-        b += (0.78 - b) * rootBlend;
+        r += (NAIL_ROOT_COLOR[0] - r) * rootBlend;
+        g += (NAIL_ROOT_COLOR[1] - g) * rootBlend;
+        b += (NAIL_ROOT_COLOR[2] - b) * rootBlend;
         col.push(Math.min(1, r), Math.min(1, g), Math.min(1, b));
         pol.push((q + 0.97) / 1.94, shade, rootBlend);
       }
@@ -254,8 +258,7 @@ function polishLinear(hex: string, shade: number): [number, number, number] {
     const k = (t - 0.5) * 2 * 0.65; // 深:向黑
     r *= 1 - k; g *= 1 - k; b *= 1 - k;
   }
-  const lin = (x: number): number => (x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4));
-  return [lin(r), lin(g), lin(b)];
+  return [srgbToLinear(r), srgbToLinear(g), srgbToLinear(b)];
 }
 
 /** 重涂甲片(设置「指甲配色」):null = 还原自然甲(首涂前把自然顶点色快照进
@@ -285,9 +288,9 @@ export function paintNailPolish(model: HandModel, polish: NailPolishSpec | null)
         let r = (base[0] + (tipC[0] - base[0]) * t) * shade;
         let g = (base[1] + (tipC[1] - base[1]) * t) * shade;
         let b = (base[2] + (tipC[2] - base[2]) * t) * shade;
-        r += (1.0 - r) * rootBlend;
-        g += (0.84 - g) * rootBlend;
-        b += (0.78 - b) * rootBlend;
+        r += (NAIL_ROOT_COLOR[0] - r) * rootBlend;
+        g += (NAIL_ROOT_COLOR[1] - g) * rootBlend;
+        b += (NAIL_ROOT_COLOR[2] - b) * rootBlend;
         arr[i * 3] = Math.min(1, r);
         arr[i * 3 + 1] = Math.min(1, g);
         arr[i * 3 + 2] = Math.min(1, b);
@@ -649,9 +652,8 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
         if (Math.abs(p.u - uC) > 0.9 * halfW) continue;
         need = Math.max(need, p.h - bed0(p.s, p.u));
       }
-      // r7:抬升收到最小(0.5U 余量 / 1.4U 顶)—— 随形拱下 need 本就小,大
-      // 抬升 = 整板悬空缝隙(用户抓的)。
-      const lift = Math.min(need + 0.5 * U, 1.4 * U);
+      // MANO 随形拱下保留小幅覆盖余量；薄甲片贴近甲床，避免浮在指背上。
+      const lift = Math.min(need + 0.25 * U, 1.15 * U);
       const bed = (sq: number, uq: number): number => bed0(sq, uq) + lift;
       const geo = buildNailGeometry({ p3: q3, axis: nf.axis, dorsal: nf.dorsal, lat: nf.lat, len: nf.len, halfWAt, surf: bed, uCenter: uC, t1, lift });
       // 刚挂 tip 代理:甲片区域(t≥0.42)皮肤 ≥97% 由末节/端点骨主导(与

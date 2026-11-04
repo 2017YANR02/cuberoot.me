@@ -9,7 +9,7 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
-import { buildManoHand, type ManoHandData } from '@/app/[lang]/sim/engine/hands/handModelMano';
+import { buildManoHand, createPoseNormalUpdater, type ManoHandData } from '@/app/[lang]/sim/engine/hands/handModelMano';
 import { JOINT_CHAINS } from '@/app/[lang]/sim/engine/hands/handModelGltf';
 import { computeHandMaps } from '@/app/[lang]/sim/engine/hands/bakeHandTexture';
 import type { FingerName } from '@/app/[lang]/sim/engine/hands/handModel';
@@ -20,6 +20,32 @@ const FILES = {
 };
 const HAVE = existsSync(FILES.right) && existsSync(FILES.left);
 const FINGERS: FingerName[] = ['thumb', 'index', 'middle', 'ring', 'pinky'];
+
+describe('pose-corrected skin normals', () => {
+  it('UV seam duplicates share the corrected surface normal without moving the skin', () => {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute([
+      0, 0, 0, 1, 0, 0, 0, 1, 0,
+      0, 0, 0, 0, 1, 0, -1, 0, 0,
+    ], 3));
+    geo.setAttribute('normal', new THREE.Float32BufferAttribute(Array(6).fill([0, 0, 1]).flat(), 3));
+    geo.setIndex([0, 1, 2, 3, 4, 5]);
+    const update = createPoseNormalUpdater(geo);
+    const position = geo.getAttribute('position');
+    position.setZ(5, 1);
+    const corrected = Array.from(position.array);
+    update();
+    const normal = geo.getAttribute('normal');
+    expect(normal.getX(0)).toBeCloseTo(1 / Math.sqrt(5), 6);
+    expect(normal.getZ(0)).toBeCloseTo(2 / Math.sqrt(5), 6);
+    for (const [a, b] of [[0, 3], [2, 4]]) {
+      expect([normal.getX(a), normal.getY(a), normal.getZ(a)])
+        .toEqual([normal.getX(b), normal.getY(b), normal.getZ(b)]);
+    }
+    expect(Array.from(position.array)).toEqual(corrected);
+    geo.dispose();
+  });
+});
 
 describe.skipIf(!HAVE)('mano hand adapter', () => {
   it.each([
@@ -64,12 +90,14 @@ describe.skipIf(!HAVE)('mano hand adapter', () => {
     const data = JSON.parse(await readFile(FILES[name], 'utf8')) as ManoHandData;
     const m = buildManoHand(data, side, new THREE.MeshStandardMaterial(), name);
     const pos = (m.meshes[0] as THREE.SkinnedMesh).geometry.getAttribute('position');
+    const normal = (m.meshes[0] as THREE.SkinnedMesh).geometry.getAttribute('normal') as THREE.BufferAttribute;
     const before = Float32Array.from(pos.array as Float32Array);
     m.group.updateMatrixWorld(true);
     m.poseCorrective!();
     let dBind = 0;
     for (let i = 0; i < before.length; i++) dBind = Math.max(dBind, Math.abs((pos.array as Float32Array)[i] - before[i]));
     expect(dBind, '绑定姿系数全零,几何不动').toBeLessThan(1e-5); // 资产空间(米)
+    const normalsBefore = Float32Array.from(normal.array);
     // 拇指根大旋转 → 修正场生效(鱼际隆起毫米级)
     m.fingers.thumb.root.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 1.2));
     m.group.updateMatrixWorld(true);
@@ -78,6 +106,12 @@ describe.skipIf(!HAVE)('mano hand adapter', () => {
     for (let i = 0; i < before.length; i++) dPose = Math.max(dPose, Math.abs((pos.array as Float32Array)[i] - before[i]));
     expect(dPose, '大姿态下有修正位移').toBeGreaterThan(5e-4);
     expect(dPose, '修正位移毫米级,不该到厘米级爆炸').toBeLessThan(0.05);
+    let normalDelta = 0;
+    for (let i = 0; i < normalsBefore.length; i++) normalDelta = Math.max(normalDelta, Math.abs(normal.array[i] - normalsBefore[i]));
+    expect(normalDelta, '修正后的曲面必须更新高光方向').toBeGreaterThan(1e-3);
+    const normalVersion = normal.version;
+    m.poseCorrective!();
+    expect(normal.version, '同一姿态不重复计算法线').toBe(normalVersion);
   });
 
   it.each([

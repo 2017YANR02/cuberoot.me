@@ -58,8 +58,10 @@ vi.mock('@/components/TwistySection', async () => {
         vi.spyOn(player, 'experimentalCurrentVantages').mockReturnValue(new Promise(() => {}));
         fixture.players.push(player);
         props.playerRef!.current = player;
+        props.onPlayerChange?.(player);
         return () => {
           if (props.playerRef!.current === player) props.playerRef!.current = null;
+          props.onPlayerChange?.(null);
           player.pause();
         };
       }, [props.puzzle, props.puzzleDescription, props.playerRef]);
@@ -71,7 +73,11 @@ vi.mock('@/components/TwistySection', async () => {
 // Change the public route state without remounting SimPage. The real page owns
 // its companion effect, player ref, image portal and export menus throughout.
 function RouteControls() {
-  const [, setQuery] = useQueryStates({ puzzle: parseAsString, setup: parseAsString, alg: parseAsString });
+  const [route] = useQueryStates({ tool: parseAsString, drawingId: parseAsString });
+  const prefix = route.tool && route.tool !== 'sim' ? `drawing${route.drawingId ?? '1'}_` : '';
+  const [, setQuery] = useQueryStates({ puzzle: parseAsString, setup: parseAsString, alg: parseAsString }, {
+    urlKeys: { puzzle: `${prefix}puzzle`, setup: `${prefix}setup`, alg: `${prefix}alg` },
+  });
   return createElement('div', null,
     createElement('button', { 'data-route-alg': true, onClick: () => { void setQuery({ alg: 'L' }); } }, 'Change animation algorithm'),
     ...['masterskewb', 'superz'].map((puzzle) => createElement('button', {
@@ -133,42 +139,133 @@ async function sampleFrames() {
 }
 
 function exportButton(label: string): HTMLButtonElement {
-  const button = [...host.querySelectorAll<HTMLButtonElement>('.vc-exports button')]
+  const button = [...activePage().querySelectorAll<HTMLButtonElement>('.vc-exports button')]
     .find((element) => element.textContent?.trim() === label);
   expect(button, label).toBeDefined();
   return button!;
 }
 
 function preview() {
-  return host.querySelector<SVGElement>('.sim-image-overlay-host .vc-preview svg');
+  return activePage().querySelector<SVGElement>('.sim-image-overlay-host .vc-preview svg');
 }
 
-async function setWorkspace(value: 'animation' | 'creation') {
+function activePage() { return host.querySelector<HTMLElement>('.sim-page:not([hidden])')!; }
+
+// cubing.js allocates fresh gradient IDs when its native SVG animator attaches.
+// Compare the full geometry and paint, ignoring only that resource namespace.
+function previewContent() { return preview()?.outerHTML.replace(/grad-svg\d+-/g, 'grad-'); }
+
+async function setWorkspace(value: 'sim' | 'draw') {
   await act(async () => {
-    const select = host.querySelector<HTMLSelectElement>('select[aria-label="Workspace mode"]')!;
+    const select = activePage().querySelector<HTMLSelectElement>('select[aria-label="Workspace mode"]')!;
     select.value = value;
     select.dispatchEvent(new Event('change', { bubbles: true }));
     await vi.dynamicImportSettled();
   });
 }
 
+async function drawingAction(label: 'From current animation state' | 'New drawing' | 'Undo replacement' | 'Redo replacement') {
+  await act(async () => {
+    const button = [...activePage().querySelectorAll<HTMLButtonElement>('[aria-label="Drawing actions"] button')]
+      .find((element) => element.textContent === label)!;
+    button.click();
+    await vi.dynamicImportSettled();
+  });
+}
+
+// This page seeds new document URL keys on mount. The testing adapter otherwise
+// resets the pending queue on every render, discarding those initial writes.
+const memoryAdapter = { hasMemory: true, resetUrlUpdateQueueOnMount: false };
+
+it('imports the paused native timeline position without moving the animation', async () => {
+  await act(async () => root.render(createElement(NuqsTestingAdapter, {
+    searchParams: '?puzzle=skewb&renderer=cubing&alg=R+U', ...memoryAdapter,
+    children: createElement(SimPage),
+  })));
+  const source = fixture.players.at(-1)!;
+  await act(async () => {
+    await source.experimentalModel.indexer.get();
+    source.timestamp = 500 as TwistyPlayer['timestamp'];
+    await source.experimentalModel.detailedTimelineInfo.get();
+  });
+  expect((await source.experimentalModel.detailedTimelineInfo.get()).timestamp).toBe(500);
+  await setWorkspace('draw');
+  const drawing = fixture.players.at(-1)!;
+  expect(drawing).not.toBe(source);
+  await vi.waitFor(async () => expect((await drawing.experimentalModel.detailedTimelineInfo.get()).timestamp).toBe(500));
+  await setWorkspace('sim');
+  expect((await source.experimentalModel.detailedTimelineInfo.get()).timestamp).toBe(500);
+  await setWorkspace('draw');
+  expect((await drawing.experimentalModel.detailedTimelineInfo.get()).timestamp).toBe(500);
+});
+
+it('keeps independent drawing content across animation edits, new drawings and undo', async () => {
+  await act(async () => root.render(createElement(NuqsTestingAdapter, {
+    searchParams: '?puzzle=dogic&renderer=cubing', ...memoryAdapter,
+    children: [createElement(RouteControls, { key: 'routes' }), createElement(SimPage, { key: 'sim' })],
+  })));
+  const workspace = host.querySelector<HTMLSelectElement>('select[aria-label="Workspace mode"]')!;
+  expect([...workspace.options].map(option => [option.value, option.text])).toEqual([
+    ['sim', 'Animation'], ['draw', 'Drawing'],
+  ]);
+  await setWorkspace('draw');
+  expect(activePage().querySelector<HTMLSelectElement>('select[aria-label="Workspace mode"]')?.value).toBe('draw');
+  expect(host.querySelector('[aria-label="Drawing source"]')).toBeNull();
+  expect(activePage().querySelector<HTMLElement>('.sim-capture-controls')?.hidden).toBe(false);
+  await vi.waitFor(async () => {
+    await sampleFrames();
+    expect(preview()?.querySelectorAll('polygon')).toHaveLength(120);
+  }, { timeout: 5_000, interval: 10 });
+  const player = fixture.players.at(-1)!;
+  const oldImage = previewContent();
+
+  await setWorkspace('sim');
+  await navigate('superz');
+  await setWorkspace('draw');
+  await vi.waitFor(async () => { await sampleFrames(); expect(previewContent()).toBe(oldImage); });
+  await drawingAction('New drawing');
+  const drawing = activePage().querySelector('[data-drawing-puzzle]');
+  expect(drawing).not.toBeNull();
+  expect(activePage().querySelector<HTMLElement>('.sim-capture-controls')?.hidden).toBe(true);
+  await setWorkspace('sim');
+  await setWorkspace('draw');
+  expect(activePage().querySelector('[data-drawing-puzzle]')).toBe(drawing);
+
+  await drawingAction('Undo replacement');
+  expect(activePage().querySelector<HTMLElement>('.sim-capture-controls')?.hidden).toBe(false);
+  await vi.waitFor(async () => {
+    await sampleFrames();
+    expect(preview()?.querySelectorAll('polygon')).toHaveLength(120);
+  }, { timeout: 5_000, interval: 10 });
+  expect(fixture.players).toContain(player);
+  expect(previewContent()).toBe(oldImage);
+  expect(exportButton('Download').disabled).toBe(false);
+  await drawingAction('Redo replacement');
+  expect(activePage().querySelector('[data-drawing-puzzle]')).toBe(drawing);
+  await drawingAction('Undo replacement');
+  await drawingAction('From current animation state');
+  await vi.waitFor(async () => { await sampleFrames(); expect(preview()).not.toBeNull(); });
+  expect(activePage().querySelector('[data-current-puzzle]')?.getAttribute('data-current-puzzle')).toBe('superz');
+  expect(previewContent()).not.toBe(oldImage);
+});
+
 it('snapshots a legacy drawing puzzle before animation changes its project', async () => {
   await act(async () => {
     root.render(createElement(NuqsTestingAdapter, {
-      searchParams: '?tool=draw&puzzle=skewb&renderer=cubing', hasMemory: true,
+      searchParams: '?tool=draw&puzzle=skewb&renderer=cubing', ...memoryAdapter,
       children: [createElement(RouteControls, { key: 'routes' }), createElement(SimPage, { key: 'sim' })],
     }));
     await vi.dynamicImportSettled();
   });
-  await setWorkspace('animation');
+  await setWorkspace('sim');
   await navigate('masterskewb');
-  await setWorkspace('creation');
-  expect(host.querySelector('[data-drawing-puzzle]')?.getAttribute('data-drawing-puzzle')).toBe('skewb');
+  await setWorkspace('draw');
+  expect(activePage().querySelector('[data-drawing-puzzle]')?.getAttribute('data-drawing-puzzle')).toBe('skewb');
 });
 
 it('keeps canvas and playback tools together and opens settings in a dismissible popover', async () => {
   await act(async () => root.render(createElement(NuqsTestingAdapter, {
-    searchParams: '?puzzle=skewb&renderer=cubing', hasMemory: true,
+    searchParams: '?puzzle=skewb&renderer=cubing', ...memoryAdapter,
     children: createElement(SimPage),
   })));
   expect(host.querySelector('.sim-view-tools .sim-canvas-tools')).not.toBeNull();
@@ -201,28 +298,29 @@ it('keeps canvas and playback tools together and opens settings in a dismissible
 it('snapshots a legacy FTO image algorithm before animation changes its formula', async () => {
   await act(async () => {
     root.render(createElement(NuqsTestingAdapter, {
-      searchParams: '?tool=image&puzzle=fto&alg=R&renderer=cubing', hasMemory: true,
+      searchParams: '?tool=image&puzzle=fto&alg=R&renderer=cubing', ...memoryAdapter,
       children: [createElement(RouteControls, { key: 'routes' }), createElement(SimPage, { key: 'sim' })],
     }));
     await vi.dynamicImportSettled();
   });
-  await setWorkspace('animation');
+  await setWorkspace('sim');
   await act(async () => host.querySelector<HTMLButtonElement>('[data-route-alg]')!.click());
-  await setWorkspace('creation');
-  expect(host.querySelector('[data-image-alg]')?.getAttribute('data-image-alg')).toBe('R');
+  await setWorkspace('draw');
+  expect(activePage().querySelector('[data-image-alg]')?.getAttribute('data-image-alg')).toBe('R');
 });
 
 async function navigate(puzzle: string) {
   await act(async () => host.querySelector<HTMLButtonElement>(`[data-route-puzzle="${puzzle}"]`)!.click());
-  expect(host.querySelector('[data-current-puzzle]')?.getAttribute('data-current-puzzle')).toBe(puzzle);
+  expect(activePage().querySelector('[data-current-puzzle]')?.getAttribute('data-current-puzzle')).toBe(puzzle);
 }
 
-it('clears the old native image and exports while the next puzzle has no frame, then resumes from a new native player', async () => {
+it.each(['?tool=capture', '?tool=draw&drawSource=state'])('clears stale previews and exports while the next puzzle loads (%s)', async (entry) => {
   await act(async () => root.render(createElement(NuqsTestingAdapter, {
-    searchParams: '?tool=capture&puzzle=dogic&renderer=cubing',
-    hasMemory: true,
+    searchParams: `${entry}&puzzle=dogic&renderer=cubing`,
+    ...memoryAdapter,
     children: [createElement(RouteControls, { key: 'routes' }), createElement(SimPage, { key: 'sim' })],
   })));
+  expect(activePage().querySelector<HTMLSelectElement>('select[aria-label="Workspace mode"]')?.value).toBe('draw');
   await vi.waitFor(async () => {
     await sampleFrames();
     expect(preview()?.querySelectorAll('polygon')).toHaveLength(120);
@@ -237,7 +335,7 @@ it('clears the old native image and exports while the next puzzle has no frame, 
   await navigate('masterskewb');
   await sampleFrames();
   expect(preview() === null).toBe(true);
-  expect(host.querySelector('.sim-image-overlay-host [role="status"]')?.textContent).toContain('Waiting for the exact image');
+  expect(activePage().querySelector('.sim-image-overlay-host [role="status"]')?.textContent).toContain('Waiting for the exact image');
   expect(exportButton('Copy').disabled).toBe(true);
   expect(exportButton('Download').disabled).toBe(true);
   const formats = [...host.querySelectorAll<HTMLButtonElement>('.vc-export-formats button')];

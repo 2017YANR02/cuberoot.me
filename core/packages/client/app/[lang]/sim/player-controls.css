@@ -1443,6 +1443,14 @@
 .sim-person-avatar-adjust { display: flex; flex-wrap: wrap; gap: 12px; flex-basis: 100%; }
 .sim-person-avatar-adjust > .sim-slider { flex: 1 1 120px; min-width: 0; }
 
+.sim-hand-settings { display: grid; gap: 12px; padding-block: 8px; min-width: 0; }
+.sim-hand-settings > .sim-toggle { justify-self: start; }
+.sim-hand-toggles { display: flex; flex-wrap: wrap; gap: 10px 24px; }
+.sim-hand-toggles .sim-toggle { gap: 8px; }
+.sim-hand-status { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 13px; color: var(--muted-foreground); }
+.sim-hand-status > button { color: var(--foreground); text-decoration: underline; text-underline-offset: 3px; padding: 4px; }
+.sim-hand-settings .sim-person-avatar { margin: 0; }
+
 .sim-animation-controls { display: flex; flex-direction: column; gap: 10px; }
 .sim-animation-controls[hidden] { display: none; }
 .sim-field-label { color: var(--muted-foreground); font-size: 13px; }

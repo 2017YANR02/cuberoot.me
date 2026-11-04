@@ -8,6 +8,8 @@ export interface HandsCubeLike {
 
 export interface WorldHands extends Group {
   readonly isEnabled: boolean;
+  /** Loaded and currently visible; requesting a model must not reframe an empty scene. */
+  readonly fullBodyOn?: boolean;
   setFullBody(want: boolean): void;
   setAvatar?(src: string, x?: number, y?: number, scale?: number): void;
   getHeadView?(position: Vector3, direction: Vector3): boolean;

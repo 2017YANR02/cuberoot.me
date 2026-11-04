@@ -147,6 +147,50 @@ const _qp = new THREE.Quaternion();
 const _qr = new THREE.Quaternion();
 const _mR = new THREE.Matrix4();
 
+/** 姿态修正改变表面形状后更新平滑法线。UV 岛拆开的同位顶点共用面积加权
+ * 法线，不能直接 computeVertexNormals()（会把图集边界变成皮肤硬缝）。
+ * 拓扑只在绑定姿态建立一次；每次调用复用缓冲，不改几何位置/蒙皮/UV。 */
+export function createPoseNormalUpdater(geo: THREE.BufferGeometry): () => void {
+  const position = geo.getAttribute("position") as THREE.BufferAttribute;
+  const normal = geo.getAttribute("normal") as THREE.BufferAttribute;
+  const index = geo.getIndex();
+  const welded = new Uint32Array(position.count);
+  const groups = new Map<string, number>();
+  for (let i = 0; i < position.count; i++) {
+    const key = `${position.getX(i)},${position.getY(i)},${position.getZ(i)}`;
+    let group = groups.get(key);
+    if (group === undefined) { group = groups.size; groups.set(key, group); }
+    welded[i] = group * 3;
+  }
+  const sum = new Float32Array(groups.size * 3);
+  const count = index?.count ?? position.count;
+  return () => {
+    sum.fill(0);
+    for (let i = 0; i < count; i += 3) {
+      const a = index ? index.getX(i) : i;
+      const b = index ? index.getX(i + 1) : i + 1;
+      const c = index ? index.getX(i + 2) : i + 2;
+      const bx = position.getX(b) - position.getX(a), by = position.getY(b) - position.getY(a), bz = position.getZ(b) - position.getZ(a);
+      const cx = position.getX(c) - position.getX(a), cy = position.getY(c) - position.getY(a), cz = position.getZ(c) - position.getZ(a);
+      const nx = by * cz - bz * cy, ny = bz * cx - bx * cz, nz = bx * cy - by * cx;
+      const wa = welded[a], wb = welded[b], wc = welded[c];
+      sum[wa] += nx; sum[wa + 1] += ny; sum[wa + 2] += nz;
+      sum[wb] += nx; sum[wb + 1] += ny; sum[wb + 2] += nz;
+      sum[wc] += nx; sum[wc + 1] += ny; sum[wc + 2] += nz;
+    }
+    for (let i = 0; i < sum.length; i += 3) {
+      const len = Math.hypot(sum[i], sum[i + 1], sum[i + 2]);
+      if (len > 0) { sum[i] /= len; sum[i + 1] /= len; sum[i + 2] /= len; }
+    }
+    for (let i = 0; i < position.count; i++) {
+      const w = welded[i];
+      // 退化面保留原法线，避免零法线进入着色器。
+      if (sum[w] !== 0 || sum[w + 1] !== 0 || sum[w + 2] !== 0) normal.setXYZ(i, sum[w], sum[w + 1], sum[w + 2]);
+    }
+    normal.needsUpdate = true;
+  };
+}
+
 /** posedirs 系数:各 MANO 关节「相对父骨的局部旋转」(R−I) 展平成 135 维。
  *  bones = MANO_JOINT_BONES 同序的 16 个关节对象(世界四元数已刷新)。绑定时
  *  全骨世界四元数 = align(attach 保世界),故 qp⁻¹·qj 直接给出模板系局部旋转
@@ -171,7 +215,7 @@ export function manoPoseCoeffs(bones: THREE.Object3D[], c: Float32Array): void {
  * 模板系局部旋转 = qp_world⁻¹·qj_world 直接可得(align 共轭恰好抵消),手根
  * 世界位姿也在共轭里抵消 —— 待机呼吸(只动手根)系数不变,早退零开销。
  * 位移在模板(资产)空间施加于 geometry.position(蒙皮之前的绑定几何),
- * 法线不重算(毫米级鼓包,着色误差不可见)。
+ * 修正后同步重算法线，保持关节/鱼际高光随实际曲面变化。
  */
 function makePoseCorrective(model: HandModel, geo: THREE.BufferGeometry, data: ManoHandData, n: number): () => void {
   const q8 = new Int8Array(b64ToArrayBuffer(data.posedirs));         // (n,3,135)
@@ -192,6 +236,7 @@ function makePoseCorrective(model: HandModel, geo: THREE.BufferGeometry, data: M
   });
   const cLast = new Float32Array(135).fill(NaN);
   const c = new Float32Array(135);
+  const updateNormals = createPoseNormalUpdater(geo);
   return () => {
     manoPoseCoeffs(bones, c);
     let dirty = false;
@@ -210,19 +255,21 @@ function makePoseCorrective(model: HandModel, geo: THREE.BufferGeometry, data: M
       for (let i = 0; i < n * 3; i++) out[i] += ck * pd[row + i];
     }
     attr.needsUpdate = true;
+    updateNormals();
   };
 }
 
 /** 浏览器加载入口(side=-1 → 右手)。资产 gitignored:dev 走本地 public/,
  *  prod 走 static.cuberoot.me(作者授权后手动上传);缺失 404 → 上抛,由 rig
- *  侧回退 generic-hand 并告警。内容变更必须 bump ?v=(30 天强缓存,不 bump
+ *  侧显示加载失败并提供重试。内容变更必须 bump ?v=(30 天强缓存,不 bump
  *  = 旧缓存静默降级,2026-07-12 焊臂实测教训)。 */
-export async function loadManoHand(side: 1 | -1, skinMat: THREE.Material): Promise<HandModel> {
+export async function loadManoHand(side: 1 | -1, skinMat: THREE.Material, signal?: AbortSignal): Promise<HandModel> {
   const name = side === -1 ? "right" : "left";
   const url = staticUrl(`/sim/hands/mano/${name}.mano.json`) + "?v=5";
-  const res = await fetch(url);
+  const res = await fetch(url, { signal });
   if (!res.ok) throw new Error(`mano hand asset missing (${res.status} ${url}) — run scripts/convert-mano.py`);
   const data = (await res.json()) as ManoHandData;
+  signal?.throwIfAborted();
   if (!data.handFrame) {
     console.warn(`mano hand asset stale (no handFrame, ${url}) — body arms will stay in T-pose; hard-refresh or re-run scripts/convert-mano.py`);
   }

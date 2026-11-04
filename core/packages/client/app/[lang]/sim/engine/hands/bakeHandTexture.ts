@@ -8,7 +8,7 @@
  * 特征清单:
  *  - albedo:基础肤色(0xd9af94 同前臂平色,接缝连续)+ 双频斑驳 + 关节微暗;
  *  - bump:毛孔颗粒 + 指背关节皱纹环带(横纹×高斯包络)+ 掌侧屈痕线(凹陷);
- *  - roughness:直接画物理值(材质 roughness=1 不再乘系数),皮肤 ~0.6。
+ *  - roughness:直接画物理值(材质 roughness=1 不再乘系数),皮肤 ~0.54。
  *  血色 / 掌背明暗仍走顶点色(低频,与贴图相乘复合,见 handModelGltf
  *  bakeVertexTint),贴图只管中高频。
  *
@@ -54,6 +54,21 @@ function fbm2(x: number, y: number, z: number, f: number): number {
 
 const clamp01 = (x: number): number => (x < 0 ? 0 : x > 1 ? 1 : x);
 
+/** 手、融合前臂、全身皮肤共用。颜色为 sRGB，bump/roughness 为线性数据。
+ * 细颗粒负责微表面，低频只轻微改变肤色，避免远看像泥斑。返回 pores 供皱纹使用。 */
+function sampleSkinSurface(x: number, y: number, z: number, acc: Float32Array): number {
+  const pores = fbm2(x, y, z, 1 / (0.72 * U));
+  const mottle = fbm2(x, y, z, 1 / (9.5 * U));
+  const blood = vnoise3(x / (4.8 * U) + 71.3, y / (4.8 * U) + 13.9, z / (4.8 * U) + 47.1) - 0.5;
+  const mv = 1 + (mottle - 0.5) * 0.045;
+  acc[0] = 0.851 * mv * (1 + blood * 0.025);
+  acc[1] = 0.686 * mv * (1 - blood * 0.035);
+  acc[2] = 0.580 * mv * (1 - blood * 0.045);
+  acc[3] = 0.5 + (pores - 0.5) * 0.24;
+  acc[4] = 0.54 + (pores - 0.5) * 0.12 + (mottle - 0.5) * 0.045;
+  return pores;
+}
+
 // ---------- 特征定义(烘焙前从骨骼/蒙皮一次性推导) ----------
 
 /** 关节皱纹环带:指背横纹(cos×高斯包络)+ 可选掌侧屈痕线。手系 3D 域定义;
@@ -86,11 +101,14 @@ export function applyWrinkles(
     if (dm > 0) {
       const axFall = Math.exp(-(s * s) / (wj.w * wj.w));
       if (axFall > 0.02) {
-        const wr = Math.cos((s * Math.PI * 2) / wj.period + (pores - 0.5) * 2.5) * axFall * radFall * dm * wj.amp;
-        acc[3] += wr * 0.09;
-        const dk = Math.max(0, -wr) * 0.045;
+        // 窄而不规则的屈纹；旧正弦的宽明暗环让关节像橡胶软管。
+        const variation = vnoise3(hx / (3 * U), hy / (3 * U), hz / (3 * U));
+        const wave = 0.5 + 0.5 * Math.cos((s * Math.PI * 2) / wj.period + (variation - 0.5) * 1.8);
+        const wr = (0.08 - Math.pow(wave, 6)) * axFall * radFall * dm * wj.amp * (0.65 + variation * 0.35);
+        acc[3] += wr * 0.12;
+        const dk = Math.max(0, -wr) * 0.028;
         acc[0] *= 1 - dk; acc[1] *= 1 - dk * 1.3; acc[2] *= 1 - dk * 1.4;
-        acc[4] += Math.abs(wr) * 0.05;
+        acc[4] += Math.abs(wr) * 0.035;
         // 关节区整体微暗微糙(皮肤增厚)
         acc[4] += axFall * radFall * dm * 0.04;
         acc[1] *= 1 - axFall * radFall * dm * 0.02;
@@ -98,11 +116,11 @@ export function applyWrinkles(
     }
     if (pm > 0 && wj.volar.length > 0) {
       for (const ofs of wj.volar) {
-        const ds = s - ofs;
-        const line = Math.exp(-(ds * ds) / (0.6 * U * 0.6 * U)) * radFall * pm;
+        const ds = s - ofs + (pores - 0.5) * 0.4 * U;
+        const line = Math.exp(-(ds * ds) / (0.38 * U * 0.38 * U)) * radFall * pm;
         if (line < 0.02) continue;
-        acc[3] -= line * 0.16;
-        acc[0] *= 1 - line * 0.05; acc[1] *= 1 - line * 0.11; acc[2] *= 1 - line * 0.13;
+        acc[3] -= line * 0.13;
+        acc[0] *= 1 - line * 0.035; acc[1] *= 1 - line * 0.07; acc[2] *= 1 - line * 0.08;
         acc[4] += line * 0.06;
       }
     }
@@ -209,7 +227,8 @@ export function buildHandWrinkles(model: HandModel): WrinkleJoint[] {
  * 纯计算核(Node 可测,不碰 DOM):光栅化 + 逐像素特征求值 + BFS 外扩。
  * yieldEveryTris > 0 时每 N 个三角形让出一次事件循环(浏览器主线程防长任务)。
  */
-export async function computeHandMaps(model: HandModel, size: number, yieldEveryTris = 0): Promise<HandMapsData> {
+export async function computeHandMaps(model: HandModel, size: number, yieldEveryTris = 0, signal?: AbortSignal): Promise<HandMapsData> {
+  signal?.throwIfAborted();
   const mesh = model.meshes[0] as THREE.SkinnedMesh;
   if (!mesh.isSkinnedMesh) throw new Error("hand bake: meshes[0] is not a skinned mesh");
   model.group.updateMatrixWorld(true);
@@ -246,9 +265,6 @@ export async function computeHandMaps(model: HandModel, size: number, yieldEvery
   const rough = new Uint8ClampedArray(S * S * 4);
   const mask = new Uint8Array(S * S);
 
-  const fPore = 1 / (1.7 * U);
-  const fMottle = 1 / (9.5 * U);
-  const fMottle2 = 1 / (4.8 * U);
   const acc = new Float32Array(5); // [r,g,b,bump,rough] — applyWrinkles 就地累加
 
   const index = geo.getIndex();
@@ -258,6 +274,7 @@ export async function computeHandMaps(model: HandModel, size: number, yieldEvery
   for (let t = 0; t < triCount; t++) {
     if (yieldEveryTris > 0 && t > 0 && t % yieldEveryTris === 0) {
       await new Promise((r) => setTimeout(r, 0));
+      signal?.throwIfAborted();
     }
     const ia = vIdx(t, 0), ib = vIdx(t, 1), ic = vIdx(t, 2);
     // UV → 像素(GLB 约定 v=0 顶行;CanvasTexture 侧配 flipY=false 对齐)
@@ -295,17 +312,7 @@ export async function computeHandMaps(model: HandModel, size: number, yieldEvery
         nx /= nl; ny /= nl; nz /= nl;
 
         // ===== 逐像素特征求值(全部 3D 域) =====
-        const pores = fbm2(hx, hy, hz, fPore);
-        const mottle = fbm2(hx, hy, hz, fMottle);
-        const mott2 = vnoise3(hx * fMottle2 + 71.3, hy * fMottle2 + 13.9, hz * fMottle2 + 47.1);
-
-        // 基础肤色(sRGB;0xd9af94 = (0.851,0.686,0.580),同前臂平色接缝连续)
-        const mv = 1 + (mottle - 0.5) * 0.11;
-        acc[0] = 0.851 * mv * (1 + (mott2 - 0.5) * 0.03);
-        acc[1] = 0.686 * mv * (1 - (mott2 - 0.5) * 0.06);
-        acc[2] = 0.580 * mv * (1 - (mott2 - 0.5) * 0.10);
-        acc[3] = 0.5 + (pores - 0.5) * 0.22;
-        acc[4] = 0.585 + (pores - 0.5) * 0.13 + (mottle - 0.5) * 0.07;
+        const pores = sampleSkinSurface(hx, hy, hz, acc);
 
         const dm = clamp01((-nz - 0.15) / 0.5); // 指背/手背
         const pm = clamp01((nz - 0.15) / 0.5);  // 掌侧
@@ -376,9 +383,7 @@ export function computeLimbMaps(geo: THREE.BufferGeometry, size: number): {
   const rough = new Uint8ClampedArray(S * S * 4);
   const mask = new Uint8Array(S * S);
 
-  const fPore = 1 / (1.7 * U);
-  const fMottle = 1 / (9.5 * U);
-  const fMottle2 = 1 / (4.8 * U);
+  const acc = new Float32Array(5);
 
   const index = geo.getIndex();
   const triCount = (index ? index.count : posA.count) / 3;
@@ -412,22 +417,13 @@ export function computeLimbMaps(geo: THREE.BufferGeometry, size: number): {
         const hy = posA.getY(ia) * w0 + posA.getY(ib) * w1 + posA.getY(ic) * w2;
         const hz = posA.getZ(ia) * w0 + posA.getZ(ib) * w1 + posA.getZ(ic) * w2;
 
-        const pores = fbm2(hx, hy, hz, fPore);
-        const mottle = fbm2(hx, hy, hz, fMottle);
-        const mott2 = vnoise3(hx * fMottle2 + 71.3, hy * fMottle2 + 13.9, hz * fMottle2 + 47.1);
-
-        const mv = 1 + (mottle - 0.5) * 0.11;
-        const r = 0.851 * mv * (1 + (mott2 - 0.5) * 0.03);
-        const g = 0.686 * mv * (1 - (mott2 - 0.5) * 0.06);
-        const b = 0.580 * mv * (1 - (mott2 - 0.5) * 0.10);
-        const bmp = 0.5 + (pores - 0.5) * 0.22;
-        const rgh = 0.585 + (pores - 0.5) * 0.13 + (mottle - 0.5) * 0.07;
+        sampleSkinSurface(hx, hy, hz, acc);
 
         const o = (py * S + px) * 4;
-        albedo[o] = clamp01(r) * 255; albedo[o + 1] = clamp01(g) * 255; albedo[o + 2] = clamp01(b) * 255; albedo[o + 3] = 255;
-        const bb = clamp01(bmp) * 255;
+        albedo[o] = clamp01(acc[0]) * 255; albedo[o + 1] = clamp01(acc[1]) * 255; albedo[o + 2] = clamp01(acc[2]) * 255; albedo[o + 3] = 255;
+        const bb = clamp01(acc[3]) * 255;
         bump[o] = bb; bump[o + 1] = bb; bump[o + 2] = bb; bump[o + 3] = 255;
-        const rr = clamp01(rgh) * 255;
+        const rr = clamp01(acc[4]) * 255;
         rough[o] = rr; rough[o + 1] = rr; rough[o + 2] = rr; rough[o + 3] = 255;
         mask[py * S + px] = 1;
       }
@@ -444,6 +440,17 @@ export interface HandBakedMaps {
   rough: THREE.CanvasTexture;
 }
 
+/** 手与全身共用材质接入，避免开启人物后肤色/颗粒强度突然改变。 */
+export function applyBakedSkinMaps(material: THREE.MeshStandardMaterial, maps: HandBakedMaps): void {
+  material.color.setRGB(1, 1, 1);
+  material.map = maps.albedo;
+  material.bumpMap = maps.bump;
+  material.bumpScale = 0.48;
+  material.roughnessMap = maps.rough;
+  material.roughness = 1;
+  material.needsUpdate = true;
+}
+
 function dataToTexture(arr: Uint8ClampedArray<ArrayBuffer>, size: number, srgb: boolean): THREE.CanvasTexture {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = size;
@@ -452,14 +459,16 @@ function dataToTexture(arr: Uint8ClampedArray<ArrayBuffer>, size: number, srgb: 
   ctx.putImageData(new ImageData(arr, size, size), 0, 0);
   const tex = new THREE.CanvasTexture(canvas);
   tex.flipY = false;
+  tex.anisotropy = 4; // 掠视指侧仍保留细纹；渲染器会钳到设备支持的上限。
   if (srgb) tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
 }
 
 /** 浏览器包装:计算 → canvas → CanvasTexture(flipY=false 对齐 GLB UV 约定)。 */
-export async function bakeHandTextures(model: HandModel, size = 1024): Promise<HandBakedMaps> {
+export async function bakeHandTextures(model: HandModel, size = 1024, signal?: AbortSignal): Promise<HandBakedMaps> {
   // 实测 1024² 全手 ~0.9s:120 tris/片 ≈ 45ms,让出事件循环不卡长任务。
-  const data = await computeHandMaps(model, size, 120);
+  const data = await computeHandMaps(model, size, 120, signal);
+  signal?.throwIfAborted();
   return { albedo: dataToTexture(data.albedo, size, true), bump: dataToTexture(data.bump, size, false), rough: dataToTexture(data.rough, size, false) };
 }
 
@@ -488,7 +497,8 @@ export interface BodyBakeInput {
  * (含左手区),不存在任何拼接线;皱纹特征各在其手系域求值(reach 有限,
  * 远离该手自动归零)。dm/pm(背/掌半球)取该特征所属手系的法线 z。
  */
-export async function computeBodyMaps(input: BodyBakeInput, size: number, yieldEveryTris = 0): Promise<HandMapsData> {
+export async function computeBodyMaps(input: BodyBakeInput, size: number, yieldEveryTris = 0, signal?: AbortSignal): Promise<HandMapsData> {
+  signal?.throwIfAborted();
   const { position, normal, uv, index } = input;
   const nVert = position.length / 3;
   const S = size;
@@ -518,9 +528,6 @@ export async function computeBodyMaps(input: BodyBakeInput, size: number, yieldE
   const bump = new Uint8ClampedArray(S * S * 4);
   const rough = new Uint8ClampedArray(S * S * 4);
   const mask = new Uint8Array(S * S);
-  const fPore = 1 / (1.7 * U);
-  const fMottle = 1 / (9.5 * U);
-  const fMottle2 = 1 / (4.8 * U);
   const acc = new Float32Array(5);
   const wrR = input.wrinkles.R;
   const wrL = input.wrinkles.L;
@@ -532,6 +539,7 @@ export async function computeBodyMaps(input: BodyBakeInput, size: number, yieldE
   for (let t = 0; t < triCount; t++) {
     if (yieldEveryTris > 0 && t > 0 && t % yieldEveryTris === 0) {
       await new Promise((r) => setTimeout(r, 0));
+      signal?.throwIfAborted();
     }
     const ia = index[t * 3], ib = index[t * 3 + 1], ic = index[t * 3 + 2];
     const xa = uv[ia * 2] * S, ya = uv[ia * 2 + 1] * S;
@@ -561,16 +569,7 @@ export async function computeBodyMaps(input: BodyBakeInput, size: number, yieldE
         const hz = lerp3(PR, ia, ib, ic, w0, w1, w2, 2);
         const nzR = lerp3(NR, ia, ib, ic, w0, w1, w2, 2);
 
-        const pores = fbm2(hx, hy, hz, fPore);
-        const mottle = fbm2(hx, hy, hz, fMottle);
-        const mott2 = vnoise3(hx * fMottle2 + 71.3, hy * fMottle2 + 13.9, hz * fMottle2 + 47.1);
-
-        const mv = 1 + (mottle - 0.5) * 0.11;
-        acc[0] = 0.851 * mv * (1 + (mott2 - 0.5) * 0.03);
-        acc[1] = 0.686 * mv * (1 - (mott2 - 0.5) * 0.06);
-        acc[2] = 0.580 * mv * (1 - (mott2 - 0.5) * 0.10);
-        acc[3] = 0.5 + (pores - 0.5) * 0.22;
-        acc[4] = 0.585 + (pores - 0.5) * 0.13 + (mottle - 0.5) * 0.07;
+        const pores = sampleSkinSurface(hx, hy, hz, acc);
 
         if (wrR.length > 0) {
           applyWrinkles(wrR, hx, hy, hz, clamp01((-nzR - 0.15) / 0.5), clamp01((nzR - 0.15) / 0.5), pores, acc);
@@ -600,7 +599,8 @@ export async function computeBodyMaps(input: BodyBakeInput, size: number, yieldE
 
 /** onepiece 全身浏览器包装(默认 2048²:体表 ~10× 手表面积,纹素密度略低于
  *  手单烘可接受;120 tris/片让出事件循环,~83k tris 总耗时秒级、不卡长任务)。 */
-export async function bakeBodyTextures(input: BodyBakeInput, size = 2048): Promise<HandBakedMaps> {
-  const data = await computeBodyMaps(input, size, 120);
+export async function bakeBodyTextures(input: BodyBakeInput, size = 2048, signal?: AbortSignal): Promise<HandBakedMaps> {
+  const data = await computeBodyMaps(input, size, 120, signal);
+  signal?.throwIfAborted();
   return { albedo: dataToTexture(data.albedo, size, true), bump: dataToTexture(data.bump, size, false), rough: dataToTexture(data.rough, size, false) };
 }

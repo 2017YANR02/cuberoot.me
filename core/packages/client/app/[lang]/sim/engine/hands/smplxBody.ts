@@ -39,9 +39,9 @@ import * as THREE from "three";
 import { staticUrl } from "@/lib/stats-base";
 import { SIZE } from "../define";
 import { HAND_SCALE, WRIST_LOCAL, type HandModel } from "./handModel";
-import { MANO_JOINT_BONES, manoPoseCoeffs } from "./handModelMano";
+import { MANO_JOINT_BONES, createPoseNormalUpdater, manoPoseCoeffs } from "./handModelMano";
 import { boneBloodScore } from "./handModelGltf";
-import { bakeBodyTextures, type HandBakedMaps, type WrinkleJoint } from "./bakeHandTexture";
+import { applyBakedSkinMaps, bakeBodyTextures, type HandBakedMaps, type WrinkleJoint } from "./bakeHandTexture";
 
 import { BodyAppearance } from "./bodyAppearance";
 
@@ -87,11 +87,12 @@ function b64ToArrayBuffer(s: string): ArrayBuffer {
   return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
 }
 
-export async function loadSmplxOnePiece(): Promise<SmplxOnePieceData> {
+export async function loadSmplxOnePiece(signal?: AbortSignal): Promise<SmplxOnePieceData> {
   const url = staticUrl("/sim/hands/smplx/onepiece.smplx.json") + "?v=1";
-  const res = await fetch(url);
+  const res = await fetch(url, { signal });
   if (!res.ok) throw new Error(`smplx onepiece asset missing (${res.status} ${url}) — run scripts/convert-mano.py`);
   const data = (await res.json()) as SmplxOnePieceData;
+  signal?.throwIfAborted();
   if (data.format !== "cuberoot-smplx-onepiece@1") {
     throw new Error(`smplx onepiece: unknown format ${data.format} — re-run scripts/convert-mano.py`);
   }
@@ -148,6 +149,7 @@ export class SmplxBody extends THREE.Group {
   private baking = false;
   private disposed = false;
   private readonly appearance: BodyAppearance;
+  private readonly updatePoseNormals: () => void;
 
   setAvatar(src: string, x = 0, y = 0, scale = 1): void { this.appearance.setAvatar(src, x, y, scale); }
   getHeadView(position: THREE.Vector3, direction: THREE.Vector3): boolean {
@@ -205,8 +207,9 @@ export class SmplxBody extends THREE.Group {
     geo.setAttribute("skinIndex", new THREE.Uint16BufferAttribute(Array.from(si), 4));
     geo.setAttribute("skinWeight", new THREE.BufferAttribute(sw, 4));
     geo.setIndex(new THREE.BufferAttribute(idx, 1));
+    this.updatePoseNormals = createPoseNormalUpdater(geo);
 
-    // 材质:克隆手部平色皮肤材质(肤色/sheen 标量同源)。onepiece 带 UV 图集
+    // 材质:克隆手部平色皮肤材质(肤色/反射参数同源)。onepiece 带 UV 图集
     // 与顶点色(下方烘),vertexColors 保留;贴图先剥(噪声细节图纹素密度对
     // 不上图集),bakeTextures() 烘完全身三图后热替换。
     if (skin) {
@@ -447,6 +450,7 @@ export class SmplxBody extends THREE.Group {
    *  ② 稀疏 posedirs:系数取活手骨局部旋转(manoPoseCoeffs 同源),不变早退。 */
   syncHands(): void {
     const mpInv = _m3.copy(this.mesh.matrixWorld).invert();
+    let normalsDirty = false;
     for (const side of ["R", "L"] as const) {
       const s = this.sync[side];
       s.live.group.updateMatrixWorld(true);
@@ -483,13 +487,15 @@ export class SmplxBody extends THREE.Group {
         out[o + 2] = s.tmp[vi * 3 + 2];
       }
       attr.needsUpdate = true;
+      normalsDirty = true;
     }
+    if (normalsDirty) this.updatePoseNormals();
   }
 
   /** 全身贴图异步烘焙(浏览器专用;探针/Node 不调用)。基肤在右手系全局单场
    *  求值(全网格连续),双手皱纹各在其手系域(bind 缓存列表);烘完热替换为
-   *  与手部 mkBakedMat 同语义的贴图材质(roughnessMap 画物理值)。 */
-  async bakeTextures(): Promise<void> {
+   *  与手部共用 applyBakedSkinMaps(roughnessMap 画物理值)。 */
+  async bakeTextures(signal?: AbortSignal): Promise<void> {
     if (this.baked || this.baking) return;
     this.baking = true;
     try {
@@ -504,19 +510,13 @@ export class SmplxBody extends THREE.Group {
           R: (this.sync.R.live.bakeWrinkles ?? []) as WrinkleJoint[],
           L: (this.sync.L.live.bakeWrinkles ?? []) as WrinkleJoint[],
         },
-      });
+      }, 2048, signal);
       if (this.disposed) {
         maps.albedo.dispose(); maps.bump.dispose(); maps.rough.dispose();
         return;
       }
       this.baked = maps;
-      this.mat.map = maps.albedo;
-      this.mat.bumpMap = maps.bump;
-      this.mat.bumpScale = 0.7;
-      this.mat.roughnessMap = maps.rough;
-      this.mat.roughness = 1.0; // roughnessMap 画的是物理值(同手部 mkBakedMat)
-      this.mat.color.set(0xffffff); // 基础肤色已画进 albedo,别再乘一层
-      this.mat.needsUpdate = true;
+      applyBakedSkinMaps(this.mat, maps);
     } finally {
       this.baking = false;
     }

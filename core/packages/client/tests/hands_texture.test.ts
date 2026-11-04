@@ -65,7 +65,7 @@ describe.skipIf(!existsSync(RIGHT))('computeHandMaps 皮肤贴图烘焙', () => 
   });
 
   it('无画甲:贴图中不存在低粗糙甲面区', () => {
-    // 皮肤 roughness ~0.585±小扰动;画甲(~0.32)一旦回归立刻掉进 <0.45 桶。
+    // 皮肤 roughness ~0.54±小扰动;画甲(~0.32)一旦回归立刻掉进 <0.45 桶。
     let glossy = 0;
     for (let i = 0; i < S * S; i++) {
       if (maps.rough[i * 4] < 0.45 * 255) glossy++;

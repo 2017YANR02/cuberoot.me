@@ -51,8 +51,8 @@ describe('paintNailPolish(合成甲片)', () => {
     // g 通道:根(融肤前的基色)< 中段 < 尖端(白 × 0.9 阴影仍远高于中段红)
     expect(c[4]).toBeGreaterThan(0);
     expect(c[7]).toBeGreaterThan(c[4]);
-    // 根部融肤:t=0 顶点朝肤色(g≈0.84)拉了 0.8,应高于中段纯红
-    expect(c[1]).toBeGreaterThan(c[4]);
+    // 甲根使用皮肤的线性色，不能再将 sRGB 0.84 当作线性值（会出现白色甲根）。
+    expect(c[1]).toBeCloseTo(0.31363618, 6);
   });
 
   it('深浅:淡(0)提亮、深(100)压暗,同一底色三档单调', () => {

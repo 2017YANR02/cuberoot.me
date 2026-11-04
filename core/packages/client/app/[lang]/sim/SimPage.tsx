@@ -13,10 +13,10 @@
 
 import MoreToggle from '@/components/MoreToggle';
 import {
-  useCallback, useEffect, useMemo, useRef, useState,
+  useCallback, useEffect, useMemo, useRef, useState, type RefObject,
 } from 'react';
 import dynamic from 'next/dynamic';
-import { useQueryStates, parseAsString, parseAsStringEnum } from 'nuqs';
+import { useQueryStates, parseAsString, parseAsStringEnum, type inferParserType } from 'nuqs';
 import CollapsibleSection from './CollapsibleSection';
 import PageHeading from '@/components/PageHeading';
 import NxNOrderInput from '@/components/NxNOrderInput';
@@ -104,7 +104,7 @@ import type { TwistyPlaybackPlayer } from '@/lib/twisty-playback';
 import { attachNative2DCompanion, type Native2DCompanionPlayer } from '@/lib/puzzle-image/native-2d-companion';
 import { useImageSpec } from '@/components/puzzle-image/useImageSpec';
 import { rotationDefaultsFor } from '@/lib/puzzle-image/defaults';
-import { type InheritedFields } from '@/lib/puzzle-image/codec';
+import { readSpecFromParams, type InheritedFields } from '@/lib/puzzle-image/codec';
 import type { ImageSpec, PuzzleType } from '@/lib/puzzle-image/types';
 import { parseMask, MASK_COLOR } from '@/lib/puzzle-image/mask-core';
 import { toEngineMask } from '@/lib/puzzle-image/puzzle-mask';
@@ -125,6 +125,7 @@ import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
 } from './keymap';
 import { DRAW_PUZZLES, normalizeDrawPuzzle } from './puzzleOptions';
+import { engineHistoryAlgorithm } from './engineHistory';
 import './sim.css';
 
 import { useT } from "@/hooks/useT";
@@ -259,7 +260,69 @@ interface SimCubeMin {
 
 const DAISY_SETUP = 'F2 R2 B2 L2';
 
-export default function SimPage() {
+const SIM_QUERY_PARSERS = {
+  tool: parseAsStringEnum(['sim', 'capture', 'draw', 'image'] as const)
+    .withDefault('sim')
+    .withOptions({ history: 'push' }),
+  puzzle: parseAsString.withDefault('3').withOptions({ clearOnDefault: false }),
+  // Custom-cut PuzzleGeometry description for the Puzzle Cuts editor (e.g. "c f 0.255").
+  cuts: parseAsString,
+  drawPuzzle: parseAsString,
+  imageAlg: parseAsString,
+  alg: parseAsString,
+  setup: parseAsString,
+  // The timer uses csTimer's face names. Share the convention with the text:
+  // DR/DL already exist in cubing.js but denote different faces there.
+  kiloNotation: parseAsStringEnum(['cstimer', 'cubing'] as const).withDefault('cstimer'),
+  // Playback setup anchor. Written when the selector changes so copied links
+  // reproduce whether the alg starts at setup or finishes at setup.
+  anchor: parseAsStringEnum(['start', 'end'] as const),
+  imageInverse: parseAsStringEnum(['1'] as const),
+  // Which renderer for an ENGINE_TWISTY puzzle: 'group' = the in-house Three.js engine
+  // + a live group-theory panel backed by the vendored puzzle-geometry (the default —
+  // its strict superset of the engine view, so the preferred entry point), or 'cubing'
+  // = the cubing.js TwistyPlayer. Default 'group' → omitted; 'cubing' is written
+  // explicitly. 'engine' is the retired engine-without-panel mode — still parsed so old
+  // links degrade to the engine view (treated as 'group' everywhere), no longer in the UI.
+  renderer: parseAsStringEnum(['cubing', 'engine', 'group'] as const).withDefault('group'),
+  // 按阶段展示色块(twizzle edit 的 Stickering,issue #27)。默认 'full' 省略;
+  // 值 = cubing.js 阶段名(OLL/Cross/CMLL…),NxN 走引擎遮罩,megaminx/fto 走
+  // cubing.js 原生。不支持的拼图忽略(下拉也隐藏)。
+  stickering: parseAsString.withDefault('full'),
+  // 阶段配色朝向(整体转前缀,lib/cube-orientation 的 24 档):遮罩位置不变,
+  // 只重贴六面颜色。默认 ''(UF,恒等)省略;仅 NxN 引擎遮罩消费。
+  stickeringRot: parseAsString.withDefault(''),
+  // 自定义阶段的本位贴纸样式，可分享。旧链接 U:0,2;F:3-5 使用 stickeringPick；
+  // 新画笔 regular=U:0,2|dim=F:3-5 将各格样式单独保存。
+  stickeringMask: parseAsString.withDefault(''),
+  // 当前画笔(同时兼容旧链接的统一样式)与未设置贴纸的默认样式。
+  stickeringPick: parseAsStringEnum([...CUSTOM_BRUSHES]).withDefault('regular'),
+  stickeringRest: parseAsStringEnum([...CUSTOM_TREATMENTS]).withDefault('ignored'),
+};
+
+interface SimDocumentSeed {
+  params: Record<string, string>;
+  settings?: SimSettings;
+  imageSpec?: ImageSpec;
+  timestamp?: number;
+  capture?: { setup: string; alg: string };
+  sceneRotation?: [number, number, number, THREE.EulerOrder];
+}
+
+interface SimEditorProps {
+  scope?: string;
+  active: boolean;
+  seed?: SimDocumentSeed;
+  snapshotRef?: RefObject<(() => Promise<SimDocumentSeed>) | null>;
+  onModeChange: (mode: 'sim' | 'draw') => void;
+  onNew: (puzzle: SimPuzzle) => void;
+  onImport: () => void;
+  onUndo?: () => void;
+  redo?: boolean;
+  busy: boolean;
+}
+
+function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew, onImport, onUndo, redo, busy }: SimEditorProps) {
   const t = useT();
   const { i18n } = useTranslation();
   const { isMember } = useMembership();
@@ -270,57 +333,34 @@ export default function SimPage() {
   // puzzle ALWAYS appears in the URL (clearOnDefault:false keeps even '3'); a mount
   // effect force-writes it so a bare /sim resolves to /sim?puzzle=3 — the puzzle
   // identity is never silently dropped (which used to read back as a 3x3 fallback).
-  const [query, setQuery] = useQueryStates(
-    {
-      tool: parseAsStringEnum(['sim', 'capture', 'draw', 'image'] as const)
-        .withDefault('sim')
-        .withOptions({ history: 'push' }),
-      puzzle: parseAsString.withDefault('3').withOptions({ clearOnDefault: false }),
-      // Custom-cut PuzzleGeometry description for the Puzzle Cuts editor (e.g. "c f 0.255").
-      cuts: parseAsString,
-      drawPuzzle: parseAsString,
-      imageAlg: parseAsString,
-      alg: parseAsString,
-      setup: parseAsString,
-      // The timer uses csTimer's face names. Share the convention with the text:
-      // DR/DL already exist in cubing.js but denote different faces there.
-      kiloNotation: parseAsStringEnum(['cstimer', 'cubing'] as const).withDefault('cstimer'),
-      // Playback setup anchor. Written when the selector changes so copied links
-      // reproduce whether the alg starts at setup or finishes at setup.
-      anchor: parseAsStringEnum(['start', 'end'] as const),
-      imageInverse: parseAsStringEnum(['1'] as const),
-      // Which renderer for an ENGINE_TWISTY puzzle: 'group' = the in-house Three.js engine
-      // + a live group-theory panel backed by the vendored puzzle-geometry (the default —
-      // its strict superset of the engine view, so the preferred entry point), or 'cubing'
-      // = the cubing.js TwistyPlayer. Default 'group' → omitted; 'cubing' is written
-      // explicitly. 'engine' is the retired engine-without-panel mode — still parsed so old
-      // links degrade to the engine view (treated as 'group' everywhere), no longer in the UI.
-      renderer: parseAsStringEnum(['cubing', 'engine', 'group'] as const).withDefault('group'),
-      // 按阶段展示色块(twizzle edit 的 Stickering,issue #27)。默认 'full' 省略;
-      // 值 = cubing.js 阶段名(OLL/Cross/CMLL…),NxN 走引擎遮罩,megaminx/fto 走
-      // cubing.js 原生。不支持的拼图忽略(下拉也隐藏)。
-      stickering: parseAsString.withDefault('full'),
-      // 阶段配色朝向(整体转前缀,lib/cube-orientation 的 24 档):遮罩位置不变,
-      // 只重贴六面颜色。默认 ''(UF,恒等)省略;仅 NxN 引擎遮罩消费。
-      stickeringRot: parseAsString.withDefault(''),
-      // 自定义阶段的本位贴纸样式，可分享。旧链接 U:0,2;F:3-5 使用 stickeringPick；
-      // 新画笔 regular=U:0,2|dim=F:3-5 将各格样式单独保存。
-      stickeringMask: parseAsString.withDefault(''),
-      // 当前画笔(同时兼容旧链接的统一样式)与未设置贴纸的默认样式。
-      stickeringPick: parseAsStringEnum([...CUSTOM_BRUSHES]).withDefault('regular'),
-      stickeringRest: parseAsStringEnum([...CUSTOM_TREATMENTS]).withDefault('ignored'),
-    },
-    { history: 'replace', scroll: false },
-  );
+  const seedQuery = useMemo(() => {
+    if (!seed) return null;
+    return Object.fromEntries(Object.entries(SIM_QUERY_PARSERS).map(([key, parser]) => {
+      const raw = key === 'stickering' && seed.params[key] === 'cross_full' ? 'Cross' : seed.params[key];
+      return [key, (raw === undefined ? null : parser.parse(raw)) ?? ('defaultValue' in parser ? parser.defaultValue : null)];
+    })) as inferParserType<typeof SIM_QUERY_PARSERS>;
+  }, [seed]);
+  const urlKeys = useMemo(() => Object.fromEntries(Object.keys(SIM_QUERY_PARSERS).map(key => [key, `${scope}${key}`])), [scope]);
+  const [urlQuery, setQuery] = useQueryStates(SIM_QUERY_PARSERS, { history: 'replace', scroll: false, urlKeys });
+  const [queryInitialized, setQueryInitialized] = useState(!seed);
+  const query = !queryInitialized && seedQuery ? seedQuery : urlQuery;
+  useEffect(() => {
+    // URL flush resolves before every subscriber renders. Keep the seed until
+    // this document has observed the atomic update, avoiding a wrong-workspace flash.
+    if (seedQuery && !queryInitialized && Object.entries(seedQuery)
+      .every(([key, value]) => urlQuery[key as keyof typeof urlQuery] === value)) setQueryInitialized(true);
+  }, [seedQuery, queryInitialized, urlQuery]);
 
   const algParam = query.alg || '';
   const setupParam = query.setup || '';
   const imageMode = query.tool === 'image';
-  // Legacy formula-image URLs open the same editable drawing workspace.
-  const drawMode = query.tool === 'draw' || imageMode;
-  const animationMode = query.tool === 'sim';
-  const captureMode = query.tool === 'capture';
+  const animationMode = !scope;
+  const drawMode = !animationMode && (query.tool === 'draw' || imageMode);
+  const captureMode = !animationMode && !drawMode;
+  const activeRef = useRef(active);
+  activeRef.current = active;
   const [panelExpanded, setPanelExpanded] = useState(false);
+  const panelId = `${scope}sim-task-panel`;
   const pageRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const page = pageRef.current;
@@ -379,7 +419,8 @@ export default function SimPage() {
   // a bare /sim becomes /sim?puzzle=3 so the project is always explicit and never
   // silently resolves to the 3x3 fallback.
   useEffect(() => {
-    setQuery({
+    void setQuery({
+      ...(seed ? query : {}),
       puzzle: String(puzzleParam),
       ...(query.stickering === 'cross_full' ? { stickering: 'Cross' } : {}),
     });
@@ -533,7 +574,7 @@ export default function SimPage() {
   // that parent effect; children must not replay the new puzzle on the old cube.
   const [activeCube, setActiveCube] = useState<World['cube'] | null>(null);
   const [settings, setSettings] = useState<SimSettings>(() => {
-    const saved = { ...loadSettings(), viewMode: 'cube' as const };
+    const saved = seed?.settings ?? { ...loadSettings(), viewMode: 'cube' as const };
     if (!query.anchor) return saved;
     return { ...saved, playbackMode: query.anchor === 'end' ? 'algorithm' : 'moves' };
   });
@@ -557,8 +598,8 @@ export default function SimPage() {
   const keymapRef = useRef(keymap);
   useEffect(() => { keymapRef.current = keymap; saveKeymap(keymap); }, [keymap]);
 
-  // Image preview belongs to creation mode, never to the animation workspace.
-  const imageOpen = captureMode;
+  // The current-state image is one source inside the drawing workspace.
+  const imageOpen = active && captureMode;
 
   // 交换主图 ↔ 伴图(伴图铺满画布、实时 3D 缩进左上小框)。观察偏好,走 localStorage。
   // 交换态下渲染器/world 真调到小框尺寸(resize 闭包读 imgSwapRef;CSS 只钉显示位),
@@ -619,11 +660,12 @@ export default function SimPage() {
   useEffect(() => {
     const prev = prevViewPuzzleRef.current;
     prevViewPuzzleRef.current = puzzleParam;
+    if (prev === null && seed?.settings) return;
     if (typeof prev === 'number' && typeof puzzleParam === 'number') return; // 仅换阶数,保留手调
     const dv = defaultViewFor(puzzleParam, twisty);
     setSettings((s) => (s.viewAngle === dv.viewAngle && s.viewGradient === dv.viewGradient
       ? s : { ...s, viewAngle: dv.viewAngle, viewGradient: dv.viewGradient }));
-  }, [puzzleParam, twisty]);
+  }, [puzzleParam, twisty, seed]);
 
   // Host for the 图像 preview, floated over the canvas' top-left (the studio portals
   // its preview section in here — see PuzzleImageStudio previewHost). State, not a
@@ -659,14 +701,15 @@ export default function SimPage() {
     };
   }, [settings.faceColors, setupParam, algParam, toPlayerText,
       imgPuzzle, query.stickering, query.stickeringRot]);
-  const [imgSpec, setImgSpec] = useImageSpec('img_', { puzzle: imgPuzzle, inherit: imgInherit });
+  const [imgSpec, setImgSpec] = useImageSpec(`${scope}img_`, { puzzle: imgPuzzle, inherit: imgInherit },
+    seed?.imageSpec ?? (seed ? readSpecFromParams(seed.params, 'img_', { puzzle: imgPuzzle, inherit: imgInherit }) : undefined));
   // Static/spec rendering is an exact fallback only when it can encode every visible
   // piece of simulator state. Engine-only puzzles and picture/room scenes have no
   // accurate spec model. They and unsupported stage stickerings must wait for the
   // live mirror, including after changing puzzles while an export menu is open.
   const stickeringAffectsView = query.stickering !== 'full'
     && resolveCaps(puzzleParam, query.renderer).supports.stickering;
-  const staticFallbackExact = !pictureImageStudioEngineOnly && (!stickeringAffectsView
+  const staticFallbackExact = seed?.timestamp === undefined && !pictureImageStudioEngineOnly && (!stickeringAffectsView
     || (typeof puzzleParam === 'number'
       && visualcubeMaskForStickering(puzzleParam, query.stickering) !== ''));
 
@@ -726,7 +769,7 @@ export default function SimPage() {
   // Dependencies let cleanup tear down a live cuber instance when the user
   // switches NxN ↔ twisty. Mode changes retain the existing scene and timeline.
   useEffect(() => {
-    if (twisty) return;
+    if (twisty || drawMode) return;
     if (worldRef.current) return;
     const container = containerRef.current;
     if (!container) return;
@@ -743,7 +786,18 @@ export default function SimPage() {
 
     const world = new World();
     attachInteraction(world); // 指针控制器 client 注入(engine 核心已 headless 化)
-    world.handsFactory = () => new HandsRig();
+    world.handsFactory = () => {
+      const rig = new HandsRig();
+      let bodyVisible = false;
+      rig.subscribeLoadState(() => {
+        if (bodyVisible !== rig.fullBodyOn) {
+          bodyVisible = rig.fullBodyOn;
+          world.resize();
+        }
+        world.dirty = true;
+      });
+      return rig;
+    };
     world.smplxLoader = loadSmplxFullBody;
     worldRef.current = world;
     // 手部标定/穿模 oracle 的句柄(scratchpad Playwright 脚本经它驱动 rig 内部)。
@@ -1318,6 +1372,7 @@ export default function SimPage() {
       const now = performance.now();
       const dt = now - lastFrameAt;
       lastFrameAt = now;
+      if (!activeRef.current) { raf = requestAnimationFrame(loop); return; }
       // Corner-turners (Ivy/Dino/Redi) surface their own twist-axis labels at the
       // corners instead of the 6-face U/D/L/R/F/B letters (those don't describe a
       // corner turn — skill pitfall #10); each puzzle picks its set by puzzleKind.
@@ -1373,6 +1428,7 @@ export default function SimPage() {
         world.disposeDuoCube();
         world.disposeMagicCubes();
         world.disposeSphereCube();
+        world.hands?.dispose();
         window.removeEventListener('resize', resize);
         ro.disconnect();
         renderer.domElement.removeEventListener('wheel', onWheel);
@@ -1412,7 +1468,7 @@ export default function SimPage() {
       cleanup?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [twisty]);
+  }, [twisty, drawMode]);
 
   const applyPuzzle = useCallback((kind: SimPuzzle) => {
     if (typeof kind === 'number') setOrder(kind);
@@ -1569,6 +1625,7 @@ export default function SimPage() {
   }, [twisty, worldTick, puzzleParam, query.stickering, customGrain]);
 
   const prevSettingsRef = useRef<SimSettings | null>(null);
+  const seededViewRef = useRef<World | null>(null);
   useEffect(() => {
     const world = worldRef.current;
     if (!world || !roomsActive || settings.roomTheme === 'off') return;
@@ -1581,14 +1638,19 @@ export default function SimPage() {
 
   useEffect(() => {
     // 存的是用户自己的设置(settings),喂给引擎的是叠了 trans 预设的那份(renderSettings)。
-    saveSettings(settings);
+    if (!scope) saveSettings(settings);
     const world = worldRef.current;
     if (world) applySettings(world, renderSettings, prevSettingsRef.current ?? undefined);
+    if (world && seed?.sceneRotation && seededViewRef.current !== world) {
+      world.scene.rotation.set(...seed.sceneRotation);
+      seededViewRef.current = world;
+      world.dirty = true;
+    }
     // Turning hold-partial OFF clears any frozen partial turn (SQ1/Ivy snap-back +
     // NxN layer release via controller, done inside clearPartialFreeze).
     if (prevSettingsRef.current?.holdPartialTurn && !settings.holdPartialTurn) clearPartialFreeze();
     prevSettingsRef.current = renderSettings;
-  }, [settings, renderSettings, clearPartialFreeze]);
+  }, [settings, renderSettings, clearPartialFreeze, scope, seed, worldTick]);
 
   // Re-layout the back-view window (size + fullscreen-button offset) and force a
   // repaint when the toggle flips, the puzzle engine changes, or the world is
@@ -1684,7 +1746,7 @@ export default function SimPage() {
   }, []);
 
   useEffect(() => {
-    if (!animationMode) return;
+    if (!active || !animationMode) return;
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       // 菜单内编辑与键盘拖拽只操作菜单，不能同时转动魔方。
@@ -1734,7 +1796,7 @@ export default function SimPage() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [animationMode, handleUndo, handleRedo]);
+  }, [active, animationMode, handleUndo, handleRedo]);
 
   const onAlgChange = useCallback((alg: string) => {
     setQuery({ alg: alg || null });
@@ -1797,8 +1859,42 @@ export default function SimPage() {
     // cubing.js TwistyPlayer(自定义切割 / PG 目录拼图 / renderer='cubing'):
     // 引擎 world 不在场时,截图组从它的 vantage 取 scene+camera 做 SVG 投影 / PNG。
     getTwistyPlayer: () => twistyPlayerRef.current,
-    setup: setupParam, alg: algParam,
-  }), [getCanvas, getWorld, getRenderer, flatMode, getFlatSvg, setupParam, algParam]);
+    setup: seed?.capture?.setup ?? setupParam, alg: seed?.capture?.alg ?? algParam,
+  }), [getCanvas, getWorld, getRenderer, flatMode, getFlatSvg, setupParam, algParam, seed]);
+
+  useEffect(() => {
+    if (!snapshotRef) return;
+    snapshotRef.current = async () => {
+      const params = Object.fromEntries(Object.entries(query)
+        .filter(([, value]) => value !== null).map(([key, value]) => [key, String(value)]));
+      params.tool = 'capture';
+      let timestamp: number | undefined;
+      const world = worldRef.current;
+      if (world && world.puzzleKind === puzzleParam) {
+        params.setup = engineHistoryAlgorithm(world.cube.history);
+        params.alg = '';
+        params.anchor = 'start';
+      } else if (twistyPlaybackPlayer) {
+        twistyPlaybackPlayer.pause();
+        timestamp = (await twistyPlaybackPlayer.experimentalModel.detailedTimelineInfo.get()).timestamp;
+      } else {
+        throw new Error(t('魔方尚未就绪', 'The puzzle is not ready'));
+      }
+      return { params, settings: structuredClone(settings), imageSpec: { ...imgSpec }, timestamp,
+        sceneRotation: world ? [world.scene.rotation.x, world.scene.rotation.y, world.scene.rotation.z, world.scene.rotation.order] : undefined,
+        capture: { setup: setupParam, alg: algParam } };
+    };
+    return () => { snapshotRef.current = null; };
+  }, [snapshotRef, query, puzzleParam, twistyPlaybackPlayer, settings, imgSpec, setupParam, algParam, t]);
+
+  useEffect(() => {
+    if (seed?.timestamp === undefined || !twistyPlaybackPlayer) return;
+    let current = true;
+    void twistyPlaybackPlayer.experimentalModel.indexer.get().then(() => {
+      if (current) twistyPlaybackPlayer.timestamp = seed.timestamp!;
+    });
+    return () => { current = false; };
+  }, [seed, twistyPlaybackPlayer]);
 
   // Keep the (seeded) image spec in step with the sim as its puzzle / alg / colours
   // change after mount — the codec injection only runs on the cold-load seed, so every
@@ -2230,9 +2326,8 @@ export default function SimPage() {
     if (drawMode) void setQuery({ tool: 'draw', drawPuzzle: String(puzzle) });
     else handlePuzzle(puzzle);
   };
-  const changeTool = (tool: 'sim' | 'capture' | 'draw') => {
+  const changeTool = (tool: 'sim' | 'draw') => {
     void setQuery({
-      tool: tool === 'sim' ? null : tool,
       // Legacy creation links share puzzle/alg with animation until the first mode
       // change. Snapshot the departing document before animation can edit those keys.
       ...(drawMode || tool === 'draw' ? {
@@ -2240,6 +2335,7 @@ export default function SimPage() {
         imageAlg: query.imageAlg ?? (imageMode ? initialImageAlg : puzzleParam === 'fto' ? algParam : initialImageAlg),
       } : {}),
     });
+    onModeChange(tool);
   };
 
   const reconLink = animationMode && reconHref && (
@@ -2255,7 +2351,7 @@ export default function SimPage() {
   );
 
   return (
-    <div ref={pageRef} className={`sim-page${fullscreen && animationMode ? ' sim-page--fullscreen' : ''}${panelExpanded ? ' sim-page--panel-expanded' : ''}`} data-board-bg={settings.boardBg} data-workspace={query.tool}>
+    <div ref={pageRef} hidden={!active} className={`sim-page${fullscreen && animationMode ? ' sim-page--fullscreen' : ''}${panelExpanded ? ' sim-page--panel-expanded' : ''}`} data-board-bg={settings.boardBg} data-workspace={animationMode ? 'sim' : 'draw'} data-draw-source={captureMode ? 'state' : undefined}>
       <header className="sim-header">
         <PageHeading titleClassName="sim-title">{t('模拟', 'Sim')}</PageHeading>
         <div className="sim-project-controls">
@@ -2281,19 +2377,19 @@ export default function SimPage() {
         </div>
         <select
           className="sim-tool-select"
-          value={drawMode ? 'draw' : query.tool}
-          onChange={(event) => changeTool(event.target.value as 'sim' | 'capture' | 'draw')}
+          value={animationMode ? 'sim' : 'draw'}
+          disabled={busy}
+          onChange={(event) => changeTool(event.target.value as 'sim' | 'draw')}
           aria-label={t('工作模式', 'Workspace mode')}
         >
           <option value="sim">{t('动画', 'Animation')}</option>
-          <option value="capture">{t('当前状态', 'Current state')}</option>
-          <option value="draw">{t('自由绘图', 'Free drawing')}</option>
+          <option value="draw">{t('绘图', 'Drawing')}</option>
         </select>
-        {!drawMode && !imageMode && (
-          <MoreToggle type="button" className="sim-panel-toggle" expanded={panelExpanded} aria-controls="sim-task-panel"
+        {!drawMode && (
+          <MoreToggle type="button" className="sim-panel-toggle" expanded={panelExpanded} aria-controls={panelId}
             onClick={() => {
               if (panelExpanded && document.activeElement instanceof HTMLElement
-                && document.activeElement.closest('#sim-task-panel')) document.activeElement.blur();
+                && document.activeElement.closest(`#${panelId}`)) document.activeElement.blur();
               setPanelExpanded(expanded => !expanded);
             }}>
             {panelExpanded ? t('收起面板', 'Collapse panel') : t('展开面板', 'Expand panel')}
@@ -2303,7 +2399,15 @@ export default function SimPage() {
         <div className="sim-header-recon">{reconLink}</div>
       </header>
 
-      <div className="sim-body" style={{ display: drawMode || imageMode ? 'none' : undefined }} aria-hidden={drawMode || imageMode}>
+      {!animationMode && (
+        <div className="sim-drawing-toolbar sim-actions" aria-label={t('绘图操作', 'Drawing actions')}>
+          <button type="button" disabled={busy} onClick={onImport}>{t('基于动画当前状态', 'From current animation state')}</button>
+          <button type="button" disabled={busy} onClick={() => onNew(selectedPuzzle)}>{t('全新绘图', 'New drawing')}</button>
+          {onUndo && <button type="button" disabled={busy} onClick={onUndo}>{redo ? t('重做替换', 'Redo replacement') : t('撤销替换', 'Undo replacement')}</button>}
+        </div>
+      )}
+
+      <div className="sim-body" style={{ display: drawMode ? 'none' : undefined }} aria-hidden={drawMode}>
         <div className="sim-stage">
         <div className="sim-stage-recon">{reconLink}</div>
         {roomsActive && <div className="sim-room-toolbar">
@@ -2346,7 +2450,7 @@ export default function SimPage() {
               coreOpacity={renderSettings.coreOpacity}
             />
           )}
-          {twisty ? (
+          {twisty && !drawMode ? (
             <TwistySection
               puzzle={String(puzzleParam)}
               puzzleDescription={pgDef}
@@ -2449,7 +2553,7 @@ export default function SimPage() {
         <div className="sim-playback-under" ref={setPlaybackSlot} />
         </div>
 
-        <aside className="sim-side" data-site-surface="panel" id="sim-task-panel" onFocusCapture={event => {
+        <aside className="sim-side" data-site-surface="panel" id={panelId} onFocusCapture={event => {
           if (window.matchMedia('(max-width: 767px)').matches
             && event.target.matches('textarea, input:not([type="range"]), [contenteditable="true"]')) setPanelExpanded(true);
         }}>
@@ -2459,7 +2563,8 @@ export default function SimPage() {
             </div>
           )}
           <PlayerControls
-            active={animationMode}
+            idPrefix={scope}
+            active={active && animationMode}
             world={worldRef.current}
             activeCube={activeCube}
             clearFrozen={clearPartialFreeze}
@@ -2533,7 +2638,7 @@ export default function SimPage() {
             onCustomRestChange={(v) => recordCustomMask({ ...maskHistory.current.history.current, rest: v })}
           />
           <div className="sim-api-slot" ref={setApiDocHost} hidden={!captureMode} />
-          {/* One studio owns the preview in both modes; only creation exposes its controls. */}
+          {/* Keep the live-state studio mounted when switching drawing sources. */}
           <section className="sim-capture-controls" hidden={!captureMode}>
           <h2 className="sim-panel-title">{t('图片与导出', 'Image & export')}</h2>
           <PuzzleImageStudio
@@ -2568,7 +2673,7 @@ export default function SimPage() {
       {drawVisited && (
         <div style={{ display: drawMode ? 'contents' : 'none' }}>
           <PuzzleDrawWorkspace
-            active={drawMode}
+            active={active && drawMode}
             puzzle={drawPuzzle}
             order={typeof drawPuzzle === 'number' ? drawPuzzle : drawOrder}
             onDocumentChange={setDrawDocument}
@@ -2591,4 +2696,83 @@ export default function SimPage() {
       )}
     </div>
   );
+}
+
+/** Two tasks, with independent mounted documents so switching is lossless. */
+export default function SimPage() {
+  const t = useT();
+  const [route, setRoute] = useQueryStates({
+    ...SIM_QUERY_PARSERS,
+    drawSource: parseAsStringEnum(['state', 'free']),
+    drawingId: parseAsString,
+  }, { history: 'replace', scroll: false });
+  const animation = route.tool === 'sim';
+  const snapshotRef = useRef<(() => Promise<SimDocumentSeed>) | null>(null);
+  const nextId = useRef(Math.max(1, Number(route.drawingId) || 1));
+  const [documents, setDocuments] = useState<{ id: string; seed: SimDocumentSeed }[]>(() => {
+    if (animation && !route.drawingId) return [];
+    const id = route.drawingId ?? '1';
+    const raw = typeof window === 'undefined' ? new URLSearchParams() : new URLSearchParams(window.location.search);
+    let params = { ...Object.fromEntries(raw), ...Object.fromEntries(Object.entries(route)
+      .filter(([, value]) => value !== null).map(([key, value]) => [key, String(value)])) };
+    const prefix = `drawing${id}_`;
+    if (raw.has(`${prefix}tool`)) params = Object.fromEntries([...raw]
+      .filter(([key]) => key.startsWith(prefix)).map(([key, value]) => [key.slice(prefix.length), value]));
+    if (route.drawSource === 'state') params.tool = 'capture';
+    return [{ id, seed: { params } }];
+  });
+  const [selectedId, setSelectedId] = useState(documents[0]?.id ?? '');
+  const [replacementUndone, setReplacementUndone] = useState(false);
+  useEffect(() => {
+    if (route.drawingId && documents.some(doc => doc.id === route.drawingId)) setSelectedId(route.drawingId);
+  }, [route.drawingId, documents]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const importing = useRef(false);
+
+  const replaceDrawing = (seed: SimDocumentSeed) => {
+    const id = String(++nextId.current);
+    setDocuments(current => [...current.filter(doc => doc.id === selectedId), { id, seed }]);
+    setSelectedId(id);
+    setReplacementUndone(false);
+    void setRoute({ tool: 'draw', drawSource: null, drawingId: id });
+  };
+  const importAnimation = async () => {
+    if (importing.current) return;
+    importing.current = true;
+    setBusy(true);
+    setError('');
+    try {
+      if (!snapshotRef.current) throw new Error(t('魔方尚未就绪', 'The puzzle is not ready'));
+      replaceDrawing(await snapshotRef.current());
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : t('无法读取动画状态', 'Unable to read the animation state'));
+    } finally {
+      importing.current = false;
+      setBusy(false);
+    }
+  };
+  const changeMode = (mode: 'sim' | 'draw') => {
+    if (mode === 'draw' && documents.length === 0) { void importAnimation(); return; }
+    setError('');
+    void setRoute({ tool: mode === 'sim' ? null : 'draw', drawSource: null, drawingId: selectedId || null });
+  };
+  const newDrawing = (puzzle: SimPuzzle) => replaceDrawing({ params: {
+    tool: 'draw', puzzle: String(normalizeDrawPuzzle(puzzle)), drawPuzzle: String(normalizeDrawPuzzle(puzzle)), imageAlg: '',
+  } });
+  const undoReplacement = documents.length > 1 ? () => {
+    const previous = documents.find(doc => doc.id !== selectedId)!;
+    setSelectedId(previous.id);
+    setReplacementUndone(undone => !undone);
+    void setRoute({ drawingId: previous.id });
+  } : undefined;
+
+  return <>
+    <SimEditor active={animation} snapshotRef={snapshotRef} onModeChange={changeMode}
+      onNew={newDrawing} onImport={() => { void importAnimation(); }} busy={busy} />
+    {documents.map(doc => <SimEditor key={doc.id} scope={`drawing${doc.id}_`} seed={doc.seed}
+      active={!animation && selectedId === doc.id} onModeChange={changeMode}
+      onNew={newDrawing} onImport={() => { void importAnimation(); }} onUndo={undoReplacement} redo={replacementUndone} busy={busy} />)}
+    {error && <div className="sim-drawing-error" role="alert">{error}</div>}
+  </>;
 }

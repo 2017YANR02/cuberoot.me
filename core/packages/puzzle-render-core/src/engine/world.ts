@@ -600,6 +600,8 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
   panY = 0;
   private _lookAtTarget = new THREE.Vector3();
   resize(): void {
+    const handsOn = this.hands?.isEnabled === true && this.puzzleKind === 3;
+    const bodyOn = handsOn && this.hands?.fullBodyOn === true;
     // 变焦架构 = 变 FOV,相机 z 恒 refHalf·perspective(≈19.5×SIZE)。全身人物
     // 的身体就站在相机位一带(胸口 z≈19×SIZE,过肩视角),继续开广角只会鱼眼
     // 穿胸 —— scale 低于常规下限 0.3 的部分改为「后拉相机」(dolly),FOV 封在
@@ -610,9 +612,9 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
     // 缩放域 ×0.07 重映射进后拉段:0.5~1.5 → 0.035~0.105,全域低于「相机整体
     // 出体」阈 ≈0.11(头后余量,2026-07-12 实测),人必然全身入画;FOV 恒 0.3
     // 档、纯 dolly,滑杆语义(大=近)不变。旧「变焦穿越带」淡出随之删除。
-    const scaleEff = this.handsFullBodyWanted ? this.scale * 0.07 : this.scale;
-    const fovScale = this.handsFullBodyWanted ? Math.max(scaleEff, 0.3) : scaleEff;
-    const dolly = this.handsFullBodyWanted ? fovScale / scaleEff : 1; // ≥1
+    const scaleEff = bodyOn ? this.scale * 0.07 : this.scale;
+    const fovScale = bodyOn ? Math.max(scaleEff, 0.3) : scaleEff;
+    const dolly = bodyOn ? fovScale / scaleEff : 1; // ≥1
     const min = this.height / Math.min(this.width, this.height) / fovScale / this.perspective;
     const fov = (2 * Math.atan(min) * 180) / Math.PI;
 
@@ -624,7 +626,6 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
     // stacked layers ≈SIZE*2.2 in y, bounding-sphere radius ≈250 (> NxN-3's
     // ~166) — so at the NxN reference it overflows the viewport. SIZE*4.6 pulls
     // it back to the same ~0.85 fill the NxN view has. NxN path unchanged.
-    const handsOn = this.hands?.isEnabled === true && this.puzzleKind === 3;
     const isSquare = this.puzzleKind === 'sq1' || this.puzzleKind === 'sq2' || this.puzzleKind === 'sq4';
     const isDino = this.puzzleKind === 'dino';
     const isRedi = this.puzzleKind === 'redi';
@@ -656,13 +657,13 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
     // = 魔方前 960)会把整个躯干裁掉只剩残臂。near 面位于世界 z=+margin×SIZE
     // (轴向情形,与 dolly 无关)—— 人体最深点(肩背/头后)z 可达 ~50×SIZE,
     // margin 40 恰在头中间切一刀(2026-07-12 拉远「无头人」实测),58 整体罩住。
-    const nearMargin = handsOn ? (this.handsFullBodyWanted ? 58 : 15) : isSquare || isDino || isRedi || isRex || isHeli || isGear || isSkewb || isMega || isFto || isGhost ? 5 : 4;
+    const nearMargin = handsOn ? (bodyOn ? 58 : 15) : isSquare || isDino || isRedi || isRex || isHeli || isGear || isSkewb || isMega || isFto || isGhost ? 5 : 4;
     this.camera.near = Math.max(distance - SIZE * nearMargin, SIZE * 0.4);
     // 全身人物:人体站在魔方后方(−z 纵深 ~1m ≈ 数十 SIZE),far 随开关放宽
-    // (按意愿而非加载完成算 —— 资产异步就位时不再有 resize 时机)。swap 背视
+    // (加载完成由宿主触发 resize，加载中/失败保留近景)。swap 背视
     // 图下人体在 far 侧(视深 ≈ distance + 42×SIZE,pitch/yaw 斜置再加成),
     // 64 会把上半身裁掉只剩腿(2026-07-12 swap 远景实测),放宽到 84。
-    this.camera.far = distance + SIZE * (handsOn ? (this.handsFullBodyWanted ? 84 : 15.5) : 8);
+    this.camera.far = distance + SIZE * (handsOn ? (bodyOn ? 84 : 15.5) : 8);
     this._lookAtTarget.set(this.panX, this.panY, 0);
     this.camera.lookAt(this._lookAtTarget);
     this.camera.updateProjectionMatrix();
