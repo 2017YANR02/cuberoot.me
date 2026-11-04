@@ -2,20 +2,25 @@
 
 Blender 是静态场景的编辑源，Three.js 是网页运行引擎。住宅、公司、海岛地形、上海建筑、桥梁和道路从 Blender 导出；可转动魔方、天气、水面、交通、时间与相机保留实时程序。首次迁移保留现有模型，并不等同于完成实测 1:1 建模或电影级美术。
 
-当前上海版本（2026-09-13）：金茂入口补充雨棚细杆、条带遮板、灯具外壳、东侧交叉拉杆和灰红方形铺地，已完成近景检查、保存和正式导出。GLB 为 **602,288,668 字节**、16 张共享纹理；新增七个网格、原基部与裙房、周边共享网格、原塔楼 51 个网格的几何、材质和变换核对通过，加载器及完整 HTTP 下载校验见[最新跟踪记录](../../docs/space-blender-tracker.md#2026-09-13-金茂入口雨棚细部与铺地-本轮收尾)。按用户要求，本轮完成后暂停。石材颗粒、铺地图案精确校准、门厅与中庭内部、庭院水池和网页日夜画面继续待办；约 602 MB 整城资产尚需分区、LOD 和实际设备性能验证。尺寸及材质仍为照片估算，尚未达到 1:1 或电影级。下方日期段落保留历史状态。重资产继续本地保存，Git LFS 配置与上传暂缓。
+当前上海资产为 2026-11-03 金茂入口夜景校准版本，GLB **602,290,688 字节**、16 张共享纹理。三个入口新增六盏可编辑灯具，底部竖肋的整片夜间补光按高度退让，圆门与铺地恢复局部明暗；正式 Blender 工程和本地 GLB 均已保存。已实际查看圆形入口、南入口昼夜、金茂整栋夜景、390px 窄屏及往返江海关后的照明恢复。此前新增的三处网页入口与 29 个共享机位继续保留。通过项和边界见[最新跟踪记录](../../docs/space-blender-tracker.md#2026-11-03-金茂入口夜景校准)。石材颗粒、铺地图案精确校准、门厅与中庭内部、庭院水池、环球观景厅镜顶继续待办；约 602 MB 整城资产尚需分区、LOD 和实际设备性能验证。尺寸及配光仍为照片估算，尚未达到 1:1 或电影级。下方日期段落保留历史状态。重资产继续本地保存，Git LFS 配置与上传暂缓。
 
 ## 文件在哪里
 
 | 内容 | 位置 | Git |
 | --- | --- | --- |
-| 25 份可编辑原工程 | `design/space/scenes/*.blend` | 后续使用 Git LFS；当前暂缓启用，本地保留并单独备份 |
+| 25 份可编辑原工程 | `design/space/scenes/*.blend` | 后续使用 Git LFS；当前暂缓启用，本地保留，旧备份已按维护者要求删除 |
 | 首次导入清单 | `design/space/scenes/*.import.json` | 跟踪首次导入，不代表后续编辑状态 |
 | 网页模型、共享纹理 | `core/packages/client/public/assets/space/blender-v1/` | GLB 和纹理单独打包，JSON 清单入库 |
 | Blender 软件 | `blender`（从 `PATH` 查找，可用 `CUBEROOT_BLENDER` 指定） | 仓库外 |
-| 首次捕获和导出中间文件 | `E:/CubeRoot-Assets/space/` | 缓存，不是源工程 |
+| 首次捕获和历史导出 | 维护者 Mac：`/Users/eula/Documents/CubeRoot-Assets/space/` | 本地归档，不是当前源工程 |
+| 新导出中间文件 | 系统临时目录 `cuberoot-space-export-*` | 完成或失败后自动清理 |
 | 检查截图、导出日志 | `.tmp/png/space-blender/` | 临时文件 |
 
 资产名由 8 种风格 `modern / minimal / cyberpunk / vintage / italian / penthouse / japanese / company` 和 3 种环境 `original / island / shanghai` 组成，例如 `italian-island`。另有一份独立的 `shanghai.blend` 城市工程，共 25 份。住宅的 `*-shanghai.blend` 与城市分别加载。
+
+2026-11-03 已按维护者要求从 Windows **剪切迁移**到 Mac：当前 25 份 `.blend` 和 25 份正式 GLB 保留上述仓库路径，初始捕获、历史导出、独立候选及配套截图/报告放在 Mac 的 `CubeRoot-Assets/space/`，历史工作目录位于其 `windows-history/`。保留 2,007 个文件、10,617,111,467 字节，其中 200 个模型文件（包含候选和旧运行资源副本）；逐文件 SHA-256 校验后删除 Windows 对应原件，另重新连接核实 34 个源目录均不存在。
+
+维护者随后明确不保留旧备份，已删除两端的 `.blend1` 等自动备份、旧 `backups/` 目录及 `shanghai-before-*` 操作前快照，共 65 个文件、7,401,188,548 字节。独立候选、恢复版本和烘焙试验工程保留。迁移清单在 Mac 的 `/Users/eula/Documents/CubeRoot-Assets/space/migration-20261103.json`。后文历史记录中的 Windows 备份路径不再代表可恢复文件；代码推送仍不包含这些重资产，未启用 LFS 或发布。
 
 ## 日常编辑与查看
 
@@ -44,7 +49,13 @@ Blender 是静态场景的编辑源，Three.js 是网页运行引擎。住宅、
 cd core && pnpm space:batch --asset italian-original --preview-camera Bathroom
 ```
 
-住宅相机可用 `Overview`、`"Living room"`、`Study`、`Bedroom`、`Bathroom`、`Courtyard`、`Garage`、`Cinema`、`Gym`；公司工程预置 `Overview`、`"Living room"`、`Study`、`Courtyard`；城市工程预置 `Overview`、`"Jin Mao"`、`"Jin Mao crown"`，以及园区的 `"Alibaba whole campus"`、`"Alibaba X Art Tower"`、`"Alibaba campus"`、`"Alibaba courtyard"`、`"Alibaba Z campus"`、`"Alibaba Z courtyard"`。图片和日志输出到 `.tmp/png/space-blender/`。预览不会保存修改源工程，也不会导出网页资源。
+住宅相机可用 `Overview`、`"Living room"`、`Study`、`Bedroom`、`Bathroom`、`Courtyard`、`Garage`、`Cinema`、`Gym`；公司工程预置 `Overview`、`"Living room"`、`Study`、`Courtyard`。城市预览可使用 `space-shanghai-cameras.json` 中的 29 个网页机位键或英文名称，例如 `jinmaoEntrance`、`jinmaoBase`、`swfcSkywalk`；工程里原有的 `Overview`、`"Jin Mao"`、`"Jin Mao crown"` 等相机按原名继续可用。图片和日志输出到 `.tmp/png/space-blender/`。预览不会保存修改源工程，也不会导出网页资源。
+
+```sh
+cd core && pnpm space:batch --asset shanghai --preview-camera jinmaoBase
+```
+
+`preview_cameras.city_camera(scene, 'jinmaoBase')` 也可在已打开上海工程的 Blender Python 控制台中调用。它转换网页坐标与垂直视场角，创建或复用 `PREVIEW` 中的 `Web review | …` 相机，明确标记不导出；它不会保存工程或覆盖同名的手工相机。此 helper 只返回相机，查看时将其设为当前场景/视口相机。网页窄屏的视场角及外景后退适配仍须在网页检查。
 
 预览脚本把 `spaceLights` 中的网页面光源转换为临时 Blender Area Light，功率换算用于看清室内，不是现场光度校准。网页反射与专用材质仍需在网页验收，不能用这张 Cycles 图片代表网页画质。
 
@@ -53,7 +64,7 @@ cd core && pnpm space:batch --asset italian-original --preview-camera Bathroom
 - 保留原对象的 `spaceId`、材质标记、自定义顶点属性与 Scene 的 `space_asset / space_schema / space_contract`。它们标记水面、反射、屋顶、灯光、交通模板及夜景建筑。新增要导出的对象设 `space_export = true`；预览辅助对象不设置。
 - 碰撞框和运行灯光分别来自根对象的 `spaceObstacles / spaceLights`；可放置表面由网格的 `spaceSurface` 标记识别。改变房屋布局、墙体或家具占地时，需要同步更新碰撞与灯光数据，并检查表面标记，不能只移动外观网格。改变整个场景坐标会影响网页的预设相机与动态路线。
 - 交通模型作为动态实例模板使用；调整其几何后应应用对象变换并检查网页朝向。不要删除动态绑定对象。
-- 室内默认相机坐标共用 `core/packages/client/app/[lang]/space/space-room-cameras.json`，Blender 按坐标轴约定转换。`repair_scene_cameras.py` 仅修正首次迁移留下的旧预览相机，保留已被手工修改的位置和朝向；普通模型编辑不需要运行它。
+- 室内默认相机坐标共用 `core/packages/client/app/[lang]/space/space-room-cameras.json`；上海机位、近裁剪、视场角与窄屏视场角共用同目录的 `space-shanghai-cameras.json`。Blender 按坐标轴约定转换，网页 `view()` 与 `resize()` 复用相同视场角选择。`repair_scene_cameras.py` 仅修正首次迁移留下的旧住宅预览相机，保留已被手工修改的位置和朝向；普通模型编辑不需要运行它。
 - `capture.ts`、`import_scene.py`、`upgrade_scene.py` 仅用于首次迁移及旧合同升级；日常只使用 `batch.mts` / `export_scene.py`。不要用旧程序重新生成已手工编辑的工程。
 
 ## 验收
@@ -65,6 +76,8 @@ cd core && pnpm space:batch --asset italian-original --preview-camera Bathroom
 每盏灯保持所属建筑的父子关系及唯一 `spaceFacadeSlot`（0 至 5），不设置 `space_export`。正常导出时 `facade_rig.py` 将当前灯具转换为 Y-up 的 `facadeLighting.lamps`，不保存回源工程；网页复用原有 6 盏带阴影灯。缺灯、重复槽号、错误类型或非法强度会拒绝导出。建筑的 `facadeLighting.centre` 是局部 Y-up 选光中心；`washTop` 控制旧有立面补光退让的高度，0 表示保留绝大部分补光。高处未被近景灯覆盖的石材仍使用原有远景补光。
 
 铜顶材质可用 `spaceRoofWash = { bottom, top, color }` 调整远景补光；高度为网格局部 Y-up 米制坐标，颜色为线性 RGB，必须有限、在 0–1 内且 `top > bottom`。它是网页补光近似，不是 Blender 节点或烘焙结果；改动屋顶顶点或本地原点后同步校准高度。和平饭店当前六灯为四盏绿色坡面代理灯和两盏暖色冠部代理灯，近景屋顶随所属建筑的灯光权重退让，未设置该材质属性的屋顶保持原公式。
+
+金茂入口在 `AUTHORING | Jin Mao entrance lights (metadata export)` 中有六盏同合同的 SPOT 灯，南、东、北各两盏，当前 `spaceCandela` 分别为 180 / 60。它们接入既有六灯池，不增加同时启用的灯数。竖肋材质可用 `spaceIlluminationHeight = { bottom: 10, top: 45 }`：在网格局部 Y-up 10 m 以下关闭该材质的整片夜间补光，到 45 m 平滑恢复原强度；直接光照、白天材质和其他灯具不受此渐变影响。高度必须有限且 `top > bottom`，修改网格原点或顶点后须重新校准。`refine_jin_mao_lighting.py` 的一次性 `prepare` / `save` 已执行，后续直接编辑现有灯具和材质，不再重建该修订。
 
 镜头转向邻栋时，网页将旧灯和立面补光同步渐变，在近景灯强度归零时换灯位，再渐亮新灯；单程按 0.3 秒计算，低帧率下因帧间隔限幅会延长。过渡使用独立于天气开关的帧时间，完成后停止额外绘制；渐变期间不重复刷新静态阴影。此机制消除整组灯瞬间换位，但没有消除近景灯与远景补光的配光差异，仍须逐栋校准并继续评估烘焙照明。
 
@@ -80,9 +93,9 @@ cd core && pnpm space:batch --asset italian-original --preview-camera Bathroom
 
 2026-09-09 用户确定后续资产版本管理使用 Git LFS，但暂不配置或上传。`.blend` 和必要原始贴图通过 LFS 保存版本，脚本、文档和清单继续普通 Git；`.blend1`、缓存和临时渲染不入库。网页 GLB 和运行贴图按资源发布流程提供，不能把 LFS 当成网页资源地址。恢复资产入库时同步配置 `.gitattributes` 与精确忽略例外，核对 LFS 指针、用量预算及干净检出；不要用 `git add -f` 将大文件塞进普通 Git。
 
-源工程和网页 GLB/纹理被 Git 忽略，提交代码不会备份这些重资产。完整备份需同时包含 `design/space/scenes` 与 `client/public/assets/space/blender-v1`；2026-09-08 迁出的 8 份旧 `.blend1` 备份在 `E:/CubeRoot-Assets/space/backups/20260908/`，随后修正预览相机时生成的 `.blend1` 留在原工程旁。E 盘缓存可重建，不能取代 `.blend` 备份。
+源工程和网页 GLB/纹理被 Git 忽略，提交代码不会备份这些重资产。若另行安排版本备份，需同时包含 `design/space/scenes` 与 `client/public/assets/space/blender-v1`。2026-11-03 已按维护者要求删除旧 `.blend1`、`backups/` 和操作前快照；历史记录中的 Windows 备份路径已失效，当前正式源和运行资源位于 Mac。
 
-本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 500,054,592 字节（约 500 MB，2026-09-13 金茂材质导出），正式发布前仍需分区加载、压缩与移动设备验证。
+本地开发默认加载 Blender 产物。生产默认仍走已有场景生成逻辑；需要先在构建/部署环境提供完整模型、纹理和对应 JSON 清单，核对哈希和资源可达，再在构建时设置 `NEXT_PUBLIC_SPACE_BLENDER=1`。代码提交和 push 不包含被忽略的重资产。上海模型当前为 602,290,688 字节（约 602 MB，2026-11-03 金茂入口照明导出），正式发布前仍需分区加载、压缩与移动设备验证。
 
 Blender 和 glTF 插件来源已加入网页的“来源与致谢”，统一数据在 `credits_data.json`；建筑及天气等既有资料见 [来源记录](../../docs/space-sources.md)，迁移状态见 [跟踪文档](../../docs/space-blender-tracker.md)。
 

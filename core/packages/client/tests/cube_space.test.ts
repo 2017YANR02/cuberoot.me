@@ -11,6 +11,7 @@ import { mirrorFaces } from '@/components/puzzle-models/mirror/mirrorGeometry';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { COLORS } from '@cuberoot/puzzle-render-core/engine/define';
 import { droneMovement, SpaceScene, surfaceHit, visibleBounds } from '@/app/[lang]/space/space-scene';
+import { SpaceRoom } from '@/app/[lang]/space/space-room';
 import { cityHorizon, sceneDaylight, weatherRoof } from '@/app/[lang]/space/space-weather';
 import { createUniforms } from '@/app/[lang]/space/abyssal/core/SharedUniforms.js';
 import { OceanMesh } from '@/app/[lang]/space/abyssal/ocean/OceanMesh.js';
@@ -18,7 +19,7 @@ import { Lightning } from '@/app/[lang]/space/abyssal/weather/Lightning.js';
 import { Weather as AbyssalWeather } from '@/app/[lang]/space/abyssal/weather/Weather.js';
 import { ISLAND, islandHeight } from '@/app/[lang]/space/space-island';
 import { RIVER_COLORS, WEATHER, VILLA_ROOMS, layoutTime, validSceneTime, type Weather } from '@/app/[lang]/space/space-state';
-import { commitLayout, ENVIRONMENTS, type Environment, INITIAL_LAYOUT, MAX_OBJECTS, movePosition, parseLayout, ROOMS, travelHistory, validSpaceMove, walkFloor, walkStep, type Vec3, type History, type PuzzleKind, type RoomStyle } from '@/app/[lang]/space/space-state';
+import { commitLayout, ENVIRONMENTS, type Environment, INITIAL_LAYOUT, MAX_OBJECTS, MAX_OBJECT_MOVES, MAX_LAYOUT_BYTES, movePosition, parseLayout, ROOMS, travelHistory, validSpaceMove, walkFloor, walkStep, type Vec3, type History, type PuzzleKind, type RoomStyle } from '@/app/[lang]/space/space-state';
 
 describe('Shanghai first draw preparation', () => {
   const deferred = <T,>() => {
@@ -115,6 +116,89 @@ describe('Shanghai first draw preparation', () => {
   });
 });
 
+it('releases a failed room once and ignores later resize/render callbacks', () => {
+  const room = Object.create(SpaceRoom.prototype) as SpaceRoom;
+  const geometry = new THREE.BoxGeometry(), material = new THREE.MeshStandardMaterial(), texture = new THREE.Texture();
+  const root = new THREE.Group(); root.add(new THREE.Mesh(geometry, material));
+  const disposals = [geometry, material, texture].map(resource => vi.spyOn(resource, 'dispose'));
+  Object.assign(room, { disposed: false, root, mirrors: [], textures: new Map([['surface', texture]]) });
+  room.dispose(); room.dispose();
+  room.resize(390); room.update(new THREE.PerspectiveCamera(), false);
+  for (const dispose of disposals) expect(dispose).toHaveBeenCalledOnce();
+});
+
+describe('space viewport resizing', () => {
+  const fixture = () => {
+    const scene = Object.create(SpaceScene.prototype) as SpaceScene;
+    const camera = new THREE.PerspectiveCamera(27, 2);
+    camera.position.set(100, 70, 200);
+    const host = { clientWidth: 390, clientHeight: 480 };
+    const renderer = { setSize: vi.fn() }, composer = { setSize: vi.fn() }, ao = { setSize: vi.fn() };
+    const room = { resize: vi.fn(), style: 'modern' }, render = vi.fn();
+    Object.assign(scene, { host, camera, renderer, composer, ao, room, render, currentView: 'interior', freeCamera: false });
+    return { scene, camera, host, renderer, composer, ao, room, render };
+  };
+
+  it.each(['walk', 'drone'] as const)('preserves the %s lens and pose across portrait and landscape sizes', navigation => {
+    const f = fixture();
+    f.scene.navigation = navigation;
+    for (const [width, height] of [[390, 480], [844, 390]]) {
+      Object.assign(f.host, { clientWidth: width, clientHeight: height });
+      f.scene['resize']();
+      expect(f.camera.fov).toBe(27);
+      expect(f.camera.position.toArray()).toEqual([100, 70, 200]);
+      expect(f.camera.aspect).toBe(width / height);
+      expect(f.renderer.setSize).toHaveBeenLastCalledWith(width, height);
+      expect(f.composer.setSize).toHaveBeenLastCalledWith(width, height);
+      expect(f.ao.setSize).toHaveBeenLastCalledWith(Math.ceil(width * .75), Math.ceil(height * .75));
+      expect(f.room.resize).toHaveBeenLastCalledWith(width);
+    }
+  });
+
+  it('keeps the flown-to lens after returning to orbit, but adapts preset room views', () => {
+    const f = fixture();
+    f.scene.navigation = 'orbit';
+    Object.assign(f.scene, { freeCamera: true });
+    f.scene['resize'](); expect(f.camera.fov).toBe(27);
+    Object.assign(f.scene, { freeCamera: false });
+    f.scene['resize'](); expect(f.camera.fov).toBe(76);
+    f.host.clientWidth = 844;
+    f.scene['resize'](); expect(f.camera.fov).toBe(58);
+  });
+
+  it('retains the last projection and render targets while the canvas has no area', () => {
+    const f = fixture();
+    for (const [width, height] of [[0, 480], [390, 0]]) {
+      Object.assign(f.host, { clientWidth: width, clientHeight: height });
+      f.scene['resize']();
+    }
+    expect(f.camera.aspect).toBe(2); expect(f.camera.fov).toBe(27);
+    expect(f.renderer.setSize).not.toHaveBeenCalled(); expect(f.composer.setSize).not.toHaveBeenCalled();
+    expect(f.ao.setSize).not.toHaveBeenCalled(); expect(f.render).not.toHaveBeenCalled();
+  });
+
+  it('keeps the Skywalk camera inside the hall on narrow screens and preserves its lens when resizing', () => {
+    const f = fixture(), fly = vi.fn();
+    Object.assign(f.scene, {
+      city: {}, scene: new THREE.Scene(), orbit: { cursor: new THREE.Vector3() },
+      sun: new THREE.DirectionalLight(), interiorLight: new THREE.SpotLight(),
+      cruise: vi.fn(), cancel: vi.fn(), setNavigation: vi.fn(), positionSun: vi.fn(), fly,
+    });
+    f.scene.navigation = 'orbit';
+    f.scene.view('swfcSkywalk');
+    expect(fly.mock.calls[0][0].toArray()).toEqual([358.63415, 475, 1886.71896]);
+    expect(fly.mock.calls[0][1].toArray()).toEqual([382.12927, 475, 1856.85293]);
+    expect(f.camera.near).toBe(.05); expect(f.camera.fov).toBe(76);
+    f.host.clientWidth = 900;
+    f.scene['resize'](); expect(f.camera.fov).toBe(65);
+    f.host.clientWidth = 390;
+    f.scene['resize'](); expect(f.camera.fov).toBe(76);
+    Object.assign(f.scene, { currentView: 'alibabaCourt' });
+    f.host.clientWidth = 900;
+    f.scene['resize'](); expect(f.camera.fov).toBe(58);
+  });
+});
+
 describe('space drone controls', () => {
   it('moves horizontally in camera heading, with independent rise and fall', () => {
     const facing = new THREE.Vector3(0, -.8, -.6);
@@ -200,6 +284,18 @@ describe('space walking and tabletop placement', () => {
 });
 
 describe('cube space saved layouts', () => {
+  it.each([['333', "Rw'"], ['sq1', '(-6,-6)']] as const)('restores and reimports a fully populated space with long %s turn histories', (kind, move) => {
+    const layout = { ...INITIAL_LAYOUT, objects: Array.from({ length: MAX_OBJECTS }, (_, i) => ({
+      ...INITIAL_LAYOUT.objects[0], id: `cube-${i}`, kind, moves: Array<string>(MAX_OBJECT_MOVES).fill(move),
+    })) };
+    const saved = JSON.stringify(layout);
+    const exported = JSON.stringify(layout, null, 2);
+    expect(saved.length > 128_000).toBe(true);
+    expect(new TextEncoder().encode(exported).byteLength < MAX_LAYOUT_BYTES).toBe(true);
+    expect(parseLayout(saved)).toEqual(layout);
+    expect(parseLayout(exported)).toEqual(layout);
+  });
+
   it('round-trips every river color and rejects invalid imported selections', () => {
     for (const riverColor of Object.keys(RIVER_COLORS)) {
       const layout = { ...INITIAL_LAYOUT, environment: 'shanghai', weather: 'rainbow', riverColor };
@@ -413,7 +509,7 @@ describe('cube space saved layouts', () => {
       { version: 1, objects: Array.from({ length: MAX_OBJECTS + 1 }, (_, i) => ({ ...object, id: `cube-${i}` })) },
     ]) expect(() => parseLayout(JSON.stringify(data))).toThrow();
     expect(() => parseLayout('{')).toThrow();
-    expect(() => parseLayout(' '.repeat(128_001))).toThrow();
+    expect(() => parseLayout(' '.repeat(MAX_LAYOUT_BYTES + 1))).toThrow('size');
     expect(() => parseLayout('{"version":1,"objects":[{"id":"x","kind":"333","position":[1e999,0],"rotation":[0,0,0],"scale":1}]}')).toThrow();
     expect(parseLayout(JSON.stringify({ version: 1, objects: [{ ...object, unexpected: 'discard' }] })).objects[0]).toEqual(object);
   });
@@ -438,6 +534,32 @@ describe('cube space saved layouts', () => {
 });
 
 describe('shared simulator models in the space', () => {
+  it('reuses picking geometry through placement, rotation, scaling and shape-changing turns', () => {
+    const scene = Object.create(SpaceScene.prototype) as SpaceScene;
+    Object.assign(scene, { scene: new THREE.Scene(), snap: false });
+    for (const kind of ['333', 'mirror', 'sq1', 'pyram'] as const) {
+      const original = { ...INITIAL_LAYOUT.objects[0], kind };
+      const entry = scene['create'](original), geometry = entry.proxy.geometry;
+      const disposed = vi.spyOn(geometry, 'dispose');
+      try {
+        for (const data of [original, { ...original, position: [12, 3] as [number, number], rotation: [.3, .7, -.2] as Vec3, scale: .06 },
+          { ...original, moves: kind === 'sq1' ? ['(1,0)', '/'] : ['R'] }, original]) {
+          scene['apply'](entry, data);
+          entry.root.updateWorldMatrix(true, true);
+          const modelBounds = visibleBounds(entry.model, entry.root);
+          entry.proxy.geometry.computeBoundingBox();
+          const pickingBounds = entry.proxy.geometry.boundingBox!.clone().applyMatrix4(entry.proxy.matrix);
+          for (const side of ['min', 'max'] as const) for (const axis of ['x', 'y', 'z'] as const) {
+            expect(pickingBounds[side][axis], `${kind} ${side}.${axis}`).toBeCloseTo(modelBounds[side][axis], 6);
+          }
+          expect(entry.proxy.geometry).toBe(geometry);
+          expect(disposed).not.toHaveBeenCalled();
+        }
+      } finally { scene['remove'](entry); }
+      expect(disposed).toHaveBeenCalledOnce();
+    }
+  });
+
   it('turns every supported puzzle and replays its inverse without moving the object', () => {
     const fixtures: [PuzzleKind, SpacePuzzle][] = [['222', new Cube(2)], ['333', new Cube(3)], ['444', new Cube(4)], ['555', new Cube(5)], ['mirror', new Cube(3, true)], ['sq1', new Sq1Cube()], ['pyram', new PyraCube()], ['minx', new MegaminxCube()], ['skewb', new SkewbCube()]];
     for (const [kind, cube] of fixtures) {

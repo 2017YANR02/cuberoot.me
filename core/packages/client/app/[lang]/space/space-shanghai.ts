@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import shanghaiCameras from './space-shanghai-cameras.json';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { Water } from 'three/addons/objects/Water.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
@@ -13,7 +14,7 @@ import { createShanghaiSupertalls, glazing } from './space-shanghai-supertalls';
 import { shanghaiWindowTexture, bundStone, roofMetal } from './space-shanghai-facades';
 import { applyNewsStone } from './space-shanghai-bund';
 import { applyCommercialFixtures } from './space-shanghai-commercial-bank';
-import { loadSpaceBlender, SPACE_ASSET_SOURCE } from './space-blender';
+import { loadSpaceBlender, SPACE_ASSET_SOURCE, type SpaceAssetProgress } from './space-blender';
 import { ShanghaiTraffic } from './space-shanghai-traffic';
 import { ShanghaiFacadeLighting } from './space-shanghai-lighting';
 import { BlenderInteriorMirrors, guardPlanarReflection } from './space-planar-reflections';
@@ -21,35 +22,9 @@ import { BlenderInteriorMirrors, guardPlanarReflection } from './space-planar-re
 type Point = [number, number];
 type Road = ShanghaiRoad;
 export type ShanghaiData = { version: number; origin: Point; river: Point[]; polygons: Polygon[]; roads: Road[] };
-export const SHANGHAI_VIEWS = {
-  northBund: { zh: '北外滩', en: 'North Bund', camera: [450, 210, 80], target: [-150, 180, 1650] },
-  lujiazui: { zh: '陆家嘴', en: 'Lujiazui', camera: [-1210, 215, 2440], target: [50, 255, 1670] },
-  jinmao: { zh: '金茂大厦', en: 'Jin Mao Tower', camera: [-273, 241, 1353], target: [218, 217, 1796] },
-  swfc: { zh: '环球金融中心', en: 'World Financial Center', camera: [775, 300, 1215], target: [371, 258, 1871] },
-  shanghaiTower: { zh: '上海中心', en: 'Shanghai Tower', camera: [-585, 380, 2498], target: [206, 326, 1982] },
-  bund: { zh: '外滩建筑群', en: 'Bund architecture', camera: [-680, 110, 1860], target: [-1340, 35, 1580] },
-  peace: { zh: '和平饭店', en: 'Peace Hotel', camera: [-1165, 64, 1475], target: [-1345, 36, 1367] },
-  customs: { zh: '江海关', en: 'Customs House', camera: [-1188, 49, 1678], target: [-1301, 37, 1644] },
-  hsbc: { zh: '汇丰大楼', en: 'HSBC Building', camera: [-1169, 22, 1765], target: [-1302, 20, 1718] },
-  commercialBank: { zh: '通商银行', en: 'Commercial Bank', camera: [-1188.28, 11.28, 1834.96], target: [-1228.35, 10.34, 1853.15] },
-  tomson: { zh: '汤臣一品', en: 'Tomson Riviera', camera: [-570, 115, 2260], target: [-185, 80, 2050] },
-  tomsonGarden: { zh: '汤臣庭院', en: 'Tomson garden', camera: [-257, 18, 2095], target: [-205, 3, 2064] },
-  waibaidu: { zh: '外白渡桥', en: 'Waibaidu Bridge', camera: [-1130, 45, 965], target: [-1272, 10, 900] },
-  nanpu: { zh: '南浦大桥', en: 'Nanpu Bridge', camera: [610, 175, 4540], target: [174, 76, 5106] },
-  nanpuApproach: { zh: '南浦螺旋引桥', en: 'Nanpu spiral approach', camera: [-455, 165, 4560], target: [-150, 30, 4840] },
-  lupu: { zh: '卢浦大桥', en: 'Lupu Bridge', camera: [-2550, 175, 7520], target: [-2160, 62, 6930] },
-  xuhui: { zh: '徐汇滨江', en: 'Xuhui waterfront', camera: [-2790, 190, 8560], target: [-4040, 100, 9740] },
-  alibabaAll: { zh: '阿里园区全景', en: 'Alibaba whole campus', camera: [-3626, 290, 9922], target: [-3990, 24, 9599] },
-  alibabaX: { zh: 'X 区艺岛', en: 'X Art Tower', camera: [-3829, 92, 9867], target: [-3955, 23, 9730] },
-  alibaba: { zh: 'Y 区主楼', en: 'Y main building', camera: [-3828, 100, 9732], target: [-3980, 26, 9594] },
-  alibabaCourt: { zh: 'Y 区中庭', en: 'Y courtyard', camera: [-3965, 4, 9653], target: [-3980, 13, 9590] },
-  alibabaZ: { zh: 'Z 区方案', en: 'Z design', camera: [-3821, 95, 9625], target: [-3986, 23, 9479] },
-  alibabaZCourt: { zh: 'Z 区中庭', en: 'Z courtyard', camera: [-3988, 5, 9532], target: [-3986, 20, 9469] },
-  // Xujiahui / South Wanping Road, WGS84 OSM way/1442066946 bounds centre.
-  xujiahui: { zh: '徐家汇', en: 'Xujiahui', camera: [-5010, 290, 6900], target: [-5375.8, 25, 6478.1] },
-  qiantan: { zh: '前滩', en: 'Qiantan', camera: [-4020, 210, 11100], target: [-2520, 155, 10400] },
-  huangpu: { zh: '黄浦江全景', en: 'Huangpu overview', camera: [-7600, 7200, 14400], target: [-1200, 0, 5450] },
-} satisfies Record<string, { zh: string; en: string; camera: Vec3; target: Vec3 }>;
+export const SHANGHAI_VIEWS = shanghaiCameras as { [K in keyof typeof shanghaiCameras]: {
+  zh: string; en: string; camera: Vec3; target: Vec3; near?: number; shadowSpan?: number; inside?: boolean; fov?: number; mobileFov?: number;
+} };
 export type ShanghaiView = keyof typeof SHANGHAI_VIEWS;
 
 export function validateShanghaiData(raw: unknown): asserts raw is ShanghaiData {
@@ -83,6 +58,7 @@ export class ShanghaiScene {
   private water?: Reflector & { material: THREE.ShaderMaterial };
   private interiorMirrors?: BlenderInteriorMirrors;
   private boats?: THREE.InstancedMesh;
+  private boatTime = NaN;
   private boatDetails: THREE.InstancedMesh[] = [];
   private traffic?: ShanghaiTraffic;
   private night = { value: 0 };
@@ -94,7 +70,7 @@ export class ShanghaiScene {
   private facadeLighting: ShanghaiFacadeLighting;
   private batches = new Map<string, { geometries: THREE.BufferGeometry[]; material: THREE.Material }>();
 
-  constructor(private narrow: boolean, private changed: () => void, private source: 'blender' | 'bootstrap' = SPACE_ASSET_SOURCE) {
+  constructor(private narrow: boolean, private changed: () => void, private source: 'blender' | 'bootstrap' = SPACE_ASSET_SOURCE, private progress?: (progress: SpaceAssetProgress) => void) {
     this.root.name = 'Shanghai Huangpu River';
     this.facadeLighting = new ShanghaiFacadeLighting(narrow);
     this.root.add(this.facadeLighting.root);
@@ -104,6 +80,13 @@ export class ShanghaiScene {
 
   private material(color: number, metalness = 0, roughness = .8, illumination = 0, target?: THREE.MeshStandardMaterial) {
     const m = target ?? new THREE.MeshStandardMaterial({ color, metalness, roughness });
+    // An authored lower facade can rely on actual fixtures while the tower's
+    // distant wash resumes above it. Heights are mesh-local Y-up metres.
+    const height = m.userData.spaceIlluminationHeight;
+    if (height !== undefined && (!height || typeof height !== 'object' ||
+      !Number.isFinite(height.bottom) || !Number.isFinite(height.top) || height.top <= height.bottom)) {
+      throw new Error('Invalid Blender illumination height profile');
+    }
     m.userData.cityFacadeLight = this.facadeLighting.active;
     // Keep the asset's value independent of its program key. Different lamp
     // strengths share GLSL instead of compiling a program for every constant.
@@ -114,9 +97,15 @@ export class ShanghaiScene {
         shader.uniforms.cityNight = this.night;
         shader.uniforms.cityIllumination = strength;
         shader.fragmentShader = 'uniform float cityNight, cityIllumination;\n' + shader.fragmentShader;
-        shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance+=diffuse*cityNight*cityIllumination;');
+        if (height) {
+          shader.uniforms.cityIlluminationHeight = { value: new THREE.Vector2(height.bottom, height.top) };
+          shader.vertexShader = 'varying float cityIlluminationY;\n' + shader.vertexShader;
+          shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\ncityIlluminationY=position.y;');
+          shader.fragmentShader = 'uniform vec2 cityIlluminationHeight; varying float cityIlluminationY;\n' + shader.fragmentShader;
+        }
+        shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\ntotalEmissiveRadiance+=diffuse*cityNight*cityIllumination${height ? '*smoothstep(cityIlluminationHeight.x,cityIlluminationHeight.y,cityIlluminationY)' : ''};`);
       };
-      m.customProgramCacheKey = () => 'shanghai-illumination-uniform-v1';
+      m.customProgramCacheKey = () => `shanghai-illumination-uniform-v1${height ? '-height-v1' : ''}`;
     }
     this.materials.add(m); return m;
   }
@@ -236,7 +225,7 @@ export class ShanghaiScene {
   }
 
   private async loadBlender(data: ShanghaiData) {
-    const { scene } = await loadSpaceBlender('shanghai');
+    const { scene } = await loadSpaceBlender('shanghai', progress => { if (!this.disposed) this.progress?.(progress); });
     // Attach first so the same disposer owns even an interrupted or failed load.
     this.root.add(scene);
     if (this.disposed) { this.dispose(); return; }
@@ -335,11 +324,12 @@ export class ShanghaiScene {
     else if (key === 'shanghai-lit-boat-cabin') this.cabinMaterial(m);
     else {
       const illumination = /^shanghai-illumination-([\d.]+)$/.exec(key);
-      if (illumination || key === 'shanghai-illumination-uniform-v1') {
+      if (illumination || /^shanghai-illumination-uniform-v1(?:-height-v1)?$/.test(key)) {
         // Existing .blend/GLB assets encode this in the old key; new exports
         // retain the unrounded authoring value in a separate userData field.
         const value = illumination ? Number(illumination[1]) : m.userData.spaceIllumination;
         if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) throw new Error(`Invalid Blender illumination: ${key}`);
+        if (key.endsWith('-height-v1') && m.userData.spaceIlluminationHeight === undefined) throw new Error('Missing Blender illumination height profile');
         factory(m.color.getHex(), m.metalness, m.roughness, value);
       }
       else if (key && !key.includes('onBeforeCompile') && !key.includes('trafficVisibility')) throw new Error(`Unsupported Blender material: ${key}`);
@@ -522,7 +512,8 @@ export class ShanghaiScene {
       camera.position.set(p.x, 165, p.z); target.set(ahead.x, 125, ahead.z); camera.lookAt(target);
       if (this.distance >= length - 1) { this.cruising = false; this.changed(); }
     }
-    if (this.boats) {
+    if (this.boats && this.boatTime !== this.elapsed) {
+      this.boatTime = this.elapsed;
       const m = new THREE.Object3D();
       for (let i = 0; i < this.boats.count; i++) {
         const t = (i / this.boats.count + this.elapsed * (i % 2 ? -.0005 : .0006) + 1) % 1, p = this.route.getPoint(t), dir = this.route.getTangent(t);

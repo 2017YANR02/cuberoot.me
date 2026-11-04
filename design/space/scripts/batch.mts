@@ -28,8 +28,8 @@ const plan = process.argv.includes('--plan');
 if (!modes.has(mode)) throw new Error(`Unknown mode: ${mode}`);
 if (asset && !allKeys.includes(asset)) throw new Error(`Unknown Space asset: ${asset}`);
 if (previewCamera && !asset) throw new Error('--preview-camera requires --asset');
-if (previewCamera && !/^[A-Za-z ]+$/.test(previewCamera)) {
-  throw new Error('--preview-camera must be a camera name, for example Overview or Living room');
+if (previewCamera && !/^[A-Za-z0-9 _-]+$/.test(previewCamera)) {
+  throw new Error('--preview-camera must be a camera name or preset key, for example Overview or jinmaoEntrance');
 }
 const keys = asset ? [asset] : mode === 'original' ? allKeys.filter((key) => key.endsWith('-original'))
   : mode === 'variants' ? allKeys.filter((key) => key.endsWith('-island') || key.endsWith('-shanghai'))

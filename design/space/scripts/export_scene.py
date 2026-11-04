@@ -4,6 +4,7 @@ import re
 import sys
 import bpy
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 root = Path(__file__).resolve().parents[1]
 repository = root.parents[1]
@@ -30,12 +31,12 @@ for obj in scene.objects:
 if not selected:
     raise RuntimeError('No exportable Space objects')
 target = output / (key + '.glb')
-temporary = Path('E:/CubeRoot-Assets/space/export') / (key + '.glb')
-temporary.parent.mkdir(parents=True, exist_ok=True)
-bpy.ops.export_scene.gltf(filepath=str(temporary), export_format='GLB', use_selection=True,
-    export_extras=True, export_attributes=True, export_yup=True,
-    export_animations=False, export_cameras=False, export_lights=False,
-    export_gpu_instances=True, export_image_format='AUTO')
-summary = {'asset': key, 'source': str(Path(bpy.data.filepath).relative_to(repository)).replace('\\', '/'), 'objects': len(selected), 'facadeRigs': facade_rigs, 'blender': bpy.app.version_string, **pack(temporary, target)}
+with TemporaryDirectory(prefix='cuberoot-space-export-') as directory:
+    temporary = Path(directory) / (key + '.glb')
+    bpy.ops.export_scene.gltf(filepath=str(temporary), export_format='GLB', use_selection=True,
+        export_extras=True, export_attributes=True, export_yup=True,
+        export_animations=False, export_cameras=False, export_lights=False,
+        export_gpu_instances=True, export_image_format='AUTO')
+    summary = {'asset': key, 'source': str(Path(bpy.data.filepath).relative_to(repository)).replace('\\', '/'), 'objects': len(selected), 'facadeRigs': facade_rigs, 'blender': bpy.app.version_string, **pack(temporary, target)}
 atomic_write(output / (key + '.json'), (json.dumps(summary, indent=2) + '\n').encode('utf-8'))
 print('SPACE_EXPORT_RESULT ' + json.dumps(summary))

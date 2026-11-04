@@ -5,7 +5,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { loadSpaceBlender, SPACE_ASSET_SOURCE } from './space-blender';
+import { loadSpaceBlender, SPACE_ASSET_SOURCE, type SpaceAssetProgress } from './space-blender';
 import { VILLA_ROOMS, type RoomStyle, type WalkObstacle, type Environment } from './space-state';
 
 import { applyIslandMaterial, createIsland } from './space-island';
@@ -56,7 +56,7 @@ export class SpaceRoom {
   private dark = new THREE.MeshStandardMaterial({ color: 0x242a2b, roughness: 0.5 });
   private ceramic = new THREE.MeshPhysicalMaterial({ color: 0xf0efdf, roughness: 0.12, clearcoat: 1 });
   private led!: THREE.MeshBasicMaterial;
-  constructor(readonly style: RoomStyle, private helpers: THREE.Object3D[], private invalidate = () => {}, readonly environment: Environment = 'original', source: 'blender' | 'bootstrap' = SPACE_ASSET_SOURCE) {
+  constructor(readonly style: RoomStyle, private helpers: THREE.Object3D[], private invalidate = () => {}, readonly environment: Environment = 'original', source: 'blender' | 'bootstrap' = SPACE_ASSET_SOURCE, private progress?: (progress: SpaceAssetProgress) => void) {
     this.palette = style in PALETTES ? PALETTES[style as keyof typeof PALETTES] : EXTRA[style as keyof typeof EXTRA];
     const p = this.palette;
     if (!('LTC_FLOAT_1' in THREE.UniformsLib)) RectAreaLightUniformsLib.init();
@@ -98,7 +98,7 @@ export class SpaceRoom {
   }
 
   private async loadBlender() {
-    const { scene } = await loadSpaceBlender(`${this.style}-${this.environment}`);
+    const { scene } = await loadSpaceBlender(`${this.style}-${this.environment}`, progress => { if (!this.disposed) this.progress?.(progress); });
     if (this.disposed) { this.disposeModel(scene); return; }
     let source: THREE.Object3D = scene;
     scene.traverse(o => { if (o.userData.spaceId === 'root') source = o; });
@@ -1053,6 +1053,7 @@ export class SpaceRoom {
   }
 
   resize(width: number) {
+    if (this.disposed) return;
     const size = width < 600 ? 384 : 768;
     for (const mirror of this.mirrors) {
       mirror.getRenderTarget().setSize(size, size);
@@ -1061,6 +1062,7 @@ export class SpaceRoom {
   }
 
   update(camera: THREE.Camera, cutaway: boolean) {
+    if (this.disposed) return;
     // Load the detailed cars only when their wing is approached.
     const nearGarage = camera.position.distanceToSquared(new THREE.Vector3(21, 1, -10)) < 24 * 24;
     if (this.style !== 'company' && !this.carsLoaded && nearGarage) {
@@ -1082,6 +1084,7 @@ export class SpaceRoom {
   }
 
   dispose() {
+    if (this.disposed) return;
     this.disposed = true;
     this.textures.forEach(t => t.dispose());
     this.root.removeFromParent();

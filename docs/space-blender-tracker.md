@@ -2,6 +2,33 @@
 
 当前日常导出入口是仓库根执行 `cd core && pnpm space:batch --asset shanghai`（或 `--mode all`）。下方日期记录中的 `batch.ps1` 只描述当时实际使用的旧脚本，不是现行命令。
 
+## 2026-11-03 金茂入口夜景校准
+
+上一轮网页审图发现，金茂底部竖肋使用整片自发光，在近景中变成白条，而门面与铺地缺少局部照明。本轮为南、东、北入口各增加两盏可在 Blender 编辑的 SPOT 灯，使用现有悬挂灯壳的位置；竖肋材质增加局部高度渐变，在 10 m 以下关闭整片夜间补光，10–45 m 平滑恢复原 2.4 强度。网页沿用已有六灯池，没有增加同时工作的灯数。灯位聚合、强度和渐变高度是视觉估算，不是现场光度测量，来源边界见[参考档案](../design/space/references/jin-mao.md#2026-11-03-入口夜景校准)。
+
+- 第一版每入口 1800 / 600 cd，在真实网页中把门面与地面照得发白；第二版降为 **180 / 60 cd**。已逐张查看[圆门修改前](../.tmp/png/space-jinmao-lighting-20261103/circular-before-night.jpg)、[最终夜景](../.tmp/png/space-jinmao-lighting-20261103/circular-after-night.jpg)、[圆门日景](../.tmp/png/space-jinmao-lighting-20261103/circular-after-day.jpg)、[南入口夜景](../.tmp/png/space-jinmao-lighting-20261103/south-after-night.jpg)、[南入口日景](../.tmp/png/space-jinmao-lighting-20261103/south-after-day.jpg)和[整栋夜景](../.tmp/png/space-jinmao-lighting-20261103/tower-after-night.jpg)。门框、墙面分缝与铺地纹样可辨，底部竖肋保留明暗，塔身与塔冠夜景继续显示。
+- [390 × 844 窄屏](../.tmp/png/space-jinmao-lighting-20261103/circular-after-night-mobile.jpg)实际画布为 390 × 490，页面 scrollWidth 与 clientWidth 均为 390；这是桌面浏览器缩窄检查，未做实体手机性能验收。[江海关](../.tmp/png/space-jinmao-lighting-20261103/customs-after-night.jpg)和[返回圆门](../.tmp/png/space-jinmao-lighting-20261103/circular-return-night.jpg)照明均正常显示。日志保留在[网页记录](../.tmp/png/space-jinmao-lighting-20261103/browser-review.json)：存在旧的浏览器扩展失效与消息通道错误，未发现本轮 Shader、WebGL 或资源加载错误，不将控制台表述为空。
+- 正式源已保存修订 `jin-mao-entrance-lighting-20261103`，**305,139,960 字节**，精确指纹 `[305139960,1793776247744468291]`，见[保存记录](../.tmp/png/space-jinmao-lighting-20261103/saved.json)。保存前独立读取原磁盘工程，与编辑中的 **12,031 个网格对象**逐项比较几何、UV、存储属性、材质分配、运行 ID、父子关系、变换及动画状态，[结果无变化](../.tmp/png/space-jinmao-lighting-20261103/source-comparison.json)。保留原六组作者灯；326 份导出材质中仅竖肋新增高度属性，16 张共享纹理保持。旧 GLB 的部分 buffer 哈希与此次导出不同，未将跨版本导出计为字节级几何一致性通过；模型保留结论来自独立源工程比较。
+- 正式 GLB **602,290,688 字节**，比旧版增加 **2,020 字节**，12,037 个导出对象、7 组作者灯、16 张共享纹理。SHA-256 为 `bccf754289c998b593d81368204ae1e3edcd7fb31b076a8c1d8bd023617ad683`。[文件与清单检查](../.tmp/png/space-jinmao-lighting-20261103/formal-check.json)确认本地完整文件长度/哈希、六灯数据、材质高度与保存记录相符；开发服务器清单 HTTP 200 且与磁盘一致。本轮未重复完整 GLB HTTP 下载，画面检查使用正常页面正式资源。
+- 客户端 typecheck 与定向 `space_shanghai.test.ts` **50 项通过**，覆盖渐变与无渐变材质的 Shader 缓存隔离、不同高度参数共享程序、非法元数据拒绝及原材质保留；新增 Blender 脚本语法检查通过。29 个不导出的审图相机随本次源文件保存，Blender 留在[圆门 Solid / Material 视图](../.tmp/png/space-jinmao-lighting-20261103/blender-saved-review.jpg)，它用于几何查看，不代表网页光照。未创建 `.blend1` 或操作前工程备份，未运行 Next build、完整 Cycles 渲染、提交或发布。
+
+**入口夜景的过亮竖条和照明缺失已有改善，整城画质未判为通过。** 石材颗粒仍平、南北入口后方门厅未复刻、圆门方位及铺地图案有估算；未补做北入口和全部天气验收。环球观景厅镜顶、庭院水池和中庭内部继续待办；约 602 MB 整城分区、LOD 与真机性能尚未完成。以下日期段落保留各轮结束时的历史状态。
+
+## 2026-11-03 Mac 实机查看与共享上海机位
+
+维护者要求继续优化上海并打开 Blender 查看。Mac 已载入正式 `design/space/scenes/shanghai.blend`，使用 Blender 5.2.3 LTS；核对 17 张文件贴图均已打包。当前 Blender 留在金茂圆形入口的 Solid / Material 色彩视图，便于观察雨棚、圆门、格栅与铺地几何；这不是最终 PBR 光照图。新增审图相机和视口设置只存在当前会话，未保存覆盖正式工程或重导出 GLB。
+
+- 网页增加“金茂南入口”“金茂圆形入口”“环球 100 层观景厅”，近裁剪为 0.05 m，并使用局部阴影范围。原 26 个机位的坐标保留，合计 29 个机位移到 `space-shanghai-cameras.json`；Blender 与网页消费同一份坐标和桌面垂直视场角。
+- `preview_cameras.city_camera` 创建或复用明确不导出的审图相机，保护同名的手工对象，兼容现存作者相机。实际 Blender 中逐一核对 29 个机位的位置、视场角、重复调用和不导出标记；另检查原 `Jin Mao crown` 相机继续按名称返回。
+- 窄屏室内预设通过扩大视场角适配，不再将镜头后退 20% 而穿出建筑。观景厅桌面 65°、窄屏 76°；Y/Z 中庭固定桌面 58°、窄屏 76°。切换房间风格及画布尺寸不再把城市中庭重设为住宅/外景视场角。
+- 在真实 Chrome 中加载正式 GLB，查看三处新机位的 09:00 和 21:00 画面；390 × 844 下观景厅仍在室内、页面无横向溢出，测试后恢复桌面视口。最终读取控制台 error/warn 为空。此次未测试实体手机、全部天气或全部城市机位。
+
+本地证据：[Blender 圆形入口](../.tmp/png/space-shanghai-review-20261103/blender-jinmao-circular.jpg)、[机位与打包贴图记录](../.tmp/png/space-shanghai-review-20261103/blender-camera-check.json)、[金茂南入口日景](../.tmp/png/space-shanghai-review-20261103/jinmao-south-day.jpg)、[南入口夜景](../.tmp/png/space-shanghai-review-20261103/jinmao-south-night.jpg)、[圆形入口日景](../.tmp/png/space-shanghai-review-20261103/jinmao-circular-day.jpg)、[圆形入口夜景](../.tmp/png/space-shanghai-review-20261103/jinmao-circular-night.jpg)、[观景厅日景](../.tmp/png/space-shanghai-review-20261103/swfc-hall-day.jpg)、[观景厅夜景](../.tmp/png/space-shanghai-review-20261103/swfc-hall-night.jpg)、[观景厅窄屏](../.tmp/png/space-shanghai-review-20261103/swfc-hall-night-mobile.jpg)。均为本地忽略目录产物。
+
+**机位、加载和窄屏行为通过，整体画质继续待改。** 金茂近景夜间竖肋成片过亮，铺地和门厅暗部不足；当前资产的 `vertical floodlit piers` 使用 `shanghai-illumination-2.4`，运行时直接向整片表面叠加夜间自发光，不是分灯具的实际洗墙。需要依据实拍校准竖肋配光和入口照明，不能通过整体曝光压暗来冒充完成。石材仍偏平、圆形入口方位与拉杆尺寸有估算；环球观景厅镜顶波纹、夜间宽柱面和后续内部空间仍待验收。约 602 MB 整城分区/LOD 及真机性能待办保留。
+
+客户端 typecheck、`cube_space.test.ts` 和 `space_shanghai.test.ts` 共 87 项、差异检查通过；Blender helper 语法、上述实机检查及新机位的批处理只读计划通过。另与 Git 中原定义逐项比较，26 个既有机位的双语名称、位置和目标坐标全部保留。未运行 Next build、正式批量渲染、提交或发布；模型资产版本保持原样。下方 9 月记录为历史事实，旧备份按维护者 11 月 3 日要求已经删除，不再可恢复。
+
 ## 2026-09-13 金茂入口雨棚细部与铺地 本轮收尾
 
 继续对照已署名的 SOM 南入口实拍与 Nephilim 圆形入口照片，补三个雨棚的檐口细杆、玻璃下条带遮板、悬挂板分缝及灯具外壳；东入口补两块悬挂遮板与交叉拉杆，三个入口补灰红方形铺地。每座雨棚新增 130 根细杆、26 个梁边灯具；构件合批为七个网格。来源已同步到网页双语来源记录，尺寸、方位和纹样估算边界见[参考档案](../design/space/references/jin-mao.md#2026-09-13-入口雨棚细部与方形铺地)。

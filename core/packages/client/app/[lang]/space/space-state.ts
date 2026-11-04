@@ -2,6 +2,9 @@ import { applySq1Move, isSlashValid, parseSq1Scramble, solvedSq1 } from '@cubero
 
 export const SPACE_KEY = 'cuberoot.space.v1';
 export const MAX_OBJECTS = 64;
+export const MAX_OBJECT_MOVES = 2000;
+// Includes the indented export of 64 puzzles with their complete turn histories.
+export const MAX_LAYOUT_BYTES = 4_000_000;
 export const SPACE_LIMIT = 32;
 export const SCALE_MIN = 0.04;
 export const SCALE_MAX = 2.5;
@@ -181,7 +184,7 @@ export function validSpaceMove(kind: PuzzleKind, move: string) {
 }
 
 export function parseLayout(text: string): Layout {
-  if (text.length > 128_000) throw new Error('size');
+  if (text.length > MAX_LAYOUT_BYTES) throw new Error('size');
   const data: unknown = JSON.parse(text);
   if (!data || typeof data !== 'object' || !('version' in data) || data.version !== 1 ||
     !('objects' in data) || !Array.isArray(data.objects) || data.objects.length > MAX_OBJECTS) throw new Error('layout');
@@ -201,7 +204,7 @@ export function parseLayout(text: string): Layout {
       !isPuzzleKind(v.kind) || !vector(v.position, 2, SPACE_LIMIT) || !vector(v.rotation, 3, Math.PI * 2) ||
       typeof v.scale !== 'number' || !Number.isFinite(v.scale) || v.scale < SCALE_MIN || v.scale > SCALE_MAX) throw new Error('object');
     if ('level' in v && v.level !== 0 && v.level !== 1) throw new Error('level');
-    if ('moves' in v && (!Array.isArray(v.moves) || v.moves.length > 2000 || v.moves.some(m => typeof m !== 'string' || !validSpaceMove(v.kind as PuzzleKind, m)))) throw new Error('moves');
+    if ('moves' in v && (!Array.isArray(v.moves) || v.moves.length > MAX_OBJECT_MOVES || v.moves.some(m => typeof m !== 'string' || !validSpaceMove(v.kind as PuzzleKind, m)))) throw new Error('moves');
     if (v.kind === 'sq1' && Array.isArray(v.moves)) {
       let state = solvedSq1();
       for (const move of parseSq1Scramble(v.moves.join(' '))) {

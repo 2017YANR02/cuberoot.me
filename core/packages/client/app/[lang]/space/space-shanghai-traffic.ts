@@ -55,7 +55,7 @@ export class ShanghaiTraffic {
   private visibility: THREE.InstancedBufferAttribute;
   private wet = { value: 0 };
   private night = { value: 0 };
-  private lastTime = 0;
+  private lastTime: number | null = null;
   private transform = new THREE.Object3D();
   private direction = new THREE.Vector3();
 
@@ -177,7 +177,10 @@ export class ShanghaiTraffic {
   setWeather(night:number, wet:number) { this.night.value=night; this.wet.value=wet; }
 
   update(elapsed:number) {
-    const dt=Math.min(.1,Math.max(0,elapsed-this.lastTime)); this.lastTime=elapsed;
+    // A paused scene can still redraw for camera/light changes. Retain the
+    // existing instance buffers instead of resampling and uploading every car.
+    if (elapsed === this.lastTime) return;
+    const dt=this.lastTime === null ? 0 : Math.min(.1,Math.max(0,elapsed-this.lastTime)); this.lastTime=elapsed;
     for(let i=0;i<this.cars.length;i++) {
       const car=this.cars[i]; let track=this.tracks[car.track]; car.distance+=dt*car.speed;
       if(car.distance>=track.length) {

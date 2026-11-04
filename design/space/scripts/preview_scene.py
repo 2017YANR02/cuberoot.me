@@ -7,6 +7,8 @@ from pathlib import Path
 
 import bpy
 from mathutils import Quaternion, Vector
+sys.path.insert(0, str(Path(__file__).parent))
+from preview_cameras import city_camera
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--camera', default='Overview')
@@ -15,7 +17,7 @@ scene = bpy.context.scene
 key = scene.get('space_asset')
 if not isinstance(key, str) or not re.fullmatch(r'shanghai|(minimal|modern|cyberpunk|vintage|italian|penthouse|japanese|company)-(original|island|shanghai)', key):
     parser.error('Open a Space source scene first')
-camera = scene.objects.get(args.camera)
+camera = city_camera(scene, args.camera) if key == 'shanghai' and args.camera != 'Overview' else scene.objects.get(args.camera)
 if camera is None or camera.type != 'CAMERA':
     parser.error('Unknown camera. Available: ' + ', '.join(o.name for o in scene.objects if o.type == 'CAMERA'))
 

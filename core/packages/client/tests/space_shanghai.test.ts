@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { addShanghaiSigns, shanghaiSignLetters } from '@/app/[lang]/space/space-shanghai-signs';
@@ -84,6 +84,40 @@ describe('Shanghai illumination program sharing', () => {
     expect(programs[1].vertexShader).toBe(programs[0].vertexShader);
     expect(programs[1].fragmentShader).toBe(programs[0].fragmentShader);
     materials.forEach(material => material.dispose());
+  });
+
+  it('keeps local facade height fades separate from unfaded lamps while sharing height-profile programs', () => {
+    const scene = city(), bank = { width: 1, axes: [], wingAxes: [], wingZ: 0 };
+    const material = (height: { bottom: number; top: number } | undefined, key = 'shanghai-illumination-2.4') => {
+      const m = new THREE.MeshStandardMaterial({ metalness: .74, roughness: .25 });
+      m.userData = { spaceShaderKey: key, spaceIllumination: 2.4, spaceIlluminationHeight: height };
+      scene['restoreBlenderMaterial'](m, bank);
+      return m;
+    };
+    const a = material({ bottom: 10, top: 45 });
+    const b = material({ bottom: 16, top: 50 }, 'shanghai-illumination-uniform-v1-height-v1');
+    const lamp = material(undefined);
+    const first = shader(a), second = shader(b), unfaded = shader(lamp);
+    expect(a.customProgramCacheKey()).toBe('shanghai-illumination-uniform-v1-height-v1');
+    expect(b.customProgramCacheKey()).toBe(a.customProgramCacheKey());
+    expect(lamp.customProgramCacheKey()).not.toBe(a.customProgramCacheKey());
+    expect(first.fragmentShader).toBe(second.fragmentShader);
+    expect(first.vertexShader).toBe(second.vertexShader);
+    expect(first.uniforms.cityIlluminationHeight.value.toArray()).toEqual([10, 45]);
+    expect(second.uniforms.cityIlluminationHeight.value.toArray()).toEqual([16, 50]);
+    expect(first.uniforms.cityNight).toBe(unfaded.uniforms.cityNight);
+    expect(first.uniforms.cityIllumination.value).toBe(2.4);
+    expect(unfaded.uniforms.cityIlluminationHeight).toBeUndefined();
+    expect(unfaded.vertexShader).not.toContain('cityIlluminationY');
+    expect(a.metalness).toBe(.74); expect(a.roughness).toBe(.25); expect(a.emissive.getHex()).toBe(0);
+    for (const invalid of [null, {}, { bottom: 10, top: 10 }, { bottom: 11, top: 10 }, { bottom: NaN, top: 45 }, { bottom: 10, top: Infinity }]) {
+      const m = new THREE.MeshStandardMaterial();
+      m.userData = { spaceShaderKey: 'shanghai-illumination-2.4', spaceIlluminationHeight: invalid };
+      expect(() => scene['restoreBlenderMaterial'](m, bank)).toThrow('Invalid Blender illumination height profile');
+      m.dispose();
+    }
+    expect(() => material(undefined, 'shanghai-illumination-uniform-v1-height-v1')).toThrow('Missing Blender illumination height profile');
+    a.dispose(); b.dispose(); lamp.dispose();
   });
 
   it('preserves independent SWFC top PBR materials without applying the opaque tower window shader', () => {
@@ -518,7 +552,13 @@ describe('Shanghai geographic asset and river cruise', () => {
       traffic.update(.05);
       const moved=Array.from(meshes[0].instanceMatrix.array);
       expect(moved.every(Number.isFinite)).toBe(true); expect(moved).not.toEqual(before);
+      const version = meshes[0].instanceMatrix.version;
+      const visibility = meshes[0].geometry.getAttribute('trafficVisibility');
+      const visibilityVersion = (visibility as THREE.InstancedBufferAttribute).version;
       traffic.update(.05); expect(Array.from(meshes[0].instanceMatrix.array)).toEqual(moved);
+      expect(meshes[0].instanceMatrix.version).toBe(version);
+      expect((visibility as THREE.InstancedBufferAttribute).version).toBe(visibilityVersion);
+      traffic.update(.1); expect(meshes[0].instanceMatrix.version).toBe(version + 1);
       for(const mesh of meshes) {
         expect(mesh.count).toBe(count); expect(mesh.instanceMatrix).toBe(meshes[0].instanceMatrix);
         expect(mesh.boundingSphere!.radius).toBeGreaterThan(0);
@@ -528,6 +568,28 @@ describe('Shanghai geographic asset and river cruise', () => {
     let allocated=0;
     const empty=new ShanghaiTraffic([],()=>{allocated++; return new THREE.MeshStandardMaterial();},false);
     empty.update(1); expect(empty.root.children).toEqual([]); expect(allocated).toBe(0);
+  });
+
+  it('keeps boat buffers and bounds unchanged while paused, with camera lighting still updating', () => {
+    const city = Object.create(ShanghaiScene.prototype) as ShanghaiScene;
+    const boats = new THREE.InstancedMesh(new THREE.BoxGeometry(2, 1, 4), new THREE.MeshBasicMaterial(), 3);
+    const route = new THREE.LineCurve3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1000, 0, 0));
+    const lighting = { update: vi.fn(() => false), transitioning: false };
+    Object.assign(city, { boats, boatDetails: [], elapsed: 0, lastTime: 0, route, night: { value: 0 }, facadeLighting: lighting });
+    const camera = new THREE.PerspectiveCamera(), target = new THREE.Vector3();
+    const bounds = vi.spyOn(boats, 'computeBoundingSphere');
+    try {
+      city.update(100, false, camera, target);
+      const version = boats.instanceMatrix.version, matrix = Array.from(boats.instanceMatrix.array);
+      camera.position.set(200, 100, 300);
+      city.update(200, false, camera, target);
+      expect(boats.instanceMatrix.version).toBe(version);
+      expect(Array.from(boats.instanceMatrix.array)).toEqual(matrix);
+      expect(bounds).toHaveBeenCalledTimes(1); expect(lighting.update).toHaveBeenCalledTimes(2);
+      city.update(300, true, camera, target);
+      expect(boats.instanceMatrix.version).toBe(version + 1); expect(bounds).toHaveBeenCalledTimes(2);
+      expect(Array.from(boats.instanceMatrix.array)).not.toEqual(matrix);
+    } finally { boats.dispose(); boats.geometry.dispose(); (boats.material as THREE.Material).dispose(); }
   });
 
   it('validates optional OSM traffic metadata while preserving older maps', () => {

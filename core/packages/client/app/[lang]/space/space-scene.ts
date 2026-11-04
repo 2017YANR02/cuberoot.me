@@ -20,9 +20,10 @@ import MegaminxCube from '@cuberoot/puzzle-render-core/engine/mega/MegaminxCube'
 import SkewbCube from '@cuberoot/puzzle-render-core/engine/skewb/SkewbCube';
 import { movePosition, PEDESTALS, VILLA_ROOMS, floorHeight, walkFloor, walkStep, type Destination, type Level, type Layout, type RiverColor, type SpaceObject, type Vec3 } from './space-state';
 import { SpaceRoom } from './space-room';
+import type { SpaceAssetProgress } from './space-blender';
 import roomCameras from './space-room-cameras.json';
 import { pickTurn, turnBusy, turnPuzzle } from './space-turn';
-import { validSpaceMove, layoutTime, type Weather } from './space-state';
+import { validSpaceMove, layoutTime, MAX_OBJECT_MOVES, type Weather } from './space-state';
 import { SpaceWeather } from './space-weather';
 import { ShanghaiScene, SHANGHAI_VIEWS, type ShanghaiView } from './space-shanghai';
 
@@ -77,6 +78,7 @@ export class SpaceScene {
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(42, 1, 0.05, 100000);
   private disposed = false;
+  private contextLost = false;
   private sky: THREE.DataTexture | null = null;
   private renderer: THREE.WebGLRenderer;
   private composer: EffectComposer;
@@ -118,12 +120,15 @@ export class SpaceScene {
   private currentView: View = 'home';
   private flight: { start: number; from: THREE.Vector3; to: THREE.Vector3; fromTarget: THREE.Vector3; target: THREE.Vector3 } | null = null;
   private observer: ResizeObserver;
+  private viewportObserver: IntersectionObserver;
+  private inViewport = true;
   private themeObserver: MutationObserver;
   private media = window.matchMedia('(prefers-color-scheme: dark)');
   private events = new AbortController();
   private frame = 0;
   private themeFrame = 0;
   private selected: string | null = null;
+  private layout: Layout | null = null;
   private placing = false;
   private snap = false;
   private mode: Mode = 'translate';
@@ -132,7 +137,7 @@ export class SpaceScene {
   private consumedTouch: number | null = null;
   private forwarding = false;
   private drag: { id: number; entry: Entry; before: SpaceObject; plane: THREE.Plane; offset: THREE.Vector3; x: number; y: number; moved: boolean } | null = null;
-  private press: { x: number; y: number; blank: boolean } | null = null;
+  private press: { id: number; x: number; y: number; blank: boolean } | null = null;
   private turnDrag: { id: number; x: number; y: number; entry: Entry; resolve: (dx: number, dy: number) => string | null; fired: boolean } | null = null;
   navigation: Navigation = 'orbit';
   private freeCamera = false;
@@ -154,6 +159,7 @@ export class SpaceScene {
     weatherError: () => void;
     cityState: (state: 'loading' | 'ready' | 'error' | null) => void;
     roomState?: (state: 'loading' | 'ready' | 'error') => void;
+    assetProgress?: (asset: 'room' | 'city', progress: SpaceAssetProgress | null) => void;
     cruising: (active: boolean) => void;
     zoom: (value: number) => void;
   }) {
@@ -239,7 +245,7 @@ export class SpaceScene {
     environmentScene.dispose();
     pmrem.dispose();
     new HDRLoader().load('/assets/space/v1/sunset.hdr.bin', texture => {
-      if (!this.disposed) {
+      if (!this.disposed && !this.contextLost) {
         const generator = new THREE.PMREMGenerator(this.renderer);
         this.outdoorEnvironment = generator.fromEquirectangular(texture);
         if (!this.weatherKey) this.scene.environment = this.outdoorEnvironment.texture;
@@ -272,29 +278,18 @@ export class SpaceScene {
     this.scene.add(this.drop);
     this.outline.visible = false;
     this.scene.add(this.outline);
-    this.observer = new ResizeObserver(() => {
-      // A hidden canvas has no renderable area; keep its last valid targets.
-      const width = host.clientWidth, height = host.clientHeight;
-      if (!width || !height) return;
-      this.camera.aspect = width / height;
-      this.camera.fov = ['interior', 'study', 'bedroom', 'bathroom', 'courtyard', 'garage', 'cinema', 'gym'].includes(this.currentView) ? (width < 600 ? 76 : this.room?.style === 'company' ? 65 : 58) : width < 600 ? 60 : 46;
-      this.camera.updateProjectionMatrix();
-      this.renderer.setSize(width, height);
-      this.composer.setSize(width, height);
-      this.ao.setSize(Math.ceil(width * 0.75), Math.ceil(height * 0.75));
-      this.room?.resize(width);
-      this.render();
-    });
+    this.observer = new ResizeObserver(() => this.resize());
     this.observer.observe(host);
+    this.viewportObserver = new IntersectionObserver(entries => {
+      this.inViewport = entries.some(entry => entry.target === host && entry.isIntersecting);
+      this.updateVisibility();
+    });
+    this.viewportObserver.observe(host);
     this.themeObserver = new MutationObserver(this.theme);
     this.themeObserver.observe(document.documentElement, { attributes: true });
     this.media.addEventListener('change', this.theme);
     this.reducedMotion.addEventListener('change', this.render, { signal: this.events.signal });
-    document.addEventListener('visibilitychange', () => {
-      clearTimeout(this.weatherTimer);
-      if (document.hidden) { this.cancel(); cancelAnimationFrame(this.frame); this.frame = 0; }
-      else this.render();
-    }, { signal: this.events.signal });
+    document.addEventListener('visibilitychange', () => this.updateVisibility(), { signal: this.events.signal });
     // Appearance previews animate CSS tokens after the attribute mutation.
     for (const event of ['transitionend', 'transitioncancel'] as const) {
       document.documentElement.addEventListener(event, e => {
@@ -314,21 +309,40 @@ export class SpaceScene {
     }, { passive: false, signal: this.events.signal });
     canvas.addEventListener('pointermove', this.move, options);
     canvas.addEventListener('pointerleave', () => { this.drop.visible = false; this.render(); }, { signal: this.events.signal });
-    canvas.addEventListener('pointerup', this.up, options);
+    canvas.addEventListener('pointerup', event => this.up(event), options);
     canvas.addEventListener('pointercancel', e => { this.touches.delete(e.pointerId); this.consumedTouch = null; this.cancel(); }, options);
-    canvas.addEventListener('lostpointercapture', this.cancel, options);
-    canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); this.callbacks.unavailable(); }, { signal: this.events.signal });
+    canvas.addEventListener('lostpointercapture', () => this.cancel(), options);
+    canvas.addEventListener('webglcontextlost', event => this.loseContext(event), { signal: this.events.signal });
     window.addEventListener('blur', () => { this.touches.clear(); this.consumedTouch = null; this.cancel(); }, { signal: this.events.signal });
     const movement: Record<string, string> = { KeyW: 'forward', ArrowUp: 'forward', KeyS: 'back', ArrowDown: 'back', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right', KeyR: 'up', KeyF: 'down', KeyE: 'up', KeyQ: 'down' };
     const look: Record<string, string> = { ArrowUp: 'look-up', ArrowDown: 'look-down', ArrowLeft: 'look-left', ArrowRight: 'look-right' };
     canvas.addEventListener('blur', () => { this.walkKeys.clear(); this.walkTime = 0; }, { signal: this.events.signal });
     canvas.addEventListener('keydown', event => {
-      if (!this.navigating || event.ctrlKey || event.metaKey || event.altKey) return;
+      if (!this.navigating || event.defaultPrevented || event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
       const direction = (this.navigation === 'drone' && look[event.code]) || movement[event.code];
       if (direction) { event.preventDefault(); this.navigationInput(direction, true, event.code); }
     }, { signal: this.events.signal });
     window.addEventListener('keyup', event => { const direction = movement[event.code]; if (direction) this.navigationInput(direction, false, event.code); }, { signal: this.events.signal });
     this.view('interior');
+  }
+
+  private resize() {
+    if (this.disposed || this.contextLost) return;
+    // A hidden canvas has no renderable area; keep its last valid targets.
+    const width = this.host.clientWidth, height = this.host.clientHeight;
+    if (!width || !height) return;
+    this.camera.aspect = width / height;
+    // Navigation zoom belongs to the camera, not the viewport. Rotating a phone
+    // or opening controls must not reset the lens chosen while walking/flying.
+    if (!this.navigating && !this.freeCamera) {
+      this.camera.fov = this.presetFov(width);
+    }
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(width, height);
+    this.composer.setSize(width, height);
+    this.ao.setSize(Math.ceil(width * 0.75), Math.ceil(height * 0.75));
+    this.room?.resize(width);
+    this.render();
   }
 
   private theme = () => {
@@ -363,16 +377,26 @@ export class SpaceScene {
   };
 
   private render = () => {
+    if (this.disposed || this.contextLost) return;
     this.shadowDirty = true;
-    if (this.room) this.weather.patchSurfaces(this.room.root);
     this.scheduleRender();
   };
 
-  private scheduleRender = () => {
-    if (this.disposed || this.preparingCity || this.frame || document.hidden) return;
+  private updateVisibility() {
+    if (this.disposed || this.contextLost) return;
+    clearTimeout(this.weatherTimer);
+    if (document.hidden || !this.inViewport) {
+      this.touches.clear(); this.consumedTouch = null;
+      this.cancel();
+      cancelAnimationFrame(this.frame); this.frame = 0;
+    } else this.render();
+  }
+
+  private scheduleRender() {
+    if (this.disposed || this.contextLost || this.preparingCity || this.frame || document.hidden || !this.inViewport) return;
     this.frame = requestAnimationFrame(time => {
       this.frame = 0;
-      if (this.disposed || this.preparingCity) return;
+      if (this.disposed || this.contextLost || this.preparingCity || document.hidden || !this.inViewport) return;
       if (this.navigating && this.walkKeys.size && this.room) {
         const dt = this.walkTime ? Math.min(0.05, (time - this.walkTime) / 1000) : 0;
         this.walkTime = time;
@@ -418,9 +442,22 @@ export class SpaceScene {
       this.shadowDirty = false;
       this.composer.render();
       clearTimeout(this.weatherTimer);
-      if (animateWeather || this.city?.cruising || this.city?.lightingTransitioning) this.weatherTimer = window.setTimeout(this.scheduleRender, Math.max(0, 33 - (performance.now() - time)));
+      if (animateWeather || this.city?.cruising || this.city?.lightingTransitioning) this.weatherTimer = window.setTimeout(() => this.scheduleRender(), Math.max(0, 33 - (performance.now() - time)));
     });
-  };
+  }
+
+  private loseContext(event: Event) {
+    event.preventDefault();
+    this.contextLost = true;
+    this.weather.engine.abort.abort();
+    this.flight = null;
+    this.cancel();
+    this.cruise(false);
+    clearTimeout(this.weatherTimer);
+    cancelAnimationFrame(this.frame);
+    this.frame = 0;
+    this.callbacks.unavailable();
+  }
 
   private afterCityCompilation(dispose: () => void) {
     // Three's compileAsync polls material properties until the GPU is ready.
@@ -437,7 +474,7 @@ export class SpaceScene {
 
   private async prepareCity(city: ShanghaiScene | null, room: SpaceRoom) {
     const revision = ++this.cityPreparation;
-    const current = () => !this.disposed && this.cityPreparation === revision && this.city === city && this.room === room;
+    const current = () => !this.disposed && !this.contextLost && this.cityPreparation === revision && this.city === city && this.room === room;
     this.preparingCity = true;
     try {
       // The room supplies four area-light slots. The weather environment's
@@ -481,7 +518,7 @@ export class SpaceScene {
       if (!current()) return;
       console.error('Space city preparation failed', error);
       // Keep the controls and weather usable after an asset/compile failure;
-      // a new environment selection can retry without drawing a partial city.
+      // retrying or changing the environment must not draw a partial city.
       if (city) { city.root.visible = false; this.callbacks.cityState('error'); }
       room.root.visible = false;
       this.callbacks.roomState?.('error');
@@ -543,7 +580,8 @@ export class SpaceScene {
       };
       o.material = Array.isArray(o.material) ? o.material.map(finish) : finish(o.material);
     });
-    const proxy = new THREE.Mesh(new THREE.BoxGeometry(size.x * factor, size.y * factor, size.z * factor), new THREE.MeshBasicMaterial({ visible: false }));
+    const proxy = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ visible: false }));
+    proxy.scale.copy(size).multiplyScalar(factor);
     proxy.userData.spaceId = data.id;
     root.add(proxy);
     this.scene.add(root);
@@ -583,7 +621,9 @@ export class SpaceScene {
     entry.root.position.y = height - box.min.y;
     entry.root.updateMatrixWorld(true);
     const localBounds = visibleBounds(entry.model, entry.root);
-    entry.proxy.geometry.dispose(); entry.proxy.geometry = new THREE.BoxGeometry(...localBounds.getSize(new THREE.Vector3()).toArray());
+    // Reuse the picking mesh during drags and turns instead of allocating and
+    // disposing geometry for every pointer movement.
+    entry.proxy.scale.copy(localBounds.getSize(new THREE.Vector3()));
     entry.proxy.position.copy(localBounds.getCenter(new THREE.Vector3()));
   }
 
@@ -592,7 +632,16 @@ export class SpaceScene {
     return { ...entry.data, position: [position.x, position.z], rotation: [rotation.x, rotation.y, rotation.z] as Vec3 };
   }
 
-  sync(layout: Layout, selected: string | null, mode: Mode, snap: boolean, placing: boolean) {
+  retryAssets(layout: Layout) {
+    if (this.preparingCity) return;
+    this.sync(layout, this.selected, this.mode, this.snap, false, true);
+  }
+
+  sync(layout: Layout, selected: string | null, mode: Mode, snap: boolean, placing: boolean, reloadAssets = false) {
+    if (this.disposed || this.contextLost) return;
+    // React can echo an already-applied interaction state. Reapplying it would
+    // cancel a just-started cruise and rebuild every puzzle's picking bounds.
+    if (!reloadAssets && this.layout === layout && this.selected === selected && this.mode === mode && this.snap === snap && this.placing === placing) return;
     // An external edit/undo cancels any unfinished gesture before reconciling models.
     if (!this.turnDrag || mode !== this.mode || selected !== this.selected || layout.objects.find(o => o.id === selected)?.moves?.join(' ') !== this.turnDrag.entry.appliedMoves) this.cancel();
     const style = layout.room ?? 'minimal';
@@ -602,30 +651,47 @@ export class SpaceScene {
     this.orbit.maxTargetRadius = environment === 'shanghai' ? 20000 : environment === 'island' ? 500 : 70;
     this.orbit.maxDistance = environment === 'shanghai' ? 24000 : 240;
     const environmentChanged = this.room?.environment !== environment;
-    const roomChanged = this.room?.style !== style || environmentChanged;
-    if (environmentChanged) {
+    const roomChanged = this.room?.style !== style || environmentChanged || reloadAssets;
+    if (environmentChanged || reloadAssets) {
       this.cruise(false); this.retireScene(this.city); this.city = null;
       this.weatherPatchedCity = null;
+      this.callbacks.assetProgress?.('city', null);
       if (environment === 'shanghai') {
         this.callbacks.cityState('loading');
-        const city = new ShanghaiScene(this.host.clientWidth < 600, () => { this.callbacks.cruising(city.cruising); this.render(); });
+        const city = new ShanghaiScene(this.host.clientWidth < 600, () => { this.callbacks.cruising(city.cruising); this.render(); }, undefined, progress => {
+          if (!this.disposed && !this.contextLost && this.city === city) this.callbacks.assetProgress?.('city', progress);
+        });
         this.city = city; this.scene.add(city.root);
       } else this.callbacks.cityState(null);
     }
     if (roomChanged) {
       this.weather.forgetRoom();
       this.retireScene(this.room);
-      this.room = new SpaceRoom(style, [this.transform.getHelper(), this.outline, this.grid, this.drop], this.render, environment);
-      this.scene.add(this.room.root);
-      const room = this.room;
+      this.callbacks.assetProgress?.('room', null);
+      const room = new SpaceRoom(style, [this.transform.getHelper(), this.outline, this.grid, this.drop], () => {
+        if (this.disposed || this.contextLost || this.room !== room) return;
+        // Bootstrap props can arrive after room.ready. Patch their new materials
+        // here, without traversing the room on every camera or puzzle frame.
+        this.weather.patchSurfaces(room.root);
+        this.render();
+      }, environment, undefined, progress => {
+        if (!this.disposed && !this.contextLost && this.room === room) this.callbacks.assetProgress?.('room', progress);
+      });
+      this.room = room;
+      this.scene.add(room.root);
       this.callbacks.roomState?.('loading');
       void room.ready.then(() => {
-        if (this.disposed || this.room !== room) return;
+        if (this.disposed || this.contextLost || this.room !== room) return;
         room.resize(this.host.clientWidth);
         this.weather.patchSurfaces(room.root);
+        // Table surfaces arrive with the model. Restore support heights after
+        // loading/retrying, without snapping an object out of an active drag.
+        for (const entry of this.entries.values()) {
+          if (this.drag?.entry !== entry && !(this.transform.dragging && this.selected === entry.data.id)) this.apply(entry, entry.data);
+        }
         this.callbacks.roomState?.('ready'); this.render();
       }).catch(error => {
-        if (this.disposed || this.room !== room) return;
+        if (this.disposed || this.contextLost || this.room !== room) return;
         console.error('Space room asset failed to load', error);
         this.callbacks.roomState?.('error');
       });
@@ -643,7 +709,8 @@ export class SpaceScene {
       this.sun.color.setHex(cyber ? 0x8cb8ff : 0xffead4);
       this.sun.intensity = cyber ? 0.15 : 2.2;
       this.sun.position.set(-35, 32, 42);
-      this.sun.target.position.set(-9, 0, -3); this.scene.add(this.sun.target);
+      if (!reloadAssets) this.sun.target.position.set(-9, 0, -3);
+      this.scene.add(this.sun.target);
       if (style === 'company') this.sun.intensity = 0.12;
       this.fill.intensity = cyber ? 0.08 : 0.12;
       this.bloom.strength = cyber ? 0.18 : 0.04;
@@ -654,16 +721,16 @@ export class SpaceScene {
       this.pedestalMaterial.roughness = 0.22;
       // The room owns terrain and paving; the legacy plane would cover them.
       this.surfaces.forEach((surface, i) => { surface.visible = style !== 'company' && i > 0; });
-      this.view(environmentChanged ? environment === 'shanghai' ? 'northBund' : environment === 'island' ? 'island' : 'exterior' : style === 'company' ? 'interior' : this.currentView);
+      if (!reloadAssets) this.view(environmentChanged ? environment === 'shanghai' ? 'northBund' : environment === 'island' ? 'island' : 'exterior' : style === 'company' ? 'interior' : this.currentView);
     }
     this.weatherMotion = layout.weatherMotion ?? true;
     const weather = layout.weather ?? 'sunny', weatherKey = `${style}:${environment}:${weather}`;
-    if (weatherKey !== this.weatherKey) {
+    if (roomChanged || weatherKey !== this.weatherKey) {
       this.weatherKey = weatherKey;
       this.weather.set(weather, style, this.room!.root, environment === 'island', environment === 'shanghai');
     }
     const timeOfDay = layoutTime(layout), lightingKey = `${weatherKey}:${timeOfDay}`;
-    if (lightingKey !== this.lightingKey) {
+    if (roomChanged || lightingKey !== this.lightingKey) {
       this.lightingKey = lightingKey;
       this.weather.setTime(timeOfDay);
       const daylight = this.weather.daylight;
@@ -696,8 +763,10 @@ export class SpaceScene {
     }
     for (const data of layout.objects) {
       let entry = this.entries.get(data.id);
-      if (!entry) { entry = this.create(data); this.entries.set(data.id, entry); }
-      this.apply(entry, data);
+      if (!entry) {
+        entry = this.create(data); this.entries.set(data.id, entry);
+        this.apply(entry, data);
+      } else if (roomChanged || entry.data !== data) this.apply(entry, data);
     }
     this.selected = selected;
     this.mode = mode;
@@ -718,11 +787,12 @@ export class SpaceScene {
       if (this.city || this.cityCompilation) void this.prepareCity(this.city, this.room!);
       else { ++this.cityPreparation; this.preparingCity = false; }
     }
+    this.layout = layout;
     this.render();
   }
 
   twist(token: string, entry = this.selected ? this.entries.get(this.selected) : undefined) {
-    if (!entry || (entry.data.moves?.length ?? 0) >= 2000 || !validSpaceMove(entry.data.kind, token)) return false;
+    if (!entry || (entry.data.moves?.length ?? 0) >= MAX_OBJECT_MOVES || !validSpaceMove(entry.data.kind, token)) return false;
     if (!turnPuzzle(entry.model, token)) return false;
     entry.data = { ...entry.data, moves: [...entry.data.moves ?? [], token] };
     entry.appliedMoves = entry.data.moves!.join(' ');
@@ -792,6 +862,15 @@ export class SpaceScene {
     this.shadowDirty = true;
   }
 
+  private presetFov(width: number) {
+    if (this.city && Object.hasOwn(SHANGHAI_VIEWS, this.currentView)) {
+      const preset = SHANGHAI_VIEWS[this.currentView as ShanghaiView];
+      return width < 600 ? preset.mobileFov ?? 60 : preset.fov ?? 46;
+    }
+    const inside = ['interior', 'study', 'bedroom', 'bathroom', 'courtyard', 'garage', 'cinema', 'gym'].includes(this.currentView);
+    return inside ? (width < 600 ? 76 : this.room?.style === 'company' ? 65 : 58) : width < 600 ? 60 : 46;
+  }
+
   view(view: View) {
     this.cruise(false);
     this.setNavigation('orbit');
@@ -800,14 +879,15 @@ export class SpaceScene {
     this.orbit.cursor.set(0, 0, 0);
     this.orbit.maxPolarAngle = Math.PI / 2 - .025;
     this.currentView = view;
-    const inside = ['interior', 'study', 'bedroom', 'bathroom', 'courtyard', 'garage', 'cinema', 'gym', 'alibabaCourt', 'alibabaZCourt'].includes(view);
+    const cityView = !!this.city && Object.hasOwn(SHANGHAI_VIEWS, view);
+    const preset = cityView ? SHANGHAI_VIEWS[view as ShanghaiView] : undefined;
+    const inside = preset?.inside || ['interior', 'study', 'bedroom', 'bathroom', 'courtyard', 'garage', 'cinema', 'gym'].includes(view);
     this.scene.backgroundIntensity = 0.12;
     this.orbit.minDistance = inside ? 0.2 : 4;
-    const cityView = !!this.city && Object.hasOwn(SHANGHAI_VIEWS, view);
     this.ao.enabled = !cityView;
-    this.camera.near = cityView ? 1 : .05;
+    this.camera.near = preset?.near ?? (cityView ? 1 : .05);
     const mobile = this.host.clientWidth < 600;
-    this.camera.fov = inside ? (mobile ? 76 : this.room?.style === 'company' ? 65 : 58) : mobile ? 60 : 46;
+    this.camera.fov = this.presetFov(this.host.clientWidth);
     this.camera.updateProjectionMatrix();
     const target = new THREE.Vector3(-9, 3, -2);
     const direction = new THREE.Vector3(...(({ home: [0.72, 0.85, 1], front: [0, 0.2, 1], side: [1, 0.35, 0], top: [0, 1, 0.001] } as Partial<Record<View, Vec3>>)[view] ?? [0.85, 0.35, 1])).normalize();
@@ -819,19 +899,20 @@ export class SpaceScene {
     }
     if (view === 'island') { position.set(mobile ? 162 : 155, mobile ? 90 : 64, mobile ? 168 : 162); target.set(-6, -2, 3); }
     if (view === 'shore') { position.set(32, -1.8, 63); target.set(8, -4.8, 135); }
-    if (cityView) {
-      const preset = SHANGHAI_VIEWS[view as ShanghaiView]; position.set(...preset.camera); target.set(...preset.target);
+    if (preset) {
+      position.set(...preset.camera); target.set(...preset.target);
       // Ground-level courtyard presets must be able to look up beneath bridges.
       if (position.y < target.y) this.orbit.maxPolarAngle = Math.PI - .025;
-      if (mobile) position.sub(target).multiplyScalar(1.2).add(target);
+      // Widen an interior lens without backing the camera through a wall.
+      if (mobile && !preset.inside) position.sub(target).multiplyScalar(1.2).add(target);
     }
     // Metre-scale city shadows are focused on the current district; room views
     // restore the original small shadow camera and directional-light position.
     this.sun.target.position.copy(cityView ? target : new THREE.Vector3(-9, 0, -3));
     // A 4.6 km map cannot retain sub-metre cornices/columns. Close architectural
     // presets focus the existing shadow map; broad city/bridge views keep coverage.
-    const closeArchitecture = cityView && ['hsbc', 'customs', 'peace', 'tomsonGarden', 'commercialBank', 'alibabaAll', 'alibabaX', 'alibaba', 'alibabaCourt', 'alibabaZ', 'alibabaZCourt'].includes(view);
-    const span = cityView ? view === 'commercialBank' ? 60 : view === 'alibabaAll' ? 360 : closeArchitecture ? 160 : 2300 : 42;
+    const closeArchitecture = cityView && (preset?.shadowSpan !== undefined || ['hsbc', 'customs', 'peace', 'tomsonGarden', 'commercialBank', 'alibabaAll', 'alibabaX', 'alibaba', 'alibabaCourt', 'alibabaZ', 'alibabaZCourt'].includes(view));
+    const span = cityView ? preset?.shadowSpan ?? (view === 'commercialBank' ? 60 : view === 'alibabaAll' ? 360 : closeArchitecture ? 160 : 2300) : 42;
     Object.assign(this.sun.shadow.camera, { left: -span, right: span, top: span, bottom: -span, near: .5, far: cityView ? 11000 : 180 });
     this.sun.shadow.normalBias = cityView ? view === 'commercialBank' ? .015 : closeArchitecture ? .06 : 1 : .025;
     this.sun.shadow.bias = closeArchitecture ? -.000008 : -.0002;
@@ -987,7 +1068,7 @@ export class SpaceScene {
     if (event.button !== 0) return;
     this.renderer.domElement.focus({ preventScroll: true });
     this.cast(event);
-    this.press = { x: event.clientX, y: event.clientY, blank: false };
+    this.press = { id: event.pointerId, x: event.clientX, y: event.clientY, blank: false };
     if (this.placing) {
       this.orbit.enabled = false;
       if (event.pointerType === 'touch') this.consumedTouch = event.pointerId;
@@ -1065,11 +1146,13 @@ export class SpaceScene {
     event.stopImmediatePropagation();
   };
 
-  private up = (event: PointerEvent) => {
+  private up(event: PointerEvent) {
+    if (event.button !== 0) return;
     if (this.navigating) {
       if (this.walkLook?.id === event.pointerId) { this.walkLook = null; if (this.renderer.domElement.hasPointerCapture(event.pointerId)) this.renderer.domElement.releasePointerCapture(event.pointerId); }
       event.stopImmediatePropagation(); return;
     }
+    if (this.press && this.press.id !== event.pointerId) return;
     this.touches.delete(event.pointerId);
     if (this.consumedTouch === event.pointerId) this.consumedTouch = null;
     if (!this.touches.size) this.transform.enabled = true;
@@ -1086,7 +1169,7 @@ export class SpaceScene {
       if (this.renderer.domElement.hasPointerCapture(event.pointerId)) this.renderer.domElement.releasePointerCapture(event.pointerId);
       if (drag.moved) this.callbacks.change(this.read(drag.entry));
       event.stopImmediatePropagation();
-    } else if (this.press && Math.hypot(event.clientX - this.press.x, event.clientY - this.press.y) < 5) {
+    } else if (this.press?.id === event.pointerId && Math.hypot(event.clientX - this.press.x, event.clientY - this.press.y) < 5) {
       if (this.placing) {
         this.cast(event);
         const hit = this.placementHit();
@@ -1100,39 +1183,40 @@ export class SpaceScene {
         event.stopImmediatePropagation();
       } else if (this.press.blank && !this.transform.dragging) this.callbacks.select(null);
     }
-    if (this.placing) this.orbit.enabled = true;
-    this.press = null;
-  };
+    if (this.placing && this.press?.id === event.pointerId) this.orbit.enabled = true;
+    if (this.press?.id === event.pointerId) this.press = null;
+  }
 
-  cancel = () => {
-    this.cruise(false);
-    this.walkKeys.clear();
-    const look = this.walkLook;
-    this.walkLook = null; this.walkTime = 0;
-    if (look && this.renderer.domElement.hasPointerCapture(look.id)) this.renderer.domElement.releasePointerCapture(look.id);
-    if (this.turnDrag && this.renderer.domElement.hasPointerCapture(this.turnDrag.id)) this.renderer.domElement.releasePointerCapture(this.turnDrag.id);
-    this.turnDrag = null;
-    const drag = this.drag;
-    this.drag = null;
-    this.press = null;
-    if (drag) {
-      this.apply(drag.entry, drag.before);
-      if (this.renderer.domElement.hasPointerCapture(drag.id)) this.renderer.domElement.releasePointerCapture(drag.id);
-    }
-    if (this.transform.dragging) {
-      this.cancelling = true;
-      this.transform.reset();
-      this.transform.pointerUp(new PointerEvent('pointerup', { button: 0 }));
-      this.cancelling = false;
-    }
-    this.orbit.enabled = this.transform.enabled = !this.navigating;
-    this.render();
-  };
+  cancel() {
+    if (this.cancelling) return;
+    this.cancelling = true;
+    try {
+      this.cruise(false);
+      this.walkKeys.clear();
+      const captures = new Set([this.walkLook?.id, this.turnDrag?.id, this.drag?.id, this.press?.id]);
+      const drag = this.drag;
+      this.walkLook = null; this.walkTime = 0;
+      this.turnDrag = null; this.drag = null; this.press = null;
+      if (drag) this.apply(drag.entry, drag.before);
+      if (this.transform.dragging) {
+        this.transform.reset();
+        this.transform.pointerUp(new PointerEvent('pointerup', { button: 0 }));
+      }
+      // Release placement captures too. A synchronous lostpointercapture must
+      // not cancel the same gesture recursively or commit its temporary pose.
+      for (const id of captures) {
+        if (id !== undefined && this.renderer.domElement.hasPointerCapture(id)) this.renderer.domElement.releasePointerCapture(id);
+      }
+      this.orbit.enabled = this.transform.enabled = !this.navigating;
+      this.render();
+    } finally { this.cancelling = false; }
+  }
 
   cruise(active: boolean) {
     if (!this.city?.route || active === this.city.cruising) return;
     if (active) {
       this.view('northBund'); this.flight = null; this.currentView = 'huangpu';
+      this.placing = false; this.drop.visible = false; this.renderer.domElement.style.cursor = 'grab';
       this.ao.enabled = false; this.camera.near = 1; this.camera.fov = 58; this.camera.updateProjectionMatrix();
       if (this.city.distance >= this.city.route.getLength() - 1) this.city.distance = 0;
       this.transform.detach(); this.outline.visible = false;
@@ -1155,6 +1239,7 @@ export class SpaceScene {
     this.cancel();
     this.events.abort();
     this.observer.disconnect();
+    this.viewportObserver.disconnect();
     this.themeObserver.disconnect();
     this.media.removeEventListener('change', this.theme);
     this.transform.dispose();
