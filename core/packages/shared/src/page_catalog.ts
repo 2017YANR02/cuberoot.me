@@ -856,11 +856,11 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Create or update a cube teacher or training school profile with experience, photos, specialties, and contact details.',
     },
   },
-  'tutorial/lbl2': {
-    title: { zh: 'LBL2 层先法教程', en: 'LBL2 Layer-by-layer Tutorial' },
+  'tutorial/lbl-archive': {
+    title: { zh: '三阶魔方层先法（旧版存档）', en: '3×3 LBL (Archive)' },
     description: {
-      zh: '认识魔方，跟随交互演示、公式和口诀，逐步学习层先法。',
-      en: 'Learn layer-by-layer solving with interactive demonstrations, algorithms and move cues.',
+      zh: '旧版层先法教程存档，保留原有交互演示与练习。',
+      en: 'Archived layer-by-layer tutorial with its original interactive demonstrations and exercises.',
     },
   },
   'tutorial/lbl': {

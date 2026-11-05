@@ -44,21 +44,8 @@ function state(alg: string) {
   return cube;
 }
 type Cube = ReturnType<typeof state>;
-export function rightTopCornerStickers(alg: string): string[] {
-  const cube = state(alg);
-  return [cube.faces[Face.U][8], cube.faces[Face.U][2], cube.faces[Face.R][0], cube.faces[Face.R][2], cube.faces[Face.F][2], cube.faces[Face.B][0]];
-}
-/** Front edge, center and solved bottom row form the middle-layer inverted T. */
-export function middleAlignmentStickers(setup: string): string[] {
-  const cube = state(setup);
-  return [1, 4, 6, 7, 8].map(index => cube.faces[Face.F][index]);
-}
 /** Current home identity at the left-thumb observation position. */
 export const yellowFaceTouchSticker = (alg: string) => state(alg).faces[Face.F][0];
-export function yellowFaceNonYellowStickers(alg: string, hidden: readonly string[] = []): string[] {
-  const cube = state(alg);
-  return [0, 2, 6, 8].map(index => cube.faces[Face.U][index]).filter(id => id[0] !== 'U' || hidden.includes(id));
-}
 export function yellowFishRecognitionStickers(alg: string, left: boolean): string[] {
   const cube = state(alg);
   return [cube.faces[Face.U][left ? 8 : 6], cube.faces[Face.F][left ? 0 : 2]];
@@ -333,8 +320,6 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
         if (!isCorner) {
           // Decide left/right only after the visible edge and center form an inverted T.
           if (rec) phases.push({ start: moves.length, end: moves.length, recognize: rec, act: rec, recognizeOnly: true });
-          const alignment = recognize(t('侧色对齐中心，形成倒 T。', 'The side color matches its center, forming an upside-down T.'), choice.index, middleAlignmentStickers(currentAlg()));
-          phases.push({ start: moves.length, end: moves.length, recognize: alignment, act: alignment, recognizeOnly: true });
           const direction = recognize(choice.index === 0
             ? t('顶面颜色与右侧中心同色，去右。', 'The top sticker matches the right center: insert right.')
             : t('顶面颜色与左侧中心同色，去左。', 'The top sticker matches the left center: insert left.'), choice.index, choice.outlines);
@@ -373,7 +358,7 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
         choice ??= { u, alg, index: gray === 3 ? index : gray === 2 ? 2 : 3 };
       }
       if (!choice) throw new Error('No taught yellow-face action found');
-      let rec: DemoContent | undefined = recognize(gray === 3 ? t('3个非黄格，观察鱼头和侧面鱼鳍。', 'Three non-yellow corners: check the head and side fins.') : gray === 2 ? t('2个非黄格，左拇指放前面左上角，要碰黄。', 'Two non-yellow corners: place your left thumb at front-top-left, touching yellow.') : t('4个非黄格，左拇指放前面左上角，不碰黄。', 'Four non-yellow corners: place your left thumb at front-top-left, away from yellow.'), choice.index,
+      let rec: DemoContent | undefined = recognize(gray === 3 ? t('3 灰，观察鱼头和侧面鱼鳍。', 'Three gray corners: check the head and side fins.') : gray === 2 ? t('2 灰，左拇指放前面左上角，要碰黄。', 'Two gray corners: place your left thumb at front-top-left, touching yellow.') : t('4 灰，左拇指放前面左上角，不碰黄。', 'Four gray corners: place your left thumb at front-top-left, away from yellow.'), choice.index,
         cornerIndices.filter(i => color(cube, Face.U, i) !== 'U').map(i => cube.faces[Face.U][i]));
       const alignment = choice.index === 0 ? t('转顶层，把鱼头放左前。', 'Turn the top to put the head at front-left.') : choice.index === 1 ? t('转顶层，把鱼头放右前。', 'Turn the top to put the head at front-right.') : choice.index === 2 ? t('转顶层，让左拇指位置碰黄。', 'Turn the top so yellow reaches the left thumb position.') : t('转顶层，让左拇指位置不碰黄。', 'Turn the top so the left thumb position does not touch yellow.');
       if (gray !== 3) rec.touchSticker = true;

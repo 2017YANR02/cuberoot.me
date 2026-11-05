@@ -16,8 +16,8 @@ export default function Walkthrough() {
   const step = LBL_STEPS.find(item => item.id === stage);
   return <main className="lbl-page lbl-walkthrough">
     <header className="lbl-header">
-      <PageBackLink fallback="/tutorial/lbl" />
-      <Link href="/tutorial/lbl" prefetch={false}><T zh="层先法" en="LBL" /></Link>
+      <PageBackLink fallback="/tutorial/lbl-archive" />
+      <Link href="/tutorial/lbl-archive" prefetch={false}><T zh="层先法" en="LBL" /></Link>
       <h1><T zh="完整还原" en="Full solve" /></h1>
     </header>
     <div className="lbl-walkthrough-options">
@@ -32,7 +32,7 @@ export default function Walkthrough() {
           {LBL_LESSON_STAGE_IDS.map(id => <option key={id} value={id}>{tr(LBL_STEPS.find(item => item.id === id)!.title)}</option>)}
         </select>
       </label>
-      {step && <Link href={`/tutorial/lbl?step=${step.id}`} prefetch={false}><T zh="学习本节" en="Study this stage" /></Link>}
+      {step && <Link href={`/tutorial/lbl-archive?step=${step.id}`} prefetch={false}><T zh="学习本节" en="Study this stage" /></Link>}
     </div>
     <p className="lbl-walkthrough-scramble">{run.scramble}</p>
     <div className="lbl-walkthrough-player">

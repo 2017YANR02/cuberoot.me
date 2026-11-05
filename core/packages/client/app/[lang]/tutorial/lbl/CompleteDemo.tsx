@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import { persistItem } from '@/lib/safe-storage';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import AlgPlaybackControls from '@/components/AlgPlayer/AlgPlaybackControls';
@@ -9,11 +10,11 @@ import { FM_OUTLINE, FM_REGULAR, mergeStickeringMaskFns, stickeringMaskFn } from
 import { resolveStageMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/vcStageMask';
 import { engineHomeSid } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex';
 import { T, tr } from '@/i18n/tr';
-import { LESSON_STICKERING, type LblExample } from './content';
+import { LBL_STEPS, LESSON_STICKERING, lblDemoView, type LblExample } from './content';
 import { usePlayerVisible } from './use-player-visible';
+import { getLblAlgGroups } from './alg-cues';
 import { buildEdgePositionExample, completeDemoPool, yellowFaceTouchSticker, type CompleteDemoStage, type DemoContent, type DemoPhase, type DemoView, type CompleteDemo as Demo } from './complete-demo-state';
 
-const DEMO_VIEW = { x: 25 * Math.PI / 180, y: -25 * Math.PI / 180, z: 0 };
 const CAPTION_FADE_MS = 450;
 const CAPTION_DURATION_MS = 3200;
 const VIEW_OFFSETS: Record<DemoView, { x: number; y: number }> = {
@@ -50,6 +51,36 @@ export function EdgePositionExample({ example, index }: { example: LblExample; i
   return <Demonstration stage="edge-position" demo={demo} onCaseCueChange={IGNORE_CASE_CUE} />;
 }
 
+function DemoToolbar({ onNext }: { onNext: () => void }) {
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => { setHost(document.getElementById('lbl2-demo-toolbar')); }, []);
+  return host ? createPortal(<div className="lbl-complete-toolbar"><button type="button" className="lbl-button" onClick={onNext}><T zh="下一个例子" en="Next example" /></button></div>, host) : null;
+}
+
+export function WhiteCrossCompleteDemo() {
+  const [index, setIndex] = useState(0);
+  const demo = useMemo<Demo>(() => {
+    const example = LBL_STEPS.find(step => step.id === 'cross')!.examples[0];
+    const setup = index === 0 ? example.setup! : `${example.setup!} U2`;
+    const alg = index === 0 ? example.alg : "R2 y d' R2 y R2 y d' R2";
+    const moves = alg.split(/\s+/);
+    return { setup, alg,
+      done: { zh: '白十字完成，四条侧面颜色也对齐中心。', en: 'The white cross is solved and all four side colors match their centers.' },
+      phases: moves.map((move, index) => ({ start: index, end: index + 1,
+        act: { text: /^d/.test(move)
+          ? { zh: '同时转下面两层，让白棱侧面的颜色对齐同色中心。', en: 'Turn the lower two layers together to match the white edge’s side color with its center.' }
+          : /^y/.test(move) ? (index > 0 && /^d/.test(moves[index + 1] ?? '')
+            ? { zh: '转体，把下一条白棱放到右手边观察。', en: 'Rotate the cube to inspect the next white edge on the right.' }
+            : { zh: '转体，把已经对齐的白棱放到右手边。', en: 'Rotate the cube to put the aligned white edge on the right.' })
+            : { zh: '做“上上”，让这条白棱归位。', en: 'Turn the right face twice to insert this white edge.' }, alg: move } })),
+    };
+  }, [index]);
+  return <div className="lbl-complete-demo">
+    <DemoToolbar onNext={() => setIndex(value => (value + 1) % 2)} />
+    <Demonstration key={index} stage="cross" demo={demo} onCaseCueChange={IGNORE_CASE_CUE} />
+  </div>;
+}
+
 export default function CompleteDemo({ stage, onCaseCueChange }: CueProps & { stage: CompleteDemoStage }) {
   const pool = useMemo(() => completeDemoPool(stage), [stage]);
   const storageKey = `lbl-demo-example:${stage}`;
@@ -62,9 +93,7 @@ export default function CompleteDemo({ stage, onCaseCueChange }: CueProps & { st
     window.dispatchEvent(new Event(EXAMPLE_CHANGE));
   };
   return <div className="lbl-complete-demo">
-    <div className="lbl-complete-toolbar">
-      <button type="button" className="lbl-button" onClick={nextExample}><T zh="下一个例子" en="Next example" /></button>
-    </div>
+    <DemoToolbar onNext={nextExample} />
     <Demonstration key={`${stage}:${index}`} stage={stage} demo={pool[index]} onCaseCueChange={onCaseCueChange} />
   </div>;
 }
@@ -78,7 +107,7 @@ type DemoFrame = {
   view?: DemoView;
 };
 
-function Demonstration({ stage, demo, onCaseCueChange }: { stage: CompleteDemoStage; demo: Demo } & CueProps) {
+function Demonstration({ stage, demo, onCaseCueChange }: { stage: CompleteDemoStage | 'cross'; demo: Demo } & CueProps) {
   const [recognitionOutlines, setRecognitionOutlines] = useState<string[]>(NO_OUTLINES);
   const maskOutlines = stage === 'yellow-face' ? NO_OUTLINES : recognitionOutlines;
   const stickeringAtStep = useMemo(() => {
@@ -109,9 +138,15 @@ function Demonstration({ stage, demo, onCaseCueChange }: { stage: CompleteDemoSt
         frames.push({ step: move + 1, duration: 0, caption: 'act', phase, move, view: move === phase.start ? phase.moveView : undefined });
       }
     });
-    frames.push({ step: demo.alg.split(' ').length, duration: 0, caption: 'done' });
+    const finalStep = demo.alg.split(' ').length;
+    if (stage === 'cross') {
+      const reveal: DemoPhase = { start: finalStep, end: finalStep, act: { text: { zh: '看看底面，白十字已经完成。', en: 'Look underneath: the white cross is complete.' } } };
+      frames.push({ step: finalStep, duration: 2700, caption: 'act', phase: reveal, view: 'bottom' });
+      frames.push({ step: finalStep, duration: 1100, caption: 'act', phase: { ...reveal, act: { text: demo.done } }, view: 'home' });
+    }
+    frames.push({ step: finalStep, duration: 0, caption: 'done' });
     return frames;
-  }, [demo]);
+  }, [demo, stage]);
   const player = useRef<AlgPlayerHandle>(null);
   const playerVisible = usePlayerVisible(player, demo.setup);
   const [ready, setReady] = useState(false);
@@ -128,15 +163,16 @@ function Demonstration({ stage, demo, onCaseCueChange }: { stage: CompleteDemoSt
 
   useEffect(() => {
     let id = 0;
+    let timer = 0;
     const loaded = () => {
       if (!player.current || player.current.isUserMovePending?.()) id = requestAnimationFrame(loaded);
       else {
         setReady(true);
-        setPlaying(!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        timer = window.setTimeout(() => setPlaying(!window.matchMedia('(prefers-reduced-motion: reduce)').matches && !document.hidden), 1000);
       }
     };
     id = requestAnimationFrame(loaded);
-    return () => cancelAnimationFrame(id);
+    return () => { cancelAnimationFrame(id); clearTimeout(timer); };
   }, []);
 
   // One paused/resumable timeline owns both captions and turns. A result is
@@ -235,9 +271,10 @@ function Demonstration({ stage, demo, onCaseCueChange }: { stage: CompleteDemoSt
 
   return <div className="lbl-demo lbl-demo-split lbl-complete-player" data-player-ready={playerVisible} aria-busy={!playerVisible}>
     <div className="lbl-cube" data-player-ready={playerVisible} aria-busy={!playerVisible}><div className="lbl-complete-playback"><AlgPlayer ref={player} puzzle="3x3" engine="sim" controlMode="none" hideResetView
+      highlightDaisyAlignment={stage === 'cross'}
       set={LESSON_STICKERING[stage]} additionalStickering={stage.startsWith('yellow-') || stage.endsWith('-position') ? 'F2L' : undefined} orientation="z2"
       highlightedStickers={stage === 'yellow-face' ? touchHighlight ?? recognitionOutlines : undefined}
-      sceneRot={DEMO_VIEW} setup={demo.setup} alg={demo.alg} stickeringAtStep={stickeringAtStep} fillPane moveDurationMs={850} />
+      sceneRot={lblDemoView()} setup={demo.setup} alg={demo.alg} stickeringAtStep={stickeringAtStep} fillPane moveDurationMs={850} />
       <AlgPlaybackControls step={frame.step} count={total} playing={playing} stepMarkers={boundaries}
         onScrub={seek} onStepBack={() => seek(frame.step - 1)} onStepForward={() => seek(frame.step + 1)}
         onTogglePlay={() => {
@@ -250,12 +287,12 @@ function Demonstration({ stage, demo, onCaseCueChange }: { stage: CompleteDemoSt
           viewMotion.current = null;
         }} />
     </div></div>
-    <Thought {...message} playing={playing} revision={revision} onCaseCueChange={onCaseCueChange} onRecognitionOutlinesChange={setRecognitionOutlines} />
+    <Thought {...message} stage={stage} playing={playing} revision={revision} onCaseCueChange={onCaseCueChange} onRecognitionOutlinesChange={setRecognitionOutlines} />
     {['corners', 'yellow-cross', 'yellow-face', 'edge-position'].includes(stage) && <div className="lbl-complete-legend-space" aria-hidden="true" />}
   </div>;
 }
 
-function Thought({ text, detail, alg, caseIndex, outlines, playing, revision, onCaseCueChange, onRecognitionOutlinesChange }: ThoughtContent & { playing: boolean; revision: number; onRecognitionOutlinesChange: (outlines: string[]) => void } & CueProps) {
+function Thought({ text, detail, alg, caseIndex, outlines, playing, revision, onCaseCueChange, onRecognitionOutlinesChange, stage }: ThoughtContent & { stage: string; playing: boolean; revision: number; onRecognitionOutlinesChange: (outlines: string[]) => void } & CueProps) {
   const key = `${text}\n${detail ?? ''}\n${alg ?? ''}\n${caseIndex ?? ''}\n${outlines?.join(',') ?? ''}`;
   const [displayed, setDisplayed] = useState({ key, text, detail, alg, caseIndex, outlines, revision });
   useEffect(() => {
@@ -277,7 +314,7 @@ function Thought({ text, detail, alg, caseIndex, outlines, playing, revision, on
   return <div className="lbl-complete-thought" aria-live="polite">
     <p data-fading={fading}>
       <span>{displayed.text}</span>
-      {displayed.alg ? <code className="lbl-complete-detail">{displayed.alg}</code>
+      {displayed.alg ? <code className="lbl-complete-detail lbl2-complete-alg">{getLblAlgGroups(stage, displayed.alg).map((group, index) => <span key={index}>{group.map(move => move.notation).join(' ')}</span>)}</code>
         : <span className="lbl-complete-detail">{displayed.detail}</span>}
     </p>
   </div>;

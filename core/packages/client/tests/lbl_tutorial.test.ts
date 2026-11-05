@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cube3x3x3 } from 'cubing/puzzles';
-import { LBL_STEPS } from '@/app/[lang]/tutorial/lbl/content';
-import { practiceState } from '@/app/[lang]/tutorial/lbl/practice-state';
+import { LBL_STEPS } from '@/app/[lang]/tutorial/lbl-archive/content';
+import { practiceState } from '@/app/[lang]/tutorial/lbl-archive/practice-state';
 import { resolvePlayerSetup, resolveSimPreviewMoves } from '@/components/AlgPlayer/player-setup';
 
 const kp = await cube3x3x3.kpuzzle();

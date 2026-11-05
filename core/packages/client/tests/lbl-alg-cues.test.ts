@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Alg } from 'cubing/alg';
-import { getLblAlgGroups } from '@/app/[lang]/tutorial/lbl/alg-cues';
-import { LBL_STEPS } from '@/app/[lang]/tutorial/lbl/content';
+import { getLblAlgGroups } from '@/app/[lang]/tutorial/lbl-archive/alg-cues';
+import { LBL_STEPS } from '@/app/[lang]/tutorial/lbl-archive/content';
 
 describe('LBL bilingual move cues', () => {
   it('keeps the final alignment inside the complete taught J algorithm', () => {

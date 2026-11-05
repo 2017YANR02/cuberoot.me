@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { cube3x3x3 } from 'cubing/puzzles';
-import { LBL_LESSON_RUNS, LBL_LESSON_STAGE_IDS, lessonFrame } from '@/app/[lang]/tutorial/lbl/lesson-runs';
+import { LBL_LESSON_RUNS, LBL_LESSON_STAGE_IDS, lessonFrame } from '@/app/[lang]/tutorial/lbl-archive/lesson-runs';
 
 it.each(LBL_LESSON_RUNS)('keeps every stage continuous and solves $scramble', async run => {
   const puzzle = await cube3x3x3.kpuzzle();

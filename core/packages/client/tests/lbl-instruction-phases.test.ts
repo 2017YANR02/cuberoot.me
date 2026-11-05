@@ -1,8 +1,8 @@
 import { expect, it } from 'vitest';
 import { Alg } from 'cubing/alg';
-import { LBL_STEPS } from '@/app/[lang]/tutorial/lbl/content';
-import { getLblAlgGroups } from '@/app/[lang]/tutorial/lbl/alg-cues';
-import { INSTRUCTION_PHASES, splitInstruction } from '@/app/[lang]/tutorial/lbl/instruction-phases';
+import { LBL_STEPS } from '@/app/[lang]/tutorial/lbl-archive/content';
+import { getLblAlgGroups } from '@/app/[lang]/tutorial/lbl-archive/alg-cues';
+import { INSTRUCTION_PHASES, splitInstruction } from '@/app/[lang]/tutorial/lbl-archive/instruction-phases';
 
 for (const step of LBL_STEPS.filter(step => step.id !== 'structure')) {
   for (const [index, example] of step.examples.entries()) {

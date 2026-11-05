@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Alg } from 'cubing/alg';
-import { LBL_STEPS, LESSON_STICKERING } from '@/app/[lang]/tutorial/lbl/content';
-import { practiceState } from '@/app/[lang]/tutorial/lbl/practice-state';
+import { LBL_STEPS, LESSON_STICKERING } from '@/app/[lang]/tutorial/lbl-archive/content';
+import { practiceState } from '@/app/[lang]/tutorial/lbl-archive/practice-state';
 import { resolvePlayerSetup } from '@/components/AlgPlayer/player-setup';
 import { pickStickering } from '@/components/AlgPlayer/stickering';
 import { stageStickerColors } from '@/lib/sim-stage-thumbnail';

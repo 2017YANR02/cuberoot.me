@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
-import { completeDemoPool, COMPLETE_DEMO_STAGES } from '@/app/[lang]/tutorial/lbl/complete-demo-state';
-import { practiceState } from '@/app/[lang]/tutorial/lbl/practice-state';
+import { completeDemoPool, COMPLETE_DEMO_STAGES } from '@/app/[lang]/tutorial/lbl-archive/complete-demo-state';
+import { practiceState } from '@/app/[lang]/tutorial/lbl-archive/practice-state';
 
 const colors = ['U', 'R', 'F', 'D', 'L', 'B'].flatMap(color => Array<string>(9).fill(color));
 const sides = [1, 2, 4, 5];

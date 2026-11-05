@@ -2,9 +2,11 @@
 
 import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { parseAsInteger, useQueryState } from 'nuqs';
 import { Alg } from 'cubing/alg';
-import { ArrowLeft, ArrowRight, Trophy, X } from '@app-foundation/icons/lucide';
+import { ArrowRight, Trophy, X } from '@app-foundation/icons/lucide';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
+import PageBackLink from '@/components/PageBackLink';
 import Link from '@/components/AppLink';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import { resolvePlayerSetup } from '@/components/AlgPlayer/player-setup';
@@ -16,9 +18,11 @@ import { resolveStageMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/vcSt
 import { stageStickerColors } from '@/lib/sim-stage-thumbnail';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import { tr, T } from '@/i18n/tr';
-import { LBL_STEPS, LESSON_STICKERING, LBL_INITIAL_VIEW, type LblExample } from './content';
+import { LBL_STEPS, LESSON_STICKERING, LBL_INITIAL_VIEW } from './content';
+import { LBL_COURSE_ENTRIES } from './alg-lessons';
 import { practiceState, practiceTargetStates } from './practice-state';
 import AlgSteps from './AlgSteps';
+import ContinueButton from './ContinueButton';
 
 const practiceMoves = [
   { moves: ['R', "R'"], zh: '右边一层', en: 'Right layer', labels: ['右手上', '右手下'], english: ['Right up', 'Right down'], arrows: ['↑', '↓'] },
@@ -40,27 +44,18 @@ function moveLabel(move: string): string {
   return move;
 }
 
-export default function Practice({ step, initialIndex, extraExample, onClose, onNextChapter }: {
-  step: typeof LBL_STEPS[number]; initialIndex: number; extraExample?: LblExample; onClose: () => void; onNextChapter?: () => void;
-}) {
+export default function Practice({ step }: { step: typeof LBL_STEPS[number] }) {
   const [textMoves, setTextMoves] = useState(false);
-  const [index, setIndex] = useState(initialIndex);
-  const examples = extraExample ? [extraExample, ...step.examples] : step.examples;
-  return <main className="lbl-page lbl-practice-page lbl2-practice-page">
-    <header className="lbl2-header">
-      <button type="button" className="lbl-button lbl2-practice-back" onClick={onClose} aria-label={tr({ zh: '回看本节教程', en: 'Review this lesson' })}><ArrowLeft size={18} /></button>
-      <h1><T zh="分步练习" en="Guided practice" /></h1>
-    </header>
-    <Exercise key={index} step={step} example={examples[index]} index={index} total={examples.length}
-      textMoves={textMoves} onTextMovesChange={setTextMoves} onNext={() => setIndex(value => value + 1)} onClose={onClose} onNextChapter={onNextChapter} />
+  const [question, setQuestion] = useQueryState('case', parseAsInteger.withDefault(1).withOptions({ history: 'replace' }));
+  const index = Math.max(0, Math.min(step.examples.length - 1, question - 1));
+  return <main className="lbl-page lbl-practice-page">
+    <header className="lbl-header"><PageBackLink fallback={`/tutorial/lbl-archive?step=${step.id}`} /><Link href={`/tutorial/lbl-archive?step=${step.id}`} prefetch={false}>{tr(step.title)}</Link><h1><T zh="分步练习" en="Guided practice" /></h1></header>
+    <Exercise key={`${step.id}-${index}`} step={step} index={index} textMoves={textMoves} onTextMovesChange={setTextMoves} onNext={() => { void setQuestion(index + 2); }} />
   </main>;
 }
 
-function Exercise({ step, example, index, total, onNext, onClose, onNextChapter, textMoves, onTextMovesChange }: {
-  step: typeof LBL_STEPS[number]; example: LblExample; index: number; total: number; onNext: () => void; onClose: () => void;
-  onNextChapter?: () => void;
-  textMoves: boolean; onTextMovesChange: (value: boolean) => void;
-}) {
+function Exercise({ step, index, onNext, textMoves, onTextMovesChange }: { step: typeof LBL_STEPS[number]; index: number; onNext: () => void; textMoves: boolean; onTextMovesChange: (value: boolean) => void }) {
+  const example = step.examples[index];
   const beginner = step.id === 'daisy';
   const setup = new Alg(resolvePlayerSetup('3x3', example.alg, example.setup, example.startSolved ?? false)).expand().toString();
   const target = new Alg(`${setup} ${example.alg}`).expand().toString();
@@ -110,13 +105,14 @@ function Exercise({ step, example, index, total, onNext, onClose, onNextChapter,
     }, 100);
     return () => window.clearInterval(timer);
   }, [checking, colors, setup, targetStates, finalExercise]);
-  const last = index === total - 1;
+  const last = index === step.examples.length - 1;
+  const nextStep = LBL_COURSE_ENTRIES[LBL_COURSE_ENTRIES.findIndex(item => item.id === step.id) + 1];
   const actionRows = (rows: typeof practiceMoves) => rows.map(row => <div className="lbl-action-row" key={row.en}>
     <span>{tr(row)}</span>{row.moves.map((move, i) => <button className="lbl-button" type="button" key={move} onClick={() => turn(move)}><b aria-hidden="true">{row.arrows[i]}</b>{moveLabel(move)}</button>)}
   </div>);
   return <section className="lbl-basics lbl-exercise">
-    {completed && <CompletionDialog onClose={() => setCompleted(false)} onReview={onClose} />}
-    <div className="lbl-exercise-heading"><h2>{tr(example.title)}</h2><span className="lbl-basic-progress">{index + 1} / {total}</span></div>
+    {completed && <CompletionDialog onClose={() => setCompleted(false)} />}
+    <div className="lbl-exercise-heading"><h2>{tr(step.title)}</h2><span className="lbl-basic-progress">{index + 1} / {step.examples.length}</span></div>
     <div className="lbl-basic-content">
       <div className="lbl-basic-demo">
         <div className="lbl-cube"><AlgPlayer ref={player} key={generation} puzzle="3x3" engine="sim" set={LESSON_STICKERING[step.id]} orientation="z2" sceneRot={example.sceneRot ?? LBL_INITIAL_VIEW} highlightDaisyAlignment={step.id === 'cross'} alg="" setup={`${setup} ${restoredMoves}`} controlMode="none" hideResetView interactionMode="turn" onUserMove={record} fillPane moveDurationMs={525} />
@@ -132,20 +128,20 @@ function Exercise({ step, example, index, total, onNext, onClose, onNextChapter,
         </div> : <div className="lbl-move-buttons" role="group" aria-label={tr({ zh: '转动魔方', en: 'Turn the cube' })}>{['R', "R'", 'L', "L'", 'U', "U'", 'F', "F'", 'D', "D'", 'B', "B'", 'f', "f'", 'y', "y'", ...(step.id === 'cross' ? ['d', "d'"] : [])].map(move => <button className="lbl-button" type="button" key={move} onClick={() => turn(move)}>{move}</button>)}</div>}
         <div className="lbl-exercise-tools">{beginner && <button className="lbl-button" type="button" onClick={undo} disabled={!history}><T zh="撤销一步" en="Undo" /></button>}<button className="lbl-button" type="button" onClick={reset}>{beginner ? <T zh="重新开始" en="Restart" /> : <T zh="重来" en="Restart" />}</button><MoreToggle className="lbl-button" type="button" expanded={hint} onClick={() => setHint(!hint)}>{hint ? tr({ zh: '收起提示', en: 'Hide hint' }) : tr({ zh: '给我提示', en: 'Show hint' })}</MoreToggle></div>
       </div>
-      <div className="lbl-basic-copy"><h3><T zh="转动魔方，让重点色块与目标图一致。" en="Turn the cube to match the highlighted stickers in the target image." /></h3>
-        <div className="lbl-exercise-target"><VisualCube local view="iso" size={112} setup={target} stickerColors={colors} stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]} alt={tr({ zh: '本题目标状态', en: 'Target state' })} /><p><T zh="黄心朝上，绿心朝前。" en="Yellow center up, green center in front." /></p></div>
+      <div className="lbl-basic-copy"><h3>{step.id === 'cross' ? tr({ zh: '完成四条白棱，侧面颜色对齐中心。', en: 'Complete all four white edges, matching their side colors to the centers.' }) : tr({ zh: '转动魔方，让重点色块与目标图一致。', en: 'Turn the cube to match the highlighted stickers in the target image.' })}</h3>
+        <div className="lbl-exercise-target"><VisualCube view="iso" size={112} setup={target} stickerColors={colors} stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]} alt={tr({ zh: '本题目标状态', en: 'Target state' })} /><p><T zh="黄心朝上，绿心朝前。" en="Yellow center up, green center in front." /></p></div>
         {hint && <div className="lbl-exercise-hint"><p>{tr(example.hint)}</p><AlgSteps step={step.id} alg={example.alg} /></div>}
         {feedback === 'wrong' && <p className="lbl-exercise-result" aria-live="polite">{tr({ zh: '对照目标图继续调整。', en: 'Keep adjusting the cube to match the target image.' })}</p>}
       </div>
     </div>
-    <div className="lbl-basic-footer"><button className="lbl-button lbl2-practice-review" type="button" onClick={onClose}><T zh="回看本节教程" en="Review this lesson" /></button>
+    <div className="lbl-basic-footer"><Link href={`/tutorial/lbl-archive?step=${step.id}`} prefetch={false}><T zh="回看本节教程" en="Review this lesson" /></Link>
       {feedback === 'correct' && last ? <button className="lbl-button lbl-basic-next" type="button" onClick={reset}><T zh="再练一次" en="Try again" /></button> : <button type="button" className="lbl-button lbl-basic-next" disabled={checking} onClick={feedback === 'correct' ? onNext : () => setChecking(true)}>{checking ? tr({ zh: '等待转动完成…', en: 'Waiting for moves…' }) : feedback === 'correct' ? tr({ zh: '下一题 →', en: 'Next →' }) : tr({ zh: '检查结果', en: 'Check result' })}</button>}
-      {onNextChapter && <button type="button" className="lbl-button lbl-exercise-next-lesson" onClick={onNextChapter}><T zh="下一章" en="Next chapter" /></button>}
+      {nextStep && <ContinueButton href={`/tutorial/lbl-archive?step=${nextStep.id}`} />}
     </div>
   </section>;
 }
 
-function CompletionDialog({ onClose, onReview }: { onClose: () => void; onReview: () => void }) {
+function CompletionDialog({ onClose }: { onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const backdropProps = useModalDismiss(onClose);
   useEffect(() => {
@@ -161,7 +157,7 @@ function CompletionDialog({ onClose, onReview }: { onClose: () => void; onReview
       <h2 id="lbl-completion-title"><T zh="恭喜你！" en="Congratulations!" /><br /><T zh="完成三阶层先法学习" en="You’ve completed the 3×3 LBL course" /></h2>
       <p className="lbl-completion-copy"><T zh="从第一朵小花，到六面还原。" en="From your first daisy to all six faces solved." /><br /><T zh="接下来，试着独立完成一次，记录你的进步。" en="Now try a solve on your own and track your progress." /></p>
       <Link className="lbl-completion-primary" href="/timer" prefetch={false}><T zh="开始计时练习" en="Start timed practice" /><ArrowRight size={20} /></Link>
-      <button type="button" className="lbl-completion-review" onClick={onReview}><T zh="回看本节教程" en="Review this lesson" /></button>
+      <Link className="lbl-completion-review" href="/tutorial/lbl-archive" prefetch={false} onClick={onClose}><T zh="再复习一遍" en="Review the lessons" /></Link>
       <p className="lbl-completion-footnote"><T zh="不急着拼速度，先把每一步练熟。" en="Build confidence with each step before chasing speed." /></p>
     </section>
   </dialog>;
