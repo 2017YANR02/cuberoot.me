@@ -34,6 +34,11 @@
 }
 .gallery-collection { margin-top: 42px; }
 .gallery-collection h2 { margin: 0 0 16px; font-size: 18px; }
+.gallery-artwork { width: min(560px, 100%); margin: 0; }
+.gallery-artwork > svg { display: block; width: 100%; height: auto; }
+.gallery-artwork figcaption { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.gallery-video-download { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.gallery-artwork-g5 { margin-top: 40px; }
 .gallery-state { margin: 0; color: var(--muted-foreground); font-size: 14px; }
 .gallery-state p { margin: 0 0 12px; }
 .gallery-grid { columns: 4 220px; column-gap: 12px; }
