@@ -20,7 +20,7 @@ export interface ICubeOptions {
   /** Plan view only: inset highlight on masked U-face stickers. Width is relative to sticker size. */
   maskedTopOutline?: { color: string; widthFraction: number }
   /** Inset outlines at final-state indices in U R F D L B order, in any view. */
-  stickerOutline?: { indices: readonly number[]; color: string; widthFraction: number }
+  stickerOutline?: { indices: readonly number[]; color: string; widthFraction: number; includePlanSides?: boolean }
   stickerColors?: string[]
   facelets?: string[] | FaceletDefinition[]
   viewportRotations?: [Axis, number][]
