@@ -11,10 +11,8 @@ import {
   type ContactPlatform,
 } from '@cuberoot/shared/contact';
 import { SITE_CREATOR_PROFILE } from '@cuberoot/shared/site-directory';
-import { Globe, Mail, Monitor, PanelsTopLeft, Smartphone, Users, User, Watch } from '@app-foundation/icons/lucide';
+import { Globe, Mail, PanelsTopLeft, Users, User } from '@app-foundation/icons/lucide';
 import { BrandIcon } from '@app-foundation/icons';
-import { SiAndroid, SiApple, SiHarmonyos, SiTiktok } from 'react-icons/si';
-import { RiMiniProgramLine } from 'react-icons/ri';
 import { useCopy } from '@/hooks/useCopy';
 import { tr, useLang } from '@/i18n/tr';
 import AppLink from '@/components/AppLink';
@@ -48,22 +46,16 @@ const SOCIAL_QR_PATHS: Partial<Record<ContactPlatformId, string>> = {
   'wechat-official': '/contact/wechat-official-qr.jpg',
 };
 const COMING_SOON = { zh: '即将上线', en: 'Coming soon' } as const;
-function PhonePlatformIcon({ children }: { children: ReactNode }) {
-  return <span className="contact-device-icon" aria-hidden="true">
-    <Smartphone size={24} />
-    <span className="contact-device-brand">{children}</span>
-  </span>;
-}
-
 const APP_PLATFORMS = [
-  { icon: <Globe size={24} />, label: { zh: '网站', en: 'Website' }, value: { zh: CONTACT_WEBSITE, en: CONTACT_WEBSITE }, href: '/', qr: '/contact/website-qr.png' },
-  { icon: <RiMiniProgramLine size={24} />, label: { zh: '微信小程序', en: 'WeChat Mini Program' }, value: { zh: '魔方根', en: 'CubeRoot' }, href: null, qr: '/contact/wechat-miniprogram-qr.jpg' },
-  { icon: <span className="contact-mini-icon"><RiMiniProgramLine size={24} /><SiTiktok size={10} /></span>, label: { zh: '抖音小程序', en: 'Douyin Mini Program' }, value: COMING_SOON, href: null },
-  { icon: <PhonePlatformIcon><SiApple size={10} /></PhonePlatformIcon>, label: { zh: 'iOS', en: 'iOS' }, value: COMING_SOON, href: null },
-  { icon: <Watch size={24} />, label: { zh: 'Apple Watch', en: 'Apple Watch' }, value: COMING_SOON, href: null },
-  { icon: <PhonePlatformIcon><SiAndroid size={10} /></PhonePlatformIcon>, label: { zh: '安卓', en: 'Android' }, value: COMING_SOON, href: null },
-  { icon: <PhonePlatformIcon><SiHarmonyos size={10} /></PhonePlatformIcon>, label: { zh: '鸿蒙', en: 'HarmonyOS' }, value: COMING_SOON, href: null },
-  { icon: <Monitor size={24} />, label: { zh: 'Windows 客户端', en: 'Windows client' }, value: COMING_SOON, href: null },
+  { label: { zh: '网站', en: 'Website' }, value: { zh: CONTACT_WEBSITE, en: CONTACT_WEBSITE }, href: '/', qr: '/contact/website-qr.png' },
+  { label: { zh: '微信小程序', en: 'WeChat Mini Program' }, value: { zh: '魔方根', en: 'CubeRoot' }, href: null, qr: '/contact/wechat-miniprogram-qr.jpg' },
+  { label: { zh: 'iOS', en: 'iOS' }, value: COMING_SOON, href: null },
+  { label: { zh: 'macOS', en: 'macOS' }, value: COMING_SOON, href: null },
+  { label: { zh: 'Apple Watch', en: 'Apple Watch' }, value: COMING_SOON, href: null },
+  { label: { zh: '抖音小程序', en: 'Douyin Mini Program' }, value: COMING_SOON, href: null },
+  { label: { zh: '安卓', en: 'Android' }, value: COMING_SOON, href: null },
+  { label: { zh: '鸿蒙', en: 'HarmonyOS' }, value: COMING_SOON, href: null },
+  { label: { zh: 'Win', en: 'Win' }, value: COMING_SOON, href: null },
 ] as const;
 
 function ContactQr({ id, src, label, alt, href, children }: { id: string; src: string; label: string; alt: string; href?: string; children: ReactNode }) {
@@ -162,7 +154,7 @@ export default function ContactDetails() {
                   {platform.href ? (
                     <button type="button" className="contact-qr-trigger" aria-haspopup="dialog"
                       aria-label={tr(platform.label)} onClick={() => setWebsiteOpen(true)}>
-                      {platform.icon}<span>{tr(platform.label)}</span>
+                      <span>{tr(platform.label)}</span>
                     </button>
                   ) : 'qr' in platform ? (
                     <ContactQr
@@ -170,14 +162,11 @@ export default function ContactDetails() {
                       src={platform.qr}
                       label={tr(platform.label) + tr({ zh: '二维码', en: ' QR code' })}
                       alt={tr(platform.label) + tr({ zh: '二维码', en: ' QR code' })}
-                    >{platform.icon}<span>{tr(platform.label)}</span></ContactQr>
+                    ><span>{tr(platform.label)}</span></ContactQr>
                   ) : (
-                    <span className="contact-app-unavailable">
-                      {platform.icon}
-                      <span className="contact-app-caption">
-                        <span>{tr(platform.label)}</span>
-                        <span className="contact-platform-count">{tr(COMING_SOON)}</span>
-                      </span>
+                    <span className="contact-app-unavailable" aria-disabled="true">
+
+                      <span>{tr(platform.label)}</span>
                     </span>
                   )}
 

@@ -1007,7 +1007,20 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 .landing-contact-details .contact-app-platform-label .contact-qr-trigger,
 .landing-contact-details .contact-app-unavailable {
     min-height: var(--footer-row-height);
+    padding: 0;
+    white-space: nowrap;
+}
+
+.landing-contact-details .contact-app-platform-list {
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 0.75rem;
+    gap: 0 1rem;
     padding-left: 13px;
+}
+
+.landing-contact-details .contact-app-platform-label {
+    flex: 0 0 auto;
 }
 
 .landing-contact-details .contact-column-heading > svg,
@@ -1022,20 +1035,10 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     flex-shrink: 0;
 }
 
-.landing-contact-details .contact-app-unavailable > svg,
-.landing-contact-details .contact-app-platform-label .contact-qr-trigger > svg,
 .landing-contact-details .contact-social-logo > svg,
-.landing-contact-details .contact-direct-details .contact-details-icon > svg,
-.landing-contact-details .contact-device-icon > svg,
-.landing-contact-details .contact-mini-icon > svg:first-child {
+.landing-contact-details .contact-direct-details .contact-details-icon > svg {
     width: 18px;
     height: 18px;
-}
-
-.landing-contact-details .contact-device-brand > svg,
-.landing-contact-details .contact-mini-icon > svg:last-child {
-    width: 8px;
-    height: 8px;
 }
 
 @media (max-width: 900px) {
