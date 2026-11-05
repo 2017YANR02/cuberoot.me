@@ -1,0 +1,36 @@
+.grid-selector {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), var(--slot-cell-width, 44px));
+  width: max-content;
+  padding: 1px 0 0 1px;
+}
+.grid-selector > .grid-selector-cell {
+  display: grid;
+  place-items: center;
+  text-decoration: none !important;
+  position: relative;
+  appearance: none;
+  min-height: 44px;
+  margin: -1px 0 0 -1px;
+  padding: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.grid-selector > .grid-selector-cell.is-top-left { border-top-left-radius: 10px; }
+.grid-selector > .grid-selector-cell.is-top-right { border-top-right-radius: 10px; }
+.grid-selector > .grid-selector-cell.is-bottom-left { border-bottom-left-radius: 10px; }
+.grid-selector > .grid-selector-cell.is-bottom-right { border-bottom-right-radius: 10px; }
+.grid-selector > .grid-selector-cell:is([aria-pressed="true"], [aria-current="true"]) {
+  z-index: 1;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.grid-selector > .grid-selector-cell:focus-visible { z-index: 2; outline: 2px solid var(--ring); outline-offset: 2px; }
+.grid-selector > .grid-selector-cell:disabled { cursor: not-allowed; }
+.grid-selector > .grid-selector-cell:disabled:not([aria-pressed="true"]) { color: var(--faint-foreground); }

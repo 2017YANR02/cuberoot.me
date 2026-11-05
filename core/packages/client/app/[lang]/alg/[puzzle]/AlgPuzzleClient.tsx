@@ -10,7 +10,7 @@
  *
  * Loads each set's case count lazily so the page renders before all imports finish.
  */
-import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { useTrainingParams as useParams, useTrainingRouter as useRouter, useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +20,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type D
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { ALG_CATALOG, ALG_CATALOG_SECTIONS, ALG_PUZZLES, CFOP_SET_SLUGS, type AlgCase, type AlgPuzzle } from '@cuberoot/shared/alg';
 import AlgPuzzlePicker from '@/components/AlgPuzzlePicker';
+import GridSelector from '@/components/GridSelector';
 import PageHeading from '@/components/PageHeading';
 import { CaseThumb } from '@/components/CaseThumb';
 import { prepareAlgCatalog, type PreparedAlgCatalog } from '@/lib/alg-catalog';
@@ -121,8 +122,7 @@ function LsSubsetGuide({ samples, size }: { samples: Record<string, AlgCase | nu
           </div>
         ))}
         {LS_WHITE_ORIENTATIONS.map((item, rowIndex) => (
-          <Fragment key={item.face}>
-            <div className="alg-ls-matrix-axis is-row">
+            <div key={item.face} className="alg-ls-matrix-axis is-row" style={{ gridColumn: 1, gridRow: rowIndex + 2 }}>
               {samples[item.sample] && (
                 <VisualCube
                   setup={samples[item.sample]!.setup}
@@ -136,13 +136,16 @@ function LsSubsetGuide({ samples, size }: { samples: Record<string, AlgCase | nu
                 />
               )}
             </div>
-            {LS_YELLOW_ORIENTATIONS.map((_, colIndex) => {
-              const subset = rowIndex * 3 + colIndex + 1;
+        ))}
+        <GridSelector items={[1, 2, 3, 4, 5, 6, 7, 8, 9]} columns={3}
+          className="alg-ls-subset-selector" ariaLabel={tr({ zh: 'LS 子集选择', en: 'LS subset selector' })}
+          renderItem={(subset, cellClass) => {
               return (
                 <Link
                   key={subset}
                   href={`/alg/2x2/ls${subset}`}
-                  className={`alg-ls-matrix-cell${current === subset ? ' is-current' : ''}`}
+                  className={cellClass}
+                  aria-current={current === subset ? 'true' : undefined}
                   onMouseEnter={() => setCurrent(subset)}
                   onFocus={() => setCurrent(subset)}
                   onPointerDown={event => {
@@ -166,9 +169,8 @@ function LsSubsetGuide({ samples, size }: { samples: Record<string, AlgCase | nu
                   LS{subset}
                 </Link>
               );
-            })}
-          </Fragment>
-        ))}
+          }}
+        />
       </nav>
       <Link
         href={`/alg/2x2/ls${current}`}

@@ -14,6 +14,10 @@ describe('timer training catalog', () => {
   it('includes every registered project and formula set, preserving both supported puzzle spellings', () => {
     for (const puzzle of ALG_PUZZLES) {
       const group = TRAINING_DIRECTORY.find(item => item.id === `alg:${puzzle}`);
+      if (ALG_CATALOG[puzzle].length === 0 && !VIRTUAL_ALG_SET_METADATA.some(meta => meta.puzzle === puzzle)) {
+        expect(group, puzzle).toBeUndefined();
+        continue;
+      }
       expect(group, puzzle).toBeDefined();
       expect(group?.eventId).toBe(PUZZLE_EVENT[puzzle]);
       for (const set of ALG_CATALOG[puzzle]) {

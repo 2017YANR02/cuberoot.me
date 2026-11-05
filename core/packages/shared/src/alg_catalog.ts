@@ -1,4 +1,4 @@
-export type AlgPuzzle = '2x2' | '3x3' | '4x4' | '5x5' | 'sq1' | 'megaminx' | 'pyraminx' | 'skewb' | 'fto';
+export type AlgPuzzle = '2x2' | '3x3' | '4x4' | '5x5' | '6x6' | '7x7' | 'sq1' | 'megaminx' | 'pyraminx' | 'skewb' | 'fto';
 
 
 /** 3x3 set slug — matches `slug` in {@link ALG_CATALOG['3x3']}. */
@@ -167,6 +167,8 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
     { slug: 'l2e', scd: 'L2E', en: 'Last Two Edges',   zh: 'Last Two Edges (L2E)' },
     { slug: 'l2c', scd: 'L2C', en: 'Last Two Centers', zh: 'Last Two Centers (L2C)' },
   ],
+  '6x6': [],
+  '7x7': [],
   'sq1': [
     { slug: 'cs',     scd: 'SQ1CS',     short: 'CS',     en: 'Cube Shape',         zh: '复形' },
     {
@@ -244,7 +246,7 @@ export const ALG_CATALOG_SECTIONS: Partial<Record<AlgPuzzle, AlgCatalogSection[]
   ],
 };
 
-export const ALG_PUZZLES: AlgPuzzle[] = ['2x2', '3x3', '4x4', '5x5', 'sq1', 'megaminx', 'pyraminx', 'skewb', 'fto'];
+export const ALG_PUZZLES: AlgPuzzle[] = ['2x2', '3x3', '4x4', '5x5', '6x6', '7x7', 'sq1', 'megaminx', 'pyraminx', 'skewb', 'fto'];
 
 export function getAlgSetMeta(puzzle: AlgPuzzle, slug: string): AlgSetMeta | undefined {
   return ALG_CATALOG[puzzle]?.find(s => s.slug === slug);

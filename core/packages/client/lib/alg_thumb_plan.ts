@@ -21,7 +21,7 @@ import { visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
 export const DEFAULT_ALG_CUBE_ORIENTATION = "z2 y'";
 
 export const PUZZLE_SIZE: Record<AlgPuzzle, number> = {
-  '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5,
+  '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5, '6x6': 6, '7x7': 7,
   'sq1': 3, 'megaminx': 3, 'pyraminx': 3, 'skewb': 3, 'fto': 3,
 };
 

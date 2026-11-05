@@ -148,7 +148,7 @@ export const TRAINING_DIRECTORY: readonly TrainingDirectoryGroup[] = [
         path: `/alg/${puzzle}/mix/select`, title: { zh: '混合公式集', en: 'Mixed sets' },
       }] : []),
     ],
-  })),
+  })).filter(group => group.items.length > 0),
   ...SPECIAL_GROUPS.map(group => ({
     ...group,
     items: STATIC_ROUTES.filter(item => item.group === group.id).map(item => ({

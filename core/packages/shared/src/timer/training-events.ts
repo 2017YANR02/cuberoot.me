@@ -4,7 +4,7 @@ import { ALG_PUZZLES, type AlgPuzzle } from '../alg_catalog';
 
 // alg-set puzzle <-> WCA event id
 export const PUZZLE_EVENT: Record<AlgPuzzle, string> = {
-  '2x2': '222', '3x3': '333', '4x4': '444', '5x5': '555',
+  '2x2': '222', '3x3': '333', '4x4': '444', '5x5': '555', '6x6': '666', '7x7': '777',
   'sq1': 'sq1', 'megaminx': 'minx', 'pyraminx': 'pyram', 'skewb': 'skewb', 'fto': 'fto',
 };
 const EVENT_TO_PUZZLE: Record<string, AlgPuzzle> = Object.fromEntries(
