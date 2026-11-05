@@ -856,13 +856,6 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Create or update a cube teacher or training school profile with experience, photos, specialties, and contact details.',
     },
   },
-  'tutorial/lbl-archive': {
-    title: { zh: '三阶魔方层先法（旧版存档）', en: '3×3 LBL (Archive)' },
-    description: {
-      zh: '旧版层先法教程存档，保留原有交互演示与练习。',
-      en: 'Archived layer-by-layer tutorial with its original interactive demonstrations and exercises.',
-    },
-  },
   'tutorial/lbl': {
     title: { zh: '三阶魔方层先法', en: '3×3 LBL' },
     description: { zh: '从小花到六面复原，跟随可交互魔方逐步学习三阶层先法。', en: 'Learn to solve the 3×3 layer by layer with interactive demonstrations, from the daisy to the last edges.' },

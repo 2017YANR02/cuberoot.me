@@ -115,7 +115,7 @@ function scanRoutes(): string[] {
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [...new Set([...scanRoutes(), ...EXTRA])]
-    .filter((r) => !EXCLUDE.has(r) && r !== 'tutorial/lbl-archive' && !r.startsWith('partnership/') && !r.startsWith('bp/') && !isRetiredAlgTrainer(`/${r}`))
+    .filter((r) => !EXCLUDE.has(r) && !r.startsWith('partnership/') && !r.startsWith('bp/') && !isRetiredAlgTrainer(`/${r}`))
     .sort();
   // Pattern B: English is the BARE URL (no /en prefix); Chinese is /zh/….
   const en = (path: string) => (path ? `${BASE}/${path}` : `${BASE}/`);

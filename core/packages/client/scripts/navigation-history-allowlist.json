@@ -185,21 +185,6 @@
     "reason": "进入课程章节"
   },
   {
-    "path": "app/[lang]/tutorial/lbl-archive/BasicsCards.tsx",
-    "call": "useQueryStates({topic,basics}) history='push'",
-    "reason": "进入课程章节、知识主题或练习界面"
-  },
-  {
-    "path": "app/[lang]/tutorial/lbl-archive/page.tsx",
-    "call": "useQueryStates({step,topic,basics}) history='push'",
-    "reason": "进入课程章节、知识主题或练习界面"
-  },
-  {
-    "path": "app/[lang]/tutorial/lbl-archive/page.tsx",
-    "call": "useQueryState('view') history='push'",
-    "reason": "进入课程章节、知识主题或练习界面"
-  },
-  {
     "path": "app/[lang]/wca/comp/[slug]/CompDetailPage.tsx",
     "call": "useQueryState('view') history='push'",
     "reason": "比赛成绩、预排名、赛程等主要标签导航"
