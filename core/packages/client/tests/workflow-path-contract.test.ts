@@ -907,7 +907,7 @@ describe('deployment workflow path contracts', () => {
     }
   });
 
-  it('materializes the research hook working directory in sparse client test jobs', () => {
+  it('materializes research hook and architecture evidence in sparse client test jobs', () => {
     const workflow = readWorkflow('test.yml');
     for (const job of ['test', 'client-tests']) {
       const start = workflow.indexOf(`\n  ${job}:\n`);
@@ -917,6 +917,8 @@ describe('deployment workflow path contracts', () => {
       // spawnSync needs a real cwd even though the hook classifies commands
       // without executing the solver. One tracked text fixture is sufficient.
       expect(block, job).toMatch(/^\s+\/solver\/experiments\/cube48opt-rust\/README\.md\s*$/m);
+      expect(block, job).toMatch(/^\s+\/ops\/nginx\/dev-machines\.conf\s*$/m);
+      expect(block, job).toMatch(/^\s+\/ops\/dev-preview\/machines\.json\s*$/m);
     }
   });
 

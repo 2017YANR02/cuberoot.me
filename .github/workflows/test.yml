@@ -398,6 +398,8 @@ jobs:
             /ops/contests/recordranks-ref.txt
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
+            /ops/nginx/dev-machines.conf
+            /ops/dev-preview/machines.json
             /ops/nginx/purge-api-cache.ts
             /ops/maintenance/
             /ops/vercel-ban-relay/competition-rule.json
@@ -663,6 +665,8 @@ jobs:
             /ops/contests/recordranks-ref.txt
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
+            /ops/nginx/dev-machines.conf
+            /ops/dev-preview/machines.json
             /ops/nginx/purge-api-cache.ts
             /ops/maintenance/
             /ops/vercel-ban-relay/competition-rule.json
