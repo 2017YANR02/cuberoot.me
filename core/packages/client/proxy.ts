@@ -30,6 +30,7 @@ import { fillPlatformParams, matchPlatformRoute } from './lib/platform-routes';
 import { competitionGate } from './lib/competition-gate';
 import { isRetiredAlgTrainer, retiredAlgTrainerHref } from './lib/timer-training-catalog';
 import { canonicalTimerPracticeSearch } from './lib/timer-practice-url';
+import { isRetiredRoute } from './lib/retired-routes';
 
 const SUPPORTED_LOCALES = ['en', 'zh'] as const;
 type Locale = typeof SUPPORTED_LOCALES[number];
@@ -168,16 +169,10 @@ function routeLanguage(req: NextRequest) {
 
   const { locale, rest } = stripLocalePrefix(pathname);
 
-  // Retired URLs return the site's 404, not a streamed soft-404 or redirect.
-  if (rest === '/platform/shop' || rest.startsWith('/platform/shop/')
-    || rest === '/dev/code-history'
-    || rest === '/dev/architecture/decisions'
-    || rest === '/dev/architecture/code-history' || rest === '/dev/architecture/history'
-    || rest === '/wca/cross_city_competition_streaks') {
-    const target = url.clone();
-    target.pathname = `/${locale ?? preferredLocale(req)}/404`;
-    target.search = '';
-    return NextResponse.rewrite(target, { status: 404, headers: { 'X-Robots-Tag': 'noindex, nofollow' } });
+  // Let next.config's internal rewrite render the branded, hard 404. Avoid
+  // both language redirects and Proxy self-proxying on standalone servers.
+  if (isRetiredRoute(rest)) {
+    return NextResponse.next({ headers: { 'X-Robots-Tag': 'noindex, nofollow' } });
   }
 
   if (rest === '/timer') {

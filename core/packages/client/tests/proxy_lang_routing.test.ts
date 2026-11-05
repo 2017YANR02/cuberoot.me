@@ -10,6 +10,8 @@
 import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { proxy } from '@/proxy';
+import nextConfig from '../next.config';
+import { RETIRED_ROUTES } from '@/lib/retired-routes';
 
 function request(url: string, headers: Record<string, string> = {}) {
   return proxy(new NextRequest(url, { headers: new Headers(headers) }));
@@ -21,10 +23,19 @@ afterEach(() => { vi.unstubAllGlobals(); });
 const FORWARDED_HTTPS = { 'x-forwarded-proto': 'https' };
 
 describe('retired architecture URLs', () => {
+  it('routes retired pages to the root 404 before dynamic shells', async () => {
+    const config = await nextConfig.rewrites!();
+    expect(Array.isArray(config)).toBe(false);
+    if (Array.isArray(config) || !config.beforeFiles) throw new Error('Expected ordered rewrites');
+    expect(config.beforeFiles.slice(0, RETIRED_ROUTES.length)).toEqual(RETIRED_ROUTES.map(route => ({
+      source: `/:lang(en|zh)?${route.path}${'descendants' in route ? '/:path*' : ''}`, destination: '/404',
+    })));
+  });
   const paths = ['/dev/architecture/decisions', '/dev/code-history', '/dev/architecture/code-history', '/dev/architecture/history'];
-  it.each(paths.flatMap(path => [path, `/zh${path}`, `/en${path}`, `${path}?lang=zh&day=2026-02-22`]))('returns 404 without a language redirect for %s', async path => {
+  it.each(paths.flatMap(path => [path, `/zh${path}`, `/en${path}`, `${path}?lang=zh&day=2026-02-22`]))('defers to the internal 404 route without a Proxy rewrite for %s', async path => {
     const res = await request(`https://cuberoot.me${path}`, { 'accept-language': 'zh-CN', ...FORWARDED_HTTPS });
-    expect(res.status).toBe(404);
+    expect(res.headers.get('x-middleware-next')).toBe('1');
+    expect(res.headers.get('x-middleware-rewrite')).toBeNull();
     expect(res.headers.get('location')).toBeNull();
     expect(res.headers.get('x-robots-tag')).toBe('noindex, nofollow');
   });

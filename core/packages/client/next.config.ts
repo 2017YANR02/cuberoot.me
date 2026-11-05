@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import path from "node:path";
 import dns from "node:dns";
 import { PLATFORM_CANONICAL_REWRITES } from "./lib/platform-routes";
+import { RETIRED_ROUTES } from "./lib/retired-routes";
 import { usesLocalStats, PUBLISHED_STATS_ORIGIN } from "@cuberoot/shared/stats-base";
 
 // Force IPv4 first for upstream rewrites — node fetch's default IPv6-first
@@ -229,6 +230,12 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
+        // Config rewrites resolve internally on both hosts. Proxy rewrites can
+        // self-proxy HTTPS to standalone's HTTP port behind TLS termination.
+        ...RETIRED_ROUTES.map(route => ({
+          source: `/:lang(en|zh)?${route.path}${'descendants' in route ? '/:path*' : ''}`,
+          destination: '/404',
+        })),
         // Platform canonical aliases keep their /platform/* URL while serving
         // the existing main-site implementation. This is the complete shared
         // functionality, not a duplicate page or a link-only placeholder.

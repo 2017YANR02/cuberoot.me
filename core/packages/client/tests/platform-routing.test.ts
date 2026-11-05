@@ -282,10 +282,11 @@ describe('Platform route conservation', () => {
     }
   });
 
-  it('returns 404 for retired storefront paths without redirecting, including language queries', async () => {
+  it('lets config resolve retired storefront paths without Proxy rewrites or language redirects', async () => {
     for (const path of ['/platform/shop', '/zh/platform/shop/cart', '/en/platform/shop/poster?lang=zh']) {
       const response = await proxy(new NextRequest(`https://cuberoot.me${path}`));
-      expect(response.status).toBe(404);
+      expect(response.headers.get('x-middleware-next')).toBe('1');
+      expect(response.headers.get('x-middleware-rewrite')).toBeNull();
       expect(response.headers.get('Location')).toBeNull();
     }
   });
