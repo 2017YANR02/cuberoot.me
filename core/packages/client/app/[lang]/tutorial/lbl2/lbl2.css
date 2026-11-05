@@ -3,21 +3,21 @@
 .lbl2-header a { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; color: var(--muted-foreground); text-decoration: none; }
 .lbl2-header a:hover { color: var(--foreground); }
 .lbl2-header h1 { margin: 0; font-size: 1rem; }
-.lbl2-page button { font: inherit; cursor: pointer; }
+.lbl2-page :is(.lbl2-chapter-button, .lbl2-section-button, .lbl2-footer-button, .lbl2-practice-button, .lbl-alg-move) { font: inherit; cursor: pointer; }
 /* LBL2 playback always uses a plain progress track, including complete demos. */
 .lbl2-page .playback-bar-markers { display: none; }
-.lbl2-page button:focus-visible, .lbl2-page summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.lbl2-page :is(.lbl2-chapter-button, .lbl2-section-button, .lbl2-footer-button, .lbl2-practice-button, .lbl-alg-move):focus-visible, .lbl2-page summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
 .lbl2-chapters { overflow: hidden; padding: 8px 0 20px; border-bottom: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent); }
 .lbl2-chapter-track { position: relative; display: grid; grid-template-columns: repeat(var(--chapter-count), minmax(0, 1fr)); }
-.lbl2-chapter-track > button { position: relative; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; border: 0; background: transparent; padding: 0 4px 12px; color: var(--muted-foreground); font-size: .8rem; line-height: 1.5; }
-.lbl2-chapter-track > button[aria-current] { color: var(--accent); }
+.lbl2-chapter-track > .lbl2-chapter-button { position: relative; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; border: 0; background: transparent; padding: 0 4px 12px; color: var(--muted-foreground); font-size: .8rem; line-height: 1.5; }
+.lbl2-chapter-track > .lbl2-chapter-button[aria-current] { color: var(--accent); }
 .lbl2-chapter-line { display: block; flex-shrink: 0; height: 4px; margin-bottom: 12px; border-radius: 999px; background: var(--border-default); }
 .lbl2-indicator { position: absolute; z-index: 1; top: 0; left: 0; width: calc(100% / var(--chapter-count)); height: 4px; transform: translateX(calc(var(--chapter) * 100%)); transition: transform 680ms cubic-bezier(.22, 1.85, .36, 1); pointer-events: none; }
 .lbl2-indicator::after { content: ''; position: absolute; inset: 0 4px; border-radius: 999px; background: var(--accent); }
 .lbl2-body { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 0; gap: 40px; padding-top: 24px; }
 .lbl2-sidebar { min-width: 0; min-height: 0; overflow-y: auto; padding-right: 12px; border-right: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent); }
 .lbl2-page .af-nav-menu { width: 100%; }
-.lbl2-page .af-nav-menu button { width: 100%; border: 0; text-align: left; }
+.lbl2-page .lbl2-section-button { width: 100%; border: 0; text-align: left; }
 .lbl2-page .af-nav-link { height: 68px; gap: 12px; }
 .lbl2-page .af-nav-icon { width: 52px; height: 52px; flex-basis: 52px; }
 .lbl2-page .af-nav-icon svg { width: 52px; height: 52px; }
@@ -27,7 +27,7 @@
 .lbl2-demo-toolbar { min-width: 0; display: flex; align-items: start; gap: 8px; }
 .lbl2-demo-toolbar .lbl-complete-toolbar { position: static; margin-inline-start: auto; }
 .lbl2-demo-toolbar .lbl2-practice-button { display: inline-flex; align-items: center; gap: 6px; padding: 9px 12px; border: 0; border-radius: 10px; background: var(--accent-soft); color: var(--accent); font-size: .85rem; }
-.lbl2-practice-page .lbl2-header button, .lbl2-practice-page button.lbl-completion-review { border: 0; background: transparent; color: inherit; cursor: pointer; }
+.lbl2-practice-page .lbl2-practice-back, .lbl2-practice-page .lbl-completion-review { border: 0; background: transparent; color: inherit; cursor: pointer; }
 .lbl2-practice-page .lbl-exercise .lbl-basic-footer > .lbl2-practice-review { grid-column: 1; justify-self: start; }
 .lbl2-lesson-scroll { min-height: 0; overflow: auto; overscroll-behavior: contain; }
 .lbl2-content { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: center; gap: 48px; min-height: 470px; animation: lbl2-enter 220ms ease-out; }
@@ -40,10 +40,10 @@
 .lbl2-direction-emphasis { color: var(--accent); }
 .lbl2-placeholder { font-size: .75rem; color: var(--faint-foreground); }
 .lbl2-footer { display: flex; justify-content: space-between; gap: 20px; padding-top: 32px; border-top: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent); }
-.lbl2-footer button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 8px 14px; border: 0; border-radius: 10px; color: var(--muted-foreground); background: transparent; }
-.lbl2-footer button:last-child { color: var(--accent); background: var(--accent-soft); }
-.lbl2-footer button:hover:not(:disabled) { background: var(--muted); color: var(--foreground); }
-.lbl2-footer button:disabled { opacity: .35; cursor: default; }
+.lbl2-footer .lbl2-footer-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 8px 14px; border: 0; border-radius: 10px; color: var(--muted-foreground); background: transparent; }
+.lbl2-footer .lbl2-footer-next { color: var(--accent); background: var(--accent-soft); }
+.lbl2-footer .lbl2-footer-button:hover:not(:disabled) { background: var(--muted); color: var(--foreground); }
+.lbl2-footer .lbl2-footer-button:disabled { opacity: .35; cursor: default; }
 .lbl2-mobile-menu { display: none; }
 .lbl2-content-reading { display: flex; flex-direction: column; align-items: center; box-sizing: border-box; max-width: 760px; margin: 0 auto; min-height: 100%; }
 .lbl2-content-reading > .lbl2-explanation { width: 100%; box-sizing: border-box; margin-block: auto; text-align: center; }
@@ -143,7 +143,7 @@
   .lbl2-explanation > img { float: right; width: 80px; height: 80px; margin: 0 0 12px 16px; }
   .lbl2-explanation::after { content: ''; display: block; clear: both; }
   .lbl2-footer { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; padding-top: 20px; }
-  .lbl2-footer > button { gap: 4px; padding: 8px 6px; font-size: .8rem; }
+  .lbl2-footer > .lbl2-footer-button { gap: 4px; padding: 8px 6px; font-size: .8rem; }
   .lbl2-stage-overview { gap: 8px; }
   .lbl2-content-reading { min-height: 100%; }
   .lbl2-complete .lbl-demo.lbl-demo-split { grid-template-columns: minmax(0, 1fr); }

@@ -105,7 +105,7 @@ export default function Lbl2Template() {
   // The shared menu owns item styling; the host owns lesson selection.
   const navigation = <NavigationMenu items={items} collapsed={false} label={tr({ zh: '本章小节', en: 'Chapter sections' })}
     renderLink={({ children, href, onClick, className, ...props }) => {
-      return <button className={className} aria-label={props['aria-label']} aria-current={props['aria-current']} type="button" onClick={() => { chooseSection(Number(href.replace('#section-', ''))); onClick?.(); }}>{children}</button>;
+      return <button className={`lbl2-section-button ${className ?? '}`} aria-label={props['aria-label']} aria-current={props['aria-current']} type="button" onClick={() => { chooseSection(Number(href.replace('#section-', ''))); onClick?.(); }}>{children}</button>;
     }} />;
 
   if (practiceOpen) return <Practice step={currentChapter}
@@ -124,7 +124,7 @@ export default function Lbl2Template() {
     <nav className="lbl2-chapters" ref={chapterNav} aria-label={tr({ zh: '课程章节', en: 'Course chapters' })}>
       <div className="lbl2-chapter-track" style={{ '--chapter': chapter, '--chapter-count': chapters.length } as CSSProperties}>
         <span className="lbl2-indicator" aria-hidden="true" />
-        {chapters.map((label, index) => <button key={index} type="button" aria-current={chapter === index ? 'step' : undefined}
+        {chapters.map((label, index) => <button key={index} className="lbl2-chapter-button" type="button" aria-current={chapter === index ? 'step' : undefined}
           onClick={() => chooseChapter(index)}>
           <span className="lbl2-chapter-line" /><span>{tr(label.title)}</span>
         </button>)}
@@ -142,12 +142,12 @@ export default function Lbl2Template() {
           <LessonContent chapter={currentChapter} lesson={currentLesson} />
         </div>
         <footer className="lbl2-footer">
-          <button type="button" disabled={chapter === 0 && section === 0} onClick={() => advance(-1)}><ArrowLeft size={17} /><T zh="上一节" en="Previous" /></button>
+          <button className="lbl2-footer-button" type="button" disabled={chapter === 0 && section === 0} onClick={() => advance(-1)}><ArrowLeft size={17} /><T zh="上一节" en="Previous" /></button>
           <details className="lbl2-mobile-menu" ref={menu}>
             <summary><span className="lbl2-section-count">{section + 1}/{sections.length}</span><span>{tr(currentLesson.title)}</span><ChevronDown size={15} /></summary>
             <div className="lbl2-section-popover" data-site-surface="popover">{navigation}</div>
           </details>
-          <button type="button" disabled={chapter === chapters.length - 1 && section === sections.length - 1} onClick={() => advance(1)}><T zh="下一节" en="Next" /><ArrowRight size={17} /></button>
+          <button className="lbl2-footer-button lbl2-footer-next" type="button" disabled={chapter === chapters.length - 1 && section === sections.length - 1} onClick={() => advance(1)}><T zh="下一节" en="Next" /><ArrowRight size={17} /></button>
         </footer>
       </div>
     </div>

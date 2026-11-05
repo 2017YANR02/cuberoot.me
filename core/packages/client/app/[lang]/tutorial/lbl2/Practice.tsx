@@ -48,7 +48,7 @@ export default function Practice({ step, initialIndex, extraExample, onClose, on
   const examples = extraExample ? [extraExample, ...step.examples] : step.examples;
   return <main className="lbl-page lbl-practice-page lbl2-practice-page">
     <header className="lbl2-header">
-      <button type="button" className="lbl-button" onClick={onClose} aria-label={tr({ zh: '回看本节教程', en: 'Review this lesson' })}><ArrowLeft size={18} /></button>
+      <button type="button" className="lbl-button lbl2-practice-back" onClick={onClose} aria-label={tr({ zh: '回看本节教程', en: 'Review this lesson' })}><ArrowLeft size={18} /></button>
       <h1><T zh="分步练习" en="Guided practice" /></h1>
     </header>
     <Exercise key={index} step={step} example={examples[index]} index={index} total={examples.length}
