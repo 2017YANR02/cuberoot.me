@@ -63,7 +63,7 @@ const STAT_CATEGORIES = [
     nameEn: 'Competitor Journey', nameZh: '选手经历',
     iconName: 'UserRound',
     ids: ['competitions_per_year_by_person', 'longest_competitions_path',
-          'cross_city_competition_streaks',
+          'competition_streaks',
           'longest_streak_of_competitions_in_own_country',
           'longest_streak_of_personal_records', 'longest_streak_of_podiums',
           'longest_time_to_sub_10',

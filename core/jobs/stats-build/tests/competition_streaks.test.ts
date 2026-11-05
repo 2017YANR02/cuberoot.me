@@ -1,15 +1,15 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { PoolConnection, RowDataPacket } from 'mysql2/promise';
 import { getPool, closePool } from '../src/core/database.js';
-import { CrossCityCompetitionStreaks } from '../src/statistics/cross_city_competition_streaks.js';
+import { CompetitionStreaks } from '../src/statistics/competition_streaks.js';
 
 // Opt-in SQL integration: temporary tables shadow the dump only on this connection.
-// WCA_STATS_SQL_TEST=1 pnpm --filter @cuberoot/stats-build exec vitest run tests/cross_city_competition_streaks.test.ts
-describe.skipIf(process.env.WCA_STATS_SQL_TEST !== '1')('cross-city streak SQL', () => {
+// WCA_STATS_SQL_TEST=1 pnpm --filter @cuberoot/stats-build exec vitest run tests/competition_streaks.test.ts
+describe.skipIf(process.env.WCA_STATS_SQL_TEST !== '1').each([false, true])('competition streak SQL (cross-city only: %s)', (crossCityOnly) => {
   let connection: PoolConnection;
   let resultId = 0;
   const people = new Set<string>();
-  const stat = new CrossCityCompetitionStreaks();
+  const stat = new CompetitionStreaks();
 
   beforeAll(async () => {
     connection = await getPool().getConnection();
@@ -41,7 +41,7 @@ describe.skipIf(process.env.WCA_STATS_SQL_TEST !== '1')('cross-city streak SQL',
   }
 
   async function streaks(person: string) {
-    const [rows] = await connection.query<RowDataPacket[]>(stat.query());
+    const [rows] = await connection.query<RowDataPacket[]>(stat.query(crossCityOnly));
     return stat.transform(rows.filter(row => row.person_id === person));
   }
 
@@ -80,15 +80,23 @@ describe.skipIf(process.env.WCA_STATS_SQL_TEST !== '1')('cross-city streak SQL',
     expect(rows[0][6]).toBe('Overlapping schedules');
   });
 
-  it('breaks on normalized same-city visits, preserving the next maximal streak', async () => {
+  it('joins same-city visits only when the cross-city requirement is off', async () => {
     await visit('same', 'k', ' A  Town ', 1);
     await visit('same', 'l', 'a town', 2);
     await visit('same', 'm', 'B', 3);
     const rows = await streaks('same');
     expect(rows).toHaveLength(1);
-    expect(rows[0][0]).toBe(2);
-    expect(rows[0][3]).toBe('2026-05-02');
+    expect(rows[0][0]).toBe(crossCityOnly ? 2 : 3);
+    expect(rows[0][3]).toBe(crossCityOnly ? '2026-05-02' : '2026-05-01');
     expect(rows[0][6]).toBe('Non-overlapping schedules');
+  });
+
+  it('includes a wholly same-city streak only without the cross-city requirement', async () => {
+    await visit('local', 'local-a', 'A', 1);
+    await visit('local', 'local-b', 'A', 2);
+    const rows = await streaks('local');
+    if (crossCityOnly) expect(rows).toEqual([]);
+    else expect(rows[0][0]).toBe(2);
   });
 
   it('does not use an earlier long event to bridge a gap after the immediately previous event', async () => {
@@ -105,7 +113,9 @@ describe.skipIf(process.env.WCA_STATS_SQL_TEST !== '1')('cross-city streak SQL',
     await visit('unknown', 'q', 'A', 1);
     await visit('unknown', 'r', '', 2);
     await visit('unknown', 's', 'B', 3);
-    expect(await streaks('unknown')).toEqual([]);
+    const unknown = await streaks('unknown');
+    if (crossCityOnly) expect(unknown).toEqual([]);
+    else expect(unknown[0][0]).toBe(3);
     await visit('country', 't', 'Victoria', 1, 1, [100], 'Canada');
     await visit('country', 'u', 'Victoria', 2, 2, [100], 'Seychelles');
     expect((await streaks('country'))[0][0]).toBe(2);

@@ -1,20 +1,21 @@
 import type { RowDataPacket } from 'mysql2';
-import { Statistic } from '../core/statistic.js';
+import { Statistic, type StatJson } from '../core/statistic.js';
+import { query as dbQuery } from '../core/database.js';
 
-export class CrossCityCompetitionStreaks extends Statistic {
+export class CompetitionStreaks extends Statistic {
   constructor() {
     super();
-    this.title = 'Cross-city competition streaks';
-    this.titleZh = '跨城连续参赛（特种兵）';
-    this.note = 'At least two competitions in different adjacent cities, with touching or overlapping date ranges. Each competition requires a positive attempt or DNF; DNS-only entries do not count. Competitions are ordered by start date, end date, then ID. Same-city entries or a gap of one full day break the streak. Cities use WCA country and normalized city names; missing or multi-location cities break the streak. Overlapping schedules do not establish actual attendance dates. Only complete streaks are listed.';
-    this.noteZh = '至少两场，相邻比赛城市不同，完整赛期相接或重叠。每场须有正常成绩或 DNF，纯 DNS 不算参赛。按开始日期、结束日期、比赛 ID 排序；同城比赛或中间空一天会中断。城市按 WCA 国家和规范化城市名区分，缺失或多地点城市会中断。赛期重叠不代表已确认实际到场日期。每段完整行程仅列一次。';
+    this.title = 'Competition streaks';
+    this.titleZh = '特种兵：连续参赛';
+    this.note = 'At least two competitions with touching or overlapping date ranges. Each competition requires a positive attempt or DNF; DNS-only entries do not count. Competitions are ordered by start date, end date, then ID; a gap of one full day after the immediately previous competition breaks the streak. Cities are unrestricted by default. With “Cross-city only” enabled, adjacent competitions must be in different cities; same-city, missing-city or multi-location entries break the streak. Cities use WCA country and normalized city names. Overlapping schedules do not establish actual attendance dates. Only complete streaks are listed.';
+    this.noteZh = '至少两场，完整赛期相接或重叠。每场须有正常成绩或 DNF，纯 DNS 不算参赛。按开始日期、结束日期、比赛 ID 排序；与紧邻上一场比赛中间空一天会中断。默认不限城市；开启“仅跨城”后，相邻比赛须在不同城市，同城、城市缺失或多地点比赛会中断。城市按 WCA 国家和规范化城市名区分。赛期重叠不代表已确认实际到场日期。每段完整行程仅列一次。';
     this.tableHeader = {
       Competitions: 'right', Person: 'left', 'City route': 'left',
       'Start date': 'left', 'End date': 'left', List: 'left', 'Schedule overlap': 'left',
     };
   }
 
-  query(): string {
+  query(crossCityOnly = false): string {
     return `
       WITH attended AS (
         SELECT DISTINCT r.person_id, r.competition_id
@@ -41,9 +42,9 @@ export class CrossCityCompetitionStreaks extends Statistic {
         WINDOW w AS (PARTITION BY person_id ORDER BY start_date, end_date, competition_id)
       ), numbered AS (
         SELECT previous_visits.*,
-          SUM(CASE WHEN city_key IS NOT NULL AND previous_city IS NOT NULL
-            AND BINARY city_key <> BINARY previous_city
-            AND start_date <= DATE_ADD(previous_end, INTERVAL 1 DAY)
+          SUM(CASE WHEN ${crossCityOnly ? `city_key IS NOT NULL AND previous_city IS NOT NULL
+            AND BINARY city_key <> BINARY previous_city AND` : ''}
+            start_date <= DATE_ADD(previous_end, INTERVAL 1 DAY)
             THEN 0 ELSE 1 END) OVER (
               PARTITION BY person_id ORDER BY start_date, end_date, competition_id
               ROWS UNBOUNDED PRECEDING
@@ -62,6 +63,17 @@ export class CrossCityCompetitionStreaks extends Statistic {
       ORDER BY s.streak_size DESC, s.person_id, s.streak_id,
         s.start_date, s.end_date, s.competition_id
     `;
+  }
+
+  override async toJson(): Promise<StatJson> {
+    const { rows, ...data } = await super.toJson();
+    const crossCityRows = this.transform(await dbQuery(this.query(true)));
+    return { ...data,
+      header: data.header.map(column => column.key === 'list' ? { ...column, labelZh: '比赛' } : column),
+      sections: [
+      { title: 'All cities', titleZh: '不限城市', rows: rows ?? [] },
+      { title: 'Cross-city only', titleZh: '仅跨城', rows: crossCityRows },
+    ] };
   }
 
   transform(rows: RowDataPacket[]): unknown[][] {
