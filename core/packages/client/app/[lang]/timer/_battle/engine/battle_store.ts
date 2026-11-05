@@ -1,3 +1,4 @@
+import { usesStackmatPads, STACKMAT_PAD_HOLD_MS } from '@/components/stackmat-catalog';
 import { normalizeSoloLayout, type SoloLayout, resolveTimerWcaSourceCore, timerSupportsRealWcaScrambles, readLocalBattlePreferences, requestLocalBattleScramble, type LocalBattleScramble, summarizeLocalBattleRounds } from '@cuberoot/shared/timer';
 /**
  * Battle 模块 Zustand Store
@@ -628,7 +629,7 @@ function applyLocalAction(get: () => BattleState, set: (patch: Partial<BattleSta
       timers[effect.playerId] = setTimeout(() => {
         const next = [...get().readyTimers]; next[effect.playerId] = null; set({ readyTimers: next });
         applyLocalAction(get, set, { type: 'player-timer', playerId: effect.playerId, action: { type: 'hold-ready' } });
-      }, s.startDelay);
+      }, usesStackmatPads(getSettings()) ? STACKMAT_PAD_HOLD_MS : s.startDelay);
       set({ readyTimers: timers });
     }
     if (effect.effect === 'run-stopped') {
@@ -1117,7 +1118,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
           timers[target] = null;
           set({ players: newPlayers, readyTimers: timers });
         }
-      }, s.startDelay);
+      }, usesStackmatPads(getSettings()) ? STACKMAT_PAD_HOLD_MS : s.startDelay);
       const timers = [...s.readyTimers];
       timers[target] = timer;
       set({ readyTimers: timers });

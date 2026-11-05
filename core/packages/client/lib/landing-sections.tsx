@@ -6,7 +6,7 @@ import {
   Compass, Grid2x2, Trophy, Code as CodeIcon,
   Brain, Sigma, Scale, Sprout, Brush, MessageCircle, MessagesSquare, Shapes, Eye, Palette,
   CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap, School, Building2,
-  FileText, Award, Radio, PanelsTopLeft, UserRound, UsersRound, HardDrive, ListOrdered,
+  FileText, Award, Radio, PanelsTopLeft, UserRound, UsersRound, HardDrive,
   Images, Music2, Gamepad2, History, Type as TypeIcon,
   type LucideIcon,
 } from '@app-foundation/icons/lucide';
@@ -17,6 +17,7 @@ import {
 } from '@cuberoot/shared/site-directory';
 import { type LandingSearchCard } from '@/components/LandingSearch';
 import StackmatIcon from '@/components/StackmatIcon';
+import { SpeedStacksOutlineIcon } from '@/components/SpeedStacksDisplayIcon';
 import CheckeredFlagIcon from '@/components/CheckeredFlagIcon';
 import { PAGE_META } from '@/lib/page-meta';
 import { SITE_ANNOUNCEMENTS } from '@cuberoot/shared/site-announcements';
@@ -74,7 +75,7 @@ const CARD_VISUALS: Partial<Record<SiteDirectoryEntry['id'], CardVisual>> = {
   recon: { iconText: '// xcross' },
   scramble: { iconText: "S' U' M'" },
   competitions: { Icon: CheckeredFlagIcon },
-  'wca-results': { Icon: ListOrdered },
+  'wca-results': { Icon: SpeedStacksOutlineIcon },
   'wca-stats': { iconImg: '/icons/wca.svg' },
   memo: { Icon: Brain },
   predict: { Icon: Eye },

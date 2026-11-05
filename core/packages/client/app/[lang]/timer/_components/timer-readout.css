@@ -1,0 +1,52 @@
+.timer-stackmat-readout {
+  display: inline-block;
+  position: relative;
+  width: 7em;
+  vertical-align: middle;
+  line-height: 0;
+  pointer-events: none;
+}
+.timer-stackmat-readout > svg { display: block; width: 100%; height: auto; }
+.timer-stackmat-status {
+  position: absolute;
+  inset: 34% 12% auto 22%;
+  text-align: right;
+  line-height: 1;
+  font-family: var(--font-sans), sans-serif;
+  color: var(--stackmat-digit-color, var(--destructive));
+}
+.timer-display:is(.holding, .ready, .inspection, .inspection-warn-8, .inspection-warn-12, .inspection-plus2, .inspection-dnf, .dnf) .timer-stackmat-readout,
+.player-area:is(.state-ready, .state-can-start, .state-inspecting) .timer-stackmat-readout {
+  --stackmat-digit-color: currentColor;
+}
+.time-display:has(.timer-stackmat-readout) { font-size: inherit; margin-top: 0; }
+.settings-appearance-preview .timer-stackmat-readout { max-width: 100%; }
+.timer-stackmat-readout > .timer-stackmat-pads {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+}
+.timer-stackmat-pad {
+  pointer-events: auto;
+  fill: transparent;
+  cursor: pointer;
+  touch-action: none;
+}
+.timer-stackmat-pad[aria-pressed="true"], .timer-stackmat-pad:focus-visible {
+  fill: color-mix(in srgb, var(--primary) 24%, transparent);
+  stroke: var(--primary);
+  stroke-width: 3px;
+  outline: none;
+}
+.timer-stackmat-pad[aria-disabled="true"] { pointer-events: none; }
+.timer-stackmat-key {
+  fill: var(--foreground);
+  stroke: var(--background);
+  stroke-width: 3px;
+  paint-order: stroke;
+  font: 600 13px var(--font-sans), sans-serif;
+  pointer-events: none;
+}

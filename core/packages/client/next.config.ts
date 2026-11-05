@@ -89,6 +89,7 @@ const nextConfig: NextConfig = {
       { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
     ];
     return [
+      { source: "/videos/stackmat/v1/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
       // Kill-switch service worker (public/sw.js): never cache, so clients with
       // the retired worker pick up the self-destruct script on their next update check.
       {

@@ -1,4 +1,6 @@
 'use client';
+import { usesStackmatPads } from '@/components/stackmat-catalog';
+import TimerReadout from '../_components/TimerReadout';
 import { TimerNetPkArena, TimerRemoteLiveCube, useNetBattleLiveView } from '@cuberoot/timer-ui';
 
 import {
@@ -64,7 +66,6 @@ import {
   timerSupportsNetBattleSmartCube,
 } from '@cuberoot/shared/timer';
 import {
-  SegmentTime,
   TimerCubePreview,
   timerCubePreviewAspect,
   TimerDeviceCenter,
@@ -932,7 +933,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const inRoom = !!room;
   useEffect(() => {
-    if (!inRoom) return;
+    if (!inRoom || usesStackmatPads(settings)) return;
     const el = surfaceRef.current;
     if (!el) return;
     const down = (e: PointerEvent) => {
@@ -952,7 +953,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       el.removeEventListener('pointerup', up);
       el.removeEventListener('pointercancel', up);
     };
-  }, [inRoom]);
+  }, [inRoom, settings.timerDisplayMode, settings.stackmatInputMode]);
 
   // 弹层打开时全局空格不进计时(同 Solo 的 anyModalOpen)。蓝牙弹窗里有 MAC 输入框,
   // 战绩 / 管理面板可以点到背景 —— 焦点一旦不在 button/input 上,空格就会穿透去
@@ -960,7 +961,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const overlayOpen = showStats || showAdmin || bluetoothOpen || renameOpen || qrOpen;
   const overlayOpenRef = useRef(overlayOpen); overlayOpenRef.current = overlayOpen;
   useEffect(() => {
-    if (!inRoom) return;
+    if (!inRoom || usesStackmatPads(settings)) return;
     const kd = (e: KeyboardEvent) => {
       if (overlayOpenRef.current) return;
       if (shouldIgnoreTimerTarget(e.target)) return;
@@ -978,7 +979,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     window.addEventListener('keydown', kd);
     window.addEventListener('keyup', ku);
     return () => { window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
-  }, [inRoom]);
+  }, [inRoom, settings.timerDisplayMode, settings.stackmatInputMode]);
 
   // ── 罚时调整(交卷后可改,改 = 重交同一时间新罚时)──────────────
   const adjustPenalty = useCallback((p: NetPenalty) => {
@@ -1208,7 +1209,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       phase: timer.phase,
       colorClass: `${colorClass} tf-${settings.timerFont}`.trim(),
       fontScale: settings.timerFontScale,
-      digits: <SegmentTime text={digitsText} />,
+      digits: <TimerReadout text={digitsText} padHost={{ down: pressDown, up: timer.onPressUp, cancel: timer.cancelPress,
+            running: () => phaseRef.current === 'running', indicator: timer.phase === 'ready' ? 'ready' : timer.phase === 'holding' ? 'holding' : 'idle', enabled: inRoom && !overlayOpen && !cubeConnected }} />,
       surfaceRef: surfaceRef,
 
       cornerSlot: activePkLock ? ownLiveCubeSlot : selectedCubeSlot,

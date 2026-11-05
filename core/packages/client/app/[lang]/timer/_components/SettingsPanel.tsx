@@ -1,4 +1,8 @@
 'use client';
+
+import { usesStackmatPads, STACKMAT_PAD_HOLD_MS } from '@/components/stackmat-catalog';
+import TimerReadout from './TimerReadout';
+import TimerDisplayModeSetting from './TimerDisplayModeSetting';
 import MoreToggle from '@/components/MoreToggle';
 import { timerFontPreviewStyle } from '@cuberoot/timer-ui/font-picker';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
@@ -263,13 +267,14 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
                 aria-label={tr({ zh: '外观预览', en: 'Appearance preview' })}
               >
                 <span className="settings-preview-label">{tr({ zh: '预览', en: 'Preview' })}</span>
-                <strong style={timerFontPreviewStyle(s.timerFont)}>12.34</strong>
+                <strong style={timerFontPreviewStyle(s.timerFont)}><TimerReadout text="12.34" /></strong>
                 <span style={timerFontPreviewStyle(s.scrambleFont, 400)}>R U R&apos; U&apos; F2</span>
               </div>
             )}
 
         <TimerTimingSettingsSections
           active={activeCategory === 'timer'}
+          fixedHoldMs={usesStackmatPads(s) ? STACKMAT_PAD_HOLD_MS : undefined}
           localize={tr}
           onChange={updateSettings}
           renderBooleanControl={renderTimingBooleanControl}
@@ -419,6 +424,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           <p className="settings-section-note">{tr({ zh: '字号和布局可通过计时器顶部的“调整布局”修改。', en: 'Use “Edit layout” in the timer toolbar to resize text and arrange the layout.' })}</p>
         </SettingsSection>
         <SettingsSection category="appearance" activeCategory={activeCategory} title={tr({ zh: '显示与操作', en: 'Display and interaction' })}>
+          <TimerDisplayModeSetting />
           <TimerDisplaySettings value={s} onChange={updateSettings} localize={tr} renderBooleanControl={props => <SharedBoolToggle {...props} />}>
           <TimerScramblePreviewSettings
             localize={tr}

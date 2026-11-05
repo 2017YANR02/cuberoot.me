@@ -1,3 +1,4 @@
+import { usesStackmatPads, STACKMAT_PAD_HOLD_MS } from '@/components/stackmat-catalog';
 /**
  * React adapter for the shared, platform-neutral timer machine.
  *
@@ -152,7 +153,7 @@ export function useTimer(
             currentConfig(),
           );
           commitState(transition.state);
-        }, getSettings().holdMs);
+        }, usesStackmatPads(getSettings()) ? STACKMAT_PAD_HOLD_MS : getSettings().holdMs);
       } else if (effect === 'hold-cancelled') {
         stopHoldTimer();
       } else if (effect === 'run-started') {

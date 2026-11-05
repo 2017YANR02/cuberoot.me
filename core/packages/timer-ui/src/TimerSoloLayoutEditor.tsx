@@ -131,7 +131,6 @@ export function TimerSoloLayoutEditor({ surfaceRef, contentKey, onDone, getSetti
     createPortal(<RegionHandles region={region} getSettings={getSettings} updateSettings={updateWithinViewport} language={language} />, target, `${region.gap}-${targetIndex}`)))}
     {surfaceRef.current && createPortal(
       <div className="solo-layout-toolbar" role="toolbar" aria-label={tr({ zh: '布局调整', en: 'Layout editing' })} data-no-timer data-site-surface="popover">
-        <span className="solo-layout-toolbar-label">{tr({ zh: '拖动调整', en: 'Drag to arrange' })}</span>
         <button title={tr({ zh: '恢复默认布局', en: 'Reset layout' })} type="button"
           className="solo-layout-reset" aria-label={tr({ zh: '恢复默认布局', en: 'Reset layout' })}
           onClick={() => updateWithinViewport({ soloLayout: { ...DEFAULT_SOLO_LAYOUT }, timerFontScale: 1, scrambleFontScale: 1 })}>

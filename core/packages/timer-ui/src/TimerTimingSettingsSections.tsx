@@ -24,6 +24,8 @@ export interface TimerTimingSettingsSectionsProps {
   active?: boolean;
   /** Hosts with mandatory timing omit the legacy untimed-practice control. */
   timingRequired?: boolean;
+  /** An input device can require a fixed arming interval without overwriting the normal setting. */
+  fixedHoldMs?: number;
   localize: (copy: TimerSettingCopy) => string;
   onChange: (patch: Partial<TimerTimingSettings>) => void;
   /** Platform visual primitive; this shared component owns the row and setting behavior. */
@@ -188,6 +190,7 @@ export function TimerBooleanSettingRow({
 export function TimerTimingSettingsSections({
   active = true,
   timingRequired = false,
+  fixedHoldMs,
   localize,
   onChange,
   renderBooleanControl,
@@ -232,7 +235,8 @@ export function TimerTimingSettingsSections({
             onKeyDown={event => { if (event.key === 'Enter') commitHold(); }}
             step={HOLD_RULE.step}
             type="number"
-            value={holdInput}
+            disabled={fixedHoldMs !== undefined}
+            value={fixedHoldMs ?? holdInput}
           />
         </TimerSettingRow>
       </TimerSettingsSection>

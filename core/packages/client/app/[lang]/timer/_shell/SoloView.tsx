@@ -1,4 +1,6 @@
 'use client';
+import { usesStackmatPads } from '@/components/stackmat-catalog';
+import TimerReadout from '../_components/TimerReadout';
 import { trackFeatureUse } from '@/lib/analytics-signal';
 import { TimerResultsTabs } from '@cuberoot/timer-ui';
 import { useLiveSmartCubeAttempt, TimerLiveSolutionPanel, TimerTrainingTimingStatus } from '@cuberoot/timer-ui';
@@ -261,7 +263,6 @@ import { CubePreview } from '../_lib/cube';
 import LiveCubeState from '../_components/LiveCubeState';
 import {
   GestureWheel,
-  SegmentTime,
   TimerDeviceCenter,
   TimerInfoToast,
   TimerAttemptSplitStatus,
@@ -2372,7 +2373,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const { wheelRef: gestureWheelRef } = useGestureWheel({
     surfaceRef,
     canGesture: () => {
-      if (competitionRef.current.enabled || layoutEditingRef.current) return false;
+      if (competitionRef.current.enabled || layoutEditingRef.current || usesStackmatPads(getSettings())) return false;
       const ph = phaseSnapshotRef.current;
       return timerCanUseGestureWheel(ph);
     },
@@ -2388,11 +2389,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     },
     // 计时关(练习模式):按下不预备,松开(未拖动)直接下一个打乱,不计时不记成绩。同 /alg 训练器。
     onPressDown: () => {
-      if (!getSettings().timingEnabled) return;
+      if (!getSettings().timingEnabled || usesStackmatPads(getSettings())) return;
       onPressDown(true);
     },
     onPressCancel: () => { if (!competitionRef.current.enabled && !smartCubeInputBlocked()) cancelPress(); },
-    onPressUp: () => { if (!getSettings().timingEnabled) { nextScramble(); return; } onPressUp(); },
+    onPressUp: () => { if (usesStackmatPads(getSettings())) return; if (!getSettings().timingEnabled) { nextScramble(); return; } onPressUp(); },
     onArmCancel: () => { if (!competitionRef.current.enabled && !smartCubeInputBlocked()) cancelArm(); },
     ignoreTarget: shouldIgnoreTimerTarget,
   });
@@ -2807,9 +2808,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         case 'none':
           return;
         case 'press-down':
+          if (usesStackmatPads(getSettings())) return;
           onPressDown(command.warmupSound);
           return;
         case 'press-up':
+          if (usesStackmatPads(getSettings())) return;
           onPressUp();
           return;
         case 'reset':
@@ -2870,6 +2873,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (competitionRef.current.enabled) return;
+      if (usesStackmatPads(getSettings()) && e.code !== 'Escape') return;
       const modal: TimerKeyboardModalState = timerSoloModalState(anyModalOpenRef.current && !hintsOnlyRef.current, hintsOnlyRef.current);
       executeKeyboardDecision(timerKeyDownDecision({
         input: e,
@@ -2905,6 +2909,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 这里只补面板之外的区域,并跳过面板内目标避免双触发(双触发会停表后立即重新进入 hold/观察)。
   useEffect(() => {
     const onDocDown = (e: PointerEvent) => {
+      if (usesStackmatPads(getSettings())) return;
       const t = e.target as Node | null;
       if (shouldIgnoreTimerTarget(t)) return;
       const insideSurface = !!(surfaceRef.current && t && surfaceRef.current.contains(t));
@@ -3264,7 +3269,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         {competition.attempt && <>
           <p className="competition-scramble">{scramble}</p>
           <TimingSurface phase={timer.phase} colorClass={`tf-${settings.timerFont}`} fontSize={fontSize}
-            digits={<SegmentTime text={digitsText} />} digitsRef={digitsRef} surfaceRef={surfaceRef} />
+            digits={<TimerReadout text={digitsText} />} digitsRef={digitsRef} surfaceRef={surfaceRef} />
           {competition.interrupted ? <p role="status">{tr({ zh: '本次连接已中断或页面已重载，请监督员处理本次成绩。不能重新开始同一次。', en: 'This attempt was interrupted or reloaded. Ask your supervisor to resolve it; the same attempt cannot restart.' })}</p>
             : competition.reported ? <p role="status">{tr({ zh: '已结束，等待监督员确认。设备数据不等于正式成绩。', en: 'Finished. Waiting for your supervisor; device data is not an official result.' })}</p>
             : <button type="button" className="competition-primary" disabled={!competition.canPrepare || event !== '333' || !bluetoothCube.status.connected || bluetoothCube.hijacked || scrambleGuidance.match !== true}
@@ -3473,7 +3478,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 phase: timer.phase,
 colorClass: `${colorClass} tf-${settings.timerFont}`.trim(),
 fontScale: settings.timerFontScale,
-digits: <SegmentTime text={digitsText} />,
+digits: <TimerReadout text={digitsText} padHost={{
+              down: () => onPressDown(true), up: onPressUp, cancel: timer.cancelPress,
+              running: () => phaseSnapshotRef.current === 'running', indicator: timer.phase === 'ready' ? 'ready' : timer.phase === 'holding' ? 'holding' : 'idle',
+              enabled: !anyModalOpen && !layoutEditing && !competitionRef.current.enabled && settings.timingEnabled && !smartCubeInputBlocked() && !stackmat.status.listening && !bluetoothTimer.status.connected,
+            }} />,
 digitsRef: digitsRef,
 surfaceRef: surfaceRef,
 className: targetFeedbackClass,

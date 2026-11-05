@@ -1,9 +1,9 @@
 import { forwardRef } from 'react';
-import { createLucideIcon, type LucideProps } from 'lucide-react';
+import { createLucideIcon, type LucideProps, type IconNode } from 'lucide-react';
 
 // Approved G5 v2 vector: original traced outline, internal contours and lower crescent.
 // Keep the reference coordinate space so its proportions and line spacing are unchanged.
-const StackmatG5 = createLucideIcon('StackmatG5', [
+export const STACKMAT_G5_PARTS: IconNode = [
   [
     "path",
     {
@@ -105,7 +105,9 @@ const StackmatG5 = createLucideIcon('StackmatG5', [
       "key": "outline-12"
     }
   ]
-]);
+];
+
+const StackmatG5 = createLucideIcon('StackmatG5', STACKMAT_G5_PARTS);
 
 const StackmatIcon = forwardRef<SVGSVGElement, LucideProps>(function StackmatIcon({
   size = 24, strokeWidth = 1.5, ...props

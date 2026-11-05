@@ -24,7 +24,7 @@
   cursor: pointer;
 }
 .timer-presence-trigger:hover,
-.timer-presence-trigger.is-open {
+.timer-presence-trigger[aria-expanded="true"] {
   background: var(--shell-hover);
   color: var(--foreground);
 }
@@ -39,12 +39,10 @@
   line-height: 1;
 }
 .timer-presence-panel {
-  /* anchored-panel: clamped (usePanelClamp in TimerPresencePanel) */
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  width: min(420px, calc(100vw - 16px));
-  max-height: min(70vh, 560px);
+  /* Shared CompactSelect owns fixed/top-layer positioning and viewport limits. */
+  margin: 0;
+  width: max-content;
+  max-width: min(420px, calc(100vw - 16px));
   overflow-y: auto;
   padding: 8px;
   border: 1px solid var(--border-default);
@@ -52,8 +50,8 @@
   background: var(--popover);
   box-shadow: 0 6px 18px color-mix(in srgb, var(--foreground) 40%, transparent);
   color: var(--foreground);
-  z-index: 60;
 }
+.timer-presence-trigger .compact-select-current { display: flex; align-items: center; gap: 3px; }
 .timer-presence-title {
   padding: 2px 4px 6px;
   color: var(--muted-foreground);
@@ -128,7 +126,7 @@
 }
 .timer-presence-attribution:hover { color: var(--muted-foreground); }
 .timer-presence-result {
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
   margin-top: 6px;
   font-size: 12px;

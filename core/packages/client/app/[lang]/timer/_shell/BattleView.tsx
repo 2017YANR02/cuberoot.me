@@ -1,5 +1,8 @@
 'use client';
+import { usesStackmatPads, STACKMAT_PAD_HOLD_MS } from '@/components/stackmat-catalog';
 
+import TimerReadout from '../_components/TimerReadout';
+import TimerDisplayModeSetting from '../_components/TimerDisplayModeSetting';
 import { LOCAL_BATTLE_SCRAMBLE_COPY } from '@cuberoot/shared/timer';
 import {
   TimerBattleAppearanceSettings,
@@ -168,13 +171,12 @@ export function useKeyboardControls(suppressed: boolean) {
   }, [suppressed]);
 }
 
-// NOTE: 计时器动画 hook — 通过 RAF 直接写 DOM（不走 React state）
-// 1:1 翻译自 battle.js startTimerAnimation()（行 918~934）
-function useTimerAnimation(playerId: number, timeRef: React.RefObject<HTMLDivElement | null>) {
+// One battle clock, with a display sink for plain digits or the SVG readout.
+function useTimerAnimation(playerId: number, write: (html: string) => void) {
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const unsubscribe = useBattleStore.subscribe((state) => {
+    const update = (state: ReturnType<typeof useBattleStore.getState>) => {
       const p = state.players[playerId];
       if (p.isTiming && !rafRef.current) {
         // 开始 RAF 循环
@@ -187,9 +189,7 @@ function useTimerAnimation(playerId: number, timeRef: React.RefObject<HTMLDivEle
           }
           const elapsed = performance.now() - cp.startTime;
           const timeStr = curr.showTime ? formatTime(elapsed, curr.timerPrecision) : '';
-          if (timeRef.current) {
-            timeRef.current.innerHTML = timeStr;
-          }
+          write(timeStr);
           rafRef.current = requestAnimationFrame(tick);
         };
         rafRef.current = requestAnimationFrame(tick);
@@ -197,44 +197,68 @@ function useTimerAnimation(playerId: number, timeRef: React.RefObject<HTMLDivEle
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
       }
-    });
+    };
+    const unsubscribe = useBattleStore.subscribe(update);
+    update(useBattleStore.getState());
 
     return () => {
       unsubscribe();
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
       }
+      rafRef.current = null;
     };
-  }, [playerId, timeRef]);
+  }, [playerId, write]);
 }
 
-// NOTE: WCA Inspection 倒计时显示 — 通过 subscribe 直接写 DOM
-function useInspectionDisplay(playerId: number, timeRef: React.RefObject<HTMLDivElement | null>) {
+// Inspection uses the same display sink as the running clock.
+function useInspectionDisplay(playerId: number, write: (html: string) => void) {
   useEffect(() => {
     let frame = 0;
     const update = () => {
       const state = useBattleStore.getState();
       const p = state.players[playerId];
-      if (p.isInspecting && timeRef.current) {
+      if (p.isInspecting) {
         const elapsed = (performance.now() - p.inspectionStart) / 1000;
         const limit = p.timerState?.inspectionSec ?? state.inspectionTime;
         if (limit < 9999) {
           if (elapsed >= limit + 2) {
-            timeRef.current.textContent = 'DNF';
+            write('DNF');
           } else if (elapsed >= limit) {
-            timeRef.current.textContent = '+2';
+            write('+2');
           } else {
-            timeRef.current.textContent = Math.floor(elapsed).toString();
+            write(Math.floor(elapsed).toString());
           }
         } else {
-          timeRef.current.textContent = Math.floor(elapsed).toString();
+          write(Math.floor(elapsed).toString());
         }
       }
       frame = requestAnimationFrame(update);
     };
     frame = requestAnimationFrame(update);
     return () => cancelAnimationFrame(frame);
-  }, [playerId, timeRef]);
+  }, [playerId, write]);
+}
+
+// Keep frame updates inside the readout; the battle engine still owns the clock.
+function BattleTimeReadout({ playerId, live, html, className, inputBlocked }: { playerId: number; live: boolean; html: string; className: string; inputBlocked: boolean }) {
+  const { timerDisplayMode } = useSettings();
+  const player = useBattleStore(s => s.players[playerId]);
+  const graphic = timerDisplayMode !== 'digits';
+  const timeRef = useRef<HTMLDivElement>(null);
+  const [liveText, setLiveText] = useState('');
+  const write = useCallback((value: string) => {
+    if (graphic) setLiveText(value.replace(/<[^>]*>/g, ''));
+    else if (timeRef.current) timeRef.current.innerHTML = value;
+  }, [graphic]);
+  useTimerAnimation(playerId, write);
+  useInspectionDisplay(playerId, write);
+  if (!graphic) return <div className={className} ref={timeRef} dangerouslySetInnerHTML={{ __html: html }} />;
+  return <div className={className}><TimerReadout text={live ? liveText : html.replace(/<[^>]*>/g, '')} padHost={{
+    down: () => useBattleStore.getState().playerDown(playerId), up: () => useBattleStore.getState().playerUp(playerId),
+    cancel: () => useBattleStore.getState().playerCancel(playerId), running: () => useBattleStore.getState().players[playerId].isTiming,
+    playerId, enabled: !inputBlocked, indicator: player.canStart ? 'ready' : player.isReady ? 'holding' : 'idle',
+  }} /></div>;
 }
 
 // ===== ScramblePanel 组件 =====
@@ -290,22 +314,17 @@ export function battlePointerReleaseAction(
   return eventType === 'pointerup' ? 'up' : 'cancel';
 }
 
-export function TimerArea({ playerId, rotated, hideScramble, cellClass, layoutEditing = false }: { playerId: number; rotated?: boolean; hideScramble?: boolean; cellClass?: string; controlsCorner?: 'left' | 'right' | 'center'; layoutEditing?: boolean }) {
+export function TimerArea({ playerId, rotated, hideScramble, cellClass, layoutEditing = false, inputBlocked = false }: { playerId: number; rotated?: boolean; hideScramble?: boolean; cellClass?: string; controlsCorner?: 'left' | 'right' | 'center'; layoutEditing?: boolean; inputBlocked?: boolean }) {
+  const padMode = usesStackmatPads(useSettings());
   const player = useBattleStore(s => s.players[playerId]);
   const store = useBattleStore();
   const areaRef = useRef<HTMLDivElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
-  const timeRef = useRef<HTMLDivElement>(null);
-
-  // NOTE: 高频计时器动画（不走 React re-render）
-  useTimerAnimation(playerId, timeRef);
-  // NOTE: Inspection 倒计时显示
-  useInspectionDisplay(playerId, timeRef);
 
   // NOTE: 原生 pointer 事件处理 — 每位玩家独立 pointerId(两个拇指可独立 arm)
   useEffect(() => {
     const el = areaRef.current;
-    if (!el || layoutEditing) return;
+    if (!el || layoutEditing || padMode || inputBlocked) return;
 
     const onDown = (e: PointerEvent) => {
       if (shouldIgnoreTimerTarget(e.target)) return;
@@ -360,7 +379,7 @@ export function TimerArea({ playerId, rotated, hideScramble, cellClass, layoutEd
         curr.playerCancel(playerId);
       }
     };
-  }, [playerId, layoutEditing]);
+  }, [playerId, layoutEditing, padMode, inputBlocked]);
 
   const areaClasses = [
     'player-area',
@@ -421,8 +440,8 @@ export function TimerArea({ playerId, rotated, hideScramble, cellClass, layoutEd
         colorClass: "",
         fontSize: `calc(clamp(2.5rem, 12vw, 5rem) * ${store.timerFontScale})`,
         surfaceRef: surfaceRef,
-        digits: <div className={timeClasses} ref={timeRef}
-          dangerouslySetInnerHTML={{ __html: renderTimeContent() }} />,
+        digits: <BattleTimeReadout playerId={playerId} className={timeClasses} inputBlocked={inputBlocked || layoutEditing}
+          live={player.isTiming || player.isInspecting} html={renderTimeContent()} />,
         scrambleSlot: !hideScramble && <ScramblePanel ids={[playerId]} part="text" />,
         cornerAspect: timerCubePreviewAspect(battleToTimerEvent(store.puzzleIds[playerId]), store.scrambles[playerId]),
         cornerSlot: !hideScramble && store.showImage
@@ -484,18 +503,18 @@ function useBattleSettingsProps(onClose: () => void): React.ComponentProps<typeo
     language: isZh ? 'zh' : 'en',
     onClose: onClose,
     onReset: () => store.resetAll(),
-    keys: store.playerKeys.slice(0, store.playerCount),
+    keys: usesStackmatPads(settings) ? [] : store.playerKeys.slice(0, store.playerCount),
     onKeyChange: store.setPlayerKey,
     precision: { value: store.timerPrecision, onChange: store.setTimerPrecision },
     inspection: { value: store.inspectionTime, onChange: store.setInspectionTime, options: [0, 8, 15, 9999] },
     syncStart: { value: store.syncStart, onChange: store.setSyncStart },
-    hold: { value: store.startDelay, onChange: store.setStartDelay },
+    hold: { value: usesStackmatPads(settings) ? STACKMAT_PAD_HOLD_MS : store.startDelay, disabled: usesStackmatPads(settings), onChange: store.setStartDelay },
     preview: { value: store.showImage, onChange: store.setShowImage },
     hideTime: { value: !store.showTime, onChange: () => store.toggleShowTime() },
     source: <TimerBattleSourceSettings language={tr({ en: 'en' as const, zh: 'zh' as const })}
       value={settings.scrambleSource === 'wca' ? 'wca' : 'random'} onChange={scrambleSource => updateSettings({ scrambleSource })}>
       <WcaSourceConfig isZh={isZh} event={battleToTimerEvent(store.puzzleIds[0])} settings={settings} updateSettings={updateSettings} />
-    </TimerBattleSourceSettings>, children: <> <TimerBattleAppearanceSettings language={tr({ en: 'en' as const, zh: 'zh' as const })} playerCount={store.playerCount}
+    </TimerBattleSourceSettings>, children: <> <TimerDisplayModeSetting /> <TimerBattleAppearanceSettings language={tr({ en: 'en' as const, zh: 'zh' as const })} playerCount={store.playerCount}
       value={{ bgColors: store.bgColors, bgImages: store.bgImages, bgOpacity: store.bgOpacity, scrambleScale: store.scrambleScale }}
       onChange={patch => {
         if (patch.scrambleScale !== undefined) store.setScrambleScale(patch.scrambleScale);
@@ -537,7 +556,8 @@ export default function BattleView({ playerCount, playersControl, presenceContro
   const [layoutEditing, setLayoutEditing] = useState(false);
   const surfaceRef = useRef<HTMLElement>(null);
   const finishLayoutEditing = useCallback(() => setLayoutEditing(false), []);
-  useKeyboardControls(settingsOpen || vsHistoryOpen || layoutEditing);
+  const padMode = usesStackmatPads(useSettings());
+  useKeyboardControls(settingsOpen || vsHistoryOpen || layoutEditing || padMode);
   const layoutBusy = store.players.slice(0, playerCount).some(player =>
     player.isTiming || player.isInspecting || player.isReady || player.canStart || player.pointerId !== null);
 
@@ -689,7 +709,7 @@ export default function BattleView({ playerCount, playersControl, presenceContro
       bottomScramble: bottomSame ? <ScramblePanel ids={[0, 1]} imgHeight="var(--timer-cube-h)" /> : undefined,
       topScramble: topSame ? <ScramblePanel ids={[2, 3]} imgHeight="var(--timer-cube-h)" /> : undefined,
       renderPlayer: (playerId, cell) => <TimerArea playerId={playerId}
-        hideScramble={cell.hideScramble} controlsCorner={cell.controlsCorner} layoutEditing={layoutEditing} />
+        hideScramble={cell.hideScramble} controlsCorner={cell.controlsCorner} layoutEditing={layoutEditing} inputBlocked={settingsOpen || vsHistoryOpen} />
     }}
       settings={settingsOpen && settingsProps}
       history={vsHistoryOpen && historyProps}

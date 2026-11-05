@@ -75,7 +75,6 @@
   font: 12px/1.4 var(--font-sans);
   cursor: default;
 }
-.solo-layout-toolbar-label { padding-inline: 12px 4px; color: var(--muted-foreground); white-space: nowrap; }
 .solo-layout-reset, .solo-layout-done {
   appearance: none;
   display: inline-flex;

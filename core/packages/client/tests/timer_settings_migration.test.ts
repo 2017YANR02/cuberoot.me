@@ -40,6 +40,21 @@ async function freshSettings() {
   return import('@/app/[lang]/timer/_lib/settings');
 }
 
+it('defaults old settings to digits and persists tournament display across reloads', async () => {
+  installStorage({ [KEY]: JSON.stringify({ holdMs: 500 }) });
+  try {
+    const settings = await freshSettings();
+    expect(settings.getSettings().timerDisplayMode).toBe('digits');
+    settings.updateSettings({ timerDisplayMode: 'stackmat' });
+    const reloaded = await freshSettings();
+    expect(reloaded.getSettings().timerDisplayMode).toBe('stackmat');
+    reloaded.updateSettings({ holdMs: 600 });
+    expect((await freshSettings()).getSettings().timerDisplayMode).toBe('stackmat');
+    reloaded.resetSettings();
+    expect(reloaded.getSettings().timerDisplayMode).toBe('digits');
+  } finally { vi.unstubAllGlobals(); }
+});
+
 it.each(['none', 'copy', 'next'])('migrates hidden %s to timing once and preserves subsequent choices', async (legacy) => {
   installStorage({ [KEY]: JSON.stringify({ scrambleClickAction: legacy, scrambleClickMigrated: true }) });
   try {

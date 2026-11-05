@@ -1,3 +1,4 @@
+import { normalizeStackmatSkin, normalizeStackmatInput, type StackmatG5Skin, type StackmatInputMode } from '@/components/stackmat-catalog';
 import { isDouyinToolSurface } from '@/lib/douyin-content';
 import { normalizeTimerSyncSeed, consumeTimerSeed, type TimerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
 /**
@@ -56,6 +57,8 @@ const KEY = 'cuberoot-timer.settings.v1';
 
 /** Big-digit typeface ids — shared vocabulary with the /alg trainer's picker. */
 export type TimerFontId = TimerTypeface;
+export type TimerDisplayMode = 'digits' | 'stackmat' | 'stackmat-g1' | 'stackmat-g2' | 'stackmat-g3' | 'stackmat-g4' | 'stackmat-g5';
+const normalizeDisplayMode = (value: unknown): TimerDisplayMode => typeof value === 'string' && ['stackmat', 'stackmat-g1', 'stackmat-g2', 'stackmat-g3', 'stackmat-g4', 'stackmat-g5'].includes(value) ? value as TimerDisplayMode : 'digits';
 
 export interface TimerSettings extends
   TimerTimingSettings,
@@ -80,6 +83,9 @@ export interface TimerSettings extends
   /** Big-digit typeface. 'lcd' = 7-segment Segment7Standard (default);
    *  the rest are self-hosted site fonts (same four options as the /alg trainer). */
   timerFont: TimerFontId;
+  timerDisplayMode: TimerDisplayMode;
+  stackmatSkin: StackmatG5Skin;
+  stackmatInputMode: StackmatInputMode;
 
   /** Scale factor for the scramble strip text (0.6..2.5). */
   scrambleFontScale: number;
@@ -271,6 +277,9 @@ export const DEFAULTS: TimerSettings = {
   // A new key keeps legacy development defaults from enabling the production tool.
   showAdminFakeCube: false,
   ...DEFAULT_TIMER_TYPOGRAPHY,
+  timerDisplayMode: 'digits',
+  stackmatSkin: 'classic',
+  stackmatInputMode: 'normal',
   compactScramble: false,
   preScr: '',    // (UF)
   preScrT: '', // (UF) — white up, green front
@@ -353,6 +362,9 @@ function load(): TimerSettings {
       ...normalizedScramblePreview,
       ...normalizedSmartCube,
       ...normalizeTimerTypography(parsed),
+      timerDisplayMode: normalizeDisplayMode(parsed.timerDisplayMode),
+      stackmatSkin: normalizeStackmatSkin(parsed.stackmatSkin),
+      stackmatInputMode: normalizeStackmatInput(parsed.stackmatInputMode),
       soloLayout: normalizeSoloLayout(parsed.soloLayout),
       ...normalizeTimerDisplaySettings(parsed),
       ...normalizeTimerPreScrambleSettings(parsed),
@@ -481,6 +493,9 @@ export function updateSettings(patch: Partial<TimerSettings>): void {
     ...normalizeTimerTimingSettings(candidate),
     ...normalizeTimerSyncSeed(candidate),
     ...normalizeTimerTypography(candidate),
+    timerDisplayMode: normalizeDisplayMode(candidate.timerDisplayMode),
+    stackmatSkin: normalizeStackmatSkin(candidate.stackmatSkin),
+    stackmatInputMode: normalizeStackmatInput(candidate.stackmatInputMode),
     soloLayout: normalizeSoloLayout(candidate.soloLayout),
     ...normalizeTimerDisplaySettings(candidate),
     ...normalizeTimerPreScrambleSettings(candidate),

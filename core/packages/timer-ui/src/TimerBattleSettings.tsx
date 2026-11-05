@@ -15,7 +15,7 @@ export interface TimerBattleSettingsProps {
   onKeyChange(playerId: number, key: string): void;
   precision?: Setting<number> & { options?: readonly number[] };
   inspection?: Setting<number> & { options?: readonly number[] };
-  hold?: Setting<number>;
+  hold?: Setting<number> & { disabled?: boolean };
   preview?: Setting<boolean>;
   hideTime?: Setting<boolean>;
   syncStart?: Setting<boolean>;
@@ -56,11 +56,11 @@ export function TimerBattleSettings({ language, layout, onClose, keys, onKeyChan
       {layout && <TimerBattleLayoutControls {...layout} language={language} autoOrientation={false} />}
       {precision && <label>{copy.precision}<select value={precision.value} onChange={(event) => precision.onChange(Number(event.target.value))}>{(precision.options ?? [0, 1, 2, 3]).map((value) => <option value={value} key={value}>{(10 ** -value).toFixed(value)}s</option>)}</select></label>}
       {inspection && <label>{copy.inspection}<select value={inspection.value} onChange={(event) => inspection.onChange(Number(event.target.value))}>{(inspection.options ?? [0, 15]).map((value) => <option value={value} key={value}>{value === 0 ? copy.off : value === 9999 ? '∞' : `${value}s`}</option>)}</select></label>}
-      {hold && <label>{copy.hold}<span>{(hold.value / 1000).toFixed(2)}s</span><input type="range" min={0} max={1000} step={50} value={hold.value} onChange={(event) => hold.onChange(Number(event.target.value))} /></label>}
+      {hold && <label>{copy.hold}<span>{(hold.value / 1000).toFixed(2)}s</span><input type="range" disabled={hold.disabled} min={0} max={1000} step={50} value={hold.value} onChange={(event) => hold.onChange(Number(event.target.value))} /></label>}
       {preview && <BoolToggle label={copy.preview} {...preview} />}
       {syncStart && <BoolToggle label={copy.sync} {...syncStart} />}
       {hideTime && <BoolToggle label={copy.hide} {...hideTime} />}
-      <TimerBattleKeyBindings language={language} keys={keys} onChange={onKeyChange} />
+      {keys.length > 0 && <TimerBattleKeyBindings language={language} keys={keys} onChange={onKeyChange} />}
       {devices}
       {source}
       {children}

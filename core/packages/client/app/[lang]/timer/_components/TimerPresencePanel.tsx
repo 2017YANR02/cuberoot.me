@@ -1,11 +1,11 @@
 'use client';
 
-import { Fragment, useEffect, useId, useRef, useState } from 'react';
+import { Fragment } from 'react';
 import { Bluetooth, Globe2, Timer, UserRound, Users } from '@app-foundation/icons/lucide';
 import { useTranslation } from 'react-i18next';
 import { EventIcon } from '@/components/EventIcon';
 import { tr } from '@/i18n/tr';
-import { usePanelClamp } from '@/hooks/usePanelClamp';
+import { CompactSelect } from '@/components/CompactSelect';
 import { eventDisplayName } from '@/lib/wca-events';
 import { formatMs } from '../_lib/stats';
 import type { TimerPresenceResult, TimerPresenceSnapshot } from '../_lib/presence';
@@ -18,29 +18,8 @@ function resultText(result: TimerPresenceResult): string {
 }
 
 export default function TimerPresencePanel({ snapshot }: { snapshot: TimerPresenceSnapshot | null }) {
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const panelId = useId();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  usePanelClamp(open, panelRef);
-
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!wrapRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [open]);
 
   const title = tr({ zh: '当前在线', en: 'Currently online' });
   const value = (n: number | undefined) => n === undefined ? '—' : String(n);
@@ -52,28 +31,17 @@ export default function TimerPresencePanel({ snapshot }: { snapshot: TimerPresen
   })[mode];
 
   return (
-    <div className="timer-presence" ref={wrapRef} data-no-timer>
-      <button
-        type="button"
-        className={`timer-presence-trigger${open ? ' is-open' : ''}`}
-        onClick={() => setOpen(value => !value)}
-        title={title}
-        aria-label={title}
-        aria-controls={panelId}
-        aria-expanded={open}
-        aria-haspopup="dialog"
-      >
-        <Users size={13} />
-        <span className="timer-presence-total">{value(snapshot?.total)}</span>
-      </button>
-      {open && (
-        <div
-          ref={panelRef}
-          id={panelId}
-          className="timer-presence-panel"
-          role="dialog"
-          aria-label={title}
-        >
+    <CompactSelect
+      className="timer-presence"
+      triggerClassName="timer-presence-trigger"
+      popupClassName="timer-presence-panel"
+      unstyledTrigger
+      showArrow={false}
+      ariaLabel={title}
+      label={<><Users size={13} /><span className="timer-presence-total">{value(snapshot?.total)}</span></>}
+      items={[]}
+      onChange={() => {}}
+      panelContent={<>
           <div className="timer-presence-title">{title}</div>
           <div className="timer-presence-summary">
             <span><Timer size={14} />{tr({ zh: '普通', en: 'Regular' })} <strong>{value(snapshot?.normal)}</strong></span>
@@ -146,8 +114,7 @@ export default function TimerPresencePanel({ snapshot }: { snapshot: TimerPresen
           ) : (
             <div className="timer-presence-empty">{tr({ zh: '当前无人计时', en: 'No active timers' })}</div>
           )}
-        </div>
-      )}
-    </div>
+      </>}
+    />
   );
 }
