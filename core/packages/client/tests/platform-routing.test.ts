@@ -271,14 +271,13 @@ describe('Platform route conservation', () => {
     expect(publicResponse.headers.get('Link')).toContain('rel="canonical"');
   });
 
-  it('uses the public shop URL for language alternates while the page owns its canonical', async () => {
+  it('keeps the unfinished shop private and out of search indexes', async () => {
     for (const path of ['/shop', '/zh/shop', '/shop/help', '/zh/shop/poster']) {
       const response = await proxy(new NextRequest(`https://cuberoot.me${path}`));
       const links = response.headers.get('Link');
-      expect(links).toContain(`https://cuberoot.me${path.replace(/^\/zh/, '')}`);
-      expect(links).not.toContain('/platform/shop');
-      expect(links).not.toContain('rel="canonical"');
-      expect(response.headers.get('X-Robots-Tag')).toBeNull();
+      expect(links).toBeNull();
+      expect(response.status).toBe(404);
+      expect(response.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
     }
   });
 

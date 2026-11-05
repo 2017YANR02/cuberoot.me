@@ -90,6 +90,7 @@ describe('homepage development cards', () => {
         expect(edit.getAttribute('aria-pressed')).toBe('true');
       }
       const admin = user?.wcaId === ADMIN_WCA_IDS[0];
+      expect(host.querySelector('a[href="/zh/shop"]') !== null).toBe(admin);
       for (const [id, href] of [['platform', '/zh/platform'], ['teaching-management', '/zh/org'], ['learning-center', '/zh/learn']]) {
         const card = host.querySelector(`#card-${id}`)!;
         if (!admin) { expect(card).toBeNull(); continue; }

@@ -327,7 +327,7 @@ function PlatformLanding() {
         <span>{t('继续探索', 'Keep exploring')}</span>
         <AppLink href="/platform/paths" prefetch={false}>{t('学习路径', 'Learning paths')}</AppLink>
         <AppLink href="/platform/news" prefetch={false}>{t('资讯', 'News')}</AppLink>
-        <AppLink href={SHOP_ROOT} prefetch={false}>{t('商店', 'Shop')}</AppLink>
+        {isAdmin && <AppLink href={SHOP_ROOT} prefetch={false}>{t('商店', 'Shop')}</AppLink>}
         <AppLink href="/platform/about" prefetch={false}>{t('关于 Platform', 'About Platform')}</AppLink>
       </footer>
     </div>

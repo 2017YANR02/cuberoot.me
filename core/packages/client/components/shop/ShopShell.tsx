@@ -24,6 +24,8 @@ export function ShopShell({ children }: { children: ReactNode }) {
   const [search, setSearch] = useState(query);
   useEffect(() => setSearch(query), [query, path]);
   const count = useShopCart().reduce((sum, item) => sum + item.quantity, 0);
+  // The server gate verifies access; this also hides an already-open shop on logout/role preview.
+  if (!admin) return null;
   return <div className="shop-shell">
     <a href="#shop-main" className="shop-skip">{t('跳至商品内容', 'Skip to shop content')}</a>
     <header className="shop-header">

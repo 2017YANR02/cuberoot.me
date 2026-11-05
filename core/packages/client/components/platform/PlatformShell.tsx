@@ -95,14 +95,14 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
         <AppLink href="/platform/events" prefetch={false}>{t('活动', 'Events')}</AppLink>
         <AppLink href="/platform/news" prefetch={false}>{t('资讯', 'News')}</AppLink>
         <AppLink href="/platform/leaderboard" prefetch={false}>{t('学习榜', 'Learning leaderboard')}</AppLink>
-        <AppLink href={SHOP_ROOT} prefetch={false}>{t('商店', 'Shop')}</AppLink>
+        {isAdmin && <AppLink href={SHOP_ROOT} prefetch={false}>{t('商店', 'Shop')}</AppLink>}
         <AppLink href="/platform/membership" prefetch={false}>{t('课程会员', 'Course membership')}</AppLink>
         <AppLink href="/platform/teachers/apply" prefetch={false}>{t('讲师入驻', 'Teach with us')}</AppLink>
         {user && <AppLink href="/platform/account/courses" prefetch={false}>{t('学习工作台', 'My learning')}</AppLink>}
         {isAdmin && <AppLink href="/platform/admin" prefetch={false}>{t('管理', 'Administration')}</AppLink>}
       </nav>}
       {orderPage && <nav className="platform-context-nav" aria-label={t('订单导航', 'Order navigation')}>
-        <AppLink href={SHOP_ROOT} prefetch={false}>{t('继续购物', 'Continue shopping')}</AppLink>
+        {isAdmin && <AppLink href={SHOP_ROOT} prefetch={false}>{t('继续购物', 'Continue shopping')}</AppLink>}
         <AppLink href="/platform/account/shipping" prefetch={false}>{t('收货地址', 'Shipping addresses')}</AppLink>
         <AppLink href="/contact" prefetch={false}>{t('联系商家', 'Contact us')}</AppLink>
       </nav>}

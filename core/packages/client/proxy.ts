@@ -31,6 +31,7 @@ import { competitionGate } from './lib/competition-gate';
 import { isRetiredAlgTrainer, retiredAlgTrainerHref } from './lib/timer-training-catalog';
 import { canonicalTimerPracticeSearch } from './lib/timer-practice-url';
 import { isRetiredRoute } from './lib/retired-routes';
+import { isShopPreviewPath, shopAccessDenied, SHOP_PRIVATE_HEADERS } from './lib/shop-access';
 
 const SUPPORTED_LOCALES = ['en', 'zh'] as const;
 type Locale = typeof SUPPORTED_LOCALES[number];
@@ -157,7 +158,16 @@ function setSeoLinkHeaders(res: NextResponse, rest: string, locale: Locale) {
 export async function proxy(req: NextRequest) {
   const challenge = await competitionGate(req);
   if (challenge) return challenge;
-  return routeLanguage(req);
+  const privateShop = isShopPreviewPath(req.nextUrl.pathname);
+  if (privateShop) {
+    const denied = await shopAccessDenied(req);
+    if (denied) return denied;
+  }
+  const response = routeLanguage(req);
+  if (privateShop) {
+    for (const [key, value] of Object.entries(SHOP_PRIVATE_HEADERS)) response.headers.set(key, value);
+  }
+  return response;
 }
 
 function routeLanguage(req: NextRequest) {
