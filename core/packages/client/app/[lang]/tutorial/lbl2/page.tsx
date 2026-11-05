@@ -105,7 +105,7 @@ export default function Lbl2Template() {
   // The shared menu owns item styling; the host owns lesson selection.
   const navigation = <NavigationMenu items={items} collapsed={false} label={tr({ zh: '本章小节', en: 'Chapter sections' })}
     renderLink={({ children, href, onClick, className, ...props }) => {
-      return <button className={`lbl2-section-button ${className ?? '}`} aria-label={props['aria-label']} aria-current={props['aria-current']} type="button" onClick={() => { chooseSection(Number(href.replace('#section-', ''))); onClick?.(); }}>{children}</button>;
+      return <button className={`lbl2-section-button ${className ?? ''}`} aria-label={props['aria-label']} aria-current={props['aria-current']} type="button" onClick={() => { chooseSection(Number(href.replace('#section-', ''))); onClick?.(); }}>{children}</button>;
     }} />;
 
   if (practiceOpen) return <Practice step={currentChapter}
