@@ -9,7 +9,7 @@ export const SPACE_LIMIT = 32;
 export const SCALE_MIN = 0.04;
 export const SCALE_MAX = 2.5;
 export const ROOMS = {
-  minimal: { zh: '方序馆', en: 'Rubik Atrium' },
+  minimal: { zh: '魔方庭院', en: 'Cube Courtyard' },
   cyberpunk: { zh: '赛博朋克', en: 'Cyberpunk' },
   modern: { zh: '现代住宅', en: 'Modern residence' },
   vintage: { zh: '复古宅邸', en: 'Vintage residence' },

@@ -494,7 +494,7 @@ export class SpaceRoom {
 
   /** The residence is two occupied levels; no stacked clerestory tower remains. */
   private rubikAtrium() {
-    this.root.name = '方序馆 · Rubik Residence';
+    this.root.name = '魔方庭院 · Cube Courtyard';
     this.root.userData.spaceArchitecture = 'rubik-atrium';
     this.villaSideWingShell();
     this.glass.color.setHex(0xc0d9df);
