@@ -2,15 +2,22 @@ import { createHash } from 'node:crypto';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
-import { CAREER_POSITION_IDS } from '@cuberoot/shared/careers';
+import { CAREER_POSITION_IDS, CAREER_WORK_ARRANGEMENT_IDS } from '@cuberoot/shared/careers';
 import { query } from '../db/connection.js';
 import { requireAdmin, checkRateLimit } from '../utils/recon_helpers.js';
 import { getIp } from '../utils/analytics_helpers.js';
 
 export const careerApplicationRoutes = new Hono();
+const optionalWebsite = z.string().trim().max(2000).refine(value => {
+  if (!value) return true;
+  try { return ['http:', 'https:'].includes(new URL(value).protocol); } catch { return false; }
+}).default('');
 const requestSchema = z.object({
-  id: z.string().uuid(), position: z.enum(CAREER_POSITION_IDS), city: z.literal('shanghai'),
+  id: z.string().uuid(), position: z.enum(CAREER_POSITION_IDS), city: z.enum(CAREER_WORK_ARRANGEMENT_IDS),
   name: z.string().trim().min(1).max(100), phone: z.string().trim().min(3).max(32), email: z.string().trim().email().max(254),
+  github: optionalWebsite, website: optionalWebsite,
+  aiTools: z.string().trim().max(500).default(''), aiSubscriptionCost: z.string().trim().max(200).default(''),
+  computer: z.string().trim().max(200).default(''), mobile: z.string().trim().max(200).default(''),
   education: z.string().trim().max(100), experience: z.string().trim().max(200), channel: z.string().trim().max(100), consent: z.literal('yes'),
 });
 const MAX_RESUME = 5 * 1024 * 1024;
@@ -38,7 +45,7 @@ careerApplicationRoutes.post('/career-applications', bodyLimit({ maxSize: 8 * 10
   checkRateLimit(getIp(c), { bucket: 'career-application', max: 5 });
   let form: FormData;
   try { form = await c.req.formData(); } catch { return c.json({ error: 'Invalid application' }, 400); }
-  const parsed = requestSchema.safeParse(Object.fromEntries(['id', 'position', 'city', 'name', 'phone', 'email', 'education', 'experience', 'channel', 'consent'].map(key => [key, form.get(key)])));
+  const parsed = requestSchema.safeParse(Object.fromEntries(['id', 'position', 'city', 'name', 'phone', 'email', 'education', 'experience', 'channel', 'consent', 'computer', 'mobile', 'aiTools', 'aiSubscriptionCost', 'github', 'website'].map(key => [key, form.get(key) ?? undefined])));
   const resume = form.get('resume'), photo = form.get('photo');
   if (!parsed.success || !(resume instanceof File) || resume.size < 1 || resume.size > MAX_RESUME || (photo !== null && (!(photo instanceof File) || photo.size < 1 || photo.size > MAX_PHOTO))) return c.json({ error: 'Invalid application or file size' }, 400);
   const resumeBytes = Buffer.from(await resume.arrayBuffer());
@@ -50,9 +57,9 @@ careerApplicationRoutes.post('/career-applications', bodyLimit({ maxSize: 8 * 10
   const data = parsed.data;
   const resumeName = safeFilename(resume.name), photoName = photoFile ? safeFilename(photoFile.name) : null;
   const hash = createHash('sha256').update(JSON.stringify({ ...data, resumeName, photoName })).update(resumeBytes).update(photoBytes ?? Buffer.alloc(0)).digest('hex');
-  const rows = await query<{ payload_hash: string }>(`INSERT INTO career_applications (id, payload_hash, position_id, city, applicant_name, phone, email, education, experience, channel, resume_name, resume_ext, resume_data, photo_name, photo_ext, photo_data)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET id = career_applications.id RETURNING payload_hash`,
-    [data.id, hash, data.position, data.city, data.name, data.phone, data.email, data.education, data.experience, data.channel, resumeName, resumeExt, resumeBytes, photoName, photoExt, photoBytes]);
+  const rows = await query<{ payload_hash: string }>(`INSERT INTO career_applications (id, payload_hash, position_id, city, applicant_name, phone, email, education, experience, channel, resume_name, resume_ext, resume_data, photo_name, photo_ext, photo_data, computer, mobile, ai_tools, ai_subscription_cost, github, website)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET id = career_applications.id RETURNING payload_hash`,
+    [data.id, hash, data.position, data.city, data.name, data.phone, data.email, data.education, data.experience, data.channel, resumeName, resumeExt, resumeBytes, photoName, photoExt, photoBytes, data.computer, data.mobile, data.aiTools, data.aiSubscriptionCost, data.github, data.website]);
   if (rows[0].payload_hash !== hash) return c.json({ error: 'Application ID already used' }, 409);
   return c.json({ ok: true }, 201);
 });
@@ -60,7 +67,7 @@ careerApplicationRoutes.get('/career-applications', async c => {
   await requireAdmin(c);
   const offset = Number(c.req.query('offset') ?? '0');
   if (!Number.isSafeInteger(offset) || offset < 0 || offset > 100000) return c.json({ error: 'Invalid offset' }, 400);
-  const rows = await query(`SELECT id, position_id, city, applicant_name, phone, email, education, experience, channel, resume_name, photo_name, created_at FROM career_applications ORDER BY created_at DESC, id DESC LIMIT 51 OFFSET ?`, [offset]);
+  const rows = await query(`SELECT id, position_id, city, applicant_name, phone, email, education, experience, channel, computer, mobile, ai_tools, ai_subscription_cost, github, website, resume_name, photo_name, created_at FROM career_applications ORDER BY created_at DESC, id DESC LIMIT 51 OFFSET ?`, [offset]);
   return c.json({ applications: rows.slice(0, 50), hasMore: rows.length > 50 });
 });
 careerApplicationRoutes.delete('/career-applications/:id', async c => {

@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { CAREER_WORK_ARRANGEMENTS, type CareerWorkArrangementId } from '@cuberoot/shared/careers';
+import { tr } from '@/i18n/tr';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { apiUrl } from '@/lib/api-base';
@@ -10,7 +12,7 @@ import { useIsAdmin } from '@/lib/auth-store';
 import '../admin.css';
 import './careers-admin.css';
 
-type Application = { id: string; position_id: string; city: string; applicant_name: string; phone: string; email: string; education: string; experience: string; channel: string; resume_name: string; photo_name: string | null; created_at: string };
+type Application = { id: string; position_id: string; city: string; applicant_name: string; phone: string; email: string; education: string; experience: string; channel: string; computer: string; mobile: string; ai_tools: string; ai_subscription_cost: string; github: string; website: string; resume_name: string; photo_name: string | null; created_at: string };
 export default function CareersAdmin() {
   const t = useT();
   const admin = useIsAdmin();
@@ -68,8 +70,8 @@ export default function CareersAdmin() {
         {deleteError && <p role="alert">{t('删除失败，请重试。', 'Could not delete the application. Please try again.')}</p>}
         {!applications.length && <p>{t('暂无申请。', 'No applications yet.')}</p>}
         {applications.map(item => <article key={item.id} className="careers-admin-item" data-site-surface="panel">
-          <h2>{item.applicant_name}</h2><p>{item.position_id === 'engineering' ? t('全栈工程师', 'Full-stack engineer') : item.position_id === 'content-operations' ? t('内容运营与视频剪辑', 'Content operations and video editor') : item.position_id} · {item.city === 'shanghai' ? t('上海', 'Shanghai') : item.city} · <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleString()}</time></p>
-          <dl><dt>{t('手机号码', 'Phone')}</dt><dd>{item.phone}</dd><dt>{t('邮箱', 'Email')}</dt><dd>{item.email}</dd>{item.education && <><dt>{t('最高学历', 'Education')}</dt><dd>{item.education}</dd></>}{item.experience && <><dt>{t('工作经历', 'Experience')}</dt><dd>{item.experience}</dd></>}{item.channel && <><dt>{t('招聘渠道', 'Source')}</dt><dd>{item.channel}</dd></>}</dl>
+          <h2>{item.applicant_name}</h2><p>{item.position_id === 'engineering' ? t('全栈工程师', 'Full-stack engineer') : item.position_id === 'content-operations' ? t('内容运营与视频剪辑', 'Content operations and video editor') : item.position_id} · {Object.hasOwn(CAREER_WORK_ARRANGEMENTS, item.city) ? tr(CAREER_WORK_ARRANGEMENTS[item.city as CareerWorkArrangementId]) : item.city} · <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleString()}</time></p>
+          <dl><dt>{t('手机号码', 'Phone')}</dt><dd>{item.phone}</dd><dt>{t('邮箱', 'Email')}</dt><dd>{item.email}</dd>{item.education && <><dt>{t('最高学历', 'Education')}</dt><dd>{item.education}</dd></>}{item.experience && <><dt>{t('工作经历', 'Experience')}</dt><dd>{item.experience}</dd></>}{item.computer && <><dt>{t('电脑系统与型号', 'Computer OS and model')}</dt><dd>{item.computer}</dd></>}{item.mobile && <><dt>{t('手机系统与型号', 'Phone OS and model')}</dt><dd>{item.mobile}</dd></>}{item.ai_tools && <><dt>{t('使用的 AI 模型或工具', 'AI models or tools used')}</dt><dd>{item.ai_tools}</dd></>}{item.ai_subscription_cost && <><dt>{t('套餐总费用', 'Total subscription cost')}</dt><dd>{item.ai_subscription_cost}</dd></>}{item.github && <><dt>{t('GitHub 仓库', 'GitHub repository')}</dt><dd>{item.github}</dd></>}{item.website && <><dt>{t('个人网站', 'Personal website')}</dt><dd>{item.website}</dd></>}{item.channel && <><dt>{t('招聘渠道', 'Source')}</dt><dd>{item.channel}</dd></>}</dl>
           <div className="careers-admin-files"><button className="careers-admin-action" type="button" onClick={() => void download(item.id, 'resume', item.resume_name)}>{t('下载简历', 'Download resume')}: {item.resume_name}</button>{item.photo_name && <button className="careers-admin-action" type="button" onClick={() => void download(item.id, 'photo', item.photo_name!)}>{t('下载照片', 'Download photo')}: {item.photo_name}</button>}<button type="button" className="careers-admin-action careers-admin-delete" disabled={deleting !== null} onClick={() => void remove(item.id)}>{deleting === item.id ? t('正在删除…', 'Deleting…') : t('删除申请', 'Delete application')}</button></div>
         </article>)}
         <nav className="careers-admin-pages" aria-label={t('申请分页', 'Application pages')}><button className="careers-admin-page-button" type="button" disabled={offset === 0} onClick={() => setOffset(value => Math.max(0, value - 50))}>{t('上一页', 'Previous')}</button><button className="careers-admin-page-button" type="button" disabled={!hasMore} onClick={() => setOffset(value => value + 50)}>{t('下一页', 'Next')}</button></nav>

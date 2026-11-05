@@ -9594,6 +9594,12 @@ CREATE TABLE site_assistant_shares (
   UNIQUE (user_id, request_id)
 );
 CREATE TABLE career_applications (
+  github TEXT NOT NULL DEFAULT '',
+  website TEXT NOT NULL DEFAULT '',
+  ai_tools TEXT NOT NULL DEFAULT '',
+  ai_subscription_cost TEXT NOT NULL DEFAULT '',
+  computer TEXT NOT NULL DEFAULT '',
+  mobile TEXT NOT NULL DEFAULT '',
   id UUID PRIMARY KEY,
   payload_hash TEXT NOT NULL,
   position_id TEXT NOT NULL,

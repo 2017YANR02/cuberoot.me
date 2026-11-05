@@ -11,13 +11,17 @@ export type CareerPosition = {
   advantages: CareerText[];
 };
 
-// Employment terms have not yet been confirmed.
+export const careerLocation = { zh: '上海线下 / 线上实习', en: 'Shanghai on-site / Remote internship' };
+export const careerWorkDescription = {
+  zh: '线下办公地点在上海阿里巴巴徐汇滨江园区；同时招募线上实习生，可远程参与全栈开发、内容运营或视频剪辑，不限所在城市。',
+  en: 'Our office is at Alibaba Xuhui Riverside Campus, Shanghai. Remote internships in full-stack development, content operations or video editing are also open to applicants in any city.',
+};
 export const careerPositions: CareerPosition[] = [
   {
     id: 'engineering',
     title: { zh: '全栈工程师', en: 'Full-stack engineer' },
     category: { zh: '技术研发', en: 'Engineering' },
-    summary: { zh: '与团队一起建设魔方根的网站、工具和产品。', en: 'Build CubeRoot’s website, tools and products with the team.' },
+    summary: { zh: '与团队一起建设魔方根的网站、工具和产品，支持线上实习。', en: 'Build CubeRoot’s website, tools and products with the team. Remote internships are welcome.' },
     responsibilities: [
       { zh: '参与产品需求拆解、方案设计与全栈开发，持续改进已有功能。', en: 'Turn product needs into designs and full-stack implementations, and improve existing features.' },
       { zh: '使用 AI 编程工具推进开发，同时审查、测试和维护生成的代码。', en: 'Use AI coding tools to move work forward while reviewing, testing and maintaining the resulting code.' },
@@ -37,7 +41,7 @@ export const careerPositions: CareerPosition[] = [
     id: 'content-operations',
     title: { zh: '内容运营与视频剪辑', en: 'Content operations and video editor' },
     category: { zh: '运营与内容', en: 'Operations and content' },
-    summary: { zh: '把选手素材制作成视频，持续运营魔方根的各平台内容。', en: 'Turn footage of cubers into videos and grow CubeRoot’s content across platforms.' },
+    summary: { zh: '持续运营魔方根的各平台内容，把选手素材制作成视频；线上实习可侧重内容运营或视频剪辑方向。', en: 'Grow CubeRoot’s content across platforms and turn footage of cubers into videos. Remote interns can focus on content operations or video editing.' },
     responsibilities: [
       { zh: '整理选手及比赛素材，完成选题、剪辑、字幕、封面和成片交付。', en: 'Organize footage of cubers and competitions, develop ideas, edit videos, and deliver captions and covers.' },
       { zh: '根据平台特点制作和发布内容，维护小红书、快手、微博、YouTube、TikTok、B 站等账号。', en: 'Adapt and publish content for Xiaohongshu, Kuaishou, Weibo, YouTube, TikTok, Bilibili and other channels.' },

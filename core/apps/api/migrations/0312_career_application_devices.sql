@@ -1,0 +1,3 @@
+ALTER TABLE career_applications
+  ADD COLUMN computer TEXT NOT NULL DEFAULT '',
+  ADD COLUMN mobile TEXT NOT NULL DEFAULT '';

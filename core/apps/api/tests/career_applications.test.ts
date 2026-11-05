@@ -50,6 +50,37 @@ describe('career applications', () => {
     mocks.query.mockResolvedValue([{ payload_hash: 'different' }]);
     expect((await careerApplicationRoutes.request('/career-applications', { method: 'POST', body: application() })).status).toBe(409);
   });
+  it.each(['engineering', 'content-operations'])('saves remote internship applications for %s', async position => {
+    mocks.query.mockImplementation(async (_sql, params) => [{ payload_hash: params[1] }]);
+    const form = application(); form.set('position', position); form.set('city', 'remote-internship');
+    form.set('computer', 'macOS · MacBook Air M3 13-inch'); form.set('mobile', 'iOS · iPhone 16');
+    form.set('aiTools', 'Claude、Codex\nChatGPT'); form.set('aiSubscriptionCost', '40 美元/月');
+    form.set('github', 'https://github.com/example/project'); form.set('website', 'https://example.com');
+    const response = await careerApplicationRoutes.request('/career-applications', { method: 'POST', body: form });
+    expect(response.status).toBe(201);
+    expect(mocks.query.mock.calls[0][1].slice(2, 4)).toEqual([position, 'remote-internship']);
+    expect(mocks.query.mock.calls[0][1].slice(16)).toEqual(['macOS · MacBook Air M3 13-inch', 'iOS · iPhone 16', 'Claude、Codex\r\nChatGPT', '40 美元/月', 'https://github.com/example/project', 'https://example.com']);
+  });
+  it.each([['aiTools', 501], ['aiSubscriptionCost', 201]])('rejects oversized %s before saving', async (field, length) => {
+    const form = application(); form.set(field, 'x'.repeat(length));
+    expect((await careerApplicationRoutes.request('/career-applications', { method: 'POST', body: form })).status).toBe(400);
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+  it.each(['github', 'website'])('rejects invalid %s URLs before saving', async field => {
+    const form = application(); form.set(field, 'javascript:alert(1)');
+    expect((await careerApplicationRoutes.request('/career-applications', { method: 'POST', body: form })).status).toBe(400);
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+  it('rejects oversized device descriptions before saving', async () => {
+    const form = application(); form.set('computer', 'x'.repeat(201));
+    expect((await careerApplicationRoutes.request('/career-applications', { method: 'POST', body: form })).status).toBe(400);
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+  it('rejects unsupported work arrangements before saving', async () => {
+    const form = application(); form.set('city', 'invalid');
+    expect((await careerApplicationRoutes.request('/career-applications', { method: 'POST', body: form })).status).toBe(400);
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
   it('downloads only for an authorized administrator as an attachment', async () => {
     mocks.requireAdmin.mockResolvedValue({ isAdmin: true });
     mocks.query.mockResolvedValue([{ data: Buffer.from('%PDF-1.4 test'), ext: 'pdf' }]);

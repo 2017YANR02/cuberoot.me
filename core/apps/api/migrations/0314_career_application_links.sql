@@ -1,0 +1,3 @@
+ALTER TABLE career_applications
+  ADD COLUMN github TEXT NOT NULL DEFAULT '',
+  ADD COLUMN website TEXT NOT NULL DEFAULT '';

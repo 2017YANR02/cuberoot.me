@@ -901,6 +901,9 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 289, slug: 'wca_translations', desc: { zh: 'WCA 官方英中翻译与来源状态，原子同步及检索。', en: 'Official WCA English–Chinese translations with provenance, atomic sync and retrieval.' } },
   { n: 308, slug: 'assistant_private_attachments', desc: { zh: 'AI 私有会话图片附件', en: 'Private AI conversation image attachments' } },
   { n: 309, slug: 'product_analytics', desc: { zh: '复用产品事件与授权表，为全站分析增加聚合和授权查询索引。', en: 'Index existing product events and consents for website analytics.' } },
+  { n: 314, slug: 'career_application_links', desc: { zh: '招聘申请保存选填的 GitHub 仓库和个人网站。', en: 'Store optional GitHub repository and personal website links with career applications.' } },
+  { n: 313, slug: 'career_application_ai_usage', desc: { zh: '招聘申请保存 AI 模型或工具与套餐总费用。', en: 'Store AI models or tools and total subscription cost with career applications.' } },
+  { n: 312, slug: 'career_application_devices', desc: { zh: '招聘申请保存电脑、手机系统与具体型号。', en: 'Store computer and phone operating systems and exact models with career applications.' } },
   { n: 311, slug: 'teacher_signature', desc: { zh: '老师对外署名：姓名、机构简称或两者。', en: 'Public teacher attribution: name, organization short name, or both.' } },
   { n: 310, slug: 'wca_final_winners_index', desc: { zh: '为决赛冠军建立局部索引，避免按日期查询冠军时扫描全部历史成绩。', en: 'Index final-round winners to avoid scanning all historical results for dated winner queries.' } },
 ];
