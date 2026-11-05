@@ -27,107 +27,73 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
 
-it.each([['cn', bilibili, youtube], ['us', youtube, bilibili], ['', youtube, bilibili]])('selects one video for IP country %s and lets the user switch', async (country, preferred, alternate) => {
+it.each([['cn', bilibili], ['us', youtube], ['', youtube]])('selects one regional cover and title for %s', async (country, preferred) => {
   vi.mocked(loadIpCountry).mockResolvedValue(country);
-  await act(async () => root.render(createElement(VideoSection, { videoUrl: `${youtube}\n${bilibili}` })));
+  await act(async () => root.render(createElement(VideoSection, { videoUrl: youtube + '\n' + bilibili })));
   expect(host.querySelectorAll('.detail-video-facade')).toHaveLength(1);
   expect(host.querySelector('.detail-video-facade')?.getAttribute('href')).toBe(preferred);
-  expect(host.querySelectorAll('.detail-video-switch')).toHaveLength(1);
-  await act(async () => (host.querySelector('.detail-video-switch') as HTMLButtonElement).click());
-  expect(host.querySelectorAll('.detail-video-facade')).toHaveLength(1);
-  expect(host.querySelector('.detail-video-facade')?.getAttribute('href')).toBe(alternate);
+  expect(host.querySelectorAll('.detail-video-title')).toHaveLength(1);
+  expect(host.querySelector('.detail-video-title')?.getAttribute('href')).toBe(preferred);
+  expect(host.querySelectorAll('.detail-video-switch')).toHaveLength(2);
 });
 
-it('preserves a manual choice when the IP lookup finishes later', async () => {
+it('preserves a manual choice when the regional preference arrives later', async () => {
   let finish!: (country: string) => void;
   vi.mocked(loadIpCountry).mockReturnValue(new Promise(resolve => { finish = resolve; }));
-  await act(async () => root.render(createElement(VideoSection, { videoUrl: `${youtube}\n${bilibili}` })));
-  expect(host.querySelector('.detail-video-facade')).toBeNull();
+  await act(async () => root.render(createElement(VideoSection, { videoUrl: youtube + '\n' + bilibili })));
   await act(async () => (host.querySelector('.detail-video-switch') as HTMLButtonElement).click());
   await act(async () => finish('cn'));
   expect(host.querySelector('.detail-video-facade')?.getAttribute('href')).toBe(youtube);
+  expect(host.querySelector('.detail-video-title')?.getAttribute('href')).toBe(youtube);
 });
 
-it('shows the available platform immediately when there is no alternative', async () => {
+it('switches the cover, title and destination together, including two Bilibili sources', async () => {
+  const otherBili = 'https://www.bilibili.com/video/BV1qppd65EY1';
+  const urls = [youtube, bilibili + '?p=2&t=12', otherBili];
+  const titles = ['World record', '比赛现场完整视频', '[100FPS] 2.51三阶单次世界纪录WR'];
+  vi.mocked(loadIpCountry).mockResolvedValue('us');
+  vi.mocked(loadVideoTitle).mockImplementation(async url => titles[urls.indexOf(url)]);
+  await act(async () => root.render(createElement(VideoSection, { videoUrl: urls.join('\n') })));
+  const buttons = [...host.querySelectorAll<HTMLButtonElement>('.detail-video-switch')];
+  expect(buttons[1].getAttribute('aria-label')).not.toBe(buttons[2].getAttribute('aria-label'));
+  for (const index of [1, 2, 0]) {
+    await act(async () => buttons[index].click());
+    const title = host.querySelector('.detail-video-title');
+    expect(host.querySelectorAll('.detail-video-title')).toHaveLength(1);
+    expect(title?.textContent).toBe(titles[index]);
+    expect(title?.getAttribute('href')).toBe(urls[index]);
+    expect(title?.getAttribute('target')).toBe('_blank');
+    expect(host.querySelector('.detail-video-facade')?.getAttribute('href')).toBe(urls[index]);
+    expect(host.querySelectorAll('.detail-video-switch[aria-pressed="true"]')).toHaveLength(1);
+    expect(buttons[index].getAttribute('aria-pressed')).toBe('true');
+    expect(buttons[index].closest('.detail-video-facade')).toBeNull();
+  }
+});
+
+it('does not replace the selected title when another source finishes loading', async () => {
+  let finish!: (title: string) => void;
+  vi.mocked(loadIpCountry).mockResolvedValue('us');
+  vi.mocked(loadVideoTitle).mockImplementation(url => url === youtube
+    ? new Promise(resolve => { finish = resolve; })
+    : Promise.resolve('比赛现场完整视频'));
+  await act(async () => root.render(createElement(VideoSection, { videoUrl: youtube + '\n' + bilibili })));
+  await act(async () => (host.querySelectorAll('.detail-video-switch')[1] as HTMLButtonElement).click());
+  await act(async () => finish('YouTube source title'));
+  expect(host.querySelector('.detail-video-title')?.textContent).toBe('比赛现场完整视频');
+});
+
+it.each([null, '', '   '])('uses the URL when the only source has no title (%s)', async title => {
+  vi.mocked(loadVideoTitle).mockResolvedValue(title);
   await act(async () => root.render(createElement(VideoSection, { videoUrl: bilibili })));
-  expect(host.querySelector('.detail-video-facade')?.getAttribute('href')).toBe(bilibili);
+  expect(host.querySelector('.detail-video-title')?.textContent).toBe(bilibili);
   expect(host.querySelector('.detail-video-switch')).toBeNull();
   expect(loadIpCountry).not.toHaveBeenCalled();
 });
 
-
-it('shows four independent videos as four covers, including repeated platforms', async () => {
-  await act(async () => root.render(createElement(VideoSection, { videoUrl: [youtube, youtube, bilibili, bilibili].join('\n\n') })));
-  expect(host.querySelectorAll('.detail-video-facade')).toHaveLength(4);
-  expect(host.querySelector('.detail-video-switch')).toBeNull();
-});
-
-it('switches sources only within the selected video in mixed groups', async () => {
+it('switches only the selected group and keeps uploaded files playable', async () => {
   vi.mocked(loadIpCountry).mockResolvedValue('cn');
-  await act(async () => root.render(createElement(VideoSection, { videoUrl: [youtube + '\n' + bilibili, youtube, bilibili].join('\n\n') })));
-  expect(host.querySelectorAll('.detail-video-facade')).toHaveLength(3);
-  expect(host.querySelectorAll('.detail-video-switch')).toHaveLength(1);
+  await act(async () => root.render(createElement(VideoSection, { videoUrl: [youtube + '\n' + bilibili, bilibili, 'https://api.cuberoot.me/v1/recon/video/42'].join('\n\n') })));
   await act(async () => (host.querySelector('.detail-video-switch') as HTMLButtonElement).click());
-  expect([...host.querySelectorAll('.detail-video-facade')].map(el => el.getAttribute('href'))).toEqual([youtube, youtube, bilibili]);
-});
-
-it('preserves selected Bilibili part and time when opening its cover', async () => {
-  const url = bilibili + '?p=2&t=12';
-  await act(async () => root.render(createElement(VideoSection, { videoUrl: url })));
-  expect(host.querySelector('.detail-video-facade')?.getAttribute('href')).toBe(url);
-});
-
-it('shows the source title below a single video cover without changing its link', async () => {
-  const title = '[100FPS] 2.51三阶单次世界纪录WR';
-  vi.mocked(loadVideoTitle).mockResolvedValue(title);
-  await act(async () => root.render(createElement(VideoSection, { videoUrl: bilibili })));
-  const cover = host.querySelector('.detail-video-facade');
-  expect(cover?.nextElementSibling?.textContent).toBe(title);
-  expect(cover?.getAttribute('href')).toBe(bilibili);
-  expect(cover?.getAttribute('target')).toBe('_blank');
-});
-
-it('keeps the caption with the selected source when another title arrives later', async () => {
-  let finish!: (title: string) => void;
-  vi.mocked(loadIpCountry).mockResolvedValue('us');
-  vi.mocked(loadVideoTitle).mockImplementation(url => url === youtube
-    ? Promise.resolve('YouTube source title')
-    : new Promise(resolve => { finish = resolve; }));
-  await act(async () => root.render(createElement(VideoSection, { videoUrl: `${youtube}\n${bilibili}` })));
-  expect(host.querySelector('.detail-video-title')?.textContent).toBe('YouTube source title');
-  await act(async () => (host.querySelector('.detail-video-switch') as HTMLButtonElement).click());
-  expect(host.querySelector('.detail-video-title')).toBeNull();
-  await act(async () => finish('比赛现场完整视频'));
-  expect(host.querySelector('.detail-video-title')?.textContent).toBe('比赛现场完整视频');
-  await act(async () => (host.querySelector('.detail-video-switch') as HTMLButtonElement).click());
-  expect(host.querySelector('.detail-video-title')?.textContent).toBe('YouTube source title');
-});
-
-it.each([null, '', '   '])('omits an unavailable or blank title (%s)', async title => {
-  vi.mocked(loadVideoTitle).mockResolvedValue(title);
-  await act(async () => root.render(createElement(VideoSection, { videoUrl: bilibili })));
-  expect(host.querySelector('.detail-video-title')).toBeNull();
-  expect(host.querySelector('.detail-video-facade')?.getAttribute('href')).toBe(bilibili);
-});
-
-it('shows uploaded files and unknown providers as separate video entries', async () => {
-  await act(async () => root.render(createElement(VideoSection, { videoUrl: 'https://api.cuberoot.me/v1/recon/video/42\n\nhttps://example.com/watch' })));
-  expect(host.querySelectorAll('.detail-video-player')).toHaveLength(2);
+  expect([...host.querySelectorAll('.detail-video-facade')].map(el => el.getAttribute('href'))).toEqual([youtube, bilibili]);
   expect(host.querySelector('video')?.getAttribute('src')).toBe('https://api.cuberoot.me/v1/recon/video/42');
-  expect(host.querySelector('.detail-video-facade')?.getAttribute('href')).toBe('https://example.com/watch');
-});
-
-it('shows each video title in its tooltip even when two alternatives are both Bilibili', async () => {
-  const otherBili = 'https://www.bilibili.com/video/BV1qppd65EY1';
-  vi.mocked(loadIpCountry).mockResolvedValue('us');
-  vi.mocked(loadVideoTitle).mockImplementation(async url => url === bilibili ? '比赛现场完整视频' : '[100FPS] 2.51三阶单次世界纪录WR');
-  await act(async () => root.render(createElement(VideoSection, { videoUrl: [youtube, bilibili, otherBili].join('\n') })));
-  const buttons = host.querySelectorAll<HTMLButtonElement>('.detail-video-switch');
-  expect(buttons).toHaveLength(2);
-  await act(async () => buttons[0].focus());
-  expect(document.querySelector('[role="tooltip"]')?.textContent).toBe('比赛现场完整视频');
-  await act(async () => buttons[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
-  await act(async () => buttons[1].focus());
-  expect(document.querySelector('[role="tooltip"]')?.textContent).toBe('[100FPS] 2.51三阶单次世界纪录WR');
-  expect(buttons[1].getAttribute('aria-label')).toContain('[100FPS] 2.51三阶单次世界纪录WR');
 });

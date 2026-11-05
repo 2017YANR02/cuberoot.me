@@ -153,14 +153,15 @@ export function RecordSelect({ value, onChange, onFocus, className, records, pla
           </span>
         )}
         {value && (
-          <span
+          <button
+            type="button"
             className="record-select-clear"
-            role="button"
-            aria-label="clear"
-            onMouseDown={e => { e.preventDefault(); e.stopPropagation(); onChange(''); setText(''); }}
+            aria-label={tr({ zh: '清除纪录', en: 'Clear record' })}
+            onMouseDown={e => e.preventDefault()}
+            onClick={e => { e.stopPropagation(); onChange(''); setText(''); }}
           >
             <X size={14} />
-          </span>
+          </button>
         )}
         <ChevronDown size={14} className="record-select-chevron" />
       </div>

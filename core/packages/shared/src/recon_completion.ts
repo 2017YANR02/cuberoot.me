@@ -17,7 +17,7 @@ export function validateReconTiming(input: {
   }
   if (input.recordType !== 'timing' && input.pickupTime == null && input.putdownTime == null) return null;
   if ([input.pickupTime, input.putdownTime].some(value => typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 359999.999 || Math.abs(value * 1000 - Math.round(value * 1000)) > 0.000001)) {
-    return { zh: '请填写起表和拍表耗时，单位为秒，范围为 0–359999.999，最多三位小数。', en: 'Enter both pickup and putdown durations in seconds, from 0 to 359999.999, with up to three decimals.' };
+    return { zh: '请填写起表和拍表，单位为秒，范围为 0–359999.999，最多三位小数。', en: 'Enter both pickup and putdown durations in seconds, from 0 to 359999.999, with up to three decimals.' };
   }
   if (input.recordType === 'timing' && typeof input.solution === 'string' && input.solution.trim()) {
     return { zh: '已有解法，请使用完整复盘模式保存。', en: 'A solution is present. Save in full reconstruction mode.' };

@@ -17,6 +17,7 @@ import { useReconLineDiagrams } from './ReconLineDiagrams';
 import Link from '@/components/ReconCaseLink';
 import { reconCommentLinks } from '@/lib/recon-comment-links';
 import { tr } from '@/i18n/tr';
+import { computeStm, reconFreePairLines } from '@/lib/recon-stats';
 import { crossColorFromReconText } from '@/components/CubeColorChip/CubeColorChip';
 import NotationLine, { useNotationCases } from '@cuberoot/timer-ui/recon/NotationLine';
 import { findTokenPositions, syncReconPlayerCursorFromText, reconInspectionOrientations, reconWasteBrackets, showReconInspectionColors } from '@/lib/recon-alg-utils';
@@ -154,6 +155,9 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
   }, [playerRef, moveCaret, plainText]);
 
   const lines = useMemo(() => plainText.split('\n'), [plainText]);
+  const freePairLines = useMemo(() => linkComments ? reconFreePairLines(sourceText) : new Set<number>(), [sourceText, linkComments]);
+  const lineMoveCounts = useMemo(() => sourceText.replace(/\r\n?/g, '\n').split('\n').map(line =>
+    line.split('//')[0].trim() ? computeStm(line, event) : null), [sourceText, event]);
   // 每行起始的全局字符偏移(含换行),用于把全局 cursorOffset / hlRange 映射到行内局部位置。
   const lineStarts = useMemo(() => {
     const out: number[] = [];
@@ -186,10 +190,16 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
           const href = f2lLinks.get(i)?.get('F2L');
           return href ? [{ ...link, href }] : [];
         }) : [];
-        return <span key={i}>{nl}<NotationLine line={line} lineStart={lineStart}
+        return <span key={i}>{nl}<NotationLine line={line} lineStart={lineStart} className="recon-counted-line"
           cursorOffset={cursorOffset} hlRange={hlRange} wasteBrackets={wasteBrackets}
           crossColor={crossColor} links={links} colorHref={colors => linkComments ? f2lLinks.get(i)?.get(colors) : undefined}
-          inspectionColors={inspectionColors.get(i)} diagram={diagramAt(i)} trailing={toggle}
+          inspectionColors={inspectionColors.get(i)} diagram={diagramAt(i)} trailing={<>{toggle}
+            {freePairLines.has(i) && <span className="recon-annotation-badge recon-line-free-pair" data-recon-text-length="0"
+              data-label={tr({ zh: '基', en: 'free' })} aria-label={tr({ zh: '基态', en: 'Free pair' })} />}
+            {(lineMoveCounts[i] ?? 0) > 0 && <span className="recon-line-move-count" data-recon-text-length="0"
+              data-count={`(${lineMoveCounts[i]})`}
+              aria-label={tr({ zh: `${lineMoveCounts[i]} 步`, en: `${lineMoveCounts[i]} moves` })} />}
+          </>}
           localize={tr} renderLink={(href, children) => <Link href={href} prefetch={false} className="recon-comment-link">{children}</Link>}
         /></span>;
       })}

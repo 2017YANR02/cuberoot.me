@@ -44,7 +44,8 @@ import ReconSolutionField, { type ReconSolutionFieldHandle } from '@/components/
 import ReconReuseModal from './ReconReuseModal';
 import ScramblePicker from './ScramblePicker';
 import GroupScramblePicker from './GroupScramblePicker';
-import { useAuthStore } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
+import { ownerKey } from '@cuberoot/shared/account';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useMembership } from '@/hooks/useMembership';
 import { useRequireMembership } from '@/hooks/useRequireMembership';
@@ -213,7 +214,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const unsolvedReasonRef = useRef<HTMLTextAreaElement>(null);
   const solverUserTouched = useRef(false);
 
-  const [form, setForm] = useState<Partial<ReconSolve>>({
+  const [draftForm, setForm] = useState<Partial<ReconSolve>>({
     official: 'wca',
     visibility: 'public',
     event: '3x3',
@@ -242,6 +243,15 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     regionalAverageRecord: '',
     aoType: '',
   });
+
+  const editViewerKey = authUser ? `${ownerKey(authUser.uid, authUser.wcaId)}:${hasAdminAccess(authUser)}` : 'guest';
+  const [loadedEdit, setLoadedEdit] = useState<{ id: string; viewerKey: string; solve: Partial<ReconSolve> } | null>(null);
+  const [editLoadError, setEditLoadError] = useState(false);
+  const loadedSolve = loadedEdit && loadedEdit.id === editId && loadedEdit.viewerKey === editViewerKey ? loadedEdit.solve : null;
+  const readOnly = isEditing && (!loadedSolve || !authUser || (!hasAdminAccess(authUser)
+    && loadedSolve.addedById !== ownerKey(authUser.uid, authUser.wcaId)));
+  // Viewers see the saved record, never values filled in by editing-only effects.
+  const form = readOnly && loadedSolve ? loadedSolve : draftForm;
 
   useEffect(() => {
     if (isEditing || fromId) return;
@@ -325,6 +335,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   }, []);
 
   const requestVideoUpload = () => {
+    if (readOnly) return;
     if (!isMember) {
       try {
         sessionStorage.setItem('recon.membership-draft', JSON.stringify({
@@ -351,7 +362,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   }, [pruneReused]);
 
   const handleVideoUpload = useCallback(async (file: File | undefined) => {
-    if (!file) return;
+    if (readOnly || !file) return;
     setVideoUploadError('');
     const supported = ['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type)
       || /\.(mp4|webm|mov)$/i.test(file.name);
@@ -375,7 +386,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       setVideoUploading(false);
       if (videoUploadInputRef.current) videoUploadInputRef.current.value = '';
     }
-  }, [pruneReused]);
+  }, [pruneReused, readOnly]);
 
   const activeScrambleValue = scrambleField === 'wca'
     ? form.wcaScramble || ''
@@ -418,8 +429,12 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   // ── Edit-mode load ──
   useEffect(() => {
     if (!isEditing || !editId) return;
+    let active = true;
     setLoadingEdit(true);
+    setEditLoadError(false);
+    setLoadedEdit(null);
     getRecon(Number(editId)).then(solve => {
+      if (!active) return;
       const normalized = {
         ...solve,
         videoUrl: normalizeReconVideoUrls(solve.videoUrl || ''),
@@ -429,6 +444,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         optimalScramble: normalizeReconScrambleSpacing(solve.event, solve.optimalScramble || ''),
         scramble: normalizeReconScrambleSpacing(solve.event, solve.scramble || ''),
       };
+      setLoadedEdit({ id: editId, viewerKey: editViewerKey, solve: normalized });
       setForm(normalized);
       setScrambleField(solve.optimalScramble?.trim()
         ? 'optimal'
@@ -452,8 +468,13 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       setCubeUserTouched(true);
       if (solve.solution) solutionFieldRef.current?.setText(solve.solution);
       setLoadingEdit(false);
-    }).catch(() => setLoadingEdit(false));
-  }, [editId, isEditing]);
+    }).catch(() => {
+      if (!active) return;
+      setEditLoadError(true);
+      setLoadingEdit(false);
+    });
+    return () => { active = false; };
+  }, [editId, isEditing, editViewerKey]);
 
   // ── ?from= prefill ──
   useEffect(() => {
@@ -1530,6 +1551,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   };
 
   const handleSubmit = async () => {
+    if (readOnly) return;
     if (groupMatchPending || (matchedGroup && form.groupId !== matchedGroup)) return;
     setSubmitError(null);
     const person = form.person?.trim() ?? '';
@@ -1667,7 +1689,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   // render so they match (auth state isn't known until localStorage is read).
   const checkoutDraftRestored = useRef(false);
   useEffect(() => {
-    if (!mounted || loadingEdit || checkoutDraftRestored.current) return;
+    if (!mounted || loadingEdit || readOnly || checkoutDraftRestored.current) return;
     checkoutDraftRestored.current = true;
     try {
       const key = 'recon.membership-draft';
@@ -1680,14 +1702,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       setAvgInput(draft.avgInput);
       solutionFieldRef.current?.setText(draft.form.solution || '');
     } catch { /* No valid pending checkout draft. */ }
-  }, [mounted, loadingEdit, authUser?.uid]);
+  }, [mounted, loadingEdit, readOnly, authUser?.uid]);
 
   if (!mounted) {
     return <div className="recon-page"><div className="recon-loading"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></div></div>;
   }
 
   // ── Login gate ──
-  if (!authUser) {
+  if (!authUser && !isEditing) {
     return (
       <div className="recon-page">
         <div className="recon-page-header">
@@ -1722,7 +1744,13 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     );
   }
 
-  if (loadingEdit) return <div className="recon-page"><div className="recon-loading"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></div></div>;
+  if (editLoadError) return <div className="recon-page submit-page">
+    <PageHeading backHref={`${langPrefix}/recon`}>{t('recon.editRecon')}</PageHeading>
+    <p role="alert">{tr({ zh: '无法查看这条复盘，内容可能不存在或你没有查看权限。', en: 'This reconstruction is unavailable or you do not have permission to view it.' })}</p>
+    {!authUser && <button type="button" className="recon-btn" onClick={() => login()}><LogIn size={14} />{tr({ zh: '登录', en: 'Sign in' })}</button>}
+  </div>;
+
+  if (loadingEdit || (isEditing && !loadedSolve)) return <div className="recon-page"><div className="recon-loading"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></div></div>;
 
   // ── Person/reconer pill helpers ──
   const solverLite: WcaPersonLite | null = form.personId
@@ -1774,7 +1802,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         )}
 
         <div className="submit-form-pane">
-          <div className="submit-form">
+          {readOnly && <p className="submit-readonly-notice">{tr({ zh: '仅查看 · 只有添加者和管理员可以修改', en: 'Read only · Only the submitter and administrators can edit' })}</p>}
+          <fieldset className="submit-form" disabled={readOnly} aria-label={tr({ zh: '复盘内容', en: 'Reconstruction content' })}>
             {!isEditing && !fromId && authUser && (
               <button type="button" className="submit-reuse-btn" onClick={() => setReuseOpen(true)}>
                 <History size={14} />
@@ -2382,7 +2411,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   </button>
                 )}
               </span>
-              {normalized ? (
+              {readOnly ? (
+                <pre className="submit-field-textarea submit-solution-textarea submit-readonly-source" aria-label={tr({ zh: '解法原文', en: 'Solution source' })}><code>{form.solution || form.recon || ''}</code></pre>
+              ) : normalized ? (
                 <SolutionView
                   text={displaySolution}
                   event={form.event}
@@ -2405,14 +2436,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   onBlurField={() => setActiveVkbField(f => f === 'solution' ? null : f)}
                 />
               )}
-              <span className="submit-hint">{tr({ zh: '仅记录起拍表耗时时，解法可留空。', en: 'Leave the solution blank to record only pickup and putdown durations.' })}</span>
+              <span className="submit-hint">{tr({ zh: '仅记录起拍表时，解法可留空。', en: 'Leave the solution blank to record only pickup and putdown durations.' })}</span>
               {renderSubmitError('solution')}
             </div>
 
             <div className="submit-row">
               {(['pickupTime', 'putdownTime'] as const).map(field => (
                 <label className="submit-field" key={field}>
-                  <span className="submit-label">{field === 'pickupTime' ? tr({ zh: '起表耗时（秒）', en: 'Pickup (seconds)' }) : tr({ zh: '拍表耗时（秒）', en: 'Putdown (seconds)' })}</span>
+                  <span className="submit-label">{field === 'pickupTime' ? tr({ zh: '起表（秒）', en: 'Pickup (seconds)' }) : tr({ zh: '拍表（秒）', en: 'Putdown (seconds)' })}</span>
                   <input className="submit-field-input" type="number" inputMode="decimal" min="0" max="359999.999" step="0.001"
                     value={form[field] ?? ''} onChange={e => setField(field, e.target.value === '' ? null : Number(e.target.value))} />
                   <span className="submit-hint">{field === 'pickupTime' ? tr({ zh: '起表到第一步', en: 'Timer start to first move' }) : tr({ zh: '最后一步到拍表', en: 'Last move to timer stop' })}</span>
@@ -2633,7 +2664,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             </div>
 
             {/* Danger Zone */}
-            {isEditing && editId && (
+            {isEditing && editId && !readOnly && (
               <div className="submit-danger-zone">
                 <div className="submit-danger-zone-header">{t('recon.dangerZone')}</div>
                 <div className="submit-danger-zone-body">
@@ -2641,7 +2672,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     type="button"
                     className="submit-btn submit-btn-danger"
                     onClick={async () => {
-                      if (!confirm(t('recon.confirmDelete'))) return;
+                      if (readOnly || !confirm(t('recon.confirmDelete'))) return;
                       try {
                         await deleteRecon(Number(editId));
                         router.push(`${langPrefix}/recon`);
@@ -2656,7 +2687,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </div>
               </div>
             )}
-          </div>
+          </fieldset>
         </div>
       </div>
     </div>

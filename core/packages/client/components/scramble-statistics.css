@@ -1,5 +1,6 @@
 .scramble-statistics {
     min-width: 0;
+    width: min(100%, 30rem);
     margin-block: 0.6rem;
     color: var(--foreground);
     font-family: var(--font-sans);
@@ -7,18 +8,22 @@
     line-height: 1.5;
 }
 .scramble-statistics-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.35rem 0.8rem;
-    margin-bottom: 0.35rem;
+    display: grid;
+    grid-template-columns: 24% repeat(5, minmax(0, 1fr));
+    align-items: start;
+    margin-block: 0.6rem;
 }
-.scramble-statistics-header small,
-.scramble-statistics-status,
-.scramble-statistics-missing {
+.scramble-statistics-status {
     color: var(--muted-foreground);
 }
-.scramble-statistics-whole { margin-left: auto; }
+.scramble-statistics-whole {
+    grid-column: 2;
+}
+.scramble-statistics-summary-metric {
+    display: grid;
+    gap: 0.2rem;
+    text-align: center;
+}
 .scramble-statistics .scramble-statistics-matrix {
     width: 100%;
     table-layout: fixed;
@@ -41,28 +46,28 @@
     text-align: left;
     overflow-wrap: anywhere;
 }
-.scramble-statistics .scramble-statistics-matrix thead th,
-.scramble-statistics-group > dt,
-.scramble-statistics-metrics dt {
-    color: var(--muted-foreground);
-}
 .scramble-statistics dl,
 .scramble-statistics dd { margin: 0; }
 .scramble-statistics .scramble-statistics-other { margin-top: 0.45rem; }
 .scramble-statistics-group {
     display: grid;
-    grid-template-columns: 3em minmax(0, 1fr);
-    column-gap: 0.75rem;
-    align-items: baseline;
-    padding-block: 0.2rem;
+    grid-template-columns: 24% minmax(0, 1fr);
+    align-items: start;
+    padding-block: 0.4rem;
 }
 .scramble-statistics-metrics {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.2rem 0.85rem;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    row-gap: 0.6rem;
 }
-.scramble-statistics-group.is-ungrouped { display: block; }
-.scramble-statistics-metrics > div { display: flex; gap: 0.3rem; align-items: baseline; white-space: nowrap; }
+.scramble-statistics-group > dd { grid-column: 2; }
+.scramble-statistics-metrics > div {
+    display: grid;
+    gap: 0.2rem;
+    align-content: start;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
 .scramble-statistics b { font-weight: 600; font-variant-numeric: tabular-nums; }
 .scramble-statistics-status { margin: 0.35rem 0 0; font-size: 0.75rem; }
 .scramble-statistics-retry {

@@ -63,10 +63,13 @@ export default function NotationLine({ line, lineStart = 0, cursorOffset = null,
     : [];
   const colorsAt = new Map(labelColorGroups.map(group => [group.start, group.colors]));
   const hiddenBrackets = cubeColorGroupPunctuation(line, labelColorGroups);
+  const cancellations = commentStart < 0 ? [] : [...line.slice(commentStart + 2).matchAll(/\bcancel\s+into\b/gi)]
+    .map(match => ({ start: commentStart + 2 + match.index!, end: commentStart + 2 + match.index! + match[0].length }));
 
   // 切点:0 / 行尾 / 光标 / 高亮起止 / 色块位置 → 分段渲染。
   const movesEnd = commentStart < 0 ? line.length : commentStart;
   const cuts = new Set<number>([0, line.length]);
+  for (const range of cancellations) { cuts.add(range.start); cuts.add(range.end); }
   if (moves !== undefined) cuts.add(movesEnd);
   for (const offset of wasteBrackets.keys()) {
     if (offset >= lineStart && offset <= lineStart + line.length) cuts.add(offset - lineStart);
@@ -89,6 +92,15 @@ export default function NotationLine({ line, lineStart = 0, cursorOffset = null,
     );
     if (hiddenBrackets.has(a)) {
       parts.push(<span key={`bracket${a}`} data-recon-text-length={1}>{line[a] === '+' ? ' ' : null}</span>);
+      continue;
+    }
+    const cancellation = cancellations.find(range => a >= range.start && a < range.end);
+    if (cancellation) {
+      if (a === cancellation.start) parts.push(
+        <span key={`cancel${a}`} className="recon-annotation-badge recon-cancel-badge"
+          data-recon-text-length={cancellation.end - cancellation.start}
+          title={localize({ zh: '衔接消步', en: 'Cancel into next step' })}>{localize({ zh: '消步', en: 'cancel' })}</span>,
+      );
       continue;
     }
     const colors = colorsAt.get(a);

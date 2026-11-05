@@ -209,6 +209,9 @@
 /* --- 统计网格 --- */
 .detail-stats-grid {
   display: grid;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--foreground);
   grid-template-columns: repeat(4, 1fr);
   gap: 6px 12px;
   background: color-mix(in srgb, var(--foreground) 3%, transparent);
@@ -224,16 +227,18 @@
   padding: 2px 0;
 }
 
-.stat-label {
-  font-size: 0.85rem;
-  color: var(--faint-foreground);
+.detail-stats-grid .stat-label {
+  font-size: inherit;
+  color: inherit;
   white-space: nowrap;
 }
 
-.stat-value {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.95rem;
-  color: var(--foreground);
+.detail-stats-grid .stat-value {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
   text-align: left;
 }
 
@@ -243,6 +248,59 @@
 
 @media (max-width: 480px) {
   .detail-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.detail-notation-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.detail-notation-toolbar > .compact-select {
+  align-self: center;
+}
+.detail-source-copy .compact-select-current {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.detail-source-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.detail-source-copy:hover {
+  color: var(--foreground);
+}
+.detail-source-text {
+  margin: 0;
+  color: var(--foreground);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 4;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.detail-source-text code {
+  font: inherit;
+}
+.detail-source-copy:focus-visible,
+.detail-source-text:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+  border-radius: 4px;
 }
 
 /* --- 视频嵌入 --- */
@@ -272,45 +330,73 @@
 
 .detail-video-player {
   position: relative;
-  width: 360px;
+  width: max-content;
   max-width: 100%;
   min-width: 0;
 }
-.detail-video-title {
-  margin: 8px 0 0;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: var(--foreground);
-  overflow-wrap: anywhere;
-}
+
 .detail-video-player > .detail-video-wrap {
-  width: 100%;
-  padding-top: 56.25%;
+  width: min(360px, 100%);
+  aspect-ratio: 16 / 9;
+  padding-top: 0;
   margin-bottom: 0;
 }
-.detail-video-switches {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+.detail-video-sources {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
+  margin-top: 8px;
 }
 .detail-video-switch {
-  display: grid;
-  place-items: center;
-  width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 40px;
   height: 40px;
   padding: 6px;
   border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 4px 4px 0 0;
   background: none;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
   cursor: pointer;
 }
-.detail-video-switch img {
-  display: block;
+.detail-video-switch > img {
+  width: 24px;
+  height: 24px;
   object-fit: contain;
+}
+.detail-video-switch:hover {
+  background: var(--muted);
+}
+.detail-video-switch[aria-pressed="true"] {
+  border-bottom-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--foreground);
+}
+.detail-video-title {
+  display: block;
+  margin-top: 8px;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+.detail-video-title:hover {
+  text-decoration: underline;
+}
+.detail-video-switch:focus-visible,
+.detail-video-title:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .detail-video-facade {
+  display: block;
   cursor: pointer;
   width: 360px;
   padding-top: 202.5px; /* 16:9 of 360 */
@@ -324,7 +410,7 @@
   }
 }
 
-.detail-video-facade img:not(.detail-video-play-yt):not(.detail-video-play-bili) {
+.detail-video-cover {
   position: absolute;
   top: 0; left: 0;
   width: 100%; height: 100%;

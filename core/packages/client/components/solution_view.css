@@ -31,6 +31,31 @@
 }
 
 /* 阶段注释行高亮 (// xxx) */
+.recon-line-free-pair {
+  margin-inline-start: 0.65em;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+}
+.recon-line-free-pair::after { content: attr(data-label); }
+
+.recon-line-move-count {
+  display: inline-block;
+  margin-inline-start: 0.65em;
+  color: var(--muted-foreground);
+  font-size: 0.8em;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.recon-line-move-count::after { content: attr(data-count); }
+.recon-counted-line:hover .recon-line-move-count,
+.recon-counted-line:focus-within .recon-line-move-count {
+  opacity: 1;
+}
+
 .recon-step-label {
   color: var(--accent);
   font-weight: 500;
@@ -94,8 +119,26 @@
   padding-inline-start: var(--recon-diagram-indent);
 }
 .detail-caption-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4em 0.8em;
   font-family: 'Roboto Mono', monospace;
   font-size: 0.85rem;
   color: var(--foreground);
   margin: 0 0 6px;
+}
+.detail-caption-timing {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4em 1em;
+}
+.detail-caption-timing.is-separated {
+  border-inline-start: 1px solid var(--border-strong);
+  padding-inline-start: 0.8em;
+}
+.detail-caption-timing > span { white-space: nowrap; }
+.detail-caption-timing > span + span {
+  border-inline-start: 1px solid var(--border-strong);
+  padding-inline-start: 1em;
 }

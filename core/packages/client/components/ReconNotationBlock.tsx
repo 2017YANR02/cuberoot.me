@@ -8,15 +8,21 @@ import SolutionView from './SolutionView';
 
 export function ReconNotationBlock({ captionHeader, scramble, scrambleCubeOrder, displayScramble, optimalScrambleTag = '', solutionText, displayText, rawDisplayText, solve, playerRef, canToggle, crossLineIdx, crossNormalized, setCrossNormalized, canRemoveWaste = false, wasteRemoved = false, setWasteRemoved = () => {} }: {
   captionHeader: string; scramble: string; scrambleCubeOrder: number | null; displayScramble: string; optimalScrambleTag?: string;
-  solutionText: string; displayText: string; rawDisplayText: string; solve: { event: string };
+  solutionText: string; displayText: string; rawDisplayText: string; solve: { event: string; pickupTime?: number | null; putdownTime?: number | null };
   playerRef: ComponentProps<typeof SolutionView>['playerRef']; canToggle: boolean; crossLineIdx: number; crossNormalized: boolean;
   setCrossNormalized: (update: (value: boolean) => boolean) => void;
   canRemoveWaste?: boolean; wasteRemoved?: boolean; setWasteRemoved?: (update: (value: boolean) => boolean) => void;
 }) {
   const { copied: scrambleCopied, copy: copyScramble } = useCopy();
+  const hasTiming = solve.pickupTime != null || solve.putdownTime != null;
   return <>
-            {captionHeader && (
-              <div className="detail-caption-header">{captionHeader}
+            {(captionHeader || hasTiming) && (
+              <div className="detail-caption-header">
+                {captionHeader && <span>{captionHeader}</span>}
+                {hasTiming && <span className={`detail-caption-timing${captionHeader ? ' is-separated' : ''}`}>
+                  {solve.pickupTime != null && <span title={tr({ zh: '起表到第一步', en: 'Timer start to first move' })}>{tr({ zh: '起表', en: 'Pickup' })} {solve.pickupTime.toFixed(3)}</span>}
+                  {solve.putdownTime != null && <span title={tr({ zh: '最后一步到拍表', en: 'Last move to timer stop' })}>{tr({ zh: '拍表', en: 'Putdown' })} {solve.putdownTime.toFixed(3)}</span>}
+                </span>}
             {canRemoveWaste && <button type="button" className={`recon-cross-toggle${wasteRemoved ? ' active' : ''}`}
               aria-pressed={wasteRemoved} onClick={() => setWasteRemoved(value => !value)}>
               {wasteRemoved ? tr({ zh: '恢复废步', en: 'Restore wasted moves' }) : tr({ zh: '消步', en: 'Remove wasted moves' })}

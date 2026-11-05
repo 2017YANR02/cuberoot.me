@@ -32,6 +32,17 @@
 }
 
 /* Semantic chip size belongs to the row, never to the host page. */
+.recon-annotation-badge {
+  display: inline-block;
+  padding: 0.05em 0.4em;
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: 0.8em;
+  line-height: 1.3;
+  vertical-align: middle;
+}
 .ccc-chip.recon-label-chip { width: 17px; height: 11px; }
 .recon-notation-list :is(.recon-comment-link, .sml-case-link) {
   color: inherit;

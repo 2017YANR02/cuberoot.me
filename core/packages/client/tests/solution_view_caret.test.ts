@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cubeThumbParams } from '@/lib/alg_thumb_plan';
 import { visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
 import SolutionView from '@/components/SolutionView';
+import { computeAllStats, reconFreePairLines } from '@/lib/recon-stats';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import StepMoveList from '@cuberoot/timer-ui/reconstruct/StepMoveList';
 import { ReconstructHostContext } from '@cuberoot/timer-ui/reconstruct/ReconstructHost';
@@ -256,6 +257,38 @@ describe('SolutionView caret mapping', () => {
     const params = cubeThumbParams('3x3', set, { kind: 'raw', tag: '', attrs: {} });
     expected.innerHTML = renderFromSimpleQuery({ setup: "R U2 R'", sch: 'wrgyob', view: 'iso', mask: params.mask, ngs: params.hideGreySides ? '1' : undefined, size: 28, pzl: 3 });
     expect(host.querySelector('.recon-case-diagram svg')?.outerHTML).toBe(expected.querySelector('svg')?.outerHTML);
+  });
+
+  it('marks free pairs on the same source rows used by the aggregate without changing copied text', async () => {
+    const text = "x' z' // insp\nU' r' R2 U' R2' D' R2 // W psxcross (OB) cancel into\nU R' U'D' // xxcross (RG)\nR' U' R // OG\nL' U' L // RB\nR' U R U R' U2' R U R D R' U2 R D' R' // ZBLL-U15";
+    expect([...reconFreePairLines(text)]).toEqual([3, 4]);
+    expect(computeAllStats(text, 2.51, '333').freePair).toBe(2);
+    expect([...reconFreePairLines("R // cross\nU2 y R U' R' // pair\nL R U R // excluded\nR L U L // excluded\n// note")]).toEqual([1]);
+    await act(async () => root.render(createElement(SolutionView, {
+      text, event: '333', playerRef: { current: null },
+    })));
+    const rows = [...host.querySelectorAll('.recon-counted-line')];
+    expect(rows[1].querySelector('.recon-cancel-badge')?.textContent).toBe('cancel');
+    expect(rows[1].querySelector('.recon-cancel-badge')?.getAttribute('data-recon-text-length')).toBe('11');
+    expect(rows.flatMap((row, index) => row.querySelector('.recon-line-free-pair') ? [index] : [])).toEqual([3, 4]);
+    expect(host.querySelector('.recon-line-free-pair')?.getAttribute('data-label')).toBe('free');
+    expect([...host.querySelectorAll('.recon-line-free-pair')].map(node => node.textContent)).toEqual(['', '']);
+    window.getSelection()!.collapse(rows[5], 0);
+    expect(getTextOffsetInElement(host.querySelector('pre')!)).toBe(text.lastIndexOf("R' U R U"));
+  });
+
+  it('counts each raw row without adding text to the copy or caret stream', async () => {
+    const text = "x' z' // insp\nU R U'D' // step\n(R U)2 M2 // end\n// note";
+    await act(async () => root.render(createElement(SolutionView, {
+      text, event: '333', playerRef: { current: null },
+    })));
+    expect([...host.querySelectorAll('.recon-line-move-count')].map(el => el.getAttribute('data-count')))
+      .toEqual(['(4)', '(5)']);
+    expect(host.querySelector('pre')?.textContent).toBe(text);
+    const lastLine = host.querySelectorAll('.recon-counted-line')[3];
+    const selection = window.getSelection()!;
+    selection.collapse(lastLine, 0);
+    expect(getTextOffsetInElement(host.querySelector('pre')!)).toBe(text.indexOf('// note'));
   });
 
   it('shows inspection U/F colors without changing source text or caret offsets', async () => {

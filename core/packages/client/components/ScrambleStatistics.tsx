@@ -16,7 +16,6 @@ const CROSS_VARIANTS = VARIANT_ORDER.filter((variant): variant is CompStepsVaria
 const OTHER_GROUPS: { label: string | null; variants: CompStepsVariant[] }[] = [
   { label: 'lbl', variants: ['daisy', 'first_layer'] },
   { label: 'block', variants: ['123', '222', '223', '123x2'] },
-  { label: null, variants: ['eoline', 'dr'] },
 ];
 const FAMILY = new Set(['333', '333oh', '333bf', '333fm', '333ft']);
 export const supportsScrambleStatistics = (event: string) => FAMILY.has(toWcaEventId(event));
@@ -65,8 +64,13 @@ function StatisticsBody({ compId, scramble, optimalScramble, resolveOriginal = f
 
   const header = (
       <div className="scramble-statistics-header">
-        <span>{tr({ zh: '最少步数', en: 'Minimum moves' })} <small>HTM</small></span>
-        {wholeSteps !== null && <span className="scramble-statistics-whole">{variantLabel('333', isZh)} <b>{wholeSteps}</b></span>}
+        <span>{tr({ zh: '最少步', en: 'Minimum moves' })}</span>
+        {(wholeSteps !== null || hasStages) && <span className="scramble-statistics-whole scramble-statistics-summary-metric"><span>{variantLabel('333', isZh)}</span>{renderValue(wholeSteps)}</span>}
+        {hasStages && (['eoline', 'dr'] as const).flatMap(variant => COMP_STEP_STAGES[variant].map((stage, index) =>
+          <span className="scramble-statistics-summary-metric" key={`${variant}:${stage}`}>
+            <span>{stageLabel(stage, isZh)}</span>{renderValue(valueFor(variant, index))}
+          </span>,
+        ))}
       </div>
   );
 

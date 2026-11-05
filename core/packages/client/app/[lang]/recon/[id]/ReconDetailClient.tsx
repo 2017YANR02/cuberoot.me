@@ -3,6 +3,8 @@
 import PageHeading from '@/components/PageHeading';
 import PageBackLink from '@/components/PageBackLink';
 import MoreToggle from '@/components/MoreToggle';
+import LiquidGlassChips from '@/components/LiquidGlassChips';
+import { useCopy } from '@/hooks/useCopy';
 import { reconVideoGroups } from '@/lib/recon-video-url';
 import { loadBiliVideo, loadVideoTitle } from '@/lib/recon-video-cover';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
@@ -32,7 +34,7 @@ import { ReconCommentVotes } from './ReconCommentVotes';
 import { useReconDetailData } from './useReconDetailData';
 import {
   formatTime, isBldEvent, hasMethodOnlyReconStats,
-  buildExternalLinks, FACE_COLORS, attemptsPerRound, localizeRound,
+  buildExternalLinks, attemptsPerRound, localizeRound,
   formatReconSingle,
 } from '@/lib/recon-utils';
 import { compLinkProps } from '@/lib/comp-link';
@@ -85,12 +87,13 @@ import '@/components/wca-results/attempts-grid.css';
 import { AvgDec } from '@/components/wca-results/AvgDec';
 import { tr } from '@/i18n/tr';
 import { loadIpCountry } from '@/lib/ip-country';
-import { Tooltip } from '@/components/Tooltip';
 import { CompactSelect } from '@/components/CompactSelect';
 import { saveBlob } from '@/lib/puzzle-image/image-export';
 import { exportReconImages, type ReconImageFont, type ReconImageStyle } from './export-recon-image';
 import { buildSimQuery, simPuzzleForReconEvent } from '@/lib/sim-recon-link';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+
+const NOTATION_VIEWS = ['recon', 'source'] as const;
 
 const YOUTUBE_LOGO = '/assets/youtube_logo.svg';
 const BILIBILI_LOGO = '/assets/bilibili_logo.svg';
@@ -318,6 +321,10 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   const playerRef = useRef<any>(null);
   const [crossNormalized, setCrossNormalized] = useState(false);
   const [wasteRemoved, setWasteRemoved] = useState(false);
+  const [sourceViewId, setSourceViewId] = useState<number | null>(null);
+  const sourceView = sourceViewId === solve.id;
+  const sourceText = [scramble, solutionText].filter(Boolean).join('\n');
+  const { copiedKey, copy: copySource } = useCopy();
   const imageRef = useRef<HTMLDivElement>(null);
   const downloadImage = async (style: ReconImageStyle | 'both', font: ReconImageFont) => {
     if (!imageRef.current) throw new Error('Reconstruction image unavailable');
@@ -373,6 +380,8 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
     const body = [scrambleLine, displayText].filter(Boolean).join('\n');
     return [captionHeader, body].filter(Boolean).join('\n');
   }, [solutionText, scramble, displayScramble, optimalScrambleTag, displayText, captionHeader]);
+  const notationCopyKey = `${solve.id}:${sourceView ? 'source' : 'recon'}`;
+  const notationCopyLabel = sourceView ? tr({ zh: '复制原文', en: 'Copy raw text' }) : tr({ zh: '复制复盘', en: 'Copy reconstruction' });
 
   // 复盘者与提交者常是同一人——同一人时合并成一行,名字只显示一次(双图标)
   const sameContributor =
@@ -397,7 +406,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           showScrambleNet={!scrambleCubeOrder}
           event={solve.event}
           scramble={scramble}
-          displayText={displayText}
+          displayText={sourceView ? solutionText : displayText}
           playerRef={playerRef}
           fillPane
           fullscreenButton={fullscreenButton}
@@ -407,16 +416,30 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
       }
       <div className="detail-content-pane">
         {solutionText && (
-          <ExternalLinks event={solve.event} scramble={playerScramble} alg={rawDisplayText} solveId={solve.id} copyText={fullCopyText} shareTarget={shareTarget} onDownload={solve.recordType !== 'timing' ? downloadImage : undefined} />
+          <ExternalLinks event={solve.event} scramble={playerScramble} alg={sourceView ? solutionText : rawDisplayText} solveId={solve.id} shareTarget={shareTarget} />
         )}
 
         {solve.recordType !== 'timing' && (scramble || solutionText) && (
-          <div className="detail-section detail-scramble-solution" ref={imageRef}>
+          <div className="detail-section">
+            {solutionText && <div className="detail-notation-toolbar">
+              <LiquidGlassChips items={NOTATION_VIEWS} value={sourceView ? 'source' : 'recon'}
+                onChange={view => setSourceViewId(view === 'source' ? solve.id : null)}
+                getLabel={view => view === 'source' ? tr({ zh: '原始', en: 'Raw' }) : tr({ zh: '复盘', en: 'Recon' })}
+                ariaLabel={tr({ zh: '复盘展示方式', en: 'Reconstruction view' })} />
+              <button type="button" className="detail-source-copy" title={notationCopyLabel} onClick={() => copySource(sourceView ? sourceText : fullCopyText, notationCopyKey)}>
+                {copiedKey === notationCopyKey ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+                <span className="sr-only" aria-live="polite">{copiedKey === notationCopyKey ? tr({ zh: '已复制', en: 'Copied' }) : notationCopyLabel}</span>
+              </button>
+              <ReconImageDownload onDownload={downloadImage} />
+            </div>}
+            {sourceView && <pre className="detail-source-text" tabIndex={0} aria-label={tr({ zh: '复盘原文', en: 'Reconstruction source' })}><code>{sourceText}</code></pre>}
+            <div className="detail-scramble-solution" ref={imageRef} hidden={sourceView}>
             <ReconNotationBlock captionHeader={captionHeader} scramble={scramble} scrambleCubeOrder={scrambleCubeOrder}
               displayScramble={displayScramble} optimalScrambleTag={optimalScrambleTag} solutionText={solutionText}
               displayText={displayText} rawDisplayText={rawDisplayText} solve={solve} playerRef={playerRef}
               canToggle={canToggle} crossLineIdx={crossLineIdx} crossNormalized={crossNormalized} setCrossNormalized={setCrossNormalized}
               canRemoveWaste={wasteFreeText !== null} wasteRemoved={wasteRemoved} setWasteRemoved={setWasteRemoved} />
+            </div>
           </div>
         )}
 
@@ -517,23 +540,13 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   );
 }
 
-function ExternalLinks({ event, scramble, alg, solveId, copyText, shareTarget, onDownload }: {
-  event: string; scramble: string; alg: string; solveId: number; copyText: string;
-  shareTarget: HTMLSpanElement | null;
-  onDownload?: (style: ReconImageStyle | 'both', font: ReconImageFont) => Promise<void>;
+function ReconImageDownload({ onDownload }: {
+  onDownload: (style: ReconImageStyle | 'both', font: ReconImageFont) => Promise<void>;
 }) {
-  const { t } = useTranslation();
-  // Preserve the existing admin-only external debugging links.
-  const isAdminUser = useIsAdmin();
-  const playerAlg = event === 'fto' ? cleanFtoReconAlgForPlayer(alg) : cleanForPlayer(alg);
-  const { algUrl, algSiteName, cubedbUrl } = buildExternalLinks(event, scramble, playerAlg);
-  const simPuzzle = simPuzzleForReconEvent(event);
-  const simHref = simPuzzle ? `/sim?${buildSimQuery(simPuzzle, scramble, alg)}` : null;
-  const [copyResult, setCopyResult] = useState<{ target: 'link' | 'recon'; success: boolean } | null>(null);
   const [imageStatus, setImageStatus] = useState<'idle' | 'busy' | 'error'>('idle');
   const [imageFont, setImageFont] = useState<ReconImageFont>('original');
   const download = async (imageStyle: ReconImageStyle | 'both') => {
-    if (!onDownload || imageStatus === 'busy') return;
+    if (imageStatus === 'busy') return;
     setImageStatus('busy');
     try {
       await onDownload(imageStyle, imageFont);
@@ -542,23 +555,67 @@ function ExternalLinks({ event, scramble, alg, solveId, copyText, shareTarget, o
       setImageStatus('error');
     }
   };
+
+  return (
+    <CompactSelect<ReconImageStyle | 'both'>
+      triggerClassName="detail-source-copy"
+      unstyledTrigger
+      showArrow={false}
+      ariaLabel={tr({ zh: '下载 PNG', en: 'Download PNG' })}
+      title={tr({ zh: '下载 PNG', en: 'Download PNG' })}
+      disabled={imageStatus === 'busy'}
+      label={<span className="recon-png-label"><Download size={14} aria-hidden="true" />
+        <span className="sr-only" aria-live="polite">{imageStatus === 'busy'
+          ? tr({ zh: '正在生成…', en: 'Generating…' })
+          : imageStatus === 'error'
+            ? tr({ zh: '下载失败，点击重试', en: 'Download failed, retry' })
+            : 'PNG'}</span>
+      </span>}
+      items={[
+        { value: 'both', label: tr({ zh: '黑白两版', en: 'Black & white versions' }) },
+        { value: 'black', label: tr({ zh: '黑字', en: 'Black text' }) },
+        { value: 'white', label: tr({ zh: '白字', en: 'White text' }) },
+        { value: 'white-outline', label: tr({ zh: '白字黑边', en: 'White text, black outline' }) },
+      ]}
+      onChange={style => { void download(style); }}
+      footer={() => <label className="recon-image-font">
+        <span>{tr({ zh: '字体', en: 'Font' })}</span>
+        <select className="recon-image-font-select" value={imageFont} onChange={e => setImageFont(e.target.value as ReconImageFont)}>
+          <option value="original">{tr({ zh: '原始字体', en: 'Original font' })}</option>
+          <option value="roboto-condensed">Roboto Condensed Regular</option>
+        </select>
+      </label>}
+    />
+  );
+}
+
+function ExternalLinks({ event, scramble, alg, solveId, shareTarget }: {
+  event: string; scramble: string; alg: string; solveId: number;
+  shareTarget: HTMLSpanElement | null;
+}) {
+  const { t } = useTranslation();
+  // Preserve the existing admin-only external debugging links.
+  const isAdminUser = useIsAdmin();
+  const playerAlg = event === 'fto' ? cleanFtoReconAlgForPlayer(alg) : cleanForPlayer(alg);
+  const { algUrl, algSiteName, cubedbUrl } = buildExternalLinks(event, scramble, playerAlg);
+  const simPuzzle = simPuzzleForReconEvent(event);
+  const simHref = simPuzzle ? `/sim?${buildSimQuery(simPuzzle, scramble, alg)}` : null;
+  const [copyResult, setCopyResult] = useState<{ success: boolean } | null>(null);
   const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (copyResetRef.current) clearTimeout(copyResetRef.current); }, []);
 
-  const copy = async (target: 'link' | 'recon') => {
-    const text = target === 'link' ? `${window.location.origin}/recon/${solveId}` : copyText;
+  const copy = async () => {
+    const text = `${window.location.origin}/recon/${solveId}`;
     const success = await copyPageLink(text);
     if (copyResetRef.current) clearTimeout(copyResetRef.current);
-    setCopyResult({ target, success });
+    setCopyResult({ success });
     copyResetRef.current = setTimeout(() => setCopyResult(null), 2000);
   };
-  const copyLabel = (target: 'link' | 'recon') => {
-    if (copyResult?.target === target) {
+  const copyLabel = () => {
+    if (copyResult) {
       return copyResult.success ? t('recon.copied') : tr({ zh: '复制失败，请重试', en: 'Copy failed, retry' });
     }
-    return target === 'link'
-      ? tr({ zh: '链接', en: 'Link' })
-      : tr({ zh: '复盘', en: 'Reconstruction' });
+    return tr({ zh: '链接', en: 'Link' });
   };
 
   return shareTarget ? createPortal(
@@ -585,49 +642,16 @@ function ExternalLinks({ event, scramble, alg, solveId, copyText, shareTarget, o
           </div>
         )}
         <div className="recon-copy-actions">
-          <button type="button" className="recon-copy-action" onClick={() => { void copy('link'); }}>
-            {copyResult?.target === 'link' && copyResult.success ? <Check size={15} aria-hidden="true" /> : <Link2 size={15} aria-hidden="true" />}
-            <span aria-live="polite">{copyLabel('link')}</span>
+          <button type="button" className="recon-copy-action" onClick={() => { void copy(); }}>
+            {copyResult?.success ? <Check size={15} aria-hidden="true" /> : <Link2 size={15} aria-hidden="true" />}
+            <span aria-live="polite">{copyLabel()}</span>
           </button>
-          {copyText && (
-            <button type="button" className="recon-copy-action" onClick={() => { void copy('recon'); }}>
-              {copyResult?.target === 'recon' && copyResult.success ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
-              <span aria-live="polite">{copyLabel('recon')}</span>
-            </button>
-          )}
-          {onDownload && <CompactSelect<ReconImageStyle | 'both'>
-            triggerClassName="recon-copy-action"
-            ariaLabel="PNG"
-            disabled={imageStatus === 'busy'}
-            label={<span className="recon-png-label"><Download size={15} aria-hidden="true" />
-              <span aria-live="polite">{imageStatus === 'busy'
-                ? tr({ zh: '正在生成…', en: 'Generating…' })
-                : imageStatus === 'error'
-                  ? tr({ zh: '下载失败，点击重试', en: 'Download failed, retry' })
-                  : 'PNG'}</span>
-            </span>}
-            items={[
-              { value: 'both', label: tr({ zh: '黑白两版', en: 'Black & white versions' }) },
-              { value: 'black', label: tr({ zh: '黑字', en: 'Black text' }) },
-              { value: 'white', label: tr({ zh: '白字', en: 'White text' }) },
-              { value: 'white-outline', label: tr({ zh: '白字黑边', en: 'White text, black outline' }) },
-            ]}
-            onChange={style => { void download(style); }}
-            footer={() => <label className="recon-image-font">
-              <span>{tr({ zh: '字体', en: 'Font' })}</span>
-              <select className="recon-image-font-select" value={imageFont} onChange={e => setImageFont(e.target.value as ReconImageFont)}>
-                <option value="original">{tr({ zh: '原始字体', en: 'Original font' })}</option>
-                <option value="roboto-condensed">Roboto Condensed Regular</option>
-              </select>
-            </label>}
-          />}
+
         </div>
       </div>}
     />, shareTarget,
   ) : null;
 }
-
-const CROSS_LABELS: Record<number, string> = { 0: 'cross', 1: 'xcross', 2: 'xxcross', 3: 'xxxcross', 4: 'xxxxcross' };
 
 function StatsGrid({ solve }: { solve: ReconSolve }) {
   const { t } = useTranslation();
@@ -639,18 +663,11 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
     const time = (isBldEvent(solve.event) ? solve.execTime : solve.rawTime) ?? 0;
     return computeAllStats(text, time, solve.event);
   }, [methodOnly, solve.solution, solve.recon, solve.rawTime, solve.execTime, solve.event]);
-  const crossStm = computed ? computed.crossStm : solve.crossStm;
-  const f2l = computed ? computed.f2l : solve.f2l;
-  const ll = computed ? computed.ll : solve.ll;
-  const crossType = computed ? computed.crossType : solve.crossType;
-  const freePair = computed ? computed.freePair : solve.freePair;
   const yRot = computed ? computed.yRot : solve.yRot;
   const regrip = computed ? computed.regrip : solve.regrip;
   const lockup = computed ? computed.lockup : solve.lockup;
   const sMove = computed ? computed.sMove : solve.sMove;
-  const crossColor = computed ? computed.crossColor : solve.crossColor;
   const ollShort = computed?.ollShort || solve.ollShort || solve.oll;
-  const pllShort = computed?.pllShort || solve.pllShort || solve.pll;
 
   const isBld = isBldEvent(solve.event);
   // SQ1 没有 CFOP 分步概念(Cross/F2L/顶层/OLL/PLL 等),这些字段对它没有意义,全隐藏。
@@ -658,30 +675,20 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
   const items: [string, React.ReactNode | undefined][] = methodOnly ? [] : [
     [t('recon.memo'), isBld && solve.memoTime != null ? Number(solve.memoTime).toFixed(2) : undefined],
     [t('recon.exec'), isBld && solve.execTime != null ? Number(solve.execTime).toFixed(2) : undefined],
-    ['Cross', !isBld && !isSq1 && crossStm != null ? `${crossStm}` : undefined],
-    ['F2L', !isBld && !isSq1 && f2l != null ? `${f2l}` : undefined],
-    [t('recon.ll'), !isBld && !isSq1 && ll != null ? `${ll}` : undefined],
-    ['?x', !isBld && !isSq1 && crossType != null ? (CROSS_LABELS[crossType as number] || String(crossType)) : undefined],
-    [t('recon.freePair'), isBld || isSq1 ? undefined : freePair],
     [t('recon.yRot'), isBld || isSq1 ? undefined : yRot],
     [t('recon.regrip'), isSq1 ? undefined : regrip],
     [t('recon.lockup'), isSq1 ? undefined : lockup],
     [t('recon.sMove'), isSq1 ? undefined : sMove],
-    [t('recon.crossColor'), !isBld && !isSq1 && crossColor ? (
-      FACE_COLORS[crossColor as string]
-        ? <span style={{ color: FACE_COLORS[crossColor as string], fontWeight: 600 }}>{String(crossColor)}</span>
-        : String(crossColor)
-    ) : undefined],
     ['OLL', isBld || isSq1 ? undefined : ollShort],
-    ['PLL', isBld || isSq1 ? undefined : pllShort],
   ];
 
   const validItems = items.filter(([, v]) => v != null && v !== '' && v !== 0);
-  if (solve.pickupTime != null) validItems.push(
-    [tr({ zh: '起表耗时', en: 'Pickup' }), <span title={tr({ zh: '起表到第一步', en: 'Timer start to first move' })}>{solve.pickupTime.toFixed(3)}s</span>],
+  const timingInHeader = solve.recordType !== 'timing' && Boolean(getReconScramble(solve) || solve.solution || solve.recon);
+  if (!timingInHeader && solve.pickupTime != null) validItems.push(
+    [tr({ zh: '起表', en: 'Pickup' }), <span title={tr({ zh: '起表到第一步', en: 'Timer start to first move' })}>{solve.pickupTime.toFixed(3)}</span>],
   );
-  if (solve.putdownTime != null) validItems.push(
-    [tr({ zh: '拍表耗时', en: 'Putdown' }), <span title={tr({ zh: '最后一步到拍表', en: 'Last move to timer stop' })}>{solve.putdownTime.toFixed(3)}s</span>],
+  if (!timingInHeader && solve.putdownTime != null) validItems.push(
+    [tr({ zh: '拍表', en: 'Putdown' }), <span title={tr({ zh: '最后一步到拍表', en: 'Last move to timer stop' })}>{solve.putdownTime.toFixed(3)}</span>],
   );
   if (validItems.length === 0) return null;
 
@@ -749,30 +756,30 @@ function VideoSourceGroup({ urls }: { urls: string[] }) {
 
   const priority = country === 'cn' ? ['bilibili', 'douyin', 'youtube', 'other'] : ['youtube', 'bilibili', 'douyin', 'other'];
   const preferred = sources.find(source => source.platform === priority.find(platform => sources.some(item => item.platform === platform)));
-  // Wait for the bounded IP lookup before loading either platform's cover. A manual
-  // choice takes precedence and is never replaced by a late region response.
+  // A manual selection wins over a late regional preference response.
   const active = sources.find(source => source.url === selectedUrl)
     ?? (!hasChoice || country !== null ? preferred : undefined);
-  const activeTitle = active ? titles[active.url]?.trim() : undefined;
   if (!sources.length) return null;
 
   return (
     <div className="detail-video-player">
       {active ? <VideoEmbed key={active.url} url={active.url} /> : <div className="detail-video-wrap" aria-busy="true" />}
-      {activeTitle && <p className="detail-video-title">{activeTitle}</p>}
-      {hasChoice && <div className="detail-video-switches">
-        {sources.filter(source => source !== active).map(source => {
-          const title = titles[source.url] || source.url;
-          const label = tr({ zh: `切换到 ${source.label}：${title}`, en: `Switch to ${source.label}: ${title}` });
-          return <Tooltip key={source.url} content={title}>{tip => (
-            <button {...tip} type="button" className="detail-video-switch"
-              aria-label={label} onClick={() => setSelectedUrl(source.url)}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              {source.logo ? <img src={source.logo} alt="" width={26} height={26} /> : <Video size={26} />}
-            </button>
-          )}</Tooltip>;
+      {hasChoice && <div className="detail-video-sources" role="group" aria-label={tr({ zh: '视频来源', en: 'Video sources' })}>
+        {sources.map(source => {
+          const platformSources = sources.filter(item => item.platform === source.platform);
+          const number = platformSources.length > 1 ? platformSources.indexOf(source) + 1 : null;
+          const label = number ? `${source.label} ${number}` : source.label;
+          return <button key={source.url} type="button" className="detail-video-switch"
+            aria-label={label} aria-pressed={source === active} onClick={() => setSelectedUrl(source.url)}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {source.logo ? <img src={source.logo} alt="" width={24} height={24} /> : <Video size={24} aria-hidden="true" />}
+            {number && <span>{number}</span>}
+          </button>;
         })}
       </div>}
+      {active && <a href={active.url} target="_blank" rel="noopener noreferrer" className="detail-video-title">
+        {titles[active.url]?.trim() || active.url}
+      </a>}
     </div>
   );
 }
@@ -789,23 +796,15 @@ function VideoEmbed({ url }: { url: string }) {
         target="_blank"
         rel="noopener noreferrer"
         className="detail-video-wrap detail-video-facade"
-        style={{ display: 'block', textDecoration: 'none' }}
+        aria-label={tr({ zh: '打开视频', en: 'Open video' })}
       >
-        <div style={{ position: 'absolute', inset: 0, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`}
-            alt=""
-            referrerPolicy="no-referrer"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={YOUTUBE_LOGO}
-            alt="YouTube"
-            style={{ position: 'relative', width: 68, height: 'auto', opacity: 0.95, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
-          />
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`}
+          alt=""
+          referrerPolicy="no-referrer"
+          className="detail-video-cover"
+        />
       </a>
     );
   }
@@ -1688,25 +1687,17 @@ function BilibiliFacade({ bvId, href }: { bvId: string | null; href: string }) {
       target="_blank"
       rel="noopener noreferrer"
       className="detail-video-wrap detail-video-facade"
-      style={{ display: 'block', textDecoration: 'none' }}
+      aria-label={tr({ zh: '打开视频', en: 'Open video' })}
     >
-      <div style={{ position: 'absolute', inset: 0, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {cover && (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={cover}
-            alt=""
-            referrerPolicy="no-referrer"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
-          />
-        )}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+      {cover && (
+        /* eslint-disable-next-line @next/next/no-img-element */
         <img
-          src={BILIBILI_LOGO}
-          alt="Bilibili"
-          style={{ position: 'relative', width: 68, height: 68, opacity: 0.95, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
+          src={cover}
+          alt=""
+          referrerPolicy="no-referrer"
+          className="detail-video-cover"
         />
-      </div>
+      )}
     </a>
   );
 }
@@ -1718,7 +1709,7 @@ function DouyinFacade({ url }: { url: string }) {
     let alive = true;
     getDouyinCover(url).then(res => {
       if (alive && res.pic) setCover(res.pic);
-    }).catch(() => { /* ignore — fall back to logo-only facade */ });
+    }).catch(() => { /* Keep the source link available without a cover. */ });
     return () => { alive = false; };
   }, [url]);
 
@@ -1728,24 +1719,17 @@ function DouyinFacade({ url }: { url: string }) {
       target="_blank"
       rel="noopener noreferrer"
       className="detail-video-wrap detail-video-facade"
-      style={{ display: 'block', textDecoration: 'none' }}
+      aria-label={tr({ zh: '打开视频', en: 'Open video' })}
     >
-      <div style={{ position: 'absolute', inset: 0, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {cover && (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={cover}
-            alt=""
-            referrerPolicy="no-referrer"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
-          />
-        )}
-        {/* 官方抖音 logo(深色字+青红 note)为浅底设计,放白色圆角片上保证盖在封面上也清晰 */}
-        <div style={{ position: 'relative', background: '#fff', borderRadius: 10, padding: '10px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.45)' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={DOUYIN_LOGO} alt="Douyin" style={{ display: 'block', width: 92, height: 'auto' }} />
-        </div>
-      </div>
+      {cover && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={cover}
+          alt=""
+          referrerPolicy="no-referrer"
+          className="detail-video-cover"
+        />
+      )}
     </a>
   );
 }

@@ -105,6 +105,36 @@
 
 .submit-form {
   max-width: none;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.submit-readonly-notice {
+  margin: 0 0 16px;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+}
+.submit-form:disabled {
+  filter: grayscale(1);
+}
+.submit-form:disabled :is(input, textarea, select, button, .submit-readonly-source) {
+  color: var(--muted-foreground);
+  -webkit-text-fill-color: var(--muted-foreground);
+}
+.submit-form:disabled :is(input, textarea, select, button) {
+  cursor: not-allowed;
+}
+.submit-readonly-source {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+.submit-readonly-source code {
+  font: inherit;
 }
 
 /* ── 平板（768–1023px）：上下堆叠 ──────────────────────────── */

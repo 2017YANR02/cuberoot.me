@@ -17,6 +17,8 @@ export async function exportReconImages(source: HTMLElement, styles: readonly Re
   }
   // Keep the same CSS/colour context without changing the live player or selection.
   const snapshot = source.cloneNode(true) as HTMLElement;
+  // Source view keeps the rendered notation mounted for the same image export.
+  snapshot.hidden = false;
   snapshot.setAttribute('aria-hidden', 'true');
   snapshot.inert = true;
   Object.assign(snapshot.style, {

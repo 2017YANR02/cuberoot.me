@@ -259,45 +259,27 @@ function computeLl(recon: string): number {
   return 0;
 }
 
-/** Free Pair 计算 */
-function computeFreePair(recon: string): number {
-  if (!recon) return 0;
+/** 按既有 Free Pair 统计规则返回原文行号，供总数与行内标记共用。 */
+export function reconFreePairLines(recon: string): Set<number> {
+  const rows = new Set<number>();
+  if (!recon) return rows;
   const xcMatch = recon.match(/( cross| xcross| xxcross| xxxcross| xxxxcross)/i);
-  if (!xcMatch) return 0;
+  if (!xcMatch) return rows;
   const xcType = xcMatch[1];
   let xcPos = recon.indexOf(xcType);
   if (xcPos < 0) xcPos = recon.toLowerCase().indexOf(xcType.toLowerCase());
-  if (xcPos < 0) return 0;
-  const after = recon.substring(xcPos + xcType.length);
-
-  const pairLines = after.split(/\r?\n/).filter(l => l.includes('//'));
-  if (pairLines.length === 0) return 0;
-  const stageAfter = pairLines.join('\n');
-
-  const cleanedText = stageAfter.replace(/[ ()'’‘`xyz23·↑↓.]/g, '');
-
-  const cleanedLines: string[] = [];
-  for (const line of cleanedText.split('\n')) {
-    const trimmed = line.trim().replace(/^U+/, '');
-    if (trimmed) cleanedLines.push(trimmed);
-  }
-  const deletePreAUF = cleanedLines.join('\n');
-
-  let count = 0;
-  for (const line of deletePreAUF.split('\n')) {
-    const cIdx = line.indexOf('//');
-    if (cIdx < 0) continue;
-    const algLen = line.substring(0, cIdx).length;
-    if (algLen >= 1 && algLen <= 4) count++;
-  }
-
-  const noComment = deleteComment(deletePreAUF);
-  for (const pat of ['LRUR', 'RLUL']) {
-    for (const line of noComment.split('\n')) {
-      if (line.trim() === pat) count--;
+  if (xcPos < 0) return rows;
+  const start = xcPos + xcType.length;
+  const firstLine = recon.slice(0, start).split('\n').length - 1;
+  recon.slice(start).split(/\r?\n/).forEach((line, index) => {
+    if (!line.includes('//')) return;
+    const cleaned = line.replace(/[ ()'’‘`xyz23·↑↓.]/g, '').trim().replace(/^U+/, '');
+    const alg = cleaned.slice(0, cleaned.indexOf('//'));
+    if (alg.length >= 1 && alg.length <= 4 && !['LRUR', 'RLUL'].includes(alg.trim())) {
+      rows.add(firstLine + index);
     }
-  }
-  return Math.max(count, 0);
+  });
+  return rows;
 }
 
 /** OLL 全名抽取 */
@@ -390,7 +372,7 @@ export function computeAllStats(
     pllFull,
     ollShort: ollShortFrom(ollFull),
     pllShort: pllShortFrom(pllFull),
-    freePair: computeFreePair(recon),
+    freePair: reconFreePairLines(recon).size,
     yRot: countY(recon),
     regrip: countRegrip(recon),
     lockup: countLockup(recon),
