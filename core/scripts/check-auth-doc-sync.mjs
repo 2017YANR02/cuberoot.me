@@ -207,7 +207,7 @@ export function checkAuthDocReview(page, entries) {
     '/dev/auth is stale: authentication sources changed without documentation review.',
     'Update the affected flow and bilingual text (or explain why behavior is unchanged), then update auth-doc-review.',
     `Reviewed source fingerprint: ${fingerprint}`,
-    'Read AGENTS.md: 登录系统与流程图同步. Do not merely refresh the fingerprint.',
+    'Read docs/contributing/domains.md: 登录系统与流程图同步. Do not merely refresh the fingerprint.',
   ];
 }
 
