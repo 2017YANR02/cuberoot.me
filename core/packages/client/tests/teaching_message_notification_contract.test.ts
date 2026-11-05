@@ -26,6 +26,6 @@ describe('teaching message notification wire contract', () => {
 
   it('renders a known icon and bilingual inbox label', () => {
     expect(PAGE).toContain('teaching_message: MessagesSquare');
-    expect(PAGE).toContain("teaching_message: t('发送了教学消息', 'sent a teaching message')");
+    expect(PAGE).toContain("teaching_message: t('教学消息', 'Teaching message')");
   });
 });

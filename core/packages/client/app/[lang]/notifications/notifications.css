@@ -5,6 +5,27 @@
 }
 
 .ntf-header { margin-bottom: 20px; }
+.ntf-settings-title { margin: 0 0 16px; font-size: 18px; font-weight: 600; }
+.ntf-settings-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.ntf-settings-button:hover,
+.ntf-settings-button[aria-expanded="true"] {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+}
+.ntf-settings-button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 
 .ntf-back {
   display: inline-flex;
@@ -80,17 +101,42 @@
 .ntf-icon {
   display: flex;
   flex: none;
-  padding-top: 2px;
+  align-items: center;
+  height: 22px; /* Match the first-line label: 18px text + padding and border. */
   color: var(--muted-foreground);
 }
 .ntf-item.is-new .ntf-icon { color: var(--accent); }
 
 .ntf-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
 
-.ntf-line { display: flex; flex-wrap: wrap; gap: 5px; align-items: baseline; }
+.ntf-line { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
 
 .ntf-actor { color: var(--foreground); font-size: 14px; font-weight: 600; }
-.ntf-action { color: var(--muted-foreground); font-size: 14px; }
+.ntf-action {
+  --ntf-label-color: var(--signal-info);
+  display: inline-flex;
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid color-mix(in srgb, var(--ntf-label-color) 35%, transparent);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--ntf-label-color) 10%, transparent);
+  color: var(--ntf-label-color);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.ntf-action:is([data-kind="recon_alt"], [data-kind="forum_thread"], [data-kind="document_change"], [data-kind="wca_record"]) {
+  --ntf-label-color: var(--accent);
+}
+.ntf-action:is([data-kind="recon_reply"], [data-kind="forum_reply"], [data-kind="forum_approved"], [data-kind="friend_accepted"], [data-kind="membership_payment"], [data-kind="cal_rsvp"]) {
+  --ntf-label-color: var(--signal-success);
+}
+.ntf-action:is([data-kind="assistant_alert"], [data-kind="forum_review"], [data-kind="cal_reminder"]) {
+  --ntf-label-color: var(--signal-warning);
+}
+.ntf-action:is([data-kind="forum_report"], [data-kind="forum_rejected"]) {
+  --ntf-label-color: var(--destructive);
+}
 
 .ntf-target {
   color: var(--muted-foreground);
@@ -125,7 +171,7 @@
   .ntf-when { width: 100%; padding-left: 25px; }
 }
 .ntf-record-prefs { margin: 16px 0 24px; }
-.ntf-record-prefs summary { cursor: pointer; }
+.ntf-record-title { margin: 0; font-size: inherit; font-weight: 600; }
 .ntf-record-prefs p { margin: 12px 0; }
 .ntf-record-fields { border: 0; padding: 0; margin: 16px 0 0; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
 .ntf-record-fields legend { margin-bottom: 12px; }

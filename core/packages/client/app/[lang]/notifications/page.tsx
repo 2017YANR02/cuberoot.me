@@ -9,11 +9,13 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   MessageSquare, Reply, GitBranch, LogIn, Check, MessagesSquare, Flag,
   Hourglass, CircleCheck, CircleX, Plane, BellRing, CalendarPlus, CalendarCheck,
-  FilePenLine, UserPlus, UserCheck,
+  FilePenLine, UserPlus, UserCheck, Settings,
 } from '@app-foundation/icons/lucide';
 import PageBackLink from '@/components/PageBackLink';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
+import { Tooltip } from '@/components/Tooltip';
+import SettingsDialog from '@/components/SettingsDialog';
 import { useT } from '@/hooks/useT';
 import { useAuthStore } from '@/lib/auth-store';
 import {
@@ -66,31 +68,32 @@ export default function NotificationsPage() {
   const [items, setItems] = useState<SiteNotification[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [emailNotify, setEmailNotify] = useState<boolean | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
   const kindText = (k: NotificationKind): string => ({
     assistant_alert: t('AI 服务告警', 'AI service alert'),
-    recon_alt: t('提交了新另解', 'submitted an alternative'),
-    recon_comment: t('发表了新评论', 'left a new comment'),
-    recon_reply: t('回复了你的评论', 'replied to your comment'),
-    forum_thread: t('发布了新主题', 'started a new thread'),
-    forum_reply: t('回复了你的主题', 'replied to your thread'),
-    forum_report: t('举报了一个帖子', 'reported a post'),
-    forum_review: t('发布了待审核内容', 'posted content awaiting review'),
-    forum_approved: t('通过了你的帖子', 'approved your post'),
-    forum_rejected: t('驳回了你的帖子', 'declined your post'),
-    comp_reg: t('报名了国外比赛', 'registered for an overseas competition'),
+    recon_alt: t('另解', 'Alternative'),
+    recon_comment: t('评论', 'Comment'),
+    recon_reply: t('回复', 'Reply'),
+    forum_thread: t('新主题', 'New thread'),
+    forum_reply: t('回复', 'Reply'),
+    forum_report: t('举报', 'Report'),
+    forum_review: t('待审核', 'Pending review'),
+    forum_approved: t('审核通过', 'Approved'),
+    forum_rejected: t('审核未通过', 'Declined'),
+    comp_reg: t('比赛报名', 'Registration'),
     wca_record: t('纪录快讯', 'Record news'),
     membership_payment: t('会员收款成功', 'Membership payment received'),
-    document_change: t('修改了你关注的协作文件', 'updated a collaborative file you follow'),
+    document_change: t('文件更新', 'File update'),
     cal_reminder: t('日程提醒', 'Event reminder'),
-    cal_invite: t('邀请你参加日程', 'invited you to an event'),
-    cal_rsvp: t('回应了你的日程邀请', 'responded to your invitation'),
-    teaching_message: t('发送了教学消息', 'sent a teaching message'),
-    friend_request: t('申请添加你为好友', 'sent you a friend request'),
-    friend_accepted: t('接受了你的好友申请', 'accepted your friend request'),
-    friend_message: t('发来了消息', 'sent you a message'),
+    cal_invite: t('日程邀请', 'Event invitation'),
+    cal_rsvp: t('邀请回应', 'Invitation response'),
+    teaching_message: t('教学消息', 'Teaching message'),
+    friend_request: t('好友申请', 'Friend request'),
+    friend_accepted: t('好友申请通过', 'Friend request accepted'),
+    friend_message: t('私信', 'Message'),
   }[k]);
 
   const load = useCallback(() => {
@@ -132,6 +135,14 @@ export default function NotificationsPage() {
       <header className="ntf-header page-back-heading">
         <PageBackLink className="ntf-back" />
         <h1 className="ntf-title">{t('消息', 'Notifications')}</h1>
+        {user && <Tooltip content={t('消息设置', 'Notification settings')}>
+          {(tip) => <button {...tip} type="button" className="ntf-settings-button"
+            aria-label={t('消息设置', 'Notification settings')}
+            aria-expanded={settingsOpen} aria-haspopup="dialog"
+            onClick={() => setSettingsOpen(open => !open)}>
+            <Settings size={19} aria-hidden="true" />
+          </button>}
+        </Tooltip>}
       </header>
 
       {!user ? (
@@ -146,6 +157,8 @@ export default function NotificationsPage() {
         </div>
       ) : (
         <>
+          {settingsOpen && <SettingsDialog label={t('消息设置', 'Notification settings')} onClose={() => setSettingsOpen(false)}>
+          <h2 className="ntf-settings-title">{t('消息设置', 'Notification settings')}</h2>
           {emailNotify !== null && (
             <div className="ntf-prefs">
               <BoolToggle
@@ -153,15 +166,11 @@ export default function NotificationsPage() {
                 onChange={toggleEmail}
                 label={t('新消息也发邮件给我', 'Also email me about new notifications')}
               />
-              {!emailNotify && (
-                <p className="ntf-prefs-hint">
-                  {t('已关闭邮件,这里的红点和列表照常。', 'Email is off. The badge and this list still work.')}
-                </p>
-              )}
             </div>
           )}
 
           <RecordPreferences key={user.uid ?? user.wcaId} />
+          </SettingsDialog>}
           {err && <div className="ntf-error">{err}</div>}
           {!items && !err && <div className="ntf-empty"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>}
           {items && items.length === 0 && (
@@ -184,8 +193,8 @@ export default function NotificationsPage() {
                   <span className="ntf-icon"><Icon size={15} /></span>
                   <span className="ntf-main">
                     <span className="ntf-line">
-                      <strong className="ntf-actor">{n.actorName}</strong>
-                      <span className="ntf-action">{kindText(n.kind)}</span>
+                      <span className="ntf-action" data-kind={n.kind}>{kindText(n.kind)}</span>
+                      {n.actorName && <strong className="ntf-actor">{n.actorName}</strong>}
                     </span>
                     <span className="ntf-target">{n.title}</span>
                     {n.excerpt && <span className="ntf-excerpt">{n.excerpt}</span>}
