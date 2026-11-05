@@ -114,6 +114,7 @@ describe('/dev/auth source-review drift', () => {
     ['@cuberoot/server', 'src/utils/password.ts'], ['@cuberoot/server', 'src/utils/credentials.ts'],
     ['@cuberoot/mobile', 'src/native/secure-token.ts'], ['@cuberoot/client', 'proxy.ts'],
     ['@cuberoot/client', 'lib/page-access-api.ts'], ['@cuberoot/client', 'app/api/page-access/route.ts'],
+    ['@cuberoot/client', 'lib/shop-access.ts'],
     ['@cuberoot/client', 'lib/competition-gate.ts'], ['@cuberoot/shared', 'src/competition-access.ts'],
     ['@cuberoot/client', 'app/v1/competition-access/check/route.ts'],
     ['@cuberoot/client', 'app/[lang]/competition-verify/page.tsx'],
