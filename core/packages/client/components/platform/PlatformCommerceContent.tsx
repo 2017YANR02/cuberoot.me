@@ -6,24 +6,15 @@ import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { useEffect, useState } from 'react';
 import AppLink from '@/components/AppLink';
+import { productHref } from '@/lib/shop';
 import { useT } from '@/hooks/useT';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 import './platform-commerce.css';
 
-export function commerceRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
-}
-export function commerceMoney(value: unknown, currency: unknown): string {
-  const amount = Number(value);
-  if (!Number.isFinite(amount) || !/^[A-Z]{3}$/.test(String(currency))) return '—';
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency: String(currency) }).format(amount / 100);
-}
-export function commerceText(data: Record<string, unknown>, key: string, t: ReturnType<typeof useT>): string {
-  const zh = String(data[`${key}Zh`] ?? data[`${key}En`] ?? data[key] ?? '');
-  const en = String(data[`${key}En`] ?? data[`${key}Zh`] ?? data[key] ?? '');
-  return t(zh, en);
-}
+import { commerceRecord, commerceMoney, commerceText } from '@/lib/platform-commerce-format';
+export { commerceRecord, commerceMoney, commerceText } from '@/lib/platform-commerce-format';
+
 function bodyText(value: unknown): string {
   if (typeof value === 'string') return value;
   const body = commerceRecord(value);
@@ -84,7 +75,7 @@ export function PlatformCommerceContent({ definition, entity }: { definition: Pl
       {data.memberOnly === true ? <p>{t('此商品仅限有效会员购买。', 'An active membership is required to purchase this product.')} <AppLink href="/platform/membership">{t('查看会员', 'View memberships')}</AppLink></p> : null}
       {Array.isArray(features) && features.length ? <ul>{features.map((feature,index)=><li key={index}>{String(feature)}</li>)}</ul> : null}
       <div className="platform-commerce-grid">{Array.isArray(data.variants) ? data.variants.map(raw => { const item=commerceRecord(raw);return <article key={String(item.id)} data-site-surface="panel"><h3>{local(item,'title')}</h3><strong className="platform-commerce-price">{commerceMoney(item.amountMinor,item.currency)}</strong>{presentation.originalAmountMinor != null && Number(presentation.originalAmountMinor)>Number(item.amountMinor) ? <del>{commerceMoney(presentation.originalAmountMinor,item.currency)}</del> : null}{item.memberAmountMinor != null ? <p>{t('会员价', 'Member price')}: {commerceMoney(item.memberAmountMinor,item.currency)}</p> : null}<p>{Number(item.availableQuantity)>0 && item.status==='active' ? t(`可购买 ${item.availableQuantity} 件`, `${item.availableQuantity} available`) : t('暂时缺货', 'Out of stock')}</p></article>; }) : null}</div>
-      {Array.isArray(data.related) && data.related.length ? <section><h2>{t('同类商品', 'Related products')}</h2>{data.related.map(raw=>{const item=commerceRecord(raw);return <p key={String(item.id)}><AppLink href={`/platform/shop/${encodeURIComponent(String(item.slug??item.id))}`} prefetch={false}>{local(item,'title')}</AppLink></p>;})}</section> : null}
+      {Array.isArray(data.related) && data.related.length ? <section><h2>{t('同类商品', 'Related products')}</h2>{data.related.map(raw=>{const item=commerceRecord(raw);return <p key={String(item.id)}><AppLink href={productHref({ id: String(item.id), title: '', data: item })} prefetch={false}>{local(item,'title')}</AppLink></p>;})}</section> : null}
     </section>;
   }
   if (definition.id === 'event-detail') {

@@ -13,6 +13,8 @@ vi.mock('../src/platform/auth.js', () => ({
 }));
 vi.mock('../src/platform/payment.js', () => ({
   PLATFORM_PAYMENT_PROVIDERS: ['wechat', 'alipay'],
+  orderPaymentChannels: () => ({ alipay: true, wechatNative: true, wechatH5: true, wechatMiniProgram: true }),
+  queryProviderPayment: async () => null,
   createProviderPayment: async (input: { orderNo: string }) => { state.paymentOrder = input.orderNo; return { checkoutUrl: 'https://example.invalid/fixture-payment' }; },
   verifyProviderNotification: async () => ({ provider: 'wechat', eventId: 'fixture-paid', providerTransactionId: 'fixture-transaction', orderNo: state.paymentOrder,
     paid: true, amountCents: 1000, currency: 'CNY', merchantId: 'fixture-merchant', raw: { fixture: true } }),

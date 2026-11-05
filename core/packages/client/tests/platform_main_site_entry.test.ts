@@ -180,22 +180,24 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
   it('gives public Platform subroutes distinct metadata and sitemap coverage', () => {
     const layout = read('app/[lang]/platform/layout.tsx');
     const page = read('app/[lang]/platform/[...segments]/page.tsx');
+    const metadata = read('lib/platform-metadata.ts');
     const expected = PLATFORM_ROUTES
       .filter((route) => route.access === 'public'
         && route.pattern !== ''
         && !route.pattern.includes(':')
-        && !route.canonicalHref
-        && !['search', 'offline', 'login', 'notifications'].includes(route.id))
-      .map((route) => `platform/${route.pattern}`)
+        && route.kind !== 'canonical'
+        && !['shop-cart', 'shop-checkout', 'search', 'offline', 'login', 'notifications'].includes(route.id))
+      .map((route) => route.canonicalHref?.slice(1) ?? `platform/${route.pattern}`)
       .sort();
 
     expect(layout).toContain("pageMetadata('platform')");
     expect(layout).toContain("canonical: lang === 'zh' ? zh : en");
     expect(layout).toContain("languages: { en, zh, 'x-default': en }");
-    expect(page).toContain('metadataFromEntry');
-    expect(page).toContain('match.definition.title');
-    expect(page).toContain('match.definition.description');
-    expect(page).toContain('fillPlatformParams(match.definition.canonicalHref, match.params)');
+    expect(page).toContain('platformPageMetadata(lang, segments)');
+    expect(metadata).toContain('metadataFromEntry');
+    expect(metadata).toContain('match.definition.title');
+    expect(metadata).toContain('match.definition.description');
+    expect(metadata).toContain('fillPlatformParams(match.definition.canonicalHref, match.params)');
     expect(PLATFORM_SITEMAP_PATHS.slice().sort()).toEqual(expected);
   });
 });

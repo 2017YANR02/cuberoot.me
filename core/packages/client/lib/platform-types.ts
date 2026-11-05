@@ -199,6 +199,7 @@ export interface PlatformActionResult {
   expiresAt?: string;
   checkoutUrl?: string;
   qrCodeDataUrl?: string;
+  clientType?: 'pc' | 'wap' | 'miniprogram';
   batchReference?: string;
   count?: number;
   codes?: Array<{ id: string; code: string }>;

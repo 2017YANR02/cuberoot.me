@@ -20,6 +20,16 @@ afterEach(() => { vi.unstubAllGlobals(); });
 
 const FORWARDED_HTTPS = { 'x-forwarded-proto': 'https' };
 
+describe('retired architecture URLs', () => {
+  const paths = ['/dev/architecture/decisions', '/dev/code-history', '/dev/architecture/code-history', '/dev/architecture/history'];
+  it.each(paths.flatMap(path => [path, `/zh${path}`, `/en${path}`, `${path}?lang=zh&day=2026-02-22`]))('returns 404 without a language redirect for %s', async path => {
+    const res = await request(`https://cuberoot.me${path}`, { 'accept-language': 'zh-CN', ...FORWARDED_HTTPS });
+    expect(res.status).toBe(404);
+    expect(res.headers.get('location')).toBeNull();
+    expect(res.headers.get('x-robots-tag')).toBe('noindex, nofollow');
+  });
+});
+
 describe('retired algorithm trainers', () => {
   it('redirects before rendering and scopes invitations, repeated cases and assignment attribution', async () => {
     const res = await request('http://localhost:3000/zh/alg/333/oll/run?room=invite&case=A&case=B&scope=ocll&mode=memo&trainingOrg=school');

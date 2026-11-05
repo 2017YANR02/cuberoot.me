@@ -13,10 +13,11 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'r
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { parseAsBoolean, useQueryState } from 'nuqs';
-import { ArrowRight, Check, Crown, Download, Heart, Lock, LockOpen, LogIn, Pencil, User, type LucideIcon } from '@app-foundation/icons/lucide';
+import { ArrowRight, Check, Crown, Download, Heart, Lock, LockOpen, LogIn, Pencil, ShoppingBag, User, type LucideIcon } from '@app-foundation/icons/lucide';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
+import { SHOP_ROOT } from '@/lib/shop';
 import SortableCard from '@/components/SortableCard';
 import { RecordBadge } from '@/components/RecordBadge';
 import { CubingIcon } from '@cuberoot/event-icon';
@@ -491,6 +492,10 @@ export default function LandingPage() {
             {editingCards ? <Check size={16} aria-hidden="true" /> : <Pencil size={16} aria-hidden="true" />}
           </button>}
         </Tooltip>}
+        <Link href={SHOP_ROOT} className="landing-auth-btn" prefetch={false}>
+          <ShoppingBag size={16} aria-hidden="true" />
+          <span>{tr({ zh: '商店', en: 'Shop' })}</span>
+        </Link>
         {isAdmin && <Tooltip content={tr({ zh: '下载', en: 'Download' })}>
           {(tip) => <Link {...tip} href="/download" className="landing-auth-icon"
             aria-label={tr({ zh: '下载', en: 'Download' })} prefetch={false}>

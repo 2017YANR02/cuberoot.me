@@ -9,6 +9,7 @@ import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { matchPlatformRoute, platformParentHref, PLATFORM_PUBLIC_NAV, PLATFORM_ROUTES } from '@/lib/platform-routes';
 import type { PlatformRouteDefinition } from '@/lib/platform-types';
 import './platform.css';
+import { SHOP_ROOT } from '@/lib/shop';
 
 const AREA_ICONS = {
   discover: Compass,
@@ -94,13 +95,18 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
         <AppLink href="/platform/events" prefetch={false}>{t('活动', 'Events')}</AppLink>
         <AppLink href="/platform/news" prefetch={false}>{t('资讯', 'News')}</AppLink>
         <AppLink href="/platform/leaderboard" prefetch={false}>{t('学习榜', 'Learning leaderboard')}</AppLink>
-        <AppLink href="/platform/shop" prefetch={false}>{t('商店', 'Shop')}</AppLink>
+        <AppLink href={SHOP_ROOT} prefetch={false}>{t('商店', 'Shop')}</AppLink>
         <AppLink href="/platform/membership" prefetch={false}>{t('课程会员', 'Course membership')}</AppLink>
         <AppLink href="/platform/teachers/apply" prefetch={false}>{t('讲师入驻', 'Teach with us')}</AppLink>
         {user && <AppLink href="/platform/account/courses" prefetch={false}>{t('学习工作台', 'My learning')}</AppLink>}
         {isAdmin && <AppLink href="/platform/admin" prefetch={false}>{t('管理', 'Administration')}</AppLink>}
       </nav>}
-      {workspaceRoutes.length > 0 && <nav className="platform-workspace-nav" aria-label={t('工作台功能', 'Workspace sections')} data-site-surface="panel">
+      {orderPage && <nav className="platform-context-nav" aria-label={t('订单导航', 'Order navigation')}>
+        <AppLink href={SHOP_ROOT} prefetch={false}>{t('继续购物', 'Continue shopping')}</AppLink>
+        <AppLink href="/platform/account/shipping" prefetch={false}>{t('收货地址', 'Shipping addresses')}</AppLink>
+        <AppLink href="/contact" prefetch={false}>{t('联系商家', 'Contact us')}</AppLink>
+      </nav>}
+      {!orderPage && workspaceRoutes.length > 0 && <nav className="platform-workspace-nav" aria-label={t('工作台功能', 'Workspace sections')} data-site-surface="panel">
         {workspaceRoutes.map(item => <AppLink key={item.id} href={`/platform/${item.pattern}`} prefetch={false}
           aria-current={definition?.id === item.id ? 'page' : undefined}>{t(item.title.zh, item.title.en)}</AppLink>)}
       </nav>}

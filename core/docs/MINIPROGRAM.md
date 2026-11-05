@@ -158,7 +158,7 @@
 | [x] | 工具 | `mosaic` | `/mosaic` | 网页白名单 |
 | [x] | 工具 | `lettering` | `/lettering` | 网页白名单，复用网站拼字页面 |
 | [x] | 工具 | `space` | `/space` | 网页白名单 |
-| [x] | 工具 | `paper-odyssey` | `/dev/architecture/history?mode=play` | 网页白名单，保留游戏模式参数 |
+| [x] | 工具 | `paper-odyssey` | `/dev/architecture/log?mode=play` | 网页白名单，保留游戏模式参数 |
 | [x] | 工具 | `paint` | `/paint` | 网页白名单 |
 | [x] | 工具 | `icon` | `/icon` | 网页白名单 |
 | [x] | 工具 | `timezone` | `/timezone` | 网页白名单 |

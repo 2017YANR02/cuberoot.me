@@ -73,7 +73,7 @@ platformContentRoutes.get('/platform/search', async (c) => {
         AND (n.title_zh ILIKE '%'||$1||'%' OR n.title_en ILIKE '%'||$1||'%' OR n.body_zh::text ILIKE '%'||$1||'%' OR n.body_en::text ILIKE '%'||$1||'%')
       UNION ALL
       SELECT 'product', p.id::text, p.slug, p.title_zh, p.title_en, p.description_zh, p.description_en,
-        '/platform/shop/' || p.slug, p.created_at
+        '/shop/' || p.slug, p.created_at
       FROM platform_products p WHERE p.status='active'
         AND (p.title_zh ILIKE '%'||$1||'%' OR p.title_en ILIKE '%'||$1||'%'
           OR p.description_zh ILIKE '%'||$1||'%' OR p.description_en ILIKE '%'||$1||'%')

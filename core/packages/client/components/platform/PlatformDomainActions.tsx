@@ -12,7 +12,6 @@ import { useLang } from '@/i18n/tr';
 import { apiUrl } from '@/lib/api-base';
 import { useAuthUser } from '@/lib/auth-store';
 import { approveCompetitionOrderRefund, listCompetitionOrderRefunds, refreshCompetitionOrderRefund, rejectCompetitionOrderRefund, requestCompetitionOrderRefund, type CompetitionRefund } from '@/lib/online-competition-api';
-import { isMiniProgramCommerceRestricted, openMiniProgramOrderPayment } from '@/lib/miniprogram-bridge';
 import { platformQrLinksProblem, platformQrTargetProblem, type PlatformQrLink, type PlatformQrTargetKind } from '@/lib/platform-qr-landing';
 import { loadPlatformManagedQuizzes, loadPlatformMembershipPlans, loadPlatformMemberships, loadPlatformResource, loadPlatformShippingAddresses, PLATFORM_ACTION_LABELS } from '@/lib/platform-gateway';
 import type {
@@ -30,9 +29,7 @@ import type {
   PlatformMembership,
   PlatformMembershipPlan,
   PlatformRouteDefinition,
-  PlatformPaymentAttemptResult,
 } from '@/lib/platform-types';
-import { isPlatformPaymentAttemptResult } from '@/lib/platform-types';
 import { PLATFORM_COURSE_SECTIONS, platformCourseSectionsIncludedBy } from '@/lib/platform-routes';
 import { PlatformLessonCoverEditor } from './PlatformLessonCoverEditor';
 import { PlatformState } from './PlatformState';
@@ -45,6 +42,7 @@ import { renderArticleMarkdown } from '@/lib/article-markdown';
 import { platformLocalDateTime, platformMajorToMinor, platformMinorToMajor } from '@/lib/platform-commerce-fields';
 import { InstructorPayoutSettings } from './InstructorPayoutSettings';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { SHOP_CATEGORIES, SHOP_CATEGORY } from '@/lib/shop';
 
 type FieldKind = 'text' | 'textarea' | 'number' | 'rating' | 'date' | 'datetime-local' | 'tel' | 'url' | 'select' | 'boolean' | 'lines' | 'json' | 'structured' | 'markdown' | 'money';
 
@@ -177,7 +175,7 @@ const NEWS_FIELDS = [
 ] satisfies ContractFields<PlatformNewsWrite>;
 
 const PRODUCT_FIELDS = [
-  field('category', '商品分类', 'Category'),
+  field('category', '商品分类', 'Category', { kind: 'select', defaultValue: SHOP_CATEGORY, options: SHOP_CATEGORIES.map(category => option(category.id, category.zh, category.en)) }),
   field('memberOnly', '仅限会员购买', 'Members only', { kind: 'boolean' }),
   field('presentation', '商品介绍', 'Product presentation', { kind: 'structured' }),
   field('slug', 'Slug', 'Slug', { required: true, pattern: '[a-z0-9][a-z0-9_-]{0,119}', maxLength: 120 }),
@@ -187,7 +185,7 @@ const PRODUCT_FIELDS = [
   field('descriptionZh', '中文说明', 'Chinese description', { kind: 'textarea', rows: 6 }),
   field('descriptionEn', '英文说明', 'English description', { kind: 'textarea', rows: 6 }),
   field('status', '状态', 'Status', { kind: 'select', options: [option('draft', '草稿', 'Draft'), option('active', '销售中', 'Active'), option('archived', '已归档', 'Archived')] }),
-  field('variants', '规格 JSON 数组', 'Variant JSON array', { kind: 'json', rows: 10, required: true }),
+  field('variants', '规格、价格与库存', 'Variants, prices & stock', { kind: 'structured', defaultValue: '[]' }),
 ] satisfies ContractFields<PlatformProductWrite>;
 
 const PATH_FIELDS = [
@@ -546,12 +544,13 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onR
   );
 }
 
-function ActionButton({ action, resourceId, payload, label, confirm, disabled = false, busy, runAction }: {
+function ActionButton({ action, resourceId, payload, label, confirm, secondary = false, disabled = false, busy, runAction }: {
   action: PlatformActionId;
   resourceId?: string;
   payload?: Record<string, unknown>;
   label?: PlatformLocaleText;
   confirm?: PlatformLocaleText;
+  secondary?: boolean;
   disabled?: boolean;
   busy: string | null;
   runAction: RunAction;
@@ -559,7 +558,7 @@ function ActionButton({ action, resourceId, payload, label, confirm, disabled = 
   const t = useT();
   const key = resourceId ? `${action}:${resourceId}` : action;
   const buttonLabel = label ?? PLATFORM_ACTION_LABELS[action];
-  return <button type="button" className="platform-button platform-button-primary" disabled={disabled || !resourceId || busy === key} onClick={() => {
+  return <button type="button" className={`platform-button${secondary ? '' : ' platform-button-primary'}`} disabled={disabled || !resourceId || busy === key} onClick={() => {
     if (confirm && !window.confirm(t(confirm.zh, confirm.en))) return;
     void runAction(action, resourceId, payload);
   }}>{busy === key ? t('处理中…', 'Working…') : t(buttonLabel.zh, buttonLabel.en)}</button>;
@@ -1189,7 +1188,7 @@ export function PlatformLearningActions(props: CommonProps) {
   return null;
 }
 
-function PlatformShippingAddressManager({ definition, busy, runAction, onAddresses }: CommonProps & {
+export function PlatformShippingAddressManager({ definition, busy, runAction, onAddresses }: CommonProps & {
   onAddresses?: (addresses: PlatformEntity[]) => void;
 }) {
   const [addresses, setAddresses] = useState<PlatformEntity[] | null>(null);
@@ -1391,80 +1390,6 @@ function PlatformMembershipCatalog({ definition, entities, busy, runAction }: Co
   );
 }
 
-function PlatformOrderPayment({ entity, orderId, busy, runAction }: {
-  entity?: PlatformEntity;
-  orderId: string;
-  busy: string | null;
-  runAction: RunAction;
-}) {
-  const t = useT();
-  const [attempt, setAttempt] = useState<PlatformPaymentAttemptResult | null>(null);
-  const [embedded, setEmbedded] = useState<boolean | null>(null);
-  const [nativeBusy, setNativeBusy] = useState(false);
-  const [nativeError, setNativeError] = useState('');
-  useEffect(() => {
-    let cancel = false;
-    void isMiniProgramCommerceRestricted().then((restricted) => {
-      if (!cancel) setEmbedded(restricted);
-    });
-    return () => { cancel = true; };
-  }, []);
-  const status = typeof entity?.data?.status === 'string' ? entity.data.status : entity?.status;
-  const totalAmountMinor = Number(entity?.data?.totalAmountMinor ?? 0);
-  const canPay = status === 'pending_payment' && totalAmountMinor > 0;
-  const canCancel = status === 'pending_payment';
-  const ticketOnly = Array.isArray(entity?.data?.items) && entity.data.items.length > 0
-    && entity.data.items.every(item => item && typeof item === 'object' && item.sellableType === 'event_ticket');
-  const paymentDisabled = !canPay || embedded === null || nativeBusy || busy === `start-payment:${orderId}`;
-  const start = async (provider: 'wechat' | 'alipay') => {
-    if (!canPay || paymentDisabled) return;
-    if (embedded) {
-      if (!ticketOnly || provider !== 'wechat') return;
-      setNativeBusy(true);
-      setNativeError('');
-      try {
-        if (!await openMiniProgramOrderPayment(entity?.id ?? orderId)) {
-          setNativeError(t('当前环境无法打开微信小程序支付，请使用支持此功能的微信小程序版本。', 'Native checkout is unavailable here. Use a WeChat Mini Program version that supports competition payment.'));
-        }
-      } finally { setNativeBusy(false); }
-      return;
-    }
-    const clientType = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'wap' : 'pc';
-    const response = await runAction('start-payment', orderId, { provider, clientType });
-    if (!response || !isPlatformPaymentAttemptResult(response)) return;
-    setAttempt(response);
-    if (response.checkoutUrl) window.location.assign(response.checkoutUrl);
-  };
-  if (!entity?.data || !canCancel) return null;
-  return (
-    <section className="platform-domain-actions">
-      <h2>{t('支付与订单状态', 'Payment and order status')}</h2>
-      <p className="platform-domain-note">{embedded && !ticketOnly
-        ? t('此类订单暂不支持小程序支付。', 'This order type cannot be paid in the Mini Program.')
-        : embedded && canPay
-        ? t('将打开小程序微信支付，完成后返回本页查看报名状态。', 'Continue to native WeChat checkout, then return here to see your entry status.')
-        : canPay
-        ? t('订单待支付。选择支付渠道后，将跳转到渠道页面或显示支付二维码。', 'This order is awaiting payment. Choose a provider to continue by checkout URL or QR code.')
-        : status === 'pending_payment'
-          ? t('零金额订单不需要发起支付。', 'Zero-value orders do not require a payment attempt.')
-          : t('当前订单状态不允许再次发起支付或取消。', 'The current order state does not allow another payment attempt or cancellation.')}</p>
-      <div className="platform-write-actions">
-        {canPay && (!embedded || ticketOnly) ? <button type="button" className="platform-button platform-button-primary" disabled={paymentDisabled} onClick={() => { void start('wechat'); }}>{t('微信支付', 'WeChat Pay')}</button> : null}
-        {canPay && embedded === false ? <button type="button" className="platform-button platform-button-primary" disabled={paymentDisabled} onClick={() => { void start('alipay'); }}>{t('支付宝', 'Alipay')}</button> : null}
-        <ActionButton action="cancel-order" resourceId={orderId} disabled={!canCancel} confirm={text('确定取消这笔未支付订单吗？', 'Cancel this unpaid order?')} busy={busy} runAction={runAction} />
-      </div>
-      {nativeError ? <p role="alert">{nativeError}</p> : null}
-      {attempt?.qrCodeDataUrl ? (
-        <div className="platform-payment-result" role="status">
-          <img src={attempt.qrCodeDataUrl} alt={t('支付二维码', 'Payment QR code')} />
-          <p>{t('请使用对应支付应用扫码。支付结果以订单状态为准。', 'Scan with the matching payment app. The order status remains the source of truth.')}</p>
-        </div>
-      ) : null}
-      {attempt && !attempt.checkoutUrl && !attempt.qrCodeDataUrl ? <p className="platform-domain-note">{t('支付请求已创建，请刷新订单确认支付状态。', 'The payment attempt was created. Refresh the order to confirm its status.')}</p> : null}
-    </section>
-  );
-}
-
 function PlatformOrderRefunds({ entity, orderId, admin = false, manualFallback, onSaved }: { entity?: PlatformEntity; orderId: string; admin?: boolean; manualFallback?: ReactNode; onSaved?: () => void }) {
   const t = useT();
   const [items, setItems] = useState<CompetitionRefund[]>([]);
@@ -1550,7 +1475,7 @@ export function PlatformCommerceActions(props: CommonProps) {
     );
   }
   if (definition.id !== 'order-detail') return null;
-  return <><PlatformOrderPayment entity={entity} orderId={params.id} busy={busy} runAction={runAction} /><PlatformOrderRefunds key={params.id} entity={entity} orderId={params.id} onSaved={props.onSaved} /></>;
+  return <>{entity?.status === 'pending_payment' && <section className="platform-domain-actions"><ActionButton action="cancel-order" resourceId={entity.id} secondary confirm={text('确定取消这笔未支付订单吗？', 'Cancel this unpaid order?')} busy={busy} runAction={runAction} /></section>}<PlatformOrderRefunds key={params.id} entity={entity} orderId={params.id} onSaved={props.onSaved} /></>;
 }
 
 export function PlatformEventActions(props: CommonProps) {

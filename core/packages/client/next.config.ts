@@ -90,6 +90,7 @@ const nextConfig: NextConfig = {
     ];
     return [
       { source: "/videos/stackmat/v1/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+      { source: "/images/shop/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
       // Kill-switch service worker (public/sw.js): never cache, so clients with
       // the retired worker pick up the self-destruct script on their next update check.
       {

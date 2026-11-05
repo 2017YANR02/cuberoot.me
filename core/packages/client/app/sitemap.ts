@@ -55,19 +55,19 @@ const EXCLUDE = new Set(['chat', 'chat/share', 'sim/embed', 'account/sop', 'comp
 // under each alg set (interactive tools, not content, and near-duplicates of
 // the set page) and LSLL's degenerate O group (LISTED_CATEGORIES drops it
 // because the site itself does not link it — see LsllCategory.pureLL).
-const PLATFORM_NOINDEX_IDS = new Set(['search', 'offline', 'login', 'notifications']);
+const PLATFORM_NOINDEX_IDS = new Set(['shop-cart', 'shop-checkout', 'search', 'offline', 'login', 'notifications']);
 
-// The Platform UI is one catch-all route, so the filesystem walk can only see
-// /platform itself. List its static public directories from the same route
-// registry that powers navigation; parameterized client shells stay out until
+// Platform and Shop use catch-all routes. List their static public directories
+// at their canonical paths from the same route registry that powers navigation;
+// parameterized client shells stay out until
 // there is a stable, server-visible entity catalog to enumerate.
 export const PLATFORM_SITEMAP_PATHS = PLATFORM_ROUTES
   .filter((route) => route.access === 'public'
     && route.pattern !== ''
     && !route.pattern.includes(':')
-    && !route.canonicalHref
+    && route.kind !== 'canonical'
     && !PLATFORM_NOINDEX_IDS.has(route.id))
-  .map((route) => `platform/${route.pattern}`);
+  .map((route) => route.canonicalHref?.slice(1) ?? `platform/${route.pattern}`);
 
 const EXTRA = [
   ...ALL_NEWS.map(({id}) => `regulation/post/${id}`),

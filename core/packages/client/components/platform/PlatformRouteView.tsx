@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { ArrowRight, ExternalLink, Play, Search } from '@app-foundation/icons/lucide';
 import { parseAsFloat, parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
+import { productHref, SHOP_ROOT } from '@/lib/shop';
 import { AccountPanel, LoginForm } from '@/components/AuthPanel';
 import Paginator from '@/components/wca-stats/Paginator';
 import { CompactSelect } from '@/components/CompactSelect';
@@ -35,6 +36,7 @@ import type {
 } from '@/lib/platform-types';
 import { PlatformState } from './PlatformState';
 import { PlatformDomainActions } from './PlatformDomainActions';
+import { PlatformOrderPayment } from './PlatformOrderPayment';
 import { PlatformDomainContent } from './PlatformDomainContent';
 import { PlatformPrivacySettings } from './PlatformPrivacySettings';
 import { PlatformQrCardStudio } from './PlatformQrCardStudio';
@@ -53,10 +55,11 @@ function titleFor(t: ReturnType<typeof useT>, definition: PlatformRouteDefinitio
 function localDetailHref(definition: PlatformRouteDefinition, entity: PlatformEntity): string | null {
   const base = `/platform/${definition.pattern}`.replace(/\/$/, '');
   if (definition.kind !== 'collection') return null;
+  if (definition.id === 'shop') return productHref(entity);
   if (definition.id === 'teachers') return `/platform/teachers/${encodeURIComponent(entity.id)}`;
   if (definition.id === 'community') return `/platform/community/posts/${encodeURIComponent(entity.id)}`;
   if (definition.id === 'community-circle') return `/platform/community/posts/${encodeURIComponent(entity.id)}`;
-  if (['courses', 'paths', 'events', 'news', 'shop', 'orders'].includes(definition.id)) {
+  if (['courses', 'paths', 'events', 'news', 'orders'].includes(definition.id)) {
     return `${base}/${encodeURIComponent(entity.id)}`;
   }
   const adminCollections: Record<string, string> = {
@@ -76,11 +79,11 @@ function localDetailHref(definition: PlatformRouteDefinition, entity: PlatformEn
   if (definition.id === 'account-favorites') {
     const targetType = entity.data?.targetType;
     if (targetType === 'course') return `/platform/courses/${encodeURIComponent(entity.id)}`;
-    if (targetType === 'product') return `/platform/shop/${encodeURIComponent(entity.id)}`;
+    if (targetType === 'product') return productHref(entity);
     if (targetType === 'news') return `/platform/news/${encodeURIComponent(entity.id)}`;
     if (targetType === 'event') return `/platform/events/${encodeURIComponent(entity.id)}`;
   }
-  if (definition.id === 'account-wishlist') return `/platform/shop/${encodeURIComponent(entity.id)}`;
+  if (definition.id === 'account-wishlist') return productHref(entity);
   return null;
 }
 
@@ -324,7 +327,7 @@ function PlatformLanding() {
         <span>{t('继续探索', 'Keep exploring')}</span>
         <AppLink href="/platform/paths" prefetch={false}>{t('学习路径', 'Learning paths')}</AppLink>
         <AppLink href="/platform/news" prefetch={false}>{t('资讯', 'News')}</AppLink>
-        <AppLink href="/platform/shop" prefetch={false}>{t('商店', 'Shop')}</AppLink>
+        <AppLink href={SHOP_ROOT} prefetch={false}>{t('商店', 'Shop')}</AppLink>
         <AppLink href="/platform/about" prefetch={false}>{t('关于 Platform', 'About Platform')}</AppLink>
       </footer>
     </div>
@@ -716,7 +719,7 @@ function PlatformResourceRouteView({
         window.location.replace(`${lang === 'zh' ? '/zh' : ''}/platform/courses/${encodeURIComponent(courseId)}/sections/core`);
         return response;
       }
-      setActionMessage(response.message ?? t('操作已完成。', 'Action completed.'));
+      setActionMessage(action === 'start-payment' ? null : response.message ?? t('操作已完成。', 'Action completed.'));
       if (definition.id === 'admin-qr-detail' && action === 'admin-save' && params.code
         && response.code && response.code !== params.code) {
         const url = new URL(window.location.href);
@@ -848,6 +851,9 @@ function PlatformResourceRouteView({
             </div>
           ) : null}
 
+          {definition.id === 'order-detail' && !permissionDenied && !orderUnavailable && sortedItems[0] ? <PlatformOrderPayment key={sortedItems[0].id}
+            entity={sortedItems[0]} busy={actionBusy} runAction={runAction} message={actionMessage} /> : null}
+
           {!loadsResource ? null : permissionDenied ? (
             <PlatformState
               kind="permission"
@@ -912,7 +918,7 @@ function PlatformResourceRouteView({
               onSaved={() => setRetry(value => value + 1)}
             />
           )}
-          {actionMessage ? <p className="platform-action-message" role="status">{actionMessage}</p> : null}
+          {actionMessage && (definition.id !== 'order-detail' || sortedItems[0]?.status !== 'pending_payment') ? <p className="platform-action-message" role="status">{actionMessage}</p> : null}
         </>
       ) : (
         <PlatformCanonicalView definition={definition} params={params} />

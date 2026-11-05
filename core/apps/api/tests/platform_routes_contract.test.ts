@@ -245,10 +245,12 @@ describe('Platform route and security contract', () => {
     expect(createAttempt).toContain("status IN ('initiated','pending')");
     expect(createAttempt).toContain('reservation_expires_at');
     const notify = routeBlock(commerceSource, 'platformCommerceRoutes', 'post', '/payments/:provider/notify');
-    expect(notify).toContain("failure_code = 'provider_not_succeeded'");
-    expect(notify).toContain("rejection_code = 'additional_provider_transaction'");
-    expect(notify).toContain("failure_code = 'order_cancelled'");
-    expect(notify).toContain('duplicate_payment_requires_reconciliation');
+    expect(notify).toContain('await applyVerifiedPayment(event)');
+    const settle = commerceSource.slice(commerceSource.indexOf('async function applyVerifiedPayment('), commerceSource.indexOf("platformCommerceRoutes.post('/payments/:provider/notify'"));
+    expect(settle).toContain("failure_code = 'provider_not_succeeded'");
+    expect(settle).toContain("rejection_code = 'additional_provider_transaction'");
+    expect(settle).toContain("failure_code = 'order_cancelled'");
+    expect(settle).toContain('duplicate_payment_requires_reconciliation');
   });
 
   it('keeps refunds and payouts signed, reversible, and explicitly reconcilable', () => {

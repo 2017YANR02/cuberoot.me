@@ -20,6 +20,15 @@ export function paymentAvailability(): Record<PlatformPaymentProvider, boolean> 
   };
 }
 
+export function orderPaymentChannels(currency: string) {
+  return {
+    alipay: currency === 'CNY' && alipay.alipayConfigured(),
+    wechatNative: currency === 'CNY' && wechat.wechatConfigured(),
+    wechatH5: currency === 'CNY' && wechat.wechatH5Configured(),
+    wechatMiniProgram: currency === 'CNY' && wechat.wechatMiniProgramPayConfigured() && wechatMiniProgramConfigured(),
+  };
+}
+
 export async function createProviderPayment(input: {
   provider: PlatformPaymentProvider;
   clientType: 'pc' | 'wap' | 'miniprogram';
@@ -31,11 +40,12 @@ export async function createProviderPayment(input: {
   payerIp: string;
   miniProgramCode?: string;
   payerUserId?: number;
+  lang?: 'en' | 'zh';
 }): Promise<{ checkoutUrl?: string; qrCodeDataUrl?: string; requestPayment?: wechat.WechatMiniProgramPayment }> {
   if (input.currency !== 'CNY') badRequest('Online payment currently supports CNY only');
   if (!Number.isSafeInteger(input.amountCents) || input.amountCents <= 0) badRequest('Invalid payment amount');
   const notifyUrl = `${API_ORIGIN}/v1/platform/payments/${input.provider}/notify`;
-  const returnUrl = `${SITE_ORIGIN}/platform/orders/${encodeURIComponent(input.returnOrderNo ?? input.orderNo)}`;
+  const returnUrl = `${SITE_ORIGIN}${input.lang === 'zh' ? '/zh' : ''}/platform/orders/${encodeURIComponent(input.returnOrderNo ?? input.orderNo)}`;
 
   if (input.clientType === 'miniprogram') {
     if (input.provider !== 'wechat') badRequest('Mini Program payment requires WeChat Pay');
@@ -81,15 +91,15 @@ export async function createProviderPayment(input: {
     if (!wechat.wechatH5Configured()) {
       throw new PlatformApiError('PAYMENT_NOT_CONFIGURED', 503, 'WeChat H5 Pay is not configured');
     }
-    return {
-      checkoutUrl: await wechat.createWechatH5({
+    const checkoutUrl = new URL(await wechat.createWechatH5({
         outTradeNo: input.orderNo,
         amountCents: input.amountCents,
         description: input.subject.slice(0, 120),
         notifyUrl,
         payerClientIp: input.payerIp,
-      }),
-    };
+      }));
+    checkoutUrl.searchParams.set('redirect_url', returnUrl);
+    return { checkoutUrl: checkoutUrl.href };
   }
   const codeUrl = await wechat.createWechatNative({
     outTradeNo: input.orderNo,
@@ -106,10 +116,47 @@ export interface VerifiedPaymentEvent {
   providerTransactionId: string;
   orderNo: string;
   paid: boolean;
+  closed?: boolean;
   amountCents: number;
   currency: string;
   merchantId: string;
   raw: unknown;
+}
+
+/** Only authenticated provider queries can recover a missed notification. */
+export async function queryProviderPayment(provider: PlatformPaymentProvider, orderNo: string): Promise<VerifiedPaymentEvent | null> {
+  const result = provider === 'alipay'
+    ? await alipay.queryAlipayTrade(orderNo)
+    : await wechat.queryWechatOrder(orderNo);
+  if (!result?.paid) return null;
+  const envelope = result.raw as Record<string, unknown> | null;
+  const raw = provider === 'alipay' ? envelope?.alipay_trade_query_response as Record<string, unknown> | undefined : envelope;
+  if (!raw || raw.out_trade_no !== orderNo || !result.txn) {
+    throw new PlatformApiError('PROVIDER_VERIFICATION_FAILED', 403, 'Queried payment identity mismatch');
+  }
+  const merchantId = provider === 'alipay' ? process.env.ALIPAY_APP_ID : process.env.WECHAT_MCHID;
+  let amountCents: number;
+  let currency: string;
+  if (provider === 'alipay') {
+    if (!['TRADE_SUCCESS', 'TRADE_FINISHED'].includes(String(raw.trade_status)) || raw.trade_no !== result.txn) {
+      throw new PlatformApiError('PROVIDER_VERIFICATION_FAILED', 403, 'Queried Alipay payment is not settled');
+    }
+    amountCents = decimalAmountToCents(raw.total_amount);
+    currency = 'CNY';
+  } else {
+    if (!wechat.isWechatPaymentAppId(String(raw.appid)) || raw.mchid !== merchantId
+      || raw.trade_state !== 'SUCCESS' || raw.transaction_id !== result.txn) {
+      throw new PlatformApiError('PROVIDER_VERIFICATION_FAILED', 403, 'Queried WeChat payment identity mismatch');
+    }
+    const amount = raw.amount as Record<string, unknown> | undefined;
+    amountCents = Number(amount?.total);
+    currency = String(amount?.currency ?? '');
+  }
+  if (!merchantId || !Number.isSafeInteger(amountCents) || amountCents <= 0 || currency !== 'CNY') {
+    throw new PlatformApiError('PROVIDER_VERIFICATION_FAILED', 403, 'Queried payment amount is invalid');
+  }
+  return { provider, eventId: `query:${result.txn}`, providerTransactionId: result.txn,
+    orderNo, paid: true, amountCents, currency, merchantId, raw };
 }
 
 export async function verifyProviderNotification(
@@ -141,10 +188,11 @@ async function verifyAlipayNotification(c: Context): Promise<VerifiedPaymentEven
   const status = String(params.trade_status ?? '').toUpperCase();
   return {
     provider: 'alipay',
-    eventId: transactionId,
+    eventId: String(params.notify_id),
     providerTransactionId: transactionId,
     orderNo,
     paid: status === 'TRADE_SUCCESS' || status === 'TRADE_FINISHED',
+    closed: status === 'TRADE_CLOSED',
     amountCents,
     currency: 'CNY',
     merchantId: appId,
@@ -193,6 +241,7 @@ async function verifyWechatNotification(c: Context): Promise<VerifiedPaymentEven
     providerTransactionId: transactionId,
     orderNo,
     paid: result.paid === true,
+    closed: ['CLOSED', 'REVOKED', 'PAYERROR'].includes(String(raw.trade_state)),
     amountCents,
     currency,
     merchantId,

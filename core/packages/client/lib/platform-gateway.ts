@@ -1,6 +1,7 @@
 import { sessionFetch } from '@/lib/session-fetch';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { apiUrl } from '@/lib/api-base';
+import { createPlatformOrder } from './platform-checkout';
 import type { PlatformOrderWrite } from '@cuberoot/shared';
 import type {
   PlatformActionId,
@@ -96,7 +97,8 @@ function readPath(resource: PlatformResource, options: PlatformLoadOptions): str
   const id = encodedId(options);
   const rawQuery = queryString(options);
   const query = ['courses', 'paths', 'events', 'news', 'products', 'search'].includes(resource)
-    ? rawQuery + (rawQuery ? '&' : '?') + 'v=3' : rawQuery;
+    ? rawQuery + (rawQuery ? '&' : '?') + 'v=3'
+    : ['orders', 'admin-orders'].includes(resource) ? rawQuery + (rawQuery ? '&' : '?') + 'v=2' : rawQuery;
   switch (resource) {
     case 'search': return `/v1/platform/search${query}`;
     case 'leaderboard': return `/v1/platform/leaderboard${query}`;
@@ -252,6 +254,9 @@ export async function loadPlatformResource(
     signal: options.signal,
   });
   if (response.status === 401 || response.status === 403) throw new PlatformPermissionError(response.status);
+  // A known artwork can have a public preview before a sellable product exists.
+  // Only an explicit 404 is absence; transport and server errors still reject.
+  if (resource === 'products' && idFrom(options) && response.status === 404) return { items: [], total: 0 };
   const result = normalizeResource(await handleApi<unknown>(response));
   const id = idFrom(options);
   if (resource === 'teachers' && id) {
@@ -495,7 +500,7 @@ export async function executePlatformAction(
     case 'update-progress': return write(`/v1/platform/me/progress/${requiredId(input)}`, 'PUT', payload);
     case 'submit-quiz': return write(`/v1/platform/learning/lessons/${requiredId(input)}/quiz`, 'POST', payload);
     case 'enroll': return write(`/v1/platform/courses/${requiredId(input)}/enrollment`, 'POST', payload);
-    case 'create-order': return write('/v1/platform/orders', 'POST', orderPayload(payload));
+    case 'create-order': return createPlatformOrder(orderPayload(payload));
     case 'start-payment': return write(`/v1/platform/orders/${requiredId(input)}/payment-attempts`, 'POST', payload);
     case 'cancel-order': return write(`/v1/platform/orders/${requiredId(input)}/cancel`, 'POST', payload);
     case 'apply-instructor': return write('/v1/platform/instructor/applications', 'POST', payload);

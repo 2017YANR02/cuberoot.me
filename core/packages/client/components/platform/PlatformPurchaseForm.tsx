@@ -1,17 +1,15 @@
 'use client';
 
-import { sessionFetch } from '@/lib/session-fetch';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
 import { useT } from '@/hooks/useT';
 import { useAuthUser } from '@/lib/auth-store';
-import { apiUrl } from '@/lib/api-base';
-import { authHeaders, handleApi } from '@/lib/admin-api';
+import { quotePlatformOrder, type PlatformQuote } from '@/lib/platform-checkout';
 import type { PlatformActionId, PlatformActionResult, PlatformEntity } from '@/lib/platform-types';
 import { commerceMoney, commerceRecord, commerceText, ticketAvailability } from './PlatformCommerceContent';
 
-type Quote = {currency:string;member:boolean;subtotalAmountMinor:number;discountAmountMinor:number;totalAmountMinor:number};
+type Quote = PlatformQuote;
 type RunAction = (action:PlatformActionId,id?:string,payload?:Record<string,unknown>)=>Promise<PlatformActionResult|undefined>;
 
 /** A quote is advisory; creation applies the same server pricing again under its inventory locks. */
@@ -38,8 +36,7 @@ export function PlatformPurchaseForm({entity,kind,addresses=[],busy,runAction}:{
     request.current?.abort();const controller=new AbortController();request.current=controller;setQuoting(true);setError('');setQuote(null);
     const key=kind==='product_variant'?'productVariantId':kind==='event_ticket'?'eventTicketTypeId':'courseId';
     try {
-      const response=await sessionFetch(apiUrl('/v1/platform/orders/quote'),{method:'POST',headers:{...authHeaders(false),'Content-Type':'application/json'},body:JSON.stringify({items:[{[key]:selected,quantity:Number(quantity)}],...(coupon.trim()?{couponCode:coupon.trim()}:{})}),signal:controller.signal});
-      const next=await handleApi<Quote>(response);
+      const next=await quotePlatformOrder([{[key]:selected,quantity:Number(quantity)}],coupon,controller.signal);
       if(!controller.signal.aborted)setQuote(next);
     } catch(reason) {if(!controller.signal.aborted)setError(reason instanceof Error?reason.message:t('报价未完成，请重试。','Could not calculate the price. Try again.'));}
     finally{if(!controller.signal.aborted)setQuoting(false);}

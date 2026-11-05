@@ -133,8 +133,8 @@ describe('mini program web routes', () => {
     expect(resolveWebTool('documents')).toMatchObject({ id: 'documents', href: '/docs', title: '协作文档' });
     expect(resolveWebTool('spreadsheets')).toBeNull();
     expect(resolveWebRoute('paper-odyssey')).toMatchObject({
-      path: '/zh/dev/architecture/history?mode=play',
-      url: 'https://cuberoot.me/zh/dev/architecture/history?mode=play#wechat_redirect',
+      path: '/zh/dev/architecture/log?mode=play',
+      url: 'https://cuberoot.me/zh/dev/architecture/log?mode=play#wechat_redirect',
     });
     expect(resolveWebTool('algdb')).toMatchObject({ id: 'algdb', key: 'alg', action: 'web' });
     expect(resolveWebTool('timer')).toMatchObject({ id: 'timer', key: 'timer', action: 'native' });

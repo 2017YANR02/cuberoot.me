@@ -108,17 +108,16 @@ const CANONICAL_HOST = 'https://cuberoot.me';
 const OWNS_ITS_CANONICAL = /^\/recon\/\d[^/]*$/;
 
 function platformSeoRoute(rest: string): { rest: string; ownsCanonical: boolean; noindex: boolean } | null {
-  if (rest !== '/platform' && !rest.startsWith('/platform/')) return null;
-  const rawSegments = rest === '/platform'
-    ? []
-    : rest.slice('/platform/'.length).split('/').filter(Boolean);
+  const shop = rest === '/shop' || rest.startsWith('/shop/');
+  if (!shop && rest !== '/platform' && !rest.startsWith('/platform/')) return null;
+  const rawSegments = (shop ? rest : rest.slice('/platform'.length)).split('/').filter(Boolean);
   const segments = rawSegments.map((segment) => {
     try { return decodeURIComponent(segment); } catch { return segment; }
   });
   const match = matchPlatformRoute(segments);
   if (!match) return { rest, ownsCanonical: true, noindex: true };
   const noindex = match.definition.access !== 'public'
-    || ['search', 'offline', 'login', 'notifications', 'online-competition-preview', 'course-lesson', 'course-section-introduction', 'course-section-trial', 'course-section-core', 'certificate', 'qr'].includes(match.definition.id);
+    || ['shop-cart', 'shop-checkout', 'search', 'offline', 'login', 'notifications', 'online-competition-preview', 'course-lesson', 'course-section-introduction', 'course-section-trial', 'course-section-core', 'certificate', 'qr'].includes(match.definition.id);
   const canonicalRest = match.definition.canonicalHref
     ? fillPlatformParams(match.definition.canonicalHref, match.params)
     : rest;
@@ -170,7 +169,8 @@ function routeLanguage(req: NextRequest) {
   const { locale, rest } = stripLocalePrefix(pathname);
 
   // Retired URLs return the site's 404, not a streamed soft-404 or redirect.
-  if (rest === '/dev/code-history'
+  if (rest === '/platform/shop' || rest.startsWith('/platform/shop/')
+    || rest === '/dev/code-history'
     || rest === '/dev/architecture/decisions'
     || rest === '/dev/architecture/code-history' || rest === '/dev/architecture/history'
     || rest === '/wca/cross_city_competition_streaks') {

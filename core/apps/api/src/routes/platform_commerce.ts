@@ -24,6 +24,9 @@ import { reconcileCompetitionSettlement } from '../platform/competition_settleme
 import {
   PLATFORM_PAYMENT_PROVIDERS,
   createProviderPayment,
+  orderPaymentChannels,
+  queryProviderPayment,
+  type VerifiedPaymentEvent,
   verifyProviderNotification,
   type PlatformPaymentProvider,
 } from '../platform/payment.js';
@@ -471,6 +474,14 @@ async function orderDetails(db: PlatformDb, predicate: string, parameters: reado
   `, parameters);
   const order = rows[0];
   if (!order) return undefined;
+  order.paymentChannels = orderPaymentChannels(String(order.currency));
+  const active = await platformQuery(db, `
+    SELECT id::text, provider, status, expires_at AS "expiresAt", checkout_payload
+    FROM platform_payment_attempts WHERE order_id=$1::uuid AND status='pending' AND expires_at>NOW()
+    ORDER BY attempt_number DESC LIMIT 1
+  `, [order.id]);
+  order.activePayment = active[0] ? { id: active[0].id, provider: active[0].provider, status: 'pending',
+    expiresAt: active[0].expiresAt, ...(active[0].checkout_payload as Record<string, unknown> ?? {}) } : null;
   const events = await platformQuery<{
     id: string; order_item_id: string; entry_type: ShipmentEventType; delta_quantity: number;
     external_reference: string | null; metadata: Record<string, unknown>; created_at: string;
@@ -730,11 +741,38 @@ platformCommerceRoutes.get('/orders', async (c) => {
   return c.json({ items: rows, page, pageSize,total:counts[0]?.total??0 });
 });
 
+// Claim at most one provider query per order per ten seconds across API workers.
+// No provider errors or browser return values can mark an order as paid.
+async function refreshOrderPayment(orderId: string): Promise<boolean> {
+  const attempts = await platformQuery<{ provider: PlatformPaymentProvider; provider_order_id: string }>(platformDb(), `
+    UPDATE platform_payment_attempts SET updated_at=NOW()
+    WHERE id=(SELECT id FROM platform_payment_attempts WHERE order_id=$1::uuid
+      AND status IN ('initiated','pending') ORDER BY attempt_number DESC LIMIT 1)
+      AND updated_at<NOW()-INTERVAL '10 seconds'
+    RETURNING provider, provider_order_id
+  `, [orderId]);
+  const attempt = attempts[0];
+  if (!attempt || !PLATFORM_PAYMENT_PROVIDERS.includes(attempt.provider)) return false;
+  try {
+    const event = await queryProviderPayment(attempt.provider, attempt.provider_order_id);
+    if (!event) return false;
+    await applyVerifiedPayment(event);
+    return true;
+  } catch {
+    // The confirmed database status remains authoritative while the next poll retries.
+    console.warn('[platform-payment] provider verification unavailable', orderId);
+    return false;
+  }
+}
+
 platformCommerceRoutes.get('/orders/:id', async (c) => {
   const actor = await requirePlatformActor(c);
   const id = resourceId(c.req.param('id'));
-  const row = await orderDetails(platformDb(), `o.buyer_user_id = $1 AND ${orderIdentityPredicate(id, 2)}`, [actor.userId, id]);
+  let row = await orderDetails(platformDb(), `o.buyer_user_id = $1 AND ${orderIdentityPredicate(id, 2)}`, [actor.userId, id]);
   if (!row) notFound('Order');
+  if (row.status === 'pending_payment' && await refreshOrderPayment(String(row.id))) {
+    row = await orderDetails(platformDb(), 'o.id=$1::uuid AND o.buyer_user_id=$2', [row.id, actor.userId]);
+  }
   privateNoStore(c);
   return c.json(row);
 });
@@ -959,6 +997,10 @@ platformCommerceRoutes.post('/orders/:id/payment-attempts', async (c) => {
   const body = await readJsonObject(c);
   const provider = enumField(body, 'provider', PLATFORM_PAYMENT_PROVIDERS, { required: true })!;
   const clientType = enumField(body, 'clientType', ['pc', 'wap', 'miniprogram'] as const) ?? 'pc';
+  const lang = enumField(body, 'lang', ['en', 'zh'] as const) ?? 'en';
+  if (clientType === 'wap' && /MicroMessenger/i.test(c.req.header('user-agent') ?? '')) {
+    throw new PlatformApiError('EXTERNAL_BROWSER_REQUIRED', 400, 'Open this order in your browser to pay');
+  }
   const miniProgramCode = clientType === 'miniprogram' ? stringField(body, 'code', { required: true, max: 512 }) : undefined;
   if (clientType === 'miniprogram' && provider !== 'wechat') badRequest('Mini Program checkout requires WeChat Pay');
   const result = await withIdempotency(c, actor, `commerce.payment.create:${id}`, body, async (db) => {
@@ -1002,8 +1044,8 @@ platformCommerceRoutes.post('/orders/:id/payment-attempts', async (c) => {
       if (unsupported.length) badRequest('Mini Program checkout currently supports competition registrations only');
     }
     if (amount === 0) throw new PlatformApiError('INVALID_STATE', 409, 'Zero-value orders do not require payment');
-    const activeAttempts = await platformQuery<{ id: string; expired: boolean; provider: string; checkout_payload: Record<string, unknown> | null }>(db, `
-      SELECT id::text, expires_at <= NOW() AS expired,provider,checkout_payload
+    const activeAttempts = await platformQuery<{ id: string; expired: boolean; provider: string; provider_order_id: string; checkout_payload: Record<string, unknown> | null }>(db, `
+      SELECT id::text, expires_at <= NOW() AS expired,provider,provider_order_id,checkout_payload
       FROM platform_payment_attempts
       WHERE order_id = $1::uuid AND status IN ('initiated','pending')
       ORDER BY attempt_number
@@ -1017,8 +1059,19 @@ platformCommerceRoutes.post('/orders/:id/payment-attempts', async (c) => {
       `, [expiredAttemptIds]);
     }
     if (activeAttempts.some((attempt) => !attempt.expired)) {
-      const reusable = activeAttempts.find(attempt => !attempt.expired && attempt.provider === 'wechat' && attempt.checkout_payload?.requestPayment);
-      if (clientType === 'miniprogram' && reusable) return { status: 200, body: { id: reusable.id, provider, status: 'pending', expiresAt: order.reservation_expires_at, ...reusable.checkout_payload } };
+      const reusable = activeAttempts.find(attempt => !attempt.expired && attempt.provider === provider
+        && (attempt.checkout_payload?.clientType === clientType
+          || (clientType === 'miniprogram' && attempt.checkout_payload?.requestPayment)));
+      if (reusable?.checkout_payload) {
+        // Refresh expiring H5 URLs using the SAME provider order, never another charge.
+        const payment = clientType === 'miniprogram' ? reusable.checkout_payload : {
+          ...await createProviderPayment({ provider, clientType, orderNo: reusable.provider_order_id,
+            returnOrderNo: order.order_number, amountCents: amount, currency: order.currency,
+            subject: `CubeRoot ${order.order_number}`, payerIp: getIp(c), lang }), clientType,
+        };
+        await platformQuery(db, `UPDATE platform_payment_attempts SET checkout_payload=$2::jsonb WHERE id=$1::uuid`, [reusable.id, payment]);
+        return { status: 200, body: { id: reusable.id, provider, status: 'pending', expiresAt: order.reservation_expires_at, ...payment } };
+      }
       conflict('An active payment attempt already exists for this order');
     }
     const nextRows = await platformQuery<{ next: number }>(db, `SELECT COALESCE(MAX(attempt_number), 0)::integer + 1 AS next FROM platform_payment_attempts WHERE order_id = $1::uuid`, [order.id]);
@@ -1033,17 +1086,15 @@ platformCommerceRoutes.post('/orders/:id/payment-attempts', async (c) => {
       RETURNING id::text
     `, [order.id, attemptNumber, provider, merchant, providerOrderId, amount, order.currency,
       createHash('sha256').update(JSON.stringify(body)).digest('hex'), order.reservation_expires_at]);
-    const payment = await createProviderPayment({ provider, clientType, orderNo: providerOrderId, returnOrderNo: order.order_number, amountCents: amount, currency: order.currency, subject: `CubeRoot ${order.order_number}`, payerIp: getIp(c), miniProgramCode, payerUserId: actor.userId! });
-    await platformQuery(db, `UPDATE platform_payment_attempts SET status = 'pending',checkout_payload=$2::jsonb WHERE id = $1::uuid`, [attemptRows[0].id,payment]);
-    return { status: 201, body: { id: attemptRows[0].id, provider, status: 'pending', expiresAt: order.reservation_expires_at, ...payment }, resourceType: 'platform_payment_attempt', resourceId: attemptRows[0].id };
+    const payment = await createProviderPayment({ provider, clientType, orderNo: providerOrderId, returnOrderNo: order.order_number, amountCents: amount, currency: order.currency, subject: `CubeRoot ${order.order_number}`, payerIp: getIp(c), miniProgramCode, payerUserId: actor.userId!, lang });
+    await platformQuery(db, `UPDATE platform_payment_attempts SET status = 'pending',checkout_payload=$2::jsonb WHERE id = $1::uuid`, [attemptRows[0].id,{ ...payment, clientType }]);
+    return { status: 201, body: { id: attemptRows[0].id, provider, status: 'pending', expiresAt: order.reservation_expires_at, clientType, ...payment }, resourceType: 'platform_payment_attempt', resourceId: attemptRows[0].id };
   });
   return sendMutation(c, result);
 });
 
-platformCommerceRoutes.post('/payments/:provider/notify', async (c) => {
-  const provider = resourceId(c.req.param('provider')) as PlatformPaymentProvider;
-  if (!PLATFORM_PAYMENT_PROVIDERS.includes(provider)) notFound('Payment provider');
-  const event = await verifyProviderNotification(c, provider);
+async function applyVerifiedPayment(event: VerifiedPaymentEvent): Promise<void> {
+  const { provider } = event;
   await platformTransaction(async (db) => {
     const attempts = await platformQuery<{
       id: string; order_id: string; status: string; amount_minor: number | string; currency: string; merchant_account: string;
@@ -1092,7 +1143,8 @@ platformCommerceRoutes.post('/payments/:provider/notify', async (c) => {
       { provider, providerEventId: event.eventId, paid: event.paid }]);
     if (!inserted[0]) return;
     if (!event.paid) {
-      if (['initiated', 'pending'].includes(attempt.status)) {
+      // Waiting for the buyer is not a failed payment and must not unlock a second charge.
+      if (event.closed && ['initiated', 'pending'].includes(attempt.status)) {
         await platformQuery(db, `
           UPDATE platform_payment_attempts SET status = 'failed', failure_code = 'provider_not_succeeded'
           WHERE id = $1::uuid
@@ -1178,6 +1230,13 @@ platformCommerceRoutes.post('/payments/:provider/notify', async (c) => {
     await settlePaidOrder(db, order);
     await platformQuery(db, `UPDATE platform_provider_events SET status = 'processed', processed_at = NOW() WHERE id = $1::uuid`, [inserted[0].id]);
   });
+}
+
+platformCommerceRoutes.post('/payments/:provider/notify', async (c) => {
+  const provider = resourceId(c.req.param('provider')) as PlatformPaymentProvider;
+  if (!PLATFORM_PAYMENT_PROVIDERS.includes(provider)) notFound('Payment provider');
+  const event = await verifyProviderNotification(c, provider);
+  await applyVerifiedPayment(event);
   return provider === 'alipay' ? c.text('success') : c.json({ code: 'SUCCESS', message: '成功' });
 });
 
