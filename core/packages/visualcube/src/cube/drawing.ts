@@ -554,6 +554,16 @@ export function renderOLLStickers(
     if (visibility && !visibility.side[ringIndexOf(face, i, options.cubeSize) - 1]) continue
 
     inner.push(renderSticker(p1, p2, p3, p4, stickerColor, options.cubeColor))
+    const index = AllFaces.indexOf(face) * options.cubeSize * options.cubeSize + i
+    const outline = options.stickerOutline
+    // Opt-in only: existing plan diagrams retain their exact side-rim output.
+    if (outline?.includePlanSides && outline.indices.includes(index)) {
+      const fraction = Math.max(0, Math.min(0.5, outline.widthFraction))
+      const points: Vec3[] = [p1, p2, p3, p4]
+      const center: Vec3 = [points.reduce((sum, p) => sum + p[0], 0) / 4, points.reduce((sum, p) => sum + p[1], 0) / 4, 0]
+      const width = Math.min(Math.hypot(p2[0] - p1[0], p2[1] - p1[1]), Math.hypot(p4[0] - p1[0], p4[1] - p1[1])) * fraction
+      inner.push(`<polygon data-sticker-outline="true" points="${pointsAttr(points.map(p => transScale(p, center, 1 - fraction)))}" fill="none" stroke="${attr(outline.color)}" stroke-opacity="1" stroke-width="${width}"/>`)
+    }
   }
   return inner.join('')
 }
