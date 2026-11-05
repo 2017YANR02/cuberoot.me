@@ -5,7 +5,7 @@
 import MoreToggle from '@/components/MoreToggle';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { formatDateRangeIso } from '@cuberoot/shared/iso-date';
-import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
+import PersonLink from '@/components/PersonLink';
 import React from 'react';
 import Link from '@/components/AppLink';
 import {
@@ -123,8 +123,7 @@ function renderLinkedSegment(segment: string, segIdx: number, isZh: boolean | un
     const wcaId = extractWcaId(url);
     const compId = extractCompId(url);
     const iso2 = wcaId ? (personCountry ?? personFlagIso2(wcaId)) : compId ? compFlagIso2(compId) : '';
-    if (wcaId) parts.push(<WcaPersonTeamBadge key={`team-${segIdx}-${match.index}`} wcaId={wcaId} />);
-    if (iso2 && withFlag) {
+    if (!wcaId && iso2 && withFlag) {
       parts.push(<Flag key={`flag-${segIdx}-${match.index}`} iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />);
       parts.push(' ');
     }
@@ -143,16 +142,20 @@ function renderLinkedSegment(segment: string, segIdx: number, isZh: boolean | un
     if (compId) {
       displayText = localizeCompName(compId, displayText, !!isZh);
     }
-    // 人名 → 站内选手页(/wca/persons/<wcaId>,AppLink 补 lang);比赛 → 站内 comp 页;
-    // 大排名表人名众多,人名内链关 prefetch 防预取风暴。
-    const internalHref = compId ? rewriteWcaCompUrl(url) : wcaId ? `/wca/persons/${wcaId}` : null;
+    if (wcaId) {
+      parts.push(<PersonLink key={`${segIdx}-${match.index}`} wcaId={wcaId}
+        flag={iso2 && withFlag ? <><Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />{' '}</> : undefined}>
+        {displayText}
+      </PersonLink>);
+      lastIndex = match.index + match[0].length;
+      continue;
+    }
+    const internalHref = compId ? rewriteWcaCompUrl(url) : null;
     const prefetch = compId ? () => prefetchComp(compId) : undefined;
     parts.push(
       compId && internalHref
         ? <Link key={`${segIdx}-${match.index}`} href={internalHref} onMouseEnter={prefetch} onFocus={prefetch} onTouchStart={prefetch}>{displayText}</Link>
-        : internalHref
-          ? <React.Fragment key={`${segIdx}-${match.index}`}><Link  href={internalHref} prefetch={false}>{displayText}</Link></React.Fragment>
-          : <a key={`${segIdx}-${match.index}`} href={url} target="_blank" rel="noopener noreferrer">{displayText}</a>
+        : <a key={`${segIdx}-${match.index}`} href={url} target="_blank" rel="noopener noreferrer">{displayText}</a>
     );
     lastIndex = match.index + match[0].length;
   }
@@ -169,21 +172,18 @@ export function renderCell(value: unknown, columnKey?: string, isZh?: boolean, p
         const match = /^(.*) \(([^()]*)\)$/.exec(city);
         const iso2 = match ? countryToIso2(match[2]) : '';
         const cityName = localizeCity(match ? match[1] : city, !!isZh, iso2);
-        return <li key={i}>{match && iso2
-          ? <>{cityName}{' '}<span title={match[2]}><Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" /></span></>
-          : <>{cityName}{match ? ` (${match[2]})` : ''}</>}</li>;
+        return <li key={i}>{cityName}{match && !iso2 ? ` (${match[2]})` : ''}</li>;
       })}
     </ol>;
   }
   if (value && typeof value === 'object' && (value as Record<string, unknown>)._type === 'competition-itinerary') {
     const cell = value as { competitions: Array<{ id: string; name: string; startDate: string; endDate: string }> };
-    return cell.competitions.map((comp, i) => <React.Fragment key={comp.id}>
-      {i > 0 && <br />}
+    return <span className="wca-comp-itinerary">{cell.competitions.map(comp => <React.Fragment key={comp.id}>
+      <span>{formatDateRangeIso(comp.startDate, comp.endDate)}</span>
       <Link href={`/wca/comp/${comp.id}`} prefetch={false}>
         <CompCell compId={comp.id} compName={comp.name} date={comp.startDate} isZh={!!isZh} />
-      </Link>{' '}
-      <span style={{ whiteSpace: 'nowrap' }}>{formatDateRangeIso(comp.startDate, comp.endDate)}</span>
-    </React.Fragment>);
+      </Link>
+    </React.Fragment>)}</span>;
   }
   if (value && typeof value === 'object' && (value as Record<string, unknown>)._type === 'solves') {
     const cell = value as { _type: 'solves'; csv: string };

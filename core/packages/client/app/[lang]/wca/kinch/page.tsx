@@ -1,7 +1,7 @@
 'use client';
 
 import PageHeading from '@/components/PageHeading';
-import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
+import { WcaPersonIdentity } from '@/components/WcaPersonIdentity';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { parseAsString, useQueryStates } from 'nuqs';
 import type { WcaPersonLite } from '@/lib/wca-api';
@@ -215,7 +215,7 @@ function KinchPageInner() {
             <thead>
               <tr>
                 <th className="wse-rank-col">#</th>
-                <th>{tr({ zh: '选手', en: 'Person' })}</th>
+                <th className="wca-person-column">{tr({ zh: '选手', en: 'Person' })}</th>
                 <th>{tr({ zh: '国家', en: 'Country' })}</th>
                 <th className="wse-value-col">Kinch</th>
               </tr>
@@ -225,12 +225,12 @@ function KinchPageInner() {
                 <tr key={row.wcaId}>
                   <td className="wse-rank-col">{row.rank}</td>
                   <td>
-                    <><WcaPersonTeamBadge wcaId={row.wcaId} /><AppLink
+                    <WcaPersonIdentity wcaId={row.wcaId}><AppLink
                       href={`/wca/kinch?wcaId=${encodeURIComponent(row.wcaId)}${country ? `&country=${encodeURIComponent(country)}` : ''}`}
                       prefetch={false}
                     >
                       {displayCuberName(row.name, isZh)}
-                    </AppLink></>
+                    </AppLink></WcaPersonIdentity>
                     <span className="kinch-person-id">{row.wcaId}</span>
                   </td>
                   <td>

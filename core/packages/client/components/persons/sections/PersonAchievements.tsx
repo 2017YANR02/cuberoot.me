@@ -1,4 +1,4 @@
-import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
+import PersonLink from '@/components/PersonLink';
 import { memo, Fragment, useEffect, useMemo, useState } from 'react';
 import { RecordBadge } from '@/components/RecordBadge';
 import AppLink from '@/components/AppLink';
@@ -7,7 +7,6 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { useT } from '@/hooks/useT';
-import { displayCuberName } from '@/lib/cuber-name-display';
 import { listPublicMembers, publicMemberBadgeKind } from '@/lib/membership-api';
 import { apiUrl } from '@/lib/api-base';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -102,7 +101,7 @@ export const GrandSlamBadges = memo(function GrandSlamBadges({ rows, wcaId, isZh
             {e.event && <strong>{eventDisplayName(e.event, isZh)} </strong>}
             {e.value && e.event && <span>{formatWcaResult(e.value, e.event, e.type ?? 'single')} </span>}
             {e.text && <span>{e.text} </span>}
-            {e.personId && <><WcaPersonTeamBadge wcaId={e.personId} /><AppLink href={`/wca/persons/${e.personId}`} prefetch={false}>{displayCuberName(e.personName || e.personId, isZh)}</AppLink></>}
+            {e.personId && <PersonLink wcaId={e.personId} name={e.personName || e.personId} isZh={isZh} />}
             {e.place && <span>{t(`第 ${e.place} 名`, `Place ${e.place}`)} </span>}
             {e.date && <time>{formatDateRangeIso(e.date, e.endDate)}</time>}
             {e.compId && <div><AppLink href={`/wca/comp/${e.compId}`} prefetch={false}><CompCell compId={e.compId} compName={compNames.get(e.compId)} isZh={isZh} date={null} /></AppLink></div>}

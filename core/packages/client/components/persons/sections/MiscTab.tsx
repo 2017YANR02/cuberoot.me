@@ -52,7 +52,7 @@ export default function MiscTab({ profile, comps, isZh }: Props) {
             <table className="wp-misc-table">
               <thead>
                 <tr>
-                  <th>{t('选手', 'Cuber')}</th>
+                  <th className="wca-person-column">{t('选手', 'Cuber')}</th>
                   <th className="wp-cell-num">{t('参赛次数', 'Shared')}</th>
                 </tr>
               </thead>

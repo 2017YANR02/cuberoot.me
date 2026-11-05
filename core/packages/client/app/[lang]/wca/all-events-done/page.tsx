@@ -114,7 +114,7 @@ function AllEventsDonePageInner() {
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>
-                  <th>{tr({ zh: '选手', en: 'Person'
+                  <th className="wca-person-column">{tr({ zh: '选手', en: 'Person'
                 })}</th>
                   <th className="wse-value-col" aria-sort={order === 'asc' ? 'ascending' : 'descending'}>
                     <button

@@ -764,7 +764,7 @@ td.is-pr {
 .comp-row-clickable { cursor: pointer; }
 /* 高亮只由 tr 绘制，避免 td 叠色及 flex 姓名格未铺满列宽时出现断带。 */
 
-.td-person { display: flex; align-items: center; gap: 8px; }
+.td-person { white-space: nowrap; }
 
 .comp-calc-link {
   display: inline-flex;
@@ -795,7 +795,7 @@ td.is-pr {
 /* 选手列按内容收缩,长名保留省略上限。 */
 .comp-table-cn .th-person { width: auto; }
 .comp-table-cn .td-person {
-  width: max-content;
+  width: auto;
   max-width: none;
 }
 .comp-table-cn .td-person .cuber-name {
@@ -854,7 +854,7 @@ td.is-pr {
   --result-summary: 14rem;
   --result-attempt: 12rem;
 }
-.comp-results-table .comp-result-person,
+.comp-results-table .wca-person-identity,
 .comp-results-table .comp-result-person-link,
 .comp-results-table .comp-result-person-name { min-width: 0; }
 .comp-results-table .comp-result-person-name {
@@ -862,13 +862,8 @@ td.is-pr {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.comp-result-person {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 .comp-table .td-person .comp-result-person-link {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.35em;
   flex: 1;
@@ -898,7 +893,6 @@ td.is-pr {
    更好那轮正常显示,另一轮淡灰。两行共用同一条纹底色 (按选手 idx),自然成组。 */
 .comp-table-dual td.dual-td-span { vertical-align: middle; }
 .comp-table-dual .dual-td-person { white-space: nowrap; }
-.dual-person-inner { display: inline-flex; align-items: center; gap: 8px; }
 .comp-table-dual .td-dual-round { color: var(--foreground); }
 /* 表头带 InfoTooltip 的布局 wrapper:横向 flex + 间距,实际触发 / 弹层走组件 */
 .wp-th-info { display: inline-flex; align-items: center; gap: 3px; }
@@ -1626,7 +1620,6 @@ td.is-pr {
   .comp-modal-header { padding: 10px 12px; }
   .comp-modal-title { font-size: 0.95rem; gap: 6px; }
   .comp-modal-body { padding: 10px; }
-  .td-person { gap: 6px; }
   .comp-round-modal { max-height: 95vh; }
   .comp-round-modal-body { padding: 12px; gap: 12px; }
 }

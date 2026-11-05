@@ -84,7 +84,7 @@ export const SITE_DIRECTORY_TEXTS = {
   creator: { en: 'Ruimin Yan', zh: '颜瑞民' },
   competitions: { en: 'Competitions', zh: '比赛' },
   records: { en: 'Records', zh: '纪录' },
-  rankings: { en: 'Rankings', zh: '排名' },
+  rankings: { en: 'Results', zh: '成绩' },
   statistics: { en: 'Statistics', zh: '统计' },
   about: { en: 'About', zh: '关于' },
   acknowledgments: { en: 'Acknowledgments', zh: '致谢' },

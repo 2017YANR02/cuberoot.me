@@ -25,7 +25,6 @@
 .wca-teams-table th, .wca-teams-table td { padding: 12px 16px; text-align: right; font-variant-numeric: tabular-nums; }
 .wca-teams-table th:first-child, .wca-teams-table td:first-child { text-align: start; width: 34%; }
 .wca-teams-table th:nth-child(2), .wca-teams-table td:nth-child(2) { text-align: center; width: 16%; }
-.wca-team-person { display: flex; align-items: center; gap: 12px; }
 .wca-team-person-id { display: block; margin-top: 3px; font-size: 11px; letter-spacing: 0.03em; color: var(--muted-foreground); }
 .wca-team-average { font-weight: 600; }
 .wca-team-world-rank { display: block; margin-top: 3px; font-size: 11px; font-weight: 400; color: var(--muted-foreground); }
@@ -39,5 +38,4 @@
   .wca-team-brand-heading { min-height: 36px; }
   .wca-teams-toolbar .search-input { flex: 1; width: auto; }
   .wca-teams-table th, .wca-teams-table td { padding: 10px; }
-  .wca-team-person { gap: 8px; }
 }

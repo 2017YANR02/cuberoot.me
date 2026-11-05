@@ -5,7 +5,7 @@
  * (per-column filters, record badges, WCA auth, comp localize/links).
  */
 import { Tooltip } from '@/components/Tooltip';
-import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
+import { WcaPersonIdentity } from '@/components/WcaPersonIdentity';
 import {
   cloneElement, useEffect, useMemo, useState, useRef, useCallback, useContext,
 } from 'react';
@@ -832,12 +832,13 @@ export default function ReconListPage() {
             {cubers.map((c, i) => (
               <span key={i}>
                 {i > 0 ? <span className="recon-cuber-sep"> &amp; </span> : null}
-                <WcaPersonTeamBadge wcaId={c.id} />{c.country ? <><Flag iso2={c.country} className="recon-inline-flag" />{' '}</> : null}
+                <WcaPersonIdentity wcaId={c.id} flag={c.country ? <Flag iso2={c.country} className="recon-inline-flag" /> : null}>
                 {c.id ? (
                   <><Link href={`/recon/person/${c.id}`} onClick={(e) => e.stopPropagation()}>
                     {displayCuberName(c.name, isZh)}
                   </Link></>
                 ) : displayCuberName(c.name, isZh)}
+                </WcaPersonIdentity>
               </span>
             ))}
           </>
@@ -1119,7 +1120,7 @@ export default function ReconListPage() {
                     return (
                       <th
                         key={col.key || col.labelKey}
-                        className={`${col.className || ''} ${
+                        className={`${col.className || ''} ${col.key === 'person' ? 'wca-person-column' : ''} ${
                           col.sortable && col.key === sortKey
                             ? `sort-${sortDir}`
                             : ''

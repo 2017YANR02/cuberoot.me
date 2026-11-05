@@ -5,11 +5,9 @@ import type { EChartsType } from 'echarts';
 import { useTranslation } from 'react-i18next';
 import { parseAsString, useQueryStates } from 'nuqs';
 import BoolToggle from '@/components/BoolToggle';
-import Link from '@/components/AppLink';
 import { Flag } from '@/components/Flag';
-import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
+import PersonLink from '@/components/PersonLink';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
-import { displayCuberName } from '@/lib/cuber-name-display';
 import { apiUrl } from '@/lib/api-base';
 import { tr } from '@/i18n/tr';
 interface CensusRow { rank: number; wcaId: string; name: string; iso2: string | null; subsetsWon: number; }
@@ -147,8 +145,8 @@ export default function SorCensus({ type }: { type: 'single' | 'average' }) {
                   return (
                     <li key={r.wcaId}>
                       <span className="sor-census-rank">{r.rank}</span>
-                      <WcaPersonTeamBadge wcaId={r.wcaId} />{r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                      <Link prefetch={false} href={`/wca/persons/${r.wcaId}`}>{displayCuberName(r.name, isZh)}</Link>
+                      <span className="sor-census-person"><PersonLink wcaId={r.wcaId} name={r.name} isZh={isZh}
+                        flag={<>{r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}</>} /></span>
                       <span className="sor-census-share">{share < 0.1 ? share.toFixed(3) : share.toFixed(1)}%</span>
                     </li>
                   );

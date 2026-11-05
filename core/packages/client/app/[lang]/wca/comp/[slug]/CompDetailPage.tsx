@@ -1,7 +1,8 @@
 'use client';
 import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
-import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
+import { WcaPersonIdentity } from '@/components/WcaPersonIdentity';
+import PersonLink from '@/components/PersonLink';
 import { competitionFetch, ensureCompetitionAccess } from '@/lib/competition-access';
 
 /**
@@ -1859,12 +1860,7 @@ export default function CompDetailPage() {
                     location: resolveCompLocation(compInfo, cubingZh, isZh).text,
                   }} />
                   {myRegistrationNumber !== null && (
-                    <Tooltip content={tr({ zh: '我的粗饼报名编号', en: 'My Cubing China registration number' })} openOnClick>
-                      {tip => <button {...tip} type="button" className="comp-registration-number"
-                        aria-label={tr({ zh: `我的粗饼报名编号：${myRegistrationNumber}`, en: `My Cubing China registration number: ${myRegistrationNumber}` })}>
-                        {myRegistrationNumber}
-                      </button>}
-                    </Tooltip>
+                    <RegistrationNumber key={`registration-${slug}`} number={myRegistrationNumber} cubingSlug={cubingSlug} />
                   )}
                 </>
               );
@@ -2326,6 +2322,31 @@ function renderWcaText(text: string): React.ReactNode {
   return out.length ? out : text;
 }
 
+function RegistrationNumber({ number, cubingSlug }: { number: number; cubingSlug: string }) {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const linkRef = useRef<HTMLAnchorElement>(null);
+  usePanelClamp(open, panelRef);
+  usePopoverDismiss(open, () => setOpen(false), panelRef, triggerRef);
+  useEffect(() => {
+    if (open) linkRef.current?.focus({ preventScroll: true });
+  }, [open]);
+  const label = tr({ zh: '我的粗饼报名编号', en: 'My Cubing China registration number' });
+  return <span className="info-tooltip">
+    <button ref={triggerRef} type="button" className="comp-registration-number"
+      aria-label={`${label}: ${number}`} aria-expanded={open} aria-haspopup="dialog"
+      onClick={() => setOpen(value => !value)}>{number}</button>
+    {open && <div ref={panelRef} className="info-tooltip-pop" data-site-surface="popover" role="dialog" aria-label={label}>
+      <div>{label}</div>
+      <a ref={linkRef} className="comp-info-link" href={`https://cubing.com/competition/${cubingSlug}/registration`}
+        target="_blank" rel="noopener noreferrer">
+        {tr({ zh: '打开签到二维码', en: 'Open check-in QR code' })}
+      </a>
+    </div>}
+  </span>;
+}
+
 function CompAddress({ address, isZh, countryIso2 }: { address: string; isZh: boolean; countryIso2: string }) {
   const user = useAuthUser();
   const [accountCountry, setAccountCountry] = useState<{ user: typeof user; country: string } | null>(null);
@@ -2703,7 +2724,7 @@ function ResultsTable({ results, search = '', users, round, isZh, pbMap, advance
         <thead>
           <tr>
             <th className="th-place">{tr({ zh: '名次', en: 'Place' })}</th>
-            <th className="th-person">{tr({ zh: '选手', en: 'Person'
+            <th className="th-person wca-person-column">{tr({ zh: '选手', en: 'Person'
             })}</th>
             {(() => {
               const avgTh = showAvg ? (
@@ -2863,8 +2884,7 @@ const ResultsTableRow = memo(function ResultsTableRow({
         )}
       </td>
       <td className="td-person comp-result-person-cell">
-        <div className="comp-result-person">
-          <WcaPersonTeamBadge wcaId={u.wcaid} /><Flag iso2={regionToIso2(u.region)} className="comp-flag" />
+        <WcaPersonIdentity wcaId={u.wcaid} flag={<Flag iso2={regionToIso2(u.region)} spanClassName="country-flag" imgClassName="country-flag-ct" />}>
           <Link
             href={compResultHref(compId ?? '', { eventId: r.e, roundId: r.r, number: r.n })}
             prefetch={false}
@@ -2875,7 +2895,7 @@ const ResultsTableRow = memo(function ResultsTableRow({
           >
             <span className="comp-result-person-name">{cuberName}</span>
           </Link>
-        </div>
+        </WcaPersonIdentity>
         {/* 行级编辑铅笔已移除:管理员经点成绩弹窗里的「编辑变更记录…」打开整条变更编辑器。 */}
       </td>
       {(() => {
@@ -3083,7 +3103,7 @@ function CompRecordsView({ groups, users, isZh, onClickCuber }: CompRecordsViewP
               <table className="comp-table">
                 <thead>
                   <tr>
-                    <th className="th-person">{tr({ zh: '选手', en: 'Person'
+                    <th className="th-person wca-person-column">{tr({ zh: '选手', en: 'Person'
                     })}</th>
                     <th className="th-best">{tr({ zh: '单次', en: 'Best'
                     })}</th>
@@ -3105,10 +3125,11 @@ function CompRecordsView({ groups, users, isZh, onClickCuber }: CompRecordsViewP
                         onClick={() => onClickCuber(row.n, g.ev.i, row.roundId)}
                       >
                         <td className="td-person">
-                          <WcaPersonTeamBadge wcaId={u.wcaid} /><Flag iso2={iso2} className="comp-flag" />
-                          <span className="cuber-name" title={regionDisplay(u.region, isZh)}>
-                            {displayCuberName(u.name, isZh)}
-                          </span>
+                          <WcaPersonIdentity wcaId={u.wcaid} flag={<Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}>
+                            <span className="cuber-name" title={regionDisplay(u.region, isZh)}>
+                              {displayCuberName(u.name, isZh)}
+                            </span>
+                          </WcaPersonIdentity>
                         </td>
                         <td className="td-best">
                           {row.single && (
@@ -3184,7 +3205,7 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
         <thead>
           <tr>
             <th className="th-place">{tr({ zh: '名次', en: 'Place' })}</th>
-            <th className="th-person">{tr({ zh: '选手', en: 'Person'
+            <th className="th-person wca-person-column">{tr({ zh: '选手', en: 'Person'
             })}</th>
             <th className="th-dual-round">
               <span className="wp-th-info">
@@ -3254,12 +3275,11 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
                   )}
                   {si === 0 && (
                     <td className="dual-td-span dual-td-person" rowSpan={span}>
-                      <span className="dual-person-inner">
-                        <WcaPersonTeamBadge wcaId={u.wcaid} /><Flag iso2={regionToIso2(u.region)} className="comp-flag" />
+                      <WcaPersonIdentity wcaId={u.wcaid} flag={<Flag iso2={regionToIso2(u.region)} spanClassName="country-flag" imgClassName="country-flag-ct" />}>
                         <span className="cuber-name" title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}>
                           {cuberName}
                         </span>
-                      </span>
+                      </WcaPersonIdentity>
                     </td>
                   )}
                   <td className="td-dual-round">{roundLabel(sr.rd.i)}</td>
@@ -3285,22 +3305,10 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
 
 // 选手名:有 WCA ID 时链到选手主页 (stopPropagation 避免同时触发整行的弹窗 onClick).
 function CuberNameLink({ u, isZh }: { u: User; isZh: boolean }) {
-  const name = displayCuberName(u.name, isZh);
-  const title = regionDisplay(u.region, isZh);
-  if (u.wcaid) {
-    return (
-      <><Link
-        prefetch={false}
-        href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${u.wcaid}`}
-        className="cuber-name cuber-link"
-        title={title}
-        onClick={e => e.stopPropagation()}
-      >
-        {name}
-      </Link></>
-    );
-  }
-  return <span className="cuber-name" title={title}>{name}</span>;
+  return <PersonLink wcaId={u.wcaid ?? ''} name={u.name} isZh={isZh}
+    className="cuber-name cuber-link" title={regionDisplay(u.region, isZh)}
+    onClick={event => event.stopPropagation()}
+    flag={<><Flag iso2={regionToIso2(u.region)} spanClassName="country-flag" imgClassName="country-flag-ct" />{' '}</>} />;
 }
 
 // 单项目预排名顺序 → 每个选手在该项目里的名次 (1-based) + 参赛人数. 名次和复用此函数:
@@ -3487,7 +3495,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
           <thead>
             <tr>
               <th className="th-place">{tr({ zh: '名次', en: 'Rank' })}</th>
-              <th className="th-person">{tr({ zh: '选手', en: 'Person'
+              <th className="th-person wca-person-column">{tr({ zh: '选手', en: 'Person'
             })}</th>
               {eventIds.map(e => (
                 <th key={e} className="comp-sor-evcol"><EventIcon event={e} className="comp-sor-evicon" /></th>
@@ -3510,7 +3518,6 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
               >
                 <td className="td-place">{idx + 1}</td>
                 <td className="td-person">
-                  <WcaPersonTeamBadge wcaId={row.u.wcaid} /><Flag iso2={regionToIso2(row.u.region)} className="comp-flag" />
                   <CuberNameLink u={row.u} isZh={isZh} />
                 </td>
                 {row.ranks.map((r, j) => (
@@ -3546,7 +3553,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
             <thead>
               <tr>
                 <th className="th-place">{tr({ zh: '名次', en: 'Rank' })}</th>
-                <th className="th-person">{tr({ zh: '选手', en: 'Person'
+                <th className="th-person wca-person-column">{tr({ zh: '选手', en: 'Person'
                 })}</th>
                 {(() => {
                   const avgTh = (
@@ -3574,7 +3581,6 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
                   >
                     <td className="td-place">{rankByN.get(row.n) ?? idx + 1}</td>
                     <td className="td-person">
-                      <WcaPersonTeamBadge wcaId={row.u.wcaid} /><Flag iso2={regionToIso2(row.u.region)} className="comp-flag" />
                       <CuberNameLink u={row.u} isZh={isZh} />
                     </td>
                     {(() => {
@@ -3614,7 +3620,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
             <thead>
               <tr>
                 <th className="th-place">#</th>
-                <th className="th-person">{tr({ zh: '选手', en: 'Person'
+                <th className="th-person wca-person-column">{tr({ zh: '选手', en: 'Person'
                 })}</th>
                 <th>{tr({ zh: '项目', en: 'Events'
                 })}</th>
@@ -3632,7 +3638,6 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
                   >
                     <td className="td-place">{idx + 1}</td>
                     <td className="td-person">
-                      <WcaPersonTeamBadge wcaId={u.wcaid} /><Flag iso2={regionToIso2(u.region)} className="comp-flag" />
                       <CuberNameLink u={u} isZh={isZh} />
                     </td>
                     <td className="comp-roster-events">
@@ -3774,18 +3779,9 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, personal = false, lo
       <div ref={cardRef} className="comp-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <header className="comp-modal-header comp-cuber-modal-header">
           <div className="comp-modal-title">
-            {u && <><WcaPersonTeamBadge wcaId={u.wcaid} /><Flag iso2={regionToIso2(u.region)} className="comp-flag" /></>}
-            {u?.wcaid ? (
-              <><Link
-                prefetch={false}
-                href={`/wca/persons/${u.wcaid}`}
-                className="cuber-link-modal"
-              >
-                {displayCuberName(u.name, isZh)}
-              </Link></>
-            ) : (
-              <span className="cuber-link-static">{u ? displayCuberName(u.name, isZh) : ''}</span>
-            )}
+            {u && <PersonLink wcaId={u.wcaid ?? ''} name={u.name} isZh={isZh}
+              className={u.wcaid ? 'cuber-link-modal' : 'cuber-link-static'}
+              flag={<><Flag iso2={regionToIso2(u.region)} className="comp-flag" />{' '}</>} />}
           </div>
           <div className="comp-modal-search">
             <SearchInput
@@ -4178,18 +4174,8 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
       <div ref={cardRef} className="comp-round-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <header className="comp-modal-header">
           <div className="comp-modal-title">
-            <WcaPersonTeamBadge wcaId={u.wcaid} /><Flag iso2={iso2} className="comp-flag" />
-            {u.wcaid ? (
-              <><Link
-                prefetch={false}
-                href={`/wca/persons/${u.wcaid}`}
-                className="cuber-link-modal"
-              >
-                {displayCuberName(u.name, isZh)}
-              </Link></>
-            ) : (
-              <span>{displayCuberName(u.name, isZh)}</span>
-            )}
+            <PersonLink wcaId={u.wcaid ?? ''} name={u.name} isZh={isZh} className="cuber-link-modal"
+              flag={<><Flag iso2={iso2} className="comp-flag" />{' '}</>} />
             {place !== null && <span className="comp-round-modal-place">#{place}</span>}
           </div>
           <button type="button" className="comp-modal-close" onClick={onClose} aria-label="Close">

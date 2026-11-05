@@ -814,8 +814,6 @@ html[data-theme=dark] .wp-page {
 .wp-tab-btn.wp-tab-btn--empty.is-active { border-bottom-color: var(--wp-text-mute); }
 .wp-tab-body { padding: 16px 24px 24px; }
 
-/* 「成绩」=按项目视图;右侧「比赛」(sub=comp)直接复用 .wp-tab-btn 主 tab 样式,无额外 CSS */
-
 /* 管理员「编辑模式」开关:紧贴「全部成绩」标题右侧的纯图标按钮 */
 .wp-editmode-toggle {
     display: inline-flex; align-items: center; justify-content: center;
@@ -879,8 +877,15 @@ html[data-theme=dark] .wp-page {
 .wp-attempt-stats > span { display: grid; gap: 3px; text-align: center; white-space: nowrap; }
 .wp-attempt-stats strong { color: var(--wp-text); font-size: 0.9rem; }
 
-/* 「比赛」视图工具行:成绩/赛事 PillToggle + (# PR 名次 / 编辑)同一行,左对齐 + 与下方表格留白 */
-.wp-comp-subtoggle { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+/* 成绩工具行：按项目 / 按比赛分组菜单，以及当前视图的操作。 */
+.wp-comp-subtoggle { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 12px; }
+.wp-comp-subtoggle > .wca-stats-tab-bar { flex-shrink: 0; margin: 0; }
+.wp-comp-subtoggle:has(.wp-event-strip-tabs) { flex-wrap: nowrap; }
+.wp-comp-subtoggle > .wp-event-strip-tabs {
+    flex: 1; min-width: 0; flex-wrap: nowrap; overflow-x: auto;
+    justify-content: flex-start; padding: 0; margin: 0;
+}
+.wp-comp-subtoggle > .wp-event-strip-tabs > .wp-event-tab { flex-shrink: 0; }
 
 /* ── 按比赛 (ByCompList) ─────────────────────────────────────────── */
 .wp-bycomp { display: flex; flex-direction: column; gap: 16px; }

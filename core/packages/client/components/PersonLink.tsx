@@ -12,8 +12,8 @@
 //   - 非 WCA id 降级成纯文本:站内作者字段存的是归属键 ownerKey(shared/account.ts),
 //     没绑 WCA 的账号是合成 `u<uid>`,/wca/persons/u144 查无此人 → 不该出链接。
 
-import type { ReactNode } from 'react';
-import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
+import type { ComponentProps, ReactNode } from 'react';
+import { WcaPersonIdentity } from '@/components/WcaPersonIdentity';
 import AppLink from '@/components/AppLink';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { isWcaIdFormat } from '@cuberoot/shared/account';
@@ -33,18 +33,19 @@ interface Props {
   flag?: ReactNode;
   /** Disable when the caller already renders the team identity. */
   showTeam?: boolean;
+  onClick?: ComponentProps<typeof AppLink>['onClick'];
 }
 
 export default function PersonLink({
-  wcaId, name, isZh = false, className, prefetch = false, title, children, showTeam = true, flag,
+  wcaId, name, isZh = false, className, prefetch = false, title, children, showTeam = true, flag, onClick,
 }: Props) {
   const body = children ?? (name != null ? displayCuberName(name, isZh) : wcaId);
   if (!isWcaIdFormat(wcaId)) {
-    return <>{flag}<span className={className} title={title}>{body}</span></>;
+    return <WcaPersonIdentity showTeam={showTeam} flag={flag}><span className={className} title={title}>{body}</span></WcaPersonIdentity>;
   }
   return (
-    <>{showTeam && <WcaPersonTeamBadge wcaId={wcaId} />}{flag}<AppLink href={personHref(wcaId)} prefetch={prefetch} className={className} title={title}>
+    <WcaPersonIdentity wcaId={wcaId} showTeam={showTeam} flag={flag}><AppLink href={personHref(wcaId)} prefetch={prefetch} className={className} title={title} onClick={onClick}>
       {body}
-    </AppLink></>
+    </AppLink></WcaPersonIdentity>
   );
 }

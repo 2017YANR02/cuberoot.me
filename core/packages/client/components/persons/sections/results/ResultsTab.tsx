@@ -1,5 +1,5 @@
 'use client';
-import '@cuberoot/timer-ui/compact-select.css';
+import '@/components/wca-stats/wca-stats-tabs.css';
 
 // 成绩 tab:按项目 / 按比赛 子切换 + 项目图标条(在按项目模式下).
 
@@ -7,6 +7,10 @@ import { useQueryStates, parseAsString } from 'nuqs';
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
+import AppLink from '@/components/AppLink';
+import BoolToggle from '@/components/BoolToggle';
+import { tr } from '@/i18n/tr';
+import { useT } from '@/hooks/useT';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import { mergePersonLive } from '@/lib/person-live-merge';
@@ -33,20 +37,19 @@ interface Props {
 type Sub = 'event' | 'comp';
 
 export default function ResultsTab({ profile, results, comps, liveResults, liveComps, reconLookup, isZh, femaleRecordLookup }: Props) {
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = useT();
   // 「详细成绩」逐把 PR 名次角标的显示开关(默认开;开关 UI 在各视图「全部成绩」标题右侧)。
   const [showAttemptRanks, setShowAttemptRanks] = useState(true);
-  // 「按比赛」视图内的子 tab:成绩(逐场详细成绩,默认)/ 赛事(紧凑比赛列表,原赛事 tab 合并进来)。
+  // 「成绩」默认开启；关闭后显示紧凑赛事列表。
   const [compView, setCompView] = useState<'results' | 'list'>('results');
-  // 比赛视图的工具(# PR 名次)由本组件统一渲染,与上方原生菜单同一行;ByCompList 自带的工具行不再
+  // 比赛视图的工具(# PR 名次)由本组件统一渲染,与成绩开关同一行;ByCompList 自带的工具行不再
   // 渲染(不传 onToggle* 回调即隐藏)。编辑改由点成绩弹窗内做(无全局编辑模式 / 铅笔)。
   // 子 tab(按项目 / 按比赛)+ 选中项目均为页内瞬时态 → replace,不堆历史
   const [q, setQ] = useQueryStates(
     { sub: parseAsString, event: parseAsString },
     { history: 'replace', scroll: false },
   );
-  // 子视图(按项目 / 按比赛)由「成绩」主 tab 右侧的 PillToggle 写入 ?sub=(见 PersonTabs);
-  // 这里只读取以决定渲染哪个视图。
+  // 成绩内部切换分组方式；沿用 ?sub=，兼容现有按比赛深链。
   const rawSub = (q.sub ?? 'event').toLowerCase();
   const sub: Sub = rawSub === 'comp' ? 'comp' : 'event';
 
@@ -72,40 +75,52 @@ export default function ResultsTab({ profile, results, comps, liveResults, liveC
 
   return (
     <div className="wp-results-tab">
-      {sub === 'event' && eventIds.length > 0 && (
-        <div className="wp-event-strip wp-event-strip-tabs">
-          {eventIds.map((eid) => (
-            <button
-              key={eid}
-              type="button"
-              className={`wp-event-tab ${eid === activeEvent ? 'is-active' : ''}`}
-              onClick={() => setEvent(eid)}
-              title={eid}
-            >
-              <EventIcon event={eid} className="wp-event-icon-md" />
-            </button>
-          ))}
+      <div className="wp-comp-subtoggle">
+        <div className="wca-stats-tab-bar wca-stats-tab-bar-connected" role="group" aria-label={t('成绩分组', 'Group results')}>
+          <button type="button" className={`wca-stats-tab${sub === 'event' ? ' active' : ''}`}
+            aria-pressed={sub === 'event'} onClick={() => setQ({ sub: null })}>
+            {t('按项目', 'By event')}
+          </button>
+          <button type="button" className={`wca-stats-tab${sub === 'comp' ? ' active' : ''}`}
+            aria-pressed={sub === 'comp'} onClick={() => setQ({ sub: 'comp' })}>
+            {t('按比赛', 'By competition')}
+          </button>
         </div>
-      )}
-
-      {sub === 'comp' && (
-        <div className="wp-comp-subtoggle">
-          <select
-            value={String(compView === 'list')}
-            onChange={event => { const v = event.currentTarget.value === 'true'; setCompView(v ? 'list' : 'results'); }}
-            aria-label={t('比赛视图:成绩或赛事列表', 'Competition view: results or competition list')}
-            className="native-select"
+        {sub === 'comp' && <>
+          <BoolToggle
+            label={t('成绩', 'Results')}
+            value={compView === 'results'}
+            onChange={show => setCompView(show ? 'results' : 'list')}
+          />
+          <AppLink
+            href={`/wca/competition_streaks?q=${encodeURIComponent(profile.person.wca_id)}`}
+            prefetch={false}
+            className="btn-secondary"
           >
-            <option value="true">{t('赛事', 'Competitions')}</option>
-            <option value="false">{t('成绩', 'Results')}</option>
-          </select>
+            {tr({ zh: '特种兵', en: 'Competition streaks' })}
+          </AppLink>
           {compView === 'results' && (
             <span className="wp-section-h-tools">
               <AttemptRanksToggle active={showAttemptRanks} onToggle={() => setShowAttemptRanks((v) => !v)} />
             </span>
           )}
-        </div>
-      )}
+        </>}
+        {sub === 'event' && eventIds.length > 0 && (
+          <div className="wp-event-strip wp-event-strip-tabs">
+            {eventIds.map((eid) => (
+              <button
+                key={eid}
+                type="button"
+                className={`wp-event-tab ${eid === activeEvent ? 'is-active' : ''}`}
+                onClick={() => setEvent(eid)}
+                title={eid}
+              >
+                <EventIcon event={eid} className="wp-event-icon-md" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <Suspense fallback={<div className="wp-loading-inline"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>}>
         {sub === 'event' && (

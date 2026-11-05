@@ -5,9 +5,9 @@ import { Suspense, useEffect, useState } from 'react';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { CubingBrandLabel } from '@/components/CubingBrandLabel';
-import { WcaTeamLink } from '@/components/WcaTeamLink';
 import PersonLink from '@/components/PersonLink';
 import { Flag } from '@/components/Flag';
+import { WcaPersonIdentity } from '@/components/WcaPersonIdentity';
 import { SearchInput } from '@/components/SearchInput';
 import { Tooltip } from '@/components/Tooltip';
 import { WcaRelationColumnHeader } from '@/components/WcaRelationColumnHeader';
@@ -113,14 +113,11 @@ function TeamsDirectory() {
           {tip => <span {...tip} tabIndex={0}>{tr({ zh: '夺冠次数', en: 'Titles' })}</span>}
         </Tooltip></th></tr></thead>
       <tbody>{!loading && !failed && data?.members.map(member => <tr key={member.memberId ?? member.wcaId}>
-        <td><div className="wca-team-person">
-          <span className="wca-person-team-slot"><WcaTeamLink team={{ id: member.teamId, name: member.teamName }} className="wca-person-team-badge" /></span>
-          {member.iso2 && <Flag iso2={member.iso2} />}
-          <div>{member.wcaId
+        <td><WcaPersonIdentity team={{ id: member.teamId, name: member.teamName }} flag={member.iso2 && <Flag iso2={member.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}>{member.wcaId
             ? <PersonLink wcaId={member.wcaId} name={member.name} isZh={isZh} showTeam={false} />
             : <span>{displayCuberName(member.name, isZh)}</span>}
-            {member.wcaId && <span className="wca-team-person-id">{member.wcaId}</span>}</div>
-        </div></td>
+            {member.wcaId && <span className="wca-team-person-id">{member.wcaId}</span>}
+        </WcaPersonIdentity></td>
         <td>{member.bestSingle == null ? '—' : formatWcaResult(member.bestSingle, '333', 'single')}
           {member.bestSingle != null && member.singleWorldRank != null && member.singleWorldRank > 0 &&
             <span className="wca-team-world-rank">WR{member.singleWorldRank}</span>}

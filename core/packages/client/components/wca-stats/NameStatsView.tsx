@@ -1,13 +1,12 @@
 'use client';
 import MoreToggle from '@/components/MoreToggle';
-import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
+import PersonLink from '@/components/PersonLink';
 import '@cuberoot/timer-ui/compact-select.css';
 
 // name_stats 专属可视化:词数 / 字符长度 双 tab。
 // 分布复用 /scramble 的 DiscreteHistogram(竖向渐变柱 + PDF/CDF + %/计数 切换),
 // 点柱子 → 下方展示该组的国旗占比 + 选手名(站内链接)。字符长度尾部过长时折叠成 "N+"。
 import React, { useMemo, useState, useEffect } from 'react';
-import Link from '@/components/AppLink';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { Flag } from '@/components/Flag';
 import { countryToIso2, personFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
@@ -28,14 +27,14 @@ function fmtPct(p: number): string {
   return p >= 9.95 ? `${Math.round(p)}%` : `${p.toFixed(1)}%`;
 }
 
-function PersonLink({ p, mode }: { p: PersonItem; mode: NameMode }) {
+function NameStatsPerson({ p, mode }: { p: PersonItem; mode: NameMode }) {
   const iso2 = personFlagIso2(p.id);
   return (
     <span className="ns-person-wrap">
-      <><WcaPersonTeamBadge wcaId={p.id} /><Link className="ns-person" href={`/wca/persons/${p.id}`} prefetch={false}>
-        {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+      <PersonLink wcaId={p.id} className="ns-person"
+        flag={<>{iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}</>}>
         {nameByMode(p.n, mode)}
-      </Link></>
+      </PersonLink>
       {/* 含曾用名:现名后跟弱化的曾用名标签,拆开避免一串连读 */}
       {mode === 'aka' && <FormerNames former={p.former} />}
     </span>
@@ -49,7 +48,7 @@ function NamesBlock({ people, mode }: { people: People; mode: NameMode }) {
     <div className="ns-names">
       {items.map((p, i) => (
         <React.Fragment key={i}>
-          <PersonLink p={p} mode={mode} />
+          <NameStatsPerson p={p} mode={mode} />
           {(i < items.length - 1 || more > 0) && <span className="ns-sep">, </span>}
         </React.Fragment>
       ))}

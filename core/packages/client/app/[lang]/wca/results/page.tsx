@@ -32,8 +32,7 @@ import { ClearButton } from '@/components/ClearButton';
 import { SearchInput } from '@/components/SearchInput';
 import { AttemptHeaderCells, AttemptCells } from '@/components/wca-results/AttemptsGrid';
 import { formatWcaResult } from '@/lib/wca-format-result';
-import { displayCuberName } from '@/lib/cuber-name-display';
-import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
+import PersonLink from '@/components/PersonLink';
 import { RecordBadge } from '@/components/RecordBadge';
 import { apiUrl } from '@/lib/api-base';
 import { compLinkProps } from '@/lib/comp-link';
@@ -130,7 +129,6 @@ interface SorRow {
 function AllResultsPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  const personHref = (id: string) => `/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${id}`;
   const [query, setQuery] = useQueryStates(
     {
       rtype: parseAsString,
@@ -828,9 +826,11 @@ function AllResultsPageInner() {
                       <tr key={r.wcaId}>
                         <td className="wse-rank-col">{(page - 1) * size + i + 1}</td>
                         <td>
-                          <WcaPersonTeamBadge wcaId={r.wcaId} />{r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                           <span className="ns-person-wrap">
-                            <><Link prefetch={false} href={personHref(r.wcaId)}>{nameByMode(r.name, pname)}</Link></>
+                            <PersonLink wcaId={r.wcaId}
+                              flag={<>{r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}</>}>
+                              {nameByMode(r.name, pname)}
+                            </PersonLink>
                             {pname === 'aka' && <FormerNames former={r.former} />}
                           </span>
                         </td>
@@ -887,8 +887,8 @@ function AllResultsPageInner() {
                       <tr key={`${r.rank}-${r.wcaId}-${r.compId}`}>
                         <td className="wse-rank-col">{r.rank}</td>
                         <td>
-                          <WcaPersonTeamBadge wcaId={r.wcaId} />{r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-                          <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
+                          <PersonLink wcaId={r.wcaId} name={r.name} isZh={isZh}
+                            flag={<>{r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}</>} />
                         </td>
                         <WcaPersonRelationCells wcaId={r.wcaId} eventIds={teacherEventIds} teacherDirectory={teacherDirectory} teamDirectory={teamDirectory} isZh={isZh} />
                         <td className="wse-value-col">
@@ -928,8 +928,8 @@ function AllResultsPageInner() {
                       <tr key={r.wcaId}>
                         <td className="wse-rank-col">{r.rank}</td>
                         <td>
-                          <WcaPersonTeamBadge wcaId={r.wcaId} />{r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-                          <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
+                          <PersonLink wcaId={r.wcaId} name={r.name} isZh={isZh}
+                            flag={<>{r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}</>} />
                         </td>
                         <WcaPersonRelationCells wcaId={r.wcaId} eventIds={teacherEventIds} teacherDirectory={teacherDirectory} teamDirectory={teamDirectory} isZh={isZh} />
                         <td className="wse-value-col">{r.value != null ? formatWcaResult(r.value, singleEvent, effType) : '—'}</td>
@@ -994,10 +994,8 @@ function AllResultsPageInner() {
                       <tr key={r.wcaId}>
                         <td className="wse-rank-col">{(page - 1) * size + i + 1}</td>
                         <td>
-                          <span className="wse-person-cell">
-                            <WcaPersonTeamBadge wcaId={r.wcaId} />{r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                            <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
-                          </span>
+                          <PersonLink wcaId={r.wcaId} name={r.name} isZh={isZh}
+                            flag={<>{r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}</>} />
                         </td>
                         <WcaPersonRelationCells wcaId={r.wcaId} eventIds={teacherEventIds} teacherDirectory={teacherDirectory} teamDirectory={teamDirectory} isZh={isZh} />
                         <td className="wse-value-col">{r.subsetTotal != null ? r.subsetTotal : isCountryMode ? r.totalCountryRank : r.totalWorldRank}</td>

@@ -243,7 +243,7 @@ export default function PersonDetailClient() {
           />
         ) : (
           <>
-            <PersonUpcomingComps wcaId={profile.person.wca_id} isZh={isZh} />
+            <PersonUpcomingComps wcaId={profile.person.wca_id} isZh={isZh} title={null} />
             <PersonStudents
               teacherWcaId={profile.person.wca_id}
               teacherCountryIso2={profile.person.country_iso2}

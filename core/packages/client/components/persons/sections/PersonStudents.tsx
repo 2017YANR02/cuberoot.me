@@ -299,7 +299,7 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
         <table className="wp-pr-table wp-students-table">
           <thead>
             <tr>
-              <th className="wp-th-student">
+              <th className="wp-th-student wca-person-column">
                 <span className="wp-student-heading">
                   {isManagement && (
                     <WcaStudentAdder
@@ -373,21 +373,14 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
                         onSaved={() => setReloadKey((current) => current + 1)}
                       />
                     ) : null}
-                    {student.wcaId ? (
-                      <PersonLink
-                        flag={student.countryIso2 ? <Flag iso2={student.countryIso2} spanClassName="country-flag" imgClassName="country-flag-ct" /> : null}
-                        wcaId={student.wcaId}
-                        name={student.name}
-                        isZh={isZh}
-                        className="wp-student-link"
-                      />
-                    ) : (
-                      <>
-                        {student.countryIso2 && <Flag iso2={student.countryIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                        <span className="wp-student-unregistered-name">{student.name}</span>
-                        <span className="wp-student-unregistered">{t('未参赛', 'Not competed')}</span>
-                      </>
-                    )}
+                    <PersonLink
+                      flag={student.countryIso2 ? <Flag iso2={student.countryIso2} spanClassName="country-flag" imgClassName="country-flag-ct" /> : null}
+                      wcaId={student.wcaId ?? ''}
+                      name={student.name}
+                      isZh={isZh}
+                      className={student.wcaId ? 'wp-student-link' : 'wp-student-unregistered-name'}
+                    />
+                    {!student.wcaId && <span className="wp-student-unregistered">{t('未参赛', 'Not competed')}</span>}
                   </span>
                   <div>{teacherDirectory.institutions.get(student.wcaId || `named:${student.namedStudent?.id}`)?.name}</div>
                 </td>

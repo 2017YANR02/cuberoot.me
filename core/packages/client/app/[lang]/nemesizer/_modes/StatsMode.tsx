@@ -99,7 +99,7 @@ function PersonsCountTable({ persons, valueLabel, valueKey, isZh }: {
     <div className="wse-table-wrapper sticky-scroll nemesizer-table-wrap">
       <table className="wse-table sticky-thead">
         <thead>
-          <tr><th>WCA ID</th><th>{tr({ zh: '姓名', en: 'Name' })}</th><th>{valueLabel}</th></tr>
+          <tr><th>WCA ID</th><th className="wca-person-column">{tr({ zh: '姓名', en: 'Name' })}</th><th>{valueLabel}</th></tr>
         </thead>
         <tbody>
           {persons.map(p => (
@@ -123,7 +123,7 @@ function PeopleTable({ persons, isZh }: {
     <div className="wse-table-wrapper sticky-scroll nemesizer-table-wrap">
       <table className="wse-table sticky-thead">
         <thead><tr>
-          <th>WCA ID</th><th>{tr({ zh: '姓名', en: 'Name' })}</th>
+          <th>WCA ID</th><th className="wca-person-column">{tr({ zh: '姓名', en: 'Name' })}</th>
           <th>{tr({ zh: '宿敌数', en: 'Nemeses'
         })}</th><th>{tr({ zh: '被视为宿敌数', en: 'Nemesized'
         })}</th>

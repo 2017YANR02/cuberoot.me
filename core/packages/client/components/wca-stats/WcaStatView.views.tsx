@@ -136,12 +136,13 @@ export function RecordSectionsView({ header, sections, query, onChange, isZh }: 
 // 一次性渲染全部 cell（markdown + flag + 本地化）卡死主线程。小分区不受影响。
 const PAGE_SIZE = 300;
 
-export function StatsTable({ header, rows, searchTerm, isZh, searchColumnKey }: {
+export function StatsTable({ header, rows, searchTerm, isZh, searchColumnKey, hiddenColumnKeys = [] }: {
   header: StatHeader[];
   rows: unknown[][];
   searchTerm: string;
   isZh: boolean;
   searchColumnKey?: string;
+  hiddenColumnKeys?: readonly string[];
 }) {
   const filtered = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -156,13 +157,14 @@ export function StatsTable({ header, rows, searchTerm, isZh, searchColumnKey }: 
   useEffect(() => { setVisible(PAGE_SIZE); }, [rows, searchTerm]);
   const shown = filtered.length > visible ? filtered.slice(0, visible) : filtered;
   const remaining = filtered.length - shown.length;
+  const visibleHeaders = header.filter(h => !hiddenColumnKeys.includes(h.key) && !shouldHideCountryCol(h.key, header));
 
   return (
     <div className="wca-stats-table-wrapper sticky-scroll">
       <table className="wca-stats-table sticky-thead">
         <thead>
           <tr>
-            {header.map(h => shouldHideCountryCol(h.key, header) ? null : (
+            {visibleHeaders.map(h => (
               <th key={h.key} className={h.key === 'person' || h.key === 'name' ? 'wca-person-column' : undefined} style={{ textAlign: h.align }}>
                 {isZh ? h.labelZh : h.label}
               </th>
@@ -170,14 +172,14 @@ export function StatsTable({ header, rows, searchTerm, isZh, searchColumnKey }: 
           </tr>
         </thead>
         <tbody>
-          {shown.length === 0 && searchTerm.trim() && <tr><td colSpan={header.length}>
+          {shown.length === 0 && searchTerm.trim() && <tr><td colSpan={visibleHeaders.length}>
             {tr({ zh: '未找到匹配结果', en: 'No matching results' })}
           </td></tr>}
           {shown.map((row, i) => (
             <tr key={i}>
               {row.map((cell, j) => {
                 const colKey = header[j]?.key ?? '';
-                if (shouldHideCountryCol(colKey, header)) return null;
+                if (hiddenColumnKeys.includes(colKey) || shouldHideCountryCol(colKey, header)) return null;
                 const isCountryCol = colKey === 'country';
                 const flagIso2 = isCountryCol ? countryToIso2(String(cell)) : '';
                 return (

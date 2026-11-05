@@ -21,7 +21,8 @@ export function generateStaticParams() {
 //   name_stats   → 迁到 /wca/results 空态(姓名统计 + A-Z 名录)
 //   all-results  → 路由重命名为 /wca/results(原 /wca/all-results 弃用)
 //   wr_metric    → 迁到 /wca/results 的「记录·指标」视图(?view=metric;wr_metric.json 仍生成,只是不再单独成页)
-const RETIRED_STATS = new Set(['name_stats', 'all-results', 'wr_metric']);
+//   cross_city_competition_streaks → 合并到 competition_streaks 的“仅跨城”开关
+const RETIRED_STATS = new Set(['name_stats', 'all-results', 'wr_metric', 'cross_city_competition_streaks']);
 
 export default async function Page({ params }: { params: Promise<{ statId: string }> }) {
   const { statId } = await params;

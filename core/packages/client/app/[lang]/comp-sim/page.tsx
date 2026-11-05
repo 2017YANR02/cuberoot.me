@@ -631,7 +631,7 @@ export default function CompSimPage() {
                     <thead>
                       <tr>
                         <th>{tr({ zh: '对照排名', en: 'Comparison rank' })}</th>
-                        <th>{tr({ zh: '选手', en: 'Competitor' })}</th>
+                        <th className="wca-person-column">{tr({ zh: '选手', en: 'Competitor' })}</th>
                         <th>{tr({ zh: '成绩', en: 'Result' })}</th>
                       </tr>
                     </thead>

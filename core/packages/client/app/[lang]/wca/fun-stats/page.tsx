@@ -1,13 +1,12 @@
 'use client';
 import PageHeading from '@/components/PageHeading';
-import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
+import PersonLink from '@/components/PersonLink';
 import '@cuberoot/timer-ui/compact-select.css';
 
 // /wca/fun-stats 趣味统计 — port of cubingchina /results/statistics.
 // 单一聚合页:左侧按家族选榜(?stat= 深链),顶部统一 region/事件/类型/年份控件,下方表格。
 // 全部 23 榜支持 world / continent / country。数据走 /v1/wca/fun/*(wca_fs_* 预计算)。
 import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
-import Link from '@/components/AppLink';
 import { useQueryState, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { RegionPicker } from '@/components/RegionPicker';
@@ -17,7 +16,6 @@ import { useCountries } from '@/components/wca-stats/useCountries';
 import { EventIcon } from '@/components/EventIcon';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
-import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryName } from '@/lib/country-name';
 import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion } from '@/lib/country-flags';
@@ -139,7 +137,6 @@ interface ApiResp { total?: number; rows?: Record<string, unknown>[]; years?: nu
 function FunStatsInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   // 榜单选择(左侧导航)持久化到 ?stat=,沿用原 replace 语义(不堆历史)
   const [statParam, setStatParam] = useQueryState(
     'stat',
@@ -169,7 +166,6 @@ function FunStatsInner() {
   const countries = useCountries();
   const restrictTo = useMemo(() => countries.map(c => c.iso2).filter((x): x is string => !!x), [countries]);
 
-  const personHref = (id: string) => `/${lang}/wca/persons/${id}`;
 
   // F 平均变体排除无平均的项目(444bf/555bf/333mbf)
   const availableEvents = useMemo(() => {
@@ -311,7 +307,6 @@ function FunStatsInner() {
           {resp && (
             <FunStatTable
               stat={stat} rows={rows} resp={resp} isZh={isZh} kind={kind} event={event}
-              personHref={personHref}
             />
           )}
 
@@ -328,15 +323,15 @@ function FunStatsInner() {
 }
 
 // ── 表格渲染(按 shape 分流)──
-function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
+function FunStatTable({ stat, rows, resp, isZh, kind, event }: {
   stat: FunStat; rows: Record<string, unknown>[]; resp: ApiResp; isZh: boolean;
-  kind: 'single' | 'average'; event: string; personHref: (id: string) => string;
+  kind: 'single' | 'average'; event: string;
 }) {
   const t = useT();
   const personCell = (r: any) => (
     <span className="fun-cell-person">
-      <WcaPersonTeamBadge wcaId={r.wcaId} /><Flag iso2={r.iso2 ?? ''} spanClassName="country-flag" imgClassName="country-flag-ct" />
-      <><Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name ?? '', isZh)}</Link></>
+      <PersonLink wcaId={r.wcaId} name={r.name ?? ''} isZh={isZh}
+        flag={<><Flag iso2={r.iso2 ?? ''} spanClassName="country-flag" imgClassName="country-flag-ct" />{' '}</>} />
     </span>
   );
   const compCell = (r: any) => (
@@ -526,7 +521,7 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
                 <td>{fmtAvg(r.sumValue)}</td>
                 {r.podium?.map((p: any) => (
                   <td key={p.pos}>
-                    {p.wcaId ? <><WcaPersonTeamBadge wcaId={p.wcaId} /><Link prefetch={false} href={personHref(p.wcaId)}>{displayCuberName(p.name ?? '', isZh)}</Link></> : '—'}
+                    {p.wcaId ? <PersonLink wcaId={p.wcaId} name={p.name ?? ''} isZh={isZh} /> : '—'}
                     {p.wcaId && <span className="fun-cell-sub"> {fmtBP(p.value)}</span>}
                   </td>
                 ))}

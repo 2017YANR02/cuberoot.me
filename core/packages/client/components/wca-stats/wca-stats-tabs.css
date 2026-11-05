@@ -1,0 +1,36 @@
+/* Shared segmented navigation for WCA results and statistics. */
+.wca-stats-tab-bar {
+  align-items: center;
+  flex-wrap: wrap;
+  max-width: 100%;
+  display: inline-flex;
+  gap: 4px 8px;
+  margin: 6px 12px 6px 0;
+  vertical-align: middle;
+}
+
+.wca-stats-tab-bar-connected {
+  gap: 0;
+  flex-wrap: nowrap;
+}
+
+.wca-stats-tab {
+  padding: 8px 20px;
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  transition: all 0.2s;
+  border-radius: 0;
+}
+.wca-stats-tab:first-child { border-radius: 6px 0 0 6px; }
+.wca-stats-tab:last-of-type { border-radius: 0 6px 6px 0; }
+.wca-stats-tab + .wca-stats-tab { border-left: none; }
+.wca-stats-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-foreground);
+}

@@ -1,6 +1,6 @@
 'use client';
 import MoreToggle from '@/components/MoreToggle';
-import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
+import PersonLink from '@/components/PersonLink';
 import '@cuberoot/timer-ui/compact-select.css';
 
 /**
@@ -34,7 +34,6 @@ import {
   type CompRoundMetaMap,
 } from '@cuberoot/shared';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
-import { displayCuberName } from '@/lib/cuber-name-display';
 import { formatDateRangeIso, toIsoDate } from '@/lib/wca-date';
 import { persistItem } from '@/lib/safe-storage';
 import { Flag as SharedFlag } from '@/components/Flag';
@@ -541,10 +540,10 @@ function CompModal({ comp, isZh, onClose, t, cancelled, loggedIn, followed, onTo
                     <CubingIcon icon={`event-${r.e}`} />
                     <span className="record-kind">{r.k === 's' ? t('upcoming.single') : t('upcoming.average')}</span>
                     <span className="record-value mono">{formatWcaResult(r.v, r.e, r.k === 's' ? 'single' : 'average')}</span>
-                    <><WcaPersonTeamBadge wcaId={r.p} /><Link prefetch={false} href={`/wca/persons/${r.p}`} className="record-person">
-                      <SharedFlag iso2={personFlagIso2(r.p)} />
-                      <span>{displayCuberName(r.n, isZh)}</span>
-                    </Link></>
+                    <span className="record-person">
+                      <PersonLink wcaId={r.p} name={r.n} isZh={isZh}
+                        flag={<><SharedFlag iso2={personFlagIso2(r.p)} />{' '}</>} />
+                    </span>
                   </li>
                 ))}
               </ul>

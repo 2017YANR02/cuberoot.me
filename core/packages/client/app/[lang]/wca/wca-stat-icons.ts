@@ -43,7 +43,7 @@ export const STAT_ICONS: Record<string, LucideIcon> = {
   // 选手经历
   competitions_per_year_by_person: CalendarDays,
   longest_competitions_path: Route,
-  cross_city_competition_streaks: Route,
+  competition_streaks: Route,
   longest_streak_of_competitions_in_own_country: House,
   longest_streak_of_personal_records: TrendingUp,
   longest_streak_of_podiums: Medal,

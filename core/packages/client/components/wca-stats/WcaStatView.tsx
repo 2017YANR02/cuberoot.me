@@ -10,6 +10,7 @@
 // This file is the orchestrator only. The data-shape types, the pure cell/markdown
 // render helpers, and the 8 sub-view components live in the sibling
 // WcaStatView.{types,cells,views} modules (split out 2026-07 — no behavior change).
+import BoolToggle from '@/components/BoolToggle';
 import PageHeading from '@/components/PageHeading';
 import { SearchInput } from '@/components/SearchInput';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
@@ -64,8 +65,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
   const [data, setData] = useState<StatData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const isCrossCityStreak = statId === 'cross_city_competition_streaks';
+  const isCompetitionStreak = statId === 'competition_streaks';
   const [selectedEvent, setSelectedEvent] = useState<string>('');
   const [activePanel, setActivePanel] = useState(0);
   const [activeMetric, setActiveMetric] = useState(0);
@@ -78,9 +78,14 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
   // 只用 setter 写 URL;读取在数据加载时直接读 window.location.search(一次性深链,不入 effect deps)。
   const [urlState, setUrlState] = useQueryStates(
     { [k('event')]: parseAsString, [k('type')]: parseAsString, [k('metric')]: parseAsString,
-      [k('region')]: parseAsString, [k('level')]: parseAsString, [k('source')]: parseAsString },
+      [k('region')]: parseAsString, [k('level')]: parseAsString, [k('source')]: parseAsString, [k('crossCity')]: parseAsString,
+      [k('q')]: parseAsString },
     { history: 'replace', scroll: false },
   );
+
+  const crossCityOnly = urlState[k('crossCity')] === 'true';
+  const searchTerm = urlState[k('q')] ?? '';
+  const streakRows = data?.sections?.find(section => section.title === (crossCityOnly ? 'Cross-city only' : 'All cities'))?.rows ?? [];
 
   const isZh = i18n.language === 'zh';
 
@@ -177,6 +182,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
 
   const renderMode = useMemo(() => {
     if (!data) return 'empty';
+    if (isCompetitionStreak) return 'streaks';
     if (data.id === 'annual_participation') return 'annual';
     if (data.sections?.some(section => section.recordScope)) return 'records';
     if (data.metricPanels && data.metricPanels.length > 0) return 'metricPanels';
@@ -184,7 +190,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
     if (data.sections && data.sections.length > 0) return 'sections';
     if (data.rows && data.rows.length > 0) return 'rows';
     return 'empty';
-  }, [data]);
+  }, [data, isCompetitionStreak]);
 
   const availableEvents = useMemo((): Set<string> => {
     if (!data) return new Set();
@@ -278,20 +284,24 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
         <div className="wca-stats-header">
           <PageHeading backHref="/wca">
             {tr({ zh: data.titleZh, en: data.title })}
-            {isCrossCityStreak && data.note && <>{' '}<InfoTooltip
+            {isCompetitionStreak && data.note && <>{' '}<InfoTooltip
               icon={HelpCircle} iconSize={20}
               ariaLabel={tr({ zh: '统计口径', en: 'Counting rules' })}
               content={note ? tr(note) : ''}
             /></>}
           </PageHeading>
-          {note && !isCrossCityStreak && (
+          {note && !isCompetitionStreak && (
             <p className="wca-stats-note">{tr(note)}</p>
           )}
         </div>
       )}
-      {isCrossCityStreak && <div className="wca-stats-person-search">
-        <SearchInput value={searchTerm} onChange={setSearchTerm}
+      {isCompetitionStreak && <div className="wca-stats-streak-filters">
+        <SearchInput className="wca-stats-person-search" value={searchTerm}
+          onChange={value => { void setUrlState({ [k('q')]: value || null }); }}
           placeholder={tr({ zh: '搜索选手姓名或 WCA ID', en: 'Search name or WCA ID' })} />
+        <BoolToggle value={crossCityOnly}
+          onChange={value => { void setUrlState({ [k('crossCity')]: value ? 'true' : null }); }}
+          label={tr({ zh: '仅跨城', en: 'Cross-city only' })} />
       </div>}
       {!['sections', 'panels', 'metricPanels'].includes(renderMode) && (showEventSelector || afterEventSelector) && (
         <div className="wca-stats-tab-bar">{filterControls}</div>
@@ -299,6 +309,10 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
       {headerMode === 'note' && note && (
         <p className="wca-stats-note wca-stats-embedded-note">{tr(note)}</p>
       )}
+
+      {renderMode === 'streaks' && <StatsTable header={data.header} rows={streakRows}
+        searchTerm={searchTerm} isZh={isZh} searchColumnKey="person"
+        hiddenColumnKeys={['start_date', 'end_date', 'schedule_overlap']} />}
 
       {renderMode === 'rows' && data.rows && data.years && data.cumulative && (
         <WrByCountryYearView
@@ -310,8 +324,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
         />
       )}
       {renderMode === 'rows' && data.rows && !(data.years && data.cumulative) && (
-        <StatsTable header={data.header} rows={data.rows} searchTerm={searchTerm} isZh={isZh}
-          searchColumnKey={isCrossCityStreak ? 'person' : undefined} />
+        <StatsTable header={data.header} rows={data.rows} searchTerm={searchTerm} isZh={isZh} />
       )}
 
       {renderMode === 'annual' && data.sections && <AnnualParticipationView

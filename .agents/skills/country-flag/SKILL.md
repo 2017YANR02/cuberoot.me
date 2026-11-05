@@ -51,4 +51,4 @@ MapLibre popup 挂在 map 容器外，**页面前缀 CSS（`.globe-page .flag-sp
 
 任何渲染 **WCA 比赛名** 的地方,前面必须有该比赛举办国国旗,走 `<CompCell compId compName isZh />`(`components/CompCell/`),内部 `compFlagIso2` + `localizeCompName`。页面挂载时必须 `loadFlagData()` 一次,否则旗 / 中文名都 miss。裸 `c.name` / `compId` 直显是 bug。
 
-选手名同理:本页含 person 列必须 iso2 + `<Flag>`,见 `cuber-name-display`。
+选手名同理:本页含 person 列使用真实国籍 + `<Flag>`。表格中的选手国旗须跨行对齐，使用 `PersonLink` / `WcaPersonIdentity` 的共享 logo 列；具体布局、无战队行与验收规则见 [cuber-name-display](../cuber-name-display/SKILL.md)。不要在单页重写间距。

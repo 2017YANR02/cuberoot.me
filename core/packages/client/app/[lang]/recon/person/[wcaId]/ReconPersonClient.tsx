@@ -6,7 +6,7 @@ import PageHeading from '@/components/PageHeading';
  * 汇总某选手参与的全部 recon:作为选手 / 合作者 / 复盘者 / 添加者,角色 tab 过滤。
  * 数据走 GET /v1/recon/person/:wcaId(含 addedBy/addedById,LIST_COLUMNS 没有)。
  */
-import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
+import { WcaPersonIdentity } from '@/components/WcaPersonIdentity';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
@@ -255,7 +255,7 @@ export default function ReconPersonClient() {
                   <tr>
                     <th className="col-event">{tr({ zh: '项目', en: 'Event'
                     })}</th>
-                    <th className="col-solver">{tr({ zh: '选手', en: 'Solver'
+                    <th className="col-solver wca-person-column">{tr({ zh: '选手', en: 'Solver'
                     })}</th>
                     <th className="col-dsingle">{tr({ zh: '单次', en: 'Single'
                     })}</th>
@@ -294,10 +294,11 @@ export default function ReconPersonClient() {
                           {cubers.map((c, i) => (
                             <span key={i}>
                               {i > 0 ? <span className="recon-cuber-sep"> &amp; </span> : null}
-                              <WcaPersonTeamBadge wcaId={c.id} />{c.country ? <><Flag iso2={c.country} className="recon-inline-flag" />{' '}</> : null}
+                              <WcaPersonIdentity wcaId={c.id} flag={c.country ? <Flag iso2={c.country} className="recon-inline-flag" /> : null}>
                               {c.id
                                 ? <><Link href={`/recon/person/${c.id}`}>{displayCuberName(c.name, isZh)}</Link></>
                                 : displayCuberName(c.name, isZh)}
+                              </WcaPersonIdentity>
                             </span>
                           ))}
                         </td>

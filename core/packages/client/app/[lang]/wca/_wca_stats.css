@@ -1,3 +1,5 @@
+@import '../../../components/wca-stats/wca-stats-tabs.css';
+
 /* NOTE: WCA 统计页样式 — 全站主题 + 现代表格 */
 
 /* 项目列：仅 cubing-icon */
@@ -47,22 +49,6 @@
   max-width: 220px;
 }
 
-/* NOTE: Tab 按钮容器 — inline-flex 让多个 tab-bar 可在同一行流动 */
-.wca-stats-tab-bar {
-  align-items: center;
-  flex-wrap: wrap;
-  max-width: 100%;
-  display: inline-flex;
-  gap: 4px 8px;
-  margin: 6px 12px 6px 0;
-  vertical-align: middle;
-}
-
-.wca-stats-tab-bar-connected {
-  gap: 0;
-  flex-wrap: nowrap;
-}
-
 /* In the unified results view, project/type filters precede its single navigation row. */
 .wse-results-page .wca-stats-metric-panels > .wca-stats-tab-bar:first-child {
   display: flex;
@@ -78,29 +64,6 @@
   font-size: 13px;
   color: var(--muted-foreground);
 }
-.wca-stats-tab {
-  padding: 8px 20px;
-  border: 1px solid var(--border-default);
-  background: transparent;
-  color: var(--foreground);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.2;
-  transition: all 0.2s;
-  border-radius: 0;
-}.wca-stats-tab:first-child {
-  border-radius: 6px 0 0 6px;
-}.wca-stats-tab:last-of-type {
-  border-radius: 0 6px 6px 0;
-}.wca-stats-tab + .wca-stats-tab {
-  border-left: none;
-}.wca-stats-tab.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-foreground);
-}
-
 /* panel-tab（排名/历史）与主 tab 统一同一强调色 */
 .wca-stats-panel-tab.active {
   background: var(--accent);
@@ -170,19 +133,27 @@
 }
 
 /* 列头吸顶改用全站共用工具(.sticky-thead,见 components/sticky-table.css):表加 .sticky-thead、
-   外层 wrapper 加 .sticky-scroll;th 已有 background:var(--muted) 不透明。这里只把吸顶下划线色对齐 th 下边框。 */
+   外层 wrapper 加 .sticky-scroll;表头与页面同底色，吸顶下划线与窄屏边框同色。 */
 .wca-stats-table { --sticky-thead-border: var(--border-strong); }
 
 .wca-stats-table th {
+  --sticky-thead-background: var(--background);
   padding: 12px 16px;
-  background: var(--muted);
+  background: var(--sticky-thead-background);
   color: var(--muted-foreground);
   font-weight: 600;
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-bottom: 2px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
   white-space: nowrap;
+}
+
+/* 桌面吸顶工具已画下划线，避免与实体边框叠成双线；窄屏保留上面的单线边框。 */
+@media (min-width: 768px) {
+  .wca-stats-table.sticky-thead thead th {
+    border-bottom: 0;
+  }
 }
 
 .wca-stats-table td {
@@ -206,34 +177,28 @@
 
 .wca-stats-table:has(.wca-city-route) {
   width: 100%;
-  min-width: 1000px;
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .wca-stats-table:has(.wca-city-route) :is(th, td) {
   padding: 8px 10px;
   vertical-align: top;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
   line-height: 1.5;
 }
 
-.wca-stats-table:has(.wca-city-route) th:nth-child(1) { width: 5%; }
-.wca-stats-table:has(.wca-city-route) th:nth-child(2) { width: 12%; }
-.wca-stats-table:has(.wca-city-route) th:nth-child(3) { width: 25%; }
-.wca-stats-table:has(.wca-city-route) th:nth-child(4),
-.wca-stats-table:has(.wca-city-route) th:nth-child(5) { width: 9%; }
-.wca-stats-table:has(.wca-city-route) th:nth-child(6) { width: 40%; }
-.wca-stats-table:has(.wca-city-route) :is(th, td):nth-child(7) { display: none; }
+.wca-comp-itinerary {
+  display: inline-grid;
+  grid-template-columns: max-content auto;
+  column-gap: 0.5em;
+  align-items: baseline;
+  white-space: nowrap;
+}
 
 .wca-city-route {
   margin: 0;
-  padding-inline-start: 1.5em;
-  list-style: decimal;
-}
-
-.wca-city-route li {
-  padding-inline-start: 0.15em;
+  padding: 0;
+  list-style: none;
 }
 
 .wca-stats-person-search {
@@ -241,7 +206,20 @@
   margin-bottom: 16px;
 }
 
-.wca-stats-table tbody tr:nth-child(even) {
+.wca-stats-streak-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-bottom: 16px;
+}
+
+.wca-stats-streak-filters .wca-stats-person-search {
+  margin-bottom: 0;
+}
+
+/* 共用统计表：表头为页面底色，首条数据浅底，后续交替。其他表格体系不在此覆盖。 */
+.wca-stats-table tbody tr:nth-child(odd) {
   background: color-mix(in srgb, var(--foreground) 4%, transparent);
 }
 

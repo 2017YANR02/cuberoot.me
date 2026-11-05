@@ -112,7 +112,7 @@
 .fun-cell-strong { font-weight: 700; }
 .fun-cell-sub { color: var(--muted-foreground); font-size: 0.82em; }
 
-.fun-cell-person, .fun-cell-comp, .fun-cell-region {
+.fun-cell-comp, .fun-cell-region {
   display: inline-flex;
   align-items: center;
   gap: 7px;

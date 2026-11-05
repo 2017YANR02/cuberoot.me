@@ -1,9 +1,9 @@
 'use client';
-// 选手页 5-tab 容器:成绩 / 赛事 / 项目统计 / 里程碑 / 点亮城市.
+// 选手页主导航；成绩内部负责按项目 / 按比赛切换。
 // URL 通过 ?tab= 持久化.
 
 import { useQueryState, parseAsStringEnum } from 'nuqs';
-import { Suspense, lazy, Fragment, useState, useMemo, useEffect } from 'react';
+import { Suspense, lazy, useState, useMemo, useEffect } from 'react';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import { fetchWcaPersonChampionshipPodiums, type ChampionshipPodiumRow } from '@/lib/wca-person-api';
 import type { ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
@@ -46,13 +46,6 @@ export default function PersonTabs({ profile, results, comps, liveResults, liveC
     'tab',
     parseAsStringEnum<TabKey>(TAB_KEYS).withDefault('results').withOptions({ history: 'push' }),
   );
-  // 成绩 tab 的「按项目 / 按比赛」子视图开关 —— 与 ResultsTab 共享同一个 ?sub= 参数(nuqs 自动同步)。
-  // 「成绩」本身=按项目视图;右侧「比赛」是同款主 tab(sub=comp),点「成绩」回到 sub=event。
-  const [sub, setSub] = useQueryState(
-    'sub',
-    parseAsStringEnum(['event', 'comp']).withDefault('event').withOptions({ history: 'replace', scroll: false }),
-  );
-
   // 内容为空的 tab 置灰提示。首条有效官方成绩就是 PR,无需重复跑完整排名计算。
   const recordsEmpty = useMemo(
     () => !!results && !results.some((r) => !r.live && (r.best > 0 || r.average > 0)),
@@ -96,22 +89,14 @@ export default function PersonTabs({ profile, results, comps, liveResults, liveC
     <section className="wp-card wp-tabs-card">
       <div className="wp-tabs-bar">
         {visibleTabs.map((k) => (
-          <Fragment key={k}>
-            <button
-              className={`wp-tab-btn ${k === effectiveActive && !(k === 'results' && sub === 'comp') ? 'is-active' : ''} ${tabEmpty(k) ? 'wp-tab-btn--empty' : ''}`}
-              disabled={tabEmpty(k)}
-              onClick={() => { setActive(k); if (k === 'results') setSub('event'); }}
-            >
-              {labels[k]}
-            </button>
-            {k === 'results' && (
-              <button
-                type="button"
-                className={`wp-tab-btn ${effectiveActive === 'results' && sub === 'comp' ? 'is-active' : ''}`}
-                onClick={() => { setActive('results'); setSub('comp'); }}
-              >{t('比赛', 'Comp')}</button>
-            )}
-          </Fragment>
+          <button
+            key={k}
+            className={`wp-tab-btn ${k === effectiveActive ? 'is-active' : ''} ${tabEmpty(k) ? 'wp-tab-btn--empty' : ''}`}
+            disabled={tabEmpty(k)}
+            onClick={() => setActive(k)}
+          >
+            {labels[k]}
+          </button>
         ))}
       </div>
       <div className="wp-tab-body">

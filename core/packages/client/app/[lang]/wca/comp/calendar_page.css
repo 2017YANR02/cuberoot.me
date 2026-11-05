@@ -948,9 +948,6 @@
 }
 .calendar-page .modal-record-item .record-person {
     margin-left: auto;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
     color: inherit;
     text-decoration: none;
 }

@@ -1,3 +1,17 @@
+:root {
+  --wca-person-team-column: 3rem;
+  --wca-person-team-gap: 0.35rem;
+}
+
+.wca-person-identity {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  gap: 0;
+}
+.wca-person-identity-content { min-width: 0; }
+table .wca-person-identity { white-space: nowrap; }
+
 .wca-person-team-badge {
   display: inline-flex;
   vertical-align: middle;
@@ -13,32 +27,29 @@
   align-items: center;
   justify-content: center;
   vertical-align: middle;
-  margin-inline-end: 0.35rem;
+  margin-inline-end: var(--wca-person-team-gap);
+  flex-shrink: 0;
 }
 .wca-person-team-slot:empty { display: none; }
-/* Reserve the same logo space in every table row, including unaffiliated people. */
+/* One compact logo column aligns every flag; right alignment keeps narrow logos
+   close to the flag instead of leaving half an empty slot between them. */
 table .wca-person-team-slot {
-  width: 3rem;
-  min-width: 3rem;
-  flex: 0 0 3rem;
+  width: var(--wca-person-team-column);
+  min-width: var(--wca-person-team-column);
+  flex: 0 0 var(--wca-person-team-column);
+  justify-content: flex-end;
 }
 table .wca-person-team-slot:empty { display: inline-flex; }
+th.wca-person-column::before {
+  content: '';
+  display: inline-block;
+  width: calc(var(--wca-person-team-column) + var(--wca-person-team-gap));
+}
 table .wca-person-team-slot .wca-person-team-badge,
 table .wca-person-team-slot .cubing-brand-label {
   max-width: 100%;
   white-space: normal;
   overflow-wrap: anywhere;
 }
-table .wca-person-team-slot .cubing-brand-logo { max-width: 100%; }
-
-/* Header starts at the same flag position as the cells below it. */
-th.wca-person-column::before {
-  content: '';
-  display: inline-block;
-  width: calc(3rem + 0.35rem + var(--wca-person-column-gap, 0px));
-}
-table:has(.wse-person-cell) { --wca-person-column-gap: 6px; }
-table:has(.wca-team-person) { --wca-person-column-gap: 12px; }
-@media (max-width: 520px) {
-  table:has(.wca-team-person) { --wca-person-column-gap: 8px; }
-}
+/* Preserve brand proportions within the shared compact logo column. */
+.wca-person-team-slot .cubing-brand-logo { max-width: var(--wca-person-team-column); }

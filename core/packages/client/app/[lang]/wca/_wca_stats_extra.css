@@ -438,9 +438,6 @@ th.wse-sor-evcell { padding: 4px 2px !important; }
 
 /* ── Sum-of-Ranks 名人堂 (.sor-census) ── 个人最优组合 (.sor-tool/.sor-pb) 已抽到 components/wca-stats/best-combos.css(排名页 + 选手页共用) ── */
 
-/* SoR main table: flag + name inline in the person cell */
-.wse-person-cell { display: inline-flex; align-items: center; gap: 6px; }
-
 .sor-census { margin: 0 0 16px; }
 .sor-census-toggle {
   display: inline-flex; align-items: center; gap: 6px;
@@ -464,10 +461,10 @@ th.wse-sor-evcell { padding: 4px 2px !important; }
   display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 4px 16px;
 }
 .sor-census-list li { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.sor-census-list li > :is(.wca-person-team-slot, .country-flag, .country-flag-ct) { margin-inline-end: 0; }
 .sor-census-rank { min-width: 24px; text-align: right; color: var(--faint-foreground); font-variant-numeric: tabular-nums; }
-.sor-census-list li > a { color: var(--foreground); text-decoration: none; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sor-census-list li > a:hover { color: var(--accent); }
+.sor-census-person { flex: 1; min-width: 0; white-space: nowrap; }
+.sor-census-person a { color: var(--foreground); text-decoration: none; }
+.sor-census-person a:hover { color: var(--accent); }
 .sor-census-share { color: var(--muted-foreground); font-variant-numeric: tabular-nums; font-size: 12px; }
 .sor-census-more { margin-top: 10px; background: none; border: none; color: var(--accent); font-size: 13px; cursor: pointer; padding: 4px 0; }
 .sor-census-more:hover { text-decoration: underline; }

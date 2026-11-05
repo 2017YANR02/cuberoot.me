@@ -139,7 +139,7 @@ function CohortRanksPageInner() {
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>
-                  <th>{tr({ zh: '选手', en: 'Person'
+                  <th className="wca-person-column">{tr({ zh: '选手', en: 'Person'
                 })}</th>
                   <th className="wse-value-col">{(isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average'))}</th>
                   {(!country || country.startsWith('_')) && <th>{tr({ zh: '国家', en: 'Country'

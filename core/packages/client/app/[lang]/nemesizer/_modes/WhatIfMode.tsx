@@ -165,7 +165,7 @@ export default function WhatIfMode({ isZh }: Props) {
         <>
           <div className="wse-table-wrapper sticky-scroll nemesizer-table-wrap">
             <table className="wse-table sticky-thead">
-              <thead><tr><th>WCA ID</th><th>{tr({ zh: '姓名', en: 'Name' })}</th></tr></thead>
+              <thead><tr><th>WCA ID</th><th className="wca-person-column">{tr({ zh: '姓名', en: 'Name' })}</th></tr></thead>
               <tbody>
                 {[...result.persons]
                   .sort((a, b) => a.wcaId.localeCompare(b.wcaId))
