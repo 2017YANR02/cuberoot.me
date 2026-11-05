@@ -425,10 +425,10 @@ const TABLES: Table[] = [
   ] },
   { name: 'timer_sessions', domain: 'studio', origin: 'snapshot', purpose: { zh: '计时器分组 / 分段', en: 'Timer sessions / groups' } },
   { name: 'train_results', domain: 'studio', origin: 'snapshot', purpose: { zh: '公式计时训练成绩', en: 'Trainer (timed-alg) results' } },
-  { name: 'collaborative_documents', domain: 'studio', origin: '0122', evolved: [123], purpose: { zh: '通用协作文档与在线表格：标题、类型、所有者及可合并的 Yjs 状态', en: 'Collaborative docs and spreadsheets: title, kind, owner, and mergeable Yjs state' }, cols: [
-    { name: 'id (UUID PK), title, kind, owner_key' }, { name: 'ydoc_state BYTEA', note: { zh: 'Yjs 二进制更新，保留并发编辑语义', en: 'Binary Yjs update preserving concurrent-edit semantics' } }, { name: 'created_at, updated_at' },
+  { name: 'collaborative_documents', domain: 'studio', origin: '0122', evolved: [123, 315], purpose: { zh: '通用协作文档与在线表格：标题、类型、所有者及可合并的 Yjs 状态', en: 'Collaborative docs and spreadsheets: title, kind, owner, and mergeable Yjs state' }, cols: [
+    { name: 'id (UUID PK), title, kind, owner_key' }, { name: 'general_access, general_role, editors_can_share, editors_can_export, viewers_can_export' }, { name: 'ydoc_state BYTEA', note: { zh: 'Yjs 二进制更新，保留并发编辑语义', en: 'Binary Yjs update preserving concurrent-edit semantics' } }, { name: 'created_at, updated_at' },
   ] },
-  { name: 'collaborative_document_members', domain: 'studio', origin: '0122', naturalKey: true, purpose: { zh: '协作文档成员与 owner / editor / viewer 权限', en: 'Collaborative-document membership and owner / editor / viewer roles' }, cols: [
+  { name: 'collaborative_document_members', domain: 'studio', origin: '0122', naturalKey: true, purpose: { zh: '协作文档成员与 owner / editor / commenter / viewer 权限', en: 'Collaborative-document membership and owner / editor / commenter / viewer roles' }, cols: [
     { name: 'document_id, user_key (PK)' }, { name: 'role, added_by, created_at' },
   ] },
   { name: 'collaborative_document_subscriptions', domain: 'studio', origin: '0124', naturalKey: true, purpose: { zh: '协作资源按用户保存修改订阅、最后查看与通知节流时间', en: 'Per-user subscriptions, last-seen timestamps, and notification throttling for collaborative resources' }, cols: [
@@ -901,6 +901,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 289, slug: 'wca_translations', desc: { zh: 'WCA 官方英中翻译与来源状态，原子同步及检索。', en: 'Official WCA English–Chinese translations with provenance, atomic sync and retrieval.' } },
   { n: 308, slug: 'assistant_private_attachments', desc: { zh: 'AI 私有会话图片附件', en: 'Private AI conversation image attachments' } },
   { n: 309, slug: 'product_analytics', desc: { zh: '复用产品事件与授权表，为全站分析增加聚合和授权查询索引。', en: 'Index existing product events and consents for website analytics.' } },
+  { n: 315, slug: 'document_sharing', desc: { zh: '协作文件常规访问权限、评论者、编辑者共享授权及导出限制。', en: 'General access, commenter roles, editor sharing permissions and export restrictions for collaborative files.' } },
   { n: 314, slug: 'career_application_links', desc: { zh: '招聘申请保存选填的 GitHub 仓库和个人网站。', en: 'Store optional GitHub repository and personal website links with career applications.' } },
   { n: 313, slug: 'career_application_ai_usage', desc: { zh: '招聘申请保存 AI 模型或工具与套餐总费用。', en: 'Store AI models or tools and total subscription cost with career applications.' } },
   { n: 312, slug: 'career_application_devices', desc: { zh: '招聘申请保存电脑、手机系统与具体型号。', en: 'Store computer and phone operating systems and exact models with career applications.' } },

@@ -3232,11 +3232,18 @@ export const CATALOG: ComponentEntry[] = [
     },
   },
   {
+    name: 'CollaborativeComments',
+    import: "import { CollaborativeComments } from '@/components/collaboration/CollaborativeComments';",
+    category: 'more',
+    zh: '文档与表格共用的 Yjs 批注、回复及解决操作，正文锚点由宿主提供。',
+    en: 'Shared Yjs comments, replies and resolution for documents and sheets, with host-provided content anchors.',
+  },
+  {
     name: 'CollaborativeSharePanel',
     import: "import { CollaborativeSharePanel } from '@/components/collaboration/CollaborativeSharePanel';",
     category: 'more',
-    zh: `协作资源共用的成员权限面板：搜索 WCA 用户、邀请为编辑者或查看者、修改权限和移除成员。文档与在线表格共用同一实现。`,
-    en: `Shared member-permissions panel for collaborative resources: search WCA users, invite editors or viewers, change roles, and remove members. Used by both documents and online spreadsheets.`,
+    zh: `协作资源共用的成员权限面板：搜索 WCA 用户、邀请为编辑者、评论者或查看者、修改权限和移除成员。文档与在线表格共用同一实现。`,
+    en: `Shared member-permissions panel for collaborative resources: search WCA users, invite editors, commenters or viewers, change roles, and remove members. Used by both documents and online spreadsheets.`,
   },
   {
     name: 'ScheduleTimeline',

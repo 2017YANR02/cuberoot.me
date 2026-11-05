@@ -4231,6 +4231,11 @@ CREATE TABLE collaborative_documents (
   title        VARCHAR(240) NOT NULL,
   kind         VARCHAR(16)  NOT NULL DEFAULT 'document' CHECK (kind IN ('document', 'spreadsheet')),
   owner_key    VARCHAR(20)  NOT NULL,
+  general_access VARCHAR(16) NOT NULL DEFAULT 'restricted' CHECK (general_access IN ('restricted', 'admins', 'anyone')),
+  general_role VARCHAR(9) NOT NULL DEFAULT 'viewer' CHECK (general_role IN ('viewer', 'commenter', 'editor')),
+  editors_can_share BOOLEAN NOT NULL DEFAULT FALSE,
+  editors_can_export BOOLEAN NOT NULL DEFAULT TRUE,
+  viewers_can_export BOOLEAN NOT NULL DEFAULT TRUE,
   ydoc_state   BYTEA        NOT NULL,
   created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
@@ -4243,7 +4248,7 @@ CREATE INDEX idx_collaborative_documents_kind_updated
 CREATE TABLE collaborative_document_members (
   document_id  UUID        NOT NULL REFERENCES collaborative_documents(id) ON DELETE CASCADE,
   user_key     VARCHAR(20) NOT NULL,
-  role         VARCHAR(8)  NOT NULL CHECK (role IN ('owner', 'editor', 'viewer')),
+  role         VARCHAR(9)  NOT NULL CHECK (role IN ('owner', 'editor', 'commenter', 'viewer')),
   added_by     VARCHAR(20) NOT NULL,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (document_id, user_key)

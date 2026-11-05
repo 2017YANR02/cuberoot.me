@@ -1,11 +1,15 @@
 import { Hocuspocus } from '@hocuspocus/server';
 import { Database } from '@hocuspocus/extension-database';
-import { BANNED_WCA_IDS } from '@cuberoot/shared/admin';
+import { ADMIN_WCA_IDS, BANNED_WCA_IDS } from '@cuberoot/shared/admin';
 import { query } from '../db/connection.js';
 import { authenticateUser, type WcaUser } from '../utils/recon_helpers.js';
+import { documentAccessFor, type DocumentRole } from './access.js';
+import { assertCommentOnlyUpdate } from './comment-permissions.js';
 import { notify } from '../utils/notify.js';
 
-type DocumentContext = WcaUser & { role: 'owner' | 'editor' | 'viewer' };
+const accessTimers = new Map<string, ReturnType<typeof setInterval>>();
+
+type DocumentContext = WcaUser & { role: DocumentRole; token: string };
 
 function documentId(name: string): string {
   return name.startsWith('document.') ? name.slice('document.'.length) : '';
@@ -20,15 +24,19 @@ async function notifySubscribers(documentName: string, actor: DocumentContext): 
     `UPDATE collaborative_document_subscriptions s
         SET last_notified_at = NOW()
        FROM collaborative_documents d
-       JOIN collaborative_document_members m ON m.document_id = d.id
       WHERE d.id = s.document_id
         AND d.id = ?
-        AND m.user_key = s.user_key
+        AND (EXISTS (SELECT 1 FROM collaborative_document_members m WHERE m.document_id = d.id AND m.user_key = s.user_key)
+          OR d.general_access = 'anyone'
+          OR (d.general_access = 'admins' AND EXISTS (SELECT 1 FROM app_users u
+            WHERE COALESCE(u.wca_id, 'u' || u.id::text) = s.user_key AND u.merged_into_user_id IS NULL
+              AND (u.is_admin = TRUE OR u.wca_id = ANY(?::text[])))))
+        AND NOT (s.user_key = ANY(?::text[]))
         AND s.subscribed
         AND s.user_key <> ?
         AND (s.last_notified_at IS NULL OR s.last_notified_at < NOW() - INTERVAL '15 minutes')
       RETURNING s.user_key, d.title, d.kind`,
-    [id, actor.wcaId],
+    [id, [...ADMIN_WCA_IDS], [...BANNED_WCA_IDS], actor.wcaId],
   );
   if (!recipients.length) return;
   const resource = recipients[0];
@@ -39,7 +47,7 @@ async function notifySubscribers(documentName: string, actor: DocumentContext): 
     actorName: actor.name || actor.wcaId,
     title: resource.title,
     excerpt: '打开协作文件查看最新正文、批注、建议和修改记录。 Open the collaborative file to review its latest content, comments, suggestions, and activity.',
-    link: `/${resource.kind === 'spreadsheet' ? 'spreadsheets' : 'docs'}/edit?id=${encodeURIComponent(id)}`,
+    link: `/${resource.kind === 'spreadsheet' ? 'sheets' : 'docs'}/edit?id=${encodeURIComponent(id)}`,
   });
 }
 
@@ -71,15 +79,45 @@ export const collaborativeDocuments = new Hocuspocus<DocumentContext>({
   async onAuthenticate({ documentName, token, connectionConfig }) {
     const id = documentId(documentName);
     const user = id ? await authenticateUser(token ? `Bearer ${token}` : undefined) : null;
-    if (!user || BANNED_WCA_IDS.includes(user.wcaId)) throw new Error('Authentication required');
-    const rows = await query<{ role: DocumentContext['role'] }>(
-      'SELECT role FROM collaborative_document_members WHERE document_id = ? AND user_key = ?',
-      [id, user.wcaId],
-    );
-    const role = rows[0]?.role;
-    if (!role) throw new Error('Document access denied');
-    connectionConfig.readOnly = role === 'viewer';
-    return { ...user, role };
+    if (token && !user || user && BANNED_WCA_IDS.includes(user.wcaId)) throw new Error('Authentication required');
+    const access = await documentAccessFor(id, user);
+    if (!access) throw new Error('Document access denied');
+    connectionConfig.readOnly = access.role === 'viewer';
+    return { ...(user ?? { wcaId: '', name: 'Guest', isAdmin: false }), role: access.role, token: token || '' };
+  },
+  async beforeSync({ documentName, context, connection, document, type, payload }) {
+    // Resolve the current account role for every sync, including after an admin
+    // grant is revoked. The connection's initial role is never an authorization cache.
+    const user = context.token ? await authenticateUser(`Bearer ${context.token}`) : null;
+    if (context.token && !user) throw new Error('Authentication required');
+    const access = await documentAccessFor(documentId(documentName), user);
+    if (!access) throw new Error('Document access denied');
+    context.role = access.role;
+    connection.readOnly = access.role === 'viewer';
+    if (access.role === 'commenter' && (type === 1 || type === 2)) assertCommentOnlyUpdate(document, payload);
+  },
+  async afterLoadDocument({ documentName, document }) {
+    // Idle readers must also lose access after account/admin revocation.
+    let checking = false;
+    const timer = setInterval(async () => {
+      if (checking) return;
+      checking = true;
+      try {
+        await Promise.all(document.getConnections().map(async connection => {
+          const context = connection.context as DocumentContext;
+          try {
+            const user = context.token ? await authenticateUser(`Bearer ${context.token}`) : null;
+            const access = context.token && !user ? null : await documentAccessFor(documentId(documentName), user);
+            if (!access || access.role !== context.role) connection.close();
+          } catch { connection.close(); }
+        }));
+      } finally { checking = false; }
+    }, 30_000);
+    timer.unref();
+    accessTimers.set(documentName, timer);
+  },
+  async afterUnloadDocument({ documentName }) {
+    clearInterval(accessTimers.get(documentName)); accessTimers.delete(documentName);
   },
   async beforeHandleAwareness({ context, states }) {
     if (!context) return;

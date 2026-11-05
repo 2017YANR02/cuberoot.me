@@ -128,7 +128,7 @@ export default function DocumentsPage() {
           {doc.kind === 'spreadsheet' ? <Sheet size={21} aria-hidden="true" /> : <FileText size={21} aria-hidden="true" />}
         </span>
         <span className="docs-row-main"><strong>{doc.title}</strong><span>{dateFormat.format(new Date(doc.updatedAt))}</span></span>
-        <span className="docs-role">{tr({ zh: doc.role === 'owner' ? '所有者' : doc.role === 'editor' ? '可编辑' : '只读', en: doc.role === 'owner' ? 'Owner' : doc.role === 'editor' ? 'Editor' : 'Viewer' })}</span>
+        <span className="docs-role">{tr({ zh: doc.role === 'owner' ? '所有者' : doc.role === 'editor' ? '编辑者' : doc.role === 'commenter' ? '评论者' : '查看者', en: doc.role === 'owner' ? 'Owner' : doc.role === 'editor' ? 'Editor' : doc.role === 'commenter' ? 'Commenter' : 'Viewer' })}</span>
       </AppLink>
         {doc.role === 'owner' && <button type="button" className="docs-button" disabled={deletingId !== null} onClick={() => void removeDocument(doc)} aria-label={tr({ zh: `删除“${doc.title}”`, en: `Delete “${doc.title}”` })}>
           <Trash2 size={16} aria-hidden="true" /><T zh="删除" en="Delete" />

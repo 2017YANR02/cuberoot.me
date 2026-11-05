@@ -1,0 +1,12 @@
+.collab-comments { display: grid; gap: 16px; padding: 12px; }
+.collab-comment-composer { display: grid; gap: 8px; }
+.collab-comment-input { width: 100%; min-height: 72px; padding: 8px; border: 1px solid var(--input); border-radius: var(--radius); background: transparent; color: inherit; font: inherit; resize: vertical; }
+.collab-comment-composer .collab-button { justify-self: end; }
+.collab-comment { overflow-wrap: anywhere; }
+.collab-comment p { white-space: pre-wrap; margin: 8px 0; }
+.collab-comment-reply { padding-left: 12px; margin-top: 12px; }
+.collab-comment-actions { display: flex; gap: 16px; }
+.collab-comment-action, .collab-comment-quote { border: 0; background: transparent; padding: 4px 0; color: var(--muted-foreground); font: inherit; text-align: left; cursor: pointer; }
+.collab-comment-quote { display: block; font-size: .85rem; }
+.sheet-comments { max-height: 40vh; overflow: auto; border-top: 1px solid var(--border-default); }
+.collab-comment time { display: block; margin-top: 4px; color: var(--muted-foreground); font-size: .75rem; }

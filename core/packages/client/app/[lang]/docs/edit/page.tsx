@@ -1,7 +1,8 @@
 'use client';
 
+import { restrictDocumentOutput } from '@/lib/document-output';
 import { getWebAccessToken } from '@/lib/web-session';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
 import { ChevronLeft, Share2 } from '@app-foundation/icons/lucide';
 import { HocuspocusProvider } from '@hocuspocus/provider';
@@ -35,25 +36,29 @@ export default function DocumentEditorPage() {
   const [shareOpen, setShareOpen] = useState(false);
   const [error, setError] = useState('');
 
+  const loadRevision = useRef(0);
   const load = useCallback(async () => {
-    if (!id || !user) return;
+    if (!id) return;
+    const revision = ++loadRevision.current;
     try {
       const next = await fetchDocument(id);
+      if (revision !== loadRevision.current) return;
       if (next.document.kind !== 'document') throw new Error(tr({ zh: '这不是协作文档。', en: 'This resource is not a document.' }));
       setDetails(next); setTitle(next.document.title); setError('');
     }
-    catch (cause) { setError((cause as Error).message); }
+    catch (cause) { if (revision === loadRevision.current) { setDetails(null); setError((cause as Error).message); } }
   }, [id, user]);
   useEffect(() => { void load(); }, [load]);
 
   useEffect(() => {
-    if (!id || !details || !user) return;
+    if (!id || !details) return;
+    let disposed = false;
     const sessionToken = getSessionToken() || getWcaToken();
     const ydoc = new Y.Doc();
     const provider = new HocuspocusProvider({
       url: websocketUrl(), name: `document.${id}`, document: ydoc,
       token: () => getWebAccessToken(sessionToken),
-      onStatus: ({ status: nextStatus }) => setStatus(nextStatus),
+      onStatus: ({ status: nextStatus }) => { setStatus(nextStatus); if (!disposed && nextStatus === 'disconnected') void load(); },
       onAuthenticationFailed: ({ reason }) => setError(reason || tr({ zh: '文档认证失败', en: 'Document authentication failed' })),
       onAwarenessChange: ({ states }) => {
         const names = states.map((state) => typeof state.user === 'object' && state.user && typeof state.user.name === 'string' ? state.user.name : '')
@@ -62,13 +67,14 @@ export default function DocumentEditorPage() {
       },
     });
     setSession({ ydoc, provider });
-    void markDocumentSeen(id).catch(() => undefined);
-    return () => { provider.destroy(); ydoc.destroy(); setSession(null); setPeopleOnline([]); };
+    if (user) void markDocumentSeen(id).catch(() => undefined);
+    return () => { disposed = true; provider.destroy(); ydoc.destroy(); setSession(null); setPeopleOnline([]); };
   }, [id, details?.document.role, user]);
 
+  useEffect(() => restrictDocumentOutput('.doc-workspace', details?.canExport === false), [details?.canExport]);
   const saveTitle = async () => {
     const cleaned = title.trim();
-    if (!details?.canManage || !cleaned || cleaned === details.document.title) {
+    if (details?.document.role !== 'owner' || !cleaned || cleaned === details.document.title) {
       if (!cleaned && details) setTitle(details.document.title);
       return;
     }
@@ -92,19 +98,19 @@ export default function DocumentEditorPage() {
     <main className="doc-workspace">
       <header className="doc-topbar">
         <AppLink href="/docs" prefetch={false} className="doc-back" aria-label={tr({ zh: '返回文档列表', en: 'Back to documents' })}><ChevronLeft size={20} /></AppLink>
-        <input className="doc-title-input" value={title} readOnly={!details?.canManage} onChange={(event) => setTitle(event.target.value)}
+        <input className="doc-title-input" value={title} readOnly={details?.document.role !== 'owner'} onChange={(event) => setTitle(event.target.value)}
           onBlur={() => void saveTitle()} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }}
           aria-label={tr({ zh: '文档标题', en: 'Document title' })} />
         <div className={`doc-sync is-${status}`}><span aria-hidden="true" />
           {status === 'connected' ? <T zh="已同步" en="Synced" /> : status === 'connecting' ? <T zh="连接中" en="Connecting" /> : <T zh="离线，等待重连" en="Offline, retrying" />}
         </div>
         {peopleOnline.length > 0 && <span className="doc-presence" title={peopleOnline.join(', ')}>{peopleOnline.length}<T zh=" 人在线" en=" online" /></span>}
-        {details?.canManage && <button type="button" className="docs-button" onClick={() => setShareOpen(true)}><Share2 size={16} /><span><T zh="共享" en="Share" /></span></button>}
+        {details && <button type="button" className="docs-button" onClick={() => setShareOpen(true)}><Share2 size={16} /><span><T zh="共享" en="Share" /></span></button>}
         <WcaAuth />
       </header>
       {error && <p className="doc-page-error" role="alert">{error}</p>}
       {!user && !details && <div className="doc-auth-needed"><T zh="请先登录，再打开共享给你的文档。" en="Sign in to open a document shared with you." /></div>}
-      {user && !details && !error && <p className="doc-editor-loading"><LoadingIndicator><T zh="正在加载文档…" en="Loading document…" /></LoadingIndicator></p>}
+      {!details && !error && <p className="doc-editor-loading"><LoadingIndicator><T zh="正在加载文档…" en="Loading document…" /></LoadingIndicator></p>}
       {details && session && <CollaborativeDocumentEditor session={session} details={details} title={title} onError={setError}
         onShare={() => setShareOpen(true)} onSubscriptionChange={changeSubscription} />}
       {shareOpen && details && <CollaborativeSharePanel id={id} kind="document" details={details} reload={load} close={() => setShareOpen(false)} />}

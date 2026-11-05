@@ -1,21 +1,43 @@
 .collab-share-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px; background: color-mix(in srgb, var(--foreground) 46%, transparent); }
-.collab-share { width: min(520px, 100%); max-height: min(680px, calc(100vh - 32px)); overflow: auto; border: 1px solid var(--border-default); border-radius: var(--radius); background: var(--background); color: var(--foreground); padding: 20px; box-shadow: 0 18px 52px color-mix(in srgb, var(--foreground) 24%, transparent); }
-.collab-share-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.collab-share-head h2 { margin: 0; font-size: 1.25rem; }
-.collab-share h3 { margin: 24px 0 10px; font-size: .92rem; }
-.collab-invite-row { display: flex; align-items: center; gap: 8px; margin-top: 18px; }
-.collab-search-wrap { display: flex; align-items: center; min-width: 0; flex: 1; border-bottom: 1px solid var(--border-default); }
-.collab-search-input { width: 100%; min-height: 38px; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; }
-.collab-role-select { align-self: flex-start; width: max-content; min-height: 34px; border: 1px solid var(--border-default); border-radius: calc(var(--radius) - 5px); background: var(--background); color: inherit; padding: 0 8px; }
-.collab-people-results { display: grid; margin-top: 7px; }
-.collab-person-option { appearance: none; display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
-.collab-person-option:hover { background: var(--muted); }
+.collab-share { width: min(560px, 100%); max-height: calc(100dvh - 32px); overflow: auto; border: 1px solid var(--border-default); border-radius: var(--radius); color: var(--foreground); padding: 24px; }
+.collab-share-head { display: flex; align-items: center; gap: 12px; }
+.collab-share-head h2 { flex: 1; min-width: 0; margin: 0; font-size: 1.35rem; font-weight: 500; overflow-wrap: anywhere; }
+.collab-share h3 { margin: 26px 0 14px; font-size: 1rem; font-weight: 600; }
+.collab-invite-row { display: flex; align-items: center; gap: 8px; margin-top: 24px; }
+.collab-search-wrap { display: flex; align-items: center; min-width: 0; flex: 1; border: 1px solid var(--input); border-radius: calc(var(--radius) - 5px); padding: 0 12px; }
+.collab-search-wrap:focus-within { outline: 2px solid var(--ring); outline-offset: 1px; }
+.collab-search-input { width: 100%; min-height: 46px; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; }
+.collab-role-select, .collab-access-select { align-self: flex-start; width: max-content; max-width: 100%; min-height: 36px; border: 0; border-radius: calc(var(--radius) - 5px); background: transparent; color: inherit; padding: 0 4px; font: inherit; cursor: pointer; }
+.collab-role-select option, .collab-access-select option { background: var(--popover); color: var(--foreground); }
+.collab-people-results { display: grid; margin-top: 8px; }
+.collab-person-option { appearance: none; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.collab-person-option:hover, .collab-icon-button:hover { background: var(--muted); }
 .collab-person-option small { color: var(--muted-foreground); }
-.collab-error { margin: 10px 0 0; color: var(--destructive); }
-.collab-member-list { display: grid; gap: 5px; }
-.collab-member { display: flex; align-items: center; gap: 8px; min-height: 38px; }
-.collab-member-name { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.collab-member-role { color: var(--muted-foreground); font-size: .86rem; }
-.collab-remove { appearance: none; display: grid; place-items: center; width: 34px; height: 34px; border: 0; background: transparent; color: var(--muted-foreground); cursor: pointer; }
+.collab-error { margin: 12px 0 0; color: var(--destructive); }
+.collab-member-list { display: grid; gap: 12px; }
+.collab-member { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+.collab-member-name { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.collab-member-role { color: var(--muted-foreground); font-size: .88rem; }
+.collab-avatar { display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 38px; border-radius: 50%; background: var(--muted); color: var(--muted-foreground); overflow: hidden; }
+.collab-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.collab-icon-button { appearance: none; display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: var(--muted-foreground); cursor: pointer; }
 .collab-remove:hover { color: var(--destructive); }
-@media (max-width: 480px) { .collab-share { padding: 16px; } .collab-invite-row { align-items: stretch; flex-direction: column; } }
+.collab-access-row { display: flex; align-items: flex-start; gap: 12px; }
+.collab-access-description { flex: 1; min-width: 0; }
+.collab-access-description p { margin: 4px 0 0; color: var(--muted-foreground); font-size: .84rem; line-height: 1.5; }
+.collab-share-footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 28px; }
+.collab-button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 38px; border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 0 18px; background: transparent; color: var(--foreground); font: inherit; cursor: pointer; }
+.collab-primary { background: var(--primary); color: var(--primary-foreground); border-color: transparent; }
+.collab-button:disabled, .collab-icon-button:disabled, .collab-person-option:disabled, .collab-role-select:disabled, .collab-access-select:disabled { opacity: .55; cursor: default; }
+.collab-settings .bool-toggle { display: flex; width: 100%; margin: 16px 0; }
+.collab-invite-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+@media (max-width: 480px) {
+  .collab-share { padding: 20px 16px; }
+  .collab-share-head h2 { font-size: 1.15rem; }
+  .collab-access-row { flex-wrap: wrap; }
+  .collab-access-row > .collab-role-select { margin-left: 50px; }
+  .collab-invite-row { flex-wrap: wrap; }
+  .collab-search-wrap { flex-basis: 100%; }
+  .collab-member { gap: 8px; }
+}
+@media print { [data-export-blocked="true"] { display: none !important; } }

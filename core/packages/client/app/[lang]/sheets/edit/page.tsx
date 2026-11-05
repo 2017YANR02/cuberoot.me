@@ -1,11 +1,13 @@
 'use client';
 
+import { restrictDocumentOutput } from '@/lib/document-output';
 import { getWebAccessToken } from '@/lib/web-session';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { AlignCenter, AlignLeft, AlignRight, Bold, CheckSquare, ChevronLeft, ClipboardPaste, Copy, Download, FileDown, Grid2x2, Italic, Link2, Merge, PaintBucket, Palette, Plus, Printer, Redo2, Scissors, Search, Share2, Strikethrough, Trash2, Undo2, WrapText } from '@app-foundation/icons/lucide';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import * as Y from 'yjs';
+import { CollaborativeComments } from '@/components/collaboration/CollaborativeComments';
 import AppLink from '@/components/AppLink';
 import { CollaborativeSharePanel } from '@/components/collaboration/CollaborativeSharePanel';
 import WcaAuth from '@/components/WcaAuth';
@@ -110,8 +112,8 @@ interface ClipboardPayload {
   validations: Array<Array<CellValidation | undefined>>;
 }
 
-function SpreadsheetGrid({ session, readOnly, activeSheetId, onActiveSheet, onError, onFormulaError, onExport, onPrint }: {
-  session: EditorSession; readOnly: boolean; activeSheetId: string; onActiveSheet: (id: string) => void;
+function SpreadsheetGrid({ session, readOnly, canExport, activeSheetId, onActiveSheet, onError, onFormulaError, onExport, onPrint }: {
+  session: EditorSession; readOnly: boolean; canExport: boolean; activeSheetId: string; onActiveSheet: (id: string) => void;
   onError: (message: string) => void; onFormulaError: (message: string) => void;
   onExport: (format: 'xlsx' | 'csv' | 'pdf') => void; onPrint: () => void;
 }) {
@@ -208,6 +210,7 @@ function SpreadsheetGrid({ session, readOnly, activeSheetId, onActiveSheet, onEr
     setSelection({ start: focus, end: { row: Math.min(data.rowCount - 1, focus.row + table.length - 1), column: Math.min(data.columnCount - 1, focus.column + Math.max(0, ...table.map((row) => row.length - 1))) } });
   };
   const copySelection = async (cut = false) => {
+    if (!canExport) return;
     const selected = normalizedRange(selection);
     const payload: ClipboardPayload = { cells: [], values: [], styles: [], notes: [], links: [], validations: [] };
     for (let row = selected.start.row; row <= selected.end.row; row += 1) {
@@ -614,10 +617,10 @@ function SpreadsheetGrid({ session, readOnly, activeSheetId, onActiveSheet, onEr
       <SheetMenu label={tr({ zh: '文件', en: 'File' })} open={openMenu === 'file'} onToggle={() => setOpenMenu(openMenu === 'file' ? null : 'file')}>
         <SheetMenuLink href="/docs"><T zh="打开文档列表" en="Open document list" /></SheetMenuLink>
         <span className="sheet-menu-divider" />
-        <SheetMenuItem onClick={() => runMenu(onPrint)}><T zh="打印" en="Print" /></SheetMenuItem>
+        <SheetMenuItem disabled={!canExport} onClick={() => runMenu(onPrint)}><T zh="打印" en="Print" /></SheetMenuItem>
         <span className="sheet-menu-divider" />
-        <SheetMenuItem onClick={() => runMenu(() => onExport('xlsx'))}><T zh="导出 Excel" en="Export Excel" /></SheetMenuItem>
-        <SheetMenuItem onClick={() => runMenu(() => onExport('csv'))}><T zh="导出 CSV" en="Export CSV" /></SheetMenuItem>
+        <SheetMenuItem disabled={!canExport} onClick={() => runMenu(() => onExport('xlsx'))}><T zh="导出 Excel" en="Export Excel" /></SheetMenuItem>
+        <SheetMenuItem disabled={!canExport} onClick={() => runMenu(() => onExport('csv'))}><T zh="导出 CSV" en="Export CSV" /></SheetMenuItem>
         <SheetMenuItem onClick={() => runMenu(() => onExport('pdf'))}><T zh="导出 PDF" en="Export PDF" /></SheetMenuItem>
       </SheetMenu>
       <SheetMenu label={tr({ zh: '编辑', en: 'Edit' })} open={openMenu === 'edit'} onToggle={() => setOpenMenu(openMenu === 'edit' ? null : 'edit')}>
@@ -709,7 +712,7 @@ function SpreadsheetGrid({ session, readOnly, activeSheetId, onActiveSheet, onEr
       <ToolbarButton label={tr({ zh: '复制', en: 'Copy' })} onClick={() => { void copySelection(); }}><Copy size={16} /></ToolbarButton>
       <ToolbarButton label={tr({ zh: '粘贴', en: 'Paste' })} disabled={readOnly} onClick={() => { void pastePayload('all'); }}><ClipboardPaste size={16} /></ToolbarButton>
       <ToolbarButton label={tr({ zh: '查找和替换', en: 'Find and replace' })} onClick={findAndReplace}><Search size={16} /></ToolbarButton>
-      <ToolbarButton label={tr({ zh: '打印', en: 'Print' })} onClick={onPrint}><Printer size={17} /></ToolbarButton><span className="sheet-tool-separator" />
+      <ToolbarButton disabled={!canExport} label={tr({ zh: '打印', en: 'Print' })} onClick={onPrint}><Printer size={17} /></ToolbarButton><span className="sheet-tool-separator" />
       <select className="sheet-tool-select is-zoom" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} aria-label={tr({ zh: '缩放', en: 'Zoom' })}>{[75, 90, 100, 110, 125].map((value) => <option key={value} value={value}>{value}%</option>)}</select>
       <span className="sheet-tool-separator" />
       <ToolbarButton label={tr({ zh: '货币格式', en: 'Currency format' })} active={selectedStyle.numberFormat === 'currency'} disabled={readOnly} onClick={() => applyNumberFormat('currency')}><span className="sheet-symbol">¥</span></ToolbarButton>
@@ -805,39 +808,44 @@ export default function SpreadsheetEditorPage() {
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState('');
   const [formulaError, setFormulaError] = useState('');
+  const loadRevision = useRef(0);
   const load = useCallback(async () => {
-    if (!id || !user) return;
+    if (!id) return;
+    const revision = ++loadRevision.current;
     try {
       const next = await fetchDocument(id);
+      if (revision !== loadRevision.current) return;
       if (next.document.kind !== 'spreadsheet') throw new Error(tr({ zh: '这不是协作表格。', en: 'This resource is not a spreadsheet.' }));
       setDetails(next); setTitle(next.document.title); setError('');
-    } catch (cause) { setError((cause as Error).message); }
+    } catch (cause) { if (revision === loadRevision.current) { setDetails(null); setError((cause as Error).message); } }
   }, [id, user]);
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
-    if (!id || !details || !user) return;
+    if (!id || !details) return;
+    let disposed = false;
     const sessionToken = getSessionToken() || getWcaToken();
     const ydoc = new Y.Doc();
     const provider = new HocuspocusProvider({
       url: websocketApiUrl('/v1/documents/realtime'), name: `document.${id}`, document: ydoc, token: () => getWebAccessToken(sessionToken),
-      onStatus: ({ status: next }) => setStatus(next),
+      onStatus: ({ status: next }) => { setStatus(next); if (!disposed && next === 'disconnected') void load(); },
       onSynced: ({ state }) => {
-        if (state && details.document.role !== 'viewer') repairSpreadsheetSheets(ydoc);
+        if (state && (details.document.role === 'owner' || details.document.role === 'editor')) repairSpreadsheetSheets(ydoc);
       },
       onAuthenticationFailed: ({ reason }) => setError(reason || tr({ zh: '表格认证失败', en: 'Spreadsheet authentication failed' })),
       onAwarenessChange: ({ states }) => setPeopleOnline(states.map((state) => typeof state.user === 'object' && state.user && typeof state.user.name === 'string' ? state.user.name : '').filter((name, index, all) => name && all.indexOf(name) === index)),
     });
     const undo = new Y.UndoManager(ydoc.getArray('sheets'));
     setSession({ ydoc, provider, undo });
-    return () => { undo.destroy(); provider.destroy(); ydoc.destroy(); setSession(null); setPeopleOnline([]); };
+    return () => { disposed = true; undo.destroy(); provider.destroy(); ydoc.destroy(); setSession(null); setPeopleOnline([]); };
   }, [details?.document.role, id, user]);
+  useEffect(() => restrictDocumentOutput('.sheet-workspace', details?.canExport === false), [details?.canExport]);
   const saveTitle = async () => {
-    const cleaned = title.trim(); if (!details?.canManage || !cleaned || cleaned === details.document.title) { if (!cleaned && details) setTitle(details.document.title); return; }
+    const cleaned = title.trim(); if (details?.document.role !== 'owner' || !cleaned || cleaned === details.document.title) { if (!cleaned && details) setTitle(details.document.title); return; }
     try { await updateDocumentTitle(details.document.id, cleaned); setDetails({ ...details, document: { ...details.document, title: cleaned } }); }
     catch (cause) { setError((cause as Error).message); }
   };
   const exportFile = async (format: 'xlsx' | 'csv' | 'pdf') => {
-    if (!session) return;
+    if (!session || details?.canExport === false) return;
     setExporting(true); setError(''); setExportOpen(false);
     try {
       const sheets = session.ydoc.getArray<SheetMap>('sheets').toArray().map(snapshot);
@@ -849,7 +857,7 @@ export default function SpreadsheetEditorPage() {
     finally { setExporting(false); }
   };
   const printFile = async () => {
-    if (!session) return;
+    if (!session || details?.canExport === false) return;
     const preview = window.open('', '_blank');
     setExporting(true); setError('');
     try {
@@ -869,11 +877,12 @@ export default function SpreadsheetEditorPage() {
   };
   if (!id) return <main className="sheet-workspace"><p className="docs-error"><T zh="缺少表格 ID。" en="Missing spreadsheet ID." /></p></main>;
   return <main className="sheet-workspace">
-    <header className="sheet-topbar"><AppLink href="/docs" prefetch={false} className="sheet-back" aria-label={tr({ zh: '返回文档列表', en: 'Back to documents' })}><ChevronLeft size={20} /></AppLink><input className="sheet-title-input" value={title} readOnly={!details?.canManage} onChange={(event) => setTitle(event.target.value)} onBlur={() => void saveTitle()} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} aria-label={tr({ zh: '表格标题', en: 'Spreadsheet title' })} /><div className={`sheet-sync is-${status}`}><span />{status === 'connected' ? <T zh="已同步" en="Synced" /> : status === 'connecting' ? <T zh="连接中" en="Connecting" /> : <T zh="离线，等待重连" en="Offline, retrying" />}</div>{peopleOnline.length > 0 && <span className="sheet-presence" title={peopleOnline.join(', ')}>{peopleOnline.length}<T zh=" 人在线" en=" online" /></span>}<div className="sheet-export-wrap"><button type="button" className="sheet-action" onClick={() => setExportOpen((open) => !open)} disabled={exporting}><Download size={16} /><T zh="导出" en="Export" /></button>{exportOpen && <div className="sheet-export-menu"><button type="button" className="sheet-export-option" onClick={() => void exportFile('xlsx')}><Download size={15} />Excel (.xlsx)</button><button type="button" className="sheet-export-option" onClick={() => void exportFile('csv')}><Download size={15} />CSV</button><button type="button" className="sheet-export-option" onClick={() => void exportFile('pdf')}><FileDown size={15} />PDF</button></div>}</div>{details?.canManage && <button type="button" className="sheet-action" onClick={() => setShareOpen(true)}><Share2 size={16} /><T zh="共享" en="Share" /></button>}<WcaAuth /></header>
+    <header className="sheet-topbar"><AppLink href="/docs" prefetch={false} className="sheet-back" aria-label={tr({ zh: '返回文档列表', en: 'Back to documents' })}><ChevronLeft size={20} /></AppLink><input className="sheet-title-input" value={title} readOnly={details?.document.role !== 'owner'} onChange={(event) => setTitle(event.target.value)} onBlur={() => void saveTitle()} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} aria-label={tr({ zh: '表格标题', en: 'Spreadsheet title' })} /><div className={`sheet-sync is-${status}`}><span />{status === 'connected' ? <T zh="已同步" en="Synced" /> : status === 'connecting' ? <T zh="连接中" en="Connecting" /> : <T zh="离线，等待重连" en="Offline, retrying" />}</div>{peopleOnline.length > 0 && <span className="sheet-presence" title={peopleOnline.join(', ')}>{peopleOnline.length}<T zh=" 人在线" en=" online" /></span>}<div className="sheet-export-wrap"><button type="button" className="sheet-action" onClick={() => setExportOpen((open) => !open)} disabled={exporting || details?.canExport === false}><Download size={16} /><T zh="导出" en="Export" /></button>{exportOpen && <div className="sheet-export-menu"><button type="button" className="sheet-export-option" onClick={() => void exportFile('xlsx')}><Download size={15} />Excel (.xlsx)</button><button type="button" className="sheet-export-option" onClick={() => void exportFile('csv')}><Download size={15} />CSV</button><button type="button" className="sheet-export-option" onClick={() => void exportFile('pdf')}><FileDown size={15} />PDF</button></div>}</div>{details && <button type="button" className="sheet-action" onClick={() => setShareOpen(true)}><Share2 size={16} /><T zh="共享" en="Share" /></button>}<WcaAuth /></header>
     {(error || formulaError) && <p className="sheet-page-error" role="alert">{error || formulaError}</p>}
     {!user && !details && <div className="sheet-auth-needed"><T zh="请先登录，再打开共享给你的表格。" en="Sign in to open a spreadsheet shared with you." /></div>}
-    {user && !details && !error && <p className="sheet-loading"><LoadingIndicator><T zh="正在加载表格…" en="Loading spreadsheet…" /></LoadingIndicator></p>}
-    {details && session && <SpreadsheetGrid session={session} readOnly={details.document.role === 'viewer'} activeSheetId={activeSheetId} onActiveSheet={setActiveSheetId} onError={setError} onFormulaError={setFormulaError} onExport={(format) => { void exportFile(format); }} onPrint={() => { void printFile(); }} />}
+    {!details && !error && <p className="sheet-loading"><LoadingIndicator><T zh="正在加载表格…" en="Loading spreadsheet…" /></LoadingIndicator></p>}
+    {details && session && <SpreadsheetGrid session={session} readOnly={details.document.role !== 'owner' && details.document.role !== 'editor'} canExport={details.canExport !== false} activeSheetId={activeSheetId} onActiveSheet={setActiveSheetId} onError={setError} onFormulaError={setFormulaError} onExport={(format) => { void exportFile(format); }} onPrint={() => { void printFile(); }} />}
+    {details && session && <section className="sheet-comments" aria-label={tr({ zh: '表格批注', en: 'Spreadsheet comments' })}><CollaborativeComments ydoc={session.ydoc} canComment={details.document.role !== 'viewer'} /></section>}
     {shareOpen && details && <CollaborativeSharePanel id={id} kind="spreadsheet" details={details} reload={load} close={() => setShareOpen(false)} />}
   </main>;
 }

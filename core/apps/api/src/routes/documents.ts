@@ -8,24 +8,26 @@ import { Doc as YDoc, Map as YMap, encodeStateAsUpdate } from 'yjs';
 import { query } from '../db/connection.js';
 import {
   ADMIN_WCA_IDS,
+  authenticateUser,
   checkRateLimit,
   requireAdmin,
   requireAdminOrApiKey,
   requireAuth,
   type WcaUser,
 } from '../utils/recon_helpers.js';
+import { documentAccessFor, DOCUMENT_ACCESS_COLUMNS, resolveDocumentAccess, sharingJson, type DocumentAccess, type DocumentRole } from '../documents/access.js';
 import { collaborativeDocuments } from '../documents/realtime.js';
 import { getIp } from '../utils/analytics_helpers.js';
 
 export const documentRoutes = new Hono();
 const NO_STORE = 'no-store';
 const MAX_DOCX_BYTES = 20 * 1024 * 1024;
-const ROLES = new Set(['editor', 'viewer']);
+const ROLES = new Set(['editor', 'commenter', 'viewer']);
 const KINDS = new Set(['document', 'spreadsheet']);
 const MAX_SPREADSHEET_CELLS = 100_000;
 const MAX_SPREADSHEET_TEXT = 20_000_000;
 
-type Role = 'owner' | 'editor' | 'viewer';
+type Role = DocumentRole;
 type DocumentKind = 'document' | 'spreadsheet';
 type DocumentRow = {
   id: string;
@@ -63,20 +65,9 @@ function documentJson(row: DocumentRow) {
   };
 }
 
-async function accessFor(documentId: string, user: WcaUser): Promise<DocumentRow | null> {
-  const rows = await query<DocumentRow>(
-    `SELECT d.id, d.title, d.kind, d.owner_key, m.role, d.created_at, d.updated_at
-     FROM collaborative_documents d
-     JOIN collaborative_document_members m ON m.document_id = d.id
-     WHERE d.id = ? AND m.user_key = ?`,
-    [documentId, user.wcaId],
-  );
-  return rows[0] ?? null;
-}
-
+const accessFor = documentAccessFor;
 async function canManage(documentId: string, user: WcaUser): Promise<boolean> {
-  const access = await accessFor(documentId, user);
-  return access?.role === 'owner';
+  return (await accessFor(documentId, user))?.canManage ?? false;
 }
 
 function initialState(html: string): Uint8Array {
@@ -160,15 +151,16 @@ documentRoutes.get('/documents', async (c) => {
   const me = await requireAuth(c);
   const requestedKind = c.req.query('kind');
   const kind = requestedKind && KINDS.has(requestedKind) ? requestedKind as DocumentKind : null;
-  const rows = await query<DocumentRow>(
-    `SELECT d.id, d.title, d.kind, d.owner_key, m.role, d.created_at, d.updated_at
-     FROM collaborative_documents d
-     JOIN collaborative_document_members m ON m.document_id = d.id
-     WHERE m.user_key = ? AND (?::text IS NULL OR d.kind = ?)
+  const rows = await query<DocumentAccess>(
+    `SELECT ${DOCUMENT_ACCESS_COLUMNS} FROM collaborative_documents d
+     LEFT JOIN collaborative_document_members m ON m.document_id = d.id AND m.user_key = ?
+     WHERE (m.user_key IS NOT NULL OR (d.general_access = 'admins' AND ?::boolean))
+       AND (?::text IS NULL OR d.kind = ?)
      ORDER BY d.updated_at DESC`,
-    [me.wcaId, kind, kind],
+    [me.wcaId, me.isAdmin, kind, kind],
   );
-  return c.json({ documents: rows.map(documentJson) });
+  const documents = rows.map(row => resolveDocumentAccess(row, me)).filter(row => row !== null);
+  return c.json({ documents: documents.map(documentJson) });
 });
 
 documentRoutes.post('/documents', async (c) => {
@@ -244,7 +236,7 @@ documentRoutes.get('/documents/people', async (c) => {
 
 documentRoutes.get('/documents/:id', async (c) => {
   c.header('Cache-Control', NO_STORE);
-  const me = await requireAuth(c);
+  const me = await authenticateUser(c.req.header('Authorization'));
   const doc = await accessFor(c.req.param('id'), me);
   if (!doc) return c.json({ error: 'Document not found' }, 404);
   const members = await query<MemberRow>(
@@ -261,14 +253,16 @@ documentRoutes.get('/documents/:id', async (c) => {
      ORDER BY CASE m.role WHEN 'owner' THEN 0 WHEN 'editor' THEN 1 ELSE 2 END, m.created_at`,
     [doc.id],
   );
-  const subscriptions = await query<SubscriptionRow>(
+  const subscriptions = me ? await query<SubscriptionRow>(
     `SELECT subscribed, last_seen_at FROM collaborative_document_subscriptions
      WHERE document_id = ? AND user_key = ?`,
     [doc.id, me.wcaId],
-  );
+  ) : [];
   return c.json({
     document: documentJson(doc),
-    canManage: doc.role === 'owner',
+    canManage: doc.canManage,
+    canExport: doc.canExport,
+    sharing: sharingJson(doc),
     members: members.map((member) => ({
       key: member.user_key,
       name: member.display_name || member.wca_id || member.user_key,
@@ -337,11 +331,46 @@ documentRoutes.patch('/documents/:id', async (c) => {
   checkRateLimit(getIp(c), { bucket: 'document-write', max: 60 });
   const me = await requireAuth(c);
   const id = c.req.param('id');
-  if (!(await canManage(id, me))) return c.json({ error: 'Cannot edit document settings' }, 403);
+  if ((await accessFor(id, me))?.role !== 'owner') return c.json({ error: 'Cannot edit document settings' }, 403);
   const body: Record<string, unknown> = await c.req.json<Record<string, unknown>>().catch(() => ({}));
   const title = cleanTitle(body.title);
   await query('UPDATE collaborative_documents SET title = ? WHERE id = ?', [title, id]);
   return c.json({ ok: true, title });
+});
+
+documentRoutes.put('/documents/:id/sharing', async (c) => {
+  c.header('Cache-Control', NO_STORE);
+  checkRateLimit(getIp(c), { bucket: 'document-write', max: 60 });
+  const me = await requireAuth(c);
+  const id = c.req.param('id');
+  const access = await accessFor(id, me);
+  if (!access?.canManage) return c.json({ error: 'Cannot manage document sharing' }, 403);
+  const body = await c.req.json<Record<string, unknown>>().catch(() => null);
+  if (!body || typeof body.access !== 'string' || typeof body.role !== 'string'
+    || !['restricted', 'admins', 'anyone'].includes(body.access) || !ROLES.has(body.role)) {
+    return c.json({ error: 'Invalid sharing settings' }, 400);
+  }
+  const owner = access.role === 'owner';
+  const flags = ['editorsCanShare', 'editorsCanExport', 'viewersCanExport'] as const;
+  const current = sharingJson(access);
+  for (const flag of flags) {
+    if (body[flag] !== undefined && typeof body[flag] !== 'boolean') return c.json({ error: 'Invalid sharing settings' }, 400);
+    if (!owner && body[flag] !== undefined && body[flag] !== current[flag]) return c.json({ error: 'Only the owner can change sharing restrictions' }, 403);
+  }
+  if (owner) {
+    await query(`UPDATE collaborative_documents SET general_access = ?, general_role = ?,
+      editors_can_share = ?, editors_can_export = ?, viewers_can_export = ? WHERE id = ?`,
+      [body.access, body.role, body.editorsCanShare ?? current.editorsCanShare,
+        body.editorsCanExport ?? current.editorsCanExport, body.viewersCanExport ?? current.viewersCanExport, id]);
+  } else {
+    // Delegates never rewrite owner-only flags, even if those flags changed
+    // between the authorization read and this write.
+    const updated = await query(`UPDATE collaborative_documents SET general_access = ?, general_role = ?
+      WHERE id = ? AND editors_can_share = TRUE RETURNING id`, [body.access, body.role, id]);
+    if (!updated.length) return c.json({ error: 'Cannot manage document sharing' }, 403);
+  }
+  collaborativeDocuments.closeConnections(`document.${id}`);
+  return c.json({ ok: true });
 });
 
 documentRoutes.post('/documents/:id/members', async (c) => {
@@ -362,9 +391,11 @@ documentRoutes.post('/documents/:id/members', async (c) => {
   await query(
     `INSERT INTO collaborative_document_members (document_id, user_key, role, added_by)
      VALUES (?, ?, ?, ?)
-     ON CONFLICT (document_id, user_key) DO UPDATE SET role = EXCLUDED.role, added_by = EXCLUDED.added_by`,
+     ON CONFLICT (document_id, user_key) DO UPDATE SET role = EXCLUDED.role, added_by = EXCLUDED.added_by
+     WHERE collaborative_document_members.role <> 'owner'`,
     [id, userKey, role, me.wcaId],
   );
+  collaborativeDocuments.closeConnections(`document.${id}`);
   return c.json({ ok: true });
 });
 
@@ -381,6 +412,7 @@ documentRoutes.patch('/documents/:id/members/:userKey', async (c) => {
      WHERE document_id = ? AND user_key = ? AND role <> 'owner' RETURNING user_key`,
     [body.role, id, c.req.param('userKey')],
   );
+  if (rows.length) collaborativeDocuments.closeConnections(`document.${id}`);
   return rows.length ? c.json({ ok: true }) : c.json({ error: 'Member not found' }, 404);
 });
 

@@ -2,7 +2,7 @@ import { sessionFetch } from '@/lib/session-fetch';
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 
-export type DocumentRole = 'owner' | 'editor' | 'viewer';
+export type DocumentRole = 'owner' | 'editor' | 'commenter' | 'viewer';
 export type DocumentKind = 'document' | 'spreadsheet';
 
 export interface CollaborativeDocument {
@@ -29,9 +29,22 @@ export interface DocumentPerson {
   wcaId: string;
 }
 
+export interface DocumentSharing {
+  access: 'restricted' | 'admins' | 'anyone';
+  role: Exclude<DocumentRole, 'owner'>;
+  editorsCanShare: boolean;
+  editorsCanExport: boolean;
+  viewersCanExport: boolean;
+}
+export const DEFAULT_DOCUMENT_SHARING: DocumentSharing = {
+  access: 'restricted', role: 'viewer', editorsCanShare: false, editorsCanExport: true, viewersCanExport: true,
+};
+
 export interface DocumentDetails {
   document: CollaborativeDocument;
   canManage: boolean;
+  canExport?: boolean;
+  sharing?: DocumentSharing;
   members: DocumentMember[];
   /** Optional while the frontend and API roll out independently. */
   subscription?: { subscribed: boolean; lastSeenAt: string | null };
@@ -99,6 +112,12 @@ export async function addDocumentMember(id: string, userKey: string, role: Exclu
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ userKey, role }),
+  }));
+}
+
+export async function updateDocumentSharing(id: string, sharing: DocumentSharing): Promise<void> {
+  await handleApi(await sessionFetch(apiUrl(`/v1/documents/${encodeURIComponent(id)}/sharing`), {
+    method: 'PUT', headers: authHeaders(), body: JSON.stringify(sharing),
   }));
 }
 
