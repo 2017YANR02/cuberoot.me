@@ -357,10 +357,9 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     title: { zh: '账号全流程', en: 'Account lifecycle' },
     description: { zh: '直观展示网站、iOS、安卓与小程序的登录、绑定、账号合并、退出和注销流程，区分当前实现与目标方案。', en: 'Visualize sign-in, linking, merging, sign-out, and deletion across website, iOS, Android, and Mini Programs, separating implementation from proposals.' },
   },
-  'dev/architecture': { title: { zh: '架构地图', en: 'Architecture Atlas' } },
-  'dev/architecture/decisions': { title: { zh: '技术决策', en: 'Technical Decisions' } },
+  'dev/architecture': { title: { zh: '架构', en: 'Architecture' } },
   'dev/architecture/flow': { title: { zh: '请求流程', en: 'Request Flow' } },
-  'dev/architecture/history': { title: { zh: '历程', en: 'History' } },
+  'dev/architecture/log': { title: { zh: '日志', en: 'Log' } },
   'dev/infrastructure': {
     title: { zh: '基础设施与运维', en: 'Infrastructure & Operations' },
     description: {
@@ -384,7 +383,6 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'dev/dead-code': { title: { zh: '死代码守卫', en: 'Dead Code Guard' } },
-  'dev/code-history': { title: { zh: '代码语言历史', en: 'Code language history' }, description: { zh: 'CubeRoot 代码语言占比的每日历史，以 GitHub Linguist 统计并展示堆积面积图。', en: 'Daily language shares in CubeRoot, measured with GitHub Linguist and displayed as a stacked area chart.' } },
   'dev/fonts': { title: { zh: '字体', en: 'Fonts' } },
   'dev/guards': { title: { zh: '约束守卫', en: 'Guards' } },
   'dev/language': { title: { zh: '编程', en: 'Code' } },

@@ -7,9 +7,8 @@ import { tr } from '@/i18n/tr';
 
 const TABS = [
   { path: '/dev/architecture',           zh: '概览',    en: 'Overview' },
-  { path: '/dev/architecture/flow',      zh: '请求流程', en: 'Flow' },
-  { path: '/dev/architecture/decisions', zh: '技术决策', en: 'Decisions' },
-  { path: '/dev/architecture/history',   zh: '历程',    en: 'History' },
+  { path: '/dev/architecture/flow',      zh: '请求',    en: 'Requests' },
+  { path: '/dev/architecture/log',       zh: '日志',    en: 'Log' },
 ] as const;
 
 export default function ArchNav() {
@@ -34,6 +33,7 @@ export default function ArchNav() {
           <Link
             key={tab.path}
             href={`${prefix}${tab.path}`}
+            prefetch={false}
             role="tab"
             aria-selected={isActive(tab.path)}
             className={`arch-nav-tab${isActive(tab.path) ? ' active' : ''}`}

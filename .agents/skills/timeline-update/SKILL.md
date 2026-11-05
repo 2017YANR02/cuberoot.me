@@ -8,7 +8,7 @@ description: "Use when updating /dev/architecture history, commit calendar, TIME
 同一历史的三个视图:
 - 日历 → `core/packages/client/app/[lang]/dev/architecture/timeline_commits.json` (升序, 每天 1 行 `{date, zh, en}`)
 - 列表 → `app/[lang]/dev/architecture/_lib/arch-data.tsx` 里 `TIMELINE` (降序 newest-first, 产品级 changelog)
-- 交互画卷 → `core/packages/client/app/[lang]/dev/architecture/history/` 与 `_components/HistoryJourney.tsx`, 日期和正文复用日历与 TIMELINE
+- 日志页 → `core/packages/client/app/[lang]/dev/architecture/log/`；交互画卷引擎 → `core/packages/client/app/[lang]/dev/architecture/history/` 与 `_components/HistoryJourney.tsx`, 日期和正文复用日历与 TIMELINE
 
 ## 画卷硬要求
 
@@ -21,7 +21,7 @@ description: "Use when updating /dev/architecture history, commit calendar, TIME
 - 桌面和窄屏均验证清晰度与交互,长画卷只加载附近场景并释放离开视野的资源。
 - 日期跳转后人物停在点的左侧一点;保留暂停,行进方式统一为漫步、慢跑、快跑、滑行一个菜单,速度和姿态共用 `history-days.ts` 的 `HISTORY_GAITS`,视频导出也复用,禁再拆倍速菜单。
 - 轻玩法复用 `history-play.ts`:跳跃、二段跳、稀疏拾光与连收计分;暂停冻结物理,拖动和日期跳转不得得分,桌面键盘与触屏跳跃键不能抢占阅读和画卷拖动。
-- 山河滑行由 `history?mode=play` 进入,复用画卷引擎;滑行按住空翻、松手落地,成功加速、失误减速,指针取消和失焦须释放按住状态。
+- 山河滑行由 `/dev/architecture/log?mode=play` 进入,复用画卷引擎;滑行按住空翻、松手落地,成功加速、失误减速,指针取消和失焦须释放按住状态。
 - 滑痕与飞溅复用 `history-ski-trail.ts` 的有界世界坐标池,按既有地貌和天气区分雪、沙、水;跳转清理、暂停冻结,现场和视频共用。
 - 保留主要地貌、昼夜变化、雷电等气候和至少 30 种水陆空动物;动物须稀疏分布并运动,雨雪覆盖当前整个可见场景,水流保持细节且不得异常隆起,船只须在实页可见。
 - 彩蛋复用站内真实内容入口,内部跳转使用 AppLink,支持中键和 Ctrl 点击。

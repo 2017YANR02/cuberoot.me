@@ -73,6 +73,7 @@ node --input-type=module -e 'import { activePackages } from "./scripts/check-arc
 - 修改路径、package 身份、运行时边界或 workflow 时，同批更新对应当前入口；完成事项从开放清单移出，验收追加到历史记录并保留提交、验证范围与未验证项。
 - 本地实现、验证、提交、推送、CI、部署、真机及人工验收分别记录；没有证据的阶段写“未验证”，不由其他阶段代替。
 - 不改写历史验收数字。历史结论失效时在当前入口说明替代关系，保留原始证据。
+- 可视化地图的节点、连线、术语和源码位置统一来自 `client/app/[lang]/dev/architecture/_lib/architecture-map.ts`；目录覆盖测试不替代语义与部署核对。最近一次限定范围核对见[地图核对记录](./architecture-map-audit.md)，不更新本跟踪表其他事项的验收状态。
 - 仍遵守根 AGENTS.md 的当前任务范围与发布授权；历史批次中的 worktree、审批或并行审查安排不是本轮默认流程。
 
 ## 6. App、package 和 job 的定义

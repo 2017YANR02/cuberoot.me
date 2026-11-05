@@ -54,16 +54,16 @@ const CARDS: Card[] = [
     glyph: '⛯',
     accent: 'var(--signal-success)',
     zh: {
-      title: '架构地图',
-      sub: 'Architecture Atlas',
+      title: '架构',
+      sub: 'Architecture',
       tagline: '沿着可交互拓扑看清 Web、客户端、服务、数据和共享能力之间的关系',
-      meta: '交互拓扑 / 源码边界 / 术语讲解',
+      meta: '交互拓扑 / 技术决策 / 语言历史',
     },
     en: {
-      title: 'Architecture Atlas',
+      title: 'Architecture',
       sub: 'How the system fits together',
       tagline: 'Trace the relationships between the web, installed clients, services, data, and shared capabilities',
-      meta: 'Interactive topology / source boundaries / terms',
+      meta: 'Interactive topology / decisions / language history',
     },
   },
   {
@@ -116,13 +116,6 @@ const CARDS: Card[] = [
       tagline: '28 pieces of software cuberoot.me actually uses, one page each',
       meta: '28 pieces · frontend · backend · edge · dev',
     },
-  },
-  {
-    href: '/dev/code-history',
-    glyph: '◴',
-    accent: 'var(--signal-info)',
-    zh: { title: '代码语言历史', sub: '', tagline: '按天查看代码语言占比的变化', meta: 'GitHub Linguist · 堆积面积图' },
-    en: { title: 'Code language history', sub: '', tagline: 'Explore daily changes in the repository’s language mix', meta: 'GitHub Linguist · stacked area chart' },
   },
   {
     href: '/dev/language',

@@ -1897,7 +1897,7 @@
       "workingDirectory": "core",
       "command": "ruby packages/client/scripts/build-code-history.rb",
       "outputs": [
-        "core/packages/client/app/[lang]/dev/code-history/history.json"
+        "core/packages/client/app/[lang]/dev/architecture/_components/code-history/history.json"
       ],
       "verification": [
         "pnpm --filter @cuberoot/client typecheck"

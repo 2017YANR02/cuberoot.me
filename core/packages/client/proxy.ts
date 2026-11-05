@@ -169,6 +169,17 @@ function routeLanguage(req: NextRequest) {
 
   const { locale, rest } = stripLocalePrefix(pathname);
 
+  // Retired URLs return the site's 404, not a streamed soft-404 or redirect.
+  if (rest === '/dev/code-history'
+    || rest === '/dev/architecture/decisions'
+    || rest === '/dev/architecture/code-history' || rest === '/dev/architecture/history'
+    || rest === '/wca/cross_city_competition_streaks') {
+    const target = url.clone();
+    target.pathname = `/${locale ?? preferredLocale(req)}/404`;
+    target.search = '';
+    return NextResponse.rewrite(target, { status: 404, headers: { 'X-Robots-Tag': 'noindex, nofollow' } });
+  }
+
   if (rest === '/timer') {
     const canonical = canonicalTimerPracticeSearch(searchParams).toString();
     if (canonical !== searchParams.toString()) {

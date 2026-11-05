@@ -201,9 +201,8 @@
 | [core/packages/client/app/[lang]/dev/algorithms/page.tsx](<../core/packages/client/app/[lang]/dev/algorithms/page.tsx>) | `/dev/algorithms` | 文档/内容/演示（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/dev/algorithms/webcodecs/page.tsx](<../core/packages/client/app/[lang]/dev/algorithms/webcodecs/page.tsx>) | `/dev/algorithms/webcodecs` | 文档/内容/演示（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/dev/api/page.tsx](<../core/packages/client/app/[lang]/dev/api/page.tsx>) | `/dev/api` | 文档/内容/演示（候选） | 待浏览 |
-| [core/packages/client/app/[lang]/dev/architecture/decisions/page.tsx](<../core/packages/client/app/[lang]/dev/architecture/decisions/page.tsx>) | `/dev/architecture/decisions` | 文档/内容/演示（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/dev/architecture/flow/page.tsx](<../core/packages/client/app/[lang]/dev/architecture/flow/page.tsx>) | `/dev/architecture/flow` | 文档/内容/演示（候选） | 待浏览 |
-| [core/packages/client/app/[lang]/dev/architecture/history/page.tsx](<../core/packages/client/app/[lang]/dev/architecture/history/page.tsx>) | `/dev/architecture/history` | 文档/内容/演示（候选） | 待浏览 |
+| [core/packages/client/app/[lang]/dev/architecture/log/page.tsx](<../core/packages/client/app/[lang]/dev/architecture/log/page.tsx>) | `/dev/architecture/log` | 文档/内容/演示（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/dev/architecture/page.tsx](<../core/packages/client/app/[lang]/dev/architecture/page.tsx>) | `/dev/architecture` | 文档/内容/演示（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/dev/components/page.tsx](<../core/packages/client/app/[lang]/dev/components/page.tsx>) | `/dev/components` | 文档/内容/演示（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/dev/cubingchina/page.tsx](<../core/packages/client/app/[lang]/dev/cubingchina/page.tsx>) | `/dev/cubingchina` | 文档/内容/演示（候选） | 待浏览 |

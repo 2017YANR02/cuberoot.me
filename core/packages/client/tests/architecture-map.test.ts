@@ -39,7 +39,7 @@ describe('architecture map', () => {
     const currentPages = [
       'core/packages/client/app/[lang]/dev/architecture/page.tsx',
       'core/packages/client/app/[lang]/dev/architecture/flow/page.tsx',
-      'core/packages/client/app/[lang]/dev/architecture/decisions/page.tsx',
+      'core/packages/client/app/[lang]/dev/architecture/_components/ArchitectureDecisions.tsx',
     ].map((path) => readFileSync(join(REPO_ROOT, path), 'utf8')).join('\n');
 
     expect(`${JSON.stringify(ARCHITECTURE_NODES)}\n${currentPages}`).not.toMatch(/(?:React|Next(?:\.js)?|Node|PostgreSQL|Capacitor|Tauri|Hono)\s+v?\d/i);

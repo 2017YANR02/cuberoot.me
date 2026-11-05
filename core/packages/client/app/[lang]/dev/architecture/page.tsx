@@ -5,7 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L } from '../_lib/Lang';
 import type { Lang } from '../_lib/Lang';
 import ArchitectureAtlas from './_components/ArchitectureAtlas';
+import ArchitectureDecisions from './_components/ArchitectureDecisions';
 import ArchNav from './_components/ArchNav';
+import CodeLanguageHistory from './_components/code-history/CodeLanguageHistory';
 import './architecture.css';
 
 export default function ArchitecturePage() {
@@ -18,14 +20,7 @@ export default function ArchitecturePage() {
         <ArchNav />
 
         <header className="arch-hero">
-          <div className="arch-hero-meta"><L zh="可交互的系统地图" en="Interactive system map" /></div>
-          <h1 className="arch-hero-title"><L zh="CubeRoot 架构地图" en="CubeRoot Architecture Atlas" /></h1>
-          <p className="arch-hero-lede">
-            <L
-              zh="点击任一节点，就能看到它在系统里的职责、源码位置和相关术语。地图只记录稳定边界，不记录容易过期的版本号和规模数字。"
-              en="Select any node to see its responsibility, source location, and related terms. The map records stable boundaries, not fast-expiring versions or scale figures."
-            />
-          </p>
+          <h1 className="arch-hero-title"><L zh="CubeRoot 架构" en="CubeRoot Architecture" /></h1>
         </header>
 
         <section className="arch-sec arch-sec--wide">
@@ -33,25 +28,23 @@ export default function ArchitecturePage() {
             <span className="arch-sec-num">01</span>
             <h2 className="arch-sec-title"><L zh="从入口到数据" en="From entry to data" /></h2>
           </div>
-          <p className="arch-sec-lede">
-            <L
-              zh="实线表示在线请求，虚线表示共享能力，点线表示离线任务生成的数据。点击节点可沿着关系查看上下游。"
-              en="Solid lines are live requests, dashed lines are shared capabilities, and dotted lines are artifacts from offline jobs. Select a node to trace its neighbors."
-            />
-          </p>
           <ArchitectureAtlas lang={lang} />
         </section>
 
-        <section className="arch-sec">
+        <section className="arch-sec arch-sec--wide" id="decisions">
           <div className="arch-sec-head">
             <span className="arch-sec-num">02</span>
-            <h2 className="arch-sec-title"><L zh="怎么防止地图失效" en="How the map stays current" /></h2>
+            <h2 className="arch-sec-title"><L zh="技术决策" en="Technical decisions" /></h2>
           </div>
-          <ol className="architecture-guardrails">
-            <li><strong><L zh="只维护一份" en="One source" /></strong><span><L zh="节点、连线、术语和源码位置来自同一份结构数据。" en="Nodes, edges, terms, and source paths come from one data structure." /></span></li>
-            <li><strong><L zh="目录变化就报错" en="Directory drift fails" /></strong><span><L zh="测试会对照真实 apps、packages 和 jobs，新增、移动或删除模块时必须同步地图。" en="A test compares real apps, packages, and jobs, so adding, moving, or deleting a unit requires updating the map." /></span></li>
-            <li><strong><L zh="不写易变数字" en="No volatile figures" /></strong><span><L zh="版本、耗时、文件大小和页面数量不属于这张稳定地图。" en="Versions, timings, file sizes, and page counts do not belong in this stable map." /></span></li>
-          </ol>
+          <ArchitectureDecisions />
+        </section>
+
+        <section className="arch-sec arch-sec--wide" id="code-history">
+          <div className="arch-sec-head">
+            <span className="arch-sec-num">03</span>
+            <h2 className="arch-sec-title"><L zh="代码语言历史" en="Code language history" /></h2>
+          </div>
+          <CodeLanguageHistory />
         </section>
 
         <footer className="arch-foot">
@@ -60,11 +53,8 @@ export default function ArchitecturePage() {
             <span className="arch-meta-sep">/</span>
             <Link href="/dev/architecture/flow"><L zh="请求流程" en="Request flow" /></Link>
             <span className="arch-meta-sep">/</span>
-            <Link href="/dev/architecture/decisions"><L zh="技术决策" en="Technical decisions" /></Link>
-            <span className="arch-meta-sep">/</span>
             <Link href="/dev/infrastructure"><L zh="基础设施" en="Infrastructure" /></Link>
           </div>
-          <p className="arch-foot-note"><L zh="这页是 CubeRoot 的系统说明书：稳定结构由地图维护，易变运行数据留在各自事实源。" en="This is CubeRoot's system handbook: the map owns stable structure, while volatile operational data stays in its source of truth." /></p>
         </footer>
       </div>
     </LangCtx.Provider>

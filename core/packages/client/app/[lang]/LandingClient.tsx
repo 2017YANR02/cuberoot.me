@@ -83,7 +83,7 @@ const GITHUB_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'github'
 const HISTORY_HOME_FEATURE: PageNotice = {
   id: -1, path: '/', placement: 'home_featured', level: 'info',
   bodyZh: '把时间，走成风景。', bodyEn: 'Walk through a landscape of time.',
-  href: '/dev/architecture/history', enabled: true, dismissible: false,
+  href: '/dev/architecture/log', enabled: true, dismissible: false,
   endsAt: '2026-09-17T00:00:00+08:00', updatedAt: '2026-09-09T00:00:00+08:00',
 };
 

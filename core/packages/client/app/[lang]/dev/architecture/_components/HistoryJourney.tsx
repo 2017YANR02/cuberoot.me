@@ -13,7 +13,6 @@ import { ClientLoadStatus } from '@/components/StartupStatus';
 import PlaybackScrubber from '@/components/PlaybackScrubber';
 import { tr } from '@/i18n/tr';
 import { TIMELINE } from '../_lib/arch-data';
-import DAYS from '../timeline_commits.json';
 import { HISTORY_PLACES, HISTORY_LAST, HISTORY_GAITS, type HistoryGait, clampHistoryPosition } from '../history/history-days';
 import type { HistoryScene } from '../history/history-scene';
 import { EMPTY_HISTORY_SCORE, type HistoryPlayScore } from '../history/history-play';
@@ -189,10 +188,9 @@ export default function HistoryJourney() {
   return (
     <main className={`history-journey${isGame ? ' is-game' : ''}`}>
       <header className="journey-heading">
-        <div><p className="journey-eyebrow">CUBEROOT / {tr({ zh: '生长纪', en: 'A living history' })}</p><h1>{tr({ zh: '把时间，走成风景。', en: 'Time becomes a landscape.' })}</h1></div>
-        <p className="journey-edition">{tr({ zh: `${DATES.length} 日山河`, en: `${DATES.length} days of landscapes` })}<span>{DATES[0]} — {DATES[HISTORY_LAST]}</span></p>
+        <div><h1>{tr({ zh: '把时间，走成风景。', en: 'Time becomes a landscape.' })}</h1></div>
       </header>
-      <section className="journey-scroll" aria-label={tr({ zh: '项目历程交互画卷', en: 'Interactive project landscape' })}>
+      <section className="journey-scroll" aria-label={tr({ zh: '项目日志交互画卷', en: 'Interactive project log landscape' })}>
         <div className="journey-stage" tabIndex={0} role="region" aria-label={tr({ zh: '左右键切换日期，空格起跳，滑行时按住空翻，P 暂停', en: 'Left and right change dates; Space jumps, hold to flip while gliding; P pauses' })}
           onPointerDown={event => {
             if (!isGame || !(event.target instanceof HTMLCanvasElement) || event.button !== 0) return;
@@ -258,7 +256,7 @@ export default function HistoryJourney() {
           <div className={`journey-trick-feedback is-${playScore.status}`} role="status">{playScore.status === 'boost' ? tr({ zh: '漂亮落地！顺风加速', en: 'Clean landing! A tailwind boost' }) : playScore.status === 'stumble' ? tr({ zh: '稳住，再来一次', en: 'Find your balance. Try again' }) : ''}</div>
           <div className="journey-landing-cue">{tr({ zh: '松手，准备落地', en: 'Release to land' })}</div>
           {isGame && <>
-            <div className="journey-game-bar"><div className="page-back-heading"><PageBackLink fallback="/dev/architecture/history" /><h1>{tr({ zh: '山河滑行', en: 'Paper Odyssey' })}</h1></div><ClearButton variant="standalone" ariaLabel={tr({ zh: '退出游戏，返回画卷', en: 'Leave game and return to the landscape' })} onClick={() => { pauseWalking(); void setMode(null); }} /></div>
+            <div className="journey-game-bar"><div className="page-back-heading"><PageBackLink fallback="/dev/architecture/log" /><h1>{tr({ zh: '山河滑行', en: 'Paper Odyssey' })}</h1></div><ClearButton variant="standalone" ariaLabel={tr({ zh: '退出游戏，返回画卷', en: 'Leave game and return to the landscape' })} onClick={() => { pauseWalking(); void setMode(null); }} /></div>
             {started && position !== HISTORY_LAST && <p className="journey-game-mission">{playScore.lights < 12 ? tr({ zh: `沿途拾光 ${playScore.lights} / 12`, en: `Gather light ${playScore.lights} / 12` }) : playScore.flips < 3 ? tr({ zh: `乘风空翻 ${playScore.flips} / 3`, en: `Ride the wind ${playScore.flips} / 3 flips` }) : tr({ zh: '拾光成章，继续探索山河', en: 'A chapter of light. Keep exploring' })}</p>}
             {(!started || position === HISTORY_LAST) && status === 'ready' && <div className="journey-game-welcome">
               <p className="journey-eyebrow">CUBEROOT / PAPER ODYSSEY</p>
@@ -292,7 +290,6 @@ export default function HistoryJourney() {
         </nav>
         {exportOpen && <HistoryVideoExport source={host} current={current} initialGait={gait} weatherVariation={weatherVariation} onClose={() => { setExportOpen(false); exportButton.current?.focus({ preventScroll: true }); }} />}
       </section>
-      <p className="journey-art-note">{tr({ zh: '每八站走过晨昼暮夜。37 种地貌与 36 种野生动物沿途相伴，留意闪光的小物件。自然景观为艺术化演绎，日期与更新内容来自真实记录。', en: 'Dawn to moonlight unfolds over every eight stops, with 37 landforms and 36 wildlife species. Look out for little glimmering objects. Imagined nature accompanies real dates and updates.' })}</p>
       <section id="journey-reader" ref={reader} tabIndex={-1} className={`journey-reader${reading ? ' is-open' : ''}`} aria-label={tr({ zh: '这一天的故事', en: 'The story of this day' })}>
         {reading && <>
           <header className="journey-reader-heading"><div><time dateTime={place.date}>{place.date}</time><h2>{tr(place)}</h2></div><ClearButton variant="standalone" onClick={() => { setReading(false); readButton.current?.focus(); }} ariaLabel={tr({ zh: '收起故事', en: 'Close story' })} /></header>
@@ -300,7 +297,7 @@ export default function HistoryJourney() {
           {events.map(event => <article className="journey-story" key={`${event.date}-${event.en.title}`}><h3>{tr(event).title}</h3><p>{tr(event).body}</p><p>{tr(event).expand}</p></article>)}
         </>}
       </section>
-      <details className="journey-archive" onToggle={event => setArchiveOpen(event.currentTarget.open)}><MoreToggle as="summary">{tr({ zh: '翻阅完整记录', en: 'Browse the complete archive' })}<span>{tr({ zh: `${TIMELINE.length} 项关键改动，${DAYS.length} 天更新`, en: `${TIMELINE.length} milestones, ${DAYS.length} days of updates` })}</span></MoreToggle>{archiveOpen && <MemoHistoryArchive />}</details>
+      <details className="journey-archive" onToggle={event => setArchiveOpen(event.currentTarget.open)}><MoreToggle as="summary">{tr({ zh: '翻阅完整记录', en: 'Browse the complete archive' })}</MoreToggle>{archiveOpen && <MemoHistoryArchive />}</details>
     </main>
   );
 }

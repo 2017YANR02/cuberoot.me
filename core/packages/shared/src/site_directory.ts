@@ -186,7 +186,7 @@ export const SITE_DIRECTORY_GROUPS = [
       { id: 'mosaic', href: '/mosaic', internal: true, tier: 'medium', nameKey: 'mosaic' },
       { id: 'lettering', href: '/lettering', internal: true, tier: 'medium', nameKey: 'lettering' },
       { id: 'space', href: '/space', internal: true, tier: 'medium', nameKey: 'space' },
-      { id: 'paper-odyssey', href: '/dev/architecture/history?mode=play', internal: true, tier: 'medium', nameKey: 'paperOdyssey' },
+      { id: 'paper-odyssey', href: '/dev/architecture/log?mode=play', internal: true, tier: 'medium', nameKey: 'paperOdyssey' },
       { id: 'paint', href: '/paint', internal: true, tier: 'medium', nameKey: 'paint' },
       { id: 'icon', href: '/icon', internal: true, tier: 'medium', nameKey: 'icon' },
       { id: 'timezone', href: '/timezone', internal: true, tier: 'medium', nameKey: 'timezone' },

@@ -43,6 +43,6 @@ filled = (Date.parse(rows.first['date'])..Date.parse(rows.last['date'])).map do 
   previous = by_date[date.to_s] || previous
   previous.merge('date' => date.to_s)
 end
-output = File.expand_path('../app/[lang]/dev/code-history/history.json', __dir__)
+output = File.expand_path('../app/[lang]/dev/architecture/_components/code-history/history.json', __dir__)
 File.write(output, JSON.generate({'engine' => "github-linguist #{Linguist::VERSION}", 'timezone' => ENV['TZ'], 'branch' => 'main', 'rows' => filled}))
 puts "Saved #{filled.size} calendar days"

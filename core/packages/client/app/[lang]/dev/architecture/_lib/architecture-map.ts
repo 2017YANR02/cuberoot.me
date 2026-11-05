@@ -56,9 +56,9 @@ export const ARCHITECTURE_NODES: ArchitectureNode[] = [
     facts: [
       { label: 'cuberoot.me', zh: '唯一规范 Web 域名；DNS 把请求送往边缘托管或自有托管的同一份 Next 应用。', en: 'The canonical web domain; DNS routes requests to the same Next app on edge-hosted or self-hosted infrastructure.' },
       { label: 'api.cuberoot.me', zh: 'Hono API 与 PostgreSQL 的稳定业务入口。', en: 'The stable business entry for the Hono API and PostgreSQL.' },
-      { label: 'next.cuberoot.me', zh: '自有 Next 的预发布与直连入口。', en: 'The staging and direct entry for self-hosted Next.' },
+      { label: 'next.cuberoot.me', zh: '同一自有 Next 服务的直连别名。', en: 'A direct alias for the same self-hosted Next service.' },
       { label: 'static.cuberoot.me', zh: '分发静态工具、统计产物及 Web 的静态回源资源。', en: 'Serves static tools, statistics artifacts, and static fallback assets for the web app.' },
-      { label: 'blog.cuberoot.me', zh: '独立博客应用，不与主站共用运行时。', en: 'An independent blog application with its own runtime.' },
+      { label: 'blog.cuberoot.me', zh: '独立仓库维护的博客静态归档，由静态托管交付。', en: 'A static blog archive maintained in a separate repository and delivered through static hosting.' },
     ],
     terms: [
       { name: 'Split DNS', fullName: 'Split-Horizon Domain Name System', zh: '同一个规范域名可按线路进入不同的 Web 交付端。', en: 'Lets one canonical domain reach different web delivery targets by route.' },
@@ -68,16 +68,18 @@ export const ARCHITECTURE_NODES: ArchitectureNode[] = [
   },
   {
     id: 'development', lane: 'entry', x: 10, y: 81, eyebrow: 'DEV',
-    sourcePaths: ['core/packages/client/next.config.ts', 'ops/nginx/www.cuberoot.me.conf'],
+    sourcePaths: ['core/packages/client/next.config.ts', 'ops/nginx/www.cuberoot.me.conf', 'ops/dev-preview/machines.json', 'core/scripts/dev-preview', 'ops/nginx/dev-machines.conf'],
     label: { zh: '本地与外网开发', en: 'Local & remote development' },
-    zh: '本机直接连接同一份 Next 开发服务；手机和外网设备经 TLS 反向代理与 frp 隧道接入。',
-    en: 'The local machine connects directly to one Next development server; phones and off-network devices enter through a TLS reverse proxy and an frp tunnel.',
+    zh: '本机直接连接 Next 开发服务；外网预览经 TLS 反向代理接入，维护者入口沿用 frp，按设备登记的入口使用独立 SSH 反向隧道。',
+    en: 'Local access connects directly to Next. Remote previews use a TLS reverse proxy: the maintainer entry uses frp, while registered device entries use individual reverse SSH tunnels.',
     facts: [
       { label: '127.0.0.1:3000', zh: '本机直接连接 Next 开发服务。', en: 'The local machine connects directly to the Next development server.' },
       { label: 'dev.cuberoot.me', zh: 'TLS 反向代理 → frp 隧道 → 本机 :3000；HMR 使用 WSS，响应不缓存，也不进入生产拓扑。', en: 'TLS reverse proxy → frp tunnel → local :3000; HMR uses WSS, responses are not cached, and this path stays outside production.' },
+      { label: 'dev-<name>-<device>.cuberoot.me', zh: '设备清单生成入口配置，每台电脑使用独立 SSH 密钥和反向隧道接入本机开发服务。', en: 'The device registry generates entry configuration; each computer uses its own SSH key and reverse tunnel to reach its local development server.' },
     ],
     terms: [
       { name: 'frp', fullName: 'Fast Reverse Proxy', zh: '把外网入口安全转发到本机开发服务的反向代理隧道。', en: 'A reverse-proxy tunnel that forwards a public entry to the local development server.' },
+      { name: 'SSH', fullName: 'Secure Shell', zh: '通过加密反向隧道连接设备预览入口，每台电脑的权限独立。', en: 'Connects device preview entries through encrypted reverse tunnels with separate access for each computer.' },
       { name: 'HMR', fullName: 'Hot Module Replacement', zh: '修改代码后只替换受影响模块，不整页重载。', en: 'Replaces changed modules during development without a full-page reload.' },
       { name: 'WSS', fullName: 'WebSocket Secure', zh: '在加密连接上维持开发热更新通道。', en: 'Keeps the development hot-update channel open over an encrypted connection.' },
     ],
@@ -117,20 +119,20 @@ export const ARCHITECTURE_NODES: ArchitectureNode[] = [
     ],
   },
   {
-    id: 'blog', lane: 'product', x: 35, y: 91, eyebrow: 'BLOG', sourcePaths: [],
+    id: 'blog', lane: 'product', x: 35, y: 91, eyebrow: 'BLOG', sourcePaths: ['ops/nginx/www.cuberoot.me.conf', 'core/packages/client/next.config.ts'],
     label: { zh: '独立博客', en: 'Independent blog' },
-    zh: '文章内容由独立应用负责，主站只保留规范跳转入口。',
-    en: 'Article content belongs to a separate application; the main site only keeps the canonical link entry.',
+    zh: '博客内容在独立仓库维护为静态归档。Next 的 /blog 入口跳转到博客域名，自有 nginx 同时保留 /blog/ 静态目录。',
+    en: 'Blog content is maintained as a static archive in a separate repository. Next redirects /blog to the blog domain, while self-hosted nginx also serves the /blog/ static directory.',
     terms: [
       { name: 'Redirect', fullName: 'HTTP Redirect', zh: '让旧入口明确跳到唯一规范地址。', en: 'Sends an old entry to its single canonical address.' },
-      { name: 'Runtime boundary', fullName: 'Runtime Boundary', zh: '独立应用可以单独构建、发布和运行。', en: 'An independent application can be built, released, and run separately.' },
+      { name: 'Static hosting', fullName: 'Static Hosting', zh: '直接分发预生成的 HTML 与资源，不在请求时运行博客后端。', en: 'Serves prebuilt HTML and assets without running a blog backend for each request.' },
     ],
   },
   {
     id: 'api', lane: 'service', x: 60, y: 21, eyebrow: 'API', sourcePaths: ['core/apps/api'],
     label: { zh: 'Hono API', en: 'Hono API' },
-    zh: '登录、权限、业务读写和数据访问的唯一在线后端。',
-    en: 'The single online backend for sign-in, authorization, business writes, and data access.',
+    zh: '负责登录、权限、业务读写和数据访问的主要业务后端；FMC 求解由独立服务承担。',
+    en: 'The main business backend for sign-in, authorization, business reads and writes, and data access; FMC solving runs in a separate service.',
     terms: [
       { name: 'REST API', fullName: 'Representational State Transfer API', zh: '用 URL、HTTP 方法和 JSON 表达资源操作的接口风格。', en: 'An API style using URLs, HTTP methods, and JSON to operate on resources.' },
       { name: 'Authentication', fullName: 'Authentication', zh: '确认“你是谁”，例如登录和会话校验。', en: 'Confirms who you are, such as through sign-in and session checks.' },
@@ -143,6 +145,9 @@ export const ARCHITECTURE_NODES: ArchitectureNode[] = [
     label: { zh: 'FMC 求解服务', en: 'FMC solver service' },
     zh: '独立构建和部署的计算服务，通过固定 HTTP 边界提供求解能力。',
     en: 'A separately built and deployed compute service exposed through a stable HTTP boundary.',
+    facts: [
+      { label: '/v1/fmc/*', zh: 'API 域名的 nginx 将该路径转发到独立 FMC 服务，由专用 workflow 构建部署。', en: 'The API domain’s nginx forwards this path to the independent FMC service, built and deployed by its own workflow.' },
+    ],
     terms: [
       { name: 'Service boundary', fullName: 'Service Boundary', zh: '用网络接口隔开运行时和发布周期。', en: 'Separates runtimes and release cycles behind a network interface.' },
       { name: 'Native', fullName: 'Native Code', zh: '直接编译成目标机器可执行代码，适合重计算。', en: 'Code compiled directly for the target machine, suited to heavy computation.' },
@@ -161,7 +166,7 @@ export const ARCHITECTURE_NODES: ArchitectureNode[] = [
     ],
   },
   {
-    id: 'database', lane: 'foundation', x: 86, y: 12, eyebrow: 'DATA', sourcePaths: [],
+    id: 'database', lane: 'foundation', x: 86, y: 12, eyebrow: 'DATA', sourcePaths: ['core/apps/api/src/db/schema.pg.sql', 'core/apps/api/migrations'],
     label: { zh: 'PostgreSQL', en: 'PostgreSQL' },
     zh: '账号、内容、权限和业务数据的关系型事实源。',
     en: 'The relational source of truth for accounts, content, permissions, and product data.',
@@ -233,6 +238,7 @@ export const ARCHITECTURE_EDGES: ArchitectureEdge[] = [
   { from: 'shared', to: 'installed', kind: 'capability', zh: '共享能力', en: 'shared capability' },
   { from: 'shared', to: 'api', kind: 'capability', zh: '共享契约', en: 'shared contracts' },
   { from: 'shared', to: 'miniprogram', kind: 'capability', zh: '共享契约', en: 'shared contracts' },
+  { from: 'shared', to: 'jobs', kind: 'capability', zh: '共享规则与求解能力', en: 'shared rules and solving capabilities' },
   { from: 'governance', to: 'web', kind: 'capability', zh: '移植 / 包装', en: 'ports / wrappers' },
   { from: 'governance', to: 'static', kind: 'capability', zh: '上游静态资源', en: 'upstream assets' },
 ];

@@ -7,9 +7,9 @@ import type { Lang } from '../../_lib/Lang';
 import ArchNav from '../_components/ArchNav';
 import HistoryJourney from '../_components/HistoryJourney';
 import '../architecture.css';
-import './history.css';
+import '../history/history.css';
 
-export default function ArchHistoryPage() {
+export default function ArchLogPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
@@ -26,7 +26,7 @@ export default function ArchHistoryPage() {
             <span className="arch-meta-sep">·</span>
             <Link href="/dev/architecture/flow"><L zh="请求流程" en="Flow" /></Link>
             <span className="arch-meta-sep">·</span>
-            <Link href="/dev/architecture/decisions"><L zh="技术决策" en="Decisions" /></Link>
+            <Link href="/dev/architecture#decisions"><L zh="技术决策" en="Decisions" /></Link>
           </div>
         </footer>
       </div>

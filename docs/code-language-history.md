@@ -1,6 +1,6 @@
 # Code language history
 
-`/dev/code-history` uses the official `github-linguist` 9.7.0 gem. The snapshot stores byte counts for every detected language, each day's source commit, the branch, and timezone. No hand classification or line counting is used.
+The Code language history section is embedded in the Architecture overview at `/dev/architecture#code-history` and uses the official `github-linguist` 9.7.0 gem. The former `/dev/code-history` and `/dev/architecture/code-history` URLs, including language-prefixed forms, return HTTP 404 without a redirect. The component and snapshot live under `core/packages/client/app/[lang]/dev/architecture/_components/code-history/`. The snapshot stores byte counts for every detected language, each day's source commit, the branch, and timezone. No hand classification or line counting is used.
 
 The chart and selected-day bar separately show every language reaching 1% on any day in the snapshot: TypeScript, JavaScript, CSS, HTML, Rust, PLpgSQL, C++, Python, Ruby, PHP. Recheck this set when refreshing the snapshot. Colors come from Linguist's language registry; order and colors remain fixed across dates. Other contains only the remaining small languages. Labels round actual byte shares to one decimal; geometry retains unrounded shares. Rounding can make displayed totals differ slightly from 100%.
 

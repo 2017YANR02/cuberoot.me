@@ -1,5 +1,3 @@
-import type { ReactNode } from 'react';
-
 export interface Mod {
   route: string;
   zh: string;
@@ -18,88 +16,30 @@ export const BORROWED_MODULES: Mod[] = [
 ];
 
 export interface Decision {
-  topic: string;
+  topic: { zh: string; en: string };
   pick: string;
-  alt: string;
   zh: string;
   en: string;
 }
 export const DECISIONS: Decision[] = [
-  { topic: 'UI library',  pick: 'React',         alt: 'Vue / Svelte / Solid',  zh: '生态成熟，魔方相关组件容易接入，Web 与已安装客户端也能共享产品层。', en: 'A mature ecosystem, straightforward integration with cubing components, and a product layer shared by the web and installed clients.'
-  },
-  { topic: 'Framework',   pick: 'Next.js App Router', alt: 'Remix / TanStack Start / 纯 SPA', zh: '路由、静态生成、服务端渲染和流式响应在同一套约定里，且同一份 Web 代码可以走两条发布线路。', en: 'Routing, static generation, server rendering, and streaming share one convention, while the same web code can ship through two release paths.'
-  },
-  { topic: 'Bundler',     pick: 'Turbopack',        alt: 'Webpack / Vite',        zh: '跟随 Web 框架的默认构建链，开发和生产不维护两套打包配置。', en: 'Uses the web framework’s default build chain, avoiding separate development and production bundler configurations.'
-  },
-  { topic: 'Styling',     pick: '语义化 CSS + 主题 token', alt: '纯工具类 / CSS-in-JS', zh: '页面用可读的语义类名，颜色统一取主题变量，衍生色用 color-mix。', en: 'Pages use readable semantic class names, colors come from shared theme variables, and derived colors use color-mix.'
-  },
-  { topic: 'API server',  pick: 'Hono',             alt: 'Express / Fastify',     zh: 'TypeScript 友好，路由与中间件简洁，适合当前 API 的规模和部署方式。', en: 'TypeScript-friendly routes and middleware fit the current API size and deployment model.'
-  },
-  { topic: 'Database',    pick: 'PostgreSQL',    alt: 'MariaDB / MongoDB',     zh: '关系、事务、JSON 数据、窗口函数和部分索引能在同一个事实源里完成。', en: 'Relations, transactions, JSON data, window functions, and partial indexes live in one source of truth.'
-  },
-  { topic: 'Monorepo',    pick: 'pnpm + Turbo',     alt: '多个独立仓库', zh: '应用、共享包和离线任务在同一仓库协作，同时保持各自的构建与运行边界。', en: 'Applications, shared packages, and offline jobs collaborate in one repository while retaining distinct build and runtime boundaries.'
-  },
-  { topic: 'State mgmt',  pick: 'Zustand',          alt: 'Redux Toolkit / Jotai / Context', zh: '客户端内存和持久化状态使用小型 store，组件通过 selector 只订阅需要的切片。', en: 'Small stores hold in-memory and persisted client state; components subscribe only to the slices they need.'
-},
-  { topic: 'URL state',   pick: 'nuqs',             alt: '手写 history.pushState / router.replace / useState', zh: '页内"在哪个视图 / tab / 筛选 / 搜索"统一进 URL search params, 一处声明 useQueryState / useQueryStates。视图 / tab / 模式 / 浮层 push 进历史(后退能返回), 筛选 / 排序 / 搜索 replace(不堆历史)。替掉全站各写各的 history.pushState/replaceState + 手写 popstate;一个 PreToolUse hook 写入即拦 + 一条 vitest 守卫 CI 兜底, 仅 maplibre / zustand 数据序列化等少数处豁免。', en: 'In-page "which view / tab / filter / search" lives in URL search params, declared once via useQueryState / useQueryStates. Views / tabs / modes / overlays push to history (back returns); filters / sort / search replace (no pile-up). Replaced the site-wide grab-bag of raw history.pushState/replaceState + hand-rolled popstate; a PreToolUse hook blocks at write time and a vitest guard backstops CI, with a few exemptions (maplibre, zustand data serialization).'
-},
-  { topic: 'Hosting',     pick: '双线路 Web + 独立 API', alt: '单一 Web 线路', zh: '同一份 Web 代码走两条发布线路，API 和静态资源保持稳定入口；详细容量与恢复边界放在基础设施页维护。', en: 'The same web code ships through two routes, while API and static assets keep stable entry points; capacity and recovery details live on the infrastructure page.'
-  },
-  { topic: 'Theme tokens', pick: 'CSS variables + color-mix', alt: '页面硬编码颜色', zh: '亮色、暗色和系统主题共用语义 token，页面只引用含义，不复制色值。', en: 'Light, dark, and system themes share semantic tokens; pages reference meaning instead of copying color values.'
-},
-];
-
-export interface Detail {
-  title: string;
-  zh: ReactNode;
-  en: ReactNode;
-}
-export const DETAILS: Detail[] = [
-  {
-    title: 'SharedArrayBuffer / COOP / COEP',
-    zh: <><strong>/scramble/solver</strong> 运行求解器时需要 <code>SharedArrayBuffer</code>。隔离响应头只在这条路由启用，避免影响登录回调和其它页面。</>,
-    en: <><strong>/scramble/solver</strong> needs <code>SharedArrayBuffer</code> for its solver. Isolation headers are limited to that route so sign-in callbacks and other pages stay unaffected.</>
-},
-  {
-    title: 'apiUrl() 是唯一的 fetch 入口',
-    zh: <>客户端不能硬编码 origin。<code>lib/api-base.ts</code> 的 <code>apiUrl()</code> 根据构建环境和可选公开配置选择入口；浏览器开发环境走站内重写，服务端和生产环境使用绝对地址。</>,
-    en: <>Clients never hardcode an origin. <code>lib/api-base.ts</code> selects the entry from the build environment and optional public configuration; browser development uses the in-site rewrite, while server and production calls use an absolute URL.</>
-},
-  {
-    title: 'cubing.js + sr-puzzlegen + visualcube 三件套',
-    zh: <><strong>cubing.js</strong> 渲染动画 (TwistyPlayer)、跑 3x3 / 4x4 求解器。<strong>sr-puzzlegen</strong> 出 sq1 / megaminx / pyraminx / skewb 静态 SVG。<strong>visualcube</strong> 出 NxN 状态图 (F2L / OLL / PLL / ZBLL)。三者各管一块, <strong>禁止手写魔方 SVG</strong>。</>,
-    en: <><strong>cubing.js</strong> for animation (TwistyPlayer) and 3x3/4x4 solvers. <strong>sr-puzzlegen</strong> for sq1 / megaminx / pyraminx / skewb SVGs. <strong>visualcube</strong> for NxN state images (F2L / OLL / PLL / ZBLL). Three libs, three lanes — <strong>hand-written cube SVG is banned</strong>.</>
-},
-  {
-    title: 'i18n / English and Simplified Chinese',
-    zh: <>长文和复用文案走 <code>t()</code> 与语言 JSON；组件内短文案走 <code>tr()</code>、<code>T</code> 或 <code>useT()</code>。页面不手写语言判断三元。WCA 比赛中文名由独立数据源维护。</>,
-    en: <>Long-form and reused copy uses <code>t()</code> with locale JSON; short component copy uses <code>tr()</code>, <code>T</code>, or <code>useT()</code>. Pages do not hand-roll language ternaries. Chinese WCA competition names have their own data source.</>
-},
-  {
-    title: 'Theme — dark / light / system 三态',
-    zh: <>语义 token (<code>--background --foreground --muted-foreground --accent --signal-*</code>) 集中定义主题。衍生色用 <code>color-mix()</code>，系统、亮色和暗色通过同一套变量切换。</>,
-    en: <>Semantic tokens (<code>--background --foreground --muted-foreground --accent --signal-*</code>) define the theme centrally. Derived colors use <code>color-mix()</code>, and system, light, and dark modes switch the same variable set.</>
-},
-  {
-    title: 'WCA 统计的脆弱三角',
-    zh: <>统计生成物需要 <code>core/jobs/stats-build</code> 的输出、<code>.github/workflows/stats.yml</code> 的传输清单和 <code>ops/sql/load.sql</code> 的装载清单保持一致。发布前的管道检查会对照这三段契约，防止产物生成后没有传输或装载。</>,
-    en: <>Statistics artifacts require the output from <code>core/jobs/stats-build</code>, the transfer manifest in <code>.github/workflows/stats.yml</code>, and the load manifest in <code>ops/sql/load.sql</code> to stay aligned. A pre-release pipeline check compares all three contracts so generated artifacts are not skipped during transfer or loading.</>
-},
-  {
-    title: 'fork / port / own 三种治理',
-    zh: <><strong>fork</strong> 表示上游静态资源原样托管，只维护外层包装；<strong>port</strong> 表示在仓库内重写；<strong>own</strong> 表示自研。改 fork 或 port 前必须先确认上游边界。</>,
-    en: <><strong>fork</strong> means upstream static assets are hosted as-is with only a local wrapper; <strong>port</strong> means rewritten in-repo; <strong>own</strong> means built here. Check the upstream boundary before changing a fork or port.</>
-},
-  {
-    title: '状态管理 — Zustand(内存)+ nuqs(URL)',
-    zh: <>客户端内存 / 持久化状态走 <strong>Zustand</strong>:<code>auth_store</code> (WCA OAuth 用户)、<code>settingsStore</code> (主题 / 语言, persist)、<code>sessionStore</code> (当前 solve 会话, persist)、<code>statsStore</code> (WCA stats 查询)、<code>trainerStore</code> (训练状态, persist)、<code>recon_store</code> (复盘缓存);页面级 store 跟着各自 page 走 (battle / calc / mosaic / viz)。模式统一:<code>create()</code> 返回 hook, 不用 Provider, 不写 reducer。<strong>URL 状态</strong>(在哪个视图 / tab / 筛选 / 搜索)统一走 <strong>nuqs</strong> 的 <code>useQueryState</code> 写进 query params — 刷新可恢复、能分享深链、前进后退正常:大视图 / tab / 模式 / 浮层 push 进历史(后退能返回), 筛选 / 排序 / 搜索 replace(不堆历史)。禁裸 <code>history.pushState/replaceState</code> + 手写 popstate, 一个 PreToolUse hook 写入即拦 + 一条 vitest 守卫在 CI 兜底, 仅 maplibre / zustand 数据序列化等少数处豁免。</>,
-    en: <>In-memory / persisted client state uses <strong>Zustand</strong>: <code>auth_store</code> (WCA OAuth user), <code>settingsStore</code> (theme / lang, persisted), <code>sessionStore</code> (active solve session, persisted), <code>statsStore</code> (WCA stats query), <code>trainerStore</code> (drill state, persisted), <code>recon_store</code> (recon cache); page-local stores live next to their pages (battle / calc / mosaic / viz). One pattern throughout: <code>create()</code> returns a hook — no Provider, no reducer. <strong>URL state</strong> (which view / tab / filter / search) goes through <strong>nuqs</strong> <code>useQueryState</code> into the query params — survives refresh, shareable deep links, correct back/forward: big views / tabs / modes / overlays push to history (back returns), filters / sort / search replace (no history pile-up). Raw <code>history.pushState/replaceState</code> and hand-rolled popstate are banned — a PreToolUse hook blocks them at write time and a vitest guard backstops CI, with only a few exemptions (maplibre, zustand data serialization).</>
-},
-  {
-    title: 'npm registry — 我们用 pnpm 但拉的是 npm',
-    zh: <><code>pnpm</code> 是包管理客户端，依赖仍遵循 npm 的 <code>package.json</code>、语义化版本和 lockfile 协议。选择它是为了共享依赖存储和更顺手的 monorepo 工作流。</>,
-    en: <><code>pnpm</code> is the package-manager client; dependencies still follow npm’s <code>package.json</code>, semantic-versioning, and lockfile protocols. It is used for its shared dependency store and monorepo workflow.</>
-},
+  { topic: { zh: '网页', en: 'Web' }, pick: 'React + Next.js',
+    zh: '静态生成内容页，React 处理交互。',
+    en: 'Static generation for content pages; React for interaction.' },
+  { topic: { zh: '接口', en: 'API' }, pick: 'Hono',
+    zh: '独立部署，供网页和客户端共用。',
+    en: 'Deployed separately and shared by the web and installed clients.' },
+  { topic: { zh: '数据库', en: 'Database' }, pick: 'PostgreSQL',
+    zh: '统一存储业务数据，支持事务和统计查询。',
+    en: 'Stores application data with transactions and analytical queries.' },
+  { topic: { zh: '客户端', en: 'Apps' }, pick: 'React + Capacitor / Tauri / ArkWeb',
+    zh: '共用业务界面，各平台单独适配系统能力。',
+    en: 'Shared product UI with platform-specific system adapters.' },
+  { topic: { zh: '状态', en: 'State' }, pick: 'Zustand + nuqs',
+    zh: '本地状态用 store，可分享的筛选写入 URL。',
+    en: 'Stores for local state; URL parameters for shareable filters.' },
+  { topic: { zh: '部署', en: 'Hosting' }, pick: 'Vercel + nginx',
+    zh: '同一份网页分别部署到 Vercel 和自有服务器。',
+    en: 'The same web app deploys to Vercel and a self-hosted server.' },
 ];
 
 export type StageId = 'browser' | 'edge' | 'spa' | 'fetch' | 'api' | 'hono' | 'pg';
