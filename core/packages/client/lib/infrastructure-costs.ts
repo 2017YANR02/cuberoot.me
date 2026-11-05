@@ -198,6 +198,23 @@ export const EQUIPMENT_GROUPS: readonly EquipmentGroup[] = [
     category: { zh: '手机与电脑', en: 'Phones and computers' },
     items: [
       {
+        name: { zh: '深空黑色 16 英寸 MacBook Pro (PROLED XDR 显示屏) - M5 Max 芯片', en: 'Space Black 16-inch MacBook Pro (PROLED XDR display) - M5 Max chip' },
+        detail: {
+          zh: '18 核 CPU、40 核 GPU；128GB 统一内存、2TB 存储',
+          en: '18-core CPU, 40-core GPU; 128GB unified memory, 2TB storage',
+        },
+        amount: 58999,
+        imageSrc: '/images/dev/infrastructure/macbook-pro-16-proled-xdr-m5-max-space-black.png',
+        imageScale: 1.35,
+      },
+      {
+        name: { zh: 'iPhone Duo 512GB', en: 'iPhone Duo 512GB' },
+        detail: { zh: '夜空色', en: 'Night Sky' },
+        amount: 17999,
+        imageSrc: '/images/dev/infrastructure/iphone-duo-night-sky.png',
+        imageScale: 1.35,
+      },
+      {
         name: { zh: 'iPhone 15 Pro Max 512 GB', en: 'iPhone 15 Pro Max 512 GB' },
         detail: { zh: '手机；中国大陆发售价', en: 'Phone; mainland China launch price' },
         amount: 11999,
