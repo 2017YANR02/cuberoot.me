@@ -51,7 +51,7 @@ const LOOP_PAUSE_MS = 900;
 const ALIGNMENT_PAUSE_MS = 1200;
 
 export const NXN_ORDER: Partial<Record<AlgPlayerPuzzle, number>> = {
-  '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5,
+  '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5, '6x6': 6,
 };
 
 const SIM_PUZZLE: Partial<Record<AlgPlayerPuzzle, PuzzleKind>> = {

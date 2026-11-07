@@ -20,7 +20,7 @@ import { algHtmlText, editAlgHtmlText, type AlgTextEdit } from '@/lib/alg_html';
 
 /** Only U-layer turns: cube order four, Megaminx order five, Pyraminx/FTO order three. */
 export function uTurnOrder(puzzle: string): number | undefined {
-  if (['2x2', '3x3', '4x4', '5x5'].includes(puzzle)) return 4;
+  if (['2x2', '3x3', '4x4', '5x5', '6x6'].includes(puzzle)) return 4;
   if (puzzle === 'megaminx') return 5;
   if (puzzle === 'pyraminx' || puzzle === 'fto') return 3;
   return undefined;

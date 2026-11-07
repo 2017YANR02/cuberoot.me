@@ -95,6 +95,9 @@ const SETS: SetDef[] = [
   // 5x5
   { puzzle: '5x5', outSlug: 'l2e', scd: 'L2E' },
   { puzzle: '5x5', outSlug: 'l2c', scd: 'L2C' },
+  // 6x6
+  { puzzle: '6x6', outSlug: 'l2e', scd: '6x6L2E' },
+  { puzzle: '6x6', outSlug: 'l2c', scd: '6x6L2C' },
   // sq1
   { puzzle: 'sq1',       outSlug: 'cs',     scd: 'SQ1CS' },
   { puzzle: 'sq1',       outSlug: 'co',     scd: 'SQ1CO' },
@@ -316,18 +319,19 @@ async function scrapeOne(def: SetDef): Promise<AlgDb> {
 
 async function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
 
-function parseArgs(): { puzzle?: string; set?: string } {
-  const out: { puzzle?: string; set?: string } = {};
+function parseArgs(): { puzzle?: string; set?: string; outputDir?: string } {
+  const out: { puzzle?: string; set?: string; outputDir?: string } = {};
   for (let i = 2; i < process.argv.length; i++) {
     const a = process.argv[i];
     if (a === '--puzzle') out.puzzle = process.argv[++i];
     else if (a === '--set') out.set = process.argv[++i];
+    else if (a === '--output-dir') out.outputDir = process.argv[++i];
   }
   return out;
 }
 
 async function main() {
-  const { puzzle, set } = parseArgs();
+  const { puzzle, set, outputDir = SHARED_DATA_DIR } = parseArgs();
   const filtered = SETS.filter(d =>
     (puzzle == null || d.puzzle === puzzle) && (set == null || d.outSlug === set)
   );
@@ -335,14 +339,14 @@ async function main() {
     console.error(`No sets matched (puzzle=${puzzle ?? '*'}, set=${set ?? '*'}).`);
     process.exit(1);
   }
-  mkdirSync(SHARED_DATA_DIR, { recursive: true });
+  mkdirSync(outputDir, { recursive: true });
   for (const def of filtered) {
     const { puzzle: p, outSlug, scd } = def;
     try {
       const tag = typeof scd === 'string' ? scd : `${scd.parent} (umbrella)`;
       console.log(`scraping ${p}/${outSlug} (speedcubedb ${tag})…`);
       const db = await scrapeOne(def);
-      const out = join(SHARED_DATA_DIR, `alg_${p}_${outSlug}.json`);
+      const out = join(outputDir, `alg_${p}_${outSlug}.json`);
       writeFileSync(out, JSON.stringify(db, null, 2));
       const totalAlgs = db.cases.reduce((sum, c) => sum + c.algs.flat().length, 0);
       const stickerKinds = new Set(db.cases.map(c => c.sticker.kind));

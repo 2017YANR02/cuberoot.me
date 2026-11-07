@@ -20,7 +20,7 @@ import { parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
 
 /** 用 WCA 面/宽/中层/转体记号的魔方 —— 这几种才能走 `toMoveString`。
  *  megaminx(`R++` `D--`)、sq1(`(1,0)/`)是另一套文法,喂进去只会炸。 */
-const CUBE_NOTATION = new Set<AlgPuzzle>(['2x2', '3x3', '4x4', '5x5', 'pyraminx', 'skewb']);
+const CUBE_NOTATION = new Set<AlgPuzzle>(['2x2', '3x3', '4x4', '5x5', '6x6', 'pyraminx', 'skewb']);
 
 /**
  * LowCubes Full PLL uses the notation from Raul Low's Megaminx sheet rather

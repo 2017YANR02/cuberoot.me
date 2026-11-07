@@ -1930,6 +1930,33 @@
         "Generator reopens every WOFF2, checks exact and non-overlapping character coverage, and verifies the union equals the source CJK repertoire for both weights."
       ],
       "driftPolicy": "Regenerate fonts and CSS together when updating the source font or optimizing common headings. New heading text is covered by on-demand CJK shards without regeneration. CSS URLs use content hashes; do not hand-edit generated ranges or cache versions."
+    },
+    {
+      "id": "migration.alg-6x6",
+      "kind": "immutable-migration-family",
+      "source": {
+        "url": "https://speedcubedb.com/a/6x6",
+        "locator": "Reviewed source case colours, algorithm IDs and setups; docs/alg-6x6-intake.md"
+      },
+      "license": {
+        "spdx": "NOASSERTION",
+        "evidence": "Existing SpeedCubeDB algorithm attribution; source artwork is not bundled; no additional public license asserted."
+      },
+      "owner": [
+        "core/jobs/scramble-stats-build/bin/scrape_speedcubedb.ts",
+        "core/packages/client/scripts/prepare-six-algs.mts"
+      ],
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/client exec node --import tsx scripts/prepare-six-algs.mts <raw-directory> <review-output-directory>",
+      "outputs": [
+        "core/apps/api/migrations/0316_alg_6x6.sql",
+        "core/packages/client/tests/fixtures/alg-6x6.json"
+      ],
+      "verification": [
+        "pnpm --filter @cuberoot/client exec vitest run tests/alg_6x6.test.ts",
+        "Apply migration twice to isolated PostgreSQL and verify 32 L2C / 3 L2E cases and 40 algorithms"
+      ],
+      "driftPolicy": "Review source changes before importing. Published migration is immutable; use a new migration for subsequent corrections."
     }
   ]
 }

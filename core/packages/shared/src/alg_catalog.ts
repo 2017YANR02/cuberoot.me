@@ -167,7 +167,10 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
     { slug: 'l2e', scd: 'L2E', en: 'Last Two Edges',   zh: 'Last Two Edges (L2E)' },
     { slug: 'l2c', scd: 'L2C', en: 'Last Two Centers', zh: 'Last Two Centers (L2C)' },
   ],
-  '6x6': [],
+  '6x6': [
+    { slug: 'l2e', scd: '6x6L2E', en: 'Last Two Edges', zh: 'Last Two Edges (L2E)' },
+    { slug: 'l2c', scd: '6x6L2C', en: 'Last Two Centers', zh: 'Last Two Centers (L2C)' },
+  ],
   '7x7': [],
   'sq1': [
     { slug: 'cs',     scd: 'SQ1CS',     short: 'CS',     en: 'Cube Shape',         zh: '复形' },
