@@ -286,6 +286,7 @@ describe.each([
   { event: 'radiojam', nameEn: 'Radio Jam', nameZh: 'Radio Jam' },
   { event: 'catscradle', nameEn: 'Cat’s Cradle', nameZh: 'Cat’s Cradle' },
   { event: 'radiocanon', nameEn: 'Radio Canon', nameZh: 'Radio Canon' },
+  { event: 'radiolarian3', nameEn: 'Radiolarian 3', nameZh: 'Radiolarian 3' },
 ] as const)('$event csTimer compatibility', ({ event, nameEn, nameZh }) => {
   it('preserves renamed sessions and mixed native notation through both import APIs', () => {
     const solve = {
@@ -384,6 +385,9 @@ describe('compound native csTimer session names', () => {
     ['Radiolarian 1.5 practice', 'radiocanon'],
     ['Session_Radiolarian_1.5', 'radiocanon'],
     ['Session_Radiolarian1.5_Practice', 'radiocanon'],
+    ['Radiolarian 3 practice', 'radiolarian3'],
+    ['Session_Radiolarian_3', 'radiolarian3'],
+    ['Session_Radiolarian3_Practice', 'radiolarian3'],
     ['Session_3x3_+_Skewb', 'cube3skewb'],
     ['3×3 + Skewb_Practice', 'cube3skewb'],
     ['练习：三阶＋斜转', 'cube3skewb'],
@@ -423,6 +427,26 @@ describe('3×3 + Helicopter csTimer session names', () => {
     const byEvent = importCstimerJson(raw);
     expect(byEvent?.cube3heli?.[0].event).toBe('cube3heli');
     expect(byEvent?.['333']).toBeUndefined();
+  });
+});
+
+describe('Radiolarian 3 session-name boundaries', () => {
+  it.each([
+    ['Radiolarian 3.', true],
+    ['Session_Radiolarian_3.', true],
+    ['Radiolarian3. Practice', true],
+    ['Radiolarian3.5', false],
+    ['Radiolarian 3.0', false],
+    ['Radiolarian30', false],
+    ['XRadiolarian 3', false],
+    ['XRadiolarian3 Practice', false],
+  ] as const)('recognizes only the complete puzzle name in %s', (name, matches) => {
+    const raw = JSON.stringify({
+      session1: [[[0, 8_765], 'R', '', 1_700_000_000]],
+      properties: { sessionData: { 1: { name, opt: { scrType: 'input' } } } },
+    });
+    expect(parseCstimerExport(raw)[0].event === 'radiolarian3').toBe(matches);
+    expect(importCstimerJson(raw)?.radiolarian3?.[0].event === 'radiolarian3').toBe(matches);
   });
 });
 

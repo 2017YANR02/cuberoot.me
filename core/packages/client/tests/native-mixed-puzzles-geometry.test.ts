@@ -32,6 +32,8 @@ import { nativePuzzleKPuzzle, parseNativePuzzleAlg } from '@cuberoot/puzzle-solv
 // https://www.puzzleforge.com/wp/2012/10/06/radiolarian-5-cats-cradle-102012/
 // Radio Canon's radio01_5 uses planar cuts at 0.77 and retains fixed centers:
 // https://www.puzzleforge.com/wp/2014/05/08/radiolarian-1-5-the-radio-cannon-52014/
+// Radiolarian 3's radio03 uses 1 - (1 - 1/phi) * 4/5 and mobile centers:
+// https://www.puzzleforge.com/wp/2010/03/08/132/
 // Baby Face preset: https://github.com/cubing/cubing.js/issues/127
 // 3x3 + Skewb is the independent superposition of the standard 3x3 and Skewb
 // cut families, not a measured reproduction of an inaccessible original post.
@@ -201,6 +203,13 @@ const CASES: readonly Spec[] = [
     axes: [{ pairs: icoFacePairs, normals: icoNormals, cuts: [0.77], order: 3 }],
     faces: 20, perFace: 16, raw: 360, visible: 320, pieces: 182,
     shapes: { 3: 7, 4: 9 }, unmarkedOrbit: 'CENTERS2',
+    orbits: [['C5RNER', 12, 5], ['EDGES', 60, 2], ['CENTERS', 60, 1], ['EDGES2', 30, 2], ['CENTERS2', 20, 3]],
+  },
+  {
+    id: 'radiolarian3', faceNormals: icoNormals,
+    axes: [{ pairs: icoFacePairs, normals: icoNormals, cuts: [(2 * Math.sqrt(5) - 1) / 5], order: 3 }],
+    faces: 20, perFace: 16, raw: 360, visible: 320, pieces: 182,
+    shapes: { 3: 10, 4: 3, 5: 3 }, unmarkedOrbit: 'CENTERS2',
     orbits: [['C5RNER', 12, 5], ['EDGES', 60, 2], ['CENTERS', 60, 1], ['EDGES2', 30, 2], ['CENTERS2', 20, 3]],
   },
   {
@@ -428,6 +437,42 @@ it('keeps all twenty Radio Canon face centers fixed under every outer face turn'
       expect(orbit.orientationDelta[sticker.ord] !== 0, `${move} center rotation ${centerFamily}`)
         .toBe(centerFamily === family);
     }
+  }
+});
+
+it('keeps radiolarian3 centers mobile despite matching Radio Canon in sticker and piece counts', () => {
+  const spec = CASES.find(({ id }) => id === 'radiolarian3')!;
+  const { stickers, puzzle } = fixture(spec);
+  const depth = (2 * Math.sqrt(5) - 1) / 5;
+  expect(Number(NATIVE_PUZZLES.radiolarian3.description.split(' ')[2])).toBe(depth);
+  expect(shapeCounts(expectedFace(spec, icoNormals.U))).toEqual({ 3: 10, 4: 3, 5: 3 });
+  const centers = Object.entries(icoNormals).map(([family, normal]) => {
+    const sticker = stickers.find((candidate) => candidate.center.distanceTo(normal) < EPS);
+    expect(sticker, `${family} physical face center`).toBeDefined();
+    expect(sticker!.vertices).toHaveLength(3);
+    expect(sticker!.orbit).toBe('CENTERS2');
+    return { normal, sticker: sticker! };
+  });
+  expect(new Set(centers.map(({ sticker }) => sticker.ord)).size).toBe(20);
+  for (const [family, axis] of Object.entries(icoNormals)) {
+    // A face has three neighboring face centers at dot product sqrt(5)/3.
+    // They lie beyond the new cut, whereas Radio Canon's 0.77 cut excludes them.
+    const neighboring = centers.filter(({ normal }) => normal.dot(axis) > depth + EPS && normal.distanceTo(axis) > EPS);
+    expect(neighboring).toHaveLength(3);
+    for (const { normal } of neighboring) expect(normal.dot(axis)).toBeCloseTo(Math.sqrt(5) / 3, 12);
+    for (const amount of [1, -1]) {
+      const state = puzzle.defaultPattern().applyMove(new Move(family, amount)).patternData.CENTERS2;
+      expect(state.pieces.filter((piece, position) => piece !== position)).toHaveLength(3);
+      for (const { normal, sticker } of centers) {
+        const expected = normal.dot(axis) > depth + EPS
+          ? normal.clone().applyAxisAngle(axis, -amount * 2 * Math.PI / 3) : normal;
+        const target = centers.find((candidate) => candidate.normal.distanceTo(expected) < EPS)!;
+        expect(target, `${family} independent center destination`).toBeDefined();
+        expect(state.pieces[target.sticker.ord]).toBe(sticker.ord);
+      }
+    }
+    const fixed = nativePuzzleKPuzzle('radiocanon').defaultPattern().applyMove(family).patternData.CENTERS2;
+    expect(fixed.pieces.filter((piece, position) => piece !== position)).toHaveLength(0);
   }
 });
 
@@ -710,7 +755,7 @@ afterEach(async () => {
   }
 });
 
-it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'catscradle', 'radiocanon'] as const)('animates %s moves in both directions with the real PG3D matrices and selected pieces', async (id) => {
+it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'catscradle', 'radiocanon', 'radiolarian3'] as const)('animates %s moves in both directions with the real PG3D matrices and selected pieces', async (id) => {
   // This is a local renderer fixture, not browser interaction evidence. The
   // real TwistyPlayer creates its real PG3D; only DOM camera attachment and
   // scheduling are suppressed because jsdom has no display or GPU.
@@ -748,8 +793,8 @@ it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radio
   const puzzle = await (await player.experimentalModel.puzzleLoader.get()).kpuzzle();
   // Fixed samples of the renderer's quintic easing, independently applied to
   // physical vertices. Keep existing cases at their established middle frame;
-  // the new fixed-center model checks start, end and three intermediate frames.
-  const samples = id === 'radiocanon' || id === 'radiojam'
+  // the newer icosahedral models check start, end and three intermediate frames.
+  const samples = id === 'radiocanon' || id === 'radiojam' || id === 'radiolarian3'
     ? [[0, 0], [0.2, 0.05792], [0.5, 0.5], [0.8, 0.94208], [1, 1]]
     : [[0.5, 0.5]];
   for (const choice of manualChoices(spec)) {
