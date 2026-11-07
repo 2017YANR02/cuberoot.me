@@ -22,6 +22,7 @@ const SCAN_DIRS = ['app', 'components', 'lib', 'hooks'];
 const ALLOWLIST = new Set([
   'hooks/useHashHighlight.ts', // 唯一合法处:全站 hash 锚点滚动+高亮的单一实现
   'components/WeChatShareSync.tsx', // 全局分享元数据同步，不滚动也不高亮
+  'lib/entry-navigation.ts', // Global per-entry provenance notification; no anchor scrolling or highlighting.
 ]);
 
 // 另一团队的 roux 实验 WIP,不在本约定范围内。

@@ -75,6 +75,7 @@ export function ShopShell({ children }: { children: ReactNode }) {
     </nav>
       <nav className="shop-utilities" aria-label={t('购物服务', 'Shopping services')}>
         <div className="shop-search-slot" data-open={searchVisible}>
+          {/* allow-manual-search: Opens the live search field; query updates while typing. */}
           <button ref={searchTrigger} type="button" className="shop-control shop-icon-button shop-search-trigger" tabIndex={searchVisible ? -1 : 0} aria-label={t('搜索商品', 'Search products')} aria-expanded={searchVisible} aria-controls="shop-search" onClick={() => setSearchOpen(true)}><Search size={21} aria-hidden /></button>
           <div ref={searchPanel} id="shop-search" className="shop-search" role="search" inert={!searchVisible} aria-hidden={!searchVisible}>
             <SearchInput className="shop-search-field" inputClassName="shop-control shop-search-input" value={query} onChange={value => {

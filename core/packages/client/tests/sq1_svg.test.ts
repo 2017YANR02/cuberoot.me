@@ -58,9 +58,9 @@ describe('SQ1 tokenizer — single-num shorthand `t` = (t, 0)', () => {
   it('compact emits `t` for (t, 0) at end / before slash', () => {
     expect(compactSq1Alg('3')).toBe('3');
     expect(canonicalSq1Alg(compactSq1Alg('-4'))).toBe('(-4, 0)');
-    // Two adjacent (t, 0) turns with no slice between — keep `t0` to avoid
-    // greedy regex mis-parse of `33` as (3, 3).
-    expect(compactSq1Alg('(3, 0) (3, 0)')).toBe('3030');
+    // Keep tuple boundaries when adjacent turns have no slice between them.
+    expect(compactSq1Alg('(3, 0) (3, 0)')).toBe('(3,0)(3,0)');
+    expect(canonicalSq1Alg(compactSq1Alg('(3, 0) (3, 0)'))).toBe('(3, 0) (3, 0)');
   });
   it('invert single negates top, keeps 0 bottom', () => {
     expect(invertSq1Alg('3')).toBe('(-3,0)');

@@ -16,6 +16,7 @@ import { caseThumbPlan } from '@/lib/alg_thumb_plan';
 import { reorderCaseAlgs, rotateCaseClockwise } from '@/lib/alg_sets_api';
 import baseline from './fixtures/alg-case-alignment-baseline.json';
 import relocations from './fixtures/alg-case-relocations.json';
+import sixLayerFiles from './fixtures/alg-6x6.json';
 
 // Full public API snapshot, 2026-09-16. Include the two non-catalog BLD sets.
 // Read at runtime instead of inferring a multi-megabyte literal TypeScript type.
@@ -94,7 +95,8 @@ describe('one public case state for every algorithm set', () => {
     expect(files).toHaveLength(71);
     expect(files.reduce((n, f) => n + f.cases.flatMap(c => c.algs.flat()).length, 0)).toBe(24633);
     expect(allTargets().map(t => `${t.puzzle}/${t.set}`).sort())
-      .toEqual(files.map(f => `${f.puzzle}/${f.set}`).sort());
+      // The later six-layer intake is exhaustively validated by alg_6x6.test.ts.
+      .toEqual([...files, ...sixLayerFiles].map(f => `${f.puzzle}/${f.set}`).sort());
   });
 
   it.each(files.map(file => ({ key: `${file.puzzle}/${file.set}`, file })))('$key: every accepted row solves the public state', async ({ key, file }) => {

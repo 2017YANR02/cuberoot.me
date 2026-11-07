@@ -13,7 +13,7 @@ describe('algorithm player placement', () => {
     const category = read('components/AlgCategoryView.tsx');
     expect(detail).toContain('>{renderDetail}</AdminCaseEditor>');
     expect(detail).toContain('editorAlgorithms={editor?.algorithms}');
-    expect(detail).toContain('{editor ? editor.name : <span data-alg-shared-title={primary}>{primary}</span>}');
+    expect(detail).toMatch(/\{editor \? editor\.name : <span data-alg-shared-title=\{primary\}>\s*\{embedded && !onEmbeddedCaseChange \? primary : <TimerPracticeContentPicker/);
     expect(detail).toContain('className="alg-case-edit-toggle"');
     expect(detail).toContain('if (editing && editor && !editor.confirmDiscard()) return;');
     expect(category).toContain('draggable={canReorder && c.id != null}');
