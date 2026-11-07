@@ -11,7 +11,7 @@ export interface CubePhotoResult {
   recognition?: PhotoRecognition;
   results: PhotoAlgResult[];
   requestedSets?: PhotoAlgSet[];
-  assumptions: { f2lSolved: true | 'not-required'; standardColorScheme: true };
+  assumptions: { f2lSolved: true | 'not-required'; standardColorScheme: true; puzzleSize?: 2 | 3 | 4; pocketStage?: 'eg' | 'last-slot'; pllParity?: true };
 }
 export interface CubePhotoArtifact extends CubePhotoResult {
   kind: 'cube-photo';
