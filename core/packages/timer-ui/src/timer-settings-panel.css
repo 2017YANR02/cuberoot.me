@@ -10,6 +10,7 @@
 }
 .timer-modal.settings-modal {
   --timer-settings-section-bg: var(--muted);
+  font-family: var(--font-sans);
   font-size: 16px;
   background: var(--popover);
   color: var(--foreground);
@@ -44,6 +45,36 @@ html[data-palette-scheme='dark'] .timer-modal.settings-modal {
   flex-direction: column;
 }
 .settings-modal:focus { outline: none; }
+@keyframes timer-settings-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes timer-settings-enter {
+  from { transform: translateY(10px) scale(var(--timer-settings-enter-scale, .985)); }
+  to { transform: none; }
+}
+@keyframes timer-settings-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes timer-settings-exit {
+  from { transform: none; }
+  to { transform: translateY(10px) scale(var(--timer-settings-enter-scale, .985)); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .timer-settings-overlay {
+    animation: timer-settings-fade-in 180ms ease-out;
+  }
+  .timer-modal.settings-modal {
+    animation: timer-settings-enter 180ms cubic-bezier(.2, .8, .2, 1);
+  }
+  .timer-settings-overlay[data-closing] {
+    animation: timer-settings-fade-out 180ms ease-in forwards;
+  }
+  .timer-settings-overlay[data-closing] .timer-modal.settings-modal {
+    animation: timer-settings-exit 180ms ease-in forwards;
+  }
+}
 .settings-modal-head {
   flex: none;
   display: flex;
@@ -238,7 +269,7 @@ html[data-palette-scheme='dark'] .timer-modal.settings-modal {
 .settings-modal .settings-row-control input[type="text"]:not(.country-input-field) {
   max-width: 100%;
 }
-.settings-modal .hint-btn {
+.settings-modal .settings-main .hint-btn {
   display: inline-flex;
   align-items: center;
   min-height: 34px;
@@ -260,6 +291,7 @@ html[data-palette-scheme='dark'] .timer-modal.settings-modal {
 @media (max-width: 720px) {
   .timer-settings-overlay { padding: 0; }
   .timer-modal.settings-modal {
+    --timer-settings-enter-scale: 1;
     width: 100%;
     height: 100dvh;
     max-width: none;
@@ -353,9 +385,13 @@ html[data-palette-scheme='dark'] .timer-modal.settings-modal {
 .settings-modal .settings-global-reset .reset-defaults-btn { border: 0; }
 .settings-category-rail { padding-bottom: 76px; }
 @media (max-width: 720px) {
-  .settings-modal-head { flex-wrap: wrap; gap: 6px 12px; }
-  .settings-modal .settings-global-reset { position: static; inset: auto; transform: none; order: 1; flex-basis: 100%; display: flex; justify-content: flex-end; }
-  .settings-modal .settings-global-reset .reset-defaults-btn { min-height: 36px; padding: 6px 10px; }
+  .settings-modal-head { flex-wrap: nowrap; gap: 8px; }
+  .settings-modal-head > h2 { flex: none; }
+  .settings-modal .settings-category-picker { flex: 0 1 auto; min-width: 0; }
+  .settings-modal .settings-category-select { min-width: 0; max-width: 100%; }
+  .settings-modal .settings-global-reset { position: static; inset: auto; transform: none; flex: none; margin-left: auto; }
+  .settings-modal .settings-global-reset .reset-defaults-btn { min-height: 44px; padding: 6px 4px; white-space: nowrap; }
+  .settings-modal .settings-modal-close { flex: none; margin-left: 0; }
   .settings-modal .settings-export-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 }
 .settings-modal .hint-btn.timer-settings-action-danger { width: auto; }
@@ -370,9 +406,25 @@ html[data-palette-scheme='dark'] .timer-modal.settings-modal {
 }
 .settings-modal .timer-sync-seed-controls > button { flex-shrink: 0; white-space: nowrap; }
 
-/* Keep embedded controls readable without changing their sizes elsewhere. */
-.settings-modal .settings-row-control :is(input:not([type="range"]), select, .compact-select-trigger, .native-select, .keymap-bind-btn),
+/* One type scale for embedded settings; font samples and key bindings retain
+   their own families, while descriptions share the secondary text treatment. */
+.timer-modal.settings-modal .settings-row-control :is(input:not([type="range"]), select, .compact-select-trigger, .native-select, .keymap-bind-btn),
 .settings-modal .reset-defaults-btn { font-size: 16px; }
-.settings-modal :is(.settings-row-control .hint, .wca-src-hint, .keymap-reject, .cstimer-target-picker, .settings-backup-row small, .settings-backup-list > p) { font-size: 14px; }
+.settings-modal :is(.hint, .settings-section-note, .settings-row-hint, .settings-import-note, .wca-src-hint, .cstimer-target-picker, .settings-backup-row small, .settings-backup-list > p, .tfp-name) {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+.settings-modal .keymap-reject { font-size: 14px; line-height: 1.5; }
+.settings-modal .settings-row:has(.tfp) { grid-template-columns: max-content minmax(0, 1fr); }
+.settings-modal .tfp { min-width: 0; max-width: 100%; }
+.settings-modal .tfp-name { opacity: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.settings-modal .tfp-digits { font-size: 16px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.settings-modal .tfp-trigger { min-height: 36px; max-width: 100%; border-radius: 4px; }
+@media (max-width: 540px) {
+  .settings-modal .tfp-trigger { min-height: 44px; }
+}
 .settings-modal :is(.cstimer-import-name, .settings-backup-row strong) { font-size: 16px; }
 .settings-modal .settings-category-button > svg { width: 18px; height: 18px; flex-shrink: 0; }

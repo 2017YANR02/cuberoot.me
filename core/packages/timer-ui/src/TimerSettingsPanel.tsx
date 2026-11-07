@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Bluetooth, Database, Dices, Keyboard, Palette, Timer, Trophy, Volume2, X } from 'lucide-react';
 import { TIMER_SETTING_CATEGORY_CONTRACTS, type TimerSettingCategoryId } from '@cuberoot/shared/timer';
@@ -27,7 +27,23 @@ export function TimerSettingsPanel({ language, activeCategory, onCategoryChange,
   const titleId = useId();
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
-  const close = useRef(() => closeRef.current()).current;
+  const [closing, setClosing] = useState(false);
+  const closeStarted = useRef(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const close = useRef(() => {
+    if (closeStarted.current) return;
+    closeStarted.current = true;
+    if (!window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+      closeRef.current();
+      return;
+    }
+    setClosing(true);
+    // Keep the dialog mounted (and scrolling locked) until its exit finishes.
+    closeTimer.current = setTimeout(() => closeRef.current(), 180);
+  }).current;
+  useEffect(() => () => {
+    if (closeTimer.current !== null) clearTimeout(closeTimer.current);
+  }, []);
   const backdrop = useModalDismiss(close);
   const items = TIMER_SETTING_CATEGORY_CONTRACTS.filter(category => !categories || categories.includes(category.id));
   const label = (en: string, zh: string) => language === 'zh' ? zh : en;
@@ -36,12 +52,15 @@ export function TimerSettingsPanel({ language, activeCategory, onCategoryChange,
   }, [activeCategory]);
   useEffect(() => {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    // Pointer-opened settings must not leave the trigger focused: pad timing
+    // deliberately ignores keys on buttons. Preserve keyboard navigation only.
+    const restoreFocus = previous?.matches(':focus-visible') ?? false;
     dialogRef.current?.focus({ preventScroll: true });
-    return () => { if (previous?.isConnected) previous.focus({ preventScroll: true }); };
+    return () => { if (restoreFocus && previous?.isConnected) previous.focus({ preventScroll: true }); };
   }, []);
   if (typeof document === 'undefined') return null;
   return createPortal(
-    <div className="timer-settings-overlay" data-no-timer {...backdrop}>
+    <div className="timer-settings-overlay" data-closing={closing || undefined} data-no-timer {...backdrop}>
       <div ref={dialogRef} className="timer-modal settings-modal" data-site-surface="panel" role="dialog" aria-modal="true"
         aria-labelledby={titleId} tabIndex={-1} onKeyDown={event => {
           if (event.key !== 'Tab' || !dialogRef.current) return;

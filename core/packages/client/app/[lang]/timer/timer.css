@@ -235,7 +235,7 @@
    as bare text with no box, which reads as a label rather than something you
    can type in. Scoped to this modal so the shared primitives stay untouched;
    CountryInput is excluded because it brings its own frame. */
-.timer-modal .settings-row-control input[type="text"]:not(.country-input-field) {
+.timer-modal:not(.settings-modal) .settings-row-control input[type="text"]:not(.country-input-field) {
   background: var(--background);
   color: var(--foreground);
   border: 1px solid var(--input);
