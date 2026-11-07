@@ -163,6 +163,14 @@
 .shop-help { max-width: 780px; padding-bottom: 70px; margin: 0 auto; }
 .shop-help h1 { font-size: 40px; font-weight: 550; margin: 16px 0 30px; }
 .shop-help > .shop-button { margin-top: 30px; }
+.shop-help-item { padding: 20px 0; border-bottom: 1px solid var(--border-default); }
+.shop-help-trigger { display: flex; align-items: center; justify-content: space-between; gap: 15px; width: 100%; padding: 0; border: 0; background: none; color: var(--foreground); font-size: 14px; font-weight: 500; line-height: 1.5; text-align: left; cursor: pointer; }
+.shop-help-trigger svg { flex-shrink: 0; transition: transform .28s ease; }
+.shop-help-item[data-open=true] .shop-help-trigger svg { transform: rotate(180deg); }
+.shop-help-answer { display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden; transition: grid-template-rows .28s ease, opacity .2s ease, visibility 0s .28s; }
+.shop-help-item[data-open=true] .shop-help-answer { grid-template-rows: 1fr; opacity: 1; visibility: visible; transition-delay: 0s; }
+.shop-help-answer > div { min-height: 0; overflow: hidden; }
+.shop-help-answer p { padding-top: 16px; font-size: 13px; line-height: 1.85; color: var(--muted-foreground); }
 @media (max-width: 1000px) {
   .shop-header { gap: 20px; } .shop-utilities { gap: 13px; } .shop-category-nav { gap: 24px; }
   .shop-wordmark strong { font-size: 25px; }
@@ -231,7 +239,8 @@
   .shop-category-nav { order: 3; flex-basis: 100%; gap: 24px; overflow-x: auto; }
   .shop-shell:has(.shop-catalog) .shop-main { padding-block: 28px; }
 }
-@media (min-width: 1101px) {
+/* Only hide same-row navigation where the expanded search would overlap it. */
+@media (min-width: 1101px) and (max-width: 1279px) {
   .shop-header[data-search-open=true] .shop-category-nav { opacity: 0; visibility: hidden; }
   .shop-category-nav { transition: opacity .18s ease; }
 }

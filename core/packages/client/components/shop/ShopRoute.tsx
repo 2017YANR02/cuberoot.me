@@ -2,7 +2,7 @@
 
 // Next App Router supplies React's ViewTransition runtime; installed React types expose it here.
 import type {} from 'react/canary';
-import { ViewTransition } from 'react';
+import { useId, useState, ViewTransition } from 'react';
 import PageBackLink from '@/components/PageBackLink';
 import { ChevronDown } from '@app-foundation/icons/lucide';
 import dynamic from 'next/dynamic';
@@ -24,6 +24,8 @@ export function ShopRoute({ definition, id }: { definition: PlatformRouteDefinit
 
 function ShopHelp() {
   const t = useT();
+  const groupId = useId();
+  const [expanded, setExpanded] = useState<number | null>(null);
   const entries = [
     [t('如何购买？', 'How do I place an order?'), t('选择商品规格和数量，加入购物车。结算时登录 CubeRoot 账号，实物商品需选择收货地址。确认金额后创建订单，在订单页完成支付。', 'Choose a variant and quantity and add it to your bag. Sign in to your CubeRoot account at checkout and select a shipping address for physical goods. Review the total, place your order, then pay on the order page.')],
     [t('“价格待定”是什么意思？', 'What does “Price to be announced” mean?'), t('商品尚未开放销售。价格和可售规格公布后才能加入购物车，不会按 0 元下单。', 'The product is not on sale yet. It can be added to your bag once its price and available variants are published.')],
@@ -32,7 +34,17 @@ function ShopHelp() {
     [t('如何申请售后？', 'How do I get after-sales support?'), t('在订单详情中查看可用的售后操作，或通过“联系我们”提供订单号和问题说明。退换货条件及寄回安排由客服根据实际订单确认。', 'Check the available support actions in your order details, or contact us with your order number and a description of the issue. Support will confirm return eligibility and return-shipping arrangements for your order.')],
   ];
   return <section className="shop-help"><PageBackLink fallback={SHOP_ROOT} className="shop-back" /><h1>{t('购物帮助', 'Shopping help')}</h1>
-    {entries.map(([title, body]) => <details key={title} className="shop-disclosure"><summary>{title}<ChevronDown size={18} aria-hidden /></summary><p>{body}</p></details>)}
+    {entries.map(([title, body], index) => {
+      const open = expanded === index;
+      const triggerId = `${groupId}-question-${index}`;
+      const panelId = `${groupId}-answer-${index}`;
+      return <div key={index} className="shop-help-item" data-open={open}>
+        <h2><button id={triggerId} type="button" className="shop-control shop-help-trigger" aria-expanded={open} aria-controls={panelId} onClick={() => setExpanded(current => current === index ? null : index)}>{title}<ChevronDown size={18} aria-hidden /></button></h2>
+        <div id={panelId} className="shop-help-answer" role="region" aria-labelledby={triggerId} aria-hidden={!open} inert={!open}>
+          <div><p>{body}</p></div>
+        </div>
+      </div>;
+    })}
     <AppLink className="shop-button shop-button-primary" href="/contact" prefetch={false}>{t('联系客服', 'Contact us')}</AppLink>
   </section>;
 }
