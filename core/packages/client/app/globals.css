@@ -547,9 +547,14 @@ a {
    document.startViewTransition 包住 data-theme 切换,浏览器对整页旧→新做交叉
    淡出。这里把默认 0.25s 放慢到 0.42s,贴近"中国色"的慢过渡气质;不支持的
    浏览器(无 startViewTransition)自动瞬切,reduced-motion 由 JS 跳过。 */
-::view-transition-old(root),
-::view-transition-new(root) {
+html[data-discrete-transition]::view-transition-old(root),
+html[data-discrete-transition]::view-transition-new(root) {
   animation-duration: 0.42s;
+}
+
+html:not([data-discrete-transition])::view-transition-old(root),
+html:not([data-discrete-transition])::view-transition-new(root) {
+  animation-duration: 180ms;
 }
 
 /* Hover 预览不能用整页 View Transition:快照层会短暂接管 hit testing,快速扫过

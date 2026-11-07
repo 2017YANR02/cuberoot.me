@@ -1559,6 +1559,14 @@ export const CATALOG: ComponentEntry[] = [
     usage: '<ContactDetails />',
   },
   {
+    name: 'PageTransition',
+    import: "import PageTransition from '@/components/PageTransition';",
+    usage: '<PageTransition>{children}</PageTransition>',
+    category: 'nav',
+    zh: '跨模块导航短淡化；同模块更新不触发，保留现有详情过渡和减少动态效果设置。',
+    en: 'Short cross-section navigation crossfade; preserves same-section updates, detail transitions and reduced motion.',
+  },
+  {
     name: 'BackHome',
     import: "import BackHome from '@/components/BackHome';",
     category: 'nav',
