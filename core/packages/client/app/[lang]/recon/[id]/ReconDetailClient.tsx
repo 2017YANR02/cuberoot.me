@@ -406,7 +406,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           showScrambleNet={!scrambleCubeOrder}
           event={solve.event}
           scramble={scramble}
-          displayText={sourceView ? solutionText : displayText}
+          displayText={sourceView ? solutionText : rawDisplayText}
           playerRef={playerRef}
           fillPane
           fullscreenButton={fullscreenButton}
