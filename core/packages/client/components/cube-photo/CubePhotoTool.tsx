@@ -170,7 +170,7 @@ export default function CubePhotoTool() {
         {modified && selected && result && photo && <button className="cube-photo-action" onClick={() => restoreDetection(result, photo)}><RotateCcw size={17} />{tr({ zh: '恢复自动结果', en: 'Restore automatic result' })}</button>}
     </>}
     </div>
-    {puzzleSize === 4 && <p className="cube-photo-note">{tr({ zh: '针对 PPLL，默认有 P 特；中心、配棱及下三层需已复原。', en: 'For PPLL, PLL parity is assumed. Centers, edge pairing and the lower three layers must be solved.' })}</p>}
+    {puzzleSize === 4 && <p className="cube-photo-note">{tr({ zh: '针对 PPLL，默认有 P 特。', en: 'For PPLL, PLL parity is assumed.' })}</p>}
     {!hasPhotoWorkspace && error && <p className="cube-photo-error" role="alert">{error}</p>}
     <div className={`cube-photo-workspace${hasPhotoWorkspace ? ' has-photo' : ''}`}>
     {/* Photo and overlay share the same coordinate system at every display size. */}
