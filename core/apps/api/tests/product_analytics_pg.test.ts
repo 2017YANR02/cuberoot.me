@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import postgres from 'postgres';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { PRODUCT_ANALYTICS_POLICY, HOME_ANALYTICS_LAYOUT, analyticsPage, validAnalyticsEvent, type ProductAnalyticsEvent } from '@cuberoot/shared/product-analytics';
+import { HOME_ANALYTICS_LAYOUT, analyticsPage, validAnalyticsEvent, type ProductAnalyticsEvent } from '@cuberoot/shared/product-analytics';
 const state = vi.hoisted(() => ({ db: null as unknown, userId: 1, admin: false }));
 vi.mock('../src/db/connection.js', () => ({ get sql() { return state.db; } }));
 vi.mock('../src/platform/auth.js', () => ({
@@ -31,7 +31,7 @@ it('normalizes private/dynamic routes and rejects payload contents outside the v
 });
 
 const url = process.env.PRODUCT_ANALYTICS_TEST_DATABASE_URL;
-describe.skipIf(!url)('consented product analytics with real PostgreSQL', () => {
+describe.skipIf(!url)('default product analytics with real PostgreSQL', () => {
   let db: ReturnType<typeof postgres>;
   const schema = `analytics_${randomUUID().replaceAll('-', '')}`;
   const subjectToken = randomUUID();
@@ -58,29 +58,27 @@ describe.skipIf(!url)('consented product analytics with real PostgreSQL', () => 
   });
   afterAll(async () => { if (db) { await db.unsafe(`DROP SCHEMA ${schema} CASCADE`); await db.end(); } });
 
-  it('requires explicit consent, deduplicates retries, revokes and isolates identities', async () => {
+  it('accepts anonymous and member events without consent and deduplicates retries', async () => {
     const events = [event()];
-    expect((await write('/analytics/events', { sessionId, events })).status).toBe(403);
-    expect((await write('/analytics/consent', { enabled: true, policyVersion: PRODUCT_ANALYTICS_POLICY })).status).toBe(200);
     expect(await (await write('/analytics/events', { sessionId, events })).json()).toEqual({ accepted: 1 });
     expect(await (await write('/analytics/events', { sessionId, events })).json()).toEqual({ accepted: 0 });
-    expect((await write('/analytics/events', { sessionId, events: [event()] }, true)).status).toBe(403);
-    await db.unsafe("INSERT INTO platform_privacy_consents (user_id, purpose, status, policy_version, source) VALUES (1, 'analytics', 'granted', 'platform-1', 'fixture')");
-    expect((await write('/analytics/events', { sessionId, events: [event()] }, true)).status).toBe(403);
-    expect((await write('/analytics/events', { subjectToken: randomUUID(), sessionId, events: [event()] })).status).toBe(403);
-    expect((await write('/analytics/consent', { enabled: false, policyVersion: PRODUCT_ANALYTICS_POLICY })).status).toBe(200);
-    expect((await write('/analytics/events', { sessionId, events: [event()] })).status).toBe(403);
-    const rows = await db.unsafe('SELECT user_id, encode(anonymous_subject_hash, \'hex\') AS hash, dimensions FROM platform_analytics_events');
+    expect((await write('/analytics/events', { sessionId, events: [event()] }, true)).status).toBe(202);
+    // Historical preference records no longer control default web statistics.
+    await db.unsafe("INSERT INTO platform_privacy_consents (user_id, purpose, status, policy_version, source) VALUES (1, 'analytics', 'withdrawn', 'web-analytics-1', 'fixture')");
+    expect((await write('/analytics/events', { sessionId, events: [event()] }, true)).status).toBe(202);
+    const rows = await db.unsafe('SELECT user_id, consent_id, encode(anonymous_subject_hash, \'hex\') AS hash, dimensions FROM platform_analytics_events ORDER BY occurred_at');
     expect(rows[0].user_id).toBeNull(); expect(rows[0].hash).toHaveLength(64);
+    expect(rows.every(row => row.consent_id === null)).toBe(true);
     expect(JSON.stringify(rows)).not.toContain(subjectToken);
+    expect((await db.unsafe('SELECT COUNT(*)::int AS count FROM platform_privacy_consents'))[0].count).toBe(1);
+    expect((await write('/analytics/events', {sessionId, events:[{...event(), route:'/timer?secret=1'}]})).status).toBe(400);
   });
 
   it('reports matched exposure/click/use funnels, excludes admins, and purges expiry', async () => {
     expect((await app.request('/admin/product-analytics')).status).toBe(403);
-    await write('/analytics/consent', { enabled: true, policyVersion: PRODUCT_ANALYTICS_POLICY }, true);
     const viewId = randomUUID();
     const entry = { viewId, route: '/', feature: 'home', entryId: 'timer', placement: 'main', position: 0, layoutVersion: HOME_ANALYTICS_LAYOUT } as const;
-    const events = [event({ ...entry, name: 'web.entry_impression' }), event({ ...entry, name: 'web.entry_click' }),
+    const events = [event({name: 'web.feature_interaction'}), event({ ...entry, name: 'web.entry_impression' }), event({ ...entry, name: 'web.entry_click' }),
       event({ name: 'web.feature_use', action: 'timer_solve', sourceViewId: viewId, sourcePlacement: 'main', sourcePosition: 0 })];
     expect((await write('/analytics/events', { sessionId, events }, true)).status).toBe(202);
     state.admin = true;
@@ -89,6 +87,8 @@ describe.skipIf(!url)('consented product analytics with real PostgreSQL', () => 
     expect(response.headers.get('Cache-Control')).toBe('private, no-store');
     const report = await response.json();
     expect(response.status, JSON.stringify(report)).toBe(200);
+    expect(report.coverage).toBe('default_web');
+    expect(report.features.find((row: {feature:string}) => row.feature === 'timer')).toMatchObject({interactingSessions:1, usingSessions:1});
     expect(report.summary.accountUsers).toBe(1);
     expect(report.entries[0]).toMatchObject({ impressions: 1, clicks: 1, usedAfterClick: 1 });
     expect(report.frequency[0]).toMatchObject({ feature: 'timer', users: 1, activeDaysPerUser: 1, sessionsPerUser: 1 });

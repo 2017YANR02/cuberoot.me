@@ -15,7 +15,7 @@ import '@/components/sticky-table.css';
 import '../admin.css';
 import './product-analytics.css';
 
-type View = 'pages' | 'entries' | 'frequency';
+type View = 'features' | 'pages' | 'entries' | 'frequency';
 const featureNames = new Map(listSiteDirectoryEntries().map(entry => [entry.id as string, SITE_DIRECTORY_TEXTS[entry.nameKey]]));
 const measuredFeatures = new Set(Object.values(ANALYTICS_ACTION_FEATURES));
 const percent = (part: number, total: number) => total > 0 ? `${(part / total * 100).toFixed(1)}%` : '—';
@@ -28,7 +28,7 @@ export default function ProductAnalyticsPage() {
   const [mounted, setMounted] = useState(false);
   const [days, setDays] = useState(28);
   const [audience, setAudience] = useState<AnalyticsReportAudience>('public');
-  const [view, setView] = useState<View>('entries');
+  const [view, setView] = useState<View>('features');
   const [refresh, setRefresh] = useState(0);
   const [data, setData] = useState<ProductAnalyticsReport | null>(null);
   const [loading, setLoading] = useState(false);
@@ -62,13 +62,14 @@ export default function ProductAnalyticsPage() {
     { value: 'admin', label: t('管理员', 'Administrators') },
   ];
   const viewItems: Array<{ value: View; label: string }> = [
+    { value: 'features', label: t('功能总览', 'Feature overview') },
     { value: 'entries', label: t('入口曝光与点击', 'Entry impressions and clicks') },
     { value: 'pages', label: t('页面使用', 'Page usage') },
     { value: 'frequency', label: t('使用频率', 'Usage frequency') },
   ];
   return <main className="admin-hub admin-hub--dashboard product-analytics">
     <header className="admin-hub__heading"><h1>{t('产品使用分析', 'Product usage analytics')}</h1>
-      <p>{t('仅包含主动授权的 Web 使用数据，匿名会话不等同于独立访客。', 'Includes opted-in Web activity only. Anonymous sessions are not unique visitors.')}</p></header>
+      <p>{t('默认统计登录及匿名用户的 Web 活动，匿名会话不等同于独立访客。', 'Web activity is collected by default for signed-in and anonymous users. Anonymous sessions are not unique visitors.')}</p></header>
     <section className="admin-dashboard" aria-busy={loading}>
       <div className="admin-dashboard__toolbar">
         <CompactSelect value={days} onChange={setDays} label={t(`最近 ${days} 天`, `Last ${days} days`)} ariaLabel={t('时间范围', 'Period')}
@@ -87,7 +88,7 @@ export default function ProductAnalyticsPage() {
         <div className="admin-dashboard__toolbar">
           <CompactSelect value={view} onChange={setView} items={viewItems} label={viewItems.find(item => item.value === view)!.label} ariaLabel={t('统计视图', 'Report view')} />
         </div>
-        {data.summary.events === 0 ? <p className="admin-dashboard__empty">{t('此时间范围内暂无已授权的使用数据。', 'No opted-in activity in this period.')}</p>
+        {data.summary.events === 0 ? <p className="admin-dashboard__empty">{t('此时间范围内暂无使用数据。', 'No activity in this period.')}</p>
           : <AnalyticsTable key={`${view}:${days}:${audience}:${refresh}`} data={data} view={view} />}
         {data.truncated && <p role="status">{t('结果达到 1,000 行上限，请缩短时间范围或筛选人群。', 'Results reached the 1,000-row limit. Narrow the period or audience.')}</p>}
         {data.summary.lastEventAt && <p className="admin-dashboard__updated">{t('最新事件（UTC）', 'Latest event (UTC)')}：{data.summary.lastEventAt.replace('T', ' ').slice(0, 19)}</p>}
@@ -95,10 +96,10 @@ export default function ProductAnalyticsPage() {
       <details className="admin-dashboard__table product-analytics__definitions"><MoreToggle as="summary">{t('指标口径与覆盖范围', 'Definitions and coverage')}</MoreToggle>
         <p>{t('入口曝光要求至少 50% 可见且持续 1 秒；主动点击也计为曝光。同一页面访问内，同一位置的入口只计一次曝光和点击。点击率 = 点击 / 曝光；使用转化率 = 点击后 30 分钟内使用对应功能的次数 / 点击。',
           'An impression requires at least 50% visibility for one second; a deliberate click also establishes exposure. Each entry position is counted once per page view. CTR = clicks / impressions. Use conversion = matched clicks followed by feature use within 30 minutes / clicks.')}</p>
-        <p>{t('有效阅读要求页面可见 30 秒且有真实交互。使用率 = 使用功能的会话 / 访问会话。当前功能事件覆盖计时完成、主动重新生成打乱、批量求解结果、模拟器操作、公式播放和 NxN 复盘播放；未接入的功能显示“—”。同一操作类型在一次页面访问内只计一次，不表示复原把数或转动次数。',
-          'Engaged reading requires 30 visible seconds and interaction. Usage rate = sessions using a feature / visiting sessions. Instrumented actions cover completed solves, requested scramble regeneration, batch solver results, simulator moves, algorithm playback and NxN reconstruction playback. Uninstrumented features show “—”. Each action is counted once per page view, not once per solve or turn.')}</p>
-        <p>{t('跨日频率仅统计执行过上述功能操作的登录账号，按 UTC 计算。默认排除管理员、开发环境和嵌入页面；只保留最近 30 天有效事件。统计存在授权与丢包偏差，低点击率不能单独证明功能不重要。',
-          'Cross-day frequency covers signed-in accounts performing those actions, using UTC dates. Administrators, development environments and embedded pages are excluded by default. Events remain valid for 30 days. Consent and delivery affect coverage; a low CTR alone does not establish low importance.')}</p>
+        <p>{t('交互会话表示在页面内容区使用指针或键盘，不包含导航点击；不等同于完成操作。有效阅读要求页面可见 30 秒且有真实交互。使用率 = 使用功能的会话 / 访问会话。当前功能事件覆盖计时完成、主动重新生成打乱、批量求解结果、模拟器操作、公式播放和 NxN 复盘播放；未接入的功能显示“—”。同一操作类型在一次页面访问内只计一次，不表示复原把数或转动次数。',
+          'Interaction sessions include pointer or keyboard activity within page content, excluding navigation clicks; they do not imply completed operations. Engaged reading requires 30 visible seconds and interaction. Usage rate = sessions using a feature / visiting sessions. Instrumented actions cover completed solves, requested scramble regeneration, batch solver results, simulator moves, algorithm playback and NxN reconstruction playback. Uninstrumented features show “—”. Each action is counted once per page view, not once per solve or turn.')}</p>
+        <p>{t('跨日频率仅统计执行过上述功能操作的登录账号，按 UTC 计算。默认排除管理员、开发环境和嵌入页面；只保留最近 30 天有效事件。浏览器隐私信号、拦截及丢包会影响覆盖，低点击率不能单独证明功能不重要。',
+          'Cross-day frequency covers signed-in accounts performing those actions, using UTC dates. Administrators, development environments and embedded pages are excluded by default. Events remain valid for 30 days. Browser privacy signals, blocking and delivery affect coverage; a low CTR alone does not establish low importance.')}</p>
       </details>
     </section>
   </main>;
@@ -113,14 +114,19 @@ function AnalyticsTable({ data, view }: { data: ProductAnalyticsReport; view: Vi
   const placementNames: Record<string, string> = { main: t('常用', 'Main'), wca: 'WCA', train: t('训练', 'Training'), tool: t('工具', 'Tools'), learn: t('学习', 'Learning'), other: t('其他', 'Other'), header: t('日历', 'Calendar'), search: t('搜索', 'Search') };
   let headers: string[];
   let rows: Array<{ key: string; volume: number; rate: number; cells: ReactNode[] }>;
-  if (view === 'pages') {
-    headers = [t('页面', 'Page'), t('屏幕', 'Screen'), t('语言', 'Language'), 'PV', t('会话', 'Sessions'), t('有效阅读率', 'Engaged rate'), t('使用会话', 'Using sessions'), t('使用率', 'Usage rate')];
+  if (view === 'features') {
+    if (!data.features) return <p role="status">{t('统计服务尚未更新，功能总览将在服务端部署后可用。', 'The analytics service has not been updated. Feature overview will be available after the server deployment.')}</p>;
+    headers = [t('功能', 'Feature'), 'PV', t('访问会话', 'Visiting sessions'), t('交互会话', 'Interaction sessions'), t('交互率', 'Interaction rate'), t('完成操作会话', 'Completed-operation sessions')];
+    rows = data.features.map(row => ({ key: row.feature, volume: row.sessions, rate: row.sessions ? row.interactingSessions / row.sessions : 0,
+      cells: [featureName(row.feature), row.views, row.sessions, row.interactingSessions, percent(row.interactingSessions, row.sessions), measuredFeatures.has(row.feature) ? row.usingSessions : '—'] }));
+  } else if (view === 'pages') {
+    headers = [t('页面', 'Page'), t('屏幕', 'Screen'), t('语言', 'Language'), 'PV', t('会话', 'Sessions'), t('有效阅读率', 'Engaged rate'), t('交互会话', 'Interaction sessions'), t('使用会话', 'Using sessions'), t('使用率', 'Usage rate')];
     rows = data.pages.map(row => {
       const title = PAGE_META[row.route.slice(1)]?.title;
       const measured = measuredFeatures.has(row.feature);
       return { key: `${row.route}:${row.device}:${row.language}`, volume: row.views, rate: measured && row.sessions ? row.usingSessions / row.sessions : -1,
         cells: [<span key="page">{title ? t(title.zh, title.en) : featureName(row.feature)}<small>{row.route}</small></span>, deviceName(row.device), row.language === 'zh' ? t('中文', 'Chinese') : 'English', row.views, row.sessions,
-          percent(row.engagedSessions, row.sessions), measured ? row.usingSessions : '—', measured ? percent(row.usingSessions, row.sessions) : '—'] };
+          percent(row.engagedSessions, row.sessions), row.interactingSessions, measured ? row.usingSessions : '—', measured ? percent(row.usingSessions, row.sessions) : '—'] };
     });
   } else if (view === 'entries') {
     headers = [t('入口', 'Entry'), t('位置', 'Placement'), t('屏幕', 'Screen'), t('曝光', 'Impressions'), t('点击', 'Clicks'), t('点击率', 'CTR'), t('使用转化', 'Uses after click'), t('转化率', 'Conversion')];
@@ -138,8 +144,8 @@ function AnalyticsTable({ data, view }: { data: ProductAnalyticsReport; view: Vi
   if (!rows.length) return <p className="admin-dashboard__empty">{view === 'frequency' ? t('没有可计算频率的登录账号操作。', 'No signed-in feature activity to calculate frequency.') : t('此视图暂无数据。', 'No data in this view.')}</p>;
   return <div className="admin-dashboard__table">
     <div className="admin-dashboard__toolbar"><CompactSelect value={sort} onChange={value => { setSort(value); setPage(0); }} label={sort === 'volume' ? t('按数量排序', 'Sort by volume') : t('按比例 / 频率排序', 'Sort by rate / frequency')} ariaLabel={t('排序', 'Sort')} items={[
-      { value: 'volume', label: view === 'entries' ? t('曝光量优先', 'Most impressions') : view === 'pages' ? t('访问量优先', 'Most views') : t('使用人数优先', 'Most accounts') },
-      { value: 'rate', label: view === 'entries' ? t('点击率优先', 'Highest CTR') : view === 'pages' ? t('使用率优先', 'Highest usage rate') : t('活跃天数优先', 'Most active days') },
+      { value: 'volume', label: view === 'entries' ? t('曝光量优先', 'Most impressions') : (view === 'pages' || view === 'features') ? t('访问量优先', 'Most views') : t('使用人数优先', 'Most accounts') },
+      { value: 'rate', label: view === 'entries' ? t('点击率优先', 'Highest CTR') : view === 'features' ? t('交互率优先', 'Highest interaction rate') : view === 'pages' ? t('使用率优先', 'Highest usage rate') : t('活跃天数优先', 'Most active days') },
     ]} /></div>
     <div className="sticky-scroll product-analytics__scroll"><table className="sticky-thead"><thead><tr>{headers.map(header => <th key={header} scope="col">{header}</th>)}</tr></thead>
       <tbody>{rows.slice(current * 50, (current + 1) * 50).map(row => <tr key={row.key}>{row.cells.map((value, index) => index === 0 ? <th key={index} scope="row">{value}</th> : <td key={index}>{typeof value === 'number' ? value.toLocaleString() : value}</td>)}</tr>)}</tbody></table></div>
