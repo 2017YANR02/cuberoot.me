@@ -492,10 +492,12 @@ export default function LandingPage() {
             {editingCards ? <Check size={16} aria-hidden="true" /> : <Pencil size={16} aria-hidden="true" />}
           </button>}
         </Tooltip>}
-        {isAdmin && <Link href={SHOP_ROOT} className="landing-auth-btn" prefetch={false}>
-          <ShoppingBag size={16} aria-hidden="true" />
-          <span>{tr({ zh: '商店', en: 'Shop' })}</span>
-        </Link>}
+        {isAdmin && <Tooltip content={tr({ zh: '商店', en: 'Shop' })}>
+          {(tip) => <Link {...tip} href={SHOP_ROOT} className="landing-auth-icon"
+            aria-label={tr({ zh: '商店', en: 'Shop' })} prefetch={false}>
+            <ShoppingBag size={16} aria-hidden="true" />
+          </Link>}
+        </Tooltip>}
         {isAdmin && <Tooltip content={tr({ zh: '下载', en: 'Download' })}>
           {(tip) => <Link {...tip} href="/download" className="landing-auth-icon"
             aria-label={tr({ zh: '下载', en: 'Download' })} prefetch={false}>
