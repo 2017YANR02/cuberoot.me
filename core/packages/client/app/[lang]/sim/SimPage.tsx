@@ -156,7 +156,7 @@ const ENGINE_TWISTY_DEF: Record<string, string> = { fto: 'o f 0.333333333333333'
  *  下含义不同,所以换拼图 / 换渲染器时必须按目标重算这两值,不能跨拼图沿用。 */
 function defaultViewFor(kind: SimPuzzle, twisty: boolean): { viewAngle: number; viewGradient: number } {
   const yawDeg = kind === 'megaminx' || kind === 'kilominx' ? 0 : 30;
-  const pitchDeg = kind === 'fto' || kind === 'baby_fto' ? 0 : 30;
+  const pitchDeg = kind === 'fto' ? 0 : 30;
   const yawFactor = twisty ? 3.6 : 1.8;
   return { viewAngle: 50 - yawDeg / yawFactor, viewGradient: 50 - pitchDeg / 1.8 };
 }
