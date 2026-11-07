@@ -1,5 +1,22 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createPadInput, requiredPads } from '@/app/[lang]/timer/_lib/stackmat/pad-input';
+import { effectiveStackmatInput, usesStackmatPads } from '@/components/stackmat-catalog';
+
+describe('StackMat generation input compatibility', () => {
+  for (const generation of [1, 2, 3, 4, 5]) {
+    it(`G${generation}: supports two pads and safely resolves a saved four-pad choice`, () => {
+      const settings = { timerDisplayMode: `stackmat-g${generation}`, stackmatInputMode: '4-pad' as const };
+      expect(effectiveStackmatInput(settings)).toBe(generation === 5 ? '4-pad' : '2-pad');
+      expect(usesStackmatPads({ ...settings, stackmatInputMode: '2-pad' })).toBe(true);
+      expect(usesStackmatPads({ ...settings, stackmatInputMode: 'normal' })).toBe(false);
+    });
+  }
+  it('keeps ordinary input for digits and the tournament display', () => {
+    for (const timerDisplayMode of ['digits', 'stackmat']) {
+      expect(usesStackmatPads({ timerDisplayMode, stackmatInputMode: '4-pad' })).toBe(false);
+    }
+  });
+});
 
 describe('StackMat multi-contact input', () => {
   for (const mode of ['2-pad', '4-pad'] as const) {

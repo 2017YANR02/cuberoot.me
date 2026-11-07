@@ -12,6 +12,6 @@ const StackmatTimerArtwork = forwardRef<SVGSVGElement, Props>(function StackmatT
 }, ref) {
   return generation === 5
     ? <StackmatG5Artwork ref={ref} skin={skin} padMode={padMode} indicator={indicator} {...props}/>
-    : <StackmatLegacyArtwork ref={ref} generation={generation} {...props}/>;
+    : <StackmatLegacyArtwork ref={ref} generation={generation} indicator={indicator} {...props}/>;
 });
 export default StackmatTimerArtwork;

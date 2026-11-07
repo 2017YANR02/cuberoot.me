@@ -1,7 +1,7 @@
 import { forwardRef, useId, type SVGProps } from 'react';
 import StackmatWordmark from './StackmatWordmark';
 import StackmatLcdDigits from './StackmatLcdDigits';
-import { STACKMAT_HAND, STACKMAT_RESET } from './stackmat-artwork-parts';
+import { STACKMAT_HAND, STACKMAT_RESET, PALM_STRAIGHT, PALM_G4 } from './stackmat-artwork-parts';
 import { STACKMAT_LETTERING } from './stackmat-lettering';
 
 function Lettering({ label, x, y, width, height, color = '#15191c' }: {
@@ -14,14 +14,12 @@ function Lettering({ label, x, y, width, height, color = '#15191c' }: {
 // Separately drawn housings. Reference photographs and variant notes live in docs/stackmat-artwork.md.
 const STRAIGHT_BODY = 'M63 43Q16 43 10 82Q3 126 52 136L225 151Q280 156 307 178Q400 224 493 178Q520 156 575 151L748 136Q797 126 790 82Q784 43 737 43L540 43L525 31H275L260 43Z';
 const G4_BODY = 'M60 21Q12 12 7 57Q2 94 39 119L235 200Q255 211 281 215Q400 263 519 215Q545 211 565 200L761 119Q798 94 793 57Q788 12 740 21L552 72Q531 78 513 68Q400 21 287 68Q269 78 248 72Z';
-const PALM_STRAIGHT = 'M62 49Q22 48 17 83Q11 118 54 129L238 144L254 48Z';
-const PALM_G4 = 'M60 28Q20 20 15 58Q10 88 43 111L231 189L251 79Z';
 
 type Props = SVGProps<SVGSVGElement> & {
-  generation: 1 | 2 | 3 | 4; size?: number; displayValue?: string; digitColor?: string;
+  generation: 1 | 2 | 3 | 4; indicator?: 'idle' | 'holding' | 'ready'; size?: number; displayValue?: string; digitColor?: string;
 };
 const StackmatLegacyArtwork = forwardRef<SVGSVGElement, Props>(function StackmatLegacyArtwork({
-  generation, size = 280, displayValue = '0.000', digitColor = '#414a37', ...props
+  generation, size = 280, displayValue = '0.000', digitColor = '#414a37', indicator, ...props
 }, ref) {
   const id = useId().replace(/:/g, '');
   const paint = (name: string) => `url(#${id}-${name})`;
@@ -90,8 +88,8 @@ const StackmatLegacyArtwork = forwardRef<SVGSVGElement, Props>(function Stackmat
       {generation === 2 && <path d="M304 107h8m5 0h9m5 0h9m5 0h9m6 0h12" stroke="#737f66" strokeWidth="1.2"/>}
     </>}
     <g transform={g4 ? 'translate(285 162)' : 'translate(457 68)'}>
-      <circle r="6.5" fill="#202526" stroke="#b4b5a5" strokeWidth="1.5"/><circle r="4.5" fill={paint('red')}/>
-      <circle cy="20" r="6.5" fill="#202526" stroke="#b4b5a5" strokeWidth="1.5"/><circle cy="20" r="4.5" fill={paint('green')}/>
+      <circle r="6.5" fill="#202526" stroke="#b4b5a5" strokeWidth="1.5"/><circle r="4.5" fill={paint('red')} opacity={indicator === undefined || indicator === 'holding' || indicator === 'ready' ? 1 : .25}/>
+      <circle cy="20" r="6.5" fill="#202526" stroke="#b4b5a5" strokeWidth="1.5"/><circle cy="20" r="4.5" fill={paint('green')} opacity={indicator === undefined || indicator === 'ready' ? 1 : .25}/>
     </g>
     <g transform={g4 ? 'translate(300 208)' : 'translate(428 86)'}>
       <circle r="17" fill="#111718" stroke="#d2d7ce" strokeWidth="1.5"/>

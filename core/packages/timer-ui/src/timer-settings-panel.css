@@ -9,11 +9,21 @@
   background: var(--modal-overlay, color-mix(in srgb, var(--background) 70%, transparent));
 }
 .timer-modal.settings-modal {
+  --timer-settings-section-bg: var(--muted);
   font-size: 16px;
   background: var(--popover);
   color: var(--foreground);
   border: 1px solid var(--border-default);
   border-radius: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme='light']):not([data-palette-scheme='light']) .timer-modal.settings-modal {
+    --timer-settings-section-bg: color-mix(in srgb, var(--foreground) 7%, var(--muted));
+  }
+}
+html[data-theme='dark']:not([data-palette-scheme='light']) .timer-modal.settings-modal,
+html[data-palette-scheme='dark'] .timer-modal.settings-modal {
+  --timer-settings-section-bg: color-mix(in srgb, var(--foreground) 7%, var(--muted));
 }
 .settings-modal-close { display: grid; place-items: center; border: 0; border-radius: 6px; cursor: pointer; }
 .settings-modal .settings-section h2 { margin: 0 0 6px; font-size: 18px; }
@@ -86,7 +96,7 @@
 }
 .settings-category-button:hover { background: var(--shell-hover); color: var(--foreground); }
 .settings-category-button[data-active='true'] {
-  background: var(--muted);
+  background: var(--timer-settings-section-bg, var(--muted));
   color: var(--foreground);
   font-weight: 600;
 }
@@ -146,7 +156,7 @@
   padding: 8px 16px;
   border: 0;
   border-radius: 12px;
-  background: var(--muted);
+  background: var(--timer-settings-section-bg, var(--muted));
   color: var(--foreground);
   font-size: 16px;
 }

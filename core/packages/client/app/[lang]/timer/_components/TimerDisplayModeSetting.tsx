@@ -1,12 +1,14 @@
 'use client';
 
-import { STACKMAT_GENERATIONS, STACKMAT_G5_SKINS, STACKMAT_G5_SKIN_LABELS } from '@/components/stackmat-catalog';
+import { effectiveStackmatInput, STACKMAT_GENERATIONS, STACKMAT_G5_SKINS, STACKMAT_G5_SKIN_LABELS } from '@/components/stackmat-catalog';
 import { CompactSelect } from '@/components/CompactSelect';
 import { tr } from '@/i18n/tr';
 import { updateSettings, useSettings, type TimerDisplayMode } from '../_lib/settings';
 
 export default function TimerDisplayModeSetting() {
-  const { timerDisplayMode, stackmatSkin, stackmatInputMode } = useSettings();
+  const settings = useSettings();
+  const { timerDisplayMode, stackmatSkin } = settings;
+  const stackmatInputMode = effectiveStackmatInput(settings);
   const items: { value: TimerDisplayMode; label: string }[] = [
     { value: 'digits', label: tr({ zh: '数字', en: 'Digits' }) },
     { value: 'stackmat', label: tr({ zh: '大显', en: 'Tournament display' }) },
@@ -26,16 +28,20 @@ export default function TimerDisplayModeSetting() {
           label={tr(STACKMAT_G5_SKIN_LABELS[stackmatSkin])} value={stackmatSkin}
           items={STACKMAT_G5_SKINS.map(value => ({ value, label: tr(STACKMAT_G5_SKIN_LABELS[value]) }))}
           onChange={value => updateSettings({ stackmatSkin: value })}/></span></div>
+    </>}
+    {timerDisplayMode.startsWith('stackmat-g') && <>
       <div className="settings-row"><span className="settings-row-label">{tr({ zh: '计时方式', en: 'Timing input' })}</span>
         <span className="settings-row-control"><CompactSelect ariaLabel={tr({ zh: '计时方式', en: 'Timing input' })}
           label={stackmatInputMode === 'normal' ? tr({ zh: '普通', en: 'Normal' }) : stackmatInputMode === '2-pad' ? '2-Pad' : '4-Pad'}
           value={stackmatInputMode} items={[
             { value: 'normal', label: tr({ zh: '普通', en: 'Normal' }) },
-            { value: '2-pad', label: '2-Pad' }, { value: '4-pad', label: '4-Pad' },
+            { value: '2-pad', label: '2-Pad' },
+            ...(timerDisplayMode === 'stackmat-g5' ? [{ value: '4-pad' as const, label: '4-Pad' }] : []),
           ]} onChange={value => updateSettings({ stackmatInputMode: value })}/></span></div>
-      {stackmatInputMode !== 'normal' && <p className="settings-hint">{tr({
-        zh: '按齐感应区或标注按键 0.55 秒，绿灯后松开起表；再次按齐停表。',
-        en: 'Hold all required pads or their labeled keys for 0.55 seconds, then release on green to start. Touch all required pads again to stop.',
+      {stackmatInputMode !== 'normal' && <p className="hint">{tr(stackmatInputMode === '4-pad' ? {
+        zh: '可用键盘的 A S/ D F 模拟拍表', en: 'Use A S / D F on your keyboard to simulate the pads.',
+      } : {
+        zh: '可用键盘的 A/F 模拟拍表', en: 'Use A / F on your keyboard to simulate the pads.',
       })}</p>}
     </>}
   </>;
