@@ -35,7 +35,7 @@ const EXPECTED_WCA: EventId[] = [
 const EXPECTED_OTHER: EventId[] = [
   '333ni', '333mr', 'sphere', '666bld', '777bld', 'r3', 'r4', 'r5',
   'cross', 'f2l', 'll', 'oll', 'pll', 'pll-chain', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'cfzb', 'lse', 'l10p', 'eg1', 'eg2',
-  'custom', 'fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram', 'pyraminx_duo',
+  'custom', 'fto', 'baby_fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram', 'pyraminx_duo',
   'superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino',
   'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
   'quadx', 'dinoocta', 'fto5', 'fto6', 'eto', 'radiocrystal',
@@ -85,7 +85,7 @@ describe('shared timer event picker catalog', () => {
 
     const pickerIds = TIMER_EVENT_PICKER_ITEMS.map((item) => item.id);
     const eventIds = EVENTS.map((event) => event.id);
-    expect(pickerIds).toHaveLength(84);
+    expect(pickerIds).toHaveLength(85);
     expect(new Set(pickerIds).size).toBe(pickerIds.length);
     expect(new Set(pickerIds)).toEqual(new Set(eventIds));
   });

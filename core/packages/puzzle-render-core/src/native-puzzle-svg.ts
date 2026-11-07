@@ -1,9 +1,10 @@
 /** Complete unfolded nets; geometry, colors and notation come from native cubing.js. */
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
-import { NATIVE_PUZZLES, type NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
-import { parsePuzzleGeometryAlg, puzzleGeometryKPuzzle } from '@cuberoot/puzzle-solvers/native-puzzle-model';
+import { INTERACTIVE_PG_PUZZLES, type PgInteractionPuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
+import { nativePuzzleKPuzzle, parseNativePuzzleAlg, parsePuzzleGeometryAlg, puzzleGeometryKPuzzle } from '@cuberoot/puzzle-solvers/native-puzzle-model';
+import type { KPatternData } from 'cubing/kpuzzle';
 
-export function nativePuzzleSvgAspect(id: NativePuzzleId): number { return NATIVE_PUZZLES[id].aspect; }
+export function nativePuzzleSvgAspect(id: PgInteractionPuzzleId): number { return INTERACTIVE_PG_PUZZLES[id].aspect; }
 
 interface Facelet {
   face: string;
@@ -65,18 +66,23 @@ function puzzleNet(spec: PuzzleGeometrySvgSpec, aspect: number): Net {
   return net;
 }
 
-export function renderNativePuzzleSvg(id: NativePuzzleId, scramble: string): string {
-  return renderPuzzleGeometrySvg({ id, ...NATIVE_PUZZLES[id] }, scramble);
+export function renderNativePuzzleSvg(id: PgInteractionPuzzleId, scramble: string): string {
+  const alg = parseNativePuzzleAlg(id, scramble);
+  const pattern = nativePuzzleKPuzzle(id).defaultPattern().applyAlg(alg).patternData;
+  return renderPuzzleNet({ id, ...INTERACTIVE_PG_PUZZLES[id] }, pattern);
 }
 
 /** Reuse the exact native PG net and notation path for an existing catalog definition. */
 export function renderPuzzleGeometrySvg(spec: PuzzleGeometrySvgSpec, scramble: string): string {
+  const alg = parsePuzzleGeometryAlg(spec.description, scramble);
+  const pattern = puzzleGeometryKPuzzle(spec.description).defaultPattern().applyAlg(alg).patternData;
+  return renderPuzzleNet(spec, pattern);
+}
+
+function renderPuzzleNet(spec: PuzzleGeometrySvgSpec, pattern: KPatternData): string {
   if (!/^[a-z0-9_-]+$/i.test(spec.id)) throw new Error('Invalid puzzle SVG identifier');
   const aspect = spec.aspect ?? 4 / 3;
   if (!Number.isFinite(aspect) || aspect <= 0) throw new Error('Invalid puzzle SVG aspect ratio');
-  const alg = parsePuzzleGeometryAlg(spec.description, scramble);
-  const puzzle = puzzleGeometryKPuzzle(spec.description);
-  const pattern = puzzle.defaultPattern().applyAlg(alg).patternData;
   const net = puzzleNet(spec, aspect);
   const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${480 * aspect} 480" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${spec.id}">`,
     `<g transform="${net.transform}" stroke="#000000" stroke-width="1.2" stroke-linejoin="round">`];

@@ -11,6 +11,7 @@ import { renderSphereScrambleSvg } from '@cuberoot/puzzle-render-core/sphere-svg
 import { renderNativePuzzleSvg, nativePuzzleSvgAspect } from '@cuberoot/puzzle-render-core/native-puzzle-svg';
 import { generateNativePuzzleScramble } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { TimerCubePreview, TimingSurface, timerCubePreviewAspect } from '@cuberoot/timer-ui';
+import { renderTimerScrambleSvg } from '@cuberoot/timer-ui/scramble-preview';
 import { act, createElement, createRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -65,6 +66,39 @@ describe('shared timer scramble preview', () => {
   it('keeps Web renderer imports as identity re-exports', () => {
     expect(webMega).toBe(sharedMega);
     expect(webSq1).toBe(sharedSq1);
+  });
+
+  it('renders all Baby FTO faces, rotations and exported previews through the shared net', async () => {
+    const render = async (scramble: string) => act(async () => root.render(createElement(TimerCubePreview, {
+      event: 'baby_fto', scramble, visualization: '3D', height: 240, ariaLabel: 'Baby FTO state',
+    })));
+    await render('');
+    const solved = host.querySelector('svg')?.outerHTML;
+    for (const scramble of ["D B BL Uv Rv'", "(U BR')2 [D, BL]"]) {
+      await render(scramble);
+      const svg = renderNativePuzzleSvg('baby_fto', scramble);
+      const expected = document.createElement('div');
+      expected.innerHTML = svg;
+      const preview = host.querySelector<HTMLElement>('[aria-label="Baby FTO state"]');
+      expect(preview?.innerHTML).toBe(expected.innerHTML);
+      expect(preview?.style.aspectRatio).toBe(`${9 * nativePuzzleSvgAspect('baby_fto')} / 9`);
+      expect(host.querySelectorAll('polygon')).toHaveLength(32);
+      expect(new Set([...host.querySelectorAll('[data-face]')].map(face => face.getAttribute('data-face'))).size).toBe(8);
+      expect(host.querySelector('svg')?.outerHTML).not.toBe(solved);
+      expect(host.querySelector('mock-twisty-player')).toBeNull();
+      expect(timerCubePreviewAspect('baby_fto', scramble)).toBe(nativePuzzleSvgAspect('baby_fto'));
+      await expect(renderTimerScrambleSvg('baby_fto', scramble)).resolves.toBe(svg);
+    }
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      await render('invalid');
+      expect(host.querySelector('svg')).toBeNull();
+      await expect(renderTimerScrambleSvg('baby_fto', 'invalid')).resolves.toBeNull();
+      await render('D B BL');
+      expect(host.querySelectorAll('polygon')).toHaveLength(32);
+    } finally {
+      warning.mockRestore();
+    }
   });
 
   it.each([

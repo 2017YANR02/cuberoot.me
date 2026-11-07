@@ -10,7 +10,7 @@
  *
  *   pyra / skewb / sq1 / mega / clock                    → shared preview
  *   222/333/444/555/666/777 + their bld/oh/fm variants   → shared preview
- *   fto / redi / kilominx                               → shared preview
+ *   fto / baby_fto / redi / kilominx                    → shared preview
  *   sphere                                              → unfolded 3x3 SVG
  *   r3 / r4 / r5                                         → 3x3 of first sub
  *   custom                                               → best-effort 3x3
@@ -109,7 +109,7 @@ function previewEvent(event: EventId): EventId | null {
   if (nxn !== null) return nxn;
   switch (event) {
     case 'pyra': case 'skewb': case 'sq1': case 'mega': case 'clock':
-    case 'ivy': case 'pyraminx_duo': case 'magic': case 'mmagic': case 'fto': case 'redi': case 'kilominx':
+    case 'ivy': case 'pyraminx_duo': case 'magic': case 'mmagic': case 'fto': case 'baby_fto': case 'redi': case 'kilominx':
       return event;
     case 'r3': case 'r4': case 'r5': case 'custom':
       return '333';

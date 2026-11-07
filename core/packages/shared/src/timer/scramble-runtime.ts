@@ -32,6 +32,7 @@ export type TimerCubingScrambleEventId =
   | '555bf'
   | 'clock'
   | 'fto'
+  | 'baby_fto'
   | 'minx'
   | 'pyram'
   | 'redi_cube'
@@ -110,6 +111,7 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   magic: { kind: 'compound', provider: 'timer-compound' },
   mmagic: { kind: 'compound', provider: 'timer-compound' },
   fto: { kind: 'cubing', cubingEventId: 'fto' },
+  baby_fto: { kind: 'cubing', cubingEventId: 'baby_fto' },
   kilominx: { kind: 'shared', provider: 'cstimer-nonwca' },
   gear: { kind: 'shared', provider: 'small-puzzle-random-state' },
   ivy: { kind: 'shared', provider: 'small-puzzle-random-state' },

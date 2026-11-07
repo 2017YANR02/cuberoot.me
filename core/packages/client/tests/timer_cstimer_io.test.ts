@@ -166,6 +166,47 @@ describe('csTimer import — session structure', () => {
   });
 });
 
+describe('Baby FTO csTimer compatibility', () => {
+  it('preserves the original notation and event through renamed manual-input sessions', () => {
+    const solve = {
+      id: 'baby-fto-solve', event: 'baby_fto' as const, timeMs: 4_321,
+      scramble: "U L U' F R BR' R' BR F' L", penalty: '+2' as const, ts: 1_700_000_000_000, comment: 'practice',
+    };
+    const outer = JSON.parse(exportTimerCstimerJson({ baby_fto: [solve] }).json);
+    const metadata = JSON.parse(outer.properties.sessionData);
+    expect(metadata['1']).toMatchObject({ opt: { scrType: 'input' }, cuberootEvent: 'baby_fto' });
+    metadata['1'].name = 'Morning practice';
+    outer.properties.sessionData = JSON.stringify(metadata);
+    const renamed = JSON.stringify(outer);
+    const session = parseCstimerExport(renamed)[0];
+    expect(session.event).toBe('baby_fto');
+    expect(session.solves).toHaveLength(1);
+    expect(session.solves[0]).toMatchObject({ ...solve, id: expect.any(String) });
+    expect(importCstimerJson(renamed)?.baby_fto?.[0]).toMatchObject({ ...solve, id: expect.any(String) });
+  });
+
+  it.each(['baby_fto', 'Baby FTO', '二阶 FTO', 'Session: Baby FTO', 'Baby-FTO practice', '练习：二阶 FTO', '2-layer FTO practice', '2×2 FTO practice'])(
+    'recognizes %s without merging it into full-size FTO', (name) => {
+      const exported = JSON.stringify({
+        session1: JSON.stringify([[[0, 4_321], "U BR'", '', 1_700_000_000]]),
+        properties: { sessionData: JSON.stringify({ 1: { name, opt: { scrType: 'input' } } }) },
+      });
+      expect(parseCstimerExport(exported)[0].event).toBe('baby_fto');
+      expect(importCstimerJson(exported)?.baby_fto?.[0].event).toBe('baby_fto');
+    },
+  );
+
+  it('honors an explicitly different scramble type over stale Baby FTO metadata', () => {
+    const exported = JSON.stringify({
+      session1: JSON.stringify([[[0, 4_321], 'R U', '', 1_700_000_000]]),
+      properties: { sessionData: JSON.stringify({
+        1: { name: 'Practice', opt: { scrType: 'ftoso' }, cuberootEvent: 'baby_fto' },
+      }) },
+    });
+    expect(parseCstimerExport(exported)[0].event).toBe('fto');
+  });
+});
+
 describe('Pyraminx Duo csTimer compatibility', () => {
   it('uses csTimer manual input and restores renamed sessions from original-event metadata', () => {
     const solve = {

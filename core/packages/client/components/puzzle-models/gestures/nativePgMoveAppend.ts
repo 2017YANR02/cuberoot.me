@@ -1,5 +1,5 @@
 import { Alg, Move, experimentalAppendMove } from 'cubing/alg';
-import type { NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
+import type { PgInteractionPuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { nativePuzzleKPuzzle, parseNativePuzzleAlg } from '@cuberoot/puzzle-solvers/native-puzzle-model';
 
 type AppendOptions = NonNullable<Parameters<typeof experimentalAppendMove>[2]>;
@@ -29,7 +29,7 @@ export function attachNativePgMoveAppend(
   // TwistyPlayer exposes this model publicly through its experimental API.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   model: any,
-  id: NativePuzzleId,
+  id: PgInteractionPuzzleId,
   opts: Options,
 ): () => void {
   const originalAddMove = model.experimentalAddMove;

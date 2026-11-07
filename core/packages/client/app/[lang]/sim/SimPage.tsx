@@ -94,7 +94,7 @@ import PlayerControls, { stripHandMarks, type SimPuzzle } from './PlayerControls
 import AppLink from '@/components/AppLink';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
-import { isNativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
+import { isPgInteractionPuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { isTwistyPuzzle } from './twistyPuzzles';
 import AlgsPanel from './AlgsPanel';
 import PuzzleImageStudio, { type SimBridge } from '@/components/puzzle-image/PuzzleImageStudio';
@@ -156,7 +156,7 @@ const ENGINE_TWISTY_DEF: Record<string, string> = { fto: 'o f 0.333333333333333'
  *  下含义不同,所以换拼图 / 换渲染器时必须按目标重算这两值,不能跨拼图沿用。 */
 function defaultViewFor(kind: SimPuzzle, twisty: boolean): { viewAngle: number; viewGradient: number } {
   const yawDeg = kind === 'megaminx' || kind === 'kilominx' ? 0 : 30;
-  const pitchDeg = kind === 'fto' ? 0 : 30;
+  const pitchDeg = kind === 'fto' || kind === 'baby_fto' ? 0 : 30;
   const yawFactor = twisty ? 3.6 : 1.8;
   return { viewAngle: 50 - yawDeg / yawFactor, viewGradient: 50 - pitchDeg / 1.8 };
 }
@@ -2248,7 +2248,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
         if (exportedSig) { exportedSig = ''; publishEngineSvg(null); }
         return;
       }
-      if (isNativePuzzleId(puzzleParam)) {
+      if (isPgInteractionPuzzleId(puzzleParam)) {
         if (nativeCompanionPlayer !== tp) {
           stopNativeCompanion?.();
           nativeCompanionPlayer = tp;
@@ -2454,7 +2454,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
             <TwistySection
               puzzle={String(puzzleParam)}
               puzzleDescription={pgDef}
-              nativePuzzleId={isNativePuzzleId(puzzleParam) ? puzzleParam : undefined}
+              nativePuzzleId={isPgInteractionPuzzleId(puzzleParam) ? puzzleParam : undefined}
               // Keep editor / URL notation intact; translate at the player boundary.
               scramble={toPlayerText(setupParam)}
               alg={toPlayerText(algParam)}

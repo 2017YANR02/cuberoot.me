@@ -20,6 +20,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 ## 先分流(动手前定这 3 件)
 - cubing.js 有 `pg()`(PuzzleGeometry,有 3D 模型)→ 走 twisty(`TwistySection`),不碰自有引擎;只有 `svg()`(仅 2D net、没注册)→ 必走自有引擎(实测:`redi_cube`/`dino` 都得自有引擎,别被 twizzle 能开 2D net 误导)。
 - 原生 loader 带轨道遮罩或专用外观时保留具名 puzzle id，不以裸 PuzzleGeometry 描述替换；将具名项目登记在 `twistyPuzzles.ts`，让页面与无 World 的播放控件共用判定。
+- 接入二阶 FTO 等已有上游打乱器的具名 PG 项目时，按 [Baby FTO](references/native-pg-puzzles.md#baby-fto) 分开交互注册表与原生随机转动注册表，保留具名模型的朝向模数、完整记号、上游打乱与确定性派生。
 - 原生 PG 独立项目复用 `core/packages/puzzle-solvers/src/native-puzzles.ts` 的注册表、同目录 `native-puzzle-model.ts` 的模型与有界解析、`core/packages/puzzle-render-core/src/native-puzzle-svg.ts` 的完整展开图；按 [原生 PG 结构与接线](references/native-pg-puzzles.md) 核对来源、深度、方向和可见贴片，不在页面复制描述或生成器。
 - 按注册表的逐轴层数派生混合转角与深度能力，保留第二／第三单层及宽转；让按钮、拖转和点击共用规范族名与层深元数据，按原生映射选择 `Aw` 或 `1-2A`，不要拼接不存在的面宽转。
 - 按逐轴 `axisOrders` 处理混合机制，保留 FaceRenamingMapper 的完整外部族名，并独立核对不增加表面分区的角尖切面与旧种子打乱兼容性。

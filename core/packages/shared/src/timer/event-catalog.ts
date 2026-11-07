@@ -137,6 +137,7 @@ const TIMER_EVENT_PICKER_LAYOUT = [
 
   // Non-WCA puzzle icons come from EventInfo.icon.
   { id: 'fto', group: 'other' },
+  { id: 'baby_fto', group: 'other' },
   { id: 'kilominx', group: 'other' },
   { id: 'gear', group: 'other' },
   { id: 'ivy', group: 'other' },
