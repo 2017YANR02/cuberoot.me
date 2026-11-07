@@ -7,7 +7,7 @@ import { resolve } from 'node:path';
 import assert from 'node:assert/strict';
 import { Alg } from 'cubing/alg';
 import { CubeData, parseAlgorithm } from '@cuberoot/visualcube';
-import type { AlgFile, AlgCase, AlgEntry } from '@cuberoot/shared';
+import type { AlgFile, AlgCase, AlgEntry } from '@cuberoot/shared/alg';
 
 const [rawDir, outputDir] = process.argv.slice(2);
 assert(rawDir && outputDir, 'Expected raw-directory and output-directory');

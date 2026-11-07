@@ -21,9 +21,8 @@ const fixtures: Fixture[] = [
     { name: `competition-${view}-countries`, path: `/zh/wca/comp?year=2026&month=10&view=${view}`, panel: '.region-picker-popup', open: (p: Page) => p.locator('.toolbar .region-picker-trigger').click() },
     { name: `competition-${view}-filters`, path: `/zh/wca/comp?year=2026&month=10&view=${view}`, panel: '.comp-filters-panel', open: (p: Page) => p.locator('.comp-filters-btn').click() },
   ]),
-  { name: 'sum-of-ranks', path: '/zh/wca/results?events=333,222', panel: '.sor-race .region-picker-popup', open: async p => {
-    await p.locator('.sor-census-toggle').first().click();
-    await p.locator('.sor-race .region-picker-trigger').click();
+  { name: 'sum-of-ranks', path: '/zh/wca/results?events=all', panel: '.wse-country .region-picker-popup', open: async p => {
+    await p.locator('.wse-country .region-picker-trigger').click();
   } },
   { name: 'person-distribution', path: '/zh/wca/persons/2017YANR02?tab=results', panel: '.viz-page .wca-pp-results', open: async p => {
     await p.getByRole('button', { name: '分布', exact: true }).click();

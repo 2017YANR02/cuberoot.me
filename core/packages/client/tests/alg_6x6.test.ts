@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { puzzles } from 'cubing/puzzles';
 import { CubeData, Masking, makeMasking, parseAlgorithm, renderFromSimpleQuery } from '@cuberoot/visualcube';
-import type { AlgFile } from '@cuberoot/shared';
+import type { AlgFile } from '@cuberoot/shared/alg';
 import fixture from './fixtures/alg-6x6.json';
 import { validateStoredAlgCase } from '@/lib/alg_validation';
 import { reachesGoal } from '@/lib/alg_goals';
