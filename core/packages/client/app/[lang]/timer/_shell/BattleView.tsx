@@ -1,4 +1,5 @@
 'use client';
+import PageBackLink from '@/components/PageBackLink';
 import { usesStackmatPads, STACKMAT_PAD_HOLD_MS } from '@/components/stackmat-catalog';
 
 import TimerReadout from '../_components/TimerReadout';
@@ -39,8 +40,7 @@ import { MilestoneToast } from '@/app/[lang]/timer/_battle/AdvancedFeatures';
 import { useBattleHistoryProps } from '@/app/[lang]/timer/_battle/VsHistoryPanel';
 import { updateSettings, useSettings } from '@/app/[lang]/timer/_lib/settings';
 import { eventInfo } from '@/app/[lang]/timer/_lib/types';
-import HomeLink from '@/components/HomeLink';
-import { ArrowLeft, LayoutTemplate } from '@app-foundation/icons/lucide';
+import { LayoutTemplate } from '@app-foundation/icons/lucide';
 import { Tooltip } from '@/components/Tooltip';
 import WcaSourceConfig from '@/components/WcaSourceConfig';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -701,7 +701,7 @@ export default function BattleView({ playerCount, playersControl, presenceContro
       onSettings: handleSettingsClick,
       onHistory: () => setVsHistoryOpen(true),
       controls: <>{playersControl}{presenceControl}</>,
-      brand: <HomeLink className="tb-btn shell-topbar-home" data-no-timer aria-label={tr({ zh: '返回首页', en: 'Back to home' })}><ArrowLeft size={18} /></HomeLink>
+      brand: <PageBackLink fallback="/" className="tb-btn shell-topbar-home" data-no-timer />
     }} layout={{
       playerCount: playerCount as 2 | 3 | 4,
       layout: store.layout,

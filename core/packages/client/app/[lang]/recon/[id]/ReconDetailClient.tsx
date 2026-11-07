@@ -19,7 +19,8 @@ import { useEffect, useState, useCallback, useMemo, useRef, Fragment, type React
 import Link from '@/components/AppLink';
 import { createPortal } from 'react-dom';
 import { copyPageLink } from '@/lib/page-share';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useTranslation } from 'react-i18next';
 import { Box, PenLine, Calendar, UserPlus, StickyNote, Video, TriangleAlert, Pencil, Trash2, Pin, PinOff, Plus, Key, Copy, Check, Maximize2, Minimize2, Lock, Link2, LogIn, ExternalLink, Share2, Download } from '@app-foundation/icons/lucide';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';

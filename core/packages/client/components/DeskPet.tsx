@@ -1,4 +1,5 @@
 'use client';
+import { currentEntryHref } from '@/lib/entry-navigation';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { installedPetAvailable } from '@/lib/installed-content';
 
@@ -14,7 +15,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExter
 import { useAssistantWorkspace } from '@/hooks/useAssistantWorkspace';
 import { assistantConversations, assistantOwner } from '@/lib/assistant-conversations';
 import dynamic from 'next/dynamic';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import i18n from '@/i18n/i18n-client';
 import { canTestRoles, getRolePreview, hasAdminAccess, useAuthStore } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
@@ -2224,7 +2226,7 @@ export default function DeskPet() {
           lang={curLang}
           origin={searchOriginRef.current}
           onClose={() => setSearchOpen(false)}
-          onOpenPetHome={() => { setSearchOpen(false); setTouchActionsVisible(false); window.location.assign(`${curLang === 'zh' ? '/zh' : ''}/pets?pet=${character}`); }}
+          onOpenPetHome={() => { setSearchOpen(false); setTouchActionsVisible(false); window.location.assign(currentEntryHref(`${curLang === 'zh' ? '/zh' : ''}/pets?pet=${character}`)); }}
           character={compact ? 'none' : character}
           characters={petChoices}
           catalogAdmin={isAdmin}

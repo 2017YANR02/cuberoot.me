@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CalendarDays, CalendarCheck, Loader2 } from '@app-foundation/icons/lucide';
-import { useRouter } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import { addCompetitionToCalendar, isCompetitionInCalendar, type CompetitionCalendarInput } from '@/lib/competition-calendar-event';
 import { tr } from '@/i18n/tr';

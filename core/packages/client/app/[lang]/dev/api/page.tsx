@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import MoreToggle from '@/components/MoreToggle';
 import { useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
@@ -1234,7 +1235,7 @@ export default function ApiCatalogPage() {
       <div className="api-bg" />
       <div className="api-inner">
         <div className="api-topbar">
-          <Link href="/dev" className="api-back">← /dev</Link>
+          <PageBackLink fallback="/dev" className="api-back" />
         </div>
 
         <header className="api-hero">

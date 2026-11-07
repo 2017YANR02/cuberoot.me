@@ -1,6 +1,7 @@
+import PageBackLink from '@/components/PageBackLink';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { ChevronLeft, Download, ExternalLink } from '@app-foundation/icons/lucide';
+import { Download, ExternalLink } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import JsonLd, { PUBLISHER } from '@/components/JsonLd';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
@@ -24,9 +25,7 @@ export default async function RegulationTranslation() {
   return (
     <div className="reg-page">
       <div className="reg-wrap">
-        <Link href="/regulation" prefetch={false} className="back-home" aria-label="返回规则首页 / Back to regulations">
-          <ChevronLeft size={16} aria-hidden="true" />
-        </Link>
+        <PageBackLink fallback="/regulation" prefetch={false} className="back-home" />
         <nav className="reg-translation-downloads" aria-label="翻译资源 / Translation resources">
           <Link href="/regulation/translation/search" prefetch={false}>
             <T zh="官方译文查询" en="Search official translations" /> →

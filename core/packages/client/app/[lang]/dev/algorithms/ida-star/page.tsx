@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import type { ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
@@ -577,7 +578,7 @@ export default function IdaStarPage() {
         <div className="algo-page-bg" />
         <div className="algo-page-inner">
           <div className="algo-page-topbar">
-            <Link href="/dev/algorithms" className="algo-page-back">← /dev/algorithms</Link>
+            <PageBackLink fallback="/dev/algorithms" className="algo-page-back" />
           </div>
 
           <header className="algo-page-head">

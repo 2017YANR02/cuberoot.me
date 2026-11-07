@@ -1,7 +1,8 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { ArrowRight, ChevronDown, LockKeyhole, ShoppingBag, Trash2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
@@ -68,7 +69,7 @@ export function ShopCart({ checkout }: { checkout: boolean }) {
   const valid = cart.length > 0 && !loading && !invalid && !mixedCurrency && Number.isSafeInteger(subtotal);
   const physical = rows.some(row => row.product?.data?.productType === 'physical');
   return <section className="shop-cart-page">
-    <AppLink href={checkout ? `${SHOP_ROOT}/cart` : SHOP_ROOT} className="shop-back" prefetch={false}>{checkout ? t('返回购物车', 'Back to bag') : t('继续逛逛', 'Continue shopping')}</AppLink>
+    <PageBackLink fallback={checkout ? `${SHOP_ROOT}/cart` : SHOP_ROOT} className="shop-back" prefetch={false} />
     <header className="shop-section-heading"><div><h1>{checkout ? t('结算', 'Checkout') : t('购物车', 'Your bag')}<small>{cart.reduce((sum, line) => sum + line.quantity, 0)}</small></h1></div></header>
     {!cart.length ? <div className="shop-empty"><ShoppingBag size={42} strokeWidth={1.1} aria-hidden /><h2>{t('购物车还是空的', 'Your bag is empty')}</h2><AppLink className="shop-button shop-button-primary" href={SHOP_ROOT} prefetch={false}>{t('去逛逛', 'Explore the shop')}<ArrowRight size={17} aria-hidden /></AppLink></div> : <div className="shop-cart-layout"><div>
       <div className="shop-cart-lines" aria-busy={loading}>{rows.map(({ line, product, variant }) => <article key={line.variantId} className="shop-cart-line">

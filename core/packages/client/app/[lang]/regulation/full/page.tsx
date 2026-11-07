@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 // /regulation/full — a verbatim, self-hosted mirror of the official WCA
 // Regulations: the full combined document in one page, English text alongside
 // the official Chinese translation. The text is built into
@@ -10,7 +11,7 @@
 // this site can deep-link the rules without leaving for worldcubeassociation.org.
 
 import type { ReactNode } from 'react';
-import { ChevronLeft, ArrowUp } from '@app-foundation/icons/lucide';
+import { ArrowUp } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { useT } from '../../../../hooks/useT';
@@ -107,9 +108,7 @@ export default function RegulationFull() {
   return (
     <div className="reg-page" id="top">
       <div className="reg-wrap reg-doc">
-        <Link href="/regulation/rules" className="back-home" aria-label={t('返回规则', 'Back to regulations')}>
-          <ChevronLeft size={16} aria-hidden="true" />
-        </Link>
+        <PageBackLink fallback="/regulation/rules" className="back-home" />
 
         <header className="reg-hero">
           <div className="reg-eyebrow">

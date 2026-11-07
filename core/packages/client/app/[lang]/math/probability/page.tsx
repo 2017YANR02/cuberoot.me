@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 /**
  * /math/probability — 情况概率与旋转对称。
  *
@@ -16,7 +17,7 @@
 import Link from '@/components/AppLink';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+
 import { TeX, TeXBlock } from '@/components/math/Tex';
 import './probability.css';
 import { useT } from '@/hooks/useT';
@@ -40,10 +41,7 @@ export default function ProbabilityPage() {
   return (
     <div className="prob-page">
       <header className="prob-header">
-        <Link href="/math" className="prob-back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{t('返回 数学', 'Back to Math')}</span>
-        </Link>
+        <PageBackLink fallback="/math" className="prob-back" />
       </header>
 
       <main className="prob-main">

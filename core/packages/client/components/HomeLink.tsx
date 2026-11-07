@@ -23,7 +23,7 @@ export default function HomeLink({ children, prefetch = false, onClick, miniProg
   const router = useRouter();
   const { i18n } = useTranslation();
   const home = (i18n.language.startsWith('zh') ? '/zh' : '/');
-  return <Link href={home} data-mini-program-target={miniProgramTarget} {...rest} prefetch={prefetch} onClick={(event) => {
+  return <Link href={home} data-entry-navigation="none" data-mini-program-target={miniProgramTarget} {...rest} prefetch={prefetch} onClick={(event) => {
     onClick?.(event);
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey
       || event.shiftKey || event.altKey || (rest.target && rest.target !== '_self')

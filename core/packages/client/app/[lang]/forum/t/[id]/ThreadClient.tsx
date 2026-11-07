@@ -4,7 +4,8 @@
 // Sentinel shell: real id from window.location (see page.tsx).
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useQueryState, parseAsInteger } from 'nuqs';
 import { Pin, PinOff, Lock, LockOpen, Trash2, Pencil, Hourglass, CircleX, Check } from '@app-foundation/icons/lucide';
 import Paginator from '@/components/wca-stats/Paginator';

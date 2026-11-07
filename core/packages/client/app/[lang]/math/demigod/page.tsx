@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 /**
  * /math/demigod — Merino & Subercaseaux 2024
  *   "A Demigod's Number for the Rubik's Cube" (arXiv:2501.00144) 详细介绍。
@@ -22,7 +23,7 @@
 import { Suspense, lazy, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ExternalLink, FileText } from '@app-foundation/icons/lucide';
+import { ExternalLink, FileText } from '@app-foundation/icons/lucide';
 import { TeX, TeXBlock } from '../god/_components/Tex';
 import { PAPER_MEAN, PAPER_TOTAL } from './_components/DistanceHistogram';
 import './demigod.css';
@@ -79,10 +80,7 @@ export default function DemigodPage() {
   return (
     <div className="demigod-page">
       <header className="dg-header">
-        <Link href="/math/god" className="dg-back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{t('返回 上帝之数', "Back to God's Number")}</span>
-        </Link>
+        <PageBackLink fallback="/math/god" className="dg-back" />
       </header>
 
       <main className="dg-main">

@@ -346,6 +346,15 @@ export const CATALOG: UtilEntry[] = [
     en: '"Click a thing → URL fragment updates → scroll to it and highlight" in one place. Unifies 6 hand-rolled copies (wiki entries, the two person result tables, alg cards, prediction event sections, forum posts). Differences become options: resolve / reveal (expand a collapsed group, force-render a virtualized row, open <details>; return false to retry) / linger (sticky vs flash) / highlightClass / deps.',
   },
   {
+    name: 'useEntryRouter',
+    sig: 'useEntryRouter(): AppRouterInstance',
+    imp: "import { useEntryRouter } from '@/hooks/useEntryRouter';",
+    usage: "const router = useEntryRouter();\nrouter.push('/platform/orders');",
+    category: 'hook',
+    zh: '程序式站内导航统一入口。push 记录来源，replace 保留来源，返回由 PageBackLink 逐层消费。',
+    en: 'Shared imperative navigation. Push records the entry, replace preserves it, and PageBackLink unwinds the trail.',
+  },
+  {
     name: 'useLiveUrlSuffix',
     sig: 'useLiveUrlSuffix(): string',
     imp: "import { useLiveUrlSuffix } from '@/hooks/useLiveUrlSuffix';",

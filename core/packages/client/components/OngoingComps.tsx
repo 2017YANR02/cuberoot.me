@@ -7,7 +7,7 @@
 // lazy behind homepage search input.
 import { useRetainedState } from '@/hooks/useRetainedState';
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { loadLandingComps, type Comp } from '@/lib/comp-search';
 import { compLinkProps } from '@/lib/comp-link';
 import { localizeCompName } from '@/lib/comp-localize';

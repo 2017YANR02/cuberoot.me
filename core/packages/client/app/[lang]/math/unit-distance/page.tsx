@@ -1,3 +1,4 @@
+import PageBackLink from '@/components/PageBackLink';
 /**
  * /math/unit-distance — visual companion to OpenAI 2026:
  *   "Planar Point Sets with Many Unit Distances"
@@ -18,10 +19,9 @@
 'use client';
 
 import { Suspense } from 'react';
-import Link from '@/components/AppLink';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ExternalLink, FileText, Sparkles } from '@app-foundation/icons/lucide';
+import { ExternalLink, FileText, Sparkles } from '@app-foundation/icons/lucide';
 import { TeX, TeXBlock } from '@/components/math/Tex';
 import './unit_distance.css';
 import { useT } from "@/hooks/useT";
@@ -64,10 +64,7 @@ export default function UnitDistancePage() {
   return (
     <div className="unit-distance-page">
       <header className="ud-header">
-        <Link href="/math" className="ud-back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{t('返回 数学', 'Back to Math')}</span>
-        </Link>
+        <PageBackLink fallback="/math" className="ud-back" />
       </header>
 
       <main className="ud-main">

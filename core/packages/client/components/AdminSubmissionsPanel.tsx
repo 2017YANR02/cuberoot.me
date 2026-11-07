@@ -6,7 +6,7 @@
  * DeskPet 在 I18nProvider 外,故文案 / 链接前缀都靠 lang prop,不用 react-i18next / AppLink。
  */
 import { useEffect, useState } from 'react';
-import NextLink from 'next/link';
+import NextLink from '@/components/AppLink';
 import { X, Inbox } from '@app-foundation/icons/lucide';
 import type { AlgSubmission } from '@cuberoot/shared';
 import { fetchRecentSubmissions, markSubmissionsSeen } from '@/lib/alg_api';

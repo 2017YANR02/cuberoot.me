@@ -1,7 +1,8 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, ChevronDown, ShoppingBag } from '@app-foundation/icons/lucide';
+import { ArrowRight, ChevronDown, ShoppingBag } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
@@ -31,7 +32,7 @@ export function ShopProduct({ id, definition }: { id: string; definition: Platfo
     }).catch(() => { if (!controller.signal.aborted) setError(true); });
     return () => controller.abort();
   }, [id, revision]);
-  return <section className="shop-product-page"><AppLink className="shop-back" href={SHOP_ROOT} prefetch={false} aria-label={t('返回全部商品', 'Back to all products')}><ArrowLeft size={20} aria-hidden /></AppLink>
+  return <section className="shop-product-page"><PageBackLink className="shop-back" fallback={SHOP_ROOT} prefetch={false} />
     {error && <div className="shop-empty" role="alert"><p>{t('商品购买信息暂时无法加载，请重试。', 'Purchase information could not be loaded. Please try again.')}</p><button className="shop-control shop-button" onClick={() => setRevision(value => value + 1)}>{t('重试', 'Retry')}</button></div>}
     {product ? <ProductDetails key={product.id} product={localizePlatformEntity(product, lang)} definition={definition} /> : !error && <div className="shop-empty" role="status">{t('正在加载商品…', 'Loading product…')}</div>}
   </section>;

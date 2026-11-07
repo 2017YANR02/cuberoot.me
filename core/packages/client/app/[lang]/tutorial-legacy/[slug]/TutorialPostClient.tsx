@@ -1,7 +1,7 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import { useState } from 'react';
-import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
@@ -60,9 +60,7 @@ export default function TutorialPostClient() {
     <div className="tutorial-root">
       <div className="tutorial-post-header">
         <div className="tutorial-breadcrumb">
-          <Link href="/tutorial-legacy" className="tutorial-breadcrumb-back">
-            {tr({ zh: '公式教程', en: 'Algorithms' })}
-          </Link>
+          <PageBackLink fallback="/tutorial-legacy" className="tutorial-breadcrumb-back" />
           <span className="tutorial-breadcrumb-sep">/</span>
           <span>{post.category}</span>
           {post.subcategory && (

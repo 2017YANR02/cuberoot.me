@@ -7,7 +7,8 @@
 import { memo, useState, useEffect, useMemo, useCallback } from 'react';
 import { useResultMetricTransition } from './useResultMetricTransition';
 import Link from '@/components/AppLink';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import dynamic from 'next/dynamic';
 // echarts-for-react needs to be client-only.
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });

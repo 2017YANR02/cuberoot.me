@@ -1,7 +1,7 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import { useEffect, useState } from 'react';
-import AppLink from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { fetchTeacherLiveScript, type TeacherLiveScript } from '@/lib/teacher-live-scripts-api';
 import LiveScriptDocument from '../LiveScriptDocument';
@@ -24,5 +24,5 @@ export default function LiveScriptReaderClient() {
     return () => { active = false; };
   }, []);
   if (script) return <LiveScriptDocument script={script} />;
-  return <main className="script-state-page"><p>{error || <LoadingIndicator>{tr({ zh: '正在加载话术…', en: 'Loading the script…' })}</LoadingIndicator>}</p>{error && <AppLink href="/teachers/scripts"><span aria-hidden="true">←</span> <span className="sr-only">{tr({ zh: '返回话术库', en: 'Back to the library' })}</span></AppLink>}</main>;
+  return <main className="script-state-page"><p>{error || <LoadingIndicator>{tr({ zh: '正在加载话术…', en: 'Loading the script…' })}</LoadingIndicator>}</p>{error && <PageBackLink fallback="/teachers/scripts" />}</main>;
 }

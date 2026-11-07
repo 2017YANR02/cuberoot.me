@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 // Shared shell for every WCA Regulations chapter page (/regulation/<slug>).
 // Provides: breadcrumb back to the hub, the chapter hero (badge + title +
 // tagline from the registry), the chapter body (children), prev/next chapter
@@ -112,7 +113,7 @@ export default function RegArticleLayout({ slug, children }: { slug: string; chi
             )}
           </p>
           <p style={{ marginTop: 12 }}>
-            <Link href="/regulation/rules"><span aria-hidden="true">←</span><span className="sr-only">{t('← 返回规则总览', '← Back to overview')}</span></Link>
+            <PageBackLink fallback="/regulation/rules" />
             {' · '}
             <a href={WCA_REG_FULL} target="_blank" rel="noopener noreferrer">{t('官方规则全文', 'Official Regulations (full)')}</a>
             {' · '}

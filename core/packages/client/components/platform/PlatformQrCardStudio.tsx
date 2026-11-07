@@ -1,5 +1,6 @@
 'use client';
 
+import { currentEntryHref } from '@/lib/entry-navigation';
 import MoreToggle from '@/components/MoreToggle';
 import {
   type ChangeEvent,
@@ -1053,7 +1054,7 @@ export function PlatformQrCardStudio({
     if (!activeId) return;
     event.preventDefault();
     const href = event.currentTarget.href;
-    if (await save()) window.location.assign(href);
+    if (await save()) window.location.assign(currentEntryHref(href));
   };
 
   return (

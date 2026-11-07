@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useAuthStore } from '@/lib/auth-store';
 import { membershipEntryHref } from '@/lib/membership-return';
 

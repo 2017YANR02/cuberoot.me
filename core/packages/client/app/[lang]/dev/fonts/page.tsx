@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 // /dev/fonts — single reference for every self-hosted font on the site.
 // Each font shows a live specimen rendered in its actual family, plus role,
 // weights, coverage, where it's used, the token to prefer, files and license.
@@ -99,7 +100,7 @@ export default function CodeFontsPage() {
     <div className="fn">
       <header className="fn-head">
         <div className="fn-topbar">
-          <Link href="/dev" className="fn-back">← /dev</Link>
+          <PageBackLink fallback="/dev" className="fn-back" />
         </div>
         <h1 className="fn-title">
           <span className="fn-prefix">/</span>fonts

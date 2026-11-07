@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 /**
  * /feedback — 公开反馈流。所有人可读,任意登录用户可发反馈 / 回复。
  * 管理员的诊断字段与审核操作仍只在 /feedback/admin 展示。
@@ -8,9 +9,8 @@ import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
-import { ChevronLeft, Lightbulb, Bug, Link2, MessageSquare, Plus } from '@app-foundation/icons/lucide';
+import { Lightbulb, Bug, Link2, MessageSquare, Plus } from '@app-foundation/icons/lucide';
 import { CompactSelect } from '@/components/CompactSelect';
-import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
 import FeedbackModal from '@/components/FeedbackModal';
 import FeedbackConversation from '@/components/FeedbackConversation';
@@ -132,7 +132,7 @@ export default function FeedbackPage() {
   return (
     <div className="fbm-page">
       <header className="fbm-header">
-        <HomeLink className="fbm-back"><ChevronLeft size={16} /><span className="sr-only">{t('首页', 'Home')}</span></HomeLink>
+        <PageBackLink fallback="/" className="fbm-back" />
       </header>
       <div className="fbm-titlerow">
         <div>

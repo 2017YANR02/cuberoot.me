@@ -9,7 +9,7 @@
  */
 
 import { useMemo, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useTranslation } from 'react-i18next';
 import BoolToggle from '@/components/BoolToggle';
 import { useT } from '@/hooks/useT';

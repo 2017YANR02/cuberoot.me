@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import './code_landing.css';
@@ -513,9 +514,7 @@ export default function CodeLandingPage() {
 
       <header className="code-landing-head">
         <div className="code-landing-topbar">
-          <Link href="/dev" className="code-landing-back">
-            ← /dev
-          </Link>
+          <PageBackLink fallback="/dev" className="code-landing-back" />
         </div>
         <h1 className="code-landing-title">
           <span className="code-landing-prefix">/</span>language

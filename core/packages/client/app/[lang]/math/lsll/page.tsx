@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 /**
  * /math/lsll — LSLL(最后一槽 + 顶层)情况计数长文。
  *
@@ -10,7 +11,7 @@
  * 与 /math/probability(末层 62,208 态的 AUF 概率)同源,是它在"最后一槽"上的推广。
  */
 import Link from '@/components/AppLink';
-import { ArrowLeft, Boxes } from '@app-foundation/icons/lucide';
+import { Boxes } from '@app-foundation/icons/lucide';
 import { TeX, TeXBlock } from '@/components/math/Tex';
 import { useT } from '@/hooks/useT';
 import { T } from '@/i18n/tr';
@@ -28,10 +29,7 @@ export default function LsllMathPage() {
   return (
     <div className="lmath-page">
       <header className="lmath-header">
-        <Link href="/math" className="lmath-back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{t('返回 数学', 'Back to Math')}</span>
-        </Link>
+        <PageBackLink fallback="/math" className="lmath-back" />
         <Link href="/alg/lsll" className="lmath-header-link">
           <Boxes size={15} />
           <span>{t('LSLL 公式集', 'LSLL algorithms')}</span>

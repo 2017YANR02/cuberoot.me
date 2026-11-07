@@ -1,10 +1,11 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 /**
  * /recon-about — 复盘库说明页
  */
 import Link from '@/components/AppLink';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+
 import './recon_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -28,10 +29,7 @@ export default function ReconAboutPage() {
   return (
     <div className="rca-page">
       <div className="rca-header">
-        <Link href="/recon" className="rca-back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{t('返回复盘库', 'Back to Recon')}</span>
-        </Link>
+        <PageBackLink fallback="/recon" className="rca-back" />
       </div>
 
       <main className="rca-main">

@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import MoreToggle from '@/components/MoreToggle';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 
@@ -220,7 +221,7 @@ export default function OpsPage() {
 
       <div className="ops-shell">
         <div className="ops-topbar">
-          <Link href="/dev" className="ops-back">← /dev</Link>
+          <PageBackLink fallback="/dev" className="ops-back" />
         </div>
 
         <header className="ops-hero">

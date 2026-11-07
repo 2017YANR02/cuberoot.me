@@ -6,7 +6,7 @@
  * 挂 app/layout.tsx 一次即可,不渲染任何东西。
  */
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { setAuthNavigate } from '@/lib/auth-store';
 
 export default function AuthRouteBridge() {

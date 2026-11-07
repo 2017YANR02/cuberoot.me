@@ -1,9 +1,8 @@
 'use client';
-
+import PageBackLink from '@/components/PageBackLink';
 // /about — port of packages/client-vite/src/pages/AboutPage.tsx.
 
-import { ChevronLeft } from '@app-foundation/icons/lucide';
-import HomeLink from '@/components/HomeLink';
+
 import CREDITS from './credits_data.json';
 import './about.css';
 import { tr } from '@/i18n/tr';
@@ -13,11 +12,7 @@ export default function AboutPage() {
   return (
     <div className="about-page">
       <header className="about-header">
-        <HomeLink className="about-back">
-          <ChevronLeft size={16} />
-          <span className="sr-only">{tr({ zh: '首页', en: 'Home'
-        })}</span>
-        </HomeLink>
+        <PageBackLink fallback="/" className="about-back" />
       </header>
 
       <main className="about-main">

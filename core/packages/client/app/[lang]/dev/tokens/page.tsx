@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 // /dev/tokens — single-source color-token reference for the whole site.
 // Light + dark value of every token shown side by side; derivation via color-mix.
 import { useState } from 'react';
@@ -72,7 +73,7 @@ export default function CodeTokensPage() {
     <div className="tk">
       <header className="tk-head">
         <div className="tk-topbar">
-          <Link href="/dev" className="tk-back">← /dev</Link>
+          <PageBackLink fallback="/dev" className="tk-back" />
         </div>
         <h1 className="tk-title">
           <span className="tk-prefix">/</span>tokens

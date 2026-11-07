@@ -3,7 +3,7 @@
 // /forum/new — start a new thread. ?f= preselects the target forum.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useQueryState, parseAsString } from 'nuqs';
 import { Key } from '@app-foundation/icons/lucide';
 import { tr, T, useLang } from '@/i18n/tr';

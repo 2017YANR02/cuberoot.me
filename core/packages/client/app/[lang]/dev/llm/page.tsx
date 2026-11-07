@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 // /dev/llm — the "大模型 / LLMs" hub. Collects every large-language-model
 // page on the site: the Claude chat model, the Claude Code CLI agent, and the
 // bespoke Claude Fable 5 page. Reuses the /dev index card styling.
@@ -97,9 +98,7 @@ export default function CodeLlmPage() {
 
       <header className="code-index-head">
         <div className="code-index-topbar">
-          <Link href="/dev" className="code-index-back">
-            ← /dev
-          </Link>
+          <PageBackLink fallback="/dev" className="code-index-back" />
         </div>
         <h1 className="code-index-title">
           <span className="code-index-prefix">/</span>llm

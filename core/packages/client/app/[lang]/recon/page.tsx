@@ -1,5 +1,6 @@
 'use client';
 
+import { currentEntryHref } from '@/lib/entry-navigation';
 /**
  * /recon — list page. Full port of packages/client-vite/src/pages/recon/ReconListPage.tsx
  * (per-column filters, record badges, WCA auth, comp localize/links).
@@ -10,7 +11,7 @@ import {
   cloneElement, useEffect, useMemo, useState, useRef, useCallback, useContext,
 } from 'react';
 import Link from '@/components/AppLink';
-import { useRouter } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsStringEnum } from 'nuqs';
 import { CirclePlus, HelpCircle, TriangleAlert, LayoutGrid, List, TestTube2, Check, Bookmark } from '@app-foundation/icons/lucide';
@@ -495,7 +496,7 @@ export default function ReconListPage() {
     if ((e.target as HTMLElement).closest('a')) return;
     const url = getDetailUrl(solve);
     if (e.ctrlKey || e.metaKey) {
-      window.open(url, '_blank');
+      window.open(currentEntryHref(url), '_blank');
     } else {
       router.push(url);
     }
@@ -512,7 +513,7 @@ export default function ReconListPage() {
     if (e.button === 1) {
       if ((e.target as HTMLElement).closest('a')) return;
       e.preventDefault();
-      window.open(getDetailUrl(solve), '_blank');
+      window.open(currentEntryHref(getDetailUrl(solve)), '_blank');
     }
   }, [getDetailUrl]);
 

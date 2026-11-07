@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 // /dev/dead-code — 介绍 knip + 本站三层死代码守卫。自包含静态内容,跟 /dev 系其他页独立设计(art-directed dark)。
 
 import { useState } from 'react';
@@ -140,7 +141,7 @@ export default function DeadCodePage() {
 
       <div className="dc-shell">
         <div className="dc-topbar">
-          <Link href="/dev" className="dc-back">← /dev</Link>
+          <PageBackLink fallback="/dev" className="dc-back" />
         </div>
 
         <header className="dc-hero">

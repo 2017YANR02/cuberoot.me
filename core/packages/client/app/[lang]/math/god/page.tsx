@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 /**
  * /math/god — 上帝之数 (God's Number) 全 WCA 项目总览。
  *
@@ -16,7 +17,7 @@ import { Suspense, lazy, useMemo, type ReactNode } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { VisualCube } from '@/components/VisualCube';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
@@ -194,10 +195,7 @@ export default function GodNumberPage() {
   return (
     <div className="god-page">
       <header className="god-header">
-        <Link href="/math" className="god-back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{t('返回数学', 'Back to math hub')}</span>
-        </Link>
+        <PageBackLink fallback="/math" className="god-back" />
       </header>
 
       <main className="god-main">

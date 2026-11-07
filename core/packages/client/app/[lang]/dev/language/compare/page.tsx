@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
@@ -396,9 +397,7 @@ export default function CompareAo5Page() {
 
         <header className="compare-head">
           <div className="compare-topbar">
-            <Link href="/dev/language" className="compare-back">
-              ← <L zh="回 /dev/language" en="Back to /dev/language" />
-            </Link>
+            <PageBackLink fallback="/dev/language" className="compare-back" />
           </div>
 
           <div className="compare-tag">

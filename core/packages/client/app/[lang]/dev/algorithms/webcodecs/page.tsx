@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import { useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
@@ -70,7 +71,7 @@ export default function WebCodecsPage() {
         <div className="wc-scanlines" aria-hidden />
         <div className="wc-inner">
           <div className="wc-topbar">
-            <Link href="/dev/algorithms" className="wc-back">← /dev/algorithms</Link>
+            <PageBackLink fallback="/dev/algorithms" className="wc-back" />
           </div>
 
           {/* ── HERO ── */}

@@ -5,7 +5,6 @@ import {
   Binary,
   Box,
   ChartNoAxesColumnIncreasing,
-  ChevronLeft,
   Database,
   GitBranch,
   ScanSearch,
@@ -13,7 +12,7 @@ import {
   type LucideIcon,
 } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
-import HomeLink from '@/components/HomeLink';
+import PageBackLink from '@/components/PageBackLink';
 import { tr } from '@/i18n/tr';
 import './achievements.css';
 
@@ -402,10 +401,7 @@ export default function AchievementsPage() {
   return (
     <main className="achievements-page">
       <header className="achievements-topbar">
-        <HomeLink className="achievements-home" prefetch={false}>
-          <ChevronLeft size={17} aria-hidden />
-          <span className="sr-only">{tr({ zh: '首页', en: 'Home' })}</span>
-        </HomeLink>
+        <PageBackLink className="achievements-home" />
         <span>{tr({ zh: '独立开发与原创研究', en: 'Independent development and original research' })}</span>
       </header>
 

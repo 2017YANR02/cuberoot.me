@@ -18,7 +18,8 @@ import { Tooltip } from '@/components/Tooltip';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Link from '@/components/AppLink';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import dynamic from 'next/dynamic';
 import {
   ImagePlus, Plus, Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, MessageSquare,

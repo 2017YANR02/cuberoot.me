@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 // /dev/components — browsable catalog of cuberoot.me's own reusable components.
 // Data + live demos live in ./_catalog.tsx (the single place to register new ones).
 import Link from '@/components/AppLink';
@@ -41,7 +42,7 @@ export default function CodeComponentsPage() {
     <div className="cg">
       <header className="cg-head">
         <div className="cg-topbar">
-          <Link href="/dev" className="cg-back">← /dev</Link>
+          <PageBackLink fallback="/dev" className="cg-back" />
         </div>
         <h1 className="cg-title">
           <span className="cg-prefix">/</span>components

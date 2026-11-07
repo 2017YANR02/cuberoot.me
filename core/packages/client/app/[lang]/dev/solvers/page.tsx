@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 /**
  * /dev/solvers — 求解器舰队看板 (矩阵版).
  * 行 = 求解器, 列 = 回填 / 吞吐 / 内存 / 表 / 浏览器; 点单元格或列头弹窗看全文 (信息零丢失).
@@ -633,7 +634,7 @@ export default function SolversPage() {
 
       <div className="solv-shell">
         <div className="solv-topbar">
-          <Link href="/dev" className="solv-back">← /dev</Link>
+          <PageBackLink fallback="/dev" className="solv-back" />
           <span className="solv-snapshot" title={live ? (zh ? '覆盖率实时取自 distribution.json' : 'coverage live from distribution.json') : (zh ? '回退到内置快照' : 'fallback to built-in snapshot')}>
             {zh ? '数据' : 'data'} {snapshot}{live ? ' ↻' : ''}
           </span>

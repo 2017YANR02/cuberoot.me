@@ -1,5 +1,5 @@
 'use client';
-
+import PageBackLink from '@/components/PageBackLink';
 /**
  * /wiki — 魔方术语表 (collaborative).
  *
@@ -14,8 +14,7 @@
  */
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Search, Pencil, MessageSquarePlus, Plus, Trash2, Link2 } from '@app-foundation/icons/lucide';
-import HomeLink from '@/components/HomeLink';
+import { Search, Pencil, MessageSquarePlus, Plus, Trash2, Link2 } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
 import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
@@ -260,11 +259,7 @@ export default function WikiPage() {
   return (
     <div className="wiki-page">
       <header className="wiki-header">
-        <HomeLink className="wiki-back">
-          <ChevronLeft size={16} />
-          <span className="sr-only">{tr({ zh: '首页', en: 'Home'
-        })}</span>
-        </HomeLink>
+        <PageBackLink fallback="/" className="wiki-back" />
         <BoolToggle
           className="wiki-bi-toggle"
           value={showBoth}

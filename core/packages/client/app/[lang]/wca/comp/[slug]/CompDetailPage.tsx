@@ -1,4 +1,5 @@
 'use client';
+import { currentEntryHref } from '@/lib/entry-navigation';
 import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
 import { WcaPersonIdentity } from '@/components/WcaPersonIdentity';
@@ -14,7 +15,8 @@ import dynamic from 'next/dynamic';
 import { flushSync } from 'react-dom';
 import { runViewTransition } from '@/lib/view-transition';
 import Link from '@/components/AppLink';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download, Calculator } from '@app-foundation/icons/lucide';
@@ -2152,7 +2154,7 @@ export default function CompDetailPage() {
                     if (number > 0) setModal({ kind: 'round', number, eventId: first.eventId, roundId });
                     else {
                       const award = awardByNumber.get(number);
-                      if (award?.wcaId) window.location.assign((isZh ? '/zh' : '') + '/wca/persons/' + award.wcaId + '?tab=group-awards');
+                      if (award?.wcaId) window.location.assign(currentEntryHref((isZh ? '/zh' : '') + '/wca/persons/' + award.wcaId + '?tab=group-awards'));
                     }
                   }} />;
               }} />

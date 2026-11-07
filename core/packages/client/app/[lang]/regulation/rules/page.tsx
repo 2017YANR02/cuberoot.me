@@ -1,6 +1,7 @@
 'use client';
 
-import { ChevronLeft, ArrowRight, ScrollText } from '@app-foundation/icons/lucide';
+import PageBackLink from '@/components/PageBackLink';
+import { ArrowRight, ScrollText } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { CORE_ARTICLES, EVENT_ARTICLES, regArticleHref, type RegArticle } from '../_data/articles';
@@ -25,9 +26,7 @@ export default function RegulationDirectory() {
   return (
     <div className="reg-page">
       <div className="reg-wrap">
-        <Link href="/regulation" className="back-home" aria-label={t('返回规则首页', 'Back to overview')}>
-          <ChevronLeft size={16} aria-hidden="true" />
-        </Link>
+        <PageBackLink fallback="/regulation" className="back-home" />
         <header className="reg-hero">
           <h1 className="reg-title">WCA <span className="reg-code">{t('规则', 'Regulations')}</span></h1>
         </header>

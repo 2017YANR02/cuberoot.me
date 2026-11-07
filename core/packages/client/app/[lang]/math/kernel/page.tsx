@@ -1,3 +1,4 @@
+import PageBackLink from '@/components/PageBackLink';
 /**
  * /math/kernel — an accessible-but-rigorous explainer of the /sim "group-theory kernel":
  * how the simulator turns a twisty puzzle on screen into its real permutation group G,
@@ -15,7 +16,7 @@
 import MoreToggle from '@/components/MoreToggle';
 import { Fragment, useState } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft, Boxes, Cpu, Eye, ShieldCheck, Sparkles, Wand2 } from '@app-foundation/icons/lucide';
+import { Boxes, Cpu, Eye, ShieldCheck, Sparkles, Wand2 } from '@app-foundation/icons/lucide';
 import { useTranslation } from 'react-i18next';
 import { TeX } from '@/components/math/Tex';
 import { useT } from '@/hooks/useT';
@@ -109,7 +110,7 @@ export default function KernelPage() {
   return (
     <div className="kernel-page">
       <header className="kn-header">
-        <Link href="/math" className="kn-back" prefetch={false}><ArrowLeft size={16} /><span className="sr-only">{t('返回 数学', 'Back to Math')}</span></Link>
+        <PageBackLink fallback="/math" className="kn-back" prefetch={false} />
       </header>
 
       <main className="kn-main">

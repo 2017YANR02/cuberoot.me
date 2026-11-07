@@ -1,5 +1,7 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
+import { currentEntryHref } from '@/lib/entry-navigation';
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { ArrowRight, ExternalLink, Play, Search } from '@app-foundation/icons/lucide';
@@ -716,7 +718,7 @@ function PlatformResourceRouteView({
           courseId = typeof entitlement?.data?.courseId === 'string' ? entitlement.data.courseId : null;
         }
         if (!courseId) throw new Error(t('兑换成功，但无法定位课程。请刷新后重试。', 'Code redeemed, but the course could not be located. Please refresh and try again.'));
-        window.location.replace(`${lang === 'zh' ? '/zh' : ''}/platform/courses/${encodeURIComponent(courseId)}/sections/core`);
+        window.location.replace(currentEntryHref(`${lang === 'zh' ? '/zh' : ''}/platform/courses/${encodeURIComponent(courseId)}/sections/core`, 'replace'));
         return response;
       }
       setActionMessage(action === 'start-payment' ? null : response.message ?? t('操作已完成。', 'Action completed.'));
@@ -769,9 +771,7 @@ function PlatformResourceRouteView({
       <header className="platform-route-header">
         <div className="platform-route-heading">
           {courseSection && params.id ? <div>
-            <AppLink className="platform-home-secondary" href={`/platform/courses/${encodeURIComponent(params.id)}`} prefetch={false}>
-              <span aria-hidden="true">←</span> <span className="sr-only">{t('返回课程', 'Back to course')}</span>
-            </AppLink>
+            <PageBackLink className="platform-home-secondary" fallback={`/platform/courses/${encodeURIComponent(params.id)}`} prefetch={false} />
           </div> : null}
           {!inviteManager && !orderPage ? <div className="platform-route-labels">
             <span className="platform-route-area">{courseDetail || courseSection || definition.id === 'course-lesson' || definition.id === 'courses' ? t('CubeRoot 课程', 'CubeRoot Courses') : t(({ discover: '发现', learning: '学习', commerce: '商店与订单', account: '个人空间', instructor: '讲师工作台', admin: '管理', organization: '机构', community: '社区' } as Record<string, string>)[definition.area] ?? '学习空间', ({ discover: 'Discover', learning: 'Learning', commerce: 'Shop and orders', account: 'My workspace', instructor: 'Instructor workspace', admin: 'Administration', organization: 'Organizations', community: 'Community' } as Record<string, string>)[definition.area] ?? 'Learning')}</span>

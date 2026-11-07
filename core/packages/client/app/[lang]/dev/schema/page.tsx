@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import MoreToggle from '@/components/MoreToggle';
 import { Fragment, useMemo } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
@@ -945,7 +946,7 @@ export default function SchemaPage() {
       <div className="schema-bg" />
       <div className="schema-inner">
         <div className="schema-topbar">
-          <Link href="/dev" className="schema-back">← /dev</Link>
+          <PageBackLink fallback="/dev" className="schema-back" />
         </div>
 
         <header className="schema-hero">

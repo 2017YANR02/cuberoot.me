@@ -1,4 +1,5 @@
 'use client';
+import PageBackLink from '@/components/PageBackLink';
 import type { MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 import { usesStackmatPads } from '@/components/stackmat-catalog';
 import TimerReadout from '../_components/TimerReadout';
@@ -48,8 +49,7 @@ import { useQueryState } from 'nuqs';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 
 
-import HomeLink from '@/components/HomeLink';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+
 import { EventIcon } from '@/components/EventIcon';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
@@ -1082,7 +1082,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     })),
   }));
   const topbar = {
-    brand: <HomeLink className="tb-btn shell-topbar-home" data-no-timer aria-label={tr({ zh: '返回首页', en: 'Back to home' })}><ArrowLeft size={18} /></HomeLink>,
+    brand: <PageBackLink fallback="/" className="tb-btn shell-topbar-home" data-no-timer />,
     controls: <>
       {room && <TimerNetBattleEvent picker={{
         dataNoTimer: true,

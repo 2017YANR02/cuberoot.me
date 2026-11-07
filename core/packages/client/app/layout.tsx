@@ -1,4 +1,5 @@
 import { SiteCorners } from "@2017yanr02/continuous-corners/react";
+import EntryNavigationBridge from '@/components/EntryNavigationBridge';
 import { DOUYIN_CONTENT_BOOTSTRAP } from '@/lib/douyin-content-bootstrap';
 import InstalledContentBoundary from "@/components/InstalledContentBoundary";
 import { MOBILE_EMBED_FRAME_NAMES } from '@cuberoot/shared/mobile-embed';
@@ -127,6 +128,7 @@ export default function RootLayout({
             <DeskPet />
           </SiteChrome>
           <AuthRouteBridge />
+          <EntryNavigationBridge />
           <Suspense fallback={null}><ProductAnalytics /></Suspense>
           <ThemeColorSync />
           <AuthTokenRefresher />

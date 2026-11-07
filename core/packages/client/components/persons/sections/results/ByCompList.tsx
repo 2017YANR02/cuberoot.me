@@ -5,7 +5,8 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { tr } from '@/i18n/tr';
 import Link from '@/components/AppLink';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { formatWcaResult } from '@/lib/wca-format-result';

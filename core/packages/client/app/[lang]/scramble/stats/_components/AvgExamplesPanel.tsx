@@ -2,7 +2,7 @@
 
 import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { Flag } from '@/components/Flag';
 import { EventIcon } from '@/components/EventIcon/EventIcon';

@@ -1,10 +1,11 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 /**
  * /nemesizer-about — Nemesizer 宿敌说明页
  */
 import Link from '@/components/AppLink';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+
 import './nemesizer_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -28,10 +29,7 @@ export default function NemesizerAboutPage() {
   return (
     <div className="nema-page">
       <div className="nema-header">
-        <Link href="/nemesizer" className="nema-back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{t('返回 Nemesizer', 'Back to Nemesizer')}</span>
-        </Link>
+        <PageBackLink fallback="/nemesizer" className="nema-back" />
       </div>
 
       <main className="nema-main">

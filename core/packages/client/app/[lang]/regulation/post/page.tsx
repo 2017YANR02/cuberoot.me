@@ -1,6 +1,7 @@
 'use client';
 import {useEffect} from 'react';
-import {useRouter,usePathname} from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import {useTranslation} from 'react-i18next';
 import {parseAsString,parseAsInteger,useQueryStates} from 'nuqs';
 import {ArrowRight} from '@app-foundation/icons/lucide';

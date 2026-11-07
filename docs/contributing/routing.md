@@ -21,6 +21,14 @@ WCA 通用统计页面的有效 ID 与分类统一定义在 `core/packages/share
 
 ## URL 状态(全站统一 nuqs)
 
+### 入口来源与返回
+
+- 站内前进链接复用 `AppLink`，程序式导航复用 `hooks/useEntryRouter`，整页跳转和新标签页先经过 `currentEntryHref`。它们共同调用 `lib/entry-navigation.ts`，不另建页面来源状态或全局“最后访问页”。原生正文、地图弹出框链接由根入口 `EntryNavigationBridge` 在交互时接入同一契约；静态资源、外链、认证回调、下载和锚点不记录。
+- 返回箭头复用 `PageBackLink`（默认首页可用 `BackHome`）：有来源时逐层返回真实入口，无来源时使用页面声明的 `fallback`。品牌与明确的主页链接仍使用 `HomeLink`。不要把返回箭头写成固定的主页或模块入口。
+- 来源链存入 `navBack`，刷新、新标签页和复制链接后可恢复。最多保留 8 层、4096 字符；只记录站内产品路径及源码白名单中的轻量筛选状态，不复制凭据、支付参数、嵌套来源或私密分享路径。旧 `accountBack/accountEntry`、`shopBack/shopEntry` 仅作为历史链接读取。
+- 同路径筛选、锚点与 `router.replace` 保留来源而不新增一层；链接指向已有祖先时收回对应层级，避免往返循环。真正的前进使用 `push`。登录的 `next` 继续保留其原业务目的，导航层补齐来源，登录回跳不作为新的产品入口。
+- `AppLink navigation="return"` 只用于已经由共享返回函数算出的目标，`navigation="none"` 用于确实不参与来源链的入口。原生链接如需排除，声明 `data-entry-navigation="none"`。弹层关闭、沉浸式浏览器后退、小程序原生返回桥仍遵循各自契约。
+
 - 页内状态进 URL 一律 `useQueryState`,禁裸 `history.pushState/replaceState` + 手写 `popstate`(maplibre/canvas/video 重组件例外加注释豁免)。CI `tests/url-state-no-raw-history.test.ts`(豁免加 ALLOWLIST + eslint-disable + 理由)。
 - 大视图/大 tab/全屏浮层 → `.withOptions({ history: 'push' })`;筛选/排序/搜索 → 默认 replace;默认值 `.withDefault(x)`;枚举 `parseAsStringEnum`。
 - 分页、列表/卡片布局、日历日周月显示、项目/轮次筛选、训练范围与练习内换题同样用 replace；URL 仍保留可分享状态，返回不应逐次撤销这些操作。真实内容导航（详情、课程章节、聊天会话、全屏浮层）才用 push。CI `tests/url-state-no-raw-history.test.ts` 用 AST 核对显式 `history: 'push'`（含条件分支及 setter 覆盖）；新增导航须在 `core/packages/client/scripts/navigation-history-allowlist.json` 按具体文件、调用和理由登记，禁止整页放行或为通过检查把筛选冒充导航。此守卫不替代对 router/AppLink 和间接动态配置的审阅。

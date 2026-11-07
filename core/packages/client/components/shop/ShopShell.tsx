@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { parseAsString, useQueryState } from 'nuqs';
 import { ArrowUpRight, Heart, Package, Search, ShoppingBag, UserRound } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
@@ -50,7 +51,7 @@ export function ShopShell({ children }: { children: ReactNode }) {
       <AppLink href={SHOP_ROOT} prefetch={false}>{t('全部周边', 'All merch')}</AppLink>
       <AppLink href={`${SHOP_ROOT}/help`} prefetch={false}>{t('购物帮助', 'Shopping help')}</AppLink>
       <AppLink href="/contact" prefetch={false}>{t('联系我们', 'Contact us')}</AppLink>
-      <AppLink href="/" prefetch={false}>{t('CubeRoot 主页', 'CubeRoot home')}</AppLink>
+      <AppLink href="/" prefetch={false}>{t('主页', 'Home')}</AppLink>
       {admin && <AppLink className="shop-manage-link" href="/platform/admin/products" prefetch={false}>{t('店铺管理', 'Manage shop')}<ArrowUpRight size={14} aria-hidden /></AppLink>}
     </nav>
     <main id="shop-main" className="shop-main">{children}</main>

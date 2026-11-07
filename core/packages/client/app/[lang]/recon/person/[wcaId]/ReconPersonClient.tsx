@@ -1,4 +1,5 @@
 'use client';
+import { currentEntryHref } from '@/lib/entry-navigation';
 import PageHeading from '@/components/PageHeading';
 
 /**
@@ -10,7 +11,8 @@ import { WcaPersonIdentity } from '@/components/WcaPersonIdentity';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useTranslation } from 'react-i18next';
 import { Bookmark, LogOut, TriangleAlert } from '@app-foundation/icons/lucide';
 import type { ReconSolve } from '@cuberoot/shared';
@@ -155,7 +157,7 @@ export default function ReconPersonClient() {
   const handleRowClick = useCallback((e: React.MouseEvent, s: ReconSolve) => {
     if ((e.target as HTMLElement).closest('a')) return;
     const url = detailUrl(s);
-    if (e.ctrlKey || e.metaKey) window.open(url, '_blank');
+    if (e.ctrlKey || e.metaKey) window.open(currentEntryHref(url), '_blank');
     else router.push(url);
   }, [router, detailUrl]);
   const handleRowMouseDown = useCallback((e: React.MouseEvent) => {
@@ -165,7 +167,7 @@ export default function ReconPersonClient() {
     if (e.button !== 1) return;
     if ((e.target as HTMLElement).closest('a')) return;
     e.preventDefault();
-    window.open(detailUrl(s), '_blank');
+    window.open(currentEntryHref(detailUrl(s)), '_blank');
   }, [detailUrl]);
 
   const roleBadges = (r: RoleFlags) => {

@@ -1,5 +1,6 @@
 'use client';
 
+import { currentEntryHref } from '@/lib/entry-navigation';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { FilePlus2, FileText, Sheet, Trash2, Upload } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
@@ -41,7 +42,7 @@ export default function DocumentsPage() {
   }, [user]);
 
   const openCreated = (id: string, kind: DocumentKind) => {
-    window.location.assign(`${lang === 'zh' ? '/zh' : ''}/${kind === 'spreadsheet' ? 'sheets' : 'docs'}/edit?id=${encodeURIComponent(id)}`);
+    window.location.assign(currentEntryHref(`${lang === 'zh' ? '/zh' : ''}/${kind === 'spreadsheet' ? 'sheets' : 'docs'}/edit?id=${encodeURIComponent(id)}`));
   };
   const createBlank = async () => {
     setWorking(true); setError('');

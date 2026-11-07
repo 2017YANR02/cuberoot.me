@@ -1,4 +1,5 @@
 'use client';
+import PageBackLink from '@/components/PageBackLink';
 import { usesStackmatPads } from '@/components/stackmat-catalog';
 import TimerReadout from '../_components/TimerReadout';
 import { trackFeatureUse } from '@/lib/analytics-signal';
@@ -49,13 +50,7 @@ import dynamic from 'next/dynamic';
 import { isMiniProgramWebView } from '@/lib/miniprogram-bridge';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 'nuqs';
-import {
-  AlertTriangle,
-  LayoutTemplate,
-  ArrowLeft,
-  Box,
-} from '@app-foundation/icons/lucide';
-import HomeLink from '@/components/HomeLink';
+import { AlertTriangle, LayoutTemplate, Box } from '@app-foundation/icons/lucide';
 import { petReact } from '@/lib/deskpet';
 import {
   parseTrainingAssignmentDestination,
@@ -3340,7 +3335,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           onClose: () => setTool(null)
         }}
         topbar={{
-          brand: <HomeLink className="tb-btn shell-topbar-home" data-no-timer aria-label={tr({ zh: '返回首页', en: 'Back to home' })}><ArrowLeft size={18} /></HomeLink>,
+          brand: <PageBackLink fallback="/" className="tb-btn shell-topbar-home" data-no-timer />,
           controls: (
           <>
           {trainingOrg && trainingAssignment && <AppLink className="tb-btn" data-no-timer prefetch={false} href={`/training/${encodeURIComponent(trainingOrg)}?assignment=${encodeURIComponent(trainingAssignment)}`}>{tr({ zh: '训练打卡进度', en: 'Training check-in progress' })}</AppLink>}

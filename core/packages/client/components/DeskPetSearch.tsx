@@ -1,4 +1,5 @@
 'use client';
+import { currentEntryHref } from '@/lib/entry-navigation';
 import './settings-typography.css';
 import { Spinner } from '@/components/Spinner/Spinner';
 
@@ -573,7 +574,7 @@ export default function DeskPetSearch({
               {character !== 'none' && <div className="deskpet-character-gallery">
                 <button type="button" className="compact-select-option" onClick={() => {
                   close();
-                  window.location.assign(`${lang === 'zh' ? '/zh' : ''}/pets/gallery?pet=${character}`);
+                  window.location.assign(currentEntryHref(`${lang === 'zh' ? '/zh' : ''}/pets/gallery?pet=${character}`));
                 }}>
                   <span className="deskpet-character-option">
                     <span className="deskpet-character-thumb" aria-hidden><Sparkles size={18} /></span>
