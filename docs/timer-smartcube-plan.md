@@ -1,5 +1,9 @@
 # /timer 智能魔方全覆盖 + 功能补齐
 
+## 2026-11-06：软件计时精度基准（本地）
+
+新增 [441 用例的软件计时基准](benchmarks/smart-cube-timing-2026-11-06.md)，直接执行共享 MoveClock／timer machine 与固定版本 csTimer 的真实校时及成绩回调。原始基线与 [首轮漂移修复](benchmarks/smart-cube-timing-fix-2026-11-06.md) 均保留；最新 [冷启动与首批消息偏移修复](benchmarks/smart-cube-timing-cold-start-2026-11-06.md) 使用统一的整局校正，成绩与保存动作时间一致。相同 441 例中，局中重新定锚保持 0，误差 ≤10 ms 从上轮 194 例增至 380 例（csTimer 346 例）；上轮 18 例退步中的 2 例随机抖动归零，16 例渐增延迟仍存在。全量比较仍有 34 例相对上轮变差，细项及验证限制均在报告中。验证范围为本地软件，未发布、未做真机验收。
+
 ## 2026-10-15：复盘展示共用整行组件（本地，未发布）
 
 `/recon` 的 `SolutionView` 和 `/timer` 的 `ReportContent` 都通过 `@cuberoot/timer-ui/recon/NotationLine` 绘制复盘行。色块、观察上下色块、颜色括号、公式链接、行首图布局和缩进样式只在该组件维护；公式名称索引使用同模块的 `useNotationCases`。小图状态与公式库遮罩继续复用 `ReconLineDiagrams`，公式弹窗继续复用 `ReconCaseLink`。

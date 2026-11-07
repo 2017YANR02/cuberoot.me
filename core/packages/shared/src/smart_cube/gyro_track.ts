@@ -150,7 +150,7 @@ function base64ToBytes(s: string): Uint8Array {
 }
 
 /** 编码成 base64。空数组 → `null`(「没录到」和「录了个空的」是两回事)。 */
-export function encodeGyroTrack(samples: GyroSample[], frame?: 'scramble'): string | null {
+export function encodeGyroTrack(samples: readonly GyroSample[], frame?: 'scramble'): string | null {
   if (samples.length === 0) return null;
   const n = Math.min(samples.length, MAX_SAMPLES);
   const buf = new Uint8Array(HEADER_BYTES + n * SAMPLE_BYTES);

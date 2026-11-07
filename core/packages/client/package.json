@@ -12,6 +12,7 @@
     "safari 16.4"
   ],
   "scripts": {
+    "bench:smart-cube-timing": "node --max-old-space-size=256 --import tsx scripts/smart-cube-timing/benchmark.mts",
     "double-zbll:install": "node --import tsx scripts/install-double-zbll.mts",
     "double-zbll:summary": "node --max-old-space-size=128 --import tsx scripts/summarize-double-zbll.mts",
     "dev": "node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs && turbo watch dev:serve --filter=@cuberoot/client --concurrency=2 --ui=stream --env-mode=loose",

@@ -21,6 +21,22 @@
   },
   "manualContracts": [
     {
+      "id": "smart-cube-timing-benchmark-git-revision",
+      "from": "packages/client/scripts/smart-cube-timing/benchmark.mts",
+      "to": "local git rev-parse HEAD",
+      "phase": "subprocess-native",
+      "mechanism": "Read-only, bounded git invocation records the revision measured by the offline timing benchmark.",
+      "owner": "timer maintainers",
+      "rationale": "Benchmark reports need source provenance alongside hashes resolved from public package exports.",
+      "replacement": "Keep this exact tool-only git call; no product runtime subprocess or source deep import.",
+      "subprocessCalls": [
+        { "file": "packages/client/scripts/smart-cube-timing/benchmark.mts", "mechanism": "execFileSync", "target": "git", "count": 1 }
+      ],
+      "evidence": [
+        { "file": "core/packages/client/scripts/smart-cube-timing/benchmark.mts", "contains": "timeout: 5000" }
+      ]
+    },
+    {
       "id": "nginx-cache-purge-isolated-regression",
       "from": "packages/client/tests/nginx-api-cache-purge.test.ts",
       "to": "local Node subprocesses operating only on test temporary directories",

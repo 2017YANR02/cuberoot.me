@@ -164,6 +164,7 @@
       "./timer": "runtime-neutral",
       "./timer/smart-cube-training": "runtime-neutral",
       "./timer/smart-cube-attempt": "runtime-neutral",
+      "./timer/smart-cube-move-recorder": "runtime-neutral",
       "./timer/device-contract": "runtime-neutral",
       "./timer/reconstruct/apply-token": "runtime-neutral",
       "./timer/reconstruct/cfop-detect": "runtime-neutral",
@@ -794,6 +795,10 @@
     "./timer/smart-cube-attempt": {
       "node": "./dist/timer/smart-cube-attempt.js",
       "default": "./src/timer/smart-cube-attempt.ts"
+    },
+    "./timer/smart-cube-move-recorder": {
+      "node": "./dist/timer/smart-cube-move-recorder.js",
+      "default": "./src/timer/smart-cube-move-recorder.ts"
     },
     "./timer/device-contract": {
       "node": "./dist/timer/device-contract.js",

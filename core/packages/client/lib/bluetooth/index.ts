@@ -43,6 +43,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CubeDriver, CubeMoveMetadata, GyroSink } from './driver';
+import type { MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 // detectBluetoothEnv re-exported above; the connect() helper uses it
 // indirectly via the env-tagged error and the surrounding consumer.
 import { ganV2Driver } from './gan_v2';
@@ -506,10 +507,11 @@ interface UseBluetoothCubeOpts {
     timestamp: number,
     facelets: string,
     metadata?: CubeMoveMetadata,
+    clock?: MoveClockSample,
   ) => void;
   /** Called when state transitions from unsolved → solved. Move-triggered
    * transitions carry that move's calibrated timestamp; state-only reports do not. */
-  onSolved?: (timestamp?: number) => void;
+  onSolved?: (timestamp?: number, clock?: MoveClockSample) => void;
   /**
    * Called for connection-lifecycle events: drop, reconnect attempts, final
    * give-up. Useful for surfacing toasts to the user.
@@ -670,7 +672,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         setFacelets(snapshot.facelets);
         setSolved(snapshot.solved);
       },
-      onMove: ({ facelets, metadata, move, timestamp }) => {
+      onMove: ({ facelets, metadata, move, timestamp, clock }) => {
         // Persist a MAC only after a real frame decodes successfully.
         const pendingMac = pendingSaveMacRef.current;
         if (pendingMac) {
@@ -678,10 +680,10 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
           pendingSaveMacRef.current = null;
         }
         if (calibratingRef.current || relayCalibratingRef.current) return;
-        onMoveRef.current?.(move, timestamp, facelets, metadata);
+        onMoveRef.current?.(move, timestamp, facelets, metadata, clock);
       },
-      onSolved: (timestamp) => {
-        if (!calibratingRef.current && !relayCalibratingRef.current) onSolvedRef.current?.(timestamp);
+      onSolved: (timestamp, clock) => {
+        if (!calibratingRef.current && !relayCalibratingRef.current) onSolvedRef.current?.(timestamp, clock);
       },
     });
   }

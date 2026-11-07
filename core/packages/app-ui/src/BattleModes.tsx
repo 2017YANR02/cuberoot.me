@@ -1,4 +1,5 @@
 import { useNetBattleLiveCube, useNetBattleLiveView, TimerNetPkArena, TimerRemoteLiveCube, timerRoomPlayerName } from '@cuberoot/timer-ui';
+import type { MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 import { NET_BATTLE_LIVE_PATH, type TimerSmartCubeSettings } from '@cuberoot/shared/timer';
 import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
@@ -224,8 +225,8 @@ export interface LocalBattleModeProps extends BattleModeBaseProps {
 
 export interface BattleSmartCubeHandlers {
   onGyro?(quaternion: Quat, timestamp: number): void;
-  onMove(move: string, timestamp: number, facelets: string): void;
-  onSolved(timestamp: number): void;
+  onMove(move: string, timestamp: number, facelets: string, clock?: MoveClockSample): void;
+  onSolved(timestamp: number, clock?: MoveClockSample): void;
 }
 
 /**
@@ -444,7 +445,7 @@ export function LocalBattleMode({
   useEffect(() => {
     if (!onSmartCubeHandlersChange) return undefined;
     const handlers: BattleSmartCubeHandlers = {
-      onMove(_move, timestamp, facelets) {
+      onMove(_move, timestamp, facelets, clock) {
         if (inputBlockedRef.current) return;
         const holder = cubeHolderRef.current;
         const player = stateRef.current.players[holder];
@@ -453,7 +454,7 @@ export function LocalBattleMode({
         dispatch({
           type: 'player-timer',
           playerId: holder,
-          action: { type: 'start-from-cube', nowMs: performance.now(), atMs: timestamp },
+          action: { type: 'start-from-cube', nowMs: performance.now(), atMs: timestamp, clock },
         });
         if (facelets === smartCubeTargetFacelets(player.scramble)) {
           dispatch({
@@ -463,14 +464,14 @@ export function LocalBattleMode({
           });
         }
       },
-      onSolved(timestamp) {
+      onSolved(timestamp, clock) {
         const holder = cubeHolderRef.current;
         const player = stateRef.current.players[holder];
         if (!player || !timerSupportsLocalBattleSmartCube(player.event)) return;
         const stopped = dispatch({
           type: 'player-timer',
           playerId: holder,
-          action: { type: 'stop-from-cube', nowMs: performance.now(), atMs: timestamp },
+          action: { type: 'stop-from-cube', nowMs: performance.now(), atMs: timestamp, clock },
         });
         if (!stopped) return;
         const next = nextLocalBattleCubeHolder(stateRef.current, holder);
@@ -972,7 +973,7 @@ export function NetBattleMode({
     holdMs,
     inspectionSec,
     onComplete,
-    onStart: (startedAtMs) => {
+    onStart: (startedAtMs, cubeStart) => {
       const current = roomRef.current, auth = credentialsRef.current;
       if (!current || !auth) return;
       attemptAuthRef.current = { ...auth };
@@ -985,7 +986,7 @@ export function NetBattleMode({
         sessionId: sessionId ?? '', id: netAttemptSolveId({ code: current.code, playerId: auth.playerId, round: current.round }), ts: Date.now(),
         event: playerEventOf(current, auth.playerId), scramble: myScramble(current, auth.playerId) ?? ''
       }, startedAtMs,
-        cubeConnected ? { model: smartCube?.model ?? '', name: smartCube?.deviceName ?? '' } : undefined);
+        cubeConnected ? { model: smartCube?.model ?? '', name: smartCube?.deviceName ?? '' } : undefined, cubeStart);
     },
   });
   const timerPhase = timer.machine.phase;
@@ -1028,12 +1029,12 @@ export function NetBattleMode({
         liveQuatRef.current = quaternion;
         if (recordGyro && cubeAttemptRef.current && netTimerPhaseRef.current === 'running') netAttemptRef.current.recordGyro(quaternion, timestamp);
       },
-      onMove(move, timestamp, facelets) {
+      onMove(move, timestamp, facelets, clock) {
         if (!netSmartCubeSupported) return;
         liveAnchor.move(move, timestamp);
         publishLiveMove(move);
         if (netTimerPhaseRef.current === 'running') {
-          netAttemptRef.current.recordMove(move, timestamp);
+          netAttemptRef.current.recordMove(move, timestamp, clock);
           return;
         }
         if (!netSmartCubeSupported
@@ -1042,18 +1043,18 @@ export function NetBattleMode({
           || myResult
           || !inRoundRoster
           || !canManuallyStart) return;
-        if (timer.startFromCube(timestamp)) {
+        if (timer.startFromCube(timestamp, clock)) {
           netTimerPhaseRef.current = 'running';
-          netAttemptRef.current.recordMove(move, timestamp);
+          netAttemptRef.current.recordMove(move, timestamp, clock);
           setNetSmartCubeHint(null);
           return;
         }
         if (facelets === netSmartCubeTarget) timer.armFromCube();
       },
-      onSolved(timestamp) {
+      onSolved(timestamp, clock) {
         if (!netSmartCubeSupported
           || netTimerPhaseRef.current !== 'running'
-          || !timer.stopFromCube(timestamp)) return;
+          || !timer.stopFromCube(timestamp, clock)) return;
         netTimerPhaseRef.current = 'stopped';
       },
     };

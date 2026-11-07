@@ -1,3 +1,4 @@
+import type { MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 import {
   initialTimerMachineState,
   timerCanHandleAttemptPress,
@@ -25,12 +26,12 @@ interface TimerControllerOptions {
   holdMs: number;
   inspectionSec: number;
   onComplete(result: SolveResult): void;
-  onStart?(startedAtMs: number): void;
+  onStart?(startedAtMs: number, cubeStart?: TimerMachineState['cubeStart']): void;
   onTransition?(transition: TimerMachineTransition): void;
 }
 
 export interface TimerController {
-  armFromCube(atMs?: number): boolean;
+  armFromCube(atMs?: number, clock?: MoveClockSample): boolean;
   cancelArm(): boolean;
   machine: TimerMachineState;
   nowMs: number;
@@ -40,8 +41,8 @@ export interface TimerController {
   reset(): boolean;
   startNow(elapsedMs?: number): boolean;
   startExternal(elapsedMs?: number): boolean;
-  startFromCube(atMs?: number): boolean;
-  stopFromCube(atMs?: number): boolean;
+  startFromCube(atMs?: number, clock?: MoveClockSample): boolean;
+  stopFromCube(atMs?: number, clock?: MoveClockSample): boolean;
   stopExternal(timeMs: number, inspectionMs?: number): boolean;
 }
 
@@ -112,7 +113,7 @@ export function useTimerController({
       clearHoldTimeout();
     }
     if (transition.effects.includes('run-started')) {
-      onStartRef.current?.(transition.state.startedAtMs ?? performance.now());
+      onStartRef.current?.(transition.state.startedAtMs ?? performance.now(), transition.state.cubeStart);
     }
     onTransitionRef.current?.(transition);
     if (transition.solve) onCompleteRef.current(transition.solve);
@@ -171,9 +172,9 @@ export function useTimerController({
     return apply({ type: 'cancel-press' }).accepted === true;
   }, [apply, clearHoldTimeout]);
 
-  const armFromCube = useCallback((atMs?: number): boolean => {
+  const armFromCube = useCallback((atMs?: number, clock?: MoveClockSample): boolean => {
     if (!enabledRef.current || !canStartRef.current) return false;
-    return apply({ type: 'arm-from-cube', nowMs: performance.now(), atMs }).accepted === true;
+    return apply({ type: 'arm-from-cube', nowMs: performance.now(), atMs, clock }).accepted === true;
   }, [apply]);
 
   const cancelArm = useCallback((): boolean => {
@@ -181,9 +182,10 @@ export function useTimerController({
     return apply({ type: 'cancel-arm' }).accepted === true;
   }, [apply, clearHoldTimeout]);
 
-  const startFromCube = useCallback((atMs?: number): boolean => (
+  const startFromCube = useCallback((atMs?: number, clock?: MoveClockSample): boolean => (
     !inputBlockedRef.current?.() && enabledRef.current && canStartRef.current && apply({
       type: 'start-from-cube',
+      clock,
       nowMs: performance.now(),
       atMs,
     }).accepted === true
@@ -195,8 +197,9 @@ export function useTimerController({
     && apply({ type: 'start-now', nowMs: performance.now(), elapsedMs }).effects.includes('run-started')
   ), [apply]);
 
-  const stopFromCube = useCallback((atMs?: number): boolean => !inputBlockedRef.current?.() && apply({
+  const stopFromCube = useCallback((atMs?: number, clock?: MoveClockSample): boolean => !inputBlockedRef.current?.() && apply({
     type: 'stop-from-cube',
+    clock,
     nowMs: performance.now(),
     atMs,
   }).accepted === true, [apply]);

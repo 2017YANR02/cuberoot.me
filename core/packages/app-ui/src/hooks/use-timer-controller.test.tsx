@@ -242,6 +242,6 @@ describe('mobile timer controller source invalidation', () => {
       expect(controller.startFromCube(5_000)).toBe(true);
     });
 
-    expect(onStart).toHaveBeenCalledWith(8_000);
+    expect(onStart).toHaveBeenCalledWith(8_000, undefined);
   });
 });

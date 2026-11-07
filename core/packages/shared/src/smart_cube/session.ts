@@ -2,7 +2,7 @@ import {
   SOLVED_SMART_CUBE_FACELETS,
   SmartCubeStateTracker,
 } from './cubie';
-import { MoveClock, type MoveClockStampOptions } from './move_clock';
+import { MoveClock, type MoveClockSample, type MoveClockStampOptions } from './move_clock';
 
 /** Shared retry cadence; native GATT and browser GATT retain their own cleanup. */
 export const SMART_CUBE_RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000] as const;
@@ -18,6 +18,7 @@ export interface SmartCubeSessionSnapshot<Metadata = unknown> {
 }
 
 export interface SmartCubeSessionMove<Metadata = unknown> {
+  clock?: MoveClockSample;
   facelets: string;
   metadata: Metadata | undefined;
   move: string;
@@ -37,7 +38,7 @@ export interface SmartCubeSessionControllerOptions<Metadata = unknown> {
   now?(): number;
   onChange?(snapshot: SmartCubeSessionSnapshot<Metadata>): void;
   onMove?(event: SmartCubeSessionMove<Metadata>): void;
-  onSolved?(timestamp?: number): void;
+  onSolved?(timestamp?: number, clock?: MoveClockSample): void;
   projectFacelets?(rawFacelets: string): string;
 }
 
@@ -204,10 +205,11 @@ export class SmartCubeSessionController<Metadata = unknown> {
       rawFacelets,
       solved,
     };
-    const event = { facelets, metadata, move, rawFacelets, timestamp };
+    const sample = this.moveClock.sample;
+    const event = { facelets, metadata, move, rawFacelets, timestamp, clock: sample };
     this.options.onMove?.(event);
     this.emit();
-    if (becameSolved) this.options.onSolved?.(timestamp);
+    if (becameSolved) this.options.onSolved?.(timestamp, sample);
     return event;
   }
 

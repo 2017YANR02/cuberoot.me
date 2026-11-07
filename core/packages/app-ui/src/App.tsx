@@ -2519,7 +2519,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     holdMs: store?.settings.holdMs ?? 550,
     inspectionSec: store?.settings.inspectionSec ?? 0,
     onComplete: completeSolve,
-    onStart: (startedAtMs) => {
+    onStart: (startedAtMs, cubeStart) => {
       recapAttemptRevisionRef.current++;
       setRecapSolveId(null);
       const entry = scrambleHistoryRef.current.list[scrambleHistoryRef.current.idx];
@@ -2548,7 +2548,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       smartCubeAttemptProducerRef.current.begin(startedAtMs, connectedSmartCubeRef.current,
         storeRef.current?.settings.recordGyro && reference && initial
           ? { reference, initial, orientation: timerSmartCubeTrainingOrientation(activeEvent, storeRef.current?.settings.preScrT) }
-          : undefined);
+          : undefined, cubeStart);
       if (storeRef.current?.settings.recordGyro && smartCubeQuatRef.current) {
         smartCubeAttemptProducerRef.current.recordGyro(smartCubeQuatRef.current, 0);
       }
@@ -2648,8 +2648,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     onChange: setSmartCubeAnchor,
   }));
   const smartCubeSoloController = useMemo(() => new SmartCubeSoloTimerController({
-    armFromCube: (timestamp) => {
-      const armed = timerRef.current.armFromCube(timestamp);
+    armFromCube: (timestamp, clock) => {
+      const armed = timerRef.current.armFromCube(timestamp, clock);
       if (armed) timerPhaseRef.current = trainingTimingMode()
         ? trainingTimingMode() === 'first-turn' ? 'ready' : 'inspecting'
         : (storeRef.current?.settings.inspectionSec ?? 0) > 0 ? 'inspecting' : 'ready';
@@ -2665,8 +2665,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     onMove: ({ move, timestamp }) => {
       for (const subscriber of smartCubeMoveSubscribersRef.current) subscriber(move, timestamp);
     },
-    recordMove: ({ move, timestamp }) => {
-      if (!smartCubeAttemptProducerRef.current.recordMove(move, timestamp)) return;
+    recordMove: ({ move, timestamp, clock }) => {
+      if (!smartCubeAttemptProducerRef.current.recordMove(move, timestamp, clock)) return;
       publishLiveSolve();
       const attempt = attemptRef.current;
       if (!attempt) return;
@@ -2678,9 +2678,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       });
     },
     solve: solveMobileSmartCubeFixup,
-    startFromCube: (timestamp) => timerRef.current.startFromCube(timestamp),
-    stopFromCube: (timestamp) => {
-      const stopped = timerRef.current.stopFromCube(timestamp);
+    startFromCube: (timestamp, clock) => timerRef.current.startFromCube(timestamp, clock),
+    stopFromCube: (timestamp, clock) => {
+      const stopped = timerRef.current.stopFromCube(timestamp, clock);
       if (stopped) timerPhaseRef.current = 'stopped';
       return stopped;
     },
@@ -2699,14 +2699,14 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         smartCubeAttemptProducerRef.current.recordGyro(quaternion, timestamp - attemptStartedAtRef.current);
       }
     },
-    onMove: (move, timestamp, facelets, metadata) => {
+    onMove: (move, timestamp, facelets, metadata, clock) => {
       const futureHistory = metadata?.futureHistory === true;
       smartCubeAnchorController.move(move, timestamp);
       if (timerModeRef.current !== 1) {
-        if (!futureHistory) battleSmartCubeHandlersRef.current?.onMove(move, timestamp, facelets);
+        if (!futureHistory) battleSmartCubeHandlersRef.current?.onMove(move, timestamp, facelets, clock);
         return;
       }
-      const outcome = smartCubeSoloController.move({ facelets, metadata, move, timestamp });
+      const outcome = smartCubeSoloController.move({ facelets, metadata, move, timestamp, clock });
       if (outcome.guidancePenultimate && storeRef.current?.settings.autoCalibrateGyro && smartCubeQuatRef.current) {
         resetSmartCubeOrientation();
       }
@@ -2714,12 +2714,12 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         smartCubeReferenceRef.current = { ...smartCubeQuatRef.current };
       }
     },
-    onSolved: (timestamp) => {
+    onSolved: (timestamp, clock) => {
       if (timerModeRef.current !== 1) {
-        battleSmartCubeHandlersRef.current?.onSolved(timestamp);
+        battleSmartCubeHandlersRef.current?.onSolved(timestamp, clock);
         return;
       }
-      smartCubeSoloController.solved(timestamp);
+      smartCubeSoloController.solved(timestamp, clock);
     },
   });
   connectedSmartCubeRef.current = smartCube.phase === 'connected' && smartCube.deviceName

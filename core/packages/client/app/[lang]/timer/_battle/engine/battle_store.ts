@@ -9,6 +9,7 @@ import { normalizeSoloLayout, type SoloLayout, resolveTimerWcaSourceCore, timerS
 
 import { create } from 'zustand';
 import type { PlayerState, SolveEntry, Session, BattleMode, BattleLayout, TabName } from './types';
+import { moveClockElapsed, type MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 import { PENALTY, LS_PREFIX, MIN_SOLVE_TIME, DEFAULT_PLAYER_KEYS } from './constants';
 import type { PenaltyType } from './constants';
 import { generateScrambleImageUrl } from './scramble_engine';
@@ -503,8 +504,8 @@ export interface BattleState {
    * 返回值 = 这一下有没有被采纳(状态不对时什么也不做)。
    */
   cubeArm: (playerId: number) => boolean;
-  cubeStart: (playerId: number, atMs: number) => boolean;
-  cubeStop: (playerId: number, atMs: number) => boolean;
+  cubeStart: (playerId: number, atMs: number, clock?: MoveClockSample) => boolean;
+  cubeStop: (playerId: number, atMs: number, clock?: MoveClockSample) => boolean;
   setCubeMode: (mode: 'own' | 'shared') => void;
   setCubeHolder: (playerId: number) => void;
   /** 传给下一个还没拧完的人;都拧完了就停在原地。 */
@@ -856,9 +857,9 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     return true;
   },
 
-  cubeStart: (playerId: number, atMs: number): boolean => {
+  cubeStart: (playerId: number, atMs: number, clock?: MoveClockSample): boolean => {
     if (get().mode !== 'solo') {
-      return applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'start-from-cube', nowMs: atMs, atMs } });
+      return applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'start-from-cube', nowMs: atMs, atMs, clock } });
     }
     const s = get();
     if (!inPlay(s, playerId)) return false;
@@ -876,6 +877,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       isReady: false,
       isTiming: true,
       startTime: atMs,
+      timerState: { ...initialTimerMachineState(), cubeStart: clock && clock.timestamp === atMs
+        ? { sample: clock } : undefined },
       time: 0,
       phaseSplits: [],
       penalty: p.inspectionPenalty ? p.penalty : PENALTY.OK,
@@ -885,15 +888,17 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     return true;
   },
 
-  cubeStop: (playerId: number, atMs: number): boolean => {
+  cubeStop: (playerId: number, atMs: number, clock?: MoveClockSample): boolean => {
     if (get().mode !== 'solo') {
-      return applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'stop-from-cube', nowMs: atMs, atMs } });
+      return applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'stop-from-cube', nowMs: atMs, atMs, clock } });
     }
     const s = get();
     if (!inPlay(s, playerId)) return false;
     const p = s.players[playerId];
     if (!p.isTiming) return false;
-    const elapsed = atMs - p.startTime;
+    const start = p.timerState?.cubeStart?.sample;
+    const elapsed = (start?.timestamp === p.startTime && clock?.timestamp === atMs
+      ? moveClockElapsed(start, clock) : null) ?? (atMs - p.startTime);
     // 起表后立刻又「复原」= 打乱没拧完 / 误报,不算一把。和按键那条同一道闸。
     if (elapsed <= MIN_SOLVE_TIME) return false;
     let penalty = p.penalty;
@@ -1047,6 +1052,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
           isTiming: true,
           isReady: false,
           startTime: performance.now(),
+          timerState: undefined,
           time: 0,
           phaseSplits: [],
           penalty: p.inspectionPenalty ? p.penalty : PENALTY.OK,

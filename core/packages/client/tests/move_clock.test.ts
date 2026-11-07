@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { MoveClock, RESYNC_THRESHOLD_MS } from '@/app/[lang]/timer/_lib/bluetooth/move_clock';
+import { MoveClock } from '@/app/[lang]/timer/_lib/bluetooth/move_clock';
 
 describe('MoveClock', () => {
   it('does not move the device epoch to the arrival of an untimed history page', () => {
@@ -73,19 +73,16 @@ describe('MoveClock', () => {
     expect(clock.stamp(1300, 5210)).toBe(5200);
   });
 
-  it('re-anchors when the two clocks have genuinely drifted apart', () => {
+  it('never treats a large arrival delay as a new origin for a valid device clock', () => {
     const clock = new MoveClock();
     clock.stamp(0, 0);
-    // Device clock runs slow: after a long session it is behind local time by
-    // more than the threshold. Keeping the old anchor would report every
-    // subsequent move seconds before it happened.
-    const drifted = clock.stamp(60_000, 60_000 + RESYNC_THRESHOLD_MS + 500);
-    expect(drifted).toBe(60_000 + RESYNC_THRESHOLD_MS + 500);
-    // ...and intervals are correct again from the new anchor.
-    expect(clock.stamp(60_100, 62_600)).toBe(60_000 + RESYNC_THRESHOLD_MS + 600);
+    // Two points cannot distinguish oscillator drift from radio latency.
+    // Neither is permission to move the origin of an already-running solve.
+    expect(clock.stamp(60_000, 62_500)).toBe(60_000);
+    expect(clock.stamp(60_100, 62_600)).toBe(60_100);
   });
 
-  it('tolerates drift below the threshold rather than re-anchoring constantly', () => {
+  it('preserves device intervals while there is insufficient evidence for rate correction', () => {
     const clock = new MoveClock();
     clock.stamp(0, 0);
     // 100 ms of disagreement is normal BLE latency, not drift. The device
@@ -126,5 +123,85 @@ describe('MoveClock', () => {
     // Two turns the cube timestamped identically must not go backwards.
     expect(clock.stamp(1000, 10)).toBe(0);
     expect(clock.stamp(1001, 11)).toBe(1);
+  });
+
+  it.each([1999, 2000, 2001, 2500])('does not add a late final packet (%i ms) to the result', delay => {
+    const clock = new MoveClock();
+    const start = clock.stamp(0, 20);
+    for (let i = 1; i < 100; i++) clock.stamp(i * 100, 20 + i * 100);
+    expect(clock.stamp(10_000, 10_020 + delay) - start).toBe(10_000);
+  });
+
+  it.each([0.95, 0.993, 1.007, 1.05])('corrects a learned device rate of %f without moving past timestamps', deviceRate => {
+    const clock = new MoveClock();
+    let previous = clock.stamp(0, 20);
+    let start = 0;
+    for (let i = 1; i <= 200; i++) {
+      const rateBeforeMove = clock.clockRate;
+      const next = clock.stamp(i * 1000 * deviceRate, 20 + i * 1000);
+      expect(next - previous).toBeCloseTo(1000 * deviceRate * rateBeforeMove, 7);
+      previous = next;
+      if (i === 190) start = next;
+    }
+    expect(clock.clockRate).toBeCloseTo(1 / deviceRate, 10);
+    expect(previous - start).toBeCloseTo(10_000, 7);
+  });
+
+  it('does not refit partially delivered batches', () => {
+    const clock = new MoveClock();
+    const mapped = Array.from({ length: 100 }, (_, i) => clock.stamp(i * 100, Math.floor(i / 4) * 400 + 320));
+    expect(mapped.slice(1).map((time, i) => time - mapped[i])).toEqual(Array(99).fill(100));
+    expect(clock.clockRate).toBe(1);
+  });
+
+  it('calibrates irregular turn intervals without relying on the benchmark move grid', () => {
+    const clock = new MoveClock();
+    const intervals = [43, 167, 81, 209, 56, 144, 93, 207];
+    let real = 0;
+    clock.stamp(0, 20);
+    let first = 0, last = 0;
+    for (let i = 0; i < 320; i++) {
+      real += intervals[i % intervals.length];
+      last = clock.stamp(Math.round(real * 0.993), real + 20);
+      if (i === 239) first = last;
+    }
+    expect(last - first).toBeCloseTo(10_000, 0);
+  });
+
+  it('does not follow alternating radio jitter on an accurate device clock', () => {
+    const clock = new MoveClock();
+    let last = clock.stamp(0, 20);
+    for (let i = 1; i <= 300; i++) last = clock.stamp(i * 100, i * 100 + (i % 2 ? 100 : 20));
+    expect(clock.clockRate).toBe(1);
+    expect(last).toBe(30_020);
+  });
+
+  it('keeps fitting invariant to large device and host epochs', () => {
+    const intervals = (deviceOrigin: number, localOrigin: number) => {
+      const clock = new MoveClock();
+      const result: number[] = [];
+      for (let i = 0; i <= 200; i++) {
+        result.push(clock.stamp(deviceOrigin + i * 1007, localOrigin + i * 1000));
+      }
+      return { rate: clock.clockRate, span: result[200] - result[190] };
+    };
+    const original = intervals(0, 0);
+    const translated = intervals(4_000_000_000, 1_700_000_000_000);
+    expect(translated.rate).toBe(original.rate);
+    expect(translated.span).toBeCloseTo(original.span, 3);
+  });
+
+  it('does not use delayed history to teach the clock rate and clears calibration on restart', () => {
+    const clock = new MoveClock();
+    for (let i = 0; i <= 100; i++) clock.stamp(i * 950, i * 1000);
+    expect(clock.clockRate).toBeCloseTo(1 / 0.95, 10);
+    const rate = clock.clockRate;
+    for (let i = 101; i <= 150; i++) clock.stamp(i * 950, 200_000, { delayed: true });
+    expect(clock.clockRate).toBe(rate);
+    expect(clock.stamp(5, 200_100, { delayed: true })).toBe(200_100);
+    expect(clock.clockRate).toBe(1);
+    clock.reset();
+    expect(clock.clockRate).toBe(1);
+    expect(clock.anchored).toBe(false);
   });
 });

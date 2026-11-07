@@ -46,7 +46,7 @@ describe('TimerSmartCubeMoveRecorder', () => {
     const local = readFileSync(new URL('../app/[lang]/timer/_battle/useBattleCubes.ts', import.meta.url), 'utf8');
     expect(local).toContain('new SmartCubeAttemptProducer()');
     expect(local).toContain('recorder.begin(p.startTime,');
-    expect(local).toContain('recorder.recordMove(move, ts)');
+    expect(local).toContain('recorder.recordMove(move, ts, clock)');
     expect(local).toContain('recorder.finishSolveFields(solve)');
     expect(local).not.toMatch(/moves:\s*\[|t0:/);
   });

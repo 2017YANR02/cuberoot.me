@@ -20,6 +20,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { updateSettings } from '@/app/[lang]/timer/_lib/settings';
+import type { MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 
 vi.mock('@cuberoot/timer-ui/random-scramble', () => ({
   createRandomScrambleClient: () => ({ generate: async ({ event }: { event: string }) => ({
@@ -390,6 +391,19 @@ describe('同时开始 + 智能魔方', () => {
     expect(useBattleStore.getState().cubeArm(0)).toBe(true);
     expect(P(0).isReady).toBe(true);
     expect(P(0).canStart).toBe(false);
+  });
+
+  it('only the initiating player inherits its device-clock epoch', () => {
+    const start: MoveClockSample = { epoch: 10, deviceTime: 0, timestamp: 1000, hostTime: 1000, rate: 1 };
+    useBattleStore.getState().cubeArm(0);
+    useBattleStore.getState().cubeArm(1);
+    vi.advanceTimersByTime(DELAY + 10);
+    expect(useBattleStore.getState().cubeStart(0, 1000, start)).toBe(true);
+    expect(P(0).timerState?.cubeStart?.sample).toBe(start);
+    expect(P(1).timerState?.cubeStart).toBeUndefined();
+    const end = { ...start, deviceTime: 10500, timestamp: 11500, hostTime: 11000, rate: 1 / 1.05 };
+    expect(useBattleStore.getState().cubeStop(0, 11500, end)).toBe(true);
+    expect(P(0).time).toBe(10000);
   });
 
   it('魔方 + 按键各一人:两人到齐后一起绿灯', () => {

@@ -329,7 +329,10 @@ describe('useInstalledSmartCube', () => {
 
   it('records the solved final turn before publishing the stop edge', async () => {
     await act(async () => state.callbacks?.onMove("R'", 251));
-    expect(state.onMove).toHaveBeenLastCalledWith("R'", expect.any(Number), SOLVED_3X3);
+    expect(state.onMove).toHaveBeenLastCalledWith("R'", expect.any(Number), SOLVED_3X3, undefined,
+      expect.objectContaining({ deviceTime: 251, rate: 1 }));
+    const lastMove = state.onMove.mock.calls.at(-1)!;
+    expect(state.onSolved).toHaveBeenCalledWith(lastMove[1], lastMove[4]);
     expect(state.onSolved).toHaveBeenCalledOnce();
     expect(state.onMove.mock.invocationCallOrder.at(-1)).toBeLessThan(state.onSolved.mock.invocationCallOrder[0]);
   });
@@ -341,6 +344,7 @@ describe('useInstalledSmartCube', () => {
       expect.any(Number),
       SOLVED_3X3,
       { futureHistory: true },
+      expect.objectContaining({ deviceTime: 251, rate: 1 }),
     );
   });
 

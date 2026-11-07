@@ -1,4 +1,5 @@
 import type { GanCubeStatus } from './smart-cube/gan-cube';
+import type { MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 import type { WebMembershipRequest, WebMembershipResult } from '@cuberoot/shared/mobile-embed';
 import type { LegacyCubeStatus } from './smart-cube/legacy-cube';
 import type { BleTransport } from './smart-cube/transport';
@@ -49,8 +50,9 @@ export interface InstalledAppSmartCubeOptions {
     timestamp: number,
     facelets: string,
     metadata?: InstalledSmartCubeMoveMetadata,
+    clock?: MoveClockSample,
   ): void;
-  onSolved?(timestamp: number): void;
+  onSolved?(timestamp: number, clock?: MoveClockSample): void;
   onGyro?(quaternion: GyroQuaternion, timestamp: number, velocity?: GyroVelocity): void;
 }
 

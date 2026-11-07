@@ -464,7 +464,9 @@ export function transitionLocalBattle(
     if (input.type === 'arm-from-cube' && (player.timer.phase === 'running' || player.timer.phase === 'holding' || player.timer.phase === 'ready')) return { state, effects: [], accepted: false };
     if (player.timer.phase === 'running' && (input.type === 'press-down' || input.type === 'stop-from-cube')) {
       const stoppedAt = input.type === 'stop-from-cube' ? Math.min(input.nowMs, input.atMs ?? input.nowMs) : input.nowMs;
-      if (stoppedAt - (player.timer.startedAtMs ?? stoppedAt) <= (config.minSolveMs ?? 100)) {
+      const elapsed = input.type === 'stop-from-cube' ? transitionTimer(player.timer, input, config).solve?.timeMs
+        : stoppedAt - (player.timer.startedAtMs ?? stoppedAt);
+      if (elapsed !== undefined && elapsed <= (config.minSolveMs ?? 100)) {
         return { state, effects: [], accepted: false };
       }
     }
@@ -484,7 +486,11 @@ export function transitionLocalBattle(
           if (item.id >= state.playerCount || item.result || item.timer.phase === 'running') return item;
           effects.push({ type: 'player-timer', playerId: item.id, effect: 'hold-cancelled' });
           if (!together && !cancel && item.id !== action.playerId) return item;
-          const transition = transitionTimer(item.timer, input, config);
+          // Only the initiating cube owns this sample. Other players share a
+          // host start, not that cube's device epoch or cold-start correction.
+          const ownInput = input.type === 'start-from-cube' && item.id !== action.playerId
+            ? { ...input, clock: undefined } : input;
+          const transition = transitionTimer(item.timer, ownInput, config);
           effects.push(...transition.effects.map((effect): LocalBattleEffect => ({ type: 'player-timer', playerId: item.id, effect })));
           return { ...item, timer: transition.state };
         });

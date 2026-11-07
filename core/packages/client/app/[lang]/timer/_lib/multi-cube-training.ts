@@ -6,6 +6,7 @@ import {
   type SmartCubeSoloTimerControllerOptions,
 } from '@cuberoot/shared/smart-cube/solo-timer';
 import type { SmartCubeGuidanceState } from '@cuberoot/shared/smart-cube/scramble-guidance';
+import type { MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 
 export type TrainingCubeStage = 'idle' | 'preparing' | 'queued' | 'active' | 'running';
 export interface TrainingCubeSnapshot<Context> {
@@ -90,14 +91,14 @@ export class MultiCubeTrainingController<
           if (current) { current.guidance = guidance; this.emit(); }
         },
         onMove: event => { if (this.activeId === id) timer.onMove?.(event); },
-        startFromCube: timestamp => {
-          if (this.activeId !== id || !timer.startFromCube(timestamp)) return false;
+        startFromCube: (timestamp, clock) => {
+          if (this.activeId !== id || !timer.startFromCube(timestamp, clock)) return false;
           this.cubes.get(id)!.stage = 'running';
           this.emit();
           return true;
         },
-        stopFromCube: timestamp => {
-          if (this.activeId !== id || !timer.stopFromCube(timestamp)) return false;
+        stopFromCube: (timestamp, clock) => {
+          if (this.activeId !== id || !timer.stopFromCube(timestamp, clock)) return false;
           // Drain only after the finishing move has left the old controller.
           this.finishedId = id;
           return true;
@@ -158,15 +159,15 @@ export class MultiCubeTrainingController<
       && event.facelets !== cube.context?.targetFacelets) this.invalidate(cube);
     cube.facelets = event.facelets;
     const outcome = cube.controller.move(event);
-    if (outcome.guidanceCompleted && cube.stage === 'preparing') this.enqueue(cube, event.timestamp);
+    if (outcome.guidanceCompleted && cube.stage === 'preparing') this.enqueue(cube, event.timestamp, event.clock);
     this.drainFinished();
     this.schedule(false);
     this.emit();
     return outcome;
   }
 
-  solved(id: string, timestamp?: number): void {
-    this.cubes.get(id)?.controller.solved(timestamp);
+  solved(id: string, timestamp?: number, clock?: MoveClockSample): void {
+    this.cubes.get(id)?.controller.solved(timestamp, clock);
     this.drainFinished();
   }
 
@@ -198,12 +199,12 @@ export class MultiCubeTrainingController<
     cube.controller.setContext(cube.context);
   }
 
-  private enqueue(cube: Cube<Context, Metadata>, timestamp?: number): void {
+  private enqueue(cube: Cube<Context, Metadata>, timestamp?: number, clock?: MoveClockSample): void {
     if (cube.stage !== 'preparing') return;
     cube.stage = 'queued';
     if (!this.queue.includes(cube.id)) this.queue.push(cube.id);
     if (this.scrambleId === cube.id) this.scrambleId = null;
-    this.schedule(true, timestamp);
+    this.schedule(true, timestamp, { id: cube.id, clock });
     this.emit();
   }
 
@@ -222,7 +223,7 @@ export class MultiCubeTrainingController<
     this.emit();
   }
 
-  private schedule(advance: boolean, timestamp?: number): void {
+  private schedule(advance: boolean, timestamp?: number, source?: { id: string; clock?: MoveClockSample }): void {
     if (this.scheduling) return;
     this.scheduling = true;
     try {
@@ -235,7 +236,7 @@ export class MultiCubeTrainingController<
           cube.stage = 'active';
           this.options.onActive(cube.id, cube.context);
           if (this.options.timer.autoReadyOnScramble() && this.options.timer.canStartAttempt()
-            && this.options.timer.isTimingEnabled()) this.options.timer.armFromCube(timestamp);
+            && this.options.timer.isTimingEnabled()) this.options.timer.armFromCube(timestamp, source?.id === cube.id ? source.clock : undefined);
         }
       }
       if (this.scrambleId) return;

@@ -1,5 +1,25 @@
 import { inspectionPenalty, type AutoPenalty } from './inspection';
 import type { TrainingStartMode } from './training-settings';
+import { moveClockElapsed, type MoveClockSample } from '../smart_cube/move_clock';
+
+export interface CubeTimerStart {
+  sample: MoveClockSample;
+  /** Training observation is host-timed unless it began on a known cube turn. */
+  observationStartedAtMs?: number;
+  observationClock?: MoveClockSample;
+}
+
+/** One final clock model for the score, move timeline and host-time alignment. */
+export function cubeTimerElapsed(start: CubeTimerStart | undefined, end: MoveClockSample | undefined): number | null {
+  const execution = moveClockElapsed(start?.sample, end);
+  if (execution === null) return null;
+  const observation = moveClockElapsed(start?.observationClock, end);
+  if (observation !== null) return Math.max(execution, observation);
+  if (start?.observationStartedAtMs !== undefined && Number.isFinite(end!.hostTime)) {
+    return Math.max(execution, end!.hostTime - start.observationStartedAtMs);
+  }
+  return execution;
+}
 
 export type TimerPhase = 'idle' | 'inspecting' | 'holding' | 'ready' | 'running' | 'stopped';
 
@@ -11,6 +31,8 @@ export interface SolveResult {
 }
 
 export interface TimerMachineState {
+  cubeStart?: CubeTimerStart;
+  cubeObservation?: MoveClockSample;
   trainingStartMode?: TrainingStartMode;
   phase: TimerPhase;
   lastMs: number | null;
@@ -36,9 +58,9 @@ export type TimerMachineAction =
   | { type: 'hold-ready' }
   | { type: 'start-now'; nowMs: number; elapsedMs?: number }
   | { type: 'stop-external'; timeMs: number; inspectionMs?: number }
-  | { type: 'start-from-cube'; nowMs: number; atMs?: number }
-  | { type: 'arm-from-cube'; nowMs: number; atMs?: number }
-  | { type: 'stop-from-cube'; nowMs: number; atMs?: number }
+  | { type: 'start-from-cube'; nowMs: number; atMs?: number; clock?: MoveClockSample }
+  | { type: 'arm-from-cube'; nowMs: number; atMs?: number; clock?: MoveClockSample }
+  | { type: 'stop-from-cube'; nowMs: number; atMs?: number; clock?: MoveClockSample }
   | { type: 'abort-run'; nowMs: number }
   | { type: 'cancel-arm' }
   | { type: 'reset' };
@@ -113,6 +135,8 @@ function startRunning(
     state: {
       ...state,
       phase: 'running',
+      cubeStart: undefined,
+      cubeObservation: undefined,
       trainingStartMode,
       lastMs: null,
       startedAtMs: normalizedStartedAtMs,
@@ -141,6 +165,7 @@ function stopRunning(
     state: {
       ...state,
       phase: 'stopped',
+      cubeStart: undefined,
       trainingStartMode: undefined,
       lastMs: timeMs,
       startedAtMs: null,
@@ -207,7 +232,9 @@ export function transitionTimer(
       const armed = { ...state, trainingStartMode: config.trainingStartMode };
       if (config.trainingStartMode !== 'first-turn') {
         const atMs = Math.min(action.nowMs, Math.max(action.nowMs - (config.maxCubeBackdateMs ?? DEFAULT_MAX_CUBE_BACKDATE_MS), action.atMs ?? action.nowMs));
-        return { ...startInspection(armed, atMs, 0), accepted: true };
+        const inspecting = startInspection(armed, atMs, 0);
+        inspecting.state.cubeObservation = action.clock?.timestamp === action.atMs ? action.clock : undefined;
+        return { ...inspecting, accepted: true };
       }
       return { state: { ...armed, phase: 'ready', inspectionStartedAtMs: null, inspectionSec: null, autoPenalty: null }, effects: [], accepted: true };
     }
@@ -278,7 +305,13 @@ export function transitionTimer(
       config.maxCubeBackdateMs ?? DEFAULT_MAX_CUBE_BACKDATE_MS,
     );
     const startedAtMs = Math.min(nowMs, Math.max(nowMs - maxBackdateMs, requestedAt));
-    return { ...startRunning(state, startedAtMs, config), accepted: true };
+    const started = startRunning(state, startedAtMs, config);
+    if (action.clock && action.clock.timestamp === action.atMs && moveClockElapsed(action.clock, action.clock) !== null) {
+      started.state.cubeStart = { sample: action.clock,
+        ...(started.state.trainingStartMode && state.inspectionStartedAtMs !== null
+          ? { observationStartedAtMs: state.inspectionStartedAtMs, observationClock: state.cubeObservation } : {}) };
+    }
+    return { ...started, accepted: true };
   }
 
   if (action.type === 'stop-from-cube') {
@@ -288,7 +321,13 @@ export function transitionTimer(
     const requestedAt = action.atMs === undefined || !Number.isFinite(action.atMs)
       ? nowMs
       : action.atMs;
-    const stoppedAtMs = Math.min(nowMs, requestedAt);
+    const elapsed = action.clock?.timestamp === action.atMs
+      ? cubeTimerElapsed(state.cubeStart, action.clock) : null;
+    // Duration can exceed the interval between packet arrivals (batched first
+    // turns). Never clamp a calibrated duration against an absolute host time.
+    const stoppedAtMs = elapsed !== null && state.startedAtMs !== null
+      ? state.startedAtMs + elapsed
+      : Math.min(nowMs, requestedAt);
     if (state.startedAtMs !== null && stoppedAtMs < state.startedAtMs) {
       return { state, effects: [], accepted: false };
     }

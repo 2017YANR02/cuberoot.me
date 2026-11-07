@@ -45,6 +45,7 @@ import {
 
 import { useBluetoothCube } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle } from '../_lib/bluetooth';
+import type { MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 import type { Quat } from '../_lib/bluetooth/orientation';
 import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
 import { useSettings } from '../_lib/settings';
@@ -188,13 +189,13 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
       };
       const device = handlesRef.current[slot]?.status;
       trackRef.current[slot].recorder.begin(p.startTime, device?.connected
-        ? { model: device.brand, name: device.deviceName } : undefined);
+        ? { model: device.brand, name: device.deviceName } : undefined, undefined, p.timerState?.cubeStart);
       gyroStartRef.current[slot] = p.startTime;
     }
     return trackRef.current[slot];
   }, []);
 
-  const onMove = useCallback((slot: number, move: string, ts: number) => {
+  const onMove = useCallback((slot: number, move: string, ts: number, clock?: MoveClockSample) => {
     const st = useBattleStore.getState();
     if (!slotCounts(slot, st.cubeMode)) return;
     lastMoveAtRef.current[slot] = ts;
@@ -202,20 +203,20 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     const p = st.players[owner];
     if (p.isTiming) {
       const track = syncTrack(slot, owner);
-      track.recorder.recordMove(move, ts);
+      track.recorder.recordMove(move, ts, clock);
       return;
     }
     if (armedRef.current[slot] && p.canStart) {
       armedRef.current[slot] = false;
-      if (!st.cubeStart(owner, ts)) return;
+      if (!st.cubeStart(owner, ts, clock)) return;
       // 起表那一手也属于这一把 —— cubeStart 已经把 startTime 定在它身上了。
-      syncTrack(slot, owner).recorder.recordMove(move, ts);
+      syncTrack(slot, owner).recorder.recordMove(move, ts, clock);
       return;
     }
     // 没预备就转动 —— 可能正在拧打乱。下面的 checkArm 会在拧到位时把预备补上。
   }, [syncTrack]);
 
-  const onSolved = useCallback((slot: number, atMs?: number) => {
+  const onSolved = useCallback((slot: number, atMs?: number, clock?: MoveClockSample) => {
     const st = useBattleStore.getState();
     if (!slotCounts(slot, st.cubeMode)) return;
     const owner = ownerOf(slot, st.cubeMode, st.cubeHolder);
@@ -224,7 +225,7 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     const stopAt = atMs !== undefined && Number.isFinite(atMs)
       ? atMs
       : lastMoveAtRef.current[slot] || performance.now();
-    const stopped = st.cubeStop(owner, stopAt);
+    const stopped = st.cubeStop(owner, stopAt, clock);
     armedRef.current[slot] = false;
     // 缓冲无论如何都要清空:这一路已经不在这一把里了,留着只会漏给下一把。
     const track = trackRef.current[slot];
@@ -333,8 +334,8 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
 /** 一路连接。抽出来只是为了让上面那四行看着像四行。 */
 function useSlot(
   slot: number,
-  onMove: (slot: number, move: string, ts: number) => void,
-  onSolved: (slot: number, atMs?: number) => void,
+  onMove: (slot: number, move: string, ts: number, clock?: MoveClockSample) => void,
+  onSolved: (slot: number, atMs?: number, clock?: MoveClockSample) => void,
   checkArm: (slot: number, handle: BluetoothCubeHandle) => void,
   needMac: (slot: number, deviceName: string, isWrongKey?: boolean) => Promise<string | null>,
   onGyro: ((slot: number, q: Quat) => void) | undefined,
@@ -344,11 +345,11 @@ function useSlot(
   // 晚于挂载 effect,拿不到 null。
   const selfRef = useRef<BluetoothCubeHandle | null>(null);
   const handle = useBluetoothCube({
-    onMove: (m, ts, _facelets, metadata) => {
-      onMove(slot, m, ts);
+    onMove: (m, ts, _facelets, metadata, clock) => {
+      onMove(slot, m, ts, clock);
       if (selfRef.current && !metadata?.futureHistory) checkArm(slot, selfRef.current);
     },
-    onSolved: (atMs) => onSolved(slot, atMs),
+    onSolved: (atMs, clock) => onSolved(slot, atMs, clock),
     onNeedMac: (deviceName, isWrongKey) => needMac(slot, deviceName, isWrongKey),
     onGyro: onGyro ? (q) => onGyro(slot, q) : undefined,
   });

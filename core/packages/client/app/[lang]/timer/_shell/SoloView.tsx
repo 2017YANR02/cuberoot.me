@@ -1514,7 +1514,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     && bluetoothCubeRef.current?.status.connected ? getSettings().trainingStartMode : undefined;
   const trainingTimingModeRef = useRef(trainingTimingMode);
   trainingTimingModeRef.current = trainingTimingMode;
-  const timer = useTimer(recordSolve, (startedAtMs) => {
+  const timer = useTimer(recordSolve, (startedAtMs, cubeStart) => {
     const history = scrambleHistRef.current;
     const entry = multiEnabledRef.current ? multiTrainingRef.current?.active()?.context?.entry
       : competitionRef.current.enabled ? competitionScrambleEntry : history.list[history.idx];
@@ -1534,14 +1534,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       multiStage: settings.multiStage && timerSupportsStageSplits(eventAtStartRef.current),
     });
     const bt = bluetoothCubeRef.current?.status;
-    gyroStartRef.current = trainingTimingModeRef.current() ? startedAtMs : performance.now();
+    gyroStartRef.current = startedAtMs;
     // begin resets both streams; later start handlers must preserve this recording.
     smartCubeAttemptProducerRef.current.begin(startedAtMs, bt?.connected
       ? { model: bt.brand, name: bt.deviceName }
       : undefined, settings.recordGyro && bt?.connected && scrambleGyroRef.current && gyroQuatRef.current
       ? { reference: scrambleGyroRef.current, initial: gyroQuatRef.current,
         orientation: timerSmartCubeTrainingOrientation(event, getSettings().preScrT) }
-      : undefined);
+      : undefined, cubeStart);
     clearLiveSolve();
   }, () => ({ trainingStartMode: trainingTimingModeRef.current() }));
   cancelArmForScrambleChangeRef.current = competition.enabled ? () => {} : timer.cancelArm;
@@ -1680,9 +1680,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     match: null,
   });
   const smartCubeTimerOptions = useMemo<SmartCubeSoloTimerControllerOptions<CubeMoveMetadata>>(() => ({
-    armFromCube: (timestamp) => {
+    armFromCube: (timestamp, clock) => {
       warmupSound();
-      const armed = timerHandleRef.current.armFromCube(timestamp);
+      const armed = timerHandleRef.current.armFromCube(timestamp, clock);
       if (armed) {
         const mode = trainingTimingModeRef.current();
         phaseSnapshotRef.current = mode ? mode === 'first-turn' ? 'ready' : 'inspecting'
@@ -1708,8 +1708,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         try { subscriber(move, timestamp, metadata); } catch (err) { console.error('[bt-broadcast]', err); }
       }
     },
-    recordMove: ({ move, timestamp }) => {
-      if (!smartCubeAttemptProducerRef.current.recordMove(move, timestamp)) return;
+    recordMove: ({ move, timestamp, clock }) => {
+      if (!smartCubeAttemptProducerRef.current.recordMove(move, timestamp, clock)) return;
       // Use only this attempt's accepted moves, never the 3D anchor's scramble log.
       const moves = smartCubeAttemptProducerRef.current.snapshotMoves();
       publishLiveSolve();
@@ -1725,14 +1725,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       const target = fromFaceletString(targetFacelets);
       return from && target ? fixupScramble(from, target) : null;
     },
-    startFromCube: (timestamp) => {
-      if (!timerHandleRef.current.startFromCube(timestamp)) return false;
+    startFromCube: (timestamp, clock) => {
+      if (!timerHandleRef.current.startFromCube(timestamp, clock)) return false;
       phaseSnapshotRef.current = 'running';
       cubeStartedRef.current = true;
       return true;
     },
-    stopFromCube: (timestamp) => {
-      const stopped = timerHandleRef.current.stopFromCube(timestamp);
+    stopFromCube: (timestamp, clock) => {
+      const stopped = timerHandleRef.current.stopFromCube(timestamp, clock);
       if (stopped) { phaseSnapshotRef.current = 'stopped'; cubeStartedRef.current = false; }
       return stopped;
     },
@@ -1805,11 +1805,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         }
       }
       : undefined,
-    onMove: (move: string, ts: number, facelets: string, metadata?: CubeMoveMetadata) => {
+    onMove: (move, ts, facelets, metadata, clock) => {
       previewAnchorsRef.current.get(cubeId)?.move(move, ts);
       if (multiEnabledRef.current) {
         if (cubeId === activeCubeIdRef.current) liveAnchorRef.current?.move(move, ts);
-        const outcome = multiTraining.move(cubeId, { facelets, metadata, move, timestamp: ts });
+        const outcome = multiTraining.move(cubeId, { facelets, metadata, move, timestamp: ts, clock });
         const cube = multiTraining.snapshot().cubes.find(candidate => candidate.id === cubeId);
         const gyro = cubeGyrosRef.current.get(cubeId);
         if (outcome?.guidancePenultimate && getSettings().autoCalibrateGyro && gyro?.quat) {
@@ -1823,7 +1823,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       if (cubeId !== FIRST_TRAINING_CUBE) return;
       if (!timerSupportsTrainingTiming(event)) setBluetoothOpen(false);
       liveAnchorRef.current?.move(move, ts);
-      const outcome = smartCubeSoloController.move({ facelets, metadata, move, timestamp: ts });
+      const outcome = smartCubeSoloController.move({ facelets, metadata, move, timestamp: ts, clock });
       if (outcome.guidancePenultimate && getSettings().autoCalibrateGyro && gyroQuatRef.current) {
         resetSmartCubeOrientation();
       }
@@ -1831,11 +1831,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         scrambleGyroRef.current = { ...gyroQuatRef.current };
       }
     },
-    onSolved: (atMs) => {
-      if (multiEnabledRef.current) { multiTraining.solved(cubeId, atMs); return; }
+    onSolved: (atMs, clock) => {
+      if (multiEnabledRef.current) { multiTraining.solved(cubeId, atMs, clock); return; }
       if (cubeId !== FIRST_TRAINING_CUBE) return;
       competitionSolvedRef.current = competitionRef.current.enabled && atMs !== undefined;
-      smartCubeSoloController.solved(atMs);
+      smartCubeSoloController.solved(atMs, clock);
     },
     onNeedMac: requestMac,
     // The hook has always emitted these; nothing consumed them, so a cube that
