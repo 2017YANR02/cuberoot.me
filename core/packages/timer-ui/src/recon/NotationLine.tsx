@@ -29,7 +29,7 @@ export function useNotationCases(text: string, enabled = true): ReconCommentCase
 export default function NotationLine({ line, lineStart = 0, cursorOffset = null, hlRange = null,
   wasteBrackets = new Map(), crossColor = null, links = [], colorHref, inspectionColors, diagram, trailing,
   moves, className, state, bodyClassName = '', diagramClassName = '', chipClassName = '',
-  commentClassName, localize = text => text.en, renderLink,
+  commentClassName, localize = text => text.en, renderLink, onToggleCancellation, cancellationExpanded = false,
 }: {
   line: string; lineStart?: number; cursorOffset?: number | null; hlRange?: [number, number] | null;
   wasteBrackets?: ReadonlyMap<number, string>; crossColor?: CubeColorLetter | null;
@@ -39,6 +39,8 @@ export default function NotationLine({ line, lineStart = 0, cursorOffset = null,
   chipClassName?: string; commentClassName?: string;
   localize?: (text: { en: string; zh: string }) => string;
   renderLink: (href: string, children: ReactNode) => ReactNode;
+  onToggleCancellation?: () => void;
+  cancellationExpanded?: boolean;
 }) {
   const trimmed = line.trim();
   // 行内局部位置:光标(空 span 占位)与当前招式高亮区间。
@@ -97,7 +99,12 @@ export default function NotationLine({ line, lineStart = 0, cursorOffset = null,
     const cancellation = cancellations.find(range => a >= range.start && a < range.end);
     if (cancellation) {
       if (a === cancellation.start) parts.push(
-        <span key={`cancel${a}`} className="recon-annotation-badge recon-cancel-badge"
+        onToggleCancellation ? <button key={`cancel${a}`} type="button" className="recon-annotation-badge recon-cancel-badge"
+          data-recon-text-length={cancellation.end - cancellation.start}
+          aria-pressed={cancellationExpanded} onClick={onToggleCancellation}
+          aria-label={localize(cancellationExpanded ? { zh: '显示消步复盘', en: 'Show cancelled reconstruction' } : { zh: '显示未消步复盘', en: 'Show reconstruction before cancellation' })}>
+          {localize(cancellationExpanded ? { zh: '未消步', en: 'expanded' } : { zh: '消步', en: 'cancel' })}
+        </button> : <span key={`cancel${a}`} className="recon-annotation-badge recon-cancel-badge"
           data-recon-text-length={cancellation.end - cancellation.start}
           title={localize({ zh: '衔接消步', en: 'Cancel into next step' })}>{localize({ zh: '消步', en: 'cancel' })}</span>,
       );

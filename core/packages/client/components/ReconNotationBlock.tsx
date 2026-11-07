@@ -6,12 +6,13 @@ import { tr } from '@/i18n/tr';
 import { ScramblePreview2D } from './ScramblePreview2D';
 import SolutionView from './SolutionView';
 
-export function ReconNotationBlock({ captionHeader, scramble, scrambleCubeOrder, displayScramble, optimalScrambleTag = '', solutionText, displayText, rawDisplayText, solve, playerRef, canToggle, crossLineIdx, crossNormalized, setCrossNormalized, canRemoveWaste = false, wasteRemoved = false, setWasteRemoved = () => {} }: {
+export function ReconNotationBlock({ captionHeader, scramble, scrambleCubeOrder, displayScramble, optimalScrambleTag = '', solutionText, displayText, rawDisplayText, solve, playerRef, canToggle, crossLineIdx, crossNormalized, setCrossNormalized, canRemoveWaste = false, wasteRemoved = false, setWasteRemoved = () => {}, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
   captionHeader: string; scramble: string; scrambleCubeOrder: number | null; displayScramble: string; optimalScrambleTag?: string;
   solutionText: string; displayText: string; rawDisplayText: string; solve: { event: string; pickupTime?: number | null; putdownTime?: number | null };
   playerRef: ComponentProps<typeof SolutionView>['playerRef']; canToggle: boolean; crossLineIdx: number; crossNormalized: boolean;
   setCrossNormalized: (update: (value: boolean) => boolean) => void;
   canRemoveWaste?: boolean; wasteRemoved?: boolean; setWasteRemoved?: (update: (value: boolean) => boolean) => void;
+  cancellationLines?: ReadonlySet<number>; expandedCancellationLine?: number | null; onToggleCancellation?: (line: number) => void;
 }) {
   const { copied: scrambleCopied, copy: copyScramble } = useCopy();
   const hasTiming = solve.pickupTime != null || solve.putdownTime != null;
@@ -51,6 +52,7 @@ export function ReconNotationBlock({ captionHeader, scramble, scrambleCubeOrder,
             </div>
             {solutionText && (
               <SolutionView
+                cancellationLines={cancellationLines} expandedCancellationLine={expandedCancellationLine} onToggleCancellation={onToggleCancellation}
                 autoWaste
                 text={displayText}
                 event={solve.event}
