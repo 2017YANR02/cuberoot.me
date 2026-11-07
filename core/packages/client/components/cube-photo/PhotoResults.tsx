@@ -20,23 +20,38 @@ const STATUS = {
   ambiguous: { zh: '状态不唯一，请指定照片左侧面的中心颜色。', en: 'The state is ambiguous. Specify the center color of the left face in the photo.' },
   invalid: { zh: '颜色无法组成合法顶层，请核对色块、持方与网格。', en: 'These colors do not form a legal last layer. Check the colors, orientation and grid.' },
 };
+const POCKET_STATUS = {
+  ...STATUS,
+  ambiguous: { zh: '状态不唯一，请核对完整顶面和两个完整侧面的颜色。', en: 'The state is ambiguous. Check the colors on the full top and both full side faces.' },
+  invalid: { zh: '未找到符合底面同色条件的二阶状态。请确认底面同色，并核对色块与网格。', en: 'No 2×2 state matches a monochrome bottom face. Check that the bottom is one color, then verify the stickers and grid.' },
+};
 
-export default function PhotoResults({ workers, pixels, corners, width, height, puzzleSize = 3 }: { puzzleSize?: 2 | 3; workers: PhotoWorkers; pixels: PhotoPixels; corners: CubeCorners; width: number; height: number }) {
+export default function PhotoResults({ workers, pixels, corners, width, height, puzzleSize = 3, pocketStage = 'eg', onRecognized }: { puzzleSize?: 2 | 3; pocketStage?: 'eg' | 'last-slot'; workers: PhotoWorkers; pixels: PhotoPixels; corners: CubeCorners; width: number; height: number; onRecognized?: (recognized: boolean) => void }) {
   useTranslation();
   const [adjustments, setAdjustments] = useState<{ corners: CubeCorners; colors: Record<number, CubeColor>; front?: CubeColor } | null>(null);
   const [retry, setRetry] = useState(0), [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const previousRequest = useRef<{ pixels: PhotoPixels; corners: CubeCorners; retry: number } | null>(null);
-  const request = useMemo<PhotoAnalysisInput>(() => ({ pixels, puzzleSize, up: puzzleSize === 2 && adjustments?.corners === corners ? adjustments.front : undefined,
+  const request = useMemo<PhotoAnalysisInput>(() => ({ pixels, puzzleSize, pocketStage, up: puzzleSize === 2 && adjustments?.corners === corners ? adjustments.front : undefined,
     corners: corners.map(p => ({ x: p.x * pixels.width / width, y: p.y * pixels.height / height })) as CubeCorners,
     corrections: adjustments?.corners === corners ? adjustments.colors : {},
     front: adjustments?.corners === corners ? adjustments.front : undefined,
-  }), [pixels, corners, width, height, adjustments, puzzleSize]);
+  }), [pixels, corners, width, height, adjustments, puzzleSize, pocketStage]);
   // Never show an old state's algorithms while new geometry/colors are pending.
   const current = snapshot?.request === request ? snapshot : null;
   const recognition = current?.recognition;
   const recovered = recognition?.status === 'ok' ? recognition.candidates[0] : recognition?.status === 'corners-only' ? recognition.cornerCandidates?.[0] : null;
   const sets = recognition ? photoRecognitionSets(recognition).filter(set => (recognition.status !== 'partial' && puzzleSize !== 2) || current?.results[set]?.status !== 'missing') : [];
   const pending = !current?.done && !current?.error;
+  const statusMessages = puzzleSize !== 2 ? STATUS : pocketStage === 'eg' ? POCKET_STATUS : {
+    ...POCKET_STATUS,
+    invalid: { zh: '未找到底面三格同色的二阶状态，请核对阶段、色块与网格。', en: 'No 2×2 state has three bottom stickers of one color. Check the stage, colors and grid.' },
+    'uncertain-colors': { zh: '请核对标记的颜色；若颜色正确，请换个角度拍摄以确定隐藏角块。', en: 'Check the marked colors. If correct, take another angle to determine the hidden corners.' },
+    ambiguous: { zh: '三面信息不足以确定状态，请核对颜色并换个角度拍摄。', en: 'These three faces do not determine the state. Check the colors and take another angle.' },
+  };
+  const recognized = !current?.error && (recognition?.status === 'ok' || recognition?.status === 'corners-only'
+    || (recognition?.status === 'partial' && Object.values(current?.results ?? {}).some(result => result?.status === 'found')));
+
+  useEffect(() => { onRecognized?.(recognized); }, [onRecognized, recognized]);
 
   useEffect(() => {
     let active = true, cancel: (() => void) | undefined;
@@ -72,7 +87,7 @@ export default function PhotoResults({ workers, pixels, corners, width, height, 
     {!recognition && pending ? <PhotoLoading /> : <div className="cube-photo-result-content">
     <div className="cube-photo-result-status" role="status" aria-live="polite">
       {recognition && recognition.status !== 'ok' && recognition.status !== 'corners-only'
-        && (recognition.status !== 'partial' || !sets.length) && <p className="cube-photo-error">{tr(puzzleSize === 2 && recognition.status === 'ambiguous' ? { zh: '状态不唯一，请校正颜色或补全两个侧面的底层色块。', en: 'The state is ambiguous. Correct the colors or show the bottom row of both side faces.' } : STATUS[recognition.status === 'partial' ? 'uncertain-colors' : recognition.status])}</p>}
+        && (recognition.status !== 'partial' || !sets.length) && <p className="cube-photo-error">{tr(statusMessages[recognition.status === 'partial' ? 'uncertain-colors' : recognition.status])}</p>}
     </div>
     <PhotoAlgorithmCards stateKey={recognition?.status === 'partial' ? JSON.stringify(recognition.candidates) : recovered && ('facelet' in recovered ? recovered.facelet : JSON.stringify(recovered)) || undefined} sets={sets} results={current?.results ?? {}} error={current?.error} />
     {current?.error && !sets.length && <p className="cube-photo-error" role="alert">{tr({ zh: '识别未完成，请重试。', en: 'Analysis did not finish. Please retry.' })}</p>}

@@ -6,6 +6,7 @@ import { CaseThumb } from '@/components/CaseThumb';
 import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
 import { COLOR_RGB, type CubeColor } from '@cuberoot/shared/cube-photo/recognize';
+import { getAlgSetMeta } from '@cuberoot/shared/alg';
 import { PHOTO_ALG_SETS, POCKET_PHOTO_ALG_SETS, type PhotoAlgMatch, type PhotoAlgResult, type PhotoAlgSet } from '@cuberoot/shared/cube-photo/lookup';
 import './cube-photo.css';
 
@@ -29,7 +30,8 @@ export default function PhotoAlgorithmCards({ stateKey, sets, results, error = f
   return sets.length > 0 && <div className="cube-photo-formulas">
       {[...PHOTO_ALG_SETS, ...POCKET_PHOTO_ALG_SETS].filter(set => sets.includes(set)).map(set => {
         const result = results[set], match = result?.match;
-        const label = set === 'ortega-oll' ? 'OLL' : set === 'ortega-pbl' ? 'PBL' : set.toUpperCase();
+        const meta = getAlgSetMeta(match?.puzzle ?? (POCKET_PHOTO_ALG_SETS.some(slug => slug === set) ? '2x2' : '3x3'), set);
+        const label = meta?.short ?? (meta ? tr(meta) : set.toUpperCase());
         const key = alternativesKey(stateKey, match), alternatives = result?.alternatives ?? [];
         const open = !!key && expanded === key;
         const panelId = `${id}-${set}-alternatives`, toggleId = `${panelId}-toggle`;

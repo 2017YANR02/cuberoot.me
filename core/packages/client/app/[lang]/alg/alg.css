@@ -1,12 +1,9 @@
 /* /alg — alg library styles. Standalone (does not extend /tutorial). */
 
-/* Default to classic blue; an explicit user accent takes priority.
-   Everything else inherits :root tokens via theme-tokens. */
+/* Inherit the selected site palette and accent in both light and dark modes. */
 .alg-root {
   --alg-card-columns: 6;
   --alg-full-columns: 2;
-  --accent: var(--user-accent, #0066cc);
-  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
 
   font-family: var(--font-sans);
   color: var(--foreground);
@@ -18,16 +15,6 @@
 .alg-root[data-alg-view-animating] { overflow-x: clip; }
 [data-alg-shared-title] { display: inline-block; }
 
-html[data-theme=dark] .alg-root {
-  --accent: var(--user-accent, #4ea1ff);
-  --accent-soft: color-mix(in srgb, var(--accent) 18%, transparent);
-}
-@media (prefers-color-scheme: dark) {
-  html:not([data-theme=light]) .alg-root {
-    --accent: var(--user-accent, #4ea1ff);
-    --accent-soft: color-mix(in srgb, var(--accent) 18%, transparent);
-  }
-}
 
 /* ── index page ── */
 /* 落地页原来的项目卡片网格(.alg-puzzle-*)已换成页首下拉,样式随之删掉 */
@@ -110,6 +97,12 @@ html[data-theme=dark] .alg-root {
 }
 .alg-puzzle-back-row {
   flex-basis: 100%;
+}
+
+.alg-cat-header--puzzle :is(.alg-train-cta, .alg-index-progress-link, .alg-admin-validate-btn) {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
 }
 
 .alg-back {

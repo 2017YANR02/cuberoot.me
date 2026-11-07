@@ -11,7 +11,8 @@ import { pocketFaces, pocketSolved, pocketOriented } from './pocket';
 import type { PhotoRecognition, RecoveredCorners, RecoveredState } from './recognize';
 
 export const PHOTO_ALG_SETS = ['pll', 'oll', 'cmll', 'coll', 'ell', 'zbll', 'ollcp', '1lll'] as const;
-export const POCKET_PHOTO_ALG_SETS = ['ortega-oll', 'cll', 'eg1', 'eg2', 'ortega-pbl'] as const;
+export const POCKET_EXTENDED_PHOTO_ALG_SETS = ['tcll-plus', 'tcll-minus', 'teg2-plus', 'ls1', 'ls2', 'ls3', 'ls4', 'ls5', 'ls6', 'ls7', 'ls8', 'ls9'] as const;
+export const POCKET_PHOTO_ALG_SETS = ['ortega-oll', 'cll', 'eg1', 'eg2', 'ortega-pbl', ...POCKET_EXTENDED_PHOTO_ALG_SETS] as const;
 export type PhotoAlgSet = typeof PHOTO_ALG_SETS[number] | typeof POCKET_PHOTO_ALG_SETS[number];
 export interface PhotoAlgMatch { puzzle?: '2x2' | '3x3'; set: PhotoAlgSet; name: string; caseName: string; caseId?: number; href: string; alg: string; body?: string; preAuf: string; postAuf: string; turns: number; thumbnail?: { alg: string; setup?: string; sticker: AlgSticker } }
 export interface PhotoAlgResult { set: PhotoAlgSet; status: 'found' | 'missing' | 'error'; match?: PhotoAlgMatch; alternatives?: PhotoAlgMatch[] }
@@ -69,7 +70,9 @@ export function photoRecognitionInput(recognition: PhotoRecognition): PhotoAlgIn
 export function photoAlgSets(facelet: string): PhotoAlgSet[] {
   if (facelet.length === 24) {
     const state = pocketFaces(facelet);
-    if (!state || pocketSolved(state) || !state.D.every(c => c === 'D')) return [];
+    if (!state || pocketSolved(state)) return [];
+    if (state.D.filter(c => c === 'D').length === 3) return [...POCKET_EXTENDED_PHOTO_ALG_SETS];
+    if (!state.D.every(c => c === 'D')) return [];
     return pocketOriented(state) ? ['cll', 'eg1', 'eg2', 'ortega-pbl'] : ['ortega-oll', 'cll', 'eg1', 'eg2'];
   }
   if (validateFacelet(facelet) !== null) return [];

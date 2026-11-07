@@ -17,44 +17,52 @@ export function pocketFaces(facelet: string): CubeFaces | null {
   return state;
 }
 
-/** Exact corner constraints, with a monochrome D face; no edge parity on 2x2.
+/** Exact corner constraints: four D stickers for EG, exactly three for TEG/LS;
+ * no edge parity on 2x2. The stage is explicit because hidden twists can make
+ * otherwise identical visible photos compatible with both stage assumptions.
  * A bound is a rejection boundary, never permission to keep only likely states.
  * Y-equivalent color frames describe the same physical state: use one per U.
  */
-export function recoverPocket(samples: StickerSample[], up?: CubeColor): PhotoRecognition {
+export function recoverPocket(samples: StickerSample[], up?: CubeColor, minimumBottomStickers: 3 | 4 = 4): PhotoRecognition {
   if (samples.length !== 12) throw new Error('invalid-pocket-samples');
   const candidates: RecoveredState[] = [], limit = 128;
   const frames = standardColorFrames().filter((frame, index, all) => (!up || frame.U === up)
     && all.findIndex(other => other.U === frame.U) === index);
   for (const frame of frames) {
-    const observed = new Map(VISIBLE.flatMap((index, i) => samples[i].reliable || samples[i].corrected
-      ? [[index, Object.keys(frame).find(f => frame[f as keyof typeof frame] === samples[i].color)!] as const] : []));
+    const observed = new Map(VISIBLE.flatMap((index, i) => {
+      const sample = samples[i];
+      const colors = sample.reliable || sample.corrected ? [sample.color] : sample.possibleColors;
+      return colors?.length ? [[index, colors] as const] : [];
+    }));
     const options = CORNERS.map((indices, position) => PIECES.flatMap((colors, piece) => {
-      if ((position < 4) !== (piece < 4)) return [];
+      if (minimumBottomStickers === 4 && (position < 4) !== (piece < 4)) return [];
       return [0, 1, 2].flatMap(orientation => {
-        if (position >= 4 && orientation !== 0) return [];
+        if (minimumBottomStickers === 4 && position >= 4 && orientation !== 0) return [];
         const stickers = indices.map((_, j) => colors[(j - orientation + 3) % 3]);
-        return indices.every((index, j) => !observed.has(index) || observed.get(index) === stickers[j])
-          ? [{ piece, orientation, stickers }] : [];
+        return indices.every((index, j) => !observed.has(index)
+          || observed.get(index)!.includes(frame[stickers[j] as keyof typeof frame]))
+          ? [{ piece, orientation, stickers, missingBottom: position >= 4 && stickers[0] !== 'D' ? 1 : 0 }] : [];
       });
     }));
     if (options.some(values => !values.length)) continue;
     const order = options.map((_, i) => i).sort((a, b) => options[a].length - options[b].length);
     const facelet = Array<string>(24);
-    const visit = (depth: number, used: number, twist: number) => {
+    const visit = (depth: number, used: number, twist: number, missingBottom: number) => {
       if (candidates.length > limit) return;
       if (depth === 8) {
-        if (twist % 3 === 0) candidates.push({ facelet: facelet.join(''), frame });
+        if (twist % 3 === 0 && missingBottom === 4 - minimumBottomStickers) candidates.push({ facelet: facelet.join(''), frame });
         return;
       }
       const position = order[depth];
       for (const option of options[position]) {
         if (used & (1 << option.piece)) continue;
+        const nextMissing = missingBottom + option.missingBottom;
+        if (nextMissing > 4 - minimumBottomStickers) continue;
         CORNERS[position].forEach((index, j) => { facelet[index] = option.stickers[j]; });
-        visit(depth + 1, used | (1 << option.piece), twist + option.orientation);
+        visit(depth + 1, used | (1 << option.piece), twist + option.orientation, nextMissing);
       }
     };
-    visit(0, 0, 0);
+    visit(0, 0, 0, 0);
     if (candidates.length > limit) return { puzzle: '2x2', samples, candidates: [], status: 'ambiguous' };
   }
   const unique = candidates.length === 1 ? candidates[0] : undefined;
@@ -66,11 +74,11 @@ export function recoverPocket(samples: StickerSample[], up?: CubeColor): PhotoRe
   };
 }
 
-export function recognizePocket(image: PhotoPixels, corners: CubeCorners, corrections: Record<number, CubeColor>, up?: CubeColor): PhotoRecognition {
+export function recognizePocket(image: PhotoPixels, corners: CubeCorners, corrections: Record<number, CubeColor>, up?: CubeColor, minimumBottomStickers: 3 | 4 = 4): PhotoRecognition {
   const colors = (['top', 'left', 'right'] as const).flatMap(face => sampleFace(image, corners, face, 2));
   const samples = classifyPhotoColors(colors).map((sample, i) => corrections[i]
     ? { ...sample, color: corrections[i], corrected: true, reliable: true } : sample);
-  return recoverPocket(samples, up);
+  return recoverPocket(samples, up, minimumBottomStickers);
 }
 
 export function pocketSolved(state: CubeFaces): boolean {

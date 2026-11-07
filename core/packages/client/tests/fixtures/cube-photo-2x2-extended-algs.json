@@ -1,0 +1,493 @@
+{
+  "tcll-plus": {
+    "scrapedAt": "2026-08-05T10:49:43.087Z",
+    "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit",
+    "puzzle": "2x2",
+    "set": "tcll-plus",
+    "cases": [
+      {
+        "id": 6993,
+        "name": "TCLL+ Hammer 1",
+        "subgroup": "Hammer",
+        "setup": "F R' F' R F R' F' R",
+        "sticker": {
+          "ub": "obbb",
+          "uf": "rogw",
+          "ul": "ryrr",
+          "ur": "yygo",
+          "us": "ybgg",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "R' F R F' R' F R F'"
+            },
+            {
+              "alg": "U R U2 R' U2 R2 U R2 U' R2",
+              "setup": "R2' U R2' U' R2' U2' R U2' R' U'"
+            },
+            {
+              "alg": "y' U R2 U' R2 U R2 U2 R' U2 R",
+              "setup": "R' U2' R U2' R2' U' R2' U R2' U' y"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "tcll-minus": {
+    "scrapedAt": "2026-08-05T10:49:43.087Z",
+    "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit",
+    "puzzle": "2x2",
+    "set": "tcll-minus",
+    "cases": [
+      {
+        "id": 7036,
+        "name": "TCLL- Hammer 1",
+        "subgroup": "Hammer",
+        "setup": "x R' U R U' R' U R U' x' U",
+        "sticker": {
+          "ub": "rgbb",
+          "uf": "gbgo",
+          "ul": "yyrr",
+          "ur": "ybwo",
+          "us": "ryoo",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "U' x U R' U' R U R' U' R x'"
+            },
+            {
+              "alg": "U' F R' F' R F R' F' R"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "teg2-plus": {
+    "scrapedAt": "2026-08-05T10:49:43.087Z",
+    "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit",
+    "puzzle": "2x2",
+    "set": "teg2-plus",
+    "cases": [
+      {
+        "id": 7565,
+        "name": "TEG2+ Hammer 1",
+        "subgroup": "Hammer",
+        "setup": "F2' R U' R F2' R U R",
+        "sticker": {
+          "ub": "gogb",
+          "uf": "bgbw",
+          "ul": "byro",
+          "ur": "yygr",
+          "us": "yorr",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "R' U' R' F2 R' U R' F2"
+            },
+            {
+              "alg": "R U' F R U2 F2 U F' U2 R",
+              "setup": "R' U2' F U' F2' U2' R' F' U R'"
+            },
+            {
+              "alg": "U2 R' U R' U2 R' F R F R2",
+              "setup": "R2' F' R' F' R U2' R U' R U2'"
+            },
+            {
+              "alg": "R F' R' F2 U' F2 U' R2 U' R",
+              "setup": "R' U R2' U F2' U F2' R F R'"
+            },
+            {
+              "alg": "R' U' R' U2 F2 R U2 F2 U' R' F2"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "ls1": {
+    "scrapedAt": "2026-08-05T10:49:43.087Z",
+    "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit",
+    "puzzle": "2x2",
+    "set": "ls1",
+    "cases": [
+      {
+        "id": 7079,
+        "name": "LS-1 PBL 1",
+        "subgroup": "PBL",
+        "setup": "R U R' F2' R F' R U R2' F2'",
+        "sticker": {
+          "ub": "bobb",
+          "uf": "gggr",
+          "ul": "grrr",
+          "ur": "oobo",
+          "us": "wyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "F2 R2 U' R' F R' F2 R U' R'"
+            },
+            {
+              "alg": "U F' R U' R' F U2 F R U R'",
+              "setup": "R U' R' F' U2' F' R U R' F U'"
+            },
+            {
+              "alg": "R U R' F2 R F' R U R2 F2"
+            },
+            {
+              "alg": "U' R' F R' F' R U R' F' U' F R2"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "ls2": {
+    "scrapedAt": "2026-08-05T10:49:43.087Z",
+    "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit",
+    "puzzle": "2x2",
+    "set": "ls2",
+    "cases": [
+      {
+        "id": 7133,
+        "name": "LS-2 Hammer 1",
+        "subgroup": "Hammer",
+        "setup": "R U' R2' F R F' R U R2' F R F' U'",
+        "sticker": {
+          "ub": "robb",
+          "uf": "orgy",
+          "ul": "gyrr",
+          "ur": "yyoo",
+          "us": "wgbb",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "U F R' F' R2 U' R' F R' F' R2 U R'"
+            },
+            {
+              "alg": "U F2 U R U R' U2 F2 R U' R'",
+              "setup": "R U R' F2' U2' R U' R' U' F2' U'"
+            },
+            {
+              "alg": "U R' F R F' R U' R' U R U R' U' R' F R F'",
+              "setup": "F R' F' R U R U' R' U' R U R' F R' F' R U'"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "ls3": {
+    "scrapedAt": "2026-08-05T10:49:43.087Z",
+    "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit",
+    "puzzle": "2x2",
+    "set": "ls3",
+    "cases": [
+      {
+        "id": 7187,
+        "name": "LS-3 Hammer 1",
+        "subgroup": "Hammer",
+        "setup": "F R' F R2' U' R' F R' F2' R U'",
+        "sticker": {
+          "ub": "yobb",
+          "uf": "yygg",
+          "ul": "gbrr",
+          "ur": "bgyo",
+          "us": "wror",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "U R' F2 R F' R U R2 F' R F'"
+            },
+            {
+              "alg": "R U' R2 F R U R' F R U' F'",
+              "setup": "F U R' F' R U' R' F' R2' U R'"
+            },
+            {
+              "alg": "U R' F R F' R U' R2 F R F' R U R'"
+            },
+            {
+              "alg": "R U' R2 F R U R' U' R' F' U R"
+            },
+            {
+              "alg": "U' F' R U R' U2 F R' F' R F'",
+              "setup": "F R' F R F' U2' R U' R' F U"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "ls4": {
+    "scrapedAt": "2026-08-05T10:49:43.087Z",
+    "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit",
+    "puzzle": "2x2",
+    "set": "ls4",
+    "cases": [
+      {
+        "id": 7241,
+        "name": "LS-4 Sune-A 1",
+        "subgroup": "Sune-A",
+        "setup": "F' R U R' U' R U2' R' F'",
+        "sticker": {
+          "ub": "bwbb",
+          "uf": "oygg",
+          "ul": "ogrr",
+          "ur": "oyro",
+          "us": "gryb",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "F R U2 R' U R U' R' F"
+            },
+            {
+              "alg": "U2 F R F' R U R2 U' R U' R'",
+              "setup": "R U R' U R2' U' R' F R' F' U2'"
+            },
+            {
+              "alg": "U' R U R2 F R F' U2 R' F R F'",
+              "setup": "F R' F' R U2' F R' F' R2' U' R' U"
+            },
+            {
+              "alg": "R2 F R F' U R U2 R' U R'",
+              "setup": "R U' R U2' R' U' F R' F' R2'"
+            },
+            {
+              "alg": "U2 R' U R' U' F R' F' R U' R"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "ls5": {
+    "scrapedAt": "2026-08-05T10:49:43.087Z",
+    "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit",
+    "puzzle": "2x2",
+    "set": "ls5",
+    "cases": [
+      {
+        "id": 7295,
+        "name": "LS-5 Hammer-A 1",
+        "subgroup": "Hammer-A",
+        "setup": "F' R U R' U' R U2' R2' F' R",
+        "sticker": {
+          "ub": "ywbb",
+          "uf": "rygy",
+          "ul": "obrr",
+          "ur": "robo",
+          "us": "ggyg",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "R' F R2 U2 R' U R U' R' F"
+            },
+            {
+              "alg": "R U2 R2 F' R U R U' R' F"
+            },
+            {
+              "alg": "y' U' R U2 R' U2 R' F R' F'",
+              "setup": "F R F' R U2' R U2' R' U y"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "ls6": {
+    "scrapedAt": "2026-08-05T10:49:43.087Z",
+    "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit",
+    "puzzle": "2x2",
+    "set": "ls6",
+    "cases": [
+      {
+        "id": 7349,
+        "name": "LS-6 Hammer 1",
+        "subgroup": "Hammer",
+        "setup": "R' F R F' R' U R2' U R' U2' y",
+        "sticker": {
+          "ub": "ywbb",
+          "uf": "yrgo",
+          "ul": "orrr",
+          "ur": "goyo",
+          "us": "ggby",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "y' U2 R U' R2 U' R F R' F' R"
+            },
+            {
+              "alg": "U' R U' R' F R F' U' R' U' R",
+              "setup": "R' U R U F R' F' R U R' U"
+            },
+            {
+              "alg": "U2 R U2 R' U2 R' F R F' R U' R'",
+              "setup": "R U R' F R' F' R U2' R U2' R' U2'"
+            },
+            {
+              "alg": "y' U F R' F' R U R U' R2 U' R"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "ls7": {
+    "scrapedAt": "2026-08-05T10:49:43.087Z",
+    "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit",
+    "puzzle": "2x2",
+    "set": "ls7",
+    "cases": [
+      {
+        "id": 7403,
+        "name": "LS-7 Antisune-A 1",
+        "subgroup": "Antisune-A",
+        "setup": "R' F R' F' U R2' U R' U' R",
+        "sticker": {
+          "ub": "ygbb",
+          "uf": "gogr",
+          "ul": "wrrr",
+          "ur": "ybbo",
+          "us": "ooyg",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "R' U R U' R2 U' F R F' R"
+            },
+            {
+              "alg": "U R' F2 R U' F R U2 R' F",
+              "setup": "F' R U2' R' F' U R' F2' R U'"
+            },
+            {
+              "alg": "R U2 R' U' F R' F' R2 U R'",
+              "setup": "R U' R2' F R F' U R U2' R'"
+            },
+            {
+              "alg": "y' R2 U' R2 U R2 U' F R F'",
+              "setup": "F R' F' U R2' U' R2' U R2' y"
+            },
+            {
+              "alg": "y' R' U R U2 R' F R' F' R U' R",
+              "setup": "R' U R' F R F' R U2' R' U' R y"
+            },
+            {
+              "alg": "y R' F' R U' R' F R F' R U R2 F' R",
+              "setup": "R' F R2' U' R' F R' F' R U R' F R y'"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "ls8": {
+    "scrapedAt": "2026-08-05T10:49:43.087Z",
+    "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit",
+    "puzzle": "2x2",
+    "set": "ls8",
+    "cases": [
+      {
+        "id": 7457,
+        "name": "LS-8 Hammer 1",
+        "subgroup": "Hammer",
+        "setup": "F R' F' R U R U' R2' U' R U' y",
+        "sticker": {
+          "ub": "ggbb",
+          "uf": "brgy",
+          "ul": "wyrr",
+          "ur": "gybo",
+          "us": "oory",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "y' U R' U R2 U R' U' R' F R F'"
+            },
+            {
+              "alg": "y' U R' F R F' R' U R2 U R'",
+              "setup": "R U' R2' U' R F R' F' R U' y"
+            },
+            {
+              "alg": "U' R U R U' R' F R' F' R U R'",
+              "setup": "R U' R' F R F' R U R' U' R' U"
+            },
+            {
+              "alg": "R2 F R F' R U' R2 U' R U R'",
+              "setup": "R U' R' U R2' U R' F R' F' R2'"
+            },
+            {
+              "alg": "U2 R' U R U F R' F' R U R'",
+              "setup": "R U' R' F R F' U' R' U' R U2'"
+            },
+            {
+              "alg": "F R U' R' U' R U R' F' R U R'",
+              "setup": "R U' R' F R U' R' U R U R' F'"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "ls9": {
+    "scrapedAt": "2026-08-05T10:49:43.087Z",
+    "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit",
+    "puzzle": "2x2",
+    "set": "ls9",
+    "cases": [
+      {
+        "id": 7511,
+        "name": "LS-9 Hammer-A 1",
+        "subgroup": "Hammer-A",
+        "setup": "F R' F' R2' U R' U R U' R2' U2' y",
+        "sticker": {
+          "ub": "ogbb",
+          "uf": "bggo",
+          "ul": "wyrr",
+          "ur": "ygyo",
+          "us": "oyrr",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "y' U2 R2 U R' U' R U' R2 F R F'"
+            },
+            {
+              "alg": "y R' F2 R2 U R' U' R' F R F'",
+              "setup": "F R' F' R U R U' R2' F2' R y'"
+            },
+            {
+              "alg": "y R2 F2 R U' R' F2 R F' R",
+              "setup": "R' F R' F2' R U R' F2' R2' y'"
+            },
+            {
+              "alg": "y R U' R2 F2 R U' R' F R F'",
+              "setup": "F R' F' R U R' F2' R2' U R' y'"
+            }
+          ]
+        ]
+      }
+    ]
+  }
+}

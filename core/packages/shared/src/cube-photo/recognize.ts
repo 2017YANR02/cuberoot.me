@@ -13,7 +13,7 @@ export const COLOR_ORDER = Object.keys(COLOR_NAMES) as CubeColor[];
 const STANDARD: Record<PhotoFace, CubeColor> = { U: 'white', R: 'red', F: 'green', D: 'yellow', L: 'orange', B: 'blue' };
 export const COLOR_RGB = Object.fromEntries(Object.entries(STANDARD).map(([face, color]) => [color, CANONICAL_RGB[face as PhotoFace]])) as Record<CubeColor, RGB>;
 export type ColorFrame = Record<PhotoFace, CubeColor>;
-export interface StickerSample { rgb: RGB; color: CubeColor; margin: number; distance: number; reliable: boolean; corrected: boolean; calibrated: boolean; inferred?: boolean; observedColor?: CubeColor }
+export interface StickerSample { rgb: RGB; color: CubeColor; margin: number; distance: number; reliable: boolean; corrected: boolean; calibrated: boolean; inferred?: boolean; observedColor?: CubeColor; possibleColors?: CubeColor[] }
 export interface VisibleLastLayer { U: string; F: string; R: string }
 export interface RecoveredState { facelet: string; frame: ColorFrame }
 /** Only corner coordinates are known; no edge or complete-cube state is claimed. */
@@ -40,6 +40,9 @@ function rankColors(lab: Lab, references = REFERENCES) {
     .4 * (lab[0] - ref.lab[0]), lab[1] - ref.lab[1], lab[2] - ref.lab[2],
   ) })).sort((a, b) => a.distance - b.distance);
 }
+function saturation(rgb: RGB): number {
+  return (Math.max(...rgb) - Math.min(...rgb)) / Math.max(1, ...rgb);
+}
 function classify(rgb: RGB, references = REFERENCES, lab = srgbToLab(rgb)): StickerSample {
   const ranked = rankColors(lab, references);
   const best = ranked[0], margin = ranked[1].distance - best.distance;
@@ -49,8 +52,18 @@ function classify(rgb: RGB, references = REFERENCES, lab = srgbToLab(rgb)): Stic
   // Shaded orange can be closer to canonical red in Lab. Such a narrow
   // red/orange margin is evidence of uncertainty, not a hard cube constraint.
   const warmPair = ranked.slice(0, 2).every(r => r.color === 'red' || r.color === 'orange');
+  // A neutral reflection can pull orange toward the red Lab reference while
+  // leaving a deceptively large margin. A washed-out warm patch is not a
+  // trustworthy fixed observation unless it is close to a measured reference.
+  const plausibleWarm = !warmPair || saturation(rgb) >= .65 || best.distance <= 12;
+  // A saturated warm patch can be ambiguous between red and orange without
+  // being compatible with blue/green/white. Preserve that bounded evidence;
+  // it does not certify either warm color or train a calibration reference.
+  const boundedWarm = warmPair && best.distance < 36 && ranked[2].distance - ranked[1].distance >= 20
+    && Math.max(...rgb) >= 100 && (Math.max(...rgb) - Math.min(...rgb)) / Math.max(...rgb) >= .65;
   return { rgb, color: best.color, margin, distance: best.distance,
-    reliable: margin >= (warmPair ? 12 : 8) && best.distance < 48 && plausibleWhite, corrected: false, calibrated: false };
+    ...(boundedWarm ? { possibleColors: ['red', 'orange'] as CubeColor[] } : {}),
+    reliable: margin >= (warmPair ? 12 : 8) && best.distance < 48 && plausibleWhite && plausibleWarm, corrected: false, calibrated: false };
 }
 
 /** Dark blue loses Lab chroma and can be nearer white than a lit blue reference.
@@ -75,7 +88,17 @@ export function classifyPhotoColors(colors: readonly RGB[]): StickerSample[] {
   const initial = colors.map(classifyExposure);
   const photoRefs = new Map<CubeColor, RGB>();
   for (const color of COLOR_ORDER) {
-    const anchors = initial.filter(s => s.color === color && s.reliable && s.margin >= 12);
+    let anchors = initial.filter(s => s.color === color && s.reliable && s.margin >= 12);
+    // A photographed blue/green/yellow can differ from the canonical palette
+    // enough that no single cell clears the stronger anchor threshold. Two
+    // independently reliable, closely matching cells can corroborate that
+    // reference. Uncertain cells never participate in their own calibration,
+    // and red/orange retain their stricter separation requirement.
+    if (!anchors.length && ['blue', 'green', 'yellow'].includes(color)) {
+      const supported = initial.filter(s => s.color === color && s.reliable);
+      if (supported.length >= 2 && supported.every(a => supported.every(b =>
+        Math.hypot(...srgbToLab(a.rgb).map((v, i) => v - srgbToLab(b.rgb)[i])) <= 8))) anchors = supported;
+    }
     if (!anchors.length) continue;
     const median = (channel: number) => {
       const values = anchors.map(s => s.rgb[channel]).sort((a, b) => a - b), mid = values.length >> 1;
@@ -115,6 +138,7 @@ export function classifyPhotoColors(colors: readonly RGB[]): StickerSample[] {
     // independent photo reference, require a clear relative gap as well as a
     // minimum absolute gap; an almost tied red/orange reading still fails.
     const separated = adjusted.reliable || (adjusted.color !== 'white' && adjusted.margin >= 4
+      && (!['red', 'orange'].includes(adjusted.color) || saturation(sample.rgb) >= .65 || adjusted.distance <= 12)
       && adjusted.distance <= .65 * (adjusted.distance + adjusted.margin));
     // Lab distances contract under shade/reflection. A red anchor must not
     // absorb orange merely because the orange reference is brighter.
@@ -137,7 +161,10 @@ export function sampleFace(image: PhotoPixels, corners: CubeCorners, face: FaceN
     const offset = (sy * image.width + sx) * 4;
     rectified.set(image.data.subarray(offset, offset + 4), (y * size + x) * 4);
   }
-  return sampleGridColors(rectified, size, gridSize, .35);
+  // Pocket stickers are large enough for a wider interior patch: a printed
+  // center logo must not outweigh the surrounding sticker. Keep a margin to
+  // exclude rounded corners and seams; 3x3 retains its tighter sampling area.
+  return sampleGridColors(rectified, size, gridSize, gridSize === 2 ? .65 : .35);
 }
 
 let frames: ColorFrame[] | undefined;

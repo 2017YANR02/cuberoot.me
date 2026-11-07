@@ -56,6 +56,27 @@ async function sampledPhoto(colors: RGB[]) {
 }
 
 describe('photo last-layer state and formulas', () => {
+  it('does not mistake a reflected orange edge for reliable red and fall back to CMLL only', async () => {
+    // Anonymous patch medians from the report; no private photograph in Git.
+    const colors: RGB[] = [
+      [21, 136, 12], [249, 127, 104], [213, 208, 91], [197, 195, 0], [190, 191, 4],
+      [200, 200, 55], [43, 88, 129], [14, 128, 5], [196, 193, 2],
+      [231, 84, 34], [174, 173, 1], [121, 13, 7], [10, 176, 1], [11, 87, 152], [12, 93, 159],
+      [24, 111, 16], [255, 101, 24],
+    ];
+    expect(classifyPhotoColors(colors)[1].reliable).toBe(false);
+    const { pixels, corners } = await sampledPhoto(colors);
+    const result = recognizePhoto(pixels, corners);
+    expect(result.status).toBe('ok');
+    expect(result.candidates.map(c => c.facelet)).toEqual([
+      'FRUUUUBFUFBBRRRRRRRULFFFFFFDDDDDDDDDULULLLLLLLURBBBBBB',
+    ]);
+    expect(result.samples[1]).toMatchObject({ color: 'orange', observedColor: 'red', reliable: false, inferred: true, corrected: false });
+    expect(photoRecognitionSets(result)).toEqual(['oll', 'cmll', 'ollcp', '1lll']);
+    // An explicit user correction remains authoritative, even if inconsistent.
+    expect(recognizePhoto(pixels, corners, { 1: 'red' }).status).toBe('corners-only');
+  });
+
   it('recovers the shaded Sune edge from independent color evidence and returns ZBLL', async () => {
     expect(classifyPhotoColors([shadedSunePhoto[13]])[0].reliable).toBe(false);
     const { pixels, corners } = await sampledPhoto(shadedSunePhoto);

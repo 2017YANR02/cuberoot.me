@@ -273,7 +273,9 @@ function hasColorEvidence(image: PhotoPixels, corners: CubeCorners, size = 3): b
 
 function fitSides(image: PhotoPixels, edges: Edges, q: Quad, gridSize = 3): { corners: CubeCorners; score: number } | null {
   const size = (distance(q[2], q[1]) + distance(q[2], q[3])) / 2;
-  let best: { corners: CubeCorners; score: number; params: number[] } | null = null;
+  type SideFit = { corners: CubeCorners; score: number; params: number[] };
+  let best: SideFit | null = null;
+  const seeds: SideFit[] = [];
   const h = homography(q)!, weight = 1 + h[6] + h[7];
   // The front vertical edge need not be visible down to the bottom of the cube.
   for (const angle of [60, 75, 90, 105, 120]) for (const factor of [0.65, 0.9, 1.15, 1.4, 1.7]) for (const dw of [-0.15, 0, 0.15]) {
@@ -282,33 +284,47 @@ function fitSides(image: PhotoPixels, edges: Edges, q: Quad, gridSize = 3): { co
     const corners = extrude(q, dx, dy, dw);
     if (!corners) continue;
     const score = sideScore(image, edges, corners, gridSize);
+    if (gridSize === 2) seeds.push({ corners, score, params: [dx, dy, dw] });
     if (!best || score > best.score) best = { corners, score, params: [dx, dy, dw] };
   }
   if (!best) return null;
-  for (const step of [size * 0.1, size * 0.04, 2]) for (let pass = 0; pass < 2; pass++) for (let i = 0; i < 3; i++) for (const sign of [-1, 1]) {
-    const params: number[] = [...best.params];
-    if (i === 2) {
-      const delta = sign * step / (size * 3);
-      params[0] += q[2].x * delta; params[1] += q[2].y * delta; params[2] += delta;
-    } else params[i] += sign * step;
-    if (Math.abs(params[2]) > 0.45) continue;
-    const corners = extrude(q, params[0], params[1], params[2]);
-    if (!corners || distance(corners[2], corners[5]) < size * 0.5 || distance(corners[2], corners[5]) > size * 2) continue;
-    const score = sideScore(image, edges, corners, gridSize);
-    if (score > best.score) best = { corners, score, params };
+  // Coarse 2x2 proposals can land on the middle seam and score better than
+  // the still-unrefined bottom contour. Refine several distinct depths before
+  // choosing; one local search cannot escape that half-height solution.
+  const starts = [best];
+  if (gridSize === 2) for (const seed of seeds.sort((a, b) => b.score - a.score)) {
+    if (starts.every(start => distance(start.corners[5], seed.corners[5]) > size * .2)) starts.push(seed);
+    if (starts.length === 6) break;
   }
-  // On 2x2 both side rows are observed. Refine their actual bottom boundaries
-  // instead of inheriting the extrusion error from the estimated top corners.
-  if (gridSize === 2) for (const step of [8, 4, 2, 1]) for (let pass = 0; pass < 2; pass++) {
-    for (const i of [4, 5, 6]) for (const axis of ['x', 'y'] as const) for (const sign of [-1, 1]) {
-      const corners = best.corners.map(p => ({ ...p })) as CubeCorners;
-      corners[i][axis] += sign * step;
-      if (!validQuad(faceQuad(corners, 'left')) || !validQuad(faceQuad(corners, 'right'))) continue;
+  let winner = best;
+  for (const start of starts) {
+    best = start;
+    for (const step of [size * 0.1, size * 0.04, 2]) for (let pass = 0; pass < 2; pass++) for (let i = 0; i < 3; i++) for (const sign of [-1, 1]) {
+      const params: number[] = [...best.params];
+      if (i === 2) {
+        const delta = sign * step / (size * 3);
+        params[0] += q[2].x * delta; params[1] += q[2].y * delta; params[2] += delta;
+      } else params[i] += sign * step;
+      if (Math.abs(params[2]) > 0.45) continue;
+      const corners = extrude(q, params[0], params[1], params[2]);
+      if (!corners || distance(corners[2], corners[5]) < size * 0.5 || distance(corners[2], corners[5]) > size * 2) continue;
       const score = sideScore(image, edges, corners, gridSize);
-      if (score > best.score) best = { ...best, corners, score };
+      if (score > best.score) best = { corners, score, params };
     }
+    // On 2x2 both side rows are observed. Refine their actual bottom boundaries
+    // instead of inheriting the extrusion error from the estimated top corners.
+    if (gridSize === 2) for (const step of [8, 4, 2, 1]) for (let pass = 0; pass < 2; pass++) {
+      for (const i of [4, 5, 6]) for (const axis of ['x', 'y'] as const) for (const sign of [-1, 1]) {
+        const corners = best.corners.map(p => ({ ...p })) as CubeCorners;
+        corners[i][axis] += sign * step;
+        if (!validQuad(faceQuad(corners, 'left')) || !validQuad(faceQuad(corners, 'right'))) continue;
+        const score = sideScore(image, edges, corners, gridSize);
+        if (score > best.score) best = { ...best, corners, score };
+      }
+    }
+    if (best.score > winner.score) winner = best;
   }
-  return best;
+  return winner;
 }
 
 /** Uniform tops have weak seams and can disappear from the global Hough peaks.
