@@ -1,29 +1,11 @@
 'use client';
 
 import PageHeading from '@/components/PageHeading';
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTrainingPathname as usePathname, useTrainingQueryStates as useQueryStates, useTrainingHref } from '@/lib/training-host';
 import { parseAsString, parseAsStringEnum } from 'nuqs';
-import {
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  arrayMove,
-  rectSortingStrategy,
-  sortableKeyboardCoordinates,
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, RotateCcw, Shuffle } from '@app-foundation/icons/lucide';
+import { RotateCcw, Shuffle } from '@app-foundation/icons/lucide';
 import {
   ALG_CATALOG,
   ALG_PUZZLES,
@@ -33,80 +15,31 @@ import {
   type AlgPuzzle,
 } from '@cuberoot/shared';
 import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
-import { CaseThumb } from '@/components/CaseThumb';
+import { AlgCaseOrderGrid } from '@/components/AlgCaseOrderGrid';
 import AppLink from '@/components/AppLink';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
 import { nextQuery, useAuthUser } from '@/lib/auth-store';
-import { sortByCp } from '@/lib/alg_cp_order';
-import { displayZbllToken, primaryCaseName } from '@/lib/alg_case_display';
-import { sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
 import { eventDisplayName } from '@/lib/wca-events';
 import { PUZZLE_EVENT } from '@/app/[lang]/alg/_trainer/events';
 import {
   caseMap,
+  canonicalTimeAttackCases,
   casesForTimeAttackScope,
-  fetchCloudTimeAttackOrder,
-  newerTimeAttackOrder,
-  normalizeTimeAttackOrder,
-  readLocalTimeAttackOrder,
-  saveCloudTimeAttackOrder,
   timeAttackScopes,
-  writeLocalTimeAttackOrder,
-  type TimeAttackOrderSnapshot,
 } from '@/lib/alg-time-attack-order';
+import { displayZbllToken } from '@/lib/alg_case_display';
 import { caseKey } from '@/lib/trainer-case-key';
 import { tr } from '@/i18n/tr';
 import '../alg.css';
 import './time-attack.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
-type SyncState = 'local' | 'loading' | 'saving' | 'saved' | 'error';
+import { useTimeAttackOrder, type TimeAttackSyncState } from '@/hooks/useTimeAttackOrder';
 
 function scopeLabel(setSlug: string, scope: string): string {
   return scope.split('/').map((part) => (
     setSlug === 'zbll' ? displayZbllToken(part) : part.toUpperCase()
   )).join(' / ');
-}
-
-function SortableCase({
-  c,
-  puzzle,
-  setSlug,
-  index,
-}: {
-  c: AlgCase;
-  puzzle: AlgPuzzle;
-  setSlug: string;
-  index: number;
-}) {
-  const key = caseKey(c);
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: key });
-  const style: CSSProperties = { transform: CSS.Transform.toString(transform), transition };
-  const alg = c.algs.flat()[0]?.alg ?? c.standard ?? '';
-  return (
-    <div ref={setNodeRef} style={style} className={`alg-time-attack-case${isDragging ? ' is-dragging' : ''}`}>
-      <div className="alg-time-attack-thumb">
-        <CaseThumb local
-          puzzle={puzzle}
-          set={setSlug}
-          sticker={c.sticker}
-          alg={alg}
-          setup={c.setup}
-          size={116}
-          loading={index < 9 ? 'eager' : 'lazy'}
-        />
-      </div>
-      <button
-        type="button"
-        className="alg-time-attack-handle"
-        aria-label={tr({ zh: `移动第 ${index + 1} 张图`, en: `Move diagram ${index + 1}` })}
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical size={17} />
-      </button>
-    </div>
-  );
 }
 
 export default function AlgTimeAttackPage() {
@@ -125,10 +58,6 @@ export default function AlgTimeAttackPage() {
     : availableSets[0].slug;
   const [data, setData] = useState<AlgFile | null>(null);
   const [loadError, setLoadError] = useState(false);
-  const [order, setOrder] = useState<string[]>([]);
-  const [syncState, setSyncState] = useState<SyncState>('local');
-  const saveSequence = useRef(0);
-  const lastUpdated = useRef(0);
   const isZh = i18n.language.startsWith('zh');
   const puzzlePickerGroups = useMemo<readonly PuzzlePickerGroup[]>(() => [{
     id: 'algorithm-puzzles',
@@ -139,12 +68,6 @@ export default function AlgTimeAttackPage() {
       iconClass: item === 'fto' ? 'unofficial-fto' : `event-${PUZZLE_EVENT[item]}`,
     })),
   }], [isZh]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
 
   useEffect(() => {
     let active = true;
@@ -165,10 +88,7 @@ export default function AlgTimeAttackPage() {
 
   const sortedCases = useMemo(() => {
     if (!data) return [];
-    return sortAlgItemsBySignedLabel(
-      sortByCp(setSlug, data.cases),
-      (c) => primaryCaseName(puzzle, setSlug, c),
-    );
+    return canonicalTimeAttackCases(puzzle, setSlug, data.cases);
   }, [data, puzzle, setSlug]);
   const scopes = useMemo(() => timeAttackScopes(sortedCases), [sortedCases]);
   const scopedCases = useMemo(
@@ -176,73 +96,12 @@ export default function AlgTimeAttackPage() {
     [sortedCases, scope],
   );
   const canonicalKeys = useMemo(() => scopedCases.map(caseKey), [scopedCases]);
+  const { order, syncState, persistOrder } = useTimeAttackOrder(puzzle, setSlug, scope, canonicalKeys);
   const casesByKey = useMemo(() => caseMap(scopedCases), [scopedCases]);
   const orderedCases = useMemo(
     () => order.map((key) => casesByKey.get(key)).filter((c): c is AlgCase => !!c),
     [order, casesByKey],
   );
-
-  useEffect(() => {
-    if (canonicalKeys.length === 0) {
-      setOrder([]);
-      return;
-    }
-    let active = true;
-    const local = readLocalTimeAttackOrder(puzzle, setSlug, scope);
-    setOrder(normalizeTimeAttackOrder(canonicalKeys, local?.keys));
-    setSyncState(user ? 'loading' : 'local');
-    if (!user) return () => { active = false; };
-
-    void fetchCloudTimeAttackOrder(puzzle, setSlug, scope).then(async (cloud) => {
-      if (!active) return;
-      // 网络返回前用户可能已经排过一次，再读本机，确保刚发生的修改赢过旧云端。
-      const currentLocal = readLocalTimeAttackOrder(puzzle, setSlug, scope);
-      const winner = newerTimeAttackOrder(currentLocal, cloud);
-      const keys = normalizeTimeAttackOrder(canonicalKeys, winner?.keys);
-      let snapshot: TimeAttackOrderSnapshot | null = winner ? { ...winner, keys } : null;
-      const repaired = !!winner && (winner.keys.length !== keys.length || winner.keys.some((key, i) => key !== keys[i]));
-      if (repaired) snapshot = { keys, updatedAt: Math.max(Date.now(), winner.updatedAt + 1) };
-      setOrder(keys);
-      if (snapshot) {
-        lastUpdated.current = Math.max(lastUpdated.current, snapshot.updatedAt);
-        writeLocalTimeAttackOrder(puzzle, setSlug, scope, snapshot);
-      }
-      if (snapshot && (repaired || !cloud || snapshot.updatedAt > cloud.updatedAt)) {
-        await saveCloudTimeAttackOrder(puzzle, setSlug, scope, snapshot);
-      }
-      if (active) setSyncState('saved');
-    }).catch(() => {
-      if (active) setSyncState('error');
-    });
-    return () => { active = false; };
-  }, [canonicalKeys, puzzle, scope, setSlug, user]);
-
-  const persistOrder = useCallback((keys: string[]) => {
-    const updatedAt = Math.max(Date.now(), lastUpdated.current + 1);
-    lastUpdated.current = updatedAt;
-    const snapshot = { keys, updatedAt };
-    setOrder(keys);
-    writeLocalTimeAttackOrder(puzzle, setSlug, scope, snapshot);
-    if (!user) {
-      setSyncState('local');
-      return;
-    }
-    const sequence = ++saveSequence.current;
-    setSyncState('saving');
-    void saveCloudTimeAttackOrder(puzzle, setSlug, scope, snapshot).then(() => {
-      if (sequence === saveSequence.current) setSyncState('saved');
-    }).catch(() => {
-      if (sequence === saveSequence.current) setSyncState('error');
-    });
-  }, [puzzle, scope, setSlug, user]);
-
-  const onDragEnd = useCallback((event: DragEndEvent) => {
-    if (!event.over || event.active.id === event.over.id) return;
-    const from = order.indexOf(String(event.active.id));
-    const to = order.indexOf(String(event.over.id));
-    if (from < 0 || to < 0) return;
-    persistOrder(arrayMove(order, from, to));
-  }, [order, persistOrder]);
 
   const shuffle = useCallback(() => {
     if (order.length < 2) return;
@@ -258,7 +117,7 @@ export default function AlgTimeAttackPage() {
   const meta = getAlgSetMeta(puzzle, setSlug);
   const topScopes = scopes.filter((item) => item.depth === 1);
   const nestedScopes = scopes.filter((item) => item.depth > 1);
-  const syncText: Record<SyncState, string> = {
+  const syncText: Record<TimeAttackSyncState, string> = {
     local: tr({ zh: '已保存在本机', en: 'Saved on this device' }),
     loading: tr({ zh: '正在合并云端顺序', en: 'Merging cloud order' }),
     saving: tr({ zh: '正在保存', en: 'Saving' }),
@@ -346,15 +205,7 @@ export default function AlgTimeAttackPage() {
       ) : orderedCases.length === 0 ? (
         <div className="alg-empty">{tr({ zh: '这个范围没有可练习的图', en: 'There are no diagrams in this scope.' })}</div>
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-          <SortableContext items={order} strategy={rectSortingStrategy}>
-            <div className="alg-time-attack-grid">
-              {orderedCases.map((c, index) => (
-                <SortableCase key={caseKey(c)} c={c} puzzle={puzzle} setSlug={setSlug} index={index} />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+        <AlgCaseOrderGrid cases={orderedCases} order={order} puzzle={puzzle} setSlug={setSlug} onChange={persistOrder} />
       )}
     </main>
   );

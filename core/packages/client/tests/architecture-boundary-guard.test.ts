@@ -45,7 +45,7 @@ function rules(file: string, content: string): string[] {
 
 describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
-    expect(MANIFEST.legacyFindings).toHaveLength(191);
+    expect(MANIFEST.legacyFindings).toHaveLength(190);
     expect(compareFindings(uncontractedFindings(CURRENT, MANIFEST.manualContracts), MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
     // Reviewed native adapters, the Android release build, isolated fixtures, diagnostics, geometry/solver proofs,
     // deployment-only pgvector provisioning and remote-access host commands, plus
@@ -53,13 +53,14 @@ describe('architecture boundary guard', () => {
     // and the bounded recon intake CLI ESM loader and CubeOpt CLI symlink checks.
     // Five additional identities: two isolated nginx purge probes, the fixed FMC
     // quotient binary and two bounded small-puzzle measurement subprocess calls.
-    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 36);
-    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(143);
+    // One bounded git revision probe records the smart-cube timing benchmark provenance.
+    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 37);
+    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(142);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
   it('keeps every semantic edge contract tied to live repository evidence', () => {
-    expect(MANIFEST.manualContracts).toHaveLength(37);
+    expect(MANIFEST.manualContracts).toHaveLength(38);
     expect(validateManifestSchema(MANIFEST)).toEqual([]);
     expect(validateManualContracts(MANIFEST.manualContracts)).toEqual([]);
     expect(new Set(MANIFEST.manualContracts.map((item: { phase: string }) => item.phase))).toEqual(new Set([

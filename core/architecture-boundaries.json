@@ -1616,15 +1616,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/lib/alg-time-attack-order.ts",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/lib/alg-virtual-sets.ts",
       "importKind": "type-only",
       "mechanism": "static-import",

@@ -270,6 +270,14 @@ export const CATALOG: UtilEntry[] = [
     usage: 'const { record } = useTrainingStats("color:relations"); record(true, 1500);',
   },
   {
+    name: 'useTimeAttackOrder',
+    sig: 'useTimeAttackOrder(puzzle, setSlug, scope, canonicalKeys)',
+    imp: "import { useTimeAttackOrder } from '@/hooks/useTimeAttackOrder';",
+    category: 'hook',
+    zh: '情况顺序与 PLL 连拧共用本机保存、云端合并和排序归一化。',
+    en: 'Shared local persistence, cloud merging and order normalization for case order and PLL chains.',
+  },
+  {
     name: 'identity-choice store',
     sig: 'useIdentityChoice(): IdentityChoice | null',
     imp: "import { useIdentityChoice } from '@/lib/identity-choice';",

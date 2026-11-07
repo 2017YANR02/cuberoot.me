@@ -851,6 +851,13 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'AlgCaseOrderGrid',
+    import: "import { AlgCaseOrderGrid } from '@/components/AlgCaseOrderGrid';",
+    category: 'more',
+    zh: '情况顺序与 PLL 连拧共用的拖动、触摸和键盘排序网格，支持情况图或紧凑名称。',
+    en: 'Shared pointer, touch and keyboard case ordering, with diagrams or compact case names.',
+  },
+  {
     name: 'TrainingDailyBoard',
     import: "import TrainingDailyBoard from '@/components/teaching/TrainingDailyBoard';",
     category: 'more',
@@ -1570,7 +1577,7 @@ export const CATALOG: ComponentEntry[] = [
     name: 'BackHome',
     import: "import BackHome from '@/components/BackHome';",
     category: 'nav',
-    zh: '统一返回箭头：优先返回实际入口，无来源时回主页。放进与正文同宽的 header/topbar/wrap。',
+    zh: '统一返回箭头：优先返回实际入口，无来源时回主页。必须放进与正文同宽的 header/topbar/wrap。',
     en: 'Shared back arrow: returns to the recorded entry, falling back to Home. Place it in a header or wrapper aligned with the content.',
     usage: '<div className="page-header"><BackHome /></div>',
     Demo: BackHomeDemo,
