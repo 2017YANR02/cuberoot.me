@@ -74,6 +74,8 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   // Non-WCA puzzles — inverse of EVENT_TO_CSTIMER_SCRTYPE in export_cstimer.ts,
   // plus the plain ids so a hand-named session ("FTO") still resolves.
   'fto': 'fto', 'ftoso': 'fto',
+  'babyfto': 'baby_fto', '2layerfto': 'baby_fto', '2x2fto': 'baby_fto', '2×2fto': 'baby_fto',
+  '二阶fto': 'baby_fto', '二阶转面八面体': 'baby_fto',
   'kilominx': 'kilominx', 'klmso': 'kilominx', 'kilo': 'kilominx',
   'gear': 'gear', 'gearso': 'gear', 'gearo': 'gear',
   'ivy': 'ivy', 'ivyso': 'ivy', 'ivyo': 'ivy',
@@ -183,6 +185,11 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   if (direct.matched) return direct;
   // Common naming patterns: "3x3 OH", "Session: 4x4", etc — extract a likely tag.
   const tokens = name.toLowerCase().match(/[a-z0-9]+/g) ?? [];
+  // Preserve the two-layer name before the standalone FTO token is considered.
+  if (tokens.some((token, index) => token === 'baby' && tokens[index + 1] === 'fto')
+    || /(?:^|[^a-z0-9])2(?:[\s_-]+layer|\s*[x×]\s*2)[\s_-]+fto(?:$|[^a-z0-9])|二阶[\s_-]*(?:fto|转面八面体)/i.test(name)) {
+    return normalizeEventKey('babyfto');
+  }
   // The first word of "Pyraminx Duo practice" names a different puzzle.
   // Preserve the compound name before trying individual event tokens.
   if (tokens.some((token, index) => token === 'pyraminx' && tokens[index + 1] === 'duo')) {

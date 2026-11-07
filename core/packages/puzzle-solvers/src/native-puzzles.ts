@@ -214,8 +214,27 @@ export function isNativePuzzleId(id: unknown): id is NativePuzzleId {
   return typeof id === 'string' && Object.hasOwn(NATIVE_PUZZLES, id);
 }
 
+/** Named loaders share PG gestures, but keep their own models and scramblers.
+ * Baby FTO's loader ignores unmarked center orientation and supplies its own net.
+ * Do not add it to NATIVE_PUZZLE_IDS: cubing already provides random-state scrambles.
+ */
+export const NAMED_PG_PUZZLES = {
+  baby_fto: {
+    description: 'o f 0', zh: '二阶 FTO', en: 'Baby FTO', textLabel: 'FTO2',
+    // The shared PG net is nearly square; the named 2D SVG has its own wide layout.
+    axes: OCTAHEDRON_FACE_AXES, order: 3, layers: 1, aspect: 1, visibleFacelets: 32,
+  },
+} as const;
+
+export const INTERACTIVE_PG_PUZZLES = { ...NATIVE_PUZZLES, ...NAMED_PG_PUZZLES } as const;
+export type PgInteractionPuzzleId = keyof typeof INTERACTIVE_PG_PUZZLES;
+
+export function isPgInteractionPuzzleId(id: unknown): id is PgInteractionPuzzleId {
+  return typeof id === 'string' && Object.hasOwn(INTERACTIVE_PG_PUZZLES, id);
+}
+
 export type NativePuzzleMoveDepth = 'outer' | 'inner' | 'inner3' | 'wide' | 'wide3';
-type NativePuzzleSpec = typeof NATIVE_PUZZLES[NativePuzzleId];
+type NativePuzzleSpec = typeof INTERACTIVE_PG_PUZZLES[PgInteractionPuzzleId];
 
 function axisLayerCount(spec: NativePuzzleSpec, axis: number): number {
   return 'axisLayers' in spec ? spec.axisLayers[axis] : spec.layers;
@@ -246,10 +265,10 @@ function wideMove(spec: NativePuzzleSpec, family: string, layers: number): strin
 }
 
 /** Independent single slices and wide choices, with their physical axis/depth. */
-export function nativePuzzleMoves(id: NativePuzzleId): {
+export function nativePuzzleMoves(id: PgInteractionPuzzleId): {
   move: string; label: string; family: string; order: number; depth: NativePuzzleMoveDepth;
 }[] {
-  const spec = NATIVE_PUZZLES[id];
+  const spec = INTERACTIVE_PG_PUZZLES[id];
   return spec.axes.flatMap((pair, axis) => pair.flatMap((family) => {
     const order = axisTurnOrder(spec, axis);
     const choices: { move: string; depth: NativePuzzleMoveDepth }[] = [{ move: family, depth: 'outer' }];

@@ -3,12 +3,13 @@
 import MoreToggle from '@/components/MoreToggle';
 import { useMemo, useState } from 'react';
 import { Move } from 'cubing/alg';
-import { NATIVE_PUZZLES, nativePuzzleMoves, type NativePuzzleId, type NativePuzzleMoveDepth } from '@cuberoot/puzzle-solvers/native-puzzles';
+import { INTERACTIVE_PG_PUZZLES, nativePuzzleMoves, type PgInteractionPuzzleId, type NativePuzzleMoveDepth } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { useT } from '@/hooks/useT';
 
 export type NativeDragDepth = 'auto' | NativePuzzleMoveDepth;
 
-const NOTES: Record<NativePuzzleId, readonly [string, string]> = {
+const NOTES: Record<PgInteractionPuzzleId, readonly [string, string]> = {
+  baby_fto: ['二阶 FTO：每步面转 120°，八个面各有四个三角形；支持 U、F、R、L、D、B、BR、BL。', 'Baby FTO: 120° face turns and four triangles on each of eight faces. Supports U, F, R, L, D, B, BR and BL.'],
   superz: ['面转 90°，角转 120°；例如 R UFR F\'。', 'Face turns are 90°; corner turns are 120°. Try R UFR F\'.'],
   cube3dino: ['三阶＋恐龙：面转 90°，角转 120°；可混合外层、内层与宽转。', '3×3 + Dino: face turns are 90°; corner turns are 120°. Mix outer, inner and wide turns.'],
   dogic: ['二十色 Dogic，每步绕顶点转动 72°。', 'Twenty-color Dogic, with 72° turns around its vertices.'],
@@ -41,7 +42,7 @@ const NOTES: Record<NativePuzzleId, readonly [string, string]> = {
 
 /** The same native tokens drive 3D gestures, accessible manual input and 2D. */
 export default function NativePuzzleControls({ id, disabled, showDragDepth, depth, onDepthChange, onMove }: {
-  id: NativePuzzleId;
+  id: PgInteractionPuzzleId;
   disabled: boolean;
   showDragDepth: boolean;
   depth: NativeDragDepth;
@@ -49,7 +50,7 @@ export default function NativePuzzleControls({ id, disabled, showDragDepth, dept
   onMove: (move: string) => void;
 }) {
   const t = useT();
-  const spec = NATIVE_PUZZLES[id];
+  const spec = INTERACTIVE_PG_PUZZLES[id];
   const moves = useMemo(() => nativePuzzleMoves(id), [id]);
   const availableDepths = new Set(moves.map((move) => move.depth));
   const mixedOrders = new Set(moves.map((move) => move.order)).size > 1;
@@ -105,7 +106,7 @@ export default function NativePuzzleControls({ id, disabled, showDragDepth, dept
         {spec.layers > 2 && <p>{t('3A 只转第三层；三层宽转写作 ', '3A turns only the third layer; a three-layer wide turn is written ')}{[...(rangeWide ? ['1-3A'] : []), ...(suffixWide ? ['3Aw'] : [])].join(t(' 或 ', ' or '))}{t('。仅在该转轴支持时可用。', '. These apply only to axes that support the depth.')}</p>}
         <p>{spec.order === 2
           ? t('加撇号改变转动方向；同一招式连续转动两次回到原状态。支持分组、换位子和 // 行注释。随机打乱用于练习。', 'A prime reverses the turn direction; two identical turns return to the original state. Groups, commutators and // line comments are supported. Random-move scrambles are for practice.')
-          : t('加撇号表示逆转，加 2 表示两步。支持分组、换位子和 // 行注释。随机打乱用于练习。', 'A prime reverses the turn; 2 means two steps. Groups, commutators and // line comments are supported. Random-move scrambles are for practice.')}</p>
+          : t('加撇号表示逆转，加 2 表示两步。支持分组、换位子和 // 行注释。随机打乱用于练习。', 'A prime reverses the turn; 2 means two steps. Groups, commutators and // line comments are supported. Scrambles are for practice.')}</p>
       </details>
     </div>
   );

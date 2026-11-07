@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { puzzles } from 'cubing/puzzles';
 
 import {
   EVENTS,
@@ -44,6 +45,7 @@ const CUBING_EVENTS: Readonly<Partial<Record<EventId, TimerCubingScrambleEventId
   mega: 'minx',
   clock: 'clock',
   fto: 'fto',
+  baby_fto: 'baby_fto',
   redi: 'redi_cube',
   cross: '333',
 };
@@ -232,7 +234,7 @@ describe('shared timer scramble runtime', () => {
       });
       expect(generate).toHaveBeenLastCalledWith(cubingEventId, event);
     }
-    expect(generate).toHaveBeenCalledTimes(21);
+    expect(generate).toHaveBeenCalledTimes(22);
   });
 
   it('generates a real 3x3 scramble while preserving the Sphere event', async () => {
@@ -240,6 +242,14 @@ describe('shared timer scramble runtime', () => {
     expect(result).toMatchObject({ ok: true, event: 'sphere', kind: 'generated', provider: 'cubing' });
     if (!result.ok || result.kind !== 'generated') throw new Error('Sphere generation failed');
     expect(result.scramble).toMatch(/^[URFDLB][2']?(?: [URFDLB][2']?)+$/);
+  });
+
+  it('preserves the existing cubing random-state provider for Baby FTO', async () => {
+    const result = await generateTimerScramble({ event: 'baby_fto' });
+    expect(result).toMatchObject({ ok: true, event: 'baby_fto', kind: 'generated', provider: 'cubing' });
+    if (!result.ok || result.kind !== 'generated') throw new Error('Baby FTO generation failed');
+    const solved = (await puzzles.baby_fto.kpuzzle()).defaultPattern();
+    expect(solved.applyAlg(result.scramble).isIdentical(solved)).toBe(false);
   });
 
   it('routes 222 through the shared TNoodle WCA provider, never cubing.js', async () => {

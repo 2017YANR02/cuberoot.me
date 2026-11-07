@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Move } from 'cubing/alg';
-import { nativePuzzleMoves, type NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
+import { nativePuzzleMoves, type PgInteractionPuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { nativePuzzleKPuzzle } from '@cuberoot/puzzle-solvers/native-puzzle-model';
 import {
   createNativePuzzleDragGeometry, pickNativePuzzleDrag,
@@ -58,7 +58,7 @@ export function attachNativePgPointer(
   // The public experimental player surface includes APIs absent from its stable type.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   player: any,
-  id: NativePuzzleId,
+  id: PgInteractionPuzzleId,
   opts: Options,
 ): () => void {
   let live = true;

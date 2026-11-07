@@ -18,6 +18,7 @@ export const CSTIMER_EVENT_FALLBACKS = {
   'pll-chain': 'input',
   ...CSTIMER_TRAINING_FALLBACKS,
   pyraminx_duo: 'input',
+  baby_fto: 'input',
   superz: 'input',
   dogic: 'input',
   octahedron4: 'input',
@@ -88,6 +89,7 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
   // Non-WCA puzzles — cstimer's own scrambler keys (see scramble/nonwca.ts),
   // so a round-tripped session lands on the right puzzle in real csTimer too.
   fto: 'ftoso',
+  baby_fto: CSTIMER_EVENT_FALLBACKS.baby_fto,
   kilominx: 'klmso',
   gear: 'gearso',
   ivy: 'ivyso',

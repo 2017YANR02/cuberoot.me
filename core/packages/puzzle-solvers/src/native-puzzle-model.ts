@@ -2,7 +2,7 @@
 import { Alg, Commutator, Conjugate, Grouping, Move } from 'cubing/alg';
 import { KPuzzle } from 'cubing/kpuzzle';
 import { ExperimentalPGNotation, getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
-import { NATIVE_PUZZLES, type NativePuzzleId } from './native-puzzles';
+import { INTERACTIVE_PG_PUZZLES, type PgInteractionPuzzleId } from './native-puzzles';
 
 const cachedPuzzles = new Map<string, KPuzzle>();
 
@@ -21,8 +21,23 @@ export function puzzleGeometryKPuzzle(description: string): KPuzzle {
   return puzzle;
 }
 
-export function nativePuzzleKPuzzle(id: NativePuzzleId): KPuzzle {
-  return puzzleGeometryKPuzzle(NATIVE_PUZZLES[id].description);
+export function nativePuzzleKPuzzle(id: PgInteractionPuzzleId): KPuzzle {
+  const description = INTERACTIVE_PG_PUZZLES[id].description;
+  if (id !== 'baby_fto') return puzzleGeometryKPuzzle(description);
+  // Match the named cubing.js BabyFTOPuzzleLoader synchronously for validation
+  // and gestures. The renderer still loads `baby_fto` itself, including its SVG.
+  const key = `named:${id}`;
+  let puzzle = cachedPuzzles.get(key);
+  if (!puzzle) {
+    const pg = getPuzzleGeometryByDesc(description, { allMoves: true, orientCenters: true, addRotations: true });
+    const definition = pg.getKPuzzleDefinition(true);
+    definition.name = id;
+    definition.defaultPattern.CENTERS.orientationMod = Array(definition.defaultPattern.CENTERS.pieces.length).fill(1);
+    const notation = new ExperimentalPGNotation(pg, pg.getOrbitsDef(true));
+    puzzle = new KPuzzle(notation.remapKPuzzleDefinition(definition), { experimentalPGNotation: notation });
+    cachedPuzzles.set(key, puzzle);
+  }
+  return puzzle;
 }
 
 const MAX_LENGTH = 16_384;
@@ -45,7 +60,7 @@ function checkWork(alg: Alg, depth = 0): number {
   return work;
 }
 
-export function parsePuzzleGeometryAlg(description: string, input: string): Alg {
+function parseModelAlg(input: string, getPuzzle: () => KPuzzle): Alg {
   if (input.length > MAX_LENGTH) throw new Error('Algorithm is too long');
   // Bound nesting before the recursive upstream parser itself sees the input.
   let depth = 0;
@@ -58,7 +73,7 @@ export function parsePuzzleGeometryAlg(description: string, input: string): Alg 
   }
   const alg = new Alg(input);
   checkWork(alg);
-  const puzzle = puzzleGeometryKPuzzle(description);
+  const puzzle = getPuzzle();
   // Validate the complete sequence atomically; do not silently ignore bad grips.
   for (const node of alg.experimentalExpand()) {
     if (node instanceof Move) puzzle.moveToTransformation(node);
@@ -66,12 +81,16 @@ export function parsePuzzleGeometryAlg(description: string, input: string): Alg 
   return alg;
 }
 
-export function parseNativePuzzleAlg(id: NativePuzzleId, input: string): Alg {
-  return parsePuzzleGeometryAlg(NATIVE_PUZZLES[id].description, input);
+export function parsePuzzleGeometryAlg(description: string, input: string): Alg {
+  return parseModelAlg(input, () => puzzleGeometryKPuzzle(description));
+}
+
+export function parseNativePuzzleAlg(id: PgInteractionPuzzleId, input: string): Alg {
+  return parseModelAlg(input, () => nativePuzzleKPuzzle(id));
 }
 
 /** Cancel using each native axis's real order (SuperZ mixes orders 3 and 4). */
-export function simplifyNativePuzzleAlg(id: NativePuzzleId, input: string): string {
+export function simplifyNativePuzzleAlg(id: PgInteractionPuzzleId, input: string): string {
   const alg = parseNativePuzzleAlg(id, input);
   const puzzle = nativePuzzleKPuzzle(id);
   return alg.experimentalSimplify({

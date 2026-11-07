@@ -34,6 +34,32 @@ export interface TimerSeedRequest extends TimerScrambleRequest {
   drill?: Parameters<typeof generateTimerDrillScramble>[0] | null;
 }
 export interface TimerSeedResult { scramble: string; caseId: string | null }
+
+/** Worker entry point for generators whose random-state search is asynchronous. */
+export async function generateSeededTimerScrambleAsync(request: TimerSeedRequest): Promise<TimerSeedResult> {
+  if (request.event !== 'baby_fto' || request.drill) return generateSeededTimerScramble(request);
+
+  const [{ experimentalDeriveScrambleForEvent }, { setSearchDebug }] = await Promise.all([
+    import('cubing/scramble'), import('cubing/search'),
+  ]);
+  // cubing 0.63.3 requires an explicit opt-in for the deterministic Twips API.
+  setSearchDebug({ allowDerivedScrambles: true });
+  const seed = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(request.ticket.seed)));
+  // Twips v0.11.3 seeds have a protocol byte, a derivation level and 30 seed bytes.
+  // https://github.com/cubing/twips/blob/v0.11.3/src/lib/scramble/derive_scramble_for_event.rs
+  seed[0] = 0x67;
+  seed[1] = 0;
+  const hexSeed = Array.from(seed, byte => byte.toString(16).padStart(2, '0')).join('');
+  const event = request.event;
+  // The API expects eight ASCII salt levels, with the subevent at level seven.
+  // Keep the versioned practice domain and UTF-8 seed encoding stable. Revision
+  // only invalidates pending requests; resetting a seed must replay its sequence.
+  const salts = ['cuberoot-timer-v1', 'scrambles', event, 'r1', 'g1', `a${request.ticket.index + 1}`, event, 'sub1'];
+  const scramble = (await experimentalDeriveScrambleForEvent(hexSeed, salts, event)).toString();
+  if (!scramble.trim()) throw new Error('Empty seeded scramble');
+  return { scramble, caseId: null };
+}
+
 export function generateSeededTimerScramble(request: TimerSeedRequest): TimerSeedResult {
   const { event, ticket } = request;
   const random = rngFor(ticket.seed, ticket.index);
