@@ -1,18 +1,19 @@
 'use client';
+
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Globe, Link as LinkIcon, Check } from '@app-foundation/icons/lucide';
 import { SiX, SiReddit } from 'react-icons/si';
 import { FaLinkedin } from 'react-icons/fa6';
 import { ClearButton } from '@/components/ClearButton';
-import { useModalDismiss } from '@/hooks/useModalDismiss';
+import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import { apiUrl } from '@/lib/api-base';
 import { sessionFetch } from '@/lib/session-fetch';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { tr } from '@/i18n/tr';
 import type { AssistantTurn } from './SiteAssistantDialog';
 
-export function AssistantShareDialog({ turn, lang, preview, text, shareId, onShareId, onClose }: {
+export function AssistantShareDialog({ turn, lang, preview, text, shareId, onShareId, onClose: onClosed }: {
   turn: AssistantTurn; lang: 'zh' | 'en'; preview: ReactNode; text: string; shareId: string | null;
   onShareId: (id: string | null) => void; onClose: () => void;
 }) {
@@ -23,6 +24,7 @@ export function AssistantShareDialog({ turn, lang, preview, text, shareId, onSha
     panel.current?.querySelector<HTMLButtonElement>('button')?.focus();
     return () => { if (previous instanceof HTMLElement && previous.isConnected) previous.focus(); };
   }, []);
+  const { motionRef, close: onClose } = useDialogMotion(onClosed);
   const backdrop = useModalDismiss(onClose);
   const [pending, setPending] = useState(false), [error, setError] = useState(''), [copied, setCopied] = useState(false);
   const createLink = async () => {
@@ -57,7 +59,7 @@ export function AssistantShareDialog({ turn, lang, preview, text, shareId, onSha
     catch { setError(tr({ zh: '取消分享失败，请重试。', en: 'Could not revoke this link. Please retry.' })); }
     finally { setPending(false); }
   };
-  return createPortal(<div className="site-assistant-backdrop" {...backdrop}>
+  return createPortal(<div ref={motionRef} className="site-assistant-backdrop" {...backdrop}>
     <section ref={panel} className="assistant-share-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} data-site-surface="panel" onKeyDown={event => {
       if (event.key !== 'Tab') return;
       const items = panel.current?.querySelectorAll<HTMLElement>('button:not(:disabled),a[href]');

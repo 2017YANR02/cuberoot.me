@@ -1,9 +1,10 @@
 'use client';
+
 import { rehypeAssistantReveal } from '@/lib/assistant-text-reveal';
 import { useAssistantTextReveal } from '@/hooks/useAssistantTextReveal';
 import MoreToggle from '@/components/MoreToggle';
 import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState } from 'react';
-import type { MouseEvent, ReactNode } from 'react';
+import type { MouseEvent, ReactNode, RefObject } from 'react';
 const Markdown = lazy(() => import('react-markdown').catch(() => ({ default: ({ children }: { children?: string | null }) => <>{children}</> })));
 const WrHistoryChart = lazy(() => import('@/components/wca-stats/WrHistoryChart').catch(() => ({ default: () => null })));
 import { useCopy } from '@/hooks/useCopy';
@@ -13,7 +14,7 @@ import { SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_QUESTION_MAX_LENGTH, isAssist
 import { ASSISTANT_ERROR_TEXT } from '@/lib/site-assistant-errors';
 import { useAuthStore } from '@/lib/auth-store';
 import { formatWcaResult } from '@/lib/wca-format-result';
-import { useModalDismiss } from '@/hooks/useModalDismiss';
+import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import { Tooltip } from '@/components/Tooltip';
 import { sendAssistantEvent, type AssistantFeedback } from '@/lib/site-assistant-request';
@@ -171,12 +172,13 @@ function Progress({chart}:{chart:AssistantChart}) {
     <details><MoreToggle as="summary">{tr({zh:'查看成绩数据',en:'View result data'})}</MoreToggle><div className="site-assistant-table"><table><thead><tr><th>{tr({zh:'日期',en:'Date'})}</th><th>{tr({zh:'成绩',en:'Result'})}</th></tr></thead><tbody>{chart.points.map((p,i)=><tr key={i}><td>{p.date}</td><td>{formatWcaResult(p.value,chart.event,chart.metric)}</td></tr>)}</tbody></table></div></details>
   </section>;
 }
-function AssistantModal({ children, onClose }: { children: ReactNode; onClose: () => void }) {
+function AssistantModal({ children, onClose, motionRef }: { children: ReactNode; onClose: () => void; motionRef: RefObject<HTMLDivElement | null> }) {
   const backdrop = useModalDismiss(onClose);
-  return createPortal(<div className="site-assistant-backdrop" {...backdrop}>{children}</div>, document.body);
+  return createPortal(<div ref={motionRef} className="site-assistant-backdrop" {...backdrop}>{children}</div>, document.body);
 }
 
-export default function SiteAssistantDialog({onAnswerRevealed,turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,thinking,onThinkingChange,status={phase:'planning'},busy,error,lang,onAsk,onStop,onClose,onNew,onFeedback,embedded=false,active=true,searchResults,onBranch}:Props) {
+export default function SiteAssistantDialog({onAnswerRevealed,turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,thinking,onThinkingChange,status={phase:'planning'},busy,error,lang,onAsk,onStop,onClose:onClosed,onNew,onFeedback,embedded=false,active=true,searchResults,onBranch}:Props) {
+  const { motionRef, close: onClose } = useDialogMotion(onClosed, { enabled: !embedded });
   const [initialAnswers] = useState(() => new Set(turns.filter(turn => turn.result && !turn.partial).map(turn => turn.requestId)));
   const [revealedAnswers, setRevealedAnswers] = useState<Record<string,string>>({});
   const onRevealComplete = useCallback((id:string, text:string) => {
@@ -337,5 +339,5 @@ export default function SiteAssistantDialog({onAnswerRevealed,turns,draft,images
       {micError && <p className="site-assistant-voice-error" role="status">{tr({zh:'语音未能识别，请检查麦克风权限，或使用键盘听写。',en:'Voice recognition failed. Check microphone permissions or use keyboard dictation.'})}</p>}
       <p className="site-assistant-note">{tr({zh:'AI 回答可能有误，请核对来源。WCA 数据以最近导入为准。',en:'AI can make mistakes. Check sources. WCA data reflects the latest import.'})}</p></form>
     </div>;
-  return embedded ? content : <AssistantModal onClose={onClose}>{content}</AssistantModal>;
+  return embedded ? content : <AssistantModal onClose={onClose} motionRef={motionRef}>{content}</AssistantModal>;
 }

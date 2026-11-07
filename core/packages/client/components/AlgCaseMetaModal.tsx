@@ -13,7 +13,7 @@
 import { useMemo } from 'react';
 import { ExternalLink } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
-import { useModalDismiss } from '@/hooks/useModalDismiss';
+import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import Link from '@/components/AppLink';
 import type { AlgCase, AlgCaseMeta, AlgPuzzle } from '@cuberoot/shared';
 import AlgCaseMetaContent from '@/components/AlgCaseMetaContent';
@@ -35,17 +35,18 @@ interface Props {
   href?: string;
 }
 
-export default function AlgCaseMetaModal({ caseObj, puzzle, set, byNo, onClose, onJump, href }: Props) {
+export default function AlgCaseMetaModal({ caseObj, puzzle, set, byNo, onClose: onClosed, onJump, href }: Props) {
   // meta 可能整个没有(虚拟集 / 库里还没补元数据的集):标题退回 case 名,正文各段自行消失
   const m = (caseObj.meta ?? {}) as AlgCaseMeta;
 
+  const { motionRef, close: onClose } = useDialogMotion(onClosed);
   const backdropProps = useModalDismiss(onClose);
 
   /** 「在列表中打开」—— 真 <a>,中键能新开(AGENTS.md「链接支持中键新开」) */
   const listHref = useMemo(() => href ?? algCaseHref(puzzle, set, caseObj), [href, caseObj, puzzle, set]);
 
   return (
-    <div className="alg-admin-modal-backdrop" {...backdropProps} role="dialog" aria-modal="true">
+    <div ref={motionRef} className="alg-admin-modal-backdrop" {...backdropProps} role="dialog" aria-modal="true">
       <div className="alg-admin-modal alg-meta-modal">
         <div className="alg-admin-modal-head">
           <h2>

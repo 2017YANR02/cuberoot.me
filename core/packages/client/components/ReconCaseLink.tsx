@@ -6,7 +6,7 @@ import { ClearButton } from '@/components/ClearButton';
 import { loadAlg, type AlgFile, type AlgPuzzle } from '@cuberoot/shared/alg';
 import AppLink from '@/components/AppLink';
 import { resolveCaseSlug } from '@/lib/alg_case_link';
-import { useModalDismiss } from '@/hooks/useModalDismiss';
+import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import { tr } from '@/i18n/tr';
 import '../app/[lang]/alg/alg.css';
 import './recon-case-link.css';
@@ -14,7 +14,8 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const AlgCaseView = lazy(() => import('../app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView'));
 
-function CaseDialog({ href, onClose }: { href: string; onClose: () => void }) {
+function CaseDialog({ href, onClose: onClosed }: { href: string; onClose: () => void }) {
+  const { motionRef, close: onClose } = useDialogMotion(onClosed);
   const backdrop = useModalDismiss(onClose);
   const [currentHref, setCurrentHref] = useState(href);
   const [, puzzle, set, slug] = /^\/alg\/([^/]+)\/([^/]+)\/([^/?#]+)/.exec(currentHref)!;
@@ -40,7 +41,7 @@ function CaseDialog({ href, onClose }: { href: string; onClose: () => void }) {
   const caseObj = data && resolveCaseSlug(data.cases, decodeURIComponent(slug), puzzle, set);
   const loading = <p><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></p>;
   return createPortal(
-    <div className="alg-admin-modal-backdrop recon-case-backdrop" {...backdrop} role="dialog" aria-modal="true" aria-label={tr({ zh: '公式详情', en: 'Algorithm details' })}>
+    <div ref={motionRef} className="alg-admin-modal-backdrop recon-case-backdrop" {...backdrop} role="dialog" aria-modal="true" aria-label={tr({ zh: '公式详情', en: 'Algorithm details' })}>
       <div className="alg-admin-modal recon-case-dialog">
         <div className="alg-admin-modal-head">
           <AppLink href={currentHref} prefetch={false} target="_blank" rel="noopener noreferrer">{tr({ zh: '打开完整公式页', en: 'Open full algorithm page' })}</AppLink>

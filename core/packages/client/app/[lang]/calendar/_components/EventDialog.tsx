@@ -9,7 +9,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, ChevronDown, Clock, MapPin, Palette, Repeat, Text, Trash2, Users, X, Globe } from '@app-foundation/icons/lucide';
-import { useModalDismiss } from '@/hooks/useModalDismiss';
+import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import { DateInput } from '@/components/DateInput';
 import AppLink from '@/components/AppLink';
 import { ListSelect } from '@/components/ListSelect';
@@ -98,7 +98,8 @@ export default function EventDialog(props: Props) {
     : d.description;
   const titleRef = useRef<HTMLInputElement>(null);
   const [showTz, setShowTz] = useState(false);
-  const backdropProps = useModalDismiss(props.onClose, props.saving);
+  const { motionRef, close } = useDialogMotion(props.onClose, { sheet: true });
+  const backdropProps = useModalDismiss(close, props.saving);
 
   useEffect(() => { setD(props.draft); }, [props.draft]);
   useEffect(() => {
@@ -151,6 +152,7 @@ export default function EventDialog(props: Props) {
 
   return (
     <div
+      ref={motionRef}
       className="cal-modal-backdrop cal-event-backdrop"
       {...backdropProps}
     >
@@ -165,9 +167,9 @@ export default function EventDialog(props: Props) {
         {/* Google 这个弹窗没有标题栏 —— 标题栏那行字重复了下面的输入框(「新建日程」上面
             压着「添加标题」),只留关闭。名字给读屏器,走 aria-label。 */}
         <div className="cal-modal-head">
-          <button type="button" className="cal-event-sheet-handle" disabled={props.saving} onClick={props.onClose} aria-label={tr({ zh: '关闭日程', en: 'Close event' })}><ChevronDown size={28} aria-hidden /></button>
+          <button type="button" className="cal-event-sheet-handle" disabled={props.saving} onClick={close} aria-label={tr({ zh: '关闭日程', en: 'Close event' })}><ChevronDown size={28} aria-hidden /></button>
           <span className="cal-foot-gap" />
-          <button type="button" className="cal-icon-btn cal-event-close" disabled={props.saving} onClick={props.onClose} aria-label={tr({ zh: '关闭', en: 'Close' })}>
+          <button type="button" className="cal-icon-btn cal-event-close" disabled={props.saving} onClick={close} aria-label={tr({ zh: '关闭', en: 'Close' })}>
             <X size={18} aria-hidden />
           </button>
           {!readOnly && <button type="button" className="cal-event-done" disabled={!canSave || props.saving} onClick={() => props.onSave(d)}>
@@ -461,7 +463,7 @@ export default function EventDialog(props: Props) {
             </div>
           )}
           <span className="cal-foot-gap" />
-          <button type="button" className="cal-btn cal-event-footer-cancel" onClick={props.onClose} disabled={props.saving}>
+          <button type="button" className="cal-btn cal-event-footer-cancel" onClick={close} disabled={props.saving}>
             {tr({ zh: '取消', en: 'Cancel' })}
           </button>
           {!readOnly && (

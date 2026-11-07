@@ -22,7 +22,7 @@ import { canonicalSq1Alg, formatScrambleForEvent } from '@cuberoot/shared/sq1-no
 import { createCase, updateCase, deleteCase, type AlgCaseInput } from '@/lib/alg_sets_api';
 import { validateAlgCase, validateStoredAlgCase } from '@/lib/alg_validation';
 import { displayAlg, displayCaseAlg, displayCaseAlgHtml, shortOriName, oriAdjustSetup } from '@/lib/alg_display';
-import { useModalBackdrop } from '@/hooks/useModalDismiss';
+import { useDialogMotion, useModalBackdrop } from '@/hooks/useModalDismiss';
 import { primaryCaseName } from '@/lib/alg_case_display';
 import AlgEditor, { type AlgEditorHandle, type AlgEditorMirror, type AlgInvalidMark } from '@/components/AlgEditor';
 import AlgDeleteConfirm, { type AlgDeleteGroup } from '@/components/AlgDeleteConfirm';
@@ -107,7 +107,7 @@ function blankCase(puzzle: string, set: string): AlgCase {
   };
 }
 
-export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid, algorithmsAfter, f2lLibrary, renderOrientationSetup, renderPreviewImage, renderReadOnly, onClose, onSaved, children }: Props) {
+export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid, algorithmsAfter, f2lLibrary, renderOrientationSetup, renderPreviewImage, renderReadOnly, onClose: onClosed, onSaved, children }: Props) {
   useTranslation(); // subscribe to language changes; text via tr()
   const active = !children || !renderReadOnly;
   const initial = state.mode === 'edit' ? state.existing : blankCase(puzzle, setSlug);
@@ -151,6 +151,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
   const markEdited = useCallback(() => {
     if (active && state.mode === 'edit') setEditRevision(revision => revision + 1);
   }, [active, state.mode]);
+  const { motionRef, close: onClose } = useDialogMotion(onClosed, { enabled: !children });
   const backdrop = useModalBackdrop(onClose, busy);
   const initialPreviewEntry = initial.algs[0]?.[0];
   const [preview, setPreview] = useState(() => ({
@@ -698,7 +699,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
   if (children) return <><div inert={active && busy || undefined} aria-busy={active && busy}>{renderReadOnly ? renderReadOnly() : children({ name: nameField, subgroup: subgroupField, setup: setupField, algorithms, advanced, actions, error: errorMessage, busy, saving, confirmDiscard })}</div>{active && deleteConfirmation}</>;
 
   return (
-    <div className="alg-admin-modal-backdrop alg-admin-modal-backdrop-top" {...backdrop} role="dialog" aria-modal="true">
+    <div ref={motionRef} className="alg-admin-modal-backdrop alg-admin-modal-backdrop-top" {...backdrop} role="dialog" aria-modal="true">
       <div className="alg-admin-modal alg-admin-modal-fullscreen" onClick={e => e.stopPropagation()}>
         <div className="alg-admin-modal-head">
           <h2>{title}</h2>

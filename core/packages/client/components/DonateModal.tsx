@@ -1,7 +1,8 @@
 'use client';
+
 import './settings-typography.css';
 
-import { useModalDismiss } from '@/hooks/useModalDismiss';
+import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import { Info } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { installedMembershipStore } from '@/lib/store-membership-bridge';
@@ -15,12 +16,13 @@ interface Props {
 
 const ICON_SIZE = 14;
 
-export default function DonateModal({ lang, onClose, embedded = false }: Props) {
+export default function DonateModal({ lang, onClose: onClosed, embedded = false }: Props) {
+  const { motionRef, close: onClose } = useDialogMotion(onClosed, { enabled: !embedded });
   const backdropProps = useModalDismiss(onClose);
 
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   if (installedMembershipStore()) return (
-    <div className={embedded ? undefined : "donate-overlay"} {...(!embedded ? backdropProps : {})}>
+    <div ref={motionRef} className={embedded ? undefined : "donate-overlay"} {...(!embedded ? backdropProps : {})}>
       <section className="donate-modal settings-typography">
         <AppLink href="/membership" onClick={onClose}>{t('前往 App 内会员订阅', 'Open in-app membership subscriptions')}</AppLink>
         <button onClick={onClose}>{t('关闭', 'Close')}</button>
@@ -29,7 +31,7 @@ export default function DonateModal({ lang, onClose, embedded = false }: Props) 
   );
 
   return (
-    <div className={embedded ? undefined : "donate-overlay"} {...(!embedded ? backdropProps : {})} role={embedded ? undefined : "dialog"} aria-modal={embedded ? undefined : true}>
+    <div ref={motionRef} className={embedded ? undefined : "donate-overlay"} {...(!embedded ? backdropProps : {})} role={embedded ? undefined : "dialog"} aria-modal={embedded ? undefined : true}>
       <div className="donate-modal settings-typography">
         <button className="donate-close" onClick={onClose} aria-label={t('关闭', 'Close')}>✕</button>
         <h2 className="donate-title">{t('谢谢你的支持 ♡', 'Thanks for your support ♡')}</h2>
