@@ -41,7 +41,7 @@
 - 以 [cubing.js 的 BabyFTOPuzzleLoader](https://github.com/cubing/cubing.js/blob/main/src/cubing/puzzles/implementations/baby_fto/index.ts) 为模型基准；在播放器传入具名 `baby_fto`，保留其专用 SVG、键位及 `CENTERS.orientationMod = 1`，不要用裸 `o f 0` 播放器替换。同步共享模型时先按 `ExperimentalPGNotation` 重映射定义，并与已安装版本的具名 KPuzzle 逐动作核对。
 - 按正八面体穿心面切 `o f 0` 核对八个面各四个三角形、六个四贴片角块及八个单贴片中心；从 48 条原始 PG 数据去除中心朝向重复轮廓，保留 32 个可见区域。用 `U/F/R/L/D/B/BR/BL` 的正反 120° 面转验证方向、三次周期、混合序列和真实 PG3D 中间帧。
 - 将 Baby FTO 纳入 `INTERACTIVE_PG_PUZZLES`，复用有界解析、手动操作、原生追加、拖转与二维伴图；保持 `NATIVE_PUZZLES` 和 `NATIVE_PUZZLE_IDS` 仅登记自有随机转动项目。完整输入按具名模型校验，保留 `BR/BL`、合法整体转和分组，不对多字母面名套三阶自动空格，也不以旧静态网图的五生成元限制输入。
-- 在生成页、Timer 与 PDF 共用 `renderNativePuzzleSvg('baby_fto', alg)` 和对应比例，覆盖全部八个面及任意合法输入；在二维回退中仍使用具名 loader 的 SVG 与当前播放帧，独立验证导出和分享重建。
+- 在生成页、Timer 与 PDF 共用 `renderNativePuzzleSvg('baby_fto', alg)` 和对应比例，覆盖全部八个面及任意合法输入；按静态 PG 展开图实际的近方形包络设定比例，不套用具名 loader 横向 SVG 的比例。在二维回退中仍使用具名 loader 的 SVG 与当前播放帧，独立验证导出和分享重建。
 - 普通打乱调用上游 `randomScrambleForEvent('baby_fto')`；Timer 使用 `cubing` provider，确定性打乱通过 `generateSeededTimerScrambleAsync` 调用上游派生 API，锁定 UTF-8 种子散列、派生版本及序号路径，保留既有同步项目的序列。用真实上游调用检查同种同序号重现、不同序号变化和模型可执行性；保持非 WCA 来源文案与独立会话，csTimer 导出用 `input` 并保留 `cuberootEvent`。
 - 运行 `baby-fto-simulator.test.ts` 及受影响的原生交互、SVG、Timer 契约；实际浏览器分别验三维贴片拖转、空白旋转、播放中间帧和强制无 WebGL 的二维手动/播放/分享，不能以二维通过代替三维验收。
 

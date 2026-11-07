@@ -221,7 +221,8 @@ export function isNativePuzzleId(id: unknown): id is NativePuzzleId {
 export const NAMED_PG_PUZZLES = {
   baby_fto: {
     description: 'o f 0', zh: '二阶 FTO', en: 'Baby FTO', textLabel: 'FTO2',
-    axes: OCTAHEDRON_FACE_AXES, order: 3, layers: 1, aspect: 1860 / 708, visibleFacelets: 32,
+    // The shared PG net is nearly square; the named 2D SVG has its own wide layout.
+    axes: OCTAHEDRON_FACE_AXES, order: 3, layers: 1, aspect: 1, visibleFacelets: 32,
   },
 } as const;
 
