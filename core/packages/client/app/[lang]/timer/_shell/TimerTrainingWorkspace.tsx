@@ -50,13 +50,13 @@ export default function TimerTrainingWorkspace() {
       {/* This non-sticky toolbar must not create a backdrop root: its menu needs
           to blur and cover the training cards outside the toolbar. */}
       <div className="timer-training-workspace__toolbar" data-no-timer>
-        <div className="timer-training-workspace__navigation">
         <PageBackLink fallback="/" className="tb-btn shell-topbar-home" data-no-timer />
+        <div className="timer-training-workspace__navigation">
         {target?.kind === 'alg-run' && <div className="timer-training-workspace__settings" ref={setDevicePortal} />}
         <TimerTrainingMenu />
         {target?.kind === 'alg-run' && <div className="timer-training-workspace__settings" ref={setSettingsPortal} />}
-        </div>
         {target?.kind === 'alg-run' && <div className="timer-training-workspace__context" ref={setContextPortal} />}
+        </div>
       </div>
       {host && target ? (
         <TrainingHostProvider value={host}>

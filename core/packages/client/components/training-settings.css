@@ -61,6 +61,15 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
+}
+
+/* Fade the scrim separately: opacity on a glass ancestor creates a backdrop
+   root, preventing the panel from blurring the page behind the dialog. */
+.settings-dialog-backdrop::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
   background: rgb(0 0 0 / 50%);
 }
 
@@ -69,15 +78,15 @@
   outline: none;
 }
 
-.settings-dialog-backdrop[data-state='open'] {
-  animation: settings-backdrop-in 180ms ease-out both;
+.settings-dialog-backdrop[data-state='open']::before {
+  animation: settings-backdrop-in 180ms ease-out;
 }
 
 .settings-dialog-backdrop[data-state='open'] .settings-dialog {
-  animation: settings-dialog-in 180ms ease-out both;
+  animation: settings-dialog-in 180ms ease-out;
 }
 
-.settings-dialog-backdrop[data-state='closing'] {
+.settings-dialog-backdrop[data-state='closing']::before {
   animation: settings-backdrop-out 180ms ease-in both;
 }
 
@@ -88,17 +97,26 @@
 @keyframes settings-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes settings-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes settings-dialog-in {
-  from { opacity: 0; transform: translateY(8px) scale(.98); }
-  to { opacity: 1; transform: none; }
+  from { transform: translateY(8px) scale(.98); }
+  to { transform: none; }
 }
 @keyframes settings-dialog-out {
-  from { opacity: 1; transform: none; }
-  to { opacity: 0; transform: translateY(8px) scale(.98); }
+  from { transform: none; }
+  to { transform: translateY(8px) scale(.98); }
+}
+
+.settings-dialog-backdrop[data-state='open'] .settings-dialog-panel {
+  animation: settings-backdrop-in 180ms ease-out;
+}
+
+.settings-dialog-backdrop[data-state='closing'] .settings-dialog-panel {
+  animation: settings-backdrop-out 180ms ease-in both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .settings-dialog-backdrop[data-state],
-  .settings-dialog-backdrop[data-state] .settings-dialog {
+  .settings-dialog-backdrop[data-state]::before,
+  .settings-dialog-backdrop[data-state] .settings-dialog,
+  .settings-dialog-backdrop[data-state] .settings-dialog-panel {
     animation: none;
   }
 }
