@@ -122,13 +122,14 @@ it.each(['WCU_MY32_5C3A', 'GAN16ui_C2AF'])('cancels Apple MAC entry and closes a
     let pending!: Promise<unknown>;
     await act(async () => { pending = cube.connect().catch((error: unknown) => error); });
 
+    if (name.startsWith('WCU')) await act(async () => { await vi.advanceTimersByTimeAsync(6000); });
     expect(cube.macPrompt?.deviceName).toBe(name);
     await act(async () => { cube.macPrompt!.onCancel(); await pending; });
     expect(cube.phase).toBe('idle');
     expect(cube.macPrompt).toBe(null);
     expect(connect).toHaveBeenCalledTimes(1);
     expect(disconnect).toHaveBeenCalledTimes(1);
-    expect(stopNotifications).not.toHaveBeenCalled();
+    expect(stopNotifications).toHaveBeenCalledTimes(name.startsWith('WCU') ? 1 : 0);
     expect(vi.getTimerCount()).toBe(0);
   } finally {
     await act(async () => root.unmount());

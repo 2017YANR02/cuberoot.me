@@ -203,7 +203,7 @@ export interface Moyu32AddressIO {
   current(): boolean;
 }
 const verifiedAddresses = new Map<string, string>();
-/** Platform-neutral handshake. No turns or state callbacks escape a candidate probe. */
+/** Platform-neutral address verification; optionally continue the normal handshake stream. */
 export async function resolveMoyu32Address(options: {
   id: string;
   name: string;
@@ -213,6 +213,10 @@ export async function resolveMoyu32Address(options: {
   onVerified?: (mac: string) => void;
   onRejected?: (mac: string) => void;
   timeoutMs?: number;
+  /** With a persistent host subscription, deliver plaintext from the first legal
+   * state onward and use csTimer's info/state/battery handshake for each key.
+   * The host switches to its normal decoder when onVerified supplies the MAC. */
+  onFrame?: (plain: Uint8Array) => void;
 }): Promise<string> {
   const { io } = options;
   const check = () => { if (!io.current()) throw new Error('Smart cube connection closed'); };
@@ -239,38 +243,49 @@ export async function resolveMoyu32Address(options: {
       else poll = setTimeout(pollCurrent, 50);
     };
     pollCurrent();
+    let accepted = false;
     receive = raw => {
       if (!io.current() || raw.length !== 20) return;
       try {
         const plain = cipher.decrypt(raw);
+        if (accepted) { options.onFrame?.(plain); return; }
         if (plain[0] !== MOYU32_MESSAGE_STATE) return;
         const state = decodeMoyu32Notification(plain, createMoyu32DecodeState()).state;
         // Colour counts alone do not prove a legal cube (orientation/parity included).
-        if (state && cubieStateFromFacelets(state)) finish(true);
+        if (state && cubieStateFromFacelets(state)) {
+          accepted = true;
+          options.onFrame?.(plain);
+          finish(true);
+        }
       } catch { /* wrong key / truncated notification */ }
     };
     let writeInFlight: Promise<void> | null = null;
-    const request = async () => {
+    let writeFailure: unknown;
+    const request = async (opcode = MOYU32_MESSAGE_STATE) => {
       check();
-      const operation = io.write(cipher.encrypt(createMoyu32Command(MOYU32_MESSAGE_STATE)));
+      const operation = io.write(cipher.encrypt(createMoyu32Command(opcode)));
       writeInFlight = operation;
       try { await operation; }
+      catch (error) { writeFailure = error; throw error; }
       finally { if (writeInFlight === operation) writeInFlight = null; }
     };
     try {
       // Even a valid reply must wait for the host's write acknowledgement before
       // removing the subscription or issuing another command on the same link.
+      if (options.onFrame) await Promise.race([request(MOYU32_MESSAGE_INFO), interrupted]);
       await Promise.race([request(), interrupted]);
-      retry = setTimeout(() => { void request().catch(() => finish(false)); }, 650);
+      if (options.onFrame) await Promise.race([request(MOYU32_MESSAGE_BATTERY), interrupted]);
+      retry = setTimeout(() => { void request().catch(error => { finish(false); interrupt(error); }); }, 650);
       const valid = await result;
       if (writeInFlight) await Promise.race([writeInFlight, interrupted]);
       check();
+      if (writeFailure) throw writeFailure;
       return valid;
     } finally {
       clearTimeout(timer);
       if (poll !== undefined) clearTimeout(poll);
       if (retry !== undefined) clearTimeout(retry);
-      receive = undefined;
+      if (!accepted) receive = undefined;
     }
   };
   try {

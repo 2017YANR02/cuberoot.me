@@ -1,3 +1,4 @@
+import { replyMoyu32State } from './_moyu32_handshake';
 import { describe, expect, it, vi } from 'vitest';
 import { qiyiDriver } from '@/app/[lang]/timer/_lib/bluetooth/qiyi';
 import { moyu32Driver, MOYU32_KEY_BASE, MOYU32_IV_BASE, decodeMoyu32Quaternion } from '@/app/[lang]/timer/_lib/bluetooth/moyu32';
@@ -87,7 +88,9 @@ describe('automatic state-write confirmations', () => {
     const notify = gatt.char(moyu32Driver.service, MY_READ);
     const feed = (frame: Uint8Array) => notify.emit(encryptFrame(frame, myKey, myIv));
     const onMove = vi.fn(); const onState = vi.fn();
+    const handshakeReply = replyMoyu32State(gatt);
     const session = await moyu32Driver.start(gatt.asServer, onMove, { mac: 'CF:30:16:00:A1:B2', onState });
+    handshakeReply.mockRestore();
     const initial = MY_RESET.slice(); initial[0] = 0xa3; initial[19] = 10;
     feed(initial); onState.mockClear();
     const writer = gatt.char(moyu32Driver.service, MY_WRITE);

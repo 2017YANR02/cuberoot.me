@@ -94,3 +94,50 @@ it('bounds a native write that never acknowledges and does not probe another key
   expect(r.io.write).toHaveBeenCalledOnce();
   expect(r.stop).toHaveBeenCalledOnce();
 });
+
+it('runs info/state/battery on the winning key and preserves immediate post-state moves', async () => {
+  const r = rig('CF:30:16:00:34:56');
+  const cipher = createMoyu32Cipher(macStringToBytes('CF:30:16:00:34:56'));
+  const onFrame = vi.fn(), commands: number[] = [];
+  let receive: (frame: Uint8Array) => void = () => {};
+  r.io.subscribe = async callback => { receive = callback!; return r.stop; };
+  r.io.write = vi.fn(async raw => {
+    const opcode = cipher.decrypt(raw)[0]; commands.push(opcode);
+    if (opcode === 0xa3) {
+      receive(cipher.encrypt(statePacket()));
+      receive(cipher.encrypt(createMoyu32Command(0xa5))); // same tick, before write acknowledgement
+    }
+    if (opcode === 0xa4) receive(cipher.encrypt(createMoyu32Command(0xa4, 87)));
+  });
+  await resolveMoyu32Address({ id: 'stream-test', name: 'WCU_MY32_3456', io: r.io, onFrame });
+  expect(commands).toEqual([0xa1, 0xa3, 0xa4]);
+  expect(onFrame.mock.calls.map(([frame]) => frame[0])).toEqual([0xa3, 0xa5, 0xa4]);
+});
+
+it('does not accept battery or gyro as proof of a key', async () => {
+  const r = rig('CF:30:16:00:78:90');
+  const cipher = createMoyu32Cipher(macStringToBytes('CF:30:16:00:78:90'));
+  let receive: (frame: Uint8Array) => void = () => {};
+  r.io.subscribe = async callback => { receive = callback!; return r.stop; };
+  r.io.write = vi.fn(async () => {
+    receive(cipher.encrypt(createMoyu32Command(0xa4, 87)));
+    receive(cipher.encrypt(createMoyu32Command(0xab)));
+  });
+  const onFrame = vi.fn(), onVerified = vi.fn();
+  await expect(resolveMoyu32Address({ id: 'no-state-test', name: 'unknown', hints: ['CF:30:16:00:78:90'],
+    io: r.io, onFrame, onVerified, timeoutMs: 10,
+  })).rejects.toThrow('MAC unavailable');
+  expect(onFrame).not.toHaveBeenCalled();
+  expect(onVerified).not.toHaveBeenCalled();
+});
+
+it('does not try another key or prompt after a transport write fails', async () => {
+  const r = rig('CF:30:16:01:56:78'), requestMac = vi.fn();
+  r.io.write = vi.fn(async () => { throw new Error('GATT write failed'); });
+  await expect(resolveMoyu32Address({ id: 'write-error-test', name: 'WCU_MY32_5678',
+    io: r.io, requestMac, onFrame() {},
+  })).rejects.toThrow('GATT write failed');
+  expect(r.io.write).toHaveBeenCalledOnce();
+  expect(requestMac).not.toHaveBeenCalled();
+  expect(r.stop).toHaveBeenCalledOnce();
+});
