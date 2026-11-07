@@ -7,12 +7,14 @@
 - G1：[历史资料照片](https://cccstore.ru/blog/articles/istoriya-razvitiya-taymerov-dlya-spidkubinga-ot-pervykh-modeley-do-nashikh-dney/)。该文章标作 G2 的照片实际有 QJ 标志，未采用。
 - G2：[Wikimedia 的 Stackmatresized.jpg](https://commons.wikimedia.org/wiki/File:Stackmatresized.jpg)，蓝壳、银色面板和记忆按钮。
 - G3：[Speed Stacks 原厂 StackMat Pro 照片](https://www.speedstacks.com/store/products/_img/03612/stackmat_pro.jpg)。
-- G4：[TheCubicle 的 Gen4 实物照片](https://www.thecubicle.com/products/stackmat-pro-timer-gen4)。
+- G4：[Speed Stacks 原厂产品图](https://www.speedstacks.com/store/_img/timer_g4.png)，细节交叉核对 [TheCubicle 的 Gen4 实物照片](https://www.thecubicle.com/products/stackmat-pro-timer-gen4)。
 - G5：[Speed Stacks 产品页](https://www.speedstacks.com/store/retail/speed-stacks-g5-timer/)，原版、Blackout、Black Mist、Phantom；操作参考[原厂 G5 介绍](https://www.speedstacks.com/news/2021-02-28/new-g5-timer/)。
 
 五代拇指指纹另按[原厂 1920px Blackout 图](https://www.speedstacks.com/store/_img/_hd/03020.png)重绘：保留连续回旋纹、分段短纹和断口，左右镜像，四种涂装共用路径。
 
 均为依照片近似重绘，不是原厂 CAD。旧款小字、塑料纹理与涂装细纹做了简化；没有将五代机身换色后标成旧代。五代中心徽标上方已按用户要求移除黄色装饰，保留此决定。
+
+2026-11-06 校对：G1/G2 继续以历史实物照片为依据（尚无清晰原厂正视图），G3/G4 核对以上原厂图片。G1–G4 的手掌印复用分段品牌轮廓；G4 电源、复位、记忆键和指示灯重新定位，电源/复位键完整留在银色面板内；G1–G3 底部字标上移、缩小以留出边距。仍属于照片近似矢量重绘，未宣称尺寸或纹理与原物完全相同。
 
 ## 输入
 
