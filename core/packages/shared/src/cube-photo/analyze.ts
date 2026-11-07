@@ -2,11 +2,11 @@ import { recognizePocket } from './pocket';
 import type { AlgFile } from '../alg';
 import { detectCubePhoto, type PhotoPixels, type CubePhotoDetection } from './detect';
 import type { CubeCorners } from './geometry';
-import { recognizePhoto, type CubeColor, type PhotoRecognition } from './recognize';
+import { recognizePhoto, recognizeFour, type CubeColor, type PhotoRecognition } from './recognize';
 import { findPhotoAlg, findPhotoAlternatives, photoRecognitionSets, photoRecognitionInput, photoAufOnly, type PhotoAlgResult, type PhotoAlgSet } from './lookup';
 
 export interface PhotoAnalysisInput {
-  puzzleSize?: 2 | 3;
+  puzzleSize?: 2 | 3 | 4;
   pocketStage?: 'eg' | 'last-slot';
   up?: CubeColor;
   pixels: PhotoPixels;
@@ -27,7 +27,7 @@ export async function analyzeCubePhoto(input: PhotoAnalysisInput, load: (set: Ph
   emit: (message: PhotoAnalysisMessage) => void = () => {}, signal?: AbortSignal): Promise<PhotoAnalysis> {
   signal?.throwIfAborted();
   const recognition = input.puzzleSize === 2 ? recognizePocket(input.pixels, input.corners, input.corrections, input.up, input.pocketStage === 'last-slot' ? 3 : 4)
-    : recognizePhoto(input.pixels, input.corners, input.corrections, input.front);
+    : input.puzzleSize === 4 ? recognizeFour(input.pixels, input.corners, input.corrections, input.front) : recognizePhoto(input.pixels, input.corners, input.corrections, input.front);
   emit({ type: 'state', recognition });
   const target = photoRecognitionInput(recognition);
   const sets = photoRecognitionSets(recognition).filter(set => !input.sets || input.sets.includes(set));
@@ -58,23 +58,25 @@ export function locateCubePhoto(pixels: PhotoPixels): { detection: CubePhotoDete
 /** Try the previous size first, but never require users to choose before taking
  * a photo. A grid alone is insufficient: the observed state must also recover.
  * No catalog/network lookup is needed to select the size. */
-export function locateCubePhotoAuto(pixels: PhotoPixels, preferredSize: 2 | 3 = 3): { detection: CubePhotoDetection; puzzleSize: 2 | 3 } {
-  const attempt = (puzzleSize: 2 | 3) => {
+export function locateCubePhotoAuto(pixels: PhotoPixels, preferredSize: 2 | 3 | 4 = 3): { detection: CubePhotoDetection; puzzleSize: 2 | 3 | 4 } {
+  const attempt = (puzzleSize: 2 | 3 | 4) => {
     const detection = detectCubePhoto(pixels, puzzleSize);
     const corners = detection.candidates[0]?.corners;
-    const recognition = corners ? (puzzleSize === 2 ? recognizePocket(pixels, corners, {}) : recognizePhoto(pixels, corners)) : undefined;
+    const recognition = corners ? (puzzleSize === 2 ? recognizePocket(pixels, corners, {}) : puzzleSize === 4 ? recognizeFour(pixels, corners) : recognizePhoto(pixels, corners)) : undefined;
     const usable = recognition?.status === 'ok' || recognition?.status === 'partial' || recognition?.status === 'corners-only';
     return { detection, puzzleSize, usable };
   };
   const first = attempt(preferredSize);
   if (first.usable) return first;
-  const second = attempt(preferredSize === 3 ? 2 : 3);
-  if (second.usable || (!first.detection.candidates.length && second.detection.candidates.length)) return second;
-  const pocket = first.puzzleSize === 2 ? first : second;
+  const others: ReturnType<typeof attempt>[] = [];
+  for (const size of [3, 2, 4] as const) {
+    if (size === preferredSize) continue;
+    const result = attempt(size);
+    if (result.usable) return result;
+    others.push(result);
+  }
+  const pocket = [first, ...others].find(result => result.puzzleSize === 2)!;
   const corners = pocket.detection.candidates[0]?.corners;
-  // A last-slot photo is still a 2x2 even though the default EG stage cannot
-  // recover it. The stage remains explicit in the UI; this only selects size.
   if (corners && recognizePocket(pixels, corners, {}, undefined, 3).candidates.length) return pocket;
-  // Preserve an editable grid when neither size has a recoverable state.
-  return first;
+  return first.detection.candidates.length ? first : others.find(result => result.detection.candidates.length) ?? first;
 }

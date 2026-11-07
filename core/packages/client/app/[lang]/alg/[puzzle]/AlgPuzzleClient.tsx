@@ -409,7 +409,7 @@ export default function AlgPuzzleClient({ initialCatalog = null }: { initialCata
             label={tr({ zh: '黑顶', en: 'Black top' })}
           />
         )}
-        {isAdmin && puzzle === '3x3' && <Link href="/alg/photo" className="alg-index-progress-link" prefetch={false}>{tr({ zh: '拍照查公式', en: 'Photo algorithm lookup' })}</Link>}
+        {isAdmin && ['2x2', '3x3', '4x4'].includes(puzzle) && <Link href="/alg/photo" className="alg-index-progress-link" prefetch={false}>{tr({ zh: '拍照查公式', en: 'Photo algorithm lookup' })}</Link>}
         <Link href="/alg/progress" className="alg-index-progress-link" prefetch={false}>
           {tr({ zh: '进度', en: 'Progress' })}
         </Link>

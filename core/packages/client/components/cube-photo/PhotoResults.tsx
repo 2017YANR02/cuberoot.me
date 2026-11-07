@@ -26,7 +26,7 @@ const POCKET_STATUS = {
   invalid: { zh: '未找到符合底面同色条件的二阶状态。请确认底面同色，并核对色块与网格。', en: 'No 2×2 state matches a monochrome bottom face. Check that the bottom is one color, then verify the stickers and grid.' },
 };
 
-export default function PhotoResults({ workers, pixels, corners, width, height, puzzleSize = 3, pocketStage = 'eg', onRecognized }: { puzzleSize?: 2 | 3; pocketStage?: 'eg' | 'last-slot'; workers: PhotoWorkers; pixels: PhotoPixels; corners: CubeCorners; width: number; height: number; onRecognized?: (recognized: boolean) => void }) {
+export default function PhotoResults({ workers, pixels, corners, width, height, puzzleSize = 3, pocketStage = 'eg', onRecognized }: { puzzleSize?: 2 | 3 | 4; pocketStage?: 'eg' | 'last-slot'; workers: PhotoWorkers; pixels: PhotoPixels; corners: CubeCorners; width: number; height: number; onRecognized?: (recognized: boolean) => void }) {
   useTranslation();
   const [adjustments, setAdjustments] = useState<{ corners: CubeCorners; colors: Record<number, CubeColor>; front?: CubeColor } | null>(null);
   const [retry, setRetry] = useState(0), [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -42,7 +42,10 @@ export default function PhotoResults({ workers, pixels, corners, width, height, 
   const recovered = recognition?.status === 'ok' ? recognition.candidates[0] : recognition?.status === 'corners-only' ? recognition.cornerCandidates?.[0] : null;
   const sets = recognition ? photoRecognitionSets(recognition).filter(set => (recognition.status !== 'partial' && puzzleSize !== 2) || current?.results[set]?.status !== 'missing') : [];
   const pending = !current?.done && !current?.error;
-  const statusMessages = puzzleSize !== 2 ? STATUS : pocketStage === 'eg' ? POCKET_STATUS : {
+  const statusMessages = puzzleSize === 4 ? {
+    ...STATUS,
+    invalid: { zh: '未找到符合 P 特前提的四阶顶层，请核对配对棱、颜色与网格。', en: 'No 4×4 last layer matches the assumed PLL parity. Check paired edges, colors and the grid.' },
+  } : puzzleSize !== 2 ? STATUS : pocketStage === 'eg' ? POCKET_STATUS : {
     ...POCKET_STATUS,
     invalid: { zh: '未找到底面三格同色的二阶状态，请核对阶段、色块与网格。', en: 'No 2×2 state has three bottom stickers of one color. Check the stage, colors and grid.' },
     'uncertain-colors': { zh: '请核对标记的颜色；若颜色正确，请换个角度拍摄以确定隐藏角块。', en: 'Check the marked colors. If correct, take another angle to determine the hidden corners.' },
@@ -94,7 +97,7 @@ export default function PhotoResults({ workers, pixels, corners, width, height, 
     {(current?.error || Object.values(current?.results ?? {}).some(r => r?.status === 'error')) && <button className="cube-photo-retry" onClick={() => setRetry(v => v + 1)}><RotateCcw size={15} />{tr({ zh: '重试检索', en: 'Retry lookup' })}</button>}
     {recognition && <details className="cube-photo-details" open={recognition.status !== 'ok' || undefined}>
       <summary><ChevronDown size={16} />{tr({ zh: '颜色校正', en: 'Color correction' })}</summary>
-      <div className="cube-photo-color-grids">{(puzzleSize === 2 ? [{ face: 'U', start: 0, count: 4 }, { face: 'F', start: 4, count: 4 }, { face: 'R', start: 8, count: 4 }] : [{ face: 'U', start: 0, count: 9 }, { face: 'F', start: 9, count: 3 }, { face: 'R', start: 12, count: 3 }]).map(({ face, start, count }) => <div key={face}>
+      <div className="cube-photo-color-grids">{(puzzleSize === 4 ? [{ face: 'U', start: 0, count: 16 }, { face: 'F', start: 16, count: 4 }, { face: 'R', start: 20, count: 4 }] : puzzleSize === 2 ? [{ face: 'U', start: 0, count: 4 }, { face: 'F', start: 4, count: 4 }, { face: 'R', start: 8, count: 4 }] : [{ face: 'U', start: 0, count: 9 }, { face: 'F', start: 9, count: 3 }, { face: 'R', start: 12, count: 3 }]).map(({ face, start, count }) => <div key={face}>
         <h4>{face}</h4><div className="cube-photo-color-grid" style={{ gridTemplateColumns: `repeat(${puzzleSize}, 28px)` }}>{recognition.samples.slice(start, start + count).map((sample, offset) => <CompactSelect key={offset}
           className={`cube-photo-color${sample.reliable ? '' : ' is-uncertain'}${sample.corrected ? ' is-corrected' : ''}`}
           value={sample.color} items={colorOptions} ariaLabel={`${face}${offset + 1} ${tr(COLOR_NAMES[sample.color])}${sample.inferred ? tr({ zh: ' · 由唯一状态推导', en: ' · inferred from the unique state' }) : ''}`}

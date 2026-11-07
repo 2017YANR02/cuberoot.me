@@ -7,7 +7,7 @@ import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
 import { COLOR_RGB, type CubeColor } from '@cuberoot/shared/cube-photo/recognize';
 import { getAlgSetMeta } from '@cuberoot/shared/alg';
-import { PHOTO_ALG_SETS, POCKET_PHOTO_ALG_SETS, type PhotoAlgMatch, type PhotoAlgResult, type PhotoAlgSet } from '@cuberoot/shared/cube-photo/lookup';
+import { FOUR_PHOTO_ALG_SETS, PHOTO_ALG_SETS, POCKET_PHOTO_ALG_SETS, type PhotoAlgMatch, type PhotoAlgResult, type PhotoAlgSet } from '@cuberoot/shared/cube-photo/lookup';
 import './cube-photo.css';
 
 export function Swatch({ color }: { color: CubeColor }) {
@@ -28,9 +28,9 @@ export default function PhotoAlgorithmCards({ stateKey, sets, results, error = f
   const [expanded, setExpanded] = useState<string | null>(null);
 
   return sets.length > 0 && <div className="cube-photo-formulas">
-      {[...PHOTO_ALG_SETS, ...POCKET_PHOTO_ALG_SETS].filter(set => sets.includes(set)).map(set => {
+      {[...FOUR_PHOTO_ALG_SETS, ...PHOTO_ALG_SETS, ...POCKET_PHOTO_ALG_SETS].filter(set => sets.includes(set)).map(set => {
         const result = results[set], match = result?.match;
-        const meta = getAlgSetMeta(match?.puzzle ?? (POCKET_PHOTO_ALG_SETS.some(slug => slug === set) ? '2x2' : '3x3'), set);
+        const meta = getAlgSetMeta(match?.puzzle ?? (FOUR_PHOTO_ALG_SETS.some(slug => slug === set) ? '4x4' : POCKET_PHOTO_ALG_SETS.some(slug => slug === set) ? '2x2' : '3x3'), set);
         const label = meta?.short ?? (meta ? tr(meta) : set.toUpperCase());
         const key = alternativesKey(stateKey, match), alternatives = result?.alternatives ?? [];
         const open = !!key && expanded === key;

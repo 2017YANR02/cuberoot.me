@@ -1,5 +1,5 @@
 /** Independent pinhole-camera fixture; no detector/projection helper is reused. */
-export function cubePhotoFixture(occluded: boolean, perspective = 0.1, facelet?: string, size: 2 | 3 = 3) {
+export function cubePhotoFixture(occluded: boolean, perspective = 0.1, facelet?: string, size: 2 | 3 | 4 = 3) {
   const point = (u: number, v: number, w: number) => {
     const z = 1 + u * perspective + v * 0.04 + w * 0.015;
     return { x: (310 - 165 * u + 165 * v + 5 * w) / z, y: (85 + 90 * u + 80 * v + 215 * w) / z };

@@ -1,7 +1,7 @@
 import { cubeRotations } from './../constants.js'
 import { TurnType } from '../simulation.js'
 import { TurnAbbreviation, AlgorithmUnit, possibleMoves } from '../constants.js'
-import { expandGroups } from '@cuberoot/shared/alg-notation'
+import { expandGroups, expandAllInnerSlices } from '@cuberoot/shared/alg-notation'
 
 export interface Turn {
   move: AlgorithmUnit
@@ -46,9 +46,8 @@ const Opposite: Record<TurnType, TurnType> = {
  * Deliberate divergences from PHP `fcs_format_alg`:
  *   - After range/inner-layer rewriting, shared `expandGroups` handles nested
  *     repeats and group inversion, including `(R U)'` and `(R U)2'`.
- *   - PHP rewrites lowercase slice `m e s` → `x R' L` style; we skip that pass
- *     since the existing tokenizer below handles uppercase `M E S` directly.
- *     If a caller ever feeds lowercase slice notation it'll throw.
+ *   - Lowercase m/e/s expand to rotations and outer turns; uppercase
+ *     M/E/S retain their distinct single-middle-slice meaning.
  *   - Half-turn normalization matches moves only until groups are expanded:
  *     stripping the prime from `(R U)2'` would lose the whole group's inverse.
  */
@@ -118,7 +117,7 @@ function preprocessAlgorithm(algorithm: string): string {
 
   // Expand only after the visualcube-specific layer syntax is rewritten into
   // ordinary moves accepted by the shared inverse/group parser.
-  r = expandGroups(r)
+  r = expandAllInnerSlices(expandGroups(r))
   return r.replace(/2'|'2/g, '2')
 }
 

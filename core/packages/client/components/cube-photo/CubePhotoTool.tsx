@@ -23,7 +23,7 @@ import './cube-photo.css';
 
 interface Photo { src: string; width: number; height: number; pixels: PhotoPixels }
 interface Result { detection: CubePhotoDetection }
-const PHOTO_EVENTS = new Set(['333', '222']);
+const PHOTO_EVENTS = new Set(['333', '222', '444']);
 const LABELS = { top: { zh: '顶面', en: 'Top' }, left: { zh: '左侧面', en: 'Left' }, right: { zh: '右侧面', en: 'Right' } };
 const POINT_LABELS = [
   { zh: '顶面后角', en: 'Top back corner' }, { zh: '顶面左角', en: 'Top left corner' },
@@ -45,7 +45,7 @@ export default function CubePhotoTool() {
   const [editing, setEditing] = useState(false), [modified, setModified] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [recognized, setRecognized] = useState(false);
-  const [puzzleSize, setPuzzleSize] = useState<2 | 3>(3);
+  const [puzzleSize, setPuzzleSize] = useState<2 | 3 | 4>(3);
   const [pocketStage, setPocketStage] = useState<'eg' | 'last-slot'>('eg');
   const drag = useRef<{ index: number; pointer: number } | null>(null);
 
@@ -74,7 +74,7 @@ export default function CubePhotoTool() {
   function detect(image: Photo, version: number, size = puzzleSize) {
     setRecognized(false);
     workers.cancel(); workers.warmup(); setBusy(true); setResult(null); setCorners(null); setError(''); setModified(false);
-    workers.detect({ ...image.pixels, puzzleSize: size }, data => {
+    workers.detect({ width: image.pixels.width, height: image.pixels.height, data: image.pixels.data, puzzleSize: size }, data => {
       if (generation.current !== version) return;
       setBusy(false);
       if ('error' in data) { setError(tr({ zh: '检测未完成，可以重试或手动标定。', en: 'Detection did not finish. Retry or place the grid manually.' })); return; }
@@ -137,17 +137,17 @@ export default function CubePhotoTool() {
     <header className="cube-photo-header">
       <div><Link href="/alg" prefetch={false}>{tr({ zh: '公式库', en: 'Algorithms' })}</Link><h1>{tr({ zh: '拍照查公式', en: 'Photo algorithm lookup' })}
         <InfoTooltip icon={HelpCircle} iconSize={19} ariaLabel={tr({ zh: '拍摄说明', en: 'Photo requirements' })}
-          content={puzzleSize === 2 ? tr({ zh: '二阶拍到完整顶面和两个完整侧面。底面同色选 CLL / EG；底面三格同色选 TEG / LS。存在多个可能状态时请换个角度拍摄。照片仅在本机处理。', en: 'For 2×2, show the full top and both full side faces. Choose CLL / EG for a monochrome bottom, or TEG / LS for three bottom stickers of one color. Take another angle if the state is ambiguous. Photos stay on your device.' }) : tr({ zh: '标准配色、前两层已复原。拍到完整顶面和两个侧面的顶层，自动识别并检索公式；前两层可以被手遮挡。照片仅在本机处理。', en: 'Use a standard color scheme with F2L solved. Show the full top face and the top row of both side faces to identify the state and find algorithms. Hands may cover the lower layers. Photos stay on your device.' })} />
+          content={puzzleSize === 4 ? tr({ zh: '中心已完成、棱已配对、下三层已复原。拍到完整顶面和两个侧面的顶层；针对 PPLL，默认有 P 特。照片仅在本机处理。', en: 'Centers must be solved, edges paired and the lower three layers solved. Show the full top and the top row of two side faces. For PPLL, PLL parity is assumed. Photos stay on your device.' }) : puzzleSize === 2 ? tr({ zh: '二阶拍到完整顶面和两个完整侧面。底面同色选 CLL / EG；底面三格同色选 TEG / LS。存在多个可能状态时请换个角度拍摄。照片仅在本机处理。', en: 'For 2×2, show the full top and both full side faces. Choose CLL / EG for a monochrome bottom, or TEG / LS for three bottom stickers of one color. Take another angle if the state is ambiguous. Photos stay on your device.' }) : tr({ zh: '标准配色、前两层已复原。拍到完整顶面和两个侧面的顶层，自动识别并检索公式；前两层可以被手遮挡。照片仅在本机处理。', en: 'Use a standard color scheme with F2L solved. Show the full top face and the top row of both side faces to identify the state and find algorithms. Hands may cover the lower layers. Photos stay on your device.' })} />
       </h1></div>
       <HeaderToggles />
     </header>
     <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={event => { void upload(event.target.files?.[0]); event.target.value = ''; }} />
     <div className="cube-photo-toolbar">
         <div inert={busy} aria-disabled={busy}>
-        <WcaEventSelector availableEvents={PHOTO_EVENTS} selectedEvent={puzzleSize === 2 ? '222' : '333'}
+        <WcaEventSelector availableEvents={PHOTO_EVENTS} selectedEvent={puzzleSize === 4 ? '444' : puzzleSize === 2 ? '222' : '333'}
           isZh={i18n.language.startsWith('zh')}
           onSelect={value => {
-            const size = value === '222' ? 2 : 3;
+            const size = value === '444' ? 4 : value === '222' ? 2 : 3;
             if (busy || size === puzzleSize) return;
             setPuzzleSize(size);
             if (photo) detect(photo, ++generation.current, size);
@@ -170,6 +170,7 @@ export default function CubePhotoTool() {
         {modified && selected && result && photo && <button className="cube-photo-action" onClick={() => restoreDetection(result, photo)}><RotateCcw size={17} />{tr({ zh: '恢复自动结果', en: 'Restore automatic result' })}</button>}
     </>}
     </div>
+    {puzzleSize === 4 && <p className="cube-photo-note">{tr({ zh: '针对 PPLL，默认有 P 特；中心、配棱及下三层需已复原。', en: 'For PPLL, PLL parity is assumed. Centers, edge pairing and the lower three layers must be solved.' })}</p>}
     {!hasPhotoWorkspace && error && <p className="cube-photo-error" role="alert">{error}</p>}
     <div className={`cube-photo-workspace${hasPhotoWorkspace ? ' has-photo' : ''}`}>
     {/* Photo and overlay share the same coordinate system at every display size. */}
@@ -177,7 +178,7 @@ export default function CubePhotoTool() {
       {photo ? <svg ref={svg} xmlns="http://www.w3.org/2000/svg" width={photo.width} height={photo.height} viewBox={`0 0 ${photo.width} ${photo.height}`} role="group" aria-label={tr({ zh: '照片与三面网格叠加', en: 'Photo with three-face grid overlay' })}>
         <image key={photo.src} className="cube-photo-image" href={photo.src} width={photo.width} height={photo.height} />
         {corners && FACE_NAMES.map(face => {
-          const quad = faceQuad(corners, face), h = homography(quad), label = h ? project(h, 0.5, face === 'top' || puzzleSize === 2 ? 0.5 : 0.16) : null;
+          const quad = faceQuad(corners, face), h = homography(quad), label = h ? project(h, 0.5, face === 'top' || puzzleSize === 2 ? 0.5 : 1 / (2 * puzzleSize)) : null;
           return <g key={face}>
             {faceGrid(quad, face, puzzleSize).filter(line => !line.inferred).map((line, i) => <g key={i}>
               <line x1={line.a.x} y1={line.a.y} x2={line.b.x} y2={line.b.y} stroke="#111827" strokeOpacity={0.8} strokeWidth={(line.boundary ? 4 : 3) * unit} />

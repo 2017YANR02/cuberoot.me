@@ -236,7 +236,7 @@ function sideScore(image: PhotoPixels, edges: Edges, corners: CubeCorners, size 
     let columns = 0;
     for (let i = 0; i <= size; i++) columns += lineSupport(edges, project(h, i / size, 0.03), project(h, i / size, 1 / size));
     const firstRow = (row * 0.6 + columns / (size + 1) * 0.4) * (0.6 + cellCoherence(image, q, 1, size) * 0.4);
-    if (size === 3) return firstRow;
+    if (size !== 2) return firstRow;
     const bottom = lineSupport(edges, project(h, 0, 1), project(h, 1, 1));
     let fullColumns = 0;
     for (let i = 0; i <= size; i++) fullColumns += lineSupport(edges, project(h, i / size, 0.03), project(h, i / size, 1));
@@ -374,7 +374,7 @@ function uniformTopQuads(image: PhotoPixels, gridSize = 3): Quad[] {
 }
 
 /** Training-free, bounded, single-frame prototype. No model, remote call, or hidden template fallback. */
-export function detectCubePhoto(image: PhotoPixels, size: 2 | 3 = 3): CubePhotoDetection {
+export function detectCubePhoto(image: PhotoPixels, size: 2 | 3 | 4 = 3): CubePhotoDetection {
   if (image.width < 32 || image.height < 32 || image.width > 720 || image.height > 720
     || image.data.length !== image.width * image.height * 4) throw new Error('invalid_image_dimensions');
   const edges = edgesOf(image), lines = houghLines(edges);
