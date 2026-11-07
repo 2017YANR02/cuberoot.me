@@ -22,7 +22,7 @@ import {
   type LucideIcon,
 } from '@app-foundation/icons/lucide';
 import { useIsAdmin } from '@/lib/auth-store';
-import { statsUrl } from '@/lib/stats-base';
+import { fetchWcaStatIndex, type StatCategory, type StatIndex } from '@/lib/wca-stat-index';
 import { STAT_ICONS } from './wca-stat-icons';
 import '../wca/_wca_stats.css';
 import { tr } from '@/i18n/tr';
@@ -32,12 +32,6 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 const ICON_MAP: Record<string, LucideIcon> = {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
 };
-
-interface StatItem { id: string; titleEn: string; titleZh: string
- }
-interface StatCategory { nameEn: string; nameZh: string; iconName?: string; stats: StatItem[]
- }
-interface IndexData { categories: StatCategory[] }
 
 const TOOLS = '__tools__';
 const LOOKUP = '__lookup__';
@@ -80,7 +74,7 @@ const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; ex
 export default function WcaStatsIndex() {
   const { i18n } = useTranslation();
   const isAdmin = useIsAdmin();
-  const [data, setData] = useState<IndexData | null>(null);
+  const [data, setData] = useState<StatIndex | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeKey, setActiveKey] = useState<string>(LOOKUP);
@@ -92,12 +86,8 @@ export default function WcaStatsIndex() {
 
   useEffect(() => {
     const ac = new AbortController();
-    fetch(statsUrl('/stats/index.json'), { signal: ac.signal })
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((json: IndexData) => {
+    fetchWcaStatIndex(ac.signal)
+      .then(json => {
         setData(json);
         setLoading(false);
       })

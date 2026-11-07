@@ -6,98 +6,11 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { REGISTRY } from './compute.js';
+import { WCA_STAT_CATEGORIES, WCA_STAT_PAGE_IDS, assertWcaStatRegistry } from '@cuberoot/shared/wca-stat-catalog';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = resolve(__dirname, '../../../../../stats');
 const OUTPUT_PATH = resolve(DATA_DIR, 'index.json');
-
-// NOTE: ALL_MERGED——这些子统计被聚合页面包含，索引页不单独列出
-// top10_history 的 bar chart race 已嵌入 wr_metric 第 0 个 panel，独立卡片是死链
-const ALL_MERGED = new Set([
-  'wr_single_history', 'wr_average_history',
-  'wr_bao5', 'wr_wao5', 'wr_mo5', 'wr_bpa', 'wr_wpa',
-  'wr_median', 'wr_best_counting', 'wr_worst_counting', 'wr_worst',
-  'wr_variance', 'wr_best_average_ratio',
-  'wr_ao1r', 'wr_ao2r', 'wr_ao3r', 'wr_ao4r',
-  'average_of_3', 'average_of_5', 'average_of_12',
-  'average_of_25', 'average_of_50', 'average_of_100', 'average_of_1000',
-  'top10_history',
-]);
-
-// NOTE: RETIRED——统计的 JSON 仍生成(被别处消费),但其单独页面/路由已退役、索引页不再列卡。
-//   wr_metric → 整体迁进 /wca/results 的「指标」视图(?view=metric);wr_metric.json 仍被
-//   /wca/results 嵌入 + fetch_upcoming_comps / gen_wr_ids 消费,故留在 REGISTRY,只是不列卡。
-//   name_stats → 姓名统计已并入选手页,索引页不再单列卡(移除唯一撑起「其他」分类的项)。
-const RETIRED = new Set(['wr_metric', 'name_stats']);
-
-// NOTE: iconName 字段是 lucide-react 组件名，前端映射为 <Icon>。不再用 emoji。
-const STAT_CATEGORIES = [
-  {
-    nameEn: 'World Record Analysis', nameZh: '世界纪录分析',
-    iconName: 'Trophy',
-    preserveOrder: true,
-    // NOTE: top10_history 不单独注册——其 bar chart race 已嵌入 wr_metric 第 0 个 panel
-    // NOTE: wr_current(当前世界纪录)已退役 2026-06-22 —— 移植进 /wca/records 的「当前」视图(支持全部区域)
-    // NOTE: wr_metric(指标)已退役 2026-06-22 —— 移植进 /wca/results 的「指标」视图(?view=metric);
-    //   wr_metric.json 仍照常生成(被 /wca/results 嵌入 + fetch_upcoming_comps / gen_wr_ids 消费),只是不再单独成页/列卡。
-    ids: ['wr_aoxr', 'wr_dominance', 'round_top3_sum', 'wr_non_pr', 'wr_newcomer',
-          'average_of', 'consecutive_sub_5_average'],
-  },
-  {
-    nameEn: 'Results & Records', nameZh: '成绩与纪录',
-    iconName: 'BarChart3',
-    ids: ['best_potential_fmc_mean', 'best_round', 'keatoned_records', 'most_frequent_results',
-          'moving_average', 'smallest_diff_between_single_and_average', 'yearly_rankings',
-          'date_match_pr'],
-  },
-  {
-    nameEn: 'Podiums & Honors', nameZh: '领奖台与荣誉',
-    iconName: 'Medal',
-    ids: ['best_result_off_podium', 'complete_competition_winners', 'most_4th_places',
-          'most_competitions_before_winning', 'most_finals',
-          'most_podiums_at_single_competition', 'most_podiums_together',
-          'tied_podium_results',
-          'worst_result_on_podium'],
-  },
-  {
-    nameEn: 'Competitor Journey', nameZh: '选手经历',
-    iconName: 'UserRound',
-    ids: ['competitions_per_year_by_person', 'longest_competitions_path',
-          'competition_streaks',
-          'longest_streak_of_competitions_in_own_country',
-          'longest_streak_of_personal_records', 'longest_streak_of_podiums',
-          'longest_time_to_sub_10',
-          'most_attended_competitions_in_single_month',
-          'most_attended_competitions_in_single_week',
-          'most_competitions_abroad', 'most_completed_solves',
-          'most_distinct_dates_competed_on', 'most_solves_before_bld_success',
-          'most_visited_continents', 'most_visited_countries',
-          'shortest_time_to_get_all_singles',
-          'shortest_time_to_get_all_singles_and_averages',
-          'shortest_time_to_reach_milestone_in_comps_count'],
-  },
-  {
-    nameEn: 'Competition Statistics', nameZh: '赛事统计',
-    iconName: 'Tent',
-    ids: ['annual_participation', 'average_event_count_by_competition', 'competition_days_count_by_region',
-          'competitions_count_by_week', 'competitions_per_year_by_country',
-          'dnf_rate_by_event',
-          'most_records_at_single_competition'],
-  },
-  {
-    nameEn: 'Records & Countries', nameZh: '纪录与国家',
-    iconName: 'Globe2',
-    ids: ['best_medal_collection_from_abroad_by_country',
-          'best_medal_collection_from_abroad_by_person',
-          'current_world_records_by_country', 'delegated_competition_per_year',
-          'first_r_is_wr', 'longest_standing_records', 'longest_streak_of_world_records',
-          'most_delegated_competitions', 'potentially_seen_world_records',
-          'records_in_most_events', 'winned_week_count',
-          'world_championship_podiums_by_country',
-          'world_championship_podiums_by_person', 'world_championship_records',
-          'world_records_by_country', 'world_records_by_person'],
-  },
-];
 
 // NOTE: 集中覆盖个别 stat 的中文译名（原 titleZh 在每个 stat 的 .ts 里，零散且不地道）。
 // 这里写一次，compute_index 跑时优先使用本表；新加 stat 默认走 stat 文件的 titleZh。
@@ -172,17 +85,20 @@ interface StatEntry {
 
 interface RawMetricPanel { id?: string; labelEn?: string; labelZh?: string }
 
-function main() {
-  // NOTE: 可用统计——REGISTRY 中排除 ALL_MERGED
-  const availableIds = Object.keys(REGISTRY).filter(id => !ALL_MERGED.has(id) && !RETIRED.has(id));
+export function buildStatIndex(readStat: (id: string) => string | undefined = id => {
+  const jsonPath = resolve(DATA_DIR, id + '.json');
+  return existsSync(jsonPath) ? readFileSync(jsonPath, 'utf-8') : undefined;
+}) {
+  assertWcaStatRegistry(Object.keys(REGISTRY));
+  const availableIds = WCA_STAT_PAGE_IDS;
 
   // NOTE: 从已生成的 JSON 文件读取标题 + metricPanels(供 LandingSearch 搜指标名)
   const titles = new Map<string, { title: string; titleZh: string; metrics?: MetricEntry[] }>();
   for (const id of availableIds) {
-    const jsonPath = resolve(DATA_DIR, `${id}.json`);
-    if (existsSync(jsonPath)) {
+    const raw = readStat(id);
+    if (raw !== undefined) {
       try {
-        const data = JSON.parse(readFileSync(jsonPath, 'utf-8'));
+        const data = JSON.parse(raw);
         const mp = Array.isArray(data.metricPanels) ? (data.metricPanels as RawMetricPanel[]) : null;
         const metrics = mp
           ? mp.filter(m => m.id && m.labelEn).map(m => ({ id: m.id!, labelEn: m.labelEn!, labelZh: m.labelZh || m.labelEn! }))
@@ -197,7 +113,7 @@ function main() {
   }
 
   // NOTE: 构建分类数据
-  const categories = STAT_CATEGORIES.map(cat => {
+  const categories = WCA_STAT_CATEGORIES.map(cat => {
     let stats: StatEntry[] = cat.ids
       .filter(id => titles.has(id))
       .map(id => {
@@ -220,34 +136,17 @@ function main() {
     };
   }).filter(cat => cat.stats.length > 0);
 
-  // NOTE: 兜底检查——找出未被分类覆盖的统计
-  const allCategorized = new Set(STAT_CATEGORIES.flatMap(c => c.ids));
-  const uncategorized = availableIds.filter(id => !allCategorized.has(id));
-  if (uncategorized.length > 0) {
-    console.warn(`WARNING: ${uncategorized.length} uncategorized stats: ${uncategorized.join(', ')}`);
-    // NOTE: 添加兜底分类
-    categories.push({
-      nameEn: 'Other',
-      nameZh: '其他',
-      iconName: 'Pin',
-      stats: uncategorized.sort().map(id => {
-        const t = titles.get(id)!;
-        const entry: StatEntry = { id, titleEn: t.title, titleZh: TITLE_ZH_OVERRIDES[id] ?? t.titleZh };
-        if (t.metrics && t.metrics.length > 0) entry.metrics = t.metrics;
-        return entry;
-      }),
-    });
-  }
+  return { categories };
+}
 
-  const output = { categories };
+function main() {
+  const output = buildStatIndex();
+  const { categories } = output;
   mkdirSync(DATA_DIR, { recursive: true });
   writeFileSync(OUTPUT_PATH, JSON.stringify(output, null, 2), 'utf-8');
   console.log(`Generated ${OUTPUT_PATH} (${categories.length} categories, ` +
     `${categories.reduce((s, c) => s + c.stats.length, 0)} stats)`);
-
-
 }
 
-
-
-main();
+const scriptName = process.argv[1]?.replace(/\\/g, '/') ?? '';
+if (scriptName.endsWith('/compute_index.ts') || scriptName.endsWith('/compute_index.js')) main();

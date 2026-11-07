@@ -15,6 +15,8 @@
 
 ## 页面标题 / SEO metadata
 
+WCA 通用统计页面的有效 ID 与分类统一定义在 `core/packages/shared/src/wca-stat-catalog.ts`（公开出口 `@cuberoot/shared/wca-stat-catalog`）。索引生成器、页面、404 规则、搜索和目录共同消费，禁止另建退役名单。新增/合并统计时同步其公开页面或仅数据状态；生成器会校验统计注册表的完整归属并在不一致时失败。远程 `stats/index.json` 只提供已登记页面的展示数据，不能自行创建页面入口；数据与 Web 发布先后不同也不得放出未知或退役链接。回归覆盖 `stat_catalog.test.ts`、`wca-stat-index.test.ts`、`wca-stat-routes.test.ts` 和语言路由测试。
+
 新增路由或修改标题、SEO metadata、sitemap、hreflang、索引策略或长文结构化数据时使用 `document-title` skill，并必须读取其 [SEO 契约](../../.agents/skills/document-title/references/seo-metadata.md)；保留静态 metadata 单一来源与 SSG 边界。
 
 ## URL 状态(全站统一 nuqs)

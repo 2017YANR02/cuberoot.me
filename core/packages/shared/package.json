@@ -968,6 +968,11 @@
       "node": "./dist/product_analytics.js",
       "default": "./src/product_analytics.ts"
     },
+    "./wca-stat-catalog": {
+      "types": "./src/wca-stat-catalog.ts",
+      "node": "./dist/wca-stat-catalog.js",
+      "default": "./src/wca-stat-catalog.ts"
+    },
     "./page-catalog": {
       "types": "./src/page_catalog.ts",
       "node": "./dist/page_catalog.js",

@@ -7,7 +7,7 @@ import { useState, useEffect, useMemo, useRef, useDeferredValue } from 'react';
 import { loadPersonsIndex, searchLocalPersons } from '@cuberoot/shared/persons-index';
 import type { WcaPerson } from '@cuberoot/shared/wca-search';
 import { loadComps, searchComps, type Comp } from '@/lib/comp-search';
-import { statsUrl } from '@/lib/stats-base';
+import { fetchWcaStatIndex, type StatEntry, type StatCategory, type StatIndex, type MetricEntry } from '@/lib/wca-stat-index';
 import { listRecons } from '@/lib/recon-api';
 import { loadCachedSolves, saveCachedSolves } from '@/lib/recon-cache';
 import { compNameZh, loadFlagData } from '@/lib/country-flags';
@@ -36,13 +36,7 @@ export interface SiteSearchCard {
 export interface ToolItem { path: string; zh: string; en: string; }
 export interface LookupItem { path: string; extraQuery?: string; zh: string; en: string; }
 
-export interface MetricEntry { id: string; labelEn: string; labelZh: string
- }
-export interface StatEntry { id: string; titleEn: string; titleZh: string; metrics?: MetricEntry[]
- }
-export interface StatCategory { nameEn: string; nameZh: string; iconName?: string; stats: StatEntry[]
- }
-export interface StatIndex { categories: StatCategory[] }
+export type { MetricEntry, StatEntry, StatCategory, StatIndex } from '@/lib/wca-stat-index';
 
 export type StatItem =
   | { kind: 'stat'; stat: StatEntry }
@@ -344,16 +338,6 @@ function loadAlgSets(): Promise<AlgSetRecord[]> {
   return algSetsPromise;
 }
 
-let statIndexPromise: Promise<StatIndex | null> | null = null;
-function loadStatIndex(): Promise<StatIndex | null> {
-  if (!statIndexPromise) {
-    statIndexPromise = fetch(statsUrl('/stats/index.json'))
-      .then(r => (r.ok ? r.json() : null))
-      .catch(() => null);
-  }
-  return statIndexPromise;
-}
-
 export interface UseSiteSearchOptions {
   cards?: SiteSearchCard[];
   tools?: ToolItem[];
@@ -468,7 +452,11 @@ export function useSiteSearch(
 
   useEffect(() => {
     if (prefetch === 'lazy' && !xSearchEnabled) return;
-    loadStatIndex().then(j => { if (j) setStatIndex(j); });
+    const controller = new AbortController();
+    void fetchWcaStatIndex(controller.signal)
+      .then(index => { if (!controller.signal.aborted) setStatIndex(index); })
+      .catch(() => { /* Keep any already loaded, route-validated results. */ });
+    return () => controller.abort();
   }, [prefetch, xSearchEnabled]);
 
   useEffect(() => {
