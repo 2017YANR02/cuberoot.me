@@ -287,6 +287,11 @@
   cursor: pointer;
 }
 .comp-registration-number:hover { background: var(--muted); }
+.info-tooltip-pop.comp-registration-pop {
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  text-align: center;
+}
 .comp-calendar-error { font-size: 0.8rem; font-weight: normal; }
 .comp-title-icon:hover {
   background: color-mix(in srgb, var(--foreground) 8%, transparent);

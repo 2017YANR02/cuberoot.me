@@ -2339,7 +2339,7 @@ function RegistrationNumber({ number, cubingSlug }: { number: number; cubingSlug
     <button ref={triggerRef} type="button" className="comp-registration-number"
       aria-label={`${label}: ${number}`} aria-expanded={open} aria-haspopup="dialog"
       onClick={() => setOpen(value => !value)}>{number}</button>
-    {open && <div ref={panelRef} className="info-tooltip-pop" data-site-surface="popover" role="dialog" aria-label={label}>
+    {open && <div ref={panelRef} className="info-tooltip-pop comp-registration-pop" data-site-surface="popover" role="dialog" aria-label={label}>
       <div>{label}</div>
       <a ref={linkRef} className="comp-info-link" href={`https://cubing.com/competition/${cubingSlug}/registration`}
         target="_blank" rel="noopener noreferrer">
