@@ -1,5 +1,8 @@
 'use client';
 
+// Next App Router supplies React's ViewTransition runtime; installed React types expose it here.
+import type {} from 'react/canary';
+import { ViewTransition } from 'react';
 import PageBackLink from '@/components/PageBackLink';
 import { ChevronDown } from '@app-foundation/icons/lucide';
 import dynamic from 'next/dynamic';
@@ -8,14 +11,15 @@ import { useT } from '@/hooks/useT';
 import type { PlatformRouteDefinition } from '@/lib/platform-types';
 import { SHOP_ROOT } from '@/lib/shop';
 import { ShopCatalog } from './ShopCatalog';
-const ShopProduct = dynamic(() => import('./ShopProduct').then(module => module.ShopProduct));
+import { ShopProduct } from './ShopProduct';
 const ShopCart = dynamic(() => import('./ShopCart').then(module => module.ShopCart));
 
 export function ShopRoute({ definition, id }: { definition: PlatformRouteDefinition; id?: string }) {
-  if (definition.id === 'shop') return <ShopCatalog />;
-  if (definition.id === 'product-detail' && id) return <ShopProduct id={id} definition={definition} />;
-  if (definition.id === 'shop-cart' || definition.id === 'shop-checkout') return <ShopCart checkout={definition.id === 'shop-checkout'} />;
-  return <ShopHelp />;
+  const content = definition.id === 'shop' ? <ShopCatalog />
+    : definition.id === 'product-detail' && id ? <ShopProduct id={id} definition={definition} />
+    : definition.id === 'shop-cart' || definition.id === 'shop-checkout' ? <ShopCart checkout={definition.id === 'shop-checkout'} />
+    : <ShopHelp />;
+  return <ViewTransition default="none" enter="shop-page-enter" exit="shop-page-exit"><div>{content}</div></ViewTransition>;
 }
 
 function ShopHelp() {
