@@ -198,6 +198,13 @@ export const NATIVE_PUZZLES = {
     axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
     scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 320,
   },
+  // Jason Smith's Radiolarian 3. Hyperspeedcube radio03 uses
+  // 1 - (1 - 1/phi) * 4/5 = (2 sqrt(5) - 1)/5, with mobile centers.
+  radiolarian3: {
+    description: 'i f 0.6944271909999159', zh: 'Radiolarian 3', en: 'Radiolarian 3', textLabel: 'Radio3',
+    axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
+    scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 320,
+  },
   // Radio Jam (Radiolarian 8): Hyperspeedcube radio08 uses radio7 - 0.06.
   // The unused radio8 constant in that source is NOT this model's cut depth.
   radiojam: {

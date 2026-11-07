@@ -47,6 +47,7 @@ export const CSTIMER_EVENT_FALLBACKS = {
   radiojam: 'input',
   catscradle: 'input',
   radiocanon: 'input',
+  radiolarian3: 'input',
   sphere: '333',
 } as const;
 
@@ -124,6 +125,7 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
   radiojam: CSTIMER_EVENT_FALLBACKS.radiojam,
   catscradle: CSTIMER_EVENT_FALLBACKS.catscradle,
   radiocanon: CSTIMER_EVENT_FALLBACKS.radiocanon,
+  radiolarian3: CSTIMER_EVENT_FALLBACKS.radiolarian3,
   r3: 'r3',
   r4: 'r4',
   r5: 'r5',

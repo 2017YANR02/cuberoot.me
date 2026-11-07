@@ -28,6 +28,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 制作 Radio Jam（Radiolarian 8）时按 [Radio Jam 几何与验收](references/radio-jam.md) 使用 `radio08` 实际切深，并保留每面的 15 个三角形、6 个五边形和 1 个六边形。
 - 制作 Cat’s Cradle（Radiolarian 5）时按 [原生 PG 结构与接线](references/native-pg-puzzles.md#cats-cradle) 保留精确切深与每面十九区，独立检查切深两侧的负例，不复用相邻 Radiolarian 的分区。
 - 制作 Radio Canon（Radiolarian 1.5）时按 [固定中心与分区验证](references/native-pg-puzzles.md#radio-canon) 保留每面七个三角形、九个四边形及二十个固定中心；分别核对中心置换与不可辨自转，不以同为 320 片的 Radio Jewel 代替本项目几何。
+- 制作 Radiolarian 3 时按 [移动中心与分区验证](references/native-pg-puzzles.md#radiolarian-3) 保留精确切深、每面十个三角形／三个四边形／三个五边形，并逐外层面转验证三个相邻中心的循环置换；不要因贴片数、块数及轨道数相同就复用 Radio Canon。
 - 对二阶＋直升机等可见切缝重合的组合保留全部机制切面；分别核对 90° 面轴与 180° 棱轴、逐轴层数及交错转动，不以相同展开图或图标判定机制相同，见 [原生 PG 结构与接线](references/native-pg-puzzles.md#二阶直升机)。
 - 对 Radio Jewel 等恰有小块消失的临界切深保留解析精度，独立核对面分区、可见块数及切深两侧的负例，并在双语说明中写明保形转动与 jumbling 的支持边界。
 - 原生播放器在首次构造前检测 WebGL 能力，不可用时直接切换同一具名模型的二维展开图；跳过全部 3D 初始化，手动按钮经原生招式回调记录，导出调用原生二维 SVG 下载。

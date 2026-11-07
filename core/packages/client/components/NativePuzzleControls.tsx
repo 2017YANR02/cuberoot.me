@@ -9,6 +9,7 @@ import { useT } from '@/hooks/useT';
 export type NativeDragDepth = 'auto' | NativePuzzleMoveDepth;
 
 const NOTES: Record<PgInteractionPuzzleId, readonly [string, string]> = {
+  radiolarian3: ['Radiolarian 3：中心可移动的二十面体，每步面转 120°，支持外层、第二层与宽转；当前仅支持保形转动，不含 jumbling。', 'Radiolarian 3: an icosahedron with mobile centers and 120° outer, second and wide turns. Supports shape-preserving turns only, without jumbling.'],
   baby_fto: ['二阶 FTO：每步面转 120°，八个面各有四个三角形；支持 U、F、R、L、D、B、BR、BL。', 'Baby FTO: 120° face turns and four triangles on each of eight faces. Supports U, F, R, L, D, B, BR and BL.'],
   superz: ['面转 90°，角转 120°；例如 R UFR F\'。', 'Face turns are 90°; corner turns are 120°. Try R UFR F\'.'],
   cube3dino: ['三阶＋恐龙：面转 90°，角转 120°；可混合外层、内层与宽转。', '3×3 + Dino: face turns are 90°; corner turns are 120°. Mix outer, inner and wide turns.'],

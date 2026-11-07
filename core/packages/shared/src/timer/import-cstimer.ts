@@ -122,6 +122,7 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'catscradle': 'catscradle', 'cat’scradle': 'catscradle', "cat'scradle": 'catscradle',
   'radiolarian5': 'catscradle',
   'radiocanon': 'radiocanon', 'radiocannon': 'radiocanon', 'radiolarian1.5': 'radiocanon',
+  'radiolarian3': 'radiolarian3',
 };
 
 /* ------------------------------------------------------------------ */
@@ -214,6 +215,9 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   if (/(?:^|[^a-z0-9])(?:radio[\s_-]*cann?on(?![a-z0-9])|radiolarian[\s_-]*1\.5(?![a-z0-9]|\.\d))/i.test(name)) {
     return normalizeEventKey('radiocanon');
   }
+  if (/(?:^|[^a-z0-9])radiolarian[\s_-]*3(?![a-z0-9]|\.\d)/i.test(name)) {
+    return normalizeEventKey('radiolarian3');
+  }
   if (tokens.some((token, index) =>
     (token === 'radio' && tokens[index + 1] === 'web')
     || (token === 'radiolarian' && tokens[index + 1] === '6'))) {
@@ -275,6 +279,8 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
     return normalizeEventKey('cube2heli');
   }
   for (const t of tokens) {
+    // The complete name above must reject decimal suffixes such as 3.5.
+    if (t === 'radiolarian3') continue;
     const tried = normalizeEventKey(t);
     if (tried.matched) return tried;
   }

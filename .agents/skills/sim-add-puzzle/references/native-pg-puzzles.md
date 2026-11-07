@@ -15,6 +15,7 @@
 - [机制审查记录](#机制审查记录)
 - [Cat’s Cradle](#cats-cradle)
 - [Radio Canon](#radio-canon)
+- [Radiolarian 3](#radiolarian-3)
 
 ## 共享入口
 
@@ -72,6 +73,7 @@
 | `cube3heli` | 三阶＋直升机 / 3×3 + Helicopter | `c f 0.333333333333333 e 0.7071067811865476` | 根据 [cubing.js 官方 pgPuzzles.ts](https://github.com/cubing/cubing.js/blob/main/src/cubing/puzzle-geometry/pgPuzzles.ts) 的独立 `3x3x3`、`helicopter` 预设及 [Jaap 的平面棱转说明](https://www.jaapsch.net/puzzles/helicopter.htm)，组合均匀三阶面切与 Helicopter 棱切；以立方体半边长 1 推导面切 ±1/3、棱切 ±√2/2。支持保形 90° 面转及 180° 棱转，不包含 jumbling，不宣称精确复刻 Grégoire Pfennig 的 Helicopter 3×3 实物切深。 |
 | `radiojewel` | Radio Jewel / Radio Jewel | `i f 0.5278640450004204` | 按 [Jason Smith 的 Radiolarian 7 原作](https://www.puzzleforge.com/wp/2012/11/06/radiolarian-7-radio-jewel-112012/)和 [Hyperspeedcube 的 radio07 实现](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua)，取内切球半径 1、面切深 5−2√5；核对原作照片的中央六边形与十五个三角形，以及[实体规格的 242 个外露块](https://cubein.cn/products/radio-jewel-radiolarian-7)。保留二十色和保形 120° 面转，不包含实物的两种 jumbling，不宣称测量复刻商品尺寸。 |
 | `radiocanon` | Radio Canon / Radio Canon | `i f 0.77` | 按 [Jason Smith 的 Radiolarian 1.5 原作](https://www.puzzleforge.com/wp/2014/05/08/radiolarian-1-5-the-radio-cannon-52014/)核对固定面中心及实物分区，采用 [Hyperspeedcube 的 `radio01_5` 切深](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua) 0.77；这是已知模拟器的理想化平面模型，不是商品尺寸测量值。保留标准 120° 面转，不包含 jumbling。 |
+| `radiolarian3` | Radiolarian 3 / Radiolarian 3 | `i f 0.6944271909999159` | 按 [Jason Smith 的 Radiolarian 3 原作](https://www.puzzleforge.com/wp/2010/03/08/132/)核对更深面切及可移动中心，采用 [Hyperspeedcube 的 `radio03` 切深](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua) `1−(1−1/φ)×4/5 = (2√5−1)/5`；每面保留十个三角形、三个四边形及三个五边形，仅支持保形 120° 面转。 |
 
 把拼图描述视为几何数据；Dino Skewb、3×3 + Dino 与 3×3 + Helicopter 的组合描述由已核证的两类切面推导，不标注成上游预设中逐字复制的条目。
 
@@ -242,3 +244,12 @@
 - 从独立面中心定位二十个中央三角。核对不同面法向点积的最大值为 `√5/3 < 0.77`，并逐外层面转及逆转检查所有中央三角置换保持恒等；转动面的单色中心允许不可辨自转。固定中心不意味着内层转动或整体转体的中心置换也恒等。
 - 复用二十面轴、120° 基本转角及 `A/2A/Aw/Av` 记号，检查宽转组合、对侧中层反向别名和非法层拒绝。遍历全部手动层及整体转体的独立刚体终态与五进度切面分离；对真实 PG3D 在 `0/0.2/0.5/0.8/1` 逐手动层核对正反转动及播放方向，同时单独记录浏览器能否实测 3D 拖层。
 - 让三入口共用 60 步练习用随机转动和完整 SVG，沿用保形转动、不含 jumbling 的双语说明。csTimer 导出用 `input` 并保留 `cuberootEvent`；导入兼容 Radio Canon、Radio Cannon、Radiolarian 1.5，并保留小数点和词边界，拒绝将 Radiolarian 15、1.50 或 Radio Canonical 误归本项目。
+
+## Radiolarian 3
+
+- 将 `radiolarian3` 注册为 Jason Smith 的 Radiolarian 3，中英文沿用原名；以内切球半径 1 使用 `h = 1−(1−1/φ)×4/5 = (2√5−1)/5`，不要将相邻 Radiolarian 的切深或固定中心机制复制过来。
+- 在注册前从 `core/` 运行 `node packages/client/scripts/native-puzzles/compare-outlines.mjs --set=radiolarian3`，对照原作照片、单面切线和完整二十面展开图；黑色 Circo-Radiolarian 线仅作比较，不保留为新模型切面。
+- 从独立正二十面体半空间重导每面的十个三角形、三个四边形和三个五边形；从 360 条原生数据排除 40 个中心朝向重复片，保留 320 个可见贴片、182 个可见块。核对 `C5RNER(12,5)`、`EDGES(60,2)`、`CENTERS(60,1)`、`EDGES2(30,2)`、`CENTERS2(20,3)`，不要以和 Radio Canon 相同的统计值替代分区验证。
+- 从独立面法向定位二十个中央三角，利用 `h < √5/3` 选择每个转面附近的三个中心，并逐面、逐正反方向核对其 120° 循环置换；同时以 Radio Canon 的外层中心置换恒等作负例。区分中心位置移动与单色中心不可辨的自转。
+- 复用二十面轴、120° 基本转角及 `A/2A/Aw/Av` 记号，验证宽转组合、对侧中层反向别名与非法层拒绝；对全部手动层及整体转体独立检查刚体终态和五个进度的切面分离，再分别验证真实 PG3D 中间矩阵、拖转选层和浏览器交互。
+- 让三入口共用 60 步练习用随机转动、完整二十面 SVG 与独立计时记录；核对普通／种子打乱、生成页比赛／批量／输入、PDF 和 csTimer 导入导出，保留 `cuberootEvent` 与非 WCA 来源说明，不宣称均匀随机状态。按实际环境分别记录三维浏览器验收和二维回退验收。

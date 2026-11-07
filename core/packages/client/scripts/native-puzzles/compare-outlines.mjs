@@ -8,12 +8,22 @@
 // --set=radiojewel: review Radio Jewel's exact face-cut depth.
 // --set=catscradle: review Cat's Cradle's critical face-cut depth.
 // --set=radiocanon: review Radio Canon's fixed-center face cuts.
+// --set=radiolarian3: review Radiolarian 3's mobile-center face cuts.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
 import { NATIVE_PUZZLES } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { Vector3 } from 'three';
 
 const reviewSets = {
+  radiolarian3: {
+    basename: 'radiolarian3-outlines',
+    rows: [{
+      id: 'radiolarian3', en: 'Radiolarian 3',
+      description: 'i f 0.6944271909999159', visibleFacelets: 320,
+      prior: 'i f 0.7453559924999299', priorLabel: 'Circo-Radiolarian (comparison; cuts are replaced)',
+      notes: ['Face-normal depth h = 1 - (1 - 1/phi) * 4/5 = (2 sqrt(5) - 1)/5.', 'Ten triangles, three quadrilaterals and three pentagons per face; mobile centers.'],
+    }],
+  },
   radiojam: {
     basename: 'radiojam-outlines',
     rows: [{
