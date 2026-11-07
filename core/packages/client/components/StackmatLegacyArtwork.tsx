@@ -27,10 +27,21 @@ const StackmatLegacyArtwork = forwardRef<SVGSVGElement, Props>(function Stackmat
   const pro = generation >= 3;
   const body = g4 ? G4_BODY : STRAIGHT_BODY;
   const palm = g4 ? PALM_G4 : PALM_STRAIGHT;
-  const panel = g4 ? 'M278 120Q400 33 522 120L546 195Q400 252 254 195Z'
+  const panel = g4 ? 'M278 112Q400 0 522 112L546 195Q400 252 254 195Z'
     : 'M282 39H518L542 133Q509 182 400 197Q291 182 258 133Z';
   return <svg ref={ref} xmlns="http://www.w3.org/2000/svg" viewBox="0 10 800 260" width={size * 800 / 260} height={size} fill="none" {...props}>
     <defs>
+      {g4 && <>
+        <linearGradient id={`${id}-sidewall`} x1="0" y1="90" x2="0" y2="260" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#292d30"/><stop offset=".7" stopColor="#111517"/><stop offset="1" stopColor="#050708"/>
+        </linearGradient>
+        <linearGradient id={`${id}-shoulder`} x2="1" y2=".6">
+          <stop stopColor="#101315"/><stop offset=".45" stopColor="#424648"/><stop offset="1" stopColor="#131719"/>
+        </linearGradient>
+        <radialGradient id={`${id}-button`} cx=".4" cy=".3" r=".75">
+          <stop stopColor="#363c3d"/><stop offset=".65" stopColor="#14191a"/><stop offset="1" stopColor="#050809"/>
+        </radialGradient>
+      </>}
       <linearGradient id={`${id}-body`} x1="400" y1="20" x2="400" y2="245" gradientUnits="userSpaceOnUse">
         <stop stopColor={generation === 1 ? '#72979d' : generation === 2 ? '#127ed6' : '#4d5052'}/>
         <stop offset=".22" stopColor={generation === 1 ? '#416c75' : generation === 2 ? '#00a5ed' : '#232526'}/>
@@ -58,9 +69,14 @@ const StackmatLegacyArtwork = forwardRef<SVGSVGElement, Props>(function Stackmat
       <clipPath id={`${id}-left`}><path d={palm}/></clipPath>
       <clipPath id={`${id}-right`}><path d={palm} transform="translate(800 0) scale(-1 1)"/></clipPath>
     </defs>
-    <path d={body} transform="translate(0 10)" fill={generation === 2 ? '#053966' : '#0a1014'}/>
+    <path d={body} transform={`translate(0 ${g4 ? 16 : 10})`} fill={g4 ? paint('sidewall') : generation === 2 ? '#053966' : '#0a1014'}/>
     <path d={body} fill={paint('body')} stroke={paint('rim')} strokeWidth="2"/>
     <path d={body} transform="translate(8 3) scale(.98 .96)" stroke="#bdc8c9" strokeOpacity=".18" strokeWidth="1"/>
+    {g4 && <>
+      <path d="M248 72Q269 78 287 68L278 112L254 195L235 200L251 79Z" fill={paint('shoulder')}/>
+      <path d="M248 72Q269 78 287 68L278 112L254 195L235 200L251 79Z" transform="translate(800 0) scale(-1 1)" fill={paint('shoulder')}/>
+      <path d="M39 128L235 209Q255 220 281 224Q400 272 519 224Q545 220 565 209L761 128" stroke="#51575a" strokeOpacity=".45" strokeWidth="1.5"/>
+    </>}
     {(['left', 'right'] as const).map((side, i) => <g key={side} clipPath={paint(side)}>
       <rect width="800" height="230" fill={paint('pad')}/>
       {pro && <rect width="800" height="230" fill={paint(g4 ? 'g4-grid' : 'texture')}/>}
@@ -77,13 +93,14 @@ const StackmatLegacyArtwork = forwardRef<SVGSVGElement, Props>(function Stackmat
     </g>)}
     <path d={palm} stroke="#0b1014" strokeWidth="2"/>
     <path d={palm} transform="translate(800 0) scale(-1 1)" stroke="#0b1014" strokeWidth="2"/>
-    <path d={panel} stroke="#101619" strokeWidth="9" strokeLinejoin="round"/>
+    <path d={panel} stroke="#101619" strokeWidth={g4 ? 5 : 9} strokeLinejoin="round"/>
     <path d={panel} fill={paint('panel')} stroke="#a1b5b6" strokeWidth="2"/>
     {g4 && <path d={panel} fill={paint('brushed')}/>}
     {g4 ? <>
-      <path d="M308 117Q400 53 492 117L479 156Q400 117 321 156Z" fill="#080d0c" stroke="#797f72" strokeWidth="2"/>
-      <path d="M315 118Q400 63 485 118L476 147Q400 114 324 147Z" fill={paint('lcd')}/>
-      <StackmatLcdDigits value={displayValue} x={339} y={101} width={122} height={25} color={digitColor}/>
+      <path d="M308 108Q400 36 492 108L479 150Q400 111 321 150Z" fill="#080d0c" stroke="#797f72" strokeWidth="2"/>
+      <path d="M315 109Q400 46 485 109L476 141Q400 108 324 141Z" fill={paint('lcd')}/>
+      <path d="M315 109Q400 46 485 109" stroke="#3c4638" strokeWidth="2"/>
+      <StackmatLcdDigits value={displayValue} x={339} y={90} width={122} height={25} color={digitColor}/>
     </> : <>
       <path d="M290 63H407V119H286Z" fill="#111711" stroke="#76827e" strokeWidth="2"/>
       <path d="M296 68H401V112H292Z" fill={paint('lcd')}/>
@@ -95,11 +112,11 @@ const StackmatLegacyArtwork = forwardRef<SVGSVGElement, Props>(function Stackmat
       <circle cy="20" r="6.5" fill="#202526" stroke="#b4b5a5" strokeWidth="1.5"/><circle cy="20" r="4.5" fill={paint('green')} opacity={indicator === undefined || indicator === 'ready' ? 1 : .25}/>
     </g>
     <g transform={g4 ? 'translate(291 187) scale(.72)' : 'translate(428 86) scale(.82)'}>
-      <circle r="17" fill="#111718" stroke="#d2d7ce" strokeWidth="1.5"/>
+      <circle r="17" fill={g4 ? paint('button') : '#111718'} stroke="#d2d7ce" strokeWidth="1.5"/>
       {pro ? <path d="M0-11V1M-6-7A10 10 0 1 0 6-7" stroke="#e52631" strokeWidth="3" strokeLinecap="round"/> : <Lettering label="POWER" x={-13} y={-3} width={26} height={6} color="#d6d9cc"/>}
     </g>
     <g transform={g4 ? 'translate(509 187) scale(.72)' : 'translate(490 86) scale(.82)'}>
-      <circle r="17" fill="#111718" stroke="#d2d7ce" strokeWidth="1.5"/>
+      <circle r="17" fill={g4 ? paint('button') : '#111718'} stroke="#d2d7ce" strokeWidth="1.5"/>
       {pro ? <path d={STACKMAT_RESET} fill="#e8da00"/> : <Lettering label="RESET" x={-13} y={-3} width={26} height={6} color="#d6d9cc"/>}
     </g>
     {generation !== 1 && <g transform={g4 ? 'translate(492 140) scale(.85)' : 'translate(450 121)'}>
@@ -123,7 +140,7 @@ const StackmatLegacyArtwork = forwardRef<SVGSVGElement, Props>(function Stackmat
         <Lettering label="STACKMAT" x={320} y={152} width={160} height={16}/>
       </>}
     </>}
-    <path d={g4 ? 'M252 221Q400 277 548 221' : 'M245 158Q400 243 555 158'} stroke="#080c0e" strokeWidth="2"/>
+    {!g4 && <path d="M245 158Q400 243 555 158" stroke="#080c0e" strokeWidth="2"/>}
   </svg>;
 });
 export default StackmatLegacyArtwork;
