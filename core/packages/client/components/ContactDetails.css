@@ -11,9 +11,9 @@
 
 .contact-details-columns {
   display: grid;
-  grid-template-columns: 8fr 8fr 5fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   align-items: start;
-  gap: 1.5rem;
+  gap: 2rem;
   margin-top: 0;
 }
 
@@ -94,7 +94,7 @@
   align-items: center;
   gap: 0.45rem;
   margin: 0 0 0.5rem;
-  padding-left: 10px;
+  padding: 0;
   font-size: 0.84rem;
   font-weight: 650;
   text-align: left;
@@ -273,11 +273,6 @@
 }
 
 @media (max-width: 1040px) {
-  .contact-details-columns {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
-  }
-
   .contact-qr {
     width: min(280px, 82vw);
   }
@@ -285,8 +280,9 @@
 
 .contact-social-details {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0;
+  gap: 0.25rem;
 }
 
 .contact-social-logo {
@@ -294,18 +290,19 @@
   min-width: 44px;
   max-width: 44px;
   height: 44px;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .contact-direct-details {
   display: flex;
-  gap: 0;
+  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
 .contact-direct-details dt > :is(a, button) {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   width: 44px;
   height: 44px;
   flex: 0 0 44px;
@@ -324,14 +321,6 @@
 .contact-direct-details .contact-details-icon > svg {
   width: 24px;
   height: 24px;
-}
-
-@media (max-width: 480px) {
-  .contact-app-platform-label,
-  .contact-social-logo {
-    flex: 1 1 0;
-    min-width: 32px;
-  }
 }
 
 .contact-social-dialog {
