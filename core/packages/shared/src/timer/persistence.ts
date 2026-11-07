@@ -252,6 +252,19 @@ export function decodeTimerSolve(value: unknown, event: EventId): Solve | null {
     if (typeof value.comment !== 'string') return null;
     decoded.comment = value.comment;
   }
+  if (event === 'pll-chain' && isRecord(value.pllChain) && Array.isArray(value.pllChain.order)
+    && value.pllChain.order.length === 21 && value.pllChain.order.every(id => typeof id === 'string')
+    && new Set(value.pllChain.order).size === 21
+    && typeof value.pllChain.verified === 'boolean' && Array.isArray(value.pllChain.splits)
+    && value.pllChain.splits.length <= 21
+    && (!value.pllChain.verified || value.pllChain.splits.length === 21)
+    && value.pllChain.splits.every(split => isRecord(split) && typeof split.caseId === 'string'
+      && Number.isSafeInteger(split.endMove) && isFiniteNonNegative(split.endMove) && isFiniteNonNegative(split.elapsedMs))) {
+    decoded.pllChain = {
+      order: [...value.pllChain.order] as string[], verified: value.pllChain.verified,
+      splits: value.pllChain.splits.map(split => ({ caseId: split.caseId, endMove: split.endMove, elapsedMs: split.elapsedMs })),
+    };
+  }
   if (value.stages !== undefined) {
     if (!isRecord(value.stages)
       || (value.stages.cross !== undefined && !isFiniteNonNegative(value.stages.cross))

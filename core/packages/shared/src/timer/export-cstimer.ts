@@ -129,6 +129,7 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
   ll: 'll',
   oll: 'ollt',
   pll: 'pllt',
+  'pll-chain': 'input',
   'cll': 'cll',
   'ell': 'ell',
   'eocp': CSTIMER_TRAINING_FALLBACKS.eocp,

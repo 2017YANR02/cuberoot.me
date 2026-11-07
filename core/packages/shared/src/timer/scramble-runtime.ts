@@ -168,6 +168,7 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   'lse': { kind: 'shared', provider: 'training-state' },
   'l10p': { kind: 'shared', provider: 'training-state' },
   custom: { kind: 'manual' },
+  'pll-chain': { kind: 'manual' },
 } as const satisfies Readonly<Record<EventId, TimerScrambleCapability>>);
 
 export type TimerScrambleErrorCode =
@@ -288,7 +289,7 @@ export function timerScrambleAllowsEmptySlot(
   event: EventId,
   source: TimerScrambleSourceKind,
 ): boolean {
-  return source === 'manual' || event === 'custom';
+  return source === 'manual' || event === 'custom' || event === 'pll-chain';
 }
 
 async function defaultCubingScrambleGenerator(

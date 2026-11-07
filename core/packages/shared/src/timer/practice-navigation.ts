@@ -37,7 +37,7 @@ function formulaSetForTimer(event: EventId, type222?: Scramble222Type): string {
  * One content may offer random timing, selected cases, and recognition. The
  * catalog owns membership and labels; this projection only joins those routes.
  */
-export function timerPracticeContents(event: string): readonly TimerPracticeContent[] {
+export function timerPracticeContents(event: string, capabilities: { pllChain?: boolean } = {}): readonly TimerPracticeContent[] {
   const timerEvent = timerEventIdFromSelector(event) ?? '333';
   const puzzle = trainingPuzzleForEvent(timerEvent);
   const directory = trainingDirectoryForEvent(timerEvent);
@@ -91,6 +91,8 @@ export function timerPracticeContents(event: string): readonly TimerPracticeCont
   if (puzzle === '333') {
     for (const type of TIMER_333_SCRAMBLE_TYPES) {
       if (type.event === '333') continue;
+      // Only expose chains in hosts wired to the operation-completion callback.
+      if (type.event === 'pll-chain' && !capabilities.pllChain) continue;
       const info = eventInfo(type.event);
       addTimer(`timer:${type.event}`, { zh: info.nameZh, en: info.nameEn }, '3x3',
         formulaSetForTimer(type.event), { event: type.event });

@@ -85,6 +85,9 @@
   align-self: flex-end;
 }
 
+.settings-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; }
+.settings-dialog-heading h2 { margin: 0; font-size: 16px; font-weight: 600; }
+
 .training-settings-more > summary {
   cursor: pointer;
   font-size: 0.85rem;

@@ -56,6 +56,8 @@ export interface SmartCubeSoloTimerControllerOptions<
   onGuidanceChange?(state: SmartCubeGuidanceState): void;
   onMove?(event: SmartCubeSoloMove<Metadata>): void;
   recordMove(event: SmartCubeSoloMove<Metadata>): void;
+  /** Sequence goals reuse the same start, recorder and stop pipeline. */
+  sequenceComplete?(event: SmartCubeSoloMove<Metadata>): boolean;
   solve(fromFacelets: string, targetFacelets: string): Promise<string | null>;
   startFromCube(timestamp: number, clock?: MoveClockSample): boolean;
   stopFromCube(timestamp?: number, clock?: MoveClockSample): boolean;
@@ -226,7 +228,7 @@ export class SmartCubeSoloTimerController<
     const event = this.runningEvent ?? this.context?.event ?? null;
     if (!running || !event || !timerSupportsSmartCubeAutoTiming(event)) return false;
     // Partial goals are judged from moves in the pinned training frame, never a transport's solved flag.
-    if (timerSmartCubeTrainingStep(event)) return false;
+    if (event === 'pll-chain' || timerSmartCubeTrainingStep(event)) return false;
     return this.finish(timestamp, clock);
   }
 
@@ -268,6 +270,10 @@ export class SmartCubeSoloTimerController<
   }
 
   private observeTrainingFinish(event: SmartCubeSoloMove<Metadata>): void {
+    if (this.runningEvent === 'pll-chain') {
+      if (this.options.sequenceComplete?.(event)) this.finish(event.timestamp, event.clock);
+      return;
+    }
     const complete = this.isTrainingComplete(event.facelets);
     if (complete === null) return;
     const becameComplete = this.trainingComplete === false && complete;

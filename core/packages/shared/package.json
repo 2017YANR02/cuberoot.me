@@ -14,6 +14,7 @@
       "react-dom": "react-dom"
     },
     "runtime": {
+      "./wca-stat-catalog": "runtime-neutral",
       "./bld/read-engine": "runtime-neutral",
       "./bld/lettering": "runtime-neutral",
       "./bld/facelet-model": "runtime-neutral",

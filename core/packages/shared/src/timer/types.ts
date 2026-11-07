@@ -36,7 +36,7 @@ export type EventId =
   // Relays
   | 'r3' | 'r4' | 'r5'
   // CFOP step training
-  | 'cross' | 'f2l' | 'll' | 'oll' | 'pll'
+  | 'cross' | 'f2l' | 'll' | 'oll' | 'pll' | 'pll-chain'
   // LL training subsets
   | 'coll' | 'cmll' | 'zbll' | 'eg1' | 'eg2'
   | 'cll' | 'ell' | 'eocp' | '2gll' | 'ollcp' | 'zzll' | 'zbls' | 'cfzb' | 'lse' | 'l10p'
@@ -106,6 +106,12 @@ export interface Solve {
   /** Smart-cube training clock origin. Moves and timeMs share this origin,
    * including pre-turn observation for scrambled/manual starts. */
   trainingStartMode?: TrainingStartMode;
+  /** Ordered PLL operation training, stored with the ordinary timer result. */
+  pllChain?: {
+    order: string[];
+    verified: boolean;
+    splits: Array<{ caseId: string; endMove: number; elapsedMs: number }>;
+  };
   /** Bluetooth-recorded move stream for solve reconstruction.
    * Each entry is { m: face notation move, ts: ms since solve start
    * (training may include the pre-turn observation interval). WCA inspection-time moves are
@@ -280,6 +286,7 @@ export const EVENTS: EventInfo[] = [
   // Last-layer training
   { id: 'oll',    nameEn: 'OLL',         nameZh: 'OLL',        group: 'll' },
   { id: 'pll',    nameEn: 'PLL',         nameZh: 'PLL',        group: 'll' },
+  { id: 'pll-chain', nameEn: 'PLL chain', nameZh: 'PLL 连拧', group: 'll' },
   { id: 'coll',   nameEn: 'COLL',        nameZh: 'COLL',       group: 'll' },
   { id: 'cmll',   nameEn: 'CMLL',        nameZh: 'CMLL',       group: 'll' },
   { id: 'zbll',   nameEn: 'ZBLL',        nameZh: 'ZBLL',       group: 'll' },

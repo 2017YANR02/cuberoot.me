@@ -17,6 +17,7 @@ import {
   type TimerSolveDetailStageId,
 } from '@cuberoot/shared/timer';
 import { X } from 'lucide-react';
+import { pllCommentName } from '@cuberoot/shared/recon/alg-case-display';
 import {
   useCallback,
   useEffect,
@@ -62,6 +63,9 @@ const COPY = {
   scramble: { en: 'Scramble', zh: '打乱' },
   solved: { en: 'Solved', zh: '已还原' },
   stageSplits: { en: 'Stage splits', zh: '分阶段成绩' },
+  pllChain: { en: 'PLL chain', zh: 'PLL 连拧' },
+  recognized: { en: 'Recognized', zh: '已识别' },
+  notVerified: { en: 'Not verified', zh: '未验证' },
   time: { en: 'Time', zh: '用时' },
   total: { en: 'Total', zh: '总计' },
   unsolved: { en: 'Unsolved', zh: '未还原' },
@@ -114,7 +118,7 @@ function SplitTable({
   rows: readonly {
     cumulativeMs: number | null;
     durationMs: number | null;
-    id: TimerSolveDetailStageId;
+    id: string;
     label: string;
   }[];
   total: string;
@@ -323,6 +327,17 @@ export function TimerSolveDetailModal({
   const bld = timerSolveDetailBldTimes(solve);
   const splitSections = (
     <>
+      {solve.pllChain && (
+        <section className="timer-solve-detail-section">
+          <h3>{localize(COPY.pllChain)} · {localize(solve.pllChain.verified ? COPY.recognized : COPY.notVerified)}</h3>
+          <SplitTable rows={solve.pllChain.order.map((id, i) => {
+            const split = solve.pllChain!.splits[i];
+            const previous = solve.pllChain!.splits[i - 1]?.elapsedMs ?? 0;
+            return { id, label: pllCommentName(id), cumulativeMs: split?.elapsedMs ?? null,
+              durationMs: split ? Math.max(0, split.elapsedMs - previous) : null };
+          })} total={formatMs(solve.timeMs)} totalLabel={localize(COPY.total)} />
+        </section>
+      )}
       {stageRows.length > 0 && (
         <section className="timer-solve-detail-section">
           <h3>{localize(COPY.stageSplits)}</h3>
@@ -496,10 +511,10 @@ export function TimerSolveDetailModal({
               <div>{localize(COPY.date)}: {formatDate(solve.ts)}</div>
             </section>
             <section className="timer-solve-detail-section">{penalty}</section>
-            <section className="timer-solve-detail-section">
+            {solve.scramble && <section className="timer-solve-detail-section">
               <div>{localize(COPY.scramble)}:</div>
               <div className="timer-solve-detail-scramble">{solve.scramble}</div>
-            </section>
+            </section>}
             {preview && <section className="timer-solve-detail-preview">{preview}</section>}
             {reconstructionMetrics && (
               <TimerReconstructMetrics localize={localize} metrics={reconstructionMetrics} />
