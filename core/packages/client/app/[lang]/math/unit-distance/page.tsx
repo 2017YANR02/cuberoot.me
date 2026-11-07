@@ -1,4 +1,3 @@
-import PageBackLink from '@/components/PageBackLink';
 /**
  * /math/unit-distance — visual companion to OpenAI 2026:
  *   "Planar Point Sets with Many Unit Distances"
@@ -18,6 +17,7 @@ import PageBackLink from '@/components/PageBackLink';
  */
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';

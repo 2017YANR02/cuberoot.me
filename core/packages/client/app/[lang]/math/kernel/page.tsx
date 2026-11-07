@@ -1,4 +1,3 @@
-import PageBackLink from '@/components/PageBackLink';
 /**
  * /math/kernel — an accessible-but-rigorous explainer of the /sim "group-theory kernel":
  * how the simulator turns a twisty puzzle on screen into its real permutation group G,
@@ -13,6 +12,7 @@ import PageBackLink from '@/components/PageBackLink';
  */
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import MoreToggle from '@/components/MoreToggle';
 import { Fragment, useState } from 'react';
 import Link from '@/components/AppLink';
