@@ -99,6 +99,17 @@ export function SettingsPopover({
   const settingsHost = hosted ? trainingHost : null;
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
+  const [modalPresent, setModalPresent] = useState(false);
+  useEffect(() => {
+    if (!modal) return;
+    if (open) {
+      setModalPresent(true);
+      return;
+    }
+    const timeout = window.setTimeout(() => setModalPresent(false),
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 180);
+    return () => window.clearTimeout(timeout);
+  }, [open, modal]);
   const setOpen = useCallback((next: boolean) => {
     if (controlledOpen === undefined) setUncontrolledOpen(next);
     onOpenChange?.(next);
@@ -129,7 +140,7 @@ export function SettingsPopover({
         <Settings size={iconSize} aria-hidden="true" />
       </button>
       {!settingsHost && triggerSuffix}
-      {open && modal && <SettingsDialog label={label} panelClassName={panelClassName} onClose={close}>{children}</SettingsDialog>}
+      {modal && (open || modalPresent) && <SettingsDialog label={label} panelClassName={panelClassName} closing={!open} onClose={close}>{children}</SettingsDialog>}
       {open && !modal && (
         // Nested fixed menus portal into this unfiltered dialog boundary, so
         // outside dismissal and viewport coordinates both remain correct.

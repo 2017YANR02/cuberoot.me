@@ -69,6 +69,40 @@
   outline: none;
 }
 
+.settings-dialog-backdrop[data-state='open'] {
+  animation: settings-backdrop-in 180ms ease-out both;
+}
+
+.settings-dialog-backdrop[data-state='open'] .settings-dialog {
+  animation: settings-dialog-in 180ms ease-out both;
+}
+
+.settings-dialog-backdrop[data-state='closing'] {
+  animation: settings-backdrop-out 180ms ease-in both;
+}
+
+.settings-dialog-backdrop[data-state='closing'] .settings-dialog {
+  animation: settings-dialog-out 180ms ease-in both;
+}
+
+@keyframes settings-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes settings-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes settings-dialog-in {
+  from { opacity: 0; transform: translateY(8px) scale(.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes settings-dialog-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(8px) scale(.98); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-dialog-backdrop[data-state],
+  .settings-dialog-backdrop[data-state] .settings-dialog {
+    animation: none;
+  }
+}
+
 .settings-dialog .settings-popover-panel.settings-dialog-panel {
   position: relative;
   inset: auto;
