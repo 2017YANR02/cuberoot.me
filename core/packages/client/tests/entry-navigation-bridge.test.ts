@@ -8,33 +8,43 @@ let root: Root;
 let host: HTMLDivElement;
 beforeEach(async () => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+  sessionStorage.clear();
   window.history.replaceState(null, '', '/zh/shop?q=mat');
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
   await act(async () => root.render(createElement(EntryNavigationBridge)));
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); document.querySelectorAll('a').forEach(a => a.remove()); });
 function anchor(href: string) { const a = document.createElement('a'); a.setAttribute('href', href); document.body.append(a); return a; }
-it('prepares real links for middle-click and keyboard navigation', () => {
+it('never rewrites links when focusing, copying or opening context menus', () => {
+  const a = anchor('/zh/contact');
   for (const event of ['pointerdown', 'focusin', 'contextmenu']) {
-    const a = anchor('/zh/platform/orders'); a.dispatchEvent(new Event(event, { bubbles: true }));
-    expect(entryNavigationBack(a.getAttribute('href')!)).toBe('/zh/shop?q=mat');
+    a.dispatchEvent(new Event(event, { bubbles: true }));
+    expect(a.getAttribute('href')).toBe('/zh/contact'); expect(sessionStorage.length).toBe(0);
   }
 });
-it('does not accumulate context on repeated events or keep a stale source', () => {
-  const a = anchor('/zh/contact'); a.dispatchEvent(new Event('pointerdown', { bubbles: true })); const first = a.getAttribute('href');
-  a.dispatchEvent(new Event('focusin', { bubbles: true })); a.dispatchEvent(new Event('contextmenu', { bubbles: true })); expect(a.getAttribute('href')).toBe(first);
-  window.history.replaceState(null, '', '/zh/teachers'); a.dispatchEvent(new Event('pointerdown', { bubbles: true })); expect(entryNavigationBack(a.getAttribute('href')!)).toBe('/zh/teachers');
+it('records an actual native navigation locally without changing its href', () => {
+  const a = anchor('/zh/contact');
+  a.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  expect(a.getAttribute('href')).toBe('/zh/contact'); expect(sessionStorage.length).toBe(1);
+  window.history.pushState(null, '', a.href);
+  expect(entryNavigationBack('/zh/contact')).toBe('/zh/shop?q=mat');
 });
-it('respects managed links, explicit opt-outs, downloads and external destinations', () => {
+it('does not record cancelled clicks, managed links, modified clicks or new-tab targets', () => {
+  const a = anchor('/zh/contact');
+  a.addEventListener('click', event => event.preventDefault(), { once: true });
+  a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
   for (const attr of ['data-entry-navigation', 'download']) {
-    const a = anchor('/zh/contact'); a.setAttribute(attr, 'none'); a.dispatchEvent(new Event('pointerdown', { bubbles: true })); expect(a.getAttribute('href')).toBe('/zh/contact');
+    const managed = anchor('/zh/contact'); managed.setAttribute(attr, 'none');
+    managed.dispatchEvent(new MouseEvent('click', { bubbles: true }));
   }
-  for (const target of ['#apps', 'https://example.com', '/icons/logo.svg', '/auth/login']) {
-    const a = anchor(target); a.dispatchEvent(new Event('pointerdown', { bubbles: true })); expect(a.getAttribute('href')).toBe(target);
-  }
+  a.dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: true }));
+  a.target = '_blank'; a.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  expect(sessionStorage.length).toBe(0);
 });
-it('handles reused DOM anchors with changed destinations', () => {
-  const a = anchor('/zh/contact'); a.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-  a.setAttribute('href', '/zh/privacy'); a.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-  expect(a.getAttribute('href')).toMatch(/^\/zh\/privacy\?/); expect(entryNavigationBack(a.getAttribute('href')!)).toBe('/zh/shop?q=mat');
+it('ignores external links, resources, auth and local anchors', () => {
+  for (const target of ['#apps', 'https://example.com', '/icons/logo.svg', '/auth/login']) {
+    const a = anchor(target); a.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(a.getAttribute('href')).toBe(target);
+  }
+  expect(sessionStorage.length).toBe(0);
 });

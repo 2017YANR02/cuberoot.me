@@ -1,26 +1,23 @@
 'use client';
 
 import { useEffect } from 'react';
-import { entryNavigationHref } from '@/lib/entry-navigation';
+import { currentEntryHref, installEntryNavigation } from '@/lib/entry-navigation';
 
 /** Native anchors in prose, map popups and generated HTML share AppLink's entry contract. */
 export default function EntryNavigationBridge() {
   useEffect(() => {
-    const originals = new WeakMap<HTMLAnchorElement, { original: string; applied: string }>();
-    const prepare = (event: Event) => {
+    const dispose = installEntryNavigation();
+    const prepare = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const anchor = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a[href]') : null;
-      if (!anchor || anchor.hasAttribute('download') || anchor.hasAttribute('data-entry-navigation')) return;
-      const previous = originals.get(anchor);
-      const original = previous?.applied === anchor.getAttribute('href') ? previous.original : anchor.getAttribute('href')!;
-      if (!original.startsWith('/') || original.startsWith('//')) return;
-      const current = window.location.pathname + window.location.search + window.location.hash;
-      const applied = entryNavigationHref(original, current);
-      if (applied !== anchor.getAttribute('href')) anchor.setAttribute('href', applied);
-      originals.set(anchor, { original, applied });
+      if (!anchor || anchor.hasAttribute('download') || anchor.hasAttribute('data-entry-navigation')
+        || anchor.target && anchor.target !== '_self' || anchor.origin !== window.location.origin) return;
+      if (anchor.getAttribute('href')?.startsWith('#')) return;
+      currentEntryHref(anchor.pathname + anchor.search + anchor.hash);
     };
-    const events = ['pointerdown', 'focusin', 'contextmenu', 'click'];
-    for (const event of events) document.addEventListener(event, prepare, true);
-    return () => { for (const event of events) document.removeEventListener(event, prepare, true); };
+    // Bubble phase respects cancelled clicks. Copying, focusing and opening a new tab never mutate links.
+    document.addEventListener('click', prepare);
+    return () => { document.removeEventListener('click', prepare); dispose(); };
   }, []);
   return null;
 }

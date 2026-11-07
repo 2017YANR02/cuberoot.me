@@ -23,9 +23,9 @@ WCA 通用统计页面的有效 ID 与分类统一定义在 `core/packages/share
 
 ### 入口来源与返回
 
-- 站内前进链接复用 `AppLink`，程序式导航复用 `hooks/useEntryRouter`，整页跳转和新标签页先经过 `currentEntryHref`。它们共同调用 `lib/entry-navigation.ts`，不另建页面来源状态或全局“最后访问页”。原生正文、地图弹出框链接由根入口 `EntryNavigationBridge` 在交互时接入同一契约；静态资源、外链、认证回调、下载和锚点不记录。
+- 站内前进链接复用 `AppLink`，程序式导航复用 `hooks/useEntryRouter`，整页跳转先经过 `currentEntryHref`。它们共同调用 `lib/entry-navigation.ts`，不另建页面来源状态或全局“最后访问页”。原生正文、地图弹出框链接由根入口 `EntryNavigationBridge` 在实际点击时接入同一契约；静态资源、外链、认证回调、下载和锚点不记录。
 - 返回箭头复用 `PageBackLink`（默认首页可用 `BackHome`）：有来源时逐层返回真实入口，无来源时使用页面声明的 `fallback`。品牌与明确的主页链接仍使用 `HomeLink`。不要把返回箭头写成固定的主页或模块入口。
-- 来源链存入 `navBack`，刷新、新标签页和复制链接后可恢复。最多保留 8 层、4096 字符；只记录站内产品路径及源码白名单中的轻量筛选状态，不复制凭据、支付参数、嵌套来源或私密分享路径。旧 `accountBack/accountEntry`、`shopBack/shopEntry` 仅作为历史链接读取。
+- 来源链只存每条浏览器历史记录的 `history.state`，刷新及浏览器前进/后退可恢复；实际导航用一次性 `sessionStorage` 交接支持整页跳转，登录/支付的 `next` 续程也在标签页内交接。不得把来源写入 query、hash、链接或分享地址。独立打开、分享给他人或无来源的新标签页使用页面 `fallback`。最多保留 8 层、4096 字符；只记录站内产品路径及源码白名单中的轻量筛选状态，不复制凭据、支付参数、嵌套来源或私密分享路径。旧 `navBack`、`accountBack/accountEntry`、`shopBack/shopEntry` 仅在进入时迁入本地历史并从地址清除。
 - 同路径筛选、锚点与 `router.replace` 保留来源而不新增一层；链接指向已有祖先时收回对应层级，避免往返循环。真正的前进使用 `push`。登录的 `next` 继续保留其原业务目的，导航层补齐来源，登录回跳不作为新的产品入口。
 - `AppLink navigation="return"` 只用于已经由共享返回函数算出的目标，`navigation="none"` 用于确实不参与来源链的入口。原生链接如需排除，声明 `data-entry-navigation="none"`。弹层关闭、沉浸式浏览器后退、小程序原生返回桥仍遵循各自契约。
 

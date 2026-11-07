@@ -3,7 +3,7 @@ import { act, createElement, StrictMode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { CompetitionCalendarButton } from '@/components/CompetitionCalendarButton';
-import { entryNavigationBack } from '@/lib/entry-navigation';
+import { entryNavigationBack, installEntryNavigation } from '@/lib/entry-navigation';
 const mocks = vi.hoisted(() => ({ user: null as { uid: number } | null, push: vi.fn(), add: vi.fn(), check: vi.fn() }));
 vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => mocks.user, nextQuery: (path: string) => `?next=${encodeURIComponent(path)}` }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }));
@@ -12,15 +12,17 @@ vi.mock('@/i18n/tr', () => ({ tr: ({ zh }: { zh: string }) => zh }));
 vi.mock('@/components/AppLink', () => ({ default: ({ prefetch: _prefetch, ...props }: import('react').ComponentProps<'a'> & { prefetch?: boolean }) => createElement('a', props) }));
 const competition = { id: 'LishuiOpen2026', title: '丽水公开赛2026', startDate: '2026-12-06', endDate: '2026-12-06', location: '丽水' };
 let root: Root;
+let disposeNavigation: () => void;
 let host: HTMLDivElement;
 const render = async (input = competition) => { await act(async () => root.render(createElement(StrictMode, null, createElement(CompetitionCalendarButton, { competition: input })))); };
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks(); mocks.add.mockResolvedValue(undefined); mocks.check.mockResolvedValue(false); mocks.user = null;
   sessionStorage.clear(); window.history.replaceState(null, '', '/zh/wca/comp/LishuiOpen2026?view=psych');
+  disposeNavigation = installEntryNavigation();
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
 });
-afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
+afterEach(async () => { await act(async () => root.unmount()); host.remove(); disposeNavigation(); });
 it('returns to the same view after login and adds exactly once, only once dates have loaded', async () => {
   await render();
   await act(async () => host.querySelector<HTMLButtonElement>('button')!.click());
@@ -28,7 +30,10 @@ it('returns to the same view after login and adds exactly once, only once dates 
   const login = new URL(mocks.push.mock.calls[0][0], window.location.origin);
   expect(login.pathname).toBe('/zh/account');
   expect(login.searchParams.get('next')).toBe('/zh/wca/comp/LishuiOpen2026?view=psych');
+  expect(login.searchParams.has('navBack')).toBe(false);
+  window.history.pushState(null, '', login.href);
   expect(entryNavigationBack(login.pathname + login.search)).toBe('/zh/wca/comp/LishuiOpen2026?view=psych');
+  window.history.replaceState(null, '', '/zh/wca/comp/LishuiOpen2026?view=psych');
   await act(async () => root.unmount()); root = createRoot(host);
   mocks.user = { uid: 7 };
   await render({ ...competition, startDate: '' });

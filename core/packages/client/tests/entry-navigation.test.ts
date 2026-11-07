@@ -1,107 +1,156 @@
-import { describe, expect, it } from 'vitest';
-import { entryNavigationBack as back, entryNavigationHref as href, ENTRY_NAVIGATION_KEY } from '@/lib/entry-navigation';
+// @vitest-environment jsdom
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  currentEntryHref, entryNavigationBack, entryNavigationHref, installEntryNavigation,
+} from '@/lib/entry-navigation';
 
-const url = (path: string) => new URL(path, 'https://cuberoot.invalid');
-const clean = (path: string) => { const value = url(path); value.searchParams.delete(ENTRY_NAVIGATION_KEY); return value.pathname + value.search + value.hash; };
+const nativeReplace = window.history.replaceState.bind(window.history);
+let dispose: () => void;
+const current = () => window.location.pathname + window.location.search + window.location.hash;
+const back = () => entryNavigationBack(current());
+function visit(path: string) {
+  dispose?.();
+  sessionStorage.clear();
+  nativeReplace({ __NA: true, tree: 'next-router' }, '', path);
+  dispose = installEntryNavigation();
+}
+function go(path: string, mode: 'push' | 'replace' | 'return' | 'none' = 'push') {
+  const href = currentEntryHref(path, mode);
+  window.history[mode === 'replace' ? 'replaceState' : 'pushState']({ __NA: true, tree: 'next-router' }, '', href);
+  expect(current()).toBe(href);
+  expect(href).not.toMatch(/navBack|accountBack|shopBack/);
+  return href;
+}
+async function traverse(delta: number) {
+  const restored = new Promise<void>(resolve => window.addEventListener('popstate', () => resolve(), { once: true }));
+  window.history.go(delta);
+  await restored;
+}
+beforeEach(() => visit('/'));
+afterEach(() => { dispose(); vi.restoreAllMocks(); });
 
-describe('shared entry navigation', () => {
-  it.each(['/platform/orders', '/platform/account/shipping', '/platform/account/wishlist', '/platform/admin/products', '/account', '/contact', '/privacy'])('returns from shop entry %s to shop', target => {
-    expect(back(href(target, '/shop'))).toBe('/shop');
-    expect(back(href('/zh' + target, '/zh/shop'))).toBe('/zh/shop');
-  });
+describe('local entry navigation', () => {
   it.each([
+    ['/platform/orders', '/shop'],
+    ['/zh/platform/account/shipping', '/zh/shop?q=mat'],
     ['/wca/persons/2017TEST01', '/wca/results?tab=records'],
     ['/timer', '/alg/3x3/oll'],
     ['/teachers?teacher=42', '/platform/courses'],
     ['/membership', '/account?settings=account'],
-    ['/contact', '/shop'],
     ['/recon/123', '/recon?q=OLL&page=3'],
     ['/docs/edit?id=123', '/docs'],
-    ['/dev/algorithms', '/search?q=solver'],
-  ])('returns %s to its actual entry %s', (target, source) => {
-    expect(back(href(target, source))).toBe(source);
+  ])('returns %s to %s without putting provenance in the link', (target, source) => {
+    visit(source);
+    expect(entryNavigationHref(target, source)).toBe(target);
+    go(target);
+    expect(back()).toBe(source);
+    expect(window.history.state.tree).toBe('next-router');
   });
-  it('unwinds a multi-module journey after reload without adding reverse links', () => {
-    const orders = href('/zh/platform/orders', '/zh/shop?q=mat');
-    const detail = href('/zh/platform/orders/123', orders);
-    const contact = href('/zh/contact', detail);
-    const detailBack = back(contact)!;
-    expect(clean(detailBack)).toBe('/zh/platform/orders/123');
-    expect(back(detailBack)).toBe(orders);
-    expect(back(orders)).toBe('/zh/shop?q=mat');
-    expect(href(detailBack, contact, 'return')).toBe(detailBack);
+  it('unwinds a multi-module journey across reloads', () => {
+    visit('/zh/shop?q=mat');
+    go('/zh/platform/orders'); go('/zh/platform/orders/123'); go('/zh/contact');
+    dispose(); dispose = installEntryNavigation();
+    expect(back()).toBe('/zh/platform/orders/123');
+    go(back()!, 'return'); expect(back()).toBe('/zh/platform/orders');
+    go(back()!, 'return'); expect(back()).toBe('/zh/shop?q=mat');
+    go(back()!, 'return'); expect(back()).toBeNull();
   });
-  it('keeps direct entry fallbacks unchanged', () => {
-    expect(back('/platform/orders', '/platform')).toBeNull();
-    expect(href('/platform', '/platform/orders', 'back')).toBe('/platform');
-    expect(href('/platform/orders', '/platform/orders/123', 'return')).toBe('/platform/orders');
+  it('keeps separate histories for repeated visits to the same destination', async () => {
+    visit('/shop'); go('/contact'); go('/'); go('/wca'); go('/contact');
+    expect(back()).toBe('/wca');
+    await traverse(-3); expect(current()).toBe('/contact'); expect(back()).toBe('/shop');
+    await traverse(3); expect(current()).toBe('/contact'); expect(back()).toBe('/wca');
   });
-  it('distinguishes document identities on a shared editor route', () => {
-    const first = href('/docs/edit?id=1', '/docs');
-    const second = href('/docs/edit?id=2', first);
-    expect(back(second)).toBe(first);
-    expect(back(href('/docs/edit?id=2&tab=comments', second))).toBe(first);
+  it('does not leak local history into a shared or independently opened URL', () => {
+    visit('/shop'); const shared = go('/contact');
+    expect(shared).toBe('/contact');
+    visit(shared); expect(back()).toBeNull();
   });
-  it('retains provenance through filters, anchors, replacements and locale changes', () => {
-    const entry = href('/zh/wca/results?tab=records', '/zh/wca');
-    expect(back(href('/zh/wca/results?tab=rankings', entry))).toBe('/zh/wca');
-    expect(back(href('/zh/wca/results#333', entry))).toBe('/zh/wca');
-    expect(back(href('/wca/results?tab=records', entry, 'replace'))).toBe('/zh/wca');
-    const legacy = href('/zh/dev/team', '/zh/account?settings=account');
-    expect(back(href('/zh/admin/team?section=projects', legacy, 'replace'))).toBe('/zh/account?settings=account');
+  it('distinguishes document identities but preserves filters, anchors and replacements', () => {
+    visit('/docs'); go('/docs/edit?id=1'); go('/docs/edit?id=2');
+    expect(back()).toBe('/docs/edit?id=1');
+    window.history.replaceState({ nuqs: 'preserved' }, '', '/docs/edit?id=2&tab=comments#top');
+    expect(back()).toBe('/docs/edit?id=1'); expect(window.history.state.nuqs).toBe('preserved');
+    go('/zh/docs/edit?id=2&tab=comments', 'replace'); expect(back()).toBe('/docs/edit?id=1');
   });
-  it('collapses ancestor links instead of creating A-B-A loops', () => {
-    const b = href('/b', '/a');
-    const c = href('/c', b);
-    expect(href('/a', c)).toBe('/a');
-    expect(href('/b', c)).toBe(b);
+  it('collapses ancestor links and clears explicit home/opt-out journeys', () => {
+    visit('/a'); go('/b'); go('/c'); go('/b'); expect(back()).toBe('/a');
+    go('/'); expect(back()).toBeNull();
+    go('/contact', 'none'); expect(back()).toBeNull();
   });
-  it('uses explicit Home links to leave the journey', () => {
-    expect(href('/zh', href('/zh/contact', '/zh/shop'))).toBe('/zh');
-    expect(href('/', '/shop', 'none')).toBe('/');
+  it('hands off full-page navigation once without URL metadata', () => {
+    visit('/shop?q=mat');
+    const href = currentEntryHref('/contact');
+    dispose(); nativeReplace(null, '', href); dispose = installEntryNavigation();
+    expect(back()).toBe('/shop?q=mat');
+    dispose(); nativeReplace(null, '', href); dispose = installEntryNavigation();
+    expect(back()).toBeNull();
   });
-  it('retains login destinations and resumes without a login loop', () => {
-    const detail = href('/recon/123', '/recon?page=3');
-    const login = href('/account?next=%2Frecon%2F123', detail);
-    const next = url(login).searchParams.get('next')!;
-    expect(back(login)).toBe(detail);
-    expect(next).toBe(detail);
-    expect(href(next, login, 'replace')).toBe(detail);
+  it('does not reuse an expired handoff from a cancelled navigation', () => {
+    visit('/shop'); currentEntryHref('/contact');
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 31_000);
+    dispose(); nativeReplace(null, '', '/contact'); dispose = installEntryNavigation();
+    expect(back()).toBeNull();
   });
-  it('keeps membership destinations that differ from the entry', () => {
-    const login = href('/account?next=%2Fmembership%3Fnext%3D%252Ftimer', '/timer');
-    const membership = href(url(login).searchParams.get('next')!, login, 'replace');
-    expect(back(membership)).toBe('/timer');
-    expect(url(membership).searchParams.get('next')).toBe('/timer');
+  it('keeps the login next URL intact and resumes after an external auth round trip', () => {
+    visit('/recon?page=3'); go('/recon/123');
+    const login = go('/account?next=%2Frecon%2F123');
+    expect(new URL(login, window.location.origin).searchParams.get('next')).toBe('/recon/123');
+    expect(back()).toBe('/recon/123');
+    dispose(); nativeReplace(null, '', '/auth/callback'); dispose = installEntryNavigation();
+    window.history.replaceState({ __NA: true }, '', currentEntryHref('/recon/123', 'replace'));
+    expect(back()).toBe('/recon?page=3');
   });
-  it('excludes auth, payment and private payloads from snapshots', () => {
-    const target = href('/contact', '/shop?q=mat&ticket=secret&token=secret&next=%2Faccount&order=123&state=secret');
-    expect(back(target)).toBe('/shop?q=mat');
-    expect(target).not.toMatch(/secret|ticket|token|order/);
-    expect(back(href('/contact', '/calendar/s/private-token'))).toBeNull();
+  it('keeps nested membership continuations outside the URL', () => {
+    visit('/alg'); go('/timer');
+    go('/account?next=%2Fmembership%3Fnext%3D%252Ftimer');
+    go('/membership?next=%2Ftimer', 'replace');
+    expect(back()).toBe('/timer');
+    go('/timer', 'replace'); expect(back()).toBe('/alg');
   });
-  it('bounds history without nested URL growth', () => {
-    let current = '/page0';
-    for (let i = 1; i <= 100; i++) current = href('/page' + i, current);
-    const trail = JSON.parse(url(current).searchParams.get(ENTRY_NAVIGATION_KEY)!);
-    expect(trail).toHaveLength(8);
-    expect(trail).toEqual(Array.from({ length: 8 }, (_, i) => '/page' + (92 + i)));
-    expect(current.length).toBeLessThan(500);
+  it('excludes credentials and private share paths from local provenance', () => {
+    visit('/shop?q=mat&ticket=secret&token=secret&next=%2Faccount&order=123'); go('/contact');
+    expect(back()).toBe('/shop?q=mat');
+    expect(JSON.stringify(window.history.state)).not.toMatch(/secret|ticket|token|order/);
+    visit('/calendar/s/private-token'); go('/contact'); expect(back()).toBeNull();
   });
-  it.each(['https://evil.test', '//evil.test', '/\\evil.test', 'javascript:alert(1)', '/api/test', '/auth/login', '/icons/logo.svg', '#section', 'mailto:a@example.com'])('does not rewrite non-product target %s', target => {
-    expect(href(target, '/shop')).toBe(target);
+  it('bounds the trail while URLs remain constant length', () => {
+    visit('/page0');
+    for (let i = 1; i <= 100; i++) go('/page' + i);
+    const trail: string[] = [];
+    while (back()) { trail.push(back()!); go(back()!, 'return'); }
+    expect(trail).toEqual(Array.from({ length: 8 }, (_, i) => '/page' + (99 - i)));
   });
-  it.each(['not-json', '["https://evil.test"]', '["//evil.test"]', '["/auth/login"]', '[12]', '{}', JSON.stringify(Array(9).fill('/shop'))])('rejects malformed trail %s', value => {
-    expect(back('/contact?navBack=' + encodeURIComponent(value))).toBeNull();
+  it.each(['https://evil.test', '//evil.test', '/\\evil.test', 'javascript:alert(1)', '/api/test', '/auth/login', '/icons/logo.svg', '#section', 'mailto:a@example.com'])('leaves non-product target %s alone', target => {
+    expect(entryNavigationHref(target, '/shop')).toBe(target);
   });
-  it('reads pre-existing account and shop links', () => {
-    expect(back('/pets?accountBack=%2Faccount%3Fsettings%3Dappearance&accountEntry=%2Fpets')).toBe('/account?settings=appearance');
-    expect(back('/platform/orders?shopBack=%2Fshop&shopEntry=%2Fplatform%2Forders')).toBe('/shop');
-    expect(back('/timer?shopBack=%2Fshop&shopEntry=%2Fplatform%2Forders')).toBeNull();
+  it.each(['not-json', '["https://evil.test"]', '["//evil.test"]', '["/auth/login"]', '[12]', '{}', JSON.stringify(Array(9).fill('/shop'))])('discards and removes malformed legacy trail %s', value => {
+    visit('/contact?navBack=' + encodeURIComponent(value));
+    expect(back()).toBeNull(); expect(current()).toBe('/contact');
   });
-  it('preserves target payloads rather than sanitizing product operations', () => {
-    const target = href('/sim?alg=R%20U%20R%27&token=required', '/alg/3x3');
-    expect(url(target).searchParams.get('alg')).toBe("R U R'");
-    expect(url(target).searchParams.get('token')).toBe('required');
+  it.each([
+    ['/contact?navBack=%5B%22%2Fshop%22%5D', '/contact', '/shop'],
+    ['/pets?accountBack=%2Faccount%3Fsettings%3Dappearance&accountEntry=%2Fpets', '/pets', '/account?settings=appearance'],
+    ['/platform/orders?shopBack=%2Fshop&shopEntry=%2Fplatform%2Forders', '/platform/orders', '/shop'],
+  ])('migrates legacy %s into history without losing router state', (legacy, clean, expected) => {
+    visit(legacy); expect(current()).toBe(clean); expect(back()).toBe(expected);
+    expect(window.history.state.tree).toBe('next-router');
+  });
+  it('preserves target business payloads and encoding', () => {
+    visit('/alg/3x3');
+    const target = '/sim?alg=R%20U%20R%27&token=required';
+    expect(go(target)).toBe(target); expect(back()).toBe('/alg/3x3');
+  });
+  it('cleans provenance inside old login continuations without dropping product state', () => {
+    const old = '/account?next=' + encodeURIComponent('/recon/123?tab=solution&navBack=' + encodeURIComponent('["/recon"]'));
+    visit(old);
+    expect(new URL(window.location.href).searchParams.get('next')).toBe('/recon/123?tab=solution');
+    expect(current()).not.toContain('navBack');
+  });
+  it('supports client navigation when sessionStorage is disabled', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('denied'); });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('denied'); });
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('denied'); });
+    go('/shop'); go('/contact'); expect(back()).toBe('/shop');
   });
 });

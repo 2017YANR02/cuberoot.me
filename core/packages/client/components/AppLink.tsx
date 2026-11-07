@@ -3,10 +3,9 @@ import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
 import NextLink from 'next/link';
 import { useParams } from 'next/navigation';
-import type { ComponentProps } from 'react';
+import { useRef, type ComponentProps } from 'react';
 import { useTrainingHref } from '@/lib/training-host';
-import { entryNavigationHref, type EntryNavigationMode } from '@/lib/entry-navigation';
-import { useLiveUrlSuffix } from '@/hooks/useLiveUrlSuffix';
+import { currentEntryHref, entryNavigationHref, type EntryNavigationMode } from '@/lib/entry-navigation';
 import { LinkPendingIndicator } from '@/components/StartupStatus';
 
 type Props = ComponentProps<typeof NextLink> & { navigation?: EntryNavigationMode };
@@ -22,7 +21,7 @@ const NO_PREFIX = /^\/(v1|api|auth|callback\.html|stats|tools|cubing-chunks|cube
 // away first.
 export default function AppLink({ href, navigation = 'push', prefetch = false, ...props }: Props) {
   const params = useParams();
-  const location = useLiveUrlSuffix();
+  const clickedHref = useRef('');
   const trainingHref = useTrainingHref();
   const douyin = useDouyinToolSurface();
   const lang = params?.lang;
@@ -37,9 +36,18 @@ export default function AppLink({ href, navigation = 'push', prefetch = false, .
     const bare = href.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
     h = prefix ? `${prefix}${bare === '/' ? '' : bare}` : bare;
   }
-  if (typeof h === 'string') h = entryNavigationHref(trainingHref(h), location, props.download ? 'none' : navigation);
+  if (typeof h === 'string') h = entryNavigationHref(trainingHref(h), '');
   if (douyin && !douyinContentAvailable(typeof h === 'string' ? h : String(h.pathname ?? '/'))) return null;
-  return <NextLink href={h} prefetch={prefetch} data-entry-navigation={navigation} {...props}>
+  return <NextLink href={h} prefetch={prefetch} data-entry-navigation={navigation} {...props}
+    onClick={(event) => {
+      props.onClick?.(event);
+      clickedHref.current = event.currentTarget.getAttribute('href') ?? '';
+    }}
+    onNavigate={(event) => {
+      let cancelled = false;
+      props.onNavigate?.({ preventDefault: () => { cancelled = true; event.preventDefault(); } });
+      if (!cancelled) currentEntryHref(clickedHref.current, props.replace && navigation === 'push' ? 'replace' : navigation);
+    }}>
     {props.children}
     <LinkPendingIndicator />
   </NextLink>;
