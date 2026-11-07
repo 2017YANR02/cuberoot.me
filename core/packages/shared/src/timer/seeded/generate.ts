@@ -12,7 +12,7 @@ import { formatTimerCompoundScramble, TIMER_COMPOUND_SCRAMBLE_CHILDREN } from '.
 import { generateTimerTrainerScramble, isTimerTrainerEvent, generateTimerDrillScramble } from '../trainer-scramble';
 import { applyColorNeutral, isCnEligible } from '../color-neutral';
 import { SCRAMBLE_222_TYPE_CATALOG } from '../scramble-222';
-import type { TimerScrambleRequest } from '../scramble-runtime';
+import { timerScrambleAllowsEmptySlot, type TimerScrambleRequest } from '../scramble-runtime';
 import type { TimerSeedTicket } from '../sync-seed';
 import type { EventId } from '../types';
 import { generateTimerTrainingStateScramble, isTimerTrainingStateEvent } from '../training-state-scramble';
@@ -73,13 +73,13 @@ export function generateSeededTimerScramble(request: TimerSeedRequest): TimerSee
       case 'mpyram': return cstimer('mpyrso');
       case 'r3': case 'r4': case 'r5': case '333mbld': case '666bld': case '777bld': case 'magic': case 'mmagic':
         return formatTimerCompoundScramble(id, TIMER_COMPOUND_SCRAMBLE_CHILDREN[id].map(generate), random);
-      case 'custom': return '';
+      case 'custom': case 'pll-chain': return '';
       default: throw new Error(`Unsupported seeded event: ${id}`);
     }
   };
   const drill = request.drill ? generateTimerDrillScramble(request.drill, random, request.cnMode) : null;
   const scramble = drill ? drill.scramble : generate(event);
-  if (event !== 'custom' && !scramble.trim()) throw new Error('Empty seeded scramble');
+  if (!timerScrambleAllowsEmptySlot(event, 'random') && !scramble.trim()) throw new Error('Empty seeded scramble');
   if (drill) caseId = event === request.drill?.type ? drill.targetCase : null;
   return { scramble: !drill && isCnEligible(event) ? applyColorNeutral(scramble, request.cnMode ?? 'none', random) : scramble, caseId };
 }

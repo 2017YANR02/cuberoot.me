@@ -47,6 +47,7 @@ describe('Web solo attempt recording lifecycle', () => {
       attemptStartedAtRef: ref(0),
       attemptSplitRecorder: { begin: vi.fn() },
       event: '333',
+      isPllChain: false,
       supportsSmartCube: true,
       settings: { bldMemo: false, multiStage: false },
       getSettings: () => ({ preScrT: 'z2' }),

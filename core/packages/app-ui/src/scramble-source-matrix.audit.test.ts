@@ -9,6 +9,7 @@ import {
   generateTimerScramble,
   timerScrambleAllowsEmptySlot,
   timerSupportsRealWcaScrambles,
+  timerPracticeContents,
   type EventId,
 } from '@cuberoot/shared/timer';
 
@@ -45,7 +46,7 @@ function currentMobileOutcome(event: EventId, source: Source): RouteOutcome {
     : 'provider-missing';
 }
 
-describe('adversarial 83 × 3 Mobile scramble-source matrix', () => {
+describe('adversarial 84 × 3 shared scramble-source matrix', () => {
   it('enumerates every event/source cell exactly once', () => {
     const matrix = EVENTS.flatMap(({ id }) => (
       (['real', 'random', 'manual'] as const).map((source) => ({
@@ -55,12 +56,12 @@ describe('adversarial 83 × 3 Mobile scramble-source matrix', () => {
       }))
     ));
 
-    expect(EVENTS).toHaveLength(83);
-    expect(matrix).toHaveLength(249);
-    expect(new Set(matrix.map(({ event, source }) => `${event}:${source}`))).toHaveLength(249);
+    expect(EVENTS).toHaveLength(84);
+    expect(matrix).toHaveLength(252);
+    expect(new Set(matrix.map(({ event, source }) => `${event}:${source}`))).toHaveLength(252);
   });
 
-  it('keeps the real route at 19 isolated WCA pools, 63 same-event fallbacks, and custom manual-only', () => {
+  it('keeps 19 WCA pools, 63 same-event fallbacks, and two events without a random provider', () => {
     const mapped = EVENTS.filter(({ id }) => currentMobileOutcome(id, 'real') === 'real-pool')
       .map(({ id }) => id);
     const local = EVENTS.filter(({ id }) => currentMobileOutcome(id, 'real') === 'same-event-local')
@@ -80,14 +81,15 @@ describe('adversarial 83 × 3 Mobile scramble-source matrix', () => {
       'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'catscradle', 'radiocanon',
       'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'cfzb', 'lse', 'l10p', 'eg1', 'eg2',
     ].sort());
-    // Custom's empty user-supplied source remains explicit; it is never a 333
-    // fallback and is intentionally not a random generator.
+    // User-supplied scrambles and operation chains have no random generator;
+    // neither may silently fall back to 333.
     expect(missing.sort()).toEqual([
       ...CURRENT_MISSING_LOCAL_PROVIDERS,
       'custom',
+      'pll-chain',
     ].sort());
     expect(local).toHaveLength(63);
-    expect(missing).toHaveLength(1);
+    expect(missing).toHaveLength(2);
   });
 
   it('records the current random-provider gap instead of treating catalog presence as support', () => {
@@ -97,9 +99,9 @@ describe('adversarial 83 × 3 Mobile scramble-source matrix', () => {
       .map(({ id }) => id);
 
     expect(local.sort()).toEqual([...CURRENT_LOCAL_PROVIDERS].sort());
-    expect(missing.sort()).toEqual([...CURRENT_MISSING_LOCAL_PROVIDERS, 'custom'].sort());
+    expect(missing.sort()).toEqual([...CURRENT_MISSING_LOCAL_PROVIDERS, 'custom', 'pll-chain'].sort());
     expect(local).toHaveLength(82);
-    expect(missing).toHaveLength(1);
+    expect(missing).toHaveLength(2);
   });
 
   it.each(['kilominx', 'mpyram'] as const)(
@@ -137,10 +139,16 @@ describe('adversarial 83 × 3 Mobile scramble-source matrix', () => {
     }
   });
 
-  it('routes manual through one queue for all 83 events, including custom and empty input', () => {
+  it('routes the shared manual source through one queue for all 84 events', () => {
     const outcomes = EVENTS.map(({ id }) => currentMobileOutcome(id, 'manual'));
-    expect(outcomes).toHaveLength(83);
+    expect(outcomes).toHaveLength(84);
     expect(new Set(outcomes)).toEqual(new Set<RouteOutcome>(['manual-queue']));
+  });
+
+  it('does not expose PLL chains in the installed host before its completion handler is wired', () => {
+    expect(appSource).toContain('timerPracticeContents(activeEvent)');
+    expect(timerPracticeContents('333').some(content => content.timer?.event === 'pll-chain')).toBe(false);
+    expect(timerPracticeContents('333', { pllChain: true }).some(content => content.timer?.event === 'pll-chain')).toBe(true);
   });
 
   it('treats custom Random/retained-Real as a ready empty slot, not a missing provider', async () => {

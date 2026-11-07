@@ -15,6 +15,7 @@ export const CSTIMER_TRAINING_FALLBACKS = { cfzb: 'zbls', eocp: 'll', ollcp: 'll
 /** Events without their own csTimer type retain their identity in metadata.
  * Native puzzles use manual input; Sphere Cube shares the ordinary 3x3 generator. */
 export const CSTIMER_EVENT_FALLBACKS = {
+  'pll-chain': 'input',
   ...CSTIMER_TRAINING_FALLBACKS,
   pyraminx_duo: 'input',
   superz: 'input',
@@ -129,7 +130,7 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
   ll: 'll',
   oll: 'ollt',
   pll: 'pllt',
-  'pll-chain': 'input',
+  'pll-chain': CSTIMER_EVENT_FALLBACKS['pll-chain'],
   'cll': 'cll',
   'ell': 'ell',
   'eocp': CSTIMER_TRAINING_FALLBACKS.eocp,

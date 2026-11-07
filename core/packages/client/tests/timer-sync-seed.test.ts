@@ -54,7 +54,7 @@ describe('shared displayed seed sequence', () => {
       const first = generateSeededTimerScramble(request);
       generateSeededTimerScramble({ ...request, ticket: { ...request.ticket, index: 5 } });
       expect(generateSeededTimerScramble(request)).toEqual(first);
-      expect(first.scramble.length > 0).toBe(event !== 'custom');
+      expect(first.scramble.length > 0).toBe(!['custom', 'pll-chain'].includes(event));
     }, 120_000);
   }
   for (const scramble222Type of SCRAMBLE_222_TYPES) {

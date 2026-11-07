@@ -6,9 +6,9 @@
 .pll-chain-progress .is-current { color: var(--accent); background: var(--accent-soft); font-weight: 650; }
 .pll-chain-progress > [role="status"] { display: block; margin-top: 12px; color: var(--muted-foreground); font-size: 13px; }
 .pll-chain-warning { color: var(--signal-warning); }
-.pll-chain-dialog footer button { appearance: none; border: 0; padding: 7px 10px; border-radius: 7px; font: inherit; color: var(--foreground); background: transparent; cursor: pointer; }
-.pll-chain-dialog footer button:hover { background: var(--accent-soft); }
-.pll-chain-dialog button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.pll-chain-action { appearance: none; border: 0; padding: 7px 10px; border-radius: 7px; font: inherit; color: var(--foreground); background: transparent; cursor: pointer; }
+.pll-chain-action:hover { background: var(--accent-soft); }
+.pll-chain-action:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .pll-chain-dialog footer .pll-chain-primary { background: var(--primary); color: var(--primary-foreground); }
 .pll-chain-dialog footer .pll-chain-primary:hover { background: color-mix(in srgb, var(--primary) 90%, transparent); }
 .pll-chain-dialog .alg-case-order-names { width: 100%; margin-top: 0; }
