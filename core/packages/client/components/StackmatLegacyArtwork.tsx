@@ -15,6 +15,22 @@ function Lettering({ label, x, y, width, height, color = '#15191c' }: {
 const STRAIGHT_BODY = 'M63 43Q16 43 10 82Q3 126 52 136L225 151Q280 156 307 178Q400 224 493 178Q520 156 575 151L748 136Q797 126 790 82Q784 43 737 43L540 43L525 31H275L260 43Z';
 const G4_BODY = 'M60 21Q12 12 7 57Q2 94 39 119L235 200Q255 211 281 215Q400 263 519 215Q545 211 565 200L761 119Q798 94 793 57Q788 12 740 21L552 72Q531 78 513 68Q400 21 287 68Q269 78 248 72Z';
 
+// Rounded annular LCD: both long edges share the same centre (400, 300).
+function g4LcdOutline(outer: number, inner: number, halfAngle: number, corner: number) {
+  const point = (radius: number, degrees: number) => {
+    const angle = degrees * Math.PI / 180;
+    return `${400 + radius * Math.sin(angle)} ${300 - radius * Math.cos(angle)}`;
+  };
+  const insetAngle = corner / outer * 180 / Math.PI;
+  const a = halfAngle - insetAngle;
+  return `M${point(outer, -a)} A${outer} ${outer} 0 0 1 ${point(outer, a)}
+    Q${point(outer, halfAngle)} ${point(outer - corner, halfAngle)}
+    L${point(inner + corner, halfAngle)} Q${point(inner, halfAngle)} ${point(inner, a)}
+    A${inner} ${inner} 0 0 0 ${point(inner, -a)}
+    Q${point(inner, -halfAngle)} ${point(inner + corner, -halfAngle)}
+    L${point(outer - corner, -halfAngle)} Q${point(outer, -halfAngle)} ${point(outer, -a)}Z`;
+}
+
 type Props = SVGProps<SVGSVGElement> & {
   generation: 1 | 2 | 3 | 4; indicator?: 'idle' | 'holding' | 'ready'; size?: number; displayValue?: string; digitColor?: string;
 };
@@ -97,10 +113,9 @@ const StackmatLegacyArtwork = forwardRef<SVGSVGElement, Props>(function Stackmat
     <path d={panel} fill={paint('panel')} stroke="#a1b5b6" strokeWidth="2"/>
     {g4 && <path d={panel} fill={paint('brushed')}/>}
     {g4 ? <>
-      <path d="M308 108Q400 36 492 108L479 150Q400 111 321 150Z" fill="#080d0c" stroke="#797f72" strokeWidth="2"/>
-      <path d="M315 109Q400 46 485 109L476 141Q400 108 324 141Z" fill={paint('lcd')}/>
-      <path d="M315 109Q400 46 485 109" stroke="#3c4638" strokeWidth="2"/>
-      <StackmatLcdDigits value={displayValue} x={339} y={90} width={122} height={25} color={digitColor}/>
+      <path d={g4LcdOutline(228, 172, 26, 6)} fill="#080d0c" stroke="#797f72" strokeWidth="1.5"/>
+      <path d={g4LcdOutline(223, 177, 24.7, 3)} fill={paint('lcd')} stroke="#3c4638" strokeWidth="1"/>
+      <StackmatLcdDigits value={displayValue} x={339} y={90} width={122} height={25} color={digitColor} arcRadius={197.5}/>
     </> : <>
       <path d="M290 63H407V119H286Z" fill="#111711" stroke="#76827e" strokeWidth="2"/>
       <path d="M296 68H401V112H292Z" fill={paint('lcd')}/>
