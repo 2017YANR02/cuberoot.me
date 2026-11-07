@@ -10,9 +10,12 @@
 |------|------|-----------|------|------|
 | WCA Live 纪录 | `wca_live_record.ts` | `wca_record_monitor.py` | WCA Live `recentRecords` 扫新 WR/CR/NR | 60s |
 | cubing.com 纪录 + PR | `cubing_record.ts` | `cubing_record_monitor.py` | 新版 REST 轮次成绩的地区纪录与关注选手 personalSingleRecord/personalAverageRecord | 60s |
-| cubing.com 比赛 | `cubing_comp.ts` | `cubing_com_monitor.py` | 新公示的中国比赛 | 60s |
-| WCA 比赛 | `wca_comp.ts` | `wca_comp_monitor.py` | 新公示的 WCA 比赛(全球) | 60s |
+| cubing.com 比赛 | `cubing_comp.ts` | `cubing_com_monitor.py` | 中国大陆比赛公示的唯一通知源,保留中文名称与场馆 | 60s |
+| WCA 比赛 | `wca_comp.ts` | `wca_comp_monitor.py` | 新公示的 WCA 比赛(排除 CN,港澳台等地区仍保留) | 5min |
 | WCA Live PR | `wca_live_pr.ts` | `wca_pr_detector.py` / `wca_pr_cache.py` | 关注选手生涯 PR 检测(自管基线) | 60s |
+
+中国大陆公示不再由 WCA 源重复发送英文版。中文通道的启动顺序、轮询周期和失败重试不变,
+不增加等待中文的延迟;若粗饼尚未公示或暂时不可用,不回退发送 WCA 英文通知。
 
 另有两个**独立门控**的慢周期监控(不在 `startMonitors()` 套件里,`src/index.ts` 单独启动):
 

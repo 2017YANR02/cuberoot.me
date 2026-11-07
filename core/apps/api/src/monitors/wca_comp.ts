@@ -1,7 +1,7 @@
 /**
  * WCA 官方新比赛监控 —— 移植自 wca_comp_monitor.py。
  * 轮询 WCA REST /competitions?sort=-announced_at,diff 已推 comp id,新比赛 Bark(group wca-comp)。
- * 与粗饼监控(中国大陆)互补:本监控全球覆盖。emoji 与旧 Python 逐字一致。
+ * 中国大陆仅由粗饼监控发中文公示;本监控负责其余地区。emoji 与旧 Python 逐字一致。
  */
 import { sendBark } from './bark.js';
 import { countPushed, getPushedSet, markPushed, type MonitorId } from './state.js';
@@ -99,7 +99,8 @@ async function runOnce(): Promise<void> {
   const pushed = await getPushedSet(MONITOR, ids);
   // 按 announced_at 升序,最早公布的先推(对齐旧 Python)。
   const fresh = comps
-    .filter((c) => !pushed.has(c.id))
+    // CN 交给 cubing_comp 的原有 60s 轮询,避免英文/中文重复推送;不等待或改动中文发送时机。
+    .filter((c) => c.country_iso2?.toUpperCase() !== 'CN' && !pushed.has(c.id))
     .sort((a, b) => (a.announced_at ?? '').localeCompare(b.announced_at ?? ''));
   if (fresh.length === 0) return;
   console.log(`[wca-comp] ${fresh.length} new WCA competitions`);
