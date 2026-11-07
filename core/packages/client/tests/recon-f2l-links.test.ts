@@ -44,6 +44,22 @@ describe('F2L comment state recognition', () => {
     ]);
   });
 
+  it('keeps F2L diagrams and links when an annotation spans two rows', async () => {
+    const scramble = "F' L' B R' B2 U L2 B2 U2 F2 D R D L F' U L B'";
+    const text = [
+      "x' z' // insp",
+      "r' F R2 r' U r D F2 // W xxcross (RB+OB)",
+      "(U' U' U') R' U R // GO",
+      "U' R (U R' // GR",
+      "R U) R' U R U2' R' U // ZBLL-S+67",
+      '// GR',
+    ].join('\n');
+    const annotated = await reconF2lAnnotations(scramble, text);
+    const plain = await reconF2lAnnotations(scramble, text.replace('(U R\'', 'U R\'').replace('R U)', 'R U'));
+    expect(annotated).toEqual(plain);
+    expect([...annotated.diagrams.keys()]).toEqual([1, 2, 3, 5]);
+  });
+
   it.each(cases)('recognizes the standard $name case from its actual setup', async c => {
     const links = await reconF2lLinks(c.setup, '// Y cross\n// GR');
     expect(links.get(1)?.get('GR')).toBe(`/alg/3x3/f2l/${c.name.toLowerCase()}`);

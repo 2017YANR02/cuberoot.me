@@ -7,7 +7,7 @@ import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
 import { f2lSlotFingerprint, isSlotSolved } from '@cuberoot/shared/timer/reconstruct/f2l-slots';
 import { isCross } from '@cuberoot/shared/timer/reconstruct/cfop-detect';
 import { FACE_COLOR_KEY } from '@cuberoot/shared/timer/reconstruct/orient';
-import { cleanForPlayer } from './recon-alg-utils';
+import { cleanForPlayer, reconLineSetups } from './recon-alg-utils';
 import { algCaseDetailHref, buildCaseSlugMap } from './alg_case_link';
 import { maskedReconFacelets } from './recon-diagram-mask';
 import { simplifyAlg } from './cube3';
@@ -72,14 +72,13 @@ export async function reconF2lAnnotations(scramble: string, text: string, onDiag
   const links = new Map<number, Map<string, string>>();
   const diagrams: ReconF2lAnnotations['diagrams'] = new Map();
   if (!scramble.trim()) return { links, diagrams };
-  let state = applyScramble(3, cleanForPlayer(scramble));
-  let setup = cleanForPlayer(scramble);
+  const setups = reconLineSetups(scramble, text);
+  let state = applyScramble(3, setups[0]);
   const explicitCross = crossColorFromReconText(text);
-  for (const [lineIndex, line] of text.split(/\r?\n/).entries()) {
+  for (const [lineIndex, line] of text.replace(/\r\n?/g, '\n').split('\n').entries()) {
     const before = state;
-    const beforeSetup = setup;
-    setup = `${setup} ${cleanForPlayer(line)}`;
-    state = rotate(state, cleanForPlayer(line));
+    const beforeSetup = setups[lineIndex];
+    state = applyScramble(3, setups[lineIndex + 1]);
     const comment = line.indexOf('//');
     if (comment < 0) continue;
     const label = line.slice(comment + 2).trim();

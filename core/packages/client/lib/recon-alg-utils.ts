@@ -36,6 +36,21 @@ export function cleanForPlayer(text: string): string {
   return cleanReconAlgForPlayer(text);
 }
 
+/** Diagram boundaries include the initial scramble and the state after each row.
+ * Clean the complete prefix so completed repeats still expand. Any remaining
+ * parentheses belong to a grouping annotation crossing the current boundary;
+ * they are not turns and cannot be passed to the strict diagram parser. */
+export function reconLineSetups(scramble: string, text: string): string[] {
+  let prefix = scramble;
+  const setup = () => cleanForPlayer(prefix).replace(/[()]/g, ' ').replace(/\s+/g, ' ').trim();
+  const boundaries = [setup()];
+  for (const line of text.replace(/\r\n?/g, '\n').split('\n')) {
+    prefix += `\n${line}`;
+    boundaries.push(setup());
+  }
+  return boundaries;
+}
+
 /** Stage masks follow the reconstruction's bottom, independently of playback position. */
 export function reconPlaybackOrientation(text: string): string {
   const color = crossColorFromReconText(text);

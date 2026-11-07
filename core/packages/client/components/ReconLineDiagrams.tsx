@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { VisualCube } from '@/components/VisualCube';
 import { cubeColorGroups, crossColorFromReconText } from '@/components/CubeColorChip/CubeColorChip';
-import { cleanForPlayer } from '@/lib/recon-alg-utils';
+import { cleanForPlayer, reconLineSetups } from '@/lib/recon-alg-utils';
 import { visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
 import { tr } from '@/i18n/tr';
 import { cubeThumbParams } from '@/lib/alg_thumb_plan';
@@ -62,14 +62,7 @@ function retainRowKeys<T>(current: Map<string, T>, keys: Set<string>): Map<strin
 
 /** Shared pre-line states, F2L masking and library links for recon and timer. */
 export function useReconLineDiagrams(scramble: string, text: string, enabled = true) {
-  const lineSetups = useMemo(() => {
-    let setup = cleanForPlayer(scramble);
-    return text.replace(/\r\n?/g, '\n').split('\n').map(line => {
-      const before = setup;
-      setup = [setup, cleanForPlayer(line)].filter(Boolean).join(' ');
-      return before;
-    });
-  }, [scramble, text]);
+  const lineSetups = useMemo(() => reconLineSetups(scramble, text), [scramble, text]);
   const sourceLines = useMemo(() => text.replace(/\r\n?/g, '\n').split('\n'), [text]);
   // A later turn does not change an earlier row's state or annotation. Key
   // async results by their actual inputs, never by the whole live document.
