@@ -11,6 +11,7 @@ import {
 import { createPortal } from 'react-dom';
 
 import { normalizeMac } from '@cuberoot/shared/timer/external/mac';
+import { useDialogMotion } from './useDialogMotion';
 import { useModalBackdrop } from './useModalDismiss';
 import { ClearButton } from './ClearButton';
 import { Tooltip } from './Tooltip';
@@ -141,7 +142,7 @@ export function TimerSmartCubeDeviceModal({
   footer,
   language,
   macPrompt,
-  onClose,
+  onClose: onClosed,
   onConnect,
   onDisconnect,
   onResetGyro,
@@ -152,6 +153,7 @@ export function TimerSmartCubeDeviceModal({
   snapshot,
   title,
 }: TimerSmartCubeDeviceModalProps) {
+  const { motionRef, close: onClose } = useDialogMotion(onClosed);
   const copy = COPY[language];
   const [macInput, setMacInput] = useState('');
   const [macError, setMacError] = useState(false);
@@ -345,6 +347,7 @@ export function TimerSmartCubeDeviceModal({
   if (typeof document === 'undefined') return null;
   return createPortal(
     <div
+      ref={motionRef}
       className={anchored ? 'timer-smart-cube-device__anchor' : 'timer-smart-cube-device__overlay'}
       {...(anchored ? {} : backdropProps)}
     >

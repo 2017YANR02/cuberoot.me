@@ -45,36 +45,6 @@ html[data-palette-scheme='dark'] .timer-modal.settings-modal {
   flex-direction: column;
 }
 .settings-modal:focus { outline: none; }
-@keyframes timer-settings-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes timer-settings-enter {
-  from { transform: translateY(10px) scale(var(--timer-settings-enter-scale, .985)); }
-  to { transform: none; }
-}
-@keyframes timer-settings-fade-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-@keyframes timer-settings-exit {
-  from { transform: none; }
-  to { transform: translateY(10px) scale(var(--timer-settings-enter-scale, .985)); }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .timer-settings-overlay {
-    animation: timer-settings-fade-in 180ms ease-out;
-  }
-  .timer-modal.settings-modal {
-    animation: timer-settings-enter 180ms cubic-bezier(.2, .8, .2, 1);
-  }
-  .timer-settings-overlay[data-closing] {
-    animation: timer-settings-fade-out 180ms ease-in forwards;
-  }
-  .timer-settings-overlay[data-closing] .timer-modal.settings-modal {
-    animation: timer-settings-exit 180ms ease-in forwards;
-  }
-}
 .settings-modal-head {
   flex: none;
   display: flex;

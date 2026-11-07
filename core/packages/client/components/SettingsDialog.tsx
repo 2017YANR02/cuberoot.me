@@ -3,17 +3,17 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ClearButton } from '@/components/ClearButton';
-import { useModalDismiss } from '@/hooks/useModalDismiss';
+import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import { tr } from '@/i18n/tr';
 import './training-settings.css';
 
-export default function SettingsDialog({ label, panelClassName, closing = false, onClose, children }: {
+export default function SettingsDialog({ label, panelClassName, onClose: onClosed, children }: {
   label: string;
   panelClassName?: string;
-  closing?: boolean;
   onClose: () => void;
   children: ReactNode;
 }) {
+  const { motionRef, close: onClose } = useDialogMotion(onClosed);
   const backdropProps = useModalDismiss(onClose);
   const dialogRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -24,9 +24,9 @@ export default function SettingsDialog({ label, panelClassName, closing = false,
     };
   }, []);
   return createPortal(
-    <div className="settings-dialog-backdrop" data-state={closing ? 'closing' : 'open'} {...backdropProps} data-no-timer>
+    <div ref={motionRef} className="settings-dialog-backdrop" {...backdropProps} data-no-timer>
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={label} tabIndex={-1}
-        className="settings-dialog" inert={closing} onKeyDown={event => {
+        className="settings-dialog" onKeyDown={event => {
           if (event.key !== 'Tab') return;
           const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('button, a[href], input, select, textarea, [tabindex]')]
             .filter(element => element.tabIndex >= 0 && !element.matches(':disabled') && element.getClientRects().length > 0);

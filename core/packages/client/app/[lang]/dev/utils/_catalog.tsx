@@ -382,6 +382,15 @@ export const CATALOG: UtilEntry[] = [
     en: 'Completes the shared-element transition from an algorithm list to a case.',
   },
   {
+    name: 'useDialogMotion',
+    sig: 'useDialogMotion(onClose, { enabled?, surface?, sheet? }): { motionRef, close }',
+    imp: "import { useDialogMotion } from '@/hooks/useModalDismiss';",
+    usage: 'const { motionRef, close } = useDialogMotion(onClose);',
+    category: 'hook',
+    zh: '共享弹窗开关过渡，保持玻璃模糊，退场结束后关闭；支持减少动态效果。',
+    en: 'Shared dialog motion preserves backdrop blur and dismisses after exit; respects reduced motion.',
+  },
+  {
     name: 'useModalDismiss',
     sig: 'useModalDismiss(onClose: () => void, disabled?: boolean): backdropProps',
     imp: "import { useModalDismiss } from '@/hooks/useModalDismiss';",

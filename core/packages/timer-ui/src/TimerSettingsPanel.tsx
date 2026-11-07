@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Bluetooth, Database, Dices, Keyboard, Palette, Timer, Trophy, Volume2, X } from 'lucide-react';
 import { TIMER_SETTING_CATEGORY_CONTRACTS, type TimerSettingCategoryId } from '@cuberoot/shared/timer';
+import { useDialogMotion } from './useDialogMotion';
 import { useModalDismiss } from './useModalDismiss';
 import './timer-settings-panel.css';
 
@@ -25,25 +26,7 @@ export function TimerSettingsPanel({ language, activeCategory, onCategoryChange,
   const dialogRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
-  const closeRef = useRef(onClose);
-  closeRef.current = onClose;
-  const [closing, setClosing] = useState(false);
-  const closeStarted = useRef(false);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const close = useRef(() => {
-    if (closeStarted.current) return;
-    closeStarted.current = true;
-    if (!window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
-      closeRef.current();
-      return;
-    }
-    setClosing(true);
-    // Keep the dialog mounted (and scrolling locked) until its exit finishes.
-    closeTimer.current = setTimeout(() => closeRef.current(), 180);
-  }).current;
-  useEffect(() => () => {
-    if (closeTimer.current !== null) clearTimeout(closeTimer.current);
-  }, []);
+  const { motionRef, close } = useDialogMotion(onClose);
   const backdrop = useModalDismiss(close);
   const items = TIMER_SETTING_CATEGORY_CONTRACTS.filter(category => !categories || categories.includes(category.id));
   const label = (en: string, zh: string) => language === 'zh' ? zh : en;
@@ -60,7 +43,7 @@ export function TimerSettingsPanel({ language, activeCategory, onCategoryChange,
   }, []);
   if (typeof document === 'undefined') return null;
   return createPortal(
-    <div className="timer-settings-overlay" data-closing={closing || undefined} data-no-timer {...backdrop}>
+    <div ref={motionRef} className="timer-settings-overlay" data-no-timer {...backdrop}>
       <div ref={dialogRef} className="timer-modal settings-modal" data-site-surface="panel" role="dialog" aria-modal="true"
         aria-labelledby={titleId} tabIndex={-1} onKeyDown={event => {
           if (event.key !== 'Tab' || !dialogRef.current) return;
