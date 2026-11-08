@@ -1,5 +1,22 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-11-08：APNs / 安卓厂商配置核对（只读审计，真机验收跳过）
+
+检查基准：本地 `3672ec49b4`；核对源码、现有构建产物、本机签名描述文件、GitHub 配置名称及服务器配置。未修改凭据、生产配置或数据库，未发送测试通知。用户确认暂无设备，明确跳过本轮真机送达和点击验收。
+
+| 项目 | 本轮证据 | 尚需完成 |
+| --- | --- | --- |
+| iOS 签名 | 本机匹配 `me.cuberoot.app` 的开发和分发描述文件分别带 `aps-environment=development/production`，有效期至 2027-09-29；工程 Debug/Release 环境与之对应 | 后续签名产物仍须核对 entitlement、描述文件和实际 APNs key 的团队/topic 授权；描述文件不是发送凭据或送达证据 |
+| APNs 服务端 | 本地 API `.env`、服务器 `/root/core-api/.env` 与 API Node 进程初始环境均未配置 `RECORD_PUSH_ENABLED`、`APNS_ENABLED`、`APNS_TEAM_ID`、`APNS_KEY_ID`、`APNS_PRIVATE_KEY_PATH` | 配置明确授权 APNs 的 key 与对应环境；本次没有核验 Apple 控制台中的 key，不把本机 ASC/IAP key 当作 APNs key |
+| 个推服务端与 Android 构建 | 上述环境均未配置个推 App ID / App Key / Master Secret；本地生成的 BuildConfig 与 Debug 合并 manifest 中 `GETUI_APPID` 为空 | 对齐 Debug/Release 应用、包名、签名与个推配置，重新构建后核验产物；基础 SDK 编译成功不代表个推已启用 |
+| 安卓厂商通道 | 未发现 OPPO/vivo/小米/魅族/荣耀构建参数；Gradle 仅在相应参数完整时引入厂商依赖，当前 Debug 合并 manifest 未见对应厂商配置；现有列表没有华为 HMS 通道 | 各厂商控制台应用、证书指纹和通道开通状态未核验，不能从环境缺项推断控制台应用不存在；华为另需实现其接入 |
+| CI 配置 | GitHub 仓库及 `app-release` / `app-release-publish` 环境的 secret/variable 名称清单未见推送参数；`.github/workflows` 和 `core/scripts` 未见 APNs/Getui 参数注入，Android 构建步骤只有发布渠道参数 | 补齐 Android 构建阶段的配置注入；仅添加 secret 而不接入工作流不会使 APK 包含厂商配置。服务端 Master Secret / APNs 私钥不打入客户端 |
+| API 配套版本 | 服务器有 `0255_ios_record_push.sql`，未见本轮 `0317_competition_notifications.sql` / `0318_competition_push.sql` 文件；这里只核验文件，未查询生产 schema。Mobile API 仍固定指向线上，新客户端注册必带 `pushVersion: 2`，旧 API 严格拒绝该字段 | 保持新版 API 与 App 配套；本地全链路验收先具备隔离 API 目标，不因本地客户端安装而隐式部署生产。线上实际代码版本尚未核验 |
+
+- 后续顺序：补齐服务商及厂商配置 → 完善构建注入并核验签名产物 → 准备隔离 API/测试账号 → 设备可用后验证前台、后台、进程结束后的送达与冷启动点击，以及登出/换号、重复、过期场景。禁止为单设备验收开启生产全队列扫描。
+- 新通知的点击链路校验收件 UID；兼容的历史纪录通知可能缺少 UID，不能宣称所有历史通知都做了账号归属校验。服务商接受、设备展示、点击落页和业务触发分别记录。
+- 本轮只补充配置审计记录，没有重跑已通过的构建或将设备项标为完成；无安装、无真实推送、无生产变更、无 push。真机验收仍待后续安排，总体继续 **NOT COMPLETE**。
+
 ### 2026-11-08：Android / iOS 比赛系统通知与 App 内点击（本地实现，未发布）
 
 - 复用既有通知投递队列与设备生命周期，增加四种允许类型：纪录、公示、报名开放、报名截止；旧设备默认 `push_version=1` 仍只接收纪录，兼容原浏览器点击。新版上报版本 2，升级/降级能力会更新绑定时间，避免追发旧消息。
