@@ -408,14 +408,21 @@
   border-radius: 8px;
   color: var(--muted-foreground);
   font-size: 0.88rem;
-  cursor: pointer;
 }
-.forum-login-hint:hover {
+button.forum-login-hint { cursor: pointer; }
+button.forum-login-hint:hover {
   color: var(--accent);
   border-color: var(--accent);
 }
 
-.forum-composer { margin-top: 8px; }
+.forum-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+.forum-profile-hint { display: block; margin: 0; line-height: 1.6; }
+.forum-composer > .forum-composer-actions { margin-top: 0; }
 
 .forum-composer-actions {
   display: flex;
@@ -761,6 +768,13 @@ a.forum-post-author-name:hover { color: var(--accent); }
 .forum-post-action:hover {
   color: var(--foreground);
   background: color-mix(in srgb, var(--foreground) 7%, transparent);
+}
+.forum-post-action.forum-icon-action {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  flex: none;
+  justify-content: center;
 }
 .forum-post-action.is-danger:hover { color: var(--destructive); }
 .forum-post-action.is-approve { color: var(--signal-success); }

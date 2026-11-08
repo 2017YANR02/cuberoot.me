@@ -72,7 +72,7 @@ export const ForumComposer = forwardRef<ForumComposerHandle, {
 
   return (
     <div className="forum-composer">
-      <p className="forum-login-hint">
+      <p className="forum-login-hint forum-profile-hint">
         {tr({ zh: '新参与论坛的用户，评论前请完整填写并保存个人资料；新规前已发帖或评论的用户不受影响。', en: 'New participants must complete and save their profile before commenting. Earlier contributors are exempt.' })}{' '}
         <AppLink href="/account?view=signin" prefetch={false} target="_blank" rel="noopener noreferrer">
           {tr({ zh: '完善个人资料', en: 'Complete profile' })}

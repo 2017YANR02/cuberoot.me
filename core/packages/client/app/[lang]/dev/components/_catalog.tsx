@@ -1068,6 +1068,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shimmer skeleton for inline replies, supporting light and dark themes and reduced motion.',
   },
   {
+    name: 'ForumIconButton',
+    import: "import { ForumIconButton } from '@/components/forum/ForumIconButton';",
+    category: 'more',
+    zh: '论坛图标操作按钮，统一悬停提示、键盘名称与点击区域。',
+    en: 'Compact forum action with a shared tooltip, accessible label and consistent hit area.',
+  },
+  {
     name: 'ForumFeedPreview',
     import: "import ForumFeedPreview from '@/components/forum/ForumFeedPreview';",
     category: 'more',

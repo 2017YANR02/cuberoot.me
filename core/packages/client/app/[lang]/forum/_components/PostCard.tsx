@@ -5,7 +5,7 @@
 // (react / quote / edit / delete).
 
 import { useState } from 'react';
-import { Link2, Quote, Pencil, Trash2, Check, Flag, ShieldCheck, Hourglass, CircleX } from '@app-foundation/icons/lucide';
+import { Link2, Quote, Pencil, Trash2, Check, Flag, ShieldCheck, Hourglass, CircleX, UserRoundX, UserRoundCheck } from '@app-foundation/icons/lucide';
 import PersonLink from '@/components/PersonLink';
 import { tr, useLang } from '@/i18n/tr';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
@@ -15,6 +15,7 @@ import { formatRelativeTime, formatJoinedDate, formatCount } from '@/lib/forum-f
 import { ReactionBar } from './ReactionBar';
 import { ForumPostBody, forumPostPlaceholder } from '@/components/forum/ForumPostBody';
 import { UserContactLink } from '@/components/UserIdLabel';
+import { ForumIconButton } from '@/components/forum/ForumIconButton';
 
 export function PostCard({
   post, author, myKind, permalink, canEdit, canDelete, canQuote, canReport,
@@ -83,14 +84,6 @@ export function PostCard({
             </PersonLink>
           ) : (
             <span className="forum-post-author-name">{name}</span>
-          )}
-          {onToggleBan && author?.userId && !author.isAdmin && (
-            <button type="button" className="forum-post-action is-danger"
-              onClick={() => onToggleBan(author.userId!, !author.forumBanned)}>
-              {author.forumBanned
-                ? tr({ zh: '解除拉黑', en: 'Unban user' })
-                : tr({ zh: '拉黑', en: 'Ban user' })}
-            </button>
           )}
           {author?.isAdmin && (
             <span className="forum-staff-badge">
@@ -168,29 +161,25 @@ export function PostCard({
               </button>
             </>
           )}
+          {onToggleBan && author?.userId && !author.isAdmin && (
+            <ForumIconButton
+              icon={author.forumBanned ? UserRoundCheck : UserRoundX}
+              label={author.forumBanned ? tr({ zh: '解除拉黑', en: 'Unban user' }) : tr({ zh: '拉黑', en: 'Ban user' })}
+              className="is-danger"
+              onClick={() => onToggleBan(author.userId!, !author.forumBanned)}
+            />
+          )}
           {published && canReport && (
-            <button
-              type="button" className="forum-post-action"
-              title={tr({ zh: '向管理员举报此帖', en: 'Report this post to moderators' })}
-              onClick={() => onReport(post)}
-            >
-              <Flag size={13} aria-hidden="true" /> {tr({ zh: '举报', en: 'Report' })}
-            </button>
+            <ForumIconButton icon={Flag} label={tr({ zh: '举报', en: 'Report post' })} onClick={() => onReport(post)} />
           )}
           {published && canQuote && (
-            <button type="button" className="forum-post-action" onClick={() => onQuote(post)}>
-              <Quote size={13} aria-hidden="true" /> {tr({ zh: '引用', en: 'Quote' })}
-            </button>
+            <ForumIconButton icon={Quote} label={tr({ zh: '引用', en: 'Quote post' })} onClick={() => onQuote(post)} />
           )}
           {canEdit && (
-            <button type="button" className="forum-post-action" onClick={() => onEdit(post)}>
-              <Pencil size={13} aria-hidden="true" /> {tr({ zh: '编辑', en: 'Edit' })}
-            </button>
+            <ForumIconButton icon={Pencil} label={tr({ zh: '编辑', en: 'Edit post' })} onClick={() => onEdit(post)} />
           )}
           {canDelete && (
-            <button type="button" className="forum-post-action is-danger" onClick={() => onDelete(post)}>
-              <Trash2 size={13} aria-hidden="true" /> {tr({ zh: '删除', en: 'Delete' })}
-            </button>
+            <ForumIconButton icon={Trash2} label={tr({ zh: '删除', en: 'Delete post' })} className="is-danger" onClick={() => onDelete(post)} />
           )}
         </div>
         )}

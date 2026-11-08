@@ -1,5 +1,8 @@
 /* /forum/t/[id] — thread page-specific layout. */
 
+.forum-thread-navigation { margin-bottom: 16px; }
+.forum-thread-navigation .forum-crumbs { margin: 0; min-width: 0; }
+
 .forum-thread-head { margin-bottom: 0.8rem; }
 
 .forum-thread-heading {
