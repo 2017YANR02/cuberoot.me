@@ -61,7 +61,7 @@ export default function ForumFeedPage() {
       {error && <div className="forum-error">{error}</div>}
       {!data && !error && <div className="forum-loading"><LoadingIndicator><T zh="加载动态中…" en="Loading feed…" /></LoadingIndicator></div>}
       {data && data.threads.length === 0 && <div className="forum-empty"><T zh="还没有社区动态。" en="No community activity yet." /></div>}
-      {data && data.threads.length > 0 && <ForumFeedList threads={data.threads} sort={sort} />}
+      {data && data.threads.length > 0 && <ForumFeedList threads={data.threads} />}
 
       {data && data.total > 0 && (
         <Paginator

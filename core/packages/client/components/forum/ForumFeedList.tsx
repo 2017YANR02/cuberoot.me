@@ -14,7 +14,6 @@ import { formatCount, formatPostTime } from '@/lib/forum-format';
 import {
   reactToPost,
   type ForumFeedThread,
-  type ForumFeedSort,
   type PostReaction,
   type ReactionKind,
 } from '@/lib/forum-api';
@@ -28,7 +27,7 @@ const ForumFeedReplies = dynamic(() => import('./ForumFeedReplies'), {
   </div>,
 });
 
-export function ForumFeedList({ threads, compact = false, sort = 'latest' }: { threads: ForumFeedThread[]; compact?: boolean; sort?: ForumFeedSort }) {
+export function ForumFeedList({ threads, compact = false }: { threads: ForumFeedThread[]; compact?: boolean }) {
   const lang = useLang();
   const zh = lang === 'zh';
   const user = useAuthUser();
@@ -86,9 +85,7 @@ export function ForumFeedList({ threads, compact = false, sort = 'latest' }: { t
         const reactionCount = currentReaction.reactions.reduce((sum, reaction) => sum + reaction.count, 0);
         const imageUrls = thread.imageUrls ?? [];
         const videos = thread.videos ?? [];
-        const showLastReply = sort === 'active' && thread.replyCount > 0;
-        const timestamp = showLastReply ? thread.lastPostAt : thread.createdAt;
-        const displayTime = formatPostTime(timestamp, lang);
+        const displayTime = formatPostTime(thread.createdAt, lang);
         return (
           <article className="community-feed-item" key={thread.id}>
             <div className={`community-feed-avatar${avatar.isClawd ? ' is-clawd' : ''}`} aria-hidden="true">
@@ -98,11 +95,7 @@ export function ForumFeedList({ threads, compact = false, sort = 'latest' }: { t
               <div className="community-feed-byline">
                 {thread.author.userId ? <UserContactLink userId={thread.author.userId} className="community-feed-author">{displayName}</UserContactLink> : <PersonLink wcaId={thread.author.wcaId ?? thread.authorId} className="community-feed-author">{displayName}</PersonLink>}
                 <span aria-hidden="true">·</span>
-                <time dateTime={timestamp}>
-                  {showLastReply
-                    ? tr({ zh: `最近回复 ${displayTime}`, en: `Last reply ${displayTime}` })
-                    : tr({ zh: `发布于 ${displayTime}`, en: `Posted ${displayTime}` })}
-                </time>
+                <time dateTime={thread.createdAt}>{displayTime}</time>
                 <span aria-hidden="true">·</span>
                 <Link href={`/forum/f/${thread.forumSlug}`} prefetch={false} className="community-feed-board">
                   {tr({ zh: thread.forumNameZh, en: thread.forumNameEn })}
