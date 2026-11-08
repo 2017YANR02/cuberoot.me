@@ -52,6 +52,9 @@
 
 .forum-overview-title h1 { margin: 0; }
 
+.forum-overview-header .forum-btn-primary,
+.forum-overview-header .forum-btn-ghost { font-size: 0.9375rem; }
+
 .forum-view-toolbar {
   display: flex;
   align-items: center;
@@ -75,7 +78,7 @@
   align-items: center;
   gap: 4px;
   color: var(--muted-foreground);
-  font-size: 0.78rem;
+  font-size: 0.9375rem;
   text-decoration: none;
 }
 
@@ -91,7 +94,7 @@
   position: relative;
   padding: 7px 1px 9px;
   color: var(--muted-foreground);
-  font-size: 0.84rem;
+  font-size: 1rem;
   font-weight: 550;
   text-decoration: none;
 }
@@ -199,6 +202,7 @@
 }
 
 .forum-directory .forum-cat-title {
+  font-size: 0.9375rem;
   margin-bottom: 4px;
   padding-bottom: 0;
   border-bottom: none;
@@ -239,7 +243,8 @@
 .forum-forum-name {
   display: block;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1.125rem;
+  line-height: 1.5;
   color: var(--foreground);
   text-decoration: none;
 }
@@ -248,7 +253,7 @@
 .forum-forum-desc {
   display: block;
   margin-top: 3px;
-  font-size: 0.78rem;
+  font-size: 0.9375rem;
   line-height: 1.5;
   color: var(--muted-foreground);
 }
