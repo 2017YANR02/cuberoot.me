@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Heart, MessageCircle } from '@app-foundation/icons/lucide';
+import { useEffect, useId, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { ChevronDown, ChevronRight, Heart, MessageCircle } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { tr, useLang } from '@/i18n/tr';
-import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { useAuthStore, useAuthUser, useIsAdmin, useOwnerKey } from '@/lib/auth-store';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { resolveAccountAvatar } from '@/lib/account-avatar';
 import { formatCount, formatRelativeTime } from '@/lib/forum-format';
@@ -20,10 +22,20 @@ import { ForumVideoPlayer } from './ForumVideoPlayer';
 import { UserContactLink } from '@/components/UserIdLabel';
 import './forum-feed.css';
 
+const ForumFeedReplies = dynamic(() => import('./ForumFeedReplies'), {
+  loading: () => <div role="status" className="community-feed-replies-notice">
+    <LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator>
+  </div>,
+});
+
 export function ForumFeedList({ threads, compact = false, sort = 'latest' }: { threads: ForumFeedThread[]; compact?: boolean; sort?: ForumFeedSort }) {
   const lang = useLang();
   const zh = lang === 'zh';
   const user = useAuthUser();
+  const ownerKey = useOwnerKey();
+  const isAdmin = useIsAdmin();
+  const repliesId = useId();
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [busyPostId, setBusyPostId] = useState<number | null>(null);
   const [reactionState, setReactionState] = useState<Record<number, {
     reactions: PostReaction[];
@@ -129,7 +141,7 @@ export function ForumFeedList({ threads, compact = false, sort = 'latest' }: { t
                   <Heart className="community-feed-heart" size={14} aria-hidden="true" />
                   {reactionCount > 0 && formatCount(reactionCount, lang)}
                 </button>
-                <Link
+                {compact ? <Link
                   href={`/forum/t/${thread.id}`}
                   prefetch={false}
                   className="community-feed-meta-action"
@@ -139,8 +151,31 @@ export function ForumFeedList({ threads, compact = false, sort = 'latest' }: { t
                   {thread.replyCount > 0
                     ? tr({ zh: `${formatCount(thread.replyCount, lang)} 条回复`, en: `${formatCount(thread.replyCount, lang)} ${thread.replyCount === 1 ? 'reply' : 'replies'}` })
                     : tr({ zh: '回复', en: 'Reply' })}
-                </Link>
+                </Link> : <button
+                  type="button"
+                  id={`${repliesId}-trigger-${thread.id}`}
+                  className="community-feed-meta-action"
+                  aria-label={tr({ zh: `${expanded[thread.id] ? '收起' : '展开'} ${thread.replyCount} 条回复`, en: `${expanded[thread.id] ? 'Collapse' : 'Expand'} ${thread.replyCount} replies` })}
+                  aria-expanded={!!expanded[thread.id]}
+                  aria-controls={`${repliesId}-${thread.id}`}
+                  onClick={() => setExpanded(previous => ({ ...previous, [thread.id]: !previous[thread.id] }))}
+                >
+                  <MessageCircle size={14} aria-hidden="true" />
+                  {thread.replyCount > 0 ? tr({ zh: `${formatCount(thread.replyCount, lang)} 条回复`, en: `${formatCount(thread.replyCount, lang)} ${thread.replyCount === 1 ? 'reply' : 'replies'}` }) : tr({ zh: '回复', en: 'Reply' })}
+                  {expanded[thread.id] ? <ChevronDown size={12} aria-hidden="true" /> : <ChevronRight size={12} aria-hidden="true" />}
+                </button>}
               </div>
+              {!compact && <div id={`${repliesId}-${thread.id}`} hidden={!expanded[thread.id]}>
+                {expanded[thread.id] !== undefined && <ForumFeedReplies
+                  key={`${thread.id}:${ownerKey}:${isAdmin}`}
+                  threadId={thread.id}
+                  open={!!expanded[thread.id]}
+                  onCollapse={() => {
+                    setExpanded(previous => ({ ...previous, [thread.id]: false }));
+                    document.getElementById(`${repliesId}-trigger-${thread.id}`)?.focus({ preventScroll: true });
+                  }}
+                />}
+              </div>}
             </div>
           </article>
         );

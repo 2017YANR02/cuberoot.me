@@ -197,6 +197,29 @@
 
 .community-feed-meta-action:disabled { cursor: wait; opacity: 0.65; }
 
+.community-feed-replies {
+  margin-top: 16px;
+  padding-left: 14px;
+  border-left: 1px solid var(--border-default);
+}
+
+.community-feed-reply { padding: 0 0 16px; }
+.community-feed-reply .community-feed-byline { margin-bottom: 4px; }
+.community-feed-reply .forum-post-body { font-size: 0.86rem; }
+
+.community-feed-replies-notice,
+.community-feed-replies-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+.community-feed-replies-notice { margin: 0 0 12px; }
+.community-feed-replies-actions { padding-bottom: 4px; }
+
 .community-feed-list.is-compact .community-feed-item { padding: 12px 0; }
 .community-feed-list.is-compact .community-feed-excerpt { -webkit-line-clamp: 2; }
 

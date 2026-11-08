@@ -502,6 +502,12 @@ a.forum-post-author-name:hover { color: var(--accent); }
 
 /* --- post body typography (markdown output) --- */
 
+.forum-review-note {
+  font-size: 0.8rem;
+  color: var(--destructive);
+  margin-bottom: 8px;
+}
+
 .forum-post-body {
   font-size: 0.92rem;
   line-height: 1.65;

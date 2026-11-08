@@ -261,8 +261,8 @@ export async function fetchForumList(
   });
 }
 
-export async function fetchThread(id: number, page: number, size: number): Promise<ThreadPageData> {
-  return apiGet<ThreadPageData>(`/t/${id}`, { page: String(page), size: String(size) });
+export async function fetchThread(id: number, page: number, size: number, signal?: AbortSignal): Promise<ThreadPageData> {
+  return apiGet<ThreadPageData>(`/t/${id}`, { page: String(page), size: String(size) }, { signal });
 }
 
 export async function fetchLatestThreads(limit: number): Promise<{ threads: LatestThread[] }> {

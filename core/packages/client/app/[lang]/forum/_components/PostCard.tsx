@@ -10,11 +10,10 @@ import PersonLink from '@/components/PersonLink';
 import { tr, useLang } from '@/i18n/tr';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { resolveAccountAvatar } from '@/lib/account-avatar';
-import { renderArticleMarkdown } from '@/lib/article-markdown';
 import type { ForumPost, PostAuthor, ReactionKind } from '@/lib/forum-api';
 import { formatRelativeTime, formatJoinedDate, formatCount } from '@/lib/forum-format';
 import { ReactionBar } from './ReactionBar';
-import { ForumVideoPlayer } from '@/components/forum/ForumVideoPlayer';
+import { ForumPostBody, forumPostPlaceholder } from '@/components/forum/ForumPostBody';
 import { UserContactLink } from '@/components/UserIdLabel';
 
 export function PostCard({
@@ -56,24 +55,12 @@ export function PostCard({
     } catch { /* clipboard unavailable — ignore */ }
   };
 
-  if (post.isDeleted) {
+  const placeholder = forumPostPlaceholder(post);
+  if (placeholder) {
     return (
       <article className="forum-post is-deleted" id={`post-${post.id}`}>
         <div className="forum-post-deleted">
-          #{post.postNo} {tr({ zh: '该帖已删除', en: 'This post was deleted' })}
-        </div>
-      </article>
-    );
-  }
-
-  // 待审/驳回楼层:非作者非管理员拿到的是掩码空内容 → 只render占位,楼号不塌
-  if (post.status !== 'approved' && !post.content && (post.videos ?? []).length === 0) {
-    return (
-      <article className="forum-post is-deleted" id={`post-${post.id}`}>
-        <div className="forum-post-deleted">
-          #{post.postNo} {post.status === 'pending'
-            ? tr({ zh: '该帖待审核', en: 'This post is awaiting review' })
-            : tr({ zh: '该帖已删除', en: 'This post was deleted' })}
+          #{post.postNo} {placeholder}
         </div>
       </article>
     );
@@ -154,17 +141,7 @@ export function PostCard({
             #{post.postNo}
           </button>
         </div>
-        {bodyOverride ?? (
-        <div className="forum-post-body">
-          {post.status === 'rejected' && post.reviewNote && (
-            <div className="forum-review-note">
-              {tr({ zh: '驳回原因:', en: 'Reason: ' })}{post.reviewNote}
-            </div>
-          )}
-          {post.content && renderArticleMarkdown(post.content)}
-          {(post.videos ?? []).map((video) => <ForumVideoPlayer key={video.id} video={video} />)}
-        </div>
-        )}
+        {bodyOverride ?? <ForumPostBody post={post} />}
         {!bodyOverride && (
         <div className="forum-post-footer">
           {published && (

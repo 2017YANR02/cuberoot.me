@@ -1033,6 +1033,20 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared community feed for the forum and landing page, with first-post text, images, videos, authors, boards, reactions, and activity.',
   },
   {
+    name: 'ForumPostBody',
+    import: "import { ForumPostBody } from '@/components/forum/ForumPostBody';",
+    category: 'more',
+    zh: '主题页与动态内回复共用的帖子正文，保留 Markdown、视频与审核占位。',
+    en: 'Post body shared by thread pages and inline feed replies, preserving Markdown, videos and moderation placeholders.',
+  },
+  {
+    name: 'ForumFeedReplies',
+    import: "import ForumFeedReplies from '@/components/forum/ForumFeedReplies';",
+    category: 'more',
+    zh: '按需加载、分页展开的动态回复，支持收起、重试与查看完整讨论。',
+    en: 'On-demand paginated feed replies with collapse, retry and a link to the full discussion.',
+  },
+  {
     name: 'ForumFeedPreview',
     import: "import ForumFeedPreview from '@/components/forum/ForumFeedPreview';",
     category: 'more',
