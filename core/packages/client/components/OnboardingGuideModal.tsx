@@ -184,7 +184,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
       zh: '魔方玩家交流社区，可以发帖提问、分享练习经验、讨论成绩。',
       en: 'A cubing community: ask questions, share practice tips and discuss results.',
     },
-    href: '/forum',
+    href: '/forum/feed',
     cta: { zh: '前往论坛', en: 'Open forum' },
     tour: 'forum',
   },

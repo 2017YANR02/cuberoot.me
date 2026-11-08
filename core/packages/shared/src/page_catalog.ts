@@ -488,7 +488,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'forum/feed': {
-    title: { zh: '社区动态', en: 'Community Feed' },
+    title: { zh: '论坛动态', en: 'Forum feed' },
     description: {
       zh: '浏览 CubeRoot 魔方社区各版块的新主题与近期活跃讨论。',
       en: 'Browse new threads and recently active discussions across the CubeRoot speedcubing community.',

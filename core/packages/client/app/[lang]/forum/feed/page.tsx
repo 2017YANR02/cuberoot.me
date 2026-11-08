@@ -8,7 +8,6 @@ import { ForumFeedList } from '@/components/forum/ForumFeedList';
 import { T, tr, useLang } from '@/i18n/tr';
 import { fetchForumFeed, type ForumFeedData, type ForumFeedSort } from '@/lib/forum-api';
 import { ForumHeader } from '../_components/ForumHeader';
-import { ForumFeedComposer } from './ForumFeedComposer';
 import '../forum.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
@@ -28,7 +27,6 @@ export default function ForumFeedPage() {
   const safeSize = PAGE_SIZES.includes(size) ? size : 20;
   const [data, setData] = useState<ForumFeedData | null>(null);
   const [error, setError] = useState('');
-  const [refreshNonce, setRefreshNonce] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,7 +36,7 @@ export default function ForumFeedPage() {
       .then((next) => { if (!cancelled) setData(next); })
       .catch((e) => { if (!cancelled) setError((e as Error).message); });
     return () => { cancelled = true; };
-  }, [sort, safePage, safeSize, refreshNonce]);
+  }, [sort, safePage, safeSize]);
 
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / safeSize));
 
@@ -48,30 +46,17 @@ export default function ForumFeedPage() {
 
   return (
     <div className="forum-page forum-feed-page">
-      <ForumHeader activeView="feed" />
-      <ForumFeedComposer
-        onCreated={() => {
-          void setSort('latest');
-          void setPage(1);
-          setRefreshNonce((nonce) => nonce + 1);
-        }}
-      />
-      <div className="forum-feed-toolbar">
+      <ForumHeader activeView="feed">
         <select
-          value={String(sort === 'latest')}
-          onChange={event => { const latest = event.currentTarget.value === 'true'; void setSort(latest ? 'latest' : 'active'); void setPage(1); }}
+          value={sort}
+          onChange={event => { void setSort(event.currentTarget.value as ForumFeedSort); void setPage(1); }}
           aria-label={tr({ zh: '动态排序', en: 'Feed order' })}
           className="native-select"
         >
-          <option value="true">{tr({ zh: '最新', en: 'Latest' })}</option>
-          <option value="false">{tr({ zh: '活跃', en: 'Active' })}</option>
+          <option value="active">{tr({ zh: '最近活跃', en: 'Recently active' })}</option>
+          <option value="latest">{tr({ zh: '最新发布', en: 'Newest posts' })}</option>
         </select>
-        <span>
-          {sort === 'active'
-            ? <T zh="优先显示最近有回复的讨论" en="Discussions with recent replies first" />
-            : <T zh="优先显示刚发布的主题" en="Newest threads first" />}
-        </span>
-      </div>
+      </ForumHeader>
 
       {error && <div className="forum-error">{error}</div>}
       {!data && !error && <div className="forum-loading"><LoadingIndicator><T zh="加载动态中…" en="Loading feed…" /></LoadingIndicator></div>}
