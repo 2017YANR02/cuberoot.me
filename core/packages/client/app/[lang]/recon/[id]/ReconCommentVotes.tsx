@@ -12,7 +12,7 @@ export function ReconCommentVotes({ comment }: { comment: Awaited<ReturnType<typ
   const [value, setValue] = useState({ likeCount: comment.likeCount ?? 0, myVote: comment.myVote ?? null });
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
-  const [burst, setBurst] = useState(false);
+  const [animating, setAnimating] = useState(false);
   const [error, setError] = useState(false);
   useEffect(() => {
     setValue({ likeCount: comment.likeCount ?? 0, myVote: comment.myVote ?? null });
@@ -25,11 +25,19 @@ export function ReconCommentVotes({ comment }: { comment: Awaited<ReturnType<typ
     setBusy(true);
     setError(false);
     const next = value.myVote === kind ? null : kind;
+    const previous = value;
+    setValue({
+      myVote: next,
+      likeCount: Math.max(0, value.likeCount + Number(next === 'like') - Number(value.myVote === 'like')),
+    });
+    setAnimating(next === 'like');
     try {
       const result = await setCommentVote(comment.id, next);
       setValue({ likeCount: result.likeCount ?? 0, myVote: result.myVote ?? null });
-      setBurst(next === 'like' && result.myVote === 'like');
+      if (result.myVote !== 'like') setAnimating(false);
     } catch {
+      setValue(previous);
+      setAnimating(false);
       setError(true);
     } finally {
       pending.current = false;
@@ -38,15 +46,16 @@ export function ReconCommentVotes({ comment }: { comment: Awaited<ReturnType<typ
   }
 
   return <>
-    <button type="button" className="recon-comment-vote" aria-label={t('点赞', 'Like')}
-      aria-pressed={value.myVote === 'like'} disabled={busy} onClick={() => void vote('like')}>
-      <span className={`recon-comment-vote-icon${burst ? ' is-bursting' : ''}`}
-        onAnimationEnd={() => setBurst(false)}>
-        <ThumbsUp size={18} fill={value.myVote === 'like' ? 'currentColor' : 'none'} />
-        {burst && <span className="recon-comment-vote-burst" aria-hidden="true" />}
-      </span>
-      {value.likeCount > 0 && <span>{value.likeCount}</span>}
-    </button>
+    <span className="recon-comment-like">
+      <button type="button" className="recon-comment-vote" aria-label={t('点赞', 'Like')}
+        aria-pressed={value.myVote === 'like'} disabled={busy} onClick={() => void vote('like')}>
+        <span className={`recon-comment-vote-icon${animating ? ' is-animating' : ''}`}
+          onAnimationEnd={() => setAnimating(false)}>
+          <ThumbsUp size={18} fill={value.myVote === 'like' ? 'currentColor' : 'none'} />
+        </span>
+      </button>
+      {value.likeCount > 0 && <span className="recon-comment-vote-count">{value.likeCount}</span>}
+    </span>
     <button type="button" className="recon-comment-vote" aria-label={t('点踩', 'Dislike')}
       aria-pressed={value.myVote === 'dislike'} disabled={busy} onClick={() => void vote('dislike')}>
       <ThumbsDown size={18} fill={value.myVote === 'dislike' ? 'currentColor' : 'none'} />

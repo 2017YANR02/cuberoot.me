@@ -1399,14 +1399,23 @@
   flex-wrap: wrap;
   gap: 4px;
 }
+.recon-comment-like {
+  display: inline-flex;
+  align-items: center;
+}
+.recon-comment-vote-count {
+  padding-right: 8px;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
 .recon-comment-vote {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-width: 40px;
-  min-height: 40px;
-  padding: 6px 10px;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0;
   border: 0;
   border-radius: 999px;
   background: transparent;
@@ -1418,34 +1427,28 @@
 .recon-comment-vote:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
 .recon-comment-vote[aria-pressed="true"] { color: var(--foreground); }
 .recon-comment-vote:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-.recon-comment-vote:disabled { cursor: wait; }
-.recon-comment-vote-icon { position: relative; display: inline-flex; }
-.recon-comment-vote-icon.is-bursting > svg { animation: recon-vote-pop 600ms ease-out; }
-.recon-comment-vote-burst {
-  position: absolute;
-  inset: 7px;
-  border-radius: 50%;
-  color: var(--accent);
-  pointer-events: none;
-  box-shadow: 0 -18px currentColor, 13px -13px currentColor, 18px 0 currentColor,
-    13px 13px currentColor, 0 18px currentColor, -13px 13px currentColor,
-    -18px 0 currentColor, -13px -13px currentColor;
-  animation: recon-vote-burst 600ms ease-out forwards;
+.recon-comment-vote-icon { display: inline-flex; }
+.recon-comment-vote-icon > svg {
+  transform-origin: 30% 80%;
+  transition: transform 100ms ease-out;
+}
+.recon-comment-vote:active:not(:disabled) .recon-comment-vote-icon > svg {
+  transform: scale(0.92);
+}
+.recon-comment-vote-icon.is-animating > svg {
+  animation: recon-vote-pop 360ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .recon-comment-vote-error { color: var(--destructive); font-size: 0.8rem; }
 @keyframes recon-vote-pop {
-  0%, 100% { transform: scale(1) rotate(0); }
-  35% { transform: scale(1.35) rotate(-18deg); }
-  65% { transform: scale(0.95) rotate(8deg); }
-}
-@keyframes recon-vote-burst {
-  0% { transform: scale(0.4); opacity: 0; }
-  25% { opacity: 1; }
-  100% { transform: scale(1.3); opacity: 0; }
+  0% { transform: scale(0.92) rotate(0); }
+  40% { transform: scale(1.16) rotate(-10deg); }
+  70% { transform: scale(0.98) rotate(2deg); }
+  100% { transform: scale(1) rotate(0); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .recon-comment-vote-icon.is-bursting > svg,
-  .recon-comment-vote-burst { animation-duration: 1ms; }
+  .recon-comment-vote-icon > svg { transition: none; }
+  .recon-comment-vote:active:not(:disabled) .recon-comment-vote-icon > svg { transform: none; }
+  .recon-comment-vote-icon.is-animating > svg { animation-duration: 1ms; }
 }
 .yt-reply-btn {
   background: transparent;
