@@ -167,8 +167,10 @@ function Exercise({ step, example, index, total, onNext, onClose, onPrevious, ca
         <div className="lbl-exercise-tools">{beginner && <button className="lbl-button" type="button" onClick={undo} disabled={!history}><T zh="撤销一步" en="Undo" /></button>}<button className="lbl-button" type="button" onClick={reset}>{beginner ? <T zh="重新开始" en="Restart" /> : <T zh="重来" en="Restart" />}</button><MoreToggle className="lbl-button" type="button" expanded={hint} onClick={() => setHint(!hint)}>{hint ? tr({ zh: '收起提示', en: 'Hide hint' }) : tr({ zh: '给我提示', en: 'Show hint' })}</MoreToggle></div>
       </div>
       <div className="lbl-basic-copy"><h3>{wallGoal ? <T zh="造出一面墙，保留完整底下两层；对色在左或右均可。" en="Create a wall while keeping the first two layers solved; either edge-cycle direction is accepted." /> : fishGoal ? <T zh="变成左小鱼或右小鱼，保持下两层复原。" en="Form either a left or right fish, keeping the first two layers solved." /> : edgeGoal ? <T zh="把目标中棱移到顶层，保留完整底层；顶层位置和朝向不限。" en="Move the target middle edge to the top layer in any position or orientation, keeping the entire bottom layer intact." /> : cornerGoal ? <T zh="把目标角块移到顶层，保留底十字和其他已复原的底层角块。" en="Move the target corner to the top layer, keeping the bottom cross and the other solved bottom corners intact." /> : tr(practiceObjective(step, example))}</h3>
-        <div className="lbl-exercise-target"><VisualCube local view="iso" size={140} setup={target} stickerColors={pieceGoal?.targetColors ?? colors} stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]} alt={tr({ zh: '本题目标状态', en: 'Target state' })} /></div>
+        <div className="lbl-exercise-reference">
+        <div className="lbl-exercise-target" aria-hidden={hint}><VisualCube local view="iso" size={140} setup={target} stickerColors={pieceGoal?.targetColors ?? colors} stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]} alt={tr({ zh: '本题目标状态', en: 'Target state' })} /></div>
         <div className="lbl-exercise-hint" aria-hidden={!hint}><p>{edgeGoal ? tr({ zh: '把目标棱所在槽位放到右前方，做“去右”将它取到顶层。', en: 'Bring the target slot to front-right and use the right insertion to eject the edge into the top layer.' }) : tr(example.hint)}</p><AlgSteps step={step.id} alg={example.alg} /></div>
+        </div>
       </div>
     </div>
     <div className="lbl-basic-footer">

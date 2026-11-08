@@ -179,9 +179,13 @@ describe('algorithm player placement', () => {
     const interaction = read('components/sim-embed/attachEmbeddedSimInteraction.ts');
 
     expect(player).toContain("import('@/components/sim-embed/attachEmbeddedSimInteraction')");
-    expect(player).toContain('const detachInteraction = attachEmbeddedSimInteraction({');
-    expect(player).toContain('mode: interactionMode');
-    expect(player).toContain('detachInteraction()');
+    expect(player).toContain('detachInteraction = attachEmbeddedSimInteraction({');
+    expect(player).toContain('const options = interactionOptionsRef.current');
+    expect(player).toContain('mode: options.interactionMode');
+    expect(player).toContain('lockView: options.lockView');
+    expect(player).toContain('updateInteractionRef.current = updateInteraction');
+    expect(player).toContain('updateInteraction()');
+    expect(player).toContain('detachInteraction?.()');
     expect(interaction).toContain("import Toucher from '@/app/[lang]/sim/Toucher'");
     expect(interaction).toContain('toucher.init(dom, world.controller.touch)');
     expect(interaction).toContain("world.controller.dragEmpty = 'view'");

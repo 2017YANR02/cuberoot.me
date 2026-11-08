@@ -34,7 +34,12 @@
 .lbl-practice-page .lbl-exercise { box-sizing: border-box; min-height: 0; margin-top: 0; display: grid; grid-template-rows: 64px minmax(0, 1fr) auto; }
 .lbl-practice-page .lbl-exercise-heading { min-height: 0; overflow: auto; }
 .lbl-practice-page .lbl-exercise .lbl-basic-content { min-height: 0; overflow: auto; overscroll-behavior: contain; align-items: start; }
-.lbl-practice-page .lbl-exercise .lbl-basic-copy > h3 { box-sizing: border-box; min-height: 4.5em; margin-top: 0; }
+.lbl-practice-page .lbl-exercise .lbl-basic-copy { align-self: start; padding-top: 16px; }
+.lbl-practice-page .lbl-exercise-reference { display: grid; }
+.lbl-practice-page .lbl-exercise-reference > .lbl-exercise-target,
+.lbl-practice-page .lbl-exercise-reference > .lbl-exercise-hint { grid-area: 1 / 1; align-self: start; }
+.lbl-practice-page .lbl-exercise-reference > [aria-hidden="true"] { visibility: hidden; pointer-events: none; }
+.lbl-practice-page .lbl-exercise .lbl-basic-copy > h3 { box-sizing: border-box; height: 4.5em; overflow: auto; margin-top: 0; }
 .lbl-practice-page .lbl-exercise .lbl-exercise-navigation:disabled { color: var(--faint-foreground); background: var(--muted); cursor: default; }
 .lbl-practice-page .lbl-practice-back, .lbl-practice-page .lbl-completion-review { border: 0; background: transparent; color: inherit; cursor: pointer; }
 .lbl-practice-page .lbl-exercise .lbl-basic-footer > .lbl-practice-review { grid-column: 2; justify-self: center; }
