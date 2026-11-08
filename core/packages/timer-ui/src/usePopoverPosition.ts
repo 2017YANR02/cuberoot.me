@@ -106,16 +106,23 @@ export function usePopoverPosition({
         ? previous : { left, maxHeight, maxWidth: safeWidth, top });
     };
 
+    const onScroll = (event: Event) => {
+      // Internal scrolling does not move the anchor. Uncapping the panel to
+      // measure it here resets its scroll containers and interrupts touch inertia.
+      if (event.target instanceof Node && panelRef.current?.contains(event.target)) return;
+      positionPanel();
+    };
+
     positionPanel();
     const frame = requestAnimationFrame(positionPanel);
     window.addEventListener('resize', positionPanel);
-    window.addEventListener('scroll', positionPanel, true);
+    window.addEventListener('scroll', onScroll, true);
     window.visualViewport?.addEventListener('resize', positionPanel);
     window.visualViewport?.addEventListener('scroll', positionPanel);
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener('resize', positionPanel);
-      window.removeEventListener('scroll', positionPanel, true);
+      window.removeEventListener('scroll', onScroll, true);
       window.visualViewport?.removeEventListener('resize', positionPanel);
       window.visualViewport?.removeEventListener('scroll', positionPanel);
     };
