@@ -58,10 +58,15 @@ export function useDialogMotion(onClose: () => void, {
     cancel();
     const running = play(true);
     animations.current = running;
+    let completed = false;
     const finish = () => {
-      if (!mounted.current || !closing.current) return;
-      closing.current = false;
-      cancel();
+      if (!mounted.current || !closing.current || completed) return;
+      completed = true;
+      if (fallback.current !== null) clearTimeout(fallback.current);
+      fallback.current = null;
+      // Keep the exit's final frame until React removes/hides the dialog.
+      // Cancelling here restores the visible scrim and panel before that commit.
+      // The effect cleanup owns cancellation (including enabled -> false).
       latest.current.onClose();
     };
     if (!running.length) { finish(); return; }

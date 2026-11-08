@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { useDialogMotion } from '@cuberoot/timer-ui/dialog-motion';
 let host: HTMLDivElement, root: Root;
-let reduced: boolean, finishes: (() => void)[], frames: Keyframe[][];
+let reduced: boolean, finishes: (() => void)[], frames: Keyframe[][], cancels: ReturnType<typeof vi.fn>[];
 function Dialog({ onClose }: { onClose(): void }) {
   const { motionRef, close } = useDialogMotion(onClose);
   return createElement('div', { ref: motionRef }, createElement('section', null,
@@ -12,14 +12,16 @@ function Dialog({ onClose }: { onClose(): void }) {
 }
 beforeEach(() => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
-  reduced = false; finishes = []; frames = [];
+  reduced = false; finishes = []; frames = []; cancels = [];
   vi.stubGlobal('matchMedia', () => ({ matches: reduced, addEventListener() {}, removeEventListener() {} }));
   Element.prototype.animate = vi.fn((keyframes) => {
     frames.push(keyframes as Keyframe[]);
     let finish!: () => void;
     const finished = new Promise<void>(resolve => { finish = resolve; });
     finishes.push(finish);
-    return { finished, cancel: finish } as unknown as Animation;
+    const cancel = vi.fn(finish);
+    cancels.push(cancel);
+    return { finished, cancel } as unknown as Animation;
   });
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
 });
@@ -42,6 +44,19 @@ it('dismisses immediately for reduced motion', async () => {
   await act(async () => root.render(createElement(Dialog, { onClose: close })));
   await act(async () => host.querySelector('button')!.click());
   expect(close).toHaveBeenCalledTimes(1); expect(frames).toHaveLength(0);
+});
+it('holds the final exit frame until the owner removes the dialog', async () => {
+  const close = vi.fn();
+  await act(async () => root.render(createElement(Dialog, { onClose: close })));
+  await act(async () => host.querySelector('button')!.click());
+  const exitCancels = cancels.slice(-2);
+  await act(async () => finishes.forEach(finish => finish()));
+  expect(close).toHaveBeenCalledTimes(1);
+  expect(exitCancels.every(cancel => cancel.mock.calls.length === 0)).toBe(true);
+  await act(async () => host.querySelector('button')!.click());
+  expect(close).toHaveBeenCalledTimes(1);
+  await act(async () => root.render(null));
+  expect(exitCancels.every(cancel => cancel.mock.calls.length === 1)).toBe(true);
 });
 it('cancels a pending exit on unmount without invoking stale callbacks', async () => {
   const close = vi.fn();
