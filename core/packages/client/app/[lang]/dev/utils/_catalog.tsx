@@ -73,6 +73,14 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 
 export const CATALOG: UtilEntry[] = [
   {
+    name: 'useWcaTeams',
+    sig: 'useWcaTeams(wcaIds: string[])',
+    imp: "import { useWcaTeams } from '@/hooks/useWcaTeams';",
+    category: 'hook',
+    zh: '批量加载选手战队归属与战队目录，提供加载状态、重试和保存。',
+    en: 'Load team assignments and the team directory in batches, with readiness, retry and save support.',
+  },
+  {
     name: 'useCameraStream',
     sig: 'useCameraStream({ enabled = true, width = 1920, height = 1080 } = {})',
     imp: "import { useCameraStream } from '@/hooks/useCameraStream';",
