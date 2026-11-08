@@ -197,7 +197,7 @@
 
 .community-feed-meta-action:disabled { cursor: wait; opacity: 0.65; }
 
-/* Keep following actions stationary across zero, digit growth and compact counts. */
+/* Reserve width for visible counts so digit growth does not shift following actions. */
 .community-feed-meta > .community-feed-meta-action {
   display: grid;
   grid-template-columns: 14px 4ch;
@@ -209,6 +209,14 @@
   padding: 4px 0;
   text-align: left;
 }
+
+.community-feed-meta > .community-feed-meta-action:has(> .community-feed-count:empty) {
+  grid-template-columns: 14px;
+  margin-inline: -5px;
+  padding-inline: 5px;
+}
+
+.community-feed-count:empty { display: none; }
 
 .community-feed-count {
   display: block;
