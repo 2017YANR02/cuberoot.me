@@ -114,6 +114,11 @@
   border-radius: 0;
   padding: 0;
 }
+.detail-scramble-solution .detail-scramble-line + .detail-solution-text {
+  border-top: 1px solid var(--border-default);
+  margin-top: 6px;
+  padding-top: 6px;
+}
 .detail-scramble-solution:has(.recon-case-diagram) > .detail-caption-header,
 .detail-scramble-solution:has(.recon-case-diagram) > .detail-scramble-line:not(:has(.recon-case-diagram)) {
   padding-inline-start: var(--recon-diagram-indent);
