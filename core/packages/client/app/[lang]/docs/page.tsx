@@ -6,7 +6,7 @@ import { FilePlus2, FileText, Sheet, Trash2, Upload } from '@app-foundation/icon
 import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import WcaAuth from '@/components/WcaAuth';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 import { T, tr, useLang } from '@/i18n/tr';
 import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { createDocument, deleteDocument, fetchDocuments, importDocument, type CollaborativeDocument, type DocumentKind } from '@/lib/document-api';
@@ -118,7 +118,7 @@ export default function DocumentsPage() {
       <p><T zh="登录后查看你的文档和表格。" en="Sign in to view your documents and spreadsheets." /></p>
       <AppLink href="/account?next=/docs" prefetch={false} className="docs-text-link"><T zh="去登录" en="Sign in" /></AppLink>
     </div>}
-    {user && loading && <p className="docs-muted"><LoadingIndicator><T zh="正在加载…" en="Loading…" /></LoadingIndicator></p>}
+    {user && loading && <ContentSkeleton variant="list" />}
     {user && !loading && !error && visibleDocuments.length === 0 && <div className="docs-empty">
       <FileText size={28} aria-hidden="true" />
       <p><T zh="暂无文件。" en="No files yet." /></p>

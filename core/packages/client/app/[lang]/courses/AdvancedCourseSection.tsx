@@ -15,7 +15,7 @@ import {
   type AdvancedCourseTrack,
 } from '@/lib/teaching-api';
 import { ADVANCED_COURSE_FALLBACK } from './_data/advanced-course-fallback';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 const EMPTY_DRAFT: AdvancedCourseDraft = {
   track: '333',
@@ -167,7 +167,7 @@ export default function AdvancedCourseSection({ isAdmin }: { isAdmin: boolean })
       </div>
 
       {error && <p className={usingFallback ? 'teaching-advanced-status' : 'teaching-advanced-error'} role="alert">{error} {!loading && <button className="teaching-advanced-retry" type="button" onClick={() => void load()}><T zh="重试" en="Retry" /></button>}</p>}
-      {loading && <p className="teaching-advanced-status"><LoadingIndicator><T zh="正在加载后续课程…" en="Loading further courses…" /></LoadingIndicator></p>}
+      {loading && <ContentSkeleton variant="list" rows={4} />}
 
       {!loading && TRACKS.map((track, trackIndex) => {
         const trackLessons = grouped[track.id];

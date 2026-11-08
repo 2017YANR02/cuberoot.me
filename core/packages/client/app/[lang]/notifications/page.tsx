@@ -26,7 +26,7 @@ import { refreshNotificationsUnread } from '@/lib/notifications-unread';
 import './notifications.css';
 import RecordPreferences from './_RecordPreferences';
 import CompetitionPreferences from './_CompetitionPreferences';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 const KIND_ICON: Record<NotificationKind, typeof MessageSquare> = {
   assistant_alert: BellRing,
@@ -188,7 +188,7 @@ function NotificationsContent() {
           <CompetitionPreferences key={`competitions:${user.uid ?? user.wcaId}`} />
           </SettingsDialog>}
           {err && <div className="ntf-error">{err}</div>}
-          {!items && !err && <div className="ntf-empty"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>}
+          {!items && !err && <ContentSkeleton variant="list" />}
           {items && items.length === 0 && (
             <div className="ntf-empty">
               <Check size={16} />
