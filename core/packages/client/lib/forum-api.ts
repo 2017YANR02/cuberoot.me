@@ -282,9 +282,9 @@ export async function fetchLatestThreads(limit: number): Promise<{ threads: Late
 }
 
 export async function fetchForumFeed(
-  sort: ForumFeedSort, page: number, size: number,
+  sort: ForumFeedSort, page: number, size: number, forum = '',
 ): Promise<ForumFeedData> {
-  return apiGet<ForumFeedData>('/feed', { sort, page: String(page), size: String(size) });
+  return apiGet<ForumFeedData>('/feed', { sort, page: String(page), size: String(size), ...(forum ? { forum } : {}) });
 }
 
 export function fetchForumMine(kind: ForumMineKind, page: number, size: number, signal?: AbortSignal): Promise<ForumMineData> {

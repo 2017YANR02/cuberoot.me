@@ -7,7 +7,7 @@ const HANDOFF_KEY = 'cuberoot.entry-handoff.v1';
 const CHANGE_EVENT = 'cuberoot:entry-navigation';
 const MAX_DEPTH = 8;
 const MAX_CONTEXT_LENGTH = 4096;
-const STATE_KEYS = new Set(['q', 'tab', 'page', 'sort', 'event', 'eventId', 'country', 'region', 'year', 'view', 'settings', 'section', 'pet', 'puzzle', 'category', 'teacher', 'id']);
+const STATE_KEYS = new Set(['q', 'tab', 'page', 'sort', 'forum', 'event', 'eventId', 'country', 'region', 'year', 'view', 'settings', 'section', 'pet', 'puzzle', 'category', 'teacher', 'id']);
 const LEGACY_KEYS = ['accountBack', 'accountEntry', 'shopBack', 'shopEntry'];
 const EXCLUDED = /^\/(?:api|v1|auth|_next|stats|tools|icons|images|fonts|contact\/[^/]+\.[^/]+)(?:\/|$)/;
 const bare = (path: string) => path.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
