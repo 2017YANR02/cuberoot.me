@@ -2553,10 +2553,7 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
         <div className="sim-playback-under" ref={setPlaybackSlot} />
         </div>
 
-        <aside className="sim-side" data-site-surface="panel" id={panelId} onFocusCapture={event => {
-          if (window.matchMedia('(max-width: 767px)').matches
-            && event.target.matches('textarea, input:not([type="range"]), [contenteditable="true"]')) setPanelExpanded(true);
-        }}>
+        <aside className="sim-side" data-site-surface="panel" id={panelId}>
           {puzzleParam === 'custom' && (
             <div className="sim-cut-editor-wrap">
               <CutEditor value={customCuts} onChange={(d) => setQuery({ cuts: d })} />
