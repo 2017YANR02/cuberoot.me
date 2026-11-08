@@ -9788,6 +9788,15 @@ CREATE TABLE site_assistant_attachments (
 CREATE UNIQUE INDEX site_assistant_attachments_content ON site_assistant_attachments(user_id,conversation_id,sha256) WHERE deleted_at IS NULL;
 CREATE INDEX site_assistant_attachments_owner ON site_assistant_attachments(user_id,created_at DESC);
 
+-- Competition follows (0045), also consumed by registration reminders.
+CREATE TABLE comp_follows (
+  wca_id VARCHAR(20) NOT NULL,
+  comp_id VARCHAR(64) NOT NULL,
+  created_at BIGINT NOT NULL,
+  PRIMARY KEY (wca_id, comp_id)
+);
+CREATE INDEX idx_comp_follows_user ON comp_follows(wca_id);
+
 -- Competition subscriptions and registration reminders (0317).
 CREATE TABLE competition_notification_preferences (
   user_id BIGINT PRIMARY KEY REFERENCES app_users(id) ON DELETE CASCADE,
