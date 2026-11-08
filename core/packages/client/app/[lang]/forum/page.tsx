@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from '@/components/AppLink';
-import { T } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
 import { fetchForumIndex, type ForumIndexData } from '@/lib/forum-api';
 import { forumIcon } from './_lib/forum-icons';
 import { ForumHeader } from './_components/ForumHeader';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 import './forum.css';
 
 export default function ForumIndexPage() {
@@ -28,7 +27,7 @@ export default function ForumIndexPage() {
       <ForumHeader activeView="boards" />
 
       {error && <div className="forum-error">{error}</div>}
-      {!data && !error && <div className="forum-loading"><LoadingIndicator><T zh="加载中…" en="Loading…" /></LoadingIndicator></div>}
+      {!data && !error && <ContentSkeleton variant="list" columns={2} rows={6} />}
 
       {data && (
         <div className="forum-directory">

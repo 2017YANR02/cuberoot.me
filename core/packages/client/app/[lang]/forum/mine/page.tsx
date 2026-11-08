@@ -5,7 +5,7 @@ import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
 import { Ellipsis } from '@app-foundation/icons/lucide';
 import { CompactSelect } from '@/components/CompactSelect';
 import { ForumFeedList } from '@/components/forum/ForumFeedList';
-import { ForumReplySkeleton } from '@/components/forum/ForumReplySkeleton';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 import Paginator from '@/components/wca-stats/Paginator';
 import { useEntryRouter } from '@/hooks/useEntryRouter';
 import { useAuthStore, useOwnerKey } from '@/lib/auth-store';
@@ -82,7 +82,7 @@ function MineResults({ kind, page, size, onPageChange, onSizeChange }: {
   }, [kind, page, size, revision, onPageChange]);
   return <>
     {error ? <div className="forum-error" role="alert">{error} <button type="button" className="forum-btn-text" onClick={() => setRevision(n => n + 1)}>{tr({ zh: '重试', en: 'Retry' })}</button></div>
-      : !data ? <div className="forum-loading"><ForumReplySkeleton /></div>
+      : !data ? <ContentSkeleton variant="feed" />
       : data.threads.length === 0 ? <div className="forum-empty">{kind === 'threads'
         ? tr({ zh: '还没有发布帖子', en: 'No threads yet' }) : tr({ zh: '还没有回复帖子', en: 'No replies yet' })}</div>
       : <ForumFeedList threads={data.threads} renderBylineEnd={thread => <MineThreadMenu thread={thread} kind={kind} onDeleted={() => setRevision(n => n + 1)} />} />}

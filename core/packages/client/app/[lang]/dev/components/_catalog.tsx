@@ -1047,6 +1047,20 @@ export const CATALOG: ComponentEntry[] = [
     en: 'On-demand paginated feed replies with collapse, retry and a link to the full discussion.',
   },
   {
+    name: 'ContentSkeleton',
+    import: "import { ContentSkeleton } from '@/components/ContentSkeleton';",
+    category: 'more',
+    zh: '内容加载扫光骨架：列表、帖子、表格、卡片、资料、正文与赛程，共用主题和减少动态效果设置。',
+    en: 'Shared shimmer layouts for lists, feeds, tables, cards, profiles, articles and schedules, with theme and reduced-motion support.',
+  },
+  {
+    name: 'SkeletonBlock',
+    import: "import { SkeletonBlock } from '@/components/ContentSkeleton';",
+    category: 'more',
+    zh: '统一扫光占位块，供已有图片与卡片布局复用。',
+    en: 'Shared shimmer block for existing image and card layouts.',
+  },
+  {
     name: 'ForumReplySkeleton',
     import: "import { ForumReplySkeleton } from '@/components/forum/ForumReplySkeleton';",
     category: 'more',

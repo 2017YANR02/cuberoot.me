@@ -9,7 +9,7 @@ import { T, tr, useLang } from '@/i18n/tr';
 import { fetchForumFeed, type ForumFeedData, type ForumFeedSort } from '@/lib/forum-api';
 import { ForumHeader } from '../_components/ForumHeader';
 import '../forum.css';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 const SORTS: ForumFeedSort[] = ['active', 'latest'];
 const PAGE_SIZES = [10, 20, 40];
@@ -59,7 +59,7 @@ export default function ForumFeedPage() {
       </ForumHeader>
 
       {error && <div className="forum-error">{error}</div>}
-      {!data && !error && <div className="forum-loading"><LoadingIndicator><T zh="加载动态中…" en="Loading feed…" /></LoadingIndicator></div>}
+      {!data && !error && <ContentSkeleton variant="feed" />}
       {data && data.threads.length === 0 && <div className="forum-empty"><T zh="还没有社区动态。" en="No community activity yet." /></div>}
       {data && data.threads.length > 0 && <ForumFeedList threads={data.threads} />}
 

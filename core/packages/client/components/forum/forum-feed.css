@@ -254,40 +254,7 @@
 .community-feed-reply .community-feed-byline { margin-bottom: 4px; }
 .community-feed-reply .forum-post-body { font-size: 0.86rem; }
 
-.community-feed-reply-skeleton {
-  display: grid;
-  gap: 8px;
-  padding-bottom: 16px;
-}
-
-.community-feed-reply-skeleton > span {
-  position: relative;
-  overflow: hidden;
-  width: 90%;
-  height: 12px;
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
-}
-
-.community-feed-reply-skeleton > span:first-child { width: 24%; height: 10px; }
-.community-feed-reply-skeleton > span:last-child { width: 64%; }
-
-.community-feed-reply-skeleton > span::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--foreground) 8%, transparent), transparent);
-  animation: community-feed-reply-shimmer 1.4s ease-in-out infinite;
-}
-
-@keyframes community-feed-reply-shimmer {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(100%); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .community-feed-reply-skeleton > span::after { animation: none; }
-}
+.content-skeleton.community-feed-reply-skeleton { padding: 0 0 16px; }
 
 .community-feed-replies-notice,
 .community-feed-replies-actions {

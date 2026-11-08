@@ -1,11 +1,8 @@
 import { tr } from '@/i18n/tr';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 export function ForumReplySkeleton() {
   return (
-    <div className="community-feed-reply-skeleton" role="status" aria-label={tr({ zh: '加载回复中…', en: 'Loading replies…' })}>
-      <span aria-hidden="true" />
-      <span aria-hidden="true" />
-      <span aria-hidden="true" />
-    </div>
+    <ContentSkeleton variant="text" className="community-feed-reply-skeleton" label={tr({ zh: '加载回复中…', en: 'Loading replies…' })} />
   );
 }
