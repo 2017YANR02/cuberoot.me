@@ -10,7 +10,7 @@ import { useHomeScrollRestoration } from '@/hooks/useHomeScrollRestoration';
 import { SkeletonBlock } from '@/components/ContentSkeleton';
 
 /** Site entrypoint — Landing page. */
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { parseAsBoolean, useQueryState } from 'nuqs';
@@ -119,6 +119,33 @@ function LandingCardContent({ label, Icon, iconImg, record, iconText, puzzleIcon
 
 type ReconSolve = Awaited<ReturnType<typeof getPinnedRecons>>[number];
 
+// Only the guide consumes query state; its production prerender bailout must not hide the homepage.
+function LandingOnboarding({ mounted, personalLoading }: { mounted: boolean; personalLoading: boolean }) {
+  const user = useAuthUser();
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [replayGuide, setReplayGuide] = useQueryState('guide', parseAsBoolean.withDefault(false));
+  useEffect(() => {
+    if (!mounted) return;
+    let active = true;
+    let timer: number | undefined;
+    setGuideOpen(false);
+    if (replayGuide) {
+      setGuideOpen(true);
+    } else {
+      void isOnboardingGuided(user).then(seen => {
+        if (active && !seen) timer = window.setTimeout(() => setGuideOpen(true), 600);
+      });
+    }
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [mounted, user?.uid, user?.wcaId, replayGuide]);
+  const closeGuide = useCallback(() => {
+    setGuideOpen(false);
+    void markOnboardingGuided(user);
+    if (replayGuide) void setReplayGuide(null);
+  }, [user, replayGuide, setReplayGuide]);
+  return <OnboardingGuideModal open={guideOpen && !personalLoading} onClose={closeGuide} />;
+}
+
 export default function LandingPage({ initialLayout = null }: { initialLayout?: HomeLayoutSnapshot | null }) {
   const douyin = useDouyinToolSurface();
   const contentRefreshKey = useContentRefreshKey();
@@ -147,27 +174,6 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
   const onPersonalReady = useCallback(() => setPersonalReadyKey(personalKey), [personalKey, setPersonalReadyKey]);
   const personalLoading = Boolean(user && (!compFollows.loaded || personalReadyKey !== personalKey));
   useHomeScrollRestoration(!personalLoading);
-  const [guideOpen, setGuideOpen] = useState(false);
-  const [replayGuide, setReplayGuide] = useQueryState('guide', parseAsBoolean.withDefault(false));
-  useEffect(() => {
-    if (!mounted) return;
-    let active = true;
-    let timer: number | undefined;
-    setGuideOpen(false);
-    if (replayGuide) {
-      setGuideOpen(true);
-    } else {
-      void isOnboardingGuided(user).then(seen => {
-        if (active && !seen) timer = window.setTimeout(() => setGuideOpen(true), 600);
-      });
-    }
-    return () => { active = false; window.clearTimeout(timer); };
-  }, [mounted, user?.uid, user?.wcaId, replayGuide]);
-  const closeGuide = useCallback(() => {
-    setGuideOpen(false);
-    void markOnboardingGuided(user);
-    if (replayGuide) void setReplayGuide(null);
-  }, [user, replayGuide, setReplayGuide]);
   const [featuredNotices, setFeaturedNotices] = useRetainedState<PageNotice[]>('home:featuredNotices', []);
   const [publicMembers, setPublicMembers] = useRetainedState<PublicMember[] | null>('home:publicMembers', null);
   const [visibleWidgets, setVisibleWidgets] = useRetainedState<Record<string, boolean>>('home:visibleWidgets', {});
@@ -731,7 +737,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         <ContactDetails />
       </div>
       </footer>
-      <OnboardingGuideModal open={guideOpen && !personalLoading} onClose={closeGuide} />
+      <Suspense fallback={null}><LandingOnboarding mounted={mounted} personalLoading={personalLoading} /></Suspense>
     </div>
     </>
   );

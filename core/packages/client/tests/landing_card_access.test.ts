@@ -16,6 +16,15 @@ vi.mock('@/hooks/useRetainedState', async () => {
   return { useRetainedState: (_key: string, initial: unknown) => useState(initial) };
 });
 
+const queryRendering = vi.hoisted(() => ({ suspend: false }));
+vi.mock('nuqs', async importOriginal => {
+  const actual = await importOriginal<typeof import('nuqs')>();
+  return { ...actual, useQueryState: (...args: Parameters<typeof actual.useQueryState>) => {
+    if (queryRendering.suspend) throw new Promise(() => {});
+    return actual.useQueryState(...args);
+  } };
+});
+
 const auth = vi.hoisted(() => ({ user: null as { wcaId: string } | null }));
 const lockApi = vi.hoisted(() => ({
   getHomeCardLocks: vi.fn(async (_signal?: AbortSignal) => ({} as Record<string, boolean>)),
@@ -65,6 +74,17 @@ const renderLanding = (initialLayout?: HomeLayoutSnapshot) => createElement(Nuqs
 });
 
 describe('homepage development cards', () => {
+  it('keeps navigation in server HTML when query-dependent onboarding suspends', () => {
+    auth.user = null;
+    queryRendering.suspend = true;
+    try {
+      const html = renderToString(renderLanding({ locks: {}, orders: {} }));
+      expect(html).toContain('id="card-timer"');
+      expect(html).toContain('class="landing-page"');
+    } finally {
+      queryRendering.suspend = false;
+    }
+  });
   it('includes saved visible links and their order in the server HTML before browser requests', () => {
     auth.user = null;
     changeAppLanguage('zh');
