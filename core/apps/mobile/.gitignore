@@ -1,4 +1,5 @@
 dist/
+.env.android-push.local
 /public/cubing-chunks/
 android/.gradle/
 android/.idea/

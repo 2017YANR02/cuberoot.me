@@ -112,6 +112,7 @@ jobs:
           set -euo pipefail
           pnpm install --frozen-lockfile
           node --test scripts/android-release/*.test.ts
+          node --test apps/mobile/scripts/android-push-config.node-test.ts
           node scripts/android-release/distribute.ts prepare
           pnpm --filter @cuberoot/desktop build:deps
           pnpm --filter @cuberoot/app-ui typecheck
@@ -130,6 +131,19 @@ jobs:
         env:
           PLAY_TRACK: ${{ inputs.play_track }}
           ONLY_PLAY: ${{ inputs.only_play }}
+          # Repository-scoped build configuration; signing environment secrets stay in sign-android.
+          ANDROID_PUSH_REQUIRED: ${{ vars.ANDROID_PUSH_REQUIRED || 'false' }}
+          ANDROID_PUSH_VENDORS: ${{ vars.ANDROID_PUSH_VENDORS }}
+          GETUI_APP_ID: ${{ secrets.GETUI_APP_ID }}
+          GETUI_OPPO_APP_KEY: ${{ secrets.GETUI_OPPO_APP_KEY }}
+          GETUI_OPPO_APP_SECRET: ${{ secrets.GETUI_OPPO_APP_SECRET }}
+          GETUI_VIVO_APP_ID: ${{ secrets.GETUI_VIVO_APP_ID }}
+          GETUI_VIVO_APP_KEY: ${{ secrets.GETUI_VIVO_APP_KEY }}
+          GETUI_XIAOMI_APP_ID: ${{ secrets.GETUI_XIAOMI_APP_ID }}
+          GETUI_XIAOMI_APP_KEY: ${{ secrets.GETUI_XIAOMI_APP_KEY }}
+          GETUI_MEIZU_APP_ID: ${{ secrets.GETUI_MEIZU_APP_ID }}
+          GETUI_MEIZU_APP_KEY: ${{ secrets.GETUI_MEIZU_APP_KEY }}
+          GETUI_HONOR_APP_ID: ${{ secrets.GETUI_HONOR_APP_ID }}
         run: |
           set -euo pipefail
           chmod +x apps/mobile/android/gradlew

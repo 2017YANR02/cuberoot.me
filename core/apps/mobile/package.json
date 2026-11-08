@@ -18,6 +18,8 @@
     "cap:sync:android": "pnpm build && cap sync android",
     "cap:sync:ios": "pnpm build && cap sync ios",
     "android:open": "cap open android",
+    "android:push:check": "node scripts/android-push-config.ts",
+    "android:apk:debug": "pnpm cap:sync:android && node scripts/build-android.ts debug",
     "android:run": "pnpm cap:sync:android && cap run android",
     "android:apk:direct": "pnpm cap:sync:android && node scripts/build-android.ts direct",
     "android:apk:play": "pnpm cap:sync:android && node scripts/build-android.ts play",

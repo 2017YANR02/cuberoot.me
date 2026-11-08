@@ -57,14 +57,46 @@ Android 在线与厂商消息共用受限的显式 Activity intent，release/deb
 
 ## 4. 构建与验收
 
-先在当前 PowerShell 安全注入对应应用变量，再从 `core/` 执行既有命令：
+### 本地配置检查
 
-```powershell
-pnpm --filter @cuberoot/mobile assets:android
-pnpm --filter @cuberoot/mobile cap:sync:android
+复制 `core/apps/mobile/.env.android-push.example` 为同目录的 `.env.android-push.local`，只在本机填写客户端参数，该文件已忽略。也可通过当前 shell 注入变量。不会自动读取 API `.env`，已有 shell 变量（包括空值）优先于文件。文件只允许模板中的变量，填入服务端 `GETUI_APP_KEY` / `GETUI_MASTER_SECRET` 或其他未知项会被拒绝。
+
+从 `core/` 执行（文件参数相对 Mobile 包目录）：
+
+```sh
+pnpm --filter @cuberoot/mobile android:push:check release --push-env-file .env.android-push.local
+pnpm --filter @cuberoot/mobile android:push:check debug --push-env-file .env.android-push.local
+pnpm --filter @cuberoot/mobile android:apk:debug --push-env-file .env.android-push.local
+pnpm --filter @cuberoot/mobile android:apk:direct --push-env-file .env.android-push.local
 ```
 
-进入 `apps/mobile/android` 后，在 macOS/Linux 运行 `./gradlew :app:assembleDebug`，Windows 运行 `.\\gradlew.bat :app:assembleDebug`。正式包另走现有签名发布流程，不用调试包代替。不能提交密钥/私钥或含它们的临时配置。
+检查与构建使用同一份配置加载逻辑；构建入口在 Gradle 前检查，厂商依赖和字段清单统一来自 `apps/mobile/android/push-vendors.json`。检查只输出包名、状态、变量名和缺项，不显示值，不联网验证凭据或发送通知。未提供 `--push-env-file` 时只检查当前环境；`configured` 只表示字段齐全。
+
+- `ANDROID_PUSH_REQUIRED=false`（默认）：允许全部留空，报告 `disabled`，保留无推送的普通构建；厂商字段只填一半或缺基础 App ID 仍报错。
+- `ANDROID_PUSH_REQUIRED=true`：缺少当前包的个推 App ID 即失败。未知布尔值也失败，避免拼错后跳过门禁。
+- `ANDROID_PUSH_VENDORS=oppo,vivo,xiaomi,meizu,honor`：声明本次必须具备的厂商，可只列实际接入的项；缺任一必需项或厂商名拼错即失败。未声明的完整厂商组仍按既有 Gradle 逻辑加入；不要用清空名单来禁用已填写的组。
+- Debug 只检查 `GETUI_DEBUG_*`，Release 只检查 `GETUI_*`，不回退借用另一包的参数。Gradle 会配置两种 variant，因此另一包残留的半组参数仍可能阻断构建；不用的组全部留空。
+
+正式包继续要求现有发布签名；不能用 Debug 验证替代正式签名核对。不要使用 `VITE_*` 存储这些字段，不提交填过值的文件或把服务端凭据放到客户端环境。
+
+### CI 注入位置与凭据清单
+
+`app_release.yml` 仅在 **Build unsigned Android artifacts** 步骤注入下列仓库级 Actions secrets，覆盖 direct APK 与 Play AAB；不注入 Windows、Web 构建、签名或发布步骤。构建 job 不绑定 `app-release` environment，所以只放在该 environment 的同名 secret 不会被此步骤读取。签名环境与签名凭据的既有隔离保持不变。
+
+| 用途 | 仓库级 Actions secrets（正式包） | 调试本地文件 |
+| --- | --- | --- |
+| 个推基础 | `GETUI_APP_ID` | `GETUI_DEBUG_APP_ID` |
+| OPPO 客户端 SDK | `GETUI_OPPO_APP_KEY`、`GETUI_OPPO_APP_SECRET` | 对应 `GETUI_DEBUG_OPPO_*` |
+| vivo 客户端 SDK | `GETUI_VIVO_APP_ID`、`GETUI_VIVO_APP_KEY` | 对应 `GETUI_DEBUG_VIVO_*` |
+| 小米客户端 SDK | `GETUI_XIAOMI_APP_ID`、`GETUI_XIAOMI_APP_KEY` | 对应 `GETUI_DEBUG_XIAOMI_*` |
+| 魅族客户端 SDK | `GETUI_MEIZU_APP_ID`、`GETUI_MEIZU_APP_KEY` | 对应 `GETUI_DEBUG_MEIZU_*` |
+| 荣耀客户端 SDK | `GETUI_HONOR_APP_ID` | `GETUI_DEBUG_HONOR_APP_ID` |
+
+仓库级 Actions **variables** 使用 `ANDROID_PUSH_REQUIRED`（建议推送正式接入后设 `true`）与 `ANDROID_PUSH_VENDORS`。默认缺少配置时日志明确报告各通道 disabled，不把普通构建成功记作推送就绪。这里只接入工作流定义，不自动创建或修改 GitHub secrets/variables。
+
+API 服务端另需 `GETUI_APP_ID`、`GETUI_APP_KEY`、`GETUI_MASTER_SECRET`；调试应用使用对应 `GETUI_DEBUG_` 三项。后两项禁止放进上述客户端配置或 workflow。厂商服务端授权还需按各控制台配置到个推，本地检查不能证明控制台开通、包名/签名匹配或密钥有效。当前缺项与实际验证记录以[路线图](mobile-app-roadmap.md)为准。
+
+### 真机验收（另行安排）
 
 联调使用单个所有者测试账号与测试设备，不在个推控制台选择全量推送。需要分别实测：拒绝/允许/撤销权限、本人 PR 自动命中、订阅筛选、前台/后台/杀进程、断网重连、退出及切换账号、卸载重装、点击通知打开对应比赛。通知可见内容是公开纪录、比赛公示或报名时间，可能显示在锁屏；元数据包含消息 ID 与收件账号 UID 供本机防止换号误跳，不含登录凭据。新版点击在 App 内工具栏打开 canonical 比赛页；旧版仍只接收纪录并使用浏览器。
 

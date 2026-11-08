@@ -43,6 +43,8 @@ Harmony and Desktop hosts may implement only system adapters such as BLE transpo
 
 Run these from `core/`:
 
+Android push build configuration: `pnpm --filter @cuberoot/mobile android:push:check debug` (or `release`) prints only status and missing variable names. To use a local file, copy `.env.android-push.example` to ignored `.env.android-push.local` and append `--push-env-file .env.android-push.local` to the check or `android:apk:debug` / `android:apk:direct` / `android:apk:play` command. Release builds run the same check before Gradle. CI injects repository-scoped client credentials only in the Android artifact build step; required-provider gates and the server-only credential boundary are detailed in [notification setup](../../../docs/record-notification-setup.md#ci-注入位置与凭据清单). This does not validate provider accounts or device delivery.
+
 ```powershell
 pnpm --filter @cuberoot/mobile dev
 pnpm --filter @cuberoot/mobile test

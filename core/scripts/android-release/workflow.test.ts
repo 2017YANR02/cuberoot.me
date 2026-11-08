@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+import { pushVendors } from '../../apps/mobile/scripts/android-push-config.ts';
 
 const workflow = readFileSync(new URL('../../../.github/workflows/app_release.yml', import.meta.url), 'utf8');
 const jobs = Object.fromEntries([...workflow.matchAll(/^  ([a-z][a-z-]*):\n([\s\S]*?)(?=^  [a-z][a-z-]*:\n|$(?![\s\S]))/gm)]
@@ -9,7 +10,15 @@ const jobs = Object.fromEntries([...workflow.matchAll(/^  ([a-z][a-z-]*):\n([\s\
 
 test('dependency builds cannot access signing or publication credentials', () => {
   assert.ok(jobs.build);
-  assert.doesNotMatch(jobs.build, /secrets\.|environment:/);
+  assert.doesNotMatch(jobs.build, /environment:/);
+  const buildSecrets = [...jobs.build.matchAll(/secrets\.([A-Z_]+)/g)].map(match => match[1]);
+  const allowed = ['GETUI_APP_ID', ...pushVendors.flatMap(vendor => vendor.keys.map(key => `GETUI_${key}`))];
+  assert.deepEqual(buildSecrets.sort(), allowed.sort());
+  const androidBuild = jobs.build.split('      - name: Build unsigned Android artifacts')[1]!.split('      - uses: actions/upload-artifact')[0]!;
+  for (const key of allowed) assert.ok(androidBuild.includes(`secrets.${key}`));
+  assert.match(androidBuild, /matrix.platform == 'android' && inputs.platform != 'windows'/);
+  assert.match(androidBuild, /vars\.ANDROID_PUSH_REQUIRED/);
+  assert.match(androidBuild, /vars\.ANDROID_PUSH_VENDORS/);
   assert.match(jobs.build, /\.github\/workflows/); // Contract tests must exist in the sparse checkout.
   assert.match(jobs.build, /--unsigned-ci/);
   assert.match(jobs['sign-android'], /environment: app-release\n/);
