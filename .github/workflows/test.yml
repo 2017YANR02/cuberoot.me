@@ -62,10 +62,14 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          sparse-checkout-cone-mode: false
           sparse-checkout: |
-            core/scripts/android-release
-            core/packages/shared/src
-            .github/workflows
+            /.node-version
+            /core/scripts/android-release/
+            /core/packages/shared/src/
+            /core/apps/mobile/scripts/android-push-config.ts
+            /core/apps/mobile/android/push-vendors.json
+            /.github/workflows/
       - uses: actions/setup-node@v6
         with:
           node-version-file: .node-version
