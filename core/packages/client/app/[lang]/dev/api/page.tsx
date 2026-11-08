@@ -839,6 +839,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'feedback', m: 'DELETE', p: '/v1/feedback/:id', g: 'admin', zh: '删除反馈', en: 'Delete feedback' },
 
   // ---- notifications ----
+  { d: 'notification', m: 'GET', p: '/v1/notifications/competitions', g: 'login', c: 'no-store', zh: '比赛公示订阅与关注比赛报名提醒设置', en: 'Competition announcement and followed-competition reminder settings' },
+  { d: 'notification', m: 'PUT', p: '/v1/notifications/competitions', g: 'login', c: 'no-store', zh: '保存比赛通知设置；仅消息箱', en: 'Save competition notification settings; inbox only' },
   { d: 'notification', m: 'GET', p: '/v1/notifications', g: 'login', zh: '我的通知(recon 另解 / 评论 / 回复)', en: 'My notifications (recon alternatives / comments / replies)' },
   { d: 'notification', m: 'GET', p: '/v1/notifications/unread', g: 'login', zh: '未读数(桌宠红点)', en: 'Unread count (desk-pet badge)' },
   { d: 'notification', m: 'POST', p: '/v1/notifications/read', g: 'login', zh: '标记已读(不传 ids = 全部)', en: 'Mark read (no ids = all)' },

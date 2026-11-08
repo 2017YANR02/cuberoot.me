@@ -43,6 +43,7 @@ export type NotificationKind =
   | 'forum_thread' | 'forum_reply' | 'forum_report'
   | 'forum_review' | 'forum_approved' | 'forum_rejected'
   | 'comp_reg'
+  | 'comp_announcement' | 'comp_registration_open' | 'comp_registration_close'
   | 'wca_record'
   | 'membership_payment'
   | 'document_change'
@@ -92,6 +93,9 @@ const KIND_TEXT: Record<NotificationKind, Record<MailLang, string>> = {
   forum_approved: { zh: '通过了你的帖子', en: 'approved your post' },
   forum_rejected: { zh: '驳回了你的帖子', en: 'declined your post' },
   comp_reg: { zh: '报名了国外比赛', en: 'registered for an overseas competition' },
+  comp_announcement: { zh: '比赛公示', en: 'Competition announced' },
+  comp_registration_open: { zh: '报名开放提醒', en: 'Registration opening reminder' },
+  comp_registration_close: { zh: '报名截止提醒', en: 'Registration closing reminder' },
   wca_record: { zh: '纪录快讯', en: 'Record news' },
   membership_payment: { zh: '会员收款成功', en: 'Membership payment received' },
   document_change: { zh: '修改了你关注的协作文件', en: 'updated a collaborative file you follow' },

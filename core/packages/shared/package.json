@@ -87,6 +87,7 @@
       "./nemesizer-format": "runtime-neutral",
       "./wca-events": "runtime-neutral",
       "./record-notifications": "runtime-neutral",
+      "./competition-notifications": "runtime-neutral",
       "./scramble-length": "runtime-neutral",
       "./comp-schedule": "runtime-neutral",
       "./comp-localize": "runtime-neutral",
@@ -572,6 +573,10 @@
     "./record-notifications": {
       "node": "./dist/record_notifications.js",
       "default": "./src/record_notifications.ts"
+    },
+    "./competition-notifications": {
+      "node": "./dist/competition_notifications.js",
+      "default": "./src/competition_notifications.ts"
     },
     "./scramble-length": {
       "node": "./dist/scramble_length.js",

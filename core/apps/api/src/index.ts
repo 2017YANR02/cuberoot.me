@@ -7,6 +7,8 @@ import { bodyLimit } from 'hono/body-limit';
 import { checkCompetitionAccess, requireCompetitionAccess } from './utils/competition_access.js';
 import { issueCompetitionCaptcha, submitCompetitionCaptcha } from './utils/competition_captcha.js';
 import { startRecordPushSweep } from './utils/record_push.js';
+import { startRecordNotificationSweep } from './utils/record_notifications.js';
+import { startCompetitionRegistrationReminders } from './utils/competition_notifications.js';
 import { requestDiagnostics } from './observability/request.js';
 import { publicContentCache } from './utils/public_content_cache.js';
 import { revalidateForumMutation } from './utils/forum_revalidate.js';
@@ -435,6 +437,8 @@ startTranslationSync();
 // 去重靠 calendar_reminder_log 的主键抢占,重启 / 窗口重叠都不会重复发。
 startCalendarReminderSweep();
 startRecordPushSweep();
+startRecordNotificationSweep();
+startCompetitionRegistrationReminders();
 
 // 首页「今日公示」数据源:后台轮询 WCA announced_at(独立于监控门控).启动 90s 后首拉,之后每 20min.
 startAnnouncedCompsPoller();

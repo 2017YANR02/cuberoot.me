@@ -12,6 +12,7 @@ import { defaultRecordNotificationPreferences, parseRecordNotificationPreference
 import { ISO2_TO_CR } from '../utils/record_format.js';
 import { pushConfigured } from '../utils/push_provider.js';
 import { parsePushDevice } from '../utils/push_device.js';
+import { defaultCompetitionNotificationPreferences, parseCompetitionNotificationPreferences } from '@cuberoot/shared/competition-notifications';
 
 export const notificationRoutes = new Hono();
 
@@ -179,6 +180,31 @@ notificationRoutes.put('/notifications/records', async (c) => {
   return c.json({ preferences });
 });
 
+notificationRoutes.get('/notifications/competitions', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const user = await requireAuth(c);
+  const id = await userIdForOwnerKey(user.wcaId);
+  if (id == null) return c.json({ error: 'Account not found' }, 404);
+  const rows = await query<{ preferences: unknown }>('SELECT preferences FROM competition_notification_preferences WHERE user_id = ?', [id]);
+  return c.json({ preferences: parseCompetitionNotificationPreferences(rows[0]?.preferences) ?? defaultCompetitionNotificationPreferences(),
+    countries: Object.keys(ISO2_TO_CR).map(code => code.toLowerCase()) });
+});
+
+notificationRoutes.put('/notifications/competitions', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const user = await requireAuth(c);
+  const preferences = parseCompetitionNotificationPreferences(await c.req.json().catch(() => null));
+  if (!preferences || preferences.regions.some(code => /^[a-z]/.test(code) && !ISO2_TO_CR[code.toUpperCase()])) {
+    return c.json({ error: 'Invalid competition notification preferences' }, 400);
+  }
+  const id = await userIdForOwnerKey(user.wcaId);
+  if (id == null) return c.json({ error: 'Account not found' }, 404);
+  await query(`INSERT INTO competition_notification_preferences (user_id, preferences) VALUES (?, ?)
+    ON CONFLICT (user_id) DO UPDATE SET preferences = EXCLUDED.preferences, updated_at = NOW()
+    WHERE competition_notification_preferences.preferences IS DISTINCT FROM EXCLUDED.preferences`, [id, preferences]);
+  return c.json({ preferences });
+});
+
 interface NotificationRow {
   id: number;
   kind: string;
@@ -236,8 +262,17 @@ notificationRoutes.get('/notifications/unread', async (c) => {
 notificationRoutes.post('/notifications/read', async (c) => {
   c.header('Cache-Control', 'no-store');
   const user = await requireAuth(c);
-  const body = await c.req.json<{ ids?: number[] }>().catch(() => ({} as { ids?: number[] }));
-  const ids = (body.ids ?? []).filter((n) => Number.isInteger(n));
+  const raw = await c.req.text();
+  let body: { ids?: number[] };
+  try {
+    const parsed: unknown = raw.trim() ? JSON.parse(raw) : {};
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return c.json({ error: 'Invalid read request' }, 400);
+    body = parsed as { ids?: number[] };
+  } catch { return c.json({ error: 'Invalid read request' }, 400); }
+  if (body.ids !== undefined && (!Array.isArray(body.ids) || body.ids.length > 100
+    || !body.ids.every(n => Number.isSafeInteger(n) && n > 0))) return c.json({ error: 'Invalid notification IDs' }, 400);
+  const ids = body.ids ?? [];
+  if (body.ids !== undefined && ids.length === 0) return c.json({ ok: true });
 
   if (ids.length > 0) {
     // ids 已过滤为整数,占位符按个数展开(query() 只做 ? → $N,不接 JS 数组当 PG array)
