@@ -1492,8 +1492,9 @@ export default function CompDetailPage() {
       for (const r of data.resultsByRound[key] || []) set.add(r.n);
     }
     if (set.size > 0) return set;
-    const nextN = rs[idx + 1]?.n ?? 0;
-    if (nextN > 0) return topN(nextN);
+    // n is this round's advancement quota, not the next round's entrant count.
+    const advanceCount = currentRound.rd.n ?? 0;
+    if (advanceCount > 0) return topN(advanceCount);
     return set;
   }, [data, currentRound, filteredResults]);
 
