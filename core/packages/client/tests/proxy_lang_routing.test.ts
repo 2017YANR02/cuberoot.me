@@ -11,7 +11,9 @@ import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { proxy } from '@/proxy';
 import nextConfig from '../next.config';
-import { RETIRED_ROUTES } from '@/lib/retired-routes';
+import { RETIRED_ROUTES, isRetiredRoute } from '@/lib/retired-routes';
+import { getPathMatch } from 'next/dist/shared/lib/router/utils/path-match';
+import { matchHas } from 'next/dist/shared/lib/router/utils/prepare-destination';
 import { WCA_STAT_NON_PAGE_IDS } from '@cuberoot/shared/wca-stat-catalog';
 
 function request(url: string, headers: Record<string, string> = {}) {
@@ -40,6 +42,34 @@ describe('retired architecture URLs', () => {
     expect(res.headers.get('x-middleware-rewrite')).toBeNull();
     expect(res.headers.get('location')).toBeNull();
     expect(res.headers.get('x-robots-tag')).toBe('noindex, nofollow');
+  });
+});
+
+describe('retired common-competitor view', () => {
+  it('returns the retired view to 404 before the competition shell, preserving other views', async () => {
+    const config = await nextConfig.rewrites!();
+    if (Array.isArray(config)) throw new Error('Expected ordered rewrites');
+    const rules = config.beforeFiles!;
+    const index = rules.findIndex(rule => rule.has?.some(item => item.key === 'view' && item.value === 'common'));
+    const rule = rules[index];
+    expect(rule.destination).toBe('/404');
+    expect(index).toBeLessThan(rules.findIndex(item => item.destination === '/:lang/wca/comp/_'));
+    for (const prefix of ['', '/zh', '/en']) {
+      const path = `${prefix}/wca/comp/HainanOpen2026`;
+      expect(getPathMatch(rule.source)(path)).toBeTruthy();
+      const res = await request(`https://cuberoot.me${path}?view=common&compare=Other2026&layout=poster`,
+        { 'accept-language': 'zh-CN', ...FORWARDED_HTTPS });
+      expect(res.headers.get('location')).toBeNull();
+      expect(res.headers.get('x-middleware-rewrite')).toBeNull();
+      expect(res.headers.get('x-robots-tag')).toBe('noindex, nofollow');
+    }
+    for (const view of ['', 'result', 'psych', 'schedule', 'podium', 'scramble', 'similar', 'common']) {
+      const query = { view };
+      expect(Boolean(matchHas({ headers: {} } as Parameters<typeof matchHas>[0], query, rule.has))).toBe(view === 'common');
+      expect(isRetiredRoute('/wca/comp/HainanOpen2026', new URLSearchParams(query))).toBe(view === 'common');
+    }
+    expect(getPathMatch(rule.source)('/zh/wca/competition_streaks')).toBe(false);
+    expect(isRetiredRoute('/wca/competition_streaks', new URLSearchParams('view=common'))).toBe(false);
   });
 });
 

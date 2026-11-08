@@ -181,7 +181,7 @@ function routeLanguage(req: NextRequest) {
 
   // Let next.config's internal rewrite render the branded, hard 404. Avoid
   // both language redirects and Proxy self-proxying on standalone servers.
-  if (isRetiredRoute(rest)) {
+  if (isRetiredRoute(rest, searchParams)) {
     return NextResponse.next({ headers: { 'X-Robots-Tag': 'noindex, nofollow' } });
   }
 

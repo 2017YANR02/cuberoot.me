@@ -10,7 +10,11 @@ export const RETIRED_ROUTES = [
   ...WCA_STAT_NON_PAGE_IDS.map(id => ({ path: `/wca/${id}` })),
 ] as const;
 
-export function isRetiredRoute(path: string): boolean {
+export const RETIRED_COMP_VIEWS = ['common'] as const;
+
+export function isRetiredRoute(path: string, searchParams?: URLSearchParams): boolean {
+  if (/^\/wca\/comp\/[^/]+\/?$/.test(path)
+    && RETIRED_COMP_VIEWS.some(view => view === searchParams?.get('view'))) return true;
   return RETIRED_ROUTES.some(route => path === route.path
     || ('descendants' in route && path.startsWith(`${route.path}/`)));
 }
