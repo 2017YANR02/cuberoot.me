@@ -47,7 +47,9 @@ export default function CompetitionPreferences() {
           {COMPETITION_REMINDER_MINUTES.map(minutes => <option key={minutes} value={minutes}>{leadLabel(minutes)}</option>)}
         </select>
       </label>)}
-      <p>{t('比赛通知仅进入消息箱，开启后不补发历史提醒。', 'Competition notifications appear only in your inbox. Past reminders are not sent when you enable them.')}</p>
+      <BoolToggle label={t('同时发送手机系统通知', 'Also send mobile push notifications')} value={draft.systemPush}
+        onChange={systemPush => change({ systemPush })} />
+      <p>{t('系统通知需要新版 App 已登录并允许通知。开启后不补发历史提醒。', 'Push notifications require a signed-in, updated app with notification permission. Past reminders are not sent when enabled.')}</p>
     </fieldset>}
   </section>;
 }

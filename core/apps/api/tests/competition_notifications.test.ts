@@ -11,8 +11,11 @@ const open = Date.parse(registration.registration_open);
 describe('competition subscription rules', () => {
   it('defaults to no notifications and validates without broadening malformed filters', () => {
     expect(parseCompetitionNotificationPreferences(defaults())).toEqual(defaults());
+    const { systemPush, ...legacy } = defaults();
+    expect(systemPush).toBe(false);
+    expect(parseCompetitionNotificationPreferences(legacy)?.systemPush).toBe(false);
     expect(matchesCompetitionAnnouncement(defaults(), announcement, 'AS')).toBe(false);
-    for (const patch of [{ announcements: 1 }, { events: ['magic'] }, { events: ['333', '333'] },
+    for (const patch of [{ systemPush: 1 }, { announcements: 1 }, { events: ['magic'] }, { events: ['333', '333'] },
       { regions: ['CN'] }, { regions: ['cn', 'cn'] }, { registrationOpenMinutes: -1 }, { registrationCloseMinutes: 10.1 }, { userId: 3 }]) {
       expect(parseCompetitionNotificationPreferences({ ...defaults(), ...patch })).toBeNull();
     }

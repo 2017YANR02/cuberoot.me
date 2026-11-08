@@ -52,5 +52,20 @@ describe('Getui record transport', () => {
       expect(parsePushDevice({ ...device, ...override })).toBeNull();
     }
     expect(parsePushDevice({ installationId: device.installationId, secret: device.secret }, true)).toBeTruthy();
+    expect(parsePushDevice({ ...device, pushVersion: 2 })?.pushVersion).toBe(2);
+    expect(parsePushDevice({ ...device, pushVersion: 3 })).toBeNull();
+  });
+  it('uses a package-bound app intent and remaining TTL for version 2', () => {
+    const expiresAt = Date.now() + 90_000;
+    const payload = recordPushPayload({ ...input, kind: 'comp_registration_open', pushVersion: 2, recipientUid: '7', expiresAt }, 'me.cuberoot.app.debug');
+    const n = payload.push_message.notification;
+    expect(n.click_type).toBe('intent');
+    expect(n.intent).toContain('scheme=me.cuberoot.app.debug;');
+    expect(n.intent).toContain('component=me.cuberoot.app.debug/me.cuberoot.app.MainActivity;end');
+    expect(n.intent).toContain('recipientUid=7');
+    expect(payload.settings.ttl).toBeLessThanOrEqual(90_000);
+    expect(payload.settings.ttl).toBeGreaterThan(80_000);
+    expect(() => recordPushPayload({ ...input, kind: 'comp_announcement', recipientUid: '7' })).toThrow();
+    expect(() => recordPushPayload({ ...input, expiresAt: Date.now() - 1 })).toThrow();
   });
 });

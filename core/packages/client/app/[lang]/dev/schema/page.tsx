@@ -905,6 +905,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 289, slug: 'wca_translations', desc: { zh: 'WCA 官方英中翻译与来源状态，原子同步及检索。', en: 'Official WCA English–Chinese translations with provenance, atomic sync and retrieval.' } },
   { n: 308, slug: 'assistant_private_attachments', desc: { zh: 'AI 私有会话图片附件', en: 'Private AI conversation image attachments' } },
   { n: 309, slug: 'product_analytics', desc: { zh: '复用产品事件与授权表，为全站分析增加聚合和授权查询索引。', en: 'Index existing product events and consents for website analytics.' } },
+  { n: 318, slug: 'competition_push', desc: { zh: '推送设备能力版本，旧客户端仅接收纪录。', en: 'Push capability version; legacy clients receive records only.' } },
   { n: 317, slug: 'competition_notifications', desc: { zh: '比赛公示订阅、报名提醒与持久化调度。', en: 'Competition announcement subscriptions, registration reminders, and persistent scheduling.' } },
   { n: 316, slug: 'alg_6x6', desc: { zh: '收录六阶最后两中心与最后两棱：35 种情况、40 条公式。', en: 'Add six-layer last-two-center and last-two-edge sets: 35 cases and 40 algorithms.' } },
   { n: 315, slug: 'document_sharing', desc: { zh: '协作文件常规访问权限、评论者、编辑者共享授权及导出限制。', en: 'General access, commenter roles, editor sharing permissions and export restrictions for collaborative files.' } },

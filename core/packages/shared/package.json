@@ -267,7 +267,8 @@
       "./cube-photo/pixels": "runtime-neutral",
       "./cube-photo/result": "runtime-neutral",
       "./testing/cube-photo": "runtime-neutral",
-      "./testing/cube-photo-algs": "asset"
+      "./testing/cube-photo-algs": "asset",
+      "./notification-push": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
@@ -988,6 +989,10 @@
       "types": "./src/page_catalog.ts",
       "node": "./dist/page_catalog.js",
       "default": "./src/page_catalog.ts"
+    },
+    "./notification-push": {
+      "node": "./dist/notification_push.js",
+      "default": "./src/notification_push.ts"
     }
   },
   "scripts": {

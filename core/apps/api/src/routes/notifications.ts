@@ -31,14 +31,14 @@ notificationRoutes.put('/notifications/push/device', async (c) => {
   const id = await userIdForOwnerKey(user.wcaId);
   if (id == null) return c.json({ error: 'Account not found' }, 404);
   try {
-    const rows = await query(`INSERT INTO notification_push_devices (installation_id, secret_hash, user_id, app_id, client_id, provider, environment)
-      VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (installation_id) DO UPDATE SET
+    const rows = await query(`INSERT INTO notification_push_devices (installation_id, secret_hash, user_id, app_id, client_id, provider, environment, push_version)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (installation_id) DO UPDATE SET
         user_id = EXCLUDED.user_id, app_id = EXCLUDED.app_id, client_id = EXCLUDED.client_id,
-        provider = EXCLUDED.provider, environment = EXCLUDED.environment,
-        bound_at = CASE WHEN notification_push_devices.user_id = EXCLUDED.user_id
+        provider = EXCLUDED.provider, environment = EXCLUDED.environment, push_version = EXCLUDED.push_version,
+        bound_at = CASE WHEN notification_push_devices.user_id = EXCLUDED.user_id AND notification_push_devices.push_version = EXCLUDED.push_version
           THEN notification_push_devices.bound_at ELSE NOW() END, refreshed_at = NOW()
       WHERE notification_push_devices.secret_hash = EXCLUDED.secret_hash RETURNING installation_id`,
-    [device.installationId, device.secretHash, id, device.appId, device.clientId, device.provider, device.environment]);
+    [device.installationId, device.secretHash, id, device.appId, device.clientId, device.provider, device.environment, device.pushVersion]);
     if (!rows.length) return c.json({ error: 'Device binding conflict' }, 409);
   } catch (error) {
     if ((error as { code?: string }).code === '23505') return c.json({ error: 'Device binding conflict' }, 409);

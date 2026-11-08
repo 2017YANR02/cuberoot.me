@@ -73,4 +73,11 @@ describe('APNs record channel', () => {
     expect(parsePushDevice({ ...device, provider: 'apns' })).toBeNull();
     expect(parsePushDevice({ ...device, provider: 'apns', clientId: 'not-a-device-token' })).toBeNull();
   });
+  it('uses the competition type and exact deadline without renewing TTL on retry', async () => {
+    reply = { status: 200, reason: '' };
+    const expiresAt = Date.now() + 75_000;
+    await sendApnsRecord('me.cuberoot.app', 'sandbox', { ...input, kind: 'comp_registration_close', pushVersion: 2, recipientUid: '5', expiresAt });
+    expect(received.at(-1)?.headers).toMatchObject({ 'apns-expiration': String(Math.floor(expiresAt / 1000)), 'apns-collapse-id': 'comp_registration_close:42' });
+    expect(received.at(-1)?.payload).toMatchObject({ kind: 'comp_registration_close', recipientUid: '5', aps: { 'thread-id': 'comp_registration_close' } });
+  });
 });
