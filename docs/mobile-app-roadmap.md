@@ -1,5 +1,16 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-11-08：Android 推送 CI 注入与本地配置检查（本地实现，未发布）
+
+实现与配置说明已本地提交 `e1916722f4`；本节记录该批验证与剩余配置，不代表已推送或发布。
+
+- `app_release.yml` 的 Android 产物构建步骤已接入正式包个推 App ID 和 OPPO/vivo/小米/魅族/荣耀客户端参数，供 direct APK / Play AAB 使用；签名、发布凭据仍在各自受保护 job，服务端 App Key / Master Secret 不注入客户端构建。未修改 GitHub 配置或触发 workflow。
+- 新增 `android:push:check debug|release` 与被忽略的本地配置文件入口 `--push-env-file`；与 Debug/direct/Play 构建共用加载和校验，Gradle 与检查器共用厂商清单。报告只显示名称、状态和缺项；未启用可构建，半组参数、缺基础 App ID、必需通道缺项、控制变量拼错或文件含服务端/未知字段会失败。`ANDROID_PUSH_REQUIRED` / `ANDROID_PUSH_VENDORS` 声明实际构建要求，不能用检查通过推断控制台有效或真机送达。
+- 当前缺项：再次只读检查确认仓库级 `GETUI_*` secrets 与 `ANDROID_PUSH_*` variables 名称清单为空；本机没有 `.env.android-push.local`，当前进程的正式/调试客户端参数也均缺失。需要补两套匹配包名的 `APP_ID`，以及所需厂商的 OPPO `APP_KEY/APP_SECRET`、vivo/小米/魅族 `APP_ID/APP_KEY`、荣耀 `APP_ID`（正式前缀 `GETUI_`，调试前缀 `GETUI_DEBUG_`）。完整变量名、存放位置和命令见[配置清单](record-notification-setup.md#ci-注入位置与凭据清单)。API 的个推 App Key / Master Secret 与 APNs 凭据仍按上一节配置审计待补，本轮没有重新检查服务器或厂商控制台。
+- 验证：6 项配置/凭据输出/工作流边界定向检查通过，Mobile typecheck 通过；实际 pnpm Debug/Release 检查入口通过，必需配置缺失在 Gradle 前失败；JDK 21 下通过新的 pnpm Debug 入口完成 Vite build、Capacitor sync、Android APK 构建。该 APK 没有真实推送参数。独立审阅发现并修复了 Node 测试被 Vitest 误收集、pnpm 提前处理 `--env-file` 两个入口问题；最终 Vitest 文件列表不收集 `.node-test.ts`，专用 `--push-env-file` 已实跑。
+- 工作流定向检查通过；本机 actionlint 1.7.12 对既有 `concurrency.queue` 报不认识，仅在临时副本去掉该既有字段后其余校验通过，未改动原工作流的并发设置。未声称 GitHub CI 已执行。
+- 用户要求继续跳过真机验收。本轮无安装、无真实推送、无 API 部署/迁移、无 push；代码和文档分批本地提交，其他人的工作区修改保留。真实厂商构建、签名匹配、送达和点击验收仍待完成，总体继续 **NOT COMPLETE**。
+
 ### 2026-11-08：APNs / 安卓厂商配置核对（只读审计，真机验收跳过）
 
 检查基准：本地 `3672ec49b4`；核对源码、现有构建产物、本机签名描述文件、GitHub 配置名称及服务器配置。未修改凭据、生产配置或数据库，未发送测试通知。用户确认暂无设备，明确跳过本轮真机送达和点击验收。
