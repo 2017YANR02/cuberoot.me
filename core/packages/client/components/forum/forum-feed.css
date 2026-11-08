@@ -197,30 +197,21 @@
 
 .community-feed-meta-action:disabled { cursor: wait; opacity: 0.65; }
 
-/* Reserve width for visible counts so digit growth does not shift following actions. */
+/* Keep empty and counted actions close in width; reserve only two digits. */
 .community-feed-meta > .community-feed-meta-action {
-  display: grid;
-  grid-template-columns: 14px 4ch;
-  grid-auto-flow: column;
-  grid-auto-columns: 12px;
+  min-width: 36px;
   gap: 4px;
   flex: 0 0 auto;
-  margin: -4px 0;
-  padding: 4px 0;
+  margin: -4px -5px;
+  padding: 4px 5px;
   text-align: left;
-}
-
-.community-feed-meta > .community-feed-meta-action:has(> .community-feed-count:empty) {
-  grid-template-columns: 14px;
-  margin-inline: -5px;
-  padding-inline: 5px;
 }
 
 .community-feed-count:empty { display: none; }
 
 .community-feed-count {
   display: block;
-  min-width: 0;
+  min-width: 2ch;
   font-variant-numeric: tabular-nums;
 }
 
