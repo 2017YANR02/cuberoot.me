@@ -3363,7 +3363,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
     items={wcaTeamSelectItems(directory.teams)}
     allLabel={tr({ zh: '全部战队', en: 'All teams' })}
     ariaLabel={tr({ zh: '战队', en: 'Team' })}
-    disabled={!directory.ready} searchable portal
+    disabled={!directory.ready} searchable
   />;
 
   // 0 项 = 报名名单; 1 项 = 单项预排名; 2+ 项 = 名次和 (下方 sorRows 分支).
@@ -3498,7 +3498,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
   if (eventIds.length >= 2) {
     return (
       <>
-      {teamSelector}
+      <div className="comp-selectors">{teamSelector}</div>
       <div className="comp-table-wrap sticky-scroll-mobile">
         <table className="comp-table comp-sor-table">
           <thead>
@@ -3557,7 +3557,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
 
   return (
     <>
-      {teamSelector}
+      <div className="comp-selectors">{teamSelector}</div>
       <div className="comp-table-wrap sticky-scroll-mobile">
       <table className="comp-table">
         {eventId ? (
