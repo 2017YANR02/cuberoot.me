@@ -5,12 +5,12 @@ import { ChevronDown, ChevronUp } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import { UserContactLink } from '@/components/UserIdLabel';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { tr, useLang } from '@/i18n/tr';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { fetchThread, type ThreadPageData } from '@/lib/forum-api';
 import { formatPostTime } from '@/lib/forum-format';
 import { ForumPostBody, forumPostPlaceholder } from './ForumPostBody';
+import { ForumReplySkeleton } from './ForumReplySkeleton';
 
 const PAGE_SIZE = 5;
 
@@ -94,9 +94,7 @@ export default function ForumFeedReplies({ threadId, open, onCollapse }: {
       {data && posts.length === 0 && !hasMore && <p className="community-feed-replies-notice">
         {tr({ zh: '暂无回复', en: 'No replies yet' })}
       </p>}
-      {busy && <div role="status" className="community-feed-replies-notice">
-        <LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator>
-      </div>}
+      {(busy || (!data && !error)) && <ForumReplySkeleton />}
       {error && <div role="alert" className="community-feed-replies-notice">
         {tr({ zh: '回复加载失败', en: 'Could not load replies' })}
         <button type="button" className="community-feed-meta-action" onClick={() => void loadPage(nextPage)}>

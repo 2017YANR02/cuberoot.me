@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import { ChevronRight, Heart, MessageCircle } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { tr, useLang } from '@/i18n/tr';
 import { useAuthStore, useAuthUser, useIsAdmin, useOwnerKey } from '@/lib/auth-store';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
@@ -18,12 +17,13 @@ import {
   type ReactionKind,
 } from '@/lib/forum-api';
 import { ForumVideoPlayer } from './ForumVideoPlayer';
+import { ForumReplySkeleton } from './ForumReplySkeleton';
 import { UserContactLink } from '@/components/UserIdLabel';
 import './forum-feed.css';
 
 const ForumFeedReplies = dynamic(() => import('./ForumFeedReplies'), {
-  loading: () => <div role="status" className="community-feed-replies-notice">
-    <LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator>
+  loading: () => <div className="community-feed-replies">
+    <ForumReplySkeleton />
   </div>,
 });
 

@@ -1047,6 +1047,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'On-demand paginated feed replies with collapse, retry and a link to the full discussion.',
   },
   {
+    name: 'ForumReplySkeleton',
+    import: "import { ForumReplySkeleton } from '@/components/forum/ForumReplySkeleton';",
+    category: 'more',
+    zh: '动态回复加载时的扫光骨架，适配明暗主题与减少动态效果设置。',
+    en: 'Shimmer skeleton for inline replies, supporting light and dark themes and reduced motion.',
+  },
+  {
     name: 'ForumFeedPreview',
     import: "import ForumFeedPreview from '@/components/forum/ForumFeedPreview';",
     category: 'more',
