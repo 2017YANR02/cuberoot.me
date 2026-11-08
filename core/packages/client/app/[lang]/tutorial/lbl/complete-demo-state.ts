@@ -46,6 +46,10 @@ function state(alg: string) {
   return cube;
 }
 type Cube = ReturnType<typeof state>;
+export function daisyBlockedStickers(setup: string): string[] {
+  const cube = state(setup);
+  return [cube.faces[Face.F][5], cube.faces[Face.U][5]];
+}
 export function rightTopCornerStickers(alg: string): string[] {
   const cube = state(alg);
   return [cube.faces[Face.U][8], cube.faces[Face.U][2], cube.faces[Face.R][0], cube.faces[Face.R][2], cube.faces[Face.F][2], cube.faces[Face.B][0]];

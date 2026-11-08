@@ -656,7 +656,7 @@ body[data-site-scenery] .lbl-left-thumb-bubble[data-site-surface='panel'] {
   border-radius: 16px 4px 16px 16px;
 }
 
-.lbl-lesson-scroll:has(.lbl-content-corner-ejection, .lbl-content-middle-ejection) { position: relative; }
+.lbl-lesson-scroll:has(.lbl-content-corner-ejection, .lbl-content-middle-ejection, .lbl-daisy-blocked-prelude) { position: relative; }
 .lbl-guide-continue {
   position: absolute;
   inset: 0;

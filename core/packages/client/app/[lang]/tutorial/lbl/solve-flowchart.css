@@ -23,3 +23,11 @@
 .lbl-flow-actions { display: flex; flex-direction: column; height: 100%; padding: 8px 16px; }
 .lbl-flow-actions > .lbl-flow-action { appearance: none; width: 100%; flex: 1; min-height: 0; height: auto; margin: 0; padding: 0; border: 0; background: none; cursor: pointer; }
 .lbl-flow-action:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+
+.lbl-flow-preview-target { appearance: none; display: block; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
+.lbl-flow-preview-target:focus-visible { outline: 2px solid var(--ring); outline-offset: -4px; }
+.lbl-flow-preview { box-sizing: border-box; width: min(92vw, 440px); max-width: none; max-height: 92dvh; margin: auto; padding: 0; border: 0; background: transparent; color: var(--foreground); }
+.lbl-flow-preview-card { position: relative; padding: 48px 24px 24px; border: 1px solid var(--border-default); border-radius: 24px; background: var(--card); }
+.lbl-flow-preview-close { appearance: none; position: absolute; top: 12px; right: 12px; display: grid; place-items: center; padding: 6px; border: 0; background: none; color: inherit; cursor: pointer; }
+.lbl-flow-preview-image { display: flex; align-items: center; justify-content: center; }
+.lbl-flow-preview-image > *, .lbl-flow-preview-image svg { max-width: 100%; height: auto; }

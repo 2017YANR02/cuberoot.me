@@ -1,4 +1,6 @@
-import { useId, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { X } from '@app-foundation/icons/lucide';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { Axis } from '@cuberoot/visualcube';
 import { tr } from '@/i18n/tr';
 import { LBL_STEPS } from './content';
@@ -42,8 +44,8 @@ const stages: { done: Text; paths: CasePath[] }[] = [
     [text('无眼？', 'No headlights?'), text('J 公式造眼', 'J algorithm to make eyes'), { row: 0, label: text('变成有眼 case', 'Headlights case') }],
   ] },
   { done: text('整颗魔方已复原？', 'Cube solved?'), paths: [
-    [text('有墙？', 'A solved wall?'), text('在左 → 右鱼 U 左鱼\n在右 → 左鱼 U′ 右鱼\n转顶层对齐', 'Left → right Sune U left\nRight → left Sune U′ right\nAlign top')],
-    [text('无墙？', 'No wall?'), text('右鱼 → U → 左鱼\n转顶层对齐，造墙', 'Right Sune U left Sune\nAlign top to make wall'), { row: 0, label: text('变成有墙 case', 'Solved-wall case') }],
+    [text('有墙？', 'A solved wall?'), text('对色在左 → 右鱼，调整顶层，按小鱼还原\n对色在右 → 左鱼，调整顶层，按小鱼还原', 'Opposite color on the left → right Sune, adjust the top, finish with Sune\nOpposite color on the right → left Sune, adjust the top, finish with Sune')],
+    [text('无墙？', 'No wall?'), text('右鱼，调整顶层，按小鱼还原', 'Right Sune, adjust the top, finish with Sune'), { row: 0, label: text('变成有墙 case', 'Solved-wall case') }],
   ] },
 ];
 
@@ -81,17 +83,42 @@ const actionLessons: string[][][] = [
   [['case-0', 'case-1'], ['case-2']],
 ];
 
-function CaseImage({ chapter, stageIndex, row }: { chapter: typeof chapters[number]; stageIndex: number; row: number }) {
+function CaseImage({ chapter, stageIndex, row, size = 70 }: { chapter: typeof chapters[number]; stageIndex: number; row: number; size?: number }) {
   const index = caseExamples[stageIndex][row];
   const lesson = chapter.id === 'cross' ? { ...chapter.lessons.find(item => item.id === 'white-edge')!, example: chapter.examples[index] }
     : { id: `case-${index}`, title: chapter.examples[index].title, kind: 'example' as const, example: chapter.examples[index] };
   // Show the down-facing white sticker rather than hiding it beneath the cube.
   const bottomView: [Axis, number][] | undefined = chapter.id === 'daisy' && row === 2 ? [[Axis.Y, 30], [Axis.X, 25]] : undefined;
-  return <div className="lbl-flow-case-images" role="img" aria-label={tr(lesson.title)}>
-    <LessonThumbnail chapter={chapter} lesson={lesson} size={70} viewportRotations={bottomView} />
+  return <div className="lbl-flow-case-images" style={{ width: size, height: size, flexBasis: size }} role="img" aria-label={tr(lesson.title)}>
+    <LessonThumbnail chapter={chapter} lesson={lesson} size={size} viewportRotations={bottomView} />
   </div>;
 }
+function PreviewTarget({ x, y, width, height, label, onClick, diamond = false }: {
+  x: number; y: number; width: number; height: number; label: string; onClick: () => void; diamond?: boolean;
+}) {
+  return <foreignObject x={x} y={y} width={width} height={height}>
+    <button type="button" className="lbl-flow-preview-target" style={diamond ? { clipPath: 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)' } : undefined} aria-label={label} onClick={onClick} />
+  </foreignObject>;
+}
+
+function ImagePreview({ label, children, onClose }: { label: string; children: ReactNode; onClose: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const backdropProps = useModalDismiss(onClose);
+  useEffect(() => {
+    const element = dialog.current!;
+    element.showModal();
+    return () => element.close();
+  }, []);
+  return <dialog ref={dialog} className="lbl-flow-preview" {...backdropProps} onCancel={event => { event.preventDefault(); onClose(); }} aria-label={label}>
+    <div className="lbl-flow-preview-card" data-site-surface="panel">
+      <button type="button" className="lbl-flow-preview-close" onClick={onClose} aria-label={tr(text('关闭', 'Close'))}><X size={22} /></button>
+      <div className="lbl-flow-preview-image">{children}</div>
+    </div>
+  </dialog>;
+}
+
 export default function SolveFlowchart({ stageId, onSelectLesson }: { stageId: string; onSelectLesson?: (id: string) => void }) {
+  const [preview, setPreview] = useState<'start' | 'done' | number | null>(null);
   const markerId = useId().replace(/:/g, '');
   const chapter = chapters.find(item => item.id === stageId)!;
   const stageIndex = LBL_STEPS.findIndex(item => item.id === stageId) - 1;
@@ -103,6 +130,8 @@ export default function SolveFlowchart({ stageId, onSelectLesson }: { stageId: s
   const endY = firstCaseY + (stage.paths.length - 1) * rowSpacing + 180;
   const returnY = Math.max(...stage.paths.flatMap(([, , conversion], row) => conversion ? [] : [firstCaseY + row * rowSpacing]));
   const arrow = `url(#${markerId})`;
+  const view = stageId === 'yellow-face' || stageId === 'corner-position' ? 'plan' : 'iso';
+  const previewLabel = typeof preview === 'number' ? tr(stage.paths[preview][0]) : tr(preview === 'start' ? text('开始', 'Start') : chapter.goal);
   return <section className="lbl-content lbl-solve-flow">
     <div className="lbl-flow-canvas" tabIndex={0} role="region" aria-label={tr(text(`${chapter.title.zh}流程图`, `${chapter.title.en} flowchart`))}>
       <svg className="lbl-flow-graph" width="1000" height={endY + 88} viewBox={`0 0 1000 ${endY + 88}`} role="group" aria-label={tr(text(`${chapter.title.zh}，判断与操作`, `${chapter.title.en}, decisions and actions`))}>
@@ -113,11 +142,13 @@ export default function SolveFlowchart({ stageId, onSelectLesson }: { stageId: s
         <path d={`M264 ${goalY + 100} V${firstCaseY - 100}`} markerEnd={arrow} />
         <rect x="144" y="24" width="240" height="64" rx="32" className="lbl-flow-terminal" />
         <Label x={264} y={56} value={text('开始', 'Start')} />
+        <PreviewTarget x={144} y={24} width={240} height={64} label={tr(text('开始', 'Start'))} onClick={() => setPreview('start')} />
         <g>
           <polygon points={`264,${goalY - 100} 414,${goalY} 264,${goalY + 100} 114,${goalY}`} className="lbl-flow-decision" />
           <DecisionContent y={goalY} question={stage.done}>
-            <div className="lbl-flow-goal-image" role="img" aria-label={tr(chapter.goal)}><StageImage stage={stageId} size={70} brightCenters view={stageId === 'yellow-face' || stageId === 'corner-position' ? 'plan' : 'iso'} /></div>
+            <div className="lbl-flow-goal-image" role="img" aria-label={tr(chapter.goal)}><StageImage stage={stageId} size={70} brightCenters view={view} /></div>
           </DecisionContent>
+          <PreviewTarget diamond x={114} y={goalY - 100} width={300} height={200} label={tr(stage.done)} onClick={() => setPreview('done')} />
           <Label branch x={74} y={goalY - 20} value={text('是', 'Yes')} />
           <Label branch x={290} y={goalY + 140} value={text('否', 'No')} />
           {stage.paths.map(([condition, solve, conversion], row) => {
@@ -129,6 +160,7 @@ export default function SolveFlowchart({ stageId, onSelectLesson }: { stageId: s
             return <g key={row}>
               <polygon points={`264,${y - 100} 414,${y} 264,${y + 100} 114,${y}`} className="lbl-flow-decision" />
               <DecisionContent y={y} question={condition}><CaseImage chapter={chapter} stageIndex={stageIndex} row={row} /></DecisionContent>
+              <PreviewTarget diamond x={114} y={y - 100} width={300} height={200} label={tr(condition)} onClick={() => setPreview(row)} />
               <path d={`M414 ${y} H494`} markerEnd={arrow} />
               <Label branch x={454} y={y - 20} value={text('是', 'Yes')} />
               <rect x="494" y={y - 72} width="360" height="144" rx="16" className="lbl-flow-operation" />
@@ -147,7 +179,13 @@ export default function SolveFlowchart({ stageId, onSelectLesson }: { stageId: s
         </g>
         <rect x="144" y={endY} width="240" height="64" rx="32" className="lbl-flow-terminal lbl-flow-complete" />
         <Label x={264} y={endY + 32} value={text('本步完成', 'Stage complete')} />
+        <PreviewTarget x={144} y={endY} width={240} height={64} label={tr(text('本步完成', 'Stage complete'))} onClick={() => setPreview('done')} />
       </svg>
     </div>
+    {preview !== null && <ImagePreview label={previewLabel} onClose={() => setPreview(null)}>
+      {typeof preview === 'number' ? <CaseImage chapter={chapter} stageIndex={stageIndex} row={preview} size={320} />
+        : preview === 'start' ? <StageImage stage={LBL_STEPS[stageIndex].id} size={320} brightCenters={stageId === 'cross'} />
+        : <StageImage stage={stageId} size={320} />}
+    </ImagePreview>}
   </section>;
 }

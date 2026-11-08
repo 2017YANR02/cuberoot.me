@@ -11,7 +11,7 @@ import { LBL_STEPS, lblDemoView, LESSON_STICKERING, LBL_STAGE_GOALS, LBL_LEARNIN
 import SegmentedInstructions from './SegmentedInstructions';
 import { getLblAlgGroups } from './alg-cues';
 import CompleteDemo, { FishExample, WhiteCrossCompleteDemo } from './CompleteDemo';
-import { BLUE_RED_BOTTOM_CORNER_SETUP, bottomCornerPreview, middleLessonHiddenStickers, middleDirectionStickers, middleEdgePreview, middleAlignmentStickers, yellowFaceNonYellowStickers, yellowFaceTouchSticker, yellowFishRecognitionStickers, type CompleteDemoStage } from './complete-demo-state';
+import { BLUE_RED_BOTTOM_CORNER_SETUP, daisyBlockedStickers, bottomCornerPreview, middleLessonHiddenStickers, middleDirectionStickers, middleEdgePreview, middleAlignmentStickers, yellowFaceNonYellowStickers, yellowFaceTouchSticker, yellowFishRecognitionStickers, type CompleteDemoStage } from './complete-demo-state';
 import BasicsGuide from './BasicsGuide';
 import IntroLesson from './IntroLesson';
 import MiddleCases from './MiddleCases';
@@ -269,6 +269,60 @@ function LessonPlayer({ player, interacted, yellowCase, fishLeft, middleAlignmen
   </div>;
 }
 
+function DaisyBlockedPrelude({ setup, onDone }: { setup: string; onDone: () => void }) {
+  const wrapper = useRef<HTMLDivElement>(null);
+  const player = useRef<AlgPlayerHandle>(null);
+  const visible = usePlayerVisible(player, setup);
+  const [stage, setStage] = useState(0);
+  const stickers = useMemo(() => daisyBlockedStickers(setup), [setup]);
+  function advance() {
+    if (!visible) return;
+    if (stage < 2) setStage(value => value + 1);
+    else onDone();
+  }
+  const highlighted = stage < 2 ? [stickers[stage]] : stickers;
+  const [learningArea, setLearningArea] = useState<Element | null>(null);
+  useEffect(() => {
+    setLearningArea(wrapper.current?.closest('.lbl-lesson-scroll') ?? null);
+  }, []);
+  useEffect(() => {
+    function continueWithSpace(event: KeyboardEvent) {
+      if (event.code !== 'Space' || event.defaultPrevented || event.repeat || event.isComposing ||
+        event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      if (event.target instanceof Element && event.target.closest('button, input, select, textarea, a, [contenteditable], [role="dialog"]')) return;
+      event.preventDefault();
+      advance();
+    }
+    document.addEventListener('keydown', continueWithSpace);
+    return () => document.removeEventListener('keydown', continueWithSpace);
+  }, [onDone, visible, stage]);
+  const bubbleStage = visible ? wrapper.current?.querySelector('.sim-stage') : null;
+  return <div ref={wrapper} className="lbl-content lbl-content-example lbl-daisy-blocked-prelude">
+    <section className="lbl-demonstration lbl-daisy-blocked-player">
+      <div className="lbl-auto-player" data-visible={visible}>
+        <AlgPlayer ref={player} puzzle="3x3" engine="sim" playRequest={stage >= 2 ? 1 : 0}
+          set={LESSON_STICKERING.daisy} alg="R R' R R'" loop setup={setup} orientation="z2" sceneRot={lblDemoView()}
+          highlightedStickers={highlighted} moveDurationMs={2400}
+          controlMode="none" hideResetView lockView interactionMode="none" fillPane />
+      </div>
+      {bubbleStage && stage < 2 && createPortal(<span className="lbl-left-thumb-overlay">
+        <span className="lbl-left-thumb-bubble lbl-daisy-blocked-bubble" data-floor={stage === 0 ? 'middle' : 'top'} data-site-surface="panel" role="status">
+        {tr(stage === 0 ? { zh: '二楼棱块', en: 'Middle-floor edge' }
+          : { zh: '有其他棱块挡住', en: 'Another edge is in the way' })}
+      </span></span>, bubbleStage)}
+    </section>
+    <section className="lbl-explanation">
+      <p className="lbl-lead">{tr({ zh: '顶面挡住时，直接右手上会怎样？', en: 'What happens if you lift right while the top slot is occupied?' })}</p>
+      <p hidden={stage < 2}>{tr({ zh: '白棱上去了，原来的白花瓣却被转走了。', en: 'The white edge moves up, but the existing white petal moves away.' })}</p>
+    </section>
+    {learningArea && createPortal(<>
+      <button type="button" className="lbl-guide-continue" onClick={advance}
+        aria-label={tr({ zh: '点击学习区继续', en: 'Click the lesson area to continue' })} />
+      <span className="lbl-guide-continue-hint">{tr({ zh: '点击学习区继续', en: 'Click the lesson area to continue' })}</span>
+    </>, learningArea)}
+  </div>;
+}
+
 export default function LessonContent({ chapter, lesson, hostChapterId, onSelectLesson }: {
   chapter: typeof chapters[number]; lesson: Lesson; hostChapterId: string; onSelectLesson?: (id: string) => void;
 }) {
@@ -280,6 +334,7 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   const [moveReplay, setMoveReplay] = useState(0);
   const [cornerPreview, setCornerPreview] = useState(0);
   const [edgeObservationDone, setEdgeObservationDone] = useState(false);
+  const [daisyBlockedPreludeDone, setDaisyBlockedPreludeDone] = useState(false);
   const example = useMemo(() => {
     const original = lesson.example;
     if (!edgeObservationDone || chapter.id !== 'edge-position' || !original) return original;
@@ -345,6 +400,9 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
     setFollowRevision(value => value + 1);
   }
   if (chapter.id === 'structure' && ['facelet', 'centers', 'corners', 'edges'].includes(lesson.id)) return <PieceLesson id={lesson.id} />;
+  if (chapter.id === 'daisy' && lesson.id === 'case-2' && example?.setup && !daisyBlockedPreludeDone) {
+    return <DaisyBlockedPrelude setup={example.setup} onDone={() => setDaisyBlockedPreludeDone(true)} />;
+  }
   if (lesson.kind === 'flowchart') return <SolveFlowchart stageId={chapter.id} onSelectLesson={onSelectLesson} />;
   if (lesson.kind === 'notation') return <NotationLesson />;
   if (chapter.id === 'edge-position' && lesson.kind === 'example' && example && !edgeObservationDone) {
