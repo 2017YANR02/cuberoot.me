@@ -1,3 +1,4 @@
+import { NotificationOpenQueue } from './notification-navigation';
 import { TimerResultsSessionBar } from '@cuberoot/timer-ui';
 import { AutoRecapDismissGesture } from '@cuberoot/shared/timer/reconstruct/recap';
 import { timerTrainingSummaries } from '@cuberoot/timer-ui';
@@ -2556,6 +2557,37 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     },
   });
   timingRunningRef.current = timer.machine.phase === 'running';
+  const [notificationOpens] = useState(() => new NotificationOpenQueue());
+  const [notificationRevision, refreshNotificationOpen] = useState(0);
+  useEffect(() => {
+    if (!host.addNotificationOpenListener) return;
+    let active = true;
+    const listener = host.addNotificationOpenListener(value => {
+      if (!active) return;
+      notificationOpens.offer(value);
+      refreshNotificationOpen(n => n + 1);
+    });
+    void listener.catch(() => { /* Notification transport cannot block the app. */ });
+    return () => { active = false; void listener.then(h => h.remove()).catch(() => undefined); };
+  }, [host, notificationOpens]);
+  useEffect(() => {
+    const route = notificationOpens.take(auth.session?.user.uid,
+      !auth.loading && store !== null,
+      !['idle', 'stopped'].includes(timer.machine.phase) || battleModeActive || timerContextMutationBusyRef.current);
+    if (!route) return;
+    // Reuse Tools' real website surface and its back/auth bridge, including when
+    // another Tools page was already open or a retry URL was retained.
+    clearWebSurfaceHandshake('tools');
+    webBridgeReadyRef.current.tools = false;
+    webSurfaceLoadedRef.current.tools = false;
+    webDepthRef.current.tools = 0;
+    webLastHrefRef.current.tools = '';
+    setWebSurfaceStatus(current => ({ ...current, tools: 'loading' }));
+    setWebSurfaceReloadUrl(current => ({ ...current, tools: null }));
+    setWebSurfaceRevision(current => ({ ...current, tools: current.tools + 1 }));
+    openToolsRoute(route);
+  }, [notificationOpens, notificationRevision, auth.loading, auth.session?.user.uid, store,
+    timer.machine.phase, battleModeActive, clearWebSurfaceHandshake, openToolsRoute]);
   useEffect(() => {
     if (timer.machine.phase !== 'running') smartCubeAttemptDeviceRef.current = undefined;
   }, [timer.machine.phase]);

@@ -1,3 +1,4 @@
+import { addNotificationOpenListener } from './native/notification-open';
 import { watchTimerPort } from './watch-timer';
 import { uuRemote } from './uu-remote';
 import { exportNativeFile } from './native-export';
@@ -26,6 +27,7 @@ import {
 
 export const capacitorHost: InstalledAppHost = {
   uuRemote,
+  addNotificationOpenListener,
   watchTimer: Capacitor.getPlatform() === 'ios' ? watchTimerPort : undefined,
   createBleTransport: () => new NativeBleTransport(),
   createStackmatSource: createStackmatMicSource,

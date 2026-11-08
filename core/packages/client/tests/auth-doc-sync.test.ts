@@ -11,6 +11,10 @@ const page = (sources = entries, reason = 'Reviewed sign-in, linking, merging an
   `/* auth-doc-review ${JSON.stringify({ fingerprint: fingerprintAuthSources(sources), reason })} */`;
 
 describe('/dev/auth source-review drift', () => {
+  it('tracks notification destinations and account isolation', () => {
+    for (const path of ['apps/mobile/src/native/notification-open.ts', 'packages/app-ui/src/notification-navigation.ts',
+      'packages/shared/src/notification_push.ts']) expect(isAuthDocSource(path)).toBe(true);
+  });
   it('tracks entry return paths and analytics identity isolation', () => {
     for (const path of ['packages/client/lib/entry-navigation.ts', 'packages/client/hooks/useEntryRouter.ts',
       'packages/client/lib/product-analytics.ts', 'apps/api/src/routes/product_analytics.ts',

@@ -99,6 +99,7 @@ export interface InstalledAppNetBattle {
 }
 
 export interface InstalledAppHost {
+  addNotificationOpenListener?(listener: (value: import('@cuberoot/shared/notification-push').NotificationOpen) => void): Promise<InstalledAppListener>;
   uuRemote?: import('./uu-remote').UURemoteClient;
   watchTimer?: import('./watch-timer').WatchTimerPort;
   createBleTransport?(): BleTransport;

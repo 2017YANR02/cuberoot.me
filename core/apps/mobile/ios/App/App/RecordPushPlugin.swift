@@ -9,16 +9,22 @@ final class RecordPushState {
     var active = false
     var generation = 0
     var token: String?
-    var pendingLink: String?
+    var pendingNotification: [String: Any]?
+    weak var plugin: RecordPushPlugin?
 
     func registered(_ data: Data) {
         guard active else { return }
         token = data.map { String(format: "%02x", $0) }.joined()
     }
     func recordTap(_ info: [AnyHashable: Any]) {
-        guard info["kind"] as? String == "wca_record", let link = info["link"] as? String,
-              link.range(of: #"^/(?:zh/)?wca/comp/[A-Za-z0-9]+(?:\?[^#\s]*)?$"#, options: .regularExpression) != nil else { return }
-        pendingLink = link
+        guard let kind = info["kind"] as? String,
+              ["wca_record", "comp_announcement", "comp_registration_open", "comp_registration_close"].contains(kind),
+              let link = info["link"] as? String, let id = info["notificationId"] as? String else { return }
+        var opened: [String: Any] = ["kind": kind, "link": link, "notificationId": id]
+        if let uid = info["recipientUid"] as? String { opened["recipientUid"] = uid }
+        // The shared decoder checks destination and account before navigation.
+        pendingNotification = opened
+        plugin?.notifyListeners("notificationOpened", data: opened)
     }
 }
 
@@ -29,7 +35,8 @@ final class RecordPushPlugin: CAPPlugin, CAPBridgedPlugin, NotificationHandlerPr
     let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "start", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "status", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "stop", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "stop", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "pendingNotification", returnType: CAPPluginReturnPromise)
     ]
     private let state = RecordPushState.shared
     private var environment: String {
@@ -38,6 +45,7 @@ final class RecordPushPlugin: CAPPlugin, CAPBridgedPlugin, NotificationHandlerPr
         Bundle.main.object(forInfoDictionaryKey: "CubeRootAPNSEnvironment") as? String == "development" ? "sandbox" : "production"
     }
     override func load() {
+        state.plugin = self
         bridge?.notificationRouter.pushNotificationHandler = self
     }
     private func resolveStatus(_ call: CAPPluginCall) {
@@ -81,7 +89,7 @@ final class RecordPushPlugin: CAPPlugin, CAPBridgedPlugin, NotificationHandlerPr
             self.state.active = false
             self.state.generation += 1
             self.state.token = nil
-            self.state.pendingLink = nil
+            self.state.pendingNotification = nil
             UIApplication.shared.unregisterForRemoteNotifications()
             UNUserNotificationCenter.current().removeAllDeliveredNotifications()
             self.resolveStatus(call)
@@ -89,23 +97,20 @@ final class RecordPushPlugin: CAPPlugin, CAPBridgedPlugin, NotificationHandlerPr
     }
     func willPresent(notification: UNNotification) -> UNNotificationPresentationOptions {
         let active = Thread.isMainThread ? state.active : DispatchQueue.main.sync { state.active }
-        guard active, notification.request.content.userInfo["kind"] as? String == "wca_record" else { return [] }
+        guard active, let kind = notification.request.content.userInfo["kind"] as? String,
+              ["wca_record", "comp_announcement", "comp_registration_open", "comp_registration_close"].contains(kind) else { return [] }
         return [.banner, .list, .sound]
     }
     func didReceive(response: UNNotificationResponse) {
         guard response.actionIdentifier == UNNotificationDefaultActionIdentifier else { return }
         DispatchQueue.main.async {
             self.state.recordTap(response.notification.request.content.userInfo)
-            Self.openPendingRecord()
         }
     }
-    // Like the existing Android channel, use the canonical public competition
-    // page. SceneDelegate also passes cold-launch taps here after activation.
-    static func openPendingRecord() {
-        let state = RecordPushState.shared
-        guard UIApplication.shared.applicationState == .active,
-              let link = state.pendingLink, let url = URL(string: "https://cuberoot.me" + link) else { return }
-        state.pendingLink = nil
-        UIApplication.shared.open(url)
+    // Retained through cold startup; JS deduplicates listener + pending delivery.
+    @objc func pendingNotification(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            call.resolve(self.state.pendingNotification.map { ["notification": $0] } ?? [:])
+        }
     }
 }

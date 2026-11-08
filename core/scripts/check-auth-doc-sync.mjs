@@ -70,6 +70,8 @@ const EXACT = new Set([
   'packages/client/app/v1/competition-access/verify/route.ts',
   'packages/app-ui/src/App.tsx', 'apps/mobile/src/capacitor-host.ts',
   'apps/mobile/src/native/secure-storage.ts', 'apps/desktop/src/tauri-host.ts',
+  'apps/mobile/src/native/notification-open.ts', 'packages/app-ui/src/notification-navigation.ts',
+  'packages/shared/src/notification_push.ts',
   'apps/mobile/src/native/record-push.ts', 'apps/mobile/src/native/record-push-controller.ts',
   'apps/api/src/routes/notifications.ts', 'apps/api/src/utils/push_device.ts',
   'apps/desktop/src-tauri/src/lib.rs', 'apps/harmony/src/harmony-host.ts',
