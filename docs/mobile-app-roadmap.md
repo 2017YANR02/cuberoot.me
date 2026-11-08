@@ -1,5 +1,17 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-11-08：推送隔离 API 与专用验收入口（本地实现，未发布）
+
+API 第一批本地提交 `26be5a4ac3`；Mobile 入口、发布保护和说明作为第二批提交。使用方法见[隔离验收入口](record-notification-setup.md#6-隔离-api-与推送验收入口)。普通 App 的生产登录/API 地址没有全局改动，验收必须明确使用专用入口。
+
+- 独立 Hono fixture API 固定监听 `127.0.0.1:3339`，不加载正常 server、`.env`、PG、监控、邮件或推送发送器。随机配对令牌通过被忽略的 owner-only 文件交接，拒绝覆盖遗留文件；测试身份只有 A/B 两个临时用户，整轮一小时失效，绑定上限一台设备，设备凭据和 CID/token 不输出、不持久化。复用现有设备字段校验和四类通知 payload 契约。
+- 独立 Vite 入口 `127.0.0.1:4175` / `dist-push-acceptance` 不加载生产 App、登录客户端、Keychain 或 WebSurface。浏览器模拟 native adapter，设备绑定仍使用真实 `RecordPushController`，冷/热通知监听和点击队列复用原实现；目标路径只显示，不导航线上。API origin 限私网/loopback IPv4，fetch 禁 cookie、重定向和生产回退，并核对响应标记；CSP 限定连接目标、禁止 iframe。
+- 原生验收仅允许 Android Debug / iOS sandbox 和可信私网 HTTPS，未放宽正式明文/ATS 策略，HTTPS 转发及设备网络仍待准备。本轮没有同步验收资产或安装；正常两端资产已恢复并扫描。原生 SDK 注册仍可能联系系统/厂商服务，不把生产业务 API 隔离说成完全离线。
+- 验收产物有独立 marker，Android wrapper/Gradle Release 任务和 iOS 发布脚本/App target Release 阶段均拒绝它。Android 实际 Gradle `--dry-run` 用临时 marker 验证拒绝，iOS 从当前 project 提取的原样 shell 在隔离目录验证 Release 拒绝、Debug 允许；临时文件已清理。生命周期与点击监听统一使用一个 RecordPush 插件代理，消除重复注册警告；账号流程 source review 保持覆盖，正常用户授权/绑定语义未变。
+- 验证：API 4 项隔离/鉴权/设备/过期检查，Mobile 12 项 origin/请求边界/既有生命周期与点击检查通过；API 脚本、app-ui、Mobile 类型检查通过，账号流程守卫 89 项通过。真实 Chrome 通过配对、绑定、四类 payload、重复/延后点击、换号隔离和注销，16 次 API 请求均留在两个本地 origin，零页面错误；390px 无横向溢出。最终插件代理调整后浏览器启动无重复注册警告、无自动 API 请求。
+- 专用验收 Web 构建及正常 Mobile Web build、Android/iOS sync、Android Debug APK、无签名 iOS Simulator 构建通过。最终正常 dist/两端 native Web 资产扫描未含 fixture 入口/标记。测试进程已停止、配对文件已删除，既有 3000 服务未动。
+- 本期是注册/契约/点击队列的 **fixture 验收环境**，不是已部署的完整测试后端；没有执行真实 PG 订阅调度、系统通知发送或正式 Tools 页面验收。真机、厂商/APNs 送达及点击继续按用户要求跳过。无生产变更、迁移、部署或 push，总体继续 **NOT COMPLETE**。
+
 ### 2026-11-08：iOS APNs 本地配置检查与凭据清单（本地实现，未发布）
 
 实现与配置说明已本地提交 `c40dd383aa`。本轮只补 API 服务端的离线工具，未向 iOS 构建注入私钥；既有 APNs 配置门禁抽为同包纯函数，由运行时与检查器共用，保持发送行为不变。

@@ -47,6 +47,7 @@ try {
       'ios:release upload --dir <same directory> [--profile <name>]',
     ], notes: 'Upload waits for Apple processing; it does not assign testers, answer compliance, or submit App Review.' }, null, 2));
   } else if (command === 'archive') {
+    if (process.env.CUBEROOT_PUSH_ACCEPTANCE === '1') throw new Error('Push acceptance mode cannot be archived for release.');
     if (process.platform !== 'darwin') throw new Error('Archive requires macOS and Xcode.');
     const build = values['build-number'];
     if (!build || !/^[1-9]\d{0,3}(?:\.\d{1,2}){0,2}$/.test(build)) {
@@ -61,6 +62,7 @@ try {
       sourceStatus: run('git', ['status', '--porcelain'], true), createdAt: new Date().toISOString() };
     writeFileSync(join(dir, 'source.json'), JSON.stringify(receipt, null, 2), { mode: 0o600 });
     run('pnpm', ['--filter', '@cuberoot/mobile', 'cap:sync:ios']);
+    if (existsSync(join(mobile, 'ios/App/App/public/push-acceptance.json'))) throw new Error('Push acceptance assets cannot be archived.');
     const archive = join(dir, 'App.xcarchive');
     const ipa = join(dir, 'App.ipa');
     asc(['xcode', 'archive', '--project', join(mobile, 'ios/App/App.xcodeproj'), '--scheme', 'App',

@@ -1,11 +1,8 @@
 import { App } from '@capacitor/app';
-import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor/core';
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
 import { parseNotificationOpen, parseNotificationOpenUrl, type NotificationOpen } from '@cuberoot/shared/notification-push';
 
-const plugin = registerPlugin<{
-  pendingNotification(): Promise<{ notification?: unknown }>;
-  addListener(event: 'notificationOpened', listener: (value: unknown) => void): Promise<PluginListenerHandle>;
-}>('RecordPush');
+import { recordPushPlugin as plugin } from './record-push-plugin';
 
 /** Native callbacks contain public destinations, never credentials or web tickets. */
 export async function addNotificationOpenListener(listener: (value: NotificationOpen) => void): Promise<PluginListenerHandle> {

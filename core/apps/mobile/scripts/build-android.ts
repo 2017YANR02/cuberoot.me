@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { existsSync } from 'node:fs';
 import { loadPushEnv, reportPushConfig } from './android-push-config.ts';
 
 const { values, positionals } = parseArgs({ allowPositionals: true, options: {
@@ -10,6 +11,10 @@ if (positionals.length !== 1) throw new Error('Expected one build target');
 const channel = positionals[0];
 if (channel !== 'direct' && channel !== 'play' && channel !== 'debug') throw new Error('Expected direct, play or debug');
 const debug = channel === 'debug';
+if (!debug && (process.env.CUBEROOT_PUSH_ACCEPTANCE === '1'
+  || existsSync(new URL('../android/app/src/main/assets/public/push-acceptance.json', import.meta.url)))) {
+  throw new Error('Push acceptance assets cannot be released; restore the normal Capacitor sync first');
+}
 const unsignedCi = values['unsigned-ci'];
 const bundle = values.bundle;
 if (bundle && channel !== 'play') throw new Error('Only Play supports AAB bundles');

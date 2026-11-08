@@ -2,6 +2,13 @@ import groovy.json.JsonSlurper
 
 apply plugin: 'com.android.application'
 
+gradle.taskGraph.whenReady { graph ->
+    if (graph.allTasks.any { it.name.toLowerCase().contains('release') }
+        && file('src/main/assets/public/push-acceptance.json').exists()) {
+        throw new GradleException('Push acceptance assets cannot be built as Release; restore normal Capacitor sync')
+    }
+}
+
 // Native-only selection: changing the website or Vite environment cannot change billing.
 def mobileDistribution = providers.gradleProperty('mobileDistribution').getOrElse('play')
 if (!(mobileDistribution in ['play', 'direct'])) {

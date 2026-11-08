@@ -19,6 +19,8 @@
     "cap:sync:ios": "pnpm build && cap sync ios",
     "android:open": "cap open android",
     "android:push:check": "node scripts/android-push-config.ts",
+    "push:acceptance:dev": "vite --config vite.push-acceptance.config.ts --mode push-acceptance",
+    "push:acceptance:build": "vite build --config vite.push-acceptance.config.ts --mode push-acceptance",
     "android:apk:debug": "pnpm cap:sync:android && node scripts/build-android.ts debug",
     "android:run": "pnpm cap:sync:android && cap run android",
     "android:apk:direct": "pnpm cap:sync:android && node scripts/build-android.ts direct",

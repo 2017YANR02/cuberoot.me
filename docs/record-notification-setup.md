@@ -158,3 +158,46 @@ APNs 使用 HTTP/2 + ES256 provider JWT，仅在服务端读取 .p8；按签名�
 前台展示横幅、通知中心列表和声音；新版点击经 Swift bridge 交给共享导航，只接受公开比赛路径。冷启动等待安全会话恢复，其他账号/已退出的点击忽略，重复回调去重；准备计时、观察或正在计时时延后跳转。 不需要用 silent push 或后台轮询取代系统远程 alert。
 
 验收使用所有者单个测试账号/设备，分别核对 sandbox 开发包、production 发布包；允许/拒绝/撤销权限、token 变化、前台/后台/冷启动、点击、离线退出、换号、卸载重装、用户筛选和本人 PR。不能把本地 HTTP/2 测试或无签名 Simulator 编译当作真实 APNs 送达证据。
+
+## 6. 隔离 API 与推送验收入口
+
+使用专用验收入口，不能把普通 Mobile App、网站 dev 反代或 `dev:local` 当作推送隔离环境。普通 App 的生产登录/API 行为没有在本轮全局改址。
+
+### 本地浏览器检查
+
+从 `core/` 在两个终端分别启动：
+
+```sh
+pnpm --filter @cuberoot/server push:acceptance
+pnpm --filter @cuberoot/mobile push:acceptance:dev
+```
+
+1. API 固定监听 `127.0.0.1:3339`；页面为 `http://127.0.0.1:4175/`，端口占用会失败，不自动改端口、启动代理或回退生产。
+2. API 把随机配对令牌写入本机 `core/apps/api/.push-acceptance/session.json`（目录 `0700`，新文件 `0600`，已忽略）。把 `pairingToken` 填到页面密码框；不用真实账号 JWT。令牌不放 URL、日志或构建产物。已有同名文件时拒绝覆盖；异常退出遗留文件须确认旧 API 已停止后手动删除，再启动。
+3. 选测试账号 A/B，点击“连接并绑定”。浏览器使用模拟的 native adapter，但复用正式 `RecordPushController`；服务端复用设备字段校验和通知 payload 契约。测试身份、设备凭据、CID/token 全部只在内存中，既不读取正常 App Keychain，也不接生产账号/数据库。
+4. 选择四类通知之一并生成测试 payload，再模拟点击；可检查重复点击、勾选暂缓后恢复、切换测试账号后点击旧通知、退出撤销。点击复用共享 `NotificationOpenQueue`，只展示目标路径，不加载生产网站或跳外部浏览器。
+5. API 一次只允许一台测试设备绑定；两名测试用户的 session 互相隔离，同用户重新配对替换旧 session。整轮一小时后失效，需要重启。页面刷新会丢失本机内存撤销凭据；要绑定新实例需重启 API，不能拿生产设备 secret 解锁。正常 Ctrl-C 会删除当前进程创建的配对文件。
+
+这是 **fixture API**：没有 PG、业务扫描、邮件、Bark、APNs/个推发送器或测试群发入口；不会读取 API `.env`，即使 shell 带有生产 DB/推送变量也不启用相应组件。生成 payload 不代表服务商接受、消息入箱、订阅调度、真实送达或正式 Tools 页面落页通过；这些证据仍分开验收。
+
+### 原生测试产物与发布隔离
+
+```sh
+pnpm --filter @cuberoot/mobile push:acceptance:build
+```
+
+产物只进 `dist-push-acceptance/`，带 `push-acceptance.json` 标记，普通 build/sync 仍用 `dist/`。专用 Vite 配置不加载生产 App、登录客户端、WebSurface 或静态资源集合；只开放指定验收 API 与本地开发 WS，禁止 iframe 和跨站请求。API 地址必须为显式 loopback/私网 IPv4 origin，不接受生产域名、DNS 别名、公网 IP、userinfo、路径或查询串；每次 fetch 禁止重定向、携带 cookie 和生产 fallback，并校验 fixture 响应标记。
+
+后续有设备时，先提供手机可达且受系统信任的**私网 HTTPS**入口，只转发到本机 fixture API；本轮不自动配置证书、LAN 暴露或隧道。原生验收入口拒绝默认明文地址，不放宽正常 App 的 ATS/明文网络策略。通过 `PUSH_ACCEPTANCE_API_ORIGIN` 指定该 HTTPS origin 后重新生成验收产物；API 的 Origin allowlist 已包含 Capacitor 宿主 origin。
+
+本机 macOS/Linux 的显式同步入口（本轮跳过原生验收，未执行验收资产同步或安装）：
+
+```sh
+CUBEROOT_PUSH_ACCEPTANCE=1 pnpm --filter @cuberoot/mobile exec cap sync android
+# 或对应 iOS 宿主
+CUBEROOT_PUSH_ACCEPTANCE=1 pnpm --filter @cuberoot/mobile exec cap sync ios
+```
+
+仅使用 Android Debug 包或 iOS development/sandbox 签名包。原生 start/status/stop 均检查测试宿主及 HTTPS 条件；插件注册本身仍可能联系 APNs/个推等系统或厂商服务，不能把“生产业务 API 隔离”说成“所有网络离线”。本轮 fixture API 始终不发送，真机推送传输和系统通知点击仍另行安排。iOS Debug/Release 当前同 Bundle ID，未来安装前仍须核对是否替换既有 App；本轮没有安装。
+
+Android 构建 wrapper 和 Gradle Release 任务图拒绝验收标记；iOS 发布脚本及 App target 的 Release 构建阶段同样拒绝。验收结束后清除本次命令的环境开关，运行目标端原有 `cap:sync:android` / `cap:sync:ios` 恢复正常资产，再走既有发布流程；不能删除 marker 后发布验收代码。

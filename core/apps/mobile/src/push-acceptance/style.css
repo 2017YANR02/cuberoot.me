@@ -1,0 +1,5 @@
+body { margin: 0; font-family: system-ui, sans-serif; }
+main { max-width: 48rem; padding: 1rem; margin: auto; }
+button, input, select { font: inherit; max-width: 100%; box-sizing: border-box; }
+button { margin-block: 0.25rem; }
+pre, p { white-space: pre-wrap; overflow-wrap: anywhere; }

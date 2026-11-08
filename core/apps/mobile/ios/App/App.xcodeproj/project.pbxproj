@@ -137,6 +137,7 @@ A77C00000000000000000081 = {isa = PBXFileReference; lastKnownFileType = folder; 
 			isa = PBXNativeTarget;
 			buildConfigurationList = 504EC3161FED79650016851F /* Build configuration list for PBXNativeTarget "App" */;
 			buildPhases = (
+				A77C00000000000000000069 /* Reject acceptance assets in Release */,
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
@@ -212,6 +213,7 @@ A77C00000000000000000081 = {isa = PBXFileReference; lastKnownFileType = folder; 
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+        A77C00000000000000000069 = {isa = PBXShellScriptBuildPhase; alwaysOutOfDate = 1; buildActionMask = 2147483647; files = (); inputPaths = ("$(SRCROOT)/App/public", ); outputPaths = (); name = "Reject acceptance assets in Release"; runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/sh; shellScript = "if [ \"$CONFIGURATION\" = Release ] && [ -f \"$SRCROOT/App/public/push-acceptance.json\" ]; then\n  echo 'error: Push acceptance assets cannot be archived; restore normal Capacitor sync.'\n  exit 1\nfi\n"; };
         A77C00000000000000000068 = {isa = PBXShellScriptBuildPhase; alwaysOutOfDate = 1; buildActionMask = 2147483647; files = (); inputPaths = (); outputPaths = ("$(DERIVED_FILE_DIR)/WatchScramble.js", "$(DERIVED_FILE_DIR)/WatchCube.js", "$(DERIVED_FILE_DIR)/WatchScene.js", "$(DERIVED_FILE_DIR)/WatchAlgData.json", "$(DERIVED_FILE_DIR)/WatchReplay.js", "$(DERIVED_FILE_DIR)/WatchAlgorithms", ); name = "Bundle shared smart cube runtime"; runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/sh; shellScript = "export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH\nnode \"$SRCROOT/../../scripts/build-watch-runtime.ts\" \"$DERIVED_FILE_DIR/WatchCube.js\"\n"; };
 /* End PBXShellScriptBuildPhase section */
 /* Begin PBXSourcesBuildPhase section */
