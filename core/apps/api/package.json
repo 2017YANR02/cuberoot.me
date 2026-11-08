@@ -15,6 +15,7 @@
     "start": "node dist/server.bundle.js",
     "test": "pnpm run build:cube-photo && vitest run",
     "typecheck": "tsc --noEmit",
+    "apns:check": "tsx scripts/apns-config-check.ts",
     "gen-title": "tsx src/tools/gen_title.ts",
     "gen-glossary": "tsx scripts/gen-glossary.ts",
     "gen-wiki-backfill": "tsx scripts/gen-wiki-backfill.ts",

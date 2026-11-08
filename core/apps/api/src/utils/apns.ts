@@ -3,6 +3,7 @@ import { recordPushUrl } from './record_push_link.js';
 import { readFileSync } from 'node:fs';
 import { connect, type ClientHttp2Session } from 'node:http2';
 import jwt from 'jsonwebtoken';
+import { readApnsConfig } from './apns_config.js';
 
 export type ApnsEnvironment = 'sandbox' | 'production';
 export class ApnsError extends Error {
@@ -13,12 +14,7 @@ export class ApnsError extends Error {
   get retryable(): boolean { return this.status === 429 || this.status >= 500 || this.reason === 'ExpiredProviderToken'; }
 }
 export function apnsConfig(appId: string) {
-  if (process.env.RECORD_PUSH_ENABLED !== '1' || process.env.APNS_ENABLED !== '1'
-    || !['me.cuberoot.app', 'me.cuberoot.app.debug'].includes(appId)) return null;
-  const teamId = process.env.APNS_TEAM_ID?.trim();
-  const keyId = process.env.APNS_KEY_ID?.trim();
-  const keyPath = process.env.APNS_PRIVATE_KEY_PATH?.trim();
-  return teamId && keyId && keyPath ? { teamId, keyId, keyPath, topic: appId } : null;
+  return readApnsConfig(appId, process.env);
 }
 const sessions = new Map<string, ClientHttp2Session>();
 let cached: { identity: string; token: string; expires: number } | undefined;

@@ -115,6 +115,32 @@ iOS 复用同一订阅、站内消息、设备控制器和投递队列，通过�
 3. 服务端设置 APNS_TEAM_ID、APNS_KEY_ID、APNS_PRIVATE_KEY_PATH。APNS_ENABLED=1 与既有 RECORD_PUSH_ENABLED=1 必须同时成立；默认关闭。修改线上环境与发布按仓库发布授权执行，不由文档自动授权。
 4. 迁移 0255 扩展原设备表，旧 Android 行默认为 getui/production；APNs 的 provider、environment、app_id、client_id 联合隔离。上线由既有 Actions 先迁移再重载 API，不手工 ALTER。
 
+### APNs 本地离线检查与凭据清单
+
+APNs 私钥属于 API 服务端，不注入 Mobile、Vite 或 iOS 打包 CI。可复制 `core/apps/api/.env.apns.example` 为同目录被忽略的 `.env.apns.local`，在本机填写；也可显式检查现有 API `.env`。检查器只读取下列字段，不执行 shell 文件、不修改环境文件、不启动 API/队列、不连接 Apple、不生成 provider JWT 或发送通知。
+
+| 变量 | 用途与待准备内容 |
+| --- | --- |
+| `RECORD_PUSH_ENABLED` | 共用发送开关，运行时必须为 `1`；准备阶段保持 `0` |
+| `APNS_ENABLED` | APNs 通道开关，运行时必须为 `1`；准备阶段保持 `0` |
+| `APNS_TEAM_ID` | 拥有该 APNs key 的 Apple Developer Team ID |
+| `APNS_KEY_ID` | Apple Developer 中该 APNs key 的 Key ID |
+| `APNS_PRIVATE_KEY_PATH` | 未加密 EC P-256 私钥文件路径；对应 `.p8` 必须确有 APNs 权限，不能把 ASC/IAP key 当作已授权的 APNs key |
+
+从 `core/` 执行，配置文件参数相对 API 包目录：
+
+```sh
+pnpm --filter @cuberoot/server apns:check --push-env-file .env --environment sandbox
+pnpm --filter @cuberoot/server apns:check --push-env-file .env.apns.local --environment production
+pnpm --filter @cuberoot/server apns:check --push-env-file .env.apns.local --environment production --require-enabled
+```
+
+- 不传文件时只检查当前进程环境；不会自动加载 `.env`。已有环境变量（包括空值）优先于文件。读取完整 API `.env` 时只保留 APNs 的五个字段，其他字段不输出也不使用；未知 `APNS_*` 名称会报错，避免拼写错误被忽略。使用专用 `--push-env-file`，不要改成会被 Node/pnpm 提前处理的 `--env-file`。
+- 全部未配置且 APNs 未开启时报告 disabled/missing，可退出成功。提供部分凭据、APNs 已开启却缺凭据、开关不是 `0/1`、不支持的 topic/环境或私钥不合格时失败。`--require-enabled` 额外要求两个开关都为 `1` 且凭据完整；该参数只检查，不设置开关。不要为通过检查直接开启生产全队列。
+- 私钥检查包含当前检查进程可读取、普通文件且不超过 16 KiB、未加密 EC P-256，以及本地签名/验签。Unix 文件不得给予 group/other 权限，建议 `0600`；Windows 需另查 ACL。不打印 Team ID、Key ID、私钥路径、内容、签名或原始文件/加密库异常。相对私钥路径按 API 工作目录解析，建议使用绝对路径。
+- 默认 topic 为 `me.cuberoot.app`，与当前 Xcode Debug/Release 相同。服务端保留对 `me.cuberoot.app.debug` 的兼容，但这不代表当前有该 Bundle ID 的 iOS 签名包。`--environment sandbox|production` 仅记录**期望环境**，不会从 `.p8` 推断环境、Team、Key ID、授权 topic、是否撤销或 Apple 控制台状态。
+- 私钥本地有效、`Runtime configuration gate: configured` 和退出码 0 均不等于推送可用。最终仍须核对实际导出 App 的 entitlement / Info.plist / profile 环境一致、Apple key 授权及服务器运行用户可读；检查进程可读不证明生产进程可读。当前缺项与验证结果记录在[路线图](mobile-app-roadmap.md)，真机送达与点击另行验收。
+
 ### 构建与权限
 
 Xcode 工程已有 App.entitlements、Push capability、设备 token 回调。APNS_ENVIRONMENT 在 Debug 默认 development、Release 默认 production，同一 build setting 写入 entitlement 和 Info.plist；设备上报分别为 sandbox/production。**实际导出/重签名 profile 的 aps-environment 必须匹配 Info.plist**，不能把开发包 token 发到生产 APNs。TestFlight/App Store 使用 Release production；自定义导出流程若改变环境，须同时修改构建设置并核对最终签名 entitlement。
