@@ -8,7 +8,7 @@ import WcaAuth from '@/components/WcaAuth';
 import { T, tr } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
 
-export function ForumHeader({ activeView, children }: { activeView: 'feed' | 'boards'; children?: ReactNode }) {
+export function ForumHeader({ activeView, children }: { activeView: 'feed' | 'boards' | 'mine'; children?: ReactNode }) {
   const isAdmin = useIsAdmin();
   return (
     <>
@@ -36,6 +36,9 @@ export function ForumHeader({ activeView, children }: { activeView: 'feed' | 'bo
           </Link>
           <Link href="/forum" prefetch={false} aria-current={activeView === 'boards' ? 'page' : undefined}>
             <T zh="版块" en="Boards" />
+          </Link>
+          <Link href="/forum/mine" prefetch={false} aria-current={activeView === 'mine' ? 'page' : undefined}>
+            <T zh="我的" en="Mine" />
           </Link>
         </nav>
         <div className="forum-view-tools">

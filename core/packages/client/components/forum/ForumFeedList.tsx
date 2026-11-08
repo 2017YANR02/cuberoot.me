@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { ChevronRight, Heart, MessageCircle } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
@@ -27,7 +27,9 @@ const ForumFeedReplies = dynamic(() => import('./ForumFeedReplies'), {
   </div>,
 });
 
-export function ForumFeedList({ threads, compact = false }: { threads: ForumFeedThread[]; compact?: boolean }) {
+export function ForumFeedList<T extends ForumFeedThread>({ threads, compact = false, renderBylineEnd }: {
+  threads: T[]; compact?: boolean; renderBylineEnd?: (thread: T) => ReactNode;
+}) {
   const lang = useLang();
   const zh = lang === 'zh';
   const user = useAuthUser();
@@ -100,6 +102,7 @@ export function ForumFeedList({ threads, compact = false }: { threads: ForumFeed
                 <Link href={`/forum/f/${thread.forumSlug}`} prefetch={false} className="community-feed-board">
                   {tr({ zh: thread.forumNameZh, en: thread.forumNameEn })}
                 </Link>
+                {renderBylineEnd?.(thread)}
               </div>
               <Link href={`/forum/t/${thread.id}`} prefetch={false} className="community-feed-content">
                 <span className="community-feed-title">{thread.title}</span>

@@ -65,6 +65,9 @@
   white-space: nowrap;
 }
 
+.forum-mine-menu { margin-inline-start: auto; }
+.forum-mine-status { color: var(--accent); }
+
 .community-feed-content {
   display: block;
   color: inherit;

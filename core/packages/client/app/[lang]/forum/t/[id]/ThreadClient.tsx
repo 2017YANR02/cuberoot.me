@@ -47,6 +47,7 @@ export default function ThreadClient() {
   const [page, setPage] = useQueryState(
     'page', parseAsInteger.withDefault(1).withOptions({ history: 'replace' }));
   const [size, setSize] = useQueryState('size', parseAsInteger.withDefault(SIZE_DEFAULT));
+  const [editId, setEditId] = useQueryState('edit', parseAsInteger);
 
   const [data, setData] = useState<ThreadPageData | null>(null);
   const [error, setError] = useState('');
@@ -120,6 +121,17 @@ export default function ThreadClient() {
   const totalPages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
   const isOwner = !!data && !!myKey && data.thread.authorId === myKey;
   const locked = !!data?.thread.isLocked;
+
+  // Personal-feed edit links open the existing editor after the target page is loaded.
+  useEffect(() => {
+    if (!editId || !data || data.thread.id !== threadId || data.page !== page || data.size !== size) return;
+    const post = data.posts.find(post => post.id === editId);
+    if (post && !post.isDeleted && (isAdmin || (post.authorId === myKey && !locked))) {
+      setEditingPost(post);
+      setEditText(post.content);
+    }
+    void setEditId(null);
+  }, [editId, data, threadId, page, size, isAdmin, myKey, locked, setEditId]);
 
   // Canonical page under the DEFAULT size — a shared link must not embed the
   // viewer's personal ?size, or it points at the wrong page for everyone else.

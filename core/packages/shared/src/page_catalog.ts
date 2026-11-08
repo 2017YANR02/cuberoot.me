@@ -495,6 +495,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'forum/new': { title: { zh: '发帖', en: 'New thread' } },
+  'forum/mine': { title: { zh: '我的帖子', en: 'My forum posts' } },
   'forum/review': { title: { zh: '论坛审核', en: 'Forum moderation' } },
   'forum/search': { title: { zh: '论坛搜索', en: 'Forum search' } },
   'frame-count': {

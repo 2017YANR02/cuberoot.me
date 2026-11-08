@@ -913,7 +913,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'forum', m: 'GET', p: '/v1/forum/t/:id', g: 'public', zh: '主题帖子分页(登录附本人反应)', en: 'Thread posts (my reactions when signed in)' },
   { d: 'forum', m: 'GET', p: '/v1/forum/latest', g: 'public', zh: '全版最新活跃主题', en: 'Latest active threads' },
   { d: 'forum', m: 'GET', p: '/v1/forum/feed', g: 'public', zh: '社区动态流(活跃 / 最新排序，首帖文字、图片与视频)', en: 'Community feed (active / latest order, first-post text, images, and videos)' },
-  { d: 'forum', m: 'GET', p: '/v1/forum/mine', g: 'auth', zh: '当前用户发布的主题 / 回复过的主题，分页与个人审核状态', en: 'Current user’s threads / replied threads, pagination and personal moderation status' },
+  { d: 'forum', m: 'GET', p: '/v1/forum/mine', g: 'login', zh: '当前用户发布的主题 / 回复过的主题，分页与个人审核状态', en: 'Current user’s threads / replied threads, pagination and personal moderation status' },
   { d: 'forum', m: 'GET', p: '/v1/forum/search', g: 'public', zh: '搜标题 + 正文,带摘录', en: 'Search titles + bodies with snippet' },
   { d: 'forum', m: 'POST', p: '/v1/forum/threads', g: 'login', zh: '发主题(公告版仅管理员)', en: 'Create thread (announcements admin-only)' },
   { d: 'forum', m: 'POST', p: '/v1/forum/video', g: 'login', zh: '上传论坛短视频(原始文件流，服务端校验格式、大小与时长)', en: 'Upload forum short video (raw stream with server-side format, size, and duration validation)' },
