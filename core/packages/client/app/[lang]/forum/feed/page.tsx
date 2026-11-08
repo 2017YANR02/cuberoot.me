@@ -96,7 +96,7 @@ export default function ForumFeedPage() {
       {data && data.threads.length === 0 && <div className="forum-empty">{forum
         ? <T zh="该板块暂无动态。" en="No activity in this board yet." />
         : <T zh="还没有社区动态。" en="No community activity yet." />}</div>}
-      {data && data.threads.length > 0 && <ForumFeedList threads={data.threads} />}
+      {data && data.threads.length > 0 && <ForumFeedList threads={data.threads} timeMode={sort === 'active' ? 'activity' : 'published'} />}
 
       {data && data.total > 0 && (
         <Paginator

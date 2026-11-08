@@ -27,8 +27,8 @@ const ForumFeedReplies = dynamic(() => import('./ForumFeedReplies'), {
   </div>,
 });
 
-export function ForumFeedList<T extends ForumFeedThread>({ threads, compact = false, renderBylineEnd }: {
-  threads: T[]; compact?: boolean; renderBylineEnd?: (thread: T) => ReactNode;
+export function ForumFeedList<T extends ForumFeedThread>({ threads, compact = false, timeMode = 'published', renderBylineEnd }: {
+  threads: T[]; compact?: boolean; timeMode?: 'published' | 'activity'; renderBylineEnd?: (thread: T) => ReactNode;
 }) {
   const lang = useLang();
   const zh = lang === 'zh';
@@ -87,7 +87,10 @@ export function ForumFeedList<T extends ForumFeedThread>({ threads, compact = fa
         const reactionCount = currentReaction.reactions.reduce((sum, reaction) => sum + reaction.count, 0);
         const imageUrls = thread.imageUrls ?? [];
         const videos = thread.videos ?? [];
-        const displayTime = formatPostTime(thread.createdAt, lang);
+        const showReplyTime = timeMode === 'activity' && thread.replyCount > 0
+          && Date.parse(thread.lastPostAt) > Date.parse(thread.createdAt);
+        const timestamp = showReplyTime ? thread.lastPostAt : thread.createdAt;
+        const displayTime = formatPostTime(timestamp, lang);
         return (
           <article className="community-feed-item" key={thread.id}>
             <div className={`community-feed-avatar${avatar.isClawd ? ' is-clawd' : ''}`} aria-hidden="true">
@@ -97,7 +100,9 @@ export function ForumFeedList<T extends ForumFeedThread>({ threads, compact = fa
               <div className="community-feed-byline">
                 {thread.author.userId ? <UserContactLink userId={thread.author.userId} className="community-feed-author">{displayName}</UserContactLink> : <PersonLink wcaId={thread.author.wcaId ?? thread.authorId} className="community-feed-author">{displayName}</PersonLink>}
                 <span aria-hidden="true">·</span>
-                <time dateTime={thread.createdAt}>{displayTime}</time>
+                <time dateTime={timestamp}>{showReplyTime
+                  ? tr({ zh: `最近回复 ${displayTime}`, en: `Last reply ${displayTime}` })
+                  : displayTime}</time>
                 <span aria-hidden="true">·</span>
                 <Link href={`/forum/f/${thread.forumSlug}`} prefetch={false} className="community-feed-board">
                   {tr({ zh: thread.forumNameZh, en: thread.forumNameEn })}
