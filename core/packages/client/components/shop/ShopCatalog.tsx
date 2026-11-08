@@ -4,6 +4,7 @@ import { useEffect, useState, ViewTransition } from 'react';
 import { ArrowRight, PackageOpen, X } from '@app-foundation/icons/lucide';
 import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryStates } from 'nuqs';
 import AppLink from '@/components/AppLink';
+import { SkeletonBlock } from '@/components/ContentSkeleton';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
@@ -57,7 +58,7 @@ export function ShopCatalog() {
         </AppLink>
       </article>)}</div>}
       {error ? <div className="shop-empty" role="alert"><p>{t('商品暂时无法加载，请重试。', 'Products could not be loaded. Please try again.')}</p><button className="shop-control shop-button" onClick={() => setRevision(value => value + 1)}>{t('重新加载', 'Try again')}</button></div>
-        : !result ? <div className="shop-product-grid" aria-label={t('正在加载商品', 'Loading products')} aria-busy="true">{(designs.length ? [] : [1, 2, 3, 4]).map(id => <div className="shop-product-skeleton" key={id} />)}</div>
+        : !result ? <div className="shop-product-grid" role="status" aria-label={t('正在加载商品', 'Loading products')} aria-busy="true">{(designs.length ? [] : [1, 2, 3, 4]).map(id => <SkeletonBlock className="shop-product-skeleton" key={id} />)}</div>
         : items.length ? <>
           <div className="shop-product-grid">{items.map(product => {
             const data = product.data ?? {};

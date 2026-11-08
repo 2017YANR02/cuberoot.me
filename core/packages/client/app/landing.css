@@ -232,6 +232,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     align-items: start;
 }
 .landing-page .landing-pinned-recons {
+    --home-pinned-recon-height: 14rem;
     grid-column: span 2;
     width: 100%;
     max-width: 542px;
@@ -240,7 +241,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     grid-auto-rows: max-content;
     gap: 1rem;
     min-height: 0;
-    max-height: 14rem;
+    max-height: var(--home-pinned-recon-height);
     overflow-y: auto;
 }
 .landing-page .landing-training-links {
@@ -284,11 +285,11 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 .landing-pinned-recons .recon-card-body { overflow-y: auto; }
 .landing-slot-message { color: var(--muted-foreground); }
 .landing-pinned-recons > .landing-slot-message { grid-column: 1 / -1; align-self: center; }
-.landing-widget-skeleton {
+.skeleton-block.landing-widget-skeleton {
     height: 100%;
     border-radius: 12px;
-    background: var(--muted);
 }
+.landing-pinned-recons > .skeleton-block.landing-widget-skeleton { height: var(--home-pinned-recon-height); }
 @media (max-width: 900px) {
     .landing-page .landing-training-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1212,7 +1213,6 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 .landing-widget:empty,
 .landing-personal-comps:empty,
-.landing-widget-skeleton,
 .landing-widget :is(.recent-scrambles--loading, .today-recon--loading, .ongoing-comps--loading),
 .landing-widget .forum-feed-preview[aria-busy="true"] {
     animation: home-placeholder-breathe 1.8s ease-in-out infinite;

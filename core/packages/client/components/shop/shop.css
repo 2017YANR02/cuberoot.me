@@ -77,7 +77,7 @@
 .shop-product-card-copy { display: flex; flex: 1; flex-direction: column; gap: 12px; padding: 14px; }
 .shop-product-card h2 { font-size: 15px; line-height: 1.5; font-weight: 500; }
 .shop-card-price { font-size: 18px; font-weight: 650; margin-top: auto !important; }
-.shop-product-skeleton { aspect-ratio: .78; background: var(--muted); border-radius: 3px; }
+.skeleton-block.shop-product-skeleton { height: auto; aspect-ratio: .78; }
 .shop-empty { display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center; gap: 16px; padding: 36px 24px; min-height: 190px; }
 .shop-empty > svg { color: var(--muted-foreground); }
 .shop-empty h3, .shop-empty h2 { font-size: 18px; font-weight: 500; }

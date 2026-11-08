@@ -7,6 +7,7 @@ import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
 import { useRetainedState } from '@/hooks/useRetainedState';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 import { useHomeScrollRestoration } from '@/hooks/useHomeScrollRestoration';
+import { SkeletonBlock } from '@/components/ContentSkeleton';
 
 /** Site entrypoint — Landing page. */
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
@@ -52,16 +53,16 @@ import {
 // The dynamic fallback and viewport placeholder use the same measured height,
 // so crossing the lazy boundary does not collapse the page before data arrives.
 const OngoingComps = dynamic(() => import('@/components/OngoingComps'), {
-  loading: () => <div className="landing-widget-skeleton" aria-hidden="true" />,
+  loading: () => <SkeletonBlock className="landing-widget-skeleton" />,
 });
 const RecentScrambles = dynamic(() => import('@/components/RecentScrambles'), {
-  loading: () => <div className="landing-widget-skeleton" aria-hidden="true" />,
+  loading: () => <SkeletonBlock className="landing-widget-skeleton" />,
 });
 const TodayRecon = dynamic(() => import('@/components/TodayRecon'), {
-  loading: () => <div className="landing-widget-skeleton" aria-hidden="true" />,
+  loading: () => <SkeletonBlock className="landing-widget-skeleton" />,
 });
 const ForumFeedPreview = dynamic(() => import('@/components/forum/ForumFeedPreview'), {
-  loading: () => <div className="landing-widget-skeleton" aria-hidden="true" />,
+  loading: () => <SkeletonBlock className="landing-widget-skeleton" />,
 });
 import { useEffectiveTheme } from '@/lib/theme';
 import '../landing.css';
@@ -601,7 +602,7 @@ export default function LandingPage() {
       <div className="landing-training-grid">
         <div className="landing-pinned-recons" aria-busy={pinnedRecons === null && !pinError}>
           {pinnedRecons === null && !pinError
-            ? <><div className="landing-widget-skeleton" aria-hidden="true" /><div className="landing-widget-skeleton" aria-hidden="true" /></>
+            ? <><SkeletonBlock className="landing-widget-skeleton" /><SkeletonBlock className="landing-widget-skeleton" /></>
             : pinnedRecons?.length
               ? <TodayRecon {...reconProps} pinnedOnly />
               : <p className="landing-slot-message" role="status">{pinError ?? tr({ zh: '暂无置顶复盘', en: 'No pinned recons yet' })}</p>}
