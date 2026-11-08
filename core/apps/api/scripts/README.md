@@ -1,5 +1,7 @@
 # Local full-stack dev (edit DB data before push)
 
+For push acceptance, use `pnpm --filter @cuberoot/server push:acceptance` from `core/` and the [separate acceptance entry](../../../../docs/record-notification-setup.md#6-隔离-api-与推送验收入口). This loopback fixture API does not load production auth, `.env`, PG, monitors or provider transports. The selective production proxy described below is not a push isolation environment.
+
 ## Manual SOR player-best refresh
 
 The scheduled refresh runs in `.github/workflows/sor.yml`. For a local fallback, run from `core/`:
