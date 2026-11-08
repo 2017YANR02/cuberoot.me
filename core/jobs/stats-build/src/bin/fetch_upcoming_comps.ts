@@ -6,6 +6,7 @@
 // 数据源:
 //   1. WCA API — 全球比赛 + 选手注册信息
 //   2. cubing.com（粗饼网）— 中国内地比赛（WCA API 不覆盖）
+//   3. MYCSA — 马来西亚外部报名（WCA WCIF 名单不完整）
 //
 // 流程:
 //   1. 从 stats/wr_metric.json 提取去重后的顶尖选手 WCA ID + 项目 + WR 标记
@@ -33,6 +34,7 @@ import { enrichCompElevations } from '../elevation.js';
 import { fetchCompetitionPages, mergeSavedCatalog } from '../upcoming_catalog.js';
 import { IncrementalJson, type JsonReply } from '../incremental_json.js';
 import { mergeCompetitionNames } from '@cuberoot/shared/cubing-competitions';
+import { fetchMycsaRegistrations, type ExternalRoster } from '../mycsa_registrations.js';
 
 // ================= Configuration ==================
 // NOTE: 位置定位仓库根（bin -> src -> stats-build -> packages -> core -> repo root，5 个 '..'），
@@ -51,7 +53,7 @@ const OUTPUT_DIR = resolve(option('--output-dir', resolve(ROOT_DIR, 'stats')));
 const OUTPUT_JSON_PATH = resolve(OUTPUT_DIR, 'upcoming_comps.json');
 // NOTE: Globe history/upcoming 模式 + UpcomingCompsPage All 模式共用，含全球全量 upcoming
 const ALL_OUTPUT_JSON_PATH = resolve(OUTPUT_DIR, 'all_upcoming_comps.json');
-// NOTE: 中国内地比赛全员注册名单（前端"搜索选手"非 top 时,作为静态 fallback;WCA API 不覆盖 cubing.com）
+// External registration index (cubing.com + MYCSA); retain the published filename for existing consumers.
 const CN_REGISTRATIONS_JSON_PATH = resolve(OUTPUT_DIR, 'cn_upcoming_registrations.json');
 // 场馆坐标 → 海拔(米)缓存,enrichCompElevations 读写;与 gen_all_comps.ts 共用同一份
 const ELEVATION_CACHE_PATH = resolve(OUTPUT_DIR, 'comp_elevations.json');
@@ -686,6 +688,7 @@ export async function buildUpcomingCompsFromWcif(
   wcifMap: Record<string, WcifEntry>,
   cnComps: CnComp[],
   registrations: Record<string, string[]>,
+  externalRosters: Record<string, ExternalRoster> = {},
 ): Promise<CompEntry[]> {
   /*
    * WCA 限制 /users/:id?upcoming_competitions=true（返回 403）后的替代方案。
@@ -697,7 +700,7 @@ export async function buildUpcomingCompsFromWcif(
 
   for (const comp of allComps) {
     const compId = comp.id;
-    const competitors = wcifMap[compId]?.competitors
+    const competitors = externalRosters[compId]?.competitors ?? wcifMap[compId]?.competitors
       ?? previousTopById.get(compId)?.top_cubers.map((cuber) => cuber.id) ?? [];
     const matched = competitors.filter((w) => cuberIds.has(w));
     if (!matched.length) {
@@ -1119,6 +1122,8 @@ async function main(): Promise<void> {
   // Fetch once before publishing anything; both indexes must use the same roster snapshot.
   const cnComps = await fetchCubingChinaComps();
   const cnReg = await buildCnRegistrations(cnComps);
+  const mycsa = await fetchMycsaRegistrations(allComps, new Date().toISOString().slice(0, 10));
+  const externalReg = { ...cnReg, ...Object.fromEntries(Object.entries(mycsa).map(([id, roster]) => [id, roster.competitors])) };
 
   // 4. 用 WCIF 报名名单与 top cubers 交叉匹配，构建 Top 模式
   let compsData: CompEntry[];
@@ -1126,7 +1131,7 @@ async function main(): Promise<void> {
     console.log(
       `\n[REG] WCIF 报名名单匹配（${allComps.length} 场 × top ${Object.keys(cubers).length} 名选手）...`,
     );
-    compsData = await buildUpcomingCompsFromWcif(cubers, allComps, wcifMap, cnComps, cnReg);
+    compsData = await buildUpcomingCompsFromWcif(cubers, allComps, wcifMap, cnComps, cnReg, mycsa);
   } else {
     console.log('[WARN] all_comps 为空，Top 模式无数据源');
     compsData = [];
@@ -1176,6 +1181,14 @@ async function main(): Promise<void> {
     }
   }
 
+  // Replace registration fields only; WCIF remains the source for rounds and schedule.
+  for (const c of [...compsData, ...allComps]) {
+    const roster = mycsa[c.id ?? ''];
+    if (!roster) continue;
+    c.registered = roster.registered;
+    c.event_regs = roster.eventRegs;
+  }
+
   // 5b. 拉每场「项目修改截止」（event_change_deadline_date）—— 列表端点不含，逐场单拉（小 payload）。
   if (allComps && allComps.length) {
     console.log(`\n[CHG] 拉取 ${allComps.length} 场修改截止...`);
@@ -1204,9 +1217,9 @@ async function main(): Promise<void> {
   writeChanged(ALL_OUTPUT_JSON_PATH, allComps);
   console.log(`[ALL] 共 ${allComps.length} 场 → ${relToRoot(ALL_OUTPUT_JSON_PATH)}`);
 
-  // 8. 写出 CN 全员注册名单（前端搜选手非 top 时的静态兜底）
+  // 8. 写出外部全员报名索引（保留 cn_ 历史文件名，个人页和比赛中心共用）
   mkdirSync(dirname(CN_REGISTRATIONS_JSON_PATH), { recursive: true });
-  writeChanged(CN_REGISTRATIONS_JSON_PATH, cnReg);
+  writeChanged(CN_REGISTRATIONS_JSON_PATH, externalReg);
   console.log(`[CN-REG] 写入 ${relToRoot(CN_REGISTRATIONS_JSON_PATH)}`);
 
   const nameUpdates: Record<string, string> = {};
