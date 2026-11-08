@@ -1,118 +1,40 @@
 'use client';
 
-import PageBackLink from '@/components/PageBackLink';
-/**
- * /recon-about — 复盘库说明页
- */
 import Link from '@/components/AppLink';
-
-import './recon_about.css';
-import { useT } from "@/hooks/useT";
-
-interface StepProps { step: number; title: string; body: string; highlight?: boolean; }
-function Step({ step, title, body, highlight }: StepProps) {
-  return (
-    <div className={`rca-step${highlight ? ' is-highlight' : ''}`}>
-      <span className="rca-step-num">{step}</span>
-      <div>
-        <div className="rca-step-title">{title}</div>
-        <div className="rca-step-body">{body}</div>
-      </div>
-    </div>
-  );
-}
-function Arrow() { return <span className="rca-arrow" aria-hidden="true">↓</span>; }
+import MoreToggle from '@/components/MoreToggle';
+import PageHeading from '@/components/PageHeading';
+import { useT } from '@/hooks/useT';
+import '@/components/report-page.css';
 
 export default function ReconAboutPage() {
   const t = useT();
-
-  return (
-    <div className="rca-page">
-      <div className="rca-header">
-        <PageBackLink fallback="/recon" className="rca-back" />
+  return <main className="report-page">
+    <header className="report-header">
+      <PageHeading backHref="/recon">{t('复盘怎么看', 'Reading a reconstruction')}</PageHeading>
+      <p>{t('把一次还原拆成打乱、步骤与阶段，看看选手怎样把魔方还原。', 'Follow a solve from its scramble through the moves and stages to the solved state.')}</p>
+      <div className="report-links"><Link href="/recon">{t('浏览复盘', 'Browse reconstructions')}</Link><Link href="/recon/submit">{t('提交复盘', 'Submit a reconstruction')}</Link></div>
+    </header>
+    <h2>{t('看一条复盘，关注这三件事', 'Three things to look for')}</h2>
+    <table className="report-table">
+      <tbody>
+        <tr><th scope="row">{t('还原路线', 'The solution')}</th><td>{t('对照打乱和步骤，用动画看每一步改变了什么。', 'Use the scramble, move sequence and animation to follow how the cube changes.')}</td></tr>
+        <tr><th scope="row">{t('阶段选择', 'Stage choices')}</th><td>{t('看十字、F2L 与顶层的衔接，比较步数、转体和处理顺序。', 'Inspect the cross, F2L and last-layer transitions: moves, rotations and the order of pairs.')}</td></tr>
+        <tr><th scope="row">{t('其他解法', 'Alternative solutions')}</th><td>{t('有替代解或相同打乱的复盘时，对照不同思路。替代解不等于选手当时实际使用的解法。', 'Compare alternatives or other reconstructions of the same scramble when available. An alternative is not necessarily what the competitor executed.')}</td></tr>
+      </tbody>
+    </table>
+    <h2>{t('补充自己的还原', 'Contribute a solve')}</h2>
+    <p>{t('登录后填写打乱、还原步骤和成绩，附上视频或出处。可选择公开、不公开列出或私享；提交前检查符号、朝向和还原结果。', 'Sign in, enter the scramble, solution and result, and add a video or source. Choose public, unlisted or private visibility. Check notation, orientation and the solved state before submitting.')}</p>
+    <h2>{t('数据能说明什么', 'What the data can tell you')}</h2>
+    <ul className="report-limits">
+      <li>{t('复盘由投稿与资料整理而来，可能存在漏步、误记或来源缺失。还原成功只能验证步骤一致，不能证明它就是视频中的实际动作。', 'Contributed reconstructions may have missing moves, transcription errors or incomplete sources. A sequence that solves the cube is not proof of what happened in the video.')}</li>
+      <li>{t('总时间与步数可以算整体 TPS；准确的阶段用时还需要视频打点或设备时间记录。', 'Total time and move count give an overall TPS. Accurate stage times also need video markers or device timestamps.')}</li>
+    </ul>
+    <details className="report-details">
+      <MoreToggle as="summary">{t('阶段、校验与相关工具', 'Stages, validation and related tools')}</MoreToggle>
+      <div className="report-detail-body">
+        <p>{t('阶段分析按魔方状态识别阶段完成位置，旋转、跳步和不同还原方法可能影响切分。提交校验也不能代替对视频、成绩和出处的人工核对。', 'Stage analysis detects completion from cube states. Rotations, skips and different solving methods can affect segmentation. Submission checks do not replace reviewing the video, result and source.')}</p>
+        <div className="report-links"><Link href="/frame-count">{t('逐帧计时', 'Frame counter')}</Link><Link href="/scramble/analyzer">{t('CFOP 分析器', 'CFOP analyzer')}</Link><Link href="/wca/comp">{t('比赛成绩', 'Competition results')}</Link></div>
       </div>
-
-      <main className="rca-main">
-        <h1 className="rca-title">{t('复盘库是干啥的', 'What the Recon library is')}</h1>
-        <p className="rca-intro">
-          {t(
-            '/recon 把一次具体的 solve 完整拆给所有人看 — 打乱、还原步骤、关键节点的分析、谁解的、在哪场比赛。可以上传自己的成绩、补充别人比赛的还原、对照同轮其它选手的思路。',
-            '/recon shows a full breakdown of a specific solve — the scramble, the move sequence, key inflection points, who solved it, at which competition. You can upload your own solves, fill in reconstructions for other cubers, and compare different attempts in the same round.'
-          )}
-        </p>
-
-        <h2 className="rca-section-title">{t('能用来做什么', 'What you can do here')}</h2>
-        <p className="rca-section-intro">
-          {t(
-            '主要四类:看顶尖选手的 PR / WR 怎么解的、查自己上传过的复盘、对照同轮其它选手的 alt(替代解)、给现有复盘加备注或修正。',
-            'Four main flows: see how top cubers got their PR / WR solves, review your own uploaded recons, compare alts (alternative solutions) from the same round, and add notes / corrections to existing entries.'
-          )}
-        </p>
-
-        <h2 className="rca-section-title">{t('使用流程', 'How to use')}</h2>
-        <div className="rca-flow">
-          <Step
-            step={1}
-            title={t('过滤 / 搜索', 'Filter or search')}
-            body={t(
-              '顶部表头每列可点开 popover 过滤:项目、选手、纪录标志(WR/CR/NR)、比赛。"WCA only" toggle 只看正式比赛复盘。',
-              'Each column header opens a popover filter: event, person, record tag (WR/CR/NR), competition. The "WCA only" toggle restricts to official-competition solves.'
-            )}
-          />
-          <Arrow />
-          <Step
-            step={2}
-            title={t('点条目看详情', 'Open an entry for details')}
-            body={t(
-              '点任一行进入 /recon/:id,显示完整 alg 步骤、player 动画、节点切片(cross / F2L 各对 / OLL / PLL)、用时 / TPS。',
-              'Click any row to open /recon/:id, which shows the full move sequence, animated player, stage breakdown (cross / F2L pairs / OLL / PLL), with timing and TPS per stage.'
-            )}
-          />
-          <Arrow />
-          <Step
-            step={3}
-            title={t('提交自己的复盘', 'Submit your own')}
-            body={t(
-              '右上「+」打开 /recon/submit,粘贴 scramble + alg + 可选 setup,自动校验是否真还原,通过即写库;不通过会高亮报错位置。',
-              'The "+" button opens /recon/submit. Paste scramble + alg + optional setup; the tool auto-validates that the solution actually solves the cube, then writes to the library. Invalid attempts get highlighted error positions.'
-            )}
-          />
-          <Arrow />
-          <Step
-            step={4}
-            title={t('补 alt / 同轮联动', 'Add alts / round-mate linking')}
-            body={t(
-              '同一选手同一轮的多手 solve 自动关联,点 alt 按钮一键添加。从其它选手相同打乱的复盘进入时,标题旁会提示「同轮其它复盘 N 条」。',
-              'Multiple solves by the same cuber in the same round auto-link; click the "alt" button to add another. When viewing a recon whose scramble appears in another cuber\'s solve, the title shows "N round-mates" for quick comparison.'
-            )}
-            highlight
-          />
-        </div>
-
-        <h2 className="rca-section-title">{t('数据来源', 'Data sources')}</h2>
-        <p className="rca-section-intro">
-          {t(
-            '用户上传 + 部分官方比赛 same-round 自动联动(成绩走 cubing.com 实时 + WCA dump 周更)。所有 scramble 经 cubing.js 校验,公开后任何登录用户可贴 alt;原作者 / admin 可改。',
-            'User uploads, plus same-round auto-link from official competitions (live results via cubing.com + WCA dump weekly). All scrambles are validated through cubing.js; once public, any signed-in user can append alts, while the original poster or an admin can edit.'
-          )}
-        </p>
-
-        <h2 className="rca-section-title">{t('相关页面', 'See also')}</h2>
-        <ul className="rca-refs">
-          <li>
-            <Link href="/wca/comp">{t('比赛成绩查看', 'Competition Results')}</Link>
-            {t(' — 找到比赛具体某轮的成绩单,再回头补复盘。', ' — find an exact round\'s scoresheet, then come back to add the recon.')}
-          </li>
-          <li>
-            <Link href="/scramble/analyzer">{t('CFOP 分析器', 'CFOP Analyzer')}</Link>
-            {t(' — 给一个 scramble + solution,自动切 cross / F2L / OLL / PLL 节点。', ' — given a scramble and solution, auto-segments cross / F2L / OLL / PLL stages.')}
-          </li>
-          <li>
-            <a href="https://reco.nz/" target="_blank" rel="noopener noreferrer">{t('reco.nz', 'reco.nz')}</a>
-            {t(' — 类似定位的另一个复盘平台,可对照。', ' — another recon platform with similar scope; useful for cross-checking.')}
-          </li>
-        </ul>
-      </main>
-    </div>
-  );
+    </details>
+  </main>;
 }

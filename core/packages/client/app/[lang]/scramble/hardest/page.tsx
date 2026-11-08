@@ -11,6 +11,8 @@
  * 还是上游穷举搜索给的 ground truth —— 搬运不许伪装成证明。
  */
 
+import MoreToggle from '@/components/MoreToggle';
+import '@/components/report-page.css';
 import PageHeading from '@/components/PageHeading';
 import Link from '@/components/AppLink';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
@@ -62,49 +64,35 @@ function symmetryHref(scramble: string): string {
 }
 
 export default function HardestPage() {
-
-  return (
-    <div className="hardest-page">
-      <header>
-        <PageHeading backHref="/scramble">
-          {tr({
-            zh: `六色底 XCross 要 10 步的 ${CN_XCROSS_10_TOTAL} 个状态`,
-            en: `The ${CN_XCROSS_10_TOTAL} states whose colour-neutral XCross takes 10 moves`,
-          })}
-        </PageHeading>
-        <p className="hardest-lede">
-          {tr({
-            zh: '把六个面轮流当底、四个 F2L 槽轮流先解 —— 24 种开局口径全部要 10 步。'
-              + '这是 XCross 的上确界:整个三阶状态空间里,再没有比这更难开的局面。',
-            en: 'Put each of the six colours on the bottom and pair each of the four F2L slots — '
-              + 'all 24 ways need 10 moves. That is the supremum of XCross: no position in the '
-              + 'whole 3×3 state space opens harder than these.',
-          })}
-        </p>
-      </header>
-
-      <div className="hardest-figures">
-        <div className="hardest-figure">
-          <b>{CN_XCROSS_10_TOTAL}</b>
-          <span>{tr({ zh: '这样的状态总数', en: 'such states in total' })}</span>
-        </div>
-        <div className="hardest-figure">
-          <b>{ESSENTIAL}</b>
-          <span>
-            {tr({
-              zh: `对称去重后的本质类(${CN_XCROSS_10_SYMMETRY_ORDER} 元群)`,
-              en: `essential classes under the ${CN_XCROSS_10_SYMMETRY_ORDER}-element symmetry group`,
-            })}
-          </span>
-        </div>
-        <div className="hardest-figure">
-          <b>1 / 9.87 × 10¹⁶</b>
-          <span>{tr({ zh: '随机打乱撞上的概率', en: 'odds of a random scramble' })}</span>
-        </div>
-      </div>
-
-      <section className="hardest-section">
-        <h2>{tr({ zh: '为什么 10 步是上限', en: 'Why 10 is the ceiling' })}</h2>
+  const example = CN_XCROSS_10_REPS[0];
+  return <main className="report-page hardest-page">
+    <header className="report-header">
+      <PageHeading backHref="/scramble">{tr({ zh: '极难打乱', en: 'Hard scrambles' })}</PageHeading>
+      <p>{tr({ zh: '开局难、整方最优步数长、图案稀有，是三种不同的「难」。先看口径，再挑一条试试。', en: 'A hard opening, a long optimal solution and a rare pattern are different things. Choose a metric, then explore an example.' })}</p>
+      <div className="report-links"><Link href="/scramble/solver" prefetch={false}>{tr({ zh: '求解器', en: 'Solver' })}</Link><Link href="/scramble/stats" prefetch={false}>{tr({ zh: '阶段难度统计', en: 'Stage difficulty statistics' })}</Link></div>
+    </header>
+    <table className="report-table">
+      <thead><tr><th scope="col">{tr({ zh: '难在哪里', en: 'What is hard' })}</th><th scope="col">{tr({ zh: '这份数据说明什么', en: 'What these data show' })}</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">XCross</th><td>{tr({ zh: `六个底色任选，完成十字加一组 F2L 都至少要 10 步。收录 ${CN_XCROSS_10_TOTAL} 个状态，按对称性归为 ${ESSENTIAL} 类。`, en: `Every bottom colour needs at least 10 moves for a cross plus one F2L pair: ${CN_XCROSS_10_TOTAL} states in ${ESSENTIAL} symmetry classes.` })}</td></tr>
+        <tr><th scope="row">EOCross</th><td>{tr({ zh: `固定黄底与一条 EO 轴，最深的 ${EOCROSS_10F_TOTAL} 个状态要 10 步。改换 EO 轴，多数会变简单。`, en: `With yellow on the bottom and one EO axis fixed, ${EOCROSS_10F_TOTAL} deepest states need 10 moves. Most become easier on the other EO axis.` })}</td></tr>
+        <tr><th scope="row">{tr({ zh: '整方最优解', en: 'Optimal full solve' })}</th><td>{tr({ zh: 'HTM 的 20 步态需要至少 20 步还原，但十字仍可能只需一步。', en: 'Distance-20 states require at least 20 HTM moves to solve, yet a cross may take just one.' })}</td></tr>
+      </tbody>
+    </table>
+    <h2>{tr({ zh: '试一条六色底 XCross 极难打乱', en: 'Try a hard colour-neutral XCross' })}</h2>
+    <div className="hardest-example">
+      <ScramblePreview2D event="333" scramble={example.scramble} size={60} />
+      <div><code>{example.scramble}</code><p><Link href={solverHref(example.scramble)} prefetch={false}>{tr({ zh: '在求解器中打开', en: 'Open in solver' })}</Link></p></div>
+    </div>
+    <h2>{tr({ zh: '结论的范围', en: 'Scope of the claims' })}</h2>
+    <ul className="report-limits">
+      <li>{tr({ zh: '默认 HTM：转 90° 或 180° 都算一步；QTM 中 180° 算两步，两种数字不能混比。最优步数也不等于人手还原用时。', en: 'HTM counts 90° and 180° turns as one move; QTM counts 180° as two. The metrics differ, and optimal move count is not human solve time.' })}</li>
+      <li>{tr({ zh: '已复核收录状态的 XCross 深度与代表整方步数；「全部只有 438 个」采用上游结论，本站未重新穷举证明。QTM 最优性也未在本站独立复核。', en: 'The listed XCross depths and representative full-solve lengths were checked locally. The claim that exactly 438 exist comes from upstream, without a new exhaustive proof here. QTM optimality was not independently checked here either.' })}</li>
+    </ul>
+    <details className="report-details">
+      <MoreToggle as="summary">{tr({ zh: '步数口径与验证来源', en: 'Move metrics and verification' })}</MoreToggle>
+      <div className="report-detail-body">
+        <h3>{tr({ zh: '为什么 10 步是上限', en: 'Why 10 is the ceiling' })}</h3>
         <p>
           {tr({
             zh: '固定一个底色、允许四个槽任选,XCross 的全空间深度分布最深就到 10 步 —— '
@@ -126,10 +114,8 @@ export default function HardestPage() {
             {tr({ zh: '看完整的穷举分布 →', en: 'See the full exhaustive distributions →' })}
           </Link>
         </p>
-      </section>
 
-      <section className="hardest-section">
-        <h2>{tr({ zh: '证到哪一步了', en: 'How much of this is proved' })}</h2>
+        <h3>{tr({ zh: '证到哪一步了', en: 'How much of this is proved' })}</h3>
         <ul className="hardest-proof">
           <li>
             <div className="hardest-proof-head">
@@ -207,15 +193,23 @@ export default function HardestPage() {
             </p>
           </li>
         </ul>
-      </section>
+            <p className="hardest-source">
+        {tr({
+          zh: `${CN_XCROSS_10_TOTAL} 条全表与 ${ESSENTIAL} 条代表、以及上面几条著名打乱的各阶段步数,`
+            + '来自一份自建的三阶统计表格,单条打乱的出处保留在各自的署名里;'
+            + '本站自己复核到哪一步,见上文「证到哪一步了」。',
+          en: `The full list of ${CN_XCROSS_10_TOTAL}, the ${ESSENTIAL} representatives and the per-stage `
+            + 'numbers of the famous scrambles come from a hand-built 3×3 statistics workbook; each '
+            + 'individual scramble keeps its own credit line above. What this site re-derived itself is '
+            + 'spelled out under “How much of this is proved”.',
+        })}
+      </p>
 
-      <section className="hardest-section">
-        <h2>
-          {tr({
-            zh: `${ESSENTIAL} 类本质不同的代表`,
-            en: `${ESSENTIAL} essentially different representatives`,
-          })}
-        </h2>
+      </div>
+    </details>
+    <details className="report-details">
+      <MoreToggle as="summary">{tr({ zh: '全部 XCross 代表状态', en: 'All XCross representative states' })}</MoreToggle>
+      <div className="report-detail-body">
         <p>
           {tr({
             zh: '「轨道」= 这一类在对称群下能变出多少个不同状态,加起来正好 '
@@ -250,15 +244,12 @@ export default function HardestPage() {
             </Link>
           ))}
         </div>
-      </section>
 
-      <section className="hardest-section">
-        <h2>
-          {tr({
-            zh: `EOCross 要 10 步的 ${EOCROSS_10F_TOTAL} 个态`,
-            en: `The ${EOCROSS_10F_TOTAL} states whose EOCross takes 10 moves`,
-          })}
-        </h2>
+      </div>
+    </details>
+    <details className="report-details">
+      <MoreToggle as="summary">{tr({ zh: 'EOCross：完整清单与 EO 轴', en: 'EOCross: full list and EO axes' })}</MoreToggle>
+      <div className="report-detail-body">
         <p>
           {tr({
             zh: 'EOCross(ZZ 的第一步:12 条棱全部朝向正确 + 底面十字)的全空间是 24,330,240 个态,'
@@ -297,10 +288,12 @@ export default function HardestPage() {
             </Link>
           ))}
         </div>
-      </section>
 
-      <section className="hardest-section">
-        <h2>{tr({ zh: '20 步态:整方最难的那一撮', en: 'Twenty-move states: the hardest of all' })}</h2>
+      </div>
+    </details>
+    <details className="report-details">
+      <MoreToggle as="summary">{tr({ zh: '整方 20 步：语料与阶段统计', en: '20-move states: corpora and opening statistics' })}</MoreToggle>
+      <div className="report-detail-body">
         <p>
           {tr({
             zh: '上面几节量的都是「开局」。换一个口径 —— 整个魔方的最优解 —— 上限是 20 步(上帝之数),'
@@ -429,10 +422,12 @@ export default function HardestPage() {
           {' · '}
           <a href="https://cube20.org/distance20s/random1000.txt" target="_blank" rel="noreferrer">random1000.txt</a>
         </p>
-      </section>
 
-      <section className="hardest-section">
-        <h2>{tr({ zh: '换成四分之一转:24 步以上的那一撮', en: 'Quarter turns instead: the 24-and-beyond corner' })}</h2>
+      </div>
+    </details>
+    <details className="report-details">
+      <MoreToggle as="summary">{tr({ zh: 'QTM：24 步以上的状态', en: 'QTM: states at 24 moves and beyond' })}</MoreToggle>
+      <div className="report-detail-body">
         <p>
           {tr({
             zh: '上一节的 20 步是半转口径(HTM,180° 也算一步)。改成四分之一转口径(QTM,180° 算两步)之后,'
@@ -510,10 +505,12 @@ export default function HardestPage() {
           <a href={KNOWN_24Q_UPSTREAM.url} target="_blank" rel="noreferrer">cube20.org/distance20s</a>
           {` (qtm.zip, ${KNOWN_24Q_UPSTREAM.asOf})`}
         </p>
-      </section>
 
-      <section className="hardest-section">
-        <h2>{tr({ zh: '另一种极端:没有两块同色挨着', en: 'A different extreme: no two like colours touching' })}</h2>
+      </div>
+    </details>
+    <details className="report-details">
+      <MoreToggle as="summary">{tr({ zh: '无棒、无接触：另一种稀有', en: 'No bars or contact: a different kind of rarity' })}</MoreToggle>
+      <div className="report-detail-body">
         <p>
           {tr({
             zh: '这一节不是难,是稀有。三档口径由松到严 —— 每一档的语料都逐条验过确实满足自己那档,'
@@ -549,12 +546,12 @@ export default function HardestPage() {
           {tr({
             zh: `有多罕见,本站自己采样:${NO_BAR_SAMPLE.n.toLocaleString()} 个均匀随机合法态里,`
               + `「无棒」的有 ${NO_BAR_SAMPLE.noBar} 个 —— 约 1 / ${Math.round(NO_BAR_SAMPLE.n / NO_BAR_SAMPLE.noBar).toLocaleString()};`
-              + '「无接触」一个都没撞上,所以那一档比 3 × 10⁻⁷ 还稀有。'
+              + '「无接触」在本次样本中未出现，不能据此给出精确概率。'
               + '采样器过了三项均匀性自检(角朝向全正、棱朝向全正、角排列复原),种子固定,测试里重跑。',
             en: `Rarity is measured here rather than quoted: out of ${NO_BAR_SAMPLE.n.toLocaleString()} uniformly `
               + `random legal states, ${NO_BAR_SAMPLE.noBar} have no bar — about 1 in `
               + `${Math.round(NO_BAR_SAMPLE.n / NO_BAR_SAMPLE.noBar).toLocaleString()} — while the no-contact tier `
-              + 'never came up at all, putting it below 3 × 10⁻⁷. The sampler passes three known-probability '
+              + 'never came up in this sample, which does not establish an exact probability. The sampler passes three known-probability '
               + 'checks (corner orientation, edge orientation, corner permutation), runs from a fixed seed, and '
               + 'is re-run by the test suite.',
           })}
@@ -563,17 +560,19 @@ export default function HardestPage() {
           {tr({
             zh: `上游那页写的是「10¹⁰ 里找到 ${NO_BAR_UPSTREAM.found.toLocaleString()} 条」,`
               + '折合 5.35 × 10⁻⁷,比本机测到的低 11 倍。那 5,350 条本身逐条验过确实无棒,'
-              + '所以分歧不在口径,在它那个分母的来历 —— 站上报本机的数,上游那句只作记录。',
+              + '两份频率估计不一致，原因尚未确定；这里保留本地采样结果与上游记载。',
             en: `Upstream reports ${NO_BAR_UPSTREAM.found.toLocaleString()} finds in 10¹⁰ tries, i.e. 5.35 × 10⁻⁷, `
               + 'eleven times below what is measured here. Those 5,350 do satisfy the no-bar rule when checked one '
-              + 'by one, so the disagreement is not about the definition but about where that denominator comes '
-              + 'from. The figure shown above is the locally measured one; the upstream line is kept on record.',
+              + 'by one. The two frequency estimates differ for reasons not established here. '
+              + 'The local sample and upstream report are both retained.',
           })}
         </p>
-      </section>
 
-      <section className="hardest-section">
-        <h2>{tr({ zh: '几条被反复引用的极难打乱', en: 'A few much-quoted hard scrambles' })}</h2>
+      </div>
+    </details>
+    <details className="report-details">
+      <MoreToggle as="summary">{tr({ zh: '著名打乱与各阶段解法', en: 'Known hard scrambles and stage solutions' })}</MoreToggle>
+      <div className="report-detail-body">
         <p>
           {tr({
             zh: '「难」有好几种口径,彼此并不一致:整方 20 步的状态未必开局难,开局难的也未必整方 20 步。'
@@ -644,19 +643,8 @@ export default function HardestPage() {
             </div>
           ))}
         </div>
-      </section>
 
-      <p className="hardest-source">
-        {tr({
-          zh: `${CN_XCROSS_10_TOTAL} 条全表与 ${ESSENTIAL} 条代表、以及上面几条著名打乱的各阶段步数,`
-            + '来自一份自建的三阶统计表格,单条打乱的出处保留在各自的署名里;'
-            + '本站自己复核到哪一步,见上文「证到哪一步了」。',
-          en: `The full list of ${CN_XCROSS_10_TOTAL}, the ${ESSENTIAL} representatives and the per-stage `
-            + 'numbers of the famous scrambles come from a hand-built 3×3 statistics workbook; each '
-            + 'individual scramble keeps its own credit line above. What this site re-derived itself is '
-            + 'spelled out under “How much of this is proved”.',
-        })}
-      </p>
-    </div>
-  );
+      </div>
+    </details>
+  </main>;
 }

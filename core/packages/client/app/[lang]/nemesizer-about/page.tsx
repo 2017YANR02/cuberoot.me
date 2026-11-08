@@ -1,121 +1,43 @@
 'use client';
 
-import PageBackLink from '@/components/PageBackLink';
-/**
- * /nemesizer-about — Nemesizer 宿敌说明页
- */
 import Link from '@/components/AppLink';
-
-import './nemesizer_about.css';
-import { useT } from "@/hooks/useT";
-
-interface StepProps { step: number; title: string; body: string; highlight?: boolean; }
-function Step({ step, title, body, highlight }: StepProps) {
-  return (
-    <div className={`nema-step${highlight ? ' is-highlight' : ''}`}>
-      <span className="nema-step-num">{step}</span>
-      <div>
-        <div className="nema-step-title">{title}</div>
-        <div className="nema-step-body">{body}</div>
-      </div>
-    </div>
-  );
-}
-function Arrow() { return <span className="nema-arrow" aria-hidden="true">↓</span>; }
+import MoreToggle from '@/components/MoreToggle';
+import PageHeading from '@/components/PageHeading';
+import { useT } from '@/hooks/useT';
+import '@/components/report-page.css';
 
 export default function NemesizerAboutPage() {
   const t = useT();
-
-  return (
-    <div className="nema-page">
-      <div className="nema-header">
-        <PageBackLink fallback="/nemesizer" className="nema-back" />
+  return <main className="report-page">
+    <header className="report-header">
+      <PageHeading backHref="/nemesizer">{t('谁是你的宿敌', 'Who is your nemesis?')}</PageHeading>
+      <p>{t('你有排名的每个项目、每种成绩类型，对方都有排名且严格领先，才算你的「宿敌」。单次与平均分开比较。', 'A nemesis ranks strictly ahead of you in every event and result type where you have a ranking. Singles and averages are compared separately.')}</p>
+      <div className="report-links"><Link href="/nemesizer">{t('查找宿敌', 'Find nemeses')}</Link><Link href="/nemesizer?mode=h2h">{t('两人对比', 'Compare two cubers')}</Link></div>
+    </header>
+    <h2>{t('用一个简化例子看懂', 'A simplified example')}</h2>
+    <p>{t('假设你只有以下两项排名：', 'Suppose these are your only ranked results:')}</p>
+    <table className="report-table">
+      <thead><tr><th scope="col">{t('世界排名', 'World rank')}</th><th scope="col">{t('你', 'You')}</th><th scope="col">{t('选手 A', 'Cuber A')}</th><th scope="col">{t('选手 B', 'Cuber B')}</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">{t('三阶单次', '3×3 single')}</th><td>100</td><td>90</td><td>90</td></tr>
+        <tr><th scope="row">{t('三阶平均', '3×3 average')}</th><td>200</td><td>180</td><td>200</td></tr>
+        <tr><th scope="row">{t('是你的宿敌？', 'Your nemesis?')}</th><td>—</td><td>{t('是', 'Yes')}</td><td>{t('否，平均并列', 'No: average tied')}</td></tr>
+      </tbody>
+    </table>
+    <p>{t('少一项排名也不满足条件；对方多出的项目不影响判断。无需有共同参赛经历，也不要求实力接近。', 'Missing any of your ranked categories disqualifies a candidate; their extra events do not matter. Shared competitions and similar ability are not required.')}</p>
+    <h2>{t('还可以怎样比较', 'Other ways to compare')}</h2>
+    <ul className="report-limits">
+      <li>{t('对决：并排查看两人的各项目成绩与排名。', 'Head to head: compare both cubers’ results and ranks by event.')}</li>
+      <li>{t('假设：修改假想排名，看看宿敌关系如何变化。', 'What if: change hypothetical ranks to explore how relationships change.')}</li>
+      <li>{t('统计：查看宿敌数量与关系分布。', 'Statistics: explore counts and relationships across the dataset.')}</li>
+    </ul>
+    <p>{t('这是历史最佳排名的比较，不代表当前状态或下一场比赛胜负。数据有更新延迟；假设模式不会修改正式成绩。', 'This compares personal-best rankings, not current form or the outcome of a future competition. Data can lag; hypothetical changes do not alter official results.')}</p>
+    <details className="report-details">
+      <MoreToggle as="summary">{t('关系筛选与数据口径', 'Relation filters and data')}</MoreToggle>
+      <div className="report-detail-body">
+        <p>{t('「几乎」表示覆盖全部所需排名，但恰好有一项没领先（并列也算）；「仅差一点」仍须全部领先，且最小排名差为 1。反向关系则以对方拥有的排名为比较范围。', '“Nearly” covers all required rankings but fails to lead in exactly one, including a tie. “Only just” still requires a lead in all of them, with a smallest rank gap of one. Reverse relations use the other cuber’s ranked categories.')}</p>
+        <p>{t('地区筛选缩小候选人范围，比较依据仍是世界排名。数据来自 WCA 排名快照，日期以工具中显示的导出日期为准。', 'Region filters narrow the candidate pool; comparisons still use world ranks. Data comes from a WCA rankings snapshot, dated by the export shown in the tool.')}</p>
       </div>
-
-      <main className="nema-main">
-        <h1 className="nema-title">{t('Nemesizer 是怎么工作的', 'How Nemesizer works')}</h1>
-        <p className="nema-intro">
-          {t(
-            '/nemesizer 帮你找「宿敌」— 竞技魔方里成绩比你稍稍好一点点、偶尔超过你、但你也打得过的对手。算法基于 WCA developer dump,每周自动更新。',
-            '/nemesizer helps you find your "nemesis" — the competitor in the WCA database who is just slightly better than you, sometimes beats you, but whom you also occasionally beat. Algorithm runs on the WCA developer dump, updated weekly.'
-          )}
-        </p>
-
-        <h2 className="nema-section-title">{t('宿敌算法', 'Nemesis algorithm')}</h2>
-        <p className="nema-section-intro">
-          {t(
-            '对每个 (选手, 项目) 对,算法计算"相对强度":同场比赛中两人对决的胜负比。宿敌满足三个条件:①他们的成绩比你稍好(WR 差距在一定范围内),②两人有共同参赛经历,③胜率约在 40%-60% 之间(真正的"势均力敌")。服务端用 Hono 在 Node.js 运行,6 个端点预加载到内存。',
-            'For each (person, event) pair, the algorithm computes a relative-strength score based on head-to-head outcomes at shared competitions. A nemesis satisfies: ① they are slightly better (WR gap within a threshold), ② there is sufficient shared competition history, and ③ your mutual win rate is around 40-60% (genuinely competitive). The server runs on Hono/Node.js with 6 endpoints preloaded into memory.'
-          )}
-        </p>
-
-        <h2 className="nema-section-title">{t('四种模式', 'Four modes')}</h2>
-        <ul className="nema-list">
-          <li>
-            <strong>{t('宿敌 (Nemeses)', 'Nemeses')}</strong>
-            {t(' — 标准模式:输入 WCA-ID,列出各项目中最符合宿敌条件的对手列表。', ' — standard mode: enter a WCA-ID to see the closest nemeses per event.')}
-          </li>
-          <li>
-            <strong>{t('对决 (Head to head)', 'Head to head')}</strong>
-            {t(' — 两位选手直接对比:共同参赛场次、各项目胜负分布、最近对决时间线。', ' — two-person direct comparison: shared competitions, event-by-event win/loss breakdown, recent head-to-head timeline.')}
-          </li>
-          <li>
-            <strong>{t('假设 (What if)', 'What if')}</strong>
-            {t(' — 假设某位选手有不同 PB,重新计算宿敌关系会如何变化。用于"如果我到了 X 秒,我的宿敌是谁"的探索。', ' — hypothetical scenario: what if a cuber had a different PB? Shows how the nemesis landscape shifts.')}
-          </li>
-          <li>
-            <strong>{t('统计 (Statistics)', 'Statistics')}</strong>
-            {t(' — 全局统计:最多宿敌关系的选手、各项目宿敌密度热图等。', ' — global statistics: cubers with the most nemesis relationships, per-event nemesis density, etc.')}
-          </li>
-        </ul>
-
-        <h2 className="nema-section-title">{t('使用流程(标准模式)', 'How to use (standard mode)')}</h2>
-        <div className="nema-flow">
-          <Step
-            step={1}
-            title={t('输入你的 WCA-ID', 'Enter your WCA-ID')}
-            body={t(
-              '在搜索框输入任意 WCA 选手 ID(例如 2019GENG01)。搜索框支持姓名模糊搜索,自动补全。',
-              'Type any WCA-ID (e.g. 2019GENG01) in the search box. Name fuzzy search with autocomplete is also supported.'
-            )}
-          />
-          <Arrow />
-          <Step
-            step={2}
-            title={t('查看宿敌列表', 'View nemesis list')}
-            body={t(
-              '每个项目显示最符合宿敌定义的几位对手:姓名、国籍、相对成绩差距、共同参赛次数。点击任意宿敌可切到对决模式看详情。',
-              'Each event shows the top nemesis candidates: name, nationality, relative result gap, and shared competition count. Click any nemesis to jump to Head-to-Head mode.'
-            )}
-            highlight
-          />
-          <Arrow />
-          <Step
-            step={3}
-            title={t('切换项目', 'Switch events')}
-            body={t(
-              '页面顶部的项目 chip 可以快速切换查看不同项目的宿敌。也可以只看某个 WCA 大洲 / 国家范围内的宿敌。',
-              'Event chips at the top of the results let you quickly switch events. You can also filter to nemeses from a specific continent or country.'
-            )}
-          />
-        </div>
-
-        <h2 className="nema-section-title">{t('相关页面', 'See also')}</h2>
-        <ul className="nema-refs">
-          <li>
-            <Link href="/wca/results">{t('全成绩排名', 'All Results')}</Link>
-            {t(' — 按项目搜索任意选手的历史成绩。', ' — search any cuber\'s results by event.')}
-          </li>
-          <li>
-            <a href="https://github.com/huizhiLLL/WCA-Nemesizer-API" target="_blank" rel="noopener noreferrer">huizhiLLL/WCA-Nemesizer-API</a>
-            {t(' — 宿敌算法的上游实现参考。', ' — the upstream algorithm reference.')}
-          </li>
-          <li>
-            <a href="https://nemesizer.com" target="_blank" rel="noopener noreferrer">nemesizer.com</a>
-            {t(' — UI 设计的灵感来源。', ' — UI inspiration.')}
-          </li>
-        </ul>
-      </main>
-    </div>
-  );
+    </details>
+  </main>;
 }

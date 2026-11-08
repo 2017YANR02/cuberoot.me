@@ -1,114 +1,39 @@
 'use client';
 
-import PageBackLink from '@/components/PageBackLink';
-/**
- * /frame-count-about — 数帧工具说明页
- */
 import Link from '@/components/AppLink';
-
-import './frame_count_about.css';
-import { useT } from "@/hooks/useT";
-
-interface StepProps { step: number; title: string; body: string; highlight?: boolean; }
-function Step({ step, title, body, highlight }: StepProps) {
-  return (
-    <div className={`fca-step${highlight ? ' is-highlight' : ''}`}>
-      <span className="fca-step-num">{step}</span>
-      <div>
-        <div className="fca-step-title">{title}</div>
-        <div className="fca-step-body">{body}</div>
-      </div>
-    </div>
-  );
-}
-function Arrow() { return <span className="fca-arrow" aria-hidden="true">↓</span>; }
+import MoreToggle from '@/components/MoreToggle';
+import PageHeading from '@/components/PageHeading';
+import { useT } from '@/hooks/useT';
+import '@/components/report-page.css';
 
 export default function FrameCountAboutPage() {
   const t = useT();
-
-  return (
-    <div className="fca-page">
-      <div className="fca-header">
-        <PageBackLink fallback="/frame-count" className="fca-back" />
+  return <main className="report-page">
+    <header className="report-header">
+      <PageHeading backHref="/frame-count">{t('逐帧计时', 'Frame-by-frame timing')}</PageHeading>
+      <p>{t('在视频中标出起点、终点和中间阶段，检查一次还原的时间分配。', 'Mark the start, finish and intermediate stages of a solve to inspect its timing.')}</p>
+      <div className="report-links"><Link href="/frame-count">{t('打开逐帧工具', 'Open frame counter')}</Link><Link href="/recon">{t('复盘库', 'Reconstructions')}</Link></div>
+    </header>
+    <ol className="report-steps">
+      <li><strong>{t('载入视频，确认帧率。', 'Load a video and check its frame rate. ')}</strong>{t('用逐帧前进、后退定位动作发生的位置。', 'Step forward and backward to locate the action.')}</li>
+      <li><strong>{t('标记起止和阶段。', 'Mark the start, finish and stages. ')}</strong>{t('已有计时器成绩时，可以从结束帧反推起点，再检查画面是否吻合。', 'If you have a timer result, work backward from the finish frame and check the suggested start against the footage.')}</li>
+      <li><strong>{t('保存标记或导出画面。', 'Save marks or export footage. ')}</strong>{t('标记保存在 .splits.txt；也可导出视频片段或当前帧图片。', 'Marks are saved as .splits.txt. You can also export a video segment or the current frame.')}</li>
+    </ol>
+    <h2>{t('一帧有多长？', 'How long is one frame?')}</h2>
+    <table className="report-table">
+      <thead><tr><th scope="col">{t('固定帧率', 'Constant frame rate')}</th><th scope="col">{t('相邻帧间隔', 'Time between frames')}</th></tr></thead>
+      <tbody><tr><th scope="row">30 fps</th><td>{t('约 33.3 毫秒', 'About 33.3 ms')}</td></tr><tr><th scope="row">60 fps</th><td>{t('约 16.7 毫秒', 'About 16.7 ms')}</td></tr></tbody>
+    </table>
+    <p>{t('例如固定 60 fps 的视频，两个标记相差 600 帧，对应 10 秒。帧间隔只代表视频的时间分辨率，不是测量准确度。', 'In a constant 60 fps video, marks 600 frames apart span 10 seconds. Frame spacing is the video’s time resolution, not a guarantee of measurement accuracy.')}</p>
+    <h2>{t('哪些地方需要人工判断', 'What needs judgment')}</h2>
+    <p>{t('起止动作的选取、掉帧、可变帧率和转码都会影响结果。反推起点依赖你输入的成绩，不能再用它独立证明该成绩准确；视频分析也不自动改变正式比赛成绩。', 'The chosen start and finish, dropped frames, variable frame rate and transcoding can affect results. A start inferred from a supplied time cannot independently verify that time. Video analysis does not itself amend an official result.')}</p>
+    <details className="report-details">
+      <MoreToggle as="summary">{t('快捷键、保存与计时方式', 'Shortcuts, saving and timing methods')}</MoreToggle>
+      <div className="report-detail-body">
+        <p>{t('K 播放或暂停；逗号 / 句号逐帧后退或前进；M 添加标记。完整键位表在工具内。', 'K plays or pauses; comma / period step backward or forward; M adds a mark. The tool lists all shortcuts.')}</p>
+        <p>{t('起点反推支持帧率法与帧时间戳法；时间戳法需要可用的逐帧数据。帧率法包含对计时器百分位截断的处理，因此不等同于简单的秒数乘帧率。', 'Start estimation supports frame-rate and frame-timestamp methods; the latter needs per-frame data. The frame-rate method accounts for centisecond truncation, so it is not just time multiplied by frame rate.')}</p>
+        <p>{t('视频处理在本地进行。保存标记需允许访问视频所在文件夹，并确认工具显示保存成功。解码与导出能力取决于浏览器、编码格式和设备。', 'Video processing is local. Saving marks requires access to the video folder; check that the tool reports a successful save. Decoding and export depend on the browser, codec and device.')}</p>
       </div>
-
-      <main className="fca-main">
-        <h1 className="fca-title">{t('数帧是怎么用的', 'How frame-counting works')}</h1>
-        <p className="fca-intro">
-          {t(
-            '/frame-count 是给比赛视频 / 自己录像逐帧打点的工具。导入 mp4 / mov 后,在时间轴上标出每个 solve 的开始帧 / 结束帧,自动算成绩并跟计时器对比 — 适合裁判申诉、对比手速、复盘多手 solve 录像。',
-            '/frame-count is a frame-precise marker tool for competition footage or your own recordings. Load an mp4 / mov, mark the start and end frame of each solve on the timeline, and it auto-computes timings to compare against the official clock — useful for judge appeals, hand-speed analysis, and reviewing multi-solve recordings.'
-          )}
-        </p>
-
-        <h2 className="fca-section-title">{t('核心原理', 'Core idea')}</h2>
-        <p className="fca-section-intro">
-          {t(
-            '解码走 WebCodecs(浏览器原生硬件解码,几乎零开销);某些 mp4 元数据走 mediainfo.js 提取真实 frame rate;转码兜底走 ffmpeg.wasm。所有处理在本地,不上传视频。',
-            'Decoding uses WebCodecs (native hardware decode, near-zero overhead). True frame rate is extracted via mediainfo.js for some mp4 containers; ffmpeg.wasm provides transcoding fallback for unsupported codecs. All processing is local — your video never uploads.'
-          )}
-        </p>
-
-        <h2 className="fca-section-title">{t('使用流程', 'How to use')}</h2>
-        <div className="fca-flow">
-          <Step
-            step={1}
-            title={t('载入视频', 'Load a video')}
-            body={t(
-              '拖到页面任意位置 / 点工具栏「打开视频」 / 在 OBS 录像目录里整文件夹挑(支持 mp4 / mov / webm)。载入后右上角显示真实 frame rate。',
-              'Drag onto the page, click the toolbar "Open video", or pick from an OBS recording folder (mp4 / mov / webm). After loading, the real frame rate appears in the top-right.'
-            )}
-          />
-          <Arrow />
-          <Step
-            step={2}
-            title={t('打点', 'Mark frames')}
-            body={t(
-              '空格暂停 / 播放;`,` `.` 上一帧 / 下一帧;`M` 在当前帧打 mark。一个 solve 需要两个 mark(开始 + 结束),会用颜色带把它们连成一个 solve。',
-              'Space toggles play/pause; `,` and `.` step back/forward one frame; `M` drops a mark at the current frame. A solve needs two marks (start + end), and they\'re visually linked with a colored band.'
-            )}
-          />
-          <Arrow />
-          <Step
-            step={3}
-            title={t('精修与裁剪', 'Refine and crop')}
-            body={t(
-              '点 mark 后用方向键微调到准确帧;时间轴长按拖拽快速 scrub。需要的话用裁剪模式(C 键)只看竞赛区域,排除背景干扰。',
-              'After selecting a mark, fine-tune to the exact frame with arrow keys; long-press the timeline to scrub fast. Crop mode (C) restricts the visible area to just the cube zone, hiding distractions.'
-            )}
-          />
-          <Arrow />
-          <Step
-            step={4}
-            title={t('导出', 'Export')}
-            body={t(
-              '导出 CSV(每行一个 solve:start 帧 / end 帧 / 持续帧 / 秒数)。同时支持复制一段「逐 solve 时间表」到剪贴板,方便贴到申诉邮件 / 对比电脑成绩。',
-              'Export to CSV (one row per solve: start frame, end frame, frame count, seconds). You can also copy a "per-solve timing list" to clipboard — handy for appeal emails or side-by-side comparisons with timer logs.'
-            )}
-            highlight
-          />
-        </div>
-
-        <h2 className="fca-section-title">{t('快捷键', 'Shortcuts')}</h2>
-        <p className="fca-section-intro">
-          {t(
-            '工具栏右上「键盘」按钮列出完整快捷键表(含播放控制、打点、定位、缩放)。键位在桌面 / 移动端均可用,移动端额外有长按时间轴拖动。',
-            'The toolbar\'s keyboard button lists the full shortcut table (playback, marking, jumping, zoom). Shortcuts work on desktop and mobile; mobile additionally supports long-press timeline drag.'
-          )}
-        </p>
-
-        <h2 className="fca-section-title">{t('相关页面', 'See also')}</h2>
-        <ul className="fca-refs">
-          <li>
-            <Link href="/recon">{t('复盘库', 'Recon Library')}</Link>
-            {t(' — 数完帧拿到精确成绩后,可以来这里上传对应的还原步骤。', ' — once you have a precise timing, upload the corresponding solve breakdown here.')}
-          </li>
-          <li>
-            <a href="https://www.worldcubeassociation.org/regulations/" target="_blank" rel="noopener noreferrer">{t('WCA 规则', 'WCA regulations')}</a>
-            {t(' — 申诉相关的章节 (Article 9 / 12)。', ' — appeal-relevant sections (Articles 9 and 12).')}
-          </li>
-        </ul>
-      </main>
-    </div>
-  );
+    </details>
+  </main>;
 }

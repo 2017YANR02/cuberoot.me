@@ -1,119 +1,41 @@
 'use client';
 
-/**
- * /wca/prediction-about — 速拧极限预测说明页
- */
-import PageHeading from '@/components/PageHeading';
 import Link from '@/components/AppLink';
-
-import './prediction_about.css';
-import { useT } from "@/hooks/useT";
-
-interface StepProps { step: number; title: string; body: string; highlight?: boolean; }
-function Step({ step, title, body, highlight }: StepProps) {
-  return (
-    <div className={`pa-step${highlight ? ' is-highlight' : ''}`}>
-      <span className="pa-step-num">{step}</span>
-      <div>
-        <div className="pa-step-title">{title}</div>
-        <div className="pa-step-body">{body}</div>
-      </div>
-    </div>
-  );
-}
-function Arrow() { return <span className="pa-arrow" aria-hidden="true">↓</span>; }
+import MoreToggle from '@/components/MoreToggle';
+import PageHeading from '@/components/PageHeading';
+import { useT } from '@/hooks/useT';
+import '@/components/report-page.css';
 
 export default function PredictionAboutPage() {
   const t = useT();
-
-  return (
-    <div className="pa-page">
-
-      <main className="pa-main">
-        <PageHeading backHref="/wca/prediction" titleClassName="pa-title">{t('速拧极限预测是怎么工作的', 'How the speedcubing limit forecast works')}</PageHeading>
-        <p className="pa-intro">
-          {t(
-            '/wca/prediction 用三轨并行的数学方法预测 16 个 WCA 项目的速拧极限:曲线拟合(exp+floor / Gompertz / 幂律)、物理下界(M/TPS+R 步数法)、以及极值统计理论(GEV)。数据覆盖 1982-2050。',
-            '/wca/prediction forecasts the physical and statistical limits of 16 WCA events using three parallel approaches: curve-fitting (exp+floor / Gompertz / power-law), first-principles physics floors (M/TPS+R), and extreme-value theory (GEV). Data span 1982-2050.'
-          )}
-        </p>
-
-        <h2 className="pa-section-title">{t('三轨预测方法', 'Three-track forecast methods')}</h2>
-        <ul className="pa-list">
-          <li>
-            <strong>{t('曲线拟合 (exp+floor / Gompertz / 幂律)', 'Curve fitting (exp+floor / Gompertz / power-law)')}</strong>
-            {t(
-              ' — 对 WR 历史序列拟合收敛型曲线。exp+floor 和 Gompertz 都能捕捉"S 型"衰减;幂律适合早期快速下降段。三条曲线的预测值取加权均值。',
-              ' — fits converging curves to the historical WR sequence. exp+floor and Gompertz capture S-shaped deceleration; power-law fits the early rapid-drop phase. Forecasts are a weighted ensemble.'
-            )}
-          </li>
-          <li>
-            <strong>{t('物理下界 (M/TPS+R)', 'Physics floor (M/TPS+R)')}</strong>
-            {t(
-              ' — 把一次 solve 拆解成步数 M、人类手速 TPS、和反应时间 R 三部分,估算生物力学不可突破的硬墙。各项目参数来自公开文献 + 竞技运动数据。',
-              ' — decomposes a solve into move count M, human TPS, and reaction time R, then derives the biomechanical hard floor. Per-event parameters come from published literature and sports-science data.'
-            )}
-          </li>
-          <li>
-            <strong>{t('极值统计 (GEV)', 'Extreme-value theory (GEV)')}</strong>
-            {t(
-              ' — 把历年 WR 当成极值序列,用广义极值分布(GEV)建模。给出"百年可达"("10 亿人参与")等概率框下的预测区间。',
-              ' — treats annual WR progressions as an extremes sequence and fits a generalised extreme-value distribution. Yields probabilistic intervals for "century-scale" and "billion-participant" scenarios.'
-            )}
-          </li>
-        </ul>
-
-        <h2 className="pa-section-title">{t('报告结构', 'Report structure')}</h2>
-        <div className="pa-flow">
-          <Step
-            step={1}
-            title={t('一句话结论', 'Top Line')}
-            body={t(
-              '显示"有多少项目已经压到物理下界 80% 以内",即还有不到 1.25 倍压缩空间 — 速拧正在撞墙的全局信号。',
-              'Shows how many events sit within 80% of their physics floor — less than 1.25× compression remaining — the global signal that speedcubing is hitting the wall.'
-            )}
-          />
-          <Arrow />
-          <Step
-            step={2}
-            title={t('撞墙排名', 'Closest to Wall')}
-            body={t(
-              '16 个项目按"当前 WR / 物理下界"比值排序。比值越接近 1 代表越接近极限。3×3 BLD / 5×5 BLD 等通常在顶部。',
-              '16 events ranked by current WR / physics-floor ratio. Closer to 1.0 = closer to the limit. 3×3 BLD and 5×5 BLD typically top the list.'
-            )}
-          />
-          <Arrow />
-          <Step
-            step={3}
-            title={t('各项目详细分析', 'Per-event analysis')}
-            body={t(
-              '每个项目有:历史 WR 折线图 + 三条拟合曲线 + 物理下界线;TPS / 步数分解 biomech 计算;各时间节点(2030/2040/2050)的里程碑预测;区域格局地图。',
-              'Per event: historical WR line + three fitted curves + physics floor; per-move TPS/step biomechanical decomposition; milestone forecasts for 2030/2040/2050; regional distribution map.'
-            )}
-            highlight
-          />
-        </div>
-
-        <h2 className="pa-section-title">{t('数据来源', 'Data source')}</h2>
-        <p className="pa-section-intro">
-          {t(
-            '数据来自本机 WCA MySQL dump + Python 拟合脚本生成的 stats/prediction/all_events.json。每次有新 WR 后手动重跑。不保证实时性 — 页面会显示数据生成日期。',
-            'Data comes from a local WCA MySQL dump processed by a Python fitting script, producing stats/prediction/all_events.json. Regenerated manually after major WR progressions. Not guaranteed real-time — the page shows the data generation date.'
-          )}
-        </p>
-
-        <h2 className="pa-section-title">{t('相关页面', 'See also')}</h2>
-        <ul className="pa-refs">
-          <li>
-            <Link href="/wca/prediction/333">{t('3×3 详细分析', '3×3 deep-dive')}</Link>
-            {t(' — 单项目更深入的分节分析。', ' — deeper per-section analysis for 3×3.')}
-          </li>
-          <li>
-            <Link href="/wca/results">{t('全成绩排名', 'All Results')}</Link>
-            {t(' — 查看任意项目的历史 WR 排列。', ' — browse historical WR progressions per event.')}
-          </li>
-        </ul>
-      </main>
-    </div>
-  );
+  return <main className="report-page">
+    <header className="report-header">
+      <PageHeading backHref="/wca/prediction">{t('怎样读极限预测', 'Reading the forecasts')}</PageHeading>
+      <p>{t('用历史纪录与模型假设，探索速拧还有多少进步空间。预测值是条件下的估计，不是已证明的人类极限。', 'Explore possible progress using record history and model assumptions. Forecasts are conditional estimates, not proven human limits.')}</p>
+      <div className="report-links"><Link href="/wca/prediction">{t('查看预测报告', 'Open forecasts')}</Link><Link href="/wca/prediction/333">{t('三阶详细分析', '3×3 analysis')}</Link></div>
+    </header>
+    <table className="report-table">
+      <thead><tr><th scope="col">{t('看到的数字', 'What you see')}</th><th scope="col">{t('应该怎样理解', 'How to read it')}</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">{t('历史纪录', 'Record history')}</th><td>{t('数据快照中已发生的成绩，是模型的输入。', 'Results that occurred within the data snapshot: the model’s input.')}</td></tr>
+        <tr><th scope="row">{t('未来年份的预测', 'Future-year forecast')}</th><td>{t('历史趋势按所选模型延续后的估计，不是破纪录时间表。', 'An extrapolation of past trends under the selected model, not a record-breaking schedule.')}</td></tr>
+        <tr><th scope="row">{t('「物理下界」', '“Physical floor”')}</th><td>{t('由步数、手速、识别等假设推算的参考线。改变假设，参考线也会变。', 'A reference based on assumed move counts, turning speed and recognition time. Change the assumptions and it changes too.')}</td></tr>
+      </tbody>
+    </table>
+    <h2>{t('读区间，不只看单个数', 'Look beyond the point estimate')}</h2>
+    <p>{t('先看数据日期，再看模型是否与历史走势吻合，最后比较不同模型与预测区间。模型分歧越大，越不宜只摘一个数字。', 'Check the data date, how well the model fits the history, and the range across models and intervals. When models disagree, quoting one number hides uncertainty.')}</p>
+    <h2>{t('这些因素仍无法保证', 'Where forecasts can fail')}</h2>
+    <ul className="report-limits">
+      <li>{t('新硬件、新方法、参赛规模和幸运打乱，都可能使未来偏离旧趋势。', 'New hardware, methods, participation levels and lucky scrambles can shift results away from past trends.')}</li>
+      <li>{t('拟合得好不代表预测得准。区间只反映建模时包含的变化，不包含所有未来变化。', 'A good historical fit does not guarantee a good forecast. Intervals reflect modelled variation, not every possible future change.')}</li>
+      <li>{t('报告使用数据快照，未必包含最新纪录；不同项目的秒数、步数与成绩类型不能直接混比。', 'The snapshot may omit recent records. Seconds, move counts and different result types are not directly comparable.')}</li>
+    </ul>
+    <details className="report-details">
+      <MoreToggle as="summary">{t('模型与计算口径', 'Models and assumptions')}</MoreToggle>
+      <div className="report-detail-body">
+        <p>{t('趋势对照包括带下限的指数、Gompertz 与幂律等曲线；动作模型以「步数 ÷ 手速 + 识别等额外时间」估算用时；极值模型探索大量尝试下的极端成绩。这三类模型回答的问题不同。', 'Trend comparisons include exponential-with-floor, Gompertz and power-law curves. Movement models estimate time as moves ÷ turning speed plus recognition and other overhead. Extreme-value models explore exceptional results over many attempts. These answer different questions.')}</p>
+        <p>{t('预测报告中保留各项目参数、拟合图与数据日期。公式里的下限是估计参数；数学上证明的最少步下界与人体执行时间的假设应分开理解。', 'The report retains event parameters, fit charts and data dates. A fitted floor is an estimate; a proven mathematical move bound and an assumed human execution time are distinct.')}</p>
+      </div>
+    </details>
+  </main>;
 }

@@ -1,7 +1,10 @@
 'use client';
 
 import PageHeading from '@/components/PageHeading';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import MoreToggle from '@/components/MoreToggle';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import '@/components/report-page.css';
 import dynamic from 'next/dynamic';
 import BoolToggle from '@/components/BoolToggle';
 import { SCRAMBLE_KINDS } from '@/lib/trainer-scramble';
@@ -13,7 +16,9 @@ import { useStatisticsData, type Mode } from './useStatisticsData';
 import { useT } from '@/hooks/useT';
 import './double-zbll-about.css';
 
-const SingleStatistics = dynamic(() => import('./SingleStatistics'));
+const SingleStatistics = dynamic(() => import('./SingleStatistics'), {
+  loading: () => <LoadingIndicator />,
+});
 
 // Verified against the 18 face-turn generators and all 7,772 single-layer states.
 const rotations = ['', 'y', 'y2', "y'", 'x2', 'y x2', 'y2 x2', "y' x2"];
@@ -25,8 +30,10 @@ export default function DoubleZbllAbout() {
   const [mode, setMode] = useState<Mode>('double-zbll');
   const [pll, setPll] = useState(false);
   const data = useStatisticsData(pll);
+  const modeDetails = useRef<HTMLDetailsElement>(null);
   const selectMode = (mode: Mode) => {
     setMode(mode);
+    if (modeDetails.current) modeDetails.current.open = true;
     document.getElementById('dz-mode-details')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
   const [rotation, setRotation] = useState(0);
@@ -37,16 +44,26 @@ export default function DoubleZbllAbout() {
   const raw = cases ** 2 * 256;
   const unique = states ** 2;
   const orbits = (unique + 2 * quarterFixed ** 2 + halfFixed ** 2 + 4 * states) / 8;
-  return <main className="dz-about">
-    <header className="dz-about-hero">
+  return <main className="report-page dz-about">
+    <header className="report-header">
       <PageHeading backHref="/alg">{t('ZBLL 打乱方式与统计', 'ZBLL scramble modes and statistics')}</PageHeading>
-      <p>{t('从双底 HTM 到逆 case、四种最优度量、COEP 和 csTimer：了解每种打乱如何产生，比较分布与极端情况。', 'Explore double ZBLL HTM, inverse case, four optimal metrics, COEP and csTimer: how each scramble is made, its distribution and its extremes.')}</p>
+      <p>{t('一次练两例选双底；单层可按最短步数、逆公式或 csTimer 风格选择。步数少，不一定更好拧。', 'Choose double ZBLL to train two cases at once, or a single-layer mode by move count, inverse algorithm or csTimer style. Fewer moves do not always feel easier.')}</p>
       <AppLink href="/alg/3x3/zbll/run" prefetch={false} className="dz-about-start">{t('开始 ZBLL 训练', 'Open ZBLL training')} →</AppLink>
     </header>
 
     <div className="dz-about-section-head dz-scope-control"><p>{t('统计范围：完整 ZBLL 题库', 'Scope: complete ZBLL corpus')}</p><BoolToggle label={t('统计包含 PLL', 'Include PLL in statistics')} value={pll} onChange={setPll} /></div>
     <StatisticsOverview pll={pll} data={data} selected={mode} onSelect={selectMode} />
-    <section className="dz-about-guide" id="dz-mode-details">
+    <section className="dz-about-limits">
+      <h2>{t('如何理解这些结果', 'Reading these results')}</h2>
+      <ul className="report-limits">
+        <li>{t('最优只针对指定计步标准；缺失数据会回退逆 case，并计入统计。双底仅在已保存的 HTM 最优解中再选 QTM 和转动面数，不保证全局 QTM 最优。', 'Optimality applies to the named metric; missing data falls back to inverse case and remains in the statistics. Double ZBLL breaks ties among saved HTM-optimal solutions, without claiming global QTM optimality.')}</li>
+        <li>{t('csTimer 风格使用本站求解器，每个 case 生成一条样本，并非 csTimer 网站实测；极值只代表本次样本，失败不补填。', 'csTimer-style results use this site’s solver, one sample per case, not measurements from the csTimer website. Extremes describe this sample; failures are excluded.')}</li>
+      </ul>
+    </section>
+    <details className="report-details" id="dz-mode-details" ref={modeDetails}>
+      <MoreToggle as="summary">{t('按模式查看明细与极端案例', 'Mode details and extreme cases')}</MoreToggle>
+      <div className="report-detail-body">
+      <section className="dz-about-guide">
       <h2>{t('模式明细与计步说明', 'Mode details and counting rules')}</h2>
       <p>{t('HTM：外层半转算一步，夹层转动折算为两个外层转动。STM：外层、宽转、夹层各算一步。QTM / SQTM 分别在 HTM / STM 基础上将半转算两步。整颗转体不计步；例如 M2 为 2 HTM、1 STM、4 QTM、2 SQTM。最短不等于最好拧，步数也不能直接预测还原时间。', 'HTM counts a face half turn as one and a slice turn as two face turns. STM counts face, wide and slice turns as one each. QTM / SQTM count half turns twice under HTM / STM respectively. Cube rotations cost zero: M2 is 2 HTM, 1 STM, 4 QTM and 2 SQTM. Shortest does not mean easiest to execute, and move count does not predict solve time.')}</p>
       <div className="dz-about-section-head">
@@ -60,6 +77,12 @@ export default function DoubleZbllAbout() {
     <p>{t('双底把两个 case 放在同一颗魔方的顶层和底层，一条打乱练两例。以下统计为每个有序配对选出的打乱；单层模式每题只有一个 case。', 'Double ZBLL places one case on each of two opposite layers, training two cases with one scramble. These statistics count selected scrambles per ordered pair; single-layer modes train one case per scramble.')}</p>
     <CorpusStatistics pll={pll} />
 
+    </>}
+      </div>
+    </details>
+    <details className="report-details">
+      <MoreToggle as="summary">{t('双底的对称性、选解与验证', 'Double ZBLL: symmetry, selection and verification')}</MoreToggle>
+      <div className="report-detail-body">
     <section className="dz-about-prose" aria-labelledby="dz-counts">
       <div className="dz-about-section-head">
         <h2 id="dz-counts">{t('从组合到代表状态', 'From combinations to representatives')}</h2>
@@ -128,6 +151,7 @@ export default function DoubleZbllAbout() {
       <p>{t('出题方向优化另外验证了八种方向下全部 18 种面转的状态等价性，以及顶底交换和智能魔方目标同步。浏览器只读取题库并转换记号，不重新运行最短解求解器。', 'The orientation optimization separately verifies state equivalence for all 18 face turns in each of the eight frames, along with layer swapping and smart-cube target consistency. The browser reads the corpus and relabels moves; it does not rerun the optimal solver.')}</p>
       <p>{t('联网进入双底模式后，会在后台自动缓存题库和训练页面，无需点击下载。缓存完成后可离线使用；题库或离线页面版本更新后会自动补齐，断网失败时在恢复联网或下次进入时重试。浏览器需支持离线存储，并保留该网站的数据。', 'Entering double ZBLL mode online automatically caches the corpus and training pages in the background. Offline use is available after caching completes. Corpus or offline-page updates are cached automatically, with failures retried on reconnection or the next visit. The browser must support offline storage and retain this site’s data.')}</p>
     </section>
-    </>}
+      </div>
+    </details>
   </main>;
 }

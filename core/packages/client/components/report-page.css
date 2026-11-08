@@ -1,0 +1,34 @@
+/* Shared reading layout for user-facing reports; data and interactions stay with each page. */
+.report-page { max-width: 840px; margin: 0 auto; padding: 32px 24px 40px; color: var(--foreground); font-size: 18px; line-height: 1.65; }
+.report-page .report-header { margin-bottom: 24px; }
+.report-page .page-heading > h1.page-heading-title { font-size: clamp(26px, 3vw, 34px); }
+.report-page p { margin: 12px 0; }
+.report-page h2 { margin: 26px 0 12px; font-size: 23px; line-height: 1.35; font-weight: 600; }
+.report-page h3 { margin: 22px 0 10px; font-size: 19px; line-height: 1.4; font-weight: 600; }
+.report-page a { color: var(--accent); text-underline-offset: 4px; }
+.report-page a:focus-visible, .report-page button:focus-visible, .report-page select:focus-visible, .report-page summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.report-page .report-links { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 16px; }
+.report-page .report-note { color: var(--muted-foreground); font-size: 16px; line-height: 1.6; }
+.report-page .report-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 17px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.report-table th, .report-table td { padding: 12px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border-default); }
+.report-table th { font-weight: 600; }
+.report-table thead th { color: var(--muted-foreground); font-size: 16px; font-weight: 500; }
+.report-table th:first-child, .report-table td:first-child { padding-left: 0; }
+.report-table th:last-child, .report-table td:last-child { padding-right: 0; }
+.report-table .report-number { text-align: right; white-space: nowrap; }
+.report-page .report-limits { padding-left: 1.15em; margin: 12px 0 24px; }
+.report-page .report-steps { padding-left: 1.3em; margin: 20px 0; list-style: decimal; }
+.report-steps li { padding-left: 6px; }
+.report-page li { margin: 8px 0; }
+.report-page .report-details { margin-top: 0; border-top: 1px solid var(--border-default); }
+.report-details > summary.more-toggle-summary { width: 100%; display: flex; justify-content: space-between; padding: 16px 0; font: inherit; font-size: 17px; cursor: pointer; }
+.report-detail-body { padding: 0 0 20px; font-size: 16px; }
+.report-detail-body > :first-child { margin-top: 4px; }
+.report-detail-body code { overflow-wrap: anywhere; }
+.report-table-scroll { max-width: 100%; overflow-x: auto; }
+@media (max-width: 600px) {
+  .report-page { padding: 24px 18px 32px; }
+  .report-page .report-table { font-size: 16px; }
+  .report-table th, .report-table td { padding: 10px 6px; }
+  .report-page .report-header { margin-bottom: 20px; }
+}

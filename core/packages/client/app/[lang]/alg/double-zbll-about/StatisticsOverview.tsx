@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import MoreToggle from '@/components/MoreToggle';
 import type { Metric } from '@cuberoot/shared/alg-notation';
 import { SCRAMBLE_KINDS } from '@/lib/trainer-scramble';
 import { useT } from '@/hooks/useT';
@@ -26,21 +27,33 @@ export default function StatisticsOverview({ pll, data, selected, onSelect }: {
       })),
     ].map(group => ({ ...group, ...summarizeHistogram(group.histogram) }));
   }, [pll, data.rows, data.cases.length, data.running, metric]);
-  const label = (mode: Mode) => mode === 'double-zbll' ? t('双底 HTM', 'Double ZBLL HTM') : SCRAMBLE_KINDS.find(k => k.id === mode)!.label();
+  const label = (mode: Mode) => mode === 'double-zbll' ? t('双底 HTM', 'Double ZBLL HTM') : mode === 'cstimer' ? t('csTimer 风格', 'csTimer style') : SCRAMBLE_KINDS.find(k => k.id === mode)!.label();
   const limit = Math.max(20, ...groups.map(group => group.max));
   const peak = Math.ceil(Math.max(.1, ...groups.flatMap(group => group.histogram.map(n => group.count ? n / group.count : 0))) * 10) / 10;
   const unit = metric.toUpperCase();
   return <section className="dz-overview" aria-labelledby="dz-overview-title">
     <div className="dz-about-section-head">
-      <div><h2 id="dz-overview-title">{t('八种打乱，放在一起看', 'Eight scramble modes, side by side')}</h2></div>
-      <label>{t('统一计步标准', 'Shared counting metric')} <select aria-label={t('统一计步标准', 'Shared counting metric')} className="dz-about-symmetry-select" value={metric} onChange={e => setMetric(e.target.value as Metric)}>
+      <div><h2 id="dz-overview-title">{t('同一标准看长度', 'Compare move counts')}</h2></div>
+      <label>{t('计步标准', 'Counting metric')} <select aria-label={t('计步标准', 'Counting metric')} className="dz-about-symmetry-select" value={metric} onChange={e => setMetric(e.target.value as Metric)}>
         {(['htm', 'stm', 'sqtm', 'qtm'] as const).map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
       </select></label>
     </div>
-    <p className="dz-about-muted">{t('下面八张图分别对应训练菜单的八种打乱方式。统一横轴为步数、纵轴为占比，方便比较形状；点击卡片查看该模式的明细与极端实例。', 'Each chart corresponds to one of the eight training modes. Shared axes show move count and percentage, making distribution shapes comparable. Select a card for details and extreme examples.')}</p>
-    <p className="dz-about-muted">{t('双底每条打乱包含两个 case，按有序配对等权；其余每条一个 case，按单层 case 等权。这里比较打乱长度，不表示训练效率或还原难度。', 'Double ZBLL trains two cases per scramble and weights ordered pairs equally; other modes weight individual cases equally. These charts compare scramble lengths, not training efficiency or solving difficulty.')}</p>
     {data.error && <p role="alert">{t('单层题库加载失败，双底统计仍可查看。', 'Single-layer data failed to load; double ZBLL statistics remain available.')} <button onClick={data.retry}>{t('重试', 'Retry')}</button></p>}
     {data.running && <p role="status">{data.cases.length ? `${t('csTimer 样本生成中', 'Generating csTimer samples')}: ${data.progress} / ${data.cases.length}` : <LoadingIndicator>{t('正在加载单层题库…', 'Loading the single-layer corpus…')}</LoadingIndicator>}</p>}
+    <table className="report-table dz-summary-table">
+      <thead><tr><th scope="col">{t('模式', 'Mode')}</th><th scope="col" className="report-number">{t('平均', 'Mean')} · {unit}</th><th scope="col" className="report-number">{t('范围', 'Range')}</th></tr></thead>
+      <tbody>{groups.map(group => <tr key={group.mode}>
+        <th scope="row"><button type="button" className="dz-mode-link" onClick={() => onSelect(group.mode)}>{label(group.mode)}</button>
+          {group.fallback > 0 && <span className="dz-summary-status">{t('回退逆 case', 'Inverse-case fallbacks')}: {group.fallback}</span>}
+          {group.mode === 'cstimer' && group.ready && <span className="dz-summary-status">{t('成功样本', 'Successful samples')}: {group.count} / {data.cases.length}{data.failed > 0 && <> · {t('失败', 'Failed')}: {data.failed}</>}</span>}
+        </th>
+        <td className="report-number">{group.ready && group.count > 0 ? group.mean.toFixed(2) : '—'}</td>
+        <td className="report-number">{group.ready && group.count > 0 ? group.min + '–' + group.max : '—'}</td>
+      </tr>)}</tbody>
+    </table>
+    <p className="dz-about-muted">{t('完整题库等权统计，不加额外 AUF（U 层调整）：双底按配对，单层按 case。步数不代表还原难度或训练效率。', 'Equal weights across the full corpus, without extra AUF (U-layer adjustments): pairs for double ZBLL, cases for single-layer modes. Length does not measure solving difficulty or training efficiency.')}</p>
+    <details className="report-details"><MoreToggle as="summary">{t('完整分布图与计步口径', 'Full distributions and counting rules')}</MoreToggle><div className="report-detail-body">
+    <p>{t('双底按有序配对等权，单层按 case 等权；不额外添加 AUF，训练中的随机 AUF 及相邻步合并可能改变长度。', 'Ordered pairs have equal weight for double ZBLL; individual cases for single-layer modes. Extra AUF is excluded; random AUF and move merging during training can change lengths.')}</p>
     <div className="dz-chart-grid">
       {groups.map(group => <button type="button" className="dz-mode-chart" data-site-surface="panel" key={group.mode} aria-pressed={selected === group.mode} onClick={() => onSelect(group.mode)}>
         <span className="dz-mode-heading"><strong>{label(group.mode)}</strong><span>{group.mode === 'double-zbll' ? t('双层 · 完整题库', 'Two layers · full corpus') : group.mode === 'cstimer' ? t('单层 · 样本', 'Single layer · sample') : t('单层 · 题库', 'Single layer · corpus')}</span></span>
@@ -70,5 +83,6 @@ export default function StatisticsOverview({ pll, data, selected, onSelect }: {
       <div className="dz-range-row"><span>{unit}</span><svg viewBox="0 0 500 25" aria-hidden>{Array.from({ length: Math.floor(limit / 5) + 1 }, (_, i) => i * 5).map(n => <text key={n} x={12 + n / limit * 476} y="17" textAnchor="middle">{n}</text>)}</svg><span /></div>
     </div>
     <p className="dz-about-muted">{t('口径：单层不额外添加 AUF；缺失模式数据按训练器规则回退逆 case，已计入分布并标明数量。csTimer 每个 case 生成一条样本，极值仅代表本次样本；失败不回填。双底只有外层转动，因此 STM＝HTM、SQTM＝QTM。', 'Scope: no extra AUF for single-layer scrambles. Missing mode data falls back to inverse case as in training and is included with its count disclosed. csTimer generates one sample per case; extremes are sample observations, with failures excluded. Double ZBLL uses only face turns, so STM=HTM and SQTM=QTM.')}</p>
+    </div></details>
   </section>;
 }
