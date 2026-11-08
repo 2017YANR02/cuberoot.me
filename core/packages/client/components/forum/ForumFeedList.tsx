@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Eye, Heart, MessageCircle } from '@app-foundation/icons/lucide';
+import { Heart, MessageCircle } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import { tr, useLang } from '@/i18n/tr';
@@ -12,6 +12,7 @@ import { formatCount, formatRelativeTime } from '@/lib/forum-format';
 import {
   reactToPost,
   type ForumFeedThread,
+  type ForumFeedSort,
   type PostReaction,
   type ReactionKind,
 } from '@/lib/forum-api';
@@ -19,7 +20,7 @@ import { ForumVideoPlayer } from './ForumVideoPlayer';
 import { UserContactLink } from '@/components/UserIdLabel';
 import './forum-feed.css';
 
-export function ForumFeedList({ threads, compact = false }: { threads: ForumFeedThread[]; compact?: boolean }) {
+export function ForumFeedList({ threads, compact = false, sort = 'latest' }: { threads: ForumFeedThread[]; compact?: boolean; sort?: ForumFeedSort }) {
   const lang = useLang();
   const zh = lang === 'zh';
   const user = useAuthUser();
@@ -73,6 +74,9 @@ export function ForumFeedList({ threads, compact = false }: { threads: ForumFeed
         const reactionCount = currentReaction.reactions.reduce((sum, reaction) => sum + reaction.count, 0);
         const imageUrls = thread.imageUrls ?? [];
         const videos = thread.videos ?? [];
+        const showLastReply = sort === 'active' && thread.replyCount > 0;
+        const timestamp = showLastReply ? thread.lastPostAt : thread.createdAt;
+        const relativeTime = formatRelativeTime(timestamp, lang);
         return (
           <article className="community-feed-item" key={thread.id}>
             <div className={`community-feed-avatar${avatar.isClawd ? ' is-clawd' : ''}`} aria-hidden="true">
@@ -81,16 +85,21 @@ export function ForumFeedList({ threads, compact = false }: { threads: ForumFeed
             <div className="community-feed-main">
               <div className="community-feed-byline">
                 {thread.author.userId ? <UserContactLink userId={thread.author.userId} className="community-feed-author">{displayName}</UserContactLink> : <PersonLink wcaId={thread.author.wcaId ?? thread.authorId} className="community-feed-author">{displayName}</PersonLink>}
-                <span aria-hidden="true">/</span>
+                <span aria-hidden="true">·</span>
+                <time dateTime={timestamp}>
+                  {showLastReply
+                    ? tr({ zh: `最近回复 ${relativeTime}`, en: `Last reply ${relativeTime}` })
+                    : tr({ zh: `发布于 ${relativeTime}`, en: `Posted ${relativeTime}` })}
+                </time>
+                <span aria-hidden="true">·</span>
                 <Link href={`/forum/f/${thread.forumSlug}`} prefetch={false} className="community-feed-board">
-                  {zh ? thread.forumNameZh : thread.forumNameEn}
+                  {tr({ zh: thread.forumNameZh, en: thread.forumNameEn })}
                 </Link>
-                <span>{formatRelativeTime(thread.createdAt, lang)}</span>
               </div>
-              <Link href={`/forum/t/${thread.id}`} prefetch={false} className="community-feed-title">
-                {thread.title}
+              <Link href={`/forum/t/${thread.id}`} prefetch={false} className="community-feed-content">
+                <span className="community-feed-title">{thread.title}</span>
+                {thread.excerpt && <p className="community-feed-excerpt">{thread.excerpt}</p>}
               </Link>
-              {thread.excerpt && <p className="community-feed-excerpt">{thread.excerpt}</p>}
               {!compact && imageUrls.length > 0 && (
                 <div className={`community-feed-images${imageUrls.length === 1 ? ' is-single' : ''}`}>
                   {imageUrls.slice(0, 4).map((url, index) => (
@@ -118,7 +127,7 @@ export function ForumFeedList({ threads, compact = false }: { threads: ForumFeed
                   disabled={busyPostId !== null}
                 >
                   <Heart className="community-feed-heart" size={14} aria-hidden="true" />
-                  {formatCount(reactionCount, lang)}
+                  {reactionCount > 0 && formatCount(reactionCount, lang)}
                 </button>
                 <Link
                   href={`/forum/t/${thread.id}`}
@@ -126,21 +135,11 @@ export function ForumFeedList({ threads, compact = false }: { threads: ForumFeed
                   className="community-feed-meta-action"
                   aria-label={tr({ zh: `查看 ${thread.replyCount} 条回复`, en: `View ${thread.replyCount} replies` })}
                 >
-                  <MessageCircle size={14} aria-hidden="true" />{formatCount(thread.replyCount, lang)}
+                  <MessageCircle size={14} aria-hidden="true" />
+                  {thread.replyCount > 0
+                    ? tr({ zh: `${formatCount(thread.replyCount, lang)} 条回复`, en: `${formatCount(thread.replyCount, lang)} ${thread.replyCount === 1 ? 'reply' : 'replies'}` })
+                    : tr({ zh: '回复', en: 'Reply' })}
                 </Link>
-                <Link
-                  href={`/forum/t/${thread.id}`}
-                  prefetch={false}
-                  className="community-feed-meta-action"
-                  aria-label={tr({ zh: `查看主题，已有 ${thread.viewCount} 次浏览`, en: `View thread with ${thread.viewCount} views` })}
-                >
-                  <Eye size={14} aria-hidden="true" />{formatCount(thread.viewCount, lang)}
-                </Link>
-                {thread.lastPostAt !== thread.createdAt && (
-                  <span className="community-feed-active">
-                    {tr({ zh: `活跃于 ${formatRelativeTime(thread.lastPostAt, lang)}`, en: `active ${formatRelativeTime(thread.lastPostAt, lang)}` })}
-                  </span>
-                )}
               </div>
             </div>
           </article>

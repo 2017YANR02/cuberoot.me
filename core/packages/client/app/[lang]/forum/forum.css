@@ -9,6 +9,8 @@
   padding: 20px 16px 48px;
 }
 
+.forum-page.forum-feed-page { max-width: 740px; }
+
 .forum-page h1 {
   font-size: 1.4rem;
   margin-bottom: 0.25rem;
