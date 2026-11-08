@@ -14,6 +14,12 @@ it('shares module identity across locale, detail routes and null fallback', () =
   expect(pageTransitionSection('/zh')).toBe('home');
   expect(pageTransitionSection(null)).toBe('home');
 });
+it('gives forum threads their own transition identity while preserving list and locale identity', () => {
+  expect(pageTransitionSection('/zh/forum/feed')).toBe(pageTransitionSection('/forum'));
+  expect(pageTransitionSection('/zh/forum/t/12')).not.toBe(pageTransitionSection('/zh/forum/feed'));
+  expect(pageTransitionSection('/zh/forum/t/12')).toBe(pageTransitionSection('/en/forum/t/12'));
+  expect(pageTransitionSection('/forum/t/12')).not.toBe(pageTransitionSection('/forum/t/13'));
+});
 it('preserves child state within a module, replacing only on cross-module navigation', async () => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   const mounts = vi.fn();

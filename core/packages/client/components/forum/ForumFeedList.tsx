@@ -50,7 +50,7 @@ export function ForumFeedList<T extends ForumFeedThread>({ threads, compact = fa
     }])));
   }, [threads]);
 
-  const toggleReaction = async (thread: ForumFeedThread) => {
+  const toggleReaction = async (thread: ForumFeedThread, button: HTMLButtonElement) => {
     if (!user) {
       useAuthStore.getState().login();
       return;
@@ -68,6 +68,17 @@ export function ForumFeedList<T extends ForumFeedThread>({ threads, compact = fa
         ...previous,
         [thread.id]: { reactions: result.reactions, myReaction: nextReaction },
       }));
+      // Animate this successful click, never a restored or initially liked post.
+      const heart = button.querySelector<SVGElement>('.community-feed-heart');
+      heart?.getAnimations().forEach(animation => animation.cancel());
+      if (nextReaction && heart?.isConnected && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        heart.animate([
+          { transform: 'scale(0.85)', offset: 0 },
+          { transform: 'scale(1.28)', offset: 0.45 },
+          { transform: 'scale(0.96)', offset: 0.75 },
+          { transform: 'scale(1)', offset: 1 },
+        ], { duration: 320, easing: 'ease-out' });
+      }
     } catch (error) {
       alert((error as Error).message);
     } finally {
@@ -109,14 +120,15 @@ export function ForumFeedList<T extends ForumFeedThread>({ threads, compact = fa
                 </Link>
                 {renderBylineEnd?.(thread)}
               </div>
-              <Link href={`/forum/t/${thread.id}`} prefetch={false} className="community-feed-content">
+              {/* allow-nested-link: Content and media links below are siblings; neither wraps the other. */}
+              <Link href={`/forum/t/${thread.id}`} prefetch={false} loadingOverlay={false} className="community-feed-content">
                 <span className="community-feed-title">{thread.title}</span>
                 {thread.excerpt && <p className="community-feed-excerpt">{thread.excerpt}</p>}
               </Link>
               {!compact && imageUrls.length > 0 && (
                 <div className={`community-feed-images${imageUrls.length === 1 ? ' is-single' : ''}`}>
                   {imageUrls.slice(0, 4).map((url, index) => (
-                    <Link key={`${url}-${index}`} href={`/forum/t/${thread.id}`} prefetch={false}>
+                    <Link key={`${url}-${index}`} href={`/forum/t/${thread.id}`} prefetch={false} loadingOverlay={false}>
                       <img src={url} alt={tr({ zh: `帖子图片 ${index + 1}`, en: `Post image ${index + 1}` })} loading="lazy" />
                     </Link>
                   ))}
@@ -136,22 +148,23 @@ export function ForumFeedList<T extends ForumFeedThread>({ threads, compact = fa
                     en: currentReaction.myReaction ? 'Remove reaction' : 'Like',
                   })}
                   aria-pressed={currentReaction.myReaction !== null}
-                  onClick={() => void toggleReaction(thread)}
+                  onClick={event => void toggleReaction(thread, event.currentTarget)}
                   disabled={busyPostId !== null}
                 >
                   <Heart className="community-feed-heart" size={14} aria-hidden="true" />
-                  <span className="community-feed-count" aria-hidden="true">{reactionCount > 0 ? formatCount(reactionCount, lang) : ''}</span>
+                  <span className="community-feed-count" aria-hidden="true">{formatCount(reactionCount, lang)}</span>
                 </button>
                 {compact || thread.replyCount === 0 ? <Link
                   href={`/forum/t/${thread.id}`}
                   prefetch={false}
+                  loadingOverlay={false}
                   className="community-feed-meta-action"
                   aria-label={thread.replyCount === 0
                     ? tr({ zh: '回复', en: 'Reply' })
                     : tr({ zh: `查看 ${thread.replyCount} 条回复`, en: `View ${thread.replyCount} replies` })}
                 >
                   <MessageCircle size={14} aria-hidden="true" />
-                  <span className="community-feed-count" aria-hidden="true">{thread.replyCount > 0 ? formatCount(thread.replyCount, lang) : ''}</span>
+                  <span className="community-feed-count" aria-hidden="true">{formatCount(thread.replyCount, lang)}</span>
                 </Link> : <button
                   type="button"
                   id={`${repliesId}-trigger-${thread.id}`}
@@ -162,12 +175,15 @@ export function ForumFeedList<T extends ForumFeedThread>({ threads, compact = fa
                   onClick={() => setExpanded(previous => ({ ...previous, [thread.id]: !previous[thread.id] }))}
                 >
                   <MessageCircle size={14} aria-hidden="true" />
-                  <span className="community-feed-count" aria-hidden="true">{thread.replyCount > 0 ? formatCount(thread.replyCount, lang) : ''}</span>
-                  <ChevronRight className="community-feed-reply-chevron" size={12} aria-hidden="true" />
+                  <span className="community-feed-reply-count" aria-hidden="true">
+                    <span className="community-feed-count">{formatCount(thread.replyCount, lang)}</span>
+                    <ChevronRight className="community-feed-reply-chevron" size={12} />
+                  </span>
                 </button>}
                 <Link
                   href={`/forum/t/${thread.id}`}
                   prefetch={false}
+                  loadingOverlay={false}
                   className="community-feed-meta-action"
                   aria-label={tr({ zh: `查看主题，已有 ${thread.viewCount} 次浏览`, en: `View thread with ${thread.viewCount} views` })}
                 >

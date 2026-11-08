@@ -192,15 +192,18 @@
   fill: currentColor;
 }
 
+.community-feed-heart { transform-origin: center; transition: transform 120ms ease-out; }
+.community-feed-reaction-action:active:not(:disabled) .community-feed-heart { transform: scale(0.88); }
+
 .community-feed-meta-action:focus-visible {
   color: var(--accent);
   outline: 2px solid var(--ring);
   outline-offset: 1px;
 }
 
-.community-feed-meta-action:disabled { cursor: wait; opacity: 0.65; }
+.community-feed-meta-action:disabled { opacity: 0.65; }
 
-/* Keep empty and counted actions close in width; reserve only two digits. */
+/* Reserve two tabular digits for each stat, including zero counts. */
 .community-feed-meta > .community-feed-meta-action {
   min-width: 36px;
   gap: 4px;
@@ -210,13 +213,19 @@
   text-align: left;
 }
 
-.community-feed-count:empty { display: none; }
-
 .community-feed-count {
   display: block;
   min-width: 2ch;
   font-variant-numeric: tabular-nums;
 }
+
+.community-feed-reply-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: calc(2ch + 14px);
+}
+.community-feed-reply-count > .community-feed-count { min-width: 0; }
 
 .community-feed-replies-panel {
   display: grid;
@@ -241,7 +250,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .community-feed-replies-panel,
-  .community-feed-reply-chevron { transition: none; }
+  .community-feed-reply-chevron,
+  .community-feed-heart { transition: none; }
+  .community-feed-reaction-action:active:not(:disabled) .community-feed-heart { transform: none; }
 }
 
 .community-feed-replies {
