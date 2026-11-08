@@ -16,6 +16,7 @@ import { ACCOUNT_CARD_GROUP_ID, ACCOUNT_CARD_IDS, HOME_MEMBER_SECTION_IDS, SITE_
 import { getIp } from '../utils/analytics_helpers.js';
 import { query, withTransaction } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
+import { revalidateContentPages } from '../utils/recon_revalidate.js';
 
 export const navSitesRoutes = new Hono();
 
@@ -218,6 +219,7 @@ navSitesRoutes.put('/nav/home-locks', async (c) => {
   }
   if (typeof body.locked !== 'boolean') return c.json({ error: 'locked must be boolean' }, 400);
   await query('INSERT INTO home_card_locks (item_id, locked) VALUES (?, ?) ON CONFLICT (item_id) DO UPDATE SET locked = EXCLUDED.locked', [body.id, body.locked]);
+  await revalidateContentPages('home');
   return c.json({ ok: true });
 });
 
@@ -263,6 +265,8 @@ navSitesRoutes.put('/nav/home-order', async (c) => {
       params,
     );
   });
+
+  if (groupId !== ACCOUNT_CARD_GROUP_ID) await revalidateContentPages('home');
 
   return c.json({ ok: true });
 });

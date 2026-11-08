@@ -1,8 +1,11 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ACCOUNT_CARD_GROUP_ID, ACCOUNT_CARD_IDS, SITE_DIRECTORY_GROUPS } from '@cuberoot/shared/site-directory';
 
 const db = vi.hoisted(() => ({ query: vi.fn(), transactionQuery: vi.fn(), withTransaction: vi.fn() }));
+const invalidate = vi.hoisted(() => vi.fn(async () => {}));
+vi.mock('../src/utils/recon_revalidate.js', () => ({ revalidateContentPages: invalidate }));
 vi.mock('../src/db/connection.js', () => db);
 vi.mock('../src/utils/recon_helpers.js', () => ({
   checkRateLimit: vi.fn(),
@@ -24,6 +27,25 @@ describe('directory topic administration', () => {
     db.transactionQuery.mockImplementation((sql: string) => Promise.resolve(sql.startsWith('SELECT')
       ? [{ tag: 'Tutorial 教程' }, { tag: 'Timer 计时器' }] : []));
     db.withTransaction.mockImplementation(work => work(db.transactionQuery));
+  });
+  it('invalidates homepage snapshots only after successful visibility and homepage ordering writes', async () => {
+    const write = (path: string, body: unknown, admin = true) => app.request(`/v1/nav/${path}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json', ...(admin ? { Authorization: 'Bearer test-admin' } : {}) },
+      body: JSON.stringify(body),
+    });
+    expect((await write('home-locks', { id: 'timer', locked: true }, false)).status).toBe(403);
+    expect((await write('home-locks', { id: 'unknown', locked: true })).status).toBe(400);
+    expect(invalidate).not.toHaveBeenCalled();
+    expect((await write('home-locks', { id: 'timer', locked: true })).status).toBe(200);
+    expect(db.query.mock.invocationCallOrder.at(-1)!).toBeLessThan(invalidate.mock.invocationCallOrder[0]);
+    const group = SITE_DIRECTORY_GROUPS.find(group => group.id === 'main')!;
+    expect((await write('home-order', { groupId: group.id, ids: group.entries.map(entry => entry.id) })).status).toBe(200);
+    expect(invalidate.mock.calls).toEqual([['home'], ['home']]);
+    expect((await write('home-order', { groupId: ACCOUNT_CARD_GROUP_ID, ids: ACCOUNT_CARD_IDS })).status).toBe(200);
+    expect(invalidate).toHaveBeenCalledTimes(2);
+    db.query.mockRejectedValueOnce(new Error('write failed'));
+    expect((await write('home-locks', { id: 'timer', locked: false })).status).toBe(500);
+    expect(invalidate).toHaveBeenCalledTimes(2);
   });
   it('allows public reads but requires admin authorization for every mutation', async () => {
     const read = await app.request('/v1/nav/topics');

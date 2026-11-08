@@ -73,6 +73,8 @@ jobs:
             "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/scanner-ban.integration.ts"
           scp -i ~/.ssh/id ops/nginx/traffic-defense.integration.ts \
             "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/traffic-defense.integration.ts"
+          scp -i ~/.ssh/id ops/nginx/next-static-fallback.integration.ts \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/next-static-fallback.integration.ts"
           scp -i ~/.ssh/id ops/vercel-ban-relay/relay.ts ops/vercel-ban-relay/traffic-defense.ts ops/vercel-ban-relay/cuberoot-vercel-bans.service ops/vercel-ban-relay/cuberoot-vercel-bans.timer \
             "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/"
           scp -i ~/.ssh/id ops/geoip/update-cn-ranges.ts ops/systemd/cuberoot-cn-ranges.service ops/systemd/cuberoot-cn-ranges.timer \
@@ -102,6 +104,7 @@ jobs:
           "$NODE" --experimental-strip-types "$DEPLOY_STAGE/scanner-ban.integration.ts" "$DEPLOY_STAGE/02-scanner-ban.conf.new"
           "$NODE" --experimental-strip-types "$DEPLOY_STAGE/site-access.integration.ts" "$DEPLOY_STAGE/01-traffic-limits.conf.new" "$DEPLOY_STAGE/cuberoot-competition-access.inc.conf.new"
           "$NODE" --experimental-strip-types "$DEPLOY_STAGE/traffic-defense.integration.ts" "$DEPLOY_STAGE/01-traffic-limits.conf.new" "$DEPLOY_STAGE/00-maintenance.conf.new"
+          "$NODE" --experimental-strip-types "$DEPLOY_STAGE/next-static-fallback.integration.ts" "$DEPLOY_STAGE/www.cuberoot.me.conf.new"
           REMOTE
 
       - name: Install Vercel ban relay (activate only when credentials are configured)

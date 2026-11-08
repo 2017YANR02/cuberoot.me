@@ -343,7 +343,13 @@ const nextConfig: NextConfig = {
         // in production where it returns 404. Never fall back to the live API.
         { source: "/v1/:path((?!recon-capture-local(?:/|$)).*)?", destination: "https://api.cuberoot.me/v1/:path*" },
       ],
-      fallback: [],
+      // Split DNS can move a browser between two independently built deployments.
+      // Only missing immutable assets cross to the standalone-only alias. That
+      // host never falls back here, so unknown files terminate with a real 404.
+      fallback: isProd && isVercel ? [{
+        source: '/_next/static/:path*',
+        destination: 'https://next.cuberoot.me/_next/static/:path*',
+      }] : [],
     };
   },
 

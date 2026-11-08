@@ -11,6 +11,7 @@
 - dev/prod API base 用 `import.meta.env.DEV`,禁 `hostname==='localhost'` 判断(LAN/隧道域名会错走 prod 被 CORS 拦)。
 - COOP/COEP 仅 `/scramble/solver` 发;Next `headers()` 与 nginx map 两处同步改。
 - client 页面默认 SSG:根 layout 禁动态 API(cookies/headers),全局组件禁 render 调 `useSearchParams`;语言归属在 `[lang]/layout`。
+- 首页入口与排序以服务端验证后的公开快照预渲染，复用 ISR 和既有认证刷新 webhook；附加数据不得阻塞整页。独立构建的双线路仅对缺失 `/_next/static/*` 做同源补取，standalone-only 别名不得再向 Vercel 兜底。实现边界、缓存取舍与发布验收见[首页加载修复记录](../homepage-loading-2026-11-08.md)。
 - 省 Vercel 配额:①高基数/响应式 href/离开本页的 `<Link>` 必 `prefetch={false}`;②无 SEO 的动态 `[param]` 页走静态哨兵壳(`dynamicParams=false` + `generateStaticParams` 返 `['_']` + beforeFiles rewrite + client 读 `window.location`);③`public/` 大资产必设 `Cache-Control`;④取证看 `/www/wwwlogs/www.cuberoot.me.log`(全 IP+UA)。
 
 ## 页面标题 / SEO metadata
