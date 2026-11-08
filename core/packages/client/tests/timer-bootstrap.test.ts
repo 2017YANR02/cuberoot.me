@@ -293,6 +293,13 @@ describe('app bootstrap early guard', () => {
     vi.restoreAllMocks();
   });
 
+  it.each(['/timer/accuracy', '/zh/timer/accuracy', '/timer/marks'])('does not count %s as a timer startup', path => {
+    window.history.replaceState({}, '', path);
+    window.eval(APP_BOOT_EARLY_SCRIPT);
+    expect(window.__timerBootTelemetry).toBeUndefined();
+    expect(sendBeacon).not.toHaveBeenCalled();
+  });
+
   it('replaces the server loading shell even when React never hydrates', () => {
     const shell = document.createElement('main');
     shell.setAttribute('data-timer-bootstrap', 'loading');

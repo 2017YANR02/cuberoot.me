@@ -231,7 +231,7 @@ const APP_BOOT_DIAGNOSTIC_URL_JSON = JSON.stringify(`${BROWSER_API_ORIGIN}${APP_
  * parse the shared Next.js runtime chunks that would normally render React.
  */
 export const APP_BOOT_EARLY_SCRIPT = `(function () {
-  var isTimer = /^\\/(?:zh\\/)?timer(?:\\/|$)/.test(window.location.pathname);
+  var isTimer = /^\\/(?:zh\\/)?timer\\/?$/.test(window.location.pathname);
   document.documentElement.setAttribute('data-app-boot-guard', 'active');
   if (window.__appBootEarly && window.__appBootEarly.stop) window.__appBootEarly.stop();
   var allCopy = ${EARLY_COPY_JSON};

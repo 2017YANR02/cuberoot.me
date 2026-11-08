@@ -7,6 +7,33 @@
   },
   "artifacts": [
     {
+      "id": "client.smart-cube-timing-accuracy-page",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "Frozen 441-case software timing report and its CSV; no new benchmark run",
+        "paths": [
+          "docs/benchmarks/smart-cube-timing-cold-start-2026-11-06.json",
+          "docs/benchmarks/smart-cube-timing-cold-start-2026-11-06.csv"
+        ]
+      },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "CubeRoot-authored benchmark results; pinned csTimer implementation is linked and not bundled in these assets"
+      },
+      "owner": "core/packages/client/scripts/smart-cube-timing/export-page.mts",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/client exec node --import tsx scripts/smart-cube-timing/export-page.mts --write",
+      "outputs": [
+        "core/packages/client/app/[lang]/timer/accuracy/benchmark.generated.json",
+        "core/packages/client/public/_assets/benchmarks/smart-cube-timing-ecc4f9420f72.json",
+        "core/packages/client/public/_assets/benchmarks/smart-cube-timing-ecc4f9420f72.csv"
+      ],
+      "verification": [
+        "pnpm --filter @cuberoot/client exec node --import tsx scripts/smart-cube-timing/export-page.mts"
+      ],
+      "driftPolicy": "Derive displayed metrics and presets from the frozen source. Compare output bytes in check mode; name download assets by report hash. Preserve unfavorable cases and distinguish simulated accuracy from hardware measurement."
+    },
+    {
       "id": "client.precomputed-exact-puzzle-distributions",
       "kind": "checked-in-generated",
       "source": {

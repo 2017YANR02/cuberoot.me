@@ -825,6 +825,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Record daily practice solve times and view averages. Includes WCA-standard scrambles, smart-cube support, step-by-step analysis and cloud backup.',
     },
   },
+  'timer/accuracy': {
+    title: { zh: '智能魔方计时精度', en: 'Smart-cube timing accuracy' },
+    description: {
+      zh: '了解 CubeRoot 如何校正设备时钟与批量消息偏移。查看 441 个软件基准场景、固定版本 csTimer 对照、完整数据和适用局限。',
+      en: 'How CubeRoot corrects device-clock drift and batched messages. Explore 441 software benchmark cases, a pinned csTimer comparison, full results and limitations.',
+    },
+  },
   'timer/marks': { title: { zh: '打乱足迹', en: 'Scramble Marks' } },
   'timezone': {
     title: { zh: '时区换算', en: 'Time Zone Converter' },

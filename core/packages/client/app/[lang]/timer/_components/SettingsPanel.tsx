@@ -298,6 +298,12 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
         {activeCategory === 'smart-cube' && <>
           <TimerSmartCubeSettingsFields value={s} localize={tr} onChange={updateSettings} renderBooleanControl={renderTimingBooleanControl}
             orientationControl={<TimerPreScrambleSettings only="training" value={s} onChange={updateSettings} localize={tr} />} />
+          <div className="timer-settings-actions">
+            <AppLink className="timer-settings-action" href="/timer/accuracy" prefetch={false} onClick={onClose}>
+              <span>{tr({ zh: '计时精度与基准测试', en: 'Timing accuracy and benchmarks' })}</span>
+              <ChevronRight size={16} aria-hidden="true" />
+            </AppLink>
+          </div>
           {settingState('settings.smart-cube.fake-cube').visible && (
             <section className="settings-section">
             <details className="settings-disclosure">
