@@ -42,9 +42,11 @@ describe('website frontend is Next-only', () => {
   it('requires native typechecking after Next emits route types and before build completion', () => {
     const stages = pkg.scripts?.build?.split('&&').map(stage => stage.trim()) ?? [];
     const nextBuild = stages.indexOf('next build');
+    const prerenderCheck = stages.indexOf('node scripts/check-home-prerender.mjs');
     const nativeCheck = stages.indexOf('pnpm run typecheck');
     expect(nextBuild).toBeGreaterThan(-1);
-    expect(nativeCheck).toBe(nextBuild + 1);
+    expect(prerenderCheck).toBe(nextBuild + 1);
+    expect(nativeCheck).toBe(prerenderCheck + 1);
     expect(pkg.scripts?.typecheck).toBe('tsgo --noEmit');
     const config = readFileSync(join(CLIENT, 'next.config.ts'), 'utf8');
     expect(config).toContain('typescript: { ignoreBuildErrors: true }');
