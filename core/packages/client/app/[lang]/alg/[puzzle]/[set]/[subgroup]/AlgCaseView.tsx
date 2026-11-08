@@ -56,6 +56,7 @@ import { adjacentAlgCases, siblingAlgCases } from '@/lib/alg_case_navigation';
 import {
   CASE_VIEW_ANGLES,
   caseViewAlg,
+  playbackCaseAlg,
   caseViewSetup,
   displayCaseScramble,
   displayCaseAlg,
@@ -780,7 +781,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
                     {(!showAnimation || selectedEntry || playingScramble || oi === 0) && (
                       <div className="alg-case-detail-ori-player alg-player-list-player">
                         {!showAnimation ? renderPreviewImage(orientedSetup, oriAlgs[0]?.alg ?? caseObj.standard ?? '', oi) : (selectedEntry || playingScramble) && <AlgPlayer
-                          alg={playingScramble ? orientationSetup : selectedAlg}
+                          alg={playingScramble ? orientationSetup : playbackCaseAlg(puzzle, selectedAlg)}
                           puzzle={puzzle}
                           set={set}
                           setup={playingScramble ? undefined : orientationSetup}

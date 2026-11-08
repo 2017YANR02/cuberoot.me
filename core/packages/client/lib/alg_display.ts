@@ -3,12 +3,12 @@
  *
  * 库里存的是**完整公式**:`setup + alg` 精确还原,所以末尾常带一个把顶层转正的收尾 AUF。
  * 那个 U 对魔友没有任何帮助(他自己会转),所以显示和复制时剥掉。
- * 公式末尾用来恢复持方的 y 转体也同理：原式和播放保留，仅展示时隐藏。
+ * 公式末尾用来恢复持方的 y 转体也同理：原式保留，展示和 case 解法播放时隐藏。
  *
  * 剥掉是安全的:若 `setup + A U^b` 还原,那 A 单独执行后魔方只差一个顶层转 —— 末尾的
  * U^b 必然是纯收尾 AUF,不可能是公式的一部分(它后面没有任何步骤能被它影响)。
  *
- * ⚠ **播放器 / 缩略图 / recon 查表要的是完整公式,别喂它们 displayAlg 的结果** ——
+ * ⚠ **播放器 / 缩略图 / recon 查表别使用 displayAlg 的结果** ——
  * 剥了 AUF 的公式跑完停在没还原的魔方上。只有「渲染文本」和「复制到剪贴板」用这个。
  *
  * 纯字符串操作,不过 cubing.js —— 括号、`=` 标记、`·↑↓` 指法记号都要原样保留。
@@ -117,19 +117,24 @@ export function displayAlg(alg: string): string {
 /** Presentation always drops finishing y; top-layer sets also drop finishing AUF. */
 function caseAlgDisplayEdits(puzzle: string, set: string, alg: string): AlgTextEdit[] {
   const hideAuf = is3x3TopLayerSet(puzzle, set);
+  return trailingAdjustmentEdits(alg, token => /^y(?:2'?|')?$/.test(token)
+    || (hideAuf && /^U(?:2'?|')?$/.test(token)));
+}
+
+function trailingAdjustmentEdits(alg: string, isAdjustment: (token: string) => boolean): AlgTextEdit[] {
   const tokens = [...alg.matchAll(/[()]|[^\s()]+/g)];
   let end = tokens.length - 1;
   let adjustments = 0;
   while (end >= 0) {
     const token = tokens[end][0];
     if (token === '(' || token === ')') { end--; continue; }
-    if (!/^y(?:2'?|')?$/.test(token) && !(hideAuf && /^U(?:2'?|')?$/.test(token))) break;
+    if (!isAdjustment(token)) break;
     adjustments++;
     end--;
   }
   if (!adjustments || end < 0) return [];
   // Retain groups around surviving moves; discard groups containing only AUF/y.
-  // A repetition, commutator, wide turn or x/z at the end stops the scan.
+  // Repetitions, commutators and non-adjustment moves stop the scan.
   const start = tokens[end].index! + tokens[end][0].length;
   let depth = 0;
   let closing = '';
@@ -159,6 +164,13 @@ function legacyGroupingBalanceEdits(alg: string): AlgTextEdit[] {
   }
   if (depth > 0) edits.push({ start: alg.length, end: alg.length, text: ')'.repeat(depth) });
   return edits;
+}
+
+/** Case solution playback omits only final cube regrips, retaining AUF and the original setup.
+ * Do not apply to scrambles, editor previews or stored/validated algorithms. */
+export function playbackCaseAlg(puzzle: string, alg: string): string {
+  if (!['2x2', '3x3', '4x4', '5x5', '6x6'].includes(puzzle)) return alg;
+  return applyAlgTextEdits(alg, trailingAdjustmentEdits(alg, token => /^[xyz](?:2'?|')?$/.test(token)));
 }
 
 export function displayCaseAlg(puzzle: string, set: string, alg: string): string {
