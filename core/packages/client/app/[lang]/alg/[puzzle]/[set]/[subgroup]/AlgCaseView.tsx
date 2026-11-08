@@ -1,6 +1,8 @@
 'use client';
 import F2lSlotSelector from '@/components/F2lSlotSelector';
 import PageHeading from '@/components/PageHeading';
+import { TimerPracticeContentPicker } from '@cuberoot/timer-ui';
+import { useTranslation } from 'react-i18next';
 import { alignAlgFile, caseAlgIssue, loadAlg } from '@/lib/alg_case_alignment';
 
 /**
@@ -50,7 +52,7 @@ import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';
 import { algCaseHref, algCaseDetailHref, buildCaseSlugMap } from '@/lib/alg_case_link';
 import { primaryCaseName, displayAlgCaseName } from '@/lib/alg_case_display';
 import { compareAlgGroupLabel } from '@/lib/alg_group_order';
-import { adjacentAlgCases } from '@/lib/alg_case_navigation';
+import { adjacentAlgCases, siblingAlgCases } from '@/lib/alg_case_navigation';
 import {
   CASE_VIEW_ANGLES,
   caseViewAlg,
@@ -81,7 +83,7 @@ import {
 import { SCRAMBLE_KINDS, type ScrambleKind } from '@/lib/trainer-scramble';
 import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
 import { parseAsBoolean, parseAsStringEnum } from 'nuqs';
-import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
+import { useTrainingQueryState as useQueryState, useTrainingRouter } from '@/lib/training-host';
 
 const F2L_DETAIL_ORIENTATION_ORDER = new Map([
   ['BL', 0],
@@ -235,6 +237,9 @@ function CaseDetailsTabs({ related, metadata, advanced }: { related: ReactNode; 
 }
 
 export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embedded = false, onEmbeddedCaseChange }: { puzzle: AlgPuzzle; set: string; caseObj: AlgCase; data: AlgFile; embedded?: boolean; onEmbeddedCaseChange?: (href: string) => void; }) {
+  const navigation = useTrainingRouter();
+  const { i18n } = useTranslation();
+  const isZh = i18n.language.startsWith('zh');
   /**
    * 显示的这张 case 自己拿一份 —— admin 改完 / 拖完就地更新,不回写上层的 `data`:
    * 上层是按 **slug** 解析出这张 case 的,改了名字再回写会当场解析失败(整页变「没找到」)。
@@ -428,6 +433,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
     return showAnimation ? target : `${target}${target.includes('?') ? '&' : '?'}preview=image`;
   };
   const adjacent = useMemo(() => adjacentAlgCases(puzzle, set, data.cases, caseObj), [puzzle, set, data.cases, caseObj]);
+  const siblings = useMemo(() => siblingAlgCases(puzzle, set, data.cases, caseObj), [puzzle, set, data.cases, caseObj]);
 
   // 社区公式:只这张 case 的。
   const [submissions, setSubmissions] = useState<AlgSubmission[]>([]);
@@ -561,7 +567,21 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
       <div className="alg-case-detail-head">
 
         <PageHeading backHref={backHref} titleClassName="alg-case-detail-title">
-          {editor ? editor.name : <span data-alg-shared-title={primary}>{primary}</span>}
+          {editor ? editor.name : <span data-alg-shared-title={primary}>
+            {embedded && !onEmbeddedCaseChange ? primary : <TimerPracticeContentPicker
+              entries={siblings.map(c => {
+                const name = primaryCaseName(puzzle, set, c);
+                return { id: String(c.id), title: { zh: name, en: name } };
+              })}
+              selectedId={String(caseObj.id)} label={primary} language={isZh ? 'zh' : 'en'}
+              onSelect={id => {
+                const target = siblings.find(c => String(c.id) === id);
+                if (!target || target.id === caseObj.id) return;
+                const href = hrefFor(target, mobileSlot);
+                if (embedded && onEmbeddedCaseChange) onEmbeddedCaseChange(href);
+                else navigation.push(`${isZh ? '/zh' : ''}${href}`);
+              }} />}
+          </span>}
           {showSub && <span className="alg-meta-head-sub">{sub}</span>}
           <Link href={backHref} className="alg-meta-head-open" prefetch={false} title={tr({ zh: '在列表中打开', en: 'Open in the list' })}>
             <ExternalLink size={14} />

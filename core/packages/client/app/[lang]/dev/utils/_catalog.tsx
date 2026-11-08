@@ -270,6 +270,14 @@ export const CATALOG: UtilEntry[] = [
     usage: 'const { record } = useTrainingStats("color:relations"); record(true, 1500);',
   },
   {
+    name: 'useTimeAttackOrder',
+    sig: 'useTimeAttackOrder(puzzle, setSlug, scope, canonicalKeys)',
+    imp: "import { useTimeAttackOrder } from '@/hooks/useTimeAttackOrder';",
+    category: 'hook',
+    zh: '情况顺序与 PLL 连拧共用本机保存、云端合并和排序归一化。',
+    en: 'Shared local persistence, cloud merging and order normalization for case order and PLL chains.',
+  },
+  {
     name: 'identity-choice store',
     sig: 'useIdentityChoice(): IdentityChoice | null',
     imp: "import { useIdentityChoice } from '@/lib/identity-choice';",
@@ -346,6 +354,15 @@ export const CATALOG: UtilEntry[] = [
     en: '"Click a thing → URL fragment updates → scroll to it and highlight" in one place. Unifies 6 hand-rolled copies (wiki entries, the two person result tables, alg cards, prediction event sections, forum posts). Differences become options: resolve / reveal (expand a collapsed group, force-render a virtualized row, open <details>; return false to retry) / linger (sticky vs flash) / highlightClass / deps.',
   },
   {
+    name: 'useEntryRouter',
+    sig: 'useEntryRouter(): AppRouterInstance',
+    imp: "import { useEntryRouter } from '@/hooks/useEntryRouter';",
+    usage: "const router = useEntryRouter();\nrouter.push('/platform/orders');",
+    category: 'hook',
+    zh: '程序式站内导航统一入口。push 记录来源，replace 保留来源，返回由 PageBackLink 逐层消费。',
+    en: 'Shared imperative navigation. Push records the entry, replace preserves it, and PageBackLink unwinds the trail.',
+  },
+  {
     name: 'useLiveUrlSuffix',
     sig: 'useLiveUrlSuffix(): string',
     imp: "import { useLiveUrlSuffix } from '@/hooks/useLiveUrlSuffix';",
@@ -371,6 +388,15 @@ export const CATALOG: UtilEntry[] = [
     category: 'hook',
     zh: '从公式列表进入详情时恢复共享元素过渡。',
     en: 'Completes the shared-element transition from an algorithm list to a case.',
+  },
+  {
+    name: 'useDialogMotion',
+    sig: 'useDialogMotion(onClose, { enabled?, surface?, sheet? }): { motionRef, close }',
+    imp: "import { useDialogMotion } from '@/hooks/useModalDismiss';",
+    usage: 'const { motionRef, close } = useDialogMotion(onClose);',
+    category: 'hook',
+    zh: '共享弹窗开关过渡，保持玻璃模糊，退场结束后关闭；支持减少动态效果。',
+    en: 'Shared dialog motion preserves backdrop blur and dismisses after exit; respects reduced motion.',
   },
   {
     name: 'useModalDismiss',

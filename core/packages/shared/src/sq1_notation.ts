@@ -66,11 +66,9 @@ export function canonicalSq1Alg(alg: string): string {
 }
 
 /** Re-emit a sq1 alg in compact `tb/tb/...` form (no parens, no commas, no spaces).
- *  `(t, 0)` 简成 single `t` 仅当两侧都是 `/` (或字符串边界) —— 真 WCA 打乱 turn/slice
- *  必交替,总成立。否则保留 `tb`,免 `35/3/` 类左边界缺失 → `353/` 被 greedy 当成
- *  `(35, 3) /`。两 turn 中间没 `/` 的非 WCA 输入仍可能歧义 (e.g. `(3,0)(3,0)` →
- *  `3030` → `(303, 0)`);compact 只为 canonical scramble 显示用。
- *  DISPLAY only — safe round-trip iff every |t|, |b| ≤ 9 (sq1 turns are [-5..6] in practice). */
+ *  Adjacent layer turns retain parentheses so `(0,2)(-3,0)` cannot become
+ *  `02-30` and parse as a different move. Multi-digit amounts also retain the
+ *  canonical pair. This is display formatting; players should use raw notation. */
 export function compactSq1Alg(alg: string): string {
   const toks = parseSq1Tokens(alg);
   return toks.map((tok, i) => {
@@ -78,6 +76,9 @@ export function compactSq1Alg(alg: string): string {
     if (tok.kind === 'rotation') return ` ${tok.axis}2 `;
     const prev = toks[i - 1];
     const next = toks[i + 1];
+    if (prev?.kind === 'turn' || next?.kind === 'turn' || Math.abs(tok.top) > 9 || Math.abs(tok.bot) > 9) {
+      return `(${tok.top},${tok.bot})`;
+    }
     const leftBound = !prev || prev.kind === 'slice';
     const rightBound = !next || next.kind === 'slice';
     if (tok.bot === 0 && leftBound && rightBound) return `${tok.top}`;

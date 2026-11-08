@@ -9,7 +9,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { installedPetAvailable } from '@/lib/installed-content';
-import { useRouter } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import { Bell, BookOpen, Building2, ChevronLeft, ChevronRight, Crown, LockKeyhole, LogOut, Rewind, IdCard, GraduationCap, Inbox, Lightbulb, Loader2, Pencil, Upload, X, UserRound, Users } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';

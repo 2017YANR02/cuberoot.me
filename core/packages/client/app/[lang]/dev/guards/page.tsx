@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 // /dev/guards — 汇总散落仓库各处的「写入即拦」PreToolUse hook + CI 棘轮测试。
 // 自包含静态内容,跟 /dev 系其他页独立设计(art-directed dark,guard-red 主题)。
 // 数据在 ./_guards.ts(与 tests/dev-guards-drift.test.ts 共享,改这页先改那份数据)。
@@ -22,7 +23,7 @@ export default function GuardsPage() {
 
       <div className="gd-shell">
         <div className="gd-topbar">
-          <Link href="/dev" className="gd-back">← /dev</Link>
+          <PageBackLink fallback="/dev" className="gd-back" />
         </div>
 
         <header className="gd-hero">

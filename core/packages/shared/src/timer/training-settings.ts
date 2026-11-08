@@ -11,7 +11,7 @@ export const TRAINING_START_MODE_COPY = {
 } as const;
 
 export function timerSupportsTrainingTiming(event: EventId): boolean {
-  return event !== '333' && TIMER_333_SCRAMBLE_TYPES.some(item => item.event === event);
+  return event !== '333' && event !== 'pll-chain' && TIMER_333_SCRAMBLE_TYPES.some(item => item.event === event);
 }
 
 /** Shared training preferences; hosts own persistence and the current event. */

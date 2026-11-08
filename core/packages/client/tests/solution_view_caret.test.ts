@@ -51,6 +51,19 @@ describe('SolutionView caret mapping', () => {
     vi.mocked(loadAlg).mockResolvedValue({ cases: [] } as unknown as AlgFile);
   });
 
+  it('makes cancellation badges toggleable without moving the playback cursor', async () => {
+    const toggle = vi.fn();
+    await act(async () => root.render(createElement(SolutionView, {
+      text: "U L U // F2L 3 (GO) cancel into", event: '333', playerRef: { current: null },
+      cancellationLines: new Set([0]), expandedCancellationLine: 0, onToggleCancellation: toggle,
+    })));
+    const button = host.querySelector<HTMLButtonElement>('button.recon-cancel-badge')!;
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+    await act(async () => button.click());
+    expect(toggle).toHaveBeenCalledExactlyOnceWith(0);
+    expect(host.querySelector('.detail-cursor')).toBeNull();
+  });
+
   it.each(['timer', 'recon'])('resolves a bare OLL(CP) label to an exact case in %s', async surface => {
     const moves = "R U R' U R U2 R'";
     vi.mocked(loadAlg).mockResolvedValue({ cases: [{ id: 1, name: 'OLLCP27 1', algs: [[{ alg: moves }]] }] } as AlgFile);

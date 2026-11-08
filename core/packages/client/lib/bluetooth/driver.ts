@@ -229,6 +229,12 @@ export interface CubeDriverStartResult {
 }
 
 export interface CubeDriverContext {
+  /** Candidate-aware drivers verify addresses before exposing a connected session. */
+  macHints?: (string | null | undefined)[];
+  requestMac?: () => Promise<string | null>;
+  onVerifiedMac?: (mac: string) => void;
+  onRejectedMac?: (mac: string) => void;
+  isCurrent?: () => boolean;
   /** A validated battery notification; may arrive during or after start(). */
   onBattery?: (level: number) => void;
   /**
@@ -327,11 +333,9 @@ export interface CubeDriver {
    */
   macAdv?: MacAdvSpec;
   /**
-   * Vendor-documented fallback MAC derived from the BLE device name, for the
-   * brands that publish a fixed prefix (MoYu32's `WCU_MY32_XXYY` →
-   * `CF:30:16:00:XX:YY`). Tried after advertisements / saved / an embedded
-   * full MAC and before the manual prompt. Returns null when the name does
-   * not match the documented pattern — never a guess.
+   * Name-derived address hint. MoYu32 uses this only to identify reconnectable
+   * devices; its actual connection verifies the shared finite candidate list.
+   * Other brands may use the hint before their manual prompt.
    */
   defaultMac?(device: BluetoothDevice): string | null;
   /**

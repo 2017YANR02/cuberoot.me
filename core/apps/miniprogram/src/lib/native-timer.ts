@@ -170,21 +170,21 @@ export class NativeTimer {
     this.store = loadOrCreateTimerStore(null, { nowMs: Date.now(), id: `session-${Date.now()}`, language: getMiniProgramLocale() }).data;
     this.solo = new SmartCubeSoloTimerController({
       onGuidanceChange: () => this.onChange?.(),
-      armFromCube: atMs => this.dispatch({ type: 'arm-from-cube', nowMs: this.now(), atMs }),
+      armFromCube: (atMs, clock) => this.dispatch({ type: 'arm-from-cube', nowMs: this.now(), atMs, clock }),
       autoReadyOnScramble: () => this.settings.bluetoothAutoReady === 'scrambled',
       canStartAttempt: () => this.visible && this.cubeKnown && Boolean(this.scramble),
       getPhase: () => this.state.phase,
       isTimingEnabled: () => this.visible && this.settings.timingEnabled,
       solve: async () => null,
-      recordMove: e => { this.recording.recordMove(e.move, e.timestamp); },
-      startFromCube: atMs => this.dispatch({ type: 'start-from-cube', nowMs: this.now(), atMs }),
-      stopFromCube: atMs => this.dispatch({ type: 'stop-from-cube', nowMs: this.now(), atMs }),
+      recordMove: e => { this.recording.recordMove(e.move, e.timestamp, e.clock); },
+      startFromCube: (atMs, clock) => this.dispatch({ type: 'start-from-cube', nowMs: this.now(), atMs, clock }),
+      stopFromCube: (atMs, clock) => this.dispatch({ type: 'stop-from-cube', nowMs: this.now(), atMs, clock }),
     });
     this.cube = new SmartCubeSessionController<{ futureHistory?: boolean }>({
       now: this.now,
       onChange: () => this.onChange?.(),
       onMove: e => { if (this.visible) this.solo.move(e); },
-      onSolved: atMs => { if (this.visible) this.solo.solved(atMs); },
+      onSolved: (atMs, clock) => { if (this.visible) this.solo.solved(atMs, clock); },
     });
     try {
       // Douyin can throw for absent keys; a successful inventory distinguishes a fresh install from a read failure.
@@ -321,7 +321,7 @@ export class NativeTimer {
     const before = this.state;
     const result = transitionTimer(this.state, action, { inspectionSec: this.settings.inspectionSec });
     this.state = result.state;
-    if (result.effects.includes('run-started') && this.cubeConnected) this.recording.begin(this.state.startedAtMs ?? this.now(), this.device);
+    if (result.effects.includes('run-started') && this.cubeConnected) this.recording.begin(this.state.startedAtMs ?? this.now(), this.device, undefined, this.state.cubeStart);
     this.solo.setRunning(this.state.phase === 'running');
     if (result.solve) {
       this.lastPenalty = result.solve.autoPenalty;

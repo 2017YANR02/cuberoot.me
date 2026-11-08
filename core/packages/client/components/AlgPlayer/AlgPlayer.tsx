@@ -48,6 +48,7 @@ export const TWISTY_PUZZLE: Partial<Record<AlgPlayerPuzzle, string>> = {
   '3x3': '3x3x3',
   '4x4': '4x4x4',
   '5x5': '5x5x5',
+  '6x6': '6x6x6',
   'sq1': 'square1',
   'megaminx': 'megaminx',
   'pyraminx': 'pyraminx',
@@ -134,7 +135,7 @@ interface Props {
 
 /** `/sim` 公式播放器当前支持的全部拼图。 */
 const SIM_SUPPORTED = new Set<AlgPlayerPuzzle>([
-  '2x2', '3x3', '4x4', '5x5', 'sq1', 'megaminx', 'pyraminx', 'skewb', 'clock', 'ivy',
+  '2x2', '3x3', '4x4', '5x5', '6x6', 'sq1', 'megaminx', 'pyraminx', 'skewb', 'clock', 'ivy',
 ]);
 
 /** EIF macros expand to several physical turns, so the FTO engine uses a shorter beat. */

@@ -126,6 +126,8 @@ export const SET_GOAL: Record<string, AlgGoal> = {
   '4x4/pll-parity': 'solve',
   '5x5/l2c': 'centers',
   '5x5/l2e': 'solve',
+  '6x6/l2c': 'centers',
+  '6x6/l2e': 'solve',
   // 其它魔方:setup 描述该阶段 case；公式完成后应整解，整体换握由 reachesGoal 容忍。
   'megaminx/full-pll': 'solve',
   'megaminx/eo': 'mega-eo',
@@ -161,7 +163,7 @@ export const CUBE_ORIENTATIONS: string[] = (() => {
   return out;
 })();
 
-const CUBE_LIKE = new Set(['2x2', '3x3', '4x4', '5x5']);
+const CUBE_LIKE = new Set(['2x2', '3x3', '4x4', '5x5', '6x6']);
 
 type Orbit = { pieces: number[]; orientation: number[] };
 const orbit = (p: KPattern, name: string) => p.patternData[name] as unknown as Orbit;
@@ -304,10 +306,37 @@ function eolrGoalKeys(kp: KPuzzle): Set<string> {
   return keys;
 }
 
+const centerFacesCache = new WeakMap<KPuzzle, Record<string, number[][]>>();
+
+/** PG gives 6x6 centers distinct IDs; exchanging same-colour centers is solved. */
+function sixCentersSolved(p: KPattern, kp: KPuzzle): boolean {
+  let faces = centerFacesCache.get(kp);
+  if (!faces) {
+    faces = {};
+    for (const name of Object.keys(p.patternData).filter(name => name.startsWith('CENTERS'))) {
+      faces[name] = ['U', 'R', 'F', 'D', 'L', 'B'].map(face => {
+        const permutation = kp.moveToTransformation(face).transformationData[name].permutation;
+        return permutation.flatMap((piece, i) => piece === i ? [] : [i]);
+      });
+      if (faces[name].some(group => group.length !== 4)
+        || new Set(faces[name].flat()).size !== 24) return false;
+    }
+    centerFacesCache.set(kp, faces);
+  }
+  return Object.keys(faces).length === 4
+    && Object.entries(faces).every(([name, groups]) => groups.every(group => groupedAt(orbit(p, name), group)));
+}
+
 /** 在某一个固定朝向下,这个态达成目标了吗。 */
 function reaches(p: KPattern, kp: KPuzzle, puzzle: string, goal: AlgGoal): boolean {
   if (goal === 'skip') return true;
   if (goal === 'unregistered') return false;
+  if (puzzle === '6x6' && (goal === 'centers' || goal === 'solve')) {
+    if (!sixCentersSolved(p, kp)) return false;
+    if (goal === 'centers') return true;
+    const def = kp.defaultPattern().patternData;
+    return ['CORNERS', 'EDGES', 'EDGES2'].every(name => JSON.stringify(p.patternData[name]) === JSON.stringify(def[name]));
+  }
   if (goal === 'solve') return JSON.stringify(p.patternData) === JSON.stringify(kp.defaultPattern().patternData);
 
   if (puzzle === '2x2') {

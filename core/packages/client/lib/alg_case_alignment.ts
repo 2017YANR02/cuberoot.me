@@ -98,7 +98,7 @@ export async function alignCaseEntry(
   puzzle: AlgPuzzle, set: string, c: AlgCase, entry: AlgEntry, ori = 0,
 ): Promise<AlgEntry> {
   const setup = commonCaseSetup(puzzle, set, c, ori);
-  const validation = { fixedOrientation: ['2x2', '3x3', '4x4', '5x5'].includes(puzzle) };
+  const validation = { fixedOrientation: ['2x2', '3x3', '4x4', '5x5', '6x6'].includes(puzzle) };
   let html = entry.algHtml;
   if (html) {
     try {

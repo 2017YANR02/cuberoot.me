@@ -1,11 +1,10 @@
 import type { Metadata } from 'next';
 import { metadataFromEntry } from '@/lib/page-meta';
 import { statsUrl } from '@/lib/stats-base';
+import { isWcaStatPage } from '@cuberoot/shared/wca-stat-catalog';
 
-// The 62 WCA statistics pages all inherited /wca's title, so every one of them
-// looked identical in search results. There is no build-time list of valid
-// statIds — the /wca index discovers them by fetching /stats/index.json at
-// runtime — so the title comes from that same file. Safe to fetch here: the
+// Titles come from the published index; valid routes come from the shared
+// catalog rather than the publication's age. Safe to fetch here: the
 // route prebuilds no params (generateStaticParams returns none), so this never
 // runs during `next build`; a slow static origin can only make a title stale.
 
@@ -15,6 +14,7 @@ interface StatGroup { nameEn: string; nameZh: string; stats: StatEntry[] }
 const REVALIDATE = 86400;
 
 async function findStat(id: string): Promise<{ stat: StatEntry; group: StatGroup } | null> {
+  if (!isWcaStatPage(id)) return null;
   try {
     const res = await fetch(statsUrl('/stats/index.json'), {
       next: { revalidate: REVALIDATE, tags: ['wca-stats-index'] },

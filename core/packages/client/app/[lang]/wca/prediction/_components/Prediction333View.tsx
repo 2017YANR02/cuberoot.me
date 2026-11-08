@@ -11,7 +11,7 @@ import { useEffect, useState, useContext, createContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from '@/components/AppLink';
 import { persistItem } from '@/lib/safe-storage';
-import { useRouter } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { ArrowLeft, ArrowRight as ArrowRightIcon, Menu, X as XIcon } from '@app-foundation/icons/lucide';
 
 const ActiveSectionContext = createContext<string>('tldr');

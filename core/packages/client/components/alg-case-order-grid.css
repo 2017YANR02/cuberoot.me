@@ -1,0 +1,8 @@
+.alg-case-order-names { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; margin-top: 20px; }
+.alg-case-order-item { display: flex; flex-direction: column; align-items: center; padding: 8px 2px; border-radius: 8px; background: var(--muted); font-size: 14px; }
+.alg-case-order-item.is-dragging { z-index: 1; background: var(--accent-soft); }
+.alg-case-order-item .alg-case-order-handle { appearance: none; border: 0; padding: 0; color: var(--muted-foreground); background: transparent; touch-action: none; cursor: grab; display: grid; place-items: center; min-width: 44px; min-height: 44px; border-radius: 6px; }
+.alg-case-order-item .alg-case-order-handle:hover { color: var(--foreground); background: var(--accent-soft); }
+@media (max-width: 760px) {
+  .alg-case-order-names { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

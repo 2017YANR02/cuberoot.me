@@ -50,10 +50,10 @@
 .detail-page {
   padding: 0;
   max-width: none;
-  height: 100dvh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .detail-page .detail-header-block {
@@ -67,7 +67,7 @@
 .detail-layout {
   flex: 1;
   display: flex;
-  overflow: hidden;
+  overflow: visible;
   min-height: 0;
 }
 
@@ -131,13 +131,17 @@
   /* Cap reading width on ultrawide screens so stats / same-comp table don't
      stretch edge-to-edge; won't grow past 800, the player pane eats the rest. */
   flex: 0 1 800px;
-  overflow-y: auto;
-  scrollbar-width: none;
+  overflow: visible;
   max-width: 800px;
   padding: 12px 20px 24px;
 }
-.detail-content-pane::-webkit-scrollbar {
-  display: none;
+@media (min-width: 1024px) {
+  .detail-page:not(.detail-page--fullscreen) .detail-player-pane {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 80dvh;
+  }
 }
 
 /* 平板(768-1023): 上下堆叠 */

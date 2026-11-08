@@ -12,7 +12,7 @@ import { formatTimerCompoundScramble, TIMER_COMPOUND_SCRAMBLE_CHILDREN } from '.
 import { generateTimerTrainerScramble, isTimerTrainerEvent, generateTimerDrillScramble } from '../trainer-scramble';
 import { applyColorNeutral, isCnEligible } from '../color-neutral';
 import { SCRAMBLE_222_TYPE_CATALOG } from '../scramble-222';
-import type { TimerScrambleRequest } from '../scramble-runtime';
+import { timerScrambleAllowsEmptySlot, type TimerScrambleRequest } from '../scramble-runtime';
 import type { TimerSeedTicket } from '../sync-seed';
 import type { EventId } from '../types';
 import { generateTimerTrainingStateScramble, isTimerTrainingStateEvent } from '../training-state-scramble';
@@ -34,6 +34,32 @@ export interface TimerSeedRequest extends TimerScrambleRequest {
   drill?: Parameters<typeof generateTimerDrillScramble>[0] | null;
 }
 export interface TimerSeedResult { scramble: string; caseId: string | null }
+
+/** Worker entry point for generators whose random-state search is asynchronous. */
+export async function generateSeededTimerScrambleAsync(request: TimerSeedRequest): Promise<TimerSeedResult> {
+  if (request.event !== 'baby_fto' || request.drill) return generateSeededTimerScramble(request);
+
+  const [{ experimentalDeriveScrambleForEvent }, { setSearchDebug }] = await Promise.all([
+    import('cubing/scramble'), import('cubing/search'),
+  ]);
+  // cubing 0.63.3 requires an explicit opt-in for the deterministic Twips API.
+  setSearchDebug({ allowDerivedScrambles: true });
+  const seed = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(request.ticket.seed)));
+  // Twips v0.11.3 seeds have a protocol byte, a derivation level and 30 seed bytes.
+  // https://github.com/cubing/twips/blob/v0.11.3/src/lib/scramble/derive_scramble_for_event.rs
+  seed[0] = 0x67;
+  seed[1] = 0;
+  const hexSeed = Array.from(seed, byte => byte.toString(16).padStart(2, '0')).join('');
+  const event = request.event;
+  // The API expects eight ASCII salt levels, with the subevent at level seven.
+  // Keep the versioned practice domain and UTF-8 seed encoding stable. Revision
+  // only invalidates pending requests; resetting a seed must replay its sequence.
+  const salts = ['cuberoot-timer-v1', 'scrambles', event, 'r1', 'g1', `a${request.ticket.index + 1}`, event, 'sub1'];
+  const scramble = (await experimentalDeriveScrambleForEvent(hexSeed, salts, event)).toString();
+  if (!scramble.trim()) throw new Error('Empty seeded scramble');
+  return { scramble, caseId: null };
+}
+
 export function generateSeededTimerScramble(request: TimerSeedRequest): TimerSeedResult {
   const { event, ticket } = request;
   const random = rngFor(ticket.seed, ticket.index);
@@ -73,13 +99,13 @@ export function generateSeededTimerScramble(request: TimerSeedRequest): TimerSee
       case 'mpyram': return cstimer('mpyrso');
       case 'r3': case 'r4': case 'r5': case '333mbld': case '666bld': case '777bld': case 'magic': case 'mmagic':
         return formatTimerCompoundScramble(id, TIMER_COMPOUND_SCRAMBLE_CHILDREN[id].map(generate), random);
-      case 'custom': return '';
+      case 'custom': case 'pll-chain': return '';
       default: throw new Error(`Unsupported seeded event: ${id}`);
     }
   };
   const drill = request.drill ? generateTimerDrillScramble(request.drill, random, request.cnMode) : null;
   const scramble = drill ? drill.scramble : generate(event);
-  if (event !== 'custom' && !scramble.trim()) throw new Error('Empty seeded scramble');
+  if (!timerScrambleAllowsEmptySlot(event, 'random') && !scramble.trim()) throw new Error('Empty seeded scramble');
   if (drill) caseId = event === request.drill?.type ? drill.targetCase : null;
   return { scramble: !drill && isCnEligible(event) ? applyColorNeutral(scramble, request.cnMode ?? 'none', random) : scramble, caseId };
 }

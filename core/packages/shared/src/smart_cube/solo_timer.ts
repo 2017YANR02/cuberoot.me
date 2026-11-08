@@ -3,6 +3,7 @@ import {
   timerSupportsSmartCubeAutoTiming,
 } from '../timer/event-catalog';
 import type { TimerPhase } from '../timer/machine';
+import type { MoveClockSample } from './move_clock';
 import type { EventId } from '../timer/types';
 import { timerSmartCubeTrainingComplete, timerSmartCubeTrainingFrames, timerSmartCubeTrainingStep } from '../timer/smart-cube-training';
 import type { CnMode } from '../timer/color-neutral';
@@ -25,6 +26,7 @@ export interface SmartCubeSoloMoveMetadata {
 }
 
 export interface SmartCubeSoloMove<Metadata extends SmartCubeSoloMoveMetadata = SmartCubeSoloMoveMetadata> {
+  clock?: MoveClockSample;
   facelets: string | null;
   metadata?: Metadata;
   move: string;
@@ -43,7 +45,7 @@ export interface SmartCubeSoloMoveOutcome {
 export interface SmartCubeSoloTimerControllerOptions<
   Metadata extends SmartCubeSoloMoveMetadata = SmartCubeSoloMoveMetadata,
 > {
-  armFromCube(timestamp?: number): boolean | void;
+  armFromCube(timestamp?: number, clock?: MoveClockSample): boolean | void;
   autoReadyOnScramble(): boolean;
   correctionLimit?(): number | undefined;
   canStartAttempt(): boolean;
@@ -54,9 +56,11 @@ export interface SmartCubeSoloTimerControllerOptions<
   onGuidanceChange?(state: SmartCubeGuidanceState): void;
   onMove?(event: SmartCubeSoloMove<Metadata>): void;
   recordMove(event: SmartCubeSoloMove<Metadata>): void;
+  /** Sequence goals reuse the same start, recorder and stop pipeline. */
+  sequenceComplete?(event: SmartCubeSoloMove<Metadata>): boolean;
   solve(fromFacelets: string, targetFacelets: string): Promise<string | null>;
-  startFromCube(timestamp: number): boolean;
-  stopFromCube(timestamp?: number): boolean;
+  startFromCube(timestamp: number, clock?: MoveClockSample): boolean;
+  stopFromCube(timestamp?: number, clock?: MoveClockSample): boolean;
 }
 
 const EMPTY_OUTCOME: SmartCubeSoloMoveOutcome = {
@@ -177,7 +181,7 @@ export class SmartCubeSoloTimerController<
         && timerSmartCubeStartsAttemptOnTurn(context.event)
         && this.options.isTimingEnabled()
         && this.options.canStartAttempt()
-        && this.options.startFromCube(event.timestamp)) {
+        && this.options.startFromCube(event.timestamp, event.clock)) {
         this.enterRunning(context);
         this.options.recordMove(event);
         outcome.recorded = true;
@@ -206,7 +210,7 @@ export class SmartCubeSoloTimerController<
         && this.options.canStartAttempt()
         && this.options.autoReadyOnScramble()) {
         const currentPhase = this.options.getPhase();
-        if (currentPhase === 'idle' || currentPhase === 'stopped') this.options.armFromCube(event.timestamp);
+        if (currentPhase === 'idle' || currentPhase === 'stopped') this.options.armFromCube(event.timestamp, event.clock);
       }
       return outcome;
     } finally {
@@ -218,18 +222,18 @@ export class SmartCubeSoloTimerController<
     }
   }
 
-  solved(timestamp?: number): boolean {
+  solved(timestamp?: number, clock?: MoveClockSample): boolean {
     if (this.disposed || !this.connected) return false;
     const running = this.running || this.options.getPhase() === 'running';
     const event = this.runningEvent ?? this.context?.event ?? null;
     if (!running || !event || !timerSupportsSmartCubeAutoTiming(event)) return false;
     // Partial goals are judged from moves in the pinned training frame, never a transport's solved flag.
-    if (timerSmartCubeTrainingStep(event)) return false;
-    return this.finish(timestamp);
+    if (event === 'pll-chain' || timerSmartCubeTrainingStep(event)) return false;
+    return this.finish(timestamp, clock);
   }
 
-  private finish(timestamp?: number): boolean {
-    const stopped = this.options.stopFromCube(timestamp);
+  private finish(timestamp?: number, clock?: MoveClockSample): boolean {
+    const stopped = this.options.stopFromCube(timestamp, clock);
     if (stopped) this.setRunning(false);
     return stopped;
   }
@@ -266,10 +270,14 @@ export class SmartCubeSoloTimerController<
   }
 
   private observeTrainingFinish(event: SmartCubeSoloMove<Metadata>): void {
+    if (this.runningEvent === 'pll-chain') {
+      if (this.options.sequenceComplete?.(event)) this.finish(event.timestamp, event.clock);
+      return;
+    }
     const complete = this.isTrainingComplete(event.facelets);
     if (complete === null) return;
     const becameComplete = this.trainingComplete === false && complete;
     this.trainingComplete = complete;
-    if (becameComplete) this.finish(event.timestamp);
+    if (becameComplete) this.finish(event.timestamp, event.clock);
   }
 }

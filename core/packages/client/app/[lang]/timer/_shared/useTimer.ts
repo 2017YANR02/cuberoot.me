@@ -1,4 +1,5 @@
 import { usesStackmatPads, STACKMAT_PAD_HOLD_MS } from '@/components/stackmat-catalog';
+import type { MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 /**
  * React adapter for the shared, platform-neutral timer machine.
  *
@@ -44,11 +45,11 @@ export interface TimerHandle {
   /** Stop at an exact time measured by an external hardware timer. */
   stopExternal: (timeMs: number, inspectionMs?: number) => void;
   /** Start an armed attempt from a smart-cube move timestamp. */
-  startFromCube: (atMs?: number) => boolean;
+  startFromCube: (atMs?: number, clock?: MoveClockSample) => boolean;
   /** A matched smart-cube scramble skips the manual holding phase. */
-  armFromCube: (atMs?: number) => boolean;
+  armFromCube: (atMs?: number, clock?: MoveClockSample) => boolean;
   /** Stop a running attempt at the smart cube's calibrated move timestamp. */
-  stopFromCube: (atMs?: number) => boolean;
+  stopFromCube: (atMs?: number, clock?: MoveClockSample) => boolean;
   /** Cancel an in-progress arm while preserving the last displayed solve. */
   cancelArm: () => void;
 }
@@ -64,7 +65,7 @@ function machineConfig(): TimerMachineConfig {
 
 export function useTimer(
   onSolve?: (result: SolveResult) => void,
-  onStart?: (startedAtMs: number) => void,
+  onStart?: (startedAtMs: number, cubeStart?: TimerMachineState['cubeStart']) => void,
   configOverride?: () => Partial<TimerMachineConfig>,
 ): TimerHandle {
   const onSoundTransition = useTimerSoundFeedback(timerSound);
@@ -158,7 +159,7 @@ export function useTimer(
         stopHoldTimer();
       } else if (effect === 'run-started') {
         const startedAtMs = state.startedAtMs ?? performance.now();
-        onStartRef.current?.(startedAtMs);
+        onStartRef.current?.(startedAtMs, state.cubeStart);
         beginRunEffects(startedAtMs);
       } else if (effect === 'run-stopped') {
         stopTick();
@@ -209,22 +210,24 @@ export function useTimer(
     dispatch({ type: 'stop-external', timeMs, inspectionMs });
   }, [dispatch]);
 
-  const startFromCube = useCallback((atMs?: number): boolean => {
+  const startFromCube = useCallback((atMs?: number, clock?: MoveClockSample): boolean => {
     const transition = dispatch({
       type: 'start-from-cube',
+      clock,
       nowMs: performance.now(),
       atMs,
     });
     return transition.accepted === true;
   }, [dispatch]);
 
-  const armFromCube = useCallback((atMs?: number): boolean => {
-    return dispatch({ type: 'arm-from-cube', nowMs: performance.now(), atMs }).accepted === true;
+  const armFromCube = useCallback((atMs?: number, clock?: MoveClockSample): boolean => {
+    return dispatch({ type: 'arm-from-cube', nowMs: performance.now(), atMs, clock }).accepted === true;
   }, [dispatch]);
 
-  const stopFromCube = useCallback((atMs?: number): boolean => {
+  const stopFromCube = useCallback((atMs?: number, clock?: MoveClockSample): boolean => {
     const transition = dispatch({
       type: 'stop-from-cube',
+      clock,
       nowMs: performance.now(),
       atMs,
     });

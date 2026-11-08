@@ -2,7 +2,7 @@
 import { eventDisplayName } from '@/lib/wca-events';
 import { PG_PUZZLES, type PgPuzzleId } from './pgCatalog';
 
-export type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'pyraminx' | 'pyraminx_duo' | 'skewb' | 'megaminx' | 'kilominx' | 'fto' | 'mirror' | 'mirror2' | 'sphere' | 'clock' | 'magic' | 'mmagic' | 'custom' | PgPuzzleId;
+export type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'pyraminx' | 'pyraminx_duo' | 'skewb' | 'megaminx' | 'kilominx' | 'fto' | 'baby_fto' | 'mirror' | 'mirror2' | 'sphere' | 'clock' | 'magic' | 'mmagic' | 'custom' | PgPuzzleId;
 
 // WCA-standard event names reuse the site-wide single source (lib/wca-events
 // eventDisplayName — same labels the /wca/records page renders: 三阶/3×3, SQ1,
@@ -23,6 +23,7 @@ export const SIM_FIXED_PUZZLE_OPTIONS = [
   { value: 'mmagic', iconClass: 'event-mmagic', labelZh: '十二板', labelEn: 'Master Magic' },
   { value: 'clock',    iconClass: 'event-clock', labelZh: eventDisplayName('clock', true), labelEn: eventDisplayName('clock', false) },
   { value: 'fto',      iconClass: 'unofficial-fto', labelZh: eventDisplayName('fto', true), labelEn: eventDisplayName('fto', false) },
+  { value: 'baby_fto', iconClass: 'unofficial-baby_fto', labelZh: eventDisplayName('baby_fto', true), labelEn: eventDisplayName('baby_fto', false) },
   { value: 'dino',     iconClass: 'unofficial-dino', labelZh: '恐龙', labelEn: 'Dino' },
   { value: 'redi',     iconClass: 'unofficial-redi', labelZh: '热帝', labelEn: 'Redi' },
   { value: 'rex',      iconClass: 'unofficial-rex', labelZh: '八轴魔星', labelEn: 'Rex Cube' },
@@ -85,12 +86,12 @@ const SIM_PUZZLE_FAMILIES: readonly SimPuzzleFamily[] = [
   },
   {
     id: 'octahedron', labelZh: 'FTO 与八面体', labelEn: 'FTO & octahedra',
-    values: ['fto', 'masterfto', 'masterftov2', 'fto5', 'fto6', 'skewbdiamond', 'christophersjewel',
+    values: ['baby_fto', 'fto', 'masterfto', 'masterftov2', 'fto5', 'fto6', 'skewbdiamond', 'christophersjewel',
       'trajbersoctahedron', 'octahedron4', 'dinoocta', 'eto', 'comboctahedron', 'octastar'],
   },
   {
     id: 'icosahedron', labelZh: '二十面体', labelEn: 'Icosahedra',
-    values: ['radiochop', 'radiocrystal', 'radiojewel', 'radioweb', 'radiojam', 'catscradle', 'radiocanon', 'circoradiolarian', 'eitansstar', 'icosamate', 'astrominx', 'astrominxbigchop',
+    values: ['radiochop', 'radiocrystal', 'radiojewel', 'radioweb', 'radiojam', 'catscradle', 'radiocanon', 'radiolarian3', 'circoradiolarian', 'eitansstar', 'icosamate', 'astrominx', 'astrominxbigchop',
       'icosaminx', 'redicosahedron', 'redicosahedroncenters', 'dogic', 'icosababyface'],
   },
   {

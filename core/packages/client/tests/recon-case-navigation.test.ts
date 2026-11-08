@@ -5,7 +5,9 @@ import { afterEach, expect, it, vi } from 'vitest';
 import ReconCaseLink from '@/components/ReconCaseLink';
 
 vi.mock('@/components/AppLink', () => ({ default: ({ href, children, ...props }: any) => createElement('a', { href, ...props }, children) }));
-vi.mock('@/hooks/useModalDismiss', () => ({ useModalDismiss: () => ({}) }));
+vi.mock('@/hooks/useModalDismiss', async importOriginal => ({
+  ...await importOriginal<typeof import('@/hooks/useModalDismiss')>(), useModalDismiss: () => ({}),
+}));
 vi.mock('@/components/ClearButton', () => ({ ClearButton: ({ onClick }: any) => createElement('button', { onClick }, 'Close') }));
 vi.mock('@cuberoot/shared/alg', () => ({ loadAlg: vi.fn(async () => ({ cases: [{ name: 'A' }, { name: 'B' }] })) }));
 vi.mock('@/lib/alg_case_link', () => ({ resolveCaseSlug: (cases: { name: string }[], slug: string) => cases.find(c => c.name === slug) }));

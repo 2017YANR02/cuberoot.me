@@ -206,6 +206,7 @@ export { browserClipboardTransport } from './browser-clipboard';
 export {
   TIMER_TIMING_SETTING_FIELD_IDS,
   TimerBooleanSettingRow,
+  TimerSettingRow,
   TimerTimingSettingsSections,
 } from './TimerTimingSettingsSections';
 export type {

@@ -11,6 +11,7 @@ import { renderSphereScrambleSvg } from '@cuberoot/puzzle-render-core/sphere-svg
 import { renderNativePuzzleSvg, nativePuzzleSvgAspect } from '@cuberoot/puzzle-render-core/native-puzzle-svg';
 import { generateNativePuzzleScramble } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { TimerCubePreview, TimingSurface, timerCubePreviewAspect } from '@cuberoot/timer-ui';
+import { renderTimerScrambleSvg } from '@cuberoot/timer-ui/scramble-preview';
 import { act, createElement, createRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -67,6 +68,39 @@ describe('shared timer scramble preview', () => {
     expect(webSq1).toBe(sharedSq1);
   });
 
+  it('renders all Baby FTO faces, rotations and exported previews through the shared net', async () => {
+    const render = async (scramble: string) => act(async () => root.render(createElement(TimerCubePreview, {
+      event: 'baby_fto', scramble, visualization: '3D', height: 240, ariaLabel: 'Baby FTO state',
+    })));
+    await render('');
+    const solved = host.querySelector('svg')?.outerHTML;
+    for (const scramble of ["D B BL Uv Rv'", "(U BR')2 [D, BL]"]) {
+      await render(scramble);
+      const svg = renderNativePuzzleSvg('baby_fto', scramble);
+      const expected = document.createElement('div');
+      expected.innerHTML = svg;
+      const preview = host.querySelector<HTMLElement>('[aria-label="Baby FTO state"]');
+      expect(preview?.innerHTML).toBe(expected.innerHTML);
+      expect(preview?.style.aspectRatio).toBe(`${9 * nativePuzzleSvgAspect('baby_fto')} / 9`);
+      expect(host.querySelectorAll('polygon')).toHaveLength(32);
+      expect(new Set([...host.querySelectorAll('[data-face]')].map(face => face.getAttribute('data-face'))).size).toBe(8);
+      expect(host.querySelector('svg')?.outerHTML).not.toBe(solved);
+      expect(host.querySelector('mock-twisty-player')).toBeNull();
+      expect(timerCubePreviewAspect('baby_fto', scramble)).toBe(nativePuzzleSvgAspect('baby_fto'));
+      await expect(renderTimerScrambleSvg('baby_fto', scramble)).resolves.toBe(svg);
+    }
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      await render('invalid');
+      expect(host.querySelector('svg')).toBeNull();
+      await expect(renderTimerScrambleSvg('baby_fto', 'invalid')).resolves.toBeNull();
+      await render('D B BL');
+      expect(host.querySelectorAll('polygon')).toHaveLength(32);
+    } finally {
+      warning.mockRestore();
+    }
+  });
+
   it.each([
     { event: 'superz', faces: 6 },
     { event: 'dogic', faces: 20 },
@@ -94,6 +128,7 @@ describe('shared timer scramble preview', () => {
     { event: 'radioweb', faces: 20 },
     { event: 'radiojam', faces: 20 },
     { event: 'catscradle', faces: 20 },
+    { event: 'radiolarian3', faces: 20 },
   ] as const)('renders the complete $event net and recovers from invalid input', async ({ event, faces }) => {
     const render = async (scramble: string) => act(async () => root.render(createElement(TimerCubePreview, {
       event, scramble, visualization: '3D', height: 240, ariaLabel: 'Native state',
@@ -366,7 +401,7 @@ describe('shared timer scramble preview', () => {
       'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
       'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
       'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
-      'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'catscradle',
+      'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'catscradle', 'radiolarian3',
     ] as const) {
       expect(timerCubePreviewAspect(event)).toBe(nativePuzzleSvgAspect(event));
     }

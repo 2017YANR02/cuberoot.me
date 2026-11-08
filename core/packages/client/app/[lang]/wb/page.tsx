@@ -55,8 +55,9 @@ export default function WbPage() {
 
   return (
     <div className="wb-page">
-      <BackHome />
       <header className="wb-header">
+        {/* allow-component-reimplementation: 返回入口位于现有 wb-header 内，复用其水平内边距并与奖杯同排对齐。 */}
+        <BackHome />
         <div className="wb-title">
           <Trophy size={20} className="wb-title-icon" />
           <h1>{t('非官方世界纪录', 'Unofficial World Records')}</h1>

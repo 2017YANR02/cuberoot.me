@@ -1,10 +1,11 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 /**
  * /mosaic-about — 魔方马赛克说明页
  */
 import Link from '@/components/AppLink';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+
 import './mosaic_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -28,10 +29,7 @@ export default function MosaicAboutPage() {
   return (
     <div className="moa-page">
       <div className="moa-header">
-        <Link href="/mosaic" className="moa-back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{t('返回马赛克', 'Back to Mosaic')}</span>
-        </Link>
+        <PageBackLink fallback="/mosaic" className="moa-back" />
       </div>
 
       <main className="moa-main">

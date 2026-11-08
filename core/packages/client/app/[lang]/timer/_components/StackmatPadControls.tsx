@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { PALM_STRAIGHT, PALM_G4 } from '@/components/stackmat-artwork-parts';
+import type { StackmatGeneration } from '@/components/stackmat-catalog';
 import { STACKMAT_G5_PARTS } from '@/components/StackmatIcon';
 import { tr } from '@/i18n/tr';
 import { createPadInput, requiredPads, STACKMAT_PADS, type StackmatPad } from '../_lib/stackmat/pad-input';
@@ -20,16 +22,15 @@ const KEYSETS = [
 ] as const;
 const keyLabel = (code: string) => code === 'Semicolon' ? ';' : code.replace('Key', '');
 const contours = Object.fromEntries(STACKMAT_G5_PARTS.map(([, attributes]) => [attributes.key, attributes.d as string]));
-const positions = [[118, 159], [249, 228], [551, 228], [682, 159]];
 
-export default function StackmatPadControls({ mode, host }: { mode: '2-pad' | '4-pad'; host: StackmatPadHost }) {
+export default function StackmatPadControls({ mode, host, generation }: { mode: '2-pad' | '4-pad'; host: StackmatPadHost; generation: StackmatGeneration }) {
   const latest = useRef(host);
   latest.current = host;
   const [pressed, setPressed] = useState<ReadonlySet<StackmatPad>>(new Set());
   const controller = useMemo(() => createPadInput(requiredPads(mode), {
     down: () => latest.current.down(), up: () => latest.current.up(),
     cancel: () => latest.current.cancel(), running: () => latest.current.running(),
-  }), [mode]);
+  }), [mode, generation]);
   const keys = KEYSETS[host.playerId ?? 0] ?? KEYSETS[0];
   useEffect(() => {
     const cancel = () => { controller.cancel(); setPressed(controller.pressed()); };
@@ -64,13 +65,13 @@ export default function StackmatPadControls({ mode, host }: { mode: '2-pad' | '4
     };
   }, [controller, host.enabled, keys, mode]);
 
-  return <svg className="timer-stackmat-pads" viewBox="-8 8 816 280" data-no-timer data-stackmat-pads
+  return <svg className="timer-stackmat-pads" viewBox={generation === 5 ? "-8 8 816 280" : "0 10 800 260"} data-no-timer data-stackmat-pads
     aria-label={tr({ zh: '计时感应区', en: 'Timer touch pads' })}>
     {requiredPads(mode).map(pad => {
       const index = STACKMAT_PADS.indexOf(pad);
-      const [x, y] = positions[index];
       return <g key={pad}>
-        <path d={contours[pad.replace('-palm', '-palm-surface').replace('-thumb', '-thumb-recess')]}
+        <path d={generation === 5 ? contours[pad.replace('-palm', '-palm-surface').replace('-thumb', '-thumb-recess')] : generation === 4 ? PALM_G4 : PALM_STRAIGHT}
+          transform={generation !== 5 && pad === 'right-palm' ? 'translate(800 0) scale(-1 1)' : undefined}
           data-pad={pad} role="button" tabIndex={host.enabled ? 0 : -1} aria-disabled={!host.enabled}
           aria-label={`${tr({ zh: '感应区', en: 'Touch pad' })} ${keyLabel(keys[index])}`}
           aria-pressed={pressed.has(pad)} className="timer-stackmat-pad"
@@ -90,7 +91,6 @@ export default function StackmatPadControls({ mode, host }: { mode: '2-pad' | '4
             // A normal release already removed this contact; only an unexpected loss cancels.
             controller.lost(`pointer:${event.pointerId}`); setPressed(controller.pressed());
           }} />
-        <text x={x} y={y} textAnchor="middle" className="timer-stackmat-key">{keyLabel(keys[index])}</text>
       </g>;
     })}
   </svg>;

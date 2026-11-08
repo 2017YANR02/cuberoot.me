@@ -1,9 +1,8 @@
 'use client';
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
-import {
-  ReadonlyURLSearchParams, useParams, usePathname, useRouter, useSearchParams,
-} from 'next/navigation';
+import { ReadonlyURLSearchParams, useParams, usePathname, useSearchParams } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import {
   useQueryState, useQueryStates, type Options, type UseQueryStateOptions,
   type UseQueryStatesKeysMap, type UseQueryStatesOptions, type UseQueryStatesReturn,

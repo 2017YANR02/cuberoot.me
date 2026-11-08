@@ -25,6 +25,8 @@ it.each(['en', 'zh'] as const)('shares rail/dropdown selection, dismissal and fo
   try {
     await act(async () => root.render(createElement(Harness)));
     const trigger = host.querySelector('button')!;
+    // Exercise keyboard entry explicitly; jsdom has no input-modality tracking.
+    vi.spyOn(trigger, 'matches').mockImplementation(selector => selector === ':focus-visible');
     trigger.focus();
     await act(async () => trigger.click());
     const dialog = document.querySelector<HTMLElement>('.settings-modal')!;
@@ -55,6 +57,6 @@ it.each(['en', 'zh'] as const)('shares rail/dropdown selection, dismissal and fo
     expect(document.activeElement).toBe(trigger);
     expect(document.body.style.overflow).not.toBe('hidden');
   } finally {
-    await act(async () => root.unmount()); host.remove(); vi.unstubAllGlobals();
+    await act(async () => root.unmount()); host.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals();
   }
 });

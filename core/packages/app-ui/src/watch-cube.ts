@@ -60,7 +60,7 @@ export function createWatchCubeBridge() {
     if (result.effects.includes('run-started')) {
       startedAt = machine.startedAtMs ?? now;
       recording.begin(startedAt, connected ? { model: deviceModel, name: deviceName } : undefined,
-        reference && quaternion ? { reference, initial: quaternion } : undefined);
+        reference && quaternion ? { reference, initial: quaternion } : undefined, machine.cubeStart);
     }
     const recorded = result.solve ? recording.finish() : undefined;
     if (machine !== previous) emit({ kind: 'timer', contextId, ...machine,
@@ -68,14 +68,14 @@ export function createWatchCubeBridge() {
     return result.accepted !== false && machine !== previous;
   };
   const solo = new SmartCubeSoloTimerController({
-    armFromCube: () => action({ type: 'arm-from-cube', nowMs: now }),
+    armFromCube: (atMs, clock) => action({ type: 'arm-from-cube', nowMs: now, atMs, clock }),
     autoReadyOnScramble: () => true, canStartAttempt: () => enabled,
     getPhase: () => machine.phase, isTimingEnabled: () => enabled && connected,
     // Corrections require the phone's solver worker; exact scramble matching remains shared.
     solve: async () => null,
-    recordMove: ({ move, timestamp }) => { recording.recordMove(move, timestamp); },
-    startFromCube: atMs => action({ type: 'start-from-cube', nowMs: now, atMs }),
-    stopFromCube: atMs => action({ type: 'stop-from-cube', nowMs: now, atMs }),
+    recordMove: ({ move, timestamp, clock }) => { recording.recordMove(move, timestamp, clock); },
+    startFromCube: (atMs, clock) => action({ type: 'start-from-cube', nowMs: now, atMs, clock }),
+    stopFromCube: (atMs, clock) => action({ type: 'stop-from-cube', nowMs: now, atMs, clock }),
     onGuidanceChange: state => emit({ kind: 'guidance', contextId, matched: state.match, hint: state.hint }),
   });
   const session = new SmartCubeSessionController<{ delayed?: boolean; estimatedTime?: boolean; futureHistory?: boolean }>({
@@ -95,7 +95,7 @@ export function createWatchCubeBridge() {
         if (event.facelets) solo.syncFacelets(event.facelets);
       } else solo.move(event);
     } },
-    onSolved: timestamp => { if (!resetting) solo.solved(timestamp); },
+    onSolved: (timestamp, clock) => { if (!resetting) solo.solved(timestamp, clock); },
   });
   async function resetCube() {
     if (deviceModel === 'gan-v1' || !connected || !connection || resetting || machine.phase === 'running') return;
@@ -180,7 +180,7 @@ export function createWatchCubeBridge() {
       onStatus: status => { if (current()) { deviceModel = status.protocol; emit({ kind: 'status', ...status, canReset: deviceModel !== 'gan-v1' }); } },
       onDiagnostic: event => { if (current()) emit({ kind: 'diagnostic', ...event, now }); },
     };
-    const driver = model === 'moyu32' ? new Moyu32CubeConnection(transport, callbacks, 'verified-probe')
+    const driver = model === 'moyu32' ? new Moyu32CubeConnection(transport, callbacks)
       : model === 'qiyi' ? new QiyiCubeConnection(transport, callbacks)
       : new GanCubeConnection(transport, callbacks);
     connection = driver;

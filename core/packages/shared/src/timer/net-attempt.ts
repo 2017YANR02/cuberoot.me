@@ -1,6 +1,7 @@
 import { SmartCubeAttemptProducer, type SmartCubeAttemptDevice } from './smart-cube-attempt';
 import type { Solve } from './types';
-import type { SolveResult } from './machine';
+import type { CubeTimerStart, SolveResult } from './machine';
+import type { MoveClockSample } from '../smart_cube/move_clock';
 import { NET_EVENTS, type NetPenalty, type NetResult } from './net-battle';
 import { decodeTimerSolve } from './persistence';
 import type { Quat } from '../smart_cube/orientation';
@@ -24,12 +25,12 @@ export class NetBattleAttemptRecorder {
   private context: NetAttemptContext | null = null;
   private startedAtMs = 0;
   private latest: NetRecordedAttempt | null = null;
-  begin(context: NetAttemptContext, startedAtMs: number, device?: SmartCubeAttemptDevice): void {
+  begin(context: NetAttemptContext, startedAtMs: number, device?: SmartCubeAttemptDevice, cubeStart?: CubeTimerStart): void {
     this.context = { ...context };
     this.startedAtMs = startedAtMs;
-    this.producer.begin(startedAtMs, device);
+    this.producer.begin(startedAtMs, device, undefined, cubeStart);
   }
-  recordMove(move: string, atMs: number): boolean { return this.producer.recordMove(move, atMs); }
+  recordMove(move: string, atMs: number, clock?: MoveClockSample): boolean { return this.producer.recordMove(move, atMs, clock); }
   recordGyro(quaternion: Quat, atMs: number): void { this.producer.recordGyro(quaternion, atMs - this.startedAtMs); }
   finish(result: SolveResult): { context: NetAttemptContext; record: NetRecordedAttempt | null } | null {
     const context = this.context;

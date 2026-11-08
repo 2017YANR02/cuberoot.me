@@ -1550,7 +1550,6 @@ html:root[data-theme=dark]:has(.cal-page) {
     border-radius: 30px 30px 0 0;
     overflow: hidden;
     background: var(--cal-mobile-canvas);
-    animation: cal-sheet-enter 200ms cubic-bezier(.2,.7,.2,1);
   }
   body[data-site-scenery=transparent] .cal-event-dialog { background: var(--cal-mobile-canvas); -webkit-backdrop-filter: none; backdrop-filter: none; }
   .cal-event-dialog .cal-modal-head { position: relative; flex: 0 0 auto; min-height: 76px; padding: 22px 18px 10px; }
@@ -1609,8 +1608,7 @@ html:root[data-theme=dark]:has(.cal-page) {
   /* 这些字段直接写在抽屉表面；覆盖全站原生输入的玻璃底，避免出现灰色长方形。 */
   body[data-site-scenery] .cal-event-dialog :is(.cal-title-input, .cal-text-input, .cal-textarea, .cal-guest-field) { background-color: transparent !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
-@keyframes cal-sheet-enter { from { transform: translateY(100%); } to { transform: translateY(0); } }
-@media (prefers-reduced-motion: reduce) { .cal-event-dialog { animation: none; } }
+
 @media (max-width: 360px) {
   .cal-mobile-topbar { padding-inline: 10px; gap: 7px; }
   .cal-mobile-avatar { margin-left: 2px; }

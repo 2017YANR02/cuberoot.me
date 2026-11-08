@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 // /dev/utils — quick-reference for cuberoot.me's own hooks & canonical utils.
 // Entries live in ./_catalog.tsx (the single place to register new ones).
 import Link from '@/components/AppLink';
@@ -32,7 +33,7 @@ export default function CodeUtilsPage() {
     <div className="ur">
       <header className="ur-head">
         <div className="ur-topbar">
-          <Link href="/dev" className="ur-back">← /dev</Link>
+          <PageBackLink fallback="/dev" className="ur-back" />
         </div>
         <h1 className="ur-title">
           <span className="ur-prefix">/</span>utils

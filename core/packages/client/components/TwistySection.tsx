@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo, type MutableRefObject } from 'react';
 import { Move } from 'cubing/alg';
 import { parseNativePuzzleAlg } from '@cuberoot/puzzle-solvers/native-puzzle-model';
-import type { NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
+import type { PgInteractionPuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import WebGL from 'three/addons/capabilities/WebGL.js';
 import NativePuzzleControls, { type NativeDragDepth } from './NativePuzzleControls';
 import { attachNativePgMoveAppend } from './puzzle-models/gestures/nativePgMoveAppend';
@@ -134,7 +134,7 @@ export default function TwistySection({
    *  set) with no in-house engine. See app/[lang]/sim/pgCatalog.ts. */
   puzzleDescription?: string;
   /** Validated native model with accessible controls and a real layer-drag adapter. */
-  nativePuzzleId?: NativePuzzleId;
+  nativePuzzleId?: PgInteractionPuzzleId;
   scramble: string;
   alg: string;
   /** 撑满父容器（左栏分栏模式），否则走原 inline 固定宽模式 */

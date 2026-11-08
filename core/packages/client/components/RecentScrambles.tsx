@@ -18,7 +18,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 // 步数最短。同态 ⇒ 各阶段步数 / 难度值不变。仅「打乱长度」视图例外(那按的就是原打乱长度)。
 import { useRetainedState } from '@/hooks/useRetainedState';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import AppLink from '@/components/AppLink';
 import { buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';

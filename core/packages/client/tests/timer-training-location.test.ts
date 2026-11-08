@@ -503,7 +503,11 @@ describe('training host hooks and links', () => {
 
     await act(async () => root.render(createElement(Probe)));
     expect(container.querySelector('a')!.getAttribute('href')).toBe('/zh/timer?content=pll&source=cases&case=A');
-    expect(route).toBe(navigation.router);
+    route.push('/zh/wca', { scroll: false });
+    route.replace('/zh/timer');
+    expect(navigation.router.push).toHaveBeenLastCalledWith('/zh/wca', { scroll: false });
+    expect(navigation.router.replace).toHaveBeenLastCalledWith('/zh/timer', undefined);
+    expect(route.back).toBe(navigation.router.back);
     expect(pathname).toBe('/zh/timer');
     expect(params).toEqual({ lang: 'zh' });
     expect(search.get('room')).toBe('timer-room');

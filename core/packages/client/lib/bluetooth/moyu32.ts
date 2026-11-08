@@ -1,4 +1,4 @@
-import { createMoyu32ResetCommand } from '@cuberoot/shared/smart-cube/moyu32';
+import { createMoyu32Cipher, resolveMoyu32Address, createMoyu32ResetCommand } from '@cuberoot/shared/smart-cube/moyu32';
 import { createDeviceStateReset } from '@cuberoot/shared/smart-cube/device-reset';
 /**
  * MoYu32 smart-cube driver — the protocol every currently-sold MoYu smart
@@ -65,15 +65,11 @@ import { createDeviceStateReset } from '@cuberoot/shared/smart-cube/device-reset
  * 171) { // gyro`), so the layout comes from lukeburong's write-up.
  * UNVERIFIED against hardware — we own no smart cube.
  *
- * MAC: use the native address, saved address, or manual input, then run the
- * normal info/state/battery handshake without a separate address probe.
+ * MAC: verify native/advertised/saved addresses and finite name candidates
+ * with the normal info/state/battery handshake on one notification subscription.
  */
 
 import {
-  decryptFrame,
-  deriveKeyFromMac,
-  encryptFrame,
-  expandKey,
   toBitReader,
   type GyroSink,
 } from '@cuberoot/shared/smart-cube/gan-crypto';
@@ -331,7 +327,7 @@ export function decodeMoyu32Quaternion(frame: Uint8Array): {
   return { w, x, y, z: -negZ };
 }
 
-/** Prompt suggestion only; automatic use requires the shared encrypted probe. */
+/** Legacy single-candidate helper; connections verify all shared candidates. */
 export { moyu32DefaultMac } from '@cuberoot/shared/smart-cube/moyu32';
 import { moyu32DefaultMac } from '@cuberoot/shared/smart-cube/moyu32';
 
@@ -365,10 +361,11 @@ export const moyu32Driver: CubeDriver = {
     const service = await server.getPrimaryService(MOYU32_SERVICE);
     const notifyChar = await service.getCharacteristic(MOYU32_NOTIFY_CHAR);
 
-    const macBytes = macStringToBytes(ctx?.mac ?? null);
-    const aesKey = deriveKeyFromMac(MOYU32_KEY_BASE, macBytes);
-    const aesIv = deriveKeyFromMac(MOYU32_IV_BASE, macBytes);
-    const expandedKey = expandKey(aesKey);
+    const cmdChar = await service.getCharacteristic(MOYU32_COMMAND_CHAR);
+    let cleaned = false;
+    let cipher: ReturnType<typeof createMoyu32Cipher> | null = null;
+    let negotiating: ((frame: Uint8Array) => void) | undefined;
+    const current = () => !cleaned && server.connected && (ctx?.isCurrent?.() ?? true);
 
     const decState = createMoyu32State(ctx?.onState);
     let resetting = false;
@@ -379,17 +376,8 @@ export const moyu32Driver: CubeDriver = {
     let keyErrorFired = false;
     let batteryWaiters: Array<(v: number | null) => void> = [];
 
-    const onChar = (ev: Event): void => {
-      const target = ev.target as BluetoothRemoteGATTCharacteristic;
-      const dv = target.value;
-      if (!dv) return;
-      const ct = new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength);
-      let pt: Uint8Array;
-      try {
-        pt = decryptFrame(ct, expandedKey, aesIv);
-      } catch {
-        return;
-      }
+    const apply = (pt: Uint8Array): void => {
+      if (!current()) return;
       if (resetting && pt[0] === MSG_STATE) {
         if (calibration?.waiting && pt.length >= 20) {
           const facelets = decodeMoyu32Facelets(toBitReader(pt));
@@ -419,25 +407,23 @@ export const moyu32Driver: CubeDriver = {
       }
     };
 
-    notifyChar.addEventListener('characteristicvaluechanged', onChar);
-    await notifyChar.startNotifications();
-
-    let cmdChar: BluetoothRemoteGATTCharacteristic | null = null;
-    try {
-      cmdChar = await service.getCharacteristic(MOYU32_COMMAND_CHAR);
-    } catch {
-      // No write characteristic — we can still listen, but the cube will
-      // never send the 0xA3 snapshot that seeds the move counter, so moves
-      // stay suppressed. Non-fatal; surfaces as "connected but silent".
-    }
+    const onChar = (ev: Event): void => {
+      if (!current()) return;
+      const dv = (ev.target as BluetoothRemoteGATTCharacteristic).value;
+      if (!dv) return;
+      const raw = new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength);
+      if (negotiating) { negotiating(raw); return; }
+      if (!cipher) return;
+      try { apply(cipher.decrypt(raw)); } catch { /* malformed frame */ }
+    };
 
     let writeTail: Promise<void> = Promise.resolve();
     const sendCmd = async (req: Uint8Array, strict = false, beginConfirmation?: () => boolean): Promise<void> => {
-      if (!cmdChar) {
-        if (strict) throw new Error('Device has no write characteristic');
+      if (!cipher) {
+        if (strict) throw new Error('Cube address not verified');
         return;
       }
-      const enc = encryptFrame(req, expandedKey, aesIv);
+      const enc = cipher.encrypt(req);
       // Detach into a fresh ArrayBuffer-backed Uint8Array — the strict TS lib
       // types narrow `BufferSource` to `Uint8Array<ArrayBuffer>`.
       const buf = new Uint8Array(enc.length);
@@ -460,15 +446,6 @@ export const moyu32Driver: CubeDriver = {
     const setGyro = async (enabled: boolean): Promise<void> => {
       await sendCmd(commandFrame(MSG_GYRO_SWITCH, 0x00, enabled ? 0x01 : 0x00));
     };
-
-    if (cmdChar) {
-      // cstimer's init order: info, then state (seeds the move counter), then
-      // battery. Sequenced, each awaited.
-      await sendCmd(commandFrame(MSG_INFO));
-      await sendCmd(commandFrame(MSG_STATE));
-      await sendCmd(commandFrame(MSG_BATTERY));
-      if (onGyro) await setGyro(true);
-    }
 
     // Protocol PR #4: A2 writes solved facelets and automatically returns A3.
     calibration = createDeviceStateReset({
@@ -501,7 +478,6 @@ export const moyu32Driver: CubeDriver = {
       }
     };
 
-    let cleaned = false;
     const cleanup = (): void => {
       if (cleaned) return;
       cleaned = true;
@@ -539,6 +515,35 @@ export const moyu32Driver: CubeDriver = {
         setTimeout(() => finish(decState.battery), 1000);
       });
     };
+
+    notifyChar.addEventListener('characteristicvaluechanged', onChar);
+    try {
+      await notifyChar.startNotifications();
+      await resolveMoyu32Address({
+        id: server.device.id, name: server.device.name ?? '',
+        hints: [ctx?.mac, ...(ctx?.macHints ?? [])],
+        requestMac: ctx?.requestMac,
+        onRejected: ctx?.onRejectedMac,
+        onVerified: mac => {
+          cipher = createMoyu32Cipher(macStringToBytes(mac));
+          ctx?.onVerifiedMac?.(mac);
+        },
+        onFrame: apply,
+        io: {
+          current,
+          write: frame => writeGattValue(cmdChar, new Uint8Array(frame)),
+          // The physical subscription stays active after address verification.
+          subscribe: async receive => {
+            negotiating = receive;
+            return async () => { negotiating = undefined; };
+          },
+        },
+      });
+      if (onGyro) await setGyro(true);
+    } catch (error) {
+      cleanup();
+      throw error;
+    }
 
     return { battery, cleanup, setGyro, resetDeviceState: cmdChar ? resetDeviceState : undefined };
   },

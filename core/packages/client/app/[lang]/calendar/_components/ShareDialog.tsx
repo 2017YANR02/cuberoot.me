@@ -1,4 +1,5 @@
 'use client';
+
 import '@cuberoot/timer-ui/compact-select.css';
 
 // 对外展示设置。两个要点:
@@ -11,7 +12,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 
 import { useState } from 'react';
 import { Check, Copy, Link2, RefreshCw, X, ExternalLink } from '@app-foundation/icons/lucide';
-import { useModalDismiss } from '@/hooks/useModalDismiss';
+import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import BoolToggle from '@/components/BoolToggle';
 import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
@@ -41,11 +42,8 @@ export default function ShareDialog({ share, calendars, lang, onSave, onRotate, 
   const saveTitle = (): void => {
     if (title !== share.title) void onSave({ title });
   };
-  const close = (): void => {
-    saveTitle();
-    onClose();
-  };
-  useModalDismiss(close, busy);
+  const { motionRef, close } = useDialogMotion(() => { saveTitle(); onClose(); });
+  const backdrop = useModalDismiss(close, busy);
 
   const origin = typeof window === 'undefined' ? '' : window.location.origin;
   const prefix = lang === 'zh' ? '/zh' : '';
@@ -61,8 +59,9 @@ export default function ShareDialog({ share, calendars, lang, onSave, onRotate, 
 
   return (
     <div
+      ref={motionRef}
       className="cal-modal-backdrop"
-      onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) close(); }}
+      {...backdrop}
     >
       <div className="cal-modal is-narrow" role="dialog" aria-modal="true" aria-label={tr({ zh: '对外展示', en: 'Share' })}>
         <div className="cal-modal-head">

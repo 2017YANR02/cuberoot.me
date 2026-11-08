@@ -2,7 +2,7 @@
 
 import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useState, type ComponentType } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { Gift, HardDrive, HeartHandshake, Inbox, MessageSquare, ShieldCheck, Users, Wrench } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';

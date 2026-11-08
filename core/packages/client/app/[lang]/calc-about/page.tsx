@@ -1,10 +1,11 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 /**
  * /calc-about — 成绩计算器说明页
  */
 import Link from '@/components/AppLink';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+
 import './calc_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -28,10 +29,7 @@ export default function CalcAboutPage() {
   return (
     <div className="calca-page">
       <div className="calca-header">
-        <Link href="/calc" className="calca-back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{t('返回成绩计算器', 'Back to Calculator')}</span>
-        </Link>
+        <PageBackLink fallback="/calc" className="calca-back" />
       </div>
 
       <main className="calca-main">

@@ -15,8 +15,10 @@ export const CSTIMER_TRAINING_FALLBACKS = { cfzb: 'zbls', eocp: 'll', ollcp: 'll
 /** Events without their own csTimer type retain their identity in metadata.
  * Native puzzles use manual input; Sphere Cube shares the ordinary 3x3 generator. */
 export const CSTIMER_EVENT_FALLBACKS = {
+  'pll-chain': 'input',
   ...CSTIMER_TRAINING_FALLBACKS,
   pyraminx_duo: 'input',
+  baby_fto: 'input',
   superz: 'input',
   dogic: 'input',
   octahedron4: 'input',
@@ -45,6 +47,7 @@ export const CSTIMER_EVENT_FALLBACKS = {
   radiojam: 'input',
   catscradle: 'input',
   radiocanon: 'input',
+  radiolarian3: 'input',
   sphere: '333',
 } as const;
 
@@ -87,6 +90,7 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
   // Non-WCA puzzles — cstimer's own scrambler keys (see scramble/nonwca.ts),
   // so a round-tripped session lands on the right puzzle in real csTimer too.
   fto: 'ftoso',
+  baby_fto: CSTIMER_EVENT_FALLBACKS.baby_fto,
   kilominx: 'klmso',
   gear: 'gearso',
   ivy: 'ivyso',
@@ -121,6 +125,7 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
   radiojam: CSTIMER_EVENT_FALLBACKS.radiojam,
   catscradle: CSTIMER_EVENT_FALLBACKS.catscradle,
   radiocanon: CSTIMER_EVENT_FALLBACKS.radiocanon,
+  radiolarian3: CSTIMER_EVENT_FALLBACKS.radiolarian3,
   r3: 'r3',
   r4: 'r4',
   r5: 'r5',
@@ -129,6 +134,7 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
   ll: 'll',
   oll: 'ollt',
   pll: 'pllt',
+  'pll-chain': CSTIMER_EVENT_FALLBACKS['pll-chain'],
   'cll': 'cll',
   'ell': 'ell',
   'eocp': CSTIMER_TRAINING_FALLBACKS.eocp,

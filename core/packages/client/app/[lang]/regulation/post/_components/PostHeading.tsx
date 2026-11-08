@@ -1,8 +1,8 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, Pin } from '@app-foundation/icons/lucide';
-import Link from '@/components/AppLink';
+import { Pin } from '@app-foundation/icons/lucide';
 import { useIsAdmin } from '@/lib/auth-store';
 import { deletePageNotice, featureHomepagePost, fetchPageNotices, homepagePostNotice } from '@/lib/page-notices-api';
 import { Tooltip } from '@/components/Tooltip';
@@ -13,9 +13,7 @@ export default function PostHeading({ children, href, backLabel, large = false }
   children: ReactNode; href: string; backLabel: string; large?: boolean;
 }) {
   return <header className="news-heading">
-    <Link href={href} className="reg-crumb-link news-heading-back" aria-label={backLabel}>
-      <ArrowLeft size={20} aria-hidden="true" />
-    </Link>
+    <PageBackLink aria-label={backLabel} fallback={href} className="reg-crumb-link news-heading-back" />
     <h1 className={large ? 'reg-title' : 'news-title'}>{children}</h1>
   </header>;
 }

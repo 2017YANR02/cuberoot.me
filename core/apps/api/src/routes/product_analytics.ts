@@ -1,12 +1,12 @@
 import { bodyLimit } from 'hono/body-limit';
 import type { Context } from 'hono';
-import { ANALYTICS_BATCH_SIZE, ANALYTICS_UUID, PRODUCT_ANALYTICS_POLICY, validAnalyticsEvent } from '@cuberoot/shared/product-analytics';
+import { ANALYTICS_BATCH_SIZE, ANALYTICS_UUID, validAnalyticsEvent } from '@cuberoot/shared/product-analytics';
 import { requirePlatformActor, requirePlatformAdmin } from '../platform/auth.js';
-import { platformDb, platformQuery, platformTransaction } from '../platform/db.js';
+import { platformQuery, platformTransaction } from '../platform/db.js';
 import { badRequest, PlatformApiError } from '../platform/errors.js';
 import { platformRouter, privateNoStore } from '../platform/http.js';
 import { readJsonObject } from '../platform/validation.js';
-import { analyticsConsentEnabled, analyticsSubject, latestAnalyticsConsent, recordAnalyticsBatch, setAnalyticsConsent } from '../platform/product_analytics.js';
+import { analyticsSubject, recordAnalyticsBatch } from '../platform/product_analytics.js';
 import { getIp } from '../utils/analytics_helpers.js';
 import { checkRateLimit, RateLimitError } from '../utils/rate_limit.js';
 
@@ -35,20 +35,6 @@ async function subjectFrom(c: Context, body: Record<string, unknown>) {
   const actor = c.req.header('Authorization') ? await requirePlatformActor(c) : null;
   return analyticsSubject(actor?.userId ?? null, body.subjectToken, actor?.isAdmin);
 }
-
-productAnalyticsRoutes.post('/analytics/status', async c => {
-  const body = await readJsonObject(c);
-  const subject = await subjectFrom(c, body);
-  return c.json({ enabled: analyticsConsentEnabled(await latestAnalyticsConsent(platformDb(), subject)), audience: subject.audience, policyVersion: PRODUCT_ANALYTICS_POLICY });
-});
-
-productAnalyticsRoutes.post('/analytics/consent', async c => {
-  const body = await readJsonObject(c);
-  const subject = await subjectFrom(c, body);
-  if (typeof body.enabled !== 'boolean' || body.policyVersion !== PRODUCT_ANALYTICS_POLICY) badRequest('Explicit choice and current policy version required');
-  await setAnalyticsConsent(subject, body.enabled);
-  return c.json({ enabled: body.enabled, audience: subject.audience, policyVersion: PRODUCT_ANALYTICS_POLICY });
-});
 
 productAnalyticsRoutes.post('/analytics/events', async c => {
   const body = await readJsonObject(c);
@@ -79,7 +65,7 @@ productAnalyticsRoutes.get('/admin/product-analytics', async c => {
           AND occurred_at >= NOW() - make_interval(days => $1) AND expires_at > NOW()
           AND (($2 = 'public' AND dimensions->>'audience' IN ('anonymous', 'member')) OR dimensions->>'audience' = $2)
       )`;
-      const [summary, pages, entries, frequency] = await Promise.all([
+      const [summary, pages, entries, frequency, features] = await Promise.all([
         platformQuery(db, `${base} SELECT COUNT(*)::int AS events, COUNT(DISTINCT session)::int AS sessions,
           COUNT(DISTINCT subject) FILTER (WHERE dimensions->>'audience' <> 'anonymous')::int AS "accountUsers",
           COUNT(DISTINCT session) FILTER (WHERE dimensions->>'audience' = 'anonymous')::int AS "anonymousSessions",
@@ -89,10 +75,11 @@ productAnalyticsRoutes.get('/admin/product-analytics', async c => {
           COUNT(*) FILTER (WHERE event_name = 'web.page_view')::int AS views,
           COUNT(DISTINCT subject)::int AS subjects, COUNT(DISTINCT session)::int AS sessions,
           COUNT(DISTINCT session) FILTER (WHERE event_name = 'web.page_engaged')::int AS "engagedSessions",
+          COUNT(DISTINCT session) FILTER (WHERE event_name = 'web.feature_interaction')::int AS "interactingSessions",
           COUNT(DISTINCT session) FILTER (WHERE event_name = 'web.feature_use')::int AS "usingSessions",
           COUNT(DISTINCT subject) FILTER (WHERE event_name = 'web.feature_use')::int AS "usingSubjects",
           COUNT(*) FILTER (WHERE event_name = 'web.feature_use')::int AS uses
-          FROM events WHERE event_name IN ('web.page_view', 'web.page_engaged', 'web.feature_use')
+          FROM events WHERE event_name IN ('web.page_view', 'web.page_engaged', 'web.feature_interaction', 'web.feature_use')
           GROUP BY 1,2,3,4 ORDER BY views DESC LIMIT 1000`, [days, audience]),
         platformQuery(db, `${base}, exposures AS (
           SELECT session, dimensions->>'viewId' AS view, dimensions->>'entryId' AS entry,
@@ -123,9 +110,16 @@ productAnalyticsRoutes.get('/admin/product-analytics', async c => {
           FROM events WHERE event_name = 'web.feature_use' AND dimensions->>'audience' <> 'anonymous' GROUP BY 1,2
         ) SELECT feature, COUNT(*)::int AS users, ROUND(AVG(days), 2)::float AS "activeDaysPerUser",
           ROUND(AVG(sessions), 2)::float AS "sessionsPerUser" FROM per_user GROUP BY feature`, [days, audience]),
+        platformQuery(db, `${base} SELECT dimensions->>'feature' AS feature,
+          COUNT(*) FILTER (WHERE event_name = 'web.page_view')::int AS views,
+          COUNT(DISTINCT session)::int AS sessions,
+          COUNT(DISTINCT session) FILTER (WHERE event_name = 'web.feature_interaction')::int AS "interactingSessions",
+          COUNT(DISTINCT session) FILTER (WHERE event_name = 'web.feature_use')::int AS "usingSessions"
+          FROM events WHERE event_name IN ('web.page_view', 'web.page_engaged', 'web.feature_interaction', 'web.feature_use')
+          GROUP BY 1 ORDER BY sessions DESC LIMIT 1000`, [days, audience]),
       ]);
-      return c.json({ days, audience, timezone: 'UTC', coverage: 'opted_in_web_only', retentionDays: 30,
-        truncated: pages.length === 1000 || entries.length === 1000, summary: summary[0], pages, entries, frequency });
+      return c.json({ days, audience, timezone: 'UTC', coverage: 'default_web', retentionDays: 30,
+        truncated: pages.length === 1000 || entries.length === 1000, summary: summary[0], pages, entries, frequency, features });
     });
   } finally { reporting = false; }
 });

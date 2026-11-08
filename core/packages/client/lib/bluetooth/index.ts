@@ -43,6 +43,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CubeDriver, CubeMoveMetadata, GyroSink } from './driver';
+import type { MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 // detectBluetoothEnv re-exported above; the connect() helper uses it
 // indirectly via the env-tagged error and the surrounding consumer.
 import { ganV2Driver } from './gan_v2';
@@ -506,10 +507,11 @@ interface UseBluetoothCubeOpts {
     timestamp: number,
     facelets: string,
     metadata?: CubeMoveMetadata,
+    clock?: MoveClockSample,
   ) => void;
   /** Called when state transitions from unsolved → solved. Move-triggered
    * transitions carry that move's calibrated timestamp; state-only reports do not. */
-  onSolved?: (timestamp?: number) => void;
+  onSolved?: (timestamp?: number, clock?: MoveClockSample) => void;
   /**
    * Called for connection-lifecycle events: drop, reconnect attempts, final
    * give-up. Useful for surfacing toasts to the user.
@@ -670,7 +672,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         setFacelets(snapshot.facelets);
         setSolved(snapshot.solved);
       },
-      onMove: ({ facelets, metadata, move, timestamp }) => {
+      onMove: ({ facelets, metadata, move, timestamp, clock }) => {
         // Persist a MAC only after a real frame decodes successfully.
         const pendingMac = pendingSaveMacRef.current;
         if (pendingMac) {
@@ -678,10 +680,10 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
           pendingSaveMacRef.current = null;
         }
         if (calibratingRef.current || relayCalibratingRef.current) return;
-        onMoveRef.current?.(move, timestamp, facelets, metadata);
+        onMoveRef.current?.(move, timestamp, facelets, metadata, clock);
       },
-      onSolved: (timestamp) => {
-        if (!calibratingRef.current && !relayCalibratingRef.current) onSolvedRef.current?.(timestamp);
+      onSolved: (timestamp, clock) => {
+        if (!calibratingRef.current && !relayCalibratingRef.current) onSolvedRef.current?.(timestamp, clock);
       },
     });
   }
@@ -1043,19 +1045,18 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       throw new BluetoothConnectError('discover', `Unrecognised smart cube: ${device.name ?? '(no name)'}`);
     }
 
-    // MY32 uses a manual or saved MAC and the driver's normal handshake.
-    // Other brands retain advertisement/name-based discovery.
+    // MY32 verifies finite candidates inside its normal handshake before prompting.
     let mac: string | null = null;
     if (driver.needsMac) {
       mac = installedBleDeviceMac(device) ?? (driver.brand === 'moyu32'
-        ? savedMac(device.name ?? device.id)
+        ? normalizeMac(advMac) ?? savedMac(device.name ?? device.id)
         : normalizeMac(advMac)
         ?? savedMac(device.name)
         ?? parseMacFromName(device.name)
         // Brand-specific name fallback, never used for MY32.
         ?? driver.defaultMac?.(device)
         ?? null);
-      if (!mac && onNeedMacRef.current) {
+      if (!mac && driver.brand !== 'moyu32' && onNeedMacRef.current) {
         try { mac = normalizeMac(await onNeedMacRef.current(device.name ?? '')); }
         catch { mac = null; }
       }
@@ -1069,7 +1070,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     // A MAC-keyed cube with no MAC (user dismissed the prompt, nothing auto-
     // detected) can't decode anything — abort cleanly instead of showing a
     // dead "connected" state.
-    if (driver.needsMac && !mac) {
+    if (driver.needsMac && driver.brand !== 'moyu32' && !mac) {
       try { server.disconnect(); } catch { /* ignore */ }
       return;
     }
@@ -1119,7 +1120,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         return;
       }
       macRef.current = macToUse;
-      pendingSaveMacRef.current = macToUse ? { name: device.name ?? device.id, mac: macToUse } : null;
+      pendingSaveMacRef.current = macToUse && driver!.brand !== 'moyu32'
+        ? { name: device.name ?? device.id, mac: macToUse } : null;
 
       // Establish the fallback baseline before start(). Drivers are allowed to
       // synchronously publish their authoritative state during the handshake;
@@ -1138,6 +1140,18 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
           if (isCurrentSession()) session.move(move, deviceTs, metadata);
         }, {
           mac: macToUse,
+          macHints: [installedBleDeviceMac(device), advMac, savedMac(device.name ?? device.id)],
+          isCurrent: () => isCurrentSession() && session.isCurrent(),
+          requestMac: () => onNeedMacRef.current?.(device.name ?? '') ?? Promise.resolve(null),
+          onRejectedMac: rejected => {
+            if (savedMac(device.name ?? device.id) === rejected) clearMac(device.name ?? device.id);
+          },
+          onVerifiedMac: verified => {
+            if (!isCurrentSession() || !session.isCurrent()) return;
+            macRef.current = verified;
+            pendingSaveMacRef.current = null;
+            saveMac(device.name ?? device.id, verified);
+          },
           onBattery: (level) => {
             if (!isCurrentSession() || !session.isCurrent()) return;
             notifiedBattery = level;
@@ -1256,7 +1270,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         ?? (nameDriver.brand === 'moyu32' ? null : nameDriver.defaultMac?.(device))
         ?? null
       : null;
-    const shouldWatchMac = nameDriver?.brand !== 'moyu32' && (nameDriver === null
+    const shouldWatchMac = (nameDriver === null
       || (nameDriver.needsMac === true && reusableMac === null));
     setAdvertisementDiagnostic(shouldWatchMac
       ? {

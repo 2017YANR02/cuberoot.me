@@ -1,3 +1,4 @@
+import { replyMoyu32State } from './_moyu32_handshake';
 import { describe, expect, it, vi } from 'vitest';
 import {
   GIIKER_COMMAND_BATTERY,
@@ -97,6 +98,7 @@ describe('smart-cube GATT write compatibility', () => {
     const gatt = makeFakeGatt('WCU_MY32_A1B2', {
       [MOYU32_SERVICE]: [MOYU32_NOTIFY_CHAR, MOYU32_COMMAND_CHAR],
     });
+    replyMoyu32State(gatt);
     const session = await moyu32Driver.start(gatt.asServer, () => {}, {
       mac: 'CF:30:16:00:A1:B2',
     });

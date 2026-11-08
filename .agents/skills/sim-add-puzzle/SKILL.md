@@ -20,6 +20,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 ## 先分流(动手前定这 3 件)
 - cubing.js 有 `pg()`(PuzzleGeometry,有 3D 模型)→ 走 twisty(`TwistySection`),不碰自有引擎;只有 `svg()`(仅 2D net、没注册)→ 必走自有引擎(实测:`redi_cube`/`dino` 都得自有引擎,别被 twizzle 能开 2D net 误导)。
 - 原生 loader 带轨道遮罩或专用外观时保留具名 puzzle id，不以裸 PuzzleGeometry 描述替换；将具名项目登记在 `twistyPuzzles.ts`，让页面与无 World 的播放控件共用判定。
+- 接入二阶 FTO 等已有上游打乱器的具名 PG 项目时，按 [Baby FTO](references/native-pg-puzzles.md#baby-fto) 分开交互注册表与原生随机转动注册表，保留具名模型的朝向模数、完整记号、上游打乱与确定性派生。
 - 原生 PG 独立项目复用 `core/packages/puzzle-solvers/src/native-puzzles.ts` 的注册表、同目录 `native-puzzle-model.ts` 的模型与有界解析、`core/packages/puzzle-render-core/src/native-puzzle-svg.ts` 的完整展开图；按 [原生 PG 结构与接线](references/native-pg-puzzles.md) 核对来源、深度、方向和可见贴片，不在页面复制描述或生成器。
 - 按注册表的逐轴层数派生混合转角与深度能力，保留第二／第三单层及宽转；让按钮、拖转和点击共用规范族名与层深元数据，按原生映射选择 `Aw` 或 `1-2A`，不要拼接不存在的面宽转。
 - 按逐轴 `axisOrders` 处理混合机制，保留 FaceRenamingMapper 的完整外部族名，并独立核对不增加表面分区的角尖切面与旧种子打乱兼容性。
@@ -27,6 +28,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 制作 Radio Jam（Radiolarian 8）时按 [Radio Jam 几何与验收](references/radio-jam.md) 使用 `radio08` 实际切深，并保留每面的 15 个三角形、6 个五边形和 1 个六边形。
 - 制作 Cat’s Cradle（Radiolarian 5）时按 [原生 PG 结构与接线](references/native-pg-puzzles.md#cats-cradle) 保留精确切深与每面十九区，独立检查切深两侧的负例，不复用相邻 Radiolarian 的分区。
 - 制作 Radio Canon（Radiolarian 1.5）时按 [固定中心与分区验证](references/native-pg-puzzles.md#radio-canon) 保留每面七个三角形、九个四边形及二十个固定中心；分别核对中心置换与不可辨自转，不以同为 320 片的 Radio Jewel 代替本项目几何。
+- 制作 Radiolarian 3 时按 [移动中心与分区验证](references/native-pg-puzzles.md#radiolarian-3) 保留精确切深、每面十个三角形／三个四边形／三个五边形，并逐外层面转验证三个相邻中心的循环置换；不要因贴片数、块数及轨道数相同就复用 Radio Canon。
 - 对二阶＋直升机等可见切缝重合的组合保留全部机制切面；分别核对 90° 面轴与 180° 棱轴、逐轴层数及交错转动，不以相同展开图或图标判定机制相同，见 [原生 PG 结构与接线](references/native-pg-puzzles.md#二阶直升机)。
 - 对 Radio Jewel 等恰有小块消失的临界切深保留解析精度，独立核对面分区、可见块数及切深两侧的负例，并在双语说明中写明保形转动与 jumbling 的支持边界。
 - 原生播放器在首次构造前检测 WebGL 能力，不可用时直接切换同一具名模型的二维展开图；跳过全部 3D 初始化，手动按钮经原生招式回调记录，导出调用原生二维 SVG 下载。

@@ -302,63 +302,53 @@ describe('smart-cube reconnect ownership', () => {
     clearMac(rig.device.name);
   });
 
-  it.each(['WCU_MY32_A1B2', 'WCU_MY32_AABBCCDDEEFF'])('asks for MY32 MAC once and reuses the validated address: %s', async (name) => {
+  it.each([0, 1, 2])('verifies MY32 prefix %s automatically and reuses the address', async part => {
+    const name = 'WCU_MY32_A1B' + part;
     const rig = fakeGattRig(name);
     Object.defineProperty(rig.device, 'name', { value: name });
-    clearMac(rig.device.id);
+    clearMac(name);
+    attachMoyuProbe(rig, Uint8Array.of(0xcf, 0x30, 0x16, part, 0xa1, 0xb0 + part));
+    vi.mocked(rig.server.getPrimaryServices).mockResolvedValue([{ uuid: moyu32Driver.service } as BluetoothRemoteGATTService]);
+    onNeedMac = vi.fn();
+    await act(async () => root.render(createElement(Harness)));
+    await act(async () => {
+      const connection = cube.connectDevice(rig.device);
+      await vi.advanceTimersByTimeAsync(10000 + part * 2000);
+      await connection;
+    });
+    expect(onNeedMac).not.toHaveBeenCalled();
+    expect(cube.status.connected).toBe(true);
+    expect(savedMac(name)).toBe('CF:30:16:0' + part + ':A1:B' + part);
+    await act(async () => cube.disconnect());
+    await act(async () => { await cube.connectDevice(rig.device); });
+    expect(onNeedMac).not.toHaveBeenCalled();
+    expect(rig.device.watchAdvertisements).toHaveBeenCalledOnce();
+    clearMac(name);
+  });
+
+  it('requests manual input only after all MY32 candidates fail, then validates it', async () => {
+    const name = 'WCU_MY32_1234', rig = fakeGattRig(name);
+    Object.defineProperty(rig.device, 'name', { value: name });
+    clearMac(name);
     attachMoyuProbe(rig, Uint8Array.of(0x11, 0x22, 0x33, 0x44, 0x55, 0x66));
     vi.mocked(rig.server.getPrimaryServices).mockResolvedValue([{ uuid: moyu32Driver.service } as BluetoothRemoteGATTService]);
     const input = deferred<string | null>();
     onNeedMac = vi.fn(() => input.promise);
     await act(async () => root.render(createElement(Harness)));
-    const start = vi.spyOn(moyu32Driver, 'start').mockImplementation(async (_server, _move, ctx) => {
-      ctx?.onState?.(SCRAMBLED);
-      return { battery: async () => 80, cleanup: vi.fn() };
-    });
     let connection!: Promise<void>;
     await act(async () => {
       connection = cube.connectDevice(rig.device);
-      // MY32 now prompts directly; it does not probe guessed addresses.
-      await vi.advanceTimersByTimeAsync(0);
-      expect(onNeedMac).toHaveBeenCalledWith(name);
+      await vi.advanceTimersByTimeAsync(15999);
+      expect(onNeedMac).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
     });
-    expect(rig.device.watchAdvertisements).not.toHaveBeenCalled();
-    expect(start).not.toHaveBeenCalled();
-    expect(savedMac(rig.device.id)).toBeNull();
-    await act(async () => { input.resolve('11:22:33:44:55:66'); await connection; });
-    expect(start.mock.calls[0][2]?.mac).toBe('11:22:33:44:55:66');
-    expect(savedMac(name)).toBe('11:22:33:44:55:66');
-    await act(async () => cube.disconnect());
-    await act(async () => { await cube.connectDevice(rig.device); });
-    expect(onNeedMac).toHaveBeenCalledOnce();
-    expect(start.mock.calls[1][2]?.mac).toBe('11:22:33:44:55:66');
-    expect(rig.device.watchAdvertisements).not.toHaveBeenCalled();
-    clearMac(rig.device.id);
-  });
-
-  it('cancels MY32 connection without saving a MAC or starting its driver', async () => {
-    const rig = fakeGattRig('my32-cancel');
-    Object.defineProperty(rig.device, 'name', { value: 'WCU_MY32_1234' });
-    clearMac(rig.device.id);
-    attachMoyuProbe(rig);
-    vi.mocked(rig.server.getPrimaryServices).mockResolvedValue([{ uuid: moyu32Driver.service } as BluetoothRemoteGATTService]);
-    onNeedMac = vi.fn(async () => null);
-    await act(async () => root.render(createElement(Harness)));
-    const start = vi.spyOn(moyu32Driver, 'start');
-    let failure: unknown;
-    await act(async () => {
-      const connection = cube.connectDevice(rig.device).catch(error => { failure = error; });
-      await vi.advanceTimersByTimeAsync(0);
-      await connection;
-    });
-    // Dismissing the prompt is a clean cancellation, not a connection error.
-    expect(failure).toBeUndefined();
-    expect(onNeedMac).toHaveBeenCalledOnce();
-    expect(start).not.toHaveBeenCalled();
-    expect(rig.device.watchAdvertisements).not.toHaveBeenCalled();
+    expect(onNeedMac).toHaveBeenCalledExactlyOnceWith(name);
     expect(cube.status.connected).toBe(false);
-    expect(savedMac(rig.device.id)).toBeNull();
-    expect(rig.disconnect).toHaveBeenCalled();
+    expect(savedMac(name)).toBeNull();
+    await act(async () => { input.resolve('11:22:33:44:55:66'); await connection; });
+    expect(cube.status.connected).toBe(true);
+    expect(savedMac(name)).toBe('11:22:33:44:55:66');
+    clearMac(name);
   });
 
   it('discards an awaited reconnect after manual disconnect', async () => {

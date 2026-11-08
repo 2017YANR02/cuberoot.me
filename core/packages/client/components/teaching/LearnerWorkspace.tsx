@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import { useEffect, useState, type ReactNode } from 'react';
 import type { TeachingLearningContext } from '@cuberoot/shared/teaching';
 import AppLink from '@/components/AppLink';
@@ -50,7 +51,7 @@ export default function LearnerWorkspace({ orgSlug, studentId, children }: Props
     );
   }
   if (error) {
-    return <main className="teaching-page teaching-centered"><p role="alert">{error}</p><AppLink href="/learn" prefetch={false}><span aria-hidden="true">←</span> <span className="sr-only">{t('返回学习中心', 'Back to learning center')}</span></AppLink></main>;
+    return <main className="teaching-page teaching-centered"><p role="alert">{error}</p><PageBackLink fallback="/learn" prefetch={false} /></main>;
   }
   if (!context) return <main className="teaching-page" aria-busy="true"><p><LoadingIndicator>{t('正在加载学习档案…', 'Loading learning profile…')}</LoadingIndicator></p></main>;
 

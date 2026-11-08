@@ -26,7 +26,7 @@
   border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
   white-space: pre-wrap;
   word-break: break-word;
-  overflow-x: auto;
+  overflow: visible;
   margin: 0;
 }
 

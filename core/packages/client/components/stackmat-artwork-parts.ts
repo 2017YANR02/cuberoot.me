@@ -13,3 +13,7 @@ export const STACKMAT_G5_HAND = [
 
 // Filled clockwise reset mark, traced from the G5 product photo. The tip is triangular, not an elbow.
 export const STACKMAT_RESET = 'M6.8-7.2C1.1-11-6.4-9.2-9.6-3.8C-12.8 1.7-9.1 8.3-2.6 9.3C3.2 10.2 8.8 7.6 10.5 3.4L6.4 2.3C4.8 5.8.3 6.6-3.1 4.9C-6.1 3.4-7.1 0-5.3-2.7C-3.6-5.3-.1-6.1 3.5-4.6L1.6-2.4L10.7-1.4L9.1-8.9Z';
+
+// Shared drawing and touch-target contours for G1–G4.
+export const PALM_STRAIGHT = 'M62 49Q22 48 17 83Q11 118 54 129L238 144L254 48Z';
+export const PALM_G4 = 'M60 28Q20 20 15 58Q10 88 43 111L231 189L251 79Z';

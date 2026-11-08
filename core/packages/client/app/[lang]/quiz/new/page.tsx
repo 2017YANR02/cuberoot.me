@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useQueryState, parseAsInteger } from 'nuqs';
 import { Key } from '@app-foundation/icons/lucide';
 import type { QuizDraft } from '@cuberoot/shared/quiz';

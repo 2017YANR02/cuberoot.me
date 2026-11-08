@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { Check, Copy, Images, LoaderCircle, MessageCircle, Share2 } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
 import { tr } from '@/i18n/tr';
-import { useModalDismiss } from '@/hooks/useModalDismiss';
+import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import { copyPageLink } from '@/lib/page-share';
 import { isInWeChat } from '@/lib/wechat-share';
 import { isMiniProgramWebView } from '@/lib/miniprogram-bridge';
@@ -56,12 +56,13 @@ function errorText(error: unknown): string {
   return tr({ zh: '暂时无法调用电脑微信，请稍后重试。', en: 'WeChat desktop is temporarily unavailable. Please try again.' });
 }
 
-export function PageShareModal({ share: page, onClose }: { share: { url: string; title: string }; onClose: () => void }) {
+export function PageShareModal({ share: page, onClose: onClosed }: { share: { url: string; title: string }; onClose: () => void }) {
   const [state, setState] = useState<ShareState>('idle');
   const [activeScene, setActiveScene] = useState<WeChatShareScene | null>(null);
   const [message, setMessage] = useState('');
   const mountedRef = useRef(true);
   const [copyState, setCopyState] = useState<'idle' | 'success' | 'error'>('idle');
+  const { motionRef, close: onClose } = useDialogMotion(onClosed);
   const backdropProps = useModalDismiss(onClose, state === 'loading');
   const titleId = useId();
   const inContainer = isInWeChat() || isMiniProgramWebView();
@@ -114,7 +115,7 @@ export function PageShareModal({ share: page, onClose }: { share: { url: string;
 
   if (typeof document === 'undefined') return null;
   return createPortal(
-    <div
+    <div ref={motionRef}
       className="wechat-pc-share-backdrop"
       role="dialog"
       aria-modal="true"

@@ -1,5 +1,8 @@
 import { sessionFetch } from '@/lib/session-fetch';
-import type { AlgCase } from '@cuberoot/shared';
+import type { AlgCase, AlgPuzzle } from '@cuberoot/shared/alg';
+import { sortByCp } from './alg_cp_order';
+import { sortAlgItemsBySignedLabel } from './alg_group_order';
+import { primaryCaseName } from './alg_case_display';
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import { persistItem } from './safe-storage';
@@ -18,6 +21,10 @@ export interface TimeAttackScope {
 
 const STORAGE_PREFIX = 'alg:time-attack-order:v1';
 const LEGACY_STORAGE_PREFIX = 'alg:chain-order:v1';
+
+export function canonicalTimeAttackCases(puzzle: AlgPuzzle, setSlug: string, cases: readonly AlgCase[]): AlgCase[] {
+  return sortAlgItemsBySignedLabel(sortByCp(setSlug, [...cases]), c => primaryCaseName(puzzle, setSlug, c));
+}
 
 export function timeAttackOrderStorageKey(puzzle: string, setSlug: string, scope: string): string {
   return `${STORAGE_PREFIX}:${puzzle}/${setSlug}/${scope || 'all'}`;

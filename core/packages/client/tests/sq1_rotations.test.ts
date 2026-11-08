@@ -19,6 +19,43 @@ function expectMatrix(actual: THREE.Matrix4, expected: THREE.Matrix4) {
 }
 
 describe('SQ1 reconstruction rotations', () => {
+  it('preserves consecutive layer turns in compact reconstruction text and playback', () => {
+    // The reported recon begins with inspection/AUF turns next to solution turns.
+    const raw = '(0,2)(-3,0)/3/(0,-2)(3,0)/(0,3) // CSP\n(12,0)/(0,-12)';
+    const compact = compactSq1Solution(raw);
+    expect(compact).toBe('(0,2)(-3,0)/3/(0,-2)(3,0)/03 // CSP\n(12,0)/(0,-12)');
+    expect(parseSq1Tokens(compact)).toEqual(parseSq1Tokens(raw));
+    const original = new Sq1Cube();
+    const formatted = new Sq1Cube();
+    try {
+      original.applyMovesInstant(parseSq1Tokens(raw));
+      formatted.applyMovesInstant(parseSq1Tokens(compact));
+      expect(formatted.state).toEqual(original.state);
+      poses(formatted).forEach((pose, i) => expectMatrix(pose, poses(original)[i]));
+    } finally {
+      original.dispose();
+      formatted.dispose();
+    }
+  });
+
+  it('finishes the reported 10.04 SQ1 reconstruction with identical raw and compact poses', () => {
+    const scramble = '02/1-5/-12/3/0-3/-5-5/0-1/6/6/-4/0-2';
+    const solution = '(0,2) (-3,0) / (3,0) / (0,-2) (3,0) / 0,3 / 1,0 / -3,0 / -1,0 / 0,-3 / 1,0 / 3,0 / -1,0) / 0,3 / 1,0 / -3,0 / -1,0 / 0,-3 / 1,0 / 3,0 / 2,0';
+    const cube = new Sq1Cube();
+    try {
+      cube.twister.setup(scramble);
+      for (const move of parseSq1Tokens(solution)) cube.applyMoveInstant(move);
+      expect(cube.complete).toBe(true);
+      const expected = poses(cube);
+      cube.twister.setup(scramble);
+      for (const move of parseSq1Tokens(compactSq1Solution(solution))) cube.applyMoveInstant(move);
+      expect(cube.complete).toBe(true);
+      poses(cube).forEach((pose, i) => expectMatrix(pose, expected[i]));
+    } finally {
+      cube.dispose();
+    }
+  });
+
   it('keeps rotations through parsing, saving, simplification and inversion', () => {
     const alg = "x2(3,-3)/Y2' (0,3)z2 // annotation";
     const tokens = parseSq1Tokens(alg);

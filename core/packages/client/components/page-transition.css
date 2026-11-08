@@ -1,0 +1,14 @@
+/* Browser snapshots crossfade after React commits the destination; live glass
+   containers never receive opacity, filter, transform or a new layout wrapper. */
+::view-transition-group(.site-page-enter),
+::view-transition-group(.site-page-exit) { animation-duration: 180ms; }
+::view-transition-new(.site-page-enter) { animation: site-page-in 180ms ease-out both; }
+::view-transition-old(.site-page-exit) { animation: site-page-out 160ms ease-in both; }
+@keyframes site-page-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes site-page-out { from { opacity: 1; } to { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation-duration: 0s !important; }
+}

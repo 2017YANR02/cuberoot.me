@@ -73,7 +73,7 @@ describe('installed smart-cube timing and move persistence', () => {
       const phase = useRef<TimerPhase>('idle');
       const recorder = useRef(new TimerSmartCubeMoveRecorder());
       timer = useTimerController({ holdMs: 550, inspectionSec: 0,
-        onStart: (at) => { phase.current = 'running'; recorder.current.begin(at); },
+        onStart: (at, cubeStart) => { phase.current = 'running'; recorder.current.begin(at, cubeStart); },
         onComplete: (result) => {
           phase.current = 'stopped';
           writes.push(repository.addSolve({ event: '333', scramble: 'R', penalty: result.autoPenalty,
@@ -83,11 +83,11 @@ describe('installed smart-cube timing and move persistence', () => {
       phase.current = timer.machine.phase;
       cube = useInstalledSmartCube(() => transport, { language: 'en',
         onConnectionEvent: event => connectionEvents.push(event),
-        onMove: (move, timestamp, facelets) => {
-          if (phase.current === 'running' || timer.startFromCube(timestamp)) recorder.current.record(move, timestamp);
+        onMove: (move, timestamp, facelets, _metadata, clock) => {
+          if (phase.current === 'running' || timer.startFromCube(timestamp, clock)) recorder.current.record(move, timestamp, clock);
           else if (facelets === smartCubeTargetFacelets('R')) timer.armFromCube();
         },
-        onSolved: (timestamp) => { timer.stopFromCube(timestamp); },
+        onSolved: (timestamp, clock) => { timer.stopFromCube(timestamp, clock); },
       });
       return <output>{`${cube.phase}:${timer.machine.phase}`}</output>;
     }

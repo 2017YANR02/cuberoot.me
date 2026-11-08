@@ -9,7 +9,7 @@ import type { CubePhotoResult } from '@cuberoot/shared/cube-photo/result';
 import { standardColorFrames, classifyPhotoColors, COLOR_RGB } from '@cuberoot/shared/cube-photo/recognize';
 import { photoAlgGoal } from '@cuberoot/shared/cube-photo/lookup';
 import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
-import { applyMoves, fromFaceletString, toFaceletString } from '@cuberoot/shared/timer/reconstruct/state';
+import { applyScramble, applyMoves, fromFaceletString, toFaceletString } from '@cuberoot/shared/timer/reconstruct/state';
 import { cubePhotoFixture } from '@cuberoot/shared/testing/cube-photo';
 import fixture from '@cuberoot/shared/testing/cube-photo-algs';
 import { analyzeAssistantCubePhoto, cubePhotoImages, requiresCubePhotoEvidence, runCubePhotoTool } from '../src/utils/site_assistant_cube_photo.js';
@@ -182,3 +182,100 @@ it('returns CMLL for an unsolved M slice without claiming an inferred full cube'
   expect(photoAlgGoal('cmll', applyMoves(actual, 3, parseScramble(artifact.results[0].match!.alg)))).toBe(true);
   expect(requiresCubePhotoEvidence('图片魔方中层没复原，查询 CMLL 公式', [])).toBe(true);
 }, 25_000);
+
+it('recognizes short photo follow-ups without hijacking definitions or unrelated images', () => {
+  for (const question of ['zbll', 'CLL/EG', 'TEG', 'LS', 'PPLL', '识别这张魔方图片的公式']) {
+    expect(requiresCubePhotoEvidence(question, [])).toBe(true);
+  }
+  for (const question of ['', 'ZBLL 是什么', 'explain ZBLL', '这张照片拍得怎么样', '解释图片里的数学公式']) {
+    expect(requiresCubePhotoEvidence(question, [])).toBe(false);
+  }
+  expect(toolCallSchema.safeParse({ tool: 'lookup_cube_photo', imageRef: 'history:0:0', sets: ['eg1', 'ls3', 'oll-parity', 'pll-parity'] }).success).toBe(true);
+});
+
+it('uses the historical image for a bare ZBLL follow-up even after a mistaken visual rejection', async () => {
+  const image = await photo(fixture.states.cross);
+  let calls = 0;
+  const fetcher = vi.fn<typeof fetch>(async (input, init) => {
+    if (String(input).includes('/alg/sets/')) return Response.json(libraries[String(input).split('/').at(-1) as keyof typeof libraries]);
+    const body = JSON.parse(String(init?.body));
+    if (calls++ === 0) return modelResponse({ answerKind: 'image', answer: '角块未定向，所以不能查询 ZBLL。', sourceIds: [] });
+    if (calls === 2) {
+      expect(body.tool_choice).toEqual({ type: 'function', function: { name: 'lookup_cube_photo' } });
+      return modelResponse([{ tool: 'lookup_cube_photo', imageRef: 'history:0:0', sets: ['zbll'] }]);
+    }
+    expect(JSON.stringify(body.messages)).toContain('oriented last-layer EDGES');
+    return modelResponse({ answerKind: 'image', answer: '已找到对应的 ZBLL 公式。', sourceIds: [] });
+  });
+  const answer = await answerSiteQuestion('zbll', 'zh', { key: 'test', baseUrl: 'https://model.example/v1', model: 'qwen3.8-flash' },
+    AbortSignal.timeout(20_000), fetcher, [{ role: 'user', content: '', images: [image] }]);
+  expect(calls).toBe(3);
+  expect(answer.answer).not.toContain('不能');
+  expect(answer.artifacts?.[0]).toMatchObject({ kind: 'cube-photo', results: [{ set: 'zbll', status: 'found' }] });
+}, 25_000);
+
+it('offers proactive lookup for an image-only cube message and returns verified cards', async () => {
+  const image = await photo(fixture.states.pll);
+  let calls = 0;
+  const fetcher = vi.fn<typeof fetch>(async (input, init) => {
+    if (String(input).includes('/alg/sets/')) return Response.json(libraries[String(input).split('/').at(-1) as keyof typeof libraries]);
+    const body = JSON.parse(String(init?.body));
+    if (!calls++) {
+      expect(JSON.stringify(body)).toContain('proactively call this tool');
+      expect(JSON.stringify(body)).toContain('infer the likely task from the image itself');
+      return modelResponse([{ tool: 'lookup_cube_photo', imageRef: 'current:0', sets: ['pll'] }]);
+    }
+    return modelResponse({ answerKind: 'image', answer: '已找到 PLL 公式。', sourceIds: [] });
+  });
+  const answer = await answerSiteQuestion('', 'zh', { key: 'test', baseUrl: 'https://model.example/v1', model: 'qwen3.8-flash' },
+    AbortSignal.timeout(20_000), fetcher, [], undefined, undefined, 'UTC', [image]);
+  expect(calls).toBe(2);
+  expect(answer.artifacts?.[0]).toMatchObject({ kind: 'cube-photo', results: [{ set: 'pll', status: 'found' }] });
+}, 25_000);
+
+it.each([2, 4] as const)('detects %s layers and loads the matching puzzle catalog in the release worker', async size => {
+  const set = size === 2 ? 'ortega-oll' : 'pll-parity';
+  const alg = size === 2 ? "R U R' U R U2 R'" : '2R2 U2 2R2 Uw2 2R2 Uw2';
+  const scramble = size === 2 ? "R U2 R' U' R U' R'" : 'Uw2 Rw2 R2 Uw2 Rw2 R2 U2 Rw2 R2';
+  const state = applyScramble(size, scramble);
+  const facelet = (['U', 'R', 'F', 'D', 'L', 'B'] as const).map(f => state[f].join('')).join('');
+  const bytes = await sharp(Buffer.from(cubePhotoFixture(false, .1, facelet, size).svg)).png().toBuffer();
+  const load = vi.fn(async () => ({ ...libraries.pll, puzzle: size + 'x' + size, set,
+    cases: [{ ...libraries.pll.cases[0], name: 'Test parity', algs: [[{ alg }]] }] }));
+  const result = await analyzeAssistantCubePhoto({ mediaType: 'image/png', data: bytes.toString('base64') }, [set], load, AbortSignal.timeout(20_000));
+  expect(result.status).toBe('ok');
+  expect(result.recognition?.puzzle).toBe(size + 'x' + size);
+  expect(result.results[0]).toMatchObject({ set, status: 'found', match: { puzzle: size + 'x' + size } });
+  expect(load).toHaveBeenCalledWith('https://api.cuberoot.me/v1/alg/sets/' + size + 'x' + size + '/' + set);
+  expect(result.assumptions).toMatchObject({ f2lSolved: 'not-required', puzzleSize: size });
+}, 25_000);
+
+
+it.each([false, true])('routes a cube-state draft into the tool (missing classification: %s)', async missingClassification => {
+  const image = await photo(fixture.states.pll);
+  let calls = 0;
+  const fetcher = vi.fn<typeof fetch>(async (input, init) => {
+    if (String(input).includes('/alg/sets/')) return Response.json(libraries[String(input).split('/').at(-1) as keyof typeof libraries]);
+    calls++;
+    if (missingClassification && calls === 1) return modelResponse({ answerKind: 'image', answer: '请先说明想查什么。', sourceIds: [] });
+    if (calls === (missingClassification ? 2 : 1)) return modelResponse({ imageTask: 'cube-state', answerKind: 'image', answer: '请先说明想查什么。', sourceIds: [] });
+    if (calls === (missingClassification ? 3 : 2)) {
+      expect(JSON.parse(String(init?.body)).tool_choice).toEqual({ type: 'function', function: { name: 'lookup_cube_photo' } });
+      return modelResponse([{ tool: 'lookup_cube_photo', imageRef: 'current:0', sets: ['pll'] }]);
+    }
+    return modelResponse({ imageTask: 'cube-state', answerKind: 'image', answer: '已找到 PLL 公式。', sourceIds: [] });
+  });
+  const answer = await answerSiteQuestion('', 'zh', { key: 'test', baseUrl: 'https://model.example/v1', model: 'qwen3.8-flash' },
+    AbortSignal.timeout(20_000), fetcher, [], undefined, undefined, 'UTC', [image]);
+  expect(calls).toBe(missingClassification ? 4 : 3);
+  expect(answer.answer).not.toContain('请先');
+  expect(answer.artifacts?.[0]).toMatchObject({ kind: 'cube-photo', results: [{ set: 'pll', status: 'found' }] });
+}, 25_000);
+
+it('keeps unrelated image tasks out of formula lookup', async () => {
+  const fetcher = vi.fn<typeof fetch>(async () => modelResponse({ imageTask: 'other', answerKind: 'image', answer: '这是一张风景图。', sourceIds: [] }));
+  const answer = await answerSiteQuestion('', 'zh', { key: 'test', baseUrl: 'https://model.example/v1', model: 'qwen3.8-flash' },
+    AbortSignal.timeout(5000), fetcher, [], undefined, undefined, 'UTC', [{ mediaType: 'image/png', data: 'test-image' }]);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(answer.artifacts).toEqual([]);
+});

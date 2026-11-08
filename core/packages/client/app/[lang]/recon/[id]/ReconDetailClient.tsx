@@ -19,7 +19,8 @@ import { useEffect, useState, useCallback, useMemo, useRef, Fragment, type React
 import Link from '@/components/AppLink';
 import { createPortal } from 'react-dom';
 import { copyPageLink } from '@/lib/page-share';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useTranslation } from 'react-i18next';
 import { Box, PenLine, Calendar, UserPlus, StickyNote, Video, TriangleAlert, Pencil, Trash2, Pin, PinOff, Plus, Key, Copy, Check, Maximize2, Minimize2, Lock, Link2, LogIn, ExternalLink, Share2, Download } from '@app-foundation/icons/lucide';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
@@ -70,6 +71,7 @@ import { RecordBadge } from '@/components/RecordBadge';
 import ReconPlayerCanvas from '@/components/recon/ReconPlayerCanvas';
 import { getPuzzleId } from '@/lib/recon-utils';
 import { ReconNotationBlock } from '@/components/ReconNotationBlock';
+import { expandReconCancellation } from '@/lib/recon-f2l-links';
 import { canonicalSq1Alg, formatScrambleForEvent, compactSq1Solution } from '@cuberoot/shared/sq1-notation';
 import {
   buildNormalizedSolution, findCrossLineIndex, hasNormalizableCrossMove,
@@ -321,6 +323,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   const playerRef = useRef<any>(null);
   const [crossNormalized, setCrossNormalized] = useState(false);
   const [wasteRemoved, setWasteRemoved] = useState(false);
+  const [expandedCancellation, setExpandedCancellation] = useState<{ text: string; line: number } | null>(null);
   const [sourceViewId, setSourceViewId] = useState<number | null>(null);
   const sourceView = sourceViewId === solve.id;
   const sourceText = [scramble, solutionText].filter(Boolean).join('\n');
@@ -347,7 +350,22 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   const orientedText = crossNormalized && normalizedText ? normalizedText : solutionText;
   const wasteFreeText = useMemo(() => scrambleCubeOrder === 3
     ? removeReconWaste(orientedText, scramble) : null, [scrambleCubeOrder, orientedText, scramble]);
-  const rawDisplayText = wasteRemoved && wasteFreeText !== null ? wasteFreeText : orientedText;
+  const baseDisplayText = wasteRemoved && wasteFreeText !== null ? wasteFreeText : orientedText;
+  const cancellationViews = useMemo(() => {
+    const views = new Map<number, string>();
+    if (scrambleCubeOrder !== 3) return views;
+    baseDisplayText.split('\n').forEach((line, index) => {
+      if (!/\/\/.*\bcancel\s+into\b/i.test(line)) return;
+      try {
+        const expanded = expandReconCancellation(scramble, baseDisplayText, index);
+        if (expanded) views.set(index, expanded);
+      } catch { /* Invalid historical notation remains available in its original form. */ }
+    });
+    return views;
+  }, [scrambleCubeOrder, scramble, baseDisplayText]);
+  const cancellationLines = useMemo(() => new Set(cancellationViews.keys()), [cancellationViews]);
+  const expandedCancellationLine = expandedCancellation?.text === baseDisplayText ? expandedCancellation.line : null;
+  const rawDisplayText = (expandedCancellationLine !== null ? cancellationViews.get(expandedCancellationLine) : null) ?? baseDisplayText;
   // 展示层转 compact 简写(保留每行 // 注释),旧数据 / 手输可能存量为 canonical 记号。
   const displayText = useMemo(
     () => isSq1 ? compactSq1Solution(rawDisplayText) : rawDisplayText,
@@ -355,8 +373,8 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   );
   const crossLineIdx = useMemo(() => findCrossLineIndex(displayText), [displayText]);
   const captionHeader = useMemo(
-    () => solutionText ? wasteRemoved ? `${computeStm(rawDisplayText, solve.event)}STM` : buildCaptionHeader(solutionText, (isBldEvent(solve.event) ? solve.execTime : solve.rawTime) ?? 0, solve.event) : '',
-    [solutionText, solve.event, solve.execTime, solve.rawTime, wasteRemoved, rawDisplayText],
+    () => solutionText ? wasteRemoved || expandedCancellationLine !== null ? `${computeStm(rawDisplayText, solve.event)}STM` : buildCaptionHeader(solutionText, (isBldEvent(solve.event) ? solve.execTime : solve.rawTime) ?? 0, solve.event) : '',
+    [solutionText, solve.event, solve.execTime, solve.rawTime, wasteRemoved, expandedCancellationLine, rawDisplayText],
   );
 
   // SQ1 renders with the cuber WebGL engine (Sq1ReconPlayer, same as /sim &
@@ -406,7 +424,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           showScrambleNet={!scrambleCubeOrder}
           event={solve.event}
           scramble={scramble}
-          displayText={sourceView ? solutionText : displayText}
+          displayText={sourceView ? solutionText : rawDisplayText}
           playerRef={playerRef}
           fillPane
           fullscreenButton={fullscreenButton}
@@ -435,6 +453,8 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
             {sourceView && <pre className="detail-source-text" tabIndex={0} aria-label={tr({ zh: '复盘原文', en: 'Reconstruction source' })}><code>{sourceText}</code></pre>}
             <div className="detail-scramble-solution" ref={imageRef} hidden={sourceView}>
             <ReconNotationBlock captionHeader={captionHeader} scramble={scramble} scrambleCubeOrder={scrambleCubeOrder}
+              cancellationLines={cancellationLines} expandedCancellationLine={expandedCancellationLine}
+              onToggleCancellation={line => setExpandedCancellation(expandedCancellationLine === line ? null : { text: baseDisplayText, line })}
               displayScramble={displayScramble} optimalScrambleTag={optimalScrambleTag} solutionText={solutionText}
               displayText={displayText} rawDisplayText={rawDisplayText} solve={solve} playerRef={playerRef}
               canToggle={canToggle} crossLineIdx={crossLineIdx} crossNormalized={crossNormalized} setCrossNormalized={setCrossNormalized}

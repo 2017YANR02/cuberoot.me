@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import { useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
@@ -204,7 +205,7 @@ export default function GanBlePage() {
         <div className="ganble-grid-bg" />
         <div className="ganble-inner">
           <div className="ganble-topbar">
-            <Link href="/dev/algorithms" className="ganble-back">← /dev/algorithms</Link>
+            <PageBackLink fallback="/dev/algorithms" className="ganble-back" />
             <span className="ganble-tag">AES-128-ECB</span>
           </div>
 

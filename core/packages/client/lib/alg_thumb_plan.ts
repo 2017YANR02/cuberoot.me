@@ -76,7 +76,7 @@ export function supportsCaseViewAngle(params: CubeThumbParams): boolean {
 
 /** 普通 NxN 图都能换拿方；显式 scheme 表达教学语义，不能擅自重贴色。 */
 export function supportsCubeOrientation(puzzle: AlgPuzzle, params: CubeThumbParams): boolean {
-  return ['2x2', '3x3', '4x4', '5x5'].includes(puzzle) && !params.scheme;
+  return ['2x2', '3x3', '4x4', '5x5', '6x6'].includes(puzzle) && !params.scheme;
 }
 
 function pickView(
@@ -101,6 +101,11 @@ export function cubeThumbParams(
   if (maskOverride) {
     const hideGreySides = CORNER_LL_MASK_NAMES.has(maskOverride) || undefined;
     return { view: 'pll', mask: maskOverride, hideGreySides, puzzleSize };
+  }
+  // L2C recognition needs centers from both faces, not the LL sticker set.
+  // A piece-following LL mask greys out the exchanged front-face centers.
+  if ((puzzle === '5x5' || puzzle === '6x6') && set === 'l2c') {
+    return { view: 'pll', mask: 'center', hideGreySides: true, puzzleSize };
   }
   if (usesSvThumbStyle(puzzle, set)) {
     return { view: 'pll', mask: 'wv', hideGreySides: true, puzzleSize };

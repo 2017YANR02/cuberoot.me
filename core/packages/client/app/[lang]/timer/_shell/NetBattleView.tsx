@@ -1,4 +1,6 @@
 'use client';
+import PageBackLink from '@/components/PageBackLink';
+import type { MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 import { usesStackmatPads } from '@/components/stackmat-catalog';
 import TimerReadout from '../_components/TimerReadout';
 import { TimerNetPkArena, TimerRemoteLiveCube, useNetBattleLiveView } from '@cuberoot/timer-ui';
@@ -47,8 +49,7 @@ import { useQueryState } from 'nuqs';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 
 
-import HomeLink from '@/components/HomeLink';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+
 import { EventIcon } from '@/components/EventIcon';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
@@ -321,7 +322,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
 
   }, [roomController, tr]);
 
-  const timer = useTimer(onSolve, (startedAtMs: number) => {
+  const timer = useTimer(onSolve, (startedAtMs, cubeStart) => {
     const r = roomRef.current, auth = credentialsRef.current;
     if (!r || !auth) return;
     const event = netEventToSelectorId(playerEventOf(r, auth.playerId)) as EventId;
@@ -332,7 +333,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       code: r.code, playerId: auth.playerId, round: r.round,
       sessionId: getActiveSessionId(), id: netAttemptSolveId({ code: r.code, playerId: auth.playerId, round: r.round }), ts: identity.ts, event, scramble
     },
-      startedAtMs, bt?.connected ? { model: bt.brand, name: bt.deviceName } : undefined);
+      startedAtMs, bt?.connected ? { model: bt.brand, name: bt.deviceName } : undefined, cubeStart);
     phaseRef.current = 'running';
   });
   const phaseRef = useRef(timer.phase); phaseRef.current = timer.phase;
@@ -635,7 +636,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
 
   // hook 只给一个 onMove;订阅者(自动预备、实况魔方和录制)统一从这里分发,与 Solo 的
   // bluetoothSubscribersRef 同构,避免为每条消费路径各自读一套蓝牙状态。
-  const btSubscribersRef = useRef<Set<(m: string, ts: number, metadata?: CubeMoveMetadata) => void>>(new Set());
+  const btSubscribersRef = useRef<Set<(m: string, ts: number, metadata?: CubeMoveMetadata, clock?: MoveClockSample) => void>>(new Set());
   // Orientation samples are consumed by the live cube frame loop, not by the
   // room timer. Keep them in a ref so BLE cadence never re-renders this shell.
   const gyroQuatRef = useRef<Quat | null>(null);
@@ -646,11 +647,11 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
    * 这里额外挡三种房间态:门控期 / 倒计时期 / 已交卷 —— 那三种情况下起表权不在
    * 自己手上(见下面 autoReadyEnabled 那段注释),魔方不该替全房发车。
    */
-  const startFromCubeRef = useRef<(ts: number) => void>(() => { });
-  startFromCubeRef.current = (ts: number) => {
+  const startFromCubeRef = useRef<(ts: number, clock?: MoveClockSample) => void>(() => { });
+  startFromCubeRef.current = (ts, clock) => {
     if (!timerSupportsNetBattleSmartCube(myEvent)) return;
     if (gateRef.current || startAtRef.current !== null || !canSolveRef.current) return;
-    if (!timer.startFromCube(ts)) return;
+    if (!timer.startFromCube(ts, clock)) return;
     // useTimer has already begun the producer synchronously in onStart.
     cubeStartedRef.current = true;
     phaseRef.current = 'running';
@@ -661,24 +662,24 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       gyroQuatRef.current = q;
       if (settings.recordGyro && phaseRef.current === 'running') netAttemptRef.current.recordGyro(q, performance.now());
     } : undefined,
-    onMove: (move, ts, _facelets, metadata) => {
+    onMove: (move, ts, _facelets, metadata, clock) => {
       if (!timerSupportsNetBattleSmartCube(myEvent)) return;
       // 双方都交卷后，自己的下一次转动才切到下一轮；另一台设备继续保留结算画面。
       if (myResult && roundSettled && !roomController.isAdvancing) advance(false);
       // 先起表,后广播:如果这一手就是起表那一手,下面的录制订阅必须已经看到
       // 「在计时」。它读的是 `phaseRef`,而上面那行是同步写的 —— 等 React 重渲染
       // 就会丢掉这一步,而 BLE 可能在同一个调用栈里连给两手。
-      startFromCubeRef.current(ts);
+      startFromCubeRef.current(ts, clock);
       for (const sub of btSubscribersRef.current) {
-        try { sub(move, ts, metadata); } catch (e) { console.error('[bt-broadcast]', e); }
+        try { sub(move, ts, metadata, clock); } catch (e) { console.error('[bt-broadcast]', e); }
       }
     },
     // 魔方回到还原态 = 停表,与 Solo 同一条规则。只在真的在计时时停,所以别人回合里
     // 随手把魔方拧回还原不会替你交卷。结算使用最后一手的校准时刻,同时起表
     // (startNow 起的表)和普通起表仍落在同一条 useTimer 路径上。
-    onSolved: (atMs) => {
+    onSolved: (atMs, clock) => {
       if (!timerSupportsNetBattleSmartCube(myEvent)) return;
-      if (phaseRef.current === 'running' && timer.stopFromCube(atMs)) {
+      if (phaseRef.current === 'running' && timer.stopFromCube(atMs, clock)) {
         phaseRef.current = 'stopped';
       }
     },
@@ -842,9 +843,9 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   // 录制:计时中的每一手进缓冲,时刻相对起表点。和 Solo 同一个订阅位。
   useEffect(() => {
     const subs = btSubscribersRef.current;
-    const recorder = (m: string, ts: number) => {
+    const recorder = (m: string, ts: number, _metadata?: CubeMoveMetadata, clock?: MoveClockSample) => {
       if (phaseRef.current !== 'running') return;
-      netAttemptRef.current.recordMove(m, ts);
+      netAttemptRef.current.recordMove(m, ts, clock);
     };
     subs.add(recorder);
     return () => { subs.delete(recorder); };
@@ -1081,7 +1082,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     })),
   }));
   const topbar = {
-    brand: <HomeLink className="tb-btn shell-topbar-home" data-no-timer aria-label={tr({ zh: '返回首页', en: 'Back to home' })}><ArrowLeft size={18} /></HomeLink>,
+    brand: <PageBackLink fallback="/" className="tb-btn shell-topbar-home" data-no-timer />,
     controls: <>
       {room && <TimerNetBattleEvent picker={{
         dataNoTimer: true,

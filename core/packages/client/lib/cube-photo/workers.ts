@@ -3,8 +3,8 @@ import type { PhotoAnalysisInput, PhotoAnalysisMessage } from '@cuberoot/shared/
 
 export type PhotoWorkerRequest<T> = { id: number; input: T; fresh?: boolean } | { id: number; cancel: true };
 export interface PhotoWorkerReply<T> { id: number; message: T }
-export type PhotoDetectionInput = PhotoPixels & { puzzleSize?: 2 | 3 };
-export type PhotoDetectionMessage = { detection: CubePhotoDetection; elapsedMs: number } | { error: 'detection_failed' };
+export type PhotoDetectionInput = PhotoPixels & { puzzleSize?: 2 | 3 | 4 };
+export type PhotoDetectionMessage = { detection: CubePhotoDetection; puzzleSize: 2 | 3 | 4; elapsedMs: number } | { error: 'detection_failed' };
 
 /** One active request per worker; successful requests keep the worker and its cache. */
 class PhotoWorkerChannel<Output> {

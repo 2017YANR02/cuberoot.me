@@ -10,7 +10,7 @@ import PageBackLink from '@/components/PageBackLink';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, RefreshCw, AlertTriangle } from '@app-foundation/icons/lucide';
 import { useQueryState } from 'nuqs';
-import { useRouter } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { clearMembershipReturn, membershipReturnRequiresActive, membershipReturnPath, readMembershipReturn, rememberMembershipReturn } from '@/lib/membership-return';
 import { tr, useLang } from '@/i18n/tr';
 import { useAuthStore, isAdmin, getSessionToken, getWcaToken } from '@/lib/auth-store';

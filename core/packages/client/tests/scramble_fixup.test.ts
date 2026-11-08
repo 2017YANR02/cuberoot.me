@@ -274,7 +274,7 @@ describe('Solo smart-cube guidance has one shared lifecycle controller', () => {
     expect(source).toContain("smartCubeSoloController.setRunning(timer.phase === 'running' && !multiEnabled)");
     expect(source).toContain('smartCubeSoloController.syncFacelets(bluetoothCube.facelets)');
     expect(source).toMatch(/syncFacelets\(bluetoothCube\.facelets\);[\s\S]*?cubeConnected,[\s\S]*?currentScrambleEntry\.id,[\s\S]*?scrambleTarget,[\s\S]*?timer\.phase,/);
-    expect(source).toContain('smartCubeSoloController.move({ facelets, metadata, move, timestamp: ts })');
+    expect(source).toContain('smartCubeSoloController.move({ facelets, metadata, move, timestamp: ts, clock })');
     expect(source).toContain('return from && target ? fixupScramble(from, target) : null');
     expect(source).not.toContain('createSmartCubeGuidanceController');
     expect(source).not.toContain('verifySmartCubeScramble');
@@ -287,7 +287,7 @@ describe('Solo smart-cube guidance has one shared lifecycle controller', () => {
       join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'shared', 'src', 'smart_cube', 'solo_timer.ts'),
       'utf8',
     );
-    const start = controller.indexOf('this.options.startFromCube(event.timestamp)');
+    const start = controller.indexOf('this.options.startFromCube(event.timestamp, event.clock)');
     const record = controller.indexOf('this.options.recordMove(event)', start);
     const guidance = controller.indexOf('this.guidance.observe(event.facelets, event.move)');
     expect(start).toBeGreaterThan(-1);

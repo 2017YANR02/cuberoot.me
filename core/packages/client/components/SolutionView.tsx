@@ -49,12 +49,15 @@ function computeHighlightRange(plainText: string, offset: number): [number, numb
   return [p.start, p.end];
 }
 
-export default function SolutionView({ text, event, scramble = '', sourceText = text, playerRef, crossLineIdx = -1, crossNormalized = false, onToggleCross, autoWaste = false }: {
+export default function SolutionView({ text, event, scramble = '', sourceText = text, playerRef, crossLineIdx = -1, crossNormalized = false, onToggleCross, autoWaste = false, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
   text: string;
   event?: string;
   scramble?: string;
   sourceText?: string;
   autoWaste?: boolean;
+  cancellationLines?: ReadonlySet<number>;
+  expandedCancellationLine?: number | null;
+  onToggleCancellation?: (line: number) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef: MutableRefObject<any>;
   /** cross 行索引;>=0 时该行末尾渲染内联切换按钮。-1 表示不渲染 */
@@ -191,6 +194,8 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
           return href ? [{ ...link, href }] : [];
         }) : [];
         return <span key={i}>{nl}<NotationLine line={line} lineStart={lineStart} className="recon-counted-line"
+          onToggleCancellation={cancellationLines?.has(i) && onToggleCancellation ? () => onToggleCancellation(i) : undefined}
+          cancellationExpanded={expandedCancellationLine === i}
           cursorOffset={cursorOffset} hlRange={hlRange} wasteBrackets={wasteBrackets}
           crossColor={crossColor} links={links} colorHref={colors => linkComments ? f2lLinks.get(i)?.get(colors) : undefined}
           inspectionColors={inspectionColors.get(i)} diagram={diagramAt(i)} trailing={<>{toggle}

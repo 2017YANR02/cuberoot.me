@@ -143,6 +143,11 @@ function fakeBle(
     }),
     write: vi.fn(async (_deviceId, service, characteristic, value) => {
       writes.push({ characteristic, service, value: Uint8Array.from(value) });
+      const plain = cipher.decrypt(value);
+      if (plain.every((byte, index) => byte === (index === 0 ? MOYU32_MESSAGE_STATE : 0))) {
+        const encrypted = cipher.encrypt(stateFrame(MOYU32_SOLVED_STATE, 10));
+        notification?.(new DataView(encrypted.buffer as ArrayBuffer));
+      }
 
     }),
   };
@@ -165,26 +170,31 @@ function fakeBle(
 }
 
 describe('Moyu32CubeConnection native bridge', () => {
-  it.each([true, false])('starts the normal handshake without a probe (native MAC: %s)', async (native) => {
-    const device = { ...ANDROID_DEVICE, id: native ? ANDROID_DEVICE.id : 'device-uuid' };
-    const fake = fakeBle(device, ANDROID_MAC);
-    const onNeedMac = vi.fn(async () => ANDROID_DEVICE.id);
-    const onVerifiedMac = vi.fn();
-    const connection = new Moyu32CubeConnection(fake.transport, {
-      onNeedMac, onVerifiedMac, onDisconnect: vi.fn(), onMove: vi.fn(), onProtocolError: vi.fn(),
-    });
-    // No automatic state response: setup must not wait for the former two-second probe.
-    await connection.connect(device);
-    expect(onNeedMac).toHaveBeenCalledTimes(native ? 0 : 1);
-    expect(fake.transport.subscribe).toHaveBeenCalledTimes(1);
-    expect(fake.stopNotifications).not.toHaveBeenCalled();
-    expect(fake.decodedWrites().map(frame => frame[0])).toEqual([
-      MOYU32_MESSAGE_INFO, MOYU32_MESSAGE_STATE, MOYU32_MESSAGE_BATTERY,
-    ]);
-    expect(onVerifiedMac).not.toHaveBeenCalled();
-    fake.emit(stateFrame(MOYU32_SOLVED_STATE, 10));
-    expect(onVerifiedMac).toHaveBeenCalledExactlyOnceWith(ANDROID_DEVICE.id);
-    await connection.disconnect();
+  it.each([0, 1, 2])('verifies prefix %s without turns, gyro or a prompt', async part => {
+    vi.useFakeTimers();
+    try {
+      const device = { id: 'candidate-' + part, name: 'WCU_MY32_A1B2' };
+      const mac = Uint8Array.of(0xcf, 0x30, 0x16, part, 0xa1, 0xb2);
+      const fake = fakeBle(device, mac), onNeedMac = vi.fn(), onMove = vi.fn(), onState = vi.fn();
+      const onVerifiedMac = vi.fn();
+      const connection = new Moyu32CubeConnection(fake.transport, {
+        onNeedMac, onMove, onState, onVerifiedMac, onDisconnect() {}, onProtocolError() {},
+      });
+      const connecting = connection.connect(device);
+      await vi.advanceTimersByTimeAsync(part * 2000);
+      await connecting;
+      expect(onNeedMac).not.toHaveBeenCalled();
+      expect(onState).toHaveBeenCalledExactlyOnceWith(MOYU32_SOLVED_STATE);
+      expect(onVerifiedMac).toHaveBeenCalledExactlyOnceWith('CF:30:16:0' + part + ':A1:B2');
+      expect(fake.transport.subscribe).toHaveBeenCalledOnce();
+      expect(fake.stopNotifications).not.toHaveBeenCalled();
+      expect(fake.decodedWrites().slice(-3).map(frame => frame[0])).toEqual([
+        MOYU32_MESSAGE_INFO, MOYU32_MESSAGE_STATE, MOYU32_MESSAGE_BATTERY,
+      ]);
+      fake.emit(moveFrame(11, [0], [50]));
+      expect(onMove).toHaveBeenCalledExactlyOnceWith('F', 50);
+      await connection.disconnect();
+    } finally { vi.useRealTimers(); }
   });
 
   it('uses the supplied real MAC on Apple and sequences encrypted commands', async () => {
@@ -278,6 +288,7 @@ describe('Moyu32CubeConnection native bridge', () => {
     });
     await connection.connect(ANDROID_DEVICE);
 
+    onState.mockClear();
     const invalid = new Uint8Array(20);
     invalid[0] = 0x37;
     for (let index = 0; index < 6; index++) fake.emit(invalid);

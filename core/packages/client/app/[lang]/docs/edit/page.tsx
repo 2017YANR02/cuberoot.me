@@ -1,13 +1,13 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import { restrictDocumentOutput } from '@/lib/document-output';
 import { getWebAccessToken } from '@/lib/web-session';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
-import { ChevronLeft, Share2 } from '@app-foundation/icons/lucide';
+import { Share2 } from '@app-foundation/icons/lucide';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import * as Y from 'yjs';
-import AppLink from '@/components/AppLink';
 import { CollaborativeSharePanel } from '@/components/collaboration/CollaborativeSharePanel';
 import WcaAuth from '@/components/WcaAuth';
 import { T, tr } from '@/i18n/tr';
@@ -97,7 +97,7 @@ export default function DocumentEditorPage() {
   return (
     <main className="doc-workspace">
       <header className="doc-topbar">
-        <AppLink href="/docs" prefetch={false} className="doc-back" aria-label={tr({ zh: '返回文档列表', en: 'Back to documents' })}><ChevronLeft size={20} /></AppLink>
+        <PageBackLink fallback="/docs" prefetch={false} className="doc-back" />
         <input className="doc-title-input" value={title} readOnly={details?.document.role !== 'owner'} onChange={(event) => setTitle(event.target.value)}
           onBlur={() => void saveTitle()} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }}
           aria-label={tr({ zh: '文档标题', en: 'Document title' })} />

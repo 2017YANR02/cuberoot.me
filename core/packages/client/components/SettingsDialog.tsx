@@ -3,16 +3,18 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ClearButton } from '@/components/ClearButton';
-import { useModalDismiss } from '@/hooks/useModalDismiss';
+import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import { tr } from '@/i18n/tr';
 import './training-settings.css';
 
-export default function SettingsDialog({ label, panelClassName, onClose, children }: {
+export default function SettingsDialog({ label, heading = false, panelClassName, onClose: onClosed, children }: {
   label: string;
+  heading?: boolean;
   panelClassName?: string;
   onClose: () => void;
-  children: ReactNode;
+  children: ReactNode | ((close: () => void) => ReactNode);
 }) {
+  const { motionRef, close: onClose } = useDialogMotion(onClosed);
   const backdropProps = useModalDismiss(onClose);
   const dialogRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -23,7 +25,7 @@ export default function SettingsDialog({ label, panelClassName, onClose, childre
     };
   }, []);
   return createPortal(
-    <div className="settings-dialog-backdrop" {...backdropProps} data-no-timer>
+    <div ref={motionRef} className="settings-dialog-backdrop" {...backdropProps} data-no-timer>
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={label} tabIndex={-1}
         className="settings-dialog" onKeyDown={event => {
           if (event.key !== 'Tab') return;
@@ -38,8 +40,10 @@ export default function SettingsDialog({ label, panelClassName, onClose, childre
           }
         }}>
         <div className={`settings-popover-panel settings-dialog-panel${panelClassName ? ` ${panelClassName}` : ''}`} data-site-surface="popover">
-          <ClearButton variant="standalone" className="settings-dialog-close" ariaLabel={tr({ zh: '关闭', en: 'Close' })} onClick={onClose} />
-          {children}
+          {heading ? <header className="settings-dialog-heading"><h2>{label}</h2>
+            <ClearButton variant="standalone" ariaLabel={tr({ zh: '关闭', en: 'Close' })} onClick={onClose} />
+          </header> : <ClearButton variant="standalone" className="settings-dialog-close" ariaLabel={tr({ zh: '关闭', en: 'Close' })} onClick={onClose} />}
+          {typeof children === 'function' ? children(onClose) : children}
         </div>
       </div>
     </div>, document.body,

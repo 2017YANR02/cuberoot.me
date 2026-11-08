@@ -27,16 +27,16 @@ export type EventId =
   | 'pyra' | 'skewb' | 'sq1' | 'mega' | 'clock'
   | 'magic' | 'mmagic'
   // Non-WCA puzzles (shared providers declare their generation capability).
-  | 'fto' | 'kilominx' | 'gear' | 'ivy' | 'redi' | 'mpyram' | 'pyraminx_duo' | 'superz'
+  | 'fto' | 'baby_fto' | 'kilominx' | 'gear' | 'ivy' | 'redi' | 'mpyram' | 'pyraminx_duo' | 'superz'
   | 'dogic' | 'octahedron4' | 'dinoskewb' | 'cube3dino'
   | 'lattice' | 'hyperx' | 'latticex' | 'masterbrilic' | 'masterftov2'
   | 'quadx' | 'dinoocta' | 'fto5' | 'fto6' | 'eto' | 'radiocrystal'
   | 'cube3skewb' | 'heliskewb' | 'comboctahedron' | 'circoradiolarian' | 'icosababyface'
-  | 'cube2heli' | 'cube3heli' | 'radiojewel' | 'radioweb' | 'radiojam' | 'catscradle' | 'radiocanon'
+  | 'cube2heli' | 'cube3heli' | 'radiojewel' | 'radioweb' | 'radiojam' | 'catscradle' | 'radiocanon' | 'radiolarian3'
   // Relays
   | 'r3' | 'r4' | 'r5'
   // CFOP step training
-  | 'cross' | 'f2l' | 'll' | 'oll' | 'pll'
+  | 'cross' | 'f2l' | 'll' | 'oll' | 'pll' | 'pll-chain'
   // LL training subsets
   | 'coll' | 'cmll' | 'zbll' | 'eg1' | 'eg2'
   | 'cll' | 'ell' | 'eocp' | '2gll' | 'ollcp' | 'zzll' | 'zbls' | 'cfzb' | 'lse' | 'l10p'
@@ -106,6 +106,12 @@ export interface Solve {
   /** Smart-cube training clock origin. Moves and timeMs share this origin,
    * including pre-turn observation for scrambled/manual starts. */
   trainingStartMode?: TrainingStartMode;
+  /** Ordered PLL operation training, stored with the ordinary timer result. */
+  pllChain?: {
+    order: string[];
+    verified: boolean;
+    splits: Array<{ caseId: string; endMove: number; elapsedMs: number }>;
+  };
   /** Bluetooth-recorded move stream for solve reconstruction.
    * Each entry is { m: face notation move, ts: ms since solve start
    * (training may include the pre-turn observation interval). WCA inspection-time moves are
@@ -234,6 +240,7 @@ export const EVENTS: EventInfo[] = [
   // Non-WCA puzzles. Names follow wiki/glossary.json (the site's term base),
   // trimmed of the generic 「魔方」 suffix the way the WCA entries above are.
   { id: 'fto',      nameEn: 'FTO',             nameZh: '转面八面体', group: 'nonwca', icon: 'unofficial-fto' },
+  { id: 'baby_fto', nameEn: 'Baby FTO',        nameZh: '二阶 FTO',  group: 'nonwca', icon: 'unofficial-baby_fto' },
   { id: 'kilominx', nameEn: 'Kilominx',        nameZh: '二阶五魔',   group: 'nonwca', icon: 'unofficial-kilominx' },
   { id: 'gear',     nameEn: 'Gear Cube',       nameZh: '齿轮',       group: 'nonwca', icon: 'puzzle-gear' },
   { id: 'ivy',      nameEn: 'Ivy Cube',        nameZh: '枫叶',       group: 'nonwca', icon: 'unofficial-ivy' },
@@ -268,6 +275,7 @@ export const EVENTS: EventInfo[] = [
   { id: 'radiojam', nameEn: 'Radio Jam', nameZh: 'Radio Jam', group: 'nonwca', icon: 'puzzle-radiojam' },
   { id: 'catscradle', nameEn: 'Cat’s Cradle', nameZh: 'Cat’s Cradle', group: 'nonwca', icon: 'puzzle-catscradle' },
   { id: 'radiocanon', nameEn: 'Radio Canon', nameZh: 'Radio Canon', group: 'nonwca', icon: 'puzzle-radiocanon' },
+  { id: 'radiolarian3', nameEn: 'Radiolarian 3', nameZh: 'Radiolarian 3', group: 'nonwca', icon: 'puzzle-radiolarian3' },
 
   // CFOP step training
   { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字',       group: 'cfop'
@@ -280,6 +288,7 @@ export const EVENTS: EventInfo[] = [
   // Last-layer training
   { id: 'oll',    nameEn: 'OLL',         nameZh: 'OLL',        group: 'll' },
   { id: 'pll',    nameEn: 'PLL',         nameZh: 'PLL',        group: 'll' },
+  { id: 'pll-chain', nameEn: 'PLL chain', nameZh: 'PLL 连拧', group: 'll' },
   { id: 'coll',   nameEn: 'COLL',        nameZh: 'COLL',       group: 'll' },
   { id: 'cmll',   nameEn: 'CMLL',        nameZh: 'CMLL',       group: 'll' },
   { id: 'zbll',   nameEn: 'ZBLL',        nameZh: 'ZBLL',       group: 'll' },

@@ -32,6 +32,7 @@ export type TimerCubingScrambleEventId =
   | '555bf'
   | 'clock'
   | 'fto'
+  | 'baby_fto'
   | 'minx'
   | 'pyram'
   | 'redi_cube'
@@ -110,6 +111,7 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   magic: { kind: 'compound', provider: 'timer-compound' },
   mmagic: { kind: 'compound', provider: 'timer-compound' },
   fto: { kind: 'cubing', cubingEventId: 'fto' },
+  baby_fto: { kind: 'cubing', cubingEventId: 'baby_fto' },
   kilominx: { kind: 'shared', provider: 'cstimer-nonwca' },
   gear: { kind: 'shared', provider: 'small-puzzle-random-state' },
   ivy: { kind: 'shared', provider: 'small-puzzle-random-state' },
@@ -144,6 +146,7 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   radiojam: { kind: 'shared', provider: 'native-random-move' },
   catscradle: { kind: 'shared', provider: 'native-random-move' },
   radiocanon: { kind: 'shared', provider: 'native-random-move' },
+  radiolarian3: { kind: 'shared', provider: 'native-random-move' },
   r3: { kind: 'compound', provider: 'timer-compound' },
   r4: { kind: 'compound', provider: 'timer-compound' },
   r5: { kind: 'compound', provider: 'timer-compound' },
@@ -168,6 +171,7 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   'lse': { kind: 'shared', provider: 'training-state' },
   'l10p': { kind: 'shared', provider: 'training-state' },
   custom: { kind: 'manual' },
+  'pll-chain': { kind: 'manual' },
 } as const satisfies Readonly<Record<EventId, TimerScrambleCapability>>);
 
 export type TimerScrambleErrorCode =
@@ -288,7 +292,7 @@ export function timerScrambleAllowsEmptySlot(
   event: EventId,
   source: TimerScrambleSourceKind,
 ): boolean {
-  return source === 'manual' || event === 'custom';
+  return source === 'manual' || event === 'custom' || event === 'pll-chain';
 }
 
 async function defaultCubingScrambleGenerator(

@@ -64,7 +64,7 @@ export async function updateCase(puzzle: string, set: string, id: number, body: 
 /** Store a new public U-layer phase; source algorithms and their notation stay intact. */
 export async function rotateCaseClockwise(file: AlgFile, c: AlgCase, viewAngle: CaseViewAngle = 'default'): Promise<AlgFile> {
   const puzzle = file.puzzle as AlgPuzzle;
-  if (c.id == null || !['2x2', '3x3', '4x4', '5x5'].includes(puzzle)
+  if (c.id == null || !['2x2', '3x3', '4x4', '5x5', '6x6'].includes(puzzle)
     || !supportsCaseViewAngle(cubeThumbParams(puzzle, file.set, c.sticker))) {
     throw new Error('This case does not support a 90° top-layer rotation');
   }

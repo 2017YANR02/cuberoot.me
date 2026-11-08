@@ -52,7 +52,7 @@ const CUBE_SIZE: Partial<Record<AlgPuzzle, number>> = {
   '2x2': 2,
   '3x3': 3,
   '4x4': 4,
-  '5x5': 5,
+  '5x5': 5, '6x6': 6,
 };
 
 /**

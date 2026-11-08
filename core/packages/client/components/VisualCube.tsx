@@ -120,10 +120,16 @@ function VisualCubeContent(props: Props & { initialOrbit?: Orbit | null }) {
       ...(planSimplify?.forceShow ? { pfs: planSimplify.forceShow } : {}),
       ...(planSimplify?.forceHide ? { pfh: planSimplify.forceHide } : {}),
     };
-    if ((interactive && orbit && !isPlan) || (stickerColors && !faceletColors) || viewportRotations || outlineMaskedTop || outlinedFacelets?.length) {
-      return renderCubeSVG({ ...buildSimpleOptions(query), ...(stickerColors && !faceletColors ? { stickerColors } : {}), ...(viewportRotations ? { viewportRotations } : {}), ...(outlineMaskedTop ? { maskedTopOutline: stickerOutlineStyle } : {}), ...(outlinedFacelets?.length ? { stickerOutline: { ...stickerOutlineStyle, indices: outlinedFacelets, includePlanSides: outlinePlanSides } } : {}), ...(stickerMaskColor ? { maskColor: stickerMaskColor } : {}), ...(interactive && orbit && !isPlan ? { view: 'iso', viewportRotations: [[Axis.Y, orbit.y], [Axis.X, orbit.x]] } : {}) });
+    try {
+      if ((interactive && orbit && !isPlan) || (stickerColors && !faceletColors) || viewportRotations || outlineMaskedTop || outlinedFacelets?.length) {
+        return renderCubeSVG({ ...buildSimpleOptions(query), ...(stickerColors && !faceletColors ? { stickerColors } : {}), ...(viewportRotations ? { viewportRotations } : {}), ...(outlineMaskedTop ? { maskedTopOutline: stickerOutlineStyle } : {}), ...(outlinedFacelets?.length ? { stickerOutline: { ...stickerOutlineStyle, indices: outlinedFacelets, includePlanSides: outlinePlanSides } } : {}), ...(stickerMaskColor ? { maskColor: stickerMaskColor } : {}), ...(interactive && orbit && !isPlan ? { view: 'iso', viewportRotations: [[Axis.Y, orbit.y], [Axis.X, orbit.x]] } : {}) });
+      }
+      return renderFromSimpleQuery(query);
+    } catch {
+      // User-authored notation can be incomplete. A failed thumbnail must not
+      // abort SSR or replace the page, nor display a guessed solved state.
+      return null;
     }
-    return renderFromSimpleQuery(query);
   }, [interactive, orbit, isPlan, renderLocally, algorithm, setup, view, mask, faceletColors, stickerColors, stickerMaskColor, viewportRotations, outlineMaskedTop, outlinedFacelets, outlinePlanSides, faceletAlg, scheme, showLastLayerColor, planSimplify, size, puzzleSize, hideGreySides]);
 
   const src = useMemo(() => {
@@ -206,6 +212,7 @@ function VisualCubeContent(props: Props & { initialOrbit?: Orbit | null }) {
       />
     );
   }
+  if (renderLocally) return <span aria-hidden="true" style={{ display: 'inline-flex', width: size, height: size }} />;
   return <img className="puzzle-art" src={src} width={size} height={size} alt={alt} loading={loading} />;
 }
 

@@ -5,11 +5,15 @@ import { sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
 import { algCaseHref } from '@/lib/alg_case_link';
 
 /** Follow the owning list, including its text-only subgroup sections. */
-export function adjacentAlgCases(puzzle: string, set: string, cases: AlgCase[], current: AlgCase) {
+export function siblingAlgCases(puzzle: string, set: string, cases: AlgCase[], current: AlgCase) {
   const listPath = (c: AlgCase) => algCaseHref(puzzle, set, c).split('#')[0];
   const parent = listPath(current);
   const ordered = sortAlgItemsBySignedLabel(sortByCp(set, cases), c => primaryCaseName(puzzle, set, c));
-  const siblings = ordered.filter(c => listPath(c) === parent);
+  return ordered.filter(c => listPath(c) === parent);
+}
+
+export function adjacentAlgCases(puzzle: string, set: string, cases: AlgCase[], current: AlgCase) {
+  const siblings = siblingAlgCases(puzzle, set, cases, current);
   const index = siblings.findIndex(c => c.id != null && c.id === current.id);
   return {
     previous: index > 0 ? siblings[index - 1] : null,

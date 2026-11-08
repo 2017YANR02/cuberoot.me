@@ -1,7 +1,7 @@
 /**
  * 校验 alg case 的"setup + alg" 是否真的完成了**这个 set 该完成的事**。
  *
- * 支持的 puzzle:2x2 / 3x3 / 4x4 / 5x5 / sq1 / megaminx / pyraminx / skewb / FTO。
+ * 支持的 puzzle:2x2 / 3x3 / 4x4 / 5x5 / 6x6 / sq1 / megaminx / pyraminx / skewb / FTO。
  *
  * ## 判据按 set 走,不是按 sticker.kind
  *
@@ -74,6 +74,7 @@ const PUZZLE_TO_CUBINGJS_ID: Record<string, string> = {
   '3x3': '3x3x3',
   '4x4': '4x4x4',
   '5x5': '5x5x5',
+  '6x6': '6x6x6',
   'sq1': 'square1',
   'megaminx': 'megaminx',
   'pyraminx': 'pyraminx',
@@ -263,7 +264,7 @@ export async function validateAlgCase(
     const p = run(auf);
     if (p && goal(p)) return { ok: true, auf };
   }
-  if (options.fixedOrientation && !options.storedAlg && ['2x2', '3x3', '4x4', '5x5'].includes(puzzle)) {
+  if (options.fixedOrientation && !options.storedAlg && ['2x2', '3x3', '4x4', '5x5', '6x6'].includes(puzzle)) {
     // A source may finish in another grip. Make that correction visible;
     // never let the validator silently rotate a displayed final state.
     for (const auf of aufCandidates) {

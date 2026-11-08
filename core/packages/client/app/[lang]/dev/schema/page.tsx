@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import MoreToggle from '@/components/MoreToggle';
 import { Fragment, useMemo } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
@@ -901,6 +902,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 289, slug: 'wca_translations', desc: { zh: 'WCA 官方英中翻译与来源状态，原子同步及检索。', en: 'Official WCA English–Chinese translations with provenance, atomic sync and retrieval.' } },
   { n: 308, slug: 'assistant_private_attachments', desc: { zh: 'AI 私有会话图片附件', en: 'Private AI conversation image attachments' } },
   { n: 309, slug: 'product_analytics', desc: { zh: '复用产品事件与授权表，为全站分析增加聚合和授权查询索引。', en: 'Index existing product events and consents for website analytics.' } },
+  { n: 316, slug: 'alg_6x6', desc: { zh: '收录六阶最后两中心与最后两棱：35 种情况、40 条公式。', en: 'Add six-layer last-two-center and last-two-edge sets: 35 cases and 40 algorithms.' } },
   { n: 315, slug: 'document_sharing', desc: { zh: '协作文件常规访问权限、评论者、编辑者共享授权及导出限制。', en: 'General access, commenter roles, editor sharing permissions and export restrictions for collaborative files.' } },
   { n: 314, slug: 'career_application_links', desc: { zh: '招聘申请保存选填的 GitHub 仓库和个人网站。', en: 'Store optional GitHub repository and personal website links with career applications.' } },
   { n: 313, slug: 'career_application_ai_usage', desc: { zh: '招聘申请保存 AI 模型或工具与套餐总费用。', en: 'Store AI models or tools and total subscription cost with career applications.' } },
@@ -944,7 +946,7 @@ export default function SchemaPage() {
       <div className="schema-bg" />
       <div className="schema-inner">
         <div className="schema-topbar">
-          <Link href="/dev" className="schema-back">← /dev</Link>
+          <PageBackLink fallback="/dev" className="schema-back" />
         </div>
 
         <header className="schema-hero">

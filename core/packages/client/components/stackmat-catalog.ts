@@ -15,6 +15,11 @@ export const normalizeStackmatSkin = (value: unknown): StackmatG5Skin =>
   STACKMAT_G5_SKINS.find(skin => skin === value) ?? 'classic';
 export const normalizeStackmatInput = (value: unknown): StackmatInputMode =>
   value === '2-pad' || value === '4-pad' ? value : 'normal';
+export function effectiveStackmatInput(settings: { timerDisplayMode: string; stackmatInputMode: StackmatInputMode }): StackmatInputMode {
+  if (!/^stackmat-g[1-5]$/.test(settings.timerDisplayMode)) return 'normal';
+  if (settings.stackmatInputMode === '4-pad' && settings.timerDisplayMode !== 'stackmat-g5') return '2-pad';
+  return settings.stackmatInputMode;
+}
 export function usesStackmatPads(settings: { timerDisplayMode: string; stackmatInputMode: StackmatInputMode }) {
-  return settings.timerDisplayMode === 'stackmat-g5' && settings.stackmatInputMode !== 'normal';
+  return effectiveStackmatInput(settings) !== 'normal';
 }

@@ -6,6 +6,7 @@ import type { PhotoWorkerRequest, PhotoWorkerReply } from './workers';
 export type { PhotoAnalysisInput, PhotoAnalysisMessage } from '@cuberoot/shared/cube-photo/analyze';
 
 const catalogs = {
+  4: new PhotoCatalogCache((set, fresh) => loadAlg('4x4', set, { fresh })),
   3: new PhotoCatalogCache((set, fresh) => loadAlg('3x3', set, { fresh })),
   2: new PhotoCatalogCache((set, fresh) => loadAlg('2x2', set, { fresh })),
 };

@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { modalFocusableElements } from './modal-focus';
+import { useDialogMotion } from './useDialogMotion';
 import { useModalBackdrop } from './useModalDismiss';
 
 export interface TimerRoomDialogProps {
@@ -14,7 +15,8 @@ export interface TimerRoomDialogProps {
   children: ReactNode;
 }
 
-export function TimerRoomDialog({ title, className, headerControls, hideHeader = false, language, onClose, children }: TimerRoomDialogProps) {
+export function TimerRoomDialog({ title, className, headerControls, hideHeader = false, language, onClose: onClosed, children }: TimerRoomDialogProps) {
+  const { motionRef, close: onClose } = useDialogMotion(onClosed);
   const ref = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -37,7 +39,7 @@ export function TimerRoomDialog({ title, className, headerControls, hideHeader =
   }, []);
   if (typeof document === 'undefined') return null;
   const close = { en: 'Close', zh: '关闭' }[language];
-  return createPortal(<div className="timer-room-overlay timer-no-selection" data-no-timer {...backdrop}>
+  return createPortal(<div ref={motionRef} className="timer-room-overlay timer-no-selection" data-no-timer {...backdrop}>
     <div className={`timer-room-dialog${className ? ` ${className}` : ''}`} data-site-surface="panel" role="dialog" aria-modal="true" aria-labelledby={titleId}
       ref={ref} tabIndex={-1} onKeyUp={(event) => event.stopPropagation()} onKeyDown={(event) => {
         event.stopPropagation();

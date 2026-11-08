@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { STACK_TOOLS_META, type StackToolMeta } from './_lib/stack_meta';
@@ -65,9 +66,7 @@ export default function StackLandingPage() {
 
       <header className="stack-landing-head">
         <div className="stack-landing-topbar">
-          <Link href="/dev" className="stack-landing-back">
-            ← /dev
-          </Link>
+          <PageBackLink fallback="/dev" className="stack-landing-back" />
         </div>
         <h1 className="stack-landing-title">
           <span className="stack-landing-prefix">/</span>stack

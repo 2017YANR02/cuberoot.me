@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useTimerSearchParams as useSearchParams } from '@/lib/timer-practice-url-adapter';
 import { useQueryState } from 'nuqs';
 import { tr } from '@/i18n/tr';
+import PageBackLink from '@/components/PageBackLink';
 import { TIMER_TRAINING_HELP } from '@/lib/timer-training-help';
 import { resolveTrainingTarget } from '@/lib/timer-training-catalog';
 import { timerTrainingHref } from '@/lib/timer-training-location';
@@ -49,12 +50,13 @@ export default function TimerTrainingWorkspace() {
       {/* This non-sticky toolbar must not create a backdrop root: its menu needs
           to blur and cover the training cards outside the toolbar. */}
       <div className="timer-training-workspace__toolbar" data-no-timer>
+        <PageBackLink fallback="/" className="tb-btn shell-topbar-home" data-no-timer />
         <div className="timer-training-workspace__navigation">
         {target?.kind === 'alg-run' && <div className="timer-training-workspace__settings" ref={setDevicePortal} />}
         <TimerTrainingMenu />
         {target?.kind === 'alg-run' && <div className="timer-training-workspace__settings" ref={setSettingsPortal} />}
-        </div>
         {target?.kind === 'alg-run' && <div className="timer-training-workspace__context" ref={setContextPortal} />}
+        </div>
       </div>
       {host && target ? (
         <TrainingHostProvider value={host}>

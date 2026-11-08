@@ -1,9 +1,11 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 import dns from "node:dns";
+import { readdirSync } from "node:fs";
 import { PLATFORM_CANONICAL_REWRITES } from "./lib/platform-routes";
 import { RETIRED_ROUTES } from "./lib/retired-routes";
 import { usesLocalStats, PUBLISHED_STATS_ORIGIN } from "@cuberoot/shared/stats-base";
+import { WCA_STAT_PAGE_IDS } from "@cuberoot/shared/wca-stat-catalog";
 
 // Force IPv4 first for upstream rewrites — node fetch's default IPv6-first
 // order causes intermittent `getaddrinfo ENOTFOUND` on api.cuberoot.me proxy
@@ -228,6 +230,13 @@ const nextConfig: NextConfig = {
   // Keep external proxies limited to /v1. afterFiles runs before dynamic
   // routes, so the local capture catch-all is explicitly excluded below.
   async rewrites() {
+    // [lang] makes even named WCA pages dynamic to Next's matcher. Derive their
+    // names from the filesystem so a catch-all 404 cannot swallow a sibling page.
+    const wcaSiblings = readdirSync(path.join(__dirname, 'app/[lang]/wca'), { withFileTypes: true })
+      .filter(entry => entry.isDirectory() && !/^[\[(_@]/.test(entry.name))
+      .map(entry => entry.name);
+    const wcaPagePattern = [...WCA_STAT_PAGE_IDS, ...wcaSiblings]
+      .map(id => id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
     return {
       beforeFiles: [
         // Config rewrites resolve internally on both hosts. Proxy rewrites can
@@ -297,6 +306,9 @@ const nextConfig: NextConfig = {
         { source: "/:lang(en|zh)/alg/:puzzle/:set/:seg((?!run$|select$|simple$)[^/]+)", destination: "/:lang/alg/_/_/_" },
       ],
       afterFiles: [
+        // Reject unknown stats before streaming starts; notFound() inside a
+        // streamed shell otherwise renders a 404 screen with HTTP 200.
+        { source: `/:lang(en|zh)?/wca/:statId((?!(?:${wcaPagePattern})(?:/|$))[^/]+)`, destination: '/404' },
         // Dev only: FMC chain solver (vendored cubelib) runs as a local native
         // service on :8099 — proxy /v1/fmc/* to it so ChainExplorer can fetch it
         // without CORS. Must precede the general /v1 rule. In prod this falls

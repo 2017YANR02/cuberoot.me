@@ -2,12 +2,11 @@ import { SITE_DIRECTORY_GROUPS } from './site_directory';
 import { PAGE_META } from './page_catalog';
 
 /** Versioned, bounded vocabulary shared by the browser and ingestion API. */
-export const PRODUCT_ANALYTICS_POLICY = 'web-analytics-1';
 export const HOME_ANALYTICS_LAYOUT = 'home-2026-11-03';
 export const ANALYTICS_RETENTION_DAYS = 30;
 export const ANALYTICS_BATCH_SIZE = 20;
 export const ANALYTICS_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-export const ANALYTICS_EVENTS = ['web.page_view', 'web.page_engaged', 'web.entry_impression', 'web.entry_click', 'web.feature_use'] as const;
+export const ANALYTICS_EVENTS = ['web.page_view', 'web.page_engaged', 'web.feature_interaction', 'web.entry_impression', 'web.entry_click', 'web.feature_use'] as const;
 export const ANALYTICS_ACTIONS = ['timer_solve', 'scramble_generate', 'solver_result', 'sim_move', 'alg_play', 'recon_play'] as const;
 export type AnalyticsAction = typeof ANALYTICS_ACTIONS[number];
 export type AnalyticsEventName = typeof ANALYTICS_EVENTS[number];
@@ -21,11 +20,12 @@ export interface ProductAnalyticsReport {
   days: number;
   audience: AnalyticsReportAudience;
   timezone: 'UTC';
-  coverage: 'opted_in_web_only';
+  coverage: 'default_web';
   retentionDays: number;
   truncated: boolean;
   summary: { events: number; sessions: number; accountUsers: number; anonymousSessions: number; firstEventAt: string | null; lastEventAt: string | null };
-  pages: Array<{ route: string; feature: string; device: string; language: string; views: number; subjects: number; sessions: number; engagedSessions: number; usingSubjects: number; usingSessions: number; uses: number }>;
+  pages: Array<{ route: string; feature: string; device: string; language: string; views: number; subjects: number; sessions: number; engagedSessions: number; interactingSessions: number; usingSubjects: number; usingSessions: number; uses: number }>;
+  features: Array<{ feature: string; views: number; sessions: number; interactingSessions: number; usingSessions: number }>;
   entries: Array<{ entry: string; placement: string; layout: string; position: string; device: string; impressions: number; clicks: number; usedAfterClick: number }>;
   frequency: Array<{ feature: string; users: number; activeDaysPerUser: number; sessionsPerUser: number }>;
 }

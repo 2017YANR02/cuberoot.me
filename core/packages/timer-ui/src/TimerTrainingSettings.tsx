@@ -96,7 +96,6 @@ export function TimerGoalSettings({ value: s, onChange: updateSettings, localize
               onChange={(e) => setTargetInput(e.target.value)}
               onBlur={(e) => commitTargetInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitTargetInput((e.target as HTMLInputElement).value); }}
-              style={{ fontFamily: 'ui-monospace, monospace' }}
             />
 
           </TimerSettingRow>
@@ -180,7 +179,6 @@ export function TimerRoundSettings({ value: s, onChange, localize: tr }: Omit<Pr
               onChange={(e) => setRoundCutoffInput(e.target.value)}
               onBlur={(e) => commitRoundLimitField('cutoffMs', e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitRoundLimitField('cutoffMs', (e.target as HTMLInputElement).value); }}
-              style={{ fontFamily: 'ui-monospace, monospace' }}
             />
           </TimerSettingRow>
           <TimerSettingRow field={timerSettingFieldContract('settings.training.round-time-limit')} label={tr(timerSettingFieldContract('settings.training.round-time-limit').copy)}>
@@ -193,14 +191,13 @@ export function TimerRoundSettings({ value: s, onChange, localize: tr }: Omit<Pr
               onChange={(e) => setRoundLimitInput(e.target.value)}
               onBlur={(e) => commitRoundLimitField('limitMs', e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitRoundLimitField('limitMs', (e.target as HTMLInputElement).value); }}
-              style={{ fontFamily: 'ui-monospace, monospace' }}
             />
             <span data-setting-id="settings.training.round-cumulative">
               <select
                 value={String(s.round.cumulative)}
                 onChange={event => { const v = event.currentTarget.value === 'true'; onChange({ cumulative: v }); }}
                 aria-label={settingLabel('settings.training.round-cumulative')}
-                className="native-select"
+                className="settings-row-control-select"
               >
                 <option value="true">{tr({ zh: '累计', en: 'cumulative' })}</option>
                 <option value="false">{tr({ zh: '每把', en: 'per attempt' })}</option>

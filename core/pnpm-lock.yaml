@@ -23,6 +23,7 @@ patchedDependencies:
   '@app-foundation/workspace-ui@0.1.0': f884be29fee3ca5c17f0ad25cd9ca976c749c66b1284f9390f50dc506ec35230
   '@ffmpeg/ffmpeg@0.12.15': d090b58375aee305ddf5682a64c6ff2ea4397b71a6469fc4f7156fa2863b8d1d
   cubing@0.63.3: 026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6
+  wx-to-tt@0.3.0-beta.3: 111e6a7835324d3221f89b15b1bf005abbaaa6e95272e1c3ba4ad75a80baf537
 
 importers:
 
@@ -340,7 +341,7 @@ importers:
         version: 4.1.12(@types/node@22.19.15)(happy-dom@21.0.4)(jsdom@30.0.1)(vite@8.1.6(@types/node@22.19.15)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.0))
       wx-to-tt:
         specifier: 0.3.0-beta.3
-        version: 0.3.0-beta.3(supports-color@7.2.0)
+        version: 0.3.0-beta.3(patch_hash=111e6a7835324d3221f89b15b1bf005abbaaa6e95272e1c3ba4ad75a80baf537)(supports-color@7.2.0)
 
   apps/mobile:
     dependencies:
@@ -12204,7 +12205,7 @@ snapshots:
 
   ws@8.22.0: {}
 
-  wx-to-tt@0.3.0-beta.3(supports-color@7.2.0):
+  wx-to-tt@0.3.0-beta.3(patch_hash=111e6a7835324d3221f89b15b1bf005abbaaa6e95272e1c3ba4ad75a80baf537)(supports-color@7.2.0):
     dependencies:
       '@babel/generator': 7.29.8
       '@babel/parser': 7.29.8

@@ -11,9 +11,7 @@ import {
   type ContactText,
 } from '@cuberoot/shared/contact';
 import BackHome from '@/components/BackHome';
-import AppLink from '@/components/AppLink';
 import { T, tr } from '@/i18n/tr';
-import { useIsAdmin } from '@/lib/auth-store';
 import ContactDetails from '@/components/ContactDetails';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
 import './contact.css';
@@ -36,7 +34,6 @@ function JoinInstruction() {
 }
 
 export default function ContactPage() {
-  const admin = useIsAdmin();
   const { hash, setHash } = useHashHighlight({ block: 'start' });
   const [activeId, setActiveId] = useState('contact-details');
   useEffect(() => {
@@ -57,13 +54,6 @@ export default function ContactPage() {
     >
       <section id="contact-details" className="contact-profile">
         <div className="contact-profile-copy">
-          {admin && (
-            <div className="contact-membership-link">
-              <AppLink href="/membership" className="contact-site">
-                {tr({ zh: '会员页面 →', en: 'Membership page →' })}
-              </AppLink>
-            </div>
-          )}
           <ContactDetails />
         </div>
       </section>

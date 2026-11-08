@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { ANALYTICS_ENTRY_IDS, ANALYTICS_PLACEMENTS, HOME_ANALYTICS_LAYOUT, analyticsPage, type ProductAnalyticsEvent } from '@cuberoot/shared/product-analytics';
 import { useAuthUser } from '@/lib/auth-store';
 import { subscribeWebSession } from '@/lib/web-session';
-import { analyticsActivity, analyticsEntryTarget, analyticsNavigate, analyticsServerSnapshot, analyticsSnapshot, flushAnalytics, initializeAnalytics, stopAnalytics, subscribeAnalytics, trackAnalytics } from '@/lib/product-analytics';
+import { analyticsActivity, analyticsEntryTarget, analyticsNavigate, analyticsServerSnapshot, analyticsSnapshot, flushAnalytics, initializeAnalytics, stopAnalytics, subscribeAnalytics, trackPageInteraction, trackAnalytics } from '@/lib/product-analytics';
 
 export function observeAnalyticsEntries(root: Document = document): () => void {
   const seen = new Set<string>();
@@ -92,10 +92,9 @@ export default function ProductAnalytics() {
     const unsubscribeSession = subscribeWebSession(() => {
       const current = analyticsSnapshot();
       if (current.ready && !current.enabled) void initializeAnalytics();
+      else void flushAnalytics();
     });
-    const refresh = (event: StorageEvent) => { if (event.key?.startsWith('cuberoot:analytics:')) void initializeAnalytics(); };
-    window.addEventListener('storage', refresh);
-    return () => { unsubscribeSession(); window.removeEventListener('storage', refresh); stopAnalytics(); };
+    return () => { unsubscribeSession(); stopAnalytics(); };
   }, [owner]);
   useEffect(() => {
     if (!state.ready || !state.enabled) return;
@@ -107,7 +106,14 @@ export default function ProductAnalytics() {
     let interacted = false;
     let activityPending = false;
     let engaged = false;
-    const interact = (event: Event) => { if (event.isTrusted) { interacted = true; activityPending = true; } };
+    const interact = (event: Event) => {
+      if (!event.isTrusted) return;
+      interacted = true; activityPending = true;
+      const target = event.target instanceof Element ? event.target : null;
+      // Count in-content controls/canvas/keyboard, never global chrome or navigation.
+      if (event.type !== 'scroll' && target?.closest('main, [role="main"]')
+        && !target.closest('a, nav, header, footer, [data-analytics-disabled="true"]')) trackPageInteraction();
+    };
     document.addEventListener('pointerdown', interact, { passive: true });
     document.addEventListener('keydown', interact);
     document.addEventListener('scroll', interact, { passive: true, capture: true });

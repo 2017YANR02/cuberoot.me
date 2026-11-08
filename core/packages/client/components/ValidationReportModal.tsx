@@ -24,7 +24,7 @@ import { tr } from '@/i18n/tr';
 import Link from '@/components/AppLink';
 import { loadAlg } from '@/lib/alg_case_alignment';
 import { algCaseDetailHref, buildCaseSlugMap } from '@/lib/alg_case_link';
-import { useModalBackdrop } from '@/hooks/useModalDismiss';
+import { useDialogMotion, useModalBackdrop } from '@/hooks/useModalDismiss';
 
 export type ValidationScope =
   | { kind: 'case'; puzzle: AlgPuzzle; set: string; caseObj: AlgCase }
@@ -45,7 +45,7 @@ interface Props {
 }
 
 export default function ValidationReportModal({
-  scope, onClose, onPickCase, onResults, refreshKey = 0,
+  scope, onClose: onClosed, onPickCase, onResults, refreshKey = 0,
 }: Props) {
   useTranslation(); // subscribe to language changes; text via tr()
   const [progress, setProgress] = useState({ done: 0, total: 0 });
@@ -53,6 +53,7 @@ export default function ValidationReportModal({
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const cancelRef = useRef(false);
+  const { motionRef, close: onClose } = useDialogMotion(onClosed);
   const backdrop = useModalBackdrop(onClose);
   const [caseLinks, setCaseLinks] = useState<Record<string, string>>({});
   useEffect(() => {
@@ -131,7 +132,7 @@ export default function ValidationReportModal({
   })();
 
   return (
-    <div className="alg-admin-modal-backdrop" {...backdrop} role="dialog" aria-modal="true">
+    <div ref={motionRef} className="alg-admin-modal-backdrop" {...backdrop} role="dialog" aria-modal="true">
       <div className="alg-admin-modal alg-validation-modal" onClick={e => e.stopPropagation()}>
         <div className="alg-admin-modal-head">
           <h2>{title}</h2>

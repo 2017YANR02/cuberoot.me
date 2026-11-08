@@ -1,58 +1,23 @@
 import { createHash } from 'node:crypto';
-import { PRODUCT_ANALYTICS_POLICY, type AnalyticsAudience, type ProductAnalyticsEvent } from '@cuberoot/shared/product-analytics';
+import { type AnalyticsAudience, type ProductAnalyticsEvent } from '@cuberoot/shared/product-analytics';
 import { platformQuery, platformTransaction, type PlatformDb } from './db.js';
-import { forbidden } from './errors.js';
 
 export interface AnalyticsSubject { userId: number | null; hash: string; audience: AnalyticsAudience }
 export function analyticsSubject(userId: number | null, token: string, admin = false): AnalyticsSubject {
   return { userId, hash: createHash('sha256').update(token).digest('hex'), audience: userId == null ? 'anonymous' : admin ? 'admin' : 'member' };
 }
 
-/** The legacy account consent writer shares this lock with ingestion/revocation. */
+/** Serializes legacy account consent writes; default Web ingestion does not use it. */
 export async function lockAnalyticsSubject(db: PlatformDb, subject: Pick<AnalyticsSubject, 'userId' | 'hash'>): Promise<void> {
   await platformQuery(db, 'SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [
     subject.userId == null ? `analytics:anonymous:${subject.hash}` : `analytics:user:${subject.userId}`,
   ]);
 }
 
-export async function latestAnalyticsConsent(db: PlatformDb, subject: AnalyticsSubject) {
-  const rows = await platformQuery<{ id: string; status: string; policy: string; active: boolean }>(db, `
-    SELECT id::text, status, policy_version AS policy,
-      (expires_at IS NULL OR expires_at > NOW()) AS active
-    FROM platform_privacy_consents WHERE purpose = 'analytics' AND
-      (($1::bigint IS NOT NULL AND user_id = $1) OR
-       ($1::bigint IS NULL AND anonymous_subject_hash = decode($2, 'hex')))
-    ORDER BY decided_at DESC, id DESC LIMIT 1
-  `, [subject.userId, subject.hash]);
-  return rows[0];
-}
-
-export async function setAnalyticsConsent(subject: AnalyticsSubject, enabled: boolean): Promise<void> {
-  await platformTransaction(async db => {
-    await platformQuery(db, "SET LOCAL statement_timeout = '2s'");
-    await platformQuery(db, "SET LOCAL lock_timeout = '250ms'");
-    await lockAnalyticsSubject(db, subject);
-    const previous = await latestAnalyticsConsent(db, subject);
-    if (previous?.status === (enabled ? 'granted' : 'withdrawn') && previous.policy === PRODUCT_ANALYTICS_POLICY && previous.active) return;
-    await platformQuery(db, `INSERT INTO platform_privacy_consents
-      (user_id, anonymous_subject_hash, purpose, status, policy_version, source, decided_at, expires_at, supersedes_consent_id)
-      VALUES ($1, CASE WHEN $1::bigint IS NULL THEN decode($2, 'hex') END,
-        'analytics', $3, $4, 'web_settings', clock_timestamp(), NOW() + INTERVAL '30 days', $5::uuid)`,
-    [subject.userId, subject.hash, enabled ? 'granted' : 'withdrawn', PRODUCT_ANALYTICS_POLICY, previous?.id ?? null]);
-  });
-}
-
-export function analyticsConsentEnabled(consent: Awaited<ReturnType<typeof latestAnalyticsConsent>>): boolean {
-  return consent?.status === 'granted' && consent.active && consent.policy === PRODUCT_ANALYTICS_POLICY;
-}
-
 export async function recordAnalyticsBatch(subject: AnalyticsSubject, sessionId: string, events: ProductAnalyticsEvent[]): Promise<number> {
   return platformTransaction(async db => {
     await platformQuery(db, "SET LOCAL statement_timeout = '2s'");
     await platformQuery(db, "SET LOCAL lock_timeout = '250ms'");
-    await lockAnalyticsSubject(db, subject);
-    const consent = await latestAnalyticsConsent(db, subject);
-    if (!analyticsConsentEnabled(consent)) forbidden('Current web analytics consent required');
     // A single statement is both atomic and idempotent across network retries.
     const rows = await platformQuery(db, `INSERT INTO platform_analytics_events
       (id, consent_id, user_id, anonymous_subject_hash, event_name, surface, dimensions, occurred_at, expires_at)
@@ -62,7 +27,7 @@ export async function recordAnalyticsBatch(subject: AnalyticsSubject, sessionId:
         (e - 'id' - 'name' - 'occurredAt') || jsonb_build_object('sessionId', $4::text, 'audience', $5::text, 'schemaVersion', 1),
         (e->>'occurredAt')::timestamptz, NOW() + INTERVAL '30 days'
       FROM jsonb_array_elements($6::jsonb) e ON CONFLICT (id) DO NOTHING RETURNING id`,
-    [consent!.id, subject.userId, subject.hash, sessionId, subject.audience, events]);
+    [null, subject.userId, subject.hash, sessionId, subject.audience, events]);
     return rows.length;
   });
 }

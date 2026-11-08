@@ -576,3 +576,14 @@ export function relabelYMoveString(alg: string, k: number): string {
     return renderMove({ family, amount, layer: move.layer });
   }).join(' ');
 }
+
+
+/** Expand all-inner slice notation without confusing it with a single middle
+ * slice (M/E/S). Valid for even and odd NxN cubes. */
+export function expandAllInnerSlices(alg: string): string {
+  return expandGroups(alg).replace(/(^|\s)([mes])(2'?|')?(?=\s|$)/g, (_, space: string, face: string, suffix: string) => {
+    const bases: Record<string, string> = { m: "R L' x'", e: "U D' y'", s: "F' B z" };
+    const body = bases[face];
+    return space + (suffix?.startsWith('2') ? body + ' ' + body : suffix === "'" ? invertMoveString(body) : body);
+  });
+}

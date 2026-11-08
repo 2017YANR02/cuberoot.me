@@ -7,13 +7,56 @@ import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
 import { f2lSlotFingerprint, isSlotSolved } from '@cuberoot/shared/timer/reconstruct/f2l-slots';
 import { isCross } from '@cuberoot/shared/timer/reconstruct/cfop-detect';
 import { FACE_COLOR_KEY } from '@cuberoot/shared/timer/reconstruct/orient';
-import { cleanForPlayer } from './recon-alg-utils';
+import { cleanForPlayer, reconLineSetups } from './recon-alg-utils';
 import { algCaseDetailHref, buildCaseSlugMap } from './alg_case_link';
 import { maskedReconFacelets } from './recon-diagram-mask';
+import { simplifyAlg } from './cube3';
 
 const color = (face: keyof CubeFaces) => FACE_COLOR_KEY[face][0].toUpperCase();
 const rotate = (state: CubeFaces, alg: string) => applyMoves(state, 3, parseScramble(alg));
 const slots = ['FR', 'FL', 'BR', 'BL'] as const;
+
+/** Restore a labelled stage boundary with a short insertion and its inverse.
+ * The complete reconstruction remains equivalent; stored notation is untouched. */
+export function expandReconCancellation(scramble: string, text: string, lineIndex: number): string | null {
+  const lines = text.split('\n');
+  const line = lines[lineIndex];
+  if (!line || !scramble.trim() || !/\/\/.*\bcancel\s+into\b/i.test(line)) return null;
+  const next = lines.findIndex((value, index) => index > lineIndex && cleanForPlayer(value).trim());
+  if (next < 0) return null;
+  const label = line.slice(line.indexOf('//') + 2);
+  const pairs = cubeColorGroups(label).filter(group => group.colors.length === 2).map(group => group.colors);
+  const cross = crossColorFromReconText(text);
+  const before = applyScramble(3, cleanForPlayer([scramble, ...lines.slice(0, lineIndex)].join('\n')));
+  const state = rotate(before, cleanForPlayer(line));
+  const orientation = CUBE_ORIENTATIONS.find(({ value }) => {
+    const faces = rotate(before, value);
+    return cross ? color(faces.D[4]) === cross : isCross(faces);
+  });
+  if (!orientation) return null;
+  const prior = rotate(before, orientation.value);
+  const preserved = slots.filter(slot => isSlotSolved(prior, slot));
+  const required = slots.filter(slot => pairs.some(pair =>
+    pair.includes(color(prior[slot[0] as keyof CubeFaces][4])) && pair.includes(color(prior[slot[1] as keyof CubeFaces][4]))));
+  const crossStage = label.match(/\b(x*)cross\b/i);
+  const targetCount = crossStage ? crossStage[1].length : Number(label.match(/\bF2L\s*([1-4])/i)?.[1] ?? preserved.length + 1);
+  if (!required.length && !crossStage && !/\bF2L/i.test(label)) return null;
+  const complete = (alg: string) => {
+    const faces = rotate(rotate(state, alg), orientation.value);
+    return isCross(faces) && [...preserved, ...required].every(slot => isSlotSolved(faces, slot))
+      && slots.filter(slot => isSlotSolved(faces, slot)).length >= targetCount;
+  };
+  if (complete('')) return null;
+  const moves = ['U', 'D', 'F', 'B', 'L', 'R'].flatMap(face => [face, `${face}'`, `${face}2`]);
+  const candidates = [...moves, ...moves.flatMap(a => moves.filter(b => a[0] !== b[0]).map(b => `${a} ${b}`))];
+  const insertion = candidates.find(complete);
+  if (!insertion) return null;
+  const inverse = insertion.split(' ').reverse().map(move => move.endsWith('2') ? move : move.endsWith("'") ? move.slice(0, -1) : `${move}'`).join(' ');
+  const replaceMoves = (value: string, moves: string) => `${moves}${value.includes('//') ? ` ${value.slice(value.indexOf('//'))}` : ''}`;
+  lines[lineIndex] = replaceMoves(line, `${cleanForPlayer(line)} ${insertion}`);
+  lines[next] = replaceMoves(lines[next], simplifyAlg(`${inverse} ${cleanForPlayer(lines[next])}`));
+  return lines.join('\n');
+}
 
 export interface ReconF2lAnnotations {
   links: Map<number, Map<string, string>>;
@@ -29,14 +72,13 @@ export async function reconF2lAnnotations(scramble: string, text: string, onDiag
   const links = new Map<number, Map<string, string>>();
   const diagrams: ReconF2lAnnotations['diagrams'] = new Map();
   if (!scramble.trim()) return { links, diagrams };
-  let state = applyScramble(3, cleanForPlayer(scramble));
-  let setup = cleanForPlayer(scramble);
+  const setups = reconLineSetups(scramble, text);
+  let state = applyScramble(3, setups[0]);
   const explicitCross = crossColorFromReconText(text);
-  for (const [lineIndex, line] of text.split(/\r?\n/).entries()) {
+  for (const [lineIndex, line] of text.replace(/\r\n?/g, '\n').split('\n').entries()) {
     const before = state;
-    const beforeSetup = setup;
-    setup = `${setup} ${cleanForPlayer(line)}`;
-    state = rotate(state, cleanForPlayer(line));
+    const beforeSetup = setups[lineIndex];
+    state = applyScramble(3, setups[lineIndex + 1]);
     const comment = line.indexOf('//');
     if (comment < 0) continue;
     const label = line.slice(comment + 2).trim();

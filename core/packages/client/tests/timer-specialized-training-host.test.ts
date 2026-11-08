@@ -71,6 +71,7 @@ it('leaves SQ1 navigation to the timer while retaining it on standalone referenc
   await act(async () => root.render(hosted('/sq1/cs/name/train', createElement(Sq1ToolNav))));
   expect(container.querySelector('nav')).toBeNull();
   navigation.pathname = '/zh/alg/sq1/inspect';
+  window.history.replaceState(null, '', navigation.pathname);
   await act(async () => root.render(createElement(Sq1ToolNav)));
   expect(container.querySelector('[aria-current="page"]')!.getAttribute('href')).toBe('/zh/alg/sq1/inspect');
 });

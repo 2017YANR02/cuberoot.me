@@ -5,7 +5,7 @@
 
 import PageHeading from '@/components/PageHeading';
 import { useEffect, useState, useRef, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 
 import { useTranslation } from 'react-i18next';
 import { TriangleAlert, LogIn } from '@app-foundation/icons/lucide';

@@ -8,7 +8,6 @@ import {
   matchesMoyu32Name,
   MOYU32_MESSAGE_BATTERY,
   MOYU32_MESSAGE_GYRO_SWITCH,
-  MOYU32_MESSAGE_INFO,
   MOYU32_MESSAGE_STATE,
   MOYU32_NOTIFY_CHARACTERISTIC_UUID,
   MOYU32_SERVICE_UUID,
@@ -17,7 +16,7 @@ import {
 import type { GyroSink } from '@cuberoot/shared/smart-cube/gan-crypto';
 
 import { macStringToBytes } from '@cuberoot/shared/timer/external/mac';
-import { moyu32Mac, resolveMoyu32Address, moyu32ManufacturerMac } from '@cuberoot/shared/smart-cube/moyu32';
+import { resolveMoyu32Address, moyu32ManufacturerMac } from '@cuberoot/shared/smart-cube/moyu32';
 import { cubieStateFromFacelets } from '@cuberoot/shared/smart-cube/cubie';
 
 import type { BleDeviceRef, BleTransport } from './transport';
@@ -75,8 +74,6 @@ export class Moyu32CubeConnection {
   constructor(
     private readonly transport: BleTransport,
     private readonly callbacks: Moyu32CubeCallbacks,
-    // Watch owns its connection lifecycle separately and retains verified discovery.
-    private readonly addressMode: 'normal' | 'verified-probe' = 'normal',
   ) {}
 
   connect(device: BleDeviceRef): Promise<void> {
@@ -118,28 +115,11 @@ export class Moyu32CubeConnection {
       throw new Error('MoYu32 service or characteristic unavailable');
     }
 
-    // Match Web's normal handshake: no speculative keys or temporary state probe.
-    // Windows/Android expose a native MAC; UUID hosts use a supplied or saved one.
-    const address = this.addressMode === 'verified-probe'
-      ? await resolveMoyu32Address({
-        id: device.id, name: device.name,
-        hints: [device.id, moyu32ManufacturerMac(device.manufacturerData), device.macAddress],
-        requestMac: () => this.callbacks.onNeedMac?.(device.name) ?? Promise.resolve(null),
-        onVerified: this.callbacks.onVerifiedMac,
-        io: {
-          current,
-          write: frame => this.transport.write(device.id, MOYU32_SERVICE_UUID, MOYU32_WRITE_CHARACTERISTIC_UUID, frame),
-          subscribe: receive => this.transport.subscribe(device.id, MOYU32_SERVICE_UUID,
-            MOYU32_NOTIFY_CHARACTERISTIC_UUID, value => receive(bytesFromView(value))),
-        },
-      })
-      : moyu32Mac(device.id) ?? moyu32Mac(device.macAddress)
-        ?? moyu32Mac(await this.callbacks.onNeedMac?.(device.name));
-    if (!current()) throw new Error('smart cube connection closed');
-    if (!address) throw new Error('Cube MAC address required');
-    const cipher = createMoyu32Cipher(macStringToBytes(address));
+    let cipher: ReturnType<typeof createMoyu32Cipher> | null = null;
+    let negotiating: ((frame: Uint8Array) => void) | undefined;
     let writeTail: Promise<void> = Promise.resolve();
     const send = (command: Uint8Array, strict = true, begin?: () => boolean): Promise<void> => {
+      if (!cipher) return Promise.reject(new Error('Cube address not verified'));
       const encrypted = cipher.encrypt(command);
       const task = writeTail.then(() => {
         if (!current()) throw new Error('smart cube connection closed');
@@ -157,7 +137,6 @@ export class Moyu32CubeConnection {
     this.sendCommand = send;
 
     let stateReady = false;
-    let addressVerified = this.addressMode === 'verified-probe';
     const protocolError = { value: false };
     const decodeState = createMoyu32DecodeState();
     const reportProtocolError = () => {
@@ -174,10 +153,7 @@ export class Moyu32CubeConnection {
         const notification = decodeMoyu32Notification(plain, decodeState);
         if (decodeState.historyLost) { reportProtocolError(); return; }
         if (notification.state) {
-          if (!addressVerified && cubieStateFromFacelets(notification.state)) {
-            addressVerified = true;
-            this.callbacks.onVerifiedMac?.(address);
-          }
+          if (!cubieStateFromFacelets(notification.state)) { reportProtocolError(); return; }
           stateReady = true;
           this.callbacks.onState?.(notification.state);
         }
@@ -221,15 +197,18 @@ export class Moyu32CubeConnection {
         pending = [];
       }
     };
-    const stopNotifications = await this.transport.subscribe(
+    const unsubscribe = await this.transport.subscribe(
       device.id,
       MOYU32_SERVICE_UUID,
       MOYU32_NOTIFY_CHARACTERISTIC_UUID,
       (value) => {
         if (!current() || protocolError.value) return;
+        const raw = bytesFromView(value);
+        if (negotiating) { negotiating(raw); return; }
+        if (!cipher) return;
         let plain: Uint8Array;
         try {
-          plain = cipher.decrypt(bytesFromView(value));
+          plain = cipher.decrypt(raw);
         } catch {
           return;
         }
@@ -251,6 +230,8 @@ export class Moyu32CubeConnection {
         apply(plain);
       },
     );
+    let stopped: Promise<void> | undefined;
+    const stopNotifications = () => stopped ??= unsubscribe();
     if (!current()) {
       await stopNotifications().catch(() => undefined);
       throw new Error('smart cube connection closed');
@@ -263,9 +244,33 @@ export class Moyu32CubeConnection {
       await send(createMoyu32Command(MOYU32_MESSAGE_BATTERY));
     };
 
-    await send(createMoyu32Command(MOYU32_MESSAGE_INFO));
-    await send(createMoyu32Command(MOYU32_MESSAGE_STATE));
-    await send(createMoyu32Command(MOYU32_MESSAGE_BATTERY));
+    try {
+      await resolveMoyu32Address({
+        id: device.id, name: device.name,
+        hints: [device.id, moyu32ManufacturerMac(device.manufacturerData), device.macAddress],
+        requestMac: () => this.callbacks.onNeedMac?.(device.name) ?? Promise.resolve(null),
+        onVerified: mac => {
+          cipher = createMoyu32Cipher(macStringToBytes(mac));
+          this.callbacks.onVerifiedMac?.(mac);
+        },
+        onFrame: apply,
+        io: {
+          current,
+          write: frame => this.transport.write(device.id, MOYU32_SERVICE_UUID, MOYU32_WRITE_CHARACTERISTIC_UUID, frame),
+          // Only swap the handler; retain the native subscription throughout.
+          subscribe: async receive => {
+            negotiating = receive;
+            return async () => { negotiating = undefined; };
+          },
+        },
+      });
+    } catch (error) {
+      await stopNotifications().catch(() => undefined);
+      this.stopNotifications = null;
+      this.calibration?.dispose();
+      this.resetCommand = null;
+      throw error;
+    }
     if (this.callbacks.onGyro) {
       await send(createMoyu32Command(MOYU32_MESSAGE_GYRO_SWITCH, 0x00, 0x01));
       this.gyroEnabled = true;

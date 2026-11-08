@@ -137,13 +137,12 @@ export function useInstalledSmartCube(
         setFacelets(snapshot.facelets ?? '');
         setSolved(snapshot.solved);
       },
-      onMove: ({ facelets: nextFacelets, metadata, move, timestamp }) => {
+      onMove: ({ facelets: nextFacelets, metadata, move, timestamp, clock }) => {
         if (calibratingRef.current) return;
-        if (metadata) onMoveRef.current(move, timestamp, nextFacelets, metadata);
-        else onMoveRef.current(move, timestamp, nextFacelets);
+        onMoveRef.current(move, timestamp, nextFacelets, metadata, clock);
       },
-      onSolved: (timestamp) => {
-        if (!calibratingRef.current && timestamp !== undefined) onSolvedRef.current?.(timestamp);
+      onSolved: (timestamp, clock) => {
+        if (!calibratingRef.current && timestamp !== undefined) onSolvedRef.current?.(timestamp, clock);
       },
     });
   }

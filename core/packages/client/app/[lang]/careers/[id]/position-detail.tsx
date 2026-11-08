@@ -1,9 +1,10 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import { useEffect, useRef, useState } from 'react';
 import { encode } from 'uqr';
 import { CareerDetail } from '@app-foundation/careers-ui';
-import { ChevronLeft, Share2 } from '@app-foundation/icons/lucide';
+import { Share2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { copyPageLink, currentPageShare } from '@/lib/page-share';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
@@ -33,7 +34,7 @@ export default function PositionDetail({ position }: { position: CareerPosition 
     { title: tr({ zh: '加分项', en: 'Nice to have' }), items: position.advantages.map(tr) },
   ];
   return <main className="careers-page careers-detail">
-    <AppLink className="back-home" href="/careers" prefetch={false} aria-label={tr({ zh: '返回职位列表', en: 'Back to positions' })}><ChevronLeft size={16} aria-hidden="true" /></AppLink>
+    <PageBackLink className="back-home" fallback="/careers" prefetch={false} />
     <article className="careers-detail-card" data-site-surface="panel">
       <div className="careers-detail-actions">
         <div className="careers-share-wrap" ref={shareRef}>

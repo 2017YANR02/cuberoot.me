@@ -62,7 +62,7 @@ import { CubingIcon, EventIcon } from '@/components/EventIcon';
 import type { WcaPersonLite } from '@/lib/wca-api';
 import { fetchPersonUpcomingCompetitionIds } from '@/lib/person-upcoming';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { CompCuberPicker } from '@/components/CompCuberPicker';
 import { CompCardWithRounds, wcaRoundsSeed } from '@/components/CompCardWithRounds';
 import OnThisDayModal from './_components/OnThisDayModal';

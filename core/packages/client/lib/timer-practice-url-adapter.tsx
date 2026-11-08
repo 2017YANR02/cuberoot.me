@@ -1,7 +1,8 @@
 'use client';
 
 import { startTransition, useCallback, useMemo, type ReactNode } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import {
   unstable_createAdapterProvider as createAdapterProvider,
   type unstable_UseAdapterHook as UseAdapterHook,

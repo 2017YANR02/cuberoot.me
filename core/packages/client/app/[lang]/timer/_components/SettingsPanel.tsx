@@ -12,13 +12,13 @@ import { TimerSyncSeedSettings, TimerRankSettings, TimerBackupSettings, TimerImp
  * Settings panel — modal launched from the topbar gear button.
  */
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { ChevronRight } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import type { MoreMenuItem } from './MoreMenu';
 import { getSettings, resetSettings, updateSettings, useSettings } from '../_lib/settings';
-import { TimerKeymapSettings, TimerGoalSettings, TimerRoundSettings, TimerSettingsPanel, TimerTypographySettings } from '@cuberoot/timer-ui';
+import { TimerKeymapSettings, TimerGoalSettings, TimerRoundSettings, TimerSettingsPanel, TimerSettingRow, TimerTypographySettings } from '@cuberoot/timer-ui';
 import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
 import { resetTimerSyncSeed } from '@cuberoot/shared/timer/sync-seed';
@@ -281,7 +281,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           value={s}
         />
         <SettingsSection category="timer" activeCategory={activeCategory} title={tr({ zh: '成绩', en: 'Results' })}>
-          {s.statsRollingColumns.map((column, index) => <Row key={index} settingId="settings.timer.rolling-statistics"
+          {s.statsRollingColumns.map((column, index) => <TimerSettingRow key={index} field={timerSettingFieldContract('settings.timer.rolling-statistics')}
             label={tr({ zh: `统计指标${index === 0 ? '一' : '二'}`, en: `Statistic ${index + 1}` })}>
           <TimerRollingStatsPicker variant="settings" columns={s.statsRollingColumns}
             triggerColumns={[column]} onColumnsChange={statsRollingColumns => updateSettings({ statsRollingColumns })}
@@ -292,7 +292,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
               customSize: tr({ zh: '自定义 ao 大小', en: 'Custom ao size' }),
               replace: tr({ zh: '替换', en: 'Replace' }),
             }} />
-          </Row>)}
+          </TimerSettingRow>)}
         </SettingsSection>
 
         {activeCategory === 'smart-cube' && <>
@@ -411,7 +411,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
             else onSpeedstacksExport();
           }} />
           {ioMsg !== null && (
-            <Row label=""><span className="hint" role="status" aria-live="polite">{ioMsg}</span></Row>
+            <p className="hint" role="status" aria-live="polite">{ioMsg}</p>
           )}
         </SettingsSection>
 
@@ -516,30 +516,6 @@ function renderTimingBooleanControl({
       onChange={onChange}
       value={value}
     />
-  );
-}
-
-function Row({
-  label,
-  children,
-  settingId,
-}: {
-  label: string;
-  children: React.ReactNode;
-  settingId?: TimerSettingFieldId;
-}) {
-  const labelId = useId();
-  return (
-    <div className="settings-row" data-setting-id={settingId}>
-      <span id={label ? labelId : undefined} className="settings-row-label">{label}</span>
-      <span
-        className="settings-row-control"
-        role={label ? 'group' : undefined}
-        aria-labelledby={label ? labelId : undefined}
-      >
-        {children}
-      </span>
-    </div>
   );
 }
 

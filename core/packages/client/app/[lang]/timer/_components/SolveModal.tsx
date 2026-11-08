@@ -54,7 +54,7 @@ export default function SolveModal({
   onUseScramble,
   solve,
 }: Props) {
-  const hasMoves = (solve.moves?.length ?? 0) > 0;
+  const hasMoves = solve.event !== 'pll-chain' && (solve.moves?.length ?? 0) > 0;
   const reconstructHost = useWebReconstructHost();
   const [review, setReview] = useState<{ id: string; snapshot: ReconSnapshot | null } | null>(null);
   const receiveReview = useCallback((snapshot: ReconSnapshot | null) => setReview({ id: solve.id, snapshot }), [solve.id]);
@@ -95,7 +95,7 @@ export default function SolveModal({
       onDelete={onDelete}
       onEntered={onDisplayed}
       onMoveToSession={onMoveToSession}
-      preview={<CubePreview event={solve.event} scramble={solve.scramble} size={14} />}
+      preview={solve.event !== 'pll-chain' ? <CubePreview event={solve.event} scramble={solve.scramble} size={14} /> : undefined}
       report={hasMoves ? (
         <ReconstructReport
           history={history}

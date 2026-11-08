@@ -5,6 +5,8 @@ import { stageSegmentsFor } from './stage-segments-producer';
 import type { Quat } from '../smart_cube/orientation';
 import { applyOrientation, mirrorForBrand, quatMul, sensorBasisForBrand } from '../smart_cube/orientation';
 import { notationQuaternion } from './reconstruct/gyro_orient';
+import type { CubeTimerStart } from './machine';
+import type { MoveClockSample } from '../smart_cube/move_clock';
 
 export interface SmartCubeStartingGrip {
   reference: Quat;
@@ -43,8 +45,8 @@ export class SmartCubeAttemptProducer {
   private grip: SmartCubeStartingGrip | undefined;
   private liveGyro: readonly GyroSample[] = [];
 
-  begin(startedAtMs: number, device?: SmartCubeAttemptDevice, grip?: SmartCubeStartingGrip): void {
-    this.moves.begin(startedAtMs);
+  begin(startedAtMs: number, device?: SmartCubeAttemptDevice, grip?: SmartCubeStartingGrip, cubeStart?: CubeTimerStart): void {
+    this.moves.begin(startedAtMs, cubeStart);
     this.gyro.reset();
     this.liveGyro = [];
     this.device = device ? { model: device.model, name: device.name } : undefined;
@@ -53,8 +55,8 @@ export class SmartCubeAttemptProducer {
     if (grip) this.recordGyro(grip.initial, 0);
   }
 
-  recordMove(move: string, timestamp: number): boolean {
-    return this.moves.record(move, timestamp);
+  recordMove(move: string, timestamp: number, clock?: MoveClockSample): boolean {
+    return this.moves.record(move, timestamp, clock);
   }
 
   /** Gyro time is relative to the host's start clock, not the device move clock. */
@@ -80,7 +82,7 @@ export class SmartCubeAttemptProducer {
       }));
       this.liveGyro = Object.freeze([...this.liveGyro, ...added]);
     }
-    return { moves, gyroSamples: moves.length ? this.liveGyro : [],
+    return { moves, gyroSamples: moves.length ? this.alignGyro(this.liveGyro) : [],
       device: moves.length > 0 && this.device ? { ...this.device } : undefined };
   }
 
@@ -90,13 +92,13 @@ export class SmartCubeAttemptProducer {
     return {
       moves,
       device: moves.length > 0 && this.device ? { ...this.device } : undefined,
-      gyro: moves.length > 0 ? encodeGyroTrack(this.gyro.snapshot(), this.grip ? 'scramble' : undefined) : null,
+      gyro: moves.length > 0 ? encodeGyroTrack(this.alignGyro(this.gyro.snapshot()), this.grip ? 'scramble' : undefined) : null,
     };
   }
 
   finish(): SmartCubeAttemptResult {
+    const samples = this.alignGyro(this.gyro.take());
     const moves = this.moves.take();
-    const samples = this.gyro.take();
     const gyro = moves.length > 0 ? encodeGyroTrack(samples, this.grip ? 'scramble' : undefined) : null;
     const device = moves.length > 0 ? this.device : undefined;
     this.device = undefined;
@@ -104,6 +106,13 @@ export class SmartCubeAttemptProducer {
     this.grip = undefined;
     this.liveGyro = [];
     return { device, gyro, moves };
+  }
+
+  private alignGyro(samples: readonly GyroSample[]): readonly GyroSample[] {
+    const shift = this.moves.hostCorrectionMs;
+    if (shift === 0) return samples;
+    return samples.map((sample, i) => ({ ...sample,
+      tMs: this.grip && i === 0 ? 0 : Math.max(0, sample.tMs + shift) }));
   }
 
   /** Attach the same persisted recording fields on Web and installed App. */

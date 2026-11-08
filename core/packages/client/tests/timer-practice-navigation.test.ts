@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SCRAMBLE_222_TYPE_CATALOG, TIMER_333_SCRAMBLE_TYPES, TIMER_333_TRAINING_GROUPS } from '@cuberoot/shared/timer';
+import { SCRAMBLE_222_TYPE_CATALOG, TIMER_333_SCRAMBLE_TYPES, TIMER_333_TRAINING_GROUPS, timerPracticeContents as sharedPracticeContents } from '@cuberoot/shared/timer';
 import {
   TRAINING_DIRECTORY, resolveTrainingTarget, trainingEventForTarget,
 } from '@/lib/timer-training-catalog';
@@ -8,6 +8,17 @@ import {
 } from '@/lib/timer-practice-navigation';
 
 describe('timer practice content navigation', () => {
+  it('runs PLL chains as a normal timer subtype without a separate training surface', () => {
+    const entries = timerPracticeContents('333');
+    const entry = entries.find(item => item.timer?.event === 'pll-chain');
+    expect(entry).toBeDefined();
+    expect(entry?.path).toBeUndefined();
+    expect(entry?.runPath).toBeUndefined();
+    expect(entry?.group?.id).toBe('cfop');
+    expect(selectedTimerPracticeContent(entries, 'pll-chain', null, null)).toBe(entry);
+    expect(resolveTrainingTarget('/timer/pll-chain')).toBeNull();
+    expect(sharedPracticeContents('333').some(item => item.timer?.event === 'pll-chain')).toBe(false);
+  });
   it('joins random timing, selected cases and recognition under each formula content once', () => {
     const entries = timerPracticeContents('333');
     expect(entries[0]).toMatchObject({ id: 'solve', timer: { event: '333' } });

@@ -499,6 +499,7 @@ describe('Web migration consumes the shared contract', () => {
       for (const blocked of ['none', 'competition', 'layout', 'unready', 'mismatch', 'timing-disabled']) {
         const timer = { armFromCube: vi.fn(() => true), onPressDown: vi.fn() };
         const context = {
+          isPllChain: false,
           competitionRef: { current: { enabled: blocked === 'competition' } },
           multiEnabledRef: { current: false },
           layoutEditingRef: { current: blocked === 'layout' },
@@ -528,7 +529,7 @@ describe('Web migration consumes the shared contract', () => {
     ), 'utf8');
 
     expect(soloSource).toMatch(
-      /const attemptCanStart = competition\.enabled\s*\? competition\.authorized && Boolean\(competition\.attempt\)\s*:\s*timerCanStartAttempt\(\{/,
+      /const attemptCanStart = competition\.enabled\s*\? competition\.authorized && Boolean\(competition\.attempt\)\s*:\s*isPllChain \? pllChain\.ready : timerCanStartAttempt\(\{/,
     );
     expect(soloSource).toContain("? 'loading'");
     expect(soloSource).toContain("? 'unavailable'");
@@ -542,7 +543,7 @@ describe('Web migration consumes the shared contract', () => {
       /if \(!await competition\.begin\(scrambleTarget, bluetoothCube\.status\)\) return;[\s\S]*?if \(!latest\?\.status\.connected \|\| latest\.hijacked \|\| !latestFaces \|\| toFaceletString\(latestFaces\) !== scrambleTarget\) \{[\s\S]*?return;\s*\}\s*timer\.onPressDown\(\)/,
     );
     expect(soloSource).toMatch(
-      /const smartCubeTimerOptions = useMemo[\s\S]*?canStartAttempt: \(\) => !layoutEditingRef\.current && \(multiEnabledRef\.current[\s\S]*?: attemptCanStartRef\.current\)[\s\S]*?competitionRef\.current\.canStart\(\)[\s\S]*?startFromCube: \(timestamp\) => \{[\s\S]*?timerHandleRef\.current\.startFromCube\(timestamp\)/,
+      /const smartCubeTimerOptions = useMemo[\s\S]*?canStartAttempt: \(\) => !layoutEditingRef\.current && \(multiEnabledRef\.current[\s\S]*?: attemptCanStartRef\.current\)[\s\S]*?competitionRef\.current\.canStart\(\)[\s\S]*?startFromCube: \(timestamp, clock\) => \{[\s\S]*?timerHandleRef\.current\.startFromCube\(timestamp, clock\)/,
     );
     expect(soloSource).toContain('new SmartCubeSoloTimerController(smartCubeTimerOptions)');
     expect(soloSource).toMatch(

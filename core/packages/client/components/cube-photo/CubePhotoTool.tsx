@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { HelpCircle, ImagePlus, RotateCcw, ScanLine, SlidersHorizontal } from 'lucide-react';
+import { Camera, HelpCircle, ImagePlus, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import Link from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import WcaEventSelector from '@/components/WcaEventSelector';
+import { CompactSelect } from '@/components/CompactSelect';
 import { VisualCube } from '@/components/VisualCube';
 import { tr } from '@/i18n/tr';
 import { prepareImageUpload, type PreparedImageUpload } from '@/lib/image-upload';
@@ -22,7 +23,7 @@ import './cube-photo.css';
 
 interface Photo { src: string; width: number; height: number; pixels: PhotoPixels }
 interface Result { detection: CubePhotoDetection }
-const PHOTO_EVENTS = new Set(['333', '222']);
+const PHOTO_EVENTS = new Set(['333', '222', '444']);
 const LABELS = { top: { zh: '顶面', en: 'Top' }, left: { zh: '左侧面', en: 'Left' }, right: { zh: '右侧面', en: 'Right' } };
 const POINT_LABELS = [
   { zh: '顶面后角', en: 'Top back corner' }, { zh: '顶面左角', en: 'Top left corner' },
@@ -43,7 +44,9 @@ export default function CubePhotoTool() {
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const [editing, setEditing] = useState(false), [modified, setModified] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
-  const [puzzleSize, setPuzzleSize] = useState<2 | 3>(3);
+  const [recognized, setRecognized] = useState(false);
+  const [puzzleSize, setPuzzleSize] = useState<2 | 3 | 4>(3);
+  const [pocketStage, setPocketStage] = useState<'eg' | 'last-slot'>('eg');
   const drag = useRef<{ index: number; pointer: number } | null>(null);
 
   useEffect(() => () => { generation.current++; workers.dispose(); }, [workers]);
@@ -69,17 +72,20 @@ export default function CubePhotoTool() {
   }
 
   function detect(image: Photo, version: number, size = puzzleSize) {
+    setRecognized(false);
     workers.cancel(); workers.warmup(); setBusy(true); setResult(null); setCorners(null); setError(''); setModified(false);
-    workers.detect({ ...image.pixels, puzzleSize: size }, data => {
+    workers.detect({ width: image.pixels.width, height: image.pixels.height, data: image.pixels.data, puzzleSize: size }, data => {
       if (generation.current !== version) return;
       setBusy(false);
       if ('error' in data) { setError(tr({ zh: '检测未完成，可以重试或手动标定。', en: 'Detection did not finish. Retry or place the grid manually.' })); return; }
+      setPuzzleSize(data.puzzleSize);
       setResult(data); restoreDetection(data, image);
     });
   }
 
   async function upload(file?: File, saved?: PreparedImageUpload) {
     if (!file && !saved) return;
+    setRecognized(false);
     const version = ++generation.current;
     workers.cancel(); setBusy(true); setError(''); setResult(null); setCorners(null); setPhoto(null); setEditing(false);
     if (file && file.size > 20 * 1024 * 1024) {
@@ -131,24 +137,31 @@ export default function CubePhotoTool() {
     <header className="cube-photo-header">
       <div><Link href="/alg" prefetch={false}>{tr({ zh: '公式库', en: 'Algorithms' })}</Link><h1>{tr({ zh: '拍照查公式', en: 'Photo algorithm lookup' })}
         <InfoTooltip icon={HelpCircle} iconSize={19} ariaLabel={tr({ zh: '拍摄说明', en: 'Photo requirements' })}
-          content={puzzleSize === 2 ? tr({ zh: '二阶底面同色。拍到完整顶面和两个完整侧面，用于识别底层角块排列并检索 OLL、CLL、EG 公式。照片仅在本机处理。', en: 'For 2×2, use a monochrome bottom face. Show the full top and both full side faces to identify the bottom corners and find OLL, CLL and EG algorithms. Photos stay on your device.' }) : tr({ zh: '标准配色、前两层已复原。拍到完整顶面和两个侧面的顶层，自动识别并检索公式；前两层可以被手遮挡。照片仅在本机处理。', en: 'Use a standard color scheme with F2L solved. Show the full top face and the top row of both side faces to identify the state and find algorithms. Hands may cover the lower layers. Photos stay on your device.' })} />
+          content={puzzleSize === 4 ? tr({ zh: '中心已完成、棱已配对、下三层已复原。拍到完整顶面和两个侧面的顶层；针对 PPLL，默认有 P 特。照片仅在本机处理。', en: 'Centers must be solved, edges paired and the lower three layers solved. Show the full top and the top row of two side faces. For PPLL, PLL parity is assumed. Photos stay on your device.' }) : puzzleSize === 2 ? tr({ zh: '二阶拍到完整顶面和两个完整侧面。底面同色选 CLL / EG；底面三格同色选 TEG / LS。存在多个可能状态时请换个角度拍摄。照片仅在本机处理。', en: 'For 2×2, show the full top and both full side faces. Choose CLL / EG for a monochrome bottom, or TEG / LS for three bottom stickers of one color. Take another angle if the state is ambiguous. Photos stay on your device.' }) : tr({ zh: '标准配色、前两层已复原。拍到完整顶面和两个侧面的顶层，自动识别并检索公式；前两层可以被手遮挡。照片仅在本机处理。', en: 'Use a standard color scheme with F2L solved. Show the full top face and the top row of both side faces to identify the state and find algorithms. Hands may cover the lower layers. Photos stay on your device.' })} />
       </h1></div>
       <HeaderToggles />
     </header>
     <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={event => { void upload(event.target.files?.[0]); event.target.value = ''; }} />
     <div className="cube-photo-toolbar">
         <div inert={busy} aria-disabled={busy}>
-        <WcaEventSelector availableEvents={PHOTO_EVENTS} selectedEvent={puzzleSize === 2 ? '222' : '333'}
+        <WcaEventSelector availableEvents={PHOTO_EVENTS} selectedEvent={puzzleSize === 4 ? '444' : puzzleSize === 2 ? '222' : '333'}
           isZh={i18n.language.startsWith('zh')}
           onSelect={value => {
-            const size = value === '222' ? 2 : 3;
+            const size = value === '444' ? 4 : value === '222' ? 2 : 3;
             if (busy || size === puzzleSize) return;
             setPuzzleSize(size);
             if (photo) detect(photo, ++generation.current, size);
           }} />
         </div>
+        {puzzleSize === 2 && <CompactSelect<'eg' | 'last-slot'> showArrow value={pocketStage}
+          ariaLabel={tr({ zh: '二阶识别阶段', en: '2×2 recognition stage' })}
+          label={tr(pocketStage === 'eg' ? { zh: '底面同色', en: 'Monochrome bottom' } : { zh: '缺一角 · TEG / LS', en: 'Last corner · TEG / LS' })}
+          items={[
+            { value: 'eg', label: tr({ zh: '底面同色 · CLL / EG', en: 'Monochrome bottom · CLL / EG' }) },
+            { value: 'last-slot', label: tr({ zh: '底面三格同色 · TEG / LS', en: 'Three bottom stickers of one color · TEG / LS' }) },
+          ]} onChange={setPocketStage} />}
         {hasPhotoWorkspace && <>
-        <button className="cube-photo-action" disabled={busy || !photo} onClick={() => photo && detect(photo, ++generation.current)}><ScanLine size={17} />{tr({ zh: '重新识别', en: 'Detect again' })}</button>
+        <button type="button" className="cube-photo-action" disabled={busy || !photo} onClick={() => setCameraOpen(true)}><Camera size={17} />{tr(recognized ? { zh: '下一张', en: 'Next photo' } : { zh: '重新拍摄', en: 'Retake photo' })}</button>
         <button className="cube-photo-action" disabled={busy || !photo} aria-pressed={editing} onClick={() => {
           if (!photo) return;
           if (!corners) { setCorners(manualCorners(photo.width, photo.height)); setModified(true); }
@@ -157,6 +170,7 @@ export default function CubePhotoTool() {
         {modified && selected && result && photo && <button className="cube-photo-action" onClick={() => restoreDetection(result, photo)}><RotateCcw size={17} />{tr({ zh: '恢复自动结果', en: 'Restore automatic result' })}</button>}
     </>}
     </div>
+    {puzzleSize === 4 && <p className="cube-photo-note">{tr({ zh: '针对 PPLL，默认有 P 特。', en: 'For PPLL, PLL parity is assumed.' })}</p>}
     {!hasPhotoWorkspace && error && <p className="cube-photo-error" role="alert">{error}</p>}
     <div className={`cube-photo-workspace${hasPhotoWorkspace ? ' has-photo' : ''}`}>
     {/* Photo and overlay share the same coordinate system at every display size. */}
@@ -164,7 +178,7 @@ export default function CubePhotoTool() {
       {photo ? <svg ref={svg} xmlns="http://www.w3.org/2000/svg" width={photo.width} height={photo.height} viewBox={`0 0 ${photo.width} ${photo.height}`} role="group" aria-label={tr({ zh: '照片与三面网格叠加', en: 'Photo with three-face grid overlay' })}>
         <image key={photo.src} className="cube-photo-image" href={photo.src} width={photo.width} height={photo.height} />
         {corners && FACE_NAMES.map(face => {
-          const quad = faceQuad(corners, face), h = homography(quad), label = h ? project(h, 0.5, face === 'top' || puzzleSize === 2 ? 0.5 : 0.16) : null;
+          const quad = faceQuad(corners, face), h = homography(quad), label = h ? project(h, 0.5, face === 'top' || puzzleSize === 2 ? 0.5 : 1 / (2 * puzzleSize)) : null;
           return <g key={face}>
             {faceGrid(quad, face, puzzleSize).filter(line => !line.inferred).map((line, i) => <g key={i}>
               <line x1={line.a.x} y1={line.a.y} x2={line.b.x} y2={line.b.y} stroke="#111827" strokeOpacity={0.8} strokeWidth={(line.boundary ? 4 : 3) * unit} />
@@ -196,7 +210,7 @@ export default function CubePhotoTool() {
       {photo && !busy && !editing && <button type="button" className="cube-photo-action cube-photo-replace"
         onClick={() => setCameraOpen(true)}>{tr({ zh: '更换照片', en: 'Replace photo' })}</button>}
     </div>
-    {photo && corners ? <PhotoResults key={puzzleSize} puzzleSize={puzzleSize} workers={workers} pixels={photo.pixels} corners={corners} width={photo.width} height={photo.height} />
+    {photo && corners ? <PhotoResults key={puzzleSize} puzzleSize={puzzleSize} pocketStage={pocketStage} workers={workers} pixels={photo.pixels} corners={corners} width={photo.width} height={photo.height} onRecognized={setRecognized} />
       : hasPhotoWorkspace && <section className="cube-photo-results" aria-label={tr({ zh: '状态与公式', en: 'State and algorithms' })} aria-busy={busy}>
         {busy ? <PhotoLoading /> : failure && <p className="cube-photo-error" role="alert">{failure}</p>}
       </section>}

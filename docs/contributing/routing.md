@@ -15,9 +15,19 @@
 
 ## 页面标题 / SEO metadata
 
+WCA 通用统计页面的有效 ID 与分类统一定义在 `core/packages/shared/src/wca-stat-catalog.ts`（公开出口 `@cuberoot/shared/wca-stat-catalog`）。索引生成器、页面、404 规则、搜索和目录共同消费，禁止另建退役名单。新增/合并统计时同步其公开页面或仅数据状态；生成器会校验统计注册表的完整归属并在不一致时失败。远程 `stats/index.json` 只提供已登记页面的展示数据，不能自行创建页面入口；数据与 Web 发布先后不同也不得放出未知或退役链接。回归覆盖 `stat_catalog.test.ts`、`wca-stat-index.test.ts`、`wca-stat-routes.test.ts` 和语言路由测试。
+
 新增路由或修改标题、SEO metadata、sitemap、hreflang、索引策略或长文结构化数据时使用 `document-title` skill，并必须读取其 [SEO 契约](../../.agents/skills/document-title/references/seo-metadata.md)；保留静态 metadata 单一来源与 SSG 边界。
 
 ## URL 状态(全站统一 nuqs)
+
+### 入口来源与返回
+
+- 站内前进链接复用 `AppLink`，程序式导航复用 `hooks/useEntryRouter`，整页跳转先经过 `currentEntryHref`。它们共同调用 `lib/entry-navigation.ts`，不另建页面来源状态或全局“最后访问页”。原生正文、地图弹出框链接由根入口 `EntryNavigationBridge` 在实际点击时接入同一契约；静态资源、外链、认证回调、下载和锚点不记录。
+- 返回箭头复用 `PageBackLink`（默认首页可用 `BackHome`）：有来源时逐层返回真实入口，无来源时使用页面声明的 `fallback`。品牌与明确的主页链接仍使用 `HomeLink`。不要把返回箭头写成固定的主页或模块入口。
+- 来源链只存每条浏览器历史记录的 `history.state`，刷新及浏览器前进/后退可恢复；实际导航用一次性 `sessionStorage` 交接支持整页跳转，登录/支付的 `next` 续程也在标签页内交接。不得把来源写入 query、hash、链接或分享地址。独立打开、分享给他人或无来源的新标签页使用页面 `fallback`。最多保留 8 层、4096 字符；只记录站内产品路径及源码白名单中的轻量筛选状态，不复制凭据、支付参数、嵌套来源或私密分享路径。旧 `navBack`、`accountBack/accountEntry`、`shopBack/shopEntry` 仅在进入时迁入本地历史并从地址清除。
+- 同路径筛选、锚点与 `router.replace` 保留来源而不新增一层；链接指向已有祖先时收回对应层级，避免往返循环。真正的前进使用 `push`。登录的 `next` 继续保留其原业务目的，导航层补齐来源，登录回跳不作为新的产品入口。
+- `AppLink navigation="return"` 只用于已经由共享返回函数算出的目标，`navigation="none"` 用于确实不参与来源链的入口。原生链接如需排除，声明 `data-entry-navigation="none"`。弹层关闭、沉浸式浏览器后退、小程序原生返回桥仍遵循各自契约。
 
 - 页内状态进 URL 一律 `useQueryState`,禁裸 `history.pushState/replaceState` + 手写 `popstate`(maplibre/canvas/video 重组件例外加注释豁免)。CI `tests/url-state-no-raw-history.test.ts`(豁免加 ALLOWLIST + eslint-disable + 理由)。
 - 大视图/大 tab/全屏浮层 → `.withOptions({ history: 'push' })`;筛选/排序/搜索 → 默认 replace;默认值 `.withDefault(x)`;枚举 `parseAsStringEnum`。

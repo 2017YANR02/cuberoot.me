@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { puzzles } from 'cubing/puzzles';
 
 import {
   EVENTS,
@@ -44,6 +45,7 @@ const CUBING_EVENTS: Readonly<Partial<Record<EventId, TimerCubingScrambleEventId
   mega: 'minx',
   clock: 'clock',
   fto: 'fto',
+  baby_fto: 'baby_fto',
   redi: 'redi_cube',
   cross: '333',
 };
@@ -99,6 +101,7 @@ const SHARED_EVENTS: Readonly<Partial<Record<EventId, TimerSharedScrambleProvide
   radioweb: 'native-random-move',
   radiojam: 'native-random-move',
   radiocanon: 'native-random-move',
+  radiolarian3: 'native-random-move',
   catscradle: 'native-random-move',
   kilominx: 'cstimer-nonwca',
   mpyram: 'cstimer-nonwca',
@@ -232,7 +235,7 @@ describe('shared timer scramble runtime', () => {
       });
       expect(generate).toHaveBeenLastCalledWith(cubingEventId, event);
     }
-    expect(generate).toHaveBeenCalledTimes(21);
+    expect(generate).toHaveBeenCalledTimes(22);
   });
 
   it('generates a real 3x3 scramble while preserving the Sphere event', async () => {
@@ -240,6 +243,14 @@ describe('shared timer scramble runtime', () => {
     expect(result).toMatchObject({ ok: true, event: 'sphere', kind: 'generated', provider: 'cubing' });
     if (!result.ok || result.kind !== 'generated') throw new Error('Sphere generation failed');
     expect(result.scramble).toMatch(/^[URFDLB][2']?(?: [URFDLB][2']?)+$/);
+  });
+
+  it('preserves the existing cubing random-state provider for Baby FTO', async () => {
+    const result = await generateTimerScramble({ event: 'baby_fto' });
+    expect(result).toMatchObject({ ok: true, event: 'baby_fto', kind: 'generated', provider: 'cubing' });
+    if (!result.ok || result.kind !== 'generated') throw new Error('Baby FTO generation failed');
+    const solved = (await puzzles.baby_fto.kpuzzle()).defaultPattern();
+    expect(solved.applyAlg(result.scramble).isIdentical(solved)).toBe(false);
   });
 
   it('routes 222 through the shared TNoodle WCA provider, never cubing.js', async () => {
@@ -333,7 +344,7 @@ describe('shared timer scramble runtime', () => {
     'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
     'quadx', 'dinoocta', 'fto5', 'fto6', 'eto', 'radiocrystal',
     'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
-    'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'radiocanon', 'catscradle',
+    'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'radiocanon', 'radiolarian3', 'catscradle',
   ] as const)('routes %s through its native generator and the shared worker seam', async (event) => {
     const scramble = generateNativePuzzleScramble(event, () => 0.375);
     const generateCubingScramble = vi.fn(async () => 'must not run');
@@ -356,7 +367,7 @@ describe('shared timer scramble runtime', () => {
     'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
     'quadx', 'dinoocta', 'fto5', 'fto6', 'eto', 'radiocrystal',
     'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
-    'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'radiocanon', 'catscradle',
+    'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'radiocanon', 'radiolarian3', 'catscradle',
   ] as const)('preserves %s provider errors and empty results', async (event) => {
     for (const [generateSharedScramble, code] of [
       [async () => '   ', 'empty-result'],

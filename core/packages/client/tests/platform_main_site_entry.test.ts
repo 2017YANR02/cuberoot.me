@@ -33,7 +33,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(view).toContain('permissionHref={courseSection && error.status !== 403 ? courseSectionLoginHref : undefined}');
     expect(view).toContain("if (action === 'redeem-invite') {");
     expect(view).toContain("loadPlatformResource('entitlements', { params: {} })");
-    expect(view).toContain("window.location.replace(`${lang === 'zh' ? '/zh' : ''}/platform/courses/${encodeURIComponent(courseId)}/sections/core`);");
+    expect(view).toContain("window.location.replace(currentEntryHref(`${lang === 'zh' ? '/zh' : ''}/platform/courses/${encodeURIComponent(courseId)}/sections/core`, 'replace'));");
     expect(view).not.toContain('setRedeemed(true)');
   });
 

@@ -1,11 +1,11 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { ChevronLeft } from '@app-foundation/icons/lucide';
+
 import { CAREER_WORK_ARRANGEMENTS, CAREER_WORK_ARRANGEMENT_IDS, type CareerWorkArrangementId } from '@cuberoot/shared/careers';
 import { CONTACT_WECHAT_ID } from '@cuberoot/shared/contact';
 import { apiUrl } from '@/lib/api-base';
-import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { tr } from '@/i18n/tr';
 import { careerLocation, type CareerPosition } from '../../positions';
@@ -48,7 +48,7 @@ export default function ApplicationForm({ position }: { position: CareerPosition
     } catch { setStatus('error'); } finally { sending.current = false; }
   };
   return <main className="careers-page careers-application">
-    <AppLink className="back-home" href={`/careers/${position.id}`} prefetch={false} aria-label={tr({ zh: '返回职位详情', en: 'Back to position' })}><ChevronLeft size={16} aria-hidden /></AppLink>
+    <PageBackLink className="back-home" fallback={`/careers/${position.id}`} prefetch={false} />
     <article className="careers-application-card" data-site-surface="panel">
       <header className="careers-application-header"><p>CubeRoot</p><h1>{tr(position.title)}</h1><p>{tr(position.category)} · {tr(careerLocation)}</p></header>
       <div className="careers-application-body">

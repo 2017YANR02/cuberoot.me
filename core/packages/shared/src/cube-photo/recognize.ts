@@ -3,6 +3,7 @@ import { applyScramble } from '../timer/reconstruct/state';
 import { CANONICAL_RGB, linearToLab, sampleGridColors, srgbToLab, srgbToLinear, type Lab, type PhotoFace, type RGB } from './scan';
 import { faceQuad, homography, project, type CubeCorners, type FaceName } from './geometry';
 import type { PhotoPixels } from './detect';
+import { expandReducedFour } from './four';
 
 export const COLOR_NAMES = {
   white: { zh: '白', en: 'White' }, red: { zh: '红', en: 'Red' }, green: { zh: '绿', en: 'Green' },
@@ -13,13 +14,13 @@ export const COLOR_ORDER = Object.keys(COLOR_NAMES) as CubeColor[];
 const STANDARD: Record<PhotoFace, CubeColor> = { U: 'white', R: 'red', F: 'green', D: 'yellow', L: 'orange', B: 'blue' };
 export const COLOR_RGB = Object.fromEntries(Object.entries(STANDARD).map(([face, color]) => [color, CANONICAL_RGB[face as PhotoFace]])) as Record<CubeColor, RGB>;
 export type ColorFrame = Record<PhotoFace, CubeColor>;
-export interface StickerSample { rgb: RGB; color: CubeColor; margin: number; distance: number; reliable: boolean; corrected: boolean; calibrated: boolean; inferred?: boolean; observedColor?: CubeColor }
+export interface StickerSample { rgb: RGB; color: CubeColor; margin: number; distance: number; reliable: boolean; corrected: boolean; calibrated: boolean; inferred?: boolean; observedColor?: CubeColor; possibleColors?: CubeColor[] }
 export interface VisibleLastLayer { U: string; F: string; R: string }
 export interface RecoveredState { facelet: string; frame: ColorFrame }
 /** Only corner coordinates are known; no edge or complete-cube state is claimed. */
 export interface RecoveredCorners { cp: number[]; co: number[]; frame: ColorFrame }
 export interface PhotoRecognition {
-  puzzle?: '2x2' | '3x3';
+  puzzle?: '2x2' | '3x3' | '4x4';
   /** U row-major (back to front), then F top row, then R top row. */
   samples: StickerSample[];
   centers?: { F: StickerSample; R: StickerSample };
@@ -40,6 +41,9 @@ function rankColors(lab: Lab, references = REFERENCES) {
     .4 * (lab[0] - ref.lab[0]), lab[1] - ref.lab[1], lab[2] - ref.lab[2],
   ) })).sort((a, b) => a.distance - b.distance);
 }
+function saturation(rgb: RGB): number {
+  return (Math.max(...rgb) - Math.min(...rgb)) / Math.max(1, ...rgb);
+}
 function classify(rgb: RGB, references = REFERENCES, lab = srgbToLab(rgb)): StickerSample {
   const ranked = rankColors(lab, references);
   const best = ranked[0], margin = ranked[1].distance - best.distance;
@@ -49,8 +53,18 @@ function classify(rgb: RGB, references = REFERENCES, lab = srgbToLab(rgb)): Stic
   // Shaded orange can be closer to canonical red in Lab. Such a narrow
   // red/orange margin is evidence of uncertainty, not a hard cube constraint.
   const warmPair = ranked.slice(0, 2).every(r => r.color === 'red' || r.color === 'orange');
+  // A neutral reflection can pull orange toward the red Lab reference while
+  // leaving a deceptively large margin. A washed-out warm patch is not a
+  // trustworthy fixed observation unless it is close to a measured reference.
+  const plausibleWarm = !warmPair || saturation(rgb) >= .65 || best.distance <= 12;
+  // A saturated warm patch can be ambiguous between red and orange without
+  // being compatible with blue/green/white. Preserve that bounded evidence;
+  // it does not certify either warm color or train a calibration reference.
+  const boundedWarm = warmPair && best.distance < 36 && ranked[2].distance - ranked[1].distance >= 20
+    && Math.max(...rgb) >= 100 && (Math.max(...rgb) - Math.min(...rgb)) / Math.max(...rgb) >= .65;
   return { rgb, color: best.color, margin, distance: best.distance,
-    reliable: margin >= (warmPair ? 12 : 8) && best.distance < 48 && plausibleWhite, corrected: false, calibrated: false };
+    ...(boundedWarm ? { possibleColors: ['red', 'orange'] as CubeColor[] } : {}),
+    reliable: margin >= (warmPair ? 12 : 8) && best.distance < 48 && plausibleWhite && plausibleWarm, corrected: false, calibrated: false };
 }
 
 /** Dark blue loses Lab chroma and can be nearer white than a lit blue reference.
@@ -75,7 +89,17 @@ export function classifyPhotoColors(colors: readonly RGB[]): StickerSample[] {
   const initial = colors.map(classifyExposure);
   const photoRefs = new Map<CubeColor, RGB>();
   for (const color of COLOR_ORDER) {
-    const anchors = initial.filter(s => s.color === color && s.reliable && s.margin >= 12);
+    let anchors = initial.filter(s => s.color === color && s.reliable && s.margin >= 12);
+    // A photographed blue/green/yellow can differ from the canonical palette
+    // enough that no single cell clears the stronger anchor threshold. Two
+    // independently reliable, closely matching cells can corroborate that
+    // reference. Uncertain cells never participate in their own calibration,
+    // and red/orange retain their stricter separation requirement.
+    if (!anchors.length && ['blue', 'green', 'yellow'].includes(color)) {
+      const supported = initial.filter(s => s.color === color && s.reliable);
+      if (supported.length >= 2 && supported.every(a => supported.every(b =>
+        Math.hypot(...srgbToLab(a.rgb).map((v, i) => v - srgbToLab(b.rgb)[i])) <= 8))) anchors = supported;
+    }
     if (!anchors.length) continue;
     const median = (channel: number) => {
       const values = anchors.map(s => s.rgb[channel]).sort((a, b) => a - b), mid = values.length >> 1;
@@ -115,6 +139,7 @@ export function classifyPhotoColors(colors: readonly RGB[]): StickerSample[] {
     // independent photo reference, require a clear relative gap as well as a
     // minimum absolute gap; an almost tied red/orange reading still fails.
     const separated = adjusted.reliable || (adjusted.color !== 'white' && adjusted.margin >= 4
+      && (!['red', 'orange'].includes(adjusted.color) || saturation(sample.rgb) >= .65 || adjusted.distance <= 12)
       && adjusted.distance <= .65 * (adjusted.distance + adjusted.margin));
     // Lab distances contract under shade/reflection. A red anchor must not
     // absorb orange merely because the orange reference is brighter.
@@ -126,7 +151,7 @@ export function classifyPhotoColors(colors: readonly RGB[]): StickerSample[] {
   });
 }
 
-export function sampleFace(image: PhotoPixels, corners: CubeCorners, face: FaceName, gridSize: 2 | 3 = 3): RGB[] {
+export function sampleFace(image: PhotoPixels, corners: CubeCorners, face: FaceName, gridSize: 2 | 3 | 4 = 3): RGB[] {
   const h = homography(faceQuad(corners, face));
   if (!h) throw new Error('invalid-grid');
   const size = 90, rectified = new Uint8ClampedArray(size * size * 4);
@@ -137,7 +162,10 @@ export function sampleFace(image: PhotoPixels, corners: CubeCorners, face: FaceN
     const offset = (sy * image.width + sx) * 4;
     rectified.set(image.data.subarray(offset, offset + 4), (y * size + x) * 4);
   }
-  return sampleGridColors(rectified, size, gridSize, .35);
+  // Pocket stickers are large enough for a wider interior patch: a printed
+  // center logo must not outweigh the surrounding sticker. Keep a margin to
+  // exclude rounded corners and seams; 3x3 retains its tighter sampling area.
+  return sampleGridColors(rectified, size, gridSize, gridSize === 2 ? .65 : .35);
 }
 
 let frames: ColorFrame[] | undefined;
@@ -163,7 +191,7 @@ const PERMUTATIONS = permutations([0, 1, 2, 3]);
 const parity = (p: number[]) => p.reduce((sum, v, i) => sum + p.slice(i + 1).filter(w => v > w).length, 0) % 2;
 const solved = (): CubieCube => ({ cp: [0, 1, 2, 3, 4, 5, 6, 7], co: Array(8).fill(0), ep: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], eo: Array(12).fill(0) });
 
-function lastLayerPieces(observed: VisibleLastLayer): { corners: CubieCube[]; edges: CubieCube[] } {
+function lastLayerPieces(observed: VisibleLastLayer, allowOddFlips = false): { corners: CubieCube[]; edges: CubieCube[] } {
   if (!/^[URFDLB?]{9}$/.test(observed.U) || !/^[URFDLB?]{3}$/.test(observed.F) || !/^[URFDLB?]{3}$/.test(observed.R) || observed.U[4] !== 'U') return { corners: [], edges: [] };
   const measured = new Map<number, string>();
   for (const [start, colors] of [[0, observed.U], [18, observed.F], [9, observed.R]] as const) {
@@ -179,9 +207,9 @@ function lastLayerPieces(observed: VisibleLastLayer): { corners: CubieCube[]; ed
       c.cp.splice(0, 4, ...perm); c.co.splice(0, 4, ...first, (3 - first.reduce((a, b) => a + b, 0) % 3) % 3);
       if (matches(cubieToFacelet(c), CORNER_FACELET)) corners.push(c);
     }
-    for (let code = 0; code < 8; code++) {
+    for (let code = 0; code < (allowOddFlips ? 16 : 8); code++) {
       const c = solved(), first = [code & 1, (code >> 1) & 1, (code >> 2) & 1];
-      c.ep.splice(0, 4, ...perm); c.eo.splice(0, 4, ...first, first.reduce((a, b) => a ^ b, 0));
+      c.ep.splice(0, 4, ...perm); c.eo.splice(0, 4, ...first, allowOddFlips ? (code >> 3) & 1 : first.reduce((a, b) => a ^ b, 0));
       if (matches(cubieToFacelet(c), EDGE_FACELET)) edges.push(c);
     }
   }
@@ -189,12 +217,12 @@ function lastLayerPieces(observed: VisibleLastLayer): { corners: CubieCube[]; ed
 }
 
 /** Exact completion under solved F2L. Only explicit '?' cells are unconstrained. */
-export function completeLastLayer(observed: VisibleLastLayer, limit = Infinity): string[] {
-  const { corners, edges } = lastLayerPieces(observed), results: string[] = [];
+export function completeLastLayer(observed: VisibleLastLayer, limit = Infinity, fourParity = false): string[] {
+  const { corners, edges } = lastLayerPieces(observed, fourParity), results: string[] = [];
   for (const c of corners) for (const e of edges) {
-    if (parity(c.cp) !== parity(e.ep)) continue;
+    if ((parity(c.cp) !== parity(e.ep)) !== fourParity) continue;
     const facelet = cubieToFacelet({ cp: c.cp, co: c.co, ep: e.ep, eo: e.eo });
-    if (validateFacelet(facelet) === null) results.push(facelet);
+    if (fourParity || validateFacelet(facelet) === null) results.push(facelet);
     if (results.length >= limit) return results;
   }
   return results;
@@ -262,4 +290,40 @@ export function recognizePhoto(image: PhotoPixels, corners: CubeCorners, correct
       candidates: [], cornerCandidates, status: 'corners-only' };
   }
   return { samples: measured, centers, candidates, status: measured.some(s => !s.reliable) ? 'uncertain-colors' : overflow || cornerCandidates.length ? 'ambiguous' : 'invalid' };
+}
+
+/** Reduced 4x4 last layer, under the explicit PPLL (odd permutation) premise. */
+export function recognizeFour(image: PhotoPixels, corners: CubeCorners, corrections: Record<number, CubeColor> = {}, front?: CubeColor): PhotoRecognition {
+  const top = sampleFace(image, corners, 'top', 4), left = sampleFace(image, corners, 'left', 4), right = sampleFace(image, corners, 'right', 4);
+  const classified = classifyPhotoColors([...top, ...left.slice(0, 4), ...right.slice(0, 4), left[5], right[5]]);
+  const samples = classified.slice(0, 24).map((sample, i) => corrections[i]
+    ? { ...sample, color: corrections[i], reliable: true, corrected: true } : sample);
+  const centers = { F: classified[24], R: classified[25] };
+  const groups = [[0], [1, 2], [3], [4, 8], [5, 6, 9, 10], [7, 11], [12], [13, 14], [15], [16], [17, 18], [19], [20], [21, 22], [23]];
+  const grouped = groups.map(indices => [...new Set(indices.filter(i => samples[i].reliable).map(i => samples[i].color))]);
+  if (grouped.some(colors => colors.length > 1)) return { puzzle: '4x4', samples, centers, candidates: [], status: 'invalid' };
+  if (!grouped[4].length) return { puzzle: '4x4', samples, centers, candidates: [], status: 'uncertain-colors' };
+  const anchor = (s: StickerSample) => s.reliable && (s.margin >= 12 || (s.calibrated && s.distance <= 12));
+  const frames = standardColorFrames().filter(frame => frame.U === grouped[4][0]
+    && (front ? frame.F === front : (!anchor(centers.F) || frame.F === centers.F.color) && (!anchor(centers.R) || frame.R === centers.R.color)));
+  const candidates: RecoveredState[] = [];
+  for (const frame of frames) {
+    const observed = grouped.map(colors => colors.length ? Object.keys(frame).find(f => frame[f as PhotoFace] === colors[0])! : '?');
+    const completions = completeLastLayer({ U: observed.slice(0, 9).join(''), F: observed.slice(9, 12).join(''), R: observed.slice(12).join('') }, 129, true);
+    if (completions.length > 128) return { puzzle: '4x4', samples, centers, candidates: [], status: 'ambiguous' };
+    for (const reduced of completions) {
+      const facelet = expandReducedFour(reduced);
+      const visible = facelet.slice(0, 16) + facelet.slice(32, 36) + facelet.slice(16, 20);
+      // Bounded warm-color evidence remains a constraint even when a pair's
+      // other wing or center is uncertain. Explicit corrections always win.
+      if (samples.some((s, i) => !s.reliable && s.possibleColors && !s.possibleColors.includes(frame[visible[i] as PhotoFace]))) continue;
+      candidates.push({ facelet, frame });
+      if (candidates.length > 128) return { puzzle: '4x4', samples, centers, candidates: [], status: 'ambiguous' };
+    }
+  }
+  const unique = candidates.length === 1 ? candidates[0] : undefined;
+  const visible = unique && unique.facelet.slice(0, 16) + unique.facelet.slice(32, 36) + unique.facelet.slice(16, 20);
+  return { puzzle: '4x4', centers, candidates,
+    samples: unique && visible ? samples.map((s, i) => s.reliable ? s : { ...s, observedColor: s.color, color: unique.frame[visible[i] as PhotoFace], inferred: true }) : samples,
+    status: unique ? 'ok' : candidates.length ? 'partial' : samples.some(s => !s.reliable) ? 'uncertain-colors' : 'invalid' };
 }

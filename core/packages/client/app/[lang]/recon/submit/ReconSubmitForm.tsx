@@ -15,8 +15,9 @@ import { appendReconVideo, splitReconVideoGroups, normalizeReconVideoUrls } from
  */
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import Link from 'next/link';
-import { useRouter, useSearchParams, useParams } from 'next/navigation';
+import Link from '@/components/AppLink';
+import { useSearchParams, useParams } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useTranslation } from 'react-i18next';
 import type { ReconSolve, ReconOfficial } from '@cuberoot/shared';
 import {

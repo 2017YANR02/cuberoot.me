@@ -1,6 +1,10 @@
 'use client';
+import PageBackLink from '@/components/PageBackLink';
 import { usesStackmatPads } from '@/components/stackmat-catalog';
 import TimerReadout from '../_components/TimerReadout';
+import { PllChainProgress } from '../_components/PllChainProgress';
+import { usePllChain } from '../_shared/usePllChain';
+import { pllChainBeforeMove } from '@/lib/pll-chain';
 import { trackFeatureUse } from '@/lib/analytics-signal';
 import { TimerResultsTabs } from '@cuberoot/timer-ui';
 import { useLiveSmartCubeAttempt, TimerLiveSolutionPanel, TimerTrainingTimingStatus } from '@cuberoot/timer-ui';
@@ -49,13 +53,7 @@ import dynamic from 'next/dynamic';
 import { isMiniProgramWebView } from '@/lib/miniprogram-bridge';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 'nuqs';
-import {
-  AlertTriangle,
-  LayoutTemplate,
-  ArrowLeft,
-  Box,
-} from '@app-foundation/icons/lucide';
-import HomeLink from '@/components/HomeLink';
+import { AlertTriangle, LayoutTemplate, ListOrdered, Box } from '@app-foundation/icons/lucide';
 import { petReact } from '@/lib/deskpet';
 import {
   parseTrainingAssignmentDestination,
@@ -331,6 +329,7 @@ const SolveRecap = dynamic(() => import('../_components/SolveRecap'), {
 const LiveReconstructReport = dynamic(() => import('../_components/ReconstructReport'), { ssr: false });
 /** Administrator-only fake-cube panel, loaded on demand. */
 const DevFakeCubePanel = dynamic(() => import('../_components/DevFakeCubePanel'), { ssr: false });
+const PllChainOrderDialog = dynamic(() => import('../_components/PllChainOrderDialog'), { ssr: false });
 const ReconTestPicker = dynamic(() => import('../_components/ReconTestPicker'), { ssr: false });
 import './shell.css';
 import { tr } from '@/i18n/tr';
@@ -513,6 +512,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       .withOptions({ history: 'replace', clearOnDefault: false }),
   );
   const event: EventId = competition.enabled ? '333' : queryEvent;
+  const isPllChain = event === 'pll-chain';
+  const pllChain = usePllChain(isPllChain);
+  const pllChainRef = useRef(pllChain); pllChainRef.current = pllChain;
+  const pllChainOriginRef = useRef<string | undefined>(undefined);
   const supportsSmartCube = timerSupportsSmartCubeAutoTiming(event);
   const [sourceParam, setSourceParam] = useQueryState('source');
   // URL owns the public source choice. Other sources retain their existing
@@ -761,6 +764,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   const seedOptionsSignature = JSON.stringify([settings.syncSeed, settings.syncSeedRevision, settings.cnMode, mode222, type222, ivyMode, settings.ollSubset, settings.pllSubset]);
   const genScramble = useCallback((): TimerScrambleHistoryEntry => {
+    if (event === 'pll-chain') return timerScrambleHistoryEntry('');
     // Manual queue: walk the user-typed lines in order, wrapping at the end.
     // Empty queue → '' placeholder (the strip shows a "paste scrambles" hint).
     if (settings.scrambleSource === 'manual') {
@@ -1229,7 +1233,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     trainerSigVal,
   ]);
 
-  const attemptCanStart = competition.enabled ? competition.authorized && Boolean(competition.attempt) : timerCanStartAttempt({
+  const attemptCanStart = competition.enabled ? competition.authorized && Boolean(competition.attempt) : isPllChain ? pllChain.ready : timerCanStartAttempt({
     availability: ordinaryLoading || seedLoading || randomOptimalLoading || scrambleLoading || cstimerLoading
       || trainerLoading || byStepsLoading
       ? 'loading'
@@ -1420,7 +1424,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const { solve: liveSolve, publish: publishLiveSolve, clear: clearLiveSolve } = useLiveSmartCubeAttempt(
     smartCubeAttemptProducerRef.current, () => phaseSnapshotRef.current === 'running'
       ? { startedAt: attemptStartedAtRef.current, event: eventAtStartRef.current, scramble: scrambleAtStartRef.current }
-      : null, settings.liveSolutionAnalysis);
+      : null, settings.liveSolutionAnalysis && !isPllChain);
   const [liveStageTarget, setLiveStageTarget] = useState<HTMLDivElement | null>(null);
   const autoRecapDismissGestureRef = useRef(new AutoRecapDismissGesture());
   const autoRecapInputBlockedRef = useRef(false);
@@ -1461,10 +1465,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (caseIdAtStartRef.current) solve.caseId = caseIdAtStartRef.current;
     if (res.trainingStartMode) solve.trainingStartMode = res.trainingStartMode;
     Object.assign(solve, smartCubeAttemptProducerRef.current.finishSolveFields(solve));
+    if (ev === 'pll-chain') pllChainRef.current.finish(solve);
     reconstructionAnalyzer.handoff(`live-${attemptStartedAtRef.current}`, solve.id);
     // Inspection actually used (0 when inspection was off / never entered).
     if (res.inspectionMs > 0) solve.inspectionMs = Math.round(res.inspectionMs);
-    setLastPenalty(res.autoPenalty);
+    setLastPenalty(solve.penalty);
 
     // 破纪录(单次/Ao5/Ao12)时桌宠开心一下;不再弹横幅,纪录改在统计面板用 PR 标体现。
     {
@@ -1495,7 +1500,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     submitTimerTrainingEvidence(trainingDestinationRef.current, solve);
     // 桌面在右栏展开复盘；窄屏直接进入整屏详情。两者共用 shouldAutoRecap，
     // 没有动作流或关闭开关时都不主动打断下一把流程。
-    const showRecap = !multiEnabledRef.current && !abortingSmartCubeRef.current && shouldAutoRecap(solve, { autoRecap: settings.autoRecap });
+    const showRecap = ev !== 'pll-chain' && !multiEnabledRef.current && !abortingSmartCubeRef.current && shouldAutoRecap(solve, { autoRecap: settings.autoRecap });
     autoRecapDismissGestureRef.current.reset();
     autoRecapInputBlockedRef.current = false;
     setRecapId(showRecap ? solve.id : null);
@@ -1503,18 +1508,18 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       autoRecapInputBlockedRef.current = true;
       setModalSolve({ s: solve, idx: solveIndex, autoRecap: true });
     }
-    const showSolution = !multiEnabledRef.current && !abortingSmartCubeRef.current && settings.autoOpenSolution && Boolean(solve.device && solve.moves?.length);
+    const showSolution = ev !== 'pll-chain' && !multiEnabledRef.current && !abortingSmartCubeRef.current && settings.autoOpenSolution && Boolean(solve.device && solve.moves?.length);
     if (showRecap || showSolution) setPanelTab(null);
     if (showSolution) setSolverOpenRequest((value) => value + 1);
     if (res.autoPenalty === 'DNF') petReact('error');
     if (!multiEnabledRef.current) nextScramble();
   }, [attemptSplitRecorder, isDesktop, nextScramble, settings.autoOpenSolution, settings.precision, settings.autoRecap]);
 
-  const trainingTimingMode = () => !competitionRef.current.enabled && timerSupportsTrainingTiming(event)
-    && bluetoothCubeRef.current?.status.connected ? getSettings().trainingStartMode : undefined;
+  const trainingTimingMode = () => !competitionRef.current.enabled && (isPllChain || timerSupportsTrainingTiming(event))
+    && bluetoothCubeRef.current?.status.connected ? isPllChain ? 'first-turn' as const : getSettings().trainingStartMode : undefined;
   const trainingTimingModeRef = useRef(trainingTimingMode);
   trainingTimingModeRef.current = trainingTimingMode;
-  const timer = useTimer(recordSolve, (startedAtMs) => {
+  const timer = useTimer(recordSolve, (startedAtMs, cubeStart) => {
     const history = scrambleHistRef.current;
     const entry = multiEnabledRef.current ? multiTrainingRef.current?.active()?.context?.entry
       : competitionRef.current.enabled ? competitionScrambleEntry : history.list[history.idx];
@@ -1534,14 +1539,15 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       multiStage: settings.multiStage && timerSupportsStageSplits(eventAtStartRef.current),
     });
     const bt = bluetoothCubeRef.current?.status;
-    gyroStartRef.current = trainingTimingModeRef.current() ? startedAtMs : performance.now();
+    if (isPllChain) pllChainRef.current.begin(!!bt?.connected, bt?.connected ? pllChainOriginRef.current : undefined);
+    gyroStartRef.current = startedAtMs;
     // begin resets both streams; later start handlers must preserve this recording.
     smartCubeAttemptProducerRef.current.begin(startedAtMs, bt?.connected
       ? { model: bt.brand, name: bt.deviceName }
       : undefined, settings.recordGyro && bt?.connected && scrambleGyroRef.current && gyroQuatRef.current
       ? { reference: scrambleGyroRef.current, initial: gyroQuatRef.current,
         orientation: timerSmartCubeTrainingOrientation(event, getSettings().preScrT) }
-      : undefined);
+      : undefined, cubeStart);
     clearLiveSolve();
   }, () => ({ trainingStartMode: trainingTimingModeRef.current() }));
   cancelArmForScrambleChangeRef.current = competition.enabled ? () => {} : timer.cancelArm;
@@ -1580,6 +1586,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   ), [supportsSmartCube]);
   const onPressDown = useCallback((withWarmup = false): boolean => {
     if (competitionRef.current.enabled || layoutEditingRef.current) return false;
+    if (isPllChain && bluetoothCubeRef.current?.status.connected) {
+      if (!attemptCanStartRef.current || !getSettings().timingEnabled
+        || !['idle', 'stopped'].includes(phaseSnapshotRef.current)) return false;
+      if (withWarmup) warmupSound();
+      const armed = timer.armFromCube();
+      if (armed) phaseSnapshotRef.current = 'ready';
+      return armed;
+    }
     if (trainingTimingModeRef.current() === 'manual') {
       const guidance = multiEnabledRef.current ? multiTrainingRef.current?.active()?.guidance : smartCubeSoloController.getGuidanceSnapshot();
       if (!getSettings().timingEnabled || (!multiEnabledRef.current && !attemptCanStartRef.current)
@@ -1597,7 +1611,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (withWarmup) warmupSound();
     timer.onPressDown();
     return true;
-  }, [smartCubeInputBlocked, timer.onPressDown, timer.armFromCube]);
+  }, [isPllChain, smartCubeInputBlocked, timer.onPressDown, timer.armFromCube]);
   const onPressUp = useCallback((): boolean => {
     if (competitionRef.current.enabled || layoutEditingRef.current || smartCubeInputBlocked()) return false;
     if (!multiEnabledRef.current && !attemptCanStartRef.current && phaseSnapshotRef.current !== 'running') {
@@ -1680,9 +1694,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     match: null,
   });
   const smartCubeTimerOptions = useMemo<SmartCubeSoloTimerControllerOptions<CubeMoveMetadata>>(() => ({
-    armFromCube: (timestamp) => {
+    armFromCube: (timestamp, clock) => {
       warmupSound();
-      const armed = timerHandleRef.current.armFromCube(timestamp);
+      const armed = timerHandleRef.current.armFromCube(timestamp, clock);
       if (armed) {
         const mode = trainingTimingModeRef.current();
         phaseSnapshotRef.current = mode ? mode === 'first-turn' ? 'ready' : 'inspecting'
@@ -1708,8 +1722,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         try { subscriber(move, timestamp, metadata); } catch (err) { console.error('[bt-broadcast]', err); }
       }
     },
-    recordMove: ({ move, timestamp }) => {
-      if (!smartCubeAttemptProducerRef.current.recordMove(move, timestamp)) return;
+    recordMove: ({ move, timestamp, clock }) => {
+      if (!smartCubeAttemptProducerRef.current.recordMove(move, timestamp, clock)) return;
+      if (eventAtStartRef.current === 'pll-chain') return;
       // Use only this attempt's accepted moves, never the 3D anchor's scramble log.
       const moves = smartCubeAttemptProducerRef.current.snapshotMoves();
       publishLiveSolve();
@@ -1720,19 +1735,20 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         timeMs: Math.max(0, timestamp - attemptStartedAtRef.current),
       });
     },
+    sequenceComplete: ({ move, facelets }) => pllChainRef.current.observe(move, facelets),
     solve: async (fromFacelets, targetFacelets) => {
       const from = fromFaceletString(fromFacelets);
       const target = fromFaceletString(targetFacelets);
       return from && target ? fixupScramble(from, target) : null;
     },
-    startFromCube: (timestamp) => {
-      if (!timerHandleRef.current.startFromCube(timestamp)) return false;
+    startFromCube: (timestamp, clock) => {
+      if (!timerHandleRef.current.startFromCube(timestamp, clock)) return false;
       phaseSnapshotRef.current = 'running';
       cubeStartedRef.current = true;
       return true;
     },
-    stopFromCube: (timestamp) => {
-      const stopped = timerHandleRef.current.stopFromCube(timestamp);
+    stopFromCube: (timestamp, clock) => {
+      const stopped = timerHandleRef.current.stopFromCube(timestamp, clock);
       if (stopped) { phaseSnapshotRef.current = 'stopped'; cubeStartedRef.current = false; }
       return stopped;
     },
@@ -1805,11 +1821,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         }
       }
       : undefined,
-    onMove: (move: string, ts: number, facelets: string, metadata?: CubeMoveMetadata) => {
+    onMove: (move, ts, facelets, metadata, clock) => {
       previewAnchorsRef.current.get(cubeId)?.move(move, ts);
       if (multiEnabledRef.current) {
         if (cubeId === activeCubeIdRef.current) liveAnchorRef.current?.move(move, ts);
-        const outcome = multiTraining.move(cubeId, { facelets, metadata, move, timestamp: ts });
+        const outcome = multiTraining.move(cubeId, { facelets, metadata, move, timestamp: ts, clock });
         const cube = multiTraining.snapshot().cubes.find(candidate => candidate.id === cubeId);
         const gyro = cubeGyrosRef.current.get(cubeId);
         if (outcome?.guidancePenultimate && getSettings().autoCalibrateGyro && gyro?.quat) {
@@ -1823,7 +1839,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       if (cubeId !== FIRST_TRAINING_CUBE) return;
       if (!timerSupportsTrainingTiming(event)) setBluetoothOpen(false);
       liveAnchorRef.current?.move(move, ts);
-      const outcome = smartCubeSoloController.move({ facelets, metadata, move, timestamp: ts });
+      if (isPllChain && phaseSnapshotRef.current !== 'running') pllChainOriginRef.current = pllChainBeforeMove(facelets, move);
+      const outcome = smartCubeSoloController.move({ facelets, metadata, move, timestamp: ts, clock });
       if (outcome.guidancePenultimate && getSettings().autoCalibrateGyro && gyroQuatRef.current) {
         resetSmartCubeOrientation();
       }
@@ -1831,16 +1848,18 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         scrambleGyroRef.current = { ...gyroQuatRef.current };
       }
     },
-    onSolved: (atMs) => {
-      if (multiEnabledRef.current) { multiTraining.solved(cubeId, atMs); return; }
+    onSolved: (atMs, clock) => {
+      if (multiEnabledRef.current) { multiTraining.solved(cubeId, atMs, clock); return; }
       if (cubeId !== FIRST_TRAINING_CUBE) return;
       competitionSolvedRef.current = competitionRef.current.enabled && atMs !== undefined;
-      smartCubeSoloController.solved(atMs);
+      smartCubeSoloController.solved(atMs, clock);
     },
     onNeedMac: requestMac,
     // The hook has always emitted these; nothing consumed them, so a cube that
     // dropped mid-session went quiet with no explanation. Surface them.
     onConnectionEvent: (ev) => {
+      if (cubeId === FIRST_TRAINING_CUBE && ev.kind === 'disconnected' && eventAtStartRef.current === 'pll-chain'
+        && phaseSnapshotRef.current === 'running') pllChainRef.current.interrupt();
       if (multiEnabledRef.current && ev.kind === 'disconnected') {
         multiTraining.connect(cubeId, false);
       }
@@ -1927,7 +1946,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   );
   liveAnchorRef.current = liveAnchor;
   const cubeConnected = supportsSmartCube && bluetoothCube.status.connected;
-  const multiEligible = !competition.enabled && (event === '333' || timerSupportsTrainingTiming(event)) && !mayUseMiniProgramBridge();
+  const multiEligible = !competition.enabled && !isPllChain && (event === '333' || timerSupportsTrainingTiming(event)) && !mayUseMiniProgramBridge();
   useLayoutEffect(() => {
     if (!multiEligible && timer.phase !== 'running') {
       trainingCubes.disconnectExtras();
@@ -2114,7 +2133,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         mirror={mirrorForBrand(bluetoothCube.status.brand)}
       />
     </div>
-  ) : settings.showCubePreview ? (
+  ) : !isPllChain && settings.showCubePreview ? (
     <CubePreview event={event} scramble={previewScramble} fill visualization={settings.prefer3D ? '3D' : '2D'} />
   ) : undefined;
 
@@ -2219,7 +2238,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // Record the time the device measured verbatim rather than re-timing locally.
   // A BLE timer drives the page's live display while it runs, then supplies an
   // explicit event/scramble snapshot and exact hardware reading when it stops.
-  type ExternalAttempt = { event: EventId; scramble: string };
+  type ExternalAttempt = { event: EventId; scramble: string; pllOrder?: string[] };
   type ExternalRecordContext = ExternalAttempt & { inspectionMs?: number };
   const externalTimeRecordRef = useRef<((ms: number, context?: ExternalRecordContext) => void) | null>(null);
   externalTimeRecordRef.current = (ms: number, context?: ExternalRecordContext) => {
@@ -2238,6 +2257,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       event: solveEvent,
       penalty: 'ok',
     });
+    if (solveEvent === 'pll-chain') solve.pllChain = { order: context?.pllOrder ?? pllChainRef.current.orderSnapshot(), verified: false, splits: [] };
     if (context?.inspectionMs !== undefined
       && Number.isFinite(context.inspectionMs)
       && context.inspectionMs > 0) {
@@ -2251,7 +2271,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const stackmatAttemptRef = useRef<ExternalAttempt | null>(null);
   const stackmat = useStackmat({
     onStart: () => {
-      stackmatAttemptRef.current = !layoutEditingRef.current && attemptCanStartRef.current ? { event, scramble } : null;
+      stackmatAttemptRef.current = !layoutEditingRef.current && attemptCanStartRef.current ? { event, scramble, pllOrder: isPllChain ? pllChainRef.current.orderSnapshot() : undefined } : null;
     },
     onStop: (ms) => {
       const attempt = stackmatAttemptRef.current;
@@ -2295,7 +2315,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         || timerEvent.state === 'GET_SET'
         || timerEvent.state === 'INSPECTION') {
         if (attemptCanStartRef.current) {
-          bluetoothTimerAttemptRef.current ??= { event, scramble };
+          bluetoothTimerAttemptRef.current ??= { event, scramble, pllOrder: isPllChain ? pllChainRef.current.orderSnapshot() : undefined };
         } else {
           bluetoothTimerAttemptRef.current = null;
         }
@@ -2307,7 +2327,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           phaseSnapshotRef.current = 'idle';
           return;
         }
-        bluetoothTimerAttemptRef.current ??= { event, scramble };
+        bluetoothTimerAttemptRef.current ??= { event, scramble, pllOrder: isPllChain ? pllChainRef.current.orderSnapshot() : undefined };
         // QiYi reports the device reading when RUNNING begins, then csTimer
         // advances the browser display locally until the exact STOPPED frame.
         // Starting from that reading mirrors cstimer/src/js/timer/bttimer.js.
@@ -2738,7 +2758,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     return () => window.removeEventListener('keydown', onKey);
   }, [panelFullscreen, sessionSwitcherOpen]);
 
-  const anyModalOpen = otherModalOpen || hintsSheetOpen;
+  const anyModalOpen = otherModalOpen || hintsSheetOpen || pllChain.orderOpen;
   const anyModalOpenRef = useRef(anyModalOpen);
   useEffect(() => { anyModalOpenRef.current = anyModalOpen; }, [anyModalOpen]);
   useAutoReady({
@@ -2746,7 +2766,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // covering the timer cancels gestures; returning starts a fresh lifetime.
     // Multi-cube handoff is driven by each ticket's scramble verification;
     // single-cube gestures must not arm a different cube's waiting attempt.
-    enabled: !multiEnabled && !trainingTimingActive && !competition.enabled && settings.timingEnabled && attemptCanStart && !anyModalOpen
+    enabled: !isPllChain && !multiEnabled && !trainingTimingActive && !competition.enabled && settings.timingEnabled && attemptCanStart && !anyModalOpen
       && (timer.phase === 'idle' || timer.phase === 'inspecting' || timer.phase === 'stopped')
       && (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick')
       && cubeConnected,
@@ -3301,6 +3321,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       data-solving={timer.phase === 'running' ? 'true' : undefined}
       data-mini-program-fullscreen={fullscreen && miniProgramFullscreen ? '' : undefined}
       data-live-reconstruction={liveSolutionPanel ? '' : undefined}
+      data-pll-chain={isPllChain ? '' : undefined}
       style={{
         '--solo-scramble-gap': `${settings.soloLayout.scrambleGap}px`,
         '--solo-source-gap': `${settings.soloLayout.sourceGap}px`,
@@ -3311,6 +3332,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       } as React.CSSProperties}
     >
       {trainingCubes.connections}
+      {pllChain.orderOpen && <PllChainOrderDialog order={pllChain.order} cases={pllChain.cases} defaults={pllChain.defaults}
+        onSave={pllChain.saveOrder} onClose={() => pllChain.setOrderOpen(false)} />}
       <TimerPrintController
         currentResult={digitsText}
         currentScramble={displayScramble}
@@ -3340,7 +3363,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           onClose: () => setTool(null)
         }}
         topbar={{
-          brand: <HomeLink className="tb-btn shell-topbar-home" data-no-timer aria-label={tr({ zh: '返回首页', en: 'Back to home' })}><ArrowLeft size={18} /></HomeLink>,
+          brand: <PageBackLink fallback="/" className="tb-btn shell-topbar-home" data-no-timer />,
           controls: (
           <>
           {trainingOrg && trainingAssignment && <AppLink className="tb-btn" data-no-timer prefetch={false} href={`/training/${encodeURIComponent(trainingOrg)}?assignment=${encodeURIComponent(trainingAssignment)}`}>{tr({ zh: '训练打卡进度', en: 'Training check-in progress' })}</AppLink>}
@@ -3410,7 +3433,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <TimerTrainingMenu currentEvent={event} onTimerEventChange={selectEvent}
             disabled={!sourceControlsEnabled} showProject
             onAdvancedSettings={() => setSettingsOpen(true)}
-            sourceControl={onSelectCases => <span className="timer-practice-control">
+            sourceControl={isPllChain ? () => null : onSelectCases => <span className="timer-practice-control">
           <TimerScrambleSourceSelect
             showArrow={false}
             disabled={!sourceControlsEnabled}
@@ -3439,6 +3462,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           />
             </span>}
             beforeSettings={<>
+          {isPllChain && <Tooltip content={tr({ zh: '调整顺序', en: 'Edit order' })}>{tip => (
+            <button {...tip} type="button" className="tb-btn" data-no-timer
+              aria-label={tr({ zh: '调整顺序', en: 'Edit order' })}
+              disabled={!pllChain.ready || !['idle', 'stopped'].includes(timer.phase)}
+              onClick={() => pllChain.setOrderOpen(true)}><ListOrdered size={18} /></button>
+          )}</Tooltip>}
           <span className="shell-topbar-diff" data-no-timer ref={setDiffSlot} />
           <Tooltip content={tr({ zh: '调整布局', en: 'Edit layout' })}>{tip => (
             <button {...tip} type="button" className="tb-btn solo-layout-toggle" data-no-timer
@@ -3464,7 +3493,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           rankings: settings.rankScopes.length > 0 && rankBadgePhase && solves.length > 0 ? (
             <RankBadge eventId={event} centis={rankCentis} type="single" country={rankCountry} isZh={isZh} scopes={settings.rankScopes} wcaId={authUser?.wcaId} />
           ) : undefined,
-          source: !douyin && <ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} mergeSlot={mergeSlot} wcaSourceSlot={wcaSourceSlot} />,
+          source: !douyin && !isPllChain && <ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} mergeSlot={mergeSlot} wcaSourceSlot={wcaSourceSlot} />,
           statistics: <TimerStatRail
             ariaExpanded={panelTab != null}
             language={timerLanguage}
@@ -3488,7 +3517,11 @@ surfaceRef: surfaceRef,
 className: targetFeedbackClass,
 onMouseDown: onCenterMouseDown,
 onMouseUp: onCenterMouseUp,
-scrambleSlot: <>
+scrambleSlot: isPllChain ? <>
+            {pllChain.ready ? <PllChainProgress order={pllChain.shownOrder} completed={pllChain.completed} interrupted={pllChain.interrupted} />
+              : <span data-no-timer>{pllChain.failed ? <button type="button" onClick={pllChain.retry}>{tr({ zh: 'PLL 加载失败，重试', en: 'PLL loading failed. Retry' })}</button> : tr({ zh: '加载中…', en: 'Loading…' })}</span>}
+            {pllChain.syncState === 'error' && <span role="alert">{tr({ zh: '顺序同步失败，请重试保存', en: 'Order sync failed. Save again to retry.' })}</span>}
+            </> : <>
             {multiEnabled && <div className="training-scramble-status" data-no-timer>
               <span>{tr({ zh: '打乱', en: 'Scramble' })}: {multiSnapshot.scrambleId ? trainingCubeLabel(multiSnapshot.scrambleId) : tr({ zh: '全部已就绪', en: 'All prepared' })}</span>
               {multiSnapshot.cubes.filter(cube => cube.stage === 'queued').map(cube => <span key={cube.id}>
@@ -3616,7 +3649,10 @@ children: <>
             {tr({ zh: '计时', en: 'Timing' })}: {activeTrainingCube ? trainingCubeLabel(activeTrainingCube.id) : tr({ zh: '等待打乱完成', en: 'Waiting for a prepared cube' })}
           </div>}
           {/* sub-content under the digits */}
-          <TimerTrainingTimingStatus mode={trainingTimingActive ? settings.trainingStartMode : undefined}
+          {isPllChain && cubeConnected && (timer.phase === 'idle' || timer.phase === 'stopped' || timer.phase === 'ready') && <div className="timer-live-tps">
+            {timer.phase === 'ready' ? tr({ zh: '首转开始', en: 'Turn to start' }) : tr({ zh: '按空格或点击计时区准备', en: 'Press Space or tap the timer to get ready' })}
+          </div>}
+          <TimerTrainingTimingStatus mode={!isPllChain && trainingTimingActive ? settings.trainingStartMode : undefined}
             phase={timer.phase} matched={(multiEnabled ? activeTrainingCube?.guidance.match : scrambleGuidance.match) === true} language={isZh ? 'zh' : 'en'} />
           {timer.phase === 'running' && <TimerTargetTime targetMs={targetMs} displayMs={timer.displayMs} localize={tr} />}
           {!trainingTimingActive && timer.phase === 'inspecting' && inspectionIllegalCount > 0 && (

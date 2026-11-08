@@ -1,0 +1,731 @@
+{
+  "oll-parity": {
+    "scrapedAt": "2026-05-03T13:40:45.896Z",
+    "source": "https://speedcubedb.com/a/4x4/OLLParity",
+    "puzzle": "4x4",
+    "set": "oll-parity",
+    "cases": [
+      {
+        "id": 5497,
+        "name": "Basic",
+        "subgroup": "",
+        "setup": "Rw U2' Rw U2' Rw' U2' Rw U2' Lw' U2' Rw U2' Rw' U2' Rw' x' U2' Rw'",
+        "sticker": {
+          "ub": "bbbbbbbbbbbbbbbb",
+          "uf": "yyyygggggggggggg",
+          "ul": "rooorrrrrrrrrrrr",
+          "ur": "rrrooooooooooooo",
+          "us": "yyyyyyyyyyyygggg",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'",
+              "altId": "1081"
+            },
+            {
+              "alg": "Rw' U2' Rw U2 Rw U2' Rw2' F2 Rw' U2 Rw' U2' F2 Rw2 F2",
+              "altId": "4434"
+            },
+            {
+              "alg": "Rw2 B2 U2 Lw U2 Rw' U2 Rw U2 F2 Rw F2 Lw' B2 Rw2",
+              "altId": "1080"
+            },
+            {
+              "alg": "Rw2 B2 Rw' U2 Rw' U2 x' U2 Rw' U2 Rw U2 Rw' U2 Rw2 U2 x",
+              "altId": "5400"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5498,
+        "name": "Pure",
+        "subgroup": "",
+        "setup": "F2' 2R2' F2' U2' 2R U2' 2R' U2' 2R2' F2' 2L F2' 2L' U2' 2R",
+        "sticker": {
+          "ub": "gbbbbbbbbbbbbbbb",
+          "uf": "byyggggggggggggg",
+          "ul": "rrrorrrrrrrrrrrr",
+          "ur": "oooroooooooooooo",
+          "us": "yyyyyyyyyyyyyggy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "2R' U2 2L F2 2L' F2 2R2 U2 2R U2 2R' U2 F2 2R2 F2",
+              "altId": "5120"
+            },
+            {
+              "alg": "y2 F R U R' U' F' U Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'",
+              "altId": "1592"
+            },
+            {
+              "alg": "R' U2 Rw' U2 Rw U2 Rw2 U2 x' U2 Rw' U2 Rw U2 l' U2 Rw U2 Rw R",
+              "altId": "1083"
+            },
+            {
+              "alg": "R U2 R' U' Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw' F R' F' R",
+              "altId": "1089"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5499,
+        "name": "M",
+        "subgroup": "",
+        "setup": "m Rw U2' Rw U2' Rw' U2' Rw U2' Lw' U2' Rw U2' Rw' U2' Rw' x' U2' Rw' m'",
+        "sticker": {
+          "ub": "byybbbbbbbbbbbbb",
+          "uf": "yggygggggggggggg",
+          "ul": "rooorrrrrrrrrrrr",
+          "ur": "rrrooooooooooooo",
+          "us": "ybbyyyyyyyyygyyg",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "m Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw' m'",
+              "altId": "3166"
+            },
+            {
+              "alg": "y2 2R2 U2 2R2 Uw2 2R2 Uw2 Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'",
+              "altId": "18304"
+            },
+            {
+              "alg": "m Rw2 B2 U2 Lw U2 Rw' U2 Rw U2 F2 Rw F2 Lw' B2 Rw2 m'",
+              "altId": "1088"
+            },
+            {
+              "alg": "m Rw' U2' Rw U2 Rw U2' Rw2' F2 Rw' U2 Rw' U2' F2 Rw2 F2 m'",
+              "altId": "10878"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "pll-parity": {
+    "scrapedAt": "2026-08-07T20:15:28.710Z",
+    "source": "https://speedcubedb.com/a/4x4/PLLParity; https://cubingapp.com/algorithms/4x4-PLL-Parity; https://github.com/spencerchubb/cubingapp/commit/613a49885dc618023368e5f0c2a25024b8c7e9a5",
+    "puzzle": "4x4",
+    "set": "pll-parity",
+    "cases": [
+      {
+        "id": 5500,
+        "name": "OPP Parity",
+        "subgroup": "Edge Swap",
+        "setup": "Uw2' 2R2' Uw2' 2R2' U2' 2R2'",
+        "sticker": {
+          "ub": "gbbgbbbbbbbbbbbb",
+          "uf": "bggbgggggggggggg",
+          "ul": "oooorrrrrrrrrrrr",
+          "ur": "rrrroooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "2R2 U2 2R2 Uw2 2R2 Uw2",
+              "altId": "1084"
+            },
+            {
+              "alg": "Rw2' F2 U2 Rw2 R2' U2 F2 Rw2",
+              "altId": "3186"
+            },
+            {
+              "alg": "Uw2 Rw2 U2 2R2 U2 Rw2 Uw2",
+              "altId": "3447"
+            },
+            {
+              "alg": "2L2 U2 2L2 Uw2 2L2 Uw2",
+              "altId": "4392"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5501,
+        "name": "Adj Parity",
+        "subgroup": "Edge Swap",
+        "setup": "R' U R U Uw2 2R2' Uw2 2R2' U2 2R2' U R' U' R",
+        "sticker": {
+          "ub": "bbbbbbbbbbbbbbbb",
+          "uf": "googgggggggggggg",
+          "ul": "rrrrrrrrrrrrrrrr",
+          "ur": "oggooooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "R' U R U' 2R2 U2' 2R2 Uw2' 2R2 Uw2' U' R' U' R",
+              "altId": "17751"
+            },
+            {
+              "alg": "R U R' U' 2L2 U2 2L2 Uw2 2L2 Uw2 U' R U' R'",
+              "altId": "18095"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5502,
+        "name": "CwO",
+        "subgroup": "Edge Swap",
+        "setup": "R U R2' U' R' U' R U R' U' R' U R' U R U' 2R2' U2' 2R2' u2' 2R2' u2'",
+        "sticker": {
+          "ub": "boobbbbbbbbbbbbb",
+          "uf": "grrggggggggggggg",
+          "ul": "rbbrrrrrrrrrrrrr",
+          "ur": "oggooooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "m2 U m2 U m' U2 m2 U2 m' U 2L2 U2 2L2 Uw2 2L2 Uw2",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "u2 2R2 u2 2R2 U2 2R2 U R' U' R U' R U R U' R' U R U R2 U' R'"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5503,
+        "name": "CcwO",
+        "subgroup": "Edge Swap",
+        "setup": "R U R2' U' R' U' R U R' U' R' U R' U R 2R2' U2' 2R2' u2' 2R2' u2'",
+        "sticker": {
+          "ub": "rggrbbbbbbbbbbbb",
+          "uf": "obbogggggggggggg",
+          "ul": "googrrrrrrrrrrrr",
+          "ur": "brrboooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "Uw2 2L2 Uw2 2L2 U2 3Rw' Rw2 R' U2 m2 U2 m' U m2 U m2",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "u2 2R2 u2 2R2 U2 2R2 R' U' R U' R U R U' R' U R U R2 U' R'"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5504,
+        "name": "W",
+        "subgroup": "Edge Swap",
+        "setup": "Uw2' 2R2' Uw2' 2R2' U2' 2R2' R2' U R U R' U' R' U' R' U R' U",
+        "sticker": {
+          "ub": "grrgbbbbbbbbbbbb",
+          "uf": "bggbgggggggggggg",
+          "ul": "obborrrrrrrrrrrr",
+          "ur": "rooroooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "R' U R' U' R' U' R' U R U Rw2 U2 2R2 Uw2 2R2 Uw2",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "U' R U' R U R U R U' R' U' R2 2R2 U2 2R2 Uw2 2R2 Uw2"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5505,
+        "name": "Pj",
+        "subgroup": "Adj Corner Swap",
+        "setup": "Uw2' 2R2' Uw2' 2R2' U2' 2R2' U F R U' R' U R U R2' F' R U R U' R'",
+        "sticker": {
+          "ub": "gooobbbbbbbbbbbb",
+          "uf": "rrrggggggggggggg",
+          "ul": "bbbbrrrrrrrrrrrr",
+          "ur": "oggroooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "R U R' U' R' F R2 U' R' U' R U R' F' U' 2L2 U2 2L2 Uw2 2L2 Uw2",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "R U R' U' R' F R2 U' R' U' R U R' F' U' 2R2 U2 2R2 Uw2 2R2 Uw2"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5506,
+        "name": "Ba",
+        "subgroup": "Adj Corner Swap",
+        "setup": "R U R2' F' R U R U' R' F R U' R' U' 2L2' U2' 2L2' Uw2' 2L2' Uw2'",
+        "sticker": {
+          "ub": "brrbbbbbbbbbbbbb",
+          "uf": "obbrgggggggggggg",
+          "ul": "rgggrrrrrrrrrrrr",
+          "ur": "gooooooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "Uw2 2L2 Uw2 2L2 U2 2L2 U R U R' F' R U R' U' R' F R2 U' R'",
+              "altId": "22489"
+            },
+            {
+              "alg": "x' Rw2 U2 Rw2 Uw2 2R2 Uw2 F 3Rw U' R U2 L' U R'",
+              "altId": "5039"
+            },
+            {
+              "alg": "2R2 U2 2R2 u2 2R2 u2 U R U R' F' R U R' U' R' F R2 U' R'",
+              "altId": "22962"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5507,
+        "name": "Bb",
+        "subgroup": "Adj Corner Swap",
+        "setup": "R' U L' U2' R U' 3Rw B' Uw2' 2R2' Uw2' Rw2' U2' Rw2' x' y'",
+        "sticker": {
+          "ub": "ooobbbbbbbbbbbbb",
+          "uf": "gggogggggggggggg",
+          "ul": "rbbrrrrrrrrrrrrr",
+          "ur": "brrgoooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "U x Rw2 U2 Rw2 Uw2 2R2 Uw2 B 3Rw' U R' U2 L U' R",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "y x Rw2 U2 Rw2 Uw2 2R2 Uw2 B 3Rw' U R' U2 L U' R",
+              "altId": "5040"
+            },
+            {
+              "alg": "y 2R2 U2 2R2 u2 2R2 u2 R' U L' U2 R U' R' U2 L R",
+              "altId": "25086"
+            },
+            {
+              "alg": "y' 2R2 U2 2R2 u2 2R2 u2 L' U R' U2 L U' L' U2 L R U",
+              "altId": "22961"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5508,
+        "name": "Ca",
+        "subgroup": "Adj Corner Swap",
+        "setup": "R' U2' R U2' R' F R U R' U' R' F' Rw2' U2' 2R2' Uw2' 2R2' Uw2' y2'",
+        "sticker": {
+          "ub": "orrbbbbbbbbbbbbb",
+          "uf": "gbbogggggggggggg",
+          "ul": "rggrrrrrrrrrrrrr",
+          "ur": "boogoooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "U2 Uw2 2R2 Uw2 2R2 U2 Rw2 F R U R U' R' F' R U2 R' U2 R",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "y2 Uw2 2R2 Uw2 2R2 U2 Rw2 F R U R U' R' F' R U2 R' U2 R",
+              "altId": "22492"
+            },
+            {
+              "alg": "U2 2R2 U2 2R2 u2 2R2 u2 R2 F R U R U' R' F' R U2 R' U2 R U",
+              "altId": "22951"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5509,
+        "name": "Cb",
+        "subgroup": "Adj Corner Swap",
+        "setup": "Uw2' 2R2' Uw2' 2R2' U2' Rw2' F R U R U' R' F' R U2' R' U2' R y'",
+        "sticker": {
+          "ub": "rbbgbbbbbbbbbbbb",
+          "uf": "grrogggggggggggg",
+          "ul": "oggrrrrrrrrrrrrr",
+          "ur": "booboooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "U R' U2 R U2 R' F R U R' U' R' F' Rw2 U2 2R2 Uw2 2R2 Uw2",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "y R' U2 R U2 R' F R U R' U' R' F' Rw2 U2 2R2 Uw2 2R2 Uw2",
+              "altId": "22494"
+            },
+            {
+              "alg": "2R2 U2 2R2 u2 2R2 u2 R U' R' U' R U R D R' U' R D' R' U2 R'",
+              "altId": "22950"
+            },
+            {
+              "alg": "y2 u2 2R2 u2 2R2 U2 2R2 U2 R U' R' U' R U R D R' U' R D' R' U2 R' U2",
+              "altId": "23074"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5510,
+        "name": "Da",
+        "subgroup": "Adj Corner Swap",
+        "setup": "Uw2' 2R2' Uw2' 2R2' U2' 2R2' U L' R' U2' R U R' U2' L U' R",
+        "sticker": {
+          "ub": "ooorbbbbbbbbbbbb",
+          "uf": "bggbgggggggggggg",
+          "ul": "gbborrrrrrrrrrrr",
+          "ur": "rrrgoooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "R' U L' U2 R U' 3Rw B Rw2 U2 Rw2 Uw2 2R2 Uw2 x'",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "R' U L' U2 R U' R' U2 R L U' 2R2 U2 2R2 Uw2 2R2 Uw2"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5511,
+        "name": "Db",
+        "subgroup": "Adj Corner Swap",
+        "setup": "Uw2' 2R2' Uw2' 2R2' U2' 2R2' R U R2' F' R U R U' R' F R U' R'",
+        "sticker": {
+          "ub": "brrrbbbbbbbbbbbb",
+          "uf": "oggbgggggggggggg",
+          "ul": "gbbgrrrrrrrrrrrr",
+          "ur": "rooooooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "R U R' F' R U R' U' R' F R2 U' R' u2 2R2 u2 2R2 U2 2R2",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "R U R' F' R U R' U' R' F R2 U' R' 2R2 U2 2R2 Uw2 2R2 Uw2"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5512,
+        "name": "Ka",
+        "subgroup": "Adj Corner Swap",
+        "setup": "Uw2' 2R2' Uw2' 2R2' U2' Rw2' x D2' R U R' D2' R U' 3Lw y'",
+        "sticker": {
+          "ub": "gbbobbbbbbbbbbbb",
+          "uf": "rggggggggggggggg",
+          "ul": "boobrrrrrrrrrrrr",
+          "ur": "orrroooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "U 3Lw' U R' D2 R U' R' D2 x' Rw2 U2 2R2 Uw2 2R2 Uw2",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "y 3Lw' U R' D2 R U' R' D2 x' Rw2 U2 2R2 Uw2 2R2 Uw2",
+              "altId": "18019"
+            },
+            {
+              "alg": "2R2 U2 2R2 u2 2R2 u2 y x' R U' R D2 R' U R D2 R2 x U2",
+              "altId": "22960"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5513,
+        "name": "Kb",
+        "subgroup": "Adj Corner Swap",
+        "setup": "U x r2' R' D' R U2' R' D R x' U2' R2' r2' U2' F2' r2'",
+        "sticker": {
+          "ub": "boorbbbbbbbbbbbb",
+          "uf": "rrrggggggggggggg",
+          "ul": "gggbrrrrrrrrrrrr",
+          "ur": "obbooooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "U' 3Rw U' L D2 L' U L D2 x' Lw2 U2 2L2 Uw2 2L2 Uw2",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "r2 F2 U2 r2 R2 U2 x R' D' R U2 R' D R r2 x' U'",
+              "altId": "23889"
+            },
+            {
+              "alg": "y' 3Rw U' L D2 L' U L D2 x' Lw2 U2 2L2 Uw2 2L2 Uw2",
+              "altId": "18020"
+            },
+            {
+              "alg": "y' 2R2 U2 2R2 u2 2R2 u2 x' R U' R D2 R' U R D2 R2 F'",
+              "altId": "22959"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5514,
+        "name": "M",
+        "subgroup": "Adj Corner Swap",
+        "setup": "Uw2' 2R2' Uw2' 2R2' U2' 2R2' F R U' R' U R U R2' F' R U R U' R'",
+        "sticker": {
+          "ub": "rbbgbbbbbbbbbbbb",
+          "uf": "bggrgggggggggggg",
+          "ul": "orrorrrrrrrrrrrr",
+          "ur": "gooboooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "U2 Rw2 F2 U2 2R2 U R' U' R U R' D R D' R F2 U Rw2",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "R U R' U' R' F R2 U' R' U' R U R' F' 2R2 U2 2R2 Uw2 2R2 Uw2"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5515,
+        "name": "Pa",
+        "subgroup": "Adj Corner Swap",
+        "setup": "Uw2' 2R2' Uw2' 2R2' U2' 2R2' U R U R2' F' R U R U' R' F R U' R'",
+        "sticker": {
+          "ub": "rbbgbbbbbbbbbbbb",
+          "uf": "brrrgggggggggggg",
+          "ul": "oooorrrrrrrrrrrr",
+          "ur": "gggboooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "R U R' F' R U R' U' R' F R2 U' R' U' 2R2 U2 2R2 u2 2R2 u2",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "R U R' F' R U R' U' R' F R2 U' R' U' 2R2 U2 2R2 Uw2 2R2 Uw2"
+            },
+            {
+              "alg": "y2 U2 R U R' F' R U R' U' R' F R2 U' R' U' 2R2 U2 2R2 Uw2 2R2 Uw2"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5516,
+        "name": "Pb",
+        "subgroup": "Adj Corner Swap",
+        "setup": "R U R2' F' R U R U' R' F R U' R' u2' 2R2' u2' 2R2' U2' 2R2'",
+        "sticker": {
+          "ub": "roogbbbbbbbbbbbb",
+          "uf": "gggogggggggggggg",
+          "ul": "orrrrrrrrrrrrrrr",
+          "ur": "bbbboooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "2R2 U2 2R2 u2 2R2 u2 R U R' F' R U R' U' R' F R2 U' R'",
+              "altId": "22925"
+            },
+            {
+              "alg": "y R' U L' U2 R U' 3Rw Rw2 U2 Rw2 Uw2 2R2 Uw2 x'",
+              "altId": "5044"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5517,
+        "name": "Diag C",
+        "subgroup": "Diag Corner Swap",
+        "setup": "F R' F' R U R U' R' U u2' 2R2' u2' 2R2' U2' 2R2' U F R U' R' U R U R' F'",
+        "sticker": {
+          "ub": "bbbgbbbbbbbbbbbb",
+          "uf": "gggbgggggggggggg",
+          "ul": "orrrrrrrrrrrrrrr",
+          "ur": "rooooooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "F R U' R' U' R U R' F' U' 2R2 U2 2R2 u2 2R2 u2 U' R U R' U' R' F R F'",
+              "altId": "19256"
+            },
+            {
+              "alg": "2R U 2R' U' Rw' F Rw2 U' Rw' U' Rw U Rw' F' R U R' U' Rw' D' Rw U2 Rw' D Rw",
+              "altId": "5045"
+            },
+            {
+              "alg": "F R U' R' U' R U R' F' U' 2L2 U2 2L2 Uw2 2L2 Uw2 U' R U R' U' R' F R F'",
+              "altId": "18097"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5518,
+        "name": "Q",
+        "subgroup": "Diag Corner Swap",
+        "setup": "Uw2' 2R2' Uw2' 2R2' U2' 2R2' U' x' D R U R' D' R U' R' D R U' R' D' R U R' x",
+        "sticker": {
+          "ub": "brrgbbbbbbbbbbbb",
+          "uf": "goobgggggggggggg",
+          "ul": "obbrrrrrrrrrrrrr",
+          "ur": "rggooooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "z Rw2 Uw2' R2' Uw2' F R U R' U' R U R' U' R U R' U' F' U2' R2 Uw2' Rw2' z'",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x U 2R2 U2 2R2 Uw2 2R2 Uw2"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5519,
+        "name": "Sa",
+        "subgroup": "Diag Corner Swap",
+        "setup": "Uw2' 2R2' Uw2' 2R2' U2' 2R2' U F R' F' R U R U' R' F R U' R' U R U R' F'",
+        "sticker": {
+          "ub": "oggrbbbbbbbbbbbb",
+          "uf": "rrrogggggggggggg",
+          "ul": "goobrrrrrrrrrrrr",
+          "ur": "bbbgoooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "F R U' R' U' R U R' F' R U R' U' R' F R F' U' 2R2 U2 2R2 u2 2R2 u2",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "F R U' R' U' R U R' F' R U R' U' R' F R F' U' 2R2 U2 2R2 Uw2 2R2 Uw2"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5520,
+        "name": "Sb",
+        "subgroup": "Diag Corner Swap",
+        "setup": "Uw2' 2R2' Uw2' 2R2' U2' 2R2' F R' F' R U R U' R' F R U' R' U R U R' F'",
+        "sticker": {
+          "ub": "goobbbbbbbbbbbbb",
+          "uf": "bggggggggggggggg",
+          "ul": "rbborrrrrrrrrrrr",
+          "ur": "orrroooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "F R U' R' U' R U R' F' R U R' U' R' F R F' 2R2 U2 2R2 u2 2R2 u2",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "F R U' R' U' R U R' F' R U R' U' R' F R F' 2R2 U2 2R2 Uw2 2R2 Uw2"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5521,
+        "name": "X",
+        "subgroup": "Diag Corner Swap",
+        "setup": "Uw2' 2R2' Uw2' 2R2' U2' 2R2' x' D R U R' D' R U' R' D R U' R' D' R U R' x",
+        "sticker": {
+          "ub": "rbbobbbbbbbbbbbb",
+          "uf": "oggrgggggggggggg",
+          "ul": "boogrrrrrrrrrrrr",
+          "ur": "grrboooooooooooo",
+          "us": "yyyyyyyyyyyyyyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "Rw2 F2 U2 Rw2 F' U' R' U R U' R' U R U' R' U R F R2 U2 F2 Rw2",
+              "source": "cubingapp"
+            },
+            {
+              "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x 2R2 U2 2R2 Uw2 2R2 Uw2"
+            }
+          ]
+        ]
+      }
+    ]
+  }
+}

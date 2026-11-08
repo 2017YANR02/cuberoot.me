@@ -13,7 +13,8 @@
  */
 import { ChevronDown } from '@app-foundation/icons/lucide';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useRouter, useParams, usePathname } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useTranslation } from 'react-i18next';
 import {
   Search, Eye, EyeOff, ThumbsUp, ThumbsDown, Flag as FlagIcon, X,

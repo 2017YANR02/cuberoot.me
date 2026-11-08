@@ -7,7 +7,7 @@
 import PageHeading from '@/components/PageHeading';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
-import { useRouter } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ArrowUp, ArrowDown, ArrowRight, Mountain, Waves, Ghost } from '@app-foundation/icons/lucide';
 import { CountryInput } from '@/components/CountryInput';

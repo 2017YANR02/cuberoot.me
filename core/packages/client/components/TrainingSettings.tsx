@@ -129,7 +129,7 @@ export function SettingsPopover({
         <Settings size={iconSize} aria-hidden="true" />
       </button>
       {!settingsHost && triggerSuffix}
-      {open && modal && <SettingsDialog label={label} panelClassName={panelClassName} onClose={close}>{children}</SettingsDialog>}
+      {modal && open && <SettingsDialog label={label} panelClassName={panelClassName} onClose={close}>{children}</SettingsDialog>}
       {open && !modal && (
         // Nested fixed menus portal into this unfiltered dialog boundary, so
         // outside dismissal and viewport coordinates both remain correct.

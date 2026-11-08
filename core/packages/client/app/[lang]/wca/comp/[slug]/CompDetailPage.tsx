@@ -1,4 +1,5 @@
 'use client';
+import { currentEntryHref } from '@/lib/entry-navigation';
 import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
 import { WcaPersonIdentity } from '@/components/WcaPersonIdentity';
@@ -14,7 +15,8 @@ import dynamic from 'next/dynamic';
 import { flushSync } from 'react-dom';
 import { runViewTransition } from '@/lib/view-transition';
 import Link from '@/components/AppLink';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download, Calculator } from '@app-foundation/icons/lucide';
@@ -2152,7 +2154,7 @@ export default function CompDetailPage() {
                     if (number > 0) setModal({ kind: 'round', number, eventId: first.eventId, roundId });
                     else {
                       const award = awardByNumber.get(number);
-                      if (award?.wcaId) window.location.assign((isZh ? '/zh' : '') + '/wca/persons/' + award.wcaId + '?tab=group-awards');
+                      if (award?.wcaId) window.location.assign(currentEntryHref((isZh ? '/zh' : '') + '/wca/persons/' + award.wcaId + '?tab=group-awards'));
                     }
                   }} />;
               }} />
@@ -2337,7 +2339,7 @@ function RegistrationNumber({ number, cubingSlug }: { number: number; cubingSlug
     <button ref={triggerRef} type="button" className="comp-registration-number"
       aria-label={`${label}: ${number}`} aria-expanded={open} aria-haspopup="dialog"
       onClick={() => setOpen(value => !value)}>{number}</button>
-    {open && <div ref={panelRef} className="info-tooltip-pop" data-site-surface="popover" role="dialog" aria-label={label}>
+    {open && <div ref={panelRef} className="info-tooltip-pop comp-registration-pop" data-site-surface="popover" role="dialog" aria-label={label}>
       <div>{label}</div>
       <a ref={linkRef} className="comp-info-link" href={`https://cubing.com/competition/${cubingSlug}/registration`}
         target="_blank" rel="noopener noreferrer">

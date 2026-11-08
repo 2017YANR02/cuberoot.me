@@ -2,10 +2,9 @@
 import PageBackLink from '@/components/PageBackLink';
 import { Suspense, useMemo, useState, type AnchorHTMLAttributes } from 'react';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
-import { useRouter } from 'next/navigation';
+import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { WorkspaceProvider, WorkspaceLoginFrame, ReportEditor, Reports, ReportDetailPanel, Projects, ErrorNotice, Form, Field, useResource, value, RequestError, workspaceText, type StaffActor, type MemberDirectory } from '@app-foundation/workspace-ui';
 import AppLink from '@/components/AppLink';
-import { accountNavigationHref } from '@/lib/account-navigation';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { useAuthStore, useAuthUser } from '@/lib/auth-store';
@@ -42,7 +41,7 @@ function Link({href,...props}:AnchorHTMLAttributes<HTMLAnchorElement>&{href:stri
 const sections=['mine','updates','projects','checklists','schedule','members','detail','onboarding','offboarding','sop','quality'] as const;
 function Workspace() {
   const lang=useLang();const router=useRouter();
-  const host=useMemo(()=>({api,Link,Button,Dialog:WorkspaceDialog,DateInput,MemberPicker:WorkspaceMemberPicker,t:(text:string)=>workspaceText(lang,text),navigate:(href:string)=>router.push(accountNavigationHref(`${lang==='zh'?'/zh':''}${workspaceHref(href)}`, window.location.pathname + window.location.search))}),[lang,router]);
+  const host=useMemo(()=>({api,Link,Button,Dialog:WorkspaceDialog,DateInput,MemberPicker:WorkspaceMemberPicker,t:(text:string)=>workspaceText(lang,text),navigate:(href:string)=>router.push(`${lang==='zh'?'/zh':''}${workspaceHref(href)}`)}),[lang,router]);
   return <WorkspaceProvider host={host}><WorkspaceContent /></WorkspaceProvider>;
 }
 function WorkspaceContent() {
