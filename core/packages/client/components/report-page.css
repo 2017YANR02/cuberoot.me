@@ -6,7 +6,7 @@
 .report-page h2 { margin: 26px 0 12px; font-size: 23px; line-height: 1.35; font-weight: 600; }
 .report-page h3 { margin: 22px 0 10px; font-size: 19px; line-height: 1.4; font-weight: 600; }
 .report-page a { color: var(--accent); text-underline-offset: 4px; }
-.report-page a:focus-visible, .report-page button:focus-visible, .report-page select:focus-visible, .report-page summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.report-page a:focus-visible, .report-page summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
 .report-page .report-links { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 16px; }
 .report-page .report-note { color: var(--muted-foreground); font-size: 16px; line-height: 1.6; }
 .report-page .report-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 17px; line-height: 1.5; font-variant-numeric: tabular-nums; }
