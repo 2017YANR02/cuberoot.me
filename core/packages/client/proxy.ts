@@ -277,6 +277,6 @@ function routeLanguage(req: NextRequest) {
 export const config = {
   // Skip Next internals, API rewrites, worker chunks, and static assets.
   matcher: [
-    '/((?!_next/static|_next/image|favicon\\.ico|icons/|fonts/|cubing-chunks/|v1/).*)',
+    '/((?!_origin/_next/static|_next/static|_next/image|favicon\\.ico|icons/|fonts/|cubing-chunks/|v1/).*)',
   ],
 };

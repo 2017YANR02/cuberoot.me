@@ -44,7 +44,7 @@ const listenPort = port(reservation);
 await new Promise<void>(done => reservation.close(() => done()));
 const locations = [block('location ^~ /_next/static/'), block('location @next_static_vercel')].join('\n')
   .replace('http://127.0.0.1:3002', `http://127.0.0.1:${port(local)}`)
-  .replace('https://cuberoot-me.vercel.app', `http://127.0.0.1:${port(peer)}`);
+  .replace('https://google-api.cuberoot.me', `http://127.0.0.1:${port(peer)}`);
 const dir = mkdtempSync('/tmp/cuberoot-static-check-');
 mkdirSync(`${dir}/logs`);
 writeFileSync(`${dir}/nginx.conf`, `daemon off; pid ${dir}/nginx.pid; error_log ${dir}/error.log;

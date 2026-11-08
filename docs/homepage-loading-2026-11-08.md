@@ -23,11 +23,11 @@
 
 保持同源 URL、现有 Worker 隔离响应头和本线路优先：
 
-- 主域 nginx 仅对 `/_next/static/` 的本地 404 补取 Vercel 公共生产别名，限制 GET/HEAD，去掉 Cookie 和 Authorization。
-- Vercel 仅在本地静态文件不存在时通过 fallback rewrite 补取 `next.cuberoot.me`。
-- `next.cuberoot.me` 和 standalone 配置不反向兜底。因此两边都不存在的文件最终是 404，不循环，也不把 API、页面或服务端文件暴露出去。
+- 自有构建使用同源 `/_origin/_next/static/` 前缀；自有线路将它内部映射到静态目录，Vercel 用 beforeFiles rewrite 直接转给 `next.cuberoot.me`。不依赖 Vercel 保留路径的 fallback 行为。
+- 主域 nginx 仅对普通 `/_next/static/` 的本地 404 补取已有 Vercel 专用域名 `google-api.cuberoot.me`，限制 GET/HEAD，去掉 Cookie 和 Authorization。
+- `next.cuberoot.me` 和 standalone 不反向兜底。因此不存在的文件最终是 404，不循环，也不把 API、页面或服务端文件暴露出去。
 
-这覆盖两条现役构建之间的文件缺失，不保证已从两边移除的历史构建文件仍然存在，也不修复设备网络中断。
+这覆盖新构建在两条线路之间的请求，不保证已从两边移除的历史构建文件仍然存在；旧的无前缀自有脚本请求仍需重新加载页面，也不修复设备网络中断。
 
 ## 验证与发布
 
@@ -36,5 +36,6 @@
 - 首次发布 `6dac8eeaeb` 后，线上 HTML 已含有效快照，但新手引导的 `useQueryState` 让生产预渲染退回整页客户端渲染；本地 dev 和普通组件 SSR 不会触发这个 Next 行为。将完整引导逻辑隔离到局部 Suspense，保留自动引导、重放、用户绑定与个人数据就绪条件。新增挂起回归，并在两条线路共用的 build 命令中检查实际中英文生产 HTML，缺少入口即阻断发布。
 - 使用仓库安装的 Next 在临时独立 dev 实例实测 fallback：本地缺失而对端存在返回脚本 200，两边都缺失为 404。没有运行本地生产构建，也未重启原有 dev 服务。
 - 使用线上 nginx 二进制启动临时 loopback 测试实例，验证本地优先、对端补取、最终 404、POST 拒绝、凭据移除和 Worker 响应头；测试实例独立于生产配置。
+- 首次上线交叉验证发现 Vercel 的 `/_next/static/not-found.txt` 处理早于 fallback；自有服务器的默认 `vercel.app` DNS 解析到不可达地址。分别改用资源来源前缀和已从服务器实测 200 的专用域名；本地模拟通过不能替代生产交叉检查。
 
 发布需要包含 Web 两条线路、API 和 nginx；沿既有部署工作流，不附带原生客户端构建。上线后重新从两条线路读取同一组脚本，确认首页 HTML 包含入口，并由用户手机复验。此前不得将本地通过称为线上恢复。

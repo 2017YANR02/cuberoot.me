@@ -28,6 +28,9 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const nextConfig: NextConfig = {
+  // Distinguish the self-hosted build before Vercel's reserved static 404 handler.
+  // Relative URLs keep module workers and fonts on the page's own origin.
+  ...(isProd && !isVercel ? { assetPrefix: '/_origin' } : {}),
   // The build command requires native tsgo AFTER Next generates .next/types.
   // Any type error fails the command before either deployment can publish.
   // Avoid repeating the same check in Next's slower JS TypeScript worker.
@@ -222,6 +225,7 @@ const nextConfig: NextConfig = {
       },
       // Turbopack/构建产物里的 module worker(kociemba.worker.ts 等)
       { source: "/_next/static/:path*", headers: workerAsset },
+      { source: "/_origin/_next/static/:path*", headers: workerAsset },
       // cubing.js search worker(构建前生成到 public/cubing-chunks)
       { source: "/cubing-chunks/:path*", headers: workerAsset },
     ];
@@ -239,6 +243,10 @@ const nextConfig: NextConfig = {
       .map(id => id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
     return {
       beforeFiles: [
+        ...(isProd ? [{
+          source: '/_origin/_next/static/:path*',
+          destination: isVercel ? 'https://next.cuberoot.me/_next/static/:path*' : '/_next/static/:path*',
+        }] : []),
         // Config rewrites resolve internally on both hosts. Proxy rewrites can
         // self-proxy HTTPS to standalone's HTTP port behind TLS termination.
         ...RETIRED_ROUTES.map(route => ({
@@ -343,13 +351,7 @@ const nextConfig: NextConfig = {
         // in production where it returns 404. Never fall back to the live API.
         { source: "/v1/:path((?!recon-capture-local(?:/|$)).*)?", destination: "https://api.cuberoot.me/v1/:path*" },
       ],
-      // Split DNS can move a browser between two independently built deployments.
-      // Only missing immutable assets cross to the standalone-only alias. That
-      // host never falls back here, so unknown files terminate with a real 404.
-      fallback: isProd && isVercel ? [{
-        source: '/_next/static/:path*',
-        destination: 'https://next.cuberoot.me/_next/static/:path*',
-      }] : [],
+      fallback: [],
     };
   },
 
