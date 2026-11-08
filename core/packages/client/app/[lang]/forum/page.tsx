@@ -27,7 +27,7 @@ export default function ForumIndexPage() {
       <ForumHeader activeView="boards" />
 
       {error && <div className="forum-error">{error}</div>}
-      {!data && !error && <ContentSkeleton variant="list" columns={2} rows={6} />}
+      {!data && !error && <ContentSkeleton variant="list" rows={6} />}
 
       {data && (
         <div className="forum-directory">
