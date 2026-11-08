@@ -708,7 +708,7 @@ describe('deployment workflow path contracts', () => {
     const desktopPaths = readStepFilterPaths('test.yml', 'Detect affected inputs', 'desktop');
     expect(desktopPaths).toEqual(DESKTOP_PATHS);
     expect(workflow).toContain(
-      "if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.desktop == 'true' }}",
+      "if: ${{ inputs.scope != 'core' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.desktop == 'true') }}",
     );
     expect(workflow).toContain(
       'uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3',
@@ -738,10 +738,10 @@ describe('deployment workflow path contracts', () => {
   it('uses affected-job conditions for the expensive platform and analyzer jobs', () => {
     const workflow = readWorkflow('test.yml');
     expect(workflow).toContain(
-      "if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.mobile == 'true' }}",
+      "if: ${{ inputs.scope != 'core' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.mobile == 'true') }}",
     );
     expect(workflow).toContain(
-      "if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.analyzer == 'true' }}",
+      "if: ${{ inputs.scope != 'core' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.analyzer == 'true') }}",
     );
   });
 
@@ -905,6 +905,19 @@ describe('deployment workflow path contracts', () => {
       const block = workflow.slice(start, next < 0 ? undefined : start + 1 + next);
       expect(block).toContain("github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'");
     }
+  });
+
+  it('can rerun core integration without native builds or client shards', () => {
+    const workflow = readWorkflow('test.yml');
+    expect(workflow).toContain('options: [all, core]');
+    for (const job of ['client-tests', 'mobile', 'desktop-ui', 'desktop', 'analyzer-worker']) {
+      const start = workflow.indexOf(`\n  ${job}:\n`);
+      const next = workflow.slice(start + 1).search(/\n  [a-z][a-z-]*:\n/);
+      const block = workflow.slice(start, next < 0 ? undefined : start + 1 + next);
+      expect(block, job).toContain("if: ${{ inputs.scope != 'core' && (");
+    }
+    expect(readStepLines('test.yml', 'Test server').lines.join('\n')).toContain("github.event_name == 'workflow_dispatch'");
+    expect(readStepLines('test.yml', 'Verify stats-build producer contracts').lines.join('\n')).toContain("github.event_name == 'workflow_dispatch'");
   });
 
   it('materializes research hook and architecture evidence in sparse client test jobs', () => {
