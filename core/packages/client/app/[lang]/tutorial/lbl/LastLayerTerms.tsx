@@ -20,19 +20,19 @@ export function LastLayerTermDiagram({ wall, size = 220 }: { wall: boolean; size
 
 export default function LastLayerTerms({ wall }: { wall: boolean }) {
   return <div className="lbl-middle-core">
-    <div className={wall ? 'lbl-middle-core-cases lbl2-edge-terms' : undefined}>
+    <div className={wall ? 'lbl-middle-core-cases lbl-edge-terms' : undefined}>
       <figure>
-        <div className={wall ? 'lbl2-edge-term-art' : undefined}><LastLayerTermDiagram wall={wall} /></div>
+        <div className={wall ? 'lbl-edge-term-art' : undefined}><LastLayerTermDiagram wall={wall} size={wall ? 248 : 320} /></div>
         <figcaption><strong>{wall ? <T zh="墙" en="Wall" /> : <T zh="眼" en="Headlights" />}</strong>
           <span>{wall ? <T zh="侧面顶层三个格同色，叫作墙" en="Three matching stickers in a side’s top row form a wall" />
             : <T zh="侧面顶层两端的角格同色，叫作眼" en="Matching corner stickers at both ends of a side’s top row form headlights" />}</span>
         </figcaption>
       </figure>
       {wall && <figure>
-        <div className="lbl2-edge-term-art" aria-hidden="true">
-          <div className="lbl2-opposite-color-diagram">
+        <div className="lbl-edge-term-art" aria-hidden="true">
+          <div className="lbl-opposite-color-diagram">
             {([[CUBE_FILL.B, CUBE_FILL.F], [CUBE_FILL.R, CUBE_FILL.L]]).map(([left, right]) => (
-              <div className="lbl2-opposite-color-pair" key={left}>
+              <div className="lbl-opposite-color-pair" key={left}>
                 <span style={{ backgroundColor: left }} />
                 <ArrowLeftRight size={24} />
                 <span style={{ backgroundColor: right }} />

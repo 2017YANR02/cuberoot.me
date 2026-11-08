@@ -6,6 +6,7 @@ import { engineHomeSid } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex'
 import { buildSimpleOptions, renderCubeSVG } from '@cuberoot/visualcube';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import PlaybackBar from '@/components/PlaybackBar';
+import AppLink from '@/components/AppLink';
 import { RotateCcw } from '@app-foundation/icons/lucide';
 import { tr, T } from '@/i18n/tr';
 import { CORNER_POSITION, J_LESSON_MASK, LBL_BASICS, LBL_INITIAL_VIEW, LEFT, RIGHT } from './content';
@@ -14,7 +15,8 @@ import { rightTopCornerStickers } from './complete-demo-state';
 import { ALG_LESSONS } from './alg-lessons';
 import { useCubeOrbit } from './use-cube-orbit';
 import { usePlayerVisible } from './use-player-visible';
-import { getLblAlgGroups } from './alg-cues';
+import { getLblAlgGroups, opensOnLeft } from './alg-cues';
+import { scheduleDemoPlay } from './schedule-demo-play';
 
 const faceletMask = () => (piece: number, face: number) => engineHomeSid(piece, face, 3) === 'F2' ? FM_REGULAR : FM_IGNORED;
 
@@ -23,20 +25,20 @@ export function PieceLesson({ id }: { id: string }) {
   const stopOrbit = useCubeOrbit(player, id);
   const visible = usePlayerVisible(player, id);
   const card = LBL_BASICS.find(item => item.id === id);
-  return <div className="lbl2-content">
-    <section className="lbl2-demonstration lbl2-piece-player" data-visible={visible} onPointerDownCapture={stopOrbit} aria-label={tr({ zh: '观察魔方', en: 'Explore the cube' })}>
+  return <div className="lbl-content lbl-content-pieces">
+    <section className="lbl-demonstration lbl-piece-player" data-visible={visible} onPointerDownCapture={stopOrbit} aria-label={tr({ zh: '观察魔方', en: 'Explore the cube' })}>
       <AlgPlayer ref={player} puzzle="3x3" engine="sim" set={card?.mask ?? ''} alg="" startSolved orientation="z2" sceneRot={LBL_INITIAL_VIEW}
         stickeringAtStep={id === 'facelet' ? faceletMask : undefined}
         controlMode="none" hideResetView fillPane />
     </section>
-    <section className="lbl2-explanation">
-      <p className="lbl2-lead">{card ? tr(card.headline) : <T zh="表面一个彩色小方格，就是“一格”。" en="Each colored square on the surface is a facelet." />}</p>
+    <section className="lbl-explanation">
+      <p className="lbl-lead">{card ? tr(card.headline) : <T zh="表面一个彩色小方格，就是“一格”。" en="Each colored square on the surface is a facelet." />}</p>
       <p>{card ? tr(card.hint) : <T zh="图中亮着的绿色小方格，叫“绿格”。" en="The highlighted green square is a green facelet." />}</p>
     </section>
   </div>;
 }
 
-const notationMoves = ['R', 'L', 'U', 'F', "R'", "L'", "U'", "F'", 'R2', 'L2', 'U2', 'F2'];
+const notationMoves = ['R', 'L', 'U', 'F', "R'", "L'", "U'", "F'", 'R2', 'L2', 'U2', 'F2', 'd', "d'"];
 const triggerMoves = [LEFT, RIGHT];
 const jMoves = [CORNER_POSITION];
 const jStartCorners = rightTopCornerStickers(resolvePlayerSetup('3x3', CORNER_POSITION, undefined, false));
@@ -58,6 +60,14 @@ const variants = [
 export function NotationLesson() { return <CyclingLesson mode="notation" />; }
 export function TriggerOverview() { return <CyclingLesson mode="triggers" />; }
 export function JOverview() { return <CyclingLesson mode="j" />; }
+
+export function JExplanation() {
+  return <>
+    <span className="puzzle-art lbl-j-swap-diagram" aria-hidden="true" dangerouslySetInnerHTML={{ __html: jSwapDiagram }} />
+    <p><T zh="一条较长公式，可分三段记忆" en="A longer algorithm you can learn in three parts" /></p>
+    <p>{tr(ALG_LESSONS.find(item => item.id === 'l-alg-learning')!.algs[0].naming)}</p>
+  </>;
+}
 
 function CyclingLesson({ mode }: { mode: 'notation' | 'triggers' | 'j' }) {
   const triggers = mode === 'triggers';
@@ -93,9 +103,14 @@ function CyclingLesson({ mode }: { mode: 'notation' | 'triggers' | 'j' }) {
       : notation.endsWith('2') && base !== 'U' ? { zh: `${cue.zh}${cue.zh}`, en: `${cue.en} twice` } : cue;
   useEffect(() => {
     if (!visible) return;
-    const timer = window.setTimeout(() => setPlayRequest(value => value + 1), 1000);
-    return () => clearTimeout(timer);
-  }, [visible, identity]);
+    return scheduleDemoPlay(
+      () => player.current,
+      1000,
+      opensOnLeft(notation),
+      () => true,
+      () => setPlayRequest(value => value + 1),
+    );
+  }, [visible, identity, notation]);
   useEffect(() => {
     if (step < finalStep || (!running && !j)) return;
     let frame = 0;
@@ -123,15 +138,15 @@ function CyclingLesson({ mode }: { mode: 'notation' | 'triggers' | 'j' }) {
     }, 300);
     return () => clearTimeout(timer);
   }, [fading, running, moves.length, j]);
-  return <div className="lbl2-content">
-    <section className="lbl2-demonstration lbl2-notation-demonstration" aria-label={tr(j ? { zh: 'J公式轮播演示', en: 'J algorithm demonstration' } : triggers ? { zh: '左右公式轮播演示', en: 'Left and right trigger demonstration' } : { zh: '转动记号轮播演示', en: 'Move notation demonstration' })}>
-      <div className="lbl2-notation-player" data-visible={visible && !fading}>
+  return <div className="lbl-content">
+    <section className="lbl-demonstration lbl-notation-demonstration" aria-label={tr(j ? { zh: 'J公式轮播演示', en: 'J algorithm demonstration' } : triggers ? { zh: '左右公式轮播演示', en: 'Left and right trigger demonstration' } : { zh: '转动记号轮播演示', en: 'Move notation demonstration' })}>
+      <div className="lbl-notation-player" data-visible={visible && !fading}>
       <AlgPlayer ref={player} key={identity} puzzle="3x3" engine="sim" set={j ? J_LESSON_MASK : ''} alg={moves[index]} startSolved={!j} orientation="z2"
         highlightedStickers={j ? step === 0 ? jStartCorners : settled ? jEndCorners : undefined : undefined}
         sceneRot={LBL_INITIAL_VIEW}
         controlMode="none" hideResetView interactionMode="none" fillPane playRequest={playRequest} onStepChange={setStep} moveDurationMs={1300} />
       </div>
-      {mode === 'notation' && <div className="lbl2-notation-controls">
+      {mode === 'notation' && <div className="lbl-notation-controls">
         <PlaybackBar step={index} total={moves.length - 1} playing={running}
           onScrub={select} onSkipStart={() => select(0)} onStepBack={() => select(index - 1)}
           onStepForward={() => select(index + 1)} onSkipEnd={() => select(moves.length - 1)}
@@ -143,18 +158,17 @@ function CyclingLesson({ mode }: { mode: 'notation' | 'triggers' | 'j' }) {
             scrub: tr({ zh: '选择转法', en: 'Choose a turn' }) }} />
       </div>}
     </section>
-    <section className={`lbl2-explanation lbl2-notation-copy${j ? ' lbl2-j-overview-copy' : ''}`} aria-live="polite">
-      {j ? <>
-        <span className="puzzle-art lbl2-j-swap-diagram" aria-hidden="true" dangerouslySetInnerHTML={{ __html: jSwapDiagram }} />
-        <p><T zh="一条较长公式，可分三段记忆" en="A longer algorithm you can learn in three parts" /></p>
-        <p>{tr(ALG_LESSONS.find(item => item.id === 'l-alg-learning')!.algs[0].naming)}</p>
-      </> : triggers ? <>
-        <p className="lbl2-lead"><T zh="左公式和右公式是简短的手法。" en="The left and right triggers are short move sequences." /></p>
+    <section className={`lbl-explanation lbl-notation-copy${j ? ' lbl-j-overview-copy' : ''}`} aria-live="polite">
+      {j ? <JExplanation /> : triggers ? <>
+        <p className="lbl-lead"><T zh="左公式和右公式是简短的手法。" en="The left and right triggers are short move sequences." /></p>
         <p><T zh="在后面章节会反复出现，组合成其他长公式。" en="They appear throughout later chapters as parts of longer algorithms." /></p>
         <p><T zh="反复练习，形成肌肉记忆。" en="Practise until the moves become muscle memory." /></p>
       </> : <>
-        <div className="lbl2-notation-label"><code>{notation.replaceAll("'", '′')}</code><span>{'\u3000\u3000'}{tr(operation)}</span></div>
-        <p className="lbl2-lead">{tr(faces[index % 4])} · {tr(variants[Math.floor(index / 4)])}</p>
+        <div className="lbl-notation-label"><code>{notation.replaceAll("'", '′')}</code>{base !== 'd' && <span>{'\u3000\u3000'}{tr(operation)}</span>}</div>
+        <p className="lbl-lead">{base === 'd'
+          ? <strong><T zh="底下两层一起转" en="Turn the bottom two layers together" /></strong>
+          : <>{tr(faces[index % 4])} · {tr(variants[Math.floor(index / 4)])}</>}</p>
+        <p className="lbl-notation-guide"><AppLink href="/notation" prefetch={false}><T zh="查看完整转动记号" en="View the full move notation guide" /></AppLink></p>
       </>}
     </section>
   </div>;

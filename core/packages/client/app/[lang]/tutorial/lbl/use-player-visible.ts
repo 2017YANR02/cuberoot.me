@@ -7,7 +7,7 @@ export function usePlayerVisible(player: RefObject<AlgPlayerHandle | null>, iden
   useEffect(() => {
     let frame = 0;
     const wait = () => {
-      if (!player.current || player.current.isUserMovePending?.()) {
+      if (!player.current || player.current.isUserMovePending?.(false)) {
         frame = requestAnimationFrame(wait);
         return;
       }

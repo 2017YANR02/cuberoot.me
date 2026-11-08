@@ -61,7 +61,7 @@ export default function BasicsGuide({ section }: { section: typeof BASIC_GUIDE_T
         <h3><T zh="从下往上，一二三楼" en="Count up from the bottom" /></h3>
         <div className="lbl-guide-floor-grid">
           {layers.map(layer => <figure key={layer.height}>
-            <VisualCube local view="iso" stickerColors={layer.colors} size={160} alt={`${tr(layer.title)} · ${tr(layer.name)}`} />
+            <VisualCube local view="iso" stickerColors={layer.colors} size={220} alt={`${tr(layer.title)} · ${tr(layer.name)}`} />
             <figcaption><strong>{tr(layer.title)}</strong><span>{tr(layer.name)}</span></figcaption>
           </figure>)}
         </div>

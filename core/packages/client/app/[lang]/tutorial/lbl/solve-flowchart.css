@@ -1,0 +1,25 @@
+.lbl-content.lbl-solve-flow { display: block; }
+.lbl-solve-flow h2 { font-size: var(--lbl-text-emphasis); }
+.lbl-flow-canvas { overflow-x: auto; max-width: 100%; padding-block: 8px; }
+.lbl-flow-canvas:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.lbl-flow-canvas > .lbl-flow-graph { display: block; width: 100%; min-width: 760px; height: auto; }
+.lbl-flow-graph > text, .lbl-flow-graph > g > text, .lbl-flow-graph > g > g > text { fill: var(--foreground); font-family: inherit; font-size: var(--lbl-text-body); }
+.lbl-flow-graph > path, .lbl-flow-graph > g > path, .lbl-flow-graph > g > g > path { fill: none; stroke: var(--muted-foreground); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.lbl-flow-graph text.lbl-flow-branch { fill: var(--muted-foreground); font-size: var(--lbl-text-small); }
+.lbl-flow-canvas .lbl-flow-arrowhead { fill: var(--muted-foreground); stroke: none; }
+.lbl-flow-canvas .lbl-flow-conversion { stroke: var(--accent); stroke-dasharray: 6 4; }
+.lbl-flow-operation { fill: var(--card); stroke: var(--border-strong); stroke-width: 1.5; }
+.lbl-flow-decision { fill: color-mix(in srgb, var(--accent) 6%, var(--background)); stroke: color-mix(in srgb, var(--accent) 65%, var(--border-default)); stroke-width: 1.5; stroke-linejoin: round; }
+.lbl-flow-terminal { fill: var(--muted); stroke: var(--border-strong); stroke-width: 1.5; }
+.lbl-flow-complete { fill: var(--accent-soft); stroke: var(--accent); }
+.lbl-flow-decision-content { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; height: 100%; }
+.lbl-flow-case-images, .lbl-flow-goal-image { flex: 0 0 70px; width: 70px; height: 70px; }
+.lbl-flow-case-images { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.lbl-flow-case-images > span { display: inline-flex; }
+.lbl-flow-case-images svg, .lbl-flow-goal-image svg { display: block; }
+.lbl-flow-question { max-width: 180px; flex-shrink: 0; text-align: center; font-size: var(--lbl-text-small); line-height: 1.3; }
+.lbl-flow-action { display: flex; align-items: center; justify-content: center; height: 100%; white-space: pre-line; overflow-wrap: anywhere; text-align: center; color: var(--foreground); font-family: inherit; font-size: var(--lbl-text-body); line-height: 1.4; }
+
+.lbl-flow-actions { display: flex; flex-direction: column; height: 100%; padding: 8px 16px; }
+.lbl-flow-actions > .lbl-flow-action { appearance: none; width: 100%; flex: 1; min-height: 0; height: auto; margin: 0; padding: 0; border: 0; background: none; cursor: pointer; }
+.lbl-flow-action:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }

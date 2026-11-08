@@ -44,15 +44,15 @@ export function FishOverview() {
 
 export function FishRecognition() {
   const lesson = ALG_LESSONS.find(item => item.id === 'sune-learning')!;
-  return <div className="lbl2-fish-recognition">
-    <p className="lbl2-fish-recognition-rule"><T zh="先同时保证鱼头靠前且有鱼鳍朝前" en="First make sure the head is near the front and a fin faces forward." /></p>
+  return <div className="lbl-fish-recognition">
+    <p className="lbl-fish-recognition-rule"><T zh="先同时保证鱼头靠前且有鱼鳍朝前" en="First make sure the head is near the front and a fin faces forward." /></p>
     {lesson.algs.map(item => <figure key={item.alg}>
-      <div className="lbl2-fish-views">
-        <VisualCube local view="plan" size={200} setup={new Alg(item.alg).invert().toString()} stickerColors={SUNE_THUMB_COLORS}
+      <div className="lbl-fish-views">
+        <VisualCube local view="plan" size={248} setup={new Alg(item.alg).invert().toString()} stickerColors={SUNE_THUMB_COLORS}
           stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]!} outlinePlanSides outlinedFacelets={item.left ? [8, 18] : [6, 20]} alt={tr(item.title)} />
       </div>
       <figcaption>
-        <strong className="lbl2-direction-emphasis">{tr(item.title)}</strong>
+        <strong className="lbl-direction-emphasis">{tr(item.title)}</strong>
         <p>{tr(item.naming)}</p>
       </figcaption>
     </figure>)}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import type { AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 
-/** LBL2 slow, view-only tour; touching the cube pauses it. */
+/** LBL slow, view-only tour; touching the cube pauses it. */
 export function useCubeOrbit(player: RefObject<AlgPlayerHandle | null>, identity: string) {
   const [orbitPlaying, setOrbitPlaying] = useState(false);
   const orbitTime = useRef(0);

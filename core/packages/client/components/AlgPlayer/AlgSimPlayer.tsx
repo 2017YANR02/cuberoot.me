@@ -24,6 +24,8 @@ import { invertMoveString } from '@cuberoot/shared/alg-notation';
 import SimStage from '@/components/sim-embed/SimStage';
 import { useT } from '@/hooks/useT';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
+import type HandsRig from '@/app/[lang]/sim/engine/hands/handsRig';
+import type { GripSimStep } from '@/app/[lang]/sim/engine/hands/handsRig';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import type Sq1Cube from '@/app/[lang]/sim/engine/sq1/Sq1Cube';
 import type { PuzzleKind } from '@/app/[lang]/sim/engine/world';
@@ -46,6 +48,8 @@ import { createStepSeekPlayer } from './step-seek-player';
 import { orbitSceneFree } from '@cuberoot/puzzle-render-core/engine/viewControls';
 import { engineHomeSid } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex';
 import { FM_IGNORED, FM_REGULAR, FM_OUTLINE } from '@cuberoot/puzzle-render-core/support/sticker-mask';
+import { SIZE } from '@cuberoot/puzzle-render-core/engine/define';
+import { DoubleSide, Mesh, MeshBasicMaterial, Shape, ShapeGeometry, Vector3 } from 'three';
 
 const LOOP_PAUSE_MS = 900;
 const ALIGNMENT_PAUSE_MS = 1200;
@@ -102,6 +106,8 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   outlinedStickers?: readonly string[];
   /** Outline home stickers without changing their current mask colors. */
   highlightedStickers?: readonly string[];
+  frontFaceArrow?: { from: number; to: number };
+  stickerColorOverrides?: Readonly<Record<string, string>>;
   setup?: string;
   orientation?: string;
   sceneRot?: { x: number; y: number; z: number };
@@ -120,14 +126,16 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   onStepChange?: (step: number) => void;
   stickeringAtStep?: (step: number) => import('@cuberoot/puzzle-render-core/engine/nxn/stickering').StickeringMaskFn;
   highlightDaisyAlignment?: boolean;
+  showHands?: boolean;
   moveDurationMs?: number;
   size?: number;
   /** 撑满父容器。给编辑器那种「右半屏放预览」的布局用。 */
   fillPane?: boolean;
 }>(function AlgSimPlayer({
-  alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, highlightedStickers, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, onUserMove, pauseAfterSteps, sectionPauseMs, onStepChange, stickeringAtStep, highlightDaisyAlignment = false, moveDurationMs, size = 260, fillPane = false,
+  alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, highlightedStickers, frontFaceArrow, stickerColorOverrides, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, onUserMove, pauseAfterSteps, sectionPauseMs, onStepChange, stickeringAtStep, highlightDaisyAlignment = false, showHands = false, moveDurationMs, size = 260, fillPane = false,
 }, ref) {
   const t = useT();
+  const [handsUnavailable, setHandsUnavailable] = useState(false);
   const timedSectionPauses = typeof sectionPauseMs === 'number' && Number.isFinite(sectionPauseMs) && sectionPauseMs > 0;
   const canonicalPuzzleKind = SIM_PUZZLE[puzzle] ?? NXN_ORDER_DEFAULT;
   const puzzleKind = NXN_ORDER[puzzle] !== undefined && puzzleOrder !== undefined
@@ -170,6 +178,8 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   const onStepChangeRef = useRef(onStepChange);
   onStepChangeRef.current = onStepChange;
   useEffect(() => { onStepChangeRef.current?.(step); }, [step]);
+  const movesRef = useRef(moves);
+  movesRef.current = moves;
   const stepRef = useRef(step);
   stepRef.current = step;
   /** 进度条、首尾跳转和外部光标同步都必须瞬时落到完整状态。 */
@@ -221,9 +231,12 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       orbitSceneFree(mount.world, dx, dy, 1);
       mount.invalidate();
     },
-    isUserMovePending: () => {
+    isUserMovePending: (includeHands = true) => {
       const mount = mountRef.current;
-      return !mount || !ready || (typeof mount.world.puzzleKind === 'number' && (mount.world.cube as Cube).twister.backlog > 0);
+      const handPhase = handsRef.current?.getLoadState().hands;
+      const handsPending = showHands && puzzleKind === 3 && !handsUnavailable && handPhase !== 'ready' && handPhase !== 'error';
+      return !mount || !ready || (includeHands && handsPending)
+        || (typeof mount.world.puzzleKind === 'number' && (mount.world.cube as Cube).twister.backlog > 0);
     },
     applyUserMove: (move: string) => {
       const mount = mountRef.current;
@@ -234,11 +247,17 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       mount.invalidate();
       return true;
     },
-  }), [seekPlayer, ready, interactionMode, controlMode, puzzle, moves.length]);
+  }), [seekPlayer, ready, interactionMode, controlMode, puzzle, puzzleKind, moves.length, showHands, handsUnavailable]);
   const mountRef = useRef<SimMount | null>(null);
+  const handsRef = useRef<HandsRig | null>(null);
+  const restoreGripsRef = useRef<((prefix: string[]) => void) | null>(null);
   const alignmentRef = useRef<ReturnType<typeof import('./daisy-alignment').attachDaisyAlignment> | null>(null);
   const resetViewRef = useRef<(() => void) | null>(null);
   const clockUserMoveRef = useRef<((action: string) => void) | null>(null);
+  const interactionOptionsRef = useRef({ interactionMode, lockView });
+  interactionOptionsRef.current = { interactionMode, lockView };
+  const updateInteractionRef = useRef<(() => void) | null>(null);
+  useEffect(() => { updateInteractionRef.current?.(); }, [interactionMode, lockView]);
   const onUserMoveRef = useRef(onUserMove);
   onUserMoveRef.current = onUserMove;
   clockUserMoveRef.current = interactionMode === 'turn'
@@ -273,9 +292,13 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
 
     const alignmentModule = highlightDaisyAlignment && puzzleKind === 3
       ? await import('./daisy-alignment') : null;
+    let hands: HandsRig | null = null;
     let alignment: ReturnType<NonNullable<typeof alignmentModule>['attachDaisyAlignment']> | undefined;
     const m = mountSimWorld({ host, puzzle: puzzleKind, interactive: true, sceneRot,
-      onFrame: () => alignment?.update() ?? false });
+      onFrame: (_world, dt) => {
+        const handsChanged = hands?.tick(dt);
+        return (alignment?.update() ?? false) || (handsChanged ?? false);
+      } });
     mountRef.current = m;
     const world = m.world;
     const cube = world.cube;
@@ -291,14 +314,17 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       m.invalidate();
     };
 
-    const detachInteraction = attachEmbeddedSimInteraction({
-      world,
-      dom: m.renderer.domElement,
-      mode: interactionMode,
-      lockView,
-      onUserMove: move => onUserMoveRef.current?.(move),
-    });
-
+    let detachInteraction: (() => void) | undefined;
+    const updateInteraction = () => {
+      detachInteraction?.();
+      const options = interactionOptionsRef.current;
+      detachInteraction = attachEmbeddedSimInteraction({
+        world, dom: m.renderer.domElement, mode: options.interactionMode,
+        lockView: options.lockView, onUserMove: move => onUserMoveRef.current?.(move),
+      });
+    };
+    updateInteractionRef.current = updateInteraction;
+    updateInteraction();
     const order = typeof puzzleKind === 'number' ? puzzleKind : undefined;
     const name = puzzle === 'clock' || puzzle === 'ivy' ? undefined : pickStickering(puzzle, set, 'sim');
     if (order) {
@@ -322,23 +348,82 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       (cube as Sq1Cube).setStickering(set);
     }
 
+    let disposed = false;
+    let unsubscribeHands: (() => void) | undefined;
+    if (showHands && puzzleKind === 3) {
+      void Promise.all([
+        import('@/app/[lang]/sim/engine/hands/handsRig'),
+        import('@/app/[lang]/sim/engine/nxn/twister'),
+      ]).then(([handsModule, twisterModule]) => {
+        if (disposed) return;
+        const rig = new handsModule.default();
+        hands = rig;
+        handsRef.current = rig;
+        world.handsFactory = () => rig;
+        world.setHandsWanted(true);
+        const nxn = cube as Cube;
+        restoreGripsRef.current = prefix => {
+          const sequence: GripSimStep[] = [];
+          for (const move of prefix) {
+            const rotations = nxn.table.convert(new twisterModule.TwistAction(move));
+            if (!rotations.length) continue;
+            const { axis } = rotations[0].group;
+            if (axis !== 'x' && axis !== 'y' && axis !== 'z') continue;
+            sequence.push({ axis, layers: rotations.map(rotation => rotation.group.layer), quarters: rotations[0].twist });
+          }
+          const grips = handsModule.simulateGrips(sequence, nxn.order);
+          rig.setGrips(grips.R, grips.L);
+        };
+        restoreGripsRef.current(movesRef.current.slice(0, stepRef.current));
+        const updateHands = () => {
+          const failed = rig.getLoadState().hands === 'error';
+          setHandsUnavailable(failed);
+          if (failed) world.setHandsWanted(false);
+          m.invalidate();
+        };
+        unsubscribeHands = rig.subscribeLoadState(updateHands);
+        updateHands();
+      }).catch(() => {
+        if (!disposed) setHandsUnavailable(true);
+      });
+    }
+
     const prevFrames = timing.frames;
     timing.frames = previewTiming.frames;
 
     return () => {
       timing.frames = prevFrames;
-      detachInteraction();
+      detachInteraction?.();
+      updateInteractionRef.current = null;
       alignment?.dispose();
       alignmentRef.current = null;
+      disposed = true;
+      unsubscribeHands?.();
+      hands?.dispose();
+      handsRef.current = null;
+      restoreGripsRef.current = null;
       m.dispose();
       mountRef.current = null;
       resetViewRef.current = null;
       lastRef.current = null;
       instantStepRef.current = null;
     };
-  }, [puzzleKind, puzzle, set, additionalStickering, hiddenStickers, outlinedStickers, previewTiming.frames, interactionMode, lockView, sceneRot, highlightDaisyAlignment]);
+  }, [puzzleKind, puzzle, set, additionalStickering, hiddenStickers, outlinedStickers, previewTiming.frames, sceneRot, highlightDaisyAlignment, showHands]);
 
   const resetView = useCallback(() => resetViewRef.current?.(), []);
+
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount || !ready || typeof puzzleKind !== 'number' || !stickerColorOverrides) return;
+    const renderer = (mount.world.cube as Cube).instancedRenderer;
+    renderer.setStickerColorOverrides(stickerColorOverrides);
+    mount.invalidate();
+    return () => {
+      if (mountRef.current !== mount) return;
+      renderer.setStickerColorOverrides(null);
+      mount.invalidate();
+    };
+  }, [stickerColorOverrides, puzzleKind, ready]);
 
   // Preview outlines are independent of stickering: a gray sticker stays gray.
   useEffect(() => {
@@ -355,6 +440,49 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       mount.invalidate();
     };
   }, [highlightedStickers, puzzleKind, ready]);
+
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount || !ready || typeof puzzleKind !== 'number' || !frontFaceArrow) return;
+    const { from, to } = frontFaceArrow;
+    if (![from, to].every(index => Number.isInteger(index) && index >= 0 && index < puzzleKind * puzzleKind) || from === to) return;
+    const half = (puzzleKind - 1) / 2;
+    // Slot coordinates belong to the cube, so camera orbit and resizing preserve alignment.
+    const position = (index: number) => new Vector3(
+      (index % puzzleKind - half) * SIZE,
+      (half - Math.floor(index / puzzleKind)) * SIZE,
+      puzzleKind * SIZE / 2 + 5,
+    );
+    const origin = position(from);
+    const direction = position(to).sub(origin);
+    const length = direction.length();
+    const shaftHalfWidth = SIZE * .065;
+    const headHalfWidth = SIZE * .2;
+    const headStart = length - Math.min(SIZE * .35, length * .45);
+    const shape = new Shape();
+    shape.moveTo(-shaftHalfWidth, 0);
+    shape.lineTo(shaftHalfWidth, 0);
+    shape.lineTo(shaftHalfWidth, headStart);
+    shape.lineTo(headHalfWidth, headStart);
+    shape.lineTo(0, length);
+    shape.lineTo(-headHalfWidth, headStart);
+    shape.lineTo(-shaftHalfWidth, headStart);
+    shape.closePath();
+    const geometry = new ShapeGeometry(shape);
+    const material = new MeshBasicMaterial({ color: 0xffffff, side: DoubleSide });
+    const arrow = new Mesh(geometry, material);
+    arrow.position.copy(origin);
+    arrow.rotation.z = Math.atan2(direction.y, direction.x) - Math.PI / 2;
+    const cube = mount.world.cube as Cube;
+    cube.add(arrow);
+    mount.invalidate();
+    return () => {
+      cube.remove(arrow);
+      geometry.dispose();
+      material.dispose();
+      if (mountRef.current === mount) mount.invalidate();
+    };
+  }, [frontFaceArrow?.from, frontFaceArrow?.to, puzzleKind, ready]);
 
   /** 菜单切换只重贴当前预览的颜色，不重建 world，也不改变 case 状态。 */
   useEffect(() => {
@@ -377,6 +505,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     if (requestedMove !== null) {
       requestedMoveRef.current = null;
       twister.setup([setupAlg, ...moves.slice(0, requestedMove)].join(' '));
+      restoreGripsRef.current?.(moves.slice(0, requestedMove));
       if (typeof puzzleKind === 'number' && stickeringAtStep) {
         (m.world.cube as Cube).instancedRenderer.setStickering(stickeringAtStep(requestedMove + 1));
       }
@@ -410,6 +539,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       twister.push(invertMoveString(moves[syncStep]));
     } else {
       twister.setup([setupAlg, ...moves.slice(0, syncStep)].join(' '));
+      restoreGripsRef.current?.(moves.slice(0, syncStep));
     }
     m.invalidate();
   }, [sequenceKey, setupAlg, moves, puzzle, puzzleKind, step, ready, moveRequest, stickeringAtStep]);
@@ -481,6 +611,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
 
   return (
     <div className={`alg-sim-player${fillPane ? ' is-fill' : ''}`}>
+      {showHands && handsUnavailable && <small role="status">{t('手部模型加载失败', 'Could not load the hand models')}</small>}
       <SimStage
         size={size}
         mount={mount}

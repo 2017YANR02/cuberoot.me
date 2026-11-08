@@ -265,8 +265,13 @@ function makePoseCorrective(model: HandModel, geo: THREE.BufferGeometry, data: M
  *  = 旧缓存静默降级,2026-07-12 焊臂实测教训)。 */
 export async function loadManoHand(side: 1 | -1, skinMat: THREE.Material, signal?: AbortSignal): Promise<HandModel> {
   const name = side === -1 ? "right" : "left";
-  const url = staticUrl(`/sim/hands/mano/${name}.mano.json`) + "?v=5";
-  const res = await fetch(url, { signal });
+  const path = `/sim/hands/mano/${name}.mano.json?v=5`;
+  let url = staticUrl(path);
+  let res = await fetch(url, { signal });
+  if (res.status === 404 && url === path && process.env.NODE_ENV === 'development') {
+    url = `https://static.cuberoot.me${path}`;
+    res = await fetch(url, { signal });
+  }
   if (!res.ok) throw new Error(`mano hand asset missing (${res.status} ${url}) — run scripts/convert-mano.py`);
   const data = (await res.json()) as ManoHandData;
   signal?.throwIfAborted();

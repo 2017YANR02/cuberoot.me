@@ -9,7 +9,7 @@ import { tr } from '@/i18n/tr';
 import { MIDDLE_LEFT_SETUP, MIDDLE_RIGHT_SETUP } from './content';
 
 /** Use the existing cube renderer's sticker-to-sticker arrows, including camera projection. */
-export function MiddleCaseDiagram({ left = false, size = 200 }: { left?: boolean; size?: number }) {
+export function MiddleCaseDiagram({ left = false, size = 248 }: { left?: boolean; size?: number }) {
   const svg = useMemo(() => renderCubeSVG({
     ...buildSimpleOptions({ view: 'iso', size, sch: 'yogwrb', setup: left ? MIDDLE_LEFT_SETUP : MIDDLE_RIGHT_SETUP }),
     stickerColors: stageStickerColors(3, stickeringMaskFn(3, 'F2L'), orientedCubeFaceColors('z2')),

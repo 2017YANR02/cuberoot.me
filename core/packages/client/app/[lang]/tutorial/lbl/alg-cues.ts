@@ -1,5 +1,14 @@
 import { Alg } from 'cubing/alg';
-import { CORNER_POSITION, LEFT, LEFT_SUNE, RIGHT, RIGHT_SUNE } from './content';
+import { CORNER_POSITION, LEFT, LEFT_SUNE, MIDDLE_LEFT, MIDDLE_RIGHT, RIGHT, RIGHT_SUNE } from './content';
+
+export function opensOnLeft(alg: string): boolean {
+  return sideTurn(new Alg(alg).expand().toString().split(/\s+/)[0]) === 'L';
+}
+
+export function sideTurn(move: string): 'L' | 'R' | undefined {
+  if (/^L(?:\d+)?'?$/.test(move)) return 'L';
+  if (/^R(?:\d+)?'?$/.test(move)) return 'R';
+}
 
 type Cue = { zh: string; en: string };
 export type LblAlgMove = { notation: string; cue: Cue; index: number };
@@ -9,6 +18,10 @@ const hook = cue('勾', 'Hook');
 const down = cue('下', 'Down');
 const back = cue('回', 'Back');
 const doubleFlick = cue('连拨', 'Double flick');
+const insertionFlicks: Record<string, Cue> = {
+  [MIDDLE_RIGHT]: cue('右手拨', 'Right-hand flick'),
+  [MIDDLE_LEFT]: cue('左手拨', 'Left-hand flick'),
+};
 const trigger = [up, hook, down, back];
 const sune = [up, hook, down, hook, up, doubleFlick, down];
 const singleMoves: Record<string, Cue> = {
@@ -66,8 +79,10 @@ export function getLblAlgGroups(step: string, alg: string): LblAlgMove[][] {
         || (step === 'middle' && start === 0 && /^d(?:2|')?$/.test(moves[1])));
     const wallPlacement = step === 'edge-position' && start === 0 && /^y(?:2|')?$/.test(moves[start]);
     const finalAlignment = step === 'edge-position' && start === moves.length - 1 && /^U(?:2|')?$/.test(moves[start]);
+    const insertionFlick = step === 'middle' && start === 0 ? insertionFlicks[alg] : undefined;
     groups.push(makeGroup(start, length, sequence?.cues
-      ?? (wallPlacement ? [cue('转体调整', 'Reorient')]
+      ?? (insertionFlick ? [insertionFlick]
+        : wallPlacement ? [cue('转体调整', 'Reorient')]
         : finalAlignment ? [cue('顶层对齐', 'Align the top')]
           : preparation ? [cue('转顶层', 'Turn top')] : undefined)));
     start += length;

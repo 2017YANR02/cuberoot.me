@@ -151,6 +151,7 @@ export default class InstancedRenderer extends THREE.Group {
   private stickeringCodes: Uint8Array | null = null;
   /** 嵌入式预览可独立重贴色；null 时仍走 /sim 的全局用户配色。 */
   private faceColorOverride: Partial<Record<CubeFaceLabel, string>> | null = null;
+  private stickerColorOverrides = new Map<number, THREE.Color>();
   /** FM_DIM 下纯白压到哪。白色减半 = 灰,会跟 FM_IGNORED 那档灰撞,所以 /sim 压到
    *  `#dddddd`(cubing.js PG3D 同款)。代价是它跟满色白几乎分不出 —— 板子上同时有满色白
    *  贴纸时(/predict)调成更暗的一档,让「压暗的白」一眼是暗的。 */
@@ -1230,6 +1231,8 @@ export default class InstancedRenderer extends THREE.Group {
    * dim = 原色 ×0.5(纯白特判 #dddddd)与 cubing.js PG3D 一致,自动跟随自定义面色;
    * ignored 灰 / oriented 青 / oriented2 黄用 cubing.js 的固定常量。 */
   private resolveStickerColor(slotIdx: number, faceLabel: string | undefined): void {
+    const stickerColor = this.stickerColorOverrides.get(slotIdx);
+    if (stickerColor) { this.tmpColor.copy(stickerColor); return; }
     const code = this.stickeringCodes ? this.stickeringCodes[slotIdx] : 0;
     // 预解析过(见 FM_FIXED_3D):这里每帧跑 376k 次,不能再走字符串解析。
     const fixed = FM_FIXED_3D.get(code);
@@ -1390,6 +1393,18 @@ export default class InstancedRenderer extends THREE.Group {
   /** 只覆盖当前 renderer 的六面色；公式预览换拿方时不能污染同页或 `/sim`。 */
   setFaceColorOverride(map: Partial<Record<CubeFaceLabel, string>> | null): void {
     this.faceColorOverride = map ? { ...map } : null;
+    this.refreshStickerColors();
+  }
+
+  /** Display-only colors keyed by home sticker identity, following each piece. */
+  setStickerColorOverrides(colors: Readonly<Record<string, string>> | null): void {
+    this.stickerColorOverrides.clear();
+    if (colors) {
+      this.stickerSlots.forEach((slot, index) => {
+        const color = colors[engineHomeSid(slot.cubeletInitial, slot.face, this.cube.order)];
+        if (color) this.stickerColorOverrides.set(index, new THREE.Color(color));
+      });
+    }
     this.refreshStickerColors();
   }
 

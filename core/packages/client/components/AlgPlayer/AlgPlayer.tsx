@@ -33,7 +33,7 @@ export interface AlgPlayerHandle {
   resetView?: () => void;
   /** Manual NxN practice input, available with turn interaction and no playback controls. */
   applyUserMove?: (move: string) => boolean;
-  isUserMovePending?: () => boolean;
+  isUserMovePending?: (includeHands?: boolean) => boolean;
   /** 拿到底层播放器或兼容 seek adapter,给光标 sync 等高级用法用。 */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getPlayer(): any | null;
@@ -76,6 +76,10 @@ interface Props {
   outlinedStickers?: readonly string[];
   /** Sim NxN: outline home stickers without changing their current mask colors. */
   highlightedStickers?: readonly string[];
+  /** Sim NxN: arrow between current front-face slots, using row-major indices. */
+  frontFaceArrow?: { from: number; to: number };
+  /** Display-only colors by home sticker ID, following the pieces. */
+  stickerColorOverrides?: Readonly<Record<string, string>>;
   setup?: string;
   /** NxN 预览的整体拿方；只重贴颜色，不改公式状态。 */
   orientation?: string;
@@ -111,6 +115,8 @@ interface Props {
   stickeringAtStep?: (step: number) => import('@cuberoot/puzzle-render-core/engine/nxn/stickering').StickeringMaskFn;
   /** Sim 3x3: frame each daisy petal whose side matches the center below it. */
   highlightDaisyAlignment?: boolean;
+  /** Sim engine, 3×3 only: render the simulator's animated hands. */
+  showHands?: boolean;
   /** 每个 STM 的动画时长(ms)，默认 1000。 */
   moveDurationMs?: number;
   /** 自定义尺寸,默认 260px;`fillPane=true` 时忽略 */
@@ -167,8 +173,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
       moveDurationMs,
       props.size ?? 260,
       props.fillPane ?? false,
-      props.interactionMode ?? 'view',
-      props.lockView ?? false,
+      props.showHands,
       props.sceneRot?.x, props.sceneRot?.y, props.sceneRot?.z,
     ]);
     return (
@@ -184,8 +189,11 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         hiddenStickers={props.hiddenStickers}
         outlinedStickers={props.outlinedStickers}
         highlightedStickers={props.highlightedStickers}
+        frontFaceArrow={props.frontFaceArrow}
+        stickerColorOverrides={props.stickerColorOverrides}
         onStepChange={props.onStepChange}
         highlightDaisyAlignment={props.highlightDaisyAlignment}
+        showHands={props.showHands}
         startSolved={props.startSolved} autoPlay={props.autoPlay} loop={props.loop}
         playRequest={props.playRequest}
         controlMode={props.controlMode}

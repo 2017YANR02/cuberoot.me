@@ -1,0 +1,300 @@
+.lbl-page { --af-nav-text: var(--muted-foreground); --af-nav-active: var(--accent); --af-nav-hover: var(--muted); --af-nav-selected: var(--accent-soft); box-sizing: border-box; height: 100dvh; display: grid; grid-template-rows: auto auto minmax(0, 1fr); max-width: 1180px; margin: 0 auto; padding: 12px 20px 16px; color: var(--foreground); }
+.lbl-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 6px; margin-bottom: 4px; }
+.lbl-header a { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; color: var(--muted-foreground); text-decoration: none; }
+.lbl-header a:hover { color: var(--foreground); }
+.lbl-header h1 { margin: 0; font-size: 1rem; }
+.lbl-header-title { display: flex; align-items: center; gap: 12px; }
+.lbl-page :is(.lbl-chapter-button, .lbl-section-button, .lbl-footer-button, .lbl-practice-button, .lbl-alg-move) { font: inherit; cursor: pointer; }
+.lbl-page :is(.lbl-chapter-button, .lbl-section-button, .lbl-footer-button, .lbl-practice-button, .lbl-alg-move):focus-visible, .lbl-page summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.lbl-chapters { overflow: hidden; padding: 8px 0 20px; }
+.lbl-chapter-track { position: relative; display: grid; grid-template-columns: repeat(var(--chapter-count), minmax(0, 1fr)); }
+.lbl-chapter-track > .lbl-chapter-button { position: relative; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; border: 0; background: transparent; padding: 0 4px 12px; color: var(--muted-foreground); font-size: .8rem; line-height: 1.5; }
+.lbl-chapter-track > .lbl-chapter-button[aria-current] { color: var(--accent); }
+.lbl-chapter-line { display: block; flex-shrink: 0; height: 4px; margin-bottom: 12px; border-radius: 999px; background: var(--border-default); }
+.lbl-chapter-line[data-completed] { background: var(--foreground); }
+.lbl-indicator { position: absolute; z-index: 1; top: 0; left: 0; width: calc(100% / var(--chapter-count)); height: 4px; transform: translateX(calc(var(--chapter) * 100%)); transition: transform 680ms cubic-bezier(.22, 1.85, .36, 1); pointer-events: none; }
+.lbl-indicator::after { content: ''; position: absolute; inset: 0 4px; border-radius: 999px; background: var(--accent); }
+.lbl-body { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 0; gap: 24px; padding-top: 14px; }
+.lbl-sidebar { min-width: 0; min-height: 0; overflow-y: auto; padding-right: 12px; border-right: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent); }
+.lbl-page .af-nav-menu { width: 100%; }
+.lbl-page .lbl-section-button { width: 100%; border: 0; text-align: left; }
+.lbl-page .af-nav-link { height: 68px; gap: 12px; }
+.lbl-page .af-nav-icon { width: 52px; height: 52px; flex-basis: 52px; }
+.lbl-page .af-nav-icon svg { width: 52px; height: 52px; }
+.lbl-thumbnail { position: relative; display: inline-flex; }
+.lbl-page .af-nav-icon .lbl-thumbnail-play { position: absolute; right: -2px; bottom: -2px; width: 26px; height: 26px; padding: 3px; border-radius: 50%; background: var(--background); color: var(--accent); fill: currentColor; }
+.lbl-learning { min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) minmax(40px, auto) auto; }
+.lbl-walkthrough .lbl-learning { grid-template-rows: minmax(0, 1fr) auto; }
+.lbl-walkthrough .lbl-walkthrough-footer { display: none; }
+.lbl-demo-toolbar { min-width: 0; display: flex; justify-content: center; align-items: start; gap: 8px; }
+.lbl-footer-actions { display: flex; justify-content: flex-end; margin-inline-start: auto; }
+.lbl-footer-actions .lbl-complete-toolbar { position: static; }
+/* Keep exercise navigation stationary while lesson content varies. */
+.lbl-support-page.lbl-practice-page { box-sizing: border-box; height: 100dvh; display: grid; grid-template-rows: 40px minmax(0, 1fr); padding: 12px 20px 16px; }
+.lbl-practice-page .lbl-exercise { box-sizing: border-box; min-height: 0; margin-top: 0; display: grid; grid-template-rows: 64px minmax(0, 1fr) auto; }
+.lbl-practice-page .lbl-exercise-heading { min-height: 0; overflow: auto; }
+.lbl-practice-page .lbl-exercise .lbl-basic-content { min-height: 0; overflow: auto; overscroll-behavior: contain; align-items: start; }
+.lbl-practice-page .lbl-exercise .lbl-basic-copy > h3 { box-sizing: border-box; min-height: 4.5em; margin-top: 0; }
+.lbl-practice-page .lbl-exercise .lbl-exercise-navigation:disabled { color: var(--faint-foreground); background: var(--muted); cursor: default; }
+.lbl-practice-page .lbl-practice-back, .lbl-practice-page .lbl-completion-review { border: 0; background: transparent; color: inherit; cursor: pointer; }
+.lbl-practice-page .lbl-exercise .lbl-basic-footer > .lbl-practice-review { grid-column: 2; justify-self: center; }
+.lbl-lesson-scroll { min-height: 0; overflow: auto; overscroll-behavior: contain; display: flex; flex-direction: column; }
+/* Only spare vertical space is shared 40/60; overflowing content starts at the top. */
+.lbl-lesson-scroll::before, .lbl-lesson-scroll::after { content: ''; flex: 2 0 0; }
+.lbl-lesson-scroll::after { flex-grow: 3; }
+.lbl-lesson-scroll > :is(.lbl-content, .lbl-complete, .lbl-daisy-lift-content) { flex-shrink: 0; min-height: auto; width: 100%; }
+.lbl-content, .lbl-complete .lbl-demo.lbl-demo-split { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: center; align-content: safe center; gap: 24px; }
+.lbl-content { min-height: 100%; animation: lbl-enter 220ms ease-out; }
+.lbl-lesson-scroll:has(> .lbl-daisy-lift-content) { position: relative; }
+.lbl-lesson-scroll:has(> .lbl-daisy-overview-content) { position: relative; }
+.lbl-daisy-overview-content { box-sizing: border-box; width: 100%; flex-shrink: 0; padding-bottom: 48px; }
+.lbl-daisy-lift-content { box-sizing: border-box; min-height: 100%; padding-bottom: 48px; }
+.lbl-daisy-lift-content > .lbl-guide-continue { pointer-events: none; }
+.lbl-demonstration, .lbl-complete .lbl-cube { height: 430px; min-width: 0; }
+.lbl-auto-player { width: 100%; height: 100%; transition: opacity 220ms ease; }
+.lbl-auto-player[data-visible='false'] { opacity: 0; }
+.lbl-explanation { min-width: 0; line-height: 1.6; padding: 10px 0; }
+.lbl-explanation > p { margin: 12px 0 0; }
+.lbl-explanation .lbl-lead { font-weight: 500; }
+.lbl-direction-emphasis { color: var(--accent); }
+.lbl-placeholder { font-size: .75rem; color: var(--faint-foreground); }
+.lbl-footer { display: flex; justify-content: space-between; gap: 20px; padding-top: 16px; border-top: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent); }
+.lbl-page .lbl-footer-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 8px 14px; border: 0; border-radius: 10px; color: var(--muted-foreground); background: transparent; }
+.lbl-page .lbl-footer-next { color: var(--accent); background: var(--accent-soft); }
+.lbl-page .lbl-footer-button { box-sizing: border-box; width: 112px; height: 52px; flex-shrink: 0; line-height: 1.2; }
+.lbl-page .lbl-footer-button svg { flex-shrink: 0; }
+.lbl-page .lbl-footer-button:hover:not(:disabled) { background: var(--muted); color: var(--foreground); }
+.lbl-page .lbl-footer-button:disabled { opacity: .35; cursor: default; }
+.lbl-mobile-menu { display: none; }
+.lbl-content-reading { display: flex; flex-direction: column; align-items: center; box-sizing: border-box; max-width: 760px; margin: 0 auto; min-height: 100%; }
+.lbl-content-reading > .lbl-explanation { width: 100%; box-sizing: border-box; margin-block: auto; text-align: center; }
+.lbl-stage-overview { display: grid; grid-template-columns: minmax(0, 280px) auto minmax(0, 280px); justify-content: center; align-items: center; gap: 16px; margin-bottom: 18px; }
+.lbl-stage-arrow { place-self: center; font-size: var(--lbl-text-display); line-height: 1; }
+.lbl-stage-overview figure { margin: 0; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 14px; text-align: center; }
+.lbl-stage-overview .puzzle-art { max-width: 100%; height: auto !important; aspect-ratio: 1; }
+.lbl-stage-overview .puzzle-art svg { width: 100%; height: auto; }
+.lbl-cross-overview-cube { position: relative; width: 100%; aspect-ratio: 1; min-width: 0; transition: opacity 290ms ease; }
+.lbl-cross-overview-cube[data-visible='false'] { opacity: 0; }
+.lbl-cross-overview-cube .alg-sim-player.is-fill { padding: 0; }
+.lbl-cross-overview-cube .lbl-auto-player { transition-duration: 290ms; }
+.lbl-lesson-scroll:has(.lbl-cross-overview) { position: relative; }
+.lbl-content:has(.lbl-cross-overview) { padding-bottom: 48px; }
+.lbl-cross-comparison > figure:last-child { grid-column: 3; }
+.lbl-cross-comparison .lbl-cross-overview-cube { pointer-events: none; }
+.lbl-cross-comparison-feedback { position: absolute; inset: 0; pointer-events: none; animation: lbl-cross-feedback 1.3s ease-in-out infinite; }
+@keyframes lbl-cross-feedback { 0%, 100% { opacity: 1; } 50% { opacity: .15; } }
+@media (prefers-reduced-motion: reduce) {
+  .lbl-cross-comparison-feedback { animation: none; }
+}
+.lbl-daisy-cycle { display: grid; place-items: center; width: min(100%, 440px); margin-inline: auto; }
+.lbl-daisy-cycle > * { grid-area: 1 / 1; animation: lbl-daisy-fade 6s ease-in-out infinite; }
+/* Match the visible flower to the cube face inside the plan SVG's padded viewBox. */
+.lbl-daisy-cycle > svg { width: 68%; height: auto; }
+.lbl-daisy-cycle > .puzzle-art { width: 100% !important; height: auto !important; aspect-ratio: 1; animation-delay: -3s; }
+.lbl-daisy-cycle .puzzle-art svg { width: 100%; height: auto; }
+@keyframes lbl-daisy-fade {
+  0%, 49%, 100% { opacity: 0; }
+  9%, 39% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lbl-daisy-cycle > * { animation: none; }
+  .lbl-daisy-cycle > svg { display: none; }
+}
+.lbl-explanation .lbl-alg-steps { margin: 16px 0; gap: 12px 4px; }
+.lbl-explanation .lbl-demo-stage-body .lbl-alg-steps { margin: 8px 0 0; }
+.lbl-lesson-scroll :is(.lbl-content-example > .lbl-explanation, .lbl-complete-thought) .lbl-alg-steps {
+  justify-content: var(--lbl-alg-align, start);
+}
+.lbl-lesson-scroll :is(.lbl-content-example > .lbl-explanation, .lbl-complete-thought) .lbl-alg-group {
+  justify-content: var(--lbl-alg-align, start);
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0;
+  flex-grow: 0 !important;
+}
+.lbl-lesson-scroll :is(.lbl-content-example > .lbl-explanation, .lbl-complete-thought) .lbl-alg-move {
+  align-items: var(--lbl-alg-align, start);
+  text-align: var(--lbl-alg-align, start);
+  flex: 0 0 auto;
+  min-width: 24px;
+  padding: 0;
+  margin: 0;
+}
+.lbl-step-start { background: transparent; border: 0; padding: 0; color: inherit; font: inherit; text-align: start; cursor: pointer; }
+.lbl-step-start:hover { text-decoration: underline; }
+.lbl-step-start:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.lbl-explanation .lbl-instruction-phase[aria-current='step'] { color: var(--accent); }
+.lbl-explanation .lbl-demo-stages { gap: 0; }
+.lbl-explanation .lbl-demo-stage + .lbl-demo-stage {
+  border-top: 1px solid var(--border-default);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+.lbl-complete-alg { display: flex; flex-wrap: wrap; gap: 10px 20px; }
+.lbl-complete-alg > span { white-space: nowrap; }
+.lbl-complete-thought .lbl-fish-alg-caption { grid-template-rows: auto; }
+.lbl-facelet { text-align: center; }
+.lbl-fish-recognition { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.lbl-fish-recognition figure { margin: 0; min-width: 0; }
+.lbl-fish-views { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px; }
+.lbl-fish-views .puzzle-art { max-width: 100%; height: auto !important; aspect-ratio: 1; }
+.lbl-fish-views .puzzle-art svg { width: 100%; height: auto; }
+.lbl-fish-recognition figcaption { margin-top: 12px; }
+.lbl-fish-recognition-rule { grid-column: 1 / -1; margin: 0; }
+.lbl-piece-player, .lbl-notation-player { transition: opacity 300ms ease; }
+.lbl-piece-player[data-visible='false'], .lbl-notation-player[data-visible='false'] { opacity: 0; }
+.lbl-notation-label { display: flex; align-items: center; }
+.lbl-explanation > .lbl-notation-guide { margin-top: 32px; }
+.lbl-notation-guide a { color: var(--accent); }
+.lbl-notation-demonstration { display: flex; flex-direction: column; align-items: center; }
+.lbl-notation-demonstration > .lbl-notation-player { width: 100%; flex: 1; min-height: 0; }
+.lbl-notation-controls { width: min(100%, 260px); padding-top: 6px; }
+.lbl-notation-controls .playback-bar-bubble { display: none; }
+.lbl-j-overview-copy { text-align: center; }
+.lbl-demo-stages .lbl-j-lesson-intro { display: block; text-align: start; }
+.lbl-j-lesson-intro > p { margin: 6px 0 0; }
+.lbl-j-swap-diagram { display: block; width: min(100%, 144px); margin-inline: auto; }
+.lbl-j-lesson-intro .lbl-j-swap-diagram { margin-inline: 0; }
+.lbl-j-swap-diagram svg { display: block; width: 100%; height: auto; }
+.lbl-edge-terms { align-items: start; }
+.lbl-edge-term-art { width: min(100%, 248px); aspect-ratio: 1; margin-inline: auto; display: grid; place-items: center; }
+.lbl-opposite-color-diagram { display: grid; gap: 16px; width: min(100%, 136px); }
+.lbl-opposite-color-pair { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px; }
+.lbl-opposite-color-pair span { aspect-ratio: 1; border-radius: 5px; }
+.lbl-page .playback-bar-controls { border: 1px solid var(--border-default); border-radius: 999px; padding: 5px; width: fit-content; max-width: 100%; align-self: center; flex-wrap: nowrap; }
+.lbl-layers .lbl-guide-floor-grid > figure:nth-child(1) { order: 3; }
+.lbl-layers .lbl-guide-floor-grid > figure:nth-child(2) { order: 2; }
+.lbl-layers .lbl-guide-floor-grid > figure:nth-child(3) { order: 1; }
+.lbl-layers .lbl-guide-floor-grid > figure { margin: 0; }
+.lbl-complete { min-height: 100%; display: flex; flex-direction: column; justify-content: safe center; }
+.lbl-complete .lbl-complete-demo { flex: 0 0 auto; }
+.lbl-complete .lbl-demo.lbl-demo-split { margin-top: 0; }
+.lbl-complete .lbl-complete-toolbar { position: static; align-self: end; }
+.lbl-complete .lbl-cube { width: 100%; max-width: none; }
+.lbl-complete .lbl-complete-playback { padding: 0; }
+.lbl-complete .lbl-complete-legend-space { display: none; }
+.lbl-content-reading .lbl-intro-route { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; max-width: 720px; }
+.lbl-content-reading .lbl-method-intro { gap: 16px; padding-block: 8px; }
+.lbl-content-reading .lbl-intro-route-step { display: contents; }
+.lbl-content-reading .lbl-intro-route figure { margin: 0; text-align: center; min-width: 0; }
+.lbl-content-reading .lbl-intro-route .puzzle-art { max-width: 100%; }
+.lbl-content-reading .lbl-intro-substeps { text-align: center; }
+.lbl-content-reading .lbl-intro-substeps ol { list-style: none; padding: 0; line-height: 1.55; }
+@keyframes lbl-enter { from { opacity: 0; } to { opacity: 1; } }
+@media (min-width: 761px) {
+  .lbl-content.lbl-content-trigger { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .lbl-content-trigger > .lbl-demonstration { height: clamp(280px, 52dvh, 480px); }
+  .lbl-content-trigger > .lbl-explanation { --lbl-alg-align: center; justify-self: center; text-align: center; }
+}
+@media (min-width: 1600px) {
+  .lbl-body { gap: 32px; }
+  .lbl-content, .lbl-complete .lbl-demo.lbl-demo-split { gap: 32px; }
+  .lbl-demonstration, .lbl-complete .lbl-cube { height: clamp(480px, 40dvh, 620px); }
+  .lbl-content-reading { max-width: 900px; }
+}
+@media (max-width: 1050px) { .lbl-body { gap: 24px; } .lbl-demonstration, .lbl-complete .lbl-cube { height: 360px; } }
+@media (max-width: 760px) {
+  .lbl-page { padding: 8px 12px max(12px, env(safe-area-inset-bottom)); }
+  .lbl-chapters { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .lbl-chapters::-webkit-scrollbar { display: none; }
+  .lbl-chapter-track { width: calc(var(--chapter-count) * 112px); }
+  .lbl-body { grid-template-columns: minmax(0, 1fr); padding-top: 8px; }
+  .lbl-lesson-scroll { scrollbar-width: none; }
+  .lbl-lesson-scroll::-webkit-scrollbar { display: none; }
+  .lbl-sidebar { display: none; }
+  .lbl-mobile-menu { display: block; position: relative; min-width: 0; }
+  .lbl-mobile-menu summary { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 44px; cursor: pointer; list-style: none; color: var(--muted-foreground); font-size: .8rem; }
+  .lbl-mobile-menu summary > span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lbl-mobile-menu summary svg { flex-shrink: 0; }
+  .lbl-section-count { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .lbl-section-popover { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: min(260px, calc(100vw - 48px)); max-height: min(480px, 65dvh); overflow-y: auto; padding: 8px; z-index: 5; border: 1px solid var(--border-default); border-radius: 12px; }
+  .lbl-mobile-menu summary::-webkit-details-marker { display: none; }
+  .lbl-mobile-menu summary svg { transition: transform 180ms ease; }
+  .lbl-mobile-menu[open] summary svg { transform: rotate(180deg); }
+  .lbl-content, .lbl-complete .lbl-demo.lbl-demo-split { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .lbl-demonstration, .lbl-complete .lbl-cube { height: clamp(280px, 80vw, 390px); }
+  .lbl-explanation { padding: 12px 4px; }
+  .lbl-content-example:is(:has(.lbl-demo-stage:nth-child(2)), .lbl-content-corner-ejection), .lbl-complete .lbl-demo.lbl-demo-split {
+    height: 100%; min-height: 280px;
+    grid-template-rows: clamp(150px, 46%, 300px) minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .lbl-complete, .lbl-complete .lbl-complete-demo, .lbl-complete .lbl-cube { height: 100%; }
+  .lbl-content-example:is(:has(.lbl-demo-stage:nth-child(2)), .lbl-content-corner-ejection) > .lbl-demonstration { height: 100%; }
+  .lbl-content-example:is(:has(.lbl-demo-stage:nth-child(2)), .lbl-content-corner-ejection) > .lbl-explanation {
+    min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: none;
+  }
+  .lbl-content-example > .lbl-explanation::-webkit-scrollbar { display: none; }
+  .lbl-explanation > img { float: right; width: 80px; height: 80px; margin: 0 0 12px 16px; }
+  .lbl-explanation::after { content: ''; display: block; clear: both; }
+  .lbl-footer { display: flex; align-items: center; gap: 6px; padding-top: 12px; flex-wrap: wrap; }
+  .lbl-walkthrough .lbl-walkthrough-footer { display: flex; justify-content: center; }
+  .lbl-page .lbl-footer-button { gap: 4px; padding: 8px 6px; font-size: .8rem; }
+  .lbl-page .lbl-footer-button { width: 96px; }
+  .lbl-stage-overview {
+    width: min(100%, 390px);
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 8px;
+    margin: 0 auto 12px;
+  }
+  .lbl-stage-overview .puzzle-art { width: 100% !important; }
+  .lbl-content-reading > .lbl-explanation { overflow-wrap: anywhere; }
+  .lbl-content-reading :is(.lbl-intro-route, .lbl-guide-floor-grid) .puzzle-art { max-width: min(100%, 128px); }
+  .lbl-content-reading .lbl-middle-core .puzzle-art { max-width: min(100%, 200px, 32svh); }
+  .lbl-edge-term-art { width: min(100%, 176px, 28svh); }
+  .lbl-fish-views .puzzle-art { max-width: min(100%, 184px, 30svh); }
+  .lbl-content-reading { min-height: 100%; }
+  .lbl-complete .lbl-complete-thought { min-height: 0; overflow-y: auto; scrollbar-width: none; align-items: safe center; }
+  .lbl-content-reading .lbl-guide-moves { grid-template-columns: minmax(0, 1fr); }
+  .lbl-content-reading .lbl-guide-move-preview { padding-right: 0; }
+  .lbl-content-reading .lbl-guide-floor-grid { gap: 8px; }
+  .lbl-content-reading .lbl-middle-core-cases { grid-template-columns: minmax(0, 1fr); }
+  .lbl-fish-recognition { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .lbl-indicator, .lbl-mobile-menu summary svg { transition: none; } .lbl-content { animation: none; } }
+
+.lbl-content-pieces > .lbl-explanation > p:first-child { margin-top: 0; }
+
+.lbl-lesson-scroll {
+  --lbl-text-small: 1rem;
+  --lbl-text-body: 1.25rem;
+  --lbl-text-emphasis: 1.5rem;
+  --lbl-text-display: 1.75rem;
+}
+.lbl-lesson-scroll :is(.lbl-alg-cue, .lbl-demo-stage-note) {
+  font-size: var(--lbl-text-small);
+}
+.lbl-lesson-scroll .lbl-explanation,
+.lbl-lesson-scroll .lbl-intro-substeps ol,
+.lbl-lesson-scroll .lbl-content figcaption,
+.lbl-lesson-scroll .lbl-content figcaption :is(strong, span),
+.lbl-lesson-scroll .lbl-complete-detail {
+  font-size: var(--lbl-text-body);
+}
+.lbl-lesson-scroll .lbl-lead,
+.lbl-lesson-scroll .lbl-instruction-phase,
+.lbl-lesson-scroll .lbl-alg-move code,
+.lbl-lesson-scroll .lbl-method-intro > p,
+.lbl-lesson-scroll .lbl-basics-guide h3,
+.lbl-lesson-scroll .lbl-complete-thought p {
+  font-size: var(--lbl-text-emphasis);
+}
+.lbl-lesson-scroll .lbl-demo-stage { --lbl-phase-size: var(--lbl-text-emphasis); }
+.lbl-lesson-scroll .lbl-notation-label > code { font-size: var(--lbl-text-display); }
+.lbl-lesson-scroll .lbl-corner-case-caption { font-size: var(--lbl-text-display); }
+.lbl-lesson-scroll .lbl-fish-intro figcaption > strong,
+.lbl-lesson-scroll .lbl-fish-recognition figcaption > strong {
+  font-size: var(--lbl-text-emphasis);
+}
+
+/* Full-solve teaching text uses one body size; weight marks the current action. */
+.lbl-walkthrough .lbl-walkthrough-meta { flex-shrink: 0; font-size: var(--lbl-text-body); }
+.lbl-walkthrough .lbl-walkthrough-meta > p { margin-block: 0 12px; }
+.lbl-walkthrough .lbl-lesson-scroll::before { flex: 0 0 0; }
+.lbl-walkthrough .lbl-walkthrough-scramble-row { display: flex; align-items: baseline; gap: 12px; }
+.lbl-walkthrough .lbl-walkthrough-scramble-row > span { flex-shrink: 0; }
+.lbl-walkthrough .lbl-walkthrough-scramble { overflow-wrap: anywhere; font-size: inherit; color: inherit; }
+.lbl-walkthrough .lbl-content .lbl-explanation :is(p, code) { font-size: var(--lbl-text-body); }
+.lbl-walkthrough .lbl-walkthrough-action { font-weight: 700; }
+
+.lbl-walkthrough .lbl-walkthrough-chapter { color: var(--accent); }

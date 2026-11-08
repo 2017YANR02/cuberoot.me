@@ -24,10 +24,10 @@ export const INSTRUCTION_PHASES: Record<string, InstructionPhase[][]> = {
     phase('做“上上”归位', 'Turn the right face twice to insert it', 2),
   ]],
   corners: [
-    [phase('转顶层，把这个角另一侧的非白色格朝前', 'Turn the top to face the corner’s other side sticker forward', 1), phase('同时转下面两层，让它与同色中心对齐', 'Turn the lower two layers together to match it with its center', 2), phase('做右公式', 'do the right trigger', 3, 6)],
+    [phase('白朝右，放右前', 'White faces right. Place the corner at front-right', 1), phase('转下面两层，让目标位置处于正下方', 'Turn the lower two layers to put the target slot directly below the corner', 2), phase('做右公式', 'do the right trigger', 3, 6)],
     [phase('先转体把它放右前方', 'Rotate the whole cube to put it at bottom-front-right', 1), phase('做右公式取出', 'eject it with the right trigger', 2, 5)],
-    [phase('转顶层，把这个角另一侧的非白色格朝前', 'Turn the top to face the corner’s other side sticker forward', 1), phase('同时转下面两层，让它与同色中心对齐', 'Turn the lower two layers together to match it with its center', 2), phase('做左公式', 'do the left trigger', 3, 6)],
-    [phase('转顶层把白角放右前上方', 'Turn the top to put the corner at top-front-right', 1), phase('转下面两层，让角心交叉对齐', 'Turn the lower two layers together to cross-match the colors', 2), phase('做三遍右公式', 'Do the right trigger three times', 3, 14)],
+    [phase('白朝左，放左前', 'White faces left. Place the corner at front-left', 1), phase('转下面两层，让目标位置处于正下方', 'Turn the lower two layers to put the target slot directly below the corner', 2), phase('做左公式', 'do the left trigger', 3, 6)],
+    [phase('转顶层把白角放右前上方', 'Turn the top to put the corner at top-front-right', 1), phase('转下面两层，让目标位置处于正下方', 'Turn the lower two layers to put the target slot directly below the corner', 2), phase('做三遍右公式', 'Do the right trigger three times', 3, 14)],
   ],
   middle: [
     [], // Arrow-separated insert flows use the existing alg groups directly.
