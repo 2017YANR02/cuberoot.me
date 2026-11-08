@@ -1,5 +1,16 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-11-08：iOS APNs 本地配置检查与凭据清单（本地实现，未发布）
+
+实现与配置说明已本地提交 `c40dd383aa`。本轮只补 API 服务端的离线工具，未向 iOS 构建注入私钥；既有 APNs 配置门禁抽为同包纯函数，由运行时与检查器共用，保持发送行为不变。
+
+- 新增 `pnpm --filter @cuberoot/server apns:check`，支持 `--push-env-file` 显式读取 API `.env` 或被忽略的 `.env.apns.local`；只选取 APNs 五项，环境变量优先，不执行配置文件或启动 API/worker。默认未配置可报告 disabled/missing；`--require-enabled` 要求双开关和完整凭据，半组配置、无效开关、未知 APNs 字段、topic/环境或不合格私钥均失败。
+- 私钥检查限于当前本地进程：文件可读、大小受限、Unix owner-only 权限、未加密 EC P-256 和本地签名/验签。不打印 Team ID、Key ID、路径、内容或签名，不生成 provider JWT、不请求 APNs。`--environment` 只声明期望环境；key 的 Apple 授权、是否撤销、团队/topic/环境范围、部署进程读取权限均不能由此证明。
+- 本轮实际检查本机 API `.env` 与当前环境：`RECORD_PUSH_ENABLED`、`APNS_ENABLED`、`APNS_TEAM_ID`、`APNS_KEY_ID`、`APNS_PRIVATE_KEY_PATH` 五项均缺失，未读取任何真实 APNs 私钥；production 的 `--require-enabled` 正确失败。需要准备 APNs 授权 key 的 Team ID、Key ID、受保护 `.p8` 文件路径，联调具备隔离条件后再启用两个开关。完整[变量与使用清单](record-notification-setup.md#apns-本地离线检查与凭据清单)已补齐；本轮未重查服务器或 Apple 控制台，不推断它们已配置。
+- 源码签名环境核对：Xcode Debug/Release 仍同为 `me.cuberoot.app`，`APNS_ENVIRONMENT` 分别为 development/production，写入 entitlement 与 Info.plist；Swift 映射到 sandbox/production。未重新签名、导出或验最终产物，不能把源码一致写成签名环境验收。
+- 验证：新增离线检查 6 项与既有 APNs 传输 4 项共 10 项通过（临时合成私钥与本地传输 fixture）；API typecheck、检查脚本独立类型检查通过。实际 pnpm 文件参数入口、必需配置失败退出、私有配置 ignore 和 diff 检查通过；独立审阅确认无凭据输出或运行时门禁漂移。
+- 用户要求继续跳过真机。本轮无安装、真实推送、生产配置/数据库变更、部署或 push；未重跑无变化的原生构建。Apple 授权、最终签名产物、真实送达和点击仍待验收，总体继续 **NOT COMPLETE**。
+
 ### 2026-11-08：Android 推送 CI 注入与本地配置检查（本地实现，未发布）
 
 实现与配置说明已本地提交 `e1916722f4`；本节记录该批验证与剩余配置，不代表已推送或发布。
