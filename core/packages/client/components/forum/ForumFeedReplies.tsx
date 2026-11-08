@@ -68,7 +68,7 @@ export default function ForumFeedReplies({ threadId, open, onCollapse }: {
   const nextPage = data ? data.page + 1 : 1;
 
   return (
-    <div className="community-feed-replies" hidden={!open} aria-busy={busy}>
+    <div className="community-feed-replies" aria-busy={busy}>
       {posts.map(post => {
         const author = data?.authors[post.authorId];
         const name = ownerDisplayName(post.authorId, author?.name || post.authorName, lang === 'zh');

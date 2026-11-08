@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { ChevronDown, ChevronRight, Heart, MessageCircle } from '@app-foundation/icons/lucide';
+import { ChevronRight, Heart, MessageCircle } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -141,11 +141,13 @@ export function ForumFeedList({ threads, compact = false, sort = 'latest' }: { t
                   <Heart className="community-feed-heart" size={14} aria-hidden="true" />
                   <span className="community-feed-count" aria-hidden="true">{reactionCount > 0 ? formatCount(reactionCount, lang) : ''}</span>
                 </button>
-                {compact ? <Link
+                {compact || thread.replyCount === 0 ? <Link
                   href={`/forum/t/${thread.id}`}
                   prefetch={false}
                   className="community-feed-meta-action"
-                  aria-label={tr({ zh: `查看 ${thread.replyCount} 条回复`, en: `View ${thread.replyCount} replies` })}
+                  aria-label={thread.replyCount === 0
+                    ? tr({ zh: '回复', en: 'Reply' })
+                    : tr({ zh: `查看 ${thread.replyCount} 条回复`, en: `View ${thread.replyCount} replies` })}
                 >
                   <MessageCircle size={14} aria-hidden="true" />
                   <span className="community-feed-count" aria-hidden="true">{thread.replyCount > 0 ? formatCount(thread.replyCount, lang) : ''}</span>
@@ -160,19 +162,27 @@ export function ForumFeedList({ threads, compact = false, sort = 'latest' }: { t
                 >
                   <MessageCircle size={14} aria-hidden="true" />
                   <span className="community-feed-count" aria-hidden="true">{thread.replyCount > 0 ? formatCount(thread.replyCount, lang) : ''}</span>
-                  {expanded[thread.id] ? <ChevronDown size={12} aria-hidden="true" /> : <ChevronRight size={12} aria-hidden="true" />}
+                  <ChevronRight className="community-feed-reply-chevron" size={12} aria-hidden="true" />
                 </button>}
               </div>
-              {!compact && <div id={`${repliesId}-${thread.id}`} hidden={!expanded[thread.id]}>
-                {expanded[thread.id] !== undefined && <ForumFeedReplies
-                  key={`${thread.id}:${ownerKey}:${isAdmin}`}
-                  threadId={thread.id}
-                  open={!!expanded[thread.id]}
-                  onCollapse={() => {
-                    setExpanded(previous => ({ ...previous, [thread.id]: false }));
-                    document.getElementById(`${repliesId}-trigger-${thread.id}`)?.focus({ preventScroll: true });
-                  }}
-                />}
+              {!compact && thread.replyCount > 0 && <div
+                id={`${repliesId}-${thread.id}`}
+                className="community-feed-replies-panel"
+                data-open={!!expanded[thread.id]}
+                aria-hidden={!expanded[thread.id]}
+                inert={!expanded[thread.id]}
+              >
+                <div className="community-feed-replies-clip">
+                  {expanded[thread.id] !== undefined && <ForumFeedReplies
+                    key={`${thread.id}:${ownerKey}:${isAdmin}`}
+                    threadId={thread.id}
+                    open={!!expanded[thread.id]}
+                    onCollapse={() => {
+                      setExpanded(previous => ({ ...previous, [thread.id]: false }));
+                      document.getElementById(`${repliesId}-trigger-${thread.id}`)?.focus({ preventScroll: true });
+                    }}
+                  />}
+                </div>
               </div>}
             </div>
           </article>
