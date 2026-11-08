@@ -30,26 +30,26 @@ export function ForumHeader({ activeView, children }: { activeView: 'feed' | 'bo
         </div>
       </div>
       <div className="forum-view-toolbar">
-        <nav className="forum-view-nav" aria-label={tr({ zh: '论坛视图', en: 'Forum views' })}>
-          <Link href="/forum/feed" prefetch={false} aria-current={activeView === 'feed' ? 'page' : undefined}>
-            <T zh="动态" en="Feed" />
-          </Link>
-          <Link href="/forum" prefetch={false} aria-current={activeView === 'boards' ? 'page' : undefined}>
-            <T zh="版块" en="Boards" />
-          </Link>
-          <Link href="/forum/mine" prefetch={false} aria-current={activeView === 'mine' ? 'page' : undefined}>
-            <T zh="我的" en="Mine" />
-          </Link>
-        </nav>
-        <div className="forum-view-tools">
+        <div className="forum-view-primary">
+          <nav className="forum-view-nav" aria-label={tr({ zh: '论坛视图', en: 'Forum views' })}>
+            <Link href="/forum/feed" prefetch={false} aria-current={activeView === 'feed' ? 'page' : undefined}>
+              <T zh="动态" en="Feed" />
+            </Link>
+            <Link href="/forum" prefetch={false} aria-current={activeView === 'boards' ? 'page' : undefined}>
+              <T zh="版块" en="Boards" />
+            </Link>
+            <Link href="/forum/mine" prefetch={false} aria-current={activeView === 'mine' ? 'page' : undefined}>
+              <T zh="我的" en="Mine" />
+            </Link>
+          </nav>
           {isAdmin && (
             <Link href="/forum/review" prefetch={false} className="forum-review-link">
               <ShieldCheck size={15} aria-hidden="true" />
               <T zh="审核" en="Review" />
             </Link>
           )}
-          {children}
         </div>
+        {children && <div className="forum-view-tools">{children}</div>}
       </div>
     </>
   );

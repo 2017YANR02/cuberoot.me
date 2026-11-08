@@ -48,7 +48,7 @@
   flex-wrap: wrap;
   gap: 5px;
   color: var(--faint-foreground);
-  font-size: 0.74rem;
+  font-size: var(--forum-type-meta, 0.74rem);
 }
 
 .community-feed-author,
@@ -57,7 +57,7 @@
   text-decoration: none;
 }
 
-.community-feed-author { font-weight: 600; color: var(--foreground); }
+.community-feed-author { font-weight: var(--forum-title-weight, 600); color: var(--foreground); }
 .community-feed-author:hover,
 .community-feed-board:hover { color: var(--accent); }
 
@@ -85,9 +85,9 @@
   max-width: 100%;
   margin-top: 5px;
   color: var(--foreground);
-  font-size: 1.02rem;
-  line-height: 1.35;
-  font-weight: 650;
+  font-size: var(--forum-type-title, 1.02rem);
+  line-height: 1.5;
+  font-weight: var(--forum-title-weight, 650);
   text-decoration: none;
   overflow-wrap: anywhere;
 }
@@ -101,8 +101,8 @@
   overflow: hidden;
   margin: 6px 0 0;
   color: var(--muted-foreground);
-  font-size: 0.88rem;
-  line-height: 1.55;
+  font-size: var(--forum-type-body, 0.88rem);
+  line-height: 1.6;
   overflow-wrap: anywhere;
 }
 
@@ -153,7 +153,7 @@
   gap: 12px;
   margin-top: 9px;
   color: var(--faint-foreground);
-  font-size: 0.74rem;
+  font-size: var(--forum-type-meta, 0.74rem);
 }
 
 .community-feed-meta > span,
@@ -252,7 +252,7 @@
 
 .community-feed-reply { padding: 0 0 16px; }
 .community-feed-reply .community-feed-byline { margin-bottom: 4px; }
-.community-feed-reply .forum-post-body { font-size: 0.86rem; }
+.community-feed-reply .forum-post-body { font-size: var(--forum-type-body, 0.86rem); }
 
 .content-skeleton.community-feed-reply-skeleton { padding: 0 0 16px; }
 
@@ -263,7 +263,7 @@
   flex-wrap: wrap;
   gap: 12px;
   color: var(--muted-foreground);
-  font-size: 0.78rem;
+  font-size: var(--forum-type-meta, 0.78rem);
 }
 
 .community-feed-replies-notice { margin: 0 0 12px; }
@@ -301,8 +301,8 @@
 @media (max-width: 480px) {
   .community-feed-item { grid-template-columns: 32px minmax(0, 1fr); gap: 10px; }
   .community-feed-avatar { width: 32px; height: 32px; font-size: 0.75rem; }
-  .community-feed-title { font-size: 0.96rem; }
-  .community-feed-excerpt { font-size: 0.84rem; -webkit-line-clamp: 2; }
+  .community-feed-title { font-size: var(--forum-type-title, 0.96rem); }
+  .community-feed-excerpt { font-size: var(--forum-type-body, 0.84rem); -webkit-line-clamp: 2; }
   .community-feed-meta { gap: 11px; }
   .community-feed-images { border-radius: 8px; }
   .forum-feed-preview { margin-bottom: 2.5rem; }
