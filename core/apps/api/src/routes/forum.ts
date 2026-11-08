@@ -1199,13 +1199,17 @@ forumRoutes.get('/forum/feed', async (c) => {
   const page = posInt(c.req.query('page'), 1, 1, 100000);
   const size = posInt(c.req.query('size'), 20, 1, 50);
   const orderBy = sort === 'latest' ? 't.created_at DESC' : 't.last_post_at DESC';
+  const forumSlug = (c.req.query('forum') ?? '').trim();
+  const filterParams = forumSlug ? [forumSlug] : [];
+  const where = `NOT t.is_deleted AND t.status = 'approved'${forumSlug ? ' AND t.forum_id = (SELECT id FROM forum_forums WHERE slug = ?)' : ''}`;
 
   const totals = await query<{ n: number }>(
     `SELECT COUNT(*)::int AS n FROM forum_threads t
-     WHERE NOT t.is_deleted AND t.status = 'approved' AND EXISTS (
+     WHERE ${where} AND EXISTS (
        SELECT 1 FROM forum_posts p
        WHERE p.thread_id = t.id AND NOT p.is_deleted AND p.status = 'approved'
      )`,
+    filterParams,
   );
   const rows = await query<ThreadRow & { first_post_id: string; first_post_content: string }>(
     `SELECT ${THREAD_COLS}, f.slug AS forum_slug, f.name_en AS forum_name_en, f.name_zh AS forum_name_zh,
@@ -1217,9 +1221,9 @@ forumRoutes.get('/forum/feed', async (c) => {
        WHERE p.thread_id = t.id AND NOT p.is_deleted AND p.status = 'approved'
        ORDER BY p.id LIMIT 1
      ) fp ON TRUE
-     WHERE NOT t.is_deleted AND t.status = 'approved'
+     WHERE ${where}
      ORDER BY ${orderBy}, t.id DESC LIMIT ? OFFSET ?`,
-    [size, (page - 1) * size],
+    [...filterParams, size, (page - 1) * size],
   );
   const viewer = await authenticateUser(c.req.header('Authorization')).catch(() => null);
 

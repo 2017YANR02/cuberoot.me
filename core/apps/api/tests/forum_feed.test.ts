@@ -152,4 +152,29 @@ describe('forum activity feed', () => {
     expect(await response.json()).toEqual({ error: 'sort must be active or latest' });
     expect(queryMock).not.toHaveBeenCalled();
   });
+
+  it.each(['active', 'latest'])('filters both totals and paginated rows by board with %s ordering', async (sort) => {
+    queryMock.mockResolvedValueOnce([{ n: 14 }]).mockResolvedValueOnce([]);
+    const response = await forumRoutes.request(`/forum/feed?forum=general&sort=${sort}&page=2&size=10`);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ total: 14, page: 2, size: 10, sort });
+    for (const [sql] of queryMock.mock.calls.slice(0, 2)) {
+      expect(sql).toContain('t.forum_id = (SELECT id FROM forum_forums WHERE slug = ?)');
+      expect(sql).toContain("NOT t.is_deleted AND t.status = 'approved'");
+    }
+    expect(queryMock.mock.calls[0][1]).toEqual(['general']);
+    expect(queryMock.mock.calls[1][1]).toEqual(['general', 10, 10]);
+    expect(queryMock.mock.calls[1][0]).toContain(`ORDER BY t.${sort === 'latest' ? 'created_at' : 'last_post_at'} DESC`);
+  });
+
+  it('keeps an unknown board as a bound filter instead of falling back to all boards', async () => {
+    queryMock.mockResolvedValueOnce([{ n: 0 }]).mockResolvedValueOnce([]);
+    const slug = "missing' OR 1=1 --";
+    const response = await forumRoutes.request(`/forum/feed?forum=${encodeURIComponent(slug)}`);
+    expect(await response.json()).toMatchObject({ threads: [], total: 0 });
+    expect(queryMock.mock.calls[0][1]).toEqual([slug]);
+    expect(queryMock.mock.calls[1][1]).toEqual([slug, 20, 0]);
+    expect(queryMock.mock.calls[0][0]).not.toContain(slug);
+    expect(queryMock.mock.calls[1][0]).not.toContain(slug);
+  });
 });
