@@ -19,7 +19,7 @@ import { renderPyraminxDuoSvg, DUO_SVG_ASPECT } from '@cuberoot/puzzle-render-co
 import { renderMagicSvg, magicSvgAspect } from '@cuberoot/puzzle-render-core/magic-svg';
 import { renderSphereScrambleSvg } from '@cuberoot/puzzle-render-core/sphere-svg';
 import { renderNativePuzzleSvg, nativePuzzleSvgAspect } from '@cuberoot/puzzle-render-core/native-puzzle-svg';
-import { isNativePuzzleId, type NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
+import { isPgInteractionPuzzleId, type PgInteractionPuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { rediScrambleForCubing, toCubingKilominx } from '@cuberoot/shared/timer';
 
 export interface TimerScramblePreviewProps {
@@ -71,7 +71,7 @@ interface PuzzleSpec {
   /** cubing.js puzzle id (only used when we go through TwistyPlayer). */
   cubingPuzzle: string | null;
   /** Inline SVG renderer; overrides TwistyPlayer when present. */
-  inlineSvg?: 'ivy' | 'sq1' | 'mega' | 'pyraminx_duo' | 'magic' | 'mmagic' | 'sphere' | NativePuzzleId;
+  inlineSvg?: 'ivy' | 'sq1' | 'mega' | 'pyraminx_duo' | 'magic' | 'mmagic' | 'sphere' | PgInteractionPuzzleId;
   /** Unit multipliers for width/height (units of `size`). */
   w: number;
   h: number;
@@ -83,7 +83,7 @@ interface PuzzleSpec {
  * through to the underlying NxN cube — the scramble alg is identical.
  */
 function planFor(event: string): PuzzleSpec | null {
-  if (isNativePuzzleId(event)) {
+  if (isPgInteractionPuzzleId(event)) {
     return { cubingPuzzle: null, inlineSvg: event, w: 9 * nativePuzzleSvgAspect(event), h: 9 };
   }
   switch (event) {
@@ -138,7 +138,7 @@ function inlinePreviewSvg(plan: PuzzleSpec | null, scramble: string): string | n
       if (plan.inlineSvg === 'pyraminx_duo') return renderPyraminxDuoSvg(scramble ?? '');
       if (plan.inlineSvg === 'magic' || plan.inlineSvg === 'mmagic') return renderMagicSvg(plan.inlineSvg, scramble ?? '');
       if (plan.inlineSvg === 'sphere') return renderSphereScrambleSvg(scramble ?? '');
-      if (isNativePuzzleId(plan.inlineSvg)) return renderNativePuzzleSvg(plan.inlineSvg, scramble ?? '');
+      if (isPgInteractionPuzzleId(plan.inlineSvg)) return renderNativePuzzleSvg(plan.inlineSvg, scramble ?? '');
     } catch (err) {
       console.warn(`[CubingPreview] ${plan.inlineSvg} render failed`, err);
     }

@@ -2,7 +2,7 @@
  * Keep the loader identity: Kilominx's loader also masks non-corner orbits, so
  * replacing it with its raw PuzzleGeometry description changes the puzzle.
  */
-export const TWISTY_PUZZLES = ['pyraminx', 'skewb', 'megaminx', 'fto', 'kilominx'] as const;
+export const TWISTY_PUZZLES = ['pyraminx', 'skewb', 'megaminx', 'fto', 'kilominx', 'baby_fto'] as const;
 
 export type TwistyPuzzle = typeof TWISTY_PUZZLES[number];
 

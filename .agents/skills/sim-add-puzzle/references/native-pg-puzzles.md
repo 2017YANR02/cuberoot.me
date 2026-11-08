@@ -5,6 +5,7 @@
 ## 目录
 
 - [共享入口](#共享入口)
+- [Baby FTO](#baby-fto)
 - [已核证的结构来源](#已核证的结构来源)
 - [可见几何与 SVG](#可见几何与-svg)
 - [深度与原生记号](#深度与原生记号)
@@ -14,12 +15,14 @@
 - [机制审查记录](#机制审查记录)
 - [Cat’s Cradle](#cats-cradle)
 - [Radio Canon](#radio-canon)
+- [Radiolarian 3](#radiolarian-3)
 
 ## 共享入口
 
 | 职责 | 源文件与公开 API |
 | --- | --- |
 | 项目描述、轴、名称、徽标、图示比例、纯打乱 | `packages/puzzle-solvers/src/native-puzzles.ts`：`NATIVE_PUZZLES`、`NATIVE_PUZZLE_IDS`、`nativePuzzleMoves`、`generateNativePuzzleScramble` |
+| 具名 loader 的 PG 交互能力 | 同文件的 `NAMED_PG_PUZZLES`、`INTERACTIVE_PG_PUZZLES`、`isPgInteractionPuzzleId`；保持上游打乱项目不进入 `NATIVE_PUZZLE_IDS` |
 | 原生状态与有界完整记号 | `packages/puzzle-solvers/src/native-puzzle-model.ts`：`nativePuzzleKPuzzle`、`parseNativePuzzleAlg` |
 | 完整展开图 | `packages/puzzle-render-core/src/native-puzzle-svg.ts`：`renderNativePuzzleSvg`、`nativePuzzleSvgAspect` |
 | 模拟器项目与手动操作 | `packages/client/app/[lang]/sim/pgCatalog.ts`、`packages/client/components/TwistySection.tsx` 及其同目录 `NativePuzzleControls.tsx` |
@@ -32,6 +35,16 @@
 - 让普通与种子打乱共用注入随机源的纯生成器，只读取注册表，不在生成路径构建几何、DOM 或图示；说明有界随机转动策略，不宣称均匀随机状态或伪造 csTimer 项目键。
 - Timer 来源显示按 `timerScrambleCapability(event)` 的实际 provider 派生：`native-random-move` 即使沿用全局 WCA 偏好，也显示练习用随机转动并同步打印文案，保留手动来源，不改全局偏好；来源菜单隐藏不可用 WCA 选项，比赛配置按 `timerSupportsRealWcaScrambles(event)` 门控。核对重新进入页面、切回 WCA 项目与训练子项目，不能只验证公式和 SVG 正确。
 - 按 [跨页面接入与验收](integration-and-verification.md) 补齐生成页三个模式、Timer 外层分发及 PDF 比例；不要以项目出现在菜单中替代实际消费验证。
+
+## Baby FTO
+
+- 沿用独立项目 ID `baby_fto`、双语名称“二阶 FTO / Baby FTO”和既有 `unofficial-baby_fto` 图标；保留原有 `skewbdiamond` 项目及其记录，不再创建 `fto2` 别名项目。
+- 以 [cubing.js 的 BabyFTOPuzzleLoader](https://github.com/cubing/cubing.js/blob/main/src/cubing/puzzles/implementations/baby_fto/index.ts) 为模型基准；在播放器传入具名 `baby_fto`，保留其专用 SVG、键位及 `CENTERS.orientationMod = 1`，不要用裸 `o f 0` 播放器替换。同步共享模型时先按 `ExperimentalPGNotation` 重映射定义，并与已安装版本的具名 KPuzzle 逐动作核对。
+- 按正八面体穿心面切 `o f 0` 核对八个面各四个三角形、六个四贴片角块及八个单贴片中心；从 48 条原始 PG 数据去除中心朝向重复轮廓，保留 32 个可见区域。用 `U/F/R/L/D/B/BR/BL` 的正反 120° 面转验证方向、三次周期、混合序列和真实 PG3D 中间帧。
+- 将 Baby FTO 纳入 `INTERACTIVE_PG_PUZZLES`，复用有界解析、手动操作、原生追加、拖转与二维伴图；保持 `NATIVE_PUZZLES` 和 `NATIVE_PUZZLE_IDS` 仅登记自有随机转动项目。完整输入按具名模型校验，保留 `BR/BL`、合法整体转和分组，不对多字母面名套三阶自动空格，也不以旧静态网图的五生成元限制输入。
+- 在生成页、Timer 与 PDF 共用 `renderNativePuzzleSvg('baby_fto', alg)` 和对应比例，覆盖全部八个面及任意合法输入；按静态 PG 展开图实际的近方形包络设定比例，不套用具名 loader 横向 SVG 的比例。在二维回退中仍使用具名 loader 的 SVG 与当前播放帧，独立验证导出和分享重建。
+- 普通打乱调用上游 `randomScrambleForEvent('baby_fto')`；Timer 使用 `cubing` provider，确定性打乱通过 `generateSeededTimerScrambleAsync` 调用上游派生 API，锁定 UTF-8 种子散列、派生版本及序号路径，保留既有同步项目的序列。用真实上游调用检查同种同序号重现、不同序号变化和模型可执行性；保持非 WCA 来源文案与独立会话，csTimer 导出用 `input` 并保留 `cuberootEvent`。
+- 运行 `baby-fto-simulator.test.ts` 及受影响的原生交互、SVG、Timer 契约；实际浏览器分别验三维贴片拖转、空白旋转、播放中间帧和强制无 WebGL 的二维手动/播放/分享，不能以二维通过代替三维验收。
 
 ## 已核证的结构来源
 
@@ -60,6 +73,7 @@
 | `cube3heli` | 三阶＋直升机 / 3×3 + Helicopter | `c f 0.333333333333333 e 0.7071067811865476` | 根据 [cubing.js 官方 pgPuzzles.ts](https://github.com/cubing/cubing.js/blob/main/src/cubing/puzzle-geometry/pgPuzzles.ts) 的独立 `3x3x3`、`helicopter` 预设及 [Jaap 的平面棱转说明](https://www.jaapsch.net/puzzles/helicopter.htm)，组合均匀三阶面切与 Helicopter 棱切；以立方体半边长 1 推导面切 ±1/3、棱切 ±√2/2。支持保形 90° 面转及 180° 棱转，不包含 jumbling，不宣称精确复刻 Grégoire Pfennig 的 Helicopter 3×3 实物切深。 |
 | `radiojewel` | Radio Jewel / Radio Jewel | `i f 0.5278640450004204` | 按 [Jason Smith 的 Radiolarian 7 原作](https://www.puzzleforge.com/wp/2012/11/06/radiolarian-7-radio-jewel-112012/)和 [Hyperspeedcube 的 radio07 实现](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua)，取内切球半径 1、面切深 5−2√5；核对原作照片的中央六边形与十五个三角形，以及[实体规格的 242 个外露块](https://cubein.cn/products/radio-jewel-radiolarian-7)。保留二十色和保形 120° 面转，不包含实物的两种 jumbling，不宣称测量复刻商品尺寸。 |
 | `radiocanon` | Radio Canon / Radio Canon | `i f 0.77` | 按 [Jason Smith 的 Radiolarian 1.5 原作](https://www.puzzleforge.com/wp/2014/05/08/radiolarian-1-5-the-radio-cannon-52014/)核对固定面中心及实物分区，采用 [Hyperspeedcube 的 `radio01_5` 切深](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua) 0.77；这是已知模拟器的理想化平面模型，不是商品尺寸测量值。保留标准 120° 面转，不包含 jumbling。 |
+| `radiolarian3` | Radiolarian 3 / Radiolarian 3 | `i f 0.6944271909999159` | 按 [Jason Smith 的 Radiolarian 3 原作](https://www.puzzleforge.com/wp/2010/03/08/132/)核对更深面切及可移动中心，采用 [Hyperspeedcube 的 `radio03` 切深](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua) `1−(1−1/φ)×4/5 = (2√5−1)/5`；每面保留十个三角形、三个四边形及三个五边形，仅支持保形 120° 面转。 |
 
 把拼图描述视为几何数据；Dino Skewb、3×3 + Dino 与 3×3 + Helicopter 的组合描述由已核证的两类切面推导，不标注成上游预设中逐字复制的条目。
 
@@ -230,3 +244,12 @@
 - 从独立面中心定位二十个中央三角。核对不同面法向点积的最大值为 `√5/3 < 0.77`，并逐外层面转及逆转检查所有中央三角置换保持恒等；转动面的单色中心允许不可辨自转。固定中心不意味着内层转动或整体转体的中心置换也恒等。
 - 复用二十面轴、120° 基本转角及 `A/2A/Aw/Av` 记号，检查宽转组合、对侧中层反向别名和非法层拒绝。遍历全部手动层及整体转体的独立刚体终态与五进度切面分离；对真实 PG3D 在 `0/0.2/0.5/0.8/1` 逐手动层核对正反转动及播放方向，同时单独记录浏览器能否实测 3D 拖层。
 - 让三入口共用 60 步练习用随机转动和完整 SVG，沿用保形转动、不含 jumbling 的双语说明。csTimer 导出用 `input` 并保留 `cuberootEvent`；导入兼容 Radio Canon、Radio Cannon、Radiolarian 1.5，并保留小数点和词边界，拒绝将 Radiolarian 15、1.50 或 Radio Canonical 误归本项目。
+
+## Radiolarian 3
+
+- 将 `radiolarian3` 注册为 Jason Smith 的 Radiolarian 3，中英文沿用原名；以内切球半径 1 使用 `h = 1−(1−1/φ)×4/5 = (2√5−1)/5`，不要将相邻 Radiolarian 的切深或固定中心机制复制过来。
+- 在注册前从 `core/` 运行 `node packages/client/scripts/native-puzzles/compare-outlines.mjs --set=radiolarian3`，对照原作照片、单面切线和完整二十面展开图；黑色 Circo-Radiolarian 线仅作比较，不保留为新模型切面。
+- 从独立正二十面体半空间重导每面的十个三角形、三个四边形和三个五边形；从 360 条原生数据排除 40 个中心朝向重复片，保留 320 个可见贴片、182 个可见块。核对 `C5RNER(12,5)`、`EDGES(60,2)`、`CENTERS(60,1)`、`EDGES2(30,2)`、`CENTERS2(20,3)`，不要以和 Radio Canon 相同的统计值替代分区验证。
+- 从独立面法向定位二十个中央三角，利用 `h < √5/3` 选择每个转面附近的三个中心，并逐面、逐正反方向核对其 120° 循环置换；同时以 Radio Canon 的外层中心置换恒等作负例。区分中心位置移动与单色中心不可辨的自转。
+- 复用二十面轴、120° 基本转角及 `A/2A/Aw/Av` 记号，验证宽转组合、对侧中层反向别名与非法层拒绝；对全部手动层及整体转体独立检查刚体终态和五个进度的切面分离，再分别验证真实 PG3D 中间矩阵、拖转选层和浏览器交互。
+- 让三入口共用 60 步练习用随机转动、完整二十面 SVG 与独立计时记录；核对普通／种子打乱、生成页比赛／批量／输入、PDF 和 csTimer 导入导出，保留 `cuberootEvent` 与非 WCA 来源说明，不宣称均匀随机状态。按实际环境分别记录三维浏览器验收和二维回退验收。

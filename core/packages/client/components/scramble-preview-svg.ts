@@ -38,7 +38,7 @@ import { renderPyraminxDuoSvg } from '@cuberoot/puzzle-render-core/pyraminx-duo-
 import { renderMagicSvg } from '@cuberoot/puzzle-render-core/magic-svg';
 import { renderSphereScrambleSvg } from '@cuberoot/puzzle-render-core/sphere-svg';
 import { renderNativePuzzleSvg, renderPuzzleGeometrySvg } from '@cuberoot/puzzle-render-core/native-puzzle-svg';
-import { NATIVE_PUZZLE_IDS, isNativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
+import { NATIVE_PUZZLE_IDS, isPgInteractionPuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import {
   eventToCubeSize,
 } from '@cuberoot/shared/cube-unfolded-svg';
@@ -89,7 +89,7 @@ export function renderScramblePreviewSvg({
     if (puzzleDescription) return renderPuzzleGeometrySvg({ id: event, description: puzzleDescription }, scramble);
     if (event === 'mirror_333') return renderMirrorBlocksScrambleSvg(scramble);
     if (event === 'sphere') return renderSphereScrambleSvg(scramble);
-    if (isNativePuzzleId(eff)) return renderNativePuzzleSvg(eff, scramble);
+    if (isPgInteractionPuzzleId(eff)) return renderNativePuzzleSvg(eff, scramble);
     if (eff === 'pyraminx_duo') return renderPyraminxDuoSvg(scramble);
     if (eff === 'magic' || eff === 'mmagic') return renderMagicSvg(eff, scramble);
     const wca = renderWcaPreviewSvg({ event: eff, scramble, clockColors, sq1Colors, megaColors, mask });

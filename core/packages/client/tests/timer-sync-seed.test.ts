@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { generateSeededTimerScramble } from '@cuberoot/shared/timer/seeded/generate';
+import { generateSeededTimerScramble, generateSeededTimerScrambleAsync } from '@cuberoot/shared/timer/seeded/generate';
+import { puzzles } from 'cubing/puzzles';
 import { TIMER_SCRAMBLE_CAPABILITIES, SCRAMBLE_222_TYPES, generateTimerScramble } from '@cuberoot/shared/timer';
 import { rngFor } from '@cuberoot/shared/timer/seeded/seeded_rng';
 import { generateNativePuzzleScramble } from '@cuberoot/puzzle-solvers/native-puzzles';
@@ -12,7 +13,7 @@ describe('shared displayed seed sequence', () => {
     'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
     'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
     'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
-    'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'catscradle', 'radiocanon',
+    'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'catscradle', 'radiocanon', 'radiolarian3',
   ] as const)('%s shares one generator between ordinary and seeded requests', async (event) => {
     const ticket = { seed: 'Native 中文 seed', index: 7, revision: 0 };
     const scramble = generateNativePuzzleScramble(event, rngFor(ticket.seed, ticket.index));
@@ -29,6 +30,25 @@ describe('shared displayed seed sequence', () => {
     const sphere = generateSeededTimerScramble({ event: 'sphere', ticket });
     expect(sphere).toEqual(generateSeededTimerScramble({ event: '333', ticket }));
     expect(sphere.scramble).toMatch(/^[URFDLB][2']?(?: [URFDLB][2']?)+$/);
+  });
+  it('Baby FTO derives reproducible random states and resets without changing the sequence', async () => {
+    const request = { event: 'baby_fto' as const, ticket: { seed: 'CubeRoot 中文 seed', index: 4, revision: 0 } };
+    const first = await generateSeededTimerScrambleAsync(request);
+    const next = await generateSeededTimerScrambleAsync({ ...request, ticket: { ...request.ticket, index: 5 } });
+    const otherSeed = await generateSeededTimerScrambleAsync({ ...request, ticket: { ...request.ticket, seed: 'another seed' } });
+    expect(await generateSeededTimerScrambleAsync({ ...request, ticket: { ...request.ticket, revision: 1 } })).toEqual(first);
+    // Lock the UTF-8/root-seed/salt mapping to the pinned cubing/Twips version.
+    expect(first).toEqual({ scramble: "U L U' F R BR' R' BR F' L", caseId: null });
+    expect(next.scramble).not.toBe(first.scramble);
+    expect(otherSeed.scramble).not.toBe(first.scramble);
+    const solved = (await puzzles.baby_fto.kpuzzle()).defaultPattern();
+    for (const result of [first, next, otherSeed]) {
+      expect(solved.applyAlg(result.scramble).isIdentical(solved)).toBe(false);
+    }
+  });
+  it('keeps existing synchronous seeded generators unchanged through the worker entry point', async () => {
+    const request = { event: '333' as const, ticket: { seed: 'existing sequence', index: 7, revision: 0 } };
+    expect(await generateSeededTimerScrambleAsync(request)).toEqual(generateSeededTimerScramble(request));
   });
   it('normalizes legacy state and invalidates the same-seed reset', () => {
     const state = normalizeTimerSyncSeed({ syncSeed: 'same', syncSeedCounter: -1 });
@@ -49,11 +69,11 @@ describe('shared displayed seed sequence', () => {
     expect(mergeTimerSeedProgress(resetTimerSyncSeed(current), committed).syncSeedCounter).toBe(0);
   });
   for (const event of Object.keys(TIMER_SCRAMBLE_CAPABILITIES) as EventId[]) {
-    it(`${event}: same occurrence survives unrelated generation and warm caches`, () => {
+    it(`${event}: same occurrence survives unrelated generation and warm caches`, async () => {
       const request = { event, ticket: { seed: 'CubeRoot 中文 seed', index: 4, revision: 0 } };
-      const first = generateSeededTimerScramble(request);
-      generateSeededTimerScramble({ ...request, ticket: { ...request.ticket, index: 5 } });
-      expect(generateSeededTimerScramble(request)).toEqual(first);
+      const first = await generateSeededTimerScrambleAsync(request);
+      await generateSeededTimerScrambleAsync({ ...request, ticket: { ...request.ticket, index: 5 } });
+      expect(await generateSeededTimerScrambleAsync(request)).toEqual(first);
       expect(first.scramble.length > 0).toBe(!['custom', 'pll-chain'].includes(event));
     }, 120_000);
   }

@@ -50,6 +50,7 @@ describe('simulator puzzle families', () => {
       ['radioweb', 'icosahedron'],
       ['radiojam', 'icosahedron'],
       ['catscradle', 'icosahedron'],
+      ['radiolarian3', 'icosahedron'],
       ['cube2heli', 'hybrid-cuts'],
       ['cube3heli', 'hybrid-cuts'],
     ]) {
@@ -57,8 +58,8 @@ describe('simulator puzzle families', () => {
       expect(containing.map(group => group.id)).toEqual([family]);
       expect(containing[0].submenu).toBe(true);
     }
-    expect(groups.find(group => group.id === 'octahedron')?.options.slice(0, 4).map(option => option.value))
-      .toEqual(['fto', 'masterfto', 'masterftov2', 'fto5']);
+    expect(groups.find(group => group.id === 'octahedron')?.options.slice(0, 6).map(option => option.value))
+      .toEqual(['baby_fto', 'fto', 'masterfto', 'masterftov2', 'fto5', 'fto6']);
     expect(groups.find(group => group.id === 'icosahedron')?.options.slice(0, 2).map(option => option.value))
       .toEqual(['radiochop', 'radiocrystal']);
   });

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Move } from 'cubing/alg';
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
-import { NATIVE_PUZZLES, nativePuzzleMoves, type NativePuzzleId, type NativePuzzleMoveDepth } from '@cuberoot/puzzle-solvers/native-puzzles';
+import { INTERACTIVE_PG_PUZZLES, nativePuzzleMoves, type PgInteractionPuzzleId, type NativePuzzleMoveDepth } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { nativePuzzleKPuzzle } from '@cuberoot/puzzle-solvers/native-puzzle-model';
 import { scoreCornerTwist } from './cuberDrag';
 
@@ -21,23 +21,23 @@ interface DragMove {
 }
 
 export interface NativePuzzleDragGeometry {
-  readonly id: NativePuzzleId;
+  readonly id: PgInteractionPuzzleId;
   readonly stickers: readonly DragSticker[];
   readonly moves: readonly DragMove[];
   readonly radius: number;
 }
 
-const cache = new Map<NativePuzzleId, NativePuzzleDragGeometry>();
+const cache = new Map<PgInteractionPuzzleId, NativePuzzleDragGeometry>();
 // PG3D scales both its rendered sticker meshes and public control planes by 0.5.
 // Keep these polygons in the PG object's local coordinates, not raw PG units.
 const PG_RENDER_SCALE = 0.5;
 
 /** Native move support is spatial: PG recolors fixed slots after every completed
  * turn. No solved-piece identity or current color is used to choose a slice. */
-export function createNativePuzzleDragGeometry(id: NativePuzzleId): NativePuzzleDragGeometry {
+export function createNativePuzzleDragGeometry(id: PgInteractionPuzzleId): NativePuzzleDragGeometry {
   const cached = cache.get(id);
   if (cached) return cached;
-  const pg = getPuzzleGeometryByDesc(NATIVE_PUZZLES[id].description, {
+  const pg = getPuzzleGeometryByDesc(INTERACTIVE_PG_PUZZLES[id].description, {
     allMoves: true, orientCenters: true, addRotations: true,
   });
   const data = pg.get3d();

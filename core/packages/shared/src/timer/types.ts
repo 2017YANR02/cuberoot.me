@@ -27,12 +27,12 @@ export type EventId =
   | 'pyra' | 'skewb' | 'sq1' | 'mega' | 'clock'
   | 'magic' | 'mmagic'
   // Non-WCA puzzles (shared providers declare their generation capability).
-  | 'fto' | 'kilominx' | 'gear' | 'ivy' | 'redi' | 'mpyram' | 'pyraminx_duo' | 'superz'
+  | 'fto' | 'baby_fto' | 'kilominx' | 'gear' | 'ivy' | 'redi' | 'mpyram' | 'pyraminx_duo' | 'superz'
   | 'dogic' | 'octahedron4' | 'dinoskewb' | 'cube3dino'
   | 'lattice' | 'hyperx' | 'latticex' | 'masterbrilic' | 'masterftov2'
   | 'quadx' | 'dinoocta' | 'fto5' | 'fto6' | 'eto' | 'radiocrystal'
   | 'cube3skewb' | 'heliskewb' | 'comboctahedron' | 'circoradiolarian' | 'icosababyface'
-  | 'cube2heli' | 'cube3heli' | 'radiojewel' | 'radioweb' | 'radiojam' | 'catscradle' | 'radiocanon'
+  | 'cube2heli' | 'cube3heli' | 'radiojewel' | 'radioweb' | 'radiojam' | 'catscradle' | 'radiocanon' | 'radiolarian3'
   // Relays
   | 'r3' | 'r4' | 'r5'
   // CFOP step training
@@ -240,6 +240,7 @@ export const EVENTS: EventInfo[] = [
   // Non-WCA puzzles. Names follow wiki/glossary.json (the site's term base),
   // trimmed of the generic 「魔方」 suffix the way the WCA entries above are.
   { id: 'fto',      nameEn: 'FTO',             nameZh: '转面八面体', group: 'nonwca', icon: 'unofficial-fto' },
+  { id: 'baby_fto', nameEn: 'Baby FTO',        nameZh: '二阶 FTO',  group: 'nonwca', icon: 'unofficial-baby_fto' },
   { id: 'kilominx', nameEn: 'Kilominx',        nameZh: '二阶五魔',   group: 'nonwca', icon: 'unofficial-kilominx' },
   { id: 'gear',     nameEn: 'Gear Cube',       nameZh: '齿轮',       group: 'nonwca', icon: 'puzzle-gear' },
   { id: 'ivy',      nameEn: 'Ivy Cube',        nameZh: '枫叶',       group: 'nonwca', icon: 'unofficial-ivy' },
@@ -274,6 +275,7 @@ export const EVENTS: EventInfo[] = [
   { id: 'radiojam', nameEn: 'Radio Jam', nameZh: 'Radio Jam', group: 'nonwca', icon: 'puzzle-radiojam' },
   { id: 'catscradle', nameEn: 'Cat’s Cradle', nameZh: 'Cat’s Cradle', group: 'nonwca', icon: 'puzzle-catscradle' },
   { id: 'radiocanon', nameEn: 'Radio Canon', nameZh: 'Radio Canon', group: 'nonwca', icon: 'puzzle-radiocanon' },
+  { id: 'radiolarian3', nameEn: 'Radiolarian 3', nameZh: 'Radiolarian 3', group: 'nonwca', icon: 'puzzle-radiolarian3' },
 
   // CFOP step training
   { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字',       group: 'cfop'

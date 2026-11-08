@@ -84,7 +84,7 @@ import { cleanForPlayer, extractAlgFromText, findTokenPositions, findWhitespaceT
 import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
 import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { pgRandomScramble } from '@/lib/pg-scramble';
-import { generateNativePuzzleScramble, isNativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
+import { generateNativePuzzleScramble, isNativePuzzleId, isPgInteractionPuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { parseNativePuzzleAlg, simplifyNativePuzzleAlg } from '@cuberoot/puzzle-solvers/native-puzzle-model';
 import { cloudOptimalScramble } from '@/lib/cloud-optimal-scramble';
 import { useAuthStore } from '@/lib/auth-store';
@@ -1005,7 +1005,7 @@ export default function PlayerControls({
   // ("UFR"/"UF"/"BL" …) that auto-spacing would split mid-token. Gear's tokens are
   // single-letter too, but the WCA rules misfire on its grammar (UD/FB glue exemption,
   // suffix digits 3-6) — it gets the 'simple' variant instead of the full WCA one.
-  const algAutoSpaceSafe = puzzleKind !== 'kilominx' && !isPgMode
+  const algAutoSpaceSafe = puzzleKind !== 'kilominx' && !isPgMode && !isPgInteractionPuzzleId(puzzleKind)
     && (!corner || cornerKind === 'redi' || cornerKind === 'pyraminx' || cornerKind === 'pyraminx_duo');
   const algAutoSpace: boolean | 'simple' =
     algAutoSpaceSafe ? true : cornerKind === 'gear' ? 'simple' : false;
@@ -1233,11 +1233,11 @@ export default function PlayerControls({
   }, [algDraft, isSquarePuzzle, isIvy, corner, isTwistyMode]);
 
   const nativeSetupError = useMemo(() => {
-    if (!isNativePuzzleId(puzzleKind)) return '';
+    if (!isPgInteractionPuzzleId(puzzleKind)) return '';
     try { parseNativePuzzleAlg(puzzleKind, setupDraft); return ''; } catch (error) { return String((error as Error).message); }
   }, [puzzleKind, setupDraft]);
   const nativeAlgError = useMemo(() => {
-    if (!isNativePuzzleId(puzzleKind)) return '';
+    if (!isPgInteractionPuzzleId(puzzleKind)) return '';
     try { parseNativePuzzleAlg(puzzleKind, algDraft); return ''; } catch (error) { return String((error as Error).message); }
   }, [puzzleKind, algDraft]);
   const nativeSetupValid = !nativeSetupError;
@@ -1927,7 +1927,7 @@ export default function PlayerControls({
   // model; pyraminx/skewb/megaminx (cubing.js) can't use the cube's mod-4 fold.
   // Corner-turn engine puzzles fold via their descriptor.
   const simplifyForPuzzle = useCallback((s: string): string => {
-    if (isNativePuzzleId(puzzleKind)) {
+    if (isPgInteractionPuzzleId(puzzleKind)) {
       try { return simplifyNativePuzzleAlg(puzzleKind, s); } catch { return s; }
     }
     if (isSq1) return simplifySq1Alg(s, squareFormat);
@@ -1958,7 +1958,7 @@ export default function PlayerControls({
   }, [isSq1, squareFamilySpec, isIvy, corner, isTwistyMode, squareFormat, order, puzzleKind]);
 
   const invertForPuzzle = useCallback((s: string): string => {
-    if (isNativePuzzleId(puzzleKind)) {
+    if (isPgInteractionPuzzleId(puzzleKind)) {
       try { return parseNativePuzzleAlg(puzzleKind, s).invert().toString(); } catch { return s; }
     }
     if (corner) {
