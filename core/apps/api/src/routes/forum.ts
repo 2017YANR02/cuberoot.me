@@ -1117,6 +1117,77 @@ forumRoutes.get('/forum/latest', async (c) => {
 });
 
 // ==================== GET /v1/forum/feed ====================
+type FeedRow = ThreadRow & { first_post_id: string; first_post_content: string };
+
+async function feedThreadsJson(rows: FeedRow[], viewerKey?: string) {
+  const postIds = rows.map(r => Number(r.first_post_id));
+  const reactions = await reactionsFor(postIds);
+  const videos = await videosForPosts(postIds);
+  const authors = await authorProfilesFor(new Map(rows.map(r => [r.author_id, r.author_name])));
+  const userIds = await publicUserIdsForOwnerKeys(rows.flatMap(row => [row.author_id, row.last_post_author_id]));
+  const myReactions = viewerKey ? await reactionsByAuthor(postIds, viewerKey) : new Map<number, string>();
+  return rows.map(r => ({
+    ...threadJson(r, userIds),
+    forumSlug: r.forum_slug,
+    forumNameEn: r.forum_name_en,
+    forumNameZh: r.forum_name_zh,
+    firstPostId: Number(r.first_post_id),
+    excerpt: excerptFromMarkdown(r.first_post_content, 240),
+    imageUrls: imageUrlsFromMarkdown(r.first_post_content),
+    videos: videos.get(Number(r.first_post_id)) ?? [],
+    reactions: reactions.get(Number(r.first_post_id)) ?? [],
+    myReaction: myReactions.get(Number(r.first_post_id)) ?? null,
+    author: authors[r.author_id],
+  }));
+}
+
+// Private, viewer-scoped lists. Neither query parameters nor admin status select another owner.
+forumRoutes.get('/forum/mine', async (c) => {
+  noStore(c);
+  const viewer = await requireAuth(c);
+  const kind = c.req.query('kind') ?? 'threads';
+  if (kind !== 'threads' && kind !== 'replies') return c.json({ error: 'kind must be threads or replies' }, 400);
+  const page = posInt(c.req.query('page'), 1, 1, 100000);
+  const size = posInt(c.req.query('size'), 20, 1, 50);
+  const replies = kind === 'replies';
+  const from = `FROM forum_threads t
+    JOIN forum_forums f ON f.id = t.forum_id
+    JOIN LATERAL (
+      SELECT p.id, p.content, p.status, p.is_deleted FROM forum_posts p
+      WHERE p.thread_id = t.id ORDER BY p.id LIMIT 1
+    ) fp ON TRUE
+    ${replies ? `JOIN LATERAL (
+      SELECT p.id, p.status, p.created_at FROM forum_posts p
+      WHERE p.thread_id = t.id AND p.author_id = ? AND p.id <> fp.id AND NOT p.is_deleted
+      ORDER BY p.created_at DESC, p.id DESC LIMIT 1
+    ) mp ON TRUE` : ''}
+    WHERE NOT t.is_deleted AND NOT fp.is_deleted AND ${replies ? "(t.status = 'approved' OR t.author_id = ?) AND (fp.status = 'approved' OR t.author_id = ?)" : 't.author_id = ?'}`;
+  const params = replies ? [viewer.wcaId, viewer.wcaId, viewer.wcaId] : [viewer.wcaId];
+  const totals = await query<{ n: number }>(`SELECT COUNT(*)::int AS n ${from}`, params);
+  const ownPost = replies ? 'mp' : 'fp';
+  const rows = await query<FeedRow & { own_post_id: string; own_post_status: ReviewStatus; own_post_no: number }>(
+    `SELECT ${THREAD_COLS}, f.slug AS forum_slug, f.name_en AS forum_name_en, f.name_zh AS forum_name_zh,
+      fp.id AS first_post_id, fp.content AS first_post_content,
+      ${ownPost}.id AS own_post_id, ${ownPost}.status AS own_post_status,
+      (SELECT COUNT(*)::int FROM forum_posts p WHERE p.thread_id = t.id AND p.id <= ${ownPost}.id) AS own_post_no
+     ${from}
+     ORDER BY ${replies ? 'mp.created_at' : 't.created_at'} DESC, t.id DESC LIMIT ? OFFSET ?`,
+    [...params, size, (page - 1) * size],
+  );
+  const threads = await feedThreadsJson(rows, viewer.wcaId);
+  const canWrite = !(await forumProfileFor(viewer))?.forumBanned;
+  return c.json({
+    threads: threads.map((thread, i) => ({
+      ...thread,
+      personalPost: {
+        id: Number(rows[i].own_post_id), postNo: rows[i].own_post_no, status: rows[i].own_post_status,
+        canManage: canWrite && (isAdmin(viewer) || !rows[i].is_locked),
+      },
+    })),
+    total: totals[0]?.n ?? 0, page, size, kind,
+  });
+});
+
 // Reddit/X 式阅读流:仍以主题首帖为内容单元,复用回复、反应、审核和版块归属。
 forumRoutes.get('/forum/feed', async (c) => {
   noStore(c);
@@ -1150,28 +1221,10 @@ forumRoutes.get('/forum/feed', async (c) => {
      ORDER BY ${orderBy}, t.id DESC LIMIT ? OFFSET ?`,
     [size, (page - 1) * size],
   );
-  const postIds = rows.map((r) => Number(r.first_post_id));
-  const reactions = await reactionsFor(postIds);
-  const videos = await videosForPosts(postIds);
-  const authors = await authorProfilesFor(new Map(rows.map((r) => [r.author_id, r.author_name])));
-  const userIds = await publicUserIdsForOwnerKeys(rows.flatMap((row) => [row.author_id, row.last_post_author_id]));
   const viewer = await authenticateUser(c.req.header('Authorization')).catch(() => null);
-  const myReactions = viewer ? await reactionsByAuthor(postIds, viewer.wcaId) : new Map<number, string>();
 
   return c.json({
-    threads: rows.map((r) => ({
-      ...threadJson(r, userIds),
-      forumSlug: r.forum_slug,
-      forumNameEn: r.forum_name_en,
-      forumNameZh: r.forum_name_zh,
-      firstPostId: Number(r.first_post_id),
-      excerpt: excerptFromMarkdown(r.first_post_content, 240),
-      imageUrls: imageUrlsFromMarkdown(r.first_post_content),
-      videos: videos.get(Number(r.first_post_id)) ?? [],
-      reactions: reactions.get(Number(r.first_post_id)) ?? [],
-      myReaction: myReactions.get(Number(r.first_post_id)) ?? null,
-      author: authors[r.author_id],
-    })),
+    threads: await feedThreadsJson(rows, viewer?.wcaId),
     total: totals[0]?.n ?? 0,
     page,
     size,
