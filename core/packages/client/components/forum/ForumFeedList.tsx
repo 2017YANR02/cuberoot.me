@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
-import { ChevronRight, Heart, MessageCircle } from '@app-foundation/icons/lucide';
+import { ChevronRight, Eye, Heart, MessageCircle } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import { tr, useLang } from '@/i18n/tr';
@@ -165,6 +165,15 @@ export function ForumFeedList<T extends ForumFeedThread>({ threads, compact = fa
                   <span className="community-feed-count" aria-hidden="true">{thread.replyCount > 0 ? formatCount(thread.replyCount, lang) : ''}</span>
                   <ChevronRight className="community-feed-reply-chevron" size={12} aria-hidden="true" />
                 </button>}
+                <Link
+                  href={`/forum/t/${thread.id}`}
+                  prefetch={false}
+                  className="community-feed-meta-action"
+                  aria-label={tr({ zh: `查看主题，已有 ${thread.viewCount} 次浏览`, en: `View thread with ${thread.viewCount} views` })}
+                >
+                  <Eye size={14} aria-hidden="true" />
+                  <span className="community-feed-count" aria-hidden="true">{formatCount(thread.viewCount, lang)}</span>
+                </Link>
               </div>
               {!compact && thread.replyCount > 0 && <div
                 id={`${repliesId}-${thread.id}`}
