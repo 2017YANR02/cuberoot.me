@@ -5,7 +5,7 @@
  * 和论坛(别人回复你的主题;新主题/举报 → 管理员收)。
  * 进页即把列出的未读标记已读(红点回落),但列表仍保留「新」高亮,免得用户还没看清就被清空。
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   MessageSquare, Reply, GitBranch, LogIn, Check, MessagesSquare, Flag,
   Hourglass, CircleCheck, CircleX, Plane, BellRing, CalendarPlus, CalendarCheck,
@@ -25,6 +25,7 @@ import {
 import { refreshNotificationsUnread } from '@/lib/notifications-unread';
 import './notifications.css';
 import RecordPreferences from './_RecordPreferences';
+import CompetitionPreferences from './_CompetitionPreferences';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const KIND_ICON: Record<NotificationKind, typeof MessageSquare> = {
@@ -39,6 +40,9 @@ const KIND_ICON: Record<NotificationKind, typeof MessageSquare> = {
   forum_approved: CircleCheck,
   forum_rejected: CircleX,
   comp_reg: Plane,
+  comp_announcement: Flag,
+  comp_registration_open: CalendarPlus,
+  comp_registration_close: CalendarCheck,
   wca_record: BellRing,
   membership_payment: BellRing,
   document_change: FilePenLine,
@@ -60,6 +64,11 @@ function formatWhen(iso: string): string {
 }
 
 export default function NotificationsPage() {
+  const user = useAuthStore((s) => s.user);
+  return <NotificationsContent key={user?.uid ?? user?.wcaId ?? 'guest'} />;
+}
+
+function NotificationsContent() {
   const t = useT();
 
   const user = useAuthStore((s) => s.user);
@@ -84,6 +93,9 @@ export default function NotificationsPage() {
     forum_approved: t('审核通过', 'Approved'),
     forum_rejected: t('审核未通过', 'Declined'),
     comp_reg: t('比赛报名', 'Registration'),
+    comp_announcement: t('比赛公示', 'Competition announced'),
+    comp_registration_open: t('报名开放提醒', 'Registration opening'),
+    comp_registration_close: t('报名截止提醒', 'Registration closing'),
     wca_record: t('纪录快讯', 'Record news'),
     membership_payment: t('会员收款成功', 'Membership payment received'),
     document_change: t('文件更新', 'File update'),
@@ -96,20 +108,23 @@ export default function NotificationsPage() {
     friend_message: t('私信', 'Message'),
   }[k]);
 
-  const load = useCallback(() => {
+  useEffect(() => {
+    if (!user || !mounted) return;
+    let active = true;
     setErr(null);
     fetchNotifications(50)
       .then(async (list) => {
+        if (!active) return;
         setItems(list);
-        if (list.some((n) => !n.read)) {
-          await markNotificationsRead().catch(() => {});
-          await refreshNotificationsUnread();
+        const unreadIds = list.filter(n => !n.read).map(n => n.id);
+        if (unreadIds.length) {
+          await markNotificationsRead(unreadIds).catch(() => {});
+          if (active) await refreshNotificationsUnread();
         }
       })
-      .catch((e) => setErr(e instanceof Error ? e.message : String(e)));
-  }, []);
-
-  useEffect(() => { if (user && mounted) load(); }, [user, mounted, load]);
+      .catch((e) => { if (active) setErr(e instanceof Error ? e.message : String(e)); });
+    return () => { active = false; };
+  }, [user, mounted]);
 
   useEffect(() => {
     if (!user || !mounted) return;
@@ -170,6 +185,7 @@ export default function NotificationsPage() {
           )}
 
           <RecordPreferences key={user.uid ?? user.wcaId} />
+          <CompetitionPreferences key={`competitions:${user.uid ?? user.wcaId}`} />
           </SettingsDialog>}
           {err && <div className="ntf-error">{err}</div>}
           {!items && !err && <div className="ntf-empty"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>}

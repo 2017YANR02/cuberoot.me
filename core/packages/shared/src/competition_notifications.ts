@@ -1,4 +1,4 @@
-import { RECORD_NOTIFICATION_EVENTS } from './record_notifications.js';
+import { RECORD_NOTIFICATION_EVENTS } from '@cuberoot/shared/record-notifications';
 
 export const COMPETITION_REMINDER_MINUTES = [0, 10, 60, 1440] as const;
 export type CompetitionReminderMinutes = typeof COMPETITION_REMINDER_MINUTES[number];

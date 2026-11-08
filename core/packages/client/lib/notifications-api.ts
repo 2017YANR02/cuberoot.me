@@ -3,6 +3,7 @@ import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import i18n, { normalizeAppLang } from '@/i18n/i18n-client';
 import type { RecordNotificationPreferences } from '@cuberoot/shared/record-notifications';
+import type { CompetitionNotificationPreferences } from '@cuberoot/shared/competition-notifications';
 
 export type NotificationKind =
   | 'assistant_alert'
@@ -10,6 +11,7 @@ export type NotificationKind =
   | 'forum_thread' | 'forum_reply' | 'forum_report'
   | 'forum_review' | 'forum_approved' | 'forum_rejected'
   | 'comp_reg'
+  | 'comp_announcement' | 'comp_registration_open' | 'comp_registration_close'
   | 'wca_record'
   | 'membership_payment'
   | 'document_change'
@@ -98,6 +100,21 @@ export async function fetchRecordNotifySettings(): Promise<RecordNotifySettings>
 
 export async function saveRecordNotifySettings(preferences: RecordNotificationPreferences): Promise<void> {
   await handleApi(await sessionFetch(apiUrl('/v1/notifications/records'), {
+    method: 'PUT', headers: authHeaders(), body: JSON.stringify(preferences),
+  }));
+}
+
+export interface CompetitionNotifySettings {
+  preferences: CompetitionNotificationPreferences;
+  countries: string[];
+}
+export async function fetchCompetitionNotifySettings(): Promise<CompetitionNotifySettings> {
+  return handleApi<CompetitionNotifySettings>(await sessionFetch(apiUrl('/v1/notifications/competitions'), {
+    headers: authHeaders(false), cache: 'no-store',
+  }));
+}
+export async function saveCompetitionNotifySettings(preferences: CompetitionNotificationPreferences): Promise<void> {
+  await handleApi(await sessionFetch(apiUrl('/v1/notifications/competitions'), {
     method: 'PUT', headers: authHeaders(), body: JSON.stringify(preferences),
   }));
 }
