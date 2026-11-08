@@ -33,7 +33,7 @@ import {
 import '../../app/[lang]/wca/_wca_stats.css';
 import { tr } from '@/i18n/tr';
 import '@/i18n/i18n-client';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 interface WcaStatViewProps {
   statId: string;
@@ -242,8 +242,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
   if (loading) {
     return (
       <div className={wrapperClass}>
-        <div className="wca-stats-loading"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...'
-        })}</LoadingIndicator></div>
+        <ContentSkeleton variant="table" />
       </div>
     );
   }

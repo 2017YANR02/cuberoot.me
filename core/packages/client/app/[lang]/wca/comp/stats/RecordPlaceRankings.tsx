@@ -41,7 +41,7 @@ import {
   recordCityDisplayName,
   type RankedRecordRow,
 } from '@/lib/record-places';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 const RECORD_PAGE_SIZES = ['20', '50', '100'] as const;
 const DEFAULT_RECORD_PAGE_SIZE = RECORD_PAGE_SIZES[0];
@@ -142,7 +142,7 @@ function RecordDetailModal({ iso2, city, metric, eventIds, isZh, placeName, onCl
           {failed ? (
             <div className="cs-record-detail-state">{tr({ zh: '纪录数据暂不可用。', en: 'Record data are unavailable.' })}</div>
           ) : !shard ? (
-            <div className="cs-record-detail-state"><LoadingIndicator>{tr({ zh: '正在加载纪录…', en: 'Loading records…' })}</LoadingIndicator></div>
+            <ContentSkeleton variant="table" />
           ) : rows.length === 0 ? (
             <div className="cs-record-detail-state">{tr({ zh: '没有这类纪录。', en: 'No records of this type.' })}</div>
           ) : (
@@ -306,7 +306,7 @@ function RankingTable<T extends CountryRecordCounts>({
 }
 
 export function RecordPlaceRankings() {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const rankingRef = useRef<HTMLDivElement | null>(null);
   const [data, setData] = useState<RecordPlacesData | null>(null);
@@ -454,7 +454,7 @@ export function RecordPlaceRankings() {
       {failed ? (
         <div className="cs-empty">{tr({ zh: '纪录统计暂不可用。', en: 'Record statistics are unavailable.' })}</div>
       ) : !data ? (
-        <div className="cs-loading"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></div>
+        <ContentSkeleton variant="table" />
       ) : (
         <div ref={rankingRef} className="cs-record-ranking">
           <h3 className="sr-only">{viewLabel}</h3>

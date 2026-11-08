@@ -27,10 +27,10 @@ import '@/app/[lang]/wca/_records.css';
 import '@/components/wca-stats/wca-stats-controls.css';
 import { tr } from '@/i18n/tr';
 import { useWcaTeachers } from '@/components/WcaTeacherCell';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 const SorCensus = dynamic(() => import('@/components/wca-stats/SorCensus'), {
   ssr: false,
-  loading: () => <div className="wse-state"><LoadingIndicator /></div>,
+  loading: () => <ContentSkeleton variant="table" />,
 });
 
 interface Row extends WcaRecordRowsTableRow { cc: string }
@@ -278,8 +278,7 @@ export default function RecordsView({ embedded = false, leadingControls }: { emb
         historyLayout={show === 'mixed' ? 'mixed' : 'grouped'} />}
 
       {!sorScope && !derived && !canShowHistoryDetails && <div className="wse-table-wrapper sticky-scroll">
-        {loading && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...'
-        })}</LoadingIndicator></div>}
+        {loading && <ContentSkeleton variant="table" />}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {bundle && !loading && (
           <>

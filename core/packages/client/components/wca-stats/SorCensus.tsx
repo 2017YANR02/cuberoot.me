@@ -7,7 +7,7 @@ import { parseAsString, useQueryStates } from 'nuqs';
 import BoolToggle from '@/components/BoolToggle';
 import { Flag } from '@/components/Flag';
 import PersonLink from '@/components/PersonLink';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 import { apiUrl } from '@/lib/api-base';
 import { tr } from '@/i18n/tr';
 interface CensusRow { rank: number; wcaId: string; name: string; iso2: string | null; subsetsWon: number; }
@@ -131,7 +131,7 @@ export default function SorCensus({ type }: { type: 'single' | 'average' }) {
             </div>
           )}
           {error && <p role="alert">{tr({ zh: '统计加载失败，请刷新页面重试。', en: 'Could not load statistics. Refresh the page to retry.' })}</p>}
-          {!census && !error && <div className="sor-tool-hint"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>}
+          {!census && !error && <ContentSkeleton variant="table" />}
           {census && (
             <>
               <p className="sor-census-lead">{tr({

@@ -18,7 +18,7 @@ import type { ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 
 // 默认子视图不再串行请求第二层 chunk；其他视图仍按需加载。
 import ByEventView from './ByEventView';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 const ByCompList = lazy(() => import('./ByCompList'));
 const CompsTab = lazy(() => import('../CompsTab'));
@@ -122,7 +122,7 @@ export default function ResultsTab({ profile, results, comps, liveResults, liveC
         )}
       </div>
 
-      <Suspense fallback={<div className="wp-loading-inline"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>}>
+      <Suspense fallback={<ContentSkeleton variant="table" />}>
         {sub === 'event' && (
           <ByEventView
             profile={profile}

@@ -61,6 +61,7 @@ import {
   WCA_SINGLE_METRIC_KEYS,
   type WcaResultMetricMode,
 } from '@/lib/wca-result-metrics';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props {
@@ -115,7 +116,7 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
       return da.localeCompare(db) || wcaResultRowKey(a).localeCompare(wcaResultRowKey(b));
     }), [results, eventId, compById]);
 
-  if (!results || !comps) return <div className="wp-loading-inline"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>;
+  if (!results || !comps) return <ContentSkeleton variant="table" />;
 
   return (
     <div className="wp-byevent">
@@ -160,7 +161,7 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
           </div>
           <div className="wp-trend-block">
             <div className="wp-trend-h">{t('排名趋势', 'Rank Trend')}</div>
-            {histLoading && <div className="wp-loading-inline"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>}
+            {histLoading && <ContentSkeleton variant="table" />}
             {!histLoading && hist && hist.rows.length > 0 && (
               <RankChart hist={hist} isZh={isZh} />
             )}

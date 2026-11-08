@@ -56,6 +56,7 @@ import {
 } from '@/components/WcaTeacherCell';
 import { WcaRelationColumnHeader, teacherFilterItems } from '@/components/WcaRelationColumnHeader';
 import { wcaTeamSelectItems } from '@/components/wca-team-select-items';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { useMembership } from '@/hooks/useMembership';
 import { useRequireMembership } from '@/hooks/useRequireMembership';
@@ -69,7 +70,7 @@ type ShowMode = 'persons' | 'results';
 
 const RecordsView = dynamic(() => import('@/components/wca-records/RecordsView'), {
   ssr: false,
-  loading: () => <div className="wse-state"><LoadingIndicator /></div>,
+  loading: () => <ContentSkeleton variant="table" />,
 });
 const SorRace = dynamic(() => import('@/components/wca-stats/SorRace'), { ssr: false });
 // 单项视图(单次 / 平均)排名表上方常显的「纪录走势」bar chart race —— 复用 wr_metric 的同款组件(受控:
@@ -747,7 +748,7 @@ function AllResultsPageInner() {
           {/* ── 姓名分布 ── */}
           <h2 className="wse-section-title">{tr({ zh: '姓名分布', en: 'Name distribution' })}</h2>
           <div className="wse-table-wrapper">
-            {loading && !nameStats && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
+            {loading && !nameStats && <ContentSkeleton variant="table" />}
             {error && !nameStats && <div className="wse-state wse-state-error">Error: {error}</div>}
             {nameStats && (
               <>
@@ -803,7 +804,7 @@ function AllResultsPageInner() {
             </div>
           </div>
           <div className="wse-table-wrapper sticky-scroll">
-            {loading && !dirData && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
+            {loading && !dirData && <ContentSkeleton variant="table" />}
             {error && !dirData && <div className="wse-state wse-state-error">Error: {error}</div>}
             {dirData && (
               <>
@@ -866,7 +867,7 @@ function AllResultsPageInner() {
           </div>
 
           <div className="wse-table-wrapper sticky-scroll wse-refresh-region" aria-busy={loading}>
-            {loading && <div className={data ? "wse-refresh-status" : "wse-state"} role="status"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
+            {loading && (data ? <div className="wse-refresh-status" role="status"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div> : <ContentSkeleton variant="table" />)}
             {error && <div className="wse-state wse-state-error">Error: {error}</div>}
             {data && data.mode === show && data.mode === 'results' && (
               <>
@@ -953,7 +954,7 @@ function AllResultsPageInner() {
       {mode === 'sor' && (
         <>
           <div className="wse-table-wrapper sticky-scroll wse-refresh-region" aria-busy={loading}>
-            {loading && <div className={sorData ? "wse-refresh-status" : "wse-state"} role="status"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
+            {loading && (sorData ? <div className="wse-refresh-status" role="status"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div> : <ContentSkeleton variant="table" />)}
             {error && <div className="wse-state wse-state-error">{error}</div>}
             {sorData && (
               <>
@@ -1034,7 +1035,7 @@ function AllResultsPageInner() {
 
 export default function AllResultsPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 16, color: 'var(--muted)' }}><LoadingIndicator /></div>}>
+    <Suspense fallback={<ContentSkeleton variant="table" />}>
       <AllResultsPageInner />
     </Suspense>
   );

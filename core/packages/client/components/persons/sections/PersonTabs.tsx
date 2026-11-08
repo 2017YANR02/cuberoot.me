@@ -13,6 +13,7 @@ import ResultsTab from './results/ResultsTab';
 import CompetitionGroupAwards from '@/components/CompetitionGroupAwards';
 import { useGroupAwards } from '@/lib/competition-group-awards';
 import { useT } from '@/hooks/useT';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const RecordsTab = lazy(() => import('./RecordsTab'));
@@ -100,7 +101,7 @@ export default function PersonTabs({ profile, results, comps, liveResults, liveC
         ))}
       </div>
       <div className="wp-tab-body">
-        <Suspense fallback={<div className="wp-loading-inline"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>}>
+        <Suspense fallback={<ContentSkeleton variant="table" />}>
           {effectiveActive === 'results' && <ResultsTab profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} femaleRecordLookup={femaleRecordLookup} />}
           {effectiveActive === 'records' && <RecordsTab profile={profile} results={results} comps={comps} isZh={isZh} />}
           {effectiveActive === 'podiums' && hasPodiums && <ChampionshipPodiumsTab rows={podiumRows!} isZh={isZh} />}

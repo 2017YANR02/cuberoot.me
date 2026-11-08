@@ -20,7 +20,7 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { apiUrl } from '@/lib/api-base';
 import '../_wca_stats_extra.css';
 import { tr } from '@/i18n/tr';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 const EVENTS = [
   '333','222','444','555','666','777',
@@ -128,8 +128,7 @@ function GrandSlamPageInner() {
       </div>
 
       <div className="wse-table-wrapper sticky-scroll">
-        {loading && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...'
-        })}</LoadingIndicator></div>}
+        {loading && <ContentSkeleton variant="table" />}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {!loading && !error && (
           <>
@@ -192,7 +191,7 @@ function champCell(c: { compId: string; name: string | null; pos: number | null 
 
 export default function GrandSlamPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 16, color: 'var(--muted)' }}><LoadingIndicator /></div>}>
+    <Suspense fallback={<ContentSkeleton variant="table" />}>
       <GrandSlamPageInner />
     </Suspense>
   );

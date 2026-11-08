@@ -27,7 +27,7 @@ import { STAT_ICONS } from './wca-stat-icons';
 import '../wca/_wca_stats.css';
 import { tr } from '@/i18n/tr';
 import '@/i18n/i18n-client';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
@@ -155,8 +155,7 @@ export default function WcaStatsIndex() {
   if (loading) {
     return (
       <div className="wca-stats-index">
-        <div className="wca-stats-index-status"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...'
-        })}</LoadingIndicator></div>
+        <ContentSkeleton variant="cards" />
       </div>
     );
   }
