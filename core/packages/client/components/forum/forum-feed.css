@@ -197,6 +197,24 @@
 
 .community-feed-meta-action:disabled { cursor: wait; opacity: 0.65; }
 
+/* Keep following actions stationary across zero, digit growth and compact counts. */
+.community-feed-meta > .community-feed-meta-action {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) 12px;
+  gap: 6px;
+  flex: 0 0 88px;
+  width: 88px;
+  margin: -4px 0;
+  padding: 4px 0;
+  text-align: left;
+}
+
+.community-feed-count {
+  display: block;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+
 .community-feed-replies {
   margin-top: 16px;
   padding-left: 14px;

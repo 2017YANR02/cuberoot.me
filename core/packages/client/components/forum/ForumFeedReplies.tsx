@@ -9,7 +9,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { tr, useLang } from '@/i18n/tr';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { fetchThread, type ThreadPageData } from '@/lib/forum-api';
-import { formatRelativeTime } from '@/lib/forum-format';
+import { formatPostTime } from '@/lib/forum-format';
 import { ForumPostBody, forumPostPlaceholder } from './ForumPostBody';
 
 const PAGE_SIZE = 5;
@@ -82,7 +82,7 @@ export default function ForumFeedReplies({ threadId, open, onCollapse }: {
                   ? <PersonLink wcaId={author.wcaId} className="community-feed-author">{name}</PersonLink>
                   : <span className="community-feed-author">{name}</span>}
               <span aria-hidden="true">·</span>
-              <time dateTime={post.createdAt}>{formatRelativeTime(post.createdAt, lang)}</time>
+              <time dateTime={post.createdAt}>{formatPostTime(post.createdAt, lang)}</time>
               {post.status !== 'approved' && <span>{post.status === 'pending'
                 ? tr({ zh: '待审核', en: 'Pending review' })
                 : tr({ zh: '未通过审核', en: 'Rejected' })}</span>}

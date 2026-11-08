@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { excerptFromMarkdown, imageUrlsFromMarkdown } from '@cuberoot/shared/forum';
-import { formatJoinedDate, formatRelativeTime } from '@/lib/forum-format';
+import { formatJoinedDate, formatPostTime, formatRelativeTime } from '@/lib/forum-format';
 
 describe('relative time duration boundaries', () => {
   afterEach(() => vi.restoreAllMocks());
@@ -35,6 +35,28 @@ describe('forum joined date formatting', () => {
   it('returns an empty string for absent or invalid timestamps', () => {
     expect(formatJoinedDate(null)).toBe('');
     expect(formatJoinedDate('not-a-date')).toBe('');
+  });
+});
+
+describe('post timestamps', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('switches from elapsed time to a local date at one week', () => {
+    const now = new Date(2026, 10, 8, 12).getTime();
+    vi.spyOn(Date, 'now').mockReturnValue(now);
+    expect(formatPostTime(new Date(now - 7 * 86_400_000 + 1).toISOString(), 'zh')).toBe('6 天前');
+    expect(formatPostTime(new Date(now - 7 * 86_400_000).toISOString(), 'zh')).toBe('11月1日');
+    const oldPost = new Date(2026, 9, 8, 12).toISOString();
+    expect(formatPostTime(oldPost, 'zh')).toBe('10月8日');
+    expect(formatPostTime(oldPost, 'en')).toBe('Oct 8');
+  });
+
+  it('includes the year for older years and handles invalid input', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(new Date(2026, 10, 8, 12).getTime());
+    const oldPost = new Date(2025, 9, 8, 12).toISOString();
+    expect(formatPostTime(oldPost, 'zh')).toBe('2025年10月8日');
+    expect(formatPostTime(oldPost, 'en')).toBe('Oct 8, 2025');
+    expect(formatPostTime('invalid', 'en')).toBe('');
   });
 });
 

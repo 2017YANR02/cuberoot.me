@@ -10,7 +10,7 @@ import { tr, useLang } from '@/i18n/tr';
 import { useAuthStore, useAuthUser, useIsAdmin, useOwnerKey } from '@/lib/auth-store';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { resolveAccountAvatar } from '@/lib/account-avatar';
-import { formatCount, formatRelativeTime } from '@/lib/forum-format';
+import { formatCount, formatPostTime } from '@/lib/forum-format';
 import {
   reactToPost,
   type ForumFeedThread,
@@ -88,7 +88,7 @@ export function ForumFeedList({ threads, compact = false, sort = 'latest' }: { t
         const videos = thread.videos ?? [];
         const showLastReply = sort === 'active' && thread.replyCount > 0;
         const timestamp = showLastReply ? thread.lastPostAt : thread.createdAt;
-        const relativeTime = formatRelativeTime(timestamp, lang);
+        const displayTime = formatPostTime(timestamp, lang);
         return (
           <article className="community-feed-item" key={thread.id}>
             <div className={`community-feed-avatar${avatar.isClawd ? ' is-clawd' : ''}`} aria-hidden="true">
@@ -100,8 +100,8 @@ export function ForumFeedList({ threads, compact = false, sort = 'latest' }: { t
                 <span aria-hidden="true">·</span>
                 <time dateTime={timestamp}>
                   {showLastReply
-                    ? tr({ zh: `最近回复 ${relativeTime}`, en: `Last reply ${relativeTime}` })
-                    : tr({ zh: `发布于 ${relativeTime}`, en: `Posted ${relativeTime}` })}
+                    ? tr({ zh: `最近回复 ${displayTime}`, en: `Last reply ${displayTime}` })
+                    : tr({ zh: `发布于 ${displayTime}`, en: `Posted ${displayTime}` })}
                 </time>
                 <span aria-hidden="true">·</span>
                 <Link href={`/forum/f/${thread.forumSlug}`} prefetch={false} className="community-feed-board">
@@ -127,8 +127,8 @@ export function ForumFeedList({ threads, compact = false, sort = 'latest' }: { t
                   type="button"
                   className={`community-feed-meta-action community-feed-reaction-action${currentReaction.myReaction ? ' is-mine' : ''}`}
                   aria-label={tr({
-                    zh: currentReaction.myReaction ? '取消回应' : '点赞',
-                    en: currentReaction.myReaction ? 'Remove reaction' : 'Like',
+                    zh: `${currentReaction.myReaction ? '取消回应' : '点赞'}，${reactionCount} 次回应`,
+                    en: `${currentReaction.myReaction ? 'Remove reaction' : 'Like'}, ${reactionCount} reactions`,
                   })}
                   title={tr({
                     zh: currentReaction.myReaction ? '取消回应' : '点赞',
@@ -139,7 +139,7 @@ export function ForumFeedList({ threads, compact = false, sort = 'latest' }: { t
                   disabled={busyPostId !== null}
                 >
                   <Heart className="community-feed-heart" size={14} aria-hidden="true" />
-                  {reactionCount > 0 && formatCount(reactionCount, lang)}
+                  <span className="community-feed-count" aria-hidden="true">{reactionCount > 0 ? formatCount(reactionCount, lang) : ''}</span>
                 </button>
                 {compact ? <Link
                   href={`/forum/t/${thread.id}`}
@@ -148,9 +148,7 @@ export function ForumFeedList({ threads, compact = false, sort = 'latest' }: { t
                   aria-label={tr({ zh: `查看 ${thread.replyCount} 条回复`, en: `View ${thread.replyCount} replies` })}
                 >
                   <MessageCircle size={14} aria-hidden="true" />
-                  {thread.replyCount > 0
-                    ? tr({ zh: `${formatCount(thread.replyCount, lang)} 条回复`, en: `${formatCount(thread.replyCount, lang)} ${thread.replyCount === 1 ? 'reply' : 'replies'}` })
-                    : tr({ zh: '回复', en: 'Reply' })}
+                  <span className="community-feed-count" aria-hidden="true">{thread.replyCount > 0 ? formatCount(thread.replyCount, lang) : ''}</span>
                 </Link> : <button
                   type="button"
                   id={`${repliesId}-trigger-${thread.id}`}
@@ -161,7 +159,7 @@ export function ForumFeedList({ threads, compact = false, sort = 'latest' }: { t
                   onClick={() => setExpanded(previous => ({ ...previous, [thread.id]: !previous[thread.id] }))}
                 >
                   <MessageCircle size={14} aria-hidden="true" />
-                  {thread.replyCount > 0 ? tr({ zh: `${formatCount(thread.replyCount, lang)} 条回复`, en: `${formatCount(thread.replyCount, lang)} ${thread.replyCount === 1 ? 'reply' : 'replies'}` }) : tr({ zh: '回复', en: 'Reply' })}
+                  <span className="community-feed-count" aria-hidden="true">{thread.replyCount > 0 ? formatCount(thread.replyCount, lang) : ''}</span>
                   {expanded[thread.id] ? <ChevronDown size={12} aria-hidden="true" /> : <ChevronRight size={12} aria-hidden="true" />}
                 </button>}
               </div>
