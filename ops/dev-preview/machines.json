@@ -53,7 +53,7 @@
       "device": "macbook-pro",
       "os": "mac",
       "transport": "ssh",
-      "status": "pending",
+      "status": "active",
       "localPort": 3000,
       "remotePort": 7106,
       "certificate": "dev-ruimin-macbook-pro",
