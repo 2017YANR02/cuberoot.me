@@ -43,3 +43,5 @@
 - 旧预览图片也归档，避免把唯一历史证据默认当成可删截图；mini 根 `.tmp` 当前仅剩可重建检查戳/系统目录元数据，`core/.tmp` 已空。
 - 独立 [Local artifact lifecycle CI](https://github.com/2017YANR02/cuberoot.me/actions/runs/42655795237) 已通过。主提交 Test、Deploy Next、Deploy Core 状态继续核对；不跟进 CodeQL。
 - 提交 Hook 的隔离仓库 fixture 已补齐新增检查器与 policy；最终提交前复盘回归 305 项通过、19 项按原规则跳过。
+- Web 与 API 部署已成功；Test 的收尾修复仅补 CI 稀疏检出漏掉的新检查器/清单，以及原 AUF runner 迁入正式源码后漏登记的现有 subprocess 契约，没有新增计算能力或运行授权。
+- 新 Mac 另一个进程在旧路径留下 `compute.lock`；这是短期进程锁，按精确路径登记为临时文件，不移动、不删除、不复制，也不放行任何表或断点。新源码仍使用迁移后的路径。

@@ -349,6 +349,7 @@
   ],
   "disposableLocalFiles": [
     ".tmp/recon-ground-truth-pass.json",
-    ".tmp/recon-ground-truth-staged-pass.json"
+    ".tmp/recon-ground-truth-staged-pass.json",
+    ".tmp/cubeopt-reverse/compute.lock"
   ]
 }

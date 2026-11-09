@@ -405,6 +405,9 @@ jobs:
             /scripts/upstream/
             /scripts/stats/
             /scripts/wca-data/
+            /scripts/local-artifacts/
+            /docs/local-artifact-policy.json
+            /docs/local-artifact-paths.json
             /ops/contests/recordranks-ref.txt
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
@@ -672,6 +675,9 @@ jobs:
             /scripts/upstream/
             /scripts/stats/
             /scripts/wca-data/
+            /scripts/local-artifacts/
+            /docs/local-artifact-policy.json
+            /docs/local-artifact-paths.json
             /ops/contests/recordranks-ref.txt
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
