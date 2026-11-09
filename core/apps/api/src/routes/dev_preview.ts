@@ -31,17 +31,18 @@ devPreviewRoutes.post('/dev-preview/requests', async c => {
   if (!u.uid) return c.json({error:'Account required'},403);
   checkRateLimit(String(u.uid),{bucket:'dev-preview-enrollment',max:5});
   const b = await c.req.json().catch(()=>null);
-  if (!slug(b?.owner) || !slug(b?.device) || !['mac','windows'].includes(b?.os) || b.owner === 'ruimin') return c.json({error:'Invalid or reserved name'},400);
+  if (!slug(b?.owner) || !slug(b?.device)) return c.json({error:'Invalid name'},400);
+  if (!['mac','windows'].includes(b?.os)) return c.json({error:'Invalid system'},400);
   const ticket = randomBytes(32).toString('hex'), id = randomUUID();
   const result = await withTransaction(async q => {
     await q('SELECT id FROM app_users WHERE id=? FOR UPDATE',[u.uid]);
     const [n] = await q<{n:number}>('SELECT COUNT(*)::int AS n FROM dev_preview_requests WHERE user_id=?',[u.uid]);
-    if (n.n>=10) return false;
+    if (n.n>=10) return 'Request limit reached';
     const rows=await q('INSERT INTO dev_preview_requests(id,user_id,user_name,owner_slug,device_slug,os,ticket_hash) VALUES(?,?,?,?,?,?,?) ON CONFLICT(owner_slug,device_slug) DO NOTHING RETURNING id',[id,u.uid,u.name.slice(0,200),b.owner,b.device,b.os,hash(ticket)]);
-    if(!rows.length) return false;
+    if(!rows.length) return 'Name already taken';
     await q("INSERT INTO dev_preview_events(request_id,actor_id,action) VALUES(?,?,'created')",[id,u.uid]); return true;
   });
-  return result ? c.json({id,ticket}) : c.json({error:'Name reserved or request limit reached'},409);
+  return result === true ? c.json({id,ticket}) : c.json({error:result},409);
 });
 devPreviewRoutes.post('/dev-preview/requests/:id/ticket',async c=>{
   const u=await requireAuth(c);if(!enabled())return c.json({error:'Enrollment disabled'},503);

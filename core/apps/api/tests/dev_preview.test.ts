@@ -43,3 +43,25 @@ it('health queue and employee list require fresh independent evidence',async()=>
   expect(mock.query.mock.calls[0][0]).toContain('ORDER BY health_checked_at NULLS FIRST');
   expect(mock.query.mock.calls[0][0]).toContain("INTERVAL '5 minutes'");
 });
+it('allows ruimin to request a new device',async()=>{
+  mock.query.mockResolvedValueOnce([]).mockResolvedValueOnce([{n:0}]).mockResolvedValueOnce([{id:'new'}]).mockResolvedValueOnce([]);
+  const response=await post('requests',{owner:'ruimin',device:'macbook-pro',os:'mac'});
+  expect(response.status).toBe(200);
+  expect((await response.json()).ticket).toMatch(/^[a-f0-9]{64}$/);
+  expect(mock.query.mock.calls[2][1]).toEqual(expect.arrayContaining(['ruimin','macbook-pro','mac']));
+});
+it('reports a duplicate device separately from the account limit',async()=>{
+  mock.query.mockResolvedValueOnce([]).mockResolvedValueOnce([{n:1}]).mockResolvedValueOnce([]);
+  const duplicate=await post('requests',{owner:'ruimin',device:'macbook-pro',os:'mac'});
+  expect(duplicate.status).toBe(409);
+  expect(await duplicate.json()).toEqual({error:'Name already taken'});
+  mock.query.mockResolvedValueOnce([]).mockResolvedValueOnce([{n:10}]);
+  const limit=await post('requests',{owner:'ruimin',device:'other',os:'mac'});
+  expect(limit.status).toBe(409);
+  expect(await limit.json()).toEqual({error:'Request limit reached'});
+});
+it('distinguishes invalid identifiers from an invalid system',async()=>{
+  expect(await (await post('requests',{owner:'-ruimin',device:'mac',os:'mac'})).json()).toEqual({error:'Invalid name'});
+  expect(await (await post('requests',{owner:'ruimin',device:'mac',os:'unknown'})).json()).toEqual({error:'Invalid system'});
+  expect(mock.query).not.toHaveBeenCalled();
+});
