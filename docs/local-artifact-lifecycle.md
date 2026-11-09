@@ -16,6 +16,19 @@
 
 Git ignored 只表示不提交，绝不代表可以删除。尚未提交的报告、下载失败后要重试提交的结果、计算断点都属于持久数据。完成后需要留作证据的临时产物，先提升到持久目录，再清理工作区。
 
+## 2026-11-09 已授权的研究产物退役
+
+维护者在查看大小与依赖分析后明确要求执行清理，两台 Mac 使用同一份精确文件清单：
+
+- `table-gen-opt` 的实验 `.bin` 与三个旧生成器移除；正式 `solver/tables/` 保留。既有 78 表逐字节核对报告保留，本次只核对正式文件存在及尺寸，不重新建表。
+- `cubeopt-reverse/opt9-generated/h48prun31h9.dat`、`nxopt22-20261015/nxopth22b.dat`、`corner96` 的 `.dat/.chk/.checkpoint` 退役。Opt9 历史 release 的 official 标签说明当时选定的程序，不代表两机仍保留运行所需的大表。
+- 清单登记的旧候选目录中的 `target/` 编译缓存移除；源码、目录根的冻结程序/WASM、统计报告、耗时、峰值内存、校验值和停止记录保留。现用 Opt8、新任务新增文件不按版本号删除。
+- Opt10 的 31,130,911,744 字节主表、818,008 字节 `opt9-generated/small-memory.bin`、正式程序及冻结证据必须完整。`/dev/solvers` 的现役表组成未改变。
+
+`scripts/local-artifacts/prune-retired-research.mjs --plan` 生成 `.local-data/migrations/retention-2026-11-09/plan.json`；`--apply` 只处理该清单，核对作用域、正式表尺寸、文件大小/时间、符号链接与打开状态，写入逐机回执。第二台电脑使用源机清单，发生变化的文件保留，不递归镜像删除。目录中的 `RETENTION.md` 标记有意退役；历史来源文件缺失不能当成迁移遗漏，**不得自动重新建表或从另一台电脑补回**。新的恢复/重算需求另按计算规则处理。
+
+这项授权取代这些具体产物以前的“全部原样保留”要求，不删除源码、成绩或资源停止历史，也不扩大到其他数据。
+
 ## 迁移与双机
 
 `local-artifact-paths.json` 记录本轮历史路径映射，不记录密码、令牌或文件内容。`node scripts/local-artifacts/migrate.mjs` 只列计划，`--apply` 同盘移动，不覆盖已有目标，不删除原始证据、不运行引擎。每次移动记入 `.local-data/migrations/tmp-2026-11-09/moves.jsonl`，保留 inode 与前后状态。文件冲突须保留双份再处理。
