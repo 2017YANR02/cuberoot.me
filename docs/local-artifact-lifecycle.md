@@ -7,7 +7,7 @@
 | 程序源码、配置模板、依赖清单 | 所属模块，提交 Git | Git 同步；不能只存在某台机器 |
 | 常规 solver 表 | `solver/tables/` | 按版本复制；不可自动重建大表 |
 | CubeOpt 固定版本表、冻结构件和验证证据 | `.local-data/cubeopt-reverse/` | 保留版本目录；配套辅助表、主表、报告必须完整 |
-| ZBLL 输入、计算日志与断点 | `.local-data/double-zbll-*/` | 停止写入后交接；不并发覆盖 |
+| ZBLL 输入、计算日志与断点 | `.local-data/double-zbll-*/` | 未完成任务停止写入后交接；已完成 symmetry-v2 按维护者授权只保留最终题库、统计与完整性元数据，见[专项记录](double-zbll-trainer.md) |
 | 日常统计运行证据 | `.local-data/scramble-stats-opt10/` | 每次运行独立记录；主数据仍使用原统计数据根目录 |
 | 复盘领取状态、待提交结果、测试历史 | `.local-data/recon-*/` | 待提交结果必须保留；在线队列继续按领取/租约协调 |
 | 本地复盘数据库和视频 | `core/.local-data/recon-capture/` | 使用既有配置；数据库按逻辑备份恢复，不热同步数据库目录 |

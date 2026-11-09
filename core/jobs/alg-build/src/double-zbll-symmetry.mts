@@ -11,6 +11,7 @@ import { atomicJson, maybeJson, readJson, repairTail, guard, TOTAL, GiB, selectP
 import { activeOwner, watchDashboard, renderDashboard, renderCompletion, TerminalDashboard, REFRESH_MS } from './double-zbll-dashboard.mjs';
 import { WebsiteStatistics } from './double-zbll-website-stats.mjs';
 import { PairSelection } from './double-zbll-selection.mjs';
+import { verifyRetainedDoubleZbll } from './double-zbll-retained.mjs';
 
 const root = resolve(import.meta.dirname, '../../../..');
 // The standalone solver is outside the job's build unit, like the existing
@@ -33,6 +34,12 @@ const path = (name: string) => resolve(work, name);
 const args = process.argv.slice(2);
 if (args.length !== 1 || !['--plan', '--run', '--verify-checkpoint', '--watch'].includes(args[0])) throw Error('使用 --plan 查看，--run 开始或续算，--verify-checkpoint 只验证断点，--watch 只看面板。');
 const solve = args[0] === '--run';
+// A retained completion must never fall through into checkpoint replay or a solver.
+if (verifyRetainedDoubleZbll(work)) {
+  console.log(renderCompletion(readJson(path('progress.json')), work));
+  console.log('原始计算明细已按要求清理；最终题库位于 export/，统计记录已保留。');
+  process.exit(0);
+}
 const solverEngine = process.env.DOUBLE_ZBLL_ENGINE ?? (existsSync(path('rust-opt10-acceptance.json')) ? 'opt10' : existsSync(path('rust-h10-acceptance.json')) ? 'rust' : 'c');
 if (!['c', 'rust', 'opt10'].includes(solverEngine)) throw Error('DOUBLE_ZBLL_ENGINE 必须为 c、rust 或 opt10');
 let solverThreads: number | undefined;

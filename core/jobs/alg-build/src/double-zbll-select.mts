@@ -6,10 +6,15 @@ import { resolve } from 'node:path';
 import { PairSelection, rankSolution, compareSolutions } from './double-zbll-selection.mjs';
 import { DOUBLE_ZBLL_MOVES, DOUBLE_ZBLL_RECORD_BYTES, decodeDoubleZbll } from '@cuberoot/shared/double-zbll';
 import { atomicJson } from './double-zbll-symmetry-state.mjs';
+import { verifyRetainedDoubleZbll } from './double-zbll-retained.mjs';
 
 if (process.argv.length!==3 || !['--snapshot','--export'].includes(process.argv[2])) throw Error('Use --snapshot or --export; neither starts a solver.');
 const exporting = process.argv[2] === '--export';
 const work=resolve(import.meta.dirname,'../../../../.local-data/double-zbll-symmetry-v2');
+if (verifyRetainedDoubleZbll(work)) {
+  console.log(`计算明细已清理；已校验完整最终题库，可直接安装：${resolve(work, 'export')}`);
+  process.exit(0);
+}
 const model=await import(resolve(import.meta.dirname,'double-zbll-model.mts'));
 const selection=new PairSelection(model), seen=new Uint8Array(model.N*model.N);
 const integrity=JSON.parse(readFileSync(resolve(work,'migration-integrity.json'),'utf8'));

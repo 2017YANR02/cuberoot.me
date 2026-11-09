@@ -1,5 +1,13 @@
 # 双底 ZBLL
 
+## 完成后的保留策略（2026-11-09）
+
+维护者要求只保留最终题库与计算统计。已完成的 `double-zbll-symmetry-v2` 保留 `export/` 中完整 243,049 对题库、原始 `progress.json`（累计 121,780.287 秒及记录的速度）、每批 `report.json` / `progress.json`、资源复核与完整性元数据。删除输入副本、逐状态 CSV/JSONL、重复候选快照和运行明细日志。累计耗时及结束时速度不是统一配置从零求解的基准。
+
+`retention.json` 标明归档状态并锁定最终 manifest 哈希；旧计算/导出入口先验证最终小文件后显示已完成，不重新计算或寻找已删除日志。安装继续使用现有 `export/`。历史 manifest 中的来源哈希保持原文，仅说明来源；原始全状态结果删除后不能再逐条重验或重新选择候选解。以下历史段落中的“原始日志保留”描述由本节替代，不改变历史执行事实或资源停止记录。
+
+定向清理入口：`node scripts/local-artifacts/retain-double-zbll.mjs` 只列清单，明确 `--apply` 才删除；仅适用这一个已完成任务，不扩展到其他 ZBLL 版本或求解表。
+
 ## 问号说明页统计
 
 - `/alg/double-zbll-about` 展示含/不含 PLL 的平均 HTM、QTM、改善幅度、HTM/QTM/转动面数量分布，以及全部最短和最长有序配对。极端公式保留题库原值；展示时调用训练的 `orientDoubleZbllScramble`，模拟器链接和顶底标记使用同一结果。
