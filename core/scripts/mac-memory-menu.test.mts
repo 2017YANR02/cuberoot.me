@@ -7,7 +7,7 @@ const GiB = 2 ** 30, MiB = 2 ** 20;
 const root = resolve(import.meta.dirname, '../..');
 const native = resolve(root, 'solver/experiments/cube48opt-rust/target/opt10/release/cube48opt-research');
 const lock = { pid: 100, backend: 'opt10', entry: 'native', mode: 'generate-opt10', boot: 'same-boot' };
-const nativeCommand = (mode = 'generate-opt10') => `${native} ${mode} ${resolve(root, '.tmp/cubeopt-reverse/opt9-generated/small-memory.bin')} ${resolve(root, '.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat')} ${mode === 'generate-opt10' ? '16' : '8 20 0'}`;
+const nativeCommand = (mode = 'generate-opt10') => `${native} ${mode} ${resolve(root, '.local-data/cubeopt-reverse/opt9-generated/small-memory.bin')} ${resolve(root, '.local-data/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat')} ${mode === 'generate-opt10' ? '16' : '8 20 0'}`;
 const command = (mode = 'generate-opt10') => `node --experimental-strip-types solver/experiments/cube48opt-rust/guard.mts opt10-v2 ${nativeCommand(mode)}`;
 const identity = { guardCwd: root, commands: { 101: nativeCommand() } };
 const process = (pid: number, ppid: number, name: string, rssBytes: number, state = 'S') =>

@@ -188,7 +188,7 @@
           "core/jobs/alg-build/src/double-zbll-selection.mts",
           "core/packages/shared/src/double_zbll.ts"
         ],
-        "snapshot": ".tmp/double-zbll-symmetry-v2/solutions-integrity.json"
+        "snapshot": ".local-data/double-zbll-symmetry-v2/solutions-integrity.json"
       },
       "license": {
         "spdx": "LicenseRef-CubeRoot",
@@ -200,23 +200,27 @@
         "core/packages/client/scripts/summarize-double-zbll.mts"
       ],
       "workingDirectory": "core",
-      "command": "pnpm --filter @cuberoot/alg-build double-zbll:export, then pnpm --filter @cuberoot/client double-zbll:install ../.tmp/double-zbll-symmetry-v2/export, then pnpm --filter @cuberoot/client double-zbll:summary",
+      "command": "pnpm --filter @cuberoot/alg-build double-zbll:export, then pnpm --filter @cuberoot/client double-zbll:install ../.local-data/double-zbll-symmetry-v2/export, then pnpm --filter @cuberoot/client double-zbll:summary",
       "outputs": [
         "core/packages/client/public/data/double-zbll/manifest.json",
         "core/packages/client/public/data/double-zbll/pairs-*.bin",
         "core/packages/client/public/data/double-zbll/cases-*.json",
         "core/packages/client/app/[lang]/alg/double-zbll-about/statistics.json"
       ],
-      "transientOutputs": [
-        ".tmp/double-zbll-v1/**"
-      ],
+      "transientOutputs": [],
       "verification": [
         "Every one of 222784 records matches its target cube state, has valid HTM moves and an optimal native H48 solution",
         "tests/double-zbll.test.ts",
         "tests/trainer-double-zbll.test.ts",
         "Offline reload and selection after downloading both page shells"
       ],
-      "driftPolicy": "Export locally from completed verified journals without loading solver tables; never recompute during CI or browser startup. Preserve source identity and append-only solve checkpoints. Publish manifest last after full verification. Hash-named assets are immutable."
+      "driftPolicy": "Export locally from completed verified journals without loading solver tables; never recompute during CI or browser startup. Preserve source identity and append-only solve checkpoints. Publish manifest last after full verification. Hash-named assets are immutable.",
+      "durableOutputs": [
+        ".local-data/double-zbll-v1/**",
+        ".local-data/double-zbll-symmetry-v2/**",
+        ".local-data/double-zbll-auf-20261011/**",
+        ".local-data/double-zbll-auf-full/**"
+      ]
     },
     {
       "id": "client.maplibre-worker",
@@ -1132,14 +1136,15 @@
       ],
       "workingDirectory": "core",
       "command": "follow core/docs/best-2x2-algs-port.md through fetch, report, build-import, verify-import, and verify-finder",
-      "transientOutputs": [
-        ".tmp/best2x2/**"
-      ],
+      "transientOutputs": [],
       "verification": [
-        "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-import.mts .tmp/best2x2/import.json",
-        "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-finder.mts .tmp/best2x2/import.json"
+        "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-import.mts .local-data/best2x2/import.json",
+        "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-finder.mts .local-data/best2x2/import.json"
       ],
-      "driftPolicy": ".tmp is gitignored and disposable. This lifecycle ends at the reviewed import JSON; it neither owns the source snapshot nor an immutable migration."
+      "driftPolicy": ".tmp is gitignored and disposable. This lifecycle ends at the reviewed import JSON; it neither owns the source snapshot nor an immutable migration.",
+      "durableOutputs": [
+        ".local-data/best2x2/**"
+      ]
     },
     {
       "id": "client.tnoodle-i18n",
@@ -1432,14 +1437,27 @@
       "kind": "build-output",
       "source": {
         "locator": "Exact reviewed main commit selected by an administrator; native artifacts owned by Mobile and Desktop",
-        "paths": [".github/workflows/app_release.yml", "core/scripts/android-release/distribute.ts", "core/scripts/android-release/publish-server.mjs", "core/packages/shared/src/android-release.ts"]
+        "paths": [
+          ".github/workflows/app_release.yml",
+          "core/scripts/android-release/distribute.ts",
+          "core/scripts/android-release/publish-server.mjs",
+          "core/packages/shared/src/android-release.ts"
+        ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and packaged dependency licenses" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE and packaged dependency licenses"
+      },
       "owner": "core/scripts/android-release",
       "workingDirectory": "core",
       "command": "Manually dispatch app_release.yml through the administrator download-page entry",
-      "transientOutputs": ["release-staging/**"],
-      "verification": ["verify native identity, Android production signing certificate and artifact checksums before promoting the public latest.json", "verify both Windows EXEs before publishing their shared manifest"],
+      "transientOutputs": [
+        "release-staging/**"
+      ],
+      "verification": [
+        "verify native identity, Android production signing certificate and artifact checksums before promoting the public latest.json",
+        "verify both Windows EXEs before publishing their shared manifest"
+      ],
       "driftPolicy": "Versioned APK/EXE artifacts and per-platform manifests live on static.cuberoot.me/downloads, never in Git. Daily push builds do not publish them; an administrator release allocates a monotonically increasing sequence."
     },
     {
@@ -1698,20 +1716,23 @@
       "command": "follow the matching solver loop or runbook; use available CPU parallelism by default",
       "transientOutputs": [
         "solver/target/**",
-        "solver/tables/**",
         "solver/pkg-*/**"
       ],
       "versioning": "record the implementation version plus table size and hash for each generated family",
       "verification": [
         "exact fixtures, recorded table size and hash, and smoke checks in each target native or WASM runtime"
       ],
-      "driftPolicy": "Large tables and build output remain local and untracked. Ordinary CI checks small deterministic fixtures and contracts rather than recomputing the heavy artifacts."
+      "driftPolicy": "Large tables and build output remain local and untracked. Ordinary CI checks small deterministic fixtures and contracts rather than recomputing the heavy artifacts.",
+      "durableOutputs": [
+        "solver/tables/**",
+        ".local-data/cubeopt-reverse/**"
+      ]
     },
     {
       "id": "migration.best2x2",
       "kind": "immutable-migration-family",
       "source": {
-        "locator": ".tmp/best2x2/import.json",
+        "locator": ".local-data/best2x2/import.json",
         "lineage": "client.best2x2-import produces the reviewed import JSON from client.best2x2-source"
       },
       "license": {
@@ -1723,13 +1744,13 @@
         "core/apps/api/migrations"
       ],
       "workingDirectory": "core",
-      "command": "node jobs/alg-build/gen_best2x2_sql.mjs .tmp/best2x2/import.json core/apps/api/migrations/<new-id>_best_2x2_algs.sql",
+      "command": "node jobs/alg-build/gen_best2x2_sql.mjs .local-data/best2x2/import.json core/apps/api/migrations/<new-id>_best_2x2_algs.sql",
       "outputs": [
         "core/apps/api/migrations/0104_best_2x2_algs.sql"
       ],
       "verification": [
-        "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-import.mts .tmp/best2x2/import.json",
-        "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-finder.mts .tmp/best2x2/import.json",
+        "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-import.mts .local-data/best2x2/import.json",
+        "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-finder.mts .local-data/best2x2/import.json",
         "core/docs/best-2x2-algs-port.md"
       ],
       "driftPolicy": "This owner starts at the reviewed import JSON and owns only the immutable published migration. Never rewrite 0104 after publication; changed data requires a newly numbered migration."
@@ -1830,7 +1851,7 @@
       "kind": "immutable-migration-family",
       "source": {
         "url": "https://docs.google.com/spreadsheets/d/1I2McWXVQZxGRVmrVEJDub9r_NPTNdPs6C7jriodyG1E",
-        "intermediate": ".tmp/phase0/sheet_1lll.json",
+        "intermediate": ".local-data/phase0/sheet_1lll.json",
         "design": "docs/1lll-migration.md"
       },
       "license": {
@@ -1847,15 +1868,16 @@
       "outputs": [
         "core/apps/api/migrations/0102_fix_1lll_meta_assignment.sql"
       ],
-      "transientOutputs": [
-        ".tmp/phase4/import_1lll.sql"
-      ],
+      "transientOutputs": [],
       "verification": [
         "node jobs/alg-build/fix_1lll_meta_assignment.mjs --dry",
         "pnpm --filter @cuberoot/alg-build exec tsx verify_meta_pointers.mjs --with-sql <new-migration>",
         "docs/1lll-migration.md"
       ],
-      "driftPolicy": "The import SQL is a disposable intermediate. The published corrective migration is immutable; sheet, mapping, or metadata changes require explicit re-import review and a newly numbered migration."
+      "driftPolicy": "The import SQL is a disposable intermediate. The published corrective migration is immutable; sheet, mapping, or metadata changes require explicit re-import review and a newly numbered migration.",
+      "durableOutputs": [
+        ".local-data/phase4/import_1lll.sql"
+      ]
     },
     {
       "id": "shared.account-avatar-gallery",

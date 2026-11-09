@@ -1,11 +1,11 @@
-/** `.tmp/best2x2/import.json` → 0104_best_2x2_algs.sql。 */
+/** `.local-data/best2x2/import.json` → 0104_best_2x2_algs.sql。 */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const REPO = resolve(HERE, '../../..');
-const input = resolve(REPO, process.argv[2] ?? '.tmp/best2x2/import.json');
+const input = resolve(REPO, process.argv[2] ?? '.local-data/best2x2/import.json');
 const output = resolve(REPO, process.argv[3] ?? 'core/apps/api/migrations/0104_best_2x2_algs.sql');
 const data = JSON.parse(readFileSync(input, 'utf8'));
 

@@ -9,7 +9,7 @@ import { multithreadBaselineSha256, multithreadStoppedSha256, multithreadPriorHa
   opt10ExperimentConfig, opt10ExperimentScope, opt10HotpathReferenceHashes, opt10CosetReferenceHashes, validateOpt10ExperimentContinuation } from './multithread-policy.mts';
 import { validateOpt9ExperimentRows } from './run-opt9-experiment.mts';
 import { opt10ExperimentRequest, opt10ExperimentReportMode } from './run-opt10-experiment.mts';
-const HERE = dirname(fileURLToPath(import.meta.url)), ROOT = resolve(HERE,'../../..'), OUT = resolve(ROOT,'.tmp/cubeopt-reverse');
+const HERE = dirname(fileURLToPath(import.meta.url)), ROOT = resolve(HERE,'../../..'), OUT = resolve(ROOT,'.local-data/cubeopt-reverse');
 const GiB=2**30, sha='1'.repeat(64);
 function native(kind='opt', tier=9) {
   const env:any={CUBEOPT_MULTITHREAD_REVIEW:resolve(OUT,'mt18-fixture/launch.json'),CUBEOPT_SOLVE_THREADS:'1',

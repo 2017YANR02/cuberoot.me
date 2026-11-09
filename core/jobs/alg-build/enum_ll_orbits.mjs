@@ -9,7 +9,7 @@
  *   1. 实测顶层槽位下标(不写死)
  *   2. 纯数组穷举 62208 个 LL 态(不 BFS)
  *   3. 自己实现群复合(compose = "先 a 后 b"),并用 cubing.js 交叉验证
- *   4. 算轨道 / 朝向类,落盘 .tmp/phase0/ll_orbits.json
+ *   4. 算轨道 / 朝向类,落盘 .local-data/phase0/ll_orbits.json
  *
  *   node enum_ll_orbits.mjs [--solve-check N]
  *
@@ -24,7 +24,7 @@ import { Alg } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
 import { KPattern, KTransformation } from 'cubing/kpuzzle';
 
-const OUT_DIR = 'D:/cube/cuberoot.me/.tmp/phase0';
+const OUT_DIR = 'D:/cube/cuberoot.me/.local-data/phase0';
 const report = [];
 const log = (...a) => { const s = a.join(' '); report.push(s); console.log(s); };
 

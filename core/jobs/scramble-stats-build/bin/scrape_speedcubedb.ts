@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SHARED_PACKAGE_ROOT = dirname(dirname(fileURLToPath(import.meta.resolve('@cuberoot/shared'))));
 const SHARED_DATA_DIR = join(SHARED_PACKAGE_ROOT, 'data');
-const TMP_DIR = join(__dirname, '..', '..', '..', '..', '.tmp', 'scd');
+const TMP_DIR = join(__dirname, '..', '..', '..', '..', '.local-data', 'scd');
 
 interface AlgEntry {
   alg: string;

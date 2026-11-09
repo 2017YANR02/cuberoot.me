@@ -20,7 +20,7 @@ function update(results:Result[], status:{zh:string;en:string}) {
 }
 const deadline = Date.now() + 65 * 60_000;
 while (!existsSync(resolve(directory, 'report.json'))) {
-  const resourceFile = resolve(root, `.tmp/cubeopt-reverse/${run}-resources.json`);
+  const resourceFile = resolve(root, `.local-data/cubeopt-reverse/${run}-resources.json`);
   const stopped = existsSync(resourceFile) && JSON.parse(readFileSync(resourceFile, 'utf8')).stopped;
   if (stopped || existsSync(resolve(directory, 'failure.json')) || Date.now() > deadline) {
     update([], {zh:`${run.replace('wca100-','').toUpperCase()} 未完成`,en:`${run} incomplete`});

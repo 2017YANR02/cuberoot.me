@@ -16,7 +16,7 @@
 
 包装器模块只随原生搜索候选 feature 导出；普通 B0 直接使用原 `Opt11Solver`，无需这个模块。构造器拒绝未编入的策略，避免选择了 S2 却静默执行 S1/B0。这个检查只是源码构建能力检查，不解除 `generate-opt11` / `solve-opt11` 的运行禁令。没有默认晋升，也没有新增 CLI 或环境变量入口。
 
-完整 B0 源码另存于 `.tmp/cubeopt-reverse/opt11-source-baseline-20261029-WsCutS`。同一候选构建中的 `Baseline` 只关闭额外策略；固定 context/batch 等编译选项仍可能改变公共代码生成。以后正式对照应使用冻结 B0 的独立构建，不能把候选构建中的策略关闭冒充原始构件。
+完整 B0 源码另存于 `.local-data/cubeopt-reverse/opt11-source-baseline-20261029-WsCutS`。同一候选构建中的 `Baseline` 只关闭额外策略；固定 context/batch 等编译选项仍可能改变公共代码生成。以后正式对照应使用冻结 B0 的独立构建，不能把候选构建中的策略关闭冒充原始构件。
 
 ## S1 的依据
 

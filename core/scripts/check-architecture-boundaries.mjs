@@ -23,7 +23,7 @@ const ts = requireFromWeb('typescript');
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs']);
 const SKIP_DIRS = new Set([
   'node_modules', '.next', 'dist', 'build', 'out', 'target', 'coverage', '.turbo',
-  '.tmp', 'android', 'ios', 'public', 'pkg', 'pkg-web', 'pkg-node',
+  '.tmp', '.local-data', 'android', 'ios', 'public', 'pkg', 'pkg-web', 'pkg-node',
 ]);
 const SUBPROCESS_APIS = new Set(['spawn', 'spawnSync', 'exec', 'execSync', 'execFile', 'execFileSync', 'fork']);
 const PACKAGE_KINDS = new Set(['app', 'job', 'library']);

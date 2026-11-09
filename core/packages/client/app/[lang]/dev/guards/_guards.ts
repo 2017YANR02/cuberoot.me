@@ -472,6 +472,11 @@ export interface ProcessGuard {
 
 export const PROCESS_GUARDS: ProcessGuard[] = [
   {
+    id: 'persistent-temp', scope: 'project', hook: 'block-persistent-temp.mts', matcher: 'apply_patch',
+    zh: { title: '持久文件不得放临时目录', desc: '写入守卫限制临时目录用途，拒绝新增未登记的临时路径依赖；提交前与 Local artifact lifecycle CI 复用检查器。逐行例外必须说明可丢弃性或历史定位用途。不能阻止任意外部程序写盘，新会话须信任 Hook 配置。' },
+    en: { title: 'Keep durable files out of temporary directories', desc: 'The write hook restricts temporary destinations and unregistered temporary dependencies. Pre-commit and Local artifact lifecycle CI share the checker. Exact-line exceptions explain disposable data or historical locators. External programs are outside this guard; new sessions must trust the hook configuration.' },
+  },
+  {
     id: 'banned-words',
     scope: 'project',
     hook: 'block-banned-words.mts',

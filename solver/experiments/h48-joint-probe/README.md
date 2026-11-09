@@ -57,7 +57,7 @@ On the maintainer's arm64 Mac, from the repository root:
 mkdir -p .tmp/h48-joint-probe
 cc -std=c11 -DNEON -DTHREADS=1 -O3 -pthread -Isolver/vendor/nissy-core/src solver/experiments/h48-joint-probe/probe.c -o .tmp/h48-joint-probe/joint-probe
 cc -std=c11 -DNEON -DTHREADS=1 -O3 -pthread -Isolver/vendor/nissy-core/src solver/experiments/h48-joint-probe/probe.test.c -o .tmp/h48-joint-probe/joint-probe-test
-.tmp/h48-joint-probe/joint-probe-test .tmp/h48-corners-research/corners.dat
+.tmp/h48-joint-probe/joint-probe-test .local-data/h48-corners-research/corners.dat
 ```
 
 Use `-DPORTABLE` instead of `-DNEON` on other architectures. `probe.c` includes nissy's implementation, so do not separately link a second `nissy.c` translation unit. No large-table generation is part of these commands.

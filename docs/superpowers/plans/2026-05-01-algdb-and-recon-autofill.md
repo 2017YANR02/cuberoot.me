@@ -215,7 +215,7 @@ main().catch(err => { console.error(err); process.exit(1); });
   ```
   pnpm --filter @cuberoot/scramble-stats-build run scrape:algdb
   ```
-  Expected output: 4 lines, "scraping f2l… → algdb_f2l.json (41 cases)" etc. Counts should match: F2L 41, adv_f2l ~54, oll 57, pll 21. **If any count is off by more than ±2, stop and re-inspect the cheerio selectors against `.tmp/scd/*.html` (already cached) before continuing.**
+  Expected output: 4 lines, "scraping f2l… → algdb_f2l.json (41 cases)" etc. Counts should match: F2L 41, adv_f2l ~54, oll 57, pll 21. **If any count is off by more than ±2, stop and re-inspect the cheerio selectors against `.local-data/scd/*.html` (already cached) before continuing.**
 
 - [ ] **Step 5**: Spot-check the output by reading `algdb_f2l.json` first 100 lines + searching for the F2L 1 entry. Confirm `name="F2L 1"`, `subgroup="Free Pairs"`, `setup` non-empty, `algs[0][0].alg="U R U' R'"`. If sample doesn't match, fix the selectors and re-run.
 

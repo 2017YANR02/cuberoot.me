@@ -13,10 +13,10 @@ import { GRIP_WEIGHTS as weights, scoreGripCandidate, startLabel } from './lll-g
 interface Candidate { rank: number; algorithm: string; mcc: number; stm: number }
 interface Case { id: string; name: string; setup: string; candidates: Candidate[] }
 const root = resolve(import.meta.dirname, '../../..');
-const source = resolve(root, '.tmp/1lll-five-20261023/no-l-no-B/report.json');
+const source = resolve(root, '.local-data/1lll-five-20261023/no-l-no-B/report.json');
 const revision = process.argv[2] ?? 'regrip-v1';
 assert(/^[a-zA-Z0-9-]+$/.test(revision));
-const out = resolve(root, '.tmp/1lll-five-20261023', revision);
+const out = resolve(root, '.local-data/1lll-five-20261023', revision);
 assert(!existsSync(out), 'Preserve previous reports; use a new revision name');
 const bytes = readFileSync(source);
 const input: { results: Case[] } = JSON.parse(bytes.toString('utf8'));

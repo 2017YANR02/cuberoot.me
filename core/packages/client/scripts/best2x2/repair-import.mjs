@@ -43,15 +43,15 @@ if (process.argv[2] === '--verify') {
   process.exit(0);
 }
 
-const corrected = await read(process.argv[2] ?? '.tmp/png/best2x2-preserved.json');
-const imported = await read('.tmp/best2x2/import.json');
-const derived = await read('.tmp/best2x2/derived-site.json');
+const corrected = await read(process.argv[2] ?? '.local-data/best2x2/best2x2-preserved.json');
+const imported = await read('.local-data/best2x2/import.json');
+const derived = await read('.local-data/best2x2/derived-site.json');
 if (corrected.sets.length !== 17) throw new Error('Expected all 17 imported sets');
 const before = [];
 const updates = [];
 for (const set of corrected.sets) {
   const live = await get(set.slug);
-  const archive = set.existing ? await read(`.tmp/best2x2/site-${set.slug}.json`) : null;
+  const archive = set.existing ? await read(`.local-data/best2x2/site-${set.slug}.json`) : null;
   const slots = derived.slots.filter((s) => s.sheet === set.sheet);
   before.push(live);
   if (live.cases.length !== set.cases.length) throw new Error(`Case count mismatch: ${set.slug}`);
@@ -78,7 +78,7 @@ for (const set of corrected.sets) {
   }
 }
 before.push(await get('ortega-oll'));
-const artifact = `.tmp/png/2x2-repair-${Date.now()}.json`;
+const artifact = `.local-data/best2x2/2x2-repair-${Date.now()}.json`;
 const stats = { sets: before.length, cases: before.reduce((n, s) => n + s.cases.length, 0),
   changedSets: new Set(updates.map((u) => u.slug)).size, changedCases: updates.length,
   changedAlgorithms: updates.reduce((n, u) => n + u.algs.flat().length, 0) };

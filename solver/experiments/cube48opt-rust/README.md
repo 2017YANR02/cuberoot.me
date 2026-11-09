@@ -60,7 +60,7 @@ node --experimental-strip-types solver/experiments/cube48opt-rust/run-opt10.mts
 
 **2026-10-13 Opt10 代码阶段**：维护者已取消 H9 建表与测试。自有 Rust Opt10 的原生生成、独立表格式及搜索接入已实现，完成有界小数据验证；尚未生成/加载约 31.13 GB 大表，不能据此声称性能提升。默认 CLI 与研究 guard 禁止 Opt10 大表运行；执行边界、数学条件和剩余验收见 [Opt10 开发跟踪](opt10-development.md)。原 Opt1–9/H7/H10 程序与表继续保留。
 
-**2026-10-13 双底批处理补充**：独立 `target/zbll` 构建现已为 H10 增加共享一份只读表的状态级多线程调度。64 个双底状态与全部 60 个历史状态的 1/16 线程及 C 16 线程对照共 1,116 解通过，Rust 跨线程/轮次 620 次非时间字段比较完全一致；正式两轮混合批处理时间比为 1.426×。这只补充该固定程序的 H10 验收，不代表其他 H 档真实表已验证。旧 release 程序未覆盖，原始报告在 `.tmp/zbll-rust-acceptance-20261013-v3/`；续算契约见 `docs/double-zbll-trainer.md`。
+**2026-10-13 双底批处理补充**：独立 `target/zbll` 构建现已为 H10 增加共享一份只读表的状态级多线程调度。64 个双底状态与全部 60 个历史状态的 1/16 线程及 C 16 线程对照共 1,116 解通过，Rust 跨线程/轮次 620 次非时间字段比较完全一致；正式两轮混合批处理时间比为 1.426×。这只补充该固定程序的 H10 验收，不代表其他 H 档真实表已验证。旧 release 程序未覆盖，原始报告在 `.local-data/zbll-rust-acceptance-20261013-v3/`；续算契约见 `docs/double-zbll-trainer.md`。
 
 三阶魔方 HTM 最短解研究。Rust 自己完成状态运算、坐标、表读取、IDA* 与正逆搜索，求解过程中不调用 WASM 或 C 求解器。当前实现 Apple Silicon 原生路径及可移植标量路径；实际验收环境为 macOS arm64，未验收 Intel Mac。
 
@@ -134,7 +134,7 @@ cargo check --all-targets --target-dir target/h48-general
 本轮检查使用独立 target，未覆盖已验收的 release 程序。下面保留既有 Opt 运行入口，均从仓库根执行；其中 `target/release/cube48opt-research` 是历史程序路径，不代表刚修改的 H48 通用源码已构建验收。初次准备 Opt 表时输出目录必须不存在；原 WASM 仅用于这一步及对照验证。需要仓库已安装的 Node 与 cubing.js 依赖。
 
 ```sh
-node solver/experiments/cube48opt-rust/guard.mts opt1-generate "$(node -p 'process.execPath')" "$PWD/solver/experiments/cube48opt-rust/oracle.mjs" generate "$PWD/.tmp/cubeopt-reverse/opt1-generated"
+node solver/experiments/cube48opt-rust/guard.mts opt1-generate "$(node -p 'process.execPath')" "$PWD/solver/experiments/cube48opt-rust/oracle.mjs" generate "$PWD/.local-data/cubeopt-reverse/opt1-generated"
 ```
 
 当前机器已完成上述生成，不要覆盖已有结果。原生求解输入格式为 `标识<TAB>打乱`，支持 U/R/F/D/L/B 及 2、撇号，半转按一步计。可连续输入多行；输出每行一个 JSON。
@@ -142,7 +142,7 @@ node solver/experiments/cube48opt-rust/guard.mts opt1-generate "$(node -p 'proce
 生成线程由 `CUBEOPT_THREADS` 指定，默认 1，上限为当前 `availableParallelism()`。Oracle 调用 `init(1, threads)`；原版函数的第二个参数才传入建表/加载检查线程数，第一个参数用于状态查询或允许生成。旧 `solver/333opt/gen-table.mjs` 的参数注释有误，不沿用其 `init(THREADS,1)` 作为多线程生成方式。Opt2–9 的本次生成均使用 18 线程，加载验证仍使用一个线程。
 
 ```sh
-node solver/experiments/cube48opt-rust/guard.mts opt1-manual "$PWD/solver/experiments/cube48opt-rust/target/release/cube48opt-research" solve "$PWD/.tmp/cubeopt-reverse/opt1-generated/small-memory.bin" "$PWD/.tmp/cubeopt-reverse/opt1-generated/h48prun01.dat" 8 20 50000000 <<'CASES'
+node solver/experiments/cube48opt-rust/guard.mts opt1-manual "$PWD/solver/experiments/cube48opt-rust/target/release/cube48opt-research" solve "$PWD/.local-data/cubeopt-reverse/opt1-generated/small-memory.bin" "$PWD/.local-data/cubeopt-reverse/opt1-generated/h48prun01.dat" 8 20 50000000 <<'CASES'
 example	R U R' F2
 CASES
 ```
@@ -157,7 +157,7 @@ CASES
 
 H10 后端使用 `solver/tables/h48-nissy-core/h48h10.dat`，精确 30,336,314,216 字节。一次只读映射，正常加载验证全部表头、辅助段与主表分布，不另存一份 30 GB 数据。它是显式 H10 后端，不是上游不存在的 Opt10。
 
-以下结果属于泛化前的固定 H10 程序，SHA-256 为 `e8b2c919087006bdcd51b76f7bdbe13a294b538c2a69058d4593fa107099d8a0`。状态运算、坐标、读表和搜索热路径均为 Rust，不调用 C/WASM；固定坐标查找表额外占 9,720 字节，这不是整个进程的额外 RSS。`.tmp/cubeopt-reverse/h10-coordinate-v3/report.json` 记录 5,698 个基础及左半转状态的四项快/标量坐标比较、273,504 次边变换全部一致；`h10-validation-v2/report.json` 记录全部 3,502 个浅层状态及 60 个历史状态的三路 10,686 个解通过。优化前后两种 Rust 配置共 7,124 条输出除耗时外全部字段一致，见 `h10-search-equivalence.json`，不能把这次坐标优化说成减少了搜索量，也不能将旧版验证转记为 H0–H11 通用版验证。
+以下结果属于泛化前的固定 H10 程序，SHA-256 为 `e8b2c919087006bdcd51b76f7bdbe13a294b538c2a69058d4593fa107099d8a0`。状态运算、坐标、读表和搜索热路径均为 Rust，不调用 C/WASM；固定坐标查找表额外占 9,720 字节，这不是整个进程的额外 RSS。`.local-data/cubeopt-reverse/h10-coordinate-v3/report.json` 记录 5,698 个基础及左半转状态的四项快/标量坐标比较、273,504 次边变换全部一致；`h10-validation-v2/report.json` 记录全部 3,502 个浅层状态及 60 个历史状态的三路 10,686 个解通过。优化前后两种 Rust 配置共 7,124 条输出除耗时外全部字段一致，见 `h10-search-equivalence.json`，不能把这次坐标优化说成减少了搜索量，也不能将旧版验证转记为 H0–H11 通用版验证。
 
 与未修改原 C H10 的同表、单线程、完整 60 例正式对照已完成。排除加载与预热后，三轮整批总时间中位数为 Rust **36.782246953 秒**、原 C **57.605142 秒**，本组样本速度比 **1.566112643 倍**，耗时减少 **36.1476%**。全部 960 条求解结果验解通过，其中 360 条用于正式计时，另有 8 次启动检查；运行期间 Swapouts 为 0。完整协议、逐轮时间和重复性边界见 [性能与内存](benchmark-results.md)，不把有限语料结果外推为所有状态的提速保证。
 

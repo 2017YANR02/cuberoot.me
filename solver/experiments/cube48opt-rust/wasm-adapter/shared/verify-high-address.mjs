@@ -8,7 +8,7 @@ import { instantiate } from './cube48opt-rust8-worker.mjs';
 
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'../../../../..');
 const compiled=await WebAssembly.compile(readFileSync(process.argv[2]));
-const snapshot=readFileSync(resolve(ROOT,'.tmp/cubeopt-reverse/opt8-generated/small-memory.bin'));
+const snapshot=readFileSync(resolve(ROOT,'.local-data/cubeopt-reverse/opt8-generated/small-memory.bin'));
 const corpus=JSON.parse(readFileSync(resolve(ROOT,'solver/testdata/benchmarks/wca-first100.json')));
 assert.equal(corpus.cases.length,100);
 const memory=new WebAssembly.Memory({initial:131072n,maximum:262144n,shared:true,address:'i64'});

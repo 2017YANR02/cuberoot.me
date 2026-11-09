@@ -4,11 +4,12 @@ import { constants, openSync, closeSync, fstatSync, readFileSync, readSync, exis
 import { createHash } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { relocatedArtifactPath } from '../../../scripts/local-artifacts/paths.mjs';
 import { verifyOpt10Release } from './opt10-release.mts';
 import { readWca100 } from './wasm-benchmark.mjs';
 import { multithreadBaselineSha256, multithreadStoppedSha256, opt9ExperimentHashes } from './multithread-policy.mts';
 
-const HERE=dirname(fileURLToPath(import.meta.url)),ROOT=resolve(HERE,'../../..'),BASE=resolve(ROOT,'.tmp/cubeopt-reverse');
+const HERE=dirname(fileURLToPath(import.meta.url)),ROOT=resolve(HERE,'../../..'),BASE=resolve(ROOT,'.local-data/cubeopt-reverse');
 const GiB=2**30;
 export const officialScope='opt10-official-wca1000-mt16-single';
 export const officialPaths={
@@ -74,7 +75,7 @@ export function collectOfficialEvidence() {
   const inputBytes=readOfficialRecord(officialPaths.input);
   assert(inputBytes.equals(Buffer.from(corpus.cases.map((item:{id:string;scramble:string})=>`${item.id}\t${item.scramble}\n`).join(''))),'Only the unchanged first 1000 WCA scrambles are supported');
   assert.equal(officialDigest(readOfficialRecord(officialPaths.small)),r.snapshot.sha256);
-  assert.equal(r.snapshot.path,officialPaths.small);assert.equal(r.table.path,officialPaths.table);
+  assert.equal(relocatedArtifactPath(r.snapshot.path),officialPaths.small);assert.equal(relocatedArtifactPath(r.table.path),officialPaths.table);
   const fd=openSync(officialPaths.table,constants.O_RDONLY|constants.O_NOFOLLOW),header=Buffer.alloc(1024);
   try {assert(fstatSync(fd).isFile());assert.equal(fstatSync(fd).size,31_130_911_744);assert.equal(readSync(fd,header,0,1024,0),1024);}
   finally {closeSync(fd);}

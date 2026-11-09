@@ -17,7 +17,7 @@ const TARGET = 'wasm64-unknown-unknown';
 const RUSTFLAGS = '-C panic=abort -C target-feature=+simd128 -C link-arg=--max-memory=17179869184';
 const TARGET_DIR = resolve(HERE, 'target');
 const OUTPUT = resolve(TARGET_DIR, TARGET, 'release/cube48opt_rust_wasm.wasm');
-const ARCHIVE = resolve(ROOT, '.tmp/cubeopt-reverse/rust-wasm64-builds');
+const ARCHIVE = resolve(ROOT, '.local-data/cubeopt-reverse/rust-wasm64-builds');
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const hashFile = file => digest(readFileSync(file));
 const relativeToRoot = file => relative(ROOT, file).replaceAll('\\', '/');

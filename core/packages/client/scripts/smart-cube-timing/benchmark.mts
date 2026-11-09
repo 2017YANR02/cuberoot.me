@@ -227,7 +227,7 @@ async function main() {
     return;
   }
   const started = performance.now(), generatedAt = new Date().toISOString();
-  const artifactRoot = join(repoRoot, '.tmp/smart-cube-timing');
+  const artifactRoot = join(repoRoot, '.local-data/smart-cube-timing');
   const cache = values.cache ? resolve(values.cache) : join(artifactRoot, 'upstream');
   const output = values.out ? resolve(values.out) : join(artifactRoot, 'runs', `${generatedAt.replaceAll(':', '-')}-${process.pid}`);
   const oracle = await loadCstimer(cache, values.offline);

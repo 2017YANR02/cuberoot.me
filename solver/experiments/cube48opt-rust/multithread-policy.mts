@@ -10,7 +10,7 @@ import { parseWasmBenchmarkArguments, readWca100, sharedBuildSources, wasmBuildC
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../../..');
-const OUTPUT = resolve(ROOT, '.tmp/cubeopt-reverse');
+const OUTPUT = resolve(ROOT, '.local-data/cubeopt-reverse');
 const GiB = 2 ** 30, MiB = 2 ** 20;
 export const multithreadScope = 'mac18-wca100-single';
 export const multithreadBaselineSha256 = '47fe14e7b69dbd34dba8dfdf8695809027bb5cc3de5793854495e0f90cbd2ad4';

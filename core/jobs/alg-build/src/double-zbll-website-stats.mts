@@ -34,8 +34,8 @@ export class WebsiteStatistics {
       return { m, lengths };
     };
     // Read producer artifacts, never depend on client source/public assets.
-    const current = load(resolve(root, '.tmp/double-zbll-auf-full/export'));
-    const original = load(resolve(root, '.tmp/double-zbll-v1/export'));
+    const current = load(resolve(root, '.local-data/double-zbll-auf-full/export'));
+    const original = load(resolve(root, '.local-data/double-zbll-v1/export'));
     if (current.m.caseCount !== original.m.caseCount) throw Error('网站基线范围已变化，需要重新核对统计');
     this.count = current.m.caseCount; this.version = current.m.version;
     this.baseline = current.lengths; this.original = original.lengths;

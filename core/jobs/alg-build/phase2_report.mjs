@@ -1,9 +1,9 @@
 /**
  * Phase 2 的产出:给站长看的问题清单 → `docs/1lll-sheet-issues.md`。
  *
- * 依赖 phase2_validate.mjs 的 `.tmp/phase1/phase2_report.json` 和 `.tmp/phase1/repairs.json`。
+ * 依赖 phase2_validate.mjs 的 `.local-data/phase1/phase2_report.json` 和 `.local-data/phase1/repairs.json`。
  *
- *   node phase2_validate.mjs && node .tmp/_repair.mjs && node phase2_report.mjs
+ *   node phase2_validate.mjs && node .local-data/_repair.mjs && node phase2_report.mjs
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -13,11 +13,11 @@ import { identOfAlg, ident } from './ll_ident.mjs';
 const ROOT = path.resolve(import.meta.dirname, '../../..');
 const read = (p) => JSON.parse(fs.readFileSync(path.join(ROOT, p), 'utf8'));
 
-const rows = read('.tmp/phase0/sheet_1lll.json');
-const mapping = read('.tmp/phase0/mapping.json');
-const site = read('.tmp/phase0/site_cases.json');
-const repairs = read('.tmp/phase1/repairs.json');
-const rep = read('.tmp/phase1/phase2_report.json');
+const rows = read('.local-data/phase0/sheet_1lll.json');
+const mapping = read('.local-data/phase0/mapping.json');
+const site = read('.local-data/phase0/site_cases.json');
+const repairs = read('.local-data/phase1/repairs.json');
+const rep = read('.local-data/phase1/phase2_report.json');
 
 const bySelf = new Map(rows.map((r) => [r.Self, r]));
 const setupOf = new Map(site.cases.map((c) => [`${c.set}/${c.name}`, c.setup]));

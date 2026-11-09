@@ -7,7 +7,7 @@
 ## 原版与输入
 
 - 原版入口保留在 `target/multithread/release/cube48opt-research`，SHA-256 为 `6cf7ff50543cb3ca28249788364a3eac76b2bc97ad43b7f6b4f76afe914561f7`。
-- 修改前源码、程序、输入、报告和结果另存于仓库 `.tmp/cubeopt-reverse/opt9-native-baseline-20261014/`；`manifest.json` 逐文件记录摘要。实验不覆盖此目录或原入口。
+- 修改前源码、程序、输入、报告和结果另存于仓库 `.local-data/cubeopt-reverse/opt9-native-baseline-20261014/`；`manifest.json` 逐文件记录摘要。实验不覆盖此目录或原入口。
 - 基准为 `wca1000-mt16-rust-native-opt9-report.json`：70.545670798 秒、峰值 RSS 15,645,851,648 字节，1000 个解均通过独立回放；有原版 WASM 结果的 625 条长度全部匹配。
 - 原生全部 1000 条长度作为候选回归参照。有限语料验证不等于全状态最短性证明，剪枝和并行所有权仍须单独论证。
 - corpus SHA-256：`5b42a18086b27e974115a73696702017b5dde0a19c9819a77c88c8014d67c8ea`。主表仍为 `opt9-generated/h48prun31h9.dat`，15,565,455,360 字节。
@@ -60,9 +60,9 @@ A 比基准少耗时 16.16%，少访问 5.27% 节点；B 比基准少耗时 20.9
 
 报告与程序绑定：
 
-- A 报告：`.tmp/cubeopt-reverse/wca1000-mt16-rust-native-opt9-exp-bpmx-report.json`；程序 SHA-256 `909630ff658d237266b0fe00a8d54a604d0eba64999deebf09424f3ef76edb7a`。
-- B 报告：`.tmp/cubeopt-reverse/wca1000-mt16-rust-native-opt9-exp-dynamic-report.json`；程序 SHA-256 `e95db0343de324d8ef27c0035cbac08740f8f21062119c0cc769dbd3d8fb2d6a`。
-- 候选源码另冻结于 `.tmp/cubeopt-reverse/opt9-native-experiment-source-20261014/`。各独立 target 中的 `opt9-experiment-build.json` 记录实际 Cargo features、原生编译选项、程序和源码摘要；两版均使用 `target-cpu=native`。
+- A 报告：`.local-data/cubeopt-reverse/wca1000-mt16-rust-native-opt9-exp-bpmx-report.json`；程序 SHA-256 `909630ff658d237266b0fe00a8d54a604d0eba64999deebf09424f3ef76edb7a`。
+- B 报告：`.local-data/cubeopt-reverse/wca1000-mt16-rust-native-opt9-exp-dynamic-report.json`；程序 SHA-256 `e95db0343de324d8ef27c0035cbac08740f8f21062119c0cc769dbd3d8fb2d6a`。
+- 候选源码另冻结于 `.local-data/cubeopt-reverse/opt9-native-experiment-source-20261014/`。各独立 target 中的 `opt9-experiment-build.json` 记录实际 Cargo features、原生编译选项、程序和源码摘要；两版均使用 `target-cpu=native`。
 - 原版程序和旧资源基线摘要在两次完成后再次核对，与修改前完全一致。原 WASM 越界停止记录也保持原样。
 
 ## 如何保留和选择版本
@@ -75,7 +75,7 @@ A 比基准少耗时 16.16%，少访问 5.27% 节点；B 比基准少耗时 20.9
 
 ## 第二轮：保留 55.80 秒版，探索 40 秒
 
-维护者要求继续，协议仍为同一 WCA1000、16 线程、每个新候选单轮不预热。原版和 B 不重测、不覆盖。B 的源码、二进制、报告、1000 条原始结果、资源和启动证据已另封存到 `.tmp/cubeopt-reverse/opt9-native-55s-preserved-20261014/`，`manifest.json` 记录 37 个文件摘要。
+维护者要求继续，协议仍为同一 WCA1000、16 线程、每个新候选单轮不预热。原版和 B 不重测、不覆盖。B 的源码、二进制、报告、1000 条原始结果、资源和启动证据已另封存到 `.local-data/cubeopt-reverse/opt9-native-55s-preserved-20261014/`，`manifest.json` 记录 37 个文件摘要。
 
 初步分析：B 的 18–19 步输入占 52.66 秒（94.4%）。逐条耗时对节点数拟合的截距约 2 毫秒，只是粗略估计，尚无线程等待剖析；减少线程创建本身不太可能带来所需的 28.3% 总耗时下降。
 
@@ -91,7 +91,7 @@ A 比基准少耗时 16.16%，少访问 5.27% 节点；B 比基准少耗时 20.9
 | C：预取 | 56.0287 秒 | 13,301,569,431 | 15,974,756,504 | 15.65 GB |
 | D：预取 + 等价四分之一转剪枝 | 46.6339 秒 | 9,868,921,966 | 12,546,286,987 | 15.64 GB |
 
-C 与保留 B 的差别约 +0.4%，没有明确收益。D 比 B 少耗时 16.43%、少访问约 25% 节点；新计数记录剪除了 3,513,541,648 个等价兄弟分支。两版均正常退出、Swapouts=0、保护未触发，各自1000条独立回放通过，长度同时匹配原版与 B。每次只跑一轮，不能据此给出重复运行置信区间。D 的源码、程序与证据已保存到 `.tmp/cubeopt-reverse/opt9-native-quarter-preserved-20261014/`。
+C 与保留 B 的差别约 +0.4%，没有明确收益。D 比 B 少耗时 16.43%、少访问约 25% 节点；新计数记录剪除了 3,513,541,648 个等价兄弟分支。两版均正常退出、Swapouts=0、保护未触发，各自1000条独立回放通过，长度同时匹配原版与 B。每次只跑一轮，不能据此给出重复运行置信区间。D 的源码、程序与证据已保存到 `.local-data/cubeopt-reverse/opt9-native-quarter-preserved-20261014/`。
 
 ### 第二轮后续结果与当前最佳版本
 
@@ -112,12 +112,12 @@ E/F 各 1000 条独立回放通过，全部长度同时匹配原版和 B；报�
 
 ### 封存与复现索引
 
-- B（55.8 秒）：`.tmp/cubeopt-reverse/opt9-native-55s-preserved-20261014/`，包含完整源码、可执行程序、原始结果与逐文件摘要；原有 `target/opt9-dynamic` 程序保持。
-- D（46.6 秒）：`.tmp/cubeopt-reverse/opt9-native-quarter-preserved-20261014/`。
-- E（47.9 秒）：`.tmp/cubeopt-reverse/opt9-native-cached-preserved-20261014/`。
-- F（43.2 秒）：`.tmp/cubeopt-reverse/opt9-native-fixed-preserved-20261014/`，32 个文件的 manifest SHA-256 为 `f2f633ebc79f5948b86991f259c85e53cedc6b2776167573d574bafc8eda1244`；保存源码与构建摘要逐项匹配。
+- B（55.8 秒）：`.local-data/cubeopt-reverse/opt9-native-55s-preserved-20261014/`，包含完整源码、可执行程序、原始结果与逐文件摘要；原有 `target/opt9-dynamic` 程序保持。
+- D（46.6 秒）：`.local-data/cubeopt-reverse/opt9-native-quarter-preserved-20261014/`。
+- E（47.9 秒）：`.local-data/cubeopt-reverse/opt9-native-cached-preserved-20261014/`。
+- F（43.2 秒）：`.local-data/cubeopt-reverse/opt9-native-fixed-preserved-20261014/`，32 个文件的 manifest SHA-256 为 `f2f633ebc79f5948b86991f259c85e53cedc6b2776167573d574bafc8eda1244`；保存源码与构建摘要逐项匹配。
 - F 程序：`target/opt9-fixed/release/cube48opt-research`，SHA-256 `3314f88daaf8be5423ae862e359c98fc741a0f9ea8bbd9695f45fd474eb857a9`。
-- F 报告：`.tmp/cubeopt-reverse/wca1000-mt16-rust-native-opt9-exp-fixed-report.json`；同名前缀保存原始 JSONL、资源、退出、启动及审阅证据。
+- F 报告：`.local-data/cubeopt-reverse/wca1000-mt16-rust-native-opt9-exp-fixed-report.json`；同名前缀保存原始 JSONL、资源、退出、启动及审阅证据。
 
 F 编译参数为 `--features opt9-native-bpmx,opt9-native-dynamic,opt9-native-prefetch,opt9-native-quarter,opt9-native-root-bound,opt9-native-fixed-contexts --target-dir target/opt9-fixed`；未启用 `opt9-native-quarter-cache`。后续重建请使用新的 target 目录，避免覆盖已测程序。大表运行仍须经 guard 和新的任务审阅，不可重用已消费的运行凭证。原版与 B 的现有程序和备份均保留，可在后续授权运行中继续选用。
 
@@ -152,7 +152,7 @@ I 记录直接删去 119,028,047 个分支、延后删去 349,336,122 个分支�
 
 ### Opt10 迁移边界
 
-BPMX、动态分工、固定上下文和根下界可以复用相同搜索框架。四分之一转与上述相反面剪枝还要求查询下界对左半转不变；现有 EO10 坐标满足相同的群作用结构。只读取 818,008 字节辅助快照，对 6502 个状态及其逆态进行了 78,024 次左半转不变检查和 78,024 次四分之一转等价检查，EO10 标量结果一致，负对照正常方向不被错误当成等价。证据在 .tmp/cubeopt-reverse/opt10-coordinate-audit-20261014/。
+BPMX、动态分工、固定上下文和根下界可以复用相同搜索框架。四分之一转与上述相反面剪枝还要求查询下界对左半转不变；现有 EO10 坐标满足相同的群作用结构。只读取 818,008 字节辅助快照，对 6502 个状态及其逆态进行了 78,024 次左半转不变检查和 78,024 次四分之一转等价检查，EO10 标量结果一致，负对照正常方向不被错误当成等价。证据在 .local-data/cubeopt-reverse/opt10-coordinate-audit-20261014/。
 
 这些检查证明了已测坐标的迁移前提，不能代替 Opt10 求解验收。当前 Opt10 尚未启用这些 Opt9 实验策略；其主表头、有效索引及下界解码不同，不能复制 Opt9 的读取偏移。此次没有读取 Opt10 主表、没有重建表，也没有运行 Opt10 基准；不推算 Opt10 提速比例。
 
@@ -174,9 +174,9 @@ J 只启用 F 的六个 feature 加 opt9-native-ranked，未叠加 G/H/I。正�
 
 | 候选 | 完整源/程序/结果快照 | 正式报告前缀 |
 | --- | --- | --- |
-| G | .tmp/cubeopt-reverse/opt9-native-niss-preserved-20261014/ | wca1000-mt16-rust-native-opt9-exp-niss |
-| H | .tmp/cubeopt-reverse/opt9-native-ternary-preserved-20261014/ | wca1000-mt16-rust-native-opt9-exp-ternary |
-| I | .tmp/cubeopt-reverse/opt9-native-axis-preserved-20261014/ | wca1000-mt16-rust-native-opt9-exp-axis |
-| J | .tmp/cubeopt-reverse/opt9-native-ranked-preserved-20261014/ | wca1000-mt16-rust-native-opt9-exp-ranked |
+| G | .local-data/cubeopt-reverse/opt9-native-niss-preserved-20261014/ | wca1000-mt16-rust-native-opt9-exp-niss |
+| H | .local-data/cubeopt-reverse/opt9-native-ternary-preserved-20261014/ | wca1000-mt16-rust-native-opt9-exp-ternary |
+| I | .local-data/cubeopt-reverse/opt9-native-axis-preserved-20261014/ | wca1000-mt16-rust-native-opt9-exp-axis |
+| J | .local-data/cubeopt-reverse/opt9-native-ranked-preserved-20261014/ | wca1000-mt16-rust-native-opt9-exp-ranked |
 
-报告在 .tmp/cubeopt-reverse/，各前缀后接 -report.json；同名前缀保留原始逐例、退出、资源及协议记录。各快照附逐文件摘要，独立 target 保留原程序。**仅本地，未提交、未推送、未替换网站或服务器。**
+报告在 .local-data/cubeopt-reverse/，各前缀后接 -report.json；同名前缀保留原始逐例、退出、资源及协议记录。各快照附逐文件摘要，独立 target 保留原程序。**仅本地，未提交、未推送、未替换网站或服务器。**

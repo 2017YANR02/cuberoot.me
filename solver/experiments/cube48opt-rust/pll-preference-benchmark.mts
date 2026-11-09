@@ -14,8 +14,8 @@ import { scoreGripCandidate } from './lll-grip-scoring.mts';
 import { moveFeatures, trainPreference, preferenceScore, rankPreference, scoreContributions, type PreferenceGroup } from './lll-preference-ranking.mts';
 
 const root = resolve(import.meta.dirname, '../../..');
-const input = resolve(root, '.tmp/pll-21-20261023');
-const out = resolve(process.argv[2] ?? resolve(root, '.tmp/pll-preference-20261024-v1'));
+const input = resolve(root, '.local-data/pll-21-20261023');
+const out = resolve(process.argv[2] ?? resolve(root, '.local-data/pll-preference-20261024-v1'));
 assert(!existsSync(resolve(out, 'report.json')), 'Use a new output directory; completed evidence is immutable');
 mkdirSync(out, { recursive: true });
 const hash = (b: string | Uint8Array) => createHash('sha256').update(b).digest('hex');

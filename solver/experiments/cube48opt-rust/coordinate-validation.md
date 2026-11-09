@@ -15,9 +15,9 @@ cargo build --release --manifest-path solver/experiments/cube48opt-rust/Cargo.to
 ```sh
 node solver/experiments/cube48opt-rust/verify-coordinates.mjs \
   solver/experiments/cube48opt-rust/target/release/examples/verify_coordinates \
-  .tmp/cubeopt-reverse/opt1-small \
-  .tmp/cubeopt-reverse/hot-query.json \
-  .tmp/cubeopt-reverse/coordinate-differential-reproduced.json
+  .local-data/cubeopt-reverse/opt1-small \
+  .local-data/cubeopt-reverse/hot-query.json \
+  .local-data/cubeopt-reverse/coordinate-differential-reproduced.json
 ```
 
 必须全部严格相等：407 条状态和 fastcube 有效字段、19,536 个对称变换、7,326 个逆态移动恒等式、407 个从 WASM 共轭状态重算的参考坐标、54,538 个优化/标量坐标、814 个原 WASM 热路径正逆索引。额外检查逆态乘积、对称类不变和复原坐标 2。fastcube 的 `[28,32)`、`[44,48)` 是原版未定义 padding，只检查 Rust 自己输出为零。
@@ -29,9 +29,9 @@ node solver/experiments/cube48opt-rust/verify-coordinates.mjs \
 ```sh
 CUBEOPT_VARIANT=9 node solver/experiments/cube48opt-rust/verify-coordinates.mjs \
   solver/experiments/cube48opt-rust/target/release/examples/verify_coordinates \
-  .tmp/cubeopt-reverse/opt9-small \
-  .tmp/cubeopt-reverse/opt9-hot-query.json \
-  .tmp/cubeopt-reverse/opt9-coordinate-differential.json
+  .local-data/cubeopt-reverse/opt9-small \
+  .local-data/cubeopt-reverse/opt9-hot-query.json \
+  .local-data/cubeopt-reverse/opt9-coordinate-differential.json
 ```
 
 上述路径为调用范式，不能据此断言文件已生成。原 OOB 查询只读取首次查表前已写出的真实索引，不应把没有读取 PDB 的运行报告成剪枝值已验证。各档状态见 [coordinate-matrix.md](coordinate-matrix.md)。
@@ -47,12 +47,12 @@ Mac AArch64 的优化路径是 NEON，其它架构走标量；报告中的 `coor
 ```sh
 cargo build --release --manifest-path solver/experiments/cube48opt-rust/Cargo.toml \
   --example verify_coordinates --features neon-moves \
-  --target-dir .tmp/cubeopt-reverse/neon-moves-target
+  --target-dir .local-data/cubeopt-reverse/neon-moves-target
 node solver/experiments/cube48opt-rust/verify-coordinates.mjs \
-  .tmp/cubeopt-reverse/neon-moves-target/release/examples/verify_coordinates \
-  .tmp/cubeopt-reverse/opt1-small \
-  .tmp/cubeopt-reverse/hot-query.json \
-  .tmp/cubeopt-reverse/coordinate-differential-neon-moves.json
+  .local-data/cubeopt-reverse/neon-moves-target/release/examples/verify_coordinates \
+  .local-data/cubeopt-reverse/opt1-small \
+  .local-data/cubeopt-reverse/hot-query.json \
+  .local-data/cubeopt-reverse/coordinate-differential-neon-moves.json
 ```
 
-Mac 报告明确为 `pairedMoveBackend: "neon"`，7,326 对移动差分已通过。随后 18 例 × 4 轮原生输出（72 行）除耗时外逐字段与标量移动基线一致，包含解序列、节点数、查表数、缓存和剪枝计数；证据为 `.tmp/cubeopt-reverse/neon-search-equivalence.json`。与原 WASM 的交错计时另见跟踪 MD，不能将状态差分本身当作性能证据。
+Mac 报告明确为 `pairedMoveBackend: "neon"`，7,326 对移动差分已通过。随后 18 例 × 4 轮原生输出（72 行）除耗时外逐字段与标量移动基线一致，包含解序列、节点数、查表数、缓存和剪枝计数；证据为 `.local-data/cubeopt-reverse/neon-search-equivalence.json`。与原 WASM 的交错计时另见跟踪 MD，不能将状态差分本身当作性能证据。

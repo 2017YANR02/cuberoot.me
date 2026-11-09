@@ -206,8 +206,8 @@ const TABLES: Record<string, SolverTbls> = {
         en: 'Selected separately from Opt9, sharing its required coordinate snapshot. The official Opt10 coset release solved WCA first1000 in 24.591 seconds with 16 search threads, one pass and no warmup; all solutions passed verification. The resumable double-ZBLL job uses this same release; its actual throughput has not yet been measured.',
       },
     },
-    builtZh: '本机保留 Opt9（15.6 GB）与自研 Opt10 v2（31.1 GB），另已生成 nxopt22 对照表（7.8 GB），位于 .tmp/cubeopt-reverse/ 下。各求解器独立选表，不同时加载。旧 H10 统计入口当前缺表，尚未迁移；服务器 Rust WASM Opt8 不受影响。',
-    builtEn: 'Local tables include Opt9 (15.6 GB), custom Opt10 v2 (31.1 GB), and the newly generated nxopt22 benchmark table (7.8 GB), under .tmp/cubeopt-reverse/. Each solver loads its own table separately. The old H10 statistics entry lacks its table and has not been migrated; server Rust WASM Opt8 is unaffected.',
+    builtZh: '本机保留 Opt9（15.6 GB）与自研 Opt10 v2（31.1 GB），另已生成 nxopt22 对照表（7.8 GB），位于 .local-data/cubeopt-reverse/ 下。各求解器独立选表，不同时加载。旧 H10 统计入口当前缺表，尚未迁移；服务器 Rust WASM Opt8 不受影响。',
+    builtEn: 'Local tables include Opt9 (15.6 GB), custom Opt10 v2 (31.1 GB), and the newly generated nxopt22 benchmark table (7.8 GB), under .local-data/cubeopt-reverse/. Each solver loads its own table separately. The old H10 statistics entry lacks its table and has not been migrated; server Rust WASM Opt8 is unaffected.',
   },
   '222': {
     move: [{ n: 'mt_edge3', b: 760332 }, { n: 'mt_corn', b: 1740 }],

@@ -2,6 +2,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { relocatedArtifactPath } from '../../scripts/local-artifacts/paths.mjs';
 import { verifyOpt10Release } from '../experiments/cube48opt-rust/opt10-release.mts';
 import { zbllOfficialReviewPath } from '../experiments/cube48opt-rust/opt10-zbll-policy.mts';
 
@@ -33,7 +34,7 @@ export function rustCsv(line: string): string {
 export function rustConfiguration(root: string, table: string, threads: number) {
   const research = resolve(root, 'solver/experiments/cube48opt-rust');
   const binary = resolve(research, 'target/zbll/release/cube48opt-research');
-  const acceptancePath = resolve(root, '.tmp/double-zbll-symmetry-v2/rust-h10-acceptance.json');
+  const acceptancePath = resolve(root, '.local-data/double-zbll-symmetry-v2/rust-h10-acceptance.json');
   const acceptance = JSON.parse(readFileSync(acceptancePath, 'utf8'));
   const sha256 = createHash('sha256').update(readFileSync(binary)).digest('hex');
   if (!Number.isInteger(threads) || threads < 1 || threads > 18 || acceptance.passed !== true || acceptance.binarySha256 !== sha256
@@ -47,13 +48,13 @@ export function opt10Configuration(root: string, threads: number) {
   const research = resolve(root, 'solver/experiments/cube48opt-rust');
   const release = verifyOpt10Release();
   const binary = release.executable;
-  const table = resolve(root, '.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
-  const small = resolve(root, '.tmp/cubeopt-reverse/opt9-generated/small-memory.bin');
+  const table = resolve(root, '.local-data/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
+  const small = resolve(root, '.local-data/cubeopt-reverse/opt9-generated/small-memory.bin');
   const acceptancePath = zbllOfficialReviewPath;
   const acceptance = JSON.parse(readFileSync(acceptancePath,'utf8'));
   const sha256 = release.manifest.executable.sha256;
   if (!Number.isInteger(threads) || threads < 1 || threads > 18
-      || acceptance.executableSha256 !== sha256 || acceptance.table?.path !== table
+      || acceptance.executableSha256 !== sha256 || relocatedArtifactPath(acceptance.table?.path,root) !== table
       || statSync(table).size !== 31_130_911_744 || statSync(small).size !== 818_008)
     throw Error('Rust Opt10 release or thread configuration differs from the reviewed artifacts');
   return { binary, sha256, table, acceptancePath, release:release.manifest.id,

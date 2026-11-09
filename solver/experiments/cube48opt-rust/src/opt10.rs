@@ -437,7 +437,7 @@ mod tests {
     fn eo10_projection_selection_exhaustive_snapshot() {
         use crate::{coord::CORNER_RAW_COUNT, cube::MOVES};
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../../.tmp/cubeopt-reverse/opt9-generated/small-memory.bin");
+            .join("../../../.local-data/cubeopt-reverse/opt9-generated/small-memory.bin");
         assert_eq!(std::fs::metadata(&path).unwrap().len(), 818_008);
         let coordinates = Opt10Coordinates::from_opt9_snapshot(&std::fs::read(path).unwrap()).unwrap();
         assert_eq!(coordinates.projection_symmetries.len(), CORNER_RAW_COUNT);
@@ -560,7 +560,7 @@ mod tests {
     fn eo10_lookahead_selection_exhaustive_snapshot() {
         use crate::{coord::CORNER_RAW_COUNT, cube::MOVES};
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../../.tmp/cubeopt-reverse/opt9-generated/small-memory.bin");
+            .join("../../../.local-data/cubeopt-reverse/opt9-generated/small-memory.bin");
         assert_eq!(std::fs::metadata(&path).unwrap().len(), 818_008);
         let coordinates = Opt10Coordinates::from_opt9_snapshot(&std::fs::read(path).unwrap()).unwrap();
         assert_eq!(coordinates.lookahead_moves.len(), CORNER_RAW_COUNT);

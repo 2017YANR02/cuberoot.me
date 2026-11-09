@@ -1,6 +1,6 @@
 //! Native search recovered from cube48opt1..9.wasm, without a WASM runtime.
 //!
-//! Evidence: `.tmp/cubeopt-reverse/cube48opt1.wat` functions 36--44 and 47.
+//! Evidence: `.local-data/cubeopt-reverse/cube48opt1.wat` functions 36--44 and 47.
 //! The first implementation preserves the two-sided bound, NISS side score,
 //! half-turn reuse, same-face backward pruning, and eight interleaved DFS
 //! contexts, ranked prefix jobs and root-stabilizer reduction. Rust

@@ -1,6 +1,6 @@
 # Opt1–Opt9 坐标的静态恢复
 
-依据是仓库保留的九个原 `cube48optN.wasm`，不是按文件名推测倍增。WABT 静态反编译产物在 `.tmp/cubeopt-reverse/variants/optN.{dcmp,wat}`；没有为本次恢复实例化 WASM、求解或建表。公开原始文件和摘要由 `oracle.mjs` 对应的逐档 manifest 固定。
+依据是仓库保留的九个原 `cube48optN.wasm`，不是按文件名推测倍增。WABT 静态反编译产物在 `.local-data/cubeopt-reverse/variants/optN.{dcmp,wat}`；没有为本次恢复实例化 WASM、求解或建表。公开原始文件和摘要由 `oracle.mjs` 对应的逐档 manifest 固定。
 
 ## 实际参数
 

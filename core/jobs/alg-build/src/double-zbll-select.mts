@@ -9,8 +9,8 @@ import { atomicJson } from './double-zbll-symmetry-state.mjs';
 
 if (process.argv.length!==3 || !['--snapshot','--export'].includes(process.argv[2])) throw Error('Use --snapshot or --export; neither starts a solver.');
 const exporting = process.argv[2] === '--export';
-const work=resolve(import.meta.dirname,'../../../../.tmp/double-zbll-symmetry-v2');
-const model=await import(resolve(work,'model.mts'));
+const work=resolve(import.meta.dirname,'../../../../.local-data/double-zbll-symmetry-v2');
+const model=await import(resolve(import.meta.dirname,'double-zbll-model.mts'));
 const selection=new PairSelection(model), seen=new Uint8Array(model.N*model.N);
 const integrity=JSON.parse(readFileSync(resolve(work,'migration-integrity.json'),'utf8'));
 const completion = exporting ? JSON.parse(readFileSync(resolve(work,'solutions-integrity.json'),'utf8')) : undefined;

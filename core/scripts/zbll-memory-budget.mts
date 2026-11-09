@@ -11,7 +11,7 @@ export function observeZbllMemory(owner: number, available: number, boot: string
   if (!processes.some(p=>p.pid === owner)) throw Error('Incomplete process-tree observation');
   let lock: any = null, guardCommand = '', commands: Record<number,string> = {};
   try {
-    lock = JSON.parse(readFileSync(resolve(root,'.tmp/cubeopt-reverse/compute.lock'),'utf8'));
+    lock = JSON.parse(readFileSync(resolve(root,'.local-data/cubeopt-reverse/compute.lock'),'utf8'));
     if (Number.isSafeInteger(lock.pid) && lock.pid > 0) {
       guardCommand = command(['-p',String(lock.pid),'-o','command=']);
       const pids = processes.filter(p=>p.name === 'cube48opt-research' || p.name === 'time').map(p=>p.pid);

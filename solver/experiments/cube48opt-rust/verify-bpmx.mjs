@@ -66,7 +66,7 @@ async function main() {
   assert.equal(process.argv.length, 2, 'This pinned checker accepts no overrides');
   assert(existsSync(resolve(ROOT, 'AGENTS.md')), 'Run from the canonical repository source tree');
   assert.equal(HERE, resolve(ROOT, 'solver/experiments/cube48opt-rust'), 'Noncanonical checker source');
-  const parent = resolve(ROOT, '.tmp/cubeopt-reverse');
+  const parent = resolve(ROOT, '.local-data/cubeopt-reverse');
   mkdirSync(parent, { recursive: true });
   output = mkdtempSync(resolve(parent, 'bpmx-small-check-'));
   const before = sourceHashes();

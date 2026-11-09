@@ -6,13 +6,13 @@
  * pg_dump 的 COPY 显式列出列名,多一个 `meta` 列照样灌得进(回滚后 meta 为 NULL)——
  * migration 0069 不回滚,加一列是无害的。
  *
- *   node make_rollback.mjs .tmp/phase4/alg_backup_20260713.sql
+ *   node make_rollback.mjs .local-data/phase4/alg_backup_20260713.sql
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const ROOT = path.resolve(import.meta.dirname, '../../..');
-const src = path.join(ROOT, process.argv[2] ?? '.tmp/phase4/alg_backup_20260713.sql');
+const src = path.join(ROOT, process.argv[2] ?? '.local-data/phase4/alg_backup_20260713.sql');
 const lines = readFileSync(src, 'utf8').split('\n');
 
 const i = lines.findIndex((l) => l.startsWith('COPY public.alg_cases ('));

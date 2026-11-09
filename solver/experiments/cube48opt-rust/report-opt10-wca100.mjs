@@ -10,7 +10,7 @@ import { verify } from './benchmark.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../../..');
-const BASE = resolve(ROOT, '.tmp/cubeopt-reverse');
+const BASE = resolve(ROOT, '.local-data/cubeopt-reverse');
 const PREFIX = resolve(BASE, 'wca100-rust-opt10-single');
 const OUTPUT = `${PREFIX}-report.json`;
 const TABLE = resolve(BASE, 'opt10-generated-v2/cuberoot-opt10.dat');

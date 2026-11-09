@@ -23,7 +23,7 @@ const LL_SETS = ['oll', 'pll', 'coll', 'cmll', 'anti-pll', 'ollcp', 'zbll', '1ll
 /** 目标态 = 整体还原的那 5 个(其余 4 个只完成本阶段,替代公式本就不整还原) */
 const FULL_SOLVE_SETS = new Set(['pll', 'zbll', '1lll', 'ell', 'anti-pll']);
 const TABLE = 'alg_cases_dryrun';
-const TMP = '../../../.tmp';
+const TMP = '../../../.local-data';
 
 const docker = (args) => execFileSync('docker', args, { encoding: 'utf-8' });
 const psql = (sql) => docker(['exec', '-i', 'pg13', 'psql', '-U', 'postgres', '-d', 'cuberoot_db', '-v', 'ON_ERROR_STOP=1', '-qtA', '-c', sql]);

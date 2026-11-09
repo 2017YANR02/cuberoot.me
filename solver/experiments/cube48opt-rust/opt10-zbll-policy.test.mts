@@ -16,8 +16,8 @@ test('only the reviewed persistent ZBLL session removes the per-batch deadline',
 });
 const root=resolve(import.meta.dirname,'../../..');
 const bin=resolve(import.meta.dirname,'target/opt10/release/cube48opt-research');
-const args=['solve-opt10',resolve(root,'.tmp/cubeopt-reverse/opt9-generated/small-memory.bin'),resolve(root,'.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat'),'8','20','0'];
-const env={CUBEOPT_BACKEND:'opt10',CUBEOPT_SOLVE_THREADS:'1',CUBEOPT_ZBLL_REVIEW:resolve(root,'.tmp/double-zbll-symmetry-v2/opt10-resource-review.json')};
+const args=['solve-opt10',resolve(root,'.local-data/cubeopt-reverse/opt9-generated/small-memory.bin'),resolve(root,'.local-data/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat'),'8','20','0'];
+const env={CUBEOPT_BACKEND:'opt10',CUBEOPT_SOLVE_THREADS:'1',CUBEOPT_ZBLL_REVIEW:resolve(root,'.local-data/double-zbll-symmetry-v2/opt10-resource-review.json')};
 test('batch scope admits only reviewed Opt10 solves and never expands the old single-pass scope',()=>{
   for(const n of [1,Math.min(16,availableParallelism())]){
     const p=researchPolicy('double-zbll-opt10-batch',bin,args,{...env,CUBEOPT_SOLVE_THREADS:String(n)});

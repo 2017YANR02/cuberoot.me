@@ -18,8 +18,8 @@ test('one minimum per pair, rotated/swapped pairs, fallback and PLL coverage sta
       writeFileSync(resolve(dir, 'manifest.json'), JSON.stringify({ version: 'fixture', recordBytes: 21, pairCount: 4, caseCount: 2,
         dataFile: 'pairs.bin', casesFile: 'cases.json', dataSha256: hash(bytes), casesSha256: hash(c) }));
     };
-    corpus(resolve(root, '.tmp/double-zbll-auf-full/export'), [18,17,16,15]);
-    corpus(resolve(root, '.tmp/double-zbll-v1/export'), [18,18,18,18]);
+    corpus(resolve(root, '.local-data/double-zbll-auf-full/export'), [18,17,16,15]);
+    corpus(resolve(root, '.local-data/double-zbll-v1/export'), [18,18,18,18]);
     const s = new WebsiteStatistics(root, { N: 3, cases: [...cases, { id: 3, name: 'PLL' }],
       states: [{caseIndex:0},{caseIndex:1},{caseIndex:2}], image: (a,b,g) => g < 4 ? a*3+b : b*3+a });
     s.accept(1,14); s.accept(1,17); s.accept(1,14); s.accept(6,12);

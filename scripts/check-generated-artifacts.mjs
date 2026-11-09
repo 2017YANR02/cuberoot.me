@@ -337,9 +337,10 @@ export function validateLedger(ledger, { root = repoRoot } = {}) {
 
     const outputs = asArray(artifact.outputs);
     const transientOutputs = asArray(artifact.transientOutputs);
+    const durableOutputs = asArray(artifact.durableOutputs);
     const runtimeOutputs = asArray(artifact.runtimeOutputs);
-    if (outputs.length + transientOutputs.length + runtimeOutputs.length === 0) {
-      fail(`${artifact.id}: missing outputs, transientOutputs, or runtimeOutputs`);
+    if (outputs.length + transientOutputs.length + durableOutputs.length + runtimeOutputs.length === 0) {
+      fail(`${artifact.id}: missing outputs, transientOutputs, durableOutputs, or runtimeOutputs`);
     }
     for (const output of outputs) {
       const pendingVersionRecord = artifact.versionRecord?.state === 'pending-next-successful-sync'
@@ -351,6 +352,11 @@ export function validateLedger(ledger, { root = repoRoot } = {}) {
     for (const output of transientOutputs) {
       if (assertLocalPath(output, `${artifact.id}.transientOutputs`, root, fail, { mayBeAbsent: true })) {
         claims.push({ artifact, category: 'transientOutputs', pattern: normalizePattern(output) });
+      }
+    }
+    for (const output of durableOutputs) {
+      if (assertLocalPath(output, `${artifact.id}.durableOutputs`, root, fail, { mayBeAbsent: true })) {
+        claims.push({ artifact, category: 'durableOutputs', pattern: normalizePattern(output) });
       }
     }
     for (const output of runtimeOutputs) {
@@ -426,10 +432,10 @@ export function validateLedger(ledger, { root = repoRoot } = {}) {
       fail('client.best2x2-source must own the checked-in source snapshot');
     }
     if (asArray(best2x2Import.outputs).length > 0
-        || !best2x2Import.transientOutputs?.includes('.tmp/best2x2/**')) {
-      fail('client.best2x2-import must own only the transient .tmp lifecycle');
+        || !best2x2Import.durableOutputs?.includes('.local-data/best2x2/**')) {
+      fail('client.best2x2-import must own the durable reviewed import lifecycle');
     }
-    if (best2x2Migration.source?.locator !== '.tmp/best2x2/import.json'
+    if (best2x2Migration.source?.locator !== '.local-data/best2x2/import.json'
         || best2x2Migration.sourcePipeline
         || best2x2Migration.outputs?.some((output) => !output.startsWith('core/apps/api/migrations/'))) {
       fail('migration.best2x2 must consume the reviewed import and own only immutable migration outputs');

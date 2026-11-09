@@ -1,0 +1,1797 @@
+{
+  "schemaVersion": 1,
+  "migrationDate": "2026-11-09",
+  "scope": "repository-root .tmp, core/.tmp and tmp; dependency-owned build caches excluded",
+  "mappings": [
+    {
+      "from": ".tmp/1lll-five-20261023",
+      "to": ".local-data/1lll-five-20261023",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/HR6Xy2MK2kc.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/HR6Xy2MK2kc.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/SpeedStacksDisplayIcon-before-depth.tsx",
+      "to": ".local-data/archive/tmp-2026-11-09/root/SpeedStacksDisplayIcon-before-depth.tsx",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/account-city-coverage.mjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/account-city-coverage.mjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/account-city-remainder.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/account-city-remainder.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/account-gear-review.mjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/account-gear-review.mjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/account-management-visual-review",
+      "to": ".local-data/account-management-visual-review",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-after-closed.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-after-closed.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-after-open.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-after-open.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-after-opening.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-after-opening.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-before-closed.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-before-closed.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-before-open.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-before-open.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-before-opening.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-before-opening.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-force-dark-light-closed.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-force-dark-light-closed.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-force-dark-light-open.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-force-dark-light-open.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-force-dark-light-opening.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-force-dark-light-opening.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-force-dark-light-reclosed.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-force-dark-light-reclosed.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-force-dark-light-role.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-force-dark-light-role.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-force-light-dark-closed.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-force-light-dark-closed.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-force-light-dark-open.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-force-light-dark-open.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-force-light-dark-opening.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-force-light-dark-opening.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-force-light-dark-reclosed.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-force-light-dark-reclosed.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-force-light-dark-role.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-force-light-dark-role.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-order-review.mjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-order-review.mjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-system-dark-closed.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-system-dark-closed.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-system-dark-open.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-system-dark-open.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-system-dark-opening.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-system-dark-opening.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-system-dark-reclosed.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-system-dark-reclosed.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-system-dark-role.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-system-dark-role.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-system-light-closed.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-system-light-closed.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-system-light-open.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-system-light-open.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-system-light-opening.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-system-light-opening.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-system-light-reclosed.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-system-light-reclosed.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/admin-system-light-role.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/admin-system-light-role.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/alg-trainers-timer.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/alg-trainers-timer.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/analyze-cross-orientation.ts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/analyze-cross-orientation.ts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/analyze-pll-tail.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/analyze-pll-tail.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/analyze-qtm-ranking.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/analyze-qtm-ranking.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/analyze-review.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/analyze-review.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/apk",
+      "to": ".local-data/apk",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/apple-login-visual-review",
+      "to": ".local-data/apple-login-visual-review",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/apple-login-visual-review.mjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/apple-login-visual-review.mjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/apple-production-config.mjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/apple-production-config.mjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/apple-production-smoke",
+      "to": ".local-data/apple-production-smoke",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/apple-production-smoke.mjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/apple-production-smoke.mjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/audit-account-city-pinyin.mjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/audit-account-city-pinyin.mjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/auth-flow-browser-review",
+      "to": ".local-data/auth-flow-browser-review",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/auth-flow-browser-review.mjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/auth-flow-browser-review.mjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/background-perf",
+      "to": ".local-data/background-perf",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/benchmark-memory-simple-local.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/benchmark-memory-simple-local.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/benchmark-opt8-cohort.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/benchmark-opt8-cohort.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/benchmark-wasm-opt8-live.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/benchmark-wasm-opt8-live.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/benchmark-wasm-opt9-live.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/benchmark-wasm-opt9-live.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/bp-layout",
+      "to": ".local-data/bp-layout",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/bp-style-mockup-template.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/bp-style-mockup-template.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/bp-style-mockup.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/bp-style-mockup.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/build-oll-workspace-mockup.mjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/build-oll-workspace-mockup.mjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/build-team-mockup.mjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/build-team-mockup.mjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cancel-into-mockup.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cancel-into-mockup.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cancel-into-v2-mockup.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cancel-into-v2-mockup.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/check-final-x.ts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/check-final-x.ts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/check-order.ts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/check-order.ts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/check-settings-contrast.cjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/check-settings-contrast.cjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/check-y.ts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/check-y.ts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/ci-test-investigation-20261004",
+      "to": ".local-data/ci-test-investigation-20261004",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/coll-share.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/coll-share.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/comp-perf",
+      "to": ".local-data/comp-perf",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/compare-account-city-existing.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/compare-account-city-existing.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/competition-icons",
+      "to": ".local-data/competition-icons",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/competition-icons-mockup.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/competition-icons-mockup.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cross-down-boundaries.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cross-down-boundaries.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cross-down-fixed.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cross-down-fixed.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cross-down-share.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cross-down-share.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cross-inspection-normalized.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cross-inspection-normalized.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cross-orientation-share.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cross-orientation-share.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cubeopt-hugepages-review-20261021",
+      "to": ".local-data/cubeopt-hugepages-review-20261021",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cubeopt-prefetch-review-20261021",
+      "to": ".local-data/cubeopt-prefetch-review-20261021",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cubeopt-production",
+      "to": ".local-data/cubeopt-production",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cubeopt-profile-review-20261021",
+      "to": ".local-data/cubeopt-profile-review-20261021",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cubeopt-reverse",
+      "to": ".local-data/cubeopt-reverse",
+      "kind": "versioned-runtime-and-research"
+    },
+    {
+      "from": ".tmp/cubeopt-wasm-native-review-20261022",
+      "to": ".local-data/cubeopt-wasm-native-review-20261022",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cuberoot-ios-clean.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cuberoot-ios-clean.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cuberoot-ios-current.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cuberoot-ios-current.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cuberoot-ios-dark.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cuberoot-ios-dark.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cuberoot-ios-dom-diagnostic.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cuberoot-ios-dom-diagnostic.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cuberoot-ios-error-overlay.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cuberoot-ios-error-overlay.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cuberoot-ios-simulator-after-wait.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cuberoot-ios-simulator-after-wait.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cuberoot-ios-simulator-diagnostic.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cuberoot-ios-simulator-diagnostic.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cuberoot-ios-simulator-launched.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cuberoot-ios-simulator-launched.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cuberoot-ios-simulator.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cuberoot-ios-simulator.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/cuberoot-ui.xml",
+      "to": ".local-data/archive/tmp-2026-11-09/root/cuberoot-ui.xml",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/double-zbll-1000",
+      "to": ".local-data/double-zbll-1000",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/double-zbll-50",
+      "to": ".local-data/double-zbll-50",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/double-zbll-auf-20261011",
+      "to": ".local-data/double-zbll-auf-20261011",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/double-zbll-auf-full",
+      "to": ".local-data/double-zbll-auf-full",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/double-zbll-cloud-draft.patch",
+      "to": ".local-data/archive/tmp-2026-11-09/root/double-zbll-cloud-draft.patch",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/double-zbll-compact.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/double-zbll-compact.png",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/double-zbll-dev.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/double-zbll-dev.log",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/double-zbll-expanded-benchmark",
+      "to": ".local-data/double-zbll-expanded-benchmark",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/double-zbll-final.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/double-zbll-final.png",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/double-zbll-smart-cube.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/double-zbll-smart-cube.png",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/double-zbll-symmetry-v2",
+      "to": ".local-data/double-zbll-symmetry-v2",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/double-zbll-v1",
+      "to": ".local-data/double-zbll-v1",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/double-zbll-v1.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/double-zbll-v1.log",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/double-zbll-website-validation",
+      "to": ".local-data/double-zbll-website-validation",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/f2l-cross-down.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/f2l-cross-down.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/f2l-side-triggers.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/f2l-side-triggers.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/f2l-single-layer.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/f2l-single-layer.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/f2l-without-z.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/f2l-without-z.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/ffmpeg-next-worker-patch",
+      "to": ".local-data/ffmpeg-next-worker-patch",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/fix-account-city-labels.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/fix-account-city-labels.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/h48-corners-research",
+      "to": ".local-data/h48-corners-research",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/h48-optimize-20261004",
+      "to": ".local-data/h48-optimize-20261004",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/history-update",
+      "to": ".local-data/history-update",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/home-four-cards.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/home-four-cards.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/home-training-cards.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/home-training-cards.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/icon-layout-fix",
+      "to": ".local-data/icon-layout-fix",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/identity-choice-visual-review",
+      "to": ".local-data/identity-choice-visual-review",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/identity-choice-visual-review.mjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/identity-choice-visual-review.mjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/ivy-preview-fix",
+      "to": ".local-data/ivy-preview-fix",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/ivy-rlub",
+      "to": ".local-data/ivy-rlub",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/landing-avatar-390.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/landing-avatar-390.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/landing-avatar-review.mjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/landing-avatar-review.mjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/landing-header-en.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/landing-header-en.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/landing-header-review.mjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/landing-header-review.mjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/landing-header-zh.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/landing-header-zh.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/membership-mockup.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/membership-mockup.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/native-feature-ab-20261021",
+      "to": ".local-data/native-feature-ab-20261021",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/oll-live.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/oll-live.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/oll-workspace-mockup.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/oll-workspace-mockup.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/oll-workspace-preview.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/oll-workspace-preview.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/oll9-debug.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/oll9-debug.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/oll9-debug.test.ts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/oll9-debug.test.ts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/oll9-real.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/oll9-real.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/ollcp-debug.txt",
+      "to": ".local-data/archive/tmp-2026-11-09/root/ollcp-debug.txt",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/ollcp-investigate.test.ts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/ollcp-investigate.test.ts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/ollcp-live.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/ollcp-live.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/penalty-check",
+      "to": ".local-data/penalty-check",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/person-perf",
+      "to": ".local-data/person-perf",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/pll-21-20261023",
+      "to": ".local-data/pll-21-20261023",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/pll-preference-20261024-v1",
+      "to": ".local-data/pll-preference-20261024-v1",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/pll-preference-20261024-v2",
+      "to": ".local-data/pll-preference-20261024-v2",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/pll-single-layer-20261024-v1",
+      "to": ".local-data/pll-single-layer-20261024-v1",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/pll-tail-fixed.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/pll-tail-fixed.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/pll-tail-share.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/pll-tail-share.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/pr-review-demo",
+      "to": ".local-data/pr-review-demo",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/prepare-zbll-resume-20261015.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/prepare-zbll-resume-20261015.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/psych-team-mockup.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/psych-team-mockup.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/publish-all",
+      "to": ".local-data/publish-all",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/q0hnFpogTf4.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/q0hnFpogTf4.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/qtm-ranking-analysis-20261012.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/qtm-ranking-analysis-20261012.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/readout-runtime-review.mjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/readout-runtime-review.mjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-admission-before.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-admission-before.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-capture",
+      "to": ".local-data/recon-capture",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/recon-cz-debug.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-cz-debug.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-cz-gate.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-cz-gate.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-djo-debug.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-djo-debug.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-djo-gate.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-djo-gate.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-enroll-CzFyBf0jbpo.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-enroll-CzFyBf0jbpo.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-enroll-JGOgVMc7Ck8.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-enroll-JGOgVMc7Ck8.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-enroll-dJO3fnMoX0Y.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-enroll-dJO3fnMoX0Y.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-enroll-oct17",
+      "to": ".local-data/recon-enroll-oct17",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-enroll-oct18",
+      "to": ".local-data/recon-enroll-oct18",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-enroll-oct18b",
+      "to": ".local-data/recon-enroll-oct18b",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-enroll-sdF71ZFy4MA.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-enroll-sdF71ZFy4MA.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-enroll-zm2Kksqth4E.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-enroll-zm2Kksqth4E.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-ground-truth-pass.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-ground-truth-pass.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-ground-truth-runs",
+      "to": ".local-data/recon-ground-truth-runs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-ground-truth-staged-pass.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-ground-truth-staged-pass.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-inline-label.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-inline-label.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-inspection-chip-gate.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-inspection-chip-gate.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-intake",
+      "to": ".local-data/recon-intake",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/recon-j-debug.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-j-debug.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-j-gate.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-j-gate.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-jgo-angles.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-jgo-angles.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-jgo-debug.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-jgo-debug.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-jgo-gate.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-jgo-gate.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-mask-gate.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-mask-gate.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-oll-debug.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-oll-debug.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-oll-no-regrip-gate.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-oll-no-regrip-gate.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-row-copy-gate.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-row-copy-gate.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-shared-line-contract.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-shared-line-contract.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-shared-line-gate.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-shared-line-gate.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-shared-line.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-shared-line.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-start-diagnostic.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-start-diagnostic.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-yellow-blue-gate.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-yellow-blue-gate.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-yellow-blue-regression.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-yellow-blue-regression.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-yellow-blue-start.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-yellow-blue-start.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-yellow-blue-typecheck.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-yellow-blue-typecheck.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-zm-debug.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-zm-debug.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-zm-gate.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-zm-gate.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/recon-zm-slice-debug.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/recon-zm-slice-debug.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/release-architecture.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/release-architecture.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/release-ci-repair.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/release-ci-repair.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/release-commit.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/release-commit.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/release-guards.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/release-guards.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/release-repair-commit.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/release-repair-commit.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/release-shard1-clean.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/release-shard1-clean.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/release-shard1.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/release-shard1.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/release-shard2-clean.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/release-shard2-clean.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/release-shard2.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/release-shard2.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/release-targeted.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/release-targeted.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/release-typecheck.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/release-typecheck.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/render-results-display.tsx",
+      "to": ".local-data/archive/tmp-2026-11-09/root/render-results-display.tsx",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/render-results-outline.tsx",
+      "to": ".local-data/archive/tmp-2026-11-09/root/render-results-outline.tsx",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/report-nine-grid",
+      "to": ".local-data/report-nine-grid",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/report-pages",
+      "to": ".local-data/report-pages",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/restored-solve-recap.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/restored-solve-recap.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/results-display-preview.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/results-display-preview.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/results-icon-mockup.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/results-icon-mockup.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/review-E1pU5e.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/review-E1pU5e.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/review-stats-resources-20261021-v2.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/review-stats-resources-20261021-v2.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/review-stats-resources-20261021-v3.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/review-stats-resources-20261021-v3.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/review-stats-resources-20261021-v4.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/review-stats-resources-20261021-v4.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/review-stats-resources-20261021.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/review-stats-resources-20261021.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/review-zbll-official.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/review-zbll-official.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/review-zbll-ps-stop.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/review-zbll-ps-stop.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/rotation-cascade-fixed.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/rotation-cascade-fixed.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/rotation-order-fixed.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/rotation-order-fixed.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/rotation-order-share.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/rotation-order-share.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/scd",
+      "to": ".local-data/scd",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/scramble-stats-opt10",
+      "to": ".local-data/scramble-stats-opt10",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": ".tmp/scroll-diagnostics",
+      "to": ".local-data/scroll-diagnostics",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/sim-hands-refinement",
+      "to": ".local-data/sim-hands-refinement",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/site-perf-audit",
+      "to": ".local-data/site-perf-audit",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/site-perf-fix",
+      "to": ".local-data/site-perf-fix",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/site-perf-round2",
+      "to": ".local-data/site-perf-round2",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/smart-cube-perf",
+      "to": ".local-data/smart-cube-perf",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/smart-cube-timing",
+      "to": ".local-data/smart-cube-timing",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/solver-benchmark-mockup.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/solver-benchmark-mockup.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/solver-benchmark-opt9-quarter.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/solver-benchmark-opt9-quarter.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/solver-benchmark-preview.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/solver-benchmark-preview.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/solver-benchmark-results.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/solver-benchmark-results.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/solver-benchmark-resumed.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/solver-benchmark-resumed.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/solver-comparison-proof",
+      "to": ".local-data/solver-comparison-proof",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/space-migration-20261103",
+      "to": ".local-data/space-migration-20261103",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/sq1-correction",
+      "to": ".local-data/sq1-correction",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/sq1-review",
+      "to": ".local-data/sq1-review",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/stage-search-baseline",
+      "to": ".local-data/stage-search-baseline",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/stats-acceptance-20261021",
+      "to": ".local-data/stats-acceptance-20261021",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/stats-monitor-20261021-114437",
+      "to": ".local-data/stats-monitor-20261021-114437",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/stats-opt",
+      "to": ".local-data/stats-opt",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/stats-resource-plan-skip-sq1-v4.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/stats-resource-plan-skip-sq1-v4.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/stats-resource-plan.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/stats-resource-plan.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/stats-resource-reviewed-20261021-v2.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/stats-resource-reviewed-20261021-v2.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/stats-resource-reviewed-20261021-v3.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/stats-resource-reviewed-20261021-v3.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/stats-resource-reviewed-20261021-v4.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/stats-resource-reviewed-20261021-v4.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/stats-resource-reviewed-20261021.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/stats-resource-reviewed-20261021.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/table-gen-opt",
+      "to": ".local-data/table-gen-opt",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-accuracy-page",
+      "to": ".local-data/timer-accuracy-page",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-bluetooth-toolbar.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/timer-bluetooth-toolbar.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-dev-500-2026-11-06",
+      "to": ".local-data/timer-dev-500-2026-11-06",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-difficulty-glass.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/timer-difficulty-glass.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-eoxxcross-2795",
+      "to": ".local-data/timer-eoxxcross-2795",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-inspection-colors.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/timer-inspection-colors.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-line-diagrams.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/timer-line-diagrams.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-practice-compact.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/timer-practice-compact.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-practice-option-a.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/timer-practice-option-a.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-toolbar-font-size.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/timer-toolbar-font-size.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-trainer-sharing-mobile.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/timer-trainer-sharing-mobile.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-trainer-sharing-mockup.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/timer-trainer-sharing-mockup.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-trainer-sharing-preview.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/timer-trainer-sharing-preview.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-training-a-implemented.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/timer-training-a-implemented.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-training-layout.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/timer-training-layout.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-training-navigation-mockup.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/timer-training-navigation-mockup.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-training-review",
+      "to": ".local-data/timer-training-review",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-training-simple-mockup.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/timer-training-simple-mockup.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-training-simple-preview.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/timer-training-simple-preview.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/timer-zbls-waste.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/timer-zbls-waste.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/trainer-manual-scramble.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/trainer-manual-scramble.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/trainer-results-collapsed.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/trainer-results-collapsed.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/trainer-scramble-hidden.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/trainer-scramble-hidden.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/trainer-scramble-highlight.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/trainer-scramble-highlight.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/trainer-thumbnail-after.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/trainer-thumbnail-after.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/trainer-thumbnail-before.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/trainer-thumbnail-before.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/trainer-thumbnail-layout-fixed.jpg",
+      "to": ".local-data/archive/tmp-2026-11-09/root/trainer-thumbnail-layout-fixed.jpg",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/trainer-thumbnail-layout.mjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/trainer-thumbnail-layout.mjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/training-orientation",
+      "to": ".local-data/training-orientation",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/training-report",
+      "to": ".local-data/training-report",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/twizzle-check",
+      "to": ".local-data/twizzle-check",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/update-zbll-reviewed-hashes.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/update-zbll-reviewed-hashes.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/user-report-audit",
+      "to": ".local-data/user-report-audit",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/watch-device-backups",
+      "to": ".local-data/watch-device-backups",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/wca-results-merge-a-audit.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/wca-results-merge-a-audit.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/wca-results-merge-a-verification.md",
+      "to": ".local-data/archive/tmp-2026-11-09/root/wca-results-merge-a-verification.md",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/wca-results-structure-mockup.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/wca-results-structure-mockup.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/wca-teams-mockup.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/wca-teams-mockup.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/wechat-payout-upload-20261027.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/wechat-payout-upload-20261027.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/wechat-renewal-recovery-20261020",
+      "to": ".local-data/wechat-renewal-recovery-20261020",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/xcross-bench",
+      "to": ".local-data/xcross-bench",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/xcross-ci-shard1-clean.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/xcross-ci-shard1-clean.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/xcross-ci-shard1.log",
+      "to": ".local-data/archive/tmp-2026-11-09/root/xcross-ci-shard1.log",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/xcross-color-chip.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/xcross-color-chip.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/xcross-demo-data.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/xcross-demo-data.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/xcross-integration",
+      "to": ".local-data/xcross-integration",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/xcross-live.wasm",
+      "to": ".local-data/archive/tmp-2026-11-09/root/xcross-live.wasm",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/xcross-next-page.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/xcross-next-page.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/xcross-prod-page.html",
+      "to": ".local-data/archive/tmp-2026-11-09/root/xcross-prod-page.html",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/xcross-publish-check.mjs",
+      "to": ".local-data/archive/tmp-2026-11-09/root/xcross-publish-check.mjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/xcross-ranking-check.json",
+      "to": ".local-data/archive/tmp-2026-11-09/root/xcross-ranking-check.json",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/xcross-ranking-check.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/xcross-ranking-check.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/xcross-table-benchmark-GuhOcF",
+      "to": ".local-data/xcross-table-benchmark-GuhOcF",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/xcross-worker-check.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/root/xcross-worker-check.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/zbll-case-selection-enabled.png",
+      "to": ".local-data/archive/tmp-2026-11-09/root/zbll-case-selection-enabled.png",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/zbll-mcc-20261023",
+      "to": ".local-data/zbll-mcc-20261023",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/zbll-opt10-acceptance-20261013",
+      "to": ".local-data/zbll-opt10-acceptance-20261013",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/zbll-rust-acceptance-20261013",
+      "to": ".local-data/zbll-rust-acceptance-20261013",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/zbll-rust-acceptance-20261013-v2",
+      "to": ".local-data/zbll-rust-acceptance-20261013-v2",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/zbll-rust-acceptance-20261013-v3",
+      "to": ".local-data/zbll-rust-acceptance-20261013-v3",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/check-g5-timer.cjs",
+      "to": ".local-data/archive/tmp-2026-11-09/core/check-g5-timer.cjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/check-gallery-download.cjs",
+      "to": ".local-data/archive/tmp-2026-11-09/core/check-gallery-download.cjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/check-photo-engine.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/core/check-photo-engine.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/check-photo-live-ai.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/core/check-photo-live-ai.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/check-photo-resize.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/core/check-photo-resize.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/check-settings-size.cjs",
+      "to": ".local-data/archive/tmp-2026-11-09/core/check-settings-size.cjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/check-stackmat-contacts.cjs",
+      "to": ".local-data/archive/tmp-2026-11-09/core/check-stackmat-contacts.cjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/check-stackmat-normal.cjs",
+      "to": ".local-data/archive/tmp-2026-11-09/core/check-stackmat-normal.cjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/check-stackmat-pads.cjs",
+      "to": ".local-data/archive/tmp-2026-11-09/core/check-stackmat-pads.cjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/check-stackmat-settings.cjs",
+      "to": ".local-data/archive/tmp-2026-11-09/core/check-stackmat-settings.cjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/check-stackmat.cjs",
+      "to": ".local-data/archive/tmp-2026-11-09/core/check-stackmat.cjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/detect-160.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/core/detect-160.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/detect-300.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/core/detect-300.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/detect-80.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/core/detect-80.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/detect-base.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/core/detect-base.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/detect-beam.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/core/detect-beam.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/detect-count.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/core/detect-count.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/detect-distinct.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/core/detect-distinct.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/detect-families.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/core/detect-families.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/detect-peaks.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/core/detect-peaks.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/detect-seeds.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/core/detect-seeds.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/detect-width.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/core/detect-width.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/diagnose-grid.mts",
+      "to": ".local-data/archive/tmp-2026-11-09/core/diagnose-grid.mts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/douyin-no-browser",
+      "to": ".local-data/archive/tmp-2026-11-09/core/douyin-no-browser",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/fonts",
+      "to": ".local-data/archive/tmp-2026-11-09/core/fonts",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/package-timer-videos.cjs",
+      "to": ".local-data/archive/tmp-2026-11-09/core/package-timer-videos.cjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/preview-g5.tsx",
+      "to": ".local-data/archive/tmp-2026-11-09/core/preview-g5.tsx",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/recon-review",
+      "to": ".local-data/archive/tmp-2026-11-09/core/recon-review",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/render-stackmat-family.tsx",
+      "to": ".local-data/archive/tmp-2026-11-09/core/render-stackmat-family.tsx",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/render-timer-videos.tsx",
+      "to": ".local-data/archive/tmp-2026-11-09/core/render-timer-videos.tsx",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/stackmat-lettering.cjs",
+      "to": ".local-data/archive/tmp-2026-11-09/core/stackmat-lettering.cjs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "core/.tmp/wx-to-tt-no-browser",
+      "to": ".local-data/archive/tmp-2026-11-09/core/wx-to-tt-no-browser",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": "tmp/pdfs",
+      "to": ".local-data/archive/tmp-2026-11-09/legacy/pdfs",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/best2x2",
+      "to": ".local-data/best2x2",
+      "kind": "reviewed-input-and-results"
+    },
+    {
+      "from": ".tmp/1lll",
+      "to": ".local-data/1lll",
+      "kind": "reviewed-input-and-results"
+    },
+    {
+      "from": ".tmp/zbls",
+      "to": ".local-data/zbls",
+      "kind": "reviewed-input-and-results"
+    },
+    {
+      "from": ".tmp/sq1-pbl-stale",
+      "to": ".local-data/sq1-pbl-stale",
+      "kind": "reviewed-input-and-results"
+    },
+    {
+      "from": ".tmp/enum",
+      "to": ".local-data/enum",
+      "kind": "reviewed-input-and-results"
+    },
+    {
+      "from": ".tmp/phase0",
+      "to": ".local-data/phase0",
+      "kind": "reviewed-input-and-results"
+    },
+    {
+      "from": ".tmp/phase1",
+      "to": ".local-data/phase1",
+      "kind": "reviewed-input-and-results"
+    },
+    {
+      "from": ".tmp/phase4",
+      "to": ".local-data/phase4",
+      "kind": "reviewed-input-and-results"
+    },
+    {
+      "from": ".tmp/meta-pointers",
+      "to": ".local-data/meta-pointers",
+      "kind": "reviewed-input-and-results"
+    },
+    {
+      "from": ".tmp/geonames",
+      "to": ".local-data/geonames",
+      "kind": "reviewed-input-and-results"
+    },
+    {
+      "from": "core/.tmp/sor",
+      "to": "core/.local-data/sor",
+      "kind": "resumable-task-data"
+    },
+    {
+      "from": "core/.tmp/sq1_wca",
+      "to": "core/.local-data/sq1_wca",
+      "kind": "research-fixtures"
+    },
+    {
+      "from": ".tmp/png/publish-manifest-test-6263c073d62249bebaf954a70bea79bf",
+      "to": ".local-data/archive/tmp-2026-11-09/png/publish-manifest-test-6263c073d62249bebaf954a70bea79bf",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/png/publish-manifest-test-c2535bf66c054ab8b40964a6824e8845",
+      "to": ".local-data/archive/tmp-2026-11-09/png/publish-manifest-test-c2535bf66c054ab8b40964a6824e8845",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/png/space-jinmao-lighting-20261103",
+      "to": ".local-data/archive/tmp-2026-11-09/png/space-jinmao-lighting-20261103",
+      "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/png/space-shanghai-review-20261103",
+      "to": ".local-data/archive/tmp-2026-11-09/png/space-shanghai-review-20261103",
+      "kind": "historical-evidence"
+    }
+  ]
+}

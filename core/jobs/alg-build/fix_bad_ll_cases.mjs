@@ -19,7 +19,7 @@
  *     三条对上才写;对不上就报出来交给站长,别猜。
  *
  *   node fix_bad_ll_cases.mjs         # 只出报告
- *   node fix_bad_ll_cases.mjs --sql   # 额外产出 .tmp/fix_bad_ll_cases.sql
+ *   node fix_bad_ll_cases.mjs --sql   # 额外产出 .local-data/fix_bad_ll_cases.sql
  *
  * ⚠ sticker 的 5 个颜色串(us/ub/uf/ul/ur)**不动**:全站只读 sticker.kind,颜色串没有任何
  *   渲染路径(缩略图走 setup),而且它的 facelet 编码复现不出来 —— 重生成只会造出新的垃圾。
@@ -253,7 +253,7 @@ console.log(`修 ${fixes.length} 条:`);
 console.table(fixes.map(f => ({ set: f.set, case: f.name, id: f.id, why: f.why })));
 if (fail.length) { console.log('\n✗ 没修成(交给站长):'); console.table(fail); }
 
-mkdirSync('../../../.tmp', { recursive: true });
+mkdirSync('../../../.local-data', { recursive: true });
 const q = (s) => `'${String(s).replace(/'/g, "''")}'`;
 const sql = [
   '-- 修 4 条既有坏数据(与 canonicalize 无关;是"setup + alg 必须精确还原"这条新不变式照出来的)',
@@ -273,8 +273,8 @@ const sql = [
 ].join('\n');
 
 if (process.argv.includes('--sql')) {
-  writeFileSync('../../../.tmp/fix_bad_ll_cases.sql', sql, 'utf-8');
-  console.log(`\nSQL → .tmp/fix_bad_ll_cases.sql(${fixes.length} 条 UPDATE)`);
+  writeFileSync('../../../.local-data/fix_bad_ll_cases.sql', sql, 'utf-8');
+  console.log(`\nSQL → .local-data/fix_bad_ll_cases.sql(${fixes.length} 条 UPDATE)`);
 }
 
 // ── 本地 pg13 dry run:灌进临时表 → 套 SQL → **读回来**验,绝不碰真表 ─────────────
@@ -284,15 +284,15 @@ if (process.argv.includes('--dryrun')) {
   const dk = (a) => execFileSync('docker', a, { encoding: 'utf-8' });
   const psqlFile = (p) => dk(['exec', '-i', 'pg13', 'psql', '-U', 'postgres', '-d', 'cuberoot_db', '-v', 'ON_ERROR_STOP=1', '-q', '-f', p]);
   const psql = (s) => dk(['exec', '-i', 'pg13', 'psql', '-U', 'postgres', '-d', 'cuberoot_db', '-v', 'ON_ERROR_STOP=1', '-qtA', '-c', s]);
-  const push = (n) => dk(['cp', new URL(`../../../.tmp/${n}`, import.meta.url).pathname.replace(/^\//, ''), `pg13:/tmp/${n}`]);
+  const push = (n) => dk(['cp', new URL(`../../../.local-data/${n}`, import.meta.url).pathname.replace(/^\//, ''), `pg13:/tmp/${n}`]);
 
   const all = Object.entries(sets).flatMap(([s, cs]) => cs.map(c => ({ ...c, set: s })));
-  writeFileSync('../../../.tmp/fixrun_seed.sql', [
+  writeFileSync('../../../.local-data/fixrun_seed.sql', [
     `DROP TABLE IF EXISTS ${TABLE};`,
     `CREATE TABLE ${TABLE} (id INT PRIMARY KEY, set_slug TEXT, name TEXT, setup TEXT, algs JSONB);`,
     ...all.map(c => `INSERT INTO ${TABLE} VALUES (${c.id}, ${q(c.set)}, ${q(c.name)}, ${q(c.setup)}, ${q(JSON.stringify(c.algs))}::jsonb);`),
   ].join('\n'), 'utf-8');
-  writeFileSync('../../../.tmp/fixrun_apply.sql', sql.replace(/UPDATE alg_cases /g, `UPDATE ${TABLE} `), 'utf-8');
+  writeFileSync('../../../.local-data/fixrun_apply.sql', sql.replace(/UPDATE alg_cases /g, `UPDATE ${TABLE} `), 'utf-8');
   push('fixrun_seed.sql'); psqlFile('/tmp/fixrun_seed.sql');
   push('fixrun_apply.sql'); psqlFile('/tmp/fixrun_apply.sql');
   console.log(`\n本地 pg13:灌 ${psql(`SELECT count(*) FROM ${TABLE};`).trim()} 行,套 ${fixes.length} 条 UPDATE`);

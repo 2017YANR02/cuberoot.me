@@ -12,7 +12,7 @@ import { getVariant } from './variants.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../../..');
-const BASE = resolve(ROOT, '.tmp/cubeopt-reverse');
+const BASE = resolve(ROOT, '.local-data/cubeopt-reverse');
 const GiB = 2 ** 30;
 const SHA = /^[a-f0-9]{64}$/;
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');

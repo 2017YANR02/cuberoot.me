@@ -37,7 +37,7 @@ test('plain artifact upload and metadata probes do not authorize computation', (
 });
 test('dedicated 18-thread reviews route only existing-table commands with one shared native table', () => {
   const root=resolve(here,'../../..'), executable=resolve(here,'target/multithread/release/cube48opt-research');
-  const env={CUBEOPT_MULTITHREAD_REVIEW:resolve(root,'.tmp/cubeopt-reverse/mt18-review/launch.json'),
+  const env={CUBEOPT_MULTITHREAD_REVIEW:resolve(root,'.local-data/cubeopt-reverse/mt18-review/launch.json'),
     CUBEOPT_BACKEND:'h48',CUBEOPT_H:'10',CUBEOPT_SEARCH_THREADS:'18',CUBEOPT_SOLVE_THREADS:'1',CUBEOPT_MEASURE_RSS:'1'};
   const args=['solve-h48','10',resolve(root,'solver/tables/h48-nissy-core/h48h10.dat'),'8','20','0'];
   const p=researchPolicy('wca100-mt18-h10',executable,args,env);
@@ -222,7 +222,7 @@ test('WASM output must contain one complete solution, never a silent failure or 
 
 test('Opt10 verification permits only a bounded Opt1 read-only verification target', () => {
   const root=resolve(here,'../../..'), executable=resolve(here,'target/release/examples/verify_opt10_generation');
-  const args=['--verify-opt1',resolve(root,'.tmp/cubeopt-reverse/opt9-generated/small-memory.bin'),resolve(root,'.tmp/cubeopt-reverse/opt1-generated/h48prun01.dat'),'16'];
+  const args=['--verify-opt1',resolve(root,'.local-data/cubeopt-reverse/opt9-generated/small-memory.bin'),resolve(root,'.local-data/cubeopt-reverse/opt1-generated/h48prun01.dat'),'16'];
   const env={CUBEOPT_BACKEND:'opt10-verify',CUBEOPT_VARIANT:'1'};
   const policy=researchPolicy('verify-opt1',executable,args,env);
   assert.equal(policy.tableBytes,30_401_280); assert.equal(policy.rssLimit,512*2**20); assert.equal(policy.deadlineMs,3_600_000);
@@ -248,8 +248,8 @@ test('Opt10 commands never receive a smaller existing backend or an unrelated bi
 });
 test('Opt10 generation and solving have fixed canonical paths, options and full budgets', () => {
   const root=resolve(here,'../../..'), binary=resolve(here,'target/opt10/release/cube48opt-research');
-  const small=resolve(root,'.tmp/cubeopt-reverse/opt9-generated/small-memory.bin');
-  const table=resolve(root,'.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
+  const small=resolve(root,'.local-data/cubeopt-reverse/opt9-generated/small-memory.bin');
+  const table=resolve(root,'.local-data/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
   const env={CUBEOPT_BACKEND:'opt10'};
   const generate=['generate-opt10',small,table,'16'], solve=['solve-opt10',small,table,'8','20','0'];
   const generation=researchPolicy('opt10-generate',binary,generate,env);
@@ -294,8 +294,8 @@ test('Opt10 generation proof rejects stale sources, incomplete coverage and stop
 
 function opt10ChainFixture() {
   const encode=(v:unknown)=>Buffer.from(JSON.stringify(v)), hash=(v:Buffer)=>createHash('sha256').update(v).digest('hex');
-  const root=resolve(here,'../../..'),small=resolve(root,'.tmp/cubeopt-reverse/opt9-generated/small-memory.bin');
-  const table=resolve(root,'.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
+  const root=resolve(here,'../../..'),small=resolve(root,'.local-data/cubeopt-reverse/opt9-generated/small-memory.bin');
+  const table=resolve(root,'.local-data/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
   const binary=resolve(here,'target/opt10/release/cube48opt-research');
   const sources=Object.fromEntries(opt10ReviewSources.map(name=>[name,'a'.repeat(64)]));
   const current={boot:'original-boot',swapouts:0,pressure:1,available:45*2**30};
@@ -323,7 +323,7 @@ function opt10ChainFixture() {
     return {request,evidence,review,receipt,resources,exit:{exitCode:0,signal:null,finishedAt:'2026-10-13T18:01:01.000Z'}};
   };
   const verify=make('verify-opt1','verify-opt10-v2',resolve(here,'target/release/examples/verify_opt10_generation'),
-    ['--verify-opt1',small,resolve(root,'.tmp/cubeopt-reverse/opt1-generated/h48prun01.dat'),'16'],{CUBEOPT_BACKEND:'opt10-verify',CUBEOPT_VARIANT:'1'});
+    ['--verify-opt1',small,resolve(root,'.local-data/cubeopt-reverse/opt1-generated/h48prun01.dat'),'16'],{CUBEOPT_BACKEND:'opt10-verify',CUBEOPT_VARIANT:'1'});
   const proof={schema:'cuberoot.opt10.generation-proof.v1',exitCode:0,sourceSha256:sources,resources:verify.resources,
     result:{schema:'cuberoot.opt10.opt1-generation-validation.v1',sharedGenerator:true,projectionEoBits:0,base:7,completedDepth:9,threads:16,
       comparedValidCells:117_567_450,differences:0,allEqual:true,tableWritten:false,distribution:[117_567_450,0,0,0,0,0,0,0,0,0,0]}};

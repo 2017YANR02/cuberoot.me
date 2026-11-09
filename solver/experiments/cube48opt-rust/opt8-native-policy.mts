@@ -7,16 +7,16 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 export const nxRoot = resolve(here, '../../..');
-export const nxDir = resolve(nxRoot, '.tmp/cubeopt-reverse/opt8-native-quarter-cpu-wca100-4-20261015');
+export const nxDir = resolve(nxRoot, '.local-data/cubeopt-reverse/opt8-native-quarter-cpu-wca100-4-20261015');
 export const nxReview = resolve(nxDir, 'session.json');
-export const nxStop = resolve(nxRoot, '.tmp/cubeopt-reverse/opt8-native-6ps-20261015-stop.json');
+export const nxStop = resolve(nxRoot, '.local-data/cubeopt-reverse/opt8-native-6ps-20261015-stop.json');
 export const nxLabel = 'opt8-native-quarter-cpu-wca100-4-20261015';
-export const nxBinary = resolve(nxRoot,'.tmp/cubeopt-reverse/opt8-native-quarter-cpu-source-20261015/target/release/cube48opt-research');
+export const nxBinary = resolve(nxRoot,'.local-data/cubeopt-reverse/opt8-native-quarter-cpu-source-20261015/target/release/cube48opt-research');
 export const nxTableBytes = 7782727680;
 export const nxBoot = '{ sec = 1791771877, usec = 170806 } Sun Oct 11 19:24:37 2026';
 export const nxHash = (p: string) => {assert(statSync(p).size < 64*2**20); return createHash('sha256').update(readFileSync(p)).digest('hex');};
-const table=resolve(nxRoot,'.tmp/cubeopt-reverse/opt8-generated/h48prun31h8.dat');
-const small=resolve(nxRoot,'.tmp/cubeopt-reverse/opt9-generated/small-memory.bin');
+const table=resolve(nxRoot,'.local-data/cubeopt-reverse/opt8-generated/h48prun31h8.dat');
+const small=resolve(nxRoot,'.local-data/cubeopt-reverse/opt9-generated/small-memory.bin');
 export function nxRequest() {return {label:nxLabel, executable:nxBinary,
   args:['solve',small,table,'8','20','0'], env:{CUBEOPT_OPT8_NATIVE_REVIEW:nxReview,CUBEOPT_VARIANT:'8',CUBEOPT_BACKEND:'opt',CUBEOPT_SEARCH_THREADS:'4',CUBEOPT_SOLVE_THREADS:'1',CUBEOPT_MEASURE_RSS:'1'}};}
 export function nxPolicy(request: {label:string;executable:string;args:string[];env:NodeJS.ProcessEnv}) {
@@ -38,7 +38,7 @@ export function validateNxReview(request: Parameters<typeof nxPolicy>[0], curren
   assert.equal(statSync(table).size,nxTableBytes);
   const receiptPath=resolve(nxDir,'receipt.json');assert(!existsSync(receiptPath),'nxopt run already consumed');
   for(const file of ['raw.log','results.jsonl','timing.json']) assert(!existsSync(resolve(nxDir,file)),`Existing nxopt output: ${file}`);
-  assert(!existsSync(resolve(nxRoot,'.tmp/cubeopt-reverse',nxLabel+'-resources.json')));
+  assert(!existsSync(resolve(nxRoot,'.local-data/cubeopt-reverse',nxLabel+'-resources.json')));
   return {receiptPath,input:Buffer.from(JSON.parse(readFileSync(resolve(nxRoot,'solver/testdata/benchmarks/wca-first100.json'),'utf8')).cases.map((c:any)=>`${c.id}\t${c.scramble}\n`).join('')),receipt:{schema:'cuberoot.nxopt-receipt.v1',reviewSha256:nxHash(nxReview),before:current,
     request:nxRequest(),consumedAt:new Date().toISOString()}};
 }
@@ -51,7 +51,7 @@ if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url))
     'opt8-native-specialized-wca100-4-20261015/report.json','opt8-native-specialized-wca100-4-20261015-resources.json',
     'opt8-native-search-wca100-4-20261015/report.json','opt8-native-search-wca100-4-20261015-resources.json',
     'opt8-native-batch-wca100-4-20261015/report.json','opt8-native-batch-wca100-4-20261015-resources.json',
-    'opt8-native-native-cpu-wca100-4-20261015/report.json','opt8-native-native-cpu-wca100-4-20261015-resources.json'].map(f=>resolve(nxRoot,'.tmp/cubeopt-reverse',f));
+    'opt8-native-native-cpu-wca100-4-20261015/report.json','opt8-native-native-cpu-wca100-4-20261015-resources.json'].map(f=>resolve(nxRoot,'.local-data/cubeopt-reverse',f));
   writeFileSync(nxReview,JSON.stringify({schema:'cuberoot.nxopt-review.v1',authorization:'按维护者要求复用现有表，WCA100、4线程、单轮不预热',
     boot:nxBoot,swapouts:48,preparedAt:new Date().toISOString(),request:nxRequest(),
     artifacts:Object.fromEntries(artifacts.map(p=>[p,nxHash(p)])),history:Object.fromEntries(history.map(p=>[p,nxHash(p)]))},null,2)+'\n',{flag:'wx'});

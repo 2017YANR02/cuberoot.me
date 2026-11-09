@@ -9,7 +9,7 @@ import { algSpeed, normalizeLine, MCC_DEFAULTS, getSTM } from '../../../core/pac
 import { compareZbllNotation, improveNotation, isAllowedZbllAlgorithm, ZBLL_ALLOWED_FAMILIES, wideTurnCount } from './zbll-mcc-notation.mts';
 
 const root = resolve(import.meta.dirname, '../../..');
-const out = resolve(root, '.tmp/zbll-mcc-20261023');
+const out = resolve(root, '.local-data/zbll-mcc-20261023');
 const { Alg } = await import(resolve(root, 'core/packages/client/node_modules/cubing/dist/lib/cubing/alg/index.js'));
 const { puzzles } = await import(resolve(root, 'core/packages/client/node_modules/cubing/dist/lib/cubing/puzzles/index.js'));
 const loader = puzzles['3x3x3'];
@@ -127,7 +127,7 @@ async function report() {
   const top = candidates.slice(0, 200).map((row, i) => ({rank:i+1,...row}));
   assert(top.length === 200, `Only ${top.length} distinct paths`);
   assert(candidates.every(row => isAllowedZbllAlgorithm(row.algorithm)), 'All ranked candidates must obey the move whitelist');
-  const resourcesPath = resolve(root,'.tmp/cubeopt-reverse/zbll-mcc-20261023-opt9-single-resources.json');
+  const resourcesPath = resolve(root,'.local-data/cubeopt-reverse/zbll-mcc-20261023-opt9-single-resources.json');
   const resources = JSON.parse(readFileSync(resourcesPath,'utf8'));
   const run = JSON.parse(readFileSync(resolve(runDir,'run.json'),'utf8'));
   const summary = {

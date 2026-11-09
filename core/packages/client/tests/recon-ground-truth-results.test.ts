@@ -34,7 +34,7 @@ describe('durable ground-truth results', () => {
   });
   it('retains pending samples without running or promoting them, even if an old assertion passed', () => {
     const { root, context: old } = setup(); report(old); finishResult(root, old, 0);
-    const oldPath = join(root, '.tmp/recon-ground-truth-runs', old.run.id + '.json');
+    const oldPath = join(root, '.local-data/recon-ground-truth-runs', old.run.id + '.json');
     const oldText = readFileSync(oldPath, 'utf8');
     const path = join(root, 'core/packages/client/tests/fixtures/recon-workbook/example.json');
     const fixture = JSON.parse(readFileSync(path, 'utf8')); fixture.approval = { status: 'pending' };
@@ -98,7 +98,7 @@ describe('durable ground-truth results', () => {
   });
   it('retries failed synchronization, acknowledges only successful uploads and never rewrites the local report', async () => {
     const { root, context } = setup(); report(context); finishResult(root, context, 0);
-    const path = join(root, '.tmp/recon-ground-truth-runs', context.run.id + '.json'); const before = readFileSync(path, 'utf8');
+    const path = join(root, '.local-data/recon-ground-truth-runs', context.run.id + '.json'); const before = readFileSync(path, 'utf8');
     const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(Response.json({}, { status: 503 })).mockResolvedValue(Response.json({ saved: true }));
     const options = { key: 'test-only', url: 'https://example.test/runs', fetcher };
     expect(await publishResults(root, options)).toEqual({ sent: 0, pending: true });

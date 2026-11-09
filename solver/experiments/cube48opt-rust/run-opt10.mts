@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { verifyOpt10Release } from './opt10-release.mts';
 import { officialArgs, officialPaths, officialPolicy, officialScope, officialDigest, readOfficialRecord, officialHasStop } from './opt10-official-policy.mts';
 
-const HERE=dirname(fileURLToPath(import.meta.url)),ROOT=resolve(HERE,'../../..'),BASE=resolve(ROOT,'.tmp/cubeopt-reverse');
+const HERE=dirname(fileURLToPath(import.meta.url)),ROOT=resolve(HERE,'../../..'),BASE=resolve(ROOT,'.local-data/cubeopt-reverse');
 const save=(path:string,value:unknown)=>writeFileSync(path,JSON.stringify(value,null,2)+'\n',{flag:'wx',mode:0o600});
 export function checkOfficialOpt10() {
   const r=verifyOpt10Release();

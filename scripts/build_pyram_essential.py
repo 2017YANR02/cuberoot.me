@@ -23,7 +23,7 @@
 #   <OUT_DIR>/pyram_essential_cases.json  — all 39,035 essential cases with a home-grown
 #                                           HTM*-optimal full solution each.
 #
-# OUT_DIR defaults to .tmp/enum/out/ (gitignored; the site owner reviews before promoting to
+# OUT_DIR defaults to .local-data/enum/out/ (gitignored; the site owner reviews before promoting to
 # stats/). Override with env PYRAM_OUT_DIR.
 #
 # Run:  uv run --with numpy python scripts/build_pyram_essential.py
@@ -34,7 +34,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
-OUT_DIR = os.environ.get("PYRAM_OUT_DIR", os.path.join(REPO, ".tmp", "enum", "out"))
+OUT_DIR = os.environ.get("PYRAM_OUT_DIR", os.path.join(REPO, ".local-data", "enum", "out"))
 
 GENERATED_AT = "2026-07-11"
 

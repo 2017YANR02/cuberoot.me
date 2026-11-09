@@ -41,7 +41,7 @@ pressure stayed normal, Swapouts stayed 0, and minimum estimated headroom was
 Opt8/four-thread configuration still requires its own compatibility and performance
 acceptance; this local Node/V8 Opt9/single-thread result cannot substitute for it.
 
-Evidence: `.tmp/cubeopt-reverse/wca100-wasm-opt9-simd-v8/` (`report.json`,
+Evidence: `.local-data/cubeopt-reverse/wca100-wasm-opt9-simd-v8/` (`report.json`,
 `guard-exit.json`, `pruning-audit.json`, `v7-v8-exact-search-audit.json`, frozen
 artifacts/sources). Every solution and search counter matches v7 exactly.
 Measured WASM SHA-256: `d9e1703e41dc0f64034c37ef129d63c9c2ae5dfe27fa8e1f3103d319a065e065`.
@@ -64,7 +64,7 @@ This initial Rust WASM build takes **2.48 times** as long. It does not satisfy
 the user's deployment condition, so production was not replaced. Native Rust
 results are a different compilation target and cannot establish WASM speed.
 One pass does not estimate measurement variance. Full results, raw records and
-frozen source/artifacts: `.tmp/cubeopt-reverse/wca100-wasm-opt9-single/`.
+frozen source/artifacts: `.local-data/cubeopt-reverse/wca100-wasm-opt9-single/`.
 
 ## Reproduce the build
 
@@ -97,7 +97,7 @@ the new WASM, wrapper, full Rust source snapshot, compiler/flags, source hashes,
 and an allocation-free ABI smoke report under:
 
 ```text
-.tmp/cubeopt-reverse/rust-wasm64-builds/<wasm-hash-prefix>-<source-hash-prefix>/
+.local-data/cubeopt-reverse/rust-wasm64-builds/<wasm-hash-prefix>-<source-hash-prefix>/
 ```
 
 `build-metadata.json` and versioned artifacts are immutable. `latest.json` is only
@@ -185,7 +185,7 @@ took **2.483 times as long**. Their worker peak RSS was approximately 15.634 GB
 and 15.856 GB respectively. The build is therefore **not a performance upgrade
 and has not replaced the server's original WASM**.
 
-Evidence is preserved under `.tmp/cubeopt-reverse/wca100-wasm-opt9-single/`:
+Evidence is preserved under `.local-data/cubeopt-reverse/wca100-wasm-opt9-single/`:
 `report.json`, the two immutable WASM artifacts, and
 `static-hotpath-audit.json`. The static audit records both binary hashes, the
 WABT 1.0.42 disassembly commands, text hashes, function names/line positions,

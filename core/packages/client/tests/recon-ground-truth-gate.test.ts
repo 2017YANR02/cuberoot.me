@@ -117,6 +117,7 @@ describe('reconstruction ground-truth commit gate', () => {
     try {
       expect(run('git', ['init', '-q']).status).toBe(0);
       for (const path of ['core/scripts/recon-ground-truth-gate.mjs',
+        'scripts/local-artifacts/check.mjs', 'docs/local-artifact-policy.json',
         'core/scripts/recon-staged-snapshot.mjs',
         'core/scripts/recon-ground-truth-results.mts',
         'core/packages/client/lib/recon-test-history.server.ts',
@@ -126,7 +127,7 @@ describe('reconstruction ground-truth commit gate', () => {
         'core/packages/client/tests/fixtures/recon-ground-truth.json']) {
         put(path, readFileSync(join(REPO_ROOT, path), 'utf8'));
       }
-      put('.gitignore', '.tmp/\nnode_modules/\n');
+      put('.gitignore', '.tmp/\n.local-data/\nnode_modules/\n');
       const gate = 'core/scripts/recon-ground-truth-gate.mjs';
       expect(run(process.execPath, [gate, 'install']).status).toBe(0);
       expect(run('git', ['config', '--get', 'core.hooksPath']).stdout.trim()).toBe('.githooks');

@@ -12,7 +12,7 @@ import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import type { AlgCase, AlgFile } from '@cuberoot/shared/alg';
 import { DOUBLE_ZBLL_MOVES, DOUBLE_ZBLL_RECORD_BYTES } from '@cuberoot/shared/double-zbll';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
-const work = resolve(root, '.tmp/double-zbll-v1');
+const work = resolve(root, '.local-data/double-zbll-v1');
 const output = resolve(work, 'export');
 const hash = (s: string | Uint8Array) => createHash('sha256').update(s).digest('hex');
 const atomic = (p: string, v: string | Uint8Array) => { writeFileSync(`${p}.tmp`, v); renameSync(`${p}.tmp`, p); };

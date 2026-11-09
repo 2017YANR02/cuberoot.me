@@ -735,7 +735,7 @@ git apply /absolute/path/to/corner96-v1-to-v2.patch
 corner_repo="$(pwd)"
 corner_crate="$corner_repo/solver/experiments/cube48opt-rust"
 corner_bin="$corner_crate/target/corner-research/release/corner-research"
-corner_out="$corner_repo/.tmp/cubeopt-reverse/corner96"
+corner_out="$corner_repo/.local-data/cubeopt-reverse/corner96"
 cd "$corner_crate"
 cargo build --release --features corner-research \
   --target-dir target/corner-research --bin corner-research

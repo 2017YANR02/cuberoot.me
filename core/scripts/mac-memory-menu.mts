@@ -6,7 +6,7 @@ import { basename, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseVm, memorySummary, parseProcesses } from './mac-system-recorder.mts';
 
-const work = resolve(import.meta.dirname, '../../.tmp/double-zbll-symmetry-v2');
+const work = resolve(import.meta.dirname, '../../.local-data/double-zbll-symmetry-v2');
 const root = resolve(import.meta.dirname, '../..');
 const research = 'solver/experiments/cube48opt-rust';
 const guardScript = `${research}/guard.mts`;
@@ -55,8 +55,8 @@ function guardedNativeCommand(command: string, lock: Opt10Lock, cwd: string | un
   if (!/^[a-z0-9-]+$/.test(words[at + 1] ?? '') || words[at + 3] !== lock.mode
       || !(binary === opt10Native || binary === opt10OfficialNative && lock.mode === 'solve-opt10')) return null;
   const expected = [binary, lock.mode,
-    resolve(root, '.tmp/cubeopt-reverse/opt9-generated/small-memory.bin'),
-    resolve(root, '.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat'),
+    resolve(root, '.local-data/cubeopt-reverse/opt9-generated/small-memory.bin'),
+    resolve(root, '.local-data/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat'),
     ...(lock.mode === 'generate-opt10' ? ['16'] : ['8', '20', '0'])];
   return JSON.stringify(words.slice(at + 2)) === JSON.stringify(expected) ? expected.join(' ') : null;
 }
@@ -105,7 +105,7 @@ function output() {
     if (!processes.length) throw Error('无法读取进程内存');
     let lock: unknown = null, boot = '', guardCommand = '', identity: ProcessIdentity = {};
     try {
-      lock = JSON.parse(readFileSync(resolve(root, '.tmp/cubeopt-reverse/compute.lock'), 'utf8'));
+      lock = JSON.parse(readFileSync(resolve(root, '.local-data/cubeopt-reverse/compute.lock'), 'utf8'));
       boot = command('/usr/sbin/sysctl', ['-n', 'kern.boottime']).trim();
       if (liveOpt10Lock(processes, lock, boot)) {
         guardCommand = command('/bin/ps', ['-p', String(lock.pid), '-o', 'command=']);

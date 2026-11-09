@@ -3,7 +3,7 @@
  *
  *   NODE_USE_ENV_PROXY=1 pnpm -w exec tsx packages/client/scripts/best2x2/fetch.mts [outDir]
  *
- * 默认落在仓库根的 .tmp/best2x2/(gitignored)。漂移检测走同一个抓取层,
+ * 默认落在仓库根的 .local-data/best2x2/(gitignored)。漂移检测走同一个抓取层,
  * 见 sheets.mts —— 抓取只此一份,不许第二处再写一个 URL 拼装。
  *
  * ⚠ 本机走代理才能连 Google:Node 的 fetch **不读** HTTPS_PROXY,必须显式
@@ -17,7 +17,7 @@ import { ALL_SHEETS, fetchSheetCsv } from './sheets.mjs';
 
 /** 仓库根 = 本文件往上 5 层(scripts/best2x2 → scripts → client → packages → core → repo)。 */
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../..');
-const outDir = process.argv[2] ? resolve(process.argv[2]) : resolve(REPO_ROOT, '.tmp/best2x2');
+const outDir = process.argv[2] ? resolve(process.argv[2]) : resolve(REPO_ROOT, '.local-data/best2x2');
 
 await mkdir(outDir, { recursive: true });
 

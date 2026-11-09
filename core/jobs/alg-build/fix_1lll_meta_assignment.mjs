@@ -68,11 +68,11 @@ const SHOULD_BE = {
 /**
  * phase0 从 xlsx 抽出来的原表。**只用来重捞打乱** —— 搬过来的那几条当初是拿旧的错态验的,
  * 按新态可能本来就成立;捞回来的每一条都要重新过轨道判据才收。
- * 文件不在(别的机器 / 清过 .tmp)就跳过重捞,只丢不补 —— 前端有 setup 保底,不会开天窗。
+ * 文件不在(别的机器 / 清过 .local-data)就跳过重捞,只丢不补 —— 前端有 setup 保底,不会开天窗。
  */
-const SHEET = path.join(ROOT, '.tmp/phase0/sheet_1lll.json');
+const SHEET = path.join(ROOT, '.local-data/phase0/sheet_1lll.json');
 const sheetRows = existsSync(SHEET) ? JSON.parse(readFileSync(SHEET, 'utf8')) : null;
-if (!sheetRows) console.log('⚠ 没有 .tmp/phase0/sheet_1lll.json,验不过的打乱只丢不补');
+if (!sheetRows) console.log('⚠ 没有 .local-data/phase0/sheet_1lll.json,验不过的打乱只丢不补');
 
 // ══ 拉数据 + 算态 ═════════════════════════════════════════════════════════════
 const cases = [];

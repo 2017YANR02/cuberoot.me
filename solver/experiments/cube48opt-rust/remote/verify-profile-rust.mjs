@@ -78,7 +78,7 @@ export async function verifyProfileRust(directory) {
   // need not equal the source descriptor's whitespace; bind that descriptor
   // through the fixture/baseline, and bind the reference values below.
   assert.equal(json(resolve(directory, 'fixture-input.json')).referenceFirstPass.sha256, input.referenceSha256);
-  const historical = jsonl(resolve(ROOT, '.tmp/cubeopt-reverse/wca100-rust-h10-v2.jsonl'));
+  const historical = jsonl(resolve(ROOT, '.local-data/cubeopt-reverse/wca100-rust-h10-v2.jsonl'));
   assert.equal(historical.length, 400); assert.deepEqual(reference, historical.slice(0, 100));
   assert.deepEqual(reference, archived.reference);
   const rawPath = resolve(directory, 'rust/raw.jsonl'), resultsPath = resolve(directory, 'rust/results.jsonl');

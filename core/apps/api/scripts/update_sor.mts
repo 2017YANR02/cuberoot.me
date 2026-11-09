@@ -8,7 +8,7 @@ import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
-const sorDir = resolve(process.env.SOR_DATA_DIR ?? join(repository, 'core/.tmp/sor'));
+const sorDir = resolve(process.env.SOR_DATA_DIR ?? join(repository, 'core/.local-data/sor'));
 const exe = join(repository, 'core/sorcalc/target/release', `sorcalc${process.platform === 'win32' ? '.exe' : ''}`);
 const copyTsv = join(sorDir, 'sor_player_best.copy.tsv');
 const loadSql = join(sorDir, 'load_sor_pb.sql');

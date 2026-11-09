@@ -30,7 +30,7 @@
 
 `coset-chain` 正式完成：**25.482831272秒**，比coset24.591秒慢约3.63%，未达到20秒。节点5,013,737,972、查询6,344,640,716，较coset分别少约0.33%/0.32%，但总体耗时增加。证书检查141,702,050次、回退边检查142,409,766次，仅12,418次实际强化，其中额外整祖先回退73帧、半转mask位34,274；多数第一条边即遇相反侧quarter，传播收益过稀。不能把总节点微降全部归因于剪枝，线程分工和终止时机也影响总量。
 
-1000条全部独立回放及原版Opt9/Opt10、hotpath、coset最优长度对照通过；原生峰值RSS31,203,917,824字节、guard峰值31,321,358,336字节、最小余量11,414,781,952字节；退出0、压力正常、Swapouts=0、无保护触发。小检查55库通过/1外部fixture忽略、8程序通过、默认golden通过、16纯协议检查通过。正式报告 `.tmp/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-coset-chain-report.json`；43文件快照 `.tmp/cubeopt-reverse/opt10-native-coset-chain-preserved-20261014/`，manifest SHA-256 `1f410e97a9c227e2dfa9f7bc17d9dfe4a73a67ea01332410c88c11295b7ef3ca`。不重跑此标签，不替换24.591秒版。
+1000条全部独立回放及原版Opt9/Opt10、hotpath、coset最优长度对照通过；原生峰值RSS31,203,917,824字节、guard峰值31,321,358,336字节、最小余量11,414,781,952字节；退出0、压力正常、Swapouts=0、无保护触发。小检查55库通过/1外部fixture忽略、8程序通过、默认golden通过、16纯协议检查通过。正式报告 `.local-data/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-coset-chain-report.json`；43文件快照 `.local-data/cubeopt-reverse/opt10-native-coset-chain-preserved-20261014/`，manifest SHA-256 `1f410e97a9c227e2dfa9f7bc17d9dfe4a73a67ea01332410c88c11295b7ef3ca`。不重跑此标签，不替换24.591秒版。
 
 后续草稿 `coset-gated` 只针对已观察到的低命中率：提前跳过第一条相反侧quarter，保持数学规则和有效剪枝结果。56项库检查/1忽略、8程序、默认golden及16纯协议检查通过，但**维护者随后明确拒绝小修小补，要求改走有机会大幅低于20秒的路径，因此取消这版正式构建与WCA测试**。未消费gated正式标签，不把小检查当作性能结果。
 
@@ -56,7 +56,7 @@
 
 10–12层合计96.689%的访问；节点占比不直接等于时间占比，但足以否定“半径5/6残局球可省20%整体工作”的当前收益假设。本轮不建残局表。guard峰值31,330,795,520字节，最小余量12,191,727,616字节，退出0、Swapouts=0、无保护触发。
 
-报告及聚合 `.tmp/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-profile-{report,profile-summary}.json`；45文件完整快照 `.tmp/cubeopt-reverse/opt10-native-profile-preserved-20261014/`，manifest SHA-256 `3235dbe576b6db83bb56a2fc408a7e2031296ab1b4076a05a79c42a140e1b813`。55库/9程序/默认golden/17协议检查通过，诊断启停不改变小样本查询轨迹。
+报告及聚合 `.local-data/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-profile-{report,profile-summary}.json`；45文件完整快照 `.local-data/cubeopt-reverse/opt10-native-profile-preserved-20261014/`，manifest SHA-256 `3235dbe576b6db83bb56a2fc408a7e2031296ab1b4076a05a79c42a140e1b813`。55库/9程序/默认golden/17协议检查通过，诊断启停不改变小样本查询轨迹。
 
 ### 邻居下界完成：正确，但本轮未提速
 
@@ -68,7 +68,7 @@
 
 小坐标全量审计：153,090种raw角模式全部有可见性改变的半转，最少2个；按U2/R2/F2/D2/L2/B2顺序选择的计数为127,225/22,394/3,399/48/24/0。918,540个半转的源位置预测与真实双EO翻转的标量/SIMD索引差分一致，另918,540次左半转验证选择与新查询索引恒定。仅读取818,008字节坐标快照，主表读取为0。选择只保证新信息可见，不保证每次下界都提高。
 
-独立BFS的全部3,502个radius≤3真实状态，精确/保守弱化CO下界、1/8上下文、prepare早拒/正常查表、新规则开/关，共56,032次完整搜索最短长度及回放全部一致。精确CO下界不发生增强，两版节点均1,579,040；弱化CO为8,148,692→7,040,970。新增尝试839,236、实际补查812,840、下界提高139,812、直接拒绝52,792、恰达预算71,234、额外清除半转位358,880；早拒和分裂/缓存路径均有实际覆盖。小数据节点改善不能折算正式WCA速度。另检查0值下界、NISS转侧后缓存和补查阶段取消。日志 `.tmp/cubeopt-reverse/opt10-lookahead-validation-fixture.log`。18项纯协议检查通过；独立审查未发现错剪、查询来源或所有权阻断。
+独立BFS的全部3,502个radius≤3真实状态，精确/保守弱化CO下界、1/8上下文、prepare早拒/正常查表、新规则开/关，共56,032次完整搜索最短长度及回放全部一致。精确CO下界不发生增强，两版节点均1,579,040；弱化CO为8,148,692→7,040,970。新增尝试839,236、实际补查812,840、下界提高139,812、直接拒绝52,792、恰达预算71,234、额外清除半转位358,880；早拒和分裂/缓存路径均有实际覆盖。小数据节点改善不能折算正式WCA速度。另检查0值下界、NISS转侧后缓存和补查阶段取消。日志 `.local-data/cubeopt-reverse/opt10-lookahead-validation-fixture.log`。18项纯协议检查通过；独立审查未发现错剪、查询来源或所有权阻断。
 
 正式单轮 `lookahead`：**27.437856878秒**，比coset24.591秒慢约11.6%，不采用。全部1000条独立回放及四份已验证参考最优长度一致。总节点5,028,409,933，仅比coset少0.040%；总查询6,750,484,266，多约6.1%。额外381,792,574次实际查询中，下界提高34,660,595次，直接拒绝8,149,246次；17,711,661次恰达预算，新增清除67,328,665个半转位。
 
@@ -80,7 +80,7 @@
 
 证据说明：EO可见性改变不等于距离下界提高；邻居结果减1后最高12，不能直接拒绝r12主力层。局部剪枝次数不能等同于全局唯一子树减少，NISS/前缀权重和并行终止也会变化。本轮看不到足以抵偿新增查询的总工作量减少，不继续调这个失败候选的微小开销。
 
-56项库、9项程序、默认golden、完整小快照检查通过。原生峰值RSS31,203,606,528字节，guard峰值31,320,522,752字节，最小余量11,899,469,824字节；退出0、Swapouts=0、无保护触发。正式报告/计数聚合 `.tmp/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-lookahead-{report,pruning-summary}.json`；49文件快照 `.tmp/cubeopt-reverse/opt10-native-lookahead-preserved-20261014/`，manifest SHA-256 `1f03e2acf11b3d0f1422c81200e688314835280de1e638ac91954ae9d9158bb9`。源码/程序及原始证据全部保留，未重跑该版本。
+56项库、9项程序、默认golden、完整小快照检查通过。原生峰值RSS31,203,606,528字节，guard峰值31,320,522,752字节，最小余量11,899,469,824字节；退出0、Swapouts=0、无保护触发。正式报告/计数聚合 `.local-data/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-lookahead-{report,pruning-summary}.json`；49文件快照 `.local-data/cubeopt-reverse/opt10-native-lookahead-preserved-20261014/`，manifest SHA-256 `1f03e2acf11b3d0f1422c81200e688314835280de1e638ac91954ae9d9158bb9`。源码/程序及原始证据全部保留，未重跑该版本。
 
 ### 最后一项候选：同态的替代对称投影
 
@@ -90,7 +90,7 @@
 
 预计算raw角模式到替代symmetry的映射，以及3393个角class的可用标记。运行时先从已算出的原索引检查class，无候选时不重算rawcorner；只对r11/12且normal原下界等于剩余预算的双侧存活节点查询，替代索引与原索引相同则跳过。默认版本和主表不变，独立正确性检查及正式单轮结果如下。
 
-实现完成并冻结：强制选出的对称必须把角模式映到与原规范表示完全相同的raw角代表，故属于生成时允许的稳定子投影集合；每个替代下界均可采纳且左H不变，直接取max安全。153,090模式独立全量检查、7,890个有效别名成员检查、47,340次左H不变性检查通过；另4096段确定性随机合法转动及各逆态，共8192个完整乱态，验证原SIMD/标量一致、432个实际不同的替代NEON索引与独立标量一致且属于生成投影集合。日志 `.tmp/cubeopt-reverse/opt10-projection-coordinate-validation.log`。
+实现完成并冻结：强制选出的对称必须把角模式映到与原规范表示完全相同的raw角代表，故属于生成时允许的稳定子投影集合；每个替代下界均可采纳且左H不变，直接取max安全。153,090模式独立全量检查、7,890个有效别名成员检查、47,340次左H不变性检查通过；另4096段确定性随机合法转动及各逆态，共8192个完整乱态，验证原SIMD/标量一致、432个实际不同的替代NEON索引与独立标量一致且属于生成投影集合。日志 `.local-data/cubeopt-reverse/opt10-projection-coordinate-validation.log`。
 
 真实CO双投影fixture对3502个独立BFS状态完成56,032次搜索，最短长度和回放全部一致；精确CO节点两版均1,579,040，弱化双投影2,842,292→2,539,780，实际补查177,420、提高及拒绝均33,218。它与lookahead小fixture的弱化模式不同，不跨这两组小数据排名。56项库、9项程序、最终默认golden、18项纯协议检查通过；两份独立审查无阻断。
 
@@ -105,7 +105,7 @@
 
 全部1000条独立cubing.js回放通过，并分别与已验证原Opt9、原Opt10、hotpath及coset的1000条最优长度一致；未重跑任何参考程序。原生峰值RSS31,207,243,776字节（约31.2GB），guard进程树峰值31,323,881,472字节，最小余量10,128,932,864字节；退出0、压力正常、同次启动Swapouts=0、无保护触发。求解耗时不包含表加载、完整性扫描和外部验解；无求解预热。
 
-正式报告及聚合 `.tmp/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-projection-{report,pruning-summary}.json`；46文件完整快照 `.tmp/cubeopt-reverse/opt10-native-projection-preserved-20261014/`，manifest SHA-256 `56e3830f26eafd433aff476f2b9269b4b6076020ad6086262fc102974ab12841`，程序SHA-256 `7afc0ccd04487741666aa22d8542bb72b1c99deb5d2be9d704696f238271f03c`。原表仅复用，不复制或重建。正式标签已消费，不重复运行。
+正式报告及聚合 `.local-data/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-projection-{report,pruning-summary}.json`；46文件完整快照 `.local-data/cubeopt-reverse/opt10-native-projection-preserved-20261014/`，manifest SHA-256 `56e3830f26eafd433aff476f2b9269b4b6076020ad6086262fc102974ab12841`，程序SHA-256 `7afc0ccd04487741666aa22d8542bb72b1c99deb5d2be9d704696f238271f03c`。原表仅复用，不复制或重建。正式标签已消费，不重复运行。
 
 本轮结论：当前保留的最低单次结果仍为24.591秒，相对原Opt10的33.032秒少用约25.6%时间；未达到20秒。数学正确和局部新增剪枝均已实证，但本轮两条新下界没有带来性能突破。不采用负结果，不为达到目标更换打乱、挑样本或追加重复轮次。原版、25.145秒版、24.591秒版及本轮源码/程序/证据保持可用；所有改动仅本地。
 
@@ -117,13 +117,13 @@
 
 `batch` 已完成：**29.764163911秒**，比保留的25.145秒版慢约18.4%，**不采用**。节点5,032,867,374，查表6,368,486,534，与hotpath搜索量接近；本机没有观测到集中读取的收益。原生峰值RSS31,203,835,904字节；guard峰值31,323,455,488字节，最小余量12,152,356,864字节，退出0、Swapouts=0、无保护触发。1000条全部独立验解通过，并与原版和hotpath最优长度一致。53项库小检查及9项程序检查通过，1项外部快照检查仍ignored；原golden摘要不变。
 
-报告：`.tmp/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-batch-report.json`。独立构建：`target/opt10-batch`。源码、程序、构建、输入和完整运行证据冻结于 `.tmp/cubeopt-reverse/opt10-native-batch-preserved-20261014/`，35文件清单SHA-256 `c142357180d4f65e8436f352119c1787fc43b41116ce14dbc62e06424b8b1793`。不会重跑该候选。
+报告：`.local-data/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-batch-report.json`。独立构建：`target/opt10-batch`。源码、程序、构建、输入和完整运行证据冻结于 `.local-data/cubeopt-reverse/opt10-native-batch-preserved-20261014/`，35文件清单SHA-256 `c142357180d4f65e8436f352119c1787fc43b41116ce14dbc62e06424b8b1793`。不会重跑该候选。
 
 `dual` 从25.145秒hotpath版独立扩展，不继承batch：当逆态下界仅够拒绝当前孩子、父节点仍有待搜分支时，有选择地补查正态下界。如果更强下界使 h−r>2，可安全回退整个父节点。此信息只作当前路径的下界传播，不写入要求左半转不变的缓存。
 
 `dual` 已完成：**27.826550048秒**，比hotpath慢约10.7%，**不采用**。节点5,044,007,581，查表6,975,227,517；补查582,963,224次，下界提升83,384,473次，新整父回退15,948,866次。剪枝确实发生，但本轮新增查询成本未抵消收益，搜索总量也未减少。原生峰值RSS31,204,016,128字节，guard峰值31,318,212,608字节，最小余量12,281,937,920字节；退出0、Swapouts=0、无保护触发。全部1000条独立验解、与原版及hotpath最优长度对照通过。
 
-54项库小检查及8项程序检查通过，默认golden不变；1项外部快照检查仍ignored。真实角朝向下界及其保守弱化版本覆盖3502个独立BFS状态、28016次搜索；新增补查242412次、提升24382次、整父回退11504次，全部最短解一致，并检查左半转不变量。报告 `.tmp/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-dual-report.json`；独立target `target/opt10-dual`；源码/程序/完整运行证据及小验证日志冻结于 `.tmp/cubeopt-reverse/opt10-native-dual-preserved-20261014/`，39文件清单SHA-256 `98f8f466619d7e620efe4064ab39c31494d100c1a27555d3a5a33020a1136759`。
+54项库小检查及8项程序检查通过，默认golden不变；1项外部快照检查仍ignored。真实角朝向下界及其保守弱化版本覆盖3502个独立BFS状态、28016次搜索；新增补查242412次、提升24382次、整父回退11504次，全部最短解一致，并检查左半转不变量。报告 `.local-data/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-dual-report.json`；独立target `target/opt10-dual`；源码/程序/完整运行证据及小验证日志冻结于 `.local-data/cubeopt-reverse/opt10-native-dual-preserved-20261014/`，39文件清单SHA-256 `98f8f466619d7e620efe4064ab39c31494d100c1a27555d3a5a33020a1136759`。
 
 备用 `prefix` 只尝试缓存前缀排序评分，保持同分稳定次序和原权重，u64乘积溢出时回退原u128路径。目前为独立草稿；按维护者强调数学底层的最新要求暂缓，未运行正式基准。
 
@@ -133,7 +133,7 @@
 
 父节点已通过预算r+1，继承证书至多r，因此该改动通常不直接拒绝孩子。最初假设是修复下界落差后，恢复normal==r时的反侧半转禁令。**此收益假设已被数学分析和小数据否证**：child继承证书等于r，必然意味着parent.normal_bound=r+1；父节点的plan早已删除inverse_mask中的半转，而孩子原样继承该mask。NISS同时交换bound和mask，不改变这个归纳结论。因此新增半转禁令计数应当为0，不能为了让测试通过制造不可达的完整搜索状态。
 
-真实CO及保守压缩CO模型的56032次有界搜索全部最优长度一致。下界提高37888次，但新增半转禁令为0；精确CO节点两版同为1579040，压缩CO节点两版同为8166842。最初“必须产生新禁半转”的新fixture断言失败，原因正是上述收益假设错误，不是旧回归或验解失败。该方向可能只改变NISS同分排序，无法据此声称新增剪枝。停止正式WCA1000基准，保留草稿及分析证据，撤回候选接线；不耗费一次大表运行去验证已被否证的机制。精确冗余回归已通过，日志 `.tmp/cubeopt-reverse/opt10-pathmax-redundancy-proof.log`；代码草稿、源码快照及证明位于 `.tmp/cubeopt-reverse/opt10-pathmax-redundant-20261014/`，Rust六文件已核对恢复到dual冻结基线。
+真实CO及保守压缩CO模型的56032次有界搜索全部最优长度一致。下界提高37888次，但新增半转禁令为0；精确CO节点两版同为1579040，压缩CO节点两版同为8166842。最初“必须产生新禁半转”的新fixture断言失败，原因正是上述收益假设错误，不是旧回归或验解失败。该方向可能只改变NISS同分排序，无法据此声称新增剪枝。停止正式WCA1000基准，保留草稿及分析证据，撤回候选接线；不耗费一次大表运行去验证已被否证的机制。精确冗余回归已通过，日志 `.local-data/cubeopt-reverse/opt10-pathmax-redundancy-proof.log`；代码草稿、源码快照及证明位于 `.local-data/cubeopt-reverse/opt10-pathmax-redundant-20261014/`，Rust六文件已核对恢复到dual冻结基线。
 
 ### 数学候选coset：从失败孩子向父节点传回陪集证书
 
@@ -141,7 +141,7 @@
 
 `coset`候选严格限于直接失败excess=2、正确查询侧归属、同面剪枝后父节点仍有自己拥有的分支。只清当前context父inverse_mask，不修改另一拆分owner或半转缓存，不使用泛化BPMX传播后的残差。NISS同时交换状态与mask，归属检查为 `inverse_rejected != (child.side == parent.side)`。该证明及实现已经独立审查通过；不增加查询阶段或Frame字段。
 
-实现及独立代码审查通过：54项库小检查、8项程序检查、默认golden检查通过（1项外部快照库检查仍ignored）。真实3502个BFS状态、56032次完整有界搜索全部保持最优解；一致CO节点1579040→1579040，保守压缩CO节点8166842→8148692；新增17010次本地父mask证明、100852个半转位删除。这些是本地掩码修改次数，不能解释成等量的全局唯一子树。日志 `.tmp/cubeopt-reverse/opt10-coset-validation-{lib,bin,default}.log`。
+实现及独立代码审查通过：54项库小检查、8项程序检查、默认golden检查通过（1项外部快照库检查仍ignored）。真实3502个BFS状态、56032次完整有界搜索全部保持最优解；一致CO节点1579040→1579040，保守压缩CO节点8166842→8148692；新增17010次本地父mask证明、100852个半转位删除。这些是本地掩码修改次数，不能解释成等量的全局唯一子树。日志 `.local-data/cubeopt-reverse/opt10-coset-validation-{lib,bin,default}.log`。
 
 运行协议15项纯检查通过；独立构建 `target/opt10-coset` 只启用hotpath加coset，不含dual、batch、pathmax。正式单轮标签 `wca1000-mt16-rust-native-opt10-exp-coset` 已完成，**24.591098480秒**；1000条全部独立回放、与已保留原版及hotpath的最优长度全部匹配。表加载和完整性校验不计入求解耗时。
 
@@ -149,7 +149,7 @@
 
 原生峰值RSS31,207,653,376字节；guard峰值31,324,471,296字节，最小余量11,286,396,928字节；退出0、压力正常、同次启动Swapouts=0、无保护触发。未重建表、未测试其他档、未提交推送或部署。
 
-报告 `.tmp/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-coset-report.json`；完整源码、程序、构建、原始输入/结果和验证日志冻结于 `.tmp/cubeopt-reverse/opt10-native-coset-preserved-20261014/`，40文件清单SHA-256 `c0fb78c5e8565ed34304448ce1346008a6ee46b144b4f5332f9f3d9db448a529`；程序SHA-256 `bd311e05cfd541b43aafb32e67025130bacc130592033b28439a9277cee3c58c`。旧原版和25.145秒版的程序及快照均核验不变，正式运行标签不重复消费。
+报告 `.local-data/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-coset-report.json`；完整源码、程序、构建、原始输入/结果和验证日志冻结于 `.local-data/cubeopt-reverse/opt10-native-coset-preserved-20261014/`，40文件清单SHA-256 `c0fb78c5e8565ed34304448ce1346008a6ee46b144b4f5332f9f3d9db448a529`；程序SHA-256 `bd311e05cfd541b43aafb32e67025130bacc130592033b28439a9277cee3c58c`。旧原版和25.145秒版的程序及快照均核验不变，正式运行标签不重复消费。
 
 | 第二轮候选 | 正式1000条耗时 | 结论 |
 | --- | ---: | --- |
@@ -167,8 +167,8 @@
 ## 基准与保留
 
 - 使用当前源码、默认 feature 加 `opt10-runtime`，构建到独立 `target/opt10-baseline`，不覆盖旧 `target/opt10` 或 `target/multithread`。
-- 修改前源码位于 `.tmp/cubeopt-reverse/opt10-native-baseline-20261014/`；完整程序、构建摘要、输入、报告和逐文件清单随正式基准补齐。
-- 现有表 `.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat`，31,130,911,744 字节。复用同一 818,008 字节辅助快照，不重建表。
+- 修改前源码位于 `.local-data/cubeopt-reverse/opt10-native-baseline-20261014/`；完整程序、构建摘要、输入、报告和逐文件清单随正式基准补齐。
+- 现有表 `.local-data/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat`，31,130,911,744 字节。复用同一 818,008 字节辅助快照，不重建表。
 - 原 Opt9、55.8秒及43.2秒版程序和快照保持。本轮不重测 Opt9，不将不同协议的历史 Opt10 WCA100 单线程35.9秒当作本轮基准。
 
 ## 数学分析和首轮候选
@@ -191,13 +191,13 @@ Opt10 base=10，编码1/2/3返回11/12/13，编码0读64格块minimum。13是穷
 
 `baseline`：**33.032167991 秒**，峰值原生 RSS **31,204,196,352 字节**，7,332,650,034 个节点、8,706,050,870 次查表。1000条全部独立验解通过，最优长度全部匹配已验证原版 Opt9 1000条；未重新运行 Opt9。保护正常、Swapouts=0、退出0。目标一半为 **16.516083996 秒**。
 
-报告 `.tmp/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-baseline-report.json`；报告中的 `baseline` 子对象沿用共用验证器命名，指历史 Opt9 长度参考，不是本次 Opt10 时间；本次应读取 `totalSeconds` / `candidate`。保留源/程序/构建/原始证据位于上述独立快照，下一版才开始启用实验策略。
+报告 `.local-data/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-baseline-report.json`；报告中的 `baseline` 子对象沿用共用验证器命名，指历史 Opt9 长度参考，不是本次 Opt10 时间；本次应读取 `totalSeconds` / `candidate`。保留源/程序/构建/原始证据位于上述独立快照，下一版才开始启用实验策略。
 
 ## 搜索候选已完成
 
 `search`：**25.665952339 秒**，比本轮基准减少 **22.3%** 耗时；节点 **4,992,359,029**（减少31.9%），查表 **6,317,596,710**（减少27.4%）。峰值原生 RSS **31,203,770,368 字节**。1000条全部独立回放、最优长度全部匹配本轮 Opt10 基准；退出0、Swapouts=0、无保护触发。
 
-候选仅通过 `opt10-native-search` 开启，不改变默认程序。源码、程序、构建和全部运行证据冻结于 `.tmp/cubeopt-reverse/opt10-native-search-preserved-20261014/`，35文件清单 SHA-256 `80a98f4a35d51e931d2f0c6654e774589da73d34d4c472d3dacc7a1e1bb5a161`。原基准36文件清单 SHA-256 `862c35417b2c5f561afcd8f8f3cc882f0e144e8230d7e4157bfb040b25070bca`。原 Opt9 / 55.8秒 / 43.2秒三个程序与快照全部核对不变。
+候选仅通过 `opt10-native-search` 开启，不改变默认程序。源码、程序、构建和全部运行证据冻结于 `.local-data/cubeopt-reverse/opt10-native-search-preserved-20261014/`，35文件清单 SHA-256 `80a98f4a35d51e931d2f0c6654e774589da73d34d4c472d3dacc7a1e1bb5a161`。原基准36文件清单 SHA-256 `862c35417b2c5f561afcd8f8f3cc882f0e144e8230d7e4157bfb040b25070bca`。原 Opt9 / 55.8秒 / 43.2秒三个程序与快照全部核对不变。
 
 第二候选 `hotpath` 在搜索候选之上只尝试 Opt10 `lookup` 强制内联和从安全范围内引用发出的预取。反汇编确认原基准存在未内联的查表调用；`search` 产物也保留4个静态调用点，但并非全部查表都经过函数调用。预取可与8个上下文间的坐标计算和其他读取重叠。保留有效索引、数组边界、独立解码和完整加载验证，不改表。已核对 `/dev/solvers` 的 Opt10 表名和31,130,911,744字节快照仍准确，库存未变。
 
@@ -221,11 +221,11 @@ Opt10 base=10，编码1/2/3返回11/12/13，编码0读64格块minimum。13是穷
 
 | 版本 | 构建目录 | 冻结快照 |
 | --- | --- | --- |
-| 原 Opt10 | `solver/experiments/cube48opt-rust/target/opt10-baseline` | `.tmp/cubeopt-reverse/opt10-native-baseline-20261014` |
-| 搜索候选 | `solver/experiments/cube48opt-rust/target/opt10-search` | `.tmp/cubeopt-reverse/opt10-native-search-preserved-20261014` |
-| 查表候选 | `solver/experiments/cube48opt-rust/target/opt10-hotpath` | `.tmp/cubeopt-reverse/opt10-native-hotpath-preserved-20261014` |
+| 原 Opt10 | `solver/experiments/cube48opt-rust/target/opt10-baseline` | `.local-data/cubeopt-reverse/opt10-native-baseline-20261014` |
+| 搜索候选 | `solver/experiments/cube48opt-rust/target/opt10-search` | `.local-data/cubeopt-reverse/opt10-native-search-preserved-20261014` |
+| 查表候选 | `solver/experiments/cube48opt-rust/target/opt10-hotpath` | `.local-data/cubeopt-reverse/opt10-native-hotpath-preserved-20261014` |
 
-`hotpath` 35文件清单SHA-256：`4e73ebf9862085ef03f2fddd7b95826415d6e5ace55ded7fdb688366628f6b11`；程序SHA-256：`8fa568fae7dc8090b592e208dd4e6b7fea23a6bbed382fd1f2d9581cb9eb8a9a`。正式报告为 `.tmp/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-{baseline,search,hotpath}-report.json`。已消费的测试标签不可重复运行，不为了复测覆盖记录或重置资源基线。
+`hotpath` 35文件清单SHA-256：`4e73ebf9862085ef03f2fddd7b95826415d6e5ace55ded7fdb688366628f6b11`；程序SHA-256：`8fa568fae7dc8090b592e208dd4e6b7fea23a6bbed382fd1f2d9581cb9eb8a9a`。正式报告为 `.local-data/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-{baseline,search,hotpath}-report.json`。已消费的测试标签不可重复运行，不为了复测覆盖记录或重置资源基线。
 
 ### 验证及后续边界
 

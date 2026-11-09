@@ -21,10 +21,10 @@ strength of its pruning counter or extrapolate these single-pass results.
 
 Preserved local evidence, with paths relative to the repository root:
 
-- Source snapshot and exact WASM/wrapper/worker: `.tmp/cubeopt-reverse/rust-wasm-shared-builds/build-K1O5W7/`, including `source/`, `build-metadata.json` and `small-check.json`. WASM SHA-256: `47ef75332d6b4e50e62d7265a33003617df1e061cf26e62935d795534e83c3b6`.
-- Independent report: `.tmp/cubeopt-reverse/wasm-opt8-opt9-20261015/opt8-report.json`; raw solutions: `opt8/rust/results.jsonl` inside that same run directory.
-- Consumed review/receipt and exit evidence: `.tmp/cubeopt-reverse/wasm-opt8-opt9-20261015/`, including `opt8-receipt.json` and `opt8-exit.json`.
-- Resource record: `.tmp/cubeopt-reverse/wasm-opt8-candidate-20261015-resources.json`; the separate Opt9 loading stop remains in `.tmp/cubeopt-reverse/wasm-opt9-candidate-20261015-resources.json` and the run directory's `stop.json`.
+- Source snapshot and exact WASM/wrapper/worker: `.local-data/cubeopt-reverse/rust-wasm-shared-builds/build-K1O5W7/`, including `source/`, `build-metadata.json` and `small-check.json`. WASM SHA-256: `47ef75332d6b4e50e62d7265a33003617df1e061cf26e62935d795534e83c3b6`.
+- Independent report: `.local-data/cubeopt-reverse/wasm-opt8-opt9-20261015/opt8-report.json`; raw solutions: `opt8/rust/results.jsonl` inside that same run directory.
+- Consumed review/receipt and exit evidence: `.local-data/cubeopt-reverse/wasm-opt8-opt9-20261015/`, including `opt8-receipt.json` and `opt8-exit.json`.
+- Resource record: `.local-data/cubeopt-reverse/wasm-opt8-candidate-20261015-resources.json`; the separate Opt9 loading stop remains in `.local-data/cubeopt-reverse/wasm-opt9-candidate-20261015-resources.json` and the run directory's `stop.json`.
 
 The `wasm-coset-prune` research source and `coset-batch-four` build definition
 are retained. Future AI work must inspect the frozen source/report first and
@@ -47,7 +47,7 @@ trigger. Solver peak RSS 8,076,361,728 B; process-tree peak 8,399,142,912 B.
 The first memory-preflight rejection is retained. Owner then explicitly asked
 to start after freeing memory; no threshold reduction or baseline reset.
 
-Evidence: `.tmp/cubeopt-reverse/original-opt8-local4-20261015/opt8-report.json`,
+Evidence: `.local-data/cubeopt-reverse/original-opt8-local4-20261015/opt8-report.json`,
 SHA-256 `f165222be3b03314630bd0f0780585418669d711dff721fbb6e4b46c8a2a79d6`.
 The one-use receipt is consumed. Local comparison page updated; no commit,
 push, deployment, Rust rerun, Opt9 run or solver replacement. Padded-state
@@ -89,7 +89,7 @@ The new direct coset proof really removed 38,233,566 half-turn mask bits, but
 visited nodes fell only 0.0086% (1,717,133,808 to 1,716,985,601), insufficient
 evidence of a useful search-work reduction. This candidate is not promoted;
 the release pointer and server WASM remain unchanged. No baseline rerun.
-Full results: `.tmp/cubeopt-reverse/wasm-opt8-opt9-20261015/opt8-report.json`.
+Full results: `.local-data/cubeopt-reverse/wasm-opt8-opt9-20261015/opt8-report.json`.
 
 The subsequent separate Opt9 candidate stopped during table loading when
 system Swapouts rose from 16 to 48. It solved zero cases. The shared scope is
@@ -112,7 +112,7 @@ scalar/optimized inverse-quarter coordinate checks; shared-worker ownership,
 cancellation and failure checks. Full WCA100 replay and known optimal lengths
 are verified by the measurement harness before accepting performance results.
 
-Raw run directories under `.tmp/cubeopt-reverse/`:
+Raw run directories under `.local-data/cubeopt-reverse/`:
 
 - `wca100-local4-opt8-baseline-20261014`
 - `wca100-local4-opt8-quarter-20261014`
@@ -164,7 +164,7 @@ with 100/100 exact-length and independent replay verification. The 32.324 s
 research-build result is not substituted for this exact release binary.
 
 Artifact-only deployment evidence is retained in
-`.tmp/cubeopt-reverse/opt8-local-release-20261014/`. The transaction validates both
+`.local-data/cubeopt-reverse/opt8-local-release-20261014/`. The transaction validates both
 local reports against the exact old/new bundle file hashes, same corpus/table,
 same local runtime and compiler, successful process exit and resource guard.
 Table bytes are reused by hardlink; no new table or server benchmark. Publication
@@ -183,7 +183,7 @@ Local exact release: 33.368675666 s versus V4 37.794426789 s, WCA100/4 workers/
 one pass/no warmup, both with --no-liftoff; 100/100 independently verified.
 Server speed improvement has not been measured or inferred from local seconds.
 The release selection is recorded in `opt8-wasm-release.json`; all reports and
-transaction/verification evidence are under `.tmp/cubeopt-reverse/opt8-local-release-20261014/`.
+transaction/verification evidence are under `.local-data/cubeopt-reverse/opt8-local-release-20261014/`.
 
 ## Obsolete server table links removed — 2026-10-14
 

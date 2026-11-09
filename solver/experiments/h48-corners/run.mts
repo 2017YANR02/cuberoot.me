@@ -73,7 +73,7 @@ if (!args.includes('--run')) process.exit(0);
 if (process.platform !== 'darwin') throw Error('This runner currently requires the reviewed macOS resource monitor');
 
 const GiB = 2 ** 30;
-const work = join(root, '.tmp/h48-corners-research');
+const work = join(root, '.local-data/h48-corners-research');
 mkdirSync(work, { recursive: true });
 function atomic(path: string, value: unknown) {
   const fd = openSync(path + '.new', 'w');

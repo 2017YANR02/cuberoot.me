@@ -3725,7 +3725,7 @@ mod tests {
     #[test]
     fn wca_bigtable_report() {
         let w = Sq1WcaSolver::shared();
-        let data = match std::fs::read_to_string("../core/.tmp/sq1_wca/sample.txt") {
+        let data = match std::fs::read_to_string("../core/.local-data/sq1_wca/sample.txt") {
             Ok(d) => d,
             Err(_) => {
                 eprintln!("[bigtable] sample.txt missing, skip");
@@ -4956,10 +4956,10 @@ mod tests {
 
     /// 分析(瞬时,不做精确解):phase-1 启发式 `h` vs 近最优 WCA 上界的 gap 分布。
     /// gap = near - h ≥ actual - h,是真实启发式松弛的上界。gap 大 = IDA* 深态炸点。
-    /// 读 ../core/.tmp/sq1_wca/sample.txt(`id,scramble`);缺文件则 skip。
+    /// 读 ../core/.local-data/sq1_wca/sample.txt(`id,scramble`);缺文件则 skip。
     #[test]
     fn wca_heuristic_gap_analysis() {
-        let path = "../core/.tmp/sq1_wca/sample.txt";
+        let path = "../core/.local-data/sq1_wca/sample.txt";
         let data = match std::fs::read_to_string(path) {
             Ok(d) => d,
             Err(_) => {
@@ -5064,7 +5064,7 @@ mod tests {
     #[test]
     #[ignore] // 手动:cargo test --release --lib -- --ignored --nocapture wca_calibrate_one
     fn wca_calibrate_one() {
-        let path = "../core/.tmp/sq1_wca/sample.txt";
+        let path = "../core/.local-data/sq1_wca/sample.txt";
         let data = std::fs::read_to_string(path).expect("corpus");
         let w = Sq1WcaSolver::shared();
         // 选 h 最接近目标(默认 15 = 均值,代表典型硬态)的 1 条。SQ1_CALIB_H 可覆盖。
@@ -5109,7 +5109,7 @@ mod tests {
     }
 
     /// A4 诊断(运行时驱动,#[ignore]):读 `SQ1_PROFILE_FILE`(默认
-    /// `../core/.tmp/sq1_wca/diag/profile_in.txt`,每行 `id,scramble`),对每条跑 `solve_profile`
+    /// `../core/.local-data/sq1_wca/diag/profile_in.txt`,每行 `id,scramble`),对每条跑 `solve_profile`
     /// 看 phase-1 逐 bound 节点爆炸 + 首方形深度 + h vs 近最优 gap。node/time cap 防挂
     /// (`SQ1_PROFILE_NODECAP` / `SQ1_PROFILE_TIMECAP_MS` 覆盖,默认 2e9 / 60s)。
     /// 跑:`CUBE_TABLE_DIR=...\tables cargo test --release --lib wca_profile_file -- --ignored --nocapture`
@@ -5117,7 +5117,7 @@ mod tests {
     #[ignore]
     fn wca_profile_file() {
         let path = std::env::var("SQ1_PROFILE_FILE")
-            .unwrap_or_else(|_| "../core/.tmp/sq1_wca/diag/profile_in.txt".to_string());
+            .unwrap_or_else(|_| "../core/.local-data/sq1_wca/diag/profile_in.txt".to_string());
         let data =
             std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {}: {}", path, e));
         let node_cap: u64 = std::env::var("SQ1_PROFILE_NODECAP")

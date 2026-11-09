@@ -21,7 +21,7 @@
  *   2. **逐条实证**。对不上就原样保留,并给出真诊断。
  *
  *   node canonicalize_ll_algs.mjs          # 只出报告
- *   node canonicalize_ll_algs.mjs --sql    # 额外产出 .tmp/canonicalize_ll_algs.sql
+ *   node canonicalize_ll_algs.mjs --sql    # 额外产出 .local-data/canonicalize_ll_algs.sql
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { Alg } from 'cubing/alg';
@@ -196,9 +196,9 @@ if (report.stillBroken.length) {
   console.table(report.stillBroken.map(s => ({ set: s.set, case: s.case, id: s.id, alg: s.alg })));
 }
 
-mkdirSync('../../../.tmp', { recursive: true });
-writeFileSync('../../../.tmp/canonicalize_ll_algs_report.json', JSON.stringify(report, null, 2), 'utf-8');
-console.log('\n完整变更报告 → .tmp/canonicalize_ll_algs_report.json');
+mkdirSync('../../../.local-data', { recursive: true });
+writeFileSync('../../../.local-data/canonicalize_ll_algs_report.json', JSON.stringify(report, null, 2), 'utf-8');
+console.log('\n完整变更报告 → .local-data/canonicalize_ll_algs_report.json');
 
 if (process.argv.includes('--sql')) {
   const sql = [
@@ -214,6 +214,6 @@ if (process.argv.includes('--sql')) {
     'COMMIT;',
     '',
   ].join('\n');
-  writeFileSync('../../../.tmp/canonicalize_ll_algs.sql', sql, 'utf-8');
-  console.log(`SQL → .tmp/canonicalize_ll_algs.sql (${sql.length} bytes)`);
+  writeFileSync('../../../.local-data/canonicalize_ll_algs.sql', sql, 'utf-8');
+  console.log(`SQL → .local-data/canonicalize_ll_algs.sql (${sql.length} bytes)`);
 }

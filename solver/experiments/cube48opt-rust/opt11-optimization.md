@@ -11,8 +11,8 @@
 ## 原版保留
 
 - B0：本轮开始前的 Opt11 源码，含 `opt11.rs`、`opt11_generate.rs`、共享坐标、表格式、建表器、搜索器及安全入口。B0 本身也尚未编译或验证。
-- 优化前已创建独立本地源码快照：仓库根目录下 `.tmp/cubeopt-reverse/opt11-source-baseline-20261029-WsCutS/`；`BASELINE.json` 记录复制范围，保存完整 `src/`、Cargo 配置及相关入口/文档，不包含大表或构建产物。该目录仅存在于本机，不是已发布或已验证版本。
-- 六个候选的完成态源码另存于 `.tmp/cubeopt-reverse/opt11-candidates-source-20261029-knKjje/`，清单为 `CANDIDATES.json`。它们共享基础实现，通过独立策略/feature 区分；不是六份重复的求解器，也没有构建产物。两个源码档案都应保留，不作普通临时文件清理。
+- 优化前已创建独立本地源码快照：仓库根目录下 `.local-data/cubeopt-reverse/opt11-source-baseline-20261029-WsCutS/`；`BASELINE.json` 记录复制范围，保存完整 `src/`、Cargo 配置及相关入口/文档，不包含大表或构建产物。该目录仅存在于本机，不是已发布或已验证版本。
+- 六个候选的完成态源码另存于 `.local-data/cubeopt-reverse/opt11-candidates-source-20261029-knKjje/`，清单为 `CANDIDATES.json`。它们共享基础实现，通过独立策略/feature 区分；不是六份重复的求解器，也没有构建产物。两个源码档案都应保留，不作普通临时文件清理。
 - 新候选使用独立模块与显式策略，不覆盖 B0 的默认行为。共享代码只增加必要的复用入口，保留原调用路径。
 - 候选的筛选只能发生在另一次获准验证后；本轮不删除任何候选，也不把推测写为成绩。
 

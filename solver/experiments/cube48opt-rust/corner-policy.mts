@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '../../..');
 export const cornerExecutable = resolve(here, 'target/corner-research/release/corner-research');
-export const cornerDirectory = resolve(root, '.tmp/cubeopt-reverse/corner96');
+export const cornerDirectory = resolve(root, '.local-data/cubeopt-reverse/corner96');
 const MiB = 2 ** 20, GiB = 2 ** 30;
 
 /** Pure protocol/budget selection. It does not inspect or reset any baseline.

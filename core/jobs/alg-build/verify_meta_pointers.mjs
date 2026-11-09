@@ -40,7 +40,7 @@ import { ident, invert } from './ll_ident.mjs';
 import { mirrorMoveString } from '@cuberoot/shared/alg-mirror';
 
 const ROOT = path.resolve(import.meta.dirname, '../../..');
-const OUT = path.join(ROOT, '.tmp/meta-pointers');
+const OUT = path.join(ROOT, '.local-data/meta-pointers');
 const API = process.env.ALG_API ?? 'https://api.cuberoot.me/v1/alg/sets';
 
 /** 四个吃 meta 的 set。`meta.no`(表里的 `Self`)在这四个 set 上是**全局唯一**的,所以要一起拉。 */

@@ -22,7 +22,7 @@ export async function verifyRootBound(wasmPath, root) {
   await assert.rejects(createModule({ wasmModule: compiled, fixtureRootBound: true, instantiateOnly: true }), /fixture requires/);
   const variants = [];
   for (const [variant, threads] of [[8, 4], [9, probe.metadata.maxThreads]]) {
-    const snapshot = readFileSync(resolve(root, `.tmp/cubeopt-reverse/opt${variant}-generated/small-memory.bin`));
+    const snapshot = readFileSync(resolve(root, `.local-data/cubeopt-reverse/opt${variant}-generated/small-memory.bin`));
     const m = await createModule({ wasmModule: compiled, variant, threads, fixture: true,
       fixtureRootBound: true, smallTableBytes: snapshot });
     let skippedDepths = 0, skippedCases = 0, cancelledSiblings = 0;

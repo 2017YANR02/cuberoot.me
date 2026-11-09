@@ -22,7 +22,7 @@
 - 双底设置新增「包含 PLL」，默认关闭并记住选择；开启将 21 个 PLL 加入当前选题范围，关闭移除。切回普通 ZBLL 不带入 PLL，普通离线选题也仅返回 472 个情况。
 - QTM 与转动面数量是在各状态已保存的 HTM 最优解之间选优，不宣称穷举同一状态的全部 HTM 最优解。
 - 资产经现有安装器校验后先写 hash 文件、最后原子切换 manifest；旧资产与原始日志保留。离线就绪标记绑定题库版本；训练页面在进入双底模式时自动检查并后台缓存，不依赖设置面板打开，不显示下载按钮。按页面 scope 合并并发安装，已有完整缓存时跳过；失败不循环重试，恢复联网或下次进入时再检查。问号使用无边框图标。
-- 从 `core/` 运行 `pnpm --filter @cuberoot/alg-build double-zbll:export` 导出（不启动求解器），再运行 `pnpm --filter @cuberoot/client double-zbll:install ../.tmp/double-zbll-symmetry-v2/export` 安装。
+- 从 `core/` 运行 `pnpm --filter @cuberoot/alg-build double-zbll:export` 导出（不启动求解器），再运行 `pnpm --filter @cuberoot/client double-zbll:install ../.local-data/double-zbll-symmetry-v2/export` 安装。
 - 本次仅更新本地；未提交、未 push、未部署线上。以下日期段落保留为历史记录。
 
 ## 大断点核验的字符串保留修复（2026-10-15）
@@ -63,9 +63,9 @@
 
 维护者要求试用并切换已有 Rust Opt10，长期计算由本人启动。默认入口仍是「双底 ZBLL 计算」，先输入线程数；验收文件 `rust-opt10-acceptance.json` 存在时选择 Opt10，终端标题显示 `Rust Opt10`。保留全部 1,444,324 条已验证结果及原始批次、游标、H10 程序和表；排序仍为 HTM → QTM → 转动种类数。每个状态仍保留一个已求得的 HTM 最优解，不声称遍历该状态的所有 QTM 最优解。
 
-使用现有专用程序 `solver/experiments/cube48opt-rust/target/opt10/release/cube48opt-research`，SHA-256 `041d808743e92dab110b3208341a48736e8373ef6ea59a10f315c34e6bf30fd4`，本轮不重编或重建大表。主表 `.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat` 为 31,130,911,744 字节，坐标小表 `opt9-generated/small-memory.bin` 为 818,008 字节，线程共享匿名驻留。原有日常打乱统计默认仍为 C H10，只有双底协调器选择 Opt10。
+使用现有专用程序 `solver/experiments/cube48opt-rust/target/opt10/release/cube48opt-research`，SHA-256 `041d808743e92dab110b3208341a48736e8373ef6ea59a10f315c34e6bf30fd4`，本轮不重编或重建大表。主表 `.local-data/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat` 为 31,130,911,744 字节，坐标小表 `opt9-generated/small-memory.bin` 为 818,008 字节，线程共享匿名驻留。原有日常打乱统计默认仍为 C H10，只有双底协调器选择 Opt10。
 
-16 线程单次回归覆盖原来的 64 个双底状态和 60 个历史状态：124 个解全部独立 cubing.js 回放通过、HTM 匹配已知最优值。峰值进程树 RSS 31,262,359,552 字节，最低余量 8,979,841,024 字节，Swapouts 0；无同轮 H10 速度对照，不把历史计时当作新提速结论。完整原始输出和报告在 `.tmp/zbll-opt10-acceptance-20261013/`。
+16 线程单次回归覆盖原来的 64 个双底状态和 60 个历史状态：124 个解全部独立 cubing.js 回放通过、HTM 匹配已知最优值。峰值进程树 RSS 31,262,359,552 字节，最低余量 8,979,841,024 字节，Swapouts 0；无同轮 H10 速度对照，不把历史计时当作新提速结论。完整原始输出和报告在 `.local-data/zbll-opt10-acceptance-20261013/`。
 
 正式适配入口另外通过 8 条续算验收：两条已有 H10 解逐字保留，只运行缺少的六条 Opt10 求解，最终八条全部独立回放通过。加载、表完整校验与六条求解合计约 108 秒，不能当成六条搜索时间。此验收使用独立临时目录，未启动或改写长期任务的进度与结果；运行中的进程身份预算实读约 29.16 GiB 驻留、仅 0.08 GiB 额外预留、8.54 GiB 余量。报告为同目录 `resume-report.json`。完成后没有遗留原生计算，用户自行打开原快捷指令并输入线程数继续。
 
@@ -81,7 +81,7 @@
 
 本地 `rust-h10-acceptance.json` 存在时协调器选择 Rust，启动适配器必须核验其通过标志、实际程序 SHA-256 及同一表路径；未验收或程序改变拒绝启动。`DOUBLE_ZBLL_ENGINE=c` 可显式回退旧引擎。新程序仍由研究 guard 启动，每批最多两小时，沿用研究独占锁和原任务 boot/Swapouts 基线；原协调器的 34 GiB 启动、32 GiB RSS、2 GiB 保守余量、压力和磁盘保护仍有效。
 
-验收使用固定 64 个双底代表状态及全部 60 个历史状态，分别运行 Rust 1 线程、原 C 16 线程、Rust 16 线程；每个配置完整预热一次，再计两轮整批墙钟时间。加载和独立验解排除，管道调度与输出包含在时间内。输入、原始解、逐轮时间与资源记录保留于 `.tmp/zbll-rust-acceptance-20261013-v3/` 及研究资源日志。实测共 1,116 次求解验解通过，Rust 1/16 线程间 124 个状态共 620 次非时间字段严格比较完全一致。排除预热后两轮平均：Rust 1 线程 55.836 秒、原 C 16 线程 8.456 秒、Rust 16 线程 5.929 秒；本组混合语料速度比 1.426×，耗时下降 29.89%。受监控进程树峰值 30,642,421,760 bytes，Swapouts 增量 0。仅代表这组本机混合样本，不外推全部双底任务；原始报告和未通过的启动尝试均保留。验收凭据已写入本地任务目录。启动钩子的真实调用发现 code-mode 丢失嵌套 workdir，新增同一协调器的精确绝对路径登记，仍检查相同源码 hash；实际工具调用已放行到线程输入。手动快捷指令入口保持。
+验收使用固定 64 个双底代表状态及全部 60 个历史状态，分别运行 Rust 1 线程、原 C 16 线程、Rust 16 线程；每个配置完整预热一次，再计两轮整批墙钟时间。加载和独立验解排除，管道调度与输出包含在时间内。输入、原始解、逐轮时间与资源记录保留于 `.local-data/zbll-rust-acceptance-20261013-v3/` 及研究资源日志。实测共 1,116 次求解验解通过，Rust 1/16 线程间 124 个状态共 620 次非时间字段严格比较完全一致。排除预热后两轮平均：Rust 1 线程 55.836 秒、原 C 16 线程 8.456 秒、Rust 16 线程 5.929 秒；本组混合语料速度比 1.426×，耗时下降 29.89%。受监控进程树峰值 30,642,421,760 bytes，Swapouts 增量 0。仅代表这组本机混合样本，不外推全部双底任务；原始报告和未通过的启动尝试均保留。验收凭据已写入本地任务目录。启动钩子的真实调用发现 code-mode 丢失嵌套 workdir，新增同一协调器的精确绝对路径登记，仍检查相同源码 hash；实际工具调用已放行到线程输入。手动快捷指令入口保持。
 
 ## Mac 一键续算（2026-10-11，本地入口）
 
@@ -106,7 +106,7 @@ pnpm --filter @cuberoot/alg-build double-zbll:symmetry --watch
 - 终端每 **5 秒**刷新，青色突出主进度和预计剩余时间；主进度计入本批已计算项，并分别显示「已验证」「待核验」，避免整批验证前进度不变。步数分布按行显示数量、占比和条形图，最高频项加亮；普通 80×24 窗口自动用两列分布，大窗口展开为单列。内存/峰值/保守余量、压力、换出增量和磁盘独立展示。刷新时钟与数据时间可区分是否仍在更新，超过 15 秒无新快照时暂停 ETA。预计时间基于本次实测，不把历史迁移记录当作吞吐；难度变化及停机会影响估算。
 - `Control-C` 在计算窗口会通知批次停止、保留已落盘结果；下次点同一个入口恢复。重复点击只打开**只读面板**，不会再启动求解器；`--watch` 始终只读，不获取锁、不写断点、不启动或停止计算。只读面板的 Control-C / 关窗仅关闭面板。计算窗口关闭时通过 SIGHUP 通知独立批次停止；不要强杀原生进程或删除 `.tmp` 数据。
 - 「可回收」包含只读文件映射页；H48 表通过 `mmap(PROT_READ, MAP_PRIVATE)` 加载，约 28.25 GiB 的表可以同时计入求解器 RSS 和系统文件缓存。因此系统显示约 41 GiB 可用不代表表未加载，也不是可随意分配的空闲内存。面板突出保守余量（可回收减整个计算进程树 RSS）；资源门槛和停止保护保持原样。
-- 断点仍在 `.tmp/double-zbll-symmetry-v2/`。`representatives.csv` 作为只读迁移基线；新结果追加至 `solutions.csv`；`checkpoint.json` 保存调度版本、配对游标与批次，`progress.json` 是显示快照，`run.log` 记录底层输出。每秒读取新增完整行并逐条验证棱角状态，再追加、fsync 到总结果；整对验证齐全后写入 `finished-pairs.csv` 并显示最终最短步数，批末继续检查完整行数和 hash。旧批次与旧游标备份全部保留，切换顺序时先导入旧未完成批次的完整结果行。末尾半行会先保存 recovery 副本，完整行保留。游标落后于日志时重放并幂等合并，不重复追加结果。
+- 断点仍在 `.local-data/double-zbll-symmetry-v2/`。`representatives.csv` 作为只读迁移基线；新结果追加至 `solutions.csv`；`checkpoint.json` 保存调度版本、配对游标与批次，`progress.json` 是显示快照，`run.log` 记录底层输出。每秒读取新增完整行并逐条验证棱角状态，再追加、fsync 到总结果；整对验证齐全后写入 `finished-pairs.csv` 并显示最终最短步数，批末继续检查完整行数和 hash。旧批次与旧游标备份全部保留，切换顺序时先导入旧未完成批次的完整结果行。末尾半行会先保存 recovery 副本，完整行保留。游标落后于日志时重放并幂等合并，不重复追加结果。
 - 初次启动继承本次已验证迁移的 boot / Swapouts=0，随后沿用 `progress.json`，绝不因再次点击自动重设基线。启动仍需 34 GiB 可回收内存和正常压力；运行每秒检查整个进程树，超过 32 GiB RSS、保守余量低于 2 GiB、新增换出、压力异常或磁盘不足 30 GiB 就停。以上实际保护停止或系统重启后需要重新审查；只有尚未加载大表的启动内存不足按上文等待恢复。等待期间每 5 秒也检查这些保护，等待跨过授权期限会停止。运行时监控仍不保证内核绝不发生首次换出。
 - 快捷指令只安装在这台 Mac；模型、旧批次 runner、冻结源数据、大表与原生引擎是本地依赖。换机器须迁移并核验这些依赖，不能只复制 `.command`。hook 对新命令按代码 hash 和既有期限登记，普通未保护的大内存入口仍拦截。
 - 2026-10-11 用户已手动运行首批，并于 21:23 主动停止以更新终端展示；当时 355,891 个已验证、6,600 个批内已算，Swapouts 仍为 0。用户随后授权 UI 改完后续算。没有提交、push 或网站题库切换；493-case 客户端题库仍须按下述完整验证与发布边界另行接入。
@@ -135,14 +135,14 @@ pnpm --filter @cuberoot/alg-build double-zbll:symmetry --watch
 
 - 2026-10-13：修正菜单栏对 Rust Opt10 进程内存重复扣减的问题。Opt10 的匿名表内存已减少系统可回收值，不能再减一次全部 RSS；仅在研究锁、同次启动标识、活跃 guard 命令及原生子进程均匹配时，移除此任务树的额外预留。H48 文件映射及未确认类型的任务仍沿用原保守预留，失效锁或身份核对失败也回退至保守口径。下拉菜单分开显示估计余量、总计算驻留和额外预留；菜单只读，不更改任何求解保护或基线。本轮实读约 13.08 GiB 余量、29.23 GiB 驻留，压力正常，Swapouts 0；此前约 −16 GiB 的显示不是系统欠缺该数量的内存。
 - 终端步数分布改为网站实际选题口径：每个有序 case 配对选出目前最短的已验证代表。读取 job 上次完整导出的 472-case 题库作为兜底，沿用已审计模型的八种旋转映射，把验证通过的规范代表分配回全部对应配对。不重复计入 256 个 AUF 状态，不将本批尚未验证的解计入统计。
-- 对比基线为 `.tmp/double-zbll-auf-full/export`（版本 `2cf62aac9b538a9d`），本次已确认与客户端已安装 manifest 一致；统计器只依赖 job 导出，不依赖 client 源码或 public。输出「平均步数前→后、每对平均减少、变短配对数、最大节省、步数分布」。主分布完整覆盖不含 PLL 的 222,784 对；含 PLL 的 20,265 对单独显示已有解覆盖数量，缺项不伪装成完整题库。
+- 对比基线为 `.local-data/double-zbll-auf-full/export`（版本 `2cf62aac9b538a9d`），本次已确认与客户端已安装 manifest 一致；统计器只依赖 job 导出，不依赖 client 源码或 public。输出「平均步数前→后、每对平均减少、变短配对数、最大节省、步数分布」。主分布完整覆盖不含 PLL 的 222,784 对；含 PLL 的 20,265 对单独显示已有解覆盖数量，缺项不伪装成完整题库。
 - 标注「每对目前最短 / 待安装」：这是当前已知候选成果，既非全部 AUF 算完后的最终下界，也非已经更新网站。未修改网站资产或离线版本。
 - 21:40 PDT 实测：上次导出均值 16.423 → 候选 16.184 HTM，49,283 对变短、最多省 3 步、含 PLL 已覆盖 630/20,265 对。完整分布数量合计 222,784；单独统计进程 RSS 约 124 MiB。4 项针对性测试和 job typecheck 通过，包含对称映射、去重、未优化兜底和 PLL 范围边界。
 - 按用户随后明确授权，21:41 对旧协调器 PID 93896 发 SIGTERM 并等原生求解器退出；372,275 已验证和第二批 4,900 的停止快照保留。原 boot 与 Swapouts=0 检查通过后由相同快捷入口续算。21:42 新协调器 PID 81077、单一原生 PID 44555 已推进至第二批 5,088，`progress.json.website` 包含上述完整统计；RSS 28.80 GiB、保守余量 10.96 GiB、压力正常、无新增换出。菜单栏脚本输出「可用 11.0 GiB」，Stats 内存模块显示开关经 UI 核实为关闭。没有提交或推送。
 
 21:28 PDT 按用户明确要求通过原 `.command` 打开新版终端并续算，协调器 PID 93896、单一原生求解器 PID 54477；批内从保留的 6,794 条推进到 7,194 条（原停止快照仅显示 6,600，末次刷盘更多）。当时实测约 20.38 个/秒，RSS 28.87 GiB、保守余量约 11.81 GiB、压力正常，Swapouts 基线与当前均为 0。启动前资源检查、原 boot 基线及保护条件全部沿用，没有清除数据或重设保护。
 
-验收：4 项进程锁/资源/末行恢复/分批续算针对性检查通过，alg-build typecheck 通过，架构边界通过，命令 hook 74 项通过。真实迁移文件重新逐条验证 355,891 条，峰值约 0.33 GiB，换出增量为 0；结果见 `.tmp/double-zbll-symmetry-v2/shortcut-verification.log`。快捷指令已在资料库保存，实际以 `--plan` 打开终端，未运行 H48。终端画面因工具访问限制未直接截图；入口进程与计划输出已分别核验。
+验收：4 项进程锁/资源/末行恢复/分批续算针对性检查通过，alg-build typecheck 通过，架构边界通过，命令 hook 74 项通过。真实迁移文件重新逐条验证 355,891 条，峰值约 0.33 GiB，换出增量为 0；结果见 `.local-data/double-zbll-symmetry-v2/shortcut-verification.log`。快捷指令已在资料库保存，实际以 `--plan` 打开终端，未运行 H48。终端画面因工具访问限制未直接截图；入口进程与计划输出已分别核验。
 
 另外用新批次枚举器走完全部输入空间（不加载大表）：含 PLL 待算 542,422 个，纯 ZBLL 待算 6,657,133 个，加迁移结果恰为 7,555,446；峰值约 186 MiB，见 `shortcut-plan-audit.json`。真实 Bash 工具调用的无计算探针（`node --version` 加未授权入口参数）被 hook 拒绝；合法精确命令的 hook 判定单独验证放行，但没有执行计算命令。
 
@@ -155,7 +155,7 @@ pnpm --filter @cuberoot/alg-build double-zbll:symmetry --watch
 - 本地说明页 `/zh/alg/double-zbll-about`（英文 `/alg/double-zbll-about`），入口在双底打乱菜单旁的问号。包含 PLL 计数比较、八种面转映射交互、最优性证明和 Burnside 计数。这里的 PLL 开关仅比较理论数量，不修改训练设置。
 - 包含 PLL 时共 493 个 case：原始组合 `493² × 256 = 62,220,544`；单层去重后为 `7,488 + 284 = 7,772` 个状态，配对共 `60,403,984` 个。
 - 只采用保持 U/D 轴的八种旋转共轭：`1, y, y2, y', x2, y x2, y2 x2, y' x2`。单层绕轴固定数为 `[7772,4,92,4]`，Burnside 计数 `(7772²+4²+92²+4²+4×7772)/8 = 7,555,446`。不含 PLL 时固定数为 `[7488,0,64,0]`，得 `7,013,024`。其他 16 种空间朝向未计入节省量。
-- `.tmp/double-zbll-symmetry-v2/audit.json` 记录全量配对枚举、62,176 次单层旋转及 144 次 HTM 生成元映射审计；`model.mts` 保留状态编号、共轭映射和规范代表选择。
+- `.local-data/double-zbll-symmetry-v2/audit.json` 记录全量配对枚举、62,176 次单层旋转及 144 次 HTM 生成元映射审计；`model.mts` 保留状态编号、共轭映射和规范代表选择。
 - `migrate.mts` 不加载 H48，内存硬上限 768 MiB，启动 heap 上限 512 MiB；逐条核验旧解、转换为规范代表、再次核验新解，追加 `representatives.csv`，每 512 条 fsync。旧结果只读；中断后校验并重放新日志，已完成源文件须匹配原 hash，新增换出或压力异常会停止且不自动重设基线。
 - 迁移实际验证 **788,046** 条旧记录（原始 222,784 + 完整 AUF 565,248 + 批次 0017 已落盘但旧进度未计入的 14 条），来自 20 组文件；合并得到 **355,891** 个已解规范代表，剩余 **7,199,555** 个。`migration.json` 为 `complete`，`migration-integrity.json` 保存计数与 SHA-256：`fdeaa5804b7018f9379edf89a9034426bcae18f5f3b0bc363895fdd2cea14b36`。
 - 本次迁移峰值 RSS 436,420,608 bytes，Swapouts 0 → 0。没有重启求解器或修改原交换保护基线；20:01 PDT 可回收内存约 29.76 GiB，低于既有 34 GiB 求解启动门槛。
@@ -170,7 +170,7 @@ pnpm --filter @cuberoot/alg-build double-zbll:symmetry --watch
 - 原代表打乱均值 **16.375 HTM**，每对最短 AUF 均值 **15.0625 HTM**，平均少 **1.3125** 步：22 对少 1 步，10 对少 2 步。
 - 全部 AUF 均匀使用的均值 **16.440918 HTM**。缩短来自选择同一对 case 的较短 AUF 状态，不是让同一状态突破原最优长度；32 对样本不能保证全部配对都有相同收益。
 - 计算与验证 **497.815 秒**；峰值进程组 RSS **28.35788 GiB**，最低保守余量 **13.58623 GiB**；Swapouts **1487252 → 1487252**。这是本次 boot 的真实启动值，不沿用上次开机的计数。
-- 明细与原始结果：`.tmp/double-zbll-auf-20261011/{report.json,comparison.csv,input.json,solutions.csv}`。
+- 明细与原始结果：`.local-data/double-zbll-auf-20261011/{report.json,comparison.csv,input.json,solutions.csv}`。
 - 首次新版题库仍有完整 **222,784** 条代表打乱；替换其中 32 条，总共缩短 42 步，其他记录保留原解。网站二进制仍为 **4,678,464 bytes**，版本 `353a21ca47e1b9cf`；HTTP 200、hash 和 32 条实际长度均已核验。
 
 ### 执行、断点与跟进
@@ -178,18 +178,18 @@ pnpm --filter @cuberoot/alg-build double-zbll:symmetry --watch
 仓库根目录唯一长期入口：
 
 ```bash
-node --import ./core/node_modules/tsx/dist/loader.mjs .tmp/double-zbll-auf-20261011/full.mts --run
+node --import ./core/node_modules/tsx/dist/loader.mjs .local-data/double-zbll-auf-20261011/full.mts --run
 ```
 
 `full.mts` 复用同目录 `run.mts` 的样本/批次实现，底层复用 `solver/333opt/solve_h10.mts` 与原生 H48 h10，不另造求解器。hook 只对本任务精确命令和两个脚本的已核验 SHA-256 开放；代码改变必须重新审阅 hash，不允许用环境变量绕开保护。授权窗口到 2026-12-01；如仍未完成须复核，不自动续期。
 
 - 总计划 **57,032,704** 条 AUF 组合（222,784 × 256）。当前保留每个组合的独立 ID，包含对称情况产生的重复状态；不冒称全部是不同状态。原去重审计为 56,070,144 个不同状态。
 - 每批至多 128 对 / 32,768 条；样本已完成的 32 对直接跳过。预计按样本吞吐约 **40 天**，批次难度和停机会改变用时。
-- 总进度 `.tmp/double-zbll-auf-full/progress.json`，唯一 owner `.tmp/double-zbll-auf-full/owner.pid`；活动批次在 `batches/NNNN/`，各有追加式 `solutions.csv`、进度与 owner。不要重复启动活 owner。
-- 每 100 条结果 fsync；意外末尾半行先保留 recovery 副本，恢复时只跳过有效完整 ID。每批全部验证后才发布其最佳解。原 `.tmp/double-zbll-v1/solutions.csv` 不改不删。
+- 总进度 `.local-data/double-zbll-auf-full/progress.json`，唯一 owner `.local-data/double-zbll-auf-full/owner.pid`；活动批次在 `batches/NNNN/`，各有追加式 `solutions.csv`、进度与 owner。不要重复启动活 owner。
+- 每 100 条结果 fsync；意外末尾半行先保留 recovery 副本，恢复时只跳过有效完整 ID。每批全部验证后才发布其最佳解。原 `.local-data/double-zbll-v1/solutions.csv` 不改不删。
 - 已做真实受控中断：首批保留 **4,430** 条，重启原生入口显示 `solved=4430/32768`，从后续 ID 继续；前缀 hash 证据保存在 `resume-proof.json`。
 - 全任务沿用样本的 boot 与 Swapouts 基线，不能每批重新接受新增换出；运行期间交换/压力异常、32 GiB 进程组 RSS 或 2 GiB 保守余量保护触发即停止。磁盘余量不足 30 GiB 也停止。`caffeinate -i -w owner` 仅防止计算期间自动空闲睡眠。
-- 每批验证后导出完整题库到 `.tmp/double-zbll-auf-full/export`，调用原有 `install-double-zbll.mts <export绝对路径>` 安装，数据先写、manifest 最后原子替换。`publication.json` 记录已发布批次，允许恢复时跳过。
+- 每批验证后导出完整题库到 `.local-data/double-zbll-auf-full/export`，调用原有 `install-double-zbll.mts <export绝对路径>` 安装，数据先写、manifest 最后原子替换。`publication.json` 记录已发布批次，允许恢复时跳过。
 - 本地网站刷新页面时检查新 manifest，新数据完整验 hash 后才替换缓存；断网、损坏或下载失败保留旧完整缓存。本轮 9 项离线/更新测试与 client typecheck 已通过。
 - 用户要求停止监控后，自动跟进 `zbll` 已暂停。2026-10-11 新安装的本机系统记录器仅采集故障证据，不恢复 AI 定时跟进或求解器。此任务仍未发布线上。
 
@@ -218,12 +218,12 @@ pnpm --filter @cuberoot/alg-build double-zbll
 pnpm --filter @cuberoot/client double-zbll:install
 ```
 
-第一条完成全部计算并导出 `.tmp/double-zbll-v1/export/`；第二条由前端所属的安装器校验哈希并安装公共资产。
+第一条完成全部计算并导出 `.local-data/double-zbll-v1/export/`；第二条由前端所属的安装器校验哈希并安装公共资产。
 
 读取已有 `solver/tables/h48-nissy-core/h48h10.dat`（30,336,314,216 bytes），不建表。
 线程数采用机器可用并行度。原生求解器只读映射表，浏览器不用这张大表。
 
-工作目录 `.tmp/double-zbll-v1/`：
+工作目录 `.local-data/double-zbll-v1/`：
 
 - `source.json`：冻结的公共公式库；`identity.txt` 校验情况顺序、规范状态与种子。
 - `corpus.csv`：固定的全部输入状态。
@@ -297,7 +297,7 @@ typecheck 通过。浏览器 GAN v4 模拟设备完成逐步高亮、完整打�
 - `solutions.csv` 实有 222,784 行、唯一 ID 0–222783；全部棱角排列与方向逐条校验通过，`progress.json` 为 `complete`。
 - 首次输入文件创建 17:04:21.966 UTC，最后解写入 20:13:49.709 UTC；含断点重启的计算墙钟时间 **3 小时 9 分 27.743 秒**。全量导出校验另用 12.085 秒，于 20:25:12.902 UTC 完成。
 - 原生求解器峰值 RSS **28.2593 GiB**；最后长任务的最低保守余量 **8.8913 GiB**，早期检查点记录最低约 8.135 GiB，未触及用户指定的 2 GiB 门槛。
-- 系统 Swapouts 始终 **953258 → 953258**，本轮未新增交换写入。计算结束前的监控原记录保存在 `.tmp/double-zbll-v1/solve-complete-before-export.json`；后续只导出运行的 `progress.json` 内 RSS 为 0，不代表原生计算没有占用内存。
+- 系统 Swapouts 始终 **953258 → 953258**，本轮未新增交换写入。计算结束前的监控原记录保存在 `.local-data/double-zbll-v1/solve-complete-before-export.json`；后续只导出运行的 `progress.json` 内 RSS 为 0，不代表原生计算没有占用内存。
 - 初次导出发现逆公式含 `F2'` 形式；统一为等价 WCA 半转记号后重新验证全部记录。原生最优解无需重算，完整 `solutions.csv` 保留。
 - HTM 长度 **11–19**，平均 **16.437271**；长度 11/12/13/14/15/16/17/18/19 的数量分别为 9/99/635/3782/20345/79887/108383/9643/1。
 - 3 个公共文件已真实安装。二进制 4,678,464 bytes，SHA-256 `dc524085be737a81296e2fb1a77b4eff365e7660a465dc3f5724499c48c81212`；情况 JSON SHA-256 `c4cd4db9e935414623af0a4477de438fd4efcaa5ec84edce7b0e549c455df801`。

@@ -6,7 +6,7 @@ import {normalize,outerTurnSequence} from '../../../core/packages/shared/src/rec
 import {strictOuterForm} from '../../../core/packages/shared/src/timer/reconstruct/library_correction.ts';
 import {algSpeed,normalizeLine,MCC_DEFAULTS,getSTM} from '../../../core/packages/client/lib/mcc.ts';
 import {improveNotation,isAllowedZbllAlgorithm,ZBLL_ALLOWED_FAMILIES} from './zbll-mcc-notation.mts';
-const root=resolve(import.meta.dirname,'../../..'),out=resolve(root,'.tmp/1lll-five-20261023');
+const root=resolve(import.meta.dirname,'../../..'),out=resolve(root,'.local-data/1lll-five-20261023');
 const revision=process.argv[2]==='report'?process.argv[4]:undefined;
 if(revision)assert(/^[a-zA-Z0-9-]+$/.test(revision),'Expected a revision directory name');
 const reportOut=revision?resolve(out,revision):out;

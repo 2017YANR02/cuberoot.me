@@ -12,7 +12,7 @@ import { validateNativeReview, validateNativeProtection, validateNativeRows } fr
 import { validatePreparedRequest, validateWasmSummary } from './run-multithread.mts';
 
 const HERE = dirname(fileURLToPath(import.meta.url)), ROOT = resolve(HERE, '../../..');
-const BASE = resolve(ROOT, '.tmp/cubeopt-reverse');
+const BASE = resolve(ROOT, '.local-data/cubeopt-reverse');
 const TARGET = resolve(ROOT, 'core/packages/client/app/[lang]/dev/solvers/compare/unified-benchmark.ts');
 const SHA = /^[a-f0-9]{64}$/;
 const hash = (bytes: Uint8Array | string) => createHash('sha256').update(bytes).digest('hex');

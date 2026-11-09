@@ -9,9 +9,9 @@ import { observeStatsResources } from './stats-resume-review.mts';
 import { resumeHistory } from './zbll-resume-review.mts';
 
 const here = import.meta.dirname, root = resolve(here, '../../..'), GiB = 2 ** 30;
-const research = resolve(root, '.tmp/cubeopt-reverse');
+const research = resolve(root, '.local-data/cubeopt-reverse');
 const failedLabel = 'zbll-mcc-20261023-opt9';
-const failedDir = resolve(root, '.tmp/zbll-mcc-20261023');
+const failedDir = resolve(root, '.local-data/zbll-mcc-20261023');
 export const zbllMultisolutionLabel = 'zbll-mcc-20261023-opt9-single';
 export const zbllMultisolutionDir = resolve(failedDir, 'single');
 export const zbllMultisolutionPaths = {
@@ -142,8 +142,8 @@ export function collectZbllMultisolutionEvidence() {
   assert.equal(sha(read(p.tableManifest)), tableManifestSha256);
   const history = resumeHistory();
   for (const path of [resolve(research, 'opt10-official-wca1000-mt16-20261022/stop.json'),
-    resolve(root, '.tmp/scramble-stats-opt10/protected-stop.json'),
-    ...['resume-stop-20261015.json', 'resume-stop-after-ps-review-20261015.json'].map(name => resolve(root, '.tmp/double-zbll-symmetry-v2', name))])
+    resolve(root, '.local-data/scramble-stats-opt10/protected-stop.json'),
+    ...['resume-stop-20261015.json', 'resume-stop-after-ps-review-20261015.json'].map(name => resolve(root, '.local-data/double-zbll-symmetry-v2', name))])
     if (existsSync(path)) history[path] = sha(read(path));
   const historySummary = Object.fromEntries(Object.keys(history).sort().map(path => {
     const value = JSON.parse(read(path).toString());

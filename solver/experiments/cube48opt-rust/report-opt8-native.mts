@@ -11,14 +11,14 @@ const descriptions:Record<string,string>={baseline:'Preserved Rust fixed native 
 descriptions['native-cpu']='Opt8 specialized search; compiled for this host CPU';
 descriptions['quarter-cpu']='Preserved quarter-only Opt8 source; compiled for this host CPU';
 assert(process.argv.length<=3&&Object.hasOwn(descriptions,candidate));
-const root=resolve(import.meta.dirname,'../../..'),label=`opt8-native-${candidate==='baseline'?'':candidate+'-'}wca100-4-20261015`,dir=resolve(root,'.tmp/cubeopt-reverse',label);
+const root=resolve(import.meta.dirname,'../../..'),label=`opt8-native-${candidate==='baseline'?'':candidate+'-'}wca100-4-20261015`,dir=resolve(root,'.local-data/cubeopt-reverse',label);
 const read=(p:string)=>JSON.parse(readFileSync(p,'utf8'));
 const raw=readFileSync(resolve(dir,'raw.jsonl'));
 const rows=raw.toString().trim().split('\n').map(JSON.parse);
-const resources=read(resolve(root,'.tmp/cubeopt-reverse',label+'-resources.json'));
+const resources=read(resolve(root,'.local-data/cubeopt-reverse',label+'-resources.json'));
 assert.equal(rows.length,100);assert.equal(resources.stopped,'');assert.equal(resources.swapouts,48);assert.equal(resources.pressure,1);assert.equal(resources.trigger,null);
 const corpus=readWca100(resolve(root,'solver/testdata/benchmarks/wca-first100.json'),100);
-const ref=readFileSync(resolve(root,'.tmp/cubeopt-reverse/wca1000-mt16-rust-native-opt9-exp-fixed.jsonl'),'utf8').trim().split('\n').map(JSON.parse);
+const ref=readFileSync(resolve(root,'.local-data/cubeopt-reverse/wca1000-mt16-rust-native-opt9-exp-fixed.jsonl'),'utf8').trim().split('\n').map(JSON.parse);
 const {cube3x3x3}=await import(pathToFileURL(resolve(root,'core/jobs/alg-build/node_modules/cubing/dist/lib/cubing/puzzles/index.js')).href);const puzzle=await cube3x3x3.kpuzzle();
 for(let i=0;i<100;i++){assert.equal(rows[i].id,corpus.cases[i].id);assert.equal(rows[i].length,ref[i].length);assert.equal(rows[i].threads,4);assert.equal(rows[i].cancelled,false);verify(puzzle,corpus.cases[i],rows[i]);}
 const sha=(b:Buffer)=>createHash('sha256').update(b).digest('hex');

@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { constants, openSync, closeSync, fstatSync, readFileSync, mkdirSync, existsSync,
   copyFileSync, chmodSync, writeFileSync } from 'node:fs';
 import { dirname, resolve, relative, isAbsolute } from 'node:path';
+import { relocatedArtifactPath } from '../../../scripts/local-artifacts/paths.mjs';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url)), ROOT = resolve(HERE, '../../..');
@@ -30,7 +31,7 @@ export function readNativeRelease(variant: 9 | 10) {
   assert.equal(manifest.candidate, variant === 9 ? 'fixed' : 'coset');
   assert.equal(manifest.command, variant === 9 ? 'solve' : 'solve-opt10');
   assert.equal(manifest.threads, 16); assert.equal(manifest.contexts, 8);
-  const snapshot = child(ROOT, manifest.snapshot.path);
+  const snapshot = relocatedArtifactPath(manifest.snapshot.path, ROOT);
   return { manifest, executable: child(HERE, manifest.executable.path), snapshot,
     report: child(snapshot, manifest.benchmark.report) };
 }

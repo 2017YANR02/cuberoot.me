@@ -4,15 +4,15 @@ import {existsSync,readFileSync,readdirSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 const root=resolve(import.meta.dirname,'../../..');
-const work=resolve(root,'.tmp/double-zbll-symmetry-v2');
-const research=resolve(root,'.tmp/cubeopt-reverse');
+const work=resolve(root,'.local-data/double-zbll-symmetry-v2');
+const research=resolve(root,'.local-data/cubeopt-reverse');
 export const resumeReviewPath=resolve(work,'resume-review-20261015.json');
 export const previousResumeStopPath=resolve(work,'resume-stop-20261015.json');
 export const observationReviewPath=resolve(work,'resume-ps-review-20261015.json');
 export const resumeStopPath=resolve(work,'resume-stop-after-ps-review-20261015.json');
 export const resumeDigest=(bytes:Buffer)=>createHash('sha256').update(bytes).digest('hex');
 export function resumeHistory() {
-  const files=[resolve(research,'resource-baseline.json'),resolve(root,'.tmp/h48-corners-research/resource-baseline.json'),
+  const files=[resolve(research,'resource-baseline.json'),resolve(root,'.local-data/h48-corners-research/resource-baseline.json'),
     resolve(work,'opt10-official-resource-review.json'),resolve(import.meta.dirname,'opt10-release.json')];
   for(const dir of [research,...['open-benchmark-20261015','wasm-opt8-opt9-20261015','wasm-browser-20261015'].map(d=>resolve(research,d))])
     if(existsSync(dir))for(const name of readdirSync(dir))if(name.endsWith('.json')&&name.includes('stop'))files.push(resolve(dir,name));

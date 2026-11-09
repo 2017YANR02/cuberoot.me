@@ -1,6 +1,6 @@
 /**
  * Phase 0 —— **状态轨道 join**:把站长那张表的 3915 行,和站上 3918 个 LL case 对上。
- * 产出 `.tmp/phase0/mapping.json` + 冲突报告。见 docs/1lll-migration.md §8。
+ * 产出 `.local-data/phase0/mapping.json` + 冲突报告。见 docs/1lll-migration.md §8。
  *
  * case 身份 / 朝向类 / 角置换类的定义与证明:见 ll_ident.mjs。
  *
@@ -26,7 +26,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { parseAlgCell } from './sheet_notation.mjs';
 import { ident, identOfAlg, identOfScramble, invert } from './ll_ident.mjs';
 
-const TMP = '../../../.tmp/phase0';
+const TMP = '../../../.local-data/phase0';
 const API = 'https://api.cuberoot.me/v1/alg/sets/3x3';
 
 /** OLL 字母 → 标准 OLL 号,来自 xlsx 的 `OLL` sheet(A 列字母、B 列 No.)。不是我编的。 */
@@ -365,4 +365,4 @@ writeFileSync(`${TMP}/mapping.json`, JSON.stringify({
   badAlgs, unresolved: problems, siteDups: siteDups.map(g => g.map(c => `${c.set}/${c.name}`)),
   parseErrors, parseWarns, sdbBad,
 }, null, 2), 'utf-8');
-console.log(`\nmapping → .tmp/phase0/mapping.json`);
+console.log(`\nmapping → .local-data/phase0/mapping.json`);

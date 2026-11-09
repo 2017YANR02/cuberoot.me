@@ -32,11 +32,11 @@ const root = resolve(here, '../../..');
 const native = resolve(here, 'target/release/cube48opt-research');
 const zbllNative = resolve(here, 'target/zbll/release/cube48opt-research');
 const opt10Native = resolve(here, 'target/opt10/release/cube48opt-research');
-const opt10Small = resolve(root, '.tmp/cubeopt-reverse/opt9-generated/small-memory.bin');
-const opt10Table = resolve(root, '.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
-const opt10Proof = resolve(root, '.tmp/cubeopt-reverse/opt10-generation-validation-v2.json');
-const opt10Metadata = resolve(root, '.tmp/cubeopt-reverse/opt10-generated-v2/generation-metadata.json');
-const opt10Input = resolve(root, '.tmp/cubeopt-reverse/wca100-single.tsv');
+const opt10Small = resolve(root, '.local-data/cubeopt-reverse/opt9-generated/small-memory.bin');
+const opt10Table = resolve(root, '.local-data/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
+const opt10Proof = resolve(root, '.local-data/cubeopt-reverse/opt10-generation-validation-v2.json');
+const opt10Metadata = resolve(root, '.local-data/cubeopt-reverse/opt10-generated-v2/generation-metadata.json');
+const opt10Input = resolve(root, '.local-data/cubeopt-reverse/wca100-single.tsv');
 const opt10PayloadBytes = 31_130_910_720;
 const opt10FileBytes = opt10PayloadBytes + 1024;
 const opt10ProofSources = ['src/opt10_generate.rs', 'src/opt10.rs', 'src/opt10_table.rs', 'src/eo_table.rs', 'src/coord.rs', 'src/cube.rs'];
@@ -340,7 +340,7 @@ if (env.CUBEOPT_ZBLL_REVIEW !== undefined) {
       || env.CUBEOPT_BACKEND !== 'opt10' || env.CUBEOPT_OPT10_REVIEW !== undefined
       || env.CUBEOPT_RESOURCE_REVIEW !== undefined || env.CUBEOPT_VARIANT !== undefined || env.CUBEOPT_H !== undefined
       || env.CUBEOPT_BENCHMARK !== undefined || env.CUBEOPT_MEASURE_RSS !== undefined
-      || env.CUBEOPT_ZBLL_REVIEW !== resolve(root, '.tmp/double-zbll-symmetry-v2/opt10-resource-review.json')
+      || env.CUBEOPT_ZBLL_REVIEW !== resolve(root, '.local-data/double-zbll-symmetry-v2/opt10-resource-review.json')
       || !Number.isInteger(threads) || threads < 1 || threads > availableParallelism()
       || String(threads) !== env.CUBEOPT_SOLVE_THREADS
       || JSON.stringify(args) !== JSON.stringify(['solve-opt10', opt10Small, opt10Table, '8', '20', '0']))
@@ -363,8 +363,8 @@ if (env.CUBEOPT_BACKEND === 'opt10' || ['generate-opt10', 'solve-opt10'].include
     rssLimit:opt10PayloadBytes+GiB,deadlineMs:(generation?6:1)*60*60_000};
 }
 if (resolve(executable) === resolve(here, 'target/release/examples/verify_opt10_generation')) {
-  const small = resolve(root, '.tmp/cubeopt-reverse/opt9-generated/small-memory.bin');
-  const table = resolve(root, '.tmp/cubeopt-reverse/opt1-generated/h48prun01.dat');
+  const small = resolve(root, '.local-data/cubeopt-reverse/opt9-generated/small-memory.bin');
+  const table = resolve(root, '.local-data/cubeopt-reverse/opt1-generated/h48prun01.dat');
   if (!/^[a-z0-9-]+$/.test(label) || args.length !== 4 || args[0] !== '--verify-opt1'
       || executable !== resolve(here, 'target/release/examples/verify_opt10_generation')
       || args[1] !== small || args[2] !== table || args[3] !== '16'
@@ -629,11 +629,11 @@ if (tablePath !== null && h !== null) {
 }
 if (process.platform !== 'darwin') throw Error('This resource guard requires macOS');
 const observationReserve = 256 * MiB;
-const output = resolve(root, '.tmp/cubeopt-reverse');
+const output = resolve(root, '.local-data/cubeopt-reverse');
 mkdirSync(output, { recursive: true });
 if (backend === 'corner' && ['-resources.json', '-started.json'].some(suffix => existsSync(resolve(output, label + suffix))))
   throw Error('This corner-research label already has resource evidence; use a new label to resume the same checkpoint');
-const record = resolve(root, '.tmp/h48-corners-research/resource-baseline.json');
+const record = resolve(root, '.local-data/h48-corners-research/resource-baseline.json');
 const ownRecord = resolve(output, 'resource-baseline.json');
 const lockPath = resolve(output, 'compute.lock');
 const reviewedStopPath = resolve(output, 'resource-review-stop.json');

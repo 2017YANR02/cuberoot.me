@@ -8,7 +8,7 @@ import { algSpeed } from '../../../core/packages/client/lib/mcc.ts';
 import { isAllowedZbllAlgorithm } from './zbll-mcc-notation.mts';
 import { scoreGripCandidate, startLabel } from './lll-grip-scoring.mts';
 
-const root = resolve(import.meta.dirname, '../../..'), dir = resolve(root, '.tmp/pll-21-20261023');
+const root = resolve(import.meta.dirname, '../../..'), dir = resolve(root, '.local-data/pll-21-20261023');
 const source = JSON.parse(readFileSync(resolve(dir, 'source.json'), 'utf8'));
 const report = JSON.parse(readFileSync(resolve(dir, 'report.json'), 'utf8'));
 const { Alg } = await import(resolve(root, 'core/packages/client/node_modules/cubing/dist/lib/cubing/alg/index.js'));

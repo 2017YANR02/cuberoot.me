@@ -780,7 +780,7 @@ git apply /absolute/path/to/corner96.patch
 corner_repo="$PWD"
 corner_crate="$corner_repo/solver/experiments/cube48opt-rust"
 corner_bin="$corner_crate/target/corner-research/release/corner-research"
-corner_out="$corner_repo/.tmp/cubeopt-reverse/corner96"
+corner_out="$corner_repo/.local-data/cubeopt-reverse/corner96"
 
 cd "$corner_crate"
 cargo build --release --features corner-research \
@@ -946,7 +946,7 @@ printf 'short\tR U F\n' |
 以上运行步骤沿用仓库现有 **macOS guard**，要求完整仓库、Rust 与 Node.js 24+。
 Rust 算法本身未用 macOS 专用 API；当前资源监控依赖该仓库的 macOS 系统观察入口，不能据此宣称已提供 Linux/Windows 等价的受保护运行流程。
 
-新 backend 固定为 corner，运行文件只允许专用 binary，研究产物只允许仓库 .tmp/cubeopt-reverse/corner96/ 下的绝对规范路径。
+新 backend 固定为 corner，运行文件只允许专用 binary，研究产物只允许仓库 .local-data/cubeopt-reverse/corner96/ 下的绝对规范路径。
 它不接受其他实验的 REVIEW 变量、档位、H 参数或并行设置；内部启动标记由 guard 设置，不能手工用它跳过监控。
 如 guard 因已有停止记录拒绝启动，保留记录并按原规则处理；本文没有重置或绕过命令。
 
