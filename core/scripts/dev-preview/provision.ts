@@ -6,6 +6,7 @@ import {homedir} from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {slug,publicKey} from './model.ts';
 import {artifacts,syncCheckout} from './checkout.ts';
+import {deploymentState} from './deployments.ts';
 import {retryable,retryDelay,RetryableError} from './retry.ts';
 const root=resolve(import.meta.dirname,'../../..');
 const config=JSON.parse(readFileSync(join(homedir(),'.config/cuberoot-preview/host.json'),'utf8'));
@@ -62,9 +63,14 @@ function publish(id:string,phase:string){
 }
 async function deployments(sha:string,names:string[]){
   for(let i=0;i<120;i++){
-    const runs=JSON.parse(run('gh',['run','list','--commit',sha,'--limit','30','--json','name,status,conclusion']));
-    if(names.every(name=>runs.some((r:{name:string;conclusion:string})=>r.name===name&&r.conclusion==='success')))return;
-    if(runs.some((r:{name:string;status:string;conclusion:string})=>names.includes(r.name)&&r.status==='completed'&&r.conclusion!=='success'))throw Error('Deployment failed; inspect GitHub Actions before retry');
+    git('fetch','origin','main');
+    const runs=JSON.parse(run('gh',['run','list','--branch','main','--limit','60','--json','name,status,conclusion,headSha']));
+    const state=deploymentState(sha,names,runs,candidate=>{
+      try{git('merge-base','--is-ancestor',sha,candidate);git('diff','--quiet',sha,candidate,'--',...artifacts);return true;}
+      catch{return false;}
+    });
+    if(state==='success')return;
+    if(state==='failure')throw Error('Deployment failed; inspect GitHub Actions before retry');
     await delay(15000);
   }
   throw new RetryableError('Deployment still pending');

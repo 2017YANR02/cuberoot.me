@@ -1,6 +1,7 @@
 import {beforeEach,expect,it,vi} from 'vitest';
 import {Hono} from 'hono';
 import jwt from 'jsonwebtoken';
+vi.mock('@cuberoot/shared/dev-preview',()=>({DEV_PREVIEW_HOSTS:['dev-legacy-old.cuberoot.me']}));
 const mock=vi.hoisted(()=>({auth:vi.fn(),query:vi.fn()}));
 vi.mock('../src/utils/recon_helpers.js',()=>({requireAuth:mock.auth,checkRateLimit:vi.fn()}));
 vi.mock('../src/db/connection.js',()=>({query:mock.query,withTransaction:async(f:(q:typeof mock.query)=>unknown)=>f(mock.query)}));
@@ -66,7 +67,7 @@ it('distinguishes invalid identifiers from an invalid system',async()=>{
   expect(mock.query).not.toHaveBeenCalled();
 });
 it('rejects an already registered legacy device without reserving the owner name',async()=>{
-  const r=await post('requests',{owner:'ruimin',device:'mac-mini',os:'mac'});
+  const r=await post('requests',{owner:'legacy',device:'old',os:'mac'});
   expect(r.status).toBe(409);expect(await r.json()).toEqual({error:'Device already registered'});
   expect(mock.query).not.toHaveBeenCalled();
 });
