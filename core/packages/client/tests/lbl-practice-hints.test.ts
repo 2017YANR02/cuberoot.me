@@ -12,6 +12,7 @@ import { getLblAlgGroups } from '../app/[lang]/tutorial/lbl/alg-cues';
 import { crossMask } from '../app/[lang]/tutorial/lbl/cross-display';
 import { daisyPracticeExample, DAISY_PRACTICE_TARGET } from '../app/[lang]/tutorial/lbl/daisy-practice';
 import { bottomCornerGoal, middleEdgeGoal, practiceState, practiceTargetStates } from '../app/[lang]/tutorial/lbl/practice-state';
+import { practiceNextMove, practiceAlgFinished, practiceCompletedMoves, practiceRecoveryMoves } from '../app/[lang]/tutorial/lbl/practice-next-move';
 
 for (const step of chapters) {
   const examples = step.examples.map((example, index) => step.id === 'daisy' ? daisyPracticeExample(example, index) : example);
@@ -29,6 +30,27 @@ for (const step of chapters) {
       const goal = step.id === 'corners' && example === step.examples[1] ? bottomCornerGoal(setup, target, colors)
         : step.id === 'middle' && (example === step.examples[2] || example === step.examples[3]) ? middleEdgeGoal(setup, target, colors) : null;
       expect(goal ? goal.matches(result) : practiceTargetStates(colors, target).has(practiceState(colors, result))).toBe(true);
+      if (step.id === 'structure') return; // This chapter has no practice route.
+
+      // Follow the same camera-independent layer hints used by every exercise.
+      const guided: string[] = [];
+      for (let turn = 0; turn < getLblAlgGroups(step.id, example.alg).flat().length + 20; turn++) {
+        if (practiceAlgFinished(example.alg, guided.join(' '))) break;
+        const next = practiceNextMove(example.alg, guided.join(' '));
+        expect(next).toBeDefined();
+        expect(next).not.toMatch(/^[xyz]/);
+        guided.push(next!);
+        expect(practiceRecoveryMoves(example.alg, guided.join(' '))).toEqual([]);
+      }
+      expect(practiceAlgFinished(example.alg, guided.join(' '))).toBe(true);
+      expect(practiceCompletedMoves(example.alg, guided.join(' '))).toBe(getLblAlgGroups(step.id, example.alg).flat().length);
+      const guidedResult = `${setup} ${guided.join(' ')}`;
+      expect(goal ? goal.matches(guidedResult) : practiceTargetStates(colors, target).has(practiceState(colors, guidedResult))).toBe(true);
+
+      const wrong = `${guided.join(' ')} F D`;
+      // An erroneous turn can itself coincide with another taught prefix.
+      expect(practiceRecoveryMoves(example.alg, wrong).length).toBeGreaterThan(0);
+      expect(practiceAlgFinished(example.alg, `${wrong} D' F'`)).toBe(true);
     });
   }
 }

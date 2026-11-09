@@ -79,6 +79,9 @@ interface Props {
   highlightedStickers?: readonly string[];
   /** Sim NxN: arrow between current front-face slots, using row-major indices. */
   frontFaceArrow?: { from: number; to: number };
+  /** Sim NxN: show surface arrows for the next guided turn. */
+  moveHint?: string;
+  moveHintRecovery?: boolean;
   /** Display-only colors by home sticker ID, following the pieces. */
   stickerColorOverrides?: Readonly<Record<string, string>>;
   setup?: string;
@@ -191,6 +194,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         outlinedStickers={props.outlinedStickers}
         highlightedStickers={props.highlightedStickers}
         frontFaceArrow={props.frontFaceArrow}
+        moveHint={props.moveHint} moveHintRecovery={props.moveHintRecovery}
         stickerColorOverrides={props.stickerColorOverrides}
         onStepChange={props.onStepChange}
         highlightDaisyAlignment={props.highlightDaisyAlignment}

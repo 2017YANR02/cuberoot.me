@@ -81,6 +81,7 @@ body:has(.lbl-support-page) {
 .lbl-alg-move { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: space-between; gap: 7px; min-width: 0; text-align: center; }
 .lbl-alg-cue { color: var(--muted-foreground); font-size: .8rem; font-weight: 400; line-height: 1.4; white-space: nowrap; }
 .lbl-alg-move code { color: var(--foreground); font-size: 1.2rem; font-weight: 400; line-height: 1.4; white-space: nowrap; }
+.lbl-exercise-hint .lbl-alg-move[data-completed] :is(code, .lbl-alg-cue) { color: var(--accent); }
 .lbl-alg-move[aria-current='step'] .lbl-alg-cue, .lbl-alg-move[aria-current='step'] code { color: var(--accent); }
 .lbl-alg-note { margin: -10px 0 20px; font-size: .8rem; line-height: 1.7; color: var(--muted-foreground); text-align: center; }
 .lbl-demo:has(> .lbl-trigger-legend) > .lbl-alg-steps { margin-bottom: 10px; }
@@ -299,6 +300,8 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
 .lbl-move-buttons .lbl-button, .lbl-exercise-tools .lbl-button { border: 1px solid var(--border-default); border-radius: 10px; background: var(--card); color: var(--foreground); padding: 10px 6px; font: inherit; cursor: pointer; }
 .lbl-move-buttons .lbl-button:hover { background: var(--accent-soft); }
 .lbl-exercise-tools { display: flex; gap: 10px; }
+.lbl-exercise-tools .lbl-button { display: inline-flex; flex-direction: row; align-items: center; justify-content: center; gap: 6px; }
+.lbl-exercise-tools .lbl-button > svg { flex-shrink: 0; }
 .lbl-completion { position: fixed; inset: 0; margin: 0; border: 0; padding: 16px; width: 100%; height: 100%; max-width: none; max-height: none; background: transparent; color: var(--foreground); overflow-y: auto; }
 .lbl-completion[open] { display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; box-sizing: border-box; }
 .lbl-completion-card { position: relative; box-sizing: border-box; width: 100%; max-width: 480px; min-width: 0; padding: 36px 32px 28px; border: 1px solid var(--border-default); border-radius: 28px; background: var(--card); text-align: center; margin: auto; }
@@ -689,4 +692,46 @@ body[data-site-scenery] .lbl-left-thumb-bubble[data-site-surface='panel'] {
   display: grid;
   place-items: center;
   pointer-events: none;
+}
+
+/* Practice hints: aligned notation, cues and quiet segment labels. */
+.lbl-practice-karaoke { display: grid; grid-template-rows: auto auto auto; gap: 10px 6px; overflow-x: auto; padding: 2px 0 6px; scrollbar-width: thin; }
+.lbl-practice-karaoke > .lbl-alg-move { display: grid; grid-template-rows: subgrid; grid-row: 1 / span 2; gap: 10px; padding-inline: 4px; cursor: default; }
+.lbl-practice-karaoke .lbl-alg-move code { font-size: var(--lbl-text-emphasis, 1.5rem); font-weight: 600; letter-spacing: -.04em; padding-bottom: 4px; border-bottom: 2px solid transparent; }
+.lbl-practice-karaoke .lbl-alg-move[aria-current='step'] code { border-bottom-color: var(--accent); }
+.lbl-practice-karaoke .lbl-alg-cue { font-size: var(--lbl-text-small, 1rem); white-space: nowrap; overflow-wrap: normal; }
+.lbl-practice-karaoke-label { white-space: nowrap; }
+.lbl-practice-karaoke-label { align-self: stretch; display: grid; place-items: center; margin-top: 4px; padding: 5px 4px; border-radius: 6px; background: var(--muted); color: var(--muted-foreground); text-align: center; font-size: var(--lbl-text-small, 1rem); line-height: 1.4; }
+.lbl-practice-karaoke-label + .lbl-practice-karaoke-label { margin-left: 4px; }
+.lbl-practice-karaoke-label[data-in-progress] { position: relative; overflow: hidden; color: var(--foreground); }
+.lbl-practice-segment-progress { position: absolute; bottom: 0; left: 0; height: 2px; background: var(--accent); }
+.lbl-practice-karaoke .lbl-practice-karaoke-label[data-completed] { color: var(--accent); background: var(--accent-soft); }
+.lbl-practice-hint-stage { position: relative; min-width: 0; }
+.lbl-practice-hint-stage > .lbl-practice-recovery { position: absolute; inset: 0; z-index: 1; box-sizing: border-box; padding: 12px; overflow-y: auto; border-radius: 8px; text-align: center; background: var(--glass-popover-bg); backdrop-filter: var(--glass-menu-filter); -webkit-backdrop-filter: var(--glass-menu-filter); }
+.lbl-practice-recovery:not([hidden]) { display: grid; place-items: center; }
+.lbl-exercise .lbl-basic-copy .lbl-practice-recovery :is(p, .lbl-practice-recovery-restart) { margin: 0; color: var(--accent); font-size: var(--lbl-text-emphasis, 1.5rem); font-weight: 700; line-height: 1.5; }
+.lbl-practice-recovery-restart { border: 0; padding: 0; background: transparent; font: inherit; text-align: center; cursor: pointer; }
+.lbl-practice-recovery-restart:hover { text-decoration: underline; text-underline-offset: 4px; }
+.lbl-practice-recovery-restart:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.lbl-practice-recovery-dismiss { position: absolute; inset: 0; width: 100%; }
+.lbl-practice-page .lbl-exercise-hint { display: grid; box-sizing: border-box; width: 100%; min-width: 0; background: var(--card); border: 1px solid var(--border-default); border-radius: 16px; padding: 16px 18px 10px; margin-top: 12px; }
+.lbl-exercise-hint > .lbl-practice-hint-trigger, .lbl-exercise-hint > .lbl-practice-hint-content { grid-area: 1 / 1; min-width: 0; }
+.lbl-practice-hint-content[aria-hidden='true'] { visibility: hidden; pointer-events: none; }
+.lbl-exercise .lbl-basic-copy .lbl-practice-hint-content > p { margin: 0 0 12px; color: var(--muted-foreground); font-size: var(--lbl-text-small, 1rem); line-height: 1.6; }
+.lbl-practice-hint-trigger { display: flex; align-items: center; justify-content: center; gap: 10px; align-self: stretch; justify-self: stretch; min-height: 96px; border: 0; border-radius: 8px; background: transparent; color: var(--muted-foreground); font: inherit; cursor: pointer; padding: 12px; transition: color 160ms ease; }
+.lbl-practice-hint-trigger svg { flex-shrink: 0; color: var(--accent); }
+.lbl-practice-hint-trigger:hover { color: var(--accent); }
+.lbl-practice-hint-trigger:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.lbl-practice-hint-footer { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-height: 32px; }
+.lbl-practice-hint-footer > .lbl-practice-hint-close { align-self: center; }
+.lbl-practice-hint-close-icon { display: inline-flex; position: relative; padding-right: 6px; color: var(--accent); }
+.lbl-practice-hint-close-mark { position: absolute; top: 0; right: 0; }
+.lbl-practice-hint-close { display: inline-flex; align-items: center; justify-content: center; gap: 10px; flex-shrink: 0; min-height: 32px; border: 0; border-radius: 0; padding: 4px 0; background: transparent; color: var(--muted-foreground); font: inherit; cursor: pointer; }
+.lbl-practice-hint-close:hover { color: var(--accent); }
+.lbl-practice-hint-close:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.lbl-exercise-hint .lbl-practice-karaoke[data-recovering] :is(code, .lbl-alg-cue, .lbl-practice-karaoke-label) { color: var(--muted-foreground); }
+.lbl-exercise-hint .lbl-practice-karaoke[data-recovering] .lbl-practice-karaoke-label { background: var(--muted); }
+.lbl-practice-karaoke[data-recovering] .lbl-practice-segment-progress { background: var(--muted-foreground); }
+@media (prefers-reduced-motion: reduce) {
+  .lbl-practice-hint-trigger { transition: none; }
 }

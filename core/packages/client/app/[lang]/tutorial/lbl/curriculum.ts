@@ -101,3 +101,17 @@ export function practiceExampleOrder(chapter: Chapter): number[] {
   const ordered = chapter.lessons.flatMap(lesson => lesson.practiceIndices ?? []);
   return [...new Set([...ordered, ...chapter.examples.map((_, index) => index)])];
 }
+
+/** Resolve a practice URL to its teaching section, including grouped examples. */
+export function practiceReviewLocation(chapter: Chapter, selectedCase: string | null) {
+  if (selectedCase === 'white-edge') return {
+    section: Math.max(0, chapter.lessons.findIndex(lesson => lesson.id === 'white-edge')), daisyLiftIndex: 0,
+  };
+  const position = Number(selectedCase) - 1;
+  const order = practiceExampleOrder(chapter);
+  const exampleIndex = order[Number.isInteger(position) && position >= 0 && position < order.length ? position : 0];
+  return {
+    section: Math.max(0, chapter.lessons.findIndex(lesson => lesson.practiceIndices?.includes(exampleIndex))),
+    daisyLiftIndex: chapter.id === 'daisy' && exampleIndex === 1 ? 1 : 0,
+  };
+}

@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { NavigationMenu } from '@app-foundation/navigation-ui';
-import { useQueryState } from 'nuqs';
+import { parseAsString, useQueryState, useQueryStates } from 'nuqs';
 import { ArrowLeft, ArrowRight, ChevronDown, ChevronLeft } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { T, tr } from '@/i18n/tr';
-import { activeChapters, chapters as allChapters, lessonSourceChapter, practiceExampleOrder } from './curriculum';
+import { activeChapters, chapters as allChapters, lessonSourceChapter, practiceExampleOrder, practiceReviewLocation } from './curriculum';
 import LessonContent from './LessonContent';
 import LessonThumbnail from './LessonThumbnail';
-import Practice from './Practice';
+import PracticeRoute from './PracticeRoute';
 import Walkthrough from './Walkthrough';
 import ChapterNavigation from './ChapterNavigation';
 import './lesson-support.css';
@@ -25,6 +25,7 @@ function keepMouseNavigationUnfocused(event: MouseEvent<HTMLButtonElement>) {
 
 export default function LblTutorial() {
   const [view] = useQueryState('view');
+  if (view === 'practice') return <PracticeRoute />;
   if (view === 'walkthrough') return <Walkthrough />;
   const archive = view === 'archive';
   return <LblLessonView key={archive ? 'archive' : 'active'} archive={archive} />;
@@ -35,12 +36,14 @@ function LblLessonView({ archive }: { archive: boolean }) {
   const storageSuffix = archive ? ':archive' : '';
   const storageKey = `${lessonStorageKey}${storageSuffix}`;
   const legacyStorageKey = `${legacyLessonStorageKey}${storageSuffix}`;
-  const [linkedStep, setLinkedStep] = useQueryState('step');
+  const [linkedStep] = useQueryState('step');
+  const [linkedCase] = useQueryState('case');
   const [chapter, setChapter] = useState(0);
   const [section, setSection] = useState(0);
   const [revision, setRevision] = useState(0);
-  const [practiceOpen, setPracticeOpen] = useState(false);
-  const [practiceStartIndex, setPracticeStartIndex] = useState<number | null>(null);
+
+  const [, setPracticeRoute] = useQueryStates({ view: parseAsString, step: parseAsString, case: parseAsString });
+
   const [daisyLiftIndex, setDaisyLiftIndex] = useState(0);
   const [showDaisyTerms, setShowDaisyTerms] = useState(false);
   const currentChapter = chapters[chapter];
@@ -51,7 +54,7 @@ function LblLessonView({ archive }: { archive: boolean }) {
   const isDaisyOverview = currentChapter.id === 'daisy' && currentLesson.kind === 'overview';
   const menu = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
-    if ((!isDaisyLift && (!isDaisyOverview || showDaisyTerms)) || practiceOpen) return;
+    if ((!isDaisyLift && (!isDaisyOverview || showDaisyTerms))) return;
     function switchHandWithSpace(event: KeyboardEvent) {
       if (event.code !== 'Space' || event.defaultPrevented || event.repeat || event.isComposing ||
         event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
@@ -64,12 +67,14 @@ function LblLessonView({ archive }: { archive: boolean }) {
     }
     document.addEventListener('keydown', switchHandWithSpace);
     return () => document.removeEventListener('keydown', switchHandWithSpace);
-  }, [isDaisyLift, isDaisyOverview, showDaisyTerms, practiceOpen]);
+  }, [isDaisyLift, isDaisyOverview, showDaisyTerms]);
   useEffect(() => {
     const linkedChapter = chapters.findIndex(item => item.id === linkedStep);
     if (linkedChapter >= 0) {
       setChapter(linkedChapter);
-      setSection(0);
+      const review = linkedCase ? practiceReviewLocation(chapters[linkedChapter], linkedCase) : { section: 0, daisyLiftIndex: 0 };
+      setSection(review.section);
+      setDaisyLiftIndex(review.daisyLiftIndex);
       return;
     }
     let saved: string | null;
@@ -87,7 +92,7 @@ function LblLessonView({ archive }: { archive: boolean }) {
     if (savedLeftLift) setDaisyLiftIndex(1);
     setChapter(chapterIndex);
     setSection(Math.max(0, sectionIndex));
-  }, [chapters, linkedStep, storageKey, legacyStorageKey]);
+  }, [chapters, linkedStep, linkedCase, storageKey, legacyStorageKey]);
   useEffect(() => {
     const closeOutside = (event: PointerEvent) => {
       if (menu.current && !menu.current.contains(event.target as Node)) menu.current.open = false;
@@ -112,16 +117,15 @@ function LblLessonView({ archive }: { archive: boolean }) {
     setShowDaisyTerms(false);
     setRevision(value => value + 1);
     if (menu.current) menu.current.open = false;
-    if (linkedStep) void setLinkedStep(null);
+    if (linkedStep || linkedCase) void setPracticeRoute({ step: null, case: null });
     const target = chapters[chapterIndex];
     try {
       sessionStorage.setItem(storageKey, `${target.id}/${target.lessons[sectionIndex].id}`);
     } catch {
       // Navigation still works when browser storage is unavailable.
     }
-  }, [chapters, linkedStep, setLinkedStep, storageKey]);
+  }, [chapters, linkedStep, linkedCase, setPracticeRoute, storageKey]);
   useEffect(() => {
-    if (practiceOpen) return;
     function navigateWithArrows(event: KeyboardEvent) {
       if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.isComposing) return;
       if (window.matchMedia('(max-width: 760px)').matches) return;
@@ -140,7 +144,7 @@ function LblLessonView({ archive }: { archive: boolean }) {
     }
     document.addEventListener('keydown', navigateWithArrows);
     return () => document.removeEventListener('keydown', navigateWithArrows);
-  }, [chapter, section, chapters.length, sections.length, practiceOpen, goToLesson]);
+  }, [chapter, section, chapters.length, sections.length, goToLesson]);
   function chooseChapter(index: number) {
     if (index !== chapter) goToLesson(index, 0);
   }
@@ -167,23 +171,6 @@ function LblLessonView({ archive }: { archive: boolean }) {
   const chapterNavigation = <ChapterNavigation label={tr({ zh: '课程章节', en: 'Course chapters' })} selected={chapter}
       items={chapters.map(item => ({ id: item.id, title: <>{tr(item.title)}{item.archived && <T zh="（归档）" en=" (Archived)" />}</> }))}
       onSelect={chooseChapter} onMouseDown={keepMouseNavigationUnfocused} />;
-
-  const previousPracticeChapter = chapters.findLastIndex((item, index) => index < chapter && item.id !== 'structure' && item.examples.length > 0);
-  const nextPracticeChapter = chapters.findIndex((item, index) => index > chapter && item.id !== 'structure' && item.examples.length > 0);
-  const switchPracticeChapter = (target: number, last: boolean) => {
-    const targetChapter = chapters[target];
-    const order = practiceExampleOrder(targetChapter);
-    const exampleIndex = last ? order[order.length - 1] : order[0];
-    const lessonIndex = targetChapter.lessons.findIndex(lesson => lesson.practiceIndices?.includes(exampleIndex));
-    setPracticeStartIndex(exampleIndex);
-    goToLesson(target, Math.max(0, lessonIndex));
-  };
-  if (practiceOpen) return <Practice key={currentChapter.id} step={currentChapter} exampleOrder={practiceExampleOrder(currentChapter)}
-    initialIndex={practiceStartIndex ?? (isDaisyLift ? daisyLiftIndex : (currentLesson.practiceIndices?.[0] ?? 0))}
-    extraExample={practiceStartIndex === null && currentLesson.id === 'white-edge' ? currentLesson.example : undefined}
-    onPreviousChapter={previousPracticeChapter >= 0 ? () => switchPracticeChapter(previousPracticeChapter, true) : undefined}
-    onNextChapter={nextPracticeChapter >= 0 ? () => switchPracticeChapter(nextPracticeChapter, false) : undefined}
-    onClose={() => { setPracticeOpen(false); setPracticeStartIndex(null); }} />;
 
   return <main className="lbl-page">
     <header className="lbl-header">
@@ -237,7 +224,7 @@ function LblLessonView({ archive }: { archive: boolean }) {
           <div className="lbl-footer-actions" id="lbl-footer-actions">
             {currentLesson.kind !== 'overview' && currentLesson.kind !== 'complete' && currentLesson.kind !== 'flowchart' && currentLesson.kind !== 'layers' &&
             !(currentLesson.kind === 'terms' && ['daisy', 'middle'].includes(sourceChapter.id)) &&
-            sourceChapter.id !== 'structure' && sourceChapter.examples.length > 0 && <button className="lbl-footer-button lbl-footer-next lbl-practice-button" type="button" onClick={() => setPracticeOpen(true)}>
+            sourceChapter.id !== 'structure' && sourceChapter.examples.length > 0 && <button className="lbl-footer-button lbl-footer-next lbl-practice-button" type="button" onClick={() => { const order = practiceExampleOrder(currentChapter); const index = isDaisyLift ? daisyLiftIndex : (currentLesson.practiceIndices?.[0] ?? order[0]); void setPracticeRoute({ view: 'practice', step: currentChapter.id, case: currentLesson.id === 'white-edge' ? 'white-edge' : String(Math.max(0, order.indexOf(index)) + 1) }, { history: 'push' }); }}>
             <T zh="练习本节" en="Practice this lesson" /><ArrowRight size={17} aria-hidden="true" />
           </button>}
           </div>

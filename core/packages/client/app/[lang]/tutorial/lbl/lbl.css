@@ -36,10 +36,11 @@
 .lbl-practice-page .lbl-exercise .lbl-basic-content { min-height: 0; overflow: auto; overscroll-behavior: contain; align-items: start; }
 .lbl-practice-page .lbl-exercise .lbl-basic-copy { align-self: start; padding-top: 16px; }
 .lbl-practice-page .lbl-exercise-reference { display: grid; }
-.lbl-practice-page .lbl-exercise-reference > .lbl-exercise-target,
-.lbl-practice-page .lbl-exercise-reference > .lbl-exercise-hint { grid-area: 1 / 1; align-self: start; }
+.lbl-practice-page .lbl-exercise-reference > .lbl-exercise-hint { align-self: start; }
 .lbl-practice-page .lbl-exercise-reference > [aria-hidden="true"] { visibility: hidden; pointer-events: none; }
-.lbl-practice-page .lbl-exercise .lbl-basic-copy > h3 { box-sizing: border-box; height: 4.5em; overflow: auto; margin-top: 0; }
+.lbl-practice-goal { display: grid; grid-template-columns: 140px minmax(0, 1fr); align-items: center; gap: 16px; height: 180px; margin-top: 24px; }
+.lbl-practice-page .lbl-practice-goal > h3 { grid-area: 1 / 2; box-sizing: border-box; max-height: 100%; overflow: auto; margin: 0; text-align: left; }
+.lbl-practice-page .lbl-practice-goal > .lbl-exercise-target { grid-area: 1 / 1; min-width: 0; border: 0; padding: 0; margin: 0; }
 .lbl-practice-page .lbl-exercise .lbl-exercise-navigation:disabled { color: var(--faint-foreground); background: var(--muted); cursor: default; }
 .lbl-practice-page .lbl-practice-back, .lbl-practice-page .lbl-completion-review { border: 0; background: transparent; color: inherit; cursor: pointer; }
 .lbl-practice-page .lbl-exercise .lbl-basic-footer > .lbl-practice-review { grid-column: 2; justify-self: center; }

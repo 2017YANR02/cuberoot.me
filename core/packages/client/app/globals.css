@@ -76,6 +76,7 @@ body {
   --destructive: #e05c5c;
   --destructive-foreground: #FFFFFF;
   --signal-success: #5aac7e;
+  --move-hint-secondary: #ffffff;
   --signal-warning: #d4a259;
   --signal-info: #4a9eff;
   --signal-danger: #e05c5c;

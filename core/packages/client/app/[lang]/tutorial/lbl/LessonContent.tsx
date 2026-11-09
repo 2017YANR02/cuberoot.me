@@ -275,12 +275,19 @@ function DaisyBlockedPrelude({ setup, onDone }: { setup: string; onDone: () => v
   const visible = usePlayerVisible(player, setup);
   const [stage, setStage] = useState(0);
   const stickers = useMemo(() => daisyBlockedStickers(setup), [setup]);
+  const [outlineVisible, setOutlineVisible] = useState(true);
+  useEffect(() => {
+    setOutlineVisible(true);
+    if (!visible || stage >= 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const timer = window.setInterval(() => setOutlineVisible(value => !value), 650);
+    return () => window.clearInterval(timer);
+  }, [visible, stage]);
   function advance() {
     if (!visible) return;
     if (stage < 2) setStage(value => value + 1);
     else onDone();
   }
-  const highlighted = stage < 2 ? [stickers[stage]] : stickers;
+  const highlighted = stage < 2 ? outlineVisible ? [stickers[stage]] : [] : stickers;
   const [learningArea, setLearningArea] = useState<Element | null>(null);
   useEffect(() => {
     setLearningArea(wrapper.current?.closest('.lbl-lesson-scroll') ?? null);

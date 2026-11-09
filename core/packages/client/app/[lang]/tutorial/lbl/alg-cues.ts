@@ -89,3 +89,29 @@ export function getLblAlgGroups(step: string, alg: string): LblAlgMove[][] {
   }
   return groups;
 }
+
+/** Only complete taught algorithms label the third practice row. */
+export function getLblPracticeSegments(moves: LblAlgMove[]) {
+  const named = [
+    { alg: CORNER_POSITION, name: cue('J公式', 'J algorithm') },
+    { alg: RIGHT_SUNE, name: cue('右小鱼', 'Right Sune') },
+    { alg: LEFT_SUNE, name: cue('左小鱼', 'Left Sune') },
+    { alg: RIGHT, name: cue('右公式', 'Right trigger') },
+    { alg: LEFT, name: cue('左公式', 'Left trigger') },
+  ].map(item => ({ ...item, tokens: item.alg.split(' ') }));
+  const segments: { moves: LblAlgMove[]; name?: Cue }[] = [];
+  for (let i = 0; i < moves.length;) {
+    const match = named.find(item => item.tokens.every((token, offset) =>
+      moves[i + offset]?.notation === token && moves[i + offset].index === moves[i].index + offset));
+    if (match) {
+      segments.push({ moves: moves.slice(i, i + match.tokens.length), name: match.name });
+      i += match.tokens.length;
+    } else {
+      const previous = segments.at(-1);
+      if (previous && !previous.name) previous.moves.push(moves[i]);
+      else segments.push({ moves: [moves[i]] });
+      i++;
+    }
+  }
+  return segments;
+}

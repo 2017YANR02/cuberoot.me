@@ -1,9 +1,9 @@
 'use client';
 
-import MoreToggle from '@/components/MoreToggle';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alg } from 'cubing/alg';
-import { ArrowLeft, ArrowRight, Trophy, X } from '@app-foundation/icons/lucide';
+import { ArrowLeft, ArrowRight, Lightbulb, RotateCcw, Trophy, X } from '@app-foundation/icons/lucide';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import Link from '@/components/AppLink';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
@@ -19,6 +19,7 @@ import { tr, T } from '@/i18n/tr';
 import { LBL_STEPS, LESSON_STICKERING, LBL_INITIAL_VIEW, type LblExample } from './content';
 import { practiceState, practiceTargetStates, bottomCornerGoal, middleEdgeGoal, isFishWithSolvedLowerLayers, isWallWithSolvedLowerLayers } from './practice-state';
 import AlgSteps from './AlgSteps';
+import { practiceNextMove, practiceCompletedMoves, practiceRecoveryMoves, practiceGoalAllowsCompletion, practiceAlgFinished } from './practice-next-move';
 import { practiceObjective } from './practice-objective';
 import { crossMask, crossStickering } from './cross-display';
 import { daisyPracticeExample, DAISY_PRACTICE_TARGET } from './daisy-practice';
@@ -45,29 +46,30 @@ function moveLabel(move: string): string {
 }
 
 */
-export default function Practice({ step, initialIndex, exampleOrder, extraExample, onClose, onPreviousChapter, onNextChapter }: {
-  step: typeof LBL_STEPS[number]; initialIndex: number; exampleOrder?: number[]; extraExample?: LblExample; onClose: () => void; onPreviousChapter?: () => void; onNextChapter?: () => void;
+export default function Practice({ step, initialIndex, exampleOrder, extraExample, onClose, onPreviousChapter, onNextChapter, onIndexChange, stepHints, setStepHints }: {
+  stepHints: boolean; setStepHints: (value: boolean) => void; step: typeof LBL_STEPS[number]; initialIndex: number; exampleOrder?: number[]; extraExample?: LblExample; onClose: () => void; onPreviousChapter?: () => void; onNextChapter?: () => void; onIndexChange?: (index: number) => void;
 }) {
   // const [textMoves, setTextMoves] = useState(false);
   const [index, setIndex] = useState(() => extraExample ? 0 : Math.max(0, exampleOrder?.indexOf(initialIndex) ?? initialIndex));
   const chapterExamples = useMemo(() => step.id === 'daisy' ? step.examples.map(daisyPracticeExample) : step.examples, [step]);
   const orderedExamples = exampleOrder ? exampleOrder.map(index => chapterExamples[index]) : chapterExamples;
   const examples = extraExample ? [extraExample, ...orderedExamples] : orderedExamples;
+  const selectIndex = (next: number) => { setIndex(next); onIndexChange?.(next); };
   return <main className="lbl-support-page lbl-support-practice-page lbl-practice-page">
     <header className="lbl-header">
       <button type="button" className="lbl-button lbl-practice-back" onClick={onClose} aria-label={tr({ zh: '回看本节教程', en: 'Review this lesson' })}><ArrowLeft size={18} /></button>
       <h1><T zh="分步练习" en="Guided practice" /></h1>
     </header>
-    <Exercise key={index} step={step} example={examples[index]} index={index} total={examples.length}
-      onNext={() => { if (index < examples.length - 1) setIndex(index + 1); else onNextChapter?.(); }}
+    <Exercise key={index} stepHints={stepHints} setStepHints={setStepHints} step={step} example={examples[index]} index={index} total={examples.length}
+      onNext={() => { if (index < examples.length - 1) selectIndex(index + 1); else onNextChapter?.(); }}
       canPrevious={index > 0 || !!onPreviousChapter} canNext={index < examples.length - 1 || !!onNextChapter}
-      onClose={onClose} onPrevious={() => { if (index > 0) setIndex(index - 1); else onPreviousChapter?.(); }} />
+      onClose={onClose} onPrevious={() => { if (index > 0) selectIndex(index - 1); else onPreviousChapter?.(); }} />
   </main>;
 }
 
-function Exercise({ step, example, index, total, onNext, onClose, onPrevious, canPrevious, canNext }: {
+function Exercise({ step, example, index, total, onNext, onClose, onPrevious, canPrevious, canNext, stepHints, setStepHints }: {
   step: typeof LBL_STEPS[number]; example: LblExample; index: number; total: number; onNext: () => void; onClose: () => void;
-  onPrevious: () => void; canPrevious: boolean; canNext: boolean;
+  onPrevious: () => void; canPrevious: boolean; canNext: boolean; stepHints: boolean; setStepHints: (value: boolean) => void;
   // textMoves: boolean; onTextMovesChange: (value: boolean) => void;
 }) {
   const beginner = step.id === 'daisy';
@@ -87,26 +89,53 @@ function Exercise({ step, example, index, total, onNext, onClose, onPrevious, ca
   const wallGoal = step.id === 'edge-position' && example === step.examples[2];
   const pieceGoal = cornerGoal ?? edgeGoal;
   const targetStates = useMemo(() => practiceTargetStates(colors, target), [colors, target]);
-  const [hint, setHint] = useState(false);
+
+
+  const [guidedMove, setGuidedMove] = useState<string>();
+  const [restartRequired, setRestartRequired] = useState(false);
   const [solved, setSolved] = useState(false);
+  const [completedHintDismissed, setCompletedHintDismissed] = useState(false);
   const [generation, setGeneration] = useState(0);
   const [completed, setCompleted] = useState(false);
   const finalExercise = step.id === 'edge-position' && index < 2;
   const player = useRef<AlgPlayerHandle>(null);
   const moves = useRef<string[]>([]);
   const [history, setHistory] = useState('');
+  const recoveryMoves = useMemo(() => stepHints ? practiceRecoveryMoves(example.alg, history) : [], [stepHints, example.alg, history]);
+  const recoveryLimitReached = restartRequired || recoveryMoves.length >= 10;
+  useEffect(() => { if (recoveryMoves.length >= 10) setRestartRequired(true); }, [recoveryMoves.length]);
+  const completedMoves = useMemo(() => practiceCompletedMoves(example.alg, history), [example.alg, history]);
+  const completedByLessonAlg = useMemo(() => solved && practiceAlgFinished(example.alg, history), [solved, example.alg, history]);
   const [restoredMoves, setRestoredMoves] = useState('');
   const record = (move: string) => {
+    setCompletedHintDismissed(false);
+    setGuidedMove(undefined);
     moves.current.push(move);
     setHistory(moves.current.join(' '));
     setSolved(false);
   };
   const reset = () => {
+    setCompletedHintDismissed(false);
+    setRestartRequired(false);
+    setGuidedMove(undefined);
     setCompleted(false);
     moves.current = []; setHistory(''); setRestoredMoves(''); setSolved(false); setGeneration(n => n + 1);
   };
+  useEffect(() => {
+    if (!stepHints || solved || recoveryLimitReached) {
+      setGuidedMove(undefined);
+      return;
+    }
+    const timer = window.setInterval(() => {
+      if (!player.current || player.current.isUserMovePending?.()) return;
+      window.clearInterval(timer);
+      setGuidedMove(practiceNextMove(example.alg, history));
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, [stepHints, solved, recoveryLimitReached, example.alg, history, generation]);
   const undo = () => {
     if (!moves.current.length) return;
+    setCompletedHintDismissed(false);
     moves.current.pop();
     const remaining = moves.current.join(' ');
     setHistory(remaining); setRestoredMoves(remaining);
@@ -123,22 +152,24 @@ function Exercise({ step, example, index, total, onNext, onClose, onPrevious, ca
       if (!player.current || player.current.isUserMovePending?.()) return;
       window.clearInterval(timer);
       if (!(wallGoal ? isWallWithSolvedLowerLayers(`${setup} ${history}`) : fishGoal ? isFishWithSolvedLowerLayers(`${setup} ${history}`) : pieceGoal ? pieceGoal.matches(`${setup} ${history}`) : targetStates.has(practiceState(colors, `${setup} ${history}`)))) return;
+      if (stepHints && !practiceGoalAllowsCompletion(example.alg, history)) return;
       setSolved(true);
       if (finalExercise) setCompleted(true);
     }, 100);
     return () => window.clearInterval(timer);
-  }, [history, colors, setup, targetStates, finalExercise, pieceGoal, fishGoal, wallGoal]);
+  }, [history, colors, setup, targetStates, finalExercise, pieceGoal, fishGoal, wallGoal, stepHints, example.alg]);
 
   useEffect(() => {
-    const nextOnSpace = (event: KeyboardEvent) => {
-      if (event.code !== 'Space' || event.repeat || event.isComposing || event.ctrlKey || event.altKey || event.metaKey || completed) return;
+    const navigateOnKey = (event: KeyboardEvent) => {
+      if (!['Space', 'ArrowLeft', 'ArrowRight'].includes(event.code) || event.repeat || event.isComposing || event.ctrlKey || event.altKey || event.metaKey || completed) return;
       if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"], dialog')) return;
       event.preventDefault();
       event.stopPropagation();
-      if (canNext) onNext();
+      if (event.code === 'ArrowLeft') { if (canPrevious) onPrevious(); }
+      else if (canNext) onNext();
     };
-    document.addEventListener('keydown', nextOnSpace, true);
-    return () => document.removeEventListener('keydown', nextOnSpace, true);
+    document.addEventListener('keydown', navigateOnKey, true);
+    return () => document.removeEventListener('keydown', navigateOnKey, true);
   });
   /* 暂停按钮操作。
   const actionRows = (rows: typeof practiceMoves) => rows.map(row => <div className="lbl-action-row" key={row.en}>
@@ -151,7 +182,7 @@ function Exercise({ step, example, index, total, onNext, onClose, onPrevious, ca
     <div className="lbl-basic-content">
       <div className="lbl-basic-demo">
         <div className="lbl-cube"><AlgPlayer ref={player} key={generation} puzzle="3x3" engine="sim" hiddenStickers={edgeGoal?.hiddenStickers} set={LESSON_STICKERING[step.id]} additionalStickering={step.id === 'corners' ? 'centers-only' : ['yellow-cross', 'yellow-face', 'edge-position'].includes(step.id) ? 'F2L' : undefined} orientation="z2" sceneRot={example.sceneRot ?? LBL_INITIAL_VIEW} highlightDaisyAlignment={step.id === 'cross'} alg="" setup={`${setup} ${restoredMoves}`} controlMode="none" hideResetView interactionMode={solved ? 'view' : 'turn'} onUserMove={record} fillPane moveDurationMs={525}
-          stickeringAtStep={step.id === 'cross' ? crossStickering : undefined} />
+          moveHint={stepHints && !solved && !recoveryLimitReached ? guidedMove : undefined} moveHintRecovery={recoveryMoves.length > 0} stickeringAtStep={step.id === 'cross' ? crossStickering : undefined} />
           <TrainingFeedbackOverlay kind={solved ? 'correct' : null} correctLabel={tr({ zh: '已达到本题目标', en: 'Target reached' })} wrongLabel="" />
         </div>
         <p className="lbl-help"><T zh="拖动色块转层，拖动空白调整视角" en="Drag stickers to turn; drag the background to change your view." /></p>
@@ -164,12 +195,26 @@ function Exercise({ step, example, index, total, onNext, onClose, onPrevious, ca
           <details><MoreToggle as="summary"><T zh="更多动作" en="More moves" /></MoreToggle><p><T zh="顺、逆时针都要正对所转的面判断；转后面时，想象从背后看它。" en="Judge clockwise while looking directly at the face being turned; for the back face, imagine looking from behind." /></p>{actionRows(practiceMoves.slice(3, step.id === 'cross' ? 7 : 8))}</details>
         </div> : <div className="lbl-move-buttons" role="group" aria-label={tr({ zh: '转动魔方', en: 'Turn the cube' })}>{['R', "R'", 'L', "L'", 'U', "U'", 'F', "F'", 'D', "D'", 'B', "B'", 'f', "f'", 'y', "y'", ...(step.id === 'cross' ? ['d', "d'"] : [])].map(move => <button className="lbl-button" type="button" key={move} onClick={() => turn(move)}>{move}</button>)}</div>}
         */}
-        <div className="lbl-exercise-tools">{beginner && <button className="lbl-button" type="button" onClick={undo} disabled={!history}><T zh="撤销一步" en="Undo" /></button>}<button className="lbl-button" type="button" onClick={reset}>{beginner ? <T zh="重新开始" en="Restart" /> : <T zh="重来" en="Restart" />}</button><MoreToggle className="lbl-button" type="button" expanded={hint} onClick={() => setHint(!hint)}>{hint ? tr({ zh: '收起提示', en: 'Hide hint' }) : tr({ zh: '给我提示', en: 'Show hint' })}</MoreToggle></div>
+        <div className="lbl-exercise-tools">{beginner && <button className="lbl-button" type="button" onClick={undo} disabled={!history}><T zh="撤销一步" en="Undo" /></button>}<button className="lbl-button" type="button" onClick={reset}><RotateCcw size={16} aria-hidden="true" />{beginner ? <T zh="重新开始" en="Restart" /> : <T zh="重来" en="Restart" />}</button></div>
       </div>
-      <div className="lbl-basic-copy"><h3>{wallGoal ? <T zh="造出一面墙，保留完整底下两层；对色在左或右均可。" en="Create a wall while keeping the first two layers solved; either edge-cycle direction is accepted." /> : fishGoal ? <T zh="变成左小鱼或右小鱼，保持下两层复原。" en="Form either a left or right fish, keeping the first two layers solved." /> : edgeGoal ? <T zh="把目标中棱移到顶层，保留完整底层；顶层位置和朝向不限。" en="Move the target middle edge to the top layer in any position or orientation, keeping the entire bottom layer intact." /> : cornerGoal ? <T zh="把目标角块移到顶层，保留底十字和其他已复原的底层角块。" en="Move the target corner to the top layer, keeping the bottom cross and the other solved bottom corners intact." /> : tr(practiceObjective(step, example))}</h3>
+      <div className="lbl-basic-copy"><div className="lbl-practice-goal"><h3>{wallGoal ? <T zh="造出一面墙，保留完整底下两层；对色在左或右均可。" en="Create a wall while keeping the first two layers solved; either edge-cycle direction is accepted." /> : fishGoal ? <T zh="变成左小鱼或右小鱼，保持下两层复原。" en="Form either a left or right fish, keeping the first two layers solved." /> : edgeGoal ? <T zh="把目标中棱移到顶层，保留完整底层；顶层位置和朝向不限。" en="Move the target middle edge to the top layer in any position or orientation, keeping the entire bottom layer intact." /> : cornerGoal ? <T zh="把目标角块移到顶层，保留底十字和其他已复原的底层角块。" en="Move the target corner to the top layer, keeping the bottom cross and the other solved bottom corners intact." /> : tr(practiceObjective(step, example))}</h3>
+        <div className="lbl-exercise-target"><VisualCube local view="iso" size={140} setup={target} stickerColors={pieceGoal?.targetColors ?? colors} stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]} alt={tr({ zh: '本题目标状态', en: 'Target state' })} /></div>
+        </div>
         <div className="lbl-exercise-reference">
-        <div className="lbl-exercise-target" aria-hidden={hint}><VisualCube local view="iso" size={140} setup={target} stickerColors={pieceGoal?.targetColors ?? colors} stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]} alt={tr({ zh: '本题目标状态', en: 'Target state' })} /></div>
-        <div className="lbl-exercise-hint" aria-hidden={!hint}><p>{edgeGoal ? tr({ zh: '把目标棱所在槽位放到右前方，做“去右”将它取到顶层。', en: 'Bring the target slot to front-right and use the right insertion to eject the edge into the top layer.' }) : tr(example.hint)}</p><AlgSteps step={step.id} alg={example.alg} /></div>
+        <div className="lbl-exercise-hint" data-site-surface="panel">
+          {!stepHints && <button className="lbl-practice-hint-trigger" type="button" onClick={() => setStepHints(true)}>
+            <Lightbulb size={22} strokeWidth={1.5} aria-hidden="true" />
+            <T zh="点击此处获取提示" en="Click here for a hint" />
+          </button>}
+          <div className="lbl-practice-hint-content" aria-hidden={!stepHints}>
+            <div className="lbl-practice-hint-stage"><AlgSteps step={step.id} alg={example.alg} completedMoves={stepHints ? completedMoves : 0} karaoke recovering={stepHints && !solved && (recoveryMoves.length > 0 || recoveryLimitReached)} />
+            <div className="lbl-practice-recovery" data-site-surface="popover" role="status" hidden={solved ? completedHintDismissed : !stepHints || (recoveryMoves.length === 0 && !recoveryLimitReached)}>{solved ? <button className="lbl-practice-recovery-restart lbl-practice-recovery-dismiss" type="button" onClick={() => setCompletedHintDismissed(true)} aria-label={tr({ zh: '关闭完成提示，查看公式', en: 'Dismiss completion to view the algorithm' })}>{completedByLessonAlg ? <T zh="已完成" en="Completed" /> : <T zh="已通过其他方法完成" en="Completed using another method" />}</button> : stepHints && (recoveryLimitReached ? <button className="lbl-practice-recovery-restart" type="button" onClick={reset}><T zh="错误步骤较多，点击重来" en="Too many incorrect moves. Click to restart." /></button> : recoveryMoves.length > 0 ? <p><T zh="有转动错误，按箭头恢复" en="Incorrect turn. Follow the arrows to recover." /></p> : null)}</div>
+            </div>
+            <div className="lbl-practice-hint-footer">
+              <button className="lbl-practice-hint-close" type="button" onClick={() => { setStepHints(false); }}><span className="lbl-practice-hint-close-icon" aria-hidden="true"><Lightbulb size={22} strokeWidth={1.5} /><X className="lbl-practice-hint-close-mark" size={10} strokeWidth={2} /></span><T zh="关闭提示" en="Hide hint" /></button>
+            </div>
+          </div>
+        </div>
         </div>
       </div>
     </div>

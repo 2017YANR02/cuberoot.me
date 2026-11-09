@@ -107,6 +107,8 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   /** Outline home stickers without changing their current mask colors. */
   highlightedStickers?: readonly string[];
   frontFaceArrow?: { from: number; to: number };
+  moveHint?: string;
+  moveHintRecovery?: boolean;
   stickerColorOverrides?: Readonly<Record<string, string>>;
   setup?: string;
   orientation?: string;
@@ -132,7 +134,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   /** 撑满父容器。给编辑器那种「右半屏放预览」的布局用。 */
   fillPane?: boolean;
 }>(function AlgSimPlayer({
-  alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, highlightedStickers, frontFaceArrow, stickerColorOverrides, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, onUserMove, pauseAfterSteps, sectionPauseMs, onStepChange, stickeringAtStep, highlightDaisyAlignment = false, showHands = false, moveDurationMs, size = 260, fillPane = false,
+  alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, highlightedStickers, frontFaceArrow, moveHint, moveHintRecovery = false, stickerColorOverrides, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, onUserMove, pauseAfterSteps, sectionPauseMs, onStepChange, stickeringAtStep, highlightDaisyAlignment = false, showHands = false, moveDurationMs, size = 260, fillPane = false,
 }, ref) {
   const t = useT();
   const [handsUnavailable, setHandsUnavailable] = useState(false);
@@ -285,6 +287,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     setReplayRequest(request => request + 1);
   }, [ready, autoPlay, alg, playRequest, setupAlg, moves.length, jumpToStep]);
 
+  const updateMoveHintRef = useRef<(() => boolean) | null>(null);
   const mount = useCallback(async (host: HTMLElement) => {
     const {
       mountSimWorld, attachEmbeddedSimInteraction, timing, stickeringMaskFn, mergeStickeringMaskFns, resolveStageMaskFn, resetSceneView,
@@ -297,7 +300,8 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     const m = mountSimWorld({ host, puzzle: puzzleKind, interactive: true, sceneRot,
       onFrame: (_world, dt) => {
         const handsChanged = hands?.tick(dt);
-        return (alignment?.update() ?? false) || (handsChanged ?? false);
+        const hintChanged = updateMoveHintRef.current?.() ?? false;
+        return (alignment?.update() ?? false) || (handsChanged ?? false) || hintChanged;
       } });
     mountRef.current = m;
     const world = m.world;
@@ -484,6 +488,30 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     };
   }, [frontFaceArrow?.from, frontFaceArrow?.to, puzzleKind, ready]);
 
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount || !ready || !moveHint || typeof puzzleKind !== 'number') return;
+    let disposed = false;
+    let detach: (() => void) | undefined;
+    void import('./move-hint-arrows').then(({ attachMoveHintArrows }) => {
+      if (disposed || mountRef.current !== mount) return;
+      const style = getComputedStyle(mount.renderer.domElement);
+      const accent = style.getPropertyValue(moveHintRecovery ? '--destructive' : '--signal-success').trim();
+      const secondary = style.getPropertyValue('--move-hint-secondary').trim();
+      const arrows = attachMoveHintArrows(mount.world.cube as Cube, moveHint, accent, secondary);
+      detach = arrows;
+      const started = performance.now();
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      updateMoveHintRef.current = () => arrows.update(reducedMotion ? 0 : performance.now() - started);
+      mount.invalidate();
+    });
+    return () => {
+      disposed = true;
+      updateMoveHintRef.current = null;
+      detach?.();
+      if (mountRef.current === mount) mount.invalidate();
+    };
+  }, [moveHint, moveHintRecovery, puzzleKind, ready]);
   /** 菜单切换只重贴当前预览的颜色，不重建 world，也不改变 case 状态。 */
   useEffect(() => {
     const m = mountRef.current;
