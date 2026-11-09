@@ -5,6 +5,7 @@ import {join,resolve} from 'node:path';
 import {homedir} from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {slug,publicKey} from './model.ts';
+import {artifacts,syncCheckout} from './checkout.ts';
 import {retryable,retryDelay,RetryableError} from './retry.ts';
 const root=resolve(import.meta.dirname,'../../..');
 const config=JSON.parse(readFileSync(join(homedir(),'.config/cuberoot-preview/host.json'),'utf8'));
@@ -35,7 +36,7 @@ function ensureDns(id:string){
   if(records.length){if(records.length!==1||records[0].RR!==rr||records[0].Type!=='A'||records[0].Value!=='47.97.30.181'||records[0].Line!=='default'||records[0].Status!=='ENABLE')throw Error('Existing DNS conflicts; inspect without overwriting');return;}
   dns('AddDomainRecord',['--DomainName','cuberoot.me','--RR',rr,'--Type','A','--Value','47.97.30.181','--Line','default','--TTL','600']);
 }
-const artifacts=['ops/dev-preview/machines.json','ops/nginx/dev-machines.conf','core/packages/shared/src/dev-preview.ts'];
+let failureStage='checkout';
 function publish(id:string,phase:string){
   const checkpoint=join(state,`${id}-${phase}.sha`);
   const changed=run('git',['status','--porcelain','--untracked-files=no']).split('\n').filter(Boolean).map(s=>s.slice(3));
@@ -77,20 +78,23 @@ async function provision(r:{id:string;owner_slug:string;device_slug:string;os:st
   const active=join(state,'active-request');
   if(existsSync(active)&&readFileSync(active,'utf8')!==r.id)throw Error('Previous provisioning needs repair before another request');
   writeFileSync(active,r.id,{mode:0o600});
-  if(!git('status','--porcelain')){
-    git('fetch','origin','main');
-    // A previous commit may be awaiting its push; publish() resumes that checkpoint.
-    if(git('rev-list','--count','origin/main..HEAD')==='0')git('merge','--ff-only','origin/main');
-  }
+  failureStage='checkout';
+  if(syncCheckout(root,state,id))throw new RetryableError('Worker updated; reload before provisioning');
+  failureStage='identity';
   cli('register','--owner',owner,'--device',device,'--os',r.os);
+  failureStage='authorization';
   cli('authorize','--id',id,'--request',request,'--out',profile);
+  failureStage='dns';
   ensureDns(id);
   const registry=JSON.parse(readFileSync(join(root,artifacts[0]),'utf8'));
   const machine=registry.machines.find((m:{owner:string;device:string})=>`${m.owner}-${m.device}`===id);
   if(machine.status==='pending'){
+    failureStage='deployment';
     const sha=publish(id,'http');await deployments(sha,['Deploy Web Ops Config']);
+    failureStage='certificate';
     cli('certificate','--id',id);cli('activate','--id',id);
   }
+  failureStage='deployment';
   const sha=publish(id,'https');
   await deployments(sha,['Deploy Web Ops Config','Deploy Core','Deploy Next']);
   cli('render','--check');
@@ -121,7 +125,7 @@ try{
           const ms=retryDelay(previous.attempt);
           writeFileSync(checkpoint,JSON.stringify({attempt:previous.attempt+1,nextAt:Date.now()+ms}),{mode:0o600});
           console.log(`Temporary failure for ${request.id}; retry in ${ms/1000}s`);
-        }else{await api(request.id,{status:'failed'});throw error;}
+        }else{await api(request.id,{status:'failed',failureCode:failureStage});throw error;}
       }
     }
   }

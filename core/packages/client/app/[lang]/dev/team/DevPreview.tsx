@@ -8,7 +8,7 @@ import {authHeaders,handleApi} from '@/lib/admin-api';
 import {sessionFetch} from '@/lib/session-fetch';
 import {ClearButton} from '@/components/ClearButton';
 
-type Request={id:string;user_id:number;user_name:string;owner_slug:string;device_slug:string;status:string;os:string;connected?:boolean};
+type Request={id:string;user_id:number;user_name:string;owner_slug:string;device_slug:string;status:string;os:string;connected?:boolean;failure_code?:string};
 type List={enabled:boolean;canApprove:boolean;requests:Request[]};
 export default function DevPreview(){
   const t=useT(),user=useAuthUser(),{copy,copiedKey}=useCopy();
@@ -35,6 +35,7 @@ export default function DevPreview(){
       {actionError&&<p role="alert">{({
         'Invalid name':t('姓名和电脑标识须为 1–25 位小写字母、数字或连字符，连字符不能连续或位于首尾。','Name and computer identifiers must be 1–25 lowercase letters, numbers or single hyphens, with no leading or trailing hyphen.'),
         'Invalid system':t('请选择 macOS 或 Windows。','Choose macOS or Windows.'),
+        'Device already registered':t('该设备标识已用于现有设备，请更换标识；替换旧设备须先由负责人停用旧接入。','This identifier belongs to an existing device. Choose another identifier or ask the lead to retire the old connection before replacing it.'),
         'Name already taken':t('该姓名与电脑标识组合已被使用，请检查已有申请或更换电脑标识。','This name and computer combination is already taken. Check existing requests or choose another computer identifier.'),
         'Request limit reached':t('已达到每个账号 10 个申请的上限，请联系负责人。','The limit of 10 requests per account has been reached. Contact the lead.'),
         'Enrollment disabled':t('开发网址申请服务暂未启用。','Development URL enrollment is not enabled.'),
@@ -54,6 +55,14 @@ export default function DevPreview(){
       </form>}
       {ticket&&<p><button type="button" className="staff-start-action" onClick={()=>copy(prompt,'preview-setup')}>{copiedKey==='preview-setup'?t('已复制','Copied'):t('复制给 AI，自动接入','Copy for AI setup')}</button></p>}
       <ul className="staff-start-steps">{data?.requests.map(r=><li key={r.id}><div className="staff-start-device-label"><strong>{r.user_name}</strong><span className="staff-start-device-detail">dev-{r.owner_slug}-{r.device_slug}.cuberoot.me</span></div>{!(data.canApprove&&r.status==='pending')&&<p>{r.status==='ready'&&r.connected?t('已连通，可用','Connected and available'):labels[r.status]}</p>}
+        {r.status==='failed'&&<p role="alert">{({
+          checkout:t('开通服务代码同步失败，负责人需检查专用仓库。','Provisioning code could not sync. The lead must check the dedicated checkout.'),
+          identity:t('设备标识与已有配置冲突，负责人需核对旧设备。','The device identifier conflicts with existing configuration. The lead must review the old device.'),
+          authorization:t('设备 SSH 授权失败，负责人需检查密钥和权限。','Device SSH authorization failed. The lead must check keys and permissions.'),
+          dns:t('开发域名配置失败，负责人需检查 DNS 记录和权限。','Domain setup failed. The lead must check DNS records and permissions.'),
+          certificate:t('HTTPS 证书配置失败，负责人需检查域名验证。','HTTPS certificate setup failed. The lead must check domain validation.'),
+          deployment:t('预览配置发布失败，负责人需检查部署任务。','Preview deployment failed. The lead must check the deployment jobs.'),
+        } as Record<string,string>)[r.failure_code??'']??t('开通服务未提供失败阶段，负责人需检查工作服务日志。','No failure stage was reported. The lead must check worker logs.')}</p>}
         {r.status==='preparing'&&Number(r.user_id)===user.uid&&<button type="button" className="staff-start-inline-action" disabled={busy} onClick={()=>void send(`requests/${r.id}/ticket`,{})}>{t('重新生成配置指令','Regenerate setup instructions')}</button>}
         {r.status==='ready'&&r.connected&&<a href={`https://dev-${r.owner_slug}-${r.device_slug}.cuberoot.me/zh`} target="_blank" rel="noreferrer">{t('打开开发网址','Open preview')}</a>}
         {data.canApprove&&['pending','failed'].includes(r.status)&&<><button type="button" className="staff-start-action" disabled={busy} onClick={()=>void send(`requests/${r.id}/decision`,{decision:'approved'})}>{r.status==='failed'?t('重试开通','Retry'):t('批准','Approve')}</button>{' '}<button type="button" className="staff-start-action" disabled={busy} onClick={()=>void send(`requests/${r.id}/decision`,{decision:'rejected'})}>{t('拒绝','Decline')}</button></>}

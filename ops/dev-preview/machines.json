@@ -6,7 +6,8 @@
   "reservedPorts": [
     7101,
     7102,
-    7199
+    7199,
+    7104
   ],
   "machines": [
     {
@@ -34,19 +35,6 @@
       "certificate": "dev-machines",
       "aliases": [
         "dev-alienware.cuberoot.me"
-      ]
-    },
-    {
-      "owner": "ruimin",
-      "device": "macbook-pro",
-      "os": "mac",
-      "transport": "frp",
-      "status": "active",
-      "localPort": 3000,
-      "remotePort": 7104,
-      "certificate": "dev-machines",
-      "aliases": [
-        "dev-macbook-pro.cuberoot.me"
       ]
     },
     {

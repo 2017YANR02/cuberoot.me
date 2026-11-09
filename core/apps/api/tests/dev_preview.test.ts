@@ -65,3 +65,16 @@ it('distinguishes invalid identifiers from an invalid system',async()=>{
   expect(await (await post('requests',{owner:'ruimin',device:'mac',os:'unknown'})).json()).toEqual({error:'Invalid system'});
   expect(mock.query).not.toHaveBeenCalled();
 });
+it('rejects an already registered legacy device without reserving the owner name',async()=>{
+  const r=await post('requests',{owner:'ruimin',device:'mac-mini',os:'mac'});
+  expect(r.status).toBe(409);expect(await r.json()).toEqual({error:'Device already registered'});
+  expect(mock.query).not.toHaveBeenCalled();
+});
+it('records only an allowed failure stage, never arbitrary worker output',async()=>{
+  const token='x'.repeat(40);
+  const invalid=await post('host/id',{status:'failed',failureCode:'private log details'},token);
+  expect(invalid.status).toBe(400);expect(mock.query).not.toHaveBeenCalled();
+  mock.query.mockResolvedValueOnce([{id:'id',status:'provisioning'}]).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+  expect((await post('host/id',{status:'failed',failureCode:'checkout'},token)).status).toBe(200);
+  expect(mock.query.mock.calls[2][1]).toEqual(['id','failed:checkout']);
+});
