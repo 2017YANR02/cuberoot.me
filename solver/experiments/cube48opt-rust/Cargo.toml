@@ -84,6 +84,8 @@ opt8-native-search = ["opt8-native-specialized"]
 opt8-native-batch = ["opt8-native-search", "wasm-batch-probes"]
 # Isolated x86 read-ahead hint; keep the existing Opt8 search policy explicit.
 opt8-native-prefetch = ["opt8-native-specialized"]
+# Independent x86 Opt8 cache hint; no scheduling or table-layout change.
+opt8-native-prefetch-nta = ["opt8-native-prefetch"]
 # Independent round-robin query pipeline; never selected by default builds.
 opt8-native-interleaved = ["opt8-native-search", "opt8-native-quarter", "opt8-native-prefetch", "opt9-native-fixed-contexts"]
 # Separate second candidate: wider query overlap with vacant-lane work sharing.

@@ -14,9 +14,10 @@ if (expectedSha256 && !/^[a-f0-9]{64}$/.test(expectedSha256)) {
   throw new Error('CUBEOPT_EXPECTED_BINARY_SHA256 must be a lowercase SHA-256 digest');
 }
 const candidate = process.env.CUBEOPT_CANDIDATE || 'none';
-if (!['none', 'avx2', 'interleaved', 'interleaved32'].includes(candidate)) throw new Error('Unknown native candidate');
+if (!['none', 'avx2', 'interleaved', 'interleaved32', 'nta'].includes(candidate)) throw new Error('Unknown native candidate');
 const features = 'opt8-native-search,opt8-native-quarter,opt9-native-fixed-contexts,opt8-native-prefetch'
-  + (candidate.startsWith('interleaved') ? `,opt8-native-${candidate}` : '');
+  + (candidate.startsWith('interleaved') ? `,opt8-native-${candidate}` : '')
+  + (candidate === 'nta' ? ',opt8-native-prefetch-nta' : '');
 const args = [`+${toolchain}`, 'build', '--locked', '--release', '--target', target,
   '--target-dir', resolve(root, 'target/native-service'), '--features', features,
   '--bin', 'cube48opt-research'];

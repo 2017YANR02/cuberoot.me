@@ -18,6 +18,7 @@ on:
           - avx2
           - interleaved
           - interleaved32
+          - nta
       expected_binary_sha256:
         description: 'SHA-256 of the performance-accepted binary; reject a different build before upload'
         required: false

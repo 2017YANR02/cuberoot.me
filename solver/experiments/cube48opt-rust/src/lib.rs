@@ -36,6 +36,7 @@ pub mod opt10_table;
 pub mod opt10_generate;
 #[cfg(all(target_arch = "x86_64", any(
     feature = "opt1-7-native-prefetch",
+    feature = "opt8-native-prefetch",
     feature = "opt9-native-prefetch",
     feature = "opt10-native-prefetch-x86",
     feature = "opt11-lookup",

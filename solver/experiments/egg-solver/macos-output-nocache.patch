@@ -1,0 +1,25 @@
+diff --git a/src/bin/gen.rs b/src/bin/gen.rs
+index d9bbbff..22a1087 100644
+--- a/src/bin/gen.rs
++++ b/src/bin/gen.rs
+@@ -484,6 +484,20 @@ fn generate_dfs(
+ /// trailer.
+ fn create_table_file(path: &str, data_bytes: u64) -> anyhow::Result<std::fs::File> {
+     let f = std::fs::File::create(path).with_context(|| format!("cannot create {path}"))?;
++    #[cfg(target_os = "macos")]
++    if f.metadata()
++        .with_context(|| format!("cannot inspect {path}"))?
++        .is_file()
++    {
++        use std::os::unix::io::AsRawFd;
++        // Avoid growing the output page cache beside the anonymous table.
++        // SAFETY: F_NOCACHE accepts an integer flag on this open file descriptor.
++        if unsafe { libc::fcntl(f.as_raw_fd(), libc::F_NOCACHE, 1) } == -1 {
++            return Err(std::io::Error::last_os_error())
++                .with_context(|| format!("cannot disable data caching for {path}"));
++        }
++        log::info!("disabled output data caching for {path} (F_NOCACHE)");
++    }
+     f.set_len(file::file_bytes(data_bytes, false))
+         .with_context(|| format!("cannot size {path}"))?;
+     Ok(f)
