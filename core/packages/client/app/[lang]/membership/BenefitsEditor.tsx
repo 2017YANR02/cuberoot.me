@@ -4,8 +4,7 @@ import { Pencil, Plus, Save } from '@app-foundation/icons/lucide';
 import { Tooltip } from '@/components/Tooltip';
 import { ClearButton } from '@/components/ClearButton';
 import { validateMembershipBenefits, type MembershipBenefit, type MembershipBenefitGroup, type MembershipBenefits } from '@cuberoot/shared/membership-benefits';
-import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import SortableList, { replaceSortableItems } from '@/components/SortableList';
 import SortableCard from '@/components/SortableCard';
 import { listMembershipBenefits, saveMembershipBenefits } from '@/lib/membership-perks';
 import { tr } from '@/i18n/tr';
@@ -40,11 +39,6 @@ export default function BenefitsEditor({ onSaved, children, group: targetGroup, 
     });
   }, [draft, editLanguage]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-
   async function open() {
     setBusy(true); setError('');
     try { setDraft(await listMembershipBenefits()); }
@@ -59,19 +53,6 @@ export default function BenefitsEditor({ onSaved, children, group: targetGroup, 
     setEditLanguage('zh');
     setDraft(current => current && ({ ...current, items: [...current.items, { id: `custom_${crypto.randomUUID().replaceAll('-', '')}`, zh: '', en: '', group, enabled: true }] }));
     setError('');
-  }
-  function reorder(group: MembershipBenefitGroup, { active, over }: DragEndEvent) {
-    if (busy || !over || active.id === over.id) return;
-    setDraft(current => {
-      if (!current) return current;
-      const groupItems = current.items.filter(item => item.group === group);
-      const from = groupItems.findIndex(item => item.id === active.id);
-      const to = groupItems.findIndex(item => item.id === over.id);
-      if (from < 0 || to < 0) return current;
-      const reordered = arrayMove(groupItems, from, to);
-      let index = 0;
-      return { ...current, items: current.items.map(item => item.group === group ? reordered[index++] : item) };
-    });
   }
   async function save() {
     if (!draft) return;
@@ -92,11 +73,7 @@ export default function BenefitsEditor({ onSaved, children, group: targetGroup, 
       {!heading && editButton}
       <div className="mem-benefits-content">
         {!draft ? children : <>
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={event => {
-            const item = draft.items.find(item => item.id === event.active.id);
-            if (item) reorder(item.group, event);
-          }}>
-            <SortableContext items={visibleItems.map(item => item.id)} strategy={verticalListSortingStrategy}>
+          <SortableList items={visibleItems} disabled={busy} onReorder={reordered => setDraft(current => current && ({ ...current, items: replaceSortableItems(current.items, reordered) }))}>
               <div className="mem-benefits-edit-list">
                 {visibleItems.map(item => <SortableCard className="mem-benefit-edit-row" key={item.id} id={item.id} draggable disabled={busy} stretch={false} dragLabel={tr({ zh: '拖动调整权益顺序', en: 'Drag to reorder benefits' })}>
                   <textarea className="mem-benefit-inline-input" rows={1} maxLength={editLanguage === 'zh' ? 1000 : 2000} disabled={busy} aria-label={tr({ zh: '权益内容', en: 'Benefit text' })} value={item[editLanguage]} placeholder={editLanguage === 'en' ? item.zh : undefined} onChange={event => update(item.id, editLanguage === 'zh' ? { zh: event.target.value, en: '' } : { en: event.target.value })} onKeyDown={event => {
@@ -104,8 +81,7 @@ export default function BenefitsEditor({ onSaved, children, group: targetGroup, 
                   }} />
                 </SortableCard>)}
               </div>
-            </SortableContext>
-          </DndContext>
+          </SortableList>
           <div className="mem-benefits-actions">
             <select className="mem-benefits-language" aria-label={tr({ zh: '编辑语言', en: 'Editing language' })} value={editLanguage} disabled={busy} onChange={event => setEditLanguage(event.target.value as 'zh' | 'en')}><option value="zh">{tr({ zh: '中文', en: 'Chinese' })}</option><option value="en">{tr({ zh: '英文', en: 'English' })}</option></select>
             {targetGroup && targetGroup !== 'plan' && <button type="button" className="mem-benefits-button" onClick={() => add(targetGroup)} disabled={busy || draft.items.length >= 100} aria-label={tr({ zh: '新增权益', en: 'Add benefit' })} title={tr({ zh: '新增权益', en: 'Add benefit' })}><Plus size={15} /></button>}

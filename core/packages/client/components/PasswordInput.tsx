@@ -54,7 +54,7 @@ export function PasswordInput({
         aria-pressed={show}
         onClick={toggleShow}
       >
-        {show ? <Eye size={18} aria-hidden="true" /> : <EyeOff size={18} aria-hidden="true" />}
+        {show ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
       </button>
     </div>
   );

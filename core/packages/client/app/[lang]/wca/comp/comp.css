@@ -862,6 +862,14 @@ td.is-pr {
 .comp-results-table .wca-person-identity,
 .comp-results-table .comp-result-person-link,
 .comp-results-table .comp-result-person-name { min-width: 0; }
+/* Bound both identity layers so the name can shrink inside the fixed column. */
+.comp-results-table .wca-person-identity { width: 100%; }
+.comp-results-table .wca-person-identity-content {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+.comp-results-table .wca-person-identity-content > .country-flag { flex-shrink: 0; }
 .comp-results-table .comp-result-person-name {
   overflow: hidden;
   text-overflow: ellipsis;
