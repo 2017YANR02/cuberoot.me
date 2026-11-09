@@ -1,0 +1,45 @@
+diff --git a/src/bin/gen.rs b/src/bin/gen.rs
+index d9bbbff..22a1087 100644
+--- a/src/bin/gen.rs
++++ b/src/bin/gen.rs
+@@ -484,6 +484,20 @@ fn generate_dfs(
+ /// trailer.
+ fn create_table_file(path: &str, data_bytes: u64) -> anyhow::Result<std::fs::File> {
+     let f = std::fs::File::create(path).with_context(|| format!("cannot create {path}"))?;
++    #[cfg(target_os = "macos")]
++    if f.metadata()
++        .with_context(|| format!("cannot inspect {path}"))?
++        .is_file()
++    {
++        use std::os::unix::io::AsRawFd;
++        // Avoid growing the output page cache beside the anonymous table.
++        // SAFETY: F_NOCACHE accepts an integer flag on this open file descriptor.
++        if unsafe { libc::fcntl(f.as_raw_fd(), libc::F_NOCACHE, 1) } == -1 {
++            return Err(std::io::Error::last_os_error())
++                .with_context(|| format!("cannot disable data caching for {path}"));
++        }
++        log::info!("disabled output data caching for {path} (F_NOCACHE)");
++    }
+     f.set_len(file::file_bytes(data_bytes, false))
+         .with_context(|| format!("cannot size {path}"))?;
+     Ok(f)
+diff --git a/src/tables.rs b/src/tables.rs
+index ca2fe3d..755bca9 100644
+--- a/src/tables.rs
++++ b/src/tables.rs
+@@ -1114,6 +1114,15 @@ impl H48Table {
+         }
+         let memory = Memory::anonymous(len)?;
+         let table_file = std::fs::File::open(path).map_err(io_error)?;
++        #[cfg(target_os = "macos")]
++        {
++            use std::os::unix::io::AsRawFd;
++            // The anonymous copy is retained; avoid also caching the input file.
++            // SAFETY: F_NOCACHE accepts an integer flag on this open descriptor.
++            if unsafe { libc::fcntl(table_file.as_raw_fd(), libc::F_NOCACHE, 1) } == -1 {
++                return Err(file::io_error(path)(std::io::Error::last_os_error()));
++            }
++        }
+         #[cfg(unix)]
+         read_parallel(&table_file, &memory, len).map_err(file::io_error(path))?;
+         #[cfg(not(unix))]
