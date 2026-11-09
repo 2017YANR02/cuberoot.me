@@ -2,7 +2,7 @@
 
 // 新手功能引导（Element Highlighting Tooltip Tour，Driver.js / Intro.js 风格）。
 //
-// 打开后直接进入第 1 步；12 步通过 getBoundingClientRect() 定位高亮与气泡。
+// 打开后直接进入第 1 步；各步骤通过 getBoundingClientRect() 定位高亮与气泡。
 // 位置说明：站内没有全局 SiteHeader / TopNav，首页头部就是
 // `app/[lang]/LandingClient.tsx` 里的 `.landing-auth`，主导航是首页两排 hero
 // 卡片（`renderCard` / `renderCardGrid`，经 `SortableCard[tourKey]` 透传
@@ -33,7 +33,6 @@ import {
   Shuffle,
   Sigma,
   Timer as TimerIcon,
-  Trophy,
   X,
   type LucideIcon,
 } from '@app-foundation/icons/lucide';
@@ -50,11 +49,11 @@ export interface OnboardingStep {
   tour: string;
 }
 
-// 12 步固定文案（中文一字不改）：
+// 导览步骤：
 // 1 计时 timer / 2 公式 formulas / 3 模拟 simulator / 4 复盘 replay /
-// 5 打乱 scramble / 6 比赛 competition / 7 纪录 records / 8 排名 rankings /
-// 9 统计 statistics / 10 近期打乱 recent-scrambles /
-// 11 今日复盘 today-replay / 12 论坛 forum。
+// 5 打乱 scramble / 6 比赛 competition / 7 排名 rankings /
+// 8 统计 statistics / 9 近期打乱 recent-scrambles /
+// 10 今日复盘 today-replay / 11 论坛 forum。
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     Icon: TimerIcon,
@@ -121,17 +120,6 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     href: '/comp-sim',
     cta: { zh: '前往比赛', en: 'Open competitions' },
     tour: 'competition',
-  },
-  {
-    Icon: Trophy,
-    title: { zh: '纪录', en: 'Records' },
-    body: {
-      zh: '查看全部历史还原成绩，浏览每一次练习记录。',
-      en: 'Browse your full solve history and every practice record.',
-    },
-    href: '/wca/results?tab=records',
-    cta: { zh: '前往纪录', en: 'Open records' },
-    tour: 'records',
   },
   {
     Icon: ListOrdered,
@@ -300,7 +288,7 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
       const el = document.querySelector(`[data-tour="${tour}"]`);
       try {
         (el as HTMLElement | null)?.scrollIntoView({
-          // 10→11→12 在页面底部相邻，instant 瞬切比 smooth 更稳：
+          // 页面底部的挂件相邻，instant 瞬切比 smooth 更稳：
           // smooth 的长滚动动画中途 rect 全程越界，高亮框反复横跳闪线。
           behavior: 'instant' as ScrollBehavior,
           block: 'center',
