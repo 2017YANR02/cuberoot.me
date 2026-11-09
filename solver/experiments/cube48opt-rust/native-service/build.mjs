@@ -13,8 +13,10 @@ const expectedSha256 = process.env.CUBEOPT_EXPECTED_BINARY_SHA256 || '';
 if (expectedSha256 && !/^[a-f0-9]{64}$/.test(expectedSha256)) {
   throw new Error('CUBEOPT_EXPECTED_BINARY_SHA256 must be a lowercase SHA-256 digest');
 }
+const candidate = process.env.CUBEOPT_CANDIDATE || 'none';
+if (!['none', 'avx2', 'interleaved', 'interleaved32'].includes(candidate)) throw new Error('Unknown native candidate');
 const features = 'opt8-native-search,opt8-native-quarter,opt9-native-fixed-contexts,opt8-native-prefetch'
-  + (process.env.CUBEOPT_INTERLEAVED_CANDIDATE === '1' ? ',opt8-native-interleaved' : '');
+  + (candidate.startsWith('interleaved') ? `,opt8-native-${candidate}` : '');
 const args = [`+${toolchain}`, 'build', '--locked', '--release', '--target', target,
   '--target-dir', resolve(root, 'target/native-service'), '--features', features,
   '--bin', 'cube48opt-research'];
@@ -27,9 +29,16 @@ function run(command, argv, options = {}) {
 }
 
 const revision = run('git', ['rev-parse', 'HEAD']);
-const env = { ...process.env, RUSTFLAGS: '-C target-cpu=x86-64' };
+const env = { ...process.env, RUSTFLAGS: '-C target-cpu=x86-64'
+  + (candidate === 'avx2' ? ' -C target-feature=+avx2,+popcnt' : '') };
 delete env.CARGO_ENCODED_RUSTFLAGS;
 run('cargo', args, { env, stdio: 'inherit' });
+if (process.platform === 'linux') {
+  // Bounded library/protocol tests only; ignored snapshot/PDB tests stay off.
+  const testArgs = [...args, '--lib'];
+  testArgs[1] = 'test';
+  run('cargo', testArgs, { env, stdio: 'inherit' });
+}
 mkdirSync(output, { recursive: true });
 const binaryPath = resolve(output, 'cube48opt-native');
 copyFileSync(resolve(root, `target/native-service/${target}/release/cube48opt-research`), binaryPath);

@@ -86,6 +86,8 @@ opt8-native-batch = ["opt8-native-search", "wasm-batch-probes"]
 opt8-native-prefetch = ["opt8-native-specialized"]
 # Independent round-robin query pipeline; never selected by default builds.
 opt8-native-interleaved = ["opt8-native-search", "opt8-native-quarter", "opt8-native-prefetch", "opt9-native-fixed-contexts"]
+# Separate second candidate: wider query overlap with vacant-lane work sharing.
+opt8-native-interleaved32 = ["opt8-native-interleaved"]
 # Linux-only allocation advice candidate; no global THP policy or table changes.
 opt8-native-hugepages = []
 opt9-native-quarter-cache = ["opt9-native-quarter"]

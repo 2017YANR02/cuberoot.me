@@ -106,6 +106,27 @@ pub(super) fn search<O: PruningOracle, const N: usize>(start: Cube, oracle: &O, 
                 }
             }
         }
+        #[cfg(feature = "opt8-native-interleaved32")]
+        for empty in 0..N {
+            if !contexts[empty].stack.is_empty() { continue; }
+            debug_assert!(matches!(pending[empty], Pending::None));
+            jobs.finish(&mut contexts[empty]);
+            for donor in 0..N {
+                if donor == empty { continue; }
+                let split = if donor < empty {
+                    let (before, after) = contexts.split_at_mut(empty);
+                    before[donor].split_pending_into(&mut after[0])
+                } else {
+                    let (before, after) = contexts.split_at_mut(donor);
+                    after[0].split_pending_into(&mut before[empty])
+                };
+                if split {
+                    stats.splits += 1;
+                    active = true;
+                    break;
+                }
+            }
+        }
         if !active { return DepthResult::Exhausted; }
     }
 }
@@ -136,8 +157,7 @@ mod tests {
         fn allow_quarter_pruning(&self) -> bool { true }
         fn allow_parent_propagation(&self) -> bool { true }
     }
-    #[test]
-    fn interleaved_prefixes_match_independent_bfs() {
+    fn check_independent_bfs<const N: usize>() -> u64 {
         let mut distances = HashMap::from([(Cube::SOLVED, 0u8)]);
         let mut queue = VecDeque::from([Cube::SOLVED]);
         while let Some(cube) = queue.pop_front() {
@@ -151,6 +171,7 @@ mod tests {
             }
         }
         assert_eq!(distances.len(), 3502);
+        let mut splits = 0;
         for (cube, distance) in distances {
             if distance == 0 { continue; }
             let symmetries = RootSymmetries::new(&cube, &Zero);
@@ -158,7 +179,7 @@ mod tests {
             let options = SearchOptions { max_depth: 3, max_nodes: 0, contexts: 8 };
             let mut stats = SearchStats::default();
             for depth in 1..=distance {
-                let result = search::<_, 8>(cube, &Zero, options, depth, &mut stats, &symmetries, &mut jobs);
+                let result = search::<_, N>(cube, &Zero, options, depth, &mut stats, &symmetries, &mut jobs);
                 if depth < distance { assert!(matches!(result, DepthResult::Exhausted)); }
                 else {
                     let DepthResult::Found(moves) = result else { panic!("missed BFS state"); };
@@ -168,12 +189,25 @@ mod tests {
             }
             if distance == 3 {
                 let mut jobs = PrefixQueue::default();
-                let result = search::<_, 8>(cube, &Twists, options, 3, &mut stats, &symmetries, &mut jobs);
+                let result = search::<_, N>(cube, &Twists, options, 3, &mut stats, &symmetries, &mut jobs);
                 let DepthResult::Found(moves) = result else { panic!("pruned a valid BFS solution"); };
                 assert_eq!(moves.len(), 3);
                 assert!(moves.iter().fold(cube, |c, &m| c.moved(m)).is_solved());
             }
+            splits += stats.splits;
         }
+        splits
+    }
+
+    #[test]
+    fn interleaved_prefixes_match_independent_bfs() {
+        check_independent_bfs::<8>();
+    }
+
+    #[test]
+    #[cfg(feature = "opt8-native-interleaved32")]
+    fn thirty_two_lanes_preserve_bfs_distances_with_pending_donations() {
+        assert!(check_independent_bfs::<32>() > 0, "exercise actual pending ancestor donations");
     }
 
     #[test]
@@ -186,9 +220,61 @@ mod tests {
             assert!(matches!(search::<_, 8>(cube, &Twists, options, 3, &mut stats, &symmetries,
                 &mut PrefixQueue::default()), DepthResult::Cancelled));
             assert_eq!(stats.nodes, limit);
+            #[cfg(feature = "opt8-native-interleaved32")]
+            {
+                let mut stats = SearchStats::default();
+                assert!(matches!(search::<_, 32>(cube, &Twists, options, 3, &mut stats, &symmetries,
+                    &mut PrefixQueue::default()), DepthResult::Cancelled));
+                assert_eq!(stats.nodes, limit);
+            }
         }
         let options = SearchOptions { max_depth: 3, max_nodes: 0, contexts: 1 };
         assert!(matches!(search::<_, 1>(cube, &Twists, options, 3, &mut SearchStats::default(),
             &symmetries, &mut PrefixQueue::default()), DepthResult::Exhausted));
+        #[cfg(feature = "opt8-native-interleaved32")]
+        {
+            let mut stats = SearchStats::default();
+            assert!(matches!(search::<_, 32>(cube, &Twists, options, 3, &mut stats,
+                &symmetries, &mut PrefixQueue::default()), DepthResult::Exhausted));
+            assert!(stats.splits > 0, "exhaustion must include donated ownership");
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "opt8-native-interleaved32")]
+    fn pending_split_preserves_query_and_never_donates_unproved_top() {
+        for side in [false, true] {
+            let mut donor = Context::empty();
+            let mut root = Frame::root(Cube::from_scramble("R U F").unwrap());
+            root.side = side;
+            root.normal_mask = (1 << 0) | (1 << 6) | (1 << 12);
+            let child = root.child();
+            donor.stack.extend([root, child]);
+            donor.job = Some(17);
+            donor.weight = 42;
+            donor.needs_query = true;
+            let pending_cube = donor.stack[1].cube.to_bytes();
+            let pending_inverse = donor.stack[1].inverse.to_bytes();
+            let pending_mask = donor.stack[1].normal_mask;
+            let owned = donor.stack[0].normal_mask;
+            let mut recipient = Context::empty();
+            assert!(donor.split_pending_into(&mut recipient));
+            assert_eq!(recipient.stack.len(), 1);
+            assert_eq!(donor.stack.len(), 2);
+            assert_eq!(donor.stack[1].cube.to_bytes(), pending_cube);
+            assert_eq!(donor.stack[1].inverse.to_bytes(), pending_inverse);
+            assert_eq!(donor.stack[1].normal_mask, pending_mask);
+            assert_eq!(donor.stack[0].normal_mask & recipient.stack[0].normal_mask, 0);
+            assert_eq!(donor.stack[0].normal_mask | recipient.stack[0].normal_mask, owned);
+            assert_eq!(recipient.stack[0].side, side);
+            assert_eq!(recipient.stack[0].chosen_move, 0);
+            assert_eq!((donor.job, donor.weight, donor.needs_query), (Some(17), 42, true));
+            assert_eq!((recipient.job, recipient.weight, recipient.needs_query), (Some(17), 0, false));
+
+            donor.stack[0].normal_mask = 0;
+            let mut vacant = Context::empty();
+            assert!(!donor.split_pending_into(&mut vacant), "the pending top has no proven children");
+            assert!(vacant.stack.is_empty() && vacant.job.is_none());
+        }
     }
 }

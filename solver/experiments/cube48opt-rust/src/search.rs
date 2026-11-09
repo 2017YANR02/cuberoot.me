@@ -858,17 +858,30 @@ impl Context {
     /// Split the earliest pending subtree. The two contexts own disjoint masks.
     /// Ancestors before the split have no pending moves and cannot be re-entered.
     fn split_into(&mut self, other: &mut Self) -> bool {
+        self.split_owned_into::<false>(other)
+    }
+
+    #[cfg(all(feature = "opt8-native-interleaved32", not(target_family = "wasm")))]
+    fn split_pending_into(&mut self, other: &mut Self) -> bool {
+        self.split_owned_into::<true>(other)
+    }
+
+    fn split_owned_into<const ALLOW_PENDING: bool>(&mut self, other: &mut Self) -> bool {
         // The caller has already finished this vacant context. Keep its
         // MAX_DEPTH+1 frame buffer instead of allocating a replacement on
         // every split (which crosses the host allocator ABI in shared WASM).
         debug_assert!(other.stack.is_empty());
         debug_assert!(other.job.is_none());
-        if self.needs_query {
+        if self.needs_query && !ALLOW_PENDING {
             return false;
         }
         let Some(last) = self.stack.len().checked_sub(1) else { return false; };
         let Some(split_at) = self.stack.iter().enumerate().position(|(i, frame)| {
-            frame.normal_mask != 0 && (i != last || frame.normal_mask.count_ones() > 1)
+            // A pending top frame has not passed both queries/plan. Its
+            // ancestors have, and their untried masks exclude the active
+            // child. Moving only those masks cannot invalidate its query.
+            frame.normal_mask != 0
+                && (i != last || (!self.needs_query && frame.normal_mask.count_ones() > 1))
         }) else { return false; };
         other.stack.extend_from_slice(&self.stack[..=split_at]);
         other.job = self.job;
@@ -1293,6 +1306,9 @@ fn search_depth<O: PruningOracle>(
     if oracle.interleaved_opt8() && depth > oracle.max_bound() {
         return match options.contexts {
             1 => interleaved::search::<O, 1>(start, oracle, options, depth, stats, symmetries, jobs),
+            #[cfg(feature = "opt8-native-interleaved32")]
+            8 => interleaved::search::<O, 32>(start, oracle, options, depth, stats, symmetries, jobs),
+            #[cfg(not(feature = "opt8-native-interleaved32"))]
             8 => interleaved::search::<O, 8>(start, oracle, options, depth, stats, symmetries, jobs),
             _ => unreachable!("validated context count"),
         };
