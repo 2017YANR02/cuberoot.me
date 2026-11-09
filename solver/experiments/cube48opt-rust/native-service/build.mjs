@@ -13,7 +13,8 @@ const expectedSha256 = process.env.CUBEOPT_EXPECTED_BINARY_SHA256 || '';
 if (expectedSha256 && !/^[a-f0-9]{64}$/.test(expectedSha256)) {
   throw new Error('CUBEOPT_EXPECTED_BINARY_SHA256 must be a lowercase SHA-256 digest');
 }
-const features = 'opt8-native-search,opt8-native-quarter,opt9-native-fixed-contexts,opt8-native-prefetch';
+const features = 'opt8-native-search,opt8-native-quarter,opt9-native-fixed-contexts,opt8-native-prefetch'
+  + (process.env.CUBEOPT_INTERLEAVED_CANDIDATE === '1' ? ',opt8-native-interleaved' : '');
 const args = [`+${toolchain}`, 'build', '--locked', '--release', '--target', target,
   '--target-dir', resolve(root, 'target/native-service'), '--features', features,
   '--bin', 'cube48opt-research'];

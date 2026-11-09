@@ -23,6 +23,9 @@ const NO_HALF_TURNS: u32 = 0x2db6d;
 const MAX_DEPTH: u8 = 20;
 const MAX_CONTEXTS: usize = 8;
 
+#[cfg(all(feature = "opt8-native-interleaved", not(target_family = "wasm")))]
+mod interleaved;
+
 // WAT step4_domove: (68717638136 >> (20-(m+((4793490>>m)&3)))) & 262143.
 // Move order is the cubeopt order, not nissy's order. Opposite faces differ by 3.
 const ALLOWED: [u32; 6] = [0x3fff8, 0x3ffc7, 0x3fe3f, 0x3f1f8, 0x38fc7, 0x7e3f];
@@ -38,6 +41,9 @@ pub trait PruningOracle {
     /// opposite-side half-turn invariance as a decoded table bound.
     fn prepare(&self, cube: &Cube, remaining: u8) -> Result<Self::Query, u8>;
     fn lookup(&self, query: Self::Query) -> u8;
+
+    /// Only the dedicated native Opt8 oracle may select the alternative loop.
+    fn interleaved_opt8(&self) -> bool { false }
 
     /// Optional, separate certificate L <= D(cube). No half-turn invariance,
     /// consistency, or relationship to max_bound is required. The caller may
@@ -1283,6 +1289,14 @@ fn search_depth<O: PruningOracle>(
     symmetries: &RootSymmetries,
     jobs: &mut PrefixQueue,
 ) -> DepthResult {
+    #[cfg(all(feature = "opt8-native-interleaved", not(target_family = "wasm")))]
+    if oracle.interleaved_opt8() && depth > oracle.max_bound() {
+        return match options.contexts {
+            1 => interleaved::search::<O, 1>(start, oracle, options, depth, stats, symmetries, jobs),
+            8 => interleaved::search::<O, 8>(start, oracle, options, depth, stats, symmetries, jobs),
+            _ => unreachable!("validated context count"),
+        };
+    }
     #[cfg(any(feature = "wasm-quarter-fixed", all(feature = "opt9-native-fixed-contexts", not(target_family = "wasm"))))]
     {
         match options.contexts {

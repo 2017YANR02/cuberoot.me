@@ -33,6 +33,7 @@ impl<O: PruningOracle> PruningOracle for Cancellable<'_, O> {
         self.oracle.prepare(cube, remaining)
     }
     #[inline(always)] fn lookup(&self, query: Self::Query) -> u8 { self.oracle.lookup(query) }
+    #[inline(always)] fn interleaved_opt8(&self) -> bool { self.oracle.interleaved_opt8() }
     #[cfg(any(feature = "wasm-batch-probes", all(any(feature = "opt10-native-batch", feature = "opt11-native-batch"), not(target_family = "wasm"))))]
     #[inline(always)] fn lookup_batch(&self, queries: &[Option<Self::Query>; 8]) -> [u8; 8] {
         self.oracle.lookup_batch(queries)

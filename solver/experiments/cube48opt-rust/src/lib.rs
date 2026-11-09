@@ -136,6 +136,8 @@ struct Opt8Oracle<'a>(&'a OptSolver);
 impl search::PruningOracle for Opt8Oracle<'_> {
     type Query = u64;
     #[inline(always)]
+    fn interleaved_opt8(&self) -> bool { cfg!(feature = "opt8-native-interleaved") }
+    #[inline(always)]
     fn prepare(&self, cube: &cube::Cube, _: u8) -> Result<u64, u8> {
         let index = self.0.coordinates.index8(cube);
         #[cfg(feature = "opt8-native-prefetch")]
