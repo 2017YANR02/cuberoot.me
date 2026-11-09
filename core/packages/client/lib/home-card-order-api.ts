@@ -1,12 +1,18 @@
 import { sessionFetch } from '@/lib/session-fetch';
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
+import { parseHomeLocks, parseHomeOrders, type HomeLayoutSnapshot } from './home-layout';
 
 const HOME_ORDER_PATH = '/v1/nav/home-order';
 const HOME_LOCKS_PATH = '/v1/nav/home-locks';
 
-export async function getHomeCardLocks(): Promise<Record<string, boolean>> {
-  return (await handleApi<{ locks: Record<string, boolean> }>(await sessionFetch(apiUrl(HOME_LOCKS_PATH), { cache: 'no-store' }))).locks;
+export async function getHomeCardLocks(signal?: AbortSignal): Promise<Record<string, boolean>> {
+  return parseHomeLocks(await handleApi(await sessionFetch(apiUrl(HOME_LOCKS_PATH), { cache: 'no-store', signal })));
+}
+
+export async function getHomeLayout(signal?: AbortSignal): Promise<HomeLayoutSnapshot> {
+  const [locks, orders] = await Promise.all([getHomeCardLocks(signal), getHomeCardOrders(false, signal)]);
+  return { locks, orders };
 }
 
 export async function setHomeCardLock(id: string, locked: boolean): Promise<{ ok: boolean }> {
@@ -15,9 +21,9 @@ export async function setHomeCardLock(id: string, locked: boolean): Promise<{ ok
   }));
 }
 
-export async function getHomeCardOrders(_fresh = false): Promise<Record<string, string[]>> {
-  const response = await sessionFetch(apiUrl(HOME_ORDER_PATH), { cache: 'no-cache' });
-  return (await handleApi<{ orders: Record<string, string[]> }>(response)).orders;
+export async function getHomeCardOrders(_fresh = false, signal?: AbortSignal): Promise<Record<string, string[]>> {
+  const response = await sessionFetch(apiUrl(HOME_ORDER_PATH), { cache: 'no-cache', signal });
+  return parseHomeOrders(await handleApi(response));
 }
 
 export async function reorderHomeCards(groupId: string, ids: string[]): Promise<{ ok: boolean }> {

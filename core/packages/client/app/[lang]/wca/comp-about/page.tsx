@@ -1,135 +1,39 @@
 'use client';
 
-/**
- * /wca/comp-about — WCA 比赛直播说明页
- */
-import PageHeading from '@/components/PageHeading';
 import Link from '@/components/AppLink';
-
-import './comp_about.css';
-import { useT } from "@/hooks/useT";
-
-interface StepProps { step: number; title: string; body: string; highlight?: boolean; }
-function Step({ step, title, body, highlight }: StepProps) {
-  return (
-    <div className={`ca-step${highlight ? ' is-highlight' : ''}`}>
-      <span className="ca-step-num">{step}</span>
-      <div>
-        <div className="ca-step-title">{title}</div>
-        <div className="ca-step-body">{body}</div>
-      </div>
-    </div>
-  );
-}
-function Arrow() { return <span className="ca-arrow" aria-hidden="true">↓</span>; }
+import MoreToggle from '@/components/MoreToggle';
+import PageHeading from '@/components/PageHeading';
+import { useT } from '@/hooks/useT';
+import '@/components/report-page.css';
 
 export default function CompAboutPage() {
   const t = useT();
-
-  return (
-    <div className="ca-page">
-
-      <main className="ca-main">
-        <PageHeading backHref="/wca/comp" titleClassName="ca-title">{t('加载任意比赛', 'Load any competition')}</PageHeading>
-        <p className="ca-intro">
-          {t(
-            '/wca/comp 是站内的比赛成绩查看入口。输入或搜索一场比赛,就能看到逐轮次、逐选手的成绩,包括 PR 历史排名、选手成绩弹窗、Psych Sheet。已结束的比赛 50-400 毫秒出表,粗饼实时比赛由 SSE 事件触发刷新，轮询补偿断线期间的更新。',
-            '/wca/comp is the competition results viewer. Search or paste a competition id to browse round-by-round results — with historical PR rank, per-person result modal, and Psych Sheet. Past comps render in 50-400ms; Cubing China live results refresh on SSE events, with polling to recover missed updates.'
-          )}
-        </p>
-
-        <h2 className="ca-section-title">{t('为什么瞬间加载', 'Why it loads instantly')}</h2>
-        <p className="ca-section-intro">
-          {t(
-            '已结束的 17000+ 场比赛预先 dump 成静态 JSON 文件,放在 nginx 静态目录。打开页面时客户端先 fetch /stats/comp/<比赛 id>.json — 同源,无 CORS,命中即跳过 API。从比赛列表 / 日历 / 地球视图点进来时,hover 阶段已经悄悄 prefetch 进浏览器缓存,真点击瞬间出货。每周一 CI 增量补新结束的比赛。',
-            'All 17000+ past comps are pre-dumped to static JSON in nginx static dir. Client fetches /stats/comp/<id>.json first — same-origin, no CORS, skips the API on hit. Hover-prefetch from list / calendar / globe pre-warms the browser cache so the click is instant. A weekly CI job incrementally adds newly finished comps.'
-          )}
-        </p>
-
-        <h2 className="ca-section-title">{t('数据来源', 'Data sources')}</h2>
-        <p className="ca-section-intro">
-          {t(
-            '四条路径,server 端自动挑最合适的:wca_db(本地 WCA dump 拼装,过去比赛走这条,带历史 PR 排名)/ cubing.com(中国比赛进行中走这条,SSE 事件刷新与轮询恢复)/ WCA Live(国外比赛实时官方源)/ WCA REST(已公示但还没在 dump 里的比赛)。静态 snapshot 走的就是 wca_db 路径冻结后的产物。',
-            'Four paths; server picks the best. wca_db (assembled from local WCA dump, used for past comps with historical PR rank) / cubing.com (Chinese ongoing comps via SSE and polling) / WCA Live (international ongoing comps) / WCA REST (announced but not yet in dump). The static snapshot is just the wca_db output frozen to disk.'
-          )}
-        </p>
-
-        <h2 className="ca-section-title">{t('使用流程', 'How to use')}</h2>
-        <div className="ca-flow">
-          <Step
-            step={1}
-            title={t('搜索或粘贴链接', 'Search or paste a link')}
-            body={t(
-              '在搜索框里输入比赛名、城市,或直接粘贴 cubing.com / WCA 的比赛链接。自动识别 WCA-ID 和 cubing.com slug 两种格式。',
-              'Type a competition name, city, or paste a cubing.com / WCA competition URL. Both WCA-ID format and cubing.com slug are auto-detected.'
-            )}
-          />
-          <Arrow />
-          <Step
-            step={2}
-            title={t('选轮次和视图', 'Pick a round and view')}
-            body={t(
-              '进入比赛详情后,顶部有轮次选择器。成绩视图显示标准成绩表;心理表视图(Psychsheet)显示报名选手的 WR 排名。',
-              'In the comp detail view, a round selector sits at the top. The results view shows a standard scoreboard; the Psychsheet view shows registered competitors sorted by their world ranking.'
-            )}
-          />
-          <Arrow />
-          <Step
-            step={3}
-            title={t('点击选手看历史', 'Click a person for history')}
-            body={t(
-              '点任意选手名会弹出他/她在本场各项目的所有成绩(每次 attempt + PR 标记),以及生涯 PB 对比。',
-              'Clicking a competitor\'s name opens a modal with all their round results (per-attempt + PR flags) across events in this competition, alongside their career PB.'
-            )}
-            highlight
-          />
-          <Arrow />
-          <Step
-            step={4}
-            title={t('最近浏览', 'Recent comps')}
-            body={t(
-              '浏览过的比赛自动记录在首页(最近 12 条,存 localStorage)。再次访问无需重新搜索。',
-              'Previously viewed competitions are remembered on the index page (up to 12, stored in localStorage). No need to search again on revisit.'
-            )}
-          />
-        </div>
-
-        <h2 className="ca-section-title">{t('PR 标记规则', 'PR badge rules')}</h2>
-        <p className="ca-section-intro">
-          {t(
-            '每条成绩标的不只是"是不是 PR",而是历史第几快:PR = 选手此项目历史最快,PR2 = 历史第 2 快,PR17 = 历史第 17 快,以此类推。计算口径:本比赛开始日期之前的全部历史成绩取 dense rank。这意味着旧比赛页面的 PR rank 在那一刻冻结 — 选手未来破纪录不会回头改老页面里的标志。单次和平均独立排名。',
-            'Each result is tagged not just "is PR" but its historical position: PR = fastest ever, PR2 = 2nd best, PR17 = 17th best, etc. Dense rank computed across all results before this competition\'s start date. Past-comp PR rank is frozen in time — future breakthroughs do not retroactively rewrite old pages. Single and average ranked independently.'
-          )}
-        </p>
-
-        <h2 className="ca-section-title">{t('比赛日历', 'Competition calendar')}</h2>
-        <p className="ca-section-intro">
-          {t(
-            '本页主体是一张比赛日历:月历 / 紧凑国旗 / 列表三种视图,默认展示近期与历史的 WCA 比赛。可按顶尖选手、地区(大洲 / 国家)、项目轮次、月份过滤;点任意比赛弹出各轮次 WR / CR / NR 纪录摘要,再一步进入完整成绩。顶部「统计」链接到比赛数量随时间分布的热力图。比赛列表来自每周更新的 all_upcoming_comps.json / all_past_comps.json。',
-            'The body of this page is a competition calendar: month-grid / compact-flags / list views, showing upcoming and past WCA competitions by default. Filter by top cubers, region (continent / country), event rounds, and month; click any competition for its per-round WR / CR / NR record highlights, then drill into full results. The "Stats" link opens a heatmap of competition counts over time. Lists update weekly from all_upcoming_comps.json / all_past_comps.json.'
-          )}
-        </p>
-
-        <h2 className="ca-section-title">{t('相关页面', 'See also')}</h2>
-        <ul className="ca-refs">
-          <li>
-            <Link href="/wca/comp?view=globe">{t('地球视图', 'Globe view')}</Link>
-            {t(' — 比赛地理分布 3D 地球。', ' — competitions on an interactive 3D globe.')}
-          </li>
-          <li>
-            <Link href="/wca/comp/sources">{t('数据源流程', 'Data source flow')}</Link>
-            {t(' — WCA dump 和 cubing.com 两条路径的详细合并逻辑。', ' — detailed merge logic for WCA dump and cubing.com paths.')}
-          </li>
-          <li>
-            <a href="https://cubing.com" target="_blank" rel="noopener noreferrer">cubing.com</a>
-            {t(' — 实时成绩的上游来源。', ' — the upstream source for live results.')}
-          </li>
-          <li>
-            <a href="https://www.worldcubeassociation.org/competitions" target="_blank" rel="noopener noreferrer">{t('WCA 官方比赛列表', 'WCA official competition list')}</a>
-            {t(' — 所有已公布的 WCA 比赛。', ' — all officially published WCA competitions.')}
-          </li>
-        </ul>
-      </main>
-    </div>
-  );
+  return <main className="report-page">
+    <header className="report-header">
+      <PageHeading backHref="/wca/comp">{t('比赛成绩怎么看', 'Reading competition results')}</PageHeading>
+      <p>{t('搜索比赛名或粘贴比赛链接，查看每轮成绩、选手表现和赛前排名。', 'Search a competition or paste its link to browse rounds, competitor results and pre-competition rankings.')}</p>
+      <div className="report-links"><Link href="/wca/comp">{t('查找比赛', 'Find a competition')}</Link><Link href="/wca/comp?view=globe">{t('在地图上找', 'Browse the globe')}</Link></div>
+    </header>
+    <table className="report-table">
+      <thead><tr><th scope="col">{t('想看什么', 'Looking for')}</th><th scope="col">{t('在哪里', 'Where to find it')}</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">{t('某一轮的成绩', 'Round results')}</th><td>{t('选项目和轮次，查看名次、单次与平均。', 'Select an event and round to see places, singles and averages.')}</td></tr>
+        <tr><th scope="row">{t('一个选手的整场表现', 'A competitor’s full event')}</th><td>{t('点选手姓名，查看本场各轮成绩与个人最佳对比。', 'Select a competitor to inspect their rounds and compare personal bests.')}</td></tr>
+        <tr><th scope="row">{t('赛前实力排序', 'Pre-competition seeding')}</th><td>{t('切到 Psych Sheet，查看报名选手的历史成绩排名。', 'Open the Psych Sheet for registered competitors ranked by past performance.')}</td></tr>
+      </tbody>
+    </table>
+    <h2>{t('PR2 不是第二名', 'PR2 is not second place')}</h2>
+    <p>{t('PR 表示个人最快，PR2 表示个人历史第二快的成绩档位。它与本轮名次不同，单次和平均分别比较，同值共享档位。', 'PR marks a personal best; PR2 marks the second-fastest distinct result in that person’s history. It is separate from round placement. Singles and averages are ranked separately, with equal values sharing a rank.')}</p>
+    <p>{t('历史比较以赛前成绩为基础，再按轮次计入本场成绩；未来的新纪录不会把旧比赛标记改成按今天排名。', 'Historical comparisons start with pre-competition results and incorporate this competition round by round. Future records do not turn old badges into present-day rankings.')}</p>
+    <h2>{t('直播成绩可能变化', 'Live results can change')}</h2>
+    <p>{t('录入、判罚与来源同步可能有延迟或修正，直播结果以最终官方发布为准。Psych Sheet 是赛前参考，不是最终名次；数据缺失也不代表选手没有成绩。', 'Entry, penalties and source updates can be delayed or corrected. Final official results take precedence. A Psych Sheet is a pre-competition reference, not a final ranking; missing data does not mean no result exists.')}</p>
+    <details className="report-details">
+      <MoreToggle as="summary">{t('数据来源与更新方式', 'Data sources and updates')}</MoreToggle>
+      <div className="report-detail-body">
+        <p>{t('历史成绩来自 WCA 数据，进行中的比赛按可用情况读取 cubing.com 或 WCA Live；部分新比赛通过 WCA 接口补充。静态快照与缓存加快读取，但不保证实时同步。', 'Historical results come from WCA data. Ongoing competitions use cubing.com or WCA Live where available, with WCA APIs supplementing some new events. Snapshots and caches speed up access but do not guarantee real-time updates.')}</p>
+        <p>{t('支持的直播来源通过事件通知触发刷新，并用轮询补偿漏掉的更新。来源切换、网络中断与上游更正都可能影响显示时间。', 'Supported live sources trigger refreshes through event notifications, with polling to recover missed updates. Source changes, outages and upstream corrections can affect when results appear.')}</p>
+        <div className="report-links"><Link href="/wca/comp/sources">{t('完整数据源流程', 'Full data-source flow')}</Link><a href="https://www.worldcubeassociation.org/competitions" target="_blank" rel="noopener noreferrer">{t('WCA 官方比赛', 'Official WCA competitions')}</a></div>
+      </div>
+    </details>
+  </main>;
 }

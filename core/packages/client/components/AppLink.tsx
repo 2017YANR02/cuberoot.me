@@ -8,7 +8,7 @@ import { useTrainingHref } from '@/lib/training-host';
 import { currentEntryHref, entryNavigationHref, type EntryNavigationMode } from '@/lib/entry-navigation';
 import { LinkPendingIndicator } from '@/components/StartupStatus';
 
-type Props = ComponentProps<typeof NextLink> & { navigation?: EntryNavigationMode };
+type Props = ComponentProps<typeof NextLink> & { navigation?: EntryNavigationMode; loadingOverlay?: boolean };
 
 // Internal absolute paths that must NOT get a /zh prefix: route handlers, API,
 // auth/OAuth, static asset trees, SEO files. Match prefix + boundary.
@@ -19,7 +19,7 @@ const NO_PREFIX = /^\/(v1|api|auth|callback\.html|stats|tools|cubing-chunks|cube
 // tree behind a proxy rewrite), so English links stay bare; on Chinese pages we
 // re-prefix with /zh. Any stray /en or /zh already in the href is normalized
 // away first.
-export default function AppLink({ href, navigation = 'push', prefetch = false, ...props }: Props) {
+export default function AppLink({ href, navigation = 'push', prefetch = false, loadingOverlay = true, ...props }: Props) {
   const params = useParams();
   const clickedHref = useRef('');
   const trainingHref = useTrainingHref();
@@ -49,6 +49,7 @@ export default function AppLink({ href, navigation = 'push', prefetch = false, .
       if (!cancelled) currentEntryHref(clickedHref.current, props.replace && navigation === 'push' ? 'replace' : navigation);
     }}>
     {props.children}
-    <LinkPendingIndicator />
+    {/* allow-nested-link: LinkPendingIndicator only subscribes to pending state and returns null, never an anchor. */}
+    {loadingOverlay && <LinkPendingIndicator />}
   </NextLink>;
 }

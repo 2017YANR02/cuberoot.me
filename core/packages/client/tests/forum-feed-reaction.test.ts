@@ -69,3 +69,21 @@ describe('ForumFeedList reaction button', () => {
     expect(html).not.toContain('👍');
   });
 });
+
+describe('ForumFeedList timestamps', () => {
+  const lastPostAt = '2026-10-12T00:00:00.000Z';
+
+  it.each([
+    ['activity', 1, lastPostAt, true],
+    ['published', 1, lastPostAt, false],
+    ['activity', 0, THREAD.createdAt, false],
+    ['activity', 1, THREAD.createdAt, false],
+  ] as const)('uses %s time for a thread with %i replies at %s', (timeMode, replyCount, replyTime, showReplyTime) => {
+    const html = renderToStaticMarkup(createElement(ForumFeedList, {
+      threads: [{ ...THREAD, replyCount, lastPostAt: replyTime }], timeMode, compact: true,
+    }));
+    expect(html).toContain(`<time dateTime="${showReplyTime ? replyTime : THREAD.createdAt}">`);
+    expect(html.includes('最近回复')).toBe(showReplyTime);
+    expect(html).not.toContain('发布于');
+  });
+});

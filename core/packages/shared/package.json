@@ -87,6 +87,7 @@
       "./nemesizer-format": "runtime-neutral",
       "./wca-events": "runtime-neutral",
       "./record-notifications": "runtime-neutral",
+      "./competition-notifications": "runtime-neutral",
       "./scramble-length": "runtime-neutral",
       "./comp-schedule": "runtime-neutral",
       "./comp-localize": "runtime-neutral",
@@ -266,7 +267,8 @@
       "./cube-photo/pixels": "runtime-neutral",
       "./cube-photo/result": "runtime-neutral",
       "./testing/cube-photo": "runtime-neutral",
-      "./testing/cube-photo-algs": "asset"
+      "./testing/cube-photo-algs": "asset",
+      "./notification-push": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
@@ -572,6 +574,10 @@
     "./record-notifications": {
       "node": "./dist/record_notifications.js",
       "default": "./src/record_notifications.ts"
+    },
+    "./competition-notifications": {
+      "node": "./dist/competition_notifications.js",
+      "default": "./src/competition_notifications.ts"
     },
     "./scramble-length": {
       "node": "./dist/scramble_length.js",
@@ -983,6 +989,10 @@
       "types": "./src/page_catalog.ts",
       "node": "./dist/page_catalog.js",
       "default": "./src/page_catalog.ts"
+    },
+    "./notification-push": {
+      "node": "./dist/notification_push.js",
+      "default": "./src/notification_push.ts"
     }
   },
   "scripts": {

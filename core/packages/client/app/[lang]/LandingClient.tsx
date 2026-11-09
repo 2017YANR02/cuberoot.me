@@ -7,9 +7,10 @@ import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
 import { useRetainedState } from '@/hooks/useRetainedState';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 import { useHomeScrollRestoration } from '@/hooks/useHomeScrollRestoration';
+import { SkeletonBlock } from '@/components/ContentSkeleton';
 
 /** Site entrypoint — Landing page. */
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { parseAsBoolean, useQueryState } from 'nuqs';
@@ -35,7 +36,6 @@ import PersonUpcomingComps from '@/components/persons/sections/PersonUpcomingCom
 import { useCompFollows } from '@/components/CompFollow';
 import SearchInput from '@/components/SearchInput';
 import LazyVisible from '@/components/LazyVisible';
-import { ClientLoadStatus } from '@/components/StartupStatus';
 import {
   FOOTER_ENTRIES,
   PRIMARY_CARDS,
@@ -52,16 +52,16 @@ import {
 // The dynamic fallback and viewport placeholder use the same measured height,
 // so crossing the lazy boundary does not collapse the page before data arrives.
 const OngoingComps = dynamic(() => import('@/components/OngoingComps'), {
-  loading: () => <div className="landing-widget-skeleton" aria-hidden="true" />,
+  loading: () => <SkeletonBlock className="landing-widget-skeleton" />,
 });
 const RecentScrambles = dynamic(() => import('@/components/RecentScrambles'), {
-  loading: () => <div className="landing-widget-skeleton" aria-hidden="true" />,
+  loading: () => <SkeletonBlock className="landing-widget-skeleton" />,
 });
 const TodayRecon = dynamic(() => import('@/components/TodayRecon'), {
-  loading: () => <div className="landing-widget-skeleton" aria-hidden="true" />,
+  loading: () => <SkeletonBlock className="landing-widget-skeleton" />,
 });
 const ForumFeedPreview = dynamic(() => import('@/components/forum/ForumFeedPreview'), {
-  loading: () => <div className="landing-widget-skeleton" aria-hidden="true" />,
+  loading: () => <SkeletonBlock className="landing-widget-skeleton" />,
 });
 import { useEffectiveTheme } from '@/lib/theme';
 import '../landing.css';
@@ -72,7 +72,8 @@ import { colorFor, homepageNoticeTitle, iconFor } from '@/lib/page-notice-visual
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { listPublicMembers, type PublicMember } from '@/lib/membership-api';
-import { getHomeCardLocks, getHomeCardOrders, reorderHomeCards, setHomeCardLock } from '@/lib/home-card-order-api';
+import { getHomeLayout, reorderHomeCards, setHomeCardLock } from '@/lib/home-card-order-api';
+import type { HomeLayoutSnapshot } from '@/lib/home-layout';
 import { getPinnedRecons, setReconHomePin } from '@/lib/recon-api';
 import { HOME_MEMBER_SECTION_IDS } from '@cuberoot/shared/site-directory';
 
@@ -118,7 +119,34 @@ function LandingCardContent({ label, Icon, iconImg, record, iconText, puzzleIcon
 
 type ReconSolve = Awaited<ReturnType<typeof getPinnedRecons>>[number];
 
-export default function LandingPage() {
+// Only the guide consumes query state; its production prerender bailout must not hide the homepage.
+function LandingOnboarding({ mounted, personalLoading }: { mounted: boolean; personalLoading: boolean }) {
+  const user = useAuthUser();
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [replayGuide, setReplayGuide] = useQueryState('guide', parseAsBoolean.withDefault(false));
+  useEffect(() => {
+    if (!mounted) return;
+    let active = true;
+    let timer: number | undefined;
+    setGuideOpen(false);
+    if (replayGuide) {
+      setGuideOpen(true);
+    } else {
+      void isOnboardingGuided(user).then(seen => {
+        if (active && !seen) timer = window.setTimeout(() => setGuideOpen(true), 600);
+      });
+    }
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [mounted, user?.uid, user?.wcaId, replayGuide]);
+  const closeGuide = useCallback(() => {
+    setGuideOpen(false);
+    void markOnboardingGuided(user);
+    if (replayGuide) void setReplayGuide(null);
+  }, [user, replayGuide, setReplayGuide]);
+  return <OnboardingGuideModal open={guideOpen && !personalLoading} onClose={closeGuide} />;
+}
+
+export default function LandingPage({ initialLayout = null }: { initialLayout?: HomeLayoutSnapshot | null }) {
   const douyin = useDouyinToolSurface();
   const contentRefreshKey = useContentRefreshKey();
   // Title is owned by page.tsx's generateMetadata (lib/page-meta.ts, key '').
@@ -146,30 +174,8 @@ export default function LandingPage() {
   const onPersonalReady = useCallback(() => setPersonalReadyKey(personalKey), [personalKey, setPersonalReadyKey]);
   const personalLoading = Boolean(user && (!compFollows.loaded || personalReadyKey !== personalKey));
   useHomeScrollRestoration(!personalLoading);
-  const [guideOpen, setGuideOpen] = useState(false);
-  const [replayGuide, setReplayGuide] = useQueryState('guide', parseAsBoolean.withDefault(false));
-  useEffect(() => {
-    if (!mounted) return;
-    let active = true;
-    let timer: number | undefined;
-    setGuideOpen(false);
-    if (replayGuide) {
-      setGuideOpen(true);
-    } else {
-      void isOnboardingGuided(user).then(seen => {
-        if (active && !seen) timer = window.setTimeout(() => setGuideOpen(true), 600);
-      });
-    }
-    return () => { active = false; window.clearTimeout(timer); };
-  }, [mounted, user?.uid, user?.wcaId, replayGuide]);
-  const closeGuide = useCallback(() => {
-    setGuideOpen(false);
-    void markOnboardingGuided(user);
-    if (replayGuide) void setReplayGuide(null);
-  }, [user, replayGuide, setReplayGuide]);
   const [featuredNotices, setFeaturedNotices] = useRetainedState<PageNotice[]>('home:featuredNotices', []);
   const [publicMembers, setPublicMembers] = useRetainedState<PublicMember[] | null>('home:publicMembers', null);
-  const [layoutReady, setLayoutReady] = useRetainedState('home:layoutReady', { notice: false, members: false, order: false });
   const [visibleWidgets, setVisibleWidgets] = useRetainedState<Record<string, boolean>>('home:visibleWidgets', {});
   const rememberWidget = (key: string) => setVisibleWidgets(previous => previous[key] ? previous : { ...previous, [key]: true });
   const [memberQueries, setMemberQueries] = useState({ enterprise: '', individual: '' });
@@ -197,19 +203,17 @@ export default function LandingPage() {
         managedNotices = rows.filter((row) => row.placement === 'home_featured' && row.path === '/');
         refresh();
       })
-      .catch(() => { /* 焦点新闻不可阻断首页 */ })
-      .finally(() => { if (active) setLayoutReady(previous => ({ ...previous, notice: true })); });
+      .catch(() => { /* 焦点新闻不可阻断首页 */ });
     return () => { active = false; window.clearTimeout(expiryTimer); };
-  }, [contentRefreshKey, setFeaturedNotices, setLayoutReady]);
+  }, [contentRefreshKey, setFeaturedNotices]);
 
   useEffect(() => {
     let active = true;
     listPublicMembers()
       .then((members) => { if (active) setPublicMembers(members); })
-      .catch(() => { /* 会员名单不可阻断首页 */ })
-      .finally(() => { if (active) setLayoutReady(previous => ({ ...previous, members: true })); });
+      .catch(() => { /* 会员名单不可阻断首页 */ });
     return () => { active = false; };
-  }, [setPublicMembers, setLayoutReady]);
+  }, [setPublicMembers]);
 
   const t = useCallback((key: keyof typeof TEXTS) => TEXTS[key][lang], [lang]);
 
@@ -245,31 +249,42 @@ export default function LandingPage() {
     }
   };
   const reconProps = { lang, pinnedRecons, isAdmin, savingPins, pinError, onPin };
-  const [cardOrders, setCardOrders] = useRetainedState<Record<string, string[]>>('home:cardOrders', {});
-  const [cardLocks, setCardLocks] = useRetainedState<Record<string, boolean>>('home:cardLocks', {});
-  const [locksLoaded, setLocksLoaded] = useRetainedState('home:locksLoaded', false);
+  const [homeLayout, setHomeLayout] = useState(initialLayout);
+  const cardOrders = homeLayout?.orders ?? {};
+  const cardLocks = homeLayout?.locks ?? {};
+  const locksLoaded = homeLayout !== null;
+  const [locksFailed, setLocksFailed] = useState(false);
+  const [locksRetry, setLocksRetry] = useState(0);
   const [savingLocks, setSavingLocks] = useState<Set<string>>(new Set());
   useEffect(() => {
-    let active = true;
+    let controller: AbortController | undefined;
+    let timeout: number | undefined;
     const refresh = () => {
-      getHomeCardLocks().then((locks) => {
-        if (active) { setCardLocks(locks); setLocksLoaded(true); }
-      }).catch(() => { /* 保留默认锁定状态；读取成功前禁止管理操作。 */ });
+      controller?.abort();
+      window.clearTimeout(timeout);
+      const request = new AbortController();
+      controller = request;
+      setLocksFailed(false);
+      const deadline = window.setTimeout(() => {
+        request.abort();
+        setLocksFailed(true);
+      }, 8_000);
+      timeout = deadline;
+      getHomeLayout(request.signal).then((layout) => {
+        if (!request.signal.aborted) setHomeLayout(layout);
+      }).catch(() => {
+        if (!request.signal.aborted) setLocksFailed(true);
+      }).finally(() => window.clearTimeout(deadline));
     };
     refresh();
-    window.addEventListener('focus', refresh);
-    return () => { active = false; window.removeEventListener('focus', refresh); };
-  }, [setCardLocks, setLocksLoaded]);
+    window.addEventListener('online', refresh);
+    return () => {
+      controller?.abort();
+      window.clearTimeout(timeout);
+      window.removeEventListener('online', refresh);
+    };
+  }, [locksRetry, contentRefreshKey]);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
-
-  useEffect(() => {
-    let active = true;
-    getHomeCardOrders(isAdmin)
-      .then((orders) => { if (active) setCardOrders(orders); })
-      .catch(() => { /* 自定义顺序不可阻断首页 */ })
-      .finally(() => { if (active) setLayoutReady(previous => ({ ...previous, order: true })); });
-    return () => { active = false; };
-  }, [isAdmin, contentRefreshKey, setCardOrders, setLayoutReady]);
 
   const searchCards = useMemo(
     () => SEARCH_CARDS.filter((card) => (isAdmin || locksLoaded)
@@ -293,7 +308,7 @@ export default function LandingPage() {
         setSavingLocks((current) => new Set(current).add(id));
         try {
           await setHomeCardLock(id, !locked);
-          setCardLocks((current) => ({ ...current, [id]: !locked }));
+          setHomeLayout(current => current && { ...current, locks: { ...current.locks, [id]: !locked } });
         } catch (error) {
           alert(tr({ zh: `保存失败：${error instanceof Error ? error.message : String(error)}`, en: `Save failed: ${error instanceof Error ? error.message : String(error)}` }));
         } finally {
@@ -402,11 +417,11 @@ export default function LandingPage() {
       const newIndex = current.indexOf(String(over.id));
       if (oldIndex < 0 || newIndex < 0) return;
       const next = arrayMove(current, oldIndex, newIndex);
-      setCardOrders((orders) => ({ ...orders, [groupId]: next }));
+      setHomeLayout(current => current && { ...current, orders: { ...current.orders, [groupId]: next } });
       reorderHomeCards(groupId, next).catch((error) => {
         console.error('homepage card reorder failed', error);
         alert(tr({ zh: `排序失败：${error.message}`, en: `Reorder failed: ${error.message}` }));
-        setCardOrders((orders) => ({ ...orders, [groupId]: current }));
+        setHomeLayout(layout => layout && { ...layout, orders: { ...layout.orders, [groupId]: current } });
       });
     };
     return (
@@ -463,15 +478,20 @@ export default function LandingPage() {
     );
   });
 
-  // These small responses decide which sections exist. Reveal one settled
-  // structure, then let the lazy widgets fill independently. Warm route
-  // mounts already have the snapshot and skip this boundary entirely.
-  if (!locksLoaded || !layoutReady.notice || !layoutReady.members || !layoutReady.order) return <ClientLoadStatus />;
+  // Lock-dependent links stay hidden until verified; optional data never hides the page.
+  const entryStatus = !locksLoaded && (locksFailed
+    ? <div role="alert">
+        <p>{tr({ zh: '首页入口加载失败，请重试。', en: 'Home links could not load. Please retry.' })}</p>
+        <button type="button" className="app-startup-button app-startup-button-primary"
+          onClick={() => setLocksRetry(value => value + 1)}>{tr({ zh: '重试', en: 'Retry' })}</button>
+      </div>
+    : <SkeletonBlock className="landing-widget-skeleton" />);
 
   if (douyin) return <div className="landing-page">
     <div className="landing-auth"><HeaderToggles /><Link href="/account" prefetch={false}>{tr({ zh: '我的', en: 'Account' })}</Link></div>
     <div className="brand-line"><span className="brand-name">CubeRoot</span></div>
     <p>{tr({ zh: '计时、成绩记录与比赛信息查询', en: 'Timing, solve records and competition information' })}</p>
+    {entryStatus}
     <div className="hero-grids">
       {renderCardGrid('main', PRIMARY_CARDS, 'primary-hero-grid')}
       {renderCardGrid('wca', WCA_CARDS, 'wca-hero-grid')}
@@ -481,9 +501,7 @@ export default function LandingPage() {
 
   return (
     <>
-    {personalLoading && <ClientLoadStatus />}
-    {/* Keep the data loader mounted while the first personalized layout settles. */}
-    <div className="landing-page" style={personalLoading ? { display: 'none' } : undefined}>
+    <div className="landing-page">
       <div className="landing-auth">
         {isAdmin && <Tooltip content={editingCards ? tr({ zh: '完成编辑', en: 'Finish editing' }) : tr({ zh: '编辑', en: 'Edit' })}>
           {(tip) => <button {...tip} type="button" className="landing-auth-icon" aria-pressed={editingCards}
@@ -601,7 +619,7 @@ export default function LandingPage() {
       <div className="landing-training-grid">
         <div className="landing-pinned-recons" aria-busy={pinnedRecons === null && !pinError}>
           {pinnedRecons === null && !pinError
-            ? <><div className="landing-widget-skeleton" aria-hidden="true" /><div className="landing-widget-skeleton" aria-hidden="true" /></>
+            ? <><SkeletonBlock className="landing-widget-skeleton" /><SkeletonBlock className="landing-widget-skeleton" /></>
             : pinnedRecons?.length
               ? <TodayRecon {...reconProps} pinnedOnly />
               : <p className="landing-slot-message" role="status">{pinError ?? tr({ zh: '暂无置顶复盘', en: 'No pinned recons yet' })}</p>}
@@ -610,6 +628,7 @@ export default function LandingPage() {
 
       {/* 两行 hero 的共同外壳。桌面是 5 + 4 两个独立网格;手机端外壳自己变成 3 列网格、
           两个子网格 display:contents,9 张卡直接排成 3 行 3 个(见 landing.css)。 */}
+      {entryStatus}
       <div className="hero-grids">
         {/* 主入口 — 标语正下方,五张最常用直达卡(计时器 / 公式 / 模拟 / 复盘 / 打乱) */}
         {renderCardGrid('main', PRIMARY_CARDS, 'primary-hero-grid')}
@@ -718,7 +737,7 @@ export default function LandingPage() {
         <ContactDetails />
       </div>
       </footer>
-      <OnboardingGuideModal open={guideOpen && !personalLoading} onClose={closeGuide} />
+      <Suspense fallback={null}><LandingOnboarding mounted={mounted} personalLoading={personalLoading} /></Suspense>
     </div>
     </>
   );

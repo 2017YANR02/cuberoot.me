@@ -1,12 +1,9 @@
 import { App } from '@capacitor/app';
-import { Capacitor, registerPlugin } from '@capacitor/core';
+import { Capacitor } from '@capacitor/core';
 import { mobileApiUrl } from '@cuberoot/app-ui';
 import { nativeMobileSecureStorage } from './secure-storage';
-import { RecordPushController, type PushStatus } from './record-push-controller';
-
-const plugin = registerPlugin<{
-  start(): Promise<PushStatus>; status(): Promise<PushStatus>; stop(): Promise<PushStatus>;
-}>('RecordPush');
+import { RecordPushController } from './record-push-controller';
+import { recordPushPlugin as plugin } from './record-push-plugin';
 
 export const recordPush = ['android', 'ios'].includes(Capacitor.getPlatform()) ? new RecordPushController({
   storage: nativeMobileSecureStorage,

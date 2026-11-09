@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import { RECORD_NOTIFICATION_EVENTS, type RecordNotificationPreferences } from '@cuberoot/shared/record-notifications';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
@@ -10,43 +9,15 @@ import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { fetchRecordNotifySettings, saveRecordNotifySettings, type RecordNotifySettings } from '@/lib/notifications-api';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { useNotificationPreferences } from './_useNotificationPreferences';
 
 const EVENTS = new Set(RECORD_NOTIFICATION_EVENTS);
 
 export default function RecordPreferences() {
   const t = useT();
   const isZh = useLang() === 'zh';
-  const [settings, setSettings] = useState<RecordNotifySettings | null>(null);
-  const [draft, setDraft] = useState<RecordNotificationPreferences | null>(null);
-  const [error, setError] = useState('');
-  const [saving, setSaving] = useState(false);
-  const savingRef = useRef(false);
-
-  async function load() {
-    setError('');
-    try {
-      const result = await fetchRecordNotifySettings();
-      setSettings(result);
-      setDraft(result.preferences);
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
-  }
-  useEffect(() => { void load(); }, []);
-
-  async function change(value: Partial<RecordNotificationPreferences>) {
-    if (!draft || savingRef.current) return;
-    const previous = draft;
-    const next = { ...previous, ...value };
-    savingRef.current = true;
-    setDraft(next);
-    setSaving(true);
-    setError('');
-    try { await saveRecordNotifySettings(next); }
-    catch (e) {
-      setDraft(previous);
-      setError(e instanceof Error ? e.message : String(e));
-    }
-    finally { savingRef.current = false; setSaving(false); }
-  }
+  const { settings, draft, error, saving, change, load } = useNotificationPreferences<RecordNotificationPreferences, RecordNotifySettings>(
+    fetchRecordNotifySettings, saveRecordNotifySettings);
 
   return <section className="ntf-record-prefs">
     <h3 className="ntf-record-title">{t('纪录订阅', 'Record subscriptions')}</h3>

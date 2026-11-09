@@ -1,6 +1,6 @@
 import type { AlgCase, AlgEntry } from '@cuberoot/shared/alg';
 import type { KPattern } from 'cubing/kpuzzle';
-import { duplicateAlgKey, invertMoveString, toMoveStringStrict } from '@cuberoot/shared/alg-notation';
+import { invertMoveString, renderMove, tokenizeMoves, toMoveStringStrict } from '@cuberoot/shared/alg-notation';
 import { getCube3 } from '@/lib/cube3';
 import { commonCaseSetup } from '@/lib/alg_case_alignment';
 import { simplifyAdjacentU } from '@/lib/alg_display';
@@ -42,6 +42,16 @@ export function f2lStateKey(pattern: KPattern): string {
   }).concat(pattern.patternData.CENTERS.pieces.join(',')).join('|');
 }
 
+/** Compare parsed F2L methods, treating half-turn directions as one choice.
+ * Keep this separate from library-entry equality: source notation/finger tricks
+ * and the full playback algorithms must remain intact. Do not compare only the
+ * resulting state, since distinct insertion methods can solve the same pieces. */
+function f2lMethodKey(alg: string): string {
+  return tokenizeMoves(alg).moves.map(move => renderMove(
+    move.amount === -2 ? { ...move, amount: 2 } : move,
+  )).join(' ');
+}
+
 /** Derive references from every existing full algorithm. Standard-library
  * choices update on the next read; distinct legacy suffixes remain explicitly
  * marked as originals, never mistaken for a live standard reference. */
@@ -65,7 +75,7 @@ export async function groupF2lSolutions(
   const ungrouped: number[] = [];
   const retainOriginal = (group: F2lSolutionGroup, suffix: string) => {
     const alg = simplifyAdjacentU('3x3', suffix);
-    if (!group.options.some(option => duplicateAlgKey(option.alg) === duplicateAlgKey(alg))) {
+    if (!group.options.some(option => f2lMethodKey(option.alg) === f2lMethodKey(alg))) {
       group.options.push({ alg, fullAlg: `${group.prefix} ${alg}`, source: 'original' });
     }
   };
@@ -82,7 +92,7 @@ export async function groupF2lSolutions(
         state = state.applyAlg(moves[split - 1]);
         for (const { c, auf } of standards.get(f2lStateKey(state)) ?? []) {
           const prefix = moves.slice(0, split).join(' ');
-          const key = `${prefix}|${c.id ?? c.name}|${orientation}|${auf}`;
+          const key = `${f2lMethodKey(prefix)}|${c.id ?? c.name}|${orientation}|${auf}`;
           const existing = groups.get(key);
           if (existing) {
             existing.sourceIndices.push(sourceIndex);
@@ -94,8 +104,9 @@ export async function groupF2lSolutions(
           for (const insertion of c.algs[orientation] ?? []) {
             try {
               const alg = simplifyAdjacentU('3x3', [invertMoveString(auf), toMoveStringStrict(insertion.alg)].filter(Boolean).join(' '));
-              if (seen.has(alg) || f2lStateKey(state.applyAlg(alg)) !== solvedKey) continue;
-              seen.add(alg);
+              const insertionKey = f2lMethodKey(alg);
+              if (seen.has(insertionKey) || f2lStateKey(state.applyAlg(alg)) !== solvedKey) continue;
+              seen.add(insertionKey);
               options.push({ alg, fullAlg: `${prefix} ${alg}`, source: 'standard' });
             } catch { /* Unusable library choices are not offered. */ }
           }

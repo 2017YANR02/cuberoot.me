@@ -7,7 +7,7 @@ vi.mock('../src/db/connection.js', () => ({ query: mocks.query, withTransaction:
 vi.mock('../src/routes/cubing_live.js', () => ({ resolveRecordResult: mocks.resolve }));
 vi.mock('../src/utils/notify.js', () => ({ notify: mocks.notify }));
 vi.mock('../src/routes/wca_recent_records.js', () => ({ formatInferred: async () => ({ cn: '4.52 三阶平均纪录', en: '4.52 3x3 record' }) }));
-import { deliverRecordNotifications, observeRecordNotifications, recordNotificationKey } from '../src/utils/record_notifications';
+import { deliverRecordNotifications, observeRecordNotifications, recordNotificationKey, sweepRecordNotifications } from '../src/utils/record_notifications';
 
 const record: InferredRecord = { id: 'source-id', compId: 'WuhanCrimsonAutumn2026', compNameEn: 'Wuhan Crimson Autumn 2026',
   eventId: '333', roundId: 'f', type: 'average', tag: 'FWR', attemptResult: 452,
@@ -83,5 +83,15 @@ describe('record notification ledger', () => {
     mocks.notify.mockRejectedValueOnce(new Error('database unavailable'));
     await expect(deliverRecordNotifications(record.compId)).rejects.toThrow('database unavailable');
     expect(mocks.query).toHaveBeenCalledTimes(2);
+  });
+  it('retries independently of source refresh and isolates one failed competition', async () => {
+    mocks.query.mockResolvedValueOnce([]).mockResolvedValueOnce([{ comp_id: 'Failed2026' }, { comp_id: record.compId }])
+      .mockRejectedValueOnce(new Error('temporary failure'))
+      .mockResolvedValueOnce([{ event_key: 'retry-key', payload: record, observed_at: '2026-09-13' }])
+      .mockResolvedValueOnce([{ id: 1, wca_id: record.personWcaId, created_at: '2026-09-01', preferences: null }]);
+    await sweepRecordNotifications();
+    expect(mocks.notify).toHaveBeenCalledWith(expect.objectContaining({ kind: 'wca_record', dedupeKey: 'retry-key' }));
+    expect(mocks.query.mock.calls[0][0]).toContain("observed_at <= NOW() - INTERVAL '24 hours'");
+    expect(mocks.query.mock.calls[3][0]).toContain("observed_at > NOW() - INTERVAL '24 hours'");
   });
 });

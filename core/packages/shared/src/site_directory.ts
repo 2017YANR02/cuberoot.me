@@ -235,7 +235,7 @@ export const SITE_DIRECTORY_GROUPS = [
     entries: [
       { id: 'gallery', href: '/gallery', internal: true, tier: 'medium', nameKey: 'gallery' },
       { id: 'music', href: '/music', internal: true, tier: 'medium', nameKey: 'music' },
-      { id: 'forum', href: '/forum', internal: true, tier: 'medium', nameKey: 'forum' },
+      { id: 'forum', href: '/forum/feed', internal: true, tier: 'medium', nameKey: 'forum' },
       { id: 'drive', href: '/drive', internal: true, tier: 'medium', nameKey: 'drive' },
       { id: 'feedback', href: '/feedback', internal: true, tier: 'medium', nameKey: 'feedback' },
       { id: 'dev', href: '/dev', internal: true, tier: 'medium', nameKey: 'dev' },

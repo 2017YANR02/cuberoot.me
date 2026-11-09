@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ALG_3X3_TOP_LAYER_SET } from '@cuberoot/shared/alg';
 import { CubeData, parseAlgorithm } from '@cuberoot/visualcube';
 import { normalizeAlg } from '@/lib/alg_normalize';
-import { CASE_VIEW_ANGLES, caseViewSetup, displayCaseAlg, displayCaseAlgHtml, displayCaseScramble, adjacentUEdits, simplifyAdjacentU } from '@/lib/alg_display';
+import { CASE_VIEW_ANGLES, playbackCaseAlg, caseViewSetup, displayCaseAlg, displayCaseAlgHtml, displayCaseScramble, adjacentUEdits, simplifyAdjacentU } from '@/lib/alg_display';
 import { algHtmlText, editAlgHtmlText } from '@/lib/alg_html';
 import fixtures from './fixtures/alg-ll-scramble-setups.json';
 
@@ -98,5 +98,25 @@ describe('last-layer displayed scrambles', () => {
         expect(output, `${c.name} / ${angle}`).not.toMatch(/\by(?:2'?|')?(?:\s+U(?:2'?|')?)*\s*$/);
       }
     }
+  });
+});
+
+
+describe('case solution playback', () => {
+  it.each([
+    ["R U R' U' y'", "R U R' U'"],
+    ["y R U R' U' x y2 z'", "y R U R' U'"],
+    ["(R U R' U' y')", "(R U R' U')"],
+    ["(R U R') (y x')", "(R U R')"],
+    ["R y U y'", "R y U"],
+    ["R U r' M'", "R U r' M'"],
+    ["(R y)2", "(R y)2"],
+    ["[R, y]", "[R, y]"],
+    ["y'", "y'"],
+  ])('removes only the finishing regrip from %s', (source, expected) => {
+    expect(playbackCaseAlg('3x3', source)).toBe(expected);
+  });
+  it('leaves non-cube notation unchanged', () => {
+    expect(playbackCaseAlg('sq1', '(1,0) / y2')).toBe('(1,0) / y2');
   });
 });

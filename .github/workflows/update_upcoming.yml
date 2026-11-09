@@ -66,7 +66,7 @@ jobs:
 
       # WCA 对 GH runner IP 段返 403;经自有服务器代理出网(IP 未被封)。
       # 见 @cuberoot/server 的 src/routes/wca_proxy.ts;secret 存 repo secret WCA_PROXY_SECRET。
-      - name: Fetch upcoming comps (WCA + CN)
+      - name: Fetch upcoming comps (WCA + cubing.com + MYCSA)
         working-directory: core/${{ steps.workspace.outputs.stats }}
         env:
           WCA_API_BASE: https://api.cuberoot.me/v1/wca-proxy/api/v0

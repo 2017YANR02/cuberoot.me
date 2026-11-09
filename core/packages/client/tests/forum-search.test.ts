@@ -85,3 +85,12 @@ it('preserves session authentication for viewer-dependent forum reads', async ()
   expect(mocks.exchange).toHaveBeenCalledExactlyOnceWith('web-session:search-test');
   expect(new Headers(mocks.fetch.mock.lastCall![1].headers).get('Authorization')).toBe('Bearer access-token');
 });
+
+it('sends the board filter with feed pagination and omits it for all boards', async () => {
+  mocks.exchange.mockResolvedValue('access-token');
+  await fetchForumFeed('latest', 2, 10, 'general');
+  const filtered = new URL(mocks.fetch.mock.lastCall![0]);
+  expect(Object.fromEntries(filtered.searchParams)).toMatchObject({ forum: 'general', sort: 'latest', page: '2', size: '10' });
+  await fetchForumFeed('latest', 1, 10);
+  expect(new URL(mocks.fetch.mock.lastCall![0]).searchParams.has('forum')).toBe(false);
+});

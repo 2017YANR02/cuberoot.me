@@ -6,7 +6,7 @@
   --pb-thumb: 16px; /* native range thumb width — keeps the value bubble over the thumb */
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
   width: min(100%, 260px);
   align-self: center;
 }
@@ -17,7 +17,7 @@
   display: flex;
   align-items: center;
 }
-.playback-bar-scrub--counts { padding-top: 26px; }
+.playback-bar-scrub--counts { padding-top: 18px; }
 .playback-bar-scrub .playback-scrubber {
   flex: 1;
   width: 100%;
@@ -52,6 +52,7 @@
   transform: translateX(-50%);
   font-variant-numeric: tabular-nums;
   font-size: 12px;
+  line-height: 16px;
   color: var(--muted-foreground);
   white-space: nowrap;
   pointer-events: none;

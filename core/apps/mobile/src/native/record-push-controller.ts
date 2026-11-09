@@ -1,3 +1,4 @@
+import { NOTIFICATION_PUSH_VERSION } from '@cuberoot/shared/notification-push';
 import type { WebSession } from '@cuberoot/shared/auth/web-session';
 import type { MobileSecureStorage } from './secure-storage';
 
@@ -98,7 +99,7 @@ export class RecordPushController {
     if (this.registered === binding && Date.now() - this.registeredAt < 3_600_000) return;
     if (this.desired !== session) return;
     await this.port.request('PUT', '/notifications/push/device', {
-      installationId: device.installationId, secret: device.secret, appId, clientId: status.clientId,
+      installationId: device.installationId, secret: device.secret, appId, clientId: status.clientId, pushVersion: NOTIFICATION_PUSH_VERSION,
       ...(status.provider ? { provider: status.provider, environment: status.environment } : {}),
     }, session.token);
     this.registered = binding;

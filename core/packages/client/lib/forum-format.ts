@@ -24,6 +24,18 @@ export function formatRelativeTime(iso: string, lang: Lang): string {
   return zh ? `${years} 年前` : `${years}y ago`;
 }
 
+/** Recent posts use elapsed time; older posts show a local calendar date. */
+export function formatPostTime(iso: string, lang: Lang): string {
+  const date = new Date(iso);
+  if (!Number.isFinite(date.getTime())) return '';
+  if (Date.now() - date.getTime() < 7 * 86_400_000) return formatRelativeTime(iso, lang);
+  return new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en-US', {
+    month: 'short',
+    day: 'numeric',
+    ...(date.getFullYear() !== new Date(Date.now()).getFullYear() ? { year: 'numeric' as const } : {}),
+  }).format(date);
+}
+
 /** 1234 → 1.2k (en) / 1234 (zh keeps digits below 10k, 万 above). */
 export function formatCount(n: number, lang: Lang): string {
   if (lang === 'zh') {

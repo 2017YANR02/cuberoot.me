@@ -2,6 +2,7 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { revalidateTag } from 'next/cache';
 import { reconCacheTag, RECON_SAME_SCRAMBLE_TAG } from '@/lib/recon-seo';
 import { forumThreadCacheTag, FORUM_CACHE_TAG } from '@/lib/forum-seo';
+import { HOME_LAYOUT_CACHE_TAG } from '@/lib/home-layout';
 
 export const runtime = 'nodejs';
 
@@ -17,12 +18,16 @@ export async function POST(request: Request): Promise<Response> {
   const body = await request.json().catch(() => null);
   const kind = body?.kind ?? 'recon';
   const id = String(body?.id ?? '');
-  if (!['recon', 'forum', 'alg'].includes(kind) ||
-    (kind === 'alg' ? body?.id !== undefined :
+  if (!['recon', 'forum', 'alg', 'home'].includes(kind) ||
+    (kind === 'alg' || kind === 'home' ? body?.id !== undefined :
       (!(kind === 'forum' && body?.id === undefined) && (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id)))))) {
     return Response.json({ error: 'Invalid content reference' }, { status: 400, headers });
   }
-  if (kind === 'alg') {
+  if (kind === 'home') {
+    // Navigation visibility is presentation, not authorization. Keep the last
+    // verified homepage usable while regenerating, including during API outages.
+    revalidateTag(HOME_LAYOUT_CACHE_TAG, 'max');
+  } else if (kind === 'alg') {
     // Public covers stay visible while refreshing; the browser separately
     // checks the current revision. A brief API outage must not blank the page.
     revalidateTag('alg-catalog', 'max');

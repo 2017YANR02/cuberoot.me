@@ -37,6 +37,11 @@ if (!i18n.isInitialized) {
     initImmediate: false,
     react: { useSuspense: false },
   });
+} else if (process.env.NODE_ENV === 'development') {
+  // HMR preserves the initialized singleton but reloads the JSON imports.
+  // Refresh both bundles so new keys also render on the server before hydration.
+  i18n.addResourceBundle('zh', 'translation', zh, true, true);
+  i18n.addResourceBundle('en', 'translation', en, true, true);
 }
 
 // Switch language. Both Chinese catalogs are static, so this is just a plain

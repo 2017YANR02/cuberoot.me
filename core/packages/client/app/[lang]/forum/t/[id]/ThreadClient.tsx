@@ -26,7 +26,9 @@ import { formatCount } from '@/lib/forum-format';
 import '../../forum.css';
 import './forum_thread.css';
 import '@/components/hash-highlight.css';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
+import { ForumIconButton } from '@/components/forum/ForumIconButton';
+import PageBackLink from '@/components/PageBackLink';
 
 const SIZE_DEFAULT = 20;
 
@@ -47,6 +49,7 @@ export default function ThreadClient() {
   const [page, setPage] = useQueryState(
     'page', parseAsInteger.withDefault(1).withOptions({ history: 'replace' }));
   const [size, setSize] = useQueryState('size', parseAsInteger.withDefault(SIZE_DEFAULT));
+  const [editId, setEditId] = useQueryState('edit', parseAsInteger);
 
   const [data, setData] = useState<ThreadPageData | null>(null);
   const [error, setError] = useState('');
@@ -120,6 +123,17 @@ export default function ThreadClient() {
   const totalPages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
   const isOwner = !!data && !!myKey && data.thread.authorId === myKey;
   const locked = !!data?.thread.isLocked;
+
+  // Personal-feed edit links open the existing editor after the target page is loaded.
+  useEffect(() => {
+    if (!editId || !data || data.thread.id !== threadId || data.page !== page || data.size !== size) return;
+    const post = data.posts.find(post => post.id === editId);
+    if (post && !post.isDeleted && (isAdmin || (post.authorId === myKey && !locked))) {
+      setEditingPost(post);
+      setEditText(post.content);
+    }
+    void setEditId(null);
+  }, [editId, data, threadId, page, size, isAdmin, myKey, locked, setEditId]);
 
   // Canonical page under the DEFAULT size — a shared link must not embed the
   // viewer's personal ?size, or it points at the wrong page for everyone else.
@@ -285,13 +299,16 @@ export default function ThreadClient() {
 
   return (
     <div className="forum-page">
-      <ForumBreadcrumbs items={data ? [
-        { label: zh ? data.category.nameZh : data.category.nameEn },
-        { label: zh ? data.forum.nameZh : data.forum.nameEn, href: `/forum/f/${data.forum.slug}` },
-      ] : []} />
+      <div className="page-back-heading forum-thread-navigation">
+        <PageBackLink fallback="/forum/feed" />
+        <ForumBreadcrumbs items={data ? [
+          { label: zh ? data.category.nameZh : data.category.nameEn },
+          { label: zh ? data.forum.nameZh : data.forum.nameEn, href: `/forum/f/${data.forum.slug}` },
+        ] : []} />
+      </div>
 
       {error && <div className="forum-error">{error}</div>}
-      {!data && !error && <div className="forum-loading"><LoadingIndicator><T zh="加载中…" en="Loading…" /></LoadingIndicator></div>}
+      {!data && !error && <ContentSkeleton variant="article" />}
 
       {data && (
         <>
@@ -330,31 +347,24 @@ export default function ThreadClient() {
               </span>
               <span className="forum-composer-spacer" />
               {(isAdmin || (isOwner && !locked)) && !editingTitle && (
-                <button
-                  type="button" className="forum-post-action"
+                <ForumIconButton
+                  icon={Pencil} label={tr({ zh: '改标题', en: 'Rename thread' })}
                   onClick={() => { setTitleDraft(data.thread.title); setEditingTitle(true); }}
-                >
-                  <Pencil size={13} aria-hidden="true" /> <T zh="改标题" en="Rename" />
-                </button>
+                />
               )}
               {isAdmin && (
                 <>
-                  <button type="button" className="forum-post-action" onClick={() => handleMod({ isPinned: !data.thread.isPinned })}>
-                    {data.thread.isPinned
-                      ? <><PinOff size={13} aria-hidden="true" /> <T zh="取消置顶" en="Unpin" /></>
-                      : <><Pin size={13} aria-hidden="true" /> <T zh="置顶" en="Pin" /></>}
-                  </button>
-                  <button type="button" className="forum-post-action" onClick={() => handleMod({ isLocked: !locked })}>
-                    {locked
-                      ? <><LockOpen size={13} aria-hidden="true" /> <T zh="解锁" en="Unlock" /></>
-                      : <><Lock size={13} aria-hidden="true" /> <T zh="锁定" en="Lock" /></>}
-                  </button>
+                  <ForumIconButton icon={data.thread.isPinned ? PinOff : Pin}
+                    label={tr({ zh: data.thread.isPinned ? '取消置顶' : '置顶', en: data.thread.isPinned ? 'Unpin' : 'Pin' })}
+                    pressed={data.thread.isPinned} onClick={() => handleMod({ isPinned: !data.thread.isPinned })} />
+                  <ForumIconButton icon={locked ? LockOpen : Lock}
+                    label={tr({ zh: locked ? '解锁' : '锁定', en: locked ? 'Unlock' : 'Lock' })}
+                    pressed={locked} onClick={() => handleMod({ isLocked: !locked })} />
                 </>
               )}
               {(isAdmin || (isOwner && !locked)) && (
-                <button type="button" className="forum-post-action is-danger" onClick={handleDeleteThread}>
-                  <Trash2 size={13} aria-hidden="true" /> <T zh="删除主题" en="Delete thread" />
-                </button>
+                <ForumIconButton icon={Trash2} label={tr({ zh: '删除主题', en: 'Delete thread' })}
+                  className="is-danger" onClick={handleDeleteThread} />
               )}
             </div>
           </div>

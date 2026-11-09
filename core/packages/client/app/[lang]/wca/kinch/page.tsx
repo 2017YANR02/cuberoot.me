@@ -21,7 +21,7 @@ import '../_wca_stats_extra.css';
 import { WcaStatsTable, WcaStatsTableSection } from '@/components/wca-stats/WcaStatsTable';
 import './kinch.css';
 import '@/components/wca-stats/wca-stats-controls.css';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
 
@@ -154,7 +154,7 @@ function KinchPageInner() {
         </div>
       </div>
 
-      {loading && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
+      {loading && <ContentSkeleton variant="table" />}
       {error && <div className="wse-state wse-state-error">{error}</div>}
 
       {personData && !loading && (
@@ -286,7 +286,7 @@ function KinchPageInner() {
 
 export default function KinchPage() {
   return (
-    <Suspense fallback={<LoadingIndicator />}>
+    <Suspense fallback={<ContentSkeleton variant="table" />}>
       <KinchPageInner />
     </Suspense>
   );

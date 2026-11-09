@@ -65,7 +65,7 @@ describe('algorithm player placement', () => {
     expect(detail).toContain("const selectedAlg = caseViewAlg(selectedEntry?.alg ?? '', effectiveViewAngle);");
     expect(detail).not.toContain('f2lPlayerSequence');
     expect(detail).toContain('const orientationSetup = caseViewSetup(orientedSetup, effectiveViewAngle);');
-    expect(detail).toMatch(/className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{playingScramble \? orientationSetup : selectedAlg\}[\s\S]*?setup=\{playingScramble \? undefined : orientationSetup\}[\s\S]*?startSolved=\{playingScramble\}[\s\S]*?orientation=\{effectiveOrientation\}/);
+    expect(detail).toMatch(/className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{playingScramble \? orientationSetup : playbackCaseAlg\(puzzle, selectedAlg\)\}[\s\S]*?setup=\{playingScramble \? undefined : orientationSetup\}[\s\S]*?startSolved=\{playingScramble\}[\s\S]*?orientation=\{effectiveOrientation\}/);
     expect(detail).toMatch(/className="alg-case-detail-ori-algs alg-player-list-options">[\s\S]*?<SetupLine[\s\S]*?displayCaseScramble\(puzzle, set, orientationSetup\)/);
     expect(detail).toContain('renderOrientationSetup={m ? undefined : (setup) => (');
     expect(detail).not.toContain('{editor && <div hidden={effectiveViewAngle !== \'default\'}>{editor.setup}</div>}');

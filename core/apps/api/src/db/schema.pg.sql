@@ -9787,3 +9787,41 @@ CREATE TABLE site_assistant_attachments (
 );
 CREATE UNIQUE INDEX site_assistant_attachments_content ON site_assistant_attachments(user_id,conversation_id,sha256) WHERE deleted_at IS NULL;
 CREATE INDEX site_assistant_attachments_owner ON site_assistant_attachments(user_id,created_at DESC);
+
+-- Competition follows (0045), also consumed by registration reminders.
+CREATE TABLE comp_follows (
+  wca_id VARCHAR(20) NOT NULL,
+  comp_id VARCHAR(64) NOT NULL,
+  created_at BIGINT NOT NULL,
+  PRIMARY KEY (wca_id, comp_id)
+);
+CREATE INDEX idx_comp_follows_user ON comp_follows(wca_id);
+
+-- Competition subscriptions and registration reminders (0317).
+CREATE TABLE competition_notification_preferences (
+  user_id BIGINT PRIMARY KEY REFERENCES app_users(id) ON DELETE CASCADE,
+  preferences JSONB NOT NULL CHECK (jsonb_typeof(preferences) = 'object'),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Independent of Bark's dry-run/absorbed history. Inbox insertion uses its own recipient dedupe key.
+CREATE TABLE competition_announcement_events (
+  comp_id VARCHAR(64) PRIMARY KEY,
+  payload JSONB NOT NULL CHECK (jsonb_typeof(payload) = 'object'),
+  announced_at TIMESTAMPTZ NOT NULL,
+  processed_at TIMESTAMPTZ
+);
+CREATE INDEX idx_competition_announcement_pending ON competition_announcement_events(announced_at) WHERE processed_at IS NULL;
+
+-- One fresh source check per competition, shared by all subscribers; oldest checks run first.
+CREATE TABLE competition_registration_checks (
+  comp_id VARCHAR(64) PRIMARY KEY,
+  checked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  next_check_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_comp_follows_comp ON comp_follows(comp_id);
+
+-- 0318_competition_push.sql
+-- Version 1 clients only understand record notifications and browser clicks.
+ALTER TABLE notification_push_devices ADD COLUMN push_version SMALLINT NOT NULL DEFAULT 1
+    CHECK (push_version IN (1, 2));

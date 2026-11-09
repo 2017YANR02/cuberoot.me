@@ -1,6 +1,7 @@
 import { pageMetadata, PAGE_META } from '@/lib/page-meta';
 import JsonLd, { SITE_URL, SITE_NAME, PUBLISHER } from '@/components/JsonLd';
 import LandingClient from './LandingClient';
+import { fetchHomeLayout } from '@/lib/home-layout-server';
 
 // The landing page is the ONE route that cannot get its metadata from a sibling
 // layout.tsx: at this level that file is app/[lang]/layout.tsx, which wraps every
@@ -9,11 +10,13 @@ import LandingClient from './LandingClient';
 // takes the server-wrapper split instead, and the page body lives in
 // LandingClient.tsx unchanged.
 export const generateMetadata = pageMetadata('');
+export const revalidate = 60;
 
 export default async function Page({ params }: {
   params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
+  const initialLayout = await fetchHomeLayout();
   const isZh = lang === 'zh';
   // Identity nodes for the site itself. Deliberately NO SearchAction: that
   // property promises a URL template a query can be substituted into, and this
@@ -35,7 +38,7 @@ export default async function Page({ params }: {
   return (
     <>
       <JsonLd data={graph} />
-      <LandingClient />
+      <LandingClient initialLayout={initialLayout} />
     </>
   );
 }

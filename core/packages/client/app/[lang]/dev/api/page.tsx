@@ -69,7 +69,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
 //   career_applications account_auth account_face admin_assistant admin_dashboard admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
-//   chat comp_absences comp_follows creator_gallery cube cubeopt_solve cubing_live documents downloads drive feedback forum friends geo health historical_ranks pb private_vault
+//   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents downloads drive feedback forum friends geo health historical_ranks pb private_vault
 //   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops remote_access dev_preview page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth recon_intake recon_capture scramble_555 teacher_directory teaching teaching_saas
 //   smart_cube_macs scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wca_teams wca_training_institutions wca_translations wechat_jssdk wechat_pc_opensdk wiki
@@ -365,9 +365,6 @@ const ENDPOINTS: Ep[] = [
   // ---- comp ----
   { d: 'comp', m: 'GET', p: '/v1/comp/announced', g: 'public', zh: '今日公示比赛', en: "Today's announced comps" },
   { d: 'comp', m: 'GET', p: '/v1/cn-comp-names', g: 'public', c: 'cdn', zh: '中国比赛中文名', en: 'Chinese comp names' },
-  { d: 'comp', m: 'GET', p: '/v1/comp/:compId/absences', g: 'public', c: 'no-store', zh: '管理员确认的不参加名单', en: 'Administrator-confirmed absences' },
-  { d: 'comp', m: 'PUT', p: '/v1/comp/:compId/absences/:wcaId', g: 'admin', c: 'no-store', zh: '标记选手不参加比赛', en: 'Mark a competitor absent' },
-  { d: 'comp', m: 'DELETE', p: '/v1/comp/:compId/absences/:wcaId', g: 'admin', c: 'no-store', zh: '撤销不参加标记', en: 'Restore a competitor' },
   { d: 'comp', m: 'GET', p: '/v1/comp/follows', g: 'login', zh: '我关注的比赛', en: 'My followed comps' },
   { d: 'comp', m: 'PUT', p: '/v1/comp/follows/:compId', g: 'login', zh: '关注比赛', en: 'Follow a comp' },
   { d: 'comp', m: 'DELETE', p: '/v1/comp/follows/:compId', g: 'login', zh: '取消关注', en: 'Unfollow' },
@@ -842,6 +839,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'feedback', m: 'DELETE', p: '/v1/feedback/:id', g: 'admin', zh: '删除反馈', en: 'Delete feedback' },
 
   // ---- notifications ----
+  { d: 'notification', m: 'GET', p: '/v1/notifications/competitions', g: 'login', c: 'no-store', zh: '比赛公示订阅与关注比赛报名提醒设置', en: 'Competition announcement and followed-competition reminder settings' },
+  { d: 'notification', m: 'PUT', p: '/v1/notifications/competitions', g: 'login', c: 'no-store', zh: '保存比赛通知设置；仅消息箱', en: 'Save competition notification settings; inbox only' },
   { d: 'notification', m: 'GET', p: '/v1/notifications', g: 'login', zh: '我的通知(recon 另解 / 评论 / 回复)', en: 'My notifications (recon alternatives / comments / replies)' },
   { d: 'notification', m: 'GET', p: '/v1/notifications/unread', g: 'login', zh: '未读数(桌宠红点)', en: 'Unread count (desk-pet badge)' },
   { d: 'notification', m: 'POST', p: '/v1/notifications/read', g: 'login', zh: '标记已读(不传 ids = 全部)', en: 'Mark read (no ids = all)' },
@@ -850,7 +849,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'notification', m: 'GET', p: '/v1/notifications/records', g: 'login', zh: '纪录订阅、本人 WCA 身份和邮箱就绪状态', en: 'Record subscriptions, linked WCA identity, and email readiness' },
   { d: 'notification', m: 'PUT', p: '/v1/notifications/records', g: 'login', zh: '保存纪录订阅筛选', en: 'Save record subscription filters' },
   { d: 'notification', m: 'GET', p: '/v1/notifications/push/config', g: 'login', zh: '当前 App 包名的系统推送就绪状态', en: 'System push readiness for the requested app package' },
-  { d: 'notification', m: 'PUT', p: '/v1/notifications/push/device', g: 'login', zh: '将已授权设备绑定到当前账号', en: 'Bind a consented push device to the current account' },
+  { d: 'notification', m: 'PUT', p: '/v1/notifications/push/device', g: 'login', zh: '将已授权设备绑定到当前账号，pushVersion=2 支持比赛通知和 App 内点击', en: 'Bind a consented device; pushVersion=2 supports competition pushes and in-app opening' },
   { d: 'notification', m: 'DELETE', p: '/v1/notifications/push/device', g: 'public', zh: '凭设备专用撤销密钥解绑，允许退出后离线重试', en: 'Revoke using a device-only credential, including retries after logout' },
   { d: 'notification', m: 'GET', p: '/v1/notifications/unsubscribe', g: 'public', zh: '邮件退订(签名令牌,免登录,回确认页)', en: 'Unsubscribe via signed token (no login, HTML page)' },
   { d: 'notification', m: 'POST', p: '/v1/notifications/unsubscribe', g: 'public', zh: '一键退订(RFC 8058,邮件客户端调)', en: 'One-click unsubscribe (RFC 8058)' },
@@ -914,6 +913,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'forum', m: 'GET', p: '/v1/forum/t/:id', g: 'public', zh: '主题帖子分页(登录附本人反应)', en: 'Thread posts (my reactions when signed in)' },
   { d: 'forum', m: 'GET', p: '/v1/forum/latest', g: 'public', zh: '全版最新活跃主题', en: 'Latest active threads' },
   { d: 'forum', m: 'GET', p: '/v1/forum/feed', g: 'public', zh: '社区动态流(活跃 / 最新排序，首帖文字、图片与视频)', en: 'Community feed (active / latest order, first-post text, images, and videos)' },
+  { d: 'forum', m: 'GET', p: '/v1/forum/mine', g: 'login', zh: '当前用户发布的主题 / 回复过的主题，分页与个人审核状态', en: 'Current user’s threads / replied threads, pagination and personal moderation status' },
   { d: 'forum', m: 'GET', p: '/v1/forum/search', g: 'public', zh: '搜标题 + 正文,带摘录', en: 'Search titles + bodies with snippet' },
   { d: 'forum', m: 'POST', p: '/v1/forum/threads', g: 'login', zh: '发主题(公告版仅管理员)', en: 'Create thread (announcements admin-only)' },
   { d: 'forum', m: 'POST', p: '/v1/forum/video', g: 'login', zh: '上传论坛短视频(原始文件流，服务端校验格式、大小与时长)', en: 'Upload forum short video (raw stream with server-side format, size, and duration validation)' },

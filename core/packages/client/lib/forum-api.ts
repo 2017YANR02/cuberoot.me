@@ -203,6 +203,18 @@ export interface ForumFeedData {
   sort: ForumFeedSort;
 }
 
+export type ForumMineKind = 'threads' | 'replies';
+export interface ForumMineThread extends ForumFeedThread {
+  personalPost: { id: number; postNo: number; status: ForumReviewStatus; canManage: boolean };
+}
+export interface ForumMineData {
+  threads: ForumMineThread[];
+  total: number;
+  page: number;
+  size: number;
+  kind: ForumMineKind;
+}
+
 export interface SearchThread extends LatestThread {
   snippet: string | null;
 }
@@ -261,8 +273,8 @@ export async function fetchForumList(
   });
 }
 
-export async function fetchThread(id: number, page: number, size: number): Promise<ThreadPageData> {
-  return apiGet<ThreadPageData>(`/t/${id}`, { page: String(page), size: String(size) });
+export async function fetchThread(id: number, page: number, size: number, signal?: AbortSignal): Promise<ThreadPageData> {
+  return apiGet<ThreadPageData>(`/t/${id}`, { page: String(page), size: String(size) }, { signal });
 }
 
 export async function fetchLatestThreads(limit: number): Promise<{ threads: LatestThread[] }> {
@@ -270,9 +282,13 @@ export async function fetchLatestThreads(limit: number): Promise<{ threads: Late
 }
 
 export async function fetchForumFeed(
-  sort: ForumFeedSort, page: number, size: number,
+  sort: ForumFeedSort, page: number, size: number, forum = '',
 ): Promise<ForumFeedData> {
-  return apiGet<ForumFeedData>('/feed', { sort, page: String(page), size: String(size) });
+  return apiGet<ForumFeedData>('/feed', { sort, page: String(page), size: String(size), ...(forum ? { forum } : {}) });
+}
+
+export function fetchForumMine(kind: ForumMineKind, page: number, size: number, signal?: AbortSignal): Promise<ForumMineData> {
+  return apiGet('/mine', { kind, page: String(page), size: String(size) }, { signal });
 }
 
 export async function searchForum(q: string, page: number, size: number, signal?: AbortSignal): Promise<SearchData> {

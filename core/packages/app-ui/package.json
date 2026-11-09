@@ -20,7 +20,8 @@
       "./watch-cube-scene": "mixed",
       "./watch-replay": "mixed",
       "./loading-brand": "react-dom",
-      "./loading-brand.css": "asset"
+      "./loading-brand.css": "asset",
+      "./notification-navigation": "runtime-neutral"
     }
   },
   "exports": {
@@ -32,7 +33,8 @@
     "./watch-cube-scene": "./src/watch-cube-scene.ts",
     "./watch-replay": "./src/watch-replay.ts",
     "./loading-brand": "./src/LoadingBrandMark.tsx",
-    "./loading-brand.css": "./src/loading-brand.css"
+    "./loading-brand.css": "./src/loading-brand.css",
+    "./notification-navigation": "./src/notification-navigation.ts"
   },
   "sideEffects": true,
   "scripts": {

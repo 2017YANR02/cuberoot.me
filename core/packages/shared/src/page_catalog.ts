@@ -488,13 +488,14 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'forum/feed': {
-    title: { zh: '社区动态', en: 'Community Feed' },
+    title: { zh: '论坛动态', en: 'Forum feed' },
     description: {
       zh: '浏览 CubeRoot 魔方社区各版块的新主题与近期活跃讨论。',
       en: 'Browse new threads and recently active discussions across the CubeRoot speedcubing community.',
     },
   },
   'forum/new': { title: { zh: '发帖', en: 'New thread' } },
+  'forum/mine': { title: { zh: '我的帖子', en: 'My forum posts' } },
   'forum/review': { title: { zh: '论坛审核', en: 'Forum moderation' } },
   'forum/search': { title: { zh: '论坛搜索', en: 'Forum search' } },
   'frame-count': {
@@ -823,6 +824,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     description: {
       zh: '速拧计时器：记录日常练习的还原成绩，查看平均成绩；支持 WCA 标准打乱、智能魔方、分步分析与云端备份。',
       en: 'Record daily practice solve times and view averages. Includes WCA-standard scrambles, smart-cube support, step-by-step analysis and cloud backup.',
+    },
+  },
+  'timer/accuracy': {
+    title: { zh: '智能魔方计时精度', en: 'Smart-cube timing accuracy' },
+    description: {
+      zh: '了解 CubeRoot 如何校正设备时钟与批量消息偏移。查看 441 个软件基准场景、固定版本 csTimer 对照、完整数据和适用局限。',
+      en: 'How CubeRoot corrects device-clock drift and batched messages. Explore 441 software benchmark cases, a pinned csTimer comparison, full results and limitations.',
     },
   },
   'timer/marks': { title: { zh: '打乱足迹', en: 'Scramble Marks' } },

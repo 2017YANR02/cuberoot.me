@@ -46,7 +46,7 @@ import { tr } from '@/i18n/tr';
 import { useIsAdmin, useAuthUser, useAuthStore } from '@/lib/auth-store';
 import { CompactSelect } from '@/components/CompactSelect';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 // ── 视图模式 ──
 type ViewMode = 'list' | 'grid';
@@ -341,6 +341,8 @@ export default function ReconListPage() {
   useEffect(() => {
     void loadFlagData().then(v => { if (v !== flagVer) setFlagVer(v); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const waitingForContent = loading || (favoritesOnly && !!user && favorites === null && !curationError);
 
   const filtered = useMemo(() => getFilteredSolves(favoritesOnly ? (favorites ?? []) : undefined).filter(s =>
     recordKind === 'all' || (recordKind === 'timing' ? s.recordType === 'timing' : s.recordType !== 'timing')
@@ -1088,11 +1090,10 @@ export default function ReconListPage() {
 
       {favoritesOnly && !user && <button type="button" className="btn-secondary" onClick={() => useAuthStore.getState().login()}>{tr({ zh: '登录后查看收藏夹', en: 'Sign in to view favorites' })}</button>}
       {user && favorites === null && curationError && <button type="button" className="btn-secondary" onClick={() => { setCurationError(null); setFavoriteRevision(value => value + 1); }}>{tr({ zh: '重试加载收藏夹', en: 'Retry loading favorites' })}</button>}
-      {favoritesOnly && user && favorites === null && !curationError && <p role="status"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></p>}
-      {loading && <div className="recon-loading"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></div>}
+      {waitingForContent && <ContentSkeleton variant={viewMode === 'list' ? 'table' : 'cards'} media />}
       {error && <div className="recon-error"><TriangleAlert size={16} /> {error}</div>}
 
-      {!loading && !error && (
+      {!waitingForContent && !error && (
         <>
           {viewMode === 'list' && (
           <div className="recon-table-wrap sticky-scroll-mobile">

@@ -7,6 +7,8 @@ import { bodyLimit } from 'hono/body-limit';
 import { checkCompetitionAccess, requireCompetitionAccess } from './utils/competition_access.js';
 import { issueCompetitionCaptcha, submitCompetitionCaptcha } from './utils/competition_captcha.js';
 import { startRecordPushSweep } from './utils/record_push.js';
+import { startRecordNotificationSweep } from './utils/record_notifications.js';
+import { startCompetitionRegistrationReminders } from './utils/competition_notifications.js';
 import { requestDiagnostics } from './observability/request.js';
 import { publicContentCache } from './utils/public_content_cache.js';
 import { revalidateForumMutation } from './utils/forum_revalidate.js';
@@ -87,7 +89,6 @@ import { membershipRoutes } from './routes/membership.js';
 import { membershipGalleryRoutes } from './routes/membership_gallery.js';
 import { membershipSubscriptionRoutes } from './routes/membership_subscriptions.js';
 import { compFollowsRoutes } from './routes/comp_follows.js';
-import { compAbsencesRoutes } from './routes/comp_absences.js';
 import { algMarksRoutes } from './routes/alg_marks.js';
 import { algTimeAttackOrderRoutes } from './routes/alg_time_attack_order.js';
 import { algPreferredAlgsRoutes } from './routes/alg_preferred_algs.js';
@@ -265,7 +266,6 @@ app.route('/v1', membershipAppleRoutes);
 app.route('/v1', membershipGoogleRoutes);
 app.route('/v1', membershipSubscriptionRoutes);
 app.route('/v1', compFollowsRoutes);
-app.route('/v1', compAbsencesRoutes);
 app.route('/v1', algMarksRoutes);
 app.route('/v1', algTimeAttackOrderRoutes);
 app.route('/v1', algPreferredAlgsRoutes);
@@ -437,6 +437,8 @@ startTranslationSync();
 // 去重靠 calendar_reminder_log 的主键抢占,重启 / 窗口重叠都不会重复发。
 startCalendarReminderSweep();
 startRecordPushSweep();
+startRecordNotificationSweep();
+startCompetitionRegistrationReminders();
 
 // 首页「今日公示」数据源:后台轮询 WCA announced_at(独立于监控门控).启动 90s 后首拉,之后每 20min.
 startAnnouncedCompsPoller();

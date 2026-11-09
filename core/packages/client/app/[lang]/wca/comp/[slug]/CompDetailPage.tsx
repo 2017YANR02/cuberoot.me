@@ -1,4 +1,7 @@
 'use client';
+import { useWcaTeams } from '@/hooks/useWcaTeams';
+import { ListSelect } from '@/components/ListSelect';
+import { wcaTeamSelectItems } from '@/components/wca-team-select-items';
 import { currentEntryHref } from '@/lib/entry-navigation';
 import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
@@ -97,7 +100,6 @@ import CompetitionGroupAwards from '@/components/CompetitionGroupAwards';
 import { useGroupAwards } from '@/lib/competition-group-awards';
 
 const CompScramblesTab = dynamic(() => import('./CompScramblesTab'), { ssr: false });
-const CommonCompetitors = dynamic(() => import('./CommonCompetitors'), { ssr: false });
 // 同理:赛程 tab (ScheduleView + 它的工具条)、海报布局、以及管理员改成绩的编辑器,
 // 都只在特定 tab / 权限下才渲染,不该进首屏 chunk。
 const ScheduleView = dynamic(() => import('./ScheduleView'), { ssr: false });
@@ -806,7 +808,7 @@ export default function CompDetailPage() {
   );
   const [viewQuery, setExplicitView] = useQueryState(
     'view',
-    parseAsStringEnum<'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar' | 'common'>(['result', 'psych', 'schedule', 'podium', 'scramble', 'similar', 'common']).withOptions({ history: 'push', scroll: false }),
+    parseAsStringEnum<'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar'>(['result', 'psych', 'schedule', 'podium', 'scramble', 'similar']).withOptions({ history: 'push', scroll: false }),
   );
   const [psychEventParam, setPsychEventParam] = useQueryState(
     'psychEvent',
@@ -1046,9 +1048,8 @@ export default function CompDetailPage() {
     const t = compInfo?.registration_open ? Date.parse(compInfo.registration_open) : NaN;
     return Number.isFinite(t) && Date.now() < t;
   }, [compInfo]);
-  const viewParam: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar' | 'common' =
-    explicitView === 'common' ? 'common'
-      : explicitView === 'psych' ? 'psych'
+  const viewParam: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar' =
+    explicitView === 'psych' ? 'psych'
       : explicitView === 'schedule' ? 'schedule'
         : explicitView === 'scramble' ? 'scramble'
           : (explicitView === 'similar' && showSimilarTab) ? 'similar'
@@ -1062,7 +1063,6 @@ export default function CompDetailPage() {
   const isPodium = viewParam === 'podium';
   const isScramble = viewParam === 'scramble';
   const isSimilar = viewParam === 'similar';
-  const isCommon = viewParam === 'common';
   // 把当前生效的视图固化进 URL(强制带上 ?view=…),分享/收藏直接命中 active tab。
   // 仅在用户未显式选 tab 且默认视图依赖的数据已就位时写一次:有成绩=纯 data 驱动,无成绩需
   // 等 compInfo settle 才能定 schedule/psych。history:replace 不污染后退栈,避免回退到裸 URL。
@@ -1495,8 +1495,9 @@ export default function CompDetailPage() {
       for (const r of data.resultsByRound[key] || []) set.add(r.n);
     }
     if (set.size > 0) return set;
-    const nextN = rs[idx + 1]?.n ?? 0;
-    if (nextN > 0) return topN(nextN);
+    // n is this round's advancement quota, not the next round's entrant count.
+    const advanceCount = currentRound.rd.n ?? 0;
+    if (advanceCount > 0) return topN(advanceCount);
     return set;
   }, [data, currentRound, filteredResults]);
 
@@ -1627,7 +1628,7 @@ export default function CompDetailPage() {
     setFilterParam(value || null);
   };
 
-  const onChangeView = (value: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar' | 'common') => {
+  const onChangeView = (value: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar') => {
     setExplicitView(value); // 显式记录:空成绩比赛点「成绩」不会被默认弹回预排名
   };
 
@@ -1959,13 +1960,6 @@ export default function CompDetailPage() {
             {tr({ zh: '赛程', en: 'Schedule'
             })}
           </button>
-          <button
-            type="button"
-            className={`comp-view-tab${isCommon ? ' is-active' : ''}`}
-            onClick={() => onChangeView('common')}
-          >
-            {tr({ zh: '共同选手', en: 'Common competitors' })}
-          </button>
           {/* 相似比赛:名字只差版本号(I/II/III…)或年份的同系列比赛。有 ≥1 场才显示入口。 */}
           {showSimilarTab && (
             <button
@@ -2002,7 +1996,7 @@ export default function CompDetailPage() {
         </div>
 
         {/* 分享图布局不吃项目筛选,项目条一并隐藏 */}
-        {!isPodium && !isScramble && !isSimilar && !isCommon && !(isSchedule && schedView === 'poster') && (
+        {!isPodium && !isScramble && !isSimilar && !(isSchedule && schedView === 'poster') && (
           <div className="comp-event-bar">
             <WcaEventSelector
               presentation="inline"
@@ -2032,9 +2026,7 @@ export default function CompDetailPage() {
           </div>
         )}
 
-        {isCommon ? (
-          <CommonCompetitors key={slug} data={data} isZh={isZh} onRefresh={refresh} />
-        ) : isScramble ? (
+        {isScramble ? (
           <CompScramblesTab slug={slug} />
         ) : isSimilar ? (
           <SimilarCompsView series={similarComps} sameCity={sameCityComps} isZh={isZh} lang={isZh ? 'zh' : 'en'} />
@@ -3361,6 +3353,19 @@ interface PsychSheetProps {
 }
 
 function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetProps) {
+  const user = useAuthUser();
+  const [teamFilter, setTeamFilter] = useState('');
+  const directory = useWcaTeams(Object.values(data.users).flatMap(u => u.wcaid ? [u.wcaid] : []));
+  const teamById = new Map(directory.assignments.map(a => [a.wcaId, String(a.teamId)]));
+  const matchesTeam = (u: User) => !teamFilter || teamById.get(u.wcaid ?? '') === teamFilter;
+  const teamSelector = <ListSelect
+    value={teamFilter} onChange={setTeamFilter}
+    items={wcaTeamSelectItems(directory.teams)}
+    allLabel={tr({ zh: '全部战队', en: 'All teams' })}
+    ariaLabel={tr({ zh: '战队', en: 'Team' })}
+    disabled={!directory.ready} searchable
+  />;
+
   // 0 项 = 报名名单; 1 项 = 单项预排名; 2+ 项 = 名次和 (下方 sorRows 分支).
   const eventId = eventIds.length === 1 ? eventIds[0]! : '';
   const router = useRouter();
@@ -3441,9 +3446,9 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
   const rosterRows = useMemo(() => {
     if (eventId) return [];
     const all = Object.values(data.users);
-    all.sort((a, b) => a.number - b.number);
+    all.sort((a, b) => Number(Boolean(user?.wcaId && b.wcaid === user.wcaId)) - Number(Boolean(user?.wcaId && a.wcaid === user.wcaId)) || a.number - b.number);
     return all;
-  }, [data, eventId]);
+  }, [data, eventId, user?.wcaId]);
 
   // 名次和 (2+ 项): 每位选手在每个所选项目的预排名相加. 报名了但缺该项 → 计 "参赛人数+1"
   // (比该项倒数第一再差一名), 与 /wca/sum-of-ranks 口径一致. 全程用已加载的 pbMap, 不发请求.
@@ -3492,6 +3497,8 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
 
   if (eventIds.length >= 2) {
     return (
+      <>
+      <div className="comp-selectors">{teamSelector}</div>
       <div className="comp-table-wrap sticky-scroll-mobile">
         <table className="comp-table comp-sor-table">
           <thead>
@@ -3512,13 +3519,13 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
             </tr>
           </thead>
           <tbody>
-            {sorRows.map((row, idx) => (
+            {sorRows.map((row, idx) => ({ ...row, position: idx + 1 })).filter(row => matchesTeam(row.u)).map((row, idx) => (
               <tr
                 key={row.n}
                 className={`${idx % 2 === 1 ? 'row-odd' : ''} comp-row-clickable`}
                 onClick={() => onRowClick(row.u)}
               >
-                <td className="td-place">{idx + 1}</td>
+                <td className="td-place">{row.position}</td>
                 <td className="td-person">
                   <CuberNameLink u={row.u} isZh={isZh} />
                 </td>
@@ -3534,13 +3541,14 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
                 <td className="comp-sor-total-col">{row.total}</td>
               </tr>
             ))}
-            {sorRows.length === 0 && (
+            {!sorRows.some(row => matchesTeam(row.u)) && (
               <tr><td colSpan={eventIds.length + 3} className="comp-empty">{tr({ zh: '暂无数据', en: 'No data'
             })}</td></tr>
             )}
           </tbody>
         </table>
       </div>
+      </>
     );
   }
 
@@ -3548,7 +3556,9 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
   const rankByN = new Map<number, number>(psychRows.map((r, i) => [r.n, i + 1]));
 
   return (
-    <div className="comp-table-wrap sticky-scroll-mobile">
+    <>
+      <div className="comp-selectors">{teamSelector}</div>
+      <div className="comp-table-wrap sticky-scroll-mobile">
       <table className="comp-table">
         {eventId ? (
           <>
@@ -3573,7 +3583,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
               </tr>
             </thead>
             <tbody>
-              {displayRows.map((row, idx) => {
+              {displayRows.filter(row => matchesTeam(row.u)).map((row, idx) => {
                 const isOdd = idx % 2 === 1;
                 return (
                   <tr
@@ -3611,7 +3621,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
                   </tr>
                 );
               })}
-              {psychRows.length === 0 && (
+              {!psychRows.some(row => matchesTeam(row.u)) && (
                 <tr><td colSpan={4} className="comp-empty">{tr({ zh: '暂无数据', en: 'No data'
                 })}</td></tr>
               )}
@@ -3629,7 +3639,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
               </tr>
             </thead>
             <tbody>
-              {rosterRows.map((u, idx) => {
+              {rosterRows.filter(matchesTeam).map((u, idx) => {
                 const isOdd = idx % 2 === 1;
                 const evs = userEvents.get(u.number) ?? [];
                 return (
@@ -3650,7 +3660,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
                   </tr>
                 );
               })}
-              {rosterRows.length === 0 && (
+              {!rosterRows.some(matchesTeam) && (
                 <tr><td colSpan={3} className="comp-empty">{tr({ zh: '暂无数据', en: 'No data'
                 })}</td></tr>
               )}
@@ -3659,6 +3669,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
         )}
       </table>
     </div>
+    </>
   );
 }
 

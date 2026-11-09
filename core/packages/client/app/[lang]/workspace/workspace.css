@@ -279,6 +279,10 @@
 .workspace-dialog-body { padding: 24px; }
 .workspace-dialog-body .staff-panel { margin: 0; }
 .workspace-dialog .staff-input, .workspace-dialog .date-input { min-height: 44px; font-size: 16px; }
+.staff-workspace .staff-input:is(textarea[name="progress"]) {
+  field-sizing: content;
+  min-height: calc(5lh + 20px);
+}
 .workspace-dialog .staff-field-date .date-input { width: 100%; }
 .workspace-dialog .staff-field-short[data-control="select"] { flex-basis: 8rem; width: 8rem; }
 .workspace-discard { margin: 20px 24px 0; padding: 16px; border: 1px solid var(--border-strong); border-radius: 8px; }

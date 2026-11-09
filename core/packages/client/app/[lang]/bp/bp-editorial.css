@@ -321,3 +321,132 @@
   .bp-editorial .bp-roadmap-composition .bp-visual { grid-template-columns: 1fr 1fr; }
   .bp-editorial .bp-appendix .bp-detail { break-inside: auto; }
 }
+
+/* Screen reading scale. Keep the existing PDF layout and meeting-notes page independent. */
+@media screen {
+  .bp-page.bp-editorial { font-size: 18px; line-height: 1.75; }
+  .bp-page.bp-editorial .overview-wrap { width: min(1120px, calc(100% - 64px)); }
+  .bp-page.bp-editorial .overview-section { padding-block: 48px; }
+  .bp-page.bp-editorial h2 { max-width: 900px; font-size: clamp(28px, 3vw, 36px); line-height: 1.4; letter-spacing: -.025em; margin-bottom: 20px; }
+  .bp-page.bp-editorial h3 { font-size: 22px; line-height: 1.5; letter-spacing: -.015em; }
+  .bp-page.bp-editorial p { font-size: 18px; line-height: 1.75; }
+  .bp-page.bp-editorial :is(.overview-intro, .overview-lead) { max-width: 800px; }
+  .bp-page.bp-editorial :is(
+    summary, figcaption, .overview-text-link, .overview-primary,
+    .bp-source-links a, .bp-market-source a, .bp-toc a, .overview-footer a, .overview-small a,
+    .bp-product-preview figcaption a, .overview-kicker, .bp-market-label, .bp-market-status,
+    .bp-stream-status, .bp-mini-loop, .bp-margin-label, .bp-subscription-tag,
+    .bp-founder-credentials span, .bp-certificate > span, .bp-visual-tag,
+    .bp-preview-toolbar, .bp-preview-toolbar > span, .bp-product-preview figcaption strong,
+    .bp-atlas-heading, .bp-atlas-heading > span, .bp-recon-sequence > div,
+    .bp-illustration-label, .bp-product-chapter > span, .bp-event-inputs span,
+    .bp-event-calculation > div > span, .overview-cost-list span, .bp-milestone-number span
+  ) { font-size: 16px; line-height: 1.65; }
+  .bp-page.bp-editorial .overview-action { font-size: 16px; line-height: 1.65; }
+  .bp-page.bp-editorial :is(.overview-small, .bp-market-source, .bp-executive-core p, .bp-executive-tile p, .bp-executive-milestone p, .bp-product-preview figcaption p) { font-size: 16px; line-height: 1.75; }
+  .bp-page.bp-editorial :is(.overview-cost-list strong, .bp-evidence-notes strong, .bp-backlog > strong, .bp-subscriptions li) { font-size: 18px; line-height: 1.75; }
+  .bp-page.bp-editorial :is(.overview-summary strong, .overview-summary > div > span:not(.bp-stat-number)) { font-size: 16px; line-height: 1.65; }
+  .bp-page.bp-editorial :is(.overview-brand, .overview-footer > strong) { font-size: 22px; }
+  .bp-page.bp-editorial .overview-brand span { font-size: 14px; letter-spacing: .06em; }
+  .bp-page.bp-editorial .overview-nav { min-height: 88px; }
+  .bp-page.bp-editorial .bp-market-opening { padding-block: 32px; }
+  .bp-page.bp-editorial .bp-market-heading { grid-template-columns: 1.15fr 1fr; gap: 36px; margin-bottom: 32px; }
+  .bp-page.bp-editorial .bp-market-opening h1 { font-size: clamp(32px, 3.4vw, 44px); line-height: 1.3; letter-spacing: -.035em; margin-bottom: 20px; }
+  .bp-page.bp-editorial .bp-market-heading .overview-lead { font-size: 18px; line-height: 1.75; }
+  .bp-page.bp-editorial .bp-market-cards { gap: 20px; }
+  .bp-page.bp-editorial .bp-market-cards > article { padding: 24px; }
+  .bp-page.bp-editorial .bp-market-cards strong { font-size: 44px; line-height: 1.2; }
+  .bp-page.bp-editorial .bp-market-source { margin-top: 18px; max-width: none; }
+  .bp-page.bp-editorial .overview-summary { padding-block: 24px 32px; gap: 24px; }
+  .bp-page.bp-editorial .overview-summary .bp-stat-number { font-size: 40px; }
+  .bp-page.bp-editorial .bp-toc { width: 100%; gap: 28px; padding: 14px 24px; }
+  .bp-page.bp-editorial :is(.bp-rival-grid, .bp-moat-grid, .overview-product-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-block: 28px; }
+  .bp-page.bp-editorial :is(.bp-rival, .bp-moat-grid article, .overview-product, .bp-streams > article, .overview-cost-grid > div, .bp-executive-bento > div) { padding: 28px; }
+  .bp-page.bp-editorial .bp-executive-bento { grid-template-columns: 1.15fr 1fr 1fr; gap: 20px; }
+  .bp-page.bp-editorial .bp-executive-core h3 { max-width: none; font-size: 26px; }
+  .bp-page.bp-editorial .bp-moat-grid article > p { min-height: 0; }
+  .bp-page.bp-editorial :is(.bp-rival-mark, .overview-product > svg, .bp-moat-grid .bp-icon) { margin-bottom: 16px; }
+  .bp-page.bp-editorial .bp-detail { margin-top: 16px; }
+  .bp-page.bp-editorial .bp-detail summary { padding-block: 18px; }
+  .bp-page.bp-editorial .bp-detail-columns { gap: 24px 32px; }
+  .bp-page.bp-editorial .bp-product-story { margin-block: 32px; }
+  .bp-page.bp-editorial .bp-product-chapters { gap: 24px; margin-top: 24px; }
+  .bp-page.bp-editorial .bp-product-chapter h3 { font-size: 24px; margin-block: 12px; }
+  .bp-page.bp-editorial .bp-preview-toolbar { flex-wrap: wrap; gap: 12px; }
+  .bp-page.bp-editorial .bp-product-preview figcaption { align-items: flex-start; gap: 16px; }
+  .bp-page.bp-editorial .overview-founder { grid-template-columns: 1.2fr 1fr; gap: 32px; }
+  .bp-page.bp-editorial .bp-founder-evidence { grid-template-columns: .85fr 1fr 1fr; gap: 24px; }
+  .bp-page.bp-editorial .bp-team-visual { grid-column: auto; }
+  .bp-page.bp-editorial .bp-stream-status { margin-bottom: 20px; }
+  .bp-page.bp-editorial .bp-streams { gap: 24px; margin-block: 28px; }
+  .bp-page.bp-editorial #bp-cooperation .bp-streams > article { display: grid; grid-template-columns: minmax(200px, .8fr) minmax(0, 1.6fr); align-items: start; column-gap: 32px; }
+  .bp-page.bp-editorial #bp-cooperation .bp-streams { grid-template-columns: 1fr; }
+  .bp-page.bp-editorial #bp-cooperation .bp-stream-status { grid-column: 1; margin: 0 0 12px; }
+  .bp-page.bp-editorial #bp-cooperation .bp-streams > article > svg { grid-column: 1; grid-row: 2; }
+  .bp-page.bp-editorial #bp-cooperation .bp-streams h3 { grid-column: 1; grid-row: 2; margin: 0; padding-left: 46px; }
+  .bp-page.bp-editorial #bp-cooperation .bp-streams p { grid-column: 2; grid-row: 1 / span 2; }
+  .bp-page.bp-editorial #bp-cooperation .overview-text-link { grid-column: 2; }
+  .bp-page.bp-editorial #bp-cooperation .bp-cooperation-detail { grid-column: 2; margin-top: 16px; }
+  .bp-page.bp-editorial .bp-roadmap-composition { grid-template-columns: minmax(240px, .75fr) minmax(0, 1.25fr); gap: 24px; }
+  .bp-page.bp-editorial .bp-roadmap-composition .bp-visual { gap: 20px; }
+  .bp-page.bp-editorial .bp-visual-top { margin-bottom: 12px; }
+  .bp-page.bp-editorial .bp-event-inputs strong { font-size: 44px; }
+  .bp-page.bp-editorial .bp-event-calculation > strong { font-size: 56px; }
+  .bp-page.bp-editorial .overview-advantage-grid > article { padding-block: 16px; }
+  .bp-page.bp-editorial .overview-review { padding: 28px; }
+  .bp-page.bp-editorial .bp-source-links { gap: 8px 24px; }
+  .bp-page.bp-editorial .bp-source-links a { padding-block: 10px; overflow-wrap: anywhere; }
+  .bp-page.bp-editorial :is(.bp-market-heading, .bp-executive-bento, .bp-founder-evidence, .bp-streams, .bp-roadmap-composition, .bp-event-inputs) > * { min-width: 0; }
+}
+
+@media screen and (min-width: 960px) and (prefers-reduced-motion: no-preference) {
+  .bp-page.bp-editorial.bp-motion .bp-product-story { grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr); gap: 36px; }
+  .bp-page.bp-editorial.bp-motion .bp-product-chapters { margin: 0; }
+  .bp-page.bp-editorial.bp-motion .bp-product-chapter { min-height: 240px; padding-block: 24px; }
+  .bp-page.bp-editorial.bp-motion .bp-product-chapter[data-active='false'] { opacity: 1; }
+}
+
+@media screen and (max-width: 960px) {
+  .bp-page.bp-editorial .bp-streams { grid-template-columns: 1fr; }
+  .bp-page.bp-editorial .bp-founder-evidence { grid-template-columns: 1fr 1fr; }
+  .bp-page.bp-editorial .bp-team-visual { grid-column: 1 / -1; }
+  .bp-page.bp-editorial .bp-roadmap-composition { grid-template-columns: 1fr; }
+  .bp-page.bp-editorial .bp-roadmap-art { max-width: 620px; margin-inline: auto; }
+}
+
+@media screen and (max-width: 760px) {
+  .bp-page.bp-editorial .overview-wrap { width: calc(100% - 40px); }
+  .bp-page.bp-editorial .overview-section { padding-block: 36px; }
+  .bp-page.bp-editorial h2 { font-size: 28px; }
+  .bp-page.bp-editorial h3 { font-size: 22px; }
+  .bp-page.bp-editorial .overview-nav { min-height: 76px; }
+  .bp-page.bp-editorial .overview-brand { font-size: 20px; }
+  .bp-page.bp-editorial .overview-brand span { font-size: 12px; }
+  .bp-page.bp-editorial .overview-action { font-size: 0; }
+  .bp-page.bp-editorial .bp-market-opening { padding-block: 24px; }
+  .bp-page.bp-editorial .bp-market-heading { grid-template-columns: 1fr; gap: 24px; }
+  .bp-page.bp-editorial .bp-market-opening h1 { font-size: 32px; }
+  .bp-page.bp-editorial .bp-market-cards > article { grid-template-columns: 1fr; padding: 24px; gap: 8px; }
+  .bp-page.bp-editorial .bp-market-status { grid-column: 1; grid-row: auto; }
+  .bp-page.bp-editorial .bp-market-cards strong { grid-row: auto; }
+  .bp-page.bp-editorial .overview-summary { grid-template-columns: 1fr; gap: 24px; text-align: left; }
+  .bp-page.bp-editorial .overview-summary > div { display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px; }
+  .bp-page.bp-editorial .overview-summary .bp-stat-number { grid-row: 1 / span 2; align-self: center; font-size: 36px; }
+  .bp-page.bp-editorial .overview-summary .overview-text-link { grid-column: 2; justify-content: flex-start; }
+  .bp-page.bp-editorial .bp-toc { width: 100%; gap: 24px; padding: 12px 20px; }
+  .bp-page.bp-editorial :is(.bp-rival-grid, .bp-moat-grid, .overview-product-grid, .overview-founder, .bp-founder-evidence, .bp-executive-bento) { grid-template-columns: 1fr; gap: 20px; }
+  .bp-page.bp-editorial .bp-executive-milestone { grid-column: 1; }
+  .bp-page.bp-editorial .bp-executive-core { min-height: 0; gap: 12px; }
+  .bp-page.bp-editorial :is(.bp-rival, .bp-moat-grid article, .overview-product, .bp-streams > article, .overview-cost-grid > div, .bp-executive-bento > div, .overview-review, .bp-event-calculation, .bp-founder-art) { padding: 24px; }
+  .bp-page.bp-editorial .bp-team-visual { grid-column: auto; }
+  .bp-page.bp-editorial .bp-product-preview figcaption { flex-direction: column; }
+  .bp-page.bp-editorial #bp-cooperation .bp-streams > article { display: flex; gap: 0; }
+  .bp-page.bp-editorial #bp-cooperation .bp-streams h3 { margin-block: 16px 12px; padding-left: 0; }
+  .bp-page.bp-editorial #bp-cooperation .bp-stream-status { margin-bottom: 16px; }
+  .bp-page.bp-editorial .bp-roadmap-composition .bp-visual { grid-template-columns: 1fr; }
+  .bp-page.bp-editorial .bp-event-inputs { grid-template-columns: 1fr; gap: 12px; }
+  .bp-page.bp-editorial .bp-event-inputs article { display: grid; grid-template-columns: 28px 72px 1fr; align-items: center; gap: 16px; padding: 20px; }
+  .bp-page.bp-editorial .bp-event-inputs strong { font-size: 36px; }
+  .bp-page.bp-editorial .bp-event-calculation > strong { font-size: 44px; }
+  .bp-page.bp-editorial .overview-review { flex-direction: column; gap: 16px; }
+}

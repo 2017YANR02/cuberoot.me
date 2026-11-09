@@ -76,6 +76,26 @@ afterEach(async () => {
   vi.restoreAllMocks();
 });
 
+it('does not remeasure scrolling menu columns but still follows page scroll and resize', () => {
+  act(() => root.render(createElement(PuzzlePicker, { groups, selectedEvent: 'nxn', onSelect: vi.fn() })));
+  act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')!.click());
+  act(() => host.querySelector<HTMLButtonElement>('.pp-item[aria-haspopup="menu"]')!.click());
+  const panel = host.querySelector<HTMLElement>('.pp-popup')!;
+  const measure = vi.spyOn(panel, 'getBoundingClientRect');
+  const columns = [...panel.querySelectorAll<HTMLElement>('.pp-cascade-column')];
+  expect(columns).toHaveLength(2);
+  for (const scroller of [panel, ...columns]) {
+    scroller.scrollTop = 120;
+    act(() => scroller.dispatchEvent(new Event('scroll')));
+    expect(scroller.scrollTop).toBe(120);
+  }
+  expect(measure).not.toHaveBeenCalled();
+  act(() => host.dispatchEvent(new Event('scroll')));
+  expect(measure).toHaveBeenCalledTimes(1);
+  act(() => window.dispatchEvent(new Event('resize')));
+  expect(measure).toHaveBeenCalledTimes(2);
+});
+
 it('uses the shared submenu for families while WCA choices remain directly selectable', () => {
   const onSelect = vi.fn();
   act(() => root.render(createElement(PuzzlePicker, { groups, selectedEvent: 'nxn', onSelect })));

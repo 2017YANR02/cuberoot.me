@@ -1,5 +1,8 @@
 /* /forum/t/[id] — thread page-specific layout. */
 
+.forum-thread-navigation { margin-bottom: 16px; }
+.forum-thread-navigation .forum-crumbs { margin: 0; min-width: 0; }
+
 .forum-thread-head { margin-bottom: 0.8rem; }
 
 .forum-thread-heading {
@@ -47,13 +50,6 @@
 .forum-review-banner.is-pending { color: var(--signal-warning); }
 .forum-review-banner.is-rejected { color: var(--destructive); }
 .forum-review-banner-actions { display: inline-flex; gap: 4px; }
-
-/* 驳回原因(楼内,仅作者/管理员可见) */
-.forum-review-note {
-  font-size: 0.8rem;
-  color: var(--destructive);
-  margin-bottom: 8px;
-}
 
 .forum-thread-headmeta {
   display: flex;

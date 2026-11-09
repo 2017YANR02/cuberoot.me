@@ -17,7 +17,7 @@ import '../_wca_stats_extra.css';
 import { WcaStatsTable, WcaStatsTableSection } from '@/components/wca-stats/WcaStatsTable';
 import '@/components/wca-stats/wca-stats-controls.css';
 import { tr } from '@/i18n/tr';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 const EVENTS = [
   '333','222','444','555','666','777',
@@ -130,8 +130,7 @@ function CohortRanksPageInner() {
       </div>
 
       <WcaStatsTableSection>
-        {loading && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...'
-        })}</LoadingIndicator></div>}
+        {loading && <ContentSkeleton variant="table" />}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {data && !loading && (
           <>
@@ -184,7 +183,7 @@ function CohortRanksPageInner() {
 
 export default function CohortRanksPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 16, color: 'var(--muted)' }}><LoadingIndicator /></div>}>
+    <Suspense fallback={<ContentSkeleton variant="table" />}>
       <CohortRanksPageInner />
     </Suspense>
   );

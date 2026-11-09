@@ -2,6 +2,13 @@ import groovy.json.JsonSlurper
 
 apply plugin: 'com.android.application'
 
+gradle.taskGraph.whenReady { graph ->
+    if (graph.allTasks.any { it.name.toLowerCase().contains('release') }
+        && file('src/main/assets/public/push-acceptance.json').exists()) {
+        throw new GradleException('Push acceptance assets cannot be built as Release; restore normal Capacitor sync')
+    }
+}
+
 // Native-only selection: changing the website or Vite environment cannot change billing.
 def mobileDistribution = providers.gradleProperty('mobileDistribution').getOrElse('play')
 if (!(mobileDistribution in ['play', 'direct'])) {
@@ -121,13 +128,7 @@ dependencies {
 apply from: 'capacitor.build.gradle'
 
 // Vendor credentials belong to the matching Android package, never share debug/release IDs.
-def pushVendors = [
-    [artifact: 'com.assist-v3:oppo:3.6.0', keys: ['OPPO_APP_KEY', 'OPPO_APP_SECRET'], extra: ['com.google.code.gson:gson:2.13.2', 'commons-codec:commons-codec:1.18.0', 'androidx.annotation:annotation:1.9.1']],
-    [artifact: 'com.assist-v3:vivo:3.2.0', keys: ['VIVO_APP_ID', 'VIVO_APP_KEY']],
-    [artifact: 'com.getui.opt:xmp:3.3.7', keys: ['XIAOMI_APP_ID', 'XIAOMI_APP_KEY']],
-    [artifact: 'com.getui.opt:mzp:3.3.2', keys: ['MEIZU_APP_ID', 'MEIZU_APP_KEY']],
-    [artifact: 'com.getui.opt:honor:3.6.0', keys: ['HONOR_APP_ID'], extra: ['com.hihonor.mcs:push:7.0.61.303']],
-]
+def pushVendors = new JsonSlurper().parse(file('../push-vendors.json'))
 ['debug', 'release'].each { variant ->
     def prefix = variant == 'debug' ? 'GETUI_DEBUG_' : 'GETUI_'
     pushVendors.each { vendor ->

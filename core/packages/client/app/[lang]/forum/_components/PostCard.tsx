@@ -5,17 +5,17 @@
 // (react / quote / edit / delete).
 
 import { useState } from 'react';
-import { Link2, Quote, Pencil, Trash2, Check, Flag, ShieldCheck, Hourglass, CircleX } from '@app-foundation/icons/lucide';
+import { Link2, Quote, Pencil, Trash2, Check, Flag, ShieldCheck, Hourglass, CircleX, UserRoundX, UserRoundCheck } from '@app-foundation/icons/lucide';
 import PersonLink from '@/components/PersonLink';
 import { tr, useLang } from '@/i18n/tr';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { resolveAccountAvatar } from '@/lib/account-avatar';
-import { renderArticleMarkdown } from '@/lib/article-markdown';
 import type { ForumPost, PostAuthor, ReactionKind } from '@/lib/forum-api';
 import { formatRelativeTime, formatJoinedDate, formatCount } from '@/lib/forum-format';
 import { ReactionBar } from './ReactionBar';
-import { ForumVideoPlayer } from '@/components/forum/ForumVideoPlayer';
+import { ForumPostBody, forumPostPlaceholder } from '@/components/forum/ForumPostBody';
 import { UserContactLink } from '@/components/UserIdLabel';
+import { ForumIconButton } from '@/components/forum/ForumIconButton';
 
 export function PostCard({
   post, author, myKind, permalink, canEdit, canDelete, canQuote, canReport,
@@ -56,24 +56,12 @@ export function PostCard({
     } catch { /* clipboard unavailable — ignore */ }
   };
 
-  if (post.isDeleted) {
+  const placeholder = forumPostPlaceholder(post);
+  if (placeholder) {
     return (
       <article className="forum-post is-deleted" id={`post-${post.id}`}>
         <div className="forum-post-deleted">
-          #{post.postNo} {tr({ zh: '该帖已删除', en: 'This post was deleted' })}
-        </div>
-      </article>
-    );
-  }
-
-  // 待审/驳回楼层:非作者非管理员拿到的是掩码空内容 → 只render占位,楼号不塌
-  if (post.status !== 'approved' && !post.content && (post.videos ?? []).length === 0) {
-    return (
-      <article className="forum-post is-deleted" id={`post-${post.id}`}>
-        <div className="forum-post-deleted">
-          #{post.postNo} {post.status === 'pending'
-            ? tr({ zh: '该帖待审核', en: 'This post is awaiting review' })
-            : tr({ zh: '该帖已删除', en: 'This post was deleted' })}
+          #{post.postNo} {placeholder}
         </div>
       </article>
     );
@@ -96,14 +84,6 @@ export function PostCard({
             </PersonLink>
           ) : (
             <span className="forum-post-author-name">{name}</span>
-          )}
-          {onToggleBan && author?.userId && !author.isAdmin && (
-            <button type="button" className="forum-post-action is-danger"
-              onClick={() => onToggleBan(author.userId!, !author.forumBanned)}>
-              {author.forumBanned
-                ? tr({ zh: '解除拉黑', en: 'Unban user' })
-                : tr({ zh: '拉黑', en: 'Ban user' })}
-            </button>
           )}
           {author?.isAdmin && (
             <span className="forum-staff-badge">
@@ -154,17 +134,7 @@ export function PostCard({
             #{post.postNo}
           </button>
         </div>
-        {bodyOverride ?? (
-        <div className="forum-post-body">
-          {post.status === 'rejected' && post.reviewNote && (
-            <div className="forum-review-note">
-              {tr({ zh: '驳回原因:', en: 'Reason: ' })}{post.reviewNote}
-            </div>
-          )}
-          {post.content && renderArticleMarkdown(post.content)}
-          {(post.videos ?? []).map((video) => <ForumVideoPlayer key={video.id} video={video} />)}
-        </div>
-        )}
+        {bodyOverride ?? <ForumPostBody post={post} />}
         {!bodyOverride && (
         <div className="forum-post-footer">
           {published && (
@@ -191,29 +161,25 @@ export function PostCard({
               </button>
             </>
           )}
+          {onToggleBan && author?.userId && !author.isAdmin && (
+            <ForumIconButton
+              icon={author.forumBanned ? UserRoundCheck : UserRoundX}
+              label={author.forumBanned ? tr({ zh: '解除拉黑', en: 'Unban user' }) : tr({ zh: '拉黑', en: 'Ban user' })}
+              className="is-danger"
+              onClick={() => onToggleBan(author.userId!, !author.forumBanned)}
+            />
+          )}
           {published && canReport && (
-            <button
-              type="button" className="forum-post-action"
-              title={tr({ zh: '向管理员举报此帖', en: 'Report this post to moderators' })}
-              onClick={() => onReport(post)}
-            >
-              <Flag size={13} aria-hidden="true" /> {tr({ zh: '举报', en: 'Report' })}
-            </button>
+            <ForumIconButton icon={Flag} label={tr({ zh: '举报', en: 'Report post' })} onClick={() => onReport(post)} />
           )}
           {published && canQuote && (
-            <button type="button" className="forum-post-action" onClick={() => onQuote(post)}>
-              <Quote size={13} aria-hidden="true" /> {tr({ zh: '引用', en: 'Quote' })}
-            </button>
+            <ForumIconButton icon={Quote} label={tr({ zh: '引用', en: 'Quote post' })} onClick={() => onQuote(post)} />
           )}
           {canEdit && (
-            <button type="button" className="forum-post-action" onClick={() => onEdit(post)}>
-              <Pencil size={13} aria-hidden="true" /> {tr({ zh: '编辑', en: 'Edit' })}
-            </button>
+            <ForumIconButton icon={Pencil} label={tr({ zh: '编辑', en: 'Edit post' })} onClick={() => onEdit(post)} />
           )}
           {canDelete && (
-            <button type="button" className="forum-post-action is-danger" onClick={() => onDelete(post)}>
-              <Trash2 size={13} aria-hidden="true" /> {tr({ zh: '删除', en: 'Delete' })}
-            </button>
+            <ForumIconButton icon={Trash2} label={tr({ zh: '删除', en: 'Delete post' })} className="is-danger" onClick={() => onDelete(post)} />
           )}
         </div>
         )}

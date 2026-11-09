@@ -1,29 +1,17 @@
 'use client';
 
-// /forum — index: category groups of subforums + latest activity + stats.
-// Structure modeled on classic forum landing (speedsolving-style taxonomy).
-
 import { useEffect, useState } from 'react';
 import Link from '@/components/AppLink';
-import { tr, T, useLang } from '@/i18n/tr';
-import { displayCuberName } from '@/lib/cuber-name-display';
-import { UserContactLink } from '@/components/UserIdLabel';
-import {
-  fetchForumIndex, fetchLatestThreads,
-  type ForumIndexData, type LatestThread,
-} from '@/lib/forum-api';
+import { useT } from '@/hooks/useT';
+import { fetchForumIndex, type ForumIndexData } from '@/lib/forum-api';
 import { forumIcon } from './_lib/forum-icons';
-import { formatRelativeTime, formatCount } from '@/lib/forum-format';
 import { ForumHeader } from './_components/ForumHeader';
-import { ThreadRowList } from './_components/ThreadRowList';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 import './forum.css';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function ForumIndexPage() {
-  const lang = useLang();
-  const zh = lang === 'zh';
+  const t = useT();
   const [data, setData] = useState<ForumIndexData | null>(null);
-  const [latest, setLatest] = useState<LatestThread[]>([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -31,99 +19,44 @@ export default function ForumIndexPage() {
     fetchForumIndex()
       .then(d => { if (!cancelled) setData(d); })
       .catch(e => { if (!cancelled) setError((e as Error).message); });
-    fetchLatestThreads(12)
-      .then(d => { if (!cancelled) setLatest(d.threads); })
-      .catch(() => { /* latest block is optional */ });
     return () => { cancelled = true; };
   }, []);
 
   return (
-    <div className="forum-page">
+    <div className="forum-page forum-directory-page">
       <ForumHeader activeView="boards" />
 
       {error && <div className="forum-error">{error}</div>}
-      {!data && !error && <div className="forum-loading"><LoadingIndicator><T zh="加载中…" en="Loading…" /></LoadingIndicator></div>}
+      {!data && !error && <ContentSkeleton variant="list" rows={6} />}
 
       {data && (
-        <div className="forum-index-layout">
-          <div className="forum-index-main">
-            {data.categories.map(cat => {
-              // adminOnly only restricts POSTING — every forum stays readable.
-              const forums = cat.forums;
-              if (forums.length === 0) return null;
-              return (
-                <section key={cat.id} className="forum-cat">
-                  <h2 className="forum-cat-title">{zh ? cat.nameZh : cat.nameEn}</h2>
-                  <div className="forum-cat-forums">
-                    {forums.map(f => {
-                      const Icon = forumIcon(f.icon);
-                      return (
-                        <div key={f.id} className="forum-forum-row">
-                          <Icon size={22} strokeWidth={1.5} className="forum-forum-icon" aria-hidden="true" />
-                          <div className="forum-forum-main">
-                            <Link href={`/forum/f/${f.slug}`} prefetch={false} className="forum-forum-name">
-                              {zh ? f.nameZh : f.nameEn}
-                            </Link>
-                            <div className="forum-forum-desc">{zh ? f.descZh : f.descEn}</div>
-                          </div>
-                          <div className="forum-forum-counts">
-                            <span>{tr({ zh: '主题 ', en: 'Threads ' })}{formatCount(f.threadCount, lang)}</span>
-                            <span>{tr({ zh: '帖子 ', en: 'Posts ' })}{formatCount(f.postCount, lang)}</span>
-                          </div>
-                          <div className="forum-forum-last">
-                            {f.lastThread ? (
-                              <>
-                                <Link
-                                  href={`/forum/t/${f.lastThread.id}`}
-                                  prefetch={false}
-                                  className="forum-forum-last-title"
-                                  title={f.lastThread.title}
-                                >
-                                  {f.lastThread.title}
-                                </Link>
-                                <span className="forum-forum-last-sub">
-                                  <UserContactLink userId={f.lastThread.lastPostAuthorUserId}>{displayCuberName(f.lastThread.lastPostAuthorName, zh)}</UserContactLink>
-                                  {' '}
-                                  {formatRelativeTime(f.lastThread.lastPostAt, lang)}
-                                </span>
-                              </>
-                            ) : (
-                              <span className="forum-forum-last-sub"><T zh="暂无主题" en="No threads yet" /></span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-              );
-            })}
-          </div>
-
-          <aside className="forum-index-side">
-            <section className="forum-side-block">
-              <h2 className="forum-cat-title"><T zh="最新活跃" en="Latest activity" /></h2>
-              {latest.length > 0
-                ? <ThreadRowList threads={latest} />
-                : <div className="forum-forum-last-sub"><T zh="还没有动态" en="Nothing yet" /></div>}
-            </section>
-            <section className="forum-side-block forum-stats-block">
-              <h2 className="forum-cat-title"><T zh="论坛统计" en="Forum statistics" /></h2>
-              <dl className="forum-stats">
-                <div><dt><T zh="主题" en="Threads" /></dt><dd>{formatCount(data.stats.threads, lang)}</dd></div>
-                <div><dt><T zh="帖子" en="Posts" /></dt><dd>{formatCount(data.stats.posts, lang)}</dd></div>
-                <div><dt><T zh="成员" en="Members" /></dt><dd>{formatCount(data.stats.members, lang)}</dd></div>
-                {data.stats.latestMemberName && (
-                  <div>
-                    <dt><T zh="最新成员" en="Newest member" /></dt>
-                    <dd>
-                      <UserContactLink userId={data.stats.latestMemberUserId}>{displayCuberName(data.stats.latestMemberName, zh)}</UserContactLink>
-                    </dd>
-                  </div>
-                )}
-              </dl>
-            </section>
-          </aside>
+        <div className="forum-directory">
+          {data.categories.map(cat => {
+            // adminOnly restricts posting, not reading.
+            if (cat.forums.length === 0) return null;
+            return (
+              <section key={cat.id} className="forum-cat" aria-labelledby={`forum-category-${cat.id}`}>
+                <h2 id={`forum-category-${cat.id}`} className="forum-cat-title">
+                  {t(cat.nameZh, cat.nameEn)}
+                </h2>
+                <div className="forum-cat-forums">
+                  {cat.forums.map(f => {
+                    const Icon = forumIcon(f.icon);
+                    const description = t(f.descZh, f.descEn);
+                    return (
+                      <Link key={f.id} href={`/forum/f/${f.slug}`} prefetch={false} className="forum-forum-row">
+                        <Icon size={22} strokeWidth={1.5} className="forum-forum-icon" aria-hidden="true" />
+                        <span className="forum-forum-main">
+                          <span className="forum-forum-name">{t(f.nameZh, f.nameEn)}</span>
+                          {description && <span className="forum-forum-desc">{description}</span>}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
         </div>
       )}
     </div>

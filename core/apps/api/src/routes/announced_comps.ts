@@ -14,6 +14,7 @@
  * 可读快照,独立运行(不受 MONITORS_ENABLED 门控,休眠监控时本端点照常工作)。
  */
 import { Hono } from 'hono';
+import { observeCompetitionAnnouncements } from '../utils/competition_notifications.js';
 
 export const announcedCompsRoutes = new Hono();
 
@@ -187,9 +188,10 @@ async function fetchOnce(): Promise<void> {
   const cutoff = Date.now() - WINDOW_MS;
   const out: AnnouncedComp[] = [];
   const seen = new Set<string>();
+  let complete = false;
   for (let page = 1; page <= MAX_PAGES; page++) {
     const batch = await fetchPage(page);
-    if (batch.length === 0) break;
+    if (batch.length === 0) { complete = true; break; }
     let passedCutoff = false;
     for (const c of batch) {
       const annMs = c.announced_at ? Date.parse(c.announced_at) : NaN;
@@ -204,12 +206,15 @@ async function fetchOnce(): Promise<void> {
       out.push(mapComp(c));
     }
     // sort=-announced_at 降序:一旦本页出现窗口外的,或不足一页,后续都在窗口外,停。
-    if (passedCutoff || batch.length < PER_PAGE) break;
+    if (passedCutoff || batch.length < PER_PAGE) { complete = true; break; }
     await sleep(500);
   }
+  if (!complete) throw new Error('Announcement pagination did not cover the full window');
   out.sort((a, b) => b.announced_at.localeCompare(a.announced_at));
   await attachCnZhNames(out); // CN 比赛实时挂 cubing.com 中文名(失败静默,不阻断快照)
   snapshot = { fetchedAt: Date.now(), comps: out };
+  // Keep the public snapshot available even if the inbox write needs a retry.
+  await observeCompetitionAnnouncements(out);
 }
 
 function refresh(): Promise<void> {

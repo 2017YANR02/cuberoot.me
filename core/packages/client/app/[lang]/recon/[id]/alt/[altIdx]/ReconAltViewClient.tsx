@@ -26,7 +26,7 @@ import { parseReconId } from '@/lib/recon-seo';
 import '../../../recon.css';
 import '../../../submit/recon_submit.css';
 import '../../recon_detail.css';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 export default function ReconAltViewClient() {
   const params = useParams<{ id: string; altIdx: string }>();
@@ -62,7 +62,7 @@ export default function ReconAltViewClient() {
   );
 
   if (loading) {
-    return <div className="recon-page"><div className="recon-loading"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></div></div>;
+    return <div className="recon-page"><ContentSkeleton variant="article" media aspectRatio="16 / 9" /></div>;
   }
   if (error || !parent) {
     return (

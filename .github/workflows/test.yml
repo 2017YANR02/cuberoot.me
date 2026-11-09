@@ -4,6 +4,12 @@ name: Test
 
 on:
   workflow_dispatch:
+    inputs:
+      scope:
+        description: 'Core integration rerun excludes client shards and installed-client builds'
+        type: choice
+        default: all
+        options: [all, core]
   # Weekly full run catches runner/toolchain drift that path filters cannot see.
   schedule:
     - cron: '17 9 * * 1'
@@ -62,10 +68,14 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          sparse-checkout-cone-mode: false
           sparse-checkout: |
-            core/scripts/android-release
-            core/packages/shared/src
-            .github/workflows
+            /.node-version
+            /core/scripts/android-release/
+            /core/packages/shared/src/
+            /core/apps/mobile/scripts/android-push-config.ts
+            /core/apps/mobile/android/push-vendors.json
+            /.github/workflows/
       - uses: actions/setup-node@v6
         with:
           node-version-file: .node-version
@@ -632,7 +642,7 @@ jobs:
   client-tests:
     name: Client tests (${{ matrix.shard }}/2)
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.client == 'true' }}
+    if: ${{ inputs.scope != 'core' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.client == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -759,7 +769,7 @@ jobs:
   # Capacitor/Gradle 链。Tauri 的双桌面 native backend 由独立矩阵编译。
   mobile:
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.mobile == 'true' }}
+    if: ${{ inputs.scope != 'core' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.mobile == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -943,7 +953,7 @@ jobs:
   desktop-ui:
     name: Desktop UI
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.desktop == 'true' }}
+    if: ${{ inputs.scope != 'core' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.desktop == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -982,7 +992,7 @@ jobs:
   desktop:
     name: Desktop (${{ matrix.os }})
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.desktop_native == 'true' }}
+    if: ${{ inputs.scope != 'core' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.desktop_native == 'true') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     strategy:
@@ -1046,7 +1056,7 @@ jobs:
   # 互抢 CPU；它与主 test job 并行，所以既保留精确回归，也缩短整条 workflow 墙钟。
   analyzer-worker:
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.analyzer == 'true' }}
+    if: ${{ inputs.scope != 'core' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.analyzer == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

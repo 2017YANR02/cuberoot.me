@@ -14,7 +14,7 @@ import RegionCountrySelect from './RegionCountrySelect';
 import { useCountries } from './useCountries';
 import { WcaStatsPageHeader } from './WcaStatsPageHeader';
 import '../../app/[lang]/wca/_wca_stats_extra.css';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
 
@@ -93,7 +93,7 @@ function PersonalRecordStreakPageInner() {
         />
       </div>
       <div className="wse-table-wrapper sticky-scroll">
-        {loading && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
+        {loading && <ContentSkeleton variant="table" />}
         {error && <div className="wse-state wse-state-error">{tr({ zh: '加载失败,请稍后重试', en: 'Failed to load. Please try again.' })}</div>}
         {data && !loading && !error && (
           <>
@@ -147,5 +147,5 @@ function PersonalRecordStreakPageInner() {
 }
 
 export default function PersonalRecordStreakPage() {
-  return <Suspense fallback={<LoadingIndicator />}><PersonalRecordStreakPageInner /></Suspense>;
+  return <Suspense fallback={<ContentSkeleton variant="table" />}><PersonalRecordStreakPageInner /></Suspense>;
 }

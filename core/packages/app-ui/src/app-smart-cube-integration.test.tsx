@@ -149,6 +149,39 @@ afterEach(async () => {
 });
 
 describe('installed App GAN lifecycle integration', () => {
+  it('opens notification destinations in the real Tools surface after auth, reuses the shell and ignores duplicate/foreign taps', async () => {
+    let loading = true;
+    let receive!: (value: import('@cuberoot/shared/notification-push').NotificationOpen) => void;
+    const tap = { kind: 'comp_announcement' as const, notificationId: '42', recipientUid: '7', link: '/zh/wca/comp/Test2026' };
+    const external = vi.fn(async () => undefined);
+    const notificationHost: InstalledAppHost = { ...host, openExternal: external,
+      useAuth: () => ({ ...host.useAuth('en'), loading, session: { token: 'local-fixture', user: {
+        uid: 7, wcaId: null, name: 'Test', avatar: '', avatarSource: 'auto', avatarPreset: null, isAdmin: false,
+      } } }),
+      addNotificationOpenListener: async listener => {
+        receive = listener; listener(tap);
+        return { remove: async () => undefined };
+      },
+    };
+    await act(async () => root.render(<App host={notificationHost} />));
+    expect(container.querySelector('iframe')).toBeNull();
+    loading = false;
+    await act(async () => root.render(<App host={notificationHost} />));
+    const first = container.querySelector<HTMLIFrameElement>('iframe')!;
+    expect(new URL(first.src).pathname).toBe('/wca/comp/Test2026');
+    expect(first.closest<HTMLElement>('.web-surface')?.hidden).toBe(false);
+    await act(async () => receive(tap));
+    expect(container.querySelector('iframe')).toBe(first);
+    await act(async () => receive({ ...tap, notificationId: '43', link: '/wca/comp/Next2026' }));
+    const second = container.querySelector<HTMLIFrameElement>('iframe')!;
+    expect(new URL(second.src).pathname).toBe('/wca/comp/Next2026');
+    expect(second).not.toBe(first);
+    await act(async () => receive({ ...tap, notificationId: '44', recipientUid: '8' }));
+    expect(container.querySelector('iframe')).toBe(second);
+    expect(external).not.toHaveBeenCalled();
+    expect(saved()).toHaveLength(0);
+  });
+
   it('keeps the selected content when changing source and opens recall in the shared training surface', async () => {
     const clickText = async (selector: string, text: string) => {
       const button = [...document.querySelectorAll<HTMLButtonElement>(selector)].find(node => node.textContent?.trim() === text)!;

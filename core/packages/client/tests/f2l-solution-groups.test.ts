@@ -43,6 +43,28 @@ describe('F2L standard insertion references', () => {
     expect(result.ungrouped).toEqual([0, 1]);
   });
 
+  it('merges H+ half-turn variants across prefixes, library choices and originals', async () => {
+    const file = await alignAlgFile({ puzzle: '3x3', set: 'f2l', cases, scrapedAt: '', source: '' });
+    const h = file.cases.find(c => c.name === 'H+')!;
+    const library = file.cases.map(c => isF2lStandard(c)
+      ? { ...c, algs: c.algs.map(rows => [...rows, ...rows]) } : c);
+    const rows = [
+      "L U L' U' L U2 L' U2 L U L' y2",
+      "L U L' U' L U2' L' U2' L U L' y2",
+    ].map(alg => ({ alg }));
+    const before = JSON.stringify({ library, rows });
+    const result = await groupF2lSolutions(library, commonCaseSetup('3x3', 'f2l', h, 2), rows, 2);
+    expect(result.ungrouped).toEqual([]);
+    expect(result.groups).toHaveLength(1);
+    expect(result.groups[0].sourceIndices).toEqual([0, 1]);
+    expect(result.groups[0].options).toEqual([{
+      alg: "U2' L U L' y2",
+      fullAlg: "L U L' U' L U2 L' U2' L U L' y2",
+      source: 'standard',
+    }]);
+    expect(JSON.stringify({ library, rows })).toBe(before);
+  });
+
   it.each([0, 1, 2, 3])('verifies every offered composition in orientation %i', async ori => {
     const setup = commonCaseSetup('3x3', 'f2l', w, ori);
     const result = await groupF2lSolutions(cases, setup, w.algs[ori], ori);
@@ -69,6 +91,10 @@ describe('F2L standard insertion references', () => {
       sources += rows.length;
       grouped += result.groups.reduce((n, g) => n + g.sourceIndices.length, 0);
       groups += result.groups.length;
+      for (const group of result.groups) {
+        const methods = group.options.map(choice => choice.alg.replace(/2'/g, '2'));
+        expect(new Set(methods).size, `${c.name}/${ori}: ${group.prefix}`).toBe(methods.length);
+      }
       for (const group of result.groups) for (const choice of group.options) {
         choices++;
         expect(f2lStateKey(solved.applyAlg(setup).applyAlg(choice.fullAlg)), `${c.name}/${ori}: ${choice.fullAlg}`)
@@ -77,7 +103,7 @@ describe('F2L standard insertion references', () => {
     }
     expect(slots).toBe(164);
     expect({ slots, sources, grouped, groups, choices }).toEqual({
-      slots: 164, sources: 570, grouped: 380, groups: 304, choices: 665,
+      slots: 164, sources: 570, grouped: 380, groups: 304, choices: 639,
     });
   });
 });

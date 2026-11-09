@@ -1,114 +1,37 @@
 'use client';
 
-import PageBackLink from '@/components/PageBackLink';
-/**
- * /mosaic-about — 魔方马赛克说明页
- */
 import Link from '@/components/AppLink';
-
-import './mosaic_about.css';
-import { useT } from "@/hooks/useT";
-
-interface StepProps { step: number; title: string; body: string; highlight?: boolean; }
-function Step({ step, title, body, highlight }: StepProps) {
-  return (
-    <div className={`moa-step${highlight ? ' is-highlight' : ''}`}>
-      <span className="moa-step-num">{step}</span>
-      <div>
-        <div className="moa-step-title">{title}</div>
-        <div className="moa-step-body">{body}</div>
-      </div>
-    </div>
-  );
-}
-function Arrow() { return <span className="moa-arrow" aria-hidden="true">↓</span>; }
+import MoreToggle from '@/components/MoreToggle';
+import PageHeading from '@/components/PageHeading';
+import { useT } from '@/hooks/useT';
+import '@/components/report-page.css';
 
 export default function MosaicAboutPage() {
   const t = useT();
-
-  return (
-    <div className="moa-page">
-      <div className="moa-header">
-        <PageBackLink fallback="/mosaic" className="moa-back" />
+  return <main className="report-page">
+    <header className="report-header">
+      <PageHeading backHref="/mosaic">{t('魔方拼画', 'Cube mosaics')}</PageHeading>
+      <p>{t('把照片转成魔方色块，预览效果并导出分块拼装图纸。', 'Turn a photo into cube colours, preview the mosaic and export a build guide.')}</p>
+      <div className="report-links"><Link href="/mosaic">{t('制作拼画', 'Create a mosaic')}</Link></div>
+    </header>
+    <h2>{t('先决定要用多少魔方', 'Start with your cube budget')}</h2>
+    <p>{t('例如用三阶拼 20 列 × 30 行，需要 600 个魔方，画面由 60 × 90 个色块组成。魔方数量决定能保留多少细节，原图像素再高也不能突破这个网格。', 'A 20-column × 30-row mosaic uses 600 3×3 cubes and produces a 60 × 90-sticker image. The cube count limits detail, regardless of the source photo’s resolution.')}</p>
+    <ol className="report-steps">
+      <li><strong>{t('裁剪主体、设置行列。', 'Crop the subject and set the grid. ')}</strong>{t('让人物或图案在有限网格里仍能辨认。', 'Keep the subject recognisable at the chosen size.')}</li>
+      <li><strong>{t('比较配色效果。', 'Compare colour treatments. ')}</strong>{t('选择渐变或抖色方案，再调整亮度、对比度与可用颜色。', 'Choose a gradient or dithering variant, then adjust brightness, contrast and available colours.')}</li>
+      <li><strong>{t('导出 PDF，按分块拼装。', 'Export a PDF and build block by block. ')}</strong>{t('图纸包含总览、位置和色块标记，可选黑白打印。', 'The guide includes an overview, block locations and colour labels, with a black-and-white print option.')}</li>
+    </ol>
+    <h2>{t('实物效果的边界', 'Before building')}</h2>
+    <ul className="report-limits">
+      <li>{t('屏幕颜色与贴纸、光线有差异，先用一小块实物核对配色。', 'Screen colours differ from stickers under real lighting. Check a small physical sample first.')}</li>
+      <li>{t('图纸给出可见面的色块目标，不提供每个魔方的转动解法，也不验证所有色块组合都能转出来。', 'The guide specifies the visible face colours. It does not supply turn sequences or validate that every sticker pattern is reachable.')}</li>
+    </ul>
+    <details className="report-details">
+      <MoreToggle as="summary">{t('配色方法与来源', 'Colour methods and source')}</MoreToggle>
+      <div className="report-detail-body">
+        <p>{t('渐变按明暗分配颜色；抖色用相邻色块的排列近似原图中不存在于调色板的颜色。两者的观感不同，应按实际观看距离选择。调色板可以修改颜色或禁用不需要的颜色。', 'Gradient mapping assigns colours by brightness. Dithering arranges neighbouring stickers to suggest colours outside the palette. Compare them at the intended viewing distance. Palette colours can be edited or disabled.')}</p>
+        <p>{t('PDF 可设置每块的魔方行列数、颜色字母和拼装方向。工具基于：', 'PDF options include block dimensions, colour letters and build direction. Based on: ')}<a href="https://github.com/Roman-/mosaic" target="_blank" rel="noopener noreferrer">Roman-/mosaic</a></p>
       </div>
-
-      <main className="moa-main">
-        <h1 className="moa-title">{t('魔方马赛克是什么', 'What the Mosaic tool does')}</h1>
-        <p className="moa-intro">
-          {t(
-            '/mosaic 把任意图片切成网格,每格挑一面魔方的图案(单面 9 块或拆 6 块),最后给你「需要多少个魔方 + 每个魔方应该转到什么状态」的完整方案。可以用来真的拼一面墙,也可以纯欣赏。',
-            '/mosaic turns any image into a grid where each cell is one face of a Rubik\'s cube (full 9-sticker face, or split 6-sticker variant). The output is "how many cubes you need + the exact pattern each cube has to show". You can use it to physically build a wall art, or just admire the rendering.'
-          )}
-        </p>
-
-        <h2 className="moa-section-title">{t('两种风格', 'Two styles')}</h2>
-        <p className="moa-section-intro">
-          {t(
-            '「整面」每个魔方贡献 1 面 9 块,简单但色彩离散度低。「拆面」把每个魔方拆成 6 个朝向单独贡献,色彩密度 ×6,但需要安排好朝向。可在 method-choose 阶段切换。',
-            'In "Whole-face" mode each cube contributes 9 stickers from one face — simpler but lower color density. "Split" mode breaks each cube into 6 orientations contributing separately, giving 6× density but requiring careful orientation. Switch between them at the method-choose stage.'
-          )}
-        </p>
-
-        <h2 className="moa-section-title">{t('使用流程', 'How to use')}</h2>
-        <div className="moa-flow">
-          <Step
-            step={1}
-            title={t('上传 / 裁剪', 'Upload and crop')}
-            body={t(
-              '拖入或选一张图,在 crop 阶段调到目标比例(默认 1:1)。原图越大、细节越多,生成方案越接近原图。',
-              'Drag or select an image, then adjust to the target aspect ratio in the crop stage (default 1:1). Higher-resolution, higher-contrast originals give crisper results.'
-            )}
-          />
-          <Arrow />
-          <Step
-            step={2}
-            title={t('选方法 + 变体', 'Pick method and variant')}
-            body={t(
-              '先选「整面」/「拆面」;再选 grid 尺寸(几列 × 几行 = 多少个魔方)。预览即时算出 sticker 总数和大致成本。',
-              'First choose Whole-face / Split. Then pick grid dimensions (cols × rows = total cubes). The preview updates with sticker count and rough cost estimate.'
-            )}
-          />
-          <Arrow />
-          <Step
-            step={3}
-            title={t('调色板', 'Tune the palette')}
-            body={t(
-              '默认用 WCA 6 色;开 palette 弹层可微调每种颜色对应的 RGB,适配自定义魔方贴纸 / 灯光环境。改完即时重算整图。',
-              'Default palette is the 6 WCA colors. Open the palette panel to tweak each color\'s RGB to match custom stickers or lighting. Changes recompute the whole image instantly.'
-            )}
-          />
-          <Arrow />
-          <Step
-            step={4}
-            title={t('导出方案', 'Export the build plan')}
-            body={t(
-              '导出包含:总览预览图、每个魔方的 6 面 facelets(从某朝向开始一面一面看)、按行扫描的拼接说明。打印或存 PDF 都行。',
-              'The export bundles: the overview render, per-cube 6-face facelets (read one face at a time from a fixed orientation), and a row-by-row build guide. Print or save as PDF.'
-            )}
-            highlight
-          />
-        </div>
-
-        <h2 className="moa-section-title">{t('实物拼装小提示', 'Build tips')}</h2>
-        <p className="moa-section-intro">
-          {t(
-            '一般用便宜的练习级魔方(不需要顺滑),买够数 + 5%(应对色块脱胶 / 损坏)。拼前先把每个魔方按方案归位 + 贴标签写位置,墙上一次性装好后调整成本极高。',
-            'Use cheap stickered or solid-color practice cubes (smoothness doesn\'t matter); buy 5% extra to cover sticker loss or damage. Solve each cube to its target pattern AND label its position before mounting — once on the wall, adjustments are extremely expensive.'
-          )}
-        </p>
-
-        <h2 className="moa-section-title">{t('相关页面', 'See also')}</h2>
-        <ul className="moa-refs">
-          <li>
-            <Link href="/sim">{t('魔方模拟器', 'Puzzle Simulator')}</Link>
-            {t(' — 单个魔方状态可视化,可以快速验证 mosaic 导出的某一格是否正确。', ' — single-cube state visualizer; handy for sanity-checking individual cells from a mosaic plan.')}
-          </li>
-          <li>
-            <a href="https://github.com/Roman-/mosaic" target="_blank" rel="noopener noreferrer">{t('上游项目 Roman-/mosaic', 'Upstream Roman-/mosaic')}</a>
-            {t(' — 算法和早期 UI 出处。', ' — algorithm and original UI inspiration.')}
-          </li>
-        </ul>
-      </main>
-    </div>
-  );
+    </details>
+  </main>;
 }

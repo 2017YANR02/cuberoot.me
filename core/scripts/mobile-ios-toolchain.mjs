@@ -53,7 +53,8 @@ function buildSimulator(watch = false) {
     '-project', XCODE_PROJECT,
     '-scheme', watch ? 'CubeRootWatch' : 'App',
     '-configuration', 'Debug',
-    '-sdk', watch ? 'watchsimulator' : 'iphonesimulator',
+    // Destination selects each target's SDK. A global -sdk iphonesimulator
+    // makes the embedded Watch target look for WatchJS.o in the iPhone folder.
     '-destination', watch ? 'generic/platform=watchOS Simulator' : 'generic/platform=iOS Simulator',
     '-derivedDataPath', join(tmpdir(), 'cuberoot-mobile-ios-derived-data'),
     'CODE_SIGNING_ALLOWED=NO',

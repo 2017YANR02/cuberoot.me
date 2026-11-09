@@ -1,7 +1,9 @@
+import { pushOpen, pushExpiry, type NotificationPushInput } from './push_message.js';
 import { recordPushUrl } from './record_push_link.js';
 import { readFileSync } from 'node:fs';
 import { connect, type ClientHttp2Session } from 'node:http2';
 import jwt from 'jsonwebtoken';
+import { readApnsConfig } from './apns_config.js';
 
 export type ApnsEnvironment = 'sandbox' | 'production';
 export class ApnsError extends Error {
@@ -12,12 +14,7 @@ export class ApnsError extends Error {
   get retryable(): boolean { return this.status === 429 || this.status >= 500 || this.reason === 'ExpiredProviderToken'; }
 }
 export function apnsConfig(appId: string) {
-  if (process.env.RECORD_PUSH_ENABLED !== '1' || process.env.APNS_ENABLED !== '1'
-    || !['me.cuberoot.app', 'me.cuberoot.app.debug'].includes(appId)) return null;
-  const teamId = process.env.APNS_TEAM_ID?.trim();
-  const keyId = process.env.APNS_KEY_ID?.trim();
-  const keyPath = process.env.APNS_PRIVATE_KEY_PATH?.trim();
-  return teamId && keyId && keyPath ? { teamId, keyId, keyPath, topic: appId } : null;
+  return readApnsConfig(appId, process.env);
 }
 const sessions = new Map<string, ClientHttp2Session>();
 let cached: { identity: string; token: string; expires: number } | undefined;
@@ -42,12 +39,13 @@ function sessionFor(origin: string): ClientHttp2Session {
   session.unref();
   return session;
 }
-export interface ApnsRecordInput { clientId: string; notificationId: number; title: string; excerpt: string; link: string }
+export type ApnsRecordInput = NotificationPushInput;
 export function apnsPayload(input: ApnsRecordInput) {
   recordPushUrl(input.link);
+  const opened = pushOpen(input);
   return { aps: { alert: { title: Array.from(input.title).slice(0, 80).join(''),
-    body: Array.from(input.excerpt || input.title).slice(0, 400).join('') }, sound: 'default', 'thread-id': 'wca_record' },
-  kind: 'wca_record', notificationId: String(input.notificationId), link: input.link };
+    body: Array.from(input.excerpt || input.title).slice(0, 400).join('') }, sound: 'default', 'thread-id': opened.kind },
+  ...opened };
 }
 export async function sendApnsRecord(appId: string, environment: ApnsEnvironment, input: ApnsRecordInput): Promise<void> {
   const config = apnsConfig(appId);
@@ -59,8 +57,8 @@ export async function sendApnsRecord(appId: string, environment: ApnsEnvironment
   await new Promise<void>((resolve, reject) => {
     const request = sessionFor(origin).request({ ':method': 'POST', ':path': `/3/device/${input.clientId}`,
       authorization: `bearer ${token}`, 'apns-topic': config.topic, 'apns-push-type': 'alert',
-      'apns-priority': '10', 'apns-expiration': String(Math.floor(Date.now() / 1000) + 3600),
-      'apns-collapse-id': `wca_record:${input.notificationId}` });
+      'apns-priority': '10', 'apns-expiration': String(Math.floor(pushExpiry(input) / 1000)),
+      'apns-collapse-id': `${input.kind ?? 'wca_record'}:${input.notificationId}` });
     let status = 0;
     let response = '';
     request.setEncoding('utf8');

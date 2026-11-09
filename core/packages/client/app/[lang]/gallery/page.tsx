@@ -13,7 +13,7 @@ import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { uploadedImageUrl } from '@/lib/image-upload';
 import { listGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-api';
 import './gallery.css';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 import SpeedStacksDisplayIcon from '@/components/SpeedStacksDisplayIcon';
 import { CompactSelect } from '@/components/CompactSelect';
 import StackmatTimerArtwork from '@/components/StackmatTimerArtwork';
@@ -134,7 +134,7 @@ export default function GalleryPage() {
       <section className="gallery-collection" aria-labelledby="gallery-collection-title">
         <h2 id="gallery-collection-title">{tr({ zh: '会员照片', en: 'Member photos' })}</h2>
         {loading ? (
-          <p className="gallery-state" aria-live="polite"><LoadingIndicator>{tr({ zh: '正在加载图库…', en: 'Loading the gallery…' })}</LoadingIndicator></p>
+          <ContentSkeleton variant="cards" media columns={4} rows={4} aspectRatio="3 / 4" label={tr({ zh: '正在加载图库…', en: 'Loading the gallery…' })} />
         ) : failed ? (
           <div className="gallery-state" role="alert">
             <p>{tr({ zh: '图库暂时无法加载。', en: 'The gallery could not be loaded.' })}</p>

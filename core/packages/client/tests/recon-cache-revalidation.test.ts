@@ -5,9 +5,12 @@ import { POST } from '@/app/api/recon/revalidate/route';
 import { revalidateTag } from 'next/cache';
 
 vi.mock('next/cache', () => ({ revalidateTag: vi.fn() }));
-const { revalidateReconPages } = await import(pathToFileURL(
+const { revalidateReconPages, revalidateContentPages } = await import(pathToFileURL(
   workspaceFixturePath('@cuberoot/server', 'src/utils/recon_revalidate.ts'),
-).href) as { revalidateReconPages(id: string | number): Promise<void> };
+).href) as {
+  revalidateReconPages(id: string | number): Promise<void>;
+  revalidateContentPages(kind: 'home'): Promise<void>;
+};
 
 const secret = 'test-only-secret';
 const destinations = ['https://production.example/api/recon/revalidate', 'https://standalone.example/api/recon/revalidate'];
@@ -23,6 +26,15 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
 
 describe('recon cache webhook', () => {
+  it('refreshes both homepage caches without discarding the usable snapshot and rejects an item id', async () => {
+    vi.stubGlobal('fetch', (url: string, init: RequestInit) => POST(new Request(url, init)));
+    await revalidateContentPages('home');
+    expect(vi.mocked(revalidateTag).mock.calls).toEqual([
+      ['home-layout', 'max'], ['home-layout', 'max'],
+    ]);
+    expect((await POST(request('{"kind":"home","id":1}'))).status).toBe(400);
+    expect(revalidateTag).toHaveBeenCalledTimes(2);
+  });
   it('rejects unconfigured or unauthorized callers without invalidation', async () => {
     expect((await POST(request('{"id":2796}', 'wrong'))).status).toBe(401);
     vi.stubEnv('RECON_REVALIDATE_SECRET', '');

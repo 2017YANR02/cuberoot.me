@@ -21,7 +21,7 @@ import { ForumBreadcrumbs } from '../_components/ForumBreadcrumbs';
 import { formatRelativeTime } from '@/lib/forum-format';
 import '../forum.css';
 import './forum_review.css';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 export default function ForumReviewPage() {
   const lang = useLang();
@@ -119,7 +119,7 @@ export default function ForumReviewPage() {
 
       {showQueue && (
         !items ? (
-          !error && <div className="forum-loading"><LoadingIndicator><T zh="加载中…" en="Loading…" /></LoadingIndicator></div>
+          !error && <ContentSkeleton variant="feed" />
         ) : items.length === 0 ? (
           <div className="forum-empty"><T zh="队列空了,没有待审核的内容。" en="Queue is clear — nothing awaiting review." /></div>
         ) : (
@@ -171,7 +171,7 @@ export default function ForumReviewPage() {
 
       {!showQueue && (
         !reports ? (
-          !error && <div className="forum-loading"><LoadingIndicator><T zh="加载中…" en="Loading…" /></LoadingIndicator></div>
+          !error && <ContentSkeleton variant="feed" />
         ) : (
           <>
             <BoolToggle

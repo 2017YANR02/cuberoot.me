@@ -13,7 +13,7 @@ import { Tooltip } from '@/components/Tooltip';
 import { WcaRelationColumnHeader } from '@/components/WcaRelationColumnHeader';
 import { wcaTeamSelectItems } from '@/components/wca-team-select-items';
 import Paginator from '@/components/wca-stats/Paginator';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 import AppLink from '@/components/AppLink';
 import { apiUrl } from '@/lib/api-base';
 import { WCA_TEAM_BRANDS, wcaTeamBrand } from '@/lib/wca-team-brands';
@@ -103,7 +103,7 @@ function TeamsDirectory() {
     <div className="wca-teams-toolbar"><SearchInput value={draft} onChange={setDraft} placeholder={tr({ zh: '姓名或 WCA ID', en: 'Name or WCA ID' })} />
       {data && <span className="wca-teams-total">{tr({ zh: `${data.total} 人`, en: `${data.total} members` })}</span>}
     </div>
-    {loading ? <LoadingIndicator /> : failed ? <button type="button" onClick={() => retry(value => value + 1)}>{tr({ zh: '加载失败，重试', en: 'Failed to load. Retry' })}</button> : null}
+    {loading ? <ContentSkeleton variant="list" /> : failed ? <button type="button" onClick={() => retry(value => value + 1)}>{tr({ zh: '加载失败，重试', en: 'Failed to load. Retry' })}</button> : null}
     <div className="wse-table-wrapper"><table className="wse-table wca-teams-table sticky-thead" aria-busy={loading}>
       <thead><tr><WcaRelationColumnHeader className="wca-person-column" label={tr({ zh: '选手', en: 'Person' })} filterLabel={tr({ zh: '战队', en: 'Team' })} resetLabel={tr({ zh: '不限战队', en: 'Any team' })} filter={{ value: team, onChange: chooseTeam, items: wcaTeamSelectItems(data?.teams ?? []) }} />
         <th>{tr({ zh: '三阶单次', en: '3×3 single' })}</th>
@@ -136,4 +136,4 @@ function TeamsDirectory() {
   </main>;
 }
 
-export default function Page() { return <Suspense fallback={<LoadingIndicator />}><TeamsDirectory /></Suspense>; }
+export default function Page() { return <Suspense fallback={<ContentSkeleton variant="list" />}><TeamsDirectory /></Suspense>; }

@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { CalendarDays, Table as TableIcon, ImageDown, CalendarPlus } from '@app-foundation/icons/lucide';
-import { Spinner } from '@/components/Spinner/Spinner';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -16,7 +15,7 @@ import {
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
 import H2hMarker from './H2hMarker';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 const WCA_REGS = 'https://www.worldcubeassociation.org/regulations';
 
@@ -32,9 +31,7 @@ function gcalUrl(startIso: string, endIso: string, name: string): string {
 const ScheduleCalendar = dynamic(() => import('./ScheduleCalendar'), {
   ssr: false,
   loading: () => (
-    <div className="sched-loading">
-      <Spinner size={22} label={tr({ zh: '加载赛程…', en: 'Loading schedule…' })} />
-    </div>
+    <ContentSkeleton variant="schedule" />
   ),
 });
 
@@ -84,11 +81,7 @@ export default function ScheduleView({ slug, isZh, compName, view, detailsExpand
 
   if (loading) {
     return (
-      <div className="sched-loading">
-        <Spinner size={22} />
-        <span><LoadingIndicator>{tr({ zh: '加载赛程…', en: 'Loading schedule…'
-        })}</LoadingIndicator></span>
-      </div>
+      <ContentSkeleton variant="schedule" />
     );
   }
 

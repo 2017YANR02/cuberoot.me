@@ -6,8 +6,10 @@
 
 import BoolToggle from '@/components/BoolToggle';
 import '@cuberoot/timer-ui/compact-select.css';
-import { X } from '@app-foundation/icons/lucide';
+import { ClearButton } from '@/components/ClearButton';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useDialogMotion, useModalBackdrop } from '@/hooks/useModalDismiss';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import GhostCube from '@cuberoot/puzzle-render-core/engine/ghost/GhostCube';
 import { GHOST_DEFAULT_FACE_COLORS, GHOST_FACE_LABELS } from '@cuberoot/puzzle-render-core/engine/ghost/ghostGeometry';
@@ -857,27 +859,29 @@ interface KeymapModalProps {
 export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeymap }: KeymapModalProps) {
   const t = useT();
   const [editingCode, setEditingCode] = useState<string | null>(null);
+  const { motionRef, close } = useDialogMotion(onClose, { enabled: open });
+  const backdropProps = useModalBackdrop(close);
 
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (editingCode) setEditingCode(null);
-        else onClose();
+        else close();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose, editingCode]);
+  }, [open, close, editingCode]);
 
   if (!open) return null;
 
-  return (
-    <div className="sim-keymap-modal-backdrop" onClick={onClose}>
-      <div className="sim-keymap-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={t('键盘快捷键', 'Keyboard shortcuts')}>
+  return createPortal(
+    <div ref={motionRef} className="sim-keymap-modal-backdrop" {...backdropProps}>
+      <div className="sim-keymap-modal" role="dialog" aria-modal="true" aria-label={t('键盘快捷键', 'Keyboard shortcuts')}>
         <header className="sim-keymap-modal-head">
           <h2>{t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts')}</h2>
-          <button onClick={onClose} title={t('关闭', 'Close')}><X size={16} /></button>
+          <ClearButton variant="standalone" ariaLabel={t('关闭', 'Close')} onClick={close} />
         </header>
         <div className="sim-keymap-modal-body">
           <div className="sim-keymap-hint">
@@ -996,6 +1000,7 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

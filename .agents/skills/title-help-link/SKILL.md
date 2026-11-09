@@ -1,79 +1,45 @@
 ---
 name: title-help-link
-description: "Use when adding a help/info icon next to a page title that explains the page (intro / flow / engine choices). Pattern: lucide HelpCircle inside react-router Link → standalone /<page>-about route. Triggers: \"标题问号\", \"页面问号\", \"help icon\", \"info icon\", \"about page\", \"说明页\", \"介绍页\", \"intro page\", \"HelpCircle\", \"问号按钮\", \"页面介绍\"."
+description: "Use when adding or editing a help icon beside a page title and its standalone explanation page. Covers 标题问号、说明页、介绍页 and HelpCircle links; pair with user-facing-report for concise user-facing content."
 ---
 
-# 标题旁的 ? 帮助链接 + about 页
+# 标题帮助入口与说明页
 
-页面标题右侧放问号入口,点进单独 about 页给「介绍 + 流程」。本站已有 3 处实现这套,新增时直接抄结构,**不要造新 popover / modal / tooltip**。
+标题旁的问号进入独立说明页。这个 skill 约束入口和组件复用，不规定每个页面都采用相同正文模板。
 
-## 三条不变规则
+## 入口
 
-1. **图标**:lucide `HelpCircle`,`size={18-20}` `strokeWidth={1.75}`。其它图标(InfoCircle / `?` 字符)= bug。
-2. **包裹**:`react-router-dom` `<Link>`,**不要** `<a href>`(失去 SPA 路由)。`title=` + `aria-label=` 双写,双语用现成的 `t(zh, en)` helper。
-3. **目标路由**:`/<sourceRoute>-about`(或 `/<sourceRoute>/about/<param>` if 按 id),不堆在弹层里。
-
-## 三个现成实例(任挑一个抄)
-
-| 源页 | 入口 | about 路由 | about 页文件 |
-|------|------|-----------|-------------|
-| `/scramble/gen` | 标题旁 `gen-title-help` | `/scramble/gen-about` | `pages/gen_about/GenAboutPage.tsx` |
-| `/scramble/gen` (5x5 picker) | mode toggle 旁 `gen-555-mode-info` | `/scramble/555-about` | `pages/scramble_555_about/Scramble555AboutPage.tsx` |
-| `/wca/:statId` | 标题旁 `wca-stats-title-help` | `/wca/about/:statId` | `pages/wca_about/...` |
-
-## JSX 模板(从 GenPage 抄)
+- 复用 `@app-foundation/icons/lucide` 的 `HelpCircle`，通常 18–20px、strokeWidth 1.75。
+- 站内链接使用 `@/components/AppLink` 与 `href`；保留双语 `aria-label`。需要悬停提示时复用 `Tooltip`，不另造提示气泡。
+- 沿用已有说明页 URL；新增时通常使用 `/<sourceRoute>-about`，按参数的说明沿用所属模块路由。不要为了统一命名搬动既有路由。
+- 独立说明内容不塞入源页面的 tooltip、popover 或 modal。源页的问号即入口，无需重复加入全站导航。
 
 ```tsx
-import { Link } from 'react-router-dom';
-import { HelpCircle } from 'lucide-react';
+import Link from '@/components/AppLink';
+import { HelpCircle } from '@app-foundation/icons/lucide';
 
-<h1>
-  {t('页面标题', 'Page title')}
-  <Link
-    to="/<route>-about"
-    className="<prefix>-title-help"
-    title={t('这页是干啥的?', 'What is this page?')}
-    aria-label={t('查看说明', 'About this page')}
-  >
-    <HelpCircle size={18} strokeWidth={1.75} />
-  </Link>
-</h1>
+<Link href="/calc-about" aria-label={t('查看说明', 'About this page')}>
+  <HelpCircle size={18} strokeWidth={1.75} />
+</Link>
 ```
 
-## CSS(每页 ~10 行,放各自 `<page>.css`)
+## 说明页
 
-```css
-.<prefix>-title h1 { display: inline-flex; align-items: center; gap: 8px; }
-.<prefix>-title-help {
-    display: inline-flex;
-    align-items: center;
-    color: var(--<prefix>-text-mute);
-    opacity: 0.6;
-    text-decoration: none;
-    transition: opacity 0.15s, color 0.15s;
-}
-.<prefix>-title-help:hover { opacity: 1; color: var(--<prefix>-accent); }
-```
+- 先读 [user-facing-report](../user-facing-report/SKILL.md)，按页面职责组织信息：操作说明用简短流程，指标说明用例子或对照，参考库保留完整资料与检索。不要机械复制「简介 → 步骤卡片 → 技术 → 相关链接」。
+- 优先复用 `components/report-page.css` 的阅读宽度、字号与表格样式。共用排版不等于共用内容结构；只有独特交互需要页面专属 CSS。
+- 标题和返回使用 `PageHeading`；技术细节使用原生 `details` + `MoreToggle as="summary"`。关键局限保持可见。
+- 双语遵循 [i18n](../i18n/SKILL.md)，颜色遵循 [theme-tokens](../theme-tokens/SKILL.md)。不复制页面私有明暗色值；确需语言/主题入口时复用 `HeaderToggles`。
+- 先核对当前工具源码，再写操作与能力说明。旧说明不能作为唯一事实源；不要为凑流程补写尚未实现的能力。
+- 路由位于 `core/packages/client/app/[lang]/`；新增路由按 [document-title](../document-title/SKILL.md) 配置标题与 metadata，不使用已退役的 Vite `pages/`、`App.tsx` 注册方式。
+- 避免在已有 max-width 的容器上叠加基于整个 viewport 计算的水平 padding，以免窄屏正文挤成单字列。
 
-## about 页骨架
+## 参考
 
-- 新目录 `pages/<source>_about/`(下划线分隔,跟源页同级)。
-- 文件名 `<Source>AboutPage.tsx` + 同名 `.css`。
-- CSS namespace 自己一套 `--<prefix2>-bg / -surface / -text / -accent` + `[data-theme="dark"]` 覆写。
-- header 套路:左 `<ArrowLeft>` + 「返回 X」`<Link to="/<sourceRoute>">`,右 `<LangToggle />`。
-- 主体常用区块:`<h1>` 标题 → `.intro` 简介 → `<h2>` 分节 → `Step` 流程组件 + `Arrow` 单字符箭头。看 `GenAboutPage.tsx` / `Scramble555AboutPage.tsx` 任一参考。
-- 双语全用 `t(zh, en)`,**所有** user-facing string 都套。
-- 末尾「相关页面」段:`<Link>` 内部页 + `<a target="_blank" rel="noopener noreferrer">` 外部资料。
+| 页面 | 用途 |
+| --- | --- |
+| `/scramble/gen-about` | 生成模式对照、公开边界、折叠引擎细节 |
+| `/frame-count-about` | 简短操作流程、时间分辨率例子、测量局限 |
+| `/nemesizer-about` | 用小表格解释关系定义与并列边界 |
+| `/scramble/hardest` | 可操作例子、可见口径、完整语料折叠 |
 
-## 注册 + 跳转
-
-- `App.tsx`:`const <Name>AboutPage = lazy(() => import('./pages/<source>_about/<Source>AboutPage'));` + `<Route path="/<route>-about" element={<Suspense ...><<Name>AboutPage /></Suspense>} />`。
-- 不需要加到首页 / hub / nav — 入口就是源页标题旁那个问号。
-
-## 禁
-
-- `.x-main` 已有 `max-width: 880px` 时 padding 只能 `2rem 1.5rem 4rem`;响应式 `max(..., calc((100vw-880px)/2))` 仅用于无 max-width 的 header,否则汉字单字成行。
-- 不要 popover / tooltip 当 about 内容。
-- 不复用别 about 页的 CSS class(都是 page-local namespace)。
-- 不把 about 内容塞回源页 collapsible。
-- about 页底部不放 LangToggle / ThemeToggle 之外的全局按钮。
+参考信息层级和组件，不要求复制相同章节。完成后按 `user-facing-report` 检查双语、窄屏和主题。

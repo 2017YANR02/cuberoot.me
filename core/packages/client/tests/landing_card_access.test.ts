@@ -2,9 +2,11 @@
 import { act, createElement, type AnchorHTMLAttributes, type ReactNode } from 'react';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { createRoot } from 'react-dom/client';
+import { renderToString } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
 import type { PublicMember } from '@/lib/membership-api';
+import type { HomeLayoutSnapshot } from '@/lib/home-layout';
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
@@ -14,13 +16,32 @@ vi.mock('@/hooks/useRetainedState', async () => {
   return { useRetainedState: (_key: string, initial: unknown) => useState(initial) };
 });
 
+const queryRendering = vi.hoisted(() => ({ suspend: false }));
+vi.mock('nuqs', async importOriginal => {
+  const actual = await importOriginal<typeof import('nuqs')>();
+  return { ...actual, useQueryState: (...args: Parameters<typeof actual.useQueryState>) => {
+    if (queryRendering.suspend) throw new Promise(() => {});
+    return actual.useQueryState(...args);
+  } };
+});
+
 const auth = vi.hoisted(() => ({ user: null as { wcaId: string } | null }));
 const lockApi = vi.hoisted(() => ({
-  getHomeCardLocks: vi.fn(async () => ({} as Record<string, boolean>)),
+  getHomeCardLocks: vi.fn(async (_signal?: AbortSignal) => ({} as Record<string, boolean>)),
   setHomeCardLock: vi.fn(async (_id: string, _locked: boolean) => ({ ok: true })),
 }));
-vi.mock('@/lib/home-card-order-api', () => ({ ...lockApi, getHomeCardOrders: async () => ({}), reorderHomeCards: vi.fn() }));
-vi.mock('@/lib/page-notices-api', () => ({ fetchPageNotices: async () => [] }));
+const optionalApi = vi.hoisted(() => ({
+  getHomeCardOrders: vi.fn(async () => ({})),
+  fetchPageNotices: vi.fn(async () => []),
+}));
+vi.mock('@/lib/home-card-order-api', () => ({
+  ...lockApi, getHomeCardOrders: optionalApi.getHomeCardOrders, reorderHomeCards: vi.fn(),
+  getHomeLayout: async (signal?: AbortSignal) => {
+    const [locks, orders] = await Promise.all([lockApi.getHomeCardLocks(signal), optionalApi.getHomeCardOrders()]);
+    return { locks, orders };
+  },
+}));
+vi.mock('@/lib/page-notices-api', () => ({ fetchPageNotices: optionalApi.fetchPageNotices }));
 const memberApi = vi.hoisted(() => ({ listPublicMembers: vi.fn(async (): Promise<PublicMember[]> => []) }));
 vi.mock('@/lib/membership-api', () => memberApi);
 vi.mock('@/lib/onboarding', () => ({ isOnboardingGuided: async () => true, markOnboardingGuided: vi.fn() }));
@@ -48,9 +69,101 @@ import LandingPage from '@/app/[lang]/LandingClient';
 import { changeAppLanguage } from '@/i18n/i18n-client';
 import { PRIMARY_CARDS, WCA_CARDS, SECTIONS } from '@/lib/landing-sections';
 
-const renderLanding = () => createElement(NuqsTestingAdapter, { children: createElement(LandingPage) });
+const renderLanding = (initialLayout?: HomeLayoutSnapshot) => createElement(NuqsTestingAdapter, {
+  children: createElement(LandingPage, { initialLayout }),
+});
 
 describe('homepage development cards', () => {
+  it('keeps navigation in server HTML when query-dependent onboarding suspends', () => {
+    auth.user = null;
+    queryRendering.suspend = true;
+    try {
+      const html = renderToString(renderLanding({ locks: {}, orders: {} }));
+      expect(html).toContain('id="card-timer"');
+      expect(html).toContain('class="landing-page"');
+    } finally {
+      queryRendering.suspend = false;
+    }
+  });
+  it('includes saved visible links and their order in the server HTML before browser requests', () => {
+    auth.user = null;
+    changeAppLanguage('zh');
+    const ids = PRIMARY_CARDS.map(card => card.id).reverse();
+    const initialLayout = { locks: { timer: true }, orders: { main: ids } };
+    const host = document.createElement('div');
+    host.innerHTML = renderToString(renderLanding(initialLayout));
+    expect(host.querySelector('#card-timer')).toBeNull();
+    expect([...host.querySelectorAll('.primary-hero-grid [id^="card-"]')].map(card => card.id))
+      .toEqual(ids.filter(id => id !== 'timer').map(id => `card-${id}`));
+    expect(host.querySelector('.app-startup-page')).toBeNull();
+  });
+
+  it('keeps home links visible while optional and personal data never settle', async () => {
+    auth.user = { wcaId: 'ordinary-user' };
+    optionalApi.getHomeCardOrders.mockImplementationOnce(() => new Promise(() => {}));
+    optionalApi.fetchPageNotices.mockImplementationOnce(() => new Promise(() => {}));
+    memberApi.listPublicMembers.mockImplementationOnce(() => new Promise(() => {}));
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(renderLanding({ locks: {}, orders: {} })));
+      expect(host.querySelector('#card-timer')).not.toBeNull();
+      expect(host.querySelector<HTMLElement>('.landing-page')?.style.display).not.toBe('none');
+      expect(host.querySelector('.app-startup-page')).toBeNull();
+    } finally {
+      await act(async () => root.unmount());
+    }
+  });
+
+  it('keeps the verified server layout when a background refresh fails', async () => {
+    auth.user = null;
+    lockApi.getHomeCardLocks.mockRejectedValueOnce(new Error('offline'));
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(renderLanding({ locks: { teaching: true }, orders: {} })));
+      expect(host.querySelector('#card-timer')).not.toBeNull();
+      expect(host.querySelector('#card-teaching')).toBeNull();
+      expect(host.querySelector('[role="alert"]')).toBeNull();
+      lockApi.getHomeCardLocks.mockResolvedValueOnce({ timer: true });
+      await act(async () => { window.dispatchEvent(new Event('online')); });
+      expect(host.querySelector('#card-timer')).toBeNull();
+      expect(host.querySelector('#card-teaching')).not.toBeNull();
+    } finally {
+      await act(async () => root.unmount());
+    }
+  });
+
+  it.each(['failure', 'timeout'])('recovers from lock %s without exposing unverified links', async (failure) => {
+    vi.useFakeTimers();
+    auth.user = null;
+    changeAppLanguage('zh');
+    if (failure === 'failure') lockApi.getHomeCardLocks.mockRejectedValueOnce(new Error('offline'));
+    else lockApi.getHomeCardLocks.mockImplementationOnce(() => new Promise(() => {}));
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(renderLanding()));
+      const signal = lockApi.getHomeCardLocks.mock.lastCall?.[0];
+      if (failure === 'timeout') {
+        await act(async () => vi.advanceTimersByTimeAsync(8_000));
+        expect(signal?.aborted).toBe(true);
+      }
+      expect(host.querySelector('.brand-name')?.textContent).toBe('CubeRoot');
+      expect(host.querySelector('[id^="card-"]')).toBeNull();
+      const alert = host.querySelector('[role="alert"]');
+      expect(alert?.textContent).toContain('首页入口加载失败');
+      lockApi.getHomeCardLocks.mockResolvedValueOnce({ timer: true });
+      await act(async () => alert!.querySelector<HTMLButtonElement>('button')!.click());
+      expect(host.querySelector('[role="alert"]')).toBeNull();
+      expect(host.querySelector('#card-timer')).toBeNull();
+      expect(host.querySelector('#card-teaching')).not.toBeNull();
+    } finally {
+      await act(async () => root.unmount());
+      vi.useRealTimers();
+    }
+  });
+
   it('shows the shared upcoming competition cards only for a logged-in WCA account', async () => {
     changeAppLanguage('zh');
     const render = async () => {

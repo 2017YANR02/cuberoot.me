@@ -1,5 +1,119 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-11-08：推送隔离 API 与专用验收入口（本地实现，未发布）
+
+API 第一批本地提交 `26be5a4ac3`；Mobile 入口、发布保护和说明作为第二批提交。使用方法见[隔离验收入口](record-notification-setup.md#6-隔离-api-与推送验收入口)。普通 App 的生产登录/API 地址没有全局改动，验收必须明确使用专用入口。
+
+- 独立 Hono fixture API 固定监听 `127.0.0.1:3339`，不加载正常 server、`.env`、PG、监控、邮件或推送发送器。随机配对令牌通过被忽略的 owner-only 文件交接，拒绝覆盖遗留文件；测试身份只有 A/B 两个临时用户，整轮一小时失效，绑定上限一台设备，设备凭据和 CID/token 不输出、不持久化。复用现有设备字段校验和四类通知 payload 契约。
+- 独立 Vite 入口 `127.0.0.1:4175` / `dist-push-acceptance` 不加载生产 App、登录客户端、Keychain 或 WebSurface。浏览器模拟 native adapter，设备绑定仍使用真实 `RecordPushController`，冷/热通知监听和点击队列复用原实现；目标路径只显示，不导航线上。API origin 限私网/loopback IPv4，fetch 禁 cookie、重定向和生产回退，并核对响应标记；CSP 限定连接目标、禁止 iframe。
+- 原生验收仅允许 Android Debug / iOS sandbox 和可信私网 HTTPS，未放宽正式明文/ATS 策略，HTTPS 转发及设备网络仍待准备。本轮没有同步验收资产或安装；正常两端资产已恢复并扫描。原生 SDK 注册仍可能联系系统/厂商服务，不把生产业务 API 隔离说成完全离线。
+- 验收产物有独立 marker，Android wrapper/Gradle Release 任务和 iOS 发布脚本/App target Release 阶段均拒绝它。Android 实际 Gradle `--dry-run` 用临时 marker 验证拒绝，iOS 从当前 project 提取的原样 shell 在隔离目录验证 Release 拒绝、Debug 允许；临时文件已清理。生命周期与点击监听统一使用一个 RecordPush 插件代理，消除重复注册警告；账号流程 source review 保持覆盖，正常用户授权/绑定语义未变。
+- 验证：API 4 项隔离/鉴权/设备/过期检查，Mobile 12 项 origin/请求边界/既有生命周期与点击检查通过；API 脚本、app-ui、Mobile 类型检查通过，账号流程守卫 89 项通过。真实 Chrome 通过配对、绑定、四类 payload、重复/延后点击、换号隔离和注销，16 次 API 请求均留在两个本地 origin，零页面错误；390px 无横向溢出。最终插件代理调整后浏览器启动无重复注册警告、无自动 API 请求。
+- 专用验收 Web 构建及正常 Mobile Web build、Android/iOS sync、Android Debug APK、无签名 iOS Simulator 构建通过。最终正常 dist/两端 native Web 资产扫描未含 fixture 入口/标记。测试进程已停止、配对文件已删除，既有 3000 服务未动。
+- 本期是注册/契约/点击队列的 **fixture 验收环境**，不是已部署的完整测试后端；没有执行真实 PG 订阅调度、系统通知发送或正式 Tools 页面验收。真机、厂商/APNs 送达及点击继续按用户要求跳过。无生产变更、迁移、部署或 push，总体继续 **NOT COMPLETE**。
+
+### 2026-11-08：iOS APNs 本地配置检查与凭据清单（本地实现，未发布）
+
+实现与配置说明已本地提交 `c40dd383aa`。本轮只补 API 服务端的离线工具，未向 iOS 构建注入私钥；既有 APNs 配置门禁抽为同包纯函数，由运行时与检查器共用，保持发送行为不变。
+
+- 新增 `pnpm --filter @cuberoot/server apns:check`，支持 `--push-env-file` 显式读取 API `.env` 或被忽略的 `.env.apns.local`；只选取 APNs 五项，环境变量优先，不执行配置文件或启动 API/worker。默认未配置可报告 disabled/missing；`--require-enabled` 要求双开关和完整凭据，半组配置、无效开关、未知 APNs 字段、topic/环境或不合格私钥均失败。
+- 私钥检查限于当前本地进程：文件可读、大小受限、Unix owner-only 权限、未加密 EC P-256 和本地签名/验签。不打印 Team ID、Key ID、路径、内容或签名，不生成 provider JWT、不请求 APNs。`--environment` 只声明期望环境；key 的 Apple 授权、是否撤销、团队/topic/环境范围、部署进程读取权限均不能由此证明。
+- 本轮实际检查本机 API `.env` 与当前环境：`RECORD_PUSH_ENABLED`、`APNS_ENABLED`、`APNS_TEAM_ID`、`APNS_KEY_ID`、`APNS_PRIVATE_KEY_PATH` 五项均缺失，未读取任何真实 APNs 私钥；production 的 `--require-enabled` 正确失败。需要准备 APNs 授权 key 的 Team ID、Key ID、受保护 `.p8` 文件路径，联调具备隔离条件后再启用两个开关。完整[变量与使用清单](record-notification-setup.md#apns-本地离线检查与凭据清单)已补齐；本轮未重查服务器或 Apple 控制台，不推断它们已配置。
+- 源码签名环境核对：Xcode Debug/Release 仍同为 `me.cuberoot.app`，`APNS_ENVIRONMENT` 分别为 development/production，写入 entitlement 与 Info.plist；Swift 映射到 sandbox/production。未重新签名、导出或验最终产物，不能把源码一致写成签名环境验收。
+- 验证：新增离线检查 6 项与既有 APNs 传输 4 项共 10 项通过（临时合成私钥与本地传输 fixture）；API typecheck、检查脚本独立类型检查通过。实际 pnpm 文件参数入口、必需配置失败退出、私有配置 ignore 和 diff 检查通过；独立审阅确认无凭据输出或运行时门禁漂移。
+- 用户要求继续跳过真机。本轮无安装、真实推送、生产配置/数据库变更、部署或 push；未重跑无变化的原生构建。Apple 授权、最终签名产物、真实送达和点击仍待验收，总体继续 **NOT COMPLETE**。
+
+### 2026-11-08：Android 推送 CI 注入与本地配置检查（本地实现，未发布）
+
+实现与配置说明已本地提交 `e1916722f4`；本节记录该批验证与剩余配置，不代表已推送或发布。
+
+- `app_release.yml` 的 Android 产物构建步骤已接入正式包个推 App ID 和 OPPO/vivo/小米/魅族/荣耀客户端参数，供 direct APK / Play AAB 使用；签名、发布凭据仍在各自受保护 job，服务端 App Key / Master Secret 不注入客户端构建。未修改 GitHub 配置或触发 workflow。
+- 新增 `android:push:check debug|release` 与被忽略的本地配置文件入口 `--push-env-file`；与 Debug/direct/Play 构建共用加载和校验，Gradle 与检查器共用厂商清单。报告只显示名称、状态和缺项；未启用可构建，半组参数、缺基础 App ID、必需通道缺项、控制变量拼错或文件含服务端/未知字段会失败。`ANDROID_PUSH_REQUIRED` / `ANDROID_PUSH_VENDORS` 声明实际构建要求，不能用检查通过推断控制台有效或真机送达。
+- 当前缺项：再次只读检查确认仓库级 `GETUI_*` secrets 与 `ANDROID_PUSH_*` variables 名称清单为空；本机没有 `.env.android-push.local`，当前进程的正式/调试客户端参数也均缺失。需要补两套匹配包名的 `APP_ID`，以及所需厂商的 OPPO `APP_KEY/APP_SECRET`、vivo/小米/魅族 `APP_ID/APP_KEY`、荣耀 `APP_ID`（正式前缀 `GETUI_`，调试前缀 `GETUI_DEBUG_`）。完整变量名、存放位置和命令见[配置清单](record-notification-setup.md#ci-注入位置与凭据清单)。API 的个推 App Key / Master Secret 与 APNs 凭据仍按上一节配置审计待补，本轮没有重新检查服务器或厂商控制台。
+- 验证：6 项配置/凭据输出/工作流边界定向检查通过，Mobile typecheck 通过；实际 pnpm Debug/Release 检查入口通过，必需配置缺失在 Gradle 前失败；JDK 21 下通过新的 pnpm Debug 入口完成 Vite build、Capacitor sync、Android APK 构建。该 APK 没有真实推送参数。独立审阅发现并修复了 Node 测试被 Vitest 误收集、pnpm 提前处理 `--env-file` 两个入口问题；最终 Vitest 文件列表不收集 `.node-test.ts`，专用 `--push-env-file` 已实跑。
+- 工作流定向检查通过；本机 actionlint 1.7.12 对既有 `concurrency.queue` 报不认识，仅在临时副本去掉该既有字段后其余校验通过，未改动原工作流的并发设置。未声称 GitHub CI 已执行。
+- 用户要求继续跳过真机验收。本轮无安装、无真实推送、无 API 部署/迁移、无 push；代码和文档分批本地提交，其他人的工作区修改保留。真实厂商构建、签名匹配、送达和点击验收仍待完成，总体继续 **NOT COMPLETE**。
+
+### 2026-11-08：APNs / 安卓厂商配置核对（只读审计，真机验收跳过）
+
+检查基准：本地 `3672ec49b4`；核对源码、现有构建产物、本机签名描述文件、GitHub 配置名称及服务器配置。未修改凭据、生产配置或数据库，未发送测试通知。用户确认暂无设备，明确跳过本轮真机送达和点击验收。
+
+| 项目 | 本轮证据 | 尚需完成 |
+| --- | --- | --- |
+| iOS 签名 | 本机匹配 `me.cuberoot.app` 的开发和分发描述文件分别带 `aps-environment=development/production`，有效期至 2027-09-29；工程 Debug/Release 环境与之对应 | 后续签名产物仍须核对 entitlement、描述文件和实际 APNs key 的团队/topic 授权；描述文件不是发送凭据或送达证据 |
+| APNs 服务端 | 本地 API `.env`、服务器 `/root/core-api/.env` 与 API Node 进程初始环境均未配置 `RECORD_PUSH_ENABLED`、`APNS_ENABLED`、`APNS_TEAM_ID`、`APNS_KEY_ID`、`APNS_PRIVATE_KEY_PATH` | 配置明确授权 APNs 的 key 与对应环境；本次没有核验 Apple 控制台中的 key，不把本机 ASC/IAP key 当作 APNs key |
+| 个推服务端与 Android 构建 | 上述环境均未配置个推 App ID / App Key / Master Secret；本地生成的 BuildConfig 与 Debug 合并 manifest 中 `GETUI_APPID` 为空 | 对齐 Debug/Release 应用、包名、签名与个推配置，重新构建后核验产物；基础 SDK 编译成功不代表个推已启用 |
+| 安卓厂商通道 | 未发现 OPPO/vivo/小米/魅族/荣耀构建参数；Gradle 仅在相应参数完整时引入厂商依赖，当前 Debug 合并 manifest 未见对应厂商配置；现有列表没有华为 HMS 通道 | 各厂商控制台应用、证书指纹和通道开通状态未核验，不能从环境缺项推断控制台应用不存在；华为另需实现其接入 |
+| CI 配置 | GitHub 仓库及 `app-release` / `app-release-publish` 环境的 secret/variable 名称清单未见推送参数；`.github/workflows` 和 `core/scripts` 未见 APNs/Getui 参数注入，Android 构建步骤只有发布渠道参数 | 补齐 Android 构建阶段的配置注入；仅添加 secret 而不接入工作流不会使 APK 包含厂商配置。服务端 Master Secret / APNs 私钥不打入客户端 |
+| API 配套版本 | 服务器有 `0255_ios_record_push.sql`，未见本轮 `0317_competition_notifications.sql` / `0318_competition_push.sql` 文件；这里只核验文件，未查询生产 schema。Mobile API 仍固定指向线上，新客户端注册必带 `pushVersion: 2`，旧 API 严格拒绝该字段 | 保持新版 API 与 App 配套；本地全链路验收先具备隔离 API 目标，不因本地客户端安装而隐式部署生产。线上实际代码版本尚未核验 |
+
+- 后续顺序：补齐服务商及厂商配置 → 完善构建注入并核验签名产物 → 准备隔离 API/测试账号 → 设备可用后验证前台、后台、进程结束后的送达与冷启动点击，以及登出/换号、重复、过期场景。禁止为单设备验收开启生产全队列扫描。
+- 新通知的点击链路校验收件 UID；兼容的历史纪录通知可能缺少 UID，不能宣称所有历史通知都做了账号归属校验。服务商接受、设备展示、点击落页和业务触发分别记录。
+- 本轮只补充配置审计记录，没有重跑已通过的构建或将设备项标为完成；无安装、无真实推送、无生产变更、无 push。真机验收仍待后续安排，总体继续 **NOT COMPLETE**。
+
+### 2026-11-08：Android / iOS 比赛系统通知与 App 内点击（本地实现，未发布）
+
+- 复用既有通知投递队列与设备生命周期，增加四种允许类型：纪录、公示、报名开放、报名截止；旧设备默认 `push_version=1` 仍只接收纪录，兼容原浏览器点击。新版上报版本 2，升级/降级能力会更新绑定时间，避免追发旧消息。
+- 比赛设置新增「同时发送手机系统通知」，默认关闭；旧 JSON 缺少该字段同样视为关闭，已有消息箱订阅不会被静默升级。发送前再次核对开关、关注、账号与设备归属；合并旧账号排除，注销沿用外键级联清理。
+- 纪录/公示最多使用消息生成后一小时的剩余有效期；报名提醒每次尝试均重新读取官方时间，取消、时间变更、过期或退订停止投递，回源失败按队列退避。报名有效期不晚于原触发点后 10 分钟，提前提醒不晚于报名里程碑，开放提醒不晚于报名截止。Getui TTL 与 APNs expiration 使用剩余时间，重试不续期。
+- API/共享契约第一批 `2557a3802e`：迁移 `0318_competition_push.sql` 已在本地 PG13 隔离 schema 执行；API 投递/权限/版本/筛选和两家服务商隔离传输测试通过。新开关复用 canonical 消息设置与双语保存/回滚；/dev/schema、/dev/api、账号流程文档同步。
+- 第二批复用 Mobile 薄宿主和共享 Tools surface：Android 在线/厂商消息改为指定包名与 MainActivity 的 intent，iOS 接收四类通知并保留冷启动点击，取消打开系统浏览器。共享 decoder 只允许公开比赛路径，恢复账号后核对收件 UID，去重 listener/pending 回调；准备、观察、计时或对战中暂存跳转，不自动标已读。宿主只传通知目的地，不向 iframe 传长期凭据。
+- Android SDK 隐私同意文案扩展为纪录和主动开启的比赛提醒；沿用既有权限、设备绑定、换号撤销及离线重试。默认不开启比赛系统通知；APNs/个推服务端凭据、厂商配置未更改，基础构建未启用真实个推配置。其他宿主无通知 adapter，本期未扩展。
+- 本地证据：shared build；API、client、app-ui、Mobile 类型检查；API 5 文件 26 项（真实 PG13 隔离 migration/队列，模拟 Getui 与本地 HTTP/2 APNs）；Mobile 生命周期/冷启动桥 10 项；共享导航队列 3 项及真实 App 组件 1 项定向集成。消息设置中英文 Chrome fixture 验证系统推送开关保存、重新读取和失败回滚，390/1280px 无横向溢出。消息源、传输、组件均为隔离 fixture，不代表真实设备送达。
+- Mobile Vite build + Android/iOS Capacitor sync 完成；Android Debug APK 与无签名 iOS Simulator 完整构建通过。修正既有 iOS 构建脚本的全局 `-sdk` 参数：原先使内嵌 Watch 目标在 iPhone 目录查找 `WatchJS.o`；由 destination 为各 target 选择 SDK 后，仓库 `ios:build` 入口验证通过。未安装到真机、未做 APNs/厂商前后台与杀进程矩阵，不把无签名构建写成签名或发布证据。
+- 本期保留 WCA 比赛范围、既有邮件与 Bark 通道；不 push、不生产迁移、不部署，不群发测试消息。真实 APNs/厂商后台与杀进程送达尚未验收，总体继续 **NOT COMPLETE**。
+
+### 2026-11-08：纪录、公示订阅和报名提醒接入消息箱（本地实现，未发布）
+
+- 第一批后端提交 `af887e9bbc`：保留现有纪录判定、本人 PR 自动纳入、首次快照静默基线与订阅筛选；新增每分钟独立重试，不再只依赖比赛预热成功。纪录待处理超过 24 小时终止补发并保留去重键；合并后的旧账号不再生成通知。既有纪录邮件/系统推送行为没有在此扩展。
+- WCA 新比赛公示复用 `announced_comps.ts` 的全球分页快照（含中国大陆 WCA 比赛），每 20 分钟刷新、覆盖最近 48 小时；新偏好按举办地区和项目筛选。公示事件与 Bark 分开持久化，取消/缺席当前有效快照的事件不从旧 payload 直接补发，分页窗口不完整时保留旧快照且不投递；晚于公示才开启或修改的订阅不追发该事件。本期不包含粗饼民间赛外链。
+- 关注比赛的报名提醒复用 `comp_follows`，开放与截止各可选择关闭、准点、提前 10 分钟、1 小时或 1 天。扫描每分钟执行，每轮最多复核 30 场，按上次复核时间公平调度；平时 5 分钟复核一次，接近触发点提前安排下一次检查。每次投递前直接核对 WCA 官方详情，不把每日目录当实时依据；取消、日期缺失、回源失败、已取消关注或关闭提醒均不投递。失败一分钟后重试，补发宽限 10 分钟；提前提醒不会在对应里程碑过后迟发。绝对 UTC 时刻参与计算、展示明确标明 UTC，不承诺秒级送达。
+- 新公示和报名开关默认关闭，开启前的历史不补发；只写站内消息箱（`email: false`），不因现有邮件总开关开启就自动发邮件，也不扩展原生推送队列。`comp_reg` 仍保留原“指定选手国外报名通知管理员”的语义。
+- 第二批界面复用 canonical `/notifications`、`WcaEventMultiSelector`、`RegionPicker` 和现有设置弹窗；纪录与比赛设置共用保存串行化、失败回滚和卸载隔离逻辑。新增公示/开报/截止消息标签；只将本次显示的消息 ID 标为已读，空/非法 ID 列表不再误清全部未读；换号重新挂载消息与设置状态。
+- 迁移 `0317_competition_notifications.sql`、schema 快照、`/dev/schema`、`/dev/api` 和账号注销文档已同步。偏好通过 `app_users` 外键级联删除，所有设置读写以当前会话定归属；事件及调度台账不保存私人收件人清单。
+- 本地验证：shared build、API/client typecheck；API 的订阅规则、真实 PG13 隔离 schema、收件箱读取/已读、纪录重试及去重 5 个测试文件共 36 项通过，迁移实际执行；WCA 公共详情字段做了只读核对。Chrome 隔离 API fixture 验证四类消息、保存/回滚、设置持久读取，中英文和 390/1280px 无横向溢出、无页面异常；未使用真实账号发送消息。schema/API 账本、注销及账号流程检查通过；账号文档指纹另按第一批实际暂存源码（322 文件）验证，未将其他任务尚未提交的 i18n HMR 修改夹带进本次提交或指纹。
+- 本轮只本地分批提交，不 push、不部署，不在生产应用迁移，也未安装或发布原生包。手机系统推送扩展、App 内点击、鸿蒙/桌面/小程序通知通道及各端真机送达仍待后续阶段，总体继续 **NOT COMPLETE**。
+
+### 2026-11-07：比赛公示与报名通知接入审计（源码审计，待分期实现）
+
+检查基准：`8a4fd45a28` 的当前 checkout。范围为比赛公示/公布、用户关注比赛后的报名提醒，以及 Web、五个安装端和微信/抖音小程序。保留工作区已有的公式样式、比赛详情和战队显示修改。本轮仅补充审计与实施顺序，没有修改通知行为、运行通知任务、发送消息或核验生产配置/已安装包；历史构建记录不代表当前设备送达。
+
+**业务链路与断点**
+
+| 业务 | 当前源码事实 | 缺口 |
+| --- | --- | --- |
+| 新比赛公示 | API `monitors/wca_comp.ts`（非 CN，5 分钟）和 `monitors/cubing_comp.ts`（CN，60 秒）只调用 `sendBark`；`monitors/bark.ts` 使用服务端单设备配置 | 没有用户级公示订阅、收件人匹配及站内通知；Bark 不等于 CubeRoot App 推送 |
+| 公示列表 | `routes/announced_comps.ts` 独立抓取并返回页面快照，不受监控启用开关控制 | 页面能看到新比赛不能证明用户已收到通知 |
+| 关注比赛的报名提醒 | `routes/comp_follows.ts` 保存关注；Web `components/CompFollow.tsx`、`RegistrationComps.tsx` 复用关注并置顶，展示开报/截止时间 | 没有读取关注表的报名提醒扫描任务；“盯一下”目前不产生开报/截止通知 |
+| 已有 `comp_reg` | `monitors/watched_foreign_reg.ts` 固定监控两位选手的国外报名，向管理员发站内消息/邮件及 Bark | 是选手报名动态，不是普通用户开报提醒；应保留原语义，不能直接挪用 |
+| 通知收件箱 | `utils/notify.ts` 写 `notifications`，支持 `dedupeKey`，邮件按验证邮箱及总开关旁路发送 | 邮件失败没有独立补发队列；公示/报名提醒尚未成为事件生产者 |
+| 手机系统推送 | `utils/record_push.ts` 从站内消息建立设备投递队列，严格筛选 `wca_record` | 新增比赛站内消息不会自动触发手机推送；APNs payload 和 Swift 接收也限制纪录类型 |
+
+上表 API 路径相对 `core/apps/api/src`，Web 路径相对 `core/packages/client`。既有纪录配置见 [record-notification-setup.md](record-notification-setup.md)。
+
+**各端接入层级**
+
+| 端 | 当前可复用实现 | 尚未接通/验证 |
+| --- | --- | --- |
+| Web | canonical `/notifications` 收件箱、未读、邮件开关及纪录订阅 | 无公示/报名偏好；未发现 Web Push 注册及投递实现 |
+| Android | Mobile `native/record-push-controller.ts`、个推插件、隐私同意、权限、账号设备绑定/撤销 | 比赛事件、服务商/厂商实际配置与真机送达；当前通知点击打开网站 |
+| iOS | 与 Android 共用控制器；`RecordPushPlugin.swift`、API APNs 通道、冷启动点击暂存 | 比赛事件、真实签名环境及 APNs 送达；当前通知点击打开系统浏览器 |
+| HarmonyOS NEXT | 共享 App UI 的网站 Account/消息入口 | 无系统消息通知 adapter，不能用 Android 兼容包或 BLE notification 代替 |
+| Windows / macOS | 同一 Tauri 宿主、共享 Account/消息入口 | 无系统消息通知 adapter；两种桌面系统须分别验证 |
+| 微信 / 抖音小程序 | 原生账号与网站入口；后端账号体系可复用 | 当前 `src` 未发现订阅消息申请/投递契约，`app.json` 无原生消息页；网站入口不等于订阅消息。API `platform/wechat_notification.ts` 是支付验签，不能计入消息推送 |
+
+安装端源码入口：`core/apps/mobile/src/hooks/use-mobile-auth.ts`、`core/apps/mobile/src/native/record-push-controller.ts`、`core/apps/mobile/android/`、`core/apps/mobile/ios/`；共享产品入口为 `core/packages/app-ui/src/App.tsx` 与 `core/packages/app-ui/src/platform.ts`。Web 消息设置目前只有邮件总开关和 `RecordPreferences`，没有本机通知权限/绑定状态展示。既有安全存储、串行绑定、退出/换号撤销和离线撤销重试应继续复用，不复制成每端一套业务逻辑。
+
+**按依赖分期，以下均为待实现项**
+
+1. [ ] **先闭合用户事件与站内消息。** 区分公示、开报、截止与既有选手报名动态；公示按用户选择的地区/项目订阅，报名提醒复用比赛关注并明确提醒开关/提前量。设置复用 canonical 消息页，不把已有关注静默升级为邮件或系统推送订阅。共用 API/客户端事件契约，不新增通知业务 package。
+2. [ ] **补可靠的生产与调度。** 复用既有比赛源，持久化事件和去重，处理时区、报名时间变更、取消比赛、退订、重启和有限补发；临近提醒前核对数据新鲜度，不能把 `upcoming_comps_cache.ts` 的 1 小时缓存当作实时确认。公示用户通知与 Bark 各自记账：Bark 禁用时返回成功并吸收历史的状态不能代表用户通知已生成；WCA 当前只取最新 10 场，还需覆盖停机后分页追赶。
+3. [ ] **扩展 Android / iOS 同一条投递链。** 同步扩展队列允许类型、APNs 内容/分组、Swift 展示/点击、Android 通知文案和受控目的地；保留旧版本兼容及账号隔离。过期的开报提醒不能沿用纪录的一小时有效期无条件迟发。原生开关/权限/绑定失败应能在统一设置入口查看，点击通过既有共享导航打开 App 内对应比赛。
+4. [ ] **验收手机通道，再补其余宿主。** 单个测试账号分别验证 Android/iOS 允许/拒绝/撤权、前台/后台/杀进程、冷启动点击、断网恢复、换号、重复与过期。之后为 HarmonyOS NEXT、同一 Tauri 的 Windows/macOS、小程序分别增加必要 adapter；第二个真实宿主消费者落地时再提取中性生命周期，禁止复制 Mobile 私有代码。小程序模板/用户授权/平台资质按实际控制台与当时官方规则核对。
+5. [ ] **记录运行证据。** 分别记录事件生成、入箱、排队、服务商接受、设备展示和点击结果；服务商接受不能标为用户已读或设备送达。邮件可靠重试、Web Push、Apple Watch 通知体验另行补齐，不能由站内消息或 iOS 通道存在推断完成。
+
+优先交付第 1–2 项的单一业务闭环，再进入第 3–4 项。公开比赛页以外的目的地必须单独定义：现有 `record_push_link.ts` 只允许自有比赛链接，粗饼民间赛的外站回退不可直接塞入现有推送器。完成标准是订阅→事件→站内消息→各端投递→点击/已读的实际证据；总体继续 **NOT COMPLETE**。
+
 ### 2026-11-07：APP 备案进度
 
 - 维护者确认网站 ICP 备案已完成；iOS APP 备案已提交，当前在管局审核。

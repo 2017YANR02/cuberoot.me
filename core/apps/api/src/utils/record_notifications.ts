@@ -44,13 +44,14 @@ export async function observeRecordNotifications(compId: string, records: Inferr
 export async function deliverRecordNotifications(compId: string): Promise<void> {
   const pending = await query<{ event_key: string; payload: InferredRecord; observed_at: string }>(
     `SELECT event_key, payload, observed_at FROM record_notification_events
-     WHERE comp_id = ? AND NOT delivered ORDER BY observed_at, event_key`, [compId],
+     WHERE comp_id = ? AND NOT delivered AND observed_at > NOW() - INTERVAL '24 hours'
+     ORDER BY observed_at, event_key`, [compId],
   );
   if (!pending.length) return;
   const subscribers = await query<Subscriber>(
     `SELECT u.id, u.wca_id, u.lang, u.created_at, p.preferences, p.updated_at
      FROM app_users u LEFT JOIN record_notification_preferences p ON p.user_id = u.id
-     WHERE u.wca_id IS NOT NULL OR p.user_id IS NOT NULL`,
+     WHERE (u.wca_id IS NOT NULL OR p.user_id IS NOT NULL) AND u.merged_into_user_id IS NULL`,
   );
   for (const item of pending) {
     const record = item.payload;
@@ -81,4 +82,29 @@ export async function deliverRecordNotifications(compId: string): Promise<void> 
     }
     await query('UPDATE record_notification_events SET delivered = TRUE WHERE event_key = ?', [item.event_key]);
   }
+}
+
+/** Retry durable inbox events independently of a competition's next successful refresh. */
+export async function sweepRecordNotifications(): Promise<void> {
+  // delivered already also denotes a silently absorbed baseline. Expired events are
+  // terminal too; retain their keys so another source refresh cannot recreate them.
+  await query(`UPDATE record_notification_events SET delivered = TRUE
+    WHERE NOT delivered AND observed_at <= NOW() - INTERVAL '24 hours'`);
+  const comps = await query<{ comp_id: string }>(`SELECT comp_id FROM record_notification_events
+    WHERE NOT delivered GROUP BY comp_id ORDER BY MIN(observed_at) LIMIT 30`);
+  for (const { comp_id: compId } of comps) {
+    try { await deliverRecordNotifications(compId); }
+    catch (error) { console.warn('[record-notifications] retry pending:', compId, (error as Error).message); }
+  }
+}
+
+export function startRecordNotificationSweep(): void {
+  let running = false;
+  const timer = setInterval(() => {
+    if (running) return;
+    running = true;
+    void sweepRecordNotifications().catch(error => console.warn('[record-notifications] sweep failed:', (error as Error).message))
+      .finally(() => { running = false; });
+  }, 60_000);
+  timer.unref();
 }

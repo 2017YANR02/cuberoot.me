@@ -38,6 +38,7 @@ describe('local entry navigation', () => {
     ['/teachers?teacher=42', '/platform/courses'],
     ['/membership', '/account?settings=account'],
     ['/recon/123', '/recon?q=OLL&page=3'],
+    ['/forum/t/12', '/forum/feed?forum=general&sort=latest&page=2'],
     ['/docs/edit?id=123', '/docs'],
   ])('returns %s to %s without putting provenance in the link', (target, source) => {
     visit(source);

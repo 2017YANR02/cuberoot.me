@@ -49,12 +49,12 @@ it.each(['en', 'zh'] as const)('requires confirmation and contains keyboard focu
   const trigger = document.createElement('button'); document.body.append(trigger); trigger.focus();
   const host = document.createElement('div'); const root = createRoot(host);
   const kick = vi.fn(); const close = vi.fn(); const leaked = vi.fn();
+  const render = () => act(async () => root.render(createElement(TimerRoomAdmin, { room, currentPlayerId: 'self', language, onSyncStart: vi.fn(), onTransfer: vi.fn(), onKick: kick, onClose: close })));
   window.addEventListener('keydown', leaked);
   try {
-    await act(async () => root.render(createElement(TimerRoomAdmin, { room, currentPlayerId: 'self', language, onSyncStart: vi.fn(), onTransfer: vi.fn(), onKick: kick, onClose: close })));
-    const dialog = document.querySelector<HTMLElement>('.timer-room-dialog')!;
-    const buttons = [...dialog.querySelectorAll<HTMLButtonElement>('button')];
-    const remove = buttons.at(-1)!;
+    await render();
+    let dialog = document.querySelector<HTMLElement>('.timer-room-dialog')!;
+    let buttons = [...dialog.querySelectorAll<HTMLButtonElement>('button')];
     const backdrop = dialog.parentElement!;
     await act(async () => {
       dialog.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 }));
@@ -72,6 +72,12 @@ it.each(['en', 'zh'] as const)('requires confirmation and contains keyboard focu
       backdrop.click();
     });
     expect(close).toHaveBeenCalledOnce();
+    // The owner removes a dismissed dialog before opening a fresh instance.
+    await act(async () => root.render(null));
+    await render();
+    dialog = document.querySelector<HTMLElement>('.timer-room-dialog')!;
+    buttons = [...dialog.querySelectorAll<HTMLButtonElement>('button')];
+    const remove = buttons.at(-1)!;
     close.mockClear();
     await act(async () => remove.click()); expect(kick).not.toHaveBeenCalled();
     await act(async () => remove.click()); expect(kick).toHaveBeenCalledWith('other');
@@ -79,8 +85,9 @@ it.each(['en', 'zh'] as const)('requires confirmation and contains keyboard focu
     expect(document.activeElement).toBe(buttons[0]);
     await act(async () => buttons[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
     expect(close).toHaveBeenCalledOnce(); expect(leaked).not.toHaveBeenCalled();
-    await act(async () => root.unmount()); expect(document.activeElement).toBe(trigger);
+    await act(async () => root.render(null)); expect(document.activeElement).toBe(trigger);
   } finally {
+    await act(async () => root.unmount());
     window.removeEventListener('keydown', leaked); trigger.remove(); vi.unstubAllGlobals();
   }
 });

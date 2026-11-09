@@ -22,6 +22,7 @@ import {
   useOperationKey,
 } from './TeachingUi';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 const MESSAGE_PAGE_SIZE = 100;
 
@@ -180,7 +181,7 @@ export default function TeachingConversationThread({
     }
   }
 
-  if (loading) return <p aria-busy="true"><LoadingIndicator>{t('正在加载消息…', 'Loading messages…')}</LoadingIndicator></p>;
+  if (loading) return <ContentSkeleton variant="feed" label={t('正在加载消息…', 'Loading messages…')} />;
   if (error && !conversation) return <MutationMessage message={error} error />;
   if (!conversation) return null;
 
