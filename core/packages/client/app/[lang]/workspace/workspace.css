@@ -322,7 +322,6 @@
 .workspace-software-table th:last-child { width: 112px; }
 .workspace-software-table th, .workspace-software-table td { padding: 10px 8px; vertical-align: middle; overflow-wrap: anywhere; }
 .workspace-software-name { display: flex; align-items: center; gap: 10px; }
-.workspace-software-name input { width: 18px; height: 18px; flex: 0 0 auto; accent-color: var(--accent); }
 .workspace-software-description { color: var(--muted-foreground); }
 .workspace-software-table .is-done .workspace-software-name span { color: var(--muted-foreground); text-decoration: line-through; }
 .workspace-software-actions { display: flex; justify-content: flex-end; gap: 4px; }
