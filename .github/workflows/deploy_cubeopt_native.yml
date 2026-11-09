@@ -8,11 +8,16 @@ on:
         required: false
         type: boolean
         default: true
-      interleaved_candidate:
-        description: 'Build the isolated Opt8 query-interleaving candidate (build-only)'
+      candidate:
+        description: 'Isolated performance candidate; requires deploy=false'
         required: false
-        type: boolean
-        default: false
+        type: choice
+        default: none
+        options:
+          - none
+          - avx2
+          - interleaved
+          - interleaved32
       expected_binary_sha256:
         description: 'SHA-256 of the performance-accepted binary; reject a different build before upload'
         required: false
@@ -34,7 +39,7 @@ jobs:
     timeout-minutes: 35
     steps:
       - name: Reject unmeasured candidate promotion
-        if: inputs.deploy && inputs.interleaved_candidate
+        if: inputs.deploy && inputs.candidate != 'none'
         run: exit 1
       - uses: actions/checkout@v4
         with:
@@ -58,7 +63,7 @@ jobs:
         env:
           CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: musl-gcc
           CUBEOPT_EXPECTED_BINARY_SHA256: ${{ inputs.expected_binary_sha256 }}
-          CUBEOPT_INTERLEAVED_CANDIDATE: ${{ inputs.interleaved_candidate && '1' || '0' }}
+          CUBEOPT_CANDIDATE: ${{ inputs.candidate }}
         run: node solver/experiments/cube48opt-rust/native-service/build.mjs "$RUNNER_TEMP/cubeopt-native"
 
       - uses: actions/upload-artifact@v4
