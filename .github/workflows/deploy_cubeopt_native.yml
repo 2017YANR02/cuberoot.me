@@ -47,6 +47,7 @@ jobs:
             .node-version
             solver/experiments/cube48opt-rust
             solver/.cargo
+            solver/vendor/nissy-core/src/solvers/h48
           filter: blob:none
 
       - uses: actions/setup-node@v4
