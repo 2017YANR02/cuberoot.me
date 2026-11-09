@@ -5,9 +5,15 @@ import {resolve, dirname, relative, isAbsolute} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
-const apply=process.argv.includes('--apply');
-if(process.argv.slice(2).some(x=>x!=='--apply'))throw Error('Usage: migrate.mjs [--apply]');
+const args=process.argv.slice(2),apply=args.includes('--apply');
+let only;
+for(let i=0;i<args.length;i++){
+ if(args[i]==='--apply')continue;
+ if(args[i]==='--only'&&args[i+1]){only=args[++i];continue;}
+ throw Error('Usage: migrate.mjs [--apply] [--only SOURCE]');
+}
 const contract=JSON.parse(fs.readFileSync(resolve(root,'docs/local-artifact-paths.json'),'utf8'));
+if(only&&!contract.mappings.some(entry=>entry.from===only))throw Error('Unregistered migration source');
 const safe=p=>{const f=resolve(root,p),r=relative(root,f);if(!r||r.startsWith('../')||isAbsolute(r))throw Error('Unsafe migration path');return f;};
 if(apply&&process.platform!=='win32'){
  const processes=execFileSync('ps',['-axo','comm'],{encoding:'utf8'});
@@ -17,6 +23,7 @@ const receipt=resolve(root,'.local-data/migrations/tmp-2026-11-09');
 if(apply)fs.mkdirSync(receipt,{recursive:true});
 let moved=0,missing=0;
 for(const entry of contract.mappings){
+ if(only&&entry.from!==only)continue;
  const source=safe(entry.from),destination=safe(entry.to);
  if(!fs.existsSync(source)){missing++;continue;}
  if(fs.existsSync(destination))throw Error(`Both paths exist; preserve and reconcile manually: ${entry.from} -> ${entry.to}`);

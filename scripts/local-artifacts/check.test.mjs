@@ -17,6 +17,7 @@ test('persistent runtime dependencies fail; ephemeral and atomic writes remain v
 });
 test('frozen paths resolve on both machines without accepting arbitrary relative traversal',()=>{
  assert.throws(()=>relocatedArtifactPath('../../outside'));
+ assert.throws(()=>relocatedArtifactPath('.tmp/cubeopt-reverse/../../../outside'));
  const expected=resolve(root,'.local-data/cubeopt-reverse/opt9-generated/small-memory.bin');
  assert.equal(relocatedArtifactPath('/Users/eula/Developer/cuberoot.me/.tmp/cubeopt-reverse/opt9-generated/small-memory.bin'),expected);
  assert.equal(relocatedArtifactPath('/Users/cuberoot/Developer/cuberoot.me/.tmp/cubeopt-reverse/opt9-generated/small-memory.bin'),expected);

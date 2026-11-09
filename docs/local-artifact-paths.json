@@ -1792,6 +1792,16 @@
       "from": ".tmp/png/space-shanghai-review-20261103",
       "to": ".local-data/archive/tmp-2026-11-09/png/space-shanghai-review-20261103",
       "kind": "historical-evidence"
+    },
+    {
+      "from": ".tmp/png",
+      "to": ".local-data/archive/tmp-2026-11-09/preview-images/root",
+      "kind": "historical-preview-evidence"
+    },
+    {
+      "from": "core/.tmp/png",
+      "to": ".local-data/archive/tmp-2026-11-09/preview-images/core",
+      "kind": "historical-preview-evidence"
     }
   ]
 }

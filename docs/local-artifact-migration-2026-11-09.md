@@ -18,7 +18,7 @@
 - [x] 移动运行资产、任务数据与历史归档，更新现役路径引用。
 - [x] 完整依赖检查及路径迁移兼容处理。
 - [x] AI 写入守卫、提交前检查、CI 与规则文档。
-- [ ] 同步新 Mac，保留并合并其独立修改。
+- [x] 同步新 Mac，保留并合并其独立修改。
 - [x] 最小静态/契约验证，记录未验证边界。
 - [ ] 提交、push、确认相关 CI/部署。
 
@@ -28,10 +28,18 @@
 
 ## 已完成核对
 
-- mini 共移动 346 个顶层/嵌套条目；同盘 rename 验证对象 inode 不变。迁移数据清单 37,100 个文件/链接，约 162.6 GB 逻辑大小；目录磁盘占用约 151 GiB。主要为 86 GiB 建表实验历史、59 GiB CubeOpt 资产及 4.3 GiB ZBLL 结果。
+- mini 共移动 348 个顶层/嵌套条目；同盘 rename 验证对象 inode 不变。迁移数据清单 37,100 个文件/链接，约 162.6 GB 逻辑大小；目录磁盘占用约 151 GiB。主要为 86 GiB 建表实验历史、59 GiB CubeOpt 资产及 4.3 GiB ZBLL 结果。
 - 新 Mac 已接收所有本机清单条目。其独有的 Opt10/egg 比较报告保留；资源基线冲突先保存到新机 `.local-data/migrations/tmp-2026-11-09/macbook-preserved/`，再恢复正式冻结版本所需的历史证据。
 - Opt10 固定程序、40 个冻结快照文件、辅助表 SHA256、主表尺寸与 1024 字节表头、既有报告/停止记录核对通过；不读主表 payload，不启动引擎。
 - 生命周期规则 4 项、统计/Opt10 规则 5 项、求解器保护 28 项、客户端守卫/复盘记录 207 项通过；Web typecheck、alg-build typecheck 通过。没有本地 Next build，没有新求解或建表。
 - 全仓生成物检查存在四项既有问题：assistant/pages.json 本机缺失、avatar-gallery 缺许可证依据、exact-puzzles 与 scramble 输出归属重叠、根 AGENTS 与检查器所要求的旧文字不一致；本轮不把这些无关问题伪报为通过。
 - 新 Hook 已有适配器 JSON deny 验证；更新后的定义仍需新会话信任后验证真实工具拦截。Git hook 与 CI 独立生效。
 - 冻结证据不改写，未重置任何停止状态或机器基线；旧研究任务的源码/boot 审批不会因迁移自动重新授权。
+
+## 双机与发布
+
+- 主整改提交 `5df32829c5` 已 push；两台 Mac 均更新至该提交，新机的 `.node-version`、预览工作流设置及其他任务修改保留。新机 Git pre-commit 已启用。
+- 两台机器的 `scripts/local-artifacts/verify.mts` 均通过，辅助表 SHA256 为 `0db5898f544781d7088be836e9759c61d45ffcc7bf3ceb18010f5cba5932377d`。
+- 旧预览图片也归档，避免把唯一历史证据默认当成可删截图；mini 根 `.tmp` 当前仅剩可重建检查戳/系统目录元数据，`core/.tmp` 已空。
+- 独立 [Local artifact lifecycle CI](https://github.com/2017YANR02/cuberoot.me/actions/runs/42655795237) 已通过。主提交 Test、Deploy Next、Deploy Core 状态继续核对；不跟进 CodeQL。
+- 提交 Hook 的隔离仓库 fixture 已补齐新增检查器与 policy；最终提交前复盘回归 305 项通过、19 项按原规则跳过。

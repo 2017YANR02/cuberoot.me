@@ -7,6 +7,7 @@ const {mappings}=JSON.parse(readFileSync(resolve(root,'docs/local-artifact-paths
 export function relocatedArtifactPath(recorded, repositoryRoot=root) {
  if(typeof recorded!=='string')throw Error('Missing recorded artifact path');
  let path=recorded.replaceAll('\\','/');
+ if(path.split('/').includes('..'))throw Error('Recorded artifact contains parent traversal');
  for(const prefix of [repositoryRoot+'/','/Users/eula/Developer/cuberoot.me/','/Users/cuberoot/Developer/cuberoot.me/'])
   if(path.startsWith(prefix)){path=path.slice(prefix.length);break;}
  for(const {from,to} of mappings)if(path===from||path.startsWith(from+'/'))return resolve(repositoryRoot,to+path.slice(from.length));
