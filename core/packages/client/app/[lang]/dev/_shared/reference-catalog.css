@@ -75,3 +75,9 @@
 @media (max-width: 700px) { .dev-reference-page { padding: 16px; gap: 12px; } }
 
 .dev-reference-detail p { font-size: 16px; line-height: 1.7; margin: 4px 0 12px; overflow-wrap: anywhere; }
+
+.dev-reference-facts { display: flex; flex-wrap: wrap; gap: 16px 32px; padding: 16px 0; margin: 16px 0; border-block: 1px solid var(--border-default); }
+.dev-reference-facts dt { font-size: 14px; color: var(--muted-foreground); margin-bottom: 4px; }
+.dev-reference-facts dd { margin: 0; font-size: 16px; }
+.dev-reference-detail a { color: var(--accent); text-underline-offset: 3px; }
+.dev-reference-detail a:hover { text-decoration: underline; }

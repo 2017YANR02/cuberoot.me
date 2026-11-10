@@ -11,14 +11,27 @@ import './reference-catalog.css';
 
 interface ReferenceEntry { name: string; category: string; zh: string; en: string }
 interface Category { id: string; zh: string; en: string }
+interface Facet<E> {
+  key: string;
+  label: string;
+  options: { value: string; label: string }[];
+  value: (entry: E) => string;
+}
 
-/** Shared browsing; the component and utility registries own all content. */
-export default function ReferenceCatalog<E extends ReferenceEntry>({ entries, categories, searchText, children, directoryLabel }: {
+/** Shared browsing; each reference registry owns its content and filters. */
+export default function ReferenceCatalog<E extends ReferenceEntry>({ entries, categories, searchText, children, directoryLabel,
+  searchPlaceholder, facets = [], categoryParam = 'category', entryParam = 'entry', sortCategory,
+}: {
   entries: E[];
   categories: Category[];
   searchText: (entry: E) => string;
   children: (entry: E) => ReactNode;
   directoryLabel: string;
+  searchPlaceholder?: string;
+  facets?: Facet<E>[];
+  categoryParam?: string;
+  entryParam?: string;
+  sortCategory?: (a: E, b: E) => number;
 }) {
   const t = useT();
   const prefix = useId();
@@ -26,16 +39,22 @@ export default function ReferenceCatalog<E extends ReferenceEntry>({ entries, ca
     q: parseAsString.withDefault(''), category: parseAsString.withDefault(''),
     page: parseAsInteger.withDefault(1), size: parseAsInteger.withDefault(20),
     entry: parseAsString.withDefault(''),
-  });
+  }, { urlKeys: { category: categoryParam, entry: entryParam } });
+  const [facetValues, setFacetValues] = useQueryStates(Object.fromEntries(
+    facets.map(facet => [facet.key, parseAsString.withDefault('')]),
+  ));
   const category = categories.some(cat => cat.id === state.category) ? state.category : '';
   const categoryTotal = category ? entries.filter(entry => entry.category === category).length : entries.length;
   const terms = state.q.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
   const orderedEntries = category
-    ? entries.filter(entry => entry.category === category).sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base', numeric: true }))
+    ? entries.filter(entry => entry.category === category).sort(sortCategory ?? ((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base', numeric: true })))
     : categories.flatMap(cat => entries.filter(entry => entry.category === cat.id));
   const matches = orderedEntries.filter(entry => {
     const haystack = `${entry.name} ${entry.zh} ${entry.en} ${searchText(entry)}`.toLocaleLowerCase();
-    return terms.every(term => haystack.includes(term));
+    return terms.every(term => haystack.includes(term)) && facets.every(facet => {
+      const value = facetValues[facet.key];
+      return !facet.options.some(option => option.value === value) || facet.value(entry) === value;
+    });
   });
   const size = [20, 50, 100].includes(state.size) ? state.size : 20;
   const totalPages = Math.max(1, Math.ceil(matches.length / size));
@@ -50,18 +69,31 @@ export default function ReferenceCatalog<E extends ReferenceEntry>({ entries, ca
   return <div className="dev-reference dev-reference--workspace" data-detail={selectedIndex >= 0 || undefined}>
     <div className="dev-reference-controls">
       <SearchInput value={state.q} onChange={q => void setState({ q, page: 1, entry: null })}
-        placeholder={t('搜索名称、用途或导入路径', 'Search names, purposes or import paths')} className="dev-reference-search" />
+        placeholder={searchPlaceholder ?? t('搜索名称、用途或导入路径', 'Search names, purposes or import paths')} className="dev-reference-search" />
       <label className="dev-reference-category"><span>{t('分类', 'Category')}</span>
-        <select value={category} onChange={event => void setState({ category: event.target.value, page: 1, entry: null })}>
+        <select aria-label={t('分类', 'Category')} value={category} onChange={event => void setState({ category: event.target.value, page: 1, entry: null })}>
           <option value="">{t('全部分类', 'All categories')}</option>
           {categories.map(cat => <option key={cat.id} value={cat.id}>{tr(cat)}</option>)}
         </select>
       </label>
+      {facets.map(facet => <label key={facet.key} className="dev-reference-category"><span>{facet.label}</span>
+        <select aria-label={facet.label} value={facet.options.some(option => option.value === facetValues[facet.key]) ? facetValues[facet.key] : ''}
+          onChange={event => {
+            void setFacetValues({ [facet.key]: event.target.value || null });
+            void setState({ page: 1, entry: null });
+          }}>
+          <option value="">{t('全部', 'All')}</option>
+          {facet.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+        </select>
+      </label>)}
       <span className="dev-reference-total">{t(`共 ${categoryTotal} 项`, `${categoryTotal} entries`)}</span>
     </div>
     {visible.length === 0 && <p className="dev-reference-empty" role="status">
       {t('没有匹配项。', 'No matches.')}
-      <button type="button" onClick={() => void setState({ q: null, category: null, page: null, entry: null })}>{t('清除筛选', 'Clear filters')}</button>
+      <button type="button" onClick={() => {
+        void setState({ q: null, category: null, page: null, entry: null });
+        void setFacetValues(null);
+      }}>{t('清除筛选', 'Clear filters')}</button>
     </p>}
     {selected && <div className="dev-reference-workspace">
       <div className="dev-reference-sidebar">
