@@ -1,92 +1,31 @@
 'use client';
 
 import PageBackLink from '@/components/PageBackLink';
-// /dev/utils — quick-reference for cuberoot.me's own hooks & canonical utils.
-// Entries live in ./_catalog.tsx (the single place to register new ones).
 import Link from '@/components/AppLink';
-import { useTranslation } from 'react-i18next';
-import './utils_ref.css';
-import { tr } from '@/i18n/tr';
-import { CATALOG, UCATS, iconFor, type UtilEntry } from './_catalog';
-
-function Card({ e, lang }: { e: UtilEntry; lang: 'zh' | 'en' }) {
-  const Icon = iconFor(e);
-  return (
-    <div className="ur-card">
-      <div className="ur-card-head">
-        <span className="ur-viz"><Icon size={18} strokeWidth={1.6} aria-hidden="true" /></span>
-        <span className="ur-card-name">{e.name}</span>
-      </div>
-      <p className="ur-card-desc">{lang === 'zh' ? e.zh : e.en}</p>
-      <pre className="ur-code ur-code-sig"><code>{e.sig}</code></pre>
-      <pre className="ur-code ur-code-sub"><code>{e.imp}</code></pre>
-      {e.usage && <pre className="ur-code ur-code-sub"><code>{e.usage}</code></pre>}
-    </div>
-  );
-}
+import MoreToggle from '@/components/MoreToggle';
+import { useT } from '@/hooks/useT';
+import ReferenceCatalog from '../_shared/ReferenceCatalog';
+import { CATALOG, UCATS } from './_catalog';
 
 export default function CodeUtilsPage() {
-  const { i18n } = useTranslation();
-  const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  return (
-    <div className="ur">
-      <header className="ur-head">
-        <div className="ur-topbar">
-          <PageBackLink fallback="/dev" className="ur-back" />
-        </div>
-        <h1 className="ur-title">
-          <span className="ur-prefix">/</span>utils
-          <span className="ur-cursor">_</span>
-        </h1>
-        <p className="ur-sub">
-          {tr({
-            zh: 'cuberoot.me 自己的 6 个 React Hook,与一批 canonical 工具函数,集中速查:i18n 文案、API 地址、WCA 成绩格式化、项目归一、配色常量。写新代码前先翻一遍,别重复造轮子。',
-            en: 'A quick-reference for cuberoot.me’s own 6 React hooks and the canonical utility functions: i18n text, API URLs, WCA result formatting, event normalization, color constants. Skim before writing new code — don’t reinvent the wheel.'
-        })}
-        </p>
-      </header>
-
-      <div className="ur-note">
-        <span className="ur-note-mark">★</span>
-        <span>
-          {tr({
-            zh: '约定:新增一个可复用 hook / 工具函数后,在 ',
-            en: 'Convention: after adding a reusable hook / util, register an entry in '
-        })}
-          <code>app/[lang]/dev/utils/_catalog.tsx</code>
-          {tr({
-            zh: ' 里登记一条,下一个人 / 下一个 AI 打开本页就能查到它。',
-            en: ' — the next person, or the next AI, then finds it right here.'
-        })}
-        </span>
-      </div>
-
-      {UCATS.map((cat) => {
-        const items = CATALOG.filter((e) => e.category === cat.id);
-        if (!items.length) return null;
-        return (
-          <section className="ur-cat" key={cat.id}>
-            <div className="ur-cat-head">
-              <span className="ur-cat-tag">// {cat.id}</span>
-              <h2 className="ur-cat-title">{lang === 'zh' ? cat.zh : cat.en}</h2>
-            </div>
-            <div className="ur-grid">
-              {items.map((e) => <Card key={e.name} e={e} lang={lang} />)}
-            </div>
-          </section>
-        );
-      })}
-
-      <footer className="ur-foot">
-        <div className="ur-foot-line">
-          <Link href="/dev/components">/components</Link>
-          <span>·</span>
-          <Link href="/dev">/dev</Link>
-          <span>·</span>
-          <Link href="/">CubeRoot</Link>
-        </div>
-      </footer>
-    </div>
-  );
+  const t = useT();
+  return <main className="dev-reference-page">
+    <header className="dev-reference-page-heading">
+      <PageBackLink fallback="/dev" />
+      <h1>{t('Hooks 与工具函数', 'Hooks & utilities')}</h1>
+    </header>
+    <ReferenceCatalog directoryLabel={t('工具目录', 'Utility directory')} entries={CATALOG} categories={UCATS} searchText={entry => `${entry.sig} ${entry.imp} ${entry.usage ?? ''}`}>
+      {entry => <>
+        <h3>{t('类型签名', 'Type signature')}</h3><pre><code>{entry.sig}</code></pre>
+        <h3>{t('导入', 'Import')}</h3><pre><code>{entry.imp}</code></pre>
+        {entry.usage && <><h3>{t('调用示例', 'Example')}</h3><pre><code>{entry.usage}</code></pre></>}
+      </>}
+    </ReferenceCatalog>
+    <footer className="dev-reference-page-footer"><Link href="/dev/components">{t('组件库', 'Component library')}</Link>
+    <details className="dev-reference-maintenance">
+      <MoreToggle as="summary">{t('维护工具目录', 'Maintaining the catalog')}</MoreToggle>
+      <p>{t('目录由 _catalog.tsx 提供。新增或修改公共工具时，同步用途、真实类型签名与导入路径；参数约束和调用示例随条目保留。', 'The catalog comes from _catalog.tsx. Keep purposes, actual type signatures and imports in sync when public utilities change, including constraints and examples.')}</p>
+    </details>
+    </footer>
+  </main>;
 }

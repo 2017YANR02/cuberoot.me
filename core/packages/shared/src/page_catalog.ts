@@ -439,7 +439,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'dev/tokens': { title: { zh: '设计令牌', en: 'Design Tokens' } },
   'alg/photo': { title: { zh: '拍照查公式', en: 'Photo Algorithm Lookup' }, description: { zh: '在本机识别手持三阶魔方照片，查询并验证顶层公式。', en: 'Identify a handheld 3×3 cube photo locally and find verified last-layer algorithms.' } },
   'dev/cube-photo': { title: { zh: '魔方照片识别', en: 'Cube Photo Recognition' } },
-  'dev/utils': { title: { zh: '速查', en: 'Hooks & Utils' } },
+  'dev/utils': { title: { zh: 'Hooks 与工具函数', en: 'Hooks & utilities' }, description: { zh: '按用途查找共享 Hooks 与工具函数，查看完整类型签名、导入路径和调用示例。', en: 'Find shared hooks and utilities by purpose, with complete type signatures, imports and examples.' } },
   'dev/wca-export': { title: { zh: 'WST 数据导出', en: 'WST Export' } },
   'dev/wca-rest-api': { title: { zh: 'WCA REST API', en: 'WCA REST API' } },
   'dev/wca-site': { title: { zh: 'WorldCubeAssociation.org : WCA 官网源码 — 2008 年起的 Rails 单体, 正迁往 Next.js', en: 'WorldCubeAssociation.org : the WCA\'s codebase — a Rails monolith since 2008, migrating to Next.js' } },
