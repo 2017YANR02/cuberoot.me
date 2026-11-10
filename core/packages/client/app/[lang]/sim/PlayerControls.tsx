@@ -21,7 +21,7 @@ import { trackFeatureUse } from '@/lib/analytics-signal';
  *    random-move (cheap, no solver needed).
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useT } from '@/hooks/useT';
@@ -907,6 +907,16 @@ interface Props {
   onCustomRestChange?: (v: CustomTreatment) => void;
 }
 
+// Match the touch-landscape layout in sim.css; keep hydration deterministic.
+const TOUCH_LANDSCAPE = '(pointer: coarse) and (orientation: landscape) and (min-width: 600px) and (max-height: 600px)';
+const subscribeLandscape = (notify: () => void) => {
+  const media = window.matchMedia(TOUCH_LANDSCAPE);
+  media.addEventListener('change', notify);
+  return () => media.removeEventListener('change', notify);
+};
+const landscapeSnapshot = () => window.matchMedia(TOUCH_LANDSCAPE).matches;
+const landscapeServerSnapshot = () => false;
+
 export default function PlayerControls({
   active = true,
   idPrefix,
@@ -1012,6 +1022,7 @@ export default function PlayerControls({
   // "Derive scramble from solution" (cubedb-style) is 3x3-only — the solver is.
   const is3x3 = !isSquarePuzzle && !isIvy && !corner && !isTwistyMode && order === 3;
   const tr = useT();
+  const touchLandscape = useSyncExternalStore(subscribeLandscape, landscapeSnapshot, landscapeServerSnapshot);
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -2735,10 +2746,7 @@ export default function PlayerControls({
       />
 
       {active && (() => {
-      const playbackBar = (
-      // 播放控制排:twizzle alpha.twizzle.net/edit 同款两排布局(进度条在上、传输按钮在下),
-      // 与 /recon 播放条共用同一份 <PlaybackBar>。stickering / 锚点两个下拉挂在按钮排两端。
-      <div className="sim-stage-controls">
+      const viewTools = (
       <div className="sim-view-tools" role="toolbar" aria-label={t('画布工具', 'Canvas tools')}>
         {backViewButton}{fullscreenButton}
         {!resolveCaps(puzzleKind, renderer).flat && <button type="button" className="playback-bar-btn"
@@ -2749,6 +2757,13 @@ export default function PlayerControls({
           }}>{t('重置视角', 'Reset view')}</button>}
         {canvasTools}
       </div>
+      );
+      const speedControl = <div className="sim-playback-speed">
+        <Slider label="TPS" value={settings.speed} onChange={speed => onSettingsChange({ ...settings, speed })} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
+      </div>;
+      const playbackBar = (
+      <div className="sim-stage-controls">
+      {!touchLandscape && viewTools}
       <PlaybackBar layout="wide"
         disabled={!isTwistyMode && (!engineReady || replayPending)}
         step={isTwistyMode ? (totalSteps > 0 ? twistyPlayback.step : 0) : step}
@@ -2760,10 +2775,9 @@ export default function PlayerControls({
         onTogglePlay={handleTogglePlay}
         onStepForward={stepForward}
         onSkipEnd={() => { setCaretChar(null); jumpToStep(totalSteps); }}
-        leading={<div className="sim-playback-speed">
-          <Slider label="TPS" value={settings.speed} onChange={speed => onSettingsChange({ ...settings, speed })} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
-        </div>}
+        leading={touchLandscape ? undefined : speedControl}
         trailing={<SettingsPopover label={t('播放设置', 'Playback settings')} className="sim-playback-settings" iconSize={14}>
+          {touchLandscape && <>{speedControl}{viewTools}</>}
           {anchorSelect}
           <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={animatePlayback => onSettingsChange({ ...settings, animatePlayback })} />
         </SettingsPopover>}

@@ -1705,3 +1705,32 @@
 @media (max-width: 480px) {
   .sim-puzzle-toggles > * { border-inline-end: 0; padding-inline-end: 0; }
 }
+
+/* Phone landscape: secondary view/speed controls live in the existing settings
+   popover, leaving one aligned transport row and a larger canvas. */
+@media (pointer: coarse) and (orientation: landscape) and (min-width: 600px) and (max-height: 600px) {
+  .sim-playback-under { padding: 4px 8px; }
+  .sim-stage-controls .playback-bar-controls {
+    grid-template-columns: repeat(5, minmax(44px, 1fr)) 44px;
+    gap: 2px;
+  }
+  .sim-stage-controls .playback-bar-btn,
+  .sim-playback-settings > button { min-width: 44px; min-height: 44px; padding-inline: 6px; }
+  .sim-playback-settings .sim-playback-speed { width: 100%; }
+  .sim-playback-settings .sim-view-tools { flex-wrap: wrap; margin: 0; gap: 4px; }
+  .sim-side .sim-player-row--top { flex-wrap: nowrap; }
+  .sim-side .sim-player-row--top > .sim-player-hlwrap { min-width: 0; }
+  .sim-side .sim-player-row--top > button { flex-shrink: 0; padding-inline: 6px; }
+  .sim-side .sim-random-label-full { display: none; }
+  .sim-side .sim-random-label-short { display: inline; }
+  .sim-player input:not([type="range"]),
+  .sim-player textarea { font-size: 16px; }
+  .sim-player button:not(.pill-toggle):not(.bool-toggle-label),
+  .sim-player input:not([type="range"]),
+  .sim-player select,
+  .sim-playback-settings .sim-color-select-trigger,
+  .sim-playback-settings .compact-select-trigger,
+  .sim-float-close,
+  .sim-backview-swap,
+  .sim-image-swap { min-width: 44px; min-height: 44px; }
+}
