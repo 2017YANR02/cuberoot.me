@@ -36,6 +36,6 @@ it('shows navigation only for administrators and follows the active page', async
   state.pathname = '/admin'; state.section = 'system'; state.view = 'monitoring';
   await act(async () => root.render(createElement(AdminShell, null, 'Page content')));
   expect(node.querySelector('details')?.open).toBe(true);
-  expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('Assistant and diagnostics');
+  expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('AI chat');
   await act(async () => root.unmount());
 });

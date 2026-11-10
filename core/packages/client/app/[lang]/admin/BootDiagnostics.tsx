@@ -1,6 +1,8 @@
 'use client';
 
 import MoreToggle from '@/components/MoreToggle';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
+import { HelpCircle } from '@app-foundation/icons/lucide';
 import { useEffect, useState } from 'react';
 import { useT } from '@/hooks/useT';
 import { apiUrl } from '@/lib/api-base';
@@ -46,14 +48,14 @@ export default function BootDiagnostics() {
   const osNames: Record<string, string> = { ios: 'iOS', android: 'Android', macos: 'macOS', windows: 'Windows', linux: 'Linux', other: t('其他系统', 'Other OS') };
 
   return (
-    <section className="admin-boot" aria-labelledby="admin-boot-title">
+    <details className="admin-monitoring__disclosure admin-monitoring__boot">
+      <MoreToggle as="summary">{t('最近启动错误', 'Recent startup errors')}</MoreToggle>
       <div className="admin-boot__heading">
-        <h2 id="admin-boot-title">{t('最近启动错误', 'Recent startup errors')}</h2>
+        <InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('启动错误说明', 'About startup errors')} content={t('自动收集最近 50 条记录，保留 90 天。同一编号可能对应多次错误，不代表某一位用户。', 'The latest 50 automatic reports, retained for 90 days. A code can match multiple errors and does not identify a user.')} />
         <button type="button" className="admin-boot__refresh" disabled={loading} onClick={() => setRevision(value => value + 1)}>
           {t('刷新', 'Refresh')}
         </button>
       </div>
-      <p className="admin-hub__status">{t('自动收集的最近 50 条记录，保留 90 天。无需用户复制发送；同一编号可能对应多次错误，不代表某一位用户。', 'The latest 50 automatic reports, retained for 90 days. Users do not need to copy and send them. A code can match multiple errors and does not identify a user.')}</p>
       {loading && <p role="status"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p>}
       {failed && <p role="alert">{t('错误记录加载失败，请刷新重试。', 'Could not load error reports. Refresh to retry.')}</p>}
       {!loading && !failed && events.length === 0 && <p>{t('暂无错误记录。', 'No error reports yet.')}</p>}
@@ -75,6 +77,6 @@ export default function BootDiagnostics() {
           ))}
         </details>
       ))}
-    </section>
+    </details>
   );
 }
