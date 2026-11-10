@@ -115,9 +115,9 @@ it('does not look up or overwrite metadata saved at collection', async () => {
 
 it('returns authenticated paginated filter summaries without recordings or expectations', async () => {
   expect((await app.request('/v1/recon-intake?summary=1')).status).toBe(403);
-  db.query.mockResolvedValueOnce([{ id: 'sample', created_by: 'admin', source_snapshot: null }]);
-  const response = await app.request('/v1/recon-intake?status=all&summary=1&offset=50', { headers: { Authorization: 'Bearer admin' } });
-  expect(await response.json()).toEqual({ items: [{ id: 'sample', createdBy: 'admin', sourceSnapshot: null }], hasMore: false });
+  db.query.mockResolvedValueOnce([{ id: 'sample', created_by: 'admin', source_snapshot: null, status: 'needs-review', revision: 2 }]);
+  const response = await app.request('/v1/recon-intake?status=all&summary=workflow&offset=50', { headers: { Authorization: 'Bearer admin' } });
+  expect(await response.json()).toEqual({ items: [{ id: 'sample', createdBy: 'admin', sourceSnapshot: null, status: 'needs-review', revision: 2 }], hasMore: false });
   expect(db.query.mock.calls[0][0]).toContain('SELECT id, created_by, source_snapshot');
   expect(db.query.mock.calls[0][1]).toEqual([50]);
 });

@@ -17,6 +17,7 @@ vi.mock('@/components/AppLink', () => ({ default: () => null }));
 vi.mock('@/components/WcaAuth', () => ({ default: () => null }));
 vi.mock('@/components/MoreToggle', () => ({ default: () => null }));
 vi.mock('@/app/[lang]/recon/ground-truth/SourceInfo', () => ({ default: () => null }));
+vi.mock('@/app/[lang]/recon/ground-truth/RegressionCaseDetail', () => ({ default: () => null }));
 import RegressionResults from '@/app/[lang]/recon/ground-truth/RegressionResults';
 
 let root: Root;
@@ -38,9 +39,9 @@ beforeEach(() => {
 it('paginates the complete catalog and applies person and collector filters before paging', async () => {
   const first = '00000000-0000-4000-8000-000000000001';
   const last = '00000000-0000-4000-8000-000000000013';
-  mocks.intake.mockResolvedValueOnce({ items: [{ id: first, createdBy: 'collector-a', sourceSnapshot: {
+  mocks.intake.mockResolvedValueOnce({ items: [{ id: first, status: 'active', revision: 1, createdBy: 'collector-a', sourceSnapshot: {
     id: 1, metadata: { personId: 'solver-a', person: 'Solver A' },
-  } }], hasMore: true }).mockResolvedValueOnce({ items: [{ id: last, createdBy: 'collector-b', sourceSnapshot: {
+  } }], hasMore: true }).mockResolvedValueOnce({ items: [{ id: last, status: 'active', revision: 1, createdBy: 'collector-b', sourceSnapshot: {
     id: 13, metadata: { personId: 'solver-b', person: 'Solver B' },
   } }], hasMore: false });
   const cases = Array.from({ length: 13 }, (_, i) => ({
@@ -48,7 +49,7 @@ it('paginates the complete catalog and applies person and collector filters befo
   }));
   await act(async () => root.render(createElement(RegressionResults)));
   await act(async () => respond(0, { scope: 'local', runs: [], cases, hasMore: false }));
-  expect(mocks.intake).toHaveBeenNthCalledWith(2, '?status=all&summary=1&offset=50');
+  expect(mocks.intake).toHaveBeenNthCalledWith(2, '?status=all&summary=workflow&offset=50');
   expect(host.querySelectorAll('.gt-candidate')).toHaveLength(6);
   const next = host.querySelector<HTMLButtonElement>('[aria-label="下一页样例"]')!;
   await act(async () => next.click());
@@ -103,4 +104,29 @@ it('keeps narrow-screen pages to three cases', async () => {
   }));
   expect(host.querySelectorAll('.gt-candidate')).toHaveLength(3);
   expect(host.querySelector('.gt-pages')?.textContent).toContain('1 / 3');
+});
+
+it('includes unexported intake and deduplicates older exports without inheriting their approval or result', async () => {
+  const revised = '00000000-0000-4000-8000-000000000021';
+  const fresh = '00000000-0000-4000-8000-000000000022';
+  mocks.intake.mockResolvedValue({ items: [
+    { id: revised, status: 'needs-review', revision: 2, createdBy: 'collector' },
+    { id: fresh, status: 'pending-test', revision: 1, createdBy: 'collector' },
+  ], hasMore: false });
+  await act(async () => root.render(createElement(RegressionResults)));
+  const older = { ...history('Old approved revision').cases[0], id: 'intake-' + revised + '-v1', status: 'passed' };
+  await act(async () => respond(0, { scope: 'local', cases: [older], runs: [{
+    id: 'old-run', status: 'passed', startedAt: '2026-11-01T00:00:00Z', cases: [older], errors: [], commit: '', fingerprint: '',
+  }], hasMore: false }));
+  expect(host.querySelectorAll('.gt-candidate')).toHaveLength(2);
+  expect(host.querySelector('.gt-regression-summary')?.textContent).toContain('启用 0 · 待办 2');
+  expect(host.querySelector('.gt-candidate')?.textContent).toContain('未检查');
+  expect(host.querySelector('.gt-candidate')?.textContent).toContain('待验收');
+  const state = [...host.querySelectorAll('label')].find(item => item.querySelector('span')?.textContent === '样例状态')!.querySelector('select')!;
+  await act(async () => { state.value = 'active'; state.dispatchEvent(new Event('change', { bubbles: true })); });
+  expect(host.querySelectorAll('.gt-candidate')).toHaveLength(0);
+  await act(async () => { state.value = 'pending-test'; state.dispatchEvent(new Event('change', { bubbles: true })); });
+  expect(host.querySelectorAll('.gt-candidate')).toHaveLength(1);
+  await act(async () => { state.value = 'todo'; state.dispatchEvent(new Event('change', { bubbles: true })); });
+  expect(host.querySelectorAll('.gt-candidate')).toHaveLength(2);
 });

@@ -67,7 +67,7 @@ export default function ReconIntakeAction({ solve, snapshot, host }: {
   return <div className="ri-action">
     <button className="ri-button" ref={trigger} type="button" onClick={() => { setOpen(v => !v); setError(''); }}
       aria-expanded={open}>{tr({ zh: '收录样本', en: 'Collect sample' })}</button>
-    {saved && <Link href="/recon/ground-truth?view=queue" prefetch={false}>{tr({ zh: '已收录 · 查看队列', en: 'Saved · View queue' })}</Link>}
+    {saved && <Link href="/recon/ground-truth?view=smart" prefetch={false}>{tr({ zh: '已收录 · 查看样例', en: 'Saved · View case' })}</Link>}
     {open && <div ref={panel} className="ri-popover" data-site-surface="popover">
       <label>{tr({ zh: '其他复盘链接（选填，留空使用当前复盘）', en: 'Another replay link (optional; blank uses this replay)' })}
         <span className="ri-input"><input className="ri-field ri-link-input" value={link} disabled={busy} onChange={e => { setLink(e.target.value); setTarget(null); }} />

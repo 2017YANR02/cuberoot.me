@@ -12,7 +12,7 @@ import { tr, useLang } from '@/i18n/tr';
 import type { ReconTestCase, ReconTestHistory, ReconTestRow, ReconTestStatus } from '@/lib/recon-test-results';
 import type { ReconIntakeCase } from '@cuberoot/shared/recon-ground-truth';
 import { intakeRequest, resolveIntakeSource } from '@/lib/recon-intake-api';
-import SourceInfo from './SourceInfo';
+import RegressionCaseDetail from './RegressionCaseDetail';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { SearchInput } from '@/components/SearchInput';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -41,7 +41,12 @@ const STATUS: Record<ReconTestStatus, { zh: string; en: string }> = {
 const title = (sample: ReconTestCase) => tr(TITLES[sample.id] ?? (sample.id.startsWith('intake-') ? { zh: '收录样本', en: 'Intake sample' } : { zh: sample.issue, en: sample.issue }));
 const textRows = (rows: ReconTestRow[]) => rows.map(row => `${row.moves}${row.label ? '  ' + row.label : ''}${row.colors.length ? ' [' + row.colors.join(' / ') + ']' : ''}`).join('\n');
 type History = ReconTestHistory & { cases?: ReconTestCase[]; hasMore?: boolean };
-type IntakeSummary = Pick<ReconIntakeCase, 'id' | 'createdBy' | 'sourceSnapshot'>;
+type IntakeSummary = Pick<ReconIntakeCase, 'id' | 'createdBy' | 'sourceSnapshot' | 'status' | 'revision'>;
+const CASE_STATUS = {
+  'pending-test': { zh: '待测试', en: 'Pending test' }, 'needs-fix': { zh: '待修正', en: 'Needs correction' },
+  'needs-review': { zh: '待验收', en: 'Needs review' }, active: { zh: '已启用', en: 'Active' },
+  unconfirmed: { zh: '待确认', en: 'Unconfirmed' },
+};
 const intakeId = (id: string) => id.match(/^intake-([0-9a-f-]{36})-v\d+$/)?.[1];
 
 export default function RegressionResults() {
@@ -66,7 +71,7 @@ export default function RegressionResults() {
     void (async () => {
       const items: IntakeSummary[] = [];
       for (let start = 0; ; start += 50) {
-        const page = await intakeRequest<{ items: IntakeSummary[]; hasMore: boolean }>(`?status=all&summary=1&offset=${start}`);
+        const page = await intakeRequest<{ items: IntakeSummary[]; hasMore: boolean }>(`?status=all&summary=workflow&offset=${start}`);
         if (!active) return;
         items.push(...page.items);
         if (!page.hasMore) break;
@@ -132,9 +137,21 @@ export default function RegressionResults() {
     return () => { clearInterval(timer); epoch.current++; inFlight.current = false; };
   }, [load]);
   const run = history?.runs.find(item => item.id === runId) ?? history?.runs[0];
-  const catalog = history?.cases ?? [];
+  // Database workflow state is current; a historical run never changes admission.
+  // Keep one row per intake, even when the catalog still contains an older revision.
+  const fixtures = history?.cases ?? [];
+  const catalog: ReconTestCase[] = [
+    ...Object.values(intakes).map(item => {
+      const existing = fixtures.find(sample => intakeId(sample.id) === item.id);
+      const id = 'intake-' + item.id + '-v' + item.revision;
+      return { id, source: '', issue: '', expected: [], status: 'not-run' as const, errors: [],
+        ...(existing?.id === id ? existing : {}), approved: item.status === 'active' };
+    }),
+    ...fixtures.filter(sample => !intakes[intakeId(sample.id) ?? '']),
+  ];
   const approvedCount = catalog.filter(sample => sample.approved === true).length;
   const sampleIntake = (sample: ReconTestCase) => intakes[intakeId(sample.id) ?? ''];
+  const workflowStatus = (sample: ReconTestCase) => sampleIntake(sample)?.status ?? (sample.approved ? 'active' : 'unconfirmed');
   const source = (sample: ReconTestCase) => sampleIntake(sample)?.sourceSnapshot;
   const names = new Map<string, string>();
   for (const item of Object.values(intakes)) {
@@ -149,7 +166,7 @@ export default function RegressionResults() {
   const cases = catalog.filter(sample => {
     const m = source(sample)?.metadata;
     const creator = sampleIntake(sample)?.createdBy;
-    return (filter === 'all' || (sample.approved === true ? 'approved' : 'pending') === filter)
+    return (filter === 'all' || (filter === 'todo' ? workflowStatus(sample) !== 'active' : workflowStatus(sample) === filter))
       && matchesPerson(personId, m?.personId) && matchesPerson(collectorId, creator)
       && (resultFilter === 'all' || (run?.cases.find(item => item.id === sample.id)?.status ?? 'not-run') === resultFilter)
       && `${title(sample)} ${sample.id} ${m?.person ?? ''} ${m?.personId ?? ''} ${m?.collector ?? ''} ${creator ?? ''} ${m?.competition ?? ''} ${source(sample)?.id ?? ''}`.toLowerCase().includes(query.trim().toLowerCase());
@@ -175,7 +192,7 @@ export default function RegressionResults() {
       <button className="gt-refresh" type="button" disabled={loading} onClick={() => { attempted.current.clear(); setMetadataRefresh(value => value + 1); void load(); }}>{tr({ zh: '刷新', en: 'Refresh' })}</button>
     </header>
     <div className="gt-regression-summary">
-      {history && <span>{tr({ zh: '启用 ' + approvedCount + ' · 待确认 ' + (catalog.length - approvedCount), en: approvedCount + ' active · ' + (catalog.length - approvedCount) + ' pending' })}</span>}
+      {history && <span>{tr({ zh: '启用 ' + approvedCount + ' · 待办 ' + (catalog.length - approvedCount), en: approvedCount + ' active · ' + (catalog.length - approvedCount) + ' pending' })}</span>}
       {run && <strong data-result={run.status}>{tr(STATUS[run.status])}</strong>}
       {stale && <span className="gt-stale">{tr({ zh: '代码已变更', en: 'Code changed' })}<InfoTooltip iconSize={14} content={tr({ zh: '所选运行发生在代码修改之前，不能代表当前代码。', en: 'The selected run predates code changes and does not verify the current code.' })} /></span>}
       {history && approvedCount === 0 && <span className="gt-stale">{tr({ zh: '暂无启用样例', en: 'No active cases' })}</span>}
@@ -213,7 +230,8 @@ export default function RegressionResults() {
           <option value="unknown">{tr({ zh: '未记录', en: 'Not recorded' })}</option>
         </select></label>)}
       <label className="gt-filter-label"><span>{tr({ zh: '样例状态', en: 'Case status' })}</span><select className="gt-filter-select" value={filter} onChange={e => { setFilter(e.target.value); setCasePage(1); }}>
-        <option value="all">{tr({ zh: '全部', en: 'All' })}</option><option value="approved">{tr({ zh: '启用', en: 'Active' })}</option><option value="pending">{tr({ zh: '待确认', en: 'Pending' })}</option>
+        <option value="all">{tr({ zh: '全部', en: 'All' })}</option><option value="todo">{tr({ zh: '收录待办', en: 'Intake to do' })}</option>
+        {Object.entries(CASE_STATUS).map(([value, label]) => <option key={value} value={value}>{tr(label)}</option>)}
       </select></label>
       <label className="gt-filter-label"><span>{tr({ zh: '检查结果', en: 'Test result' })}</span><select className="gt-filter-select" value={resultFilter} onChange={e => { setResultFilter(e.target.value); setCasePage(1); }}>
         <option value="all">{tr({ zh: '全部', en: 'All' })}</option>{Object.entries(STATUS).map(([value, label]) => <option key={value} value={value}>{tr(label)}</option>)}
@@ -225,7 +243,7 @@ export default function RegressionResults() {
         <div className="gt-section-head">{tr({ zh: '样例', en: 'Cases' })}<span>{cases.length}</span></div>
         {pageCases.map(sample => <button type="button" key={sample.id} className={'gt-candidate' + (selected?.id === sample.id ? ' is-selected' : '')} aria-pressed={selected?.id === sample.id} onClick={() => setCaseId(sample.id)}>
           <span className="gt-candidate-main"><strong>{shortTitle(sample)}</strong><span data-result={run?.cases.find(item => item.id === sample.id)?.status ?? 'not-run'}>{tr(STATUS[run?.cases.find(item => item.id === sample.id)?.status ?? 'not-run'])}</span></span>
-          <span className="gt-candidate-sub">{tr(sample.approved ? { zh: '启用', en: 'Active' } : { zh: '待确认', en: 'Pending' })} · {title(sample)}</span>
+          <span className="gt-candidate-sub">{tr(CASE_STATUS[workflowStatus(sample)])} · {title(sample)}</span>
         </button>)}
         <nav className="gt-pages" aria-label={tr({ zh: '样例分页', en: 'Case pages' })}>
           <button className="gt-page-button" type="button" disabled={page <= 1} aria-label={tr({ zh: '上一页样例', en: 'Previous cases' })} onClick={() => setCasePage(page - 1)}><ChevronLeft size={16} /></button>
@@ -233,7 +251,7 @@ export default function RegressionResults() {
           <button className="gt-page-button" type="button" disabled={page >= totalPages} aria-label={tr({ zh: '下一页样例', en: 'Next cases' })} onClick={() => setCasePage(page + 1)}><ChevronRight size={16} /></button>
         </nav>
       </section>
-      <section className="gt-detail" aria-label={tr({ zh: '样例结果', en: 'Case result' })}>
+      <section key={selected?.id} className="gt-detail" aria-label={tr({ zh: '样例结果', en: 'Case result' })}>
         {selected ? <div key={selected.id}>
           <div className="gt-detail-head"><h2>{shortTitle(selected)}</h2>
             {(!selected.id.startsWith('intake-') || /^https?:\/\//.test(selected.source) || selected.source.startsWith('/')) && <Link className="gt-source-link" href={selected.source || '/timer?share=' + encodeURIComponent(selected.id)} prefetch={false} target="_blank">{tr({ zh: '打开复盘', en: 'Open replay' })}</Link>}
@@ -242,17 +260,20 @@ export default function RegressionResults() {
             {!selected.approved && <span className="gt-stale">{tr({ zh: '预期待确认', en: 'Expectation unconfirmed' })}<InfoTooltip iconSize={14} content={tr({ zh: '此样例不参加正式回归。旧的通过结果只表示与保存的答案一致，不代表答案已获确认。', en: 'This case is excluded from formal regression. An older pass only matched the saved answer and does not imply approval.' })} /></span>}
           </div>
           {!!selectedResult?.errors.length && <p className="gt-error">{tr({ zh: '存在检查错误', en: 'Check errors found' })}</p>}
-          {source(selected) && <SourceInfo source={source(selected)} />}
+          <RegressionCaseDetail key={selected.id} intakeId={intakeId(selected.id)}
+            replaySource={selected.source || '/timer?share=' + encodeURIComponent(selected.id)}
+            onChange={() => { setMetadataRefresh(value => value + 1); void load(); }} />
           <details className="gt-case-disclosure"><MoreToggle as="summary">{tr({ zh: '样例说明', en: 'Case details' })}</MoreToggle>
             <p>{title(selected)}</p><small>{selected.id}</small>
             {sampleIntake(selected)?.createdBy && <p>{tr({ zh: '收录人', en: 'Collector' })}：{names.get(sampleIntake(selected)!.createdBy) ?? sampleIntake(selected)!.createdBy}</p>}
           </details>
-          <details className="gt-case-disclosure"><MoreToggle as="summary">{tr({ zh: '预期与实际对照', en: 'Expected and actual' })}</MoreToggle>
+          <details className="gt-case-disclosure"><MoreToggle as="summary">{tr({ zh: '全量回归对照', en: 'Regression comparison' })}</MoreToggle>
+            <p className="gt-run-note">{run ? new Date(run.startedAt).toLocaleString() : tr({ zh: '尚无全量运行记录', en: 'No regression runs yet' })}{' · '}{tr(STATUS[selectedResult?.status ?? 'not-run'])}</p>
             <div className="gt-text-compare"><div><h3>{tr({ zh: '预期', en: 'Expected' })}</h3><pre>{textRows(selectedResult?.expected ?? selected.expected)}</pre></div>
               <div><h3>{tr({ zh: '实际', en: 'Actual' })}</h3><pre>{selectedResult?.actual ? textRows(selectedResult.actual) : tr({ zh: '本次无输出', en: 'No output in this run' })}</pre></div></div>
           </details>
           {!!selectedResult?.errors.length && <details className="gt-case-disclosure"><MoreToggle as="summary">{tr({ zh: '错误详情', en: 'Error details' })}</MoreToggle><pre className="gt-run-errors">{selectedResult.errors.join('\n\n')}</pre></details>}
-        </div> : !history ? (!error && <p role="status">{tr({ zh: '正在加载检查记录…', en: 'Loading check history…' })}</p>) : <p>{tr({ zh: '当前没有符合筛选条件的样例。', en: 'No cases match this filter.' })}</p>}
+        </div> : !history || peopleLoading ? (!error && <p role="status">{tr({ zh: '正在加载检查记录…', en: 'Loading check history…' })}</p>) : <p>{tr({ zh: '当前没有符合筛选条件的样例。', en: 'No cases match this filter.' })}</p>}
       </section>
     </div>
   </main>;

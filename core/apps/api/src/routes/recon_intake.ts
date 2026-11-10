@@ -172,11 +172,11 @@ reconIntakeRoutes.get('/recon-intake', async c => {
     throw new HTTPException(400);
   const offset = Math.max(0, Math.min(100000, Math.trunc(Number(c.req.query('offset')) || 0)));
   const where = status === 'all' ? 'TRUE' : status === 'todo' ? "status <> 'active'" : 'status = ?';
-  if (c.req.query('summary') === '1') {
-    const rows = await query<Pick<Row, 'id' | 'created_by' | 'source_snapshot'>>(
-      `SELECT id, created_by, source_snapshot FROM recon_intake WHERE ${where} ORDER BY created_at, id LIMIT 51 OFFSET ?`,
+  if (['1', 'workflow'].includes(c.req.query('summary') ?? '')) {
+    const rows = await query<Pick<Row, 'id' | 'created_by' | 'source_snapshot' | 'status' | 'revision'>>(
+      `SELECT id, created_by, source_snapshot, status, revision FROM recon_intake WHERE ${where} ORDER BY created_at, id LIMIT 51 OFFSET ?`,
       [...(status === 'all' || status === 'todo' ? [] : [status]), offset]);
-    const items = rows.slice(0, 50).map(row => ({ id: row.id, createdBy: row.created_by,
+    const items = rows.slice(0, 50).map(row => ({ id: row.id, createdBy: row.created_by, status: row.status, revision: row.revision,
       sourceSnapshot: row.source_snapshot ?? null }));
     return c.json({ items: await withSourceMetadata(items), hasMore: rows.length > 50 });
   }
