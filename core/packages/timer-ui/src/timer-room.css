@@ -98,6 +98,12 @@
 .timer-battle-history-results > div { display: flex; flex-direction: column; gap: 8px; }
 .timer-battle-history-results strong { font: 28px var(--font-mono); }
 .timer-battle-history-scramble p { overflow-wrap: anywhere; }
+.timer-room-dialog.timer-battle-history-detail { width: min(100%, 1040px); }
+.timer-battle-history-replays { display: grid; gap: 20px; min-width: 0; }
+.timer-battle-history-replay { min-width: 0; }
+.timer-battle-history-replay > h4 { margin: 12px 0 8px; }
+.timer-battle-history-replay .shell-recap { height: auto; }
+.timer-battle-history-replay .shell-recap-body { overflow: visible; }
 .timer-battle-settings { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .timer-battle-settings > label, .timer-battle-settings > .bool-toggle { min-height: 44px; }
 .timer-battle-hold-control { display: flex; align-items: center; gap: 12px; min-width: 0; }

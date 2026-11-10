@@ -8,7 +8,8 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Waypoints } from '@app-foundation/icons/lucide';
-import { TimerBattleHistory } from '@cuberoot/timer-ui';
+import dynamic from 'next/dynamic';
+import { TimerBattleHistory, battlePlayerLabel } from '@cuberoot/timer-ui';
 import {
   useBattleStore,
   timerToBattleEvent,
@@ -16,14 +17,16 @@ import {
   loadLegacyBattleRecords,
 } from './engine/battle_store';
 import { battleReconIndex, battleReconKey } from '@/app/[lang]/timer/_lib/storage/db';
-import ReconstructModal from '@/app/[lang]/timer/_components/ReconstructModal';
-import { eventInfo, type Solve } from '@/app/[lang]/timer/_lib/types';
+import { eventInfo } from '@/app/[lang]/timer/_lib/types';
 import { formatTimePlain } from '@/app/[lang]/timer/_shared/format';
 import { getEffectiveTimeFromEntry } from '@/app/[lang]/timer/_shared/stats-core';
 import { EventIcon } from '@/components/EventIcon';
 import { isWcaEvent } from '@/lib/wca-events';
 import { tr } from '@/i18n/tr';
 import { buildLocalBattleCsv, type LocalBattleRound } from '@cuberoot/shared/timer';
+
+const ReconstructModal = dynamic(() => import('../_components/ReconstructModal'), { ssr: false });
+const SolveRecap = dynamic(() => import('../_components/SolveRecap'), { ssr: false });
 
 // NOTE: yyyy-mm-dd —— 列表用
 function formatDateOnly(isoDate: string): string {
@@ -68,7 +71,7 @@ export function useBattleHistoryProps({ onClose }: { onClose: () => void }): Rea
     onExport: exportCSV,
     warning: warning,
     onDelete: (id) => { const index = rounds.findIndex((round) => round.id === id); if (index >= 0) store.deleteVsRound(index); return !useBattleStore.getState().battleRounds.some(round => round.id === id); },
-    roundActions: (round) => <RoundReplay round={round} isZh={isZh} />,
+    roundDetails: (round) => <RoundReplays round={round} rounds={rounds} isZh={isZh} />,
     legacy: <>
       {legacyHistory.records.length > 0 && <>
         <p role="status">{tr({ zh: '旧版个人记录保留为独立记录，不与轮次合并。', en: 'Legacy individual records are preserved separately from verified rounds.' })}</p>
@@ -86,21 +89,37 @@ export function useBattleHistoryProps({ onClose }: { onClose: () => void }): Rea
   };
 }
 
-/** Reconstruction remains a Web storage capability, injected into shared round details. */
-function RoundReplay({ round, isZh }: { round: LocalBattleRound; isZh: boolean }) {
-  const [solve, setSolve] = useState<Solve | null>(null);
-  const attempt = round.attempts.find((entry) => entry.playerId === 0)?.solve;
-  const recon = useMemo(() => {
-    if (!attempt?.scramble) return null;
-    const { index, solves } = battleReconIndex(attempt.event);
-    const hit = index.get(battleReconKey(attempt.scramble, attempt.timeMs));
-    return hit ? { hit, solves } : null;
+/** Each player's own recording and history feed the same recap used in Solo. */
+function RoundReplays({ round, rounds, isZh }: { round: LocalBattleRound; rounds: LocalBattleRound[]; isZh: boolean }) {
+  return <div className="timer-battle-history-replays">{round.attempts.map(attempt =>
+    <BattleAttemptReplay key={attempt.solve.id} attempt={attempt} rounds={rounds} isZh={isZh} />
+  )}</div>;
+}
+
+function BattleAttemptReplay({ attempt, rounds, isZh }: {
+  attempt: LocalBattleRound['attempts'][number]; rounds: LocalBattleRound[]; isZh: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const recorded = useMemo(() => {
+    if (attempt.solve.moves?.length) return attempt.solve;
+    // Older rounds only linked P1's solo recording; preserve that existing entry.
+    if (attempt.playerId !== 0 || !attempt.solve.scramble) return null;
+    const { index } = battleReconIndex(attempt.solve.event);
+    const hit = index.get(battleReconKey(attempt.solve.scramble, attempt.solve.timeMs));
+    return hit ? { ...hit, ...attempt.solve } : null;
   }, [attempt]);
-  if (!recon) return null;
-  return <>
-    <button type="button" onClick={() => setSolve(recon.hit)}><Waypoints size={14} />{tr({ zh: 'P1 复盘', en: 'P1 reconstruction' })}</button>
-    {solve && <ReconstructModal solve={solve} isZh={isZh} history={recon.solves} onClose={() => setSolve(null)} />}
-  </>;
+  const history = useMemo(() => rounds.flatMap(round => round.attempts
+    .filter(entry => entry.playerId === attempt.playerId && entry.solve.event === attempt.solve.event)
+    .map(entry => entry.solve)), [rounds, attempt.playerId, attempt.solve.event]);
+  if (!recorded) return null;
+  const label = battlePlayerLabel(attempt.playerId + 1, isZh ? 'zh' : 'en');
+  return <section className="timer-battle-history-replay">
+    <h4>{label}</h4>
+    {dismissed ? <button type="button" onClick={() => setDismissed(false)}><Waypoints size={14} />{tr({ zh: '复盘', en: 'Reconstruction' })}</button>
+      : <SolveRecap solve={recorded} isZh={isZh} history={history} onFull={() => setExpanded(true)} onDismiss={() => setDismissed(true)} />}
+    {expanded && <ReconstructModal solve={recorded} isZh={isZh} history={history} onClose={() => setExpanded(false)} />}
+  </section>;
 }
 
 export default function VsHistoryPanel(props: { onClose: () => void }) {

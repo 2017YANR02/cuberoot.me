@@ -163,10 +163,8 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
   // 无害(store 幂等),但重复算「第一下转动」就会把起表时刻往后挪。
   const armedRef = useRef<boolean[]>(Array.from({ length: MAX_PLAYERS }, () => false));
   /**
-   * 这一把的转动流,每路一份。对战的成绩表只存数字,所以在此之前,拿智能魔方在
-   * 对战里拧的每一把都是**扔掉的**。这里把它按 Solo 那条路留一份到本机计时记录里
-   * (同一个 `makeSolve` + `finishSolveFields` + `appendSolves`),复盘 / 回放 / 分段
-   * 统计就全都有了 —— 对战自己的记分板一个字都不用改。
+   * 每路独立录制；全员的复盘字段随对战轮次原子保存。
+   * P1 另存到单人历史，其他玩家不混入用户自己的统计。
    */
   const trackRef = useRef<Array<Track>>(
     Array.from({ length: MAX_PLAYERS }, emptyTrack),
@@ -244,16 +242,16 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     const stopAt = atMs !== undefined && Number.isFinite(atMs)
       ? atMs
       : lastMoveAtRef.current[slot] || performance.now();
-    const stopped = st.cubeStop(owner, stopAt, clock);
-    armedRef.current[slot] = false;
-    // 缓冲无论如何都要清空:这一路已经不在这一把里了,留着只会漏给下一把。
     const track = trackRef.current[slot];
-    const hasMoves = track.recorder.snapshotMoves().length > 0;
-
+    const hasRecording = track.attempt === attempt && track.scramble && track.recorder.snapshotMoves().length > 0;
+    const stopped = st.cubeStop(owner, stopAt, clock, hasRecording ? timeMs => track.recorder.finishSolveFields({
+      event: battleToTimerEvent(track.event), scramble: track.scramble, timeMs,
+    }) : undefined);
+    // A rejected early solved frame leaves this attempt running and recordable.
+    if (!stopped) return;
+    armedRef.current[slot] = false;
     trackRef.current[slot] = emptyTrack();
-    if (!stopped || track.attempt !== attempt
-      || !recordsToLocalHistory(slot, st.cubeMode, st.cubeHolder)
-      || !hasMoves || !track.scramble) {
+    if (!hasRecording || !recordsToLocalHistory(slot, st.cubeMode, st.cubeHolder)) {
       track.recorder.reset();
       return;
     }
@@ -267,7 +265,7 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
       event: ev,
       penalty: done.penalty === PENALTY.DNF ? 'DNF' : done.penalty === PENALTY.PLUS2 ? '+2' : 'ok',
     });
-    Object.assign(solve, track.recorder.finishSolveFields(solve));
+    Object.assign(solve, done.recording);
     appendSolves(ev, [solve]);
   }, []);
 

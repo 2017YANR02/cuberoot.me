@@ -17,13 +17,14 @@ export interface TimerBattleHistoryProps {
   onClear?(): void | boolean | Promise<void | boolean>;
   onExport?(): void;
   roundActions?(round: LocalBattleRound): ReactNode;
+  roundDetails?(round: LocalBattleRound): ReactNode;
 }
 const COPY = {
   en: { title: 'Local battle history', empty: 'No rounds yet', player: 'Player', attempts: 'Attempts', wins: 'Wins', best: 'Best', round: 'Round', scramble: 'Scramble', delete: 'Delete round', clear: 'Clear history', confirm: 'Confirm', back: 'Back to rounds', preview: 'Scramble preview' },
   zh: { title: '本地对战历史', empty: '暂无对战记录', player: '玩家', attempts: '次数', wins: '胜场', best: '最佳', round: '轮次', scramble: '打乱', delete: '删除此轮', clear: '清空历史', confirm: '确认', back: '返回轮次', preview: '打乱预览' },
 };
 
-export function TimerBattleHistory({ rounds, playerCount, language, precision, warning, legacy, onClose, onBackChange, onDelete, onClear, onExport, roundActions }: TimerBattleHistoryProps) {
+export function TimerBattleHistory({ rounds, playerCount, language, precision, warning, legacy, onClose, onBackChange, onDelete, onClear, onExport, roundActions, roundDetails }: TimerBattleHistoryProps) {
   const copy = COPY[language];
   const [busy, setBusy] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -38,7 +39,7 @@ export function TimerBattleHistory({ rounds, playerCount, language, precision, w
     const ms = effectiveMs(solve);
     return !Number.isFinite(ms) ? 'DNF' : formatMs(ms, precision) + (solve.penalty === '+2' ? '+' : '');
   };
-  return <TimerRoomDialog key={detail?.id ?? 'list'} title={copy.title} language={language} onClose={detail ? () => setDetailId(null) : onClose}>
+  return <TimerRoomDialog key={detail?.id ?? 'list'} className={detail && roundDetails ? 'timer-battle-history-detail' : undefined} title={copy.title} language={language} onClose={detail ? () => setDetailId(null) : onClose}>
     {warning}
     {detail ? <>
       <div className="timer-room-actions"><button type="button" onClick={() => { setDetailId(null); setConfirm(null); }}>{copy.back}</button></div>
@@ -48,6 +49,7 @@ export function TimerBattleHistory({ rounds, playerCount, language, precision, w
         <span>{copy.player} {playerId + 1} · {solve.event}</span><strong>{result(solve)}</strong>
         {detail.winners.includes(playerId) && <Trophy size={18} aria-label={copy.wins} />}
       </div>)}</div>
+      {roundDetails?.(detail)}
       {detail.attempts.filter((attempt, index, all) => all.findIndex((other) => other.solve.event === attempt.solve.event && other.solve.scramble === attempt.solve.scramble) === index).map(({ solve }) => <section className="timer-battle-history-scramble" key={`${solve.event}:${solve.scramble}`}>
         <h4>{copy.scramble} · {solve.event}</h4><p>{solve.scramble}</p>
         <TimerCubePreview event={solve.event} scramble={solve.scramble} height="100px" visualization="2D" ariaLabel={copy.preview} />

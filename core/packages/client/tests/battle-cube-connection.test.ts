@@ -28,7 +28,8 @@ vi.mock('@/app/[lang]/timer/_lib/storage/db', () => ({
 const { useBluetoothCube } = await import('@/app/[lang]/timer/_lib/bluetooth');
 const { useBattleCubes } = await import('@/app/[lang]/timer/_battle/useBattleCubes');
 const { useBattleStore } = await import('@/app/[lang]/timer/_battle/engine/battle_store');
-const { initialTimerMachineState } = await import('@cuberoot/shared/timer');
+const { initialTimerMachineState, decodeLocalBattleRounds } = await import('@cuberoot/shared/timer');
+const { appendSolves } = await import('@/app/[lang]/timer/_lib/storage/db');
 const { updateSettings } = await import('@/app/[lang]/timer/_lib/settings');
 const { fixupScramble } = await import('@/app/[lang]/timer/_lib/bluetooth/scramble_fixup');
 type Options = NonNullable<Parameters<typeof useBluetoothCube>[0]>;
@@ -57,7 +58,8 @@ function move(slot: number, notation: string, atMs: number, state: string) {
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   const store = useBattleStore.getState();
-  updateSettings({ bluetoothAutoReady: 'scrambled' });
+  updateSettings({ bluetoothAutoReady: 'scrambled', recordGyro: false });
+  vi.mocked(appendSolves).mockClear();
   vi.mocked(fixupScramble).mockReset().mockResolvedValue(null);
   store.cancelReadyTimer();
   useBattleStore.setState({ mode: '1v1', playerCount: 2, syncStart: false, cubeMode: 'own', cubeHolder: 0,
@@ -65,7 +67,7 @@ beforeEach(() => {
     scrambleRevisions: [0, 0, 0, 0],
     puzzleIds: ['333', '333', '333', '333'], scrambleLoadings: [false, false, false, false],
     scrambleErrors: [false, false, false, false],
-    players: store.players.map(player => ({ ...player, timerState: initialTimerMachineState(),
+    players: store.players.map(player => ({ ...player, timerState: initialTimerMachineState(), recording: undefined,
       isReady: false, canStart: false, isInspecting: false, isTiming: false, hasFinished: false,
       startTime: 0, time: 0, pointerId: null, inspectionPenalty: null })),
   });
@@ -217,4 +219,46 @@ it('resumes preparation after another player’s connection panel cancels readin
   expect(cubes.handles[1].guidance.hint?.current).toBe('R');
   move(0, 'U', 300, 'R U');
   expect(useBattleStore.getState().players[0].canStart).toBe(true);
+});
+
+it('atomically persists both players’ complete recordings even for the same scramble and time', async () => {
+  updateSettings({ recordGyro: true });
+  setCube(0, 'R U'); setCube(1, 'R U'); render();
+  move(0, "U'", 1000, 'R');
+  act(() => callbacks[0].onGyro?.({ x: 0, y: 0, z: 0, w: 1 }));
+  move(0, "R'", 2000, '');
+  act(() => callbacks[0].onSolved?.(2000));
+  expect(useBattleStore.getState().battleRounds).toHaveLength(0);
+  move(1, "U'", 1200, 'R');
+  move(1, 'F', 1400, 'R F');
+  move(1, "F'", 1700, 'R');
+  act(() => callbacks[1].onGyro?.({ x: 0, y: 0, z: 0, w: 1 }));
+  move(1, "R'", 2200, '');
+  await act(async () => callbacks[1].onSolved?.(2200));
+  const state = useBattleStore.getState();
+  expect(state.battleRounds).toHaveLength(1);
+  const round = state.battleRounds[0];
+  expect(round.attempts.map(attempt => attempt.solve.timeMs)).toEqual([1000, 1000]);
+  expect(round.attempts.map(attempt => attempt.solve.moves?.map(move => move.m))).toEqual([
+    ["U'", "R'"], ["U'", 'F', "F'", "R'"],
+  ]);
+  expect(round.attempts.map(attempt => attempt.solve.device?.name)).toEqual(['Cube 0', 'Cube 1']);
+  for (const { solve } of round.attempts) {
+    expect(solve.gyro).toEqual(expect.any(String));
+    expect(solve.stageSegments).toBeDefined();
+    expect(solve.moves?.at(-1)?.ts).toBe(1000);
+  }
+  const stored = JSON.parse(localStorage.getItem(`battle_rounds_v1_${state.sessionId}`)!);
+  expect(decodeLocalBattleRounds(stored)).toEqual(state.battleRounds);
+  // P2 belongs in the battle history, never in the user's personal statistics.
+  expect(appendSolves).toHaveBeenCalledTimes(1);
+  expect(vi.mocked(appendSolves).mock.calls[0][1][0].moves).toEqual(round.attempts[0].solve.moves);
+  act(() => useBattleStore.getState().handlePenalty(1, '+2'));
+  expect(useBattleStore.getState().battleRounds[0].attempts[1].solve.moves).toEqual(round.attempts[1].solve.moves);
+  act(() => {
+    // Supply the next generated scramble before the reset, as the store requires.
+    useBattleStore.setState({ scrambles: ['F U', 'F U', 'R U', 'R U'], scrambleLoadings: [false, false, false, false] });
+    useBattleStore.getState().resetForNextRound();
+  });
+  expect(useBattleStore.getState().players.slice(0, 2).map(player => player.recording)).toEqual([undefined, undefined]);
 });

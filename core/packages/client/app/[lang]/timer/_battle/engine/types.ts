@@ -1,4 +1,5 @@
-import type { TimerMachineState, SolveResult } from '@cuberoot/shared/timer';
+import type { TimerMachineState, SolveResult, Solve } from '@cuberoot/shared/timer';
+export type BattleRecording = Pick<Solve, 'moves' | 'device' | 'gyro' | 'stageSegments'>;
 /**
  * Battle 模块类型定义
  * 1:1 翻译自 battle.js state 对象和 createPlayer()（行 99~171）
@@ -22,6 +23,7 @@ export interface SolveEntry {
 export interface PlayerState {
   timerState?: TimerMachineState;
   timerResult?: SolveResult | null;
+  recording?: BattleRecording;
   resultScramble?: string;
   resultScrambleSource?: import('@cuberoot/shared/timer').TimerScrambleSourceSnapshot;
   id: number;
