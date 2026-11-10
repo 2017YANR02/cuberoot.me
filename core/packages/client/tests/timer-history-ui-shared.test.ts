@@ -335,7 +335,7 @@ describe('shared TimerHistoryRow DOM and interaction contract', () => {
     const backdrop = document.querySelector<HTMLDivElement>('.timer-history-quick-backdrop')!;
     expect(sheet).not.toBeNull();
     expect(sheet.style.maxHeight).toBe('420px');
-    expect(backdrop.style.paddingBottom).toBe('64px');
+    expect(backdrop.style.paddingBottom).toBe('max(64px, var(--host-safe-bottom, 0px))');
     expect(sheet.textContent).toContain('#5 · 14.34');
 
     await act(async () => row.dispatchEvent(touchEvent('touchend')));

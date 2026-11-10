@@ -221,7 +221,7 @@ describe('复盘异步加载时先稳定容器', () => {
 
   it('桌面自动复盘不在完整报告挂载时动画改变栏宽', () => {
     const css = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timer-workspace.css')));
-    expect(css).toContain('.timer-workspace[data-recap-open]');
+    expect(css).toContain('.timer-workspace[data-wide-layout][data-recap-open]');
     // Explicitly disabling transitions while dragging does not animate the dock.
     for (const match of css.matchAll(/transition\s*:\s*([^;}]+)/g)) {
       expect(match[1].trim()).toBe('none');

@@ -602,7 +602,7 @@
   .trainPage .title { font-size: 22px; margin-block: 4px; }
   .trainPage .content { padding-top: 6px; }
   .trainPage .trainerToolbar { gap: 6px 10px; }
-  .trainPage .trainerToolbar > button { min-height: 44px; }
+  .trainPage .trainerToolbar > .button { min-height: 44px; }
   .trainPage .trainerStage {
     grid-template-columns: minmax(140px, 190px) minmax(0, 1fr);
     gap: 12px;

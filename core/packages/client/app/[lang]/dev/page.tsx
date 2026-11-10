@@ -256,7 +256,7 @@ export default function DevIndexPage() {
             aria-label={t('拖动或用方向键旋转，松手吸附分类；单击展开', 'Drag or use arrow keys to rotate and snap to a category; click to unfold')} />
 
           <nav className="dev-cube-categories" aria-label={t('分类', 'Categories')} inert={expanded} aria-hidden={expanded}>
-            {FACES.map((face, index) => <button type="button" key={face.id}
+            {FACES.map((face, index) => <button className="dev-cube-category" type="button" key={face.id}
               aria-pressed={selected === index} aria-controls="dev-cube-focus"
               onClick={() => selectFace(face.id)}>{tr(face.name)}</button>)}
           </nav>

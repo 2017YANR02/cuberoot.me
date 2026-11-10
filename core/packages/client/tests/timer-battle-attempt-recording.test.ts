@@ -35,10 +35,14 @@ const named = (name: string) => (node: ts.Node) => ts.isVariableDeclaration(node
 
 function localHarness() {
   const emptyTrack = () => ({ attempt: '', recorder: new SmartCubeAttemptProducer(), scramble: '', event: '333' });
-  const state = {
+  const state: { cubeMode: string; cubeHolder: number; playerCount: number; puzzleIds: string[]; scrambles: string[]; players: { isTiming: boolean; startTime: number; time: number; penalty: number; canStart: boolean }[]; cubeStop: ReturnType<typeof vi.fn>; cubeStart: ReturnType<typeof vi.fn> } = {
     cubeMode: 'shared', cubeHolder: 0, playerCount: 2, puzzleIds: ['333', '333'], scrambles: ['R U', 'F'],
     players: [0, 1].map(() => ({ isTiming: true, startTime: 1_000, time: 500, penalty: 0, canStart: true })),
-    cubeStop: vi.fn(() => true), cubeStart: vi.fn(() => true),
+    cubeStop: vi.fn((owner: number, at: number, _clock: unknown, finish?: (time: number) => unknown) => {
+      state.players[owner]!.time = at - state.players[owner]!.startTime;
+      Object.assign(state.players[owner]!, { recording: finish?.(state.players[owner]!.time), isTiming: false });
+      return true;
+    }), cubeStart: vi.fn(() => true),
   };
   const trackRef = ref([emptyTrack(), emptyTrack()]);
   const handlesRef = ref([{ status: { connected: true, brand: 'gan-v4', deviceName: 'Original' } }]);
@@ -91,13 +95,13 @@ describe('local battle shared attempt', () => {
     expect(h.trackRef.current[0]!.recorder.snapshotMoves()).toEqual([]);
   });
 
-  it('drops cancelled attempts and isolates the next keyboard start', () => {
+  it('keeps rejected early stops recordable and isolates the next start', () => {
     const h = localHarness();
     h.move(0, 'R', 1_000);
     const abandoned = h.trackRef.current[0]!.recorder;
     h.state.cubeStop.mockReturnValueOnce(false);
     h.solved(0, 1_200);
-    expect(abandoned.recordMove('F', 1_250)).toBe(false);
+    expect(abandoned.recordMove('F', 1_250)).toBe(true);
     expect(h.appendSolves).not.toHaveBeenCalled();
     h.state.players[0]!.startTime = 2_000;
     h.move(0, "U'", 2_000);

@@ -47,7 +47,7 @@ describe('TimerSmartCubeMoveRecorder', () => {
     expect(local).toContain('new SmartCubeAttemptProducer()');
     expect(local).toContain('recorder.begin(p.startTime,');
     expect(local).toContain('recorder.recordMove(move, ts, clock)');
-    expect(local).toContain('recorder.finishSolveFields(solve)');
+    expect(local).toContain('track.recorder.finishSolveFields({');
     expect(local).not.toMatch(/moves:\s*\[|t0:/);
   });
 
@@ -72,7 +72,7 @@ describe('TimerSmartCubeMoveRecorder', () => {
     expect(netPage).toContain('<TimerRoomPlayers {...room.players}');
     expect(net).toContain('viewedPlayerId: viewedCubePlayerId');
     expect(net).toContain('onViewPlayer: setViewedCubePlayerId');
-    expect(remote).toContain('useGyro={false}');
+    expect(remote).toContain('useGyro={Boolean(live.quatRef?.current)}');
     expect(css).toContain("grid-template-areas: 'self opponent'");
     expect(css).toContain("'opponent'\n      'self'");
   });

@@ -128,10 +128,10 @@
 }
 .code-index[data-dragging='true'] .dev-cube-open { cursor: grabbing; }
 .dev-cube-categories { position: absolute; left: 0; bottom: 0; width: 54%; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; opacity: 1; visibility: visible; transition: opacity 200ms ease 250ms, visibility 200ms ease 250ms; }
-.dev-cube-categories button { min-width: 0; padding: 13px 4px; border: 1px solid var(--border-strong); border-radius: 7px; background: transparent; color: var(--muted-foreground); font: inherit; font-size: 20px; cursor: pointer; transition: color 160ms, border-color 160ms, background 160ms; }
-.dev-cube-categories button:lang(en) { font-size: 14px; }
-.dev-cube-categories button:hover { color: var(--foreground); border-color: var(--accent); }
-.dev-cube-categories button[aria-pressed='true'] { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.dev-cube-category { min-width: 0; padding: 13px 4px; border: 1px solid var(--border-strong); border-radius: 7px; background: transparent; color: var(--muted-foreground); font: inherit; font-size: 20px; cursor: pointer; transition: color 160ms, border-color 160ms, background 160ms; }
+.dev-cube-category:lang(en) { font-size: 14px; }
+.dev-cube-category:hover { color: var(--foreground); border-color: var(--accent); }
+.dev-cube-category[aria-pressed='true'] { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 .dev-cube-focus {
   position: absolute;
   left: 56%;
@@ -209,8 +209,8 @@
   .more-toggle.dev-cube-toggle { padding: 10px 12px; font-size: 13px; }
   .dev-cube-scene { height: calc(546px + var(--cube-entry-count) * 74px); }
   .dev-cube-categories { top: 356px; bottom: auto; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-  .dev-cube-categories button { padding: 10px 4px; font-size: 18px; }
-  .dev-cube-categories button:lang(en) { font-size: 16px; }
+  .dev-cube-category { padding: 10px 4px; font-size: 18px; }
+  .dev-cube-category:lang(en) { font-size: 16px; }
   .dev-cube-focus { left: 4px; right: 4px; top: 482px; transform: translateY(0); }
   .code-index[data-expanded='true'] .dev-cube-focus { transform: translateY(12px); }
   .dev-cube-focus-title { margin-bottom: 14px; }

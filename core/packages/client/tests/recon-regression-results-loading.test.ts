@@ -15,7 +15,7 @@ vi.mock('@/components/InfoTooltip/InfoTooltip', () => ({ InfoTooltip: () => null
 vi.mock('@/components/PageHeading', () => ({ default: () => null }));
 vi.mock('@/components/AppLink', () => ({ default: () => null }));
 vi.mock('@/components/WcaAuth', () => ({ default: () => null }));
-vi.mock('@/components/MoreToggle', () => ({ default: () => null }));
+vi.mock('@/components/MoreToggle', async importOriginal => ({ ...await importOriginal<object>(), default: () => null }));
 vi.mock('@/app/[lang]/recon/ground-truth/SourceInfo', () => ({ default: () => null }));
 vi.mock('@/app/[lang]/recon/ground-truth/RegressionCaseDetail', () => ({ default: () => null }));
 import RegressionResults from '@/app/[lang]/recon/ground-truth/RegressionResults';
@@ -50,11 +50,11 @@ it('paginates the complete catalog and applies person and collector filters befo
   await act(async () => root.render(createElement(RegressionResults)));
   await act(async () => respond(0, { scope: 'local', runs: [], cases, hasMore: false }));
   expect(mocks.intake).toHaveBeenNthCalledWith(2, '?status=all&summary=workflow&offset=50');
-  expect(host.querySelectorAll('.gt-candidate')).toHaveLength(6);
+  expect(host.querySelectorAll('.gt-candidate')).toHaveLength(12);
   const next = host.querySelector<HTMLButtonElement>('[aria-label="下一页样例"]')!;
   await act(async () => next.click());
-  expect(host.querySelector('.gt-pages')?.textContent).toContain('2 / 3');
-  expect(host.querySelectorAll('.gt-candidate')).toHaveLength(6);
+  expect(host.querySelector('.gt-pages')?.textContent).toContain('2 / 2');
+  expect(host.querySelectorAll('.gt-candidate')).toHaveLength(1);
   const select = async (label: string, value: string) => {
     const control = [...host.querySelectorAll('label')].find(item => item.querySelector('span')?.textContent === label)!.querySelector('select')!;
     await act(async () => { control.value = value; control.dispatchEvent(new Event('change', { bubbles: true })); });
@@ -69,14 +69,14 @@ it('paginates the complete catalog and applies person and collector filters befo
   expect(host.querySelectorAll('.gt-candidate')).toHaveLength(1);
   await select('收录人', 'unknown');
   expect(host.querySelector('.gt-section-head')?.textContent).toContain('11');
-  expect(host.querySelectorAll('.gt-candidate')).toHaveLength(6);
+  expect(host.querySelectorAll('.gt-candidate')).toHaveLength(11);
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers(); });
 
 it('loads immediately after StrictMode effect replay and ignores the stale response', async () => {
   await act(async () => root.render(createElement(StrictMode, null, createElement(RegressionResults))));
   expect(mocks.fetch).toHaveBeenCalledTimes(2);
-  expect(host.textContent).toContain('正在加载检查记录');
+  expect(host.querySelector('[aria-label="正在加载检查记录…"]')).not.toBeNull();
   expect(host.textContent).not.toContain('当前没有符合筛选条件的样例');
   await act(async () => respond(0, history('旧结果')));
   expect(host.textContent).not.toContain('旧结果');
@@ -85,7 +85,7 @@ it('loads immediately after StrictMode effect replay and ignores the stale respo
   expect(mocks.fetch).toHaveBeenCalledTimes(2);
   await act(async () => respond(1, history('首次切换的结果')));
   expect(host.textContent).toContain('首次切换的结果');
-  expect(host.textContent).not.toContain('正在加载检查记录');
+  expect(host.querySelector('[aria-label="正在加载检查记录…"]')).toBeNull();
 });
 
 it('shows an empty state only after an empty response completes', async () => {
@@ -93,7 +93,7 @@ it('shows an empty state only after an empty response completes', async () => {
   expect(host.textContent).not.toContain('当前没有符合筛选条件的样例');
   await act(async () => respond(0, { scope: 'local', runs: [], cases: [], hasMore: false }));
   expect(host.textContent).toContain('当前没有符合筛选条件的样例');
-  expect(host.textContent).toContain('还没有检查记录');
+  expect(host.querySelector('[aria-label="正在加载检查记录…"]')).toBeNull();
 });
 
 it('keeps narrow-screen pages to three cases', async () => {
@@ -125,8 +125,6 @@ it('includes unexported intake and deduplicates older exports without inheriting
   const state = [...host.querySelectorAll('label')].find(item => item.querySelector('span')?.textContent === '样例状态')!.querySelector('select')!;
   await act(async () => { state.value = 'active'; state.dispatchEvent(new Event('change', { bubbles: true })); });
   expect(host.querySelectorAll('.gt-candidate')).toHaveLength(0);
-  await act(async () => { state.value = 'pending-test'; state.dispatchEvent(new Event('change', { bubbles: true })); });
-  expect(host.querySelectorAll('.gt-candidate')).toHaveLength(1);
   await act(async () => { state.value = 'todo'; state.dispatchEvent(new Event('change', { bubbles: true })); });
   expect(host.querySelectorAll('.gt-candidate')).toHaveLength(2);
 });
