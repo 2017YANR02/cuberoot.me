@@ -4,7 +4,6 @@ import { sessionFetch } from '@/lib/session-fetch';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Check, Copy, Download, KeyRound, Loader2, Lock, Plus, Save, Trash2, UserPlus, X } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
-import BoolToggle from '@/components/BoolToggle';
 import { PasswordInput } from '@/components/PasswordInput';
 import { SearchInput } from '@/components/SearchInput';
 import { CompactSelect } from '@/components/CompactSelect';
@@ -540,7 +539,6 @@ export default function VaultPage() {
                 <button type="button" className="vault-icon-button" aria-label={tr({ zh: '复制', en: 'Copy' })} onClick={() => copy(field.value, field.id)}>{copiedKey === field.id ? <Check /> : <Copy />}</button>
                 {editable && <button type="button" className="vault-icon-button is-danger" aria-label={tr({ zh: '删除字段', en: 'Delete field' })} onClick={() => updateDraft((item) => { item.entry.fields.splice(index, 1); })}><X /></button>}
               </div>
-              {editable && <BoolToggle value={field.secret} onChange={(value) => updateDraft((item) => { item.entry.fields[index].secret = value; })} label={tr({ zh: '隐藏内容', en: 'Hide value' })} />}
             </div>;
           })}{editable && <button type="button" className="vault-button" onClick={() => updateDraft((item) => item.entry.fields.push({ id: crypto.randomUUID(), label: '', value: '', secret: false }))}><Plus />{tr({ zh: '添加字段', en: 'Add field' })}</button>}</div>
 

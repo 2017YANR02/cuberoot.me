@@ -1,5 +1,6 @@
 .recon-test { position: relative; }
 .recon-test-panel {
+  /* anchored-panel: clamped by usePanelClamp */
   position: absolute; z-index: 80; top: calc(100% + 8px); left: 0;
   width: min(420px, calc(100vw - 24px)); max-height: min(70dvh, 650px); overflow: auto;
   box-sizing: border-box; padding: 14px; border: 1px solid var(--border-default); border-radius: 8px;
@@ -8,9 +9,11 @@
 .recon-test-panel :is(.recon-test-control, .recon-test-item, .recon-test-use) { font: inherit; color: inherit; cursor: pointer; }
 .recon-test-heading, .recon-test-filters, .recon-test-pages { display: flex; align-items: center; gap: 8px; }
 .recon-test-heading { justify-content: space-between; }
-.recon-test-people { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
-.recon-test-people label { display: flex; flex-direction: column; gap: 4px; max-width: 100%; }
-.recon-test-select { width: fit-content; max-width: 100%; font: inherit; }
+.recon-test-people { display: grid; gap: 10px; margin-top: 12px; }
+.recon-test-person-field { display: grid; grid-template-columns: 3.5em minmax(0, 1fr); align-items: start; gap: 8px; }
+.recon-test-person-field > span { padding-top: 6px; }
+.recon-test-person-search { min-width: 0; }
+.recon-test-person-value { display: flex; align-items: center; gap: 8px; min-height: 32px; }
 .recon-test-control, .recon-test-use {
   padding: 4px 8px; border: 1px solid var(--border-default); border-radius: 4px; background: transparent;
 }

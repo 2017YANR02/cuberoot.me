@@ -29,9 +29,15 @@
 .ri-button.ri-annotate { font-size: .8rem; margin-left: .5rem; white-space: nowrap; color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 .ri-queue { max-width: 80rem; margin: auto; padding: 1rem; }
 .ri-queue-controls { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
-.ri-queue-grid { display: grid; grid-template-columns: minmax(12rem, 1fr) minmax(0, 3fr); gap: 1.5rem; margin-top: 1rem; }
+.ri-queue-grid { display: grid; grid-template-columns: minmax(14rem, 19rem) minmax(0, 1fr); align-items: start; gap: 1.5rem; margin-top: 1rem; }
 .ri-case-list { display: flex; flex-direction: column; gap: .5rem; }
-.ri-case-button { text-align: left; overflow-wrap: anywhere; }
+.ri-case-button { display: flex; flex-direction: column; gap: .35rem; text-align: left; overflow-wrap: anywhere; padding: .7rem .8rem; }
+.ri-case-button > span { font-size: .82rem; }
+.ri-case-detail { min-width: 0; }
+.ri-case-detail > details { margin-block: .75rem; }
+.ri-case-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem 1rem; }
+.ri-case-heading h2 { margin: 0; font-size: 1.15rem; }
+.ri-queue > .ri-queue-controls { margin-top: 1rem; }
 .ri-case-button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
 .ri-compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 .ri-queue pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .85rem; }

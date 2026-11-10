@@ -24,7 +24,6 @@ import {
 import { tr } from '@/i18n/tr';
 import './ground-truth.css';
 import RegressionResults from './RegressionResults';
-import IntakeQueue from './IntakeQueue';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const FILTERS = ['all', 'pending', 'discussion', 'confirmed', 'rejected'] as const;
@@ -94,14 +93,13 @@ function CandidateRow({ item, selected, onSelect }: {
 }
 
 export default function ReconGroundTruthPage() {
-  const [view, setView] = useQueryState('view', parseAsStringEnum(['queue', 'smart', 'manual']).withDefault('queue'));
+  const [view, setView] = useQueryState('view', parseAsStringEnum(['smart', 'manual']).withDefault('smart'));
   return <><div className="gt-page gt-mode"><label className="gt-filter-label">
     <span>{tr({ zh: '查看内容', en: 'View' })}</span>
-    <select className="gt-filter-select" value={view} onChange={event => { void setView(event.target.value as 'queue' | 'smart' | 'manual'); }}>
-      <option value="queue">{tr({ zh: '收录待办队列', en: 'Intake queue' })}</option>
+    <select className="gt-filter-select" value={view} onChange={event => { void setView(event.target.value as 'smart' | 'manual'); }}>
       <option value="smart">{tr({ zh: '智能魔方回归测试', en: 'Smart cube regression tests' })}</option>
       <option value="manual">{tr({ zh: '人工复盘样例', en: 'Manual reconstruction cases' })}</option>
-    </select></label></div>{view === 'manual' ? <ManualGroundTruthPage /> : view === 'queue' ? <IntakeQueue /> : <RegressionResults />}</>;
+    </select></label></div>{view === 'manual' ? <ManualGroundTruthPage /> : <RegressionResults />}</>;
 }
 
 function ManualGroundTruthPage() {

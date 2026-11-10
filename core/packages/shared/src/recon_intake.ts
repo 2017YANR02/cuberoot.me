@@ -40,6 +40,13 @@ export interface ReconIntakeInput {
   hadOverride: boolean;
 }
 export type ReconIntakeStatus = 'pending-test' | 'needs-fix' | 'needs-review' | 'active';
+export interface ReconSourceMetadata {
+  value: string | null; date: string | null;
+  person: string | null; personId: string | null;
+  reconer: string | null; reconerId: string | null;
+  collector: string | null; collectorId: string | null;
+  competition: string | null; competitionId?: string | null; country?: string | null;
+}
 export interface ReconIntakeRun {
   id: string; status: 'passed' | 'failed' | 'interrupted';
   actual: ReconSnapshot | null; errors: string[];
@@ -48,7 +55,9 @@ export interface ReconIntakeRun {
 }
 export interface ReconIntakeCase {
   id: string; revision: number; contentHash: string; recordingHash: string;
-  sourceSnapshot?: { id: number; scramble: string; solution: string } | null;
+  sourceSnapshot?: { id: number; scramble: string; solution: string;
+    metadata?: ReconSourceMetadata; metadataOrigin?: 'collection' | 'current';
+  } | null;
   input: ReconIntakeInput; expected: ReconSnapshot | null;
   status: ReconIntakeStatus; createdBy: string; createdAt: string; updatedAt: string;
   approvedBy: string | null;

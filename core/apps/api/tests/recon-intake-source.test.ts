@@ -71,17 +71,53 @@ it('rejects a source already collected under a different recording', async () =>
 });
 
 it('persists the validated source identity and immutable source snapshot', async () => {
-  const snapshot = { id: 123, scramble: 'R', solution: "R'" };
+  const metadata = { value: '4.00', date: '2026-01-01', person: 'Solver', personId: 'solver',
+    reconer: 'Reconstructor', reconerId: 'reconer', collector: 'Collector', collectorId: 'author', competition: 'Test', competitionId: null, country: null };
+  const snapshot = { id: 123, scramble: 'R', solution: "R'", metadata, metadataOrigin: 'collection' };
   const row = { id: randomUUID(), revision: 1, recording_hash: 'recording', content_hash: 'content', input,
     expected: input.observed, status: 'pending-test', created_by: 'admin', approved_by: 'admin',
     created_at: new Date('2026-01-01'), updated_at: new Date('2026-01-01'), latest_run: null,
     claimed_by: null, lease_until: null, source_snapshot: snapshot };
-  const run = vi.fn().mockResolvedValueOnce([{ scramble: 'R', solution: "R'", source_hash: sourceHash, added_by_id: 'author' }])
+  const run = vi.fn().mockResolvedValueOnce([{ id: 123, scramble: 'R', solution: "R'", source_hash: sourceHash,
+    value: '4.00', date: '2026-01-01', person: 'Solver', person_id: 'solver', reconer: 'Reconstructor', reconer_id: 'reconer',
+    added_by: 'Collector', added_by_id: 'author', comp: 'Test' }])
     .mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([row]).mockResolvedValueOnce([]);
   db.transaction.mockImplementation(fn => fn(run));
   const response = await post(input);
   expect(response.status).toBe(200);
   expect((await response.json()).sourceSnapshot).toEqual(snapshot);
-  expect(run.mock.calls[0][0]).not.toContain('person_id');
+  expect(run.mock.calls[0][0]).toContain('reconer_id');
   expect(run.mock.calls[2][1].slice(1, 3)).toEqual([123, snapshot]);
+});
+
+it('enriches legacy linked records without replacing saved algorithms or recorded time', async () => {
+  const source_snapshot = { id: 123, scramble: 'R', solution: "R'" };
+  const row = { id: randomUUID(), revision: 1, input, source_snapshot, created_at: new Date(), updated_at: new Date() };
+  db.query.mockResolvedValueOnce([row]).mockResolvedValueOnce([{ id: 123, value: '2.51', person: 'Solver', person_id: 'solver',
+    reconer: 'Original author', reconer_id: 'reconer', added_by: 'Collector', added_by_id: 'collector' }]);
+  const response = await app.request('/v1/recon-intake?status=all', { headers: { Authorization: 'Bearer admin' } });
+  expect(response.status).toBe(200);
+  const sample = (await response.json()).items[0];
+  expect(sample.sourceSnapshot).toMatchObject({ ...source_snapshot, metadataOrigin: 'current',
+    metadata: { value: '2.51', reconer: 'Original author', collector: 'Collector' } });
+  expect(sample.input.recording.timeMs).toBe(1000);
+  expect(source_snapshot).toEqual({ id: 123, scramble: 'R', solution: "R'" });
+  expect(db.query.mock.calls[1][1]).toEqual([[123]]);
+});
+
+it('does not look up or overwrite metadata saved at collection', async () => {
+  const source_snapshot = { id: 123, scramble: 'R', solution: "R'", metadata: { value: '4.00' }, metadataOrigin: 'collection' };
+  db.query.mockResolvedValueOnce([{ id: randomUUID(), revision: 1, input, source_snapshot, created_at: new Date(), updated_at: new Date() }]);
+  const response = await app.request('/v1/recon-intake?status=all', { headers: { Authorization: 'Bearer admin' } });
+  expect((await response.json()).items[0].sourceSnapshot).toEqual(source_snapshot);
+  expect(db.query).toHaveBeenCalledTimes(1);
+});
+
+it('returns authenticated paginated filter summaries without recordings or expectations', async () => {
+  expect((await app.request('/v1/recon-intake?summary=1')).status).toBe(403);
+  db.query.mockResolvedValueOnce([{ id: 'sample', created_by: 'admin', source_snapshot: null, status: 'needs-review', revision: 2 }]);
+  const response = await app.request('/v1/recon-intake?status=all&summary=workflow&offset=50', { headers: { Authorization: 'Bearer admin' } });
+  expect(await response.json()).toEqual({ items: [{ id: 'sample', createdBy: 'admin', sourceSnapshot: null, status: 'needs-review', revision: 2 }], hasMore: false });
+  expect(db.query.mock.calls[0][0]).toContain('SELECT id, created_by, source_snapshot');
+  expect(db.query.mock.calls[0][1]).toEqual([50]);
 });
