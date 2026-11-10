@@ -1,7 +1,7 @@
 'use client';
 
 // Ported from packages/client-vite/src/pages/trainer/components.tsx
-import MoreToggle from '@/components/MoreToggle';
+import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Trash2, Check, Star } from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
@@ -500,13 +500,7 @@ export function CaseMarkBadges({ marks, k }: { marks: CaseMarks; k: string }) {
 
 /** Keep visited panels mounted for closing transitions; unopened cases stay lazy. */
 function CasePickerPanel({ open, id, children }: { open: boolean; id: string; children: ReactNode }) {
-  const [visited, setVisited] = useState(open);
-  if (open && !visited) setVisited(true);
-  return (
-    <div id={id} className={`trainer-picker-panel${open ? ' is-open' : ''}`} inert={!open} aria-hidden={!open}>
-      <div className="trainer-picker-panel-inner">{visited ? children : null}</div>
-    </div>
-  );
+  return <MoreTogglePanel id={id} expanded={open}>{children}</MoreTogglePanel>;
 }
 
 function TopThumb({ g, puzzle, set, hasSubLevel }: {

@@ -14,7 +14,7 @@ import { prepareBrowserAdapter } from './wasm-browser-adapter.mjs';
 import { parsePrintedSolution, readWca100, validateSharedDepthResults } from './wasm-benchmark.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url)), ROOT = resolve(HERE, '../../..');
-const BASE = resolve(ROOT, '.tmp/cubeopt-reverse');
+const BASE = resolve(ROOT, '.local-data/cubeopt-reverse');
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const read = path => JSON.parse(readFileSync(path, 'utf8'));
 const save = (path, value) => writeFileSync(path, JSON.stringify(value, null, 2) + '\n', {flag: 'wx'});

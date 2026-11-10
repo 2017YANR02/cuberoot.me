@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { puzzles } from 'cubing/puzzles';
 
 const ROOT = resolve(import.meta.dirname, '../../../../..');
-const input = resolve(ROOT, process.argv[2] ?? '.tmp/best2x2/import.json');
+const input = resolve(ROOT, process.argv[2] ?? '.local-data/best2x2/import.json');
 
 interface ImportFile {
   stats: Record<string, number>;

@@ -497,6 +497,8 @@ export interface BluetoothAdvertisementDiagnostic {
 }
 
 interface UseBluetoothCubeOpts {
+  /** Reject a device owned by another local player before touching its GATT session. */
+  validateDevice?: (device: BluetoothDevice) => void;
   /** Official competition sessions only accept physical peripherals. */
   allowSimulated?: boolean;
   /** Called for each move. `timestamp` is a calibrated `performance.now()`-domain
@@ -587,6 +589,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
 
   // Refs so the GATT-event closure doesn't capture stale callback refs.
   const onMoveRef = useRef(opts.onMove);
+  const validateDeviceRef = useRef(opts.validateDevice);
+  validateDeviceRef.current = opts.validateDevice;
   const onSolvedRef = useRef(opts.onSolved);
   const onConnectionEventRef = useRef(opts.onConnectionEvent);
   useEffect(() => { onMoveRef.current = opts.onMove; }, [opts.onMove]);
@@ -998,6 +1002,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     ) => void,
   ): Promise<void> => {
     const isCurrentSession = (): boolean => connectionGenerationRef.current === generation;
+    validateDeviceRef.current?.(device);
     if (!device.gatt) {
       throw new BluetoothConnectError('gatt', 'Selected device does not expose a GATT server.');
     }

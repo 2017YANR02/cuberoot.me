@@ -5,7 +5,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
 import { query, withTransaction } from '../db/connection.js';
 import { requireAdminOrApiKey } from '../utils/recon_helpers.js';
-import type { ReconIntakeCase, ReconIntakeInput, ReconSnapshot } from '@cuberoot/shared/recon-ground-truth';
+import type { ReconIntakeCase, ReconIntakeInput, ReconSnapshot, ReconSourceMetadata } from '@cuberoot/shared/recon-ground-truth';
 import { reconCanonicalJson } from '@cuberoot/shared/recon-ground-truth';
 
 const short = z.string().max(4000);
@@ -66,6 +66,30 @@ function item(row: Row): ReconIntakeCase {
     updatedAt: new Date(row.updated_at).toISOString(), latestRun: row.latest_run,
     claimedBy: row.claimed_by, leaseUntil: row.lease_until ? new Date(row.lease_until).toISOString() : null,
     sourceSnapshot: row.source_snapshot ?? null };
+}
+type SourceMetadataRow = {
+  id: number; value: string | null; date: string | null; person: string | null; person_id: string | null;
+  reconer: string | null; reconer_id: string | null; added_by: string | null; added_by_id: string | null; comp: string | null;
+  comp_wca_id: string | null; country: string | null;
+};
+function sourceMetadata(source: SourceMetadataRow): ReconSourceMetadata {
+  return { value: source.value ?? null, date: source.date ?? null, person: source.person ?? null, personId: source.person_id ?? null,
+    reconer: source.reconer ?? null, reconerId: source.reconer_id ?? null,
+    collector: source.added_by ?? null, collectorId: source.added_by_id ?? null, competition: source.comp ?? null,
+    competitionId: source.comp_wca_id ?? null, country: source.country ?? null };
+}
+/** Legacy records retain their saved algorithms; only missing display metadata is read from the linked source. */
+async function withSourceMetadata<T extends Pick<ReconIntakeCase, 'sourceSnapshot'>>(items: T[]): Promise<T[]> {
+  const ids = [...new Set(items.flatMap(value => value.sourceSnapshot && !value.sourceSnapshot.metadata ? [value.sourceSnapshot.id] : []))];
+  if (!ids.length) return items;
+  const sources = await query<SourceMetadataRow>(`SELECT id, value, date::text, person, person_id, reconer, reconer_id, added_by, added_by_id, comp, comp_wca_id, country
+    FROM recons WHERE id = ANY(?::int[])`, [ids]);
+  const byId = new Map(sources.map(source => [source.id, source]));
+  return items.map(value => {
+    const snapshot = value.sourceSnapshot;
+    const source = snapshot && !snapshot.metadata ? byId.get(snapshot.id) : undefined;
+    return source && snapshot ? { ...value, sourceSnapshot: { ...snapshot, metadata: sourceMetadata(source), metadataOrigin: 'current' } } : value;
+  });
 }
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
@@ -148,9 +172,17 @@ reconIntakeRoutes.get('/recon-intake', async c => {
     throw new HTTPException(400);
   const offset = Math.max(0, Math.min(100000, Math.trunc(Number(c.req.query('offset')) || 0)));
   const where = status === 'all' ? 'TRUE' : status === 'todo' ? "status <> 'active'" : 'status = ?';
+  if (['1', 'workflow'].includes(c.req.query('summary') ?? '')) {
+    const rows = await query<Pick<Row, 'id' | 'created_by' | 'source_snapshot' | 'status' | 'revision'>>(
+      `SELECT id, created_by, source_snapshot, status, revision FROM recon_intake WHERE ${where} ORDER BY created_at, id LIMIT 51 OFFSET ?`,
+      [...(status === 'all' || status === 'todo' ? [] : [status]), offset]);
+    const items = rows.slice(0, 50).map(row => ({ id: row.id, createdBy: row.created_by, status: row.status, revision: row.revision,
+      sourceSnapshot: row.source_snapshot ?? null }));
+    return c.json({ items: await withSourceMetadata(items), hasMore: rows.length > 50 });
+  }
   const rows = await query<Row>(`SELECT * FROM recon_intake WHERE ${where} ORDER BY created_at, id LIMIT 51 OFFSET ?`,
     [...(status === 'all' || status === 'todo' ? [] : [status]), offset]);
-  return c.json({ items: rows.slice(0, 50).map(item), hasMore: rows.length > 50 });
+  return c.json({ items: await withSourceMetadata(rows.slice(0, 50).map(item)), hasMore: rows.length > 50 });
 });
 reconIntakeRoutes.post('/recon-intake', async c => {
   const actor = await authorize(c);
@@ -162,9 +194,9 @@ reconIntakeRoutes.post('/recon-intake', async c => {
   const saved = await withTransaction(async q => {
     let sourceSnapshot: ReconIntakeCase['sourceSnapshot'] = null;
     if (input.sourceReconId) {
-      const [source] = await q<{ scramble: string; solution: string; source_hash: string; added_by_id: string | null }>(`SELECT
+      const [source] = await q<SourceMetadataRow & { scramble: string; solution: string; source_hash: string }>(`SELECT
         COALESCE(NULLIF(BTRIM(optimal_scramble), ''), NULLIF(BTRIM(wca_scramble), ''), BTRIM(scramble), '') AS scramble,
-        COALESCE(solution, '') AS solution, added_by_id,
+        COALESCE(solution, '') AS solution, id, value, date::text, person, person_id, reconer, reconer_id, added_by, added_by_id, comp, comp_wca_id, country,
         md5(jsonb_build_array(COALESCE(NULLIF(BTRIM(optimal_scramble), ''), NULLIF(BTRIM(wca_scramble), ''), BTRIM(scramble), ''), COALESCE(solution, ''))::text) AS source_hash FROM recons
         WHERE id = ? AND event = '3x3' FOR SHARE`, [input.sourceReconId]);
       const normalize = (value: string) => value.trim().replace(/\s+/g, ' ');
@@ -173,7 +205,8 @@ reconIntakeRoutes.post('/recon-intake', async c => {
         throw new HTTPException(400, { message: 'Source reconstruction or scramble does not match' });
       const [confirmed] = await q<{ recon_id: number }>("SELECT recon_id FROM recon_ground_truth_cases WHERE recon_id = ? AND status = 'confirmed' AND source_event = '3x3' AND source_added_by_id IS NOT DISTINCT FROM ? AND source_scramble = ? AND source_solution = ?", [input.sourceReconId, source.added_by_id, source.scramble, source.solution]);
       if (confirmed) throw new HTTPException(409, { message: 'Source reconstruction already collected' });
-      sourceSnapshot = { id: input.sourceReconId, scramble: source.scramble, solution: source.solution };
+      sourceSnapshot = { id: input.sourceReconId, scramble: source.scramble, solution: source.solution,
+        metadata: sourceMetadata(source), metadataOrigin: 'collection' };
     }
     await q(`INSERT INTO recon_intake (id, source_recon_id, source_snapshot, submission_hash, recording_hash, content_hash, input, expected, status, created_by, approved_by)
       VALUES (?, ?, ?::jsonb, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?) ON CONFLICT DO NOTHING`,
@@ -194,7 +227,7 @@ reconIntakeRoutes.get('/recon-intake/:id', async c => {
   if (!row) throw new HTTPException(404);
   const runs = await query('SELECT payload, revision, created_at FROM recon_intake_runs WHERE case_id = ? ORDER BY created_at DESC LIMIT 30', [id]);
   const revisions = await query('SELECT revision, input, expected, actor, created_at FROM recon_intake_revisions WHERE case_id = ? ORDER BY revision DESC LIMIT 30', [id]);
-  return c.json({ item: item(row), runs, revisions });
+  return c.json({ item: (await withSourceMetadata([item(row)]))[0], runs, revisions });
 });
 reconIntakeRoutes.post('/recon-intake/:id/claim', async c => {
   const id = parse(uuid, c.req.param('id'));

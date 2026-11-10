@@ -5,6 +5,8 @@
 .platform-learning-directory [aria-current=step] { background:var(--accent-soft); color:var(--accent); }
 .platform-learning-directory small { color:var(--muted-foreground); }
 .platform-learning-panel { padding:20px; border:1px solid var(--border-default); border-radius:16px; min-width:0; overflow-wrap:anywhere; }
+.platform-learning-panel h2 { margin:0 0 12px; font-size:1.125rem; font-weight:600; line-height:1.5; }
+.platform-learning-panel h3 { margin:0 0 8px; font-size:1rem; font-weight:600; line-height:1.5; }
 .platform-learning-panel article + article { border-top:1px solid var(--border-default); margin-top:16px; padding-top:16px; }
 .platform-learning-panel :is(input,textarea,select) { max-width:100%; }
 .platform-learning-panel fieldset { border:1px solid var(--border-default); margin:16px 0; padding:16px; border-radius:12px; }

@@ -6,6 +6,8 @@ import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { parseAsString, useQueryState } from 'nuqs';
 import { WorkspaceProvider, ReportEditor, Projects, useResource, workspaceText, type WorkspaceHost, type StaffProject, type WorkReport } from '@app-foundation/workspace-ui';
 import type { Checklist, Schedule } from '@cuberoot/shared/workspace-planning';
+import MacSetupChecklist from '@/components/workspace/MacSetupChecklist';
+import { replaceSortableItems } from '@/components/SortableList';
 import Checklists from '@/app/[lang]/workspace/Checklists';
 import Schedules from '@/app/[lang]/workspace/Schedules';
 import { WorkspaceButton, WorkspaceDialog, WorkspaceMemberPicker } from '@/app/[lang]/workspace/WorkspaceControls';
@@ -28,7 +30,10 @@ const host: WorkspaceHost = {
       calls.push({ action, body });
       if (rejectSave) throw new Error('Reload before saving');
       if (pendingSave) await pendingSave;
-      if (action === 'checklist') lists = lists.map(list => list.id === (body as Checklist).id ? { ...body as Checklist, version: list.version + 1 } : list);
+      if (action === 'checklist') {
+        const saved = { ...body as Checklist, version: (body as Checklist).version + 1 };
+        lists = lists.some(list => list.id === saved.id) ? lists.map(list => list.id === saved.id ? saved : list) : [...lists, saved];
+      }
       if (action === 'checklist-delete') lists = lists.filter(list => list.id !== (body as Checklist).id);
       if (action === 'schedule-delete') schedules = schedules.filter(row => row.id !== (body as Schedule).id);
       if (action === 'schedule') {
@@ -529,4 +534,49 @@ it('locks local editor switches while saving and ignores late navigation callbac
   expect(container.querySelector<HTMLSelectElement>('select')!.value).toBe('schedule');
   expect(container.querySelector('[name="name"]')).toBeNull();
   expect(schedules[0].tasks[0].id).toBe('task');
+});
+
+
+it('saves the Mac checklist on first edit and preserves deletion of every item after remount', async () => {
+  lists = [];
+  await mount(h(MacSetupChecklist));
+  expect(container.textContent).not.toContain('RustDesk');
+  expect(calls).toHaveLength(0);
+  expect(container.querySelector('[aria-label="Required"]')?.textContent).toContain('Homebrew');
+  expect(container.querySelector('[aria-label="Optional"]')?.textContent).toContain('Chrome');
+  expect(container.querySelectorAll('th').length).toBe(8);
+  await click('Delete task: Chrome：Browse and debug, optional (Safari included)');
+  expect(lists).toHaveLength(1);
+  expect(lists[0].version).toBe(1);
+  expect(lists[0].items.some(item => item.text.startsWith('Chrome'))).toBe(false);
+  expect(container.querySelector('input[type="checkbox"]')).toBeNull();
+  expect(container.querySelector('[aria-label="Drag to reorder: ChatGPT / Codex"]')).not.toBeNull();
+  await click('Move to optional: ChatGPT / Codex');
+  expect(container.querySelector('[aria-label="Optional"]')?.textContent).toContain('ChatGPT / Codex');
+  await click('Move to required: ChatGPT / Codex');
+  expect(container.querySelector('[aria-label="Required"]')?.textContent).toContain('ChatGPT / Codex');
+  await setInput(container.querySelector<HTMLInputElement>('[aria-label="New task"]')!, 'Custom app: My task');
+  await act(async () => container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+  expect(lists[0].items.at(-1)?.text).toBe('Custom app: My task');
+  for (const item of [...lists[0].items]) await click(`Delete task: ${item.text}`);
+  expect(lists[0].items).toEqual([]);
+  await mount(null);
+  await mount(h(MacSetupChecklist));
+  expect(container.querySelectorAll('input[type="checkbox"]')).toHaveLength(0);
+});
+
+it('keeps Mac checklist items visible when saving is rejected', async () => {
+  lists = [];
+  await mount(h(MacSetupChecklist));
+  rejectSave = true;
+  await click('Delete task: Chrome：Browse and debug, optional (Safari included)');
+  expect(container.textContent).toContain('Reload before saving');
+  expect(container.querySelector('[aria-label="Move to required: Chrome"]')).not.toBeNull();
+  expect(lists).toHaveLength(0);
+});
+
+it('reorders visible items without moving hidden items or other groups', () => {
+  const items = [{ id: 'a' }, { id: 'hidden' }, { id: 'b' }, { id: 'other' }, { id: 'c' }];
+  expect(replaceSortableItems(items, [items[4], items[0], items[2]]).map(item => item.id)).toEqual(['c', 'hidden', 'a', 'other', 'b']);
+  expect(items.map(item => item.id)).toEqual(['a', 'hidden', 'b', 'other', 'c']);
 });

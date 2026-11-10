@@ -5,3 +5,17 @@
 .product-analytics__scroll th:first-child { min-width: 160px; max-width: 300px; white-space: normal; overflow-wrap: anywhere; }
 .product-analytics__pagination { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
 .product-analytics__definitions { margin-top: 28px; }
+
+.product-analytics .admin-dashboard__metrics { gap: 12px; margin-bottom: 16px; }
+.product-analytics .admin-dashboard__metrics > * { padding: 16px; gap: 8px; }
+.product-analytics .admin-dashboard__metrics strong { font-size: 2rem; }
+.product-analytics .admin-dashboard__toolbar { gap: 12px; margin-bottom: 16px; }
+.product-analytics .admin-dashboard__updated { margin: 8px 0 16px; font-size: .875rem; }
+.product-analytics__details { margin-top: 16px; }
+.product-analytics__details > summary { padding: 10px 0; }
+.product-analytics .admin-dashboard__panel { margin-bottom: 16px; }
+.product-analytics .admin-dashboard__chart { height: 320px; }
+@media (max-width: 640px) {
+  .product-analytics .admin-dashboard__metrics strong { font-size: 1.6rem; }
+  .product-analytics .admin-dashboard__panel { padding: 16px; }
+}

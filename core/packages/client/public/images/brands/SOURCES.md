@@ -29,3 +29,10 @@ verified original-color SVG was found upstream; `gan-color.svg` is a local
 vector adaptation using the source blue, not an upstream original-color asset.
 The UI must not substitute monochrome artwork merely to use SVG.
 Do not wrap raster images in SVG and describe them as vector artwork.
+
+Added 2026-11-09:
+
+| Asset | Source | Notes |
+| --- | --- | --- |
+| `yj.png` | https://www.yjcube.com/theme/skin-yj/images/1.png (https://www.yjcube.com/) | Official footer emblem, original transparent 200×128 PNG; source colors and internal white artwork preserved. No verified SVG found. |
+| `diansheng.png` | https://www.dianshengtoys.com/images/logo.png (https://www.dianshengtoys.com/) | Official header logo, original transparent 74×73 PNG; source colors and white cube grid preserved. No verified SVG found. |

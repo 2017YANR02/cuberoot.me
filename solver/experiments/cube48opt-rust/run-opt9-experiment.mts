@@ -13,7 +13,7 @@ import { readWca100 } from './wasm-benchmark.mjs';
 import { parseCompleteJsonl, readSuccessfulTiming } from './report-opt10-wca100.mjs';
 import { verify } from './benchmark.mjs';
 
-const HERE=dirname(fileURLToPath(import.meta.url)), ROOT=resolve(HERE,'../../..'), BASE=resolve(ROOT,'.tmp/cubeopt-reverse');
+const HERE=dirname(fileURLToPath(import.meta.url)), ROOT=resolve(HERE,'../../..'), BASE=resolve(ROOT,'.local-data/cubeopt-reverse');
 const digest=(b:Uint8Array)=>createHash('sha256').update(b).digest('hex');
 const save=(path:string,value:any)=>writeFileSync(path,JSON.stringify(value,null,2)+'\n',{flag:'wx',mode:0o600});
 function read(path:string,max=8*1024**2) {

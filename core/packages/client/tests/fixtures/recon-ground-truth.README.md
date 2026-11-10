@@ -125,7 +125,7 @@ verify the current source rather than stale dist exports. Build failure is saved
 as a failed run and blocks the commit.
 
 The existing gate stores each run atomically under the ignored
-`.tmp/recon-ground-truth-runs/` directory, including failures and startup errors.
+`.local-data/recon-ground-truth-runs/` directory, including failures and startup errors.
 The current fingerprint warning prevents an older pass from looking current.
 A missing or incomplete report fails the gate; an exited unfinished process is
 shown as interrupted. A cached Git credential does not create a fictitious run.

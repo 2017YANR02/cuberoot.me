@@ -9,10 +9,15 @@ const CHANGE_EVENT = 'deskpet-visibility-change';
 let visitChoice: boolean | undefined;
 const pageChoices = new Map<string, boolean>();
 
-/** Training surfaces default to quiet; catalog and help pages keep the global preference. */
+/** Focused tools and dense data workspaces default to quiet, without changing the global preference. */
 export function deskPetQuietPage(pathname: string): string | null {
   const path = pathname.replace(/^\/(zh|en)(?=\/|$)/, '').replace(/\/$/, '') || '/';
-  if (/^\/(timer|alg-trainers|algTrainer)(\/|$)/.test(path)
+  if (/^\/(calc|frame-count|mosaic|paint|wb|notation|recon)(\/|$)/.test(path)
+    || /^\/wca\/(results|records|comp)(\/|$)/.test(path)
+    || /^\/scramble\/(solver|analyzer)(\/|$)/.test(path)
+    || /^\/recognize\/[^/]+$/.test(path)
+    || /^\/alg\/3bld\/lookup(\/|$)/.test(path)
+    || /^\/(timer|alg-trainers|algTrainer)(\/|$)/.test(path)
     || /^\/[^/]+_trainer(\/|$)/.test(path)
     || /^\/alg\/[^/]+\/[^/]+\/(run|simple)(\/|$)/.test(path)
     || /^\/alg\/(roux|skewb-trainer)(\/|$)/.test(path)

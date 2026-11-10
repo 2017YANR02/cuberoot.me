@@ -13,8 +13,8 @@ describe('PasswordInput', () => {
     }));
 
     expect(render(false)).toContain('type="password"');
-    expect(render(false)).toContain('lucide-eye-off');
+    expect(render(false)).toContain('lucide-eye"');
     expect(render(true)).toContain('type="text"');
-    expect(render(true)).toContain('lucide-eye"');
+    expect(render(true)).toContain('lucide-eye-off');
   });
 });

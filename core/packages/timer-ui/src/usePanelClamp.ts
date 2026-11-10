@@ -1,38 +1,87 @@
 'use client';
 
-// 锚定下拉面板防溢出(issue #29):面板 position:absolute 锚在触发钮下方(left:0)时,
-// 触发钮靠右 + 面板较宽 → 右缘越出视口被裁。max-width:90vw 只钳面板自身宽度,
-// 钳不住「锚点位置 + 宽度」合起来越界 —— 只能开着时实测再左移。
-// 用法:面板条件渲染(open && <div ref={panelRef}>)时传 open + 面板 ref;
-// 用 margin-left 修正左右溢出(不碰 transform,保留居中定位),左缘不越界优先;resize 重算。
 import { useLayoutEffect, type RefObject } from 'react';
+import { getUsableViewport } from './host-viewport';
 
-const MARGIN = 8; // 面板与视口边缘的最小间距 px
+const MARGIN = 8;
+const GAP = 6;
 
-export function usePanelClamp(open: boolean, ref: RefObject<HTMLElement | null>) {
+/** Clamp anchored panels without replacing their transform (for example centering).
+ * Pass the trigger to also choose above/below and constrain the scrollable height.
+ * Existing callers without a trigger retain their own vertical positioning.
+ */
+export function usePanelClamp(
+  open: boolean,
+  ref: RefObject<HTMLElement | null>,
+  triggerRef?: RefObject<HTMLElement | null>,
+) {
   useLayoutEffect(() => {
     if (!open) return;
     const el = ref.current;
     if (!el) return;
+    const original = {
+      marginLeft: el.style.marginLeft, marginRight: el.style.marginRight,
+      marginTop: el.style.marginTop, maxHeight: el.style.maxHeight,
+      overflowY: el.style.overflowY,
+    };
+    const restore = () => Object.assign(el.style, original);
     const apply = () => {
-      el.style.marginLeft = '';
-      const left = el.getBoundingClientRect().left; // 出场 scale 动画原点 top left,不影响 left
-      const width = el.offsetWidth;                 // layout 宽,不受入场 transform 影响
-      // A stable scrollbar gutter can sit inside clientWidth; keep the panel outside it.
+      restore();
       const root = document.documentElement;
-      const vw = Math.min(root.clientWidth, root.getBoundingClientRect().right);
-      const overRight = left + width - (vw - MARGIN);
-      const shift = Math.max(MARGIN - left, -Math.max(0, overRight));
-      if (shift !== 0) el.style.marginLeft = `${shift}px`;
+      const viewport = getUsableViewport();
+      const vw = Math.min(root.clientWidth, root.getBoundingClientRect().right, viewport.offsetLeft + viewport.width);
+      const left = el.getBoundingClientRect().left;
+      const overRight = left + el.offsetWidth - (vw - MARGIN);
+      const shift = Math.max(viewport.offsetLeft + MARGIN - left, -Math.max(0, overRight));
+      if (shift !== 0) {
+        // Both edges matter: margin-left alone cannot move a right-anchored panel.
+        const style = getComputedStyle(el);
+        el.style.marginLeft = `${(parseFloat(style.marginLeft) || 0) + shift}px`;
+        el.style.marginRight = `${(parseFloat(style.marginRight) || 0) - shift}px`;
+      }
+      const trigger = triggerRef?.current;
+      if (!trigger) return;
+      const anchor = trigger.getBoundingClientRect();
+      const top = viewport.offsetTop + MARGIN;
+      const bottom = viewport.offsetTop + viewport.height - MARGIN;
+      const below = Math.max(0, bottom - Math.max(top, anchor.bottom + GAP));
+      const above = Math.max(0, Math.min(bottom, anchor.top - GAP) - top);
+      const up = el.offsetHeight > below && above > below;
+      const space = up ? above : below;
+      const style = getComputedStyle(el);
+      const extra = style.boxSizing === 'border-box' ? 0
+        : (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0)
+          + (parseFloat(style.borderTopWidth) || 0) + (parseFloat(style.borderBottomWidth) || 0);
+      const cssLimit = parseFloat(style.maxHeight);
+      el.style.maxHeight = `${Math.max(0, Math.min(Number.isFinite(cssLimit) ? cssLimit : Infinity, space - extra))}px`;
+      el.style.overflowY = 'auto';
+      const target = up ? Math.min(bottom, anchor.top - GAP) - el.offsetHeight : Math.max(top, anchor.bottom + GAP);
+      const delta = target - el.getBoundingClientRect().top;
+      if (delta !== 0) el.style.marginTop = `${(parseFloat(style.marginTop) || 0) + delta}px`;
     };
     apply();
-    // Menus can expand in place (for example, opening a background gallery).
+    // Re-measure dynamic contents; writing the same final geometry does not
+    // generate another ResizeObserver delivery. Ignore internal menu scrolling.
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(apply);
     observer?.observe(el);
+    if (triggerRef?.current) observer?.observe(triggerRef.current);
+    const onScroll = (event: Event) => {
+      if (event.target instanceof Node && el.contains(event.target)) return;
+      apply();
+    };
     window.addEventListener('resize', apply);
+    window.addEventListener('scroll', onScroll, true);
+    window.visualViewport?.addEventListener('resize', apply);
+    window.visualViewport?.addEventListener('scroll', apply);
+    el.addEventListener('animationend', apply);
     return () => {
       observer?.disconnect();
       window.removeEventListener('resize', apply);
+      window.removeEventListener('scroll', onScroll, true);
+      window.visualViewport?.removeEventListener('resize', apply);
+      window.visualViewport?.removeEventListener('scroll', apply);
+      el.removeEventListener('animationend', apply);
+      restore();
     };
-  }, [open, ref]);
+  }, [open, ref, triggerRef]);
 }

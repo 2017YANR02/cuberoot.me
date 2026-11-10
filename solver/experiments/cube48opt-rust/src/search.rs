@@ -1,6 +1,6 @@
 //! Native search recovered from cube48opt1..9.wasm, without a WASM runtime.
 //!
-//! Evidence: `.tmp/cubeopt-reverse/cube48opt1.wat` functions 36--44 and 47.
+//! Evidence: `.local-data/cubeopt-reverse/cube48opt1.wat` functions 36--44 and 47.
 //! The first implementation preserves the two-sided bound, NISS side score,
 //! half-turn reuse, same-face backward pruning, and eight interleaved DFS
 //! contexts, ranked prefix jobs and root-stabilizer reduction. Rust
@@ -23,6 +23,9 @@ const NO_HALF_TURNS: u32 = 0x2db6d;
 const MAX_DEPTH: u8 = 20;
 const MAX_CONTEXTS: usize = 8;
 
+#[cfg(all(feature = "opt8-native-interleaved", not(target_family = "wasm")))]
+mod interleaved;
+
 // WAT step4_domove: (68717638136 >> (20-(m+((4793490>>m)&3)))) & 262143.
 // Move order is the cubeopt order, not nissy's order. Opposite faces differ by 3.
 const ALLOWED: [u32; 6] = [0x3fff8, 0x3ffc7, 0x3fe3f, 0x3f1f8, 0x38fc7, 0x7e3f];
@@ -38,6 +41,9 @@ pub trait PruningOracle {
     /// opposite-side half-turn invariance as a decoded table bound.
     fn prepare(&self, cube: &Cube, remaining: u8) -> Result<Self::Query, u8>;
     fn lookup(&self, query: Self::Query) -> u8;
+
+    /// Only the dedicated native Opt8 oracle may select the alternative loop.
+    fn interleaved_opt8(&self) -> bool { false }
 
     /// Optional, separate certificate L <= D(cube). No half-turn invariance,
     /// consistency, or relationship to max_bound is required. The caller may
@@ -852,17 +858,30 @@ impl Context {
     /// Split the earliest pending subtree. The two contexts own disjoint masks.
     /// Ancestors before the split have no pending moves and cannot be re-entered.
     fn split_into(&mut self, other: &mut Self) -> bool {
+        self.split_owned_into::<false>(other)
+    }
+
+    #[cfg(all(feature = "opt8-native-interleaved32", not(target_family = "wasm")))]
+    fn split_pending_into(&mut self, other: &mut Self) -> bool {
+        self.split_owned_into::<true>(other)
+    }
+
+    fn split_owned_into<const ALLOW_PENDING: bool>(&mut self, other: &mut Self) -> bool {
         // The caller has already finished this vacant context. Keep its
         // MAX_DEPTH+1 frame buffer instead of allocating a replacement on
         // every split (which crosses the host allocator ABI in shared WASM).
         debug_assert!(other.stack.is_empty());
         debug_assert!(other.job.is_none());
-        if self.needs_query {
+        if self.needs_query && !ALLOW_PENDING {
             return false;
         }
         let Some(last) = self.stack.len().checked_sub(1) else { return false; };
         let Some(split_at) = self.stack.iter().enumerate().position(|(i, frame)| {
-            frame.normal_mask != 0 && (i != last || frame.normal_mask.count_ones() > 1)
+            // A pending top frame has not passed both queries/plan. Its
+            // ancestors have, and their untried masks exclude the active
+            // child. Moving only those masks cannot invalidate its query.
+            frame.normal_mask != 0
+                && (i != last || (!self.needs_query && frame.normal_mask.count_ones() > 1))
         }) else { return false; };
         other.stack.extend_from_slice(&self.stack[..=split_at]);
         other.job = self.job;
@@ -1283,6 +1302,17 @@ fn search_depth<O: PruningOracle>(
     symmetries: &RootSymmetries,
     jobs: &mut PrefixQueue,
 ) -> DepthResult {
+    #[cfg(all(feature = "opt8-native-interleaved", not(target_family = "wasm")))]
+    if oracle.interleaved_opt8() && depth > oracle.max_bound() {
+        return match options.contexts {
+            1 => interleaved::search::<O, 1>(start, oracle, options, depth, stats, symmetries, jobs),
+            #[cfg(feature = "opt8-native-interleaved32")]
+            8 => interleaved::search::<O, 32>(start, oracle, options, depth, stats, symmetries, jobs),
+            #[cfg(not(feature = "opt8-native-interleaved32"))]
+            8 => interleaved::search::<O, 8>(start, oracle, options, depth, stats, symmetries, jobs),
+            _ => unreachable!("validated context count"),
+        };
+    }
     #[cfg(any(feature = "wasm-quarter-fixed", all(feature = "opt9-native-fixed-contexts", not(target_family = "wasm"))))]
     {
         match options.contexts {

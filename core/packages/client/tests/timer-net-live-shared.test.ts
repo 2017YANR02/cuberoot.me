@@ -5,11 +5,13 @@ import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 import { useNetBattleLiveCube, useNetBattleLiveView, type UseNetBattleLiveCubeOptions } from '@cuberoot/timer-ui';
 import { SOLVED_3X3, cubeMove } from '@cuberoot/puzzle-solvers/timer-333-cube';
 import type { NetRoomState } from '@cuberoot/shared/timer';
+import { applyOrientation } from '@cuberoot/shared/smart-cube/orientation';
 
 class Socket extends EventTarget {
   static OPEN = 1;
   static instances: Socket[] = [];
   readyState = 1;
+  bufferedAmount = 0;
   sent: Record<string, unknown>[] = [];
   closes: number[] = [];
   constructor(readonly url: string) { super(); Socket.instances.push(this); }
@@ -21,6 +23,7 @@ let root: Root;
 let container: HTMLDivElement;
 let live: ReturnType<typeof useNetBattleLiveCube>;
 let view: ReturnType<typeof useNetBattleLiveView>;
+let renders = 0;
 const credentials = { playerId: 'player01', playerToken: 'private-token' };
 const solve = async () => '';
 const room: NetRoomState = {
@@ -29,6 +32,7 @@ const room: NetRoomState = {
   results: {}, history: [], scores: {}, admin: 'player01', syncStart: false, startAt: null, now: 100,
 };
 function Probe({ round = 1, code = '1234' }: { round?: number; code?: string }) {
+  renders++;
   const options: UseNetBattleLiveCubeOptions = { code, round, credentials, solve,
     websocketUrl: 'wss://example.invalid/live', localConnected: true, localFacelets: SOLVED_3X3 };
   live = useNetBattleLiveCube(options);
@@ -37,6 +41,7 @@ function Probe({ round = 1, code = '1234' }: { round?: number; code?: string }) 
   return null;
 }
 beforeEach(() => {
+  renders = 0;
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   vi.stubGlobal('WebSocket', Socket); Socket.instances = [];
   container = document.createElement('div'); document.body.append(container); root = createRoot(container);
@@ -78,4 +83,67 @@ it('reconnects after a sequence gap and rejects late messages from the departed 
   expect(Socket.instances[1].closes).toContain(1000);
   await act(async () => socket.message({ type: 'snapshot', playerId: 'player02', round: 1, seq: 9, facelets: SOLVED_3X3, updatedAt: 110 }));
   expect(live.players).toEqual({});
+});
+
+it('sends the first pose immediately, coalesces bursts and backpressure, and keeps old servers compatible', async () => {
+  vi.useFakeTimers();
+  await act(async () => root.render(h(Probe)));
+  const socket = Socket.instances[0];
+  await act(async () => socket.message({ type: 'ready', version: 1 }));
+  live.publishGyro({ w: 1, x: 0, y: 0, z: 0 });
+  expect(socket.sent.some(m => m.type === 'gyro')).toBe(false);
+  await act(async () => socket.message({ type: 'ready', version: 1, gyro: true }));
+  vi.advanceTimersByTime(20);
+  socket.sent = [];
+  const q = { w: Math.SQRT1_2, x: 0, y: Math.SQRT1_2, z: 0 };
+  live.publishGyro(q, { basis: 'rotX90', mirror: true });
+  const expected = applyOrientation(q, null, { basis: 'rotX90', mirror: true });
+  expect(socket.sent).toHaveLength(1);
+  const sent = socket.sent[0].quaternion as typeof q;
+  for (const key of ['w', 'x', 'y', 'z'] as const) expect(sent[key]).toBeCloseTo(expected[key], 5);
+  socket.bufferedAmount = 100;
+  for (let i = 0; i < 100; i++) live.publishGyro({ w: 0, x: 1, y: 0, z: 0 });
+  live.publishGyro(q, { reference: q });
+  vi.advanceTimersByTime(100);
+  expect(socket.sent).toHaveLength(1);
+  socket.bufferedAmount = 0;
+  vi.advanceTimersByTime(20);
+  expect(socket.sent).toHaveLength(2);
+  expect(socket.sent.at(-1)).toMatchObject({ type: 'gyro', quaternion: { w: 1, x: 0, y: 0, z: 0 } });
+  live.publishGyro(null);
+  vi.advanceTimersByTime(20);
+  expect(socket.sent.at(-1)).toMatchObject({ type: 'gyro', quaternion: null });
+});
+
+it('applies remote gyro samples without React renders, rejects old rounds and clears pose on disconnect', async () => {
+  await act(async () => root.render(h(Probe)));
+  const socket = Socket.instances[0];
+  await act(async () => socket.message({ type: 'snapshot', playerId: 'player02', round: 1, seq: 0, facelets: SOLVED_3X3, updatedAt: 100 }));
+  const pose = (round: number, w: number, x: number) => ({ type: 'gyro', playerId: 'player02', round, quaternion: { w, x, y: 0, z: 0 } });
+  await act(async () => socket.message(pose(1, 1, 0)));
+  const count = renders;
+  const ref = live.players.player02.quatRef!;
+  await act(async () => {
+    for (let i = 0; i < 50; i++) socket.message(pose(1, 0, 1));
+  });
+  expect(renders).toBe(count);
+  expect(ref.current).toEqual({ w: 0, x: 1, y: 0, z: 0 });
+  await act(async () => socket.message(pose(2, 1, 0)));
+  expect(ref.current?.x).toBe(1);
+  await act(async () => socket.message({ type: 'presence', players: [] }));
+  expect(ref.current).toBeNull();
+});
+
+it('cancels a queued pose when leaving the room and never leaks it to the next room', async () => {
+  vi.useFakeTimers();
+  await act(async () => root.render(h(Probe)));
+  const socket = Socket.instances[0];
+  await act(async () => socket.message({ type: 'ready', version: 1, gyro: true }));
+  socket.bufferedAmount = 100;
+  live.publishGyro({ w: 0, x: 1, y: 0, z: 0 });
+  await act(async () => root.render(h(Probe, { code: '5678' })));
+  const next = Socket.instances[1];
+  await act(async () => next.message({ type: 'ready', version: 1, gyro: true }));
+  vi.advanceTimersByTime(100);
+  expect(next.sent.filter(m => m.type === 'gyro').every(m => m.quaternion === null)).toBe(true);
 });

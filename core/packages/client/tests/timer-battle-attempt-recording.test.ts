@@ -36,7 +36,7 @@ const named = (name: string) => (node: ts.Node) => ts.isVariableDeclaration(node
 function localHarness() {
   const emptyTrack = () => ({ attempt: '', recorder: new SmartCubeAttemptProducer(), scramble: '', event: '333' });
   const state = {
-    cubeMode: 'shared', cubeHolder: 0, puzzleIds: ['333', '333'], scrambles: ['R U', 'F'],
+    cubeMode: 'shared', cubeHolder: 0, playerCount: 2, puzzleIds: ['333', '333'], scrambles: ['R U', 'F'],
     players: [0, 1].map(() => ({ isTiming: true, startTime: 1_000, time: 500, penalty: 0, canStart: true })),
     cubeStop: vi.fn(() => true), cubeStart: vi.fn(() => true),
   };
@@ -44,7 +44,7 @@ function localHarness() {
   const handlesRef = ref([{ status: { connected: true, brand: 'gan-v4', deviceName: 'Original' } }]);
   const appendSolves = vi.fn();
   const context: Record<string, unknown> = {
-    SmartCubeAttemptProducer, trackRef, handlesRef, emptyTrack,
+    SmartCubeAttemptProducer, trackRef, handlesRef, emptyTrack, optsRef: ref({}),
     useBattleStore: { getState: () => state },
     attemptKey: (owner: number, start: number) => `${owner}:${start}`,
     ownerOf: (slot: number, mode: string, holder: number) => mode === 'shared' ? holder : slot,

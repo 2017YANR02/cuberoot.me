@@ -13,7 +13,7 @@ const privateEnv = existsSync(envFile) ? parseEnv(readFileSync(envFile, 'utf8'))
 const origin = process.env.RECON_INTAKE_API_URL ?? privateEnv.RECON_INTAKE_API_URL ?? 'http://127.0.0.1:3011';
 const key = process.env.ADMIN_API_KEY ?? privateEnv.ADMIN_API_KEY;
 const [command = 'help', id] = process.argv.slice(2);
-const work = resolve(root, '.tmp/recon-intake');
+const work = resolve(root, '.local-data/recon-intake');
 const fixturePath = resolve(core, 'packages/client/tests/fixtures/recon-intake.json');
 const libraryPath = resolve(core, 'packages/client/tests/fixtures/recon-workbook/libraries.json');
 const sha = (data: string) => createHash('sha256').update(data).digest('hex');

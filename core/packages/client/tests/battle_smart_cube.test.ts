@@ -228,6 +228,19 @@ describe('一颗魔方轮流拧(shared)', () => {
 });
 
 describe('和按键那条路并存', () => {
+  it('同步观察后由魔方第一手带所有玩家起表', () => {
+    useBattleStore.setState({ syncStart: true, inspectionTime: 15 });
+    const store = useBattleStore.getState();
+    store.cubeArm(0);
+    store.playerDown(1);
+    vi.advanceTimersByTime(DELAY + 1);
+    store.playerUp(1);
+    expect(P(0).isInspecting).toBe(true);
+    expect(P(1).isInspecting).toBe(true);
+    expect(store.cubeStart(0, performance.now())).toBe(true);
+    expect(P(0).isTiming).toBe(true);
+    expect(P(1).isTiming).toBe(true);
+  });
   it('一个人用魔方、一个人用键盘,同一轮里各走各的', () => {
     // 0 号用魔方
     useBattleStore.getState().cubeArm(0);

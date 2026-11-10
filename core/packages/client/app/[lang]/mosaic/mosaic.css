@@ -339,3 +339,34 @@
     backdrop-filter: var(--glass-filter);
   }
 }
+
+
+.mosaic-topbar > .mosaic-topbar-left { min-width: 0; }
+.mosaic-title, .mosaic-subtitle, .mosaic-back { word-break: keep-all; }
+.mosaic-topbar .settings-popover { flex-shrink: 0; }
+@media (max-width: 480px) {
+  .mosaic-topbar { padding: 8px; gap: 8px; }
+  .mosaic-topbar-left { gap: 8px; }
+  .mosaic-title { font-size: 16px; }
+}
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 640px) {
+  .mosaic-page { padding: 8px; }
+  .mosaic-topbar { padding: 6px 10px; margin-bottom: 8px; }
+  .mosaic-main:has(> .mosaic-crop-controls) {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+  }
+  .mosaic-crop-controls { gap: 6px; padding: 8px; margin: 0; }
+  .mosaic-crop-controls :is(input, select, button) { min-height: 44px; }
+  .mosaic-crop-wrap {
+    min-width: 0;
+    height: calc(100dvh - 140px);
+    min-height: 160px;
+    max-height: none;
+    padding: 8px;
+  }
+  .mosaic-crop-wrap > img { max-height: 100%; }
+  .mosaic-cropper-note { grid-column: 2; margin: 0; }
+}

@@ -1,10 +1,13 @@
 'use client';
 import MoreToggle from '@/components/MoreToggle';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
+import { HelpCircle } from '@app-foundation/icons/lucide';
 import { useEffect, useState } from 'react';
 import { useT } from '@/hooks/useT';
 import { ClearButton } from '@/components/ClearButton';
 import { SearchInput } from '@/components/SearchInput';
-import { fetchChatMonitoring, reviewAssistantRequest, type ChatSummary, type ChatRecords, type ChatDetail, type ChatInsights } from '@/lib/admin-assistant-api';
+import { fetchChatMonitoring, reviewAssistantRequest, type ChatSummary, type ChatRecords, type ChatDetail, type ChatInsights, type ChatBilling } from '@/lib/admin-assistant-api';
+import { SkeletonBlock } from '@/components/ContentSkeleton';
 import { DashboardChart } from './Dashboard';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
@@ -16,6 +19,8 @@ const wrap = { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } as const;
 
 export default function AssistantMonitoring() {
   const t = useT();
+  const [billing, setBilling] = useState<ChatBilling | null>(null);
+  const [billingError, setBillingError] = useState(false);
   const [insights,setInsights]=useState<ChatInsights|null>(null),[poll,setPoll]=useState(0);
   const [feedback,setFeedback]=useState('all'),[conversation,setConversation]=useState<{id:string;user:string}|null>(null);
   const [reviewStatus,setReviewStatus]=useState('open'),[reviewNote,setReviewNote]=useState(''),[reviewBusy,setReviewBusy]=useState(false),[reviewError,setReviewError]=useState(false);
@@ -29,6 +34,14 @@ export default function AssistantMonitoring() {
   const labels: Record<string, string> = { all: t('全部状态', 'All states'), success: t('成功', 'Success'), error: t('失败', 'Failed'), cancelled: t('取消 / 断开', 'Cancelled / disconnected'), rejected: t('限流拒绝', 'Rate limited'), running: t('进行中', 'Running'), interrupted: t('异常中断', 'Interrupted') };
   const feedbackLabels: Record<string,string>={ helpful:t('有帮助','Helpful'),incorrect:t('回答有误','Incorrect'),irrelevant:t('未解决问题','Unresolved'),bad_source:t('资料不合适','Poor sources'),bad_link:t('入口不对','Wrong destination'),other:t('其他','Other') };
   const reviewLabels: Record<string,string>={open:t('待复核','Open'),confirmed:t('问题已确认','Confirmed'),resolved:t('已改进','Resolved'),dismissed:t('无需处理','Dismissed')};
+  useEffect(() => {
+    const controller = new AbortController();
+    setBillingError(false);
+    void fetchChatMonitoring<ChatBilling>('billing', { days }, controller.signal)
+      .then(value => { if (!controller.signal.aborted) setBilling(value); })
+      .catch(() => { if (!controller.signal.aborted) setBillingError(true); });
+    return () => controller.abort();
+  }, [days, refresh, poll]);
   useEffect(()=>{const timer=setInterval(()=>{if(document.visibilityState==='visible')setPoll(n=>n+1);},60000);return()=>clearInterval(timer);},[]);
   useEffect(()=>{const controller=new AbortController();void fetchChatMonitoring<ChatInsights>('insights',{days},controller.signal).then(v=>{if(!controller.signal.aborted)setInsights(v);}).catch(()=>{if(!controller.signal.aborted)setInsights(null);});return()=>controller.abort();},[days,refresh,poll]);
   useEffect(()=>{setReviewStatus(detail?.review_status??'open');setReviewNote(detail?.review_note??'');setReviewError(false);},[detail]);
@@ -59,26 +72,50 @@ export default function AssistantMonitoring() {
   const totals = summary?.totals;
   const settled = totals ? totals.success + totals.errors + totals.interrupted : 0;
   const rate = settled ? `${(totals!.success / settled * 100).toFixed(1)}%` : '—';
-  return <section className="admin-dashboard" id="chat-monitoring" aria-busy={loading}>
-    <div className="admin-dashboard__toolbar"><div><h2>{t('AI 聊天监控', 'AI chat monitoring')}</h2>
-      <p>{t('按北京时间统计已通过身份校验且模型已配置的请求。每次发送或重试单独计数；成功指请求完成，不代表答案正确。', 'Beijing calendar days; authenticated requests with a configured model. Sends and retries count separately. Success means completion, not answer correctness.')}</p></div>
+  return <section className="admin-dashboard admin-monitoring" id="chat-monitoring" aria-busy={loading}>
+    <div className="admin-dashboard__toolbar"><div><h2>{t('AI 聊天监控', 'AI chat monitoring')} <InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('统计口径', 'Metric definitions')} content={t('按北京时间统计已通过身份校验且模型已配置的请求。每次发送或重试单独计数；成功指请求完成，不代表答案正确。', 'Beijing calendar days; authenticated requests with a configured model. Sends and retries count separately. Success means completion, not answer correctness.')} /></h2></div>
       <label>{t('统计范围', 'Period')} <select className="admin-dashboard-select" value={days} onChange={e => { setDays(e.target.value); setSummary(null); setPage(1); setSelected(null); }}>{[7,30,90].map(n => <option key={n} value={n}>{t(`最近 ${n} 天`, `Last ${n} days`)}</option>)}</select></label>
-      <button type="button" className="admin-boot__refresh" disabled={loading} onClick={() => setRefresh(n => n + 1)}>{t('刷新聊天统计', 'Refresh chat metrics')}</button>
+      <button type="button" className="admin-boot__refresh" disabled={loading} onClick={() => setRefresh(n => n + 1)}>{t('刷新', 'Refresh')}</button>
     </div>
-    <p>{t('问答正文与复核备注保留 30 天，个人明细保留 90 天，无身份日汇总保留 2 年；账号注销删除个人记录。历史未记录的聊天无法补回。图片和思考原文不保存；常见密钥会尝试遮盖，正文仍可能包含个人信息。', 'Text and review notes: 30 days; individual records: 90 days; anonymous daily totals: 2 years. Account deletion removes individual records. Unrecorded history cannot be recovered. Images and reasoning text are excluded. Common credentials are redacted where recognized, but text may still contain personal information.')}</p>
     {summaryError && summary && <p role="alert">{t('汇总更新失败，当前显示上次成功读取的数据。','Summary refresh failed; showing the last successful snapshot.')}</p>}
-    {!summary && <p role="status">{t('统计尚未加载；若刷新后仍不可用，请检查监控接口是否已部署。', 'Metrics have not loaded. If refreshing does not help, check whether the monitoring API is deployed.')}</p>}
+    {!summary && !summaryError && <div className="admin-dashboard__metrics" aria-busy="true">{Array.from({length:4}, (_, i) => <div key={i} data-site-surface="panel"><SkeletonBlock style={{width:'50%',height:22}} /><strong><SkeletonBlock className="admin-dashboard__number-skeleton" /></strong></div>)}</div>}
+    {!summary && summaryError && <p role="status">{t('统计尚未加载；若刷新后仍不可用，请检查监控接口是否已部署。', 'Metrics have not loaded. If refreshing does not help, check whether the monitoring API is deployed.')}</p>}
     {!!summary?.health.failedWrites && <p role="alert" className="admin-dashboard__notice">{t(`当前进程发生 ${summary.health.failedWrites} 次记录写入故障；待重放 ${summary.health.pendingCompletions ?? 0} 条。请结合告警和累计故障检查恢复情况。`, `${summary.health.failedWrites} recording faults in this process; ${summary.health.pendingCompletions ?? 0} completions awaiting replay. Check alerts and durable failure totals.`)}</p>}
-    {summary?.state&&<p>{t('累计记录故障','Recorded write faults')}: {number(summary.state.failed_writes)} · {t('待补记','Awaiting replay')}: {summary.health.pendingCompletions??0}</p>}
     {summary?.state?.last_cleanup_at && Date.parse(summary.updatedAt)-Date.parse(summary.state.last_cleanup_at)>300000&&<p role="alert">{t('后台维护超过 5 分钟未更新，请检查告警。','Background maintenance is over 5 minutes stale. Check alerts.')}</p>}
     {summary && <>
       <div className="admin-dashboard__metrics">{[
         [t('提问请求', 'Requests'), number(totals?.requests)], [t('提问用户', 'Distinct users'), number(totals?.users)],
-        [t('完成成功率', 'Completion rate'), rate], [t('含图片请求', 'Requests with images'), number(totals?.images)],
-        [t('平均耗时', 'Average latency'), seconds(totals?.avg_ms)], [t('P50 耗时', 'P50 latency'), seconds(totals?.p50_ms)],
-        [t('P95 耗时', 'P95 latency'), seconds(totals?.p95_ms)], [t('首段回答', 'First answer text'), seconds(totals?.first_answer_ms)],
+        [t('完成成功率', 'Completion rate'), rate], [t('平均耗时', 'Average latency'), seconds(totals?.avg_ms)],
       ].map(([label, value]) => <div data-site-surface="panel" key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>
-      <p>{t('成功率不含取消、限流和进行中的请求。耗时分位数仅统计成功请求；首段回答仅统计实际发送正文的流式请求。', 'Completion rate excludes cancellations, rate limits and pending requests. Latency percentiles cover successful requests; first-answer latency covers streams that emitted answer text.')}</p>
+
+    </>}
+    {insights && <>
+      <div className="admin-dashboard__metrics admin-monitoring__quality">{[
+        [t('待复核差评', 'Negative ratings to review'), number(insights.feedback.filter(r => r.feedback !== 'helpful' && r.review_status === 'open').reduce((n, r) => n + r.requests, 0))],
+        [t('有帮助的评价', 'Helpful ratings'), number(insights.feedback.filter(r => r.feedback === 'helpful').reduce((n, r) => n + r.requests, 0))],
+
+      ].map(([label, value]) => <div data-site-surface="panel" key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>
+      <p className="admin-monitoring__health" role={insights.alerts.some(a => a.active) ? 'alert' : 'status'}>{!insights.alerts.length ? t('等待首次后台检查', 'Awaiting the first check') : insights.alerts.some(a => a.active) ? t('存在运行告警，请展开质量与运行诊断查看。', 'Active alerts. Open quality and diagnostics for details.') : t('当前无运行告警', 'No active alerts')}</p>
+    </>}
+    <section className="admin-monitoring__billing" aria-label={t('余额与费用', 'Balance and costs')}>
+      <div className="admin-monitoring__billing-row">
+        <span>{t('DeepSeek 余额', 'DeepSeek balance')} <InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('余额说明', 'About the balance')} content={<>
+          <p>{t('官方账号可用余额，包含充值余额与未过期赠金。覆盖该账号全部 API Key，不随上方天数切换；最多缓存 1 分钟。', 'Official account balance including top-ups and unexpired grants. Covers all API keys on the account, regardless of the selected period; cached for up to one minute.')}</p>
+          {billing?.balance.status === 'ok' && <>{billing.balance.balances.map(b => <p key={b.currency}>{b.currency} · {t('充值', 'Top-up')}: {b.topped_up_balance} · {t('赠金', 'Grant')}: {b.granted_balance}</p>)}<p>{t('更新于', 'Updated')} {timestamp(billing.balance.updatedAt)} (UTC+8)</p></>}
+        </>} /></span>
+        <strong>{billing?.balance.status === 'ok' ? billing.balance.balances.map(b => `${b.currency === 'CNY' ? '¥' : '$'}${b.total_balance}`).join(' + ') : billing?.balance.status === 'unconfigured' ? t('未配置', 'Not configured') : billingError || billing?.balance.status === 'unavailable' ? t('暂不可用', 'Unavailable') : <SkeletonBlock className="admin-dashboard__number-skeleton" />}</strong>
+      </div>
+      {billing?.balance.status === 'ok' && !billing.balance.isAvailable && <p role="alert">{t('DeepSeek 余额不足', 'Insufficient DeepSeek balance')}</p>}
+      <div className="admin-monitoring__billing-row"><span>{t('费用估算（元）', 'Estimated cost (CNY)')} <InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('费用估算说明', 'About cost estimates')} content={t('按所选北京时间范围汇总本站已记录调用，使用调用时保存的价格和实际 Token 用量，已计入缓存优惠。DeepSeek 显示低峰至高峰区间，不推断节假日折扣；百炼包含聊天、向量、重排序及搜索意图估算。缺少用量、缓存或价格的调用不按零费用处理，未计入金额。免费额度、赠金抵扣和最终扣费以供应商账单为准；不能用账号余额变化推算本站消费。', 'Aggregates recorded site calls in the selected Beijing calendar days using saved tariffs and actual token usage, including cache discounts. DeepSeek shows the off-peak to peak range without guessing holiday rates. Bailian includes chat, embeddings, reranking and estimated search intents. Calls missing usage, cache or pricing data are excluded, not treated as free. Free allowances, grants and actual charges follow provider bills. Account balance changes do not establish site spending.')} /></span><span>{billingError ? t('加载失败', 'Load failed') : !billing ? <SkeletonBlock className="admin-dashboard__number-skeleton" /> : billing.providers.length === 0 ? t('暂无记录', 'No records') : ''}</span></div>
+      {billing?.providers.map(p => <div className="admin-monitoring__billing-row" key={p.provider}>
+        <span>{({ deepseek: 'DeepSeek', bailian: t('阿里云百炼', 'Alibaba Bailian'), unknown: t('未识别供应商', 'Unknown provider') })[p.provider]}{p.unpricedCalls > 0 && <> · {t(`${p.unpricedCalls} 次未估价`, `${p.unpricedCalls} unpriced calls`)}</>}</span>
+        <strong>{p.pricedCalls === 0 ? '—' : p.minCny === p.maxCny ? p.maxCny.toFixed(4) : `${p.minCny.toFixed(4)}–${p.maxCny.toFixed(4)}`}</strong>
+      </div>)}
+    </section>
+    {summary && <>
+      <details className="admin-monitoring__disclosure admin-monitoring__trends"><MoreToggle as="summary">{t('趋势、耗时与模型用量', 'Trends, latency and model usage')}</MoreToggle>
+    {summary?.state && ((summary.state.failed_writes ?? 0) > 0 || (summary.health.pendingCompletions ?? 0) > 0) && <p>{t('累计记录故障','Recorded write faults')}: {number(summary.state.failed_writes)} · {t('待补记','Awaiting replay')}: {summary.health.pendingCompletions??0}</p>}
+      <p><InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('耗时与成功率口径', 'Latency and completion definitions')} content={t('成功率不含取消、限流和进行中的请求。耗时分位数仅统计成功请求；首段回答仅统计实际发送正文的流式请求。', 'Completion rate excludes cancellations, rate limits and pending requests. Latency percentiles cover successful requests; first-answer latency covers streams that emitted answer text.')} /> {t('含图片请求', 'Requests with images')}: {number(totals?.images)} · P50: {seconds(totals?.p50_ms)} · P95: {seconds(totals?.p95_ms)} · {t('首段回答', 'First answer text')}: {seconds(totals?.first_answer_ms)}</p>
       <div className="admin-dashboard__grid">
         <section className="admin-dashboard__panel" data-site-surface="panel"><h3>{t('每日提问与结果', 'Daily questions and outcomes')}</h3>
           {summary.daily.length ? <DashboardChart label={t('每日聊天请求', 'Daily chat requests')} labels={summary.daily.map(d => d.day)} series={[
@@ -87,38 +124,43 @@ export default function AssistantMonitoring() {
             { name: t('失败与中断', 'Failed or interrupted'), type: 'line', data: summary.daily.map(d => d.errors + d.interrupted) },
           ]} /> : <p>{t('所选范围暂无记录。', 'No records in this period.')}</p>}
         </section>
-        <section className="admin-dashboard__panel" data-site-surface="panel"><h3>{t('错误与调用工具', 'Errors and tools')}</h3>
-          <p>{statuses.map(key => `${labels[key]}: ${number(totals?.[key === 'error' ? 'errors' : key])}`).join(' · ')}</p>
-          {summary.errors.map(row => <p key={row.error_code}>{row.error_code}: {row.requests}</p>)}
-          {summary.tools.map(row => <p key={row.tool}>{row.tool}: {row.calls}</p>)}
+        <section className="admin-dashboard__panel admin-monitoring__outcomes" data-site-surface="panel">
+          <h3>{t('请求状态', 'Request status')}</h3>
+          <dl className="admin-monitoring__status-grid">{statuses.map(key => <div key={key}><dt>{labels[key]}</dt><dd>{number(totals?.[key === 'error' ? 'errors' : key])}</dd></div>)}</dl>
+          <details className="admin-monitoring__breakdown"><MoreToggle as="summary">{t('错误分类', 'Error breakdown')}</MoreToggle>
+            {summary.errors.length ? <dl className="admin-monitoring__count-list">{summary.errors.map(row => <div key={row.error_code}><dt>{row.error_code}</dt><dd>{number(row.requests)}</dd></div>)}</dl> : <p>{t('暂无错误。', 'No errors.')}</p>}
+          </details>
+          <details className="admin-monitoring__breakdown"><MoreToggle as="summary">{t('工具调用', 'Tool calls')}</MoreToggle>
+            {summary.tools.length ? <dl className="admin-monitoring__count-list">{summary.tools.map(row => <div key={row.tool}><dt>{row.tool}</dt><dd>{number(row.calls)}</dd></div>)}</dl> : <p>{t('暂无工具调用。', 'No tool calls.')}</p>}
+          </details>
         </section>
       </div>
       <details className="admin-dashboard__table"><MoreToggle as="summary">{t('每日用户、状态与耗时明细', 'Daily users, outcomes and latency')}</MoreToggle><div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><thead><tr>{[t('日期', 'Date'),t('请求', 'Requests'),t('用户', 'Users'),...statuses.map(s => labels[s]),t('平均耗时', 'Average latency'),t('P95 耗时', 'P95 latency')].map(label => <th key={label}>{label}</th>)}</tr></thead><tbody>{summary.daily.map(day => <tr key={day.day}><th>{day.day}</th><td>{day.requests}</td><td>{day.users}</td>{statuses.map(s => <td key={s}>{day[s === 'error' ? 'errors' : s]}</td>)}<td>{seconds(day.avg_ms)}</td><td>{seconds(day.p95_ms)}</td></tr>)}</tbody></table></div></details>
-      <h3>{t('模型用量', 'Model usage')}</h3><p>{t('包含同一问题的多轮和修复调用。缺失用量不是零；缓存与思考 tokens 是输入或输出的子集，不重复相加。向量区分在线查询和离线建库；实际费用以服务商账单为准。', 'Includes multiple rounds and repair calls. Missing usage is not zero. Cache/reasoning tokens are subsets, not additional totals. Embeddings distinguish online queries from offline indexing. Provider billing is authoritative.')}</p>
+      <h3>{t('模型用量', 'Model usage')}</h3><div className="admin-monitoring__help"><InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('说明', 'Details')} content={<>{t('包含同一问题的多轮和修复调用。缺失用量不是零；缓存与思考 tokens 是输入或输出的子集，不重复相加。向量区分在线查询和离线建库；实际费用以服务商账单为准。', 'Includes multiple rounds and repair calls. Missing usage is not zero. Cache/reasoning tokens are subsets, not additional totals. Embeddings distinguish online queries from offline indexing. Provider billing is authoritative.')}</>} /></div>
       <div className="admin-dashboard__table"><div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><thead><tr>{[t('模型', 'Model'),t('类型', 'Kind'),t('调用', 'Calls'),t('思考调用', 'Thinking calls'),t('输入', 'Input'),t('输出', 'Output'),t('缓存命中', 'Cache read'),t('思考', 'Reasoning'),t('用量缺失', 'Missing usage')].map(v => <th key={v}>{v}</th>)}</tr></thead><tbody>{summary.models.map(m => <tr key={m.kind + m.model}><th>{m.model}</th><td>{({chat:t('聊天','Chat'),embedding:t('查询向量','Query embeddings'),embedding_index:t('建库向量','Index embeddings'),rerank:t('重排序','Reranking')} as Record<string,string>)[m.kind]??m.kind}</td><td>{m.calls}</td><td>{m.thinking_calls}</td><td>{number(m.input_tokens)}</td><td>{number(m.output_tokens)}</td><td>{number(m.cached_tokens)}</td><td>{number(m.reasoning_tokens)}</td><td>{m.missing_usage}</td></tr>)}</tbody></table></div></div>
       <p>{summary.state && <>{t('开始记录', 'Recording since')} {timestamp(summary.state.enabled_at)} · {t('最近清理', 'Last cleanup')} {summary.state.last_cleanup_at ? timestamp(summary.state.last_cleanup_at) : '—'} · </>}{t('更新时间', 'Updated')} {timestamp(summary.updatedAt)} (UTC+8)</p>
+      </details>
     </>}
-    <h3>{t('质量、检索与运行状况','Quality, retrieval and operations')}</h3>
+    <details className="admin-monitoring__disclosure admin-monitoring__diagnostics"><MoreToggle as="summary">{t('质量与运行诊断', 'Quality and diagnostics')}</MoreToggle>
     {!insights ? <p role="status">{t('诊断统计暂不可用，请刷新。','Diagnostics are unavailable. Please refresh.')}</p> : <>
-      <p>{t('页面可见时每分钟自动更新汇总。入口拒绝单独计数，不保存未通过校验的正文；网页在发请求前拦截的输入不计入服务端统计。','Summaries refresh every minute while visible. Pre-admission failures are counted without content; browser-side rejections never sent to the API are excluded.')}</p>
+      <div className="admin-monitoring__help"><InfoTooltip icon={HelpCircle} iconSize={15} ariaLabel={t('诊断统计说明', 'About diagnostics')} content={t('页面可见时每分钟自动更新汇总。入口拒绝单独计数，不保存未通过校验的正文；网页在发请求前拦截的输入不计入服务端统计。','Summaries refresh every minute while visible. Pre-admission failures are counted without content; browser-side rejections never sent to the API are excluded.')} /></div>
       <div className="admin-dashboard__metrics">{[
         [t('收到评价','Ratings'),number(insights.feedback.reduce((n,r)=>n+r.requests,0))],
         [t('有帮助','Helpful'),number(insights.feedback.filter(r=>r.feedback==='helpful').reduce((n,r)=>n+r.requests,0))],
         [t('待复核差评','Negative ratings to review'),number(insights.feedback.filter(r=>r.feedback!=='helpful'&&r.review_status==='open').reduce((n,r)=>n+r.requests,0))],
         [t('打开推荐页面的回答','Answers with destination clicks'),number(insights.cost.clicked)],
-        [t('已知用量估算（元）','Priced usage estimate (CNY)'),insights.cost.gross_cny.toFixed(4)],
+        [t('优惠前估算（元）','Estimate before discounts (CNY)'),insights.cost.gross_cny.toFixed(4)],
         [t('无法估价的调用','Unpriced calls'),number(insights.cost.unpriced_calls)],
       ].map(([label,value])=><div key={label} data-site-surface="panel"><span>{label}</span><strong>{value}</strong></div>)}</div>
-      <p>{t('评价来自主动反馈，不能代表所有用户。页面点击不等于训练完成。费用含聊天、在线/离线向量及联网搜索，按调用时保存的价目版本估算；搜索按供应商返回的意图次数估计，不等于账单计费次数。DeepSeek 使用高峰标价，未扣低谷优惠、免费额度或缓存折扣；未知模型或用量缺失不会算作零费用。','Ratings are voluntary and do not represent all users. A click does not prove training completion. Estimates include chat, online/offline embeddings and web search using saved price snapshots. Search uses reported intent counts, which are not billed request counts. DeepSeek uses peak rates before off-peak, free-tier or cache discounts. Unknown models or missing usage remain unpriced.')}
-        {' '}<a href="https://help.aliyun.com/zh/model-studio/model-pricing" target="_blank" rel="noreferrer">{t('百炼官方价格','Official Bailian pricing')}</a>{' · '}<a href="https://api-docs.deepseek.com/zh-cn/quick_start/pricing/" target="_blank" rel="noreferrer">{t('DeepSeek 官方价格','Official DeepSeek pricing')}</a></p>
+
       <div className="admin-dashboard__grid"><section className="admin-dashboard__panel" data-site-surface="panel"><h4>{t('告警与恢复','Alerts and recovery')}</h4>
         {insights.alerts.length===0&&<p>{t('等待首次后台检查。','Awaiting the first background check.')}</p>}
         {insights.alerts.map(a=><p key={a.code} role={a.active?'alert':undefined}>{a.active?t('异常','Alert'):t('正常','Normal')} · {({error_rate:t('错误率','Error rate'),latency:t('回答耗时','Latency'),recording:t('记录写入','Recording'),cost:t('日费用提醒','Daily cost threshold'),unpriced:t('费用覆盖不完整','Incomplete pricing')} as Record<string,string>)[a.code]??a.code} · {timestamp(a.checked_at)}<br/><small style={wrap}>{Object.entries(a.details as Record<string,number|null>).map(([key,value])=>{const labels:Record<string,string>={p95:t('P95 耗时','P95 latency'),thresholdMs:t('耗时阈值','Latency threshold'),grossCny:t('已知用量费用（元）','Priced usage (CNY)'),thresholdCny:t('日提醒阈值（元）','Daily alert threshold (CNY)'),requests:t('请求数','Requests'),pending:t('待补记','Awaiting replay'),errors:t('失败数','Failures'),threshold:t('失败率阈值','Error-rate threshold')};return (labels[key]??key)+': '+(key==='p95'||key==='thresholdMs'?seconds(value):key==='threshold'?String(Number(value)*100)+'%':number(value));}).join(' · ')}</small></p>)}
-        <p>{t('每分钟检查；15 分钟内至少 10 次完成请求，失败率达到 20% 或 P95 超过 30 秒时告警。写入异常和费用阈值另行监测，恢复也通知；复用管理员站内通知及已启用的邮件通知。','Checks run each minute. At least 10 settled requests in 15 minutes trigger alerts at 20% failures or P95 above 30 seconds. Recording and cost have separate checks. Alerts and recovery use admin site notifications and enabled email notifications.')}</p>
+        <div className="admin-monitoring__help"><InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('说明', 'Details')} content={<>{t('每分钟检查；15 分钟内至少 10 次完成请求，失败率达到 20% 或 P95 超过 30 秒时告警。写入异常和费用阈值另行监测，恢复也通知；复用管理员站内通知及已启用的邮件通知。','Checks run each minute. At least 10 settled requests in 15 minutes trigger alerts at 20% failures or P95 above 30 seconds. Recording and cost have separate checks. Alerts and recovery use admin site notifications and enabled email notifications.')}</>} /></div>
       </section><section className="admin-dashboard__panel" data-site-surface="panel"><h4>{t('检索与入口失败','Retrieval and admission failures')}</h4>
         {insights.retrievals.map((r,i)=><p key={i}>{({hybrid:t('混合检索','Hybrid'),database_lexical:t('数据库关键词','Database keywords'),local_lexical:t('本地关键词','Local keywords'),fallback:t('降级','Fallback'),web:t('联网搜索','Web search'),web_unavailable:t('联网未取得证据','No usable web evidence')} as Record<string,string>)[r.mode]??r.mode} · {({disabled_or_unconfigured:t('未启用向量检索','Vector search unavailable'),index_mismatch:t('索引版本不匹配','Index mismatch'),embedding_unavailable:t('向量服务不可用','Embedding unavailable'),retrieval_unavailable:t('检索服务不可用','Retrieval unavailable'),corpus_unavailable:t('资料索引不可用','Corpus unavailable'),not_configured:t('未配置联网服务','Web search not configured'),public_query_required:t('查询包含敏感信息','Query contains sensitive information'),provider_access:t('搜索服务权限不足','Search access denied'),provider_unavailable:t('搜索服务不可用','Search provider unavailable'),incomplete_response:t('搜索响应不完整','Incomplete search response'),no_relevant_evidence:t('未找到相关证据','No relevant evidence'),invalid_search_summary:t('搜索摘要格式异常','Invalid search summary'),missing_citations:t('搜索结果缺少引用','Missing search citations'),missing_search_sources:t('搜索结果缺少来源','Missing search sources'),insufficient_cited_evidence:t('有效引用不足','Insufficient cited evidence'),timeout:t('搜索超时','Search timed out')} as Record<string,string>)[r.reason??'']??r.reason??'—'} · {t('调用','Calls')} {r.calls} · {t('无结果','Empty')} {r.empty}</p>)}
         {!insights.retrievals.length&&<p>{t('尚无资料检索调用。','No knowledge retrieval calls yet.')}</p>}
-        <p>{t('混合检索、降级和最终本地检索分步记录；无检索不等于失败，直接查询成绩或打开工具无需 RAG。召回命中不代表资料一定相关。','Hybrid retrieval and fallbacks are recorded separately. Direct data/tool questions may need no RAG. A retrieval hit does not prove relevance.')}</p>
+        <div className="admin-monitoring__help"><InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('说明', 'Details')} content={<>{t('混合检索、降级和最终本地检索分步记录；无检索不等于失败，直接查询成绩或打开工具无需 RAG。召回命中不代表资料一定相关。','Hybrid retrieval and fallbacks are recorded separately. Direct data/tool questions may need no RAG. A retrieval hit does not prove relevance.')}</>} /></div>
         {insights.entries.map(r=><p key={r.code}>{r.code}: {r.requests}</p>)}
       </section></div>
       <details><MoreToggle as="summary">{t('长期日汇总与下载','Long-term daily totals and download')}</MoreToggle><p>{t('保留 2 年，不含问题、回答和用户标识。每日用户数不能相加当作跨日独立用户数。','Retained for 2 years without text or user identifiers. Daily distinct users are not additive across days.')}</p>
@@ -127,14 +169,16 @@ export default function AssistantMonitoring() {
       </details>
       <details><MoreToggle as="summary">{t('最近管理员访问与复核审计','Recent admin access and review audit')}</MoreToggle>{insights.audit.map((a,i)=><p key={i} style={wrap}>{timestamp(a.at)} · {a.actor} · {a.action} · {a.record_id??'—'}</p>)}</details>
     </>}
-    <h3>{t('逐条问答', 'Questions and answers')}</h3>
+    </details>
+    <details className="admin-monitoring__disclosure"><MoreToggle as="summary">{t('逐条问答与复核', 'Questions and reviews')}</MoreToggle>
+    <p><InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('记录保留与隐私', 'Retention and privacy')} content={t('问答正文与复核备注保留 30 天，个人明细保留 90 天，无身份日汇总保留 2 年；账号注销删除个人记录。历史未记录的聊天无法补回。图片和思考原文不保存；常见密钥会尝试遮盖，正文仍可能包含个人信息。', 'Text and review notes: 30 days; individual records: 90 days; anonymous daily totals: 2 years. Account deletion removes individual records. Unrecorded history cannot be recovered. Images and reasoning text are excluded. Common credentials are redacted where recognized, but text may still contain personal information.')} /></p>
     <div className="admin-dashboard__toolbar">
       <SearchInput value={q} debounceMs={300} onChange={value => { setQ(value); setPage(1); setSelected(null); }} placeholder={t('搜索最近 30 天的问题或回答', 'Search questions or answers from the last 30 days')} ariaLabel={t('搜索问答', 'Search chats')} maxLength={100} />
       <label>{t('质量筛选','Quality')} <select className="admin-dashboard-select" value={feedback} onChange={e=>{setFeedback(e.target.value);setPage(1);setSelected(null);}}>{[['all',t('全部评价','All ratings')],['negative',t('没帮助','Not helpful')],['helpful',t('有帮助','Helpful')],['unreviewed',t('待复核差评','Negative ratings to review')]].map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
       {conversation&&<p>{t('正在查看同一用户的完整会话','Viewing this user’s conversation')} <button type="button" className="admin-boot__refresh" onClick={()=>{setConversation(null);setPage(1);}}>{t('清除会话筛选','Clear conversation filter')}</button></p>}
       <label>{t('状态', 'Status')} <select className="admin-dashboard-select" value={status} onChange={e => { setStatus(e.target.value); setPage(1); setSelected(null); }}>{['all', ...statuses].map(s => <option key={s} value={s}>{labels[s]}</option>)}</select></label>
     </div>
-    <p>{t('搜索和状态筛选只影响明细，上方统计始终覆盖所选天数。', 'Search and status filters affect the list only; summary metrics cover the full selected period.')}</p>
+    <div className="admin-monitoring__help"><InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={t('说明', 'Details')} content={<>{t('搜索和状态筛选只影响明细，上方统计始终覆盖所选天数。', 'Search and status filters affect the list only; summary metrics cover the full selected period.')}</>} /></div>
     {error && <p role="alert">{t('明细加载失败，请刷新重试。', 'Could not load records. Refresh to retry.')}</p>}
     {records && <><div className="admin-dashboard__table"><div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><thead><tr>{[t('时间 (UTC+8)', 'Time (UTC+8)'),t('用户', 'User'),t('问题', 'Question'),t('状态', 'Status'),t('耗时', 'Latency')].map(v => <th key={v}>{v}</th>)}</tr></thead><tbody>{records.rows.map(row => <tr key={row.id}><th>{timestamp(row.started_at)}</th><td>{row.user_id ?? '—'}</td><td><button type="button" className="admin-boot__refresh" onClick={() => setSelected(row.id)}>{row.question || t('图片提问 / 正文已过期', 'Image question / expired text')}</button></td><td>{labels[row.status]}</td><td>{seconds(row.duration_ms)}</td></tr>)}</tbody></table></div></div>
       <div className="admin-dashboard__toolbar"><p>{t(`共 ${records.total} 条，第 ${page} 页`, `${records.total} records, page ${page}`)}</p><button type="button" className="admin-boot__refresh" disabled={page === 1 || loading} onClick={() => { setPage(n => n - 1); setSelected(null); }}>{t('上一页', 'Previous')}</button><button type="button" className="admin-boot__refresh" disabled={page * records.pageSize >= records.total || loading} onClick={() => { setPage(n => n + 1); setSelected(null); }}>{t('下一页', 'Next')}</button></div></>}
@@ -161,5 +205,6 @@ export default function AssistantMonitoring() {
         <details><MoreToggle as="summary">{t('查看详细用量记录', 'Detailed usage records')}</MoreToggle><pre style={wrap}>{JSON.stringify(detail.metrics, null, 2)}</pre></details>
       </>}
     </section>}
+    </details>
   </section>;
 }

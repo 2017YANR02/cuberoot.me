@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
+import { SettingsPopover } from '@/components/TrainingSettings';
 import { HelpCircle } from '@app-foundation/icons/lucide';
 import { useTranslation } from 'react-i18next';
 import { useMosaicStore } from './_components/state/store';
@@ -53,7 +54,7 @@ export default function MosaicPage() {
   const backAction: { label: string; fn: () => void } | null = (() => {
     if (stage === 'upload') return null;
     if (stage === 'palette') return { label: t('mosaic.topbar.done'), fn: closePalette };
-    if (stage === 'crop') return { label: t('mosaic.topbar.newMosaic'), fn: resetAll };
+    if (stage === 'crop') return null;
     if (stage === 'choose-method') return { label: t('mosaic.topbar.backCrop'), fn: () => goToStage('crop') };
     if (stage === 'choose-variant') return { label: t('mosaic.topbar.backMethod'), fn: () => goToStage('choose-method') };
     if (stage === 'adjust') return { label: t('mosaic.topbar.backVariant'), fn: () => goToStage('choose-variant') };
@@ -85,14 +86,12 @@ export default function MosaicPage() {
             <p className="mosaic-subtitle">{t(STAGE_TITLE_KEY[stage])}</p>
           </div>
         </div>
-        <div className="mosaic-topbar-left">
-          {stage !== 'palette' && stage !== 'upload' && (
-            <button className="mosaic-btn" onClick={openPalette}>🎨 {t('mosaic.topbar.palette')}</button>
-          )}
-          {(stage === 'choose-method' || stage === 'choose-variant' || stage === 'adjust') && (
-            <button className="mosaic-btn" onClick={resetAll}>＋ {t('mosaic.topbar.newMosaic')}</button>
-          )}
-        </div>
+        {stage !== 'upload' && stage !== 'palette' && (
+          <SettingsPopover label={tr({ zh: '马赛克工具', en: 'Mosaic tools' })}>
+            <button className="mosaic-btn" onClick={openPalette}>{t('mosaic.topbar.palette')}</button>
+            <button className="mosaic-btn" onClick={resetAll}>{t('mosaic.topbar.newMosaic')}</button>
+          </SettingsPopover>
+        )}
       </div>
 
       <div className="mosaic-main">

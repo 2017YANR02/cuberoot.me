@@ -13,6 +13,8 @@ const brands = [
   { aliases: ['gan', 'gancube'], src: '/images/brands/gan-color.svg', circle: false },
   { aliases: ['魔域', '魔域文化', 'moyu'], src: '/images/brands/moyu-color.png', circle: false },
   { aliases: ['奇艺', '奇艺魔方', '奇艺魔方格', 'qiyi'], src: '/images/brands/qiyi-color.png', circle: true },
+  { aliases: ['永骏', '永骏魔方', 'yj', 'yongjun'], src: '/images/brands/yj.png', circle: false, width: '2.4em' },
+  { aliases: ['点盛', '点盛魔方', 'diansheng', 'dian sheng'], src: '/images/brands/diansheng.png', circle: false },
 ];
 
 export function CubingBrandLabel({ name, logoOnly = false, fallbackToName = false }: { name: string; logoOnly?: boolean; fallbackToName?: boolean }) {

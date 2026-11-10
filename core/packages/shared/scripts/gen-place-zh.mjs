@@ -3,7 +3,7 @@
 // 来源 = GeoNames alternateNames(zh,OpenCC t2s 转简)按比赛坐标反查城市 + LLM 兜底无 exonym 的长尾。
 //
 // 重新生成(两步,都在 core/packages/shared 下跑,为 opencc-js 解析):
-//   1. 下载 GeoNames 输入到 D:/cube/cuberoot.me/.tmp/geonames/(仓库外,gitignored):
+//   1. 下载 GeoNames 输入到 D:/cube/cuberoot.me/.local-data/geonames/(仓库外,gitignored):
 //        curl -O https://download.geonames.org/export/dump/cities500.zip      && unzip cities500.zip
 //        curl -O https://download.geonames.org/export/dump/admin1CodesASCII.txt
 //        curl -O https://download.geonames.org/export/dump/alternateNamesV2.zip
@@ -19,7 +19,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as OpenCC from 'opencc-js';
 
-const GN = 'D:/cube/cuberoot.me/.tmp/geonames';
+const GN = 'D:/cube/cuberoot.me/.local-data/geonames';
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(SCRIPT_DIR, '../../../..');
 const t2s = OpenCC.Converter({ from: 't', to: 'cn' });

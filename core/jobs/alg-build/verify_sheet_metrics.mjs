@@ -20,7 +20,7 @@ import { stm, sqtm, gen, deleteAuf } from '@cuberoot/shared/alg-notation';
 import { parseAlgCell } from './sheet_notation.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '../../..');
-const rows = JSON.parse(fs.readFileSync(path.join(ROOT, '.tmp/phase0/sheet_1lll.json'), 'utf8'));
+const rows = JSON.parse(fs.readFileSync(path.join(ROOT, '.local-data/phase0/sheet_1lll.json'), 'utf8'));
 
 /** 表的 SH/SQ 只看**首条**公式。首条 = `Self alg` 的第一行的第一段(行中 `=` 之前)。 */
 const firstAlg = (row) => parseAlgCell(String(row['Self alg'] ?? '').split('\n')[0])[0] ?? null;
@@ -70,6 +70,6 @@ for (const k of Object.keys(buckets)) {
   }
 }
 
-fs.mkdirSync(path.join(ROOT, '.tmp/phase1'), { recursive: true });
-fs.writeFileSync(path.join(ROOT, '.tmp/phase1/metric_diffs.json'), JSON.stringify(buckets, null, 2));
-console.log('\n→ .tmp/phase1/metric_diffs.json');
+fs.mkdirSync(path.join(ROOT, '.local-data/phase1'), { recursive: true });
+fs.writeFileSync(path.join(ROOT, '.local-data/phase1/metric_diffs.json'), JSON.stringify(buckets, null, 2));
+console.log('\n→ .local-data/phase1/metric_diffs.json');

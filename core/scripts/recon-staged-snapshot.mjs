@@ -40,7 +40,7 @@ export function verifyStagedSnapshot({ repoRoot, verify }) {
     });
     if (listed.status !== 0) return listed.status ?? 2;
     const paths = listed.stdout.split('\0').filter(path => path && (!path.includes('/')
-      || ['core/', 'docs/', '.codex/', '.githooks/'].some(prefix => path.startsWith(prefix))));
+      || ['core/', 'docs/', 'scripts/', '.codex/', '.githooks/'].some(prefix => path.startsWith(prefix))));
     const exported = spawnSync('git', ['checkout-index', '--stdin', '-z', `--prefix=${snapshot.replaceAll('\\', '/')}/`], {
       cwd: repoRoot, env: exportEnv, input: `${paths.join('\0')}\0`, stdio: ['pipe', 'inherit', 'inherit'], windowsHide: true,
     });

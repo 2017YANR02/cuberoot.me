@@ -44,7 +44,7 @@ RSS 来自每批 `/usr/bin/time -l`，覆盖各进程启动与求解，单位 by
 
 原 C 对照从未修改的固定 nissy-core 源码以 `H48_ORIGINAL`、`-O3`、NEON、单线程编译，未应用历史实验的确定性 rank 补丁。Rust 的 H10 根对称消重尚未启用，仍完整枚举分支；复用 Opt 搜索组织，并保留 Nissy 的角投影早剪、主表与 EOESEP fallback。因此这次是两套具体实现的同表对照，不是逐节点等同的语言微基准。
 
-证据目录为 `.tmp/cubeopt-reverse/h10-benchmark-full60/`：`input.json`、`report.json`、`results.jsonl`、每批原始输出/启动/退出记录、程序和源码副本均保留。Rust 程序 SHA-256 为 `e8b2c919087006bdcd51b76f7bdbe13a294b538c2a69058d4593fa107099d8a0`；C 程序为 `46d201e856901a1b6ebe06ceec51b438620ff27530343c7b3bd569fec14ee501`，构建输入记录在 `../h10-build/build.json`。H10 表进行了完整分布校验和元数据一致性检查，没有重新计算整张 30 GB 表的 SHA-256。旧版源码、程序和表均保留，备份位置见主跟踪 MD。
+证据目录为 `.local-data/cubeopt-reverse/h10-benchmark-full60/`：`input.json`、`report.json`、`results.jsonl`、每批原始输出/启动/退出记录、程序和源码副本均保留。Rust 程序 SHA-256 为 `e8b2c919087006bdcd51b76f7bdbe13a294b538c2a69058d4593fa107099d8a0`；C 程序为 `46d201e856901a1b6ebe06ceec51b438620ff27530343c7b3bd569fec14ee501`，构建输入记录在 `../h10-build/build.json`。H10 表进行了完整分布校验和元数据一致性检查，没有重新计算整张 30 GB 表的 SHA-256。旧版源码、程序和表均保留，备份位置见主跟踪 MD。
 
 本次结论仅覆盖该 Mac、固定 60 例、上述协议。它与下文 Opt9/WASM 的 1.165× 是不同的表和比较对象，不能据此声称全状态空间都快、全球最快、3 倍提升或数学上的搜索量突破。
 
@@ -82,7 +82,7 @@ Opt1–8 的 `input.json.cases` 逐字节一致，均为 **18 个有界样本**�
 
 每档 **18 × 2 × 4 = 144 个解**在运行时通过独立 cubing.js 回放和解长检查，其中 36 个属于预热、108 个属于正式测量；Opt1–8 合计 **1,152 个已验证解**，正式测量 864 个。本次汇总另核对了原始结果的数量、验证标记，并从 `results.jsonl` 重新相加三轮总时间，与各报告中位数逐项一致，没有重新求解。
 
-另对 Opt1–8 的 576 条原生输出按 144 个档位/样本分组，进行 432 次跨轮严格比较：仅排除 `seconds`，解、步数、节点、所有计数、`completed_depth` 和取消标记等全部字段相等。覆盖与差异错误均为 0，证据为 `.tmp/cubeopt-reverse/generic-native-repeatability.json`；尚不包含独立协议的 Opt9。
+另对 Opt1–8 的 576 条原生输出按 144 个档位/样本分组，进行 432 次跨轮严格比较：仅排除 `seconds`，解、步数、节点、所有计数、`completed_depth` 和取消标记等全部字段相等。覆盖与差异错误均为 0，证据为 `.local-data/cubeopt-reverse/generic-native-repeatability.json`；尚不包含独立协议的 Opt9。
 
 ## 原生 RSS 的独立测量
 
@@ -104,25 +104,25 @@ RSS 汇总时观察到的当前原生程序也是该摘要，但单次 RSS stdou
 
 | 证据 | 路径 |
 | --- | --- |
-| Opt1–8 逐档输入与摘要 | `.tmp/cubeopt-reverse/benchmark-generic-optN/input.json`，N=1..8 |
-| 本表主指标来源 | `.tmp/cubeopt-reverse/benchmark-generic-optN/report.json` |
-| 每例/每轮时间、解、先后、预热标记 | `.tmp/cubeopt-reverse/benchmark-generic-optN/results.jsonl` |
+| Opt1–8 逐档输入与摘要 | `.local-data/cubeopt-reverse/benchmark-generic-optN/input.json`，N=1..8 |
+| 本表主指标来源 | `.local-data/cubeopt-reverse/benchmark-generic-optN/report.json` |
+| 每例/每轮时间、解、先后、预热标记 | `.local-data/cubeopt-reverse/benchmark-generic-optN/results.jsonl` |
 | 原生与 WASM 原始输出 | 同目录 `native-raw.jsonl`、`wasm-raw.jsonl`、`native-stderr.log` |
 | 实际程序与源码快照 | 同目录 `native-binary`、`source/`，包括固定上游 `.wasm/.mjs` |
 | 固定输入原件与表来源 | 同目录 `cases-source.json`、`table-manifest.json`、`small-manifest.json` |
-| 基准保护观测 | `.tmp/cubeopt-reverse/benchmark-generic-optN-resources.json` |
-| Opt9 完整语料输入、时间和报告 | `.tmp/cubeopt-reverse/benchmark-opt9-full60/{input.json,results.jsonl,report.json}` |
+| 基准保护观测 | `.local-data/cubeopt-reverse/benchmark-generic-optN-resources.json` |
+| Opt9 完整语料输入、时间和报告 | `.local-data/cubeopt-reverse/benchmark-opt9-full60/{input.json,results.jsonl,report.json}` |
 | Opt9 各进程启动、原始输出及退出记录 | 同目录 `round-R-P/S/{startup.json,raw.jsonl,complete.json}`，R=0..3，P=warmup/measure，S=native/wasm |
-| Opt9 保护观测与独立复核 | `.tmp/cubeopt-reverse/benchmark-opt9-full60-resources.json`、`opt9-native-repeatability.json` |
-| 九档 RSS 及 18 解独立复核 | `.tmp/cubeopt-reverse/native-rss-report.json` |
-| RSS 两例原始输入与来源/hash | `.tmp/cubeopt-reverse/native-rss-cases.tsv`、`native-rss-cases.json` |
-| RSS 原生输出、系统测量、保护观测 | `.tmp/cubeopt-reverse/optN-native-rss.jsonl`、`optN-native-rss.stderr.log`、`optN-native-rss-resources.json`，N=1..9 |
+| Opt9 保护观测与独立复核 | `.local-data/cubeopt-reverse/benchmark-opt9-full60-resources.json`、`opt9-native-repeatability.json` |
+| 九档 RSS 及 18 解独立复核 | `.local-data/cubeopt-reverse/native-rss-report.json` |
+| RSS 两例原始输入与来源/hash | `.local-data/cubeopt-reverse/native-rss-cases.tsv`、`native-rss-cases.json` |
+| RSS 原生输出、系统测量、保护观测 | `.local-data/cubeopt-reverse/optN-native-rss.jsonl`、`optN-native-rss.stderr.log`、`optN-native-rss-resources.json`，N=1..9 |
 
 原始历史输入为 `solver/testdata/benchmarks/h48-h10-2026-10-04.json`，SHA-256：`1cd84b7074eb8633bbd2ff1db07ac9de11dcd1cb11a8eb1d55ef06eef97ab5d5`。RSS 报告还记录各输入、输出、stderr、资源记录和表 manifest 的独立摘要。
 
 ## Opt9 完整 60 例：已完成的独立基准
 
-目录为 `.tmp/cubeopt-reverse/benchmark-opt9-full60/`。它保留历史语料原顺序的全部 60 条完整状态：HTM 15/16/17/18/19 步分别为 **1/1/14/39/5 例**，没有按运行速度筛选。采用一次只驻留一份表的 `--sequential` 协议：每轮每路新进程，先做独立启动检查和一遍完整语料预热，再运行该批；整批引擎顺序跨轮交替。首轮整批也排除，只汇总之后三轮。这组完整样本与上方 18 例持久双引擎数据不是同一基准。
+目录为 `.local-data/cubeopt-reverse/benchmark-opt9-full60/`。它保留历史语料原顺序的全部 60 条完整状态：HTM 15/16/17/18/19 步分别为 **1/1/14/39/5 例**，没有按运行速度筛选。采用一次只驻留一份表的 `--sequential` 协议：每轮每路新进程，先做独立启动检查和一遍完整语料预热，再运行该批；整批引擎顺序跨轮交替。首轮整批也排除，只汇总之后三轮。这组完整样本与上方 18 例持久双引擎数据不是同一基准。
 
 实际完成 **960 条验解结果、8 条 startup 记录及 8 条进程正常退出记录**：480 条进程内预热、120 条全局首轮预热均排除，只有 360 条 `measure` 进入正式统计。启动记录吸收表加载时间，未计入搜索结果。原生 8 contexts 与 WASM 内部 8 contexts 均由一个 OS 求解线程执行；原生每例节点预算为 10 亿，全部 `cancelled=false`。没有跳过或补跑失败样本。
 
@@ -135,7 +135,7 @@ RSS 汇总时观察到的当前原生程序也是该摘要，但单次 RSS stdou
 
 从原始逐例记录重新相加得到的三轮总时间与 `report.json` 完全一致，WASM/Rust 中位数比为 **1.165031645×，约 1.17×**。这表示该固定历史语料和协议下 Rust 总搜索时间更短，不是全体随机状态或 Nissy H10 的速度结论；不以较高的逐例几何比替代总时间指标。每个新进程确已完整预热，但不据此声称 JIT 必然达到稳态。
 
-额外独立复核保存于 `.tmp/cubeopt-reverse/opt9-native-repeatability.json`：960 条解全部再次通过 cubing.js 角块/棱块复原与已知 HTM 检查；480 条原生结果涵盖 4 个进程、每进程 2 遍语料，每例出现 8 次。以首次结果为基准进行 **420 次严格比较，仅排除 `seconds` 后全部字段相同**，包括解、步数、节点、所有计数和 `completed_depth`；覆盖错误与差异均为 0。另核对了输入来源、12 份源码/上游快照、保留的原生程序摘要及全部 WASM startup 中的程序/加载表摘要。此次复核只读已有结果和小文件，没有重跑求解，也没有重新读取 15.6 GB 大表；大表依据运行时加载摘要及当前 size/mtime 与原记录一致。
+额外独立复核保存于 `.local-data/cubeopt-reverse/opt9-native-repeatability.json`：960 条解全部再次通过 cubing.js 角块/棱块复原与已知 HTM 检查；480 条原生结果涵盖 4 个进程、每进程 2 遍语料，每例出现 8 次。以首次结果为基准进行 **420 次严格比较，仅排除 `seconds` 后全部字段相同**，包括解、步数、节点、所有计数和 `completed_depth`；覆盖错误与差异均为 0。另核对了输入来源、12 份源码/上游快照、保留的原生程序摘要及全部 WASM startup 中的程序/加载表摘要。此次复核只读已有结果和小文件，没有重跑求解，也没有重新读取 15.6 GB 大表；大表依据运行时加载摘要及当前 size/mtime 与原记录一致。
 
 该轮 guard 的 `stopped` 为空，Swapouts 保持 0，采样进程树峰值为 **16,080,437,248 bytes**，最小保守余量为 **20,818,477,056 bytes**，未触及保护门槛。这个进程树采样值不能替代前述独立测得的 Opt9 原生最大 RSS **15,569,256,448 bytes**。
 
@@ -148,7 +148,7 @@ H9 预计 15,169,187,432 字节；专用 guard 的 h9gen 路径仅放行这一�
 9 项检查通过；表生成及 Rust H9 单次 100 条实测尚待完成。Opt7 WASM/Rust
 单次对照已完成（`benchmark-wca100-opt7-single`）：WASM 222.220814 秒，Rust Opt7 206.352212629 秒，200 解已验证。
 维护者随后要求停止 4 线程并改为 16 线程。旧进程组已退出，日志保存在
-`.tmp/cubeopt-reverse/h9-generation-4threads-stopped/`；16 线程建表于 2026-10-13T12:45Z 启动。
+`.local-data/cubeopt-reverse/h9-generation-4threads-stopped/`；16 线程建表于 2026-10-13T12:45Z 启动。
 沿用同一系统启动及 Swapouts=0 基线、相同 RSS 上限，未重设保护记录；实际 16 线程 worker 已确认运行。
 
 ### Rust H7/H10 最终结果（已完成）
@@ -164,7 +164,7 @@ H9 预计 15,169,187,432 字节；专用 guard 的 h9gen 路径仅放行这一�
 
 H10 在该语料下速度约为 H7 的 4.48 倍。两个进程均正常退出，资源保护未触发，
 同次系统启动的 Swapouts 始终为 0。H7 证据前缀为
-`.tmp/cubeopt-reverse/wca100-rust-h7-v2`，H10 为 `wca100-rust-h10-v2`；
+`.local-data/cubeopt-reverse/wca100-rust-h7-v2`，H10 为 `wca100-rust-h10-v2`；
 各自保留 `.jsonl`、`.stderr.log`、`-resources.json`、`-report.json`。
 已本地回填页面，未推送。用户最终只要求现有表 H7/H10，其他档位不在本轮范围。
 
@@ -172,7 +172,7 @@ H10 在该语料下速度约为 H7 的 4.48 倍。两个进程均正常退出，
 Rust 专项采用单进程完整 100 条预热，然后同顺序三轮计时，400 条结果均独立验解；
 与此前 Opt8 的每轮新进程协议分别记账。H10 已完成：59.122515 / 57.439391 /
 59.590332 秒，中位数 59.122515 秒，独立最大 RSS 30,343,528,448 bytes。
-原始结果与资源记录为 `.tmp/cubeopt-reverse/wca100-rust-h10-v2.*` 及同名
+原始结果与资源记录为 `.local-data/cubeopt-reverse/wca100-rust-h10-v2.*` 及同名
 `-resources.json` / `-report.json`。H7 旧的 10 分钟窗口运行主动终止并保留，
 完整重跑使用 `wca100-rust-h7-v2`。原生 H48 基准新增显式
 `CUBEOPT_BENCHMARK=1`，只将该基准的时限设为一小时，RSS、压力、Swapouts、
@@ -188,8 +188,8 @@ Rust 专项采用单进程完整 100 条预热，然后同顺序三轮计时，4
 H10 基准已支持 `--cases`，原 60 条默认协议仍保留。当前 H10 启动检查要求
 34,631,281,512 bytes，观测保守可用 12,811,141,120 bytes，故未启动。
 Opt8 使用现存表经 guard 顺序运行 Rust/WASM，输出目录
-`.tmp/cubeopt-reverse/benchmark-wca100-opt8`，资源日志
-`.tmp/cubeopt-reverse/wca100-opt8-resources.json`。
+`.local-data/cubeopt-reverse/benchmark-wca100-opt8`，资源日志
+`.local-data/cubeopt-reverse/wca100-opt8-resources.json`。
 每个进程完整预热 100 条，首轮排除，三轮正式结果取总搜索时间中位数；
 每条 120 秒超时，任何失败保留记录且整组不发布为完成结果。
 H11 不运行；一次仅驻留一个引擎；内存保护触发后不重设基线续跑。
@@ -204,7 +204,7 @@ H11 不运行；一次仅驻留一个引擎；内存保护触发后不重设基�
 | 原 C 16 线程 | 8.342 | 8.571 | 8.456 |
 | Rust 16 线程 | 5.974 | 5.884 | 5.929 |
 
-这组混合样本吞吐速度比 1.426×，耗时减少 29.89%；未做全任务速度外推。1,116 解全部独立 cubing.js 复原并匹配已有最短 HTM，另有 3 次启动检查；Rust 124 状态跨 1/16 线程与三轮共 620 次非时间字段比较全等。进程树 RSS 采样峰值 30,642,421,760 bytes；Swapouts 0，保护未触发。报告 `.tmp/zbll-rust-acceptance-20261013-v3/{input.json,raw.jsonl,report.json,thread-equivalence.json}`，资源记录 `.tmp/cubeopt-reverse/zbll-rust-acceptance-v3-resources.json`。失败的 v1（Node 模块加载）与 v2（成对 x2 输入转换缺失）没有产生正式结果，目录保留；v3 已对所有输入的转换前后完整棱角状态逐条核对。
+这组混合样本吞吐速度比 1.426×，耗时减少 29.89%；未做全任务速度外推。1,116 解全部独立 cubing.js 复原并匹配已有最短 HTM，另有 3 次启动检查；Rust 124 状态跨 1/16 线程与三轮共 620 次非时间字段比较全等。进程树 RSS 采样峰值 30,642,421,760 bytes；Swapouts 0，保护未触发。报告 `.local-data/zbll-rust-acceptance-20261013-v3/{input.json,raw.jsonl,report.json,thread-equivalence.json}`，资源记录 `.local-data/cubeopt-reverse/zbll-rust-acceptance-v3-resources.json`。失败的 v1（Node 模块加载）与 v2（成对 x2 输入转换缺失）没有产生正式结果，目录保留；v3 已对所有输入的转换前后完整棱角状态逐条核对。
 
 ### WCA100 更新
 
@@ -217,7 +217,7 @@ Rust Opt8 不是 Rust H8，不将该结果标在 Rust H8 行。
 采样峰值不作为独立引擎最大 RSS 发布。
 
 维护者释放内存后，H10 经同一基线及资源预算检查启动，结果保存于
-`.tmp/cubeopt-reverse/benchmark-wca100-h10`。启动后观测进程树峰值约
+`.local-data/cubeopt-reverse/benchmark-wca100-h10`。启动后观测进程树峰值约
 30.5 GB，保守余量大于 41 GB，Swapouts 为 0。完成前不填性能成绩。
 `publish-wca100.mts` 从原始逐条结果核对完整语料、轮次、总时间和中位数后
 回填页面，H10 与 Opt 使用同一份冻结输入，保留旧成绩与原始程序。
@@ -250,7 +250,7 @@ Opt10 使用已完成的 v2 表，旧 v1 不完整文件不参与测试。
 | Rust H7 | 25.372522463 | 3,865,968,640 | 100/100，通过 |
 | Rust 原生 Opt9 | 6.385029210 | 15,642,624,000 | 100/100，通过 |
 
-结果分别在 `.tmp/cubeopt-reverse/wca100-mt18-rust-h7-review/result/` 和
+结果分别在 `.local-data/cubeopt-reverse/wca100-mt18-rust-h7-review/result/` 和
 `wca100-mt18-rust-opt9-review/result/`，保留完整报告、消费凭证及原始输出。
 两项均单轮、不预热、正常退出，Swapouts 为 0，资源保护未触发。
 
@@ -266,12 +266,12 @@ H10 于 2026-10-14T05:02:55Z 在启动前被余量检查拒绝，没有加载表
 - Corpus: solver/testdata/benchmarks/wca-first1000.json, SHA256 5b42a18086b27e974115a73696702017b5dde0a19c9819a77c88c8014d67c8ea.
 - Runner: run-wca1000.mts, all computation remains under guard.mts.
 - Status: original WASM startup rejected before any solve or table loading: fresh 3 GiB startup headroom unavailable. Observed reclaimable 12.6 GiB; required WASM 21.4 GiB / native 18.7 GiB. Swapouts 0. Neither other engine started. No valid performance result.
-- Attempt evidence: .tmp/cubeopt-reverse/wca1000-mt16-original-wasm-opt9.stderr.log and -exit.json. This is a preflight rejection, not a consumed benchmark. Preserve resource failure history; do not lower budgets or automatically reset/retry.
+- Attempt evidence: .local-data/cubeopt-reverse/wca1000-mt16-original-wasm-opt9.stderr.log and -exit.json. This is a preflight rejection, not a consumed benchmark. Preserve resource failure history; do not lower budgets or automatically reset/retry.
 - Previous scores must not be presented as the new 1000/16 results. User does not want historical results displayed.
 
 ### WCA1000 / 16 threads — 2026-10-14 outcome
 
-- Explicit resume after startup-memory rejection; archived only the unconsumed preflight attempt in .tmp/cubeopt-reverse/preflight-archive-20261014. No baseline reset.
+- Explicit resume after startup-memory rejection; archived only the unconsumed preflight attempt in .local-data/cubeopt-reverse/preflight-archive-20261014. No baseline reset.
 - Original Opt9 WASM: 625 completed and independently verified, process exited 1 on case 626 (ID 1683001), stderr only unwind. Incomplete; no 1000-case time.
 - Rust Opt9 native: 1000 completed and independently verified, 70.54567079799996 solve seconds, peak RSS 15645851648 bytes; 625 original reference lengths matched.
 - Rust Opt9 shared WASM: failed on first case, worker 3 cubeopt_begin -> GenericOracle::conjugate -> panic_bounds_check. Zero completed rows.
@@ -290,7 +290,7 @@ H10 于 2026-10-14T05:02:55Z 在启动前被余量检查拒绝，没有加载表
 
 F 峰值 RSS **15.64 GB**，进程树峰值 15.75 GB；1000 条全部独立验解通过，长度同时匹配原版和 55.8 秒版。各轮正常退出，Swapouts 为 0，资源保护未触发。F 比保留 55.8018 秒结果少耗时 22.53%，比原版 70.5457 秒少耗时 38.72%；两份旧版没有重跑，属于同协议历史对照。**尚未达到 40 秒。**
 
-原版、55.8 秒版与新最快版均有独立源码/程序/证据封存，原 Opt9 表不变。F 程序位于 `target/opt9-fixed`，完整快照位于 `.tmp/cubeopt-reverse/opt9-native-fixed-preserved-20261014/`；详情与数学依据见 [opt9-native-experiments.md](opt9-native-experiments.md)。只改本地，未更换默认程序、网页或服务器，未提交推送。
+原版、55.8 秒版与新最快版均有独立源码/程序/证据封存，原 Opt9 表不变。F 程序位于 `target/opt9-fixed`，完整快照位于 `.local-data/cubeopt-reverse/opt9-native-fixed-preserved-20261014/`；详情与数学依据见 [opt9-native-experiments.md](opt9-native-experiments.md)。只改本地，未更换默认程序、网页或服务器，未提交推送。
 
 
 ## 2026-10-14：Opt9 第三轮探索 30 秒

@@ -13,8 +13,8 @@ register();
 const { rustScramble } = await import(resolve(root, 'solver/333opt/rust-h10-adapter.mts'));
 const out = resolve(root, process.argv[2]);
 mkdirSync(out, { recursive: false });
-const model = await import(resolve(root, '.tmp/double-zbll-symmetry-v2/model.mts'));
-const saved = readFileSync(resolve(root, '.tmp/double-zbll-symmetry-v2/representatives.csv'), 'utf8').trim().split('\n');
+const model = await import(resolve(root, 'core/jobs/alg-build/src/double-zbll-model.mts'));
+const saved = readFileSync(resolve(root, '.local-data/double-zbll-symmetry-v2/representatives.csv'), 'utf8').trim().split('\n');
 const cases = Array.from({ length: 64 }, (_, i) => {
   const [id, htm] = saved[Math.floor(i * saved.length / 64)].split(',');
   return { id: `z${id}`, scramble: model.setup(Number(id)), htm: Number(htm), group: 'double-zbll' };

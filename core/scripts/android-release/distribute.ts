@@ -60,7 +60,7 @@ if (mode === 'prepare') {
     const version = run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', '(Get-Item -LiteralPath $env:CUBEROOT_VERIFY_EXE).VersionInfo.ProductVersion'], { ...process.env, CUBEROOT_VERIFY_EXE: path });
     if (version.split('.').slice(0, 3).join('.') !== identity.versionName) throw new Error('Windows binary version mismatch');
   }
-  const prefix = `CubeRoot-${identity.versionName}-${identity.versionCode}-x64`;
+  const prefix = `CubeRoot-${identity.versionName}-x64`;
   const metadata = parseWindowsRelease({ schemaVersion: 1, platform: 'windows', arch: 'x64', ...identity, commit,
     publishedAt: new Date().toISOString(), notes, files: {
       installer: artifact(join(release, 'bundle/nsis', installers[0]!), `${prefix}-installer.exe`, 'windows'),

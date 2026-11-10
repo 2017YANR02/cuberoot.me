@@ -60,7 +60,7 @@ No completed production replacement or measured four-thread speedup is claimed y
 
 - Same server/Opt8 table/4 workers/WCA first100, one fresh pass each, zero warmup.
 - Original: 126.296131695 s; peak RSS 7,941,787,648 B. Rust ABI2 candidate MEhVBN: 148.077852546 s; peak RSS 7,944,888,320 B (17.25% longer).
-- Both processes exited normally. All 200 solutions plus the retained 100 H10 references independently replayed successfully; all optimal lengths matched. Results and full raw files: `.tmp/cubeopt-reverse/opt8-server-deploy-20261014/run-v1/`.
+- Both processes exited normally. All 200 solutions plus the retained 100 H10 references independently replayed successfully; all optimal lengths matched. Results and full raw files: `.local-data/cubeopt-reverse/opt8-server-deploy-20261014/run-v1/`.
 - Current production pointer was never promoted. Transaction `rust-opt8-20261014` rolled back configuration; original engine is enabled/configured/ready again. No old table was removed.
 - Search-node totals: original 2,382,921,416; Rust 2,266,356,939. These counters are an implementation diagnostic, not proof that node work is identical.
 - Follow-up candidate reuses empty context stacks to remove allocation/free calls during splitting. Original baseline will be retained, not rerun.
@@ -196,4 +196,4 @@ Local exact release: 33.368675666 s versus V4 37.794426789 s, WCA100/4 workers/
 one pass/no warmup, both with --no-liftoff; 100/100 independently verified.
 Server speed improvement has not been measured or inferred from local seconds.
 The release selection is recorded in `opt8-wasm-release.json`; all reports and
-transaction/verification evidence are under `.tmp/cubeopt-reverse/opt8-local-release-20261014/`.
+transaction/verification evidence are under `.local-data/cubeopt-reverse/opt8-local-release-20261014/`.

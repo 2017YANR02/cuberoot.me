@@ -11,6 +11,7 @@ import { atomicJson, maybeJson, readJson, repairTail, guard, TOTAL, GiB, selectP
 import { activeOwner, watchDashboard, renderDashboard, renderCompletion, TerminalDashboard, REFRESH_MS } from './double-zbll-dashboard.mjs';
 import { WebsiteStatistics } from './double-zbll-website-stats.mjs';
 import { PairSelection } from './double-zbll-selection.mjs';
+import { verifyRetainedDoubleZbll } from './double-zbll-retained.mjs';
 
 const root = resolve(import.meta.dirname, '../../../..');
 // The standalone solver is outside the job's build unit, like the existing
@@ -28,11 +29,17 @@ const { ResidentRustSession } = await import(resolve(root,'solver/333opt/residen
 };
 const { opt10Configuration, rustScramble } = await import(resolve(root,'solver/333opt/rust-h10-adapter.mts'));
 const { observeZbllMemory } = await import(resolve(root,'core/scripts/zbll-memory-budget.mts'));
-const work = resolve(root, '.tmp/double-zbll-symmetry-v2');
+const work = resolve(root, '.local-data/double-zbll-symmetry-v2');
 const path = (name: string) => resolve(work, name);
 const args = process.argv.slice(2);
 if (args.length !== 1 || !['--plan', '--run', '--verify-checkpoint', '--watch'].includes(args[0])) throw Error('使用 --plan 查看，--run 开始或续算，--verify-checkpoint 只验证断点，--watch 只看面板。');
 const solve = args[0] === '--run';
+// A retained completion must never fall through into checkpoint replay or a solver.
+if (verifyRetainedDoubleZbll(work)) {
+  console.log(renderCompletion(readJson(path('progress.json')), work));
+  console.log('原始计算明细已按要求清理；最终题库位于 export/，统计记录已保留。');
+  process.exit(0);
+}
 const solverEngine = process.env.DOUBLE_ZBLL_ENGINE ?? (existsSync(path('rust-opt10-acceptance.json')) ? 'opt10' : existsSync(path('rust-h10-acceptance.json')) ? 'rust' : 'c');
 if (!['c', 'rust', 'opt10'].includes(solverEngine)) throw Error('DOUBLE_ZBLL_ENGINE 必须为 c、rust 或 opt10');
 let solverThreads: number | undefined;
@@ -254,7 +261,7 @@ try {
   checkResources(); show(true);
   if (solve && recoveredStartup) atomicJson(path(`startup-memory-recovery-${Date.now()}.json`), { previous: prior, checked: current, action: 'Reclassify pre-table startup memory rejection; original boot and swap baseline retained' });
   if (await hashFile(path('representatives.csv')) !== integrity.sha256) throw Error('迁移结果 hash 不符，原结果保留。');
-  model = await import(path('model.mts'));
+  model = await import(resolve(import.meta.dirname,'double-zbll-model.mts'));
   if (model.orbitCount !== TOTAL || model.N !== 7772 || model.cases.length !== 493) throw Error('模型口径改变。');
   websiteStats = new WebsiteStatistics(root, model);
   selection = new PairSelection(model);
@@ -267,7 +274,7 @@ try {
     screen.close(); console.log(`逐条核验通过：${verified.toLocaleString()} 个；迁移文件 SHA-256 ${integrity.sha256}`);
   } else {
     checkResources();
-    if (existsSync(resolve(root, '.tmp/cubeopt-reverse/compute.lock')) || execFileSync('ps', ['-axo', 'comm'], { encoding: 'utf8' }).split('\n').some(s => /solve_h48_h10|cube48opt-research|table_generator/.test(s))) throw Error('已有求解器、研究锁或建表任务，禁止重复启动。');
+    if (existsSync(resolve(root, '.local-data/cubeopt-reverse/compute.lock')) || execFileSync('ps', ['-axo', 'comm'], { encoding: 'utf8' }).split('\n').some(s => /solve_h48_h10|cube48opt-research|table_generator/.test(s))) throw Error('已有求解器、研究锁或建表任务，禁止重复启动。');
     fd = openSync(journal, 'a');
     let cursor = checkpoint?.cursor ?? 0, pass = checkpoint?.pass ?? 0;
     if (checkpoint?.scheduler !== scheduler) {
@@ -400,7 +407,7 @@ try {
         const logFd = openSync(log, 'a');
         const logStart = statSync(log).size;
         child = spawn(process.execPath, ['--max-old-space-size=512', '--import', resolve(root, 'core/node_modules/tsx/dist/loader.mjs'),
-          resolve(root, '.tmp/double-zbll-auf-20261011/run.mts'), '--solve', `--symmetry-batch=${String(activeBatch).padStart(6, '0')}`],
+          resolve(root, 'core/jobs/alg-build/src/double-zbll-auf-run.mts'), '--solve', `--symmetry-batch=${String(activeBatch).padStart(6, '0')}`],
         { cwd: root, detached: true, env: { ...process.env, H10_ENGINE: solverEngine, THREADS: String(solverThreads), AUF_EXPECTED_BOOT: baseline.boot, AUF_EXPECTED_SWAPOUTS: String(baseline.baselineSwapouts) }, stdio: ['ignore', logFd, logFd] }); closeSync(logFd);
         interval = setInterval(() => {
           try { checkResources(); bp = batchProgress(); activeCompleted = bp?.completed ?? 0; verifyLive(); atomicJson(progressPath, snapshot('running')); show(); }

@@ -594,3 +594,27 @@
     min-width: 124px;
   }
 }
+
+
+.trainingHelp { margin-top: 6px; }
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 640px) {
+  .trainPage .header { padding-top: 8px; }
+  .trainPage .title { font-size: 22px; margin-block: 4px; }
+  .trainPage .content { padding-top: 6px; }
+  .trainPage .trainerToolbar { gap: 6px 10px; }
+  .trainPage .trainerToolbar > button { min-height: 44px; }
+  .trainPage .trainerStage {
+    grid-template-columns: minmax(140px, 190px) minmax(0, 1fr);
+    gap: 12px;
+    margin-block: 8px;
+    align-items: start;
+  }
+  .trainPage .trainerThumb { min-height: 0; }
+  .trainPage .trainerThumb :global(.puzzle-art) {
+    width: 150px !important;
+    height: 150px !important;
+  }
+  .trainPage .trainerStage h2 { margin: 0 0 4px; font-size: 16px; }
+  .trainPage .scramble { font-size: 0.85rem; line-height: 1.4; margin: 4px 0; }
+  .trainPage .trainerStage .hint { margin-block: 4px; }
+}

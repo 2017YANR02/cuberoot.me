@@ -395,10 +395,16 @@
         { "file": "jobs/alg-build/src/double-zbll-symmetry.mts", "mechanism": "spawn", "target": "caffeinate", "count": 1 },
         { "file": "jobs/alg-build/src/double-zbll-symmetry.mts", "mechanism": "execFileSync", "target": "vm_stat", "count": 1 },
         { "file": "jobs/alg-build/src/double-zbll-symmetry.mts", "mechanism": "execFileSync", "target": "sysctl", "count": 2 },
-        { "file": "jobs/alg-build/src/double-zbll-symmetry.mts", "mechanism": "execFileSync", "target": "ps", "count": 2 }
+        { "file": "jobs/alg-build/src/double-zbll-symmetry.mts", "mechanism": "execFileSync", "target": "ps", "count": 2 },
+        { "file": "jobs/alg-build/src/double-zbll-auf-run.mts", "mechanism": "spawn", "target": "<dynamic>", "count": 1 },
+        { "file": "jobs/alg-build/src/double-zbll-auf-run.mts", "mechanism": "spawn", "target": "caffeinate", "count": 1 },
+        { "file": "jobs/alg-build/src/double-zbll-auf-run.mts", "mechanism": "execFileSync", "target": "vm_stat", "count": 1 },
+        { "file": "jobs/alg-build/src/double-zbll-auf-run.mts", "mechanism": "execFileSync", "target": "sysctl", "count": 2 },
+        { "file": "jobs/alg-build/src/double-zbll-auf-run.mts", "mechanism": "execFileSync", "target": "ps", "count": 1 }
       ],
       "evidence": [
         { "file": "docs/double-zbll-trainer.md", "contains": "7,555,446" },
+        { "file": "core/jobs/alg-build/src/double-zbll-auf-run.mts", "contains": "Long-job baseline changed; do not reset" },
         { "file": "solver/333opt/solve_h10.mts" }
       ]
     },

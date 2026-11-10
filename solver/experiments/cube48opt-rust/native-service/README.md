@@ -8,7 +8,16 @@ The workflow builds a static Linux x86-64 binary using Rust 1.98.1 and
 `opt8-native-search,opt8-native-quarter,opt9-native-fixed-contexts,opt8-native-prefetch`. The CPU
 baseline is explicitly `x86-64`; runtime SIMD detection selects the supported
 backend. Its `build.json` records the source commit, flags and binary SHA-256.
-Builds never load or generate tables.
+Linux release builds also run bounded library and protocol checks; tests that
+require external snapshots remain ignored. Builds never access production
+pruning tables.
+
+For an experiment, set `deploy=false` and select `candidate` (`avx2`,
+`interleaved`, `interleaved32`, `nta`, or `dynamic`). These are opt-in builds;
+the workflow rejects combining a candidate with promotion. `nta` changes
+only the Opt8 x86 prefetch hint; `dynamic` combines the existing dynamic
+prefix scheduler with the deployed T0 prefetch. Each candidate must pass
+independent solution replay and same-server timing before adoption.
 
 When publishing a measured optimization, supply the accepted executable's
 SHA-256 as the workflow's `expected_binary_sha256` input. A different build

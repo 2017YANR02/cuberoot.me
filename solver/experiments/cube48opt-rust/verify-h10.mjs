@@ -38,7 +38,7 @@ function execute(binary, table, input, prefix) {
 function main() {
   assert.equal(process.argv.length, 7, 'usage: verify-h10.mjs C_ORACLE_BINARY RUST_EXAMPLE_BINARY H10_TABLE OPT1_FIXTURES_JSON NEW_OUT_DIR');
   const [cBinary, rustBinary, table, fixtureFile] = process.argv.slice(2, 6).map(file => realpathSync(file));
-  assert.equal(cBinary, path.join(ROOT, '.tmp/cubeopt-reverse/h10-build/h10-oracle'), 'fixed low-memory C helper required');
+  assert.equal(cBinary, path.join(ROOT, '.local-data/cubeopt-reverse/h10-build/h10-oracle'), 'fixed low-memory C helper required');
   assert.equal(rustBinary, path.join(HERE, 'target/release/examples/verify_h10_coordinates'), 'fixed low-memory Rust helper required');
   assert.equal(table, realpathSync(path.join(ROOT, 'solver/tables/h48-nissy-core/h48h10.dat')), 'fixed preserved H10 table required');
   output = path.resolve(process.argv[6]);

@@ -81,7 +81,7 @@ memory bandwidth and the chosen search features are outside this measurement.
 Full same-table solver measurements are recorded below; production rollout is
 tracked separately in `docs/cubeopt-native-rollout.md`.
 
-Local raw evidence: `.tmp/cubeopt-reverse/x86-simd-20261021-c53Ib1/` at repository
+Local raw evidence: `.local-data/cubeopt-reverse/x86-simd-20261021-c53Ib1/` at repository
 root, containing `fixtures-manifest.json`, `correctness.json`, `kernels.json`,
 the initial Opt8 probe and `instruction-evidence.json`. Small fixtures are retained
 there for reproduction; historic programs and benchmark reports were not replaced.
@@ -122,7 +122,7 @@ the automatic selection policy. The Mac 32G benchmark uses its frozen ARM
 release, not this x86 build.
 
 Build hashes, raw checks and kernel results are retained in
-`.tmp/cubeopt-reverse/opt-x86-coverage-20261022/`. ARM library compilation and
+`.local-data/cubeopt-reverse/opt-x86-coverage-20261022/`. ARM library compilation and
 the x86 release build passed. These additions remain local pending publication.
 
 ## Linux full solves, 2026-10-21
@@ -146,7 +146,7 @@ therefore do not measure SIMD performance. This fixed-order single pass does
 not quantify scheduling, cache or thermal variance on the shared server.
 
 Raw results and resource/PID/exit evidence are retained locally under
-`.tmp/cubeopt-reverse/native-service-linux-20261021/results-ready-wait/`.
+`.local-data/cubeopt-reverse/native-service-linux-20261021/results-ready-wait/`.
 Its `independent-verification.json` confirms all 300 solutions replay to solved,
 all 300 lengths match the pinned historical H10 optimum, and each engine
 handled all requests in one PID before exiting normally without descendants.
@@ -187,7 +187,7 @@ The range/ABI rules follow [madvise(2)](https://man7.org/linux/man-pages/man2/ma
 and [getpagesize(2)](https://man7.org/linux/man-pages/man2/getpagesize.2.html).
 
 Frozen local evidence lives under
-`.tmp/cubeopt-reverse/native-feature-ab-20261021/`: the original four candidates
+`.local-data/cubeopt-reverse/native-feature-ab-20261021/`: the original four candidates
 retain their `builds.json` and `source/`; hugepages has its own
 `hugepages/build.json`, source and ELF. It uses the same defaults, baseline
 `x86-64` target and explicit production search flags, plus only the hugepage
@@ -243,8 +243,8 @@ Accepted prefetch executable SHA-256:
 `0f6f481c5f98130d5295aaf2b073f2b642a5b8c4e271dfb60c19f42c6c9a50c0`.
 It was built by workflow `39657276722` from `8719737536`, adding only
 `opt8-native-prefetch` to the production search flags. Full local records:
-`.tmp/cubeopt-reverse/native-feature-ab-20261021/accepted-v4/{hugepages,prefetch}/`;
-independent tail review: `.tmp/cubeopt-prefetch-review-20261021/review.md`.
+`.local-data/cubeopt-reverse/native-feature-ab-20261021/accepted-v4/{hugepages,prefetch}/`;
+independent tail review: `.local-data/cubeopt-prefetch-review-20261021/review.md`.
 Combining other features requires a new measured executable; standalone gains
 must not be added together.
 
@@ -267,7 +267,7 @@ to 3.301 seconds; the root-bound candidate increased P99 from 4.734 to 5.275
 seconds. All 21 passes across the three groups exited normally with no remaining
 descendants; each kept the same solver PID for its 100 requests. The final
 wrapper restored production health/readiness at 21:31 UTC. See
-`.tmp/cubeopt-reverse/native-feature-ab-20261021/accepted-v4/dynamic-root/`.
+`.local-data/cubeopt-reverse/native-feature-ab-20261021/accepted-v4/dynamic-root/`.
 Only prefetch proceeds to release; no unmeasured combination is enabled.
 
 ## Production-machine profile of the selected prefetch binary
@@ -311,9 +311,9 @@ or off-CPU waiting were available, and no new speedup is claimed from the profil
 
 Raw `perf.data` SHA-256:
 `916ebef8ff3f31ab8eee58829fb7c33abd5721efe2baa2d8a55dc9f104566608`.
-Local evidence: `.tmp/cubeopt-reverse/native-feature-ab-20261021/profile-results-v4/profile-QjFH26/`
+Local evidence: `.local-data/cubeopt-reverse/native-feature-ab-20261021/profile-results-v4/profile-QjFH26/`
 (`analysis-v3`, exact-ELF `annotations`, original results and rejected exports).
-Independent interpretation: `.tmp/cubeopt-profile-review-20261021/review.md`.
+Independent interpretation: `.local-data/cubeopt-profile-review-20261021/review.md`.
 
 ## Opt8 memory-policy experiment (2026-10-22)
 
@@ -360,7 +360,7 @@ Even under this limited protocol, no candidate beat its matched control, so
 there is no measured benefit that justifies adopting it.
 
 Frozen source, executable hashes, single-use launch wrapper, original fixtures,
-results and `decision.json`: `.tmp/cubeopt-reverse/opt8-memory-20261022-v1/`.
+results and `decision.json`: `.local-data/cubeopt-reverse/opt8-memory-20261022-v1/`.
 The rejected implementation is retained as `candidates.patch` (SHA-256
 `a523261e03e8334028e5264315dc78ee21840431f774c507e6d0618ab100913d`).
 This scope is consumed: do not repeat its passes or overwrite its evidence.

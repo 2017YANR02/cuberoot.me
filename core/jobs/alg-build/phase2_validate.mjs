@@ -22,9 +22,9 @@ import { stm, sqtm } from '@cuberoot/shared/alg-notation';
 const ROOT = path.resolve(import.meta.dirname, '../../..');
 const read = (p) => JSON.parse(fs.readFileSync(path.join(ROOT, p), 'utf8'));
 
-const rows = read('.tmp/phase0/sheet_1lll.json');
-const mapping = read('.tmp/phase0/mapping.json');
-const site = read('.tmp/phase0/site_cases.json');
+const rows = read('.local-data/phase0/sheet_1lll.json');
+const mapping = read('.local-data/phase0/mapping.json');
+const site = read('.local-data/phase0/site_cases.json');
 
 // ---- 每行的真 case key(锚定 Phase 0)----
 const siteSetup = new Map();          // "set/name" → setup
@@ -98,6 +98,6 @@ console.log(`  首条公式    ${first.length}   (Phase 0 报的是 19 —— �
 console.log(`  备选公式    ${alt.length}   ← Phase 0 没扫的部分`);
 
 const out = { 统计: { total, ok, broken: broken.length, misfiled: misfiled.length, parseErr: parseErr.length }, broken, misfiled, parseErr, parseWarn };
-fs.mkdirSync(path.join(ROOT, '.tmp/phase1'), { recursive: true });
-fs.writeFileSync(path.join(ROOT, '.tmp/phase1/phase2_report.json'), JSON.stringify(out, null, 2));
-console.log('\n→ .tmp/phase1/phase2_report.json');
+fs.mkdirSync(path.join(ROOT, '.local-data/phase1'), { recursive: true });
+fs.writeFileSync(path.join(ROOT, '.local-data/phase1/phase2_report.json'), JSON.stringify(out, null, 2));
+console.log('\n→ .local-data/phase1/phase2_report.json');

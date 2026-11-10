@@ -33,8 +33,8 @@ const {
   useKeyboardControls,
 } = await import('@/app/[lang]/timer/_shell/BattleView');
 
-function KeyboardHarness({ suppressed }: { suppressed: boolean }) {
-  useKeyboardControls(suppressed);
+function KeyboardHarness({ suppressed, blockedPlayers }: { suppressed: boolean; blockedPlayers?: boolean[] }) {
+  useKeyboardControls(suppressed, blockedPlayers);
   return null;
 }
 
@@ -61,6 +61,28 @@ beforeEach(() => {
 });
 
 describe('battle overlay keyboard suppression', () => {
+  it('blocks only the smart-cube player and restores keyboard input after disconnect', () => {
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    const down = vi.spyOn(useBattleStore.getState(), 'playerDown').mockReturnValue(false);
+    const up = vi.spyOn(useBattleStore.getState(), 'playerUp').mockImplementation(() => {});
+    const press = (key: string) => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+      document.dispatchEvent(new KeyboardEvent('keyup', { key, bubbles: true }));
+    };
+    try {
+      act(() => root.render(createElement(KeyboardHarness, { suppressed: false, blockedPlayers: [true, false] })));
+      act(() => { press(' '); press('Enter'); });
+      expect(down.mock.calls).toEqual([[1]]);
+      expect(up.mock.calls).toEqual([[1]]);
+      act(() => root.render(createElement(KeyboardHarness, { suppressed: false, blockedPlayers: [false, false] })));
+      act(() => press(' '));
+      expect(down.mock.calls).toEqual([[1], [0]]);
+    } finally {
+      act(() => root.unmount());
+      down.mockRestore(); up.mockRestore();
+    }
+  });
   it('blocks pointer timing during layout editing and restores it without replacing the readout', () => {
     const host = document.createElement('div');
     document.body.append(host);

@@ -3,6 +3,23 @@ name: Deploy CubeOpt Native
 on:
   workflow_dispatch:
     inputs:
+      deploy:
+        description: 'Promote the built binary; disable for a performance candidate'
+        required: false
+        type: boolean
+        default: true
+      candidate:
+        description: 'Isolated performance candidate; requires deploy=false'
+        required: false
+        type: choice
+        default: none
+        options:
+          - none
+          - avx2
+          - interleaved
+          - interleaved32
+          - nta
+          - dynamic
       expected_binary_sha256:
         description: 'SHA-256 of the performance-accepted binary; reject a different build before upload'
         required: false
@@ -23,12 +40,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
+      - name: Reject unmeasured candidate promotion
+        if: inputs.deploy && inputs.candidate != 'none'
+        run: exit 1
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
             .node-version
             solver/experiments/cube48opt-rust
             solver/.cargo
+            solver/vendor/nissy-core/src/solvers/h48
           filter: blob:none
 
       - uses: actions/setup-node@v4
@@ -45,6 +66,7 @@ jobs:
         env:
           CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: musl-gcc
           CUBEOPT_EXPECTED_BINARY_SHA256: ${{ inputs.expected_binary_sha256 }}
+          CUBEOPT_CANDIDATE: ${{ inputs.candidate }}
         run: node solver/experiments/cube48opt-rust/native-service/build.mjs "$RUNNER_TEMP/cubeopt-native"
 
       - uses: actions/upload-artifact@v4
@@ -54,6 +76,7 @@ jobs:
           retention-days: 30
 
       - name: Setup SSH
+        if: inputs.deploy
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -64,6 +87,7 @@ jobs:
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: Upload immutable candidate
+        if: inputs.deploy
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           RELEASE_ID: ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
@@ -73,6 +97,7 @@ jobs:
           scp -i ~/.ssh/deploy_key "$RUNNER_TEMP/cubeopt-native/cube48opt-native" "$RUNNER_TEMP/cubeopt-native/build.json" solver/experiments/cube48opt-rust/native-service/deploy.sh "root@$DEPLOY_HOST:$upload/"
 
       - name: Verify, smoke and promote native Opt8
+        if: inputs.deploy
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           RELEASE_ID: ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}

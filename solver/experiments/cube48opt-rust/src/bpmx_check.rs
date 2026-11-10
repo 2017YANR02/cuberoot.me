@@ -652,7 +652,7 @@ fn niss_inverse_tie_matches_every_radius_three_bfs_distance() {
 fn quarter_real_opt9_coordinates_match_under_left_half_turns() {
     use crate::coord::CoordTables;
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../../.tmp/cubeopt-reverse/opt9-generated/small-memory.bin");
+        .join("../../../.local-data/cubeopt-reverse/opt9-generated/small-memory.bin");
     assert_eq!(std::fs::metadata(&path).unwrap().len(), 818_008);
     let tables = CoordTables::from_variant_bytes(&std::fs::read(path).unwrap(), 9).unwrap();
     let mut states: Vec<_> = ball(Cube::SOLVED).into_keys()

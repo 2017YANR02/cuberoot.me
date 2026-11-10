@@ -2,11 +2,17 @@
 
 本文件承接根 [AGENTS.md](../../AGENTS.md) 中的对应细则（2026-11-05 整理），是当前维护规则，不是历史归档。涉及本主题时先读；当次用户指令优先。代码路径除明确标注外均相对仓库根目录，core 命令在 `core/` 执行。发布授权统一见[发布规则](release.md)。
 
+## 移动端布局检查记录
+
+主要功能页的竖屏/横屏问题、复现条件、修复顺序和接手验收见 [2026-11-09 Web 移动端布局清单](../mobile-web-layout-audit-2026-11-09.md)。这是待办与历史检查记录，不替代下述组件规范。
+
 ## 代码风格
 
 - **选手身份展示复用（维护者要求，2026-11-04）**：以 `/wca/results?tab=records` 的共享实现为准。跳转选手主页用 `PersonLink`，国旗通过其 `flag` 传入，不再手写战队 logo + 国旗 + 姓名链接；姓名模式、曾用名和历史国籍仍保留各自数据语义。比赛成绩弹窗、自定义目的地、整张可点击卡片和纯文本标题使用 `PersonLink` 同源的 `WcaPersonIdentity` 包裹原有内容，并传入 `flag`，不得为复用改变点击行为或嵌套链接；卡片/按钮内徽标用 `linked={false}`。表格中的国旗必须跨行对齐：共享紧凑 logo 列保留相同宽度，logo 靠右紧邻国旗；无战队行仍保留这列以对齐国旗，表头对齐国旗起点。不要将“不要占位”误解为允许国旗随 logo 宽度左右跳动；非表格保持自然宽度。logo 列宽、最大尺寸和比例统一由 `wca-person-team-badge.css` 管理，不在页面复制尺寸或叠加 logo 外边距。详见 `.agents/skills/cuber-name-display/SKILL.md`。
 
 - **展开与收起（维护者要求，2026-10-30）**：展开/收起控件使用图标库中的线性图标（如 ChevronRight/ChevronDown），不得使用浏览器默认实心三角形、三角字符或 CSS 三角形。使用 details/summary 时隐藏原生 marker，图标随展开状态变化，保留原生键盘操作与无障碍语义。
+
+  过渡由 `@cuberoot/timer-ui/MoreToggle` 统一管理，Web 从 `@/components/MoreToggle` 使用。`as="summary"` 默认给所属 `details` 添加 220ms 高度过渡；不支持 `interpolate-size` / `::details-content` 的浏览器保留原生即时展开。按钮控制的内容使用同模块导出的 `MoreTogglePanel expanded={open}`，不要在外层用 `open &&` 卸载面板；默认首次展开才挂载内容，访问后保留以完成收起动画，`keepMounted` 可提前挂载。触发器和面板各支持 `animate={false}`，并统一遵循减少动态效果偏好；页面不再重复写折叠动画。加载更多、切换视图等按钮不自动套用内容面板。示例见 `/dev/components` 的 MoreToggle。
 
 - **厂商与培训机构 logo（维护者要求，2026-10-26）**：不加白色或其他装饰性描边、外框、光晕；原素材自带的白色轮廓也应使用无描边版本替换。保留品牌原色与标志形状，优先复用真实 SVG 矢量资源，不把 PNG 嵌入 SVG 冒充矢量。统一复用 `CubingBrandLabel` 和 `public/images/brands/` 资源，新增品牌或机构时同样遵循；logo 内部有意义的白色图形不视为装饰描边。
 

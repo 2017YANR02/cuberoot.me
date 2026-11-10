@@ -21,17 +21,17 @@
 @media (prefers-reduced-motion: reduce) { .admin-navigation .af-nav-group > summary::after, .admin-navigation .af-nav-group::details-content { transition: none; } }
 @media (min-width: 768px) { .admin-navigation[data-collapsed="true"] .af-nav-group > summary::after { display: none; } }
 @media (min-width: 768px) { .admin-navigation[data-collapsed="true"] .af-nav-link[href*="view="] { padding-left: 10px; } }
-.admin-navigation .admin-hub { padding-top: 40px; }
-@media (max-width: 640px) { .admin-navigation__header { padding: 0 16px; } .admin-navigation__brand span { display: none; } .admin-navigation .admin-hub { padding-top: 28px; } }
+.admin-navigation .admin-hub { padding-top: 24px; }
+@media (max-width: 640px) { .admin-navigation__header { padding: 0 16px; } .admin-navigation__brand span { display: none; } .admin-navigation .admin-hub { padding-top: 20px; } }
 
 .admin-hub {
   width: min(900px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 64px 0 80px;
+  padding: 24px 0 48px;
   color: var(--foreground);
 }
 
-.admin-hub__heading { margin-bottom: 42px; }
+.admin-hub__heading { margin-bottom: 20px; }
 .admin-hub__eyebrow { margin: 0 0 8px; color: var(--accent); font-size: .875rem; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
 .admin-hub h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 540; letter-spacing: -.045em; }
 .admin-hub__heading > p:last-child { max-width: 560px; margin: 12px 0 0; color: var(--muted-foreground); }
@@ -41,6 +41,8 @@
 .admin-hub__link span { display: grid; gap: 5px; min-width: 0; }
 .admin-hub__link strong { font-size: 1rem; font-weight: 600; }
 .admin-hub__link small { color: var(--muted-foreground); font-size: .875rem; line-height: 1.45; }
+.admin-hub__link .admin-hub__destination-label { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+.admin-hub__destination-label small { overflow-wrap: anywhere; }
 .admin-hub__link:hover strong { color: var(--accent); }
 .admin-hub__link:hover > svg { color: var(--accent); }
 .admin-hub__status { margin: 16px 0; color: var(--muted-foreground); }
@@ -106,7 +108,102 @@
 .admin-boot__event p { font-size: .9375rem; }
 
 @media (max-width: 640px) {
-  .admin-hub { width: calc(100% - 28px); padding-top: 38px; }
-  .admin-hub__heading { margin-bottom: 26px; }
+  .admin-hub { width: calc(100% - 28px); padding-top: 20px; }
+  .admin-hub__heading { margin-bottom: 16px; }
   .admin-hub__nav { grid-template-columns: 1fr; }
 }
+
+/* Monitoring starts with the overview; investigation tools are opt-in. */
+.admin-monitoring { margin-bottom: 0; }
+.admin-monitoring .admin-dashboard__toolbar { gap: 12px; margin-bottom: 16px; }
+.admin-monitoring .admin-dashboard__toolbar > div { flex-basis: 240px; }
+.admin-monitoring .admin-dashboard__metrics { gap: 12px; margin-bottom: 16px; }
+.admin-monitoring .admin-dashboard__metrics > * { padding: 14px; gap: 6px; }
+.admin-monitoring .admin-dashboard__metrics strong { font-size: 1.8rem; }
+.admin-monitoring .admin-monitoring__quality { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.admin-monitoring__disclosure { margin: 0; padding: 8px 0; }
+.admin-monitoring__disclosure > summary { padding: 10px 0; font-weight: 600; }
+.admin-monitoring__disclosure[open] > summary { margin-bottom: 12px; }
+.admin-monitoring__help { margin: 8px 0; }
+.admin-monitoring__boot .admin-boot__heading { margin: 8px 0 16px; }
+@media (max-width: 640px) {
+  .admin-monitoring .admin-dashboard__metrics strong { font-size: 1.5rem; }
+  .admin-monitoring .admin-dashboard__metrics span { font-size: .875rem; }
+}
+.admin-monitoring__billing { margin: 8px 0 16px; }
+.admin-monitoring__billing-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px 16px; padding: 6px 0; font-size: .9375rem; }
+.admin-monitoring__billing-row strong { font-variant-numeric: tabular-nums; }
+
+.admin-monitoring__trends > p { margin: 8px 0; }
+.admin-monitoring__trends > .admin-dashboard__grid { margin: 20px 0 12px; gap: 16px; }
+.admin-monitoring__trends > h3 { margin-top: 24px; }
+.admin-monitoring__status-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; margin: 18px 0 20px; }
+.admin-monitoring__status-grid > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.admin-monitoring__status-grid dt { font-size: .9375rem; }
+.admin-monitoring__status-grid dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.admin-monitoring__breakdown > summary { padding: 10px 0; font-size: .9375rem; }
+.admin-monitoring__count-list { max-height: 240px; overflow-y: auto; overscroll-behavior: contain; margin: 4px 0 12px; padding-inline-end: 8px; }
+.admin-monitoring__count-list > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; padding: 6px 0; font-size: .875rem; }
+.admin-monitoring__count-list dt { overflow-wrap: anywhere; }
+.admin-monitoring__count-list dd { margin: 0; font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) {
+  .admin-monitoring__status-grid { gap: 12px 16px; }
+}
+
+/* Overview: charts and short metrics first, definitions and queues on demand. */
+.admin-overview .admin-dashboard__toolbar { margin-bottom: 16px; gap: 12px; }
+.admin-overview .admin-dashboard__toolbar > div { font-size: .875rem; }
+.admin-overview .admin-dashboard__metrics { gap: 12px; margin-bottom: 16px; }
+.admin-overview .admin-dashboard__metrics > * { padding: 16px; gap: 8px; }
+.admin-overview .admin-dashboard__metrics strong { font-size: 2rem; }
+.admin-overview .admin-dashboard__grid { gap: 16px; }
+.admin-overview .admin-dashboard__panel { padding: 20px; }
+.admin-overview .admin-dashboard__panel > p { margin: 12px 0; }
+.admin-overview .admin-dashboard__empty { min-height: 64px; }
+.admin-overview .admin-dashboard__todos { margin: 8px 0; }
+.admin-overview .admin-dashboard__todos a { padding: 12px 0; }
+.admin-overview__disclosure { margin-top: 16px; }
+.admin-overview__disclosure > summary { padding: 8px 0; font-size: .9375rem; }
+.admin-overview__disclosure > p { margin: 10px 0; }
+.admin-monitoring__diagnostics > .admin-dashboard__metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 24px; }
+.admin-monitoring__diagnostics > .admin-monitoring__help { margin: 0 0 16px; }
+.admin-monitoring__diagnostics > .admin-dashboard__grid { gap: 16px; margin-bottom: 20px; }
+.admin-monitoring__diagnostics .admin-dashboard__panel h4 { margin-top: 0; margin-bottom: 16px; }
+.admin-monitoring__diagnostics .admin-dashboard__panel p { margin: 12px 0; }
+.admin-monitoring__diagnostics .admin-dashboard__panel small { display: inline-block; margin-top: 4px; }
+.admin-monitoring__diagnostics > details > summary { padding: 10px 0; }
+@media (max-width: 640px) {
+  .admin-monitoring__diagnostics > .admin-dashboard__metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-overview .admin-dashboard__metrics strong { font-size: 1.6rem; }
+  .admin-overview .admin-dashboard__panel { padding: 16px; }
+}
+
+/* Admin content has one top inset; do not stack the workspace and page padding. */
+.cuberoot-workspace-navigation .staff-main.admin-navigation__content { padding-top: 24px; }
+.admin-navigation__content > .admin-navigation__page > .admin-hub,
+.admin-navigation__content > .admin-navigation__page > .admin-users-page { padding-top: 0; }
+@media (max-width: 640px) {
+  .cuberoot-workspace-navigation .staff-main.admin-navigation__content { padding-top: 20px; }
+}
+
+/* Match the final chart geometry while data or the chart renderer is pending. */
+.admin-dashboard__chart-frame { position: relative; }
+.admin-dashboard__chart-overlay.skeleton-block { position: absolute; inset: 0; height: 100%; }
+.admin-dashboard__chart-placeholder.skeleton-block { margin-bottom: 44px; }
+.admin-dashboard__number-skeleton.skeleton-block { width: 6ch; max-width: 100%; height: 1.2em; display: inline-block; vertical-align: middle; }
+
+/* Navigation-only entry fade, including synchronous query navigation.
+   No fill mode: restore the live surface's normal compositing after entry. */
+.admin-navigation__page { min-width: 0; animation: admin-content-enter 350ms ease-out; }
+@keyframes admin-content-enter { from { opacity: .25; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .admin-navigation__page { animation: none; }
+}
+
+.admin-section-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.admin-section-switch { display: flex; align-items: center; gap: 20px; margin-bottom: 24px; }
+.admin-section-toolbar .admin-section-switch { margin-bottom: 0; }
+.admin-section-switch a { padding: 8px 0; color: var(--muted-foreground); text-decoration: none; border-bottom: 2px solid transparent; }
+.admin-section-switch a[aria-current="page"] { color: var(--foreground); border-bottom-color: var(--accent); }
+.admin-section-switch a:hover { color: var(--foreground); }
+.admin-section-toolbar > a { color: var(--muted-foreground); font-size: .875rem; }

@@ -106,7 +106,7 @@ export default function PuzzlePicker({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const popupId = useId();
-  usePanelClamp(open, panelRef);
+  usePanelClamp(open, panelRef, triggerRef);
 
   const wcaIds = wcaEvents ? ALL_EVENT_IDS.filter((id) => wcaEvents.has(id)) : [];
   const ids = availableEvents

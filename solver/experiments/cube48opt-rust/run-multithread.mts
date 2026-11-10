@@ -14,7 +14,7 @@ import { readWca100, validateSharedDepthResults } from './wasm-benchmark.mjs';
 import { getVariant } from './variants.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url)), ROOT = resolve(HERE, '../../..');
-const BASE = resolve(ROOT, '.tmp/cubeopt-reverse');
+const BASE = resolve(ROOT, '.local-data/cubeopt-reverse');
 const hash = (bytes: Uint8Array | string) => createHash('sha256').update(bytes).digest('hex');
 const CONTROL_ENV = ['CUBEOPT_MULTITHREAD_REVIEW', 'CUBEOPT_BACKEND', 'CUBEOPT_VARIANT', 'CUBEOPT_H',
   'CUBEOPT_SEARCH_THREADS', 'CUBEOPT_SOLVE_THREADS', 'CUBEOPT_MEASURE_RSS'];

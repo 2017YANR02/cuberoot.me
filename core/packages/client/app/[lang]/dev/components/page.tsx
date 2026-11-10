@@ -1,101 +1,38 @@
 'use client';
 
 import PageBackLink from '@/components/PageBackLink';
-// /dev/components — browsable catalog of cuberoot.me's own reusable components.
-// Data + live demos live in ./_catalog.tsx (the single place to register new ones).
 import Link from '@/components/AppLink';
-import { useTranslation } from 'react-i18next';
-import './components_gallery.css';
+import MoreToggle from '@/components/MoreToggle';
+import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
-import { CATALOG, CATEGORIES, EXTRA_DEMOS, iconFor, type ComponentEntry } from './_catalog';
-
-function Card({ e, lang }: { e: ComponentEntry; lang: 'zh' | 'en' }) {
-  const Demo = e.Demo ?? EXTRA_DEMOS[e.name];
-  const Icon = Demo ? null : iconFor(e);
-  return (
-    <div className="cg-card">
-      <div className="cg-card-head">
-        <span className="cg-card-name">{e.name}</span>
-      </div>
-      <p className="cg-card-desc">{lang === 'zh' ? e.zh : e.en}</p>
-      {Demo ? (
-        <div className="cg-stage">
-          <Demo />
-        </div>
-      ) : Icon ? (
-        <div className="cg-viz">
-          <Icon size={32} strokeWidth={1.4} aria-hidden="true" />
-        </div>
-      ) : null}
-      <pre className="cg-code"><code>{e.import}</code></pre>
-      {e.usage && <pre className="cg-code cg-code-usage"><code>{e.usage}</code></pre>}
-      {e.note && <div className="cg-card-note">{lang === 'zh' ? e.note.zh : e.note.en}</div>}
-    </div>
-  );
-}
+import ReferenceCatalog from '../_shared/ReferenceCatalog';
+import { CATALOG, CATEGORIES, EXTRA_DEMOS } from './_catalog';
+import './components_gallery.css';
 
 export default function CodeComponentsPage() {
-  const { i18n } = useTranslation();
-  const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  return (
-    <div className="cg">
-      <header className="cg-head">
-        <div className="cg-topbar">
-          <PageBackLink fallback="/dev" className="cg-back" />
-        </div>
-        <h1 className="cg-title">
-          <span className="cg-prefix">/</span>components
-          <span className="cg-cursor">_</span>
-        </h1>
-        <p className="cg-sub">
-          {tr({
-            zh: 'cuberoot.me 自己沉淀的可复用 UI 组件,一处集中查阅:每个组件一句话说清用途,能独立演示的直接给实时预览加照抄即用的 import。写新页面前先来这翻一遍,别重复造轮子。',
-            en: 'The reusable UI components cuberoot.me has accumulated, in one browsable place: a one-line purpose for each, a live preview for the self-contained ones, plus a copy-paste import. Skim here before building a new page — don’t reinvent the wheel.'
-        })}
-        </p>
-      </header>
-
-      <div className="cg-note">
-        <span className="cg-note-mark">★</span>
-        <span>
-          {tr({
-            zh: '约定:新建一个可复用组件后,在 ',
-            en: 'Convention: after building a new reusable component, register an entry in '
-        })}
-          <code>app/[lang]/dev/components/_catalog.tsx</code>
-          {tr({
-            zh: ' 里登记一条(顺手写个实时 Demo),下一个人 / 下一个 AI 打开本页就能查到它。',
-            en: ' (and add a live demo while you’re at it). The next person — or the next AI — then finds it right here.'
-        })}
-        </span>
-      </div>
-
-      {CATEGORIES.map((cat) => {
-        const items = CATALOG.filter((e) => e.category === cat.id);
-        if (!items.length) return null;
-        return (
-          <section className="cg-cat" key={cat.id}>
-            <div className="cg-cat-head">
-              <span className="cg-cat-tag">// {cat.id}</span>
-              <h2 className="cg-cat-title">{lang === 'zh' ? cat.zh : cat.en}</h2>
-            </div>
-            <div className="cg-grid">
-              {items.map((e) => (
-                <Card key={e.name} e={e} lang={lang} />
-              ))}
-            </div>
-          </section>
-        );
-      })}
-
-      <footer className="cg-foot">
-        <div className="cg-foot-line">
-          <Link href="/dev">/dev</Link>
-          <span>·</span>
-          <Link href="/">CubeRoot</Link>
-        </div>
-      </footer>
-    </div>
-  );
+  const t = useT();
+  return <main className="cg dev-reference-page">
+    <header className="dev-reference-page-heading">
+      <PageBackLink fallback="/dev" />
+      <h1>{t('组件库', 'Component library')}</h1>
+    </header>
+    <ReferenceCatalog directoryLabel={t('组件目录', 'Component directory')} entries={CATALOG} categories={CATEGORIES}
+      searchText={entry => `${entry.import} ${entry.usage ?? ''} ${entry.note?.zh ?? ''} ${entry.note?.en ?? ''}`}>
+      {entry => {
+        const Demo = entry.Demo ?? EXTRA_DEMOS[entry.name];
+        return <>
+          <h3>{t('导入', 'Import')}</h3><pre><code>{entry.import}</code></pre>
+          {entry.usage && <><h3>{t('用法', 'Usage')}</h3><pre><code>{entry.usage}</code></pre></>}
+          {entry.note && <><h3>{t('使用约定', 'Usage notes')}</h3><p>{tr(entry.note)}</p></>}
+          {Demo && <><h3>{t('交互示例', 'Interactive example')}</h3><div className="dev-reference-demo"><Demo /></div></>}
+        </>;
+      }}
+    </ReferenceCatalog>
+    <footer className="dev-reference-page-footer"><Link href="/dev/utils">{t('Hooks 与工具函数', 'Hooks & utilities')}</Link>
+    <details className="dev-reference-maintenance">
+      <MoreToggle as="summary">{t('维护组件目录', 'Maintaining the catalog')}</MoreToggle>
+      <p>{t('组件登记在 _catalog.tsx。保留双语用途、导入路径和必要限制；能独立运行的组件可补充示例，需要业务数据或权限的组件保留接入说明。', 'Register components in _catalog.tsx with bilingual purposes, imports and constraints. Add demos for standalone components and integration notes for those requiring business data or permissions.')}</p>
+    </details>
+    </footer>
+  </main>;
 }

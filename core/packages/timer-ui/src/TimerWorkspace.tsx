@@ -2,6 +2,7 @@ import { useSyncExternalStore, type HTMLAttributes, type ReactNode } from 'react
 import './timer-workspace.css';
 import { ResizeDivider } from '@app-foundation/navigation-ui/resize-divider';
 import '@app-foundation/navigation-ui/resize-divider.css';
+import { useHostViewportLayout } from './host-viewport';
 
 export const TIMER_WIDE_QUERY = '(min-width: 1024px)';
 function subscribe(notify: () => void) {
@@ -10,17 +11,22 @@ function subscribe(notify: () => void) {
   query.addEventListener('change', notify);
   return () => query.removeEventListener('change', notify);
 }
-/** Same breakpoint for Web docks and installed hosts; stable narrow SSR. */
-export function useTimerWideLayout() {
-  return useSyncExternalStore(subscribe, () => typeof window.matchMedia === 'function' && window.matchMedia(TIMER_WIDE_QUERY).matches, () => false);
+/** Desktop defaults stay at 1024px; native results docks can use safe content geometry. */
+export function useTimerWideLayout({ useHostContent = false }: { useHostContent?: boolean } = {}) {
+  const host = useHostViewportLayout();
+  const desktop = useSyncExternalStore(subscribe, () => typeof window.matchMedia === 'function' && window.matchMedia(TIMER_WIDE_QUERY).matches, () => false);
+  // A native reserved area reduces the actual workspace width. Require enough
+  // room for a 480px timer and 300px results; short landscape stays single-pane.
+  return useHostContent && host ? host.content.width >= 800 && host.content.height >= 560 : desktop;
 }
 
 export function TimerWorkspace({ active = true, panelOpen = false, recap, resizeLabel = 'Resize panel', children, className = '', ...props }: HTMLAttributes<HTMLDivElement> & {
   active?: boolean; panelOpen?: boolean; recap?: ReactNode; resizeLabel?: string;
 }) {
-  const wide = useTimerWideLayout();
+  const wide = useTimerWideLayout({ useHostContent: true });
   const recapOpen = active && wide && !panelOpen && Boolean(recap);
   return <div {...props} className={`${className}${active ? ' timer-workspace timer-no-selection' : ''}`}
+    data-wide-layout={wide ? '' : undefined}
     data-panel-open={active && (panelOpen || recapOpen) ? '' : undefined} data-recap-open={recapOpen ? '' : undefined}>
     {children}
     {active && wide && (panelOpen || recapOpen) && <TimerWorkspaceDivider side="right" label={resizeLabel} />}

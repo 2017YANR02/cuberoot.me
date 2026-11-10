@@ -67,7 +67,7 @@ mod opt8_specialized_checks {
     #[test]
     #[ignore = "reads only the local 818008-byte small snapshot, never a PDB"]
     fn opt8_fixed_packing_matches_scalar_generic_and_wasm_wrapper() {
-        let bytes = std::fs::read(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../.tmp/cubeopt-reverse/opt9-generated/small-memory.bin")).unwrap();
+        let bytes = std::fs::read(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../.local-data/cubeopt-reverse/opt9-generated/small-memory.bin")).unwrap();
         assert_eq!(bytes.len(), 818008);
         let tables = CoordTables::from_variant_bytes(&bytes, 8).unwrap();
         let wrapper = Opt8CoordTables::from_bytes(&bytes).unwrap();

@@ -1,4 +1,5 @@
 import { lllFivePolicy, validateLllFiveReview } from './lll-five-policy.mts';
+import {macPolicy, validateMacReview} from '../egg-solver/native-service/mac-h8-policy.mts';
 import { pllPolicy, validatePllReview } from './pll-sample-policy.mts';
 import {beginStatsRun, validateStatsRun} from './stats-resume-review.mts';
 import {cornerExecutable, cornerResearchPolicy} from './corner-policy.mts';
@@ -32,11 +33,11 @@ const root = resolve(here, '../../..');
 const native = resolve(here, 'target/release/cube48opt-research');
 const zbllNative = resolve(here, 'target/zbll/release/cube48opt-research');
 const opt10Native = resolve(here, 'target/opt10/release/cube48opt-research');
-const opt10Small = resolve(root, '.tmp/cubeopt-reverse/opt9-generated/small-memory.bin');
-const opt10Table = resolve(root, '.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
-const opt10Proof = resolve(root, '.tmp/cubeopt-reverse/opt10-generation-validation-v2.json');
-const opt10Metadata = resolve(root, '.tmp/cubeopt-reverse/opt10-generated-v2/generation-metadata.json');
-const opt10Input = resolve(root, '.tmp/cubeopt-reverse/wca100-single.tsv');
+const opt10Small = resolve(root, '.local-data/cubeopt-reverse/opt9-generated/small-memory.bin');
+const opt10Table = resolve(root, '.local-data/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
+const opt10Proof = resolve(root, '.local-data/cubeopt-reverse/opt10-generation-validation-v2.json');
+const opt10Metadata = resolve(root, '.local-data/cubeopt-reverse/opt10-generated-v2/generation-metadata.json');
+const opt10Input = resolve(root, '.local-data/cubeopt-reverse/wca100-single.tsv');
 const opt10PayloadBytes = 31_130_910_720;
 const opt10FileBytes = opt10PayloadBytes + 1024;
 const opt10ProofSources = ['src/opt10_generate.rs', 'src/opt10.rs', 'src/opt10_table.rs', 'src/eo_table.rs', 'src/coord.rs', 'src/cube.rs'];
@@ -289,6 +290,8 @@ export function resourceProtectionReasons(before: MemoryObservation, now: Memory
 
 /** Pure protocol validation. Tests never need to observe memory or open a PDB. */
 export function researchPolicy(label: string, executable: string, args: string[], env: NodeJS.ProcessEnv = process.env) {
+if (env.CUBEOPT_EGG_H8_REVIEW !== undefined)
+  return macPolicy({label,executable,args,env});
 if (env.CUBEOPT_BACKEND === 'opt11' || args.some(arg => /^(?:generate|solve|query)-opt11$/.test(arg)))
   throw Error('Opt11 is source-only; generation, table loading and solving are not authorized');
 if (env.CUBEOPT_BACKEND === 'corner' || executable === cornerExecutable)
@@ -340,7 +343,7 @@ if (env.CUBEOPT_ZBLL_REVIEW !== undefined) {
       || env.CUBEOPT_BACKEND !== 'opt10' || env.CUBEOPT_OPT10_REVIEW !== undefined
       || env.CUBEOPT_RESOURCE_REVIEW !== undefined || env.CUBEOPT_VARIANT !== undefined || env.CUBEOPT_H !== undefined
       || env.CUBEOPT_BENCHMARK !== undefined || env.CUBEOPT_MEASURE_RSS !== undefined
-      || env.CUBEOPT_ZBLL_REVIEW !== resolve(root, '.tmp/double-zbll-symmetry-v2/opt10-resource-review.json')
+      || env.CUBEOPT_ZBLL_REVIEW !== resolve(root, '.local-data/double-zbll-symmetry-v2/opt10-resource-review.json')
       || !Number.isInteger(threads) || threads < 1 || threads > availableParallelism()
       || String(threads) !== env.CUBEOPT_SOLVE_THREADS
       || JSON.stringify(args) !== JSON.stringify(['solve-opt10', opt10Small, opt10Table, '8', '20', '0']))
@@ -363,8 +366,8 @@ if (env.CUBEOPT_BACKEND === 'opt10' || ['generate-opt10', 'solve-opt10'].include
     rssLimit:opt10PayloadBytes+GiB,deadlineMs:(generation?6:1)*60*60_000};
 }
 if (resolve(executable) === resolve(here, 'target/release/examples/verify_opt10_generation')) {
-  const small = resolve(root, '.tmp/cubeopt-reverse/opt9-generated/small-memory.bin');
-  const table = resolve(root, '.tmp/cubeopt-reverse/opt1-generated/h48prun01.dat');
+  const small = resolve(root, '.local-data/cubeopt-reverse/opt9-generated/small-memory.bin');
+  const table = resolve(root, '.local-data/cubeopt-reverse/opt1-generated/h48prun01.dat');
   if (!/^[a-z0-9-]+$/.test(label) || args.length !== 4 || args[0] !== '--verify-opt1'
       || executable !== resolve(here, 'target/release/examples/verify_opt10_generation')
       || args[1] !== small || args[2] !== table || args[3] !== '16'
@@ -556,6 +559,7 @@ const wasmCandidate = 'wasmCandidate' in policy && policy.wasmCandidate === true
 const dualWasmCandidate = 'dualWasmCandidate' in policy && policy.dualWasmCandidate === true;
 const browserBenchmark = 'browserBenchmark' in policy && policy.browserBenchmark === true;
 const opt8NativeBenchmark = 'opt8NativeBenchmark' in policy && policy.opt8NativeBenchmark === true;
+const macH8Benchmark = 'macH8Benchmark' in policy && policy.macH8Benchmark === true;
 const opt10CurrentBenchmark = 'opt10CurrentBenchmark' in policy && policy.opt10CurrentBenchmark === true;
 const lllFive = 'lllFive' in policy && policy.lllFive === true;
 const pllSample = 'pllSample' in policy && policy.pllSample === true;
@@ -563,7 +567,7 @@ const zbllMultisolution = pllSample || lllFive || 'zbllMultisolution' in policy 
 const nxoptBenchmark = 'nxoptBenchmark' in policy && policy.nxoptBenchmark === true;
 const dualScopeStopPath = 'scopeStopPath' in policy ? policy.scopeStopPath : undefined;
 if ((dualWasmCandidate || browserBenchmark || opt10CurrentBenchmark || zbllMultisolution) && typeof dualScopeStopPath !== 'string') throw Error('Missing fixed candidate scope stop path');
-const validateBenchmarkReview = pllSample ? validatePllReview : lllFive ? validateLllFiveReview : zbllMultisolution ? validateZbllMultisolutionReview : opt10CurrentBenchmark ? validateCurrentReview : opt8NativeBenchmark ? validateOpt8NativeReview : nxoptBenchmark ? validateNxReview : browserBenchmark ? validateBrowserReview : dualWasmCandidate ? validateDualCandidateReview : wasmCandidate ? validateCandidateReview : originalResume ? validateResumeReview : validateOpenReview;
+const validateBenchmarkReview = macH8Benchmark ? validateMacReview : pllSample ? validatePllReview : lllFive ? validateLllFiveReview : zbllMultisolution ? validateZbllMultisolutionReview : opt10CurrentBenchmark ? validateCurrentReview : opt8NativeBenchmark ? validateOpt8NativeReview : nxoptBenchmark ? validateNxReview : browserBenchmark ? validateBrowserReview : dualWasmCandidate ? validateDualCandidateReview : wasmCandidate ? validateCandidateReview : originalResume ? validateResumeReview : validateOpenReview;
 let openBenchmarkReceipt: any;
 const { entry, mode, backend, variant, h, tablePath, measureNativeRss, rssLimit, deadlineMs } = policy;
 // Only the fixed, reviewed candidate policy may select a different startup reserve.
@@ -629,11 +633,11 @@ if (tablePath !== null && h !== null) {
 }
 if (process.platform !== 'darwin') throw Error('This resource guard requires macOS');
 const observationReserve = 256 * MiB;
-const output = resolve(root, '.tmp/cubeopt-reverse');
+const output = resolve(root, '.local-data/cubeopt-reverse');
 mkdirSync(output, { recursive: true });
 if (backend === 'corner' && ['-resources.json', '-started.json'].some(suffix => existsSync(resolve(output, label + suffix))))
   throw Error('This corner-research label already has resource evidence; use a new label to resume the same checkpoint');
-const record = resolve(root, '.tmp/h48-corners-research/resource-baseline.json');
+const record = resolve(root, '.local-data/h48-corners-research/resource-baseline.json');
 const ownRecord = resolve(output, 'resource-baseline.json');
 const lockPath = resolve(output, 'compute.lock');
 const reviewedStopPath = resolve(output, 'resource-review-stop.json');
@@ -668,7 +672,7 @@ if (generationProof) {
 if (process.env.AUF_EXPECTED_BOOT !== undefined && (process.env.AUF_EXPECTED_BOOT !== before.boot || Number(process.env.AUF_EXPECTED_SWAPOUTS) !== before.swapouts))
   throw Error('Long-job boot/swap baseline changed; cannot reset');
 const otherComputations = command('/bin/ps', ['-axo', 'pid,comm']).split('\n')
-  .filter(line => /solve_h48_h10|cube48opt-research|corner-research|table_generator|nxopt\d+/.test(line));
+  .filter(line => /solve_h48_h10|cube48opt-research|corner-research|table_generator|nxopt\d+|cuberoot-egg|egg-solver\/target\/.*\/(?:solve|gen)$/.test(line));
 if (otherComputations.length) throw Error('Another native computation is running: ' + otherComputations.join('; '));
 if (!openBenchmark && !zbllResume && !statsResume && !cornerSession && (existsSync(reviewedStopPath) || existsSync(opt10ReviewedStopPath) || existsSync(officialPaths.stop)
     || (existsSync(multithreadPaths.stop) && !multithreadReviewPath && !official && !zbllOfficial && !localOpt8))) throw Error('A newer reviewed computation stopped; further execution requires review');
@@ -925,7 +929,7 @@ function stop(reason: string, protection = false, details?: unknown) {
         const archive = resolve(output, `multithread-stop-${digest(previous)}.json`);
         if (!existsSync(archive)) writeFileSync(archive, previous, {flag:'wx'});
       }
-      atomic(cornerSession ? cornerSession.stopPath : statsResume ? statsResume.stopPath : zbllResume ? zbllResumeStopPath : dualWasmCandidate || browserBenchmark || nxoptBenchmark || opt8NativeBenchmark || opt10CurrentBenchmark || zbllMultisolution ? dualScopeStopPath as string : wasmCandidate ? candidateStopPath : originalResume ? resumeStopPath : openBenchmark ? openStopPath : officialReviewReceipt ? officialPaths.stop : multithreadReviewReceipt ? multithreadPaths.stop : opt10ReviewReceipt || zbll ? opt10ReviewedStopPath : reviewReceipt ? reviewedStopPath : ownRecord,
+      atomic(cornerSession ? cornerSession.stopPath : statsResume ? statsResume.stopPath : zbllResume ? zbllResumeStopPath : macH8Benchmark || dualWasmCandidate || browserBenchmark || nxoptBenchmark || opt8NativeBenchmark || opt10CurrentBenchmark || zbllMultisolution ? dualScopeStopPath as string : wasmCandidate ? candidateStopPath : originalResume ? resumeStopPath : openBenchmark ? openStopPath : officialReviewReceipt ? officialPaths.stop : multithreadReviewReceipt ? multithreadPaths.stop : opt10ReviewReceipt || zbll ? opt10ReviewedStopPath : reviewReceipt ? reviewedStopPath : ownRecord,
         { ...before, stopped: reason, trigger,
           ...(reviewReceipt ? { label, reviewReceipt } : {}), ...(opt10ReviewReceipt ? {label,opt10ReviewReceipt} : {}),
           ...(multithreadReviewReceipt ? {label,multithreadReviewReceipt} : {}),...(officialReviewReceipt ? {label,officialReviewReceipt} : {}) });

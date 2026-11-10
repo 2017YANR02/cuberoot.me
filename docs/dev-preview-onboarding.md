@@ -10,7 +10,7 @@ AI 从 `AGENTS.md` 进入 `dev-preview` skill，再使用本手册和命令完�
 - TypeScript 管理器：`core/scripts/dev-preview/cli.ts`；电脑端：同目录 `client.ts`。
 - 生成物：`ops/nginx/dev-machines.conf`、`core/packages/shared/src/dev-preview.ts`。client 环境识别和 API CORS 都消费这个 shared 入口；以后不再分别手工加名单。
 - 管理器 `register` 查询服务器监听端口、服务器保留端口和清单后分配 7105–7198。7101/7102 为原有服务保留，7199 为接入机制验收保留；已撤销设备的端口也不重用。
-- 现有 ruimin 三台继续使用 FRP：Mac Mini→7100，Alienware→7103，MacBook Pro→7104。Mac Mini 本机还经过 Caddy 3001 压缩到 Next 3000。旧域名仍兼容，`dev.cuberoot.me` 的 nginx 单独维护。
+- 现有 ruimin 三台继续使用 FRP：Mac Mini→7100，Alienware→7103，旧 MacBook Pro→7104（2026-11-09 按本人要求退役，端口保留不复用）；新 MacBook Pro 改用独立 SSH 接入。Mac Mini 本机还经过 Caddy 3001 压缩到 Next 3000。旧域名仍兼容，`dev.cuberoot.me` 的 nginx 单独维护。
 - 新增设备使用 OpenSSH 22 端口的独立密钥，只准在服务器 `127.0.0.1:<分配端口>` 监听，禁止 shell/SFTP、执行命令、本地转发、Unix socket 转发、代理转发、TTY 和任意其他端口。管理员私钥、FRP 共用令牌不交给同事。
 - 密钥只让该电脑连接开发预览，不授予 CubeRoot 网站管理员身份。当前网站开发代理仍连接线上 API；不能把它解释成独立测试数据库。
 
@@ -162,3 +162,9 @@ SSH 限制依据：[OpenSSH sshd_config](https://man.openbsd.org/sshd_config)、
 - 同一设备使用 enroll.pid 防止重复配置，复用原设备密钥、现有开发服务和已经运行的 runner；仅停止自己启动的子进程。Ctrl+C 明确停止，关机或强行结束进程后仍需恢复原命令，不承诺进程不存在时能自行运行。
 - 负责人端重试保留批准状态、阶段提交与发布检查点；push 回执丢失时核对远端提交再续跑，ready 回执丢失时核对 API 状态后清理占用。安全冲突卡住时不把后面的申请误标为失败。
 - 发布顺序：先应用 0274 migration 并部署 API（旧客户端兼容），再更新负责人专用 checkout 与客户端脚本/页面；仅修改本地主目录不会更新在运行的专用 checkout。发布后还需 Windows/Mac 的实际断网恢复与页面验收。
+
+### 工作服务更新与故障定位
+
+执行申请前安全同步专用 checkout；快进更新后退出本轮，下一轮重新加载新代码。只允许有对应发布检查点且仅修改部署生成物的本地提交继续恢复；其他历史分叉或修改保留原状并报错，禁止自动 reset 或强推。恢复旧副本时先归档旧 HEAD，再切到 origin/main，保留原请求、密钥和检查点。
+
+网页显示代码同步、设备身份、SSH 授权、DNS、证书或发布失败阶段，不展示原始日志与凭据。临时网络错误继续退避重试。已登记域名在申请时拒绝重复；旧 FRP 需要明确退役后才能替换。

@@ -1593,7 +1593,7 @@ def write_public_export(
     )
     if repository_root is None:
         raise ValueError(f"cannot locate repository root for stale asset quarantine: {public_dir}")
-    quarantine_root = repository_root / ".tmp" / "sq1-pbl-stale"
+    quarantine_root = repository_root / ".local-data" / "sq1-pbl-stale"
     quarantine_stale_generated_files(
         public_dir / "sheets",
         {f"{sheet['slug']}.json" for sheet in public_sheets},

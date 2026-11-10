@@ -1,5 +1,6 @@
 'use client';
 
+import { getUsableViewport } from './host-viewport';
 import {
   TIMER_HISTORY_QUICK_ACTION_CONTRACTS,
   formatSolveResult,
@@ -204,7 +205,7 @@ function TimerHistoryQuickMenu({
   }, [onClose]);
 
   useLayoutEffect(() => {
-    const viewport = window.visualViewport;
+    const viewport = getUsableViewport();
     const viewportLeft = viewport?.offsetLeft ?? 0;
     const viewportTop = viewport?.offsetTop ?? 0;
     const viewportWidth = viewport?.width ?? document.documentElement.clientWidth;
@@ -325,7 +326,7 @@ function TimerHistoryQuickMenu({
       <div
         className="timer-history-quick-backdrop"
         data-no-timer
-        style={{ paddingBottom: Math.max(0, viewportBottomInset) }}
+        style={{ paddingBottom: `max(${Math.max(0, viewportBottomInset)}px, var(--host-safe-bottom, 0px))` }}
       >
         <div
           aria-label={labels.menu}

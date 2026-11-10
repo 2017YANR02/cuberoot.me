@@ -22,7 +22,11 @@ export function TimerRemoteLiveCube({ playerId, live, ownerLabel, reconnecting =
             moves={[...live.moves]}
             algAnchored={live.algAnchored}
             mode={mode} language={language}
-            useGyro={false}
+            useGyro={Boolean(live.quatRef?.current)}
+            quatRef={live.quatRef}
+            sensorBasis="identity"
+            mirror={false}
+            orientationTauMs={20}
           />
         </div>
       </div>

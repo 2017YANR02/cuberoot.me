@@ -2,15 +2,13 @@
 
 import PageBackLink from '@/components/PageBackLink';
 import MoreToggle from '@/components/MoreToggle';
-import { useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { useTranslation } from 'react-i18next';
-import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
-import { SearchInput } from '@/components/SearchInput';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
+import { useT } from '@/hooks/useT';
+import ReferenceCatalog from '../_shared/ReferenceCatalog';
 import { tr } from '@/i18n/tr';
 import './api.css';
 
-const ACCENT = '#22D3EE';
 const BASE = 'api.cuberoot.me';
 
 type Method = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -30,6 +28,7 @@ interface Ep {
 // 域分组(渲染顺序 + 双语标签)。
 const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'auth', zh: '登录与身份', en: 'Auth & identity' },
+  { key: 'account', zh: '账号与工作区', en: 'Accounts & workspaces' },
   { key: 'wca-stats', zh: 'WCA 统计', en: 'WCA stats' },
   { key: 'wca-fun', zh: 'WCA 趣味榜', en: 'WCA fun stats' },
   { key: 'wca-data', zh: 'WCA 数据与监控', en: 'WCA data & watch' },
@@ -156,6 +155,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'POST', p: '/v1/mcp/oauth/revoke', g: 'public', c: 'no-store', zh: '凭 MCP 令牌撤销对应授权', en: 'Revoke a grant using its MCP token' },
   { d: 'auth', m: 'GET', p: '/v1/mcp/oauth/connections', g: 'admin', c: 'no-store', zh: '本人有效的 MCP 授权', en: 'Own active MCP grants' },
   { d: 'auth', m: 'POST', p: '/v1/mcp/oauth/connections/revoke', g: 'admin', c: 'no-store', zh: '撤销本人指定的 MCP 授权', en: 'Revoke a specific MCP grant owned by the administrator' },
+  { d: 'system', m: 'GET', p: '/v1/admin/assistant/billing', g: 'admin', c: 'no-store', zh: 'DeepSeek 官方余额与按供应商拆分的缓存优惠费用估算；days=7/30/90', en: 'Official DeepSeek balance and provider cost estimates with cache discounts; days=7/30/90' },
   { d: 'system', m: 'GET', p: '/v1/admin/assistant/insights', g: 'admin', c: 'no-store', zh: '评价、检索、费用、告警、匿名汇总与访问审计', en: 'Feedback, retrieval, cost, alerts, anonymous totals and access audit' },
   { d: 'system', m: 'GET', p: '/v1/admin/assistant/health', g: 'admin', c: 'no-store', zh: '监控后台心跳及活动告警', en: 'Monitoring heartbeat and active alerts' },
   { d: 'system', m: 'POST', p: '/v1/admin/assistant/requests/:id/review', g: 'admin', c: 'no-store', zh: '管理员复核与处理记录', en: 'Admin review and resolution' },
@@ -1182,223 +1182,55 @@ const CACHE_NOTE: Record<Cache, { zh: string; en: string }> = {
 };
 
 function pathParams(p: string): string[] {
-  return (p.match(/:([a-zA-Z]+)/g) ?? []).map((s) => s.slice(1));
+  return (p.match(/:([A-Za-z_][A-Za-z0-9_]*)/g) ?? []).map((s) => s.slice(1));
 }
 
+const CATEGORIES = DOMAINS.map(domain => ({ id: domain.key, zh: domain.zh, en: domain.en }));
+const ENTRIES = ENDPOINTS.map(endpoint => ({ ...endpoint, name: `${endpoint.m} ${endpoint.p}`, category: endpoint.d }));
+
 export default function ApiCatalogPage() {
-  const { i18n } = useTranslation();
-  const lang = (['en', 'zh'] as const)[Number(i18n.language.startsWith('zh'))];
-
-  const [q, setQ] = useQueryState('q', parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }));
-  const [domain, setDomain] = useQueryState('domain', parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }));
-  const [method, setMethod] = useQueryState('method', parseAsStringEnum<Method>(METHODS).withOptions({ history: 'replace', scroll: false }));
-  const [gate, setGate] = useQueryState('gate', parseAsStringEnum<Gate>(GATES).withOptions({ history: 'replace', scroll: false }));
-
-  const [open, setOpen] = useState<Set<string>>(() => new Set());
-  const toggle = (id: string) =>
-    setOpen((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-
-  const needle = q.trim().toLowerCase();
-  const filtered = useMemo(
-    () =>
-      ENDPOINTS.filter((e) => {
-        if (domain && e.d !== domain) return false;
-        if (method && e.m !== method) return false;
-        if (gate && e.g !== gate) return false;
-        if (needle) {
-          const hay = `${e.p} ${e.zh} ${e.en} ${e.d}`.toLowerCase();
-          if (!hay.includes(needle)) return false;
-        }
-        return true;
-      }),
-    [domain, method, gate, needle],
-  );
-
-  const groups = useMemo(
-    () =>
-      DOMAINS.map((dm) => ({ dm, items: filtered.filter((e) => e.d === dm.key) })).filter((g) => g.items.length > 0),
-    [filtered],
-  );
-
-  const total = ENDPOINTS.length;
-  const publicCount = ENDPOINTS.filter((e) => e.g === 'public').length;
-  const hasFilter = Boolean(needle || domain || method || gate);
-  const reset = () => { setQ(''); setDomain(''); setMethod(null); setGate(null); };
-
-  return (
-    <div className="api-page" style={{ ['--accent' as string]: ACCENT }}>
-      <div className="api-bg" />
-      <div className="api-inner">
-        <div className="api-topbar">
-          <PageBackLink fallback="/dev" className="api-back" />
-        </div>
-
-        <header className="api-hero">
-          <h1 className="api-title"><span className="api-title-slash">/</span>dev/api</h1>
-          <p className="api-lede">
-            {tr({
-              zh: 'CubeRoot 后端是一个 Hono 服务,全部端点挂在 /v1 下。这里把每个对外端点列全:方法、路径、用途、鉴权门、缓存策略。数据直接从路由源码抽出。',
-              en: 'The CubeRoot backend is a single Hono service; every endpoint lives under /v1. This lists each public endpoint — method, path, purpose, auth gate, cache policy — extracted straight from the route source.',
-            })}
-          </p>
-          <div className="api-base">
-            <span className="api-base-label">{tr({ zh: '基地址', en: 'Base' })}</span>
-            <code>https://{BASE}</code>
-          </div>
-          <div className="api-stats">
-            <span><strong>{total}</strong> {tr({ zh: '个端点', en: 'endpoints' })}</span>
-            <span><strong>{DOMAINS.length}</strong> {tr({ zh: '个域', en: 'domains' })}</span>
-            <span><strong>{publicCount}</strong> {tr({ zh: '个公开', en: 'public' })}</span>
-          </div>
-        </header>
-
-        <div className="api-controls">
-          <div className="api-search">
-            <svg className="api-search-icon" viewBox="0 0 16 16" aria-hidden="true">
-              <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
-              <path d="M10.5 10.5 L14 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
-            <SearchInput
-              value={q}
-              onChange={setQ}
-              className="api-search-field"
-              inputClassName="api-search-input"
-              placeholder={tr({ zh: '搜路径或用途，如 sum-of-ranks / 打乱 / recon', en: 'Search path or purpose — sum-of-ranks / scramble / recon' })}
-              ariaLabel={tr({ zh: '搜索端点', en: 'Search endpoints' })}
-              spellCheck={false}
-              autoComplete="off"
-            />
-          </div>
-
-          <div className="api-filter-row">
-            <label className="api-domain">
-              <span className="api-filter-label">{tr({ zh: '域', en: 'Domain' })}</span>
-              <select value={domain} onChange={(e) => setDomain(e.target.value)} className="api-select">
-                <option value="">{tr({ zh: '全部', en: 'All' })}</option>
-                {DOMAINS.map((dm) => (
-                  <option key={dm.key} value={dm.key}>{dm[lang]}</option>
-                ))}
-              </select>
-            </label>
-
-            <div className="api-chiprow" role="group" aria-label={tr({ zh: '按方法过滤', en: 'Filter by method' })}>
-              {METHODS.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  className={`api-chip api-m${method === m ? ' is-on' : ''}`}
-                  data-method={m}
-                  aria-pressed={method === m}
-                  onClick={() => setMethod(method === m ? null : m)}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-
-            <div className="api-chiprow" role="group" aria-label={tr({ zh: '按鉴权过滤', en: 'Filter by auth' })}>
-              {GATES.map((g) => (
-                <button
-                  key={g}
-                  type="button"
-                  className={`api-chip api-g${gate === g ? ' is-on' : ''}`}
-                  data-gate={g}
-                  aria-pressed={gate === g}
-                  onClick={() => setGate(gate === g ? null : g)}
-                >
-                  {GATE_LABEL[g][lang]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="api-resultbar">
-            <span>{tr({ zh: `匹配 ${filtered.length} / ${total}`, en: `${filtered.length} / ${total} match` })}</span>
-            {hasFilter && (
-              <button type="button" className="api-reset" onClick={reset}>
-                {tr({ zh: '清除筛选', en: 'Clear filters' })}
-              </button>
-            )}
-          </div>
-        </div>
-
-        <main className="api-groups">
-          {groups.length === 0 && (
-            <p className="api-empty">{tr({ zh: '没有匹配的端点。', en: 'No matching endpoints.' })}</p>
-          )}
-          {groups.map(({ dm, items }) => (
-            <section key={dm.key} className="api-group">
-              <div className="api-group-head">
-                <h2>{dm[lang]}</h2>
-                <span className="api-group-count">{items.length}</span>
-                <code className="api-group-key">{dm.key}</code>
-              </div>
-              <ul className="api-list">
-                {items.map((e) => {
-                  const id = `${e.m} ${e.p}`;
-                  const isOpen = open.has(id);
-                  const params = pathParams(e.p);
-                  return (
-                    <li key={id} className={`api-row${isOpen ? ' is-open' : ''}`}>
-                      <MoreToggle type="button" className="api-row-main" onClick={() => toggle(id)} expanded={isOpen}>
-                        <span className="api-method" data-method={e.m}>{e.m}</span>
-                        <code className="api-path">{e.p}</code>
-                        <span className="api-row-right">
-                          <span className="api-gate" data-gate={e.g}>{GATE_LABEL[e.g][lang]}</span>
-                          {e.c && <span className="api-cache" data-cache={e.c}>{CACHE_LABEL[e.c][lang]}</span>}
-
-                        </span>
-                      </MoreToggle>
-                      <p className="api-summary">{e[lang]}</p>
-                      {isOpen && (
-                        <div className="api-detail">
-                          <div className="api-detail-url">
-                            <span className="api-method" data-method={e.m}>{e.m}</span>
-                            <code>https://{BASE}{e.p}</code>
-                          </div>
-                          {params.length > 0 && (
-                            <div className="api-detail-block">
-                              <span className="api-detail-h">{tr({ zh: '路径参数', en: 'Path params' })}</span>
-                              <span className="api-params">
-                                {params.map((pp) => <code key={pp} className="api-param">{pp}</code>)}
-                              </span>
-                            </div>
-                          )}
-                          <div className="api-detail-block">
-                            <span className="api-detail-h">{GATE_LABEL[e.g][lang]}</span>
-                            <span className="api-detail-note">{GATE_NOTE[e.g][lang]}</span>
-                          </div>
-                          {e.c && (
-                            <div className="api-detail-block">
-                              <span className="api-detail-h">{CACHE_LABEL[e.c][lang]}</span>
-                              <span className="api-detail-note">{CACHE_NOTE[e.c][lang]}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          ))}
-        </main>
-
-        <footer className="api-foot">
-          <p>
-            {tr({
-              zh: '调本站接口请走前端的 apiUrl() 封装,别硬编码 origin。鉴权门只标到「需登录 / 需 admin」级别,不公开任何密钥。',
-              en: 'From the frontend, always go through the apiUrl() helper — never hardcode an origin. Auth gates are shown only at the login / admin level; no secrets are exposed.',
-            })}
-          </p>
-          <Link href="/dev/architecture" className="api-foot-link">{tr({ zh: '架构总览 →', en: 'Architecture overview →' })}</Link>
-        </footer>
-      </div>
-    </div>
-  );
+  const t = useT();
+  return <main className="dev-reference-page api-reference">
+    <header className="dev-reference-page-heading">
+      <PageBackLink fallback="/dev" />
+      <h1>{t('API 端点目录', 'API endpoints')}</h1>
+      <InfoTooltip iconSize={18} ariaLabel={t('API 使用说明', 'About this API')}
+        content={t('按业务领域、请求方法和权限检索。空格分隔的关键词需同时匹配；可搜索路径、参数名和中英文用途。接口基址为 https://api.cuberoot.me，Web 内部请求复用 apiUrl()。', 'Filter by domain, method and access. Space-separated terms must all match; search paths, parameter names and descriptions in either language. The base URL is https://api.cuberoot.me; Web callers use apiUrl().')} />
+    </header>
+    <ReferenceCatalog entries={ENTRIES} categories={CATEGORIES} categoryParam="domain"
+      directoryLabel={t('端点目录', 'Endpoint directory')}
+      searchPlaceholder={t('搜索路径、参数或用途', 'Search paths, parameters or purposes')}
+      facets={[
+        { key: 'method', label: t('方法', 'Method'), options: METHODS.map(value => ({ value, label: value })), value: entry => entry.m },
+        { key: 'gate', label: t('权限', 'Access'), options: GATES.map(value => ({ value, label: tr(GATE_LABEL[value]) })), value: entry => entry.g },
+      ]}
+      searchText={entry => {
+        const domain = DOMAINS.find(domain => domain.key === entry.d);
+        return `${entry.d} ${domain?.zh} ${domain?.en} ${entry.g} ${GATE_LABEL[entry.g].zh} ${GATE_LABEL[entry.g].en} ${entry.c ?? ''}`;
+      }}>
+      {entry => <>
+        <dl className="dev-reference-facts">
+          <div><dt>{t('领域', 'Domain')}</dt><dd>{tr(DOMAINS.find(domain => domain.key === entry.d)!)}</dd></div>
+          <div><dt>{t('请求方法', 'Method')}</dt><dd><code className="api-reference-method" data-method={entry.m}>{entry.m}</code></dd></div>
+          <div><dt>{t('权限', 'Access')}</dt><dd>{tr(GATE_LABEL[entry.g])}</dd></div>
+          {entry.c && <div><dt>{t('缓存', 'Cache')}</dt><dd>{tr(CACHE_LABEL[entry.c])}</dd></div>}
+        </dl>
+        <h3>{t('请求地址', 'Request URL')}</h3><pre><code>https://{BASE}{entry.p}</code></pre>
+        {pathParams(entry.p).length > 0 && <>
+          <h3>{t('路径参数', 'Path parameters')}</h3>
+          <p className="api-reference-params">{pathParams(entry.p).map(param => <code key={param}>:{param}</code>)}</p>
+        </>}
+        <h3>{t('鉴权要求', 'Authentication')}</h3><p>{tr(GATE_NOTE[entry.g])}</p>
+        {entry.c && <><h3>{t('缓存约定', 'Caching')}</h3><p>{tr(CACHE_NOTE[entry.c])}</p></>}
+      </>}
+    </ReferenceCatalog>
+    <footer className="dev-reference-page-footer">
+      <Link href="/dev/schema">{t('数据库', 'Database')}</Link>
+      <Link href="/dev/architecture">{t('系统架构', 'Architecture')}</Link>
+      <details className="dev-reference-maintenance">
+        <MoreToggle as="summary">{t('调用与维护约定', 'Calling & maintaining the API')}</MoreToggle>
+        <p>{t('前端请求通过 apiUrl() 生成地址，避免硬编码域名。公开接口无需凭据；登录和管理员接口只在对应授权下调用，凭据不放进 URL。端点方法、路径和权限以 core/apps/api/src/routes/ 的实现为准；新增路由时同步本目录。', 'Build client request URLs with apiUrl() instead of hardcoding the origin. Public endpoints need no credentials; authenticated and admin calls require the corresponding authorization. Keep credentials out of URLs. Methods, paths and access rules are defined in core/apps/api/src/routes/; update this catalog when adding routes.')}</p>
+      </details>
+    </footer>
+  </main>;
 }

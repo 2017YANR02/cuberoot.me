@@ -6,7 +6,7 @@ import {officialPaths,officialArgs} from '../experiments/cube48opt-rust/opt10-of
 import {zbllOfficialReviewPath} from '../experiments/cube48opt-rust/opt10-zbll-policy.mts';
 test('daily default selects Opt10 independently of retired H10 table',()=>{
  const c=statsEngine('/repo',{}); assert.equal(c.engine,'opt10'); assert.equal(c.expectedBytes,31130911744);
- assert.equal(c.table,'/repo/.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
+ assert.equal(c.table,'/repo/.local-data/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
  assert.equal(statsEngine('/repo',{H10_ENGINE:'c',H48_H10_TABLE:'/old'}).table,'/old');
  assert.throws(()=>statsEngine('/repo',{H10_ENGINE:'typo'}));
 });

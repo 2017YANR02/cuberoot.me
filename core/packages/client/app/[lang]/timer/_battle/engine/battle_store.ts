@@ -8,7 +8,7 @@ import { normalizeSoloLayout, type SoloLayout, resolveTimerWcaSourceCore, timerS
  */
 
 import { create } from 'zustand';
-import type { PlayerState, SolveEntry, Session, BattleMode, BattleLayout, TabName } from './types';
+import type { PlayerState, SolveEntry, Session, BattleMode, BattleLayout, TabName, BattleRecording } from './types';
 import { moveClockElapsed, type MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 import { PENALTY, LS_PREFIX, MIN_SOLVE_TIME, DEFAULT_PLAYER_KEYS } from './constants';
 import type { PenaltyType } from './constants';
@@ -504,8 +504,9 @@ export interface BattleState {
    * 返回值 = 这一下有没有被采纳(状态不对时什么也不做)。
    */
   cubeArm: (playerId: number) => boolean;
+  cubeCancel: (playerId: number) => void;
   cubeStart: (playerId: number, atMs: number, clock?: MoveClockSample) => boolean;
-  cubeStop: (playerId: number, atMs: number, clock?: MoveClockSample) => boolean;
+  cubeStop: (playerId: number, atMs: number, clock?: MoveClockSample, recording?: (timeMs: number) => BattleRecording) => boolean;
   setCubeMode: (mode: 'own' | 'shared') => void;
   setCubeHolder: (playerId: number) => void;
   /** 传给下一个还没拧完的人;都拧完了就停在原地。 */
@@ -605,7 +606,8 @@ function localState(s: BattleState): LocalBattleState {
   }) };
 }
 
-function applyLocalAction(get: () => BattleState, set: (patch: Partial<BattleState>) => void, action: LocalBattleAction): boolean {
+function applyLocalAction(get: () => BattleState, set: (patch: Partial<BattleState>) => void, action: LocalBattleAction,
+  recording?: { playerId: number; finish(timeMs: number): BattleRecording }): boolean {
   const s = get();
   const transition = transitionLocalBattle(localState(s), action, { inspectionSec: s.inspectionTime, syncStart: s.syncStart, minSolveMs: MIN_SOLVE_TIME });
   if (!transition.accepted) return false;
@@ -614,6 +616,7 @@ function applyLocalAction(get: () => BattleState, set: (patch: Partial<BattleSta
     players: s.players.map((p, id) => {
     const next = transition.state.players[id], timer = next.timer;
     return { ...p, timerState: timer, timerResult: next.result, resultScramble: next.resultScramble, resultScrambleSource: next.resultScrambleSource, isTiming: timer.phase === 'running', hasFinished: next.result !== null,
+      recording: next.result ? recording?.playerId === id ? recording.finish(next.result.timeMs) : p.recording : undefined,
       isReady: timer.phase === 'holding' || timer.phase === 'ready' && (p.isReady || s.syncStart), canStart: timer.phase === 'ready',
       isInspecting: timer.inspectionStartedAtMs !== null && timer.phase !== 'running',
       inspectionStart: timer.inspectionStartedAtMs ?? 0,
@@ -818,6 +821,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   // 走的是和按键同一套 player 字段(isReady / canStart / isTiming / hasFinished),
   // 所以「一半人用魔方、一半人用键盘」是自然成立的,不需要第二套状态。
 
+  cubeCancel: (playerId: number) => {
+    applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'cancel-arm' } });
+  },
+
   cubeArm: (playerId: number): boolean => {
     if (get().mode !== 'solo') {
       if (get().players.slice(0, get().playerCount).every(p => p.hasFinished)) get().resetForNextRound();
@@ -888,9 +895,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     return true;
   },
 
-  cubeStop: (playerId: number, atMs: number, clock?: MoveClockSample): boolean => {
+  cubeStop: (playerId: number, atMs: number, clock?: MoveClockSample, recording?: (timeMs: number) => BattleRecording): boolean => {
     if (get().mode !== 'solo') {
-      return applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'stop-from-cube', nowMs: atMs, atMs, clock } });
+      return applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'stop-from-cube', nowMs: atMs, atMs, clock } },
+        recording ? { playerId, finish: recording } : undefined);
     }
     const s = get();
     if (!inPlay(s, playerId)) return false;
@@ -905,7 +913,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     if (p.inspectionPenalty === '+2') penalty = PENALTY.PLUS2;
     else if (p.inspectionPenalty === 'dnf') penalty = PENALTY.DNF;
     const players = [...s.players];
-    players[playerId] = { ...p, time: elapsed, isTiming: false, hasFinished: true, penalty };
+    players[playerId] = { ...p, time: elapsed, isTiming: false, hasFinished: true, penalty, recording: recording?.(elapsed) };
     if (p.rafId !== null) cancelAnimationFrame(p.rafId);
     set({ players });
     get().checkBothFinished();      // 传魔方也在里面 —— 见 advanceCubeHolder 的注释
@@ -1203,6 +1211,11 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       const roundId = createLocalBattleRoundId();
       const round = createLocalBattleRound(localState(finalized), roundId, roundTs);
       if (!round) return;
+      // Attach recordings before the one atomic round write, including the last
+      // player to stop. Never recover other players' recordings from solo history.
+      for (const attempt of round.attempts) {
+        Object.assign(attempt.solve, finalized.players[attempt.playerId].recording);
+      }
       const battleRounds = [...finalized.battleRounds, round];
       const persisted = persistBattleRounds(finalized.sessionId, battleRounds);
       set({

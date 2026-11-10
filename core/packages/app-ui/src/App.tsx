@@ -234,6 +234,7 @@ import {
   TimerBooleanSettingRow,
   TimerWorkspace,
   useTimerWideLayout,
+  useHostViewportLayout,
   TimerTypographySettings,
   TimerSettingsPanel,
   TimerTimingSettingsSections,
@@ -453,7 +454,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const [view, setView] = useState<AppView>('timer');
   const [settingsCategory, setSettingsCategory] = useState<TimerSettingCategoryId>('timer');
   const [timerMode, setTimerMode] = useState<TimerPlayersValue>(1);
-  const wideLayout = useTimerWideLayout();
+  const wideLayout = useTimerWideLayout({ useHostContent: true });
+  const hostViewport = useHostViewportLayout();
   const wideLayoutRef = useRef(wideLayout);
   const bluetoothButtonRef = useRef<HTMLButtonElement>(null);
   wideLayoutRef.current = wideLayout;
@@ -482,6 +484,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     tools: null,
   });
   const [viewportHeight, setViewportHeight] = useState(visibleViewportHeight);
+  const sideNavigation = Boolean(hostViewport?.bar && viewportHeight - hostViewport.bar.y >= 148);
   const [primaryNavBottomInset, setPrimaryNavBottomInset] = useState(0);
   const primaryNavRef = useRef<HTMLElement>(null);
   const [connection, setConnection] = useState<ConnectionState>('checking');
@@ -2044,8 +2047,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
 
   useLayoutEffect(() => {
     const height = primaryNavRef.current?.getBoundingClientRect().height ?? 0;
-    setPrimaryNavBottomInset(wideLayout ? 0 : height);
-  }, [fullscreen, storeLoaded, viewportHeight, wideLayout]);
+    setPrimaryNavBottomInset(wideLayout || sideNavigation ? 0 : height);
+  }, [fullscreen, storeLoaded, viewportHeight, wideLayout, sideNavigation]);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -3959,7 +3962,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       triggerLabel={TIMER_DEVICE_CENTER_LABELS.trigger[language]}
     />
   );
-  const shellViewport = mobileShellViewportLayout(viewportHeight);
+  const contentRect = hostViewport?.content;
+  const shellHeight = contentRect ? Math.max(1, Math.min(contentRect.height, viewportHeight - contentRect.y)) : viewportHeight;
+  const shellViewport = mobileShellViewportLayout(shellHeight);
   const solverHintPanel = activeEvent === '333' ? <Suspense fallback={null}>
     <StageSolverDialog scramble={scramble} language={language}
       sheetOpen={openOverlay === TIMER_OVERLAY_IDS.stageSolver} onSheetOpenChange={changeSolverSheet}
@@ -3973,8 +3978,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       className={`app-shell app-shell--${dockHistory || view === 'settings' ? 'timer' : view}${shellViewport.classNameSuffix}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
       data-timer-hide-ui={timerMode === 1 && store && timerHidesRunningUi(timer.machine.phase, store.settings) ? '' : undefined}
       data-wide={wideLayout ? 'true' : undefined}
+      data-side-navigation={sideNavigation ? '' : undefined}
       data-layout-editing={layoutEditing ? '' : undefined}
       style={{ ...shellViewport.style,
+        ...(contentRect ? { position: 'fixed', left: contentRect.x, top: contentRect.y, width: contentRect.width, paddingTop: 0 } : {}),
         '--solo-scramble-gap': `${store?.settings.soloLayout.scrambleGap ?? 16}px`,
         '--solo-source-gap': `${store?.settings.soloLayout.sourceGap ?? 16}px`,
         '--solo-timer-gap': `${store?.settings.soloLayout.timerGap ?? 20}px`,
@@ -4015,7 +4022,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
 
 
 
-      <TimerWorkspace className="view-container" active={timerMode === 1 && timerVisible}
+      <TimerWorkspace className="view-container" data-fit-viewport={hostViewport ? '' : undefined} active={timerMode === 1 && timerVisible}
         data-live-reconstruction={liveSolutionPanel ? '' : undefined}
         panelOpen={dockHistory && !liveSolutionPanel} recap={liveSolutionPanel ?? solveRecap}>
         {timerVisible && timerMode === 1 && (
@@ -4283,7 +4290,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
                   onClick={() => setView('history')}
                 />}}
         solver={solverHintPanel}
-        narrowRecap={liveSolutionPanel}
+        narrowRecap={!wideLayout ? liveSolutionPanel : undefined}
         timing={{
 className: targetFeedbackClass,
 ariaLabel: copy.timer,
@@ -5128,7 +5135,9 @@ children: <>
         connectAttempt={externalConnectAttempt?.kind === 'stackmat' ? externalConnectAttempt.promise : null}
       />}
 
-      <nav data-timer-hide-while-running className="primary-nav" aria-label={copy.title} ref={primaryNavRef}>
+      <nav data-timer-hide-while-running className="primary-nav" aria-label={copy.title} ref={primaryNavRef}
+        style={sideNavigation && hostViewport?.bar ? { left: hostViewport.bar.x, top: hostViewport.bar.y,
+          width: hostViewport.bar.width, height: Math.min(hostViewport.bar.height, Math.max(0, viewportHeight - hostViewport.bar.y)) } : undefined}>
         <button
           aria-current={view === 'timer' || view === 'history' || view === 'settings' ? 'page' : undefined}
           data-no-timer

@@ -12,7 +12,7 @@ import { orientedSpellings, outerKey, joinMoves, inverseTokens, moveTokens, scor
   splitLiteralOrientation, compareOriented, fixedCaseSetup } from './lll-oriented-notation.mts';
 import { startLabel } from './lll-grip-scoring.mts';
 
-const root = resolve(import.meta.dirname, '../../..'), inputDir = resolve(root, '.tmp/pll-21-20261023');
+const root = resolve(import.meta.dirname, '../../..'), inputDir = resolve(root, '.local-data/pll-21-20261023');
 const out = resolve(inputDir, 'starting-orientation-v2');
 const read = (name: string) => readFileSync(resolve(inputDir, name));
 const digest = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');

@@ -21,7 +21,7 @@ it('records keys before timer bindings, cancels on Escape, and delegates support
     await act(async () => buttons[1].click());
     await act(async () => buttons[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'q', bubbles: true })));
     expect(assign).toHaveBeenCalledExactlyOnceWith(1, 'q'); expect(timerKey).not.toHaveBeenCalled();
-    const select = document.querySelector('select')!;
+    const select = document.querySelector<HTMLSelectElement>('.timer-battle-settings select')!;
     expect([...select.options].map((option) => option.value)).toEqual(['2', '3']);
     await act(async () => { select.value = '2'; select.dispatchEvent(new Event('change', { bubbles: true })); });
     expect(change).toHaveBeenCalledWith(2);
@@ -39,17 +39,22 @@ it('clearly confirms clearing results, preserves them on cancel, and ignores mod
     await act(async () => root.render(createElement(TimerBattleSettings, {
       language: 'en', keys: ['a', ' '], onKeyChange: assign, onClose: close, onReset: reset,
     })));
-    const button = document.querySelector<HTMLButtonElement>('.timer-battle-settings-reset button')!;
+    const category = (text: string) => [...document.querySelectorAll<HTMLButtonElement>('.settings-category-button')].find(button => button.textContent === text)!;
+    await act(async () => category('Data').click());
+    let button = document.querySelector<HTMLButtonElement>('.timer-battle-settings-reset button')!;
     expect(button.textContent).toBe('Clear battle results');
     await act(async () => button.click());
     expect(confirm).toHaveBeenCalledWith('Clear all results in the current battle session? This cannot be undone. Your settings will be kept.');
     expect(reset).not.toHaveBeenCalled(); expect(close).not.toHaveBeenCalled();
+    await act(async () => category('Timing').click());
     const key = document.querySelector<HTMLButtonElement>('.timer-battle-key-bindings button')!;
     await act(async () => key.click());
     await act(async () => key.dispatchEvent(new KeyboardEvent('keydown', { key: 'q', metaKey: true, bubbles: true })));
     expect(assign).not.toHaveBeenCalled();
     await act(async () => key.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
     confirm.mockReturnValue(true);
+    await act(async () => category('Data').click());
+    button = document.querySelector<HTMLButtonElement>('.timer-battle-settings-reset button')!;
     await act(async () => button.click());
     expect(reset).toHaveBeenCalledOnce(); expect(close).toHaveBeenCalledOnce();
   } finally { await act(async () => root.unmount()); vi.restoreAllMocks(); vi.unstubAllGlobals(); }

@@ -42,6 +42,7 @@ describe.skipIf(process.env.RECON_INTAKE_PG_TEST !== '1')('intake transactions o
     await query(`CREATE TABLE IF NOT EXISTS recon_ground_truth_cases (recon_id INTEGER PRIMARY KEY, status TEXT NOT NULL,
       source_event TEXT, source_added_by_id TEXT, source_scramble TEXT NOT NULL, source_solution TEXT NOT NULL)`);
     await query('ALTER TABLE recons ADD COLUMN IF NOT EXISTS added_by_id TEXT');
+    await query('ALTER TABLE recons ADD COLUMN IF NOT EXISTS person TEXT, ADD COLUMN IF NOT EXISTS reconer TEXT, ADD COLUMN IF NOT EXISTS reconer_id TEXT, ADD COLUMN IF NOT EXISTS added_by TEXT, ADD COLUMN IF NOT EXISTS comp_wca_id TEXT, ADD COLUMN IF NOT EXISTS country TEXT');
     await query('ALTER TABLE recon_ground_truth_cases ADD COLUMN IF NOT EXISTS source_event TEXT');
     await query('ALTER TABLE recon_ground_truth_cases ADD COLUMN IF NOT EXISTS source_added_by_id TEXT');
   });
@@ -91,7 +92,8 @@ describe.skipIf(process.env.RECON_INTAKE_PG_TEST !== '1')('intake transactions o
       request('', { id: randomUUID(), input: { ...linked, recording: { ...linked.recording, timeMs: 1001 } } })]);
     expect(attempts.map(response => response.status).sort()).toEqual([200, 409]);
     const stored = await attempts.find(response => response.status === 200)!.json();
-    expect(stored.sourceSnapshot).toEqual({ id: source.id, scramble: 'R', solution: "R'" });
+    expect(stored.sourceSnapshot).toMatchObject({ id: source.id, scramble: 'R', solution: "R'", metadataOrigin: 'collection',
+      metadata: { value: '4.00', competition: 'Test', personId: '2023GENG02' } });
     const collected = await (await request('/sources?status=collected')).json();
     expect(collected.items.find((row: { id: number }) => row.id === source.id)?.intakeStatus).toBe('pending-test');
     await query("UPDATE recons SET solution = 'R R2' WHERE id = 2000000001");

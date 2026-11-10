@@ -82,7 +82,7 @@ opt1 加载路径调用的 `check_pruning_dist(..., checksum=0, ...)` 禁用了 
 - `node oracle.mjs query ABS_TABLE ABS_FIXTURES_JSON ABS_OUT_JSON`：真实调用原版 `step1_query`，只启用一个 context，剩余七个停用；给负剩余预算让第一次查表必定剪枝，防止逆坐标二次计算覆盖首次结果。保存 407 条正/逆坐标和下界，不进行搜索。
 - `node oracle.mjs query-small ABS_FIXTURES_JSON ABS_OUT_JSON`：只初始化小表，不分配 PDB；把 PDB 指针暂设为线性内存末尾，原版 `step1_query` 写出第一坐标后在第一次 PDB 读取触发预期越界。读取已写坐标并恢复指针。固定二进制中的该函数没有下级调用或全局栈指针写入；哨兵、坐标范围、memory32 加法不绕回及预期异常均检查。输出 `hot-query.v1` 的 814 个坐标，`method` 明确记录方式、下界为 null；这不验证剪枝表值或求解正确性。
 - `node validate.mjs shallow|suite ABS_NATIVE ABS_SMALL_DIR ABS_TABLE ABS_NEW_OUT_DIR`：统一对照运行。`shallow` 用 cubing.js BFS 全部深度 0..3 状态（数量 1、18、243、3240），Rust contexts 1/8 和 WASM 各验一遍；`suite` 用 10 个固定短序列及历史 15 步 case `3649581001`。同时检查 Rust 节点预算取消和深度穷尽的边界，保存每路原始结果和汇总。
-- `node benchmark.mjs ABS_NATIVE ABS_SMALL_DIR ABS_TABLE ABS_NEW_OUT_DIR [--cases ABS_CASES_JSON] [--probe] [--sequential]`：默认保留持久 Rust 进程（8 contexts）与持久 WASM 实例（1 thread、1 group、内部 8 contexts），两边加载同一档位表后逐例交错求解。默认 **18 例**：从历史 60 例中取全部 `htm<=17` 的 16 例（原始最短步数 15/16/17 分别 1/1/14 例），每条截取前 14 个转动，作为 `prefix14` 组；再追加全部 `htm<=16` 的 2 条完整原序列，作为 `historical` 组。截取后的 16 条不继承原序列的 `htm`，其距离与 WASM 对照确定。默认生成数据与 `.tmp/cubeopt-reverse/benchmark-bounded-cases.json` 的 `cases` 序列化后逐字节一致。`--cases` 可传数组或 `{cases:[{id,scramble,htm?,group?}]}`。正式运行首轮预热并排除，再测 3 轮，同例跨轮交换先后；`--probe` 只做 1 轮资源/耗时探测，不能作为正式性能结论。Rust 每例 10 亿节点预算，触及预算报告取消，不宣称无解；外层使用 guard 当前按档位/动作选择的 RSS、超时与原 Swapouts 基线。
+- `node benchmark.mjs ABS_NATIVE ABS_SMALL_DIR ABS_TABLE ABS_NEW_OUT_DIR [--cases ABS_CASES_JSON] [--probe] [--sequential]`：默认保留持久 Rust 进程（8 contexts）与持久 WASM 实例（1 thread、1 group、内部 8 contexts），两边加载同一档位表后逐例交错求解。默认 **18 例**：从历史 60 例中取全部 `htm<=17` 的 16 例（原始最短步数 15/16/17 分别 1/1/14 例），每条截取前 14 个转动，作为 `prefix14` 组；再追加全部 `htm<=16` 的 2 条完整原序列，作为 `historical` 组。截取后的 16 条不继承原序列的 `htm`，其距离与 WASM 对照确定。默认生成数据与 `.local-data/cubeopt-reverse/benchmark-bounded-cases.json` 的 `cases` 序列化后逐字节一致。`--cases` 可传数组或 `{cases:[{id,scramble,htm?,group?}]}`。正式运行首轮预热并排除，再测 3 轮，同例跨轮交换先后；`--probe` 只做 1 轮资源/耗时探测，不能作为正式性能结论。Rust 每例 10 亿节点预算，触及预算报告取消，不宣称无解；外层使用 guard 当前按档位/动作选择的 RSS、超时与原 Swapouts 基线。
 
 `--sequential` 默认改用同一历史文件的全部 **60 条完整打乱**（已知 HTM 15～19），不是上述前缀集合，也不按观察到的速度挑选。每轮为每路引擎各启动一个新子进程，当前引擎完成整批并退出后才启动下一路，因此一次仅驻留一份 PDB；按轮次奇偶交替整批先后。每批先在该进程做复原态启动检查，单独记录包含加载的 wall 耗时；随后先完整跑一遍语料并验解，标记为 `process-warmup`，排除其耗时，再在同一进程内跑该轮完整集合。保留全局首轮整批排除及三轮正式测量，因此默认保存 **960 条结果**（480 条进程预热、120 条全局预热、360 条正式测量）和另外 **8 条启动检查**；元数据 `perProcessWarmupRounds=1`。`--probe` 仍只做一轮、不进行完整语料预热，不能作为正式性能结论。
 
@@ -110,15 +110,15 @@ opt1 加载路径调用的 `check_pruning_dist(..., checksum=0, ...)` 禁用了 
 
 ## 历史 Opt1 阶段的正式基准
 
-原 26 例 probe 在第一个完整 17 步历史例 `348442001` 上，Rust 耗时 35.616 秒达到 10 亿节点预算，完整穷尽到深度 16 后取消，不能将此结果记成无解。独立 WASM 求得并验证 17 步解，自报 `tt=38.463` 秒。失败及原始结果保存在 `.tmp/cubeopt-reverse/benchmark-probe/` 与 `wasm17.jsonl`。为了让重复对照落在固定运行预算内，正式两版均显式使用同一份 18 例 `benchmark-bounded-cases.json`；默认语料现已与其对齐，预算和计时逻辑未变。
+原 26 例 probe 在第一个完整 17 步历史例 `348442001` 上，Rust 耗时 35.616 秒达到 10 亿节点预算，完整穷尽到深度 16 后取消，不能将此结果记成无解。独立 WASM 求得并验证 17 步解，自报 `tt=38.463` 秒。失败及原始结果保存在 `.local-data/cubeopt-reverse/benchmark-probe/` 与 `wasm17.jsonl`。为了让重复对照落在固定运行预算内，正式两版均显式使用同一份 18 例 `benchmark-bounded-cases.json`；默认语料现已与其对齐，预算和计时逻辑未变。
 
 两版均为 1 轮预热加 3 轮交错测量；每版 18×2×4＝**144 个解**全部通过独立验解。三次测量的整批总时间取中位数：
 
 | 版本与结果文件（相对仓库根） | Rust | WASM | WASM / Rust |
 | --- | ---: | ---: | ---: |
-| 标量基线 `.tmp/cubeopt-reverse/benchmark-baseline/report.json` | 3.900356 s | 3.190428 s | 0.818× |
-| NEON 候选 `.tmp/cubeopt-reverse/benchmark-neon/report.json` | 3.293073 s | 3.648869 s | **1.108×** |
+| 标量基线 `.local-data/cubeopt-reverse/benchmark-baseline/report.json` | 3.900356 s | 3.190428 s | 0.818× |
+| NEON 候选 `.local-data/cubeopt-reverse/benchmark-neon/report.json` | 3.293073 s | 3.648869 s | **1.108×** |
 
 该历史 Opt1 阶段主报告采用 **约 1.11×**。逐例时间中位数的配对几何比为 1.154×，这是另一种聚合口径，不替换主指标。两次运行的 WASM 时间也有变化，因此不把跨运行的 Rust 基线/候选时间差全部归因于代码；结果仅覆盖这 18 个固定输入和 opt1 内存档位，不能外推 H10 或全部随机态。后续 Opt1–9 逐档真实表验收和不同程序的基准见 [README](README.md) 与 [基准记录](benchmark-results.md)，不与这里的旧数字合并。
 
-`.tmp/cubeopt-reverse/neon-search-equivalence.json` 确认候选与标量基线的 **72 条原生结果**（含预热），除 `seconds` 外所有字段一致，包括解和计数。当前 `Cargo.toml` 默认启用 `neon-moves`，其 SIMD 实现仅在 `aarch64` 目标使用；其它目标保留标量路径。默认语料更新只执行一次 JS 数据比对：18 例序列化为 1,829 bytes，与正式输入的 `cases` 逐字节相等，未重跑任何求解。
+`.local-data/cubeopt-reverse/neon-search-equivalence.json` 确认候选与标量基线的 **72 条原生结果**（含预热），除 `seconds` 外所有字段一致，包括解和计数。当前 `Cargo.toml` 默认启用 `neon-moves`，其 SIMD 实现仅在 `aarch64` 目标使用；其它目标保留标量路径。默认语料更新只执行一次 JS 数据比对：18 例序列化为 1,829 bytes，与正式输入的 `cases` 逐字节相等，未重跑任何求解。

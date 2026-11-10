@@ -6,7 +6,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as OpenCC from 'opencc-js';
 const t2s = OpenCC.Converter({ from: 't', to: 'cn' });
-const GN = 'D:/cube/cuberoot.me/.tmp/geonames';
+const GN = 'D:/cube/cuberoot.me/.local-data/geonames';
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const PACKAGE_DIR = join(SCRIPT_DIR, '..');
 
@@ -14,7 +14,7 @@ const geo = JSON.parse(fs.readFileSync(`${GN}/place-geo.json`, 'utf8'));
 const cityKeys = new Set(geo.llmCity.map((c) => c.key));
 const adminKeys = new Set(geo.llmAdmin.map((c) => c.key));
 
-// committed LLM layer (key -> zh). Bootstrapped once from .tmp/geonames/out/*; maintained here.
+// committed LLM layer (key -> zh). Bootstrapped once from .local-data/geonames/out/*; maintained here.
 const llm = JSON.parse(fs.readFileSync(join(SCRIPT_DIR, 'place-tail-zh.json'), 'utf8'));
 
 // sanitize: bare 台湾 → 中国台湾 (politically consistent with 中华台北/中国香港 used site-wide)

@@ -32,7 +32,7 @@
  *   换握记号 `↑↓·` / 标签 / 括号全部原样保留 —— 手别是靠空白定的(FINGERTRICKS §2)。
  *   `R4` / `L4'` / `R3` 是**真实的物理动作**,照留。
  *
- *   node import_1lll.mjs          → .tmp/phase4/import_1lll.sql + report.json
+ *   node import_1lll.mjs          → .local-data/phase4/import_1lll.sql + report.json
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
@@ -44,7 +44,7 @@ import { stm, sqtm, gen, deleteAuf, flattenAlg, tokenizeMoves, toMoveString } fr
 
 const ROOT = path.resolve(import.meta.dirname, '../../..');
 const read = (p) => JSON.parse(readFileSync(path.join(ROOT, p), 'utf8'));
-const OUT = path.join(ROOT, '.tmp/phase4');
+const OUT = path.join(ROOT, '.local-data/phase4');
 
 const kpuzzle = await cube3x3x3.kpuzzle();
 const SOLVED = kpuzzle.defaultPattern();
@@ -61,9 +61,9 @@ const AUF_AMOUNT = { '': 0, U: 1, U2: 2, "U'": 3 };
 const AMOUNT_AUF = ['', 'U', 'U2', "U'"];
 
 // ══ 输入 ══════════════════════════════════════════════════════════════════════
-const rows = read('.tmp/phase0/sheet_1lll.json');
-const mapping = read('.tmp/phase0/mapping.json');
-const site = read('.tmp/phase0/site_cases.json');
+const rows = read('.local-data/phase0/sheet_1lll.json');
+const mapping = read('.local-data/phase0/mapping.json');
+const site = read('.local-data/phase0/site_cases.json');
 const byId = new Map(site.cases.map((c) => [c.id, c]));
 const byRef = new Map(site.cases.map((c) => [`${c.set}/${c.name}`, c]));
 const rowBySelf = new Map(rows.map((r) => [Math.round(r.Self), r]));
@@ -384,7 +384,7 @@ const byCol = badScrambles.reduce((m, b) => ((m[b.列] = (m[b.列] ?? 0) + 1), m
 for (const [col, n] of Object.entries(byCol)) console.log(`  ${col.padEnd(15)} ${n}`);
 
 console.log(`\n动作:${plan.filter(p => p.action === 'update').length} UPDATE / ${inserts.length} INSERT / ${dropFrom1lll.length} DELETE`);
-console.log(`SQL:${sql.length} 行 → .tmp/phase4/import_1lll.sql`);
+console.log(`SQL:${sql.length} 行 → .local-data/phase4/import_1lll.sql`);
 
 writeFileSync(path.join(OUT, 'report.json'), JSON.stringify({
   counts, kept, skipped,

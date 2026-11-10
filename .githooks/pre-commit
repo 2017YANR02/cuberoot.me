@@ -1,3 +1,4 @@
 #!/usr/bin/env sh
 # Automatically verify changed reconstruction inputs; stop on any regression.
+node scripts/local-artifacts/check.mjs --staged --local || exit $?
 exec node core/packages/client/scripts/recon-ground-truth-gate.mjs check-staged

@@ -45,7 +45,7 @@ export function readRegressionCases(root: string): ReconTestCase[] {
   })];
 }
 
-export function historyDirectory(root: string) { return join(root, '.tmp/recon-ground-truth-runs'); }
+export function historyDirectory(root: string) { return join(root, '.local-data/recon-ground-truth-runs'); }
 export function findCheckoutRoot(): string | null {
   let path = process.cwd();
   for (let i = 0; i < 6; i++) {

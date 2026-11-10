@@ -24,7 +24,7 @@ assert.deepEqual([opt8.cases,opt8.threads,opt8.passes,opt8.warmupCases,opt8.veri
 assert.equal(opt8.corpusSha256,'92171d593d13982924ed16723f099bd771a873aaa2c30a0e08f319c86b75dcde');
 results.push(opt8);
 for(const variant of [8,9]) {
-  const file=resolve(openRoot,`.tmp/cubeopt-reverse/wasm-opt8-opt9-20261015/opt${variant}-report.json`);
+  const file=resolve(openRoot,`.local-data/cubeopt-reverse/wasm-opt8-opt9-20261015/opt${variant}-report.json`);
   if(!existsSync(file)) continue;
   const r=JSON.parse(readFileSync(file,'utf8')),count=variant===8?100:1000;
   assert.deepEqual([r.exitCode,r.cases,r.threads,r.passes,r.warmupCases,r.verifiedSolutions,r.optimalLengthsMatched],

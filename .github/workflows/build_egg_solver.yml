@@ -1,0 +1,56 @@
+name: Build Egg Solver
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'solver/experiments/egg-solver/native-service/**'
+      - '.github/workflows/build_egg_solver.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: egg-solver-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            solver/experiments/egg-solver/native-service
+      - name: Install static Rust toolchain
+        run: |
+          rustup toolchain install 1.98.1 --profile minimal --target x86_64-unknown-linux-musl
+          sudo apt-get update -qq
+          sudo apt-get install -y musl-tools
+      - name: Fetch the pinned upstream and add the service adapter
+        run: |
+          git clone https://github.com/ArhanChaudhary/egg-solver.git "$RUNNER_TEMP/egg-source"
+          git -C "$RUNNER_TEMP/egg-source" checkout --detach 947c20d93564f150aad9c292486ab730a329b86c
+          cp solver/experiments/egg-solver/native-service/main.rs "$RUNNER_TEMP/egg-source/src/bin/cuberoot-egg.rs"
+      - name: Test the adapter and build the static candidate
+        env:
+          RUSTFLAGS: -C target-cpu=x86-64-v3
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: musl-gcc
+        run: |
+          cd "$RUNNER_TEMP/egg-source"
+          cargo +1.98.1 test --locked --release --bin cuberoot-egg
+          cargo +1.98.1 build --locked --release --target x86_64-unknown-linux-musl --bin cuberoot-egg --bin solve
+          mkdir "$RUNNER_TEMP/egg-artifact"
+          cp target/x86_64-unknown-linux-musl/release/{cuberoot-egg,solve} "$RUNNER_TEMP/egg-artifact/"
+          ! readelf -l "$RUNNER_TEMP/egg-artifact/cuberoot-egg" | grep -q 'INTERP'
+      - name: Record exact candidate provenance
+        env:
+          SOURCE_REVISION: ${{ github.sha }}
+        run: node solver/experiments/egg-solver/native-service/build-receipt.mjs "$RUNNER_TEMP/egg-source" "$RUNNER_TEMP/egg-artifact"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: egg-h8-native-${{ github.sha }}
+          path: ${{ runner.temp }}/egg-artifact/
+          retention-days: 90

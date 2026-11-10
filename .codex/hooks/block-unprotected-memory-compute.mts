@@ -88,12 +88,13 @@ function blockedCubeopt(words: string[], cwd: string): boolean {
   if (invocation) {
     const entry = resolve(cwd, words[invocation.index].replaceAll('\\', '/'));
     if (entry === resolve(cubeoptRoot, 'guard.mts')) return false;
+    if (['mac-h8-benchmark.mts', 'mac-h8-prepare.mts'].some(name => entry === resolve(repoRoot, 'solver/experiments/egg-solver/native-service', name))) return true;
     if (entry === resolve(cubeoptRoot, 'wasm-browser-benchmark.mjs')) {
       // Only separately bounded no-PDB probes/three-case Rust fixtures may
       // bypass the compute guard. A flag anywhere in a larger command is not enough.
       const args = words.slice(invocation.index + 1);
       const out = resolve(cwd, args[4] ?? '');
-      const probeDir = resolve(repoRoot, '.tmp/cubeopt-reverse/wasm-browser-probes');
+      const probeDir = resolve(repoRoot, '.local-data/cubeopt-reverse/wasm-browser-probes');
       const boundedMode = args[0] === '--probe' && ['original8', 'rust8', 'original9', 'rust9'].includes(args[2])
         || args[0] === '--fixture' && ['rust8', 'rust9'].includes(args[2]);
       return !(args.length === 5 && boundedMode && args[1] === '--slot' && args[3] === '--out'
@@ -158,6 +159,7 @@ function segments(command: string): string[][] {
 }
 
 export function blockedCompute(command: string, depth = 0, cwd = repoRoot): string | undefined {
+  if (command.includes('double-zbll-auf-run.mts') && command.includes('--solve')) return '双底 AUF 小样本';
   if (command.includes('double-zbll-auf-20261011/run.mts') && command.includes('--solve')) return '双底 AUF 小样本';
   if (command.includes('double-zbll-auf-20261011/full.mts') && command.includes('--run')) return '双底 AUF 长期计算';
   if (depth > 8) return undefined;
@@ -267,8 +269,8 @@ async function main() {
       "core/jobs/alg-build/src/double-zbll-dashboard.mts": "3bb82da52d3c3297028917a7f63cf124a6f8505b6cdc5a8eb9fe7bd4c2583708",
       "core/jobs/alg-build/src/double-zbll-website-stats.mts": "1909aa32d3794c45c64490cd0e56ec27efa79cd4de805f4d3c362f6dfd098143",
       "core/jobs/alg-build/src/double-zbll-symmetry-state.mts": "98783dad8592761349dcc6cb852e07a4a3fee5caf265bafcf0ab3ca35eedc04b",
-      ".tmp/double-zbll-symmetry-v2/model.mts": "ec36d0ba647796b8c979863aa81ab9cb7162a7083398fa898f7b17b76cf4f3a1",
-      ".tmp/double-zbll-auf-20261011/run.mts": "20308805d6aef28a4cc94dd4a4140bfb6065ec7fac854c20162067fb55878cbd",
+      ".local-data/double-zbll-symmetry-v2/model.mts": "ec36d0ba647796b8c979863aa81ab9cb7162a7083398fa898f7b17b76cf4f3a1",
+      ".local-data/double-zbll-auf-20261011/run.mts": "20308805d6aef28a4cc94dd4a4140bfb6065ec7fac854c20162067fb55878cbd",
       "solver/333opt/solve_h10.mts": "bc65a841175e08fc71c7aa493132501399e863870e4613a90a2bc9bbca36ecf2",
       "solver/experiments/cube48opt-rust/opt10-zbll-policy.mts": "82492332b5c81d252a1f37fe5fff46494c02d8cb8f28c172e3be2045f17c755c",
       "core/scripts/zbll-memory-budget.mts": "9ff1980d29ab3d1976158daf85c68f99b91eb19098872ceea47fdbe5045bc231",
@@ -290,10 +292,10 @@ async function main() {
   // User explicitly accepted monitoring on 2026-10-11, then authorized this
   // long-running task. Only this fixed coordinator and its guarded batch code
   // qualify; other commands remain blocked. Never treat this as OS no-swap.
-  if (command === 'node --import ./core/node_modules/tsx/dist/loader.mjs .tmp/double-zbll-auf-20261011/full.mts --run'
+  if (command === 'node --import ./core/node_modules/tsx/dist/loader.mjs .local-data/double-zbll-auf-20261011/full.mts --run'
     && Date.now() < Date.parse('2026-12-01T00:00:00Z')) {
     try {
-      const digest = (file: string) => createHash('sha256').update(readFileSync(resolve(repoRoot, '.tmp/double-zbll-auf-20261011', file))).digest('hex');
+      const digest = (file: string) => createHash('sha256').update(readFileSync(resolve(repoRoot, '.local-data/double-zbll-auf-20261011', file))).digest('hex');
       if (digest('full.mts') === '2323368ecb756f54776844db3d40289d6f840a76a1e4e3264424a523c825e9bf'
         && digest('run.mts') === 'dae9e46d66678afc2c9b7c0f34e02f650e3934fdffee702b8e3439741b3535ef') return;
     } catch { /* Missing or changed task code is not authorized. */ }

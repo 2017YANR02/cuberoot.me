@@ -346,22 +346,17 @@ impl PruningTable {
     #[cfg(all(feature = "opt8-native-prefetch", not(target_family = "wasm")))]
     #[inline(always)]
     pub(crate) fn prefetch_opt8(&self, index: u64) {
-        #[cfg(target_arch = "x86_64")]
-        if let Some(address) = self.prefetch_word_address(index) {
-            // An in-bounds reference to this immutable Vec supplies the
-            // pointer. The instruction is only a read hint, never a load
-            // used as a bound or a substitute for the checked decoder.
-            unsafe {
-                std::arch::x86_64::_mm_prefetch(address.cast::<i8>(), std::arch::x86_64::_MM_HINT_T0);
-            }
-        }
+        #[cfg(all(target_arch = "x86_64", feature = "opt8-native-prefetch-nta"))]
+        crate::prefetch::read_word_nta(&self.words, index);
+        #[cfg(all(target_arch = "x86_64", not(feature = "opt8-native-prefetch-nta")))]
+        crate::prefetch::read_word(&self.words, index);
         #[cfg(not(target_arch = "x86_64"))]
         let _ = index;
     }
 
     #[cfg(all(not(target_family = "wasm"), any(
         all(feature = "opt9-native-prefetch", any(target_arch = "aarch64", test)),
-        all(feature = "opt8-native-prefetch", any(target_arch = "x86_64", test)),
+        all(feature = "opt8-native-prefetch", test),
     )))]
     #[inline(always)]
     fn prefetch_word_address(&self, index: u64) -> Option<*const u32> {

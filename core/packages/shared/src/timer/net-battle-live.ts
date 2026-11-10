@@ -4,6 +4,7 @@ import {
   isNetBattleRoomCode,
   type NetBattleCredentials,
 } from './net-battle';
+import type { Quat } from '../smart_cube/orientation';
 
 export const NET_BATTLE_LIVE_PATH = '/v1/smart-cube/relay?mode=battle';
 export const NET_BATTLE_LIVE_PROTOCOL_VERSION = 1 as const;
@@ -13,9 +14,12 @@ export interface NetBattleLiveHello extends NetBattleCredentials {
   type: 'hello';
   version: typeof NET_BATTLE_LIVE_PROTOCOL_VERSION;
   code: string;
+  /** Optional capability: old clients and servers keep the v1 move stream. */
+  gyro?: true;
 }
 
 export type NetBattleLiveClientPayload =
+  | { type: 'gyro'; round: number; quaternion: Quat | null }
   | { type: 'snapshot'; round: number; seq: number; facelets: string }
   | { type: 'move'; round: number; seq: number; move: string }
   | { type: 'unavailable'; round: number };
@@ -28,7 +32,8 @@ export interface NetBattleLivePresencePlayer {
 }
 
 export type NetBattleLiveServerPayload =
-  | { type: 'ready'; version: typeof NET_BATTLE_LIVE_PROTOCOL_VERSION }
+  | { type: 'ready'; version: typeof NET_BATTLE_LIVE_PROTOCOL_VERSION; gyro?: true }
+  | { type: 'gyro'; playerId: string; round: number; quaternion: Quat | null }
   | {
       type: 'snapshot';
       playerId: string;
@@ -72,6 +77,19 @@ function isMove(value: unknown): value is string {
   return typeof value === 'string' && /^[URFDLB](?:2|')?$/.test(value);
 }
 
+/** Display-space unit quaternion; null explicitly disables orientation sharing. */
+function isQuaternion(value: unknown): value is Quat | null {
+  if (value === null) return true;
+  if (!isRecord(value)) return false;
+  const components = [value.w, value.x, value.y, value.z];
+  return components.every(v => typeof v === 'number' && Number.isFinite(v))
+    && Math.abs(Math.hypot(...components as number[]) - 1) < 0.01;
+}
+
+function copyQuaternion(q: Quat | null): Quat | null {
+  return q ? { w: q.w, x: q.x, y: q.y, z: q.z } : null;
+}
+
 export function parseNetBattleLiveHello(value: unknown): NetBattleLiveHello | null {
   if (!isRecord(value)
     || value.type !== 'hello'
@@ -84,11 +102,17 @@ export function parseNetBattleLiveHello(value: unknown): NetBattleLiveHello | nu
     code: value.code,
     playerId: value.playerId,
     playerToken: value.playerToken,
+    ...(value.gyro === true ? { gyro: true as const } : {}),
   };
 }
 
 export function parseNetBattleLiveClientPayload(value: unknown): NetBattleLiveClientPayload | null {
   if (!isRecord(value) || typeof value.type !== 'string') return null;
+  if (value.type === 'gyro') {
+    return isRound(value.round) && isQuaternion(value.quaternion)
+      ? { type: 'gyro', round: value.round, quaternion: copyQuaternion(value.quaternion) }
+      : null;
+  }
   if (value.type === 'snapshot') {
     return isRound(value.round) && isSeq(value.seq) && isFacelets(value.facelets)
       ? { type: 'snapshot', round: value.round, seq: value.seq, facelets: value.facelets }
@@ -123,7 +147,13 @@ export function parseNetBattleLiveServerPayload(value: unknown): NetBattleLiveSe
   if (!isRecord(value) || typeof value.type !== 'string') return null;
   if (value.type === 'ready') {
     return value.version === NET_BATTLE_LIVE_PROTOCOL_VERSION
-      ? { type: 'ready', version: NET_BATTLE_LIVE_PROTOCOL_VERSION }
+      ? { type: 'ready', version: NET_BATTLE_LIVE_PROTOCOL_VERSION,
+          ...(value.gyro === true ? { gyro: true as const } : {}) }
+      : null;
+  }
+  if (value.type === 'gyro') {
+    return isNetBattlePlayerId(value.playerId) && isRound(value.round) && isQuaternion(value.quaternion)
+      ? { type: 'gyro', playerId: value.playerId, round: value.round, quaternion: copyQuaternion(value.quaternion) }
       : null;
   }
   if (value.type === 'snapshot') {

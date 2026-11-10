@@ -6,7 +6,7 @@ import {createHash} from 'node:crypto';
 import {observeStatsResources} from './stats-resume-review.mts';
 import {collectZbllMultisolutionEvidence,validateZbllMultisolutionInput,zbllMultisolutionPaths} from './zbll-multisolution-policy.mts';
 const root=resolve(import.meta.dirname,'../../..'), GiB=2**30;
-export const dir=resolve(root,'.tmp/1lll-five-20261023');
+export const dir=resolve(root,'.local-data/1lll-five-20261023');
 export const label='1lll-five-20261023-opt9';
 export const retryLabel=label+'-retry1';
 const retryAuthorization='那你重新跑吧 现在内存应该是够的';
@@ -23,10 +23,10 @@ export function lllFivePolicy(r:{label:string;executable:string;args:string[];en
 }
 function evidence(scope=label){
  const old=collectZbllMultisolutionEvidence(); // Rechecks release, table identity and unchanged historical stops.
- const priorPath=resolve(root,'.tmp/cubeopt-reverse/zbll-mcc-20261023-opt9-single-resources.json');
+ const priorPath=resolve(root,'.local-data/cubeopt-reverse/zbll-mcc-20261023-opt9-single-resources.json');
  const priorBytes=read(priorPath),prior=JSON.parse(priorBytes.toString());
  assert.equal(prior.stopped,'');assert.equal(prior.swapouts,prior.openBenchmarkReceipt.before.swapouts);assert.equal(prior.boot,old.setupFailure.boot);
- const exit=JSON.parse(read(resolve(root,'.tmp/zbll-mcc-20261023/single/run.json')).toString());assert.equal(exit.exitCode,0);
+ const exit=JSON.parse(read(resolve(root,'.local-data/zbll-mcc-20261023/single/run.json')).toString());assert.equal(exit.exitCode,0);
  const input=read(resolve(dir,'input.tsv'));const info=validateZbllMultisolutionInput(input);assert.equal(info.rows,500);
  const queries=JSON.parse(read(resolve(dir,'queries.json')).toString());assert.equal(queries.cases.length,5);assert.equal(queries.queries.length,500);
  assert.equal(input.toString(),queries.queries.map((q:any)=>`${q.id}\t${q.scramble}\n`).join(''));
@@ -34,7 +34,7 @@ function evidence(scope=label){
  let continuation:any=undefined;
  if(scope===retryLabel){
   const paths=['session.json','receipt.json','stop.json','raw.jsonl','stderr.log','status.json'].map(f=>resolve(dir,f));
-  const resourcePath=resolve(root,'.tmp/cubeopt-reverse/'+label+'-resources.json');paths.push(resourcePath);
+  const resourcePath=resolve(root,'.local-data/cubeopt-reverse/'+label+'-resources.json');paths.push(resourcePath);
   const records=Object.fromEntries(paths.map(p=>[p,sha(read(p))]));
   const stopped=JSON.parse(read(resourcePath).toString());const first=JSON.parse(read(resolve(dir,'session.json')).toString());
   assert.equal(stopped.boot,prior.boot);assert.equal(stopped.stopped,'Resource protection: Swapouts changed');
@@ -55,7 +55,7 @@ export function validateLllFiveSession(s:any,e:any,n:any,used=false,stopped=fals
 }
 export function validateLllFiveReview(r:Parameters<typeof lllFivePolicy>[0],n:any){
  lllFivePolicy(r);const currentDir=runDir(r.label),b=read(resolve(currentDir,'session.json')),s=JSON.parse(b.toString()),e=evidence(r.label);
- const used=existsSync(resolve(currentDir,'receipt.json'))||existsSync(resolve(root,`.tmp/cubeopt-reverse/${r.label}-resources.json`));
+ const used=existsSync(resolve(currentDir,'receipt.json'))||existsSync(resolve(root,`.local-data/cubeopt-reverse/${r.label}-resources.json`));
  validateLllFiveSession(s,e,n,used,existsSync(resolve(currentDir,'stop.json')));
  return {input:read(resolve(dir,'input.tsv')),receiptPath:resolve(currentDir,'receipt.json'),receipt:{schema:'cuberoot.lll-five.receipt.v1',request:request(r.label),reviewSha256:sha(b),before:n,consumedAt:new Date().toISOString()}};
 }

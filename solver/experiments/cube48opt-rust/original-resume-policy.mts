@@ -17,7 +17,7 @@ const evidence=[prefix,...['session.json','session-setupfix.json','session-rust-
   'original-wasm-partial-report.json','rust-native-report.json','rust-wasm-report.json','original-wasm-setupfix/input.json'].map(p=>resolve(openDir,p)),
   ...['resource-baseline.json','resource-review-stop.json','opt10-resource-review-stop.json','multithread-resource-review-stop.json',
   'opt10-official-stop.json','double-zbll-opt10-session-resources.json','open16-wca1000-original-wasm-20261015-setupfix-resources.json'].map(p=>resolve(openBase,p)),
-  resolve(openRoot,'.tmp/h48-corners-research/resource-baseline.json')];
+  resolve(openRoot,'.local-data/h48-corners-research/resource-baseline.json')];
 const sources=['guard.mts','wasm-benchmark.mjs','original-wasm-compat.mjs','original-resume-policy.mts','open-benchmark-policy.mts'].map(p=>resolve(openHere,p));
 const hashes=(paths:string[])=>Object.fromEntries(paths.filter(existsSync).map(p=>[p,sha(p)]));
 export function resumeRequest() {

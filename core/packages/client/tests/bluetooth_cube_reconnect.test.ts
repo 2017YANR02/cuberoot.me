@@ -235,6 +235,18 @@ describe('smart-cube reconnect ownership', () => {
     expect(cube.status.battery).toBeNull();
   });
 
+  it('rejects another player\'s device before opening its GATT connection', async () => {
+    const rig = fakeGattRig('other-player');
+    const validateDevice = vi.fn(() => { throw new Error('Assigned to another player'); });
+    function OwnershipHarness() { cube = useBluetoothCube({ validateDevice }); return null; }
+    await act(async () => root.render(createElement(OwnershipHarness)));
+    await act(async () => {
+      await expect(cube.connectDevice(rig.device)).rejects.toThrow('Assigned to another player');
+    });
+    expect(validateDevice).toHaveBeenCalledWith(rig.device);
+    expect(rig.connect).not.toHaveBeenCalled();
+  });
+
   it('does not report a solve when device calibration confirms solved facelets', async () => {
     const rig = fakeGattRig('calibrate');
     const onSolved = vi.fn();

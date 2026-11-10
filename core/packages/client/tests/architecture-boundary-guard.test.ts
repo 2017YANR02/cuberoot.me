@@ -54,7 +54,9 @@ describe('architecture boundary guard', () => {
     // Five additional identities: two isolated nginx purge probes, the fixed FMC
     // quotient binary and two bounded small-puzzle measurement subprocess calls.
     // One bounded git revision probe records the smart-cube timing benchmark provenance.
-    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 37);
+    // Five AUF-runner identities were migrated into the existing exact subprocess
+    // contract in e2699e638; no new boundary exception is introduced here.
+    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 42);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(142);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });

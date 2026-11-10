@@ -24,6 +24,7 @@ const COPY = {
 export function TimerBattlePlayer({ background, playerNumber, language, score, winner, controls, hideHeader, actions, children, className }: TimerBattlePlayerProps) {
   const copy = COPY[language];
   return <article className={`timer-battle-player${winner ? ' is-winner' : ''}${className ? ` ${className}` : ''}`}>
+    {winner && <span key={score} className="timer-battle-player-win-highlight" aria-hidden="true" />}
     {background && (background.color || background.image) && <div aria-hidden="true" className="timer-battle-player-background" style={{ backgroundColor: background.color || undefined, backgroundImage: background.image ? `url(${JSON.stringify(background.image)})` : undefined, opacity: background.opacity }} />}
     {!hideHeader && <header className="timer-battle-player-header" data-no-timer>
       <strong>{battlePlayerLabel(playerNumber, language)}</strong>

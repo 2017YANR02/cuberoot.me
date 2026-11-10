@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { resolve } from 'node:path';
 import { officialPaths, officialArgs, validateOfficialHistory, type OfficialRequest } from './opt10-official-policy.mts';
-export const zbllOfficialReviewPath = resolve(import.meta.dirname,'../../../.tmp/double-zbll-symmetry-v2/opt10-official-resource-review.json');
+export const zbllOfficialReviewPath = resolve(import.meta.dirname,'../../../.local-data/double-zbll-symmetry-v2/opt10-official-resource-review.json');
 
 /** Long-job input remains supplied by the checkpoint runner, never the benchmark corpus. */
 export function zbllOfficialPolicy({label,executable,args,env}:OfficialRequest,cpus:number) {

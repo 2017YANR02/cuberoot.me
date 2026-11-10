@@ -6,7 +6,8 @@
   "reservedPorts": [
     7101,
     7102,
-    7199
+    7199,
+    7104
   ],
   "machines": [
     {
@@ -37,19 +38,6 @@
       ]
     },
     {
-      "owner": "ruimin",
-      "device": "macbook-pro",
-      "os": "mac",
-      "transport": "frp",
-      "status": "active",
-      "localPort": 3000,
-      "remotePort": 7104,
-      "certificate": "dev-machines",
-      "aliases": [
-        "dev-macbook-pro.cuberoot.me"
-      ]
-    },
-    {
       "owner": "czy",
       "device": "y9000p",
       "os": "windows",
@@ -58,6 +46,17 @@
       "localPort": 3000,
       "remotePort": 7105,
       "certificate": "dev-czy-y9000p",
+      "aliases": []
+    },
+    {
+      "owner": "ruimin",
+      "device": "macbook-pro",
+      "os": "mac",
+      "transport": "ssh",
+      "status": "active",
+      "localPort": 3000,
+      "remotePort": 7106,
+      "certificate": "dev-ruimin-macbook-pro",
       "aliases": []
     }
   ]

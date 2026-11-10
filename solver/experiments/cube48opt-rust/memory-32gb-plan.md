@@ -6,7 +6,7 @@
 
 ## 本次实现与下一步
 
-- [x] 旧坐标源码与计划保存在 `.tmp/cubeopt-reverse/before-opt10/`，旧求解程序和表不变。
+- [x] 旧坐标源码与计划保存在 `.local-data/cubeopt-reverse/before-opt10/`，旧求解程序和表不变。
 - [x] `src/opt10.rs` 提供独立 `Opt10Coordinates`；仅复用已校验的 Opt9 小 LUT，保留 EO 的第 10 位。没有伪造第十档 checksum、最大下界或原版行为。
 - [x] 64 位容量、padding 投影与越界拒绝测试通过。`Variant::new(10)` 继续拒绝把研究坐标冒充已验收的大表后端。
 - [x] `examples/verify_opt10_coordinates.rs` 全枚举深度 0..3 的 3,502 个物理状态；另用固定种子的 407 个深层样本、48 种共轭及正逆状态，合计 46,076 次坐标检查、276,456 次左半转检查全部通过。深层样本是本次独立生成的样本，不是历史 WASM 的 407 条 oracle。
@@ -81,4 +81,4 @@ Opt 加载器在 [src/table.rs](src/table.rs) 直接向一份 `Vec<u32>` 流式�
 
 ## 原生 RSS 固定样本
 
-已使用 `.tmp/cubeopt-reverse/native-rss-cases.tsv` 与同名 `.json` 来源说明完成 Opt1–9 逐档原生 RSS 测量。样本严格取固定历史文件全部 `htm<=16` 的两例，保留原顺序、完整打乱和已知步数；九档共 18 个解另经独立回放与长度复核，结果见 `.tmp/cubeopt-reverse/native-rss-report.json`，汇总见 [性能与内存](benchmark-results.md)。样本没有按观察到的性能挑选，固定一次加载和两次真实求解的测量条件；它不是所有深度的峰值上界或完整性能语料。这些是已保留的 Opt1–9 阶段测量，不能当作新 H10 程序的 RSS。
+已使用 `.local-data/cubeopt-reverse/native-rss-cases.tsv` 与同名 `.json` 来源说明完成 Opt1–9 逐档原生 RSS 测量。样本严格取固定历史文件全部 `htm<=16` 的两例，保留原顺序、完整打乱和已知步数；九档共 18 个解另经独立回放与长度复核，结果见 `.local-data/cubeopt-reverse/native-rss-report.json`，汇总见 [性能与内存](benchmark-results.md)。样本没有按观察到的性能挑选，固定一次加载和两次真实求解的测量条件；它不是所有深度的峰值上界或完整性能语料。这些是已保留的 Opt1–9 阶段测量，不能当作新 H10 程序的 RSS。

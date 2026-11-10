@@ -18,7 +18,7 @@ assert.equal(hash(data), manifest.dataSha256);
 assert.equal(hash(caseBytes), manifest.casesSha256);
 const cases = JSON.parse(caseBytes.toString()).cases as { name: string; subgroup: string }[];
 assert.equal(cases.length, manifest.caseCount);
-const progress = read(process.argv[2] ? resolve(process.argv[2]) : resolve(client, '../../../.tmp/double-zbll-symmetry-v2/progress.json'));
+const progress = read(process.argv[2] ? resolve(process.argv[2]) : resolve(client, '../../../.local-data/double-zbll-symmetry-v2/progress.json'));
 assert.equal(progress.status, 'complete');
 assert.equal(progress.verified, manifest.sourceStates);
 assert.equal(progress.pairs.finishedPairs, manifest.pairCount);

@@ -15,7 +15,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../../..');
 const CORPUS = resolve(ROOT, 'solver/testdata/benchmarks/wca-first100.json');
 const CORPUS_HASH = '92171d593d13982924ed16723f099bd771a873aaa2c30a0e08f319c86b75dcde';
-const REFERENCE = resolve(ROOT, '.tmp/cubeopt-reverse/wca100-rust-h10-v2.jsonl');
+const REFERENCE = resolve(ROOT, '.local-data/cubeopt-reverse/wca100-rust-h10-v2.jsonl');
 const TOKEN_SEQUENCE = /^(?:[URFDLB](?:2|')?)(?:\s+[URFDLB](?:2|')?)*$/;
 const save = (file, value) => writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
 async function hashFile(file) {
@@ -388,7 +388,7 @@ async function main() {
   const config = parseWasmBenchmarkArguments(process.argv.slice(2));
   assert.equal(process.env.CUBEOPT_BACKEND, 'opt');
   assert.equal(process.env.CUBEOPT_VARIANT, String(config.variant));
-  const lock = JSON.parse(readFileSync(resolve(ROOT, '.tmp/cubeopt-reverse/compute.lock'), 'utf8'));
+  const lock = JSON.parse(readFileSync(resolve(ROOT, '.local-data/cubeopt-reverse/compute.lock'), 'utf8'));
   assertBenchmarkGuard(config, lock, process.ppid);
   assert(!existsSync(config.out), `Refusing to overwrite ${config.out}`);
   mkdirSync(dirname(config.out), { recursive: true }); mkdirSync(config.out);

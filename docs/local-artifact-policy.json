@@ -1,0 +1,355 @@
+{
+  "schemaVersion": 1,
+  "temporaryNamespaces": [
+    ".tmp/png",
+    ".tmp/scratch",
+    ".tmp/cache"
+  ],
+  "exceptions": [
+    {
+      "file": "core/apps/miniprogram/scripts/build-state.mjs",
+      "line": "return join(packageRoot, '.tmp', target === 'douyin' ? 'douyin-build-state.json' : 'miniprogram-build-state.json');",
+      "reason": "Rebuildable compiler staging/state/type cache; not application or user data."
+    },
+    {
+      "file": "core/apps/miniprogram/scripts/build.mjs",
+      "line": "const stagingRoot = join(packageRoot, '.tmp', douyin ? 'dist-douyin-next' : 'dist-next');",
+      "reason": "Rebuildable compiler staging/state/type cache; not application or user data."
+    },
+    {
+      "file": "core/apps/miniprogram/scripts/build.mjs",
+      "line": "? join(packageRoot, '.tmp', 'dist-douyin-wechat-next')",
+      "reason": "Rebuildable compiler staging/state/type cache; not application or user data."
+    },
+    {
+      "file": "core/apps/miniprogram/scripts/build.mjs",
+      "line": "const converterLogRoot = join(packageRoot, '.tmp', 'wx-to-tt-log');",
+      "reason": "Rebuildable compiler staging/state/type cache; not application or user data."
+    },
+    {
+      "file": "core/apps/miniprogram/scripts/build.mjs",
+      "line": "const backupRoot = join(packageRoot, '.tmp', douyin ? 'dist-douyin-previous' : 'dist-previous');",
+      "reason": "Rebuildable compiler staging/state/type cache; not application or user data."
+    },
+    {
+      "file": "core/jobs/stats-build/src/bin/championship_podiums_validate.ts",
+      "line": "const outJson = resolve(__dirname, `../../../../.tmp/champ-podiums-${wcaId}.json`);",
+      "reason": "Regenerable diagnostic report or preview; never authoritative task progress."
+    },
+    {
+      "file": "core/packages/client/eslint.config.mjs",
+      "line": "'.tmp/**',",
+      "reason": "Scanner exclusion, not a file dependency."
+    },
+    {
+      "file": "core/packages/client/scripts/gear/mesh_check.mjs",
+      "line": "const TMP = 'D:/cube/cuberoot.me/.tmp/gear'; // regenerable bake outputs (gitignored)",
+      "reason": "Regenerable geometric bake cache shared by diagnostic scripts."
+    },
+    {
+      "file": "core/packages/client/scripts/gear/mesh_check.mjs",
+      "line": "mkdirSync(new URL('../../../../../.tmp/gear/', import.meta.url), { recursive: true });",
+      "reason": "Regenerable geometric bake cache shared by diagnostic scripts."
+    },
+    {
+      "file": "core/packages/client/scripts/gear/mesh_check.mjs",
+      "line": "writeFileSync(new URL('../../../../../.tmp/gear/fp_sh.json', import.meta.url),",
+      "reason": "Regenerable geometric bake cache shared by diagnostic scripts."
+    },
+    {
+      "file": "core/packages/client/scripts/gear/sector_check.mjs",
+      "line": "const CORNER_POLY = JSON.parse(readFileSync('D:/cube/cuberoot.me/.tmp/gear/corner_poly_clipped.json', 'utf8'));",
+      "reason": "Regenerable geometric bake cache shared by diagnostic scripts."
+    },
+    {
+      "file": "core/packages/client/scripts/mirror-link-plan.mts",
+      "line": "mkdirSync('.tmp', { recursive: true });",
+      "reason": "Regenerable diagnostic report or preview; never authoritative task progress."
+    },
+    {
+      "file": "core/packages/client/scripts/mirror-link-plan.mts",
+      "line": "writeFileSync('.tmp/mirror-link-plan.json', JSON.stringify({",
+      "reason": "Regenerable diagnostic report or preview; never authoritative task progress."
+    },
+    {
+      "file": "core/packages/client/scripts/native-puzzles/fto6-audit.mts",
+      "line": "const output = process.argv[2] ? resolve(process.argv[2]) : fileURLToPath(new URL('../../../../.tmp/fto6/', import.meta.url));",
+      "reason": "Regenerable diagnostic report or preview; never authoritative task progress."
+    },
+    {
+      "file": "core/packages/client/scripts/native-puzzles/verify-fto6.mts",
+      "line": "const out = process.env.OUTPUT_DIR ? resolve(process.env.OUTPUT_DIR) : fileURLToPath(new URL('../../../../.tmp/fto6-browser/', import.meta.url));",
+      "reason": "Regenerable diagnostic report or preview; never authoritative task progress."
+    },
+    {
+      "file": "core/packages/client/scripts/radio-web-browser-acceptance.mts",
+      "line": "const out = resolve(import.meta.dirname, '../../../.tmp/radio-web-evidence');",
+      "reason": "Regenerable diagnostic report or preview; never authoritative task progress."
+    },
+    {
+      "file": "core/packages/client/scripts/slot-set-audit.mts",
+      "line": "mkdirSync('.tmp', { recursive: true });",
+      "reason": "Regenerable diagnostic report or preview; never authoritative task progress."
+    },
+    {
+      "file": "core/packages/client/scripts/slot-set-audit.mts",
+      "line": "writeFileSync('.tmp/slot-set-audit.json', JSON.stringify(bad, null, 2));",
+      "reason": "Regenerable diagnostic report or preview; never authoritative task progress."
+    },
+    {
+      "file": "core/packages/client/scripts/subset-cjk-heading.py",
+      "line": "FONTS_TMP = os.path.join(REPO, \".tmp\", \"fonts\")",
+      "reason": "Font subsetting scratch input; final fonts are stored outside temporary directories."
+    },
+    {
+      "file": "core/packages/client/scripts/wk-ios-test.cjs",
+      "line": "const shotPath = path.join(process.cwd(), '.tmp', 'png', `${SHOT}.jpeg`);",
+      "reason": "Disposable browser screenshot."
+    },
+    {
+      "file": "core/packages/client/tsconfig.json",
+      "line": "\".tmp/competition-preview/types/**/*.ts\",",
+      "reason": "Rebuildable compiler staging/state/type cache; not application or user data."
+    },
+    {
+      "file": "core/packages/client/tsconfig.json",
+      "line": "\".tmp/competition-preview/dev/types/**/*.ts\",",
+      "reason": "Rebuildable compiler staging/state/type cache; not application or user data."
+    },
+    {
+      "file": "core/packages/client/tsconfig.json",
+      "line": "\".tmp/recon-intake-next/types/**/*.ts\",",
+      "reason": "Rebuildable compiler staging/state/type cache; not application or user data."
+    },
+    {
+      "file": "core/packages/client/tsconfig.json",
+      "line": "\".tmp/recon-intake-next/dev/types/**/*.ts\"",
+      "reason": "Rebuildable compiler staging/state/type cache; not application or user data."
+    },
+    {
+      "file": "core/scripts/recon-ground-truth-gate.mjs",
+      "line": "const STAMP_PATH = resolve(REPO_ROOT, '.tmp', 'recon-ground-truth-pass.json');",
+      "reason": "Recomputable success stamp, not authoritative results (results live in .local-data)."
+    },
+    {
+      "file": "core/scripts/recon-staged-snapshot.mjs",
+      "line": "const stampPath = join(repoRoot, '.tmp', 'recon-ground-truth-staged-pass.json');",
+      "reason": "Recomputable success stamp, not authoritative results (results live in .local-data)."
+    },
+    {
+      "file": "docs/generated-artifacts.json",
+      "line": "\"core/apps/miniprogram/.tmp/douyin-build-state.json\"",
+      "reason": "Ledger entry for rebuildable compiler state."
+    },
+    {
+      "file": "research/reconer/scripts/backward-decode.ts",
+      "line": "const DUMP_PATH = argAt(\"--dump\") ?? join(import.meta.dirname, \"..\", \".tmp\", \"obs-dump.json\");",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/backward-decode.ts",
+      "line": "const logoPath = join(import.meta.dirname, \"..\", \".tmp\", \"logo-measure.json\");",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/debug-blobs.ts",
+      "line": "const outDir = join(import.meta.dirname, \"..\", \"..\", \".tmp\", \"png\", \"recon-frames\");",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/last-move-probe.ts",
+      "line": "const DUMP_PATH = argAt(\"--dump\") ?? join(import.meta.dirname, \"..\", \".tmp\", \"obs-dump.json\");",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/last2-decode.ts",
+      "line": "const dump = JSON.parse(readFileSync(join(import.meta.dirname, \"..\", \".tmp\", \"obs-dump.json\"), \"utf8\")) as {",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/last2-decode.ts",
+      "line": "const binPath = join(import.meta.dirname, \"..\", \".tmp\", `tailhd-${dv.name[0]}-${W2}.bin`);",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/last2-decode.ts",
+      "line": "const logoPath = join(import.meta.dirname, \"..\", \".tmp\", \"logo-measure.json\");",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/orient-probe.ts",
+      "line": "readFileSync(join(import.meta.dirname, \"..\", \".tmp\", \"obs-geo.json\"), \"utf8\"),",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/prior-sim.ts",
+      "line": "const DUMP_PATH = argAt(\"--dump\") ?? join(import.meta.dirname, \"..\", \".tmp\", \"obs-dump.json\");",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/real-eval.ts",
+      "line": "import.meta.dirname, \"..\", \".tmp\",",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/real-eval.ts",
+      "line": "import.meta.dirname, \"..\", \".tmp\",",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/snap4k.ts",
+      "line": "const DUMP = argAt(\"--dump\") ?? \".tmp/obs-geo.json\";",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/snap4k.ts",
+      "line": "const POOL_CACHE = join(ROOT, \".tmp\", \"snap4k-pool.json\");",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/tail-probe.ts",
+      "line": "const dump = JSON.parse(readFileSync(join(import.meta.dirname, \"..\", \".tmp\", \"obs-dump.json\"), \"utf8\")) as {",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/tailhd-probe.ts",
+      "line": "const dump = JSON.parse(readFileSync(join(import.meta.dirname, \"..\", \".tmp\", \"obs-dump.json\"), \"utf8\")) as {",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/tailhd-probe.ts",
+      "line": "const binPath = join(import.meta.dirname, \"..\", \".tmp\", `tailhd-${dv.name[0]}-${W2}.bin`);",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/vlm-cell-classifier.cjs",
+      "line": "const DUMP = process.argv[2] ?? \".tmp/obs-geo2.json\";",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/vlm-export-cells.cjs",
+      "line": "const DUMP = process.argv[2] ?? \".tmp/obs-geo2.json\";",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/vlm-face-score.ts",
+      "line": "const dump = JSON.parse(readFileSync(join(dir, \"..\", \".tmp\", \"obs-geo.json\"), \"utf8\"));",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/vlm-overlay.cjs",
+      "line": "const DUMP = process.argv[3] ?? \".tmp/obs-geo.json\";",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/vlm-patch-dump.cjs",
+      "line": "const DUMP = process.argv[3] ?? \".tmp/obs-geo.json\";",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/vlm-patch-dump.cjs",
+      "line": "const out = `.tmp/obs-geo-vlm${PREFIX}-${variant}.json`;",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "research/reconer/scripts/vlm-sup-validate.cjs",
+      "line": "const DUMP = process.argv[2] ?? \".tmp/obs-geo2.json\";",
+      "reason": "Existing isolated research observation/frame cache; not the production reconstruction store. Exact legacy line only; new references require a lifecycle decision."
+    },
+    {
+      "file": "scripts/upstream/sync-blddb.ts",
+      "line": "const parent = join(root, '.tmp/upstream');",
+      "reason": "Checkout/staging scratch for an atomic upstream sync."
+    },
+    {
+      "file": "scripts/upstream/sync-blddb.ts",
+      "line": "const staging = join(root, '.tmp', `blddb-sync-${randomUUID()}`);",
+      "reason": "Checkout/staging scratch for an atomic upstream sync."
+    },
+    {
+      "file": "solver/experiments/cube48opt-rust/opt10-archives.json",
+      "line": "\"snapshot\": \".tmp/cubeopt-reverse/opt10-native-baseline-20261014\",",
+      "reason": "Immutable historical locator; runtime resolves the registered relocation without editing the signed-off evidence."
+    },
+    {
+      "file": "solver/experiments/cube48opt-rust/opt10-archives.json",
+      "line": "\"snapshot\": \".tmp/cubeopt-reverse/opt10-native-search-preserved-20261014\",",
+      "reason": "Immutable historical locator; runtime resolves the registered relocation without editing the signed-off evidence."
+    },
+    {
+      "file": "solver/experiments/cube48opt-rust/opt10-archives.json",
+      "line": "\"snapshot\": \".tmp/cubeopt-reverse/opt10-native-hotpath-preserved-20261014\",",
+      "reason": "Immutable historical locator; runtime resolves the registered relocation without editing the signed-off evidence."
+    },
+    {
+      "file": "solver/experiments/cube48opt-rust/opt10-archives.json",
+      "line": "\"snapshot\": \".tmp/cubeopt-reverse/opt10-native-batch-preserved-20261014\",",
+      "reason": "Immutable historical locator; runtime resolves the registered relocation without editing the signed-off evidence."
+    },
+    {
+      "file": "solver/experiments/cube48opt-rust/opt10-archives.json",
+      "line": "\"snapshot\": \".tmp/cubeopt-reverse/opt10-native-dual-preserved-20261014\",",
+      "reason": "Immutable historical locator; runtime resolves the registered relocation without editing the signed-off evidence."
+    },
+    {
+      "file": "solver/experiments/cube48opt-rust/opt10-archives.json",
+      "line": "\"snapshot\": \".tmp/cubeopt-reverse/opt10-native-coset-chain-preserved-20261014\",",
+      "reason": "Immutable historical locator; runtime resolves the registered relocation without editing the signed-off evidence."
+    },
+    {
+      "file": "solver/experiments/cube48opt-rust/opt10-archives.json",
+      "line": "\"snapshot\": \".tmp/cubeopt-reverse/opt10-native-profile-preserved-20261014\",",
+      "reason": "Immutable historical locator; runtime resolves the registered relocation without editing the signed-off evidence."
+    },
+    {
+      "file": "solver/experiments/cube48opt-rust/opt10-archives.json",
+      "line": "\"snapshot\": \".tmp/cubeopt-reverse/opt10-native-lookahead-preserved-20261014\",",
+      "reason": "Immutable historical locator; runtime resolves the registered relocation without editing the signed-off evidence."
+    },
+    {
+      "file": "solver/experiments/cube48opt-rust/opt10-archives.json",
+      "line": "\"snapshot\": \".tmp/cubeopt-reverse/opt10-native-projection-preserved-20261014\",",
+      "reason": "Immutable historical locator; runtime resolves the registered relocation without editing the signed-off evidence."
+    },
+    {
+      "file": "solver/experiments/cube48opt-rust/opt10-release.json",
+      "line": "\"path\": \".tmp/cubeopt-reverse/opt10-native-coset-preserved-20261014\",",
+      "reason": "Immutable historical locator; runtime resolves the registered relocation without editing the signed-off evidence."
+    },
+    {
+      "file": "solver/experiments/cube48opt-rust/opt8-wasm-release.json",
+      "line": "\"frozenBuild\": \".tmp/cubeopt-reverse/rust-wasm-shared-builds/build-FcRcSF\",",
+      "reason": "Immutable historical locator; runtime resolves the registered relocation without editing the signed-off evidence."
+    },
+    {
+      "file": "solver/experiments/cube48opt-rust/opt8-wasm-release.json",
+      "line": "\"verification\": \".tmp/cubeopt-reverse/opt8-local-release-20261014/remote-verification.json\",",
+      "reason": "Immutable historical locator; runtime resolves the registered relocation without editing the signed-off evidence."
+    },
+    {
+      "file": "solver/experiments/cube48opt-rust/opt9-release.json",
+      "line": "\"path\": \".tmp/cubeopt-reverse/opt9-native-fixed-preserved-20261014\",",
+      "reason": "Immutable historical locator; runtime resolves the registered relocation without editing the signed-off evidence."
+    },
+    {
+      "file": "solver/scripts/benchmark_xcross_table.mts",
+      "line": "const work = await mkdtemp(join(root, '.tmp/xcross-table-benchmark-'));",
+      "reason": "Isolated disposable benchmark workspace; retained results must be promoted before cleanup."
+    },
+    {
+      "file": "core/scripts/check-architecture-boundaries.mjs",
+      "line": "'.tmp', '.local-data', 'android', 'ios', 'public', 'pkg', 'pkg-web', 'pkg-node',",
+      "reason": "Scanner exclusion, not a runtime dependency."
+    },
+    {
+      "file": "design/space/scripts/refine_swfc_top.py",
+      "line": "AUDIT = ROOT / '.tmp/png/space-swfc-top-20260910/audit/swfc-current-mesh-audit.json'",
+      "reason": "Regenerable diagnostic mesh audit; authoritative Blender sources are stored in design/space."
+    }
+  ],
+  "disposableLocalFiles": [
+    ".tmp/recon-ground-truth-pass.json",
+    ".tmp/recon-ground-truth-staged-pass.json",
+    ".tmp/cubeopt-reverse/compute.lock"
+  ]
+}

@@ -1,6 +1,7 @@
 import {beforeEach,expect,it,vi} from 'vitest';
 import {Hono} from 'hono';
 import jwt from 'jsonwebtoken';
+vi.mock('@cuberoot/shared/dev-preview',()=>({DEV_PREVIEW_HOSTS:['dev-legacy-old.cuberoot.me']}));
 const mock=vi.hoisted(()=>({auth:vi.fn(),query:vi.fn()}));
 vi.mock('../src/utils/recon_helpers.js',()=>({requireAuth:mock.auth,checkRateLimit:vi.fn()}));
 vi.mock('../src/db/connection.js',()=>({query:mock.query,withTransaction:async(f:(q:typeof mock.query)=>unknown)=>f(mock.query)}));
@@ -42,4 +43,39 @@ it('health queue and employee list require fresh independent evidence',async()=>
   await app.request('/v1/dev-preview/host/health-next',{headers:{Authorization:`Bearer ${'x'.repeat(40)}`}});
   expect(mock.query.mock.calls[0][0]).toContain('ORDER BY health_checked_at NULLS FIRST');
   expect(mock.query.mock.calls[0][0]).toContain("INTERVAL '5 minutes'");
+});
+it('allows ruimin to request a new device',async()=>{
+  mock.query.mockResolvedValueOnce([]).mockResolvedValueOnce([{n:0}]).mockResolvedValueOnce([{id:'new'}]).mockResolvedValueOnce([]);
+  const response=await post('requests',{owner:'ruimin',device:'macbook-pro',os:'mac'});
+  expect(response.status).toBe(200);
+  expect((await response.json()).ticket).toMatch(/^[a-f0-9]{64}$/);
+  expect(mock.query.mock.calls[2][1]).toEqual(expect.arrayContaining(['ruimin','macbook-pro','mac']));
+});
+it('reports a duplicate device separately from the account limit',async()=>{
+  mock.query.mockResolvedValueOnce([]).mockResolvedValueOnce([{n:1}]).mockResolvedValueOnce([]);
+  const duplicate=await post('requests',{owner:'ruimin',device:'macbook-pro',os:'mac'});
+  expect(duplicate.status).toBe(409);
+  expect(await duplicate.json()).toEqual({error:'Name already taken'});
+  mock.query.mockResolvedValueOnce([]).mockResolvedValueOnce([{n:10}]);
+  const limit=await post('requests',{owner:'ruimin',device:'other',os:'mac'});
+  expect(limit.status).toBe(409);
+  expect(await limit.json()).toEqual({error:'Request limit reached'});
+});
+it('distinguishes invalid identifiers from an invalid system',async()=>{
+  expect(await (await post('requests',{owner:'-ruimin',device:'mac',os:'mac'})).json()).toEqual({error:'Invalid name'});
+  expect(await (await post('requests',{owner:'ruimin',device:'mac',os:'unknown'})).json()).toEqual({error:'Invalid system'});
+  expect(mock.query).not.toHaveBeenCalled();
+});
+it('rejects an already registered legacy device without reserving the owner name',async()=>{
+  const r=await post('requests',{owner:'legacy',device:'old',os:'mac'});
+  expect(r.status).toBe(409);expect(await r.json()).toEqual({error:'Device already registered'});
+  expect(mock.query).not.toHaveBeenCalled();
+});
+it('records only an allowed failure stage, never arbitrary worker output',async()=>{
+  const token='x'.repeat(40);
+  const invalid=await post('host/id',{status:'failed',failureCode:'private log details'},token);
+  expect(invalid.status).toBe(400);expect(mock.query).not.toHaveBeenCalled();
+  mock.query.mockResolvedValueOnce([{id:'id',status:'provisioning'}]).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+  expect((await post('host/id',{status:'failed',failureCode:'checkout'},token)).status).toBe(200);
+  expect(mock.query.mock.calls[2][1]).toEqual(['id','failed:checkout']);
 });

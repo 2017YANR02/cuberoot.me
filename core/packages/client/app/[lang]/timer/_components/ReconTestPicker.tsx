@@ -2,11 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ExternalLink, Waypoints } from '@app-foundation/icons/lucide';
+import { ExternalLink, Waypoints, X } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { ReconReferenceWindow } from '@/components/ReconReferenceWindow';
-import { CompactSelect } from '@/components/CompactSelect';
+import { SearchInput } from '@/components/SearchInput';
+import { ClearButton } from '@/components/ClearButton';
 import { Flag } from '@/components/Flag';
+import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { loadFlagData, personFlagIso2 } from '@/lib/country-flags';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { CompCell } from '@/components/CompCell/CompCell';
@@ -38,6 +41,10 @@ export default function ReconTestPicker({ canSelect, onSelect }: {
 }) {
   const isZh = useLang() === 'zh';
   const [open, setOpen] = useState(false);
+  const panelRef = useRef<HTMLElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  usePopoverDismiss(open, () => setOpen(false), panelRef, triggerRef);
+  usePanelClamp(open, panelRef);
   const [, setFlagsLoaded] = useState(false);
   useEffect(() => {
     if (!open) return;
@@ -110,14 +117,14 @@ export default function ReconTestPicker({ canSelect, onSelect }: {
   };
   return <div className="recon-test" data-no-timer>
     <Tooltip content={tr({ zh: '复盘测试', en: 'Recon testing' })}>{tip =>
-      <button {...tip} type="button" className="tb-btn recon-test-trigger" aria-label={tr({ zh: '复盘测试', en: 'Recon testing' })}
+      <button {...tip} ref={triggerRef} type="button" className="tb-btn recon-test-trigger" aria-label={tr({ zh: '复盘测试', en: 'Recon testing' })}
         aria-expanded={open} onClick={() => setOpen(value => !value)}><Waypoints size={18} aria-hidden="true" /></button>}
     </Tooltip>
     {reference && createPortal(<ReconReferenceWindow source={reference} onClose={() => setReference(null)} />,
       document.fullscreenElement ?? document.body)}
-    {open && <section className="recon-test-panel" aria-label={tr({ zh: '复盘测试', en: 'Recon testing' })} data-site-surface="panel">
+    {open && <section ref={panelRef} role="dialog" className="recon-test-panel" aria-label={tr({ zh: '复盘测试', en: 'Recon testing' })} data-site-surface="panel">
       <div className="recon-test-heading"><strong>{tr({ zh: '三阶复盘', en: '3×3 reconstructions' })}</strong>
-        <button type="button" className="recon-test-control" onClick={() => setOpen(false)}>{tr({ zh: '收起', en: 'Close' })}</button></div>
+        <button type="button" className="recon-test-reference-close" aria-label={tr({ zh: '关闭', en: 'Close' })} onClick={() => setOpen(false)}><X size={18} aria-hidden="true" /></button></div>
       <div className="recon-test-people">
         {([
           { label: tr({ zh: '选手', en: 'Solver' }), value: personId, set: setPersonId, options: choices.persons,
@@ -126,13 +133,8 @@ export default function ReconTestPicker({ canSelect, onSelect }: {
             fallback: { id: '2017YANR02', name: 'Ruimin Yan (颜瑞民)' } },
         ]).map(field => {
           const options = field.options.some(choice => choice.id === field.fallback.id) ? field.options : [field.fallback, ...field.options];
-          const items = [{ value: '', label: tr({ zh: '全部', en: 'All' }) }, ...options.map(choice => {
-            const iso2 = personFlagIso2(choice.id);
-            return { value: choice.id, label: <>{iso2 && <><Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" /> </>}{displayCuberName(choice.name, isZh)}</> };
-          })];
-          return <div key={field.label}><span>{field.label}</span><CompactSelect
-            ariaLabel={field.label} label={items.find(item => item.value === field.value)?.label}
-            items={items} value={field.value} disabled={loading} triggerClassName="recon-test-select"
+          return <div key={field.label} className="recon-test-person-field"><span>{field.label}</span><ReconPersonSearch
+            label={field.label} options={options} value={field.value} disabled={loading} isZh={isZh}
             onChange={value => { field.set(value); setOffset(0); setSelected(null); }} /></div>;
         })}
       </div>
@@ -166,6 +168,32 @@ export default function ReconTestPicker({ canSelect, onSelect }: {
         {!canSelect && <small>{tr({ zh: '请连接智能魔方并结束当前计时。', en: 'Connect a smart cube and finish the current attempt.' })}</small>}
       </div>}
     </section>}
+  </div>;
+}
+
+function ReconPersonSearch({ label, options, value, disabled, isZh, onChange }: {
+  label: string; options: SourceChoice[]; value: string; disabled: boolean; isZh: boolean; onChange: (value: string) => void;
+}) {
+  const [query, setQuery] = useState('');
+  const current = options.find(option => option.id === value);
+  const search = query.trim().toLowerCase();
+  const matches = search ? options.filter(option => `${option.name} ${option.id}`.toLowerCase().includes(search)) : [];
+  const name = (person: SourceChoice) => {
+    const iso2 = personFlagIso2(person.id);
+    return <>{iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{displayCuberName(person.name, isZh)}</>;
+  };
+  return <div className="recon-test-person-search">
+    {current ? <div className="recon-test-person-value">{name(current)}
+      {!disabled && <ClearButton ariaLabel={tr({ zh: `清除${label}`, en: `Clear ${label}` })} onClick={() => { setQuery(''); onChange(''); }} />}
+    </div> : <>
+      <SearchInput value={query} onChange={setQuery} disabled={disabled} aria-label={label}
+        placeholder={tr({ zh: '全部 · 搜索姓名或 WCA ID', en: 'All · Search name or WCA ID' })} />
+      {search && <div className="recon-test-list">
+        {matches.map(person => <button key={person.id} type="button" className="recon-test-item" disabled={disabled}
+          onClick={() => { setQuery(''); onChange(person.id); }}><span className="recon-test-person-value">{name(person)}</span><small>{person.id}</small></button>)}
+        {matches.length === 0 && <span>{tr({ zh: '无匹配结果', en: 'No matches' })}</span>}
+      </div>}
+    </>}
   </div>;
 }
 

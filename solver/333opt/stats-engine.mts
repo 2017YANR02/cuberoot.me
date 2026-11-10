@@ -9,7 +9,7 @@ export function statsEngine(root: string, env: NodeJS.ProcessEnv = process.env) 
   if (!['c', 'rust', 'opt10'].includes(engine)) throw Error('Invalid H10_ENGINE');
   const threads = Number(env.THREADS || Math.min(availableParallelism(), engine === 'opt10' ? 16 : Infinity));
   if (!Number.isSafeInteger(threads) || threads < 1) throw Error('Invalid THREADS');
-  const table = engine === 'opt10' ? resolve(root, '.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat')
+  const table = engine === 'opt10' ? resolve(root, '.local-data/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat')
     : resolve(env.H48_H10_TABLE || resolve(env.CUBE_TABLE_DIR || resolve(root,'solver/tables'),'h48-nissy-core/h48h10.dat'));
   return { engine, threads, table, expectedBytes: engine === 'opt10' ? 31_130_911_744 : 30_336_314_216 };
 }

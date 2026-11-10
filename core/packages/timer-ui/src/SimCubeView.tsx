@@ -211,6 +211,7 @@ export interface SimCubeViewProps {
    * and for tests, where the re-render cost is irrelevant.
    */
   quatRef?: { current: Quat | null };
+  orientationTauMs?: number;
   /** Bump to capture the current sample as the upright reference. */
   calibrateToken?: number;
   /** Exact host sample shared with the replay reference; avoids a later-frame capture. */
@@ -291,6 +292,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     gyroOrientation = '',
     quat,
     quatRef,
+    orientationTauMs,
     calibrateToken = 0,
     calibrationReference,
     sensorBasis = sensorBasisForBrand(null),
@@ -331,6 +333,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   const gyroViewActiveRef = useRef(false);
   const basisRef = useRef<SensorBasisName>(sensorBasis);
   const mirrorRef = useRef(mirror);
+  const orientationTauRef = useRef(orientationTauMs);
   const onReadyRef = useRef(onReady);
   // A ref to the caller's ref — the mount effect runs once, so it must not
   // close over whichever box happened to be passed on the first render.
@@ -354,6 +357,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   useEffect(() => {
     basisRef.current = sensorBasis;
     mirrorRef.current = mirror;
+    orientationTauRef.current = orientationTauMs;
     onReadyRef.current = onReady;
     externalQuatRef.current = quatRef;
     gyroFrameRef.current = gyroFrame;
@@ -446,7 +450,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
             ? CALIBRATION_TAU_MS
             : performance.now() < sliceFollowUntilRef.current
               ? SLICE_ORIENTATION_TAU_MS
-              : undefined;
+              : orientationTauRef.current;
           calibrationTransitionMsRef.current = Math.max(0, calibrationTransitionMsRef.current - dtMs);
           const next = smoothedRef.current
             ? slerpTowards(smoothedRef.current, target, dtMs, orientationTauMs)

@@ -9,9 +9,9 @@ import { setTimeout } from 'node:timers/promises';
 
 const root = resolve(import.meta.dirname, '../../../../..');
 const read = async (file) => JSON.parse(await readFile(resolve(root, file), 'utf8'));
-const derived = await read('.tmp/best2x2/derived-site.json');
-const original = await read('.tmp/best2x2/site-cll.json');
-const imported = (await read('.tmp/best2x2/import.json')).sets.find((s) => s.slug === 'cll');
+const derived = await read('.local-data/best2x2/derived-site.json');
+const original = await read('.local-data/best2x2/site-cll.json');
+const imported = (await read('.local-data/best2x2/import.json')).sets.find((s) => s.slug === 'cll');
 const url = 'https://api.cuberoot.me/v1/alg/sets/2x2/cll';
 const get = async () => {
   const r = await fetch(`${url}?fresh=1&t=${Date.now()}`, { cache: 'no-store' });
@@ -71,8 +71,8 @@ if (sune.body.algs[0][0].alg !== "R U R' U R U2 R'") throw new Error('Sune body 
 const stats = { cases: updates.length, sourceInputs: inputs,
   algorithms: updates.reduce((n, u) => n + u.body.algs[0].length, 0),
   independentSetups: updates.reduce((n, u) => n + u.body.algs[0].filter((a) => a.setup).length, 0) };
-await mkdir(resolve(root, '.tmp/png'), { recursive: true });
-const artifact = resolve(root, `.tmp/png/cll-repair-${Date.now()}.json`);
+await mkdir(resolve(root, '.local-data/best2x2'), { recursive: true });
+const artifact = resolve(root, `.local-data/best2x2/cll-repair-${Date.now()}.json`);
 await writeFile(artifact, JSON.stringify({ before, updates, stats }, null, 2) + '\n');
 console.log(JSON.stringify({ artifact, ...stats, sune: sune.body.algs[0] }));
 if (process.argv.includes('--apply')) {

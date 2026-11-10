@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { verify } from './benchmark.mjs';
 const root = resolve(import.meta.dirname, '../../..');
-const base = resolve(root, '.tmp/cubeopt-reverse');
+const base = resolve(root, '.local-data/cubeopt-reverse');
 const corpus = JSON.parse(readFileSync(resolve(root,'solver/testdata/benchmarks/wca-first100.json'),'utf8'));
 const {cube3x3x3} = await import(pathToFileURL(resolve(root,'core/jobs/alg-build/node_modules/cubing/dist/lib/cubing/puzzles/index.js')).href);
 const puzzle = await cube3x3x3.kpuzzle();

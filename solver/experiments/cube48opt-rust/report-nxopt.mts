@@ -8,7 +8,7 @@ import {nxDir,nxRoot,nxLabel,nxTableBytes,nxHash,nxBinary,nxReview} from './nxop
 import {readWca100} from './wasm-benchmark.mjs';
 import {verify} from './benchmark.mjs';
 const read=(p:string)=>JSON.parse(readFileSync(p,'utf8'));
-const base=resolve(nxRoot,'.tmp/cubeopt-reverse');
+const base=resolve(nxRoot,'.local-data/cubeopt-reverse');
 const partial=process.argv[2]==='--partial';
 assert(process.argv.length===2||partial);
 const resources=read(resolve(base,nxLabel+'-resources.json'));

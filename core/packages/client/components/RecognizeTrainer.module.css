@@ -211,3 +211,114 @@
     animation: none;
   }
 }
+
+
+.response {
+  display: contents;
+}
+
+/* PLL has 21 short answers: keep all of them beside the case on short screens.
+   Other recognition sets retain their existing layouts and keyboard sizing. */
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 640px) {
+  .pllTrainer {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-areas: 'progress guide' 'image response';
+    align-items: start;
+    gap: 8px 16px;
+    width: min(100%, 1040px);
+    margin-inline: auto;
+    padding: 8px 16px 16px;
+  }
+
+  .pllTrainer .guideRow {
+    grid-area: guide;
+    justify-content: flex-end;
+    margin: 0;
+  }
+
+  .pllTrainer .guideRow > a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-block: 6px;
+  }
+
+  .pllTrainer .progressWrap {
+    grid-area: progress;
+    align-self: center;
+    margin: 0;
+  }
+
+  .pllTrainer .image {
+    grid-area: image;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    min-width: 0;
+  }
+
+  .pllTrainer .image > div {
+    width: min(100%, calc(100dvh - 80px));
+    aspect-ratio: 1;
+  }
+
+  .pllTrainer .image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .pllTrainer .response {
+    grid-area: response;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .pllTrainer .hint {
+    margin: 0 0 6px;
+    font-size: 0.85rem;
+  }
+
+  .pllTrainer :global(.on-screen-keyboard) {
+    grid-template-columns: repeat(7, minmax(44px, 1fr));
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .pllTrainer :global(.kbd-btn) {
+    min-height: 44px;
+    padding: 4px;
+  }
+
+  .pllTrainer .actions {
+    margin-top: 6px;
+  }
+
+  .pllTrainer .actions > button {
+    min-height: 44px;
+    padding-block: 6px;
+  }
+
+  .pllTrainer .answer {
+    margin-top: 6px;
+    max-width: 100%;
+  }
+
+  .pllTrainer .answer::before {
+    display: none;
+  }
+
+  .pllTrainer .answerName {
+    margin-bottom: 2px;
+    font-size: 1rem;
+  }
+
+  .pllTrainer .answerSolution {
+    font-size: 0.8rem;
+    overflow-wrap: anywhere;
+  }
+}

@@ -27,6 +27,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
+            .node-version
             core/scripts/dev-preview
             core/packages/shared/src/dev-preview.ts
             ops/dev-preview
@@ -34,5 +35,5 @@ jobs:
           sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
-      - run: node --test core/scripts/dev-preview/model.test.ts core/scripts/dev-preview/retry.test.ts core/scripts/dev-preview/enroll.test.ts
+          node-version-file: '.node-version'
+      - run: node --test core/scripts/dev-preview/deployments.test.ts core/scripts/dev-preview/checkout.test.ts core/scripts/dev-preview/model.test.ts core/scripts/dev-preview/retry.test.ts core/scripts/dev-preview/enroll.test.ts

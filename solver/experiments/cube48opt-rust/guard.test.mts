@@ -10,6 +10,31 @@ import { Writable } from 'node:stream';
 import test from 'node:test';
 import { consumeResourceReview, deliverOpt10Input, h48FileBytes, opt10ReviewScope, opt10ReviewSources, productionResourceReviewScope, researchPolicy, resourceProtectionReasons, resourceReviewCommandSha256, resourceReviewScope, validateH48Metadata, validateOpt10GenerationProof, validateOpt10Metadata, validateOpt10ResourceReview, validateResourceReview, validateSuccessfulPredecessor } from './guard.mts';
 import { blockedCompute } from '../../../.codex/hooks/block-unprotected-memory-compute.mts';
+import {macLabel, macReview, macDriver, macPrepReview, macPrepDriver, validateMacObservation} from '../egg-solver/native-service/mac-h8-policy.mts';
+
+test('egg h8 diagnosis has one guarded command, fixed input scope and an immutable run baseline', () => {
+  const request = {label: macLabel, executable: process.execPath, args: [macDriver], env: {CUBEOPT_EGG_H8_REVIEW: macReview}};
+  assert.equal(researchPolicy(request.label, request.executable, request.args, request.env).rssLimit, 7_782_731_776 + 2 * 2 ** 30);
+  for (const changed of [{...request, label: 'another-run'}, {...request, args: [macDriver, '--repeat']},
+    {...request, executable: '/bin/sh'}, {...request, env: {...request.env, CUBEOPT_H: '11'}}])
+    assert.throws(() => researchPolicy(changed.label, changed.executable, changed.args, changed.env));
+  const now = {boot: 'fixed-boot', swapouts: 336, pressure: 1, available: 32 * 2 ** 30};
+  const plan = {schema: 'cuberoot.egg-h8-mac-diagnosis/v1', baseline: now,
+    authorization: '用户要求在本机复查 egg 与 Opt8 的速度差异；100题、4线程、三个入口各一轮、不预热',
+    threads: 4, cases: 100, warmupCases: 0, measuredPasses: 1, eggLanes: 40, order: ['egg-cli', 'egg-adapter', 'opt8']};
+  validateMacObservation(plan, now, false, false);
+  for (const changed of [{...now, swapouts: 337}, {...now, boot: 'new-boot'}, {...now, pressure: 2}, {...now, available: 2 ** 30}])
+    assert.throws(() => validateMacObservation(plan, changed, false, false));
+  assert.throws(() => validateMacObservation(plan, now, true, false));
+  assert.throws(() => validateMacObservation(plan, now, false, true));
+  assert.throws(() => validateMacObservation({...plan, cases: 1000}, now, false, false));
+  const root = resolve(import.meta.dirname, '../../..');
+  assert(blockedCompute(`node ${macDriver}`, root));
+  assert(blockedCompute(`node ${macPrepDriver}`, root));
+  assert.equal(researchPolicy(macLabel + '-prepare-fixed', process.execPath, [macPrepDriver], {CUBEOPT_EGG_H8_REVIEW: macPrepReview}).rssLimit, 43 * 2 ** 30);
+  assert.throws(() => researchPolicy(macLabel, process.execPath, [macPrepDriver], {CUBEOPT_EGG_H8_REVIEW: macPrepReview}));
+  assert.equal(blockedCompute(`node ${resolve(import.meta.dirname, 'guard.mts')} ${macLabel} ${process.execPath} ${macDriver}`, root), undefined);
+});
 import { parsePrintedSolution, parseWasmBenchmarkArguments, readWca100 } from './wasm-benchmark.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -37,7 +62,7 @@ test('plain artifact upload and metadata probes do not authorize computation', (
 });
 test('dedicated 18-thread reviews route only existing-table commands with one shared native table', () => {
   const root=resolve(here,'../../..'), executable=resolve(here,'target/multithread/release/cube48opt-research');
-  const env={CUBEOPT_MULTITHREAD_REVIEW:resolve(root,'.tmp/cubeopt-reverse/mt18-review/launch.json'),
+  const env={CUBEOPT_MULTITHREAD_REVIEW:resolve(root,'.local-data/cubeopt-reverse/mt18-review/launch.json'),
     CUBEOPT_BACKEND:'h48',CUBEOPT_H:'10',CUBEOPT_SEARCH_THREADS:'18',CUBEOPT_SOLVE_THREADS:'1',CUBEOPT_MEASURE_RSS:'1'};
   const args=['solve-h48','10',resolve(root,'solver/tables/h48-nissy-core/h48h10.dat'),'8','20','0'];
   const p=researchPolicy('wca100-mt18-h10',executable,args,env);
@@ -222,7 +247,7 @@ test('WASM output must contain one complete solution, never a silent failure or 
 
 test('Opt10 verification permits only a bounded Opt1 read-only verification target', () => {
   const root=resolve(here,'../../..'), executable=resolve(here,'target/release/examples/verify_opt10_generation');
-  const args=['--verify-opt1',resolve(root,'.tmp/cubeopt-reverse/opt9-generated/small-memory.bin'),resolve(root,'.tmp/cubeopt-reverse/opt1-generated/h48prun01.dat'),'16'];
+  const args=['--verify-opt1',resolve(root,'.local-data/cubeopt-reverse/opt9-generated/small-memory.bin'),resolve(root,'.local-data/cubeopt-reverse/opt1-generated/h48prun01.dat'),'16'];
   const env={CUBEOPT_BACKEND:'opt10-verify',CUBEOPT_VARIANT:'1'};
   const policy=researchPolicy('verify-opt1',executable,args,env);
   assert.equal(policy.tableBytes,30_401_280); assert.equal(policy.rssLimit,512*2**20); assert.equal(policy.deadlineMs,3_600_000);
@@ -248,8 +273,8 @@ test('Opt10 commands never receive a smaller existing backend or an unrelated bi
 });
 test('Opt10 generation and solving have fixed canonical paths, options and full budgets', () => {
   const root=resolve(here,'../../..'), binary=resolve(here,'target/opt10/release/cube48opt-research');
-  const small=resolve(root,'.tmp/cubeopt-reverse/opt9-generated/small-memory.bin');
-  const table=resolve(root,'.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
+  const small=resolve(root,'.local-data/cubeopt-reverse/opt9-generated/small-memory.bin');
+  const table=resolve(root,'.local-data/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
   const env={CUBEOPT_BACKEND:'opt10'};
   const generate=['generate-opt10',small,table,'16'], solve=['solve-opt10',small,table,'8','20','0'];
   const generation=researchPolicy('opt10-generate',binary,generate,env);
@@ -294,8 +319,8 @@ test('Opt10 generation proof rejects stale sources, incomplete coverage and stop
 
 function opt10ChainFixture() {
   const encode=(v:unknown)=>Buffer.from(JSON.stringify(v)), hash=(v:Buffer)=>createHash('sha256').update(v).digest('hex');
-  const root=resolve(here,'../../..'),small=resolve(root,'.tmp/cubeopt-reverse/opt9-generated/small-memory.bin');
-  const table=resolve(root,'.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
+  const root=resolve(here,'../../..'),small=resolve(root,'.local-data/cubeopt-reverse/opt9-generated/small-memory.bin');
+  const table=resolve(root,'.local-data/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
   const binary=resolve(here,'target/opt10/release/cube48opt-research');
   const sources=Object.fromEntries(opt10ReviewSources.map(name=>[name,'a'.repeat(64)]));
   const current={boot:'original-boot',swapouts:0,pressure:1,available:45*2**30};
@@ -323,7 +348,7 @@ function opt10ChainFixture() {
     return {request,evidence,review,receipt,resources,exit:{exitCode:0,signal:null,finishedAt:'2026-10-13T18:01:01.000Z'}};
   };
   const verify=make('verify-opt1','verify-opt10-v2',resolve(here,'target/release/examples/verify_opt10_generation'),
-    ['--verify-opt1',small,resolve(root,'.tmp/cubeopt-reverse/opt1-generated/h48prun01.dat'),'16'],{CUBEOPT_BACKEND:'opt10-verify',CUBEOPT_VARIANT:'1'});
+    ['--verify-opt1',small,resolve(root,'.local-data/cubeopt-reverse/opt1-generated/h48prun01.dat'),'16'],{CUBEOPT_BACKEND:'opt10-verify',CUBEOPT_VARIANT:'1'});
   const proof={schema:'cuberoot.opt10.generation-proof.v1',exitCode:0,sourceSha256:sources,resources:verify.resources,
     result:{schema:'cuberoot.opt10.opt1-generation-validation.v1',sharedGenerator:true,projectionEoBits:0,base:7,completedDepth:9,threads:16,
       comparedValidCells:117_567_450,differences:0,allEqual:true,tableWritten:false,distribution:[117_567_450,0,0,0,0,0,0,0,0,0,0]}};

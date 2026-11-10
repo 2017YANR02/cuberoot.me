@@ -1658,3 +1658,28 @@
 .fc-video-wrapper { background: #000; }
 .fc-solve-band-mark { color: var(--accent-foreground); }
 .fc-modal { max-width: calc(100vw - 24px); box-sizing: border-box; }
+
+/* Short landscape phones keep the video and solve workspace side by side. */
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 640px) {
+  .frame-count-page {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+    padding: 8px;
+  }
+  .fc-header { margin-bottom: 8px; }
+  .fc-main { grid-template-columns: minmax(0, 1fr) minmax(220px, 36%); gap: 8px; }
+  .fc-video-col { gap: 6px; }
+  .fc-solve-col { overflow-y: auto; overscroll-behavior: contain; }
+  .fc-video-zone { min-height: 0; max-height: none; }
+  .fc-video-zone > .fc-drop-hint { min-height: 0; padding: 8px; }
+  .fc-drop-upload-btn svg { width: 32px; height: 32px; }
+  .fc-drop-sub { display: none; }
+  .fc-video-toolbar { flex-wrap: nowrap; overflow-x: auto; flex-shrink: 0; }
+  .fc-video-label { max-width: 90px; }
+  .fc-controls { flex-wrap: wrap; gap: 2px; }
+  .fc-controls .fc-ctrl-btn,
+  .fc-controls .fc-ctrl-btn.play-btn { width: 44px; height: 44px; }
+  .fc-controls .fc-rate-group { flex-basis: 100%; justify-content: center; }
+  .fc-controls .fc-ctrl-sep { display: none; }
+}

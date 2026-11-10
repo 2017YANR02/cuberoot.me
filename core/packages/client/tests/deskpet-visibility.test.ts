@@ -7,10 +7,10 @@ vi.mock('next/navigation', () => ({ usePathname: () => route.path }));
 import { deskPetQuietPage, useDeskPetVisible } from '@/hooks/useDeskPetVisible';
 
 it('hides timing and training routes without hiding catalogs or unrelated pages', () => {
-  for (const path of ['/timer', '/zh/timer', '/en/timer/', '/cross_trainer', '/algTrainer', '/alg-trainers', '/alg/3x3/pll/run', '/alg/roux', '/alg/skewb-trainer', '/alg/sq1/train']) {
+  for (const path of ['/timer', '/zh/timer', '/en/timer/', '/cross_trainer', '/algTrainer', '/alg-trainers', '/alg/3x3/pll/run', '/alg/roux', '/alg/skewb-trainer', '/alg/sq1/train', '/zh/recon', '/en/wca/results', '/wca/comp', '/wca/records', '/mosaic', '/frame-count', '/calc', '/paint', '/wb', '/notation', '/scramble/solver', '/scramble/analyzer', '/recognize/pll', '/alg/3bld/lookup']) {
     expect(deskPetQuietPage(path), path).not.toBeNull();
   }
-  for (const path of ['/', '/zh/alg/3x3/pll', '/alg/3x3/pll/select', '/timer-help', '/account']) {
+  for (const path of ['/', '/zh/alg/3x3/pll', '/alg/3x3/pll/select', '/timer-help', '/account', '/recognize/pll/guide', '/calc-about']) {
     expect(deskPetQuietPage(path), path).toBeNull();
   }
 });

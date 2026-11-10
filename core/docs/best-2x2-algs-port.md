@@ -8,7 +8,7 @@
 
 导入器不再保存 `alignAlgToState` 折面名、前后 U/D 对齐的结果，该函数只用于判定来源公式属于对应情况。持久化保留原手法，最多前置 U/U2/U'；无法直接对齐时使用已有的单条公式 `setup`，不改手法或追加收尾调整。主图预设由首条来源公式反推。验证器使用 cubing.js 解析原始括号与 R3 记号。
 
-一次性恢复工具为 `scripts/best2x2/repair-cll.mjs`：默认只生成带线上备份的清单，`--apply` 写入，`--resume <清单>` 可续传限流中断的任务。它要求历史 `.tmp/best2x2` 快照存在，并拒绝覆盖导入后被他人改动的公式；原 0104 迁移保持不变。
+一次性恢复工具为 `scripts/best2x2/repair-cll.mjs`：默认只生成带线上备份的清单，`--apply` 写入，`--resume <清单>` 可续传限流中断的任务。它要求历史 `.local-data/best2x2` 快照存在，并拒绝覆盖导入后被他人改动的公式；原 0104 迁移保持不变。
 
 ## 全部二阶公式集手法恢复（2026-09-07）
 
@@ -100,11 +100,11 @@
 ```pwsh
 $env:NODE_USE_ENV_PROXY='1'
 pnpm -F @cuberoot/client exec tsx scripts/best2x2/fetch.mts
-pnpm -F @cuberoot/client exec tsx scripts/best2x2/report.mts --site-dir .tmp/best2x2 --json .tmp/best2x2/derived-site.json
-pnpm -F @cuberoot/client exec tsx scripts/best2x2/build-import.mts .tmp/best2x2/derived-site.json .tmp/best2x2 .tmp/best2x2/import.json
-node packages/alg-build/gen_best2x2_sql.mjs .tmp/best2x2/import.json core/apps/api/migrations/0104_best_2x2_algs.sql
-pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-import.mts .tmp/best2x2/import.json
-pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-finder.mts .tmp/best2x2/import.json
+pnpm -F @cuberoot/client exec tsx scripts/best2x2/report.mts --site-dir .local-data/best2x2 --json .local-data/best2x2/derived-site.json
+pnpm -F @cuberoot/client exec tsx scripts/best2x2/build-import.mts .local-data/best2x2/derived-site.json .local-data/best2x2 .local-data/best2x2/import.json
+node packages/alg-build/gen_best2x2_sql.mjs .local-data/best2x2/import.json core/apps/api/migrations/0104_best_2x2_algs.sql
+pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-import.mts .local-data/best2x2/import.json
+pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-finder.mts .local-data/best2x2/import.json
 node packages/client/scripts/best2x2-check.mjs
 ```
 

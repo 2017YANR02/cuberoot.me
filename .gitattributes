@@ -15,3 +15,55 @@
 *.eot binary
 *.wasm binary
 *.marshal binary
+
+# 生成的动画场景包含内嵌图片，不计入 GitHub 语言统计
+output/rootbeast-desk-video/source/*.html linguist-generated=true
+output/rootbeast-desk-video-collection/source/scenes/*.html linguist-generated=true
+
+# 已确认的生成源码；来源与生成命令见 docs/generated-artifacts.json
+# [lang] 是目录名，使用 [[] 匹配字面量左方括号。
+core/packages/event-icon/src/svg-map-event.ts linguist-generated=true
+core/packages/event-icon/src/svg-map-unofficial.ts linguist-generated=true
+core/packages/event-icon/src/svg-map-penalty.ts linguist-generated=true
+core/packages/event-icon/src/svg-map-puzzle.ts linguist-generated=true
+core/packages/shared/src/data/place_zh.ts linguist-generated=true
+core/packages/shared/src/data/cn_region.ts linguist-generated=true
+core/packages/shared/src/data/account_location_requirements.ts linguist-generated=true
+core/packages/shared/src/timer/trainer-case-data.generated.ts linguist-generated=true
+core/packages/shared/src/account_avatar_gallery.generated.ts linguist-generated=true
+core/packages/client/app/[[]lang]/sim/engine/pgFacts.generated.ts linguist-generated=true
+core/packages/client/app/[[]lang]/scramble/gen/_tnoodle-i18n.ts linguist-generated=true
+core/packages/client/app/fonts-wenkai.css linguist-generated=true
+
+# 第三方同步边界见 docs/generated-artifacts.json；不排除整个 tools 目录。
+tools/cstimer/** linguist-vendored=true
+tools/cstimer-scramble/** linguist-vendored=true
+tools/alg_trainers/** linguist-vendored=true
+tools/blddb/** linguist-vendored=true
+core/packages/client/public/scramble_module.js linguist-vendored=true
+tools/RUBIKS_SOLVER_UPSTREAM.txt linguist-vendored=true
+tools/src/** linguist-vendored=true
+tools/url_params_compressor_simple.js linguist-vendored=true
+tools/sw-register.js linguist-vendored=true
+tools/sw.js linguist-vendored=true
+tools/manifest.json linguist-vendored=true
+tools/icons/** linguist-vendored=true
+tools/documents/** linguist-vendored=true
+tools/screenshots/** linguist-vendored=true
+tools/solver/** linguist-vendored=true
+tools/2x2x2/** linguist-vendored=true
+tools/documentation/** linguist-vendored=true
+tools/cross_trainer/** linguist-vendored=true
+tools/xcross_trainer/** linguist-vendored=true
+tools/xxcross_trainer/** linguist-vendored=true
+tools/xcross_pairing_trainer/** linguist-vendored=true
+tools/pairing_trainer/** linguist-vendored=true
+tools/pseudo_xcross_trainer/** linguist-vendored=true
+tools/pseudo_pairing_trainer/** linguist-vendored=true
+tools/eocross_trainer/** linguist-vendored=true
+tools/algTrainer/** linguist-vendored=true
+tools/jsonEditor/** linguist-vendored=true
+
+# 官方 WebView SDK
+core/packages/client/public/vendor/jweixin-1.6.0.js linguist-vendored=true
+core/packages/client/public/vendor/douyin-webview-jssdk-1.2.0.js linguist-vendored=true

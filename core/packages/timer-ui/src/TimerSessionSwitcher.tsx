@@ -1,5 +1,6 @@
 'use client';
 
+import { getUsableViewport } from './host-viewport';
 import {
   TIMER_SESSION_UI_COPY,
   timerSessionClearConfirmation,
@@ -237,7 +238,7 @@ export function TimerSessionSwitcher({
       const panel = panelRef.current;
       if (!trigger || !panel) return;
 
-      const viewport = window.visualViewport;
+      const viewport = getUsableViewport();
       const viewportLeft = viewport?.offsetLeft ?? 0;
       const viewportTop = viewport?.offsetTop ?? 0;
       const viewportWidth = viewport?.width ?? document.documentElement.clientWidth;

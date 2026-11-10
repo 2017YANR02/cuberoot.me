@@ -51,7 +51,7 @@ Apple M5 Pro，固定 WCA 前 100 条，1 线程、8 contexts，每个版本只�
 以及独立 cubing.js 回放核对。主表加载/认证时间与搜索时间分开记录。
 
 本轮输入、源文件和二进制快照在
-`.tmp/cubeopt-reverse/corner96/opt8-wca100-v1/`；汇总由
+`.local-data/cubeopt-reverse/corner96/opt8-wca100-v1/`；汇总由
 `node solver/experiments/cube48opt-rust/corner-benchmark.mts report` 生成。
 
 ### 单轮结果（2026-10-22 UTC）
@@ -123,7 +123,7 @@ Swapouts 始终为 0，压力级别始终为 1。guard 启动收据中的二进�
 
 查询微基准为每布局一轮、相同的 4,194,304 个不重复确定性角状态，表已驻留，
 不计构建和认证；它不是完整求解速度，也不是实际搜索访问分布。
-输入、源码、二进制与结果保存在 `.tmp/cubeopt-reverse/corner96/layouts-v2/`。
+输入、源码、二进制与结果保存在 `.local-data/cubeopt-reverse/corner96/layouts-v2/`。
 `corner-benchmark.mts report-layouts` 核对完整状态覆盖、校验和与 guard 收据后生成报告。
 该轮峰值进程树 RSS 为 209,797,120 字节，Swapouts 0、压力级别 1。
 
@@ -160,7 +160,7 @@ library/main `cargo check` 通过。
 全轮 PID 为 `3840`，guard PID 为 `3832`，主表只加载一次；加载与辅助准备共 1.728 秒，
 未计入搜索时间。采样峰值进程树 RSS 为 7,910,195,200 字节，最低保守余量
 27,416,559,616 字节，Swapouts 始终 0、压力级别始终 1，正常结束。
-证据在 `.tmp/cubeopt-reverse/corner96/opt8-wca100-v2/`，由
+证据在 `.local-data/cubeopt-reverse/corner96/opt8-wca100-v2/`，由
 `corner-benchmark.mts report scheduled` 核对输入、解、二进制哈希、PID 与保护记录。
 原始两轮证据分别保留，本次改动仅在本地，未提交或推送。
 
@@ -203,7 +203,7 @@ library/main `cargo check` 通过。
 角棱联合投影。继续压缩返回相同角距离的小表，无法减少大部分主表工作。
 当前结果不构成 96 对称取逆约简无效的证据，也没有验证全局联合投影粗化的效果。
 
-证据保存在 `.tmp/cubeopt-reverse/corner96/opt8-profile-v1/`，由
+证据保存在 `.local-data/cubeopt-reverse/corner96/opt8-profile-v1/`，由
 `corner-benchmark.mts report-profile` 核对冻结输入/程序、原始结果及保护记录。
 求解 PID `16798`、guard PID `16790` 全程常驻，峰值进程树 RSS 7,910,080,512 字节，
 最低保守余量 22,179,987,456 字节，同一 boot、Swapouts 0、压力级别 1，正常退出。
@@ -264,7 +264,7 @@ library/main `cargo check` 通过。
 观察进程 PID **17992**、guard PID **17983** 全程不变，峰值进程树 RSS
 7,983,988,736 字节、最低保守余量 15,146,008,576 字节，同一系统启动、Swapouts 0、
 压力 1，正常退出。新增入口的 8 项策略检查通过。冻结源码、程序、输入、断点、
-逐条结果和独立核验报告分别在 `.tmp/cubeopt-reverse/corner96/joint-v1/` 与
+逐条结果和独立核验报告分别在 `.local-data/cubeopt-reverse/corner96/joint-v1/` 与
 `joint-probe-v1/`；标签均已消费，不覆盖或重跑。本轮未执行完整速度基准，未修改
 正式主表、公开 TABLES 快照或生产默认功能，未提交或推送。
 
@@ -320,12 +320,12 @@ PID 35831，峰值进程树 RSS 9,831,596,032 字节，最低余量 15,898,116,0
 原脚本仍引用 10 月 13 日退役清理后的废纸篓路径；本轮用户正常清空废纸篓，文件已删除。
 这是实验输入路径管理错误。失败输出、资源记录和 `exit.json` 保留，不能作为速度结果，
 也不覆盖后重跑。同一份原表已在服务器确认存在，恢复目标为项目内
-`.tmp/cubeopt-reverse/opt8-generated/h48prun31h8.dat`；恢复完成并核对原 SHA-256 后，
+`.local-data/cubeopt-reverse/opt8-generated/h48prun31h8.dat`；恢复完成并核对原 SHA-256 后，
 才以独立恢复记录继续尚未开始的单轮计时，沿用原 boot/Swapouts 基线。
 现有 Opt8 配置已改为项目路径，corner 入口提前拒绝 `.Trash` / `.Trashes` 输入。
 完整速度及验解结果待完成后记录，不根据局部拒绝率预报整体提速。
 
-产物与逐阶段日志在 `.tmp/cubeopt-reverse/corner96/`。运行必须经过现有
+产物与逐阶段日志在 `.local-data/cubeopt-reverse/corner96/`。运行必须经过现有
 `guard.mts` 的 corner backend：共用计算锁，整轮共用一个 boot/Swapouts
 基线，单个求解过程常驻表，逐条输出持久化；新增换出、压力异常、RSS 超限
 或不足 2 GiB 余量即停止，保留断点与停止记录。旧任务记录只读保留。

@@ -584,3 +584,30 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+.notation-intro { margin-top: 8px; }
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 640px) {
+  .notation-page .notation-shell { padding: 8px 16px 24px; }
+  .notation-page .alg-notation-hero h1 { font-size: 22px; }
+  .notation-page .notation-project-picker { margin-top: 6px; }
+  .notation-page .notation-catalog-section,
+  .notation-page .alg-notation-demo-section { margin-top: 8px; }
+  .notation-page .move-notation-demo.alg-player-list-layout {
+    display: grid;
+    grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+    gap: 12px;
+    margin-top: 0;
+  }
+  .notation-page .move-notation-demo.is-compact .move-notation-stage {
+    width: 100%;
+    height: max(140px, calc(100dvh - 164px));
+    max-height: 260px;
+  }
+  .notation-page .move-notation-options {
+    width: 100%;
+    max-height: max(140px, calc(100dvh - 164px));
+    margin: 0;
+  }
+  .notation-page .move-notation-option { min-height: 44px; align-items: center; }
+}

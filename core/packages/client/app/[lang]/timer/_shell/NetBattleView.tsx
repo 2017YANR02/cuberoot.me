@@ -640,6 +640,9 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   // Orientation samples are consumed by the live cube frame loop, not by the
   // room timer. Keep them in a ref so BLE cadence never re-renders this shell.
   const gyroQuatRef = useRef<Quat | null>(null);
+  const gyroCalibrationRef = useRef<Quat | null>(null);
+  const gyroCalibrationPendingRef = useRef(false);
+  const publishGyroRef = useRef<ReturnType<typeof useNetBattleLiveCube>['publishGyro']>(() => {});
   const [calibrateNonce, setCalibrateNonce] = useState(0);
 
   /**
@@ -660,6 +663,16 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const bluetoothCube = useBluetoothCube({
     onGyro: settings.gyroEnabled ? (q) => {
       gyroQuatRef.current = q;
+      if (gyroCalibrationPendingRef.current) {
+        gyroCalibrationRef.current = { ...q };
+        gyroCalibrationPendingRef.current = false;
+        setCalibrateNonce(n => n + 1);
+      }
+      publishGyroRef.current(q, {
+        basis: sensorBasisForBrand(bluetoothCube.status.brand),
+        mirror: mirrorForBrand(bluetoothCube.status.brand),
+        reference: gyroCalibrationRef.current,
+      });
       if (settings.recordGyro && phaseRef.current === 'running') netAttemptRef.current.recordGyro(q, performance.now());
     } : undefined,
     onMove: (move, ts, _facelets, metadata, clock) => {
@@ -817,6 +830,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     players: liveCubePlayers,
     ready: liveRoomReady,
     publishMove: publishLiveMove,
+    publishGyro: publishLiveGyro,
   } = useNetBattleLiveCube({
     code: room?.code ?? null,
     credentials: liveCredentials,
@@ -824,6 +838,16 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     localConnected: cubeConnected,
     localFacelets: bluetoothCube.facelets,
   });
+  publishGyroRef.current = publishLiveGyro;
+  useEffect(() => {
+    gyroQuatRef.current = null;
+    gyroCalibrationRef.current = null;
+    gyroCalibrationPendingRef.current = false;
+    publishLiveGyro(null);
+  }, [bluetoothCube.status.connected, bluetoothCube.status.deviceId, bluetoothCube.status.deviceName, publishLiveGyro]);
+  useEffect(() => {
+    if (!settings.gyroEnabled) publishLiveGyro(null);
+  }, [settings.gyroEnabled, publishLiveGyro]);
   useEffect(() => {
     const subs = btSubscribersRef.current;
     const publish = (move: string) => publishLiveMove(move);
@@ -1145,6 +1169,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
             useGyro={settings.gyroEnabled}
             quatRef={settings.gyroEnabled ? gyroQuatRef : undefined}
             calibrateToken={calibrateNonce}
+            calibrationReference={gyroCalibrationRef.current}
             sensorBasis={sensorBasisForBrand(bluetoothCube.status.brand)}
             mirror={mirrorForBrand(bluetoothCube.status.brand)}
           />
@@ -1307,7 +1332,17 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       isZh={isZh}
       cube={bluetoothCube}
       connectAttempt={bluetoothConnectAttempt}
-      onResetGyro={() => setCalibrateNonce(n => n + 1)}
+      onResetGyro={() => {
+        const q = gyroQuatRef.current;
+        gyroCalibrationRef.current = q ? { ...q } : null;
+        gyroCalibrationPendingRef.current = !q;
+        if (q && settings.gyroEnabled) publishLiveGyro(q, {
+          basis: sensorBasisForBrand(bluetoothCube.status.brand),
+          mirror: mirrorForBrand(bluetoothCube.status.brand),
+          reference: gyroCalibrationRef.current,
+        });
+        setCalibrateNonce(n => n + 1);
+      }}
       macPrompt={macPrompt}
       onSubmitMac={(mac) => resolveMac(mac)}
       onCancelMac={() => resolveMac(null)}

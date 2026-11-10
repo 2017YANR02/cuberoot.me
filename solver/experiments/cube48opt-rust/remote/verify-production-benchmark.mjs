@@ -58,7 +58,7 @@ export async function verifyProductionBenchmark(directory) {
     assert.deepEqual(value.engineOrder, reused ? ['rust'] : ['original', 'rust']); assert.equal(value.corpusSha256, corpus.corpusSha256);
   }
   const reference = json(resolve(directory, 'reference-first-pass.json'));
-  const historical = jsonl(resolve(ROOT, '.tmp/cubeopt-reverse/wca100-rust-h10-v2.jsonl'));
+  const historical = jsonl(resolve(ROOT, '.local-data/cubeopt-reverse/wca100-rust-h10-v2.jsonl'));
   assert.equal(historical.length, 400); assert.deepEqual(reference, historical.slice(0, 100), 'Reference must match preserved H10 first pass');
   const { cube3x3x3 } = await import(pathToFileURL(resolve(ROOT,
     'core/jobs/alg-build/node_modules/cubing/dist/lib/cubing/puzzles/index.js')));

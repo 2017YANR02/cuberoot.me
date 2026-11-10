@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import jwt from 'jsonwebtoken';
+import { DEV_PREVIEW_HOSTS } from '@cuberoot/shared/dev-preview';
 import { normalizeRemoteKey } from '@cuberoot/shared/remote-access';
 import { query, withTransaction } from '../db/connection.js';
 import { requireAuth, checkRateLimit, type WcaUser } from '../utils/recon_helpers.js';
@@ -11,7 +12,7 @@ const owner = (u: WcaUser) => u.isAdmin && u.realWcaId === '2017YANR02';
 const enabled = () => (process.env.DEV_PREVIEW_HOST_TOKEN?.length ?? 0) >= 32;
 const hash = (s: string) => createHash('sha256').update(s).digest('hex');
 const slug = (s: unknown): s is string => typeof s === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s) && s.length <= 25;
-const fields = "id,user_id,user_name,owner_slug,device_slug,os,public_key,status,profile,created_at,updated_at,verified_at,COALESCE(status='ready' AND verified_at>NOW()-INTERVAL '5 minutes',FALSE) AS connected";
+const fields = "id,user_id,user_name,owner_slug,device_slug,os,public_key,status,profile,created_at,updated_at,verified_at,COALESCE(status='ready' AND verified_at>NOW()-INTERVAL '5 minutes',FALSE) AS connected,(SELECT substring(e.action from 8) FROM dev_preview_events e WHERE e.request_id=dev_preview_requests.id AND e.action LIKE 'failed:%' ORDER BY e.id DESC LIMIT 1) AS failure_code";
 type Request = {id: string; user_id: number; owner_slug: string; device_slug: string; os: string; status: string; public_key: string | null; profile: unknown; verified_at?: string | Date | null};
 
 devPreviewRoutes.use('/dev-preview/*', bodyLimit({maxSize: 8192}));
@@ -31,17 +32,19 @@ devPreviewRoutes.post('/dev-preview/requests', async c => {
   if (!u.uid) return c.json({error:'Account required'},403);
   checkRateLimit(String(u.uid),{bucket:'dev-preview-enrollment',max:5});
   const b = await c.req.json().catch(()=>null);
-  if (!slug(b?.owner) || !slug(b?.device) || !['mac','windows'].includes(b?.os) || b.owner === 'ruimin') return c.json({error:'Invalid or reserved name'},400);
+  if (!slug(b?.owner) || !slug(b?.device)) return c.json({error:'Invalid name'},400);
+  if (!['mac','windows'].includes(b?.os)) return c.json({error:'Invalid system'},400);
+  if (DEV_PREVIEW_HOSTS.includes(`dev-${b.owner}-${b.device}.cuberoot.me`)) return c.json({error:'Device already registered'},409);
   const ticket = randomBytes(32).toString('hex'), id = randomUUID();
   const result = await withTransaction(async q => {
     await q('SELECT id FROM app_users WHERE id=? FOR UPDATE',[u.uid]);
     const [n] = await q<{n:number}>('SELECT COUNT(*)::int AS n FROM dev_preview_requests WHERE user_id=?',[u.uid]);
-    if (n.n>=10) return false;
+    if (n.n>=10) return 'Request limit reached';
     const rows=await q('INSERT INTO dev_preview_requests(id,user_id,user_name,owner_slug,device_slug,os,ticket_hash) VALUES(?,?,?,?,?,?,?) ON CONFLICT(owner_slug,device_slug) DO NOTHING RETURNING id',[id,u.uid,u.name.slice(0,200),b.owner,b.device,b.os,hash(ticket)]);
-    if(!rows.length) return false;
+    if(!rows.length) return 'Name already taken';
     await q("INSERT INTO dev_preview_events(request_id,actor_id,action) VALUES(?,?,'created')",[id,u.uid]); return true;
   });
-  return result ? c.json({id,ticket}) : c.json({error:'Name reserved or request limit reached'},409);
+  return result === true ? c.json({id,ticket}) : c.json({error:result},409);
 });
 devPreviewRoutes.post('/dev-preview/requests/:id/ticket',async c=>{
   const u=await requireAuth(c);if(!enabled())return c.json({error:'Enrollment disabled'},503);
@@ -113,6 +116,7 @@ devPreviewRoutes.post('/dev-preview/host/:id/health',async c=>{
 devPreviewRoutes.post('/dev-preview/host/:id',async c=>{
   const b=await c.req.json().catch(()=>null);
   if(!['provisioning','ready','failed'].includes(b?.status))return c.json({error:'Invalid state'},400);
+  if(b.status==='failed' && b.failureCode!==undefined && !['checkout','identity','authorization','dns','certificate','deployment'].includes(b.failureCode))return c.json({error:'Invalid failure code'},400);
   const ok=await withTransaction(async q=>{
     const [r]=await q<Request>("SELECT * FROM dev_preview_requests WHERE id::text=? AND status IN ('approved','provisioning') FOR UPDATE",[c.req.param('id')]);
     if(!r)return false;
@@ -122,7 +126,7 @@ devPreviewRoutes.post('/dev-preview/host/:id',async c=>{
       try{normalizeRemoteKey(p.hostKey);}catch{return false;}
     }
     await q('UPDATE dev_preview_requests SET status=?,profile=?,verified_at=NULL,health_checked_at=NULL,updated_at=NOW() WHERE id=?',[b.status,b.status==='ready'?b.profile:null,r.id]);
-    await q('INSERT INTO dev_preview_events(request_id,action) VALUES(?,?)',[r.id,b.status]);return true;
+    await q('INSERT INTO dev_preview_events(request_id,action) VALUES(?,?)',[r.id,b.status==='failed'&&b.failureCode?`failed:${b.failureCode}`:b.status]);return true;
   });
   return ok?c.json({ok:true}):c.json({error:'Invalid transition or profile'},409);
 });

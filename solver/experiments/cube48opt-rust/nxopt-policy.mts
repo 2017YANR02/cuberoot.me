@@ -7,7 +7,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 export const nxRoot = resolve(here, '../../..');
-export const nxDir = resolve(nxRoot, '.tmp/cubeopt-reverse/nxopt22-wca100-4-20261015');
+export const nxDir = resolve(nxRoot, '.local-data/cubeopt-reverse/nxopt22-wca100-4-20261015');
 export const nxReview = resolve(nxDir, 'session.json');
 export const nxStop = resolve(nxDir, 'stop.json');
 export const nxLabel = 'nxopt22-wca100-4-20261015';
@@ -36,7 +36,7 @@ export function validateNxReview(request: Parameters<typeof nxPolicy>[0], curren
   assert.equal(statSync(resolve(nxDir,'nxopth22b.dat')).size,nxTableBytes);
   const receiptPath=resolve(nxDir,'receipt.json');assert(!existsSync(receiptPath),'nxopt run already consumed');
   for(const file of ['raw.log','results.jsonl','timing.json']) assert(!existsSync(resolve(nxDir,file)),`Existing nxopt output: ${file}`);
-  assert(!existsSync(resolve(nxRoot,'.tmp/cubeopt-reverse',nxLabel+'-resources.json')));
+  assert(!existsSync(resolve(nxRoot,'.local-data/cubeopt-reverse',nxLabel+'-resources.json')));
   return {receiptPath,input:undefined,receipt:{schema:'cuberoot.nxopt-receipt.v1',reviewSha256:nxHash(nxReview),before:current,
     request:nxRequest(),consumedAt:new Date().toISOString()}};
 }
@@ -46,7 +46,7 @@ if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url))
   assert.equal(execFileSync('git',['rev-parse','HEAD'],{cwd:source,encoding:'utf8'}).trim(),'f430921a48306874864b9f2ac8a059b43492fd3a');
   const artifacts=[nxBinary,...['nxopt.w','cubepos.w','makefile-nxopt','nxopt.cpp','cubepos.cpp','cubepos.h'].map(f=>resolve(source,f)),
     ...['nxopt-policy.mts','nxopt-benchmark.mjs','guard.mts'].map(f=>resolve(here,f)),resolve(nxRoot,'solver/testdata/benchmarks/wca-first100.json')];
-  const history=['resource-baseline.json','opt10-resource-review-stop.json','wasm-opt8-opt9-20261015/stop.json','wasm-browser-20261015/stop.json'].map(f=>resolve(nxRoot,'.tmp/cubeopt-reverse',f));
+  const history=['resource-baseline.json','opt10-resource-review-stop.json','wasm-opt8-opt9-20261015/stop.json','wasm-browser-20261015/stop.json'].map(f=>resolve(nxRoot,'.local-data/cubeopt-reverse',f));
   writeFileSync(nxReview,JSON.stringify({schema:'cuberoot.nxopt-review.v1',authorization:'按维护者要求复用现有表，WCA100、4线程、单轮不预热',
     boot:nxBoot,swapouts:48,preparedAt:new Date().toISOString(),request:nxRequest(),
     artifacts:Object.fromEntries(artifacts.map(p=>[p,nxHash(p)])),history:Object.fromEntries(history.map(p=>[p,nxHash(p)]))},null,2)+'\n',{flag:'wx'});

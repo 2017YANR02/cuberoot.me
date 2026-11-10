@@ -26,6 +26,41 @@ summary.more-toggle-summary::after { content: none !important; display: none !im
 .more-toggle-chevron { flex-shrink: 0; display: inline-block; vertical-align: middle; }
 .more-toggle-summary > .more-toggle-chevron { margin-inline-start: 0.3rem; }
 details[open] > .more-toggle-summary > .more-toggle-chevron { transform: rotate(180deg); }
+
+/* Native disclosures opt in through their direct MoreToggle summary. */
+@media screen {
+  @supports (interpolate-size: allow-keywords) and selector(details::details-content) {
+    details:has(> .more-toggle-summary[data-animate="true"]) { interpolate-size: allow-keywords; }
+    details:has(> .more-toggle-summary[data-animate="true"])::details-content {
+      block-size: 0;
+      overflow: clip;
+      transition: block-size 220ms ease, content-visibility 220ms allow-discrete;
+    }
+    details[open]:has(> .more-toggle-summary[data-animate="true"])::details-content {
+      block-size: auto;
+      overflow: visible;
+      animation: more-toggle-clip 220ms;
+    }
+  }
+}
+/* Clip while opening, then release overflow for menus and tooltips inside. */
+@keyframes more-toggle-clip { from, to { overflow: clip; } }
+
+/* Controlled disclosures share the same duration, lazy mounting and closed focus state. */
+.more-toggle-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition: grid-template-rows 220ms ease, visibility 0s linear 220ms;
+}
+.more-toggle-panel[data-open="true"] { grid-template-rows: 1fr; visibility: visible; transition-delay: 0s; }
+.more-toggle-panel-content { min-height: 0; overflow: hidden; }
+.more-toggle-panel[data-open="true"][data-settled="true"] > .more-toggle-panel-content,
+.more-toggle-panel[data-open="true"][data-animate="false"] > .more-toggle-panel-content { overflow: visible; }
+.more-toggle-panel[data-animate="false"],
+[data-animate="false"] > .more-toggle-chevron { transition: none; }
 @media (prefers-reduced-motion: reduce) {
-  .more-toggle-chevron { transition: none; }
+  .more-toggle-chevron, .more-toggle-panel,
+  details:has(> .more-toggle-summary)::details-content { transition: none; animation: none; }
+  .more-toggle-panel[data-open="true"] > .more-toggle-panel-content { overflow: visible; }
 }

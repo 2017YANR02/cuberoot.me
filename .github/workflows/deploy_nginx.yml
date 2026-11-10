@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version-file: '.node-version'
       - name: Validate and generate China IP ranges
         run: |
           node --experimental-strip-types --test ops/geoip/update-cn-ranges.test.mjs

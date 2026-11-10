@@ -1,7 +1,7 @@
 /**
  * Best 2x2 Algs 表格的体检报告:逐格反推 case、组内互校、形状核对、与站内既有集配对。
  *
- * 先跑 `fetch.mts` 把 21 张表拉到仓库根 `.tmp/best2x2/`,再:
+ * 先跑 `fetch.mts` 把 21 张表拉到仓库根 `.local-data/best2x2/`,再:
  *   NODE_USE_ENV_PROXY=1 pnpm -F @cuberoot/client exec tsx scripts/best2x2/report.mts
  *   --json <路径>   顺带把逐格结果写成 JSON(入库脚本吃这个)
  *   --offline       不连站内 API(只做表内自校)
@@ -101,7 +101,7 @@ const shapeTagOf = (sh: DerivedSlot['shape']) => shapeTag({ shape: sh } as Deriv
 
 console.log('表      格数   来源>公式  case  组内全票   逐条一致   站内已有   形状');
 for (const sheet of ALG_SHEETS) {
-  const csv = await readFile(resolve(ROOT, `.tmp/best2x2/${sheet}.csv`), 'utf8');
+  const csv = await readFile(resolve(ROOT, `.local-data/best2x2/${sheet}.csv`), 'utf8');
   const raws = parseAlgSheet(sheet, parseCsv(csv), isAlgLike).slots.map((s) => ({ ...s, sheet }));
 
   // 两遍:第一遍先看这张表的格子普遍长什么样(方法定义决定,几十格互证),

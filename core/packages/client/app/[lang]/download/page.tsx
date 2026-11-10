@@ -2,7 +2,7 @@
 
 /** @module Official app downloads and platform availability. */
 import MoreToggle from '@/components/MoreToggle';
-import { Download, Monitor, PackageCheck, Smartphone } from '@app-foundation/icons/lucide';
+import { Download, Info, Monitor, PackageCheck, Smartphone } from '@app-foundation/icons/lucide';
 import { useEffect, useState } from 'react';
 import { fetchAndroidRelease, fetchWindowsRelease, type AndroidRelease, type WindowsRelease } from '@cuberoot/shared/android-release';
 import BackHome from '@/components/BackHome';
@@ -52,10 +52,14 @@ export default function DownloadPage() {
         </div>
       </header>
       <div className="download-platforms">
-        <section className="download-platform-section" aria-labelledby="download-android-title">
-          <Smartphone className="download-platform-icon" size={28} strokeWidth={1.5} aria-hidden="true" />
-          <h2 id="download-android-title">Android</h2>
-          <p className="download-requirement">{tr({ zh: 'Android 8.0 及以上', en: 'Android 8.0 or later' })}</p>
+        <section className="download-platform-section" data-site-surface="panel" aria-labelledby="download-android-title">
+          <header className="download-platform-header">
+            <Smartphone className="download-platform-icon" size={28} strokeWidth={1.5} aria-hidden="true" />
+            <div>
+              <h2 id="download-android-title">Android</h2>
+              <p className="download-requirement">{tr({ zh: 'Android 8.0 及以上', en: 'Android 8.0 or later' })}</p>
+            </div>
+          </header>
           <div className="download-primary-action">
             <a className="download-play-badge" href={GOOGLE_PLAY_URL} onClick={() => trackDownload('play', language)}>
               <img src={tr({ zh: '/badges/google-play-zh-cn.png', en: '/badges/google-play-en.png' })}
@@ -68,17 +72,21 @@ export default function DownloadPage() {
             </a>}
             {release && <span className="download-version">{tr({ zh: '官网版', en: 'Direct download' })} {release.versionName}</span>}
           </div>
-          <p className="download-note">{tr({ zh: 'Google Play 用户请继续通过 Play 更新。', en: 'For Google Play installations, update through Play.' })}</p>
+          <p className="download-note"><Info size={16} aria-hidden="true" /><span>{tr({ zh: 'Google Play 用户请继续通过 Play 更新。', en: 'For Google Play installations, update through Play.' })}</span></p>
           <details className="download-details">
             <MoreToggle as="summary">{tr({ zh: '安装与更新说明', en: 'Installation & updates' })}</MoreToggle>
             <p>{tr({ zh: '官网 APK 与 Google Play 使用不同签名，不能互相覆盖安装。不要为切换渠道卸载应用，以免丢失本地记录。', en: 'The website APK and Google Play use different signing certificates and cannot update each other. Uninstalling to switch channels can erase local records.' })}</p>
             {release && <p>{tr({ zh: 'APK 构建号', en: 'APK build' })}: {release.versionCode}</p>}
           </details>
         </section>
-        <section className="download-platform-section" aria-labelledby="download-windows-title">
-          <Monitor className="download-platform-icon" size={28} strokeWidth={1.5} aria-hidden="true" />
-          <h2 id="download-windows-title">Windows</h2>
-          <p className="download-requirement">{tr({ zh: '64 位（x64）', en: '64-bit (x64)' })}</p>
+        <section className="download-platform-section" data-site-surface="panel" aria-labelledby="download-windows-title">
+          <header className="download-platform-header">
+            <Monitor className="download-platform-icon" size={28} strokeWidth={1.5} aria-hidden="true" />
+            <div>
+              <h2 id="download-windows-title">Windows</h2>
+              <p className="download-requirement">{tr({ zh: '64 位（x64）', en: '64-bit (x64)' })}</p>
+            </div>
+          </header>
           <div className="download-primary-action">
             {windows ? <a className="download-button download-button-primary" href={windows.files.installer.url} onClick={() => trackDownload('windows-installer', language)}>
               <Download size={18} aria-hidden="true" />{tr({ zh: '下载 Windows 版', en: 'Download for Windows' })}
@@ -97,7 +105,7 @@ export default function DownloadPage() {
               <button className="download-text-link" type="button" onClick={() => setAttempt(value => value + 1)}>{tr({ zh: '重试', en: 'Retry' })}</button>
             </> : <span className="download-version">{tr({ zh: '正在获取版本信息…', en: 'Loading release information…' })}</span>}
           </div>
-          <p className="download-note">{tr({ zh: '当前版本未签名，Windows 可能显示安全提示。', en: 'This release is unsigned. Windows may show a security warning.' })}</p>
+          <p className="download-note"><Info size={16} aria-hidden="true" /><span>{tr({ zh: '当前版本未签名，Windows 可能显示安全提示。', en: 'This release is unsigned. Windows may show a security warning.' })}</span></p>
           <details className="download-details">
             <MoreToggle as="summary">{tr({ zh: '安装版与免安装版', en: 'Installer or standalone EXE?' })}</MoreToggle>
             <p>{tr({ zh: '推荐使用安装版。免安装版无需安装应用，但需要电脑已安装 Microsoft Edge WebView2。', en: 'The installer is recommended. The standalone EXE runs without installing the app, but requires Microsoft Edge WebView2 on your PC.' })}</p>
@@ -106,7 +114,7 @@ export default function DownloadPage() {
       </div>
       <section className="download-upcoming" aria-labelledby="download-upcoming-title">
         <h2 id="download-upcoming-title">{tr({ zh: '更多平台', en: 'More platforms' })}</h2>
-        <p><span>iOS · macOS · HarmonyOS NEXT</span><span className="download-version">{tr({ zh: '暂未发布', en: 'Not yet available' })}</span></p>
+        <p><span className="download-upcoming-platforms"><span>iOS</span><span>macOS</span><span>HarmonyOS NEXT</span></span><span className="download-version">{tr({ zh: '暂未发布', en: 'Not yet available' })}</span></p>
       </section>
     </main>
   );

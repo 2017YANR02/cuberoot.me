@@ -110,17 +110,6 @@
 
 /* SimPage 用 CollapsibleSection 把 AlgsPanel / PuzzleImageStudio 折进侧栏。
    子面板自身已有 border-top,wrapper 不再重复加。 */
-.sim-section-body {
-  display: grid;
-  grid-template-rows: 0fr;
-  visibility: hidden;
-  transition: grid-template-rows 220ms ease, visibility 0s linear 220ms;
-}
-.sim-section-body[data-open="true"] { grid-template-rows: 1fr; visibility: visible; transition-delay: 0s; }
-.sim-section-content { min-height: 0; overflow: hidden; }
-@media (prefers-reduced-motion: reduce) {
-  .sim-section-body, .sim-puzzle-caret { transition: none; }
-}
 .sim-section-content > .sim-algs {
   max-height: none;  /* 折叠面板里不再用 40vh 顶死,让父级 .sim-side 滚动 */
 }
@@ -947,11 +936,6 @@
   .sim-capture-controls .vc-row > .vc-label { flex-basis: auto; }
 }
 
-.sim-section-body[data-open="true"][data-settled="true"] > .sim-section-content { overflow: visible; }
-@media (prefers-reduced-motion: reduce) {
-  .sim-section-body[data-open="true"] > .sim-section-content { overflow: visible; }
-}
-
 .sim-capture-controls .vc-view-size-row {
   grid-column: 1 / -1;
   display: flex;
@@ -961,3 +945,39 @@
 }
 .sim-capture-controls .vc-view-size-row > .vc-row { gap: 8px; padding: 0; margin: 0; }
 .sim-capture-controls .vc-view-size-row .vc-label { flex: 0 0 auto; min-width: 0; white-space: nowrap; }
+
+/* Touch landscape keeps the cube visible while the editor scrolls independently.
+   Width alone cannot distinguish a phone turned sideways from a desktop. */
+@media (pointer: coarse) and (orientation: landscape) and (min-width: 600px) and (max-height: 600px) {
+  .sim-page {
+    top: calc(var(--page-notice-h, 0px) + var(--sim-visible-top, 0px));
+    bottom: auto;
+    height: calc(var(--sim-visible-height, 100dvh) - var(--page-notice-h, 0px));
+    padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    box-sizing: border-box;
+  }
+  .sim-body { flex-direction: row; overflow: hidden; }
+  .sim-stage,
+  .sim-page--panel-expanded .sim-stage { flex: 1; min-height: 0; }
+  .sim-canvas-wrap { flex: 1; min-height: 0; }
+  .sim-side,
+  .sim-page--panel-expanded .sim-side {
+    flex: 0 0 50%;
+    width: 50%;
+    max-height: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-top: 0;
+    border-left: 1px solid var(--border-default);
+  }
+  .sim-panel-toggle { display: none; }
+  .sim-header-recon { display: contents; }
+  .sim-stage-recon { display: none; }
+  .sim-page--panel-expanded .sim-playback-under { display: flex; }
+  .sim-page--panel-expanded .sim-image-overlay,
+  .sim-page--panel-expanded .sim-backview,
+  .sim-page--panel-expanded .sim-backview-swap,
+  .sim-page--panel-expanded .sim-float-close--backview,
+  .sim-page--panel-expanded .sim-bg-overlay { visibility: visible; }
+}

@@ -1,479 +1,275 @@
 'use client';
 
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
+import { ArrowUpRight, Code2, Cpu, Globe, Network, Palette, Settings2, type LucideIcon } from 'lucide-react';
 import Link from '@/components/AppLink';
-import { useTranslation } from 'react-i18next';
 import BackHome from '@/components/BackHome';
+import MoreToggle from '@/components/MoreToggle';
+import { useT } from '@/hooks/useT';
+import { tr, type Msg } from '@/i18n/tr';
+import { CUBE_POSES, cubeRotationTransform, dragCubeRotation, nearestCubeFace, rotationFromMatrix, rotationFromPose, type CubeFace, type CubeRotation } from './_cube-orbit';
 import './code_index.css';
 
-interface Card {
+interface Entry {
   href: string;
-  glyph: string;
-  accent: string;
-  zh: { title: string; sub: string; tagline: string; meta: string };
-  en: { title: string; sub: string; tagline: string; meta: string };
+  name: Msg;
+  description: Msg;
 }
 
-const CARDS: Card[] = [
+interface Face {
+  id: CubeFace;
+  name: Msg;
+  icon: LucideIcon;
+  entries: Entry[];
+}
+
+// One catalog supplies both the focused face and the unfolded navigation.
+const FACES: Face[] = [
   {
-    href: '/dev/continuous-corners',
-    glyph: '◜',
-    accent: 'var(--signal-info)',
-    zh: { title: '连续圆角', sub: 'Continuous Corners', tagline: 'SwiftUI 路径重建、贝塞尔数学、同心圆角与误差测量', meta: '交互实验 / 数学推导 / TypeScript' },
-    en: { title: 'Continuous Corners', sub: 'Design & Geometry', tagline: 'SwiftUI path reconstruction, Bézier mathematics, concentric corners and error measurements', meta: 'Interactive labs / Mathematics / TypeScript' },
+    id: 'system', name: { zh: '系统', en: 'System' }, icon: Network,
+    entries: [
+      { href: '/dev/architecture', name: { zh: '架构', en: 'Architecture' }, description: { zh: 'Web、客户端、服务与共享能力之间的关系', en: 'How the web, clients, services and shared capabilities fit together' } },
+      { href: '/dev/infrastructure', name: { zh: '基础设施', en: 'Infrastructure' }, description: { zh: '生产环境、请求路径、发布、监控与恢复', en: 'Production systems, request routing, releases, monitoring and recovery' } },
+      { href: '/dev/dns-routing', name: { zh: '域名与路由', en: 'DNS & routing' }, description: { zh: '同一个网址为何连接不同服务器', en: 'Why one address can connect to different servers' } },
+      { href: '/dev/auth', name: { zh: '账号全流程', en: 'Account lifecycle' }, description: { zh: '跨端登录、绑定、合并与注销', en: 'Sign-in, linking, merging and deletion across platforms' } },
+    ],
   },
   {
-    href: '/admin/team',
-    glyph: '↗',
-    accent: 'var(--accent)',
-    zh: { title: 'Workspace', sub: '', tagline: '项目、工作记录与团队协作', meta: '入职 / 离职 / SOP' },
-    en: { title: 'Workspace', sub: '', tagline: 'Projects, work updates and team collaboration', meta: 'Onboarding / Offboarding / SOP' },
+    id: 'compute', name: { zh: '计算', en: 'Compute' }, icon: Cpu,
+    entries: [
+      { href: '/dev/algorithms', name: { zh: '算法', en: 'Algorithms' }, description: { zh: '状态空间搜索、剪枝表与核心算法', en: 'State-space search, pruning tables and core algorithms' } },
+      { href: '/dev/solvers', name: { zh: '求解器', en: 'Solvers' }, description: { zh: '原生分析器与浏览器 WASM 求解器', en: 'Native analyzers and browser WASM solvers' } },
+      { href: '/dev/llm', name: { zh: '大模型', en: 'Language models' }, description: { zh: 'CubeRoot 与大语言模型协作的历史', en: 'The history of CubeRoot’s collaboration with language models' } },
+    ],
   },
   {
-    href: '/dev/dns-routing',
-    glyph: '⌁',
-    accent: 'var(--signal-info)',
-    zh: { title: '同一个网址，为何连到不同服务器？', sub: '域名 · 跳转 · Cloudflare', tagline: '从打开网页讲起：网址为何会变，Cloudflare 免费版能否让国内走阿里云、国外走 Cloudflare', meta: '访问过程 / 路线图 / 官方文档' },
-    en: { title: 'One address, different servers', sub: 'Domain · Redirect · Cloudflare', tagline: 'Follow a page visit to see why the address bar changes and what Cloudflare Free can do for overseas visitors', meta: 'Visit steps / route diagrams / sources' },
+    id: 'design', name: { zh: '设计', en: 'Design' }, icon: Palette,
+    entries: [
+      { href: '/dev/continuous-corners', name: { zh: '连续圆角', en: 'Continuous corners' }, description: { zh: '路径重建、贝塞尔数学与误差测量', en: 'Path reconstruction, Bézier mathematics and error measurements' } },
+      { href: '/dev/components', name: { zh: '组件库', en: 'Components' }, description: { zh: '可复用 UI 组件、实时预览与使用示例', en: 'Reusable UI components, live previews and usage examples' } },
+      { href: '/dev/tokens', name: { zh: '设计令牌', en: 'Design tokens' }, description: { zh: '全站配色、状态与亮暗主题的统一来源', en: 'The source of site colors, states and light and dark themes' } },
+      { href: '/dev/fonts', name: { zh: '字体', en: 'Fonts' }, description: { zh: '字体样张、字重、用途与许可', en: 'Type specimens, weights, uses and licenses' } },
+    ],
   },
   {
-    href: '/dev/traffic-incident-2026-09',
-    glyph: '↗',
-    accent: 'var(--accent)',
-    zh: { title: '9 月流量事件记录', sub: '2026.09.22–25', tagline: '计算器访问量突增后的日志排查、停站与恢复记录，以及新增的防护措施', meta: 'Vercel 截图 / 请求统计 / 处置记录' },
-    en: { title: 'September traffic incident', sub: '2026.09.22–25', tagline: 'Log analysis, service pauses, reopening and protection changes after the calculator traffic spike', meta: 'Vercel screenshots / request counts / response log' },
+    id: 'build', name: { zh: '开发', en: 'Build' }, icon: Code2,
+    entries: [
+      { href: '/dev/stack', name: { zh: '技术栈', en: 'Stack' }, description: { zh: 'CubeRoot 使用的软件与工具', en: 'The software and tools used by CubeRoot' } },
+      { href: '/dev/language', name: { zh: '语言', en: 'Languages' }, description: { zh: '编程语言的历史、特性与生态', en: 'Programming languages: history, features and ecosystems' } },
+      { href: '/dev/utils', name: { zh: '速查', en: 'Hooks & utils' }, description: { zh: '共享 React Hooks 与工具函数', en: 'Shared React hooks and utility functions' } },
+      { href: '/dev/api', name: { zh: 'API', en: 'API' }, description: { zh: '按业务域组织的接口参考', en: 'Endpoint reference organized by domain' } },
+      { href: '/dev/schema', name: { zh: '数据模型', en: 'Database schema' }, description: { zh: 'PostgreSQL 数据表、关键列与迁移', en: 'PostgreSQL tables, key columns and migrations' } },
+    ],
   },
   {
-    href: '/dev/auth',
-    glyph: '⇄',
-    accent: 'var(--accent)',
-    zh: { title: '账号全流程', sub: 'Account lifecycle', tagline: '从网站、iOS、安卓到小程序，看清登录、绑定、合并与注销，区分当前实现和目标方案', meta: '全平台 / 账号合并 / 永久注销' },
-    en: { title: 'Account lifecycle', sub: 'One CubeRoot account', tagline: 'Follow sign-in, linking, merging, and deletion across website, iOS, Android, and Mini Programs, separating current behavior from proposals', meta: 'Cross-platform / account merging / deletion' },
+    id: 'operations', name: { zh: '运维', en: 'Operations' }, icon: Settings2,
+    entries: [
+      { href: '/dev/ops', name: { zh: '运维手册', en: 'Runbook' }, description: { zh: '数据库、构建、部署和备份命令', en: 'Commands for databases, builds, deployment and backups' } },
+      { href: '/dev/guards', name: { zh: '约束守卫', en: 'Guards' }, description: { zh: '写入拦截与 CI 棘轮', en: 'Write-time checks and CI ratchets' } },
+      { href: '/dev/dead-code', name: { zh: '死代码守卫', en: 'Dead code' }, description: { zh: '未使用文件、依赖与导出的治理', en: 'Checks for unused files, dependencies and exports' } },
+      { href: '/dev/expenses', name: { zh: '支出与设备', en: 'Expenses' }, description: { zh: '设备、工位、人员与服务订阅的投入', en: 'Investment in equipment, workspaces, staffing and subscriptions' } },
+      { href: '/dev/traffic-incident-2026-09', name: { zh: '9 月流量事件', en: 'Traffic incident' }, description: { zh: '2026 年 9 月的流量排查与处置记录', en: 'Investigation and response to the September 2026 traffic incident' } },
+      { href: '/admin/team', name: { zh: 'Workspace', en: 'Workspace' }, description: { zh: '项目、工作记录与团队协作', en: 'Projects, work updates and team collaboration' } },
+    ],
   },
   {
-    href: '/dev/architecture',
-    glyph: '⛯',
-    accent: 'var(--signal-success)',
-    zh: {
-      title: '架构',
-      sub: 'Architecture',
-      tagline: '沿着可交互拓扑看清 Web、客户端、服务、数据和共享能力之间的关系',
-      meta: '交互拓扑 / 技术决策 / 语言历史',
-    },
-    en: {
-      title: 'Architecture',
-      sub: 'How the system fits together',
-      tagline: 'Trace the relationships between the web, installed clients, services, data, and shared capabilities',
-      meta: 'Interactive topology / decisions / language history',
-    },
-  },
-  {
-    href: '/dev/infrastructure',
-    glyph: '▤',
-    accent: 'var(--signal-info)',
-    zh: {
-      title: '基础设施与运维',
-      sub: 'Infrastructure',
-      tagline: '生产环境的公开档案:容量、请求路径、发布、监控、备份和安全披露边界',
-      meta: '4 vCPU / 16 GiB / 发布与恢复',
-    },
-    en: {
-      title: 'Infrastructure & Operations',
-      sub: 'Production systems',
-      tagline: 'A public profile of production capacity, request routing, releases, monitoring, backups, and disclosure boundaries',
-      meta: '4 vCPU / 16 GiB / release and recovery',
-    },
-  },
-  {
-    href: '/dev/expenses',
-    glyph: '¥',
-    accent: 'var(--signal-info)',
-    zh: {
-      title: '支出与设备',
-      sub: 'Expenses & Equipment',
-      tagline: '设备、工位、人员与服务订阅的投入概览，公开金额和统计口径',
-      meta: '一次性投入 / 持续支出 / 设备清单',
-    },
-    en: {
-      title: 'Expenses & Equipment',
-      sub: 'Investment overview',
-      tagline: 'Equipment, workspace, staffing and subscriptions, with amounts and their accounting basis',
-      meta: 'One-off investment / recurring costs / equipment inventory',
-    },
-  },
-  {
-    href: '/dev/stack',
-    glyph: '◴',
-    accent: '#7BD389',
-    zh: {
-      title: '技术栈',
-      sub: 'The Stack',
-      tagline: 'cuberoot.me 真正在用的 28 件软件, 一件一篇',
-      meta: '28 件软件 · 前端 · 后端 · 边缘 · 开发',
-    },
-    en: {
-      title: 'Stack',
-      sub: 'The Stack',
-      tagline: '28 pieces of software cuberoot.me actually uses, one page each',
-      meta: '28 pieces · frontend · backend · edge · dev',
-    },
-  },
-  {
-    href: '/dev/language',
-    glyph: '{ }',
-    accent: '#5BA8FF',
-    zh: {
-      title: '语言',
-      sub: 'Programming Languages',
-      tagline: '17 门编程语言的长篇导览。一门一篇深度, 含历史、特性、生态、当下处境',
-      meta: '17 门语言 · 2 篇横向对比',
-    },
-    en: {
-      title: 'Languages',
-      sub: 'Long-form guides',
-      tagline: 'Long-form guides to 17 programming languages — history, features, ecosystem, current state, one page each',
-      meta: '17 languages · 2 cross-comparisons',
-    },
-  },
-  {
-    href: '/dev/algorithms',
-    glyph: 'Σ',
-    accent: '#E879A6',
-    zh: {
-      title: '算法',
-      sub: 'Algorithms',
-      tagline: 'CubeRoot 站内真正在跑的核心算法:IDA* + 剪枝表、Kociemba 二阶段、min2phase、自研 CFOP 多阶段求解器,带数学建模和大样本统计',
-      meta: '4 篇深度 · 状态空间搜索 · 240 万样本',
-    },
-    en: {
-      title: 'Algorithms',
-      sub: 'Core algorithms',
-      tagline: 'The algorithms actually running inside CubeRoot: IDA* with pruning tables, Kociemba two-phase, min2phase, and a self-built CFOP multi-stage solver — with full math modeling and 2.4M-sample statistics',
-      meta: '4 deep dives · state-space search · 2.4M samples',
-    },
-  },
-  {
-    href: '/dev/solvers',
-    glyph: '◈',
-    accent: '#2DD4BF',
-    zh: {
-      title: '求解器',
-      sub: 'Solver Fleet',
-      tagline: '魔方分阶段求解器舰队:本机原生分析器与浏览器 WASM 的回填进度、吞吐、内存占用',
-      meta: '7 原生分析器 / ~34GB 表 / 静态快照',
-    },
-    en: {
-      title: 'Solvers',
-      sub: 'Solver Fleet',
-      tagline: 'The staged cube-solver fleet: native analyzers and browser WASM — backfill coverage, throughput, memory',
-      meta: '7 native analyzers / ~34GB tables / snapshot',
-    },
-  },
-  {
-    href: '/dev/llm',
-    glyph: '✦',
-    accent: '#D97757',
-    zh: {
-      title: '大模型',
-      sub: 'Large Language Models',
-      tagline: 'CubeRoot 与大语言模型协作的历史档案:Claude、Claude Code、Claude Fable 5,以及迁移到 Codex 的过程',
-      meta: 'Claude 历史 · Codex 迁移',
-    },
-    en: {
-      title: 'LLMs',
-      sub: 'Large Language Models',
-      tagline: 'An archive of CubeRoot’s work with large language models: Claude, Claude Code, Claude Fable 5, and the migration to Codex',
-      meta: 'Claude history · Codex migration',
-    },
-  },
-  {
-    href: '/dev/components',
-    glyph: '⊞',
-    accent: '#4FC3DC',
-    zh: {
-      title: '组件库',
-      sub: 'Component Library',
-      tagline: 'cuberoot.me 自有可复用 UI 组件的集中查阅页:开关、按钮、选择器、徽章、图标,能独立演示的带实时预览加照抄即用的 import',
-      meta: '实时预览 · 一处登记 · 持续增补',
-    },
-    en: {
-      title: 'Components',
-      sub: 'Component Library',
-      tagline: 'A browsable catalog of cuberoot.me’s own reusable UI components: toggles, buttons, pickers, badges, icons — with live previews and copy-paste imports for the self-contained ones',
-      meta: 'Live previews · one registry · always growing',
-    },
-  },
-  {
-    href: '/dev/tokens',
-    glyph: '◐',
-    accent: '#E0B341',
-    zh: {
-      title: '设计令牌',
-      sub: 'Design Tokens',
-      tagline: '全站配色的单一来源:背景 / 文字 / 品牌 / 状态 / 边框令牌,每个亮暗双主题并排,衍生色一律 color-mix。写 CSS 取色照着来,禁硬码灰阶',
-      meta: '17 令牌 · 亮 / 暗并排 · color-mix',
-    },
-    en: {
-      title: 'Tokens',
-      sub: 'Design Tokens',
-      tagline: 'The single source for every color on the site: surface, text, brand, signal and border tokens shown side by side in light and dark, with color-mix derivation. Pick from here — never hardcode greys',
-      meta: '17 tokens · light / dark · color-mix',
-    },
-  },
-  {
-    href: '/dev/fonts',
-    glyph: 'Aa',
-    accent: '#C58AF0',
-    zh: {
-      title: '字体',
-      sub: 'Typography',
-      tagline: '全站用到的每一款字体的集中速查:正文 SF Pro、等宽 Roboto Mono、衬线 Fraunces、计时器七段、打乱表 PDF 还原三件套。每款带真渲染样张、字重、用途、文件与许可',
-      meta: '自托管 Web 字体 · 全部样张 · 设计令牌',
-    },
-    en: {
-      title: 'Fonts',
-      sub: 'Typography',
-      tagline: 'A quick reference for every font on the site: SF Pro for body, Roboto Mono for mono, Fraunces serif, the seven-segment timer face, and the three-font scramble-PDF parity set. Each with a live specimen, weights, usage, files and license',
-      meta: 'Self-hosted Web fonts · live specimens · design tokens',
-    },
-  },
-  {
-    href: '/dev/utils',
-    glyph: 'ƒ',
-    accent: '#67C18E',
-    zh: {
-      title: '速查',
-      sub: 'Hooks & Utils',
-      tagline: 'cuberoot.me 自己的 6 个 React Hook 与一批 canonical 工具函数集中速查:i18n 文案、API 地址、WCA 成绩格式化、项目归一、配色常量。写新代码前先翻,别重复造轮子',
-      meta: '6 Hooks · ~17 工具 · 一处登记',
-    },
-    en: {
-      title: 'Utils',
-      sub: 'Hooks & Utils',
-      tagline: 'A quick-reference for cuberoot.me’s own 6 React hooks and canonical utility functions: i18n text, API URLs, WCA result formatting, event normalization, color constants. Skim before writing new code',
-      meta: '6 hooks · ~17 utils · one registry',
-    },
-  },
-  {
-    href: '/dev/dead-code',
-    glyph: '∅',
-    accent: '#34D399',
-    zh: {
-      title: '死代码守卫',
-      sub: 'Dead Code Guard',
-      tagline: '没人调用的文件、装了不用的依赖、导出却无人 import 的函数:用 knip 扫干净,再用三层守卫(编译期 + CI 棘轮)把它挡在门外',
-      meta: 'knip 6.21 · 3 层守卫 · CI 棘轮',
-    },
-    en: {
-      title: 'Dead Code',
-      sub: 'Dead Code Guard',
-      tagline: 'Files nobody calls, deps nobody uses, exports nobody imports: swept with knip, then kept out by a three-layer guard (compile-time + CI ratchet)',
-      meta: 'knip 6.21 · 3-layer guard · CI ratchet',
-    },
-  },
-  {
-    href: '/dev/guards',
-    glyph: '⛔',
-    accent: '#FB7185',
-    zh: {
-      title: '约束守卫',
-      sub: 'Guards',
-      tagline: '散落仓库各处的"写入即拦"PreToolUse hook 与 CI 棘轮测试一览:哪些反模式落盘前就被拦,哪些靠 CI 兜底,各自基线还剩多少',
-      meta: '6 对双层守卫 · 9 条 CI 棘轮 · 5 条进程级',
-    },
-    en: {
-      title: 'Guards',
-      sub: 'Constraint Layers',
-      tagline: 'A map of the repo’s "blocked at write time" PreToolUse hooks and CI ratchet tests — what’s stopped before it lands, what CI catches instead, and how far each baseline has left',
-      meta: '6 paired guards · 9 CI ratchets · 5 process-level',
-    },
-  },
-  {
-    href: '/dev/ops',
-    glyph: '~$',
-    accent: '#A78BFA',
-    zh: {
-      title: '运维',
-      sub: 'Ops Runbook',
-      tagline: '日常维护命令的实战手册:DB 刷新、构建、部署、备份。每条命令带前置条件、耗时、踩坑',
-      meta: '可复制 · 带 context · 持续增补',
-    },
-    en: {
-      title: 'Ops',
-      sub: 'Runbook',
-      tagline: 'Hands-on commands for routine maintenance: DB refresh, builds, deploys, backups. Each with prereqs, runtime, gotchas',
-      meta: 'Copyable · with context · always growing',
-    },
-  },
-  {
-    href: '/dev/api',
-    glyph: '⇄',
-    accent: '#22D3EE',
-    zh: {
-      title: 'API',
-      sub: 'Endpoint Reference',
-      tagline: 'cuberoot.me 后端 Hono 服务的全部对外端点:按 16 个业务域分组,每条标方法、鉴权门、缓存档,可搜可筛。前端只经 apiUrl() 单入口调用',
-      meta: '208 端点 · 16 域 · /v1',
-    },
-    en: {
-      title: 'API',
-      sub: 'Endpoint Reference',
-      tagline: 'Every public endpoint of cuberoot.me’s Hono backend, grouped into 16 domains — each tagged with method, auth gate and cache tier, searchable and filterable. The frontend reaches them only through the single apiUrl() entry',
-      meta: '208 endpoints · 16 domains · /v1',
-    },
-  },
-  {
-    href: '/dev/schema',
-    glyph: '▦',
-    accent: '#6366F1',
-    zh: {
-      title: '数据库 Schema',
-      sub: 'Data Model',
-      tagline: 'cuberoot.me 自有 PostgreSQL 的数据模型:按领域分组的全部表 + 关键列,加 0001→0061 迁移时间线。与 WST 导出(来源)、WCIF(格式)互补的第三块',
-      meta: '100 表 · 61 迁移 · 启动自动 apply',
-    },
-    en: {
-      title: 'Database Schema',
-      sub: 'Data Model',
-      tagline: 'cuberoot.me’s own PostgreSQL data model: every table grouped by domain with key columns, plus the 0001→0061 migration timeline. The third piece beside the WST export (source) and WCIF (format)',
-      meta: '100 tables · 61 migrations · auto-applied',
-    },
-  },
-  {
-    href: '/dev/wca-export',
-    glyph: '⛁',
-    accent: '#5BA8FF',
-    zh: {
-      title: 'WST 数据导出',
-      sub: 'WCA Developer Export',
-      tagline: 'WCA 每天发布的完整数据库快照:1982 年至今全部比赛/选手/成绩/轮次配置/打乱。站内所有 WCA 统计都从它离线构建',
-      meta: '每日 · 22 表 · 离线管道源',
-    },
-    en: {
-      title: 'WST Export',
-      sub: 'WCA Developer Export',
-      tagline: 'The full WCA database snapshot published daily: every comp / person / result / round config / scramble since 1982. Every WCA stat here is built offline from it',
-      meta: 'Daily · 22 tables · pipeline source',
-    },
-  },
-  {
-    href: '/dev/wcif',
-    glyph: '◇',
-    accent: '#4A90D9',
-    zh: {
-      title: 'WCIF',
-      sub: 'WCA 比赛数据格式',
-      tagline: 'WCA 比赛交换格式速查:两个端点、Competition/Person/Event/Round 对象、AttemptResult 编码,以及 CubeRoot 怎么用它',
-      meta: '官方 spec v1.1 · 开发 / AI 速查',
-    },
-    en: {
-      title: 'WCIF',
-      sub: 'WCA Competition Format',
-      tagline: 'Quick reference for the WCA Competition Interchange Format: endpoints, Competition/Person/Event/Round objects, AttemptResult encoding, how CubeRoot uses it',
-      meta: 'Official spec v1.1 · dev / AI reference',
-    },
-  },
-  {
-    href: '/dev/wca-rest-api',
-    glyph: '❖',
-    accent: '#42A893',
-    zh: {
-      title: 'WCA REST API',
-      sub: '非官方 WCA 数据接口',
-      tagline: 'Robin Ingelbrecht 把 WCA 导出预烘焙成每实体一个静态 JSON 的只读 REST API:选手/比赛/排名/成绩,开箱即用、零基建。本页给人也给 AI 速查端点、响应与调用',
-      meta: '静态 JSON · 每日 · 9 类资源',
-    },
-    en: {
-      title: 'WCA REST API',
-      sub: 'Unofficial WCA API',
-      tagline: 'Robin Ingelbrecht’s read-only REST API that pre-bakes the WCA export into one static JSON per entity — persons / comps / ranks / results, zero infra. Endpoints, responses and usage for humans and AI',
-      meta: 'Static JSON · daily · 9 resources',
-    },
-  },
-  {
-    href: '/dev/wca-site',
-    glyph: '◉',
-    accent: '#0051BA',
-    zh: {
-      title: 'WCA 官网',
-      sub: 'worldcubeassociation.org',
-      tagline: '世界魔方协会官网源码:官方成绩 / 排名 / 纪录的唯一真相源。一个 2008 年起、GPL-3.0 开源的 Ruby on Rails 单体,由 WCA 软件组领着 200 多人维护,正把前端迁往 Next.js',
-      meta: '2008 起 · Rails · GPL-3.0 · 迁往 Next.js',
-    },
-    en: {
-      title: 'WCA Website',
-      sub: 'worldcubeassociation.org',
-      tagline: 'The World Cube Association’s codebase: the single source of truth for official results / rankings / records. A GPL-3.0 Ruby on Rails monolith since 2008, maintained by the WST and 200+ contributors, migrating its frontend to Next.js',
-      meta: 'Since 2008 · Rails · GPL-3.0 · → Next.js',
-    },
-  },
-  {
-    href: '/dev/cubingchina',
-    glyph: '⬢',
-    accent: '#E23B3B',
-    zh: {
-      title: '粗饼网',
-      sub: 'CubingChina · cubing.com',
-      tagline: '中国 WCA 比赛的报名 / 日历 / 成绩镜像 / 直播平台。对一个 GPL-2.0 开源、Yii 1.1 PHP、主要靠一人维护十二年的同行站点做的技术侧写',
-      meta: '2014 成立 · Yii 1.1 · GPL-2.0 · 蓝绿 WCA 镜像',
-    },
-    en: {
-      title: 'CubingChina',
-      sub: 'cubing.com',
-      tagline: 'Registration, calendar, results mirror and live-streaming for China’s WCA competitions — a technical profile of a GPL-2.0, Yii 1.1 PHP peer site maintained largely by one person for twelve years',
-      meta: 'Est. 2014 · Yii 1.1 · GPL-2.0 · blue-green WCA mirror',
-    },
+    id: 'ecosystem', name: { zh: '生态', en: 'Ecosystem' }, icon: Globe,
+    entries: [
+      { href: '/dev/wca-export', name: { zh: 'WST 数据导出', en: 'WST export' }, description: { zh: 'WCA 数据快照与离线统计来源', en: 'WCA database snapshots and the source of offline statistics' } },
+      { href: '/dev/wcif', name: { zh: 'WCIF', en: 'WCIF' }, description: { zh: 'WCA 比赛数据交换格式', en: 'The WCA Competition Interchange Format' } },
+      { href: '/dev/wca-rest-api', name: { zh: 'WCA REST API', en: 'WCA REST API' }, description: { zh: '非官方静态 JSON 数据接口', en: 'Unofficial static JSON data endpoints' } },
+      { href: '/dev/wca-site', name: { zh: 'WCA 官网', en: 'WCA website' }, description: { zh: '官方成绩来源与网站技术档案', en: 'The official results source and a technical profile of the website' } },
+      { href: '/dev/cubingchina', name: { zh: '粗饼网', en: 'CubingChina' }, description: { zh: '中国赛事平台的技术侧写', en: 'A technical profile of the Chinese competition platform' } },
+    ],
   },
 ];
 
+const ENTRY_COUNT = FACES.reduce((count, face) => count + face.entries.length, 0);
+// Deliberately scattered, but stable across SSR, language switches and dragging.
+// Reserve the center for the category and the top-right sticker for its number.
+const STICKER_SLOTS = [[0, 5, 6, 7], [1, 3, 6, 8], [0, 3, 5, 8], [1, 5, 6, 8], [0, 3, 7, 8], [1, 3, 5, 6]];
+
+interface CubeDrag {
+  id: number;
+  startX: number;
+  startY: number;
+  start: CubeRotation;
+  current: CubeRotation;
+  moved: boolean;
+}
+
+function EntryLinks({ entries, detailed = false }: { entries: Entry[]; detailed?: boolean }) {
+  return <div className={`dev-cube-links${detailed ? ' dev-cube-links-detailed' : ''}`}>
+    {entries.map(entry => <Link key={entry.href} href={entry.href} prefetch={false} className="dev-cube-link">
+        <span><span className="dev-cube-link-name">{tr(entry.name)}</span>
+          {detailed && <span className="dev-cube-link-description">{tr(entry.description)}</span>}
+        </span>
+        <ArrowUpRight size={16} aria-hidden="true" />
+      </Link>)}
+  </div>;
+}
+
 export default function DevIndexPage() {
-  const { i18n } = useTranslation();
-  const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
+  const t = useT();
+  const [expanded, setExpanded] = useState(false);
+  const [selected, setSelected] = useState(0);
+  const [rotation, setRotation] = useState<CubeRotation>(() => rotationFromPose(CUBE_POSES.system));
+  const [dragging, setDragging] = useState(false);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const rotorRef = useRef<HTMLDivElement>(null);
+  const dragButtonRef = useRef<HTMLButtonElement>(null);
+  const pointer = useRef<CubeDrag | null>(null);
+  const frame = useRef(0);
+  const suppressClick = useRef(false);
+  const active = FACES[selected];
+
+  useEffect(() => () => cancelAnimationFrame(frame.current), []);
+
+  const stopPointer = () => {
+    cancelAnimationFrame(frame.current);
+    frame.current = 0;
+    const drag = pointer.current;
+    pointer.current = null;
+    setDragging(false);
+    if (drag && dragButtonRef.current?.hasPointerCapture(drag.id)) {
+      dragButtonRef.current.releasePointerCapture(drag.id);
+    }
+    return drag;
+  };
+
+  const selectFace = (face: CubeFace) => {
+    stopPointer();
+    setSelected(FACES.findIndex(item => item.id === face));
+    setRotation(rotationFromPose(CUBE_POSES[face]));
+  };
+
+  const finishDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    const drag = pointer.current;
+    if (!drag || drag.id !== event.pointerId) return;
+    suppressClick.current = drag.moved;
+    selectFace(nearestCubeFace(drag.current, active.id));
+  };
+
+  const beginDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0 || !event.isPrimary || expanded || pointer.current) return;
+    // Catch an in-flight snap at its displayed pose rather than jumping to its
+    // target when the user grabs the cube again before the transition finishes.
+    const matrix = new DOMMatrixReadOnly(getComputedStyle(rotorRef.current!).transform);
+    const start = rotationFromMatrix(matrix);
+    suppressClick.current = false;
+    pointer.current = { id: event.pointerId, startX: event.clientX, startY: event.clientY, start, current: start, moved: false };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setRotation(start);
+    setDragging(true);
+  };
+
+  const moveDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    const drag = pointer.current;
+    if (!drag || drag.id !== event.pointerId) return;
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+    drag.moved ||= Math.hypot(dx, dy) > 5;
+    if (!drag.moved) return;
+    drag.current = dragCubeRotation(drag.start, dx, dy);
+    if (!frame.current) frame.current = requestAnimationFrame(() => {
+      frame.current = 0;
+      if (pointer.current) setRotation(pointer.current.current);
+    });
+  };
+
+  // Faces remain mounted in both views. CSS interpolates their actual geometry,
+  // including an interrupted/reversed transition, without snapshots or timers.
+  const toggle = () => {
+    if (pointer.current) selectFace(nearestCubeFace(pointer.current.current, active.id));
+    toggleRef.current?.focus({ preventScroll: true });
+    setExpanded(value => !value);
+  };
 
   return (
-    <div className="code-index">
-      <div className="code-index-bg" />
+    <div className="code-index" data-expanded={expanded} data-dragging={dragging} style={{
+      '--cube-rotation': cubeRotationTransform(rotation),
+      '--cube-entry-count': active.entries.length,
+    } as CSSProperties}>
+      <div className="code-index-wrap">
+        <header className="code-index-head">
+          <div className="code-index-topbar">
+            <BackHome />
+            <Link href="/" className="code-index-brand">CubeRoot</Link>
+          </div>
+          <div className="code-index-heading">
+            <div className="code-index-title-row">
+              <h1><span>/</span>dev<span className="code-index-cursor" aria-hidden="true">_</span></h1>
+              <span className="code-index-count">{ENTRY_COUNT} {t('个入口', 'entries')}</span>
+            </div>
+            <MoreToggle ref={toggleRef} expanded={expanded} onToggle={toggle}
+              aria-controls="dev-cube-scene" className="dev-cube-toggle">
+              {expanded ? t('收回魔方', 'Fold into cube') : t('展开全部', 'Unfold all')}
+            </MoreToggle>
+          </div>
+        </header>
 
-      <header className="code-index-head">
-        <div className="code-index-topbar">
-          <div className="page-back-row"><BackHome /></div>
-        </div>
-        <h1 className="code-index-title">
-          <span className="code-index-prefix">/</span>dev
-          <span className="code-index-cursor">_</span>
-        </h1>
-      </header>
+        <main id="dev-cube-scene" className="dev-cube-scene" aria-label={t('开发导航', 'Developer navigation')}>
+          <div className="dev-cube-rotor" ref={rotorRef}>
+            {FACES.map((face, index) => (
+              <section key={face.id} className="dev-cube-face" data-face={face.id}
+                data-active={index === selected} inert={!expanded} aria-hidden={!expanded}
+                aria-labelledby={`dev-face-${face.id}`}>
+                <div className="dev-cube-surface" data-site-surface="panel">
+                  <div className="dev-cube-stickers" aria-hidden="true">
+                    {Array.from({ length: 9 }, (_, cell) => {
+                      const slot = STICKER_SLOTS[index].indexOf(cell);
+                      const entry = slot >= 0 && slot < Math.min(face.entries.length, 4)
+                        ? face.entries[(slot + index) % face.entries.length] : null;
+                      return <span key={cell}>
+                        {cell === 4 && <face.icon className="dev-cube-category-icon" strokeWidth={1.25} aria-hidden="true" />}
+                        {entry && <span className="dev-cube-sticker-label">{tr(entry.name)}</span>}
+                      </span>;
+                    })}
+                  </div>
+                  <span className="dev-cube-index" aria-hidden="true">0{index + 1}</span>
+                  <h2 id={`dev-face-${face.id}`}>{tr(face.name)}</h2>
+                  <div className="dev-cube-face-links"><EntryLinks entries={face.entries} /></div>
+                </div>
+              </section>
+            ))}
+          </div>
 
-      <main className="code-index-grid">
-        {CARDS.map((c) => {
-          const t = c[lang];
-          return (
-            <Link
-              key={c.href}
-              href={c.href}
-              prefetch={false}
-              className="code-index-card"
-              style={{ ['--accent' as string]: c.accent }}
-            >
-              <div className="code-index-card-top">
-                <div className="code-index-card-glyph">{c.glyph}</div>
-                <div className="code-index-card-title">{t.title}</div>
-              </div>
-              {t.sub && <div className="code-index-card-sub">{t.sub}</div>}
-              <p className="code-index-card-tagline">{t.tagline}</p>
-              <div className="code-index-card-foot">
-                <span className="code-index-card-meta">{t.meta}</span>
-                <span className="code-index-card-arrow">→</span>
-              </div>
-            </Link>
-          );
-        })}
-      </main>
+          <button ref={dragButtonRef} type="button" className="dev-cube-open"
+            onPointerDown={beginDrag} onPointerMove={moveDrag} onPointerUp={finishDrag}
+            onPointerCancel={finishDrag} onLostPointerCapture={finishDrag}
+            onClick={event => {
+              if (event.detail === 0 || !suppressClick.current) toggle();
+              suppressClick.current = false;
+            }}
+            onKeyDown={event => {
+              const delta = { ArrowLeft: [-200, 0], ArrowRight: [200, 0], ArrowUp: [0, -200], ArrowDown: [0, 200] }[event.key];
+              if (delta) {
+                event.preventDefault();
+                const next = dragCubeRotation(rotation, delta[0], delta[1]);
+                selectFace(nearestCubeFace(next, active.id));
+              } else if (event.key === 'Escape' || event.key === 'Home') {
+                event.preventDefault();
+                selectFace(event.key === 'Home' ? 'system' : active.id);
+              }
+            }}
+            inert={expanded} aria-hidden={expanded}
+            aria-label={t('拖动或用方向键旋转，松手吸附分类；单击展开', 'Drag or use arrow keys to rotate and snap to a category; click to unfold')} />
 
-      <footer className="code-index-foot">
-        <div className="code-index-foot-line">
-          <Link href="/">CubeRoot</Link>
-        </div>
-      </footer>
+          <nav className="dev-cube-categories" aria-label={t('分类', 'Categories')} inert={expanded} aria-hidden={expanded}>
+            {FACES.map((face, index) => <button type="button" key={face.id}
+              aria-pressed={selected === index} aria-controls="dev-cube-focus"
+              onClick={() => selectFace(face.id)}>{tr(face.name)}</button>)}
+          </nav>
+
+          <div id="dev-cube-focus" className="dev-cube-focus" inert={expanded} aria-hidden={expanded}>
+            <h2 className="dev-cube-focus-title">{tr(active.name)}</h2>
+            <div className="dev-cube-focus-content" aria-live="polite">
+              <EntryLinks entries={active.entries} detailed />
+            </div>
+          </div>
+        </main>
+        <footer className="code-index-foot" aria-hidden="true">CUBEROOT <span>/</span> DEV</footer>
+      </div>
     </div>
   );
 }

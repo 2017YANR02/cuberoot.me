@@ -1,24 +1,13 @@
 'use client';
 /** @module Named team checklists, using the workspace host and forms. */
-import MoreToggle from '@/components/MoreToggle';
+import ChecklistPanel from '@/components/workspace/ChecklistPanel';
 import { useEffect, useRef, useState } from 'react';
 import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
 import { ErrorNotice, Field, Form, EditorDialog, useResource, useWorkspace, value, type ProjectList } from '@app-foundation/workspace-ui';
-import { orderChecklistItems, type Checklist, type ChecklistItem } from '@cuberoot/shared/workspace-planning';
+import { type Checklist } from '@cuberoot/shared/workspace-planning';
 import { useT } from '@/hooks/useT';
 import { Tooltip } from '@/components/Tooltip';
-import { Archive, ArchiveRestore, ChevronsDown, ChevronsUp, Folder, FolderOpen } from '@app-foundation/icons/lucide';
-
-function groupChecklistItems(items: ChecklistItem[]) {
-  const groups = new Map<string, ChecklistItem[]>();
-  for (const item of items) {
-    const path = item.text.trim().match(/^\/[a-z0-9][a-z0-9_-]*(?=\/|\s|$)/i)?.[0] ?? '';
-    const group = groups.get(path);
-    if (group) group.push(item);
-    else groups.set(path, [item]);
-  }
-  return [...groups].map(([path, rows]) => ({ path, items: orderChecklistItems(rows), completed: rows.filter(item => item.done).length }));
-}
+import { ChevronsDown, ChevronsUp } from '@app-foundation/icons/lucide';
 
 export default function Checklists() {
   const t = useT();
@@ -89,56 +78,4 @@ export default function Checklists() {
     }} />)}</div>
     {resource.data && (page > 1 || resource.data.hasMore) && <div className="staff-pagination"><Button action="previous" variant="secondary" disabled={page <= 1} onClick={() => { setEditing(null); void setPage(page - 1); }}>{t('上一页', 'Previous')}</Button><span>{page}</span><Button action="next" variant="secondary" disabled={!resource.data.hasMore} onClick={() => { setEditing(null); void setPage(page + 1); }}>{t('下一页', 'Next')}</Button></div>}
   </>;
-}
-
-function ChecklistPanel({ list, itemStatus, archiveSupported, reload, edit, onSaved, onDeleted }: { itemStatus: 'active' | 'archived' | 'all'; archiveSupported: boolean; list: Checklist; reload: () => void; edit: () => void; onSaved: (list: Checklist) => void; onDeleted: () => void }) {
-  const t = useT();
-  const { api, Button } = useWorkspace();
-  const [busy, setBusy] = useState(false);
-  const lock = useRef(false);
-  const [error, setError] = useState<Error>();
-  const [editing, setEditing] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [text, setText] = useState('');
-  const editable = list.canEdit && list.active;
-  async function save(items: ChecklistItem[]) {
-    if (lock.current) return;
-    lock.current = true; setBusy(true); setError(undefined);
-    try { const saved = await api<{ version: number }>('checklist', { ...list, items }); onSaved({ ...list, items, version: saved.version }); }
-    catch (cause) { setError(cause instanceof Error ? cause : new Error(t('保存失败', 'Save failed'))); throw cause; }
-    finally { lock.current = false; setBusy(false); }
-  }
-  async function remove() {
-    if (lock.current) return;
-    lock.current = true; setBusy(true); setError(undefined);
-    try { await api('checklist-delete', { id: list.id, version: list.version }); onDeleted(); }
-    catch (cause) { setError(cause instanceof Error ? cause : new Error(t('删除失败', 'Delete failed'))); throw cause; }
-    finally { lock.current = false; setBusy(false); }
-  }
-  return <section className="staff-panel workspace-checklist" aria-busy={busy}>
-    <div className="workspace-list-heading"><h2>{list.name}</h2>{(list.projectName || !list.active) && <span className="staff-muted">{list.projectName}{!list.active && `${list.projectName ? ' · ' : ''}${t('已归档', 'Archived')}`}</span>}{list.canEdit && <div className="staff-toolbar-actions"><Button action="edit" variant="secondary" disabled={busy} onClick={edit}>{t('编辑', 'Edit')}</Button><Button action="delete" variant="secondary" disabled={busy} aria-label={`${t('删除清单', 'Delete checklist')}: ${list.name}`} onClick={() => setDeleting(true)}>{t('删除清单', 'Delete checklist')}</Button></div>}</div>
-    <ErrorNotice error={error} retry={reload} />
-    <div className="workspace-check-tree">{groupChecklistItems(list.items.filter(item => itemStatus === 'all' || (itemStatus === 'archived' ? item.archived : !item.archived))).map(group => <details key={group.path} className="workspace-check-folder">
-      <MoreToggle as="summary">
-
-        <Folder className="workspace-check-folder-closed" size={20} aria-hidden="true" />
-        <FolderOpen className="workspace-check-folder-open" size={20} aria-hidden="true" />
-        <span className="workspace-check-folder-name">{group.path || t('其他', 'Other')}</span>
-        <span className="workspace-check-count" aria-label={`${t('已完成', 'Completed')}: ${group.completed} / ${group.items.length}`}>{group.completed}/{group.items.length}</span>
-      </MoreToggle>
-      <ul className="workspace-check-items">{group.items.map(item => <li key={item.id} className={item.done ? 'workspace-check-item is-done' : 'workspace-check-item'}>
-      {/* allow-checkbox: Checklist completion is a task checkbox, not a settings switch. */}
-      <input type="checkbox" checked={item.done} disabled={!editable || busy || !!item.archived} aria-label={`${t('完成', 'Complete')}: ${item.text}`} onChange={() => { void save(list.items.map(row => row.id === item.id ? { ...row, done: !row.done } : row)).catch(() => {}); }} />
-      <span className="workspace-check-text">{item.text.trim().slice(group.path.length).trim() || item.text}</span>{editable && !item.archived && <Button action="edit" variant="secondary" disabled={busy} onClick={() => setEditing(item.id)}>{t('编辑', 'Edit')}</Button>}
-      {editable && archiveSupported && (item.done || item.archived) && <Tooltip content={item.archived ? t('恢复事项', 'Restore task') : t('归档事项', 'Archive task')}>{tip => <button {...tip} type="button" className="btn workspace-icon-action workspace-action" data-emphasis="quiet" disabled={busy} aria-label={`${item.archived ? t('恢复事项', 'Restore task') : t('归档事项', 'Archive task')}: ${item.text}`} onClick={() => { void save(list.items.map(row => row.id === item.id ? { ...row, archived: !item.archived } : row)).catch(() => {}); }}>{item.archived ? <ArchiveRestore size={20} aria-hidden="true" /> : <Archive size={20} aria-hidden="true" />}</button>}</Tooltip>}
-      </li>)}</ul>
-    </details>)}</div>
-    {editable && <Form submit={async () => { if (!text.trim()) return; await save([...list.items, { id: crypto.randomUUID(), text: text.trim(), done: false }]); setText(''); }}><div className="workspace-add-item"><input className="workspace-add-input" aria-label={t('新增事项', 'New task')} placeholder={t('新增事项…', 'Add a task…')} value={text} onChange={event => setText(event.target.value)} required maxLength={160} /><Button action="add" type="submit" disabled={!text.trim() || busy || list.items.length >= 200}>{t('添加', 'Add')}</Button></div></Form>}
-    {editing && editable && <EditorDialog title={t('编辑事项', 'Edit task')} onClose={() => setEditing(null)}><Form submit={async data => { await save(list.items.map(row => row.id === editing ? { ...row, text: value(data, 'text') } : row)); setEditing(null); }}><Field label={t('事项', 'Task')}><input name="text" required maxLength={160} defaultValue={list.items.find(item => item.id === editing)?.text} /></Field><div className="staff-actions staff-form-actions"><Button action="save" type="submit" disabled={busy}>{t('保存', 'Save')}</Button></div></Form></EditorDialog>}
-    {deleting && list.canEdit && <EditorDialog title={t('删除清单', 'Delete checklist')} onClose={() => setDeleting(false)}><Form submit={remove}>
-      <p><strong>{list.name}</strong><span className="staff-muted"> · {list.items.length} {t('项', 'tasks')}</span></p>
-      <p>{t('清单及其中全部事项将被删除，无法恢复。', 'This checklist and all its tasks will be permanently deleted.')}</p>
-      <div className="staff-actions staff-form-actions"><Button variant="secondary" onClick={() => setDeleting(false)} disabled={busy}>{t('取消', 'Cancel')}</Button><Button action="delete" iconOnly={false} className="workspace-danger-action" type="submit" disabled={busy}>{t('删除清单', 'Delete checklist')}</Button></div>
-    </Form></EditorDialog>}
-  </section>;
 }

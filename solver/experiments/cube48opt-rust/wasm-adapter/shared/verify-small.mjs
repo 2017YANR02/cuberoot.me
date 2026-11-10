@@ -52,7 +52,7 @@ export async function verifySmall(wasmPath, root, { additionalThreadCounts = [] 
   let deepPrefixes;
   const variants = [];
   for (let variant = 1; variant <= 9; variant++) {
-    const snapshot = readFileSync(resolve(root, `.tmp/cubeopt-reverse/opt${variant}-generated/small-memory.bin`));
+    const snapshot = readFileSync(resolve(root, `.local-data/cubeopt-reverse/opt${variant}-generated/small-memory.bin`));
     for (const threads of threadCounts) {
     const m = await createModule({ wasmModule: compiled, variant, threads, fixture: true, smallTableBytes: snapshot });
     try {
@@ -105,7 +105,7 @@ export async function verifySmall(wasmPath, root, { additionalThreadCounts = [] 
     } finally { await m.close(); }
     }
   }
-  const snapshot = readFileSync(resolve(root,'.tmp/cubeopt-reverse/opt8-generated/small-memory.bin'));
+  const snapshot = readFileSync(resolve(root,'.local-data/cubeopt-reverse/opt8-generated/small-memory.bin'));
   const failedStartup = await createModule({ wasmModule: compiled, variant:8,threads:4,fixture:true,smallTableBytes:snapshot,
     workerURL:new URL('data:text/javascript,throw%20new%20Error(%22fixture-startup-failure%22)') });
   await assert.rejects(failedStartup.init(0,4), /fixture-startup-failure/);

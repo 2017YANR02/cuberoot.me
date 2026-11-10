@@ -39,7 +39,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 OUT = os.path.join(REPO, "core", "packages", "client", "app", "[lang]",
                    "scramble", "stats", "_data", "firstface_pyram.json")
-DBG = os.path.join(REPO, ".tmp", "enum", "pyram_firstface_debug.json")
+DBG = os.path.join(REPO, ".local-data", "enum", "pyram_firstface_debug.json")
 GENERATED_AT = "2026-07-14"
 
 # ---------------- abstract no-tips engine (verbatim) ----------------

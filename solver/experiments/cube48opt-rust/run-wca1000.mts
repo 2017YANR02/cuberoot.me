@@ -10,7 +10,7 @@ import { cleanRunEnvironment, validateRunCompletion } from './run-multithread.mt
 import { readWca100, validateSharedDepthResults } from './wasm-benchmark.mjs';
 import { parseCompleteJsonl, readSuccessfulTiming } from './report-opt10-wca100.mjs';
 import { verify } from './benchmark.mjs';
-const HERE = dirname(fileURLToPath(import.meta.url)), ROOT = resolve(HERE, '../../..'), BASE = resolve(ROOT, '.tmp/cubeopt-reverse');
+const HERE = dirname(fileURLToPath(import.meta.url)), ROOT = resolve(HERE, '../../..'), BASE = resolve(ROOT, '.local-data/cubeopt-reverse');
 const save = (p: string, v: any) => writeFileSync(p, JSON.stringify(v,null,2)+'\n', {flag:'wx'});
 const json = (p: string) => JSON.parse(readFileSync(p,'utf8'));
 const hash = (p: string) => createHash('sha256').update(readFileSync(p)).digest('hex');

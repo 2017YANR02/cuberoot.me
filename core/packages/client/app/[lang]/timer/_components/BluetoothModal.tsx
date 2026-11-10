@@ -10,7 +10,7 @@
  *    cube reset action with installed apps.
  */
 
-import { TimerSmartCubeDeviceModal } from '@cuberoot/timer-ui';
+import { BatteryLevelIcon, TimerSmartCubeDeviceModal } from '@cuberoot/timer-ui';
 import {
   createTimerDeviceRegistry,
   SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
@@ -27,7 +27,7 @@ import {
   mayUseMiniProgramBridge,
 } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle, ConnectStage, ConnectPickOptions } from '../_lib/bluetooth';
-import { Battery, Check, ExternalLink, LoaderCircle, Plus } from '@app-foundation/icons/lucide';
+import { Check, ExternalLink, LoaderCircle, Plus } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import { trainingCubeStatusLabel, type TrainingCubeStatus } from '../_lib/training-cube-status';
 
@@ -39,6 +39,7 @@ interface CubeConnectionItem {
 }
 
 interface Props {
+  title?: string;
   anchorRef?: RefObject<HTMLButtonElement | null>;
   isZh: boolean;
   cube: BluetoothCubeHandle;
@@ -131,7 +132,7 @@ function ConnectFailure({ detail }: { detail: string }) {
   );
 }
 
-export default function BluetoothModal({ anchorRef, isZh, cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro, allowDeviceCalibration = true, connections, selectedConnectionId, onSelectConnection, onConnectNext, connectingNext }: Props) {
+export default function BluetoothModal({ title, anchorRef, isZh, cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro, allowDeviceCalibration = true, connections, selectedConnectionId, onSelectConnection, onConnectNext, connectingNext }: Props) {
   useSyncExternalStore(subscribeInstalledBleBridge, installedBleAvailable, () => false);
   const [connecting, setConnecting] = useState(Boolean(connectAttempt) && !cube.status.connected);
   const [connectError, setConnectError] = useState<{ stage: ConnectStage | null; detail: string } | null>(null);
@@ -278,7 +279,7 @@ export default function BluetoothModal({ anchorRef, isZh, cube, onClose, onConne
                 </span>
                 {connection.status !== 'disconnected' && connection.battery !== null && <span className="bt-cube-battery"
                   data-low={connection.battery <= 20} aria-label={tr({ zh: `电量 ${connection.battery}%`, en: `Battery ${connection.battery}%` })}>
-                  <Battery size={14} aria-hidden="true" />{connection.battery}%
+                  <BatteryLevelIcon level={connection.battery} width={18} height={12} />{connection.battery}%
                 </span>}
               </span>
             </span>
@@ -318,7 +319,7 @@ export default function BluetoothModal({ anchorRef, isZh, cube, onClose, onConne
       }}
       title={macPrompt
         ? tr({ zh: '输入 MAC 地址', en: 'Enter MAC address' })
-        : tr({ zh: '智能魔方', en: 'Smart cube' })}
+        : title ?? tr({ zh: '智能魔方', en: 'Smart cube' })}
     />
   );
 }

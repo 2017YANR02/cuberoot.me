@@ -15,7 +15,7 @@
 - `stats.wca-release`：Nemesizer 和选手搜索生成物保存在本仓库唯一可更新的 `wca-data-latest` Release，不提交进 Git。完整上传、部署验收、更新 Release 清单后删除旧附件；本地用 `node scripts/wca-data/cli.ts hydrate` 恢复。日常发布、失败恢复和并行边界见 [WCA data release](wca-data-release.md)。
 - 网络同步、全量统计和本机大表不进入普通无网络 CI；廉价且确定的 ledger、generator 和 snapshot 检查可以进入常规守卫。
 
-`outputs`、`outputExclusions` 与 `transientOutputs` 采用仓库相对路径，允许以 `/**` 表示一个 owner 管理的目录树。`runtimeOutputs` 只登记部署或运行时 locator，例如制品根和发布目录模板，不冒充仓库路径。任意实际输出只能有一个 owner；共享 helper 可以复用，但不能因此制造第二个生成入口。
+`outputs`、`outputExclusions`、`durableOutputs` 与 `transientOutputs` 采用仓库相对路径，允许以 `/**` 表示一个 owner 管理的目录树。`durableOutputs` 是不提交 Git 但必须保留/备份的本地表、审阅输入、断点与证据；`transientOutputs` 才是可丢弃中间物。`runtimeOutputs` 只登记部署或运行时 locator，例如制品根和发布目录模板，不冒充仓库路径。任意实际输出只能有一个 owner；共享 helper 可以复用，但不能因此制造第二个生成入口。本机迁移与双机同步见 [本地文件生命周期](local-artifact-lifecycle.md)。
 
 ## 维护与验证
 

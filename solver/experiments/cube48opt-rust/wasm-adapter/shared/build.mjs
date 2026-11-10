@@ -53,7 +53,7 @@ async function main() {
     : candidate === 'opt9-batch-padded' ? 'wasm-opt9-batch-padded'
     : candidate === 'opt9-select' ? 'wasm-opt9-select'
     : candidate === 'opt9-batch' ? 'wasm-opt9-batch' : candidate;
-  const archive = resolve(ROOT,'.tmp/cubeopt-reverse/rust-wasm-shared-builds'); mkdirSync(archive,{recursive:true});
+  const archive = resolve(ROOT,'.local-data/cubeopt-reverse/rust-wasm-shared-builds'); mkdirSync(archive,{recursive:true});
   const directory = mkdtempSync(resolve(archive,compileOnly ? 'draft-' : 'build-'));
   const targetDir = resolve(directory, 'target');
   const output = resolve(targetDir, TARGET, 'release/cube48opt_rust_shared_wasm.wasm');

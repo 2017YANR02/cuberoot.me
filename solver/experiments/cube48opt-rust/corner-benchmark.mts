@@ -19,7 +19,7 @@ const scheduled = version === 'scheduled';
 assert(!(layouts || diagnostic) || !scheduled, 'Layout/profile evidence has no search variant');
 const directory = resolve(cornerDirectory, diagnostic ? 'opt8-profile-v1' : layouts ? 'layouts-v2' : scheduled ? 'opt8-wca100-v2' : 'opt8-wca100-v1');
 const label = diagnostic ? 'corner96-opt8-profile-v1-20261022' : layouts ? 'corner96-layouts-v2-20261022' : scheduled ? 'corner96-opt8-compare-v2-20261022' : 'corner96-opt8-compare-v1-20261022';
-const reference = resolve(root, '.tmp/cubeopt-reverse/opt10-official-wca1000-mt16-20261022/results.jsonl');
+const reference = resolve(root, '.local-data/cubeopt-reverse/opt10-official-wca1000-mt16-20261022/results.jsonl');
 const modes = scheduled ? ['u-deferred', 'distance-late', 'combined-late'] : ['baseline', 'u', 'distance', 'combined'];
 const baselineReport = resolve(cornerDirectory, 'opt8-wca100-v1/report.json');
 const sha = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
@@ -40,8 +40,8 @@ function freeze() {
 
 function evidence() {
   const input = JSON.parse(readFileSync(resolve(directory, 'input.json'), 'utf8'));
-  const started = JSON.parse(readFileSync(resolve(root, `.tmp/cubeopt-reverse/${label}-started.json`), 'utf8'));
-  const resources = JSON.parse(readFileSync(resolve(root, `.tmp/cubeopt-reverse/${label}-resources.json`), 'utf8'));
+  const started = JSON.parse(readFileSync(resolve(root, `.local-data/cubeopt-reverse/${label}-started.json`), 'utf8'));
+  const resources = JSON.parse(readFileSync(resolve(root, `.local-data/cubeopt-reverse/${label}-resources.json`), 'utf8'));
   assert.equal(sha(readFileSync(resolve(directory, 'corner-research'))), input.binarySha256);
   assert.equal(started.executableSha256, input.binarySha256);
   assert.equal(resources.guardPid, started.guardPid);
@@ -189,7 +189,7 @@ if (command === 'prepare-profile') {
     const bytes = readFileSync(resolve(cornerDirectory, resource.name));
     assert.equal(bytes.length, resource.bytes); assert.equal(sha(bytes), resource.sha256);
   }
-  const started = JSON.parse(readFileSync(resolve(root, `.tmp/cubeopt-reverse/${label}-started.json`), 'utf8'));
+  const started = JSON.parse(readFileSync(resolve(root, `.local-data/cubeopt-reverse/${label}-started.json`), 'utf8'));
   assert.equal(started.executableSha256, input.binarySha256);
   assert.equal(started.args[0], scheduled ? 'compare-opt8-scheduled' : 'compare-opt8');
   const historical = rows(readFileSync(reference));
@@ -228,7 +228,7 @@ if (command === 'prepare-profile') {
     value.tableBytes = ready.main_table_bytes + value.auxiliaryTableBytes;
     value.relativeTableTimesNodes = (value.tableBytes / ready.main_table_bytes) * (value.nodes / baseline.nodes);
   }
-  const resources = JSON.parse(readFileSync(resolve(root, `.tmp/cubeopt-reverse/${label}-resources.json`), 'utf8'));
+  const resources = JSON.parse(readFileSync(resolve(root, `.local-data/cubeopt-reverse/${label}-resources.json`), 'utf8'));
   assert.equal(resources.stopped, ''); assert.equal(resources.trigger, null);
   assert.equal(resources.swapouts, 0); assert.equal(resources.pressure, 1);
   assert.equal(resources.childPid, ready.pid);

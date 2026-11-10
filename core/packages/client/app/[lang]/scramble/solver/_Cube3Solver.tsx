@@ -159,7 +159,9 @@ export default function Cube3Solver() {
   const [paintColor, setPaintColor] = useState<PaintColor>('U');
   const [paintCanvasSize, setPaintCanvasSize] = useState(360);
   useEffect(() => {
-    const upd = () => setPaintCanvasSize(Math.min(360, Math.max(200, window.innerWidth - 64)));
+    const upd = () => setPaintCanvasSize(window.matchMedia('(orientation: landscape) and (max-height: 500px) and (min-width: 640px)').matches
+      ? Math.max(140, Math.min(240, window.innerHeight - 190))
+      : Math.min(360, Math.max(200, window.innerWidth - 64)));
     upd();
     window.addEventListener('resize', upd);
     return () => window.removeEventListener('resize', upd);
@@ -1367,5 +1369,23 @@ const INLINE_CSS = `
   .auto-dl span { white-space: nowrap; }
   .btn, .btn-primary, .btn-cancel { font-size: 0.78rem; padding: 0.3rem 0.5rem; }
   .row { gap: 0.35rem; }
+}
+
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 640px) {
+  .cubeopt-page { padding: 8px 12px 20px; display: flex; flex-direction: column; }
+  .cubeopt-page > .cubeopt-card { order: 1; }
+  .cubeopt-page > :is(.cubeopt-info, .cubeopt-warn) { order: 2; }
+  .cubeopt-page > .cubeopt-foot { order: 3; }
+  .cubeopt-page .paint-view-toggle { margin-bottom: 6px; }
+  .cubeopt-page .vc-cube3d {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+  }
+  .cubeopt-page .vc-cube3d-body { gap: 6px; }
+  .cubeopt-page .vc-paint-controls { min-width: 0; }
+  .cubeopt-page .vc-paint-btn { min-height: 44px; }
+  .cubeopt-page .logs-area { min-height: 80px; height: 100px; }
 }
 `;

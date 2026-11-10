@@ -8,7 +8,7 @@ import { observeStatsResources } from './stats-resume-review.mts';
 import { collectZbllMultisolutionEvidence, validateZbllMultisolutionInput, zbllMultisolutionPaths } from './zbll-multisolution-policy.mts';
 
 const root = resolve(import.meta.dirname, '../../..'), GiB = 2 ** 30;
-export const pllDir = resolve(root, '.tmp/pll-21-20261023');
+export const pllDir = resolve(root, '.local-data/pll-21-20261023');
 export const pllLabel = 'pll-21-20261023-opt9';
 const tableBytes = 15_565_455_360;
 const hash = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');
@@ -31,11 +31,11 @@ export function pllPolicy(r: { label: string; executable: string; args: string[]
 }
 function evidence() {
   const old = collectZbllMultisolutionEvidence();
-  const donePath = resolve(root, '.tmp/1lll-five-20261023/retry-1/completed.json');
+  const donePath = resolve(root, '.local-data/1lll-five-20261023/retry-1/completed.json');
   const doneBytes = read(donePath), done = JSON.parse(doneBytes.toString());
   assert.equal(done.solvedInputs, 500); assert.equal(done.swapoutsBefore, 16); assert.equal(done.swapoutsAfter, 16);
   for (const [path, digest] of Object.entries(done.hashes)) assert.equal(hash(read(resolve(root, path))), digest, `Predecessor changed: ${path}`);
-  const priorPath = resolve(root, '.tmp/cubeopt-reverse/1lll-five-20261023-opt9-retry1-resources.json');
+  const priorPath = resolve(root, '.local-data/cubeopt-reverse/1lll-five-20261023-opt9-retry1-resources.json');
   const prior = JSON.parse(read(priorPath).toString());
   assert.equal(prior.stopped, ''); assert.equal(prior.pressure, 1); assert.equal(prior.swapouts, 16);
   assert.equal(prior.openBenchmarkReceipt.before.swapouts, 16); assert.equal(prior.boot, old.setupFailure.boot);
@@ -61,7 +61,7 @@ export function validatePllSession(s: any, e: any, n: any, used = false, stopped
 export function validatePllReview(r: Parameters<typeof pllPolicy>[0], n: any) {
   pllPolicy(r);
   const bytes = read(resolve(pllDir, 'session.json')), s = JSON.parse(bytes.toString()), e = evidence();
-  const used = existsSync(resolve(pllDir, 'receipt.json')) || existsSync(resolve(root, `.tmp/cubeopt-reverse/${pllLabel}-resources.json`));
+  const used = existsSync(resolve(pllDir, 'receipt.json')) || existsSync(resolve(root, `.local-data/cubeopt-reverse/${pllLabel}-resources.json`));
   validatePllSession(s, e, n, used, existsSync(resolve(pllDir, 'stop.json')));
   return { input: read(resolve(pllDir, 'input.tsv')), receiptPath: resolve(pllDir, 'receipt.json'),
     receipt: { schema: 'cuberoot.pll-21.receipt.v1', request: pllRequest(), reviewSha256: hash(bytes), before: n, consumedAt: new Date().toISOString() } };

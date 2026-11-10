@@ -5,8 +5,8 @@ import {resolve} from 'node:path';
 import {resumeHistory, resumeDigest} from './zbll-resume-review.mts';
 import {execFileSync} from 'node:child_process';
 import {parseVm,memorySummary} from '../../../core/scripts/mac-system-recorder.mts';
-export const statsReviewPath=resolve(import.meta.dirname,'../../../.tmp/scramble-stats-opt10/review-20261017.json');
-export const statsStopPath=resolve(import.meta.dirname,'../../../.tmp/scramble-stats-opt10/protected-stop.json');
+export const statsReviewPath=resolve(import.meta.dirname,'../../../.local-data/scramble-stats-opt10/review-20261017.json');
+export const statsStopPath=resolve(import.meta.dirname,'../../../.local-data/scramble-stats-opt10/protected-stop.json');
 export function statsHistory() {
   const history=resumeHistory();
   for(const file of ['guard.mts','stats-resume-review.mts','../../333opt/stats-engine.mts','../../333opt/solve_h10.mts','../../333opt/rust-h10-adapter.mts']) {
@@ -45,7 +45,7 @@ export function observeStatsResources() {
     swapouts:vm.pages.Swapouts,pressure:Number(run('/usr/sbin/sysctl',['-n','kern.memorystatus_vm_pressure_level']).trim()),
     available:summary.reclaimableEstimateBytes,
     computeRunning:/solve_h48_h10|cube48opt-research|table_generator|nxopt\d+/.test(run('/bin/ps',['-axo','comm'])),
-    lockExists:existsSync(resolve(import.meta.dirname,'../../../.tmp/cubeopt-reverse/compute.lock'))};
+    lockExists:existsSync(resolve(import.meta.dirname,'../../../.local-data/cubeopt-reverse/compute.lock'))};
 }
 export function statsStartupReady(observation:ReturnType<typeof observeStatsResources>, threads:number) {
   validateStatsRun(observation,observation);
@@ -61,7 +61,7 @@ export function validateStatsRun(start:{boot:string;swapouts:number},now:{boot:s
 }
 export function beginStatsRun(now:{boot:string;swapouts:number;pressure:number;available:number}) {
   validateStatsRun(now,now);
-  const directory=resolve(import.meta.dirname,'../../../.tmp/scramble-stats-opt10/runs',`${Date.now()}-${process.pid}`);
+  const directory=resolve(import.meta.dirname,'../../../.local-data/scramble-stats-opt10/runs',`${Date.now()}-${process.pid}`);
   mkdirSync(directory,{recursive:true});
   const run={...now,directory,stopPath:resolve(directory,'protected-stop.json'),
     schema:'cuberoot.stats-opt10-run.v2',startedAt:new Date().toISOString(),history:statsHistory()};

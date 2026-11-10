@@ -8,6 +8,7 @@ import Link from '@/components/AppLink';
 import AlgNotationStyleSelect from '@/components/AlgNotationStyleSelect';
 import BoolToggle from '@/components/BoolToggle';
 import { CompactSelect, type CompactSelectItem } from '@/components/CompactSelect';
+import MoreToggle from '@/components/MoreToggle';
 import MoveNotationDemo, { type MoveNotationOption } from '@/components/MoveNotationDemo/MoveNotationDemo';
 import NxNOrderInput from '@/components/NxNOrderInput';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
@@ -218,12 +219,15 @@ export default function NotationPage() {
           </Link>
         </header>
 
+        <details className="notation-intro">
+        <MoreToggle as="summary">{t('说明', 'About')}</MoreToggle>
         <p className="alg-fto-notation-intro">
           {t(
             '记号把每一步转动写成文字，让同一个打乱、解法和裁判记录能被一致还原。这里集中收录 WCA 第 12 条的正式记号、本站公式系统支持的常用扩展，以及非 WCA 魔方记号；教学说明与动画共用同一份记号目录和统一播放器。',
             'Notation records every turn in text so the same scramble, solution and judging record can be reproduced consistently. This guide combines the official notation from WCA Article 12, common extensions supported by the algorithm system, and notation for non-WCA puzzles; its explanations and animations share one catalog and one player.',
           )}
         </p>
+        </details>
 
         <nav className="notation-project-picker" aria-label={t('选择项目与记号范围', 'Choose a puzzle and notation scope')}>
           <PuzzlePicker

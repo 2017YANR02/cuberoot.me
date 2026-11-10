@@ -44,3 +44,12 @@ export interface ChatInsights {
 export async function reviewAssistantRequest(id: string, status: string, note: string) {
   return handleApi(await sessionFetch(apiUrl(`/v1/admin/assistant/requests/${id}/review`), { method: 'POST', headers: authHeaders(), body: JSON.stringify({status,note}) }));
 }
+
+export interface ChatBilling {
+  balance: { status: 'unconfigured' | 'unavailable' } | {
+    status: 'ok'; updatedAt: string; isAvailable: boolean;
+    balances: Array<{ currency: 'CNY' | 'USD'; total_balance: string; granted_balance: string; topped_up_balance: string }>;
+  };
+  providers: Array<{ provider: 'deepseek' | 'bailian' | 'unknown'; calls: number; pricedCalls: number; unpricedCalls: number; minCny: number; maxCny: number }>;
+  updatedAt: string;
+}

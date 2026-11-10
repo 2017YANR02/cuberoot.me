@@ -107,7 +107,7 @@ mod tests {
     #[ignore = "requires the Opt9 small snapshot; no main table is loaded"]
     fn full_eo_aliases_roundtrip_and_project_to_the_existing_opt10_coordinate() {
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../../.tmp/cubeopt-reverse/opt9-generated/small-memory.bin");
+            .join("../../../.local-data/cubeopt-reverse/opt9-generated/small-memory.bin");
         let snapshot = std::fs::read(path).unwrap();
         let coordinates = Opt11Coordinates::from_opt9_snapshot(&snapshot).unwrap();
         let mut cube = Cube::SOLVED;

@@ -11,7 +11,7 @@ import { resumeHistory } from './zbll-resume-review.mts';
 
 const here = import.meta.dirname, root = resolve(here, '../../..');
 export const currentLabel = 'opt10-official-wca1000-mt16-20261022';
-export const currentDirectory = resolve(root, '.tmp/cubeopt-reverse', currentLabel);
+export const currentDirectory = resolve(root, '.local-data/cubeopt-reverse', currentLabel);
 export const currentReviewPath = resolve(currentDirectory, 'session.json');
 export const currentStopPath = resolve(currentDirectory, 'stop.json');
 export const currentReceiptPath = resolve(currentDirectory, 'receipt.json');
@@ -72,7 +72,7 @@ export function validateCurrentSession(review: any, evidence: ReturnType<typeof 
 }
 function used() {
   return existsSync(currentReceiptPath) || ['-resources.json', '-exit.json', '-started.json']
-    .some(suffix => existsSync(resolve(root, '.tmp/cubeopt-reverse', currentLabel + suffix)));
+    .some(suffix => existsSync(resolve(root, '.local-data/cubeopt-reverse', currentLabel + suffix)));
 }
 export function validateCurrentReview(request: Parameters<typeof currentPolicy>[0], current: Observation) {
   currentPolicy(request);

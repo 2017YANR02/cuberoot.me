@@ -12,10 +12,10 @@ import { isAllowedZbllAlgorithm, wideTurnCount } from './zbll-mcc-notation.mts';
 import { moveFeatures, preferenceScore, rankPreference } from './lll-preference-ranking.mts';
 
 const root = resolve(import.meta.dirname, '../../..');
-const input = resolve(root, '.tmp/pll-21-20261023/starting-orientation-v2/report.json');
-const previousPath = resolve(root, '.tmp/pll-preference-20261024-v2/report.json');
-const modelPath = resolve(root, '.tmp/pll-preference-20261024-v2/model-grams3.json');
-const out = resolve(process.argv[2] ?? resolve(root, '.tmp/pll-single-layer-20261024-v1'));
+const input = resolve(root, '.local-data/pll-21-20261023/starting-orientation-v2/report.json');
+const previousPath = resolve(root, '.local-data/pll-preference-20261024-v2/report.json');
+const modelPath = resolve(root, '.local-data/pll-preference-20261024-v2/model-grams3.json');
+const out = resolve(process.argv[2] ?? resolve(root, '.local-data/pll-single-layer-20261024-v1'));
 assert(!existsSync(out), 'Preserve previous evidence; choose a new output directory');
 const sourceBytes = readFileSync(input), modelBytes = readFileSync(modelPath), previousBytes = readFileSync(previousPath);
 const source = JSON.parse(sourceBytes.toString()), previous = JSON.parse(previousBytes.toString());

@@ -12,7 +12,7 @@ import { readWca100, parseWasmBenchmarkArguments, wasmBuildContract } from './wa
 import { verifyOpt9Release } from './opt9-release.mts';
 
 export const openHere=dirname(fileURLToPath(import.meta.url)), openRoot=resolve(openHere,'../../..');
-export const openBase=resolve(openRoot,'.tmp/cubeopt-reverse'), openDir=resolve(openBase,'open-benchmark-20261015');
+export const openBase=resolve(openRoot,'.local-data/cubeopt-reverse'), openDir=resolve(openBase,'open-benchmark-20261015');
 export const openReviewPath=resolve(openDir,'session-rust-wasm.json'), openStopPath=resolve(openDir,'stop-rust-wasm.json');
 export const openEngines=['rust-native','original-wasm','rust-wasm'] as const;
 const corpusPath=resolve(openRoot,'solver/testdata/benchmarks/wca-first1000.json');
@@ -21,7 +21,7 @@ const wasm=resolve(openBase,'rust-wasm-shared-builds/build-Nv4Vc5/cube48opt-rust
 const table=resolve(openBase,'opt9-generated/h48prun31h9.dat'), small=resolve(openBase,'opt9-generated/small-memory.bin');
 const sha=(bytes:Uint8Array)=>createHash('sha256').update(bytes).digest('hex');
 const read=(path:string)=>{assert(statSync(path).isFile()&&statSync(path).size<8*2**20);return readFileSync(path);};
-const historyPaths=[resolve(openRoot,'.tmp/h48-corners-research/resource-baseline.json'),
+const historyPaths=[resolve(openRoot,'.local-data/h48-corners-research/resource-baseline.json'),
   ...['resource-baseline.json','resource-review-stop.json','opt10-resource-review-stop.json',
     'multithread-resource-review-stop.json','opt10-official-stop.json','double-zbll-opt10-session-resources.json'].map(p=>resolve(openBase,p))];
 const artifactPaths=[native,wasm,resolve(dirname(wasm),'build-metadata.json'),small,

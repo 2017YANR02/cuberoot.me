@@ -476,9 +476,11 @@ export function transitionLocalBattle(
       || input.type === 'start-from-cube' || input.type === 'cancel-press' || input.type === 'cancel-arm')) {
       const allHolding = players.every(item => item.timer.phase === 'holding');
       const allReady = players.every(item => item.timer.phase === 'ready');
+      const allInspecting = players.every(item => item.timer.phase === 'inspecting');
       if (input.type === 'hold-ready' && !allHolding) return { state, effects: [], accepted: false };
-      if (input.type === 'start-from-cube' && !allReady) return { state, effects: [], accepted: false };
-      const together = input.type === 'hold-ready' || allReady && (input.type === 'press-up' || input.type === 'start-from-cube');
+      if (input.type === 'start-from-cube' && !allReady && !allInspecting) return { state, effects: [], accepted: false };
+      const together = input.type === 'hold-ready' || allReady && (input.type === 'press-up' || input.type === 'start-from-cube')
+        || allInspecting && input.type === 'start-from-cube';
       const cancel = input.type === 'cancel-press' || input.type === 'cancel-arm';
       if (together || cancel || input.type === 'press-up' && player.timer.phase === 'holding') {
         const effects: LocalBattleEffect[] = [];

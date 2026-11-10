@@ -11,8 +11,11 @@ test('release numbers are monotonic across version boundaries and reject invalid
 });
 
 test('Windows requires both immutable artifacts and rejects foreign URLs', () => {
-  const r = { schemaVersion: 1, platform: 'windows', arch: 'x64', ...releaseIdentity(1), commit: 'a'.repeat(40), publishedAt: new Date().toISOString(), notes: 'Release', files: Object.fromEntries(['installer', 'portable'].map(kind => [kind, { url: `https://static.cuberoot.me/downloads/windows/CubeRoot-1.0.1-1000001-x64-${kind}.exe`, sha256: 'b'.repeat(64), size: 123 }])) };
+  const r = { schemaVersion: 1, platform: 'windows', arch: 'x64', ...releaseIdentity(1), commit: 'a'.repeat(40), publishedAt: new Date().toISOString(), notes: 'Release', files: Object.fromEntries(['installer', 'portable'].map(kind => [kind, { url: `https://static.cuberoot.me/downloads/windows/CubeRoot-1.0.1-x64-${kind}.exe`, sha256: 'b'.repeat(64), size: 123 }])) };
   assert.equal(parseWindowsRelease(r).versionName, '1.0.1');
+  const legacy = { ...r, files: Object.fromEntries(Object.entries(r.files).map(([kind, file]) => [kind, { ...file, url: file.url.replace('-x64-', '-1000001-x64-') }])) };
+  assert.equal(parseWindowsRelease(legacy).versionName, '1.0.1');
+  assert.throws(() => parseWindowsRelease({ ...r, files: { ...r.files, portable: { ...r.files.portable, url: r.files.portable!.url.replace('1.0.1', '1.0.2') } } }));
   assert.throws(() => parseWindowsRelease({ ...r, files: { installer: r.files.installer } }));
   assert.throws(() => parseWindowsRelease({ ...r, files: { ...r.files, portable: { ...r.files.portable, url: 'https://evil.example/a.exe' } } }));
 });

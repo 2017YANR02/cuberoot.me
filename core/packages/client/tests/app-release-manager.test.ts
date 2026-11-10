@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import ReleaseManager from '../app/[lang]/download/ReleaseManager';
 const api = vi.hoisted(() => ({ status: vi.fn(), publish: vi.fn() }));
 vi.mock('../lib/app-release-api', () => ({ fetchAppReleaseStatus: api.status, publishAppRelease: api.publish }));
-vi.mock('../i18n/tr', () => ({ tr: (v: { en: string }) => v.en }));
+vi.mock('../i18n/tr', () => ({ tr: (v: { en: string }) => v.en, useLang: () => 'en' }));
 let root: Root, node: HTMLDivElement;
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

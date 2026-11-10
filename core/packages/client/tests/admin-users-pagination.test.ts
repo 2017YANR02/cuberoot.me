@@ -175,3 +175,14 @@ it('requires a reason and opens a specific-user view in a new tab', async () => 
   expect(host.querySelector('[role="dialog"]')).toBeNull();
   open.mockRestore();
 });
+
+it('reserves the users layout with shimmer skeletons while the request is pending', async () => {
+  fetchAdminUsers.mockImplementation(() => new Promise(() => {}));
+  await act(async () => root.render(createElement(NuqsTestingAdapter, {
+    key: 'pending-users', searchParams: '', hasMemory: true,
+    children: createElement(AdminUsersPage),
+  })));
+  expect(host.querySelector('[aria-label="正在加载用户数据…"]')).not.toBeNull();
+  expect(host.querySelectorAll('.skeleton-block').length).toBeGreaterThan(0);
+  expect(host.querySelector('.admin-users-spin')).toBeNull();
+});

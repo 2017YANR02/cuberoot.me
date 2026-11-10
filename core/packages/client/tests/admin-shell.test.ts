@@ -23,7 +23,7 @@ it('shows navigation only for administrators and follows the active page', async
   const accountLink = node.querySelector<HTMLAnchorElement>('.admin-navigation__account');
   expect(accountLink?.textContent).toBe('CubeRoot Admin');
   expect(accountLink?.getAttribute('href')).toBe('/account');
-  expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('Content and community');
+  expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('Content / Community');
   const group = node.querySelector('details')!;
   expect(group.open).toBe(false);
   await act(async () => group.querySelector('summary')!.click());
@@ -32,10 +32,10 @@ it('shows navigation only for administrators and follows the active page', async
   expect(group.open).toBe(false);
   state.pathname = '/zh/admin/users';
   await act(async () => root.render(createElement(AdminShell, null, 'Page content')));
-  expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('Users and memberships');
+  expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('Users / Memberships');
   state.pathname = '/admin'; state.section = 'system'; state.view = 'monitoring';
   await act(async () => root.render(createElement(AdminShell, null, 'Page content')));
   expect(node.querySelector('details')?.open).toBe(true);
-  expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('Assistant and diagnostics');
+  expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('AI chat');
   await act(async () => root.unmount());
 });

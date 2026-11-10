@@ -9,7 +9,7 @@ const { applyPocketAlg, pocketStateToFacelet, solvedPocketState, POCKET_FACES } 
   await import('../../lib/pocket-facelet.ts');
 
 const ROOT = resolve(import.meta.dirname, '../../../../..');
-const input = resolve(ROOT, process.argv[2] ?? '.tmp/best2x2/import.json');
+const input = resolve(ROOT, process.argv[2] ?? '.local-data/best2x2/import.json');
 const scramble = process.argv.slice(3).join(' ') || "R U R' F2 U' R2 F R2 U2";
 const METHOD: Record<string, string> = {
   cll: 'CLL', eg1: 'EG-1', eg2: 'EG-2', leg1: 'LEG-1',

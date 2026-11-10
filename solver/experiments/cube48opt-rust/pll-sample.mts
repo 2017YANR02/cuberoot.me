@@ -12,7 +12,7 @@ import { algSpeed, getSTM } from '../../../core/packages/client/lib/mcc.ts';
 import { improveNotation, isAllowedZbllAlgorithm, ZBLL_ALLOWED_FAMILIES } from './zbll-mcc-notation.mts';
 import { GRIP_WEIGHTS, scoreGripCandidate, startLabel } from './lll-grip-scoring.mts';
 
-const root = resolve(import.meta.dirname, '../../..'), out = resolve(root, '.tmp/pll-21-20261023');
+const root = resolve(import.meta.dirname, '../../..'), out = resolve(root, '.local-data/pll-21-20261023');
 const { Alg } = await import(resolve(root, 'core/packages/client/node_modules/cubing/dist/lib/cubing/alg/index.js'));
 const { puzzles } = await import(resolve(root, 'core/packages/client/node_modules/cubing/dist/lib/cubing/puzzles/index.js'));
 const loader = puzzles['3x3x3'], identity = (await loader.kpuzzle()).defaultPattern();

@@ -75,6 +75,7 @@ async function main() {
       if (!['mac', 'windows'].includes(v.os ?? '')) throw Error('--os mac|windows is required');
       const old = r.machines.find(m => idOf(m) === `${owner}-${device}`);
       if (old) {
+        if (old.transport !== 'ssh') throw Error('Legacy FRP identity already exists; retire it explicitly or choose another device name');
         if (old.os !== v.os || old.status === 'revoked') throw Error('Existing/revoked identity differs; inspect before reusing');
         console.log(JSON.stringify(plan(old), null, 2)); return;
       }

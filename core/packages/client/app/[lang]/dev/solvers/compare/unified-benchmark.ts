@@ -19,7 +19,7 @@ export const WCA_BENCHMARK = {
       "peakRssBytes": 15638528000
     },
     // Approved Opt10 coset result; solver RSS from /usr/bin/time, not guard-tree RSS.
-    // Evidence: .tmp/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-coset-report.json
+    // Evidence: .local-data/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-coset-report.json
     {
       "id": "rust-opt-10",
       "machineId": "mac",

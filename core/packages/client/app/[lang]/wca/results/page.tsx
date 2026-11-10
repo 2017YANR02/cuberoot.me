@@ -630,9 +630,9 @@ function AllResultsPageInner() {
       {view === 'rank' && (<>
       {/* 项目选择器在模式切换时保持挂载。 */}
       <div className="wse-filters wca-stats-controls">
-        <div className="wse-filter wse-filter-events" style={{ minWidth: '100%' }}>
+        <div className="wse-filter wse-filter-events">
           <WcaEventMultiSelector
-            presentation="inline"
+            presentation="menu"
             availableEvents={RANK_EVENT_SET}
             selectedEvents={selectedSet}
             onChange={setEventsSet}

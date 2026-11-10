@@ -4,15 +4,15 @@
 
 | 档位 | 独立 cubing.js 407 态 | 19,536 个共轭 | 54,538 次优化/标量索引 | 原版正/逆索引 814 项 | >u32 覆盖 | 新版报告 |
 | --- | --- | --- | --- | --- | --- | --- |
-| Opt1 | 通过 | 通过 | 通过 | 通过 | 0 项 | [报告](../../../.tmp/cubeopt-reverse/opt1-generic-coordinate.json) |
-| Opt2 | 通过 | 通过 | 通过 | 通过 | 0 项 | [报告](../../../.tmp/cubeopt-reverse/opt2-coordinate.json) |
-| Opt3 | 通过 | 通过 | 通过 | 通过 | 0 项 | [报告](../../../.tmp/cubeopt-reverse/opt3-coordinate.json) |
-| Opt4 | 通过 | 通过 | 通过 | 通过 | 0 项 | [报告](../../../.tmp/cubeopt-reverse/opt4-coordinate.json) |
-| Opt5 | 通过 | 通过 | 通过 | 通过 | 0 项 | [报告](../../../.tmp/cubeopt-reverse/opt5-coordinate.json) |
-| Opt6 | 通过 | 通过 | 通过 | 通过 | 243 项 | [报告](../../../.tmp/cubeopt-reverse/opt6-coordinate.json) |
-| Opt7 | 通过 | 通过 | 通过 | 通过 | 283 项 | [报告](../../../.tmp/cubeopt-reverse/opt7-coordinate.json) |
-| Opt8 | 通过 | 通过 | 通过 | 通过 | 295 项 | [报告](../../../.tmp/cubeopt-reverse/opt8-coordinate.json) |
-| Opt9 | 通过 | 通过 | 通过 | 通过 | 307 项 | [报告](../../../.tmp/cubeopt-reverse/opt9-coordinate.json) |
+| Opt1 | 通过 | 通过 | 通过 | 通过 | 0 项 | [报告](../../../.local-data/cubeopt-reverse/opt1-generic-coordinate.json) |
+| Opt2 | 通过 | 通过 | 通过 | 通过 | 0 项 | [报告](../../../.local-data/cubeopt-reverse/opt2-coordinate.json) |
+| Opt3 | 通过 | 通过 | 通过 | 通过 | 0 项 | [报告](../../../.local-data/cubeopt-reverse/opt3-coordinate.json) |
+| Opt4 | 通过 | 通过 | 通过 | 通过 | 0 项 | [报告](../../../.local-data/cubeopt-reverse/opt4-coordinate.json) |
+| Opt5 | 通过 | 通过 | 通过 | 通过 | 0 项 | [报告](../../../.local-data/cubeopt-reverse/opt5-coordinate.json) |
+| Opt6 | 通过 | 通过 | 通过 | 通过 | 243 项 | [报告](../../../.local-data/cubeopt-reverse/opt6-coordinate.json) |
+| Opt7 | 通过 | 通过 | 通过 | 通过 | 283 项 | [报告](../../../.local-data/cubeopt-reverse/opt7-coordinate.json) |
+| Opt8 | 通过 | 通过 | 通过 | 通过 | 295 项 | [报告](../../../.local-data/cubeopt-reverse/opt8-coordinate.json) |
+| Opt9 | 通过 | 通过 | 通过 | 通过 | 307 项 | [报告](../../../.local-data/cubeopt-reverse/opt9-coordinate.json) |
 
 九档的 `coordinateBackend`、`pairedMoveBackend` 均为 `neon`，各自 7,326 对移动逐字节与标量一致，`allEqual=true`。独立物理报告位于各 `optN-small/physical-verification.json`，其 SHA-256 已嵌入对应坐标报告。Opt1 重用已加载原表的 `step1_query` 输出；Opt2–9 的原版索引来自该函数首次 PDB 读取前的预期 OOB trap，未分配 PDB。
 

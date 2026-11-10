@@ -65,7 +65,7 @@ Nissy 主索引是紧密排列的 `(corner_class×34650 + edge_sep)×2^h + retai
 
 已有 `H10Solver`、`h10_coord.rs`、`h10_table.rs` 和显式 `solve-h10` / `query-h10` 入口。`PruningOracle` 使用关联 Query 类型：`prepare(cube, remaining)` 先做 COCSEP 早剪，存活状态准备主索引及 Nissy 状态，`lookup(query)` 仅在零码计算 EOESEP。Opt 查询类型仍是 u64，没有额外状态转换。H10 的主表、COCSEP 与 EOESEP 同属一次只读映射。完整表分布默认加载时扫描，计时与真正求解分开。
 
-优化版仅增加 9,720 字节固定坐标查找表，并使用 SIMD 坐标和主表预取；热路径不调用 C/WASM。`h10-coordinate-v3/report.json` 的 5,698 个状态四项快/标量坐标、273,504 次边变换全等；`h10-validation-v2/report.json` 的浅层与全部 60 个历史状态共 10,686 个解通过，完整表分布也已核验。两个 Rust 配置共 7,124 条输出除耗时外与标量首版完全一致，见 `h10-search-equivalence.json`；上述路径相对 `.tmp/cubeopt-reverse/`。这是有限语料的正确性证据，不能替代全状态空间证明或正式速度测量。
+优化版仅增加 9,720 字节固定坐标查找表，并使用 SIMD 坐标和主表预取；热路径不调用 C/WASM。`h10-coordinate-v3/report.json` 的 5,698 个状态四项快/标量坐标、273,504 次边变换全等；`h10-validation-v2/report.json` 的浅层与全部 60 个历史状态共 10,686 个解通过，完整表分布也已核验。两个 Rust 配置共 7,124 条输出除耗时外与标量首版完全一致，见 `h10-search-equivalence.json`；上述路径相对 `.local-data/cubeopt-reverse/`。这是有限语料的正确性证据，不能替代全状态空间证明或正式速度测量。
 
 本轮优化版程序 SHA-256 为 `e8b2c919087006bdcd51b76f7bdbe13a294b538c2a69058d4593fa107099d8a0`。与原 C H10 的完整 60 例同表、单线程对照已完成，排除加载与预热后的正式三轮整批时间如下：
 

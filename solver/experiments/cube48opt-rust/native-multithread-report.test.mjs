@@ -20,7 +20,7 @@ function fixture() {
     label: 'wca100-mt18-native-report-fixture', executable: resolve(ROOT, '.tmp/native-report-fixture-binary'), executableSha256: sha,
     backend: 'opt', variant: 1, h: null, args: ['solve', snapshot.path, table.path, '8', '20', '0'],
     table, snapshot, threads: 18, batchThreads: 1, cases: 100, measuredPasses: 1, warmupCases: 0,
-    input: { path: resolve(ROOT, '.tmp/cubeopt-reverse/wca100-single.tsv'), sha256: hash(input), corpusSha256: corpus.corpusSha256 },
+    input: { path: resolve(ROOT, '.local-data/cubeopt-reverse/wca100-single.tsv'), sha256: hash(input), corpusSha256: corpus.corpusSha256 },
     machine: { platform: 'darwin', arch: 'arm64', logicalCpus: 18, hostname: 'fixture', cpuModel: 'fixture', osRelease: 'fixture' },
     boot: 'fixture-boot', swapouts: 0, baselineSha256: sha, stoppedResourcesSha256: sha,
     sourceSha256: Object.fromEntries(['Cargo.toml', 'Cargo.lock', 'src/main.rs', 'src/native_parallel.rs', 'src/search.rs', 'src/cube.rs'].map(k => [k, sha])),

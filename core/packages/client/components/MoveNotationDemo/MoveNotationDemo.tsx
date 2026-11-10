@@ -88,6 +88,7 @@ export default function MoveNotationDemo({ puzzle, puzzleOrder, moves, notationS
           playRequest={playRequest}
           controlMode="none"
           size={260}
+          fillPane={variant === 'compact'}
         />
       </div>
 

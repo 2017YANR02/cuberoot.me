@@ -9,7 +9,7 @@ import { validateOfficialHistory, officialHasStop } from './opt10-official-polic
 import { parseWasmBenchmarkArguments, readWca100, wasmBuildContract } from './wasm-benchmark.mjs';
 
 const HERE=dirname(fileURLToPath(import.meta.url)), ROOT=resolve(HERE,'../../..');
-const BASE=resolve(ROOT,'.tmp/cubeopt-reverse');
+const BASE=resolve(ROOT,'.local-data/cubeopt-reverse');
 export const localOpt8Scope='mac4-wca100-opt8-rust-candidates';
 const builds={
   release4:['build-FcRcSF','b600c699ab91c29f0bef5a14b7c2871bf1fb03d840b8813d5656266132433bb6'],

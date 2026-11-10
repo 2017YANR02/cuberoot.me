@@ -12,9 +12,9 @@ import { preserveAlg } from './preserve-alg.mjs';
 const { faceletToPocketState } = await import('../../lib/pocket-facelet.ts');
 
 const ROOT = resolve(import.meta.dirname, '../../../../..');
-const input = resolve(ROOT, process.argv[2] ?? '.tmp/best2x2/derived-site.json');
-const siteDir = resolve(ROOT, process.argv[3] ?? '.tmp/best2x2');
-const output = resolve(ROOT, process.argv[4] ?? '.tmp/best2x2/import.json');
+const input = resolve(ROOT, process.argv[2] ?? '.local-data/best2x2/derived-site.json');
+const siteDir = resolve(ROOT, process.argv[3] ?? '.local-data/best2x2');
+const output = resolve(ROOT, process.argv[4] ?? '.local-data/best2x2/import.json');
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit';
 
 interface DerivedAlg {

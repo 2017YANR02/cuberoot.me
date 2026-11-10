@@ -71,7 +71,7 @@ export function TimerDeviceCenter({
 
   const active = items.some((item) => item.active);
   // Host utilities must remain reachable even with a cube connected.
-  const connectedCube = items.some((item) => !item.kind) ? undefined
+  const connectedCube = items.some((item) => !item.kind) || items.filter(item => item.kind === 'smart-cube').length > 1 ? undefined
     : items.find((item) => item.kind === 'smart-cube' && item.active && !item.disabled);
   const directItem = directSingleItem && items.length === 1 ? items[0] : connectedCube;
   return (

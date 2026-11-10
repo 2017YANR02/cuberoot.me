@@ -1,6 +1,7 @@
 'use client';
 
 import MoreToggle from '@/components/MoreToggle';
+import { SettingsPopover } from '@/components/TrainingSettings';
 import TrainingStatsPanel, { TrainingSelfPractice } from '@/components/TrainingStatsPanel';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
 
@@ -447,25 +448,27 @@ export function Sq1ShapeTrainer() {
     <div className={styles.trainerToolbar}>
       <button type="button" className={styles.primary} disabled={!eligibleGroups.length || generating} onClick={() => pick()}>{tr({ zh: '新题', en: 'New scramble' })}</button>
       <BoolToggle value={inspection} onChange={setInspection} label={tr({ zh: '15 秒观察', en: '15-second inspection' })} />
-      <label className={styles.trainerSetting}>
-        <span>{tr({ zh: '中层', en: 'Middle layer' })}</span>
-        <select className={styles.select} value={middleMode} onChange={(event) => setMiddleMode(event.target.value as Sq1MiddleMode)}>
-          <option value="random">{tr({ zh: '随机', en: 'Random' })}</option>
-          <option value="never">{tr({ zh: '不翻转', en: 'Never flipped' })}</option>
-          <option value="always">{tr({ zh: '翻转', en: 'Always flipped' })}</option>
-        </select>
-      </label>
-      {current && <>
-        <button type="button" className={styles.button} disabled={generating} onClick={repeat}>{tr({ zh: '同组合再来一题', en: 'Repeat pair' })}</button>
-        <button type="button" className={styles.button} disabled={generating} onClick={() => pickParity('same')}>{tr({ zh: '同奇偶', en: 'Same parity' })}</button>
-        <button type="button" className={styles.button} disabled={generating} onClick={() => pickParity('opposite')}>{tr({ zh: '反奇偶', en: 'Opposite parity' })}</button>
-        <button type="button" className={styles.button} disabled={generating || !swapGroup} onClick={swap}>{tr({ zh: '交换上下层', en: 'Flip layers' })}</button>
-        <button type="button" className={styles.button} disabled={generating} onClick={excludeCurrent}>{tr({ zh: '排除当前组合', en: 'Exclude pair' })}</button>
-      </>}
-      {excluded.size > 0 && <button type="button" className={styles.button} onClick={() => setExcluded(new Set())}>{tr({ zh: '恢复排除题', en: 'Restore excluded' })}</button>}
+      <SettingsPopover label={tr({ zh: '练习设置', en: 'Practice settings' })}>
+        <label className={styles.trainerSetting}>
+          <span>{tr({ zh: '中层', en: 'Middle layer' })}</span>
+          <select className={styles.select} value={middleMode} onChange={(event) => setMiddleMode(event.target.value as Sq1MiddleMode)}>
+            <option value="random">{tr({ zh: '随机', en: 'Random' })}</option>
+            <option value="never">{tr({ zh: '不翻转', en: 'Never flipped' })}</option>
+            <option value="always">{tr({ zh: '翻转', en: 'Always flipped' })}</option>
+          </select>
+        </label>
+        {current && <>
+          <button type="button" className={styles.button} disabled={generating} onClick={repeat}>{tr({ zh: '同组合再来一题', en: 'Repeat pair' })}</button>
+          <button type="button" className={styles.button} disabled={generating} onClick={() => pickParity('same')}>{tr({ zh: '同奇偶', en: 'Same parity' })}</button>
+          <button type="button" className={styles.button} disabled={generating} onClick={() => pickParity('opposite')}>{tr({ zh: '反奇偶', en: 'Opposite parity' })}</button>
+          <button type="button" className={styles.button} disabled={generating || !swapGroup} onClick={swap}>{tr({ zh: '交换上下层', en: 'Flip layers' })}</button>
+          <button type="button" className={styles.button} disabled={generating} onClick={excludeCurrent}>{tr({ zh: '排除当前组合', en: 'Exclude pair' })}</button>
+        </>}
+        {excluded.size > 0 && <button type="button" className={styles.button} onClick={() => setExcluded(new Set())}>{tr({ zh: '恢复排除题', en: 'Restore excluded' })}</button>}
+        <p className={styles.hint}>{tr({ zh: '中层选项决定新打乱完成后中层是否翻转。', en: 'The middle-layer option controls whether the new scramble finishes with the middle layer flipped.' })}</p>
+        <p className={styles.hint} role="status" aria-live="polite">{tr({ zh: `当前可抽 ${eligibleGroups.length} 种组合。Space 新题，Shift+Space 排除；R R 重复，R S 同奇偶，R O 反奇偶，R F 交换上下层。`, en: `${eligibleGroups.length} shape pairs available. Space: new; Shift+Space: exclude; R R: repeat; R S: same parity; R O: opposite parity; R F: flip layers.` })}</p>
+      </SettingsPopover>
     </div>
-    <p className={styles.hint}>{tr({ zh: '中层选项决定新打乱完成后中层是否翻转。', en: 'The middle-layer option controls whether the new scramble finishes with the middle layer flipped.' })}</p>
-    <p className={styles.hint} role="status" aria-live="polite">{tr({ zh: `当前可抽 ${eligibleGroups.length} 种组合。Space 新题，Shift+Space 排除；R R 重复，R S 同奇偶，R O 反奇偶，R F 交换上下层。`, en: `${eligibleGroups.length} shape pairs available. Space: new; Shift+Space: exclude; R R: repeat; R S: same parity; R O: opposite parity; R F: flip layers.` })}</p>
     {generating && <p className={styles.hint} role="status">{tr({ zh: '正在生成新的随机打乱…', en: 'Generating a fresh random scramble…' })}</p>}
     {generationError && <div className={styles.error} role="alert">
       <p>{tr({ zh: '没有生成符合当前选项的打乱，请重试或调整范围。', en: 'Could not generate a scramble for the current options. Try again or adjust the ranges.' })}</p>

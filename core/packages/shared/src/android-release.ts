@@ -79,8 +79,13 @@ export function parseWindowsRelease(value: unknown): WindowsRelease {
     || typeof r.notes !== 'string' || r.notes.length > 4000 || !r.files) throw new Error('Invalid Windows release');
   for (const kind of ['installer', 'portable'] as const) {
     const file = r.files[kind];
+    // Existing published manifests retain their immutable build-number URLs.
+    const urls = [
+      `https://static.cuberoot.me/downloads/windows/CubeRoot-${r.versionName}-x64-${kind}.exe`,
+      `https://static.cuberoot.me/downloads/windows/CubeRoot-${r.versionName}-${r.versionCode}-x64-${kind}.exe`,
+    ];
     if (!file || !Number.isSafeInteger(file.size) || file.size <= 0 || !/^[a-f0-9]{64}$/.test(file.sha256)
-      || file.url !== `https://static.cuberoot.me/downloads/windows/CubeRoot-${r.versionName}-${r.versionCode}-x64-${kind}.exe`) throw new Error('Invalid Windows artifact');
+      || !urls.includes(file.url)) throw new Error('Invalid Windows artifact');
   }
   return r;
 }

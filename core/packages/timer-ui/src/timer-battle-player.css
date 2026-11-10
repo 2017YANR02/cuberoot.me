@@ -5,10 +5,24 @@
   min-height: 0;
   width: 100%;
   flex-direction: column;
-  outline: 0 solid var(--accent);
-  outline-offset: -3px;
 }
-.timer-battle-player.is-winner { outline-width: 3px; }
+.timer-battle-player-win-highlight {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+  opacity: 0;
+  animation: timer-battle-win-highlight 3.75s ease-in-out both;
+}
+@keyframes timer-battle-win-highlight {
+  0%, 100% { opacity: 0; }
+  4%, 84% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .timer-battle-player-win-highlight { animation-timing-function: steps(1, end); }
+}
 .timer-battle-player-header {
   display: flex;
   flex-wrap: wrap;

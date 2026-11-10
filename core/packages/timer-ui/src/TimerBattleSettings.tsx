@@ -1,9 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { isLocalBattleAssignableKey } from '@cuberoot/shared/timer';
+import { isLocalBattleAssignableKey, type TimerSettingCategoryId } from '@cuberoot/shared/timer';
 import BoolToggle from './BoolToggle';
 import { TimerBattleLayoutControls } from './TimerBattleLayout';
 import type { ComponentProps } from 'react';
-import { TimerRoomDialog } from './TimerRoomDialog';
+import { TimerSettingsPanel } from './TimerSettingsPanel';
 
 interface Setting<T> { value: T; onChange(value: T): void }
 export interface TimerBattleSettingsProps {
@@ -51,25 +51,34 @@ export function TimerBattleKeyBindings({ language, keys, onChange }: { language:
 export function TimerBattleSettings({ language, layout, onClose, keys, onKeyChange, precision, inspection, hold, preview, hideTime, syncStart, source, devices, children, onReset }: TimerBattleSettingsProps) {
   const copy = COPY[language];
   const [resetting, setResetting] = useState(false);
-  return <TimerRoomDialog className="timer-battle-settings-dialog" title={copy.settings} language={language} onClose={onClose}>
-    <div className="timer-battle-settings">
-      {layout && <TimerBattleLayoutControls {...layout} language={language} autoOrientation={false} />}
+  const [category, setCategory] = useState<TimerSettingCategoryId>('timer');
+  const categories: TimerSettingCategoryId[] = ['timer'];
+  if (devices) categories.push('smart-cube');
+  if (source) categories.push('scramble');
+  if (layout || preview || children) categories.push('appearance');
+  if (onReset) categories.push('data');
+  return <TimerSettingsPanel language={language} onClose={onClose} categories={categories}
+    activeCategory={category} onCategoryChange={setCategory}>
+    {category === 'timer' && <div className="settings-section timer-battle-settings">
       {precision && <label>{copy.precision}<select value={precision.value} onChange={(event) => precision.onChange(Number(event.target.value))}>{(precision.options ?? [0, 1, 2, 3]).map((value) => <option value={value} key={value}>{(10 ** -value).toFixed(value)}s</option>)}</select></label>}
       {inspection && <label>{copy.inspection}<select value={inspection.value} onChange={(event) => inspection.onChange(Number(event.target.value))}>{(inspection.options ?? [0, 15]).map((value) => <option value={value} key={value}>{value === 0 ? copy.off : value === 9999 ? '∞' : `${value}s`}</option>)}</select></label>}
-      {hold && <label>{copy.hold}<span>{(hold.value / 1000).toFixed(2)}s</span><input type="range" disabled={hold.disabled} min={0} max={1000} step={50} value={hold.value} onChange={(event) => hold.onChange(Number(event.target.value))} /></label>}
-      {preview && <BoolToggle label={copy.preview} {...preview} />}
+      {hold && <label>{copy.hold}<span className="timer-battle-hold-control"><span>{(hold.value / 1000).toFixed(2)}s</span><input type="range" disabled={hold.disabled} min={0} max={1000} step={50} value={hold.value} onChange={(event) => hold.onChange(Number(event.target.value))} /></span></label>}
       {syncStart && <BoolToggle label={copy.sync} {...syncStart} />}
       {hideTime && <BoolToggle label={copy.hide} {...hideTime} />}
       {keys.length > 0 && <TimerBattleKeyBindings language={language} keys={keys} onChange={onKeyChange} />}
-      {devices}
-      {source}
+    </div>}
+    {category === 'smart-cube' && <div className="timer-battle-settings">{devices}</div>}
+    {category === 'scramble' && <div className="settings-section timer-battle-settings">{source}</div>}
+    {category === 'appearance' && <div className="settings-section timer-battle-settings">
+      {layout && <TimerBattleLayoutControls {...layout} language={language} autoOrientation={false} />}
+      {preview && <BoolToggle label={copy.preview} {...preview} />}
       {children}
-      {onReset && <div className="timer-battle-settings-reset"><p>{copy.resetHint}</p><button type="button" disabled={resetting} onClick={async () => {
+    </div>}
+    {category === 'data' && onReset && <div className="timer-battle-settings-reset"><p>{copy.resetHint}</p><button type="button" disabled={resetting} onClick={async () => {
         if (!window.confirm(copy.confirm)) return;
         setResetting(true);
         try { await onReset(); onClose(); } catch { /* Host reports persistence failure. */ }
         finally { setResetting(false); }
       }}>{copy.reset}</button></div>}
-    </div>
-  </TimerRoomDialog>;
+  </TimerSettingsPanel>;
 }

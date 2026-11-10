@@ -1,3 +1,4 @@
+import { readDeepSeekBalance, summarizeProviderCosts, type BillingCallGroup } from '../utils/site_assistant_billing.js';
 import { Hono, type Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { redactAssistantText } from '../utils/site_assistant_monitor.js';
@@ -32,7 +33,7 @@ const counts = `COUNT(*)::int AS requests, COUNT(DISTINCT user_id)::int AS users
   percentile_cont(0.95) WITHIN GROUP (ORDER BY duration_ms) FILTER (WHERE status='success') AS p95_ms,
   ROUND(AVG(first_answer_ms) FILTER (WHERE status='success'))::int AS first_answer_ms`;
 
-export function createAdminAssistantRoutes(options: { authorize?: (c: Context) => Promise<unknown>; runQuery?: QueryRunner } = {}) {
+export function createAdminAssistantRoutes(options: { authorize?: (c: Context) => Promise<unknown>; runQuery?: QueryRunner; balance?: typeof readDeepSeekBalance } = {}) {
   const routes = new Hono(), run = options.runQuery ?? query;
   const actors = new WeakMap<Context,string>();
   routes.use('/admin/assistant/*', bodyLimit({ maxSize: 4096 }));
@@ -143,6 +144,19 @@ export function createAdminAssistantRoutes(options: { authorize?: (c: Context) =
         FROM site_assistant_requests WHERE ${windowSql}`,[days]),
     ]);
     return c.json({feedback,retrievals,entries,alerts,daily,audit,cost:cost[0],updatedAt:new Date().toISOString()});
+  });
+  routes.get('/admin/assistant/billing', async c => {
+    const parsed = filters.safeParse(c.req.query());
+    if (!parsed.success) return c.json({ error: 'Invalid filters' }, 400);
+    const [groups, balance] = await Promise.all([
+      run<BillingCallGroup>(`SELECT kind, call, COUNT(*)::int AS calls
+        FROM site_assistant_requests
+        CROSS JOIN LATERAL (VALUES ('models'), ('embeddings'), ('reranks'), ('searches')) kinds(kind)
+        CROSS JOIN LATERAL jsonb_array_elements(COALESCE(metrics->kind, '[]'::jsonb)) entries(call)
+        WHERE ${windowSql} GROUP BY kind, call`, [parsed.data.days]),
+      (options.balance ?? readDeepSeekBalance)(),
+    ]);
+    return c.json({ balance, providers: summarizeProviderCosts(groups), updatedAt: new Date().toISOString() });
   });
   routes.get('/admin/assistant/health', async c => {
     const [state] = await run<{ healthy:boolean }>(`SELECT last_cleanup_at>NOW()-INTERVAL '5 minutes' AND last_replay_at>NOW()-INTERVAL '5 minutes' AS healthy FROM site_assistant_monitor_state WHERE id=TRUE`);

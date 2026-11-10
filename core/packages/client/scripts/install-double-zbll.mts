@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { decodeDoubleZbll, validDoubleZbllManifest, type DoubleZbllManifest } from '@cuberoot/shared/double-zbll';
 const client = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // An explicit directory also accepts verified incremental AUF exports.
-const source = process.argv[2] ? resolve(process.argv[2]) : resolve(client, '../../../.tmp/double-zbll-v1/export');
+const source = process.argv[2] ? resolve(process.argv[2]) : resolve(client, '../../../.local-data/double-zbll-v1/export');
 const destination = resolve(client, 'public/data/double-zbll');
 const manifestBytes = readFileSync(resolve(source, 'manifest.json'));
 const manifest = JSON.parse(manifestBytes.toString()) as DoubleZbllManifest;

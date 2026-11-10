@@ -28,7 +28,7 @@ describe('account flow documentation', () => {
     const html = renderToStaticMarkup(createElement(AuthFlowPage));
     for (const id of ['platforms', 'signin', 'app-handoff', 'mini', 'linking', 'merge', 'exit']) {
       expect(html).toContain(`id="${id}"`);
-      expect(html).toContain(`href="#${id}"`);
+      expect(html).toContain(`<details id="${id}"`);
     }
     for (const platform of ['iOS App', 'Android App', 'HarmonyOS', 'Windows', 'macOS']) expect(html).toContain(platform);
     for (const text of lang === 'zh' ? [
@@ -42,7 +42,8 @@ describe('account flow documentation', () => {
       'does not mean timer data is cloud-synced', 'not three accounts', 'sign-in code is not a merge code', 'unknown credentials ask whether you have an account',
       'adopted pets', 'higher bond', 'Experience is not added together',
     ]) expect(html).toContain(text);
-    expect(html).not.toContain('<button');
+    expect(html).not.toContain('type="submit"');
+    expect(html).toContain(lang === 'zh' ? '说明范围与发布状态' : 'Scope and release status');
   });
 
   it('is discoverable from Dev and does not execute an authentication flow', () => {

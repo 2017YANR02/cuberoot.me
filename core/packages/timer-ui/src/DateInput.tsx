@@ -1,5 +1,6 @@
 'use client';
 
+import { getUsableViewport } from './host-viewport';
 import { isValidIsoDate, toLocalIsoDate } from '@cuberoot/shared/iso-date';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
@@ -129,7 +130,9 @@ export function DateInput({
 
     const positionPanel = () => {
       const anchor = trigger.getBoundingClientRect();
-      const viewport = window.visualViewport;
+      const viewport = getUsableViewport();
+      panel.style.maxWidth = `${Math.max(0, viewport.width - 16)}px`;
+      panel.style.maxHeight = `${Math.max(0, viewport.height - 16)}px`;
       const viewportLeft = viewport?.offsetLeft ?? 0;
       const viewportTop = viewport?.offsetTop ?? 0;
       const viewportWidth = viewport?.width ?? window.innerWidth;

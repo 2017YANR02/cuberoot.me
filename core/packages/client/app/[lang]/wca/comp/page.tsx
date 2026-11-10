@@ -1,5 +1,6 @@
 'use client';
 import MoreToggle from '@/components/MoreToggle';
+import { SettingsPopover } from '@/components/TrainingSettings';
 import PersonLink from '@/components/PersonLink';
 import '@cuberoot/timer-ui/compact-select.css';
 
@@ -2381,7 +2382,7 @@ function CalendarPageInner() {
             );
           });
           // 列表模式：用 grid 把表头对齐到下方各列（年份 cell + flag/name 两个 spacer + 天数列头 + 项目 chip）。
-          if (viewMode !== 'list' || displayedComps.length === 0) return <>{daysChip}{chips}</>;
+          if (viewMode !== 'list' || displayedComps.length === 0) return <SettingsPopover label={tr({ zh: '项目与轮次筛选', en: 'Event and round filters' })} panelClassName="calendar-event-settings"><div className="calendar-event-options">{daysChip}{chips}</div></SettingsPopover>;
           return (
             <div className="event-chips-grid">
               {/* 报名列头（最左）：文字「报名」+ 点击按下一个将发生的报名里程碑时刻排序（已截止/无数据沉底） */}

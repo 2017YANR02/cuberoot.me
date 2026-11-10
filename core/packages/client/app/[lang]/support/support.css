@@ -120,7 +120,7 @@
 
 .support-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
   gap: 1.75rem 0.75rem;
 }
 
@@ -635,7 +635,7 @@
 
 @media (max-width: 480px) {
   .support-page { padding: 1.75rem 0.75rem 3rem; }
-  .support-grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 1.4rem 0.6rem; }
+  .support-grid { grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 1.4rem 0.6rem; }
   .sponsor-avatar { width: 52px; height: 52px; }
   .sponsor-claim-backdrop { align-items: flex-end; padding: 0; }
   .sponsor-claim-dialog,
@@ -644,3 +644,5 @@
   .sponsor-claim-review-actions { align-items: stretch; }
   .sponsor-claim-review-actions .sponsor-editor-textarea { flex-basis: 100%; }
 }
+
+.support-page.support-page--embedded { width: 100%; max-width: none; margin: 0; padding: 0; }
