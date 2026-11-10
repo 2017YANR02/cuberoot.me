@@ -907,15 +907,15 @@ interface Props {
   onCustomRestChange?: (v: CustomTreatment) => void;
 }
 
-// Match the touch-landscape layout in sim.css; keep hydration deterministic.
-const TOUCH_LANDSCAPE = '(pointer: coarse) and (orientation: landscape) and (min-width: 600px) and (max-height: 600px)';
-const subscribeLandscape = (notify: () => void) => {
-  const media = window.matchMedia(TOUCH_LANDSCAPE);
+// Match the compact playback rules in player-controls.css; keep hydration deterministic.
+const COMPACT_PLAYBACK = '(pointer: coarse) and (max-width: 767px), (pointer: coarse) and (orientation: landscape) and (min-width: 600px) and (max-height: 600px)';
+const subscribeCompactPlayback = (notify: () => void) => {
+  const media = window.matchMedia(COMPACT_PLAYBACK);
   media.addEventListener('change', notify);
   return () => media.removeEventListener('change', notify);
 };
-const landscapeSnapshot = () => window.matchMedia(TOUCH_LANDSCAPE).matches;
-const landscapeServerSnapshot = () => false;
+const compactPlaybackSnapshot = () => window.matchMedia(COMPACT_PLAYBACK).matches;
+const compactPlaybackServerSnapshot = () => false;
 
 export default function PlayerControls({
   active = true,
@@ -1022,7 +1022,7 @@ export default function PlayerControls({
   // "Derive scramble from solution" (cubedb-style) is 3x3-only — the solver is.
   const is3x3 = !isSquarePuzzle && !isIvy && !corner && !isTwistyMode && order === 3;
   const tr = useT();
-  const touchLandscape = useSyncExternalStore(subscribeLandscape, landscapeSnapshot, landscapeServerSnapshot);
+  const compactPlayback = useSyncExternalStore(subscribeCompactPlayback, compactPlaybackSnapshot, compactPlaybackServerSnapshot);
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -2763,7 +2763,7 @@ export default function PlayerControls({
       </div>;
       const playbackBar = (
       <div className="sim-stage-controls">
-      {!touchLandscape && viewTools}
+      {!compactPlayback && viewTools}
       <PlaybackBar layout="wide"
         disabled={!isTwistyMode && (!engineReady || replayPending)}
         step={isTwistyMode ? (totalSteps > 0 ? twistyPlayback.step : 0) : step}
@@ -2775,9 +2775,9 @@ export default function PlayerControls({
         onTogglePlay={handleTogglePlay}
         onStepForward={stepForward}
         onSkipEnd={() => { setCaretChar(null); jumpToStep(totalSteps); }}
-        leading={touchLandscape ? undefined : speedControl}
+        leading={compactPlayback ? undefined : speedControl}
         trailing={<SettingsPopover label={t('播放设置', 'Playback settings')} className="sim-playback-settings" iconSize={14}>
-          {touchLandscape && <>{speedControl}{viewTools}</>}
+          {compactPlayback && <>{speedControl}{viewTools}</>}
           <div className="sim-playback-options">
             {anchorSelect}
             <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={animatePlayback => onSettingsChange({ ...settings, animatePlayback })} />
