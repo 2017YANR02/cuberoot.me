@@ -287,6 +287,9 @@ const CSS = `
 .deskpet-compact-status{position:absolute;right:0;bottom:calc(100% + 10px);width:min(280px,calc(100vw - 40px));padding:12px;border-radius:12px;background:var(--popover);font-size:13px;color:var(--foreground);}
 /* The homepage's fixed search occupies the bottom 2.5rem + 54px on narrow screens. */
 @media (max-width:1024px){body:has(.landing-page) .deskpet-compact{bottom:calc(7rem + var(--sab,0px));}}
+/* Open modal/menu surfaces take precedence over either pet presentation. */
+body:has([aria-modal="true"], dialog[open], [popover]:popover-open, .pp-popup) :is(.clawd-deskpet,.deskpet-compact){visibility:hidden;}
+body:has([aria-modal="true"], dialog[open], [popover]:popover-open, .pp-popup) :is(.clawd-deskpet,.deskpet-compact) *{pointer-events:none;}
 @media print{.clawd-deskpet,.deskpet-compact{display:none;}}
 `;
 
