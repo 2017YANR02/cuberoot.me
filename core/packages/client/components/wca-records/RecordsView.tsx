@@ -207,7 +207,7 @@ export default function RecordsView({ embedded = false, leadingControls }: { emb
       </header>}
 
       <div className="records-toolbar">
-        <WcaEventSelector presentation="inline" availableEvents={availableEvents}
+        <WcaEventSelector presentation="menu" availableEvents={availableEvents}
           selectedEvent={sorScope ? 'sor' : event}
           appendEvents={[{ id: 'sor', iconClass: '', textLabel: sorLabel, label: sorLabel }]}
           onSelect={v => setQ({ event: v || 'all', ...(v === 'sor'

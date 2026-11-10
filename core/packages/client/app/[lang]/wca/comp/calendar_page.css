@@ -1703,3 +1703,14 @@
     background: var(--glass-popover-bg);
   }
 }
+
+
+.calendar-event-options {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(44px, 1fr));
+    gap: 6px;
+}
+.calendar-page .calendar-event-options .event-chip {
+    min-width: 44px;
+    min-height: 44px;
+}
