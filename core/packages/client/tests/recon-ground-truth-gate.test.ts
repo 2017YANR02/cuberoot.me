@@ -225,6 +225,7 @@ describe('reconstruction ground-truth commit gate', () => {
         writeFileSync(join(root, 'snapshot-path.txt'), snapshot);
         if (readFileSync(join(snapshot, 'source.txt'), 'utf8') !== ${JSON.stringify(expected)}) return 21;
         if (existsSync(join(snapshot, 'untracked.txt'))) return 22;
+        if (readFileSync(join(snapshot, 'scripts/local-artifacts/check.mjs'), 'utf8') !== '// staged hook dependency') return 24;
         if (Object.keys(cleanEnv).some(key => key.startsWith('GIT_')) || cleanEnv.NODE_PATH) return 23;
         if (${mutate}) {
           writeFileSync(join(root, 'source.txt'), 'changed during verification');
@@ -236,6 +237,9 @@ describe('reconstruction ground-truth commit gate', () => {
     `], { cwd: temp, env, encoding: 'utf8' });
     try {
       expect(runGit(['init', '-q']).status).toBe(0);
+      mkdirSync(join(temp, 'scripts/local-artifacts'), { recursive: true });
+      writeFileSync(join(temp, 'scripts/local-artifacts/check.mjs'), '// staged hook dependency');
+      expect(runGit(['add', 'scripts']).status).toBe(0);
       writeFileSync(join(temp, 'source.txt'), 'staged');
       expect(runGit(['add', 'source.txt']).status).toBe(0);
       writeFileSync(join(temp, 'source.txt'), 'other work');

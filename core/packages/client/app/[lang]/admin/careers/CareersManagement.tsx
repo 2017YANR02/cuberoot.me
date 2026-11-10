@@ -14,9 +14,49 @@ import '../admin.css';
 import './careers-admin.css';
 
 type Application = { id: string; position_id: string; city: string; applicant_name: string; phone: string; email: string; education: string; experience: string; channel: string; computer: string; mobile: string; ai_tools: string; ai_subscription_cost: string; github: string; website: string; resume_name: string; photo_name: string | null; created_at: string };
+function ResumePreview({ application }: { application: Application }) {
+  const t = useT();
+  const [content, setContent] = useState<{ url?: string; html?: string; text?: string } | null>(null);
+  const [error, setError] = useState(false);
+  const extension = application.resume_name.split('.').pop()?.toLowerCase();
+  const supported = ['pdf', 'docx', 'txt'].includes(extension ?? '');
+  useEffect(() => {
+    if (!supported) return;
+    const controller = new AbortController();
+    let url: string | undefined;
+    void (async () => {
+      try {
+        const response = await sessionFetch(apiUrl(`/v1/career-applications/${encodeURIComponent(application.id)}/resume`), { headers: authHeaders(false), cache: 'no-store', signal: controller.signal });
+        if (!response.ok) throw new Error('Preview failed');
+        const blob = await response.blob();
+        if (controller.signal.aborted) return;
+        if (extension === 'docx') {
+          const { renderAsync } = await import('docx-preview');
+          const container = document.createElement('div');
+          await renderAsync(await blob.arrayBuffer(), container, undefined, { useBase64URL: true, renderAltChunks: false, ignoreWidth: true });
+          if (!controller.signal.aborted) setContent({ html: `<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:">${container.innerHTML}` });
+        } else if (extension === 'txt') {
+          const text = await blob.text();
+          if (!controller.signal.aborted) setContent({ text });
+        } else {
+          url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+          setContent({ url });
+        }
+      } catch { if (!controller.signal.aborted) setError(true); }
+    })();
+    return () => { controller.abort(); if (url) URL.revokeObjectURL(url); };
+  }, [application.id, extension, supported]);
+  if (!supported) return <p>{t('此格式暂不支持在线预览，请下载查看。', 'This format cannot be previewed. Download it to view.')}</p>;
+  if (error) return <p role="alert">{t('预览失败，请重新打开或下载查看。', 'Preview failed. Reopen the preview or download the file.')}</p>;
+  if (!content) return <p role="status">{t('正在加载简历…', 'Loading resume…')}</p>;
+  if (content.text !== undefined) return <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{content.text}</pre>;
+  return <iframe title={application.resume_name} src={content.url} srcDoc={content.html} sandbox={content.html ? '' : undefined} referrerPolicy="no-referrer" style={{ width: '100%', height: '75vh', border: 0, marginTop: 12 }} />;
+}
+
 export default function CareersManagement() {
   const t = useT();
   const admin = useIsAdmin();
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
@@ -72,7 +112,8 @@ export default function CareersManagement() {
         {applications.map(item => <article key={item.id} className="careers-admin-item" data-site-surface="panel">
           <h2>{item.applicant_name}</h2><p>{item.position_id === 'engineering' ? t('全栈工程师', 'Full-stack engineer') : item.position_id === 'content-operations' ? t('内容运营与视频剪辑', 'Content operations and video editor') : item.position_id} · {Object.hasOwn(CAREER_WORK_ARRANGEMENTS, item.city) ? tr(CAREER_WORK_ARRANGEMENTS[item.city as CareerWorkArrangementId]) : item.city} · <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleString()}</time></p>
           <dl><dt>{t('手机号码', 'Phone')}</dt><dd>{item.phone}</dd><dt>{t('邮箱', 'Email')}</dt><dd>{item.email}</dd>{item.education && <><dt>{t('最高学历', 'Education')}</dt><dd>{item.education}</dd></>}{item.experience && <><dt>{t('工作经历', 'Experience')}</dt><dd>{item.experience}</dd></>}{item.computer && <><dt>{t('电脑系统与型号', 'Computer OS and model')}</dt><dd>{item.computer}</dd></>}{item.mobile && <><dt>{t('手机系统与型号', 'Phone OS and model')}</dt><dd>{item.mobile}</dd></>}{item.ai_tools && <><dt>{t('使用的 AI 模型或工具', 'AI models or tools used')}</dt><dd>{item.ai_tools}</dd></>}{item.ai_subscription_cost && <><dt>{t('套餐总费用', 'Total subscription cost')}</dt><dd>{item.ai_subscription_cost}</dd></>}{item.github && <><dt>{t('GitHub 仓库', 'GitHub repository')}</dt><dd>{item.github}</dd></>}{item.website && <><dt>{t('个人网站', 'Personal website')}</dt><dd>{item.website}</dd></>}{item.channel && <><dt>{t('招聘渠道', 'Source')}</dt><dd>{item.channel}</dd></>}</dl>
-          <div className="careers-admin-files"><button className="careers-admin-action" type="button" onClick={() => void download(item.id, 'resume', item.resume_name)}>{t('下载简历', 'Download resume')}: <span className="careers-admin-filename">{item.resume_name}</span></button>{item.photo_name && <button className="careers-admin-action" type="button" onClick={() => void download(item.id, 'photo', item.photo_name!)}>{t('下载照片', 'Download photo')}: <span className="careers-admin-filename">{item.photo_name}</span></button>}<button type="button" className="careers-admin-action careers-admin-delete" disabled={deleting !== null} onClick={() => void remove(item.id)}>{deleting === item.id ? t('正在删除…', 'Deleting…') : t('删除申请', 'Delete application')}</button></div>
+          <div className="careers-admin-files"><button className="careers-admin-action" type="button" aria-expanded={previewId === item.id} onClick={() => setPreviewId(previewId === item.id ? null : item.id)}>{previewId === item.id ? t('收起预览', 'Close preview') : t('预览简历', 'Preview resume')}</button><button className="careers-admin-action" type="button" onClick={() => void download(item.id, 'resume', item.resume_name)}>{t('下载简历', 'Download resume')}: <span className="careers-admin-filename">{item.resume_name}</span></button>{item.photo_name && <button className="careers-admin-action" type="button" onClick={() => void download(item.id, 'photo', item.photo_name!)}>{t('下载照片', 'Download photo')}: <span className="careers-admin-filename">{item.photo_name}</span></button>}<button type="button" className="careers-admin-action careers-admin-delete" disabled={deleting !== null} onClick={() => void remove(item.id)}>{deleting === item.id ? t('正在删除…', 'Deleting…') : t('删除申请', 'Delete application')}</button></div>
+          {previewId === item.id && <ResumePreview key={item.id} application={item} />}
         </article>)}
         <nav className="careers-admin-pages" aria-label={t('申请分页', 'Application pages')}><button className="careers-admin-page-button" type="button" disabled={offset === 0} onClick={() => setOffset(value => Math.max(0, value - 50))}>{t('上一页', 'Previous')}</button><button className="careers-admin-page-button" type="button" disabled={!hasMore} onClick={() => setOffset(value => value + 50)}>{t('下一页', 'Next')}</button></nav>
       </>}
