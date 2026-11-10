@@ -4,10 +4,44 @@
 // Other protected computations still require the documented safeguards.
 import { dirname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+
+// User-approved 2026-11-10 run only. The receipt is created after both Macs
+// have the reviewed revision. Consuming it precedes execution; failures never
+// renew it. This is a startup authorization, not an OS no-swap guarantee.
+export function mbpStatsCommand(revision: string): string {
+  if (!/^[a-f0-9]{40}$/.test(revision)) throw Error('Invalid statistics revision');
+  return `ssh -t -o BatchMode=yes mbp 'export PATH=/Users/cuberoot/.local/bin:/Users/cuberoot/.local/opt/node-v24.22.2-darwin-arm64/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin; cd /Users/cuberoot/Developer/cuberoot.me/core && test "$(git rev-parse HEAD)" = ${revision} && test -z "$(git status --porcelain)" && CUBEROOT_DATA_ROOT=/Users/cuberoot/Documents/scramble pnpm stats:scramble'`;
+}
+
+export function consumeMbpStatsApproval(command: string, cwd: unknown, options: {
+  stateDir?: string; now?: number; revision?: () => string;
+} = {}): boolean {
+  if (!command.startsWith('ssh -t -o BatchMode=yes mbp ')
+    || typeof cwd !== 'string' || resolve(cwd) !== repoRoot
+    || (options.now ?? Date.now()) >= Date.parse('2026-11-12T00:00:00Z')) return false;
+  const stateDir = options.stateDir ?? resolve(repoRoot, '.local-data/stats-mbp-20261110');
+  try {
+    const approval = JSON.parse(readFileSync(resolve(stateDir, 'authorization.json'), 'utf8'));
+    if (approval.scope !== '2026-11-10-mbp-full-scramble-monitored'
+      || typeof approval.revision !== 'string'
+      || command !== mbpStatsCommand(approval.revision)) return false;
+    const revision = (options.revision ?? (() => {
+      const git = (args: string[]) => execFileSync('git', args, { cwd: repoRoot, encoding: 'utf8', timeout: 5000 }).trim();
+      if (git(['status', '--porcelain'])) throw Error('Statistics revision must be clean');
+      return git(['rev-parse', 'HEAD']);
+    }))();
+    if (revision !== approval.revision) return false;
+    writeFileSync(resolve(stateDir, 'used.json'), JSON.stringify({
+      ...approval, consumedAt: new Date(options.now ?? Date.now()).toISOString(), command,
+    }) + '\n', { flag: 'wx', mode: 0o600 });
+    return true;
+  } catch { return false; }
+}
 const native = /^(?:table_generator(?:_high_memory)?|(?:pseudo_f2leo|f2leo|pseudo_pair|pair|std)_analyzer)(?:\.exe)?$/;
 const script = /(?:^|\/)(?:double-zbll\.ts|gen-table\.mjs|backfill_xcross_variant\.[cm]?[jt]s)$/;
 const base = (word: string) => word.replaceAll('\\', '/').split('/').pop() ?? '';
@@ -240,6 +274,7 @@ async function main() {
   const command = request?.tool_input?.command;
   if (typeof command !== 'string') return;
   const cwd = request?.tool_input?.workdir ?? request?.tool_input?.cwd ?? request?.cwd;
+  if (consumeMbpStatsApproval(command, cwd)) return;
   // Some code-mode harnesses supply the repository cwd instead of the nested
   // exec workdir. This exact absolute entry is unambiguous in either directory;
   // it receives the same source-hash and runtime-guard checks as the shortcut.
