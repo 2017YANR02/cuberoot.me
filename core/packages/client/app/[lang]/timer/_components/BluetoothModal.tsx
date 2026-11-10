@@ -39,6 +39,7 @@ interface CubeConnectionItem {
 }
 
 interface Props {
+  title?: string;
   anchorRef?: RefObject<HTMLButtonElement | null>;
   isZh: boolean;
   cube: BluetoothCubeHandle;
@@ -131,7 +132,7 @@ function ConnectFailure({ detail }: { detail: string }) {
   );
 }
 
-export default function BluetoothModal({ anchorRef, isZh, cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro, allowDeviceCalibration = true, connections, selectedConnectionId, onSelectConnection, onConnectNext, connectingNext }: Props) {
+export default function BluetoothModal({ title, anchorRef, isZh, cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro, allowDeviceCalibration = true, connections, selectedConnectionId, onSelectConnection, onConnectNext, connectingNext }: Props) {
   useSyncExternalStore(subscribeInstalledBleBridge, installedBleAvailable, () => false);
   const [connecting, setConnecting] = useState(Boolean(connectAttempt) && !cube.status.connected);
   const [connectError, setConnectError] = useState<{ stage: ConnectStage | null; detail: string } | null>(null);
@@ -318,7 +319,7 @@ export default function BluetoothModal({ anchorRef, isZh, cube, onClose, onConne
       }}
       title={macPrompt
         ? tr({ zh: '输入 MAC 地址', en: 'Enter MAC address' })
-        : tr({ zh: '智能魔方', en: 'Smart cube' })}
+        : title ?? tr({ zh: '智能魔方', en: 'Smart cube' })}
     />
   );
 }

@@ -4,9 +4,17 @@ import { usesStackmatPads, STACKMAT_PAD_HOLD_MS } from '@/components/stackmat-ca
 
 import TimerReadout from '../_components/TimerReadout';
 import TimerDisplayModeSetting from '../_components/TimerDisplayModeSetting';
-import { LOCAL_BATTLE_SCRAMBLE_COPY } from '@cuberoot/shared/timer';
+import { LOCAL_BATTLE_SCRAMBLE_COPY, timerSupportsLocalBattleSmartCube } from '@cuberoot/shared/timer';
+import { useBattleCubes, type BattleCubes, type BattleCubeHandle } from '../_battle/useBattleCubes';
+import BluetoothModal from '../_components/BluetoothModal';
+import LiveCubeState from '../_components/LiveCubeState';
+import { mirrorForBrand, sensorBasisForBrand } from '../_lib/bluetooth/orientation';
+import { hintScramble } from '../_lib/bluetooth/scramble_hint';
+import { applyScramble, facesEqual } from '../_lib/cube/state';
 import {
   TimerBattleAppearanceSettings,
+  TimerDeviceCenter,
+  battlePlayerLabel,
   TimerBattleSourceSettings,
   TimerLocalBattlePage,
   TimerLocalBattlePlayer,
@@ -63,17 +71,22 @@ import '@/app/[lang]/timer/_battle/battle.css';
 import { battlePresenceMix, type TimerPresenceReport } from '@/app/[lang]/timer/_lib/presence';
 import { tr } from '@/i18n/tr';
 import './shell.css';
+import '../timer.css';
 
 function BattlePresenceReporter({
   playerCount,
+  cubes,
   onChange,
 }: {
   playerCount: number;
+  cubes: BattleCubes;
   onChange?: (report: TimerPresenceReport) => void;
 }) {
   const players = useBattleStore(s => s.players);
   const puzzleIds = useBattleStore(s => s.puzzleIds);
-  const mix = battlePresenceMix(playerCount, 'own', [false, false, false, false]);
+  const connected = cubes.handles.map((cube, index) => cube.status.connected
+    && timerSupportsLocalBattleSmartCube(battleToTimerEvent(puzzleIds[index])));
+  const mix = battlePresenceMix(playerCount, 'own', connected);
   const events = Array.from(new Set(
     puzzleIds.slice(0, playerCount).map(battleToTimerEvent),
   ));
@@ -95,7 +108,8 @@ function BattlePresenceReporter({
     players: playerCount,
     events,
     results,
-    devices: [],
+    devices: cubes.handles.slice(0, playerCount).flatMap((cube, index) => connected[index]
+      ? [{ name: cube.status.deviceName, ...(cube.status.deviceId ? { id: cube.status.deviceId } : {}) }] : []),
   };
   const signature = JSON.stringify(report);
   useEffect(() => { onChange?.(report); }, [signature, onChange]);
@@ -116,8 +130,10 @@ export function isBattleKeyboardExcludedTarget(target: EventTarget | null): bool
     || Boolean(t.closest('[data-no-timer]'));
 }
 
-export function useKeyboardControls(suppressed: boolean) {
+export function useKeyboardControls(suppressed: boolean, blockedPlayers: readonly boolean[] = []) {
   const keyPressedRef = useRef<Record<string, boolean>>({});
+  const blockedRef = useRef(blockedPlayers);
+  blockedRef.current = blockedPlayers;
 
   useEffect(() => {
     keyPressedRef.current = {};
@@ -134,6 +150,7 @@ export function useKeyboardControls(suppressed: boolean) {
 
       const playerId = keyToPlayer(store.playerKeys, e.key);
       if (playerId === undefined) return;
+      if (blockedRef.current[playerId]) return;
       if (isBattleKeyboardExcludedTarget(e.target)) return;
 
       if (store.mode === 'solo' && playerId !== 0) return;
@@ -153,6 +170,7 @@ export function useKeyboardControls(suppressed: boolean) {
       if (store.recordingKeyFor !== null) return;
       const playerId = keyToPlayer(store.playerKeys, e.key);
       if (playerId === undefined) return;
+      if (blockedRef.current[playerId]) return;
       if (isBattleKeyboardExcludedTarget(e.target)) return;
       if (store.mode !== 'solo' && playerId >= store.playerCount) return;
 
@@ -265,7 +283,7 @@ function BattleTimeReadout({ playerId, live, html, className, inputBlocked }: { 
 // 打乱文字 + 打乱图 + WCA 来源行。可被同排一对玩家共用:
 //   ids = 参与共享的玩家槽位,取 ids[0] 为代表读打乱(同 puzzle 时全组打乱相等);
 //   任一玩家计时中则整条隐藏。单人格传 [playerId],共享行传该排的一对(如 [0,1] / [2,3])。
-function ScramblePanel({ ids, imgHeight, part = 'all' }: { ids: number[]; imgHeight?: string; part?: 'all' | 'text' | 'preview' }) {
+function ScramblePanel({ ids, imgHeight, part = 'all', cube }: { ids: number[]; imgHeight?: string; part?: 'all' | 'text' | 'preview'; cube?: BattleCubeHandle }) {
   const store = useBattleStore();
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -282,12 +300,20 @@ function ScramblePanel({ ids, imgHeight, part = 'all' }: { ids: number[]; imgHei
   const source = useMemo(() => meta ? {
     country: compFlagIso2(meta.ci), name: localizeCompName(meta.ci, meta.cn, isZh),
   } : null, [meta, isZh, flagVer]);
+  const verification = useMemo(() => {
+    if (!cube?.status.connected || !cube.facelets || !scramble || loading || failed) return null;
+    const faces = cube.getFaces();
+    if (!faces) return null;
+    try { return { match: facesEqual(faces, applyScramble(3, scramble)), hint: hintScramble(scramble, faces) }; }
+    catch { return null; }
+  }, [cube?.status.connected, cube?.facelets, scramble, loading, failed]);
   if (anyTiming) return null;
   const preview = part !== 'text' && scramble && !failed && !loading && store.showImage
     ? <TimerCubePreview event={event} scramble={scramble} height={imgHeight} fill visualization="2D"
       ariaLabel={tr({ en: 'Scramble preview', zh: '打乱预览' })} /> : null;
   return <>
     {part !== 'preview' && <TimerScrambleStrip scramble={loading || failed ? '' : formatScrambleForEvent(event, scramble || '')}
+      match={verification?.match} hint={verification?.hint}
       copiedLabel={tr({ en: 'Copied', zh: '已复制' })} fontScale={store.scrambleScale}
       verificationLabels={{ copiedCorrection: tr({ en: 'Copied the scramble', zh: '已复制原打乱' }) }}
       status={loading ? { kind: 'loading', message: tr({ en: 'Generating scramble…', zh: '生成打乱中…' }) }
@@ -314,8 +340,9 @@ export function battlePointerReleaseAction(
   return eventType === 'pointerup' ? 'up' : 'cancel';
 }
 
-export function TimerArea({ playerId, rotated, hideScramble, cellClass, layoutEditing = false, inputBlocked = false }: { playerId: number; rotated?: boolean; hideScramble?: boolean; cellClass?: string; controlsCorner?: 'left' | 'right' | 'center'; layoutEditing?: boolean; inputBlocked?: boolean }) {
-  const padMode = usesStackmatPads(useSettings());
+export function TimerArea({ playerId, rotated, hideScramble, cellClass, layoutEditing = false, inputBlocked = false, cube, calibrateToken }: { playerId: number; rotated?: boolean; hideScramble?: boolean; cellClass?: string; controlsCorner?: 'left' | 'right' | 'center'; layoutEditing?: boolean; inputBlocked?: boolean; cube?: BattleCubeHandle; calibrateToken?: number }) {
+  const settings = useSettings();
+  const padMode = usesStackmatPads(settings);
   const player = useBattleStore(s => s.players[playerId]);
   const store = useBattleStore();
   const areaRef = useRef<HTMLDivElement>(null);
@@ -442,9 +469,14 @@ export function TimerArea({ playerId, rotated, hideScramble, cellClass, layoutEd
         surfaceRef: surfaceRef,
         digits: <BattleTimeReadout playerId={playerId} className={timeClasses} inputBlocked={inputBlocked || layoutEditing}
           live={player.isTiming || player.isInspecting} html={renderTimeContent()} />,
-        scrambleSlot: !hideScramble && <ScramblePanel ids={[playerId]} part="text" />,
+        scrambleSlot: !hideScramble && <ScramblePanel ids={[playerId]} part="text" cube={cube} />,
         cornerAspect: timerCubePreviewAspect(battleToTimerEvent(store.puzzleIds[playerId]), store.scrambles[playerId]),
-        cornerSlot: !hideScramble && store.showImage
+        cornerSlot: cube?.facelets && store.showImage ? <div className="timer-live-cube" data-no-timer>
+          <LiveCubeState facelets={cube.facelets} moves={cube.live.moves} algAnchored={cube.live.algAnchored}
+            liveSource={cube.live.anchor} mode={settings.liveCubeView} useGyro={settings.gyroEnabled}
+            quatRef={cube.quatRef} calibrateToken={calibrateToken}
+            sensorBasis={sensorBasisForBrand(cube.status.brand)} mirror={mirrorForBrand(cube.status.brand)} />
+        </div> : !hideScramble && store.showImage
           ? <ScramblePanel ids={[playerId]} part="preview" imgHeight="var(--timer-cube-h)" />
           : undefined
       }}
@@ -554,10 +586,87 @@ export default function BattleView({ playerCount, playersControl, presenceContro
   const [vsHistoryOpen, setVsHistoryOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [layoutEditing, setLayoutEditing] = useState(false);
+  const language = tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh';
+  const [cubeSlot, setCubeSlot] = useState<number | null>(null);
+  const cubeButtonRef = useRef<HTMLButtonElement>(null);
+  const [connectAttempt, setConnectAttempt] = useState<Promise<void> | null>(null);
+  const connectingCubeRef = useRef<BattleCubeHandle | null>(null);
+  const [macPrompt, setMacPrompt] = useState<{ deviceName: string; isWrongKey?: boolean } | null>(null);
+  const macResolverRef = useRef<((mac: string | null) => void) | null>(null);
+  const [calibrateTokens, setCalibrateTokens] = useState([0, 0, 0, 0]);
+  const [cubeNotices, setCubeNotices] = useState<Record<number, string>>({});
+  const resolveMac = useCallback((mac: string | null) => {
+    macResolverRef.current?.(mac);
+    macResolverRef.current = null;
+    setMacPrompt(null);
+  }, []);
+  const closeCube = useCallback(() => {
+    connectingCubeRef.current?.disconnect();
+    connectingCubeRef.current = null;
+    resolveMac(null);
+    setCubeSlot(null);
+    setConnectAttempt(null);
+  }, [resolveMac]);
+  useEffect(() => () => { macResolverRef.current?.(null); }, []);
+  const overlayOpen = settingsOpen || vsHistoryOpen || layoutEditing || cubeSlot !== null;
+  const cubes = useBattleCubes({
+    suspended: overlayOpen,
+    onNeedMac: (slot, deviceName, isWrongKey) => new Promise(resolve => {
+      macResolverRef.current?.(null);
+      macResolverRef.current = resolve;
+      setCubeSlot(slot);
+      setMacPrompt({ deviceName, isWrongKey });
+    }),
+    onConnectionEvent: (slot, event) => setCubeNotices(previous => {
+      const next = { ...previous };
+      if (event.kind === 'reconnected' || event.kind === 'disconnected' && event.reason === 'manual') delete next[slot];
+      else next[slot] = event.kind === 'reconnecting'
+        ? tr({ zh: '正在重连智能魔方…', en: 'Reconnecting to smart cube…' })
+        : event.kind === 'reconnect-failed'
+          ? tr({ zh: '智能魔方重连失败，请重新配对', en: 'Smart cube reconnect failed — pair again' })
+          : tr({ zh: '智能魔方连接断开', en: 'Smart cube disconnected' });
+      return next;
+    }),
+  });
+  const cubeHandlesRef = useRef(cubes.handles);
+  cubeHandlesRef.current = cubes.handles;
+  const connectionSignature = cubes.handles.map(cube => Number(cube.status.connected)).join('');
+  const cubeSupported = timerSupportsLocalBattleSmartCube(battleToTimerEvent(store.puzzleIds[0]));
+  const cubeConnected = cubes.handles.map(cube => cubeSupported && cube.status.connected);
+  const connectCube = async (slot: number, pick?: Parameters<BattleCubeHandle['connect']>[0]) => {
+    const cube = cubes.handles[slot];
+    connectingCubeRef.current = cube;
+    try {
+      await cube.connect(pick);
+      setCubeNotices(previous => {
+        if (!previous[slot]) return previous;
+        const next = { ...previous };
+        delete next[slot];
+        return next;
+      });
+    }
+    finally { if (connectingCubeRef.current === cube) connectingCubeRef.current = null; }
+  };
+  const openCube = (slot: number) => {
+    setCubeSlot(slot);
+    setConnectAttempt(null);
+    if (cubes.handles[slot].status.connected) return;
+    const attempt = connectCube(slot);
+    setConnectAttempt(attempt);
+    void attempt.catch(() => undefined);
+  };
+  useEffect(() => {
+    if (cubeSlot !== null && (!cubeSupported || cubeSlot >= playerCount)) closeCube();
+  }, [cubeSlot, cubeSupported, playerCount, closeCube]);
+  useEffect(() => {
+    cubeHandlesRef.current.forEach((cube, slot) => {
+      if (slot >= playerCount && cube.status.connected) cube.disconnect();
+    });
+  }, [playerCount, connectionSignature]);
   const surfaceRef = useRef<HTMLElement>(null);
   const finishLayoutEditing = useCallback(() => setLayoutEditing(false), []);
   const padMode = usesStackmatPads(useSettings());
-  useKeyboardControls(settingsOpen || vsHistoryOpen || layoutEditing || padMode);
+  useKeyboardControls(overlayOpen || padMode, cubeConnected);
   const layoutBusy = store.players.slice(0, playerCount).some(player =>
     player.isTiming || player.isInspecting || player.isReady || player.canStart || player.pointerId !== null);
 
@@ -674,14 +783,26 @@ export default function BattleView({ playerCount, playersControl, presenceContro
 
   // 同排一对玩家 puzzle 相同时(同 puzzle 打乱本就相等,见 loadNewScramble),
   // 只在两格之间渲染一份共享打乱;不同项目则各自沿用格内打乱(共享行塌陷)。
-  const bottomSame = store.puzzleIds[0] === store.puzzleIds[1];
-  const topSame = store.puzzleIds[2] === store.puzzleIds[3];
+  const bottomSame = store.puzzleIds[0] === store.puzzleIds[1] && !cubeConnected[0] && !cubeConnected[1];
+  const topSame = store.puzzleIds[2] === store.puzzleIds[3] && !cubeConnected[2] && !cubeConnected[3];
   // 上排是否翻转 180°(围坐一桌面向对面 = true;同向观看 = false,用户可关)。
   //   关掉后上排文字/图正立,控制条也从「对面视角上角」回到本屏上角。
   const flipTop = store.flipTopRow;
   return <>
-    <BattlePresenceReporter playerCount={playerCount} onChange={onPresenceChange} />
+    <BattlePresenceReporter playerCount={playerCount} cubes={cubes} onChange={onPresenceChange} />
     <TimerLocalBattlePage className="battle-container" surfaceRef={surfaceRef} layoutEditing={layoutEditing}
+      devices={cubeSupported && <TimerDeviceCenter triggerRef={cubeButtonRef}
+        ariaLabel={tr({ en: 'Timer devices', zh: '计时设备' })} menuLabel={tr({ en: 'Timer devices', zh: '计时设备' })}
+        triggerLabel={tr({ en: 'Devices', zh: '设备' })}
+        items={cubes.handles.slice(0, playerCount).map((cube, slot) => ({
+          id: `player-${slot}`, kind: 'smart-cube', active: cubeConnected[slot],
+          label: `${battlePlayerLabel(slot + 1, language)} · ${tr({ en: 'Smart cube', zh: '智能魔方' })}`,
+          detail: cubeNotices[slot] || cube.status.deviceName || undefined,
+          disabled: layoutEditing || cube.status.connected && store.players[slot].isTiming,
+          onSelect: () => openCube(slot),
+        }))} />}
+      error={Object.entries(cubeNotices).filter(([slot]) => Number(slot) < playerCount)
+        .map(([slot, notice]) => `P${Number(slot) + 1}: ${notice}`).join(' · ') || null}
       style={{
         '--battle-scramble-gap': `${store.contentLayout.scrambleGap}px`,
         '--battle-source-gap': `${store.contentLayout.sourceGap}px`,
@@ -709,11 +830,19 @@ export default function BattleView({ playerCount, playersControl, presenceContro
       bottomScramble: bottomSame ? <ScramblePanel ids={[0, 1]} imgHeight="var(--timer-cube-h)" /> : undefined,
       topScramble: topSame ? <ScramblePanel ids={[2, 3]} imgHeight="var(--timer-cube-h)" /> : undefined,
       renderPlayer: (playerId, cell) => <TimerArea playerId={playerId}
-        hideScramble={cell.hideScramble} controlsCorner={cell.controlsCorner} layoutEditing={layoutEditing} inputBlocked={settingsOpen || vsHistoryOpen} />
+        hideScramble={cell.hideScramble} controlsCorner={cell.controlsCorner} layoutEditing={layoutEditing}
+        cube={cubeConnected[playerId] ? cubes.handles[playerId] : undefined} calibrateToken={calibrateTokens[playerId]}
+        inputBlocked={overlayOpen || cubeConnected[playerId]} />
     }}
       settings={settingsOpen && settingsProps}
       history={vsHistoryOpen && historyProps}
       feedback={<>
+        {cubeSlot !== null && <BluetoothModal anchorRef={cubeButtonRef} isZh={language === 'zh'}
+          title={`${battlePlayerLabel(cubeSlot + 1, language)} · ${tr({ en: 'Smart cube', zh: '智能魔方' })}`}
+          cube={cubes.handles[cubeSlot]} connectAttempt={connectAttempt} macPrompt={macPrompt}
+          onConnect={pick => connectCube(cubeSlot, pick)} onClose={closeCube}
+          onSubmitMac={resolveMac} onCancelMac={() => resolveMac(null)}
+          onResetGyro={() => setCalibrateTokens(tokens => tokens.map((token, slot) => slot === cubeSlot ? token + 1 : token))} />}
         {toastMsg && <MilestoneToast message={toastMsg} onDone={() => setToastMsg(null)} />}
         {layoutEditing && <TimerSoloLayoutEditor surfaceRef={surfaceRef}
           language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} onDone={finishLayoutEditing}

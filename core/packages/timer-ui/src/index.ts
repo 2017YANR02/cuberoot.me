@@ -18,7 +18,7 @@ export { TimerRoomAdmin, type TimerRoomAdminProps } from './TimerRoomAdmin';
 export { TimerRoomHistory, type TimerRoomHistoryProps } from './TimerRoomHistory';
 export { TimerRoomPlayers, timerRoomPlayerName } from './TimerRoomPlayers';
 export type { TimerRoomPlayersProps } from './TimerRoomPlayers';
-export { TimerBattlePlayer } from './TimerBattlePlayer';
+export { TimerBattlePlayer, battlePlayerLabel } from './TimerBattlePlayer';
 export { TimerBattleHistory, type TimerBattleHistoryProps } from './TimerBattleHistory';
 export { TimerBattleSettings, TimerBattleKeyBindings, type TimerBattleSettingsProps } from './TimerBattleSettings';
 export { TimerBattleToolbar, type TimerBattleToolbarProps } from './TimerBattleToolbar';

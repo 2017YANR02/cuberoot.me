@@ -220,7 +220,7 @@ describe('shared timer event picker catalog', () => {
           && id !== '333fm'
           && !['333bld', '333mbld', '333ni'].includes(id),
       );
-      expect(timerSupportsLocalBattleSmartCube(id), `local: ${id}`).toBe(id === '333');
+      expect(timerSupportsLocalBattleSmartCube(id), `local: ${id}`).toBe(id === '333' || id === '333oh');
       expect(timerSupportsNetBattleSmartCube(id), `net: ${id}`).toBe(id === '333' || id === '333oh');
     }
   });

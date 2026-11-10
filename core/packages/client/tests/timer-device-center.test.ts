@@ -63,6 +63,24 @@ describe('TimerDeviceCenter', () => {
     expect(trigger.getAttribute('aria-expanded')).toBe(disabled ? 'true' : null);
   });
 
+  it('keeps other players reachable after the first cube connects', async () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    await act(async () => root.render(createElement(TimerDeviceCenter, {
+      ariaLabel: 'Timer devices', menuLabel: 'Timer devices', triggerLabel: 'Devices',
+      items: [
+        { id: 'p1', kind: 'smart-cube', label: 'Player 1', active: true, onSelect: first },
+        { id: 'p2', kind: 'smart-cube', label: 'Player 2', onSelect: second },
+      ],
+    })));
+    await act(async () => host.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!.click());
+    const items = host.querySelectorAll<HTMLButtonElement>('[role="menuitem"]');
+    expect(items).toHaveLength(2);
+    await act(async () => items[1].click());
+    expect(second).toHaveBeenCalledOnce();
+    expect(first).not.toHaveBeenCalled();
+  });
+
   it.each([false, true])('invokes the sole trainer action synchronously, disabled=%s', async (disabled) => {
     const onSelect = vi.fn();
     await act(async () => root.render(createElement(TimerDeviceCenter, {

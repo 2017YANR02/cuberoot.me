@@ -326,7 +326,7 @@ export function timerSmartCubeStartsAttemptOnTurn(id: EventId): boolean {
 }
 
 export function timerSupportsLocalBattleSmartCube(id: EventId): boolean {
-  return id === '333';
+  return timerSupportsNetBattleSmartCube(id);
 }
 
 export function timerSupportsNetBattleSmartCube(id: EventId): boolean {

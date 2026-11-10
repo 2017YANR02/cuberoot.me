@@ -44,26 +44,36 @@ import {
 } from '@cuberoot/shared/timer';
 
 import { useBluetoothCube } from '../_lib/bluetooth';
-import type { BluetoothCubeHandle } from '../_lib/bluetooth';
+import type { BluetoothCubeHandle, BluetoothConnectionEvent } from '../_lib/bluetooth';
+import { useLiveCubeAnchor } from '../_shared/useLiveCubeAnchor';
 import type { MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 import type { Quat } from '../_lib/bluetooth/orientation';
 import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
-import { useSettings } from '../_lib/settings';
+import { getSettings, useSettings } from '../_lib/settings';
+import { useAutoReady } from '../_lib/bluetooth/auto_ready';
 import { appendSolves, makeSolve } from '../_lib/storage/db';
 import type { EventId } from '../_lib/types';
 import { battleToTimerEvent, MAX_PLAYERS, useBattleStore } from './engine/battle_store';
 import { PENALTY } from './engine/constants';
+import { tr } from '@/i18n/tr';
+
+export type BattleCubeHandle = BluetoothCubeHandle & {
+  live: ReturnType<typeof useLiveCubeAnchor>;
+  quatRef: { current: Quat | null };
+};
 
 export interface BattleCubes {
   /** 每个槽位一路连接(`'shared'` 下只有 [0] 在用)。长度恒为 MAX_PLAYERS。 */
-  handles: BluetoothCubeHandle[];
+  handles: BattleCubeHandle[];
   /** 这个槽位现在有没有一颗连着的魔方(已按语义折算)。 */
   isLive: (playerId: number) => boolean;
   /** 这个槽位该点哪一路的「连接」按钮(`'shared'` 下所有人都指向第 0 路)。 */
-  handleFor: (playerId: number) => BluetoothCubeHandle;
+  handleFor: (playerId: number) => BattleCubeHandle;
 }
 
 export interface BattleCubesOpts {
+  suspended?: boolean;
+  onConnectionEvent?: (slot: number, event: BluetoothConnectionEvent) => void;
   /**
    * GAN / MoYu / QiYi 这些用 MAC 当解密密钥的牌子,广播里读不到 MAC 时要问用户。
    * 四路共用一个回调,第一个参数说是哪一路 —— 弹窗本来就只开一个。
@@ -132,6 +142,8 @@ const emptyTrack = (): Track => ({
 });
 
 export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
+  const optsRef = useRef(opts);
+  optsRef.current = opts;
   // 回调可能每次渲染都是新的;用 ref 打住,免得四路连接跟着重挂。
   const onNeedMacRef = useRef(opts.onNeedMac);
   onNeedMacRef.current = opts.onNeedMac;
@@ -200,15 +212,16 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     if (!slotCounts(slot, st.cubeMode)) return;
     lastMoveAtRef.current[slot] = ts;
     const owner = ownerOf(slot, st.cubeMode, st.cubeHolder);
+    if (owner >= st.playerCount || !timerSupportsLocalBattleSmartCube(battleToTimerEvent(st.puzzleIds[owner]))) return;
     const p = st.players[owner];
     if (p.isTiming) {
       const track = syncTrack(slot, owner);
       track.recorder.recordMove(move, ts, clock);
       return;
     }
-    if (armedRef.current[slot] && p.canStart) {
-      armedRef.current[slot] = false;
+    if (!optsRef.current.suspended && armedRef.current[slot] && (p.canStart || p.isInspecting)) {
       if (!st.cubeStart(owner, ts, clock)) return;
+      armedRef.current[slot] = false;
       // 起表那一手也属于这一把 —— cubeStart 已经把 startTime 定在它身上了。
       syncTrack(slot, owner).recorder.recordMove(move, ts, clock);
       return;
@@ -220,6 +233,8 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     const st = useBattleStore.getState();
     if (!slotCounts(slot, st.cubeMode)) return;
     const owner = ownerOf(slot, st.cubeMode, st.cubeHolder);
+    if (owner >= st.playerCount) return;
+    if (!st.players[owner].isTiming) return;
     if (!timerSupportsLocalBattleSmartCube(st.puzzleIds[owner] as EventId)) return;
     const attempt = attemptKey(owner, st.players[owner].startTime);
     const stopAt = atMs !== undefined && Number.isFinite(atMs)
@@ -271,19 +286,23 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
    * (`bluetoothAutoReady: 'scrambled'`,csTimer `giiSD='s'`),对战沿用同一条,
    * 不另发明。只有三阶能比 —— 追踪器建模的就是三阶。
    */
-  const checkArm = useCallback((slot: number, handle: BluetoothCubeHandle) => {
+  const checkArm = useCallback((slot: number, handle: BluetoothCubeHandle, gesture = false) => {
     const st = useBattleStore.getState();
     if (!slotCounts(slot, st.cubeMode)) return;
     const owner = ownerOf(slot, st.cubeMode, st.cubeHolder);
+    if (optsRef.current.suspended || !handle.status.connected || owner >= st.playerCount) return;
     const p = st.players[owner];
-    if (p.isTiming || p.canStart) return;
+    if (p.isTiming || p.canStart || p.isInspecting || p.isReady) return;
     if (!timerSupportsLocalBattleSmartCube(st.puzzleIds[owner] as EventId)) return;
     const scramble = st.scrambles[owner];
-    if (!scramble) return;
-    const target = targetFor(scramble);
-    if (!target) return;
-    const faces = handle.getFaces();
-    if (!faces || !facesEqual(faces, target)) return;
+    if (!scramble || st.scrambleLoadings[owner] || st.scrambleErrors[owner]) return;
+    if (!gesture) {
+      if (getSettings().bluetoothAutoReady !== 'scrambled') return;
+      const target = targetFor(scramble);
+      if (!target) return;
+      const faces = handle.getFaces();
+      if (!faces || !facesEqual(faces, target)) return;
+    }
     if (!st.cubeArm(owner)) return;
     armedRef.current[slot] = true;
   }, []);
@@ -295,11 +314,12 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
    * 有的牌子(MoYu32 的 0xAC)只在有人听的时候才开那条流,所以没开录时**不传**,
    * 一点电和带宽都不多费。
    */
-  const recordGyro = useSettings().recordGyro;
+  const settings = useSettings();
   const onGyro = useCallback((slot: number, q: Quat) => {
     const st = useBattleStore.getState();
     if (!slotCounts(slot, st.cubeMode)) return;
     const owner = ownerOf(slot, st.cubeMode, st.cubeHolder);
+    if (owner >= st.playerCount) return;
     // 只在真的在计时的时候录:预备阶段和拧完之后的姿态不属于这一把。
     if (!st.players[owner].isTiming) return;
     // 和转动流同一份缓冲、同一个零点 —— 姿态的时刻要能和转动的时刻直接比,
@@ -307,12 +327,38 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     syncTrack(slot, owner).recorder.recordGyro(q, performance.now() - gyroStartRef.current[slot]);
   }, [syncTrack]);
 
-  const h0 = useSlot(0, onMove, onSolved, checkArm, needMac, recordGyro ? onGyro : undefined);
-  const h1 = useSlot(1, onMove, onSolved, checkArm, needMac, recordGyro ? onGyro : undefined);
-  const h2 = useSlot(2, onMove, onSolved, checkArm, needMac, recordGyro ? onGyro : undefined);
-  const h3 = useSlot(3, onMove, onSolved, checkArm, needMac, recordGyro ? onGyro : undefined);
+  const connectionEvent = useCallback((slot: number, event: BluetoothConnectionEvent) => {
+    if (event.kind === 'disconnected') {
+      armedRef.current[slot] = false;
+      const st = useBattleStore.getState();
+      const owner = ownerOf(slot, st.cubeMode, st.cubeHolder);
+      if (slotCounts(slot, st.cubeMode) && owner < st.playerCount) st.cubeCancel(owner);
+    }
+    optsRef.current.onConnectionEvent?.(slot, event);
+  }, []);
+  const validateDevice = useCallback((slot: number, device: BluetoothDevice) => {
+    if (handlesRef.current.some((handle, index) => index !== slot
+      && handle.status.deviceId === device.id)) {
+      throw new Error(tr({ zh: '这颗智能魔方已分配给另一位玩家', en: 'This smart cube is assigned to another player' }));
+    }
+  }, []);
+  const h0 = useSlot(0, onMove, onSolved, checkArm, needMac, settings.recordGyro ? onGyro : undefined, connectionEvent, validateDevice, opts.suspended);
+  const h1 = useSlot(1, onMove, onSolved, checkArm, needMac, settings.recordGyro ? onGyro : undefined, connectionEvent, validateDevice, opts.suspended);
+  const h2 = useSlot(2, onMove, onSolved, checkArm, needMac, settings.recordGyro ? onGyro : undefined, connectionEvent, validateDevice, opts.suspended);
+  const h3 = useSlot(3, onMove, onSolved, checkArm, needMac, settings.recordGyro ? onGyro : undefined, connectionEvent, validateDevice, opts.suspended);
   const handles = [h0, h1, h2, h3];
   useEffect(() => { handlesRef.current = [h0, h1, h2, h3]; });
+  useEffect(() => {
+    if (opts.suspended) {
+      const st = useBattleStore.getState();
+      for (let slot = 0; slot < MAX_PLAYERS; slot++) {
+        if (!slotCounts(slot, st.cubeMode)) continue;
+        const owner = ownerOf(slot, st.cubeMode, st.cubeHolder);
+        if (owner < st.playerCount && armedRef.current[slot]) st.cubeCancel(owner);
+        armedRef.current[slot] = false;
+      }
+    } else handlesRef.current.forEach((handle, slot) => checkArm(slot, handle));
+  }, [opts.suspended, checkArm]);
 
   const cubeMode = useBattleStore(s => s.cubeMode);
 
@@ -336,23 +382,58 @@ function useSlot(
   slot: number,
   onMove: (slot: number, move: string, ts: number, clock?: MoveClockSample) => void,
   onSolved: (slot: number, atMs?: number, clock?: MoveClockSample) => void,
-  checkArm: (slot: number, handle: BluetoothCubeHandle) => void,
+  checkArm: (slot: number, handle: BluetoothCubeHandle, gesture?: boolean) => void,
   needMac: (slot: number, deviceName: string, isWrongKey?: boolean) => Promise<string | null>,
   onGyro: ((slot: number, q: Quat) => void) | undefined,
-): BluetoothCubeHandle {
+  onConnectionEvent: (slot: number, event: BluetoothConnectionEvent) => void,
+  validateDevice: (slot: number, device: BluetoothDevice) => void,
+  suspended = false,
+): BattleCubeHandle {
   // handle 要在自己的回调里被读到,而它是这次调用的返回值 —— 用 ref 打个结。
   // 在 effect 里写而不是渲染期写:连接必须由用户点出来,所以第一次 BLE 回调一定
   // 晚于挂载 effect,拿不到 null。
   const selfRef = useRef<BluetoothCubeHandle | null>(null);
+  const liveRef = useRef<ReturnType<typeof useLiveCubeAnchor> | null>(null);
+  const quatRef = useRef<Quat | null>(null);
+  const { gyroEnabled, bluetoothAutoReady } = useSettings();
+  const subscribers = useRef(new Set<(move: string, ts: number) => void>());
   const handle = useBluetoothCube({
-    onMove: (m, ts, _facelets, metadata, clock) => {
+    validateDevice: device => validateDevice(slot, device),
+    onMove: (m, ts, facelets, metadata, clock) => {
+      liveRef.current?.anchor.move(m, ts);
+      if (!metadata?.futureHistory) liveRef.current?.anchor.observeFacelets(facelets);
       onMove(slot, m, ts, clock);
       if (selfRef.current && !metadata?.futureHistory) checkArm(slot, selfRef.current);
+      if (!metadata?.futureHistory) for (const callback of subscribers.current) callback(m, ts);
     },
     onSolved: (atMs, clock) => onSolved(slot, atMs, clock),
     onNeedMac: (deviceName, isWrongKey) => needMac(slot, deviceName, isWrongKey),
-    onGyro: onGyro ? (q) => onGyro(slot, q) : undefined,
+    onConnectionEvent: event => onConnectionEvent(slot, event),
+    onGyro: gyroEnabled || onGyro ? (q) => { quatRef.current = q; onGyro?.(slot, q); } : undefined,
   });
+  const live = useLiveCubeAnchor(handle.status.connected
+    ? handle.status.deviceId || handle.status.deviceName || String(slot) : null, handle.facelets);
+  liveRef.current = live;
   useEffect(() => { selfRef.current = handle; });
-  return handle;
+  const battle = useBattleStore();
+  const owner = ownerOf(slot, battle.cubeMode, battle.cubeHolder);
+  const player = battle.players[owner];
+  useAutoReady({
+    enabled: !suspended && handle.status.connected && slotCounts(slot, battle.cubeMode)
+      && owner < battle.playerCount && timerSupportsLocalBattleSmartCube(battleToTimerEvent(battle.puzzleIds[owner]))
+      && bluetoothAutoReady !== 'scrambled' && !player.isTiming && !player.isInspecting && !player.isReady && !player.canStart
+      && (!player.hasFinished || battle.players.slice(0, battle.playerCount).every(candidate => candidate.hasFinished)),
+    mode: bluetoothAutoReady === 'double-flick' ? 'double-flick' : 'still',
+    onReady: () => { if (selfRef.current) checkArm(slot, selfRef.current, true); },
+    onMoveSubscriber: callback => {
+      subscribers.current.add(callback);
+      return () => { subscribers.current.delete(callback); };
+    },
+  });
+  // A fresh connection/state snapshot and a new scramble must also be verified.
+  const scramble = useBattleStore(s => s.scrambles[ownerOf(slot, s.cubeMode, s.cubeHolder)]);
+  useEffect(() => {
+    if (!handle.lastMoveMetadata?.futureHistory) checkArm(slot, handle);
+  }, [handle.status.connected, handle.facelets, scramble, checkArm, slot]);
+  return { ...handle, live, quatRef };
 }

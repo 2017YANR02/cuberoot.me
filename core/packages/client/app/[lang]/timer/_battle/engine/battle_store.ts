@@ -504,6 +504,7 @@ export interface BattleState {
    * 返回值 = 这一下有没有被采纳(状态不对时什么也不做)。
    */
   cubeArm: (playerId: number) => boolean;
+  cubeCancel: (playerId: number) => void;
   cubeStart: (playerId: number, atMs: number, clock?: MoveClockSample) => boolean;
   cubeStop: (playerId: number, atMs: number, clock?: MoveClockSample) => boolean;
   setCubeMode: (mode: 'own' | 'shared') => void;
@@ -817,6 +818,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   // ===== 智能魔方三件套 =====
   // 走的是和按键同一套 player 字段(isReady / canStart / isTiming / hasFinished),
   // 所以「一半人用魔方、一半人用键盘」是自然成立的,不需要第二套状态。
+
+  cubeCancel: (playerId: number) => {
+    applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'cancel-arm' } });
+  },
 
   cubeArm: (playerId: number): boolean => {
     if (get().mode !== 'solo') {
