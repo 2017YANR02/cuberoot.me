@@ -1,6 +1,7 @@
 // guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -62,6 +63,19 @@ describe('unprotected memory computation command guard', () => {
       expect(JSON.parse(readFileSync(join(stateDir, 'used.json'), 'utf8')).revision).toBe(revision);
       expect(consumeMbpStatsApproval(command, REPO_ROOT, options)).toBe(false);
       expect(() => mbpStatsCommand('main; echo unsafe')).toThrow('Invalid statistics revision');
+      const previous = JSON.stringify({ scope: '2026-11-10-mbp-full-scramble-monitored', revision: '4b56bb84d422790ec1683f0b30bcc94425cd7290' });
+      writeFileSync(join(stateDir, 'used.json'), previous);
+      const repair = { scope: '2026-11-10-mbp-full-scramble-monitored', revision, repairOf: 'wrong' };
+      writeFileSync(join(stateDir, 'startup-repair-authorization.json'), JSON.stringify(repair));
+      expect(consumeMbpStatsApproval(command, REPO_ROOT, options)).toBe(false);
+      repair.repairOf = createHash('sha256').update(previous).digest('hex');
+      writeFileSync(join(stateDir, 'startup-repair-authorization.json'), JSON.stringify(repair));
+      expect(command).toContain('/Users/cuberoot/.cargo/bin:');
+      expect(command).toContain('sec = 1794194703,');
+      expect(command).toContain('336[.]$');
+      expect(consumeMbpStatsApproval(command, REPO_ROOT, options)).toBe(true);
+      expect(readFileSync(join(stateDir, 'used.json'), 'utf8')).toBe(previous);
+      expect(consumeMbpStatsApproval(command, REPO_ROOT, options)).toBe(false);
     } finally { rmSync(stateDir, { recursive: true, force: true }); }
   });
   it.each([
