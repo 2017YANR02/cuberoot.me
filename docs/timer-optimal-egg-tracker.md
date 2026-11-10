@@ -286,7 +286,7 @@ NTA 的 Linux 构建/检查 [42660232873](https://github.com/2017YANR02/cuberoot
 - [x] 服务器 AVX-512 原版 CLI 为 76.110201 秒，100 个解正确且最优长度一致；比原 CLI 少用约 6.48% 时间，仍比 Opt8 多用 4.63%。维护退出 0、原版恢复就绪，不晋升候选。
 - [x] 将本机 3.44× 和云端两次 CLI 复查补入中英文比较页、报告下载及分析文档；保留全部旧成绩。
 - [x] 本地 12 项比较数据检查、client typecheck 通过；新增 guard 限定的 29 项纯数据检查通过；CLI 语法及维护脚本检查通过。中英文各 1200px / 390px 实际页面、报告下载与溢出检查通过。
-- [ ] 提交 push，完成相关 CI 与线上页面检查并补记结果。
+- [x] 代码与页面提交 `b9c384b45f174e8550558a3bf63b374936de2bd9` 已 push；相关 CI、阿里云和 Vercel 部署全部通过，公开页面验收完成。
 
 本机证据目录：`.local-data/egg-h8-mac-20261109/`。最初 upstream `gen derive` 在 clap 参数解析阶段报告缺失 k，退出 2；当时整个受保护进程树峰值约 110 MB，未加载大表、无新增换出。原始失败、计划、源码及停止记录均保留；修复入口直接调用未改动的上游 collapse 库，沿用同一 boot / Swapouts=336，不更新内存基线。新的运行停止记录独立保存，真正资源保护触发仍会终止后续阶段。
 
@@ -299,3 +299,13 @@ NTA 的 Linux 构建/检查 [42660232873](https://github.com/2017YANR02/cuberoot
 证据更正：本机 `validation-receipt-outcome.json` 记录验证凭据误用了 Node 平台名 `darwin`，未被 Rust 的 `macos` 凭据读取接受，因而触发原版加载器的内置验证。它包含在另计的 3.908626292 秒启动中，不含在 22.202972701 秒求解成绩里；没有追加扫描命令，也没有为改凭据重跑。`skylake-candidate/build-correction.json` 则更正最初构建记录沿用 CI `rustc host` 的问题：真实宿主为 aarch64-apple-darwin，目标仍为 x86_64-unknown-linux-musl、Rust 1.98.1，二进制摘要不变，冻结原始记录未改写。
 
 页面发布前服务器只余 873 MiB；已将退出使用的 `toolkit-next.bak-1794284712` 原子移出自动清理范围，压缩后通过 gzip 校验与 tar 逐文件比较，再移除未压缩副本，余量恢复约 1.9 GiB。压缩档 476,406,379 字节，恢复命令和记录见 `page-h8-disk-preparation.json`；现役页面、主表和数据库未动。UI 证据见本机 `page-local-verification.json` 及四张相邻截图。
+
+### 复查发布验收
+
+`b9c384b45` 的 [Test](https://github.com/2017YANR02/cuberoot.me/actions/runs/42759182502)、[Build Egg Solver](https://github.com/2017YANR02/cuberoot.me/actions/runs/42759182488)、[Local artifact lifecycle](https://github.com/2017YANR02/cuberoot.me/actions/runs/42759182260)、[Deploy Next](https://github.com/2017YANR02/cuberoot.me/actions/runs/42759182545) 和 Vercel 均通过。未手动触发无关平台构建，未等待 CodeQL。
+
+公开 `cuberoot.me` 中英文各 1200px / 390px 的真实 Chrome 验收通过：本机 3.44×、22.20 / 6.49 / 6.45 秒和云端 +4.6% 均正确显示；下载报告包含精确值；无横向溢出、无页面运行异常。证据为 `.local-data/egg-h8-mac-20261109/page-production-verification.json` 及四张相邻截图。第一次公开页探测发生在阿里云上传期间，未出现新分区；部署完成后的复查通过，不将旧页面当作新版本验收。
+
+2026-11-10 05:00:49 UTC 最终求解服务复核：公开和回环接口均 enabled/configured/ready=true；只有一个原 Opt8 求解进程，正式 bundle 与二进制摘要保持原样，没有 egg 求解进程。证据为 `.local-data/egg-h8-skylake-20261109/final-production-state.json`。本机计算和建表均已结束，表、原始结果和失败记录全部保留。本轮复查从头到尾未派 Agent。
+
+新网页部署留下的旧站备份使磁盘一度只余约 407 MiB。已清理可重建的 npm / SWC 缓存，将该退出使用的备份单独保留为 289,409,696 字节的 xz 压缩档；xz 校验和 tar 逐文件比较通过后才释放原目录，最终余量约 1.8 GiB。恢复命令和记录保存在 `page-h8-final-disk.json`，现役网站、求解表与数据库均保留。
