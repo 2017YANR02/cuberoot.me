@@ -454,7 +454,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const [view, setView] = useState<AppView>('timer');
   const [settingsCategory, setSettingsCategory] = useState<TimerSettingCategoryId>('timer');
   const [timerMode, setTimerMode] = useState<TimerPlayersValue>(1);
-  const wideLayout = useTimerWideLayout();
+  const wideLayout = useTimerWideLayout({ useHostContent: true });
   const hostViewport = useHostViewportLayout();
   const wideLayoutRef = useRef(wideLayout);
   const bluetoothButtonRef = useRef<HTMLButtonElement>(null);
@@ -4022,7 +4022,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
 
 
 
-      <TimerWorkspace className="view-container" active={timerMode === 1 && timerVisible}
+      <TimerWorkspace className="view-container" data-fit-viewport={hostViewport ? '' : undefined} active={timerMode === 1 && timerVisible}
         data-live-reconstruction={liveSolutionPanel ? '' : undefined}
         panelOpen={dockHistory && !liveSolutionPanel} recap={liveSolutionPanel ?? solveRecap}>
         {timerVisible && timerMode === 1 && (
@@ -4290,7 +4290,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
                   onClick={() => setView('history')}
                 />}}
         solver={solverHintPanel}
-        narrowRecap={liveSolutionPanel}
+        narrowRecap={!wideLayout ? liveSolutionPanel : undefined}
         timing={{
 className: targetFeedbackClass,
 ariaLabel: copy.timer,

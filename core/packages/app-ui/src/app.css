@@ -899,7 +899,8 @@ button {
 
 /* The host reports a system-safe vertical bar; the same three React buttons
  * move there without replacing the timer or either online browsing context. */
-.app-shell[data-side-navigation] { grid-template-rows: minmax(0, 1fr); }
+.app-shell[data-side-navigation],
+.app-shell[data-side-navigation]:not(.app-shell--timer-fullscreen) { grid-template-rows: minmax(0, 1fr); }
 .app-shell[data-side-navigation] > .view-container { grid-row: 1; }
 .app-shell[data-side-navigation] > .primary-nav {
   position: fixed;
@@ -925,3 +926,10 @@ button {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
 }
+
+/* Native geometry already excludes the system regions. */
+:root[data-host-viewport] .mobile-timer-stage { min-height: 0; overflow: auto; }
+:root[data-host-viewport] .app-titlebar { padding-inline: 18px; }
+:root[data-host-viewport] .shell-topbar.timer-solo-topbar { padding-inline: 4px; }
+:root[data-host-viewport] .timer-stage-footer { padding-inline: 12px; padding-bottom: 10px; }
+:root[data-host-viewport] .primary-nav:not([style]) { padding: 5px 8px; }
