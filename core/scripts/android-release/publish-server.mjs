@@ -21,7 +21,7 @@ export async function publish(directory, platform, base = '/www/wwwroot/toolkit/
   for (const file of files) {
     if (!file || !/^[a-f0-9]{64}$/.test(file.sha256) || !Number.isSafeInteger(file.size) || file.size < 1) throw new Error('Invalid artifact');
     const name = basename(file.url);
-    const expected = platform === 'android' ? `CubeRoot-${metadata.versionName}-${metadata.versionCode}.apk` : `CubeRoot-${metadata.versionName}-${metadata.versionCode}-x64-${file === files[0] ? 'installer' : 'portable'}.exe`;
+    const expected = platform === 'android' ? `CubeRoot-${metadata.versionName}-${metadata.versionCode}.apk` : `CubeRoot-${metadata.versionName}-x64-${file === files[0] ? 'installer' : 'portable'}.exe`;
     if (name !== expected || file.url !== `https://static.cuberoot.me/downloads/${platform}/${expected}`) throw new Error('Invalid artifact URL');
     const data = await readFile(join(source, name));
     if (data.length !== file.size || createHash('sha256').update(data).digest('hex') !== file.sha256) throw new Error('Artifact checksum mismatch');
