@@ -285,7 +285,7 @@ export default function RecognizeTrainer({
 
   return (
     <TrainerShell backHref={backHref} title={pageTitle} intro={pageIntro} showSq1Tools={showSq1Tools}>
-    <div className={`${styles.trainer} training-page`}>
+    <div className={`${styles.trainer}${recog.id === 'pll' ? ` ${styles.pllTrainer}` : ''} training-page`}>
       {recognitionGuideHref && (
         <div className={styles.guideRow}>
           <Link
@@ -344,53 +344,55 @@ export default function RecognizeTrainer({
         )}
       </div>
 
-      <div
-        className={`${styles.hint}${shakeHint ? ` ${styles.shake}` : ''}`}
-        role="status"
-        aria-live="polite"
-      >
-        {getHint()}
-      </div>
+      <div className={styles.response}>
+        <div
+          className={`${styles.hint}${shakeHint ? ` ${styles.shake}` : ''}`}
+          role="status"
+          aria-live="polite"
+        >
+          {getHint()}
+        </div>
 
-      {gameState === 'paused' && (
-        <button className={`btn-primary ${styles.primaryAction}`} type="button" onClick={resumePlay}>
-          {results.length === 0
-            ? tr({ zh: '▶ 开始', en: '▶ Start' })
-            : tr({ zh: '▶ 继续', en: '▶ Continue' })} (Space)
-        </button>
-      )}
-
-      {trainMode === 'recognition' && gameState === 'playing' && (
-        <OnScreenKeyboard
-          buttons={recog.buttons(currentCase ?? undefined)}
-          onAnswer={submitAnswer}
-          className={recog.id === 'sq1-shape' ? 'on-screen-keyboard--wide-labels' : undefined}
-        />
-      )}
-
-      {gameState === 'playing' && (
-        <div className={styles.actions}>
-          <button className="btn-secondary" type="button" onClick={pausePlay}>
-            {tr({ zh: '暂停 (Esc)', en: 'Pause (Esc)' })}
+        {gameState === 'paused' && (
+          <button className={`btn-primary ${styles.primaryAction}`} type="button" onClick={resumePlay}>
+            {results.length === 0
+              ? tr({ zh: '▶ 开始', en: '▶ Start' })
+              : tr({ zh: '▶ 继续', en: '▶ Continue' })} (Space)
           </button>
-          {!mistake && (
-            <button className="btn-secondary" type="button" onClick={giveUpOnCase}>
-              {tr({ zh: '放弃 (S/?)', en: 'Give up (S/?)' })}
-            </button>
-          )}
-        </div>
-      )}
+        )}
 
-      {gameState === 'playing' && mistake && currentCase && (
-        <div className={styles.answer}>
-          <div className={styles.answerName}>
-            {recog.label(currentCase.name)}
+        {trainMode === 'recognition' && gameState === 'playing' && (
+          <OnScreenKeyboard
+            buttons={recog.buttons(currentCase ?? undefined)}
+            onAnswer={submitAnswer}
+            className={recog.id === 'sq1-shape' ? 'on-screen-keyboard--wide-labels' : undefined}
+          />
+        )}
+
+        {gameState === 'playing' && (
+          <div className={styles.actions}>
+            <button className="btn-secondary" type="button" onClick={pausePlay}>
+              {tr({ zh: '暂停 (Esc)', en: 'Pause (Esc)' })}
+            </button>
+            {!mistake && (
+              <button className="btn-secondary" type="button" onClick={giveUpOnCase}>
+                {tr({ zh: '放弃 (S/?)', en: 'Give up (S/?)' })}
+              </button>
+            )}
           </div>
-          <div className={styles.answerSolution}>
-            {recog.solution(currentCase.name)}
+        )}
+
+        {gameState === 'playing' && mistake && currentCase && (
+          <div className={styles.answer}>
+            <div className={styles.answerName}>
+              {recog.label(currentCase.name)}
+            </div>
+            <div className={styles.answerSolution}>
+              {recog.solution(currentCase.name)}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
     </TrainerShell>
   );
