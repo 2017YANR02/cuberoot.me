@@ -106,7 +106,7 @@ export function SettingsPopover({
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  usePanelClamp(open && !modal, panelRef);
+  usePanelClamp(open && !modal, panelRef, triggerRef);
   usePopoverDismiss(open && !modal, () => setOpen(false), rootRef, triggerRef);
   const close = useCallback(() => setOpen(false), [setOpen]);
 
