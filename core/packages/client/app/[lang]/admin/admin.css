@@ -200,8 +200,8 @@
 
 /* Admin content has one top inset; do not stack the workspace and page padding. */
 .cuberoot-workspace-navigation .staff-main.admin-navigation__content { padding-top: 24px; }
-.admin-navigation__content > .admin-hub,
-.admin-navigation__content > .admin-users-page { padding-top: 0; }
+.admin-navigation__content > .admin-navigation__page > .admin-hub,
+.admin-navigation__content > .admin-navigation__page > .admin-users-page { padding-top: 0; }
 @media (max-width: 640px) {
   .cuberoot-workspace-navigation .staff-main.admin-navigation__content { padding-top: 20px; }
 }
@@ -211,3 +211,11 @@
 .admin-dashboard__chart-overlay.skeleton-block { position: absolute; inset: 0; height: 100%; }
 .admin-dashboard__chart-placeholder.skeleton-block { margin-bottom: 44px; }
 .admin-dashboard__number-skeleton.skeleton-block { width: 6ch; max-width: 100%; height: 1.2em; display: inline-block; vertical-align: middle; }
+
+/* Navigation-only entry fade, including synchronous query navigation.
+   No fill mode: restore the live surface's normal compositing after entry. */
+.admin-navigation__page { min-width: 0; animation: admin-content-enter 350ms ease-out; }
+@keyframes admin-content-enter { from { opacity: .25; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .admin-navigation__page { animation: none; }
+}
