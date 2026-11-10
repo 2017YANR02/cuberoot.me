@@ -3,9 +3,8 @@
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { consumeMbpStatsApproval, mbpStatsCommand } from '../../../../.codex/hooks/block-unprotected-memory-compute.mts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '../../../..');
@@ -19,6 +18,9 @@ const WEBKIT_FIXTURE = join(HERE, 'fixtures/block-webkit-no-webrtc-fixture.mjs')
 const ARCHITECTURE_HOOK = join(REPO_ROOT, 'core/scripts/check-architecture-boundaries.mjs');
 const RAW_CHECKBOX_HOOK = join(REPO_ROOT, 'core/packages/client/scripts/hook-detect-raw-checkbox.mjs');
 const MEMORY_COMPUTE_HOOK = join(HOOKS, 'block-unprotected-memory-compute.mts');
+// Deployment typechecks use a sparse checkout without .codex. Like the other
+// hook fixtures below, load the file only when this test actually executes.
+const { consumeMbpStatsApproval, mbpStatsCommand } = await import(pathToFileURL(MEMORY_COMPUTE_HOOK).href);
 
 function runProcess(command: string, args: string[], cwd: string, input: string, shell = false) {
   return spawnSync(command, args, {
