@@ -30,8 +30,8 @@ describe('download availability', () => {
     expect(android.querySelector('.download-primary-action button')).toBeNull();
     expect(host.querySelector('.download-note')?.textContent).not.toContain('1004');
     expect(host.querySelectorAll('.download-upcoming a, .download-upcoming button')).toHaveLength(0);
-    expect(host.querySelector('.download-upcoming p > span:first-child')?.textContent)
-      .toBe('iOS · macOS · HarmonyOS NEXT');
+    expect([...host.querySelectorAll('.download-upcoming-platforms > span')].map(node => node.textContent))
+      .toEqual(['iOS', 'macOS', 'HarmonyOS NEXT']);
     expect(windows.querySelector('h2')?.textContent).toBe('Windows');
     expect(windows.querySelectorAll('.download-primary-action button:disabled')).toHaveLength(1);
     expect(windows.querySelectorAll('a')).toHaveLength(0);

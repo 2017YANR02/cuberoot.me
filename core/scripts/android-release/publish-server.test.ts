@@ -17,7 +17,7 @@ test('Windows promotion preserves the old manifest on public verification failur
     const data = Buffer.from('test executable'), sha256 = createHash('sha256').update(data).digest('hex');
     const metadata = { versionCode: 2, versionName: '1.0.2', commit: 'a'.repeat(40), files: {} as Record<string, unknown> };
     for (const kind of ['installer', 'portable']) {
-      const name = `CubeRoot-1.0.2-2-x64-${kind}.exe`;
+      const name = `CubeRoot-1.0.2-x64-${kind}.exe`;
       await writeFile(join(source, name), data);
       metadata.files[kind] = { url: `https://static.cuberoot.me/downloads/windows/${name}`, sha256, size: data.length };
     }

@@ -27,10 +27,17 @@ let root: Root;
 let container: HTMLDivElement;
 const source = (id: number) => ({ id, scramble: 'R', solution: "R'", competition: null, date: null,
   value: '4.00', intakeId: null, intakeStatus: null, truthStatus: null, sourceChanged: false, sourceHash: 'a'.repeat(32) });
-const choose = async (select: HTMLSelectElement, value: string) => act(async () => {
-  select.value = value;
-  select.dispatchEvent(new Event('change', { bubbles: true }));
-});
+const choose = async (field: Element, value: string) => {
+  const clear = field.querySelector<HTMLButtonElement>('button[aria-label^="Clear"]');
+  if (clear) await act(async () => clear.click());
+  if (!value) return;
+  const input = field.querySelector('input')!;
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await act(async () => field.querySelector<HTMLButtonElement>('.recon-test-item')!.click());
+};
 beforeEach(() => {
   locale.value = 'en';
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -91,7 +98,7 @@ it('localizes the competition with its flag and previews normalized cross withou
     expect((reference as HTMLElement).style[dimension]).toBe(value);
     expect((reference as HTMLElement).style[coordinate]).toBe(location);
   }
-  await act(async () => container.querySelector<HTMLButtonElement>('.recon-test-trigger')!.click());
+  // Dragging the separate reference window dismisses the picker as an outside interaction.
   expect(container.querySelector('.recon-test-panel')).toBeNull();
   expect(document.querySelector('.recon-test-reference')).toBe(reference);
   await act(async () => reference!.querySelector<HTMLButtonElement>('button')!.click());
@@ -133,9 +140,9 @@ it('defaults both selectors and preserves changed filters for the next uncollect
   const onSelect = vi.fn(() => true);
   await act(async () => root.render(createElement(ReconTestPicker, { canSelect: true, onSelect })));
   await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="Recon testing"]')!.click());
-  const [solver, collector] = [...container.querySelectorAll('select')];
-  expect(solver.value).toBe('2023GENG02');
-  expect(collector.value).toBe('2017YANR02');
+  const [solver, collector] = [...container.querySelectorAll('.recon-test-person-field')];
+  expect(solver.textContent).toContain('Xuanyi Geng');
+  expect(collector.textContent).toContain('Ruimin Yan');
   expect(request).toHaveBeenCalledWith('/sources?v=2&status=pending&offset=0&personId=2023GENG02&collectorId=2017YANR02');
   await choose(solver, '2009ZEMD01');
   await choose(collector, 'another');
@@ -164,9 +171,9 @@ it.each(['filters', 'close'])('discards a delayed next-source response after cha
   await act(async () => [...container.querySelectorAll('button')].find(button => button.textContent === 'Next uncollected')!.click());
   if (change === 'filters') {
     await act(async () => [...container.querySelectorAll('button')].find(button => button.textContent === 'Collected')!.click());
-    await choose(container.querySelector('select')!, '2009ZEMD01');
+    await choose(container.querySelector('.recon-test-person-field')!, '2009ZEMD01');
   } else {
-    await act(async () => [...container.querySelectorAll('button')].find(button => button.textContent === 'Close')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.click());
     await act(async () => container.querySelector<HTMLButtonElement>('.recon-test-trigger')!.click());
   }
   await act(async () => finish({ items: [source(999)], hasMore: false }));

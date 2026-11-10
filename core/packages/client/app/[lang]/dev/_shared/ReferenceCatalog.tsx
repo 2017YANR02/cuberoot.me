@@ -71,13 +71,13 @@ export default function ReferenceCatalog<E extends ReferenceEntry>({ entries, ca
       <SearchInput value={state.q} onChange={q => void setState({ q, page: 1, entry: null })}
         placeholder={searchPlaceholder ?? t('搜索名称、用途或导入路径', 'Search names, purposes or import paths')} className="dev-reference-search" />
       <label className="dev-reference-category"><span>{t('分类', 'Category')}</span>
-        <select aria-label={t('分类', 'Category')} value={category} onChange={event => void setState({ category: event.target.value, page: 1, entry: null })}>
+        <select className="dev-reference-select" aria-label={t('分类', 'Category')} value={category} onChange={event => void setState({ category: event.target.value, page: 1, entry: null })}>
           <option value="">{t('全部分类', 'All categories')}</option>
           {categories.map(cat => <option key={cat.id} value={cat.id}>{tr(cat)}</option>)}
         </select>
       </label>
       {facets.map(facet => <label key={facet.key} className="dev-reference-category"><span>{facet.label}</span>
-        <select aria-label={facet.label} value={facet.options.some(option => option.value === facetValues[facet.key]) ? facetValues[facet.key] : ''}
+        <select className="dev-reference-select" aria-label={facet.label} value={facet.options.some(option => option.value === facetValues[facet.key]) ? facetValues[facet.key] : ''}
           onChange={event => {
             void setFacetValues({ [facet.key]: event.target.value || null });
             void setState({ page: 1, entry: null });
@@ -90,7 +90,7 @@ export default function ReferenceCatalog<E extends ReferenceEntry>({ entries, ca
     </div>
     {visible.length === 0 && <p className="dev-reference-empty" role="status">
       {t('没有匹配项。', 'No matches.')}
-      <button type="button" onClick={() => {
+      <button className="dev-reference-clear" type="button" onClick={() => {
         void setState({ q: null, category: null, page: null, entry: null });
         void setFacetValues(null);
       }}>{t('清除筛选', 'Clear filters')}</button>
@@ -98,7 +98,7 @@ export default function ReferenceCatalog<E extends ReferenceEntry>({ entries, ca
     {selected && <div className="dev-reference-workspace">
       <div className="dev-reference-sidebar">
         <nav className="dev-reference-directory" aria-label={directoryLabel}>
-          {visible.map(entry => <button key={entry.name} type="button" aria-current={entry.name === selected.name ? 'true' : undefined}
+          {visible.map(entry => <button className="dev-reference-entry" key={entry.name} type="button" aria-current={entry.name === selected.name ? 'true' : undefined}
             aria-controls={`${prefix}-detail`} onClick={() => void setState({ entry: entry.name, page })}>
             <strong className="dev-reference-name">{entry.name}</strong><span>{tr(entry)}</span>
           </button>)}
