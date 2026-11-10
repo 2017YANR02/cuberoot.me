@@ -81,8 +81,6 @@ export default function AdminPage() {
     <main className="admin-hub admin-hub--dashboard">
       <header className="admin-hub__heading">
         <h1>{section === 'system' ? t(...SYSTEM_VIEW_LABELS[view]) : t(...ADMIN_SECTION_LABELS[section])}</h1>
-        {section === 'overview' && <p>{t('查看用户增长、访问量、收入和待处理事项。', 'Review user growth, traffic, revenue and pending work.')}</p>}
-        {section === 'system' && view === 'monitoring' && <p>{t('查看助手状态和应用启动诊断。', 'Review assistant status and app startup diagnostics.')}</p>}
         {section === 'system' && view === 'tax' && <p>{t('访问官方办税服务。', 'Open official tax services.')}</p>}
       </header>
       {section === 'overview' && <Dashboard />}

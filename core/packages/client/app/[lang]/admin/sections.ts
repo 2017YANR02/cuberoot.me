@@ -6,8 +6,8 @@ export type SystemView = typeof SYSTEM_VIEWS[number];
 export const SYSTEM_VIEW_LABELS: Record<SystemView, [string, string]> = {
   tools: ['系统工具', 'System tools'],
   workspace: ['工作资料', 'Work resources'],
-  monitoring: ['助手与诊断', 'Assistant and diagnostics'],
-  tax: ['税务办理', 'Tax filing'],
+  monitoring: ['AI 聊天', 'AI chat'],
+  tax: ['税务', 'Tax'],
 };
 export const SYSTEM_DESTINATION_VIEWS: Record<string, SystemView> = {
   '/admin/disk': 'tools', '/admin/releases': 'tools', '/dev/ops': 'tools',
@@ -16,9 +16,9 @@ export const SYSTEM_DESTINATION_VIEWS: Record<string, SystemView> = {
 
 export const ADMIN_SECTION_LABELS: Record<AdminSection, [string, string]> = {
   overview: ['总览', 'Overview'],
-  users: ['用户与会员', 'Users and memberships'],
-  content: ['内容与社区', 'Content and community'],
-  commerce: ['课程与商业', 'Courses and commerce'],
+  users: ['用户 / 会员', 'Users / Memberships'],
+  content: ['内容 / 社区', 'Content / Community'],
+  commerce: ['课程 / 商业', 'Courses / Commerce'],
   system: ['运营与系统', 'Operations and system'],
 };
 

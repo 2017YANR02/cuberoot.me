@@ -6,7 +6,7 @@
 }
 .admin-users-back { display: inline-flex; align-items: center; gap: 4px; margin-bottom: 24px; color: var(--muted-foreground); font-size: .85rem; text-decoration: none; }
 .admin-users-back:hover { color: var(--foreground); }
-.admin-users-heading { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 34px; }
+.admin-users-heading { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
 .admin-users-heading h1 { margin: 0; font-size: 2rem; }
 .admin-users-heading p { margin: 7px 0 0; color: var(--muted-foreground); font-size: .88rem; }
 .admin-users-spin { flex: 0 0 auto; animation: admin-users-spin .9s linear infinite; }

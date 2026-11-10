@@ -36,15 +36,15 @@ function Navigation({ children }: { children: ReactNode }) {
     { id: 'offboarding', label: t('离职', 'Offboarding'), Icon: LogOut },
   ].map(({ id, label, Icon }) => ({ id, label, href: `/admin/team?section=${id}`, icon: <Icon size={18} aria-hidden />, active: !inAdmin && (section ?? 'mine') === id }));
   const adminItems = [
-    { id: 'overview', label: t('运营总览', 'Overview'), Icon: LayoutDashboard, href: '/admin' },
-    { id: 'analytics', label: t('产品使用分析', 'Product usage analytics'), Icon: Activity, href: '/admin/product-analytics' },
-    { id: 'users', label: t('用户与会员', 'Users and memberships'), Icon: Users, href: '/admin?section=users' },
-    { id: 'content', label: t('内容与社区', 'Content and community'), Icon: BookOpen, href: '/admin?section=content' },
-    { id: 'commerce', label: t('课程与商业', 'Courses and commerce'), Icon: Activity, href: '/admin?section=commerce' },
+    { id: 'overview', label: t('总览', 'Overview'), Icon: LayoutDashboard, href: '/admin' },
+    { id: 'analytics', label: t('产品使用', 'Product usage'), Icon: Activity, href: '/admin/product-analytics' },
+    { id: 'users', label: t('用户 / 会员', 'Users / Memberships'), Icon: Users, href: '/admin?section=users' },
+    { id: 'content', label: t('内容 / 社区', 'Content / Community'), Icon: BookOpen, href: '/admin?section=content' },
+    { id: 'commerce', label: t('课程 / 商业', 'Courses / Commerce'), Icon: Activity, href: '/admin?section=commerce' },
     { id: 'system', label: t('系统工具', 'System tools'), Icon: Wrench, href: '/admin?section=system&view=tools' },
     { id: 'work', label: t('工作资料', 'Work resources'), Icon: FolderKanban, href: '/admin?section=system&view=workspace' },
-    { id: 'monitoring', label: t('助手与诊断', 'Assistant and diagnostics'), Icon: Activity, href: '/admin?section=system&view=monitoring' },
-    { id: 'tax', label: t('税务办理', 'Tax filing'), Icon: ShieldCheck, href: '/admin?section=system&view=tax' },
+    { id: 'monitoring', label: t('AI 聊天', 'AI chat'), Icon: Activity, href: '/admin?section=system&view=monitoring' },
+    { id: 'tax', label: t('税务', 'Tax'), Icon: ShieldCheck, href: '/admin?section=system&view=tax' },
   ].map(({ id, label, Icon, href }) => {
     const selected = pathname === '/admin/product-analytics' ? 'analytics'
       : pathname === '/admin/users' ? 'users'
@@ -72,7 +72,7 @@ function Navigation({ children }: { children: ReactNode }) {
     labels={{ navigation: t('工作台导航', 'Workspace navigation'), show: t('显示侧边栏', 'Show sidebar'), hide: t('隐藏侧边栏', 'Hide sidebar'), openMobile: t('打开导航', 'Open navigation'), closeMobile: t('关闭导航', 'Close navigation') }}
     renderLink={props => <AppLink {...props} prefetch={false} />}
     header={toggle => <header className="staff-header">{toggle}<AppLink href="/" className="staff-brand" prefetch={false}>CubeRoot</AppLink><div className="staff-header-actions"><AppLink href="/account" prefetch={false}>{user.name || t('我的账号', 'My account')}</AppLink></div></header>}>
-    {children}
+    {inAdmin ? <div className="admin-navigation__page" key={pathname === '/admin' ? `${pathname}:${section ?? 'overview'}:${section === 'system' ? view ?? 'tools' : ''}` : pathname}>{children}</div> : children}
   </NavigationShell></div>;
 }
 

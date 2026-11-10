@@ -156,6 +156,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'POST', p: '/v1/mcp/oauth/revoke', g: 'public', c: 'no-store', zh: '凭 MCP 令牌撤销对应授权', en: 'Revoke a grant using its MCP token' },
   { d: 'auth', m: 'GET', p: '/v1/mcp/oauth/connections', g: 'admin', c: 'no-store', zh: '本人有效的 MCP 授权', en: 'Own active MCP grants' },
   { d: 'auth', m: 'POST', p: '/v1/mcp/oauth/connections/revoke', g: 'admin', c: 'no-store', zh: '撤销本人指定的 MCP 授权', en: 'Revoke a specific MCP grant owned by the administrator' },
+  { d: 'system', m: 'GET', p: '/v1/admin/assistant/billing', g: 'admin', c: 'no-store', zh: 'DeepSeek 官方余额与按供应商拆分的缓存优惠费用估算；days=7/30/90', en: 'Official DeepSeek balance and provider cost estimates with cache discounts; days=7/30/90' },
   { d: 'system', m: 'GET', p: '/v1/admin/assistant/insights', g: 'admin', c: 'no-store', zh: '评价、检索、费用、告警、匿名汇总与访问审计', en: 'Feedback, retrieval, cost, alerts, anonymous totals and access audit' },
   { d: 'system', m: 'GET', p: '/v1/admin/assistant/health', g: 'admin', c: 'no-store', zh: '监控后台心跳及活动告警', en: 'Monitoring heartbeat and active alerts' },
   { d: 'system', m: 'POST', p: '/v1/admin/assistant/requests/:id/review', g: 'admin', c: 'no-store', zh: '管理员复核与处理记录', en: 'Admin review and resolution' },
