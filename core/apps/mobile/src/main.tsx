@@ -8,9 +8,10 @@ import { LoadingBrandMark } from '@cuberoot/app-ui/loading-brand';
 import { capacitorHost } from './capacitor-host';
 import { initializeDistribution } from './distribution';
 import { initializeUURemote } from './uu-remote';
+import { initializeViewportLayout } from './viewport-layout';
 
 const App = lazy(async () => {
-  const [module] = await Promise.all([import('@cuberoot/app-ui'), initializeDistribution()]);
+  const [module] = await Promise.all([import('@cuberoot/app-ui'), initializeDistribution(), initializeViewportLayout()]);
   return { default: module.App };
 });
 

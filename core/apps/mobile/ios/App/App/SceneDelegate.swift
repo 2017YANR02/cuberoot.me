@@ -87,13 +87,95 @@ final class NativeFilesPlugin: CAPPlugin, CAPBridgedPlugin {
 }
 
 final class CubeRootBridgeViewController: CAPBridgeViewController {
+    private let viewportPlugin = ViewportLayoutPlugin()
+
     override func capacitorDidLoad() {
+        bridge?.registerPluginInstance(viewportPlugin)
         bridge?.registerPluginInstance(TimerPrintPlugin())
         bridge?.registerPluginInstance(NativeFilesPlugin())
         bridge?.registerPluginInstance(ScreenAwakePlugin())
         bridge?.registerPluginInstance(AppleMembershipPlugin())
         bridge?.registerPluginInstance(RecordPushPlugin())
         bridge?.registerPluginInstance(WatchTimerPlugin())
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        // Keep older SDK builds working; these guides are optional host geometry.
+        #if compiler(>=6.4)
+        if #available(iOS 27.1, *) {
+            _ = view.layoutGuide(for: .safeArea(cornerAdaptation: .vertical))
+            _ = view.layoutGuide(for: .bar(onEdge: NSDirectionalRectEdge.leading, extent: 52))
+            _ = view.layoutGuide(for: .bar(onEdge: NSDirectionalRectEdge.trailing, extent: 52))
+        }
+        #endif
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        viewportPlugin.publishLayout()
+    }
+
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+        viewportPlugin.publishLayout()
+    }
+}
+
+/// Geometry only. All three navigation destinations remain in the shared React app.
+@objc(ViewportLayoutPlugin)
+final class ViewportLayoutPlugin: CAPPlugin, CAPBridgedPlugin {
+    let identifier = "ViewportLayoutPlugin"
+    let jsName = "ViewportLayout"
+    let pluginMethods: [CAPPluginMethod] = [CAPPluginMethod(name: "getLayout", returnType: CAPPluginReturnPromise)]
+    private var lastLayout: NSDictionary?
+
+    private func layout() -> [String: Any] {
+        guard let view = bridge?.viewController?.view else { return [:] }
+        #if compiler(>=6.4)
+        if #available(iOS 27.1, *) {
+            let regions = view.reservedRegions(kind: .occlusion).filter(\.isActive)
+            let edge = view.traitCollection.verticalBarEdge
+            guard edge != .unspecified || !regions.isEmpty else { return [:] }
+            let bounds = view.bounds
+            var content = view.layoutGuide(for: .safeArea(cornerAdaptation: .vertical)).layoutFrame.intersection(bounds)
+            var bar: CGRect?
+            if edge != .unspecified {
+                let directionalEdge: NSDirectionalRectEdge = edge == .leading ? .leading : .trailing
+                let candidate = view.layoutGuide(for: .bar(onEdge: directionalEdge, extent: 52)).layoutFrame.intersection(bounds)
+                if candidate.width >= 52 && candidate.height >= 148 {
+                    bar = candidate
+                    if candidate.midX > bounds.midX {
+                        content.size.width = max(0, min(content.maxX, candidate.minX) - content.minX)
+                    } else {
+                        let right = content.maxX
+                        content.origin.x = max(content.minX, candidate.maxX)
+                        content.size.width = max(0, right - content.minX)
+                    }
+                }
+            }
+            guard content.width > 0, content.height > 0 else { return [:] }
+            func rect(_ value: CGRect) -> [String: CGFloat] {
+                ["x": value.minX, "y": value.minY, "width": value.width, "height": value.height]
+            }
+            var result: [String: Any] = ["bounds": rect(bounds), "content": rect(content)]
+            if let bar { result["bar"] = rect(bar) }
+            return result
+        }
+        #endif
+        return [:]
+    }
+
+    @objc func getLayout(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { call.resolve(self.layout()) }
+    }
+
+    func publishLayout() {
+        let current = layout()
+        let dictionary = current as NSDictionary
+        guard lastLayout == nil || !dictionary.isEqual(lastLayout!) else { return }
+        lastLayout = dictionary
+        notifyListeners("layoutChanged", data: current)
     }
 }
 

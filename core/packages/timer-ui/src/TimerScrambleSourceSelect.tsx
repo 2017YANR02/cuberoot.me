@@ -1,3 +1,4 @@
+import { getUsableViewport } from './host-viewport';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { TIMER_333_TRAINING_GROUPS } from '@cuberoot/shared/timer';
 import {
@@ -205,16 +206,19 @@ export function TimerScrambleSourceSelect<
 
     const positionPanel = () => {
       const anchor = trigger.getBoundingClientRect();
+      const viewport = getUsableViewport();
+      panel.style.maxWidth = `${Math.max(0, viewport.width - 16)}px`;
+      panel.style.maxHeight = `${Math.max(0, viewport.height - 16)}px`;
       const maxLeft = Math.max(
-        VIEWPORT_MARGIN_PX,
-        window.innerWidth - panel.offsetWidth - VIEWPORT_MARGIN_PX,
+        viewport.offsetLeft + VIEWPORT_MARGIN_PX,
+        viewport.offsetLeft + viewport.width - panel.offsetWidth - VIEWPORT_MARGIN_PX,
       );
-      const left = Math.min(Math.max(VIEWPORT_MARGIN_PX, anchor.left + (anchor.width - panel.offsetWidth) / 2), maxLeft);
+      const left = Math.min(Math.max(viewport.offsetLeft + VIEWPORT_MARGIN_PX, anchor.left + (anchor.width - panel.offsetWidth) / 2), maxLeft);
       const below = anchor.bottom + POPUP_GAP_PX;
-      const top = below + panel.offsetHeight <= window.innerHeight - VIEWPORT_MARGIN_PX
+      const top = below + panel.offsetHeight <= viewport.offsetTop + viewport.height - VIEWPORT_MARGIN_PX
         ? below
         : Math.max(
-            VIEWPORT_MARGIN_PX,
+            viewport.offsetTop + VIEWPORT_MARGIN_PX,
             anchor.top - POPUP_GAP_PX - panel.offsetHeight,
           );
       panel.style.left = `${left}px`;

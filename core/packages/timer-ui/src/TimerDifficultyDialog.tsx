@@ -1,3 +1,4 @@
+import { getUsableViewport } from './host-viewport';
 import { useEffect, useLayoutEffect, useRef, useId, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
@@ -25,11 +26,14 @@ export function TimerDifficultyDialog({ anchorRef, language, disabled, canApply 
       const anchor = anchorRef.current;
       if (!panel || !anchor) return;
       const rect = anchor.getBoundingClientRect();
+      const viewport = getUsableViewport();
+      panel.style.maxWidth = `${Math.max(0, viewport.width - 16)}px`;
+      panel.style.maxHeight = `${Math.max(0, viewport.height - 16)}px`;
       const width = panel.offsetWidth;
-      const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
-      const viewportHeight = document.documentElement.clientHeight || window.innerHeight;
-      panel.style.left = `${Math.max(8, Math.min(rect.left + (rect.width - width) / 2, viewportWidth - width - 8))}px`;
-      const top = Math.max(8, Math.min(rect.bottom + 6, viewportHeight - panel.offsetHeight - 8));
+      const viewportWidth = viewport.offsetLeft + viewport.width;
+      const viewportHeight = viewport.offsetTop + viewport.height;
+      panel.style.left = `${Math.max(viewport.offsetLeft + 8, Math.min(rect.left + (rect.width - width) / 2, viewportWidth - width - 8))}px`;
+      const top = Math.max(viewport.offsetTop + 8, Math.min(rect.bottom + 6, viewportHeight - panel.offsetHeight - 8));
       panel.style.top = `${top}px`;
       panel.style.visibility = 'visible';
     };
