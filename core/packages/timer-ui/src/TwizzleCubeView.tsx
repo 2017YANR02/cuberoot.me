@@ -149,7 +149,7 @@ export default function TwizzleCubeView(props: SimCubeViewProps) {
             mirror: current.mirror ?? mirrorForBrand(null),
           });
           const target = quatMul(quatMul(grip, measured), quatConjugate(grip));
-          const next = smoothed ? slerpTowards(smoothed, target, now - lastMs) : target;
+          const next = smoothed ? slerpTowards(smoothed, target, now - lastMs, current.orientationTauMs) : target;
           smoothed = next;
           if (!applied || quatAngleTo(applied, next) > 1e-4) {
             puzzle.quaternion.set(next.x, next.y, next.z, next.w);

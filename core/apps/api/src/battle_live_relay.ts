@@ -7,6 +7,7 @@ import {
   type NetBattleCredentials,
   type NetBattleLiveHello,
   type NetBattleLivePresencePlayer,
+  type NetBattleLiveClientPayload,
 } from '@cuberoot/shared/timer';
 
 export interface BattleRoomLiveSocket {
@@ -23,6 +24,9 @@ export type BattleRoomLiveAuthorize = (
 interface BattleRoomLivePeer {
   hello: NetBattleLiveHello;
   messagesInWindow: number;
+  gyroMessagesInWindow: number;
+  pendingGyros: Set<string>;
+  gyroTimer?: ReturnType<typeof setTimeout>;
   socket: BattleRoomLiveSocket;
   windowStartedAt: number;
 }
@@ -35,6 +39,7 @@ interface BattleRoomLivePlayerState {
   smart: boolean;
   tracker: SmartCubeStateTracker | null;
   updatedAt: number;
+  gyro?: Extract<NetBattleLiveClientPayload, { type: 'gyro' }>;
 }
 
 interface BattleRoomLiveRoom {
@@ -138,6 +143,7 @@ export class BattleRoomLiveRelay {
         return;
       }
       if (existing) {
+        clearTimeout(existing.gyroTimer);
         room.peers.delete(hello.playerId);
         closeSafely(existing.socket, 4000, 'connection replaced');
       }
@@ -145,6 +151,8 @@ export class BattleRoomLiveRelay {
       const nextPeer: BattleRoomLivePeer = {
         hello,
         messagesInWindow: 0,
+        gyroMessagesInWindow: 0,
+        pendingGyros: new Set(),
         socket,
         windowStartedAt: Date.now(),
       };
@@ -168,10 +176,14 @@ export class BattleRoomLiveRelay {
       if (!this.send(nextPeer, JSON.stringify({
         type: 'ready',
         version: NET_BATTLE_LIVE_PROTOCOL_VERSION,
+        ...(hello.gyro ? { gyro: true } : {}),
       }))) return;
       for (const [playerId, state] of room.states) {
         if (playerId === hello.playerId || !state.facelets || state.round === null) continue;
         if (!this.send(nextPeer, this.snapshotMessage(playerId, state))) return;
+        if (hello.gyro && state.smart && state.gyro) {
+          this.sendGyro(nextPeer, playerId);
+        }
       }
       this.broadcastPresence(room);
     };
@@ -214,9 +226,10 @@ export class BattleRoomLiveRelay {
         if (now - peer.windowStartedAt >= MESSAGE_WINDOW_MS) {
           peer.windowStartedAt = now;
           peer.messagesInWindow = 0;
+          peer.gyroMessagesInWindow = 0;
         }
-        peer.messagesInWindow++;
-        if (peer.messagesInWindow > BATTLE_ROOM_LIVE_MAX_MESSAGES_PER_WINDOW) {
+        const messageCount = payload.type === 'gyro' ? ++peer.gyroMessagesInWindow : ++peer.messagesInWindow;
+        if (messageCount > BATTLE_ROOM_LIVE_MAX_MESSAGES_PER_WINDOW) {
           reject('rate limit');
           return;
         }
@@ -226,6 +239,17 @@ export class BattleRoomLiveRelay {
           return;
         }
         room.touchedAt = now;
+
+        if (payload.type === 'gyro') {
+          if (!peer.hello.gyro) { reject('gyro not negotiated'); return; }
+          const state = room.states.get(peer.hello.playerId);
+          if (!state?.smart || state.round !== payload.round) return;
+          state.gyro = payload;
+          for (const target of room.peers.values()) {
+            if (target !== peer && target.hello.gyro) this.sendGyro(target, peer.hello.playerId);
+          }
+          return;
+        }
 
         if (payload.type === 'unavailable') {
           const previous = room.states.get(peer.hello.playerId);
@@ -256,6 +280,8 @@ export class BattleRoomLiveRelay {
             smart: true,
             tracker,
             updatedAt: now,
+            gyro: room.states.get(peer.hello.playerId)?.round === payload.round
+              ? room.states.get(peer.hello.playerId)?.gyro : undefined,
           };
           room.states.set(peer.hello.playerId, state);
           this.broadcast(room, this.snapshotMessage(peer.hello.playerId, state), peer);
@@ -304,7 +330,7 @@ export class BattleRoomLiveRelay {
     const peer = room.peers.get(playerId);
     room.peers.delete(playerId);
     room.states.delete(playerId);
-    if (peer) closeSafely(peer.socket, 4001, reason);
+    if (peer) { clearTimeout(peer.gyroTimer); closeSafely(peer.socket, 4001, reason); }
     if (room.peers.size === 0) this.rooms.delete(code);
     else this.broadcastPresence(room);
   }
@@ -313,14 +339,14 @@ export class BattleRoomLiveRelay {
     const room = this.rooms.get(code);
     if (!room) return;
     this.rooms.delete(code);
-    for (const peer of room.peers.values()) closeSafely(peer.socket, 4001, reason);
+    for (const peer of room.peers.values()) { clearTimeout(peer.gyroTimer); closeSafely(peer.socket, 4001, reason); }
   }
 
   pruneExpired(now = Date.now()): void {
     for (const [code, room] of this.rooms) {
       if (now - room.touchedAt <= BATTLE_ROOM_LIVE_IDLE_MS) continue;
       this.rooms.delete(code);
-      for (const peer of room.peers.values()) closeSafely(peer.socket, 1001, 'room expired');
+      for (const peer of room.peers.values()) { clearTimeout(peer.gyroTimer); closeSafely(peer.socket, 1001, 'room expired'); }
     }
   }
 
@@ -383,7 +409,37 @@ export class BattleRoomLiveRelay {
     }
   }
 
+  private sendGyro(peer: BattleRoomLivePeer, playerId: string): void {
+    peer.pendingGyros.add(playerId);
+    if (!peer.gyroTimer) this.flushGyros(peer);
+  }
+
+  private flushGyros(peer: BattleRoomLivePeer): void {
+    peer.gyroTimer = undefined;
+    const room = this.rooms.get(peer.hello.code);
+    if (room?.peers.get(peer.hello.playerId) !== peer) return;
+    for (const playerId of peer.pendingGyros) {
+      const state = room.states.get(playerId);
+      if (!state?.smart || !state.gyro) { peer.pendingGyros.delete(playerId); continue; }
+      if ((peer.socket.bufferedAmount ?? 0) > BATTLE_ROOM_LIVE_MAX_BUFFERED_BYTES) {
+        this.send(peer, ''); // Apply the existing hard backpressure limit.
+        return;
+      }
+      // Retain one latest pose per source, outside the socket send queue.
+      // The final pose is retried after congestion even if the cube goes quiet.
+      if ((peer.socket.bufferedAmount ?? 0) > 0) {
+        peer.gyroTimer = setTimeout(() => this.flushGyros(peer), 20);
+        peer.gyroTimer.unref();
+        return;
+      }
+      peer.pendingGyros.delete(playerId);
+      if (!this.send(peer, JSON.stringify({ ...state.gyro, playerId }))) return;
+    }
+  }
+
   private removePeer(peer: BattleRoomLivePeer, broadcast: boolean): void {
+    clearTimeout(peer.gyroTimer);
+    peer.pendingGyros.clear();
     const room = this.rooms.get(peer.hello.code);
     if (!room || room.peers.get(peer.hello.playerId) !== peer) return;
     room.peers.delete(peer.hello.playerId);
@@ -391,6 +447,7 @@ export class BattleRoomLiveRelay {
     if (state) {
       state.connected = false;
       state.smart = false;
+      state.gyro = undefined;
       state.updatedAt = Date.now();
     }
     room.touchedAt = Date.now();

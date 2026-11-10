@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { TwistyPlayer } from 'cubing/twisty';
 import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';
+import { TimerRemoteLiveCube, type NetBattleLiveCubePlayer } from '@cuberoot/timer-ui';
 import { LiveSmartCubeAnchor } from '@cuberoot/shared/smart-cube/anchor';
 import { cubeMove, SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
 
@@ -116,4 +117,29 @@ it('reports load failure and retries instead of silently falling back to another
   await expectState('U');
   expect(host.textContent).not.toContain('Twizzle 加载失败');
   warn.mockRestore();
+});
+
+it('renders remote display-space orientation without remapping or recalibrating the sender pose', async () => {
+  const quatRef = { current: { w: Math.SQRT1_2, x: 0, y: Math.SQRT1_2, z: 0 } };
+  const live: NetBattleLiveCubePlayer = { playerId: 'player02', connected: true, smart: true,
+    syncing: false, round: 1, seq: 0, facelets: SOLVED_3X3, moves: [], algAnchored: true,
+    updatedAt: 100, quatRef };
+  await act(async () => root.render(createElement(TimerRemoteLiveCube, {
+    playerId: live.playerId, live, mode: 'twizzle', language: 'en',
+  })));
+  await vi.waitFor(() => {
+    for (const callback of frames.splice(0)) callback(performance.now());
+    expect(probe.quaternion).toHaveBeenCalled();
+  });
+  const [x, y, z, w] = probe.quaternion.mock.calls.at(-1)!;
+  expect(x).toBeCloseTo(0); expect(y).toBeCloseTo(Math.SQRT1_2);
+  expect(z).toBeCloseTo(0); expect(w).toBeCloseTo(Math.SQRT1_2);
+  const now = performance.now();
+  for (const callback of frames.splice(0)) callback(now);
+  quatRef.current = { w: 1, x: 0, y: 0, z: 0 };
+  for (const callback of frames.splice(0)) callback(now + 20);
+  const [, nextY, , nextW] = probe.quaternion.mock.calls.at(-1)!;
+  // 20 ms remote time constant: after one time constant, 1/e of the angle remains.
+  expect(2 * Math.atan2(nextY, nextW)).toBeCloseTo(Math.PI / 2 / Math.E, 4);
+  expect(probe.mount).toHaveBeenCalledOnce();
 });

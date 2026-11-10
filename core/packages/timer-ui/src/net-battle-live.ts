@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { LiveSmartCubeAnchor, type Solve333, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import { SmartCubeStateTracker } from '@cuberoot/shared/smart-cube/cubie';
+import { applyOrientation, type Quat, type OrientationOptions } from '@cuberoot/shared/smart-cube/orientation';
 import {
   NET_BATTLE_LIVE_PROTOCOL_VERSION,
   parseNetBattleLiveServerPayload,
@@ -23,12 +24,15 @@ export interface NetBattleLiveCubePlayer {
   moves: readonly string[];
   algAnchored: boolean;
   updatedAt: number;
+  /** Updated directly by the socket, read by the renderer's frame loop. */
+  quatRef?: { current: Quat | null };
 }
 
 interface RemoteRuntime {
   round: number;
   tracker: SmartCubeStateTracker;
   anchor: LiveSmartCubeAnchor;
+  quatRef: { current: Quat | null };
 }
 
 export interface UseNetBattleLiveCubeOptions {
@@ -42,6 +46,7 @@ export interface UseNetBattleLiveCubeOptions {
 }
 
 const RECONNECT_MAX_MS = 5_000;
+const GYRO_INTERVAL_MS = 20;
 
 function emptyPlayer(playerId: string): NetBattleLiveCubePlayer {
   return {
@@ -69,6 +74,7 @@ export function useNetBattleLiveCube({
   players: Record<string, NetBattleLiveCubePlayer>;
   ready: boolean;
   publishMove(move: string): void;
+  publishGyro(quaternion: Quat | null, options?: OrientationOptions & { reference?: Quat | null }): void;
 } {
   const [players, setPlayersState] = useState<Record<string, NetBattleLiveCubePlayer>>({});
   const [ready, setReady] = useState(false);
@@ -76,6 +82,11 @@ export function useNetBattleLiveCube({
   const runtimesRef = useRef(new Map<string, RemoteRuntime>());
   const socketRef = useRef<WebSocket | null>(null);
   const socketReadyRef = useRef(false);
+  const gyroReadyRef = useRef(false);
+  const latestGyroRef = useRef<Quat | null>(null);
+  const pendingGyroRef = useRef(false);
+  const gyroTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastGyroSentRef = useRef(-Infinity);
   const localTrackerRef = useRef(new SmartCubeStateTracker());
   const localSeededRef = useRef(false);
   const localRoundRef = useRef(round);
@@ -90,11 +101,11 @@ export function useNetBattleLiveCube({
   const setPlayers = useCallback((update: (
     current: Record<string, NetBattleLiveCubePlayer>,
   ) => Record<string, NetBattleLiveCubePlayer>) => {
-    setPlayersState((current) => {
-      const next = update(current);
-      playersRef.current = next;
-      return next;
-    });
+    // Socket packets may arrive in one React batch. Advance the wire state
+    // synchronously so a following move/pose sees the preceding snapshot.
+    const next = update(playersRef.current);
+    playersRef.current = next;
+    setPlayersState(next);
   }, []);
 
   const patchPlayer = useCallback((
@@ -114,6 +125,7 @@ export function useNetBattleLiveCube({
     const runtime: RemoteRuntime = {
       round: playerRound,
       tracker: new SmartCubeStateTracker(),
+      quatRef: { current: null },
       anchor: new LiveSmartCubeAnchor({
         solve,
         onChange: (snapshot: LiveSmartCubeAnchorSnapshot) => {
@@ -141,6 +153,42 @@ export function useNetBattleLiveCube({
     }
   }, []);
 
+  const cancelGyro = useCallback(() => {
+    if (gyroTimerRef.current !== null) clearTimeout(gyroTimerRef.current);
+    gyroTimerRef.current = null;
+    pendingGyroRef.current = false;
+    lastGyroSentRef.current = -Infinity;
+  }, []);
+
+  const flushGyro = useCallback(function flush(): void {
+    gyroTimerRef.current = null;
+    if (!pendingGyroRef.current || !gyroReadyRef.current || !localConnectedRef.current || !localSeededRef.current) return;
+    const socket = socketRef.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+    const remaining = GYRO_INTERVAL_MS - (performance.now() - lastGyroSentRef.current);
+    if (remaining > 0 || socket.bufferedAmount > 0) {
+      gyroTimerRef.current = setTimeout(flush, Math.max(1, remaining, socket.bufferedAmount > 0 ? GYRO_INTERVAL_MS : 0));
+      return;
+    }
+    if (send({ type: 'gyro', round: localRoundRef.current, quaternion: latestGyroRef.current })) {
+      pendingGyroRef.current = false;
+      lastGyroSentRef.current = performance.now();
+    }
+  }, [send]);
+
+  const publishGyro = useCallback((raw: Quat | null, options: OrientationOptions & { reference?: Quat | null } = {}) => {
+    if (raw && (![raw.w, raw.x, raw.y, raw.z].every(Number.isFinite)
+      || Math.hypot(raw.w, raw.x, raw.y, raw.z) < 1e-6)) return;
+    // Normalize once at the sender. Remote renderers use identity basis and
+    // never apply their own cube brand's sensor transform a second time.
+    const q = raw ? applyOrientation(raw, options.reference ?? null, options) : null;
+    latestGyroRef.current = q ? {
+      w: +q.w.toFixed(5), x: +q.x.toFixed(5), y: +q.y.toFixed(5), z: +q.z.toFixed(5),
+    } : null;
+    pendingGyroRef.current = true;
+    if (gyroTimerRef.current === null) flushGyro();
+  }, [flushGyro]);
+
   const publishCurrent = useCallback((force = false): void => {
     const playerRound = localRoundRef.current;
     if (!localConnectedRef.current || !localSeededRef.current) {
@@ -158,18 +206,25 @@ export function useNetBattleLiveCube({
       round: playerRound,
       seq: localSeqRef.current,
       facelets,
-    })) lastPublishedRef.current = key;
-  }, [send]);
+    })) {
+      lastPublishedRef.current = key;
+      pendingGyroRef.current = true;
+      if (gyroTimerRef.current === null) flushGyro();
+    }
+  }, [send, flushGyro]);
 
   useEffect(() => {
     const roundChanged = localRoundRef.current !== round;
     if (roundChanged) {
+      cancelGyro();
       localRoundRef.current = round;
       localSeqRef.current = 0;
       localSeededRef.current = false;
       lastPublishedRef.current = '';
     }
     if (!localConnected || !localFacelets) {
+      cancelGyro();
+      latestGyroRef.current = null;
       localSeededRef.current = false;
       publishCurrent();
       return;
@@ -182,7 +237,7 @@ export function useNetBattleLiveCube({
     } else if (roundChanged) {
       publishCurrent();
     }
-  }, [round, localConnected, localFacelets, publishCurrent]);
+  }, [round, localConnected, localFacelets, publishCurrent, cancelGyro]);
 
   const publishMove = useCallback((move: string): void => {
     if (!localConnectedRef.current || !localSeededRef.current) return;
@@ -205,6 +260,9 @@ export function useNetBattleLiveCube({
       const next = { ...current };
       for (const [playerId, state] of Object.entries(next)) {
         const status = byId.get(playerId);
+        if (!status?.connected || !status.smart || status.round !== state.round) {
+          if (state.quatRef) state.quatRef.current = null;
+        }
         next[playerId] = status
           ? {
               ...state,
@@ -236,6 +294,9 @@ export function useNetBattleLiveCube({
     let reconnectTimer: number | null = null;
 
     const markDisconnected = () => {
+      gyroReadyRef.current = false;
+      cancelGyro();
+      for (const runtime of runtimesRef.current.values()) runtime.quatRef.current = null;
       socketReadyRef.current = false;
       setReady(false);
       setPlayers((current) => Object.fromEntries(
@@ -259,6 +320,7 @@ export function useNetBattleLiveCube({
           code,
           playerId: credentialPlayerId,
           playerToken: credentialPlayerToken,
+          gyro: true,
         }));
       });
 
@@ -275,6 +337,7 @@ export function useNetBattleLiveCube({
         if (message.type === 'ready') {
           reconnectAttempt = 0;
           socketReadyRef.current = true;
+          gyroReadyRef.current = message.gyro === true;
           setReady(true);
           publishCurrent(true);
           return;
@@ -288,6 +351,16 @@ export function useNetBattleLiveCube({
           return;
         }
         if (message.playerId === credentialPlayerId) return;
+        if (message.type === 'gyro') {
+          const runtime = runtimesRef.current.get(message.playerId);
+          if (runtime?.round === message.round) {
+            const availabilityChanged = Boolean(runtime.quatRef.current) !== Boolean(message.quaternion);
+            runtime.quatRef.current = message.quaternion;
+            // Only mount/unmount orientation mode; samples never render React.
+            if (availabilityChanged) patchPlayer(message.playerId, player => ({ ...player, quatRef: runtime.quatRef }));
+          }
+          return;
+        }
         if (message.type === 'snapshot') {
           const runtime = ensureRuntime(message.playerId, message.round);
           if (!runtime.tracker.adoptFacelets(message.facelets)) return;
@@ -300,6 +373,7 @@ export function useNetBattleLiveCube({
             smart: player.smart,
             syncing: false,
             updatedAt: message.updatedAt,
+            quatRef: runtime.quatRef,
           }));
           runtime.anchor.observeFacelets(message.facelets);
           return;
@@ -342,6 +416,9 @@ export function useNetBattleLiveCube({
     connect();
     return () => {
       active = false;
+      gyroReadyRef.current = false;
+      cancelGyro();
+      latestGyroRef.current = null;
       if (reconnectTimer !== null) window.clearTimeout(reconnectTimer);
       socketReadyRef.current = false;
       setReady(false);
@@ -364,7 +441,8 @@ export function useNetBattleLiveCube({
     patchPlayer,
     publishCurrent,
     setPlayers,
+    cancelGyro,
   ]);
 
-  return { players, ready, publishMove };
+  return { players, ready, publishMove, publishGyro };
 }

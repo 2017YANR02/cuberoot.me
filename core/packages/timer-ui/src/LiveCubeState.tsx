@@ -140,6 +140,8 @@ export interface LiveCubeStateProps {
    * them through props would re-render the whole timer shell for nothing.
    */
   quatRef?: { current: Quat | null };
+  /** Remote live feeds can use a shorter smoothing time to limit added lag. */
+  orientationTauMs?: number;
   /** Bump to capture the current sample as the upright reference. */
   calibrateToken?: number;
   calibrationReference?: Quat | null;
@@ -171,6 +173,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
     mode = 'net',
     quat = null,
     quatRef,
+    orientationTauMs,
     calibrateToken = 0,
     calibrationReference,
     // 漏传不等于 identity —— 见 SimCubeView 里同名 prop 的注释。
@@ -227,6 +230,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
         gyroOrientation={displayOrientation}
         quat={liveQuat}
         quatRef={useGyro ? quatRef : undefined}
+        orientationTauMs={orientationTauMs}
         calibrateToken={calibrateToken}
         calibrationReference={calibrationReference}
         sensorBasis={sensorBasis}
