@@ -264,7 +264,7 @@ describe('shared smart-cube device modal', () => {
 
   it('keeps the Web adapter on the shared status and recovery surface', () => {
     const source = readFileSync('app/[lang]/timer/_components/BluetoothModal.tsx', 'utf8');
-    expect(source).toContain("import { TimerSmartCubeDeviceModal } from '@cuberoot/timer-ui';");
+    expect(source).toContain("import { BatteryLevelIcon, TimerSmartCubeDeviceModal } from '@cuberoot/timer-ui';");
     expect(source).toContain('<TimerSmartCubeDeviceModal');
     expect(source).toContain('instructions: macBody');
     expect(source).not.toContain('data-mac-input');

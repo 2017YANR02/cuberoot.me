@@ -10,7 +10,9 @@ import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { useWebReconstructHost } from '@/lib/use-web-reconstruct-host';
 import { intakeRequest } from '@/lib/recon-intake-api';
 import WcaAuth from '@/components/WcaAuth';
-import { tr } from '@/i18n/tr';
+import { tr, useLang } from '@/i18n/tr';
+import { displayCuberName } from '@/lib/cuber-name-display';
+import SourceInfo from './SourceInfo';
 import '@/components/recon/recon-intake.css';
 
 const ReconstructReport = dynamic(() => import('@cuberoot/timer-ui/reconstruct-report'), { ssr: false });
@@ -33,6 +35,7 @@ type Detail = {
 };
 
 export default function IntakeQueue() {
+  const isZh = useLang() === 'zh';
   const admin = useIsAdmin(), user = useAuthUser(), host = useWebReconstructHost();
   const [filter, setFilter] = useState('todo'), [offset, setOffset] = useState(0);
   const [items, setItems] = useState<ReconIntakeCase[]>([]), [hasMore, setHasMore] = useState(false);
@@ -80,7 +83,6 @@ export default function IntakeQueue() {
   };
   return <main className="ri-queue">
     <PageHeading backHref="/recon/ground-truth">{tr({ zh: '复盘收录待办', en: 'Reconstruction intake queue' })}</PageHeading>
-    <p>{tr({ zh: '收录保存原始记录。人工确认、自动测试和正式启用分别记账。', en: 'Collected samples retain their original recordings. Human approval, test results and activation are tracked separately.' })}</p>
     <div className="ri-queue-controls">
       <label>{tr({ zh: '状态', en: 'Status' })} <select className="ri-field" value={filter} onChange={e => { setFilter(e.target.value); setOffset(0); }}>
         <option value="todo">{tr({ zh: '全部待办', en: 'All pending' })}</option><option value="all">{tr({ zh: '全部样本', en: 'All samples' })}</option>
@@ -95,11 +97,16 @@ export default function IntakeQueue() {
     {!busy && !items.length && !error && <p>{tr({ zh: '当前没有样本。可在智能魔方复盘顶部收录。', en: 'No samples here. Collect one from the top of a smart cube reconstruction.' })}</p>}
     <div className="ri-queue-grid"><nav className="ri-case-list">
       {items.map(sample => <button className="ri-button ri-case-button" key={sample.id} type="button" aria-pressed={selected === sample.id} onClick={() => { setSelected(sample.id); setCopied(false); }}>
-        {tr(statuses[sample.status])} · {(sample.input.recording.timeMs / 1000).toFixed(3)}s<br /><small>{sample.id.slice(0, 8)} · v{sample.revision}</small>
+        <strong>{sample.sourceSnapshot?.metadata?.value || `${(sample.input.recording.timeMs / 1000).toFixed(3)}s`}
+          {sample.sourceSnapshot?.metadata?.person && ` · ${displayCuberName(sample.sourceSnapshot.metadata.person, isZh)}`}</strong>
+        <span>{tr(statuses[sample.status])} · v{sample.revision}</span>
+        <small>{sample.sourceSnapshot ? `#${sample.sourceSnapshot.id}` : sample.id.slice(0, 8)} · {tr({ zh: '实录', en: 'Recorded' })} {(sample.input.recording.timeMs / 1000).toFixed(3)}s</small>
       </button>)}
-    </nav>{item && <section>
-      <h2>{tr(statuses[item.status])} · v{item.revision}</h2>
-      <p><small>{item.id} · {item.createdBy}</small></p>
+    </nav>{item && <section className="ri-case-detail">
+      <div className="ri-case-heading"><h2>{tr(statuses[item.status])} · v{item.revision}</h2>
+        <span>{tr({ zh: '实录用时', en: 'Recorded time' })} {(item.input.recording.timeMs / 1000).toFixed(3)}s</span></div>
+      <SourceInfo source={item.sourceSnapshot} />
+      <details><MoreToggle as="summary">{tr({ zh: '收录记录', en: 'Collection record' })}</MoreToggle><p><small>{item.id} · {item.createdBy} · {item.createdAt}</small></p></details>
       {item.sourceSnapshot && <details><MoreToggle as="summary">{tr({ zh: '收录时的来源复盘', en: 'Source reconstruction at collection' })} · #{item.sourceSnapshot.id}</MoreToggle>
         <pre>{item.sourceSnapshot.scramble}{'\n'}{item.sourceSnapshot.solution}</pre></details>}
       {item.claimedBy && <p>{tr({ zh: 'AI 领取记录（到期可重新领取）', en: 'AI claim (available again after expiry)' })}：{item.claimedBy} · {item.leaseUntil}</p>}

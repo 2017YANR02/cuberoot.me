@@ -260,7 +260,7 @@ export type {
 } from './TimerChrome';
 export { TimerDeviceCenter, TIMER_DEVICE_CENTER_LABELS } from './TimerDeviceCenter';
 export type { TimerDeviceCenterItem, TimerDeviceCenterProps } from './TimerDeviceCenter';
-export { TimerSmartCubeDeviceModal } from './TimerSmartCubeDeviceModal';
+export { BatteryLevelIcon, TimerSmartCubeDeviceModal } from './TimerSmartCubeDeviceModal';
 export type {
   TimerSmartCubeAvailableDevice,
   TimerSmartCubeConnectionPhase,

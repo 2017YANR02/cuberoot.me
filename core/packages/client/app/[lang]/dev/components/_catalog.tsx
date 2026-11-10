@@ -1955,6 +1955,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The eight-field Timing settings UI shared by the Web, Android, and iOS timers. Field order, bilingual copy, hold threshold, inspection toggle, and both precision selectors come from @cuberoot/shared/timer settings-contract. Hosts only inject persistence and their existing switch visual primitive; they must not duplicate the field list or normalization.',
   },
   {
+    name: 'BatteryLevelIcon',
+    import: "import { BatteryLevelIcon } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: '按电量百分比填充的电池图标，供智能魔方连接列表与设备详情共用。',
+    en: 'Battery icon filled by percentage, shared by smart-cube connection lists and device details.',
+  },
+  {
     name: 'TimerSmartCubeSettingsFields / useAutoReady',
     import: "import { TimerSmartCubeSettingsFields, useAutoReady } from '@cuberoot/timer-ui';",
     category: 'more',

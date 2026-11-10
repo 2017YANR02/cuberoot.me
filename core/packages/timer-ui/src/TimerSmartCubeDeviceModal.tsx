@@ -522,21 +522,26 @@ export function TimerSmartCubeDeviceModal({
   );
 }
 
-function DeviceBattery({ label, level }: { label: string; level?: number | null }) {
+export function BatteryLevelIcon({ level, width = 30, height = 16 }: { level?: number | null; width?: number; height?: number }) {
   const clipId = useId();
+  const percent = typeof level === 'number' && Number.isFinite(level) ? Math.round(Math.max(0, Math.min(100, level))) : null;
+  return <svg width={width} height={height} viewBox="0 0 30 16" fill="currentColor" aria-hidden="true">
+    <defs><clipPath id={clipId}><rect x="3" y="3" width="21" height="10" rx="2" /></clipPath></defs>
+    <rect x="1" y="1" width="25" height="14" rx="4" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.45" />
+    <path d="M28 5v6c2-0.5 2-5.5 0-6Z" opacity="0.45" />
+    {percent === null ? <path d="M10 7h7v2h-7Z" opacity="0.45" /> :
+      <rect x="3" y="3" width={21 * percent / 100} height="10" clipPath={`url(#${clipId})`} />}
+  </svg>;
+}
+
+function DeviceBattery({ label, level }: { label: string; level?: number | null }) {
   const percent = typeof level === 'number' && Number.isFinite(level) ? Math.round(Math.max(0, Math.min(100, level))) : null;
   const description = `${label} ${percent === null ? '—' : `${percent}%`}`;
   return (
     <Tooltip content={description} openOnClick>
       {tip => <button {...tip} type="button" className="timer-smart-cube-device__battery" aria-label={description}
         data-low={percent !== null && percent <= 20 ? 'true' : undefined}>
-        <svg width="30" height="16" viewBox="0 0 30 16" fill="currentColor" aria-hidden="true">
-          <defs><clipPath id={clipId}><rect x="3" y="3" width="21" height="10" rx="2" /></clipPath></defs>
-          <rect x="1" y="1" width="25" height="14" rx="4" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.45" />
-          <path d="M28 5v6c2-0.5 2-5.5 0-6Z" opacity="0.45" />
-          {percent === null ? <path d="M10 7h7v2h-7Z" opacity="0.45" /> :
-            <rect x="3" y="3" width={21 * percent / 100} height="10" clipPath={`url(#${clipId})`} />}
-        </svg>
+        <BatteryLevelIcon level={level} />
       </button>}
     </Tooltip>
   );

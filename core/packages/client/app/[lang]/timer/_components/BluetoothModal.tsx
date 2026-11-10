@@ -10,7 +10,7 @@
  *    cube reset action with installed apps.
  */
 
-import { TimerSmartCubeDeviceModal } from '@cuberoot/timer-ui';
+import { BatteryLevelIcon, TimerSmartCubeDeviceModal } from '@cuberoot/timer-ui';
 import {
   createTimerDeviceRegistry,
   SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
@@ -27,7 +27,7 @@ import {
   mayUseMiniProgramBridge,
 } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle, ConnectStage, ConnectPickOptions } from '../_lib/bluetooth';
-import { Battery, Check, ExternalLink, LoaderCircle, Plus } from '@app-foundation/icons/lucide';
+import { Check, ExternalLink, LoaderCircle, Plus } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import { trainingCubeStatusLabel, type TrainingCubeStatus } from '../_lib/training-cube-status';
 
@@ -278,7 +278,7 @@ export default function BluetoothModal({ anchorRef, isZh, cube, onClose, onConne
                 </span>
                 {connection.status !== 'disconnected' && connection.battery !== null && <span className="bt-cube-battery"
                   data-low={connection.battery <= 20} aria-label={tr({ zh: `电量 ${connection.battery}%`, en: `Battery ${connection.battery}%` })}>
-                  <Battery size={14} aria-hidden="true" />{connection.battery}%
+                  <BatteryLevelIcon level={connection.battery} width={18} height={12} />{connection.battery}%
                 </span>}
               </span>
             </span>
