@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { Settings } from '@app-foundation/icons/lucide';
 import SettingsDialog from '@/components/SettingsDialog';
 import BoolToggle from '@/components/BoolToggle';
-import { usePanelClamp } from '@/hooks/usePanelClamp';
+import { usePopoverPosition } from '@cuberoot/timer-ui/popover-position';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { tr } from '@/i18n/tr';
 import { persistItem } from '@/lib/safe-storage';
@@ -106,7 +106,7 @@ export function SettingsPopover({
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  usePanelClamp(open && !modal, panelRef, triggerRef);
+  const panelStyle = usePopoverPosition({ open: open && !modal, panelRef, triggerRef, contentKey: label });
   usePopoverDismiss(open && !modal, () => setOpen(false), rootRef, triggerRef);
   const close = useCallback(() => setOpen(false), [setOpen]);
 
@@ -133,9 +133,9 @@ export function SettingsPopover({
       {open && !modal && (
         // Nested fixed menus portal into this unfiltered dialog boundary, so
         // outside dismissal and viewport coordinates both remain correct.
-        <div role="dialog" aria-label={label}>
+        <div role="dialog" aria-label={label} ref={panelRef} popover="manual"
+          className="settings-popover-layer" style={panelStyle}>
           <div
-            ref={panelRef}
             className={`settings-popover-panel${panelClassName ? ` ${panelClassName}` : ''}`}
             data-site-surface="popover"
           >

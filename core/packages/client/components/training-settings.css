@@ -100,3 +100,7 @@
   gap: 12px;
   padding-top: 12px;
 }
+
+/* Native top layer escapes scroll containers while retaining DOM dismissal/focus. */
+.settings-popover-layer { position: fixed; inset: auto; margin: 0; padding: 0; border: 0; background: transparent; color: inherit; overflow: auto; visibility: hidden; max-width: calc(100vw - 16px); }
+.settings-popover-layer > .settings-popover-panel { position: relative; inset: auto; max-width: 100%; box-sizing: border-box; }

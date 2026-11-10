@@ -12,7 +12,8 @@ describe('shared algorithm list settings', () => {
     expect(settings).toContain('useSyncExternalStore');
     expect(settings).toContain('<SettingsPopover');
     expect(shared).toContain('export function SettingsPopover');
-    expect(shared).toContain('usePanelClamp(open && !modal, panelRef, triggerRef)');
+    expect(shared).toContain('usePopoverPosition({ open: open && !modal, panelRef, triggerRef');
+    expect(shared).toContain('popover="manual"');
     expect(shared).toContain('usePopoverDismiss(open && !modal, () => setOpen(false), rootRef, triggerRef)');
     expect(settings).toContain("value={view === 'full'}");
     expect(settings).toContain("onChange={show => onViewChange(show ? 'full' : 'cards')}");
