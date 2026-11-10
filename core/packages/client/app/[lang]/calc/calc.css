@@ -1179,3 +1179,53 @@
     background: var(--glass-popover-bg);
   }
 }
+
+
+.calc-compare { display: contents; }
+
+/* Keep full-width, lossless score fields above the chart and touch keypad. */
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 640px) {
+    .calc-page .calc-compare:not(.calc-compare--viewer) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        gap: 8px 12px;
+        align-items: start;
+    }
+    .calc-compare:not(.calc-compare--viewer) > .input-grid {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+    .calc-page .calc-compare:not(.calc-compare--viewer) > #chart-container {
+        grid-column: 1;
+        grid-row: 2;
+        width: 100%;
+        min-width: 0;
+        margin: 0;
+        align-self: center;
+    }
+    .calc-page .calc-compare:not(.calc-compare--viewer) .hth-chart {
+        max-height: 200px;
+    }
+    .calc-page .calc-compare:not(.calc-compare--viewer) > #numpad {
+        grid-column: 2;
+        grid-row: 2;
+        width: 100%;
+        margin: 0;
+        padding: 8px;
+    }
+    .calc-page .calc-compare:not(.calc-compare--viewer) .np-btn {
+        min-height: 44px;
+        padding: 4px 0;
+        font-size: 20px;
+    }
+    .calc-page .calc-compare:not(.calc-compare--viewer) #numpad-grid {
+        margin-left: 60px;
+        gap: 4px;
+    }
+    .calc-page .calc-compare:not(.calc-compare--viewer) .wheel-picker.calc-drum { width: 54px; }
+    .calc-compare > :is(.controls, .progress-controls, .calc-event-row, #calc-section) {
+        grid-column: 1 / -1;
+    }
+    .calc-page .calc-compare > .input-grid .time-cell { min-height: 44px; padding-block: 6px; }
+    .calc-page .calc-compare > .input-grid .input-row { margin: 2px 0; }
+}

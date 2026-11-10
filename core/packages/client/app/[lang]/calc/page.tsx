@@ -599,7 +599,7 @@ export function CalcPage() {
           <AverageMode event={event} />
         </>
       ) : (
-        <>
+        <div className={`calc-compare${isLiveViewer ? ' calc-compare--viewer' : ''}`}>
           {/* SVG 图表 */}
           <Chart readOnly={isLiveViewer} />
 
@@ -698,7 +698,7 @@ export function CalcPage() {
 
           {/* 指标表格 */}
           <CalcTable />
-        </>
+        </div>
       )}
       {qrUrl && live.code && (
         <RoomQrModal
