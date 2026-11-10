@@ -37,7 +37,9 @@
  * 动作触发的 `onSolved` 会带同一个时刻;只有纯状态快照没有,那时回退到最近一手。
  */
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createSmartCubeGuidanceController, type SmartCubeGuidanceState } from '@cuberoot/shared/smart-cube/scramble-guidance';
+import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import {
   SmartCubeAttemptProducer,
   timerSupportsLocalBattleSmartCube,
@@ -48,7 +50,8 @@ import type { BluetoothCubeHandle, BluetoothConnectionEvent } from '../_lib/blue
 import { useLiveCubeAnchor } from '../_shared/useLiveCubeAnchor';
 import type { MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 import type { Quat } from '../_lib/bluetooth/orientation';
-import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
+import { fromFaceletString } from '../_lib/cube/state';
+import { fixupScramble } from '../_lib/bluetooth/scramble_fixup';
 import { getSettings, useSettings } from '../_lib/settings';
 import { useAutoReady } from '../_lib/bluetooth/auto_ready';
 import { appendSolves, makeSolve } from '../_lib/storage/db';
@@ -60,6 +63,7 @@ import { tr } from '@/i18n/tr';
 export type BattleCubeHandle = BluetoothCubeHandle & {
   live: ReturnType<typeof useLiveCubeAnchor>;
   quatRef: { current: Quat | null };
+  guidance: SmartCubeGuidanceState;
 };
 
 export interface BattleCubes {
@@ -267,41 +271,24 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     appendSolves(ev, [solve]);
   }, []);
 
-  // 打乱后的目标状态,按「打乱字符串」缓存 —— 每一手都重算一次 applyScramble 太浪费,
-  // 而打乱一轮才换一次。
-  const targetCacheRef = useRef<Map<string, CubeFaces | null>>(new Map());
-  const targetFor = (scramble: string): CubeFaces | null => {
-    const cache = targetCacheRef.current;
-    if (!cache.has(scramble)) {
-      let t: CubeFaces | null = null;
-      try { t = applyScramble(3, scramble); } catch { t = null; }
-      if (cache.size > 32) cache.clear();
-      cache.set(scramble, t);
-    }
-    return cache.get(scramble) ?? null;
-  };
-
   /**
    * 拧到与打乱一致 → 预备。每一手之后查一次:这是站内 solo 的默认判据
    * (`bluetoothAutoReady: 'scrambled'`,csTimer `giiSD='s'`),对战沿用同一条,
    * 不另发明。只有三阶能比 —— 追踪器建模的就是三阶。
    */
-  const checkArm = useCallback((slot: number, handle: BluetoothCubeHandle, gesture = false) => {
+  const checkArm = useCallback((slot: number, handle: BluetoothCubeHandle, gesture = false, facelets = handle.facelets) => {
     const st = useBattleStore.getState();
     if (!slotCounts(slot, st.cubeMode)) return;
     const owner = ownerOf(slot, st.cubeMode, st.cubeHolder);
     if (optsRef.current.suspended || !handle.status.connected || owner >= st.playerCount) return;
     const p = st.players[owner];
     if (p.isTiming || p.canStart || p.isInspecting || p.isReady) return;
-    if (!timerSupportsLocalBattleSmartCube(st.puzzleIds[owner] as EventId)) return;
+    if (!timerSupportsLocalBattleSmartCube(battleToTimerEvent(st.puzzleIds[owner]))) return;
     const scramble = st.scrambles[owner];
     if (!scramble || st.scrambleLoadings[owner] || st.scrambleErrors[owner]) return;
     if (!gesture) {
       if (getSettings().bluetoothAutoReady !== 'scrambled') return;
-      const target = targetFor(scramble);
-      if (!target) return;
-      const faces = handle.getFaces();
-      if (!faces || !facesEqual(faces, target)) return;
+      if (!facelets || facelets !== smartCubeTargetFacelets(scramble)) return;
     }
     if (!st.cubeArm(owner)) return;
     armedRef.current[slot] = true;
@@ -382,7 +369,7 @@ function useSlot(
   slot: number,
   onMove: (slot: number, move: string, ts: number, clock?: MoveClockSample) => void,
   onSolved: (slot: number, atMs?: number, clock?: MoveClockSample) => void,
-  checkArm: (slot: number, handle: BluetoothCubeHandle, gesture?: boolean) => void,
+  checkArm: (slot: number, handle: BluetoothCubeHandle, gesture?: boolean, facelets?: string | null) => void,
   needMac: (slot: number, deviceName: string, isWrongKey?: boolean) => Promise<string | null>,
   onGyro: ((slot: number, q: Quat) => void) | undefined,
   onConnectionEvent: (slot: number, event: BluetoothConnectionEvent) => void,
@@ -395,6 +382,49 @@ function useSlot(
   const selfRef = useRef<BluetoothCubeHandle | null>(null);
   const liveRef = useRef<ReturnType<typeof useLiveCubeAnchor> | null>(null);
   const quatRef = useRef<Quat | null>(null);
+  const [guidance, setGuidance] = useState<SmartCubeGuidanceState>({ correctionActive: false, hint: null, match: null });
+  const guidanceRef = useRef<ReturnType<typeof createSmartCubeGuidanceController> | null>(null);
+  const targetRef = useRef<{ scramble: string; facelets: string | null } | null>(null);
+  const suspendedRef = useRef(suspended);
+  suspendedRef.current = suspended;
+  // Read the current store at each BLE event as well as after React commits:
+  // another cube can finish the round in the same notification batch.
+  const syncGuidanceContext = useCallback((connected: boolean) => {
+    const controller = guidanceRef.current;
+    if (!controller) return null;
+    const state = useBattleStore.getState();
+    const owner = ownerOf(slot, state.cubeMode, state.cubeHolder);
+    const supported = slotCounts(slot, state.cubeMode) && owner < state.playerCount
+      && timerSupportsLocalBattleSmartCube(battleToTimerEvent(state.puzzleIds[owner]));
+    const running = supported && state.players[owner].isTiming;
+    // Opening another player's connection panel cancels readiness. Clear the
+    // completed-guidance latch too, so closing it can prepare the same scramble.
+    const scramble = supported && (!suspendedRef.current || running)
+      && !state.scrambleLoadings[owner] && !state.scrambleErrors[owner]
+      ? state.scrambles[owner] : null;
+    if (scramble && targetRef.current?.scramble !== scramble) {
+      targetRef.current = { scramble, facelets: smartCubeTargetFacelets(scramble) };
+    }
+    controller.setConnected(connected && supported);
+    controller.setContext(scramble && targetRef.current?.facelets ? {
+      id: `${state.sessionId}:${state.cubeMode}:${owner}:${state.puzzleIds[owner]}:${state.scrambleRevisions[owner]}`,
+      scramble, targetFacelets: targetRef.current.facelets,
+    } : null);
+    controller.setRunning(running);
+    return controller;
+  }, [slot]);
+  useLayoutEffect(() => {
+    const controller = createSmartCubeGuidanceController({
+      onChange: setGuidance,
+      correctionLimit: () => getSettings().smartCubeCorrectionLimit,
+      solve: async (fromFacelets, targetFacelets) => {
+        const from = fromFaceletString(fromFacelets), target = fromFaceletString(targetFacelets);
+        return from && target ? fixupScramble(from, target) : null;
+      },
+    });
+    guidanceRef.current = controller;
+    return () => { controller.dispose(); guidanceRef.current = null; };
+  }, []);
   const { gyroEnabled, bluetoothAutoReady } = useSettings();
   const subscribers = useRef(new Set<(move: string, ts: number) => void>());
   const handle = useBluetoothCube({
@@ -402,19 +432,30 @@ function useSlot(
     onMove: (m, ts, facelets, metadata, clock) => {
       liveRef.current?.anchor.move(m, ts);
       if (!metadata?.futureHistory) liveRef.current?.anchor.observeFacelets(facelets);
-      onMove(slot, m, ts, clock);
-      if (selfRef.current && !metadata?.futureHistory) checkArm(slot, selfRef.current);
+      const state = useBattleStore.getState();
+      const owner = ownerOf(slot, state.cubeMode, state.cubeHolder);
+      // Recovered history is recorded during a solve, but cannot start one or
+      // advance preparation. Use this event's state, never a stale React handle.
+      if (!metadata?.futureHistory || state.players[owner].isTiming) onMove(slot, m, ts, clock);
+      const controller = syncGuidanceContext(selfRef.current?.status.connected ?? false);
+      if (!metadata?.futureHistory && facelets) {
+        controller?.observe(facelets, m);
+        if (selfRef.current) checkArm(slot, selfRef.current, false, facelets);
+      }
       if (!metadata?.futureHistory) for (const callback of subscribers.current) callback(m, ts);
     },
     onSolved: (atMs, clock) => onSolved(slot, atMs, clock),
     onNeedMac: (deviceName, isWrongKey) => needMac(slot, deviceName, isWrongKey),
-    onConnectionEvent: event => onConnectionEvent(slot, event),
+    onConnectionEvent: event => {
+      if (event.kind === 'disconnected') guidanceRef.current?.setConnected(false);
+      onConnectionEvent(slot, event);
+    },
     onGyro: gyroEnabled || onGyro ? (q) => { quatRef.current = q; onGyro?.(slot, q); } : undefined,
   });
   const live = useLiveCubeAnchor(handle.status.connected
     ? handle.status.deviceId || handle.status.deviceName || String(slot) : null, handle.facelets);
   liveRef.current = live;
-  useEffect(() => { selfRef.current = handle; });
+  useLayoutEffect(() => { selfRef.current = handle; });
   const battle = useBattleStore();
   const owner = ownerOf(slot, battle.cubeMode, battle.cubeHolder);
   const player = battle.players[owner];
@@ -431,9 +472,18 @@ function useSlot(
     },
   });
   // A fresh connection/state snapshot and a new scramble must also be verified.
-  const scramble = useBattleStore(s => s.scrambles[ownerOf(slot, s.cubeMode, s.cubeHolder)]);
-  useEffect(() => {
-    if (!handle.lastMoveMetadata?.futureHistory) checkArm(slot, handle);
-  }, [handle.status.connected, handle.facelets, scramble, checkArm, slot]);
-  return { ...handle, live, quatRef };
+  const scramble = battle.scrambles[owner];
+  const revision = battle.scrambleRevisions[owner];
+  const loading = battle.scrambleLoadings[owner];
+  const failed = battle.scrambleErrors[owner];
+  useLayoutEffect(() => {
+    const controller = syncGuidanceContext(handle.status.connected);
+    if (!handle.lastMoveMetadata?.futureHistory) {
+      if (handle.facelets) controller?.syncFacelets(handle.facelets);
+      checkArm(slot, handle);
+    }
+  }, [handle.status.connected, handle.facelets, handle.lastMoveMetadata?.futureHistory,
+    scramble, revision, loading, failed, owner, battle.sessionId, battle.cubeMode, battle.playerCount,
+    battle.puzzleIds[owner], player.isTiming, player.hasFinished, suspended, bluetoothAutoReady, checkArm, slot, syncGuidanceContext]);
+  return { ...handle, live, quatRef, guidance };
 }

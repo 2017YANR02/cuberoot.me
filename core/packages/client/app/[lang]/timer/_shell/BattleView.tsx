@@ -9,8 +9,6 @@ import { useBattleCubes, type BattleCubes, type BattleCubeHandle } from '../_bat
 import BluetoothModal from '../_components/BluetoothModal';
 import LiveCubeState from '../_components/LiveCubeState';
 import { mirrorForBrand, sensorBasisForBrand } from '../_lib/bluetooth/orientation';
-import { hintScramble } from '../_lib/bluetooth/scramble_hint';
-import { applyScramble, facesEqual } from '../_lib/cube/state';
 import {
   TimerBattleAppearanceSettings,
   TimerDeviceCenter,
@@ -300,13 +298,7 @@ function ScramblePanel({ ids, imgHeight, part = 'all', cube }: { ids: number[]; 
   const source = useMemo(() => meta ? {
     country: compFlagIso2(meta.ci), name: localizeCompName(meta.ci, meta.cn, isZh),
   } : null, [meta, isZh, flagVer]);
-  const verification = useMemo(() => {
-    if (!cube?.status.connected || !cube.facelets || !scramble || loading || failed) return null;
-    const faces = cube.getFaces();
-    if (!faces) return null;
-    try { return { match: facesEqual(faces, applyScramble(3, scramble)), hint: hintScramble(scramble, faces) }; }
-    catch { return null; }
-  }, [cube?.status.connected, cube?.facelets, scramble, loading, failed]);
+  const verification = cube?.status.connected && scramble && !loading && !failed ? cube.guidance : null;
   if (anyTiming) return null;
   const preview = part !== 'text' && scramble && !failed && !loading && store.showImage
     ? <TimerCubePreview event={event} scramble={scramble} height={imgHeight} fill visualization="2D"
@@ -314,6 +306,7 @@ function ScramblePanel({ ids, imgHeight, part = 'all', cube }: { ids: number[]; 
   return <>
     {part !== 'preview' && <TimerScrambleStrip scramble={loading || failed ? '' : formatScrambleForEvent(event, scramble || '')}
       match={verification?.match} hint={verification?.hint}
+      correctionActive={verification?.correctionActive ?? false}
       copiedLabel={tr({ en: 'Copied', zh: '已复制' })} fontScale={store.scrambleScale}
       verificationLabels={{ copiedCorrection: tr({ en: 'Copied the scramble', zh: '已复制原打乱' }) }}
       status={loading ? { kind: 'loading', message: tr({ en: 'Generating scramble…', zh: '生成打乱中…' }) }
@@ -791,16 +784,6 @@ export default function BattleView({ playerCount, playersControl, presenceContro
   return <>
     <BattlePresenceReporter playerCount={playerCount} cubes={cubes} onChange={onPresenceChange} />
     <TimerLocalBattlePage className="battle-container" surfaceRef={surfaceRef} layoutEditing={layoutEditing}
-      devices={cubeSupported && <TimerDeviceCenter triggerRef={cubeButtonRef}
-        ariaLabel={tr({ en: 'Timer devices', zh: '计时设备' })} menuLabel={tr({ en: 'Timer devices', zh: '计时设备' })}
-        triggerLabel={tr({ en: 'Devices', zh: '设备' })}
-        items={cubes.handles.slice(0, playerCount).map((cube, slot) => ({
-          id: `player-${slot}`, kind: 'smart-cube', active: cubeConnected[slot],
-          label: `${battlePlayerLabel(slot + 1, language)} · ${tr({ en: 'Smart cube', zh: '智能魔方' })}`,
-          detail: cubeNotices[slot] || cube.status.deviceName || undefined,
-          disabled: layoutEditing || cube.status.connected && store.players[slot].isTiming,
-          onSelect: () => openCube(slot),
-        }))} />}
       error={Object.entries(cubeNotices).filter(([slot]) => Number(slot) < playerCount)
         .map(([slot, notice]) => `P${Number(slot) + 1}: ${notice}`).join(' · ') || null}
       style={{
@@ -812,13 +795,23 @@ export default function BattleView({ playerCount, playersControl, presenceContro
         '--battle-cube-scale': store.contentLayout.cubeScale,
       } as CSSProperties} toolbar={{
       language: i18n.language === 'zh' ? 'zh' : 'en',
-      eventControl: <><BattleEventButton playerId={0} />
-        <Tooltip content={tr({ zh: '调整布局', en: 'Edit layout' })}>{tip => (
+      devices: cubeSupported && <TimerDeviceCenter triggerRef={cubeButtonRef}
+        ariaLabel={tr({ en: 'Timer devices', zh: '计时设备' })} menuLabel={tr({ en: 'Timer devices', zh: '计时设备' })}
+        triggerLabel={tr({ en: 'Devices', zh: '设备' })}
+        items={cubes.handles.slice(0, playerCount).map((cube, slot) => ({
+          id: `player-${slot}`, kind: 'smart-cube', active: cubeConnected[slot],
+          label: `${battlePlayerLabel(slot + 1, language)} · ${tr({ en: 'Smart cube', zh: '智能魔方' })}`,
+          detail: cubeNotices[slot] || cube.status.deviceName || undefined,
+          disabled: layoutEditing || cube.status.connected && store.players[slot].isTiming,
+          onSelect: () => openCube(slot),
+        }))} />,
+      eventControl: <BattleEventButton playerId={0} />,
+      layoutControl: <Tooltip content={tr({ zh: '调整布局', en: 'Edit layout' })}>{tip => (
           <button {...tip} type="button" className="tb-btn solo-layout-toggle" data-no-timer
             aria-label={tr({ zh: '调整布局', en: 'Edit layout' })} aria-pressed={layoutEditing}
             disabled={!layoutEditing && layoutBusy}
             onClick={() => setLayoutEditing(value => !value)}><LayoutTemplate size={18} strokeWidth={1.6} /></button>
-        )}</Tooltip></>,
+        )}</Tooltip>,
       onSettings: handleSettingsClick,
       onHistory: () => setVsHistoryOpen(true),
       controls: <>{playersControl}{presenceControl}</>,
