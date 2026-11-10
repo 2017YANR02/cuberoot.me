@@ -2,7 +2,8 @@
 
 import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, ExternalLink, RefreshCw, Save, ShieldCheck } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
@@ -24,7 +25,8 @@ import {
 import { tr } from '@/i18n/tr';
 import './ground-truth.css';
 import RegressionResults from './RegressionResults';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 
 const FILTERS = ['all', 'pending', 'discussion', 'confirmed', 'rejected'] as const;
 type Filter = (typeof FILTERS)[number];
@@ -94,15 +96,16 @@ function CandidateRow({ item, selected, onSelect }: {
 
 export default function ReconGroundTruthPage() {
   const [view, setView] = useQueryState('view', parseAsStringEnum(['smart', 'manual']).withDefault('smart'));
-  return <><div className="gt-page gt-mode"><label className="gt-filter-label">
-    <span>{tr({ zh: '查看内容', en: 'View' })}</span>
-    <select className="gt-filter-select" value={view} onChange={event => { void setView(event.target.value as 'smart' | 'manual'); }}>
-      <option value="smart">{tr({ zh: '智能魔方回归测试', en: 'Smart cube regression tests' })}</option>
-      <option value="manual">{tr({ zh: '人工复盘样例', en: 'Manual reconstruction cases' })}</option>
-    </select></label></div>{view === 'manual' ? <ManualGroundTruthPage /> : <RegressionResults />}</>;
+  const title = <select className="gt-filter-select gt-title-select" aria-label={tr({ zh: '查看内容', en: 'View' })} value={view}
+    onChange={event => { void setView(event.target.value as 'smart' | 'manual'); }}>
+    <option value="smart">{tr({ zh: '智能魔方回归测试', en: 'Smart cube regression tests' })}</option>
+    <option value="manual">{tr({ zh: '人工复盘样例', en: 'Manual reconstruction cases' })}</option>
+  </select>;
+  return view === 'manual' ? <ManualGroundTruthPage title={title} /> : <RegressionResults title={title} />;
 }
 
-function ManualGroundTruthPage() {
+function ManualGroundTruthPage({ title }: { title: ReactNode }) {
+  const pageSize = useIsMobile(700) ? 3 : 12;
   const user = useAuthUser();
   const isAdmin = useIsAdmin();
   const [q, setQ] = useQueryState('q', parseAsString.withDefault('').withOptions({ history: 'replace' }));
@@ -134,7 +137,7 @@ function ManualGroundTruthPage() {
     setLoading(true);
     setError(null);
     try {
-      const next = await listGroundTruthCandidates({ q, status: filter, page, limit: 40 });
+      const next = await listGroundTruthCandidates({ q, status: filter, page, limit: pageSize });
       setData(next);
       setSelectedId((current) => {
         if (current && next.items.some((item) => item.id === current)) return current;
@@ -145,7 +148,7 @@ function ManualGroundTruthPage() {
     } finally {
       setLoading(false);
     }
-  }, [filter, isAdmin, page, q]);
+  }, [filter, isAdmin, page, pageSize, q]);
 
   useEffect(() => {
     const timer = setTimeout(() => { void loadCandidates(); }, 180);
@@ -208,7 +211,7 @@ function ManualGroundTruthPage() {
       <main className="gt-page">
         <header className="gt-header">
 
-          <PageHeading backHref="/recon">{tr({ zh: '复盘测试样本', en: 'Reconstruction test corpus' })}</PageHeading>
+          <PageHeading backHref="/recon">{title}</PageHeading>
         </header>
         <div className="gt-access">
           <ShieldCheck size={20} />
@@ -224,21 +227,14 @@ function ManualGroundTruthPage() {
       <header className="gt-header">
 
         <div className="gt-title-row">
-          <div>
-            <PageHeading backHref="/recon">{tr({ zh: '复盘测试样本', en: 'Reconstruction test corpus' })}</PageHeading>
-            <p>{tr({
-              zh: '候选范围固定为标准三阶，且发布者为颜瑞民。候选不会自动进入测试，必须逐条确认。',
-              en: 'Candidates are standard 3×3 reconstructions published by Ruimin Yan. Nothing enters the tests without a manual decision.',
-            })}</p>
-          </div>
+          <PageHeading backHref="/recon">{title}</PageHeading>
+          <InfoTooltip iconSize={17} ariaLabel={tr({ zh: '样例说明', en: 'About these cases' })} content={tr({
+            zh: '颜瑞民发布的标准三阶复盘，需逐条确认后纳入测试。',
+            en: 'Standard 3×3 reconstructions published by Ruimin Yan. Each case requires manual approval before inclusion.',
+          })} />
           <button type="button" className="gt-refresh" onClick={() => void loadCandidates()} disabled={loading}>
             <RefreshCw size={15} /> {tr({ zh: '刷新', en: 'Refresh' })}
           </button>
-        </div>
-        <div className="gt-scope" aria-label={tr({ zh: '候选范围', en: 'Candidate scope' })}>
-          <span>event = 3x3</span>
-          <span>added_by_id = 2017YANR02</span>
-          <span>{data?.total ?? '—'} {tr({ zh: '条', en: 'rows' })}</span>
         </div>
       </header>
 
@@ -268,9 +264,10 @@ function ManualGroundTruthPage() {
         <section className="gt-candidates" aria-label={tr({ zh: '候选列表', en: 'Candidate list' })}>
           <div className="gt-section-head">
             <span>{tr({ zh: '候选', en: 'Candidates' })}</span>
-            {loading ? <span><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></span> : null}
+            {data && <span>{data.total}</span>}
           </div>
           <div className="gt-candidate-list">
+            {!data && !error && <ContentSkeleton variant="table" rows={pageSize} columns={2} label={tr({ zh: '正在加载候选…', en: 'Loading candidates…' })} />}
             {data?.items.map((item) => (
               <CandidateRow
                 key={item.id}
@@ -295,8 +292,8 @@ function ManualGroundTruthPage() {
         </section>
 
         <section className="gt-detail" aria-label={tr({ zh: '候选详情', en: 'Candidate details' })}>
-          {detailLoading ? <div className="gt-empty">{tr({ zh: '正在检查完整复原…', en: 'Checking full solve…' })}</div> : null}
-          {!detailLoading && !detail ? <div className="gt-empty">{tr({ zh: '选择一条候选', en: 'Select a candidate' })}</div> : null}
+          {(detailLoading || (!data && !error)) && <ContentSkeleton variant="article" media aspectRatio="3 / 1" rows={2} label={tr({ zh: '正在加载样例…', en: 'Loading case…' })} />}
+          {!detailLoading && data && !detail ? <div className="gt-empty">{tr({ zh: '选择一条候选', en: 'Select a candidate' })}</div> : null}
           {!detailLoading && detail ? (
             <>
               <div className="gt-detail-head">
@@ -321,7 +318,7 @@ function ManualGroundTruthPage() {
                 {detail.assessment.eligible ? <CheckCircle2 size={17} /> : <AlertTriangle size={17} />}
                 <div>
                   <strong>{detail.assessment.eligible
-                    ? tr({ zh: '文字解法可完整复原', en: 'Source reconstruction solves completely' })
+                    ? tr({ zh: '解法可复原', en: 'Solution solves' })
                     : tr({ zh: '不能确认纳入', en: 'Cannot be included' })}</strong>
                   {detail.assessment.blockers.length > 0 ? (
                     <span>{detail.assessment.blockers.map(issueText).join('；')}</span>
@@ -336,18 +333,13 @@ function ManualGroundTruthPage() {
                 </div>
               ) : null}
 
-              <div className="gt-text-compare">
-                <div>
-                  <h3>{tr({ zh: '数据库原文', en: 'Database source' })}</h3>
+              <div className="gt-manual-text">
+                <h3>{tr({ zh: '测试文本', en: 'Test text' })}{detail.assessment.crossNormalized && <> <InfoTooltip content={tr({ zh: '已统一十字朝向。', en: 'Cross orientation normalized.' })} /></>}</h3>
+                <pre>{detail.assessment.truth}</pre>
+                {detail.assessment.truth !== [detail.source.scramble, detail.source.solution].join('\n') && <details>
+                  <MoreToggle as="summary">{tr({ zh: '原文', en: 'Original' })}</MoreToggle>
                   <pre>{detail.source.scramble}{'\n'}{detail.source.solution}</pre>
-                </div>
-                <div>
-                  <h3>
-                    {tr({ zh: '最终测试文本', en: 'Final test text' })}
-                    {detail.assessment.crossNormalized ? <span>{tr({ zh: '已 Normalize cross', en: 'Cross normalized' })}</span> : null}
-                  </h3>
-                  <pre>{detail.assessment.truth}</pre>
-                </div>
+                </details>}
               </div>
 
               <div className="gt-editor">
@@ -359,37 +351,33 @@ function ManualGroundTruthPage() {
                     <option value="rejected">{statusText('rejected')}</option>
                   </select>
                 </label>
-                <label>
-                  <span>{tr({ zh: 'Timer replay 链接', en: 'Timer replay URL' })}</span>
+                <label htmlFor="gt-replay-url">
+                  <span>{tr({ zh: '回放链接', en: 'Replay URL' })} <InfoTooltip content={tr({ zh: '纳入测试需提供同一次还原的计时器 share 或 replay 链接。没有原始记录时请选择待讨论。', en: 'Inclusion requires a timer share or replay URL for this solve. Choose Discuss if the original recording is unavailable.' })} /></span>
                   <textarea
+                    id="gt-replay-url"
                     className="gt-editor-textarea"
                     value={replay}
                     onChange={(e) => { setReplay(e.target.value); setSaveError(null); }}
-                    aria-describedby="gt-replay-help"
-                    rows={3}
+                    rows={1}
                     spellCheck={false}
                     placeholder="https://cuberoot.me/zh/timer?share=…"
                   />
                 </label>
-                <p id="gt-replay-help">{tr({
-                  zh: '确认纳入需要同一把的原始动作记录。支持计时器的 share 或 replay 链接；没有记录时请先选“待讨论”，不会生成或猜测动作。',
-                  en: 'Inclusion requires the original moves from this solve. Paste a timer share or replay URL; without a recording, choose Discuss. Moves are never synthesized.',
-                })}</p>
                 <label>
                   <span>{decisionStatus === 'confirmed'
                     ? tr({ zh: '备注（可选）', en: 'Note (optional)' })
-                    : tr({ zh: '讨论或不采用的原因', en: 'Reason for discussion or rejection' })}</span>
-                  <textarea className="gt-editor-textarea" value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
+                    : tr({ zh: '原因', en: 'Reason' })}</span>
+                  <textarea className="gt-editor-textarea" value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
                 </label>
                 <details>
-                  <MoreToggle as="summary">{tr({ zh: '保存当前错误输出（可选）', en: 'Store current wrong output (optional)' })}</MoreToggle>
+                  <MoreToggle as="summary">{tr({ zh: '错误输出（可选）', en: 'Incorrect output (optional)' })}</MoreToggle>
                   <textarea className="gt-editor-textarea" value={currentWrong} onChange={(e) => setCurrentWrong(e.target.value)} rows={6} spellCheck={false} />
                 </details>
                 {decisionStatus === 'confirmed' && detail.assessment.warnings.length > 0 ? (
                   <BoolToggle
                     value={acknowledgeWarnings}
                     onChange={setAcknowledgeWarnings}
-                    label={tr({ zh: '我已检查这些警告，仍确认纳入', en: 'I reviewed the warnings and still want to include it' })}
+                    label={tr({ zh: '已核对警告，确认纳入', en: 'Warnings reviewed; confirm inclusion' })}
                   />
                 ) : null}
                 {saveError ? <div className="gt-error"><AlertTriangle size={16} /> {saveError}</div> : null}

@@ -1,6 +1,7 @@
 'use client';
 
 import { Tooltip } from '@/components/Tooltip';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { readTimerReplay } from '@cuberoot/shared/timer/replay-client';
 import type { Solve } from '@cuberoot/shared/timer';
@@ -16,9 +17,10 @@ import { useWebReconstructHost } from '@/lib/use-web-reconstruct-host';
 import { intakeRequest } from '@/lib/recon-intake-api';
 import { tr, useLang } from '@/i18n/tr';
 import SourceInfo from './SourceInfo';
+import TestComparison, { snapshotText, type RegressionComparison } from './TestComparison';
 import '@/components/recon/recon-intake.css';
 
-const ReconstructReport = dynamic(() => import('@cuberoot/timer-ui/reconstruct-report'), { ssr: false });
+const ReconstructReport = dynamic(() => import('@cuberoot/timer-ui/reconstruct-report'), { ssr: false, loading: () => <ContentSkeleton variant="article" media aspectRatio="3 / 1" rows={2} label={tr({ zh: '正在加载复盘分析…', en: 'Loading reconstruction analysis…' })} /> });
 const ReconIntakeEditor = dynamic(() => import('@/components/recon/ReconIntakeAction').then(module => module.ReconIntakeEditor), { ssr: false });
 
 const statuses = {
@@ -29,8 +31,7 @@ const runStatuses = {
   passed: { zh: '通过', en: 'Passed' }, failed: { zh: '失败', en: 'Failed' },
   interrupted: { zh: '已中断', en: 'Interrupted' },
 };
-const text = (snapshot: ReconSnapshot | null | undefined) => snapshot
-  ? [snapshot.inspection + ' // inspection', ...snapshot.lines.map(line => `${line.moves.join(' ')} // ${line.label ?? ''} [${line.fromIdx + 1}–${line.toIdx + 1}]`)].join('\n') : '—';
+const text = (snapshot: ReconSnapshot | null | undefined) => snapshot ? snapshotText(snapshot) : '—';
 type Detail = {
   item: ReconIntakeCase;
   runs: Array<{ payload: ReconIntakeCase['latestRun']; revision: number; created_at: string }>;
@@ -38,9 +39,10 @@ type Detail = {
 };
 
 
-export default function RegressionCaseDetail({ intakeId, replaySource, onChange, renderHeader }: {
+export default function RegressionCaseDetail({ intakeId, replaySource, onChange, renderHeader, regression }: {
   intakeId?: string; replaySource: string; onChange: () => void;
   renderHeader: (collectionInfo: ReactNode) => ReactNode;
+  regression: RegressionComparison;
 }) {
   const isZh = useLang() === 'zh', host = useWebReconstructHost();
   const [reportOpen, setReportOpen] = useState(true);
@@ -87,7 +89,7 @@ export default function RegressionCaseDetail({ intakeId, replaySource, onChange,
       item.claimedBy && tr({ zh: 'AI 领取', en: 'AI claim' }) + '：' + item.claimedBy + ' · ' + item.leaseUntil,
     ].filter(Boolean).join('\n')} /> : null)}
     {error && <p role="alert">{error}</p>}
-    {loading && <p role="status">{tr({ zh: '正在加载复盘详情…', en: 'Loading reconstruction…' })}</p>}
+    {loading && <ContentSkeleton variant="article" media aspectRatio="3 / 1" rows={2} label={tr({ zh: '正在加载复盘详情…', en: 'Loading reconstruction…' })} />}
     {item ? <>
       <details open={!!item.sourceSnapshot}><MoreToggle as="summary">{tr({ zh: '来源与收录信息', en: 'Source and collection' })}</MoreToggle>
         <SourceInfo source={item.sourceSnapshot} />
@@ -101,16 +103,7 @@ export default function RegressionCaseDetail({ intakeId, replaySource, onChange,
         <pre>{note.observed}</pre><p>{note.expectedAlgorithm}</p><p>{note.expectedEffect}</p>
       </div>)}
       </details>}
-      <details><MoreToggle as="summary">{tr({ zh: '单样本预期与输出', en: 'Individual expected and actual' })}</MoreToggle>
-      <div className="gt-review-summary">
-        <span data-result={item.latestRun?.status ?? 'not-run'}>{tr({ zh: '单样本测试', en: 'Individual test' })}：{item.latestRun ? tr(runStatuses[item.latestRun.status]) : tr({ zh: '未运行', en: 'Not run' })}{item.latestRun && ` · v${item.latestRun.revision} · ${item.latestRun.createdAt}`}</span>
-        <InfoTooltip content={tr({ zh: '播放器按当前代码重建。单样本测试与所选全量回归可能来自不同版本，展开对照可查看时间和版本。', en: 'Playback uses current code. Individual and regression results may come from different versions; expand comparisons for timestamps and revisions.' })} />
-      </div>
-      <div className="ri-compare"><div><h3>{item.expected ? tr({ zh: '已确认的人工预期', en: 'Approved expectation' })
-        : tr({ zh: '收录时快照（尚未确认正确）', en: 'Intake snapshot (not approved)' })}</h3><pre>{text(item.expected ?? item.input.observed)}</pre></div>
-        <div><h3>{tr({ zh: '最近测试输出', en: 'Latest test output' })}</h3><pre>{text(item.latestRun?.actual)}</pre></div></div>
-      {item.latestRun && <>{item.latestRun.errors.length > 0 && <pre>{item.latestRun.errors.join('\n')}</pre>}<small>{item.latestRun.commit} · {item.latestRun.fingerprint}</small></>}
-      </details>
+      <TestComparison regression={regression} item={item} />
       <div className="ri-queue-controls">
         <Tooltip content={tr({ zh: '复制当前样例的 AI 排查指令', en: 'Copy AI troubleshooting instructions for this case' })}>{tip => <button {...tip} className="ri-button" type="button" onClick={() => void copyTask()}>{copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: 'AI 处理指令', en: 'AI instructions' })}</button>}</Tooltip>
         <button className="ri-button" type="button" disabled={busy} onClick={() => setEditing(true)}>{tr({ zh: '修改批注', en: 'Edit annotations' })}</button>
@@ -136,5 +129,6 @@ export default function RegressionCaseDetail({ intakeId, replaySource, onChange,
         <ReconstructReport solve={solve} host={{ ...host, renderIntakeAction: undefined }} isZh={isZh} hideActions hideDate /></details>
         : <p>{tr({ zh: '此样例的原始动作记录暂不可用。', en: 'The original recording is currently unavailable.' })}</p>}
     </>}
+    {!item && <TestComparison regression={regression} />}
   </div>;
 }
