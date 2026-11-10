@@ -17,6 +17,10 @@
 .compare-section-head { margin: 0 0 26px; }
 .compare-section-head h2 { font-size: 21px; letter-spacing: -.025em; margin: 7px 0 0; }
 .compare-server { margin-bottom: 48px; }
+.compare-recent { margin-top: 48px; }
+.compare-history summary { display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none; }
+.compare-history summary::-webkit-details-marker { display: none; }
+.compare-history[open] summary > svg { transform: rotate(90deg); }
 .compare-server-summary { margin: 0 0 24px; }
 .compare-server-summary strong { font-size: 30px; font-variant-numeric: tabular-nums; }
 .compare-results > .compare-protocol-strip { padding: 0 0 24px; }

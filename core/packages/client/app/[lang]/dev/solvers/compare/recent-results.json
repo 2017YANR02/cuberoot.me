@@ -1,0 +1,312 @@
+{
+  "schema": "cuberoot.recent-solver-comparisons/v1",
+  "upstream": "947c20d93564f150aad9c292486ab730a329b86c",
+  "mac": {
+    "id": "m5-max",
+    "title": {
+      "zh": "Apple M5 Max · 128 GiB 内存",
+      "en": "Apple M5 Max · 128 GiB RAM"
+    },
+    "measuredAt": "2026-11-09T16:02:08.366Z",
+    "sourceRange": [
+      1,
+      1000
+    ],
+    "cases": 1000,
+    "threads": 16,
+    "passes": 1,
+    "warmupCases": 0,
+    "casesSha256": "ef916badc0c69e06bb155e286dbdb8c233ce4651f8b5e870e13ab71ac136c2c5",
+    "timing": "Sum of per-cube search times; table loading excluded.",
+    "rows": [
+      {
+        "id": "opt10",
+        "name": "CubeRoot Opt10",
+        "tableGB": 32,
+        "tableBytes": 31130911744,
+        "seconds": 22.685558456000003,
+        "cases": 1000,
+        "threads": 16,
+        "lanes": 8,
+        "note": {
+          "zh": "原生 · 8 通道",
+          "en": "Native · 8 lanes"
+        },
+        "verifiedSolutions": 1000,
+        "optimalLengthsMatched": 1000,
+        "proof": {
+          "report": "2026-11-09-m5-max/report.json",
+          "sha256": "57d971a9d31e3da3bee0d20daf4a77e53ac1778b2aa09f8d33b2c1ee2e2d112c"
+        }
+      },
+      {
+        "id": "egg-h10",
+        "name": "egg h10",
+        "tableGB": 32,
+        "tableBytes": 31130914816,
+        "seconds": 10.804456030999997,
+        "cases": 1000,
+        "threads": 16,
+        "lanes": 32,
+        "note": {
+          "zh": "原生 · 默认 32 通道",
+          "en": "Native · default 32 lanes"
+        },
+        "verifiedSolutions": 1000,
+        "optimalLengthsMatched": 1000,
+        "proof": {
+          "report": "2026-11-09-m5-max/report.json",
+          "sha256": "57d971a9d31e3da3bee0d20daf4a77e53ac1778b2aa09f8d33b2c1ee2e2d112c"
+        }
+      },
+      {
+        "id": "egg-h11-default",
+        "name": "egg h11",
+        "tableGB": 64,
+        "tableBytes": 62261825536,
+        "seconds": 6.4713242100000095,
+        "cases": 1000,
+        "threads": 16,
+        "lanes": 24,
+        "note": {
+          "zh": "原生 · 默认 24 通道",
+          "en": "Native · default 24 lanes"
+        },
+        "verifiedSolutions": 1000,
+        "optimalLengthsMatched": 1000,
+        "proof": {
+          "report": "2026-11-09-h11-patched-copy/report.json",
+          "sha256": "be116690ca9e201366d8dc6a79c4c34db716987c5a1e59261e9aa21e97159456"
+        }
+      },
+      {
+        "id": "egg-h11-matched",
+        "name": "egg h11",
+        "tableGB": 64,
+        "tableBytes": 62261825536,
+        "seconds": 6.546999470999997,
+        "cases": 1000,
+        "threads": 16,
+        "lanes": 32,
+        "note": {
+          "zh": "历史参数对照 · 32 通道",
+          "en": "Historical parameter comparison · 32 lanes"
+        },
+        "verifiedSolutions": 1000,
+        "optimalLengthsMatched": 1000,
+        "proof": {
+          "report": "2026-11-09-h11-patched-copy/report.json",
+          "sha256": "be116690ca9e201366d8dc6a79c4c34db716987c5a1e59261e9aa21e97159456"
+        }
+      }
+    ],
+    "speedRatio32": 2.099648366462033,
+    "egg64Over32SpeedRatio": 1.6695896667183023,
+    "note": {
+      "zh": "同一 WCA 1000 题，逐题求解，每种设置一轮、不预热；只计搜索，不含加载。4000 个解均独立回放并核对最优步数。64G 复用之前的 32G 成绩，加载器已修复，搜索算法未改；以后 64G 使用默认设置。不同机器的图表不作直接比较。",
+      "en": "Same WCA 1000 cases, one cube at a time; one pass per setting, no warmup. Search time excludes loading. All 4000 solutions independently replayed and optimal lengths matched. The 64G tests reuse the earlier 32G results with a repaired loader and unchanged search algorithm. Future 64G runs use defaults. Charts on different machines are not directly comparable."
+    }
+  },
+  "aliyun": {
+    "id": "aliyun-egg",
+    "title": {
+      "zh": "阿里云 · egg h8 对比",
+      "en": "Alibaba Cloud · egg h8 comparison"
+    },
+    "measuredAt": "2026-11-10T03:37:09.059Z",
+    "sourceRange": [
+      1,
+      100
+    ],
+    "cases": 100,
+    "threads": 4,
+    "passes": 1,
+    "warmupCases": 0,
+    "casesSha256": "06124ee37fe96897fd81eb0f4af24442f2edba6d387a69ab0291316aef793e0c",
+    "cpu": "Intel Xeon Platinum · Linux · 4 vCPU",
+    "timing": "Sum of per-request TSV round-trip times; startup, HTTP and queueing excluded.",
+    "baselineReused": true,
+    "accepted": false,
+    "ratios": {
+      "wall": 1.0929286420073725,
+      "cpu": 1.0780947871039028,
+      "p50": 1.1572518710038184,
+      "p95": 1.3206986347502037,
+      "p99": 0.9223694507715721
+    },
+    "checks": {
+      "comparison": {
+        "wall": false,
+        "cpu": false,
+        "p50": false,
+        "p95": false,
+        "p99": true
+      }
+    },
+    "rows": [
+      {
+        "id": "opt8",
+        "name": "CubeRoot Opt8",
+        "tableGB": 8,
+        "tableBytes": 7782727680,
+        "seconds": 72.74352608600002,
+        "cases": 100,
+        "threads": 4,
+        "lanes": 8,
+        "note": {
+          "zh": "线上原版 · 11 月 9 日已有成绩",
+          "en": "Production · existing Nov 9 result"
+        },
+        "verifiedSolutions": 100,
+        "optimalLengthsMatched": 100,
+        "measuredAt": "2026-11-09T16:22:03.848Z",
+        "startupSeconds": 52.699836549,
+        "cpuSeconds": 253.41,
+        "p50": 0.41731167700000515,
+        "p95": 2.592405888000001,
+        "p99": 4.55122017700001,
+        "binarySha256": "0f6f481c5f98130d5295aaf2b073f2b642a5b8c4e271dfb60c19f42c6c9a50c0",
+        "peakRssBytes": 7789350912,
+        "proof": {
+          "report": "egg-h8-aliyun-20261109/independent-verification.json",
+          "sha256": "d4beaa6d9e70388e7c25889a0762a01480f3158cf893ea06770c33585157dc4f"
+        }
+      },
+      {
+        "id": "egg-h8",
+        "name": "egg h8",
+        "tableGB": 8,
+        "tableBytes": 7782731776,
+        "seconds": 79.50348317999988,
+        "cases": 100,
+        "threads": 4,
+        "lanes": 40,
+        "note": {
+          "zh": "完整求解器 · 默认 40 通道",
+          "en": "Complete solver · default 40 lanes"
+        },
+        "verifiedSolutions": 100,
+        "optimalLengthsMatched": 100,
+        "measuredAt": "2026-11-10T03:37:09.059Z",
+        "startupSeconds": 45.878467195999995,
+        "cpuSeconds": 273.2,
+        "p50": 0.4829347189999971,
+        "p95": 3.4237869169999904,
+        "p99": 4.1979064549999965,
+        "binarySha256": "5bf640bb3b87a083d69085e6c6af79b334b64660b9d0392d1ed2164954984b90",
+        "peakRssBytes": 7794589696,
+        "proof": {
+          "report": "egg-h8-aliyun-20261109/independent-verification.json",
+          "sha256": "d4beaa6d9e70388e7c25889a0762a01480f3158cf893ea06770c33585157dc4f"
+        }
+      }
+    ],
+    "pageReference": {
+      "seconds": 87.9764358779999,
+      "speedRatio": 1.1065733519978846
+    },
+    "note": {
+      "zh": "同一服务器、同一 WCA 第 1–100 题、4 线程。egg 新测一轮、不预热；Opt8 复用 11 月 9 日已有成绩，未重测。200 个解全部独立回放、最优步数一致。只计服务内求解，加载、网络和排队另计。两次测量时间不同，单轮结果不代表普遍性能。",
+      "en": "Same server, WCA cases 1–100 and 4 threads. One new egg pass, no warmup; Opt8 reuses its Nov 9 result without rerunning. All 200 solutions independently replayed with matching optimal lengths. Service solve time excludes startup, network and queueing. Measurements were taken at different times; single-pass results are not universal."
+    }
+  },
+  "opt8Experiments": {
+    "measuredAt": "2026-11-09",
+    "sourceRange": [
+      1,
+      100
+    ],
+    "cases": 100,
+    "threads": 4,
+    "passes": 1,
+    "warmupCases": 0,
+    "baselineSeconds": 72.74352608600002,
+    "accepted": false,
+    "rows": [
+      {
+        "id": "interleaved",
+        "name": {
+          "zh": "8 通道交错推进",
+          "en": "8-lane interleaving"
+        },
+        "seconds": 83.1221605050001,
+        "verifiedSolutions": 100,
+        "optimalLengthsMatched": 100,
+        "proof": {
+          "report": "2026-11-09-timer-opt8/results/independent-verification.json",
+          "sha256": "e8922a6412634b353ca491284ff5e5b3c876ad7ceb8745b8a9685050fec666a9"
+        }
+      },
+      {
+        "id": "avx2",
+        "name": {
+          "zh": "AVX2 / POPCNT 编译",
+          "en": "AVX2 / POPCNT build"
+        },
+        "seconds": 73.6651995700001,
+        "verifiedSolutions": 100,
+        "optimalLengthsMatched": 100,
+        "proof": {
+          "report": "2026-11-09-timer-opt8/followup/results/independent-verification.json",
+          "sha256": "9e7213776b6ef20cf2f0951f2262c9bb271652bfa7e553d4225b6bc01ade14c3"
+        }
+      },
+      {
+        "id": "interleaved32",
+        "name": {
+          "zh": "32 通道交错＋动态分配",
+          "en": "32-lane interleaving + scheduling"
+        },
+        "seconds": 80.52976273499998,
+        "verifiedSolutions": 100,
+        "optimalLengthsMatched": 100,
+        "proof": {
+          "report": "2026-11-09-timer-opt8/followup/results/independent-verification.json",
+          "sha256": "9e7213776b6ef20cf2f0951f2262c9bb271652bfa7e553d4225b6bc01ade14c3"
+        }
+      },
+      {
+        "id": "nta",
+        "name": {
+          "zh": "NTA 预取",
+          "en": "NTA prefetch"
+        },
+        "seconds": 72.80930927000006,
+        "verifiedSolutions": 100,
+        "optimalLengthsMatched": 100,
+        "proof": {
+          "report": "2026-11-09-timer-opt8/prefetch/results/independent-verification.json",
+          "sha256": "22dcba013c49258224dff8d60e06d257e35f6351085350e65f03e5ebcb880f3a"
+        }
+      },
+      {
+        "id": "dynamic",
+        "name": {
+          "zh": "T0 预取＋动态分配",
+          "en": "T0 prefetch + scheduling"
+        },
+        "seconds": 69.7897583539999,
+        "verifiedSolutions": 100,
+        "optimalLengthsMatched": 100,
+        "proof": {
+          "report": "2026-11-09-timer-opt8/prefetch/results/independent-verification.json",
+          "sha256": "22dcba013c49258224dff8d60e06d257e35f6351085350e65f03e5ebcb880f3a"
+        }
+      }
+    ],
+    "holdout": {
+      "sourceRange": [
+        101,
+        200
+      ],
+      "baselineSeconds": 113.94666935299993,
+      "candidateSeconds": 119.5640295400001,
+      "verifiedSolutions": 200,
+      "accepted": false,
+      "proof": {
+        "report": "2026-11-09-timer-opt8/holdout/results/independent-verification.json",
+        "sha256": "563fa6b8e46bcf4055cbca9552749dec2eebbd029d41409e990ed75e298d50de"
+      }
+    }
+  }
+}

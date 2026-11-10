@@ -29,3 +29,25 @@ Local/CI adapter tests use only a roughly 30 MB h0 table. They exercise multiple
 requests, invalid syntax, solved states and known shallow optimal lengths.
 Production acceptance additionally requires independent cubing.js replay and
 agreement with historical optimal lengths for every measured case.
+
+## Completed Alibaba run
+
+The user reduced the original 300-case plan to one new egg pass over WCA
+cases 1–100, reusing the independently verified Nov 9 Opt8 baseline. The
+interrupted 143-case baseline extension is retained but excluded. No egg
+parameter tuning, second group or baseline rerun followed that change.
+
+`maintenance.sh TASK benchmark100` runs `benchmark.mjs` with `plan100.json`
+and `cases100.json`, retaining evidence under `TASK/egg100`. It requires the
+fixed binaries, generated table receipt and `baseline-reused` evidence.
+`verify.mjs TASK` independently replays both sets of solutions and evaluates
+the frozen performance gates; it does not load a pruning table or run a solver.
+The helper reuses the existing native-service benchmark's guards and protocol.
+
+Result: egg **79.503483 s**, existing Opt8 **72.743526 s**; all 200 solutions
+and optimal lengths verified. The performance gate failed; Timer continues
+to use Opt8. The unpromoted API integration draft was archived locally, not
+deployed. Table and complete raw evidence remain at
+`/root/egg-h8-20261109/` and the matching local `.local-data` directory.
+The comparison page's `recent-results.json` publishes the exact timings,
+measurement conditions and evidence hashes, including the earlier Mac tests.
