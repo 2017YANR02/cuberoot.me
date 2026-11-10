@@ -1762,3 +1762,17 @@
 @media (max-width: 767px) {
   .sim-stage-controls .playback-bar-controls:has(> .sim-playback-speed) { column-gap: 2px; }
 }
+
+/* Escape the short portrait stage scroll clip while keeping all settings reachable. */
+@media (pointer: coarse) and (orientation: portrait) and (max-width: 767px) and (max-height: 600px) {
+  .sim-playback-settings .settings-popover-panel {
+    /* anchored-panel: clamped (SettingsPopover uses usePanelClamp). */
+    position: fixed;
+    top: calc(var(--page-notice-h, 0px) + 8px);
+    right: 8px;
+    left: auto;
+    bottom: auto;
+    max-height: calc(var(--sim-visible-height, 100dvh) - var(--page-notice-h, 0px) - 16px);
+    overflow-y: auto;
+  }
+}
