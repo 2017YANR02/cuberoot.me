@@ -151,8 +151,7 @@
 }
 
 /* Overview: charts and short metrics first, definitions and queues on demand. */
-.admin-overview .admin-dashboard__toolbar { margin-bottom: 16px; gap: 12px; }
-.admin-overview .admin-dashboard__toolbar > div { font-size: .875rem; }
+.admin-overview .admin-dashboard__toolbar { margin-bottom: 16px; gap: 12px; justify-content: flex-end; }
 .admin-overview .admin-dashboard__metrics { gap: 12px; margin-bottom: 16px; }
 .admin-overview .admin-dashboard__metrics > * { padding: 16px; gap: 8px; }
 .admin-overview .admin-dashboard__metrics strong { font-size: 2rem; }

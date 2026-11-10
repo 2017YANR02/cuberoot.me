@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - 'core/scripts/dev-preview/**'
+      - 'core/scripts/local-dev.ts'
+      - 'core/scripts/local-dev.mts'
+      - 'core/scripts/resolve-workspace-path.mjs'
       - 'core/packages/shared/src/dev-preview.ts'
       - 'ops/dev-preview/**'
       - 'ops/nginx/dev-machines.conf'
@@ -12,6 +15,9 @@ on:
   pull_request:
     paths:
       - 'core/scripts/dev-preview/**'
+      - 'core/scripts/local-dev.ts'
+      - 'core/scripts/local-dev.mts'
+      - 'core/scripts/resolve-workspace-path.mjs'
       - 'core/packages/shared/src/dev-preview.ts'
       - 'ops/dev-preview/**'
       - 'ops/nginx/dev-machines.conf'
@@ -29,6 +35,9 @@ jobs:
           sparse-checkout: |
             .node-version
             core/scripts/dev-preview
+            core/scripts/local-dev.ts
+            core/scripts/local-dev.mts
+            core/scripts/resolve-workspace-path.mjs
             core/packages/shared/src/dev-preview.ts
             ops/dev-preview
             ops/nginx/dev-machines.conf
@@ -36,4 +45,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.node-version'
-      - run: node --test core/scripts/dev-preview/deployments.test.ts core/scripts/dev-preview/checkout.test.ts core/scripts/dev-preview/model.test.ts core/scripts/dev-preview/retry.test.ts core/scripts/dev-preview/enroll.test.ts
+      - run: node --test core/scripts/dev-preview/deployments.test.ts core/scripts/dev-preview/checkout.test.ts core/scripts/dev-preview/model.test.ts core/scripts/dev-preview/retry.test.ts core/scripts/dev-preview/enroll.test.ts core/scripts/dev-preview/reuse.test.ts core/scripts/dev-preview/restart.test.ts

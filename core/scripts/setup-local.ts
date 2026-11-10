@@ -17,7 +17,7 @@ const devsite = join(binPath, process.platform === 'win32' ? 'devsite.cmd' : 'de
 const shortcut = join(binPath, process.platform === 'win32' ? 'cuberoot.cmd' : 'cuberoot');
 try { lstatSync(shortcut); throw Error(`Command already exists: ${shortcut}. No settings changed.`); }
 catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
-const project = { directory: core, url: 'http://127.0.0.1:3000/zh', command: [process.execPath, join(core, 'scripts/local-dev.ts')] };
+const project = { directory: core, url: 'http://127.0.0.1:3000/zh', command: [process.execPath, join(core, 'scripts/local-dev.mts')] };
 
 if (existsSync(devsite)) {
   // Use the existing host tool's registration API, including the Python launcher.

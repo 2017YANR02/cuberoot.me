@@ -93,7 +93,7 @@ node scripts/dev-preview/client.ts configure --id xiaoming-alienware --profile "
 node scripts/dev-preview/client.ts run --id xiaoming-alienware
 ```
 
-run 在前台保持运行。已有健康 CubeRoot 服务时复用；3000 被不相关服务占用时退出，不杀端口进程。未运行时先构建已有 cubing worker，再直接启动 Next 的现有 binary（绕开会清理端口的 predev-clean）；只停止自身创建的进程。SSH 断线会自动重连。不能同时运行两份 runner。
+run 在前台保持运行。已有健康 CubeRoot 服务时复用；3000 被不相关服务占用时退出，不杀端口进程。未运行时复用仓库 `local-dev.mts` 中的资源生成与 Turbo watch 启动逻辑（绕开会清理端口的 predev-clean）；只停止自身创建的进程。SSH 断线会自动重连。不能同时运行两份 runner。日常快捷命令统一走 `local-dev.mts --preview 设备标识`，默认传递 `--restart`：停止该 checkout 的旧 runner、前端及其隧道，清理 Next 开发缓存，再启动新会话。新会话使用本机鉴权控制通道；旧版 Mac/Unix runner 核对脚本路径、设备标识及进程树后退出，不凭 PID 直接杀进程。`cuberoot --reuse` 才只打开现有健康服务。首次接入启动同样使用 `--restart`；恢复仍在执行的接入流程不会重复启动。
 
 前台验收通过后，Ctrl+C 停止该 runner，然后登记登录自启：
 

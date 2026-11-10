@@ -17,6 +17,8 @@
 
 相关技能按 catalog 的 trigger 使用，路径按 root alias 展开，不凭记忆或猜路径；新 UI 文案用 `i18n`，颜色/材质用 `theme-tokens`，路由/标题/SEO 用 `document-title` 及其 SEO 契约。
 
+双机同时开发与交接读取[双机开发流程](docs/contributing/multi-machine.md)；代码通过 Git 同步，发布由一个会话顺序整合两机，不镜像工作区或运行状态。
+
 ## 系统边界
 
 - `core/packages/client` 是唯一 Web 前端；`core/apps/api` 是独立 Hono API + PG，禁止依赖 Web 私有源码或运行时资产。

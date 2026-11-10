@@ -69,7 +69,7 @@ async function main(args: string[]) {
   // The configured command owns browser readiness and process cleanup.
   child.on('error', error => { console.error(error.message); process.exitCode = 1; });
   child.on('exit', code => { process.exitCode = code ?? 1; });
-  for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => {
+  for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP'] as const) process.on(signal, () => {
     // Console Ctrl+C already reaches the Windows child; let its cleanup run.
     if (process.platform !== 'win32' || signal !== 'SIGINT') child.kill(signal);
   });

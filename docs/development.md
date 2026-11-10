@@ -18,7 +18,7 @@ pnpm setup:local
 - `setup:local` 复用 `build:deps` 构建共享模块，随后安装通用 TypeScript `devsite`，通过项目登记创建快捷命令，不定义个人 shell 函数。
 - 已有 `cuberoot` 登记时保留原配置，包括维护者的 `https://dev.cuberoot.me`；已有 Mac `devsite` 时调用其 `add` 子命令，不替换它。命令同名但未登记、已有 Windows devsite 等情况停止并提示，不覆盖未知文件。
 - 配置沿用 `~/.config/devsite/projects.json`；新启动器位于 `~/.local/share/devsite/devsite.ts`。Mac 命令在 `~/.local/bin`，安装器为默认 zsh 追加相应 PATH；其他 shell 自行把此目录加入 PATH。Windows 命令在 `%APPDATA%\npm`，若未在 PATH，按安装输出通过 Windows「环境变量 → 用户变量 → Path」添加并重开终端。安装器不修改系统 PATH 或执行策略。
-- 注册的启动入口为 `node core/scripts/local-dev.ts`（实际绝对路径由安装器记录），复用既有资源生成器和 Next binary，避开会杀端口、清缓存的 `predev-clean`。已有健康 CubeRoot 服务时复用；其他服务或启动中状态不会被停止。
+- 注册的启动入口为 `node core/scripts/local-dev.mts`（实际绝对路径由安装器记录），默认先停止本 checkout 的旧开发会话、清理 Next 开发缓存，再复用既有资源生成器和 Turbo watch 启动新服务，终端持续显示日志。无法核实归属的端口进程保留并报错。已有独立隧道的设备通过 `--url` 指定预览网址；完成 SSH 接入的设备通过 `--preview 设备标识` 复用同一启动入口。
 - Node 或仓库移动后需维护登记；新增其他项目继续用 `devsite add 名称 目录 网址 -- 启动命令`，启动命令负责打开就绪网页。当前 TS 版支持 `add/list/run`；已有维护者版命令保持原样。
 - 本地前端默认代理线上 API，不是隔离测试库；写入操作按负责人安排执行。无需分发管理员密钥、数据库密码或现有 FRP 令牌。
 - 本轮不配置 DNS、HTTPS、隧道或登录自启；跨设备预览按 [开发预览接入](dev-preview-onboarding.md) 单独办理。
@@ -26,8 +26,12 @@ pnpm setup:local
 已有 Windows devsite 的人工登记范本：在 `core/` 中，把以下目录和 Node 路径换成目标电脑实际路径，使用现有工具登记；不要覆盖原启动器。
 
 ```text
-devsite add cuberoot "C:/实际项目目录/core" http://127.0.0.1:3000/zh -- "C:/实际Node目录/node.exe" "C:/实际项目目录/core/scripts/local-dev.ts"
+devsite add cuberoot "C:/实际项目目录/core" http://127.0.0.1:3000/zh -- "C:/实际Node目录/node.exe" "C:/实际项目目录/core/scripts/local-dev.mts"
 ```
+
+## 多电脑同时开发
+
+开始工作、跨电脑交接与发布按[双机开发流程](contributing/multi-machine.md)执行；新设备应用其中的仓库级 Git 配置。`git sync` 只在工作区干净时 rebase 更新，不自动提交或推送。
 
 ## 复盘提交门禁与并行任务
 
@@ -115,7 +119,7 @@ NEXT_PUBLIC_STATS_SOURCE=local pnpm --filter @cuberoot/client dev
 
 本地模式严格读取仓库 `stats/`，文件缺失或读取失败会返回明确错误并在终端记录，不回退服务器；本地响应不缓存。自动化测试使用固定样本，不依赖线上最新快照。`NEXT_PUBLIC_STATIC_ORIGIN` 只控制模型、音乐等非统计资源，不再控制统计来源；`/tools/` 保持现有规则。静态资源发布边界见 `.github/workflows/sync_toolkit.yml`。
 
-`dev`、`dev:clean`、`dev:safe` 和 `local-dev.ts` 都通过 Turborepo Watch 启动：先按依赖顺序执行 Web 依赖的 `dev:build`，再启动 Next；共享包源码改动后自动重新构建，Next 自身负责热更新。`dev:build` 只登记需要输出 `dist` 的 TypeScript 共享包，复用各包的 `build`，不运行 WASM 建表或统计任务。新增同类编译包时，在该包添加 `dev:build` 脚本即可由 workspace 依赖图纳入。保持终端运行，Ctrl+C 同时退出监听和开发服务器。
+`dev`、`dev:clean`、`dev:safe` 和 `local-dev.mts` 都通过 Turborepo Watch 启动：先按依赖顺序执行 Web 依赖的 `dev:build`，再启动 Next；共享包源码改动后自动重新构建，Next 自身负责热更新。`dev:build` 只登记需要输出 `dist` 的 TypeScript 共享包，复用各包的 `build`，不运行 WASM 建表或统计任务。新增同类编译包时，在该包添加 `dev:build` 脚本即可由 workspace 依赖图纳入。保持终端运行，Ctrl+C 同时退出监听和开发服务器。
 
 这避免源码已更新、Node 仍读取旧 `dist` 导致的缺失导出错误；真正的源码编译错误仍须修复。已有开发进程不会自动切换到新的启动流程，下次启动生效。
 
@@ -181,4 +185,4 @@ pnpm upstream:sync --only algtrainers
 
 AI App 需具备终端和本地文件操作能力；账号登录、系统管理员确认由本人完成，不向 AI 提供密码。普通网页开发不默认安装 Docker、数据库、Rust、完整 Xcode 或 Android Studio；需要原生端/求解器等具体任务时再补。默认开发 API 连接线上。
 
-配置后在新终端输入 `cuberoot`：启动过程和服务日志留在当前终端，服务就绪后打开网址。尚未批准开发域名时使用本地网址；开发网址申请完成后，enroll.ts 自动将同一 checkout 的登记切换为专属网址及前台隧道 runner。不能把“直接打开旧后台服务并返回命令行”当作首次启动验收。已有后台服务需先核对归属，不强制清理其他进程。
+配置后在新终端输入 `cuberoot`：启动过程和服务日志留在当前终端，服务就绪后打开网址。尚未批准开发域名时使用本地网址；开发网址申请完成后，enroll.ts 自动将同一 checkout 的登记切换为 `local-dev.mts --preview 设备标识`，由前台 runner 管理隧道。日常再次执行 `cuberoot` 会停止旧会话、清理开发缓存并重新启动；浏览器在服务就绪后打开，日志留在当前终端。显式 `cuberoot --reuse` 才只复用已有健康服务。新会话通过本机鉴权控制通道退出旧会话；旧版 Mac/Unix 服务迁移时核对进程树及 checkout。Windows 旧版无控制记录的服务须先手动关闭原终端一次，不凭 PID 强杀。
