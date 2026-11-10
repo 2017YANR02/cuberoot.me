@@ -1,5 +1,6 @@
 'use client';
 import MoreToggle from '@/components/MoreToggle';
+import { SettingsPopover } from '@/components/TrainingSettings';
 import '@cuberoot/timer-ui/compact-select.css';
 
 /**
@@ -518,6 +519,7 @@ function AnalyzePageInner() {
         {/* 综合来源配置:复用计时器的 WcaSourceConfig(按日期范围 / 指定比赛 / 按难度 / 最优等态)。
             始终展开内联;自动打卡对分析器无意义,隐藏。 */}
         {scrSource === 'wca' && (
+          <SettingsPopover label={t('来源设置', 'Source settings')} panelClassName="analyze-source-settings">
           <div className="analyze-wca-src">
             <WcaSourceConfig
               isZh={lang === 'zh'}
@@ -526,6 +528,7 @@ function AnalyzePageInner() {
               updateSettings={patchWcaSrc}
             />
           </div>
+          </SettingsPopover>
         )}
       </div>
 

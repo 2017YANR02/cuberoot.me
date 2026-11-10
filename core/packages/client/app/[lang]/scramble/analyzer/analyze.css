@@ -645,3 +645,21 @@ html[data-theme=dark] .analyze-page {
     --az-border-strong: var(--border-strong);
   }
 }
+
+
+.analyze-source-settings .analyze-wca-src { display: block; width: 100%; }
+.analyze-source-settings .wca-src-config { display: flex; flex-direction: column; }
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 640px) {
+  .analyze-page { padding: 8px 12px 20px; }
+  .analyze-page .analyze-wca-line { margin-block: 4px; }
+  .analyze-page .analyze-input-row { margin-block: 6px; }
+  .analyze-page .stsv-result,
+  .analyze-page .stsv-result.stsv-result-expanded {
+    display: grid;
+    grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+  }
+  .analyze-page .stsv-result > .stsv-player { grid-column: 1; grid-row: 1; width: 100%; }
+  .analyze-page .stsv-result > .stsv-sols { grid-column: 2; grid-row: 1; }
+}
