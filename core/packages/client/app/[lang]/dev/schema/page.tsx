@@ -2,11 +2,11 @@
 
 import PageBackLink from '@/components/PageBackLink';
 import MoreToggle from '@/components/MoreToggle';
-import { Fragment, useMemo } from 'react';
-import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
-import { SearchInput } from '@/components/SearchInput';
-import { tr, useLang } from '@/i18n/tr';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
+import { useT } from '@/hooks/useT';
+import ReferenceCatalog from '../_shared/ReferenceCatalog';
+import { tr } from '@/i18n/tr';
 import './schema.css';
 
 interface Bi { zh: string; en: string }
@@ -27,20 +27,20 @@ type DomainKey =
   | 'mirror' | 'derived' | 'scramble' | 'recon' | 'alg'
   | 'comp' | 'account' | 'storage' | 'teaching' | 'platform' | 'studio' | 'commerce' | 'community';
 
-const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
-  { key: 'mirror', dot: '#5BA8FF', name: { zh: 'WCA 镜像', en: 'WCA mirror' }, sub: { zh: '每日开发者导出离线重建', en: 'rebuilt offline from the daily export' } },
-  { key: 'derived', dot: '#7BD389', name: { zh: 'WCA 派生统计', en: 'WCA derived' }, sub: { zh: '排名 / 名次和 / 趣味统计', en: 'ranks, sum-of-ranks, fun-stats' } },
-  { key: 'scramble', dot: '#F0A04B', name: { zh: '打乱', en: 'Scramble' }, sub: { zh: '真题语料 / 最优解 / 难度', en: 'corpus, optimal, difficulty' } },
-  { key: 'recon', dot: '#E879A6', name: { zh: '复盘 & 成绩变更', en: 'Recon & changes' }, sub: { zh: '还原 / 变更链 / 直播成绩', en: 'reconstructions & change log' } },
-  { key: 'alg', dot: '#D97757', name: { zh: '公式库', en: 'Algorithms' }, sub: { zh: 'alg_sets / alg_cases 公式', en: 'alg sets & cases' } },
-  { key: 'comp', dot: '#4A90D9', name: { zh: '比赛 & 缓存 & 状态机', en: 'Comp & caches' }, sub: { zh: '关注 / 直播缓存 / dump 增量', en: 'follows, live cache, dump state' } },
-  { key: 'account', dot: 'var(--accent)', name: { zh: '账号与登录', en: 'Accounts & auth' }, sub: { zh: '用户 / 身份 / 验证码 / 单次票据', en: 'users, identities, codes, single-use tickets' } },
-  { key: 'storage', dot: 'var(--signal-success)', name: { zh: '文件存储', en: 'File storage' }, sub: { zh: '私人目录 / 断点上传 / 共享配额', en: 'private trees, resumable uploads, shared quota' } },
-  { key: 'teaching', dot: 'var(--signal-info)', name: { zh: '教学 SaaS', en: 'Teaching SaaS' }, sub: { zh: '机构 / 学员 / 课包 / 课堂 / 审计', en: 'organizations, students, packages, sessions, audit' } },
-  { key: 'platform', dot: 'var(--signal-warning)', name: { zh: 'Platform 主站业务', en: 'Main-site Platform' }, sub: { zh: '课程 / 学习 / 交易 / 内容 / 讲师 / QR', en: 'catalog, learning, commerce, content, instructors, QR' } },
-  { key: 'studio', dot: '#67C18E', name: { zh: '用户产物', en: 'User artifacts' }, sub: { zh: '计时 / 训练 / 绘图', en: 'timer, trainer, paint' } },
-  { key: 'commerce', dot: '#A78BFA', name: { zh: '会员 & 赞助 & 反馈', en: 'Commerce & feedback' }, sub: { zh: '订阅 / 致谢 / 反馈', en: 'membership, sponsors, feedback' } },
-  { key: 'community', dot: '#4FC3DC', name: { zh: '社区内容 & 站务', en: 'Community & ops' }, sub: { zh: '长文 / wiki / 导航 / runbook', en: 'articles, wiki, nav, runbook' } },
+const DOMAINS: { key: DomainKey; name: Bi; sub: Bi }[] = [
+  { key: 'mirror', name: { zh: 'WCA 镜像', en: 'WCA mirror' }, sub: { zh: '每日开发者导出离线重建', en: 'rebuilt offline from the daily export' } },
+  { key: 'derived', name: { zh: 'WCA 派生统计', en: 'WCA derived' }, sub: { zh: '排名 / 名次和 / 趣味统计', en: 'ranks, sum-of-ranks, fun-stats' } },
+  { key: 'scramble', name: { zh: '打乱', en: 'Scramble' }, sub: { zh: '真题语料 / 最优解 / 难度', en: 'corpus, optimal, difficulty' } },
+  { key: 'recon', name: { zh: '复盘 & 成绩变更', en: 'Recon & changes' }, sub: { zh: '还原 / 变更链 / 直播成绩', en: 'reconstructions & change log' } },
+  { key: 'alg', name: { zh: '公式库', en: 'Algorithms' }, sub: { zh: 'alg_sets / alg_cases 公式', en: 'alg sets & cases' } },
+  { key: 'comp', name: { zh: '比赛 & 缓存 & 状态机', en: 'Comp & caches' }, sub: { zh: '关注 / 直播缓存 / dump 增量', en: 'follows, live cache, dump state' } },
+  { key: 'account', name: { zh: '账号与登录', en: 'Accounts & auth' }, sub: { zh: '用户 / 身份 / 验证码 / 单次票据', en: 'users, identities, codes, single-use tickets' } },
+  { key: 'storage', name: { zh: '文件存储', en: 'File storage' }, sub: { zh: '私人目录 / 断点上传 / 共享配额', en: 'private trees, resumable uploads, shared quota' } },
+  { key: 'teaching', name: { zh: '教学 SaaS', en: 'Teaching SaaS' }, sub: { zh: '机构 / 学员 / 课包 / 课堂 / 审计', en: 'organizations, students, packages, sessions, audit' } },
+  { key: 'platform', name: { zh: 'Platform 主站业务', en: 'Main-site Platform' }, sub: { zh: '课程 / 学习 / 交易 / 内容 / 讲师 / QR', en: 'catalog, learning, commerce, content, instructors, QR' } },
+  { key: 'studio', name: { zh: '用户产物', en: 'User artifacts' }, sub: { zh: '计时 / 训练 / 绘图', en: 'timer, trainer, paint' } },
+  { key: 'commerce', name: { zh: '会员 & 赞助 & 反馈', en: 'Commerce & feedback' }, sub: { zh: '订阅 / 致谢 / 反馈', en: 'membership, sponsors, feedback' } },
+  { key: 'community', name: { zh: '社区内容 & 站务', en: 'Community & ops' }, sub: { zh: '长文 / wiki / 导航 / runbook', en: 'articles, wiki, nav, runbook' } },
 ];
 
 const TABLES: Table[] = [
@@ -918,257 +918,105 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 310, slug: 'wca_final_winners_index', desc: { zh: '为决赛冠军建立局部索引，避免按日期查询冠军时扫描全部历史成绩。', en: 'Index final-round winners to avoid scanning all historical results for dated winner queries.' } },
 ];
 
-const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
+type SchemaEntry = { name: string; category: string; zh: string; en: string } & (
+  | { kind: 'table'; table: Table }
+  | { kind: 'migration'; migration: typeof MIGRATIONS[number] }
+);
+const migrationNumber = (n: number) => String(n).padStart(4, '0');
+const migrationName = (m: typeof MIGRATIONS[number]) => `${migrationNumber(m.n)}_${m.slug}`;
+const CATEGORIES = [
+  ...DOMAINS.map(domain => ({ id: domain.key, ...domain.name })),
+  { id: 'migrations', zh: '迁移记录', en: 'Migrations' },
+];
+const ENTRIES: SchemaEntry[] = [
+  ...TABLES.map((table): SchemaEntry => ({ kind: 'table', table, name: table.name, category: table.domain, ...table.purpose })),
+  ...[...MIGRATIONS].sort((a, b) => b.n - a.n || a.slug.localeCompare(b.slug)).map((migration): SchemaEntry => ({
+    kind: 'migration', migration, name: migrationName(migration), category: 'migrations', ...migration.desc,
+  })),
+];
+const LATEST_MIGRATION = Math.max(...MIGRATIONS.map(migration => migration.n));
+
+function searchText(entry: SchemaEntry) {
+  if (entry.kind === 'migration') return 'migration 迁移记录';
+  const table = entry.table;
+  const domain = DOMAINS.find(domain => domain.key === table.domain)!;
+  return `${domain.name.zh} ${domain.name.en} ${domain.sub.zh} ${domain.sub.en} ${table.origin}
+    ${table.family?.join(' ') ?? ''} ${table.evolved?.map(migrationNumber).join(' ') ?? ''}
+    ${table.cols?.map(col => `${col.name} ${col.note?.zh ?? ''} ${col.note?.en ?? ''}`).join(' ') ?? ''}
+    ${table.naturalKey ? '自然键 natural key no foreign key' : ''}`;
+}
+
+function migrationLink(number: number | string) {
+  return `/dev/schema?domain=migrations&q=${String(number).padStart(4, '0')}`;
+}
 
 export default function SchemaPage() {
-  const lang = useLang();
-
-  const [q, setQ] = useQueryState('q', parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }));
-  const [domain, setDomain] = useQueryState(
-    'domain',
-    parseAsStringEnum([...DOMAIN_KEYS]).withDefault('all').withOptions({ history: 'replace', scroll: false }),
-  );
-  const [open, setOpen] = useQueryState('t', parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }));
-
-  const query = q.trim().toLowerCase();
-  const filtered = useMemo(() => {
-    return TABLES.filter((t) => {
-      if (domain !== 'all' && t.domain !== domain) return false;
-      if (!query) return true;
-      if (t.name.toLowerCase().includes(query)) return true;
-      if (t.purpose.zh.toLowerCase().includes(query) || t.purpose.en.toLowerCase().includes(query)) return true;
-      if (t.family?.some((f) => f.toLowerCase().includes(query))) return true;
-      return false;
-    });
-  }, [domain, query]);
-
-  const totalTables = TABLES.reduce((s, t) => s + (t.family ? t.family.length : 1), 0);
-
-  const groups = DOMAINS
-    .map((d) => ({ d, tables: filtered.filter((t) => t.domain === d.key) }))
-    .filter((g) => g.tables.length > 0);
-
-  return (
-    <div className="schema-page">
-      <div className="schema-bg" />
-      <div className="schema-inner">
-        <div className="schema-topbar">
-          <PageBackLink fallback="/dev" className="schema-back" />
-        </div>
-
-        <header className="schema-hero">
-          <div className="schema-hero-eyebrow">PostgreSQL 13 · our own database</div>
-          <h1>{tr({ zh: '数据库 Schema', en: 'Database schema' })}</h1>
-          <p>{tr({
-            zh: 'CubeRoot 自己这套 PostgreSQL 库的全貌。WCA 官方导出是只读的源数据,这里则是站点亲手设计的表:复盘、公式、会员、反馈、流量,以及一堆把 WCA 原始成绩二次加工成排名与统计的派生表。',
-            en: 'The full shape of CubeRoot’s own PostgreSQL database. The WCA export is read-only source data; this is the schema the site designed itself — reconstructions, algs, membership, feedback, traffic, plus the derived tables that turn raw WCA results into ranks and stats.',
-          })}</p>
-
-          <div className="schema-stats">
-            <div>
-              <div className="schema-stat-n">{totalTables}</div>
-              <div className="schema-stat-l">{tr({ zh: '张表', en: 'tables' })}</div>
-            </div>
-            <div>
-              <div className="schema-stat-n">{MIGRATIONS.length}</div>
-              <div className="schema-stat-l">{tr({ zh: '条 migration', en: 'migrations' })}</div>
-            </div>
-            <div>
-              <div className="schema-stat-n">{DOMAINS.length}</div>
-              <div className="schema-stat-l">{tr({ zh: '个领域', en: 'domains' })}</div>
-            </div>
-            <div>
-              <div className="schema-stat-n">append-only</div>
-              <div className="schema-stat-l">{tr({ zh: '无 down migration', en: 'no down migrations' })}</div>
-            </div>
-          </div>
-        </header>
-
-        <nav className="schema-trilogy" aria-label={tr({ zh: '数据三部曲', en: 'data trilogy' })}>
-          <Link href="/dev/wca-export" className="schema-trilogy-node">
-            <div className="schema-trilogy-k">source</div>
-            <div className="schema-trilogy-t">{tr({ zh: 'WST 数据导出', en: 'WCA export' })}</div>
-            <div className="schema-trilogy-d">{tr({ zh: '每日只读快照', en: 'daily read-only dump' })}</div>
-          </Link>
-          <div className="schema-trilogy-arrow" aria-hidden>→</div>
-          <Link href="/dev/wcif" className="schema-trilogy-node">
-            <div className="schema-trilogy-k">format</div>
-            <div className="schema-trilogy-t">WCIF</div>
-            <div className="schema-trilogy-d">{tr({ zh: '比赛交换格式', en: 'comp interchange format' })}</div>
-          </Link>
-          <div className="schema-trilogy-arrow" aria-hidden>→</div>
-          <div className="schema-trilogy-node is-self">
-            <div className="schema-trilogy-k">our DB</div>
-            <div className="schema-trilogy-t">{tr({ zh: '本页', en: 'this page' })}</div>
-            <div className="schema-trilogy-d">{tr({ zh: '站点亲手设计的库', en: 'the schema we designed' })}</div>
-          </div>
-        </nav>
-
-        <section className="schema-howto">
-          <h2>{tr({ zh: 'migration 怎么跑', en: 'How migrations run' })}</h2>
-          <div className="schema-howto-grid">
-            <div>
-              <div className="schema-howto-item-k">apply_migrations.sh</div>
-              <div className="schema-howto-item-v">{tr({ zh: 'deploy 时自动跑没跑过的;每个文件 sha256 记进 _schema_migrations 账本,已应用的改了 hash 就 abort。', en: 'Runs the un-applied files on deploy; each file’s sha256 is recorded in a _schema_migrations ledger and a changed hash aborts.' })}</div>
-            </div>
-            <div>
-              <div className="schema-howto-item-k">{tr({ zh: '部署顺序', en: 'deploy order' })}</div>
-              <div className="schema-howto-item-v">{tr({ zh: 'CI 先把 migration 同步上服务器并应用,之后才重启进程 —— 不会出现「新代码上线却查不到列」的窗口。', en: 'CI syncs and applies migrations before restarting the process, so there’s never a window where new code queries a column that doesn’t exist yet.' })}</div>
-            </div>
-            <div>
-              <div className="schema-howto-item-k">{tr({ zh: '失败即回滚', en: 'fail = rollback' })}</div>
-              <div className="schema-howto-item-v">{tr({ zh: '每个 migration 单独事务 + ON_ERROR_STOP:任一语句出错就整条回滚、后续不跑,不会半灌。', en: 'Each migration is one transaction with ON_ERROR_STOP — any error rolls the whole file back and halts, never half-applied.' })}</div>
-            </div>
-            <div>
-              <div className="schema-howto-item-k">{tr({ zh: '没有 down', en: 'no down' })}</div>
-              <div className="schema-howto-item-v">{tr({ zh: '只前进,不写反向脚本。要回滚就写一条新的 DROP migration,或从每日备份恢复。', en: 'Forward-only — no reverse scripts. To roll back, write a new DROP migration or restore from the daily backup.' })}</div>
-            </div>
-            <div>
-              <div className="schema-howto-item-k">schema.pg.sql</div>
-              <div className="schema-howto-item-v">{tr({ zh: '人读的「当前 schema 全貌」快照;migrations/ 才是 CI 实际跑的权威,两者靠纪律同步。', en: 'A human-readable snapshot of the current schema; the migrations folder is the authoritative source CI actually runs.' })}</div>
-            </div>
-            <div>
-              <div className="schema-howto-item-k">{tr({ zh: '自然键无 FK', en: 'natural keys, few FKs' })}</div>
-              <div className="schema-howto-item-v">{tr({ zh: '很多表用业务自然键(wca_id、comp_id…)而不建外键约束,换取写入简单与跨数据源拼接的灵活。', en: 'Many tables key on business-natural fields (wca_id, comp_id…) without FK constraints, trading enforcement for simpler writes.' })}</div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── table directory ── */}
-        <h2 className="schema-section-head">{tr({ zh: '表目录', en: 'Table directory' })}</h2>
-
-        <div className="schema-controls">
-          <SearchInput
-            className="schema-search"
-            inputClassName="schema-search-input"
-            value={q}
-            onChange={(v) => setQ(v || null)}
-            placeholder={tr({ zh: '搜表名 / 用途…', en: 'search tables…' })}
-            ariaLabel={tr({ zh: '搜索表', en: 'search tables' })}
-            spellCheck={false}
-            autoComplete="off"
-          />
-          <div className="schema-domains" role="tablist">
-            <button
-              type="button"
-              className={`schema-domain-pill${domain === 'all' ? ' is-active' : ''}`}
-              onClick={() => setDomain(null)}
-            >
-              {tr({ zh: '全部', en: 'All' })}
-            </button>
-            {DOMAINS.map((d) => (
-              <button
-                key={d.key}
-                type="button"
-                className={`schema-domain-pill${domain === d.key ? ' is-active' : ''}`}
-                style={{ ['--dot' as string]: d.dot }}
-                onClick={() => setDomain(domain === d.key ? null : d.key)}
-              >
-                <span className="dot" aria-hidden />
-                {d.name[lang]}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {groups.length === 0 && (
-          <p className="schema-empty">{tr({ zh: '没有匹配的表。', en: 'No matching tables.' })}</p>
-        )}
-
-        {groups.map(({ d, tables }) => (
-          <div key={d.key} className="schema-domain-group">
-            <div className="schema-domain-group-head" style={{ ['--dot' as string]: d.dot }}>
-              <span className="bar" aria-hidden />
-              <h3>{d.name[lang]}</h3>
-              <span className="sub">{d.sub[lang]}</span>
-              <span className="count">{tables.reduce((s, t) => s + (t.family ? t.family.length : 1), 0)}</span>
-            </div>
-            {tables.map((t) => {
-              const isOpen = open === t.name;
-              return (
-                <div key={t.name} className="schema-table-row">
-                  <MoreToggle
-                    type="button"
-                    className="schema-table-btn"
-                    expanded={isOpen}
-                    onClick={() => setOpen(isOpen ? null : t.name)}
-                  >
-                    <span className="schema-table-name">{t.name}</span>
-                    <span className="schema-table-purpose">{t.purpose[lang]}</span>
-                    <span className="schema-table-tags">
-                      {t.family && <span className="schema-tag family">{t.family.length} {tr({ zh: '张', en: 'tbls' })}</span>}
-                      {t.naturalKey && <span className="schema-tag natural">{tr({ zh: '自然键', en: 'nat-key' })}</span>}
-                      <span className="schema-tag origin">{t.origin === 'snapshot' ? tr({ zh: '快照', en: 'snapshot' }) : t.origin}</span>
-                    </span>
-
-                  </MoreToggle>
-                  {isOpen && (
-                    <div className="schema-detail">
-                      {t.cols && (
-                        <div className="schema-cols">
-                          {t.cols.map((c, i) => (
-                            <Fragment key={i}>
-                              <div className="schema-col-name">{c.name}</div>
-                              <div className="schema-col-note">{c.note ? c.note[lang] : ''}</div>
-                            </Fragment>
-                          ))}
-                        </div>
-                      )}
-                      {t.family && (
-                        <div className="schema-family-list">
-                          {t.family.map((f) => <span key={f}>{f}</span>)}
-                        </div>
-                      )}
-                      <div className="schema-detail-meta">
-                        {t.origin !== 'snapshot'
-                          ? <>{tr({ zh: '由 migration ', en: 'Created by migration ' })}<code>{t.origin}</code>{tr({ zh: ' 创建', en: '' })}</>
-                          : <>{tr({ zh: '定义在 ', en: 'Defined in ' })}<code>schema.pg.sql</code></>}
-                        {t.evolved && t.evolved.length > 0 && (
-                          <>
-                            {tr({ zh: ';后续 ', en: '; later evolved by ' })}
-                            {t.evolved.map((e, i) => (
-                              <Fragment key={e}>
-                                {i > 0 && ' '}
-                                <code>{String(e).padStart(4, '0')}</code>
-                              </Fragment>
-                            ))}
-                            {tr({ zh: ' 演进', en: '' })}
-                          </>
-                        )}
-                        {t.naturalKey && tr({ zh: ' · 业务自然键,无外键约束。', en: ' · keyed on business-natural fields, no FK.' })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ))}
-
-        {/* ── migration ledger ── */}
-        <section className="schema-ledger">
-          <h2 className="schema-section-head">{tr({ zh: 'Migration 账本', en: 'Migration ledger' })}</h2>
-          <p className="schema-ledger-intro">{tr({
-            zh: '从第一张导航表到最新的难度索引,schema 是一条 append-only 的演进链 —— 每一步都是一条不可改的 migration,部署时按编号顺序补齐。',
-            en: 'From the first nav table to the latest difficulty index, the schema is an append-only chain — each step an immutable migration applied in order on deploy.',
-          })}</p>
-          <ol className="schema-mig-list">
-            {MIGRATIONS.map((m) => {
-              const latest = m.n === MIGRATIONS[MIGRATIONS.length - 1]?.n;
-              return (
-                <li key={`${m.n}_${m.slug}`} className={`schema-mig${latest ? ' is-latest' : ''}`}>
-                  <span className="schema-mig-num">{String(m.n).padStart(4, '0')}</span>
-                  <span className="schema-mig-slug">{m.slug}</span>
-                  <span className="schema-mig-desc">
-                    {m.desc[lang]}
-                    {latest && <span className="schema-mig-latest-badge">{tr({ zh: '最新', en: 'latest' })}</span>}
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
-        </section>
-      </div>
-    </div>
-  );
+  const t = useT();
+  return <main className="dev-reference-page schema-reference">
+    <header className="dev-reference-page-heading">
+      <PageBackLink fallback="/dev" />
+      <h1>{t('数据库 Schema', 'Database schema')}</h1>
+      <InfoTooltip iconSize={18} ariaLabel={t('数据库目录说明', 'About this schema catalog')}
+        content={t('PostgreSQL 表目录与迁移记录。WCA 镜像从官方导出重建，其余分类覆盖派生统计和站点业务。可按表名、关键字段、用途或迁移编号检索；空格分隔的关键词需同时匹配。目录列举关键字段，完整结构以 SQL 源码为准。', 'PostgreSQL tables and migrations. WCA mirrors are rebuilt from official exports; other categories cover derived statistics and site features. Search tables, key columns, purposes or migration numbers; space-separated terms must all match. The catalog lists key columns; SQL sources define the complete schema.')} />
+    </header>
+    <ReferenceCatalog entries={ENTRIES} categories={CATEGORIES} categoryParam="domain" entryParam="t"
+      directoryLabel={t('数据库目录', 'Schema directory')}
+      searchPlaceholder={t('搜索表名、字段、用途或迁移编号', 'Search tables, columns, purposes or migrations')}
+      searchText={searchText}
+      sortCategory={(a, b) => a.kind === 'migration' && b.kind === 'migration'
+        ? b.migration.n - a.migration.n || a.name.localeCompare(b.name)
+        : a.name.localeCompare(b.name, 'en', { sensitivity: 'base', numeric: true })}>
+      {entry => entry.kind === 'table' ? <>
+        <dl className="dev-reference-facts">
+          <div><dt>{t('分类', 'Category')}</dt><dd>{tr(DOMAINS.find(domain => domain.key === entry.table.domain)!.name)}</dd></div>
+          <div><dt>{t('创建来源', 'Origin')}</dt><dd>{entry.table.origin === 'snapshot' ? <code>schema.pg.sql</code>
+            : <Link href={migrationLink(entry.table.origin)}>{entry.table.origin}</Link>}</dd></div>
+          {entry.table.naturalKey && <div><dt>{t('约束', 'Constraints')}</dt><dd>{t('业务自然键，无外键', 'Natural keys, no foreign keys')}</dd></div>}
+          {entry.table.family && <div><dt>{t('表族', 'Table family')}</dt><dd>{t(`${entry.table.family.length} 张表`, `${entry.table.family.length} tables`)}</dd></div>}
+        </dl>
+        {entry.table.cols && <>
+          <h3>{t('关键字段', 'Key columns')}</h3>
+          <dl className="schema-reference-columns">{entry.table.cols.map((col, index) => <div key={`${col.name}-${index}`}>
+            <dt><code>{col.name}</code></dt>{col.note && <dd>{tr(col.note)}</dd>}
+          </div>)}</dl>
+        </>}
+        {entry.table.family && <>
+          <h3>{t('包含的数据表', 'Tables in this family')}</h3>
+          <ul className="schema-reference-list">{entry.table.family.map(name => <li key={name}><code>{name}</code></li>)}</ul>
+        </>}
+        {!!entry.table.evolved?.length && <>
+          <h3>{t('后续迁移', 'Later migrations')}</h3>
+          <ul className="schema-reference-list">{entry.table.evolved.map(number => <li key={number}>
+            <Link href={migrationLink(number)}>{migrationNumber(number)}</Link>
+          </li>)}</ul>
+        </>}
+        <h3>{t('完整结构', 'Full definition')}</h3><p><code>core/apps/api/src/db/schema.pg.sql</code></p>
+        <p>{t('迁移文件是部署时实际执行的结构变更；快照用于阅读和核对。', 'Migration files define the changes applied on deployment; the snapshot is for reading and comparison.')}</p>
+      </> : <>
+        <dl className="dev-reference-facts">
+          <div><dt>{t('迁移编号', 'Migration')}</dt><dd>{migrationNumber(entry.migration.n)}</dd></div>
+          {entry.migration.n === LATEST_MIGRATION && <div><dt>{t('目录位置', 'Catalog position')}</dt><dd>{t('最新迁移', 'Latest migration')}</dd></div>}
+        </dl>
+        <h3>{t('SQL 文件', 'SQL file')}</h3><pre><code>core/apps/api/migrations/{entry.name}.sql</code></pre>
+        {TABLES.some(table => table.origin === migrationNumber(entry.migration.n) || table.evolved?.includes(entry.migration.n)) && <>
+          <h3>{t('关联表条目', 'Related table entries')}</h3>
+          <ul className="schema-reference-list">{TABLES.filter(table => table.origin === migrationNumber(entry.migration.n) || table.evolved?.includes(entry.migration.n)).map(table => <li key={table.name}>
+            <Link href={`/dev/schema?domain=${table.domain}&t=${encodeURIComponent(table.name)}`}>{table.name}</Link>
+          </li>)}</ul>
+        </>}
+        <h3>{t('应用规则', 'Application rules')}</h3>
+        <p>{t('按文件名顺序应用，已执行文件由 _schema_migrations 记录 SHA-256；修改已应用文件会中止部署，后续变更需新增迁移。本目录不代表线上已应用状态。', 'Files are applied in filename order. _schema_migrations records their SHA-256 hashes; editing an applied file aborts deployment, so later changes require a new migration. This catalog does not indicate production application status.')}</p>
+      </>}
+    </ReferenceCatalog>
+    <footer className="dev-reference-page-footer">
+      <Link href="/dev/api">{t('API 端点', 'API endpoints')}</Link>
+      <Link href="/dev/wca-export">{t('WCA 数据导出', 'WCA data export')}</Link>
+      <Link href="/dev/wcif">WCIF</Link>
+      <details className="dev-reference-maintenance">
+        <MoreToggle as="summary">{t('迁移与结构约定', 'Migration & schema conventions')}</MoreToggle>
+        <p>{t('CI 先同步并通过 apply_migrations.sh 应用未执行的迁移，再重启 API。每个文件独立事务，ON_ERROR_STOP 使出错文件回滚并停止后续执行；先前已成功的迁移不会随之回滚。', 'CI syncs files and runs pending migrations through apply_migrations.sh before restarting the API. Each file has its own transaction; ON_ERROR_STOP rolls back the failed file and stops later files. Earlier successful migrations remain applied.')}</p>
+        <p>{t('已应用文件保持不变；需要修正时追加新迁移，恢复数据可按备份流程处理。schema.pg.sql 是便于阅读的结构快照，migrations/ 是部署权威。目录中的自然键标记表示没有外键约束，由业务逻辑维护关联。', 'Applied files remain immutable; corrections use a new migration, and data recovery follows the backup procedure. schema.pg.sql is a readable snapshot; migrations/ is authoritative for deployment. Natural-key markers indicate relations maintained by application logic without foreign-key constraints.')}</p>
+      </details>
+    </footer>
+  </main>;
 }
