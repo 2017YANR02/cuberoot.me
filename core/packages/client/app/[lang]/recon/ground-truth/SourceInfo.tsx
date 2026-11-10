@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { ReconIntakeCase, ReconSourceMetadata } from '@cuberoot/shared/recon-ground-truth';
 import Link from '@/components/AppLink';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import PersonLink from '@/components/PersonLink';
 import { Flag } from '@/components/Flag';
 import { loadFlagData, personFlagIso2 } from '@/lib/country-flags';
@@ -41,7 +42,7 @@ export default function SourceInfo({ source }: { source: ReconIntakeCase['source
   };
   return <section className="gt-source-info" aria-label={tr({ zh: '来源复盘', en: 'Source reconstruction' })}>
     <div className="gt-source-heading"><Link href={`/recon/${source.id}`} prefetch={false} target="_blank">{tr({ zh: '来源复盘', en: 'Source reconstruction' })} #{source.id}</Link>
-      {(source.metadataOrigin === 'current' || (!source.metadata && metadata)) && <small>{tr({ zh: '来源资料为当前信息', en: 'Source details reflect current information' })}</small>}
+      {(source.metadataOrigin === 'current' || (!source.metadata && metadata)) && <InfoTooltip content={tr({ zh: '来源资料为当前信息', en: 'Source details reflect current information' })} />}
     </div>
     <dl className="gt-source-facts">
       <div><dt>{tr({ zh: '原成绩', en: 'Original result' })}</dt><dd>{metadata?.value || '—'}</dd></div>

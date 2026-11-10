@@ -8,7 +8,7 @@ import { apiUrl } from '@/lib/api-base';
 import { sessionFetch } from '@/lib/session-fetch';
 
 import MoreToggle from '@/components/MoreToggle';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
 import { recordingSolve, type ReconIntakeCase, type ReconSnapshot } from '@cuberoot/shared/recon-ground-truth';
@@ -38,11 +38,12 @@ type Detail = {
 };
 
 
-export default function RegressionCaseDetail({ intakeId, replaySource, onChange }: {
+export default function RegressionCaseDetail({ intakeId, replaySource, onChange, renderHeader }: {
   intakeId?: string; replaySource: string; onChange: () => void;
+  renderHeader: (collectionInfo: ReactNode) => ReactNode;
 }) {
   const isZh = useLang() === 'zh', host = useWebReconstructHost();
-  const [reportOpen, setReportOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(true);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [solve, setSolve] = useState<Solve | null>(null);
   const [loading, setLoading] = useState(true), [busy, setBusy] = useState(false);
@@ -78,23 +79,21 @@ export default function RegressionCaseDetail({ intakeId, replaySource, onChange 
   };
 
   return <div className="ri-case-detail">
+    {renderHeader(item ? <InfoTooltip iconSize={16} ariaLabel={tr({ zh: '收录详情', en: 'Collection details' })} content={[
+      tr(statuses[item.status]) + ' · v' + item.revision,
+      tr({ zh: '实录用时', en: 'Recorded time' }) + ' ' + (item.input.recording.timeMs / 1000).toFixed(3) + 's',
+      item.id,
+      item.createdBy + ' · ' + item.createdAt,
+      item.claimedBy && tr({ zh: 'AI 领取', en: 'AI claim' }) + '：' + item.claimedBy + ' · ' + item.leaseUntil,
+    ].filter(Boolean).join('\n')} /> : null)}
     {error && <p role="alert">{error}</p>}
     {loading && <p role="status">{tr({ zh: '正在加载复盘详情…', en: 'Loading reconstruction…' })}</p>}
     {item ? <>
-      <div className="ri-case-heading"><h2>{tr(statuses[item.status])} · v{item.revision}</h2>
-        <span>{tr({ zh: '实录用时', en: 'Recorded time' })} {(item.input.recording.timeMs / 1000).toFixed(3)}s</span></div>
-      <div className="gt-review-summary">
-        <span data-result={item.latestRun?.status ?? 'not-run'}>{tr({ zh: '单样本测试', en: 'Individual test' })}：{item.latestRun ? tr(runStatuses[item.latestRun.status]) : tr({ zh: '未运行', en: 'Not run' })}</span>
-        <InfoTooltip content={tr({ zh: '播放器按当前代码重建。单样本测试与所选全量回归可能来自不同版本，展开对照可查看时间和版本。', en: 'Playback uses current code. Individual and regression results may come from different versions; expand comparisons for timestamps and revisions.' })} />
-      </div>
-      <details><MoreToggle as="summary">{tr({ zh: '来源与收录信息', en: 'Source and collection' })}{item.sourceSnapshot && ' · #' + item.sourceSnapshot.id}</MoreToggle>
+      <details open={!!item.sourceSnapshot}><MoreToggle as="summary">{tr({ zh: '来源与收录信息', en: 'Source and collection' })}</MoreToggle>
         <SourceInfo source={item.sourceSnapshot} />
-        <p><small>{item.id} · {item.createdBy} · {item.createdAt}</small></p>
-        {item.sourceSnapshot && <pre>{item.sourceSnapshot.scramble}{'\n'}{item.sourceSnapshot.solution}</pre>}
-        {item.claimedBy && <p>{tr({ zh: 'AI 领取', en: 'AI claim' })}：{item.claimedBy} · {item.leaseUntil}</p>}
       </details>
-      <details onToggle={event => setReportOpen(event.currentTarget.open)}><MoreToggle as="summary">{tr({ zh: '复盘播放与分析', en: 'Playback and analysis' })}</MoreToggle>
-        {reportOpen && <ReconstructReport solve={recordingSolve(item.input.recording, item.id)} host={{ ...host, renderIntakeAction: undefined }} isZh={isZh} hideActions hideDate />}
+      <details open={reportOpen} onToggle={event => setReportOpen(event.currentTarget.open)}><MoreToggle as="summary">{tr({ zh: '复盘播放与分析', en: 'Playback and analysis' })}</MoreToggle>
+        <ReconstructReport solve={recordingSolve(item.input.recording, item.id)} host={{ ...host, renderIntakeAction: undefined }} isZh={isZh} hideActions hideDate />
       </details>
       {!!item.input.annotations.length && <details><MoreToggle as="summary">{tr({ zh: '问题批注', en: 'Annotations' })} · {item.input.annotations.length}</MoreToggle>
       {item.input.annotations.map(note => <div className="ri-note" key={note.id}>
@@ -103,11 +102,14 @@ export default function RegressionCaseDetail({ intakeId, replaySource, onChange 
       </div>)}
       </details>}
       <details><MoreToggle as="summary">{tr({ zh: '单样本预期与输出', en: 'Individual expected and actual' })}</MoreToggle>
+      <div className="gt-review-summary">
+        <span data-result={item.latestRun?.status ?? 'not-run'}>{tr({ zh: '单样本测试', en: 'Individual test' })}：{item.latestRun ? tr(runStatuses[item.latestRun.status]) : tr({ zh: '未运行', en: 'Not run' })}{item.latestRun && ` · v${item.latestRun.revision} · ${item.latestRun.createdAt}`}</span>
+        <InfoTooltip content={tr({ zh: '播放器按当前代码重建。单样本测试与所选全量回归可能来自不同版本，展开对照可查看时间和版本。', en: 'Playback uses current code. Individual and regression results may come from different versions; expand comparisons for timestamps and revisions.' })} />
+      </div>
       <div className="ri-compare"><div><h3>{item.expected ? tr({ zh: '已确认的人工预期', en: 'Approved expectation' })
         : tr({ zh: '收录时快照（尚未确认正确）', en: 'Intake snapshot (not approved)' })}</h3><pre>{text(item.expected ?? item.input.observed)}</pre></div>
         <div><h3>{tr({ zh: '最近测试输出', en: 'Latest test output' })}</h3><pre>{text(item.latestRun?.actual)}</pre></div></div>
-      <p>{tr({ zh: '最近测试', en: 'Latest test' })}：{item.latestRun ? `${tr(runStatuses[item.latestRun.status])} · v${item.latestRun.revision} · ${item.latestRun.createdAt}` : tr({ zh: '未运行', en: 'Not run' })}</p>
-      {item.latestRun && <><pre>{item.latestRun.errors.join('\n')}</pre><small>{item.latestRun.commit} · {item.latestRun.fingerprint}</small></>}
+      {item.latestRun && <>{item.latestRun.errors.length > 0 && <pre>{item.latestRun.errors.join('\n')}</pre>}<small>{item.latestRun.commit} · {item.latestRun.fingerprint}</small></>}
       </details>
       <div className="ri-queue-controls">
         <Tooltip content={tr({ zh: '复制当前样例的 AI 排查指令', en: 'Copy AI troubleshooting instructions for this case' })}>{tip => <button {...tip} className="ri-button" type="button" onClick={() => void copyTask()}>{copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: 'AI 处理指令', en: 'AI instructions' })}</button>}</Tooltip>
@@ -117,21 +119,21 @@ export default function RegressionCaseDetail({ intakeId, replaySource, onChange 
       </div>
       <details><MoreToggle as="summary">{tr({ zh: '测试与修改历史', en: 'Test and revision history' })}</MoreToggle>
       <h3>{tr({ zh: '测试历史', en: 'Test history' })}</h3>
-        {detail!.runs.map((run, i) => <div key={run.payload?.id ?? i}><p>v{run.revision} · {run.payload && tr(runStatuses[run.payload.status])} · {run.created_at}</p>
-          <pre>{text(run.payload?.actual)}</pre><pre>{run.payload?.errors.join('\n')}</pre></div>)}
+        {detail!.runs.map((run, i) => <details key={run.payload?.id ?? i}><MoreToggle as="summary">v{run.revision} · {run.payload && tr(runStatuses[run.payload.status])} · {run.created_at}</MoreToggle>
+          <pre>{text(run.payload?.actual)}</pre>{!!run.payload?.errors.length && <pre>{run.payload.errors.join('\n')}</pre>}</details>)}
       <h3>{tr({ zh: '批注与预期版本', en: 'Annotation and expectation history' })}</h3>
-        {detail!.revisions.map(revision => <div key={revision.revision}>
-          <p>v{revision.revision} · {revision.actor} · {revision.created_at}</p>
+        {detail!.revisions.map(revision => <details key={revision.revision}>
+          <MoreToggle as="summary">v{revision.revision} · {revision.actor} · {revision.created_at}</MoreToggle>
           {revision.input.annotations.map(note => <div key={note.id}><p>{note.problem}</p><pre>{note.expectedAlgorithm}</pre><p>{note.expectedEffect}</p></div>)}
           <pre>{text(revision.expected ?? revision.input.observed)}</pre>
-        </div>)}</details>
+        </details>)}</details>
       {editing && createPortal(<ReconIntakeEditor solve={recordingSolve(item.input.recording, item.id)} host={host}
         mode="needs-fix" source={item.input.source} existing={item} onClose={() => setEditing(false)}
         onSaved={() => { setEditing(false); refresh(); }} />, document.body)}
 
     </> : !loading && !intakeId && <>
-      {solve ? <details onToggle={event => setReportOpen(event.currentTarget.open)}><MoreToggle as="summary">{tr({ zh: '复盘播放与分析', en: 'Playback and analysis' })}</MoreToggle>
-        {reportOpen && <ReconstructReport solve={solve} host={{ ...host, renderIntakeAction: undefined }} isZh={isZh} hideActions hideDate />}</details>
+      {solve ? <details open={reportOpen} onToggle={event => setReportOpen(event.currentTarget.open)}><MoreToggle as="summary">{tr({ zh: '复盘播放与分析', en: 'Playback and analysis' })}</MoreToggle>
+        <ReconstructReport solve={solve} host={{ ...host, renderIntakeAction: undefined }} isZh={isZh} hideActions hideDate /></details>
         : <p>{tr({ zh: '此样例的原始动作记录暂不可用。', en: 'The original recording is currently unavailable.' })}</p>}
     </>}
   </div>;

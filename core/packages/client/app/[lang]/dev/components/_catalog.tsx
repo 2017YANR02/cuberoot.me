@@ -70,7 +70,7 @@ import { AttemptsGrid } from '@/components/wca-results/AttemptsGrid';
 import '@/components/wca-results/attempts-grid.css';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
-import MoreToggle from '@/components/MoreToggle';
+import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
 import { Tooltip } from '@/components/Tooltip';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { TeX } from '@/components/math/Tex';
@@ -651,7 +651,7 @@ function MoreToggleDemo() {
   return (
     <div className="cg-row">
       <MoreToggle expanded={open} onToggle={() => setOpen((v) => !v)} />
-      {open && <span className="cg-hint">{tr({ zh: '已展开的次要内容', en: 'expanded content' })}</span>}
+      <MoreTogglePanel expanded={open}><span className="cg-hint">{tr({ zh: '已展开的次要内容', en: 'expanded content' })}</span></MoreTogglePanel>
       <details><MoreToggle as="summary">{tr({ zh: '原生折叠', en: 'Native disclosure' })}</MoreToggle><p>{tr({ zh: '支持键盘展开与收起', en: 'Supports keyboard expansion and collapse' })}</p></details>
     </div>
   );
@@ -2172,10 +2172,10 @@ export const CATALOG: ComponentEntry[] = [
   // ── 展开 / 切换 ─────────────────────────────────────────────────────────
   {
     name: 'MoreToggle',
-    import: "import MoreToggle from '@/components/MoreToggle';",
+    import: "import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';",
     category: 'toggle',
-    zh: `通用「更多 / 收起」展开开关(文字 + 旋转 chevron),支持自定义 children、expanded / onToggle 或 onClick；as="summary" 保留原生 details 交互。`,
-    en: `Generic More / Show-less expand toggle (label + rotating chevron) with custom children and expanded / onToggle or onClick; as="summary" preserves native details behavior.`,
+    zh: `通用「更多 / 收起」展开开关(文字 + 旋转 chevron),支持自定义 children、expanded / onToggle 或 onClick；as="summary" 保留原生 details 交互并默认过渡；按钮内容配合 MoreTogglePanel，animate={false} 关闭过渡。`,
+    en: `Generic More / Show-less expand toggle (label + rotating chevron) with custom children and expanded / onToggle or onClick; as="summary" animates native details; pair buttons with MoreTogglePanel. Set animate={false} to disable motion.`,
     Demo: MoreToggleDemo,
     note: { zh: `折叠展开统一复用；不要使用原生三角形、字符箭头或重复实现。`, en: `Reuse for disclosures; do not use native triangles, character arrows, or separate implementations.` },
   },

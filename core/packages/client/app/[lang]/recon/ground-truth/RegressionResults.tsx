@@ -253,26 +253,24 @@ export default function RegressionResults() {
       </section>
       <section key={selected?.id} className="gt-detail" aria-label={tr({ zh: '样例结果', en: 'Case result' })}>
         {selected ? <div key={selected.id}>
-          <div className="gt-detail-head"><h2>{shortTitle(selected)}</h2>
-            {(!selected.id.startsWith('intake-') || /^https?:\/\//.test(selected.source) || selected.source.startsWith('/')) && <Link className="gt-source-link" href={selected.source || '/timer?share=' + encodeURIComponent(selected.id)} prefetch={false} target="_blank">{tr({ zh: '打开复盘', en: 'Open replay' })}</Link>}
-          </div>
-          <div className="gt-case-status"><strong data-result={selectedResult?.status ?? 'not-run'}>{tr(STATUS[selectedResult?.status ?? 'not-run'])}</strong>
-            {!selected.approved && <span className="gt-stale">{tr({ zh: '预期待确认', en: 'Expectation unconfirmed' })}<InfoTooltip iconSize={14} content={tr({ zh: '此样例不参加正式回归。旧的通过结果只表示与保存的答案一致，不代表答案已获确认。', en: 'This case is excluded from formal regression. An older pass only matched the saved answer and does not imply approval.' })} /></span>}
-          </div>
-          {!!selectedResult?.errors.length && <p className="gt-error">{tr({ zh: '存在检查错误', en: 'Check errors found' })}</p>}
           <RegressionCaseDetail key={selected.id} intakeId={intakeId(selected.id)}
+            renderHeader={collectionInfo => <>
+              <div className="gt-detail-head"><h2>{shortTitle(selected)} {collectionInfo}</h2>
+                {(!selected.id.startsWith('intake-') || /^https?:\/\//.test(selected.source) || selected.source.startsWith('/')) && <Link className="gt-source-link" href={selected.source || '/timer?share=' + encodeURIComponent(selected.id)} prefetch={false} target="_blank">{tr({ zh: '打开复盘', en: 'Open replay' })}</Link>}
+              </div>
+              <div className="gt-case-status"><strong data-result={selectedResult?.status ?? 'not-run'}>{tr(STATUS[selectedResult?.status ?? 'not-run'])}</strong>
+                {!selected.approved && <span className="gt-stale">{tr({ zh: '预期待确认', en: 'Expectation unconfirmed' })}<InfoTooltip iconSize={14} content={tr({ zh: '此样例不参加正式回归。旧的通过结果只表示与保存的答案一致，不代表答案已获确认。', en: 'This case is excluded from formal regression. An older pass only matched the saved answer and does not imply approval.' })} /></span>}
+              </div>
+              {!!selectedResult?.errors.length && <p className="gt-error">{tr({ zh: '存在检查错误', en: 'Check errors found' })}</p>}
+            </>}
             replaySource={selected.source || '/timer?share=' + encodeURIComponent(selected.id)}
             onChange={() => { setMetadataRefresh(value => value + 1); void load(); }} />
-          <details className="gt-case-disclosure"><MoreToggle as="summary">{tr({ zh: '样例说明', en: 'Case details' })}</MoreToggle>
-            <p>{title(selected)}</p><small>{selected.id}</small>
-            {sampleIntake(selected)?.createdBy && <p>{tr({ zh: '收录人', en: 'Collector' })}：{names.get(sampleIntake(selected)!.createdBy) ?? sampleIntake(selected)!.createdBy}</p>}
-          </details>
           <details className="gt-case-disclosure"><MoreToggle as="summary">{tr({ zh: '全量回归对照', en: 'Regression comparison' })}</MoreToggle>
             <p className="gt-run-note">{run ? new Date(run.startedAt).toLocaleString() : tr({ zh: '尚无全量运行记录', en: 'No regression runs yet' })}{' · '}{tr(STATUS[selectedResult?.status ?? 'not-run'])}</p>
             <div className="gt-text-compare"><div><h3>{tr({ zh: '预期', en: 'Expected' })}</h3><pre>{textRows(selectedResult?.expected ?? selected.expected)}</pre></div>
               <div><h3>{tr({ zh: '实际', en: 'Actual' })}</h3><pre>{selectedResult?.actual ? textRows(selectedResult.actual) : tr({ zh: '本次无输出', en: 'No output in this run' })}</pre></div></div>
+            {!!selectedResult?.errors.length && <pre className="gt-run-errors">{selectedResult.errors.join('\n\n')}</pre>}
           </details>
-          {!!selectedResult?.errors.length && <details className="gt-case-disclosure"><MoreToggle as="summary">{tr({ zh: '错误详情', en: 'Error details' })}</MoreToggle><pre className="gt-run-errors">{selectedResult.errors.join('\n\n')}</pre></details>}
         </div> : !history || peopleLoading ? (!error && <p role="status">{tr({ zh: '正在加载检查记录…', en: 'Loading check history…' })}</p>) : <p>{tr({ zh: '当前没有符合筛选条件的样例。', en: 'No cases match this filter.' })}</p>}
       </section>
     </div>

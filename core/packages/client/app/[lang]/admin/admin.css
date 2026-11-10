@@ -134,28 +134,6 @@
 .admin-monitoring__billing-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px 16px; padding: 6px 0; font-size: .9375rem; }
 .admin-monitoring__billing-row strong { font-variant-numeric: tabular-nums; }
 
-/* Animate every monitoring disclosure, including nested diagnostic records. */
-@supports (interpolate-size: allow-keywords) and selector(details::details-content) {
-  :is(.admin-monitoring details, details.admin-monitoring__boot, .admin-monitoring__boot details, .admin-overview details, .product-analytics details) {
-    interpolate-size: allow-keywords;
-  }
-  :is(.admin-monitoring details, details.admin-monitoring__boot, .admin-monitoring__boot details, .admin-overview details, .product-analytics details)::details-content {
-    block-size: 0;
-    overflow: clip;
-    opacity: 0;
-    transition: block-size 220ms ease, opacity 180ms ease, content-visibility 220ms allow-discrete;
-  }
-  :is(.admin-monitoring details, details.admin-monitoring__boot, .admin-monitoring__boot details, .admin-overview details, .product-analytics details)[open]::details-content {
-    block-size: auto;
-    opacity: 1;
-  }
-  .admin-monitoring__disclosure > summary { transition: margin-bottom 220ms ease; }
-}
-@media (prefers-reduced-motion: reduce) {
-  :is(.admin-monitoring details, details.admin-monitoring__boot, .admin-monitoring__boot details, .admin-overview details, .product-analytics details)::details-content,
-  .admin-monitoring__disclosure > summary { transition: none; }
-}
-
 .admin-monitoring__trends > p { margin: 8px 0; }
 .admin-monitoring__trends > .admin-dashboard__grid { margin: 20px 0 12px; gap: 16px; }
 .admin-monitoring__trends > h3 { margin-top: 24px; }

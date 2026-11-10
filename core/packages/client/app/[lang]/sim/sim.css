@@ -110,17 +110,6 @@
 
 /* SimPage 用 CollapsibleSection 把 AlgsPanel / PuzzleImageStudio 折进侧栏。
    子面板自身已有 border-top,wrapper 不再重复加。 */
-.sim-section-body {
-  display: grid;
-  grid-template-rows: 0fr;
-  visibility: hidden;
-  transition: grid-template-rows 220ms ease, visibility 0s linear 220ms;
-}
-.sim-section-body[data-open="true"] { grid-template-rows: 1fr; visibility: visible; transition-delay: 0s; }
-.sim-section-content { min-height: 0; overflow: hidden; }
-@media (prefers-reduced-motion: reduce) {
-  .sim-section-body, .sim-puzzle-caret { transition: none; }
-}
 .sim-section-content > .sim-algs {
   max-height: none;  /* 折叠面板里不再用 40vh 顶死,让父级 .sim-side 滚动 */
 }
@@ -945,11 +934,6 @@
   .sim-capture-controls .vc-controls > details[open],
   .sim-capture-controls .vc-controls > .vc-row-block { grid-column: 1 / -1; }
   .sim-capture-controls .vc-row > .vc-label { flex-basis: auto; }
-}
-
-.sim-section-body[data-open="true"][data-settled="true"] > .sim-section-content { overflow: visible; }
-@media (prefers-reduced-motion: reduce) {
-  .sim-section-body[data-open="true"] > .sim-section-content { overflow: visible; }
 }
 
 .sim-capture-controls .vc-view-size-row {
