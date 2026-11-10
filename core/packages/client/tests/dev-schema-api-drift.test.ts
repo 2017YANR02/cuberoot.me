@@ -98,6 +98,20 @@ describe('/dev/schema migration ledger drift', () => {
 });
 
 describe('/dev/api endpoint catalog drift', () => {
+  it('keeps every endpoint reachable through a declared category', () => {
+    const src = readFileSync(apiPage, 'utf8');
+    const start = src.indexOf('const DOMAINS');
+    const domains = new Set([...src.slice(start, src.indexOf('\n];', start)).matchAll(/key:\s*'([^']+)'/g)].map(match => match[1]));
+    const endpointStart = src.indexOf('const ENDPOINTS');
+    const endpoints = src.slice(endpointStart, src.indexOf('\n];', endpointStart));
+    const endpointDomains = [...endpoints.matchAll(/\bd:\s*'([^']+)'/g)].map(match => match[1]);
+    expect(endpointDomains.length).toBeGreaterThan(0);
+    expect(endpointDomains.filter(domain => !domains.has(domain))).toEqual([]);
+    const names = [...endpoints.matchAll(/\bm:\s*'([^']+)',\s*p:\s*'([^']+)'/g)].map(match => `${match[1]} ${match[2]}`);
+    expect(names.length).toBe(endpointDomains.length);
+    expect(new Set(names).size, 'endpoint names are catalog selection keys').toBe(names.length);
+  });
+
   it('covers-routes manifest equals the routes mounted in index.ts', () => {
     const onDisk = new Set(
       readdirSync(routesDir)
