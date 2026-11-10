@@ -1,5 +1,6 @@
 'use client';
 
+import { getUsableViewport } from './host-viewport';
 import { useEffect, useRef, useState, type PointerEvent, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, GripHorizontal, MoveVertical, RotateCcw } from 'lucide-react';
@@ -20,7 +21,7 @@ interface LayoutHost { getSettings(): TimerSoloLayoutSettings; updateSettings(pa
 
 /** Use the visible viewport, including zoom/keyboard offsets on touch devices. */
 function viewportOverflow(elements: Element[]) {
-  const viewport = window.visualViewport;
+  const viewport = getUsableViewport();
   const left = viewport?.offsetLeft ?? 0;
   const top = viewport?.offsetTop ?? 0;
   const right = left + Math.min(viewport?.width ?? window.innerWidth, document.documentElement.clientWidth || window.innerWidth);

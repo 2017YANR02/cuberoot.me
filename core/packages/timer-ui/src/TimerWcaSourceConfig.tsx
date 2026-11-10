@@ -1,3 +1,4 @@
+import { getUsableViewport } from './host-viewport';
 import {
   searchTimerWcaCompetitions,
   timerWcaRoundGroupOptions,
@@ -132,7 +133,7 @@ interface VisibleRect {
 }
 
 function viewportRect(): VisibleRect {
-  const visualViewport = window.visualViewport;
+  const visualViewport = getUsableViewport();
   const fallbackWidth = document.documentElement.clientWidth || window.innerWidth;
   const fallbackHeight = document.documentElement.clientHeight || window.innerHeight;
   const width = visualViewport && visualViewport.width > 0

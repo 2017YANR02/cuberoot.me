@@ -6,6 +6,7 @@
 // 用法:面板条件渲染(open && <div ref={panelRef}>)时传 open + 面板 ref;
 // 用 margin-left 修正左右溢出(不碰 transform,保留居中定位),左缘不越界优先;resize 重算。
 import { useLayoutEffect, type RefObject } from 'react';
+import { getUsableViewport } from './host-viewport';
 
 const MARGIN = 8; // 面板与视口边缘的最小间距 px
 
@@ -20,9 +21,10 @@ export function usePanelClamp(open: boolean, ref: RefObject<HTMLElement | null>)
       const width = el.offsetWidth;                 // layout 宽,不受入场 transform 影响
       // A stable scrollbar gutter can sit inside clientWidth; keep the panel outside it.
       const root = document.documentElement;
-      const vw = Math.min(root.clientWidth, root.getBoundingClientRect().right);
+      const viewport = getUsableViewport();
+      const vw = Math.min(root.clientWidth, root.getBoundingClientRect().right, viewport.offsetLeft + viewport.width);
       const overRight = left + width - (vw - MARGIN);
-      const shift = Math.max(MARGIN - left, -Math.max(0, overRight));
+      const shift = Math.max(viewport.offsetLeft + MARGIN - left, -Math.max(0, overRight));
       if (shift !== 0) el.style.marginLeft = `${shift}px`;
     };
     apply();

@@ -1,5 +1,6 @@
 'use client';
 
+import { getUsableViewport } from './host-viewport';
 import { useEffect, useId, useLayoutEffect, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import './tooltip.css';
@@ -56,11 +57,14 @@ export function Tooltip({ content, children, disabled = false, onlyWhenOverflow 
     if (!anchor || !tip) return;
     const position = () => {
       const rect = anchor.getBoundingClientRect();
-      const width = document.documentElement.clientWidth;
-      const height = document.documentElement.clientHeight;
+      const viewport = getUsableViewport();
+      tip.style.maxWidth = `${Math.max(0, viewport.width - 16)}px`;
+      tip.style.maxHeight = `${Math.max(0, viewport.height - 16)}px`;
+      const width = viewport.offsetLeft + viewport.width;
+      const height = viewport.offsetTop + viewport.height;
       const top = rect.top - tip.offsetHeight - 6;
-      tip.style.left = `${Math.max(8, Math.min(rect.left + (rect.width - tip.offsetWidth) / 2, width - tip.offsetWidth - 8))}px`;
-      tip.style.top = `${Math.max(8, Math.min(top >= 8 ? top : rect.bottom + 6, height - tip.offsetHeight - 8))}px`;
+      tip.style.left = `${Math.max(viewport.offsetLeft + 8, Math.min(rect.left + (rect.width - tip.offsetWidth) / 2, width - tip.offsetWidth - 8))}px`;
+      tip.style.top = `${Math.max(viewport.offsetTop + 8, Math.min(top >= viewport.offsetTop + 8 ? top : rect.bottom + 6, height - tip.offsetHeight - 8))}px`;
     };
     position();
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(position);

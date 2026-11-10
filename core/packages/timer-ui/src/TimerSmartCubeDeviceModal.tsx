@@ -1,3 +1,4 @@
+import { getUsableViewport } from './host-viewport';
 import { Bluetooth, CircleCheck, LoaderCircle, RefreshCw, X } from 'lucide-react';
 import {
   useEffect,
@@ -191,12 +192,15 @@ export function TimerSmartCubeDeviceModal({
       const anchor = anchorRef?.current;
       if (!panel || !anchor) return;
       const rect = anchor.getBoundingClientRect();
-      const viewport = window.visualViewport;
+      const viewport = getUsableViewport();
       const bottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight;
-      panel.style.left = `${Math.max(8, Math.min(rect.left, document.documentElement.clientWidth - panel.offsetWidth - 8))}px`;
-      const below = bottom - rect.bottom - 14;
-      panel.style.maxHeight = `${Math.max(80, below >= 160 ? below : rect.top - 14)}px`;
-      panel.style.top = `${below >= 160 ? rect.bottom + 6 : Math.max(8, rect.top - panel.offsetHeight - 6)}px`;
+      panel.style.maxWidth = `${Math.max(0, viewport.width - 16)}px`;
+      panel.style.left = `${Math.max(viewport.offsetLeft + 8, Math.min(rect.left, viewport.offsetLeft + viewport.width - panel.offsetWidth - 8))}px`;
+      const below = Math.max(0, bottom - rect.bottom - 14);
+      const above = Math.max(0, rect.top - viewport.offsetTop - 14);
+      const placeBelow = below >= above;
+      panel.style.maxHeight = `${placeBelow ? below : above}px`;
+      panel.style.top = `${placeBelow ? rect.bottom + 6 : Math.max(viewport.offsetTop + 8, rect.top - panel.offsetHeight - 6)}px`;
     };
     position();
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(position);

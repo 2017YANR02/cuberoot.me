@@ -1,5 +1,6 @@
 'use client';
 
+import { getUsableViewport } from './host-viewport';
 import { displayCuberName } from '@cuberoot/shared/cuber-name-display';
 import {
   timerWcaScrambleProgressLabels,
@@ -132,7 +133,7 @@ export function TimerWcaScrambleProgress({
       const trigger = triggerRef.current;
       const panel = panelRef.current;
       if (!trigger || !panel) return;
-      const viewport = window.visualViewport;
+      const viewport = getUsableViewport();
       const viewportLeft = viewport?.offsetLeft ?? 0;
       const viewportTop = viewport?.offsetTop ?? 0;
       const viewportWidth = viewport?.width ?? document.documentElement.clientWidth;
