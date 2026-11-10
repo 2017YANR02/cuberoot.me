@@ -1734,3 +1734,11 @@
   .sim-backview-swap,
   .sim-image-swap { min-width: 44px; min-height: 44px; }
 }
+
+/* Leave room for the move count even when translated labels are wider. */
+@media (pointer: coarse) and (orientation: landscape) and (min-width: 600px) and (max-height: 600px) {
+  .sim-side .sim-player-hlwrap,
+  .sim-side .sim-player-input { min-width: 0; }
+  .sim-view-settings > .sim-orbit { flex-direction: column; gap: 6px; }
+  .sim-view-settings .sim-orbit-fields { width: 100%; gap: 4px; }
+}
