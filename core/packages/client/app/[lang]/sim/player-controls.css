@@ -1745,3 +1745,14 @@
 
 .sim-playback-options { display: flex; align-self: stretch; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .sim-playback-options > .sim-toggle { flex-shrink: 0; }
+
+/* Align the expanded speed control with the transport row. Keep the numeric
+   field within its grid column, including on portrait phones. */
+.sim-playback-speed > .sim-slider { gap: 4px; }
+.sim-playback-speed .sim-slider-row { align-items: center; min-height: 20px; gap: 4px; }
+.sim-playback-speed .sim-slider-val { box-sizing: content-box; width: 3ch; padding: 0 2px; line-height: 20px; }
+.sim-playback-speed input[type="range"] { display: block; margin: 0; height: 20px; }
+.sim-stage-controls .playback-bar-controls:has(> .sim-playback-speed) { column-gap: 6px; }
+@media (max-width: 767px) {
+  .sim-stage-controls .playback-bar-controls:has(> .sim-playback-speed) { column-gap: 2px; }
+}
