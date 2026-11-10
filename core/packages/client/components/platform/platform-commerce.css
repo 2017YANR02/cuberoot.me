@@ -1,7 +1,7 @@
 .platform-commerce-content { display: grid; gap: 1.25rem; min-width: 0; }
 .platform-commerce-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,220px),1fr)); gap: 1rem; }
 .platform-commerce-grid > article { padding: 1.25rem; border: 1px solid var(--border-default); border-radius: 16px; background: var(--card); }
-.platform-commerce-grid h3 { margin: 0 0 .75rem; }
+.platform-commerce-grid h3 { margin: 0 0 .75rem; font-size: 1.125rem; font-weight: 600; line-height: 1.5; }
 .platform-commerce-price { font-size: 1.6rem; display: block; }
 .platform-commerce-related { display: flex; flex-wrap: wrap; gap: 1rem; }
 .platform-commerce-facts { display: grid; gap: .75rem; }
