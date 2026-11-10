@@ -1742,3 +1742,6 @@
   .sim-view-settings > .sim-orbit { flex-direction: column; gap: 6px; }
   .sim-view-settings .sim-orbit-fields { width: 100%; gap: 4px; }
 }
+
+.sim-playback-options { display: flex; align-self: stretch; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.sim-playback-options > .sim-toggle { flex-shrink: 0; }

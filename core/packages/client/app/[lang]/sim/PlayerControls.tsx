@@ -2778,8 +2778,10 @@ export default function PlayerControls({
         leading={touchLandscape ? undefined : speedControl}
         trailing={<SettingsPopover label={t('播放设置', 'Playback settings')} className="sim-playback-settings" iconSize={14}>
           {touchLandscape && <>{speedControl}{viewTools}</>}
-          {anchorSelect}
-          <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={animatePlayback => onSettingsChange({ ...settings, animatePlayback })} />
+          <div className="sim-playback-options">
+            {anchorSelect}
+            <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={animatePlayback => onSettingsChange({ ...settings, animatePlayback })} />
+          </div>
         </SettingsPopover>}
         labels={{
           skipStart: t('回到起点', 'Skip to start'),
