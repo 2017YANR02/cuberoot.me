@@ -3,8 +3,50 @@ import { COMPARISON_ROWS } from '@/app/[lang]/dev/solvers/compare/comparison-dat
 import { BENCHMARK_MACHINES, WCA_BENCHMARK } from '@/app/[lang]/dev/solvers/compare/unified-benchmark';
 import { BENCHMARK_MANIFEST, CANDIDATES, COHORTS, CURRENT_RESULTS } from '@/app/[lang]/dev/solvers/compare/benchmark-data';
 import { SERVER_RESULTS, summarizeServerResults } from '@/app/[lang]/dev/solvers/compare/server-results';
+import RECENT_RESULTS from '@/app/[lang]/dev/solvers/compare/recent-results.json';
 
 describe('multithread solver comparison evidence', () => {
+  it('publishes the local h8 result separately from the slower cloud builds', () => {
+    const {macH8, aliyun} = RECENT_RESULTS;
+    expect([macH8.cases, macH8.threads, macH8.passes, macH8.warmupCases]).toEqual([100, 4, 1, 0]);
+    const [opt8, cli, adapter] = macH8.rows;
+    expect(macH8.originalSpeedRatio).toBeCloseTo(opt8.seconds / cli.seconds, 12);
+    expect(macH8.speedRatio).toBeCloseTo(opt8.seconds / adapter.seconds, 12);
+    expect(macH8.speedRatio).toBeGreaterThan(3);
+    expect(macH8.rows.every(row => row.verifiedSolutions === 100 && row.optimalLengthsMatched === 100)).toBe(true);
+    expect(macH8.memory.swapoutsDelta).toBe(0);
+    expect(aliyun.rows.map(row => row.id)).toEqual(['opt8', 'egg-h8', 'egg-cli-v3', 'egg-cli-skylake']);
+    expect(aliyun.fastestMeasuredWallRatio).toBeCloseTo(Math.min(...aliyun.rows.slice(1).map(row => row.seconds)) / aliyun.rows[0].seconds, 12);
+    expect(aliyun.fastestMeasuredWallRatio).toBeGreaterThan(1);
+  });
+  it('keeps the M5 Max runs separate and identifies the two historical 64G settings', () => {
+    const { mac } = RECENT_RESULTS;
+    expect([mac.cases, mac.threads, mac.passes, mac.warmupCases]).toEqual([1000, 16, 1, 0]);
+    expect(mac.title.en).toContain('M5 Max');
+    const [opt10, h10, h11Default, h11Matched] = mac.rows;
+    expect(mac.speedRatio32).toBeCloseTo(opt10.seconds / h10.seconds, 10);
+    expect(mac.egg64Over32SpeedRatio).toBeCloseTo(h10.seconds / h11Default.seconds, 10);
+    expect([h11Default.lanes, h11Matched.lanes]).toEqual([24, 32]);
+    expect(mac.rows.reduce((sum, row) => sum + row.verifiedSolutions, 0)).toBe(4000);
+    expect(mac.rows.every(row => row.verifiedSolutions === row.cases && row.optimalLengthsMatched === row.cases)).toBe(true);
+  });
+
+  it('rejects the full egg h8 candidate using the recent baseline and preserves failed experiments', () => {
+    const { aliyun, opt8Experiments } = RECENT_RESULTS;
+    const [baseline, egg] = aliyun.rows;
+    expect([aliyun.cases, aliyun.threads, aliyun.passes, aliyun.warmupCases]).toEqual([100, 4, 1, 0]);
+    expect(aliyun.sourceRange).toEqual([1, 100]);
+    expect(aliyun.baselineReused).toBe(true);
+    expect(aliyun.ratios.wall).toBeCloseTo(egg.seconds / baseline.seconds, 12);
+    expect(aliyun.ratios.wall).toBeGreaterThan(1);
+    expect(aliyun.accepted).toBe(false);
+    expect(aliyun.checks.comparison).toEqual({ wall: false, cpu: false, p50: false, p95: false, p99: true });
+    expect(aliyun.pageReference.seconds).toBe(SERVER_RESULTS!.native.solveSeconds);
+    expect(baseline.seconds).toBeLessThan(aliyun.pageReference.seconds);
+    expect(opt8Experiments.rows).toHaveLength(5);
+    expect(opt8Experiments.holdout.sourceRange).toEqual([101, 200]);
+    expect(opt8Experiments.holdout.accepted).toBe(false);
+  });
   it('keeps the independently verified single-pass server comparison separate from Mac results', () => {
     expect(SERVER_RESULTS).not.toBeNull();
     const result = SERVER_RESULTS!;

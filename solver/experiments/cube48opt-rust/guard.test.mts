@@ -10,6 +10,31 @@ import { Writable } from 'node:stream';
 import test from 'node:test';
 import { consumeResourceReview, deliverOpt10Input, h48FileBytes, opt10ReviewScope, opt10ReviewSources, productionResourceReviewScope, researchPolicy, resourceProtectionReasons, resourceReviewCommandSha256, resourceReviewScope, validateH48Metadata, validateOpt10GenerationProof, validateOpt10Metadata, validateOpt10ResourceReview, validateResourceReview, validateSuccessfulPredecessor } from './guard.mts';
 import { blockedCompute } from '../../../.codex/hooks/block-unprotected-memory-compute.mts';
+import {macLabel, macReview, macDriver, macPrepReview, macPrepDriver, validateMacObservation} from '../egg-solver/native-service/mac-h8-policy.mts';
+
+test('egg h8 diagnosis has one guarded command, fixed input scope and an immutable run baseline', () => {
+  const request = {label: macLabel, executable: process.execPath, args: [macDriver], env: {CUBEOPT_EGG_H8_REVIEW: macReview}};
+  assert.equal(researchPolicy(request.label, request.executable, request.args, request.env).rssLimit, 7_782_731_776 + 2 * 2 ** 30);
+  for (const changed of [{...request, label: 'another-run'}, {...request, args: [macDriver, '--repeat']},
+    {...request, executable: '/bin/sh'}, {...request, env: {...request.env, CUBEOPT_H: '11'}}])
+    assert.throws(() => researchPolicy(changed.label, changed.executable, changed.args, changed.env));
+  const now = {boot: 'fixed-boot', swapouts: 336, pressure: 1, available: 32 * 2 ** 30};
+  const plan = {schema: 'cuberoot.egg-h8-mac-diagnosis/v1', baseline: now,
+    authorization: '用户要求在本机复查 egg 与 Opt8 的速度差异；100题、4线程、三个入口各一轮、不预热',
+    threads: 4, cases: 100, warmupCases: 0, measuredPasses: 1, eggLanes: 40, order: ['egg-cli', 'egg-adapter', 'opt8']};
+  validateMacObservation(plan, now, false, false);
+  for (const changed of [{...now, swapouts: 337}, {...now, boot: 'new-boot'}, {...now, pressure: 2}, {...now, available: 2 ** 30}])
+    assert.throws(() => validateMacObservation(plan, changed, false, false));
+  assert.throws(() => validateMacObservation(plan, now, true, false));
+  assert.throws(() => validateMacObservation(plan, now, false, true));
+  assert.throws(() => validateMacObservation({...plan, cases: 1000}, now, false, false));
+  const root = resolve(import.meta.dirname, '../../..');
+  assert(blockedCompute(`node ${macDriver}`, root));
+  assert(blockedCompute(`node ${macPrepDriver}`, root));
+  assert.equal(researchPolicy(macLabel + '-prepare-fixed', process.execPath, [macPrepDriver], {CUBEOPT_EGG_H8_REVIEW: macPrepReview}).rssLimit, 43 * 2 ** 30);
+  assert.throws(() => researchPolicy(macLabel, process.execPath, [macPrepDriver], {CUBEOPT_EGG_H8_REVIEW: macPrepReview}));
+  assert.equal(blockedCompute(`node ${resolve(import.meta.dirname, 'guard.mts')} ${macLabel} ${process.execPath} ${macDriver}`, root), undefined);
+});
 import { parsePrintedSolution, parseWasmBenchmarkArguments, readWca100 } from './wasm-benchmark.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));

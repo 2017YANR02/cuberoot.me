@@ -88,6 +88,7 @@ function blockedCubeopt(words: string[], cwd: string): boolean {
   if (invocation) {
     const entry = resolve(cwd, words[invocation.index].replaceAll('\\', '/'));
     if (entry === resolve(cubeoptRoot, 'guard.mts')) return false;
+    if (['mac-h8-benchmark.mts', 'mac-h8-prepare.mts'].some(name => entry === resolve(repoRoot, 'solver/experiments/egg-solver/native-service', name))) return true;
     if (entry === resolve(cubeoptRoot, 'wasm-browser-benchmark.mjs')) {
       // Only separately bounded no-PDB probes/three-case Rust fixtures may
       // bypass the compute guard. A flag anywhere in a larger command is not enough.

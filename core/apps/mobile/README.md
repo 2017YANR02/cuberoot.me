@@ -115,6 +115,22 @@ On macOS, run `ios:doctor` first, use `ios:build` for a repeatable unsigned Simu
 
 ## iPhone UI automation
 
+### Xcode 27 / iPhone Duo simulator
+
+Xcode 27 uses **Device Hub** for the simulator UI. Open **Xcode → Open Developer Tool → Device Hub**, select **iPhone Duo**, and use **Closed / Partially Open / Open** below the device to check its different screen sizes. See Apple's [Device Hub guide](https://developer.apple.com/documentation/xcode/managing-your-simulated-and-physical-devices-in-device-hub). Do not assume the older `Simulator.app` path exists.
+
+From `core/`, run `pnpm --filter @cuberoot/mobile ios:build`, then find the intended device with `xcrun simctl list devices available`. Use its actual UDID for the following commands; boot it only if it is shut down:
+
+```bash
+xcrun simctl boot "$IOS_SIMULATOR_UDID"
+xcrun simctl bootstatus "$IOS_SIMULATOR_UDID" -b
+IOS_SIMULATOR_APP="$(node --input-type=module -e 'import { tmpdir } from "node:os"; import { join } from "node:path"; console.log(join(tmpdir(), "cuberoot-mobile-ios-derived-data", "Build/Products/Debug-iphonesimulator/App.app"))')"
+xcrun simctl install "$IOS_SIMULATOR_UDID" "$IOS_SIMULATOR_APP"
+xcrun simctl launch "$IOS_SIMULATOR_UDID" me.cuberoot.app
+```
+
+The app path follows the existing `ios:build` script. Install updates without erasing the simulator; do not uninstall to refresh a build. For Duo screenshots, `simctl io <UDID> enumerate` identifies its displays; select the active display explicitly when capturing. Simulator startup and visible layouts do not validate physical BLE, haptics, APNs delivery or store signing.
+
 For this Mac's real-iPhone screenshot and UI automation setup, see [iOS device automation](../../../docs/mobile-ios-automation.md). It uses Appium/XCUITest against the installed app without resetting its data; it is separate from production dependencies and native release builds.
 
 ## UU Remote

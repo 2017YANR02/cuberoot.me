@@ -365,3 +365,54 @@
     aspect-ratio: var(--timer-cube-aspect, 1.5);
   }
 }
+
+/* Native reserved regions provide a bounded workspace. Size the canvas from
+ * that container, including a results dock, rather than the physical display. */
+@supports (container-type: size) {
+  .timer-workspace[data-fit-viewport] { height: 100%; overflow: hidden; --timer-right-dock-width: 300px; }
+  .timer-workspace[data-fit-viewport] .timer-solo-main { container: timer-stage / size; }
+  .timer-workspace[data-fit-viewport] .timing-surface--solo {
+    flex: 1 1 0;
+    min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr);
+    padding-top: min(var(--solo-scramble-gap, 16px), 3cqh);
+    row-gap: min(var(--solo-timer-gap, 20px), 3cqh);
+    --timer-scramble-fs: clamp(16px, 4cqw, 28px);
+  }
+  .timer-workspace[data-fit-viewport] .timing-surface-core {
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    --timer-readout-max-size: min(24cqh, 22cqw);
+  }
+  .timer-workspace[data-fit-viewport] .timing-surface-scramble-top {
+    max-height: 40cqh;
+    overflow-y: auto;
+    touch-action: pan-y;
+  }
+  .timer-workspace[data-fit-viewport] .timing-surface-sub { min-height: 0; max-height: 55%; }
+  .timer-workspace[data-fit-viewport] .timing-surface-cube { min-height: 0; }
+  .timer-workspace[data-fit-viewport] .timing-surface-cube-frame {
+    --timer-cube-h: min(30cqw, 26cqh);
+    height: calc(var(--timer-cube-h) * var(--solo-cube-scale, 1));
+    width: auto;
+    aspect-ratio: var(--timer-cube-aspect, 1.5);
+  }
+  @container timer-stage (max-height: 500px) {
+    .timer-stage-footer .shell-stat-rail { flex-direction: row; flex-wrap: wrap; gap: 2px 12px; }
+    .timer-stage-footer { padding-block: 4px; }
+  }
+  @container timer-stage (min-width: 520px) and (max-height: 500px) {
+    .timer-workspace[data-fit-viewport] .timing-surface--solo {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr);
+      column-gap: 16px;
+      padding: 8px 12px;
+    }
+    .timer-workspace[data-fit-viewport] .timing-surface-scramble-top { align-self: center; max-height: 100%; }
+    .timer-workspace[data-fit-viewport] .timing-surface-core { grid-row: 1; grid-column: 2; }
+    .timer-workspace[data-fit-viewport] .timing-surface-cube-frame { --timer-cube-h: min(22cqw, 40cqh); }
+  }
+}

@@ -383,3 +383,4 @@ export { TimerNetPkArena } from './TimerNetPkArena';
 export { TimerRemoteLiveCube } from './TimerRemoteLiveCube';
 
 export { timerTrainingSummaries } from './training-statistics';
+export { getUsableViewport, setHostViewportLayout, useHostViewportLayout, type HostViewportLayout, type ViewportRect } from './host-viewport';

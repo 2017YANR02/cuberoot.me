@@ -192,6 +192,7 @@ function assertAssetsUnchanged(config, assets) {
   assert.equal(digest(boundedRead(resolve(assets.root, 'manifest.json'))), assets.manifestSha256, 'Baseline manifest changed');
   assert.deepEqual(fileIdentity(assets.table), assets.tableIdentity, 'Table changed');
   assert.deepEqual(fileIdentity(assets.snapshot), assets.snapshotIdentity, 'Snapshot changed');
+  for (const file of assets.extraTables ?? []) assert.deepEqual(fileIdentity(file.path), file.identity, 'Candidate table changed');
   for (const [binary, expected] of Object.entries(assets.binaries)) {
     assert.deepEqual(fileIdentity(binary), expected.identity, 'Native candidate identity changed');
     assert.equal(digest(boundedRead(binary, 64 * 1024 ** 2)), expected.sha256, 'Native candidate bytes changed');
@@ -211,7 +212,7 @@ function assertAssetsUnchanged(config, assets) {
   }
 }
 
-function processRows() {
+export function processRows() {
   return readdirSync('/proc').filter(name => /^\d+$/.test(name)).flatMap(name => {
     try {
       const status = readFileSync(`/proc/${name}/status`, 'utf8');
@@ -225,7 +226,7 @@ function processRows() {
   });
 }
 
-function treeRows(rows, root) {
+export function treeRows(rows, root) {
   const ids = new Set([root]);
   for (let old = -1; old !== ids.size;) {
     old = ids.size;
@@ -234,17 +235,18 @@ function treeRows(rows, root) {
   return rows.filter(row => ids.has(row.pid));
 }
 
-function assertNoConflict(rows, binaries, allowed = []) {
+export function assertNoConflict(rows, binaries, allowed = []) {
   const allow = new Set([process.pid, ...allowed]);
   const conflicts = rows.filter(row => !allow.has(row.pid) && row.argv.length && (
     binaries.includes(row.argv[0])
+    || (basename(row.argv[0]) === 'cuberoot-egg' && ['serve', 'generate'].includes(row.argv[1]))
     || (/cube48opt|cubeopt-native/.test(basename(row.argv[0])) && row.argv.some(arg => /^solve(?:-h\d+|-h48|-opt10)?$/.test(arg)))
     || row.argv.slice(0, 4).some(arg => /(?:^|\/)(?:(?:solve-)?daemon|cubeopt-daemon|(?:native-service|production|rust-candidate)-benchmark|profile-rust)\.mjs$/.test(arg))
   ));
   assert.equal(conflicts.length, 0, `Another daemon or benchmark is active: ${conflicts.map(row => row.pid).join(', ')}`);
 }
 
-function systemSample() {
+export function systemSample() {
   const meminfo = readFileSync('/proc/meminfo', 'utf8'), vm = readFileSync('/proc/vmstat', 'utf8');
   const fields = Object.fromEntries([...meminfo.matchAll(/^(\w+):\s+(\d+) kB$/gm)].map(m => [m[1], Number(m[2]) * 1024]));
   assert(fields.MemAvailable > 0 && fields.MemTotal >= fields.MemAvailable);
@@ -261,7 +263,7 @@ function systemSample() {
     swapInPages: Number(vm.match(/^pswpin (\d+)$/m)?.[1]), swapOutPages: Number(vm.match(/^pswpout (\d+)$/m)?.[1]) };
 }
 
-function memorySettings() {
+export function memorySettings() {
   const settings = {};
   for (const key of ['enabled', 'defrag', 'hpage_pmd_size']) {
     try { settings[key] = readFileSync(`/sys/kernel/mm/transparent_hugepage/${key}`, 'utf8').trim(); }
@@ -338,7 +340,7 @@ export function startSafetyMonitor({ sampleResources, probeAdmission = signal =>
   } };
 }
 
-function assertResources(sample, rssBytes, startup = false) {
+export function assertResources(sample, rssBytes, startup = false) {
   assert(sample.availableBytes >= (startup ? LIMITS.startupAvailableBytes : LIMITS.reserveBytes), 'Insufficient MemAvailable');
   assert(rssBytes <= LIMITS.treeRssBytes, 'Process tree RSS exceeded limit');
   assert(sample.fullPressureAvg10 === null || sample.fullPressureAvg10 <= LIMITS.fullPressureAvg10, 'Memory pressure exceeded limit');
@@ -353,7 +355,7 @@ export function parseResult(line, id) {
   return { id, length, solution };
 }
 
-async function runEngine(config, assets, cases, pass, taskStarted) {
+export async function runEngine(config, assets, cases, pass, taskStarted) {
   const engine = pass.label;
   const isWasm = pass.kind === 'wasm';
   assertAssetsUnchanged(config, assets);
@@ -373,7 +375,9 @@ async function runEngine(config, assets, cases, pass, taskStarted) {
   delete env.CUBEOPT_SIMD;
   if (!isWasm) env.CUBEOPT_SIMD = pass.simd;
   const executable = isWasm ? process.execPath : pass.binary;
-  const args = isWasm ? [assets.wasm?.daemon ?? config.daemon] : ['solve', assets.snapshot, assets.table, '8', '20', '0'];
+  const args = isWasm ? [assets.wasm?.daemon ?? config.daemon]
+    : pass.kind === 'egg-native' ? ['serve', assets.extraTables.find(file => file.path === pass.table).path, '4']
+    : ['solve', assets.snapshot, assets.table, '8', '20', '0'];
   const started = performance.now();
   const child = spawn(executable, args, { env, detached: true, stdio: ['pipe', 'pipe', 'pipe'] });
   let failure = null, waiter = null, killTimer;
@@ -435,17 +439,29 @@ async function runEngine(config, assets, cases, pass, taskStarted) {
     save(resolve(directory, 'startup.json'), { pid: child.pid, engine, readyLine, startupSeconds, threads: 4 });
     saveProcessMemory(directory, child.pid, 'ready');
     const results = [];
+    const cpuTicks = () => {
+      const stat = readFileSync(`/proc/${child.pid}/stat`, 'utf8');
+      const fields = stat.slice(stat.lastIndexOf(') ') + 2).trim().split(/\s+/);
+      return Number(fields[11]) + Number(fields[12]);
+    };
     for (const item of cases) {
+      const cpuBefore = cpuTicks();
       const requestStarted = performance.now(), response = nextLine(LIMITS.requestMs);
       child.stdin.write(`${item.id}\t${item.scramble}\n`);
       const line = await response; if (failure) throw failure;
       const result = { ...parseResult(line, item.id), scramble: item.scramble, engine, pid: child.pid,
         wallSeconds: (performance.now() - requestStarted) / 1000, raw: line, independentlyReplayed: false };
+      result.cpuTicks = cpuTicks() - cpuBefore;
       if (item.expectedLength !== undefined) assert.equal(result.length, item.expectedLength, 'Optimal length differs from first baseline pass');
       writeSync(resultsFd, JSON.stringify(result) + '\n'); fsyncSync(resultsFd); results.push(result);
-      process.stderr.write(`[native-service-benchmark] ${engine} ${results.length}/100 ${result.wallSeconds.toFixed(6)}s\n`);
+      process.stderr.write(`[native-service-benchmark] ${engine} ${results.length}/${cases.length} ${result.wallSeconds.toFixed(6)}s\n`);
     }
     saveProcessMemory(directory, child.pid, 'complete');
+    if (pass.checkIdle) {
+      const before = cpuTicks();
+      await new Promise(resolveIdle => setTimeout(resolveIdle, 5000));
+      save(resolve(directory, 'idle.json'), { pid: child.pid, seconds: 5, cpuTicks: cpuTicks() - before });
+    }
     child.stdin.end();
     const eofTimer = setTimeout(() => stop(Error('Solver did not exit after EOF')), 15_000);
     try { await exit; } finally { clearTimeout(eofTimer); }

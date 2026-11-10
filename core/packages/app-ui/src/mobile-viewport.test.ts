@@ -94,7 +94,7 @@ describe('mobile visible viewport layout', () => {
       { classNameSuffix: '', style: { height: 749, minHeight: 749 } },
     ]);
     expect(app).toContain('return observeVisibleViewportHeight(setViewportHeight)');
-    expect(app).toContain('const shellViewport = mobileShellViewportLayout(viewportHeight)');
+    expect(app).toContain('const shellViewport = mobileShellViewportLayout(shellHeight)');
     expect(app).toContain('style={{ ...shellViewport.style,');
   });
 
