@@ -339,7 +339,10 @@ async function main() {
   const directory = typeof cwd === 'string' ? resolve(cwd).toLowerCase() : '';
   if (directory !== root && !directory.startsWith(root + sep)
     && !command.replaceAll('\\', '/').toLowerCase().includes(root.replaceAll('\\', '/'))) return;
-  const blocked = blockedCompute(command, 0, typeof cwd === 'string' ? resolve(cwd) : repoRoot);
+  // The shell parser does not interpret a quoted SSH payload. Keep this exact
+  // approved route closed when its receipt is absent, expired or consumed.
+  const blocked = command.startsWith('ssh -t -o BatchMode=yes mbp ') && command.includes('pnpm stats:scramble')
+    ? '打乱统计计算' : blockedCompute(command, 0, typeof cwd === 'string' ? resolve(cwd) : repoRoot);
   if (!blocked) return;
   process.stdout.write(JSON.stringify({ hookSpecificOutput: {
     hookEventName: 'PreToolUse', permissionDecision: 'deny',

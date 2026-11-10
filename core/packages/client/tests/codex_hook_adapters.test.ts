@@ -74,6 +74,8 @@ describe('unprotected memory computation command guard', () => {
     'node .local-data/double-zbll-1000/run.mts',
     'pnpm stats:scramble:local',
     'pnpm stats:scramble --jobs 333opt',
+    mbpStatsCommand('a'.repeat(40)),
+    mbpStatsCommand('a'.repeat(40)) + '; echo changed',
     'tsx ../scripts/stats/update-local.ts',
     'tsx ../scripts/stats/update-published.ts --publish',
     'pnpm stats:scramble:local --plan; pnpm stats:scramble:local',
