@@ -33,7 +33,7 @@ export default function Paginator({
 
   return (
     <div className={className}>
-      <button className="wse-page-btn" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+      <button className="wse-page-btn" aria-label={tr({ zh: '上一页', en: 'Previous page' })} disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
         <ChevronLeft size={14} />
       </button>
       <span className="paginator-text">
@@ -52,10 +52,10 @@ export default function Paginator({
         />
         {' / ' + totalPages}
       </span>
-      <button className="wse-page-btn" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
+      <button className="wse-page-btn" aria-label={tr({ zh: '下一页', en: 'Next page' })} disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
         <ChevronRight size={14} />
       </button>
-      <select className="wse-page-select" value={size} onChange={e => onSizeChange(parseInt(e.target.value, 10))}>
+      <select aria-label={tr({ zh: '每页条数', en: 'Entries per page' })} className="wse-page-select" value={size} onChange={e => onSizeChange(parseInt(e.target.value, 10))}>
         {pageSizeOptions.map(s => <option key={s} value={s}>{s}/{tr({ zh: '页', en: 'pg'
         })}</option>)}
       </select>

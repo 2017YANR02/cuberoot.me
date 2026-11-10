@@ -14,13 +14,7 @@
 
 import { useState, useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Keyboard, Bot, MessageSquare, Gift, ShieldCheck, Shuffle, Trophy, Medal, User, Star,
-  Globe, Flag as FlagIcon, CalendarDays, Search, BarChart3, Award, Table, Play, ScanSearch,
-  FileText, FilePen, BookMarked, KeyRound, Link2, ListOrdered, LayoutGrid, ToggleLeft,
-  ChevronsUpDown, Type, Tag, Component as ComponentIcon, PanelTop, Info, Sigma, Box, ListChecks,
-  Palette, Disc, MousePointerClick, Image as ImageIcon, type LucideIcon,
-} from '@app-foundation/icons/lucide';
+
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
 import TrainingNavButton from '@/components/TrainingNavButton';
@@ -109,68 +103,8 @@ export const CATEGORIES: { id: GalleryCategory; zh: string; en: string }[] = [
   { id: 'badge', zh: '徽章与图标', en: 'Badges & icons' },
   { id: 'display', zh: '展示与可视化', en: 'Display & visualization' },
   { id: 'nav', zh: '导航与链接', en: 'Navigation & links' },
-  { id: 'more', zh: '更多组件(数据驱动 / 需上下文,无内联演示)', en: 'More (data-driven / context-bound, no inline demo)' },
+  { id: 'more', zh: '业务组件', en: 'Business components' },
 ];
-
-// 给每张卡一个可视化:demoable 的渲染实时 Demo,其余按名字 / 描述关键词推断一个
-// 代表图标(下面 ICON_RULES,顺序从具体到一般),兜底按分类。新登记的条目无需手配,
-// 关键词命中即得图标。
-const ICON_RULES: [RegExp, LucideIcon][] = [
-  [/desk-?pet|mascot|clawd/, Bot],
-  [/feedback/, MessageSquare],
-  [/donate/, Gift],
-  [/scramble/, Shuffle],
-  [/milestone/, Medal],
-  [/chart|race|distribution|histogram/, BarChart3],
-  [/\btable/, Table],
-  [/registration|announced|competition|\bcomp\b/, Trophy],
-  [/person|cuber|profile|\bhero/, User],
-  [/follow|\bstar/, Star],
-  [/region|continent/, Globe],
-  [/flag|country/, FlagIcon],
-  [/calendar|month|\bdate|\byear/, CalendarDays],
-  [/search/, Search],
-  [/record/, Award],
-  [/recon/, ScanSearch],
-  [/article/, FileText],
-  [/player|playback|twisty/, Play],
-  [/\beditor\b/, FilePen],
-  [/algorithm|\balg\b|\bcase/, BookMarked],
-  [/keyboard/, Keyboard],
-  [/auth|login|account/, KeyRound],
-  [/iframe|embed/, Link2],
-  [/paginat/, ListOrdered],
-  [/\btabs?\b/, LayoutGrid],
-  [/tooltip/, Info],
-  [/tex|latex|\bmath/, Sigma],
-  [/\blogo/, ComponentIcon],
-  [/modal|popover|overlay/, PanelTop],
-  [/palette|color|subset/, Palette],
-  [/wheel/, Disc],
-  [/result|solve|attempt/, ListChecks],
-  [/cube|puzzle/, Box],
-  [/validation|\badmin/, ShieldCheck],
-  [/toggle|switch|mode/, ToggleLeft],
-  [/select|picker|dropdown/, ChevronsUpDown],
-  [/input|field/, Type],
-  [/badge|mark/, Tag],
-];
-
-const CATEGORY_ICON: Record<GalleryCategory, LucideIcon> = {
-  toggle: ToggleLeft,
-  button: MousePointerClick,
-  input: Type,
-  badge: Tag,
-  display: ImageIcon,
-  nav: Link2,
-  more: ComponentIcon,
-};
-
-export function iconFor(e: ComponentEntry): LucideIcon {
-  const hay = `${e.name} ${e.en}`.toLowerCase();
-  for (const [re, Icon] of ICON_RULES) if (re.test(hay)) return Icon;
-  return CATEGORY_ICON[e.category];
-}
 
 function useIsZh() {
   const { i18n } = useTranslation();
@@ -850,6 +784,13 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 };
 
 export const CATALOG: ComponentEntry[] = [
+  {
+    name: 'ReferenceCatalog',
+    import: "import ReferenceCatalog from '@/app/[lang]/dev/_shared/ReferenceCatalog';",
+    category: 'more',
+    zh: '开发参考共用的单屏目录与详情界面，支持搜索、分类、分页和可分享的网址状态；仅挂载当前条目的示例。全部分类保留登记顺序，单个分类按名称排序。',
+    en: 'Shared single-screen directory and details for developer references, with search, categories, pagination and shareable URL state. Only the selected demo mounts. All categories retain registry order; individual categories sort by name.',
+  },
   {
     name: 'AlgCaseOrderGrid',
     import: "import { AlgCaseOrderGrid } from '@/components/AlgCaseOrderGrid';",
