@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import MoreToggle from '@/components/MoreToggle';
 import PageBackLink from '@/components/PageBackLink';
 import Sq1AlgorithmTrainer from '@/components/Sq1AlgorithmTrainer';
 import { Sq1Importer, Sq1Inspector, Sq1Visualizer } from '@/components/Sq1InputTools';
@@ -53,11 +54,14 @@ export default function Sq1ToolsClient({ tool }: { tool: Sq1Tool }) {
   const host = useTrainingHost();
   const text = TOOL_TEXT[tool];
   return (
-    <main className={styles.page}>
+    <main className={`${styles.page}${tool === 'train' ? ` ${styles.trainPage}` : ''}`}>
       <header className={styles.header}>
         {!host && <div className="page-back-row"><PageBackLink fallback="/alg/sq1" /></div>}
         <h1 className={styles.title}>{tr(text.title)}</h1>
-        <p className={styles.intro}>{tr(text.intro)}</p>
+        {tool === 'train' ? <details className={styles.trainingHelp}>
+          <MoreToggle as="summary">{tr({ zh: '练习说明', en: 'Practice help' })}</MoreToggle>
+          <p className={styles.intro}>{tr(text.intro)}</p>
+        </details> : <p className={styles.intro}>{tr(text.intro)}</p>}
       </header>
       {!host && <div className={styles.navRow}><Sq1ToolNav contained /></div>}
       <div className={styles.content}>

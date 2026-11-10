@@ -1887,3 +1887,11 @@
     background: var(--glass-popover-bg);
   }
 }
+
+
+.bld-lookup-help { margin-block: 6px; }
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 640px) {
+  .bld-trainer-root.bld-lookup-page { padding-block: 8px 20px; }
+  .bld-lookup-page .bld-comm-toolbar { margin-block: 8px; }
+  .bld-lookup-page .bld-db-picker { margin-block: 8px; }
+}

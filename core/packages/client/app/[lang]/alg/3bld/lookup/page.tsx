@@ -18,6 +18,7 @@
 // 六条对着上游页面实测的 fixture)。显示开关(起手 / 镜像 / 逆 case / 换位子写法 / 排序 /
 // 按成绩筛)在 _store/blddb-prefs-store.ts,对齐上游 /settings。
 
+import MoreToggle from '@/components/MoreToggle';
 import PageHeading from '@/components/PageHeading';
 import { useCallback, useEffect, useMemo, useState, type JSX } from 'react';
 import { parseAsStringEnum } from 'nuqs';
@@ -574,7 +575,7 @@ export default function BlddbLookupPage(): JSX.Element {
   const playList = playing && videos?.[playing.raw] ? orderVideos(videos[playing.raw], isZh) : [];
 
   return (
-    <div className="bld-trainer-root">
+    <div className="bld-trainer-root bld-lookup-page">
       <div className="bld-topbar">
         <PageHeading backHref="/alg/3bld">
           <EventIcon event="333bf" /> {tr({ zh: '盲拧公式查询', en: 'BLD Algorithm Lookup' })}
@@ -591,12 +592,15 @@ export default function BlddbLookupPage(): JSX.Element {
         </Link>
       </div>
 
-      <p className="bld-input-summary">
-        {tr({
-          zh: '按位置或字母查一个 case,把大家在用的写法一并列出,带换位子、起手和使用者。三阶六套 + 高阶的翼棱 / 角心 / 边心 / 中棱,数据来自 BLDDB 的人工整理集;某一位填 * 可以列出一整组。穷举生成的 Nightmare 全集在完整库里。',
-          en: 'Look up a case by position or letters — every writing people actually use, with its commutator, thumb position and who uses it. Covers the six 3BLD sets plus wings, X-centers, T-centers and midges, from BLDDB’s hand-curated data; put * in one slot to list a whole group. The exhaustive Nightmare sets live in the full library.',
-        })}
-      </p>
+      <details className="bld-lookup-help">
+        <MoreToggle as="summary">{tr({ zh: '查询说明', en: 'Lookup help' })}</MoreToggle>
+        <p className="bld-input-summary">
+          {tr({
+            zh: '按位置或字母查一个 case,把大家在用的写法一并列出,带换位子、起手和使用者。三阶六套 + 高阶的翼棱 / 角心 / 边心 / 中棱,数据来自 BLDDB 的人工整理集;某一位填 * 可以列出一整组。穷举生成的 Nightmare 全集在完整库里。',
+            en: 'Look up a case by position or letters — every writing people actually use, with its commutator, thumb position and who uses it. Covers the six 3BLD sets plus wings, X-centers, T-centers and midges, from BLDDB’s hand-curated data; put * in one slot to list a whole group. The exhaustive Nightmare sets live in the full library.',
+          })}
+        </p>
+      </details>
 
       <div className="bld-comm-toolbar">
         <label className="bld-db-type">
