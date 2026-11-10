@@ -11,13 +11,18 @@ import LessonContent from './LessonContent';
 import LessonThumbnail from './LessonThumbnail';
 import PracticeRoute from './PracticeRoute';
 import Walkthrough from './Walkthrough';
-import ChapterNavigation from './ChapterNavigation';
+import ChapterNavigation from '../components/ChapterNavigation';
 import './lesson-support.css';
 import '@app-foundation/navigation-ui/navigation.css';
 import './lbl.css';
 
 const lessonStorageKey = 'lbl:current-lesson';
 const legacyLessonStorageKey = 'lbl2:current-lesson';
+
+function chapterStep(id: string) {
+  const index = activeChapters.findIndex(chapter => chapter.id === id);
+  return index >= 0 ? `lesson-${index + 1}` : `lesson-${id}`;
+}
 
 function keepMouseNavigationUnfocused(event: MouseEvent<HTMLButtonElement>) {
   if (event.button === 0) event.preventDefault();
@@ -41,6 +46,8 @@ function LblLessonView({ archive }: { archive: boolean }) {
   const [chapter, setChapter] = useState(0);
   const [section, setSection] = useState(0);
   const [revision, setRevision] = useState(0);
+  const observedRoute = useRef<string | null>(null);
+  const appliedRoute = useRef<{ step: string; case: string | null } | null>(null);
 
   const [, setPracticeRoute] = useQueryStates({ view: parseAsString, step: parseAsString, case: parseAsString });
 
@@ -69,30 +76,42 @@ function LblLessonView({ archive }: { archive: boolean }) {
     return () => document.removeEventListener('keydown', switchHandWithSpace);
   }, [isDaisyLift, isDaisyOverview, showDaisyTerms]);
   useEffect(() => {
-    const linkedChapter = chapters.findIndex(item => item.id === linkedStep);
-    if (linkedChapter >= 0) {
-      setChapter(linkedChapter);
-      const review = linkedCase ? practiceReviewLocation(chapters[linkedChapter], linkedCase) : { section: 0, daisyLiftIndex: 0 };
-      setSection(review.section);
-      setDaisyLiftIndex(review.daisyLiftIndex);
-      return;
-    }
-    let saved: string | null;
+    const routeKey = JSON.stringify([linkedStep, linkedCase]);
+    if (observedRoute.current === routeKey) return;
+    const initial = observedRoute.current === null;
+    observedRoute.current = routeKey;
+    // Ignore the URL update from our own navigation: it already selected the section.
+    if (appliedRoute.current?.step === linkedStep && appliedRoute.current.case === linkedCase) return;
+    let saved: string | null = null;
     try {
-      saved = sessionStorage.getItem(storageKey) ?? sessionStorage.getItem(legacyStorageKey);
+      if (initial) saved = sessionStorage.getItem(storageKey) ?? sessionStorage.getItem(legacyStorageKey);
     } catch {
-      return;
+      // Direct chapter links also work without browser storage.
     }
-    if (!saved) return;
-    const [chapterId, lessonId] = saved.split('/');
-    const chapterIndex = chapters.findIndex(item => item.id === chapterId);
-    if (chapterIndex < 0) return;
-    const savedLeftLift = chapterId === 'daisy' && lessonId === 'case-1';
-    const sectionIndex = chapters[chapterIndex].lessons.findIndex(item => item.id === (savedLeftLift ? 'case-0' : lessonId));
-    if (savedLeftLift) setDaisyLiftIndex(1);
+    const [savedChapter, savedLesson] = saved?.split('/') ?? [];
+    // Existing practice review links still use the internal chapter ID.
+    const linkedChapter = chapters.findIndex(item => chapterStep(item.id) === linkedStep || item.id === linkedStep);
+    const chapterIndex = linkedStep ? Math.max(0, linkedChapter)
+      : Math.max(0, chapters.findIndex(item => item.id === savedChapter));
+    const target = chapters[chapterIndex];
+    const savedLeftLift = target.id === 'daisy' && savedLesson === 'case-1';
+    const sectionIndex = initial && savedChapter === target.id
+      ? Math.max(0, target.lessons.findIndex(item => item.id === (savedLeftLift ? 'case-0' : savedLesson))) : 0;
+    const review = linkedChapter >= 0 && linkedCase ? practiceReviewLocation(target, linkedCase)
+      : { section: sectionIndex, daisyLiftIndex: savedLeftLift ? 1 : 0 };
+    const step = chapterStep(target.id);
+    appliedRoute.current = { step, case: linkedCase };
     setChapter(chapterIndex);
-    setSection(Math.max(0, sectionIndex));
-  }, [chapters, linkedStep, linkedCase, storageKey, legacyStorageKey]);
+    setSection(review.section);
+    setDaisyLiftIndex(review.daisyLiftIndex);
+    setShowDaisyTerms(false);
+    if (linkedStep !== step) void setPracticeRoute({ step }, { history: 'replace' });
+    try {
+      sessionStorage.setItem(storageKey, `${target.id}/${target.lessons[review.section].id}`);
+    } catch {
+      // Navigation still works when browser storage is unavailable.
+    }
+  }, [chapters, linkedStep, linkedCase, storageKey, legacyStorageKey, setPracticeRoute]);
   useEffect(() => {
     const closeOutside = (event: PointerEvent) => {
       if (menu.current && !menu.current.contains(event.target as Node)) menu.current.open = false;
@@ -117,14 +136,16 @@ function LblLessonView({ archive }: { archive: boolean }) {
     setShowDaisyTerms(false);
     setRevision(value => value + 1);
     if (menu.current) menu.current.open = false;
-    if (linkedStep || linkedCase) void setPracticeRoute({ step: null, case: null });
     const target = chapters[chapterIndex];
+    const step = chapterStep(target.id);
+    appliedRoute.current = { step, case: null };
+    void setPracticeRoute({ step, case: null }, { history: chapterIndex !== chapter ? 'push' : 'replace' });
     try {
       sessionStorage.setItem(storageKey, `${target.id}/${target.lessons[sectionIndex].id}`);
     } catch {
       // Navigation still works when browser storage is unavailable.
     }
-  }, [chapters, linkedStep, linkedCase, setPracticeRoute, storageKey]);
+  }, [chapter, chapters, setPracticeRoute, storageKey]);
   useEffect(() => {
     function navigateWithArrows(event: KeyboardEvent) {
       if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.isComposing) return;

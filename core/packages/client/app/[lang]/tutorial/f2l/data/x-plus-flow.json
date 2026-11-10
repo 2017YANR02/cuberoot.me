@@ -1,0 +1,156 @@
+{
+  "source": "https://api.cuberoot.me/v1/alg/sets/3x3/f2l",
+  "capturedAt": "2026-11-10T02:31:53.496Z",
+  "caseName": "X+",
+  "setup": "R U R' U2' R U R' U' R U R'",
+  "paths": [
+    {
+      "id": "1",
+      "sourceIndex": 1,
+      "alg": "R U' R' U R U' R' U2 R U' R'",
+      "checkpoints": [
+        {
+          "step": 0,
+          "name": "X+"
+        },
+        {
+          "step": 3,
+          "name": "U+"
+        },
+        {
+          "step": 7,
+          "name": "A+"
+        },
+        {
+          "step": 11,
+          "name": "solved"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "sourceIndex": 2,
+      "alg": "R' U2 R2 U R2 U R",
+      "checkpoints": [
+        {
+          "step": 0,
+          "name": "X+"
+        },
+        {
+          "step": 7,
+          "name": "solved"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "sourceIndex": 3,
+      "alg": "U R U' R' U' R U R' U' R U R'",
+      "checkpoints": [
+        {
+          "step": 0,
+          "name": "X+"
+        },
+        {
+          "step": 4,
+          "name": "L+"
+        },
+        {
+          "step": 8,
+          "name": "B+"
+        },
+        {
+          "step": 12,
+          "name": "solved"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "sourceIndex": 4,
+      "alg": "R' D' R U2 R' D R2 U R'",
+      "checkpoints": [
+        {
+          "step": 0,
+          "name": "X+"
+        },
+        {
+          "step": 9,
+          "name": "solved"
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "sourceIndex": 5,
+      "alg": "R U' R' U R U' R' U' R U2 R'",
+      "checkpoints": [
+        {
+          "step": 0,
+          "name": "X+"
+        },
+        {
+          "step": 3,
+          "name": "U+"
+        },
+        {
+          "step": 7,
+          "name": "A+"
+        },
+        {
+          "step": 11,
+          "name": "solved"
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "sourceIndex": 6,
+      "alg": "F' U' L' U L U' L' U L U' F",
+      "checkpoints": [
+        {
+          "step": 0,
+          "name": "X+"
+        },
+        {
+          "step": 11,
+          "name": "solved"
+        }
+      ]
+    },
+    {
+      "id": "7",
+      "sourceIndex": 7,
+      "alg": "U F' U2' F U' l F l'",
+      "checkpoints": [
+        {
+          "step": 0,
+          "name": "X+"
+        },
+        {
+          "step": 4,
+          "name": "B+"
+        },
+        {
+          "step": 8,
+          "name": "solved"
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "sourceIndex": 8,
+      "alg": "U2 L' U2 L U2 R U R' U2 L' U L",
+      "checkpoints": [
+        {
+          "step": 0,
+          "name": "X+"
+        },
+        {
+          "step": 12,
+          "name": "solved"
+        }
+      ]
+    }
+  ]
+}

@@ -11,7 +11,7 @@ import algSnapshot from '../data/alg-snapshot.json';
 export { f2lGroupName } from '@/lib/f2l-group-name';
 
 // Formula edits belong in alg-snapshot.json; optional chapter choices stay local too.
-export const F2L_TEACHING_OVERRIDES: Record<string, { chapter?: 8 | 9 }> = {};
+export const F2L_TEACHING_OVERRIDES: Record<string, { chapter?: 6 | 7 }> = {};
 
 export function f2lCatalogCases() {
   const file = algSnapshot;
@@ -43,7 +43,7 @@ function wrongSlots(cube: Cube) {
     edge: SLOTS.findIndex(slot => slot.edge.some(i => edge[i] === FM_REGULAR)),
   };
 }
-function protectedStructure(cube: Cube) {
+export function protectedStructure(cube: Cube) {
   const state = cube.serialize();
   // The full cross and the other three pairs must be solved before a standard case is taught.
   const cross = cube.serializeStickering(initial => {
@@ -53,7 +53,7 @@ function protectedStructure(cube: Cube) {
   return [...cross].every((value, i) => value !== FM_REGULAR || state[i] === state[Math.floor(i / 9) * 9 + 4])
     && SLOTS.slice(1).every(slot => [...slot.corner, ...slot.edge].every(i => state[i] === state[Math.floor(i / 9) * 9 + 4]));
 }
-function pairKey(cube: Cube) {
+export function pairKey(cube: Cube) {
   const state = cube.serialize(), masks = cube.serializeStickering(mask);
   return [...state].map((color, i) => masks[i] === FM_REGULAR ? color : '-').join('');
 }
@@ -154,13 +154,10 @@ export function f2lNonstandardExamples(perKind = 1) {
   } finally { cube.dispose(); }
 }
 
-/** Match local pair states modulo top-layer turns, while requiring the other slots and cross solved. */
-export function f2lTeachingPaths(cases: CatalogCase[]) {
-  const cube = new Cube(3);
-  const lookup = new Map<string, string>();
-  const basics = new Set(F2L_CASES.map(c => c.name as string));
+/** Normalize physical centers without changing the user's camera or move history. */
+export function f2lCenterNormalizer(cube: Cube) {
   const corrections = new Map<string, string>();
-  const normalize = (source: string) => {
+  return (source: string) => {
     cube.twister.setup(source);
     const state = cube.serialize();
     const centers = [4, 13, 22, 31, 40, 49].map(i => state[i]).join('');
@@ -170,16 +167,24 @@ export function f2lTeachingPaths(cases: CatalogCase[]) {
         const candidate = cube.serialize();
         return [4, 13, 22, 31, 40, 49].every(i => candidate[i] === 'URFDLB'[Math.floor(i / 9)]);
       });
-      if (!option) return false;
+      if (!option) return undefined;
       corrections.set(centers, option.value);
     }
     cube.twister.setup(source + ' ' + corrections.get(centers));
-    return true;
+    return corrections.get(centers)!;
   };
+}
+
+/** Match local pair states modulo top-layer turns, while requiring the other slots and cross solved. */
+export function f2lTeachingPaths(cases: CatalogCase[]) {
+  const cube = new Cube(3);
+  const lookup = new Map<string, string>();
+  const basics = new Set(F2L_CASES.map(c => c.name as string));
+  const normalize = f2lCenterNormalizer(cube);
   const all = [...F2L_CASES.map(c => ({ name: c.name, setup: new Alg(c.alg).invert().toString() })), ...cases];
   try {
     for (const c of all) for (const u of ['', 'U', 'U2', "U'"]) {
-      if (normalize(c.setup + ' ' + u)) lookup.set(pairKey(cube), c.name);
+      if (normalize(c.setup + ' ' + u) !== undefined) lookup.set(pairKey(cube), c.name);
     }
     const result = cases.map(c => {
       const moves = resolveSimPreviewMoves('3x3', c.alg);
@@ -187,30 +192,30 @@ export function f2lTeachingPaths(cases: CatalogCase[]) {
       for (let step = 1; step < moves.length; step++) {
         const source = c.setup + ' ' + moves.slice(0, step).join(' ');
         // Regrips are inspection-only here: the executable algorithm is never altered.
-        if (!normalize(source)) continue;
+        if (normalize(source) === undefined) continue;
         if (!protectedStructure(cube)) continue;
         const name = lookup.get(pairKey(cube));
         if (name && name !== c.name) points.push({ step, name });
       }
       const basic = points.find(point => point.step === moves.length - 3 && basics.has(point.name));
-      return { ...c, moves, points, basic, chapter: basic ? 8 : null };
+      return { ...c, moves, points, basic, chapter: basic ? 6 : null };
     });
     const verified = new Set(result.filter(c => c.basic).map(c => c.name));
-    const easy = new Set(result.filter(c => c.basic && (F2L_TEACHING_OVERRIDES[c.name]?.chapter === 8
-      || (F2L_TEACHING_OVERRIDES[c.name]?.chapter !== 9 && !c.points.some(point =>
+    const easy = new Set(result.filter(c => c.basic && (F2L_TEACHING_OVERRIDES[c.name]?.chapter === 6
+      || (F2L_TEACHING_OVERRIDES[c.name]?.chapter !== 7 && !c.points.some(point =>
         point.step < c.basic!.step && verified.has(point.name))))).map(c => c.name));
     return result.map(c => {
       const intermediate = c.points.find(point => easy.has(point.name));
       // Prefer a meaningful intermediate standard case before reaching the basic case.
       const override = F2L_TEACHING_OVERRIDES[c.name]?.chapter;
       const hasIntermediate = !!(intermediate && c.basic && intermediate.step < c.basic.step);
-      const chapter: 8 | 9 | null = c.basic
-        ? override === 9 ? (hasIntermediate ? 9 : null)
-          : override === 8 ? 8 : hasIntermediate ? 9 : 8
+      const chapter: 6 | 7 | null = c.basic
+        ? override === 7 ? (hasIntermediate ? 7 : null)
+          : override === 6 ? 6 : hasIntermediate ? 7 : 6
         : null;
-      const boundaries = [chapter === 9 ? intermediate?.step : undefined, c.basic?.step].filter((s): s is number => s !== undefined);
+      const boundaries = [chapter === 7 ? intermediate?.step : undefined, c.basic?.step].filter((s): s is number => s !== undefined);
       const segments = boundaries.concat(c.moves.length).map((end, i) => `(${c.moves.slice(i ? boundaries[i - 1] : 0, end).join(' ')})`).join(' ');
-      return { ...c, chapter, alg: segments, sections: f2lPlaybackSections(segments), chain: [c.name, ...(chapter === 9 && intermediate ? [intermediate.name] : []), ...(c.basic ? [c.basic.name] : [])] };
+      return { ...c, chapter, alg: segments, sections: f2lPlaybackSections(segments), chain: [c.name, ...(chapter === 7 && intermediate ? [intermediate.name] : []), ...(c.basic ? [c.basic.name] : [])] };
     });
   } finally { cube.dispose(); }
 }

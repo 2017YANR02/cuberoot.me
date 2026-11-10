@@ -4,16 +4,8 @@
 .lbl-header a:hover { color: var(--foreground); }
 .lbl-header h1 { margin: 0; font-size: 1rem; }
 .lbl-header-title { display: flex; align-items: center; gap: 12px; }
-.lbl-page :is(.lbl-chapter-button, .lbl-section-button, .lbl-footer-button, .lbl-practice-button, .lbl-alg-move) { font: inherit; cursor: pointer; }
-.lbl-page :is(.lbl-chapter-button, .lbl-section-button, .lbl-footer-button, .lbl-practice-button, .lbl-alg-move):focus-visible, .lbl-page summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
-.lbl-chapters { overflow: hidden; padding: 8px 0 20px; }
-.lbl-chapter-track { position: relative; display: grid; grid-template-columns: repeat(var(--chapter-count), minmax(0, 1fr)); }
-.lbl-chapter-track > .lbl-chapter-button { position: relative; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; border: 0; background: transparent; padding: 0 4px 12px; color: var(--muted-foreground); font-size: .8rem; line-height: 1.5; }
-.lbl-chapter-track > .lbl-chapter-button[aria-current] { color: var(--accent); }
-.lbl-chapter-line { display: block; flex-shrink: 0; height: 4px; margin-bottom: 12px; border-radius: 999px; background: var(--border-default); }
-.lbl-chapter-line[data-completed] { background: var(--foreground); }
-.lbl-indicator { position: absolute; z-index: 1; top: 0; left: 0; width: calc(100% / var(--chapter-count)); height: 4px; transform: translateX(calc(var(--chapter) * 100%)); transition: transform 680ms cubic-bezier(.22, 1.85, .36, 1); pointer-events: none; }
-.lbl-indicator::after { content: ''; position: absolute; inset: 0 4px; border-radius: 999px; background: var(--accent); }
+.lbl-page :is(.lbl-section-button, .lbl-footer-button, .lbl-practice-button, .lbl-alg-move) { font: inherit; cursor: pointer; }
+.lbl-page :is(.lbl-section-button, .lbl-footer-button, .lbl-practice-button, .lbl-alg-move):focus-visible, .lbl-page summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
 .lbl-body { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 0; gap: 24px; padding-top: 14px; }
 .lbl-sidebar { min-width: 0; min-height: 0; overflow-y: auto; padding-right: 12px; border-right: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent); }
 .lbl-page .af-nav-menu { width: 100%; }
@@ -30,7 +22,7 @@
 .lbl-footer-actions { display: flex; justify-content: flex-end; margin-inline-start: auto; }
 .lbl-footer-actions .lbl-complete-toolbar { position: static; }
 /* Keep exercise navigation stationary while lesson content varies. */
-.lbl-support-page.lbl-practice-page { box-sizing: border-box; height: 100dvh; display: grid; grid-template-rows: 40px minmax(0, 1fr); padding: 12px 20px 16px; }
+.lbl-support-page.lbl-practice-page { box-sizing: border-box; max-width: 1180px; height: 100dvh; display: grid; grid-template-rows: 40px minmax(0, 1fr); padding: 12px 20px 16px; }
 .lbl-practice-page .lbl-exercise { box-sizing: border-box; min-height: 0; margin-top: 0; display: grid; grid-template-rows: 64px minmax(0, 1fr) auto; }
 .lbl-practice-page .lbl-exercise-heading { min-height: 0; overflow: auto; }
 .lbl-practice-page .lbl-exercise .lbl-basic-content { min-height: 0; overflow: auto; overscroll-behavior: contain; align-items: start; }
@@ -204,9 +196,6 @@
 @media (max-width: 1050px) { .lbl-body { gap: 24px; } .lbl-demonstration, .lbl-complete .lbl-cube { height: 360px; } }
 @media (max-width: 760px) {
   .lbl-page { padding: 8px 12px max(12px, env(safe-area-inset-bottom)); }
-  .lbl-chapters { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-x: contain; }
-  .lbl-chapters::-webkit-scrollbar { display: none; }
-  .lbl-chapter-track { width: calc(var(--chapter-count) * 112px); }
   .lbl-body { grid-template-columns: minmax(0, 1fr); padding-top: 8px; }
   .lbl-lesson-scroll { scrollbar-width: none; }
   .lbl-lesson-scroll::-webkit-scrollbar { display: none; }
@@ -260,7 +249,7 @@
   .lbl-content-reading .lbl-middle-core-cases { grid-template-columns: minmax(0, 1fr); }
   .lbl-fish-recognition { grid-template-columns: minmax(0, 1fr); }
 }
-@media (prefers-reduced-motion: reduce) { .lbl-indicator, .lbl-mobile-menu summary svg { transition: none; } .lbl-content { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .lbl-mobile-menu summary svg { transition: none; } .lbl-content { animation: none; } }
 
 .lbl-content-pieces > .lbl-explanation > p:first-child { margin-top: 0; }
 
@@ -296,14 +285,29 @@
   font-size: var(--lbl-text-emphasis);
 }
 
-/* Full-solve teaching text uses one body size; weight marks the current action. */
-.lbl-walkthrough .lbl-walkthrough-meta { flex-shrink: 0; font-size: var(--lbl-text-body); }
-.lbl-walkthrough .lbl-walkthrough-meta > p { margin-block: 0 12px; }
+/* Full solve keeps the lesson's typography and two-column teaching layout. */
+.lbl-walkthrough .lbl-body { grid-template-columns: 156px minmax(0, 1fr); gap: 24px; }
+.lbl-walkthrough .lbl-sidebar { padding-right: 12px; }
+.lbl-walkthrough .lbl-sidebar .af-nav-link { height: auto; min-height: 44px; padding-block: 10px; }
+.lbl-walkthrough .lbl-sidebar .af-nav-icon:empty { display: none; }
+.lbl-walkthrough .lbl-walkthrough-meta { flex-shrink: 0; display: grid; gap: 10px; padding-bottom: 20px; font-size: var(--lbl-text-body); line-height: 1.6; }
+.lbl-walkthrough .lbl-walkthrough-meta > p { margin: 0; }
 .lbl-walkthrough .lbl-lesson-scroll::before { flex: 0 0 0; }
-.lbl-walkthrough .lbl-walkthrough-scramble-row { display: flex; align-items: baseline; gap: 12px; }
+.lbl-walkthrough .lbl-walkthrough-scramble-row { display: flex; align-items: baseline; gap: 8px; }
 .lbl-walkthrough .lbl-walkthrough-scramble-row > span { flex-shrink: 0; }
-.lbl-walkthrough .lbl-walkthrough-scramble { overflow-wrap: anywhere; font-size: inherit; color: inherit; }
-.lbl-walkthrough .lbl-content .lbl-explanation :is(p, code) { font-size: var(--lbl-text-body); }
-.lbl-walkthrough .lbl-walkthrough-action { font-weight: 700; }
-
-.lbl-walkthrough .lbl-walkthrough-chapter { color: var(--accent); }
+.lbl-walkthrough .lbl-walkthrough-scramble { min-width: 0; overflow-wrap: anywhere; font-size: inherit; color: inherit; line-height: inherit; }
+.lbl-walkthrough .lbl-walkthrough-chapter { color: var(--accent); text-decoration: none; }
+.lbl-walkthrough .lbl-walkthrough-chapter:hover { text-decoration: underline; text-underline-offset: 3px; }
+.lbl-walkthrough .lbl-complete .lbl-demo.lbl-demo-split { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 24px; align-items: center; }
+.lbl-walkthrough .lbl-complete-thought { min-height: 10rem; padding-block: 16px; }
+.lbl-walkthrough .lbl-complete .lbl-complete-thought p { font-size: var(--lbl-text-body); line-height: 1.7; gap: 16px; }
+.lbl-walkthrough .lbl-complete-thought .lbl-complete-detail { font-size: inherit; }
+.lbl-walkthrough .lbl-complete-legend-space { display: none; }
+@media (max-width: 760px) {
+  .lbl-walkthrough .lbl-body { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .lbl-walkthrough .lbl-walkthrough-meta { gap: 8px; padding-bottom: 12px; }
+  .lbl-walkthrough .lbl-complete { height: auto; }
+  .lbl-walkthrough .lbl-complete .lbl-demo.lbl-demo-split { height: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; gap: 12px; }
+  .lbl-walkthrough .lbl-complete .lbl-cube { height: clamp(260px, 74vw, 370px); }
+  .lbl-walkthrough .lbl-complete-thought { min-height: 8rem; padding: 0 4px 16px; }
+}

@@ -26,7 +26,8 @@ export default function CaseCatalogLesson({ orientation, onNextChapter }: { orie
           <VisualCube view="iso" size={100} faceletColors={c.facelets} interactive enlargeable alt={c.name} />
           <figcaption>{c.name}</figcaption>
         </figure>)}</div>
-        <StudyActions onContinue={() => {
+        <StudyActions onPrevious={groups.indexOf(activeGroup) > 0
+          ? () => setSelectedGroup(groups[groups.indexOf(activeGroup) - 1]) : undefined} onContinue={() => {
           const next = groups[groups.indexOf(activeGroup) + 1];
           if (next) setSelectedGroup(next);
           else onNextChapter();

@@ -1,0 +1,30 @@
+@import "../../components/cube-bubble.css";
+
+.f2l-concept-video { min-width: 0; }
+.f2l-concept-count { text-align: right; color: var(--muted-foreground); font-size: .875rem; font-variant-numeric: tabular-nums; }
+.f2l-concept-scene { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 28px; }
+.f2l-concept-caption { min-width: 0; text-align: center; }
+.f2l-concept-caption p { font-size: 1.5rem; line-height: 1.65; }
+.f2l-concept-line { animation: f2l-concept-line-in 450ms ease-out; }
+.f2l-concept-video[data-continuous='true'] .f2l-concept-line { animation: none; }
+@keyframes f2l-concept-line-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.f2l-concept-cube > .alg-sim-player { opacity: 0; transition: opacity 450ms ease-in-out; }
+.f2l-concept-cube[data-visible='true'] > .alg-sim-player { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .f2l-concept-cube > .alg-sim-player { transition: none; }
+  .f2l-concept-line { animation: none; }
+}
+.f2l-concept-video .f2l-concept-result { display: flex; align-items: center; gap: 6px; top: 15%; left: auto; right: 0; max-width: 36%; font-size: 1rem; pointer-events: none; }
+.f2l-concept-signal { display: flex; flex-shrink: 0; }
+.f2l-concept-result .f2l-concept-signal > div { position: static; inset: auto; }
+.f2l-concept-signal svg { width: 24px; height: 24px; }
+.f2l-concept-result svg { flex-shrink: 0; }
+.f2l-concept-video > .playback-bar { max-width: 560px; margin-inline: auto; }
+/* PlaybackBar's five standard controls: keep play (third) and the trailing reset. */
+.f2l-concept-video .playback-bar-controls > .playback-bar-btn:is(:nth-child(1), :nth-child(2), :nth-child(4), :nth-child(5)) { display: none; }
+.f2l-concept-video .playback-bar-controls { flex-wrap: nowrap; }
+@media (max-width: 700px) {
+  .f2l-concept-scene { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .f2l-concept-caption { min-height: 180px; }
+  .f2l-concept-caption p { font-size: 1.25rem; }
+}

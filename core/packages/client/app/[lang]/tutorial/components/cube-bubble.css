@@ -1,0 +1,21 @@
+.tutorial-cube-bubble,
+.lbl-left-thumb-bubble {
+  position: absolute;
+  top: calc(50% + 12cqmin);
+  left: max(0.5rem, calc(50% - 40cqmin));
+  max-width: min(14rem, calc(100% - 1rem));
+  box-sizing: border-box;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--border-default);
+  border-radius: 4px 16px 16px 16px;
+  background: color-mix(in srgb, var(--signal-info) 12%, var(--card));
+  color: var(--foreground);
+  font-size: var(--lbl-text-small, .875rem);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+body[data-site-scenery] .tutorial-cube-bubble[data-site-surface='panel'],
+body[data-site-scenery] .lbl-left-thumb-bubble[data-site-surface='panel'] {
+  background: color-mix(in srgb, var(--signal-info) 12%, var(--glass-surface-bg));
+}

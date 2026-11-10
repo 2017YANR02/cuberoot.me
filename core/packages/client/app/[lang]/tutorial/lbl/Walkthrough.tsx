@@ -6,7 +6,7 @@ import { NavigationMenu } from '@app-foundation/navigation-ui';
 import AppLink from '@/components/AppLink';
 import { T, tr } from '@/i18n/tr';
 import { Demonstration } from './CompleteDemo';
-import ChapterNavigation from './ChapterNavigation';
+import ChapterNavigation from '../components/ChapterNavigation';
 import { buildCompleteDemo, buildWalkthroughRun, walkthroughCrossPhases } from './complete-demo-state';
 import { LBL_STEPS } from './content';
 import { LBL_LESSON_RUNS, LBL_LESSON_STAGE_IDS } from './lesson-runs';

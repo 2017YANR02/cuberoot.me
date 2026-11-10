@@ -7,6 +7,7 @@ import { tr, T } from '@/i18n/tr';
 import { f2lDiagramFacelets, f2lPlaybackSections } from '../lib/cube-preview';
 import { f2lNonstandardExamples, f2lSmartExtraction } from '../lib/curriculum';
 import StudyActions from '../components/StudyActions';
+import NonstandardIntro from './NonstandardIntro';
 
 const NO_STOPS: readonly number[] = [];
 const EXTRACTION_TITLES = {
@@ -20,19 +21,25 @@ export default function ExtractionLesson({ orientation, pauseBetween, onNextChap
   orientation: string; pauseBetween: boolean; onNextChapter: () => void;
 }) {
   const [extractionKind, setExtractionKind] = useState<keyof typeof EXTRACTION_TITLES>('edge');
+  const [showIntro, setShowIntro] = useState(true);
+  const [introComplete, setIntroComplete] = useState(false);
   const [extractionIndices, setExtractionIndices] = useState<Record<string, number>>({});
   const examples = useMemo(() => f2lNonstandardExamples(8), []);
   const extractionChoices = examples.filter(example => example.kind === extractionKind);
   const extractionIndex = extractionIndices[extractionKind] ?? 0;
   const extraction = extractionChoices[extractionIndex];
   const smartExtraction = useMemo(() => extraction ? f2lSmartExtraction(extraction.setup) : '', [extraction]);
+  const kinds = Object.keys(EXTRACTION_TITLES) as (keyof typeof EXTRACTION_TITLES)[];
   return <>
     <div className="f2l-study-layout">
 
       <div className="f2l-section-nav">
         <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择非标类型', en: 'Choose a non-standard case type' })}>
+          <button type="button" className="f2l-section-button" aria-pressed={showIntro} onClick={() => { if (!showIntro) { setIntroComplete(false); setShowIntro(true); } }}>
+            <span className="f2l-section-label"><T zh="认识目标槽、标态与非标" en="Target slots, standard and non-standard cases" /></span>
+          </button>
           {(Object.keys(EXTRACTION_TITLES) as (keyof typeof EXTRACTION_TITLES)[]).map(kind => <button className="f2l-section-button" key={kind} type="button"
-            aria-pressed={extractionKind === kind} onClick={() => setExtractionKind(kind)}>
+            aria-pressed={!showIntro && extractionKind === kind} onClick={() => { setShowIntro(false); setExtractionKind(kind); }}>
             <span className="f2l-section-label">
               <VisualCube view="iso" size={36} faceletColors={f2lDiagramFacelets(examples.find(item => item.kind === kind)!.setup, orientation)} alt="" />
               <span>{tr(EXTRACTION_TITLES[kind])}</span>
@@ -41,7 +48,9 @@ export default function ExtractionLesson({ orientation, pauseBetween, onNextChap
         </div>
       </div>
       <div className="f2l-study-main">
-        {extraction && <>
+        {showIntro ? <NonstandardIntro key={orientation} orientation={orientation}
+          edgeSetup={examples.find(item => item.kind === 'edge')!.setup}
+          cornerSetup={examples.find(item => item.kind === 'corner')!.setup} onComplete={setIntroComplete} /> : extraction && <>
           <div className="f2l-extraction-comparison">{[
             { id: 'mechanical', title: tr({ zh: '基础解法', en: 'Basic method' }), alg: extraction.alg },
             { id: 'smart', title: tr({ zh: '优化解法', en: 'Optimized method' }), alg: smartExtraction },
@@ -53,16 +62,17 @@ export default function ExtractionLesson({ orientation, pauseBetween, onNextChap
             <h3>{method.title}</h3>
           </section>)}</div>
         </>}
-        <StudyActions onContinue={() => {
-          const kinds = Object.keys(EXTRACTION_TITLES) as (keyof typeof EXTRACTION_TITLES)[];
+        <StudyActions continueDisabled={showIntro && !introComplete} onPrevious={showIntro ? undefined : kinds.indexOf(extractionKind) > 0
+          ? () => setExtractionKind(kinds[kinds.indexOf(extractionKind) - 1]) : () => { setIntroComplete(false); setShowIntro(true); }} onContinue={() => {
+          if (showIntro) { setShowIntro(false); setExtractionKind('edge'); return; }
           const next = kinds[kinds.indexOf(extractionKind) + 1];
           if (next) setExtractionKind(next);
           else onNextChapter();
         }}>
-          <button type="button" className="f2l-restart" disabled={extractionChoices.length < 2} onClick={() => {
+          {!showIntro && <button type="button" className="f2l-restart" disabled={extractionChoices.length < 2} onClick={() => {
             const candidate = Math.floor(Math.random() * (extractionChoices.length - 1));
             setExtractionIndices(current => ({ ...current, [extractionKind]: candidate >= extractionIndex ? candidate + 1 : candidate }));
-          }}><T zh="换一个例子" en="Try another example" /></button>
+          }}><T zh="换一个例子" en="Try another example" /></button>}
         </StudyActions>
       </div>
     </div>

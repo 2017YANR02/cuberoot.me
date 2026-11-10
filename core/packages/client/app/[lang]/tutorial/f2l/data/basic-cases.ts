@@ -50,8 +50,8 @@ export const F2L_CASES = [
   },
 ] as const;
 
-/** Practice from solved F2L; only FR is disturbed. Choose randomly after mount or on user action. */
-export const F2L_PRACTICE_CASES = F2L_CASES.flatMap(lesson => ['', 'U', 'U2', "U'"].map(adjustment => {
+/** Practice from solved F2L; only FR is disturbed. The selected adjustment precedes insertion. */
+export const F2L_PRACTICE_CASES = F2L_CASES.flatMap(lesson => F2L_TOP_ADJUSTMENTS.map(adjustment => {
   const insertion = new Alg(lesson.alg).expand().toString();
   const alg = [adjustment && `(${adjustment})`, `(${insertion})`].filter(Boolean).join(' ');
   return {

@@ -44,8 +44,8 @@ export const F2L_CHAPTERS = [
   {
     "id": "lesson-2",
     "title": {
-      "zh": "F2L 的四种三步标态",
-      "en": "Four three-move cases"
+      "zh": "三步标态",
+      "en": "Three-move cases"
     },
     "question": {
       "zh": "前2层竟然可以同时复原？！给我看看要怎么做。",
@@ -75,31 +75,8 @@ export const F2L_CHAPTERS = [
   {
     "id": "lesson-3",
     "title": {
-      "zh": "顶面调整",
-      "en": "Top-layer alignment"
-    },
-    "question": {
-      "zh": "我的魔方和图案有点像，却又不完全一样。",
-      "en": "My cube looks similar to the picture, but not quite the same."
-    },
-    "answer": [
-      {
-        "zh": "开始复原某对棱角前仅相差 U、U′ 或 U2 属于同一个状态。顶层可随意转动以对应公式。",
-        "en": "Before solving a pair, positions differing only by U, U′ or U2 count as the same case. Turn the top layer as needed to match the algorithm."
-      }
-    ],
-    "tips": [
-      {
-        "zh": "在后续的学习中，也要记得顶层转动对前两层没有影响。",
-        "en": "As you continue learning, remember that turning the top layer does not affect the first two layers."
-      }
-    ]
-  },
-  {
-    "id": "lesson-4",
-    "title": {
-      "zh": "三步标态教学",
-      "en": "Learn the three-move cases"
+      "zh": "逐步教学",
+      "en": "Step by step"
     },
     "question": {
       "zh": "我已经认得这四种图案了！到底是哪三步？我想看看每一步是怎么把棱角送回槽里的。",
@@ -123,10 +100,10 @@ export const F2L_CHAPTERS = [
     ]
   },
   {
-    "id": "lesson-5",
+    "id": "lesson-4",
     "title": {
-      "zh": "练习三步标态",
-      "en": "Practice three-move cases"
+      "zh": "三步练习",
+      "en": "Three-move practice"
     },
     "question": {
       "zh": "我看懂了！可是真拿起魔方，我能认出来、自己做出来吗？我要试一试！",
@@ -136,6 +113,10 @@ export const F2L_CHAPTERS = [
       {
         "zh": "拿起魔方，按层先法复原前两层，再执行打乱公式，得到只剩最后一组棱角需要还原的练习状态。",
         "en": "Pick up your cube and solve the first two layers using the layer-by-layer method. Then apply the scramble to set up a practice case with only the last pair left to solve."
+      },
+      {
+        "zh": "开始复原某对棱角前仅相差 U、U′ 或 U2 属于同一个状态。先选择三步标态，按对应打乱练习，再通过顶面调整对齐并还原。",
+        "en": "Before solving a pair, positions differing only by U, U′ or U2 count as the same case. Choose a three-move case, apply the matching scramble, then align the top layer and solve the pair."
       }
     ],
     "tips": [
@@ -146,14 +127,18 @@ export const F2L_CHAPTERS = [
       {
         "zh": "随着学习的深入，你自然会领悟在其他槽完成F2L。",
         "en": "As you learn more, solving F2L pairs in the other slots will become intuitive."
+      },
+      {
+        "zh": "在后续的学习中，也要记得顶层转动对前两层没有影响。",
+        "en": "As you continue learning, remember that turning the top layer does not affect the first two layers."
       }
     ]
   },
   {
-    "id": "lesson-6",
+    "id": "lesson-5",
     "title": {
-      "zh": "认识其他标态",
-      "en": "Meet the other standard cases"
+      "zh": "其他标态",
+      "en": "Other cases"
     },
     "question": {
       "zh": "我会这四种了，可其他情况长什么样呢？",
@@ -186,10 +171,82 @@ export const F2L_CHAPTERS = [
     ]
   },
   {
+    "id": "lesson-6",
+    "title": {
+      "zh": "公式（一）",
+      "en": "Algorithms (1)"
+    },
+    "question": {
+      "zh": "这次不是我熟悉的四种图案了。我能不能把它变成已经会的三步标态，再还原呢？",
+      "en": "This is not one of the four patterns I know. Can I turn it into a familiar three-move case and solve it from there?"
+    },
+    "answer": [
+      {
+        "zh": "把新的情况转化成已经熟悉的三步标态，再完成最后三步。",
+        "en": "Turn each new case into a familiar three-move case, then finish the last three moves."
+      }
+    ],
+    "tips": [
+      {
+        "zh": "本教程优先采用便于理解的逐步转化解法，有些 case 的优秀解法并不经过这些中间状态。",
+        "en": "This tutorial favors step-by-step transformations that are easy to understand. Some effective algorithms do not pass through these intermediate cases."
+      },
+      {
+        "zh": "在练习阶段，也可以自由发挥，尝试用自己冗长的解法进行转换，这并不是坏事。",
+        "en": "While practicing, feel free to experiment with your own transformations, even if they take more moves. That is a useful part of learning."
+      },
+      {
+        "zh": "熟悉本教程的方法后，可以对照本站 F2L 公式库，学习更高效或更顺手的解法。",
+        "en": "Once these methods feel familiar, explore the F2L algorithm library for more efficient or comfortable alternatives."
+      },
+      {
+        "zh": "点击查看本站 F2L 公式库。",
+        "en": "Click to view the F2L algorithm library.",
+        "href": "/alg/3x3/f2l"
+      }
+    ]
+  },
+  {
     "id": "lesson-7",
     "title": {
-      "zh": "非标到标态的转化",
-      "en": "From non-standard to standard cases"
+      "zh": "公式（二）",
+      "en": "Algorithms (2)"
+    },
+    "question": {
+      "zh": "这个情况好像更复杂了！我能不能先把它变成上一章学过的样子，再接着做下去？",
+      "en": "This case looks more complicated! Can I first turn it into one from the last chapter, then carry on with what I already know?"
+    },
+    "answer": [
+      {
+        "zh": "更复杂的情况可以先转化成上一章学过的情况，再到三步标态，最后还原。按括号分段观察每次转化。",
+        "en": "More complex cases can first become a case from the previous chapter, then a three-move case, and finally a solved pair. Follow each transformation using the parenthesized sections."
+      }
+    ],
+    "tips": [
+      {
+        "zh": "本教程优先采用便于理解的逐步转化解法，有些 case 的优秀解法并不经过这些中间状态。",
+        "en": "This tutorial favors step-by-step transformations that are easy to understand. Some effective algorithms do not pass through these intermediate cases."
+      },
+      {
+        "zh": "在练习阶段，也可以自由发挥，尝试用自己冗长的解法进行转换，这并不是坏事。",
+        "en": "While practicing, feel free to experiment with your own transformations, even if they take more moves. That is a useful part of learning."
+      },
+      {
+        "zh": "熟悉本教程的方法后，可以对照本站 F2L 公式库，学习更高效或更顺手的解法。",
+        "en": "Once these methods feel familiar, explore the F2L algorithm library for more efficient or comfortable alternatives."
+      },
+      {
+        "zh": "点击查看本站 F2L 公式库。",
+        "en": "Click to view the F2L algorithm library.",
+        "href": "/alg/3x3/f2l"
+      }
+    ]
+  },
+  {
+    "id": "lesson-8",
+    "title": {
+      "zh": "非标转化",
+      "en": "Non-standard cases"
     },
     "question": {
       "zh": "我现在遇到的情况好像不属于刚刚展示的任何一种，怎么办？",
@@ -233,79 +290,7 @@ export const F2L_CHAPTERS = [
     ]
   },
   {
-    "id": "lesson-8",
-    "title": {
-      "zh": "学习 F2L 公式（一）",
-      "en": "Learn F2L algorithms (1)"
-    },
-    "question": {
-      "zh": "这次不是我熟悉的四种图案了。我能不能把它变成已经会的三步标态，再还原呢？",
-      "en": "This is not one of the four patterns I know. Can I turn it into a familiar three-move case and solve it from there?"
-    },
-    "answer": [
-      {
-        "zh": "把新的情况转化成已经熟悉的三步标态，再完成最后三步。",
-        "en": "Turn each new case into a familiar three-move case, then finish the last three moves."
-      }
-    ],
-    "tips": [
-      {
-        "zh": "本教程优先采用便于理解的逐步转化解法，有些 case 的优秀解法并不经过这些中间状态。",
-        "en": "This tutorial favors step-by-step transformations that are easy to understand. Some effective algorithms do not pass through these intermediate cases."
-      },
-      {
-        "zh": "在练习阶段，也可以自由发挥，尝试用自己冗长的解法进行转换，这并不是坏事。",
-        "en": "While practicing, feel free to experiment with your own transformations, even if they take more moves. That is a useful part of learning."
-      },
-      {
-        "zh": "熟悉本教程的方法后，可以对照本站 F2L 公式库，学习更高效或更顺手的解法。",
-        "en": "Once these methods feel familiar, explore the F2L algorithm library for more efficient or comfortable alternatives."
-      },
-      {
-        "zh": "点击查看本站 F2L 公式库。",
-        "en": "Click to view the F2L algorithm library.",
-        "href": "/alg/3x3/f2l"
-      }
-    ]
-  },
-  {
     "id": "lesson-9",
-    "title": {
-      "zh": "学习 F2L 公式（二）",
-      "en": "Learn F2L algorithms (2)"
-    },
-    "question": {
-      "zh": "这个情况好像更复杂了！我能不能先把它变成上一章学过的样子，再接着做下去？",
-      "en": "This case looks more complicated! Can I first turn it into one from the last chapter, then carry on with what I already know?"
-    },
-    "answer": [
-      {
-        "zh": "更复杂的情况可以先转化成上一章学过的情况，再到三步标态，最后还原。按括号分段观察每次转化。",
-        "en": "More complex cases can first become a case from the previous chapter, then a three-move case, and finally a solved pair. Follow each transformation using the parenthesized sections."
-      }
-    ],
-    "tips": [
-      {
-        "zh": "本教程优先采用便于理解的逐步转化解法，有些 case 的优秀解法并不经过这些中间状态。",
-        "en": "This tutorial favors step-by-step transformations that are easy to understand. Some effective algorithms do not pass through these intermediate cases."
-      },
-      {
-        "zh": "在练习阶段，也可以自由发挥，尝试用自己冗长的解法进行转换，这并不是坏事。",
-        "en": "While practicing, feel free to experiment with your own transformations, even if they take more moves. That is a useful part of learning."
-      },
-      {
-        "zh": "熟悉本教程的方法后，可以对照本站 F2L 公式库，学习更高效或更顺手的解法。",
-        "en": "Once these methods feel familiar, explore the F2L algorithm library for more efficient or comfortable alternatives."
-      },
-      {
-        "zh": "点击查看本站 F2L 公式库。",
-        "en": "Click to view the F2L algorithm library.",
-        "href": "/alg/3x3/f2l"
-      }
-    ]
-  },
-  {
-    "id": "lesson-10",
     "title": {
       "zh": "自由练习",
       "en": "Free practice"
@@ -330,8 +315,8 @@ export const F2L_CHAPTERS = [
         "en": "Drag the cube to adjust the view."
       },
       {
-        "zh": "如果目标棱或角位于其他槽，请先按第 7 章的方法转化为标态。",
-        "en": "If the target edge or corner is in another slot, first use the method in Chapter 7 to turn it into a standard case."
+        "zh": "如果目标棱或角位于其他槽，请先按第 8 章的方法转化为标态。",
+        "en": "If the target edge or corner is in another slot, first use the method in Chapter 8 to turn it into a standard case."
       },
       {
         "zh": "点击“重新摆放”可返回刚才设置的情况。",
@@ -342,7 +327,24 @@ export const F2L_CHAPTERS = [
         "en": "Solve the first two layers, then apply the scramble with the orientation selected above."
       }
     ]
+  },
+  {
+    id: 'lesson-10',
+    title: { zh: '动态流程图实验', en: 'Flowchart lab' },
+    question: { zh: '同一个 X+，不同公式会经过哪些 case？', en: 'Which cases do different X+ algorithms pass through?' },
+    answer: [{ zh: '选择一条公式，观察魔方与转化路径同步推进。', en: 'Choose an algorithm and follow the cube and its transformation path together.' }],
+    tips: [],
+  },
+  {
+    id: 'lesson-11',
+    title: { zh: '三步标态（合并预览）', en: 'Three-move cases (preview)' },
+    question: { zh: '三步就能还原一组棱角？如果图案转到了别的位置，我还能认出来吗？', en: 'Just three moves to solve a pair? Can I still recognize it when the pattern moves around the top?' },
+    answer: [{ zh: '先认图案，再看懂三步，最后试着把顶层调整到熟悉的朝向。', en: 'Recognize the pattern, understand the three moves, then practise aligning the top to a familiar position.' }],
+    tips: [],
   }
 ] as const satisfies readonly ChapterContent[];
 
 export type ChapterId = typeof F2L_CHAPTERS[number]['id'];
+
+// The experiment remains accessible by URL, outside the learning sequence.
+export const F2L_NAV_CHAPTERS = F2L_CHAPTERS.filter(chapter => chapter.id !== 'lesson-10' && chapter.id !== 'lesson-11');

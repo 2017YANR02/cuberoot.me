@@ -40,11 +40,6 @@ function introStickeringForPieces(pieces: readonly number[]): StickeringMaskFn {
     : INTRO_PIECES.includes(initial) ? FM_IGNORED : introBaseMask(initial, face);
 }
 
-/** The shifted case reaches the canonical picture after alignment, without inserting it. */
-export function f2lAlignmentSetup(alg: string, alignment: string): string {
-  return `${new Alg(alg).invert().expand()} ${new Alg(alignment).invert()}`;
-}
-
 /** Use the animation's exact piece mask for the existing SVG renderer too. */
 export function f2lDiagramFacelets(setup: string, orientation: string, mask = stickeringMaskFn(3, 'F2LPair')!): string {
   const cube = new Cube(3);

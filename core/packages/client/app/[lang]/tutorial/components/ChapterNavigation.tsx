@@ -1,4 +1,7 @@
+'use client';
+
 import { useEffect, useRef, type CSSProperties, type ReactNode, type MouseEvent } from 'react';
+import './chapter-navigation.css';
 
 export default function ChapterNavigation({ items, selected, label, onSelect, onMouseDown }: {
   items: readonly { id: string; title: ReactNode; completed?: boolean }[];

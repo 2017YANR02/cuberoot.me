@@ -851,6 +851,13 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'ChapterNavigation',
+    import: "import ChapterNavigation from '@/app/[lang]/tutorial/components/ChapterNavigation';",
+    category: 'more',
+    zh: '层先法与 F2L 共用的横向章节导航，带选中指示条和窄屏自动滚动。',
+    en: 'Shared LBL and F2L chapter navigation with an active indicator and automatic scrolling on narrow screens.',
+  },
+  {
     name: 'AlgCaseOrderGrid',
     import: "import { AlgCaseOrderGrid } from '@/components/AlgCaseOrderGrid';",
     category: 'more',

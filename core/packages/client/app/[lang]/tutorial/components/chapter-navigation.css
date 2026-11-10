@@ -1,0 +1,15 @@
+.lbl-chapters { overflow: hidden; padding: 8px 0 20px; }
+.lbl-chapter-track { position: relative; display: grid; grid-template-columns: repeat(var(--chapter-count), minmax(0, 1fr)); }
+.lbl-chapter-track > .lbl-chapter-button { position: relative; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; border: 0; background: transparent; padding: 0 4px 12px; color: var(--muted-foreground); font: inherit; font-size: .8rem; line-height: 1.5; cursor: pointer; }
+.lbl-chapter-button:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.lbl-chapter-track > .lbl-chapter-button[aria-current] { color: var(--accent); }
+.lbl-chapter-line { display: block; flex-shrink: 0; height: 4px; margin-bottom: 12px; border-radius: 999px; background: var(--border-default); }
+.lbl-chapter-line[data-completed] { background: var(--foreground); }
+.lbl-indicator { position: absolute; z-index: 1; top: 0; left: 0; width: calc(100% / var(--chapter-count)); height: 4px; transform: translateX(calc(var(--chapter) * 100%)); transition: transform 680ms cubic-bezier(.22, 1.85, .36, 1); pointer-events: none; }
+.lbl-indicator::after { content: ''; position: absolute; inset: 0 4px; border-radius: 999px; background: var(--accent); }
+@media (max-width: 760px) {
+  .lbl-chapters { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .lbl-chapters::-webkit-scrollbar { display: none; }
+  .lbl-chapter-track { width: calc(var(--chapter-count) * 112px); }
+}
+@media (prefers-reduced-motion: reduce) { .lbl-indicator { transition: none; } }

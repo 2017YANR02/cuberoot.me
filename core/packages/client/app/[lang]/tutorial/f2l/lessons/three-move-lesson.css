@@ -1,0 +1,13 @@
+.f2l-merged-parts { display: flex; flex-wrap: wrap; gap: 8px; }
+.f2l-merged-parts > .f2l-section-button { width: auto; padding: 8px 14px; }
+.f2l-film-caption { min-height: 3.6em; text-align: center; font-size: .9rem; }
+.f2l-merged-reference { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 20px 0; }
+.f2l-merged-reference figcaption { font-size: .85rem; color: var(--muted-foreground); }
+.f2l-merged-controls { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px; }
+.f2l-merged-controls > .f2l-restart { margin-top: 0; }
+.f2l-merged-lesson .f2l-cube { position: relative; }
+@media (max-width: 700px) {
+  .f2l-merged-lesson .f2l-section-nav > .f2l-section-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .f2l-merged-lesson .f2l-section-label { flex-direction: column; }
+  .f2l-merged-lesson .f2l-recognition { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

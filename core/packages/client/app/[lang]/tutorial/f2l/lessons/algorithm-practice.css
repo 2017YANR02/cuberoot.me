@@ -1,0 +1,57 @@
+.f2l-practice-page { display: flex; flex-direction: column; min-height: 100dvh; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+.f2l-practice-page .f2l-chapter { flex: 1; min-height: 0; margin-top: 16px; }
+.f2l-practice-page .f2l-chapter-body { min-height: 0; padding-bottom: 0; }
+.f2l-alg-practice { display: grid; grid-template-rows: auto 1fr auto; gap: 20px; }
+.f2l-practice-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.f2l-practice-heading h2 { margin: 0; font-size: 1.25rem; }
+.f2l-practice-heading > span { flex-shrink: 0; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.f2l-practice-content { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: 32px; min-height: 0; }
+.f2l-practice-demo { text-align: center; min-width: 0; }
+.f2l-practice-cube.f2l-cube { position: relative; height: clamp(280px, 48dvh, 460px); }
+.f2l-practice-demo .f2l-restart { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; }
+.f2l-practice-copy { display: grid; gap: 24px; min-width: 0; }
+.f2l-practice-route-controls { margin-inline-start: auto; flex-shrink: 0; }
+.f2l-practice-route-controls > .bool-toggle { display: flex; justify-content: space-between; width: 100%; }
+.f2l-practice-goal { min-width: 0; }
+.f2l-practice-goal .f2l-practice-flow > svg { width: 100%; height: auto; max-height: 46dvh; min-height: 240px; }
+.f2l-practice-hint { display: grid; box-sizing: border-box; min-width: 0; padding: 16px 18px 10px; border: 1px solid var(--border-default); border-radius: 16px; }
+.f2l-practice-hint > .f2l-practice-hint-trigger, .f2l-practice-hint-content { grid-area: 1 / 1; min-width: 0; }
+.f2l-practice-hint-content { display: grid; gap: 12px; }
+.f2l-practice-hint-content[aria-hidden='true'] { visibility: hidden; pointer-events: none; }
+.f2l-practice-hint-stage { position: relative; min-width: 0; }
+.f2l-practice-hint-trigger { min-height: 96px; align-self: stretch; }
+.f2l-practice-hint-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 0; background: transparent; color: var(--muted-foreground); font: inherit; cursor: pointer; }
+.f2l-practice-hint-toggle svg { color: var(--accent); flex-shrink: 0; }
+.f2l-practice-hint-toggle:hover { color: var(--accent); }
+.f2l-practice-hint-close-icon { display: inline-flex; position: relative; padding-right: 6px; }
+.f2l-practice-hint-close-icon > svg:last-child { position: absolute; top: 0; right: 0; }
+.f2l-practice-segments { display: flex; flex-wrap: wrap; gap: 16px; }
+.f2l-practice-segment { display: grid; gap: 6px; }
+.f2l-practice-segment code { display: flex; flex-wrap: wrap; gap: 10px; font-size: 1.5rem; }
+.f2l-practice-segment code span { border-bottom: 2px solid transparent; }
+.f2l-practice-segment code [data-complete='true'] { color: var(--accent); }
+.f2l-practice-segment code [aria-current='step'] { border-bottom-color: var(--accent); }
+.f2l-practice-segment > span { position: relative; overflow: hidden; padding: 5px 8px; border-radius: 6px; background: var(--muted); color: var(--muted-foreground); font-size: 1rem; text-align: center; }
+.f2l-practice-segment > span[data-active='true'] { color: var(--foreground); }
+.f2l-practice-segment > span[data-complete='true'] { color: var(--accent); background: var(--accent-soft); }
+.f2l-practice-segment-progress { position: absolute; bottom: 0; left: 0; height: 2px; background: var(--accent); }
+.f2l-practice-segments[data-recovering='true'] .f2l-practice-segment :is(code span, span[data-complete]) { color: var(--muted-foreground); }
+.f2l-practice-segments[data-recovering='true'] .f2l-practice-segment > span { background: var(--muted); }
+/* Use the same shared material tokens as LBL, including reduced-transparency fallbacks. */
+.f2l-alg-practice .f2l-practice-hint-stage > .f2l-practice-status { position: absolute; inset: 0; z-index: 1; box-sizing: border-box; padding: 12px; overflow-y: auto; border-radius: 8px; background: var(--glass-popover-bg); -webkit-backdrop-filter: var(--glass-menu-filter); backdrop-filter: var(--glass-menu-filter); color: var(--accent); font-size: 1.5rem; font-weight: 700; line-height: 1.5; text-align: center; }
+.f2l-practice-status:not([hidden]) { display: grid; place-items: center; }
+.f2l-practice-status button { border: 0; padding: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.f2l-practice-status button:hover { text-decoration: underline; text-underline-offset: 4px; }
+.f2l-practice-footer { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px; border-top: 1px solid var(--border-default); padding-top: 16px; }
+.f2l-practice-footer > :last-child { justify-self: end; }
+.f2l-page .f2l-practice-footer .f2l-footer-button { width: auto; max-width: 100%; justify-self: start; border: 1px solid var(--border-default); color: var(--foreground); background: var(--card); border-radius: 12px; font-size: .85rem; }
+.f2l-page .f2l-practice-footer .f2l-footer-button:last-child { justify-self: end; }
+.f2l-practice-review { padding: 10px 8px; border: 0; border-radius: 12px; background: transparent; color: var(--muted-foreground); font: inherit; font-size: .85rem; cursor: pointer; }
+.f2l-alg-practice button:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+@media (max-width: 700px) {
+  .f2l-practice-content { grid-template-columns: minmax(0, 1fr); align-content: start; gap: 20px; }
+  .f2l-practice-heading h2 { font-size: 1rem; }
+  .f2l-practice-footer { gap: 4px; padding-top: 12px; }
+  .f2l-page .f2l-practice-footer .f2l-footer-button { width: 100%; padding: 8px 4px; font-size: .8rem; }
+  .f2l-practice-review { max-width: 100px; font-size: .8rem; }
+}

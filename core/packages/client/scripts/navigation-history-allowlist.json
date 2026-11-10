@@ -1,5 +1,10 @@
 [
   {
+    "path": "app/[lang]/tutorial/lbl/page.tsx",
+    "call": "setPracticeRoute({step,case}) history=chapterIndex !== chapter ? 'push' : 'replace'",
+    "reason": "LBL 大章内容导航进入历史记录；同章小节切换只替换状态"
+  },
+  {
     "path": "app/[lang]/tutorial/lbl/PracticeRoute.tsx",
     "call": "setRoute({view,step,case}) history='push'",
     "reason": "退出 LBL 独立练习视图返回教程；练习换题使用 replace"
