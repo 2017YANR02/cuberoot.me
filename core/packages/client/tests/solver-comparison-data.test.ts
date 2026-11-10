@@ -6,6 +6,19 @@ import { SERVER_RESULTS, summarizeServerResults } from '@/app/[lang]/dev/solvers
 import RECENT_RESULTS from '@/app/[lang]/dev/solvers/compare/recent-results.json';
 
 describe('multithread solver comparison evidence', () => {
+  it('publishes the local h8 result separately from the slower cloud builds', () => {
+    const {macH8, aliyun} = RECENT_RESULTS;
+    expect([macH8.cases, macH8.threads, macH8.passes, macH8.warmupCases]).toEqual([100, 4, 1, 0]);
+    const [opt8, cli, adapter] = macH8.rows;
+    expect(macH8.originalSpeedRatio).toBeCloseTo(opt8.seconds / cli.seconds, 12);
+    expect(macH8.speedRatio).toBeCloseTo(opt8.seconds / adapter.seconds, 12);
+    expect(macH8.speedRatio).toBeGreaterThan(3);
+    expect(macH8.rows.every(row => row.verifiedSolutions === 100 && row.optimalLengthsMatched === 100)).toBe(true);
+    expect(macH8.memory.swapoutsDelta).toBe(0);
+    expect(aliyun.rows.map(row => row.id)).toEqual(['opt8', 'egg-h8', 'egg-cli-v3', 'egg-cli-skylake']);
+    expect(aliyun.fastestMeasuredWallRatio).toBeCloseTo(Math.min(...aliyun.rows.slice(1).map(row => row.seconds)) / aliyun.rows[0].seconds, 12);
+    expect(aliyun.fastestMeasuredWallRatio).toBeGreaterThan(1);
+  });
   it('keeps the M5 Max runs separate and identifies the two historical 64G settings', () => {
     const { mac } = RECENT_RESULTS;
     expect([mac.cases, mac.threads, mac.passes, mac.warmupCases]).toEqual([1000, 16, 1, 0]);

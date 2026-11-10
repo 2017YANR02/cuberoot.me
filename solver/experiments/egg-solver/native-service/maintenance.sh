@@ -2,9 +2,9 @@
 # Preserve production's exact pointer and restore admission after either outcome.
 set -Eeuo pipefail
 task=${1:?absolute task directory required}
-phase=${2:?generate, benchmark or benchmark100}
+phase=${2:?generate, benchmark, benchmark100 or cli100}
 [[ "$task" = /root/egg-h8-* ]]
-[[ "$phase" = generate || "$phase" = benchmark || "$phase" = benchmark100 ]]
+[[ "$phase" = generate || "$phase" = benchmark || "$phase" = benchmark100 || "$phase" = cli100 ]]
 export PATH=/root/.nvm/versions/node/v24.14.0/bin:$PATH
 root=/root/core-api
 cd "$root"
@@ -28,6 +28,7 @@ for(const p of readdirSync('/proc').filter(x=>/^\d+$/.test(x))){try{
  const a=readFileSync(`/proc/${p}/cmdline`,'utf8').split('\0');
  if(a[0]?.endsWith('/cube48opt-native')&&a[1]==='solve')process.exit(1);
  if(a[0]?.endsWith('/cuberoot-egg')&&['serve','generate'].includes(a[1]))process.exit(1);
+ if(/^\/root\/egg-h8-[^/]+\/candidate\/solve$/.test(a[0]??''))process.exit(1);
  if(a.slice(0,4).some(x=>x.endsWith('/cubeopt/solve-daemon.mjs')))process.exit(1);
 }catch(e){if(!['ENOENT','ESRCH'].includes(e.code))throw e;}}
 const r=await fetch('http://127.0.0.1:3001/v1/scramble/optimal-solve/ready',{signal:AbortSignal.timeout(5000)});
@@ -64,7 +65,9 @@ CUBEOPT_SOLVE_ENABLED=0 CUBEOPT_WARM_ON_BOOT=0 pm2 reload core-api --update-env
 settled=0
 for attempt in $(seq 1 60); do if quiet; then settled=1; break; fi; sleep 2; done
 [[ "$settled" = 1 ]]
-if [[ "$phase" = generate ]]; then script=generate-guard.mjs; else script=benchmark.mjs; fi
+if [[ "$phase" = generate ]]; then script=generate-guard.mjs
+elif [[ "$phase" = cli100 ]]; then script=cli-benchmark.mjs
+else script=benchmark.mjs; fi
 CUBEOPT_BENCH_STORE="$store" node "$task/source/egg-solver/native-service/$script" "$task" &
 worker=$!
 wait "$worker"

@@ -1,4 +1,5 @@
 import { lllFivePolicy, validateLllFiveReview } from './lll-five-policy.mts';
+import {macPolicy, validateMacReview} from '../egg-solver/native-service/mac-h8-policy.mts';
 import { pllPolicy, validatePllReview } from './pll-sample-policy.mts';
 import {beginStatsRun, validateStatsRun} from './stats-resume-review.mts';
 import {cornerExecutable, cornerResearchPolicy} from './corner-policy.mts';
@@ -289,6 +290,8 @@ export function resourceProtectionReasons(before: MemoryObservation, now: Memory
 
 /** Pure protocol validation. Tests never need to observe memory or open a PDB. */
 export function researchPolicy(label: string, executable: string, args: string[], env: NodeJS.ProcessEnv = process.env) {
+if (env.CUBEOPT_EGG_H8_REVIEW !== undefined)
+  return macPolicy({label,executable,args,env});
 if (env.CUBEOPT_BACKEND === 'opt11' || args.some(arg => /^(?:generate|solve|query)-opt11$/.test(arg)))
   throw Error('Opt11 is source-only; generation, table loading and solving are not authorized');
 if (env.CUBEOPT_BACKEND === 'corner' || executable === cornerExecutable)
@@ -556,6 +559,7 @@ const wasmCandidate = 'wasmCandidate' in policy && policy.wasmCandidate === true
 const dualWasmCandidate = 'dualWasmCandidate' in policy && policy.dualWasmCandidate === true;
 const browserBenchmark = 'browserBenchmark' in policy && policy.browserBenchmark === true;
 const opt8NativeBenchmark = 'opt8NativeBenchmark' in policy && policy.opt8NativeBenchmark === true;
+const macH8Benchmark = 'macH8Benchmark' in policy && policy.macH8Benchmark === true;
 const opt10CurrentBenchmark = 'opt10CurrentBenchmark' in policy && policy.opt10CurrentBenchmark === true;
 const lllFive = 'lllFive' in policy && policy.lllFive === true;
 const pllSample = 'pllSample' in policy && policy.pllSample === true;
@@ -563,7 +567,7 @@ const zbllMultisolution = pllSample || lllFive || 'zbllMultisolution' in policy 
 const nxoptBenchmark = 'nxoptBenchmark' in policy && policy.nxoptBenchmark === true;
 const dualScopeStopPath = 'scopeStopPath' in policy ? policy.scopeStopPath : undefined;
 if ((dualWasmCandidate || browserBenchmark || opt10CurrentBenchmark || zbllMultisolution) && typeof dualScopeStopPath !== 'string') throw Error('Missing fixed candidate scope stop path');
-const validateBenchmarkReview = pllSample ? validatePllReview : lllFive ? validateLllFiveReview : zbllMultisolution ? validateZbllMultisolutionReview : opt10CurrentBenchmark ? validateCurrentReview : opt8NativeBenchmark ? validateOpt8NativeReview : nxoptBenchmark ? validateNxReview : browserBenchmark ? validateBrowserReview : dualWasmCandidate ? validateDualCandidateReview : wasmCandidate ? validateCandidateReview : originalResume ? validateResumeReview : validateOpenReview;
+const validateBenchmarkReview = macH8Benchmark ? validateMacReview : pllSample ? validatePllReview : lllFive ? validateLllFiveReview : zbllMultisolution ? validateZbllMultisolutionReview : opt10CurrentBenchmark ? validateCurrentReview : opt8NativeBenchmark ? validateOpt8NativeReview : nxoptBenchmark ? validateNxReview : browserBenchmark ? validateBrowserReview : dualWasmCandidate ? validateDualCandidateReview : wasmCandidate ? validateCandidateReview : originalResume ? validateResumeReview : validateOpenReview;
 let openBenchmarkReceipt: any;
 const { entry, mode, backend, variant, h, tablePath, measureNativeRss, rssLimit, deadlineMs } = policy;
 // Only the fixed, reviewed candidate policy may select a different startup reserve.
@@ -668,7 +672,7 @@ if (generationProof) {
 if (process.env.AUF_EXPECTED_BOOT !== undefined && (process.env.AUF_EXPECTED_BOOT !== before.boot || Number(process.env.AUF_EXPECTED_SWAPOUTS) !== before.swapouts))
   throw Error('Long-job boot/swap baseline changed; cannot reset');
 const otherComputations = command('/bin/ps', ['-axo', 'pid,comm']).split('\n')
-  .filter(line => /solve_h48_h10|cube48opt-research|corner-research|table_generator|nxopt\d+/.test(line));
+  .filter(line => /solve_h48_h10|cube48opt-research|corner-research|table_generator|nxopt\d+|cuberoot-egg|egg-solver\/target\/.*\/(?:solve|gen)$/.test(line));
 if (otherComputations.length) throw Error('Another native computation is running: ' + otherComputations.join('; '));
 if (!openBenchmark && !zbllResume && !statsResume && !cornerSession && (existsSync(reviewedStopPath) || existsSync(opt10ReviewedStopPath) || existsSync(officialPaths.stop)
     || (existsSync(multithreadPaths.stop) && !multithreadReviewPath && !official && !zbllOfficial && !localOpt8))) throw Error('A newer reviewed computation stopped; further execution requires review');
@@ -925,7 +929,7 @@ function stop(reason: string, protection = false, details?: unknown) {
         const archive = resolve(output, `multithread-stop-${digest(previous)}.json`);
         if (!existsSync(archive)) writeFileSync(archive, previous, {flag:'wx'});
       }
-      atomic(cornerSession ? cornerSession.stopPath : statsResume ? statsResume.stopPath : zbllResume ? zbllResumeStopPath : dualWasmCandidate || browserBenchmark || nxoptBenchmark || opt8NativeBenchmark || opt10CurrentBenchmark || zbllMultisolution ? dualScopeStopPath as string : wasmCandidate ? candidateStopPath : originalResume ? resumeStopPath : openBenchmark ? openStopPath : officialReviewReceipt ? officialPaths.stop : multithreadReviewReceipt ? multithreadPaths.stop : opt10ReviewReceipt || zbll ? opt10ReviewedStopPath : reviewReceipt ? reviewedStopPath : ownRecord,
+      atomic(cornerSession ? cornerSession.stopPath : statsResume ? statsResume.stopPath : zbllResume ? zbllResumeStopPath : macH8Benchmark || dualWasmCandidate || browserBenchmark || nxoptBenchmark || opt8NativeBenchmark || opt10CurrentBenchmark || zbllMultisolution ? dualScopeStopPath as string : wasmCandidate ? candidateStopPath : originalResume ? resumeStopPath : openBenchmark ? openStopPath : officialReviewReceipt ? officialPaths.stop : multithreadReviewReceipt ? multithreadPaths.stop : opt10ReviewReceipt || zbll ? opt10ReviewedStopPath : reviewReceipt ? reviewedStopPath : ownRecord,
         { ...before, stopped: reason, trigger,
           ...(reviewReceipt ? { label, reviewReceipt } : {}), ...(opt10ReviewReceipt ? {label,opt10ReviewReceipt} : {}),
           ...(multithreadReviewReceipt ? {label,multithreadReviewReceipt} : {}),...(officialReviewReceipt ? {label,officialReviewReceipt} : {}) });
