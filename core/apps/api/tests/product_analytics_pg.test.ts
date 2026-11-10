@@ -99,4 +99,41 @@ describe.skipIf(!url)('default product analytics with real PostgreSQL', () => {
     expect((await db.unsafe('SELECT COUNT(*)::int AS count FROM platform_analytics_events'))[0].count).toBe(0);
     state.admin = false;
   });
+
+  it('deduplicates funnel steps and requires matching attribution and a click after exposure', async () => {
+    const now = Date.now();
+    const at = (offset: number) => new Date(now + offset).toISOString();
+    const make = (viewId: string, name: ProductAnalyticsEvent['name'], offset: number, extra: Partial<ProductAnalyticsEvent> = {}) => event({
+      viewId, name, occurredAt: at(offset), route: '/', feature: 'home', entryId: 'timer',
+      placement: 'main', position: 0, layoutVersion: HOME_ANALYTICS_LAYOUT, ...extra,
+    });
+    const use = (sourceViewId: string, offset = -1000, extra: Partial<ProductAnalyticsEvent> = {}) => event({
+      name: 'web.feature_use', action: 'timer_solve', occurredAt: at(offset),
+      sourceViewId, sourcePlacement: 'main', sourcePosition: 0, ...extra,
+    });
+    const matched = randomUUID(), early = randomUUID(), wrong = randomUUID(), unseen = randomUUID(), idle = randomUUID();
+    const events = [
+      make(matched, 'web.entry_impression', -5000), make(matched, 'web.entry_impression', -4000),
+      make(matched, 'web.entry_click', -3000), make(matched, 'web.entry_click', -2000), use(matched), use(matched),
+      make(early, 'web.entry_click', -5000), make(early, 'web.entry_impression', -4000),
+      make(early, 'web.entry_click', -2000), use(early),
+      make(wrong, 'web.entry_impression', -5000), make(wrong, 'web.entry_click', -3000),
+      use(wrong, -1000, { sourcePosition: 1 }), use(wrong, -4000),
+      make(unseen, 'web.entry_click', -3000), use(unseen),
+      make(idle, 'web.entry_impression', -5000), use(idle),
+    ];
+    expect((await write('/analytics/events', { sessionId: randomUUID(), events }, true)).status).toBe(202);
+    state.admin = true;
+    for (const audience of ['public', 'member', 'anonymous', 'admin']) {
+      const response = await app.request('/admin/product-analytics?days=28&audience=' + audience);
+      const report = await response.json();
+      expect(response.status, JSON.stringify(report)).toBe(200);
+      if (audience === 'public' || audience === 'member') {
+        expect(report.entries).toHaveLength(1);
+        expect(report.entries[0]).toMatchObject({ impressions: 4, clicks: 2, usedAfterClick: 1 });
+      } else expect(report.entries).toEqual([]);
+    }
+    state.admin = false;
+  });
+
 });
