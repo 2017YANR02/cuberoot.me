@@ -1,25 +1,25 @@
 /* ── /dev/ops — runbook 风格,跟 /dev 系其他页独立设计 ────────── */
-/* dark-locked: page-scope color-scheme + 自有 token,不参与 :root light/dark 翻 */
+/* Page aliases follow the site theme so code and surrounding text stay paired. */
 
 .ops-page {
-  color-scheme: dark;
-  --ops-bg: #0A0B14;
-  --ops-bg-2: #11121F;
-  --ops-panel: #141627;
-  --ops-panel-2: #1A1C30;
-  --ops-line: rgba(167, 139, 250, 0.10);
-  --ops-line-2: rgba(167, 139, 250, 0.20);
-  --ops-line-3: rgba(167, 139, 250, 0.35);
-  --ops-text: #E6E4F2;
-  --ops-text-dim: #8A87A8;
-  --ops-text-faint: #565474;
-  --ops-accent: #A78BFA;
+  color-scheme: inherit;
+  --ops-bg: var(--background);
+  --ops-bg-2: var(--card);
+  --ops-panel: var(--card);
+  --ops-panel-2: var(--muted);
+  --ops-line: var(--border-default);
+  --ops-line-2: var(--border-strong);
+  --ops-line-3: var(--border-strong);
+  --ops-text: var(--foreground);
+  --ops-text-dim: var(--muted-foreground);
+  --ops-text-faint: var(--faint-foreground);
+  --ops-accent: var(--accent);
   --ops-accent-soft: rgba(167, 139, 250, 0.12);
   /* 分类色:跟 rail / chip 切换 */
-  --ops-cat-db: #5BD4D0;
-  --ops-cat-build: #F0A04B;
-  --ops-cat-deploy: #7BD389;
-  --ops-cat-backup: #E879C9;
+  --ops-cat-db: var(--signal-info);
+  --ops-cat-build: var(--signal-warning);
+  --ops-cat-deploy: var(--signal-success);
+  --ops-cat-backup: var(--accent);
 
   --ops-mono: 'Cascadia Code', 'SF Mono', Consolas, monospace;
   --ops-sans: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -105,10 +105,7 @@
   letter-spacing: -.05em;
   line-height: .9;
   margin: 0 0 18px;
-  background: linear-gradient(180deg, #fff 0%, color-mix(in srgb, var(--ops-accent) 50%, #fff) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--ops-text);
 }
 .ops-hero-cursor {
   color: var(--ops-accent);
@@ -325,7 +322,7 @@
 
 .ops-code {
   position: relative;
-  background: #07070F;
+  background: var(--muted);
   border: 1px solid rgba(167, 139, 250, .12);
   border-radius: 10px;
   overflow: hidden;
@@ -342,7 +339,7 @@
   background: rgba(167, 139, 250, .10);
   border: 1px solid rgba(167, 139, 250, .25);
   border-radius: 5px;
-  color: var(--ops-text-dim);
+  color: var(--muted-foreground);
   cursor: pointer;
   transition: background .2s, color .2s, border-color .2s;
 }
@@ -356,21 +353,21 @@
   padding: 14px 110px 14px 16px;  /* right padding 给 copy button 留位 */
   font-family: var(--ops-mono);
   font-size: 13px;
-  color: var(--ops-text);
+  color: var(--foreground);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   line-height: 1.6;
 }
 /* prompt 模式:不是 shell,字体回归 sans + 留出段落呼吸 */
 .ops-code[data-mode='prompt'] {
-  background: #0E0E1A;
+  background: var(--muted);
   border-color: color-mix(in srgb, var(--ops-accent) 18%, transparent);
 }
 .ops-code[data-mode='prompt'] .ops-code-pre {
   font-family: var(--ops-sans);
   font-size: 14px;
   line-height: 1.75;
-  color: var(--ops-text);
+  color: var(--foreground);
   padding: 16px 110px 16px 16px;
 }
 .ops-code-line {
@@ -497,7 +494,7 @@
   font-family: var(--ops-mono);
   font-size: 12px;
   background: var(--ops-accent);
-  color: #111;
+  color: var(--accent-foreground);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -627,7 +624,7 @@
   border: 1px solid var(--ops-line-2);
   border-radius: 6px;
   padding: 8px 10px;
-  color: var(--ops-text);
+  color: var(--foreground);
   font-family: var(--ops-sans);
   font-size: 14px;
   width: 100%;
@@ -723,7 +720,7 @@
 .ops-modal-cancel:hover { border-color: var(--ops-text); color: var(--ops-text); }
 .ops-modal-save {
   background: var(--ops-accent);
-  color: #111;
+  color: var(--accent-foreground);
   border: none;
   font-weight: 600;
 }

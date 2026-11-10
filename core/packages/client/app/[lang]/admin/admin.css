@@ -41,6 +41,8 @@
 .admin-hub__link span { display: grid; gap: 5px; min-width: 0; }
 .admin-hub__link strong { font-size: 1rem; font-weight: 600; }
 .admin-hub__link small { color: var(--muted-foreground); font-size: .875rem; line-height: 1.45; }
+.admin-hub__link .admin-hub__destination-label { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+.admin-hub__destination-label small { overflow-wrap: anywhere; }
 .admin-hub__link:hover strong { color: var(--accent); }
 .admin-hub__link:hover > svg { color: var(--accent); }
 .admin-hub__status { margin: 16px 0; color: var(--muted-foreground); }
@@ -219,3 +221,11 @@
 @media (prefers-reduced-motion: reduce) {
   .admin-navigation__page { animation: none; }
 }
+
+.admin-section-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.admin-section-switch { display: flex; align-items: center; gap: 20px; margin-bottom: 24px; }
+.admin-section-toolbar .admin-section-switch { margin-bottom: 0; }
+.admin-section-switch a { padding: 8px 0; color: var(--muted-foreground); text-decoration: none; border-bottom: 2px solid transparent; }
+.admin-section-switch a[aria-current="page"] { color: var(--foreground); border-bottom-color: var(--accent); }
+.admin-section-switch a:hover { color: var(--foreground); }
+.admin-section-toolbar > a { color: var(--muted-foreground); font-size: .875rem; }

@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppReleaseRequest, AppReleaseStatus, ReleasePlatform } from '@cuberoot/shared/android-release';
 import { tr } from '@/i18n/tr';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
+import { HelpCircle } from '@app-foundation/icons/lucide';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 import { fetchAppReleaseStatus, publishAppRelease } from '@/lib/app-release-api';
 
 /** Mounted only for administrators; the API independently enforces the same permission. */
@@ -69,14 +72,17 @@ export default function ReleaseManager({ onPublished }: { onPublished: () => voi
     } finally { sending.current = false; setBusy(false); }
   }
   return <section className="download-release-manager" aria-label={tr({ zh: '版本管理', en: 'Release management' })}>
-    <div className="download-actions">
+    <div className="download-release-toolbar">
+      <p>{tr({ zh: '待发布提交', en: 'Source commit' })} <code>{data?.commit?.slice(0, 12) ?? '—'}</code></p>
       <button type="button" className="download-button" disabled={busy} onClick={() => void refresh()}>{tr({ zh: '刷新状态', en: 'Refresh status' })}</button>
     </div>
     {error && <p role="alert">{error}</p>}
     {notice && <p role="status">{notice}</p>}
     {data && !data.configured && <p>{tr({ zh: '发布服务尚未配置。', en: 'The release service is not configured.' })}</p>}
-    {data?.configured && <>
-      <p>{tr({ zh: '待发布提交', en: 'Source commit' })}: <code>{data.commit?.slice(0, 12)}</code></p>
+    {!data && !error && <ContentSkeleton variant="cards" rows={2} columns={2} />}
+    {data?.configured && <div className="download-release-grid">
+      <section className="download-release-form" data-site-surface="panel">
+      <h2>{tr({ zh: '新版本', en: 'New release' })} <InfoTooltip icon={HelpCircle} iconSize={16} ariaLabel={tr({ zh: '发布规则', en: 'Publishing rules' })} content={tr({ zh: '发布时自动递增版本号。Windows 安装版与免安装版使用同一版本。', en: 'Publishing assigns the next version. Both Windows downloads share that version.' })} /></h2>
       <label>{tr({ zh: '平台', en: 'Platform' })}
         <select className="download-release-platform" value={platform} disabled={busy || uncertain || Boolean(active)} onChange={e => setPlatform(e.target.value as ReleasePlatform)}>
           <option value="both">Android + Windows</option><option value="android">Android</option><option value="windows">Windows</option>
@@ -85,17 +91,19 @@ export default function ReleaseManager({ onPublished }: { onPublished: () => voi
       <label>{tr({ zh: '更新说明', en: 'Release notes' })}
         <textarea className="download-release-notes" value={notes} maxLength={4000} rows={4} disabled={busy || uncertain || Boolean(active)} onChange={e => setNotes(e.target.value)} />
       </label>
-      <p>{tr({ zh: '发布时自动递增版本号。Windows 安装版与免安装版使用同一版本。', en: 'Publishing assigns the next version. Both Windows downloads share that version.' })}</p>
       <button type="button" className="download-button" disabled={busy || Boolean(active) || !notes.trim() || !data.commit} onClick={() => void publish()}>
         {busy ? tr({ zh: '正在提交…', en: 'Submitting…' }) : tr({ zh: '发布新版本', en: 'Publish release' })}
       </button>
       {data.pending && <p role="status">{tr({ zh: '请求已保存，等待构建服务确认。', en: 'Request saved; waiting for the build service.' })} <code>{data.pending.requestId}</code></p>}
+      </section>
+      <section className="download-release-history" data-site-surface="panel"><h2>{tr({ zh: '发布记录', en: 'Release history' })}</h2>
+      {!data.runs.length && <p>{tr({ zh: '暂无发布记录', en: 'No releases yet' })}</p>}
       <ul>{data.runs.map(run => <li key={run.id}>
-        <a href={run.url} target="_blank" rel="noopener noreferrer">{run.versionName}</a>{' · '}
+        <a href={run.url} target="_blank" rel="noopener noreferrer">{run.versionName}</a><span>
         {run.status !== 'completed' ? tr({ zh: '排队或执行中', en: 'Queued or running' })
           : run.conclusion === 'success' ? tr({ zh: '任务完成', en: 'Completed' })
-          : tr({ zh: '未全部完成，查看详情', en: 'Incomplete — view details' })}
-      </li>)}</ul>
-    </>}
+          : tr({ zh: '未全部完成，查看详情', en: 'Incomplete — view details' })}</span>
+      </li>)}</ul></section>
+    </div>}
   </section>;
 }

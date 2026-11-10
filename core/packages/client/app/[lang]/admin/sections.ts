@@ -4,7 +4,7 @@ export type AdminSection = typeof ADMIN_SECTIONS[number];
 export const SYSTEM_VIEWS = ['tools', 'workspace', 'monitoring', 'tax'] as const;
 export type SystemView = typeof SYSTEM_VIEWS[number];
 export const SYSTEM_VIEW_LABELS: Record<SystemView, [string, string]> = {
-  tools: ['系统工具', 'System tools'],
+  tools: ['运维', 'Operations'],
   workspace: ['工作资料', 'Work resources'],
   monitoring: ['AI 聊天', 'AI chat'],
   tax: ['税务', 'Tax'],

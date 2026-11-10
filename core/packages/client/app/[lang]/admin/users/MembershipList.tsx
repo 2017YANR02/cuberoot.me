@@ -8,7 +8,7 @@ import { useLang } from '@/i18n/tr';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { fmtDate, fmtPrice, fmtVipId } from '@/lib/membership-format';
 import { adminList, adminRevoke, type Membership } from '@/lib/membership-api';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 export default function MembershipList({ onChanged }: { onChanged: () => void }) {
   const t = useT();
@@ -49,7 +49,7 @@ export default function MembershipList({ onChanged }: { onChanged: () => void })
     </div>
     {failed && <p className="admin-users-error" role="alert">{t('会员列表加载失败，请重试。', 'Could not load memberships. Please retry.')}</p>}
     {revokeError && <p className="admin-users-error" role="alert">{revokeError}</p>}
-    {!data && !failed && <p role="status"><LoadingIndicator>{t('正在加载会员…', 'Loading memberships…')}</LoadingIndicator></p>}
+    {!data && !failed && <ContentSkeleton variant="table" rows={6} columns={6} label={t('正在加载会员…', 'Loading memberships…')} />}
     {data && <div className="admin-users-table-scroll sticky-scroll">
       <table className="admin-users-table sticky-thead">
         <thead><tr>

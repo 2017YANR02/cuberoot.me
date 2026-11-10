@@ -1,10 +1,19 @@
-.careers-admin-item { margin: 18px 0; padding: 22px; border-radius: 12px; }
-.careers-admin-item h2 { margin: 0; font-size: 20px; }
-.careers-admin-item p { color: var(--muted-foreground); }
-.careers-admin-item dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 20px; }
+.careers-admin-item { margin: 0 0 12px; padding: 20px; border: 1px solid var(--border-default); border-radius: 14px; }
+.careers-admin-item h2 { margin: 0; font-size: 1.1rem; font-weight: 600; line-height: 1.4; }
+.careers-admin-item p { margin: 6px 0 0; color: var(--muted-foreground); font-size: .875rem; line-height: 1.5; }
+.careers-admin-item dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 20px; margin: 16px 0; font-size: .9375rem; line-height: 1.5; }
 .careers-admin-item dt { color: var(--muted-foreground); }
-.careers-admin-item dd { margin: 0; overflow-wrap: anywhere; }
-.careers-admin-files, .careers-admin-pages { display: flex; flex-wrap: wrap; gap: 16px; }
-.careers-admin-action, .careers-admin-page-button { color: var(--accent); text-align: left; overflow-wrap: anywhere; }
+.careers-admin-item dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.careers-admin-files, .careers-admin-pages { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; }
+.careers-admin-files { padding-top: 4px; }
+.careers-admin-pages { margin-top: 20px; }
+.careers-admin-action, .careers-admin-page-button { padding: 6px 0; font: inherit; font-size: .875rem; color: var(--accent); text-align: left; overflow-wrap: anywhere; }
+.careers-admin-action { display: inline-flex; align-items: baseline; gap: 4px; max-width: 100%; }
+.careers-admin-filename { display: inline-block; max-width: min(32ch, 50vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
 .careers-admin-page-button:disabled { color: var(--faint-foreground); }
-.careers-admin-files .careers-admin-delete { color: var(--destructive); }
+.careers-admin-files .careers-admin-delete { margin-left: auto; color: var(--destructive); white-space: nowrap; }
+@media (max-width: 640px) {
+  .careers-admin-item { padding: 16px; }
+  .careers-admin-item dl { gap: 8px 12px; grid-template-columns: minmax(5em, max-content) minmax(0, 1fr); }
+  .careers-admin-item dt { max-width: 8em; }
+}

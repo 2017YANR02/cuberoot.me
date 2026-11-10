@@ -38,17 +38,17 @@ function Navigation({ children }: { children: ReactNode }) {
   const adminItems = [
     { id: 'overview', label: t('总览', 'Overview'), Icon: LayoutDashboard, href: '/admin' },
     { id: 'analytics', label: t('产品使用', 'Product usage'), Icon: Activity, href: '/admin/product-analytics' },
-    { id: 'users', label: t('用户 / 会员', 'Users / Memberships'), Icon: Users, href: '/admin?section=users' },
+    { id: 'users', label: t('用户 / 会员', 'Users / Memberships'), Icon: Users, href: '/admin/users' },
     { id: 'content', label: t('内容 / 社区', 'Content / Community'), Icon: BookOpen, href: '/admin?section=content' },
     { id: 'commerce', label: t('课程 / 商业', 'Courses / Commerce'), Icon: Activity, href: '/admin?section=commerce' },
-    { id: 'system', label: t('系统工具', 'System tools'), Icon: Wrench, href: '/admin?section=system&view=tools' },
+    { id: 'system', label: t('运维', 'Operations'), Icon: Wrench, href: '/admin/disk' },
     { id: 'work', label: t('工作资料', 'Work resources'), Icon: FolderKanban, href: '/admin?section=system&view=workspace' },
     { id: 'monitoring', label: t('AI 聊天', 'AI chat'), Icon: Activity, href: '/admin?section=system&view=monitoring' },
     { id: 'tax', label: t('税务', 'Tax'), Icon: ShieldCheck, href: '/admin?section=system&view=tax' },
   ].map(({ id, label, Icon, href }) => {
     const selected = pathname === '/admin/product-analytics' ? 'analytics'
       : pathname === '/admin/users' ? 'users'
-      : pathname === '/admin/interview' ? 'work'
+      : pathname === '/admin/interview' || pathname === '/admin/careers' ? 'work'
       : pathname === '/admin/disk' || pathname === '/admin/releases' ? 'system'
       : section === 'system' ? ({ workspace: 'work', monitoring: 'monitoring', tax: 'tax' }[view ?? ''] ?? 'system')
       : section ?? 'overview';
