@@ -23,6 +23,10 @@ interface AdminDestination {
   title: [string, string];
 }
 
+// Order snapshot: product analytics, 28 days / public audience, read 2026-11-09 (Pacific).
+// Rank by sessions for the managed public feature; use exact page sessions for standalone pages.
+// Content leaders: alg 1868, recon 609, sim 227; commerce: platform 6, org 3, teachers 1.
+// Unmeasured admin-only destinations retain their relative order after measured entries.
 const DESTINATIONS: AdminDestination[] = [
   { href: '/admin/careers', Icon: Users, title: ['招聘申请', 'Career applications'] },
   { href: '/admin/interview', Icon: MessageSquare, title: ['采访准备', 'Interview preparation'] },
@@ -30,30 +34,30 @@ const DESTINATIONS: AdminDestination[] = [
   { href: '/admin/users', Icon: Users, title: ['用户、增长与权限', 'Users, growth, and access'] },
   { href: '/admin/releases', Icon: Wrench, title: ['应用版本管理', 'App releases'] },
   { href: '/platform/admin', Icon: ShoppingBag, title: ['课程与商城后台', 'Courses and commerce'] },
-  { href: '/platform/admin/invites', Icon: Gift, title: ['课程兑换码', 'Course redemption codes'] },
+  { href: '/org#enterprise-admin', Icon: BadgeCheck, title: ['企业认证与收款设置', 'Enterprise verification and payments'] },
   { href: '/support', Icon: HeartHandshake, title: ['赞助管理', 'Sponsorships'] },
-  { href: '/feedback/admin', Icon: MessageSquare, title: ['反馈处理', 'Feedback'] },
-  { href: '/forum/review', Icon: ShieldCheck, title: ['论坛审核', 'Forum moderation'] },
-  { href: '/account?view=submissions', Icon: Inbox, title: ['公式投稿', 'Algorithm submissions'] },
+  { href: '/alg', Icon: Library, title: ['公式库管理', 'Algorithm library'] },
+  { href: '/recon', Icon: Clapperboard, title: ['精选复盘管理', 'Featured reconstructions'] },
+  { href: '/sim', Icon: Layers, title: ['模拟器遮罩管理', 'Simulator masks'] },
   { href: '/dev/ops', Icon: Wrench, title: ['运维工具', 'Operations'] },
-  { href: '/quiz/manage', Icon: ListChecks, title: ['社区题管理', 'Community questions'] },
   { href: '/music/manage', Icon: Music, title: ['音乐审核与管理', 'Music review and management'] },
+  { href: '/quiz/manage', Icon: ListChecks, title: ['社区题管理', 'Community questions'] },
+  { href: '/site', Icon: Compass, title: ['网站导航管理', 'Site directory'] },
+  { href: '/about/ruimin', Icon: Images, title: ['创作者作品管理', 'Creator gallery'] },
+  { href: '/membership', Icon: Users, title: ['会员方案与权益', 'Membership plans and benefits'] },
+  { href: '/forum/review', Icon: ShieldCheck, title: ['论坛审核', 'Forum moderation'] },
+  { href: '/wiki', Icon: BookOpen, title: ['词条管理', 'Wiki entries'] },
+  { href: '/feedback/admin', Icon: MessageSquare, title: ['反馈处理', 'Feedback'] },
+  { href: '/regulation/post', Icon: Pin, title: ['公告首页置顶', 'Featured announcements'] },
+  { href: '/scramble/pattern/search', Icon: Grid3X3, title: ['图案示例管理', 'Pattern examples'] },
+  { href: '/account?view=submissions', Icon: Inbox, title: ['公式投稿', 'Algorithm submissions'] },
+  { href: '/teachers', Icon: GraduationCap, title: ['教师资料管理', 'Teacher profiles'] },
   { href: '/recon/ground-truth', Icon: ScanSearch, title: ['复盘回归样本', 'Reconstruction samples'] },
   { href: '/wca/result-watch', Icon: History, title: ['成绩变更', 'Result changes'] },
-  { href: '/membership', Icon: Users, title: ['会员方案与权益', 'Membership plans and benefits'] },
-  { href: '/site', Icon: Compass, title: ['网站导航管理', 'Site directory'] },
-  { href: '/scramble/pattern/search', Icon: Grid3X3, title: ['图案示例管理', 'Pattern examples'] },
-  { href: '/sim', Icon: Layers, title: ['模拟器遮罩管理', 'Simulator masks'] },
-  { href: '/alg', Icon: Library, title: ['公式库管理', 'Algorithm library'] },
-  { href: '/account', Icon: BellRing, title: ['页面通知与公式校验', 'Page notices and algorithm validation'] },
-  { href: '/recon', Icon: Clapperboard, title: ['精选复盘管理', 'Featured reconstructions'] },
-  { href: '/teachers', Icon: GraduationCap, title: ['教师资料管理', 'Teacher profiles'] },
-  { href: '/wiki', Icon: BookOpen, title: ['词条管理', 'Wiki entries'] },
-  { href: '/about/ruimin', Icon: Images, title: ['创作者作品管理', 'Creator gallery'] },
-  { href: '/org#enterprise-admin', Icon: BadgeCheck, title: ['企业认证与收款设置', 'Enterprise verification and payments'] },
+  { href: '/platform/admin/invites', Icon: Gift, title: ['课程兑换码', 'Course redemption codes'] },
   { href: '/docs', Icon: Wrench, title: ['协作文档', 'Collaborative Docs'] },
   { href: '/courses', Icon: Presentation, title: ['教学课程内容', 'Teaching course content'] },
-  { href: '/regulation/post', Icon: Pin, title: ['公告首页置顶', 'Featured announcements'] },
+  { href: '/account', Icon: BellRing, title: ['页面通知与公式校验', 'Page notices and algorithm validation'] },
 ];
 
 export default function AdminPage() {
