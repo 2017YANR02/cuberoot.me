@@ -1,11 +1,13 @@
 ---
 name: update-scramble-stats
-description: "用户说更新打乱统计、更新十字/阶段难度、更新 puzzle 或 SQ1 分布、333 HTM/333opt、补 xcross、backfill_xcross_variant 或 pseudo_f2leo 回填时使用。执行 /scramble/stats 的本地增量管道；需具备 solver 和 H48 h10 等本地大表。"
+description: "用户说更新打乱统计、更新十字/阶段难度、更新 puzzle 或 SQ1 分布、333 HTM/333opt、补 xcross、backfill_xcross_variant 或 pseudo_f2leo 回填时使用。执行 /scramble/stats 的本地增量管道；三阶最优按电脑总内存自动选 Egg Solver 32G/64G，复用已验收本地大表。"
 ---
 
 # 更新打乱统计
 
-日常一条龙在 `core/` 运行 `pnpm stats:scramble`。它默认跑 `stages,333opt,puzzles`，计算成功后自动灌线上 PG、上传 static，并提交推送统计文件；可用 `--jobs` 选子集。Mac、Windows 采用同一 TypeScript 命令，分析器继续用 Rust。明确只要本地产物时才运行 `pnpm stats:scramble:local`；`--plan` 用本地入口只读查看路径与作业。
+**2026-11-10 起，三阶最优统计按电脑物理总内存自动选择 Egg Solver：至少 128 GiB 用 64G（h11/base10），64–不足 128 GiB 用 32G（h10/base10）；不足 64 GiB 不自动启动。档位由总内存确定，不随当前空闲内存降档。正式入口仍是 core/ 下 pnpm stats:scramble，兼容 solve_h10.mts 调用 solve-egg.mts。两档复用已验收的表和 macOS F_NOCACHE 程序，默认 lanes、单进程常驻，不重新建表、不改变线上 Timer。** 按 ID 续算、逐条独立验解，不因缺文件静默回退。路径及资源保护见 [333opt.md](references/333opt.md)。
+
+日常一条龙在 `core/` 运行 `pnpm stats:scramble`。它默认跑 `stages,333opt,puzzles`，计算成功后自动灌线上 PG、上传 static 并更新 Release；统计文件不再提交 Git；可用 `--jobs` 选子集。Mac、Windows 采用同一 TypeScript 命令，分析器继续用 Rust。明确只要本地产物时才运行 `pnpm stats:scramble:local`；`--plan` 用本地入口只读查看路径与作业。
 
 ```sh
 cd core
@@ -24,12 +26,12 @@ pnpm stats:scramble:local --plan
 | job | 内容 | 主要产物 |
 | --- | --- | --- |
 | `stages` | WCA 三阶标准阶段与变体按 ID 增量补缺 | `distribution.json`、`wca_cross`、`comp_steps*`、`difficulty_first_appearance*` |
-| `333opt` | 正式原生 Opt10 续解、333 注入、最优等价打乱 | `out.0.csv`、333 变体、`wca_optimal.csv` |
+| `333opt` | Egg Solver 32G/64G 自动选档续解、333 注入、最优等价打乱 | `out.0.csv`、333 变体、`wca_optimal.csv` |
 | `puzzles` | 222、pyraminx、skewb、clock、SQ1 精确双口径 | `puzzle_distribution.json`、`puzzle_examples.json`、`puzzle_first_appearance.json` |
 
 `stages` 构建会重写分布和示例，故统计入口在它之后自动重注入 333。`puzzles` 会更新近期打乱、不同度量的 222/金字塔步数和 SQ1 WCA/slash 精确分布。非 WCA TIER C/D 离线采样默认停用，只有用户明确要求才用独立 `scripts/stats/puzzles-cli.ts --sampled`。TIER B 精确距离表仅明确加 `--rebuild-tier-b` 时重建。
 
-所有 solver 表由 `solver/` 的 `cargo run --release --bin table_generator` 统一生成。H48 h10 需 30,336,314,216 字节；SQ1 jsqfull 需 13,005,619,200 字节。表根为 `CUBE_TABLE_DIR`，默认 `solver/tables/`；数据根为 `CUBEROOT_DATA_ROOT`，默认仓库同级 `scramble/`，可覆盖 WCA/puzzle/xcross 子目录。Rayon 默认使用机器可用并行度，不手工限制 12/14。SQ1 WCA 分析器载入约 13 GiB 表，禁止并行启动两份。
+日常运行只复用已有表；以下是其他分析器的历史建表入口，不自动运行。其他 solver 表由 `solver/` 的 `cargo run --release --bin table_generator` 统一生成。H48 h10 需 30,336,314,216 字节；SQ1 jsqfull 需 13,005,619,200 字节。表根为 `CUBE_TABLE_DIR`，默认 `solver/tables/`；数据根为 `CUBEROOT_DATA_ROOT`，默认仓库同级 `scramble/`，可覆盖 WCA/puzzle/xcross 子目录。Rayon 默认使用机器可用并行度，不手工限制 12/14。SQ1 WCA 分析器载入约 13 GiB 表，禁止并行启动两份。
 
 进度由各分析器写自己的进度文件；按实际完成的字节、行数、变体或子任务计算百分比。Mac 快捷指令在终端原地刷新当前进度行，不把每个百分比写成新行；详细输出保存在 `~/.local/state/cuberoot/scramble-stats/`。无法测出中途完成量的网络与远端操作只显示 0% 和 100%，不按耗时猜测。统计总时间写 `solver/tables/stats-pipeline-times.csv`，逐阶段摘要写 `stats-local-*.json`。不要把旧机器的吞吐率当作本机预计时间。
 
@@ -43,4 +45,4 @@ pnpm stats:scramble:local --plan
 
 轻量回归：仓库根运行 `./core/node_modules/.bin/tsx --test scripts/stats/*.test.ts`；`core/` 运行 `pnpm --filter @cuberoot/scramble-stats-build exec vitest run tests/scramble_manifest.test.mjs`。全量统计、表生成和发布均是独立长任务，不属于这两个隔离测试。
 
-2026-10-17：333opt 默认已切换正式 Opt10 32G，旧 H48 h10 表不再是日常前置条件。详见 references/333opt.md 的最新约定；不要为本次缺旧表错误重建 H10。
+2026-10-17 的 Opt10 默认已由 2026-11-10 Egg 按物理内存选档约定取代。旧 H10/Opt10 仅保留显式历史入口，不作为缺文件后备。

@@ -1,4 +1,4 @@
-/** Resume optimal 3x3 solves with official Opt10; explicit legacy H10 backends remain available. */
+/** Compatibility entry: daily Egg 32G/64G selected by physical memory; explicit legacy backends remain available. */
 import { statsEngine, statsOpt10Configuration } from './stats-engine.mts';
 import { spawn, spawnSync } from 'node:child_process';
 import { appendFileSync, createReadStream, createWriteStream, existsSync, statSync, writeFileSync } from 'node:fs';
@@ -12,6 +12,11 @@ import { wcaDir } from './data_paths.mjs';
 const here = dirname(fileURLToPath(import.meta.url));
 const solverDir = resolve(here, '..');
 const { engine, threads, table, expectedBytes } = statsEngine(resolve(solverDir, '..'));
+if (engine === 'egg') {
+  const { runEggStats } = await import('./solve-egg.mts');
+  await runEggStats();
+  process.exit(0);
+}
 const corpus = resolve(process.env.CORPUS || resolve(wcaDir, 'wca_scrambles_no_wide_move.txt'));
 const output = resolve(process.env.OUT || resolve(here, 'out.0.csv'));
 const engineLabel = engine === 'opt10' ? 'Rust Opt10' : engine === 'rust' ? 'Rust H10' : 'H48 h10';

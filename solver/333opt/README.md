@@ -1,3 +1,9 @@
+# 三阶最优统计：Egg Solver 32G / 64G
+
+2026-11-10 起，三阶最优统计按电脑物理总内存自动选择 Egg Solver：至少 128 GiB 用 64G（h11/base10），64–不足 128 GiB 用 32G（h10/base10）；不足 64 GiB 不自动启动。档位由总内存确定，不随当前空闲内存降档。正式入口仍是 core/ 下 pnpm stats:scramble，兼容 solve_h10.mts 调用 solve-egg.mts。两档复用已验收的表和 macOS F_NOCACHE 程序，默认 lanes、单进程常驻，不重新建表、不改变线上 Timer。 64G / 32G 的 RSS 上限分别为 64 / 32 GiB，启动要求分别至少 67 / 35 GiB 可回收内存；运行至少 2 GiB 保守余量，固定当轮 boot/Swapouts，触线停止、不自动重试。 详细规则见 [统计 skill](../../.agents/skills/update-scramble-stats/references/333opt.md)。
+
+## 历史 H10 / Opt10 记录（不再是日常默认）
+
 # 三阶整解最优统计（H48 h10）
 
 离线 `/scramble/stats` 的 333 整解最优 HTM 和 `/timer` 同态最优打乱，统一使用 **nissy-core H48 h10**。旧 `cube48opt9` WASM、`gen-table.mjs`、`solve.mjs`、`solve_loop.mjs` 仅保留作历史参考，不再作为本地统计入口。网站 `/scramble/solver` 的线上服务另有自己的表，不受此离线切换影响。
