@@ -164,6 +164,19 @@ jobs:
           RSH="ssh -i ~/.ssh/id -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=4"
           SOURCE="core/${{ steps.workspace.outputs.web }}/.next/standalone/"
           DEST="$DEPLOY_USER@$DEPLOY_HOST:/www/wwwroot/toolkit-next.new/"
+          # Staging duplicates LIVE even with --copy-dest. Admit the full bundle
+          # plus 10% overhead and 1 GiB for PostgreSQL and concurrent service writes.
+          # Do not reclaim rollback copies or business data to force admission.
+          BUNDLE_KIB=$(du -sk "$SOURCE" | awk '{print $1}')
+          REQUIRED_KIB=$((BUNDLE_KIB + BUNDLE_KIB / 10 + 1048576))
+          $RSH "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$REQUIRED_KIB" <<'REMOTE'
+          set -eu
+          available=$(df -Pk /www/wwwroot | awk 'NR == 2 {print $4}')
+          if [ "$available" -lt "$1" ]; then
+            echo "Insufficient disk for Next staging: ${available} KiB available, $1 KiB required (includes database reserve)." >&2
+            exit 1
+          fi
+          REMOTE
           LISTS=$(mktemp -d)
           START_SECONDS=$SECONDS
           report_upload() {
