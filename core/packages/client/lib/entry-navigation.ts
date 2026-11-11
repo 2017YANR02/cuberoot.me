@@ -8,6 +8,7 @@ const CHANGE_EVENT = 'cuberoot:entry-navigation';
 const MAX_DEPTH = 8;
 const MAX_CONTEXT_LENGTH = 4096;
 const STATE_KEYS = new Set(['q', 'tab', 'page', 'sort', 'forum', 'event', 'eventId', 'country', 'region', 'year', 'view', 'settings', 'section', 'pet', 'puzzle', 'category', 'teacher', 'id']);
+const RECENT_SCRAMBLE_KEYS = new Set(['method', 'stage', 'colors', 'moves', 'match', 'count', 'scope']);
 const LEGACY_KEYS = ['accountBack', 'accountEntry', 'shopBack', 'shopEntry'];
 const EXCLUDED = /^\/(?:api|v1|auth|_next|stats|tools|icons|images|fonts|contact\/[^/]+\.[^/]+)(?:\/|$)/;
 const bare = (path: string) => path.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
@@ -31,7 +32,8 @@ function snapshot(url: URL): string | null {
   const clean = new URL(url.pathname, BASE);
   if (bare(url.pathname) === '/chat' && url.searchParams.has('settings')) clean.pathname = url.pathname.startsWith('/zh/') ? '/zh/account' : '/account';
   for (const [key, value] of url.searchParams) {
-    if (STATE_KEYS.has(key) && value.length <= 200) clean.searchParams.append(key, value);
+    const recentFilter = bare(url.pathname) === '/scramble/recent' && RECENT_SCRAMBLE_KEYS.has(key);
+    if ((STATE_KEYS.has(key) || recentFilter) && value.length <= 200) clean.searchParams.append(key, value);
   }
   if (/^#[a-zA-Z0-9_%:/.-]{1,160}$/.test(url.hash)) clean.hash = url.hash;
   return pathOf(clean);

@@ -62,6 +62,14 @@ export const CATALOG: UtilEntry[] = [
     en: 'Remember the home scroll position in the current tab and restore it when content is ready; stop restoring when the user scrolls.',
   },
   {
+    name: 'usePageScrollRestoration',
+    sig: "usePageScrollRestoration(ready: boolean, storagePrefix?: string, stateKey?: string): void",
+    imp: "import { usePageScrollRestoration } from '@/hooks/usePageScrollRestoration';",
+    category: 'hook',
+    zh: '按页面与筛选状态保存滚动位置，等待布局恢复；用户滚动后停止，离页时保留原位置。',
+    en: 'Remember scroll positions by page and filter state; restore after layout and stop on user input or departure.',
+  },
+  {
     name: 'useAssistantWorkspace',
     sig: 'useAssistantWorkspace(owner: string)',
     imp: "import { useAssistantWorkspace } from '@/hooks/useAssistantWorkspace';",
