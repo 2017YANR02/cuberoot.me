@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { AlgCase } from '@cuberoot/shared/alg';
 
-const mocks = vi.hoisted(() => ({ copy: vi.fn(), load: vi.fn(), prefer: vi.fn() }));
+const mocks = vi.hoisted(() => ({ copy: vi.fn(), load: vi.fn(), prefer: vi.fn(), changeKind: vi.fn() }));
 vi.mock('@/i18n/tr', () => ({ tr: (value: { en: string }) => value.en }));
 vi.mock('@/hooks/useCopy', () => ({ useCopy: () => ({ copied: false, copy: mocks.copy }) }));
 vi.mock('@/components/AlgCaseRelationCards', () => ({ AlgCaseRelationCards: () => null }));
@@ -22,13 +22,14 @@ vi.mock('@/lib/alg_scramble', () => ({
   alignScrambleToSetup: (_p: string, text: string) => text,
 }));
 vi.mock('@/lib/trainer-scramble', () => ({
-  availableKinds: () => ['inv', 'setup'], cstimerStyleScramble: vi.fn(),
-  SCRAMBLE_KINDS: [{ id: 'inv', label: () => 'Inverse' }, { id: 'setup', label: () => 'Original' }],
+  availableKinds: () => ['inv', 'rand'], cstimerStyleScramble: vi.fn(),
+  SCRAMBLE_KINDS: [{ id: 'inv', label: () => 'Inverse' }, { id: 'rand', label: () => 'Randomized' }],
 }));
 
 import AlgCaseMetaContent from '@/components/AlgCaseMetaContent';
 
 let host: HTMLDivElement;
+let toolbar: HTMLDivElement;
 let root: Root;
 const example: AlgCase = {
   id: 1, name: 'A+', subgroup: '', setup: "R U R' y", meta: { no: 1 },
@@ -38,17 +39,18 @@ const example: AlgCase = {
 const player = () => JSON.parse(host.querySelector('output')!.dataset.player!);
 const render = async (diagramOnly = false) => act(async () => root.render(createElement(AlgCaseMetaContent, {
   caseObj: example, puzzle: '3x3', set: 'pll', byNo: new Map([[1, example]]),
-  jump: { kind: 'callback', onJump: vi.fn() }, playable: true, onScrambleKindChange: vi.fn(),
+  jump: { kind: 'callback', onJump: vi.fn() }, playable: true, onScrambleKindChange: mocks.changeKind, scrambleSettingsContainer: toolbar,
   previewImage: diagramOnly ? createElement('div', { role: 'img', 'aria-label': 'Case diagram' }) : undefined,
 })));
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
   vi.clearAllMocks();
   host = document.createElement('div');
-  document.body.appendChild(host);
+  toolbar = document.createElement('div');
+  document.body.append(host, toolbar);
   root = createRoot(host);
 });
-afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
+afterEach(async () => { await act(async () => root.unmount()); host.remove(); toolbar.remove(); });
 
 it('plays the full raw scramble from solved, replays it, and restores the solution setup', async () => {
   await render();
@@ -75,9 +77,13 @@ it('keeps copy and scramble-type controls independent of playback', async () => 
   await act(async () => {
     copy.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     copy.click();
-    row.querySelector<HTMLSelectElement>('select')!.click();
+    const select = toolbar.querySelector<HTMLSelectElement>('select')!;
+    select.click();
+    select.value = 'rand';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
   });
   expect(mocks.copy).toHaveBeenCalledWith("R U R' U");
+  expect(mocks.changeKind).toHaveBeenCalledWith('rand');
   expect(player().playRequest).toBe(0);
   expect(player().startSolved).toBe(false);
 });
