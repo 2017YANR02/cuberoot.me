@@ -40,14 +40,14 @@
 /* Use the same shared material tokens as LBL, including reduced-transparency fallbacks. */
 .f2l-alg-practice .f2l-practice-hint-stage > .f2l-practice-status { position: absolute; inset: 0; z-index: 1; box-sizing: border-box; padding: 12px; overflow-y: auto; border-radius: 8px; background: var(--glass-popover-bg); -webkit-backdrop-filter: var(--glass-menu-filter); backdrop-filter: var(--glass-menu-filter); color: var(--accent); font-size: 1.5rem; font-weight: 700; line-height: 1.5; text-align: center; }
 .f2l-practice-status:not([hidden]) { display: grid; place-items: center; }
-.f2l-practice-status button { border: 0; padding: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
-.f2l-practice-status button:hover { text-decoration: underline; text-underline-offset: 4px; }
+.f2l-practice-completion { border: 0; padding: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.f2l-practice-completion:hover { text-decoration: underline; text-underline-offset: 4px; }
 .f2l-practice-footer { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px; border-top: 1px solid var(--border-default); padding-top: 16px; }
 .f2l-practice-footer > :last-child { justify-self: end; }
 .f2l-page .f2l-practice-footer .f2l-footer-button { width: auto; max-width: 100%; justify-self: start; border: 1px solid var(--border-default); color: var(--foreground); background: var(--card); border-radius: 12px; font-size: .85rem; }
 .f2l-page .f2l-practice-footer .f2l-footer-button:last-child { justify-self: end; }
 .f2l-practice-review { padding: 10px 8px; border: 0; border-radius: 12px; background: transparent; color: var(--muted-foreground); font: inherit; font-size: .85rem; cursor: pointer; }
-.f2l-alg-practice button:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.f2l-alg-practice :is(.f2l-restart, .f2l-practice-hint-toggle, .f2l-practice-completion, .f2l-footer-button, .f2l-practice-review):focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
 @media (max-width: 700px) {
   .f2l-practice-content { grid-template-columns: minmax(0, 1fr); align-content: start; gap: 20px; }
   .f2l-practice-heading h2 { font-size: 1rem; }

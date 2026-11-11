@@ -99,7 +99,7 @@ function FlowPlayback({ path, orientation, pauseBetween, onPathChange }: {
         setup={snapshot.setup} alg={path.alg} orientation={orientation} fillPane moveDurationMs={850}
         onStepChange={setStep} stepMarkers={stops} pauseAfterSteps={pauseBetween ? stops : NO_STOPS} sectionPauseMs={2000} /></div>
       <div className="f2l-flow-alg" aria-label={tr({ zh: '复原公式分段', en: 'Solution sections' })}>
-        {sections.map(section => <button type="button" key={section.end} onClick={() => seek(section.end)}
+        {sections.map(section => <button type="button" className="f2l-flow-alg-step" key={section.end} onClick={() => seek(section.end)}
           aria-label={`${label(section.from)} → ${label(section.to)}: ${section.alg}`}
           aria-current={activeSection === section ? 'step' : undefined}>
           <code>({section.alg})</code>

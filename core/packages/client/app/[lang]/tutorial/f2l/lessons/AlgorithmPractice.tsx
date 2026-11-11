@@ -126,7 +126,7 @@ export default function AlgorithmPractice({ lesson, chapter, orientation, index,
             </div>
             <div className="f2l-practice-status" data-site-surface="popover" role="status"
               hidden={!hints || (solved ? completionDismissed : !!progress.match)}>
-              {solved ? <button type="button" onClick={() => setCompletionDismissed(true)}><T zh="已完成" en="Completed" /></button>
+              {solved ? <button type="button" className="f2l-practice-completion" onClick={() => setCompletionDismissed(true)}><T zh="已完成" en="Completed" /></button>
                 : fixedRoute ? <T zh="当前状态偏离所选路线，可退回或重来。" en="The current state is off the selected route. Undo your turns or restart." />
                 : <T zh="当前转化未收录，可继续尝试或重来。" en="This transition is not in the saved paths. Keep trying or restart." />}
             </div>

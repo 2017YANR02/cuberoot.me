@@ -196,8 +196,18 @@
   },
   {
     "path": "app/[lang]/tutorial/f2l/page.tsx",
-    "call": "useQueryState('step') history='push'",
+    "call": "useQueryStates({step}) history='push'",
     "reason": "进入课程章节"
+  },
+  {
+    "path": "app/[lang]/tutorial/f2l/lessons/AlgorithmLessons.tsx",
+    "call": "setPracticeRoute({view,algCase}) history='push'",
+    "reason": "从练习返回对应案例的教程视图"
+  },
+  {
+    "path": "app/[lang]/tutorial/f2l/lessons/AlgorithmLessons.tsx",
+    "call": "setPracticeRoute({view,algCase}) history='push'",
+    "reason": "从案例教程进入独立的练习视图"
   },
   {
     "path": "app/[lang]/wca/comp/[slug]/CompDetailPage.tsx",

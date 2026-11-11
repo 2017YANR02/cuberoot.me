@@ -4,8 +4,8 @@
 .f2l-flow-player { min-width: 0; padding-top: 24px; }
 .f2l-flow-cube { width: 100%; height: 380px; }
 .f2l-flow-alg { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 16px; }
-.f2l-flow-alg button { padding: 6px 8px; border: 1px solid transparent; border-radius: 6px; color: var(--foreground); background: transparent; font-size: .95rem; cursor: pointer; }
-.f2l-flow-alg button[aria-current='step'] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.f2l-flow-alg-step { padding: 6px 8px; border: 1px solid transparent; border-radius: 6px; color: var(--foreground); background: transparent; font-size: .95rem; cursor: pointer; }
+.f2l-flow-alg-step[aria-current='step'] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 .f2l-flow-status { display: flex; justify-content: space-between; gap: 12px; color: var(--accent); font-size: .9rem; }
 .f2l-flow-status > span { color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
 .f2l-flow-scramble { color: var(--muted-foreground); font-size: .8rem; overflow-wrap: anywhere; }
@@ -31,7 +31,7 @@
 .f2l-flow-node.is-visited { border-color: color-mix(in srgb, var(--flow-signal) 55%, var(--border-default)); }
 .f2l-flow-node[aria-current='step'] { border-color: var(--flow-signal); color: var(--flow-signal); background: color-mix(in srgb, var(--flow-signal) 9%, transparent); box-shadow: inset 0 0 16px color-mix(in srgb, var(--flow-signal) 12%, transparent); }
 .f2l-flow-node.is-receiving { animation: f2l-flow-receive 1.4s ease-in-out infinite alternate; }
-.f2l-flow-node:focus-visible, .f2l-flow-alg button:focus-visible { outline: 2px solid var(--ring); outline-offset: -3px; }
+.f2l-flow-node:focus-visible, .f2l-flow-alg-step:focus-visible { outline: 2px solid var(--ring); outline-offset: -3px; }
 @keyframes f2l-flow-energy { to { stroke-width: 4; filter: drop-shadow(0 0 7px var(--flow-signal)); } }
 @keyframes f2l-flow-receive { to { border-color: var(--flow-signal); box-shadow: inset 0 0 18px color-mix(in srgb, var(--flow-signal) 15%, transparent); } }
 @media (prefers-reduced-motion: reduce) {
