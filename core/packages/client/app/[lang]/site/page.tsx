@@ -23,7 +23,7 @@ import type { GroupId, Site } from './data/types';
 import { GROUPS } from './data/categories';
 import { SITE_ICON_CACHE_STORAGE_PREFIX, siteIconSources } from './site-icons';
 import { captureView, visibleSiteElements, type ViewSnapshot } from './view-transition';
-import { isAdmin } from '@/lib/auth-store';
+import { useIsAdmin } from '@/lib/auth-store';
 import { firstGlyph } from '@/lib/first-glyph';
 import BackHome from '@/components/BackHome';
 import { ClearButton } from '@/components/ClearButton';
@@ -479,11 +479,7 @@ function SitesPageInner() {
   const t = useT();
   const { i18n } = useTranslation();
   const lang: 'en' | 'zh' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  // admin comes from the client-only auth store; gate on mount so SSR and the
-  // first client render agree (both non-admin) and don't trip a hydration mismatch.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  const admin = mounted && isAdmin();
+  const admin = useIsAdmin();
   const [viewMode, setViewMode] = useQueryState(
     'view',
     parseAsStringEnum<ViewMode>(VIEW_MODES).withDefault('list').withOptions({ history: 'replace', clearOnDefault: false }),
