@@ -7,7 +7,7 @@ import { getRecon, updateRecon, deleteRecon, uploadReconVideo } from '@/lib/reco
 
 const fixture = vi.hoisted(() => ({
   user: null as null | { uid: number; wcaId: string; name: string; isAdmin?: boolean },
-  solve: { id: 2795, official: 'other', event: '3x3', person: 'Example', solution: "\n  R U R' // original\n\n", scramble: "R U'", addedById: 'u7', note: 'Original note', rawTime: 2.51, regionalSingleRecord: 'WR' },
+  solve: { id: 2795, official: 'practice', event: '3x3', person: 'Example', solution: "\n  R U R' // original\n\n", scramble: "R U'", addedById: 'u7', note: 'Original note', rawTime: 2.51, regionalSingleRecord: 'WR' },
 }));
 vi.mock('next/navigation', () => ({ useParams: () => ({ lang: 'zh' }), useSearchParams: () => new URLSearchParams(), useRouter: () => ({ push: vi.fn() }) }));
 vi.mock('@/lib/auth-store', async original => ({
