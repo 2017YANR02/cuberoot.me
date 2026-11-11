@@ -7,7 +7,9 @@
 .admin-users-spin { flex: 0 0 auto; animation: admin-users-spin .9s linear infinite; }
 @keyframes admin-users-spin { to { transform: rotate(360deg); } }
 .admin-users-page section { margin-top: 24px; }
-.admin-users-page section[aria-labelledby="admin-users-overview-title"] { margin-top: 0; }
+.admin-users-page .admin-users-administrators { margin-top: 0; }
+.admin-users-administrator-list { display: flex; flex-wrap: wrap; gap: 16px 32px; list-style: none; margin: 0; padding: 0; }
+.admin-users-administrator-list > li { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; min-width: 0; }
 .admin-users-page h2 { margin: 0 0 12px; font-size: 1.1rem; font-weight: 600; }
 .admin-users-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; }
 .admin-users-metrics div { padding: 16px; border: 1px solid var(--border-default); border-radius: 14px; min-width: 0; }

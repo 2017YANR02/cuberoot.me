@@ -14,7 +14,7 @@ import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import type { Context } from 'hono';
 import { getAccountAvatarPreset, isClawdAvatarPreset } from '@cuberoot/shared/account-avatar';
-import { isAdminWcaId } from '@cuberoot/shared/admin';
+import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 import {
   isMobileAuthCodeChallenge,
   webSessionError,
@@ -1393,7 +1393,7 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
   const orderDirection = direction === 'asc' ? 'ASC' : 'DESC';
   const offset = (rawPage - 1) * rawPageSize;
 
-  const [summaryRows, dailyRows, membershipSummaryRows, membershipDailyRows, providerRows, countRows, users] = await Promise.all([
+  const [summaryRows, dailyRows, membershipSummaryRows, membershipDailyRows, providerRows, countRows, users, administrators] = await Promise.all([
     query<{
       total_users: number | string;
       registered_today: number | string;
@@ -1496,6 +1496,11 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
     GROUP BY u.id, device.user_id, wca_country.iso2
     ORDER BY ${orderColumn} ${orderDirection}, u.id ${orderDirection}
     LIMIT ? OFFSET ?`, [...params, rawPageSize, offset]),
+    query<Pick<AdminUserListRow, 'id' | 'display_name' | 'wca_id' | 'is_admin'>>(`
+      SELECT id, display_name, wca_id, is_admin FROM app_users
+      WHERE merged_into_user_id IS NULL AND (is_admin = TRUE OR wca_id = ANY(?::text[]))
+      ORDER BY CASE WHEN wca_id = ANY(?::text[]) THEN 0 ELSE 1 END, LOWER(display_name), id
+    `, [ADMIN_WCA_IDS, ADMIN_WCA_IDS]),
   ]);
 
   const summary = summaryRows[0];
@@ -1508,6 +1513,13 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
   return c.json({
     canManageAdmins: isAdminWcaId(actor.wcaId),
     canImpersonateUsers: isAdminWcaId(actor.wcaId),
+    administrators: administrators.map((row) => ({
+      id: Number(row.id),
+      displayName: row.display_name,
+      wcaId: row.wca_id,
+      isAdmin: row.is_admin || isAdminWcaId(row.wca_id),
+      isRootAdmin: isAdminWcaId(row.wca_id),
+    })),
     summary: {
       totalUsers: Number(summary?.total_users ?? 0),
       registeredToday: Number(summary?.registered_today ?? 0),

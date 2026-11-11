@@ -4,14 +4,15 @@ import { createRoot, type Root } from 'react-dom/client';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
-const { fetchAdminUsers, startUserImpersonation } = vi.hoisted(() => ({
+const { fetchAdminUsers, updateAdminRole, startUserImpersonation } = vi.hoisted(() => ({
   fetchAdminUsers: vi.fn(),
+  updateAdminRole: vi.fn(),
   startUserImpersonation: vi.fn(),
 }));
-vi.mock('@/lib/account-api', () => ({ fetchAdminUsers, updateAdminRole: vi.fn() }));
+vi.mock('@/lib/account-api', () => ({ fetchAdminUsers, updateAdminRole }));
 vi.mock('@/lib/auth-store', () => ({
-  useAuthStore: () => ({ isAdmin: true }),
   useAuthUser: () => ({ isAdmin: true }),
+  useAuthStore: () => ({ isAdmin: true }),
   hasAdminAccess: () => true,
   startUserImpersonation,
 }));
@@ -31,7 +32,11 @@ beforeEach(async () => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
   fetchAdminUsers.mockResolvedValue({
-    canManageAdmins: false, canImpersonateUsers: false,
+    canManageAdmins: true, canImpersonateUsers: false,
+    administrators: [
+      { id: 1, displayName: 'Root', wcaId: '2017YANR02', isAdmin: true, isRootAdmin: true },
+      { id: 42, displayName: 'Admin', wcaId: null, isAdmin: true, isRootAdmin: false },
+    ],
     users: [], daily: [], providerCounts: [], summary: {}, pagination: { total: 1425 },
   });
   host = document.createElement('div');
@@ -43,6 +48,29 @@ beforeEach(async () => {
   })));
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
+
+it('lists administrators before metrics even when the filtered user page is empty, and revokes from that list', async () => {
+  const section = host.querySelector<HTMLElement>('.admin-users-administrators')!;
+  expect(host.querySelector('section')).toBe(section);
+  expect(section.textContent).toContain('UID 1');
+  expect(section.textContent).toContain('UID 42');
+  expect(section.querySelectorAll('button')).toHaveLength(1);
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  try {
+    await act(async () => section.querySelector<HTMLButtonElement>('button')!.click());
+    expect(updateAdminRole).not.toHaveBeenCalled();
+    confirm.mockReturnValue(true);
+    updateAdminRole.mockRejectedValueOnce(new Error('offline'));
+    await act(async () => section.querySelector<HTMLButtonElement>('button')!.click());
+    expect(section.textContent).toContain('UID 42');
+    expect(host.textContent).toContain('管理员权限更新失败');
+    updateAdminRole.mockResolvedValueOnce({ isAdmin: false, isRootAdmin: false });
+    await act(async () => section.querySelector<HTMLButtonElement>('button')!.click());
+    expect(updateAdminRole).toHaveBeenLastCalledWith(42, false);
+    expect(section.textContent).not.toContain('UID 42');
+    expect(section.textContent).toContain('UID 1');
+  } finally { confirm.mockRestore(); }
+});
 
 async function jump(value: string, key = 'Enter') {
   const input = host.querySelector<HTMLInputElement>('[aria-label="跳转页码"]')!;

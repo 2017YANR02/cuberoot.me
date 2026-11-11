@@ -190,9 +190,11 @@ export interface AdminUserRecord {
   } | null;
   identities: AdminUserIdentity[];
 }
+export type AdminAdministrator = Pick<AdminUserRecord, 'id' | 'displayName' | 'wcaId' | 'isAdmin' | 'isRootAdmin'>;
 export interface AdminUsersResponse {
   canManageAdmins: boolean;
   canImpersonateUsers: boolean;
+  administrators?: AdminAdministrator[];
   summary: {
     totalUsers: number;
     registeredToday: number;
@@ -229,6 +231,7 @@ export async function fetchAdminUsers(params: {
   to?: string;
 }): Promise<AdminUsersResponse> {
   const search = new URLSearchParams();
+  search.set('v', '2');
   if (params.q) search.set('q', params.q);
   if (params.provider && params.provider !== 'all') search.set('provider', params.provider);
   if (params.page && params.page !== 1) search.set('page', String(params.page));
