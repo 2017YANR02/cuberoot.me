@@ -352,7 +352,7 @@ function updateSummaries(dir: string, reason: string) {
 function budgetForOptimum(): TableBudget {
   const config = statsEngine(repoRoot), meta = statSync(config.table);
   if (meta.size !== config.expectedBytes) throw Error('Optimal table metadata changed');
-  return { binary: config.engine, profile: config.engine, tableBytes: meta.size, mapped: config.engine === 'c', rssLimit: meta.size + 4 * GiB,
+  return { binary: config.engine, profile: config.engine, tableBytes: meta.size, mapped: config.engine === 'c', rssLimit: config.rssLimit ?? meta.size + 4 * GiB,
     files: [{ path: config.table, bytes: meta.size, mtimeMs: meta.mtimeMs, ino: meta.ino, dev: meta.dev }] };
 }
 async function watch(dir: string): Promise<void> {
@@ -414,8 +414,8 @@ async function watch(dir: string): Promise<void> {
         }
         budgets.set(activeIdentity.pid, registration.budget);
       }
-      // Opt10 is started through its existing inner guard rather than common.ts.
-      for (const row of family) if (/^(cube48opt-research|solve_h48_h10)$/.test(row.name)) {
+      // Optimal workers are started by their own coordinators, outside common.ts.
+      for (const row of family) if (/^(cube48opt-research|solve_h48_h10|solve)$/.test(row.name)) {
         const key = JSON.stringify(snap.identities.get(row.pid));
         if (!frozen.has(key)) {
           const budget = budgetForOptimum(); frozen.set(key, budget);

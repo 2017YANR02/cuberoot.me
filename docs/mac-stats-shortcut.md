@@ -15,13 +15,15 @@
 
 ## 本机配置
 
+2026-11-10：日常三阶最优按物理总内存自动选 Egg 档位：128 GiB 电脑用 64G，64 GiB 电脑用 32G。启动脚本设置 H10_ENGINE=egg，不固定表档，具体配置由 stats-engine.mts 统一选择，并补齐 Terminal 的 PATH。桌面「跑打乱统计.command」链接到 ~/.local/bin/跑打乱统计.command；双击可打开终端。新增 --plan 只读验证入口，不启动求解或发布。本机 Apple 快捷指令仍保留；此次检查发现高级设置「允许运行脚本」未开启，未擅自修改。实际运行前仍校验内存、正式程序与表，不因快捷方式跳过保护。
+
 2026-10-21 退出码修复：本地统计的退出码 `2` 表示全部产物已生成，但 SQ1 等仍有待解/待定状态；原因同时写入终端末尾和 `solver/tables/stats-local-*.json` 的 `partial`。日常发布入口将此状态作为警告继续发布，未解 `M` 不计入精确分布，原始记录保留供续算；真正的子任务失败仍阻止发布。2026-10-20 这一轮为 SQ1 ID `5886113` 在三轮有时限求解后仍未解出，其余结果已保存。若只恢复该轮发布，在确认本地产物仍是该轮结果后，从 `core/` 使用 `CUBEROOT_DATA_ROOT="$HOME/Documents/scramble" pnpm stats:scramble --publish-only`，不重跑计算；该命令会灌 PG、发布最新 Release 快照并上传独立在线分片，统计文件不再提交 Git。
 
 2026-10-17 路径修复：仓库在 `~/Developer/cuberoot.me`，历史统计数据仍在 `~/Documents/scramble`。本机 `.command` 明确导出 `CUBEROOT_DATA_ROOT` 指向后者；尊重显式环境覆盖，并在历史 `wca_scramble/stats/std.csv` 缺失时退出，避免把仓库移动误判为首次全量计算。不要移动、清空旧数据或把 `~/Developer/scramble` 中误启动生成的输入当作历史结果。重新启动前可用 `incremental.ts --dry-run --tsv-dir <现有导出目录> --data-dir <历史 WCA 目录>` 只读核对新增量。
 
 - Apple「快捷指令」中有「跑打乱统计」，已添加到 Dock。
 - 该快捷指令只有一个「运行Shell脚本」操作，内容为 `open -a Terminal "$HOME/.local/bin/跑打乱统计.command"`，Shell 选 `zsh`，不以管理员身份运行。
-- 在「快捷指令 → 设置 → 高级」中，用户已开启「允许运行脚本」。
+- 历史配置曾开启「允许运行脚本」；2026-11-10 复查时开关关闭，当前以本机设置为准。
 - `~/.local/bin/跑打乱统计.command` 是本机文件，不在仓库中。它进入 `${CUBEROOT_REPO:-$HOME/Developer/cuberoot.me}/core`，检测是否已有统计管道进程；没有时运行 `pnpm stats:scramble`。终端把当前任务的百分比在同一行原地刷新，不为 25%、37%、50% 等更新新增行；阶段、错误和最终结果各保留一行。短操作只显示完成结果，重复 ZIP 校验不显示。网络或远端操作若无法可靠测出中途完成量，只显示 0% 和 100%，不按耗时猜测。完整输出写入 `~/.local/state/cuberoot/scramble-stats/` 的时间戳日志，失败时附上日志末尾。结束后窗口保留，便于查看结果。换电脑时先确认文件和仓库路径是否存在，不能只复制快捷指令。
 
 ## 2026-09-24 排查记录

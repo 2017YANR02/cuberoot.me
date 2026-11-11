@@ -102,11 +102,13 @@
 .vault-list-item span,
 .vault-muted { color: var(--muted-foreground); font-size: 13px; }
 
-.vault-editor-head { align-items: flex-start; margin-bottom: 28px; }
-.vault-title-input { min-width: 0; width: min(520px, 100%); padding: 4px 0 8px; border-width: 0 0 1px; border-radius: 0; font-size: 25px; font-weight: 650; }
+.vault-editor-head { align-items: center; gap: 12px; margin-bottom: 20px; }
+.vault-editor-head > .vault-actions { flex: 0 0 auto; flex-wrap: nowrap; }
+.vault-title-input { flex: 1; min-width: 0; width: 0; padding: 4px 0 8px; border: 0; border-radius: 0; background: transparent; font-size: 25px; font-weight: 650; }
 .vault-actions { flex-wrap: wrap; }
 .vault-fields { display: flex; flex-direction: column; align-items: flex-start; gap: 22px; }
 .vault-field { width: 100%; }
+.vault-field-label { display: block; margin-bottom: 7px; font-size: 14px; font-weight: 600; }
 .vault-label-input { width: min(240px, 100%); margin-bottom: 7px; padding: 6px 8px; font-size: 13px; }
 .vault-value-line { width: 100%; }
 .vault-value-input { min-width: 0; flex: 1; padding: 9px 10px; font-family: var(--font-mono); }
@@ -115,7 +117,7 @@
 .vault-icon-button:hover { background: color-mix(in srgb, var(--foreground) 7%, transparent); color: var(--foreground); }
 .vault-field .bool-toggle { margin-top: 8px; }
 .vault-notes-label { display: block; margin: 30px 0 8px; font-size: 14px; font-weight: 600; }
-.vault-notes { width: 100%; min-height: 180px; resize: vertical; padding: 12px; line-height: 1.55; }
+.vault-notes { width: 100%; min-height: 100px; resize: vertical; padding: 12px; line-height: 1.55; }
 
 .vault-editor-fields { min-width: 0; margin: 0; padding: 0; border: 0; }
 .vault-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
@@ -174,8 +176,8 @@
 
 @media (max-width: 480px) {
   .vault-page { padding-inline: 14px; }
-  .vault-editor-head { flex-direction: column; }
-  .vault-title-input { width: 100%; }
+  .vault-editor-head { align-items: flex-start; flex-direction: column; }
+  .vault-title-input { flex: none; width: 100%; }
   .vault-value-line { align-items: stretch; flex-wrap: wrap; }
   .vault-value-input { flex-basis: calc(100% - 96px); }
   .vault-user-search { align-items: stretch; flex-direction: column; }

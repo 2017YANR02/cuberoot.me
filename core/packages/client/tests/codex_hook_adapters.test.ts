@@ -1,9 +1,10 @@
 // guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -18,6 +19,9 @@ const WEBKIT_FIXTURE = join(HERE, 'fixtures/block-webkit-no-webrtc-fixture.mjs')
 const ARCHITECTURE_HOOK = join(REPO_ROOT, 'core/scripts/check-architecture-boundaries.mjs');
 const RAW_CHECKBOX_HOOK = join(REPO_ROOT, 'core/packages/client/scripts/hook-detect-raw-checkbox.mjs');
 const MEMORY_COMPUTE_HOOK = join(HOOKS, 'block-unprotected-memory-compute.mts');
+// Deployment typechecks use a sparse checkout without .codex. Like the other
+// hook fixtures below, load the file only when this test actually executes.
+const { consumeMbpStatsApproval, mbpStatsCommand } = await import(pathToFileURL(MEMORY_COMPUTE_HOOK).href);
 
 function runProcess(command: string, args: string[], cwd: string, input: string, shell = false) {
   return spawnSync(command, args, {
@@ -39,6 +43,41 @@ function runAdapter(adapter: string, target: string | string[], payload: object)
 }
 
 describe('unprotected memory computation command guard', () => {
+  it('consumes only the exact approved MBP revision once, without executing it', () => {
+    const scratch = join(REPO_ROOT, '.tmp/scratch');
+    mkdirSync(scratch, { recursive: true });
+    const stateDir = mkdtempSync(join(scratch, 'stats-approval-test-'));
+    const revision = 'a'.repeat(40);
+    const command = mbpStatsCommand(revision);
+    const options = { stateDir, now: Date.parse('2026-11-10T18:00:00Z'), revision: () => revision };
+    try {
+      expect(consumeMbpStatsApproval(command, REPO_ROOT, options)).toBe(false);
+      writeFileSync(join(stateDir, 'authorization.json'), JSON.stringify({ scope: '2026-11-10-mbp-full-scramble-monitored', revision }));
+      expect(consumeMbpStatsApproval(command + '; pnpm stats:scramble', REPO_ROOT, options)).toBe(false);
+      expect(consumeMbpStatsApproval(command.replace('mbp ', 'mini '), REPO_ROOT, options)).toBe(false);
+      expect(consumeMbpStatsApproval(command, CORE_ROOT, options)).toBe(false);
+      expect(consumeMbpStatsApproval(command, REPO_ROOT, { ...options, now: Date.parse('2026-11-12T00:00:00Z') })).toBe(false);
+      expect(consumeMbpStatsApproval(command, REPO_ROOT, { ...options, revision: () => 'b'.repeat(40) })).toBe(false);
+      expect(consumeMbpStatsApproval(command, REPO_ROOT, { ...options, revision: () => { throw Error('dirty'); } })).toBe(false);
+      expect(consumeMbpStatsApproval(command, REPO_ROOT, options)).toBe(true);
+      expect(JSON.parse(readFileSync(join(stateDir, 'used.json'), 'utf8')).revision).toBe(revision);
+      expect(consumeMbpStatsApproval(command, REPO_ROOT, options)).toBe(false);
+      expect(() => mbpStatsCommand('main; echo unsafe')).toThrow('Invalid statistics revision');
+      const previous = JSON.stringify({ scope: '2026-11-10-mbp-full-scramble-monitored', revision: '4b56bb84d422790ec1683f0b30bcc94425cd7290' });
+      writeFileSync(join(stateDir, 'used.json'), previous);
+      const repair = { scope: '2026-11-10-mbp-full-scramble-monitored', revision, repairOf: 'wrong' };
+      writeFileSync(join(stateDir, 'startup-repair-authorization.json'), JSON.stringify(repair));
+      expect(consumeMbpStatsApproval(command, REPO_ROOT, options)).toBe(false);
+      repair.repairOf = createHash('sha256').update(previous).digest('hex');
+      writeFileSync(join(stateDir, 'startup-repair-authorization.json'), JSON.stringify(repair));
+      expect(command).toContain('/Users/cuberoot/.cargo/bin:');
+      expect(command).toContain('sec = 1794194703,');
+      expect(command).toContain('336[.]$');
+      expect(consumeMbpStatsApproval(command, REPO_ROOT, options)).toBe(true);
+      expect(readFileSync(join(stateDir, 'used.json'), 'utf8')).toBe(previous);
+      expect(consumeMbpStatsApproval(command, REPO_ROOT, options)).toBe(false);
+    } finally { rmSync(stateDir, { recursive: true, force: true }); }
+  });
   it.each([
     'pnpm --filter @cuberoot/alg-build double-zbll',
     'NO_SWAP=1 pnpm --filter @cuberoot/alg-build double-zbll --limit 1',
@@ -51,6 +90,8 @@ describe('unprotected memory computation command guard', () => {
     'node .local-data/double-zbll-1000/run.mts',
     'pnpm stats:scramble:local',
     'pnpm stats:scramble --jobs 333opt',
+    mbpStatsCommand('a'.repeat(40)),
+    mbpStatsCommand('a'.repeat(40)) + '; echo changed',
     'tsx ../scripts/stats/update-local.ts',
     'tsx ../scripts/stats/update-published.ts --publish',
     'pnpm stats:scramble:local --plan; pnpm stats:scramble:local',

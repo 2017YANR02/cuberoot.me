@@ -8,7 +8,7 @@
     "{packages/miniprogram,apps/miniprogram}/scripts/release-check-lib.d.mts",
     "packages/client/app/[lang]/timer/_lib/scramble/invert.ts"
   ],
-  "ignoreBinaries": ["open", "rundll32.exe", "netstat", "wasm-pack", "pwsh", "xcrun", "ssh-keygen", "ssh-keyscan", "plutil", "launchctl", "whoami.exe", "icacls.exe", "taskkill.exe", "schtasks.exe"],
+  "ignoreBinaries": ["open", "rundll32.exe", "netstat", "netstat.exe", "ps", "lsof", "wasm-pack", "pwsh", "xcrun", "ssh-keygen", "ssh-keyscan", "plutil", "launchctl", "whoami.exe", "icacls.exe", "taskkill.exe", "schtasks.exe"],
   "ignoreDependencies": ["tsx"],
   "workspaces": {
     ".": {

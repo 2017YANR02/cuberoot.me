@@ -20,8 +20,13 @@ export type PublishOptions = {
 };
 
 function shellQuote(value: string): string { return `'${value.replaceAll("'", "'\\''")}'`; }
-async function command(program: string, args: string[], input?: string): Promise<void> {
-  const child = spawn(program, args, { stdio: [input === undefined ? 'ignore' : 'pipe', 'inherit', 'inherit'] });
+export async function command(program: string, args: string[], input?: string): Promise<void> {
+  // Match the Release and exact-puzzle packers: --no-xattrs alone still lets
+  // macOS tar add AppleDouble sidecars, which the server correctly rejects.
+  const child = spawn(program, args, {
+    env: { ...process.env, COPYFILE_DISABLE: '1' },
+    stdio: [input === undefined ? 'ignore' : 'pipe', 'inherit', 'inherit'],
+  });
   if (input !== undefined) child.stdin.end(input, 'utf8');
   const exit = await new Promise<number>((done, fail) => { child.once('error', fail); child.once('close', code => done(code ?? 1)); });
   if (exit !== 0) throw new Error(`${program} exited with ${exit}`);

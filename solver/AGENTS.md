@@ -1,5 +1,7 @@
 # AGENTS.md
 
+2026-11-10 日常三阶整解统计：2026-11-10 起，三阶最优统计按电脑物理总内存自动选择 Egg Solver：至少 128 GiB 用 64G（h11/base10），64–不足 128 GiB 用 32G（h10/base10）；不足 64 GiB 不自动启动。档位由总内存确定，不随当前空闲内存降档。正式入口仍是 core/ 下 pnpm stats:scramble，兼容 solve_h10.mts 调用 solve-egg.mts。两档复用已验收的表和 macOS F_NOCACHE 程序，默认 lanes、单进程常驻，不重新建表、不改变线上 Timer。 64G / 32G 的 RSS 上限分别为 64 / 32 GiB，启动要求分别至少 67 / 35 GiB 可回收内存；运行至少 2 GiB 保守余量，固定当轮 boot/Swapouts，触线停止、不自动重试。 完整规则见 [计算细则](../docs/contributing/compute.md) 与 [执行 skill](../.agents/skills/update-scramble-stats/references/333opt.md)。
+
 2026-10-29 Opt11 优化：维护者允许多 agent 准备多个源码候选，并再次明确“不跑任何计算”。先建立 [Opt11 优化跟踪](experiments/cube48opt-rust/opt11-optimization.md)，B0 完整源码已保留到 `.local-data/cubeopt-reverse/opt11-source-baseline-20261029-WsCutS/`。本轮不编译、不执行任何测试或计算；独立候选不改变默认策略、正式构件或运行拒绝边界。后续 AI 从跟踪文档核对版本及未验证项，不得把源码准备状态当作性能或正确性验收。
 
 2026-10-29 Opt11：维护者仅授权编写 CubeRoot Opt11 建表与求解代码，明确“不跑任何计算”。`experiments/cube48opt-rust/src/opt11.rs`、`opt11_generate.rs` 和共享 `eo_table.rs` 已准备；未编译、未运行新增测试、未生成或加载大表、未求解。`generate-opt11` / `solve-opt11` 由 CLI 在文件访问前拒绝，guard/hook 同样不放行，不新增运行基线、不借用 Opt10 凭据。完整实现范围及待验收项见该目录 README 的 Opt11 代码准备章节。此项是 CubeRoot EO11，不是 Nissy H48 h11；原 H11 禁止运行规则不变。正式 Opt10 冻结构件、默认统计入口及历史成绩未替换。

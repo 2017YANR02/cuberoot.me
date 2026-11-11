@@ -154,7 +154,6 @@ export default function Dashboard() {
   ];
   return <section className="admin-dashboard admin-overview" aria-label={t('运营总览', 'Operations overview')} aria-busy={loading}>
     <div className="admin-dashboard__toolbar">
-      <div>{data && <span>{t('更新于', 'Updated')} {data.updatedAt.replace('T', ' ').slice(0, 19)} UTC </span>}<InfoTooltip icon={HelpCircle} iconSize={15} ariaLabel={t('统计口径', 'Metric definitions')} content={t('增长与收退款按 UTC 日期统计；今日数据尚未结束。', 'Growth and cash flow use UTC dates; today is still in progress.')} /></div>
       <label>{t('趋势范围', 'Trend period')} <select className="admin-dashboard-select" aria-label={t('趋势范围', 'Trend period')} value={range} onChange={event => { const value = event.target.value; if (value === '7' || value === '30' || value === '90') void setRange(value); }}>
         <option value="7">{t('最近 7 天', 'Last 7 days')}</option><option value="30">{t('最近 30 天', 'Last 30 days')}</option><option value="90">{t('最近 90 天', 'Last 90 days')}</option>
       </select></label>
@@ -162,7 +161,7 @@ export default function Dashboard() {
     </div>
     {!loading && (!users || !data) && <p className="admin-dashboard__notice" role="status">{t('部分统计暂时无法加载，请刷新重试。已显示的数据和管理入口仍可使用。', 'Some statistics could not load. Refresh to retry; available data and management links remain usable.')}</p>}
     <div className="admin-dashboard__metrics">
-      <AppLink href="/admin/users" prefetch={false} data-site-surface="panel"><span>{t('累计用户', 'Total users')}</span><strong>{count(users?.summary.totalUsers)}</strong><small>{users ? `${t('今日注册', 'Registered today')} ${count(users.summary.registeredToday)} · UTC` : unavailable}</small></AppLink>
+      <AppLink href="/admin/users" prefetch={false} data-site-surface="panel"><span>{t('累计用户', 'Total users')}</span><strong>{count(users?.summary.totalUsers)}</strong><small>{users ? `${t('今日注册', 'Registered today')} ${count(users.summary.registeredToday)}` : unavailable}</small></AppLink>
       <AppLink href="/admin/users" prefetch={false} data-site-surface="panel"><span>{t(`最近 ${loadedRange} 天注册`, `Registrations · last ${loadedRange} days`)}</span><strong>{count(registrations?.reduce((sum, row) => sum + row.count, 0))}</strong></AppLink>
       <div data-site-surface="panel"><span>{t('小时请求', 'Hourly requests')} <InfoTooltip icon={HelpCircle} iconSize={15} ariaLabel={t('请求统计说明', 'About request counts')} content={t('最近完整小时内已接入服务器的请求，含静态资源及自动化访问，不代表访客数。', 'Requests from connected servers in the latest complete hour, including assets and automated traffic; not visitor counts.')} /></span><strong>{count(requests)}</strong><small>{traffic?.stale ? t('历史快照，报表已过期', 'Historical snapshot · report is stale') : traffic ? null : unavailable}</small></div>
       <div data-site-surface="panel"><span>{t('待处理', 'Pending')} <InfoTooltip icon={HelpCircle} iconSize={15} ariaLabel={t('待办统计说明', 'About pending counts')} content={t('反馈、论坛审核、举报及赞助认领；不含未读公式投稿。', 'Feedback, moderation, reports and sponsorship claims; excludes unread algorithm submissions.')} /></span><strong>{count(pendingTotal)}</strong></div>

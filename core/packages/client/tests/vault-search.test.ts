@@ -75,21 +75,37 @@ it('automatically searches valid input, cancels old requests, and ignores late r
   expect(vi.mocked(fetch).mock.calls.every(([, options]) => !options?.method || options.method === 'GET')).toBe(true);
 });
 
-it('imports only validated entries for the owner, preserves secrets and skips repeated imports', async () => {
-  const entry = { id: 'import-one', title: 'Account one', category: 'accounts', fields: [{ id: 'pw', label: 'Password', value: 'test\nbackup', secret: true }], notes: '' };
-  const choose = async (items: unknown[]) => {
-    const input = host.querySelector<HTMLInputElement>('[aria-label="选择资料库文件"]')!;
-    Object.defineProperty(input, 'files', { configurable: true, value: [{ size: 100, text: async () => JSON.stringify({ version: 1, items }) }] });
-    await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })));
+it('creates an owner-only encrypted account entry through the simplified editor', async () => {
+  expect(host.querySelector('[aria-label="选择资料库文件"]')).toBeNull();
+  expect(host.textContent).not.toContain('导出明文备份');
+  const click = async (label: string) => {
+    const button = [...host.querySelectorAll('button')].find(item => item.textContent === label)!;
+    await act(async () => button.click());
   };
-  await choose([{ entry: { ...entry, images: [{ id: 'image', name: 'bad', dataUrl: 'https://example.com/private' }] } }]);
+  const fill = async (input: HTMLInputElement, value: string) => {
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  };
+  await click('新建');
+  await click('保存');
   expect(writes).toHaveLength(0);
-  await choose([{ ownerUserId: 99, shares: [{ userId: 99 }], entry }, { entry }]);
+  expect(host.textContent).toContain('请填写标题');
+  await fill(host.querySelector<HTMLInputElement>('.vault-title-input')!, 'Account one');
+  const fields = host.querySelectorAll<HTMLInputElement>('.vault-value-input');
+  expect(fields).toHaveLength(2);
+  expect(fields[1].type).toBe('password');
+  await fill(fields[0], 'test-owner');
+  await fill(fields[1], 'test-secret');
+  await click('保存');
   expect(writes).toHaveLength(1);
-  expect(writes[0].accesses.map((access) => access.userId)).toEqual([1]);
-  expect(JSON.parse(writes[0].ciphertext)).toEqual(entry);
-  expect(host.textContent).toContain('新增 1 条，跳过 1 条');
-  await choose([{ entry }, { entry: { ...entry, id: 'import-two', title: 'Account two' } }]);
-  expect(writes).toHaveLength(2);
-  expect(host.textContent).toContain('新增 1 条，跳过 1 条');
+  expect(writes[0].accesses.map(access => access.userId)).toEqual([1]);
+  expect(JSON.parse(writes[0].ciphertext)).toMatchObject({
+    title: 'Account one', category: 'accounts', fields: [
+      { label: '账号', value: 'test-owner', secret: false },
+      { label: '密码', value: 'test-secret', secret: true },
+    ],
+  });
+  expect([...host.querySelectorAll('button')].find(item => item.textContent === '保存')?.disabled).toBe(true);
 });

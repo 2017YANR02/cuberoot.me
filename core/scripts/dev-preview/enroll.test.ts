@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, copyFileSync, existsSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, copyFileSync, existsSync, rmSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -64,6 +64,7 @@ test('one enrollment survives network and provisioning failure, then starts once
     assert.match(output,/Verified and available:/);
     assert.equal(readFileSync(join(root,'commands'),'utf8'),'init\nconfigure\nrun\n');
     assert.deepEqual(JSON.parse(readFileSync(join(home,'projects.json'),'utf8')).other,{directory:'keep'});
+    assert.deepEqual(JSON.parse(readFileSync(join(home,'projects.json'),'utf8')).cuberoot.command,[process.execPath,join(realpathSync(root),'core/scripts/local-dev.mts'),'--preview','test-pc']);
     assert.equal(existsSync(join(home,'.cuberoot/dev-preview/test-pc/enroll.pid')),true);
   }finally{
     child.kill('SIGTERM');await closed;

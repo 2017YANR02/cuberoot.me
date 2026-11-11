@@ -62,7 +62,7 @@ while(true){
     if(realpathSync(current.directory)!==realpathSync(join(repo,'core')))throw Error('cuberoot belongs to another checkout; inspect the registry before changing it.');
     const profile=JSON.parse(readFileSync(file,'utf8'));
     const backup=configPath+`.before-preview-${Date.now()}`;copyFileSync(configPath,backup);
-    registry.cuberoot={directory:join(repo,'core'),url:profile.url,command:[process.execPath,client,'run','--id',id,'--open']};
+    registry.cuberoot={directory:join(repo,'core'),url:profile.url,command:[process.execPath,join(repo,'core/scripts/local-dev.mts'),'--preview',id]};
     writeFileSync(configPath,JSON.stringify(registry,null,2)+'\n',{mode:0o600});
     // Migrate only this checkout's cuberoot alias; preserve the other projects and host devsite.
     mkdirSync(join(homedir(),'.local/share/devsite'),{recursive:true});
@@ -87,10 +87,11 @@ while(true){
     const runningTask=running?Promise.resolve():retry(async()=>{
       if(stopped)return;
       const code=await new Promise<number|null>((resolve,reject)=>{
-        child=spawn(process.execPath,[client,'run','--id',id,'--open'],{stdio:'inherit'});
+        child=spawn(process.execPath,[client,'run','--id',id,'--open','--restart'],{stdio:'inherit'});
         child.once('error',reject);child.once('exit',resolve);
       });
       if(stopped)return;
+      if(code===0){stopped=true;return;}
       if(code===75)throw new RetryableError('Temporary preview startup failure');
       throw Error('Preview runner stopped. Inspect the specific error above; keys and configuration are preserved.');
     },{signal:shutdown.signal,notify:ms=>console.log(`Retrying preview startup in ${ms/1000}s.`)});

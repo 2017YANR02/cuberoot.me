@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync, chmodSync, copyFileSync, openSync, closeSync, unlinkSync, appendFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
 import { parseArgs } from 'node:util';
 import { createConnection } from 'node:net';
@@ -11,7 +11,7 @@ import { retryable } from './retry.ts';
 
 interface Profile { version: number; id: string; host: string; sshPort: number; sshUser: string; localPort: number; remotePort: number; url: string; hostKey: string; publicKey: string; repo: string }
 const { values: v, positionals } = parseArgs({ allowPositionals: true, options: {
-  open: { type: 'boolean' }, id: { type: 'string' }, profile: { type: 'string' }, repo: { type: 'string' }, state: { type: 'string' },
+  open: { type: 'boolean' }, restart: { type: 'boolean' }, id: { type: 'string' }, profile: { type: 'string' }, repo: { type: 'string' }, state: { type: 'string' },
 } });
 const command = positionals[0] ?? 'help';
 const id = v.id ? slug(v.id, 59) : '';
@@ -67,46 +67,53 @@ function stopChild(p?: ChildProcess) {
 }
 async function run() {
   const p = profile(), lock = join(dir, 'runner.pid');
+  // Installed runners also use the checkout's common frontend startup implementation.
+  const { prepareLocalDev, healthy, openBrowser, restartManaged, registerSession, clearPreviousDev, stopLegacyRunner } = await import(pathToFileURL(join(p.repo, 'core/scripts/local-dev.mts')).href) as typeof import('../local-dev.mts');
+  if (v.restart) await restartManaged(join(p.repo, 'core'));
   if (existsSync(lock)) {
     const pid = Number(readFileSync(lock, 'utf8'));
     if (!Number.isInteger(pid) || pid < 1) throw Error('Invalid runner lock; inspect it');
     let alive = false; try { process.kill(pid, 0); alive = true; } catch { /* stale */ }
-    if (alive) throw Error(`Runner already active or PID reused (${pid}); inspect before restarting`);
-    unlinkSync(lock);
+    if (alive && v.restart) {
+      await stopLegacyRunner(pid, [join(p.repo, 'core/scripts/dev-preview/client.ts'), join(dir, 'client.ts')], id);
+    } else if (alive) {
+      if (!v.open) throw Error(`Preview runner is already active (${pid}); use cuberoot to open it.`);
+      await localCheck(p);
+      if (!await healthy(p.url).catch(() => false)) throw Error(`Local CubeRoot is running, but the preview is unavailable: ${p.url}. Check the existing runner (${pid}); no process was stopped.`);
+      // Read-only reuse: never claim/remove this lock or signal its PID, even if reused.
+      console.log(`Reusing the running CubeRoot server: ${p.url}`);
+      openBrowser(p.url); return;
+    }
+    if (existsSync(lock) && readFileSync(lock, 'utf8') === String(pid)) unlinkSync(lock);
   }
   writeFileSync(lock, String(process.pid), { flag: 'wx', mode: 0o600 });
   let dev: ChildProcess | undefined, tunnel: ChildProcess | undefined, stopped = false;
-  const cleanup = () => { stopped = true; stopChild(tunnel); stopChild(dev); if (existsSync(lock)) unlinkSync(lock); };
-  process.once('SIGTERM', () => { cleanup(); process.exit(0); });
-  process.once('SIGINT', () => { cleanup(); process.exit(0); });
+  let release: (() => void) | undefined;
+  const cleanup = () => { stopped = true; stopChild(tunnel); stopChild(dev); release?.(); if (existsSync(lock) && readFileSync(lock, 'utf8') === String(process.pid)) unlinkSync(lock); };
+  // Detached children do not receive the terminal's hangup automatically.
+  for (const signal of ['SIGTERM', 'SIGINT', 'SIGHUP'] as const) process.once(signal, () => { cleanup(); process.exit(0); });
   try {
+    release = await registerSession(join(p.repo, 'core'), () => { cleanup(); process.exit(0); });
+    if (v.restart) await clearPreviousDev(join(p.repo, 'core'), join(p.repo, 'core/packages/client'));
     if (!(await listening(p.localPort))) {
-      const core = join(p.repo, 'core'), client = join(core, 'packages', 'client');
-      const next = join(client, 'node_modules', 'next', 'dist', 'bin', 'next');
-      if (!existsSync(next)) throw Error('Dependencies missing: run pnpm install in core first');
-      for (const args of [
-        ['--import','tsx','packages/client/scripts/build-cube-history.ts'],
-        ['scripts/copy-maplibre-assets.mts'],
-        ['scripts/build-cubing-worker.mjs','packages/client/public/cubing-chunks'],
-      ]) execFileSync(process.execPath,args,{cwd:core,stdio:v.open?'inherit':'pipe',timeout:120000});
-      // Bypass predev-clean: this runner must never kill an existing port owner.
-      dev = child(process.execPath, [next, 'dev', '-H', '127.0.0.1', '-p', String(p.localPort)], client);
-      dev.on('error', e => log(`Next failed: ${e.message}`));
+      const command = prepareLocalDev(join(p.repo, 'core'), v.open ? 'inherit' : 'pipe');
+      if (await listening(p.localPort)) throw Error('Port 3000 became occupied during startup. Inspect the existing service before retrying.');
+      dev = child(command.command, command.args, command.cwd);
+      dev.on('error', e => log(`Frontend failed: ${e.message}`));
+      log(`Starting ${p.url} — keep this terminal open; Ctrl+C stops this server.`);
       for (let i = 0; i < 90 && !(await listening(p.localPort)); i++) {
-        if (dev.exitCode !== null) throw Error('Next exited; inspect service.log');
+        if (dev.exitCode !== null) throw Error('Frontend exited; inspect service.log');
         await delay(1000);
       }
-      dev.once('exit', () => { if (!stopped) { log('Managed Next exited; stopping tunnel'); cleanup(); process.exit(1); } });
+      dev.once('exit', () => { if (!stopped) { log('Managed frontend exited; stopping tunnel'); cleanup(); process.exit(1); } });
     }
     await localCheck(p); log(`Local service ready. Connecting ${p.url}`);
     if (v.open) void (async () => {
       while (!stopped) {
         try {
-          const response=await fetch(p.url,{signal:AbortSignal.timeout(5000)});
-          if(response.ok&&(await response.text()).includes('CubeRoot')) {
+          if(await healthy(p.url, 5000)) {
             if(stopped)return;
-            const browser=process.platform==='darwin'?spawn('open',[p.url],{stdio:'ignore'}):spawn('rundll32.exe',['url.dll,FileProtocolHandler',p.url],{stdio:'ignore'});
-            browser.on('error',()=>log(`Open ${p.url} in your browser.`)); return;
+            openBrowser(p.url); return;
           }
         } catch { /* Wait for the tunnel and Next compilation. */ }
         await delay(5000);
@@ -156,7 +163,7 @@ function install() {
   } else throw Error('Autostart supports macOS and Windows; use run elsewhere');
 }
 async function main() {
-  if (command === 'help') { console.log('Node 24+ required. client.ts init --id OWNER-DEVICE | configure --id ID --profile CONNECTION.json --repo REPO | run --id ID | install --id ID | check --id ID'); return; }
+  if (command === 'help') { console.log('Node 24+ required. client.ts init --id OWNER-DEVICE | configure --id ID --profile CONNECTION.json --repo REPO | run --id ID [--restart] | install --id ID | check --id ID'); return; }
   if (!id || id.length > 59 || Number(process.versions.node.split('.')[0]) < 24) throw Error('Node 24+ and --id OWNER-DEVICE required');
   mkdirSync(dir, { recursive: true, mode: 0o700 }); secure(dir, true);
   if (command === 'init') {

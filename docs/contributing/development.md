@@ -13,9 +13,9 @@ WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过
 
 ## 开发预览域名接入
 
-维护者 Mac 的终端命令 `cuberoot` 是本机 `~/.local/bin/devsite` 的同名快捷命令，登记在 `~/.config/devsite/projects.json`。它在 `core/` 运行现有 `pnpm --filter @cuberoot/client dev:clean`，开发域名就绪后打开 `https://dev.cuberoot.me`。
+维护者两台 Mac 的终端命令 `cuberoot` 共用仓库 `core/scripts/local-dev.mts`，登记在各机 `~/.config/devsite/projects.json`，快捷命令经通用 TypeScript `devsite` 调用。Mac mini 带 `--url https://dev.cuberoot.me`，MacBook Pro 带 `--preview ruimin-macbook-pro`。每次执行先停止本 checkout 的旧开发会话，清理 Next 开发缓存，再在当前终端启动资源生成与 Turbo watch；就绪后打开本机登记网址。
 
-此命令复用既有常驻 FRP，不负责 DNS、证书或设备隧道配置。新增项目使用 `devsite add`，不要再复制一套 shell 启动函数。该工具属于本机配置，换设备或修改前先核对实际脚本、登记项及服务状态。
+Mac mini 复用既有常驻 FRP；MacBook Pro 的 preview runner 管理独立 SSH 隧道。重复运行 `cuberoot` 会结束旧开发会话并重启，日志留在新终端；Ctrl+C 或关闭终端停止该会话创建的服务。未知端口进程或 PID 不匹配时停止并报错，不误杀其他项目。此入口不负责 DNS、证书或设备申请。新增项目使用 `devsite add`，不要再复制一套 shell 启动函数。该工具属于本机配置，换设备或修改前先核对实际脚本、登记项及服务状态。
 
 用户说“帮我配置 dev，名字是…电脑是…”、新增同事开发域名或撤销某台电脑时，读取 `.agents/skills/dev-preview/SKILL.md` 和 `docs/dev-preview-onboarding.md`。以 `ops/dev-preview/machines.json` 为唯一设备清单，使用 `core/scripts/dev-preview/cli.ts` 和 `client.ts` 完成登记、授权、DNS、证书、部署、电脑自启和验收；不能只改 DNS 就报完成。新增同事使用每设备独立 SSH 密钥，不分发现有 FRP 共用令牌。
 
