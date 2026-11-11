@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { Settings, LogOut, UserRound } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { CompactSelect } from '@/components/CompactSelect';
-import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import { notifyMiniProgramLogout } from '@/lib/miniprogram-bridge';
 import { useT } from '@/hooks/useT';
 import './chat-account-menu.css';
@@ -23,7 +23,7 @@ export default function ChatAccountMenu() {
       </div>}
       <AppLink className="chat-account-menu-item" ref={focusSettings} href="/chat?settings=general" prefetch={false} onClick={() => setOpen(false)}><Settings size={18} aria-hidden="true"/>{t('设置', 'Settings')}</AppLink>
       {user ? <button className="chat-account-menu-item" type="button" onClick={() => {
-        setOpen(false); useAuthStore.getState().logout(); void notifyMiniProgramLogout();
+        setOpen(false); authActions.logout(); void notifyMiniProgramLogout();
       }}><LogOut size={18}/>{t('退出登录', 'Log out')}</button> :
         <AppLink className="chat-account-menu-item" href="/chat?settings=account" prefetch={false} onClick={() => setOpen(false)}><UserRound size={18}/>{t('登录', 'Sign in')}</AppLink>}
     </>} />;

@@ -8,7 +8,7 @@ import { ForumFeedList } from '@/components/forum/ForumFeedList';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
 import Paginator from '@/components/wca-stats/Paginator';
 import { useEntryRouter } from '@/hooks/useEntryRouter';
-import { useAuthStore, useOwnerKey } from '@/lib/auth-store';
+import { useOwnerKey, authActions } from '@/lib/auth-store';
 import { deletePost, deleteThread, fetchForumMine, type ForumMineData, type ForumMineKind, type ForumMineThread } from '@/lib/forum-api';
 import { tr, useLang } from '@/i18n/tr';
 import { ForumHeader } from '../_components/ForumHeader';
@@ -111,6 +111,6 @@ export default function ForumMinePage() {
     </ForumHeader>
     {ownerKey ? <MineResults key={`${ownerKey}:${kind}:${safePage}:${safeSize}`} kind={kind} page={safePage} size={safeSize}
       onPageChange={changePage} onSizeChange={changeSize} />
-      : <button type="button" className="forum-login-hint" onClick={() => useAuthStore.getState().login()}>{tr({ zh: '登录后查看我的帖子', en: 'Sign in to view your posts' })}</button>}
+      : <button type="button" className="forum-login-hint" onClick={() => authActions.login()}>{tr({ zh: '登录后查看我的帖子', en: 'Sign in to view your posts' })}</button>}
   </div>;
 }

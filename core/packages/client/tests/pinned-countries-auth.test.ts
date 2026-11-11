@@ -15,6 +15,7 @@ const state = vi.hoisted(() => ({
 vi.mock('@/lib/auth-store', async importOriginal => ({
   ...await importOriginal<typeof import('@/lib/auth-store')>(),
   useAuthUser: () => state.user,
+  getAuthUser: () => state.user,
   useAuthStore: { getState: () => state },
 }));
 vi.mock('@/lib/country-flags', () => ({

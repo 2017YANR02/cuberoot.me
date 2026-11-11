@@ -10,7 +10,7 @@ import { Key, Pencil, Trash2 } from '@app-foundation/icons/lucide';
 import PageBackLink from '@/components/PageBackLink';
 import Link from '@/components/AppLink';
 import { tr, useLang } from '@/i18n/tr';
-import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import { deleteQuestion, fetchMyQuestions, type CommunityQuestionRow } from '@/lib/quiz-api';
 import { findCategory } from '../_data';
 import '../quiz.css';
@@ -53,7 +53,7 @@ export default function QuizMinePage() {
           <button
             type="button"
             className="quiz-btn is-primary quiz-login"
-            onClick={() => useAuthStore.getState().login()}
+            onClick={() => authActions.login()}
           >
             <Key size={15} aria-hidden />
             {tr({ zh: '登录后查看', en: 'Log in to see them' })}

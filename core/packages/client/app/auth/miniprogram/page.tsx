@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { tr } from '@/i18n/tr';
-import { applySession, useAuthStore } from '@/lib/auth-store';
+import { applySession, authActions } from '@/lib/auth-store';
 import {
   MINIPROGRAM_HANDOFF_FALLBACK,
   exchangeMiniProgramWebSession,
@@ -28,7 +28,7 @@ export default function MiniProgramAuthPage() {
     if (logout) {
       setNext(logout.next);
       setPendingLabel(tr({ zh: '正在退出账号...', en: 'Signing you out...' }));
-      useAuthStore.getState().logout();
+      authActions.logout();
       window.location.replace(logout.next);
       return () => { active = false; };
     }

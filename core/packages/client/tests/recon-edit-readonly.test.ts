@@ -12,6 +12,7 @@ const fixture = vi.hoisted(() => ({
 vi.mock('next/navigation', () => ({ useParams: () => ({ lang: 'zh' }), useSearchParams: () => new URLSearchParams(), useRouter: () => ({ push: vi.fn() }) }));
 vi.mock('@/lib/auth-store', async original => ({
   ...await original<typeof import('@/lib/auth-store')>(),
+  getAuthUser: () => fixture.user, authActions: { login: vi.fn() },
   useAuthStore: Object.assign((selector: (state: unknown) => unknown) => selector({ user: fixture.user, login: vi.fn() }), { getState: () => ({ user: fixture.user }) }),
   useAuthUser: () => fixture.user,
 }));

@@ -9,6 +9,7 @@ const api = vi.hoisted(() => ({ getHomeCardOrders: vi.fn(), reorderHomeCards: vi
 vi.mock('@/lib/home-card-order-api', () => api);
 vi.mock('@/lib/auth-store', () => ({
   hasAdminAccess: (user: { isAdmin: boolean }) => user.isAdmin,
+  useIsAdmin: () => state.user.isAdmin, getAuthUser: () => state.user,
   useAuthStore: Object.assign((select: (s: typeof state) => unknown) => select(state), { getState: () => state }),
 }));
 vi.mock('@dnd-kit/core', async importOriginal => ({

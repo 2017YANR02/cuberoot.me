@@ -16,7 +16,7 @@ import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, Pencil, MessageSquarePlus, Plus, Trash2, Link2 } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
-import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthUser } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import {
   fetchWikiTerms, createTerm, updateTerm, deleteTerm,
@@ -143,7 +143,7 @@ export default function WikiPage() {
   // 关掉则跟随桌宠语言钮(i18n.language)= 仅中文 / 仅英文。
   const [showBoth, setShowBoth] = useQueryState('bi', parseAsBoolean.withDefault(true));
   const singleLang: 'zh' | 'en' = isZh ? 'zh' : 'en';
-  const user = useAuthStore(s => s.user);
+  const user = useAuthUser();
   const isLoggedIn = !!user;
   const isAdmin = hasAdminAccess(user);
   // 所有权键(与服务端一致):非 WCA 账号也能判定自己的词条。admin 判定仍用真实 wcaId。

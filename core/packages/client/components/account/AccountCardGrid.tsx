@@ -7,13 +7,13 @@ import { ACCOUNT_CARD_GROUP_ID, ACCOUNT_CARD_IDS } from '@cuberoot/shared/site-d
 import SortableCard from '@/components/SortableCard';
 import { applyCardOrder } from '@/lib/card-order';
 import { getHomeCardOrders, reorderHomeCards } from '@/lib/home-card-order-api';
-import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
+import { hasAdminAccess, useIsAdmin, getAuthUser } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
 
 const ALL_CARDS = ACCOUNT_CARD_IDS.map(id => ({ id }));
 
 export default function AccountCardGrid({ cards }: { cards: { id: string; content: ReactNode }[] }) {
-  const isAdmin = useAuthStore(s => hasAdminAccess(s.user));
+  const isAdmin = useIsAdmin();
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -35,7 +35,7 @@ export default function AccountCardGrid({ cards }: { cards: { id: string; conten
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
   const handleDragEnd = async ({ active, over }: DragEndEvent) => {
-    if (!hasAdminAccess(useAuthStore.getState().user) || !loaded || savingRef.current || !over || active.id === over.id) return;
+    if (!hasAdminAccess(getAuthUser()) || !loaded || savingRef.current || !over || active.id === over.id) return;
     const from = fullOrder.indexOf(String(active.id));
     const to = fullOrder.indexOf(String(over.id));
     if (from < 0 || to < 0) return;

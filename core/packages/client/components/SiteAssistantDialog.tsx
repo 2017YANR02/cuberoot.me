@@ -12,7 +12,7 @@ import { createPortal } from 'react-dom';
 import { ArrowUp, ArrowDown, ArrowRight, Check, Copy, Pencil, Maximize2, Minimize2, MessageSquarePlus, ImagePlus, Plus, Mic, Square, X } from '@app-foundation/icons/lucide';
 import { SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_QUESTION_MAX_LENGTH, isAssistantSourceHref, type AssistantImage, type AssistantAnswer, type AssistantChart, type AssistantStatus, type AssistantErrorCode, type AssistantThinkingMode } from '@cuberoot/shared/site-assistant';
 import { ASSISTANT_ERROR_TEXT } from '@/lib/site-assistant-errors';
-import { useAuthStore } from '@/lib/auth-store';
+import { authActions } from '@/lib/auth-store';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
@@ -310,7 +310,7 @@ export default function SiteAssistantDialog({onAnswerRevealed,turns,draft,images
         </section>;})}
         {error && (error==='login_required'||error==='wca_link_required' ?
           <div className="site-assistant-auth" role="alert">
-            <button className="site-assistant-auth-link" type="button" onClick={()=>useAuthStore.getState().login()}>
+            <button className="site-assistant-auth-link" type="button" onClick={()=>authActions.login()}>
               <span>{tr(error==='login_required' ? {zh:'登录后继续聊天',en:'Sign in to continue chatting'} : {zh:'绑定 WCA 账号以继续',en:'Link your WCA account to continue'})}</span>
               <ArrowRight size={16} aria-hidden="true"/>
             </button>

@@ -8,7 +8,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Key, MoreVertical } from '@app-foundation/icons/lucide';
-import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { UserContactLink, UserIdLabel } from '@/components/UserIdLabel';
 import { Flag } from '@/components/Flag';
@@ -57,7 +57,7 @@ export function DiscussionComposer({
     return (
       <div
         className="detail-comment-login-hint"
-        onClick={() => useAuthStore.getState().login()}
+        onClick={() => authActions.login()}
         style={{ cursor: 'pointer' }}
       >
         <Key size={16} /> {loginHint}

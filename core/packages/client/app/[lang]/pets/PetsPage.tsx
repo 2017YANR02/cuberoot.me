@@ -9,7 +9,7 @@ import PageBackLink from '@/components/PageBackLink';
 import DeskPetHome from '@/components/DeskPetHome';
 import DeskPetGallery from '@/components/DeskPetGallery';
 import { Spinner } from '@/components/Spinner/Spinner';
-import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthUser } from '@/lib/auth-store';
 import { getDeskPetCatalog } from '@/lib/deskpet-api';
 import { THEMES, THEME_IDS, type ThemeId } from '@/lib/deskpet-themes';
 import { resolveDeskPets, type DeskPetCatalog } from '@cuberoot/shared/deskpet';
@@ -19,7 +19,7 @@ import './pets.css';
 
 export default function PetsPage({ gallery = false }: { gallery?: boolean }) {
   const lang = useLang();
-  const user = useAuthStore(s=>s.user);
+  const user = useAuthUser();
   const isAdmin = hasAdminAccess(user);
   const [petId,setPetId] = useQueryState('pet',parseAsString.withDefault('rootbeast'));
   const [scene,setScene] = useQueryState('scene',parseAsString.withOptions({history:'push'}));

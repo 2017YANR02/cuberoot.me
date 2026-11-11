@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useSyncExternalStore, type SetStateAction } from 'react';
-import { useAuthStore, type WcaUser } from '@/lib/auth-store';
+import { type WcaUser, getAuthUser, subscribeAuthUser } from '@/lib/auth-store';
 
 // Only the current browser session; never persisted to storage or used for SSR.
 // Callers keep their normal refresh effects and retain content while refreshing.
@@ -11,11 +11,11 @@ const emit = () => listeners.forEach(listener => listener());
 let unsubscribeAuth: (() => void) | undefined;
 let generation = 0;
 const identity = (user: WcaUser | null) => user ? `${user.uid ?? user.wcaId}:${user.isAdmin}` : 'guest';
-const owner = () => `${identity(useAuthStore.getState().user)}:${generation}`;
+const owner = () => `${identity(getAuthUser())}:${generation}`;
 const subscribe = (listener: () => void) => {
   listeners.add(listener);
-  unsubscribeAuth ??= useAuthStore.subscribe((next, previous) => {
-    if (identity(next.user) !== identity(previous.user)) {
+  unsubscribeAuth ??= subscribeAuthUser((next, previous) => {
+    if (identity(next) !== identity(previous)) {
       generation++;
       values.clear();
       emit();

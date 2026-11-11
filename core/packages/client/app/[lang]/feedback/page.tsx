@@ -17,7 +17,7 @@ import FeedbackConversation from '@/components/FeedbackConversation';
 import { UserContactLink } from '@/components/UserIdLabel';
 import Paginator from '@/components/wca-stats/Paginator';
 import { useT } from '@/hooks/useT';
-import { useAuthStore, isAdmin } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthUser, authActions } from '@/lib/auth-store';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import {
   feedbackMediaUrl,
@@ -40,8 +40,8 @@ export default function FeedbackPage() {
   const t = useT();
   const isZh = i18n.language.startsWith('zh');
   const lang = (['en', 'zh'] as const)[Number(isZh)];
-  const user = useAuthStore((s) => s.user);
-  const login = useAuthStore((s) => s.login);
+  const user = useAuthUser();
+  const login = authActions.login;
   const [mounted, setMounted] = useState(false);
   const [page, setPage] = useQueryState(
     'page', parseAsInteger.withDefault(1).withOptions({ history: 'replace' }),
@@ -240,7 +240,7 @@ export default function FeedbackPage() {
         />
       )}
 
-      {mounted && isAdmin() && (
+      {mounted && hasAdminAccess(user) && (
         <AppLink href="/feedback/admin" className="fbm-admin-link">{t('反馈审核(管理员)', 'Review all (admin)')}</AppLink>
       )}
 

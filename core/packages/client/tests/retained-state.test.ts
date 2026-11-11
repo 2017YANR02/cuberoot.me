@@ -8,7 +8,13 @@ import { useAuthStore } from '@/lib/auth-store';
 
 vi.mock('@/lib/auth-store', async () => {
   const { create } = await import('zustand');
-  return { useAuthStore: create(() => ({ user: null })) };
+  const useAuthStore = create<{ user: unknown }>(() => ({ user: null }));
+  return {
+    useAuthStore,
+    getAuthUser: () => useAuthStore.getState().user,
+    subscribeAuthUser: (listener: (user: unknown, previous: unknown) => void) =>
+      useAuthStore.subscribe((next, previous) => listener(next.user, previous.user)),
+  };
 });
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

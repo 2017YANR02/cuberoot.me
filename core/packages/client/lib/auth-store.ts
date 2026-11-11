@@ -361,6 +361,25 @@ export function isAdmin(): boolean {
 // immediately instead of flashing the guest layout again.
 const authUserSnapshot = () => useAuthStore.getState().user;
 const authUserServerSnapshot = () => null;
+
+/** Commands never read browser state during render; resolve the current action when invoked. */
+export const authActions: AuthActions = {
+  login: () => useAuthStore.getState().login(),
+  loginWithWca: returnTo => useAuthStore.getState().loginWithWca(returnTo),
+  logout: () => useAuthStore.getState().logout(),
+  refresh: () => useAuthStore.getState().refresh(),
+};
+
+/** Imperative snapshot for event handlers and async identity checks. Render with useAuthUser. */
+export function getAuthUser(): WcaUser | null {
+  return authUserSnapshot();
+}
+
+/** Subscribe outside render, e.g. session bridges and owner-scoped caches. */
+export function subscribeAuthUser(listener: (user: WcaUser | null, previous: WcaUser | null) => void): () => void {
+  return useAuthStore.subscribe((state, previous) => listener(state.user, previous.user));
+}
+
 export function useAuthUser(): WcaUser | null {
   return useSyncExternalStore(useAuthStore.subscribe, authUserSnapshot, authUserServerSnapshot);
 }

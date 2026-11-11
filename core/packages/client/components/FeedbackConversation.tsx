@@ -12,7 +12,7 @@ import { Spinner } from '@/components/Spinner/Spinner';
 import { UserContactLink } from '@/components/UserIdLabel';
 import { useT } from '@/hooks/useT';
 import { displayCuberName } from '@/lib/cuber-name-display';
-import { getOwnerKey, isAdmin, useAuthStore } from '@/lib/auth-store';
+import { getOwnerKey, hasAdminAccess, useAuthUser, authActions } from '@/lib/auth-store';
 import { fetchFeedbackThread, replyToFeedback, deleteFeedbackMessage, type FeedbackMessage } from '@/lib/feedback-api';
 import { refreshFeedbackUnread } from '@/lib/feedback-unread';
 import './feedback-conversation.css';
@@ -30,8 +30,8 @@ export default function FeedbackConversation({ feedbackId, onActivity }: {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = useT();
-  const user = useAuthStore((s) => s.user);
-  const login = useAuthStore((s) => s.login);
+  const user = useAuthUser();
+  const login = authActions.login;
 
   const [messages, setMessages] = useState<FeedbackMessage[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -41,7 +41,7 @@ export default function FeedbackConversation({ feedbackId, onActivity }: {
   const [deleting, setDeleting] = useState<number | null>(null);
 
   const myId = user ? getOwnerKey() : null;
-  const admin = user != null && isAdmin();
+  const admin = user != null && hasAdminAccess(user);
   const canDelete = (m: FeedbackMessage) => admin || m.wcaId === myId;
 
   const load = useCallback(() => {

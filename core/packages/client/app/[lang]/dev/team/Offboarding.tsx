@@ -6,7 +6,7 @@ import { ArrowRight, Check, ClipboardCheck, FileCheck2, FolderOpen, KeyRound, La
 import AppLink from '@/components/AppLink';
 import { useCopy } from '@/hooks/useCopy';
 import { useT } from '@/hooks/useT';
-import { useAuthUser, useAuthStore } from '@/lib/auth-store';
+import { useAuthUser, authActions, getAuthUser } from '@/lib/auth-store';
 import './team-lifecycle.css';
 
 export default function OffboardingPage() {
@@ -14,7 +14,7 @@ export default function OffboardingPage() {
   const user = useAuthUser();
   const { copiedKey, copy } = useCopy();
   useEffect(() => {
-    if (!useAuthStore.getState().user) useAuthStore.getState().login();
+    if (!getAuthUser()) authActions.login();
   }, [user]);
 
   const tasks = [

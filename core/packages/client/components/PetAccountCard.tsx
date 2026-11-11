@@ -7,11 +7,11 @@ import { getDeskPetCatalog } from '@/lib/deskpet-api';
 import { THEMES, THEME_IDS, type ThemeId } from '@/lib/deskpet-themes';
 import { resolveDeskPets, type DeskPetEntry } from '@cuberoot/shared/deskpet';
 import { getDeskPetSelection, getServerDeskPetSelection, subscribeDeskPetSelection } from '@/lib/deskpet-selection';
-import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthUser } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
 import './DeskPetHome.css';
 export default function PetAccountCard() {
-  const user=useAuthStore(s=>s.user);
+  const user=useAuthUser();
   const isAdmin=hasAdminAccess(user);
   const owner=user?String(user.uid??user.wcaId):'';
   const selectedCharacter=useSyncExternalStore(subscribeDeskPetSelection,getDeskPetSelection,getServerDeskPetSelection);

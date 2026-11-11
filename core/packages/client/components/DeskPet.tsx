@@ -18,7 +18,7 @@ import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import i18n from '@/i18n/i18n-client';
-import { canTestRoles, getRolePreview, hasAdminAccess, useAuthStore } from '@/lib/auth-store';
+import { canTestRoles, getRolePreview, hasAdminAccess, useAuthUser } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
 import { useAlgSubmissionUnread, refreshAlgSubmissionUnread } from '@/lib/alg-submission-unread';
 import { useNotificationsUnread, refreshNotificationsUnread } from '@/lib/notifications-unread';
@@ -330,7 +330,7 @@ export default function DeskPet() {
   const [temporarilyHidden, setHidden] = useState(false);
   const hidden = !visible || temporarilyHidden;
   const [resting, setResting] = useState(false);
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthUser();
   const owner = assistantOwner(user);
   const workspace = useAssistantWorkspace(owner);
   const pathname = usePathname();

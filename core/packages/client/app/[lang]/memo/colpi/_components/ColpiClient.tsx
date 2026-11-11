@@ -26,7 +26,7 @@ import { SearchInput } from '@/components/SearchInput';
 import { Flag } from '@/components/Flag';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { persistItem } from '@/lib/safe-storage';
-import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthUser } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import {
   fetchWords, fetchRecent, submitWord, patchWord, deleteWord, setVote, clearVote,
@@ -108,7 +108,7 @@ function validateWordInput(word: string): string | null {
 export default function ColpiClient() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  const user = useAuthStore(s => s.user);
+  const user = useAuthUser();
   const isAdmin = hasAdminAccess(user);
   // 所有权键(与服务端一致):非 WCA 账号也能认出自己提交的词。admin 判定仍用真实 wcaId。
   const myKey = user ? computeOwnerKey(user.uid, user.wcaId) : '';

@@ -11,7 +11,7 @@ vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh', tr: ({ zh }: { zh: string }) 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock('nuqs', () => ({ useQueryState: () => [null, vi.fn()] }));
 vi.mock('@/lib/auth-store', () => ({
-  useAuthStore: (select: (state: unknown) => unknown) => select({ user: null, login: mocks.login }),
+  useAuthUser: () => null, hasAdminAccess: () => false, authActions: { login: mocks.login }, useAuthStore: (select: (state: unknown) => unknown) => select({ user: null, login: mocks.login }),
   isAdmin: () => false, getSessionToken: () => null, getWcaToken: () => null,
 }));
 vi.mock('@/lib/apple-membership-bridge', () => ({ isIosMembershipSurface: () => false, useAppleMembershipAvailable: () => false }));

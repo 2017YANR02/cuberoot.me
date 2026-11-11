@@ -62,7 +62,7 @@ import { countryName } from '@/lib/country-name';
 import { localizeCity } from '@/lib/city-localize';
 import { prepareImageUpload, uploadImageBlob } from '@/lib/image-upload';
 import { toLocalIsoDate } from '@/lib/iso-date';
-import { applySession, hasAdminAccess, useAuthStore, safeNext, takeWcaLinkPrompt } from '@/lib/auth-store';
+import { applySession, hasAdminAccess, safeNext, takeWcaLinkPrompt, useAuthUser, authActions, getAuthUser } from '@/lib/auth-store';
 import { isMiniProgramCommerceRestricted, notifyMiniProgramLogout } from '@/lib/miniprogram-bridge';
 import { tr, useLang } from '@/i18n/tr';
 import PetAccountCard from '@/components/PetAccountCard';
@@ -100,7 +100,7 @@ function AccountName({ name, wcaId }: { name: string; wcaId?: string | null }) {
 
 function AvatarEditor() {
   const t = useT();
-  const user = useAuthStore(s => s.user);
+  const user = useAuthUser();
   const [open, setOpen] = useState(false);
   if (!user) return null;
   const preset = getAccountAvatarPreset(user.avatarPreset ?? DEFAULT_CLAWD_AVATAR_PRESET);
@@ -120,7 +120,7 @@ function AvatarEditor() {
 
 function AvatarChooser({ onClose }: { onClose: () => void }) {
   const t = useT();
-  const user = useAuthStore(s => s.user);
+  const user = useAuthUser();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const fileRequest = useRef(0);
@@ -377,7 +377,7 @@ function DisplayNameField({
 
 function DisplayNameEditor() {
   const t = useT();
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthUser();
   if (!user) return null;
   const save = async (name: string) => {
     const session = await updateDisplayName(name);
@@ -401,7 +401,7 @@ type AccountRegion = { code: string; name: string; nameZh?: string; cities: stri
 
 function BasicProfileEditor() {
   const t = useT();
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthUser();
   const isZh = useLang() !== 'en';
   const [profile, setProfile] = useState<AccountBasicProfile | null>(null);
   const [draft, setDraft] = useState<EditableBasicProfile | null>(null);
@@ -736,8 +736,8 @@ export default function AccountSettings({ embedded = false }: { embedded?: boole
   const router = useRouter();
   const uiLang: 'zh' | 'en' = useLang() === 'en' ? 'en' : 'zh';
 
-  const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
+  const user = useAuthUser();
+  const logout = authActions.logout;
 
   // 齿轮切「登录方式」视图,再往里一层是「注销账号」。切换全靠真 <a>(中键可新开),页面只
   // 跟着 URL 走;push 进历史,浏览器后退能层层退回。setter 只用来在登出时清掉参数。
@@ -819,7 +819,7 @@ export default function AccountSettings({ embedded = false }: { embedded?: boole
     setMobileAuthProvider(isMobileAuth && isMobileAuthProvider(provider) ? provider : null);
     const fragmentNext = new URLSearchParams(window.location.hash.slice(1)).get('next');
     next.current = safeNext(fragmentNext) ?? safeNext(search.get('next'));
-    const u = useAuthStore.getState().user;
+    const u = getAuthUser();
     if (!u) { setMode('login'); return; }
     // The system Browser can already hold a canonical website session (for example after
     // returning from WCA/social OAuth). Continue to /auth/mobile immediately so that page
@@ -946,7 +946,7 @@ export default function AccountSettings({ embedded = false }: { embedded?: boole
 
       </header>}
 
-      {pendingIdentity ? <IdentityChoicePanel pending={pendingIdentity} firstPartyOnly={mobileAuth && !mobileAuthProvider} onCancel={() => setMode(useAuthStore.getState().user ? 'me' : 'login')} onDone={(info, returnPath) => {
+      {pendingIdentity ? <IdentityChoicePanel pending={pendingIdentity} firstPartyOnly={mobileAuth && !mobileAuthProvider} onCancel={() => setMode(getAuthUser() ? 'me' : 'login')} onDone={(info, returnPath) => {
         const original = new URL(returnPath, window.location.href);
         if (/^\/(zh\/)?account$/.test(original.pathname) || (/^\/(zh\/)?chat$/.test(original.pathname) && original.searchParams.get('settings') === 'account')) {
           next.current = safeNext(new URLSearchParams(original.hash.slice(1)).get('next')) ?? safeNext(original.searchParams.get('next'));

@@ -8,7 +8,8 @@ import PetsPage from '@/app/[lang]/pets/PetsPage';
 
 const { getCatalog } = vi.hoisted(() => ({ getCatalog: vi.fn() }));
 vi.mock('@/lib/deskpet-api', () => ({ getDeskPetCatalog: getCatalog }));
-vi.mock('@/lib/auth-store', () => ({ useAuthStore: () => null, hasAdminAccess: () => false }));
+vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => null,
+  useAuthStore: () => null, hasAdminAccess: () => false }));
 vi.mock('@/i18n/tr', () => ({ tr: (text: { en: string }) => text.en, useLang: () => 'en' }));
 vi.mock('@/components/AppLink', () => ({ default: () => null }));
 vi.mock('@/components/HomeLink', () => ({ default: () => null }));

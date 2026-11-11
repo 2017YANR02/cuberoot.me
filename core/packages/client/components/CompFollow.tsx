@@ -7,7 +7,7 @@
 import { useCallback, useEffect } from 'react';
 import { useRetainedState } from '@/hooks/useRetainedState';
 import { Star } from '@app-foundation/icons/lucide';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser } from '@/lib/auth-store';
 import { fetchFollows, addFollow, removeFollow } from '@/lib/comp-follows';
 import { tr } from '@/i18n/tr';
 import './comp_follow.css';
@@ -22,7 +22,7 @@ export interface CompFollowState {
 
 /** 登录用户的关注集合(乐观更新 + server 同步)。未登录返回空集,toggle 无副作用调用方应先门控。 */
 export function useCompFollows(): CompFollowState {
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthUser();
   const [follows, setFollows] = useRetainedState<Set<string>>('comp-follows:ids', new Set());
   const [loaded, setLoaded] = useRetainedState('comp-follows:loaded', false);
 

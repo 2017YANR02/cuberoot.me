@@ -13,7 +13,7 @@ import { useQueryState } from 'nuqs';
 import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { clearMembershipReturn, membershipReturnRequiresActive, membershipReturnPath, readMembershipReturn, rememberMembershipReturn } from '@/lib/membership-return';
 import { tr, useLang } from '@/i18n/tr';
-import { useAuthStore, isAdmin, getSessionToken, getWcaToken } from '@/lib/auth-store';
+import { hasAdminAccess, getSessionToken, getWcaToken, useAuthUser, authActions, getAuthUser } from '@/lib/auth-store';
 import { isMiniProgramCommerceRestricted } from '@/lib/miniprogram-bridge';
 import { fmtPrice, fmtDate, fmtVipId } from '@/lib/membership-format';
 import { benefitCopy } from '@cuberoot/shared/membership-benefits';
@@ -66,8 +66,8 @@ export default function MembershipPage() {
   const lang = useLang();
   const isZh = lang !== 'en';
 
-  const user = useAuthStore((s) => s.user);
-  const login = useAuthStore((s) => s.login);
+  const user = useAuthUser();
+  const login = authActions.login;
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const appleAvailable = useAppleMembershipAvailable();
@@ -75,7 +75,7 @@ export default function MembershipPage() {
   const googleAvailable = useStoreMembershipAvailable('google');
   const directApp = useWebMembershipAvailable();
   const googleSurface = mounted && (googleAvailable || installedMembershipStore() === 'google');
-  const admin = mounted && isAdmin();
+  const admin = mounted && hasAdminAccess(user);
   const loggedIn = mounted && !!user;
   const [commerceRestricted, setCommerceRestricted] = useState<boolean | null>(null);
   useEffect(() => {
@@ -113,7 +113,7 @@ export default function MembershipPage() {
       : !!(uid && membershipReturnRequiresActive(uid));
     if (uid && queryNext) rememberMembershipReturn(queryNext, uid, requireActive);
     getMyMembership().then((r) => {
-      if (useAuthStore.getState().user?.uid !== uid) return;
+      if (getAuthUser()?.uid !== uid) return;
       const destination = queryNext ?? (uid ? readMembershipReturn(uid) : null);
       if ((requireActive ? r.membership?.active : (r.isMember ?? r.membership?.active)) && destination) {
         clearMembershipReturn();

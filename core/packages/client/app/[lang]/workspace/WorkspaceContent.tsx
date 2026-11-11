@@ -7,7 +7,7 @@ import { WorkspaceProvider, WorkspaceLoginFrame, ReportEditor, Reports, ReportDe
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
-import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders } from '@/lib/admin-api';
 import { sessionFetch } from '@/lib/session-fetch';
@@ -46,7 +46,7 @@ function Workspace() {
 }
 function WorkspaceContent() {
   const t=useT();const user=useAuthUser();
-  return user ? <SignedInWorkspace key={user.uid} /> : <WorkspaceLoginFrame brand="CubeRoot"><h1>{t('Workspace','Workspace')}</h1><Button onClick={()=>useAuthStore.getState().login()}>{t('登录 CubeRoot','Sign in to CubeRoot')}</Button></WorkspaceLoginFrame>;
+  return user ? <SignedInWorkspace key={user.uid} /> : <WorkspaceLoginFrame brand="CubeRoot"><h1>{t('Workspace','Workspace')}</h1><Button onClick={()=>authActions.login()}>{t('登录 CubeRoot','Sign in to CubeRoot')}</Button></WorkspaceLoginFrame>;
 }
 function SignedInWorkspace() {
   const t=useT();const [section]=useQueryState('section',parseAsStringEnum([...sections]).withDefault('mine'));
@@ -58,7 +58,7 @@ function SignedInWorkspace() {
   return <main className={handbook ? 'staff-handbook-main' : undefined}>
     <div className="staff-page-heading page-back-heading"><PageBackLink contextOnly /><h1>{[...items,...handbookItems].find(i=>i.key===section)?.label??t('工作记录','Work report')}</h1></div>
     {!handbook&&<ErrorNotice error={session.error} retry={session.reload} />}
-    {session.error?.status===401&&<Button onClick={()=>useAuthStore.getState().login()}>{t('重新登录','Sign in again')}</Button>}
+    {session.error?.status===401&&<Button onClick={()=>authActions.login()}>{t('重新登录','Sign in again')}</Button>}
     {!handbook&&session.loading&&<p role="status"><LoadingIndicator>{t('正在加载…','Loading…')}</LoadingIndicator></p>}
     {handbook&&<div className="staff-start staff-workspace-handbook">{section==='offboarding'?<Offboarding />:section==='sop'?<Sop />:section==='quality'?<QualityStandards />:<Onboarding />}</div>}
     {actor&&<>

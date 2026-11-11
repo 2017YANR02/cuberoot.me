@@ -17,7 +17,7 @@ import {
   mobileEmbedWebSessionResultMessage,
   type MobileEmbedInitMessage,
 } from '@cuberoot/shared/mobile-embed';
-import { applySession, getSessionToken, useAuthStore } from '@/lib/auth-store';
+import { applySession, getSessionToken, authActions, getAuthUser, subscribeAuthUser } from '@/lib/auth-store';
 import { isMobileEmbedAppleLink, mobileEmbedAccountAuthRequest, mobileEmbedSupportsApple } from '@/lib/mobile-embed-auth';
 import { exchangeWebSessionTicket } from '@/lib/web-session-handoff';
 import { tr } from '@/i18n/tr';
@@ -116,7 +116,7 @@ export default function MobileEmbedBridge() {
       }
       if (linking) {
         if (pendingManagement) return true;
-        const uid = useAuthStore.getState().user?.uid;
+        const uid = getAuthUser()?.uid;
         if (!uid || !getSessionToken()) { managementFailed(); return true; }
         const requestId = crypto.randomUUID();
         const timeout = window.setTimeout(() => {
@@ -190,7 +190,7 @@ export default function MobileEmbedBridge() {
       const clear = decodeMobileEmbedAuthClear(event.data);
       if (surface === 'account' && clear) {
         invalidateWebSession();
-        useAuthStore.getState().logout();
+        authActions.logout();
         return;
       }
 
@@ -216,8 +216,8 @@ export default function MobileEmbedBridge() {
       });
     };
     const unsubscribeAuth = surface === 'account'
-      ? useAuthStore.subscribe((state) => {
-        const hasWebsiteSession = Boolean(state.user && getSessionToken());
+      ? subscribeAuthUser((user) => {
+        const hasWebsiteSession = Boolean(user && getSessionToken());
         if (hadWebsiteSession && !hasWebsiteSession) {
           invalidateWebSession();
           postToParent(mobileEmbedAuthClearMessage());

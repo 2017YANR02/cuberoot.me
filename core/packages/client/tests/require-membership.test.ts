@@ -4,7 +4,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const state = vi.hoisted(() => ({ user: null as null | { uid: number }, push: vi.fn() }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: state.push }) }));
-vi.mock('@/lib/auth-store', () => ({ useAuthStore: { getState: () => ({ user: state.user }) } }));
+vi.mock('@/lib/auth-store', () => ({ getAuthUser: () => state.user,
+  useAuthStore: { getState: () => ({ user: state.user }) } }));
 import { useRequireMembership } from '@/hooks/useRequireMembership';
 import { entryNavigationBack, installEntryNavigation } from '@/lib/entry-navigation';
 let root: Root;

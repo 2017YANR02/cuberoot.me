@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser } from '@/lib/auth-store';
 import { usePaint } from '../_lib/store';
 import { paperInk } from '../_lib/paper';
 import { loadLibrary, scheduleAutosave, flushSave } from '../_lib/cloud-store';
@@ -34,7 +34,7 @@ function isTypingTarget(el: EventTarget | null): boolean {
 // Login gate: only signed-in users can use /paint (their drawings live in the
 // cloud library). The page is dynamic(ssr:false), so reading auth here is safe.
 export default function PaintEditor() {
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthUser();
   if (!user) return <PaintGate />;
   return <PaintEditorInner key={user.uid ?? user.wcaId} />;
 }

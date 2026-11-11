@@ -4,7 +4,7 @@ import { parseAsString, useQueryState } from 'nuqs';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { apiUrl } from '@/lib/api-base';
 import { listCompetitionRegistrations, type CompetitionAttempt } from '@/lib/online-competition-api';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser } from '@/lib/auth-store';
 
 type Attempt = CompetitionAttempt & { telemetry?: { runId: string; status: 'started' | 'device_reported' } | null };
 type Device = { brand: string; deviceName: string };
@@ -29,7 +29,7 @@ export function useCompetitionAttempt() {
   const [competitionId] = useQueryState('competition', parseAsString.withDefault(''));
   const [registrationId] = useQueryState('entry', parseAsString.withDefault(''));
   const enabled = Boolean(competitionId || registrationId);
-  const userId = useAuthStore(state => state.user?.uid);
+  const userId = useAuthUser()?.uid;
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const [authorized, setAuthorized] = useState(false);
   const [error, setError] = useState('');

@@ -9,7 +9,14 @@ import { useAuthStore } from '@/lib/auth-store';
 const api = vi.hoisted(() => ({ follows: vi.fn(), catalog: vi.fn(), registrations: vi.fn() }));
 vi.mock('@/lib/auth-store', async () => {
   const { create } = await import('zustand');
-  return { useAuthStore: create(() => ({ user: { uid: 1, wcaId: '2023TEST01', isAdmin: false } })) };
+  const useAuthStore = create(() => ({ user: { uid: 1, wcaId: '2023TEST01', isAdmin: false } }));
+  return {
+    useAuthStore,
+    useAuthUser: () => useAuthStore(state => state.user),
+    getAuthUser: () => useAuthStore.getState().user,
+    subscribeAuthUser: (listener: (user: unknown, previous: unknown) => void) =>
+      useAuthStore.subscribe((next, previous) => listener(next.user, previous.user)),
+  };
 });
 vi.mock('@/lib/comp-follows', () => ({ fetchFollows: api.follows, addFollow: vi.fn(), removeFollow: vi.fn() }));
 vi.mock('@/lib/comp-search', () => ({ loadLandingComps: api.catalog }));
@@ -26,6 +33,7 @@ vi.mock('@/hooks/useT', () => ({ useT: () => (_zh: string, en: string) => en }))
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root | undefined;
 const host = document.createElement('div');
+const initialUser = useAuthStore.getState().user;
 function PersonalArea() {
   const { follows, loaded } = useCompFollows();
   return loaded ? createElement(PersonUpcomingComps, {

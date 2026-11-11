@@ -6,7 +6,7 @@ import { expect, it, vi } from 'vitest';
 const state = vi.hoisted(() => ({ section: 'system', view: 'tools' }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: vi.fn() }) }));
 vi.mock('nuqs', () => ({ parseAsString: { withDefault: () => ({}) }, parseAsStringEnum: () => ({ withDefault: () => ({}) }), useQueryState: (key: string) => [key === 'section' ? state.section : state.view] }));
-vi.mock('@/lib/auth-store', () => ({ useIsAdmin: () => true, useAuthStore: (select: (state: unknown) => unknown) => select({ user: { uid: 1 } }), loginHref: () => '/account' }));
+vi.mock('@/lib/auth-store', () => ({ useIsAdmin: () => true, useAuthUser: () => ({ uid: 1 }), useAuthStore: (select: (state: unknown) => unknown) => select({ user: { uid: 1 } }), loginHref: () => '/account' }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (_zh: string, en: string) => en }));
 vi.mock('@/components/AppLink', () => ({ default: ({ children, href }: { children: React.ReactNode; href: string }) => createElement('a', { href }, children) }));
 vi.mock('../app/[lang]/admin/Dashboard', () => ({ default: () => createElement('div', null, 'Dashboard content') }));

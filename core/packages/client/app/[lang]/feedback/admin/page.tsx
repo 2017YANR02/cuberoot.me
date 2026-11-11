@@ -13,7 +13,7 @@ import { Trash2, Lightbulb, Bug, MessageSquare, ExternalLink } from '@app-founda
 import PageBackLink from '@/components/PageBackLink';
 import FeedbackConversation from '@/components/FeedbackConversation';
 import { UserIdLabel } from '@/components/UserIdLabel';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser } from '@/lib/auth-store';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import {
@@ -48,7 +48,7 @@ export default function FeedbackAdminPage() {
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthUser();
   const [mounted, setMounted] = useState(false);
   const admin = isAdminWcaId(user?.wcaId);
 

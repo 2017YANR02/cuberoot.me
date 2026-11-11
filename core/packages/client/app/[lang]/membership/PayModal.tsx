@@ -25,7 +25,7 @@ import {
 import { fmtPrice } from '@/lib/membership-format';
 import { installedMembershipStore } from '@/lib/store-membership-bridge';
 import { requestWebMembership, useWebMembershipAvailable } from '@/lib/web-membership-bridge';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser, getAuthUser } from '@/lib/auth-store';
 import { isInWeChat } from '@/lib/wechat-share';
 import { copyPageLink } from '@/lib/page-share';
 import AppLink from '@/components/AppLink';
@@ -42,7 +42,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
   const directApp = useWebMembershipAvailable();
   const smallScreen = useIsMobile();
   const isMobile = directApp || smallScreen;
-  const uid = useAuthStore(s => s.user?.uid);
+  const uid = useAuthUser()?.uid;
   const showAlipay = channels?.alipay !== false;
   const showWechat = isMobile
     ? (channels?.wechatH5 ?? channels?.wechat) !== false
@@ -76,12 +76,12 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
   }, [uid]);
 
   async function openAppCheckout(info: OrderInfo) {
-    if (!info.url || !orderUid.current || useAuthStore.getState().user?.uid !== orderUid.current) return;
+    if (!info.url || !orderUid.current || getAuthUser()?.uid !== orderUid.current) return;
     setCreating(true);
     setErr(null);
     try {
       await requestWebMembership(info.url, orderUid.current, isZh ? 'zh' : 'en');
-      if (active.current && !completed.current && useAuthStore.getState().user?.uid === orderUid.current) pollStatus(info.outTradeNo);
+      if (active.current && !completed.current && getAuthUser()?.uid === orderUid.current) pollStatus(info.outTradeNo);
     } catch {
       if (active.current) setErr(tr({ zh: '未能打开收银台，请重试或检查支付结果。', en: 'Could not open checkout. Retry or check the payment status.' }));
     } finally { if (active.current) setCreating(false); }
@@ -109,7 +109,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
       const info = directApp
         ? await createOrder(plan.slug, ch, 'wap', isZh ? 'zh' : 'en', 'android-direct')
         : await createOrder(plan.slug, ch, isMobile ? 'wap' : 'pc', isZh ? 'zh' : 'en');
-      if (!active.current || useAuthStore.getState().user?.uid !== startingUid) return;
+      if (!active.current || getAuthUser()?.uid !== startingUid) return;
       if (directApp) {
         setOrder(info);
         pollStatus(info.outTradeNo);
@@ -169,7 +169,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
   function pollStatus(no: string, tries = 0, generation = ++pollGeneration.current) {
     if (pollRef.current !== null) window.clearTimeout(pollRef.current);
     const current = () => active.current && !completed.current && generation === pollGeneration.current
-      && (!directApp || useAuthStore.getState().user?.uid === orderUid.current);
+      && (!directApp || getAuthUser()?.uid === orderUid.current);
     if (!current()) return;
     getOrderStatus(no)
       .then((r) => {

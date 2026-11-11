@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ThumbsDown, ThumbsUp } from '@app-foundation/icons/lucide';
-import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import { setCommentVote, type listComments } from '@/lib/recon-api';
 import { useT } from '@/hooks/useT';
 
@@ -19,7 +19,7 @@ export function ReconCommentVotes({ comment }: { comment: Awaited<ReturnType<typ
   }, [comment.likeCount, comment.myVote]);
 
   async function vote(kind: 'like' | 'dislike') {
-    if (!user) { useAuthStore.getState().login(); return; }
+    if (!user) { authActions.login(); return; }
     if (pending.current) return;
     pending.current = true;
     setBusy(true);

@@ -19,7 +19,7 @@ import { Flag } from '@/components/Flag';
 import PersonLink from '@/components/PersonLink';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import Paginator from '@/components/wca-stats/Paginator';
-import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import { loadFlagData } from '@/lib/country-flags';
 import type { Comp } from '@/lib/comp-search';
 import { roundTypeName } from '@/lib/comp-schedule';
@@ -203,7 +203,7 @@ function RoundReview({ record }: { record: PracticeRecord }) {
 export default function CompSimPage() {
   const isZh = useLang() === 'zh';
   const user = useAuthUser();
-  const loginWithWca = useAuthStore((state) => state.loginWithWca);
+  const loginWithWca = authActions.loginWithWca;
   const owner = user?.wcaId || 'guest';
   const [source, setSource] = useState<'generated' | 'historical'>('generated');
   const [competitionInput, setCompetitionInput] = useState('');

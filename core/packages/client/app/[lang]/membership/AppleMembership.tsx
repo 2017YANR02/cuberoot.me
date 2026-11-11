@@ -2,15 +2,15 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { AppleMembershipProduct, AppleMembershipProductId, AppleMembershipRequest } from '@cuberoot/shared/apple-membership';
 import { requestStoreMembership, useStoreMembershipAvailable, type MembershipStore } from '@/lib/store-membership-bridge';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser, authActions, getAuthUser } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
 import AppLink from '@/components/AppLink';
 
 export default function StoreMembership({ store = 'apple', refresh, benefits }: { store?: MembershipStore; refresh: () => void; benefits: ReactNode }) {
   const available = useStoreMembershipAvailable(store);
   const storeName = store === 'google' ? 'Google Play' : 'App Store';
-  const user = useAuthStore(s => s.user);
-  const login = useAuthStore(s => s.login);
+  const user = useAuthUser();
+  const login = authActions.login;
   const [products, setProducts] = useState<AppleMembershipProduct[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -32,11 +32,11 @@ export default function StoreMembership({ store = 'apple', refresh, benefits }: 
     const initiatingUid = user.uid;
     try {
       const result = await requestStoreMembership(store, action, user.uid, productId);
-      if (useAuthStore.getState().user?.uid !== initiatingUid) return;
+      if (getAuthUser()?.uid !== initiatingUid) return;
       if (result.status === 'success') { refresh(); setMessage(tr({ zh: '已更新购买状态。', en: 'Purchase status updated.' })); }
       if (result.status === 'pending') setMessage(tr({ zh: '购买等待批准，批准后会自动更新权益。', en: 'Purchase is awaiting approval. Membership will update after approval.' }));
       if (result.status === 'error') throw new Error('Purchase not verified');
-    } catch { if (useAuthStore.getState().user?.uid === initiatingUid) setMessage(tr({ zh: '购买状态暂未确认。请使用恢复购买或稍后重试，无需再次付款。请确认 App 与网页登录的是同一个账号。', en: 'Purchase status is not confirmed. Restore purchases or retry later; do not pay again. Check that the app and this page use the same account.' })); }
+    } catch { if (getAuthUser()?.uid === initiatingUid) setMessage(tr({ zh: '购买状态暂未确认。请使用恢复购买或稍后重试，无需再次付款。请确认 App 与网页登录的是同一个账号。', en: 'Purchase status is not confirmed. Restore purchases or retry later; do not pay again. Check that the app and this page use the same account.' })); }
     finally { setBusy(false); }
   }
   return <section className="mem-store">

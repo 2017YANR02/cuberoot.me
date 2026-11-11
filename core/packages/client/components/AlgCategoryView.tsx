@@ -68,7 +68,7 @@ import { algSheetFromCases, type FromCasesOptions } from '@/lib/alg_pdf/from_cas
 import { useCopy } from '@/hooks/useCopy';
 import { listSubmissions } from '@/lib/alg_api';
 import { reorderCases, reorderCaseAlgs, rotateCaseClockwise } from '@/lib/alg_sets_api';
-import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthUser } from '@/lib/auth-store';
 import { scanCases } from '@/lib/alg_validation_scan';
 import { caseAnchor, findCaseByHash, algCaseDetailHref, buildCaseSlugMap, caseSlugBase } from '@/lib/alg_case_link';
 import { replaceHash } from '@/lib/url_hash';
@@ -532,7 +532,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const [sq1EpHasParity, setSq1EpHasParity] = useState(false);
   const [caseOri, setCaseOri] = useState<Record<string, number>>({});
   const [submissions, setSubmissions] = useState<AlgSubmission[]>([]);
-  const user = useAuthStore(s => s.user);
+  const user = useAuthUser();
   const isAdmin = hasAdminAccess(user);
   const [editingOrder, setEditingOrder] = useState(false);
   const canReorder = isAdmin && editingOrder;

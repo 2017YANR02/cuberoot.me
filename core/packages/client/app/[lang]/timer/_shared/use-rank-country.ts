@@ -9,14 +9,14 @@
  * 只接受 2 字母 iso2,其它一律视为未设(返回 '').
  */
 import { useEffect, useState } from 'react';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser } from '@/lib/auth-store';
 import { loadFlagData, personFlagIso2 } from '@/lib/country-flags';
 import { WCA_ID_REGEX } from '@/lib/wca-api';
 import { useSettings } from '../_lib/settings';
 
 export function useRankCountry(): { country: string; accountCountry: string } {
   const settings = useSettings();
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthUser();
   const wcaId = user?.wcaId?.trim().toUpperCase() ?? '';
   const [, setFlagVersion] = useState(0);
   useEffect(() => {

@@ -46,7 +46,8 @@ const memberApi = vi.hoisted(() => ({ listPublicMembers: vi.fn(async (): Promise
 vi.mock('@/lib/membership-api', () => memberApi);
 vi.mock('@/lib/onboarding', () => ({ isOnboardingGuided: async () => true, markOnboardingGuided: vi.fn() }));
 vi.mock('@/components/LazyVisible', () => ({ default: () => null }));
-vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => auth.user, useAuthStore: (select: (state: typeof auth) => unknown) => select(auth), nextQuery: () => '' }));
+vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => auth.user, authActions: { login: vi.fn() },
+  useAuthStore: (select: (state: typeof auth) => unknown) => select(auth), nextQuery: () => '' }));
 vi.mock('next/dynamic', () => ({ default: () => () => null }));
 vi.mock('next/navigation', () => ({ usePathname: () => '/zh', useParams: () => ({ lang: 'zh' }) }));
 vi.mock('next/link', () => ({

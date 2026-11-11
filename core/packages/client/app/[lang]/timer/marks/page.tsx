@@ -15,7 +15,7 @@ import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
-import { useAuthStore, isAdmin } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthUser } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -36,13 +36,13 @@ function fmtDate(epochSec: number): string {
 function MarksFeed() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const user = useAuthStore((st) => st.user);
+  const user = useAuthUser();
   // 所有权键(与服务端一致):非 WCA 账号也能筛「只看我的」/ 删自己的标记。展示链接仍用真实 wcaId。
   const myKey = user ? computeOwnerKey(user.uid, user.wcaId) : '';
   // SSR/首帧统一为未登录,挂载后再放开,避免 hydration mismatch。
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  const admin = mounted && isAdmin();
+  const admin = mounted && hasAdminAccess(user);
 
   const [{ wcaId: wcaIdFilter, q }, setQuery] = useQueryStates(
     { wcaId: parseAsString.withDefault(''), q: parseAsString.withDefault('') },

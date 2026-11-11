@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('next/navigation', () => ({ usePathname: () => '/account' }));
 vi.mock('@/lib/auth-store', () => ({
   getSessionToken: mocks.token, applySession: mocks.applySession,
+  getAuthUser: () => ({ uid: 42 }), authActions: { logout: mocks.logout }, subscribeAuthUser: () => () => undefined,
   useAuthStore: { getState: () => ({ user: { uid: 42 }, logout: mocks.logout }), subscribe: () => () => undefined },
 }));
 vi.mock('@/lib/web-session-handoff', () => ({ exchangeWebSessionTicket: mocks.exchange }));

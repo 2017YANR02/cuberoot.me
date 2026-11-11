@@ -14,7 +14,7 @@ import { GHOST_DEFAULT_FACE_COLORS } from '@cuberoot/puzzle-render-core/engine/g
 import { Slider, ValueField, OrbitPad, Toggle, resetWorldView, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR, persistPictureFaces, saveSettings, cuberLightingActive, type SimSettings, type SimBoardBg, type SliderUnit } from './SettingDrawer';
 import { CUBER_APPEARANCE } from './engine/define';
 import { useRequireMembership } from '@/hooks/useRequireMembership';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser } from '@/lib/auth-store';
 import { defaultPlatonicColorSchemes } from '@/lib/puzzle-geometry/colors';
 import { fileToLogoDataUrl } from './engine/nxn/logo';
 import { countPictureFaces, fileToPictureFaceDataUrl, type PictureFaces } from './engine/nxn/pictureCube';
@@ -390,7 +390,7 @@ export default function SimAppearancePanel({
     }
   };
 
-  const authUser = useAuthStore(state => state.user);
+  const authUser = useAuthUser();
   const requireMembership = useRequireMembership(canUseCustomLogo);
   const logoFileRef = useRef<HTMLInputElement>(null);
   const [logoBusy, setLogoBusy] = useState(false);

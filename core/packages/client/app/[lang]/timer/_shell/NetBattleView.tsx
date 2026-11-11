@@ -53,7 +53,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { EventIcon } from '@/components/EventIcon';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser } from '@/lib/auth-store';
 import { persistItem } from '@/lib/safe-storage';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import { getPerson, type WcaPersonLite } from '@/lib/wca-api';
@@ -186,7 +186,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const settings = useSettings();
-  const authUser = useAuthStore((st) => st.user);
+  const authUser = useAuthUser();
 
   // ── 房间状态 ────────────────────────────────────────────────
   const [roomParam, setRoomParam] = useQueryState('room');

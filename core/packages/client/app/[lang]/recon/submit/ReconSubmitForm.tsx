@@ -45,7 +45,7 @@ import ReconSolutionField, { type ReconSolutionFieldHandle } from '@/components/
 import ReconReuseModal from './ReconReuseModal';
 import ScramblePicker from './ScramblePicker';
 import GroupScramblePicker from './GroupScramblePicker';
-import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthUser, authActions } from '@/lib/auth-store';
 import { ownerKey } from '@cuberoot/shared/account';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useMembership } from '@/hooks/useMembership';
@@ -179,8 +179,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const suggestTime = !isEditing ? searchParams?.get('suggestTime') : null;
   const suggestScramble = !isEditing ? searchParams?.get('suggestScramble') : null;
 
-  const authUser = useAuthStore(s => s.user);
-  const login = useAuthStore(s => s.login);
+  const authUser = useAuthUser();
+  const login = authActions.login;
   const { isMember } = useMembership();
   const requireMembership = useRequireMembership(isMember);
 

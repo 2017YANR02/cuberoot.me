@@ -25,7 +25,7 @@ import DonateModal from '@/components/DonateModal';
 import FeedbackModal from '@/components/FeedbackModal';
 import FloatingMetronome from '@/components/FloatingMetronome';
 import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
-import { isAdmin, useAuthUser } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthUser } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
 import { tr } from '@/i18n/tr';
 import type { DeskPetExitStyle } from '@/lib/deskpet-motion';
@@ -300,7 +300,7 @@ export default function DeskPetSearch({
     assistantConversations.select(owner, id);
     if (window.matchMedia('(max-width:767px)').matches) setActivePanel(null);
   };
-  const searchCards = SEARCH_CARDS.filter((card) => isLandingSearchCardVisible(card, isAdmin()));
+  const searchCards = SEARCH_CARDS.filter((card) => isLandingSearchCardVisible(card, hasAdminAccess(user)));
   const workspaceRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const [activePanel, setActivePanel] = useState<'chats' | 'pet' | 'music' | 'feedback' | 'donate' | null>(null);

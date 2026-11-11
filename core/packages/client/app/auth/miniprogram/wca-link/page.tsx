@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuthStore } from '@/lib/auth-store';
+import { authActions } from '@/lib/auth-store';
 import { AuthCallbackStatus } from '../../_components/AuthCallbackStatus';
 import { tr } from '@/i18n/tr';
 
@@ -12,7 +12,7 @@ export default function MiniProgramWcaLinkPage() {
     if (!/^[A-Za-z0-9_-]{43}$/.test(ticket)) { setInvalid(true); return; }
     sessionStorage.setItem('wca_mini_link_ticket', ticket);
     sessionStorage.setItem('wca_oauth_intent', 'mini_wca_link');
-    useAuthStore.getState().loginWithWca('/auth/miniprogram/wca-link');
+    authActions.loginWithWca('/auth/miniprogram/wca-link');
   }, []);
 
   return (

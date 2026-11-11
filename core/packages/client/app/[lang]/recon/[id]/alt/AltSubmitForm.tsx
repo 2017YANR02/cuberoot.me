@@ -15,7 +15,7 @@ import { getRecon, addAlternative, updateAlternative } from '@/lib/recon-api';
 import { revalidateRecon } from '../../revalidate-action';
 import { computeAllStats } from '@/lib/recon-stats';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import ReconPlayerPane from '@/components/ReconPlayerPane';
 import ReconSolutionField from '@/components/ReconSolutionField';
@@ -38,8 +38,8 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
   const router = useRouter();
   const { t } = useTranslation();
   useDocumentTitle('提交替代解', 'Submit Alternative');
-  const user = useAuthStore(s => s.user);
-  const login = useAuthStore(s => s.login);
+  const user = useAuthUser();
+  const login = authActions.login;
 
   const [parent, setParent] = useState<ReconSolve | null>(null);
   const [loading, setLoading] = useState(true);

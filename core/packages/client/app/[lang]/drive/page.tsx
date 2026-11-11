@@ -57,7 +57,7 @@ import { useCopy } from '@/hooks/useCopy';
 import { useModalBackdrop, useModalDismiss } from '@/hooks/useModalDismiss';
 import { useLang } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import { searchFriendUsers, type FriendSearchUser } from '@/lib/friends-api';
 import {
   addDriveMember,
@@ -301,8 +301,8 @@ function FileKindIcon({ node }: { node: DriveNode }) {
 function DrivePageContent() {
   const t = useT();
   const lang = useLang();
-  const user = useAuthStore((state) => state.user);
-  const login = useAuthStore((state) => state.login);
+  const user = useAuthUser();
+  const login = authActions.login;
   const [mounted, setMounted] = useState(false);
   const [folderId] = useQueryState('folder', parseAsString);
   const [view] = useQueryState(

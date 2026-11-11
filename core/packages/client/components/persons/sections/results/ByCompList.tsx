@@ -38,7 +38,7 @@ import { ResultChangeChain } from './ChangedResultValue';
 import { PendingProposals } from './PendingProposals';
 import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser } from '@/lib/auth-store';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
 
 interface Props {
@@ -65,7 +65,7 @@ interface CompetitionGroup {
 export default function ByCompList({ wcaId, personName, personCountry, results, comps, reconLookup, isZh, showAttemptRanks = true, onToggleAttemptRanks, femaleRecordLookup }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   const { map: changeMap, refresh: refreshChanges } = useRowChangeMap(wcaId);
-  const myWcaId = useAuthStore((s) => s.user?.wcaId);
+  const myWcaId = useAuthUser()?.wcaId;
   const admin = isAdminWcaId(myWcaId);
   const isOwner = !!myWcaId && myWcaId === wcaId;
   const loggedIn = !!myWcaId;

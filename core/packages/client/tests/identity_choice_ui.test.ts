@@ -18,6 +18,7 @@ vi.mock('@/lib/account-api', async (original) => ({ ...await original(),
 }));
 vi.mock('@/lib/google-auth', () => ({ requestGoogleAssertion: mocks.requestGoogleAssertion }));
 vi.mock('@/lib/auth-store', () => ({
+  useAuthUser: () => mocks.user, getAuthUser: () => mocks.user, authActions: { loginWithWca: vi.fn(), refresh: vi.fn(), logout: vi.fn() },
   useAuthStore: Object.assign((selector: (value: unknown) => unknown) => selector({ user: mocks.user, loginWithWca: vi.fn(), refresh: vi.fn() }), { getState: () => ({ user: mocks.user }) }),
   applySession: mocks.applySession, getSessionToken: () => 'existing-session',
 }));

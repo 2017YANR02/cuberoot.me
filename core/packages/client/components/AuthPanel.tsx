@@ -16,7 +16,7 @@ import type { MobileAuthProvider } from '@cuberoot/shared/auth/web-session';
 import AppLink from '@/components/AppLink';
 import { PasswordInput } from '@/components/PasswordInput';
 import { ClearButton } from '@/components/ClearButton';
-import { useAuthStore, applySession } from '@/lib/auth-store';
+import { applySession, useAuthUser, authActions, getAuthUser } from '@/lib/auth-store';
 import { persistItem } from '@/lib/safe-storage';
 import { useLang } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
@@ -784,7 +784,7 @@ export function IdentityChoicePanel({ pending, firstPartyOnly = false, onDone, o
   onCancel?: () => void;
 }) {
   const t = useT();
-  const user = useAuthStore((state) => state.user);
+  const user = useAuthUser();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const request = useRef<AbortController | null>(null);
@@ -800,19 +800,19 @@ export function IdentityChoicePanel({ pending, firstPartyOnly = false, onDone, o
   useEffect(() => () => { request.current?.abort(); }, []);
 
   const authenticated = () => {
-    const uid = useAuthStore.getState().user?.uid;
+    const uid = getAuthUser()?.uid;
     if (uid) updateIdentityChoice(pending.ticket, { stage: 'confirm', expectedUid: uid, otherIdentityRejected: false });
   };
   const complete = async (action: 'create' | 'link') => {
     if (request.current || getIdentityChoice()?.ticket !== pending.ticket) return;
     const expectedUid = action === 'link' ? pending.expectedUid : undefined;
-    if (action === 'link' && (!expectedUid || useAuthStore.getState().user?.uid !== expectedUid)) return;
+    if (action === 'link' && (!expectedUid || getAuthUser()?.uid !== expectedUid)) return;
     const controller = new AbortController();
     request.current = controller; setBusy(true); setError('');
     try {
       const result = await completeIdentityChoice(pending.ticket, action, expectedUid, controller.signal);
       if (controller.signal.aborted || getIdentityChoice()?.ticket !== pending.ticket) return;
-      if (action === 'link' && (useAuthStore.getState().user?.uid !== expectedUid || result.user.uid !== expectedUid)) {
+      if (action === 'link' && (getAuthUser()?.uid !== expectedUid || result.user.uid !== expectedUid)) {
         throw new Error(t('当前账号已更改，请重新确认。', 'Your account changed. Confirm the account again.'));
       }
       if (!(await applySession(result.token, result.user))) throw new Error(t('无法保存登录状态，请检查浏览器存储后重试。', 'Could not save your session. Check browser storage and retry.'));
@@ -861,8 +861,8 @@ function LoginFormFields({
 }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
-  const loginWithWca = useAuthStore((s) => s.loginWithWca);
-  const refresh = useAuthStore((s) => s.refresh);
+  const loginWithWca = authActions.loginWithWca;
+  const refresh = authActions.refresh;
   // 服务端已配置的登录方式:未配的(email/sms env 缺、google/三方没配)对应入口隐藏,配好 env 一
   // reload 即自动亮。拿不到默认全开 email/phone/wca(退化成旧行为),google/三方拿不到凭据不乐观开。
   const [providers, setProviders] = useState<AuthProviders | null>(null);
@@ -1007,7 +1007,7 @@ function startWcaLink(loginWithWca: (returnTo?: string) => void, returnTo?: stri
 export function WcaLinkPrompt({ returnTo, onSkip }: { returnTo?: string | null; onSkip: () => void }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
-  const loginWithWca = useAuthStore((s) => s.loginWithWca);
+  const loginWithWca = authActions.loginWithWca;
   return (
     <>
       <h2 className="auth-title">{t('您是否参加过 WCA 比赛？', 'Have you competed in a WCA competition?')}</h2>
@@ -1035,7 +1035,7 @@ export function WcaLinkPrompt({ returnTo, onSkip }: { returnTo?: string | null; 
 /** Only an authenticated account may issue this short-lived proof; it is never an account lookup. */
 function MiniProgramLinkCodePanel({ emphasized = false }: { emphasized?: boolean }) {
   const t = useT();
-  const uid = useAuthStore((state) => state.user?.uid);
+  const uid = useAuthUser()?.uid;
   const [result, setResult] = useState<{ linkCode: string; expiresAt: number; uid: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -1056,7 +1056,7 @@ function MiniProgramLinkCodePanel({ emphasized = false }: { emphasized?: boolean
     setBusy(true); setError(''); setResult(null); setCopied(false);
     try {
       const issued = await issueIdentityLinkCode(uid, controller.signal);
-      if (controller.signal.aborted || useAuthStore.getState().user?.uid !== uid) return;
+      if (controller.signal.aborted || getAuthUser()?.uid !== uid) return;
       setResult({ linkCode: issued.linkCode, expiresAt: Date.now() + issued.expiresInSeconds * 1000, uid });
     } catch (cause) {
       if (!controller.signal.aborted) setError(authErrorText(cause instanceof Error ? cause.message : String(cause), t));
@@ -1087,10 +1087,10 @@ function MiniProgramLinkCodePanel({ emphasized = false }: { emphasized?: boolean
  */
 export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { expectedAppleUid?: number | null; miniProgramLogin?: boolean }) {
   const lang = useLang();
-  const currentUid = useAuthStore((s) => s.user?.uid);
+  const currentUid = useAuthUser()?.uid;
   const appleAccountMismatch = expectedAppleUid !== undefined && (!expectedAppleUid || currentUid !== expectedAppleUid);
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
-  const loginWithWca = useAuthStore((s) => s.loginWithWca);
+  const loginWithWca = authActions.loginWithWca;
   const [identities, setIdentities] = useState<Identity[] | null>(null);
   const [identityLoadFailed, setIdentityLoadFailed] = useState(false);
   const identityRequest = useRef(0);
@@ -1135,12 +1135,12 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
     setIdentityLoadFailed(false);
     try {
       const acct = await fetchIdentities();
-      if (requestId !== identityRequest.current || useAuthStore.getState().user?.uid !== currentUid) return;
+      if (requestId !== identityRequest.current || getAuthUser()?.uid !== currentUid) return;
       setIdentities(acct.identities);
       setHasPassword(acct.hasPassword);
       setCanReset(acct.canResetPassword);
     } catch {
-      if (requestId !== identityRequest.current || useAuthStore.getState().user?.uid !== currentUid) return;
+      if (requestId !== identityRequest.current || getAuthUser()?.uid !== currentUid) return;
       setIdentities(null);
       setHasPassword(false);
       setCanReset(false);
@@ -1206,7 +1206,7 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
   const linkSocialStart = async (provider: RedirectAuthProvider) => {
     setError(null);
     if (provider === 'apple' && expectedAppleUid !== undefined
-      && (!expectedAppleUid || useAuthStore.getState().user?.uid !== expectedAppleUid)) {
+      && (!expectedAppleUid || getAuthUser()?.uid !== expectedAppleUid)) {
       setError(t('浏览器账号与 App 不一致，请退出后登录 App 中的同一账号再绑定。', 'This browser account differs from the app. Sign out and sign in to the same account before linking.'));
       return;
     }
@@ -1223,7 +1223,7 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
 
   const generateMergeCode = async () => {
     if (mergeRequest.current || !currentUid) return;
-    if (useAuthStore.getState().user?.uid !== currentUid) {
+    if (getAuthUser()?.uid !== currentUid) {
       setGeneratedMergeCode('');
       setError(t('当前账号已更改，请重新登录并确认。', 'Your account changed. Sign in and confirm again.'));
       return;
@@ -1233,7 +1233,7 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
     setMergeBusy(true);
     try {
       const issued = await issueAccountMergeCode(currentUid);
-      if (!mounted.current || useAuthStore.getState().user?.uid !== currentUid) return;
+      if (!mounted.current || getAuthUser()?.uid !== currentUid) return;
       if (!new RegExp(`^${currentUid}-[0-9]{6}$`).test(issued.code)) {
         setGeneratedMergeCode('');
         throw new Error('account changed; sign in again');
@@ -1250,7 +1250,7 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
 
   const submitMerge = async () => {
     if (!confirmMerge || mergeRequest.current || !currentUid) return;
-    if (useAuthStore.getState().user?.uid !== currentUid) {
+    if (getAuthUser()?.uid !== currentUid) {
       setConfirmMerge(false);
       setError(t('当前账号已更改，请重新登录并确认。', 'Your account changed. Sign in and confirm again.'));
       return;
@@ -1260,7 +1260,7 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
     setMergeBusy(true);
     try {
       const result = await mergeAccount(mergeCode.trim(), currentUid);
-      if (!mounted.current || useAuthStore.getState().user?.uid !== currentUid) return;
+      if (!mounted.current || getAuthUser()?.uid !== currentUid) return;
       if (!(await applySession(result.token, result.user))) throw new Error('session storage failed');
       setConfirmMerge(false);
       setMergeMode(null);
@@ -1556,8 +1556,8 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
  */
 export function DeleteAccountPanel({ backHref }: { backHref: string }) {
   const t = useT();
-  const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
+  const user = useAuthUser();
+  const logout = authActions.logout;
   const [handle, setHandle] = useState<string | null>(null);
   const [hasPassword, setHasPassword] = useState(false);
   const [confirm, setConfirm] = useState('');

@@ -31,7 +31,7 @@ import { RecordBadge } from '@/components/RecordBadge';
 import { EventIcon } from '@/components/EventIcon';
 import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import '../../recon.css';
 import './recon-person.css';
 import { tr } from '@/i18n/tr';
@@ -59,8 +59,8 @@ export default function ReconPersonClient() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
 
-  const user = useAuthStore(s => s.user);
-  const logout = useAuthStore(s => s.logout);
+  const user = useAuthUser();
+  const logout = authActions.logout;
   const isSelf = !!user && user.wcaId === wcaId;
 
   const [solves, setSolves] = useState<ReconSolve[]>([]);

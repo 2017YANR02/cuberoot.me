@@ -8,7 +8,7 @@ import { useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import AppLink from '@/components/AppLink';
 import { Key } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
-import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import { ForumMarkdownEditor, type ForumEditorHandle } from './ForumMarkdownEditor';
 
 export interface ForumComposerHandle {
@@ -40,7 +40,7 @@ export const ForumComposer = forwardRef<ForumComposerHandle, {
       <button
         type="button"
         className="forum-login-hint"
-        onClick={() => useAuthStore.getState().login()}
+        onClick={() => authActions.login()}
       >
         <Key size={15} aria-hidden="true" />
         {tr({ zh: '登录后参与讨论', en: 'Log in to join the discussion' })}

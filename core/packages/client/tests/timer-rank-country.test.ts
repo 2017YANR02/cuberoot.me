@@ -11,6 +11,7 @@ const state = vi.hoisted(() => ({
   countries: new Map<string, string>(),
 }));
 vi.mock('@/lib/auth-store', () => ({
+  useAuthUser: () => state.user,
   useAuthStore: (select: (value: typeof state) => unknown) => select(state),
 }));
 vi.mock('@/app/[lang]/timer/_lib/settings', () => ({ useSettings: () => state }));

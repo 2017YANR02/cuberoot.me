@@ -604,6 +604,11 @@ jobs:
           NODE
           test "$before" = "$(sha256sum ../stats/scramble/dist_sq2.json)"
 
+      - name: Check client auth rendering boundary
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.client == 'true' }}
+        working-directory: core
+        run: pnpm --filter @cuberoot/client lint:auth
+
       - name: Typecheck client
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.client == 'true' }}
         working-directory: core

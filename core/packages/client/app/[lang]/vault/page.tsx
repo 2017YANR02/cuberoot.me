@@ -12,7 +12,7 @@ import { useRequireMembership } from '@/hooks/useRequireMembership';
 import { tr } from '@/i18n/tr';
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
-import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import {
   createVaultKeyProfile,
   decryptVaultEntry,
@@ -66,7 +66,7 @@ const emptyEntry = (category: VaultCategory): VaultEntry => ({
 
 export default function VaultPage() {
   const user = useAuthUser();
-  const login = useAuthStore((state) => state.login);
+  const login = authActions.login;
   const { copiedKey, copy } = useCopy();
   const [mounted, setMounted] = useState(false);
   const [payload, setPayload] = useState<VaultPayload | null>(null);

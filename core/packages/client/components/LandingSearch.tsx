@@ -48,7 +48,7 @@ import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { ensureAssistantConversation, useAssistantWorkspace } from '@/hooks/useAssistantWorkspace';
 import { assistantConversations, assistantOwner, type AssistantConversation } from '@/lib/assistant-conversations';
 import { tr } from '@/i18n/tr';
-import { useAuthUser, useAuthStore } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import { authHeaders } from '@/lib/admin-api';
 import { apiUrl } from '@/lib/api-base';
 import SiteAssistantDialog, { SiteAssistantAnswerText, type AssistantTurn } from '@/components/SiteAssistantDialog';
@@ -623,7 +623,7 @@ export default function LandingSearch({
             {assistantBusy ? <p>{tr({ zh: '正在回答…', en: 'Preparing an answer…' })}</p>
               : assistantError ? <>
                 <p>{tr(ASSISTANT_ERROR_TEXT[assistantError])}</p>
-                {(assistantError === 'login_required' || assistantError === 'wca_link_required') && <button type="button" className="landing-search-item" onClick={() => useAuthStore.getState().login()}>{tr({ zh: '前往账号页', en: 'Go to account' })}</button>}
+                {(assistantError === 'login_required' || assistantError === 'wca_link_required') && <button type="button" className="landing-search-item" onClick={() => authActions.login()}>{tr({ zh: '前往账号页', en: 'Go to account' })}</button>}
                 {totalCount > 0 && <button type="button" className="landing-search-item" onClick={goFirstResult}>{tr({ zh: '打开首个搜索结果', en: 'Open the first search result' })}</button>}
               </> : assistantAnswer ? <>
                 <div className="landing-search-answer-text"><SiteAssistantAnswerText result={assistantAnswer}/></div>

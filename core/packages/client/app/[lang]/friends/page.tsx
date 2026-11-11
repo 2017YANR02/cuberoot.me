@@ -20,7 +20,7 @@ import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { resolveAccountAvatar } from '@/lib/account-avatar';
-import { useAuthStore, useIsAdmin, refreshSessionUser, type WcaUser } from '@/lib/auth-store';
+import { useIsAdmin, refreshSessionUser, type WcaUser, useAuthUser, authActions } from '@/lib/auth-store';
 import { createWebChatClient } from '@/lib/chat-adapter';
 import { refreshNotificationsUnread } from '@/lib/notifications-unread';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -226,7 +226,7 @@ const refreshChatNotification = () => { void refreshNotificationsUnread(); };
 function FriendChat({ user, peerId, onSelectPeer }: { user: WcaUser; peerId: number | null; onSelectPeer: (peer: number | null) => void }) {
   const t = useT();
   const lang = useLang();
-  const login = useAuthStore((state) => state.login);
+  const login = authActions.login;
   const [petCatalog, setPetCatalog] = useState<DeskPetCatalog | null>(null);
   const reloadPetCatalog = () => { void getDeskPetCatalog().then(setPetCatalog).catch(() => setPetCatalog(null)); };
   useEffect(() => {
@@ -255,8 +255,8 @@ export default function FriendsPage() {
   const t = useT();
   const lang = useLang();
   const isZh = lang === 'zh';
-  const user = useAuthStore((state) => state.user);
-  const login = useAuthStore((state) => state.login);
+  const user = useAuthUser();
+  const login = authActions.login;
   const [mounted, setMounted] = useState(false);
   const [overview, setOverview] = useState<FriendsOverview | null>(null);
   const [results, setResults] = useState<FriendSearchUser[] | null>(null);

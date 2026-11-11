@@ -14,7 +14,7 @@ import {
   type RegBucketKey,
 } from '@/lib/comp-registration';
 import { type CompFollowState } from '@/components/CompFollow';
-import { useAuthStore } from '@/lib/auth-store';
+import { authActions } from '@/lib/auth-store';
 import { type CompCardTone } from '@/components/CompCard';
 import { CompCardWithRounds, wcaRoundsSeed } from '@/components/CompCardWithRounds';
 import { tr } from '@/i18n/tr';
@@ -105,7 +105,7 @@ export function RegistrationView({ comps, isZh, lang, loggedIn, follows, toggle 
   isZh: boolean;
   lang: 'zh' | 'en';
 } & Pick<CompFollowState, 'loggedIn' | 'follows' | 'toggle'>) {
-  const login = useAuthStore((s) => s.login);
+  const login = authActions.login;
   // allow-hydration-volatile-state: parent renders this view only after its client-side comp fetch.
   // now 在组件生命周期内固定,避免 useMemo 依赖每帧抖动(首页不会开几小时)。
   const [now] = useState(() => Date.now());

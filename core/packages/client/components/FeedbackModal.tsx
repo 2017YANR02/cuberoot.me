@@ -10,7 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import { ImagePlus, Film, X, Check, LogIn, Inbox, MessagesSquare } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
-import { useAuthStore, isAdmin } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthUser, authActions } from '@/lib/auth-store';
 import AppLink from '@/components/AppLink';
 import { submitFeedback, uploadFeedbackImage, uploadFeedbackVideo } from '@/lib/feedback-api';
 import { prepareImageUpload } from '@/lib/image-upload';
@@ -44,8 +44,8 @@ function probeDuration(url: string): Promise<number> {
 }
 
 export default function FeedbackModal({ lang, onClose: onClosed, embedded = false }: Props) {
-  const user = useAuthStore((s) => s.user);
-  const login = useAuthStore((s) => s.login);
+  const user = useAuthUser();
+  const login = authActions.login;
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   const [text, setText] = useState('');
@@ -251,7 +251,7 @@ export default function FeedbackModal({ lang, onClose: onClosed, embedded = fals
               <AppLink href="/feedback" className="fb-admin-link" onClick={onClose}>
                 <MessagesSquare size={14} /> {t('公开反馈', 'Public feedback')}
               </AppLink>
-              {isAdmin() && (
+              {hasAdminAccess(user) && (
                 <AppLink href="/feedback/admin" className="fb-admin-link" onClick={onClose}>
                   <Inbox size={14} /> {t('管理', 'Manage')}
                 </AppLink>

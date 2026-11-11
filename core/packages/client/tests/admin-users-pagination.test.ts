@@ -11,6 +11,7 @@ const { fetchAdminUsers, startUserImpersonation } = vi.hoisted(() => ({
 vi.mock('@/lib/account-api', () => ({ fetchAdminUsers, updateAdminRole: vi.fn() }));
 vi.mock('@/lib/auth-store', () => ({
   useAuthStore: () => ({ isAdmin: true }),
+  useAuthUser: () => ({ isAdmin: true }),
   hasAdminAccess: () => true,
   startUserImpersonation,
 }));

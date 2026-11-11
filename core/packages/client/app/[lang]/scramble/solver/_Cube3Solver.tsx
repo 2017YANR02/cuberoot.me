@@ -28,7 +28,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { streamApiUrl } from '@/lib/api-base';
 import { persistItem } from '@/lib/safe-storage';
 import { authHeaders } from '@/lib/admin-api';
-import { nextQuery, useAuthStore } from '@/lib/auth-store';
+import { nextQuery, useAuthUser } from '@/lib/auth-store';
 import { faceletToCubie, validateFacelet, cubieToFacelet } from '@/lib/cube-facelet';
 import {
   formatMoves,
@@ -254,7 +254,7 @@ export default function Cube3Solver() {
   const [cloudLiveMs, setCloudLiveMs] = useState(0);
   const cloudPhaseStartRef = useRef(0);
   const cloudTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthUser();
   // Tidy the live timer if we unmount mid-solve.
   useEffect(() => () => { if (cloudTimerRef.current) clearInterval(cloudTimerRef.current); }, []);
 

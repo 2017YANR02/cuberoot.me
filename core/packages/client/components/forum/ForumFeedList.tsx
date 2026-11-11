@@ -6,7 +6,7 @@ import { ChevronRight, Eye, Heart, MessageCircle } from '@app-foundation/icons/l
 import Link from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import { tr, useLang } from '@/i18n/tr';
-import { useAuthStore, useAuthUser, useIsAdmin, useOwnerKey } from '@/lib/auth-store';
+import { useAuthUser, useIsAdmin, useOwnerKey, authActions } from '@/lib/auth-store';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { resolveAccountAvatar } from '@/lib/account-avatar';
 import { formatCount, formatPostTime } from '@/lib/forum-format';
@@ -52,7 +52,7 @@ export function ForumFeedList<T extends ForumFeedThread>({ threads, compact = fa
 
   const toggleReaction = async (thread: ForumFeedThread, button: HTMLButtonElement) => {
     if (!user) {
-      useAuthStore.getState().login();
+      authActions.login();
       return;
     }
     if (busyPostId !== null) return;

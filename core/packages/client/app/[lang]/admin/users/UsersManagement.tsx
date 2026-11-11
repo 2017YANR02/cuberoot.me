@@ -21,7 +21,7 @@ import SortArrow from '@/components/SortArrow';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
-import { hasAdminAccess, startUserImpersonation, useAuthStore } from '@/lib/auth-store';
+import { hasAdminAccess, startUserImpersonation, useAuthUser } from '@/lib/auth-store';
 import { countryName } from '@/lib/country-name';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { fetchAdminUsers, updateAdminRole, type AdminUserRecord, type AdminUsersResponse } from '@/lib/account-api';
@@ -198,7 +198,7 @@ export default function UsersManagement() {
   const lang = useLang();
   const isZh = lang !== 'en';
   const locale = isZh ? 'zh-CN' : 'en-US';
-  const user = useAuthStore((state) => state.user);
+  const user = useAuthUser();
   const [mounted, setMounted] = useState(false);
   const [data, setData] = useState<AdminUsersResponse | null>(null);
   const [error, setError] = useState<AdminUsersError | null>(null);

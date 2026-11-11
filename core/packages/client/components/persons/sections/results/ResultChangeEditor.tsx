@@ -6,7 +6,7 @@
 
 import { useMemo, useState } from 'react';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser } from '@/lib/auth-store';
 import { DateInput } from '@/components/DateInput';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { computeWcaBestAverage, canRecompute } from '@/lib/wca-compute';
@@ -169,7 +169,7 @@ function fieldLabel(field: string): string {
 }
 
 export function ResultChangeEditor({ target, existingChanges, onClose, onSaved }: Props) {
-  const admin = useAuthStore((s) => isAdminWcaId(s.user?.wcaId));
+  const admin = isAdminWcaId(useAuthUser()?.wcaId);
   const [editingId, setEditingId] = useState<number | null>(null); // null = 新增表单关闭/打开靠 showForm
   const [showForm, setShowForm] = useState(existingChanges.length === 0);
   const [form, setForm] = useState<FormState>(() => emptyForm(target));

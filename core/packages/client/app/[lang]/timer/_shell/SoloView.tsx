@@ -173,7 +173,7 @@ import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
-import { useAuthStore, useIsAdmin } from '@/lib/auth-store';
+import { useIsAdmin, useAuthUser, getAuthUser } from '@/lib/auth-store';
 import AppLink from '@/components/AppLink';
 import { useCompetitionAttempt } from './competition-attempt';
 import '@/components/platform/online-competitions.css';
@@ -430,7 +430,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const printControllerRef = useRef<TimerPrintControllerHandle>(null);
   const settings = useSettings();
   const douyin = useDouyinToolSurface();
-  const authUser = useAuthStore((st) => st.user);
+  const authUser = useAuthUser();
   const isAdmin = useIsAdmin();
   const competition = useCompetitionAttempt();
   const fakeCubeEnabled = isAdmin && settings.showAdminFakeCube && !competition.enabled;
@@ -1344,7 +1344,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
       // The write helpers read the current JWT, so verify that it still belongs
       // to the solve's captured owner before either upsert or update-only.
-      const currentUser = useAuthStore.getState().user;
+      const currentUser = getAuthUser();
       if (!currentUser || computeOwnerKey(currentUser.uid, currentUser.wcaId) !== ownerAtCompletion) {
         return;
       }

@@ -14,7 +14,7 @@ import Link from '@/components/AppLink';
 import { UserContactLink } from '@/components/UserIdLabel';
 import { tr } from '@/i18n/tr';
 import { persistItem } from '@/lib/safe-storage';
-import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import { reportQuestion } from '@/lib/quiz-api';
 import type { Level, Question, QuizCat, QuizCategory } from '../_data';
 import { buildDeck, gradeChoice, gradeOpen, rebuildDeck, type DeckItem } from '../_lib/deck';
@@ -351,7 +351,7 @@ export default function QuizRunner({ level, cat, category, community }: Props) {
                   type="button"
                   className="quiz-flip"
                   onClick={() => {
-                    if (!user) { useAuthStore.getState().login(); return; }
+                    if (!user) { authActions.login(); return; }
                     setReportOpen((o) => !o);
                   }}
                 >

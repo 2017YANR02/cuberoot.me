@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Boxes, Check, Coffee, Copy, GitBranch, Monitor, Move, PackageCheck, Search, ShieldCheck, Sparkles, Target, UserRound, X } from 'lucide-react';
 import { useT } from '@/hooks/useT';
 import { useCopy } from '@/hooks/useCopy';
-import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { useAuthUser, authActions, getAuthUser } from '@/lib/auth-store';
 import AppLink from '@/components/AppLink';
 import './sop.css';
 import './sop-workflow.css';
@@ -16,7 +16,7 @@ export default function StaffSopPage() {
   const [activeStep, setActiveStep] = useState(0);
   const stepRefs = useRef<(HTMLButtonElement | null)[]>([]);
   useEffect(() => {
-    if (!useAuthStore.getState().user) useAuthStore.getState().login();
+    if (!getAuthUser()) authActions.login();
   }, [user]);
 
   const steps = [

@@ -18,7 +18,7 @@ import { addSubmission, updateSubmission, deleteSubmission } from '@/lib/alg_api
 import { validateAlgCase, validateStoredAlgCase, setupForCase } from '@/lib/alg_validation';
 import { caseViewAlg, displayAlg, type CaseViewAngle } from '@/lib/alg_display';
 import { formatAlgNotation, type AlgNotationStyle } from '@/lib/alg-notation-display';
-import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthUser, authActions } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { tr } from '@/i18n/tr';
@@ -211,8 +211,8 @@ export default function CommunityAlgs({
 }: Props) {
   const { i18n } = useTranslation(); // subscribe to language changes; text via tr()
   const isZh = i18n.language.startsWith('zh');
-  const user = useAuthStore(s => s.user);
-  const login = useAuthStore(s => s.login);
+  const user = useAuthUser();
+  const login = authActions.login;
   const isAdmin = allowAdminActions && hasAdminAccess(user);
   // 所有权键(与服务端一致):非 WCA 账号也能认出自己提交的公式。
   const myKey = user ? computeOwnerKey(user.uid, user.wcaId) : '';

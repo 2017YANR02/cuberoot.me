@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Megaphone, Sparkles, UserCog, Laptop, Globe, Drama, X } from '@app-foundation/icons/lucide';
-import { ensureFreshToken, refreshSessionUser, canTestRoles, getRolePreview, startRolePreview, endRolePreview, useAuthUser, isAdmin, type TestRole } from '@/lib/auth-store';
+import { ensureFreshToken, refreshSessionUser, canTestRoles, getRolePreview, startRolePreview, endRolePreview, useAuthUser, hasAdminAccess, type TestRole } from '@/lib/auth-store';
 import AppLink from './AppLink';
 import { openPageNoticeEditor, pageKeyFromPathname } from '@/lib/page-notices-api';
 import { useLiveUrlSuffix } from '@/hooks/useLiveUrlSuffix';
@@ -86,7 +86,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   // Attached tools must not move its anchor when their bounds leave the viewport.
   useEffect(() => { setReady(true); }, []);
   const preview = ready ? getRolePreview() : null;
-  const admin = ready && !!user && isAdmin();
+  const admin = ready && !!user && hasAdminAccess(user);
   const roleTesting = ready && (!!preview || (!!user && canTestRoles()));
   if (!ready || (!admin && !roleTesting)) return null;
   const impersonatedName = preview?.role === 'impersonation'

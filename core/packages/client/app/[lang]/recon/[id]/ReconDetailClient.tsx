@@ -65,7 +65,7 @@ import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
 import { buildReconSubmitHref } from '@/lib/recon-attempt-lookup';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
-import { useAuthStore, useAuthUser, useIsAdmin } from '@/lib/auth-store';
+import { useAuthUser, useIsAdmin, authActions } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { RecordBadge } from '@/components/RecordBadge';
 import ReconPlayerCanvas from '@/components/recon/ReconPlayerCanvas';
@@ -194,8 +194,8 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
             <Lock size={32} strokeWidth={1.5} />
             <p className="recon-private-gate-title">{tr({ zh: '这是一条私享复盘', en: 'This reconstruction is private' })}</p>
             <p className="recon-private-gate-sub">{tr({ zh: '只有添加者本人可以查看。', en: 'Only the person who added it can view it.' })}</p>
-            {!useAuthStore.getState().user && (
-              <button type="button" className="recon-btn" onClick={() => useAuthStore.getState().login()}>
+            {!commentViewer && (
+              <button type="button" className="recon-btn" onClick={() => authActions.login()}>
                 <LogIn size={14} /> {tr({ zh: '登录', en: 'Sign in' })}
               </button>
             )}
@@ -1798,7 +1798,7 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime, event }: {
           </Link>
         </div>
       ) : (
-        <div className="detail-comment-login-hint" onClick={() => useAuthStore.getState().login()} style={{ cursor: 'pointer' }}>
+        <div className="detail-comment-login-hint" onClick={() => authActions.login()} style={{ cursor: 'pointer' }}>
           <Key size={16} /> {t('recon.loginToAddAlternative')}
         </div>
       )}

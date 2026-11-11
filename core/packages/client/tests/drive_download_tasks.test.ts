@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/hooks/useT', () => ({ useT: () => mocks.t }));
 vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh', tr: ({ zh }: { zh: string }) => zh }));
 vi.mock('@/lib/auth-store', () => ({
+  useAuthUser: () => mocks.user, authActions: { login: vi.fn() },
   useAuthStore: (select: (state: unknown) => unknown) => select({ user: mocks.user, login: vi.fn() }),
 }));
 vi.mock('@/components/BackHome', () => ({ default: () => null }));

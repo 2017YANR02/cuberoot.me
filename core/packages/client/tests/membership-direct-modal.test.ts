@@ -6,7 +6,8 @@ import type { MembershipPlan } from '@/lib/membership-api';
 const mocks = vi.hoisted(() => ({ uid: 7, createOrder: vi.fn(), getOrderStatus: vi.fn(), open: vi.fn() }));
 vi.mock('@/lib/web-membership-bridge', () => ({ useWebMembershipAvailable: () => true, requestWebMembership: mocks.open }));
 vi.mock('@/lib/store-membership-bridge', () => ({ installedMembershipStore: () => null }));
-vi.mock('@/lib/auth-store', () => ({ useAuthStore: Object.assign((select: (s: unknown) => unknown) => select({ user: { uid: mocks.uid } }), { getState: () => ({ user: { uid: mocks.uid } }) }) }));
+vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => ({ uid: mocks.uid }), getAuthUser: () => ({ uid: mocks.uid }),
+  useAuthStore: Object.assign((select: (s: unknown) => unknown) => select({ user: { uid: mocks.uid } }), { getState: () => ({ user: { uid: mocks.uid } }) }) }));
 vi.mock('@/hooks/useIsMobile', () => ({ useIsMobile: () => false }));
 vi.mock('@/i18n/tr', () => ({ tr: ({ zh }: { zh: string }) => zh }));
 vi.mock('@/lib/membership-api', () => ({ createOrder: mocks.createOrder, getOrderStatus: mocks.getOrderStatus }));

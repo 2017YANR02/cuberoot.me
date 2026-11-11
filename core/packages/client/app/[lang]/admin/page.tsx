@@ -7,7 +7,7 @@ import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { BadgeCheck, BellRing, BookOpen, Clapperboard, Compass, Gift, GraduationCap, Grid3X3, HardDrive, HeartHandshake, History, Images, Inbox, Layers, Library, ListChecks, MessageSquare, Music, Pin, Presentation, ScanSearch, ShieldCheck, ShoppingBag, Users, Wrench } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
-import { loginHref, useAuthStore, useIsAdmin } from '@/lib/auth-store';
+import { loginHref, useIsAdmin, useAuthUser } from '@/lib/auth-store';
 import BootDiagnostics from './BootDiagnostics';
 import Dashboard from './Dashboard';
 import UsersManagement from './users/UsersManagement';
@@ -63,7 +63,7 @@ const DESTINATIONS: AdminDestination[] = [
 export default function AdminPage() {
   const t = useT();
   const router = useRouter();
-  const user = useAuthStore((state) => state.user);
+  const user = useAuthUser();
   const isAdmin = useIsAdmin();
   const [mounted, setMounted] = useState(false);
   const [section] = useQueryState('section', parseAsStringEnum([...ADMIN_SECTIONS]).withDefault('overview'));

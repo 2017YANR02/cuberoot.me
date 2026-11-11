@@ -12,7 +12,7 @@ import Paginator from '@/components/wca-stats/Paginator';
 import { tr, T, useLang } from '@/i18n/tr';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
-import { useAuthStore, useIsAdmin, useOwnerKey } from '@/lib/auth-store';
+import { useIsAdmin, useOwnerKey, authActions } from '@/lib/auth-store';
 import {
   setForumBan, fetchThread, createPost, updatePost, deletePost, deleteThread, updateThread,
   reactToPost, trackThreadView, reportPost, moderateReview,
@@ -145,7 +145,7 @@ export default function ThreadClient() {
     `${window.location.origin}${window.location.pathname}${canonicalQsFor(post)}`;
 
   const handleQuote = (post: ForumPost) => {
-    if (!myKey) { useAuthStore.getState().login(); return; }
+    if (!myKey) { authActions.login(); return; }
     const link = `${window.location.pathname}${canonicalQsFor(post)}`;
     const quoted = post.content.split('\n').map(l => `> ${l}`).join('\n');
     // Blank "> " line keeps the attribution its own paragraph inside the quote.
@@ -247,7 +247,7 @@ export default function ThreadClient() {
   };
 
   const handleReport = async (post: ForumPost) => {
-    if (!myKey) { useAuthStore.getState().login(); return; }
+    if (!myKey) { authActions.login(); return; }
     const reason = window.prompt(tr({
       zh: '举报原因(必填,管理员会看到):',
       en: 'Report reason (required, visible to moderators):',

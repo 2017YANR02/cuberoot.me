@@ -10,14 +10,14 @@ import { usePathname } from 'next/navigation';
 import { Key } from '@app-foundation/icons/lucide';
 import { useTranslation } from 'react-i18next';
 import AppLink from '@/components/AppLink';
-import { useAuthStore, nextQuery } from '@/lib/auth-store';
+import { nextQuery, useAuthUser } from '@/lib/auth-store';
 import './wca_auth.css';
 import { tr } from '@/i18n/tr';
 
 export default function WcaAuth({ onNavigate, showLabel = false, href = '/account', linkClassName, labelClassName = 'toolbar-label' }: { onNavigate?: () => void; showLabel?: boolean; href?: string; linkClassName?: string; labelClassName?: string }) {
   const { t } = useTranslation();
   const pathname = usePathname();
-  const user = useAuthStore(s => s.user);
+  const user = useAuthUser();
 
   // SSR 拿不到 localStorage 的 auth-store hydrated user → server 永远渲染登录入口,
   // client hydrated 出已登录 → DOM 不一致。mount 前固定渲染登录入口占位,mount 后切真值。

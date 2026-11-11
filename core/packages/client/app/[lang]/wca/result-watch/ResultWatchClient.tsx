@@ -16,7 +16,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { localizeCompName } from '@/lib/comp-localize';
 import { eventDisplayName } from '@/lib/wca-events';
 import { useT } from '@/hooks/useT';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser } from '@/lib/auth-store';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import {
   fetchResultWatchStatus, fetchResultChanges, fetchPendingChanges, canonicalRound, formatChangeFieldValue,
@@ -44,7 +44,7 @@ export default function ResultWatchClient() {
     'view',
     parseAsStringEnum(['all', 'pending']).withDefault('all').withOptions({ history: 'replace', scroll: false }),
   );
-  const myWcaId = useAuthStore((s) => s.user?.wcaId);
+  const myWcaId = useAuthUser()?.wcaId;
   const admin = isAdminWcaId(myWcaId);
 
   const [status, setStatus] = useState<ResultWatchStatus | null>(null);

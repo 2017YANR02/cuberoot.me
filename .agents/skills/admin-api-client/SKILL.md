@@ -41,10 +41,11 @@ export async function createFoo<T>(body: unknown): Promise<T> {
 ## isAdmin 检测 (page 端控制 UI 显隐)
 
 ```ts
-import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
-const user = useAuthStore((s) => s.user);
-const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
+import { useIsAdmin } from '@/lib/auth-store';
+const isAdmin = useIsAdmin();
 ```
+
+需要用户信息时用 `useAuthUser()`；这两个 hook 保证服务端与浏览器首次渲染一致。不要在 render 中直接读 store、`isAdmin()` 或 `getAuthUser()`。登录等命令用 `authActions`，异步账号核对才用 `getAuthUser()`；完整契约见 [前端规范](../../../docs/contributing/frontend.md)。
 
 server 端的 `requireAdminOrApiKey` 同时接受:
 - WCA OAuth Bearer (用户在 ADMIN_WCA_IDS 名单)

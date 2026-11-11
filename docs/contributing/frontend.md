@@ -29,6 +29,7 @@
 - 改动先定位根因,禁止在症状点打补丁;根因定位后落地用最小实现,不臆造抽象层/翻译层。
 - 展示格式化、隐藏步骤和本地化后的值只用于渲染或复制;播放器、计算、校验、保存、API 和派生状态必须使用无损原值,登录/管理员态只能增加操作能力,不得改变公开内容语义。
 - SSR 首次 render / useState 初始化禁读随机数、当前时间或浏览器存储;固定首屏后再用 effect 更新,外部存储走 useSyncExternalStore 的 server snapshot。
+- **登录态渲染**：组件和 React hooks 从 `@/lib/auth-store` 使用 `useAuthUser()` / `useIsAdmin()` / `useOwnerKey()`；它们通过 React `useSyncExternalStore` 的服务端快照保证首屏一致，后续挂载直接读取当前会话。`authActions` 提供登录、退出、刷新等命令；`getAuthUser()` 仅用于事件、effect 或异步返回后的实时账号核对，`subscribeAuthUser()` 用于会话桥接和外部缓存订阅，不能用这些命令接口派生首屏 UI。底层 `useAuthStore` / `isAdmin()` 保留给认证实现和非 React 命令代码。`eslint.auth.config.mjs` 用标准 `no-restricted-imports` 限制 `app/`、`components/`、`hooks/` 的 TS/TSX 及 `lib/` 的 TSX 导入底层接口（含别名、命名空间和转导出）；`pnpm --filter @cuberoot/client lint:auth` 已接入 CI。`auth-hydration.test.ts` 覆盖游客/普通用户/管理员首屏、后续挂载及账号/角色变化。安全 hook 是渲染契约，服务端 API 仍独立验证权限。
 - 浏览器标题统一使用 metadata 或 `useDocumentTitle`；弹窗/嵌入内容不得抢外层页面标题，复用 `AlgCaseView` 时传 `embedded`。动态标题 hook 由单一监听器协调多个使用者，禁止恢复为每实例各建标题 MutationObserver；关闭时恢复仍挂载的标题拥有者。回归见 `tests/recon-case-dialog-title.test.ts`。
 - 新增或修改 MutationObserver/ResizeObserver/effect 同步时，核对回调写入是否会再次触发自身或其他监听器；相同值不重复写，共享 DOM 状态只保留一个写入入口，卸载时清理订阅。涉及页面嵌套/弹窗时用有硬性次数上限的隔离回归验证挂载、关闭与重新挂载，不能只验证单组件或用延时掩盖循环。
 - 浏览器端源码禁用正则后行断言,改用捕获边界或显式前字符判断;Hook + CI 守卫。

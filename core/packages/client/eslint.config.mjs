@@ -1,21 +1,23 @@
 /**
  * Flat ESLint config for client — covers hand-written JS only (`.js/.mjs/.cjs`:
- * build + hook + audit scripts, test runners, service worker). TS/TSX is checked
- * by `typecheck` (tsgo) and by the CI ratchets in `tests/`, not here — there is
- * no TS parser, no React plugin, no Next plugin in this config.
+ * build + hook + audit scripts, test runners, service worker). TS/TSX also gets
+ * the auth import boundary; types remain checked by tsgo and CI tests.
  *
- * Two things it enforces:
+ * Three things it enforces:
  *  1. eslint's own `js.configs.recommended` baseline (+ a few hand-picked rules).
  *  2. ad-hoc playwright scripts must go through `scripts/headless.mjs` (which
  *     bakes in the MCP init script) instead of importing a browser engine.
+ *  3. React source must use the SSR-safe auth interface instead of raw auth state.
  *
  * Run: `pnpm --filter @cuberoot/client lint`
  */
 
 import js from '@eslint/js';
 import globals from 'globals';
+import authConfig from './eslint.auth.config.mjs';
 
 export default [
+  ...authConfig,
   // Global ignores — MUST be an object with `ignores` and NOTHING else. Put
   // `ignores` next to `files` and it only narrows THAT config object; the paths
   // still get scanned and fall through to ESLint 9's built-in `**/*.{js,mjs,cjs}`

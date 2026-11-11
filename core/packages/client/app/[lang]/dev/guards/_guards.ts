@@ -262,6 +262,12 @@ export interface CiGuard {
 
 export const CI_GUARDS_UI: CiGuard[] = [
   {
+    id: 'auth-render-imports',
+    test: 'auth-render-imports.test.ts',
+    zh: { title: '登录态首屏一致性', desc: 'ESLint no-restricted-imports 限制页面、组件与 hooks 导入 useAuthStore / isAdmin，统一使用 useAuthUser / useIsAdmin。命令走 authActions，异步账号核对用 getAuthUser；这些命令接口不能用于渲染。lint:auth 接入 CI，首屏回归验证游客、用户、管理员及会话变化。' },
+    en: { title: 'Auth hydration consistency', desc: 'ESLint no-restricted-imports prevents pages, components and hooks from importing useAuthStore / isAdmin; render with useAuthUser / useIsAdmin. Use authActions for commands and getAuthUser for async identity checks, never for rendering. CI runs lint:auth; hydration tests cover guests, members, admins and session changes.' },
+  },
+  {
     id: 'wca-record-filters',
     test: 'wca-record-filters.test.ts',
     zh: { title: '纪录统计筛选与数据一致性', desc: '按生成器源码自动发现使用 recordScope、record_scopes 或旧 Continental 分区模式的纪录统计。CI 同源检出其 JSON，逐个验证非空、唯一且可达的筛选组合，并检查地区、级别、项目与类型取值。缺少生成数据也会失败；新数据形态仍需扩展发现规则及语义审查。' },

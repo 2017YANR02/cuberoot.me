@@ -6,7 +6,8 @@ import VaultPage from '@/app/[lang]/vault/page';
 
 const { user } = vi.hoisted(() => ({ user: { uid: 1, name: 'Test owner' } }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
-vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => user, useAuthStore: () => vi.fn() }));
+vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => user, authActions: { login: vi.fn() },
+  useAuthStore: () => vi.fn() }));
 vi.mock('@/components/BackHome', () => ({ default: () => null }));
 vi.mock('@/hooks/useCopy', () => ({ useCopy: () => ({ copy: vi.fn(), copiedKey: null }) }));
 vi.mock('@/i18n/tr', () => ({ tr: ({ zh }: { zh: string }) => zh }));

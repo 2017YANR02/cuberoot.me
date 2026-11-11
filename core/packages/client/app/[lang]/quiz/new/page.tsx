@@ -15,7 +15,7 @@ import type { QuizDraft } from '@cuberoot/shared/quiz';
 import PageBackLink from '@/components/PageBackLink';
 import Link from '@/components/AppLink';
 import { tr, useLang } from '@/i18n/tr';
-import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import { createQuestion, fetchMyQuestions, updateQuestion } from '@/lib/quiz-api';
 import QuestionEditor, { draftFromRow, draftProblem, emptyDraft, errorText } from '../_components/QuestionEditor';
 import '../quiz.css';
@@ -88,7 +88,7 @@ export default function QuizNewPage() {
           <button
             type="button"
             className="quiz-btn is-primary quiz-login"
-            onClick={() => useAuthStore.getState().login()}
+            onClick={() => authActions.login()}
           >
             <Key size={15} aria-hidden />
             {tr({ zh: '登录后出题', en: 'Log in to write a question' })}

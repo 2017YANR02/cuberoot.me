@@ -87,7 +87,7 @@ import { pgRandomScramble } from '@/lib/pg-scramble';
 import { generateNativePuzzleScramble, isNativePuzzleId, isPgInteractionPuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { parseNativePuzzleAlg, simplifyNativePuzzleAlg } from '@cuberoot/puzzle-solvers/native-puzzle-model';
 import { cloudOptimalScramble } from '@/lib/cloud-optimal-scramble';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import { formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg, simplifySq1Alg, invertSq1Alg } from '@cuberoot/shared/sq1-notation';
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import SkewbNotationGuide from './SkewbNotationGuide';
@@ -1027,8 +1027,8 @@ export default function PlayerControls({
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
-  const authUser = useAuthStore((s) => s.user);
-  const authLogin = useAuthStore((s) => s.login);
+  const authUser = useAuthUser();
+  const authLogin = authActions.login;
 
   const [squareFormats, setSquareFormats] = useState<Record<'sq1' | SquareFamilyKind, SquareFamilyNotationFormat>>({
     sq1: 'compact',

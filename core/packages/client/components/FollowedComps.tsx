@@ -15,7 +15,7 @@ import { countryName } from '@/lib/country-name';
 import { formatRegStatus } from '@/lib/comp-reg-status';
 import { Flag } from '@/components/Flag';
 import { FollowStar, useCompFollows } from '@/components/CompFollow';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser } from '@/lib/auth-store';
 import { apiUrl } from '@/lib/api-base';
 import { formatDateRangeIso, toIsoDate } from '@/lib/wca-date';
 import { tr } from '@/i18n/tr';
@@ -73,7 +73,7 @@ export default function FollowedComps({ isZh, lang }: {
   isZh: boolean;
   lang: 'zh' | 'en';
 }) {
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthUser();
   const { follows, toggle, loaded } = useCompFollows();
   const [mounted, setMounted] = useState(false);
   const [comps, setComps] = useState<Comp[] | null>(null);

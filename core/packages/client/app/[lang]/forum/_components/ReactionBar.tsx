@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import { SmilePlus } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
-import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import {
   REACTION_KINDS, REACTION_EMOJI,
   type PostReaction, type ReactionKind,
@@ -31,7 +31,7 @@ export function ReactionBar({
   }, [pickerOpen]);
 
   const react = async (kind: ReactionKind | null) => {
-    if (!user) { useAuthStore.getState().login(); return; }
+    if (!user) { authActions.login(); return; }
     if (busy) return;
     setBusy(true);
     try {

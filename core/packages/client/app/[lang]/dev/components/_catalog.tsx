@@ -2954,7 +2954,7 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: `全站认证 UI,两块认证面板:LoginForm = 登录 / 注册(邮箱 / 手机 / WCA / Google / 三方),AccountPanel = 已绑定身份、绑定新方式、解绑、设/改密码。两者都只渲染于 /chat 的账户设置 —— 认证与账号管理全站独此一个地址,入口只有头像一处。`,
     en: `Site-wide auth UI as two authentication panels: LoginForm for sign-in/up (Email / Phone / WCA / Google / social) and AccountPanel for linked identities, linking, unlinking and password. Both render only in /chat account settings — the site's single auth/account address, reached only via the avatar.`,
-    note: { zh: `LoginForm 的 onDone 在拿到会话后触发(页面据此回跳 ?next=);各处「登录」入口调 useAuthStore().login() 导航过去,不再开弹层。AccountPanel 无 props,只管凭据本身 —— 姓名与登出归宿主页头部(那是页面级信息)。`, en: `LoginForm's onDone fires once a session exists (the page uses it to honour ?next=). Every "sign in" entry point calls useAuthStore().login(), which navigates there instead of opening a modal. AccountPanel takes no props and owns credentials only — the name row and sign-out belong to the host page header.` },
+    note: { zh: `LoginForm 的 onDone 在拿到会话后触发(页面据此回跳 ?next=);各处「登录」入口调 authActions.login() 导航过去,不再开弹层。AccountPanel 无 props,只管凭据本身 —— 姓名与登出归宿主页头部(那是页面级信息)。`, en: `LoginForm's onDone fires once a session exists (the page uses it to honour ?next=). Every "sign in" entry point calls authActions.login(), which navigates there instead of opening a modal. AccountPanel takes no props and owns credentials only — the name row and sign-out belong to the host page header.` },
   },
   {
     name: 'AlgCaseMetaModal',

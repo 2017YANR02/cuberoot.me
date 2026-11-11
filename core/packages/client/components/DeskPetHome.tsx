@@ -6,7 +6,7 @@ import { Apple, Hand, Heart, Moon, Sparkles, Star, Check, Zap, Loader2 } from '@
 import AppLink from '@/components/AppLink';
 import PetLevelBadge from '@/components/PetLevelBadge';
 import { tr, useLang } from '@/i18n/tr';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser } from '@/lib/auth-store';
 import { adoptPet, careForPet, getMyPets, type AdoptedPet } from '@/lib/deskpet-api';
 import { CARE_ACTIONS, careWait, currentCare, petLevel, type CareAction } from '@/lib/deskpet-care';
 import { petCareArt, petCareDuration, type ThemeId } from '@/lib/deskpet-themes';
@@ -23,7 +23,7 @@ const ACTIONS = {
 export default function DeskPetHome({ character, label, locked = false }: {
   character: ThemeId; label: { zh: string; en: string }; locked?: boolean;
 }) {
-  const user = useAuthStore(s => s.user);
+  const user = useAuthUser();
   const lang = useLang();
   const owner = user ? String(user.uid ?? user.wcaId) : '';
   const [record, setRecord] = useState<{ owner: string; pets: AdoptedPet[] } | null>(null);

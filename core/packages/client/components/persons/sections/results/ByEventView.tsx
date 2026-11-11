@@ -48,7 +48,7 @@ import { PendingProposals } from './PendingProposals';
 import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { roundChronologicalOrder } from '@cuberoot/shared/wca-round';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser } from '@/lib/auth-store';
 import { SortArrow } from '@/components/SortArrow';
 import { CompactSelect } from '@/components/CompactSelect';
 import { tr } from '@/i18n/tr';
@@ -221,7 +221,7 @@ const EventRoundsList = memo(function EventRoundsList({
 }) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   const { map: changeMap, refresh: refreshChanges } = useRowChangeMap(wcaId);
-  const myWcaId = useAuthStore((s) => s.user?.wcaId);
+  const myWcaId = useAuthUser()?.wcaId;
   const admin = isAdminWcaId(myWcaId);
   const isOwner = !!myWcaId && myWcaId === wcaId;
   const loggedIn = !!myWcaId;

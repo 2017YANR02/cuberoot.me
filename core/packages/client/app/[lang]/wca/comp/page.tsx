@@ -70,7 +70,7 @@ import OnThisDayModal from './_components/OnThisDayModal';
 import MonthGrid from '@/components/MonthGrid';
 import BoolToggle from '@/components/BoolToggle';
 import { useCompFollows } from '@/components/CompFollow';
-import { useAuthStore, useOwnerKey } from '@/lib/auth-store';
+import { useOwnerKey, authActions } from '@/lib/auth-store';
 import { loadRecent, recentKeyFor, type RecentEntry } from '@/lib/comp-recent';
 import './calendar_page.css';
 import './comp.css';
@@ -1366,7 +1366,7 @@ function CalendarPageInner() {
   // 比赛关注「盯一下」:登录用户跨设备同步的关注集合(server PG)。在页顶调用一次,把状态下发给
   // 模态 / 列表 / 日历条 / day-list,与首页 OngoingComps 共用同一份 server 数据。
   const { loggedIn: followLoggedIn, follows, toggle: toggleFollow } = useCompFollows();
-  const login = useAuthStore((s) => s.login);
+  const login = authActions.login;
   // 最近浏览按登录用户分桶(issue #33);ownerKey 空 = 未登录,列表区显示登录入口
   const recentOwnerKey = useOwnerKey();
   const [recent, setRecent] = useState<RecentEntry[]>([]);

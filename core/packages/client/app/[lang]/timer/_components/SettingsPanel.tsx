@@ -29,7 +29,7 @@ import { exportJson, exportSpeedstacks, importJson, inspectImportJson, listBacku
 import { exportCstimerJson } from '../_lib/storage/export_cstimer';
 import { exportSolvesCsv } from '../_lib/storage/export_csv';
 import { uploadBackup, restoreFromCloud, fetchBackupMeta } from '../_lib/storage/cloud';
-import { getSessionToken, useAuthStore, useIsAdmin } from '@/lib/auth-store';
+import { getSessionToken, useIsAdmin, useAuthUser, authActions } from '@/lib/auth-store';
 import { useRankCountry } from '../_shared/use-rank-country';
 import { type EventId } from '../_lib/types';
 
@@ -111,7 +111,7 @@ function SettingsSection({ category, activeCategory, title, children, headerCont
 export default function SettingsPanel({ onClose, event, actions, presenceControl, playersControl, mergeSlotRef, onDataReplaced }: Props) {
   const s = useSettings();
   const douyin = useDouyinToolSurface();
-  const optimalUser = useAuthStore((st) => st.user);
+  const optimalUser = useAuthUser();
   const metro = useMetronome();
   const [activeCategory, setActiveCategory] = useState<TimerSettingCategoryId>('timer');
   // Keep draft in sync when the active seed changes externally (e.g. settings reset).
@@ -129,9 +129,9 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
 
   // ── Cloud backup state ──
   const isAdmin = useIsAdmin();
-  const user = useAuthStore((st) => st.user);
+  const user = useAuthUser();
   const { accountCountry: rankAccountCountry } = useRankCountry();
-  const login = useAuthStore((st) => st.login);
+  const login = authActions.login;
   useEffect(() => {
     return () => {
       if (ioMsgTimerRef.current !== null) window.clearTimeout(ioMsgTimerRef.current);

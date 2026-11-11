@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/lib/account-api', async (original) => ({ ...await original(), ...mocks }));
 vi.mock('@/lib/social-auth', async (original) => ({ ...await original(), startSocialLogin: mocks.startSocialLogin }));
 vi.mock('@/lib/auth-store', () => ({
+  useAuthUser: () => ({ uid: mocks.uid }), getAuthUser: () => ({ uid: mocks.uid }), authActions: { loginWithWca: vi.fn(), refresh: vi.fn(), logout: vi.fn() },
   useAuthStore: Object.assign((selector: (state: unknown) => unknown) => selector({ user: { uid: mocks.uid }, loginWithWca: vi.fn(), refresh: vi.fn() }), { getState: () => ({ user: { uid: mocks.uid } }) }),
   getSessionToken: () => null, applySession: vi.fn(),
 }));

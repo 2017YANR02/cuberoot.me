@@ -22,7 +22,7 @@ import { renderCubeSVG } from '@cuberoot/visualcube';
 import BoolToggle from '@/components/BoolToggle';
 import { useT } from '@/hooks/useT';
 import { FACE_COLORS } from '@/lib/recon-utils';
-import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthUser } from '@/lib/auth-store';
 import {
   listPatternExamples, createPatternExample, updatePatternExample,
   deletePatternExample, reorderPatternExamples, type PatternExample,
@@ -114,7 +114,7 @@ export default function PatternSearchPage() {
   const workerRef = useRef<Worker | null>(null);
 
   // 示例预设(DB,管理员自维护)。null = 还没拉到 / 拉失败 → 整排不渲染
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthUser();
   const isAdmin = hasAdminAccess(user);
   const [examples, setExamples] = useState<PatternExample[] | null>(null);
   const [adminMode, setAdminMode] = useState(false);

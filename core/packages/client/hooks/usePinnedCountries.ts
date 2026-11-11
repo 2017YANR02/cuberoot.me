@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 
 import { persistItem } from '@/lib/safe-storage';
 import { PINNED_COUNTRIES_KEY, parsePinnedCountries, pinnedCountriesKey, resolvePinnedCountries, togglePinnedCountry } from '@/lib/pinned-countries';
 import { loadIpCountry } from '@/lib/ip-country';
-import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { useAuthUser, getAuthUser } from '@/lib/auth-store';
 import { loadFlagData, personFlagIso2 } from '@/lib/country-flags';
 
 const CHANGE_EVENT = 'pinned-countries-change';
@@ -58,7 +58,7 @@ export function usePinnedCountries() {
   const pins = useMemo(() => resolvePinnedCountries(raw, country, ipCountry), [raw, country, ipCountry]);
   const toggleCountry = useCallback((iso2: string) => {
     // Recheck the live session: an event from a previous account must not write its preferences.
-    if (!key || pinnedCountriesKey(useAuthStore.getState().user) !== key) return;
+    if (!key || pinnedCountriesKey(getAuthUser()) !== key) return;
     const pin = parsePinnedCountries(JSON.stringify([iso2]))[0];
     if (!pin) return;
     const next = togglePinnedCountry(read(key), wcaId ? personFlagIso2(wcaId) : '', ipCountry, pin);

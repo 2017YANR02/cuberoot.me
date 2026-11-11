@@ -17,7 +17,7 @@ import BoolToggle from '@/components/BoolToggle';
 import { Tooltip } from '@/components/Tooltip';
 import SettingsDialog from '@/components/SettingsDialog';
 import { useT } from '@/hooks/useT';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser, authActions } from '@/lib/auth-store';
 import {
   fetchNotifications, markNotificationsRead, fetchEmailNotifyPref, setEmailNotifyPref,
   type SiteNotification, type NotificationKind,
@@ -64,15 +64,15 @@ function formatWhen(iso: string): string {
 }
 
 export default function NotificationsPage() {
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthUser();
   return <NotificationsContent key={user?.uid ?? user?.wcaId ?? 'guest'} />;
 }
 
 function NotificationsContent() {
   const t = useT();
 
-  const user = useAuthStore((s) => s.user);
-  const login = useAuthStore((s) => s.login);
+  const user = useAuthUser();
+  const login = authActions.login;
   const [mounted, setMounted] = useState(false);
   const [items, setItems] = useState<SiteNotification[] | null>(null);
   const [err, setErr] = useState<string | null>(null);

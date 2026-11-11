@@ -43,7 +43,7 @@ import { SearchInput } from '@/components/SearchInput';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import './recon.css';
 import { tr } from '@/i18n/tr';
-import { useIsAdmin, useAuthUser, useAuthStore } from '@/lib/auth-store';
+import { useIsAdmin, useAuthUser, authActions } from '@/lib/auth-store';
 import { CompactSelect } from '@/components/CompactSelect';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
@@ -261,7 +261,7 @@ export default function ReconListPage() {
     return () => { active = false; };
   }, [owner, favoriteRevision]);
   const toggleFavorite = async (solve: ReconSolve) => {
-    if (!user) { useAuthStore.getState().login(); return; }
+    if (!user) { authActions.login(); return; }
     const key = `favorite:${owner}:${solve.id}`;
     if (!favorites || pendingCuration.current.has(key)) return;
     const selected = !favoriteIds.has(solve.id);
@@ -1088,7 +1088,7 @@ export default function ReconListPage() {
         />
       </div>
 
-      {favoritesOnly && !user && <button type="button" className="btn-secondary" onClick={() => useAuthStore.getState().login()}>{tr({ zh: '登录后查看收藏夹', en: 'Sign in to view favorites' })}</button>}
+      {favoritesOnly && !user && <button type="button" className="btn-secondary" onClick={() => authActions.login()}>{tr({ zh: '登录后查看收藏夹', en: 'Sign in to view favorites' })}</button>}
       {user && favorites === null && curationError && <button type="button" className="btn-secondary" onClick={() => { setCurationError(null); setFavoriteRevision(value => value + 1); }}>{tr({ zh: '重试加载收藏夹', en: 'Retry loading favorites' })}</button>}
       {waitingForContent && <ContentSkeleton variant={viewMode === 'list' ? 'table' : 'cards'} media />}
       {error && <div className="recon-error"><TriangleAlert size={16} /> {error}</div>}

@@ -2,13 +2,13 @@
 
 import { Brush, LogIn } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
-import { useAuthStore } from '@/lib/auth-store';
+import { authActions } from '@/lib/auth-store';
 
 // /paint is login-gated: drawings live in the user's cloud library (server-side,
 // visible across devices), so an account is required to use the editor at all.
 export default function PaintGate() {
   const t = useT();
-  const login = useAuthStore((s) => s.login);
+  const login = authActions.login;
   return (
     <div className="paint-gate">
       <div className="paint-gate-card">

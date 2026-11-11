@@ -9,6 +9,7 @@ vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
 vi.mock('next/navigation', () => ({ usePathname: () => '/zh/membership/subscription' }));
 vi.mock('@/lib/auth-store', () => ({
   useOwnerKey: () => mocks.owner, nextQuery: (path: string) => `?next=${encodeURIComponent(path)}`,
+  useAuthUser: () => ({ uid: 1 }), authActions: { logout: mocks.logout },
   useAuthStore: (selector: (state: unknown) => unknown) => selector({ user: { uid: 1 }, logout: mocks.logout }),
 }));
 vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh' }));

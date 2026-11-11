@@ -7,7 +7,7 @@ import AppLink from '@/components/AppLink';
 import { UserIdLabel } from '@/components/UserIdLabel';
 import { useCopy } from '@/hooks/useCopy';
 import { useT } from '@/hooks/useT';
-import { useAuthUser, useAuthStore } from '@/lib/auth-store';
+import { useAuthUser, authActions, getAuthUser } from '@/lib/auth-store';
 import MacSetupChecklist from '@/components/workspace/MacSetupChecklist';
 import RemoteAccess from './RemoteAccess';
 import DevPreview from './DevPreview';
@@ -19,7 +19,7 @@ export default function GetStartedPage() {
   const { copiedKey, copy } = useCopy();
   useEffect(() => {
     // Read the hydrated store inside the effect; useAuthUser is null on the first render.
-    if (!useAuthStore.getState().user) useAuthStore.getState().login();
+    if (!getAuthUser()) authActions.login();
   }, [user]);
   const hasId = Number.isSafeInteger(user?.uid) && (user?.uid ?? 0) > 0;
 

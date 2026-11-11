@@ -9,7 +9,8 @@ import { THEMES } from '@/lib/deskpet-themes';
 const { getMyPets, getDeskPetCatalog } = vi.hoisted(() => ({ getMyPets: vi.fn(), getDeskPetCatalog: vi.fn() }));
 vi.mock('@/lib/deskpet-api', () => ({ getMyPets, getDeskPetCatalog }));
 const auth = vi.hoisted(() => ({ admin: false }));
-vi.mock('@/lib/auth-store', () => ({ hasAdminAccess: () => auth.admin, getSessionToken: () => null, useAuthStore: Object.assign((select: (state: unknown) => unknown) => select({ user: { uid: 66 } }), { getState: () => ({ user: { uid: 66 } }), subscribe: () => () => {} }) }));
+vi.mock('@/lib/auth-store', () => ({ hasAdminAccess: () => auth.admin, getSessionToken: () => null, useAuthUser: () => ({ uid: 66 }),
+  useAuthStore: Object.assign((select: (state: unknown) => unknown) => select({ user: { uid: 66 } }), { getState: () => ({ user: { uid: 66 } }), subscribe: () => () => {} }) }));
 vi.mock('@/lib/account-api', () => ({ fetchAccountDeskPetSelection: vi.fn(), updateAccountDeskPetSelection: vi.fn() }));
 vi.mock('@/i18n/tr', () => ({ tr: (text: { en: string }) => text.en }));
 vi.mock('@/components/AppLink', () => ({ default: ({ children, prefetch: _, ...props }: { children: ReactNode; prefetch?: boolean }) => createElement('a', props, children) }));
