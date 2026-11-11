@@ -29,12 +29,18 @@ export function useCompFollows(): CompFollowState {
   useEffect(() => {
     if (!user) { setFollows(new Set()); setLoaded(true); return; }
     let on = true;
+    let revision = 0;
     // Keep the last snapshot visible while refreshing after route navigation.
-    fetchFollows()
-      .then((ids) => { if (on) setFollows(new Set(ids)); })
-      .catch(() => { /* best-effort */ })
-      .finally(() => { if (on) setLoaded(true); });
-    return () => { on = false; };
+    const refresh = () => {
+      const request = ++revision;
+      void fetchFollows()
+        .then((ids) => { if (on && request === revision) setFollows(new Set(ids)); })
+        .catch(() => { /* best-effort */ })
+        .finally(() => { if (on && request === revision) setLoaded(true); });
+    };
+    refresh();
+    window.addEventListener('competition-follows-changed', refresh);
+    return () => { on = false; window.removeEventListener('competition-follows-changed', refresh); };
   }, [user, setFollows, setLoaded]);
 
   const toggle = useCallback((id: string) => {

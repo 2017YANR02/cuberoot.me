@@ -5,6 +5,7 @@ import { CalendarDays, CalendarCheck, Loader2 } from '@app-foundation/icons/luci
 import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import { addCompetitionToCalendar, isCompetitionInCalendar, type CompetitionCalendarInput } from '@/lib/competition-calendar-event';
+import { addFollow } from '@/lib/comp-follows';
 import { tr } from '@/i18n/tr';
 import { Tooltip } from './Tooltip';
 import AppLink from './AppLink';
@@ -32,6 +33,8 @@ export function CompetitionCalendarButton({ competition }: { competition: Compet
     setStatus('busy');
     try {
       await addCompetitionToCalendar(owner, competition);
+      if (requestScope !== currentScope.current) return;
+      await addFollow(competition.id);
       if (requestScope !== currentScope.current) return;
       restoreFocus.current = document.activeElement === trigger.current;
       setStatus('done');

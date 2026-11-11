@@ -74,3 +74,19 @@ it('shows cached personal competitions during a return refresh, updates them, an
   await mount();
   expect(host.textContent).toBe('Updated competition');
 });
+
+it('refreshes stars after calendar additions and ignores older pending snapshots', async () => {
+  useAuthStore.setState({ user: initialUser });
+  let finishOldRequest!: (ids: string[]) => void;
+  api.follows.mockImplementationOnce(() => new Promise<string[]>(resolve => { finishOldRequest = resolve; }));
+  function Stars() {
+    return createElement('span', null, [...useCompFollows().follows].join(','));
+  }
+  root = createRoot(host);
+  await act(async () => root!.render(createElement(Stars)));
+  api.follows.mockResolvedValueOnce(['HangzhouWinter2026']);
+  await act(async () => window.dispatchEvent(new Event('competition-follows-changed')));
+  expect(host.textContent).toBe('HangzhouWinter2026');
+  await act(async () => finishOldRequest([]));
+  expect(host.textContent).toBe('HangzhouWinter2026');
+});
