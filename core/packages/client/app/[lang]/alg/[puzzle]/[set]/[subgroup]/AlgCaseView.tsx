@@ -300,6 +300,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
   const [composedByOri, setComposedByOri] = useState<Record<number, AlgEntry>>({});
   const [validationInvalid, setValidationInvalid] = useState<AlgInvalidMark[]>([]);
   const [validationTriggerContainer, setValidationTriggerContainer] = useState<HTMLDivElement | null>(null);
+  const [scrambleSettingsContainer, setScrambleSettingsContainer] = useState<HTMLDivElement | null>(null);
   const [selectedAlgByOri, setSelectedAlgByOri] = useState<Record<number, number | 'scramble'>>({});
   const [expandedAlgByOri, setExpandedAlgByOri] = useState<Record<number, number | null>>({});
   const [playRequestByOri, setPlayRequestByOri] = useState<Record<number, number>>({});
@@ -589,6 +590,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
           </Link>
         </PageHeading>
         <SettingsPopover label={tr({ zh: '公式设置', en: 'Algorithm settings' })}>
+          {m && <div ref={setScrambleSettingsContainer} />}
           <label className="alg-view-angle">
             <span>{tr({ zh: '显示', en: 'Display' })}</span>
             <select className="alg-header-select" value={previewMode}
@@ -725,6 +727,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
             } } : { kind: 'link', href: hrefFor }}
             scrambleKind={scrambleKind}
             onScrambleKindChange={setScrambleKind}
+            scrambleSettingsContainer={scrambleSettingsContainer}
             viewAngle={effectiveViewAngle}
             orientation={effectiveOrientation}
             algsAfter={(!editor || effectiveViewAngle !== 'default') ? renderCommunityAlgs(!editor) : undefined}

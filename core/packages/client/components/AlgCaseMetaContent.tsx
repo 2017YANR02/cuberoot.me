@@ -12,6 +12,7 @@ import { caseAlgIssue, caseCoepEntry } from '@/lib/alg_case_alignment';
  * 所以 `byNo` 一定查得到(查不到只显示编号,不猜)。背景见 AlgCaseMetaModal 顶部注释。
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { Copy, Check, HelpCircle, Pin, Shuffle } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
@@ -153,6 +154,7 @@ interface Props {
   /** 详情页才传:选择状态由页级 nuqs 持有;训练弹窗仍只显示默认打乱。 */
   scrambleKind?: ScrambleKind;
   onScrambleKindChange?: (kind: ScrambleKind) => void;
+  scrambleSettingsContainer?: HTMLElement | null;
   /** 顶层 case 的观察角度；详情页传入，训练弹窗沿用库里的默认角度。 */
   viewAngle?: CaseViewAngle;
   /** 详情页选择的魔方拿法；训练弹窗沿用公式库默认拿法。 */
@@ -179,6 +181,7 @@ export default function AlgCaseMetaContent({
   algRowWrap = (row) => row,
   scrambleKind = 'inv',
   onScrambleKindChange,
+  scrambleSettingsContainer,
   viewAngle = 'default',
   orientation,
   playable = false,
@@ -370,22 +373,25 @@ export default function AlgCaseMetaContent({
   const coep = caseCoepEntry(caseObj);
   const scrambleKindSelect = onScrambleKindChange
     && (scrambleKinds.length > 1 || (setupEditor && editing)) ? (
-      <select
-        className="alg-meta-scramble-kind"
-        value={editingSetup ? 'setup' : selectedScrambleKind}
-        onClick={event => event.stopPropagation()}
-        onChange={event => {
-          const kind = event.target.value;
-          setShowGeneratedScramble(kind !== 'setup');
-          if (kind !== 'setup') onScrambleKindChange(kind as ScrambleKind);
-        }}
-        aria-label={tr({ zh: '打乱类型', en: 'Scramble type' })}
-      >
-        {setupEditor && editing && <option value="setup">{tr({ zh: '原始', en: 'Original' })}</option>}
-        {scrambleKinds.map(kind => (
-          <option key={kind.id} value={kind.id}>{kind.label()}</option>
-        ))}
-      </select>
+      <label className="alg-view-angle">
+        <span>{tr({ zh: '打乱', en: 'Scramble' })}</span>
+        <select
+          className="alg-header-select"
+          value={editingSetup ? 'setup' : selectedScrambleKind}
+          onClick={event => event.stopPropagation()}
+          onChange={event => {
+            const kind = event.target.value;
+            setShowGeneratedScramble(kind !== 'setup');
+            if (kind !== 'setup') onScrambleKindChange(kind as ScrambleKind);
+          }}
+          aria-label={tr({ zh: '打乱', en: 'Scramble' })}
+        >
+          {setupEditor && editing && <option value="setup">{tr({ zh: '原始', en: 'Original' })}</option>}
+          {scrambleKinds.map(kind => (
+            <option key={kind.id} value={kind.id}>{kind.label()}</option>
+          ))}
+        </select>
+      </label>
     ) : null;
   const relationCards: AlgCaseRelationCardItem[] = [
     ...family.map(f => {
@@ -428,7 +434,6 @@ export default function AlgCaseMetaContent({
             <h3 aria-label={tr({ zh: '打乱', en: 'Scramble' })}>
               <Shuffle size={16} aria-hidden="true" />
             </h3>
-            {scrambleKindSelect}
           </>
         )}
         {setupEditor && <div className="alg-meta-setup-editor" hidden={!editingSetup}>{setupEditor}</div>}
@@ -439,7 +444,6 @@ export default function AlgCaseMetaContent({
                 <span role="img" aria-label={tr({ zh: '打乱', en: 'Scramble' })}>
                   <Shuffle size={16} aria-hidden="true" />
                 </span>
-                {scrambleKindSelect}
               </span>
             )}
             label={scramble.fromInvCase && (!onScrambleKindChange || selectedScrambleKind === 'cstimer')
@@ -458,7 +462,6 @@ export default function AlgCaseMetaContent({
             <h3 aria-label={tr({ zh: '打乱', en: 'Scramble' })}>
               <Shuffle size={16} aria-hidden="true" />
             </h3>
-            {scrambleKindSelect}
             <span className="alg-meta-scramble-loading">
               {tr({ zh: '正在生成…', en: 'Generating…' })}
             </span>
@@ -470,6 +473,7 @@ export default function AlgCaseMetaContent({
 
   return (
     <>
+      {scrambleSettingsContainer && createPortal(scrambleKindSelect, scrambleSettingsContainer)}
       {!playable && <AlgCaseRelationCards
         items={relationCards}
         puzzle={puzzle}

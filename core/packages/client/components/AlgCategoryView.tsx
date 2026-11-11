@@ -1111,6 +1111,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     };
   };
   const buildPdfSheet = () => algSheetFromCases(buildExportOptions());
+  const f2lSlots = data && !showSubgroupPicker && puzzleParam === '3x3' && (set === 'f2l' || set === 'adv-f2l')
+    ? (data.cases[0]?.oriNames ?? []).map(shortOriName)
+    : [];
 
   return (
     <div className="alg-root" ref={motionRoot}
@@ -1416,29 +1419,25 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             </button>
           </>
         )}
+        {f2lSlots.length > 1 && (
+          <F2lSlotSelector
+            className="alg-category-slot-picker"
+            ariaLabel={tr({ zh: '槽位', en: 'Slot' })}
+            selected={[f2lSlots[activeOri]]}
+            disabledSlots={['BL', 'BR', 'FL', 'FR'].filter(slot => !f2lSlots.includes(slot))}
+            onSelect={slot => {
+              const index = f2lSlots.indexOf(slot);
+              if (index < 0) return;
+              setActiveOri(index);
+              setCaseOri({});
+            }}
+          />
+        )}
       </div>
 
       {data && !showSubgroupPicker && (() => {
         const oriNames = data.cases[0]?.oriNames;
-        if (!oriNames || oriNames.length <= 1) return null;
-        if (puzzleParam === '3x3' && (set === 'f2l' || set === 'adv-f2l')) {
-          const slots = oriNames.map(shortOriName);
-          return (
-            <div className="alg-ori-tabs alg-ori-tabs-global">
-              <F2lSlotSelector
-                ariaLabel={tr({ zh: '槽位', en: 'Slot' })}
-                selected={[slots[activeOri]]}
-                disabledSlots={['BL', 'BR', 'FL', 'FR'].filter(slot => !slots.includes(slot))}
-                onSelect={slot => {
-                  const index = slots.indexOf(slot);
-                  if (index < 0) return;
-                  setActiveOri(index);
-                  setCaseOri({});
-                }}
-              />
-            </div>
-          );
-        }
+        if (!oriNames || oriNames.length <= 1 || f2lSlots.length > 1) return null;
         return (
           <div className="alg-ori-tabs alg-ori-tabs-global">
             {oriNames.map((name, i) => (

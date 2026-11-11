@@ -95,6 +95,10 @@
   gap: 16px;
   flex-wrap: wrap;
 }
+.f2l-slot-selector.alg-category-slot-picker {
+  margin-inline-start: auto;
+  flex-shrink: 0;
+}
 .alg-puzzle-back-row {
   flex-basis: 100%;
 }
@@ -385,6 +389,12 @@
   display: flex;
   align-items: center;
   gap: 6px;
+}
+.alg-cat-header:has(.alg-category-slot-picker) + .alg-subgroup {
+  padding-top: 0;
+}
+.alg-cat-header:has(.alg-category-slot-picker) + .alg-subgroup > .alg-subgroup-title {
+  margin-top: 0;
 }
 .alg-ep-options,
 .alg-ep-parity-section {
@@ -2216,6 +2226,9 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   min-width: 0;
   --alg-case-detail-formula-size: 1.125rem;
   --alg-case-detail-formula-indent: 32px;
+}
+.alg-meta-case-algs.alg-case-detail-ori-algs {
+  --alg-case-detail-formula-indent: 0px;
 }
 .alg-case-detail-ori-algs > .alg-case-standard {
   display: grid;
