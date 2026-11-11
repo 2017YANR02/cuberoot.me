@@ -90,7 +90,7 @@
   font-variant-numeric: tabular-nums;
 }
 .rs-card-footer > span { white-space: nowrap; }
-.rs-card-footer button,
+.rs-card-similar,
 .rs-browser-reset {
   appearance: none;
   border: 0;
@@ -123,10 +123,12 @@
 }
 .rs-browser-more:hover { border-color: var(--accent); color: var(--accent); }
 .rs-browser-summary a:hover,
-.rs-card-footer button:hover,
+.rs-card-similar:hover,
 .rs-browser-reset:hover { text-decoration: underline; text-underline-offset: 3px; }
-.rs-browser button:focus-visible,
-.rs-browser select:focus-visible,
+.rs-card-similar:focus-visible,
+.rs-browser-reset:focus-visible,
+.rs-browser-more:focus-visible,
+.rs-browser-select:focus-visible,
 .rs-browser a:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
 .rs-browser-empty { padding: 3rem 0; text-align: center; color: var(--muted-foreground); }
 @media (max-width: 760px) {

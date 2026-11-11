@@ -407,7 +407,7 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
         {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
         {browse && <div className="rs-card-footer">
           {m?.cd && <span>{formatDateRangeIso(m.cd.slice(0, 10), cdEndIso(m.cd))}</span>}
-          {onSimilar && <button type="button" onClick={onSimilar}>{tr({ zh: '查看同类', en: 'Similar' })}</button>}
+          {onSimilar && <button type="button" className="rs-card-similar" onClick={onSimilar}>{tr({ zh: '查看同类', en: 'Similar' })}</button>}
         </div>}
       </div>
     </div>
