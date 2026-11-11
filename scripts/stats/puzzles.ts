@@ -5,6 +5,7 @@ import { analyzer, appendData, exe, exists, fileSize, ids, jobDir, lineCount, li
 import { grindSq1Monsters } from './sq1-grind.js';
 import { runSq1Wca } from './sq1-wca.js';
 import { runSq1Slash } from './sq1-slash.js';
+import { puzzleInputFailures, puzzleScrambleFromTsv, repairPuzzleCorpus } from './puzzle-corpus.js';
 
 type Puzzle = '222' | 'pyraminx' | 'skewb' | 'clock' | 'sq1';
 const defaultPuzzles: Puzzle[] = ['222', 'pyraminx', 'skewb', 'clock', 'sq1'];
@@ -42,15 +43,23 @@ async function ensureTsv(): Promise<string> {
   await rename(`${tsv}.tmp`, tsv);
   return tsv;
 }
-async function extractCorpus(selected: Puzzle[], maxNew = 0): Promise<Map<Puzzle, number>> {
+export async function extractCorpus(selected: Puzzle[], maxNew = 0): Promise<Map<Puzzle, number>> {
   const tsv = await ensureTsv();
   const specs = selected.map(key => ({ key, event: key === 'sq1' ? 'sq1' : registered[key].event, file: join(puzzleDir, key, 'scrambles.txt') }));
   const known = new Map<Puzzle, Set<string>>();
   const pending = new Map<Puzzle, string[]>();
+  const legacy = new Map<Puzzle, Map<string, string>>();
+  const repairs = new Map<Puzzle, Map<string, { before: string; after: string }>>();
   for (const spec of specs) {
     await mkdir(join(puzzleDir, spec.key), { recursive: true });
     known.set(spec.key, await ids(spec.file));
     pending.set(spec.key, []);
+    const escaped = new Map<string, string>();
+    if (await exists(spec.file)) for await (const row of lines(spec.file)) {
+      const comma = row.indexOf(',');
+      if (comma > 0 && row.slice(comma + 1).includes('\\')) escaped.set(row.slice(0, comma), row.slice(comma + 1));
+    }
+    legacy.set(spec.key, escaped); repairs.set(spec.key, new Map());
   }
   let columns: Record<string, number> | undefined;
   for await (const row of lines(tsv)) {
@@ -64,13 +73,30 @@ async function extractCorpus(selected: Puzzle[], maxNew = 0): Promise<Map<Puzzle
       if (cells[columns.event_id] !== spec.event) continue;
       const id = cells[columns.id];
       const list = pending.get(spec.key)!;
-      if (!id || known.get(spec.key)!.has(id) || (maxNew && list.length >= maxNew)) continue;
-      list.push(`${id},${(cells[columns.scramble] ?? '').trim()}`);
+      if (!id) continue;
+      const raw = cells[columns.scramble] ?? '';
+      if (known.get(spec.key)!.has(id)) {
+        // Only repair the old verbatim-TSV importer defect, never replace a
+        // different historical scramble (and reuse its cached solution) by ID.
+        if (legacy.get(spec.key)!.get(id) === raw.trim()) {
+          const corrected = puzzleScrambleFromTsv(raw);
+          if (corrected !== raw.trim()) repairs.get(spec.key)!.set(id, { before: raw.trim(), after: corrected });
+        }
+        continue;
+      }
+      if (maxNew && list.length >= maxNew) continue;
+      let scramble: string;
+      try { scramble = puzzleScrambleFromTsv(raw); }
+      catch (error) { throw Error(`[${spec.key}] invalid TSV scramble ${id}`, { cause: error }); }
+      list.push(`${id},${scramble}`);
       known.get(spec.key)!.add(id);
     }
   }
   const counts = new Map<Puzzle, number>();
   for (const spec of specs) {
+    const result = join(puzzleDir, spec.key, spec.key === 'sq1' ? 'sq1_wca_exact.csv' : `${spec.key}.csv`);
+    await repairPuzzleCorpus(spec.file, repairs.get(spec.key)!, [result]);
+    if (repairs.get(spec.key)!.size) console.log(`[${spec.key}] 修复 ${repairs.get(spec.key)!.size} 条 TSV 转义输入；对应解析失败记录已重新列为待算`);
     const rows = pending.get(spec.key)!;
     counts.set(spec.key, rows.length);
     if (rows.length) {
@@ -172,6 +198,10 @@ export async function runPuzzles(selected: string[], maxNew = 0, options: Puzzle
     }
     taskProgress('puzzles:solve', ++solvedPuzzles, keys.length);
   }
+  }
+  for (const key of keys) {
+    const failures = await puzzleInputFailures(join(puzzleDir, key, key === 'sq1' ? 'sq1_wca_exact.csv' : `${key}.csv`));
+    if (failures) partial.push(`${key} still has ${failures} input parse failures`);
   }
   if (keys.includes('222') || keys.includes('pyraminx')) {
     await runTs(join(jobDir, 'src', 'build_puzzle_metrics.mts'), keys.filter(key => key === '222' || key === 'pyraminx'));

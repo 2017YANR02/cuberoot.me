@@ -20,6 +20,8 @@ pnpm stats:scramble:local --jobs puzzles --puzzles sq1
 
 222、金字塔、斜转及 clock 从 `incremental/tsv/Scrambles.tsv` 按 event_id 增量抽取语料，按 ID 差集分块调用原生分析器或 TS clock analyzer，逐块校验后追加 CSV。222/金字塔的多口径步数由 `src/build_puzzle_metrics.mts` 增量预算；`build_puzzle_dist.ts`、`build_puzzle_examples.ts`、`build_puzzle_first_appearance.ts` 消费结果。前三者的最优等价打乱通过分析器的 `PUZZLE_EMIT_SOLN=1` 解列产生。新增 puzzle 同步更新 `scripts/stats/puzzles.ts` 注册表及 `src/build_puzzle_dist.ts`。
 
+导入五个项目（含 SQ1）时统一在 TSV 边界解码一次 MySQL 转义，将换行/制表符整理为单行空白；未知转义和控制字符明确报错，不反复解码或随意删字符。已有语料只有与当前 TSV 原始字段完全相同、能证明来自旧导入缺陷的记录才自动修复；修复证据保留在 `scrambles.txt.input-repairs.jsonl`。对应解析失败的 `-` 缓存先失效，再改输入，使下一次获准计算按 ID 补算；保留成功结果和超时 `M`。统计摘要必须分别报告解析失败和搜索超时，不能把有 ID 当作已经求解成功。输入修复本身不需要加载求解表，也不新增计算授权。
+
 ### SQ1 精确双口径
 
 SQ1 使用统一 `table_generator` 产出的 `sq1_wca_jsqfull.bin`（13,005,619,200 字节）。TypeScript 管道按 ID 续跑 WCA 12c4 精确解，并从最优解派生 slash 下界；仅 `W=2s−1` 的歧义态需要 via-WCA 搜索，超时残留由 `sq1_slash_mitm` 判定。CSV 分别为 `sq1_wca_exact.csv` 和 `sq1_slash_exact.csv`，后者同时写 `sq1_slash_meta.json` 的 `fallback/provisional`。分布和示例构建只统计可证结果，未解态保留明确部分状态。
