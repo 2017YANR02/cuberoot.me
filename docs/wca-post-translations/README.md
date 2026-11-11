@@ -23,7 +23,7 @@ GitHub .github/workflows/wca_news_drift.yml 每日 08:23 UTC 和手动运行 che
 
 原 incidents:<id> 与 disciplinary:/posts/<slug> 处理规则见 ../wca-log-translations/daily-processing.md。新增 posts:/posts/<slug> 进入本目录；同 URL 纪律公告沿用原纪律 key。保留 Issue 的 wca-news-drift key/hash 标记，按版本去重；修订前归档旧译文，新来源保存新快照，禁止重置基线吞掉变更。当前抓取失败、缺失旧 key、分页移动都禁止发布部分结果。
 
-新指纹已有全文译文则复用，不能把基线当作翻译完成清单。导入脚本读取 progress.snapshot；新增来源须先保存完整快照并更新该引用，再导入；不要把旧版本强行匹配新 hash。完成翻译后重建网站数据，按授权发布并验收后才关闭对应 Issue。
+新指纹已有全文译文则复用，不能把基线当作翻译完成清单。导入脚本读取 progress.snapshot；新增来源须先保存完整快照并更新该引用，再导入；不要把旧版本强行匹配新 hash。完成翻译后重建网站数据，按授权发布并验收后才勾选汇总中的对应条目；整张汇总全部完成才关闭 Issue。监测器仅归档已迁入汇总的旧单条通知，不能把这种归档当作译文已经完成。
 
 现有每日处理任务继续使用，不新建定时任务。网站生成文件由 build-wca-posts.mts 产生，禁止手工改写。所有进行中的网页及译文改动保持未提交。
 
