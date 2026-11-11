@@ -241,8 +241,6 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     grid-auto-rows: max-content;
     gap: 1rem;
     min-height: 0;
-    max-height: var(--home-pinned-recon-height);
-    overflow-y: auto;
 }
 .landing-page .landing-training-links {
     display: flex;
@@ -282,7 +280,6 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     box-sizing: border-box;
 }
 .landing-pinned-recons .recon-card-media { flex-shrink: 0; }
-.landing-pinned-recons .recon-card-body { overflow-y: auto; }
 .landing-slot-message { color: var(--muted-foreground); }
 .landing-pinned-recons > .landing-slot-message { grid-column: 1 / -1; align-self: center; }
 .skeleton-block.landing-widget-skeleton {

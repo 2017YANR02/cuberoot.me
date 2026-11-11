@@ -1,0 +1,144 @@
+.recent-scrambles-page {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 1.75rem 1.25rem 4rem;
+}
+
+.recent-scrambles-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.rs-browser { min-width: 0; }
+.rs-browser-toolbar { scroll-margin-top: 1rem; }
+.rs-browser-primary,
+.rs-browser-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+.rs-browser-filters { margin-top: 0.75rem; }
+.rs-browser-select {
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  min-height: 36px;
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+  max-width: 100%;
+}
+.rs-browser-range {
+  margin-inline-start: auto;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rs-browser-summary {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin: 1.75rem 0 0.85rem;
+}
+.rs-browser-summary h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.rs-browser-summary > span,
+.rs-browser-pagination > span,
+.rs-browser-note {
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+.rs-browser-summary > a {
+  margin-inline-start: auto;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+.rs-browser-note { margin: 0 0 1rem; line-height: 1.5; }
+.rs-browser .rs-browser-cards { gap: 1rem; }
+.rs-browser .rs-scard {
+  padding: 1rem;
+  gap: 1rem;
+  min-height: 168px;
+  align-items: center;
+}
+.rs-browser .rs-scard-body { gap: 0.65rem; }
+.rs-browser .rs-scard-rtag { font-size: 0.85rem; color: var(--foreground); }
+.rs-browser .rs-scard-rprob { font-size: 0.7rem; }
+.rs-browser .rs-scard-scramble { font-size: 0.8rem; line-height: 1.6; }
+.rs-browser .rs-row-name { font-size: 0.78rem; }
+.rs-browser .rs-row-sub { font-size: 0.7rem; }
+.rs-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.6rem;
+  font-size: 0.7rem;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.rs-card-footer > span { white-space: nowrap; }
+.rs-card-footer button,
+.rs-browser-reset {
+  appearance: none;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  padding: 0.25rem 0;
+  font: inherit;
+  cursor: pointer;
+}
+.rs-browser-reset { font-size: 0.8rem; }
+.rs-browser-source { margin: -0.25rem 0 0.85rem; }
+.rs-browser-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.75rem;
+}
+.rs-browser-more {
+  appearance: none;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.6rem 1.25rem;
+  border: 1px solid var(--border-default);
+  border-radius: 9px;
+  background: var(--background);
+  color: var(--foreground);
+  cursor: pointer;
+}
+.rs-browser-more:hover { border-color: var(--accent); color: var(--accent); }
+.rs-browser-summary a:hover,
+.rs-card-footer button:hover,
+.rs-browser-reset:hover { text-decoration: underline; text-underline-offset: 3px; }
+.rs-browser button:focus-visible,
+.rs-browser select:focus-visible,
+.rs-browser a:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.rs-browser-empty { padding: 3rem 0; text-align: center; color: var(--muted-foreground); }
+@media (max-width: 760px) {
+  .rs-browser .rs-browser-cards { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .recent-scrambles-page { padding: 1.25rem 0.85rem 3rem; }
+  .recent-scrambles-page-header { margin-bottom: 1.25rem; }
+  .rs-browser-range { flex-basis: 100%; margin: 0.25rem 0 0; }
+  .rs-browser-summary { margin-top: 1.25rem; }
+  .rs-browser .rs-scard { padding: 0.85rem 0.7rem; gap: 0.7rem; }
+  .rs-browser .rs-scard-rtag { font-size: 0.78rem; }
+  .rs-browser .rs-scard-scramble { font-size: 0.75rem; }
+  .rs-browser-pagination { flex-wrap: wrap; }
+}

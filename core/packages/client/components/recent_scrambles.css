@@ -20,6 +20,19 @@
 
 .rs-topbar, .rs-head, .rs-body { display: contents; }
 
+.rs-all-link {
+  order: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+.rs-all-link:hover { color: var(--accent); }
+.rs-cards, .rs-empty, .rs-rare-more { order: 2; }
+
 .rs-title {
   font-size: 0.95rem;
   font-weight: 700;

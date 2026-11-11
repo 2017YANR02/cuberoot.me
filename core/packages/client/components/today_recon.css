@@ -17,7 +17,7 @@
 
 .tr-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.6rem;
 }
 .tr-title {
@@ -25,10 +25,13 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--foreground);
-  margin-right: auto;
 }
 .tr-all {
-  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   color: var(--muted-foreground);
   text-decoration: none;
   transition: color 0.12s;

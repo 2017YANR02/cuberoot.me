@@ -20,6 +20,7 @@ import { useRetainedState } from '@/hooks/useRetainedState';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import AppLink from '@/components/AppLink';
+import { ArrowRight } from 'lucide-react';
 import { buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
@@ -38,8 +39,14 @@ import { eventDisplayName, wcaToReconEvent } from '@/lib/wca-events';
 import './recent_scrambles.css';
 import './scroll_panel.css';
 import { tr } from '@/i18n/tr';
+import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryStates } from 'nuqs';
+import { useUrlSubsetSelection } from '@/components/SubsetColorPicker/SubsetColorPicker';
+import LazyVisible from '@/components/LazyVisible';
+import { diversifyRecentScrambles, matchesRecentMoves } from '@/lib/recent-scramble-selection';
+import { fetchByDifficulty, type ByDifficultyResult } from '@/lib/scramble-by-difficulty';
+import { usePageScrollRestoration } from '@/hooks/usePageScrollRestoration';
 
-interface Props { lang: 'zh' | 'en' }
+interface Props { lang: 'zh' | 'en'; standalone?: boolean }
 
 interface ScrMeta { ci: string; cn: string; cd: string; r: string; g: string; n: number; e: string; x?: 0 | 1 }
 interface RecentScramblesJson {
@@ -88,7 +95,6 @@ function cdEndIso(cd: string): string {
 }
 
 // 本批全部打乱来源比赛的日期跨度:最早开始日 ~ 最晚结束日(跨 333 与其它项目两份 meta)。
-// 本栏标题紧挨着,年份是噪音 -> 掐掉打头的 "YYYY-"(跨年才会剩下结束日的年份,不去,消歧义)。
 function batchDateRange(
   data: RecentScramblesJson | null,
   eventsJson: RecentScramblesEventsJson | null,
@@ -106,7 +112,7 @@ function batchDateRange(
   if (data?.meta) for (const k in data.meta) consider(data.meta[k].cd);
   if (eventsJson?.meta) for (const k in eventsJson.meta) consider(eventsJson.meta[k].cd);
   if (!minStart) return null;
-  return formatDateRangeIso(minStart, maxEnd).replace(/^\d{4}-/, '');
+  return formatDateRangeIso(minStart, maxEnd);
 }
 
 // 紧凑数字(960000→960k)。
@@ -178,7 +184,7 @@ interface RareEntry { id: string; uiVariant: string; metric: string; step: numbe
 // 是用户显式选择的「任一中性视角下最稀有」口径)。同一打乱(id)按 id 去重保留最稀有那次,
 // 按概率升序返回。UI 层 variant(块族归并为 'block')。
 function collectRareScrambles(
-  data: RecentScramblesJson, dist: DistributionJson, threshold: number, subsetKey: string | null,
+  data: RecentScramblesJson, dist: DistributionJson, threshold: number, subsetKey: string | null, deduplicate = true,
 ): RareEntry[] {
   const wcaVars = dist.sets?.wca?.variants;
   if (!wcaVars || !data.rank) return [];
@@ -213,8 +219,9 @@ function collectRareScrambles(
           if (p >= threshold) continue;
           const step = Number(stepStr);
           for (const [id, color] of entries) {
-            const prev = best.get(id);
-            if (!prev || p < prev.p) best.set(id, { id, uiVariant, metric, step, color, subsetKey: sk, p });
+            const key = deduplicate ? id : `${id}:${uiVariant}:${metric}`;
+            const prev = best.get(key);
+            if (!prev || p < prev.p) best.set(key, { id, uiVariant, metric, step, color, subsetKey: sk, p });
           }
         }
       }
@@ -247,7 +254,7 @@ function rarityTag(uiVariant: string, metric: string, step: number, isZh: boolea
   const vl = variantLabel(uiVariant, isZh);
   const sl = stageLabel(metric, isZh);
   const head = vl === sl ? vl : `${vl} ${sl}`;
-  return `${head} ${tr({ zh: `${step}步`, en: `${step}f` })}`;
+  return `${head} ${tr({ zh: `${step}步`, en: `${step} moves` })}`;
 }
 
 // 步数下拉选项标签(zh「N 步」/ en「N」)。tr 包住避免内联 isZh 文案三元。
@@ -332,7 +339,7 @@ function CompSource({ m, lp, isZh, row }: { m: RecentScrMeta | ScrMeta; lp: stri
 
 // 统一打乱小卡(2 列网格单元):魔方图 + 打乱记号 + 比赛来源,可选左上角底色点。
 // 整卡非单一 <a>(内部「大图 / analyzer / gen」三个并列链接,禁嵌套),与原 hero 同结构。
-function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors, dotTitle, rarity, optimal, analysis }: {
+function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors, dotTitle, rarity, optimal, analysis, browse, onSimilar }: {
   event: string;
   scramble: string;
   m?: RecentScrMeta | ScrMeta;
@@ -349,6 +356,8 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
   // 显示的是最优等态打乱(非该场原打乱的记号)→ 悬停说明,免得被当成比赛原打乱。
   optimal?: boolean;
   analysis?: { variant: string; metric: string; step: number | null; prob?: string };
+  browse?: boolean;
+  onSimilar?: () => void;
 }) {
   const dotList = dotColors ?? (color ? [color] : []);
   const describeSource = (lang: 'zh' | 'en') => {
@@ -378,13 +387,15 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
           </AppLink>
         )}
         </div>
-        <ScramblePreview2D event={event} scramble={scramble} size={58} fullSizeLink linkTitle={tr({ zh: '查看大图', en: 'View full size' })} />
+        <LazyVisible inline initiallyVisible={!browse} minHeight={event === 'sq1' ? 116 : 87} style={{ width: event === 'sq1' ? 58 : 116 }}>
+          <ScramblePreview2D event={event} scramble={scramble} size={58} fullSizeLink linkTitle={tr({ zh: '查看大图', en: 'View full size' })} />
+        </LazyVisible>
       </div>
       <div className="rs-scard-body">
         {rarity && (
           <div className="rs-scard-rarity">
             <span className="rs-scard-rtag">{rarity.tag}</span>
-            <span className="rs-scard-rprob">{rarity.prob}</span>
+            {rarity.prob && <span className="rs-scard-rprob">{rarity.prob}</span>}
           </div>
         )}
         <Link
@@ -394,12 +405,16 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
           title={optimal ? tr({ zh: '最优等态打乱:与该场原打乱同一魔方态,步数最短', en: 'Optimal equivalent scramble — same cube state as the original, fewest moves' }) : undefined}
         >{scramble}</Link>
         {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
+        {browse && <div className="rs-card-footer">
+          {m?.cd && <span>{formatDateRangeIso(m.cd.slice(0, 10), cdEndIso(m.cd))}</span>}
+          {onSimilar && <button type="button" onClick={onSimilar}>{tr({ zh: '查看同类', en: 'Similar' })}</button>}
+        </div>}
       </div>
     </div>
   );
 }
 
-export default function RecentScrambles({ lang }: Props) {
+export default function RecentScrambles({ lang, standalone = false }: Props) {
   const isZh = lang === 'zh';
   const lp = langPrefix(lang);
   const [data, setData] = useRetainedState<RecentScramblesJson | null | undefined>('home:scrambles', undefined);
@@ -489,7 +504,9 @@ export default function RecentScrambles({ lang }: Props) {
   const dateRange = batchDateRange(data ?? null, eventsJson);
 
   // 主数据到达前保留与成品区块一致的几何尺寸，避免动态 chunk 已到、JSON 未到时先塌陷。
-  if (data === undefined || dist === undefined) return <div className="recent-scrambles recent-scrambles--loading" data-tour="recent-scrambles" aria-hidden="true" />;
+  if (data === undefined || dist === undefined) return standalone
+    ? <p className="rs-browser-note" role="status">{tr({ zh: '正在加载近期打乱…', en: 'Loading recent scrambles…' })}</p>
+    : <div className="recent-scrambles recent-scrambles--loading" data-tour="recent-scrambles" aria-hidden="true" />;
   if (availableEvents.size === 0) return <p className="landing-slot-message">{tr({ zh: '暂无近期打乱', en: 'No recent scrambles available' })}</p>;
 
   const curEvent = availableEvents.has(event) ? event : (availableEvents.has('333') ? '333' : [...availableEvents][0]);
@@ -503,6 +520,8 @@ export default function RecentScrambles({ lang }: Props) {
     })),
   }];
 
+  if (standalone) return <RecentScramblesBrowser data={data} dist={dist} eventsJson={eventsJson} isZh={isZh} lp={lp} groups={pickerGroups} dateRange={dateRange} />;
+
   return (
     <div
       className="recent-scrambles"
@@ -512,14 +531,228 @@ export default function RecentScrambles({ lang }: Props) {
       onTouchStart={loadExtras}
     >
       <div className="rs-topbar">
-        <span className="rs-title" title={dateRange || undefined}>{tr({ zh: '打乱', en: 'Scrambles' })}</span>
+        {!standalone && <span className="rs-title" title={dateRange || undefined}>{tr({ zh: '打乱', en: 'Scrambles' })}</span>}
         <PuzzlePicker showArrow={false} isZh={isZh} selectedEvent={curEvent} groups={pickerGroups} onSelect={setEvent} />
+        {!standalone && <AppLink href="/scramble/recent" prefetch={false} className="rs-all-link" aria-label={tr({ zh: '查看全部近期打乱', en: 'View all recent scrambles' })}><ArrowRight size={18} aria-hidden="true" /></AppLink>}
       </div>
       {curEvent === '333'
         ? <Recent333Body data={data} dist={dist} eventsJson={eventsJson} isZh={isZh} lp={lp} />
         : <RecentEventBody event={curEvent} json={eventsJson} isZh={isZh} lp={lp} />}
     </div>
   );
+}
+
+// Only mounted by the standalone page: URL filters do not affect the homepage.
+function RecentScramblesBrowser({ data, dist, eventsJson, isZh, lp, groups, dateRange }: {
+  data: RecentScramblesJson | null;
+  dist: DistributionJson | null;
+  eventsJson: RecentScramblesEventsJson | null;
+  isZh: boolean;
+  lp: string;
+  groups: readonly PuzzlePickerGroup[];
+  dateRange: string | null;
+}) {
+  const [query, setQuery] = useQueryStates({
+    event: parseAsString.withDefault('333'),
+    view: parseAsStringEnum(['featured', 'rare', 'custom']).withDefault('featured'),
+    method: parseAsString.withDefault('std'),
+    stage: parseAsString.withDefault('cross'),
+    colors: parseAsString.withDefault('BGORWY'),
+    moves: parseAsInteger,
+    match: parseAsStringEnum(['max', 'exact']).withDefault('max'),
+    count: parseAsInteger.withDefault(24),
+    scope: parseAsStringEnum(['recent', 'archive']).withDefault('recent'),
+    page: parseAsInteger.withDefault(1),
+  });
+  usePageScrollRestoration(true, 'recent-scroll', JSON.stringify(query));
+  const update = (patch: Partial<typeof query>) => { void setQuery({ ...patch, count: 24, page: 1 }); };
+  const sel = useUrlSubsetSelection('cn', query.colors, colors => update({ colors: colors ?? 'BGORWY' }));
+  const event = groups[0].items.some(item => item.id === query.event) ? query.event : '333';
+  const view = query.view === 'rare' && (event !== '333' || !dist) ? 'featured' : query.view;
+  const custom = view === 'custom';
+  const methods = useMemo(() => uiVariantOptions(v => {
+    const rank = data?.rank[v];
+    return !!rank && Object.values(rank).some(subsets => Object.values(subsets).some(steps => Object.values(steps).some(rows => rows.length)));
+  }).filter(v => v !== LENGTH_VARIANT), [data]);
+  const method = methods.includes(query.method) ? query.method : (methods[0] ?? 'std');
+  const stagesOf = (v: string) => uiStagesOf(v).filter(stage => {
+    const ref = variantDataRef(v, stage);
+    return !!data?.rank[ref.variant]?.[ref.recentMetric];
+  });
+  const stages = stagesOf(method);
+  const stage = stages.includes(query.stage) ? query.stage : (stages[0] ?? 'cross');
+  const subset = method === WHOLE_SOLVE ? WHOLE_SOLVE_SUBSET : sel.subsetKey;
+  const ref = variantDataRef(method, stage);
+  const buckets = data?.rank[ref.variant]?.[ref.recentMetric]?.[subset];
+  const eventBuckets = eventsJson?.events[event];
+  const eventDifficulty = !!eventBuckets?.difficulty && Object.keys(eventBuckets.difficulty.byStep).length > 0;
+  const otherBuckets = eventDifficulty ? eventBuckets?.difficulty?.byStep : eventBuckets?.length;
+  const steps = Object.keys(event === '333' ? buckets ?? {} : otherBuckets ?? {}).map(Number).sort((a, b) => a - b);
+  const moves = query.moves !== null && query.moves >= 0 && query.moves <= 100 ? query.moves : null;
+  const count = Math.max(24, query.count);
+  const archive = custom && event === '333' && moves !== null && query.match === 'exact' && query.scope === 'archive';
+
+  const candidates = useMemo((): RareEntry[] => {
+    if (event !== '333') {
+      return Object.entries(otherBuckets ?? {}).flatMap(([step, ids]) => ids.map(id => ({
+        id, uiVariant: '', metric: eventDifficulty ? 'htm' : 'length', step: Number(step), color: '' as const, subsetKey: '', p: Infinity,
+      })));
+    }
+    if (!data) return [];
+    if (!custom) {
+      // Retain alternative stage highlights until the editorial selection deduplicates.
+      if (dist) return collectRareScrambles(data, dist, Infinity, null, view === 'rare');
+      // Probability data is optional for browsing. Keep the actual stage/depth
+      // examples available and omit probability badges if its fetch failed.
+      return Object.entries(data.rank).flatMap(([variant, metrics]) =>
+        Object.entries(metrics).flatMap(([metric, subsets]) =>
+          Object.entries(subsets).flatMap(([subsetKey, steps]) =>
+            Object.entries(steps).flatMap(([step, rows]) => rows.map(([id, color]) => ({
+              id, color, uiVariant: uiVariantOf(variant), metric, subsetKey, step: Number(step), p: Infinity,
+            }))))));
+    }
+    const distVariant = dist?.sets?.wca?.variants[ref.variant];
+    const distStage = Object.keys(distVariant?.data ?? {}).find(s => stageLabel(s, false) === stageLabel(stage, false));
+    const counts = distStage ? distVariant?.data[distStage]?.[subset]?.counts : undefined;
+    const total = Object.values(counts ?? {}).reduce((sum, n) => sum + n, 0);
+    return Object.entries(buckets ?? {}).flatMap(([step, rows]) => rows.map(([id, color]) => ({
+      id, color, uiVariant: method, metric: stage, step: Number(step), subsetKey: subset,
+      p: total > 0 && counts?.[step] ? counts[step] / total : Infinity,
+    })));
+  }, [event, otherBuckets, eventDifficulty, data, dist, custom, view, ref.variant, stage, subset, buckets, method]);
+
+  const entries = useMemo(() => {
+    const filtered = candidates.filter(entry => !custom || matchesRecentMoves(entry.step, moves, query.match));
+    if (view === 'featured') return diversifyRecentScrambles(filtered, entry => (event === '333' ? data?.meta[entry.id] : eventsJson?.meta[entry.id])?.ci ?? '');
+    const sorted = custom ? [...filtered].sort((a, b) => a.step - b.step || a.id.localeCompare(b.id)) : filtered;
+    const seen = new Set<string>();
+    return sorted.filter(entry => { if (seen.has(entry.id)) return false; seen.add(entry.id); return true; });
+  }, [candidates, custom, moves, query.match, view, event, data, eventsJson]);
+
+  const similar = (entry: RareEntry) => {
+    update({ view: 'custom', method: entry.uiVariant || 'std', stage: entry.metric,
+      colors: entry.subsetKey || 'BGORWY', moves: entry.step, match: 'max' });
+    document.querySelector('.rs-browser-toolbar')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  const loadingEvent = event !== '333' && !eventsJson;
+  const shown = entries.slice(0, count);
+  const viewLabels = {
+    featured: { zh: '近期精选', en: 'Recent picks' },
+    rare: { zh: '按稀有度', en: 'By rarity' },
+    custom: { zh: '自选条件', en: 'Custom selection' },
+  };
+  const distributionQuery = new URLSearchParams({ variant: ref.variant, stage: ref.stage, colors: subset });
+
+  return <section className="rs-browser">
+    <div className="rs-browser-toolbar">
+      <div className="rs-browser-primary">
+        <PuzzlePicker isZh={isZh} selectedEvent={event} groups={groups} onSelect={event => update({ event, moves: null, scope: 'recent', view: 'featured' })} />
+        <select className="rs-browser-select" aria-label={tr({ zh: '浏览方式', en: 'Browse mode' })} value={view} onChange={e => update({ view: e.target.value as typeof query.view })}>
+          <option value="featured">{tr({ zh: '精选', en: 'Featured' })}</option>
+          {event === '333' && dist && <option value="rare">{tr({ zh: '稀有度', en: 'Rarity' })}</option>}
+          <option value="custom">{tr({ zh: '自选', en: 'Custom' })}</option>
+        </select>
+        <span className="rs-browser-range">{archive ? tr({ zh: 'WCA 历史题库', en: 'WCA archive' }) : dateRange}</span>
+      </div>
+      {custom && <div className="rs-browser-filters">
+        {event === '333' && <>
+          <MethodStagePicker isZh={isZh} method={method} stage={stage} methods={methods} stagesOf={stagesOf}
+            onSelect={(method, stage) => update({ method, stage: stage || stagesOf(method)[0] || 'cross', moves: null })} />
+          {method !== WHOLE_SOLVE && <SubsetColorPicker sel={sel} isZh={isZh} />}
+        </>}
+        <select className="rs-browser-select" aria-label={tr({ zh: '步数', en: 'Moves' })} value={moves ?? ''} onChange={e => update({ moves: e.target.value === '' ? null : Number(e.target.value) })}>
+          <option value="">{tr({ zh: '不限步数', en: 'Any move count' })}</option>
+          {[...new Set([...steps, ...(moves !== null ? [moves] : [])])].sort((a, b) => a - b).map(n => <option key={n} value={n}>{stepOptionLabel(n)}</option>)}
+        </select>
+        {moves !== null && <select className="rs-browser-select" aria-label={tr({ zh: '步数条件', en: 'Move comparison' })} value={query.match} onChange={e => update({ match: e.target.value as typeof query.match })}>
+          <option value="max">{tr({ zh: '以内', en: 'or fewer' })}</option>
+          <option value="exact">{tr({ zh: '恰好', en: 'exactly' })}</option>
+        </select>}
+        <button type="button" className="rs-browser-reset" onClick={() => update({ method: 'std', stage: 'cross', colors: 'BGORWY', moves: null, match: 'max', scope: 'recent' })}>{tr({ zh: '重置', en: 'Reset' })}</button>
+      </div>}
+    </div>
+    <div className="rs-browser-summary" aria-live="polite">
+      <h2>{custom ? (archive ? tr({ zh: '历史打乱', en: 'Archived scrambles' }) : tr({ zh: '近期样例', en: 'Recent examples' })) : tr(viewLabels[view])}</h2>
+      {!archive && <span>{tr({ zh: `${entries.length} 条样例`, en: `${entries.length} examples` })}</span>}
+      {custom && event === '333' && <AppLink href={`/scramble/stats?${distributionQuery}`} prefetch={false}>{tr({ zh: '查看分布', en: 'View distribution' })}</AppLink>}
+    </div>
+    {custom && event === '333' && moves !== null && <div className="rs-browser-source">
+      <button type="button" className="rs-browser-reset" onClick={() => update({ scope: archive ? 'recent' : 'archive', match: 'exact' })}>
+        {archive ? tr({ zh: '回到近期样例', en: 'Recent examples' }) : tr({ zh: `查找历史 ${moves} 步题`, en: `Find ${moves}-move scrambles in the archive` })}
+      </button>
+    </div>}
+    {view === 'rare' && <p className="rs-browser-note">{tr({ zh: '按各题标注的阶段与底色计算概率。', en: 'Probabilities use the stage and color selection shown on each scramble.' })}</p>}
+    {archive ? <RecentArchiveResults key={`${ref.variant}:${ref.stage}:${subset}:${moves}:${query.page}`} variant={ref.variant} stage={ref.stage} colors={subset} moves={moves} method={method} metric={stage} page={Math.max(1, query.page)} onPage={page => { void setQuery({ page }); document.querySelector('.rs-browser-toolbar')?.scrollIntoView({ block: 'start' }); }} lp={lp} isZh={isZh} />
+    : loadingEvent ? <p role="status">{tr({ zh: '加载中…', en: 'Loading…' })}</p> : shown.length ? <div className="rs-cards rs-browser-cards">
+      {shown.map(entry => {
+        const source = event === '333' ? data : eventsJson;
+        const useOptimal = event === '333' || eventDifficulty;
+        const optimal = useOptimal ? source?.opt?.[entry.id] : undefined;
+        const colors = subsetColorsOf(entry.subsetKey);
+        const prob = Number.isFinite(entry.p) ? formatProb(entry.p) ?? '' : '';
+        const tag = event === '333' ? rarityTag(entry.uiVariant, entry.metric, entry.step, isZh)
+          : tr({ zh: `${eventDifficulty ? '整解' : '打乱'} ${entry.step} 步`, en: `${eventDifficulty ? 'Optimal' : 'Scramble'} · ${entry.step} moves` });
+        return <ScrambleCard key={entry.id} browse event={event} lp={lp} isZh={isZh}
+          scramble={optimal ?? source?.scr[entry.id] ?? ''} optimal={!!optimal} m={source?.meta[entry.id]}
+          color={entry.color || undefined} dotColors={colors} dotTitle={colors.length ? subsetDotTitle(colors, entry.color || undefined) : undefined}
+          ssTarget={event === '333' ? stageSolverTarget(entry.uiVariant, entry.metric) : null}
+          rarity={{ tag, prob }} analysis={{ variant: entry.uiVariant, metric: event === '333' ? entry.metric : '', step: entry.step, prob }}
+          onSimilar={!custom ? () => similar(entry) : undefined} />;
+      })}
+    </div> : <div className="rs-browser-empty">
+      <p>{tr({ zh: '近期样例中没有符合条件的打乱', en: 'No recent examples match these filters' })}</p>
+      <button type="button" className="rs-browser-more" onClick={() => update({ moves: null, view: 'featured' })}>{tr({ zh: '浏览近期精选', en: 'Browse recent picks' })}</button>
+    </div>}
+    {!archive && shown.length > 0 && <div className="rs-browser-pagination">
+      <span>{tr({ zh: `已显示 ${shown.length} / ${entries.length}`, en: `Showing ${shown.length} of ${entries.length}` })}</span>
+      {count < entries.length && <button type="button" className="rs-browser-more" onClick={() => { void setQuery({ count: count + 24 }); }}>{tr({ zh: '加载更多', en: 'Load more' })}</button>}
+    </div>}
+  </section>;
+}
+
+function RecentArchiveResults({ variant, stage, colors, moves, method, metric, page, onPage, lp, isZh }: {
+  variant: string; stage: string; colors: string; moves: number; method: string; metric: string;
+  page: number; onPage: (page: number) => void; lp: string; isZh: boolean;
+}) {
+  const [result, setResult] = useState<ByDifficultyResult | null | undefined>(undefined);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let active = true;
+    setResult(undefined);
+    void fetchByDifficulty({ variant, stage, colors, bin: moves, page, pageSize: 24 })
+      .then(result => { if (active) setResult(result); });
+    return () => { active = false; };
+  }, [variant, stage, colors, moves, page, attempt]);
+  if (result === undefined) return <p className="rs-browser-note" role="status">{tr({ zh: '正在查询历史题库…', en: 'Searching the archive…' })}</p>;
+  if (result === null) return <div className="rs-browser-empty" role="status">
+    <p>{tr({ zh: '题库暂时无法加载', en: 'The archive could not be loaded' })}</p>
+    <button type="button" className="rs-browser-more" onClick={() => setAttempt(n => n + 1)}>{tr({ zh: '重试', en: 'Retry' })}</button>
+  </div>;
+  const pages = Math.max(1, Math.ceil(result.total / result.pageSize));
+  return <>
+    <p className="rs-browser-note" role="status">{tr({ zh: `${result.total} 条打乱 · 第 ${page} / ${pages} 页`, en: `${result.total} scrambles · Page ${page} of ${pages}` })}</p>
+    {!result.scrambles.length && <p className="rs-browser-note">{tr({ zh: '这一页没有符合条件的打乱', en: 'No matching scrambles on this page' })}</p>}
+    <div className="rs-cards rs-browser-cards">
+      {result.scrambles.map(m => {
+        const colorOrder = ['B', 'G', 'O', 'R', 'W', 'Y'] as const;
+        const selected = colorOrder.filter(color => colors.includes(color));
+        const color = selected.reduce<ColorLetter | undefined>((best, current) => {
+          const value = m.cols[colorOrder.indexOf(current)];
+          if (value == null || value < 0) return best;
+          return best === undefined || value < m.cols[colorOrder.indexOf(best)] ? current : best;
+        }, undefined);
+        return <ScrambleCard key={`${m.ci}:${m.e}:${m.r}:${m.g}:${m.n}:${m.x}`} browse event="333" lp={lp} isZh={isZh}
+          scramble={m.o ?? m.scramble} optimal={!!m.o} m={m} color={color} dotColors={selected}
+          dotTitle={selected.length ? subsetDotTitle(selected, color) : undefined}
+          ssTarget={stageSolverTarget(method, metric)} rarity={{ tag: rarityTag(method, metric, moves, isZh), prob: '' }}
+          analysis={{ variant: method, metric, step: moves }} />;
+      })}
+    </div>
+    <div className="rs-browser-pagination">
+      {page > 1 && <button type="button" className="rs-browser-more" onClick={() => onPage(page - 1)}>{tr({ zh: '上一页', en: 'Previous' })}</button>}
+      {page < pages && <button type="button" className="rs-browser-more" onClick={() => onPage(page + 1)}>{tr({ zh: '下一页', en: 'Next' })}</button>}
+    </div>
+  </>;
 }
 
 // ============================ 333:富控件(变体 × 类型 × 底色 × 步数)============================

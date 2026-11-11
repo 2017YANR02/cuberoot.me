@@ -10,6 +10,7 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 // 数据:lib/recon-api getTodayRecons()(主用 /v1/recon/today,回退 /latest 单条)。
 import { useEffect } from 'react';
 import Link from '@/components/AppLink';
+import { ArrowRight } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getTodayRecons } from '@/lib/recon-api';
 import { CuratedReconCard } from '@/components/ReconCard/CuratedReconCard';
@@ -74,7 +75,7 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
     <div className="today-recon" data-tour="today-replay">
       <div className="tr-head">
         <span className="tr-title">{tr({ zh: '复盘', en: 'Reconstructions' })}</span>
-        <Link href="/recon" prefetch={false} className="tr-all">{tr({ zh: '全部', en: 'All recons' })}</Link>
+        <Link href="/recon" prefetch={false} className="tr-all" aria-label={tr({ zh: '查看全部复盘', en: 'View all reconstructions' })}><ArrowRight size={18} aria-hidden="true" /></Link>
       </div>
 
       {isAdmin && pinError && <p role="alert">{pinError}</p>}
