@@ -6,7 +6,20 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { promisify } from 'node:util';
-import { parseManifest, publishScrambleIncremental } from './publish-static.js';
+import { command, parseManifest, publishScrambleIncremental } from './publish-static.js';
+
+test('macOS metadata does not add unlisted AppleDouble files to the publication tar', { skip: process.platform !== 'darwin' }, async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'scramble-mac-tar-'));
+  try {
+    const file = join(dir, 'sample.txt'), archive = join(dir, 'delta.tgz'), list = join(dir, 'files.txt');
+    await writeFile(file, 'published data');
+    await writeFile(list, './sample.txt\n');
+    await promisify(execFile)('xattr', ['-w', 'com.cuberoot.archive-test', 'source metadata', file]);
+    await command('tar', ['--no-xattrs', '-czf', archive, '-C', dir, '-T', list]);
+    const { stdout } = await promisify(execFile)('tar', ['-tzf', archive]);
+    assert.deepEqual(stdout.trim().split('\n'), ['./sample.txt']);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
 
 test('manifest parser rejects traversal, duplicates, and malformed rows', () => {
   const hash = 'a'.repeat(40);
