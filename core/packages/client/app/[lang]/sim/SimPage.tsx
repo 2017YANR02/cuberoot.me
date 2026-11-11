@@ -12,6 +12,8 @@
  */
 
 import MoreToggle from '@/components/MoreToggle';
+import { ResizeDivider } from '@app-foundation/navigation-ui/resize-divider';
+import '@app-foundation/navigation-ui/resize-divider.css';
 import {
   useCallback, useEffect, useMemo, useRef, useState, type RefObject,
 } from 'react';
@@ -2409,6 +2411,15 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
 
       <div className="sim-body" style={{ display: drawMode ? 'none' : undefined }} aria-hidden={drawMode}>
         <div className="sim-stage">
+        <ResizeDivider className="sim-pane-divider" direction={-1} label={t('拖动调整面板宽度', 'Drag to resize panel')}
+          getSize={element => element.closest('.sim-body')?.querySelector('.sim-side')?.getBoundingClientRect().width ?? 0}
+          onResize={(element, requested) => {
+            const body = element.closest<HTMLElement>('.sim-body');
+            if (!body) return;
+            const width = Math.max(280, Math.min(requested, body.clientWidth - 240));
+            body.style.setProperty('--sim-side-width', `${width / body.clientWidth * 100}%`);
+            return width;
+          }} />
         <div className="sim-stage-recon">{reconLink}</div>
         {roomsActive && <div className="sim-room-toolbar">
           <select

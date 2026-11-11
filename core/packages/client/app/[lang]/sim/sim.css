@@ -375,6 +375,7 @@
 
 /* 画布 + 播放控制条同列(twizzle 式:控制条紧贴魔方正下方) */
 .sim-stage {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -392,7 +393,7 @@
 }
 
 .sim-side {
-  width: 50%;
+  width: clamp(280px, var(--sim-side-width, 50%), calc(100% - 240px));
   min-width: 0;
   flex-shrink: 0;
   border-left: 1px solid var(--border-default);
@@ -401,6 +402,12 @@
   display: flex;
   flex-direction: column;
 }
+
+.resize-divider.sim-pane-divider { right: 0; }
+@media (max-width: 767px) {
+  .resize-divider.sim-pane-divider { display: none; }
+}
+.sim-page--fullscreen .resize-divider.sim-pane-divider { display: none; }
 /* Borderless sections (house style, matches .gt-panel): a single top hairline
    separates stacked panels instead of wrapping each in a card. The first section
    gets no line (it sits at the panel top). .sim-player / .gt-panel already declare
