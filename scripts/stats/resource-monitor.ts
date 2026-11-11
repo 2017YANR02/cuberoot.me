@@ -1,6 +1,6 @@
 /** Mac statistics process-tree protection. Observation is not OS-enforced no-swap. */
 import { execFileSync, spawn } from 'node:child_process';
-import { appendFileSync, closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { appendFileSync, closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync, type Stats } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 import { totalmem } from 'node:os';
 import { basename, join, resolve } from 'node:path';
@@ -88,7 +88,7 @@ export function analyzerTableNames(binary: string, env: NodeJS.ProcessEnv, physi
     case 'pseudo_f2leo_analyzer': names = pseudo; break;
     case 'pseudo_pair_analyzer': names = [...pseudo, ...[4, 5, 6, 7].flatMap(c => [`pt_pscross_C${c}`, ...[0, 1, 2, 3].flatMap(e => [`pt_pscross_ins_C${c}_diff${e}`, `pt_pspair_C${c}_E${e}`])])]; break;
     case 'daisy_analyzer': case 'first_layer_analyzer': names = ['mt_edge4']; break;
-    case 'f2b_analyzer': names = env.CUBE_F2B_LIGHT === '1' ? [] : ['pt_f2b_be3c2']; break;
+    case 'f2b_analyzer': names = ['mt_corn2', 'mt_edge3', ...(env.CUBE_F2B_LIGHT === '1' ? [] : ['pt_f2b_be3c2'])]; break;
     case 'sq1_analyzer': names = env.SQ1_SLASH_VIA_WCA === '1' ? [] : ['sq1_wca_jsqfull']; break;
     case 'block222_analyzer': names = ['mt_edge3', 'mt_corn']; break;
     case 'roux_analyzer': names = ['mt_corn2', 'mt_edge3', 'mt_corn', 'mt_edge2']; break;
@@ -98,6 +98,28 @@ export function analyzerTableNames(binary: string, env: NodeJS.ProcessEnv, physi
     case 'pyraminx_analyzer': case 'skewb_analyzer': case 'sq1_slash_mitm':
     case 'tsx': case 'tsx.cmd': case 'node': break;
     default: throw Error(`No reviewed resource plan for analyzer ${binary}`);
+  }
+  names = [...names]; // Never mutate the shared base inventories across jobs.
+  const analyzer = basename(binary).replace(/\.exe$/, '');
+  if (['first', 'all'].includes(env.CUBE_PAIR_JOINT_MODE ?? (analyzer === 'pair_analyzer' ? 'first' : 'off'))) {
+    if (analyzer === 'pair_analyzer') names.push('pt_cross_pair_C4E0');
+    if (analyzer === 'pseudo_pair_analyzer') names.push(...[0, 1, 2, 3].map(i => `pt_pscross_pair_C4E${i}`));
+  }
+  if ((env.CUBE_F2LEO_COMPACT_MODE ?? 'first') === 'first' && ['f2leo_analyzer', 'pseudo_f2leo_analyzer'].includes(analyzer)) names.push('pt_cross_eo_E0E1E2E3');
+  if (['middle', 'both'].includes(env.CUBE_STAGE_JOINT_MODE ?? (analyzer === 'f2b_analyzer' ? 'middle' : 'off'))
+    && ['std_analyzer', 'f2b_analyzer'].includes(analyzer) && !(analyzer === 'f2b_analyzer' && env.CUBE_F2B_LIGHT === '1')) {
+    names.push('pt_C4C5C6C7E0E1E2E3');
+    if (analyzer === 'f2b_analyzer') names.push('mt_edge4');
+  }
+  if (['deep', 'both'].includes(env.CUBE_STAGE_JOINT_MODE ?? '') && analyzer === 'std_analyzer') names.push('pt_cross_C4C6E0E1E2');
+  const noDiagonal = env.CUBE_STAGE_DEEP_NO_DIAG;
+  if (noDiagonal !== undefined && !['0', '1'].includes(noDiagonal)) throw Error('Invalid CUBE_STAGE_DEEP_NO_DIAG');
+  if (noDiagonal === '1') {
+    if (analyzer !== 'std_analyzer' || !['deep', 'both'].includes(env.CUBE_STAGE_JOINT_MODE ?? ''))
+      throw Error('CUBE_STAGE_DEEP_NO_DIAG=1 requires the standard Deep solver');
+    // Only the explicit projection candidate omits the old diagonal mapping.
+    // Frozen full-Deep binaries continue to budget both tables without this flag.
+    names = names.filter(name => name !== 'pt_cross_C4C6E0E2');
   }
   return { profile: high ? 'high-memory' : 'default', names: [...new Set(names)].map(name => name + '.bin') };
 }
@@ -132,9 +154,21 @@ export function tableBudget(binary: string, env: NodeJS.ProcessEnv, physicalByte
   }
   return { binary, profile, files, tableBytes, workingBytes, mapped: name !== 'sq1_analyzer', rssLimit: tableBytes + workingBytes + 4 * GiB };
 }
-export function statsResourcePlan(binaries: string[], env: NodeJS.ProcessEnv, includeOptimal = false): unknown[] {
+type StandardStagePlanContext = { available: number; physicalBytes: number; inspect?: typeof statSync; readHeader?: (path: string) => Buffer };
+export function statsResourcePlan(binaries: string[], env: NodeJS.ProcessEnv, includeOptimal = false, context?: StandardStagePlanContext): unknown[] {
   const result: unknown[] = binaries.map(binary => {
-    try { return tableBudget(binary, env); }
+    try {
+      if (basename(binary).replace(/\.exe$/, '') === 'std_analyzer') {
+        // update-local's actual stdSession adds this after stageEnv() removes it.
+        const effective = { ...env, CUBE_RUN_FULL_STD: '1' };
+        const preview = standardStageDecision(binary, effective, context ?? {
+          available: process.platform === 'darwin' ? observe().available : 0, physicalBytes: totalmem(),
+        });
+        return { ...preview.budget, startupRequiredBytes: startupRequiredBytes(preview.budget.rssLimit),
+          standardStageSelection: { ...preview.selection, frozen: false, selectionPoint: 'analyzer-start-under-monitor' } };
+      }
+      return tableBudget(binary, env);
+    }
     catch (error) { return { binary, error: String(error) }; }
   });
   if (includeOptimal) {
@@ -185,10 +219,104 @@ export function selectStatsEoProfile(env: NodeJS.ProcessEnv, available: number, 
   if (physicalBytes < 56 * GiB) return { ...env, CUBE_TABLE_PROFILE: 'default' };
   return { ...env, CUBE_TABLE_PROFILE: available >= startupRequiredBytes(highRssLimit()) ? 'high-memory' : 'default' };
 }
+
+const deepFile = 'pt_cross_C4C6E0E1E2.bin';
+const deepFileBytes = 65_910_624_256;
+const deepStates = 128_755_722_240n;
+type DeepFileStat = Pick<Stats, 'size' | 'mtimeMs' | 'ino' | 'dev' | 'isFile'>;
+
+/** Validate only the published metadata, never read/map the 61 GiB payload. */
+export function validateStatsDeepTableMetadata(path: string, meta: DeepFileStat, header: Buffer) {
+  if (!meta.isFile() || meta.size !== deepFileBytes || !Number.isFinite(meta.mtimeMs) || meta.mtimeMs < 0
+    || !Number.isSafeInteger(meta.ino) || meta.ino < 0 || !Number.isSafeInteger(meta.dev) || meta.dev < 0 || header.length !== 4096)
+    throw Error(`Invalid DeepSeven file metadata: ${path}`);
+  const records = [0, 512].flatMap(offset => {
+    const bytes = header.subarray(offset, offset + 512);
+    if (!bytes.subarray(0, 8).equals(Buffer.from('STGJPDB1'))) return [];
+    let hash = 0xcbf29ce484222325n;
+    for (let i = 0; i < 504; i += 8) hash = BigInt.asUintN(64, (hash ^ bytes.readBigUInt64LE(i)) * 0x100000001b3n);
+    if (hash !== bytes.readBigUInt64LE(504)) return [];
+    const value = (i: number) => bytes.readBigUInt64LE(8 + i * 8);
+    if (value(0) !== 1n || value(1) !== 2n || value(2) !== 258n || value(3) !== 510_935_040n || value(4) !== deepStates
+      || value(5) > BigInt(Number.MAX_SAFE_INTEGER) || value(6) > 14n || value(7) > 1n || value(8) > 1n) return [];
+    const depth = Number(value(6)), histogram = Array.from({ length: 15 }, (_, i) => value(10 + i));
+    const reached = histogram.reduce((sum, n) => sum + n, 0n);
+    if (histogram[0] !== 1n || reached > deepStates || histogram.slice(depth + 1).some(n => n !== 0n)
+      || value(8) === 1n && reached !== deepStates) return [];
+    return [{ generation: Number(value(5)), completedDepth: depth, ready: value(7) === 1n, full: value(8) === 1n,
+      reached: Number(reached), checksum: value(9).toString(16).padStart(16, '0') }];
+  });
+  // Rust Iterator::max_by_key chooses the later record when generations tie.
+  records.sort((a, b) => a.generation - b.generation);
+  const record = records.at(-1);
+  if (!record || !record.ready || !record.full || record.completedDepth < 12)
+    throw Error(`DeepSeven metadata is invalid or not fully published: ${path}`);
+  return { path, bytes: meta.size, mtimeMs: meta.mtimeMs, ino: meta.ino, dev: meta.dev, ...record };
+}
+
+function readDeepHeader(path: string): Buffer {
+  const header = Buffer.alloc(4096), fd = openSync(path, 'r');
+  try {
+    for (let offset = 0; offset < header.length;) {
+      const count = readSync(fd, header, offset, header.length - offset, offset);
+      if (!count) throw Error(`Incomplete DeepSeven header: ${path}`);
+      offset += count;
+    }
+  } finally { closeSync(fd); }
+  return header;
+}
+
+const hasExplicitStandardStage = (env: NodeJS.ProcessEnv) => env.CUBE_STAGE_JOINT_MODE !== undefined || env.CUBE_STAGE_DEEP_NO_DIAG !== undefined;
+
+/** Pure admission: resolve once; the later spawn must keep this explicit choice. */
+export function selectStatsStandardStageMode(env: NodeJS.ProcessEnv, available: number, deepRssLimit: () => number, physicalBytes: number): NodeJS.ProcessEnv {
+  if (hasExplicitStandardStage(env)) return env;
+  const off = { ...env, CUBE_STAGE_JOINT_MODE: 'off', CUBE_STAGE_DEEP_NO_DIAG: '0' };
+  const profile = env.CUBE_TABLE_PROFILE?.trim() || 'auto';
+  if (!['auto', 'default', 'high-memory'].includes(profile)) throw Error('Invalid CUBE_TABLE_PROFILE');
+  if (env.CUBE_RUN_FULL_STD !== '1' || env.CUBE_ALLOW_HUGE_TABLES !== '1' || physicalBytes < 128 * GiB || profile === 'default') return off;
+  if (!Number.isSafeInteger(available) || available < 0 || !Number.isSafeInteger(physicalBytes)) throw Error('Invalid standard stage memory observation');
+  let limit: number;
+  try { limit = deepRssLimit(); }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return off; throw error; }
+  if (!Number.isSafeInteger(limit) || limit <= 0 || !Number.isSafeInteger(startupRequiredBytes(limit))) throw Error('Invalid DeepSeven RSS budget');
+  return available >= startupRequiredBytes(limit) ? { ...env, CUBE_STAGE_JOINT_MODE: 'deep', CUBE_STAGE_DEEP_NO_DIAG: '1' } : off;
+}
+
+function standardStageDecision(binary: string, env: NodeJS.ProcessEnv, context: StandardStagePlanContext) {
+  const { available, physicalBytes } = context, inspect = context.inspect ?? statSync;
+  let optionalDeep: { budget: TableBudget; startupRequiredBytes: number; metadata: ReturnType<typeof validateStatsDeepTableMetadata> } | null = null;
+  let optionalStatus = hasExplicitStandardStage(env) ? 'explicit' : 'ineligible';
+  const resolved = selectStatsStandardStageMode(env, available, () => {
+    const path = join(env.CUBE_TABLE_DIR || tableDir, deepFile);
+    optionalStatus = 'inspecting';
+    try {
+      const metadata = validateStatsDeepTableMetadata(path, inspect(path), (context.readHeader ?? readDeepHeader)(path));
+      const budget = tableBudget(binary, { ...env, CUBE_STAGE_JOINT_MODE: 'deep', CUBE_STAGE_DEEP_NO_DIAG: '1' }, physicalBytes, inspect);
+      optionalDeep = { budget, startupRequiredBytes: startupRequiredBytes(budget.rssLimit), metadata };
+      optionalStatus = 'available';
+      return budget.rssLimit;
+    } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') optionalStatus = 'missing'; throw error; }
+  }, physicalBytes);
+  const budget = tableBudget(binary, resolved, physicalBytes, inspect);
+  return { env: resolved, budget, selection: { requested: hasExplicitStandardStage(env) ? 'explicit' : 'auto',
+    selected: resolved.CUBE_STAGE_JOINT_MODE ?? 'off', noDiagonal: resolved.CUBE_STAGE_DEEP_NO_DIAG ?? '0',
+    available, physicalBytes, optionalStatus, optionalDeep } };
+}
 /** Resolve before the checkpoint hash and keep the selected profile explicit.
  * A later startup check still rejects either profile if resources have changed.
  */
 export function resolveStatsAnalyzerEnv(binary: string, env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  if (process.platform === 'darwin' && basename(binary) === 'std_analyzer' && !hasExplicitStandardStage(env)) {
+    const dir = inheritedRun();
+    if (!dir) return env;
+    const now = observe();
+    const decision = standardStageDecision(binary, env, { available: now.available, physicalBytes: totalmem() });
+    atomic(join(dir, `stage-selection-${process.pid}.json`), { binary, ...decision.selection, frozen: true,
+      budget: decision.budget, sampledAt: now.sampledAt, boot: now.boot, swapouts: now.swapouts });
+    console.log(`[统计阶段] ${basename(binary)} auto → ${decision.selection.selected} (no-diag=${decision.selection.noDiagonal}, available=${now.available}, required=${startupRequiredBytes(decision.budget.rssLimit)})`);
+    return decision.env;
+  }
   if (process.platform !== 'darwin' || basename(binary) !== 'eo_cross_analyzer' || !['', 'auto'].includes(env.CUBE_TABLE_PROFILE?.trim() ?? '')) return env;
   const dir = inheritedRun();
   if (!dir) return env;
@@ -222,13 +350,22 @@ export function skipOptionalStatsAnalyzer(binary: string, env: NodeJS.ProcessEnv
   return true;
 }
 export function prepareStatsAnalyzer(binary: string, env: NodeJS.ProcessEnv): (pid: number) => () => void {
+  if (!inheritedRun()) return () => () => {};
+  return prepareStatsTask(tableBudget(binary, env));
+}
+/** Register an explicitly reviewed generator budget in the same process-tree
+ * monitor. Callers must validate their fixed plan before reaching this API.
+ */
+export function prepareStatsTask(budget: TableBudget): (pid: number) => () => void {
   const dir = inheritedRun();
-  if (!dir) return () => () => {};
-  const owner = read<Owner>(join(dir, 'owner.json')), budget = tableBudget(binary, env);
+  if (!dir) throw Error('A reviewed computation requires an active resource monitor');
+  if (!Number.isSafeInteger(budget.rssLimit) || budget.rssLimit <= 0 || !Number.isSafeInteger(budget.tableBytes) || budget.tableBytes < 0)
+    throw Error('Invalid reviewed task budget');
+  const owner = read<Owner>(join(dir, 'owner.json'));
   const now = observe();
   try {
     validateStatsRun(owner.baseline, now);
-    if (statsAnalyzerStartupDecision(now.available, budget.rssLimit, false) === 'reject') throw Error(`Insufficient startup memory for ${basename(binary)}: requires ${startupRequiredBytes(budget.rssLimit)} bytes`);
+    if (statsAnalyzerStartupDecision(now.available, budget.rssLimit, false) === 'reject') throw Error(`Insufficient startup memory for ${basename(budget.binary)}: requires ${startupRequiredBytes(budget.rssLimit)} bytes`);
   } catch (error) {
     atomic(join(dir, 'request-stop.json'), { reason: String(error) });
     throw error;
@@ -330,6 +467,17 @@ function terminateOwnedChildren(root: Identity, known: Map<number, Identity>, ex
 export function isTsxService(row: ProcessRow, current: Identity | undefined): boolean {
   return row.name === 'esbuild' && Boolean(current && /[/\\]node_modules[/\\](?:[^\n]*[/\\])?@esbuild[/\\][^/\\\s]+[/\\]bin[/\\]esbuild --service=[\d.]+ --ping$/.test(current.command));
 }
+/** Called only after finish.json is visible. The normal sampling snapshot may
+ * predate child close/reaping. Keep zombies in tree traversal so their live
+ * descendants remain visible, and exempt them only from completion admission.
+ */
+export function inspectCompletion(root: Identity, known: Map<number, Identity>, excludedPid: number, readSnapshot = snapshot) {
+  const current = readSnapshot();
+  const family = trackedTree(root, known, current.rows, current.identities, excludedPid);
+  const survivors = family.filter(row => row.pid !== root.pid && !row.state.startsWith('Z')
+    && !(/^[RSI]/.test(row.state) && isTsxService(row, current.identities.get(row.pid))));
+  return { family, survivors };
+}
 const delay = (ms: number) => new Promise<void>(done => setTimeout(done, ms));
 export async function runWhileMonitored(action: () => Promise<void>, exited: Promise<number>, failed: () => void): Promise<void> {
   let running = true;
@@ -425,14 +573,16 @@ async function watch(dir: string): Promise<void> {
       }
       const observation = observe();
       // Save the triggering raw observation too, even if validation throws.
-      last = { ...observation, ...resourceValues(observation, family, budgets), pids: family.map(p => p.pid), headroomMethod: 'available-minus-active-mapped-RSS-upper-bound-minus-512MiB' };
+      last = { ...observation, ...resourceValues(observation, family, budgets), pids: family.map(p => p.pid), processes: family, headroomMethod: 'available-minus-active-mapped-RSS-upper-bound-minus-512MiB' };
       const values = resourceLimits(owner.baseline, observation, family, budgets);
       peakRss = Math.max(peakRss, values.rss); minimumHeadroom = Math.min(minimumHeadroom ?? Infinity, values.headroom); samples++;
-      last = { ...observation, ...values, pids: family.map(p => p.pid), headroomMethod: 'available-minus-active-mapped-RSS-upper-bound-minus-512MiB' };
+      last = { ...observation, ...values, pids: family.map(p => p.pid), processes: family, headroomMethod: 'available-minus-active-mapped-RSS-upper-bound-minus-512MiB' };
       appendFileSync(join(dir, 'samples.jsonl'), JSON.stringify(last) + '\n');
       atomic(join(dir, 'current.json'), { ...last as object, peakRss, minimumHeadroom, samples, known: [...known.values()] });
       if (existsSync(join(dir, 'finish.json'))) {
-        if (family.some(p => p.pid !== owner.root.pid && !isTsxService(p, snap.identities.get(p.pid)))) throw Error('Statistics finished with surviving child processes');
+        const completion = inspectCompletion(owner.root, known, process.pid);
+        last = { ...last as object, completion: { sampledAt: new Date().toISOString(), processes: completion.family, survivors: completion.survivors } };
+        if (completion.survivors.length) throw Error('Statistics finished with surviving child processes');
         atomic(join(dir, 'exit.json'), { ...read<object>(join(dir, 'finish.json')), baseline: owner.baseline, last, peakRss, minimumHeadroom, samples, finishedAt: new Date().toISOString() });
         return;
       }

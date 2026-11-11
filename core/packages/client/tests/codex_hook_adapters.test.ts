@@ -22,6 +22,8 @@ const MEMORY_COMPUTE_HOOK = join(HOOKS, 'block-unprotected-memory-compute.mts');
 // Deployment typechecks use a sparse checkout without .codex. Like the other
 // hook fixtures below, load the file only when this test actually executes.
 const { consumeMbpStatsApproval, mbpStatsCommand } = await import(pathToFileURL(MEMORY_COMPUTE_HOOK).href);
+const { readEoExperimentApproval, eoExperimentFiles, eoExperimentRelative, eoDigest } = await import(pathToFileURL(join(REPO_ROOT, 'solver/scripts/eo_stage_experiment_policy.mts')).href);
+const { readStageApproval, stageFiles, stageRelative, stageFollowupRelative, stageKeys, stageRequest, stageDigest } = await import(pathToFileURL(join(REPO_ROOT, 'solver/scripts/stage_candidate_policy.mts')).href);
 
 function runProcess(command: string, args: string[], cwd: string, input: string, shell = false) {
   return spawnSync(command, args, {
@@ -43,6 +45,189 @@ function runAdapter(adapter: string, target: string | string[], payload: object)
 }
 
 describe('unprotected memory computation command guard', () => {
+  it('binds EO approval to reviewed code, binaries, input and an unconsumed single pass', () => {
+    const scratch = join(REPO_ROOT, '.tmp/scratch');
+    mkdirSync(scratch, { recursive: true });
+    const root = mkdtempSync(join(scratch, 'eo-approval-test-'));
+    const directory = join(root, eoExperimentRelative);
+    const put = (file: string, text: string) => { mkdirSync(dirname(file), { recursive: true }); writeFileSync(file, text); };
+    try {
+      for (const file of eoExperimentFiles) put(join(root, file), 'fixture code');
+      for (const name of ['input.txt', 'expected.csv', 'resource-plan.json']) put(join(directory, name), 'fixture');
+      const plan = {
+        schema: 'cuberoot.eo-stage-experiment/v1', cases: 100, threads: 18, repetitions: 1, warmup: false,
+        baselineToPreserve: { boot: '{ sec = 1794194703, usec = 456751 } Sun Nov  8 19:25:03 2026', swapouts: 336 },
+        resourceBudget: { tableBytes: 43_157_566_416, rssLimitBytes: 47_452_533_712, startupRequiredBytes: 50_136_888_272, minimumHeadroomBytes: 2 ** 31 },
+        inputSha256: eoDigest(join(directory, 'input.txt')), goldenSha256: eoDigest(join(directory, 'expected.csv')),
+        versions: Object.fromEntries(['baseline', 'candidate'].map(name => {
+          const binary = join(directory, name, 'eo_cross_analyzer'); put(binary, name);
+          put(join(directory, name, 'input.txt'), 'fixture');
+          return [name, { binary, binarySha256: eoDigest(binary) }];
+        })),
+      };
+      const approve = () => {
+        put(join(directory, 'plan.json'), JSON.stringify(plan));
+        put(join(directory, 'authorization.json'), JSON.stringify({ scope: 'eo-stages-128g-20261110', authorization: '允许本次受监控对照（推荐）',
+          planSha256: eoDigest(join(directory, 'plan.json')), resourcePlanSha256: eoDigest(join(directory, 'resource-plan.json')),
+          codeHashes: Object.fromEntries(eoExperimentFiles.map((file: string) => [file, eoDigest(join(root, file))])),
+        }));
+      };
+      approve(); expect(readEoExperimentApproval(root).plan.cases).toBe(100);
+      put(join(root, eoExperimentFiles[0]), 'changed');
+      expect(() => readEoExperimentApproval(root)).toThrow('reviewed code changed');
+      put(join(root, eoExperimentFiles[0]), 'fixture code');
+      plan.threads = 19; approve(); expect(() => readEoExperimentApproval(root)).toThrow();
+      plan.threads = 18; approve();
+      put(join(directory, 'candidate/eo_cross_analyzer'), 'changed');
+      expect(() => readEoExperimentApproval(root)).toThrow('Changed candidate binary');
+      put(join(directory, 'candidate/eo_cross_analyzer'), 'candidate');
+      put(join(directory, 'used.json'), '{}');
+      expect(() => readEoExperimentApproval(root)).toThrow('already consumed');
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  });
+  it('binds stage approval to reviewed code, all eight binaries, inputs, golden data and one pass', () => {
+    const scratch = join(REPO_ROOT, '.tmp/scratch');
+    mkdirSync(scratch, { recursive: true });
+    const root = mkdtempSync(join(scratch, 'stage-approval-test-'));
+    const directory = join(root, stageRelative);
+    const put = (file: string, text: string) => { mkdirSync(dirname(file), { recursive: true }); writeFileSync(file, text); };
+    try {
+      for (const file of stageFiles) put(join(root, file), 'fixture code');
+      put(join(directory, 'input.txt'), 'fixture input');
+      put(join(directory, 'resource-plan.json'), '{}');
+      const boot = '{ sec = 1794194703, usec = 456751 } Sun Nov  8 19:25:03 2026';
+      const plan = {
+        schema: 'cuberoot.stage-candidates/v1', cases: 100, threads: 18, repetitions: 1, warmup: false,
+        baselineToPreserve: { boot, swapouts: 336 }, minimumHeadroomBytes: 2 ** 31,
+        inputSha256: stageDigest(join(directory, 'input.txt')),
+        stages: Object.fromEntries(stageKeys.map((key: string) => {
+          const golden = join(directory, key, 'expected.csv');
+          if (key !== 'pseudo_f2leo') put(golden, `fixture golden ${key}`);
+          return [key, {
+            columns: key === 'std' ? 30 : 24,
+            rssLimitBytes: 24 * 2 ** 30, startupRequiredBytes: 26.5 * 2 ** 30,
+            ...(key === 'pseudo_f2leo' ? {} : { goldenSha256: stageDigest(golden) }),
+            versions: Object.fromEntries(['baseline', 'candidate'].map(name => {
+              const binary = join(directory, key, name, `${key}_analyzer`);
+              put(binary, `fixture ${key} ${name}`);
+              put(join(directory, key, name, 'input.txt'), 'fixture input');
+              return [name, { binary, binarySha256: stageDigest(binary) }];
+            })),
+          }];
+        })),
+      };
+      const approve = () => {
+        put(join(directory, 'plan.json'), JSON.stringify(plan));
+        put(join(directory, 'authorization.json'), JSON.stringify({
+          scope: 'three-stage-optimization-20261110', authorization: stageRequest,
+          planSha256: stageDigest(join(directory, 'plan.json')),
+          resourcePlanSha256: stageDigest(join(directory, 'resource-plan.json')),
+          codeHashes: Object.fromEntries(stageFiles.map((file: string) => [file, stageDigest(join(root, file))])),
+        }));
+      };
+      const rejectsChanged = (file: string, reason?: string) => {
+        const original = readFileSync(file, 'utf8');
+        put(file, original + '\n');
+        try { expect(() => readStageApproval(root)).toThrow(reason); }
+        finally { put(file, original); }
+      };
+      approve();
+      expect(Object.keys(readStageApproval(root).plan.stages)).toEqual(stageKeys);
+      for (const file of stageFiles) rejectsChanged(join(root, file), 'reviewed code changed');
+      rejectsChanged(join(directory, 'plan.json'), 'Stage plan changed');
+      rejectsChanged(join(directory, 'resource-plan.json'), 'Stage metadata changed');
+      rejectsChanged(join(directory, 'input.txt'));
+      for (const key of stageKeys) {
+        if (key !== 'pseudo_f2leo') rejectsChanged(join(directory, key, 'expected.csv'));
+        for (const name of ['baseline', 'candidate']) {
+          rejectsChanged(join(directory, key, name, `${key}_analyzer`), `Changed ${key} ${name} binary`);
+          rejectsChanged(join(directory, key, name, 'input.txt'));
+        }
+      }
+      plan.threads = 19; approve(); expect(() => readStageApproval(root)).toThrow();
+      plan.threads = 18; plan.baselineToPreserve.boot = 'different boot';
+      approve(); expect(() => readStageApproval(root)).toThrow();
+      plan.baselineToPreserve.boot = boot; plan.baselineToPreserve.swapouts = 337;
+      approve(); expect(() => readStageApproval(root)).toThrow();
+      plan.baselineToPreserve.swapouts = 336; approve();
+      expect(readStageApproval(root).plan.cases).toBe(100);
+      put(join(directory, 'used.json'), '{}');
+      expect(() => readStageApproval(root)).toThrow('already consumed');
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  });
+  it('binds the 7 GiB follow-up to a completed baseline without permitting its rerun', () => {
+    const scratch = join(REPO_ROOT, '.tmp/scratch');
+    mkdirSync(scratch, { recursive: true });
+    const root = mkdtempSync(join(scratch, 'stage-followup-test-'));
+    const directory = join(root, stageFollowupRelative), previous = join(root, stageRelative);
+    const put = (file: string, text: string) => { mkdirSync(dirname(file), { recursive: true }); writeFileSync(file, text); };
+    try {
+      for (const file of stageFiles) put(join(root, file), 'fixture code');
+      const input = 'fixture input', output = 'fixture baseline CSV';
+      const executionFile = join(previous, 'execution.json'), usedFile = join(previous, 'used.json');
+      const baselineOutput = join(previous, 'pseudo_pair/baseline/input_pseudo_pair.csv');
+      const binary = join(directory, 'pseudo_pair/candidate/pseudo_pair_analyzer');
+      const baseline = { key: 'pseudo_pair', name: 'baseline', seconds: 0.86, nodes: 123, checkedDistances: 2400 };
+      const execution = { status: 'complete', versions: [baseline] };
+      put(executionFile, JSON.stringify(execution)); put(usedFile, '{"consumed":true}');
+      put(baselineOutput, output); put(join(previous, 'input.txt'), input);
+      put(join(directory, 'input.txt'), input); put(join(directory, 'resource-plan.json'), '{}');
+      put(join(directory, 'pseudo_pair/expected.csv'), output);
+      put(binary, 'new conjugate candidate'); put(join(directory, 'pseudo_pair/candidate/input.txt'), input);
+      const stage = {
+        columns: 24, rssLimitBytes: 7 * 2 ** 30, startupRequiredBytes: 9.5 * 2 ** 30,
+        goldenSha256: stageDigest(baselineOutput),
+        versions: { candidate: { binary, binarySha256: stageDigest(binary) } },
+      };
+      const plan = {
+        schema: 'cuberoot.stage-candidates/v1', cases: 100, threads: 18, repetitions: 1, warmup: false,
+        baselineToPreserve: { boot: '{ sec = 1794194703, usec = 456751 } Sun Nov  8 19:25:03 2026', swapouts: 336 },
+        minimumHeadroomBytes: 2 ** 31, inputSha256: stageDigest(join(directory, 'input.txt')),
+        stages: { pseudo_pair: stage },
+        reference: {
+          executionSha256: stageDigest(executionFile), usedSha256: stageDigest(usedFile),
+          outputSha256: stageDigest(baselineOutput), baseline: { ...baseline },
+        },
+      };
+      const approve = () => {
+        put(join(directory, 'plan.json'), JSON.stringify(plan));
+        put(join(directory, 'authorization.json'), JSON.stringify({
+          scope: 'pseudo-pair-conjugate-20261110', authorization: stageRequest,
+          planSha256: stageDigest(join(directory, 'plan.json')),
+          resourcePlanSha256: stageDigest(join(directory, 'resource-plan.json')),
+          codeHashes: Object.fromEntries(stageFiles.map((file: string) => [file, stageDigest(join(root, file))])),
+        }));
+      };
+      expect(() => readStageApproval(root, true)).toThrow();
+      approve();
+      expect(Object.keys(readStageApproval(root, true).plan.stages.pseudo_pair.versions)).toEqual(['candidate']);
+      for (const file of [executionFile, usedFile, baselineOutput, join(previous, 'input.txt'), binary,
+        join(directory, 'pseudo_pair/expected.csv'), join(directory, 'pseudo_pair/candidate/input.txt')]) {
+        const original = readFileSync(file, 'utf8'); put(file, original + '\n');
+        try { expect(() => readStageApproval(root, true)).toThrow(); }
+        finally { put(file, original); }
+      }
+      const used = readFileSync(usedFile, 'utf8'); rmSync(usedFile);
+      expect(() => readStageApproval(root, true)).toThrow(); put(usedFile, used);
+      execution.status = 'failed'; put(executionFile, JSON.stringify(execution));
+      plan.reference.executionSha256 = stageDigest(executionFile); approve();
+      expect(() => readStageApproval(root, true)).toThrow();
+      execution.status = 'complete'; put(executionFile, JSON.stringify(execution));
+      plan.reference.executionSha256 = stageDigest(executionFile);
+      plan.reference.baseline.nodes += 1; approve();
+      expect(() => readStageApproval(root, true)).toThrow();
+      plan.reference.baseline.nodes = baseline.nodes;
+      Object.assign(stage.versions, { baseline: stage.versions.candidate }); approve();
+      expect(() => readStageApproval(root, true)).toThrow();
+      Reflect.deleteProperty(stage.versions, 'baseline');
+      stage.rssLimitBytes += 1; stage.startupRequiredBytes += 1; approve();
+      expect(() => readStageApproval(root, true)).toThrow('Stage memory exceeds reviewed scope');
+      stage.rssLimitBytes -= 1; stage.startupRequiredBytes -= 1; approve();
+      expect(readStageApproval(root, true).plan.reference.baseline).toEqual(baseline);
+      put(join(directory, 'used.json'), '{}');
+      expect(() => readStageApproval(root, true)).toThrow('already consumed');
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  });
   it('consumes only the exact approved MBP revision once, without executing it', () => {
     const scratch = join(REPO_ROOT, '.tmp/scratch');
     mkdirSync(scratch, { recursive: true });
@@ -87,6 +272,27 @@ describe('unprotected memory computation command guard', () => {
     'cargo run --bin=table_generator',
     './solver/target/release/table_generator --help',
     './solver/target/release/f2leo_analyzer input.csv',
+    './solver/target/release/eo_cross_analyzer input.csv',
+    './solver/target/release/pseudo_analyzer input.csv',
+    'node solver/scripts/benchmark_eo_stages.mts --run',
+    'node solver/scripts/benchmark_eo_stages.mts --plan --run',
+    'node solver/scripts/benchmark_eo_stages.mts --run --probe-deny',
+    'node solver/scripts/benchmark_eo_stages.mts --plan; ./solver/target/release/eo_cross_analyzer',
+    'node solver/scripts/benchmark_stage_candidates.mts --run',
+    'node solver/scripts/run_stage_tables.mts --run pair',
+    'node solver/scripts/run_stage_tables.mts --plan pair --run pair',
+    'node solver/scripts/run_stage_tables.mts --plan pair; ./solver/target/release/table_generator --only rust',
+    'node solver/scripts/benchmark_stage_candidates.mts --plan --run',
+    'node solver/scripts/benchmark_stage_candidates.mts --help --run',
+    'node solver/scripts/benchmark_stage_candidates.mts --run --probe-deny',
+    'node solver/scripts/benchmark_stage_candidates.mts --plan; ./solver/target/release/pseudo_analyzer',
+    'node solver/scripts/benchmark_stage_candidates.mts --plan && node solver/scripts/benchmark_stage_candidates.mts --run',
+    'node solver/scripts/benchmark_stage_candidates.mts --run-pseudo-pair-conjugate',
+    'node solver/scripts/benchmark_stage_candidates.mts --plan --run-pseudo-pair-conjugate',
+    'node solver/scripts/benchmark_stage_candidates.mts --help --run-pseudo-pair-conjugate',
+    'node solver/scripts/benchmark_stage_candidates.mts --run-pseudo-pair-conjugate --run',
+    'node solver/scripts/benchmark_stage_candidates.mts --run-pseudo-pair-conjugate --probe-deny',
+    'node solver/scripts/benchmark_stage_candidates.mts --plan && node solver/scripts/benchmark_stage_candidates.mts --run-pseudo-pair-conjugate',
     'node .local-data/double-zbll-1000/run.mts',
     'pnpm stats:scramble:local',
     'pnpm stats:scramble --jobs 333opt',
@@ -128,8 +334,11 @@ describe('unprotected memory computation command guard', () => {
     expect(result.stderr).toBe('');
     const output = JSON.parse(result.stdout).hookSpecificOutput;
     expect(output.permissionDecision).toBe('deny');
-    expect(output.permissionDecisionReason).toContain(/double-zbll(?:-symmetry|:symmetry)/.test(command)
-      ? '受保护入口登记未匹配' : '系统级防交换保护');
+    const reason = /double-zbll(?:-symmetry|:symmetry)/.test(command)
+      ? '受保护入口登记未匹配'
+      : /(?:benchmark_(?:eo_stages|stage_candidates)|run_stage_tables)\.mts .*--run\b/.test(command)
+        ? '一次性凭据' : '系统级防交换保护';
+    expect(output.permissionDecisionReason).toContain(reason);
   });
 
   it.each([
@@ -281,6 +490,14 @@ describe('unprotected memory computation command guard', () => {
     'pnpm --filter @cuberoot/alg-build double-zbll:symmetry --watch',
     'shasum -a 256 solver/333opt/solve_h10.mts',
     'pnpm stats:scramble:local --plan',
+    'node solver/scripts/benchmark_eo_stages.mts --plan',
+    'node --check solver/scripts/benchmark_eo_stages.mts',
+    'node solver/scripts/benchmark_stage_candidates.mts --plan',
+    'node solver/scripts/benchmark_stage_candidates.mts --help',
+    'node solver/scripts/run_stage_tables.mts --plan pair',
+    'node --check solver/scripts/run_stage_tables.mts',
+    'node --check solver/scripts/benchmark_stage_candidates.mts',
+    'node solver/scripts/compare_eo_stages.mts --help',
     'tsx ../scripts/stats/update-local.ts --plan',
     'pnpm stats:scramble:publish --publish --publish-only',
     "rg -n 'double-zbll|table_generator' .codex",

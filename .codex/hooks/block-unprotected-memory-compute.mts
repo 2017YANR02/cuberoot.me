@@ -7,6 +7,9 @@ import { fileURLToPath } from 'node:url';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
+import { approvedEoExperimentCommand } from '../../solver/scripts/eo_stage_experiment_policy.mts';
+import { approvedStageCommand } from '../../solver/scripts/stage_candidate_policy.mts';
+import { approvedStageTableCommand } from '../../solver/scripts/stage_table_policy.mts';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -56,7 +59,7 @@ export function consumeMbpStatsApproval(command: string, cwd: unknown, options: 
     return true;
   } catch { return false; }
 }
-const native = /^(?:table_generator(?:_high_memory)?|(?:pseudo_f2leo|f2leo|pseudo_pair|pair|std)_analyzer)(?:\.exe)?$/;
+const native = /^(?:table_generator(?:_high_memory)?|(?:pseudo_f2leo|f2leo|pseudo_pair|pseudo|pair|std|eo_cross)_analyzer)(?:\.exe)?$/;
 const script = /(?:^|\/)(?:double-zbll\.ts|gen-table\.mjs|backfill_xcross_variant\.[cm]?[jt]s)$/;
 const base = (word: string) => word.replaceAll('\\', '/').split('/').pop() ?? '';
 const cubeoptRoot = resolve(repoRoot, 'solver/experiments/cube48opt-rust');
@@ -239,6 +242,14 @@ export function blockedCompute(command: string, depth = 0, cwd = repoRoot): stri
     // H9-only generation was explicitly authorized on 2026-10-13. The guard
     // validates the exact target, directory, threads and process-tree budget.
     const guarded = interpreterScript(words);
+    const eoEntry = words.findIndex(word => ['benchmark_eo_stages.mts', 'benchmark_stage_candidates.mts', 'run_stage_tables.mts'].includes(base(word)));
+    if (eoEntry >= 0) {
+      const args = words.slice(eoEntry + 1);
+      const readOnly = guarded?.index === eoEntry && (guarded.checkOnly
+        || args.length === 0 || args.length === 1 && ['--plan', '--help'].includes(args[0])
+        || base(words[eoEntry]) === 'run_stage_tables.mts' && args.length === 2 && args[0] === '--plan' && /^[a-z0-9][a-z0-9-]{0,80}$/.test(args[1]));
+      if (!readOnly) return `${base(words[eoEntry]) === 'benchmark_eo_stages.mts' ? 'EO' : '三阶'} 阶段受监控对照（仅限已审查的一次性入口）`;
+    }
     if (guarded && resolve(cwd, words[guarded.index]) === resolve(cubeoptRoot, 'guard.mts')) {
       const args = words.slice(guarded.index + 1);
       if (args.length === 4 && words.includes('CUBEOPT_BACKEND=h9gen')
@@ -289,6 +300,9 @@ async function main() {
   if (typeof command !== 'string') return;
   const cwd = request?.tool_input?.workdir ?? request?.tool_input?.cwd ?? request?.cwd;
   if (consumeMbpStatsApproval(command, cwd)) return;
+  if (approvedEoExperimentCommand(command, cwd)) return;
+  if (approvedStageCommand(command, cwd)) return;
+  if (approvedStageTableCommand(command, cwd)) return;
   // Some code-mode harnesses supply the repository cwd instead of the nested
   // exec workdir. This exact absolute entry is unambiguous in either directory;
   // it receives the same source-hash and runtime-guard checks as the shortcut.
@@ -362,6 +376,8 @@ async function main() {
     hookEventName: 'PreToolUse', permissionDecision: 'deny',
     permissionDecisionReason: blocked === '双底对称去重长期计算'
       ? `双底任务已授权，但受保护入口登记未匹配：工作目录=${String(cwd)}；请核对 core 工作目录、完整命令和登记源码 hash。保留断点，不得绕过运行时资源保护。`
+      : /^(EO|三阶) 阶段受监控对照/.test(blocked)
+      ? '阶段对照只允许已审查的精确命令和一次性凭据；多余参数、源码/构件变化或已消费凭据均拒绝。请核对对应 benchmark 入口与本轮 authorization.json，保留原始记录，不绕过监控或自动重试。'
       : blocked === cubeoptLabel
       ? `禁止直接启动 ${blocked}：本轮授权仅适用于 solver/experiments/cube48opt-rust/guard.mts。请经 node --experimental-strip-types solver/experiments/cube48opt-rust/guard.mts LABEL EXECUTABLE [ARGS] 启动，由入口按 CUBEOPT_VARIANT=1..9、显式 CUBEOPT_BACKEND=h10，或 CUBEOPT_BACKEND=h48 加 CUBEOPT_H=0..10 核对预算。H48 档位必须匹配 CLI、实际表大小和表头；CubeRoot Opt11 与 H48 H11 均仅实现代码，不允许运行，即使通过 guard 也拒绝。持续监控进程树 RSS、内存压力、同次系统启动的 Swapouts 与至少 2 GiB 余量，H10 基准仅允许顺序单表驻留。保护触发后不得重设基线自动重启。inspect、small、verify-small 和小表坐标校验可直接运行；此授权不是操作系统禁用 swap。`
       : `禁止启动 ${blocked}：尚无经核验、覆盖进程及其子进程的系统级防交换保护。现有轮询监控、NO_SWAP 环境变量及缩小批次不能保证零换出。保留结果和断点，先配置并核验系统级保护，再登记受保护入口；不要重设基线或绕过 hook。只读查看统计计划可用 pnpm stats:scramble:local --plan。见 AGENTS.md「本地计算内存与交换保护」；H10 独立求解已按新规则放行，此限制仍适用于上述其他计算。`,

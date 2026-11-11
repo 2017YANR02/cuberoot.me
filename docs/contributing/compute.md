@@ -8,6 +8,14 @@
 
 ## 本地计算内存与交换保护（维护者更新，2026-10-13）
 
+- **三阶新增 PDB 建表与验收（2026-11-10）**：维护者在已有监控约定上明确要求“然后呢 你把该做的都做了，可以建表”。允许本轮 Pair / PseudoPair 联合表、F2LEO 紧排表、标准阶段对称联合表通过统一 `table_generator --only rust --table <精确表名>` 受监控顺序生成，并做固定样本正确性与性能对照。入口为 `solver/scripts/run_stage_tables.mts`，每个已审查 job 固定源码/构件/输入、表目标及内存预算，绑定 `.local-data/stage-pdb-build-20261110/` 下独立凭据，不复用此前已消费的 EO/阶段对照。继续固定 boot `1794194703` / Swapouts `336`，启动要求预算加 2.5 GiB、运行至少 2 GiB 保守余量，新增换出/异常压力/超限即停，不自动重试或重设基线；长期生成必须有按层断点。只生成尚缺且验收通过的新表，保留既有表、程序及结果。此项不包括 SQ1、Egg/Nissy H11 或 CubeRoot Opt11 建表、其他研究及发布；监控不等于系统禁止换出。
+
+- **三阶阶段优化后续对照（2026-11-10）**：维护者在同意本轮监控方式后继续明确要求“别的地方还有什么三阶分阶段求解器可以优化 你多派几个agent去调查 然后测试 优化好”。本轮新 scope `three-stage-optimization-20261110` 仅允许 `benchmark_stage_candidates.mts --run` 顺序对照 std、pseudo、pseudo_pair、pseudo_f2leo 原版/候选各 100 条、18 线程、各一轮、不预热。复用现有表，单进程预算不超过 28 GiB，启动额外 2.5 GiB，运行至少 2 GiB 保守余量；固定原 boot `1794194703` / Swapouts `336`，共用既有统计监控和历史停止记录，10 分钟总时限，触线停止、不自动重试。源码、程序、语料和表元数据绑定于 `.local-data/three-stage-optimization-20261110/`，独立一次性消费记录，不续用已消费的 EO 授权。范围不包括新建表、SQ1、91.4 GiB 表运行或发布；监控不代表系统禁止 swap。
+
+  首轮已正常完成，8 份 100 条输出全部一致，Swapouts 336→336；pseudo_pair 缓存候选未提速，不晋升。按同一“测试、优化好”的要求，仅追加真正不同的 `pseudo-pair-single-conjugate` 每节点候选：`benchmark_stage_candidates.mts --run-pseudo-pair-conjugate`，独立 `.local-data/pseudo-pair-conjugate-20261110/` 一次性凭据。仅新候选 100 条一轮，复用首轮已完成的原版结果，不重跑原版或缓存版；RSS 不超过 7 GiB，其余 boot、Swapouts、停止保护和禁止自动重试不变。首轮入口源码及所有证据已冻结，旧凭据不续期。
+
+- **EO 多槽位对照单项授权（2026-11-10）**：维护者明确回复“允许本次受监控对照（推荐）”，允许 `solver/scripts/benchmark_eo_stages.mts --run` 在本机顺序执行已冻结的原版与候选各 100 条、18 线程、每版一轮、不预热。仅复用既有 43,157,566,416 字节 EO 表，进程树 RSS 上限 47,452,533,712 字节，启动至少 50,136,888,272 字节可回收内存，运行保守余量至少 2 GiB。使用现有统计监控与历史停止记录，固定 boot `1794194703` / Swapouts `336`；新增换出、异常压力、超限或 10 分钟时限即停止，不自动重试或重设基线。授权与构件、语料、代码摘要位于 `.local-data/eo-stages-128g-20261110/`，启动排他写入 `used.json`，失败不续期。此项不授权建表、SQ1、其他 H11 研究或发布，也不代表系统禁止 swap。
+
 - **本轮 MBP 完整统计授权（2026-11-10）**：维护者明确批准本轮 `pnpm stats:scramble` 全流程（三阶阶段、日常 Egg、puzzles/SQ1 及计算成功后的发布）使用已有资源监控。仅经 `ssh mbp` 在已同步、干净且固定提交的 checkout 执行正式入口。启动前核对表、已有进程、历史保护记录及资源预算；全程固定 boot/Swapouts 基线，压力异常、RSS 超限或保守余量低于 2 GiB 即停止，保留断点，不自动重试或重设基线。复用现有表，不授权建表或其他 H11 研究，也不代表系统禁止 swap。Hook 仅接受本轮精确 SSH 命令及 `.local-data/stats-mbp-20261110/authorization.json` 中的已审查提交；执行前以排他写入 `used.json` 消耗授权，失败也不续期。未使用授权于 2026-11-12 00:00 UTC 失效；此期限只限制启动，不终止已启动的受监控任务。不得删除或重建消费记录来重试。其他统计命令继续按原默认规则检查。
 
   本轮环境修复记录：首次尝试 `1794334301951-53299-48578525-8d7e-4c0e-bf00-47ef2d109a07` 在 `build-analyzers` 的 `spawn cargo ENOENT` 处结束，未启动分析器或求解。监控正常退出，峰值 RSS 约 77 MiB，boot `1794194703`、Swapouts `336` 前后一致，没有保护停止。原始凭据和证据保留。为完成同一次已授权计算，补入现有 `~/.cargo/bin` 后允许一次人工复核的环境修复凭据 `startup-repair-authorization.json`，绑定原 `used.json` 的 SHA256 和修复后的提交，消费到独立 `startup-repair-used.json`。SSH 命令在启动前再次检查 Cargo 和原始 boot/Swapouts；两者变化就拒绝，不重设基线。此项不适用于资源保护停止、已开始的计算失败或后续自动重试。

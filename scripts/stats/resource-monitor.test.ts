@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { once } from 'node:events';
 import { parseProcesses } from '../../core/scripts/mac-system-recorder.mts';
-import { GiB, analyzerTableNames, archiveReviewedStatsStop, isTsxService, parseIdentities, resourceLimits, resourceValues, resolveStatsAnalyzerEnv, runWhileMonitored, sameIdentity, selectStatsEoProfile, startupRequiredBytes, statsAnalyzerStartupDecision, tableBudget, trackedTree, validateResumeReview, type Identity, type ProcessRow, type TableBudget } from './resource-monitor.js';
+import { GiB, analyzerTableNames, archiveReviewedStatsStop, inspectCompletion, isTsxService, parseIdentities, resourceLimits, resourceValues, resolveStatsAnalyzerEnv, runWhileMonitored, sameIdentity, selectStatsEoProfile, selectStatsStandardStageMode, startupRequiredBytes, statsAnalyzerStartupDecision, statsResourcePlan, tableBudget, trackedTree, validateResumeReview, validateStatsDeepTableMetadata, type Identity, type ProcessRow, type TableBudget } from './resource-monitor.js';
 import { sq1GrindLadder, sq1GrindResourcePlan } from './sq1-grind.js';
 
 const identity = (pid: number, command = `process-${pid}`, start = 'Wed Oct 21 12:00:00 2026'): Identity => ({ pid, start, command });
@@ -46,6 +46,53 @@ test('table plan follows EO profile and optional table flags; unknown binaries f
   assert.equal(tableBudget('sq1_slash_mitm', {}, 64 * GiB, inspect).workingBytes, 20_736_638_976);
 });
 
+test('new stage PDBs enter budgets only for their requested consumers', () => {
+  const names = (binary: string, env: NodeJS.ProcessEnv) => analyzerTableNames(binary, env, 128 * GiB).names;
+  assert(names('pair_analyzer', { CUBE_PAIR_JOINT_MODE: 'first' }).includes('pt_cross_pair_C4E0.bin'));
+  assert(names('pair_analyzer', {}).includes('pt_cross_pair_C4E0.bin'));
+  assert(!names('pseudo_pair_analyzer', {}).some(n => n.startsWith('pt_pscross_pair_')));
+  assert.equal(names('pseudo_pair_analyzer', { CUBE_PAIR_JOINT_MODE: 'all' }).filter(n => n.startsWith('pt_pscross_pair_')).length, 4);
+  assert(!names('pair_analyzer', { CUBE_PAIR_JOINT_MODE: 'off' }).includes('pt_cross_pair_C4E0.bin'));
+  for (const binary of ['f2leo_analyzer', 'pseudo_f2leo_analyzer']) assert(names(binary, { CUBE_F2LEO_COMPACT_MODE: 'first' }).includes('pt_cross_eo_E0E1E2E3.bin'));
+  assert(names('f2leo_analyzer', {}).includes('pt_cross_eo_E0E1E2E3.bin'));
+  assert(!names('f2leo_analyzer', { CUBE_F2LEO_COMPACT_MODE: 'off' }).includes('pt_cross_eo_E0E1E2E3.bin'));
+  assert(names('std_analyzer', { CUBE_STAGE_JOINT_MODE: 'both' }).includes('pt_cross_C4C6E0E1E2.bin'));
+  assert(!names('f2b_analyzer', { CUBE_STAGE_JOINT_MODE: 'both' }).includes('pt_cross_C4C6E0E1E2.bin'));
+  for (const mode of ['middle', 'both']) {
+    const tables = names('f2b_analyzer', { CUBE_STAGE_JOINT_MODE: mode });
+    assert(tables.includes('mt_edge4.bin'));
+    assert(tables.includes('pt_C4C5C6C7E0E1E2E3.bin'));
+  }
+  assert(!names('f2b_analyzer', { CUBE_STAGE_JOINT_MODE: 'off' }).includes('mt_edge4.bin'));
+  assert(names('f2b_analyzer', {}).includes('mt_edge4.bin'));
+  assert(names('f2b_analyzer', {}).includes('pt_C4C5C6C7E0E1E2E3.bin'));
+  assert(!names('f2b_analyzer', { CUBE_STAGE_JOINT_MODE: 'off' }).includes('mt_edge4.bin'), 'Opt-in inventory must not mutate its base');
+  assert.deepEqual(names('f2b_analyzer', { CUBE_F2B_LIGHT: '1' }), ['mt_corn2.bin', 'mt_edge3.bin']);
+  assert.deepEqual(names('f2b_analyzer', { CUBE_F2B_LIGHT: '1', CUBE_STAGE_JOINT_MODE: 'middle' }), ['mt_corn2.bin', 'mt_edge3.bin']);
+  assert(!names('std_analyzer', {}).includes('pt_C4C5C6C7E0E1E2E3.bin'));
+  assert(!names('std_analyzer', {}).includes('pt_cross_C4C6E0E1E2.bin'), 'Explicit candidates must not mutate base inventories');
+});
+
+test('Deep projection omits exactly the redundant diagonal file and preserves reserves', () => {
+  const full = { CUBE_STAGE_JOINT_MODE: 'deep' };
+  const projected = { ...full, CUBE_STAGE_DEEP_NO_DIAG: '1' };
+  const oldDiagonal = 'pt_cross_C4C6E0E2.bin';
+  const names = (env: NodeJS.ProcessEnv) => analyzerTableNames('std_analyzer', env, 128 * GiB).names;
+  assert.deepEqual(names(projected), names(full).filter(name => name !== oldDiagonal));
+  assert(names(projected).includes('pt_cross_C4C5E0E1.bin'), 'Retain adjacent pair goal checks');
+  assert(names(full).includes(oldDiagonal), 'Candidate calls must not mutate the full inventory');
+  assert(names({ ...projected, CUBE_STAGE_DEEP_NO_DIAG: '0' }).includes(oldDiagonal));
+  const inspect = ((path: string) => ({ isFile: () => true, size: path.endsWith(oldDiagonal) ? 10_729_635_856 : 100, mtimeMs: 0, ino: 1, dev: 1 })) as Parameters<typeof tableBudget>[3];
+  const original = tableBudget('std_analyzer', full, 128 * GiB, inspect);
+  const candidate = tableBudget('std_analyzer', projected, 128 * GiB, inspect);
+  assert.equal(original.rssLimit - candidate.rssLimit, 10_729_635_856);
+  assert.equal(candidate.rssLimit - candidate.tableBytes, 4 * GiB);
+  assert.equal(startupRequiredBytes(candidate.rssLimit) - candidate.rssLimit, 2.5 * GiB);
+  for (const mode of ['off', 'middle', 'default', undefined]) assert.throws(() => names({ ...projected, CUBE_STAGE_JOINT_MODE: mode }));
+  assert.throws(() => names({ ...projected, CUBE_STAGE_DEEP_NO_DIAG: 'default' }));
+  for (const binary of ['pair_analyzer', 'f2leo_analyzer', 'f2b_analyzer']) assert.throws(() => analyzerTableNames(binary, projected, 128 * GiB));
+});
+
 test('EO auto freezes a profile at the unchanged startup boundary and preserves native eligibility', () => {
   const highRssLimit = 47_452_533_712, required = 50_136_888_272;
   const original = { CUBE_TABLE_PROFILE: 'auto', CUBE_EO_NO_DIAG: '0' };
@@ -63,6 +110,118 @@ test('EO auto freezes a profile at the unchanged startup boundary and preserves 
   assert.equal(resolveStatsAnalyzerEnv('eo_cross_analyzer', explicitDefault), explicitDefault);
   assert.equal(resolveStatsAnalyzerEnv('std_analyzer', original), original);
   assert.equal(selectStatsEoProfile(original, 0, () => highRssLimit, 64 * GiB).CUBE_TABLE_PROFILE, 'default');
+});
+
+const fullStdEnv = { CUBE_RUN_FULL_STD: '1', CUBE_ALLOW_HUGE_TABLES: '1' };
+const deepMetadata = { isFile: () => true, size: 65_910_624_256, mtimeMs: 1794385000000, ino: 42, dev: 1 };
+function sealDeepRecord(record: Buffer) {
+  let hash = 0xcbf29ce484222325n;
+  for (let i = 0; i < 504; i += 8) hash = BigInt.asUintN(64, (hash ^ record.readBigUInt64LE(i)) * 0x100000001b3n);
+  record.writeBigUInt64LE(hash, 504);
+}
+// Rust STGJPDB1's fixed-width LE metadata, including its wrapping u64 checksum.
+function deepHeader(changes: Record<number, bigint> = {}) {
+  const header = Buffer.alloc(4096), record = header.subarray(0, 512);
+  record.write('STGJPDB1', 0, 'ascii');
+  const values = [1n, 2n, 258n, 510_935_040n, 128_755_722_240n, 14n, 13n, 1n, 1n, 0xfedcba9876543210n,
+    ...Array.from({ length: 15 }, (_, i) => i === 0 ? 1n : i === 13 ? 128_755_722_239n : 0n)];
+  for (const [index, value] of Object.entries(changes)) values[Number(index)] = value;
+  values.forEach((value, i) => record.writeBigUInt64LE(value, 8 + i * 8));
+  sealDeepRecord(record);
+  return header;
+}
+
+test('standard stage auto selects Deep only at its unchanged budget and freezes both choices', () => {
+  const limit = 78 * GiB, required = startupRequiredBytes(limit);
+  let calls = 0;
+  const inspect = () => { calls++; return limit; };
+  const selected = selectStatsStandardStageMode(fullStdEnv, required, inspect, 128 * GiB);
+  assert.equal(selected.CUBE_STAGE_JOINT_MODE, 'deep');
+  assert.equal(selected.CUBE_STAGE_DEEP_NO_DIAG, '1');
+  assert.deepEqual(fullStdEnv, { CUBE_RUN_FULL_STD: '1', CUBE_ALLOW_HUGE_TABLES: '1' });
+  const low = selectStatsStandardStageMode(fullStdEnv, required - 1, inspect, 128 * GiB);
+  assert.equal(low.CUBE_STAGE_JOINT_MODE, 'off'); assert.equal(low.CUBE_STAGE_DEEP_NO_DIAG, '0');
+  const forbidden = () => { throw Error('Do not re-inspect tables for a frozen choice'); };
+  assert.equal(selectStatsStandardStageMode(selected, 0, forbidden, 128 * GiB), selected);
+  assert.equal(selectStatsStandardStageMode(low, 128 * GiB, forbidden, 128 * GiB), low);
+  assert.equal(calls, 2);
+  for (const explicit of [{ CUBE_STAGE_JOINT_MODE: 'off' }, { CUBE_STAGE_JOINT_MODE: 'deep' },
+    { CUBE_STAGE_JOINT_MODE: 'both', CUBE_STAGE_DEEP_NO_DIAG: '1' }, { CUBE_STAGE_DEEP_NO_DIAG: '0' }]) {
+    const env = { ...fullStdEnv, ...explicit };
+    assert.equal(selectStatsStandardStageMode(env, 0, forbidden, 128 * GiB), env);
+  }
+  for (const env of [{}, { CUBE_RUN_FULL_STD: '1' }, { CUBE_ALLOW_HUGE_TABLES: '1' },
+    { ...fullStdEnv, CUBE_TABLE_PROFILE: 'default' }])
+    assert.equal(selectStatsStandardStageMode(env, 128 * GiB, forbidden, 128 * GiB).CUBE_STAGE_JOINT_MODE, 'off');
+  assert.equal(selectStatsStandardStageMode(fullStdEnv, 128 * GiB, forbidden, 128 * GiB - 1).CUBE_STAGE_JOINT_MODE, 'off');
+  assert.equal(selectStatsStandardStageMode({ ...fullStdEnv, CUBE_TABLE_PROFILE: 'high-memory' }, required, () => limit, 128 * GiB).CUBE_STAGE_JOINT_MODE, 'deep');
+  const missing = () => { throw Object.assign(Error('missing Deep table'), { code: 'ENOENT' }); };
+  assert.equal(selectStatsStandardStageMode(fullStdEnv, 128 * GiB, missing, 128 * GiB).CUBE_STAGE_JOINT_MODE, 'off');
+  for (const code of ['EACCES', 'EIO', 'ENOTDIR']) assert.throws(() => selectStatsStandardStageMode(fullStdEnv, required,
+    () => { throw Object.assign(Error(code), { code }); }, 128 * GiB), new RegExp(code));
+  for (const invalid of [0, -1, Number.NaN, Number.MAX_SAFE_INTEGER])
+    assert.throws(() => selectStatsStandardStageMode(fullStdEnv, required, () => invalid, 128 * GiB), /budget/);
+});
+
+test('standard stage auto validates Rust Deep metadata with exact BigInt checksums', () => {
+  const path = '/fixture/pt_cross_C4C6E0E1E2.bin';
+  const valid = validateStatsDeepTableMetadata(path, deepMetadata, deepHeader());
+  assert.equal(valid.completedDepth, 13); assert.equal(valid.full, true);
+  assert.equal(valid.reached, 128_755_722_240); assert.equal(valid.checksum, 'fedcba9876543210');
+  for (const change of [{ size: deepMetadata.size - 1 }, { isFile: () => false }, { mtimeMs: Number.NaN }, { ino: 0.5 }, { dev: -1 }])
+    assert.throws(() => validateStatsDeepTableMetadata(path, { ...deepMetadata, ...change }, deepHeader()), /metadata/);
+  const invalidRecords: Array<Record<number, bigint>> = [{ 0: 2n }, { 1: 1n }, { 2: 257n }, { 3: 510_935_039n }, { 4: 128_755_722_239n },
+    { 5: BigInt(Number.MAX_SAFE_INTEGER) + 1n }, { 6: 15n }, { 7: 0n }, { 8: 0n }, { 10: 0n }, { 24: 1n },
+    { 6: 11n, 21: 128_755_722_239n, 23: 0n }];
+  for (const change of invalidRecords)
+    assert.throws(() => validateStatsDeepTableMetadata(path, deepMetadata, deepHeader(change)), /metadata/);
+  const corrupt = deepHeader(); corrupt[90] ^= 1;
+  assert.throws(() => validateStatsDeepTableMetadata(path, deepMetadata, corrupt), /metadata/);
+  const highBitMagic = deepHeader(); highBitMagic[0] |= 0x80; sealDeepRecord(highBitMagic.subarray(0, 512));
+  assert.equal(highBitMagic.subarray(0, 8).toString('ascii'), 'STGJPDB1', 'ASCII decoding would hide the invalid byte');
+  assert.throws(() => validateStatsDeepTableMetadata(path, deepMetadata, highBitMagic), /metadata/);
+  assert.throws(() => validateStatsDeepTableMetadata(path, deepMetadata, deepHeader().subarray(0, 4095)), /metadata/);
+  const redundant = deepHeader(); corrupt.copy(redundant, 512, 0, 512);
+  assert.equal(validateStatsDeepTableMetadata(path, deepMetadata, redundant).generation, 14, 'Ignore a torn alternate record');
+  const pending = deepHeader({ 5: 15n, 7: 0n, 8: 0n }); pending.copy(redundant, 512, 0, 512);
+  assert.throws(() => validateStatsDeepTableMetadata(path, deepMetadata, redundant), /metadata/, 'Never fall back past a newer unpublished record');
+  deepHeader({ 7: 0n, 8: 0n }).copy(redundant, 512, 0, 512);
+  assert.throws(() => validateStatsDeepTableMetadata(path, deepMetadata, redundant), /metadata/, 'Rust chooses the second valid record on a generation tie');
+  deepHeader({ 9: 0xfedcba9876543211n }).copy(redundant, 512, 0, 512);
+  assert.equal(validateStatsDeepTableMetadata(path, deepMetadata, redundant).checksum, 'fedcba9876543211');
+});
+
+test('standard stage read-only plan uses the real full-std flags and exposes optional Deep budget', () => {
+  const directory = '/fixture/tables', path = join(directory, 'pt_cross_C4C6E0E1E2.bin');
+  let headerReads = 0;
+  const inspect = ((file: string) => file === path ? deepMetadata : { ...deepMetadata, size: 100 }) as NonNullable<Parameters<typeof tableBudget>[3]>;
+  const context = { available: 128 * GiB, physicalBytes: 128 * GiB, inspect,
+    readHeader: (file: string) => { assert.equal(file, path); headerReads++; return deepHeader(); } };
+  const env = { CUBE_TABLE_DIR: directory, CUBE_ALLOW_HUGE_TABLES: '1' };
+  const [high] = statsResourcePlan(['std_analyzer'], env, false, context) as any[];
+  assert.equal(high.tableBytes, deepMetadata.size + 900);
+  assert.equal(high.rssLimit, high.tableBytes + 4 * GiB);
+  assert.equal(high.startupRequiredBytes, high.rssLimit + 2.5 * GiB);
+  assert.equal(high.standardStageSelection.selected, 'deep'); assert.equal(high.standardStageSelection.noDiagonal, '1');
+  assert.equal(high.standardStageSelection.frozen, false);
+  assert.equal(high.standardStageSelection.optionalDeep.budget.rssLimit, high.rssLimit);
+  assert(!high.files.some((file: any) => file.path.endsWith('pt_cross_C4C6E0E2.bin')));
+  const [low] = statsResourcePlan(['std_analyzer'], env, false, { ...context, available: high.startupRequiredBytes - 1 }) as any[];
+  assert.equal(low.standardStageSelection.selected, 'off'); assert.equal(low.tableBytes, 1000);
+  assert.equal(low.standardStageSelection.optionalDeep.startupRequiredBytes, high.startupRequiredBytes);
+  assert.equal(headerReads, 2);
+  const missing = ((file: string) => {
+    if (file === path) throw Object.assign(Error('absent'), { code: 'ENOENT' });
+    return inspect(file);
+  }) as Parameters<typeof tableBudget>[3];
+  const [fallback] = statsResourcePlan(['std_analyzer'], env, false, { ...context, inspect: missing }) as any[];
+  assert.equal(fallback.standardStageSelection.optionalStatus, 'missing'); assert.equal(fallback.tableBytes, 1000);
+  assert.equal(headerReads, 2, 'Missing metadata must not open the payload');
+  const [damaged] = statsResourcePlan(['std_analyzer'], env, false, { ...context, readHeader: () => Buffer.alloc(4096) }) as any[];
+  assert.match(damaged.error, /DeepSeven metadata/); assert.equal(damaged.tableBytes, undefined);
+  const [explicit] = statsResourcePlan(['std_analyzer'], { ...env, CUBE_STAGE_JOINT_MODE: 'off' }, false,
+    { ...context, readHeader: () => { throw Error('Explicit off must not inspect Deep'); } }) as any[];
+  assert.equal(explicit.standardStageSelection.requested, 'explicit'); assert.equal(explicit.tableBytes, 1000);
 });
 
 test('daily SQ1 ladder budgets every rung and skips only optional attempts below the unchanged threshold', () => {
@@ -139,6 +298,51 @@ test('tree tracking retains known orphans, excludes monitor descendants and reje
   assert.deepEqual(trackedTree(root, known, rows, current, 3).map(p => p.pid), [1]);
   assert.equal(sameIdentity(original, current.get(2)), false);
   assert.deepEqual(parseIdentities(' 2 Wed Oct  7 12:00:00 2026 /path with spaces --arg\n'), [{ pid: 2, start: 'Wed Oct 7 12:00:00 2026', command: '/path with spaces --arg' }]);
+});
+
+test('completion refreshes stale snapshots and only ignores explicit zombies', () => {
+  const root = identity(1), child = identity(2, '(pair_analyzer)');
+  const known = new Map([[1, root], [2, child]]);
+  const stale = { rows: [row(1, 0), row(2, 1)], identities: new Map([[1, root], [2, child]]) };
+  assert.deepEqual(trackedTree(root, known, stale.rows, stale.identities, -1).map(p => p.pid), [1, 2]);
+  let reads = 0;
+  const reaped = inspectCompletion(root, known, -1, () => {
+    reads++;
+    return { rows: [row(1, 0)], identities: new Map([[1, root]]) };
+  });
+  assert.equal(reads, 1);
+  assert.deepEqual(reaped.family.map(p => p.pid), [1]);
+  assert.deepEqual(reaped.survivors, []);
+
+  const inspect = (state: string) => inspectCompletion(root, known, -1, () => ({
+    ...stale, rows: [row(1, 0), { ...row(2, 1, 0), state }],
+  }));
+  for (const state of ['Z', 'Z+']) {
+    assert.deepEqual(inspect(state).survivors, []);
+    assert.equal(inspect(state).family[1].state, state, 'Retain terminal process state for audit');
+  }
+  for (const state of ['R', 'S', 'T', 'U', 'D', 'I', '', '?', 'X']) {
+    assert.deepEqual(inspect(state).survivors.map(p => p.pid), [2], `Do not exempt state ${state}, zero RSS or a parenthesized command`);
+  }
+});
+
+test('completion retains live grandchildren beneath zombies and fails closed on unknown service state', () => {
+  const root = identity(1), zombie = identity(2, '(pair_analyzer)'), worker = identity(3), monitor = identity(4);
+  const current = new Map([[1, root], [2, zombie], [3, worker], [4, monitor], [5, identity(5)]]);
+  const inspected = inspectCompletion(root, new Map(), 4, () => ({
+    identities: current,
+    rows: [row(1, 0), { ...row(2, 1), state: 'Z' }, row(3, 2), row(4, 1), row(5, 4)],
+  }));
+  assert.deepEqual(inspected.family.map(p => p.pid), [1, 2, 3]);
+  assert.deepEqual(inspected.survivors.map(p => p.pid), [3]);
+
+  const service = identity(2, '/app/node_modules/@esbuild/darwin-arm64/bin/esbuild --service=0.25.0 --ping');
+  for (const state of ['S', 'R', '?', '', 'T']) {
+    const result = inspectCompletion(root, new Map(), -1, () => ({
+      identities: new Map([[1, root], [2, service]]), rows: [row(1, 0), { ...row(2, 1), name: 'esbuild', state }],
+    }));
+    assert.deepEqual(result.survivors.map(p => p.pid), ['S', 'R'].includes(state) ? [] : [2]);
+  }
 });
 
 test('resume review binds exact retained proof and cannot refresh its original baseline', () => {
