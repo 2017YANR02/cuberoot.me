@@ -72,7 +72,11 @@ fn compile_worker(manifest: &Path, target_dir: &Path, threads: usize) -> Result<
             manifest.join("native/h48_progress.h"),
         ];
         if worker_mtime.is_some_and(|t| {
-            sources.iter().all(|p| std::fs::metadata(p).and_then(|m| m.modified()).is_ok_and(|s| s <= t))
+            sources.iter().all(|p| {
+                std::fs::metadata(p)
+                    .and_then(|m| m.modified())
+                    .is_ok_and(|s| s <= t)
+            })
         }) {
             return Ok(output);
         }
@@ -83,7 +87,8 @@ fn compile_worker(manifest: &Path, target_dir: &Path, threads: usize) -> Result<
     } else {
         "PORTABLE"
     };
-    let compiler = std::env::var("CC").unwrap_or_else(|_| if cfg!(windows) { "clang" } else { "cc" }.into());
+    let compiler =
+        std::env::var("CC").unwrap_or_else(|_| if cfg!(windows) { "clang" } else { "cc" }.into());
     eprintln!("[H48] compiling nissy-core: {threads} threads, {arch}, {compiler}");
     let mut command = Command::new(compiler);
     command.arg("-std=c11").arg("-D_POSIX_C_SOURCE=200809L");
@@ -119,9 +124,13 @@ fn mark_failed_progress(table_path: &Path) {
     let mut name = table_path.as_os_str().to_os_string();
     name.push(".progress.json");
     let path = PathBuf::from(name);
-    let Ok(status) = std::fs::read_to_string(&path) else { return };
+    let Ok(status) = std::fs::read_to_string(&path) else {
+        return;
+    };
     let updated = status.replacen("\"status\":\"running\"", "\"status\":\"failed\"", 1);
-    if updated == status { return }
+    if updated == status {
+        return;
+    }
     let tmp = path.with_extension("json.new");
     if std::fs::write(&tmp, updated).is_ok() {
         let _ = std::fs::rename(tmp, path);
@@ -146,7 +155,10 @@ pub fn generate(threads: usize, dataid: &str) -> Result<(bool, u64, u64), String
         .output()
         .map_err(|e| format!("cannot inspect H48 {dataid} size: {e}"))?;
     if !info.status.success() {
-        return Err(format!("cannot inspect H48 {dataid} size: {}", String::from_utf8_lossy(&info.stderr)));
+        return Err(format!(
+            "cannot inspect H48 {dataid} size: {}",
+            String::from_utf8_lossy(&info.stderr)
+        ));
     }
     let info_text = String::from_utf8_lossy(&info.stderr);
     let expected = info_text
@@ -156,7 +168,9 @@ pub fn generate(threads: usize, dataid: &str) -> Result<(bool, u64, u64), String
         .and_then(|value| value.trim().parse::<u64>().ok())
         .ok_or_else(|| format!("H48 {dataid} did not report its expected size: {info_text}"))?;
     if dataid == "h48h10" && expected != H10_BYTES {
-        return Err(format!("H48 h10 size changed: expected {H10_BYTES}, got {expected}"));
+        return Err(format!(
+            "H48 h10 size changed: expected {H10_BYTES}, got {expected}"
+        ));
     }
     if dataid == "h48h9" && expected != 15_169_187_432 {
         return Err(format!("H48 h9 size changed: {expected}"));
@@ -176,14 +190,19 @@ pub fn generate(threads: usize, dataid: &str) -> Result<(bool, u64, u64), String
         .stderr(Stdio::piped())
         .spawn()
         .map_err(|e| format!("cannot start H48 worker: {e}"))?;
-    let mut child_stderr = child.stderr.take().ok_or("cannot capture H48 worker stderr")?;
+    let mut child_stderr = child
+        .stderr
+        .take()
+        .ok_or("cannot capture H48 worker stderr")?;
     let reader = std::thread::spawn(move || -> std::io::Result<()> {
         let mut log = log;
         let mut stderr = std::io::stderr().lock();
         let mut buffer = [0_u8; 8192];
         loop {
             let count = child_stderr.read(&mut buffer)?;
-            if count == 0 { break; }
+            if count == 0 {
+                break;
+            }
             log.write_all(&buffer[..count])?;
             stderr.write_all(&buffer[..count])?;
         }
@@ -201,7 +220,11 @@ pub fn generate(threads: usize, dataid: &str) -> Result<(bool, u64, u64), String
                 let _ = child.wait();
                 let _ = reader.join();
                 mark_failed_progress(&path);
-                return Err(format!("H48 stopped at 57 GiB alarm: RSS {} bytes after {:.1}s", rss, started.elapsed().as_secs_f64()));
+                return Err(format!(
+                    "H48 stopped at 57 GiB alarm: RSS {} bytes after {:.1}s",
+                    rss,
+                    started.elapsed().as_secs_f64()
+                ));
             }
         }
         #[cfg(target_os = "macos")]
@@ -221,16 +244,26 @@ pub fn generate(threads: usize, dataid: &str) -> Result<(bool, u64, u64), String
             }
         }
         if let Some(status) = child.try_wait().map_err(|e| e.to_string())? {
-            reader.join().map_err(|_| "H48 worker log thread panicked".to_owned())?
+            reader
+                .join()
+                .map_err(|_| "H48 worker log thread panicked".to_owned())?
                 .map_err(|e| format!("cannot write H48 worker log {}: {e}", log_path.display()))?;
             if !status.success() {
                 mark_failed_progress(&path);
-                return Err(format!("H48 worker failed: {status}; peak RSS {peak} bytes; see {}", log_path.display()));
+                return Err(format!(
+                    "H48 worker failed: {status}; peak RSS {peak} bytes; see {}",
+                    log_path.display()
+                ));
             }
             if !std::fs::metadata(&path).is_ok_and(|m| m.len() == expected) {
-                return Err(format!("H48 worker finished without complete {expected}-byte table"));
+                return Err(format!(
+                    "H48 worker finished without complete {expected}-byte table"
+                ));
             }
-            eprintln!("[H48] peak worker RSS: {peak} bytes ({:.2} GiB)", peak as f64 / 1024_f64.powi(3));
+            eprintln!(
+                "[H48] peak worker RSS: {peak} bytes ({:.2} GiB)",
+                peak as f64 / 1024_f64.powi(3)
+            );
             return Ok((true, peak, expected));
         }
         std::thread::sleep(Duration::from_millis(250));

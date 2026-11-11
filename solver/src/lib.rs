@@ -54,6 +54,14 @@ pub mod xcross_restrict_solver;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod high_memory_tables;
 #[cfg(not(target_arch = "wasm32"))]
+pub mod pair_joint_table;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod f2leo_compact_table;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod stage_symmetry;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod stage_joint_table;
+#[cfg(not(target_arch = "wasm32"))]
 pub mod logo;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod prune_create;

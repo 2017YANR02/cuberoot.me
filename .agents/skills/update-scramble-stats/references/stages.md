@@ -12,6 +12,17 @@ TypeScript 入口下载或复用 WCA export，抽取新增打乱，运行 `std_a
 
 分析器走 `CUBE_TABLE_DIR` 与 `CUBE_ALLOW_HUGE_TABLES=1`，Rayon 默认使用机器可用并行度。性能估计须读取本机实际进度；旧机器的 eo、pair 等速率不能作为本机承诺。产物自动记录各阶段耗时。若更改分布 JSON 结构，应同时更新前端类型和资源版本。
 
+2026-11-11 标准阶段已接受 61.384 GiB DeepSeven 表。macOS 受监控日常
+入口在物理内存至少 128 GiB、完整表已存在、可回收内存至少 80.800 GiB
+且未显式指定模式时选择 `CUBE_STAGE_JOINT_MODE=deep` 和
+`CUBE_STAGE_DEEP_NO_DIAG=1`；不满足条件用原表 `off`，非法或损坏表拒绝。
+投影恢复 XXCross 的精确对角距离，并加强 XXX/XXXXCross，实际表文件
+合计 74.300 GiB、RSS 预算 78.300 GiB；旧对角表文件保留供其他求解器。
+选择在 checkpoint 身份计算前冻结，跨批次不改档、不重载；启动后资源
+触线仍停止。显式模式优先，不自动生成大表。固定千条样本中位数
+2.08→0.88 秒，不能外推为整个统计管道加速倍数。表与验收细节见
+[HIGH_MEMORY_TABLE_PROFILE.md](../../../../solver/HIGH_MEMORY_TABLE_PROFILE.md)。
+
 ### 第二套数据集：xcross_2_col_10f
 
 它与 WCA 增量管道解耦。只补 CSV，在仓库根运行：

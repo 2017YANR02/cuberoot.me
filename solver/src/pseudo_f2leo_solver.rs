@@ -1744,8 +1744,35 @@ struct BigConj {
     ie_rel: [u32; 4], // 4 个 edge slot 的 mt_edge 当前态(0..23,共轭后)
 }
 
+/// 先遍历深度,再按固定顺序尝试所有启发式允许的 combo。
+/// 深度 0 也交给调用方检查,因此不能把 h=0 直接当成包含自由棱 EO 的完整目标。
+#[cfg(all(
+    not(target_arch = "wasm32"),
+    any(feature = "pseudo-f2leo-global-ida", test)
+))]
+fn search_stage_depths(
+    scored: &[(u32, usize)],
+    cap: u32,
+    mut search: impl FnMut(usize, u32) -> bool,
+) -> u32 {
+    let start = scored.first().map_or(99, |&(h, _)| h);
+    for depth in start..=cap {
+        for &(h, ci) in scored {
+            if h > depth {
+                break;
+            }
+            if search(ci, depth) {
+                return depth;
+            }
+        }
+    }
+    99
+}
+
 #[cfg(not(target_arch = "wasm32"))]
 pub struct PseudoF2leoBigSolver {
+    #[cfg(feature = "f2leo-compact-table")]
+    compact_cross: Option<Arc<crate::f2leo_compact_table::CompactCrossTable>>,
     mt_edge2: Arc<MoveTable>,
     mt_edge4: Arc<MoveTable>,
     mt_corn: Arc<MoveTable>,
@@ -1772,6 +1799,8 @@ impl PseudoF2leoBigSolver {
         let ptm = prune_tables::instance();
         let mt_edge2 = mtm.ensure_edge2();
         PseudoF2leoBigSolver {
+            #[cfg(feature = "f2leo-compact-table")]
+            compact_cross: crate::f2leo_compact_table::configured(),
             cross_prune: build_pscross_prune(mt_edge2.as_u32()),
             mt_edge2,
             mt_edge4: mtm.ensure_edge4(),
@@ -2089,6 +2118,10 @@ impl PseudoF2leoBigSolver {
     }
 
     fn solve_cross(&self, i1: usize, i2: usize, eo: [usize; 4]) -> u32 {
+        #[cfg(feature = "f2leo-compact-table")]
+        if let Some(table) = &self.compact_cross {
+            return table.distance_from_root(i1, i2, eo, true);
+        }
         let pr = self.cross_prune[i1 * E2 + i2] as u32;
         if pr == 0 && eo.iter().all(|&e| e % 2 == 0) {
             return 0;
@@ -2263,54 +2296,111 @@ impl PseudoF2leoBigSolver {
             aux_all[k] = (aux, naux, ref_slot);
         }
         scored[..m].sort_by_key(|t| t.0);
-        let mut best = 99u32;
-        for &(h, ci) in &scored[..m] {
-            if h >= best {
-                break;
-            }
-            let combo = &combos[ci];
-            let (aux, naux, ref_slot) = &aux_all[ci];
-            // 自由棱 = 不在 combo 棱槽集合里的 F2L 棱(实 frame)。
-            let mut in_set = [false; 4];
-            for &(s, _p) in combo {
-                in_set[s] = true;
-            }
-            let mut free18 = [0usize; 3];
-            let mut nf = 0;
-            for t in 0..4 {
-                if !in_set[t] {
-                    free18[nf] = edg[t] * 18;
-                    nf += 1;
-                }
-            }
-            let res = if h == 0 && (0..nf).all(|j| (free18[j] / 18) % 2 == 0) {
-                0
-            } else {
-                let mut pairs = [(0usize, 0usize, 0usize, 0usize, 0usize); 3];
+        #[cfg(feature = "pseudo-f2leo-global-ida")]
+        {
+            let np = combos[0].len();
+            let nf = 4 - np;
+            let mut pairs_all = [[(0usize, 0usize, 0usize, 0usize, 0usize); 3]; 36];
+            let mut free_all = [[0usize; 3]; 36];
+            for (ci, combo) in combos.iter().enumerate() {
+                let mut in_set = [false; 4];
                 for (i, &(s, p)) in combo.iter().enumerate() {
+                    in_set[s] = true;
                     let d = Self::diff(s, p);
-                    pairs[i] = (
+                    pairs_all[ci][i] = (
                         st[p].im as usize,
-                        (st[p].ic_b as usize) * 18,
-                        (st[p].ie_rel[d] as usize) * 18,
+                        st[p].ic_b as usize * 18,
+                        st[p].ie_rel[d] as usize * 18,
                         p,
                         d,
                     );
                 }
-                let np = combo.len();
-                let max_d = cap.min(best.saturating_sub(1));
-                let mut found = 99;
-                for d in h.max(1)..=max_d {
-                    if self.search_psx(&pairs[..np], *ref_slot, aux, *naux, &free18[..nf], d, 18) {
-                        found = d;
-                        break;
+                let mut j = 0;
+                for t in 0..4 {
+                    if !in_set[t] {
+                        free_all[ci][j] = edg[t] * 18;
+                        j += 1;
                     }
                 }
-                found
-            };
-            best = best.min(res);
+            }
+            // 同一 combo 的根、启发式和搜索顺序不变。全局首次成功的深度即最优值,
+            // 无需先求出某个 combo 较大的最优值,再用它收紧其他 combo 的上界。
+            search_stage_depths(&scored[..m], cap, |ci, depth| {
+                let free18 = &free_all[ci][..nf];
+                if depth == 0 {
+                    return free18.iter().all(|&e| (e / 18) % 2 == 0);
+                }
+                let (aux, naux, ref_slot) = &aux_all[ci];
+                self.search_psx(
+                    &pairs_all[ci][..np],
+                    *ref_slot,
+                    aux,
+                    *naux,
+                    free18,
+                    depth,
+                    18,
+                )
+            })
         }
-        best
+        #[cfg(not(feature = "pseudo-f2leo-global-ida"))]
+        {
+            let mut best = 99u32;
+            for &(h, ci) in &scored[..m] {
+                if h >= best {
+                    break;
+                }
+                let combo = &combos[ci];
+                let (aux, naux, ref_slot) = &aux_all[ci];
+                // 自由棱 = 不在 combo 棱槽集合里的 F2L 棱(实 frame)。
+                let mut in_set = [false; 4];
+                for &(s, _p) in combo {
+                    in_set[s] = true;
+                }
+                let mut free18 = [0usize; 3];
+                let mut nf = 0;
+                for t in 0..4 {
+                    if !in_set[t] {
+                        free18[nf] = edg[t] * 18;
+                        nf += 1;
+                    }
+                }
+                let res = if h == 0 && (0..nf).all(|j| (free18[j] / 18) % 2 == 0) {
+                    0
+                } else {
+                    let mut pairs = [(0usize, 0usize, 0usize, 0usize, 0usize); 3];
+                    for (i, &(s, p)) in combo.iter().enumerate() {
+                        let d = Self::diff(s, p);
+                        pairs[i] = (
+                            st[p].im as usize,
+                            (st[p].ic_b as usize) * 18,
+                            (st[p].ie_rel[d] as usize) * 18,
+                            p,
+                            d,
+                        );
+                    }
+                    let np = combo.len();
+                    let max_d = cap.min(best.saturating_sub(1));
+                    let mut found = 99;
+                    for d in h.max(1)..=max_d {
+                        if self.search_psx(
+                            &pairs[..np],
+                            *ref_slot,
+                            aux,
+                            *naux,
+                            &free18[..nf],
+                            d,
+                            18,
+                        ) {
+                            found = d;
+                            break;
+                        }
+                    }
+                    found
+                };
+                best = best.min(res);
+            }
+            best
+        }
     }
 
     /// 6 视角 × 4 阶段,返回 24 值(同小表版口径:12 朝向折叠 min)。
@@ -2357,6 +2447,79 @@ pub fn pseudo_f2leo_big_instance() -> Arc<PseudoF2leoBigSolver> {
     static S: OnceLock<Arc<PseudoF2leoBigSolver>> = OnceLock::new();
     S.get_or_init(|| Arc::new(PseudoF2leoBigSolver::new()))
         .clone()
+}
+
+#[cfg(all(test, not(target_arch = "wasm32")))]
+mod global_ida_tests {
+    use super::search_stage_depths;
+
+    #[test]
+    fn global_ida_schedule_matches_combo_search() {
+        // 用任意逐深度成功/失败模式代替搜索,不假设较深层也一定成功。
+        // 穷举三个 combo、启发式 0..4、cap 0..4; 不加载或生成任何魔方表。
+        let mut outcomes = Vec::new();
+        for h in 0u32..=4 {
+            for successes in 0u8..32 {
+                if successes & ((1 << h) - 1) == 0 {
+                    outcomes.push((h, successes));
+                }
+            }
+        }
+        for &a in &outcomes {
+            for &b in &outcomes {
+                for &c in &outcomes {
+                    let roots = [a, b, c];
+                    let mut scored = [(a.0, 0), (b.0, 1), (c.0, 2)];
+                    scored.sort_by_key(|&(h, _)| h);
+                    for cap in 0u32..=4 {
+                        let mut previous_calls = [0u8; 3];
+                        let mut previous = 99u32;
+                        for &(h, ci) in &scored {
+                            if h >= previous {
+                                break;
+                            }
+                            if h == 0 {
+                                previous_calls[ci] |= 1;
+                                if roots[ci].1 & 1 != 0 {
+                                    previous = 0;
+                                    continue;
+                                }
+                            }
+                            for depth in h.max(1)..=cap.min(previous.saturating_sub(1)) {
+                                previous_calls[ci] |= 1 << depth;
+                                if roots[ci].1 & (1 << depth) != 0 {
+                                    previous = depth;
+                                    break;
+                                }
+                            }
+                        }
+
+                        let mut global_calls = [0u8; 3];
+                        let global = search_stage_depths(&scored, cap, |ci, depth| {
+                            global_calls[ci] |= 1 << depth;
+                            roots[ci].1 & (1 << depth) != 0
+                        });
+                        let expected = (0..=cap)
+                            .find(|&d| {
+                                roots
+                                    .iter()
+                                    .any(|&(_, successes)| successes & (1 << d) != 0)
+                            })
+                            .unwrap_or(99);
+                        assert_eq!(global, expected, "roots={roots:?}, cap={cap}");
+                        assert_eq!(global, previous, "roots={roots:?}, cap={cap}");
+                        for ci in 0..3 {
+                            assert_eq!(
+                                global_calls[ci] & !previous_calls[ci],
+                                0,
+                                "extra search: roots={roots:?}, cap={cap}, combo={ci}"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 #[cfg(test)]

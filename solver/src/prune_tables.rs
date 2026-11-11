@@ -91,6 +91,7 @@ pub fn write_packed_prune_table<P: AsRef<Path>>(
         w.write_all(&entry_count.to_le_bytes())?;
         w.write_all(bytes)?;
         w.flush()?;
+        w.get_ref().sync_all()?;
     }
     std::fs::rename(&tmp_path, final_path)?;
     Ok(())

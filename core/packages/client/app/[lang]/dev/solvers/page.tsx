@@ -41,16 +41,16 @@ interface NativeSolver {
 
 // 原生分析器 (solver/target/release/*_analyzer.exe). rate 实测 (pair 2026-06-03 暖表稳态, 余 2026-05-30).
 const NATIVE: NativeSolver[] = [
-  { key: 'std', stages: 5, fbRows: 1_289_663, rate: 115, tier: 'huge', zhWhy: '联合大表剪枝最强,覆盖 Cross 到 XXXXCross 的 5 个标准阶段', enWhy: 'strongest joint-table pruning across all five standard stages from Cross through XXXXCross' },
+  { key: 'std', stages: 5, fbRows: 1_289_663, rate: 115, tier: 'huge', zhWhy: '61.38 GiB DeepSeven 加强 XXXCross / XXXXCross，并投影替代旧对角表。18 线程、1,000 条三轮样本中位耗时 2.08→0.88 秒（约快 2.36 倍），93,000 个距离值一致。倍数不含首次载入与热身。', enWhy: 'The 61.38 GiB DeepSeven table strengthens XXXCross / XXXXCross and projects exact distances for the old diagonal table. With 18 threads, the median of three 1,000-input rounds fell from 2.08 to 0.88 seconds (about 2.36×); all 93,000 distances matched. The ratio excludes initial loading and warmup.' },
   { key: 'daisy', stages: 1, fbRows: 1_323_255, rate: 45_000, tier: 'small', zhWhy: 'edge4 仅 190,080 态,24 个合法花瓣排列做多源 BFS;上帝之数 7,精确距离直查零搜索', enWhy: 'only 190,080 edge4 states, multi-source BFS from all 24 petal permutations; God\'s number 7, exact lookup with zero search' },
   { key: 'first_layer', stages: 2, fbRows: 0, rate: 250, tier: 'small', zhWhy: '底面 44,906,400 态全图精确 BFS,上帝之数 10；底层 258.66 亿有标号态走 IDA* + 可采纳 max-PDB,逐态严格最优,直径目前只证明 11..20', enWhy: 'First Face uses an exact full BFS over 44,906,400 states (God\'s number 10); First Layer spans 25.866 billion labelled states and uses IDA* with an admissible max-PDB, proving every queried optimum while its diameter remains bounded only to 11..20' },
   { key: 'eo', stages: 5, fbRows: 1_240_119, rate: 0.9, tier: 'huge', zhWhy: 'xxxxcross 全枚举 ~13M 节点每条, 唯一长极', enWhy: 'xxxxcross full enumeration ~13M nodes/case — the long pole' },
   { key: 'pseudo', stages: 4, fbRows: 1_289_663, rate: 390, tier: 'huge', zhWhy: '槽解耦 + 强剪枝, 最快', enWhy: 'slot-decoupled + strong pruning, fastest' },
-  { key: 'pseudo_pair', stages: 4, fbRows: 1_289_663, rate: 47, tier: 'huge', zhWhy: '角槽棱槽耦合, 搜索较重', enWhy: 'corner/edge slot coupling, heavier search' },
-  { key: 'pair', stages: 4, fbRows: 1_293_570, rate: 200, tier: 'huge', zhWhy: '不在默认补缺 (opt-in), 暖表后 ~200/s 已全量回填', enWhy: 'opt-in (off the default run), ~200/s once tables warm — fully backfilled' },
-  { key: 'f2leo', stages: 4, fbRows: 252, rate: 31, tier: 'huge', zhWhy: '联合大表剪枝 (同 std huge 表) + 自由棱 EO 门控, 4 阶段无 xxxxcross', enWhy: 'joint big-table pruning (same huge tables as std) + free-edge EO gating, 4 stages no xxxxcross' },
-  { key: 'pseudo_f2leo', stages: 4, fbRows: 252, rate: 81, tier: 'huge', zhWhy: 'pseudo 大表电池 (C4E + corner2/3 + edge2/3) max + 自由棱 EO, 4 阶段无 xxxxcross', enWhy: 'pseudo big-table battery (C4E + corner2/3 + edge2/3) max + free-edge EO, 4 stages no xxxxcross' },
-  { key: '333', stages: 1, fbRows: 240, rate: null, tier: 'huge', zhWhy: '本机三阶最优研究使用 Rust 原生 Opt9 / Opt10，另有 nxopt22 独立对照；旧 H10 统计入口当前缺表，未自动切换后端', enWhy: 'Local optimal-solver research uses native Rust Opt9 / Opt10 with a separate nxopt22 comparison; the old H10 statistics entry currently lacks its table and has not switched backends' },
+  { key: 'pseudo_pair', stages: 4, fbRows: 1_289_663, rate: 47, tier: 'huge', zhWhy: '角槽棱槽耦合，搜索较重。4 张新联合表已建成并验解，但 1,000 条样本对照没有提速，默认保持原表集。', enWhy: 'Coupled corner and edge slots make search heavier. Four new joint tables passed correctness checks but did not improve the 1,000-input benchmark; the default keeps the original tables.' },
+  { key: 'pair', stages: 4, fbRows: 1_293_570, rate: 200, tier: 'huge', zhWhy: '原生首阶段默认使用 52.2 MiB 联合表直查；1,000 条、三轮暖缓存中位耗时 0.41→0.38 秒。后续阶段保留原搜索；此分析器仍按需加入统计补缺。', enWhy: 'The native first stage now uses a 52.2 MiB exact joint table. The median of three warm 1,000-input rounds changed from 0.41 to 0.38 seconds. Later stages retain their original search; this analyzer remains opt-in for statistics backfill.' },
+  { key: 'f2leo', stages: 4, fbRows: 252, rate: 31, tier: 'huge', zhWhy: 'Cross+自由棱 EO 默认查询 101.5 MiB 紧排精确表；后续阶段保留联合大表剪枝与 EO 校验。1,000 条对照距离一致，短样本耗时差异不足以证明稳定提速。', enWhy: 'Cross plus free-edge EO now uses a 101.5 MiB compact exact table. Later stages retain joint-table pruning and EO checks. Distances match on 1,000 inputs; the short timing difference does not establish a stable speedup.' },
+  { key: 'pseudo_f2leo', stages: 4, fbRows: 252, rate: 81, tier: 'huge', zhWhy: '默认启用组合共享搜索深度，并复用 101.5 MiB 紧排表直查伪 Cross+EO。新增表的 1,000 条、三轮暖缓存对照：中位耗时 1.78→1.59 秒（下降 10.7%），74,400 个距离全部一致。', enWhy: 'Shared search depth across combinations is enabled, with the same 101.5 MiB compact table serving exact pseudo Cross+EO queries. Adding the table changed the median of three warm 1,000-input rounds from 1.78 to 1.59 seconds (10.7% less time); all 74,400 distances matched.' },
+  { key: '333', stages: 1, fbRows: 240, rate: null, tier: 'huge', zhWhy: '日常三阶最优统计使用 Egg Solver，按物理总内存选档：至少 128 GiB 用 64G（h11/base10），64–不足 128 GiB 用 32G（h10/base10）。复用已有表、单进程常驻；本页未把独立研究基准当作日常统计吞吐。', enWhy: 'Daily optimal 3×3 statistics use Egg Solver, selected by physical RAM: 64G (h11/base10) at 128 GiB or above, and 32G (h10/base10) from 64 to below 128 GiB. Existing tables remain resident in one process; separate research benchmarks are not reported as daily throughput.' },
   { key: '222', stages: 1, fbRows: 1_297_444, rate: 1_250_000, tier: 'small', zhWhy: '2x2x2 块 (1 角 + 3 棱) 全空间仅 253,440 态, 精确距离表直查零搜索', enWhy: '2x2x2 block (corner + 3 edges) — 253,440 states total, exact distance table lookup, zero search' },
   { key: '123', stages: 2, fbRows: 1_297_444, rate: 600_000, tier: 'small', zhWhy: 'Roux 左桥: 1x2x2 方块 (1角+2棱, 前/后双微表) + 1x2x3 (2角+3棱, 5,322,240 态全表), 精确距离表直查零搜索', enWhy: 'Roux first block: 1x2x2 square (corner + 2 edges, front/back micro-tables) + 1x2x3 (2 corners + 3 edges, 5,322,240-state full table) — exact lookups, zero search' },
   { key: '223', stages: 1, fbRows: 1_297_444, rate: 19_000, tier: 'small', zhWhy: 'Petrus 2x2x3 (2角+5棱) 全空间 ~1.5G 态放不下全表, IDA* + max(1x2x3 全表, 角2+DB/DF 表) 可采纳下界', enWhy: 'Petrus 2x2x3 (2 corners + 5 edges) — 1.5G states, too big for a full table; IDA* with admissible h = max(1x2x3 full table, corners+DB/DF table)' },
@@ -62,7 +62,7 @@ const NATIVE: NativeSolver[] = [
   { key: 'pocket', stages: 1, fbRows: 0, rate: null, tier: 'small', puzzle: '2x2x2', event: '222', zhWhy: '非 3x3 独立 puzzle: 2x2x2 整魔方全空间 3,674,160 态 (7!·3^6, 固定 DBL 角消整体朝向) 精确距离表查表即最优, God 数实测 11 HTM;统计走 puzzle_distribution.json 新管线, 已灌注, 吞吐未实测', enWhy: 'standalone non-3x3 puzzle: the whole 2x2x2 — full-space 3,674,160-state (7!·3^6, DBL corner fixed to kill whole-cube rotation) exact distance table, lookups are optimal, measured God\'s number 11 HTM; stats go through the new puzzle_distribution.json pipeline, poured, throughput not yet measured' },
   { key: 'pyraminx', stages: 1, fbRows: 0, rate: null, tier: 'small', puzzle: 'Pyraminx', event: 'pyram', zhWhy: '非 3x3 独立 puzzle: Pyraminx 核心 933,120 态 (6 棱偶置换 360 × 翻转 32 × 4 轴心 3^4) 精确距离表查表即最优, 总步数 = 核心最优 + 错位顶点数 (75,582,720 含顶点全空间验证), God 数实测 核心 11 / 含顶点 15;统计走 puzzle_distribution.json 新管线 (event pyram), 已灌注, 吞吐未实测', enWhy: 'standalone non-3x3 puzzle: the Pyraminx core — 933,120 states (even edge perm 360 × flips 32 × axial 3^4) exact distance table, lookups are optimal; total HTM = core optimum + misplaced tips (verified across all 75,582,720 tip-inclusive states), measured God\'s number 11 core / 15 with tips; stats go through the puzzle_distribution.json pipeline (event pyram), poured, throughput not yet measured' },
   { key: 'skewb', stages: 1, fbRows: 0, rate: null, tier: 'small', puzzle: 'Skewb', event: 'skewb', zhWhy: '非 3x3 独立 puzzle: Skewb (斜转) 整魔方全空间 3,149,280 态 (中心偶置换 360 × 双轨道角置换 12×3 × 扭转 3^5, 角 3 天然不动不扭作全局参照, 无需消整体朝向) 精确距离表查表即最优, God 数实测 11 (分布对公开数据逐项锁);统计走 puzzle_distribution.json 新管线 (event skewb), 已灌注, 吞吐未实测', enWhy: 'standalone non-3x3 puzzle: the whole Skewb — full-space 3,149,280-state (center even perms 360 × two-orbit corner perms 12×3 × twists 3^5; corner 3 never moves nor twists — a free global reference, no orientation reduction needed) exact distance table, lookups are optimal, measured God\'s number 11 (distribution locked term-by-term against published data); stats go through the puzzle_distribution.json pipeline (event skewb), poured, throughput not yet measured' },
-  { key: '123x2', stages: 1, fbRows: 0, rate: 220, tier: 'mid', zhWhy: '双 1x2x3 联合最优平均 ~11.5 步, 搜索深;5 张精确子目标表 max 剪枝, 其中 {块+2角} 表 2.68G 态落盘 mmap', enWhy: 'dual-1x2x3 joint optimum averages ~11.5 moves — deep search; pruned by max of 5 exact subgoal tables, incl. a 2.68G-state block+corners table mmapped from disk' },
+  { key: '123x2', stages: 1, fbRows: 0, rate: 220, tier: 'mid', zhWhy: 'F2B 默认增加 1.52 GiB 对称联合表，取各子目标下界的最大值。1,000 条、三轮暖缓存中位耗时 0.42→0.15 秒（约 2.8 倍），18,600 个距离全部一致。', enWhy: 'F2B now adds a 1.52 GiB symmetry-reduced joint table and takes the maximum of its subgoal bounds. The median of three warm 1,000-input rounds changed from 0.42 to 0.15 seconds (about 2.8× faster), with all 18,600 distances matching.' },
   { key: 'sq1', stages: 1, fbRows: 0, rate: null, tier: 'huge', puzzle: 'Square-1', event: 'sq1', zhWhy: '非 3x3 独立 puzzle: Square-1 整解, 双精确口径。WCA 12c4 最优 (Sq1WcaSolver, IDA* phase-1 + 限方形子群 phase-2 收尾, 13G jsq_full 精确 phase-2 距离查表 O(1); WCA 上帝之数 D_WCA ∈ [26,27]) + slash 最优 (Sq1Solver, twist 口径只数 /, 5 张全空间投影剪枝表零盘 ~43MB 现场建, God 数 13 = Masonjones)。统计走 puzzle_distribution.json 新管线 (event sq1): WCA 12c4 全 125,605 真题已灌; slash 最优全部可证最优 (0 残留): 95.7% 由 W=2s/2s+1 免搜索证明 t=s, 余 4.3% 歧义态 (W=2s-1) 精确判定 — 最深 s=12-13 怪物由 sq1_slash_mitm 双向 BFS + decide_t (半径 ⌊s/2⌋≤6) 完备兜底, 管道自动调用', enWhy: 'standalone non-3x3 puzzle: Square-1 whole solve, two exact metrics. WCA 12c4 optimal (Sq1WcaSolver, IDA* phase-1 + square-subgroup phase-2 finish, 13G jsq_full exact phase-2 distance table O(1); WCA God\'s number D_WCA ∈ [26,27]) + slash-optimal (Sq1Solver, twist metric counting only slashes, 5 full-space projection prune tables zero-disk ~43MB built in RAM, God\'s number 13 = Masonjones). Stats go through the puzzle_distribution.json pipeline (event sq1): WCA 12c4 fully poured for all 125,605 scrambles; slash-optimal is now provably optimal with zero residual: 95.7% proven t=s via W=2s/2s+1 (no search), the remaining 4.3% ambiguous (W=2s-1) decided exactly — the deepest s=12-13 monsters cracked by sq1_slash_mitm bidirectional BFS + decide_t (radius ⌊s/2⌋≤6), auto-invoked by the pipeline' },
 ];
 
@@ -104,11 +104,14 @@ const BROWSER_MAP: Record<string, BrowserSolver> = Object.fromEntries(BROWSER.ma
 // 每个原生分析器 mmap 的磁盘表；eo high-memory 的 plan 项已在 Mac 本机核对真实文件字节。
 // 源码核实自 solver/ (std_analyzer.rs / eo_cross_solver.rs / pseudo_analyzer.rs /
 // pseudo_pair_solver.rs / pair_solver.rs / f2leo_solver.rs / pseudo_f2leo_solver.rs),
-// 口径 = 权威 full 全模式 (CUBE_ALLOW_HUGE_TABLES=1, 无 *_NO_DIAG / *_SKIP)。
+// 口径 = 128 GiB 主机日常 full 模式，资源满足时 std 自动选 Deep 投影档。
 // cnt>1 = 同规格一组; cond = 对角剪枝表, 仅全模式载, 设 *_NO_DIAG 可跳过 (各省 ~10GB).
 interface Tbl { n: string; b: number; cnt?: number; cond?: boolean }
-interface TablePlan { profile: string; move: Tbl[]; prune: Tbl[]; note: { zh: string; en: string }; replacesBase?: boolean; generated?: boolean }
+interface TablePlan { profile: string; move: Tbl[]; prune: Tbl[]; note: { zh: string; en: string }; replacesBase?: boolean; generated?: boolean; activeOn128GiB?: boolean }
 interface SolverTbls { move: Tbl[]; prune: Tbl[]; builtZh?: string; builtEn?: string; plan?: TablePlan; benchmarkTables?: Tbl[] }
+
+const STD_MOVE_TABLES: Tbl[] = [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }];
+const STD_BASE_PRUNE: Tbl[] = [{ n: 'pt_cross', b: 139408 }, { n: 'pt_cross_C4E0', b: 54743056 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 }, { n: 'pt_cross_C4C6E0E2', b: 10729635856 }];
 
 const TABLES: Record<string, SolverTbls> = {
   daisy: {
@@ -124,10 +127,19 @@ const TABLES: Record<string, SolverTbls> = {
     builtEn: 'the native stats analyzer builds corner-4/edge-4 moves and u8 PDBs in RAM (measured ~107MiB steady / ~258MiB build peak); the browser instead loads opt_first_layer (26.3MiB gzip / 54.7MiB raw, 4-bit PDBs) and runs no client-side BFS. First Face is O(1); First Layer uses exact IDA*. Face God\'s number 10; Layer diameter is reported only as the proven 11..20 interval',
   },
   std: {
-    move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }],
-    prune: [{ n: 'pt_cross', b: 139408 }, { n: 'pt_cross_C4E0', b: 54743056 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 }, { n: 'pt_cross_C4C6E0E2', b: 10729635856 }],
-    builtZh: '标准 XCross 到 XXXXCross 的联合剪枝表；第一层已还原条件下的第二层分布另用 26,880 态离线枚举,不加载这组大表',
-    builtEn: 'joint prune tables for standard XCross through XXXXCross; the first-layer-solved conditional Second Layer distribution is a separate 26,880-state offline enumeration and does not load these big tables',
+    move: STD_MOVE_TABLES,
+    prune: [...STD_BASE_PRUNE.filter(table => table.n !== 'pt_cross_C4C6E0E2'), { n: 'pt_cross_C4C6E0E1E2', b: 65910624256 }],
+    builtZh: 'DeepSeven 已覆盖全部 128,755,722,240 个规范化状态，最远 13 步。投影后省去约 9.99 GiB 旧对角表，当前文件合计 74.30 GiB；RSS 预算 78.30 GiB，启动需 80.80 GiB 可回收内存。1.52 GiB Middle 叠加后未提速，标准阶段不启用。',
+    builtEn: 'DeepSeven covers all 128,755,722,240 canonical states, with maximum distance 13. Projection removes the 9.99 GiB old diagonal table: loaded files total 74.30 GiB, the RSS budget is 78.30 GiB, and startup requires 80.80 GiB reclaimable memory. Adding the 1.52 GiB Middle table was slower, so standard stages leave it off.',
+    benchmarkTables: [{ n: 'pt_C4C5C6C7E0E1E2E3', b: 1636022656 }],
+    plan: {
+      profile: 'Base · 22.91 GiB', generated: true, replacesBase: true,
+      move: STD_MOVE_TABLES, prune: STD_BASE_PRUNE,
+      note: {
+        zh: '日常统计在物理内存至少 128 GiB、Deep 表已存在且启动内存充足时自动选上方 Deep 档；其余条件使用这组原表，结果仍然精确。显式模式优先；两档不同时加载，也不自动建表。',
+        en: 'Daily statistics select the Deep tier above when physical RAM is at least 128 GiB, the table exists, and startup memory is sufficient. Otherwise this original table set retains exact results. Explicit modes take precedence; the two tiers are alternatives, and no table is generated automatically.',
+      },
+    },
   },
   eo: {
     move: [{ n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }, { n: 'mt_ep4', b: 855372 }, { n: 'mt_eo12_alt', b: 147468 }],
@@ -139,7 +151,7 @@ const TABLES: Record<string, SolverTbls> = {
     builtZh: '原生 Cross+EO 直接查询已有 pt_ep4eo12 的完整精确距离，不再搜索；24,330,240 态，最远 10 步。后续阶段保持严格最优搜索；浏览器仍使用独立的小表搜索路径。',
     builtEn: 'Native Cross+EO reads exact distances directly from the existing complete pt_ep4eo12 table: 24,330,240 states, maximum distance 10. Later stages retain exact search; the browser keeps its separate small-table search path.',
     plan: {
-      profile: 'high-memory (auto ≥56 GiB)',
+      profile: 'high-memory (auto ≥56 GiB)', activeOn128GiB: true,
       move: [{ n: 'mt_ep5_high_memory', b: 6842892 }],
       prune: [
         { n: 'pt_eo_xcross_slot0_high_memory', b: 2335703056 },
@@ -170,44 +182,44 @@ const TABLES: Record<string, SolverTbls> = {
       { n: 'pt_pscross_E0E1', b: 50181136 }, { n: 'pt_pscross_E0E2', b: 50181136 },
       { n: 'pt_pscross_C4C5', b: 47900176 }, { n: 'pt_pscross_C4C6', b: 47900176 },
       { n: 'pt_pscross_E0E1E2', b: 1003622416 }, { n: 'pt_pscross_C4C5C6', b: 862202896 }],
+    benchmarkTables: [{ n: 'pt_pscross_pair_C4E0‥C4E3', b: 54743056, cnt: 4 }],
   },
   pair: {
     move: [{ n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }],
-    prune: [{ n: 'pt_cross_ins_C4', b: 2280976 }, { n: 'pt_pair_C4E0', b: 304 }, { n: 'pt_cross_C4E0', b: 54743056 },
+    prune: [{ n: 'pt_cross_pair_C4E0', b: 54743056 }, { n: 'pt_cross_ins_C4', b: 2280976 }, { n: 'pt_pair_C4E0', b: 304 }, { n: 'pt_cross_C4E0', b: 54743056 },
       { n: 'pt_cross_C4C5E0E1', b: 10729635856 }, { n: 'pt_cross_C4C6E0E2', b: 10729635856, cond: true }],
   },
   f2leo: {
     move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }],
-    prune: [{ n: 'pt_cross', b: 139408 }, { n: 'pt_cross_C4E0', b: 54743056 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 }, { n: 'pt_cross_C4C6E0E2', b: 10729635856 }],
-    builtZh: 'cross 阶段用 pt_cross;xcross 用 pt_cross_C4E0;xxcross/xxxcross 复用 std 的 pair huge 表 + 叶子门控自由 F2L 棱 EO',
-    builtEn: 'cross via pt_cross; xcross via pt_cross_C4E0; xxcross/xxxcross reuse std pair huge tables + leaf EO gating on free F2L edges'
+    prune: [{ n: 'pt_cross_eo_E0E1E2E3', b: 106444816 }, { n: 'pt_cross', b: 139408 }, { n: 'pt_cross_C4E0', b: 54743056 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 }, { n: 'pt_cross_C4C6E0E2', b: 10729635856 }],
+    builtZh: 'Cross+EO 直查紧排表：212,889,600 态，最远 9 步。XCross 及后续阶段仍使用原有联合剪枝表与自由 F2L 棱 EO 校验。',
+    builtEn: 'Cross+EO directly queries the compact table: 212,889,600 states, maximum distance 9. XCross and later stages retain their original joint bounds and free-edge EO checks.'
 },
   pseudo_f2leo: {
     move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }, { n: 'mt_corn3', b: 653196 }],
-    prune: [{ n: 'pt_pscross_C4E0‥C4E3', b: 54743056, cnt: 4 },
+    prune: [{ n: 'pt_cross_eo_E0E1E2E3', b: 106444816 }, { n: 'pt_pscross_C4E0‥C4E3', b: 54743056, cnt: 4 },
       { n: 'pt_pscross_E0E1', b: 50181136 }, { n: 'pt_pscross_E0E2', b: 50181136 },
       { n: 'pt_pscross_C4C5', b: 47900176 }, { n: 'pt_pscross_C4C6', b: 47900176 },
       { n: 'pt_pscross_E0E1E2', b: 1003622416 }, { n: 'pt_pscross_C4C5C6', b: 862202896 }],
-    builtZh: 'combo 启发式 = max(每对 C4E, 角组 corner2/3, 棱组 edge2/3) + 叶子门控自由棱 EO;另现场建 pscross 剪枝 (~272KB, 内存) 供 cross 阶段',
-    builtEn: 'combo heuristic = max(per-pair C4E, corner2/3 group, edge2/3 group) + leaf EO gating on free edges; plus pscross prune (~272KB) built in-RAM for the cross stage'
+    builtZh: '伪 Cross+EO 经四次身份重标记查询共用紧排表。后续启发式 = max(每对 C4E, 角组 corner2/3, 棱组 edge2/3) + 自由棱 EO 校验；组合共享递增深度。',
+    builtEn: 'Pseudo Cross+EO uses four piece relabelings to query the shared compact table. Later stages use max(per-pair C4E, corner2/3 group, edge2/3 group), with free-edge EO checks and shared increasing search depths.'
 },
   '333': {
-    // Opt11 is source-only (2026-10-29); no generated/loaded table or measured
-    // analyzer exists, so it does not belong in this actual-table snapshot.
-    move: [{ n: 'opt9-generated/small-memory.bin', b: 818008 }],
-    prune: [{ n: 'opt9-generated/h48prun31h9.dat', b: 15565455360 }],
-    benchmarkTables: [{ n: 'nxopt22-20261015/nxopth22b.dat', b: 7809269764 }],
+    // Daily selection and exact byte counts: solver/333opt/stats-engine.mts.
+    move: [],
+    prune: [{ n: 'Egg h11/base10 · 64G', b: 62261825536 }],
+    benchmarkTables: [{ n: 'Opt9', b: 15565455360 }, { n: 'Opt10 v2', b: 31130911744 }, { n: 'nxopt22', b: 7809269764 }],
     plan: {
-      profile: 'Rust Opt10', generated: true, replacesBase: true,
-      move: [{ n: 'opt9-generated/small-memory.bin', b: 818008 }],
-      prune: [{ n: 'opt10-generated-v2/cuberoot-opt10.dat', b: 31130911744 }],
+      profile: 'Egg 32G · 64–<128 GiB RAM', generated: true, replacesBase: true,
+      move: [],
+      prune: [{ n: 'Egg h10/base10 · 32G', b: 31130914816 }],
       note: {
-        zh: '与 Opt9 单独选用，共享必要的坐标小表。正式版为 Opt10 coset：WCA 前 1000 条、16 搜索线程、单轮不预热共 24.591 秒，全部验解通过。双底续算入口已接入同一正式程序；实际双底吞吐尚未测量。',
-        en: 'Selected separately from Opt9, sharing its required coordinate snapshot. The official Opt10 coset release solved WCA first1000 in 24.591 seconds with 16 search threads, one pass and no warmup; all solutions passed verification. The resumable double-ZBLL job uses this same release; its actual throughput has not yet been measured.',
+        zh: '物理总内存为 64–不足 128 GiB 时选用，替代 64G 档，不同时加载。低于 64 GiB 不自动启动；档位不随当前空闲内存降低。',
+        en: 'Selected for 64 to below 128 GiB physical RAM, replacing the 64G tier; the two are never loaded together. Below 64 GiB there is no automatic start. Available memory does not change the selected tier.',
       },
     },
-    builtZh: '本机保留 Opt9（15.6 GB）与自研 Opt10 v2（31.1 GB），另已生成 nxopt22 对照表（7.8 GB），位于 .local-data/cubeopt-reverse/ 下。各求解器独立选表，不同时加载。旧 H10 统计入口当前缺表，尚未迁移；服务器 Rust WASM Opt8 不受影响。',
-    builtEn: 'Local tables include Opt9 (15.6 GB), custom Opt10 v2 (31.1 GB), and the newly generated nxopt22 benchmark table (7.8 GB), under .local-data/cubeopt-reverse/. Each solver loads its own table separately. The old H10 statistics entry lacks its table and has not been migrated; server Rust WASM Opt8 is unaffected.',
+    builtZh: '128 GiB 主机日常统计选 Egg 64G，实际单表 62,261,825,536 字节（58.0 GiB）。沿用已验收的 F_NOCACHE 装载程序与资源监控，RSS 上限 64 GiB、启动需 67 GiB 可回收内存；不自动建表。网站浏览器/云端求解器另行选档。',
+    builtEn: 'Daily statistics on a 128 GiB host use Egg 64G: one 62,261,825,536-byte table (58.0 GiB). The accepted F_NOCACHE loader and resource monitoring set a 64 GiB RSS limit and require 67 GiB reclaimable memory at startup; no automatic generation. Browser/cloud solvers select their tiers separately.',
   },
   '222': {
     move: [{ n: 'mt_edge3', b: 760332 }, { n: 'mt_corn', b: 1740 }],
@@ -282,29 +294,29 @@ const TABLES: Record<string, SolverTbls> = {
     builtEn: 'SQ1 two metrics, multiple table sources. WCA 12c4 optimal (Sq1WcaSolver) uses disk tables: jsq_full ~13GB exact phase-2 distance lookup (shape bits packed into full_idx, O(1) lookups make phase-2 search-free) + corner/edge permutation projections ~283MB each; WCA God\'s number [26,27]. slash-optimal (Sq1Solver) is zero-disk: 5 full-space projection prune tables (comb / c4 / e4 / c4b / e4b, h-max 9) ~43MB built in RAM; slash God\'s number 13. The deepest ambiguous states (s=12-13) are settled by sq1_slash_mitm bidirectional BFS: node = free-turn rotation class (canonical key mod 144), edge = one slash, decide_t only tests ≤s-1 feasibility → radius ⌊s/2⌋≤6, complete and OOM-free. All three share the SQ1 state/index infrastructure',
   },
   '123x2': {
-    move: [{ n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }],
-    prune: [{ n: 'pt_f2b_be3c2', b: 1341204496 }],
-    builtZh: '内存现场 BFS 出 6 棱联合表 (111.5M 态) 与 4 角联合表;{整块+对侧2角} 表 (2.68G 态) 首跑 BFS 落盘 pt_f2b_be3c2.bin, 后续 mmap 秒开;IDA* 取 5 张精确子目标表 max',
-    builtEn: '6-edge joint table (111.5M states) + 4-corner table BFS-built in RAM; the block+far-corners table (2.68G states) is BFS-built once, cached to pt_f2b_be3c2.bin and mmapped after; IDA* prunes on the max of 5 exact subgoal tables',
+    move: [{ n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }, { n: 'mt_edge4', b: 18247692 }],
+    prune: [{ n: 'pt_f2b_be3c2', b: 1341204496 }, { n: 'pt_C4C5C6C7E0E1E2E3', b: 1636022656 }],
+    builtZh: '保留现场 BFS 的 6 棱/4 角表与原块+角表；新增四角×四中层棱联合表，8 个对称压缩为 3,233,313,360 个状态，完整距离最远 12 步。原生重型分析器默认加载，浏览器轻量路径不加载。',
+    builtEn: 'Retains the in-RAM 6-edge/4-corner tables and original block+corners table. The new four-corner/four-middle-edge table uses eight symmetries for 3,233,313,360 states and complete distances up to 12. Native heavy analysis loads it by default; the browser light path does not.',
   },
 };
 
 // 内存档共享文案 (原「内存与剪枝表」三卡: huge / small / mid + 并行约束).
 const MEM_HUGE = {
-  zh: 'mmap GB 级联合/电池剪枝表 (CEE/CCE/C4C5C6 / pair huge / E0E1E2 等)。eo 默认档工作集峰值 ~24GB, 但 private 仅 ~0.1GB — 表是只读共享 mmap；high-memory 档已在 Mac 本机生成，分析器工作集尚未实测。f2leo 复用 std 的 pair huge 表 (各 ~10GB);pseudo_f2leo 用 pseudo 电池 (corner3 862MB + edge3 1GB 等), 各仅多叶子自由棱 EO 门控。本机 333 整解最优研究保留 Opt9（15.6 GB）、Opt10（31.1 GB）及 nxopt22 对照表（7.8 GB），每次只加载一档。旧 H10 统计入口当前缺表。云端 /scramble/solver 仍使用托管 opt8。sq1 用 13G jsq_full + 双 283MB 投影磁盘表 (slash 口径另零盘 ~43MB 现场建)。',
-  en: 'GB-scale joint/battery prune tables (CEE/CCE/C4C5C6 / pair huge / E0E1E2) via mmap. The default eo tier peaks at ~24GB working set but only ~0.1GB private — read-only shared mmap; the high-memory tier was generated locally on a Mac, while its analyzer working set remains unmeasured. f2leo reuses std pair huge tables (~10GB each); pseudo_f2leo uses the pseudo battery (corner3 862MB + edge3 1GB), each adding only leaf free-edge EO gating. Local 333 optimal research retains Opt9 (15.6 GB), Opt10 (31.1 GB), and an nxopt22 comparison table (7.8 GB), loaded one at a time. The old H10 statistics entry currently lacks its table. Cloud /scramble/solver still uses its hosted opt8 table. SQ1 uses a 13G jsq_full plus two 283MB projection disk tables (the slash metric is a separate ~43MB in-RAM build).',
+  zh: '本页按 128 GiB 主机、启动内存充足的日常档计表容量：std Deep 约 74.3 GiB，pair / f2leo 约 22.9–23.0 GiB，EO high-memory 约 40.2 GiB，pseudo 系约 2.1–2.2 GiB。阶段分析器使用只读 mmap；表容量不等于峰值 RSS。日常三阶整解使用 Egg 64G，实际单表 58.0 GiB，32G 档用于 64–不足 128 GiB 主机。',
+  en: 'Table sizes assume a 128 GiB host with sufficient startup memory: about 74.3 GiB for std Deep, 22.9–23.0 GiB for pair / f2leo, 40.2 GiB for high-memory EO, and 2.1–2.2 GiB for the pseudo family. Stage analyzers use read-only mappings; table size is not peak RSS. Daily whole-cube statistics use Egg 64G with a 58.0 GiB table; the 32G tier serves hosts with 64 to below 128 GiB RAM.',
 };
 const MEM_SMALL = {
-  zh: '333-daisy 与 333-first_layer 的 native 分析器复用 mt_edge4 (17.4MB)并现场建距离/PDB；first_layer 实测稳定约 107MiB、建表峰值约 258MiB。浏览器 first_layer 另拉 26.3MiB gzip 的预构建 bundle（54.7MiB 解压,4-bit PDB）,零现场 BFS。333-222/333-123/333-223 仅微移动表；其余 small 变体按各自微表现场建。无 GB 级依赖,可与任意 huge 变体并发。',
-  en: 'The native 333-daisy and 333-first_layer analyzers reuse mt_edge4 (17.4MB) and build their distance/PDB data in RAM; first_layer measures ~107MiB steady and ~258MiB at build peak. Browser first_layer instead downloads a prebuilt 26.3MiB gzip bundle (54.7MiB raw, 4-bit PDBs), with zero client-side BFS. The 333-222/333-123/333-223 family uses only micro move tables; the remaining small solvers build their own micro tables. No GB-scale dependency, so they can run alongside a huge variant.',
+  zh: '333-daisy 与 333-first_layer 的 native 分析器复用 mt_edge4 (17.4MB)并现场建距离/PDB；first_layer 实测稳定约 107MiB、建表峰值约 258MiB。浏览器 first_layer 另拉 26.3MiB gzip 的预构建 bundle（54.7MiB 解压,4-bit PDB）,零现场 BFS。333-222/333-123/333-223 仅微移动表；其余 small 变体按各自微表现场建。无 GB 级依赖；日常统计仍按分析器串行调度。',
+  en: 'The native 333-daisy and 333-first_layer analyzers reuse mt_edge4 (17.4MB) and build their distance/PDB data in RAM; first_layer measures ~107MiB steady and ~258MiB at build peak. Browser first_layer instead downloads a prebuilt 26.3MiB gzip bundle (54.7MiB raw, 4-bit PDBs), with zero client-side BFS. The 333-222/333-123/333-223 family uses only micro move tables; the remaining small solvers build their own micro tables. No GB-scale dependency; daily statistics still run analyzers sequentially.',
 };
 const MEM_MID = {
-  zh: '介于 small 与 huge 之间:333-123x2 现场 BFS 出 6 棱联合表 (111.5M 态) + 4 角联合表, 另把 {整块+对侧2角} 表 (2.68G 态) 落盘 pt_f2b_be3c2.bin 后 mmap 秒开;具体见「表」列。',
-  en: 'between small and huge: 333-123x2 BFS-builds a 6-edge joint table (111.5M states) + a 4-corner table in RAM, plus a block+far-corners table (2.68G states) cached to pt_f2b_be3c2.bin and mmapped; see the “tables” column for specifics.',
+  zh: 'F2B（333-123x2）默认磁盘表合计约 2.79 GiB，包含原块+角表和新增 1.52 GiB 四角×四中层棱联合表；另现场 BFS 生成 6 棱与 4 角表。浏览器轻量路径单独使用小表。',
+  en: 'F2B (333-123x2) loads about 2.79 GiB of disk tables by default, including the original block+corners table and new 1.52 GiB four-corner/four-middle-edge table. It also builds 6-edge and 4-corner tables in RAM. The browser light path uses separate small tables.',
 };
 const MEM_PARALLEL = {
-  zh: '每个分析器对整块任务跑 rayon par_iter 铺满 16 核; 表只读 mmap 跨进程共享。跨变体并发会各装一套不同的 GB 表 → 撞爆 32GB, 故串行。',
-  en: 'Each analyzer runs rayon par_iter over a whole chunk across all 16 cores; tables shared read-only via mmap. Running variants concurrently loads distinct GB-scale tables → blows past 32GB, so they run serially.',
+  zh: '阶段分析器按可用 CPU 并行，本轮验收为 18 线程。变体之间串行执行，共享既有只读表；内存预算、压力和新增换出由资源监控检查。',
+  en: 'Stage analyzers use the available CPUs; the latest validation used 18 threads. Variants run sequentially and reuse existing read-only tables, with memory-budget, pressure and swap-out monitoring.',
 };
 const MEM_LIST_HUGE = '333-std / 333-eo / 333-pseudo / 333-pseudo_pair / 333-pair / 333-f2leo / 333-pseudo_f2leo / 333 / sq1';
 const MEM_LIST_SMALL = '333-daisy / 333-first_layer / 333-222 / 333-123 / 333-223 / 333-eoline / 333-dr / 333-htr / 333-htr2 / 333-fr / 222 / pyraminx / skewb';
@@ -316,9 +328,11 @@ function fmtBytes(b: number): string {
   return b + ' B';
 }
 function tblTotal(t: SolverTbls): number {
-  // cond 表(对角剪枝, 各 ~10GB)可选 / 可跳过, 不计入头部总和。
-  const sum = (arr: Tbl[]) => arr.reduce((a, x) => a + (x.cond ? 0 : x.b * (x.cnt ?? 1)), 0);
-  return sum(t.move) + sum(t.prune);
+  // Snapshot: 128 GiB physical RAM, daily full mode with sufficient startup memory.
+  const base = tblFullTotal(t);
+  if (!t.plan?.activeOn128GiB) return base;
+  const extra = [...t.plan.move, ...t.plan.prune].reduce((sum, x) => sum + x.b * (x.cnt ?? 1), 0);
+  return t.plan.replacesBase ? extra : base + extra;
 }
 function tblFullTotal(t: SolverTbls): number {
   const sum = (arr: Tbl[]) => arr.reduce((a, x) => a + x.b * (x.cnt ?? 1), 0);
@@ -477,6 +491,7 @@ export default function SolversPage() {
           {s.rate == null ? (zh ? '未实测' : 'n/a') : <>{s.rate >= 10000 ? `${(s.rate / 1e6).toFixed(2)}M` : s.rate}<small> /s</small></>}
         </div>
         <p className="solv-modal-p">{zh ? s.zhWhy : s.enWhy}</p>
+        {s.rate != null && <p className="solv-modal-p solv-dim">{tr({ zh: '上方 /s 为 2026 年 5–6 月旧机历史基准，不是当前 128 GiB 主机吞吐。', en: 'The /s figure above is a May–June 2026 baseline from the previous machine, not current throughput on the 128 GiB host.' })}</p>}
       </>
     );
   }
@@ -503,7 +518,7 @@ export default function SolversPage() {
     const plannedFullTotal = t.plan ? (t.plan.replacesBase ? plannedBytes : tblFullTotal(t) + plannedBytes) : 0;
     return (
       <>
-        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '档位 / 计入总和' : 'tier / counted total'}</span><span className="solv-tbl-sz">{s.tier} · {total > 0 ? fmtBytes(total) : (zh ? '零盘 (现场建)' : 'in-RAM')}</span></div>
+        <div className="solv-tbl-item"><span className="solv-tbl-name">{tr({ zh: '128 GiB 主机 / full 档总和', en: '128 GiB host / full-tier total' })}</span><span className="solv-tbl-sz">{s.tier} · {total > 0 ? fmtBytes(total) : tr({ zh: '零盘（现场建）', en: 'in-RAM' })}</span></div>
         {t.move.length > 0 && (
           <div className="solv-tbl-grp">
             <div className="solv-tbl-grp-h">{zh ? '移动表 mt_*' : 'move tables mt_*'}</div>
@@ -521,9 +536,10 @@ export default function SolversPage() {
           <div className="solv-tbl-grp-h">{tr({ zh: '独立对照表 · 不计入当前引擎总和', en: 'Separate benchmark tables · excluded from this engine total' })}</div>
           {t.benchmarkTables.map(tblItem)}
         </div>}
-        {hasCond && <p className="solv-tbl-note">{zh
-          ? `† 对角剪枝表 (10.2GB) 可选, 未计入上方总和; 设 ${s.key === 'pair' ? 'CUBE_PAIR_NO_DIAG' : 'CUBE_EO_NO_DIAG'}=1 跳过 (略损剪枝)。`
-          : `† diagonal prune table (10.2GB), optional, excluded from the total above; set ${s.key === 'pair' ? 'CUBE_PAIR_NO_DIAG' : 'CUBE_EO_NO_DIAG'}=1 to skip (weaker pruning).`}</p>}
+        {hasCond && <p className="solv-tbl-note">{tr({
+          zh: `† 对角剪枝表默认加载，已计入总和；设 ${s.key === 'pair' ? 'CUBE_PAIR_NO_DIAG' : 'CUBE_EO_NO_DIAG'}=1 可跳过，减少约 10.0 GiB，但剪枝变弱。`,
+          en: `† The diagonal pruning table is loaded by default and included in the total; ${s.key === 'pair' ? 'CUBE_PAIR_NO_DIAG' : 'CUBE_EO_NO_DIAG'}=1 skips about 10.0 GiB with weaker pruning.`,
+        })}</p>}
         {t.plan && (
           <div className="solv-tbl-grp">
             <div className="solv-tbl-grp-h">{tr({
@@ -571,14 +587,15 @@ export default function SolversPage() {
       </>,
     }),
     rate: () => ({
-      title: zh ? '吞吐' : 'Throughput',
-      body: <p className="solv-modal-p">{zh
-        ? '本机 16 核, huge 表全模式 (log 缩放基准)。每个数字为 2026-05-30 实测稳态 (f2leo 系 2026-05-31, pair 2026-06-03 暖表)。点单元看该求解器为何快/慢。'
-        : '16-core host, full huge-table mode (log-scale baseline). Each number is a measured steady-state from 2026-05-30 (f2leo 2026-05-31, pair 2026-06-03 warm tables). Tap a cell for why it’s fast/slow.'}</p>,
+      title: tr({ zh: '历史吞吐', en: 'Historical throughput' }),
+      body: <p className="solv-modal-p">{tr({
+        zh: '此列保留旧 16 核主机在 2026 年 5–6 月的实测稳态。本轮 128 GiB / 18 线程的新表验收使用同一常驻进程：100 条预热，再跑 1,000 条固定样本三轮并逐项验解。各行详情给出样本中位耗时，不替代全语料稳态吞吐。',
+        en: 'This column preserves steady-state measurements from the previous 16-core host in May–June 2026. New-table validation on 128 GiB / 18 threads keeps one process resident: 100 warmup inputs followed by three rounds of the same 1,000 inputs, comparing every distance. Row details show sample medians, not full-corpus steady-state throughput.',
+      })}</p>,
     }),
     mem: () => ({
       title: zh ? '内存与并行' : 'Memory & parallelism',
-      sub: zh ? '本机 31.8GB 物理内存' : '31.8GB physical RAM on the build host',
+      sub: tr({ zh: '验收主机：128 GiB · 18 线程', en: 'Validation host: 128 GiB · 18 threads' }),
       body: <>
         <div className="solv-mem-tier"><Cpu size={13} strokeWidth={2} /> huge</div>
         <div className="solv-mem-list">{MEM_LIST_HUGE}</div>
@@ -594,10 +611,11 @@ export default function SolversPage() {
     }),
     tbl: () => ({
       title: zh ? '每个求解器的表' : 'Tables per analyzer',
-      sub: zh ? '源码核实 · full 全模式 · mmap' : 'source-verified · full mode · mmap',
-      body: <p className="solv-modal-p">{zh
-        ? '每个原生分析器 mmap 的移动表 (mt_*, 状态转移) 与剪枝表 (pt_*, 启发式可采纳下界);eo high-memory 档已在 Mac 本机生成并核对真实文件字节，尚未随仓库发布。零盘表的求解器启动或首查时内存现场 BFS, 不落盘。† 对角剪枝表 (各 ~10GB) 可选, 不计入总和。点任一「表」单元看该求解器完整表清单 + 构造说明。'
-        : 'The move tables (mt_*, state transitions) and prune tables (pt_*, admissible heuristics) each native analyzer mmaps. The eo high-memory tier was generated on a Mac and its file sizes verified, but is not shipped with the repository. Zero-disk solvers BFS-build everything in RAM at startup or first query. † diagonal prune tables (~10GB each) are optional, excluded from the total. Tap any “tables” cell for the full per-solver list + build notes.'}</p>,
+      sub: tr({ zh: '源码核实 · 128 GiB 主机 · full 档', en: 'Source-verified · 128 GiB host · full tier' }),
+      body: <p className="solv-modal-p">{tr({
+        zh: '显示 128 GiB 主机、启动内存充足时实际加载的表文件总量。标准阶段包含已验收的 61.38 GiB Deep 表，合计 74.30 GiB；EO 包含 high-memory 表。三阶整解显示 Egg 64G 单表。替代档和独立对照表单列，不相加；现场生成的数据不算磁盘表。91.4 GiB 候选尚未建表。',
+        en: 'Totals show files loaded on a 128 GiB host with sufficient startup memory. Standard stages include the accepted 61.38 GiB Deep table and total 74.30 GiB; EO includes high-memory tables. Whole-cube statistics show the Egg 64G table. Alternative tiers and separate benchmark tables are not added together; in-RAM data is excluded. The 91.4 GiB candidate remains unbuilt.',
+      })}</p>,
     }),
     brow: () => ({
       title: zh ? '浏览器端 WASM' : 'Browser WASM',
@@ -643,13 +661,11 @@ export default function SolversPage() {
         <header className="solv-hero">
           <h1 className="solv-title">solvers<span className="solv-cursor">_</span></h1>
           <p className="solv-sub">
-            {zh
-              ? '魔方求解器舰队:本机原生分析器(喂打乱分布 + 比赛预计算)、浏览器端 WASM(gen 页现算),与一支纯 TypeScript 非 WCA 求解器(浏览器现算,无 Rust / 无表)。进度、吞吐、内存、覆盖 —— 点单元格或列头看详情。'
-              : 'The cube-solver fleet: native analyzers (feeding the scramble distribution + per-comp precompute), browser WASM (live solve on the gen page), and a pure-TypeScript non-WCA fleet (browser-side, no Rust, no tables) — coverage, throughput, memory. Tap a cell or column header for details.'}
+            {tr({ zh: '原生统计分析器、浏览器 WASM 与纯 TypeScript 求解器的覆盖率、历史吞吐和表容量。表配置核对日期：2026-11-11。', en: 'Coverage, historical throughput and table sizes for native statistics analyzers, browser WASM and pure TypeScript solvers. Table configuration checked on 2026-11-11.' })}
           </p>
           <p className="solv-sub">
             <Link href="/dev/solvers/compare" prefetch={false}>
-              {tr({ zh: '三阶最优求解器对比：Rust Opt9 / Opt10', en: '3×3 optimal solver comparison: Rust Opt9 / Opt10' })}
+              {tr({ zh: '三阶最优求解器对比：CubeRoot / Egg', en: '3×3 optimal solver comparison: CubeRoot / Egg' })}
             </Link>
           </p>
           <p className="solv-sub">
@@ -659,9 +675,9 @@ export default function SolversPage() {
           </p>
           <div className="solv-herostats">
             <div className="solv-stat"><span className="solv-stat-num">{NATIVE.length}</span><span className="solv-stat-label">{zh ? '原生分析器' : 'native analyzers'}</span></div>
-            <div className="solv-stat"><span className="solv-stat-num">~51<small>GB</small></span><span className="solv-stat-label">{zh ? '现有剪枝表' : 'current prune tables'}</span></div>
+            <div className="solv-stat"><span className="solv-stat-num">128<small>GiB</small></span><span className="solv-stat-label">{tr({ zh: '验收主机内存', en: 'validation host RAM' })}</span></div>
             <div className="solv-stat"><span className="solv-stat-num">{completeN}<small>/{NATIVE.length}</small></span><span className="solv-stat-label">{zh ? '已补齐' : 'fully covered'}</span></div>
-            <div className="solv-stat"><span className="solv-stat-num">0.9–1.25M<small>/s</small></span><span className="solv-stat-label">{zh ? '吞吐跨度' : 'throughput span'}</span></div>
+            <div className="solv-stat"><span className="solv-stat-num">0.9–1.25M<small>/s</small></span><span className="solv-stat-label">{tr({ zh: '旧机历史吞吐', en: 'previous-host throughput' })}</span></div>
             <div className="solv-stat"><span className="solv-stat-num">{NONWCA_TS.length}</span><span className="solv-stat-label">{zh ? '纯 TS 非 WCA' : 'pure-TS non-WCA'}</span></div>
           </div>
         </header>
@@ -675,13 +691,14 @@ export default function SolversPage() {
             <h2>{zh ? '原生分析器' : 'Native analyzers'}</h2>
             <span className="solv-sec-note">{zh ? '点单元格 / 列头看详情' : 'tap a cell / header'}</span>
           </header>
+          <p className="solv-tbl-intro">{tr({ zh: '2026-11-11：共建成 8 张三阶表。61.38 GiB Deep 表使标准阶段暖缓存样本约快 2.36 倍；F2B 联合表约快 2.8 倍，Pseudo F2LEO 紧排表使样本耗时下降 10.7%。', en: '2026-11-11: eight new 3×3 tables generated. The 61.38 GiB Deep table makes the warm standard-stage sample about 2.36× faster; the F2B joint table achieves about 2.8×, and compact Pseudo F2LEO reduces sample time by 10.7%.' })}</p>
           <div className="solv-mx-wrap">
             <table className="solv-mx">
               <thead>
                 <tr>
                   <th className="solv-mx-corner" scope="col">{zh ? '求解器' : 'solver'}</th>
                   <th scope="col"><button type="button" className="solv-mx-hbtn" onClick={() => openDim('cov')}><Database size={12} strokeWidth={2} />{zh ? '回填' : 'backfill'}</button></th>
-                  <th scope="col"><button type="button" className="solv-mx-hbtn" onClick={() => openDim('rate')}><Gauge size={12} strokeWidth={2} />{zh ? '吞吐' : 'throughput'}</button></th>
+                  <th scope="col"><button type="button" className="solv-mx-hbtn" onClick={() => openDim('rate')}><Gauge size={12} strokeWidth={2} />{tr({ zh: '历史吞吐', en: 'historical /s' })}</button></th>
                   <th scope="col"><button type="button" className="solv-mx-hbtn" onClick={() => openDim('mem')}><HardDrive size={12} strokeWidth={2} />{zh ? '内存' : 'memory'}</button></th>
                   <th scope="col"><button type="button" className="solv-mx-hbtn" onClick={() => openDim('tbl')}><Layers size={12} strokeWidth={2} />{zh ? '表' : 'tables'}</button></th>
                   <th scope="col"><button type="button" className="solv-mx-hbtn" onClick={() => openDim('brow')}><Globe size={12} strokeWidth={2} />{zh ? '浏览器' : 'browser'}</button></th>
@@ -741,7 +758,7 @@ export default function SolversPage() {
           <header className="solv-sec-head">
             <Boxes size={15} strokeWidth={2} />
             <h2>{zh ? '纯 TS 非 WCA 求解器' : 'Pure-TS non-WCA solvers'}</h2>
-            <span className="solv-sec-note">{zh ? '浏览器现算 · 无 Rust · 无表' : 'browser-side · no Rust · no tables'}</span>
+            <span className="solv-sec-note">{tr({ zh: '浏览器端 · 精确查表 / 搜索', en: 'browser-side · exact tables / search' })}</span>
           </header>
           <p className="solv-tbl-intro">{zh
             ? '给 /scramble/gen 的非 WCA 魔方依次造的浏览器端整解求解器 (lib/<x>-solver.ts):状态可整枚举的现场全 BFS 出可证最短 (TIER A);现场 BFS 太重 (>1.5s 或 >100MB) 时改离线预计算精确距离表 + 浏览器 fetch 查表 + 梯度下降, 仍可证最优 (TIER B);可证单实例最短的 IDA* (TIER C);状态空间天文级的两阶段约简则近最优 / 有效有界 (TIER D, 诚实标)。点行末「方法」看实现。'
@@ -770,7 +787,7 @@ export default function SolversPage() {
                       <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">{zh ? TS_TIER_LABEL[s.tier].zh : TS_TIER_LABEL[s.tier].en}</span></td>
                       <td className="solv-mx-cell"><span className={`solv-badge ${q.cls} solv-mx-pad`}>{zh ? q.zh : q.en}</span></td>
                       <td className="solv-mx-cell"><span className="solv-mx-val solv-mx-states" title={s.states}>{s.states}</span></td>
-                      <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">{s.gods ?? '—'}</span></td>
+                      <td className="solv-mx-cell"><span className="solv-mx-val solv-mx-detail solv-tone-dim">{s.gods ?? '—'}</span></td>
                       <td className="solv-mx-cell">
                         <button type="button" className="solv-mx-btn" onClick={() => setModal({
                           title: `${zh ? s.zhName : s.enName} · ${zh ? '方法' : 'method'}`,
@@ -947,9 +964,7 @@ export default function SolversPage() {
         </section>
 
         <footer className="solv-foot">
-          <span>{zh
-            ? `进度与日期实时取自 distribution.json (每次手动跑管道才刷新, 无定时); 吞吐/内存为 2026-05-30 实测常量。`
-            : `Coverage & date are live from distribution.json (refreshes only when the pipeline is run by hand — no schedule); throughput/memory are measured constants from 2026-05-30.`}</span>
+          <span>{tr({ zh: '覆盖率来自 distribution.json；表配置核对于 2026-11-11。历史吞吐保留旧机 2026 年 5–6 月的测量。', en: 'Coverage comes from distribution.json; table configuration was checked on 2026-11-11. Historical throughput retains the previous-host measurements from May–June 2026.' })}</span>
           <Link href="/dev" className="solv-foot-link">/dev</Link>
         </footer>
       </div>

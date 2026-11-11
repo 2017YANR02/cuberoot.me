@@ -555,7 +555,9 @@ XXCross / XXXCross / XXXXCross 三个 cascade 阶段(`search_2/3/4` + `hugeTable
    PsXC 的 `startD = max(t.h, ps_cross_result_for_this_rot)`,PsXXC 类似用 ps_xc_min,PsXXC → PsXXXC 用 ps_xxc_min。binary 端用流水线传递:Cross.get_stats → PsXCross.get_stats(cross_results) → PsXXCross.get_stats(xc_results) → PsXXXCross.get_stats(xxc_results)。
 
 7. **Huge table 优化(`pt_cross_C4C5E0E1` 10GB)主动跳过**
-   C++ 在 search_2 中对 (cp.first=0, cp.second=1, d1=d2=0) 的特殊 case 用 10GB 的 pt_cross_C4C5E0E1 加紧 h_base。该优化只影响初始 h(不影响正确性),Rust 端为节省磁盘/RAM 跳过。验证表明 PsXXC 6 列仍 bit-exact 匹配 golden,因为 IDA* 自然会从更低的 startD 搜起,只是稍慢。后续若 #1 任务(std XXCross+)启用了该表,可顺便接入。
+   Rust 未接入 C++ 对 `(cp.first=0, cp.second=1, d1=d2=0)` 的标准大表特殊分支。2026-11-10 重新核对生成器后，撤回原先“可直接加紧 h_base、不影响正确性”的建议：`create_pt_pscross_aux2` / `create_pt_cross_ce(..., is_pseudo=true)` 的目标包含 D、D2、D' 偏移，而标准表只有固定归位目标。仅一个 D 的状态在该伪目标中距离为 0，在标准目标中距离为 1，因此不能把标准表原值直接 `max` 进伪阶段下界。已有 golden 一致性只验证当前未接入该分支的实现，不能证明该建议正确。
+
+   标准表复用需逐个目标集合证明。若跟踪件身份、参考槽位和坐标都与标准表一致，且该任务的每个伪目标都能在至多一个 D 类转动后进入标准表的零值集合，则 `max(h_std - 1, 0)` 是安全下界；这不适用于未经验证的异槽配置或 Pair 的插入目标。标准目标确为当前伪目标子集时，标准距离也可作为可行解长度上界。要获得更强的精确伪距离，应使用明确覆盖全部伪目标的多源 BFS 表，不能凭表名、对称性猜测或直接在打乱末尾试四种 D 偏移来代替证明。
 
 8. **max_search = 16,std 是 12**
    PsX*Cross 解 ≤ 16 步(C++ 同款上界);std X*Cross 解 ≤ 12 步。
@@ -609,7 +611,7 @@ XXCross / XXXCross / XXXXCross 三个 cascade 阶段(`search_2/3/4` + `hugeTable
 
 ### 已知坑 / 待办
 
-- **huge 表优化未启用**:若后续做 std XXCross+(任务 #1)生成了 pt_cross_C4C5E0E1,可顺便给 pseudo search_2 加上;影响初始 h,不影响正确性。
+- **huge 表优化未启用**：后续复用 `pt_cross_C4C5E0E1` 必须遵守上文第 7 项的目标集合条件；原值不能直接充当 PsXXC 的可采纳下界。
 - **table_generator 独立 bin** 未译,所有表由各 manager 内置懒生成(够用)。
 
 ## Phase 7: pair_analyzer
@@ -900,3 +902,73 @@ FR 提取原构造的前两步，复用 192 元目标闭包和 3,456 陪集图�
 cubing.js 回放每档最短见证。原生子进程继承串行 guard 的进程组；
 构造预算 24 / 4 MiB，正式计算仅由 guard 调度。编译与静态检查不冒称
 一次枚举结果，实测证据归 `docs/puzzle-exact-distributions-tracker.md`。
+
+## 2026-11-10: EO 多槽位剪枝单轮对照
+
+非默认 feature `eo-multi-slot` 让 XX/XXX/XXXXCross+EO 使用所有目标槽位的
+既有 `pt_eo_xcross_slot{0..3}_high_memory` 下界，而非只查询首槽。
+各表的目标约束均包含在对应深阶段内，最大值仍是可采纳下界；额外槽位
+必须跟随全局移动更新，不能套用虚拟槽位共轭。表文件、加载成员与默认
+统计路径不变，因此 `/dev/solvers` 的表快照无需调整。
+
+12 个 EO 朝向、每个 256 步、4 槽位的坐标与完整 cubie 状态核对通过；
+原路径和候选 release 分析器均已编译。`eo-stage-profile` 仅为实验输出
+每条输入的 48 个对称结果和四阶段 worker 耗时，不把并发耗时之和当墙钟。
+只读工具 `scripts/compare_eo_stages.mts` 校验两版全部 30 列 golden、原始
+48 值及单轮日志。固定 100 条、18 线程、每版一轮不预热的对照已按维护者
+单项授权执行；两版共 6,000 个 golden 距离及彼此 4,800 个对称距离全部
+一致。节点 1,140,137,607→946,103,378，减少 17.02%；整批墙钟
+15.27→8.54 秒。原版先跑，未改动的 XCross 阶段也明显变快，因此不能
+把单轮耗时下降 44.07% 当作隔离缓存影响后的稳定提速；候选保持非默认。
+候选 XXXXCross+EO 占四阶段 worker 累计耗时的 95.02%，为后续重点。
+
+表文件无新增，进程树采样峰值原版 35.97 GiB、候选 40.03 GiB；最低
+保守余量 22.22 GiB，Swapouts 336→336，未触发保护。两版均只启动
+一个常驻分析器，一次性凭据已消费，不得重跑或覆盖原始记录。
+初次报告因首条性能记录与无换行终端提示同处一行而漏计，导致协调器
+状态为 failed；修正只读解析后完整验收通过，未重新求解或修改原始日志。
+源码、构件、断点、原始错误与最终 `comparison.json` 保存在仓库根
+`.local-data/eo-stages-128g-20261110/`；后续运行仍按计算规则单独核对。
+
+## 2026-11-10: 三阶阶段多 agent 优化与验收
+
+维护者要求仅调查三阶及各阶段、测试并完成优化，排除 SQ1。三个 agent
+分别检查标准阶段、pseudo_pair、pseudo_f2leo，并交叉审查。没有增加表
+或更改表加载成员，`/dev/solvers` 的 TABLES 快照保持有效。以下两个
+feature 已加入默认构建，优化分支限定于原生路径。未重建或发布 WASM。
+
+- `std-exact-lookup`：Cross/PseudoCross、XCross、XXCross 直接返回既有
+  精确表距离，保留原深度上限和哨兵。槽位最小值聚合不变；受限步法、
+  多解枚举与 XXX/XXXXCross 仍按原搜索处理。
+- `pseudo-f2leo-global-ida`：所有候选组合共享 IDA* 深度，按原启发式
+  排序，只搜索当前深度可达到的组合，首个成功深度就是全体最优。
+  0 步仍核对自由棱 EO；搜索函数与剪枝不变。增加 5,184 字节根缓存。
+
+固定 `scramble_100.txt`、18 线程、每版一轮不预热、原版先跑的结果：
+
+| 分析器/候选 | 原版→候选秒数 | 原版→候选节点 | 处理 |
+| --- | ---: | ---: | --- |
+| std 精确距离直查 | 9.04→0.49 | 37,035,515→36,961,659 | 采用；节点减少 0.20% |
+| pseudo 的 Cross 直查 | 0.80→0.12 | 30,997,071→30,997,071 | 随 Cross 采用 |
+| pseudo_f2leo 全局深度 | 0.36→0.23 | 132,255,256→79,166,142 | 采用；节点减少 40.14% |
+| pseudo_pair 初态缓存 | 0.86→0.91 | 295,652,801→295,652,801 | 未提速，非默认 |
+| pseudo_pair 单棱共轭 | 复用 0.86→0.87 | 295,652,801→295,652,801 | 未提速，非默认 |
+
+std/pseudo 的先后两次受文件缓存影响，不能把表中墙钟比作为优化倍率；
+Cross 本身不计入当前节点计数。pseudo_f2leo 本轮用时减少 36.1%，
+约 1.56 倍，但单轮短样本不代表稳定全量收益。pseudo_pair 第二候选
+只更新实际读取的一枚共轭棱（原来四枚），实际未测到收益，因此同样
+没有晋升；它复用首轮原版结果，没有重复求解原版。
+
+9 份输出共 22,800 个距离全部与冻结原版/已有 golden 一致。独立小数据
+检查包含标准/pseudo Cross 的 1,536 个距离、缓存的 8,160 组三坐标与
+2,040 组共轭、全局深度调度的 1,191,640 种情形、单棱共轭的 32,768
+次转移；入口守卫 224 项通过。首轮进程树峰值 21.36 GiB、最低保守余量
+35.84 GiB；两轮均 Swapouts 336→336、正常完成，无保护停止。
+
+原版/候选源码、程序、单轮原始输出、监控与已消费凭据保存在仓库根
+`.local-data/three-stage-optimization-20261110/` 和
+`.local-data/pseudo-pair-conjugate-20261110/`；前者的
+`reviewed-runner-source` 保留追加候选前的入口源码。不得续用凭据重跑。
+只改本地，不发布；91.4 GiB 主表仍是设计，预测边界见
+[高内存表设计](HIGH_MEMORY_TABLE_PROFILE.md)。

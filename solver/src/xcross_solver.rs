@@ -27,6 +27,74 @@ use crate::cube_common::{
 use crate::executor::bump_node_count;
 use crate::move_tables::{self, MoveTable};
 use crate::prune_tables::{self, PackedPruneTable};
+#[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+use crate::stage_joint_table::{enabled_table, JointKind, JointMode, JointPdb, JointState};
+
+fn requested_deep_no_diagonal(
+    flag: Option<&str>,
+    mode: Option<&str>,
+    with_huge: bool,
+    supported: bool,
+) -> Result<bool, &'static str> {
+    match flag {
+        None | Some("0") => return Ok(false),
+        Some("1") => {}
+        Some(_) => return Err("CUBE_STAGE_DEEP_NO_DIAG must be unset, 0 or 1"),
+    }
+    if !supported {
+        return Err("CUBE_STAGE_DEEP_NO_DIAG=1 requires native std with stage-joint-table and std-exact-lookup, without wasm-small");
+    }
+    if !with_huge {
+        return Err("CUBE_STAGE_DEEP_NO_DIAG=1 requires the full huge std stages");
+    }
+    if !matches!(mode, Some("deep" | "both")) {
+        return Err("CUBE_STAGE_DEEP_NO_DIAG=1 requires explicit CUBE_STAGE_JOINT_MODE=deep|both");
+    }
+    Ok(true)
+}
+
+/// Validate the opt-in before either native std entry point can preload diagonal
+/// tables. Deep must be present and exact through the coarse goal's diameter 12.
+pub fn use_deep_instead_of_diagonal(with_huge: bool) -> bool {
+    let read_env = |name| match std::env::var(name) {
+        Ok(value) => Some(value),
+        Err(std::env::VarError::NotPresent) => None,
+        Err(_) => panic!("{name} must contain valid Unicode"),
+    };
+    let flag = read_env("CUBE_STAGE_DEEP_NO_DIAG");
+    let mode = read_env("CUBE_STAGE_JOINT_MODE");
+    let requested = requested_deep_no_diagonal(
+        flag.as_deref(),
+        mode.as_deref(),
+        with_huge,
+        cfg!(all(
+            not(target_arch = "wasm32"),
+            not(feature = "wasm-small"),
+            feature = "stage-joint-table",
+            feature = "std-exact-lookup"
+        )),
+    )
+    .unwrap_or_else(|error| panic!("{error}"));
+    if !requested {
+        return false;
+    }
+    #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+    {
+        let deep = enabled_table(JointKind::DeepSeven, JointMode::Off)
+            .expect("CUBE_STAGE_DEEP_NO_DIAG=1 requires a loaded DeepSeven table");
+        assert!(
+            deep.completed_depth() >= 12,
+            "CUBE_STAGE_DEEP_NO_DIAG=1 requires DeepSeven completed_depth >= 12"
+        );
+        true
+    }
+    #[cfg(not(all(not(target_arch = "wasm32"), feature = "stage-joint-table")))]
+    {
+        unreachable!(
+            "unsupported deep-no-diagonal configuration must be rejected before table access"
+        )
+    }
+}
 
 /// XCross 求解器。线程局部构造(内部仅持 Arc,无可变状态)。
 pub struct XCrossSolver {
@@ -46,6 +114,10 @@ pub struct XCrossSolver {
     /// first-layer-solved input:physical code(2*position+orientation) → each slot's
     /// canonical single-edge code. Built from the same move semantics as `get_virt`.
     second_layer_edge_map: [[u8; 24]; 4],
+    #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+    stage_middle: Option<Arc<JointPdb>>,
+    #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+    stage_deep: Option<Arc<JointPdb>>,
 }
 
 /// 单槽位在 alg 下的虚拟状态。im/ic/ie 用于 XCross;ie6_*/ic2_* 用于 huge 阶段。
@@ -100,6 +172,7 @@ impl XCrossSolver {
     /// native-only(走 manager);WASM 用 from_small_tables。
     #[cfg(not(target_arch = "wasm32"))]
     pub fn new(with_huge: bool) -> Self {
+        let omit_diagonal = use_deep_instead_of_diagonal(with_huge);
         let mtm = move_tables::instance();
         let ptm = prune_tables::instance();
 
@@ -113,7 +186,11 @@ impl XCrossSolver {
                 Some(mtm.ensure_edge6()),
                 Some(mtm.ensure_corn2()),
                 Some(ptm.ensure_pt_cross_c4c5e0e1()),
-                Some(ptm.ensure_pt_cross_c4c6e0e2()),
+                if omit_diagonal {
+                    None
+                } else {
+                    Some(ptm.ensure_pt_cross_c4c6e0e2())
+                },
             )
         } else {
             (None, None, None, None)
@@ -137,6 +214,18 @@ impl XCrossSolver {
             idx_solved_e6_dg: array_to_index(&v_e6_dg, 6, 2, 12) as u32,
             idx_solved_c2_dg: array_to_index(&v_c2_dg, 2, 3, 8) as u32,
             second_layer_edge_map,
+            #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+            stage_middle: if with_huge {
+                enabled_table(JointKind::MiddleFour, JointMode::Off)
+            } else {
+                None
+            },
+            #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+            stage_deep: if with_huge {
+                enabled_table(JointKind::DeepSeven, JointMode::Off)
+            } else {
+                None
+            },
         }
     }
 
@@ -168,6 +257,10 @@ impl XCrossSolver {
             idx_solved_e6_dg: array_to_index(&v_e6_dg, 6, 2, 12) as u32,
             idx_solved_c2_dg: array_to_index(&v_c2_dg, 2, 3, 8) as u32,
             second_layer_edge_map,
+            #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+            stage_middle: None,
+            #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+            stage_deep: None,
         }
     }
 
@@ -320,6 +413,8 @@ impl XCrossSolver {
         table: [Option<&PackedPruneTable>; 3],
         depth: u32,
         prev: u8,
+        #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))] joint: JointState,
+        #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))] joint_view: usize,
     ) -> bool {
         let (vmoves, vcnt) = valid_moves();
         let count = vcnt[prev as usize] as usize;
@@ -329,10 +424,15 @@ impl XCrossSolver {
         for k in 0..count {
             let m = row[k] as usize;
             local += 1;
-            let mut n_e6 = [0u32; 3];
-            let mut n_c2 = [0u32; 3];
+            let mut n_e6 = e6;
+            let mut n_c2 = c2;
             let mut pruned = false;
             for i in 0..3 {
+                // The opt-in omits only the diagonal pair. The remaining two
+                // adjacent pairs still cover every corner/edge in this triple.
+                if table[i].is_none() {
+                    continue;
+                }
                 let (pr, ne6, nc2) = self.huge_check(conj[i], table[i], e6[i], c2[i], m, depth);
                 if pr {
                     pruned = true;
@@ -348,7 +448,30 @@ impl XCrossSolver {
                 bump_node_count(local);
                 return true;
             }
-            if self.search_3(n_e6, n_c2, conj, table, depth - 1, m as u8) {
+            #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+            let next_joint = if let Some(pdb) = &self.stage_deep {
+                let next = pdb
+                    .graph
+                    .step(joint, conj_moves_flat()[m][joint_view] as usize);
+                if pdb.bound(next) >= depth {
+                    continue;
+                }
+                next
+            } else {
+                joint
+            };
+            if self.search_3(
+                n_e6,
+                n_c2,
+                conj,
+                table,
+                depth - 1,
+                m as u8,
+                #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+                next_joint,
+                #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+                joint_view,
+            ) {
                 bump_node_count(local);
                 return true;
             }
@@ -367,6 +490,9 @@ impl XCrossSolver {
         dg_c2: [u32; 2],
         depth: u32,
         prev: u8,
+        #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))] middle: JointState,
+        #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))] deep: [JointState;
+            4],
     ) -> bool {
         let (vmoves, vcnt) = valid_moves();
         let count = vcnt[prev as usize] as usize;
@@ -396,27 +522,70 @@ impl XCrossSolver {
                 continue;
             }
 
-            let mut n_dg_e6 = [0u32; 2];
-            let mut n_dg_c2 = [0u32; 2];
-            for i in 0..2 {
-                let (pr, ne6, nc2) =
-                    self.huge_check(i as i32, dg_table, dg_e6[i], dg_c2[i], m, depth);
-                if pr {
-                    pruned = true;
-                    break;
+            let mut n_dg_e6 = dg_e6;
+            let mut n_dg_c2 = dg_c2;
+            if let Some(dg_table) = dg_table {
+                for i in 0..2 {
+                    let (pr, ne6, nc2) =
+                        self.huge_check(i as i32, Some(dg_table), dg_e6[i], dg_c2[i], m, depth);
+                    if pr {
+                        pruned = true;
+                        break;
+                    }
+                    n_dg_e6[i] = ne6;
+                    n_dg_c2[i] = nc2;
                 }
-                n_dg_e6[i] = ne6;
-                n_dg_c2[i] = nc2;
             }
             if pruned {
                 continue;
             }
 
+            // Four adjacent-pair goals already cover all F2L pieces, including
+            // when the opt-in replaces diagonal pruning with DeepSeven.
             if depth == 1 {
                 bump_node_count(local);
                 return true;
             }
-            if self.search_4(n_nb_e6, n_nb_c2, n_dg_e6, n_dg_c2, depth - 1, m as u8) {
+            #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+            let next_middle = if let Some(pdb) = &self.stage_middle {
+                let next = pdb.graph.step(middle, m);
+                if pdb.bound(next) >= depth {
+                    continue;
+                }
+                next
+            } else {
+                middle
+            };
+            #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+            let next_deep = {
+                let mut next = deep;
+                let mut rejected = false;
+                if let Some(pdb) = &self.stage_deep {
+                    for k in 0..4 {
+                        next[k] = pdb.graph.step(deep[k], conj_moves_flat()[m][k] as usize);
+                        if pdb.bound(next[k]) >= depth {
+                            rejected = true;
+                            break;
+                        }
+                    }
+                }
+                if rejected {
+                    continue;
+                }
+                next
+            };
+            if self.search_4(
+                n_nb_e6,
+                n_nb_c2,
+                n_dg_e6,
+                n_dg_c2,
+                depth - 1,
+                m as u8,
+                #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+                next_middle,
+                #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+                next_deep,
+            ) {
                 bump_node_count(local);
                 return true;
             }
@@ -433,16 +602,47 @@ impl XCrossSolver {
         a: usize,
         b: usize,
         nb: &'a PackedPruneTable,
-        dg: &'a PackedPruneTable,
-    ) -> (u32, u32, i32, &'a PackedPruneTable) {
+        dg: Option<&'a PackedPruneTable>,
+    ) -> (u32, u32, i32, Option<&'a PackedPruneTable>) {
         let v_nb = get_neighbor_view(a as i32, b as i32);
         if v_nb != -1 {
             let s = &st[v_nb as usize];
-            (s.ie6_nb, s.ic2_nb, v_nb, nb)
+            (s.ie6_nb, s.ic2_nb, v_nb, Some(nb))
         } else {
             let v_dg = get_diagonal_view(a as i32, b as i32);
             let s = &st[v_dg as usize];
             (s.ie6_dg, s.ic2_dg, v_dg, dg)
+        }
+    }
+
+    fn has_diagonal_source(&self) -> bool {
+        if self.pt_cross_c4c6e0e2.is_some() {
+            return true;
+        }
+        #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+        {
+            self.stage_deep.is_some()
+        }
+        #[cfg(not(all(not(target_arch = "wasm32"), feature = "stage-joint-table")))]
+        {
+            false
+        }
+    }
+
+    fn exact_pair_distance(&self, e6: u32, c2: u32, table: Option<&PackedPruneTable>) -> u32 {
+        if let Some(table) = table {
+            return table.get(e6 as u64 * state_space::CORNER2 as u64 + c2 as u64) as u32;
+        }
+        #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+        {
+            self.stage_deep
+                .as_ref()
+                .expect("missing diagonal source must not disable huge stages")
+                .diagonal_distance(c2, e6)
+        }
+        #[cfg(not(all(not(target_arch = "wasm32"), feature = "stage-joint-table")))]
+        {
+            unreachable!("diagonal table omission requires the native stage feature")
         }
     }
 
@@ -456,8 +656,8 @@ impl XCrossSolver {
         let mut f2l = vec![0u32; n];
 
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
-        let huge = match (&self.pt_cross_c4c5e0e1, &self.pt_cross_c4c6e0e2) {
-            (Some(nb), Some(dg)) => Some((nb.as_ref(), dg.as_ref())),
+        let huge = match (&self.pt_cross_c4c5e0e1, self.has_diagonal_source()) {
+            (Some(nb), true) => Some((nb.as_ref(), self.pt_cross_c4c6e0e2.as_deref())),
             _ => None,
         };
 
@@ -465,6 +665,21 @@ impl XCrossSolver {
             let mut a = base.clone();
             alg_rotation(&mut a, rot);
             let st: [VirtState; 4] = std::array::from_fn(|k| self.get_virt(&a, k));
+            #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+            let joint_middle = self
+                .stage_middle
+                .as_ref()
+                .map_or(JointState::default(), |p| p.graph.coordinates.root(&a));
+            #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+            let joint_deep: [JointState; 4] = std::array::from_fn(|k| {
+                self.stage_deep.as_ref().map_or(JointState::default(), |p| {
+                    let moves: Vec<u8> = a
+                        .iter()
+                        .map(|&m| conj_moves_flat()[m as usize][k])
+                        .collect();
+                    p.graph.coordinates.root(&moves)
+                })
+            });
 
             // --- 1. XCross ---
             let mut tasks: [(usize, u32); 4] = std::array::from_fn(|k| {
@@ -478,8 +693,15 @@ impl XCrossSolver {
                 if h >= best {
                     break;
                 }
-                let res = if h == 0 {
-                    0
+                // One canonical table gives the exact unrestricted single-slot
+                // distance; no witness search is needed for distance statistics.
+                let res = if h == 0
+                    || (cfg!(all(
+                        feature = "std-exact-lookup",
+                        not(target_arch = "wasm32")
+                    )) && h <= 12)
+                {
+                    h
                 } else {
                     let max_d = std::cmp::min(12, best.saturating_sub(1));
                     let mut found = 99;
@@ -512,7 +734,7 @@ impl XCrossSolver {
             let mut t2: [(usize, usize, u32); 6] = std::array::from_fn(|i| {
                 let (a, b) = PAIRS[i];
                 let (e6, c2, conj, table) = self.pair_huge(&st, a, b, nb, dg);
-                let h = table.get(e6 as u64 * state_space::CORNER2 as u64 + c2 as u64) as u32;
+                let h = self.exact_pair_distance(e6, c2, table);
                 let _ = conj;
                 (a, b, h)
             });
@@ -522,10 +744,18 @@ impl XCrossSolver {
                 if h >= best {
                     break;
                 }
-                let res = if h == 0 {
-                    0
+                // The huge pair table is exact for this XXCross goal. Keep the
+                // original cap/fallback for any unavailable distance sentinel.
+                let res = if h == 0
+                    || (cfg!(all(
+                        feature = "std-exact-lookup",
+                        not(target_arch = "wasm32")
+                    )) && h <= 14)
+                {
+                    h
                 } else {
                     let (e6, c2, conj, table) = self.pair_huge(&st, a, b, nb, dg);
+                    let table = table.expect("Deep diagonal projection requires exact lookup; legacy fallback needs its original table");
                     let max_d = std::cmp::min(14, best.saturating_sub(1));
                     let start = h.max(xc[r]);
                     let mut found = 99;
@@ -549,10 +779,17 @@ impl XCrossSolver {
                     .iter()
                     .map(|&(x, y)| {
                         let (e6, c2, _, table) = self.pair_huge(&st, x, y, nb, dg);
-                        table.get(e6 as u64 * state_space::CORNER2 as u64 + c2 as u64) as u32
+                        self.exact_pair_distance(e6, c2, table)
                     })
                     .max()
                     .unwrap();
+                #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+                let h = {
+                    let missing = (0..4).find(|k| ![a, b, c].contains(k)).unwrap();
+                    self.stage_deep
+                        .as_ref()
+                        .map_or(h, |p| h.max(p.bound(joint_deep[(missing + 1) % 4])))
+                };
                 (a, b, c, h)
             });
             t3.sort_by_key(|t| t.3);
@@ -573,13 +810,32 @@ impl XCrossSolver {
                         e6[i] = pe6;
                         c2[i] = pc2;
                         conj[i] = pconj;
-                        table[i] = Some(pt);
+                        table[i] = pt;
                     }
                     let max_d = std::cmp::min(16, best.saturating_sub(1));
                     let start = h.max(xxc[r]);
                     let mut found = 99;
+                    #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+                    let joint_view = ((0..4).find(|k| ![a, b, c].contains(k)).unwrap() + 1) % 4;
                     for d in start..=max_d {
-                        if self.search_3(e6, c2, conj, table, d, 18) {
+                        if self.search_3(
+                            e6,
+                            c2,
+                            conj,
+                            table,
+                            d,
+                            18,
+                            #[cfg(all(
+                                not(target_arch = "wasm32"),
+                                feature = "stage-joint-table"
+                            ))]
+                            joint_deep[joint_view],
+                            #[cfg(all(
+                                not(target_arch = "wasm32"),
+                                feature = "stage-joint-table"
+                            ))]
+                            joint_view,
+                        ) {
                             found = d;
                             break;
                         }
@@ -600,9 +856,22 @@ impl XCrossSolver {
                 let v = nb.get(nb_e6[i] as u64 * state_space::CORNER2 as u64 + nb_c2[i] as u64);
                 max_h = max_h.max(v as u32);
             }
-            for i in 0..2 {
-                let v = dg.get(dg_e6[i] as u64 * state_space::CORNER2 as u64 + dg_c2[i] as u64);
-                max_h = max_h.max(v as u32);
+            if let Some(dg) = dg {
+                for i in 0..2 {
+                    let v = dg.get(dg_e6[i] as u64 * state_space::CORNER2 as u64 + dg_c2[i] as u64);
+                    max_h = max_h.max(v as u32);
+                }
+            }
+            #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+            {
+                if let Some(p) = &self.stage_middle {
+                    max_h = max_h.max(p.bound(joint_middle));
+                }
+                if let Some(p) = &self.stage_deep {
+                    for state in joint_deep {
+                        max_h = max_h.max(p.bound(state));
+                    }
+                }
             }
             f2l[r] = if max_h > 16 {
                 17
@@ -612,7 +881,18 @@ impl XCrossSolver {
                 let start = max_h.max(xxxc[r]);
                 let mut found = 0;
                 for d in start..=16 {
-                    if self.search_4(nb_e6, nb_c2, dg_e6, dg_c2, d, 18) {
+                    if self.search_4(
+                        nb_e6,
+                        nb_c2,
+                        dg_e6,
+                        dg_c2,
+                        d,
+                        18,
+                        #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+                        joint_middle,
+                        #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+                        joint_deep,
+                    ) {
                         found = d;
                         break;
                     }
@@ -1313,7 +1593,16 @@ impl XCrossSolver {
             if depth == 1 {
                 out.push(path.clone());
             } else if max_h > 0 {
-                self.enumerate_multi_masked(&next[..n], depth - 1, m as u8, path, out, cap, vm, budget);
+                self.enumerate_multi_masked(
+                    &next[..n],
+                    depth - 1,
+                    m as u8,
+                    path,
+                    out,
+                    cap,
+                    vm,
+                    budget,
+                );
             }
             path.pop();
         }
@@ -1334,9 +1623,12 @@ impl XCrossSolver {
         max_depth: u32,
         mask: MoveMask,
     ) -> Vec<(Vec<usize>, Vec<u8>)> {
-        if !(1..=2).contains(&k) || min_depth == 0 || min_depth > 16
+        if !(1..=2).contains(&k)
+            || min_depth == 0
+            || min_depth > 16
             || fixed.iter().any(|&s| s >= 4)
-            || (!fixed.is_empty() && fixed.len() != k) {
+            || (!fixed.is_empty() && fixed.len() != k)
+        {
             return Vec::new();
         }
         let combos: Vec<Vec<usize>> = if !fixed.is_empty() {
@@ -1344,7 +1636,9 @@ impl XCrossSolver {
         } else if k == 1 {
             (0..4).map(|s| vec![s]).collect()
         } else {
-            (0..4).flat_map(|a| ((a + 1)..4).map(move |b| vec![a, b])).collect()
+            (0..4)
+                .flat_map(|a| ((a + 1)..4).map(move |b| vec![a, b]))
+                .collect()
         };
         let mut a: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         alg_rotation(&mut a, rot);
@@ -1354,10 +1648,20 @@ impl XCrossSolver {
         for depth in min_depth..=max_depth.min(min_depth + 6).min(16) {
             for combo in &combos {
                 let h = combo.iter().map(|&s| self.slot_h(&st[s])).max().unwrap();
-                if h == 0 || h > depth { continue; }
-                let coords: Vec<_> = combo.iter().map(|&s| (
-                    st[s].im as usize, st[s].ic as usize * 18, st[s].ie as usize * 18, s,
-                )).collect();
+                if h == 0 || h > depth {
+                    continue;
+                }
+                let coords: Vec<_> = combo
+                    .iter()
+                    .map(|&s| {
+                        (
+                            st[s].im as usize,
+                            st[s].ic as usize * 18,
+                            st[s].ie as usize * 18,
+                            s,
+                        )
+                    })
+                    .collect();
                 for &first in &vm.0[18][..vm.1[18] as usize] {
                     let mut branch = vm;
                     branch.0[18][0] = first;
@@ -1366,8 +1670,16 @@ impl XCrossSolver {
                     // At most 6 * 7 * 18 * 8,000 attempted moves and 3,024
                     // candidates. No extra tables or unbounded browser search.
                     let mut budget = 8_000;
-                    self.enumerate_multi_masked(&coords, depth, 18, &mut Vec::new(),
-                        &mut paths, 4, &branch, &mut budget);
+                    self.enumerate_multi_masked(
+                        &coords,
+                        depth,
+                        18,
+                        &mut Vec::new(),
+                        &mut paths,
+                        4,
+                        &branch,
+                        &mut budget,
+                    );
                     out.extend(paths.into_iter().map(|p| (combo.clone(), p)));
                 }
             }
@@ -1536,6 +1848,57 @@ mod tests {
     use super::*;
     use crate::cube_common::{string_to_alg, test_env_lock};
     use std::path::PathBuf;
+
+    #[test]
+    fn deep_no_diagonal_requires_explicit_compatible_configuration() {
+        for flag in [None, Some("0")] {
+            assert_eq!(
+                requested_deep_no_diagonal(flag, None, false, false),
+                Ok(false)
+            );
+        }
+        for mode in ["deep", "both"] {
+            assert_eq!(
+                requested_deep_no_diagonal(Some("1"), Some(mode), true, true),
+                Ok(true)
+            );
+            assert!(requested_deep_no_diagonal(Some("1"), Some(mode), false, true).is_err());
+            assert!(requested_deep_no_diagonal(Some("1"), Some(mode), true, false).is_err());
+        }
+        for mode in [None, Some("off"), Some("middle"), Some("default"), Some("")] {
+            assert!(requested_deep_no_diagonal(Some("1"), mode, true, true).is_err());
+        }
+        for flag in ["", "true", "2", "1 "] {
+            assert!(requested_deep_no_diagonal(Some(flag), Some("deep"), true, true).is_err());
+        }
+    }
+
+    #[test]
+    fn deep_no_diagonal_keeps_complete_neighbor_goal_coverage() {
+        for selected in [
+            vec![0, 1, 2],
+            vec![0, 1, 3],
+            vec![0, 2, 3],
+            vec![1, 2, 3],
+            vec![0, 1, 2, 3],
+        ] {
+            let mut covered = 0u8;
+            let mut adjacent = 0;
+            for (i, &a) in selected.iter().enumerate() {
+                for &b in &selected[i + 1..] {
+                    if get_neighbor_view(a, b) != -1 {
+                        covered |= (1 << a) | (1 << b);
+                        adjacent += 1;
+                    }
+                }
+            }
+            assert_eq!(
+                covered,
+                selected.iter().fold(0u8, |mask, &slot| mask | (1 << slot))
+            );
+            assert_eq!(adjacent, if selected.len() == 3 { 2 } else { 4 });
+        }
+    }
 
     fn setup_iso_dir(name: &str) -> PathBuf {
         let p = PathBuf::from("target").join("test-tables").join(name);

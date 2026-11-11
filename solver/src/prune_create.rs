@@ -48,7 +48,7 @@ fn cas_unvisited(slot: &AtomicU8, nd: u8) {
 /// out[i] 低半字节 = src[2i](偶 idx),高半字节 = src[2i+1](奇 idx),255→0xF。
 /// out idx i ≤ 源 idx 2i,前向写不会覆盖还没读的源字节;打包后把 Vec<AtomicU8>
 /// 重解释为 Vec<u8> 截断到 nb,省掉一份 total 字节的拷贝(huge 表峰值 53→21 GB)。
-fn pack_atomics_inplace(mut atomics: Vec<AtomicU8>) -> Vec<u8> {
+pub(crate) fn pack_atomics_inplace(mut atomics: Vec<AtomicU8>) -> Vec<u8> {
     let total = atomics.len();
     let nb = (total + 1) / 2;
     // SAFETY: BFS 已结束,单线程独占;AtomicU8 与 u8 同 size/align/repr。

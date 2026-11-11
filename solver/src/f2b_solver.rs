@@ -26,6 +26,8 @@ use crate::block222_solver::{face_map, ROTS6};
 use crate::cube_common::{rot_map, state_space, valid_moves, Move};
 use crate::prune_tables::PackedPruneTable;
 use crate::roux_s1_solver::{build_pt_product, conj_buf, RouxS1Solver, S1Sol};
+#[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+use crate::stage_joint_table::{enabled_table, JointKind, JointMode, JointPdb, JointState};
 
 const FACE_D: u8 = 1;
 const FACE_L: u8 = 2;
@@ -64,6 +66,16 @@ pub struct F2BSolver {
     /// {整块 + 对侧 2 角}(heavy),idx = (c2_a*EDGE3+e3_a)*CORNER2 + c2_b,
     /// nibble packed(值 = min(d,15);0xF 兼作不可达,合法 walk 不会查到)。
     pt9: Option<Arc<PackedPruneTable>>,
+    #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+    stage_middle: Option<Arc<JointPdb>>,
+}
+
+struct BlockPairTask {
+    fb: (usize, usize),
+    sb: (usize, usize),
+    lower: u32,
+    #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+    joint: JointState,
 }
 
 /// y2 帧步进用的置换 move 表:mt'[i,m] = mt[i, rm2[m]]。
@@ -205,6 +217,10 @@ impl F2BSolver {
             s.s1.e3_solved * state_space::EDGE3 + s.s1.e3_solved,
         );
         s.pt9 = Some(pt9);
+        #[cfg(feature = "stage-joint-table")]
+        {
+            s.stage_middle = enabled_table(JointKind::MiddleFour, JointMode::Middle);
+        }
         s
     }
 
@@ -224,6 +240,8 @@ impl F2BSolver {
             pt_cc,
             pt_ee: Vec::new(),
             pt9: None,
+            #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+            stage_middle: None,
         }
     }
 
@@ -271,6 +289,7 @@ impl F2BSolver {
         sb: (usize, usize),
         depth: u32,
         prev: u8,
+        #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))] joint: JointState,
     ) -> bool {
         let (vmoves, vcnt) = valid_moves();
         let count = vcnt[prev as usize] as usize;
@@ -307,7 +326,27 @@ impl F2BSolver {
                     continue;
                 }
             }
-            if depth == 1 || self.search::<HEAVY>(nfb, nsb, depth - 1, m as u8) {
+            if depth == 1 {
+                return true;
+            }
+            #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+            let next_joint = if let Some(pdb) = &self.stage_middle {
+                let next = pdb.graph.step(joint, m);
+                if pdb.bound(next) >= depth {
+                    continue;
+                }
+                next
+            } else {
+                joint
+            };
+            if self.search::<HEAVY>(
+                nfb,
+                nsb,
+                depth - 1,
+                m as u8,
+                #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+                next_joint,
+            ) {
                 return true;
             }
         }
@@ -316,11 +355,31 @@ impl F2BSolver {
 
     /// IDA* 入口分派(轻 / heavy 特化)。
     #[inline]
-    fn search_root(&self, fb: (usize, usize), sb: (usize, usize), depth: u32) -> bool {
+    fn search_root(
+        &self,
+        fb: (usize, usize),
+        sb: (usize, usize),
+        depth: u32,
+        #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))] joint: JointState,
+    ) -> bool {
         if self.pt9.is_some() {
-            self.search::<true>(fb, sb, depth, 18)
+            self.search::<true>(
+                fb,
+                sb,
+                depth,
+                18,
+                #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+                joint,
+            )
         } else {
-            self.search::<false>(fb, sb, depth, 18)
+            self.search::<false>(
+                fb,
+                sb,
+                depth,
+                18,
+                #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+                joint,
+            )
         }
     }
 
@@ -328,11 +387,29 @@ impl F2BSolver {
     pub fn solve_one(&self, alg: &[Move], rot: &str, yk: usize) -> u32 {
         let (fb, sb) = self.roots(alg, rot, yk);
         let h = self.h(fb, sb);
+        #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+        let joint = self
+            .stage_middle
+            .as_ref()
+            .map_or(JointState::default(), |p| {
+                p.graph.coordinates.root(&conj_buf(alg, rot, yk))
+            });
+        #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+        let h = self
+            .stage_middle
+            .as_ref()
+            .map_or(h, |p| h.max(p.bound(joint)));
         if h == 0 {
             return 0;
         }
         for d in h..=MAX_DEPTH {
-            if self.search_root(fb, sb, d) {
+            if self.search_root(
+                fb,
+                sb,
+                d,
+                #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+                joint,
+            ) {
                 return d;
             }
         }
@@ -341,23 +418,49 @@ impl F2BSolver {
 
     /// 单视角(2 个块对最小;yk 2/3 为重复目标):按根下界排序 + bound 传递。
     pub fn solve_face(&self, alg: &[Move], rot: &str) -> u32 {
-        let mut tasks: Vec<((usize, usize), (usize, usize), u32)> = (0..2)
+        let mut tasks: Vec<BlockPairTask> = (0..2)
             .map(|k| {
                 let (fb, sb) = self.roots(alg, rot, k);
-                (fb, sb, self.h(fb, sb))
+                let lower = self.h(fb, sb);
+                #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+                let joint = self
+                    .stage_middle
+                    .as_ref()
+                    .map_or(JointState::default(), |p| {
+                        p.graph.coordinates.root(&conj_buf(alg, rot, k))
+                    });
+                #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+                let lower = self
+                    .stage_middle
+                    .as_ref()
+                    .map_or(lower, |p| lower.max(p.bound(joint)));
+                BlockPairTask {
+                    fb,
+                    sb,
+                    lower,
+                    #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+                    joint,
+                }
             })
             .collect();
-        tasks.sort_by_key(|t| t.2);
-        if tasks[0].2 == 0 {
+        tasks.sort_by_key(|t| t.lower);
+        if tasks[0].lower == 0 {
             return 0;
         }
         let mut min_v = MAX_DEPTH + 1;
-        for &(fb, sb, h) in &tasks {
+        for task in &tasks {
+            let (fb, sb, h) = (task.fb, task.sb, task.lower);
             if h >= min_v {
                 continue;
             }
             for d in h..min_v {
-                if self.search_root(fb, sb, d) {
+                if self.search_root(
+                    fb,
+                    sb,
+                    d,
+                    #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+                    task.joint,
+                ) {
                     min_v = d;
                     break;
                 }
@@ -449,6 +552,13 @@ impl F2BSolver {
         let mut dists = [0u32; 2];
         for k in 0..2 {
             let (fb, sb) = self.roots(alg, rot, k);
+            #[cfg(all(not(target_arch = "wasm32"), feature = "stage-joint-table"))]
+            let joint = self
+                .stage_middle
+                .as_ref()
+                .map_or(JointState::default(), |p| {
+                    p.graph.coordinates.root(&conj_buf(alg, rot, k))
+                });
             ends[k] = (fb, sb);
             dists[k] = {
                 let h = self.h(fb, sb);
@@ -457,7 +567,16 @@ impl F2BSolver {
                 } else {
                     let mut v = 99;
                     for d in h..=MAX_DEPTH {
-                        if self.search_root(fb, sb, d) {
+                        if self.search_root(
+                            fb,
+                            sb,
+                            d,
+                            #[cfg(all(
+                                not(target_arch = "wasm32"),
+                                feature = "stage-joint-table"
+                            ))]
+                            joint,
+                        ) {
                             v = d;
                             break;
                         }

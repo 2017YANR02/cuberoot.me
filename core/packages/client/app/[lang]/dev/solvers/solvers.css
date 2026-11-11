@@ -107,6 +107,7 @@
 }
 .solv-badge {
   display: inline-flex;
+  white-space: nowrap;
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
@@ -237,6 +238,7 @@
   color: var(--muted-foreground);
   background: color-mix(in srgb, var(--card) 96%, var(--background)) !important;
 }
+.solv-mx thead th:not(:has(.solv-mx-hbtn)) { padding: 9px 13px; }
 .solv-mx-hbtn {
   appearance: none;
   display: inline-flex;
@@ -297,6 +299,7 @@ a.solv-mx-nm:hover { color: var(--accent); }
 .solv-mx-val small { color: var(--faint-foreground); font-size: 10px; }
 .solv-mx-eng { overflow: hidden; text-overflow: ellipsis; max-width: 16ch; }
 .solv-mx-states { display: inline-block; max-width: 20ch; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+.solv-mx-val.solv-mx-detail { display: inline-block; max-width: 28ch; padding: 6px 13px; white-space: normal; overflow-wrap: anywhere; }
 .solv-mx-more { color: var(--faint-foreground); font-size: 10px; flex-shrink: 0; }
 .solv-mx-pad { padding: 6px 13px; display: inline-block; }
 .solv-tone-ok { color: var(--signal-success); }

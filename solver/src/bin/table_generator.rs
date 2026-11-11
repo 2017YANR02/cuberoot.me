@@ -1,12 +1,15 @@
 //! table_generator binary:对应 C++ `table_generator.cpp`。
 //!
-//! 顺序生成默认 move tables (12 张) + prune tables (61 张),自动启用
+//! 顺序生成默认 move tables (12 张) + prune tables (61 张)，以及默认
+//! F2LEO compact、Pair 首阶段与 F2B Middle 表；自动启用
 //! `CUBE_ALLOW_HUGE_TABLES=1`(可通过 `CUBE_DISABLE_HUGE_TABLES=1` 关闭)。
 //! 64 GB-class 机器自动追加 EO XCross 5 张、SQ1 精确表及原生 H48 h10。
 //!
 //! 已存在的表跳过(各 manager 内部 mmap reload)。
 //!
-//! 默认档全 73 张实测 36.14 GB；high-memory 档另加 9.35 GB。
+//! 原默认 73 张实测 36.14 GB；F2LEO compact 另加约 101.5 MiB，
+//! Pair 首阶段另加约 52.2 MiB，F2B Middle 另加约 1.524 GiB；
+//! high-memory 档另加 9.35 GB。DeepSeven 始终仅显式生成。
 
 use std::io::Write;
 use std::sync::{
@@ -17,6 +20,46 @@ use std::time::Instant;
 
 static SELECTED_TABLE: OnceLock<String> = OnceLock::new();
 static MATCHED_TABLE: AtomicBool = AtomicBool::new(false);
+
+const USAGE: &str = "usage: table_generator [--only rust|sq1|h48-h7|h48-h9|h48-h10] [--table exact_file_stem (rust only)] [--resume (explicit stage checkpoint only)]";
+
+fn parse_args(args: &[String]) -> Result<(&str, Option<&str>, bool), &'static str> {
+    let (only, table, resume) = match args {
+        [] => ("all", None, false),
+        [flag, value] if flag == "--only" => (value.as_str(), None, false),
+        [flag, value, table_flag, table]
+            if flag == "--only" && value == "rust" && table_flag == "--table" =>
+        {
+            (
+                "rust",
+                Some(table.strip_suffix(".bin").unwrap_or(table)),
+                false,
+            )
+        }
+        [flag, value, table_flag, table, resume]
+            if flag == "--only"
+                && value == "rust"
+                && table_flag == "--table"
+                && resume == "--resume" =>
+        {
+            (
+                "rust",
+                Some(table.strip_suffix(".bin").unwrap_or(table)),
+                true,
+            )
+        }
+        _ => return Err(USAGE),
+    };
+    if !["all", "rust", "sq1", "h48-h7", "h48-h9", "h48-h10"].contains(&only) {
+        return Err("unknown --only target");
+    }
+    if resume && !matches!(table, Some("pt_C4C5C6C7E0E1E2E3" | "pt_cross_C4C6E0E1E2")) {
+        return Err(
+            "--resume requires --only rust --table pt_C4C5C6C7E0E1E2E3|pt_cross_C4C6E0E1E2",
+        );
+    }
+    Ok((only, table, resume))
+}
 
 use cube_solver::move_tables;
 use cube_solver::prune_tables;
@@ -56,21 +99,45 @@ fn step(name: &str, f: impl FnOnce()) {
     );
 }
 
+fn stage_table(kind: cube_solver::stage_joint_table::JointKind, threads: usize, resume: bool) {
+    use cube_solver::stage_joint_table::{self, GenerationOptions, JointKind};
+    let spec = kind.spec();
+    let name = spec.filename.trim_end_matches(".bin");
+    step(name, || {
+        let path = move_tables::table_path(spec.filename);
+        assert!(
+            !resume || !path.exists(),
+            "--resume requires an unpublished .bin.part checkpoint; published table is preserved"
+        );
+        let report = if path.exists() {
+            stage_joint_table::verify_file(&path, kind)
+        } else {
+            let options = GenerationOptions {
+                threads,
+                max_depth: 14,
+                max_transitions: if kind == JointKind::MiddleFour {
+                    80_000_000_000
+                } else {
+                    2_500_000_000_000
+                },
+                resume,
+            };
+            stage_joint_table::generate(&path, kind, &options, |p| {
+                eprintln!("[STAGE-PDB] {name} {p:?}");
+                Ok(())
+            })
+        }
+        .expect("joint stage table generation failed");
+        eprintln!("[STAGE-PDB] {name} {report:?}");
+    });
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    let only = match args.as_slice() {
-        [] => "all",
-        [flag, value] if flag == "--only" => value.as_str(),
-        [flag, value, table_flag, table] if flag == "--only" && value == "rust" && table_flag == "--table" => {
-            SELECTED_TABLE.set(table.trim_end_matches(".bin").to_string()).unwrap();
-            "rust"
-        },
-        _ => panic!("usage: table_generator [--only rust|sq1|h48-h7|h48-h9|h48-h10] [--table exact_file_stem (rust only)]"),
-    };
-    assert!(
-        ["all", "rust", "sq1", "h48-h7", "h48-h9", "h48-h10"].contains(&only),
-        "unknown --only target: {only}"
-    );
+    let (only, table, resume) = parse_args(&args).unwrap_or_else(|error| panic!("{error}"));
+    if let Some(table) = table {
+        SELECTED_TABLE.set(table.to_owned()).unwrap();
+    }
     let rayon_threads = rayon::current_num_threads();
     cube_solver::logo::print_logo_block();
 
@@ -152,7 +219,11 @@ fn main() {
         && profile.high_memory()
         && (only == "all" || only == "h48-h7" || only == "h48-h9" || only == "h48-h10")
     {
-        let dataid = match only { "h48-h7" => "h48h7", "h48-h9" => "h48h9", _ => "h48h10" };
+        let dataid = match only {
+            "h48-h7" => "h48h7",
+            "h48-h9" => "h48h9",
+            _ => "h48h10",
+        };
         eprintln!("\n=== H48 {dataid} native table (57 GiB RSS alarm) ===");
         let started = Instant::now();
         let (generated, peak, bytes) = match h48_native::generate(rayon_threads, dataid) {
@@ -174,6 +245,48 @@ fn main() {
     }
     if only == "sq1" || only == "h48-h7" || only == "h48-h9" || only == "h48-h10" {
         return;
+    }
+
+    // Explicit new-PDB requests stay on the unified entry without touching the
+    // default table managers or generating unrelated huge tables.
+    if only == "rust" {
+        if let Some(selected) = SELECTED_TABLE.get() {
+            for kind in cube_solver::pair_joint_table::ALL_KINDS {
+                let name = kind.file_name().trim_end_matches(".bin");
+                if selected == name {
+                    step(name, || {
+                        let report = cube_solver::pair_joint_table::generate(
+                            kind,
+                            &move_tables::table_dir(),
+                        )
+                        .expect("joint Pair table generation failed");
+                        eprintln!("{report:?}");
+                    });
+                    return;
+                }
+            }
+            let name = cube_solver::f2leo_compact_table::FILE_NAME.trim_end_matches(".bin");
+            if selected == name {
+                step(name, || {
+                    let report = cube_solver::f2leo_compact_table::generate_or_verify(
+                        &move_tables::table_path(cube_solver::f2leo_compact_table::FILE_NAME),
+                    )
+                    .expect("compact F2LEO table generation failed");
+                    eprintln!("{report:?}");
+                });
+                return;
+            }
+            for kind in [
+                cube_solver::stage_joint_table::JointKind::MiddleFour,
+                cube_solver::stage_joint_table::JointKind::DeepSeven,
+            ] {
+                let name = kind.spec().filename.trim_end_matches(".bin");
+                if selected == name {
+                    stage_table(kind, rayon_threads, resume);
+                    return;
+                }
+            }
+        }
     }
 
     let mtm = move_tables::instance();
@@ -270,6 +383,36 @@ fn main() {
     step("pt_cross_C4C7E0", || {
         ptm.ensure_pt_cross_c4c7e0();
     });
+    #[cfg(feature = "pair-joint-table")]
+    {
+        let kind = cube_solver::pair_joint_table::Kind::Pair;
+        step(kind.file_name().trim_end_matches(".bin"), || {
+            let report = cube_solver::pair_joint_table::generate(kind, &move_tables::table_dir())
+                .expect("joint Pair table generation failed");
+            eprintln!("{report:?}");
+        });
+    }
+    #[cfg(feature = "f2leo-compact-table")]
+    step(
+        cube_solver::f2leo_compact_table::FILE_NAME.trim_end_matches(".bin"),
+        || {
+            let report = cube_solver::f2leo_compact_table::generate_or_verify(
+                &move_tables::table_path(cube_solver::f2leo_compact_table::FILE_NAME),
+            )
+            .expect("compact F2LEO table generation failed");
+            eprintln!("{report:?}");
+        },
+    );
+    #[cfg(feature = "stage-joint-table")]
+    if !disable_huge {
+        stage_table(
+            cube_solver::stage_joint_table::JointKind::MiddleFour,
+            rayon_threads,
+            false,
+        );
+    } else {
+        eprintln!("[SKIP] pt_C4C5C6C7E0E1E2E3 (huge)");
+    }
 
     eprintln!("\n=== Prune tables: indexed families ===");
     for i in 0..4 {
@@ -339,4 +482,67 @@ fn main() {
         t0.elapsed().as_secs_f64(),
         t0.elapsed().as_secs_f64() / 60.0,
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_args;
+
+    fn args(values: &[&str]) -> Vec<String> {
+        values.iter().map(|v| (*v).to_owned()).collect()
+    }
+
+    #[test]
+    fn stage_resume_requires_explicit_exact_target() {
+        for table in ["pt_C4C5C6C7E0E1E2E3", "pt_cross_C4C6E0E1E2.bin"] {
+            let argv = args(&["--only", "rust", "--table", table, "--resume"]);
+            let (only, selected, resume) = parse_args(&argv).unwrap();
+            assert_eq!(only, "rust");
+            assert_eq!(selected, Some(table.trim_end_matches(".bin")));
+            assert!(resume);
+        }
+        for values in [
+            vec!["--resume"],
+            vec!["--only", "rust", "--resume"],
+            vec!["--only", "h48-h11"],
+            vec!["--only", "h48-h10", "--resume"],
+            vec![
+                "--only",
+                "rust",
+                "--table",
+                "pt_C4C5C6C7E0E1E2E3.bin.bin",
+                "--resume",
+            ],
+            vec!["--only", "rust", "--table", "pt_pair_all_joint", "--resume"],
+            vec![
+                "--only",
+                "rust",
+                "--table",
+                "pt_cross_eo_E0E1E2E3",
+                "--resume",
+            ],
+            vec![
+                "--only",
+                "rust",
+                "--table",
+                "pt_C4C5C6C7E0E1E2E3",
+                "--resume",
+                "extra",
+            ],
+        ] {
+            assert!(parse_args(&args(&values)).is_err(), "accepted: {values:?}");
+        }
+    }
+
+    #[test]
+    fn default_and_explicit_new_generation_do_not_resume() {
+        assert_eq!(parse_args(&[]).unwrap(), ("all", None, false));
+        let argv = args(&["--only", "rust"]);
+        assert_eq!(parse_args(&argv).unwrap(), ("rust", None, false));
+        let argv = args(&["--only", "rust", "--table", "pt_C4C5C6C7E0E1E2E3"]);
+        assert_eq!(
+            parse_args(&argv).unwrap(),
+            ("rust", Some("pt_C4C5C6C7E0E1E2E3"), false)
+        );
+    }
 }

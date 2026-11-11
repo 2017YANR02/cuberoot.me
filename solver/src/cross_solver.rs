@@ -83,11 +83,19 @@ impl CrossSolver {
     }
 
     /// 计算单个 (alg, rot) 视角下 Cross 最少步数。
-    /// 内部:从 SOLVED 起跑 alg,再 IDA* 找最小 d。返回 0 表示已是 SOLVED。
+    /// 默认从 SOLVED 起跑 alg 后查精确距离；保留 IDA* 对照路径。0 表示已到目标。
     fn solve_one(&self, alg: &[Move], rot: &str) -> u32 {
         let (i1, i2) = self.start_indices(alg, rot);
         let idx = (i1 as u64) * (state_space::EDGE2 as u64) + i2 as u64;
         let d_min = self.pt.get(idx) as u32;
+        // Both standard and pseudo tables are exact for the unrestricted goal.
+        // Statistics need the distance, while masked moves still use IDA* below.
+        if cfg!(all(
+            feature = "std-exact-lookup",
+            not(target_arch = "wasm32")
+        )) {
+            return if d_min <= 8 { d_min } else { 9 };
+        }
         if d_min == 0 {
             return 0;
         }
@@ -358,6 +366,32 @@ mod tests {
             ));
         }
         out
+    }
+
+    #[cfg(feature = "std-exact-lookup")]
+    #[test]
+    fn exact_lookup_matches_search_standard_and_pseudo() {
+        let _lock = test_env_lock().lock().unwrap_or_else(|e| e.into_inner());
+        let dir = setup_iso_dir("cross_exact_lookup");
+        std::env::set_var("CUBE_TABLE_DIR", &dir);
+        let rots = ["", "z2", "z'", "z", "x'", "x"];
+        let all18: Vec<u8> = (0..18).collect();
+
+        for is_pseudo in [false, true] {
+            let solver = CrossSolver::new(is_pseudo);
+            for seed in 0..128u64 {
+                let alg = pseudo_word(10900 + seed, seed as usize % 25, &all18);
+                for rot in rots {
+                    assert_eq!(
+                        Some(solver.solve_one(&alg, rot)),
+                        solver.solve_one_masked(&alg, rot, MASK_ALL, 8),
+                        "exact lookup differs from IDA*: pseudo={is_pseudo} seed={seed} rot={rot}",
+                    );
+                }
+            }
+        }
+
+        cleanup(&dir);
     }
 
     /// State 级 cross 谓词(独立于 mt/pt 编码):D 层 4 棱归位且朝向正。

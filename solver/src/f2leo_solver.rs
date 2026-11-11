@@ -1585,6 +1585,8 @@ struct BigVirt {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub struct F2leoBigSolver {
+    #[cfg(feature = "f2leo-compact-table")]
+    compact_cross: Option<Arc<crate::f2leo_compact_table::CompactCrossTable>>,
     mt_edge2: Arc<MoveTable>,
     mt_edge4: Arc<MoveTable>,
     mt_corn: Arc<MoveTable>,
@@ -1619,6 +1621,8 @@ impl F2leoBigSolver {
         let v_c2_dg: [i32; 2] = [12, 18];
 
         F2leoBigSolver {
+            #[cfg(feature = "f2leo-compact-table")]
+            compact_cross: crate::f2leo_compact_table::configured(),
             mt_edge2: mtm.ensure_edge2(),
             mt_edge4: mtm.ensure_edge4(),
             mt_corn: mtm.ensure_corn(),
@@ -1768,6 +1772,10 @@ impl F2leoBigSolver {
     }
 
     fn solve_cross(&self, i1: usize, i2: usize, eo: [usize; 4]) -> u32 {
+        #[cfg(feature = "f2leo-compact-table")]
+        if let Some(table) = &self.compact_cross {
+            return table.distance_from_root(i1, i2, eo, false);
+        }
         let pr = self.pt_cross.get((i1 as u64) * (E2 as u64) + i2 as u64) as u32;
         if pr == 0 && eo.iter().all(|&e| e % 2 == 0) {
             return 0;

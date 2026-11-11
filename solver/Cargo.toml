@@ -17,9 +17,23 @@ path = "src/bin/std_analyzer.rs"
 # big-tables(默认):原生批处理,XXCross+ 走 ~20GB 精确 pair 表(现状不变)。
 # wasm-small:浏览器友好,XXCross+ 走 pt_cross_C4E0(52MB)单槽 max 可采纳启发式,
 #            仍返回最优解(与 big 逐格 bit-exact),只是搜索更深。Phase 3 据此编 WASM。
-default = ["big-tables"]
+default = ["big-tables", "std-exact-lookup", "pseudo-f2leo-global-ida", "f2leo-compact-table", "pair-joint-table", "stage-joint-table"]
 big-tables = []
 wasm-small = []
+# Native EO research candidates; keep the accepted daily path unchanged.
+eo-multi-slot = []
+eo-stage-profile = []
+# Accepted native statistics optimizations (2026-11-10, fixed 100-case comparison).
+std-exact-lookup = []
+pseudo-f2leo-global-ida = []
+# Pseudo-pair candidates: equivalent results, no measured speedup; remain off.
+pseudo-pair-state-cache = []
+pseudo-pair-single-conjugate = []
+# New PDBs: compact Cross, Pair first stage and F2B Middle accepted on 2026-11-10.
+# PseudoPair, standard F2L Middle and DeepSeven remain opt-in.
+pair-joint-table = []
+f2leo-compact-table = []
+stage-joint-table = []
 
 # native:磁盘 mmap + 多核并行(WASM 不用)。
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

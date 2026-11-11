@@ -26,6 +26,10 @@ use crate::move_tables::{self, MoveTable};
 use crate::prune_tables::{self, PackedPruneTable};
 
 pub struct PairSolver {
+    #[cfg(all(feature = "pair-joint-table", not(target_arch = "wasm32")))]
+    joint: Option<Arc<PackedPruneTable>>,
+    #[cfg(all(feature = "pair-joint-table", not(target_arch = "wasm32")))]
+    joint_mode: crate::pair_joint_table::Mode,
     mt_edge4: Arc<MoveTable>,
     mt_corn: Arc<MoveTable>,
     mt_edge: Arc<MoveTable>,
@@ -83,6 +87,9 @@ impl PairSolver {
     pub fn new(with_diagonal: bool) -> Self {
         let mtm = move_tables::instance();
         let ptm = prune_tables::instance();
+        #[cfg(feature = "pair-joint-table")]
+        let joint_mode =
+            crate::pair_joint_table::Mode::from_env(crate::pair_joint_table::Mode::First);
 
         let (e6n, e6d, c2n, c2d) = Self::solved_idx();
         let pt_cross_c4c6e0e2 = if with_diagonal {
@@ -92,6 +99,17 @@ impl PairSolver {
         };
 
         PairSolver {
+            #[cfg(feature = "pair-joint-table")]
+            joint: if joint_mode == crate::pair_joint_table::Mode::Off {
+                None
+            } else {
+                Some(
+                    crate::pair_joint_table::load_cached(crate::pair_joint_table::Kind::Pair)
+                        .expect("load exact Cross + Pair table"),
+                )
+            },
+            #[cfg(feature = "pair-joint-table")]
+            joint_mode,
             mt_edge4: mtm.ensure_edge4(),
             mt_corn: mtm.ensure_corn(),
             mt_edge: mtm.ensure_edge(),
@@ -122,6 +140,10 @@ impl PairSolver {
     ) -> Self {
         let (e6n, e6d, c2n, c2d) = Self::solved_idx();
         PairSolver {
+            #[cfg(all(feature = "pair-joint-table", not(target_arch = "wasm32")))]
+            joint: None,
+            #[cfg(all(feature = "pair-joint-table", not(target_arch = "wasm32")))]
+            joint_mode: crate::pair_joint_table::Mode::Off,
             mt_edge4,
             mt_corn,
             mt_edge,
@@ -299,6 +321,10 @@ impl PairSolver {
             if self.pt_pair_c4e0.get((n_ie_p * 24 + n_ic_p) as u64) as u32 >= depth {
                 continue;
             }
+            #[cfg(all(feature = "pair-joint-table", not(target_arch = "wasm32")))]
+            if self.joint_prunes(n_im_p, n_ic_p, n_ie_p, depth) {
+                continue;
+            }
             if depth == 1 {
                 if self.pt_pair_c4e0.get((n_ie_p * 24 + n_ic_p) as u64) == 0
                     && self.pt_cross_c4e0.get(idx_xc) == 0
@@ -365,6 +391,10 @@ impl PairSolver {
             }
             let n_ie_p = mt_e[ie_p + mc_p] as usize;
             if self.pt_pair_c4e0.get((n_ie_p * 24 + n_ic_p) as u64) as u32 >= depth {
+                continue;
+            }
+            #[cfg(all(feature = "pair-joint-table", not(target_arch = "wasm32")))]
+            if self.joint_prunes(n_im_p, n_ic_p, n_ie_p, depth) {
                 continue;
             }
             if depth == 1 {
@@ -448,6 +478,10 @@ impl PairSolver {
             if self.pt_pair_c4e0.get((n_ie_p * 24 + n_ic_p) as u64) as u32 >= depth {
                 continue;
             }
+            #[cfg(all(feature = "pair-joint-table", not(target_arch = "wasm32")))]
+            if self.joint_prunes(n_im_p, n_ic_p, n_ie_p, depth) {
+                continue;
+            }
             if depth == 1 {
                 if self.pt_pair_c4e0.get((n_ie_p * 24 + n_ic_p) as u64) == 0 {
                     bump_node_count(local);
@@ -485,7 +519,39 @@ impl PairSolver {
 
     // --- solve groups ---
 
+    fn pair_root_bound(&self, st: &VirtState) -> u32 {
+        let h = self.pt_cross_ins_c4.get((st.im + st.ic) as u64) as u32;
+        #[cfg(all(feature = "pair-joint-table", not(target_arch = "wasm32")))]
+        if self.joint_mode == crate::pair_joint_table::Mode::All {
+            if let Some(table) = &self.joint {
+                return h.max(table.get((st.im as u64 + st.ic as u64) * 24 + st.ie as u64) as u32);
+            }
+        }
+        h
+    }
+
+    #[cfg(all(feature = "pair-joint-table", not(target_arch = "wasm32")))]
+    #[inline]
+    fn joint_prunes(&self, cross: usize, corner: usize, edge: usize, depth: u32) -> bool {
+        self.joint_mode == crate::pair_joint_table::Mode::All
+            && self
+                .joint
+                .as_ref()
+                .is_some_and(|t| t.get(((cross + corner) * 24 + edge) as u64) as u32 >= depth)
+    }
+
     pub fn solve_1_group(&self, alg: &[u8], bound: u32) -> u32 {
+        #[cfg(all(feature = "pair-joint-table", not(target_arch = "wasm32")))]
+        if let Some(table) = &self.joint {
+            return (0..4)
+                .map(|slot| {
+                    let st = self.get_virt(alg, slot);
+                    table.get((st.im as u64 + st.ic as u64) * 24 + st.ie as u64) as u32
+                })
+                .min()
+                .unwrap()
+                .min(bound);
+        }
         // 4 slot,按 h 升序
         let mut tasks: Vec<(usize, u32)> = (0..4)
             .map(|s1| {
@@ -534,7 +600,7 @@ impl PairSolver {
                 }
                 let sp = self.get_virt(alg, tgt);
                 let sx = self.get_virt(alg, fix);
-                let h1 = self.pt_cross_ins_c4.get((sp.im + sp.ic) as u64) as u32;
+                let h1 = self.pair_root_bound(&sp);
                 let h2 = self
                     .pt_cross_c4e0
                     .get((sx.im as u64 + sx.ic as u64) * 24 + sx.ie as u64)
@@ -591,7 +657,7 @@ impl PairSolver {
                 let sp = self.get_virt(alg, tgt);
                 let sx1 = self.get_virt(alg, p[0]);
                 let sx2 = self.get_virt(alg, p[1]);
-                let h1 = self.pt_cross_ins_c4.get((sp.im + sp.ic) as u64) as u32;
+                let h1 = self.pair_root_bound(&sp);
                 let h2 = self
                     .pt_cross_c4e0
                     .get((sx1.im as u64 + sx1.ic as u64) * 24 + sx1.ie as u64)
@@ -689,7 +755,7 @@ impl PairSolver {
                 }
             }
             let sp = self.get_virt(alg, tgt);
-            let mut h = self.pt_cross_ins_c4.get((sp.im + sp.ic) as u64) as u32;
+            let mut h = self.pair_root_bound(&sp);
             let s0 = self.get_virt(alg, fix[0]);
             let s1 = self.get_virt(alg, fix[1]);
             let s2 = self.get_virt(alg, fix[2]);

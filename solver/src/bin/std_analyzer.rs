@@ -49,6 +49,10 @@ struct StdSolver;
 
 impl SolverWrapper for StdSolver {
     fn global_init() {
+        #[cfg(not(feature = "wasm-small"))]
+        let omit_diagonal = cube_solver::xcross_solver::use_deep_instead_of_diagonal(flags().huge);
+        #[cfg(feature = "wasm-small")]
+        cube_solver::xcross_solver::use_deep_instead_of_diagonal(false);
         let mt = move_tables::instance();
         let pt = prune_tables::instance();
 
@@ -89,7 +93,9 @@ impl SolverWrapper for StdSolver {
                 mt.ensure_edge6();
                 mt.ensure_corn2();
                 pt.ensure_pt_cross_c4c5e0e1();
-                pt.ensure_pt_cross_c4c6e0e2();
+                if !omit_diagonal {
+                    pt.ensure_pt_cross_c4c6e0e2();
+                }
             }
         }
     }

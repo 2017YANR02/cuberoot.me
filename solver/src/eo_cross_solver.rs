@@ -132,6 +132,37 @@ struct SlotState {
     i_c2_dg: u32,
 }
 
+/// A physical-slot coordinate in the current global EO frame. Its goal
+/// constraints are included in every deeper stage containing this slot, so its
+/// distance is a lower bound there too. Never use virtual-slot conjugation here.
+#[cfg(feature = "eo-multi-slot")]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct ExtraEoSlot {
+    slot: usize,
+    ep5: u32,
+    corner: u32,
+}
+
+#[cfg(feature = "eo-multi-slot")]
+impl ExtraEoSlot {
+    fn from_states<const N: usize>(states: &[SlotState], slots: [usize; N]) -> [Self; N] {
+        slots.map(|slot| Self {
+            slot,
+            ep5: states[slot].iep5_high_memory,
+            corner: states[slot].icorner_high_memory,
+        })
+    }
+
+    #[inline]
+    fn moved(self, m: usize, ep5_moves: &[u32], corner_moves: &[u32]) -> Self {
+        Self {
+            slot: self.slot,
+            ep5: ep5_moves[self.ep5 as usize * 18 + m],
+            corner: corner_moves[self.corner as usize * 18 + m],
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, Default)]
 struct ViewState {
     i1: u32,
@@ -247,8 +278,7 @@ impl EOXCrossSolver {
             ieo = mt_eo[(ieo as usize) * 18 + m_global];
             if let Some(mt_ep5) = mt_ep5 {
                 iep5_high_memory = mt_ep5[(iep5_high_memory as usize) * 18 + m_global];
-                icorner_high_memory =
-                    mt_c[(icorner_high_memory as usize) * 18 + m_global];
+                icorner_high_memory = mt_c[(icorner_high_memory as usize) * 18 + m_global];
             }
 
             for k in 0..3 {
@@ -339,8 +369,7 @@ impl EOXCrossSolver {
             .as_u32()[(ep5 as usize) * 18 + m];
         let next_corner = self.mt_corn.as_u32()[(corner as usize) * 18 + m];
         let next_eo = self.mt_eo12_alt.as_u32()[(eo as usize) * 18 + m];
-        let distance =
-            Self::high_memory_eo_distance(Some(table), next_ep5, next_corner, next_eo);
+        let distance = Self::high_memory_eo_distance(Some(table), next_ep5, next_corner, next_eo);
         (distance >= depth, next_ep5, next_corner, next_eo)
     }
 
@@ -351,6 +380,51 @@ impl EOXCrossSolver {
         self.pt_eo_xcross_high_memory
             .as_ref()
             .map(|tables| tables[slot].as_ref())
+    }
+
+    #[cfg(feature = "eo-multi-slot")]
+    fn extra_eo_distance<const N: usize>(&self, slots: [ExtraEoSlot; N], eo: u32) -> u32 {
+        slots
+            .into_iter()
+            .map(|state| {
+                Self::high_memory_eo_distance(
+                    self.high_memory_table(state.slot),
+                    state.ep5,
+                    state.corner,
+                    eo,
+                )
+            })
+            .max()
+            .unwrap_or(0)
+    }
+
+    #[cfg(feature = "eo-multi-slot")]
+    #[inline]
+    fn extra_eo_check<const N: usize>(
+        &self,
+        mut slots: [ExtraEoSlot; N],
+        next_eo: u32,
+        m: usize,
+        depth: u32,
+    ) -> (bool, [ExtraEoSlot; N]) {
+        let Some(ep5) = &self.mt_ep5_high_memory else {
+            return (false, slots);
+        };
+        let ep5_moves = ep5.as_u32();
+        let corner_moves = self.mt_corn.as_u32();
+        for state in &mut slots {
+            *state = state.moved(m, ep5_moves, corner_moves);
+            if Self::high_memory_eo_distance(
+                self.high_memory_table(state.slot),
+                state.ep5,
+                state.corner,
+                next_eo,
+            ) >= depth
+            {
+                return (true, slots);
+            }
+        }
+        (false, slots)
     }
 
     // --- search_1: XCross+EO single slot ---
@@ -394,15 +468,14 @@ impl EOXCrossSolver {
             if self.pt_ep4eo12.get(idx_de) as u32 >= depth {
                 continue;
             }
-            let (pr_high, n_high_ep5, n_high_corner, n_high_eo) = self
-                .high_memory_eo_check(
-                    p_high_memory,
-                    i_high_ep5,
-                    i_high_corner,
-                    i_high_eo,
-                    m,
-                    depth,
-                );
+            let (pr_high, n_high_ep5, n_high_corner, n_high_eo) = self.high_memory_eo_check(
+                p_high_memory,
+                i_high_ep5,
+                i_high_corner,
+                i_high_eo,
+                m,
+                depth,
+            );
             if pr_high {
                 continue;
             }
@@ -472,6 +545,7 @@ impl EOXCrossSolver {
         i_high_ep5: u32,
         i_high_corner: u32,
         i_high_eo: u32,
+        #[cfg(feature = "eo-multi-slot")] extra_eo: [ExtraEoSlot; 1],
     ) -> bool {
         if depth > bound {
             return false;
@@ -511,6 +585,12 @@ impl EOXCrossSolver {
                 depth,
             );
             if pr_high {
+                continue;
+            }
+            #[cfg(feature = "eo-multi-slot")]
+            let (pr_extra, next_extra_eo) = self.extra_eo_check(extra_eo, neo as u32, m, depth);
+            #[cfg(feature = "eo-multi-slot")]
+            if pr_extra {
                 continue;
             }
             // View A
@@ -581,6 +661,8 @@ impl EOXCrossSolver {
                 n_high_ep5,
                 n_high_corner,
                 n_high_eo,
+                #[cfg(feature = "eo-multi-slot")]
+                next_extra_eo,
             ) {
                 bump_node_count(local);
                 return true;
@@ -609,6 +691,7 @@ impl EOXCrossSolver {
         i_high_ep5: u32,
         i_high_corner: u32,
         i_high_eo: u32,
+        #[cfg(feature = "eo-multi-slot")] extra_eo: [ExtraEoSlot; 2],
     ) -> bool {
         if depth > bound {
             return false;
@@ -646,6 +729,12 @@ impl EOXCrossSolver {
                 depth,
             );
             if pr_high {
+                continue;
+            }
+            #[cfg(feature = "eo-multi-slot")]
+            let (pr_extra, next_extra_eo) = self.extra_eo_check(extra_eo, neo as u32, m, depth);
+            #[cfg(feature = "eo-multi-slot")]
+            if pr_extra {
                 continue;
             }
 
@@ -733,6 +822,8 @@ impl EOXCrossSolver {
                 n_high_ep5,
                 n_high_corner,
                 n_high_eo,
+                #[cfg(feature = "eo-multi-slot")]
+                next_extra_eo,
             ) {
                 bump_node_count(local);
                 return true;
@@ -761,6 +852,7 @@ impl EOXCrossSolver {
         i_high_ep5: u32,
         i_high_corner: u32,
         i_high_eo: u32,
+        #[cfg(feature = "eo-multi-slot")] extra_eo: [ExtraEoSlot; 3],
     ) -> bool {
         if depth > bound {
             return false;
@@ -798,6 +890,12 @@ impl EOXCrossSolver {
                 depth,
             );
             if pr_high {
+                continue;
+            }
+            #[cfg(feature = "eo-multi-slot")]
+            let (pr_extra, next_extra_eo) = self.extra_eo_check(extra_eo, neo as u32, m, depth);
+            #[cfg(feature = "eo-multi-slot")]
+            if pr_extra {
                 continue;
             }
 
@@ -875,6 +973,8 @@ impl EOXCrossSolver {
                 n_high_ep5,
                 n_high_corner,
                 n_high_eo,
+                #[cfg(feature = "eo-multi-slot")]
+                next_extra_eo,
             ) {
                 bump_node_count(local);
                 return true;
@@ -906,12 +1006,7 @@ impl EOXCrossSolver {
             let v_dg = get_diagonal_view(s1 as i32, s2 as i32);
             if v_dg != -1 {
                 let st_v = &st[v_dg as usize];
-                return (
-                    v_dg,
-                    Some(pt_dg),
-                    st_v.i_e6_dg,
-                    st_v.i_c2_dg,
-                );
+                return (v_dg, Some(pt_dg), st_v.i_e6_dg, st_v.i_c2_dg);
             }
         }
         (-1, None, 0, 0)
@@ -921,6 +1016,8 @@ impl EOXCrossSolver {
     /// [0..12] = XC, [12..24] = XXC, [24..36] = XXXC, [36..48] = XXXXC
     pub fn get_stats(&self, alg: &[u8]) -> Vec<u32> {
         let mut res = vec![99u32; 48];
+        #[cfg(feature = "eo-stage-profile")]
+        let mut stage_times = [std::time::Duration::ZERO; 4];
 
         for sym in 0..12 {
             // Precompute 4 slot states
@@ -929,6 +1026,8 @@ impl EOXCrossSolver {
                 .collect();
 
             // --- 1. XC + EO ---
+            #[cfg(feature = "eo-stage-profile")]
+            let stage_start = std::time::Instant::now();
             let mut tasks: Vec<(u32, usize)> = (0..4)
                 .map(|s| {
                     let idx_xc: u64 = (st[s].i1 as u64 + st[s].i2 as u64) * 24 + st[s].i3 as u64;
@@ -981,6 +1080,10 @@ impl EOXCrossSolver {
                 }
             }
             res[sym] = best;
+            #[cfg(feature = "eo-stage-profile")]
+            {
+                stage_times[0] += stage_start.elapsed();
+            }
 
             #[allow(unused_assignments)]
             let mut best_xx: u32 = 99;
@@ -989,6 +1092,8 @@ impl EOXCrossSolver {
 
             // --- 2. XXC + EO ---
             {
+                #[cfg(feature = "eo-stage-profile")]
+                let stage_start = std::time::Instant::now();
                 const PAIRS: [[usize; 2]; 6] = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]];
                 let mut tasks_xx: Vec<(u32, usize)> = Vec::with_capacity(6);
                 for (p, pair) in PAIRS.iter().enumerate() {
@@ -1027,6 +1132,10 @@ impl EOXCrossSolver {
                         .copied()
                         .max()
                         .unwrap();
+                    #[cfg(feature = "eo-multi-slot")]
+                    let h = h.max(
+                        self.extra_eo_distance(ExtraEoSlot::from_states(&st, [s2]), st[s1].ieo),
+                    );
                     tasks_xx.push((h, p));
                 }
                 tasks_xx.sort();
@@ -1081,6 +1190,8 @@ impl EOXCrossSolver {
                             st[s1].iep5_high_memory,
                             st[s1].icorner_high_memory,
                             st[s1].ieo,
+                            #[cfg(feature = "eo-multi-slot")]
+                            ExtraEoSlot::from_states(&st, [s2]),
                         ) {
                             best_xx = d;
                             break;
@@ -1088,10 +1199,16 @@ impl EOXCrossSolver {
                     }
                 }
                 res[12 + sym] = best_xx;
+                #[cfg(feature = "eo-stage-profile")]
+                {
+                    stage_times[1] += stage_start.elapsed();
+                }
             }
 
             // --- 3. XXXC + EO ---
             {
+                #[cfg(feature = "eo-stage-profile")]
+                let stage_start = std::time::Instant::now();
                 const TRIPS: [[usize; 3]; 4] = [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]];
                 let mut tasks_xxx: Vec<(u32, usize)> = Vec::with_capacity(4);
                 for (tr, trip) in TRIPS.iter().enumerate() {
@@ -1185,6 +1302,10 @@ impl EOXCrossSolver {
                         .copied()
                         .max()
                         .unwrap();
+                    #[cfg(feature = "eo-multi-slot")]
+                    let h = h.max(
+                        self.extra_eo_distance(ExtraEoSlot::from_states(&st, [s2, s3]), st[s1].ieo),
+                    );
                     tasks_xxx.push((h, tr));
                 }
                 tasks_xxx.sort();
@@ -1300,6 +1421,8 @@ impl EOXCrossSolver {
                             st[s1].iep5_high_memory,
                             st[s1].icorner_high_memory,
                             st[s1].ieo,
+                            #[cfg(feature = "eo-multi-slot")]
+                            ExtraEoSlot::from_states(&st, [s2, s3]),
                         ) {
                             best_xxx = d;
                             break;
@@ -1307,10 +1430,16 @@ impl EOXCrossSolver {
                     }
                 }
                 res[24 + sym] = best_xxx;
+                #[cfg(feature = "eo-stage-profile")]
+                {
+                    stage_times[2] += stage_start.elapsed();
+                }
             }
 
             // --- 4. XXXXC + EO(始终启用,对应 C++ ENABLE_EO_SEARCH_4)---
             {
+                #[cfg(feature = "eo-stage-profile")]
+                let stage_start = std::time::Instant::now();
                 let mut views: [ViewState; 4] = [ViewState::default(); 4];
                 for s in 0..4 {
                     views[s] = ViewState {
@@ -1361,6 +1490,10 @@ impl EOXCrossSolver {
                     .copied()
                     .max()
                     .unwrap();
+                #[cfg(feature = "eo-multi-slot")]
+                let h_max = h_max.max(
+                    self.extra_eo_distance(ExtraEoSlot::from_states(&st, [1, 2, 3]), st[0].ieo),
+                );
 
                 let mut best_xxxx = if (sym & 1) != 0 {
                     res[36 + sym - 1]
@@ -1389,6 +1522,8 @@ impl EOXCrossSolver {
                             st[0].iep5_high_memory,
                             st[0].icorner_high_memory,
                             st[0].ieo,
+                            #[cfg(feature = "eo-multi-slot")]
+                            ExtraEoSlot::from_states(&st, [1, 2, 3]),
                         ) {
                             best_xxxx = d;
                             break;
@@ -1396,8 +1531,24 @@ impl EOXCrossSolver {
                     }
                 }
                 res[36 + sym] = best_xxxx;
+                #[cfg(feature = "eo-stage-profile")]
+                {
+                    stage_times[3] += stage_start.elapsed();
+                }
             }
         }
+        // Worker-local durations overlap in a batch; these diagnose stage shares,
+        // while the analyzer's DONE wall time remains the throughput measurement.
+        #[cfg(feature = "eo-stage-profile")]
+        eprintln!(
+            "[EO_STAGE] moves={} nanos={},{},{},{} sym={}",
+            alg.iter().map(u8::to_string).collect::<Vec<_>>().join(","),
+            stage_times[0].as_nanos(),
+            stage_times[1].as_nanos(),
+            stage_times[2].as_nanos(),
+            stage_times[3].as_nanos(),
+            res.iter().map(u32::to_string).collect::<Vec<_>>().join(",")
+        );
         res
     }
 }
@@ -2947,6 +3098,66 @@ mod tests {
     use super::*;
     use crate::cube_common::{string_to_alg, test_env_lock};
     use std::path::PathBuf;
+
+    /// Exercise every physical slot and all twelve EO frames against full cubie
+    /// moves. This catches the virtual/global-frame mix-up without any PDB I/O.
+    #[cfg(feature = "eo-multi-slot")]
+    #[test]
+    fn multi_slot_eo_coordinates_match_full_cube() {
+        use crate::cube_common::{create_multi_move_table, State};
+        use crate::mt_gen::{create_mt_corn, create_mt_ep};
+
+        let basic: Vec<i32> = create_mt_ep().into_iter().map(|x| x as i32).collect();
+        let ep5_moves: Vec<u32> =
+            create_multi_move_table(5, 1, 12, state_space::EP5 as i32, &basic)
+                .into_iter()
+                .map(|x| x as u32)
+                .collect();
+        let corner_moves = create_mt_corn();
+        let project = |cube: &State, slot: usize| {
+            let (ep, _) = cube.ep_eo();
+            let (cp, co) = cube.cp_co();
+            let targets = [8, 9, 10, 11, slot as u8];
+            let positions =
+                targets.map(|piece| ep.iter().position(|&x| x == piece).unwrap() as i32);
+            let corner = cp.iter().position(|&x| x == slot as u8 + 4).unwrap();
+            ExtraEoSlot {
+                slot,
+                ep5: array_to_index(&positions, 5, 1, 12) as u32,
+                corner: corner as u32 * 3 + co[corner] as u32,
+            }
+        };
+
+        for sym in 0..12 {
+            let mut cube = State::SOLVED;
+            let initial: Vec<SlotState> = (0..4)
+                .map(|slot| {
+                    let p = project(&cube, slot);
+                    SlotState {
+                        iep5_high_memory: p.ep5,
+                        icorner_high_memory: p.corner,
+                        ..SlotState::default()
+                    }
+                })
+                .collect();
+            let mut slots = ExtraEoSlot::from_states(&initial, [3, 1, 2, 0]);
+            let mut seed = 0x243f6a88u32;
+            for step in 0..256 {
+                seed = seed.wrapping_mul(1664525).wrapping_add(1013904223);
+                let input_move = if step < 18 {
+                    step
+                } else {
+                    (seed >> 16) as usize % 18
+                };
+                let m = sym_moves_flat()[input_move][sym] as usize;
+                cube.apply(Move::from_index(m));
+                for slot in &mut slots {
+                    *slot = slot.moved(m, &ep5_moves, &corner_moves);
+                    assert_eq!(*slot, project(&cube, slot.slot), "frame={sym}, step={step}");
+                }
+            }
+        }
+    }
 
     /// Read existing tables only. Compare all 12 symmetry distances to the
     /// independent original IDA* path, and all checked-in EO Cross fixtures.
