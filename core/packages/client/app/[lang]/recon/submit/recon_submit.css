@@ -72,6 +72,24 @@
   min-height: 0;
 }
 
+.resize-divider.submit-pane-divider {
+  right: 0;
+}
+
+@media (min-width: 1024px) {
+  .submit-layout > .submit-player-pane {
+    flex: 0 0 clamp(240px, var(--submit-player-width, 37.5%), calc(100% - 320px));
+  }
+  .submit-layout > .submit-form-pane {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 1023px) {
+  .resize-divider.submit-pane-divider { display: none; }
+}
+
 /* 左栏：动画区(grow 吃掉超宽屏余量,让表单贴右沿不留死白;600px 为下限) */
 .submit-player-pane {
   flex: 1 1 600px;
@@ -1153,4 +1171,10 @@
   flex-direction: column;
   gap: 6px;
   margin-block: 8px;
+}
+
+.submit-block > .more-toggle.vkb-toggle {
+  align-self: flex-start;
+  margin-left: 0;
+  margin-right: auto;
 }

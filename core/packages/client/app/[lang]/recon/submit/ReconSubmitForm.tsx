@@ -1,6 +1,8 @@
 'use client';
 
 import PageHeading from '@/components/PageHeading';
+import { ResizeDivider } from '@app-foundation/navigation-ui/resize-divider';
+import '@app-foundation/navigation-ui/resize-divider.css';
 import { appendReconVideo, splitReconVideoGroups, normalizeReconVideoUrls } from '@/lib/recon-video-url';
 /**
  * /recon/submit — submit/edit a reconstruction.
@@ -389,6 +391,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     }
   }, [pruneReused, readOnly]);
 
+  const realScrambleLabel = {
+    wca: { zh: 'WCA 真实打乱', en: 'WCA real scramble' },
+    non_wca: { zh: '非 WCA 真实打乱', en: 'Non-WCA real scramble' },
+    practice: { zh: '真实打乱', en: 'Real scramble' },
+  }[form.official ?? 'wca'];
   const activeScrambleValue = scrambleField === 'wca'
     ? form.wcaScramble || ''
     : scrambleField === 'optimal'
@@ -1527,7 +1534,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const validateNotationFields = (solution = form.solution || '') => {
     const fields = [
       { field: 'solution', value: solution, label: { zh: '解法', en: 'Solution' } },
-      { field: 'scramble', value: form.wcaScramble || '', label: { zh: 'WCA 真实打乱', en: 'WCA real scramble' } },
+      { field: 'scramble', value: form.wcaScramble || '', label: realScrambleLabel },
       { field: 'scramble', value: form.optimalScramble || '', label: { zh: '最优打乱', en: 'Optimal scramble' } },
       { field: 'scramble', value: form.scramble || '', label: { zh: '打乱', en: 'Scramble' } },
     ];
@@ -1798,6 +1805,15 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       <div className="submit-layout">
         {!isMobile && (
           <div className="submit-player-pane">
+            <ResizeDivider className="submit-pane-divider" label={tr({ zh: '拖动调整面板宽度', en: 'Drag to resize panel' })}
+              getSize={element => element.parentElement?.getBoundingClientRect().width ?? 0}
+              onResize={(element, requested) => {
+                const layout = element.closest<HTMLElement>('.submit-layout');
+                if (!layout) return;
+                const width = Math.max(240, Math.min(requested, layout.clientWidth - 320));
+                layout.style.setProperty('--submit-player-width', `${width / layout.clientWidth * 100}%`);
+                return width;
+              }} />
             {renderReconPlayer()}
           </div>
         )}
@@ -1939,7 +1955,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   </>
                 )}
                 <label className={`submit-field submit-field-fit submit-field--select${reusedCls('official')}`}>
-                  <span className="submit-label">WCA</span>
+                  <span className="submit-label">{tr({ zh: '类型', en: 'Type' })}</span>
                   <select className="submit-field-select" value={form.official ?? 'wca'} onChange={e => {
                     const next = e.target.value as ReconOfficial;
                     setField('official', next);
@@ -2281,7 +2297,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     setScrambleField(e.target.value as ScrambleField);
                   }}
                 >
-                  <option value="wca">{t('recon.wcaScramble')}</option>
+                  <option value="wca">{tr(realScrambleLabel)}</option>
                   <option value="optimal">{t('recon.optimalScramble')}</option>
                   <option value="generic">{t('recon.scramble')}</option>
                 </select>
@@ -2437,7 +2453,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   onBlurField={() => setActiveVkbField(f => f === 'solution' ? null : f)}
                 />
               )}
-              <span className="submit-hint">{tr({ zh: '仅记录起拍表时，解法可留空。', en: 'Leave the solution blank to record only pickup and putdown durations.' })}</span>
               {renderSubmitError('solution')}
             </div>
 
@@ -2447,7 +2462,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   <span className="submit-label">{field === 'pickupTime' ? tr({ zh: '起表（秒）', en: 'Pickup (seconds)' }) : tr({ zh: '拍表（秒）', en: 'Putdown (seconds)' })}</span>
                   <input className="submit-field-input" type="number" inputMode="decimal" min="0" max="359999.999" step="0.001"
                     value={form[field] ?? ''} onChange={e => setField(field, e.target.value === '' ? null : Number(e.target.value))} />
-                  <span className="submit-hint">{field === 'pickupTime' ? tr({ zh: '起表到第一步', en: 'Timer start to first move' }) : tr({ zh: '最后一步到拍表', en: 'Last move to timer stop' })}</span>
+                  <span className="submit-hint">{field === 'pickupTime' ? tr({ zh: '起表到第一步刚刚开始做', en: 'Timer start to the start of the first move' }) : tr({ zh: '最后一步完全做完到拍表', en: 'Completion of the last move to timer stop' })}</span>
                 </label>
               ))}
             </div>
@@ -2502,7 +2517,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                           : tr({ zh: '上传视频', en: 'Upload video' })}
                       </button>
                       <span className="submit-hint">
-                        {tr({ zh: '会员专享，MP4 / WebM / MOV，最大 200MB', en: 'Members only, MP4 / WebM / MOV, up to 200MB' })}
+                        {tr({ zh: '会员专享，最大 200MB', en: 'Members only, up to 200MB' })}
                       </span>
                     </div>
                   <span className="submit-hint">
@@ -2510,9 +2525,15 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   </span>
                   {splitReconVideoGroups(form.videoUrl || '').map((group, index, groups) => (
                     <div key={index} className="submit-video-group">
-                    <label className="submit-label" htmlFor={index === 0 ? 'recon-video-urls' : 'recon-video-urls-' + index}>
-                      {tr({ zh: '视频', en: 'Video' })} {index + 1}
-                    </label>
+                    <div className="submit-video-upload">
+                      <label className="submit-label" htmlFor={index === 0 ? 'recon-video-urls' : 'recon-video-urls-' + index}>
+                        {tr({ zh: '视频', en: 'Video' })} {index + 1}
+                      </label>
+                      {group && <ClearButton variant="standalone" onClick={() => setField('videoUrl', groups.map((value, i) => i === index ? '' : value).join('\n\n'))} />}
+                      {groups.length > 1 && <ClearButton variant="standalone"
+                        ariaLabel={tr({ zh: `移除视频 ${index + 1}`, en: `Remove video ${index + 1}` })}
+                        onClick={() => setField('videoUrl', groups.filter((_, i) => i !== index).join('\n\n'))} />}
+                    </div>
                       <textarea
                         id={index === 0 ? 'recon-video-urls' : 'recon-video-urls-' + index}
                         className="submit-field-textarea"
@@ -2545,18 +2566,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                         }}
                         rows={2}
                       />
-                    <div className="submit-video-upload">
-                      {group && <ClearButton variant="standalone" onClick={() => setField('videoUrl', groups.map((value, i) => i === index ? '' : value).join('\n\n'))} />}
-                      {groups.length > 1 && <button type="button" className="submit-reuse-btn"
-                        onClick={() => setField('videoUrl', groups.filter((_, i) => i !== index).join('\n\n'))}>
-                        {tr({ zh: '移除视频', en: 'Remove video' })} {index + 1}
-                      </button>}
-                    </div>
                     </div>
                   ))}
                   <button type="button" className="submit-reuse-btn"
-                    disabled={!splitReconVideoGroups(form.videoUrl || '').every(group => group.trim())}
-                    onClick={() => setField('videoUrl', (form.videoUrl || '').trimEnd() + '\n\n')}>
+                    onClick={() => setField('videoUrl', (form.videoUrl || '') + '\n\n')}>
                     {tr({ zh: '添加视频', en: 'Add video' })}
                   </button>
                   {videoUploadError && <span className="submit-hint submit-hint-warn">{videoUploadError}</span>}
