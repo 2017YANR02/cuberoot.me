@@ -80,6 +80,14 @@
 .cube-photo-color.is-uncertain { outline: 2px solid var(--signal-warning); border-radius: 5px; }
 .cube-photo-color.is-corrected { outline: 1px solid var(--accent); border-radius: 5px; }
 .cube-photo-retry { display: inline-flex; align-items: center; gap: 6px; padding: 8px 0; border: 0; background: transparent; color: var(--accent); cursor: pointer; }
+.puzzle-photo-colors { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.puzzle-photo-matches { margin-top: 24px; }
+.cube-photo-workspace.puzzle-photo-workspace.has-photo .cube-photo-stage { width: 100%; min-width: 0; height: auto; aspect-ratio: 1; }
+.puzzle-photo-workspace .cube-photo-stage > svg { position: absolute; inset: 0; }
+.puzzle-photo-cell polygon { stroke: var(--accent); }
+.puzzle-photo-cell text { fill: var(--foreground); stroke: var(--background); }
+.puzzle-photo-direction { fill: var(--foreground); stroke: var(--background); stroke-width: 3px; paint-order: stroke; }
+.puzzle-photo-corner { fill: var(--background); stroke: var(--accent); }
 @media (max-width: 800px) {
   .cube-photo-workspace.has-photo { grid-template-columns: 1fr; gap: 22px; }
   .cube-photo-workspace.has-photo .cube-photo-stage { height: clamp(260px, 52vh, 440px); }

@@ -2,11 +2,11 @@ import type { AlgFile } from '@cuberoot/shared/alg';
 import type { PhotoAlgSet } from '@cuberoot/shared/cube-photo/lookup';
 
 /** Short-lived page cache. Expiry uses the normal ETag-revalidating loader. */
-export class PhotoCatalogCache {
-  private entries = new Map<PhotoAlgSet, { promise: Promise<AlgFile>; expires: number }>();
-  constructor(private fetch: (set: PhotoAlgSet, fresh: boolean) => Promise<AlgFile>, private now = Date.now) {}
+export class PhotoCatalogCache<Set extends string = PhotoAlgSet> {
+  private entries = new Map<Set, { promise: Promise<AlgFile>; expires: number }>();
+  constructor(private fetch: (set: Set, fresh: boolean) => Promise<AlgFile>, private now = Date.now) {}
 
-  load(set: PhotoAlgSet, fresh = false): Promise<AlgFile> {
+  load(set: Set, fresh = false): Promise<AlgFile> {
     const existing = this.entries.get(set);
     if (!fresh && existing && existing.expires > this.now()) return existing.promise;
     const entry: { promise: Promise<AlgFile>; expires: number } = {

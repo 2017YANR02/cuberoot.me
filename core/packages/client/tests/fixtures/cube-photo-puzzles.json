@@ -1,0 +1,270 @@
+[
+  {
+    "scrapedAt": "2026-05-03T16:53:14.529Z",
+    "source": "https://speedcubedb.com/a/skewb/SarahsAdvanced",
+    "puzzle": "skewb",
+    "set": "sarahs-advanced",
+    "cases": [
+      {
+        "id": 5634,
+        "name": "1a",
+        "subgroup": "Pi + Swirl Perm",
+        "setup": "U' R' U z' R' R U' R B R' U' x' y'",
+        "sticker": {
+          "tag": "",
+          "kind": "raw",
+          "attrs": {}
+        },
+        "algs": [
+          [
+            {
+              "alg": "y x R b' r' R' r z B' r B",
+              "altId": "26882"
+            },
+            {
+              "alg": "R r' z' r' z r' R r' R r",
+              "altId": "26884"
+            },
+            {
+              "alg": "H z S z' H z H",
+              "altId": "26748"
+            },
+            {
+              "alg": "H z H z' S z H",
+              "altId": "26879"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5635,
+        "name": "1b",
+        "subgroup": "Pi + Swirl Perm",
+        "setup": "U R U' R U' R' R' U' U' R x' y2'",
+        "sticker": {
+          "tag": "",
+          "kind": "raw",
+          "attrs": {}
+        },
+        "algs": [
+          [
+            {
+              "alg": "y2 x r' B R r R' B r' B'",
+              "altId": "26886"
+            },
+            {
+              "alg": "x r' R r R r' R' r z' r' R r R' B'",
+              "altId": "26887"
+            },
+            {
+              "alg": "z' S z' S z S z' H",
+              "altId": "26885"
+            },
+            {
+              "alg": "y x r' R r R z2 r' R r R' z' R r' R' r'",
+              "altId": "26888"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "scrapedAt": "2026-08-07T20:15:28.778Z",
+    "source": "https://speedcubedb.com/a/pyraminx/L3E; https://cubingapp.com/algorithms/Pyraminx-Last-Layer; https://github.com/spencerchubb/cubingapp/commit/613a49885dc618023368e5f0c2a25024b8c7e9a5",
+    "puzzle": "pyraminx",
+    "set": "l3e",
+    "cases": [
+      {
+        "id": 5592,
+        "name": "Sune",
+        "subgroup": "",
+        "setup": "L' U' L U' L' U' L",
+        "sticker": {
+          "tag": "pcube",
+          "kind": "raw",
+          "attrs": {
+            "data-alg": "L' U' L U' L' U' L",
+            "data-width": "75",
+            "data-height": "75",
+            "data-display": "Pyra"
+          }
+        },
+        "algs": [
+          [
+            {
+              "alg": "R U R' U R U R'",
+              "altId": "26413"
+            },
+            {
+              "alg": "L U L' U L U L'",
+              "altId": "26412"
+            },
+            {
+              "alg": "R' U R U R' U R",
+              "altId": "26414"
+            },
+            {
+              "alg": "L' U L U L' U L",
+              "altId": "26411"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "scrapedAt": "2026-08-07T20:15:28.778Z",
+    "source": "https://speedcubedb.com/a/pyraminx/L4E; https://cubingapp.com/algorithms/Pyraminx-L4E; https://github.com/spencerchubb/cubingapp/commit/613a49885dc618023368e5f0c2a25024b8c7e9a5",
+    "puzzle": "pyraminx",
+    "set": "l4e",
+    "cases": [
+      {
+        "id": 5597,
+        "name": "Sune",
+        "subgroup": "Last Layer",
+        "setup": "L' U' L U' L' U' L",
+        "sticker": {
+          "tag": "pcube",
+          "kind": "raw",
+          "attrs": {
+            "data-alg": "L' U' L U' L' U' L",
+            "data-width": "75",
+            "data-height": "75",
+            "data-display": "Pyra"
+          }
+        },
+        "algs": [
+          [
+            {
+              "alg": "R U R' U R U R'",
+              "altId": "26425"
+            },
+            {
+              "alg": "L U L' U L U L'",
+              "altId": "26424"
+            },
+            {
+              "alg": "L' U L U L' U L",
+              "altId": "26423"
+            },
+            {
+              "alg": "R' U R U R' U R",
+              "altId": "26426"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 5605,
+        "name": "Righty",
+        "subgroup": "L3E",
+        "setup": "U' R U R'",
+        "sticker": {
+          "tag": "pcube",
+          "kind": "raw",
+          "attrs": {
+            "data-alg": "U' R U R'",
+            "data-width": "75",
+            "data-height": "75",
+            "data-display": "Pyra"
+          }
+        },
+        "algs": [
+          [
+            {
+              "alg": "R U' R'",
+              "altId": "26447"
+            }
+          ],
+          [
+            {
+              "alg": "L U' L'",
+              "altId": "26571"
+            }
+          ],
+          []
+        ],
+        "oriNames": [
+          "Front Slot",
+          "Left Slot ML4E",
+          "Right Slot ML4E"
+        ]
+      }
+    ]
+  },
+  {
+    "scrapedAt": "2026-08-17T12:24:14.989Z",
+    "source": "https://docs.google.com/spreadsheets/d/1VQNYNwdOLqqBkacHcfYtEBst22FOVhH9EAhTOYOZTgo/edit",
+    "puzzle": "sq1",
+    "set": "pbl",
+    "cases": [
+      {
+        "id": 8522,
+        "name": "-/Aa",
+        "subgroup": "nP/-",
+        "setup": "",
+        "sticker": {
+          "tag": "sq1-pbl",
+          "kind": "raw",
+          "attrs": {
+            "top": "-",
+            "used": "true",
+            "bottom": "Aa",
+            "bucket": "7",
+            "slices": "7",
+            "frequency": "4",
+            "shapePair": "nP/nP",
+            "recommended": "true"
+          }
+        },
+        "algs": [
+          [
+            {
+              "alg": "(1, -3) / (-4, 5) / (4, -2) / (0, -3) / (3, 0) / (2, 5) / (1, -2) / (5, 0)",
+              "note": {
+                "en": "Source mnemonic: 10 d F B' T u' -10\nbJJ 02 bJj 01",
+                "zh": "原表助记：10 d F B' T u' -10\nbJJ 02 bJj 01"
+              }
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "scrapedAt": "2026-05-03T16:52:59.002Z",
+    "source": "https://speedcubedb.com/a/sq1/SQ1Parity",
+    "puzzle": "sq1",
+    "set": "parity",
+    "cases": [
+      {
+        "id": 6006,
+        "name": "Adj Parity",
+        "subgroup": "",
+        "setup": "0,-3 / 0,3 / 1,-4 / 0,-2 / 0,2 / -4,0 / 2,0 / 0,-2 / -2,0 / 0,-3 / 0,3 / 0,-3 / 3,0 /",
+        "sticker": {
+          "tag": "sqcube",
+          "kind": "raw",
+          "attrs": {
+            "data-b": "ecececec",
+            "data-t": "CECECECE",
+            "data-br": "rrgggooobbbr",
+            "data-tr": "OGRGRGRBBBOO",
+            "data-width": "75",
+            "data-height": "75",
+            "data-display": "1"
+          }
+        },
+        "algs": [
+          [
+            {
+              "alg": "/ -3,0 / 0,3 / 0,-3 / 0,3 / 2,0 / 0,2 / -2,0 / 4,0 / 0,-2 / 0,2 / -1,4 / 0,-3 / 0,3",
+              "altId": "10948"
+            }
+          ]
+        ]
+      }
+    ]
+  }
+]

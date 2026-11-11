@@ -7,7 +7,8 @@ import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
 import { COLOR_RGB, type CubeColor } from '@cuberoot/shared/cube-photo/recognize';
 import { getAlgSetMeta } from '@cuberoot/shared/alg';
-import { FOUR_PHOTO_ALG_SETS, PHOTO_ALG_SETS, POCKET_PHOTO_ALG_SETS, type PhotoAlgMatch, type PhotoAlgResult, type PhotoAlgSet } from '@cuberoot/shared/cube-photo/lookup';
+import { FOUR_PHOTO_ALG_SETS, POCKET_PHOTO_ALG_SETS } from '@cuberoot/shared/cube-photo/lookup';
+import type { PhotoCardMatch, PhotoCardResult } from '@/lib/cube-photo/card-types';
 import './cube-photo.css';
 
 export function Swatch({ color }: { color: CubeColor }) {
@@ -16,19 +17,19 @@ export function Swatch({ color }: { color: CubeColor }) {
   return <svg width="17" height="17" viewBox="0 0 17 17" aria-hidden="true"><rect width="17" height="17" rx="3" fill={`rgb(${r},${g},${b})`} /></svg>;
 }
 
-function alternativesKey(stateKey: string | undefined, match: PhotoAlgMatch | undefined): string {
+function alternativesKey(stateKey: string | undefined, match: PhotoCardMatch | undefined): string {
   return stateKey && match?.body ? JSON.stringify([stateKey, match.set, match.caseId ?? match.caseName, match.alg]) : '';
 }
 
 export default function PhotoAlgorithmCards({ stateKey, sets, results, error = false }: {
-  stateKey?: string; sets: PhotoAlgSet[]; results: Partial<Record<PhotoAlgSet, PhotoAlgResult>>; error?: boolean;
+  stateKey?: string; sets: readonly string[]; results: Partial<Record<string, PhotoCardResult>>; error?: boolean;
 }) {
   const { copiedKey, copy } = useCopy();
   const id = useId();
   const [expanded, setExpanded] = useState<string | null>(null);
 
   return sets.length > 0 && <div className="cube-photo-formulas">
-      {[...FOUR_PHOTO_ALG_SETS, ...PHOTO_ALG_SETS, ...POCKET_PHOTO_ALG_SETS].filter(set => sets.includes(set)).map(set => {
+      {sets.map(set => {
         const result = results[set], match = result?.match;
         const meta = getAlgSetMeta(match?.puzzle ?? (FOUR_PHOTO_ALG_SETS.some(slug => slug === set) ? '4x4' : POCKET_PHOTO_ALG_SETS.some(slug => slug === set) ? '2x2' : '3x3'), set);
         const label = meta?.short ?? (meta ? tr(meta) : set.toUpperCase());
