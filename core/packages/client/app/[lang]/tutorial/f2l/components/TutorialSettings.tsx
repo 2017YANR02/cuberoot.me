@@ -11,11 +11,13 @@ import { tr, T } from '@/i18n/tr';
 const COLORS = Object.keys(CUBE_COLOR_NAMES) as CubeFace[];
 const COLOR_CHOICES = CUBE_ORIENTATIONS.map(option => ({ ...option, colors: orientedFaceColors(option.value) }));
 
-export default function TutorialSettings({ orientation, pauseBetween, onOrientationChange, onPauseBetweenChange }: {
+export default function TutorialSettings({ orientation, pauseBetween, flowTeaching, onOrientationChange, onPauseBetweenChange, onFlowTeachingChange }: {
   orientation: string;
   pauseBetween: boolean;
+  flowTeaching: boolean;
   onOrientationChange: (orientation: string) => void;
   onPauseBetweenChange: (pause: boolean) => void;
+  onFlowTeachingChange: (enabled: boolean) => void;
 }) {
   const selectedColors = orientedFaceColors(orientation);
   const bottom = selectedColors.D;
@@ -53,6 +55,9 @@ export default function TutorialSettings({ orientation, pauseBetween, onOrientat
       </div>
       <div className="f2l-playback-setting">
         <BoolToggle value={pauseBetween} onChange={onPauseBetweenChange} label={tr({ zh: '分段停顿', en: 'Pause between sections' })} />
+      </div>
+      <div className="f2l-playback-setting">
+        <BoolToggle value={flowTeaching} onChange={onFlowTeachingChange} label={tr({ zh: '流程图教学', en: 'Flowchart teaching' })} />
       </div>
     </div>
   </SettingsPopover>;

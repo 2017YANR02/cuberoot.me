@@ -38,6 +38,10 @@
   .f2l-flow-edge.is-moving .f2l-flow-pulse, .f2l-flow-node.is-receiving { animation: none; }
   .f2l-flow-pulse, .f2l-flow-node, .f2l-flow-edge .f2l-flow-progress, .f2l-flow-edge .f2l-flow-glow { transition: none; }
 }
+@media (min-width: 701px) {
+  .f2l-flow-layout { align-items: center; }
+  .f2l-flow-layout > .f2l-flow-player { padding-top: 0; }
+}
 @media (max-width: 700px) {
   .f2l-flow-layout { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .f2l-flow-player { padding-top: 0; }

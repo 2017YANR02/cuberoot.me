@@ -18,6 +18,9 @@ export interface NonstandardIntroScene {
   moveGap?: number;
   moveDuration?: number;
   showBottom?: boolean;
+  bottomTilt?: number;
+  revealLeft?: boolean;
+  flashPair?: boolean;
   /** The preceding shot ends at this shot's setup and camera angle. */
   continuePrevious?: boolean;
   beats?: readonly {
@@ -66,6 +69,7 @@ export function nonstandardIntroScenes(edgeSetup: string, cornerSetup: string, o
     {
       caption: { zh: '选定要复原的一组棱角', en: 'Choose an edge and corner to solve together' },
       setup: topSetup, alg: '', duration: 12000, highlight: pair,
+      flashPair: true,
       continuePrevious: true,
       beats: [
         { at: 0, caption: { zh: '要选定一个待复原的角块', en: 'Choose a corner to solve' },
@@ -79,11 +83,13 @@ export function nonstandardIntroScenes(edgeSetup: string, cornerSetup: string, o
     {
       caption: { zh: '目标角块和棱块需要到达的位置叫目标槽', en: 'The positions where this corner and edge belong form their target slot' },
       setup: topSetup, alg: "R U' R'", duration: 14000, highlight: pair,
+      continuePrevious: true,
       moveStart: 3500, moveGap: 300, moveDuration: 950,
       beats: [
         { at: 0, caption: { zh: '这组棱角最终要去哪里？', en: 'Where does this pair belong?' }, highlight: pair },
         { at: 3500, caption: { zh: '看看它们复原后的位置', en: 'Watch where the pieces go as we solve them' }, highlight: pair },
         { at: 7500, caption: { zh: '就是这组棱角的目标槽', en: 'This is the pair’s target slot' },
+          label: { zh: '目标槽', en: 'Target slot' },
           highlight: pair, pulse: true },
       ],
     },
@@ -94,16 +100,19 @@ export function nonstandardIntroScenes(edgeSetup: string, cornerSetup: string, o
       highlight: pair,
       beats: [
         { at: 0, caption: targetSlotCaption,
+          label: { zh: '目标槽', en: 'Target slot' },
           highlight: pair, pulse: true },
-        { at: 900, caption: targetSlotCaption,
+        { at: 600, caption: targetSlotCaption,
           highlight: [] },
         { at: 1300, caption: targetSlotCaption,
+          label: { zh: '目标槽', en: 'Target slot' },
           highlight: stickersAt(topSetup, pair), pulse: true },
       ],
     },
     {
       caption: { zh: '如果这两个块都在顶层或它们自己的目标槽内，称为标态', en: 'If both pieces are in the top layer or their own target slot, it is a standard case' },
       setup: topSetup, alg: '', duration: 6000, highlight: stickersAt(topSetup, topAndSlot), hidePair: true,
+      continuePrevious: true, moveDuration: 950,
     },
     {
       caption: { zh: '它们可以都在顶层', en: 'They can both be in the top layer' },
@@ -120,10 +129,12 @@ export function nonstandardIntroScenes(edgeSetup: string, cornerSetup: string, o
     {
       caption: { zh: '如果其中任何一个块位于其他槽内，就是“非标”', en: 'If either piece is in another slot, the case is non-standard' },
       setup: edgeSetup, alg: '', duration: 6000, highlight: edge, result: 'nonstandard',
+      revealLeft: true,
     },
     {
       caption: { zh: '如果其中任何一个块位于其他槽内，就是“非标”', en: 'If either piece is in another slot, the case is non-standard' },
       setup: cornerSetup, alg: '', duration: 6000, highlight: corner, result: 'nonstandard',
+      showBottom: true, bottomTilt: 1,
     },
   ];
 }

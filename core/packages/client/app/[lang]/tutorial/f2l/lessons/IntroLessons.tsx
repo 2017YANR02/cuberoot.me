@@ -9,6 +9,8 @@ import { ORDERED_BASIC_CASES } from '../data/basic-cases';
 import { F2L_INTRO_ALG, LBL_INTRO_ALG, lblIntroStickering, f2lDiagramFacelets, f2lIntroStickering } from '../lib/cube-preview';
 // import { f2lGoalDiagrams } from '../lib/cube-preview';
 import StudyActions from '../components/StudyActions';
+import SectionNavigation from '../components/SectionNavigation';
+import FirstTwoLayersIntro from './FirstTwoLayersIntro';
 
 function IntroComparison({ orientation, onContinue }: { orientation: string; onContinue: () => void }) {
   const [playRequest, setPlayRequest] = useState(0);
@@ -37,13 +39,18 @@ function IntroComparison({ orientation, onContinue }: { orientation: string; onC
 export default function IntroLessons({ stepId, orientation, onNextChapter }: {
   stepId: 'lesson-1' | 'lesson-2'; orientation: string; onNextChapter: () => void;
 }) {
+  const [section, setSection] = useState<'comparison' | 'lbl' | 'f2l'>('lbl');
   const chapterCases = ORDERED_BASIC_CASES;
   const diagrams = useMemo(() => chapterCases.map(item => f2lDiagramFacelets(new Alg(item.alg).invert().expand().toString(), orientation)), [orientation, chapterCases]);
   // const goalDiagrams = useMemo(() => f2lGoalDiagrams(orientation), [orientation]);
   return <>{stepId === 'lesson-1' && <div className="f2l-study-layout">
-        <aside className="f2l-section-nav">
-          <div className="f2l-section-list"><p className="f2l-section-label" aria-current="true"><T zh="F2L与层先法的区别" en="F2L vs. layer-by-layer" /></p></div>
-        </aside>
+        <SectionNavigation label={tr(section === 'comparison' ? { zh: 'F2L与层先法的区别', en: 'F2L vs. layer-by-layer' } : section === 'lbl' ? { zh: '层先法的前两层', en: 'The first two layers with LBL' } : { zh: 'F2L', en: 'F2L' })}>
+          <div className="f2l-section-list">
+            <button type="button" className="f2l-section-button" aria-pressed={section === 'comparison'} onClick={() => setSection('comparison')}><T zh="F2L与层先法的区别" en="F2L vs. layer-by-layer" /></button>
+            <button type="button" className="f2l-section-button" aria-pressed={section === 'lbl'} onClick={() => setSection('lbl')}><T zh="层先法的前两层" en="The first two layers with LBL" /></button>
+            <button type="button" className="f2l-section-button" aria-pressed={section === 'f2l'} onClick={() => setSection('f2l')}>F2L</button>
+          </div>
+        </SectionNavigation>
         <div className="f2l-study-main">
         {/* {goalDiagrams && <figure className="f2l-goal">
           <div className="f2l-goal-diagrams">
@@ -75,14 +82,22 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
 
         </figure>} */}
 
-        <IntroComparison orientation={orientation} onContinue={onNextChapter} />
+        {section === 'comparison' && <IntroComparison orientation={orientation} onContinue={() => setSection('lbl')} />}
+        {section === 'lbl' && <>
+          <FirstTwoLayersIntro key={`lbl-${orientation}`} orientation={orientation} method="lbl" />
+          <StudyActions onPrevious={() => setSection('comparison')} onContinue={() => setSection('f2l')} />
+        </>}
+        {section === 'f2l' && <>
+          <FirstTwoLayersIntro key={`f2l-${orientation}`} orientation={orientation} method="f2l" />
+          <StudyActions onPrevious={() => setSection('lbl')} onContinue={onNextChapter} />
+        </>}
         </div>
       </div>}
 
       {stepId === 'lesson-2' && <div className="f2l-study-layout">
-        <aside className="f2l-section-nav">
+        <SectionNavigation label={tr({ zh: '认识四种三步标态', en: 'Meet the four three-move cases' })}>
           <div className="f2l-section-list"><p className="f2l-section-label" aria-current="true"><T zh="认识四种三步标态" en="Meet the four three-move cases" /></p></div>
-        </aside>
+        </SectionNavigation>
         <div className="f2l-study-main">
 
         <div className="f2l-recognition">

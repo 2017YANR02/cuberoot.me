@@ -11,7 +11,7 @@ import algSnapshot from '../data/alg-snapshot.json';
 export { f2lGroupName } from '@/lib/f2l-group-name';
 
 // Formula edits belong in alg-snapshot.json; optional chapter choices stay local too.
-export const F2L_TEACHING_OVERRIDES: Record<string, { chapter?: 6 | 7 }> = {};
+export const F2L_TEACHING_OVERRIDES: Record<string, { chapter?: 4 | 5 }> = {};
 
 export function f2lCatalogCases() {
   const file = algSnapshot;
@@ -198,24 +198,24 @@ export function f2lTeachingPaths(cases: CatalogCase[]) {
         if (name && name !== c.name) points.push({ step, name });
       }
       const basic = points.find(point => point.step === moves.length - 3 && basics.has(point.name));
-      return { ...c, moves, points, basic, chapter: basic ? 6 : null };
+      return { ...c, moves, points, basic, chapter: basic ? 4 : null };
     });
     const verified = new Set(result.filter(c => c.basic).map(c => c.name));
-    const easy = new Set(result.filter(c => c.basic && (F2L_TEACHING_OVERRIDES[c.name]?.chapter === 6
-      || (F2L_TEACHING_OVERRIDES[c.name]?.chapter !== 7 && !c.points.some(point =>
+    const easy = new Set(result.filter(c => c.basic && (F2L_TEACHING_OVERRIDES[c.name]?.chapter === 4
+      || (F2L_TEACHING_OVERRIDES[c.name]?.chapter !== 5 && !c.points.some(point =>
         point.step < c.basic!.step && verified.has(point.name))))).map(c => c.name));
     return result.map(c => {
       const intermediate = c.points.find(point => easy.has(point.name));
       // Prefer a meaningful intermediate standard case before reaching the basic case.
       const override = F2L_TEACHING_OVERRIDES[c.name]?.chapter;
       const hasIntermediate = !!(intermediate && c.basic && intermediate.step < c.basic.step);
-      const chapter: 6 | 7 | null = c.basic
-        ? override === 7 ? (hasIntermediate ? 7 : null)
-          : override === 6 ? 6 : hasIntermediate ? 7 : 6
+      const chapter: 4 | 5 | null = c.basic
+        ? override === 5 ? (hasIntermediate ? 5 : null)
+          : override === 4 ? 4 : hasIntermediate ? 5 : 4
         : null;
-      const boundaries = [chapter === 7 ? intermediate?.step : undefined, c.basic?.step].filter((s): s is number => s !== undefined);
+      const boundaries = [chapter === 5 ? intermediate?.step : undefined, c.basic?.step].filter((s): s is number => s !== undefined);
       const segments = boundaries.concat(c.moves.length).map((end, i) => `(${c.moves.slice(i ? boundaries[i - 1] : 0, end).join(' ')})`).join(' ');
-      return { ...c, chapter, alg: segments, sections: f2lPlaybackSections(segments), chain: [c.name, ...(chapter === 7 && intermediate ? [intermediate.name] : []), ...(c.basic ? [c.basic.name] : [])] };
+      return { ...c, chapter, alg: segments, sections: f2lPlaybackSections(segments), chain: [c.name, ...(chapter === 5 && intermediate ? [intermediate.name] : []), ...(c.basic ? [c.basic.name] : [])] };
     });
   } finally { cube.dispose(); }
 }

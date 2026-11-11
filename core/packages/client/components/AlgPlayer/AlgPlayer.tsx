@@ -30,7 +30,7 @@ export interface AlgPlayerHandle {
   playMove?: (index: number) => void;
   /** Move only the embedded simulator view, without turning any puzzle layers. */
   orbitView?: (dx: number, dy: number) => void;
-  resetView?: () => void;
+  resetView?: (durationMs?: number) => void | Promise<void>;
   /** Manual NxN practice input, available with turn interaction and no playback controls. */
   applyUserMove?: (move: string) => boolean;
   isUserMovePending?: (includeHands?: boolean) => boolean;

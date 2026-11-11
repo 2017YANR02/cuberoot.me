@@ -1,0 +1,6 @@
+.f2l-lbl-intro .f2l-practice-segments { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+/* The corner painter observes class changes, but not data-complete. */
+.f2l-lbl-intro .f2l-practice-segment > span.is-complete { color: var(--accent); background: var(--accent-soft); }
+/* The three shots run continuously; transport offers pause and replay only. */
+.f2l-lbl-intro > .playback-bar .playback-bar-scrub { display: none; }
+.f2l-lbl-intro .f2l-concept-caption { min-height: 180px; display: flex; flex-direction: column; justify-content: center; }

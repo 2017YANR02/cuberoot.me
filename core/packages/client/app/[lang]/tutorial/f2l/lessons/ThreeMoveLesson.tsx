@@ -11,6 +11,7 @@ import { THREE_MOVE_PARTS } from '../data/three-move-lesson';
 import { f2lDiagramFacelets, f2lPlaybackSections } from '../lib/cube-preview';
 import { isF2lPracticeSolved } from '../lib/algorithm-practice';
 import StudyActions from '../components/StudyActions';
+import SectionNavigation from '../components/SectionNavigation';
 import './three-move-lesson.css';
 
 type BasicCase = typeof ORDERED_BASIC_CASES[number];
@@ -128,14 +129,14 @@ export default function ThreeMoveLesson({ orientation, pauseBetween, caseId, onC
     }
   };
   return <div className="f2l-study-layout f2l-merged-lesson">
-    <aside className="f2l-section-nav">
+    <SectionNavigation label={lesson.name}>
       <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择三步标态', en: 'Choose a three-move case' })}>
         {ORDERED_BASIC_CASES.map((item, index) => <button type="button" className="f2l-section-button" key={item.id}
           aria-pressed={item.id === lesson.id} onClick={() => onCaseChange(item.id)}>
           <span className="f2l-section-label"><VisualCube local view="iso" size={48} faceletColors={diagrams[index]} alt="" /><span>{item.name}</span></span>
         </button>)}
       </div>
-    </aside>
+    </SectionNavigation>
     <div className="f2l-study-main">
       <div className="f2l-merged-parts" role="group" aria-label={tr({ zh: '学习环节', en: 'Learning sections' })}>
         {THREE_MOVE_PARTS.map((item, index) => <button type="button" key={index} className="f2l-section-button"

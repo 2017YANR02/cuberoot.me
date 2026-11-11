@@ -6,6 +6,7 @@ import { tr, T } from '@/i18n/tr';
 import { f2lPlaybackSections } from '../lib/cube-preview';
 import { buildFreePracticeCases, freePlacementKey, placeFreePiece, SOLVED_FREE_PLACEMENT } from '../lib/free-practice';
 import StudyActions from '../components/StudyActions';
+import SectionNavigation from '../components/SectionNavigation';
 import PairEditor from '../components/PairEditor';
 
 const NO_STOPS: readonly number[] = [];
@@ -26,12 +27,12 @@ export default function FreePracticeLesson({ orientation, pauseBetween }: { orie
   return <>
 
     <div className="f2l-study-layout">
-      <aside className="f2l-section-nav">
+      <SectionNavigation label={tr({ zh: '自由练习', en: 'Free practice' })}>
         <div className="f2l-section-list"><p className="f2l-section-label" aria-current="true"><T zh="自由练习" en="Free practice" /></p></div>
         <div className="f2l-guidance" aria-live="polite">
           {!exercise && <p><T zh="暂未收录这个情况的教学解法。" en="A teaching solution for this case is not available yet." /></p>}
         </div>
-      </aside>
+      </SectionNavigation>
       <div className="f2l-study-main">
         <div className="f2l-lesson f2l-study-lesson">
         <section className="f2l-demo" aria-label={tr({ zh: '自由练习魔方', en: 'Free practice cube' })}>

@@ -92,6 +92,43 @@ body[data-site-scenery] .f2l-dialogue-answer dd[data-site-surface='panel'] { bac
 /* Case diagrams, players and algorithms. */
 .f2l-recognition { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 28px 0; }
 .f2l-recognition figure { margin: 0; min-width: 0; text-align: center; }
+.f2l-teaching-cases > .f2l-section-button { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.f2l-alg-return-row { padding: 24px 0; text-align: center; }
+.f2l-teaching-flow { width: 140px; max-width: 100%; justify-self: center; }
+.f2l-teaching-flow > svg { display: block; width: 100%; height: auto; }
+.f2l-flow-graph.f2l-teaching-flow { --flow-signal: var(--accent); }
+.f2l-teaching-flow .f2l-flow-edge-line { marker-end: none; }
+.f2l-teaching-flow .f2l-flow-edge .f2l-flow-pulse { fill: var(--background); stroke-width: 1.5; filter: none; animation: none; }
+.f2l-path-explanation { display: contents; }
+.f2l-study-layout .f2l-study-lesson.f2l-algorithm-columns.f2l-integrated-example { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); }
+.f2l-integrated-example .f2l-path-explanation { position: relative; display: block; }
+.f2l-teaching-alg-summary { display: grid; gap: 4px; margin-top: 4px; text-align: left; }
+.f2l-teaching-alg-row { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.f2l-teaching-alg-icon { display: inline-flex; flex-shrink: 0; align-self: center; color: var(--muted-foreground); }
+.f2l-teaching-alg-icon:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.f2l-teaching-alg-summary code { font-size: .8rem; line-height: 1.75; overflow-wrap: anywhere; }
+.f2l-integrated-example .f2l-teaching-flow { width: 100%; }
+.f2l-integrated-example .f2l-teaching-guidance { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.f2l-integrated-example .f2l-teaching-guidance .f2l-stage-list { display: block; margin: 0; padding: 0; }
+.f2l-integrated-example .f2l-stage-list > li { position: absolute; width: 34%; transform: translateY(-50%); box-sizing: border-box; margin: 0; padding: 0; border: 0; pointer-events: auto; }
+.f2l-integrated-example .f2l-stage-button { justify-content: center; padding: 8px 4px; border-left: 0; text-align: center; font-size: 1rem; line-height: 1.5; }
+.f2l-integrated-example .f2l-stage-title { font-family: var(--font-sans); font-weight: 400; }
+.f2l-integrated-example .f2l-stage-button[aria-current='step'] { color: var(--foreground); }
+.f2l-integrated-example .f2l-move-complete { color: var(--accent); }
+.f2l-integrated-example .f2l-stage-content { justify-items: center; }
+.f2l-teaching-flow .f2l-flow-edge .f2l-flow-progress,
+.f2l-teaching-flow .f2l-flow-edge .f2l-flow-glow,
+.f2l-teaching-flow .f2l-flow-pulse { transition: none; }
+.f2l-integrated-example .f2l-stage-content code { font-size: .95rem; }
+@media (max-width: 900px) {
+  .f2l-study-layout .f2l-study-lesson.f2l-algorithm-columns.f2l-integrated-example { grid-template-columns: minmax(0, 1fr); }
+}
+@media (min-width: 1100px) {
+  .f2l-study-layout .f2l-study-lesson.f2l-algorithm-columns { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; }
+}
+@media (min-width: 701px) and (max-width: 1099px) {
+  .f2l-teaching-flow { grid-column: 1 / -1; }
+}
 .f2l-recognition img { max-width: 100%; height: auto; }
 .f2l-recognition .puzzle-art, .f2l-recognition .puzzle-art > span { max-width: 100%; height: auto !important; aspect-ratio: 1; }
 .f2l-recognition .puzzle-art > span { width: 100% !important; }
@@ -140,6 +177,7 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
 .f2l-study-actions { position: absolute; inset: auto 0 0 calc(var(--f2l-sidebar-width) + var(--f2l-layout-gap)); display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-top: 16px; border-top: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent); }
 .f2l-study-secondary-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; min-width: 0; margin-inline-start: auto; }
 .f2l-study-actions .f2l-restart { margin-top: 0; }
+.f2l-mobile-menu-host { display: none; }
 .f2l-page .f2l-footer-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; box-sizing: border-box; width: 112px; height: 52px; min-height: 44px; flex-shrink: 0; padding: 8px 14px; border: 0; border-radius: 10px; color: var(--muted-foreground); background: transparent; font: inherit; line-height: 1.2; cursor: pointer; }
 .f2l-page .f2l-footer-next { color: var(--accent); background: var(--accent-soft); }
 .f2l-page .f2l-footer-button svg { flex-shrink: 0; }
@@ -172,6 +210,10 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
 @media (hover: hover) {
   .f2l-restart:not(:disabled):hover { border-color: var(--border-strong); background: var(--muted); }
 }
+@media (min-width: 901px) {
+  .f2l-study-layout .f2l-study-lesson { align-items: center; }
+  .f2l-study-lesson .f2l-free-formulas { padding-top: 0; }
+}
 @media (max-width: 900px) {
   .f2l-chapter-body { min-height: 88rem; }
   .f2l-chapter-dialogue { min-height: 11rem; }
@@ -197,4 +239,18 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
   .f2l-recognition { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .f2l-lesson { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .f2l-extraction-comparison { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .f2l-page .f2l-chapter-body { min-height: 0; padding-bottom: 0; }
+  .f2l-page .f2l-study-layout { grid-template-columns: minmax(0, 1fr); }
+  .f2l-page .f2l-study-layout > .f2l-section-nav { display: none; }
+  .f2l-page .f2l-study-actions { position: static; inset: auto; gap: 6px; padding-top: 12px; flex-wrap: wrap; }
+  .f2l-mobile-menu-host { display: block; min-width: 0; margin-top: 12px; }
+  .f2l-mobile-menu-host:empty { display: none; }
+  .f2l-mobile-menu { position: relative; min-width: 0; }
+  .f2l-mobile-menu > summary { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 44px; color: var(--muted-foreground); font-size: .8rem; }
+  .f2l-mobile-menu > summary > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .f2l-mobile-menu > summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+  /* anchored-panel: safe (centered in the content column, capped below viewport width). */
+  .f2l-section-popover { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: min(260px, calc(100vw - 48px)); max-height: min(480px, 65dvh); overflow-y: auto; overscroll-behavior: contain; padding: 8px; z-index: 5; border: 1px solid var(--border-default); border-radius: 12px; }
 }

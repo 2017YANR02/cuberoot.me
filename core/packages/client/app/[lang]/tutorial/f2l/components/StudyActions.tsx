@@ -2,7 +2,11 @@ import { createContext, useContext, type ReactNode } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { T } from '@/i18n/tr';
 
-export const StudyNavigation = createContext<{ previous?: () => void; next?: () => void }>({});
+export const StudyNavigation = createContext<{
+  previous?: () => void; next?: () => void;
+  mobileMenuTarget?: HTMLDivElement | null;
+  setMobileMenuTarget?: (target: HTMLDivElement | null) => void;
+}>({});
 
 export default function StudyActions({ onPrevious, onContinue, continueDisabled = false, children }: {
   onPrevious?: () => void; onContinue?: () => void; continueDisabled?: boolean; children?: ReactNode;
@@ -10,7 +14,8 @@ export default function StudyActions({ onPrevious, onContinue, continueDisabled 
   const navigation = useContext(StudyNavigation);
   const previous = onPrevious ?? navigation.previous;
   const next = onContinue ?? navigation.next;
-  return <footer className="f2l-study-actions">
+  return <><div className="f2l-mobile-menu-host" ref={navigation.setMobileMenuTarget} />
+  <footer className="f2l-study-actions">
     <button type="button" className="f2l-footer-button" disabled={!previous} onClick={previous}>
       <ArrowLeft size={17} aria-hidden="true" /><T zh="上一节" en="Previous" />
     </button>
@@ -18,5 +23,5 @@ export default function StudyActions({ onPrevious, onContinue, continueDisabled 
     <button type="button" className="f2l-footer-button f2l-footer-next" disabled={!next || continueDisabled} onClick={next}>
       <T zh="下一节" en="Next" /><ArrowRight size={17} aria-hidden="true" />
     </button>
-  </footer>;
+  </footer></>;
 }

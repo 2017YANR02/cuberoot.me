@@ -9,6 +9,7 @@ import { T, tr } from '@/i18n/tr';
 import { F2L_PRACTICE_CASES, F2L_TOP_ADJUSTMENTS, ORDERED_BASIC_CASES, type BasicCaseId } from '../data/basic-cases';
 import { f2lDiagramFacelets, f2lPlaybackSections } from '../lib/cube-preview';
 import StudyActions from '../components/StudyActions';
+import SectionNavigation from '../components/SectionNavigation';
 
 const NO_STOPS: readonly number[] = [];
 
@@ -39,7 +40,7 @@ export default function PracticeLesson({ orientation, pauseBetween, onNextChapte
     if (current) current.timestamp = index;
   };
   return <div className="f2l-study-layout">
-        <aside className="f2l-section-nav">
+        <SectionNavigation label={lesson.name}>
           <div className="f2l-section-group">
             <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择三步标态', en: 'Choose a three-move case' })}>
               {ORDERED_BASIC_CASES.map((item, index) => <button className="f2l-section-button" key={item.id} type="button"
@@ -48,7 +49,7 @@ export default function PracticeLesson({ orientation, pauseBetween, onNextChapte
               </button>)}
             </div>
           </div>
-        </aside>
+        </SectionNavigation>
         <div className="f2l-study-main">
           <div className="f2l-lesson f2l-study-lesson">
             <section className="f2l-demo" aria-label={tr({ zh: '三步标态练习演示', en: 'Three-move case practice demonstration' })}>

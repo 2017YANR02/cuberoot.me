@@ -7,6 +7,7 @@ import { tr, T } from '@/i18n/tr';
 import { f2lDiagramFacelets, f2lPlaybackSections } from '../lib/cube-preview';
 import { f2lNonstandardExamples, f2lSmartExtraction } from '../lib/curriculum';
 import StudyActions from '../components/StudyActions';
+import SectionNavigation from '../components/SectionNavigation';
 import NonstandardIntro from './NonstandardIntro';
 
 const NO_STOPS: readonly number[] = [];
@@ -33,7 +34,7 @@ export default function ExtractionLesson({ orientation, pauseBetween, onNextChap
   return <>
     <div className="f2l-study-layout">
 
-      <div className="f2l-section-nav">
+      <SectionNavigation label={tr(showIntro ? { zh: '认识目标槽、标态与非标', en: 'Target slots, standard and non-standard cases' } : EXTRACTION_TITLES[extractionKind])}>
         <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择非标类型', en: 'Choose a non-standard case type' })}>
           <button type="button" className="f2l-section-button" aria-pressed={showIntro} onClick={() => { if (!showIntro) { setIntroComplete(false); setShowIntro(true); } }}>
             <span className="f2l-section-label"><T zh="认识目标槽、标态与非标" en="Target slots, standard and non-standard cases" /></span>
@@ -46,7 +47,7 @@ export default function ExtractionLesson({ orientation, pauseBetween, onNextChap
             </span>
           </button>)}
         </div>
-      </div>
+      </SectionNavigation>
       <div className="f2l-study-main">
         {showIntro ? <NonstandardIntro key={orientation} orientation={orientation}
           edgeSetup={examples.find(item => item.kind === 'edge')!.setup}

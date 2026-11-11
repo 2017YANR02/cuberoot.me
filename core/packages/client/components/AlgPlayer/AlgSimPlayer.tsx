@@ -226,7 +226,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       setStep(index + 1);
       setMoveRequest(request => request + 1);
     },
-    resetView: () => resetViewRef.current?.(),
+    resetView: (durationMs?: number) => resetViewRef.current?.(durationMs),
     orbitView: (dx, dy) => {
       const mount = mountRef.current;
       if (!mount || !ready) return;
@@ -254,7 +254,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   const handsRef = useRef<HandsRig | null>(null);
   const restoreGripsRef = useRef<((prefix: string[]) => void) | null>(null);
   const alignmentRef = useRef<ReturnType<typeof import('./daisy-alignment').attachDaisyAlignment> | null>(null);
-  const resetViewRef = useRef<(() => void) | null>(null);
+  const resetViewRef = useRef<((durationMs?: number) => void | Promise<void>) | null>(null);
   const clockUserMoveRef = useRef<((action: string) => void) | null>(null);
   const interactionOptionsRef = useRef({ interactionMode, lockView });
   interactionOptionsRef.current = { interactionMode, lockView };
@@ -308,14 +308,37 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     const cube = world.cube;
     if (alignmentModule) alignment = alignmentModule.attachDaisyAlignment(cube as Cube);
     alignmentRef.current = alignment ?? null;
-    resetViewRef.current = () => {
+    let cancelViewReset: (() => void) | undefined;
+    resetViewRef.current = (durationMs = 0) => {
+      cancelViewReset?.();
+      const start = world.scene.quaternion.clone();
       if (sceneRot) {
         world.scene.rotation.set(sceneRot.x, sceneRot.y, sceneRot.z);
         world.scene.updateMatrix();
       } else {
         resetSceneView(world);
       }
-      m.invalidate();
+      if (!Number.isFinite(durationMs) || durationMs <= 0 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        m.invalidate();
+        return;
+      }
+      const target = world.scene.quaternion.clone();
+      world.scene.quaternion.copy(start);
+      world.scene.updateMatrix();
+      return new Promise<void>(resolve => {
+        let frame = 0;
+        const started = performance.now();
+        cancelViewReset = () => { cancelAnimationFrame(frame); cancelViewReset = undefined; resolve(); };
+        const tick = (now: number) => {
+          const progress = Math.min(1, (now - started) / durationMs);
+          world.scene.quaternion.slerpQuaternions(start, target, progress * progress * (3 - 2 * progress));
+          world.scene.updateMatrix();
+          m.invalidate();
+          if (progress < 1) frame = requestAnimationFrame(tick);
+          else { cancelViewReset = undefined; resolve(); }
+        };
+        frame = requestAnimationFrame(tick);
+      });
     };
 
     let detachInteraction: (() => void) | undefined;
@@ -397,6 +420,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
 
     return () => {
       timing.frames = prevFrames;
+      cancelViewReset?.();
       detachInteraction?.();
       updateInteractionRef.current = null;
       alignment?.dispose();

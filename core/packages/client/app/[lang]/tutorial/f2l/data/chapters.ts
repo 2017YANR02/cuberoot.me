@@ -48,13 +48,13 @@ export const F2L_CHAPTERS = [
       "en": "Three-move cases"
     },
     "question": {
-      "zh": "前2层竟然可以同时复原？！给我看看要怎么做。",
-      "en": "The first two layers can be solved together?! Show me how!"
+      "zh": "快教我吧！从最简单的开始。",
+      "en": "Show me how! Let's start with the simplest cases."
     },
     "answer": [
       {
-        "zh": "最简单的情况只需要3步，想不到吧！先对它们有个印象，后面再学。",
-        "en": "The simplest cases take just three moves—surprising, right? Get familiar with their patterns for now; we will learn how to solve them later."
+        "zh": "先认识什么是标态，再从最简单的四种情况开始。转动顶层对齐图形后，跟着动画学会最后三步。",
+        "en": "First, learn what a standard case is, then start with the four simplest cases. Turn the top layer to match the reference, then follow the animation to learn the final three moves."
       }
     ],
     "tips": [
@@ -73,7 +73,7 @@ export const F2L_CHAPTERS = [
     ]
   },
   {
-    "id": "lesson-3",
+    "id": "lesson-12",
     "title": {
       "zh": "逐步教学",
       "en": "Step by step"
@@ -100,7 +100,7 @@ export const F2L_CHAPTERS = [
     ]
   },
   {
-    "id": "lesson-4",
+    "id": "lesson-13",
     "title": {
       "zh": "三步练习",
       "en": "Three-move practice"
@@ -135,7 +135,7 @@ export const F2L_CHAPTERS = [
     ]
   },
   {
-    "id": "lesson-5",
+    "id": "lesson-3",
     "title": {
       "zh": "其他标态",
       "en": "Other cases"
@@ -171,7 +171,7 @@ export const F2L_CHAPTERS = [
     ]
   },
   {
-    "id": "lesson-6",
+    "id": "lesson-4",
     "title": {
       "zh": "公式（一）",
       "en": "Algorithms (1)"
@@ -207,7 +207,7 @@ export const F2L_CHAPTERS = [
     ]
   },
   {
-    "id": "lesson-7",
+    "id": "lesson-5",
     "title": {
       "zh": "公式（二）",
       "en": "Algorithms (2)"
@@ -243,7 +243,7 @@ export const F2L_CHAPTERS = [
     ]
   },
   {
-    "id": "lesson-8",
+    "id": "lesson-6",
     "title": {
       "zh": "非标转化",
       "en": "Non-standard cases"
@@ -290,7 +290,7 @@ export const F2L_CHAPTERS = [
     ]
   },
   {
-    "id": "lesson-9",
+    "id": "lesson-7",
     "title": {
       "zh": "自由练习",
       "en": "Free practice"
@@ -315,8 +315,8 @@ export const F2L_CHAPTERS = [
         "en": "Drag the cube to adjust the view."
       },
       {
-        "zh": "如果目标棱或角位于其他槽，请先按第 8 章的方法转化为标态。",
-        "en": "If the target edge or corner is in another slot, first use the method in Chapter 8 to turn it into a standard case."
+        "zh": "如果目标棱或角位于其他槽，请先按第 6 章的方法转化为标态。",
+        "en": "If the target edge or corner is in another slot, first use the method in Chapter 6 to turn it into a standard case."
       },
       {
         "zh": "点击“重新摆放”可返回刚才设置的情况。",
@@ -346,5 +346,5 @@ export const F2L_CHAPTERS = [
 
 export type ChapterId = typeof F2L_CHAPTERS[number]['id'];
 
-// The experiment remains accessible by URL, outside the learning sequence.
-export const F2L_NAV_CHAPTERS = F2L_CHAPTERS.filter(chapter => chapter.id !== 'lesson-10' && chapter.id !== 'lesson-11');
+// Experiments and the former standalone lessons remain accessible outside the learning sequence.
+export const F2L_NAV_CHAPTERS = F2L_CHAPTERS.filter(chapter => !['lesson-10', 'lesson-11', 'lesson-12', 'lesson-13'].includes(chapter.id));

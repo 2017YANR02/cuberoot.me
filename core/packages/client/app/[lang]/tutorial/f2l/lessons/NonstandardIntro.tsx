@@ -46,6 +46,7 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
   const appliedMove = useRef(-1);
   const playerStep = useRef(0);
   const viewTilt = useRef(0);
+  const viewYaw = useRef(0);
   const autoplay = useRef(true);
   const index = position;
   const finished = index === scenes.length - 1 && sceneDone;
@@ -53,12 +54,15 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
   const beat = scene.beats?.findLast(item => elapsed >= item.at);
   const moveCount = useMemo(() => resolveSimPreviewMoves('3x3', scene.alg).length, [scene.alg]);
   const pairColors = useMemo(() => {
-    if (!pairTransition) return undefined;
+    if (!pairTransition && !scene.flashPair) return undefined;
     const colors = orientedCubeFaceColors(orientation);
+    const visibility = pairTransition ? pairVisibility : reducedMotion || !playing ? 1
+      : (1 + Math.cos((elapsed - (beat?.at ?? 0)) * Math.PI / 350)) / 2;
     return Object.fromEntries(NONSTANDARD_INTRO_PAIR_STICKERS.map(sticker => [sticker,
-      new Color(FM_FIXED_COLOR[FM_IGNORED]!).lerp(new Color(colors[sticker[0] as CubeFace]), pairVisibility).getStyle(),
+      new Color(FM_FIXED_COLOR[FM_IGNORED]!).lerp(new Color(colors[sticker[0] as CubeFace]),
+        (beat?.hideCorner && ['D2', 'F8', 'R6'].includes(sticker)) || (beat?.hideEdge && ['F5', 'R3'].includes(sticker)) ? 0 : visibility).getStyle(),
     ]));
-  }, [orientation, pairTransition, pairVisibility]);
+  }, [orientation, pairTransition, pairVisibility, scene.flashPair, reducedMotion, playing, elapsed, beat]);
   const fadePair = useCallback((from: number, to: number, done: () => void) => {
     const start = performance.now();
     const tick = (now: number) => {
@@ -90,6 +94,7 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
     elapsedRef.current = 0; setElapsed(0);
     appliedMove.current = -1; playerStep.current = 0;
     viewTilt.current = 0;
+    viewYaw.current = 0;
     let frame = 0;
     const check = () => {
       if (!player.current?.getPlayer() || player.current.isUserMovePending?.()) {
@@ -116,11 +121,17 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
         || (appliedMove.current >= 0 && playerStep.current !== appliedMove.current + 1);
       if (!pending) {
         elapsedRef.current += delta;
+        if (scene.revealLeft) {
+          const progress = Math.max(0, Math.min(1, (elapsedRef.current - 600) / 2000));
+          const yaw = (frontLeft.y - frontRight.y) * progress * progress * (3 - 2 * progress);
+          player.current?.orbitView?.(yaw - viewYaw.current, 0);
+          viewYaw.current = yaw;
+        }
         if (scene.showBottom) {
           const time = elapsedRef.current;
           const ease = (value: number) => { const t = Math.max(0, Math.min(1, value)); return t * t * (3 - 2 * t); };
           // Negative pitch brings the D face into view; return before advancing.
-          const tilt = -1.5 * (ease((time - 1400) / 1000) - ease((time - 4300) / 1000));
+          const tilt = -(scene.bottomTilt ?? 1.5) * (ease((time - 1400) / 1000) - ease((time - 4300) / 1000));
           player.current?.orbitView?.(0, tilt - viewTilt.current);
           viewTilt.current = tilt;
         }
@@ -133,7 +144,7 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
           return;
         }
       }
-      if (elapsedRef.current - lastRendered >= 100) {
+      if (elapsedRef.current - lastRendered >= (scene.flashPair ? 16 : 100)) {
         lastRendered = elapsedRef.current; setElapsed(lastRendered);
       }
       frame = requestAnimationFrame(tick);
@@ -146,7 +157,7 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
     if (transitionTimer.current !== null || pairTransition || !ready) return;
     const target = Math.max(0, Math.min(scenes.length - 1, Math.round(next)));
     const fadePieces = !!scenes[target].result && target !== index;
-    const keepPlayer = fadePieces || (target === index + 1 && sceneDone && scenes[target].continuePrevious === true);
+    const keepPlayer = fadePieces || (target === index + 1 && (sceneDone || moveCount === 0) && scenes[target].continuePrevious === true);
     setPlaying(false); setContinuous(keepPlayer);
     const enterScene = () => {
       setReady(false); setSceneDone(false); setFadingOut(false);
@@ -177,14 +188,14 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
       transitionTimer.current = null;
       enterScene();
     }, reducedMotion ? 0 : 450);
-  }, [ready, reducedMotion, scenes, scene, index, sceneDone, pairTransition, fadePair]);
+  }, [ready, reducedMotion, scenes, scene, index, sceneDone, moveCount, pairTransition, fadePair]);
   useEffect(() => {
     if (sceneDone && !finished) seek(index + 1, true);
   }, [sceneDone, finished, index, seek]);
   const progress = finished ? scenes.length : index + Math.min(elapsed / scene.duration, .999);
   const emphasis = beat?.highlight ?? scene.highlight;
   const pulse = beat ? beat.pulse : true;
-  const highlights = !pulse || reducedMotion || !playing || Math.floor(elapsed / 900) % 2 === 0 ? emphasis : noHighlights;
+  const highlights = scene.flashPair ? noHighlights : !pulse || reducedMotion || !playing || Math.floor(elapsed / 900) % 2 === 0 ? emphasis : noHighlights;
   return <section className="f2l-concept-video" data-continuous={continuous} aria-label={tr({ zh: '标态与非标概念演示', en: 'Standard and non-standard cases: concept demonstration' })}>
     <div className="f2l-concept-count">{index + 1} / {scenes.length}</div>
     <div className="f2l-concept-scene">
@@ -194,7 +205,7 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
         highlightedStickers={highlights} stickeringAtStep={scene.hidePair || scene.crossOnly ? crossMask : beat?.hideCorner ? edgeStickering : beat?.hideEdge ? cornerStickering : pairStickering}
         onStepChange={step => { playerStep.current = step; }}
         moveDurationMs={scene.moveDuration ?? 220} controlMode="none" hideResetView interactionMode="none" fillPane />
-        {ready && !fadingOut && (scene.result || beat?.label) && <div className="tutorial-cube-bubble f2l-concept-result" data-site-surface="panel" role="status">
+        {ready && !fadingOut && (scene.result ? elapsed >= 1000 : beat?.label) && <div className="tutorial-cube-bubble f2l-concept-result" data-target={scene.flashPair ? beat?.hideEdge ? 'corner' : beat?.hideCorner ? 'edge' : 'pair' : beat?.label ? 'slot' : undefined} data-site-surface="panel" role="status">
           {scene.result ? <>
             <div className="f2l-concept-signal" aria-hidden="true"><TrainingFeedbackOverlay
               kind={scene.result === 'standard' ? 'correct' : 'wrong'} correctLabel="" wrongLabel="" /></div>
