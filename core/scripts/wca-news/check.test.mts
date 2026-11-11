@@ -79,3 +79,16 @@ test('failed digest writes cannot close originals; retry preserves existing chec
   await publishDigests([entry], [], [summary, legacy], async (path, _method, body) => { calls.push(path); return { ...legacy, ...body as object }; });
   assert.deepEqual(calls, ['/issues/1']);
 });
+
+test('incident translation drift ignores metadata but catches title and body revisions', async () => {
+  const { incidentFingerprint } = await import('./check.mts');
+  const raw = { title: 'Title', public_summary: 'Body\r\nText', competitions: [{ id: 'Test', name: 'Old' }], tags: ['old'] };
+  assert.equal(incidentFingerprint(raw), incidentFingerprint({ ...raw, competitions: [], tags: [] }));
+  assert.notEqual(incidentFingerprint(raw), incidentFingerprint({ ...raw, title: 'Changed title' }));
+  assert.notEqual(incidentFingerprint(raw), incidentFingerprint({ ...raw, public_summary: 'Changed body' }));
+  const { default: migration } = await import('./incident-hash-aliases.json', { with: { type: 'json' } });
+  const [oldHash, currentHash] = Object.entries(migration.aliases)[0];
+  const migrated = { ...entry, hash: currentHash };
+  assert.equal(changed([migrated], { [entry.key]: oldHash }, []).length, 0);
+  assert.equal(changed([migrated], {}, [{ number: 1, body: marker({ ...entry, hash: oldHash }), state: 'closed', html_url: '' }]).length, 0);
+});

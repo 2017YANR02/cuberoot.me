@@ -11,7 +11,7 @@
 1. workflow 每日 **08:23 UTC** 及手动 `workflow_dispatch` 运行，`concurrency.group=wca-news-drift`，`cancel-in-progress=false`；任务超时 20 分钟，`contents:read` / `issues:write`。
 2. 从公开 WCA 来源全量扫描，能发现老文章修订。Incidents 为公开已解决事件，接口全部分页，校验 `total` 稳定、非空页、唯一 ID、完整数量。Disciplinary 遍历全部列表页并逐篇完整读取，不抓论坛/附件。
 3. 唯一 key：`incidents:<整数ID>`；`disciplinary:/posts/<slug>`；新增 `posts:/posts/<slug>`。Posts 与纪律日志同 URL 时沿用纪律 key，不重复开票。不要用标题或日期代替 ID，不把一个摘要中的多个案件拆成新来源 ID。
-4. SHA-256 输入使用 `JSON.stringify`：Incidents 为 `{title,content,tags,competitions}`，正文 CRLF 转 LF 后 trim，标签名排序，比赛按 ID 排序；忽略仅 `updated_at` 变化，`resolved_at` 仅作为来源日期。Disciplinary 为 `{title,date,content}`，正文 HTML 去公告头、CRLF 转 LF、移除相邻标签间空白，保留链接。
+4. SHA-256 输入使用 `JSON.stringify`：Incidents 为 `{title,content}`，正文 CRLF 转 LF 后 trim；忽略元数据、标签、比赛关联和仅 `updated_at` 变化，`resolved_at` 仅作为来源日期。旧含元数据指纹通过有证据的 `incident-hash-aliases.json` 归一化，不能重置 baseline。Disciplinary 为 `{title,date,content}`，正文 HTML 去公告头、CRLF 转 LF、移除相邻标签间空白，保留链接。
 5. Issue 正文的每个条目保留标记：`<!-- wca-news-drift {"key":"…","hash":"…"} -->`。读取所有状态与分页的同标签 Issues，排除 PR；同 key 优先使用汇总条目版本，再回退原单条票与 baseline。
 6. 无版本变化不写入。变化按类别更新汇总条目，取消该条目的勾选并重新打开汇总，其他条目的勾选和条目区外人工笔记保留。每张最多 50 个来源，新来源优先加入未关闭且未满的汇总；不会为每个来源创建 Issue。上游内容回退仍是版本变化。
 7. 发布时复用 `wca-news-drift` 标签。旧 github-actions 单条开放通知仅在对应来源已成功存入汇总后归档，并链接替代汇总；保留原文和评论，归档不表示翻译或收录完成。人工反馈不迁移。

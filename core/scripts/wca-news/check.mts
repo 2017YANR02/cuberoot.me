@@ -5,6 +5,12 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { collectPosts, uniquePosts } from './posts.mts';
+import incidentHashAliases from './incident-hash-aliases.json' with { type: 'json' };
+
+const normalizeHash = (hash: string | undefined) => hash && ((incidentHashAliases.aliases as Record<string, string>)[hash] ?? hash);
+export function incidentFingerprint(item: { title: string; public_summary: string }) {
+  return fingerprint({ title: item.title, content: item.public_summary.replace(/\r\n/g, '\n').trim() });
+}
 
 const ORIGIN = 'https://www.worldcubeassociation.org';
 const LABEL = 'wca-news-drift';
@@ -64,9 +70,7 @@ export async function collect({ includePosts = false } = {}): Promise<Entry[]> {
     for (const item of data) {
       assert(Number.isInteger(item.id) && item.title && typeof item.public_summary === 'string' && item.public_summary.trim() && item.resolved_at, 'Invalid public incident');
       const content = item.public_summary.replace(/\r\n/g, '\n').trim();
-      const tags = (item.tags ?? []).map((tag: { name: string }) => tag.name).sort();
-      const competitions = [...(item.competitions ?? [])].sort((a, b) => String(a.id).localeCompare(String(b.id)));
-      entries.push({ key: `incidents:${item.id}`, kind: 'incidents', title: item.title, url: `${ORIGIN}/incidents/${item.id}`, date: item.resolved_at, content, hash: fingerprint({ title: item.title, content, tags, competitions }) });
+      entries.push({ key: `incidents:${item.id}`, kind: 'incidents', title: item.title, url: `${ORIGIN}/incidents/${item.id}`, date: item.resolved_at, content, hash: incidentFingerprint(item) });
     }
     if (entries.length >= total) break;
   }
@@ -118,7 +122,7 @@ export function changed(entries: Entry[], baseline: Record<string, string>, issu
   for (const issue of [...issues.filter(i => digest(i)), ...issues.filter(i => !digest(i))]) {
     for (const version of issueVersions(issue.body)) if (!versions.has(version.key)) versions.set(version.key, version.hash);
   }
-  return entries.filter(entry => (versions.get(entry.key) ?? baseline[entry.key]) !== entry.hash);
+  return entries.filter(entry => normalizeHash(versions.get(entry.key) ?? baseline[entry.key]) !== entry.hash);
 }
 type Github = (path: string, method?: string, body?: unknown) => Promise<any>;
 /** At most 50 sources per durable digest; retries never drop pending work or duplicate tickets. */
@@ -149,7 +153,7 @@ export async function publishDigests(entries: Entry[], changes: Entry[], issues:
     });
     for (const entry of pending.values()) {
       let bucket = buckets.find(b => b.items.has(entry.key));
-      if (bucket && issueVersion(bucket.items.get(entry.key)!)!.hash === entry.hash) continue;
+      if (bucket && normalizeHash(issueVersion(bucket.items.get(entry.key)!)!.hash) === entry.hash) continue;
       bucket ??= buckets.find(b => b.issue?.state !== 'closed' && b.items.size < 50);
       if (!bucket) {
         bucket = { issue: undefined, batch: Math.max(0, ...buckets.map(b => b.batch)) + 1, items: new Map(), dirty: false, reopen: false };
