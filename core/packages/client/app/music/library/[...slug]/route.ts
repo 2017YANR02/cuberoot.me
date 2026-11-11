@@ -1,4 +1,4 @@
-// Local preview of prepare-music.ts output; media stays outside the repository.
+// Development uses the published library unless a local prepare-music.ts output is selected.
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import path from 'node:path';
@@ -22,7 +22,16 @@ export async function GET(request: Request, { params }: Context) {
     && !/^(tracks\/[a-f0-9]{64}\.(mp3|m4a|flac|wav)|covers\/[a-f0-9]{64}\.(jpg|jpeg|png|webp)|lyrics\/[a-f0-9]{64}\.lrc)$/.test(relative)) {
     return new Response(null, { status: 404 });
   }
-  const root = process.env.MUSIC_LIBRARY_ROOT || 'Z:/cuberoot-music-staging/library';
+  const root = process.env.MUSIC_LIBRARY_ROOT;
+  if (!root) {
+    return new Response(null, {
+      status: 307,
+      headers: {
+        Location: `https://static.cuberoot.me/music/library/${relative}`,
+        'Cache-Control': 'no-store',
+      },
+    });
+  }
   const file = path.join(root, relative);
   const info = await stat(file).catch(() => null);
   if (!info?.isFile()) return new Response(null, { status: 404 });

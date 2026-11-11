@@ -21,6 +21,24 @@ afterEach(() => vi.unstubAllEnvs());
 afterAll(() => rmSync(root, { recursive: true, force: true }));
 
 describe('local music assets', () => {
+  it('uses the published library by default for manifests and media, preserving HEAD and Range requests', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('MUSIC_LIBRARY_ROOT', '');
+    for (const [req, relative] of [
+      [request(), 'manifest.v1.json'],
+      [request('bytes=0-1'), audio],
+      [new Request('http://localhost/file', { method: 'HEAD' }), audio],
+    ] as const) {
+      const response = await GET(req, context(relative));
+      expect(response.status).toBe(307);
+      expect(response.headers.get('location')).toBe(`https://static.cuberoot.me/music/library/${relative}`);
+      expect(response.headers.get('cache-control')).toBe('no-store');
+    }
+    expect((await GET(request(), context('../inventory/source-manifest.jsonl'))).status).toBe(404);
+    vi.stubEnv('NODE_ENV', 'production');
+    expect((await GET(request(), context('manifest.v1.json'))).status).toBe(404);
+  });
+
   it('is disabled in production and only serves generated paths in development', async () => {
     vi.stubEnv('MUSIC_LIBRARY_ROOT', root);
     vi.stubEnv('NODE_ENV', 'production');

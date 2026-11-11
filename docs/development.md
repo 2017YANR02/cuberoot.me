@@ -119,6 +119,8 @@ NEXT_PUBLIC_STATS_SOURCE=local pnpm --filter @cuberoot/client dev
 
 本地模式严格读取仓库 `stats/`，文件缺失或读取失败会返回明确错误并在终端记录，不回退服务器；本地响应不缓存。自动化测试使用固定样本，不依赖线上最新快照。`NEXT_PUBLIC_STATIC_ORIGIN` 只控制模型、音乐等非统计资源，不再控制统计来源；`/tools/` 保持现有规则。静态资源发布边界见 `.github/workflows/sync_toolkit.yml`。
 
+音乐开发预览默认读取 `static.cuberoot.me` 已发布的曲库清单、音频、封面和歌词，无需下载完整曲库。预览 `prepare-music.ts` 的本地产物时，设置 `MUSIC_LIBRARY_ROOT` 为生成的 `library/` 绝对路径，并保持 `NEXT_PUBLIC_STATIC_ORIGIN` 未设置；显式本地目录缺失文件时返回 404，不回退线上。历史 Windows 默认 `Z:/cuberoot-music-staging/library` 已取消。
+
 `dev`、`dev:clean`、`dev:safe` 和 `local-dev.mts` 都通过 Turborepo Watch 启动：先按依赖顺序执行 Web 依赖的 `dev:build`，再启动 Next；共享包源码改动后自动重新构建，Next 自身负责热更新。`dev:build` 只登记需要输出 `dist` 的 TypeScript 共享包，复用各包的 `build`，不运行 WASM 建表或统计任务。新增同类编译包时，在该包添加 `dev:build` 脚本即可由 workspace 依赖图纳入。保持终端运行，Ctrl+C 同时退出监听和开发服务器。
 
 这避免源码已更新、Node 仍读取旧 `dist` 导致的缺失导出错误；真正的源码编译错误仍须修复。已有开发进程不会自动切换到新的启动流程，下次启动生效。
