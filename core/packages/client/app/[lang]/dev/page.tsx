@@ -5,6 +5,7 @@ import { ArrowUpRight, Code2, Cpu, Globe, Network, Palette, Settings2, type Luci
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import MoreToggle from '@/components/MoreToggle';
+import { Tooltip } from '@/components/Tooltip';
 import { useT } from '@/hooks/useT';
 import { tr, type Msg } from '@/i18n/tr';
 import { CUBE_POSES, cubeRotationTransform, dragCubeRotation, nearestCubeFace, rotationFromMatrix, rotationFromPose, type CubeFace, type CubeRotation } from './_cube-orbit';
@@ -87,7 +88,7 @@ const FACES: Face[] = [
 const ENTRY_COUNT = FACES.reduce((count, face) => count + face.entries.length, 0);
 // Deliberately scattered, but stable across SSR, language switches and dragging.
 // Reserve the center for the category and the top-right sticker for its number.
-const STICKER_SLOTS = [[0, 5, 6, 7], [1, 3, 6, 8], [0, 3, 5, 8], [1, 5, 6, 8], [0, 3, 7, 8], [1, 3, 5, 6]];
+const STICKER_SLOTS = [[0, 5, 6, 7, 1, 3, 8], [1, 3, 6, 8, 0, 5, 7], [0, 3, 5, 8, 1, 6, 7], [1, 5, 6, 8, 0, 3, 7], [0, 3, 7, 8, 1, 5, 6], [1, 3, 5, 6, 0, 7, 8]];
 
 interface CubeDrag {
   id: number;
@@ -100,12 +101,12 @@ interface CubeDrag {
 
 function EntryLinks({ entries, detailed = false }: { entries: Entry[]; detailed?: boolean }) {
   return <div className={`dev-cube-links${detailed ? ' dev-cube-links-detailed' : ''}`}>
-    {entries.map(entry => <Link key={entry.href} href={entry.href} prefetch={false} className="dev-cube-link">
+    {entries.map(entry => <Tooltip key={entry.href} content={tr(entry.description)}>{tip => <Link {...tip} href={entry.href} prefetch={false} className="dev-cube-link">
         <span><span className="dev-cube-link-name">{tr(entry.name)}</span>
           {detailed && <span className="dev-cube-link-description">{tr(entry.description)}</span>}
         </span>
         <ArrowUpRight size={16} aria-hidden="true" />
-      </Link>)}
+      </Link>}</Tooltip>)}
   </div>;
 }
 
@@ -117,7 +118,7 @@ export default function DevIndexPage() {
   const [dragging, setDragging] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const rotorRef = useRef<HTMLDivElement>(null);
-  const dragButtonRef = useRef<HTMLButtonElement>(null);
+  const sceneRef = useRef<HTMLElement>(null);
   const pointer = useRef<CubeDrag | null>(null);
   const frame = useRef(0);
   const suppressClick = useRef(false);
@@ -131,8 +132,8 @@ export default function DevIndexPage() {
     const drag = pointer.current;
     pointer.current = null;
     setDragging(false);
-    if (drag && dragButtonRef.current?.hasPointerCapture(drag.id)) {
-      dragButtonRef.current.releasePointerCapture(drag.id);
+    if (drag && sceneRef.current?.hasPointerCapture(drag.id)) {
+      sceneRef.current.releasePointerCapture(drag.id);
     }
     return drag;
   };
@@ -143,32 +144,36 @@ export default function DevIndexPage() {
     setRotation(rotationFromPose(CUBE_POSES[face]));
   };
 
-  const finishDrag = (event: PointerEvent<HTMLButtonElement>) => {
+  const finishDrag = (event: PointerEvent<HTMLElement>) => {
     const drag = pointer.current;
     if (!drag || drag.id !== event.pointerId) return;
     suppressClick.current = drag.moved;
-    selectFace(nearestCubeFace(drag.current, active.id));
+    if (drag.moved) selectFace(nearestCubeFace(drag.current, active.id));
+    else stopPointer();
   };
 
-  const beginDrag = (event: PointerEvent<HTMLButtonElement>) => {
+  const beginDrag = (event: PointerEvent<HTMLElement>) => {
     if (event.button !== 0 || !event.isPrimary || expanded || pointer.current) return;
+    if (!(event.target instanceof Element) || !event.target.closest('.dev-cube-rotor, .dev-cube-open')) return;
     // Catch an in-flight snap at its displayed pose rather than jumping to its
     // target when the user grabs the cube again before the transition finishes.
     const matrix = new DOMMatrixReadOnly(getComputedStyle(rotorRef.current!).transform);
     const start = rotationFromMatrix(matrix);
     suppressClick.current = false;
     pointer.current = { id: event.pointerId, startX: event.clientX, startY: event.clientY, start, current: start, moved: false };
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setRotation(start);
-    setDragging(true);
+
   };
 
-  const moveDrag = (event: PointerEvent<HTMLButtonElement>) => {
+  const moveDrag = (event: PointerEvent<HTMLElement>) => {
     const drag = pointer.current;
     if (!drag || drag.id !== event.pointerId) return;
     const dx = event.clientX - drag.startX;
     const dy = event.clientY - drag.startY;
-    drag.moved ||= Math.hypot(dx, dy) > 5;
+    if (!drag.moved && Math.hypot(dx, dy) > 5) {
+      drag.moved = true;
+      event.currentTarget.setPointerCapture(event.pointerId);
+      setDragging(true);
+    }
     if (!drag.moved) return;
     drag.current = dragCubeRotation(drag.start, dx, dy);
     if (!frame.current) frame.current = requestAnimationFrame(() => {
@@ -188,7 +193,6 @@ export default function DevIndexPage() {
   return (
     <div className="code-index" data-expanded={expanded} data-dragging={dragging} style={{
       '--cube-rotation': cubeRotationTransform(rotation),
-      '--cube-entry-count': active.entries.length,
     } as CSSProperties}>
       <div className="code-index-wrap">
         <header className="code-index-head">
@@ -208,35 +212,48 @@ export default function DevIndexPage() {
           </div>
         </header>
 
-        <main id="dev-cube-scene" className="dev-cube-scene" aria-label={t('开发导航', 'Developer navigation')}>
+        <main ref={sceneRef} id="dev-cube-scene" className="dev-cube-scene" aria-label={t('开发导航', 'Developer navigation')}
+          onPointerDown={beginDrag} onPointerMove={moveDrag} onPointerUp={finishDrag}
+          onPointerCancel={finishDrag} onLostPointerCapture={finishDrag}
+          onDragStart={event => event.preventDefault()}
+          onClickCapture={event => {
+            if (suppressClick.current && event.detail !== 0) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+            suppressClick.current = false;
+          }}>
           <div className="dev-cube-rotor" ref={rotorRef}>
             {FACES.map((face, index) => (
               <section key={face.id} className="dev-cube-face" data-face={face.id}
-                data-active={index === selected} inert={!expanded} aria-hidden={!expanded}
+                data-active={index === selected}
                 aria-labelledby={`dev-face-${face.id}`}>
                 <div className="dev-cube-surface" data-site-surface="panel">
-                  <div className="dev-cube-stickers" aria-hidden="true">
+                  <div className="dev-cube-stickers" inert={expanded} aria-hidden={expanded}>
                     {Array.from({ length: 9 }, (_, cell) => {
                       const slot = STICKER_SLOTS[index].indexOf(cell);
-                      const entry = slot >= 0 && slot < Math.min(face.entries.length, 4)
+                      const entry = slot >= 0 && slot < face.entries.length
                         ? face.entries[(slot + index) % face.entries.length] : null;
+                      if (entry) return <Tooltip key={cell} content={`${tr(entry.name)} · ${tr(entry.description)}`} disabled={dragging || expanded}>
+                        {tip => <Link {...tip} href={entry.href} className="dev-cube-sticker" draggable={false}
+                          tabIndex={index === selected && !expanded ? 0 : -1}>
+                          <span className="dev-cube-sticker-label">{tr(entry.name)}</span>
+                        </Link>}
+                      </Tooltip>;
                       return <span key={cell}>
                         {cell === 4 && <face.icon className="dev-cube-category-icon" strokeWidth={1.25} aria-hidden="true" />}
-                        {entry && <span className="dev-cube-sticker-label">{tr(entry.name)}</span>}
                       </span>;
                     })}
                   </div>
                   <span className="dev-cube-index" aria-hidden="true">0{index + 1}</span>
                   <h2 id={`dev-face-${face.id}`}>{tr(face.name)}</h2>
-                  <div className="dev-cube-face-links"><EntryLinks entries={face.entries} /></div>
+                  <div className="dev-cube-face-links" inert={!expanded} aria-hidden={!expanded}><EntryLinks entries={face.entries} detailed /></div>
                 </div>
               </section>
             ))}
           </div>
 
-          <button ref={dragButtonRef} type="button" className="dev-cube-open"
-            onPointerDown={beginDrag} onPointerMove={moveDrag} onPointerUp={finishDrag}
-            onPointerCancel={finishDrag} onLostPointerCapture={finishDrag}
+          <button type="button" className="dev-cube-open"
             onClick={event => {
               if (event.detail === 0 || !suppressClick.current) toggle();
               suppressClick.current = false;
@@ -257,16 +274,10 @@ export default function DevIndexPage() {
 
           <nav className="dev-cube-categories" aria-label={t('分类', 'Categories')} inert={expanded} aria-hidden={expanded}>
             {FACES.map((face, index) => <button className="dev-cube-category" type="button" key={face.id}
-              aria-pressed={selected === index} aria-controls="dev-cube-focus"
+              aria-pressed={selected === index} aria-controls="dev-cube-scene"
               onClick={() => selectFace(face.id)}>{tr(face.name)}</button>)}
           </nav>
 
-          <div id="dev-cube-focus" className="dev-cube-focus" inert={expanded} aria-hidden={expanded}>
-            <h2 className="dev-cube-focus-title">{tr(active.name)}</h2>
-            <div className="dev-cube-focus-content" aria-live="polite">
-              <EntryLinks entries={active.entries} detailed />
-            </div>
-          </div>
         </main>
         <footer className="code-index-foot" aria-hidden="true">CUBEROOT <span>/</span> DEV</footer>
       </div>
