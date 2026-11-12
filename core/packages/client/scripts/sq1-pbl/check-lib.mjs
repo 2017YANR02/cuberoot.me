@@ -1,3 +1,4 @@
+import { sourceMarker } from '../../../../scripts/drift-issue.mts';
 const CATEGORY_LABELS = {
   content: '内容',
   presentation: '结构/格式',
@@ -44,6 +45,7 @@ export function classifyDrift(baseline, live) {
 export function renderReport(baseline, live, result, docUrl) {
   const lines = [
     '# SQ1 PBL 表格漂移检测',
+    sourceMarker({ content: live.digests?.content, presentation: live.digests?.presentation, invariants: live.invariants }),
     '',
     `- 数据源: ${docUrl}`,
     `- 基线来源: ${baseline.source ?? '(unknown)'}`,

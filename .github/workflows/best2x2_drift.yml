@@ -11,6 +11,10 @@ permissions:
   contents: read
   issues: write
 
+concurrency:
+  group: best2x2-drift
+  cancel-in-progress: false
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -25,6 +29,9 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.node-version'
+
+      - name: Verify issue deduplication
+        run: node --test core/scripts/drift-issue.test.mts
 
       - name: Resolve workspace layout
         id: workspace
@@ -54,13 +61,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh label create best2x2-drift --color C15F3C --description "Best 2x2 Algs 表格出现更新" --force || true
-          existing=$(gh issue list --label best2x2-drift --state open --json number --jq '.[0].number')
-          if [ -n "$existing" ]; then
-            gh issue comment "$existing" --body-file "$RUNNER_TEMP/best2x2-drift-report.md"
-          else
-            gh issue create \
-              --label best2x2-drift \
-              --assignee "${{ github.repository_owner }}" \
-              --title "Best 2x2 Algs 表格更新 ($(date -u +%Y-%m-%d))" \
-              --body-file "$RUNNER_TEMP/best2x2-drift-report.md"
-          fi
+          node scripts/drift-issue.mts best2x2-drift 'Best 2x2 Algs 表格更新' "$RUNNER_TEMP/best2x2-drift-report.md"

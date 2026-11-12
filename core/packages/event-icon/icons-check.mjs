@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { sourceMarker } from '../../scripts/drift-issue.mts';
 // cubing/icons upstream drift detector.
 //
 // The site vendors https://github.com/cubing/icons src/svg verbatim into
@@ -131,6 +132,7 @@ function main(upstream, local) {
     lines.push('4. 「上游已删除」的条目默认保留不动(站内可能还在用),除非确认无引用。');
     lines.push('');
   }
+  lines.push(sourceMarker([...upstream].sort(([a], [b]) => a.localeCompare(b))));
   const report = lines.join('\n');
   console.log(report);
   if (REPORT_PATH) fs.writeFileSync(REPORT_PATH, report);

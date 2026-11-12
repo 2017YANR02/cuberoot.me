@@ -16,6 +16,10 @@ permissions:
   issues: write
   pull-requests: write
 
+concurrency:
+  group: regulation-drift
+  cancel-in-progress: false
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -30,6 +34,9 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.node-version'
+
+      - name: Verify issue deduplication
+        run: node --test core/scripts/drift-issue.test.mts
 
       - name: Resolve workspace layout
         id: workspace
@@ -83,14 +90,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh label create regulation-drift --color B60205 --description "WCA 规则官方源出现变化" --force || true
-          existing=$(gh issue list --label regulation-drift --state open --json number --jq '.[0].number')
-          if [ -n "$existing" ]; then
-            gh issue comment "$existing" --body-file "$RUNNER_TEMP/reg-drift-report.md"
-            echo "commented drift report on #$existing"
-          else
-            gh issue create \
-              --label regulation-drift \
-              --assignee "${{ github.repository_owner }}" \
-              --title "WCA 规则更新检测 ($(date -u +%Y-%m-%d))" \
-              --body-file "$RUNNER_TEMP/reg-drift-report.md"
-          fi
+          node scripts/drift-issue.mts regulation-drift 'WCA 规则更新检测' "$RUNNER_TEMP/reg-drift-report.md"

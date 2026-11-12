@@ -15,6 +15,10 @@ permissions:
   contents: read
   issues: write
 
+concurrency:
+  group: icons-drift
+  cancel-in-progress: false
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -29,6 +33,9 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.node-version'
+
+      - name: Verify issue deduplication
+        run: node --test core/scripts/drift-issue.test.mts
 
       - name: Resolve workspace layout
         id: workspace
@@ -54,7 +61,7 @@ jobs:
           echo "::error::icons-check failed (exit 1) — 上游 API 或本地 svg 目录异常"
           exit 1
 
-      # 漂移(exit 3):开/更新 issue。已有 open issue 时追加评论,不重复开新的。
+      # 漂移(exit 3):开/更新 issue。同一来源版本保持静默，新版本复用原工单。
       - name: Open / update drift issue
         if: steps.check.outputs.code == '3'
         working-directory: core
@@ -62,14 +69,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh label create icons-drift --color 1D76DB --description "上游 cubing/icons 出现新增/变更 SVG" --force || true
-          existing=$(gh issue list --label icons-drift --state open --json number --jq '.[0].number')
-          if [ -n "$existing" ]; then
-            gh issue comment "$existing" --body-file "$RUNNER_TEMP/icons-drift-report.md"
-            echo "commented drift report on #$existing"
-          else
-            gh issue create \
-              --label icons-drift \
-              --assignee "${{ github.repository_owner }}" \
-              --title "cubing/icons 上游图标更新 ($(date -u +%Y-%m-%d))" \
-              --body-file "$RUNNER_TEMP/icons-drift-report.md"
-          fi
+          node scripts/drift-issue.mts icons-drift 'cubing/icons 上游图标更新' "$RUNNER_TEMP/icons-drift-report.md"

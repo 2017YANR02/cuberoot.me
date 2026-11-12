@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { sourceMarker } from '../../../scripts/drift-issue.mts';
 // Best 2x2 Algs Google Sheet drift detector (zero dependencies).
 //
 // Exit: 0 = in sync, 3 = changed, 2 = no baseline, 1 = fetch/parse error.
@@ -91,6 +92,7 @@ function report(live, snap) {
   }
   if (added.length) lines.push(`## 新增表页\n\n${added.map((s) => `- ${s}`).join('\n')}\n`);
   if (removed.length) lines.push(`## 删除表页\n\n${removed.map((s) => `- ${s}`).join('\n')}\n`);
+  lines.push(sourceMarker([...live].map(([name, item]) => [name, item.sha]).sort(([a], [b]) => a.localeCompare(b))));
   lines.push('## 更新步骤', '');
   lines.push('1. 在本地重新抓取并运行 `scripts/best2x2/report.mts`，先处理新出现的异常分支。');
   lines.push('2. 运行 `build-import.mts` 与 SQL 生成器；已经部署过 0104 时必须生成新的迁移编号，不能改旧迁移。');

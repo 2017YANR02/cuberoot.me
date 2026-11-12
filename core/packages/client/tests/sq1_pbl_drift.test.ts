@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { classifyDrift, renderReport } from '../scripts/sq1-pbl/check-lib.mjs';
+import { reportVersion } from '../../../scripts/drift-issue.mts';
 
 type Snapshot = {
   schemaVersion: number;
@@ -31,6 +32,13 @@ function changed(category: 'content' | 'presentation' | 'editorial'): Snapshot {
 }
 
 describe('SQ1 PBL drift contract', () => {
+  it('keeps notification identity stable across XLSX packaging and editorial changes', () => {
+    const live = changed('content');
+    const version = (value: Snapshot) => reportVersion(renderReport(snapshot, value, classifyDrift(snapshot, value), 'https://example.test/sheet'));
+    const repackaged = { ...live, rawSha256: 'different-download', fetchedAt: 'later', digests: { ...live.digests, editorial: 'new comment' } };
+    expect(version(repackaged)).toBe(version(live));
+    expect(version({ ...live, digests: { ...live.digests, content: 'another real revision' } })).not.toBe(version(live));
+  });
   it('locks the complete current workbook invariants', () => {
     expect(snapshot.schemaVersion).toBe(1);
     expect(snapshot.source).toContain('/export?format=xlsx');

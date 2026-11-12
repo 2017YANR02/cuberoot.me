@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { sourceMarker } from '../../../scripts/drift-issue.mts';
 // WCA Regulations drift detector.
 //
 // The official regs are a machine-readable markdown doc whose articles are
@@ -163,6 +164,7 @@ function buildReport(live, snap) {
     return { text: L.join('\n'), drift: false };
   }
 
+  L.push(sourceMarker({ version: live.version, articles: [...live.articles].map(([id, item]) => [id, item.sha]).sort(([a], [b]) => a.localeCompare(b)) }));
   if (changed.length) {
     L.push(`## 改动章节 (${changed.length})`, '');
     const snapMd = fs.existsSync(SNAP_MD) ? fs.readFileSync(SNAP_MD, 'utf8') : '';
