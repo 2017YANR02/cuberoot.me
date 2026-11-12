@@ -275,7 +275,7 @@ export default function TutorialPage() {
         <AlgCard href="/tutorial/f2l" prefetch={false}
           thumb={<SimCubeView moves={LBL_COVER_MOVES} stickering="F2LPair" className="tutorial-lbl-thumb" ariaLabel={tr({ zh: '底十字和右前角棱对', en: 'Bottom cross and front-right pair' })} />}
           title={<T zh="F2L" en="F2L" />}
-          sub={<T zh="从四种三步标态开始" en="Start with four three-move cases" />} />
+          sub={<T zh="从四种三步基态开始" en="Start with four three-move cases" />} />
       </div>}
     </main>
   );

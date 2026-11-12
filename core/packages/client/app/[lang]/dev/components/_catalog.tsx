@@ -2270,7 +2270,7 @@ export const CATALOG: ComponentEntry[] = [
     name: 'F2lSolutionGroups',
     import: "import F2lSolutionGroups from '@/components/F2lSolutionGroups';",
     category: 'more',
-    zh: '按实际 F2L 状态把完整解法收纳为前段与标态入槽引用；选择后播放、复制完整公式，保留原始编辑行。',
+    zh: '按实际 F2L 状态把完整解法收纳为前段与基态入槽引用；选择后播放、复制完整公式，保留原始编辑行。',
     en: 'Groups full F2L solutions into state-verified prefixes and live insertion-library references; plays/copies the full composition and preserves original editor rows.',
   },
   {

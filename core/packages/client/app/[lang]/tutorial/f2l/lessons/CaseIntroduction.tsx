@@ -197,9 +197,9 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
     handle.playMove?.(index);
   };
   return <div className="f2l-study-layout">
-    <SectionNavigation label={tr({ zh: '三步标态', en: 'Three-move cases' })}>
+    <SectionNavigation label={tr({ zh: '三步基态', en: 'Three-move cases' })}>
       <div className="f2l-section-list">
-        <p className="f2l-section-label" aria-current="true"><T zh="三步标态" en="Three-move cases" /></p>
+        <p className="f2l-section-label" aria-current="true"><T zh="三步基态" en="Three-move cases" /></p>
       </div>
     </SectionNavigation>
     <div className="f2l-study-main"><div ref={root} className="f2l-case-introduction" data-phase={phase}>
@@ -222,7 +222,7 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
         onClick={() => { setSelected(index); setStep(0); actualStep.current = 0; setManualStage(false); setControlsVisible(false); setReferenceFading(false); setAdjustment(null); setAlignmentComplete(false); setAlignmentStarted(false); setPairVisibility(1); setPhase('transition'); }} />
       <span className="f2l-case-name">{item.name}</span>
     </div>)}</div>
-    <p className="f2l-case-prompt"><T zh="点击选择一个三步标态，开始学习" en="Choose a three-move case to start learning" /></p>
+    <p className="f2l-case-prompt"><T zh="点击选择一个三步基态，开始学习" en="Choose a three-move case to start learning" /></p>
     {phase === 'learn' && !controlsVisible && <div className="tutorial-cube-bubble f2l-case-alignment-status" data-site-surface="panel" data-fading={referenceFading} role="status">
       <span className="f2l-case-alignment-signal" aria-hidden="true"><TrainingFeedbackOverlay kind={alignmentComplete ? 'correct' : 'wrong'} correctLabel="" wrongLabel="" /></span>
       {alignmentComplete ? <T zh="顶层已对齐" en="Top layer aligned" /> : <T zh="顶层朝向需要调整" en="Adjust the top layer" />}

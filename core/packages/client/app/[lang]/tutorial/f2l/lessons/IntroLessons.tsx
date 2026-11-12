@@ -95,8 +95,8 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
       </div>}
 
       {stepId === 'lesson-2' && <div className="f2l-study-layout">
-        <SectionNavigation label={tr({ zh: '认识四种三步标态', en: 'Meet the four three-move cases' })}>
-          <div className="f2l-section-list"><p className="f2l-section-label" aria-current="true"><T zh="认识四种三步标态" en="Meet the four three-move cases" /></p></div>
+        <SectionNavigation label={tr({ zh: '认识四种三步基态', en: 'Meet the four three-move cases' })}>
+          <div className="f2l-section-list"><p className="f2l-section-label" aria-current="true"><T zh="认识四种三步基态" en="Meet the four three-move cases" /></p></div>
         </SectionNavigation>
         <div className="f2l-study-main">
 

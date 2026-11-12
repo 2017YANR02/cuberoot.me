@@ -35,7 +35,7 @@ function ThreeMoveFilm({ lesson, orientation, pauseBetween, alignment }: {
       : { zh: `图案转到了另一个位置，但它仍然是 ${lesson.name}。`, en: `The pattern has moved around the top, but it is still ${lesson.name}.` })
     : tr(lesson.stageTitles[current]);
   return <div className="f2l-lesson f2l-study-lesson">
-    <section className="f2l-demo" aria-label={tr({ zh: '三步标态短片', en: 'Three-move walkthrough' })}>
+    <section className="f2l-demo" aria-label={tr({ zh: '三步基态短片', en: 'Three-move walkthrough' })}>
       <div className="f2l-cube"><AlgPlayer ref={player} puzzle="3x3" engine="sim" set="f2l-tutorial"
         setup={setup} alg={alg} orientation={orientation} fillPane moveDurationMs={1100}
         onStepChange={setStep} pauseAfterSteps={pauseBetween ? boundaries : NO_STOPS} sectionPauseMs={2000} /></div>
@@ -130,7 +130,7 @@ export default function ThreeMoveLesson({ orientation, pauseBetween, caseId, onC
   };
   return <div className="f2l-study-layout f2l-merged-lesson">
     <SectionNavigation label={lesson.name}>
-      <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择三步标态', en: 'Choose a three-move case' })}>
+      <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择三步基态', en: 'Choose a three-move case' })}>
         {ORDERED_BASIC_CASES.map((item, index) => <button type="button" className="f2l-section-button" key={item.id}
           aria-pressed={item.id === lesson.id} onClick={() => onCaseChange(item.id)}>
           <span className="f2l-section-label"><VisualCube local view="iso" size={48} faceletColors={diagrams[index]} alt="" /><span>{item.name}</span></span>

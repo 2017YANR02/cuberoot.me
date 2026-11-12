@@ -196,7 +196,7 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
   const emphasis = beat?.highlight ?? scene.highlight;
   const pulse = beat ? beat.pulse : true;
   const highlights = scene.flashPair ? noHighlights : !pulse || reducedMotion || !playing || Math.floor(elapsed / 900) % 2 === 0 ? emphasis : noHighlights;
-  return <section className="f2l-concept-video" data-continuous={continuous} aria-label={tr({ zh: '标态与非标概念演示', en: 'Standard and non-standard cases: concept demonstration' })}>
+  return <section className="f2l-concept-video" data-continuous={continuous} aria-label={tr({ zh: '基态与非标概念演示', en: 'Standard and non-standard cases: concept demonstration' })}>
     <div className="f2l-concept-count">{index + 1} / {scenes.length}</div>
     <div className="f2l-concept-scene">
       <div className="f2l-cube f2l-concept-cube" data-visible={(ready || continuous) && !fadingOut}><AlgPlayer key={`${orientation}:${generation}`} ref={player} puzzle="3x3" engine="sim" set="f2l-tutorial"
@@ -209,7 +209,7 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
           {scene.result ? <>
             <div className="f2l-concept-signal" aria-hidden="true"><TrainingFeedbackOverlay
               kind={scene.result === 'standard' ? 'correct' : 'wrong'} correctLabel="" wrongLabel="" /></div>
-            {scene.result === 'standard' ? <T zh="标态" en="Standard" /> : <T zh="非标态" en="Non-standard" />}
+            {scene.result === 'standard' ? <T zh="基态" en="Standard" /> : <T zh="非基态" en="Non-standard" />}
           </> : beat?.label && tr(beat.label)}
         </div>}
       </div>

@@ -54,7 +54,7 @@ export default function F2lSolutionGroups({ cases, entries, setup, orientation, 
       return <details key={group.key} className="f2l-solution-group"
         onToggle={event => { if (event.currentTarget.open) setActive(group.key); }}>
         <MoreToggle as="summary"><span className="f2l-solution-prefix">{group.prefix}</span>
-          <span className="f2l-solution-target">→ {tr({ zh: '标态', en: 'Standard' })} {group.standardName}</span>
+          <span className="f2l-solution-target">→ {tr({ zh: '基态', en: 'Free' })} {group.standardName}</span>
         </MoreToggle>
         <div className="f2l-solution-choices">
           <label><span>{tr({ zh: '入槽方法', en: 'Insertion' })}</span>
@@ -62,12 +62,7 @@ export default function F2lSolutionGroups({ cases, entries, setup, orientation, 
               setSelection(previous => ({ ...previous, [group.key]: event.target.value }));
               setActive(group.key);
             }}>
-              <optgroup label={tr({ zh: '标态公式库', en: 'Insertion library' })}>
-                {group.options.filter(o => o.source === 'standard').map(o => <option key={o.fullAlg} value={o.fullAlg}>{showAlg(o.alg)}</option>)}
-              </optgroup>
-              {group.options.some(o => o.source === 'original') && <optgroup label={tr({ zh: '其他原有入槽法', en: 'Other original insertions' })}>
-                {group.options.filter(o => o.source === 'original').map(o => <option key={o.fullAlg} value={o.fullAlg}>{showAlg(o.alg)}</option>)}
-              </optgroup>}
+              {group.options.map(o => <option key={o.fullAlg} value={o.fullAlg}>{showAlg(o.alg)}</option>)}
             </select>
           </label>
           <div className="f2l-solution-composed">
@@ -82,7 +77,7 @@ export default function F2lSolutionGroups({ cases, entries, setup, orientation, 
             }</Tooltip>
           </div>
           <Link href={algCaseDetailHref('3x3', 'f2l', slugs.byId.get(group.standardId!) ?? group.standardName.toLowerCase())} prefetch={false} className="f2l-solution-source">
-            {tr({ zh: '查看标态公式库', en: 'Open insertion library' })} · {group.standardName}
+            {tr({ zh: '查看基态公式库', en: 'Open free pair library' })} · {group.standardName}
           </Link>
         </div>
       </details>;

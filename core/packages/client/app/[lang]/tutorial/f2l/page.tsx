@@ -104,7 +104,7 @@ export default function F2lTutorial() {
         <h1><T zh="F2L 教程" en="F2L tutorial" /></h1>
       </div>
     </header>
-    <JsonLd data={{ '@context': 'https://schema.org', '@type': 'Article', headline: tr({ zh: 'F2L 教程', en: 'F2L tutorial' }), description: tr({ zh: '从认识三步标态到顶面调整，逐步学习右前槽的棱角还原。', en: 'Recognize three-move cases, align the top layer and learn front-right pair insertions.' }) }} />
+    <JsonLd data={{ '@context': 'https://schema.org', '@type': 'Article', headline: tr({ zh: 'F2L 教程', en: 'F2L tutorial' }), description: tr({ zh: '从认识三步基态到顶面调整，逐步学习右前槽的棱角还原。', en: 'Recognize three-move cases, align the top layer and learn front-right pair insertions.' }) }} />
     {!isPractice && <TutorialToolbar stepId={stepId} onChapterChange={navigate} />}
     <article className="f2l-chapter">
       <StudyNavigation.Provider value={{

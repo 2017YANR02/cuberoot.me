@@ -42,7 +42,7 @@ export default function PracticeLesson({ orientation, pauseBetween, onNextChapte
   return <div className="f2l-study-layout">
         <SectionNavigation label={lesson.name}>
           <div className="f2l-section-group">
-            <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择三步标态', en: 'Choose a three-move case' })}>
+            <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择三步基态', en: 'Choose a three-move case' })}>
               {ORDERED_BASIC_CASES.map((item, index) => <button className="f2l-section-button" key={item.id} type="button"
                 aria-pressed={lesson.id === item.id} onClick={() => onCaseChange(item.id)}>
                 <span className="f2l-section-label"><VisualCube view="iso" size={36} faceletColors={diagrams[index]} alt="" /><span>{item.name}</span></span>
@@ -52,7 +52,7 @@ export default function PracticeLesson({ orientation, pauseBetween, onNextChapte
         </SectionNavigation>
         <div className="f2l-study-main">
           <div className="f2l-lesson f2l-study-lesson">
-            <section className="f2l-demo" aria-label={tr({ zh: '三步标态练习演示', en: 'Three-move case practice demonstration' })}>
+            <section className="f2l-demo" aria-label={tr({ zh: '三步基态练习演示', en: 'Three-move case practice demonstration' })}>
               <div className="f2l-cube"><AlgPlayer key={orientation} ref={player} puzzle="3x3" set="f2l-overview" engine="sim"
                 setup={practice.setup} alg={practice.alg} orientation={orientation} fillPane moveDurationMs={850}
                 onStepChange={setPlaybackStep} sectionPauseMs={2000} pauseAfterSteps={pauseBetween ? practice.boundaries : NO_STOPS} /></div>
