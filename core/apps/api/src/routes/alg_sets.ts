@@ -17,6 +17,7 @@ import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js'
 import { syncMirrorAndLog, syncMirrorForCase } from '../utils/alg_mirror.js';
 import { is3x3TopLayerSet } from '@cuberoot/shared';
 import { sanitizeAlgHtmlFields } from '@cuberoot/shared/alg-html';
+import type { AlgEntry } from '@cuberoot/shared/alg';
 import {
   canonicalize3x3WideMoves, cubeOnly, findIllegalGluedCubeMoves, hasBalancedGrouping,
   startsWithYRotation,
@@ -388,7 +389,12 @@ algSetsRoutes.put('/alg/sets/:puzzle/:set/cases/:id', async (c) => {
   if (v.error) return c.json({ error: v.error }, 400);
 
   // 见 POST 注释:对象直接传给 ?::jsonb,driver 序列化一次就够了
+  let previousAlgs: AlgEntry[][] | undefined;
   const updated = await withAlgWrite(puzzle, set, async query => {
+    const before = await query<{ algs: AlgEntry[][] }>(
+      'SELECT algs FROM alg_cases WHERE id = ? AND puzzle = ? AND set_slug = ? FOR UPDATE', [id, puzzle, set],
+    );
+    previousAlgs = before[0]?.algs;
     await assertNoExistingAlg(query, puzzle, set, body.caseName!.trim(),
       (body.algs as Array<Array<{ alg: string }>>).flat().map(e => e.alg), { standardWrite: true });
     return query<AlgCaseRow>(
@@ -410,8 +416,9 @@ algSetsRoutes.put('/alg/sets/:puzzle/:set/cases/:id', async (c) => {
   if (updated.length === 0) return c.json({ error: 'Not found' }, 404);
   // 公式改了 → 伙伴那边的自动镜像份重算。case 内拖拽重排走的也是这条 PUT,
   // 所以 §5.5 的「排序传播」不需要单独端点:重算本来就按源顺序排。
-  await syncMirrorAndLog(puzzle, set, id);
-  return c.json(caseRowToJson(updated[0]));
+  await syncMirrorAndLog(puzzle, set, id, previousAlgs);
+  const refreshed = await query<AlgCaseRow>('SELECT * FROM alg_cases WHERE id = ? AND puzzle = ? AND set_slug = ?', [id, puzzle, set]);
+  return c.json(caseRowToJson(refreshed[0] ?? updated[0]));
 });
 
 // PUT /v1/alg/sets/:puzzle/:set/reorder — admin 重排 case 顺序

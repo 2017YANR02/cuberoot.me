@@ -27,6 +27,7 @@
  */
 import {
   flattenAlg,
+  MOVE_RE,
   mirrorFamily,
   mirrorKeepsAmount,
   relabelYMoveString,
@@ -36,6 +37,7 @@ import {
   type ParsedMove,
 } from './alg_notation';
 import type { AlgEntry } from './alg';
+import { algHtmlRuns, algHtmlText, escapeAlgText, sanitizeAlgHtml } from './alg-html';
 
 export type { AlgEntry };
 export { relabelYMoveString };
@@ -173,6 +175,63 @@ function canonicalMirrorDisplayAlg(alg: string): string {
   return canonicalNnnAlg(moves.map(renderMove).join(' '));
 }
 
+/** Locate written moves using the shared grammar. Repeated groups, comments and
+ * explicit grip/FTN notation need their own semantic mapping; never guess it. */
+function annotationMoves(text: string): Array<{ raw: string; start: number; end: number }> | null {
+  const moves: Array<{ raw: string; start: number; end: number }> = [];
+  for (let i = 0; i < text.length;) {
+    if (/[\s()]/.test(text[i])) { i++; continue; }
+    const match = MOVE_RE.exec(text.slice(i));
+    if (!match) return null;
+    moves.push({ raw: match[0], start: i, end: i + match[0].length });
+    i += match[0].length;
+  }
+  // A finishing y rotation is hidden by the library and is not a finger move.
+  while (moves.length && /^y(?:\d+)?'?$/.test(moves.at(-1)!.raw)) moves.pop();
+  return moves;
+}
+
+/** LR keeps the finger role while exchanging hands. Place source annotations on
+ * corresponding target moves, preserving the target's grouping and finishing y.
+ * null means unsupported/mismatched notation; undefined explicitly clears marks. */
+export function lrMirrorAlgHtml(source: AlgEntry, targetAlg: string): string | undefined | null {
+  const sourceText = source.algHtml ? algHtmlText(source.algHtml) : source.alg;
+  const from = annotationMoves(sourceText), original = annotationMoves(source.alg), to = annotationMoves(targetAlg);
+  if (!from || !original || !to || from.length !== to.length || from.length !== original.length) return null;
+  if (from.some((move, i) => move.raw !== original[i].raw
+    || canonicalNnnAlg(applyMirrorGen(move.raw, 'lr')) !== canonicalNnnAlg(to[i].raw))) return null;
+  if (!source.algHtml) return undefined;
+  const runs = algHtmlRuns(source.algHtml);
+  let html = '', offset = 0;
+  to.forEach((move, i) => {
+    const tags = [...new Set(runs.filter(run => run.start < from[i].end && run.end > from[i].start).flatMap(run => run.tags))];
+    html += escapeAlgText(targetAlg.slice(offset, move.start));
+    html += tags.join('') + escapeAlgText(move.raw) + tags.slice().reverse().map(tag => `</${tag.match(/^<([a-z]+)/)![1]}>`).join('');
+    offset = move.end;
+  });
+  html += escapeAlgText(targetAlg.slice(offset));
+  return /<(u|s|em|strong|sub|sup)\b/.test(html) ? sanitizeAlgHtml(html) : undefined;
+}
+
+/** Only an actual annotation edit overrides an existing independently curated
+ * counterpart. Passing the pre-save snapshot also makes removal bidirectional. */
+function syncEditedLrAnnotations(self: MirrorPairCase, partner: MirrorPairCase, previous: AlgEntry[][], notes: string[]) {
+  self.algs.forEach((view, ori) => view.forEach(entry => {
+    const prior = previous[ori]?.find(old => old.alg === entry.alg);
+    if ((prior?.algHtml ?? '') === (entry.algHtml ?? '')) return;
+    let mirrored: string;
+    try { mirrored = applyMirrorGen(entry.alg, 'lr'); }
+    catch { notes.push(`case ${self.id} ${VIEWS[ori]} 的指法记号无法无损映射到 LR 镜像`); return; }
+    const target = partner.algs[MIRROR_VIEW.lr[ori]]?.find(other =>
+      canonicalMirrorDisplayAlg(other.alg) === canonicalMirrorDisplayAlg(mirrored));
+    if (!target) return;
+    const html = lrMirrorAlgHtml(entry, target.alg);
+    if (html === null) { notes.push(`case ${self.id} ${VIEWS[ori]} 的指法记号无法无损映射到 LR 镜像`); return; }
+    if (html) target.algHtml = html;
+    else delete target.algHtml;
+  }));
+}
+
 // ---------------------------------------------------------------- 成对重算
 
 export interface MirrorPairCase {
@@ -212,9 +271,15 @@ export interface MirrorRegenResult {
 export function regenerateMirrorAlgs(
   self: MirrorPairCase,
   partner: MirrorPairCase | null,
+  previousSelfAlgs?: AlgEntry[][],
 ): MirrorRegenResult {
   const notes: string[] = [];
   const algsById = new Map<number, AlgEntry[][]>();
+  const clone = (c: MirrorPairCase): MirrorPairCase => ({ ...c, algs: c.algs.map(view => view.map(entry => ({ ...entry }))) });
+  const sameCase = partner?.id === self.id;
+  self = clone(self);
+  partner = sameCase ? self : partner ? clone(partner) : null;
+  if (partner && previousSelfAlgs) syncEditedLrAnnotations(self, partner, previousSelfAlgs, notes);
   const distinct = partner && partner.id !== self.id ? [self, partner] : [self];
 
   for (const c of distinct) {
@@ -251,8 +316,13 @@ export function regenerateMirrorAlgs(
         // 左右镜,只是末尾多一个页面会隐藏的 y'),自镜像 case 也常镜回同一条。
         if (!key || list.some(e => canonicalMirrorDisplayAlg(e.alg) === key)) continue;
         const made: AlgEntry = { alg, gen, src: { id: src.id, ori, i } };
+        if (gen === 'lr' && entry.algHtml) {
+          const html = lrMirrorAlgHtml(entry, alg);
+          if (html) made.algHtml = html;
+          else if (html === null) notes.push(`case ${src.id} ${VIEWS[ori]} 的指法记号无法无损映射到 LR 镜像`);
+        }
         // 步数镜像后不变;出处跟着源走(作者还是写源那条的人)。
-        // algHtml / ytId / tags 一律不带:指法标注、教学视频、单手标签讲的都是**那只手**的事。
+        // LR 的指法格式按对应动作映射；视频和单手标签仍只属于源条目。
         if (entry.stm != null) made.stm = entry.stm;
         if (entry.sqtm != null) made.sqtm = entry.sqtm;
         if (entry.source) made.source = entry.source;

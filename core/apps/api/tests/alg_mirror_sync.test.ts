@@ -204,3 +204,39 @@ describe('链不完整', () => {
    expect(texts(3846)[0]).toEqual(["F' S L' U L S' U F"]);
    expect((await syncMirrorForCase('3x3', 'f2l', 3846)).updated).toEqual([]);
  });
+
+describe('LR finger annotation edits', () => {
+  it('syncs the B+ FL middle-finger mark to an existing B- FR, and removes it again', async () => {
+    const before = views([], ["F U F'"]);
+    const after = structuredClone(before);
+    after[1][0].algHtml = "F <s>U</s> F'";
+    db.rows = [row(1, after, 2), row(2, [[{ alg: "F' U' F y'", source: 'curated', ytId: 'video' }], [], [], []], 1)];
+    expect((await syncMirrorForCase('3x3', 'f2l', 1, before)).notes).toEqual([]);
+    expect(db.rows[1].algs[0][0]).toEqual({ alg: "F' U' F y'", algHtml: "F' <s>U'</s> F y'", source: 'curated', ytId: 'video' });
+    const marked = structuredClone(db.rows[0].algs);
+    delete db.rows[0].algs[1][0].algHtml;
+    await syncMirrorForCase('3x3', 'f2l', 1, marked);
+    expect(db.rows[1].algs[0][0].algHtml).toBeUndefined();
+    expect(db.rows[1].algs[0][0].source).toBe('curated');
+  });
+
+  it('carries marks to generated LR rows and accepts edits made on that generated row', async () => {
+    db.rows = [row(1, [[{ alg: "F U F'", algHtml: "F <s>U</s> F'" }], [], [], []], 2), row(2, views([]), 1)];
+    await syncMirrorForCase('3x3', 'f2l', 1);
+    expect(db.rows[1].algs[1][0].algHtml).toBe("F' <s>U'</s> F");
+    const previous = structuredClone(db.rows[1].algs);
+    db.rows[1].algs[1][0].algHtml = "F' <em>U'</em> F";
+    await syncMirrorForCase('3x3', 'f2l', 2, previous);
+    expect(db.rows[0].algs[0][0].algHtml).toBe("F <em>U</em> F'");
+    expect(db.rows[1].algs[1][0].algHtml).toBe("F' <em>U'</em> F");
+    expect((await syncMirrorForCase('3x3', 'f2l', 2)).updated).toEqual([]);
+  });
+
+  it('preserves marked later moves when target alignment inserts or merges a starting AUF', async () => {
+    db.rows = [row(6081, [[{ alg: "F R U R' U' F'", algHtml: "F <s>R</s> U R' U' F'" }], [], [], []], 6081, 'zbls', "F U R U' R' F'")];
+    await syncMirrorForCase('3x3', 'zbls', 6081);
+    const mirrored = db.rows[0].algs[1].find(entry => entry.gen === 'lr')!;
+    expect(mirrored.alg).toBe("U F' L' U' L U F");
+    expect(mirrored.algHtml).toBe("U F' <s>L'</s> U' L U F");
+  });
+});
