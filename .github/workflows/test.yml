@@ -395,6 +395,7 @@ jobs:
             /solver/scripts/eo_stage_experiment_policy.mts
             /solver/scripts/stage_candidate_policy.mts
             /solver/scripts/stage_table_policy.mts
+            /solver/experiments/egg-solver/h10-optimize/policy.mts
             # Materialize the hook test workdir without checking out solver tables.
             /solver/experiments/cube48opt-rust/README.md
             /docs/double-zbll-trainer.md
@@ -673,6 +674,7 @@ jobs:
             /solver/scripts/eo_stage_experiment_policy.mts
             /solver/scripts/stage_candidate_policy.mts
             /solver/scripts/stage_table_policy.mts
+            /solver/experiments/egg-solver/h10-optimize/policy.mts
             # Materialize the hook test workdir without checking out solver tables.
             /solver/experiments/cube48opt-rust/README.md
             /docs/double-zbll-trainer.md
