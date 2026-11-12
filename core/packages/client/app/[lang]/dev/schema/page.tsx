@@ -595,6 +595,7 @@ const TABLES: Table[] = [
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 321, slug: 'diansheng_zhang_anyu', desc: { zh: '按维护者确认将张安宇（2012ZHAN08）加入点盛战队，保留其他队员归属。', en: 'Assign Anyu Zhang (2012ZHAN08) to DianSheng as confirmed by the maintainer, preserving all other memberships.' } },
+  { n: 322, slug: 'vault_merge_capacity', desc: { zh: '私密资料库单条密文上限提升至 4 MiB，支持合并原图附件。', en: 'Raise the private vault encrypted item limit to 4 MiB for merging original image attachments.' } },
   { n: 319, slug: 'yj_diansheng_teams', desc: { zh: '登记永骏与点盛品牌，尚不分配队员。', en: 'Register YongJun and DianSheng brands without assigning members.' } },
   { n: 320, slug: 'refresh_ops_commands', desc: { zh: '更新运维手册的打乱统计入口与本地 SQL 导入示例，保留后续人工编辑。', en: 'Refresh scramble-stat runbook commands and the local SQL import example, preserving later manual edits.' } },
   { n: 307, slug: 'qiyi_team_to_mfg', desc: { zh: '奇艺战队整体更名为 MFG，保留原编号及全部成员', en: 'Rename QiYi team to MFG, retaining its original ID and all members' } },

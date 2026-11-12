@@ -818,7 +818,7 @@ CREATE TABLE vault_items (
   owner_user_id BIGINT      NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
   ciphertext    TEXT        NOT NULL,
   iv            VARCHAR(32) NOT NULL,
-  byte_size     INTEGER     NOT NULL CHECK (byte_size > 0 AND byte_size <= 2097152),
+  byte_size     INTEGER     NOT NULL CHECK (byte_size > 0 AND byte_size <= 4194304),
   version       BIGINT      NOT NULL DEFAULT 1 CHECK (version > 0),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()

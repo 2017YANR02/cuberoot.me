@@ -41,6 +41,7 @@ describe('private vault crypto', () => {
     const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jG6kAAAAASUVORK5CYII=';
     const original = Uint8Array.from(atob(png), (char) => char.charCodeAt(0));
     entry.images = await readVaultImages([new File([original], '原图.png', { type: 'image/png' })]);
+    entry.mergedInto = { id: 'target', title: '合并后的条目' };
     expect(entry.images[0].dataUrl).toBe(`data:image/png;base64,${png}`);
     const withImages = await encryptVaultEntry(entry, [{ userId: 1, publicKey: owner.publicKey }]);
     expect(withImages.ciphertext).not.toContain(png);
@@ -70,5 +71,17 @@ describe('private vault crypto', () => {
     const images = await readVaultImages([new File([jpeg], 'large.jpg', { type: 'image/jpeg' })]);
     await expect(readVaultImages([new File([new Uint8Array([255, 216, 255])], 'more.jpg', { type: 'image/jpeg' })], images)).rejects.toThrow('vault_image_limit');
     await expect(encryptVaultEntry({ id: 'entry', title: 'test', fields: [], notes: '字'.repeat(500_000), images }, [{ userId: 1, publicKey: {} }])).rejects.toThrow('vault_entry_limit');
+  });
+
+  it('round-trips merged originals above the former 1 MiB image limit within the 4 MiB envelope', async () => {
+    const profile = await createVaultKeyProfile('123456');
+    const key = await unlockVaultPrivateKey('123456', profile.encryptedPrivateKey);
+    const jpeg = new Uint8Array(1_312_000); jpeg.set([255, 216, 255]);
+    const images = await readVaultImages([new File([jpeg], 'merged-originals.jpg', { type: 'image/jpeg' })]);
+    const entry: VaultEntry = { id: 'merged', title: 'Merged', fields: [], notes: '', images };
+    const encrypted = await encryptVaultEntry(entry, [{ userId: 1, publicKey: profile.publicKey }]);
+    expect(encrypted.ciphertext.length).toBeGreaterThan(2 * 1024 * 1024);
+    expect(encrypted.ciphertext.length).toBeLessThanOrEqual(4 * 1024 * 1024);
+    await expect(decryptVaultEntry(encrypted.ciphertext, encrypted.iv, encrypted.accesses[0].wrappedKey, key)).resolves.toEqual(entry);
   });
 });

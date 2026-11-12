@@ -11,7 +11,7 @@ export const privateVaultRoutes = new Hono();
 
 type Tx = postgres.TransactionSql;
 
-const MAX_CIPHERTEXT_BYTES = 2 * 1024 * 1024;
+const MAX_CIPHERTEXT_BYTES = 4 * 1024 * 1024;
 const MAX_RECIPIENTS = 50;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
@@ -127,7 +127,7 @@ function parseItemBody(value: unknown, ownerUserId: number): {
 } | null {
   if (!value || typeof value !== 'object') return null;
   const body = value as Record<string, unknown>;
-  if (!isBase64(body.ciphertext, 2_800_000) || Buffer.byteLength(body.ciphertext, 'utf8') > MAX_CIPHERTEXT_BYTES
+  if (!isBase64(body.ciphertext, MAX_CIPHERTEXT_BYTES) || Buffer.byteLength(body.ciphertext, 'utf8') > MAX_CIPHERTEXT_BYTES
     || !isBase64(body.iv, 32)) return null;
   const accesses = parseAccesses(body.accesses, ownerUserId);
   if (!accesses) return null;

@@ -3,9 +3,9 @@ const PRIVATE_KEY_AAD = new TextEncoder().encode('CubeRoot vault private key v1'
 const RECOVERY_KEY_AAD = new TextEncoder().encode('CubeRoot vault recovery key v1');
 const ENTRY_AAD = new TextEncoder().encode('CubeRoot vault entry v1');
 const RECOVERY_CODE_PREFIX = 'CRV1-';
-// Keep the complete encrypted envelope within the existing API/DB 2 MiB limit.
-const MAX_CIPHERTEXT_BYTES = 2 * 1024 * 1024;
-export const MAX_VAULT_IMAGE_BYTES = 1024 * 1024;
+// Keep the complete encrypted envelope within the API/DB 4 MiB limit.
+const MAX_CIPHERTEXT_BYTES = 4 * 1024 * 1024;
+export const MAX_VAULT_IMAGE_BYTES = 2 * 1024 * 1024;
 export const MAX_VAULT_IMAGES = 10;
 
 export interface VaultImage {
@@ -30,6 +30,7 @@ export interface VaultEntry {
   notes: string;
   images?: VaultImage[];
   category?: 'personal' | 'accounts' | 'business' | 'other';
+  mergedInto?: { id: string; title: string };
 }
 
 export interface EncryptedPrivateKey {
@@ -262,6 +263,11 @@ export async function recoverVaultPrivateKey(
 export function isVaultEntry(value: unknown): value is VaultEntry {
   if (!value || typeof value !== 'object') return false;
   const entry = value as Record<string, unknown>;
+  if (entry.mergedInto !== undefined) {
+    const target = entry.mergedInto as Record<string, unknown> | null;
+    if (!target || typeof target !== 'object' || typeof target.id !== 'string' || !target.id || target.id.length > 100
+      || typeof target.title !== 'string' || target.title.length > 200) return false;
+  }
   if (typeof entry.id !== 'string' || entry.id.length > 100
     || typeof entry.title !== 'string' || entry.title.length > 200
     || typeof entry.notes !== 'string' || entry.notes.length > 500_000
