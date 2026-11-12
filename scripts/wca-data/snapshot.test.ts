@@ -22,7 +22,7 @@ test('incremental staging verifies the complete inventory, preserves old hardlin
   async function stage(name: string) {
     const directory = join(root, name);
     prepareSnapshot(live, directory, { ...a, inventorySha256: digest }, inventoryFile, base.sha256);
-    linkSync(join(live, 'all_past_comps.json'), join(directory, 'data/all_past_comps.json'));
+    linkSync(join(live, '.stats-data/datasets', base.sha256, 'data/all_past_comps.json'), join(directory, 'data/all_past_comps.json'));
     put(directory, 'data/world_bests.json', '[3]');
     assert.deepEqual(await verifyPreparedSnapshot({ directory, inventorySha256: digest }), next);
     return { directory, inventorySha256: digest };
