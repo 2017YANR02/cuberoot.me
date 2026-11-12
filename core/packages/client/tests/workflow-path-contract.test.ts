@@ -426,7 +426,7 @@ describe('deployment workflow path contracts', () => {
 
   it('queues every core-api writer without evicting unrelated pending releases', () => {
     const members = workflowNames().filter(name => readWorkflow(name).includes('group: deploy-core-production'));
-    expect(members.sort()).toEqual(['cleanup_api_staging.yml', 'cube555_native.yml', 'deploy_core.yml', 'deploy_cubeopt_native.yml', 'wca_data_release.yml']);
+    expect(members.sort()).toEqual(['cleanup_api_staging.yml', 'cube555_native.yml', 'deploy_core.yml', 'deploy_cubeopt_native.yml', 'wca_data_maintenance.yml', 'wca_data_release.yml']);
     for (const name of members) {
       const block = readWorkflow(name).match(/group: deploy-core-production\n(?:\s+(?:#.*|cancel-in-progress: false|queue: max)\n)+/)?.[0] ?? '';
       expect(block).toContain('cancel-in-progress: false');
