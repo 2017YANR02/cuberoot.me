@@ -26,13 +26,13 @@ function ServerComparisonSection({ result }: { result: ServerComparison }) {
   const summary = summarizeServerResults(result);
   const maximum = Math.max(...summary.rows.map(row => row.solvesPerSecond));
   return <section className="compare-server" aria-labelledby="compare-server-title">
-    <div className="compare-section-head"><h2 id="compare-server-title">{t('线上版本', 'Production versions')}</h2><time className="compare-date" dateTime={result.measuredAt}>{result.measuredAt.slice(0, 10)}</time></div>
+    <div className="compare-section-head"><h2 id="compare-server-title">{t('历史线上版本 · Opt8 原生迁移', 'Production history · native Opt8 migration')}</h2><time className="compare-date" dateTime={result.measuredAt}>{result.measuredAt.slice(0, 10)}</time></div>
     <p className="compare-server-summary"><strong>{Math.abs(summary.timeReductionPercent).toFixed(1)}%</strong> {summary.timeReductionPercent >= 0 ? t('云端求解耗时减少', 'less server solve time') : t('云端求解耗时增加', 'more server solve time')}</p>
     <figure className="compare-chart">
       <figcaption>{result.environment.os} · {result.environment.vcpus} vCPU · Opt8 · WCA {result.cases} · {result.threads} {t('线程', 'threads')} <InfoTooltip content={result.environment.cpu} iconSize={14} ariaLabel={t('服务器 CPU', 'Server CPU')} /></figcaption>
       <div className="compare-column-head"><span /><span>{t('每秒求解数', 'Solves per second')}</span><span>{t('100 条耗时', 'Time for 100 solves')}</span></div>
       {summary.rows.map(row => <div className="compare-chart-row" key={row.id}>
-        <div className="compare-row-name"><strong>{row.id === 'wasm' ? t('旧线上 WASM', 'Previous production WASM') : t('当前线上原生', 'Current production native')}</strong><span>{row.id === 'wasm' ? t('原生迁移前 · 2026-10-14 发布', 'Before native migration · released 2026-10-14') : t('AVX2 + 预取', 'AVX2 + prefetch')}</span></div>
+        <div className="compare-row-name"><strong>{row.id === 'wasm' ? t('旧线上 WASM', 'Previous production WASM') : t('原生 Opt8', 'Native Opt8')}</strong><span>{row.id === 'wasm' ? t('原生迁移前 · 2026-10-14 发布', 'Before native migration · released 2026-10-14') : t('AVX2 + 预取', 'AVX2 + prefetch')}</span></div>
         <div className="compare-metric-cell" aria-label={t('每秒求解数', 'Solves per second')}>
           <div className="compare-bar-area"><div className="compare-bar" style={{ width: `${row.solvesPerSecond / maximum * 100}%` }} /></div>
           <div className="compare-row-value"><strong>{row.solvesPerSecond.toFixed(2)} <small>{t('条/秒', 'solves/s')}</small></strong></div>
@@ -44,7 +44,7 @@ function ServerComparisonSection({ result }: { result: ServerComparison }) {
   </section>;
 }
 
-function RecentComparisonSection({ result }: { result: typeof RECENT_RESULTS.mac | typeof RECENT_RESULTS.macH8 | typeof RECENT_RESULTS.aliyun }) {
+function RecentComparisonSection({ result }: { result: typeof RECENT_RESULTS.mac | typeof RECENT_RESULTS.macH8 | typeof RECENT_RESULTS.aliyun | typeof RECENT_RESULTS.aliyunOptimized }) {
   const t = useT();
   const maximum = Math.max(...result.rows.map(row => row.cases / row.seconds));
   return <section className="compare-server compare-recent" aria-labelledby={`compare-${result.id}`}>
@@ -53,7 +53,7 @@ function RecentComparisonSection({ result }: { result: typeof RECENT_RESULTS.mac
       ? <>{t('32G：egg 速度是 Opt10 的', '32G: egg runs at')} <strong>{result.speedRatio32.toFixed(2)}×</strong> {t('；64G 默认速度是 egg 32G 的', 'Opt10 speed; default egg 64G runs at')} <strong>{result.egg64Over32SpeedRatio.toFixed(2)}×</strong>{t('。', ' egg 32G speed.')}</>
       : 'speedRatio' in result
         ? <>{t('8G：egg 速度是 Opt8 的', '8G: egg runs at')} <strong>{result.speedRatio.toFixed(2)}×</strong>{t('。', ' Opt8 speed.')}</>
-        : <>{t('最快实测 egg 用时仍增加', 'The fastest measured egg run still takes')} <strong>{((result.fastestMeasuredWallRatio - 1) * 100).toFixed(1)}%</strong> {t('，Timer 保留 Opt8', 'longer; Timer retains Opt8')}</>}
+        : <>{t('优化前，最快实测 egg 用时增加', 'Before optimization, the fastest measured egg run took')} <strong>{((result.fastestMeasuredWallRatio - 1) * 100).toFixed(1)}%</strong> {t('，该轮未通过上线门槛', 'longer; that run did not qualify for promotion')}</>}
     </p>
     <figure className="compare-chart">
       <figcaption>{'cpu' in result && <>{result.cpu} · </>}WCA {result.cases} · {result.threads} {t('线程', 'threads')}</figcaption>
@@ -144,6 +144,7 @@ export default function SolverComparisonPage() {
 
     <RecentComparisonSection result={RECENT_RESULTS.mac} />
     <RecentComparisonSection result={RECENT_RESULTS.macH8} />
+    <RecentComparisonSection result={RECENT_RESULTS.aliyunOptimized} />
     <RecentComparisonSection result={RECENT_RESULTS.aliyun} />
 
     <details className="compare-history">

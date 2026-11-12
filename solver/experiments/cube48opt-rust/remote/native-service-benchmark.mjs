@@ -380,7 +380,7 @@ export async function runEngine(config, assets, cases, pass, taskStarted) {
     : ['solve', assets.snapshot, assets.table, '8', '20', '0'];
   const started = performance.now();
   const child = spawn(executable, args, { env, detached: true, stdio: ['pipe', 'pipe', 'pipe'] });
-  let failure = null, waiter = null, killTimer;
+  let failure = null, waiter = null, killTimer, profiler;
   let peakTreeRssBytes = 0, logBytes = 0, closed = false, exitResult;
   const lines = [];
   const signal = kind => { try { process.kill(-child.pid, kind); } catch (error) { if (error.code !== 'ESRCH') throw error; } };
@@ -421,6 +421,7 @@ export async function runEngine(config, assets, cases, pass, taskStarted) {
   };
   const sample = () => {
     const rows = processRows(), tree = treeRows(rows, child.pid), current = systemSample();
+    if (profiler) {tree.push(...treeRows(rows, profiler.pid)); profiler.sample();}
     const rssBytes = tree.reduce((sum, row) => sum + row.rssBytes, 0); peakTreeRssBytes = Math.max(peakTreeRssBytes, rssBytes);
     append(resolve(directory, 'resources.jsonl'), { ...current, pid: child.pid, processIds: tree.map(row => row.pid),
       treeRssBytes: rssBytes, treeSwapBytes: tree.reduce((sum, row) => sum + row.swapBytes, 0),
@@ -438,6 +439,7 @@ export async function runEngine(config, assets, cases, pass, taskStarted) {
     const startupSeconds = (performance.now() - started) / 1000;
     save(resolve(directory, 'startup.json'), { pid: child.pid, engine, readyLine, startupSeconds, threads: 4 });
     saveProcessMemory(directory, child.pid, 'ready');
+    if (config.profileSearch) profiler = await config.profileSearch({pid:child.pid, directory, onFailure:stop});
     const results = [];
     const cpuTicks = () => {
       const stat = readFileSync(`/proc/${child.pid}/stat`, 'utf8');
@@ -457,6 +459,7 @@ export async function runEngine(config, assets, cases, pass, taskStarted) {
       process.stderr.write(`[native-service-benchmark] ${engine} ${results.length}/${cases.length} ${result.wallSeconds.toFixed(6)}s\n`);
     }
     saveProcessMemory(directory, child.pid, 'complete');
+    if (profiler) {await profiler.finish(); profiler = undefined;}
     if (pass.checkIdle) {
       const before = cpuTicks();
       await new Promise(resolveIdle => setTimeout(resolveIdle, 5000));
@@ -472,7 +475,8 @@ export async function runEngine(config, assets, cases, pass, taskStarted) {
     assertAssetsUnchanged(config, assets);
     const report = { engine, pid: child.pid, cases: results.length, threads: 4, startupSeconds,
       totalWallSeconds: results.reduce((sum, row) => sum + row.wallSeconds, 0), peakTreeRssBytes,
-      processExited: true, independentReplay: false, measuredPasses: 1, warmupCases: 0 };
+      processExited: true, independentReplay: false, measuredPasses: 1, warmupCases: 0,
+      ...(config.profileSearch ? {instrumented:true} : {}) };
     save(resolve(directory, 'report.json'), report);
     return { report, results };
   } catch (error) {
@@ -480,6 +484,7 @@ export async function runEngine(config, assets, cases, pass, taskStarted) {
     throw error;
   } finally {
     await monitor.stop();
+    if (profiler) await profiler.close();
     if (!closed) { signal('SIGTERM'); const force = setTimeout(() => signal('SIGKILL'), 1500); await exit; clearTimeout(force); }
     // Also terminate any reparented child in the detached process group.
     if (child.pid && treeRows(processRows(), child.pid).length) signal('SIGKILL');

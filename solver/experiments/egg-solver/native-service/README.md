@@ -1,17 +1,20 @@
 # Full egg h8 Timer candidate
 
-The adapter builds against unchanged upstream commit
+The adapter builds against pinned upstream commit
 `947c20d93564f150aad9c292486ab730a329b86c`. Copy `main.rs` to the
 upstream checkout's `src/bin/cuberoot-egg.rs`; its existing Cargo manifest and
-lockfile supply the dependencies. `build_egg_solver.yml` builds static Linux
-x86-64-v3 executables and records their provenance. This does not deploy them.
+lockfile supply the dependencies. `build_egg_solver.yml` applies the reviewed
+`patches/linux-table-prefetch-t0.patch` and builds static Linux skylake-avx512
+executables, recording the exact patch and compiler. CI tests the patched source
+with x86-64-v3; target binaries are also tested on the actual ECS CPU. CI does
+not deploy or replace the exact measured binary.
 
 `cuberoot-egg serve TABLE THREADS` implements Timer's existing TSV protocol:
 `READY<TAB>threads`, then `id<TAB>scramble` requests and
 `id<TAB>length<TAB>solution` replies. One request uses all workers. The table,
 process and OS threads persist between requests; a new upstream `Pool` owns
 each request, including its search buffers. Idle threads sleep on channels.
-Search uses the unchanged upstream cooperative scheduler, SIMD and default
+Search uses the upstream cooperative scheduler, SIMD and default
 40 lanes per worker. No tuning file or candidate-specific parameter sweep.
 
 `cuberoot-egg generate TABLE THREADS` is a separately authorized, Linux-only
@@ -44,9 +47,9 @@ fixed binaries, generated table receipt and `baseline-reused` evidence.
 the frozen performance gates; it does not load a pruning table or run a solver.
 The helper reuses the existing native-service benchmark's guards and protocol.
 
-Result: egg **79.503483 s**, existing Opt8 **72.743526 s**; all 200 solutions
-and optimal lengths verified. The performance gate failed; Timer continues
-to use Opt8. The unpromoted API integration draft was archived locally, not
+Historical result: egg **79.503483 s**, existing Opt8 **72.743526 s**; all 200 solutions
+and optimal lengths verified. The performance gate failed; Timer then retained
+Opt8. The unpromoted API integration draft was archived locally, not
 deployed. Table and complete raw evidence remain at
 `/root/egg-h8-20261109/` and the matching local `.local-data` directory.
 The comparison page's `recent-results.json` publishes the exact timings,
@@ -83,3 +86,34 @@ loading; CLI uses whole-batch wall time while both services sum sequential
 request/reply times. The local loader-receipt fallback and the AVX-512 build
 receipt's corrected compiler-host field are explicitly retained alongside raw
 evidence. See `docs/egg-solver-performance-analysis.md` and the task tracker.
+
+## Intel cloud diagnosis and accepted T0 candidate
+
+On Nov 11 the user authorized profiling and optimization. Software CPU samples
+pointed to table accesses. `patch-prefetch.mjs` changes exactly six decoded NTA
+hint bytes in the pinned AVX-512 binary, keeping all code placement unchanged.
+This diagnostic-only binary reduced instrumented WCA100 time from 74.275352 s
+to 39.717867 s; both runs had identical 2,942,304,256-byte AnonHugePages coverage.
+
+The source patch only replaces NTA with T0 in x86 `read_once`. The source-built
+binary (SHA256 `d6bcfcf0eccbb690e95edfc4f12d2211f1df556dc79f2850e25a6b5b757d5bba`)
+passed actual-host h0 tests and uninstrumented paired acceptance: **36.391685 s**
+versus Opt8 **72.907062 s**, 2.0034×. All 200 answers were independently replayed
+with matching historical optimal lengths; CPU, P50/P95/P99 and idle gates passed.
+The original failed measurements remain unchanged above.
+
+`maintenance.sh TASK diagnose` runs an exclusive, frozen `linux-diagnosis.mjs`
+plan. `profile-session.mjs` optionally enables `perf cpu-clock:u` only after
+READY, bounds output and disables it before shutdown. `verify-linux.mjs TASK`
+replays raw results and separates instrumented diagnosis from acceptance.
+It refuses to apply production gates to instrumented results.
+
+After the API integration is deployed, `deploy.sh ACCEPTED_TASK REPOSITORY_SHA`
+uses the API's `prepare-egg.mjs` to publish only the measured source binary and
+unchanged table. It retains both release locks, admission shutdown, single-table
+preflight, atomic pointer promotion, the real manager smoke, and rollback.
+The artifact loader checks the skylake-avx512 CPU flags before execution. The
+existing table is hard-linked with its generation-time digest lineage, not
+copied or rescanned. The previous Opt8 bundle remains available for rollback.
+The production status and deployment receipts are tracked in
+`docs/timer-optimal-egg-tracker.md`.

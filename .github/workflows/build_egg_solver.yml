@@ -33,14 +33,17 @@ jobs:
         run: |
           git clone https://github.com/ArhanChaudhary/egg-solver.git "$RUNNER_TEMP/egg-source"
           git -C "$RUNNER_TEMP/egg-source" checkout --detach 947c20d93564f150aad9c292486ab730a329b86c
+          git -C "$RUNNER_TEMP/egg-source" apply "$GITHUB_WORKSPACE/solver/experiments/egg-solver/native-service/patches/linux-table-prefetch-t0.patch"
           cp solver/experiments/egg-solver/native-service/main.rs "$RUNNER_TEMP/egg-source/src/bin/cuberoot-egg.rs"
       - name: Test the adapter and build the static candidate
         env:
-          RUSTFLAGS: -C target-cpu=x86-64-v3
+          RUSTFLAGS: -C target-cpu=skylake-avx512
           CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: musl-gcc
         run: |
           cd "$RUNNER_TEMP/egg-source"
-          cargo +1.98.1 test --locked --release --bin cuberoot-egg
+          # Hosted runners need not expose AVX-512. Test the same patched source
+          # with their baseline ISA; the measured binary is also tested on ECS.
+          RUSTFLAGS='-C target-cpu=x86-64-v3' cargo +1.98.1 test --locked --release --bin cuberoot-egg
           cargo +1.98.1 build --locked --release --target x86_64-unknown-linux-musl --bin cuberoot-egg --bin solve
           mkdir "$RUNNER_TEMP/egg-artifact"
           cp target/x86_64-unknown-linux-musl/release/{cuberoot-egg,solve} "$RUNNER_TEMP/egg-artifact/"
@@ -48,7 +51,7 @@ jobs:
       - name: Record exact candidate provenance
         env:
           SOURCE_REVISION: ${{ github.sha }}
-        run: node solver/experiments/egg-solver/native-service/build-receipt.mjs "$RUNNER_TEMP/egg-source" "$RUNNER_TEMP/egg-artifact"
+        run: node solver/experiments/egg-solver/native-service/build-receipt.mjs "$RUNNER_TEMP/egg-source" "$RUNNER_TEMP/egg-artifact" skylake-avx512
       - uses: actions/upload-artifact@v4
         with:
           name: egg-h8-native-${{ github.sha }}

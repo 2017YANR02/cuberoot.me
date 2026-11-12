@@ -2,9 +2,9 @@
 # Preserve production's exact pointer and restore admission after either outcome.
 set -Eeuo pipefail
 task=${1:?absolute task directory required}
-phase=${2:?generate, benchmark, benchmark100 or cli100}
+phase=${2:?generate, benchmark, benchmark100, cli100 or diagnose}
 [[ "$task" = /root/egg-h8-* ]]
-[[ "$phase" = generate || "$phase" = benchmark || "$phase" = benchmark100 || "$phase" = cli100 ]]
+[[ "$phase" = generate || "$phase" = benchmark || "$phase" = benchmark100 || "$phase" = cli100 || "$phase" = diagnose ]]
 export PATH=/root/.nvm/versions/node/v24.14.0/bin:$PATH
 root=/root/core-api
 cd "$root"
@@ -67,6 +67,7 @@ for attempt in $(seq 1 60); do if quiet; then settled=1; break; fi; sleep 2; don
 [[ "$settled" = 1 ]]
 if [[ "$phase" = generate ]]; then script=generate-guard.mjs
 elif [[ "$phase" = cli100 ]]; then script=cli-benchmark.mjs
+elif [[ "$phase" = diagnose ]]; then script=linux-diagnosis.mjs
 else script=benchmark.mjs; fi
 CUBEOPT_BENCH_STORE="$store" node "$task/source/egg-solver/native-service/$script" "$task" &
 worker=$!

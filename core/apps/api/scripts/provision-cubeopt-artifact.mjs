@@ -107,7 +107,7 @@ export async function provisionCubeoptArtifact({
 
   let migrated = false;
   if (await pathExists(currentPath)) {
-    await loadCubeoptArtifact(resolvedStore, { allowFixtureSizes });
+    await loadCubeoptArtifact(resolvedStore, { allowFixtureSizes, cachedTable: env.CUBEOPT_VERIFY_TABLE !== '1' });
   } else {
     const modulePath = resolve(required(env.CUBEOPT_MODULE, 'legacy CUBEOPT_MODULE'));
     const tablePath = resolve(required(env.CUBEOPT_TABLE, 'legacy CUBEOPT_TABLE'));

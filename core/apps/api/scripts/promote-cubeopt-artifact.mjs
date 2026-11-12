@@ -14,7 +14,9 @@ if (!values.store || !values.bundle) {
   throw new Error('usage: pnpm cubeopt:promote -- --store <artifact-store> --bundle <bundle-id>');
 }
 
-const promoted = await promoteCubeoptBundle(resolve(values.store), values.bundle);
+const promoted = await promoteCubeoptBundle(resolve(values.store), values.bundle, {
+  cachedTable: process.env.CUBEOPT_VERIFY_TABLE !== '1',
+});
 console.log(JSON.stringify({
   promoted: promoted.manifest.bundle,
   variant: promoted.manifest.variant,

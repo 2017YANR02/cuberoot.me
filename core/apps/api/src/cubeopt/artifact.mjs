@@ -10,6 +10,13 @@ import { verifyTableDigest } from './table-digest.mjs';
 export const CUBEOPT_ARTIFACT_SCHEMA = 'cuberoot.cubeopt-artifact/v1';
 export const CUBEOPT_POINTER_SCHEMA = 'cuberoot.cubeopt-current/v1';
 export const CUBEOPT_PROTOCOL = 1;
+export const CUBEOPT_EGG_H8 = Object.freeze({
+  engine: 'egg-native', variant: 'h8', maxThreads: 4,
+  upstream: '947c20d93564f150aad9c292486ab730a329b86c',
+  cpuTarget: 'skylake-avx512', tablePrefetch: 't0',
+  tableBytes: 7_782_731_776,
+  files: Object.freeze({ binary: 'cuberoot-egg', table: 'egg-h8.dat' }),
+});
 export const CUBEOPT_NATIVE_OPT8 = Object.freeze({
   engine: 'rust-native', variant: 'opt8', maxThreads: 4,
   tableBytes: 7_782_727_680, snapshotBytes: 818_008,
@@ -69,6 +76,7 @@ function requireNonEmptyString(value, field) {
 
 export function cubeoptVariantContract(rawVariant) {
   const variant = requireNonEmptyString(rawVariant, 'variant');
+  if (variant === 'h8') return CUBEOPT_EGG_H8;
   if (!Object.hasOwn(CUBEOPT_VARIANTS, variant)) {
     throw artifactError(`unsupported variant ${JSON.stringify(variant)}; expected ${Object.keys(CUBEOPT_VARIANTS).join(', ')}`);
   }
@@ -77,6 +85,10 @@ export function cubeoptVariantContract(rawVariant) {
 }
 
 export function cubeoptEngineContract(variant, engine = 'emscripten') {
+  if (variant === 'h8') {
+    if (engine === 'egg-native') return CUBEOPT_EGG_H8;
+    throw artifactError(`unsupported engine/variant ${JSON.stringify(engine)}/${JSON.stringify(variant)}`);
+  }
   const contract = cubeoptVariantContract(variant);
   if (engine === 'emscripten') return Object.freeze({ ...contract, engine });
   if (engine === 'rust-wasm' && variant === 'opt8') return CUBEOPT_RUST_OPT8;
@@ -125,8 +137,12 @@ function validateManifest(manifest, { allowFixtureSizes }) {
       if (manifest[field] !== contract[field]) throw artifactError(`${field} must be ${contract[field]} for Rust Opt8`);
     }
   }
-  if (contract.engine === 'rust-native' && manifest.maxThreads !== contract.maxThreads) {
-    throw artifactError('native Opt8 maxThreads must be 4');
+  if (['rust-native', 'egg-native'].includes(contract.engine) && manifest.maxThreads !== contract.maxThreads) {
+    throw artifactError('native maxThreads must be 4');
+  }
+  if (contract.engine === 'egg-native'
+    && (manifest.cpuTarget !== contract.cpuTarget || manifest.tablePrefetch !== contract.tablePrefetch)) {
+    throw artifactError('egg h8 requires the measured skylake-avx512 / t0 build');
   }
 
   const source = manifest.source;
@@ -197,6 +213,21 @@ async function verifyRustAbi(paths, contract) {
     || probe.metadata.abiVersion !== contract.abiVersion || probe.metadata.variant !== 8
     || probe.metadata.threads !== 4 || probe.metadata.sharedTable !== true) {
     throw artifactError('Rust wrapper metadata does not match its verified WASM ABI');
+  }
+}
+
+// Linux names for the features enabled by Rust's skylake-avx512 target.
+// Check before executing even --server-info: the entire binary uses this ISA.
+export const EGG_CPU_FLAGS = Object.freeze(('adx aes avx avx2 avx512bw avx512cd avx512dq avx512f avx512vl '
+  + 'bmi1 bmi2 cx16 f16c fma fxsr abm movbe pclmulqdq popcnt rdrand rdseed sse sse2 pni sse4_1 sse4_2 ssse3 xsave xsavec xsaveopt xsaves').split(' '));
+
+export function assertEggCpu(cpuInfo) {
+  const processors = [...cpuInfo.matchAll(/^flags\s*:\s*(.*)$/gm)];
+  if (!processors.length) throw artifactError('egg CPU capabilities are unavailable');
+  for (const [, text] of processors) {
+    const flags = new Set(text.trim().split(/\s+/));
+    const missing = EGG_CPU_FLAGS.filter(flag => !flags.has(flag));
+    if (missing.length) throw artifactError(`egg skylake-avx512 CPU features missing: ${missing.join(', ')}`);
   }
 }
 
@@ -323,12 +354,14 @@ export async function verifyCubeoptBundle(bundleDir, { allowFixtureSizes = false
     paths[`${role}Path`] = path;
   }
 
-  if (contract.engine === 'rust-native') {
-    if (process.platform !== 'linux' || process.arch !== 'x64') throw artifactError('native Opt8 requires Linux x86_64');
+  if (['rust-native', 'egg-native'].includes(contract.engine)) {
+    if (process.platform !== 'linux' || process.arch !== 'x64') throw artifactError('native solver requires Linux x86_64');
+    if (contract.engine === 'egg-native') assertEggCpu(await readFile('/proc/cpuinfo', 'utf8'));
     const { stdout } = await promisify(execFile)(paths.binaryPath, ['--server-info'], { timeout: 5000, maxBuffer: 4096 });
     const info = JSON.parse(stdout);
     if (info.engine !== contract.engine || info.variant !== contract.variant || info.protocol !== CUBEOPT_PROTOCOL
-      || info.maxThreads !== contract.maxThreads || info.optimized !== true) throw artifactError('native Opt8 binary contract mismatch');
+      || info.maxThreads !== contract.maxThreads || info.optimized !== true
+      || (contract.upstream && info.upstream !== contract.upstream)) throw artifactError('native solver binary contract mismatch');
     return Object.freeze({ root: canonicalRoot, manifestPath, manifest: Object.freeze(manifest), ...paths });
   }
 
@@ -379,11 +412,11 @@ export async function verifyCubeoptBundle(bundleDir, { allowFixtureSizes = false
  * The temporary file is fully flushed before the same-directory rename, so a
  * failed verification or interrupted write never exposes a partial pointer.
  */
-export async function promoteCubeoptBundle(storeDir, bundle, { allowFixtureSizes = false } = {}) {
+export async function promoteCubeoptBundle(storeDir, bundle, { allowFixtureSizes = false, cachedTable = false } = {}) {
   const store = resolve(requireNonEmptyString(storeDir, 'artifact store'));
   const bundleId = requireNonEmptyString(bundle, 'bundle');
   cubeoptBundleVariant(bundleId);
-  const artifact = await verifyCubeoptBundle(resolve(store, 'bundles', bundleId), { allowFixtureSizes });
+  const artifact = await verifyCubeoptBundle(resolve(store, 'bundles', bundleId), { allowFixtureSizes, cachedTable });
   if (artifact.manifest.bundle !== bundleId) {
     throw artifactError(`requested bundle ${bundleId} does not match manifest bundle ${artifact.manifest.bundle}`);
   }

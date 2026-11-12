@@ -6,6 +6,16 @@ import { SERVER_RESULTS, summarizeServerResults } from '@/app/[lang]/dev/solvers
 import RECENT_RESULTS from '@/app/[lang]/dev/solvers/compare/recent-results.json';
 
 describe('multithread solver comparison evidence', () => {
+  it('uses the matched uninstrumented run for the accepted T0 result', () => {
+    const r = RECENT_RESULTS.aliyunOptimized, [opt8, egg] = r.rows;
+    expect([r.cases, r.threads, r.passes, r.warmupCases]).toEqual([100, 4, 1, 0]);
+    expect(r.instrumented).toBe(false); expect(r.baselineReused).toBe(false);
+    expect([opt8.seconds, egg.seconds]).toEqual([72.90706209900003, 36.391684963999914]);
+    expect(r.speedRatio).toBeCloseTo(opt8.seconds / egg.seconds, 12);
+    expect(r.accepted && Object.values(r.checks).every(Boolean)).toBe(true);
+    expect(r.rows.every(row => row.verifiedSolutions === 100 && row.optimalLengthsMatched === 100)).toBe(true);
+    expect(r.diagnosis.instrumented).toBe(true); expect(r.diagnosis.productionAcceptance).toBe(false);
+  });
   it('publishes the local h8 result separately from the slower cloud builds', () => {
     const {macH8, aliyun} = RECENT_RESULTS;
     expect([macH8.cases, macH8.threads, macH8.passes, macH8.warmupCases]).toEqual([100, 4, 1, 0]);

@@ -249,6 +249,7 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             "$API_DIR/dist/cubeopt/solve-daemon.mjs" \
             "$API_DIR/dist/cubeopt/prepare.mjs" \
+            "$API_DIR/dist/cubeopt/prepare-egg.mjs" \
             "$API_DIR/dist/cubeopt/provision.mjs" \
             "$API_DIR/dist/cubeopt/verify.mjs" \
             "$API_DIR/dist/cubeopt/promote.mjs" \
@@ -394,6 +395,7 @@ jobs:
           test -f "$staging/dist/drive-video.mjs"
           test -f "$staging/dist/search-worker-entry.js"
           test -f "$staging/dist/cubeopt/prepare.mjs"
+          test -f "$staging/dist/cubeopt/prepare-egg.mjs"
           test -f "$staging/dist/cubeopt/provision.mjs"
           test -f "$staging/dist/cubeopt/verify.mjs"
           test -f "$staging/dist/cubeopt/promote.mjs"

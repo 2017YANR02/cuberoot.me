@@ -5,8 +5,9 @@ function identity(info, expected) {
   return JSON.stringify(['cubeopt-sha256-v1', expected, ...['dev', 'ino', 'size', 'mtimeNs', 'ctimeNs'].map(key => String(info[key]))]);
 }
 
-// Deployment verification always hashes. Only daemon restarts may reuse a
-// successful receipt, bound to the expected digest and nanosecond file identity.
+// Callers may reuse a successful receipt for an unchanged immutable table,
+// bound to its expected digest and nanosecond file identity. The default still
+// hashes; explicit full checks and missing/changed receipts always hash again.
 export async function verifyTableDigest(path, expected, { cached = false } = {}) {
   const receipt = `${path}.sha256-verified.json`;
   const handle = await open(path, 'r');

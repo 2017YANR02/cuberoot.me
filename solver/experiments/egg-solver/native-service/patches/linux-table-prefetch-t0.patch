@@ -1,0 +1,13 @@
+--- a/src/prefetch.rs
++++ b/src/prefetch.rs
+@@ -25,8 +25,8 @@
+     #[cfg(target_arch = "x86_64")]
+     // SAFETY: see the module docs.
+     unsafe {
+-        use std::arch::x86_64::{_mm_prefetch, _MM_HINT_NTA};
+-        _mm_prefetch(p.cast::<i8>(), _MM_HINT_NTA);
++        use std::arch::x86_64::{_mm_prefetch, _MM_HINT_T0};
++        _mm_prefetch(p.cast::<i8>(), _MM_HINT_T0);
+     }
+     #[cfg(target_arch = "aarch64")]
+     // SAFETY: see the module docs.
