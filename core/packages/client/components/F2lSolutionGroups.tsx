@@ -1,19 +1,14 @@
 'use client';
 
-import MoreToggle from '@/components/MoreToggle';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Check, Copy, Play } from '@app-foundation/icons/lucide';
+import { AlgEditorPrefix } from '@/components/AlgEditorProjectedInput';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { AlgCase, AlgEntry } from '@cuberoot/shared/alg';
-import Link from '@/components/AppLink';
-import { Tooltip } from '@/components/Tooltip';
-import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
-import { algCaseDetailHref, buildCaseSlugMap } from '@/lib/alg_case_link';
 import { displayCaseAlg } from '@/lib/alg_display';
-import { groupF2lSolutions, type F2lGroupedSolutions } from '@/lib/f2l-solution-groups';
+import { groupF2lSolutions, type F2lGroupedSolutions, type F2lSolutionGroup } from '@/lib/f2l-solution-groups';
 
 /** Reading projection only: the original rows remain the editor/save source. */
-export default function F2lSolutionGroups({ cases, entries, setup, orientation, onSelect, children, editing = false }: {
+export default function F2lSolutionGroups({ cases, entries, setup, orientation, onSelect, children, editing = false, editableRows }: {
   cases: readonly AlgCase[];
   entries: readonly AlgEntry[];
   setup: string;
@@ -21,82 +16,70 @@ export default function F2lSolutionGroups({ cases, entries, setup, orientation, 
   onSelect: (entry: AlgEntry) => void;
   children: ReactNode;
   editing?: boolean;
+  editableRows?: { key: string; node: ReactNode }[];
 }) {
-  const [result, setResult] = useState<F2lGroupedSolutions | null>(null);
-  const [selection, setSelection] = useState<Record<string, string>>({});
-  const [active, setActive] = useState<string | null>(null);
-  const [originalsOpen, setOriginalsOpen] = useState(false);
+  const [resolved, setResolved] = useState<{ entryKey: string; value: F2lGroupedSolutions } | null>(null);
+  const [selectedAlg, setSelectedAlg] = useState<string | null>(null);
   const entryKey = JSON.stringify(entries.map(e => e.alg));
+  // Async grouping indices belong to one order only; never apply them to a new order.
+  const result = resolved?.entryKey === entryKey ? resolved.value : null;
   const stableEntries = useMemo(() => (JSON.parse(entryKey) as string[]).map(alg => ({ alg })), [entryKey]);
-  const slugs = useMemo(() => buildCaseSlugMap([...cases], 'f2l'), [cases]);
-  const selectRef = useRef(onSelect);
-  selectRef.current = onSelect;
-  const { copiedKey, copy } = useCopy();
   useEffect(() => {
+    if (editing && !editableRows) return;
     let live = true;
-    setResult(null);
+    if (!editing) setResolved(null);
     void groupF2lSolutions(cases, setup, stableEntries, orientation)
-      .then(next => { if (live) setResult(next); })
-      .catch(() => { if (live) setResult(null); });
+      .then(next => { if (live) setResolved({ entryKey, value: next }); })
+      .catch(() => { if (live) setResolved(null); });
     return () => { live = false; };
-  }, [cases, setup, stableEntries, orientation]);
-  useEffect(() => {
-    const group = result?.groups.find(g => g.key === active);
-    const option = group && (group.options.find(o => o.fullAlg === selection[group.key]) ?? group.options[0]);
-    if (option) selectRef.current({ alg: option.fullAlg });
-  }, [result, active, selection]);
+  }, [cases, setup, stableEntries, entryKey, orientation, editing, !!editableRows]);
 
-  const hasGroups = !!result?.groups.length;
-  const showAlg = (alg: string) => displayCaseAlg('3x3', 'f2l', alg);
-  return <div className="f2l-solution-groups">
-    {result?.groups.map(group => {
-      const option = group.options.find(o => o.fullAlg === selection[group.key]) ?? group.options[0];
-      return <details key={group.key} className="f2l-solution-group"
-        onToggle={event => { if (event.currentTarget.open) setActive(group.key); }}>
-        <MoreToggle as="summary"><span className="f2l-solution-prefix">{group.prefix}</span>
-          <span className="f2l-solution-target">→ {tr({ zh: '基态', en: 'Free' })} {group.standardName}</span>
-        </MoreToggle>
-        <div className="f2l-solution-choices">
-          <label><span>{tr({ zh: '入槽方法', en: 'Insertion' })}</span>
-            <select className="f2l-solution-select" value={option.fullAlg} onChange={event => {
-              setSelection(previous => ({ ...previous, [group.key]: event.target.value }));
-              setActive(group.key);
-            }}>
-              {group.options.map(o => <option key={o.fullAlg} value={o.fullAlg}>{showAlg(o.alg)}</option>)}
-            </select>
-          </label>
-          <div className="f2l-solution-composed">
-            <button type="button" className="f2l-solution-play" onClick={() => onSelect({ alg: option.fullAlg })}
-              aria-label={tr({ zh: '播放完整公式', en: 'Play complete algorithm' })}>
-              <Play size={14} /><span>{group.prefix} <strong>{showAlg(option.alg)}</strong></span>
-            </button>
-            <Tooltip content={tr({ zh: '复制完整公式', en: 'Copy complete algorithm' })}>{tip =>
-              <button {...tip} type="button" className="f2l-solution-copy" aria-label={tr({ zh: '复制完整公式', en: 'Copy complete algorithm' })} onClick={() => copy(option.fullAlg, group.key)}>
-                {copiedKey === group.key ? <Check size={14} /> : <Copy size={14} />}
-              </button>
-            }</Tooltip>
-          </div>
-          <Link href={algCaseDetailHref('3x3', 'f2l', slugs.byId.get(group.standardId!) ?? group.standardName.toLowerCase())} prefetch={false} className="f2l-solution-source">
-            {tr({ zh: '查看基态公式库', en: 'Open free pair library' })} · {group.standardName}
-          </Link>
+  // Collect each prefix at its first occurrence, including nonadjacent sources.
+  // Both modes share this display order; storage indices stay unchanged.
+  const blocks: { indices: number[]; group?: F2lSolutionGroup }[] = [];
+  entries.forEach((_, i) => {
+    const group = result?.groups.find(g => g.sourceIndices.includes(i));
+    const existing = group && blocks.find(block => block.group?.key === group.key);
+    if (existing) existing.indices.push(i);
+    else blocks.push({ indices: [i], group });
+  });
+  const displayRows = new Map(blocks.flatMap(block => block.indices).map((source, i) => [source, i + 1]));
+
+  if (editing && !editableRows) return <>{children}</>;
+  if (!editing && !result) return <>{children}</>;
+
+  // Use one grid and the same source rows in both modes. Only the row control
+  // changes; grouping never creates extra library choices absent from the editor.
+  const headings = blocks.map(({ indices, group }) => {
+    if (!group) return null;
+    const start = displayRows.get(indices[0])!;
+    return <div key={group.key} className="f2l-edit-group-prefix" style={{ gridRow: `${start} / ${start + indices.length}` }}>
+      <span>{group.prefix}</span>
+      <svg className="f2l-solution-brace" viewBox="0 0 16 100" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M15 1 C6 1 6 8 6 15 V38 C6 46 3 50 1 50 C3 50 6 54 6 62 V85 C6 92 6 99 15 99" />
+      </svg>
+    </div>;
+  });
+  const rowStyle = (i: number) => ({ gridRow: displayRows.get(i),
+    gridColumn: result?.groups.some(g => g.sourceIndices.includes(i)) ? '2' : '1 / -1' });
+  return <div className="f2l-edit-groups">
+    {editing ? editableRows!.map((row, i) => <div key={row.key} className="f2l-edit-source-row" data-grouped={rowStyle(i).gridColumn === '2'} style={rowStyle(i)}>
+      <AlgEditorPrefix value={result?.groups.find(g => g.sourceIndices.includes(i))?.prefix ?? ''}>{row.node}</AlgEditorPrefix>
+    </div>) : blocks.flatMap(block => block.indices).map(i => {
+      const entry = entries[i];
+      const prefix = result?.groups.find(g => g.sourceIndices.includes(i))?.prefix ?? '';
+      const fullText = displayCaseAlg('3x3', 'f2l', entry.alg);
+      const suffix = prefix && fullText.startsWith(prefix + ' ') ? fullText.slice(prefix.length + 1) : fullText;
+      return <div key={i} className="f2l-edit-source-row" data-grouped={rowStyle(i).gridColumn === '2'} style={rowStyle(i)}>
+        <div className="f2l-read-row">
+          <button type="button" className="f2l-solution-play" aria-pressed={selectedAlg === entry.alg}
+            onClick={() => { setSelectedAlg(entry.alg); onSelect(entry); }}
+            aria-label={tr({ zh: '播放完整公式：', en: 'Play complete algorithm: ' }) + entry.alg}>
+            {suffix}
+          </button>
         </div>
-      </details>;
+      </div>;
     })}
-    {hasGroups && result.ungrouped.map(i => <div className="f2l-solution-composed" key={i}>
-      <button type="button" className="f2l-solution-play" onClick={() => onSelect(entries[i])}>
-        <span>{showAlg(entries[i].alg)}</span>
-      </button>
-      <Tooltip content={tr({ zh: '复制', en: 'Copy' })}>{tip =>
-        <button {...tip} type="button" className="f2l-solution-copy" aria-label={tr({ zh: '复制', en: 'Copy' })} onClick={() => copy(entries[i].alg, `row-${i}`)}>
-          {copiedKey === `row-${i}` ? <Check size={14} /> : <Copy size={14} />}
-        </button>
-      }</Tooltip>
-    </div>)}
-    <details className="f2l-solution-originals" open={!hasGroups || originalsOpen}
-      onToggle={event => { if (hasGroups) setOriginalsOpen(event.currentTarget.open); }}>
-      <MoreToggle as="summary" hidden={!hasGroups}>{editing ? tr({ zh: '编辑原始公式', en: 'Edit original algorithms' })
-        : tr({ zh: '原始公式与出处', en: 'Original algorithms and sources' })}</MoreToggle>
-      {children}
-    </details>
+    {headings}
   </div>;
 }

@@ -1047,32 +1047,15 @@
   padding: 0 2px;
 }
 .f2l-solution-groups { min-width: 0; display: grid; gap: 10px; }
-.f2l-solution-group { min-width: 0; }
-.f2l-solution-group > summary, .f2l-solution-originals > summary { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; list-style: none; }
-.f2l-solution-group > summary::-webkit-details-marker, .f2l-solution-originals > summary::-webkit-details-marker { display: none; }
-.f2l-solution-originals > summary[hidden] { display: none; }
-.f2l-solution-chevron { flex: none; transition: transform 150ms ease; }
-.f2l-solution-group[open] > summary > .f2l-solution-chevron, .f2l-solution-originals[open] > summary > .f2l-solution-chevron { transform: rotate(90deg); }
-@media (prefers-reduced-motion: reduce) { .f2l-solution-chevron { transition: none; } }
-.f2l-solution-group > summary { cursor: pointer; padding: 10px 0; line-height: 1.6; overflow-wrap: anywhere; }
+.f2l-solution-group { min-width: 0; display: grid; grid-template-columns: max-content 12px minmax(0, 1fr); align-items: center; gap: 8px; }
 .f2l-solution-prefix { font-size: 0.9rem; }
-.f2l-solution-target { margin-left: 12px; color: var(--muted-foreground); font-size: 0.78rem; white-space: nowrap; }
-.f2l-solution-choices { display: grid; gap: 12px; padding: 0 0 12px 18px; min-width: 0; }
-.f2l-solution-choices label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; font-size: 0.78rem; color: var(--muted-foreground); }
-.f2l-solution-select {
-  max-width: 100%; width: fit-content; padding: 3px 6px;
-  appearance: auto; -webkit-appearance: auto;
-  font: inherit; color: var(--foreground); background: transparent;
-  border: 1px solid var(--border-default); border-radius: 4px;
-}
-.f2l-solution-select:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.f2l-solution-brace { width: 12px; height: 100%; min-height: 36px; align-self: stretch; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.f2l-solution-brace path { vector-effect: non-scaling-stroke; }
+.f2l-solution-choices { display: grid; min-width: 0; }
 .f2l-solution-composed { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .f2l-solution-play { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px 0; border: 0; background: none; color: inherit; font: inherit; font-size: 0.85rem; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
 .f2l-solution-play svg { flex-shrink: 0; }
-.f2l-solution-play strong { font-weight: 500; color: var(--accent); }
-.f2l-solution-copy { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; padding: 4px; border: 0; background: none; color: var(--muted-foreground); cursor: pointer; }
-.f2l-solution-source { width: fit-content; font-size: 0.75rem; color: var(--muted-foreground); }
-.f2l-solution-originals > summary { cursor: pointer; padding: 8px 0; color: var(--muted-foreground); font-size: 0.75rem; }
+.f2l-solution-play[aria-pressed="true"] { color: var(--accent); }
 .alg-editor-mirror { flex-basis: 100%; min-width: 0; }
 .alg-editor-notation { flex-basis: 100%; overflow-wrap: anywhere; }
 .alg-validation-name:is(button, a) { display: flex; flex: 1; align-items: center; gap: 6px; color: inherit; font: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: start; }
@@ -2216,6 +2199,7 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   --alg-case-detail-formula-size: 1.125rem;
   --alg-case-detail-formula-indent: 32px;
 }
+.is-f2l-orientation-grid .alg-case-detail-ori-algs { --alg-case-detail-formula-indent: 0px; }
 .alg-meta-case-algs.alg-case-detail-ori-algs {
   --alg-case-detail-formula-indent: 0px;
 }
@@ -2227,11 +2211,31 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 .alg-case-detail-ori-algs > .alg-case-standard .alg-case-icon {
   justify-self: start;
 }
+/* Reserve one U-prime move plus its space, using the notation's actual font metrics. */
+.is-f2l-orientation-grid .alg-case-detail-ori-algs > .alg-case-standard {
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 0;
+}
+.is-f2l-orientation-grid .alg-case-detail-ori-algs > .alg-case-standard::before {
+  content: "U'\00a0";
+  visibility: hidden;
+  grid-area: 1 / 1;
+  font-size: var(--alg-case-detail-formula-size);
+  line-height: 1.5;
+  padding-inline-start: 1px;
+}
+.is-f2l-orientation-grid .alg-case-detail-ori-algs > .alg-case-standard .alg-case-icon { grid-area: 1 / 1; }
+.is-f2l-orientation-grid .alg-case-detail-ori-algs > .alg-case-standard code { grid-area: 1 / 2; }
 .alg-case-detail-ori-algs > .alg-alg-row {
   padding-inline-start: var(--alg-case-detail-formula-indent);
 }
 .alg-case-detail-ori-algs > .alg-community {
-  padding-inline-start: var(--alg-case-detail-formula-indent);
+  padding-inline: 0;
+}
+.alg-case-detail-ori-algs > .alg-community .alg-community-add-btn {
+  align-self: stretch;
+  min-height: 32px;
+  justify-content: center;
 }
 .alg-case-inline-editor .alg-case-detail-ori-algs .alg-alg-sortable {
   padding-inline-start: var(--alg-case-detail-formula-indent);
@@ -2246,6 +2250,7 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 .alg-case-detail-ori-algs > .alg-case-standard code,
 .alg-case-detail-ori-algs .alg-alg-row,
 .alg-case-detail-ori-algs .f2l-solution-prefix,
+.alg-case-detail-ori-algs .f2l-edit-group-prefix,
 .alg-case-detail-ori-algs .f2l-solution-play,
 .alg-case-detail-ori-algs .f2l-solution-select,
 .alg-case-detail-ori-algs .alg-editor-input {
@@ -2891,6 +2896,12 @@ a.alg-mirror-line:focus-visible > * { text-decoration: underline; }
     max-width: min(320px, calc(100vw - 32px));
     height: auto;
   }
+  /* The expanded actions cross the row's drag handle; keep it from painting
+     or intercepting clicks over the toolbar until the actions collapse. */
+  .alg-case-inline-editor .alg-alg-sortable:has(.alg-editor-tools:is(:hover, :focus-within, :has([aria-expanded='true']))) > .alg-alg-drag-handle {
+    opacity: 0;
+    pointer-events: none;
+  }
   .alg-case-inline-editor .alg-editor-tools:not(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group {
     background: transparent;
     box-shadow: none;
@@ -2934,4 +2945,52 @@ a.alg-mirror-line:focus-visible > * { text-decoration: underline; }
   .alg-editor-tools .alg-editor-del,
   .alg-editor-tools .alg-tag-select .compact-select-trigger { min-width: 40px; min-height: 40px; }
   .alg-editor-add { min-height: 40px; min-width: 40px; justify-content: center; }
+}
+
+.f2l-edit-groups { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 8px; min-width: 0; }
+.f2l-edit-group-prefix { grid-column: 1; position: relative; display: flex; align-items: center; padding-inline-end: 20px; font-size: .85rem; }
+/* The SVG follows the rows' height; its intrinsic aspect ratio must not stretch them. */
+.f2l-edit-group-prefix .f2l-solution-brace { position: absolute; inset-block: 0; inset-inline-end: 0; height: 100%; min-height: 0; }
+.f2l-edit-source-row { min-width: 0; --alg-case-detail-formula-indent: 0px; }
+/* Put the drag handle beside the actions, not between the brace and notation. */
+.alg-case-inline-editor.is-f2l-orientation-grid .alg-alg-drag-handle { left: auto; right: 44px; }
+.alg-case-inline-editor.is-f2l-orientation-grid .alg-editor-row,
+.f2l-edit-groups .f2l-edit-source-row :is(.alg-editor-row, .f2l-read-row) { column-gap: 24px; }
+.f2l-read-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 40px;
+  gap: 8px;
+  padding-inline-start: var(--alg-case-detail-formula-indent, 32px);
+  margin-bottom: 6px;
+  min-height: 40px;
+}
+.f2l-read-row .f2l-solution-play {
+  box-sizing: border-box;
+  padding: 6px 0;
+  border: 1px solid transparent;
+  min-height: 40px;
+}
+.f2l-edit-source-row[data-grouped='true'] .f2l-read-row,
+.alg-case-inline-editor .f2l-edit-source-row[data-grouped='true'] .alg-alg-sortable { margin-bottom: 0; }
+.f2l-edit-source-row[data-grouped='true'] :is(.f2l-read-row, .f2l-solution-play),
+.alg-case-inline-editor .f2l-edit-source-row[data-grouped='true'] .alg-editor-input {
+  min-height: 0;
+  padding-block: 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  .alg-case-inline-editor .f2l-edit-source-row[data-grouped='true'] .alg-editor-tools {
+    height: calc(var(--alg-case-detail-formula-size, 18px) * 1.5 + 2px);
+  }
+  .alg-case-inline-editor .f2l-edit-source-row[data-grouped='true'] .alg-editor-tools-group { inset-block-start: -5px; }
+}
+.f2l-edit-groups .alg-editor-row.has-gen-heading { margin-top: 0; }
+.alg-case-inline-editor.is-f2l-orientation-grid .alg-editor-ori { margin-top: 0; gap: 0; }
+.is-f2l-orientation-grid .alg-case-detail-head { min-height: 40px; }
+@media (max-width: 900px) {
+  .is-f2l-orientation-grid { --f2l-playback-width: 260px; }
+  .is-f2l-orientation-grid .playback-bar { width: min(100%, var(--f2l-playback-width)); }
+  .is-f2l-orientation-grid .alg-player-list-options {
+    width: min(360px, 100%, calc(50% + var(--f2l-playback-width) / 2));
+    margin-inline: max(0px, calc((100% - var(--f2l-playback-width)) / 2)) 0;
+  }
 }

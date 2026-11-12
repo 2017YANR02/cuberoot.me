@@ -2270,8 +2270,15 @@ export const CATALOG: ComponentEntry[] = [
     name: 'F2lSolutionGroups',
     import: "import F2lSolutionGroups from '@/components/F2lSolutionGroups';",
     category: 'more',
-    zh: '按实际 F2L 状态把完整解法收纳为前段与基态入槽引用；选择后播放、复制完整公式，保留原始编辑行。',
-    en: 'Groups full F2L solutions into state-verified prefixes and live insertion-library references; plays/copies the full composition and preserves original editor rows.',
+    zh: '按实际 F2L 状态分组展示前段与入槽方法；播放完整公式，编辑时保留原始记录。',
+    en: 'Groups F2L prefixes and insertions, plays full algorithms and preserves original records while editing.',
+  },
+  {
+    name: 'AlgEditorProjectedInput',
+    import: "import AlgEditorProjectedInput, { AlgEditorPrefix } from '@/components/AlgEditorProjectedInput';",
+    category: 'input',
+    zh: '只编辑公共前缀之后的部分，读取、保存与光标播放仍使用完整公式。',
+    en: 'Edits the suffix after a shared prefix while exposing the complete algorithm and caret to the editor.',
   },
   {
     name: 'AlgEditor',

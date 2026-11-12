@@ -32,7 +32,8 @@ import { sq1NotationText, type Sq1NotationMode } from '@/lib/sq1-pbl-notation';
 import { canonicalSq1Alg } from '@cuberoot/shared/sq1-notation';
 import { mirrorCascadeOnEdit, VIEWS, type MirrorCascadeEntry } from '@cuberoot/shared/alg-mirror';
 import CubeKeyboardSection from '@/components/CubeKeyboardSection';
-import AlgInput, { type AlgInputHandle } from '@/components/AlgInput';
+import type { AlgInputHandle } from '@/components/AlgInput';
+import AlgInput from '@/components/AlgEditorProjectedInput';
 import AlgDeleteConfirm, { type AlgDeleteGroup } from '@/components/AlgDeleteConfirm';
 import { displayAlg, shortOriName } from '@/lib/alg_display';
 import { tr } from '@/i18n/tr';
@@ -73,6 +74,7 @@ interface Props {
   caseContext?: { puzzle: AlgPuzzle; set: string; caseObj: AlgCase; sq1NotationMode?: Sq1NotationMode };
   /** 第三项始终是无损语义值，不能传仅供展示的 formatInitialAlg 结果。 */
   renderOrientation?: (rows: React.ReactNode, oi: number, firstEntry: AlgEntry | undefined, entries: AlgEntry[]) => React.ReactNode;
+  renderRows?: (rows: { key: string; node: React.ReactNode }[], entries: AlgEntry[], oi: number) => React.ReactNode;
   /** 内联详情页中，在“新增公式”按钮之前插入社区公式等附加内容。 */
   renderBeforeAdd?: (oi: number) => React.ReactNode;
   /** 开局就标红的行(页面那轮全库校验已经知道谁挂了,不必等用户按一次保存才告诉他)。 */
@@ -133,7 +135,7 @@ function RowActions({ entry, text, oi, context, mirror }: { entry: AlgEntry; tex
   </>;
 }
 
-const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '3x3', formatInitialAlg, formatInitialHtml, caseContext, renderOrientation = rows => rows, renderBeforeAdd, initialInvalid, oriNames, mirror, mirrorPending, mirrorError, onCurrentAlgChange, onCursorMoveCount, onChange }, ref) => {
+const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '3x3', formatInitialAlg, formatInitialHtml, caseContext, renderOrientation = rows => rows, renderRows, renderBeforeAdd, initialInvalid, oriNames, mirror, mirrorPending, mirrorError, onCurrentAlgChange, onCursorMoveCount, onChange }, ref) => {
   useTranslation(); // subscribe to language changes; text via tr()
   const [layout, setLayout] = useState<Row[][]>(() => {
     const src = initialValue.length === 0
@@ -305,7 +307,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
             setLayout(current => current.map((rows, i) => i === oi ? arrayMove(rows, from, to) : rows));
             onChange?.();
           }}><SortableContext items={ori.map(row => row.uid)} strategy={verticalListSortingStrategy}>
-          {ori.map((row, ai) => {
+          {((nodes: React.ReactNode[]) => renderRows ? renderRows(nodes.map((node, i) => ({ key: ori[i].uid, node })), ori, oi) : nodes)(ori.map((row, ai) => {
             const isFocused = focusedUid === row.uid;
             const bad = invalid.get(row.uid);
             const initialText = formatInitialAlg?.(row.alg || '') ?? (row.alg || '');
@@ -418,7 +420,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
                 )}
               </SortableAlgRow>
             );
-          })}
+          }))}
           {renderBeforeAdd?.(oi)}
           <button type="button" className="alg-editor-add" onClick={() => addAlg(oi)} tabIndex={-1} title={tr({ zh: '加一条', en: 'Add' })}>
             <Plus size={12} />

@@ -11,7 +11,7 @@ import { commonCaseSetup } from '@/lib/alg_case_alignment';
  * 普通 case: 用户填 caseName / subgroup / setup + 一行一条公式即可,sticker
  * 自动推断默认值。多 orientation (F2L) / 自定义 sticker 等放在"高级"区。
  */
-import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect, type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
@@ -21,7 +21,7 @@ import { mirrorCascadeOnDelete, VIEWS } from '@cuberoot/shared/alg-mirror';
 import { canonicalSq1Alg, formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { createCase, updateCase, deleteCase, type AlgCaseInput } from '@/lib/alg_sets_api';
 import { validateAlgCase, validateStoredAlgCase } from '@/lib/alg_validation';
-import { displayAlg, displayCaseAlg, displayCaseAlgHtml, shortOriName, oriAdjustSetup } from '@/lib/alg_display';
+import { displayAlg, displayCaseAlg, displayCaseAlgHtml, playbackCaseAlg, shortOriName, oriAdjustSetup } from '@/lib/alg_display';
 import { useDialogMotion, useModalBackdrop } from '@/hooks/useModalDismiss';
 import { primaryCaseName } from '@/lib/alg_case_display';
 import AlgEditor, { type AlgEditorHandle, type AlgEditorMirror, type AlgInvalidMark } from '@/components/AlgEditor';
@@ -64,6 +64,9 @@ interface Props {
   /** 内联详情页中，紧跟公式编辑列表显示的附加内容。 */
   algorithmsAfter?: React.ReactNode;
   f2lLibrary?: readonly AlgCase[];
+  /** Share the detail page's preview state and geometry while editing. */
+  previewSetup?: (oi: number, firstEntry?: AlgEntry) => string;
+  previewPlayerProps?: (oi: number) => Partial<ComponentProps<typeof AlgPlayer>>;
   /** 内联多朝向详情中，按当前朝向渲染由原始 setup 派生的打乱。 */
   renderOrientationSetup?: (setup: string, oi: number) => React.ReactNode;
   /** Optional static preview for the detail page's diagram-only mode. */
@@ -107,7 +110,7 @@ function blankCase(puzzle: string, set: string): AlgCase {
   };
 }
 
-export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid, algorithmsAfter, f2lLibrary, renderOrientationSetup, renderPreviewImage, renderReadOnly, onClose: onClosed, onSaved, children }: Props) {
+export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid, algorithmsAfter, f2lLibrary, previewSetup: getPreviewSetup, previewPlayerProps, renderOrientationSetup, renderPreviewImage, renderReadOnly, onClose: onClosed, onSaved, children }: Props) {
   useTranslation(); // subscribe to language changes; text via tr()
   const active = !children || !renderReadOnly;
   const initial = state.mode === 'edit' ? state.existing : blankCase(puzzle, setSlug);
@@ -574,11 +577,14 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
               formatInitialAlg={alg => puzzle === 'sq1' ? formatSq1EditorAlg(alg) : displayCaseAlg(puzzle, setSlug, alg)}
               formatInitialHtml={html => displayCaseAlgHtml(puzzle, setSlug, html)}
               caseContext={children ? { puzzle, set: setSlug, caseObj: initial, sq1NotationMode } : undefined}
+              renderRows={children && f2lLibrary && !isF2lStandard(initial) ? (rows, entries, oi) => <F2lSolutionGroups
+                cases={f2lLibrary} entries={entries} setup={commonCaseSetup(puzzle, setSlug, initial, oi)} orientation={oi}
+                editing editableRows={rows} onSelect={() => {}}>{null}</F2lSolutionGroups> : undefined}
               renderBeforeAdd={children ? oi => oi === 0 ? algorithmsAfter : null : undefined}
-              renderOrientation={children ? (rows, oi, firstEntry, entries) => {
+              renderOrientation={children ? (rows, oi, firstEntry) => {
                 const selected = oriPreviews[oi] ?? initial.algs[oi]?.[0];
                 const derivesOrientationSetup = initial.algs.length > 1;
-                const orientationSetup = derivesOrientationSetup
+                const orientationSetup = getPreviewSetup ? getPreviewSetup(oi, firstEntry) : derivesOrientationSetup
                   ? invertAlg(firstEntry?.alg ?? '')
                   : setup === initialSetupText
                     ? (selected?.setup ?? commonCaseSetup(puzzle, setSlug, initial, oi))
@@ -587,10 +593,11 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
                   <div className="alg-case-detail-ori-player alg-player-list-player">
                     {renderPreviewImage ? renderPreviewImage(orientationSetup, firstEntry?.alg ?? '', oi) : <AlgPlayer
                       ref={handle => { if (handle) oriPlayers.current.set(oi, handle); else oriPlayers.current.delete(oi); }}
-                      alg={selected?.alg ?? ''}
+                      alg={previewPlayerProps ? playbackCaseAlg(puzzle, selected?.alg ?? '') : selected?.alg ?? ''}
                       setup={orientationSetup}
                       puzzle={puzzle} set={setSlug} orientation={orientation} size={260}
                       playRequest={groupPlayRequests[oi] ?? 0} autoPlay={(groupPlayRequests[oi] ?? 0) > 0}
+                      {...previewPlayerProps?.(oi)}
                     />}
                     {oi === 0 && afterPlayer}
                   </div>
@@ -599,13 +606,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
                     {renderOrientationSetup && (derivesOrientationSetup
                       ? renderOrientationSetup(orientationSetup, oi)
                       : oi === 0 ? setupField : renderOrientationSetup(orientationSetup, oi))}
-                    {f2lLibrary && !isF2lStandard(initial) ? <F2lSolutionGroups
-                      cases={f2lLibrary} entries={entries} setup={orientationSetup} orientation={oi} editing
-                      onSelect={entry => {
-                        setOriPreviews(current => ({ ...current, [oi]: entry }));
-                        setGroupPlayRequests(current => ({ ...current, [oi]: (current[oi] ?? 0) + 1 }));
-                      }}
-                    >{rows}</F2lSolutionGroups> : rows}
+                    {rows}
                   </div>
                 </div>;
               } : undefined}

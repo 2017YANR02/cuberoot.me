@@ -4,7 +4,7 @@ import F2lSlotSelector from '@/components/F2lSlotSelector';
 import PageHeading from '@/components/PageHeading';
 import { TimerPracticeContentPicker } from '@cuberoot/timer-ui';
 import { useTranslation } from 'react-i18next';
-import { alignAlgFile, caseAlgIssue, casePreviewSetup, loadAlg, type CaseSetupMode } from '@/lib/alg_case_alignment';
+import { alignAlgFile, caseAlgIssue, casePreviewSetup, commonCaseSetup, loadAlg, type CaseSetupMode } from '@/lib/alg_case_alignment';
 
 /**
  * 单张 case 的**独立详情页**正文(短链 `/alg/<puzzle>/<set>/<slug>`,如 `/alg/3x3/zbll/ur3`)。
@@ -23,7 +23,7 @@ import { alignAlgFile, caseAlgIssue, casePreviewSetup, loadAlg, type CaseSetupMo
 import { Fragment, useEffect, useMemo, useState, useRef, useId, type ReactNode } from 'react';
 import { useAlgCaseEntryTransition } from '@/hooks/useAlgViewTransition';
 import Link from '@/components/AppLink';
-import { Pencil, ChevronLeft, ChevronRight, ExternalLink, Copy, Check, Shuffle, HelpCircle, AlertTriangle } from '@app-foundation/icons/lucide';
+import { Pencil, ChevronLeft, ChevronRight, ExternalLink, Shuffle, HelpCircle, AlertTriangle } from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgEntry, AlgFile, AlgPuzzle, AlgSubmission } from '@cuberoot/shared';
 import { requires3x3AlgCaseSetup } from '@cuberoot/shared/alg';
 import { displayedAlgorithmStm } from '@/lib/alg-metrics';
@@ -71,7 +71,6 @@ import { listSubmissions } from '@/lib/alg_api';
 import { sanitizeAlgHtml } from '@/lib/alg_html';
 import { rotateCaseClockwise } from '@/lib/alg_sets_api';
 import { useIsAdmin } from '@/lib/auth-store';
-import { useCopy } from '@/hooks/useCopy';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { algTagLabel } from '@/lib/alg_tags';
 import AlgTagLabel from '@/components/AlgTagLabel';
@@ -105,9 +104,7 @@ function SetupLine({ puzzle, setup, sq1NotationMode = 'compact', selected, onPla
   selected?: boolean;
   onPlay?: () => void;
 }) {
-  const { copied, copy } = useCopy();
-  const [activated, setActivated] = useState(false);
-  const activate = () => { setActivated(true); onPlay?.(); };
+  const activate = () => { onPlay?.(); };
   const sq1Text = puzzle === 'sq1' ? sq1NotationText(setup, sq1NotationMode) : null;
   const text = sq1Text ? tr(sq1Text) : formatScrambleForEvent(puzzle, setup);
   return (
@@ -124,9 +121,6 @@ function SetupLine({ puzzle, setup, sq1NotationMode = 'compact', selected, onPla
       }}>
       <Shuffle size={13} className="alg-case-icon" aria-label={tr({ zh: '打乱', en: 'Setup' })} />
       <code>{text}</code>
-      {(selected ?? activated) && <button type="button" className="alg-alg-copy-btn alg-case-setup-copy" onClick={event => { event.stopPropagation(); copy(text); }} title={tr({ zh: '复制打乱', en: 'Copy setup' })}>
-        {copied ? <Check size={12} /> : <Copy size={12} />}
-      </button>}
     </div>
   );
 }
@@ -559,6 +553,13 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
     );
   }
 
+  const previewPlayerProps = (oi: number) => ({
+    orientation: effectiveOrientation,
+    resetAfterPlayback: canChooseSetupMode,
+    sceneRot: useF2lOrientationGrid && ['FL', 'BL'].includes(shortOriName(oriNames?.[oi] ?? ''))
+      ? F2L_LEFT_SCENE_ROT : undefined,
+    size: useF2lOrientationGrid ? 220 : 260,
+  });
   const renderPreviewImage = (setup: string, alg: string, oi: number) => {
     const image = <CaseThumb local puzzle={puzzle} set={set} sticker={caseObj.sticker}
       alg={alg} setup={setup} size={useF2lOrientationGrid ? 220 : 260}
@@ -809,12 +810,9 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
                           set={set}
                           setup={playingScramble ? undefined : orientationSetup}
                           startSolved={playingScramble}
-                          orientation={effectiveOrientation}
+                          {...previewPlayerProps(oi)}
                           resetAfterPlayback={canChooseSetupMode && !playingScramble}
                           stageOverlay={labelInStage ? slotLabel : undefined}
-                          sceneRot={useF2lOrientationGrid && ['FL', 'BL'].includes(shortOriName(oriNames?.[oi] ?? ''))
-                            ? F2L_LEFT_SCENE_ROT : undefined}
-                          size={useF2lOrientationGrid ? 220 : 260}
                           autoPlay={playRequest > 0}
                           playRequest={playRequest}
                         />}
@@ -834,7 +832,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
                         />
                       )}
                       {f2lLibrary && !isF2lStandard(caseObj) && effectiveViewAngle === 'default' ? <F2lSolutionGroups
-                        cases={f2lLibrary} entries={oriAlgs} setup={orientationSetup} orientation={oi}
+                        cases={f2lLibrary} entries={oriAlgs} setup={commonCaseSetup(puzzle, set, caseObj, oi)} orientation={oi}
                         onSelect={entry => {
                           setComposedByOri(current => ({ ...current, [oi]: entry }));
                           setSelectedAlgByOri(current => ({ ...current, [oi]: 0 }));
@@ -869,6 +867,10 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
       state={{ mode: 'edit', existing: caseObj }}
       algorithmsAfter={renderCommunityAlgs(false)}
       f2lLibrary={f2lLibrary}
+      previewSetup={useF2lOrientationGrid ? (oi, firstEntry) => casePreviewSetup(puzzle, set, {
+        ...caseObj, algs: caseObj.algs.map((rows, i) => i === oi && firstEntry ? [firstEntry, ...rows.slice(1)] : rows),
+      }, oi, setupMode) : undefined}
+      previewPlayerProps={previewPlayerProps}
       renderPreviewImage={showAnimation ? undefined : renderPreviewImage}
       renderOrientationSetup={m ? undefined : (setup) => (
         <SetupLine
