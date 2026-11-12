@@ -68,6 +68,7 @@ import { tr, useLang } from '@/i18n/tr';
 import PetAccountCard from '@/components/PetAccountCard';
 import AccountCardGrid from './AccountCardGrid';
 import TeacherSignatureEditor from './TeacherSignatureEditor';
+import AdminAccountDelete from './AdminAccountDelete';
 import './account.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
@@ -695,6 +696,7 @@ function BasicProfileEditor() {
 
 function AdminUserEditor({ userId }: { userId: number }) {
   const t = useT();
+  const [deleted, setDeleted] = useState(false);
   const [profile, setProfile] = useState<SessionUser | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -708,6 +710,10 @@ function AdminUserEditor({ userId }: { userId: number }) {
     return () => { cancelled = true; };
   }, [t, userId]);
 
+  if (deleted) return <div>
+    <p role="status">{t('账号已删除。', 'Account deleted.')}</p>
+    <AppLink href="/admin/users" className="auth-textbtn" prefetch={false}>{t('用户管理', 'User management')}</AppLink>
+  </div>;
   if (error) return <p className="auth-error" role="alert">{error}</p>;
   if (!profile) return <p className="auth-hint"><Loader2 size={14} className="auth-spin" />{t('加载中…', 'Loading…')}</p>;
 
@@ -724,6 +730,7 @@ function AdminUserEditor({ userId }: { userId: number }) {
             profile={profile}
             onSave={async (name) => setProfile(await updateAdminDisplayName(userId, name))}
           />
+          <AdminAccountDelete key={profile.uid} profile={profile} onDeleted={() => setDeleted(true)} />
         </div>
       </section>
     </>
@@ -968,7 +975,7 @@ export default function AccountSettings({ embedded = false }: { embedded?: boole
         <DeleteAccountPanel backHref={accountHref('signin')} />
       ) : view === 'user' ? (
         isAdmin && managedUserId && managedUserId > 0
-          ? <AdminUserEditor userId={managedUserId} />
+          ? <AdminUserEditor key={managedUserId} userId={managedUserId} />
           : <p className="auth-error" role="alert">{t('只有管理员可以编辑用户资料。', 'Only administrators can edit user profiles.')}</p>
       ) : (
         <>

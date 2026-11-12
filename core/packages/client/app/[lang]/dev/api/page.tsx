@@ -228,6 +228,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'GET', p: '/v1/auth/admin/users', g: 'admin', c: 'no-store', zh: '用户注册统计、绑定方式与分页明细', en: 'User registration stats, linked methods, and paginated records' },
   { d: 'auth', m: 'GET', p: '/v1/auth/admin/users/:userId', g: 'admin', c: 'no-store', zh: '读取指定 CubeRoot 用户资料', en: 'Read a CubeRoot user profile' },
   { d: 'auth', m: 'POST', p: '/v1/auth/admin/users/:userId/profile', g: 'admin', c: 'no-store', zh: '修改未关联 WCA 的用户名称', en: 'Update the name of a user not linked to WCA' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/admin/users/:userId/delete', g: 'admin', c: 'no-store', zh: '超级管理员删除其他非超级管理员账号，需确认用户 ID', en: 'Super administrator deletes another non-root account with user ID confirmation' },
   { d: 'auth', m: 'PATCH', p: '/v1/auth/admin/users/:userId/admin', g: 'admin', c: 'no-store', zh: '设置或取消注册用户的管理员角色', en: 'Grant or revoke a registered user administrator role' },
   { d: 'auth', m: 'POST', p: '/v1/auth/password/set', g: 'login', zh: '设置 / 修改密码(改密先验旧密)', en: 'Set / change password (change verifies the old one)' },
   { d: 'auth', m: 'GET', p: '/v1/auth/identities', g: 'login', zh: '当前账号已绑定的身份列表 + 是否已设密码', en: 'Linked identities of current account + whether a password is set' },

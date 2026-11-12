@@ -1626,6 +1626,32 @@ accountAuthRoutes.patch('/auth/admin/users/:userId/admin', async (c) => {
   });
 });
 
+accountAuthRoutes.post('/auth/admin/users/:userId/delete', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const actor = await requireAdmin(c);
+  if (!isAdminWcaId(actor.wcaId)) return c.json({ error: 'super administrator access required' }, 403);
+  const userId = Number(c.req.param('userId'));
+  if (!Number.isSafeInteger(userId) || userId <= 0) return c.json({ error: 'invalid user id' }, 400);
+  const body = await c.req.json<{ confirmUserId?: unknown }>().catch(() => null);
+  if (body?.confirmUserId !== String(userId)) return c.json({ error: 'confirmation does not match' }, 400);
+  const actorId = await requireAppUserId(c);
+  if (actorId === userId) return c.json({ error: 'cannot delete own account here' }, 409);
+  const target = await getUserById(userId);
+  if (!target) return c.json({ error: 'account not found' }, 404);
+  if (isAdminWcaId(target.wca_id)) return c.json({ error: 'root administrator cannot be removed' }, 409);
+  try {
+    await deleteAccount(userId, ownerKey(userId, target.wca_id));
+  } catch (error) {
+    if (error instanceof AccountOwnsOrganizationError || error instanceof AccountHasMembershipContractError) {
+      return c.json({ error: error.message }, 409);
+    }
+    if (error instanceof AppleLoginError) return appleErrorResponse(c, error);
+    throw error;
+  }
+  return c.json({ ok: true });
+});
+
 accountAuthRoutes.get('/auth/admin/users/:userId', async (c) => {
   c.header('Cache-Control', 'no-store');
   await requireAdmin(c);

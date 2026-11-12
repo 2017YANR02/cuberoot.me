@@ -80,6 +80,11 @@
   text-decoration: underline;
 }
 
+.account-admin-delete { margin-top: 32px; }
+.account-admin-delete > .auth-textbtn { color: var(--destructive); }
+.account-admin-delete .auth-input { max-width: 240px; }
+.account-admin-delete-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; margin-top: 16px; }
+
 .account-id-row { margin-bottom: 32px; }
 .account-identity-heading { display: flex; align-items: center; gap: 16px; }
 .account-identity-details { min-width: 0; flex: 1; }

@@ -246,6 +246,15 @@ export async function fetchAdminUsers(params: {
   });
   return handleApi<AdminUsersResponse>(response);
 }
+export async function deleteAdminUser(userId: number, confirmUserId: string): Promise<void> {
+  const response = await sessionFetch(apiUrl(`/v1/auth/admin/users/${userId}/delete`), {
+    method: 'POST',
+    headers: authHeaders(true),
+    body: JSON.stringify({ confirmUserId }),
+  });
+  await handleApi<{ ok: true }>(response);
+}
+
 export async function updateAdminDisplayName(userId: number, name: string): Promise<SessionUser> {
   const response = await sessionFetch(apiUrl(`/v1/auth/admin/users/${userId}/profile`), {
     method: 'POST',
