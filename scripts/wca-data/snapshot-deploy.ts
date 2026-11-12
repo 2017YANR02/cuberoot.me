@@ -1,7 +1,7 @@
-import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, writeFileSync, readlinkSync, renameSync, symlinkSync, rmSync, cpSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, writeFileSync, readlinkSync, renameSync, symlinkSync, rmSync, cpSync, statfsSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { check } from './common.ts';
+import { check, sha } from './common.ts';
 import { archiveDescriptor, hashFile, inventory, unit, unpackSnapshot, validate, type Archive, type Inventory } from './snapshot.ts';
 const present = (p: string) => { try { lstatSync(p); return true; } catch { return false; } };
 // Production dataset pointers only; never links between development checkouts.
@@ -12,6 +12,47 @@ function current(root: string) { return readlinkSync(join(base(root), 'current')
 function safeHash(hash: string) { check(/^(bootstrap|[a-f0-9]{64})$/.test(hash), 'Unmanaged statistics pointer'); return hash; }
 function publicTarget(root: string, name: string) { return relative(dirname(join(root, name)), join(base(root), 'current/data', name)); }
 function units(m: Inventory) { return [...new Set(m.files.map(f => unit(f.path)))]; }
+type PreparedSnapshot = { directory: string; inventorySha256: string };
+function preparedInventory(prepared: PreparedSnapshot): Inventory {
+  check(/^[a-f0-9]{64}$/.test(prepared.inventorySha256), 'Invalid inventory digest');
+  const file = join(prepared.directory, '_inventory.json');
+  check(lstatSync(file).isFile() && lstatSync(file).size <= 8 * 1024 * 1024, 'Invalid prepared inventory');
+  const bytes = readFileSync(file);
+  check(sha(bytes) === prepared.inventorySha256, 'Prepared inventory checksum mismatch');
+  const m = validate(JSON.parse(bytes.toString())); check(m.kind === 'snapshot', 'Expected full snapshot inventory'); return m;
+}
+export function assertStagingSpace(m: Inventory, available: number) {
+  // Conservative full-copy bound even though unchanged files normally use hardlinks.
+  const required = Math.ceil(m.files.reduce((total, f) => total + f.bytes, 0) * 1.1) + 128 * 1024 * 1024;
+  check(available >= required, `Insufficient statistics staging space: need ${required} bytes, available ${available}`);
+}
+export function prepareSnapshot(root: string, directory: string, descriptor: Archive & { inventorySha256: string }, inventoryFile: string, expected: string) {
+  archiveDescriptor(descriptor);
+  check(current(root) === safeHash(expected), 'Server/Release snapshot mismatch before transfer');
+  check(!present(directory), 'Statistics staging directory already exists');
+  mkdirSync(directory); cpSync(inventoryFile, join(directory, '_inventory.json'));
+  const m = preparedInventory({ directory, inventorySha256: descriptor.inventorySha256 });
+  const disk = statfsSync(root); assertStagingSpace(m, disk.bavail * disk.bsize);
+  mkdirSync(join(directory, 'data'));
+  console.log(`Staging ${m.files.length} files; unchanged data will be hardlinked from ${expected}`);
+}
+export async function verifyPreparedSnapshot(prepared: PreparedSnapshot): Promise<Inventory> {
+  const m = preparedInventory(prepared), expected = new Map(m.files.map(f => [`data/${f.path}`, f]));
+  let found = 0;
+  async function walk(directory: string, prefix = '') {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const name = prefix + entry.name, path = join(directory, entry.name);
+      if (entry.isDirectory()) { check(name === 'data' || name.startsWith('data/'), 'Unexpected prepared directory'); await walk(path, `${name}/`); }
+      else {
+        check(entry.isFile(), 'Prepared snapshot contains a symlink or special file');
+        if (name === '_inventory.json') continue;
+        const f = expected.get(name); check(f, `Unexpected prepared file: ${name}`);
+        check(lstatSync(path).size === f.bytes && await hashFile(path) === f.sha256, `Prepared file checksum mismatch: ${name}`); found++;
+      }
+    }
+  }
+  await walk(prepared.directory); check(found === m.files.length, 'Prepared snapshot is incomplete'); return m;
+}
 export function rollbackSnapshot(root: string) {
   if (!existsSync(journal(root))) return;
   const tx = JSON.parse(readFileSync(journal(root), 'utf8'));
@@ -36,7 +77,7 @@ export function recoverSnapshot(root: string, committed: string) {
   const tx = JSON.parse(readFileSync(journal(root), 'utf8'));
   if (tx.next === committed) finalizeSnapshot(root, committed); else rollbackSnapshot(root);
 }
-export async function activateSnapshot(root: string, archive: string, descriptor: Archive, expected: string, verify = verifySnapshot) {
+export async function activateSnapshot(root: string, archive: string, descriptor: Archive, expected: string, verify = verifySnapshot, prepared?: PreparedSnapshot) {
   const a = archiveDescriptor(descriptor); check(!existsSync(journal(root)), 'Recover unfinished statistics transaction first');
   mkdirSync(join(base(root), 'datasets'), { recursive: true });
   const dest = join(base(root), 'datasets', a.sha256);
@@ -45,7 +86,9 @@ export async function activateSnapshot(root: string, archive: string, descriptor
     await verify(root, validate(JSON.parse(readFileSync(join(dest, '_inventory.json'), 'utf8')))); return;
   }
   if (existsSync(dest)) rmSync(dest, { recursive: true });
-  const next = await unpackSnapshot(archive, dest, a); check(next.kind === 'snapshot', 'Cannot activate a patch');
+  const next = prepared ? await verifyPreparedSnapshot(prepared) : await unpackSnapshot(archive, dest, a);
+  check(next.kind === 'snapshot', 'Cannot activate a patch');
+  if (prepared) renameSync(prepared.directory, dest);
   let previous: Inventory;
   if (!present(join(base(root), 'current'))) {
     check(expected === 'none', 'Release points to a missing server snapshot');
@@ -106,6 +149,12 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const [action, root, argument, descriptor, expected] = process.argv.slice(2);
   check(root === '/www/wwwroot/toolkit/stats', 'Explicit production statistics root required');
   if (action === 'activate') await activateSnapshot(root, argument, JSON.parse(readFileSync(descriptor, 'utf8')), expected);
+  else if (action === 'prepare' || action === 'activate-prepared') {
+    check(new RegExp(`^${root}/\\.stats-data/incoming-[0-9]+-[0-9]+$`).test(argument), 'Invalid prepared statistics staging path');
+    const a = JSON.parse(readFileSync(descriptor, 'utf8'));
+    if (action === 'prepare') prepareSnapshot(root, argument, a, join(dirname(descriptor), '_inventory.json'), expected);
+    else await activateSnapshot(root, '', a, expected, verifySnapshot, { directory: argument, inventorySha256: a.inventorySha256 });
+  }
   else if (action === 'recover') recoverSnapshot(root, argument);
   else if (action === 'rollback') rollbackSnapshot(root);
   else if (action === 'finalize') finalizeSnapshot(root, argument);

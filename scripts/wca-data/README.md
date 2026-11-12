@@ -13,3 +13,5 @@ The Release body starts with a short Chinese introduction. A marked JSON code bl
 - GitHub's automatic source zip/tar links are not uploaded release assets and cannot be individually deleted through the release asset API.
 
 Read-only preview: `node scripts/wca-data/maintenance-cli.ts`. Apply through the workflow (`dry_run=false`); this command does not connect to the production server or deploy an application. Verify with `node --test scripts/wca-data/*.test.ts`.
+
+Owner patches publish a complete archive to GitHub, but deploy to the server with checksum-based rsync into a separate staging directory. Unchanged files reuse the active snapshot via `--link-dest`; never use `--inplace`. The inventory is bound to the CI-built snapshot by a SHA-256 digest sent over SSH. The server rejects missing, extra, corrupt or symlinked files before switching the existing transactional pointer, and checks available space before transfer. Successful activation still verifies public URLs before committing the Release descriptor and deleting superseded snapshots. Bootstrap retains its existing archive path.

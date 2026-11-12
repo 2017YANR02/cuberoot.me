@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { REPO, readReleaseBody, renderReleaseBody, check, run } from './common.ts';
+import { REPO, readReleaseBody, renderReleaseBody, check, run, sha } from './common.ts';
 import { endpoint, gh, api, release, upload, download } from './github.ts';
 import { withLocalLock } from './local-lock.ts';
 import { BASELINE, inventory, patch, applyPatch, owns, archiveDescriptor, packSnapshot, unpackSnapshot, validate, hashFile, type Owner, type Inventory, type Archive } from './snapshot.ts';
@@ -51,6 +51,7 @@ async function publish(candidate: string, out: string) {
   const options = ['-i', key, '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=15', '-o', 'ServerAliveInterval=20', '-o', 'ServerAliveCountMax=3'];
   const remote = `/tmp/cuberoot-statistics-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}`;
   check(/^\/tmp\/cuberoot-statistics-\d+-\d+$/.test(remote), 'Invalid staging path');
+  const incoming = `/www/wwwroot/toolkit/stats/.stats-data/incoming-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}`;
   const ssh = (command: string) => run('ssh', [...options, host, command], { timeout: 600000 });
   const scp = (args: string[]) => run('scp', [...options, ...args], { timeout: 600000 });
   ssh(`mkdir -m 700 -p ${remote}`);
@@ -60,7 +61,7 @@ async function publish(candidate: string, out: string) {
   const deploy = (action: string, args = '') => ssh(`flock -w 120 /tmp/cuberoot-wca-data.lock node ${remote}/snapshot-deploy.ts ${action} /www/wwwroot/toolkit/stats ${args}`);
   try {
     deploy('recover', old?.sha256 ?? 'none');
-    let a: Archive;
+    let a: Archive, prepared: { root: string; inventory: Inventory } | undefined;
     if (candidate === 'statistics-server') {
       check(!old, 'Statistics snapshot already initialized; use an owner patch');
       const commit = run('git', ['rev-parse', 'HEAD']);
@@ -82,11 +83,33 @@ async function publish(candidate: string, out: string) {
       }
       const m = await inventory(current.root, change.sourceCommit);
       a = await packSnapshot(current.root, m, out);
+      prepared = { root: current.root, inventory: m };
     }
     upload(release(), join(out, a.name), a.name);
-    writeFileSync(join(out, 'descriptor.json'), JSON.stringify(a));
-    scp([join(out, a.name), join(out, 'descriptor.json'), `${host}:${remote}/`]);
-    deploy('activate', `${remote}/${a.name} ${remote}/descriptor.json ${old?.sha256 ?? 'none'}`); activated = true;
+    if (prepared) {
+      const bytes = Buffer.from(JSON.stringify(prepared.inventory));
+      writeFileSync(join(out, '_inventory.json'), bytes);
+      writeFileSync(join(out, 'descriptor.json'), JSON.stringify({ ...a, inventorySha256: sha(bytes) }));
+      scp([join(out, '_inventory.json'), join(out, 'descriptor.json'), `${host}:${remote}/`]);
+      console.log(deploy('prepare', `${incoming} ${remote}/descriptor.json ${old!.sha256}`));
+      const transport = ['ssh', ...options].map(s => `'${s.replaceAll("'", "'\\''")}'`).join(' ');
+      // No --inplace: unchanged files are linked to the active snapshot and must
+      // never be overwritten. Changed files arrive via rsync's temporary files.
+      for (let attempt = 1; ; attempt++) {
+        try {
+          console.log(run('rsync', ['-a', '--no-owner', '--no-group', '--checksum', '--delay-updates', '--timeout=90', '--stats',
+            `--link-dest=/www/wwwroot/toolkit/stats/.stats-data/datasets/${old!.sha256}/data`,
+            '-e', transport, `${prepared.root}/`, `${host}:${incoming}/data/`], { timeout: 600000 }));
+          break;
+        } catch (error) { if (attempt === 2) throw error; console.log('Retrying incremental statistics transfer'); }
+      }
+      console.log(deploy('activate-prepared', `${incoming} ${remote}/descriptor.json ${old!.sha256}`));
+    } else {
+      writeFileSync(join(out, 'descriptor.json'), JSON.stringify(a));
+      scp([join(out, a.name), join(out, 'descriptor.json'), `${host}:${remote}/`]);
+      deploy('activate', `${remote}/${a.name} ${remote}/descriptor.json ${old?.sha256 ?? 'none'}`);
+    }
+    activated = true;
     try { api(`${endpoint}/${r.id}`, { body: renderReleaseBody({ ...readReleaseBody(r.body), statistics: a }) }); }
     catch (error) {
       try { r = release(); } catch { uncertain = true; throw new Error('Release commit status unknown; keep live snapshot and journal for recovery'); }
@@ -101,7 +124,7 @@ async function publish(candidate: string, out: string) {
     }
     console.log(`Published ${a.name}; one current statistics snapshot retained`);
   } catch (error) { if (activated && !committed && !uncertain) deploy('rollback'); throw error; }
-  finally { ssh(`rm -r -- ${remote}`); }
+  finally { ssh(`rm -rf -- ${remote} ${incoming}`); }
 }
 const [command, arg, extra] = process.argv.slice(2);
 const out = mkdtempSync(join(tmpdir(), 'cuberoot-statistics-'));
