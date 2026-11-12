@@ -6,7 +6,7 @@
  *
  * 家族:A 各地综合排行;B 奖牌&名次;C 遗憾榜;D 纪录;E 参赛&复原;F Top100 占席.
  */
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { query } from '../db/connection.js';
 import {
   VALID_EVENTS, ACTIVE_EVENTS, MAX_SIZE, DEFAULT_SIZE, CACHE_HEADER,
@@ -636,7 +636,65 @@ wcaFunStatsRoutes.get('/wca/fun/most-solves-person', async (c) => {
   });
 });
 
+// v3 adds event-level annual participation while retaining the old all-event API.
+async function annualParticipation(c: Context, metadata = false) {
+  const event = c.req.query('event') ?? '';
+  const sort = c.req.query('sort') ?? 'solve';
+  const yearInput = c.req.query('year');
+  if (event && !VALID_EVENTS.has(event)) return c.json({ error: 'Invalid event' }, 400);
+  if (!['solve', 'attempt', 'rounds'].includes(sort)) return c.json({ error: 'Invalid sort' }, 400);
+  if (yearInput && !/^[1-9]\d{3}$/.test(yearInput)) return c.json({ error: 'Invalid year' }, 400);
+  const scope = await resolveScope(scopeInput(c));
+  if ('err' in scope) return c.json({ error: scope.err }, 400);
+  const ready = await query<{ value: string }>(
+    `SELECT value FROM meta_historical WHERE key = 'wca_annual_participation_imported_at'`);
+  if (!ready[0]) {
+    c.header('Cache-Control', 'no-store');
+    return c.json({ error: 'Annual participation data is not ready', code: 'STATS_NOT_READY' }, 503);
+  }
+  c.header('Cache-Control', CACHE_HEADER);
+  const updatedAt = ready[0].value;
+  const reg = regionWhere(scope, 't.country_id', 'co');
+  const eventWhere = event ? ' AND t.event_id = ?' : '';
+  const filterParams = [...reg.params, ...(event ? [event] : [])];
+  if (metadata) {
+    const options = await query<{ event: string; year: number }>(
+      `SELECT DISTINCT t.event_id AS event, t.year FROM wca_fs_person_event_year_solves t
+       LEFT JOIN wca_countries co ON co.id = t.country_id
+       WHERE TRUE${reg.where}${eventWhere} ORDER BY t.year DESC, t.event_id`, filterParams);
+    return c.json({ scope: scopeInput(c), options, updatedAt,
+      years: [...new Set(options.map(r => r.year))], events: [...new Set(options.map(r => r.event))] });
+  }
+  let year = Number(yearInput ?? 0);
+  if (!year) {
+    const latest = await query<{ year: number | null }>(
+      `SELECT MAX(t.year) AS year FROM wca_fs_person_event_year_solves t
+       LEFT JOIN wca_countries co ON co.id = t.country_id WHERE TRUE${reg.where}${eventWhere}`, filterParams);
+    year = latest[0]?.year ?? 0;
+  }
+  const { page, size, offset } = pageParams(c);
+  const totals = personTotals('wca_fs_person_event_year_solves', ['solve', 'attempt', 'rounds'], scope,
+    `t.year = ?${eventWhere}`);
+  const params = [year, ...(event ? [event] : []), ...totals.params];
+  const ranked = `${totals.sql}, ranked AS (SELECT *, RANK() OVER (ORDER BY ${sort} DESC)::int AS rank FROM totals)`;
+  const [rows, count] = await Promise.all([
+    query<{ wca_id: string; country_id: string; name: string; iso2: string | null; solve: number; attempt: number; rounds: number; rank: number }>(
+      `${ranked} SELECT t.*, p.name, co.iso2 FROM ranked t
+       JOIN wca_persons p ON p.wca_id = t.wca_id LEFT JOIN wca_countries co ON co.id = t.country_id
+       ORDER BY t.rank, t.solve DESC, t.attempt ASC, t.wca_id LIMIT ? OFFSET ?`, [...params, size, offset]),
+    query<{ n: number }>(`${totals.sql} SELECT COUNT(*)::int AS n FROM totals`, params),
+  ]);
+  return c.json({ scope: scopeInput(c), event, year, sort, page, size, total: count[0]?.n ?? 0, updatedAt,
+    rows: rows.map(r => ({ rank: r.rank, wcaId: r.wca_id, name: r.name, countryId: r.country_id,
+      iso2: r.iso2, solve: r.solve, attempt: r.attempt, rounds: r.rounds })) });
+}
+
+function wantsAnnualParticipation(c: Context) {
+  return c.req.query('v') === '3' || c.req.query('event') !== undefined || c.req.query('sort') !== undefined;
+}
+
 wcaFunStatsRoutes.get('/wca/fun/most-solves-person-year/years', async (c) => {
+  if (wantsAnnualParticipation(c)) return annualParticipation(c, true);
   const scope = await resolveScope(scopeInput(c));
   if ('err' in scope) return c.json({ error: scope.err }, 400);
   const reg = regionWhere(scope, 't.country_id', 'co');
@@ -648,6 +706,7 @@ wcaFunStatsRoutes.get('/wca/fun/most-solves-person-year/years', async (c) => {
 });
 
 wcaFunStatsRoutes.get('/wca/fun/most-solves-person-year', async (c) => {
+  if (wantsAnnualParticipation(c)) return annualParticipation(c);
   const scope = await resolveScope(scopeInput(c));
   if ('err' in scope) return c.json({ error: scope.err }, 400);
   const { page, size, offset } = pageParams(c);

@@ -275,8 +275,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'wca-fun', m: 'GET', p: '/v1/wca/fun/most-solves-person-comp', g: 'public', c: 'cdn', zh: '单场最多还原', en: 'Most solves in one comp' },
   { d: 'wca-fun', m: 'GET', p: '/v1/wca/fun/most-solves-comp', g: 'public', c: 'cdn', zh: '比赛总还原数', en: 'Most solves per comp' },
   { d: 'wca-fun', m: 'GET', p: '/v1/wca/fun/most-solves-person', g: 'public', c: 'cdn', zh: '个人总还原数', en: 'Most solves per person' },
-  { d: 'wca-fun', m: 'GET', p: '/v1/wca/fun/most-solves-person-year/years', g: 'public', c: 'cdn', zh: '可选年份列表', en: 'Available years' },
-  { d: 'wca-fun', m: 'GET', p: '/v1/wca/fun/most-solves-person-year', g: 'public', c: 'cdn', zh: '年度个人还原数', en: 'Solves per person per year' },
+  { d: 'wca-fun', m: 'GET', p: '/v1/wca/fun/most-solves-person-year/years', g: 'public', c: 'cdn', zh: '年度参与榜可选年份与项目', en: 'Available years and events for annual participation' },
+  { d: 'wca-fun', m: 'GET', p: '/v1/wca/fun/most-solves-person-year', g: 'public', c: 'cdn', zh: '年度个人复原与轮次（项目、地区、排序）', en: 'Annual solves and rounds by event, region and sort order' },
   { d: 'wca-fun', m: 'GET', p: '/v1/wca/fun/top100-appearances', g: 'public', c: 'cdn', zh: 'Top100 上榜次数', en: 'Top-100 appearances' },
 
   // ---- wca-data ----

@@ -8,6 +8,7 @@
 //   NODE_OPTIONS='--expose-gc --max-old-space-size=12288' npx tsx src/bin/wca_stats_extra_build.ts
 
 import mysql from 'mysql2/promise';
+import { countSolveAttempts, addAnnualParticipation, type AnnualParticipation } from '../core/annual_participation.js';
 import { once } from 'node:events';
 import { createWriteStream, mkdirSync, writeFileSync, readFileSync, statSync, readdirSync, rmSync } from 'fs';
 import { resolve, dirname } from 'path';
@@ -407,11 +408,6 @@ async function main() {
   // ════════════ fun-stats 累加器 (port of cubingchina /results/statistics → wca_fs_*) ════════════
   // Derived statistics accumulate across all generated rows, independently of result deltas.
   // solve = value>0;attempt = value>-2 && value!=0(DNF=-1 算 attempt,DNS=-2/0/null 不算).
-  const solveAttempt = (attempts: (number | null)[]): [number, number] => {
-    let s = 0, a = 0;
-    for (const v of attempts) { if (v == null) continue; if (v > 0) { s++; a++; } else if (v === -1) a++; }
-    return [s, a];
-  };
   // B 奖牌(pid\x1fcountry → event → [g,s,b]) + 名次(pid\x1fcountry → event → [pos2,pos4]).跨 event 聚合 → 顶层.
   const medalByPidEvent = new Map<string, Map<string, [number, number, number]>>();
   const placeAcc = new Map<string, Map<string, [number, number]>>();
@@ -442,7 +438,10 @@ async function main() {
   // 21 events including non-active(为 cohort_ranks / 全成绩排行 / person_ranks 废止项列也需要历史项)
   const ALL_KNOWN_EVENTS = RANK_EVENTS;
 
+  const eventYearStream = createWriteStream(resolve(outDir, 'wca_fs_person_event_year_solves.copy.tsv'));
+  let eventYearCount = 0;
   for (const eventId of ALL_KNOWN_EVENTS) {
+    const eventYearTotals = new Map<string, AnnualParticipation>();
     const tev = Date.now();
     console.log(`[${eventId}] loading results...`);
 
@@ -677,10 +676,18 @@ async function main() {
       recTally(r.regAvgRecord, r.pid, r.countryId, r.compId);
       // E 参赛 & 复原(无 event 过滤;每行都计).
       {
-        const [sR, aR] = solveAttempt(r.attempts);
+        const [sR, aR] = countSolveAttempts(r.attempts);
+        addAnnualParticipation(eventYearTotals, r, [sR, aR]);
         { const k = r.pid + '\x1f' + r.compId; let t = personCompSA.get(k); if (!t) { t = [0, 0, r.countryId]; personCompSA.set(k, t); } t[0] += sR; t[1] += aR; }
         { const yr = compInfo.get(r.compId)?.year; if (yr) { const k = r.pid + '\x1f' + r.countryId + '\x1f' + yr; let t = personYearSA.get(k); if (!t) { t = [0, 0]; personYearSA.set(k, t); } t[0] += sR; t[1] += aR; } }
       }
+    }
+
+    // Flush each event before reading the next; do not retain a cross-event map.
+    for (const total of eventYearTotals.values()) {
+      const line = [pgEsc(total.wcaId), pgEsc(total.countryId), eventId, total.year, total.solve, total.attempt, total.rounds].join('\t') + '\n';
+      if (!eventYearStream.write(line)) await once(eventYearStream, 'drain');
+      eventYearCount++;
     }
 
     // ── fun-stats per-event 写出:C misser(每 (pid,country) 单次/平均各一行)──
@@ -1276,6 +1283,7 @@ async function main() {
     new Promise<void>(res => misserStream.end(() => res())),
     new Promise<void>(res => bestPodiumsStream.end(() => res())),
   ]);
+  await endStream(eventYearStream);
   await conn.end();
 
   const flatDigests = await digestFile(wrfSource, 5);
@@ -1310,6 +1318,21 @@ CREATE TABLE IF NOT EXISTS wca_fs_person_comp_solves (wca_id VARCHAR(20) NOT NUL
 CREATE TABLE IF NOT EXISTS wca_fs_comp_solves (comp_id VARCHAR(50) PRIMARY KEY, comp_country_id VARCHAR(50) NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS wca_fs_person_solves (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL, PRIMARY KEY (wca_id, country_id));
 CREATE TABLE IF NOT EXISTS wca_fs_person_year_solves (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, year SMALLINT NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL, PRIMARY KEY (wca_id, country_id, year));
+-- Per-event buckets retain representation at the time of the result.
+-- Existing all-event tables remain available during the data rollout.
+CREATE TABLE IF NOT EXISTS wca_fs_person_event_year_solves (
+  wca_id VARCHAR(20) NOT NULL,
+  country_id VARCHAR(50) NOT NULL,
+  event_id VARCHAR(20) NOT NULL,
+  year SMALLINT NOT NULL,
+  solve INTEGER NOT NULL CHECK (solve >= 0),
+  attempt INTEGER NOT NULL CHECK (attempt >= solve),
+  rounds INTEGER NOT NULL CHECK (rounds > 0 AND rounds <= attempt),
+  PRIMARY KEY (wca_id, country_id, event_id, year)
+);
+CREATE INDEX IF NOT EXISTS fs_peys_year_event ON wca_fs_person_event_year_solves (year, event_id, country_id);
+CREATE INDEX IF NOT EXISTS fs_peys_country ON wca_fs_person_event_year_solves (country_id, event_id, year);
+
 CREATE TABLE IF NOT EXISTS wca_championship_podiums (wca_id VARCHAR(20) NOT NULL, comp_id VARCHAR(50) NOT NULL, event_id VARCHAR(20) NOT NULL, level VARCHAR(30) NOT NULL, place SMALLINT NOT NULL, best INTEGER NOT NULL, average INTEGER NOT NULL DEFAULT 0, attempts INTEGER[], single_record VARCHAR(3) NOT NULL DEFAULT '', average_record VARCHAR(3) NOT NULL DEFAULT '', PRIMARY KEY (wca_id, comp_id, event_id, level));
 CREATE INDEX IF NOT EXISTS wcp_wca ON wca_championship_podiums (wca_id);
 -- 选手页专用全量成绩表(migration 0098 建;这里同样内联幂等 DDL,理由同上).
@@ -1469,6 +1492,12 @@ ${refreshTable({
   })}
 \\! rm -f wca_fs_person_year_solves.copy.tsv
 ${refreshTable({
+    table: 'wca_fs_person_event_year_solves',
+    columns: ['wca_id', 'country_id', 'event_id', 'year', 'solve', 'attempt', 'rounds'],
+    keyColumns: ['wca_id', 'country_id', 'event_id', 'year'], file: 'wca_fs_person_event_year_solves.copy.tsv', expectedRows: eventYearCount,
+  })}
+\\! rm -f wca_fs_person_event_year_solves.copy.tsv
+${refreshTable({
     table: 'wca_championship_podiums',
     columns: ['wca_id', 'comp_id', 'event_id', 'level', 'place', 'best', 'average', 'attempts', 'single_record', 'average_record'],
     keyColumns: ['wca_id', 'comp_id', 'event_id', 'level'], file: 'wca_championship_podiums.copy.tsv', expectedRows: champPodiumCount,
@@ -1524,6 +1553,7 @@ VACUUM (ANALYZE) wca_fs_person_comp_solves;
 VACUUM (ANALYZE) wca_fs_comp_solves;
 VACUUM (ANALYZE) wca_fs_person_solves;
 VACUUM (ANALYZE) wca_fs_person_year_solves;
+VACUUM (ANALYZE) wca_fs_person_event_year_solves;
 VACUUM (ANALYZE) wca_championship_podiums;
 VACUUM (ANALYZE) wca_person_results;`;
 
@@ -1584,6 +1614,9 @@ BEGIN
     RAISE EXCEPTION 'wca_results_flat count % != expected ${fullTopTotal} after incremental apply; aborting', n;
   END IF;
 END $$;
+
+INSERT INTO meta_historical (key, value, updated_at) VALUES ('wca_annual_participation_imported_at', NOW()::TEXT, NOW())
+  ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
 
 INSERT INTO meta_historical (key, value, updated_at) VALUES ('wca_stats_extra_imported_at', NOW()::TEXT, NOW())
   ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
