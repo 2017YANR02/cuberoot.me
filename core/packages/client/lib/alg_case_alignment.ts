@@ -1,6 +1,6 @@
-import { loadAlg as loadSourceAlg, canonicalize3x3AlgFile, isMergedOhCmllEntry, type AlgCase, type AlgEntry, type AlgFile, type AlgPuzzle } from '@cuberoot/shared/alg';
+import { loadAlg as loadSourceAlg, canonicalize3x3AlgFile, isMergedOhCmllEntry, requires3x3AlgCaseSetup, type AlgCase, type AlgEntry, type AlgFile, type AlgPuzzle } from '@cuberoot/shared/alg';
 import { duplicateAlgKey } from '@cuberoot/shared/alg-notation';
-import { adjacentUEdits, applyAlgTextEdits, displayCaseAlg, displayCaseScramble, oriAdjustSetup, uTurnOrder } from '@/lib/alg_display';
+import { adjacentUEdits, applyAlgTextEdits, displayCaseAlg, displayCaseScramble, oriAdjustSetup, playbackCaseAlg, uTurnOrder } from '@/lib/alg_display';
 import { CUBE_ORIENTATIONS } from '@/lib/alg_goals';
 import { orientCaseSetup, setupForCase, validateAlgCase, validateStoredAlgCase } from '@/lib/alg_validation';
 import { algHtmlText, editAlgHtmlText } from '@/lib/alg_html';
@@ -71,6 +71,18 @@ export function commonCaseSetup(puzzle: AlgPuzzle, set: string, c: AlgCase, ori 
     ? c.setup
     : setupForCase(puzzle, shape ? '' : c.setup, c.algs[0]?.[0]?.alg);
   return displayCaseScramble(puzzle, set, oriAdjustSetup(base, ori));
+}
+
+export type CaseSetupMode = 'preset' | 'inverse';
+
+/** Invert the first playback sequence, excluding its hidden finishing regrip. */
+export function casePreviewSetup(puzzle: AlgPuzzle, set: string, c: AlgCase, ori: number, mode: CaseSetupMode = 'preset'): string {
+  const first = c.algs[ori]?.[0];
+  if (mode === 'inverse' && requires3x3AlgCaseSetup(puzzle, set) && first && !caseAlgIssue(first)) {
+    const inverse = setupForCase(puzzle, '', playbackCaseAlg(puzzle, first.alg));
+    if (inverse) return inverse;
+  }
+  return oriAdjustSetup(c.setup, ori);
 }
 
 function adjustments(puzzle: AlgPuzzle): string[] {

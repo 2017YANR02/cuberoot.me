@@ -1159,7 +1159,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             {!collection?.cardsOnly && <BoolToggle
               value={showOtherAlgs}
               onChange={value => changeLayout(() => { void setShowOtherAlgs(value); }, effectiveView)}
-              label={tr({ zh: '显示其他公式', en: 'Show other algorithms' })}
+              label={tr({ zh: '显示更多公式', en: 'Show more algorithms' })}
             />}
             {data && canShowAllCases && (
               <BoolToggle
@@ -1717,7 +1717,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                                 onClick={() => setCaseOri(prev => ({ ...prev, [c.name]: (oriIdx + 1) % oriCount }))}
                                 title={`${shortOriName(c.oriNames?.[oriIdx] ?? '')} → ${shortOriName(c.oriNames?.[(oriIdx + 1) % oriCount] ?? '')}`}
                               >
-                                y
                                 <span className="alg-case-y-current">{shortOriName(c.oriNames?.[oriIdx] ?? '')}</span>
                               </button>
                             )}

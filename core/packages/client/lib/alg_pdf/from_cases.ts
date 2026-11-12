@@ -10,14 +10,13 @@
 import type { AlgCase, AlgEntry, AlgPuzzle } from '@cuberoot/shared';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { primaryCaseName } from '@/lib/alg_case_display';
-import { caseAlgIssue } from '@/lib/alg_case_alignment';
+import { caseAlgIssue, casePreviewSetup, type CaseSetupMode } from '@/lib/alg_case_alignment';
 import { tr } from '@/i18n/tr';
 import {
   caseViewAlg,
   caseViewSetup,
   displayCaseScramble,
   displayCaseAlg,
-  oriAdjustSetup,
   shortOriName,
   type CaseViewAngle,
 } from '@/lib/alg_display';
@@ -79,6 +78,8 @@ export interface FromCasesOptions {
   viewAngle?: CaseViewAngle;
   /** 网页当前选择的魔方拿法；PDF 缩略图必须同步。 */
   orientation?: string;
+  /** Match the detail page's preset or first-solution inverse setup. */
+  setupMode?: CaseSetupMode;
 }
 
 export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
@@ -108,7 +109,7 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
       omitted += filtered.length - verified.length;
       const picked = verified.slice(0, maxAlgs);
       // 印出来的打乱跟着视角转 —— 图是按 `oriAdjustSetup` 画的,打乱不跟着就摆不出图上那个态
-      const setup = caseViewSetup(oriAdjustSetup(c.setup, oriIdx), o.viewAngle ?? 'default');
+      const setup = caseViewSetup(casePreviewSetup(puzzle, set, c, oriIdx, o.setupMode), o.viewAngle ?? 'default');
       // 图取未筛选的首条 —— 筛选只该影响印出来的公式,不该换掉这张 case 的图
       const firstAlg = caseViewAlg(allForOri[0]?.alg ?? c.standard ?? '', o.viewAngle ?? 'default');
       const sub = c.subgroup || '';

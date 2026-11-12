@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import type { AlgFile } from '@cuberoot/shared/alg';
+import type { AlgCase, AlgFile } from '@cuberoot/shared/alg';
 import { renderFromSimpleQuery } from '@cuberoot/visualcube';
 import Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import { FM_REGULAR, stickeringMaskFn } from '@/app/[lang]/sim/engine/nxn/stickering';
-import { displayCaseScramble, oriAdjustSetup } from '@/lib/alg_display';
-import { alignAlgFile } from '@/lib/alg_case_alignment';
+import { displayCaseScramble, oriAdjustSetup, playbackCaseAlg } from '@/lib/alg_display';
+import { alignAlgFile, casePreviewSetup } from '@/lib/alg_case_alignment';
 import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
 
 // 线上 A+ 的公共 setup 和 FR / FL / BL / BR 主公式。
@@ -23,6 +23,34 @@ const TOP_LAYER_STICKERS = [
 ];
 
 describe('F2L detail player canonical pair', () => {
+  it.each(['f2l', 'adv-f2l'])('%s inverts the first playback sequence without hidden finishing regrips', set => {
+    const c: AlgCase = {
+      name: 'A+', subgroup: '', setup: A_PLUS_SETUP, sticker: { kind: 'f2l', fl: '' },
+      algs: A_PLUS_PRIMARY_ALGS.map(alg => [{ alg }, { alg: "R' F R F'" }]),
+    };
+    const sheet = algSheetFromCases({ puzzle: '3x3', set, cases: [c], title: '', filename: '',
+      allOris: true, setupMode: 'inverse',
+    });
+    const solved = new Cube(3);
+    const solvedState = solved.serialize();
+    solved.dispose();
+    for (const [ori, alg] of A_PLUS_PRIMARY_ALGS.entries()) {
+      expect(casePreviewSetup('3x3', set, c, ori)).toBe(oriAdjustSetup(A_PLUS_SETUP, ori));
+      const setup = casePreviewSetup('3x3', set, c, ori, 'inverse');
+      const cube = new Cube(3);
+      cube.twister.setup(`${setup} ${playbackCaseAlg('3x3', alg)}`);
+      expect(cube.serialize()).toBe(solvedState);
+      cube.dispose();
+      expect(sheet.cases[ori].thumb?.setup).toBe(setup);
+      expect(sheet.cases[ori].setup).toBe(displayCaseScramble('3x3', set, setup));
+    }
+    expect(casePreviewSetup('3x3', set, c, 1, 'inverse')).toBe("L F' L' F");
+    expect(casePreviewSetup('3x3', set, c, 2, 'inverse')).toBe("L U L' U'");
+    expect(casePreviewSetup('3x3', set, c, 3, 'inverse')).toBe("f R f' U'");
+    expect(casePreviewSetup('3x3', set, { ...c, algs: [[]] }, 0, 'inverse')).toBe(A_PLUS_SETUP);
+    expect(casePreviewSetup('3x3', 'oll', c, 1, 'inverse')).toBe(`${A_PLUS_SETUP} y`);
+  });
+
   it('the displayed setup reproduces every public F2L thumbnail in all four slots', async () => {
     const files = JSON.parse(readFileSync(new URL('./fixtures/alg-case-alignment.json', import.meta.url), 'utf8')) as AlgFile[];
     const file = await alignAlgFile(files.find(file => file.puzzle === '3x3' && file.set === 'f2l')!);

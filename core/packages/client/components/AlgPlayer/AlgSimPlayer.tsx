@@ -19,7 +19,7 @@
  * 的 `experimentalStickering` 同名,所以 `pickStickering` 一份两用。
  */
 
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode } from 'react';
 import { invertMoveString } from '@cuberoot/shared/alg-notation';
 import SimStage from '@/components/sim-embed/SimStage';
 import { useT } from '@/hooks/useT';
@@ -117,6 +117,8 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   autoPlay?: boolean;
   playRequest?: number;
   loop?: boolean;
+  resetAfterPlayback?: boolean;
+  stageOverlay?: ReactNode;
   controlMode?: AlgPlayerControlMode;
   stepMarkers?: readonly number[];
   hideResetView?: boolean;
@@ -134,7 +136,8 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   /** 撑满父容器。给编辑器那种「右半屏放预览」的布局用。 */
   fillPane?: boolean;
 }>(function AlgSimPlayer({
-  alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, highlightedStickers, frontFaceArrow, moveHint, moveHintRecovery = false, stickerColorOverrides, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, onUserMove, pauseAfterSteps, sectionPauseMs, onStepChange, stickeringAtStep, highlightDaisyAlignment = false, showHands = false, moveDurationMs, size = 260, fillPane = false,
+  alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, highlightedStickers, frontFaceArrow, moveHint, moveHintRecovery = false, stickerColorOverrides, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, resetAfterPlayback = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, onUserMove, pauseAfterSteps, sectionPauseMs, onStepChange, stickeringAtStep, highlightDaisyAlignment = false, showHands = false, moveDurationMs, size = 260, fillPane = false,
+  stageOverlay,
 }, ref) {
   const t = useT();
   const [handsUnavailable, setHandsUnavailable] = useState(false);
@@ -613,11 +616,26 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     setReplayRequest(request => request + 1);
   }, [jumpToStep]);
 
-  // 自动播放:走到头就停。
+  // Playback completion may hold the result briefly before restoring the setup.
   useEffect(() => {
     if (!playing) return;
     const atLastFrame = step >= moves.length;
-    if (atLastFrame && !loop) { setPlaying(false); return; }
+    if (atLastFrame && !loop) {
+      if (!resetAfterPlayback) { setPlaying(false); return; }
+      const afterFinalTurn = () => {
+        const twister = mountRef.current?.world.cube.twister as PreviewTwister | undefined;
+        if ((twister?.backlog ?? 0) > 0) {
+          resetTimer = setTimeout(afterFinalTurn, 16);
+          return;
+        }
+        resetTimer = setTimeout(() => {
+          jumpToStep(0);
+          setPlaying(false);
+        }, 1000);
+      };
+      let resetTimer = setTimeout(afterFinalTurn, previewTiming.stepMs);
+      return () => clearTimeout(resetTimer);
+    }
     const atSectionBoundary = !atLastFrame && step !== playbackStartStep.current && pauseAfterSteps?.includes(step);
     const delay = atLastFrame
       ? LOOP_PAUSE_MS + (hasCustomTiming ? previewTiming.stepMs : 0)
@@ -659,7 +677,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     };
     let id = setTimeout(afterTurn, delay);
     return () => clearTimeout(id);
-  }, [playing, loop, step, moves.length, hasCustomTiming, previewTiming.stepMs, replayRequest, jumpToStep, stepForward, highlightDaisyAlignment, pauseAfterSteps, sectionPauseMs, timedSectionPauses]);
+  }, [playing, loop, resetAfterPlayback, sequenceKey, step, moves.length, hasCustomTiming, previewTiming.stepMs, replayRequest, jumpToStep, stepForward, highlightDaisyAlignment, pauseAfterSteps, sectionPauseMs, timedSectionPauses]);
 
   return (
     <div className={`alg-sim-player${fillPane ? ' is-fill' : ''}`}>
@@ -680,6 +698,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
             showLockedMessage={false}
           />
         )}
+        {stageOverlay}
       </SimStage>
       {controlMode === 'replay' ? (
         <AlgPlaybackControls
@@ -694,10 +713,10 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
           count={moves.length}
           playing={playing}
           stepMarkers={stepMarkers}
-          onScrub={next => { if (timedSectionPauses) setPlaying(false); jumpToStep(next); }}
-          onStepBack={() => { if (timedSectionPauses) setPlaying(false); stepBack(); }}
+          onScrub={next => { if (timedSectionPauses || resetAfterPlayback) setPlaying(false); jumpToStep(next); }}
+          onStepBack={() => { if (timedSectionPauses || resetAfterPlayback) setPlaying(false); stepBack(); }}
           onTogglePlay={togglePlayback}
-          onStepForward={() => { if (timedSectionPauses) setPlaying(false); stepForward(); }}
+          onStepForward={() => { if (timedSectionPauses || resetAfterPlayback) setPlaying(false); stepForward(); }}
           onResetView={resetView}
         />
       ) : null}

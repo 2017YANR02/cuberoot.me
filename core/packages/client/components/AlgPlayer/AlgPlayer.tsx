@@ -10,7 +10,7 @@
  *  - case 详情页:用户点击公式行展开后播放
  *  - AlgEditor (admin):编辑时显示当前 focused 行的预览,核对公式
  */
-import { useEffect, useRef, useImperativeHandle, forwardRef, type CSSProperties } from 'react';
+import { useEffect, useRef, useImperativeHandle, forwardRef, type CSSProperties, type ReactNode } from 'react';
 import { mountTwistyPlayer, type MountedTwistyPlayer } from '@cuberoot/timer-ui/mount-twisty-player';
 import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 import { pickStickering } from './stickering';
@@ -97,6 +97,10 @@ interface Props {
   playRequest?: number;
   /** 自动播放到末尾后从头重播。 */
   loop?: boolean;
+  /** Sim only: after playback settles, hold for one second, then return to the setup and stop. */
+  resetAfterPlayback?: boolean;
+  /** Sim only: overlay inside the puzzle viewport without adding layout height. */
+  stageOverlay?: ReactNode;
   /** 完整播放条或仅重播按钮。记号教学使用极简重播模式。 */
   controlMode?: AlgPlayerControlMode;
   /** Sim engine: move counts at teaching stage boundaries on the scrubber. */
@@ -200,6 +204,8 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         highlightDaisyAlignment={props.highlightDaisyAlignment}
         showHands={props.showHands}
         startSolved={props.startSolved} autoPlay={props.autoPlay} loop={props.loop}
+        resetAfterPlayback={props.resetAfterPlayback}
+        stageOverlay={props.stageOverlay}
         playRequest={props.playRequest}
         controlMode={props.controlMode}
         interactionMode={props.interactionMode}

@@ -1598,6 +1598,11 @@ a.alg-community-author:hover {
 .alg-list-settings .settings-popover-panel {
   max-height: min(80dvh, 640px);
   overflow-y: auto;
+  font-size: 14px;
+}
+.alg-list-settings :is(.alg-list-settings-label, .alg-view-angle, .alg-optimal-filter-label, .alg-header-select, .alg-notation-style-select, .alg-pdf-btn, .alg-filter-clear) {
+  font-size: inherit;
+  color: inherit;
 }
 .alg-list-settings-label {
   color: var(--muted-foreground);
@@ -2199,13 +2204,11 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   }
 }
 @media (min-width: 901px) and (max-width: 1099px) {
-  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid:not(.is-editing),
-  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid.is-editing .alg-editor {
-    grid-template-columns: minmax(0, 1fr);
+  .alg-case-detail-lean-algs.is-f2l-orientation-grid .alg-player-list-layout {
+    grid-template-columns: 220px minmax(0, 1fr);
   }
-  [data-slot-order="physical"] .alg-case-detail-ori[data-slot],
-  [data-slot-order="physical"] .alg-editor > .alg-editor-ori:nth-child(n) {
-    grid-area: auto;
+  .alg-case-detail-lean-algs.is-f2l-orientation-grid .alg-player-list-player {
+    width: 220px;
   }
 }
 
@@ -2288,6 +2291,42 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 }
 .alg-case-detail-ori-player {
   min-width: 0;
+}
+.alg-case-detail-ori-player > .alg-case-detail-ori-label {
+  /* Match the adjacent scramble's line height. */
+  line-height: calc(1.125rem * 1.5);
+}
+.is-f2l-orientation-grid .alg-case-detail-ori-player {
+  display: flex;
+  flex-direction: column;
+}
+.is-f2l-orientation-grid [data-slot="BR"] .alg-case-detail-ori-label,
+.is-f2l-orientation-grid [data-slot="FR"] .alg-case-detail-ori-label {
+  text-align: right;
+}
+.is-f2l-orientation-grid [data-slot="FL"] .alg-case-detail-ori-player > .alg-case-detail-ori-label,
+.is-f2l-orientation-grid [data-slot="FR"] .alg-case-detail-ori-player > .alg-case-detail-ori-label {
+  order: 1;
+  margin-top: 3px;
+  margin-bottom: 0;
+}
+.sim-stage > .alg-case-detail-ori-label {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  margin: 0;
+  line-height: 1.5;
+  pointer-events: none;
+}
+.is-f2l-orientation-grid [data-slot="BR"] .sim-stage > .alg-case-detail-ori-label,
+.is-f2l-orientation-grid [data-slot="FR"] .sim-stage > .alg-case-detail-ori-label {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
+}
+.is-f2l-orientation-grid [data-slot="FL"] .sim-stage > .alg-case-detail-ori-label,
+.is-f2l-orientation-grid [data-slot="FR"] .sim-stage > .alg-case-detail-ori-label {
+  inset-block-start: auto;
+  inset-block-end: 0;
 }
 
 @media (max-width: 680px) {

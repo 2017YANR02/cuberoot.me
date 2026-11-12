@@ -3,7 +3,7 @@ import F2lSlotSelector from '@/components/F2lSlotSelector';
 import PageHeading from '@/components/PageHeading';
 import { TimerPracticeContentPicker } from '@cuberoot/timer-ui';
 import { useTranslation } from 'react-i18next';
-import { alignAlgFile, caseAlgIssue, loadAlg } from '@/lib/alg_case_alignment';
+import { alignAlgFile, caseAlgIssue, casePreviewSetup, loadAlg, type CaseSetupMode } from '@/lib/alg_case_alignment';
 
 /**
  * 单张 case 的**独立详情页**正文(短链 `/alg/<puzzle>/<set>/<slug>`,如 `/alg/3x3/zbll/ur3`)。
@@ -24,6 +24,7 @@ import { useAlgCaseEntryTransition } from '@/hooks/useAlgViewTransition';
 import Link from '@/components/AppLink';
 import { Pencil, ChevronLeft, ChevronRight, ExternalLink, Copy, Check, Shuffle, HelpCircle, AlertTriangle } from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgEntry, AlgFile, AlgPuzzle, AlgSubmission } from '@cuberoot/shared';
+import { requires3x3AlgCaseSetup } from '@cuberoot/shared/alg';
 import { displayedAlgorithmStm } from '@/lib/alg-metrics';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import AlgCaseMetaContent from '@/components/AlgCaseMetaContent';
@@ -32,6 +33,7 @@ import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import F2lSolutionGroups from '@/components/F2lSolutionGroups';
 import { isF2lStandard } from '@/lib/f2l-solution-groups';
 import AlgPlayer from '@/components/AlgPlayer';
+import { HOME_SCENE_ROT } from '@cuberoot/puzzle-render-core/engine/viewControls';
 import CommunityAlgs from '@/components/CommunityAlgs';
 import AdminCaseEditor, { type InlineCaseEditorParts } from '@/components/AdminCaseEditor';
 import type { AlgInvalidMark } from '@/components/AlgEditor';
@@ -61,7 +63,6 @@ import {
   displayCaseScramble,
   displayCaseAlg,
   displayCaseAlgHtml,
-  oriAdjustSetup,
   shortOriName,
   type CaseViewAngle,
 } from '@/lib/alg_display';
@@ -92,6 +93,8 @@ const F2L_DETAIL_ORIENTATION_ORDER = new Map([
   ['FL', 2],
   ['FR', 3],
 ]);
+
+const F2L_LEFT_SCENE_ROT = { ...HOME_SCENE_ROT, y: -HOME_SCENE_ROT.y };
 
 /** 打乱行(和列表卡片同款,sq1 之类会重排格式)。 */
 function SetupLine({ puzzle, setup, sq1NotationMode = 'compact', selected, onPlay }: {
@@ -197,7 +200,7 @@ function CaseDetailsTabs({ related, metadata, advanced }: { related: ReactNode; 
   const id = useId();
   const tabs = useRef<HTMLDivElement>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
-  const labels = [tr({ zh: '相关情况', en: 'Related cases' }), tr({ zh: '元信息', en: 'Metadata' }), ...(advanced ? [tr({ zh: '高级', en: 'Advanced' })] : [])];
+  const labels = [tr({ zh: '相关', en: 'Related' }), tr({ zh: '信息', en: 'Info' }), ...(advanced ? [tr({ zh: '高级', en: 'Advanced' })] : [])];
   const selected = Math.min(active, labels.length - 1);
   return <section className="alg-case-details-tabs">
     <div ref={tabs} role="tablist" aria-label={tr({ zh: 'Case 信息', en: 'Case details' })}>
@@ -326,6 +329,10 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
     'scramble',
     parseAsStringEnum<ScrambleKind>(SCRAMBLE_KINDS.map(kind => kind.id)).withDefault('inv'),
   );
+  const canChooseSetupMode = requires3x3AlgCaseSetup(puzzle, set);
+  const [setupMode, setSetupMode] = useQueryState(
+    'setup', parseAsStringEnum<CaseSetupMode>(['preset', 'inverse']).withDefault('preset'),
+  );
   const [viewAngle, setViewAngle] = useQueryState(
     'angle',
     parseAsStringEnum<CaseViewAngle>([...CASE_VIEW_ANGLES]).withDefault('default'),
@@ -391,6 +398,11 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
 
   /** 在关联 case 之间切换时保留用户刚选的打乱类型;默认值不写进 URL。 */
   const keepScrambleKind = (href: string) => {
+    if (canChooseSetupMode) {
+      if (setupMode === 'preset') return href;
+      const [path, hash] = href.split('#');
+      return `${path}${path.includes('?') ? '&' : '?'}setup=${setupMode}${hash === undefined ? '' : `#${hash}`}`;
+    }
     if (scrambleKind === 'inv') return href;
     const hashAt = href.indexOf('#');
     const path = hashAt < 0 ? href : href.slice(0, hashAt);
@@ -554,12 +566,13 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
       {editing ? image : <AlgImageDownloadButton build={() => caseImageBatch({
         puzzle, set, cases: [caseObj], title: primary,
         filename: `${puzzle}-${set}-${caseObj.name}-ori-${oi + 1}`,
-        oriOf: () => oi, sq1BlackTop, viewAngle: effectiveViewAngle, orientation: effectiveOrientation,
+        oriOf: () => oi, sq1BlackTop, viewAngle: effectiveViewAngle, orientation: effectiveOrientation, setupMode,
       })}>{image}</AlgImageDownloadButton>}
     </div>;
   };
 
   const slotPicker = useF2lOrientationGrid && <F2lSlotSelector className="alg-case-slot-picker"
+    selectOnHover
     ariaLabel={tr({ zh: '槽位', en: 'Slot' })} selected={[mobileSlot]}
     disabledSlots={['BL', 'BR', 'FL', 'FR'].filter(slot => !oriNames?.some(name => shortOriName(name) === slot))}
     onSelect={setMobileSlot} />;
@@ -591,6 +604,17 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
         </PageHeading>
         <SettingsPopover label={tr({ zh: '公式设置', en: 'Algorithm settings' })}>
           {m && <div ref={setScrambleSettingsContainer} />}
+          {canChooseSetupMode && <label className="alg-view-angle">
+            <span>{tr({ zh: '打乱方式', en: 'Scramble source' })}</span>
+            <select className="alg-header-select" value={setupMode}
+              onChange={event => {
+                setPlayRequestByOri({});
+                void setSetupMode(event.target.value as CaseSetupMode);
+              }}>
+              <option value="preset">{tr({ zh: '预设打乱', en: 'Preset' })}</option>
+              <option value="inverse">{tr({ zh: '首条公式取逆', en: 'Inverse of first algorithm' })}</option>
+            </select>
+          </label>}
           <label className="alg-view-angle">
             <span>{tr({ zh: '显示', en: 'Display' })}</span>
             <select className="alg-header-select" value={previewMode}
@@ -663,6 +687,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
               sq1BlackTop,
               viewAngle: effectiveViewAngle,
               orientation: effectiveOrientation,
+              setupMode,
             })}
           />
           {editing && <div ref={setValidationTriggerContainer} />}
@@ -741,7 +766,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
           <div className={`alg-case-detail-lean-algs is-paired-player${useF2lOrientationGrid ? ' is-f2l-orientation-grid' : ''}${editor ? ' is-editing' : ''}`}>
             {editor && <div hidden={effectiveViewAngle !== 'default'}>{editor.algorithms()}</div>}
             {(!editor || effectiveViewAngle !== 'default') && displayedOrientations.map(({ oriAlgs, oi }) => {
-              const orientedSetup = oriAdjustSetup(caseObj.setup, oi);
+              const orientedSetup = casePreviewSetup(puzzle, set, caseObj, oi, setupMode);
               const requestedAlgIdx = selectedAlgByOri[oi] ?? 0;
               const selectedAlgIdx = typeof requestedAlgIdx === 'number' && requestedAlgIdx < oriAlgs.length ? requestedAlgIdx : 0;
               const candidateEntry = composedByOri[oi] ?? oriAlgs[selectedAlgIdx];
@@ -775,14 +800,16 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
                 );
                 return <Fragment key={`${oi}:${i}`}>{row}</Fragment>;
               });
+              const slotName = shortOriName(oriNames?.[oi] ?? '');
+              const labelInStage = useF2lOrientationGrid && showAnimation;
+              const slotLabel = multiOri && <div className="alg-case-detail-ori-label">{slotName}</div>;
               return (
                 <div key={oi} id={`slot-${shortOriName(oriNames?.[oi] ?? '')}`} data-alg-motion-ori={oi} data-mobile-active={oi === mobileSlotIndex} data-slot={shortOriName(oriNames?.[oi] ?? '')} className="alg-case-detail-ori">
-                  {multiOri && <div className="alg-case-detail-ori-label">
-                    {shortOriName(oriNames![oi])}
-                  </div>}
+                  {!useF2lOrientationGrid && slotLabel}
                   <div className="alg-case-detail-ori-main alg-player-list-layout">
                     {(!showAnimation || selectedEntry || playingScramble || oi === 0) && (
                       <div className="alg-case-detail-ori-player alg-player-list-player">
+                        {useF2lOrientationGrid && !labelInStage && slotLabel}
                         {!showAnimation ? renderPreviewImage(orientedSetup, oriAlgs[0]?.alg ?? caseObj.standard ?? '', oi) : (selectedEntry || playingScramble) && <AlgPlayer
                           alg={playingScramble ? orientationSetup : playbackCaseAlg(puzzle, selectedAlg)}
                           puzzle={puzzle}
@@ -790,6 +817,10 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
                           setup={playingScramble ? undefined : orientationSetup}
                           startSolved={playingScramble}
                           orientation={effectiveOrientation}
+                          resetAfterPlayback={canChooseSetupMode && !playingScramble}
+                          stageOverlay={labelInStage ? slotLabel : undefined}
+                          sceneRot={useF2lOrientationGrid && ['FL', 'BL'].includes(shortOriName(oriNames?.[oi] ?? ''))
+                            ? F2L_LEFT_SCENE_ROT : undefined}
                           size={useF2lOrientationGrid ? 220 : 260}
                           autoPlay={playRequest > 0}
                           playRequest={playRequest}
