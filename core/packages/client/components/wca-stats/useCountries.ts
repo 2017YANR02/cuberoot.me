@@ -17,8 +17,16 @@ export function useCountries(): CountryOption[] {
   useEffect(() => {
     let alive = true;
     fetch(apiUrl('/v1/wca/historical-ranks/countries'))
-      .then(r => r.json())
-      .then((j: { countries: CountryOption[] }) => { if (alive) setList(j.countries); })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(j => {
+        if (!Array.isArray(j?.countries)) return;
+        const countries = j.countries.filter((row: unknown): row is CountryOption =>
+          row !== null && typeof row === 'object'
+          && 'id' in row && typeof row.id === 'string'
+          && 'name' in row && typeof row.name === 'string'
+          && 'iso2' in row && (row.iso2 === null || typeof row.iso2 === 'string'));
+        if (alive) setList(countries);
+      })
       .catch(() => { /* leave empty */ });
     return () => { alive = false; };
   }, []);

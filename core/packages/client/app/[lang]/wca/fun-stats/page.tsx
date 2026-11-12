@@ -21,6 +21,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { apiUrl } from '@/lib/api-base';
+import { loadAnnualParticipationOptions, type AnnualOptions } from '@/lib/wca-annual-options';
 import './fun_stats.css';
 import { tr } from '@/i18n/tr';
 import { useT } from "@/hooks/useT";
@@ -133,7 +134,6 @@ function defaultRankType(event: string): 'single' | 'average' {
 }
 
 interface ApiResp { total?: number; rows?: Record<string, unknown>[]; year?: number; updatedAt?: string; years?: number[]; events?: string[]; penalties?: number[]; self?: Record<string, unknown> | null }
-interface AnnualOptions { options: { event: string; year: number }[]; events: string[] }
 
 function FunStatsInner() {
   const { i18n } = useTranslation();
@@ -158,8 +158,9 @@ function FunStatsInner() {
   const event = filters.event || (stat.needsYear ? '' : '333');
   const page = Math.max(1, filters.page);
   const [annualOptions, setAnnualOptions] = useState<AnnualOptions | null>(null);
-  const years = useMemo(() => [...new Set((annualOptions?.options ?? [])
-    .filter(option => !event || option.event === event).map(option => option.year))], [annualOptions, event]);
+  const years = useMemo(() => [...new Set(annualOptions?.options
+    ? annualOptions.options.filter(option => !event || option.event === event).map(option => option.year)
+    : annualOptions?.years ?? [])].sort((a, b) => b - a), [annualOptions, event]);
   const [typeAvg, setTypeAvg] = useState(false);   // C 家族单次/平均
   const [selEvents, setSelEvents] = useState<Set<string>>(new Set());  // A 子集多选
   const [size, setSize] = useState(100);
@@ -194,9 +195,8 @@ function FunStatsInner() {
     if (!stat.needsYear) return;
     const controller = new AbortController();
     setAnnualOptions(null);
-    fetch(apiUrl(`/v1/wca/fun/most-solves-person-year/years?v=3&scope=${encodeURIComponent(region)}`), { signal: controller.signal })
-      .then(async r => { if (!r.ok) throw new Error(); return r.json(); })
-      .then((d: AnnualOptions) => { if (!controller.signal.aborted) setAnnualOptions(d); })
+    loadAnnualParticipationOptions(region, controller.signal)
+      .then(d => { if (!controller.signal.aborted) setAnnualOptions(d); })
       .catch(() => { /* The main request displays errors. */ });
     return () => controller.abort();
   }, [stat.needsYear, region]);
@@ -312,9 +312,10 @@ function FunStatsInner() {
                 })}</option>
               </select>
             )}
-            {stat.needsYear && (years.length > 0 || year > 0) && (
+            {stat.needsYear && (
               <select className="fun-stats-year" aria-label={tr({ zh: '年份', en: 'Year' })}
-                value={year || resp?.year || years[0] || 0} onChange={e => { void setFilters({ year: Number(e.target.value), page: 1 }); }}>
+                value={year} onChange={e => { void setFilters({ year: Number(e.target.value), page: 1 }); }}>
+                <option value={0}>{tr({ zh: '最新年份', en: 'Latest year' })}{resp?.year ? ` (${resp.year})` : ''}</option>
                 {year > 0 && !years.includes(year) && <option value={year}>{year}</option>}
                 {years.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
