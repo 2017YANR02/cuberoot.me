@@ -111,6 +111,8 @@ export interface ReconSolve {
   recon?: string;
   /** 纯解法文本（新格式） */
   solution?: string;
+  /** Sanitized inline finger annotations; plain solution remains authoritative for playback. */
+  solutionHtml?: string;
   /** 优化打乱 */
   optimalScramble?: string;
   /** WCA 真实打乱 */
@@ -199,6 +201,7 @@ export interface ReconCuber {
 /** 另解条目——挂在某个 solve 下的子还原(同打乱、不同解法) */
 export interface ReconAlternative {
   solution: string;
+  solutionHtml?: string;
   addedById: string;
   addedBy: string;
   addedByUserId?: number | null;

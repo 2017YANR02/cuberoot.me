@@ -1,0 +1,14 @@
+/* contenteditable 内的记号样式 — 与 .alg-alg-text 对齐 */
+.alg-rich-input u {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.alg-rich-input u.wavy {
+  text-decoration: underline wavy;
+  text-decoration-thickness: 1px;
+}
+.alg-rich-input s {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}

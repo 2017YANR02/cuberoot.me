@@ -74,6 +74,7 @@ import { computePrRank } from '@/components/persons/logic/progress';
 import { syncReconPlayerCursorFromText, findIllegalNotationChars } from '@/lib/recon-alg-utils';
 import { buildNormalizedSolution, hasNormalizableCrossMove } from '@/lib/recon-norm-cross-extract';
 import { encodeUrlAlg, decodeUrlAlg } from '@/lib/cubedb-url';
+import { algHtmlText, escapeAlgText, sanitizeAlgHtml } from '@/lib/alg_html';
 import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import {
@@ -463,7 +464,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       // default (item 4) clobber it once personId/event are resolved.
       setMethodUserTouched(true);
       setCubeUserTouched(true);
-      if (solve.solution) solutionFieldRef.current?.setText(solve.solution);
+      if (solve.solution) solutionFieldRef.current?.setText(solve.solution, solve.solutionHtml);
       setLoadingEdit(false);
     }).catch(() => {
       if (!active) return;
@@ -536,6 +537,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     const optimal = decodeUrlAlg(searchParams?.get('optimal') || '');
     const generic = decodeUrlAlg(searchParams?.get('generic') || '');
     const solution = decodeUrlAlg(searchParams?.get('alg') || '');
+    const markup = sanitizeAlgHtml(searchParams?.get('algHtml') || '');
+    const solutionHtml = markup && algHtmlText(markup) === solution ? markup : '';
     if (!scramble && !optimal && !generic && !solution) return;
     if (optimal) setScrambleField('optimal');
     else if (scramble) setScrambleField('wca');
@@ -552,8 +555,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         ? normalizeReconScrambleSpacing(prev.event || '3x3', generic)
         : prev.scramble || '',
       solution: solution || prev.solution || '',
+      solutionHtml: solution ? solutionHtml : prev.solutionHtml,
     }));
-    if (solution) solutionFieldRef.current?.setText(solution);
+    if (solution) solutionFieldRef.current?.setText(solution, solutionHtml);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -639,13 +643,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       const url = new URL(window.location.href);
       const next = new URLSearchParams();
       for (const [k, v] of url.searchParams) {
-        if (k === 'scramble' || k === 'optimal' || k === 'generic' || k === 'alg') continue;
+        if (k === 'scramble' || k === 'optimal' || k === 'generic' || k === 'alg' || k === 'algHtml') continue;
         next.append(k, v);
       }
       if (scr) next.set('scramble', scr);
       if (opt) next.set('optimal', opt);
       if (generic) next.set('generic', generic);
       if (sol) next.set('alg', sol);
+      if (form.solutionHtml && form.solutionHtml !== escapeAlgText(form.solution || '')) next.set('algHtml', form.solutionHtml);
       const qs = next.toString();
       const newHref = url.pathname + (qs ? '?' + qs : '') + url.hash;
       if (newHref !== url.pathname + url.search + url.hash) {
@@ -661,7 +666,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [form.wcaScramble, form.optimalScramble, form.scramble, form.solution, isEditing, fromId]);
+  }, [form.wcaScramble, form.optimalScramble, form.scramble, form.solution, form.solutionHtml, isEditing, fromId]);
 
   // ── Merged official+live WCA results for the current solver ──
   // Same official (fetchWcaPersonResults/fetchWcaPersonCompetitions) + live
@@ -1692,7 +1697,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       setForm(draft.form);
       setTimeInput(draft.timeInput);
       setAvgInput(draft.avgInput);
-      solutionFieldRef.current?.setText(draft.form.solution || '');
+      solutionFieldRef.current?.setText(draft.form.solution || '', draft.form.solutionHtml);
     } catch { /* No valid pending checkout draft. */ }
   }, [mounted, loadingEdit, readOnly, authUser?.uid]);
 
@@ -2381,6 +2386,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               ) : normalized ? (
                 <SolutionView
                   text={displaySolution}
+                  html={form.solutionHtml}
                   event={form.event}
                   scramble={getReconScramble(form)}
                   sourceText={displaySolution}
@@ -2392,7 +2398,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   event={form.event}
                   ref={solutionFieldRef}
                   value={form.solution || ''}
-                  onChange={(text) => setField('solution', text)}
+                  html={form.solutionHtml}
+                  onChange={(text, html) => { setField('solution', text); setField('solutionHtml', html); }}
                   onCaretSync={(textBefore) => syncReconPlayerCursorFromText(playerRef.current, textBefore)}
                   scramble={getReconScramble(form)}
                   isMobile={isMobile}

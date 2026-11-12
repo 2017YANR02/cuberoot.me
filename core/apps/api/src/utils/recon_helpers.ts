@@ -25,6 +25,7 @@ const COSMETIC_ANNOTATION_RE = /[.·↑↓⅓⅔​‌‍﻿]/g;
 
 // NOTE: 只列出名称不同的字段，同名字段（如 id, event, method）无需映射
 const FIELD_MAP_JSON_TO_SQL: Record<string, string> = {
+  solutionHtml: 'solution_html',
   rawTime: 'raw_time',
   execTime: 'exec_time',
   memoTime: 'memo_time',
@@ -74,7 +75,7 @@ const ALLOWED_COLUMNS = new Set([
   'official', 'event', 'method', 'date', 'comp', 'country', 'city', 'round',
   'solve_num', 'person', 'person_id', 'raw_time', 'exec_time', 'memo_time',
   'average', 'value', 'regional_single_record', 'regional_average_record',
-  'ao_type', 'regional_aoxr_record', 'solution', 'optimal_scramble',
+  'ao_type', 'regional_aoxr_record', 'solution', 'solution_html', 'optimal_scramble',
   'wca_scramble', 'scramble', 'caption', 'note', 'stm', 'tps', 'oll', 'pll',
   'oll_short', 'pll_short', 'free_pair', 'y_rot', 'regrip', 'lockup',
   'cross_type', 'cross_stm', 'f2l', 'll', 's_move', 'cross_color',
@@ -312,7 +313,7 @@ export function validateRow(row: Record<string, unknown>, existing: Record<strin
   }
 
   // TEXT 上限 64KB
-  for (const col of ['recon', 'solution', 'optimal_scramble', 'wca_scramble', 'scramble', 'caption', 'note', 'video_url']) {
+  for (const col of ['recon', 'solution', 'solution_html', 'optimal_scramble', 'wca_scramble', 'scramble', 'caption', 'note', 'video_url']) {
     const v = row[col];
     if (v !== undefined && v !== null && Buffer.byteLength(String(v), 'utf8') > 65535) {
       errors.push(`${col} exceeds max size (64KB)`);
@@ -615,7 +616,7 @@ export function buildDuplicateQuery(
 
 /** Match the existing alternative-solution byte budget, before any parsing. */
 export function assertReconTextLengths(fields: Record<string, unknown>): void {
-  for (const key of ['solution', 'scramble', 'wcaScramble', 'optimalScramble', 'wca_scramble', 'optimal_scramble']) {
+  for (const key of ['solution', 'solutionHtml', 'solution_html', 'scramble', 'wcaScramble', 'optimalScramble', 'wca_scramble', 'optimal_scramble']) {
     const value = fields[key];
     if (typeof value === 'string' && Buffer.byteLength(value, 'utf8') > 65535) {
       throw new HTTPException(400, {

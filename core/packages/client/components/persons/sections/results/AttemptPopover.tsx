@@ -418,7 +418,7 @@ function AttemptPopoverBody({
                 <div style={scrambleLineStyle}>{reconScramble}</div>
                 {reconSolution && (
                   <div style={solutionWrapStyle}>
-                    <SolutionView text={reconSolution} event={reconEvent} scramble={reconScramble} playerRef={playerRef} />
+                    <SolutionView text={reconSolution} html={reconSolve?.solutionHtml} event={reconEvent} scramble={reconScramble} playerRef={playerRef} />
                   </div>
                 )}
               </Suspense>

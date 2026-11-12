@@ -129,9 +129,23 @@ describe('CubeVirtualKeyboard formula marks', () => {
     expect(editor.textContent).toBe(`R ${inserted}`);
   });
 
+  it.each([['mark-up', '↑'], ['mark-down', '↓'], ['mark-mid', '·']])('uses the same mark entry for plain text: %s', async (key, inserted) => {
+    const textarea = document.createElement('textarea');
+    document.body.appendChild(textarea);
+    await act(async () => root.render(createElement(CubeVirtualKeyboard, { target: { current: textarea } })));
+    textarea.value = 'R ';
+    textarea.setSelectionRange(2, 2);
+    Object.defineProperty(document, 'execCommand', { configurable: true, value: (_c: string, _u: boolean, text: string) => {
+      textarea.setRangeText(text, textarea.selectionStart, textarea.selectionEnd, 'end');
+      return true;
+    } });
+    await chooseMark(key);
+    expect(textarea.value).toBe(`R ${inserted}`);
+    expect(host.querySelector('[data-key="dot-mark"]')).toBeNull();
+    textarea.remove();
+  });
+
   it.each([
-    ['dot-mark', '↑', '↑'],
-    ['dot-mark', '↓', '↓'],
     ['R', "R'", "R'"],
   ])('long-press %s inserts %s with the appropriate spacing', async (key, variant, inserted) => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });

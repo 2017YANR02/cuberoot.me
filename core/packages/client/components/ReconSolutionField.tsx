@@ -7,7 +7,9 @@
  * input trio.
  */
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import AlgInput from './AlgInput';
+import AlgInput, { type AlgInputHandle } from './AlgInput';
+import { editorText, editorCaret, setEditorCaret, type AlgEditorElement } from '@/lib/alg-editor-dom';
+import { sanitizeAlgHtml, escapeAlgText, replaceAlgHtmlText } from '@/lib/alg_html';
 import ReconAutofill from './ReconAutofill';
 import CubeKeyboardSection from './CubeKeyboardSection';
 import { normalizeSolutionSlashes, reconInspectionOrientations, showReconInspectionColors } from '@/lib/recon-alg-utils';
@@ -17,14 +19,15 @@ import { getCaretRect } from '@/lib/textarea_caret';
 import './solution_view.css';
 
 export interface ReconSolutionFieldHandle {
-  /** Imperatively overwrite the textarea's DOM value (for async edit-mode loads
+  /** Imperatively overwrite the editor's DOM value (for async edit-mode loads
    *  that resolve after the field has already mounted with an empty value). */
-  setText: (s: string) => void;
+  setText: (s: string, html?: string) => void;
 }
 
 interface Props {
   value: string;
-  onChange: (text: string) => void;
+  html?: string;
+  onChange: (text: string, html: string) => void;
   onCaretSync?: (textBeforeCaret: string) => void;
   scramble: string;
   event?: string;
@@ -38,16 +41,12 @@ interface Props {
   placeholder?: string;
 }
 
-function autoResize(el: HTMLTextAreaElement) {
-  el.style.height = 'auto';
-  el.style.height = el.scrollHeight + 'px';
-}
-
 const ReconSolutionField = forwardRef<ReconSolutionFieldHandle, Props>(function ReconSolutionField({
-  value, onChange, onCaretSync, scramble, event, isMobile,
+  value, html, onChange, onCaretSync, scramble, event, isMobile,
   mobileKeyboardVisible, onFocusField, onBlurField, autoFocus, placeholder,
 }, ref) {
-  const elRef = useRef<HTMLTextAreaElement | null>(null);
+  const elRef = useRef<AlgEditorElement | null>(null);
+  const inputRef = useRef<AlgInputHandle>(null);
   const inspections = useMemo(() => showReconInspectionColors(event) ? reconInspectionOrientations(value) : [], [value, event]);
   const [inspectionChips, setInspectionChips] = useState<{ left: number; top: number; colors: string }[]>([]);
 
@@ -65,27 +64,24 @@ const ReconSolutionField = forwardRef<ReconSolutionFieldHandle, Props>(function 
     return () => { observer.disconnect(); el.removeEventListener('scroll', update); };
   }, [inspections]);
 
-  const writeNormalizedText = useCallback((text: string): string => {
+  const writeNormalizedText = useCallback((text: string, markup?: string): string => {
     const next = normalizeReconMoveSuffixOrder(text);
     const el = elRef.current;
-    if (el && el.value !== next) {
-      const selectionStart = el.selectionStart;
-      const selectionEnd = el.selectionEnd;
-      el.value = next;
-      if (selectionStart !== null && selectionEnd !== null) {
-        el.setSelectionRange(selectionStart, selectionEnd);
-      }
-      autoResize(el);
+    const currentHtml = markup ?? (el instanceof HTMLDivElement ? el.innerHTML : escapeAlgText(text));
+    const nextHtml = sanitizeAlgHtml(next === text ? currentHtml : normalizeReconMoveSuffixOrder(currentHtml));
+    if (el instanceof HTMLDivElement && editorText(el) !== next) {
+      const caret = editorCaret(el);
+      el.innerHTML = nextHtml;
+      setEditorCaret(el, Math.min(caret, next.length));
     }
-    onChange(next);
+    onChange(next, nextHtml);
     return next;
   }, [onChange]);
 
   useImperativeHandle(ref, () => ({
-    setText: (s: string) => {
-      const el = elRef.current;
-      if (!el) return;
-      writeNormalizedText(s);
+    setText: (text: string, markup?: string) => {
+      inputRef.current?.setText(markup ? sanitizeAlgHtml(markup) : escapeAlgText(text));
+      writeNormalizedText(text, markup ?? escapeAlgText(text));
     },
   }), [writeNormalizedText]);
 
@@ -100,7 +96,7 @@ const ReconSolutionField = forwardRef<ReconSolutionFieldHandle, Props>(function 
   useEffect(() => {
     const timer = setTimeout(() => {
       const el = elRef.current;
-      if (el) onCaretSync?.(el.value.slice(0, el.selectionStart ?? el.value.length));
+      if (el) onCaretSync?.(editorText(el).slice(0, editorCaret(el)));
     }, 500);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -110,6 +106,10 @@ const ReconSolutionField = forwardRef<ReconSolutionFieldHandle, Props>(function 
     <>
       <div className="recon-solution-input">
       <AlgInput
+        ref={inputRef}
+        markable
+        multiline
+        initialHtml={html ? sanitizeAlgHtml(html) : undefined}
         elementRef={elRef as React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
         initialText={value}
         className="submit-field-textarea submit-solution-textarea"
@@ -117,7 +117,7 @@ const ReconSolutionField = forwardRef<ReconSolutionFieldHandle, Props>(function 
         spellCheck={false}
         autoSpace
         autoResize
-        style={{ overflow: 'hidden', resize: 'none', fontFamily: 'monospace' }}
+        style={{ overflow: 'hidden', minHeight: '9em', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}
         placeholder={placeholder}
         onChange={writeNormalizedText}
         onCaretChange={(text, caretIndex) => {
@@ -129,12 +129,8 @@ const ReconSolutionField = forwardRef<ReconSolutionFieldHandle, Props>(function 
           onBlurField?.();
           const el = elRef.current;
           if (!el) return;
-          const next = normalizeSolutionSlashes(el.value);
-          if (next !== el.value) {
-            el.value = next;
-            onChange(next);
-            autoResize(el);
-          }
+          const next = normalizeSolutionSlashes(editorText(el));
+          if (next !== editorText(el)) writeNormalizedText(next, normalizeSolutionSlashes(inputRef.current?.getHtml() ?? ''));
         }}
       />
       {inspectionChips.map((chip, i) => (
@@ -147,20 +143,20 @@ const ReconSolutionField = forwardRef<ReconSolutionFieldHandle, Props>(function 
         textareaRef={elRef}
         value={value}
         setValue={(next) => {
-          writeNormalizedText(next);
+          writeNormalizedText(next, replaceAlgHtmlText(inputRef.current?.getHtml() ?? '', next));
         }}
         scramble={scramble}
         isMobile={isMobile}
       />
       <CubeKeyboardSection
+        enableMarks
         target={elRef as React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
         mobileVisible={mobileKeyboardVisible}
         onInput={() => {
           const el = elRef.current;
           if (!el) return;
-          const next = writeNormalizedText(el.value);
-          autoResize(el);
-          onCaretSync?.(next.slice(0, el.selectionStart ?? next.length));
+          const next = writeNormalizedText(editorText(el));
+          onCaretSync?.(next.slice(0, editorCaret(el)));
         }}
       />
     </>

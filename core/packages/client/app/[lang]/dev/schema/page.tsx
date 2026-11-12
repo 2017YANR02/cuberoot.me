@@ -594,6 +594,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 323, slug: 'recon_solution_html', desc: { zh: '为复盘保存与纯文本解法对应的指法标记。', en: 'Store inline finger annotations alongside the plain reconstruction solution.' } },
   { n: 321, slug: 'diansheng_zhang_anyu', desc: { zh: '按维护者确认将张安宇（2012ZHAN08）加入点盛战队，保留其他队员归属。', en: 'Assign Anyu Zhang (2012ZHAN08) to DianSheng as confirmed by the maintainer, preserving all other memberships.' } },
   { n: 322, slug: 'vault_merge_capacity', desc: { zh: '私密资料库单条密文上限提升至 4 MiB，支持合并原图附件。', en: 'Raise the private vault encrypted item limit to 4 MiB for merging original image attachments.' } },
   { n: 319, slug: 'yj_diansheng_teams', desc: { zh: '登记永骏与点盛品牌，尚不分配队员。', en: 'Register YongJun and DianSheng brands without assigning members.' } },
