@@ -90,7 +90,7 @@ function ImageDownloadDialog({ snapshot, batch, onClose }: { snapshot: CaseImage
       setProgress(null);
     }
   };
-  return <TimerRoomDialog title={tr({ zh: '下载图片', en: 'Download images' })}
+  return <TimerRoomDialog topLayer title={tr({ zh: '下载图片', en: 'Download images' })}
     className="alg-image-download-dialog" language={tr({ zh: 'zh', en: 'en' }) as 'zh' | 'en'} onClose={close}>
     <fieldset className="alg-image-download-options" disabled={busy}>
       <label>{tr({ zh: '格式', en: 'Format' })}<select className="alg-image-download-select" aria-label={tr({ zh: '格式', en: 'Format' })} value={format} onChange={e => setFormat(e.target.value as 'png' | 'svg')}><option value="png">PNG</option><option value="svg">SVG</option></select></label>

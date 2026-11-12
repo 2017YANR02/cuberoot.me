@@ -132,3 +132,6 @@
 .timer-battle-cube-device .shell-device-center { position: relative; inset: auto; }
 
 .timer-room-event { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+
+/* Reset native popover sizing so top-layer dialogs retain the full viewport scrim. */
+.timer-room-overlay[popover] { margin: 0; width: auto; height: auto; max-width: none; max-height: none; border: 0; }

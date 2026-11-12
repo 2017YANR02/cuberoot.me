@@ -10,18 +10,26 @@ export interface TimerRoomDialogProps {
   className?: string;
   headerControls?: ReactNode;
   hideHeader?: boolean;
+  /** Open above native popover menus that launched this dialog. */
+  topLayer?: boolean;
   language: 'en' | 'zh';
   onClose(): void;
   children: ReactNode;
 }
 
-export function TimerRoomDialog({ title, className, headerControls, hideHeader = false, language, onClose: onClosed, children }: TimerRoomDialogProps) {
+export function TimerRoomDialog({ title, className, headerControls, hideHeader = false, topLayer = false, language, onClose: onClosed, children }: TimerRoomDialogProps) {
   const { motionRef, close: onClose } = useDialogMotion(onClosed);
   const ref = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   const backdrop = useModalBackdrop(() => closeRef.current());
   const titleId = useId();
+  useEffect(() => {
+    const overlay = motionRef.current;
+    if (!topLayer || !overlay) return;
+    overlay.showPopover();
+    return () => { if (overlay.matches(':popover-open')) overlay.hidePopover(); };
+  }, [topLayer, motionRef]);
   useEffect(() => {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const focusFirst = () => (ref.current && (modalFocusableElements(ref.current)[0] ?? ref.current).focus());
@@ -39,7 +47,7 @@ export function TimerRoomDialog({ title, className, headerControls, hideHeader =
   }, []);
   if (typeof document === 'undefined') return null;
   const close = { en: 'Close', zh: '关闭' }[language];
-  return createPortal(<div ref={motionRef} className="timer-room-overlay timer-no-selection" data-no-timer {...backdrop}>
+  return createPortal(<div ref={motionRef} popover={topLayer ? 'manual' : undefined} className="timer-room-overlay timer-no-selection" data-no-timer {...backdrop}>
     <div className={`timer-room-dialog${className ? ` ${className}` : ''}`} data-site-surface="panel" role="dialog" aria-modal="true" aria-labelledby={titleId}
       ref={ref} tabIndex={-1} onKeyUp={(event) => event.stopPropagation()} onKeyDown={(event) => {
         event.stopPropagation();
