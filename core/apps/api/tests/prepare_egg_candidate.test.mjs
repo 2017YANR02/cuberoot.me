@@ -44,6 +44,47 @@ async function fixture() {
 }
 afterEach(async () => { await Promise.all(scratch.splice(0).map(p => rm(p, { recursive: true, force: true }))); });
 
+async function followupFixture({ reference = false } = {}) {
+  const f = await fixture(), plan = JSON.parse(await readFile(`${f.task}/plan.json`));
+  const input = JSON.parse(await readFile(`${f.task}/results/input.json`));
+  plan.baselineLabel = 'egg-current'; plan.productionSha256 = 'b'.repeat(64); plan.casesSha256 = 'd'.repeat(64);
+  plan.passes[0].label = 'lanes24'; plan.passes[0].lanes = 24;
+  plan.candidateBuilds = { lanes24: { ...plan.candidateBuild, schema: 'cuberoot.egg-native-followup-build/v1',
+    toolchain: 'rustc 1.98.1 (fixture)', sources: { 'src/prefetch.rs': 'b56ba004fd38ff135e9d020cb6f81f9ca18a29936f944fffb08409a3892c49a2' } } };
+  delete plan.candidateBuild;
+  const baseline = { sha256: plan.productionSha256, verifiedSolutions: 100, optimalLengthsMatched: 100 };
+  f.acceptance.engines = { lanes24: f.acceptance.engines['egg-t0'], ...(reference ? {} : { 'egg-current': baseline }) };
+  f.acceptance.bootId = 'fixture-boot'; f.acceptance.verifiedSolutions = 100;
+  f.acceptance.acceptance = { baselineLabel: plan.baselineLabel, candidates: { lanes24: f.acceptance.acceptance, rejected: { accepted: false } } };
+  if (reference) {
+    const bytes = JSON.stringify({ instrumented: false, allSolutionsAndOptimalLengths: true, bootId: f.acceptance.bootId,
+      files: { 'cases.json': plan.casesSha256 }, engines: { 'egg-current': baseline } });
+    await writeFile(`${f.task}/reference.json`, bytes);
+    plan.baselineReference = { file: 'reference.json', sha256: sha(bytes) };
+  }
+  const planBytes = JSON.stringify(plan); await writeFile(`${f.task}/plan.json`, planBytes);
+  f.acceptance.planSha256 = sha(planBytes); f.acceptance.files['plan.json'] = sha(planBytes);
+  await save(`${f.task}/independent-verification.json`, f.acceptance);
+  input.plan = plan; input.planSha256 = sha(planBytes); input.assets.manifest = { files: { binary: { sha256: plan.productionSha256 } } };
+  await save(`${f.task}/results/input.json`, input);
+  f.options.candidateLabel = 'lanes24'; return f;
+}
+
+it('selects the measured candidate without accepting a rejected sibling', async () => {
+  const f = await followupFixture();
+  await expect(prepareEggCandidate({ ...f.options, candidateLabel: 'rejected' })).rejects.toThrow('Candidate did not pass acceptance');
+  await expect(prepareEggCandidate({ ...f.options, candidateLabel: 'missing' })).rejects.toThrow('Candidate did not pass acceptance');
+  await writeFile(f.tablePath, 'changed table');
+  await expect(prepareEggCandidate(f.options)).rejects.toThrow('Measured table changed');
+});
+it('pins the reused verified baseline before publishing a later candidate', async () => {
+  const f = await followupFixture({ reference: true });
+  const reference = `${f.task}/reference.json`, original = await readFile(reference);
+  await writeFile(reference, '{}'); await expect(prepareEggCandidate(f.options)).rejects.toThrow();
+  await writeFile(reference, original); await writeFile(f.tablePath, 'changed table');
+  await expect(prepareEggCandidate(f.options)).rejects.toThrow('Measured table changed');
+});
+
 it('refuses a rejected candidate or a failed tail-latency gate before publication', async () => {
   const f = await fixture(); f.acceptance.acceptance.accepted = false; await save(`${f.task}/independent-verification.json`, f.acceptance);
   await expect(prepareEggCandidate(f.options)).rejects.toThrow('Candidate did not pass acceptance');

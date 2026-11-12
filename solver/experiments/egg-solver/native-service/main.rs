@@ -146,7 +146,7 @@ fn main() -> anyhow::Result<()> {
     let corners = Cocsep::generate()?;
     let table = H48Table::open_copy(&args[1])?;
     let solver = Solver::new(&corners, &table);
-    serve(&solver, threads, file::untuned_lanes(8), io::stdin().lock(), io::stdout().lock())
+    serve(&solver, threads, 24, io::stdin().lock(), io::stdout().lock())
 }
 
 #[cfg(test)]

@@ -101,14 +101,39 @@ if (plan.acceptance) {
   assert.equal(plan.profile, false, 'Instrumented runs cannot qualify for promotion');
   const oldPlan = JSON.parse(readFileSync(resolve(root, '.local-data/egg-h8-aliyun-20261109/plan100.json')));
   assert.deepEqual(plan.acceptance, oldPlan.acceptance, 'Do not weaken the frozen acceptance gates');
-  const b = engines.opt8, c = engines['egg-t0'], a = plan.acceptance;
-  const ratios = { wall: c.totalSeconds / b.totalSeconds, cpu: c.cpuSeconds / b.cpuSeconds,
-    p50: c.p50 / b.p50, p95: c.p95 / b.p95, p99: c.p99 / b.p99 };
-  const checks = { wall: ratios.wall <= 1 - a.minWallTimeReduction, cpu: ratios.cpu <= a.maxCpuTimeRatio,
-    p50: ratios.p50 <= a.maxMedianRatio, p95: ratios.p95 <= a.maxP95Ratio, p99: ratios.p99 <= a.maxP99Ratio,
-    idle: c.idle?.seconds === 5 && c.idle.cpuSeconds <= a.idleCpuSecondsMax,
-    noProcessSwap: b.maxProcessSwapBytes === 0 && c.maxProcessSwapBytes === 0 };
-  acceptance = { ratios, checks, accepted: Object.values(checks).every(Boolean) };
+  const baselineLabel = plan.baselineLabel ?? 'opt8';
+  let b = engines[baselineLabel];
+  if (plan.baselineReference) {
+    assert(!b, 'Do not replace a measured baseline');
+    assert(/^[a-zA-Z0-9_-]+\.json$/.test(plan.baselineReference.file));
+    const reference = json(plan.baselineReference.file);
+    assert.equal(files[plan.baselineReference.file], plan.baselineReference.sha256);
+    assert.equal(reference.schema, 'cuberoot.egg-h8-linux-verification/v1');
+    assert.equal(reference.instrumented, false); assert.equal(reference.allSolutionsAndOptimalLengths, true);
+    assert.equal(reference.files['cases.json'], plan.casesSha256); assert.equal(reference.bootId, boot);
+    b = reference.engines[baselineLabel];
+    assert.equal(b?.sha256, plan.productionSha256, 'Referenced baseline must still be production');
+    assert.equal(b.verifiedSolutions, 100); assert.equal(b.optimalLengthsMatched, 100);
+  }
+  const a = plan.acceptance;
+  assert(b, 'Missing measured baseline');
+  const assess = c => {
+    const ratios = { wall: c.totalSeconds / b.totalSeconds, cpu: c.cpuSeconds / b.cpuSeconds,
+      p50: c.p50 / b.p50, p95: c.p95 / b.p95, p99: c.p99 / b.p99 };
+    const checks = { wall: ratios.wall <= 1 - a.minWallTimeReduction, cpu: ratios.cpu <= a.maxCpuTimeRatio,
+      p50: ratios.p50 <= a.maxMedianRatio, p95: ratios.p95 <= a.maxP95Ratio, p99: ratios.p99 <= a.maxP99Ratio,
+      idle: c.idle?.seconds === 5 && c.idle.cpuSeconds <= a.idleCpuSecondsMax,
+      noProcessSwap: b.maxProcessSwapBytes === 0 && c.maxProcessSwapBytes === 0 };
+    return { ratios, checks, accepted: Object.values(checks).every(Boolean) };
+  };
+  if (plan.baselineLabel) {
+    if (!plan.baselineReference) {
+      assert.equal(plan.passes[0].label, baselineLabel);
+      assert.equal(plan.passes[0].sha256, plan.productionSha256, 'Baseline must be the current production binary');
+    }
+    acceptance = { baselineLabel, ...(plan.baselineReference ? { baselineReference: plan.baselineReference } : {}),
+      candidates: Object.fromEntries(plan.passes.filter(pass => pass.label !== baselineLabel).map(pass => [pass.label, assess(engines[pass.label])])) };
+  } else acceptance = assess(engines['egg-t0']);
 }
 const verification = { schema: 'cuberoot.egg-h8-linux-verification/v1', verifiedAt: new Date().toISOString(),
   planSha256: files['plan.json'], instrumented: plan.profile, allSolutionsAndOptimalLengths: true,

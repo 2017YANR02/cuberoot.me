@@ -572,5 +572,243 @@
       "eggAnonHugePagesBytes": 2942304256,
       "note": "Software cpu-clock profiles only. Original and fixed-layout T0 binary differ in exactly six prefetch ModRM bytes. Same AnonHugePages bytes; not mixed with uninstrumented acceptance results."
     }
+  },
+  "aliyunFollowup": {
+    "id": "aliyun-h8-followup",
+    "title": {
+      "zh": "阿里云 · 搜索通道优化",
+      "en": "Alibaba Cloud · search lane tuning"
+    },
+    "measuredAt": "2026-11-12T07:42:31.181Z",
+    "sourceRange": [
+      1,
+      100
+    ],
+    "cases": 100,
+    "threads": 4,
+    "passes": 1,
+    "warmupCases": 0,
+    "casesSha256": "532c82682d6525c86761ca90ca08e323b2f5b1788bd047e5e225f4a783d2276c",
+    "cpu": "Intel Xeon Platinum · Skylake · Linux · 4 vCPU",
+    "timing": "Sum of sequential per-request TSV round-trip times; uninstrumented; startup, HTTP and queueing excluded.",
+    "instrumented": false,
+    "baselineReusedForIsa": true,
+    "timeReductionPercent": 12.697845206385871,
+    "historicalOpt8Reference": {
+      "seconds": 72.90706209900003,
+      "speedRatio": 2.0701924665769225,
+      "baselineReused": true
+    },
+    "acceptedCandidate": "lanes24",
+    "rows": [
+      {
+        "id": "egg-current",
+        "name": "egg h8",
+        "tableGB": 8,
+        "tableBytes": 7782731776,
+        "seconds": 40.33981582499995,
+        "cases": 100,
+        "threads": 4,
+        "lanes": 40,
+        "note": {
+          "zh": "旧版 · 40 通道",
+          "en": "Previous · 40 lanes"
+        },
+        "verifiedSolutions": 100,
+        "optimalLengthsMatched": 100,
+        "startupSeconds": 46.204767451,
+        "cpuSeconds": 132.93,
+        "p50": 0.2618711140000014,
+        "p95": 1.8464340010000015,
+        "p99": 2.157211116999999,
+        "binarySha256": "d6bcfcf0eccbb690e95edfc4f12d2211f1df556dc79f2850e25a6b5b757d5bba",
+        "peakRssBytes": 7794909184,
+        "maxProcessSwapBytes": 0,
+        "anonHugePagesBytes": 2938109952,
+        "idle": {
+          "seconds": 5,
+          "cpuSeconds": 0
+        },
+        "proof": {
+          "report": "egg-h8-followup-20261111/independent-verification.json",
+          "sha256": "a08ced8da48f54833ebb2d53e72ee5df9505e5f5b578d68e3f259458184db734"
+        },
+        "accepted": null
+      },
+      {
+        "id": "prefault",
+        "name": "egg h8",
+        "tableGB": 8,
+        "tableBytes": 7782731776,
+        "seconds": 40.57867142199995,
+        "cases": 100,
+        "threads": 4,
+        "lanes": 40,
+        "note": {
+          "zh": "加载前触页 · 未通过",
+          "en": "Prefault loader · rejected"
+        },
+        "verifiedSolutions": 100,
+        "optimalLengthsMatched": 100,
+        "startupSeconds": 49.242394039000004,
+        "cpuSeconds": 137.86,
+        "p50": 0.2466246289999981,
+        "p95": 1.8142823360000038,
+        "p99": 2.1419507030000093,
+        "binarySha256": "3cfb0e90107076b7f2cd387277a9e9a8f139286e274b97826c0440a981afade2",
+        "peakRssBytes": 7794638848,
+        "maxProcessSwapBytes": 0,
+        "anonHugePagesBytes": 3284140032,
+        "idle": {
+          "seconds": 5,
+          "cpuSeconds": 0
+        },
+        "proof": {
+          "report": "egg-h8-followup-20261111/independent-verification.json",
+          "sha256": "a08ced8da48f54833ebb2d53e72ee5df9505e5f5b578d68e3f259458184db734"
+        },
+        "accepted": false
+      },
+      {
+        "id": "t1",
+        "name": "egg h8",
+        "tableGB": 8,
+        "tableBytes": 7782731776,
+        "seconds": 38.88832602999991,
+        "cases": 100,
+        "threads": 4,
+        "lanes": 40,
+        "note": {
+          "zh": "T1 预取 · 未通过",
+          "en": "T1 prefetch · rejected"
+        },
+        "verifiedSolutions": 100,
+        "optimalLengthsMatched": 100,
+        "startupSeconds": 48.79249011300001,
+        "cpuSeconds": 134.31,
+        "p50": 0.21927717799998936,
+        "p95": 1.8868582059999752,
+        "p99": 2.2656765250000173,
+        "binarySha256": "3cfb0e90107076b7f2cd387277a9e9a8f139286e274b97826c0440a981afade2",
+        "peakRssBytes": 7794720768,
+        "maxProcessSwapBytes": 0,
+        "anonHugePagesBytes": 3271557120,
+        "idle": {
+          "seconds": 5,
+          "cpuSeconds": 0
+        },
+        "proof": {
+          "report": "egg-h8-followup-20261111/independent-verification.json",
+          "sha256": "a08ced8da48f54833ebb2d53e72ee5df9505e5f5b578d68e3f259458184db734"
+        },
+        "accepted": false
+      },
+      {
+        "id": "lanes24",
+        "name": "egg h8",
+        "tableGB": 8,
+        "tableBytes": 7782731776,
+        "seconds": 35.217528455000306,
+        "cases": 100,
+        "threads": 4,
+        "lanes": 24,
+        "note": {
+          "zh": "T0 · 24 通道 · 通过",
+          "en": "T0 · 24 lanes · accepted"
+        },
+        "verifiedSolutions": 100,
+        "optimalLengthsMatched": 100,
+        "startupSeconds": 48.75390782000002,
+        "cpuSeconds": 126.97,
+        "p50": 0.21322702699998627,
+        "p95": 1.4598139970000483,
+        "p99": 2.0961514549999847,
+        "binarySha256": "3cfb0e90107076b7f2cd387277a9e9a8f139286e274b97826c0440a981afade2",
+        "peakRssBytes": 7794515968,
+        "maxProcessSwapBytes": 0,
+        "anonHugePagesBytes": 3284140032,
+        "idle": {
+          "seconds": 5,
+          "cpuSeconds": 0
+        },
+        "proof": {
+          "report": "egg-h8-followup-20261111/independent-verification.json",
+          "sha256": "a08ced8da48f54833ebb2d53e72ee5df9505e5f5b578d68e3f259458184db734"
+        },
+        "accepted": true
+      },
+      {
+        "id": "avx2",
+        "name": "egg h8",
+        "tableGB": 8,
+        "tableBytes": 7782731776,
+        "seconds": 37.315289595000024,
+        "cases": 100,
+        "threads": 4,
+        "lanes": 40,
+        "note": {
+          "zh": "仅 AVX2 · 未通过",
+          "en": "AVX2 only · rejected"
+        },
+        "verifiedSolutions": 100,
+        "optimalLengthsMatched": 100,
+        "startupSeconds": 46.490353901999995,
+        "cpuSeconds": 124.83,
+        "p50": 0.22759269700000004,
+        "p95": 1.4877417720000012,
+        "p99": 1.9709003139999985,
+        "binarySha256": "7c5eed9c5b780248dedebb44c671abe970522ffbc17d238a91cf0316dec92ff4",
+        "peakRssBytes": 7794626560,
+        "maxProcessSwapBytes": 0,
+        "anonHugePagesBytes": 3307208704,
+        "idle": {
+          "seconds": 5,
+          "cpuSeconds": 0
+        },
+        "proof": {
+          "report": "egg-h8-isa-20261111/independent-verification.json",
+          "sha256": "a33ae0188c17c0cddf5836a75878da971a66cf8e211bcef0938c293d64b77f89"
+        },
+        "accepted": false
+      },
+      {
+        "id": "avx2-lanes24",
+        "name": "egg h8",
+        "tableGB": 8,
+        "tableBytes": 7782731776,
+        "seconds": 37.15450777899983,
+        "cases": 100,
+        "threads": 4,
+        "lanes": 24,
+        "note": {
+          "zh": "AVX2 · 24 通道 · 未通过",
+          "en": "AVX2 · 24 lanes · rejected"
+        },
+        "verifiedSolutions": 100,
+        "optimalLengthsMatched": 100,
+        "startupSeconds": 45.897586043000004,
+        "cpuSeconds": 128.28,
+        "p50": 0.22148033099999884,
+        "p95": 1.6904356489999919,
+        "p99": 2.2553187000000032,
+        "binarySha256": "5278a96b3c8e74eca4cce2bac699c1e94dc22f7449c51841db12b3dfa0ecc335",
+        "peakRssBytes": 7794356224,
+        "maxProcessSwapBytes": 0,
+        "anonHugePagesBytes": 3292528640,
+        "idle": {
+          "seconds": 5,
+          "cpuSeconds": 0
+        },
+        "proof": {
+          "report": "egg-h8-isa-20261111/independent-verification.json",
+          "sha256": "a33ae0188c17c0cddf5836a75878da971a66cf8e211bcef0938c293d64b77f89"
+        },
+        "accepted": false
+      }
+    ],
+    "note": {
+      "zh": "每个候选各一轮、不预热，600 个解全部验证正确。旧版同轮 40.34 秒、此前 36.39 秒；新版 35.22 秒，相对此前成绩仅减少 3.2%。与保存的 Opt8 成绩比较约 2.07 倍，未达到 3 倍。",
+      "en": "One pass per candidate, no warmup; all 600 solutions verified. Previous egg: 40.34 s this round, 36.39 s earlier. The new 35.22 s is only 3.2% less than the earlier result. About 2.07x the saved Opt8 speed; 3x was not reached."
+    }
   }
 }

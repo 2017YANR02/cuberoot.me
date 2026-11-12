@@ -44,12 +44,14 @@ function ServerComparisonSection({ result }: { result: ServerComparison }) {
   </section>;
 }
 
-function RecentComparisonSection({ result }: { result: typeof RECENT_RESULTS.mac | typeof RECENT_RESULTS.macH8 | typeof RECENT_RESULTS.aliyun | typeof RECENT_RESULTS.aliyunOptimized }) {
+function RecentComparisonSection({ result }: { result: typeof RECENT_RESULTS.mac | typeof RECENT_RESULTS.macH8 | typeof RECENT_RESULTS.aliyun | typeof RECENT_RESULTS.aliyunOptimized | typeof RECENT_RESULTS.aliyunFollowup }) {
   const t = useT();
   const maximum = Math.max(...result.rows.map(row => row.cases / row.seconds));
   return <section className="compare-server compare-recent" aria-labelledby={`compare-${result.id}`}>
     <div className="compare-section-head"><h2 id={`compare-${result.id}`}>{tr(result.title)}</h2><time className="compare-date" dateTime={result.measuredAt}>{result.measuredAt.slice(0, 10)}</time></div>
-    <p className="compare-server-summary">{'speedRatio32' in result
+    <p className="compare-server-summary">{'timeReductionPercent' in result
+      ? <>{t('相对同轮旧版 egg，求解耗时减少', 'Solve time reduced versus the previous egg in this round by')} <strong>{result.timeReductionPercent.toFixed(1)}%</strong></>
+      : 'speedRatio32' in result
       ? <>{t('32G：egg 速度是 Opt10 的', '32G: egg runs at')} <strong>{result.speedRatio32.toFixed(2)}×</strong> {t('；64G 默认速度是 egg 32G 的', 'Opt10 speed; default egg 64G runs at')} <strong>{result.egg64Over32SpeedRatio.toFixed(2)}×</strong>{t('。', ' egg 32G speed.')}</>
       : 'speedRatio' in result
         ? <>{t('8G：egg 速度是 Opt8 的', '8G: egg runs at')} <strong>{result.speedRatio.toFixed(2)}×</strong>{t('。', ' Opt8 speed.')}</>
@@ -144,6 +146,7 @@ export default function SolverComparisonPage() {
 
     <RecentComparisonSection result={RECENT_RESULTS.mac} />
     <RecentComparisonSection result={RECENT_RESULTS.macH8} />
+    <RecentComparisonSection result={RECENT_RESULTS.aliyunFollowup} />
     <RecentComparisonSection result={RECENT_RESULTS.aliyunOptimized} />
     <RecentComparisonSection result={RECENT_RESULTS.aliyun} />
 

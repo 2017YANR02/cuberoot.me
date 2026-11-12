@@ -123,19 +123,31 @@ export function resolveAssets(config, passes, plan) {
   const pointerBytes = boundedRead(resolve(config.store, 'current.json'));
   const pointer = JSON.parse(pointerBytes);
   assert.equal(pointer.schema, 'cuberoot.cubeopt-current/v1');
-  assert(/^cubeopt-opt8-[a-zA-Z0-9._-]+$/.test(pointer.bundle), 'Expected an Opt8 bundle');
+  assert(/^cubeopt-(?:opt8|h8)-[a-zA-Z0-9._-]+$/.test(pointer.bundle), 'Expected an h8 or Opt8 bundle');
   const root = resolve(config.store, 'bundles', pointer.bundle);
   const manifestBytes = boundedRead(resolve(root, 'manifest.json')), manifest = JSON.parse(manifestBytes);
   assert.equal(manifest.schema, 'cuberoot.cubeopt-artifact/v1'); assert.equal(manifest.bundle, pointer.bundle);
-  if (config.candidates) assert(['rust-wasm', 'rust-native'].includes(manifest.engine), 'Expected a published Rust Opt8 bundle');
-  else assert.equal(manifest.engine, 'rust-wasm', 'Baseline must be the current production Rust WASM bundle');
-  assert.equal(manifest.variant, 'opt8'); assert.equal(manifest.protocol, 1);
+  const egg = manifest.engine === 'egg-native';
+  if (egg) {
+    assert(config.candidates && !plan, 'Egg production requires an explicit diagnosis');
+    assert(passes.every(pass => pass.kind === 'egg-native'), 'Retired Opt8 assets cannot be inferred from egg production');
+    assert.equal(manifest.variant, 'h8');
+    assert.equal(manifest.files.table.path, 'egg-h8.dat');
+    assert.equal(manifest.files.table.bytes, TABLE_BYTES + 4096);
+    assert.equal(manifest.files.binary.path, 'cuberoot-egg');
+    assert.equal(digest(boundedRead(resolve(root, manifest.files.binary.path))), manifest.files.binary.sha256);
+  } else {
+    if (config.candidates) assert(['rust-wasm', 'rust-native'].includes(manifest.engine), 'Expected a published Rust Opt8 bundle');
+    else assert.equal(manifest.engine, 'rust-wasm', 'Baseline must be the current production Rust WASM bundle');
+    assert.equal(manifest.variant, 'opt8');
+    assert.equal(manifest.files.table.path, 'h48prun31h8.dat'); assert.equal(manifest.files.table.bytes, TABLE_BYTES);
+    assert.equal(manifest.files.snapshot.path, 'cube48opt8.small.bin'); assert.equal(manifest.files.snapshot.bytes, 818_008);
+  }
+  assert.equal(manifest.protocol, 1);
   assert.equal(manifest.maxThreads, 4);
-  assert.equal(manifest.files.table.path, 'h48prun31h8.dat'); assert.equal(manifest.files.table.bytes, TABLE_BYTES);
-  assert.equal(manifest.files.snapshot.path, 'cube48opt8.small.bin'); assert.equal(manifest.files.snapshot.bytes, 818_008);
-  const table = resolve(root, manifest.files.table.path), snapshot = resolve(root, manifest.files.snapshot.path);
-  assert(lstatSync(table).isFile() && statSync(table).size === TABLE_BYTES);
-  assert.equal(digest(boundedRead(snapshot)), manifest.files.snapshot.sha256);
+  const table = resolve(root, manifest.files.table.path), snapshot = egg ? undefined : resolve(root, manifest.files.snapshot.path);
+  assert(lstatSync(table).isFile() && statSync(table).size === manifest.files.table.bytes);
+  if (snapshot) assert.equal(digest(boundedRead(snapshot)), manifest.files.snapshot.sha256);
   const binaries = {};
   for (const pass of passes.filter(pass => pass.binary)) {
     if (!binaries[pass.binary]) {
@@ -180,7 +192,7 @@ export function resolveAssets(config, passes, plan) {
     wasm = { ...plan.wasm, root: wasmRoot, pointerSha256: digest(wasmPointer), manifest: wasmManifest, files,
       daemonIdentity: fileIdentity(plan.wasm.daemon), nodeIdentity: fileIdentity(process.execPath) };
   }
-  return { table, snapshot, tableIdentity: fileIdentity(table), snapshotIdentity: fileIdentity(snapshot),
+  return { table, ...(snapshot ? { snapshot, snapshotIdentity: fileIdentity(snapshot) } : {}), tableIdentity: fileIdentity(table),
     binaries, ...(wasm ? { wasm } : {}),
     ...(config.binary ? { binaryIdentity: binaries[config.binary].identity, binarySha256: binaries[config.binary].sha256,
       daemonSha256: digest(boundedRead(config.daemon, 32 * 1024 ** 2)) } : {}),
@@ -191,7 +203,7 @@ function assertAssetsUnchanged(config, assets) {
   assert.equal(digest(boundedRead(resolve(config.store, 'current.json'))), assets.pointerSha256, 'Current pointer changed');
   assert.equal(digest(boundedRead(resolve(assets.root, 'manifest.json'))), assets.manifestSha256, 'Baseline manifest changed');
   assert.deepEqual(fileIdentity(assets.table), assets.tableIdentity, 'Table changed');
-  assert.deepEqual(fileIdentity(assets.snapshot), assets.snapshotIdentity, 'Snapshot changed');
+  if (assets.snapshot) assert.deepEqual(fileIdentity(assets.snapshot), assets.snapshotIdentity, 'Snapshot changed');
   for (const file of assets.extraTables ?? []) assert.deepEqual(fileIdentity(file.path), file.identity, 'Candidate table changed');
   for (const [binary, expected] of Object.entries(assets.binaries)) {
     assert.deepEqual(fileIdentity(binary), expected.identity, 'Native candidate identity changed');

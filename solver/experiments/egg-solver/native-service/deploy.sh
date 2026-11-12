@@ -3,8 +3,10 @@
 set -Eeuo pipefail
 upload=${1:?absolute accepted task directory required}
 revision=${2:?repository revision required}
+candidate=${3:-egg-t0}
 [[ "$upload" = /root/egg-h8-* && "$upload" != *..* ]]
 [[ "$revision" =~ ^[a-f0-9]{40}$ ]]
+[[ "$candidate" =~ ^[a-z0-9-]+$ ]]
 export PATH=/root/.nvm/versions/node/v24.14.0/bin:$PATH
 root=/root/core-api
 cd "$root"
@@ -33,7 +35,7 @@ console.log(pointer.bundle);
 NODE
 )
 cp "$store/current.json" "$upload/previous-current.json"
-node --env-file=.env dist/cubeopt/prepare-egg.mjs "$upload" "$store" "$revision" > "$upload/prepared.json"
+node --env-file=.env dist/cubeopt/prepare-egg.mjs "$upload" "$store" "$revision" "$candidate" > "$upload/prepared.json"
 bundle=$(node -p 'const x=require(process.argv[1]);if(x.activated!==false)throw Error("already activated");x.bundle' "$upload/prepared.json")
 [[ "$bundle" =~ ^cubeopt-h8-egg-t0-[a-f0-9]+-[a-f0-9]+$ ]]
 test -f "$store/bundles/$bundle/manifest.json"

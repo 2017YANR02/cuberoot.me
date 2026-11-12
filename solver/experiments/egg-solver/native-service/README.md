@@ -14,8 +14,9 @@ not deploy or replace the exact measured binary.
 `id<TAB>length<TAB>solution` replies. One request uses all workers. The table,
 process and OS threads persist between requests; a new upstream `Pool` owns
 each request, including its search buffers. Idle threads sleep on channels.
-Search uses the upstream cooperative scheduler, SIMD and default
-40 lanes per worker. No tuning file or candidate-specific parameter sweep.
+Search uses the upstream cooperative scheduler and SIMD, with the ECS-accepted
+24 lanes per worker. This is Timer's h8 setting, separate from upstream CLI
+defaults and the Mac h11 configuration. No tuning file is loaded.
 
 `cuberoot-egg generate TABLE THREADS` is a separately authorized, Linux-only
 operational command: generate h8 in anonymous RAM, then write a new file.
@@ -24,7 +25,7 @@ scan. The 4096-byte upstream trailer deliberately omits optional checksums and
 distribution. Existing CubeRoot Opt8 tables are incompatible with egg.
 
 Generation and benchmarking on the 16 GB Alibaba host require the existing
-Opt8 daemon to be stopped first, a single resident table, resource limits and
+production solver to be stopped first, a single resident table, resource limits and
 an exit trap restoring production. Never start large calculations in CI.
 The release gate is documented in `docs/timer-optimal-egg-tracker.md`.
 
@@ -108,12 +109,28 @@ READY, bounds output and disables it before shutdown. `verify-linux.mjs TASK`
 replays raw results and separates instrumented diagnosis from acceptance.
 It refuses to apply production gates to instrumented results.
 
-After the API integration is deployed, `deploy.sh ACCEPTED_TASK REPOSITORY_SHA`
+After the API integration is deployed, `deploy.sh ACCEPTED_TASK REPOSITORY_SHA [CANDIDATE_LABEL]`
 uses the API's `prepare-egg.mjs` to publish only the measured source binary and
 unchanged table. It retains both release locks, admission shutdown, single-table
 preflight, atomic pointer promotion, the real manager smoke, and rollback.
 The artifact loader checks the skylake-avx512 CPU flags before execution. The
 existing table is hard-linked with its generation-time digest lineage, not
-copied or rescanned. The previous Opt8 bundle remains available for rollback.
+copied or rescanned. The previous working egg bundle remains available for rollback;
+the old Opt8 table was explicitly retired by the user.
 The production status and deployment receipts are tracked in
 `docs/timer-optimal-egg-tracker.md`.
+
+The subsequent Nov 11 ECS experiment tested 100 cases per candidate, once with
+no warmup. Current T0/40 lanes took 40.339816 s; prefault, T1 and 24 lanes took
+40.578671, 38.888326 and 35.217528 s. Only 24 lanes passed every frozen gate.
+AVX2 alone and AVX2/24 lanes took 37.315290 and 37.154508 s and failed the
+minimum 10% reduction gate. All 600 answers independently replayed and matched
+historical optimal lengths. The 24-lane result is 12.70% less time than the new
+baseline, but only 3.23% less than the earlier 36.391685 s measurement; do not
+claim a stable 14.5% gain or a 3x improvement over Opt8.
+
+Follow-up plans use `baselineLabel`, optionally a hash-pinned
+`baselineReference`, and one independently checked verdict per candidate.
+Publication selects that exact candidate label, binary and unchanged table;
+rejected siblings and altered evidence cannot qualify. Evidence directories:
+`.local-data/egg-h8-followup-20261111/` and `.local-data/egg-h8-isa-20261111/`.
