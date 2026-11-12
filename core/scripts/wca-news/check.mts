@@ -127,6 +127,7 @@ export function changed(entries: Entry[], baseline: Record<string, string>, issu
 type Github = (path: string, method?: string, body?: unknown) => Promise<any>;
 /** At most 50 sources per durable digest; retries never drop pending work or duplicate tickets. */
 export async function publishDigests(entries: Entry[], changes: Entry[], issues: Issue[], github: Github) {
+  assert(changes.length <= 50, `Unexpected bulk drift (${changes.length} sources); inspect the saved report before publishing`);
   for (const kind of ['incidents', 'disciplinary', 'posts'] as const) {
     const summaries = issues.filter(i => digest(i)?.kind === kind).sort((a, b) => digest(a)!.batch - digest(b)!.batch);
     const legacy = issues.filter(i => !digest(i) && i.state === 'open' && i.user?.login === 'github-actions[bot]' && issueVersion(i.body)?.key.startsWith(kind + ':'));

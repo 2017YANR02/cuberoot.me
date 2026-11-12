@@ -92,3 +92,11 @@ test('incident translation drift ignores metadata but catches title and body rev
   assert.equal(changed([migrated], { [entry.key]: oldHash }, []).length, 0);
   assert.equal(changed([migrated], {}, [{ number: 1, body: marker({ ...entry, hash: oldHash }), state: 'closed', html_url: '' }]).length, 0);
 });
+
+test('unexpected bulk content changes stop before any issue write', async () => {
+  const { publishDigests } = await import('./check.mts');
+  const changes = Array.from({ length: 51 }, (_, i) => ({ ...entry, key: `incidents:${i}` }));
+  let writes = 0;
+  await assert.rejects(publishDigests(changes, changes, [], async () => { writes++; }), /Unexpected bulk drift/);
+  assert.equal(writes, 0);
+});

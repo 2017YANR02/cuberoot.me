@@ -1,5 +1,7 @@
 # WCA logs and posts drift
 
+单轮超过 50 条正文/标题变动时停止发布工单，保留本轮来源快照和报告供审查；不自动重设基线。日程和手动运行通过同一 concurrency group 串行，重复运行复用既有汇总及版本记录。其他漂移任务的去重契约见 [`../drift-issue.md`](../drift-issue.md)。
+
 `.github/workflows/wca_news_drift.yml` 每日 08:23 UTC 检查，也可手动运行。
 生产任务加 `--posts`，同时监测全部公告。
 仅使用 Node 内置 fetch、公开 WCA 数据和 GitHub Actions token；无模型 API、无翻译收费。
