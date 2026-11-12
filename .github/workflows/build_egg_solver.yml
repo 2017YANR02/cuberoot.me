@@ -31,7 +31,9 @@ jobs:
           sudo apt-get install -y musl-tools
       - name: Fetch the pinned upstream and add the service adapter
         run: |
-          git clone https://github.com/ArhanChaudhary/egg-solver.git "$RUNNER_TEMP/egg-source"
+          git init "$RUNNER_TEMP/egg-source"
+          # The pinned revision may no longer be reachable from an upstream branch.
+          git -C "$RUNNER_TEMP/egg-source" fetch --depth=1 https://github.com/ArhanChaudhary/egg-solver.git 947c20d93564f150aad9c292486ab730a329b86c
           git -C "$RUNNER_TEMP/egg-source" checkout --detach 947c20d93564f150aad9c292486ab730a329b86c
           git -C "$RUNNER_TEMP/egg-source" apply "$GITHUB_WORKSPACE/solver/experiments/egg-solver/native-service/patches/linux-table-prefetch-t0.patch"
           cp solver/experiments/egg-solver/native-service/main.rs "$RUNNER_TEMP/egg-source/src/bin/cuberoot-egg.rs"
