@@ -3,14 +3,14 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { REPO, FILES, check, run, pack, unpack, parseManifest, assertFresh, obsoleteAssets, type Manifest } from './common.ts';
+import { REPO, FILES, readReleaseBody, renderReleaseBody, check, run, pack, unpack, parseManifest, assertFresh, obsoleteAssets, type Manifest } from './common.ts';
 
 import { endpoint, gh, api, release, upload, download } from './github.ts';
 import { withLocalLock } from './local-lock.ts';
 
 const scripts = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scripts, '../..');
-function currentManifest(r: any): Manifest | undefined { return r.body ? parseManifest(JSON.parse(r.body)) : undefined; }
+function currentManifest(r: any): Manifest | undefined { return r.body ? parseManifest(readReleaseBody(r.body)) : undefined; }
 function stage(root: string, out: string) {
   const m = pack(root, out, run('git', ['rev-parse', 'HEAD']));
   const r = release(true);
@@ -61,7 +61,7 @@ async function publish(candidate: string, out: string) {
     console.log(deploy('activate'));
     activated = true;
     try {
-      api(`${endpoint}/${r.id}`, { body: JSON.stringify({ ...m, ...(JSON.parse(r.body || '{}').statistics ? { statistics: JSON.parse(r.body).statistics } : {}) }, null, 2), draft: false, make_latest: 'false', name: 'Latest WCA data' });
+      api(`${endpoint}/${r.id}`, { body: renderReleaseBody({ ...m, ...(readReleaseBody(r.body || '').statistics ? { statistics: readReleaseBody(r.body).statistics } : {}) }), draft: false, make_latest: 'false', name: 'Latest WCA data' });
     } catch (error) {
       // Network timeout can happen after GitHub committed the PATCH. Resolve before rollback.
       try { r = release(); } catch {

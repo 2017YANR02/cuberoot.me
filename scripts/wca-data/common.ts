@@ -8,6 +8,48 @@ export const REPO = '2017YANR02/cuberoot.me';
 export const TAG = 'wca-data-latest';
 export const FILES = ['nemesizer/persons.bin.gz', 'nemesizer/ranks.bin.gz', 'nemesizer/counts.bin.gz', 'nemesizer/meta.json', 'persons_search.json.gz'] as const;
 export const MAX_ARCHIVE = 128 * 1024 * 1024;
+const MANIFEST_START = '<!-- wca-data-manifest:start -->';
+const MANIFEST_END = '<!-- wca-data-manifest:end -->';
+
+/** Accept the original JSON body and the human-readable Release notes. */
+export function readReleaseBody(body: string): any {
+  if (!body.trim()) return {};
+  if (body.trimStart().startsWith('{')) return JSON.parse(body);
+  check(body.split(MANIFEST_START).length === 2 && body.split(MANIFEST_END).length === 2, 'Missing or duplicate Release manifest');
+  const block = body.split(MANIFEST_START)[1].split(MANIFEST_END)[0].trim();
+  const match = /^```json\s*\n([\s\S]*?)\n```$/.exec(block);
+  check(match, 'Invalid Release manifest block');
+  const value = JSON.parse(match[1]);
+  check(value && typeof value === 'object' && !Array.isArray(value), 'Invalid Release manifest object');
+  return value;
+}
+
+export function renderReleaseBody(value: unknown): string {
+  parseManifest(value);
+  return `这里保存 CubeRoot 使用的 WCA 数据与统计结果，供网站更新、自动检查和开发环境恢复使用。日常使用请直接访问 [CubeRoot](https://cuberoot.me/)，无需下载附件。
+
+| 文件 | 用途 |
+| --- | --- |
+| \`wca-data-….tar\` | 选手搜索、Nemesizer 排名等数据 |
+| \`stats-snapshot-….tgz\` | 当前发布的统计数据快照，供自动检查和开发环境恢复使用 |
+| \`stats-patch-….tgz\` | 发布过程中的增量补丁；成功合并后删除，未完成的补丁最多保留 7 天（等待中的发布除外） |
+
+数据会在同一个 Release 中持续更新。请看附件各自的更新时间；页面顶部和 \`Source code\` 的日期对应固定标签，不代表网站或数据停更。
+
+\`Source code (zip / tar.gz)\` 是 GitHub 自动附带的标签源码压缩包，与上面的数据包用途不同，GitHub 不支持单独移除。最新源码见 [main 分支](https://github.com/2017YANR02/cuberoot.me/tree/main)。
+
+<details>
+<summary>数据清单与校验值（供发布脚本读取）</summary>
+
+${MANIFEST_START}
+\`\`\`json
+${JSON.stringify(value, null, 2)}
+\`\`\`
+${MANIFEST_END}
+
+</details>
+`;
+}
 export type Manifest = {
   schema: 1; sourceCommit: string; generatedAt: string; exportDate: string;
   personCount: number; rankCount: number;

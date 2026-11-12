@@ -3,12 +3,12 @@ import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { REPO, check, run } from './common.ts';
+import { REPO, readReleaseBody, renderReleaseBody, check, run } from './common.ts';
 import { endpoint, gh, api, release, upload, download } from './github.ts';
 import { withLocalLock } from './local-lock.ts';
 import { BASELINE, inventory, patch, applyPatch, owns, archiveDescriptor, packSnapshot, unpackSnapshot, validate, hashFile, type Owner, type Inventory, type Archive } from './snapshot.ts';
 const scripts = dirname(fileURLToPath(import.meta.url)), repoRoot = resolve(scripts, '../..');
-function descriptor(r: any): Archive | undefined { const a = JSON.parse(r.body || '{}').statistics; return a ? archiveDescriptor(a) : undefined; }
+function descriptor(r: any): Archive | undefined { const a = readReleaseBody(r.body || '').statistics; return a ? archiveDescriptor(a) : undefined; }
 async function fetchCurrent(out: string) {
   const r = release(), a = descriptor(r); check(a && !r.draft, 'Statistics Release is not initialized');
   const file = join(out, a.name); download(r, a.name, file);
@@ -87,7 +87,7 @@ async function publish(candidate: string, out: string) {
     writeFileSync(join(out, 'descriptor.json'), JSON.stringify(a));
     scp([join(out, a.name), join(out, 'descriptor.json'), `${host}:${remote}/`]);
     deploy('activate', `${remote}/${a.name} ${remote}/descriptor.json ${old?.sha256 ?? 'none'}`); activated = true;
-    try { api(`${endpoint}/${r.id}`, { body: JSON.stringify({ ...JSON.parse(r.body), statistics: a }, null, 2) }); }
+    try { api(`${endpoint}/${r.id}`, { body: renderReleaseBody({ ...readReleaseBody(r.body), statistics: a }) }); }
     catch (error) {
       try { r = release(); } catch { uncertain = true; throw new Error('Release commit status unknown; keep live snapshot and journal for recovery'); }
       if (descriptor(r)?.sha256 !== a.sha256) throw error;
