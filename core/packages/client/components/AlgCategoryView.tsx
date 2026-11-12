@@ -1,4 +1,6 @@
 'use client';
+import AlgSetupModeSelect from '@/components/AlgSetupModeSelect';
+import { requires3x3AlgCaseSetup } from '@cuberoot/shared/alg';
 
 import PageHeading from '@/components/PageHeading';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
@@ -32,7 +34,7 @@ import {
   getAlgSetMeta, ALG_PUZZLES, ALG_CATALOG,
   type AlgCase, type AlgEntry, type AlgFile, type AlgPuzzle, type AlgSubmission, type AlgTag,
 } from '@cuberoot/shared';
-import { alignAlgSelection, alignAlgFile, caseAlgIssue, commonCaseSetup } from '@/lib/alg_case_alignment';
+import { casePreviewSetup, type CaseSetupMode, alignAlgSelection, alignAlgFile, caseAlgIssue, commonCaseSetup } from '@/lib/alg_case_alignment';
 import { warmAlgValidation } from '@/lib/alg_validation';
 import { algLibraryKey, algLibraryGeneration, loadLibrarySource, subscribeAlgLibrary, prepareAlgNavigationFile, rememberAlgNavigationVersion } from '@/lib/alg-library-cache';
 import dynamic from 'next/dynamic';
@@ -89,7 +91,6 @@ import {
   displayCaseScramble,
   displayCaseAlg,
   displayCaseAlgHtml,
-  oriAdjustSetup,
   shortOriName,
   type CaseViewAngle,
 } from '@/lib/alg_display';
@@ -595,6 +596,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     'sq1-notation',
     parseAsStringEnum<Sq1NotationMode>([...SQ1_NOTATION_MODES]).withDefault('compact'),
   );
+  const [setupMode, setSetupMode] = useQueryState(
+    'setup', parseAsStringEnum<CaseSetupMode>(['inverse', 'preset']).withDefault('inverse'),
+  );
   const [showOtherAlgs, setShowOtherAlgs] = useQueryState(
     'other-algs', parseAsBoolean.withDefault(false),
   );
@@ -1011,13 +1015,14 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     (c: AlgCase) => {
       const href = algCaseDetailHref(puzzleParam, set, (c.id != null && slugMap?.byId.get(c.id)) || caseSlugBase(set, c));
       const query = new URLSearchParams();
+      if (setupMode !== 'inverse') query.set('setup', setupMode);
       if (puzzleParam === 'sq1' && !sq1BlackTop) query.set('black', 'false');
       if (puzzleParam === 'sq1' && sq1NotationMode !== 'compact') query.set('sq1-notation', sq1NotationMode);
       if (effectiveViewAngle !== 'default') query.set('angle', effectiveViewAngle);
       if (effectiveOrientation !== DEFAULT_ALG_CUBE_ORIENTATION) query.set('orientation', effectiveOrientation);
       return query.size > 0 ? `${href}?${query}` : href;
     },
-    [effectiveOrientation, effectiveViewAngle, sq1NotationMode, slugMap, puzzleParam, set, sq1BlackTop],
+    [effectiveOrientation, effectiveViewAngle, sq1NotationMode, slugMap, puzzleParam, set, sq1BlackTop, setupMode],
   );
 
   if (!validPuzzle || !meta) {
@@ -1078,6 +1083,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       puzzle: puzzleParam as AlgPuzzle,
       set,
       cases: orderedPdfCases,
+      setupMode,
       title,
       sourcePath: collection?.sourcePath ?? `/alg/${puzzleParam}/${set}${subgroupSlug ? `/${subgroupSlug}` : ''}`,
       filename: collection?.filename ?? `${puzzleParam}-${set}${subgroupSlug ? `-${subgroupSlug}` : ''}`,
@@ -1156,6 +1162,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                 }
               : {})}
           >
+            {requires3x3AlgCaseSetup(puzzleParam as AlgPuzzle, set) && <AlgSetupModeSelect
+              value={setupMode} onChange={mode => void setSetupMode(mode)} />}
             {!collection?.cardsOnly && <BoolToggle
               value={showOtherAlgs}
               onChange={value => changeLayout(() => { void setShowOtherAlgs(value); }, effectiveView)}
@@ -1555,7 +1563,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   const oriCount = c.algs.length;
                   // 缩略图始终用**未筛选**的首条 —— 筛选只该影响公式列表,不该换掉 case 的图
                   const firstAlg = allAlgsForOri[0]?.alg ?? c.standard ?? '';
-                  const orientedSetup = oriAdjustSetup(c.setup, oriIdx);
+                  const orientedSetup = casePreviewSetup(puzzleParam as AlgPuzzle, set, c, oriIdx, setupMode);
                   const primaryName = primaryCaseName(puzzleParam, set, c);
                   // LS 页首已经写明 LS1–LS9；卡片只留 Hammer 1 / PBL 2 等组内名称，避免重复套名。
                   const defaultCardName = puzzleParam === '2x2' && /^ls[1-9]$/.test(set)
@@ -1710,7 +1718,21 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               return disp.startsWith(primary) ? null : <span className="alg-case-index">{disp}</span>;
                             })()}
                             {showCaseNumbers && c.number != null && <span className="alg-case-index">#{c.number}</span>}
-                            {oriCount > 1 && (
+                            {oriCount > 1 && (f2lSlots.length > 1 ? (
+                              <F2lSlotSelector compact className="alg-case-slot-mini"
+                                ariaLabel={tr({ zh: `顺时针切换槽位：${shortOriName(c.oriNames?.[oriIdx] ?? '')}`, en: `Rotate slot clockwise: ${shortOriName(c.oriNames?.[oriIdx] ?? '')}` })}
+                                selected={[shortOriName(c.oriNames?.[oriIdx] ?? '')]}
+                                onCycle={() => {
+                                  const slots = ['FR', 'FL', 'BL', 'BR'];
+                                  const current = slots.indexOf(shortOriName(c.oriNames?.[oriIdx] ?? ''));
+                                  for (let offset = 1; offset <= slots.length; offset++) {
+                                    const next = slots[(current + offset) % slots.length];
+                                    const index = c.oriNames?.findIndex(name => shortOriName(name) === next) ?? -1;
+                                    if (index >= 0) { setCaseOri(prev => ({ ...prev, [c.name]: index })); break; }
+                                  }
+                                }}
+                              />
+                            ) : (
                               <button
                                 type="button"
                                 className="alg-case-y-btn"
@@ -1719,9 +1741,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               >
                                 <span className="alg-case-y-current">{shortOriName(c.oriNames?.[oriIdx] ?? '')}</span>
                               </button>
-                            )}
+                            ))}
                           </div>
-                          {effectiveView === 'full' && c.setup && (
+                          {effectiveView === 'full' && orientedSetup && (
                             <SetupLine
                               puzzle={puzzleParam}
                               setup={displayCaseScramble(puzzleParam, set,

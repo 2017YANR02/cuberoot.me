@@ -33,4 +33,7 @@
 }
 .grid-selector > .grid-selector-cell:focus-visible { z-index: 2; outline: 2px solid var(--ring); outline-offset: 2px; }
 .grid-selector > .grid-selector-cell:disabled { cursor: not-allowed; }
+.grid-selector.f2l-slot-selector.is-compact { --slot-cell-width: 12px; }
+button.grid-selector { appearance: none; border: 0; background: none; font: inherit; cursor: pointer; }
+.f2l-slot-selector.is-compact > .grid-selector-cell { min-height: 12px; padding: 0; }
 .grid-selector > .grid-selector-cell:disabled:not([aria-pressed="true"]) { color: var(--faint-foreground); }

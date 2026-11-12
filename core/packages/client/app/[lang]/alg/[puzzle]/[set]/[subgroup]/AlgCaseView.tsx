@@ -1,4 +1,5 @@
 'use client';
+import AlgSetupModeSelect from '@/components/AlgSetupModeSelect';
 import F2lSlotSelector from '@/components/F2lSlotSelector';
 import PageHeading from '@/components/PageHeading';
 import { TimerPracticeContentPicker } from '@cuberoot/timer-ui';
@@ -331,7 +332,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
   );
   const canChooseSetupMode = requires3x3AlgCaseSetup(puzzle, set);
   const [setupMode, setSetupMode] = useQueryState(
-    'setup', parseAsStringEnum<CaseSetupMode>(['preset', 'inverse']).withDefault('preset'),
+    'setup', parseAsStringEnum<CaseSetupMode>(['inverse', 'preset']).withDefault('inverse'),
   );
   const [viewAngle, setViewAngle] = useQueryState(
     'angle',
@@ -399,7 +400,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
   /** 在关联 case 之间切换时保留用户刚选的打乱类型;默认值不写进 URL。 */
   const keepScrambleKind = (href: string) => {
     if (canChooseSetupMode) {
-      if (setupMode === 'preset') return href;
+      if (setupMode === 'inverse') return href;
       const [path, hash] = href.split('#');
       return `${path}${path.includes('?') ? '&' : '?'}setup=${setupMode}${hash === undefined ? '' : `#${hash}`}`;
     }
@@ -572,7 +573,6 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
   };
 
   const slotPicker = useF2lOrientationGrid && <F2lSlotSelector className="alg-case-slot-picker"
-    selectOnHover
     ariaLabel={tr({ zh: '槽位', en: 'Slot' })} selected={[mobileSlot]}
     disabledSlots={['BL', 'BR', 'FL', 'FR'].filter(slot => !oriNames?.some(name => shortOriName(name) === slot))}
     onSelect={setMobileSlot} />;
@@ -604,17 +604,10 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
         </PageHeading>
         <SettingsPopover label={tr({ zh: '公式设置', en: 'Algorithm settings' })}>
           {m && <div ref={setScrambleSettingsContainer} />}
-          {canChooseSetupMode && <label className="alg-view-angle">
-            <span>{tr({ zh: '打乱方式', en: 'Scramble source' })}</span>
-            <select className="alg-header-select" value={setupMode}
-              onChange={event => {
-                setPlayRequestByOri({});
-                void setSetupMode(event.target.value as CaseSetupMode);
-              }}>
-              <option value="preset">{tr({ zh: '预设打乱', en: 'Preset' })}</option>
-              <option value="inverse">{tr({ zh: '首条公式取逆', en: 'Inverse of first algorithm' })}</option>
-            </select>
-          </label>}
+          {canChooseSetupMode && <AlgSetupModeSelect value={setupMode} onChange={mode => {
+            setPlayRequestByOri({});
+            void setSetupMode(mode);
+          }} />}
           <label className="alg-view-angle">
             <span>{tr({ zh: '显示', en: 'Display' })}</span>
             <select className="alg-header-select" value={previewMode}

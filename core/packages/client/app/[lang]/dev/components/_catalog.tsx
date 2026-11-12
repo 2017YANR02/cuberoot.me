@@ -1336,6 +1336,14 @@ export const CATALOG: ComponentEntry[] = [
     Demo: AlgNotationStyleDemo,
   },
   {
+    name: 'AlgSetupModeSelect',
+    import: "import AlgSetupModeSelect from '@/components/AlgSetupModeSelect';",
+    category: 'input',
+    zh: '公式列表与详情共用的打乱方式选择器。',
+    en: 'Shared scramble source selector for algorithm lists and details.',
+    usage: '<AlgSetupModeSelect value={setupMode} onChange={setSetupMode} />',
+  },
+  {
     name: 'Sq1NotationSelect',
     import: "import Sq1NotationSelect from '@/components/Sq1NotationSelect';",
     category: 'input',

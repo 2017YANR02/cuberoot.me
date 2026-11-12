@@ -27,10 +27,17 @@ describe('last-layer displayed scrambles', () => {
   });
 
   it('canonicalizes y2 prime everywhere in /alg display text', () => {
-    expect(displayCaseScramble('3x3', 'f2l', "y2' L U L' U'")).toBe("y2 L U L' U'");
+    expect(displayCaseScramble('3x3', 'f2l', "y2' L U L' U'", { preserveInitialRotation: true })).toBe("y2 L U L' U'");
     expect(displayCaseAlg('3x3', 'f2l', "y2' R U R'")).toBe("y2 R U R'");
     expect(displayCaseAlgHtml('3x3', 'f2l', "<em>y2'</em> R U R'"))
       .toBe("<em>y2</em> R U R'");
+  });
+
+  it('omits initial holding rotations only from displayed scramble text', () => {
+    const scramble = "y L F' L' F";
+    expect(displayCaseScramble('3x3', 'f2l', scramble)).toBe("L F' L' F");
+    expect(displayCaseScramble('3x3', 'f2l', scramble, { preserveInitialRotation: true })).toBe(scramble);
+    expect(displayCaseScramble('3x3', 'f2l', "L y F'")).toBe("L y F'");
   });
 
   it('reduces consecutive U moves using the puzzle turn order and preserves unaffected finger marks', () => {

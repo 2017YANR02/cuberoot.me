@@ -1113,20 +1113,6 @@
   color: var(--faint-foreground);
   pointer-events: none;
 }
-/* contenteditable 内的记号样式 — 与 .alg-alg-text 对齐 */
-.alg-editor-input u {
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
-}
-.alg-editor-input u.wavy {
-  text-decoration: underline wavy;
-  text-decoration-thickness: 1px;
-}
-.alg-editor-input s {
-  text-decoration: line-through;
-  text-decoration-thickness: 2px;
-}
 .alg-editor-del,
 .alg-editor-add {
   background: none;
@@ -2629,6 +2615,7 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 .alg-case-algs,
 .alg-case-standard,
 .alg-community,
+.alg-case-slot-mini,
 .alg-case-y-btn {
   position: relative;
   z-index: 2;
