@@ -1,4 +1,6 @@
 .chat-bubble {
+  --chat-bubble-accent-share: 15%;
+  --chat-bubble-default-color: color-mix(in srgb, var(--accent) var(--chat-bubble-accent-share), var(--card));
   position: relative;
   isolation: isolate;
   box-sizing: border-box;
@@ -9,13 +11,18 @@
   padding: .5em .85em;
   /* Readable SSR fallback; the measured SVG uses continuousCornerRadii. */
   border-radius: 6px;
-  background: var(--chat-bubble-color, var(--accent));
-  color: var(--chat-bubble-text, var(--accent-foreground));
+  background: var(--chat-bubble-color, var(--chat-bubble-default-color));
+  color: var(--chat-bubble-text, var(--foreground));
   font: inherit;
   line-height: 1.5;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme='light']) .chat-bubble { --chat-bubble-accent-share: 20%; }
+}
+html[data-theme='dark'] .chat-bubble { --chat-bubble-accent-share: 20%; }
 
 /* Single SVG paint layer. Its absolute size never affects the observed box. */
 .chat-bubble[data-shaped] { background: transparent; border-radius: 0; }
@@ -26,7 +33,7 @@
   width: calc(100% + 16px);
   height: calc(100% + 16px);
   max-width: none;
-  fill: var(--chat-bubble-color, var(--accent));
+  fill: var(--chat-bubble-color, var(--chat-bubble-default-color));
   stroke: none;
   pointer-events: none;
 }

@@ -793,8 +793,8 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Reusable speech bubble with four tail directions or no tail, custom colors, content-sized layout and inherited font size.',
     usage: '<ChatBubble tail="right">Hello</ChatBubble>\n<ChatBubble tail="top" color="#BAE6FD" textColor="#000000" fontSize="1.25rem">Hello</ChatBubble>',
     note: {
-      zh: 'tail：left / right / top / bottom / none。color 和 textColor 支持 CSS 颜色及变量；默认使用主题强调色及配套文字色，自定义底色时请搭配可读的文字色。fontSize 可选，位置和显示时机由调用方控制。',
-      en: 'tail: left / right / top / bottom / none. color and textColor accept CSS colors or variables; defaults use the theme accent pair. Supply a readable textColor for custom backgrounds. fontSize is optional; callers control placement and visibility.',
+      zh: 'tail：left / right / top / bottom / none。color 和 textColor 支持 CSS 颜色及变量；默认使用柔和的主题强调色底色和主题正文色，自定义底色时请搭配可读的文字色。fontSize 可选，位置和显示时机由调用方控制。',
+      en: 'tail: left / right / top / bottom / none. color and textColor accept CSS colors or variables; defaults use a soft accent tint and the theme text color. Supply a readable textColor for custom backgrounds. fontSize is optional; callers control placement and visibility.',
     },
     Demo: ChatBubbleDemo,
   },
