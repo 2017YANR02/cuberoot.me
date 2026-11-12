@@ -323,13 +323,14 @@ export default function UsersManagement() {
     }
   };
 
-  const renderAdminRole = (record: AdminAdministrator) => (
-    <div className="admin-users-role">
-      <span>{record.isRootAdmin ? t('超级管理员', 'Super administrator') : record.isAdmin ? t('管理员', 'Administrator') : t('普通用户', 'User')}</span>
+  const renderAdminRole = (record: AdminAdministrator, compact = false) => (
+    <div className={compact ? 'admin-users-role admin-users-role-compact' : 'admin-users-role'}>
+      {(!compact || record.isRootAdmin) && <span>{record.isRootAdmin ? t('超级管理员', 'Super administrator') : record.isAdmin ? t('管理员', 'Administrator') : t('普通用户', 'User')}</span>}
       {data?.canManageAdmins && !record.isRootAdmin && (
         <button className="admin-users-page-button admin-users-role-button" type="button"
+          aria-label={compact ? t(`取消“${record.displayName || `UID ${record.id}`}”的管理员权限`, `Remove administrator access from “${record.displayName || `UID ${record.id}`}”`) : undefined}
           disabled={roleUpdatingId !== null} onClick={() => void changeAdminRole(record, !record.isAdmin)}>
-          {roleUpdatingId === record.id ? t('处理中…', 'Updating…') : record.isAdmin ? t('取消管理员', 'Remove admin') : t('设为管理员', 'Make admin')}
+          {roleUpdatingId === record.id ? t('处理中…', 'Updating…') : record.isAdmin ? compact ? t('撤销', 'Revoke') : t('取消管理员', 'Remove admin') : t('设为管理员', 'Make admin')}
         </button>
       )}
     </div>
@@ -393,7 +394,7 @@ export default function UsersManagement() {
             <h2 id="admin-users-administrators-title">{t('管理员', 'Administrators')}</h2>
             {data.administrators ? <ul className="admin-users-administrator-list">
               {data.administrators.map(record => <li key={record.id}>
-                <div>
+                <div className="admin-users-administrator-identity">
                   <AppLink href={`/account?view=user&user=${record.id}`} prefetch={false} className="admin-users-name">
                     <WcaPersonIdentity wcaId={record.wcaId} linked={false}>
                       {record.wcaId ? displayCuberName(record.displayName, isZh) : record.displayName || t('未命名', 'Unnamed')}
@@ -401,7 +402,7 @@ export default function UsersManagement() {
                   </AppLink>
                   <span className="admin-users-id">UID {record.id}{record.wcaId ? ` / ${record.wcaId}` : ''}</span>
                 </div>
-                {renderAdminRole(record)}
+                {renderAdminRole(record, true)}
               </li>)}
             </ul> : <p className="admin-users-error" role="status">{t('管理员列表暂不可用', 'Administrator list unavailable')}</p>}
           </section>

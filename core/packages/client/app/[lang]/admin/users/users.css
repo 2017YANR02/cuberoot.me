@@ -8,8 +8,15 @@
 @keyframes admin-users-spin { to { transform: rotate(360deg); } }
 .admin-users-page section { margin-top: 24px; }
 .admin-users-page .admin-users-administrators { margin-top: 0; }
-.admin-users-administrator-list { display: flex; flex-wrap: wrap; gap: 16px 32px; list-style: none; margin: 0; padding: 0; }
-.admin-users-administrator-list > li { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; min-width: 0; }
+.admin-users-administrator-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 4px 28px; list-style: none; margin: 0; padding: 0; }
+.admin-users-administrator-list > li { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding-block: 8px; }
+.admin-users-administrator-identity { min-width: 0; }
+.admin-users-administrator-list .admin-users-name { width: auto; max-width: 100%; font-size: .875rem; font-weight: 500; }
+.admin-users-administrator-list .admin-users-id { font-size: .6875rem; }
+.admin-users-role.admin-users-role-compact { flex: 0 0 auto; font-size: .6875rem; color: var(--muted-foreground); }
+.admin-users-role-compact .admin-users-role-button { min-height: 32px; padding: 4px 6px; border-color: transparent; color: var(--muted-foreground); font-size: .75rem; }
+.admin-users-role-compact .admin-users-role-button:not(:disabled):hover { border-color: transparent; background: var(--accent-soft); color: var(--destructive); }
+.admin-users-role-compact .admin-users-role-button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .admin-users-page h2 { margin: 0 0 12px; font-size: 1.1rem; font-weight: 600; }
 .admin-users-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; }
 .admin-users-metrics div { padding: 16px; border: 1px solid var(--border-default); border-radius: 14px; min-width: 0; }

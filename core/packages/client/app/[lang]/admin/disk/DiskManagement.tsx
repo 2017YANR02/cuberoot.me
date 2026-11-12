@@ -14,7 +14,7 @@ import '../admin.css';
 import './disk.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
-const gib = (bytes: number) => `${(bytes / 1024 ** 3).toFixed(2)} GiB`;
+const gib = (bytes: number) => `${(bytes / 1024 ** 3).toFixed(2)} G`;
 const percent = (bytes: number, total: number) => total > 0 ? `${(100 * bytes / total).toFixed(1)}%` : '0%';
 
 export default function DiskManagement() {
