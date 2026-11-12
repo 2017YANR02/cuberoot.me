@@ -1,5 +1,3 @@
-@import "../components/cube-bubble.css";
-
 body:has(.lbl-support-page) {
   background-color: var(--background);
 }
@@ -601,7 +599,7 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
 }
 
 /* Align the tip with the front upper-left sticker at lblDemoView(). */
-.lbl-left-thumb-overlay svg {
+.lbl-left-thumb-overlay > svg {
   position: absolute;
   top: calc(50% - 6.2cqmin);
   left: calc(50% - 39cqmin);
@@ -623,22 +621,21 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
   stroke: none;
 }
 
-.lbl-left-thumb-bubble.lbl-corner-result-bubble {
+.chat-bubble.lbl-cube-callout.lbl-corner-result-bubble {
   top: calc(50% + 4cqmin);
   left: calc(50% + 13cqmin);
   max-width: min(14rem, calc(50% - 13cqmin - 0.5rem));
 }
 
-.lbl-left-thumb-bubble.lbl-middle-result-bubble {
+.chat-bubble.lbl-cube-callout.lbl-middle-result-bubble {
   top: calc(50% - 8cqmin);
   left: calc(50% + 8cqmin);
   max-width: min(14rem, calc(50% - 8cqmin - 0.5rem));
 }
 
-.lbl-left-thumb-bubble.lbl-edge-right-bubble {
+.chat-bubble.lbl-cube-callout.lbl-edge-right-bubble {
   left: auto;
   right: max(0.5rem, calc(50% - 40cqmin));
-  border-radius: 16px 4px 16px 16px;
 }
 
 .lbl-lesson-scroll:has(.lbl-content-corner-ejection, .lbl-content-middle-ejection, .lbl-daisy-blocked-prelude) { position: relative; }
@@ -716,4 +713,13 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
 .lbl-practice-karaoke[data-recovering] .lbl-practice-segment-progress { background: var(--muted-foreground); }
 @media (prefers-reduced-motion: reduce) {
   .lbl-practice-hint-trigger { transition: none; }
+}
+
+/* Tutorial-owned placement; shared ChatBubble owns the shape and colors. */
+.chat-bubble.lbl-cube-callout {
+  position: absolute;
+  top: calc(50% + 12cqmin);
+  left: max(0.5rem, calc(50% - 40cqmin));
+  max-width: min(14rem, calc(100% - 1.5rem));
+  font-size: var(--lbl-text-small);
 }

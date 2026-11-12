@@ -185,7 +185,6 @@ function Exercise({ step, example, index, total, onNext, onClose, onPrevious, ca
           moveHint={stepHints && !solved && !recoveryLimitReached ? guidedMove : undefined} moveHintRecovery={recoveryMoves.length > 0} stickeringAtStep={step.id === 'cross' ? crossStickering : undefined} />
           <TrainingFeedbackOverlay kind={solved ? 'correct' : null} correctLabel={tr({ zh: '已达到本题目标', en: 'Target reached' })} wrongLabel="" />
         </div>
-        <p className="lbl-help"><T zh="拖动色块转层，拖动空白调整视角" en="Drag stickers to turn; drag the background to change your view." /></p>
         {/* 暂停按钮操作，练习直接拖动 AlgPlayer；保留以便恢复。
         <div className="lbl-move-display"><select className="lbl-move-select" aria-label={tr({ zh: '操作显示方式', en: 'Move label format' })} value={textMoves ? 'text' : 'notation'} onChange={event => onTextMovesChange(event.target.value === 'text')}><option value="notation">{tr({ zh: '字母操作', en: 'Letter controls' })}</option><option value="text">{tr({ zh: '文字操作', en: 'Word controls' })}</option></select></div>
         {textMoves ? <div className="lbl-beginner-controls" role="group" aria-label={tr({ zh: '转动魔方', en: 'Turn the cube' })}>
