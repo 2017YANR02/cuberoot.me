@@ -119,10 +119,13 @@ function moveBaseFaceBack(value: string, endIdx: number): string {
 }
 
 /**
- * 同轴不同层「连写」:R/L/M、U/D/E、F/B/S 之间都不加空格。
+ * 同轴不同层允许连写,但 R/L 对面输入时仍用空格分开。
  * 大小写宽层按对应外层面处理；其余相邻转动必须由空格分开。
  */
-const isGluedParallelPair = areParallelCubeMoves;
+function isGluedParallelPair(firstBase: string, secondBase: string): boolean {
+  const pair = firstBase.toUpperCase() + secondBase.toUpperCase();
+  return pair !== 'RL' && pair !== 'LR' && areParallelCubeMoves(firstBase, secondBase);
+}
 
 const OPEN_TO_CLOSE: Record<string, string> = { '(': ')', '[': ']', '{': '}' };
 

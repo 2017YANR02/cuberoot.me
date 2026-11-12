@@ -5,8 +5,8 @@ describe('autoSpaceMoves — 相邻转动自动加空格', () => {
   // 模拟「刚输入第二步那个面字母」后的一次 onInput 调用
   const typed = (value: string) => autoSpaceMoves(value, value.length, 'insertText');
 
-  it('RL / UD / FB 连写不加空格(三条轴的同轴对面)', () => {
-    expect(typed('RL').value).toBe('RL');
+  it('RL 自动分开,UD / FB 保持连写', () => {
+    expect(typed('RL').value).toBe('R L');
     expect(typed('UD').value).toBe('UD');
     expect(typed('FB').value).toBe('FB');
   });
@@ -38,10 +38,10 @@ describe('autoSpaceMoves — 相邻转动自动加空格', () => {
     expect(typed("B'F").value).toBe("B'F");
   });
 
-  it('R/L 轴的反向及宽层写法也允许连写', () => {
-    expect(typed('LR').value).toBe('LR');
-    expect(typed('rL').value).toBe('rL');
-    expect(typed('RwL').value).toBe('RwL');
+  it('R/L 对面的反向及宽层写法也自动分开', () => {
+    expect(typed('LR').value).toBe('L R');
+    expect(typed('rL').value).toBe('r L');
+    expect(typed('RwL').value).toBe('Rw L');
   });
 
   it('前缀有其它转动时,末尾 U..D 仍连写', () => {

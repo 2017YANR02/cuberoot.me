@@ -11,7 +11,7 @@
  * - 双击 180°,长按 180°'
  * - iOS Shift 三态(off / single / capslock)
  * - () 三态(点击→(),下滑→[],上滑→{})
- * - 修饰键自动禁用(光标前无字母时 ' 和 w 灰显)
+ * - 修饰键自动禁用(撇号可接字母或半转后缀 2,w 仅接字母)
  * - space 左侧 `·` 小键(仅 !enableMarks,即 textarea 场景):短按插 `·`,长按出 ↑↓
  * - 公式联想(前缀匹配 8 条触发器公式)
  * - enableMarks: 在 space 左侧露出"记号"入口,弹出 7 项(下划/斜体/波浪/删除/↑/↓/·);
@@ -52,7 +52,7 @@ const LONG_PRESS_VARIANTS: Record<string, string[]> = {
   B: ["B'", 'B2', 'b'],
   R: ["R'", 'R2', 'r'],
   L: ["L'", 'L2', 'l'],
-  // NOTE: space 左侧的 `·` 小键——短按插 `·`,长按出 ↑↓(走变体 popup 通道,选中插 `↑ ` / `↓ `)
+  // NOTE: space 左侧的 `·` 小键——短按插 `·`,长按插 ↑↓,记号不附加空格。
   'dot-mark': ['↑', '↓'],
 };
 
@@ -76,14 +76,14 @@ const FACE_KEYS: Record<string, boolean> = {
 
 // NOTE: 公式联想触发器表
 const SUGGEST_ALGS = [
-  { label: "R U R' U'", alg: "R U R' U' " },
-  { label: "R U' R' U", alg: "R U' R' U " },
-  { label: "R' F R F'", alg: "R' F R F' " },
-  { label: "F R' F' R", alg: "F R' F' R " },
-  { label: "L' U' L U", alg: "L' U' L U " },
-  { label: "L' U L U'", alg: "L' U L U' " },
-  { label: "L F' L' F", alg: "L F' L' F " },
-  { label: "F' L F L'", alg: "F' L F L' " },
+  { label: "R U R' U'", alg: "R U R' U'" },
+  { label: "R U' R' U", alg: "R U' R' U" },
+  { label: "R' F R F'", alg: "R' F R F'" },
+  { label: "F R' F' R", alg: "F R' F' R" },
+  { label: "L' U' L U", alg: "L' U' L U" },
+  { label: "L' U L U'", alg: "L' U L U'" },
+  { label: "L F' L' F", alg: "L F' L' F" },
+  { label: "F' L F L'", alg: "F' L F L'" },
 ];
 
 
@@ -342,6 +342,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
   const [shiftState, setShiftState] = useState<ShiftState>('off');
   const [suggestions, setSuggestions] = useState<Array<{ label: string; alg: string; prefixLen: number }>>([]);
   const [modifierDisabled, setModifierDisabled] = useState(true);
+  const [primeDisabled, setPrimeDisabled] = useState(true);
 
   // NOTE: 长按/手势相关 ref
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -411,6 +412,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
     const before = getTextBeforeCaret(el);
     const prevChar = before.length > 0 ? before.charAt(before.length - 1) : '';
     setModifierDisabled(!/[a-zA-Z]/.test(prevChar));
+    setPrimeDisabled(!/[a-zA-Z]2?$/.test(before));
   }, [target]);
 
   /** 刷新建议条 */
@@ -564,8 +566,8 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
       }
       return;
     }
-    if (mk === 'mark-up')   { vkbInsert('↑ '); return; }
-    if (mk === 'mark-down') { vkbInsert('↓ '); return; }
+    if (mk === 'mark-up')   { vkbInsert('↑'); return; }
+    if (mk === 'mark-down') { vkbInsert('↓'); return; }
     if (mk === 'mark-mid')  { vkbInsert('·'); return; }
   }, [target, onInput, vkbInsert]);
 
@@ -666,14 +668,14 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
       }
       hidePopup();
       isLongPressRef.current = false;
-      if (val) vkbInsert(val + ' ');
+      if (val) vkbInsert(val);
       return;
     }
 
     // NOTE: UDFBRL/xyzMES 长按(无 popup)——直接输出 X2'
     if (isLongPressRef.current && DOUBLE_TAP_KEYS[key]) {
       isLongPressRef.current = false;
-      vkbInsert(key + "2' ");
+      vkbInsert(key + "2'");
       return;
     }
     isLongPressRef.current = false;
@@ -753,9 +755,9 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
     if (FACE_KEYS[key]) {
       const dy = e.clientY - startYRef.current;
       if (dy > 20) {
-        ch = key + "' ";
+        ch = key + "'";
       } else if (dy < -20) {
-        ch = key.toLowerCase() + ' ';
+        ch = key.toLowerCase();
       } else {
         ch = btn.dataset.val || key;
       }
@@ -774,7 +776,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
       if (match) {
         el.focus();
         el.setSelectionRange(pos - match[0].length, pos);
-        const doubleTapOut = key === '/' ? ' // ' : key + '2 ';
+        const doubleTapOut = key === '/' ? ' //' : key + '2';
         document.execCommand('insertText', false, doubleTapOut);
         normAndNotify();
       }
@@ -873,7 +875,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
           marksLongPressRef.current = false;
         } else {
           hidePopup();
-          if (activeVariant) vkbInsert(activeVariant + ' ');
+          if (activeVariant) vkbInsert(activeVariant);
         }
         isLongPressRef.current = false;
       }
@@ -955,10 +957,10 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
             <button type="button" className="vkb-key-btn" data-key="L">L</button>
           </div>
           <div className="vkb-row">
-            <button type="button" data-key="' " className={`vkb-key-btn${modifierDisabled ? ' vkb-disabled' : ''}`}>{'\''}
+            <button type="button" data-key="'" className={`vkb-key-btn${primeDisabled ? ' vkb-disabled' : ''}`}>{'\''}
             </button>
             <button type="button" className="vkb-key-btn" data-key="2">2</button>
-            <button type="button" data-key="w " className={`vkb-key-btn${modifierDisabled ? ' vkb-disabled' : ''}`}>w</button>
+            <button type="button" data-key="w" className={`vkb-key-btn${modifierDisabled ? ' vkb-disabled' : ''}`}>w</button>
             <button type="button" className="vkb-key-btn" data-key="/">/</button>
             <button type="button" className="vkb-key-btn" data-key="()">()</button>
             <button type="button" className="vkb-key-btn" data-key="[]">[]</button>
@@ -997,10 +999,10 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
           </div>
           {/* 触发器 */}
           <div className="vkb-triggers" style={{ paddingTop: 4 }}>
-            <button type="button" className="vkb-trigger-btn" data-key="trigger-sexy" data-val="R U R' U' ">sexy</button>
-            <button type="button" className="vkb-trigger-btn" data-key="trigger-unsexy" data-val="R U' R' U ">unsexy</button>
-            <button type="button" className="vkb-trigger-btn" data-key="trigger-sledge" data-val="R' F R F' ">sledge</button>
-            <button type="button" className="vkb-trigger-btn" data-key="trigger-hedge" data-val="F R' F' R ">hedge</button>
+            <button type="button" className="vkb-trigger-btn" data-key="trigger-sexy" data-val="R U R' U'">sexy</button>
+            <button type="button" className="vkb-trigger-btn" data-key="trigger-unsexy" data-val="R U' R' U">unsexy</button>
+            <button type="button" className="vkb-trigger-btn" data-key="trigger-sledge" data-val="R' F R F'">sledge</button>
+            <button type="button" className="vkb-trigger-btn" data-key="trigger-hedge" data-val="F R' F' R">hedge</button>
             {toggleButton}
           </div>
         </div>

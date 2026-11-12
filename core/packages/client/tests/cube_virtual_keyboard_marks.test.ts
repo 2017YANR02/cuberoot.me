@@ -86,6 +86,7 @@ describe('CubeVirtualKeyboard formula marks', () => {
     editor.remove();
     host.remove();
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   async function chooseMark(key: string) {
@@ -116,8 +117,8 @@ describe('CubeVirtualKeyboard formula marks', () => {
   });
 
   it.each([
-    ['mark-up', '↑ '],
-    ['mark-down', '↓ '],
+    ['mark-up', '↑'],
+    ['mark-down', '↓'],
     ['mark-mid', '·'],
   ])('inserts %s as visible formula text', async (key, inserted) => {
     editor.textContent = 'R ';
@@ -126,6 +127,35 @@ describe('CubeVirtualKeyboard formula marks', () => {
     await chooseMark(key);
 
     expect(editor.textContent).toBe(`R ${inserted}`);
+  });
+
+  it.each([
+    ['dot-mark', '↑', '↑'],
+    ['dot-mark', '↓', '↓'],
+    ['R', "R'", "R'"],
+  ])('long-press %s inserts %s with the appropriate spacing', async (key, variant, inserted) => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    await act(async () => {
+      root.render(createElement(CubeVirtualKeyboard, {
+        target: { current: editor },
+        enableMarks: false,
+      }));
+    });
+    editor.textContent = 'R';
+    placeCaretAtEnd(editor);
+    const trigger = host.querySelector<HTMLButtonElement>(`[data-key="${key}"]`)!;
+    await act(async () => dispatchPointer(trigger, 'pointerdown'));
+    await act(async () => vi.advanceTimersByTime(250));
+    const item = [...host.querySelectorAll<HTMLElement>('.vkb-popup-item')]
+      .find(el => el.dataset.val === variant)!;
+    expect(item).toBeDefined();
+    vi.spyOn(item, 'getBoundingClientRect').mockReturnValue({
+      left: 0, top: 0, right: 20, bottom: 20, width: 20, height: 20, x: 0, y: 0,
+      toJSON: () => ({}),
+    });
+    await act(async () => dispatchPointer(trigger, 'pointerup'));
+
+    expect(editor.textContent).toBe(`R${inserted}`);
   });
 
   it('can add strikethrough when the move already has a wavy underline', async () => {
