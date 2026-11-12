@@ -1,0 +1,22 @@
+diff --git a/src/prefetch.rs b/src/prefetch.rs
+index efd1608..618f7c6 100644
+--- a/src/prefetch.rs
++++ b/src/prefetch.rs
+@@ -5,7 +5,7 @@
+ 
+ /// Prefetch for a read used once (table lookups): x86 `prefetchnta`
+ /// (measured better than T0 for the table, ebd6c20: +2.6%), aarch64
+-/// `pldl1strm`, wasm32 a one-byte load (below).
++/// `pldl1keep` in this isolated Mac experiment, wasm32 a one-byte load (below).
+ ///
+ /// # Safety
+ /// `p` points into an allocation: on wasm32 its byte is read.
+@@ -31,7 +31,7 @@ pub unsafe fn read_once<T>(p: *const T) {
+     #[cfg(target_arch = "aarch64")]
+     // SAFETY: see the module docs.
+     unsafe {
+-        std::arch::asm!("prfm pldl1strm, [{p}]", p = in(reg) p,
++        std::arch::asm!("prfm pldl1keep, [{p}]", p = in(reg) p,
+             options(nostack, preserves_flags, readonly));
+     }
+     #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]

@@ -1,0 +1,143 @@
+diff --git a/src/portable/coord.rs b/src/portable/coord.rs
+index d63f0ac..0ca63db 100644
+--- a/src/portable/coord.rs
++++ b/src/portable/coord.rs
+@@ -6,6 +6,40 @@
+ 
+ use super::{pieces, Cube, HOT_TABLES, V16};
+ 
++/// Small immutable arithmetic lookup, compiled into the experimental binary.
++/// Valid states have four edges in each slice: 495 * 70 entries among 3^12.
++/// The packed value is (eslot << 7) | msplit; the h10 pruning table is unchanged.
++#[cfg(all(backend = "neon", target_feature = "dotprod"))]
++static EDGE_CLASS_COORDS: [u16; 531_441] = {
++    let mut result = [0; 531_441];
++    let mut e_mask = 0u32;
++    while e_mask < 4096 {
++        if e_mask.count_ones() == 4 {
++            let mut s_compact = 0u32;
++            while s_compact < 256 {
++                if s_compact.count_ones() == 4 {
++                    let (mut digit, mut weight, mut key, mut non_e_position) = (0, 1, 0, 0);
++                    while digit < 12 {
++                        let class = if e_mask >> digit & 1 != 0 { 2 } else {
++                            let value = s_compact >> non_e_position & 1;
++                            non_e_position += 1;
++                            value
++                        };
++                        key += class * weight;
++                        weight *= 3;
++                        digit += 1;
++                    }
++                    result[key as usize] = (crate::coord::ESLOT_CONST[e_mask as usize] << 7)
++                        | crate::coord::RANK8_CONST[s_compact as usize] as u16;
++                }
++                s_compact += 1;
++            }
++        }
++        e_mask += 1;
++    }
++    result
++};
++
+ /// `pext(x, mask)` (gather the bits of `x` under `mask`) for 12-bit values:
+ /// two 6-bit lookups.
+ #[inline(always)]
+@@ -106,6 +140,21 @@ pub fn edge_parts_sym_raw(cube: Cube, sym: usize) -> (u64, u32, u64) {
+         .lookup(pieces(cube.edges))
+         .xor(cube.edges.xor(V16::load(&line.source_flips.0)));
+     let conj = classes.lookup(V16::load(&line.positions.0));
++    #[cfg(all(backend = "neon", target_feature = "dotprod"))]
++    {
++        // SAFETY: legal cubes contain four M/S/E edges; the 12 base-three
++        // digits produce a key below 3^12, and the last four bytes are zero.
++        let packed = unsafe { *EDGE_CLASS_COORDS.get_unchecked(conj.edge_class_key()) };
++        (u64::from(packed & 127), (conj.bit_mask::<4>() & 0xFFF) << 16, u64::from(packed >> 7))
++    }
++    #[cfg(not(all(backend = "neon", target_feature = "dotprod")))]
++    parts_from_masks(conj)
++}
++
++#[cfg(any(test, not(all(backend = "neon", target_feature = "dotprod"))))]
++#[inline(always)]
++fn parts_from_masks(conj: V16) -> (u64, u32, u64) {
++    let tabs = &HOT_TABLES;
+     // (Bytes 12..16 of `conj` are 0: their position index is out of range.)
+     let (e_slice, s_slice, flipped) = conj.bit_masks_764(conj);
+     let non_e = !e_slice & 0xFFF;
+@@ -120,6 +169,49 @@ pub fn edge_parts_sym_raw(cube: Cube, sym: usize) -> (u64, u32, u64) {
+     (msplit, flipped << 16, eslot)
+ }
+ 
++#[cfg(all(test, backend = "neon", target_feature = "dotprod"))]
++mod ternary_tests {
++    use super::*;
++    use crate::cubie::{CubieCube, Rng};
++
++    #[test]
++    fn every_slice_partition_matches_original_coordinate() {
++        let mut checked = 0;
++        for e in 0..4096u32 {
++            if e.count_ones() != 4 { continue; }
++            for s in 0..256u32 {
++                if s.count_ones() != 4 { continue; }
++                let mut bytes = [0u8; 16];
++                let mut p = 0;
++                for (i, byte) in bytes.iter_mut().take(12).enumerate() {
++                    let class = if e >> i & 1 != 0 { 2 } else { let v = s >> p & 1; p += 1; v };
++                    *byte = ((class << 6) | ((i as u32 & 1) << 4)) as u8;
++                }
++                let vector = V16::load(&bytes);
++                let packed = EDGE_CLASS_COORDS[vector.edge_class_key()];
++                assert_eq!((u64::from(packed & 127), (vector.bit_mask::<4>() & 0xFFF) << 16, u64::from(packed >> 7)), parts_from_masks(vector));
++                checked += 1;
++            }
++        }
++        assert_eq!(checked, 34_650);
++    }
++
++    #[test]
++    fn conjugated_random_cubes_match_original_coordinate() {
++        let mut rng = Rng(20261112);
++        for _ in 0..200 {
++            let cube = Cube::from_cubie(&CubieCube::random(&mut rng));
++            for sym in 0..48 {
++                let line = &HOT_TABLES.sym_edges[sym];
++                let classes = V16::load(&line.classes.0).lookup(pieces(cube.edges))
++                    .xor(cube.edges.xor(V16::load(&line.source_flips.0)));
++                let conj = classes.lookup(V16::load(&line.positions.0));
++                assert_eq!(edge_parts_sym_raw(cube, sym), parts_from_masks(conj));
++            }
++        }
++    }
++}
++
+ #[cfg(test)]
+ mod tests {
+     use super::*;
+diff --git a/src/portable/v16_neon.rs b/src/portable/v16_neon.rs
+index 9cd9ad7..5474de4 100644
+--- a/src/portable/v16_neon.rs
++++ b/src/portable/v16_neon.rs
+@@ -141,6 +141,21 @@ impl V16 {
+         unsafe { vgetq_lane_u64::<0>(vreinterpretq_u64_u8(self.0)) }
+     }
+ 
++    /// Twelve mutually exclusive M/S/E classes (0/1/2) as base-three digits.
++    /// The four padding bytes are zero. Only used on NEON CPUs with dotprod.
++    #[cfg(target_feature = "dotprod")]
++    #[inline(always)]
++    pub(crate) fn edge_class_key(self) -> usize {
++        use std::arch::aarch64::{vdotq_u32, vdupq_n_u32, vgetq_lane_u32};
++        const WEIGHTS: [u8; 16] = [1, 3, 9, 27, 1, 3, 9, 27, 1, 3, 9, 27, 0, 0, 0, 0];
++        // SAFETY: this method is only compiled with the dotprod feature.
++        unsafe {
++            let groups = vdotq_u32(vdupq_n_u32(0), vshrq_n_u8::<6>(self.0), vld1q_u8(WEIGHTS.as_ptr()));
++            (vgetq_lane_u32::<0>(groups) + 81 * vgetq_lane_u32::<1>(groups)
++                + 6561 * vgetq_lane_u32::<2>(groups)) as usize
++        }
++    }
++
+     /// The weight of each byte's bit in a 16-bit mask (two 8-bit halves).
+     #[inline(always)]
+     fn bit_weights() -> uint8x16_t {
