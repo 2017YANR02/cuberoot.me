@@ -134,6 +134,7 @@
 
 .friends-identity {
   display: inline-flex;
+  flex: 1;
   align-items: center;
   gap: 10px;
   min-width: 0;
@@ -201,6 +202,8 @@ a.friends-identity:hover strong { color: var(--accent); }
 
 .friends-actions {
   display: flex;
+  flex-shrink: 0;
+  margin-left: auto;
   flex-wrap: wrap;
   align-items: center;
   gap: 5px;
@@ -210,6 +213,14 @@ a.friends-identity:hover strong { color: var(--accent); }
   padding: 6px 9px;
   white-space: nowrap;
 }
+
+.friends-user-row.is-friends .friends-actions,
+.friends-wca-contact .friends-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.1fr) minmax(0, 1fr);
+  width: 286px;
+}
+.friends-wca-contact .friends-action { grid-column: 2; }
 
 .friends-action:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
 .friends-action.is-primary { background: var(--accent); color: var(--accent-foreground); }
@@ -249,8 +260,12 @@ a.friends-identity:hover strong { color: var(--accent); }
   .friends-tab { font-size: 12px; padding-inline: 4px; gap: 4px; }
   .friends-tab svg { width: 14px; height: 14px; flex-shrink: 0; }
   .friends-user-row { align-items: flex-start; flex-wrap: wrap; }
-  .friends-identity { width: 100%; }
+  .friends-identity { flex: 0 0 100%; width: 100%; }
   .friends-actions { margin-left: 48px; }
+  .friends-user-row.is-friends .friends-actions,
+  .friends-wca-contact .friends-actions { width: min(286px, calc(100% - 48px)); }
+  .friends-user-row.is-friends .friends-action,
+  .friends-wca-contact .friends-action { padding-inline: 4px; }
   .friends-user-row.is-outgoing .friends-actions { margin-left: 0; }
 }
 
