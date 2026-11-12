@@ -1,0 +1,30 @@
+{
+  "engine": "egg",
+  "threads": 16,
+  "physicalMemoryBytes": 137438953472,
+  "memoryGiB": 64,
+  "h": 11,
+  "expectedBytes": 62261825536,
+  "tableChecksum": "0e756b40bf50e2b2",
+  "rssLimit": 68719476736,
+  "startupRequiredBytes": 71940702208,
+  "table": "/Users/cuberoot/Developer/egg-solver-benchmarks/2026-11-09-h11-nocache-retry/h11",
+  "binary": "/Users/cuberoot/Developer/egg-solver/target/macos-nocache-io-fix/release/solve",
+  "binarySha256": "4c7a994372cd976ff8903f8b4a31a6b163b438b44508c41a535b2fde9f9f81ba",
+  "args": [
+    "--table",
+    "/Users/cuberoot/Developer/egg-solver-benchmarks/2026-11-09-h11-nocache-retry/h11",
+    "--load",
+    "copy",
+    "-t",
+    "16",
+    "-c",
+    "1",
+    "--json"
+  ],
+  "pid": 79957,
+  "corpus": "/Users/cuberoot/Documents/scramble/wca_scramble/wca_scrambles_no_wide_move.txt",
+  "output": "/Users/cuberoot/Developer/cuberoot.me/solver/333opt/out.0.csv",
+  "pending": 11828,
+  "startedAt": "2026-11-10T19:38:05.203Z"
+}
