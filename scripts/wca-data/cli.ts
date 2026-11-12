@@ -61,7 +61,7 @@ async function publish(candidate: string, out: string) {
     console.log(deploy('activate'));
     activated = true;
     try {
-      api(`${endpoint}/${r.id}`, { body: renderReleaseBody({ ...m, ...(readReleaseBody(r.body || '').statistics ? { statistics: readReleaseBody(r.body).statistics } : {}) }), draft: false, make_latest: 'false', name: 'Latest WCA data' });
+      api(`${endpoint}/${r.id}`, { body: renderReleaseBody({ ...m, ...(readReleaseBody(r.body || '').statistics ? { statistics: readReleaseBody(r.body).statistics } : {}) }), draft: false, make_latest: 'false', name: 'WCA data' });
     } catch (error) {
       // Network timeout can happen after GitHub committed the PATCH. Resolve before rollback.
       try { r = release(); } catch {

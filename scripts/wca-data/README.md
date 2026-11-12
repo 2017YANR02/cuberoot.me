@@ -1,4 +1,4 @@
-# Latest WCA data Release
+# WCA data Release
 
 `wca-data-latest` holds the current search/Nemesizer archive and the published statistics snapshot. It is a mutable data channel, not a website software version. Other asset families sharing this transport are not managed by WCA cleanup.
 
