@@ -24,7 +24,7 @@ describe('algSheetFromCases', () => {
       [{ alg: "U R' F r U' r' F' R y'" }, { alg: "F' L F L' y'" }],
       [{ alg: "U L U' L' y2" }],
     ] });
-    const options = { ...base, set: 'f2l', cases: [c], allOris: true };
+    const options = { ...base, set: 'f2l', cases: [c], allOris: true, setupMode: 'preset' as const };
     expect(algSheetFromCases(options).cases.map(row => row.setup))
       .toEqual(["R U R' U2' R U' R' U y", "R U R' U2' R U' R' U y y"]);
     c.algs[0].reverse();
