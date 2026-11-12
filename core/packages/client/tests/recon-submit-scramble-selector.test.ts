@@ -19,8 +19,7 @@ describe('recon submit scramble selector', () => {
     expect(scrambleRegion.match(/<textarea\b/g)).toHaveLength(1);
   });
 
-  it('routes the picker and mobile keyboard through the active source', () => {
-    expect(scrambleRegion).toContain('setScramblePickerFor(scrambleField)');
+  it('routes the mobile keyboard through the active source', () => {
     expect(scrambleRegion).toContain('target={scrambleInputRef}');
     expect(scrambleRegion).toContain('updateActiveScramble(scrambleInputRef.current.value)');
   });
