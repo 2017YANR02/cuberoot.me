@@ -1,4 +1,5 @@
 'use client';
+import ChatBubble from '@/components/ChatBubble';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alg } from 'cubing/alg';
 import { Color } from 'three';
@@ -17,6 +18,9 @@ import StudyActions from '../components/StudyActions';
 import SectionNavigation from '../components/SectionNavigation';
 import './case-introduction.css';
 
+const TARGET_PAIR_STICKERS = ['F5', 'R3', 'D2', 'F8', 'R6'] as const;
+const NO_HIGHLIGHTS: readonly string[] = [];
+
 export default function CaseIntroduction({ orientation }: { orientation: string }) {
   const root = useRef<HTMLDivElement>(null);
   const players = useRef<(AlgPlayerHandle | null)[]>([]);
@@ -33,12 +37,16 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
   const [alignmentComplete, setAlignmentComplete] = useState(false);
   const [alignmentStarted, setAlignmentStarted] = useState(false);
   const [returnReady, setReturnReady] = useState(false);
+  const [pairHintReady, setPairHintReady] = useState(false);
   const [pairVisibility, setPairVisibility] = useState(1);
   const pairColors = useMemo(() => {
     const colors = orientedCubeFaceColors(orientation);
-    return Object.fromEntries(['F5', 'R3', 'D2', 'F8', 'R6'].map(sticker => [sticker,
+    return Object.fromEntries(TARGET_PAIR_STICKERS.map(sticker => [sticker,
       new Color(FM_FIXED_COLOR[FM_IGNORED]!).lerp(new Color(colors[sticker[0] as CubeFace]), pairVisibility).getStyle()]));
   }, [orientation, pairVisibility]);
+  const caseName = selected === null ? undefined : ORDERED_BASIC_CASES[selected].name;
+  const hasPairHint = caseName === 'B+' || caseName === 'B-';
+  const showPairHint = phase === 'learn' && controlsVisible && hasPairHint && step === 1 && pairHintReady;
   const actualStep = useRef(0);
   const setups = useMemo(() => ORDERED_BASIC_CASES.map(item => new Alg(item.alg).invert().expand().toString()), []);
   const reference = useMemo(() => selected === null ? null : f2lDiagramFacelets(setups[selected], orientation), [selected, setups, orientation]);
@@ -138,11 +146,14 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
   }, [phase, selected, seekVersion, manualStage, controlsVisible]);
   useEffect(() => {
     setReturnReady(false);
+    setPairHintReady(false);
     if (phase !== 'learn' || selected === null || !controlsVisible) return;
-    let frame = 0, previousReady = false, lessonFinished = false;
+    let frame = 0, previousReady = false, lessonFinished = false, previousHint = false;
     const update = () => {
       const handle = players.current[selected];
       const idle = !!handle?.getPlayer() && !handle.isUserMovePending?.();
+      const hint = hasPairHint && idle && actualStep.current === 1;
+      if (hint !== previousHint) { previousHint = hint; setPairHintReady(hint); }
       if (idle && actualStep.current === 3) lessonFinished = true;
       const ready = lessonFinished && idle;
       if (ready !== previousReady) { previousReady = ready; setReturnReady(ready); }
@@ -150,7 +161,7 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
     };
     frame = requestAnimationFrame(update);
     return () => cancelAnimationFrame(frame);
-  }, [phase, selected, controlsVisible]);
+  }, [phase, selected, controlsVisible, hasPairHint]);
   useEffect(() => {
     if (phase !== 'return' || selected === null) return;
     const element = cubes.current[selected]!;
@@ -215,6 +226,7 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
           alg={selected === index && adjustment && !controlsVisible ? new Alg(adjustment).invert().toString() : item.alg}
           moveHint={selected === index && phase === 'learn' && !controlsVisible && !alignmentStarted && !alignmentComplete && adjustment ? new Alg(adjustment).invert().toString() : undefined}
           stickerColorOverrides={selected === index ? pairColors : undefined} orientation={orientation} fillPane moveDurationMs={950}
+          highlightedStickers={selected === index && showPairHint ? TARGET_PAIR_STICKERS : NO_HIGHLIGHTS}
           controlMode={phase === 'learn' && selected === index && controlsVisible ? 'full' : 'none'} interactionMode={phase === 'learn' && selected === index ? 'view' : 'none'} hideResetView
           onStepChange={value => { if (selected === index) { actualStep.current = value; setStep(value); } }} />
       </div>
@@ -223,10 +235,13 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
       <span className="f2l-case-name">{item.name}</span>
     </div>)}</div>
     <p className="f2l-case-prompt"><T zh="点击选择一个三步基态，开始学习" en="Choose a three-move case to start learning" /></p>
-    {phase === 'learn' && !controlsVisible && <div className="tutorial-cube-bubble f2l-case-alignment-status" data-site-surface="panel" data-fading={referenceFading} role="status">
+    {phase === 'learn' && !controlsVisible && <ChatBubble tail="bottom" className="f2l-case-alignment-status" data-fading={referenceFading} role="status">
       <span className="f2l-case-alignment-signal" aria-hidden="true"><TrainingFeedbackOverlay kind={alignmentComplete ? 'correct' : 'wrong'} correctLabel="" wrongLabel="" /></span>
       {alignmentComplete ? <T zh="顶层已对齐" en="Top layer aligned" /> : <T zh="顶层朝向需要调整" en="Adjust the top layer" />}
-    </div>}
+    </ChatBubble>}
+    {showPairHint && <ChatBubble tail="bottom" className="f2l-case-alignment-status" role="status">
+      <T zh="组合好目标棱和角" en="Pair up the target edge and corner" />
+    </ChatBubble>}
     {phase === 'learn' && lesson && reference && <div key={controlsVisible ? 'stages' : 'alignment'} className="f2l-case-narration" data-alignment={!controlsVisible} data-fading={referenceFading}>
       {!controlsVisible ? <><div className="f2l-case-reference">
         <ArrowLeftRight className="f2l-case-reference-arrow" size={40} strokeWidth={1.5} aria-hidden="true" />

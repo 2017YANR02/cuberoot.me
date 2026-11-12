@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alg } from 'cubing/alg';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
+import PlaybackScrubber from '@cuberoot/timer-ui/PlaybackScrubber';
 import { VisualCube } from '@/components/VisualCube';
 import { tr, T } from '@/i18n/tr';
 import { ORDERED_BASIC_CASES } from '../data/basic-cases';
@@ -11,6 +12,7 @@ import { F2L_INTRO_ALG, LBL_INTRO_ALG, lblIntroStickering, f2lDiagramFacelets, f
 import StudyActions from '../components/StudyActions';
 import SectionNavigation from '../components/SectionNavigation';
 import FirstTwoLayersIntro from './FirstTwoLayersIntro';
+import { INTRO_COMPARE_AT, INTRO_CROSS_MS, INTRO_SPLIT_MS, INTRO_VIDEO_DURATION, introEase } from '../lib/intro-timeline';
 
 function IntroComparison({ orientation, onContinue }: { orientation: string; onContinue: () => void }) {
   const [playRequest, setPlayRequest] = useState(0);
@@ -37,13 +39,115 @@ function IntroComparison({ orientation, onContinue }: { orientation: string; onC
 
 
 export default function IntroLessons({ stepId, orientation, onNextChapter }: {
-  stepId: 'lesson-1' | 'lesson-2'; orientation: string; onNextChapter: () => void;
+  stepId: 'lesson-1' | 'lesson-2' | 'lesson-14'; orientation: string; onNextChapter: () => void;
 }) {
   const [section, setSection] = useState<'comparison' | 'lbl' | 'f2l'>('lbl');
+  const clock = useRef(0);
+  const scene = useRef<HTMLDivElement>(null);
+  const [time, setTime] = useState(0);
+  const [seekVersion, setSeekVersion] = useState(0);
+  const [comparisonPlaying, setComparisonPlaying] = useState(false);
+  const [scrubbing, setScrubbing] = useState(false);
+  const scrubbingActive = useRef(false);
+  const [leftReady, setLeftReady] = useState(false);
+  const [rightReady, setRightReady] = useState(false);
+  const comparisonReady = leftReady && rightReady;
+  const comparisonComplete = time >= INTRO_VIDEO_DURATION;
+  const playing = comparisonPlaying && !comparisonComplete && !scrubbing;
+  const comparisonStage = time < INTRO_CROSS_MS ? 'cross' : time < INTRO_COMPARE_AT ? 'split' : 'compare';
+  const prepareLeft = useCallback(() => setLeftReady(true), []);
+  const prepareRight = useCallback(() => setRightReady(true), []);
+  const beginScrub = () => { scrubbingActive.current = true; setScrubbing(true); };
+  const endScrub = useCallback(() => {
+    if (!scrubbingActive.current) return;
+    scrubbingActive.current = false; setScrubbing(false); setComparisonPlaying(true);
+  }, []);
+  const updateSplit = useCallback((value: number) => {
+    const progress = Math.max(0, Math.min(1, (value - INTRO_CROSS_MS) / INTRO_SPLIT_MS));
+    const split = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? Number(progress > 0) : introEase(progress);
+    const style = scene.current?.style;
+    if (!style) return;
+    const joined = String(1 - split), opacity = String(Math.min(progress * 4, 1));
+    if (style.getPropertyValue('--f2l-intro-joined') !== joined) style.setProperty('--f2l-intro-joined', joined);
+    if (style.getPropertyValue('--f2l-intro-clone-opacity') !== opacity) style.setProperty('--f2l-intro-clone-opacity', opacity);
+  }, []);
+  const seek = useCallback((value: number) => {
+    clock.current = Math.max(0, Math.min(INTRO_VIDEO_DURATION, value));
+    setTime(clock.current); updateSplit(clock.current);
+    setSeekVersion(version => version + 1);
+  }, [updateSplit]);
+  useEffect(() => {
+    if (comparisonReady) setComparisonPlaying(!document.hidden && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }, [comparisonReady]);
+  useEffect(() => {
+    const pauseHidden = () => { if (document.hidden) setComparisonPlaying(false); };
+    document.addEventListener('visibilitychange', pauseHidden);
+    return () => document.removeEventListener('visibilitychange', pauseHidden);
+  }, []);
+  useEffect(() => {
+    window.addEventListener('pointerup', endScrub);
+    window.addEventListener('pointercancel', endScrub);
+    window.addEventListener('blur', endScrub);
+    return () => {
+      window.removeEventListener('pointerup', endScrub);
+      window.removeEventListener('pointercancel', endScrub);
+      window.removeEventListener('blur', endScrub);
+    };
+  }, [endScrub]);
+  useEffect(() => {
+    if (!comparisonReady || !playing) return;
+    let raf = 0, last = performance.now(), rendered = last;
+    const tick = (now: number) => {
+      if (document.hidden) return;
+      clock.current = Math.min(INTRO_VIDEO_DURATION, clock.current + Math.min(50, now - last)); last = now;
+      updateSplit(clock.current);
+      if (now - rendered >= 40 || clock.current === INTRO_VIDEO_DURATION) { setTime(clock.current); rendered = now; }
+      if (clock.current === INTRO_VIDEO_DURATION) return;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [comparisonReady, playing, updateSplit]);
   const chapterCases = ORDERED_BASIC_CASES;
   const diagrams = useMemo(() => chapterCases.map(item => f2lDiagramFacelets(new Alg(item.alg).invert().expand().toString(), orientation)), [orientation, chapterCases]);
   // const goalDiagrams = useMemo(() => f2lGoalDiagrams(orientation), [orientation]);
-  return <>{stepId === 'lesson-1' && <div className="f2l-study-layout">
+  if (stepId === 'lesson-1') {
+    const label = tr({ zh: 'F2L与层先法的区别', en: 'F2L vs. layer-by-layer' });
+    return <div className="f2l-study-layout">
+      <SectionNavigation label={label}>
+        <div className="f2l-section-list"><p className="f2l-section-label" aria-current="true">{label}</p></div>
+      </SectionNavigation>
+      <div className="f2l-study-main">
+        <div className="f2l-intro-film f2l-concept-video"
+          onPointerDownCapture={event => { if (event.target instanceof HTMLInputElement && event.target.type === 'range') beginScrub(); }}
+          onKeyDownCapture={event => {
+            if (!(event.target instanceof HTMLInputElement) || event.target.type !== 'range' || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+            event.preventDefault(); beginScrub();
+            seek(event.key === 'Home' ? 0 : event.key === 'End' ? INTRO_VIDEO_DURATION : clock.current + (['ArrowLeft', 'ArrowDown'].includes(event.key) ? -500 : 500));
+          }} onKeyUpCapture={endScrub} onBlurCapture={endScrub}>
+        <div ref={scene} className="f2l-intro-methods" data-stage={comparisonStage} data-playing={playing}>
+          <div className="f2l-intro-method">
+            <FirstTwoLayersIntro key={orientation} orientation={orientation} method="lbl"
+              comparisonStage={comparisonStage} comparisonClock={clock} seekVersion={seekVersion}
+              controlledPlaying={playing} onReady={prepareLeft} />
+          </div>
+          <div className="f2l-intro-method" inert={comparisonStage !== 'compare'} aria-hidden={comparisonStage !== 'compare'}>
+            <FirstTwoLayersIntro key={orientation} orientation={orientation} method="f2l"
+              comparisonStage={comparisonStage} comparisonClock={clock} seekVersion={seekVersion}
+              controlledPlaying={playing} onReady={prepareRight} />
+          </div>
+        </div>
+        <div className="f2l-intro-progress">
+          <PlaybackScrubber step={time} total={INTRO_VIDEO_DURATION} disabled={!comparisonReady} onScrub={seek}
+            ariaLabel={tr({ zh: '演示进度', en: 'Animation progress' })} />
+        </div>
+        </div>
+        <StudyActions onContinue={onNextChapter} />
+      </div>
+    </div>;
+  }
+
+  return <>{stepId === 'lesson-14' && <div className="f2l-study-layout">
         <SectionNavigation label={tr(section === 'comparison' ? { zh: 'F2L与层先法的区别', en: 'F2L vs. layer-by-layer' } : section === 'lbl' ? { zh: '层先法的前两层', en: 'The first two layers with LBL' } : { zh: 'F2L', en: 'F2L' })}>
           <div className="f2l-section-list">
             <button type="button" className="f2l-section-button" aria-pressed={section === 'comparison'} onClick={() => setSection('comparison')}><T zh="F2L与层先法的区别" en="F2L vs. layer-by-layer" /></button>

@@ -1,5 +1,3 @@
-@import "../../components/cube-bubble.css";
-
 .f2l-concept-video { min-width: 0; }
 .f2l-concept-count { text-align: right; color: var(--muted-foreground); font-size: .875rem; font-variant-numeric: tabular-nums; }
 .f2l-concept-scene { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 28px; }
@@ -14,12 +12,12 @@
   .f2l-concept-cube > .alg-sim-player { transition: none; }
   .f2l-concept-line { animation: none; }
 }
-.f2l-concept-video .f2l-concept-result { display: flex; align-items: center; gap: 6px; top: 15%; left: auto; right: 0; max-width: 36%; font-size: 1rem; pointer-events: none; }
-.f2l-concept-video .f2l-concept-result[data-target] { right: auto; bottom: auto; transform: translate(-50%, -100%); }
-.f2l-concept-video .f2l-concept-result[data-target='corner'] { left: 24%; top: 24%; }
-.f2l-concept-video .f2l-concept-result[data-target='edge'] { left: 35%; top: 27%; }
-.f2l-concept-video .f2l-concept-result[data-target='pair'] { left: 30%; top: 24%; }
-.f2l-concept-video .f2l-concept-result[data-target='slot'] { left: 54%; top: 90%; transform: translateX(-50%); }
+.chat-bubble.f2l-concept-result { position: absolute; display: flex; align-items: center; gap: 6px; top: 15%; left: auto; right: 8px; max-width: 36%; font-size: 1rem; pointer-events: none; }
+.chat-bubble.f2l-concept-result[data-target] { right: auto; bottom: auto; transform: translate(-50%, -100%); }
+.chat-bubble.f2l-concept-result[data-target='corner'] { left: 24%; top: 24%; }
+.chat-bubble.f2l-concept-result[data-target='edge'] { left: 35%; top: 27%; }
+.chat-bubble.f2l-concept-result[data-target='pair'] { left: 30%; top: 24%; }
+.chat-bubble.f2l-concept-result[data-target='slot'] { left: 54%; top: 90%; transform: translateX(-50%); }
 .f2l-concept-signal { display: flex; flex-shrink: 0; }
 .f2l-concept-result .f2l-concept-signal > div { position: static; inset: auto; }
 .f2l-concept-signal svg { width: 24px; height: 24px; }

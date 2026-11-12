@@ -1,5 +1,6 @@
 'use client';
 
+import ChatBubble from '@/components/ChatBubble';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { Color } from 'three';
@@ -205,13 +206,13 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
         highlightedStickers={highlights} stickeringAtStep={scene.hidePair || scene.crossOnly ? crossMask : beat?.hideCorner ? edgeStickering : beat?.hideEdge ? cornerStickering : pairStickering}
         onStepChange={step => { playerStep.current = step; }}
         moveDurationMs={scene.moveDuration ?? 220} controlMode="none" hideResetView interactionMode="none" fillPane />
-        {ready && !fadingOut && (scene.result ? elapsed >= 1000 : beat?.label) && <div className="tutorial-cube-bubble f2l-concept-result" data-target={scene.flashPair ? beat?.hideEdge ? 'corner' : beat?.hideCorner ? 'edge' : 'pair' : beat?.label ? 'slot' : undefined} data-site-surface="panel" role="status">
+        {ready && !fadingOut && (scene.result ? elapsed >= 1000 : beat?.label) && <ChatBubble tail={scene.flashPair ? 'bottom' : beat?.label ? 'top' : 'left'} className="f2l-concept-result" data-target={scene.flashPair ? beat?.hideEdge ? 'corner' : beat?.hideCorner ? 'edge' : 'pair' : beat?.label ? 'slot' : undefined} role="status">
           {scene.result ? <>
             <div className="f2l-concept-signal" aria-hidden="true"><TrainingFeedbackOverlay
               kind={scene.result === 'standard' ? 'correct' : 'wrong'} correctLabel="" wrongLabel="" /></div>
             {scene.result === 'standard' ? <T zh="基态" en="Standard" /> : <T zh="非基态" en="Non-standard" />}
           </> : beat?.label && tr(beat.label)}
-        </div>}
+        </ChatBubble>}
       </div>
       <div className="f2l-concept-caption" aria-live="polite" aria-atomic="true">
         <p key={tr(beat?.caption ?? scene.caption)} className="f2l-concept-line">{tr(beat?.caption ?? scene.caption)}</p>

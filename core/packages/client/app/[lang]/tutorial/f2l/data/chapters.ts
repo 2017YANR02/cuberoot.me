@@ -9,8 +9,7 @@ type ChapterContent = {
   tips: readonly ChapterTip[];
 };
 
-export const F2L_CHAPTERS = [
-  {
+const introChapter = {
     "id": "lesson-1",
     "title": {
       "zh": "初识 F2L",
@@ -40,7 +39,10 @@ export const F2L_CHAPTERS = [
         "en": "Make sure you can solve the cube using the layer-by-layer method. See the LBL tutorial on this site."
       }
     ]
-  },
+} as const satisfies ChapterContent;
+
+export const F2L_CHAPTERS = [
+  introChapter,
   {
     "id": "lesson-2",
     "title": {
@@ -341,10 +343,11 @@ export const F2L_CHAPTERS = [
     question: { zh: '三步就能还原一组棱角？如果图案转到了别的位置，我还能认出来吗？', en: 'Just three moves to solve a pair? Can I still recognize it when the pattern moves around the top?' },
     answer: [{ zh: '先认图案，再看懂三步，最后试着把顶层调整到熟悉的朝向。', en: 'Recognize the pattern, understand the three moves, then practise aligning the top to a familiar position.' }],
     tips: [],
-  }
+  },
+  { ...introChapter, id: 'lesson-14' },
 ] as const satisfies readonly ChapterContent[];
 
 export type ChapterId = typeof F2L_CHAPTERS[number]['id'];
 
 // Experiments and the former standalone lessons remain accessible outside the learning sequence.
-export const F2L_NAV_CHAPTERS = F2L_CHAPTERS.filter(chapter => !['lesson-10', 'lesson-11', 'lesson-12', 'lesson-13'].includes(chapter.id));
+export const F2L_NAV_CHAPTERS = F2L_CHAPTERS.filter(chapter => !['lesson-10', 'lesson-11', 'lesson-12', 'lesson-13', 'lesson-14'].includes(chapter.id));

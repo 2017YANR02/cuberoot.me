@@ -90,7 +90,7 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
     if (target) void setPracticeRoute({ step: `lesson-${otherChapter}`, algCase: target.name }, { history: 'replace' });
   };
   if (practice && lesson) return <AlgorithmPractice key={`${stepId}:${lesson.name}:${orientation}`} lesson={lesson}
-    chapter={chapter} orientation={orientation} index={lessonIndex} total={orderedLessons.length}
+    chapter={chapter} orientation={orientation}
     onPrevious={lessonIndex > 0 || chapter === 5 ? () => movePractice(-1) : undefined}
     onNext={lessonIndex < orderedLessons.length - 1 || chapter === 4 ? () => movePractice(1) : undefined}
     onClose={() => { void setPracticeRoute({ view: null, algCase: lesson.name }, { history: 'push' }); }} />;

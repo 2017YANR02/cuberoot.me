@@ -9,6 +9,35 @@ import CaseFlowGraph from './CaseFlowGraph';
 
 const mask = stickeringMaskFn(3, 'F2LOverview')!;
 
+type Point = { x: number; y: number };
+
+/** Prefer the original broad Bezier arcs whenever they clear the node cards. */
+function clearCurve(points: Point[], nodes: Point[]): boolean {
+  for (let i = 0; i <= 128; i++) {
+    const t = i / 128, u = 1 - t;
+    const x = u ** 3 * points[0].x + 3 * u ** 2 * t * points[1].x + 3 * u * t ** 2 * points[2].x + t ** 3 * points[3].x;
+    const y = u ** 3 * points[0].y + 3 * u ** 2 * t * points[1].y + 3 * u * t ** 2 * points[2].y + t ** 3 * points[3].y;
+    if (nodes.some(node => x > node.x - 46.5 && x < node.x + 46.5 && y > node.y - 1.5 && y < node.y + 107.5)) return false;
+  }
+  return true;
+}
+
+/** Only obstructed arcs need waypoints through the space between rows. */
+function roundedPath(points: { x: number; y: number }[]): string {
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length - 1; i++) {
+    const previous = points[i - 1], point = points[i], next = points[i + 1];
+    const before = Math.hypot(point.x - previous.x, point.y - previous.y);
+    const after = Math.hypot(next.x - point.x, next.y - point.y);
+    const radius = Math.min(48, before / 2, after / 2);
+    if (!radius) continue;
+    d += ` L ${point.x + (previous.x - point.x) * radius / before} ${point.y + (previous.y - point.y) * radius / before}`;
+    d += ` Q ${point.x} ${point.y} ${point.x + (next.x - point.x) * radius / after} ${point.y + (next.y - point.y) * radius / after}`;
+  }
+  const end = points[points.length - 1];
+  return `${d} L ${end.x} ${end.y}`;
+}
+
 export default function PracticeFlowGraph({ flow, progress, orientation, selectedRoute, onSelectEdge }: {
   flow: PracticeFlow; progress: FlowProgress; orientation: string;
   selectedRoute?: PracticeFlowRoute; onSelectEdge?: (id: string) => void;
@@ -45,17 +74,39 @@ export default function PracticeFlowGraph({ flow, progress, orientation, selecte
       ...node, x: 260 + (j - (row.length - 1) / 2) * 140, y: i * 150,
       facelets: f2lDiagramFacelets(node.setup, orientation, mask),
     })));
-    const edges = flow.edges.map((edge, i) => {
+    const lanes = { left: 0, right: 0 };
+    const edges = flow.edges.map(edge => {
       const from = nodes.find(node => node.name === edge.from)!;
       const to = nodes.find(node => node.name === edge.to)!;
       let d: string;
       if (to.y === from.y + 150) {
         d = `M ${from.x} ${from.y + 108} C ${from.x} ${from.y + 130} ${to.x} ${to.y - 24} ${to.x} ${to.y - 4}`;
       } else {
-        // Bypass and return edges run outside the rows instead of through cubes.
-        const side = i % 2 ? 1 : -1;
-        const lane = side > 0 ? 500 - (i % 4) * 8 : 20 + (i % 4) * 8;
-        d = `M ${from.x + side * 47} ${from.y + 53} C ${lane} ${from.y + 53} ${lane} ${to.y + 53} ${to.x + side * 49} ${to.y + 53}`;
+        // Use the nearer outside corridor. A middle node must first leave its
+        // row through the gap below it; a side exit would cross its neighbour.
+        const side = from.x + to.x === 520 ? (lanes.left <= lanes.right ? -1 : 1) : (from.x + to.x < 520 ? -1 : 1);
+        const laneIndex = lanes[side < 0 ? 'left' : 'right']++;
+        const lane = side < 0 ? 20 + (laneIndex % 3) * 12 : 500 - (laneIndex % 3) * 12;
+        const outside = (node: typeof from) => !nodes.some(other => other.y === node.y && (other.x - node.x) * side > 0);
+        const exit = outside(from)
+          ? [{ x: from.x + side * 47, y: from.y + 53 }, { x: lane, y: from.y + 53 }]
+          : [{ x: from.x, y: from.y + 108 }, { x: from.x, y: from.y + 128 }, { x: lane, y: from.y + 128 }];
+        const entry = outside(to)
+          ? [{ x: lane, y: to.y + 53 }, { x: to.x + side * 49, y: to.y + 53 }]
+          : [{ x: lane, y: to.y - 22 }, { x: to.x, y: to.y - 22 }, { x: to.x, y: to.y - 4 }];
+        d = roundedPath([...exit, ...entry]);
+        for (const curveSide of [side, -side]) {
+          const curveLane = curveSide < 0 ? 20 : 500;
+          const points = [
+            { x: from.x + curveSide * 47, y: from.y + 53 },
+            { x: curveLane, y: from.y + 53 },
+            { x: curveLane, y: to.y + 53 },
+            { x: to.x + curveSide * 49, y: to.y + 53 },
+          ];
+          if (!clearCurve(points, nodes)) continue;
+          d = `M ${points[0].x} ${points[0].y} C ${points.slice(1).map(point => `${point.x} ${point.y}`).join(' ')}`;
+          break;
+        }
       }
       return { ...edge, d };
     });

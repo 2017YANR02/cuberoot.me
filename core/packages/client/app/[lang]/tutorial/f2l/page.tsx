@@ -9,7 +9,7 @@ import { tr, T } from '@/i18n/tr';
 import { F2L_CHAPTERS, F2L_NAV_CHAPTERS, type ChapterId } from './data/chapters';
 import { F2L_CASES, ORDERED_BASIC_CASES } from './data/basic-cases';
 import xPlusFlow from './data/x-plus-flow.json';
-import ChapterDialogue from './components/ChapterDialogue';
+import ChatBubble from '@/components/ChatBubble';
 import TeachingTips from './components/TeachingTips';
 import TutorialToolbar from './components/TutorialToolbar';
 import TutorialSettings from './components/TutorialSettings';
@@ -91,6 +91,7 @@ export default function F2lTutorial() {
     if (next) navigate(next.id);
   };
   const chapterIndex = F2L_NAV_CHAPTERS.findIndex(chapter => chapter.id === stepId);
+  const dialogue = F2L_CHAPTERS.find(chapter => chapter.id === stepId)!;
 
   return <main className={`f2l-page${isPractice ? ' f2l-practice-page' : ''}`} ref={page}>
     <header className="f2l-header">
@@ -113,8 +114,14 @@ export default function F2lTutorial() {
         next: chapterIndex >= 0 && chapterIndex < F2L_NAV_CHAPTERS.length - 1 ? nextChapter : undefined,
       }}>
       <div className="f2l-chapter-body">
-      {!isPractice && stepId !== 'lesson-10' && <ChapterDialogue stepId={stepId} />}
-      {stepId === 'lesson-1' && <IntroLessons stepId={stepId} orientation={orientation} onNextChapter={nextChapter} />}
+      {!isPractice && stepId !== 'lesson-10' && <div className="f2l-chapter-dialogue">
+        <ChatBubble tail="right" className="f2l-dialogue-question">{tr(dialogue.question)}</ChatBubble>
+        <ChatBubble tail="left" className="f2l-dialogue-answer">
+          {dialogue.answer.map((paragraph, index) => <p key={index}>{tr(paragraph)}</p>)}
+        </ChatBubble>
+      </div>}
+      {(stepId === 'lesson-1' || stepId === 'lesson-14') && <IntroLessons key={stepId === 'lesson-1' ? `${stepId}:${orientation}` : stepId} stepId={stepId} orientation={orientation}
+        onNextChapter={stepId === 'lesson-14' ? () => navigate('lesson-2') : nextChapter} />}
       {stepId === 'lesson-2' && <CaseIntroduction key={orientation} orientation={orientation} />}
       {stepId === 'lesson-12' && <BasicCaseLesson orientation={orientation} pauseBetween={pauseBetween} caseId={caseId} onCaseChange={id => { void setCaseId(id); }} onNextChapter={nextChapter} />}
       {stepId === 'lesson-13' && <PracticeLesson orientation={orientation} pauseBetween={pauseBetween} caseId={caseId} onCaseChange={id => { void setCaseId(id); }} onNextChapter={nextChapter} />}

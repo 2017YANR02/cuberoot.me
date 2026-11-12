@@ -15,8 +15,8 @@ import './algorithm-practice.css';
 
 type TeachingCase = ReturnType<typeof f2lTeachingPaths>[number];
 
-export default function AlgorithmPractice({ lesson, chapter, orientation, index, total, onPrevious, onNext, onClose }: {
-  lesson: TeachingCase; chapter: 4 | 5; orientation: string; index: number; total: number;
+export default function AlgorithmPractice({ lesson, chapter, orientation, onPrevious, onNext, onClose }: {
+  lesson: TeachingCase; chapter: 4 | 5; orientation: string;
   onPrevious?: () => void; onNext?: () => void; onClose: () => void;
 }) {
   const player = useRef<AlgPlayerHandle>(null);
@@ -82,7 +82,6 @@ export default function AlgorithmPractice({ lesson, chapter, orientation, index,
             setFixedRoute(value);
           }} />
         </div>
-      <span>{index + 1} / {total}</span>
     </header>
     <div className="f2l-practice-content">
       <div className="f2l-practice-demo">
@@ -93,7 +92,6 @@ export default function AlgorithmPractice({ lesson, chapter, orientation, index,
             onUserMove={move => { setGuidedMove(undefined); setSolved(false); setHistory(previous => `${previous} ${move}`.trim()); }} />
           <TrainingFeedbackOverlay kind={solved ? 'correct' : null} correctLabel={tr({ zh: '已达到本题目标', en: 'Target reached' })} wrongLabel="" />
         </div>
-        <p className="f2l-caption"><T zh="拖动色块转层，拖动空白调整视角" en="Drag stickers to turn; drag the background to change your view." /></p>
         <button type="button" className="f2l-restart" onClick={reset}><RotateCcw size={16} aria-hidden="true" /><T zh="重来" en="Restart" /></button>
       </div>
       <div className="f2l-practice-copy">
