@@ -81,6 +81,27 @@ describe('生效范围', () => {
 });
 
 describe('一对 case', () => {
+  it('deletes the whole linked group from a generated row and does not recreate it on the next save', async () => {
+    db.rows = [row(1, views(["U R U' R'", "R U R' U'"]), 2), row(2, views([]), 1)];
+    await syncMirrorForCase('3x3', 'f2l', 1);
+    const previous = structuredClone(db.rows[1].algs);
+    db.rows[1].algs[3] = db.rows[1].algs[3].slice(1);
+    await syncMirrorForCase('3x3', 'f2l', 2, previous);
+    expect(texts(1)[0]).toEqual(["R U R' U'"]);
+    expect(db.rows.flatMap(r => r.algs.flat())).toHaveLength(4);
+    expect((await syncMirrorForCase('3x3', 'f2l', 1)).updated).toEqual([]);
+  });
+
+  it('deletes independently entered counterparts together, including the last group', async () => {
+    db.rows = [row(1, views(["U R U' R'"]), 2), row(2, views([], ["U' L' U L y"]), 1)];
+    await syncMirrorForCase('3x3', 'f2l', 1);
+    const previous = structuredClone(db.rows[1].algs);
+    db.rows[1].algs[1] = [];
+    await syncMirrorForCase('3x3', 'f2l', 2, previous);
+    expect(db.rows.flatMap(r => r.algs.flat())).toEqual([]);
+    expect((await syncMirrorForCase('3x3', 'f2l', 1)).updated).toEqual([]);
+  });
+
   it('rebuilds legacy generated half turns from the signed original without changing originals', async () => {
     const original = "U2 R2' F R F' R";
     db.rows = [
@@ -170,6 +191,13 @@ describe('自镜像', () => {
     expect(generatedLr(5169)).toBe("L2' U2' F' L2' F U2' L U' L");
     expect(generatedLr(5170)).toBe("U2 y' U F' L U2' L2' U' L2 U' F' L' F2");
     expect(generatedLr(6081)).toBe("U F' L' U' L U F");
+    for (const current of db.rows) {
+      const previous = structuredClone(current.algs);
+      current.algs[1] = [];
+      await syncMirrorForCase('3x3', 'zbls', current.id, previous);
+      expect(texts(current.id).flat()).toEqual([]);
+      expect((await syncMirrorForCase('3x3', 'zbls', current.id)).updated).toEqual([]);
+    }
   });
 });
 

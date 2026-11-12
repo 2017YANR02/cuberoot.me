@@ -276,7 +276,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
     if (algsJson.trim()) {
       try {
         const parsed = JSON.parse(algsJson);
-        if (!Array.isArray(parsed) || !parsed.length || !parsed.every(ori => Array.isArray(ori) && ori.every(entry => entry && typeof entry.alg === 'string')) || !parsed.flat().some(entry => entry.alg.trim())) throw new Error('invalid algorithms');
+        if (!Array.isArray(parsed) || !parsed.length || !parsed.every(ori => Array.isArray(ori) && ori.every(entry => entry && typeof entry.alg === 'string')) || (state.mode === 'add' && !parsed.flat().some(entry => entry.alg.trim()))) throw new Error('invalid algorithms');
         algs = parsed as AlgEntry[][];
       } catch {
         setError(tr({ zh: '高级 algs JSON 格式错', en: 'Advanced algs JSON invalid' })); return;
@@ -293,7 +293,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
       });
       editorRowOf = rows;
       const total = algs.reduce((n, ori) => n + ori.length, 0);
-      if (total === 0) {
+      if (total === 0 && state.mode === 'add') {
         setError(tr({ zh: '至少要写一条公式', en: 'At least one alg required' })); return;
       }
     }

@@ -39,8 +39,7 @@ const brief = (list: ReturnType<typeof mirrorCascadeOnEdit>) =>
 
 describe('mirrorCascadeOnEdit —— 删一条,连带哪几条', () => {
   it('deleting a legacy FL original previews its partner FR mirror removal', () => {
-    const self = { id: 1, algs: [[], [{ alg: "FS' R U' R' S U' F'" }], [], []] };
-    const partner = caseOf(2, []);
+    const [self, partner] = synced({ id: 1, algs: [[], [{ alg: "FS' R U' R' S U' F'" }], [], []] }, caseOf(2, []));
     expect(brief(mirrorCascadeOnEdit(self, partner, [[], [], [], []])))
       .toEqual(["2/0/lr F' S L' U L S' U F"]);
   });
@@ -64,17 +63,14 @@ describe('mirrorCascadeOnEdit —— 删一条,连带哪几条', () => {
     expect(gone[0]).toMatchObject({ caseId: 2, view: 1 });
   });
 
-  it('伙伴那边人工早就收了同一条:那条不是生成的,删源不动它', () => {
-    // 伙伴 FL 手写了 `U' L' U L` —— 正是源的左右镜。生成时字面重合会跳过(不重复塞),
-    // 所以库里那条是人写的,源没了它照样在。
+  it('independently entered counterparts have the same deletion status', () => {
     const self = caseOf(1, ["U R U' R'"]);
     const partner: MirrorPairCase = { id: 2, algs: [[], [{ alg: "U' L' U L" }], [], []] };
     const [s, p] = synced(self, partner);
     const gone = mirrorCascadeOnEdit(s, p, without(s, 0));
-    // The surviving FL original is now also a source for the same generated copies.
-    expect(brief(gone)).toEqual([]);
-    const after = regenerateMirrorAlgs({ ...s, algs: without(s, 0) }, p).algsById;
-    expect(after.get(2)![1]).toContainEqual({ alg: "U' L' U L" });
+    expect(gone).toContainEqual({ caseId: 2, view: 1, alg: "U' L' U L" });
+    const after = regenerateMirrorAlgs({ ...s, algs: without(s, 0) }, p, s.algs).algsById;
+    expect([...after.values()].flat(2)).toEqual([]);
   });
 
   it('只连带被删那条的,旁边那条的生成份一条不动', () => {
@@ -110,11 +106,54 @@ describe('mirrorCascadeOnEdit —— 删一条,连带哪几条', () => {
     expect(mirrorCascadeOnEdit(self, null, without(self, 0))).toEqual([]);
   });
 
-  it('删生成条本身不算连带 —— 它会按源重新长回来,不是「没了」', () => {
+  it('deleting any counterpart removes the same entire orbit and never regenerates it', () => {
     const [self, partner] = synced(caseOf(1, ["U R U' R'"]), caseOf(2, []));
-    // 伙伴 FL 那条生成的删掉:源还在,重算又生成同一条
-    const nextPartner = partner!.algs.map((v, i) => (i === 1 ? [] : v));
-    expect(mirrorCascadeOnEdit(partner!, self, nextPartner)).toEqual([]);
+    for (const [edited, other] of [[self, partner!], [partner!, self]]) {
+      for (let ori = 0; ori < 4; ori++) {
+        if (!edited.algs[ori].length) continue;
+        const next = edited.algs.map((v, i) => i === ori ? [] : v);
+        expect(mirrorCascadeOnEdit(edited, other, next)).toHaveLength(3);
+        const after = regenerateMirrorAlgs({ ...edited, algs: next }, other, edited.algs).algsById;
+        expect([...after.values()].flat(2)).toEqual([]);
+        const again = regenerateMirrorAlgs({ id: edited.id, algs: after.get(edited.id)! }, { id: other.id, algs: after.get(other.id)! });
+        expect([...again.algsById.values()].flat(2)).toEqual([]);
+      }
+    }
+  });
+
+  it('follows provenance through an AUF-aligned counterpart without deleting its neighbour', () => {
+    const [self, partner] = synced(caseOf(1, ["U R U' R'", "R U R' U'"]), caseOf(2, []));
+    partner!.algs[1][0].alg = "U2 L' U L";
+    partner!.algs[1][1].alg = "U2 L' U' L U";
+    const next = partner!.algs.map((v, i) => i === 1 ? v.slice(1) : v);
+    const before = structuredClone([self, partner]);
+    const cascade = mirrorCascadeOnEdit(partner!, self, next);
+    expect(cascade).toHaveLength(3);
+    expect(cascade).toContainEqual({ caseId: 1, view: 0, alg: "U R U' R'" });
+    const after = regenerateMirrorAlgs({ ...partner!, algs: next }, self, partner!.algs).algsById;
+    expect(after.get(1)![0]).toEqual([{ alg: "R U R' U'" }]);
+    expect([...after.values()].flat(2)).toHaveLength(4);
+    expect([self, partner]).toEqual(before);
+  });
+
+  it('deletes from a self-mirrored view and leaves other groups and reordered rows intact', () => {
+    const [self] = synced(caseOf(7, ["U R U' R'", "R U R' U'"]), caseOf(7, []));
+    const reordered = self.algs.map(v => [...v].reverse());
+    expect(mirrorCascadeOnEdit(self, self, reordered)).toEqual([]);
+    const next = self.algs.map((v, i) => i === 3 ? v.slice(1) : v);
+    expect(mirrorCascadeOnEdit(self, self, next)).toHaveLength(3);
+    const after = regenerateMirrorAlgs({ ...self, algs: next }, self, self.algs).algsById.get(7)!;
+    expect(after[0]).toEqual([{ alg: "R U R' U'" }]);
+    expect(after.flat()).toHaveLength(4);
+  });
+
+  it('does not trust stale provenance indices after reordering a draft', () => {
+    const [self, partner] = synced(caseOf(1, ["U R U' R'", "R U R' U'"]), caseOf(2, []));
+    self.algs[0].reverse();
+    const next = self.algs.map((v, i) => i === 2 ? v.slice(1) : v);
+    const after = regenerateMirrorAlgs({ ...self, algs: next }, partner, self.algs).algsById;
+    expect(after.get(1)![0]).toEqual([{ alg: "R U R' U'" }]);
+    expect([...after.values()].flat(2)).toHaveLength(4);
   });
 });
 
