@@ -88,7 +88,7 @@ export function analyzerTableNames(binary: string, env: NodeJS.ProcessEnv, physi
     case 'pseudo_f2leo_analyzer': names = pseudo; break;
     case 'pseudo_pair_analyzer': names = [...pseudo, ...[4, 5, 6, 7].flatMap(c => [`pt_pscross_C${c}`, ...[0, 1, 2, 3].flatMap(e => [`pt_pscross_ins_C${c}_diff${e}`, `pt_pspair_C${c}_E${e}`])])]; break;
     case 'daisy_analyzer': case 'first_layer_analyzer': names = ['mt_edge4']; break;
-    case 'f2b_analyzer': names = ['mt_corn2', 'mt_edge3', ...(env.CUBE_F2B_LIGHT === '1' ? [] : ['pt_f2b_be3c2'])]; break;
+    case 'f2b_analyzer': names = ['mt_corn2', 'mt_edge3', ...(env.CUBE_F2B_LIGHT === '1' ? [] : ['pt_C4C5C6C7E0E3E11'])]; break;
     case 'sq1_analyzer': names = env.SQ1_SLASH_VIA_WCA === '1' ? [] : ['sq1_wca_jsqfull']; break;
     case 'block222_analyzer': names = ['mt_edge3', 'mt_corn']; break;
     case 'roux_analyzer': names = ['mt_corn2', 'mt_edge3', 'mt_corn', 'mt_edge2']; break;

@@ -1,9 +1,11 @@
 ---
 name: solvers-tables
-description: "修改 solver 表、剪枝表、移动表、table_generator 或 analyzer 加载关系时使用，尤其是 f2leo/pseudo_f2leo 加大表；必须同步 /dev/solvers 的 TABLES 快照。表文件被 gitignore，仓库、CI 和线上无法自动推导。"
+description: "新增、修改或命名 solver 表、剪枝表、移动表、table_generator 或 analyzer 加载关系时使用；按目标语义和块编号命名，并同步 /dev/solvers 的 TABLES 快照。表文件被 gitignore，仓库、CI 和线上无法自动推导。"
 ---
 
-# Solvers 看板表数据同步
+# 求解器表命名与看板同步
+
+新增或重命名三阶阶段剪枝表前，必须读 [磁盘表命名规范](../../../solver/DEFINITIONS.md#磁盘表命名)。完整规则和已确认示例只维护在该处；先核对目标集合与块编号，再确定文件名。改名同步生成器、加载器、资源清单、现用表/断点、本地程序及下方看板，不改冻结证据，不因改名重建表。
 
 `/dev/solvers` 页按分析器列出实际 mmap 的移动表 / 剪枝表 + 大小。数据是**硬编码快照**(`*.bin` 在 `solver/tables/` gitignored, repo/CI/线上都没有 → 没法 build/runtime 自动拉, 只能手维护)。改了表就得同步。
 

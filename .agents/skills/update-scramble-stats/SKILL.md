@@ -39,6 +39,8 @@ pnpm stats:scramble:local --plan
 
 ## 专项流程
 
+涉及三阶阶段表的新增、改名或加载关系调整时，先读 [磁盘表命名规范](../../../solver/DEFINITIONS.md#磁盘表命名) 并使用 `solvers-tables` skill 同步；日常统计仍只复用已有表。
+
 - 三阶阶段与 xcross 回填：读 [stages.md](references/stages.md)。
 - Puzzle、SQ1 与采样/距离表：读 [puzzles.md](references/puzzles.md)。
 - 三阶整解最优：读 [333opt.md](references/333opt.md)，并读 `solver/333opt/README.md`。

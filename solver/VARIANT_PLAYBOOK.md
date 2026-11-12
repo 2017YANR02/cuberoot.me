@@ -176,7 +176,7 @@ block223 启发式 = max(pt_s1, pt_ce2),两者都是子目标精确距离 ⇒ h=
 - **扭曲共轭坐标**:第二块 = 同一张表,根用 conj_buf(yk+2) walk、搜索步进用 rot_map[2][m] 映射,
   零额外 BFS;y² 自同构 ⇒ 耦合积表(ee/cc/pt9)一张服务双向查。
 - **盘缓存 nibble 大表**:>1G 态的剪枝表别现场重建——首跑 BFS 直接写 packed nibbles(0xF=未访问,
-  值 = min(d,15) 仍可采纳)+ frontier 超 60M 切全表扫描模式控内存,写 `CUBE_TABLE_DIR/pt_f2b_be3c2.bin`
+  值 = min(d,15) 仍可采纳)+ frontier 超 60M 切全表扫描模式控内存,写 `CUBE_TABLE_DIR/pt_C4C5C6C7E0E3E11.bin`
   (write_packed_prune_table 原子写),后续 mmap 秒开。轻/heavy 双档:wasm 走轻档,analyzer 必 heavy。
 - **慢阶段独立 CSV**:f2b 没并进 roux.csv(那要全量重算、临时回退 squares/s1 覆盖率),独立
   f2b.csv/f2b_analyzer 按自己节奏灌,partial 可先上线(pseudo_f2leo 先例)。e2e 用 `CUBE_F2B_LIGHT=1` 免大表。

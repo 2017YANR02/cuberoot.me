@@ -295,7 +295,7 @@ const TABLES: Record<string, SolverTbls> = {
   },
   '123x2': {
     move: [{ n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }, { n: 'mt_edge4', b: 18247692 }],
-    prune: [{ n: 'pt_f2b_be3c2', b: 1341204496 }, { n: 'pt_C4C5C6C7E0E1E2E3', b: 1636022656 }],
+    prune: [{ n: 'pt_C4C5C6C7E0E3E11', b: 1341204496 }, { n: 'pt_C4C5C6C7E0E1E2E3', b: 1636022656 }],
     builtZh: '保留现场 BFS 的 6 棱/4 角表与原块+角表；新增四角×四中层棱联合表，8 个对称压缩为 3,233,313,360 个状态，完整距离最远 12 步。原生重型分析器默认加载，浏览器轻量路径不加载。',
     builtEn: 'Retains the in-RAM 6-edge/4-corner tables and original block+corners table. The new four-corner/four-middle-edge table uses eight symmetries for 3,233,313,360 states and complete distances up to 12. Native heavy analysis loads it by default; the browser light path does not.',
   },

@@ -32,6 +32,8 @@ description: "用户说造新求解器、子阶段求解器、非 WCA/小魔方�
 
 # substep 求解器(3x3 / 大状态空间)
 
+涉及新增或改名三阶阶段磁盘表时，必须先读 [磁盘表命名规范](../../../solver/DEFINITIONS.md#磁盘表命名)，按规范目标和具体块编号命名；改表同步流程使用 `solvers-tables` skill。
+
 **先整读 `solver/VARIANT_PLAYBOOK.md`**(语义设计 → Rust → WASM/UI → 统计 → 发布全链路 + cstimer 语义速查表),范本代码 = `solver/src/block222_solver.rs` 全家桶;多目标/IDA* 范本 = `roux_s1_solver.rs` / `block223_solver.rs`;零盘表自包含范本 = `eoline_solver.rs` / `dr_solver.rs`;扭曲共轭 + 盘缓存 nibble 大表范本 = `f2b_solver.rs`(2026-06-10)。cstimer 3x3 求解器语义已全覆盖,新增只剩非 3x3 puzzle 与 HTR。
 
 一页纸版:

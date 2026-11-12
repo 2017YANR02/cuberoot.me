@@ -56,6 +56,8 @@ H11 在本机仅允许源码实现、静态检查和不接触 H11 表文件的�
 
 ## 求解器磁盘表生成
 
+新增或重命名三阶阶段磁盘表前，必须读取 [表命名规范](../../solver/DEFINITIONS.md#磁盘表命名)，按目标语义和具体块编号命名；同步项按 [solvers-tables skill](../../.agents/skills/solvers-tables/SKILL.md) 执行。
+
 执行命令、源码入口、进度查看与验收记录见 [solver/HIGH_MEMORY_TABLE_PROFILE.md](../../solver/HIGH_MEMORY_TABLE_PROFILE.md)。修改 H48 遍历或进度前先读 [solver/vendor/nissy-core/VENDOR.md](../../solver/vendor/nissy-core/VENDOR.md)，保留固定上游的计算边界及分布校验基准。
 
 需要生成、补齐或重建 solver 磁盘大表时，统一从 `solver/` 运行 `cargo run --release --bin table_generator`。SQ1 精确表与 H48 h10 也由这个入口生成；只补单表用同一 binary 的 `--only sq1` / `--only h48-h10`，H48 小档位流程验证用 `--only h48-h7`，不要把 ignored test、`333opt/gen-table.mjs` 或上游工具当作给 AI 的独立建表步骤。H7 只验证生成和校验流程，不替代统计管道所需的 H10。三阶整解离线统计统一使用原生 H48 h10，经 `solver/333opt/solve_h10.mts` 接入；不再生成 cubeopt9。表根目录由 `CUBE_TABLE_DIR` 指定，默认 `solver/tables/`；逐表耗时和峰值 RSS 由生成器写入该目录。64 GiB Mac 上 H48 h10 的 RSS 警戒线为 57 GiB，触线停下报告；线程使用可用 CPU 并行度，不手工钳制 12/14。

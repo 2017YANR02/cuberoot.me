@@ -12,7 +12,7 @@
 //!     可达 = EDGE6 全 42.6M 态)
 //!   - pt9[(fb.c2,fb.e3), sb.c2] / 对称双查(heavy):{整块 + 对侧 2 角} 联合精确,
 //!     5.3M×504 = 2.68G 态 nibble packed(1.34GB),首跑 BFS 落盘
-//!     `pt_f2b_be3c2.bin`,后续 mmap。y² 自同构 ⇒ 同一张表服务两个方向。
+//!     `pt_C4C5C6C7E0E3E11.bin`,后续 mmap。y² 自同构 ⇒ 同一张表服务两个方向。
 //!     F2B 平均最优 ~11.5 步,轻表 h 撑不住,analyzer 必开 heavy。
 //!
 //! 轻版(wasm 交互单查):仅 cc,单格毫秒~十毫秒级,够用。
@@ -162,11 +162,11 @@ fn build_pt9_packed(s1: &RouxS1Solver) -> Vec<u8> {
     bytes
 }
 
-/// pt9:有盘上缓存(`pt_f2b_be3c2.bin`,1.34GB)直接 mmap,否则 BFS 构建并落盘。
+/// pt9:有盘上缓存(`pt_C4C5C6C7E0E3E11.bin`,1.34GB)直接 mmap,否则 BFS 构建并落盘。
 #[cfg(not(target_arch = "wasm32"))]
 fn ensure_pt9(s1: &RouxS1Solver) -> Arc<PackedPruneTable> {
     use crate::prune_tables::{PtStorage, PT_HEADER_BYTES, PT_MAGIC};
-    let path = crate::move_tables::table_path("pt_f2b_be3c2.bin");
+    let path = crate::move_tables::table_path("pt_C4C5C6C7E0E3E11.bin");
     if let Ok(f) = std::fs::File::open(&path) {
         if let Ok(m) = unsafe { memmap2::Mmap::map(&f) } {
             if m.len() == PT_HEADER_BYTES + PT9_ENTRIES.div_ceil(2) as usize
@@ -180,13 +180,13 @@ fn ensure_pt9(s1: &RouxS1Solver) -> Arc<PackedPruneTable> {
             }
         }
     }
-    eprintln!("[INFO] building pt_f2b_be3c2 (2.68G states, one-time, minutes)...");
+    eprintln!("[INFO] building pt_C4C5C6C7E0E3E11 (2.68G states, one-time, minutes)...");
     let bytes = build_pt9_packed(s1);
     if let Some(dir) = path.parent() {
         let _ = std::fs::create_dir_all(dir);
     }
     if let Err(e) = crate::prune_tables::write_packed_prune_table(&path, PT9_ENTRIES, &bytes) {
-        eprintln!("[WARN] pt_f2b_be3c2 cache write failed: {}", e);
+        eprintln!("[WARN] pt_C4C5C6C7E0E3E11 cache write failed: {}", e);
     }
     Arc::new(PackedPruneTable {
         data: PtStorage::Owned(bytes),
