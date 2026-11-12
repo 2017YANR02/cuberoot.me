@@ -235,63 +235,32 @@
   align-items: flex-start;
 }
 
-/* ── 统一控件高度 ──
-   光统一 padding+font 不够：<select>/<input> 的 UA 默认渲染高度
-   跟 div pill / 自定义 trigger 对不齐，必须 explicit height + border-box */
-
-/* 标准行：40px */
-.submit-row .submit-field > .submit-field-input,
-.submit-row .submit-field > .submit-field-select,
-.submit-row .submit-field .comp-picker-input,
-.submit-row .submit-field .cuber-search-input,
-.submit-row .record-select-trigger,
-.submit-row .event-select-trigger,
-.submit-row .submit-solver-pill,
-.submit-row .submit-comp-pill {
-  height: 40px;
-  box-sizing: border-box;
-  padding: 9px 12px;
-  font-size: 0.98rem;
+/* All form controls except the solution share one height. */
+.submit-form {
+  --submit-control-height: 40px;
 }
-.recon-page .submit-row .wca-pp-panel {
-  min-height: 40px;
+.submit-form .submit-field :is(
+  .submit-field-input, .submit-field-select,
+  .submit-field-textarea:not(.submit-solution-textarea),
+  .comp-picker-input, .cuber-search-input,
+  .record-select-input, .pp-trigger,
+  .submit-solver-pill, .submit-comp-pill, .submit-add-cosolver,
+  .date-input__display
+) {
+  height: var(--submit-control-height);
+  min-height: var(--submit-control-height);
   box-sizing: border-box;
 }
-.recon-page .submit-row .wca-pp-input {
-  height: 38px;            /* panel 1px*2 边框 + 38 = 40 总高 */
-  box-sizing: border-box;
-  padding: 9px 12px;
-  font-size: 0.98rem;
+.submit-form .submit-field-textarea:not(.submit-solution-textarea) {
+  overflow-y: auto;
 }
-
-/* Hero 行：48px */
-.submit-hero .submit-field > .submit-field-input,
-.submit-hero .submit-field > .submit-field-select,
-.submit-hero .submit-field .cuber-search-input,
-.submit-hero .record-select-trigger,
-.submit-hero .event-select-trigger,
-.submit-hero .submit-solver-pill,
-.submit-hero .submit-comp-pill,
-.submit-hero .submit-add-cosolver {
-  height: 48px;
-  box-sizing: border-box;
-  padding: 12px 14px;
-  font-size: 1.1rem;
-}
-.recon-page .submit-hero .wca-pp-panel {
-  min-height: 48px;
+.recon-page .submit-form .wca-pp-panel {
+  min-height: var(--submit-control-height);
   box-sizing: border-box;
 }
-/* WcaPersonPicker 默认 inline panel 是 width: 320px 写死的,放大或窄屏时
-   会溢出到隔壁 grid 列;在 recon 表单里强制跟父列宽走 */
-.recon-page .wca-pp-inline .wca-pp-panel {
-  width: 100%;
-}
-.recon-page .submit-hero .wca-pp-input {
-  height: 46px;            /* 1px*2 边框 + 46 = 48 总高 */
+.recon-page .submit-form .wca-pp-input {
+  height: calc(var(--submit-control-height) - 2px);
   box-sizing: border-box;
-  padding: 12px 14px;
-  font-size: 1.1rem;
 }
 
 .submit-field {
@@ -304,6 +273,29 @@
 
 .submit-field-wide { flex: 2; }
 .submit-field-narrow { flex: 0 0 120px; min-width: 0; }
+.submit-field-record { flex: 0 0 104px; min-width: 0; }
+/* Seven time characters (3:33.33), plus input padding and borders. */
+.submit-field-time {
+  flex: 0 1 auto;
+  min-width: 0;
+  width: calc(7ch + 26px);
+  max-width: 100%;
+  font-size: 0.98rem;
+}
+/* Keep the longer label on one line; size the input for 3:33.333. */
+.submit-field-precise-time .submit-field-input {
+  width: calc(8ch + 26px);
+  max-width: 100%;
+}
+/* 3.333, plus input padding and borders. */
+.submit-field-duration {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.submit-field-duration .submit-field-input {
+  width: calc(5ch + 26px);
+  max-width: 100%;
+}
 /* pill 模式收缩到内容宽度，避免 flex:1 把已选 pill 撑满整列 */
 .submit-field-shrink { flex: 0 0 auto; min-width: 0; }
 /* 下拉类控件（项目 / WCA）按内容宽度收紧，不跟文本框一样铺满 */
@@ -574,7 +566,7 @@
   letter-spacing: 0.03em;
 }
 
-/* 打乱框标签行:label 文字 + 紧跟其后的「选已有」触发(贴左,不留空隙) */
+/* Field labels and inline controls. */
 .submit-label-row {
   display: flex;
   align-items: center;
@@ -585,25 +577,6 @@
   max-width: 100%;
   padding: 4px 8px !important;
   font-size: 0.82rem !important;
-}
-.scramble-pick-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--accent);
-  font-size: 0.72rem;
-  letter-spacing: 0;
-  text-transform: none;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-.scramble-pick-btn:hover {
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 /* ScramblePicker 弹窗的打乱列表(复用 .rr-overlay/.rr-modal/.rr-search 等壳) */
@@ -711,7 +684,7 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-/* 全都靠 JS autoResize 撑高度,禁用户手拖(与解法框一致,右下角别留 resize 抓手) */
+/* Only the solution editor grows with its content. */
 .submit-field .submit-field-textarea {
   resize: none;
 }
@@ -1005,7 +978,7 @@
   position: absolute;
   right: 13px;
   bottom: 0;
-  height: 48px;  /* 对齐 hero 行 select 高度,使 chevron 竖直居中于方框而非整个 label */
+  height: var(--submit-control-height);
   width: 12px;
   background-color: var(--muted-foreground);
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 L6 8 L9.5 4.5' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain;

@@ -45,7 +45,6 @@ import SolutionView from '@/components/SolutionView';
 import ReconPlayerPane from '@/components/ReconPlayerPane';
 import ReconSolutionField, { type ReconSolutionFieldHandle } from '@/components/ReconSolutionField';
 import ReconReuseModal from './ReconReuseModal';
-import ScramblePicker from './ScramblePicker';
 import GroupScramblePicker from './GroupScramblePicker';
 import { hasAdminAccess, useAuthUser, authActions } from '@/lib/auth-store';
 import { ownerKey } from '@cuberoot/shared/account';
@@ -86,7 +85,7 @@ import {
 } from '@cuberoot/shared/recon-completion';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
-import { ArrowRightLeft, History, Home, LogIn, UserPlus, ListPlus, AlertTriangle, Rows3, Upload } from '@app-foundation/icons/lucide';
+import { ArrowRightLeft, History, Home, LogIn, UserPlus, AlertTriangle, Rows3, Upload } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import '../recon.css';
 import './recon_submit.css';
@@ -321,8 +320,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   // reusedFields = 当前被「复用」带入、尚未编辑的字段 key(用于高亮标记)。
   const [reuseOpen, setReuseOpen] = useState(false);
   const [reusedFields, setReusedFields] = useState<Set<string>>(() => new Set());
-  // 「从已有打乱选择」弹窗:null 关闭,否则标记打开的是哪个框。
-  const [scramblePickerFor, setScramblePickerFor] = useState<null | 'wca' | 'optimal' | 'generic'>(null);
   // 「对照各组打乱」弹窗:拿不准分组时列出各组同把打乱比对认领。
   const [groupCompareOpen, setGroupCompareOpen] = useState(false);
 
@@ -425,14 +422,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   }, [scrambleField, setActiveScrambleValue]);
 
   const reusedCls = (key: string) => (reusedFields.has(key) ? ' submit-field--reused' : '');
-
-  /** textarea 自适应高度 */
-  const autoResize = useCallback((el: HTMLTextAreaElement) => {
-    el.style.height = 'auto';
-    void el.offsetHeight;
-    const borderY = el.offsetHeight - el.clientHeight;
-    el.style.height = (el.scrollHeight + borderY) + 'px';
-  }, []);
 
   // ── Edit-mode load ──
   useEffect(() => {
@@ -1248,11 +1237,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     return () => { cancelled = true; clearTimeout(timer); setScrambleLoading(false); };
   }, [form.compWcaId, form.event, form.round, form.groupId, form.solveNum, groupOptions, groupMatchPending, matchedGroup, scrambleUserTouched, optimalUserTouched, setField, isZh]);
 
-  // Resize the visible scramble textarea when its source or value changes programmatically.
-  useEffect(() => {
-    if (scrambleInputRef.current) autoResize(scrambleInputRef.current);
-  }, [activeScrambleValue, scrambleField, autoResize]);
-
   // ── Record marker auto-fetch (WCA only) ──
   useEffect(() => {
     if (form.official !== 'wca') return;
@@ -1836,30 +1820,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 onPick={applyReuse}
               />
             )}
-            {scramblePickerFor && (
-              <ScramblePicker
-                isZh={isZh}
-                event={form.event}
-                onClose={() => setScramblePickerFor(null)}
-                onPick={scramble => {
-                  const normalizedScramble = normalizeReconScrambleSpacing(form.event || '', scramble);
-                  if (scramblePickerFor === 'wca') {
-                    setScrambleUserTouched(true);
-                    setScrambleAutoSource(null);
-                    scrambleAutoFilledRef.current = false;
-                    setField('wcaScramble', normalizedScramble);
-                  } else if (scramblePickerFor === 'optimal') {
-                    setOptimalUserTouched(true);
-                    setOptimalAutoSource(null);
-                    optimalAutoFilledRef.current = false;
-                    setField('optimalScramble', normalizedScramble);
-                  } else {
-                    setField('scramble', normalizedScramble);
-                  }
-                  setScramblePickerFor(null);
-                }}
-              />
-            )}
             {groupCompareOpen && form.compWcaId && form.event && form.round && (
               <GroupScramblePicker
                 compWcaId={form.compWcaId}
@@ -2177,7 +2137,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               </div>
 
               <div className="submit-row">
-                <label className="submit-field">
+                <label className="submit-field submit-field-shrink submit-field-precise-time">
                   <span className="submit-label">{tr(isFmc ? { zh: '原始成绩', en: 'Original moves' } : { zh: '原始成绩(千分位)', en: 'Original time (0.001s)' })}</span>
                   <input
                     className="submit-field-input"
@@ -2201,7 +2161,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   />
                   {timeAutoSource ? <span className="submit-hint">{timeAutoSource}</span> : null}
                 </label>
-                <label className="submit-field">
+                <label className="submit-field submit-field-time">
                   <span className="submit-label">{t('recon.single')}</span>
                   <input
                     type="text"
@@ -2228,7 +2188,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     })}</span>
                     : singleAutoSource ? <span className="submit-hint">{singleAutoSource}</span> : null}
                 </label>
-                <label className="submit-field submit-field-narrow">
+                <label className="submit-field submit-field-record">
                   <span className="submit-label">{t('recon.badge.singleRecord')}</span>
                   <RecordSelect
                     value={form.regionalSingleRecord || ''}
@@ -2242,7 +2202,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     })}</span>
                     : (!singleRecordUserTouched && form.regionalSingleRecord && recordAutoSource) ? <span className="submit-hint">{recordAutoSource}</span> : null}
                 </label>
-                <label className="submit-field">
+                <label className="submit-field submit-field-time">
                   <span className="submit-label">{t('recon.average')}</span>
                   <input
                     type="text"
@@ -2269,7 +2229,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     })}</span>
                     : avgAutoSource ? <span className="submit-hint">{avgAutoSource}</span> : null}
                 </label>
-                <label className="submit-field submit-field-narrow">
+                <label className="submit-field submit-field-record">
                   <span className="submit-label">{t('recon.badge.averageRecord')}</span>
                   <RecordSelect
                     value={form.regionalAverageRecord || ''}
@@ -2288,6 +2248,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             {/* 三类打乱共享一个输入区;下拉只切换视图,不清空其他类型已有的值。 */}
             <div className="submit-field submit-block">
               <span className="submit-label submit-label-row">
+                <span>{t('recon.scramble')}</span>
                 <select
                   className="submit-field-select submit-scramble-type-select"
                   aria-label={tr({ zh: '打乱类型', en: 'Scramble type' })}
@@ -2301,18 +2262,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   <option value="optimal">{t('recon.optimalScramble')}</option>
                   <option value="generic">{t('recon.scramble')}</option>
                 </select>
-                <button
-                  type="button"
-                  className="scramble-pick-btn"
-                  onClick={e => { e.preventDefault(); e.stopPropagation(); setScramblePickerFor(scrambleField); }}
-                >
-                  <ListPlus size={13} /> {tr({ zh: '选已有', en: 'Pick existing' })}
-                </button>
               </span>
               <textarea
                 key={scrambleField}
                 rows={1}
-                ref={el => { scrambleInputRef.current = el; if (el) autoResize(el); }}
+                ref={scrambleInputRef}
                 value={activeScrambleValue}
                 readOnly={scrambleField === 'wca' && !!scrambleAutoSource}
                 inputMode={isMobile ? 'none' : undefined}
@@ -2321,11 +2275,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   ? tr({ zh: '自动填充值不可编辑;改 比赛/项目/轮次/分组/第几把 以重新获取', en: 'auto-filled, read-only; change comp/event/round/group/# to refetch'
                                     })
                   : undefined}
-                onChange={e => {
-                  updateActiveScramble(e.target.value);
-                  autoResize(e.target);
-                }}
-                onInput={e => autoResize(e.target as HTMLTextAreaElement)}
+                onChange={e => updateActiveScramble(e.target.value)}
                 onFocus={() => {
                   if (scrambleField === 'wca') {
                     if (scrambleAutoSource) return;
@@ -2342,7 +2292,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   setActiveVkbField(f => f === scrambleField ? null : f);
                   setActiveScrambleValue(normalizeReconScrambleSpacing(form.event || '', activeScrambleValue));
                 }}
-                style={{ overflow: 'hidden', resize: 'none' }}
               />
               {isMobile && (
                 <CubeKeyboardSection
@@ -2351,7 +2300,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   onInput={() => {
                     if (scrambleInputRef.current) {
                       updateActiveScramble(scrambleInputRef.current.value);
-                      autoResize(scrambleInputRef.current);
                     }
                   }}
                 />
@@ -2458,7 +2406,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
             <div className="submit-row">
               {(['pickupTime', 'putdownTime'] as const).map(field => (
-                <label className="submit-field" key={field}>
+                <label className="submit-field submit-field-duration" key={field}>
                   <span className="submit-label">{field === 'pickupTime' ? tr({ zh: '起表（秒）', en: 'Pickup (seconds)' }) : tr({ zh: '拍表（秒）', en: 'Putdown (seconds)' })}</span>
                   <input className="submit-field-input" type="number" inputMode="decimal" min="0" max="359999.999" step="0.001"
                     value={form[field] ?? ''} onChange={e => setField(field, e.target.value === '' ? null : Number(e.target.value))} />
@@ -2611,10 +2559,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   <textarea
                     className="submit-field-textarea"
                     value={form.note || ''}
-                    onChange={e => { setField('note', e.target.value); autoResize(e.target); }}
-                    ref={el => { if (el) autoResize(el); }}
+                    onChange={e => setField('note', e.target.value)}
                     rows={1}
-                    style={{ overflow: 'hidden', resize: 'none' }}
                   />
                 </label>
               </div>
