@@ -1,0 +1,43 @@
+.chat-bubble {
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  width: fit-content;
+  min-width: 0;
+  max-width: calc(100% - var(--chat-bubble-tail-space, 0px));
+  margin: 0;
+  padding: .5em .85em;
+  /* Readable SSR fallback; the measured SVG uses continuousCornerRadii. */
+  border-radius: 6px;
+  background: var(--chat-bubble-color, var(--accent));
+  color: var(--chat-bubble-text, var(--accent-foreground));
+  font: inherit;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+/* Single SVG paint layer. Its absolute size never affects the observed box. */
+.chat-bubble[data-shaped] { background: transparent; border-radius: 0; }
+.chat-bubble > svg.chat-bubble__shape {
+  position: absolute;
+  inset: -8px;
+  z-index: -1;
+  width: calc(100% + 16px);
+  height: calc(100% + 16px);
+  max-width: none;
+  fill: var(--chat-bubble-color, var(--accent));
+  stroke: none;
+  pointer-events: none;
+}
+.chat-bubble[data-tail='left'], .chat-bubble[data-tail='right'] { --chat-bubble-tail-space: 8px; }
+.chat-bubble[data-tail='left'] { margin-left: 8px; }
+.chat-bubble[data-tail='right'] { margin-right: 8px; }
+.chat-bubble[data-tail='top'] { margin-top: 8px; }
+.chat-bubble[data-tail='bottom'] { margin-bottom: 8px; }
+
+.chat-bubble.chat-bubble > p { margin: .5em 0; font: inherit; }
+.chat-bubble.chat-bubble > :first-child,
+.chat-bubble.chat-bubble > .chat-bubble__shape + * { margin-top: 0; }
+.chat-bubble.chat-bubble > :last-child { margin-bottom: 0; }
+.chat-bubble > :is(img, video, canvas) { max-width: 100%; height: auto; }

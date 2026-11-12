@@ -16,6 +16,7 @@ import { useState, useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { tr } from '@/i18n/tr';
+import ChatBubbleDemo from './_chat-bubble-demo';
 import BoolToggle from '@/components/BoolToggle';
 import TrainingNavButton from '@/components/TrainingNavButton';
 import TrainingSettings from '@/components/TrainingSettings';
@@ -784,6 +785,19 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 };
 
 export const CATALOG: ComponentEntry[] = [
+  {
+    name: 'ChatBubble',
+    import: "import ChatBubble from '@/components/ChatBubble';",
+    category: 'display',
+    zh: '通用聊天气泡：四向尖角或隐藏、自定义配色，尺寸随内容适应，字号默认继承。',
+    en: 'Reusable speech bubble with four tail directions or no tail, custom colors, content-sized layout and inherited font size.',
+    usage: '<ChatBubble tail="right">Hello</ChatBubble>\n<ChatBubble tail="top" color="#BAE6FD" textColor="#000000" fontSize="1.25rem">Hello</ChatBubble>',
+    note: {
+      zh: 'tail：left / right / top / bottom / none。color 和 textColor 支持 CSS 颜色及变量；默认使用主题强调色及配套文字色，自定义底色时请搭配可读的文字色。fontSize 可选，位置和显示时机由调用方控制。',
+      en: 'tail: left / right / top / bottom / none. color and textColor accept CSS colors or variables; defaults use the theme accent pair. Supply a readable textColor for custom backgrounds. fontSize is optional; callers control placement and visibility.',
+    },
+    Demo: ChatBubbleDemo,
+  },
   {
     name: 'ChapterNavigation',
     import: "import ChapterNavigation from '@/app/[lang]/tutorial/components/ChapterNavigation';",
