@@ -1,0 +1,51 @@
+name: Maintain WCA data Release
+
+on:
+  schedule:
+    - cron: '17 9 * * *'
+  workflow_run:
+    workflows: ['Publish WCA data']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Preview cleanup without deleting assets or updating notes'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  maintain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: deploy-core-production
+      cancel-in-progress: false
+      queue: max
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          sparse-checkout: |
+            .node-version
+            scripts/wca-data
+            core/packages/shared/src
+          filter: blob:none
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - run: node --test scripts/wca-data/*.test.ts
+      - name: Clean expired assets and refresh the introduction
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: |
+          if [ "$DRY_RUN" = true ]; then
+            node scripts/wca-data/maintenance-cli.ts
+          else
+            node scripts/wca-data/maintenance-cli.ts --apply
+          fi

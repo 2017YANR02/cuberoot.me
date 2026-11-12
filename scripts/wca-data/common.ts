@@ -147,14 +147,12 @@ export function resolveRelease(result: { status: number | null; stdout: string; 
   return r;
 }
 
-export function obsoleteAssets(assets: any[], activeName: string, completedCandidate: string, now = Date.now(), previousName?: string) {
-  const liveCandidates = new Set(assets.filter(a => /^candidate-[a-f0-9]{64}\.json$/.test(a.name) && a.name !== completedCandidate && now - Date.parse(a.created_at) < 86_400_000).map(a => a.name));
+export function obsoleteAssets(assets: any[], activeName: string, completedCandidate: string, _now = Date.now(), previousName?: string) {
   return assets.filter(a => {
-    if (/^candidate-[a-f0-9]{64}\.json$/.test(a.name)) return !liveCandidates.has(a.name);
-    // stage() uploads the archive before its candidate manifest. A fresh archive
-    // without a manifest can belong to an upload in progress, not an orphan.
-    if (/^wca-data-[a-f0-9]{64}\.tar$/.test(a.name)) return a.name !== activeName && !liveCandidates.has(`candidate-${a.name.slice(9, -4)}.json`)
-      && (a.name === previousName || now - Date.parse(a.created_at) >= 86_400_000);
+    if (/^candidate-[a-f0-9]{64}\.json$/.test(a.name)) return a.name === completedCandidate;
+    // Expiry belongs to the maintenance workflow, which checks pending publishes.
+    if (/^wca-data-[a-f0-9]{64}\.tar$/.test(a.name)) return a.name !== activeName && a.name === previousName
+      && !assets.some(candidate => candidate.name === `candidate-${a.name.slice(9, -4)}.json` && candidate.name !== completedCandidate);
     return false;
   });
 }

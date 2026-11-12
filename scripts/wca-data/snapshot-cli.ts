@@ -96,7 +96,7 @@ async function publish(candidate: string, out: string) {
     deploy('finalize', a.sha256);
     for (const asset of r.assets) {
       const obsoleteSnapshot = /^stats-snapshot-[a-f0-9]{64}\.tgz$/.test(asset.name) && asset.name !== a.name;
-      const obsoletePatch = /^stats-patch-[a-f0-9]{64}\.tgz$/.test(asset.name) && (asset.name === candidate || Date.now() - Date.parse(asset.created_at) > 7 * 86400000);
+      const obsoletePatch = /^stats-patch-[a-f0-9]{64}\.tgz$/.test(asset.name) && asset.name === candidate;
       if (obsoleteSnapshot || obsoletePatch) gh(['api', `${endpoint}/assets/${asset.id}`, '--method', 'DELETE']);
     }
     console.log(`Published ${a.name}; one current statistics snapshot retained`);
