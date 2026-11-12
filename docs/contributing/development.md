@@ -29,8 +29,8 @@ Mac mini 复用既有常驻 FRP；MacBook Pro 的 preview runner 管理独立 SS
 改 `core/packages/shared/src/**` 后完成前必须在 `core/` 运行 `pnpm --filter @cuberoot/shared build` 刷新 `dist`;“不用检查”只跳过测试/校验,不跳过该构建。
 
 - shell 路径相对 `core/` 写(`packages/...`),禁加 `core/` 前缀(会变 `core/core/`)。含 `[lang]` 等方括号的路径一律单引号,必要时 `git add ':(literal)packages/.../[lang]/x.tsx'`。
-- **工作树默认策略（维护者要求，2026-10-10）**：默认在当前工作目录直接开发和验证，不主动创建或切换到 Git worktree。存在其他任务的未提交修改本身不构成使用 worktree 的理由，应限定改动范围并保留他人修改。仅在用户明确要求，或确有无法在当前目录安全完成的隔离需求时使用；后者须先说明具体原因。使用时保持一个任务只有一份实际编辑来源，确保验证与提交来自同一份目录，不在主目录和工作树之间手工维护两份相同改动。
-- 临时验证目录 / worktree 禁用 Junction / SymbolicLink 复用正式 `node_modules` 或 `packages`;各自运行 `pnpm install --offline --frozen-lockfile`。
+- **禁止使用工作树（维护者要求，2026-11-11）**：所有项目均不创建、不使用 Git worktree，也不自动切换到已有工作树。直接在现有本地 checkout 开发和验证，提交与推送也使用同一目录。存在其他任务的未提交修改或远端同步冲突时，先备份并限定本次改动范围，在当前目录合并、恢复和核对其他修改；不以隔离需求作为创建工作树的理由，不覆盖、丢弃或夹带他人修改。
+- 临时验证目录禁用 Junction / SymbolicLink 复用正式 `node_modules` 或 `packages`；各自运行 `pnpm install --offline --frozen-lockfile`。
 
 ```bash
 pnpm --filter @cuberoot/client dev            # http://127.0.0.1:3000/
