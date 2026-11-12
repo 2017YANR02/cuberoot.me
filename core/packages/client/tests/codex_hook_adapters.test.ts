@@ -45,6 +45,12 @@ function runAdapter(adapter: string, target: string | string[], payload: object)
 }
 
 describe('unprotected memory computation command guard', () => {
+  it('does not grant h10 approval to modified launch commands or another checkout', async () => {
+    const { approvedH10Command, command } = await import(pathToFileURL(join(REPO_ROOT, 'solver/experiments/egg-solver/h10-optimize/policy.mts')).href);
+    expect(approvedH10Command(command, '/unreviewed-checkout')).toBe(false);
+    expect(approvedH10Command(`${command} --table h11`, REPO_ROOT)).toBe(false);
+    expect(approvedH10Command(`${command}; echo done`, REPO_ROOT)).toBe(false);
+  });
   it('keeps the isolated Egg h10 launch bounded even when mixed with read-only arguments', () => {
     const entry = 'solver/experiments/egg-solver/h10-optimize/benchmark.mts';
     for (const args of ['--plan', '--plan-ternary', '--plan-split-ternary', '--plan-lanes-repeatability', '--help']) expect(blockedCompute(`node ${entry} ${args}`)).toBeUndefined();
