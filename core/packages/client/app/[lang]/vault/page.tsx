@@ -455,9 +455,7 @@ export default function VaultPage() {
             return <div className="vault-field" key={draft.entry.category === 'accounts' && index < 2 ? `account-${index}` : field.id}>
               <label className="vault-field-label" htmlFor={`vault-field-${field.id}`}>{field.label}</label>
               <div className="vault-value-line">
-                {field.secret
-                  ? <PasswordInput id={`vault-field-${field.id}`} wrapperClassName="vault-secret-value" className="vault-value-input" value={field.value} readOnly={!editable} maxLength={100_000} placeholder={field.label} onChange={changeValue} />
-                  : <input id={`vault-field-${field.id}`} className="vault-value-input" value={field.value} readOnly={!editable} maxLength={100_000} placeholder={tr({ zh: '内容', en: 'Value' })} onChange={(event) => changeValue(event.target.value)} />}
+                <input id={`vault-field-${field.id}`} className="vault-value-input" value={field.value} readOnly={!editable} maxLength={100_000} placeholder={field.secret ? field.label : tr({ zh: '内容', en: 'Value' })} onChange={(event) => changeValue(event.target.value)} />
                 <button type="button" className="vault-icon-button" aria-label={tr({ zh: '复制', en: 'Copy' })} onClick={() => copy(field.value, field.id)}>{copiedKey === field.id ? <Check /> : <Copy />}</button>
               </div>
             </div>;

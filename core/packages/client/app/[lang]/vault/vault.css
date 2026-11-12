@@ -112,7 +112,6 @@
 .vault-label-input { width: min(240px, 100%); margin-bottom: 7px; padding: 6px 8px; font-size: 13px; }
 .vault-value-line { width: 100%; }
 .vault-value-input { min-width: 0; flex: 1; padding: 9px 10px; font-family: var(--font-mono); }
-.vault-secret-value { min-width: 0; flex: 1; }
 .vault-icon-button { display: inline-flex; padding: 7px; border-radius: 7px; color: var(--muted-foreground); }
 .vault-icon-button:hover { background: color-mix(in srgb, var(--foreground) 7%, transparent); color: var(--foreground); }
 .vault-field .bool-toggle { margin-top: 8px; }
