@@ -11,6 +11,7 @@ import { apiUrl } from '@/lib/api-base';
 import { sessionFetch } from '@/lib/session-fetch';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { tr } from '@/i18n/tr';
+import { assistantAnswerText } from '@/lib/assistant-answer-export';
 import type { AssistantTurn } from './SiteAssistantDialog';
 
 export function AssistantShareDialog({ turn, lang, preview, text, shareId, onShareId, onClose: onClosed }: {
@@ -27,9 +28,10 @@ export function AssistantShareDialog({ turn, lang, preview, text, shareId, onSha
   const { motionRef, close: onClose } = useDialogMotion(onClosed);
   const backdrop = useModalDismiss(onClose);
   const [pending, setPending] = useState(false), [error, setError] = useState(''), [copied, setCopied] = useState(false);
+  useEffect(() => { setCopied(false); setError(''); }, [turn.result]);
   const createLink = async () => {
     const id = shareId ?? (await handleApi<{ id: string }>(await sessionFetch(apiUrl('/v1/site-assistant/shares'), {
-      method: 'POST', headers: authHeaders(), body: JSON.stringify({ requestId: turn.requestId, question: turn.question, answer: text }),
+      method: 'POST', headers: authHeaders(), body: JSON.stringify({ requestId: turn.requestId, question: turn.question, answer: turn.result ? assistantAnswerText({...turn.result,artifacts:turn.result.artifacts?.filter(a=>a.kind!=='algorithms')},window.location.origin) : text, algorithms:turn.result?.artifacts?.filter(a=>a.kind==='algorithms') }),
     }))).id;
     onShareId(id);
     return new URL(`${lang === 'zh' ? '/zh' : ''}/chat/share?id=${encodeURIComponent(id)}`, window.location.origin).href;
@@ -70,7 +72,7 @@ export function AssistantShareDialog({ turn, lang, preview, text, shareId, onSha
     }}>
       <header><h2 id={titleId}>{turn.question || tr({ zh: '分享回答', en: 'Share response' })}</h2><ClearButton variant="standalone" ariaLabel={tr({ zh: '关闭', en: 'Close' })} onClick={onClose}/></header>
       <div className="assistant-share-preview">{preview}</div>
-      <div className="assistant-share-disclosure"><strong><Globe size={20}/>{tr({ zh: '分享这条消息的公开链接', en: 'Share a public link to this message' })}</strong><p>{tr({ zh: '任何拥有此链接的人都可以访问这条消息。只分享本条文字，不包含图片和其他对话。', en: 'Anyone with the link can read this message. Only this text is shared, without images or other messages.' })}</p></div>
+      <div className="assistant-share-disclosure"><strong><Globe size={20}/>{tr({ zh: '分享这条消息的公开链接', en: 'Share a public link to this message' })}</strong><p>{tr({ zh: '任何拥有此链接的人都可以访问这条消息。分享本条回答与公式状态图，不包含上传的照片和其他对话。', en: 'Anyone with the link can read this message. This answer and algorithm diagrams are shared, without uploaded photos or other messages.' })}</p></div>
       <div className="assistant-share-destinations">
         {([{ id: 'copy', icon: copied ? <Check/> : <LinkIcon/>, label: tr(copied ? { zh: '已复制', en: 'Copied' } : { zh: '复制链接', en: 'Copy link' }) }, { id: 'x', icon: <SiX size={22}/>, label: 'X' }, { id: 'linkedin', icon: <FaLinkedin size={22}/>, label: tr({ zh: '领英', en: 'LinkedIn' }) }, { id: 'reddit', icon: <SiReddit size={26}/>, label: 'Reddit' }] as const).map(item => <button className="assistant-share-destination" key={item.id} type="button" disabled={pending} onClick={() => void share(item.id)}><span>{item.icon}</span>{item.label}</button>)}
       </div>

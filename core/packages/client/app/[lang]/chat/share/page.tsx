@@ -2,10 +2,12 @@
 import { useEffect, useState } from 'react';
 import { apiUrl } from '@/lib/api-base';
 import { SiteAssistantAnswerText } from '@/components/SiteAssistantDialog';
+import AssistantAlgorithmCards from '@/components/AssistantAlgorithmCards';
+import {isAssistantAlgorithms, type AssistantAlgorithms} from '@cuberoot/shared/site-assistant';
 import { tr } from '@/i18n/tr';
 
 export default function SharedMessagePage() {
-  const [message, setMessage] = useState<{ question: string; answer: string } | null>(null);
+  const [message, setMessage] = useState<{ question: string; answer: string; algorithms?:AssistantAlgorithms[] } | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
     const controller = new AbortController();
@@ -16,5 +18,5 @@ export default function SharedMessagePage() {
       .then(data => setMessage(data)).catch(() => { if (!controller.signal.aborted) setFailed(true); });
     return () => controller.abort();
   }, []);
-  return <main className="assistant-shared-page">{message ? <><h1>{message.question || tr({ zh: '分享的回答', en: 'Shared response' })}</h1><SiteAssistantAnswerText shared result={{ answer: message.answer, sources: [] }}/></> : <p role="status">{tr(failed ? { zh: '链接已失效或已取消分享。', en: 'This link is unavailable or has been revoked.' } : { zh: '正在打开分享…', en: 'Opening shared message…' })}</p>}</main>;
+  return <main className="assistant-shared-page">{message ? <><h1>{message.question || tr({ zh: '分享的回答', en: 'Shared response' })}</h1><SiteAssistantAnswerText shared result={{ answer: message.answer, sources: [] }}/>{message.algorithms?.filter(isAssistantAlgorithms).map((a,i)=><AssistantAlgorithmCards key={i} result={a}/>)}</> : <p role="status">{tr(failed ? { zh: '链接已失效或已取消分享。', en: 'This link is unavailable or has been revoked.' } : { zh: '正在打开分享…', en: 'Opening shared message…' })}</p>}</main>;
 }

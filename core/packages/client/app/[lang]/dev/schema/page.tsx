@@ -51,7 +51,7 @@ const TABLES: Table[] = [
   { name: 'recon_captures', domain: 'recon', origin: '0298', purpose: { zh: '私有原片与原始魔方记录绑定、完整性和时间对齐状态', en: 'Private original video and cube recording bindings, integrity and alignment state' } },
   { name: 'recon_capture_revisions', domain: 'recon', origin: '0298', purpose: { zh: '视频采集样本的人工对齐锚点版本', en: 'Human alignment anchor revisions for video captures' } },
   { name: 'career_applications', domain: 'community', origin: '0295', purpose: { zh: '管理员可查看的招聘申请及附件', en: 'Private career applications and attachments for administrators' } },
-  { name: 'site_assistant_shares', domain: 'community', origin: '0294', purpose: { zh: '用户主动创建的单条文字分享；可撤销，注销级联删除', en: 'Explicit single-message public snapshots; revocable, cascade on account deletion' } },
+  { name: 'site_assistant_shares', domain: 'community', origin: '0294', purpose: { zh: '按内容版本保存单条回答与公式卡片分享；可撤销，注销级联删除', en: 'Versioned single-answer and algorithm-card snapshots; revocable, cascade on account deletion' } },
   { name: 'wca_translation_sync', domain: 'comp', origin: '0289', purpose: { zh: '官方译文同步版本、来源许可与失败状态', en: 'Official translation sync provenance, licenses and failure state' } },
   { name: 'wca_translation_units', domain: 'comp', origin: '0289', purpose: { zh: '可检索的官方英中条目与翻译状态', en: 'Searchable official English–Chinese units and translation states' } },
   { name: 'recon_intake', domain: 'recon', origin: '0286', purpose: { zh: '复盘收录、原始记录、批注、确认版本和领取租约', en: 'Reconstruction intake, recordings, annotations, approvals and leases' } },
@@ -594,6 +594,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 325, slug: 'assistant_share_versions', desc: { zh: '按内容版本保存回答分享快照，保留切换公式前的公开链接。', en: 'Version answer snapshots by content while preserving links shared before algorithm changes.' } },
   { n: 324, slug: 'wca_annual_participation', desc: { zh: '按项目、年份与参赛时地区统计成功、尝试和参赛轮次。', en: 'Annual per-event solves, attempts and rounds by represented country.' } },
   { n: 323, slug: 'recon_solution_html', desc: { zh: '为复盘保存与纯文本解法对应的指法标记。', en: 'Store inline finger annotations alongside the plain reconstruction solution.' } },
   { n: 321, slug: 'diansheng_zhang_anyu', desc: { zh: '按维护者确认将张安宇（2012ZHAN08）加入点盛战队，保留其他队员归属。', en: 'Assign Anyu Zhang (2012ZHAN08) to DianSheng as confirmed by the maintainer, preserving all other memberships.' } },

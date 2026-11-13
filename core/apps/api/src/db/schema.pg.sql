@@ -9596,8 +9596,9 @@ CREATE TABLE site_assistant_shares (
   request_id UUID NOT NULL,
   question TEXT NOT NULL,
   answer TEXT NOT NULL,
+  snapshot_hash TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (user_id, request_id)
+  CONSTRAINT site_assistant_shares_version_key UNIQUE (user_id, request_id, snapshot_hash)
 );
 CREATE TABLE career_applications (
   github TEXT NOT NULL DEFAULT '',
