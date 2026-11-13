@@ -1,0 +1,92 @@
+[
+  {
+    "id": 2543,
+    "event": "clock",
+    "scramble": "UR5- DR2- DL5+ UL6+ U1+ R4+ D3- L1- ALL2+ y2 U6+ R4+ D5- L3- ALL2+",
+    "solution": "dl(0,-5) R(-3,3) DR(0,5) \\(1,-1) UL(6,1) L(-3,-4) ur(1,2)"
+  },
+  {
+    "id": 2391,
+    "event": "pyra",
+    "scramble": "U' L' B' U B' U' B U' R L U' u' l b'",
+    "solution": "x z' // Inspection\nl'r R L U' L' // Y V\nx' U L R' L' R U' u // L4E \n"
+  },
+  {
+    "id": 2390,
+    "event": "pyra",
+    "scramble": "B' U' L' R' B' R L U l b u'",
+    "solution": "x' // Inspection\nl  R U R' U u' b' // G Layer - 1 tip"
+  },
+  {
+    "id": 2322,
+    "event": "skewb",
+    "scramble": "L U' B R B' U R L'",
+    "solution": " z' x // Inspection\nF2 D' F' D // First layer and last layer corners\nz' y' D' F D F' x2 D' F D F' // U Perm (Instead of rotating then doing a sledge I just did a back-sledge but you can't really notate that on here because skewb notation is weird on this)"
+  },
+  {
+    "id": 2229,
+    "event": "SQ1",
+    "scramble": "10/03/25/3-3/1-2/0-3/0-4/-30/-10/0-3/0-2/-20/-20/0-4",
+    "solution": "0-2/20/20/-2-1/-30/ // CSP-Scallop/Square\n31/t'/U'/F/F'/U/ // OBL-Right Kite/Left Cut\n-51/D'/D/D'/D/ // CP J/N\n30/5-1/-30/11/-30/-70 // PBL-U-/U-"
+  },
+  {
+    "id": 1858,
+    "event": "Pyraminx",
+    "scramble": "R U' L' R L R U L' U' B U r'",
+    "solution": "Bv' Rv // insp\nu↑R' U' L' U Lw // B V\nU R' L R L' // L4E"
+  },
+  {
+    "id": 1337,
+    "event": "Pyraminx",
+    "scramble": "L' B' R B U L R U B' U L l' r b'",
+    "solution": "Rv' y // insp\nu l' L r R' L' R' L R // B layer\nU L' U L U' H // 2-flip"
+  },
+  {
+    "id": 1338,
+    "event": "Pyraminx",
+    "scramble": "B' U' R B' U R U' B R L R' u' l b'",
+    "solution": "y' // insp\nl u r'.↑L U R Rv' U'↓R // R V\nU' S // L3E"
+  },
+  {
+    "id": 1260,
+    "event": "Pyraminx",
+    "scramble": "R U' B R' L' U' L U R' L' U u' r' b'",
+    "solution": "Rv' y // insp\nu l U (R' R) R' L' U' L' R2' // G V\nL R L' U' b // L3E"
+  },
+  {
+    "id": 1257,
+    "event": "Pyraminx",
+    "scramble": "U R L B' L U B R' L' R U b'",
+    "solution": "Rv // insp\nl R' U L' R' L R // B Layer\nU' L' U L U' H U' // 2-Flip"
+  },
+  {
+    "id": 1256,
+    "event": "Pyraminx",
+    "scramble": "U' L R' B' L U' R U' L R' L' u' r' b",
+    "solution": "Bv // insp\nu l U R B // R V\nS R U' R' U b' // 2-Flip"
+  },
+  {
+    "id": 1250,
+    "event": "Pyraminx",
+    "scramble": "L' U' L' R' B L B' L' B U R u l' b",
+    "solution": "y' // insp\nu' (U U') l' r L R' L // Y T\nR' U' R // V\nS U' H U' // L4E"
+  },
+  {
+    "id": 1249,
+    "event": "Pyraminx",
+    "scramble": "B U' L B' L R' U' L' U' L U r b'",
+    "solution": "r' b L' U (R' L' L R) L' // Y I\nR' L R' L' // layer\nU' R U' R' U S U' // 2-flip"
+  },
+  {
+    "id": 1247,
+    "event": "Pyraminx",
+    "scramble": "R L' R L B' U B' R' L B' U' u l' b",
+    "solution": "Lv' Bv' // insp\nl' b' u U' (R R') L R' L' // B T\nR U' R' // V\nL2 R' L' R L' U // ML3E"
+  },
+  {
+    "id": 1246,
+    "event": "Pyraminx",
+    "scramble": "B R L' B L' R' U' L' B U' B' b'",
+    "solution": "Rv' // insp\nu L' // G T\nR' U' R // V\nU S U' H U' // L4E"
+  }
+]

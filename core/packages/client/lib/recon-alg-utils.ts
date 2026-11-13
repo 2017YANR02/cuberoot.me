@@ -2,6 +2,9 @@
  * Alg text utilities — strip comments / zero-width chars, count expanded moves,
  * extract alg from recon-prefixed text. Ported from packages/client-vite/src/utils/recon_alg_utils.ts.
  */
+import { parsePyraMoves } from '@cuberoot/shared/pyra-notation';
+import { parseSkewbAlgorithm } from '@cuberoot/shared/skewb-notation';
+import { cleanFtoReconAlgForPlayer, parseClockAlgorithm } from '@cuberoot/shared/recon-completion';
 import { etm } from '@cuberoot/shared/alg-notation';
 import { detectWastedWork, wastedDisplaySpans } from '@cuberoot/shared/timer/reconstruct/error-detect';
 import { simplifyAlg } from '@/lib/cube3';
@@ -354,6 +357,17 @@ export function syncReconPlayerCursorFromText(player: any, textBeforeCaret: stri
   if (!player) return;
   if (player.__kind === 'sq1') {
     player.jumpToMoveCount?.(parseSq1Tokens(textBeforeCaret).length, autoplay);
+    return;
+  }
+  if (player.__kind === 'clock') {
+    const parsed = parseClockAlgorithm(textBeforeCaret);
+    if (!parsed.invalid) syncPlayerToMoveCount(player, parsed.alg.split(/\s+/).filter(Boolean).length, autoplay);
+    return;
+  }
+  if (player.__kind === 'pyra' || player.__kind === 'skewb') {
+    const clean = cleanFtoReconAlgForPlayer(textBeforeCaret);
+    const count = player.__kind === 'pyra' ? parsePyraMoves(clean).length : parseSkewbAlgorithm(clean).moves.length;
+    player.jumpToMoveCount?.(count, autoplay);
     return;
   }
   const algBefore = extractAlgFromText(textBeforeCaret);

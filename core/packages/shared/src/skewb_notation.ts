@@ -46,6 +46,7 @@
  *
  * Token grammar accepts prime/double suffixes, including inverse doubles (2').
  */
+import { lexCornerNotation, cornerTurnAmount } from './corner_notation';
 
 const SARAH_DIRECT: Record<string, string> = {
   F: 'F',
@@ -158,4 +159,70 @@ export type SkewbNotation = 'wca' | 'sarah';
 /** Convert an alg in the given notation to WCA. No-op for 'wca'. */
 export function toWca(alg: string, notation: SkewbNotation): string {
   return notation === 'sarah' ? translate(alg) : alg;
+}
+
+/**
+ * Quarter-turn (bare, −90°) grip permutation for x / y / z: ROT_GRIP_TAU[axis][ℓ] = the
+ * grip a WORLD-fixed letter ℓ drives after one bare rotation about that axis. Derived
+ * offline (.tmp/skewb/derive_skewb_rot.mjs) by replicating SkewbCube.remapGrip's argmax
+ * geometry — tau(ℓ) = argmax_g A_g·(R⁻¹·A_ℓ) over CORNER_AXIS — so this pure table cannot
+ * drift from the engine's live geometric remap. The closed-loop bridge test re-certifies
+ * table ≡ engine every run (a mismatch desyncs the PG mirror and the BSGS solve fails).
+ * Each is order 4 (τ⁴ = id) and swaps the two corner orbits, as a 90° cube turn must.
+ */
+export const ROT_GRIP_TAU: ReadonlyArray<ReadonlyArray<number>> = [
+  [4, 5, 0, 1, 6, 7, 2, 3], // x
+  [2, 0, 3, 1, 6, 4, 7, 5], // y
+  [1, 5, 3, 7, 0, 4, 2, 6], // z
+];
+
+/**
+ * Advance a world-letter → physical-grip map across one whole-cube rotation. A bare turn
+ * composes τ once, a prime three times (τ has order 4, so τ³ = τ⁻¹), a double twice; each
+ * application is g2p'[ℓ] = g2p[τ[ℓ]]. This is the skewb analogue of the pyraminx's
+ * rotateLetterMap — the PG bridge folds rotations through it so the group mirror stays
+ * faithful across reorientations (`y R y' R'` correctly stays scrambled), instead of the
+ * old shortcut that dropped rotations and falsely cancelled such sequences to solved.
+ */
+export function rotateGripMap(
+  g2p: ReadonlyArray<number>, rot: 0 | 1 | 2, dir: 1 | -1 | 2,
+): number[] {
+  const t = ROT_GRIP_TAU[rot];
+  const n = dir === 1 ? 1 : dir === -1 ? 3 : 2;
+  let m = g2p.slice();
+  for (let i = 0; i < n; i++) { const prev = m; m = prev.map((_, l) => prev[t[l]]); }
+  return m;
+}
+
+
+export const SKEWB_WCA_TOKENS = ['F', 'UL', 'UR', 'U', 'D', 'L', 'R', 'B'] as const;
+export type SkewbNotationMove = { corner: number; dir: 1 | -1 } | { rot: 0 | 1 | 2; dir: 1 | -1 | 2 };
+
+export function parseSkewbAlgorithm(text: string): { moves: SkewbNotationMove[]; invalid: string[] } {
+  const parsed = lexCornerNotation(text, /^(?:UL|UR|[UFDLRBxyzSHrlbfd])\d*'?/);
+  const moves: SkewbNotationMove[] = [];
+  for (const token of parsed.tokens) {
+    const macro = /^([SH])(\d*)('?)$/.exec(token);
+    if (macro) {
+      const count = Number(macro[2] || 1);
+      if (!Number.isSafeInteger(count) || count > 100) { parsed.invalid.push(token); continue; }
+      // Use the site's existing Sarah macro definitions, converted to WCA grips.
+      // Ordinary uppercase R/L/B keep their WCA meaning; never guess a dialect.
+      const body = parseSkewbAlgorithm(translateToken(macro[1] + macro[3]).join(' ')).moves;
+      for (let i = 0; i < count; i++) moves.push(...body);
+      continue;
+    }
+    const lower = /^([rlbfd])(\d*)('?)$/.exec(token);
+    if (lower) {
+      moves.push(...parseSkewbAlgorithm(SARAH_DIRECT[lower[1]] + lower[2] + lower[3]).moves);
+      continue;
+    }
+    const match = /^(UL|UR|[UFDLRBxyz])(\d*)('?)$/.exec(token)!;
+    const rot = 'xyz'.indexOf(match[1]);
+    const amount = cornerTurnAmount(match[2], match[3], rot < 0 ? 3 : 4);
+    if (!amount) continue;
+    if (rot >= 0) moves.push({ rot: rot as 0 | 1 | 2, dir: amount === 3 ? -1 : amount as 1 | 2 });
+    else moves.push({ corner: SKEWB_WCA_TOKENS.indexOf(match[1] as typeof SKEWB_WCA_TOKENS[number]), dir: amount === 1 ? -1 : 1 });
+  }
+  return { moves, invalid: parsed.invalid };
 }

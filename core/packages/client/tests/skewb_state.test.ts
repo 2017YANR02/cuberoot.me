@@ -153,8 +153,8 @@ describe('Skewb state — WCA notation', () => {
     expect(skewbMovesToString(moves)).toBe(txt);
   });
 
-  it('skips unknown tokens (old engine names, doubles)', () => {
-    expect(parseSkewbMoves('UFR foo R2 B').length).toBe(1); // only B survives
+  it('skips unknown words while accepting compact moves and doubles', () => {
+    expect(parseSkewbMoves('foo R2 B')).toEqual(parseSkewbMoves("R' B")); // doubles are inverse corner turns
   });
 
   it('WCA letters map to the right grips (cubing.js frame)', () => {

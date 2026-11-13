@@ -278,7 +278,8 @@
       "./timer/cube-orientation": "runtime-neutral",
       "./document-export": "runtime-neutral",
       "./assistant-pdf": "runtime-neutral",
-      "./pdf-fonts": "runtime-neutral"
+      "./pdf-fonts": "runtime-neutral",
+      "./pyra-notation": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
@@ -1010,7 +1011,11 @@
     "./timer/cube-orientation": "./src/timer/cube-orientation.ts",
     "./document-export": "./src/document_export.ts",
     "./assistant-pdf": "./src/assistant_pdf.ts",
-    "./pdf-fonts": "./src/pdf_fonts.ts"
+    "./pdf-fonts": "./src/pdf_fonts.ts",
+    "./pyra-notation": {
+      "node": "./dist/pyra_notation.js",
+      "default": "./src/pyra_notation.ts"
+    }
   },
   "scripts": {
     "dev:build": "pnpm run build",

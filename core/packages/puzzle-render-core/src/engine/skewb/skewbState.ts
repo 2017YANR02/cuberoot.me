@@ -23,6 +23,7 @@
  * (CORNER_NAMES below stays the 3-face grip list; it drives the PG cap match + geometry,
  * separate from the WCA display tokens in SKEWB_WCA_TOKENS.)
  */
+import { parseSkewbAlgorithm, SKEWB_WCA_TOKENS } from '@cuberoot/shared/skewb-notation';
 import { cornerMoveToString, type CornerMove } from '../cornerNotation';
 
 /** Corner slot order (index 0..7), face order U/D, F/B, L/R. Doubles as the grip list.
@@ -110,38 +111,7 @@ export function isSkewbRot(move: SkewbMove): move is SkewbRotMove {
   return 'rot' in move;
 }
 
-/**
- * Quarter-turn (bare, −90°) grip permutation for x / y / z: ROT_GRIP_TAU[axis][ℓ] = the
- * grip a WORLD-fixed letter ℓ drives after one bare rotation about that axis. Derived
- * offline (.tmp/skewb/derive_skewb_rot.mjs) by replicating SkewbCube.remapGrip's argmax
- * geometry — tau(ℓ) = argmax_g A_g·(R⁻¹·A_ℓ) over CORNER_AXIS — so this pure table cannot
- * drift from the engine's live geometric remap. The closed-loop bridge test re-certifies
- * table ≡ engine every run (a mismatch desyncs the PG mirror and the BSGS solve fails).
- * Each is order 4 (τ⁴ = id) and swaps the two corner orbits, as a 90° cube turn must.
- */
-export const ROT_GRIP_TAU: ReadonlyArray<ReadonlyArray<number>> = [
-  [4, 5, 0, 1, 6, 7, 2, 3], // x
-  [2, 0, 3, 1, 6, 4, 7, 5], // y
-  [1, 5, 3, 7, 0, 4, 2, 6], // z
-];
-
-/**
- * Advance a world-letter → physical-grip map across one whole-cube rotation. A bare turn
- * composes τ once, a prime three times (τ has order 4, so τ³ = τ⁻¹), a double twice; each
- * application is g2p'[ℓ] = g2p[τ[ℓ]]. This is the skewb analogue of the pyraminx's
- * rotateLetterMap — the PG bridge folds rotations through it so the group mirror stays
- * faithful across reorientations (`y R y' R'` correctly stays scrambled), instead of the
- * old shortcut that dropped rotations and falsely cancelled such sequences to solved.
- */
-export function rotateGripMap(
-  g2p: ReadonlyArray<number>, rot: 0 | 1 | 2, dir: 1 | -1 | 2,
-): number[] {
-  const t = ROT_GRIP_TAU[rot];
-  const n = dir === 1 ? 1 : dir === -1 ? 3 : 2;
-  let m = g2p.slice();
-  for (let i = 0; i < n; i++) { const prev = m; m = prev.map((_, l) => prev[t[l]]); }
-  return m;
-}
+export { ROT_GRIP_TAU, rotateGripMap } from '@cuberoot/shared/skewb-notation';
 
 export interface SkewbState {
   /** cornerPerm[slot] = corner pieceId currently in that slot. */
@@ -215,42 +185,12 @@ export function isSolved(state: SkewbState): boolean {
   return true;
 }
 
-/**
- * WCA / cubing.js token per grip, in CORNER_NAMES index order. R/U/L/B are the four
- * WCA scramble letters (one corner per axis); F/D/UL/UR label the opposite four so
- * every draggable grip records a valid cubing.js token.
- *   0 UFR→F  1 UFL→UL  2 UBR→UR  3 UBL→U  4 DFR→D  5 DFL→L  6 DBR→R  7 DBL→B
- */
-const SKEWB_WCA_TOKENS = ['F', 'UL', 'UR', 'U', 'D', 'L', 'R', 'B'] as const;
-
 /** The four axis corners a WCA scramble draws from (R U L B = grips 6 3 5 7). */
 const WCA_SCRAMBLE_GRIPS = [6, 3, 5, 7] as const;
 
-// Two-letter families (UL/UR) come first so the alternation matches them before U.
-const TOKEN_RE = /^(UL|UR|U|F|D|L|R|B)('?)$/;
-// Whole-cube rotations x / y / z, optionally primed or doubled.
-const ROT_RE = /^([xyz])(['2]?)$/;
-
-/** Parse a scramble/alg string into moves — corner grips (WCA tokens) and whole-cube
- *  rotations (x / x' / x2). Unknown tokens are skipped. */
+/** Shared lexer keeps renderer and completion checks in the same notation. */
 export function parseSkewbMoves(text: string): SkewbMove[] {
-  const out: SkewbMove[] = [];
-  for (const raw of text.trim().split(/\s+/)) {
-    if (!raw) continue;
-    const r = ROT_RE.exec(raw);
-    if (r) {
-      out.push({
-        rot: (r[1] === 'x' ? 0 : r[1] === 'y' ? 1 : 2) as 0 | 1 | 2,
-        dir: r[2] === '2' ? 2 : r[2] === "'" ? -1 : 1,
-      });
-      continue;
-    }
-    const m = TOKEN_RE.exec(raw);
-    if (!m) continue;
-    const corner = SKEWB_WCA_TOKENS.indexOf(m[1] as typeof SKEWB_WCA_TOKENS[number]);
-    if (corner >= 0) out.push({ corner, dir: m[2] ? 1 : -1 });
-  }
-  return out;
+  return parseSkewbAlgorithm(text).moves;
 }
 
 /** Render one move to its canonical token — grip (bare = clockwise dir −1, primed = dir

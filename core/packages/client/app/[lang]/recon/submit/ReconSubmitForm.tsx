@@ -353,6 +353,23 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   const timingOnly = !(form.solution || '').trim() && (form.pickupTime != null || form.putdownTime != null);
 
+  const completionScramble = getReconScramble(form);
+  useEffect(() => {
+    let active = true;
+    setNeedsUnsolvedReason(false);
+    if (timingOnly) return;
+    const timer = setTimeout(() => {
+      void checkReconCompletion({
+        event: form.event || '',
+        scramble: completionScramble,
+        solution: form.solution || '',
+      }).then(result => {
+        if (active) setNeedsUnsolvedReason(result.status === 'unsolved');
+      });
+    }, 200);
+    return () => { active = false; clearTimeout(timer); };
+  }, [form.event, completionScramble, form.solution, timingOnly]);
+
   const setField = useCallback(<K extends keyof ReconSolve>(key: K, value: ReconSolve[K]) => {
     setForm(prev => ({ ...prev, [key]: value }));
     setSubmitError(error => error?.field === key
@@ -451,7 +468,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
           : solve.scramble?.trim()
             ? 'generic'
             : 'wca');
-      setNeedsUnsolvedReason(!!solve.unsolvedReason);
       const baseKey = `${solve.personId ?? ''}|${solve.event ?? ''}|${solve.comp ?? ''}|${solve.compWcaId ?? ''}|${solve.round ?? ''}`;
       loadedAvgKeySnapshot.current = baseKey;
       loadedTimeKeySnapshot.current = `${baseKey}|${solve.solveNum ?? ''}`;
@@ -2422,7 +2438,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               ))}
             </div>
 
-            {(needsUnsolvedReason || !!form.unsolvedReason) && (
+            {needsUnsolvedReason && (
               <label className="submit-field submit-block">
                 <span className="submit-label">{tr({ zh: '未复原原因', en: 'Reason the puzzle is not solved' })} *</span>
                 <span className="submit-hint submit-hint-warn" role="alert">

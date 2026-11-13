@@ -12,6 +12,8 @@
  *
  * SVG rendering of the state lives client-side in `client/lib/sq1-svg.ts`.
  */
+import { SQ1_PBL_MNEMONIC_GROUPS } from './sq1_pbl_mnemonics';
+export * from './sq1_pbl_mnemonics';
 
 /** Tokenizer regex for sq1 alg. Rotations precede the numeric branches so their
  *  `2` cannot become a top-layer turn. The other three branches are:
@@ -34,18 +36,46 @@ export type Sq1Token =
 /** Single canonical tokenizer — every sq1 alg consumer should go through here
  *  so format support stays in lockstep. */
 export function parseSq1Tokens(alg: string): Sq1Token[] {
+  const parsed = parseSq1Algorithm(alg);
+  return parsed.invalid.length ? [] : parsed.tokens;
+}
+
+// Preserve explicit dictionary semantics: u2 is (5,-1), not u repeated twice.
+// M/m and prose-only definitions remain invalid rather than choosing an alignment.
+const SQ1_MACROS = new Map(SQ1_PBL_MNEMONIC_GROUPS.flatMap(group => group.entries)
+  .filter(entry => /^[0-9, /()\-]+$/.test(entry.expansion))
+  .map(entry => [entry.symbol, entry.expansion]));
+SQ1_MACROS.set('U2', '6,0');
+SQ1_MACROS.set("U2'", '-6,0');
+SQ1_MACROS.set('D2', '0,6');
+SQ1_MACROS.set("D2'", '0,-6');
+
+/** Strict parsing also exposes any text that would otherwise disappear from playback. */
+export function parseSq1Algorithm(alg: string): { tokens: Sq1Token[]; invalid: string[] } {
   // Strip `// …` line comments first so they don't parse as two `/` slices.
-  const cleaned = alg.replace(/\/\/[^\n]*/g, ' ');
+  const cleaned = alg.replace(/\/\/[^\n]*/g, ' ').replace(/-?(?:-?\d+)*[A-Za-zɆɇ]+[0-9]*'?/g, token => {
+    const expansion = SQ1_MACROS.get(token);
+    if (expansion === undefined) return token;
+    // Parentheses keep adjacent numeric blocks from being merged by the compact grammar.
+    return ' ' + expansion.replace(/-?\d+(?:,|(?=-))(-?\d+)/g, pair => '(' + pair + ')') + ' ';
+  });
   const out: Sq1Token[] = [];
   const re = new RegExp(SQ1_TOKEN_RE.source, 'g');
   let m: RegExpExecArray | null;
+  let consumed = 0;
+  const invalid: string[] = [];
   while ((m = re.exec(cleaned)) !== null) {
+    const gap = cleaned.slice(consumed, m.index).trim();
+    if (gap) invalid.push(gap);
+    consumed = re.lastIndex;
     if (/^[xyz]/i.test(m[0])) out.push({ kind: 'rotation', axis: m[0][0].toLowerCase() as 'x' | 'y' | 'z' });
     else if (m[1] === '/') out.push({ kind: 'slice' });
     else if (m[2] !== undefined) out.push({ kind: 'turn', top: parseInt(m[2], 10), bot: parseInt(m[3]!, 10) });
     else out.push({ kind: 'turn', top: parseInt(m[4]!, 10), bot: 0 });
   }
-  return out;
+  const tail = cleaned.slice(consumed).trim();
+  if (tail) invalid.push(tail);
+  return { tokens: out, invalid };
 }
 
 /** Inverse a sq1 alg: reverse order, negate each (t,b); `/` stays.

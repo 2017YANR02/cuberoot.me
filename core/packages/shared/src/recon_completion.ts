@@ -5,9 +5,15 @@
  * stage markers and cosmetic annotations do not become puzzle moves. Cube
  * notation additionally accepts crowded text such as `ULB2LD'`.
  */
+import { parseClockAlgorithm } from './clock_notation';
+export { parseClockAlgorithm } from './clock_notation';
+import { parsePyraAlgorithm, rotateLetterMap, VERTEX_NAMES } from './pyra_notation';
+import { parseSkewbAlgorithm, rotateGripMap, SKEWB_WCA_TOKENS } from './skewb_notation';
 import { MOVE_RE } from './alg_notation';
+import type { KPattern } from 'cubing/kpuzzle';
+import type { StickerDat } from 'cubing/puzzle-geometry';
 import { isFtoEifSolved, parseFtoEifAlgorithm } from './fto_notation';
-import { applySq1Move, applySq1Scramble, canonicalSq1Alg, isSq1Solved, parseSq1Tokens, SQ1_TOKEN_RE } from './sq1_notation';
+import { applySq1Move, applySq1Scramble, isSq1Solved, parseSq1Algorithm } from './sq1_notation';
 
 export function validateReconTiming(input: {
   recordType?: unknown; pickupTime?: unknown; putdownTime?: unknown; solution?: unknown;
@@ -245,91 +251,80 @@ export type ReconCompletionResult =
   | { status: 'invalid' }
   | { status: 'unchecked' };
 
-const CUBE_ORIENTATIONS = (() => {
-  const out: string[] = [];
-  for (const tilt of ['', 'x', 'x2', "x'", 'z', "z'"]) {
-    for (const spin of ['', 'y', 'y2', "y'"]) {
-      out.push([tilt, spin].filter(Boolean).join(' '));
-    }
-  }
-  return out;
-})();
+type VisualSticker = Pick<StickerDat['stickers'][number], 'orbit' | 'ord' | 'ori' | 'face' | 'color'>;
+interface VisualPuzzle {
+  stickers: VisualSticker[];
+  colors: Map<string, string>;
+  faceCount: number;
+}
+const visualPuzzles = new Map<ReconPuzzleKey, Promise<VisualPuzzle>>();
 
-const PYRAMINX_ORIENTATIONS = ['', 'y', 'y2', 'Lv', 'Lv y', 'Lv y2', "Lv'", "Lv' y", "Lv' y2", 'Rv', 'Rv y', 'Rv y2'];
+async function isVisuallySolved(puzzle: ReconPuzzleKey, state: KPattern): Promise<boolean> {
+  let pending = visualPuzzles.get(puzzle);
+  if (!pending) {
+    pending = (async () => {
+      const { puzzles } = await import('cubing/puzzles');
+      const geometry = await puzzles[puzzle].pg!();
+      const data = geometry.get3d();
+      // Keep the renderer's piece/sticker numbering, including duplicate center
+      // orientations. Retain only colors, not the generated mesh coordinates.
+      const stickers = data.stickers.map(({ orbit, ord, ori, face, color }) => ({ orbit, ord, ori, face, color }));
+      return {
+        stickers,
+        colors: new Map(stickers.map(s => [`${s.orbit}/${s.ord}/${s.ori}`, s.color])),
+        faceCount: data.faces.length,
+      };
+    })();
+    visualPuzzles.set(puzzle, pending);
+    void pending.catch(() => { visualPuzzles.delete(puzzle); });
+  }
+  const { stickers, colors, faceCount } = await pending;
+  const orientations = new Map(state.kpuzzle.definition.orbits.map(o => [o.orbitName, o.numOrientations]));
+  const faces = new Map<number, string>();
+  for (const sticker of stickers) {
+    const orbit = state.patternData[sticker.orbit];
+    const count = orientations.get(sticker.orbit)!;
+    // Same destination-to-source orientation convention as cubing's renderer.
+    const sourceOrientation = (sticker.ori + count - orbit.orientation[sticker.ord]) % count;
+    const color = colors.get(`${sticker.orbit}/${orbit.pieces[sticker.ord]}/${sourceOrientation}`);
+    if (color === undefined) throw new Error('Missing reconstruction sticker color');
+    if (faces.has(sticker.face) && faces.get(sticker.face) !== color) return false;
+    faces.set(sticker.face, color);
+  }
+  return faces.size === faceCount && new Set(faces.values()).size === faceCount;
+}
 
 function hasRealScramble(scramble: string): boolean {
   const value = scramble.trim().toLowerCase();
   return value.length > 0 && !SCRAMBLE_PLACEHOLDERS.has(value);
 }
 
-const PYRA_VERTICES = ['U', 'L', 'R', 'B'] as const;
-const PYRA_ROT_SIGMA: ReadonlyArray<ReadonlyArray<number>> = [
-  [0, 2, 3, 1], [3, 1, 0, 2], [1, 3, 2, 0], [2, 0, 1, 3],
-];
-const PYRA_ROT_VERTEX: Record<string, number> = { y: 0, Uv: 0, Lv: 1, Rv: 2, Bv: 3, z: 3 };
-
-function rotatePyraLetterMap(map: ReadonlyArray<number>, axis: number, dir: 1 | -1): number[] {
-  const sigma = PYRA_ROT_SIGMA[axis];
-  const inverse = dir === 1 ? -1 : 1;
-  return map.map((physical) => inverse === 1 ? sigma[physical] : sigma[sigma[physical]]);
-}
-
-/** Fold site Pyraminx re-holds into subsequent world-fixed move letters. */
+/** Fold regrips and complementary face slabs into physical vertex moves. */
 function cleanReconPyraminxMoves(text: string): string {
-  let letterToPhysical: ReadonlyArray<number> = [0, 1, 2, 3];
+  const parsed = parsePyraAlgorithm(cleanFtoReconAlgForPlayer(text));
+  if (parsed.invalid.length) throw new Error('Invalid Pyraminx notation');
+  let map: ReadonlyArray<number> = [0, 1, 2, 3];
   const out: string[] = [];
-  for (const token of cleanReconAlgForPlayer(text).split(/\s+/).filter(Boolean)) {
-    const rotation = /^(y|Uv|Lv|Rv|Bv|z)(')?$/.exec(token);
-    if (rotation) {
-      const bareDir = rotation[1] === 'z' ? 1 : -1;
-      const dir = (rotation[2] ? -bareDir : bareDir) as 1 | -1;
-      const physicalAxis = letterToPhysical[PYRA_ROT_VERTEX[rotation[1]]];
-      letterToPhysical = rotatePyraLetterMap(letterToPhysical, physicalAxis, dir);
-      continue;
-    }
-    const move = /^([ULRBulrb])(')?$/.exec(token);
-    if (!move) continue;
-    const logical = PYRA_VERTICES.indexOf(move[1].toUpperCase() as typeof PYRA_VERTICES[number]);
-    const physical = letterToPhysical[logical];
-    const letter = move[1] === move[1].toLowerCase()
-      ? PYRA_VERTICES[physical].toLowerCase()
-      : PYRA_VERTICES[physical];
-    out.push(letter + (move[2] ?? ''));
+  for (const move of parsed.moves) {
+    const axis = map[move.vertex];
+    if (move.part === 'rot' || move.part === 'face') map = rotateLetterMap(map, axis, move.dir);
+    if (move.part === 'rot') continue;
+    const letter = move.part === 'tip' ? VERTEX_NAMES[axis].toLowerCase() : VERTEX_NAMES[axis];
+    // A face slab is a whole rotation followed by the inverse of the untouched corner.
+    const dir = move.part === 'face' ? -move.dir : move.dir;
+    out.push(letter + (dir === 1 ? "'" : ''));
   }
   return out.join(' ');
 }
 
-const SKEWB_TOKENS = ['F', 'UL', 'UR', 'U', 'D', 'L', 'R', 'B'] as const;
-const SKEWB_ROT_GRIP: ReadonlyArray<ReadonlyArray<number>> = [
-  [4, 5, 0, 1, 6, 7, 2, 3],
-  [2, 0, 3, 1, 6, 4, 7, 5],
-  [1, 5, 3, 7, 0, 4, 2, 6],
-];
-
-function rotateSkewbGripMap(map: ReadonlyArray<number>, axis: number, suffix: string): number[] {
-  const turns = suffix === '2' ? 2 : suffix === "'" ? 3 : 1;
-  let next = map.slice();
-  for (let i = 0; i < turns; i++) {
-    const previous = next;
-    next = previous.map((_, logical) => previous[SKEWB_ROT_GRIP[axis][logical]]);
-  }
-  return next;
-}
-
-/** Fold x/y/z re-holds into subsequent Skewb grip letters. */
 function cleanReconSkewbMoves(text: string): string {
-  let gripToPhysical: ReadonlyArray<number> = [0, 1, 2, 3, 4, 5, 6, 7];
+  const parsed = parseSkewbAlgorithm(cleanFtoReconAlgForPlayer(text));
+  if (parsed.invalid.length) throw new Error('Invalid Skewb notation');
+  let map: ReadonlyArray<number> = [0, 1, 2, 3, 4, 5, 6, 7];
   const out: string[] = [];
-  for (const token of cleanReconAlgText(text).split(/\s+/).filter(Boolean)) {
-    const rotation = /^([xyz])(['2]?)$/.exec(token);
-    if (rotation) {
-      gripToPhysical = rotateSkewbGripMap(gripToPhysical, 'xyz'.indexOf(rotation[1]), rotation[2]);
-      continue;
-    }
-    const move = /^(UL|UR|U|F|D|L|R|B)('?)$/.exec(token);
-    if (!move) continue;
-    const logical = SKEWB_TOKENS.indexOf(move[1] as typeof SKEWB_TOKENS[number]);
-    out.push(SKEWB_TOKENS[gripToPhysical[logical]] + move[2]);
+  for (const move of parsed.moves) {
+    if ('rot' in move) map = rotateGripMap(map, move.rot, move.dir);
+    else out.push(SKEWB_WCA_TOKENS[map[move.corner]] + (move.dir === 1 ? "'" : ''));
   }
   return out.join(' ');
 }
@@ -343,12 +338,12 @@ export async function checkReconCompletion(input: {
   const puzzle = reconPuzzleKey(input.event);
   if (!puzzle || !hasRealScramble(input.scramble)) return { status: 'unchecked' };
 
-  if (puzzle === 'square1' && /[xyzXYZ]/.test(`${input.scramble}\n${input.solution}`.replace(/\/\/[^\n]*/g, ' '))) {
-    // Parse fields separately: top-only shorthand on either side must not merge into a pair.
-    const fields = [input.scramble, input.solution].map(text => text.replace(/\/\/[^\n]*/g, ' '));
-    if (fields.some(text => text.replace(new RegExp(SQ1_TOKEN_RE.source, 'g'), '').trim())) return { status: 'invalid' };
+  if (puzzle === 'square1') {
+    // Keep fields separate so top-only shorthand cannot merge across the boundary.
+    const fields = [input.scramble, input.solution].map(parseSq1Algorithm);
+    if (fields.some(field => field.invalid.length)) return { status: 'invalid' };
     let state = applySq1Scramble('');
-    for (const move of fields.flatMap(parseSq1Tokens)) {
+    for (const move of fields.flatMap(field => field.tokens)) {
       if (move.kind === 'slice' && [0, 12].some(offset =>
         state.pieces[offset + 5] === state.pieces[offset + 6]
         || state.pieces[offset + 11] === state.pieces[offset])) return { status: 'invalid' };
@@ -371,23 +366,24 @@ export async function checkReconCompletion(input: {
   }
 
   const isCube = /^(?:[2-7]x[2-7]x[2-7])$/.test(puzzle);
-  const scramble = puzzle === 'square1'
-    ? canonicalSq1Alg(input.scramble)
-    : isCube ? cleanReconCubeStateMoves(input.scramble)
+  const scramble = isCube ? cleanReconCubeStateMoves(input.scramble)
       : puzzle === 'clock' || puzzle === 'megaminx' ? cleanReconAlgText(input.scramble)
         : cleanReconAlgForPlayer(input.scramble);
-  const solution = puzzle === 'square1'
-    ? canonicalSq1Alg(input.solution)
-    : isCube ? cleanReconCubeStateMoves(input.solution)
+  const solution = isCube ? cleanReconCubeStateMoves(input.solution)
       : puzzle === 'clock' || puzzle === 'megaminx' ? cleanReconAlgText(input.solution)
         : cleanReconAlgForPlayer(input.solution);
 
-  const stateScramble = puzzle === 'pyraminx' ? cleanReconPyraminxMoves(input.scramble)
-    : puzzle === 'skewb' ? cleanReconSkewbMoves(input.scramble)
-      : scramble;
-  const stateSolution = puzzle === 'pyraminx' ? cleanReconPyraminxMoves(input.solution)
-    : puzzle === 'skewb' ? cleanReconSkewbMoves(input.solution)
-      : solution;
+  // Regrips in the scramble establish the frame for the solution too.
+  let stateAlg: string;
+  try {
+    stateAlg = puzzle === 'clock' ? (() => {
+      const parsed = parseClockAlgorithm(`${scramble} ${solution}`);
+      if (parsed.invalid) throw new Error('Invalid Clock notation');
+      return parsed.alg;
+    })() : puzzle === 'pyraminx' ? cleanReconPyraminxMoves(`${input.scramble}\n${input.solution}`)
+    : puzzle === 'skewb' ? cleanReconSkewbMoves(`${input.scramble}\n${input.solution}`)
+      : `${scramble} ${solution}`;
+  } catch { return { status: 'invalid' }; }
 
   let kpuzzle;
   try {
@@ -403,9 +399,17 @@ export async function checkReconCompletion(input: {
   let state;
   try {
     solved = kpuzzle.defaultPattern();
-    state = solved.applyAlg(`${stateScramble} ${stateSolution}`.trim().replace(/2'/g, '2'));
+    state = solved.applyAlg(stateAlg.trim());
   } catch {
     return { status: 'invalid' };
+  }
+
+  if (puzzle === 'clock') {
+    // Rotating the clock also rotates its printed hour marks. Frame identity,
+    // front/back choice and pin positions do not affect whether it is solved.
+    const { DIALS, HOUR_MARKS } = state.patternData;
+    return { status: DIALS.orientation.every((angle, i) =>
+      (angle - 3 * HOUR_MARKS.orientation[i]) % 12 === 0) ? 'solved' : 'unsolved' };
   }
 
   try {
@@ -414,23 +418,15 @@ export async function checkReconCompletion(input: {
       ignoreCenterOrientation: true,
     })) return { status: 'solved' };
   } catch {
-    // Some KPuzzles do not implement the experimental predicate; exact
-    // orientation enumeration below is the authoritative fallback.
+    // Some KPuzzles do not implement the experimental predicate.
   }
   if (state.isIdentical(solved)) return { status: 'solved' };
-  if (isCube || puzzle === 'skewb') {
-    for (const rotation of CUBE_ORIENTATIONS) {
-      if (rotation && state.applyAlg(rotation).isIdentical(solved)) return { status: 'solved' };
-    }
-  } else if (puzzle === 'pyraminx') {
-    for (const rotation of PYRAMINX_ORIENTATIONS) {
-      if (rotation && state.applyAlg(rotation).isIdentical(solved)) return { status: 'solved' };
-    }
-  } else if (puzzle === 'megaminx') {
-    let rotated = state;
-    for (let i = 1; i < 5; i++) {
-      rotated = rotated.applyAlg('y');
-      if (rotated.isIdentical(solved)) return { status: 'solved' };
+  if (isCube || puzzle === 'skewb' || puzzle === 'pyraminx' || puzzle === 'megaminx') {
+    try {
+      return { status: await isVisuallySolved(puzzle, state) ? 'solved' : 'unsolved' };
+    } catch {
+      // A missing geometry chunk is not evidence that the user's solve failed.
+      return { status: 'unchecked' };
     }
   }
   return { status: 'unsolved' };

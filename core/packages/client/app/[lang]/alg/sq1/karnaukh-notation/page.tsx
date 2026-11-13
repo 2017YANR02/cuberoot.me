@@ -65,12 +65,12 @@ export default function Sq1PblNotationPage() {
 
         <div className="alg-mnemonic-intro">
           <p>{t(
-            '公式卡片里括号标出的“原表记号”来自 Daniel’s Public PBL Doc。它是为批量记忆设计的卡脑壳记号，不是播放器接受的标准 Square-1 公式。',
-            'The “source mnemonic” in parentheses on each algorithm card comes from Daniel’s Public PBL Doc. Karnaukh notation is designed for memorising many algorithms; it is not executable Square-1 notation for the player.',
+            '公式卡片里括号标出的“原表记号”来自 Daniel’s Public PBL Doc，是为批量记忆设计的卡脑壳记号。',
+            'The “source mnemonic” in parentheses on each algorithm card comes from Daniel’s Public PBL Doc and is designed for memorising many algorithms.',
           )}</p>
           <p>{t(
-            '卡片主行的 (a,b) / … 才是可复制、可播放的公式。卡脑壳记号始终只作阅读提示，不参与解析、动画或训练。',
-            'The main (a,b) / … line is the executable formula to copy or play. Mnemonics remain reading aids and never enter parsing, animation, or training.',
+            '卡片主行的 (a,b) / … 可直接复制、播放。复盘输入支持表中具有唯一数字展开式的记号，切层仍需写 /；M、m、未定义变体和方向标记请改用明确的数字公式。',
+            'Copy or play the main (a,b) / … line directly. Reconstruction input also accepts symbols with an unambiguous numeric expansion from the table, with explicit / slices. Use numeric moves for M, m, undefined variants, and direction markers.',
           )}</p>
         </div>
 

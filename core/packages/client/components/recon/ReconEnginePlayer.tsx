@@ -29,7 +29,7 @@
 import { type ReactNode, type RefObject } from 'react';
 import { getPuzzleId } from '@/lib/recon-utils';
 import { cleanForPlayer, reconPlaybackSegments } from '@/lib/recon-alg-utils';
-import { cleanFtoReconAlgForPlayer, cleanReconAlgText } from '@cuberoot/shared/recon-completion';
+import { cleanFtoReconAlgForPlayer, cleanReconAlgText, parseClockAlgorithm } from '@cuberoot/shared/recon-completion';
 import { parseSkewbMoves } from '@/app/[lang]/sim/engine/skewb/skewbState';
 import { parseGearMoves } from '@/app/[lang]/sim/engine/gear/gearState';
 import { parsePyraMoves } from '@/app/[lang]/sim/engine/pyra/pyraState';
@@ -138,8 +138,8 @@ export default function ReconEnginePlayer({
         puzzleKind="skewb"
         kind="skewb"
         parseMoves={parseSkewbMoves}
-        scramble={scramble}
-        alg={cleanForPlayer(solution)}
+        scramble={cleanFtoReconAlgForPlayer(scramble)}
+        alg={cleanFtoReconAlgForPlayer(solution)}
         anchorAtEnd={anchorAtEnd}
         playerRef={playerRef}
         fillPane={fillPane}
@@ -155,8 +155,8 @@ export default function ReconEnginePlayer({
         puzzleKind="pyraminx"
         kind="pyra"
         parseMoves={parsePyraMoves}
-        scramble={scramble}
-        alg={cleanForPlayer(solution)}
+        scramble={cleanFtoReconAlgForPlayer(scramble)}
+        alg={cleanFtoReconAlgForPlayer(solution)}
         anchorAtEnd={anchorAtEnd}
         playerRef={playerRef}
         fillPane={fillPane}
@@ -169,11 +169,14 @@ export default function ReconEnginePlayer({
     <div className="recon-engine-fallback">
       <TwistySection
         puzzle={puzzleId}
-        scramble={scramble}
-        alg={puzzleId === 'clock' || puzzleId === 'megaminx'
+        scramble={puzzleId === 'clock' ? parseClockAlgorithm(scramble).alg : scramble}
+        alg={puzzleId === 'clock' ? parseClockAlgorithm(solution).alg : puzzleId === 'megaminx'
           ? cleanReconAlgText(solution)
           : cleanForPlayer(solution)}
         playerRef={playerRef}
+        onPlayerChange={puzzleId === 'clock' ? player => {
+          if (player) Object.assign(player, { __kind: 'clock' });
+        } : undefined}
         fillPane={fillPane}
         backView={backView}
         hideControls={hideControls}

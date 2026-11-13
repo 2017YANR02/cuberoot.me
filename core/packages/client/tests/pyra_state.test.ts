@@ -84,7 +84,7 @@ describe('Pyraminx notation', () => {
     expect(tip.part).toBe('tip');
   });
   it('skips unknown tokens', () => {
-    expect(parsePyraMoves('U foo R2 L x').length).toBe(2); // U, L
+    expect(parsePyraMoves('U foo R2 L x').length).toBe(4); // U, R2 (= R'), L, x (= Rv)
   });
   it('bare = clockwise (dir -1), primed = +120 (dir +1)', () => {
     expect(pyraMoveToString({ vertex: 0, part: 'corner', dir: -1 })).toBe('U');
@@ -115,7 +115,7 @@ describe('Pyraminx notation', () => {
     expect(pyraMovesToString(parsePyraMoves("Uv' Lv Rv' Bv"))).toBe("y' Lv Rv' Bv");
     expect(reducePyraAlg('y y')).toBe("y'");
     expect(reducePyraAlg("y Uv'")).toBe('');
-    expect(parsePyraMoves('x yv Yv').length).toBe(0); // no x on a tetra; z is a site alias (below)
+    expect(parsePyraMoves('x yv Yv')).toEqual(parsePyraMoves('Rv')); // x is a vertex re-hold alias; z is a site alias (below)
   });
   it("z is a site alias for Bv' (so z' = Bv); round-trips to the Bv form", () => {
     expect(parsePyraMoves('z')).toEqual(parsePyraMoves("Bv'"));
