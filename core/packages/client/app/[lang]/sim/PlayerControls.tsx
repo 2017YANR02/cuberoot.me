@@ -27,7 +27,7 @@ import { useTranslation } from 'react-i18next';
 import { useT } from '@/hooks/useT';
 import { SettingsPopover } from '@/components/TrainingSettings';
 import { FlipHorizontal2, FlipVertical2, Eraser, Link2, Check, Keyboard, Grid3x3 } from '@app-foundation/icons/lucide';
-import { Alg, Move } from 'cubing/alg';
+import { Alg, Commutator, Conjugate, Grouping, Move, Pause } from 'cubing/alg';
 import type { TwistyPlayer } from 'cubing/twisty';
 import World from './engine/world';
 import AlgTransformPanel from './AlgTransformPanel';
@@ -108,7 +108,7 @@ import { flattenAlg, stm, stripGripMarks } from '@cuberoot/shared/alg-notation';
 import { canonicalFtoEifAlgorithm, invertFtoEifAlgorithm, reduceFtoEifAlgorithm } from '@cuberoot/shared/fto-notation';
 import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from './engine/hands/ftn';
 export { SIM_FIXED_PUZZLE_OPTIONS } from './puzzleOptions';
-import { simSpeedToTps, simTpsToSpeed } from '@/lib/sim_timing';
+import { simSpeedToTps, simTpsToSpeed, uniformSimTimeline } from '@/lib/sim_timing';
 import SimAlgEditor, { type SimAlgHighlightSpan } from './SimAlgEditor';
 import ReconAutofill from '@/components/ReconAutofill';
 import PlaybackBar from '@/components/PlaybackBar';
@@ -116,6 +116,33 @@ import { CompactSelect } from '@/components/CompactSelect';
 import { createTwistyPlayback, EMPTY_TWISTY_PLAYBACK_STATE, type TwistyPlaybackPlayer, type TwistyPlaybackState } from '@/lib/twisty-playback';
 
 import './player-controls.css';
+
+/** Bound non-native preview expansion before materializing groups, including empty repeats. */
+function parseScramblePreview(text: string): Alg {
+  if (text.length > 16_384) throw new Error('Algorithm is too long');
+  let depth = 0;
+  for (const char of text.replace(/\/\/[^\n]*/g, '')) {
+    if (char === '(' || char === '[') {
+      if (++depth > 32) throw new Error('Algorithm nesting is too deep');
+    } else if (char === ')' || char === ']') depth--;
+  }
+  const alg = new Alg(text);
+  const work = (sequence: Alg): number => {
+    let count = 0;
+    for (const node of sequence.childAlgNodes()) {
+      let cost = 1;
+      if (node instanceof Grouping) cost += (1 + work(node.alg)) * Math.abs(node.amount);
+      else if (node instanceof Commutator) cost += 2 * (work(node.A) + work(node.B));
+      else if (node instanceof Conjugate) cost += 2 * work(node.A) + work(node.B);
+      else if (node instanceof Move) cost += Math.abs(node.amount);
+      count += cost;
+      if (!Number.isSafeInteger(count) || count > 4_096) throw new Error('Algorithm expansion is too large');
+    }
+    return count;
+  };
+  work(alg);
+  return alg;
+}
 
 /**
  * 换握记号(仅 NxN 解法框):↑ 上手(拇指起手在 U 面)、↓ 下手(D 面)、· 回 home 握。
@@ -2321,14 +2348,27 @@ export default function PlayerControls({
       if (!player) return;
       const reqId = ++twistyReplayReqIdRef.current;
       const model = player.experimentalModel;
-      const [timeline, originalSetup, originalAlg, originalAnchor] = await Promise.all([
+      const snapshot = await Promise.all([
         model.detailedTimelineInfo.get(), model.setupAlg.get(), model.alg.get(), model.setupAnchor.get(),
-      ]).catch(() => [null, null, null, null] as const);
+        model.animationTimelineLeavesRequest.get(),
+      ]).catch(() => null);
+      if (!snapshot) return;
+      const [timeline, originalSetup, originalAlg, originalAnchor, originalTimeline] = snapshot;
       if (!timeline || !originalSetup || !originalAlg || !originalAnchor) return;
       if (reqId !== twistyReplayReqIdRef.current) return;
       const original = { setup: originalSetup.alg, alg: originalAlg.alg, anchor: originalAnchor };
       let previewText: string;
-      try { previewText = new Alg(toPlaybackText?.(scramble) ?? scramble).toString(); }
+      let previewTimeline: NonNullable<typeof originalTimeline>;
+      try {
+        const text = toPlaybackText?.(scramble) ?? scramble;
+        const previewAlg = isPgInteractionPuzzleId(puzzleKind)
+          ? parseNativePuzzleAlg(puzzleKind, text)
+          : parseScramblePreview(text);
+        previewText = previewAlg.toString();
+        const leaves = [...previewAlg.experimentalExpand()]
+          .filter((node) => node instanceof Move || node instanceof Pause);
+        previewTimeline = uniformSimTimeline(leaves) as NonNullable<typeof originalTimeline>;
+      }
       catch { return; }
       restorePreviewRef.current = async (revision) => {
         player.pause();
@@ -2342,12 +2382,16 @@ export default function PlayerControls({
         player.experimentalSetupAlg = original.setup;
         player.alg = original.alg;
         if (currentAnchor === 'start') player.experimentalSetupAnchor = original.anchor;
+        model.animationTimelineLeavesRequest.set(originalTimeline);
         player.timestamp = timeline?.timestamp ?? 0;
       };
       player.pause();
       player.experimentalSetupAlg = '';
       player.alg = previewText;
       player.experimentalSetupAnchor = 'start';
+      // The /sim timeline normally follows the editor's alg prop. Borrow both
+      // tracks for this preview, then restore the exact request (including null).
+      model.animationTimelineLeavesRequest.set(previewTimeline);
       setScramblePreview(true);
       // Wait for this model's parsed timeline, never a fixed number of frames.
       const ready = await model.indexer.get().then(() => true, () => false);

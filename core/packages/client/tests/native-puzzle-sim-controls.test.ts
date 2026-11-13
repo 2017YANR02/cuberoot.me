@@ -3,6 +3,8 @@
 import { act, createElement, useEffect, useState, type ComponentProps } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Alg, Move, Pause } from 'cubing/alg';
+import { TwistyPlayer } from 'cubing/twisty';
 
 vi.mock('react-i18next', async (importOriginal) => ({
   ...await importOriginal<typeof import('react-i18next')>(),
@@ -16,13 +18,14 @@ vi.mock('@/lib/cubing-scramble', () => ({ tnoodleRandomScramble: vi.fn() }));
 vi.mock('@/lib/pg-scramble', () => ({ pgRandomScramble: vi.fn() }));
 
 import type { TwistyPlaybackPlayer } from '@/lib/twisty-playback';
+import { uniformSimTimeline } from '@/lib/sim_timing';
 
 import PlayerControls from '@/app/[lang]/sim/PlayerControls';
 import { DEFAULT_SETTINGS } from '@/app/[lang]/sim/SettingDrawer';
 import { DEFAULT_KEYMAP } from '@/app/[lang]/sim/keymap';
 import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { pgRandomScramble } from '@/lib/pg-scramble';
-import { generateNativePuzzleScramble, type NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
+import { NATIVE_PUZZLES, generateNativePuzzleScramble, type NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { nativePuzzleKPuzzle, parseNativePuzzleAlg, simplifyNativePuzzleAlg } from '@cuberoot/puzzle-solvers/native-puzzle-model';
 
 const CASES = [
@@ -75,6 +78,7 @@ describe('native PG simulator controls', () => {
       playingInfo: { get: vi.fn(async () => ({ playing: false })), addFreshListener: vi.fn(), removeFreshListener: vi.fn() },
       indexer: { get: vi.fn<() => Promise<null>>(async () => null), addFreshListener: vi.fn(), removeFreshListener: vi.fn() },
       coarseTimelineInfo: { get: vi.fn(async () => null) },
+      animationTimelineLeavesRequest: { get: vi.fn(async () => null), set: vi.fn() },
     },
     experimentalSetupAlg: '',
     experimentalSetupAnchor: 'start' as 'start' | 'end',
@@ -398,6 +402,17 @@ describe('native PG simulator controls', () => {
     expect(player.play).not.toHaveBeenCalled();
   });
 
+  it('keeps the model untouched when the preview timeline snapshot cannot be read', async () => {
+    await mount(CASES[0]);
+    const original = { setup: player.experimentalSetupAlg, alg: player.alg, anchor: player.experimentalSetupAnchor };
+    player.experimentalModel.animationTimelineLeavesRequest.get.mockRejectedValueOnce(new Error('disposed'));
+    await act(async () => button('Animate scramble').click());
+    expect({ setup: player.experimentalSetupAlg, alg: player.alg, anchor: player.experimentalSetupAnchor }).toEqual(original);
+    expect(player.experimentalModel.animationTimelineLeavesRequest.set).not.toHaveBeenCalled();
+    expect(player.play).not.toHaveBeenCalled();
+    expect(host.querySelector('button[title="Return to algorithm"]')).toBeNull();
+  });
+
   it.each(['Scramble', 'Solution'].flatMap((placeholder) => [0, 1].map((elapsedFrames) => ({ placeholder, elapsedFrames }))))(
     'cancels delayed random-scramble settling when $placeholder becomes invalid after $elapsedFrames frames without a URL echo',
     async ({ placeholder, elapsedFrames }) => {
@@ -476,5 +491,108 @@ describe('native PG simulator controls', () => {
     const inverse = puzzle.algToTransformation(input('Solution').value);
     expect(inverse.isIdentical(original.invert())).toBe(true);
     expect(original.applyTransformation(inverse).isIdentityTransformation()).toBe(true);
+  });
+});
+
+describe('native scramble preview with the real detached Twisty model', () => {
+  let host: HTMLDivElement;
+  let root: Root;
+  let player: TwistyPlayer | null;
+  const scramble = '(R 2R)2 . [G, U]';
+  type TimelineRequest = Awaited<ReturnType<TwistyPlayer['experimentalModel']['animationTimelineLeavesRequest']['get']>>;
+
+  beforeEach(() => {
+    vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+    vi.stubGlobal('matchMedia', (media: string) => ({
+      matches: false, media, addEventListener: () => {}, removeEventListener: () => {},
+    }));
+    // The public model/controller stays real; no canvas, World or render loop is needed.
+    vi.stubGlobal('requestAnimationFrame', () => 0);
+    vi.stubGlobal('cancelAnimationFrame', () => {});
+    vi.spyOn(performance, 'now').mockReturnValue(0);
+    player = null;
+    host = document.createElement('div');
+    document.body.appendChild(host);
+    root = createRoot(host);
+  });
+
+  afterEach(async () => {
+    await act(async () => root.unmount());
+    player?.pause();
+    host.remove();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  function button(title: string) {
+    const element = host.querySelector<HTMLButtonElement>(`button[title="${title}"]`);
+    expect(element, title).not.toBeNull();
+    return element!;
+  }
+
+  it.each([
+    { name: 'empty custom timeline', alg: '', request: 'custom', anchor: 'start' },
+    { name: 'nonempty custom timeline', alg: 'G . U', request: 'custom', anchor: 'end' },
+    { name: 'automatic timeline', alg: 'G . U', request: 'automatic', anchor: 'end' },
+  ] as const)('animates the scramble and restores the $name through the controls', async ({ alg, request, anchor }) => {
+    const current = new TwistyPlayer({
+      experimentalPuzzleDescription: NATIVE_PUZZLES.radiostar.description,
+      experimentalSetupAlg: scramble, alg, experimentalSetupAnchor: anchor,
+      visualization: '2D', controlPanel: 'none',
+    });
+    player = current;
+    const model = current.experimentalModel;
+    const leaves = [...new Alg(alg).experimentalExpand()]
+      .filter((node) => node instanceof Move || node instanceof Pause);
+    const customTimeline = uniformSimTimeline(leaves)
+      .map((leaf) => ({ ...leaf, start: leaf.start * 2, end: leaf.end * 2 })) as TimelineRequest;
+    model.animationTimelineLeavesRequest.set(request === 'automatic' ? null : customTimeline);
+    current.timestamp = 0;
+    await act(async () => root.render(createElement(PlayerControls, {
+      active: true, world: null, activeCube: null, clearFrozen: () => {}, setup: scramble, alg,
+      onSetupChange: () => {}, onAlgChange: () => {}, order: 3, puzzleKind: 'radiostar',
+      renderer: 'group', twistyPlayerRef: { current }, twistyPlaybackPlayer: current,
+      settings: { ...DEFAULT_SETTINGS, playbackMode: anchor === 'end' ? 'algorithm' : 'moves' },
+      onSettingsChange: () => {}, canUseCustomLogo: false,
+      keymap: DEFAULT_KEYMAP, onKeymapChange: () => {}, onResetKeymap: () => {},
+    })));
+    const originalIndexer = await model.indexer.get();
+    await act(async () => {
+      current.timestamp = alg ? originalIndexer.indexToMoveStartTimestamp(1 as Parameters<typeof originalIndexer.indexToMoveStartTimestamp>[0]) : 0;
+    });
+    const originalTimeline = await model.animationTimelineLeavesRequest.get();
+    const originalTimestamp = (await model.detailedTimelineInfo.get()).timestamp;
+    const originalPattern = await model.currentPattern.get();
+
+    await act(async () => button('Animate scramble').click());
+    await act(async () => {
+      await vi.waitFor(async () => {
+        const indexer = await model.indexer.get();
+        expect(indexer.numAnimatedLeaves()).toBe(9);
+        expect(indexer.algDuration()).toBe(9000);
+        expect((await model.playingInfo.get()).playing).toBe(true);
+      });
+    });
+    expect(button('Pause').disabled).toBe(false);
+    expect(host.querySelector<HTMLInputElement>('.playback-scrubber')?.disabled).toBe(false);
+    expect(host.querySelector<HTMLInputElement>('.playback-scrubber')?.max).toBe('9');
+    const animation = current.controller.animationController;
+    await act(async () => {
+      await animation.animFrame(9001 as Parameters<typeof animation.animFrame>[0]);
+    });
+    expect((await model.detailedTimelineInfo.get()).timestamp).toBe(9000);
+    const puzzle = await model.kpuzzle.get();
+    expect((await model.currentPattern.get()).isIdentical(puzzle.defaultPattern().applyAlg(scramble))).toBe(true);
+
+    await act(async () => button('Return to algorithm').click());
+    expect(await model.animationTimelineLeavesRequest.get()).toBe(originalTimeline);
+    expect((await model.setupAlg.get()).alg.toString()).toBe(scramble);
+    expect((await model.alg.get()).alg.toString()).toBe(alg);
+    expect(await model.setupAnchor.get()).toBe(anchor);
+    expect((await model.detailedTimelineInfo.get()).timestamp).toBe(originalTimestamp);
+    expect((await model.currentPattern.get()).isIdentical(originalPattern)).toBe(true);
+    expect((await model.playingInfo.get()).playing).toBe(false);
+    expect(host.querySelector<HTMLTextAreaElement>('#sim-setup')?.value).toBe(scramble);
+    expect(host.querySelector<HTMLTextAreaElement>('#sim-alg')?.value).toBe(alg);
   });
 });
