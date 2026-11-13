@@ -219,6 +219,20 @@ export const NATIVE_PUZZLES = {
     axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
     scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 380,
   },
+  // Jason Smith's Radiolarian 13; Hyperspeedcube radio13 uses
+  // h = 1/(phi^4 + phi^2) = 1 - 2/sqrt(5). Preserve this critical cut.
+  radiogem: {
+    description: 'i f 0.10557280900008412', zh: 'Radio Gem', en: 'Radio Gem', textLabel: 'Gem',
+    axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
+    scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 440,
+  },
+  // Jason Smith's Radiolarian 14; Hyperspeedcube radio14 uses h = 0.05.
+  // Keep the thin central slices and all 362 visible pieces; no jumbling.
+  radiofathom: {
+    description: 'i f 0.05', zh: 'Radio Fathom', en: 'Radio Fathom', textLabel: 'Fathom',
+    axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
+    scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 560,
+  },
 } as const;
 
 export type NativePuzzleId = keyof typeof NATIVE_PUZZLES;

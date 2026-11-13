@@ -77,8 +77,9 @@ describe('shared Timer drill contract', () => {
   it('keeps Drill visible while active and marks only a supported active event', () => {
     expect(TIMER_MORE_ACTION_CONTRACTS.find(({ id }) => id === 'more.drill')?.visibility)
       .toBe('drill-event');
-    expect(EVENTS).toHaveLength(87);
-    for (const event of EVENTS.map(({ id }) => id)) {
+    const events = EVENTS.map(({ id }) => id);
+    expect(events).toEqual(expect.arrayContaining([...DRILL_EVENTS, 'radiogem', 'radiofathom']));
+    for (const event of events) {
       for (const drillActive of [false, true]) {
         const action = timerMoreActionStates({
           compactViewport: false,

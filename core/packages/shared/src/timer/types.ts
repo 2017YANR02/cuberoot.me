@@ -32,7 +32,7 @@ export type EventId =
   | 'lattice' | 'hyperx' | 'latticex' | 'masterbrilic' | 'masterftov2'
   | 'quadx' | 'dinoocta' | 'fto5' | 'fto6' | 'eto' | 'radiocrystal'
   | 'cube3skewb' | 'heliskewb' | 'comboctahedron' | 'circoradiolarian' | 'icosababyface'
-  | 'cube2heli' | 'cube3heli' | 'radiojewel' | 'radioweb' | 'radiojam' | 'catscradle' | 'radiocanon' | 'radiolarian3' | 'radiostar'
+  | 'cube2heli' | 'cube3heli' | 'radiojewel' | 'radioweb' | 'radiojam' | 'catscradle' | 'radiocanon' | 'radiolarian3' | 'radiostar' | 'radiogem' | 'radiofathom'
   // Relays
   | 'r3' | 'r4' | 'r5'
   // CFOP step training
@@ -277,6 +277,8 @@ export const EVENTS: EventInfo[] = [
   { id: 'radiocanon', nameEn: 'Radio Canon', nameZh: 'Radio Canon', group: 'nonwca', icon: 'puzzle-radiocanon' },
   { id: 'radiolarian3', nameEn: 'Radiolarian 3', nameZh: 'Radiolarian 3', group: 'nonwca', icon: 'puzzle-radiolarian3' },
   { id: 'radiostar', nameEn: 'Radio Star', nameZh: 'Radio Star', group: 'nonwca', icon: 'puzzle-radiostar' },
+  { id: 'radiogem', nameEn: 'Radio Gem', nameZh: 'Radio Gem', group: 'nonwca', icon: 'puzzle-radiogem' },
+  { id: 'radiofathom', nameEn: 'Radio Fathom', nameZh: 'Radio Fathom', group: 'nonwca', icon: 'puzzle-radiofathom' },
 
   // CFOP step training
   { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字',       group: 'cfop'

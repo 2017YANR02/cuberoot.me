@@ -288,6 +288,8 @@ describe.each([
   { event: 'radiocanon', nameEn: 'Radio Canon', nameZh: 'Radio Canon' },
   { event: 'radiolarian3', nameEn: 'Radiolarian 3', nameZh: 'Radiolarian 3' },
   { event: 'radiostar', nameEn: 'Radio Star', nameZh: 'Radio Star' },
+  { event: 'radiogem', nameEn: 'Radio Gem', nameZh: 'Radio Gem' },
+  { event: 'radiofathom', nameEn: 'Radio Fathom', nameZh: 'Radio Fathom' },
 ] as const)('$event csTimer compatibility', ({ event, nameEn, nameZh }) => {
   it('preserves renamed sessions and mixed native notation through both import APIs', () => {
     const solve = {
@@ -486,6 +488,40 @@ describe('Radio Star session-name boundaries', () => {
     } else {
       expect(session.event).not.toBe('radiostar');
       expect(byEvent?.radiostar).toBeUndefined();
+    }
+  });
+});
+
+describe.each([
+  { event: 'radiogem', name: 'Radio Gem', number: 13 },
+  { event: 'radiofathom', name: 'Radio Fathom', number: 14 },
+] as const)('$event session-name boundaries', ({ event, name, number }) => {
+  it.each([
+    [`${name}.`, true],
+    [`Session_${event}_Practice`, true],
+    [`Session_Radiolarian_${number}.`, true],
+    [`练习：${name}（Radiolarian ${number}）`, true],
+    [`Radiolarian${number}0`, false],
+    [`Radiolarian ${number}.0`, false],
+    [`Session_Radiolarian${number}.5_Practice`, false],
+    [`Radiolarian${number}th`, false],
+    [`XRadiolarian ${number}`, false],
+    [`${name}s Practice`, false],
+    [`${event}.5 Practice`, false],
+    [`X${name} Practice`, false],
+  ] as const)('recognizes only the complete puzzle name in %s', (sessionName, matches) => {
+    const raw = JSON.stringify({
+      session1: [[[0, 8_765], "R 2L' Gw", '', 1_700_000_000]],
+      properties: { sessionData: { 1: { name: sessionName, opt: { scrType: 'input' } } } },
+    });
+    const session = parseCstimerExport(raw)[0];
+    const byEvent = importCstimerJson(raw);
+    if (matches) {
+      expect(session).toMatchObject({ event, matched: true });
+      expect(byEvent?.[event]?.[0]).toMatchObject({ event, scramble: "R 2L' Gw" });
+    } else {
+      expect(session.event).not.toBe(event);
+      expect(byEvent?.[event]).toBeUndefined();
     }
   });
 });

@@ -17,6 +17,7 @@
 - [Radio Canon](#radio-canon)
 - [Radiolarian 3](#radiolarian-3)
 - [Radio Star](#radio-star)
+- [Radio Gem 与 Radio Fathom](#radio-gem-与-radio-fathom)
 
 ## 共享入口
 
@@ -266,3 +267,19 @@
 - 核对原生轨道 `CENTERS(60,1)`、`EDGES(60,2)`、`CENTERS2(60,1)`、`EDGES2(30,2)`、`CENTERS3(60,1)`、`CENTERS4(20,3)`；复用二十个面向的 `A/2A/Aw/Av`、120° 基本转角和 60 步练习用随机转动，不宣称均匀随机状态。
 - 在现有独立几何与真实 PG3D 五进度测试中覆盖全层深、正反方向、宽转组合和非法层拒绝，再单独实测浏览器拖层、播放与二维回退；在双语说明中保留仅保形转动、不含原作 jumbling 和 double-jumble 的范围。
 - 让三入口共用完整二十面 SVG、结构图标和独立 `radiostar` 计时记录；导出使用 `input` 并保留 `cuberootEvent`，导入支持 Radio Star／Radiolarian 11，并用词边界拒绝 Radiolarian 110、11.5 等相邻名称。
+
+## Radio Gem 与 Radio Fathom
+
+- 按 Jason Smith 的 [Radio Gem（Radiolarian 13）原作](https://www.puzzleforge.com/wp/2013/05/07/radiolarian-13-the-radio-gem-52013/)与 [Radio Fathom（Radiolarian 14）原作](https://www.puzzleforge.com/wp/2013/05/07/radiolarian-14-the-radio-fathom-52013/)核对实际分区；以 [Hyperspeedcube 的 `radio13`／`radio14`](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua)为理想化面切深来源，不声称量取了实物尺寸。
+- 以内切球半径 1 分别使用 `radiogem: i f 0.10557280900008412` 和 `radiofathom: i f 0.05`；保留 Gem 的临界表达式 `h = 1/(φ⁴+φ²) = 1−2/√5`，将 Fathom 的 `0.05` 明确视为上游采用的非临界切深。
+- 在注册前从 `core/` 运行 `node packages/client/scripts/native-puzzles/compare-outlines.mjs --set=radio-gem-fathom`，核对单面切线、放大分区和完整二十面展开图；黑色 Radio Star 切线只作比较，不加入新模型。
+- 从独立半空间重导以下分区，去除单色面中心的 40 个朝向重复贴片；以物理表面块的转动连通图独立重建轨道，不将 PG 的轨道名称或同片数项目作为几何证据。
+
+| 项目 | 每面分区 | 可见贴片 | 可见块 | 块轨道 | 单／双／五贴片块 |
+| --- | --- | --- | --- | --- | --- |
+| Radio Gem | 15 三角形、6 四边形、1 六边形 | 440 | 302 | 7 | 200／90／12 |
+| Radio Fathom | 9 三角形、18 四边形、1 六边形 | 560 | 362 | 8 | 200／150／12 |
+
+- 用 Gem 的 `h±0.0001` 作负例，核对两侧均恢复 60 个双贴片块、560 个贴片和 362 个块；分别保留两侧不同的多边形分区，不让数值容差掩盖临界切深错误。对 Fathom 独立核对细窄中间层，不因其与 Nebula 同为 560 片就复用轮廓。
+- 复用二十个面向的 `A/2A/Aw/Av`、120° 基本转角和 60 步练习用随机转动；验证全部合法层、正反方向、宽转组合、整体转体及交错转动后的当前块归属，并分别记录真实 PG3D 五进度矩阵验证与浏览器拖层验收。在双语说明中保留仅保形转动、不含 jumbling 的边界，不宣称均匀随机状态。
+- 让模拟器、Timer、生成页比赛／批量／输入及 PDF 消费同一注册表与完整 SVG；用 `puzzle-radiogem`／`puzzle-radiofathom` 真实图标和独立计时记录，保留普通／种子打乱、手动操作、播放、分享与二维回退。csTimer 导出用 `input` 并保留 `cuberootEvent`；导入支持原名和 Radiolarian 13／14，用词与数字边界拒绝 130／140、13.5／14.5 等相邻名称。

@@ -148,6 +148,8 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   radiocanon: { kind: 'shared', provider: 'native-random-move' },
   radiolarian3: { kind: 'shared', provider: 'native-random-move' },
   radiostar: { kind: 'shared', provider: 'native-random-move' },
+  radiogem: { kind: 'shared', provider: 'native-random-move' },
+  radiofathom: { kind: 'shared', provider: 'native-random-move' },
   r3: { kind: 'compound', provider: 'timer-compound' },
   r4: { kind: 'compound', provider: 'timer-compound' },
   r5: { kind: 'compound', provider: 'timer-compound' },

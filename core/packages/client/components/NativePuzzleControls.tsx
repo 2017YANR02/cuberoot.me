@@ -9,6 +9,8 @@ import { useT } from '@/hooks/useT';
 export type NativeDragDepth = 'auto' | NativePuzzleMoveDepth;
 
 const NOTES: Record<PgInteractionPuzzleId, readonly [string, string]> = {
+  radiogem: ['Radio Gem（Radiolarian 13）：每面十五个三角形、六个四边形和一个六边形；支持保形的 120° 外层、第二层与宽转，不含 jumbling。', 'Radio Gem (Radiolarian 13): fifteen triangles, six quadrilaterals and one hexagon per face. Supports shape-preserving 120° outer, second and wide turns, without jumbling.'],
+  radiofathom: ['Radio Fathom（Radiolarian 14）：每面九个三角形、十八个四边形和一个六边形，保留细窄的中间层；支持保形的 120° 外层、第二层与宽转，不含 jumbling。', 'Radio Fathom (Radiolarian 14): nine triangles, eighteen quadrilaterals and one hexagon per face, with a thin central slice. Supports shape-preserving 120° outer, second and wide turns, without jumbling.'],
   radiostar: ['Radio Star（Radiolarian 11）：角块消失的深切二十面体，每面 19 个色块；仅支持保形的 120° 外层、第二层与宽转，不含 jumbling 或 double-jumble。', 'Radio Star (Radiolarian 11): a deep-cut icosahedron with no corner pieces and 19 stickers per face. Supports shape-preserving 120° outer, second and wide turns, without jumbling or double-jumbling.'],
   radiolarian3: ['Radiolarian 3：中心可移动的二十面体，每步面转 120°，支持外层、第二层与宽转；当前仅支持保形转动，不含 jumbling。', 'Radiolarian 3: an icosahedron with mobile centers and 120° outer, second and wide turns. Supports shape-preserving turns only, without jumbling.'],
   baby_fto: ['二阶 FTO：每步面转 120°，八个面各有四个三角形；支持 U、F、R、L、D、B、BR、BL。', 'Baby FTO: 120° face turns and four triangles on each of eight faces. Supports U, F, R, L, D, B, BR and BL.'],
