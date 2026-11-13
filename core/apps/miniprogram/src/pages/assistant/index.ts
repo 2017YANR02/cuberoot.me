@@ -2,7 +2,7 @@ import { algorithmCaseImage } from '@cuberoot/puzzle-render-core/alg-case-image'
 import { createAssistantAlgorithmLoader, replaceAssistantAlgorithm } from '@cuberoot/shared/site-assistant-algorithms';
 import type { AssistantAlgorithmCard } from '@cuberoot/shared/site-assistant';
 import type { AlgFile } from '@cuberoot/shared/alg-types';
-import { ASSISTANT_ERROR_TEXT, assistantAnswerHistory, assistantAnswerText, boundAssistantHistory, isAssistantAlgorithms, SITE_ASSISTANT_QUESTION_MAX_LENGTH, type AssistantAnswer, type AssistantAlgorithms, type AssistantMessage, type AssistantErrorCode } from '@cuberoot/shared/site-assistant';
+import { ASSISTANT_ERROR_TEXT, assistantAnswerHistory, assistantAnswerText, boundAssistantHistory, isAssistantAlgorithms, SITE_ASSISTANT_ARTIFACT_FORMAT, SITE_ASSISTANT_QUESTION_MAX_LENGTH, type AssistantAnswer, type AssistantAlgorithms, type AssistantMessage, type AssistantErrorCode } from '@cuberoot/shared/site-assistant';
 import { getStoredSession, requestJson, ApiError } from '../../lib/auth';
 import { miniProgramApi } from '../../lib/platform';
 import { getMiniProgramLocale, tr } from '../../lib/i18n';
@@ -166,7 +166,7 @@ Page({
     const history:AssistantMessage[]=this.records.flatMap(t=>[{role:'user' as const,content:t.question},{role:'assistant' as const,content:assistantAnswerHistory(t.result,SITE_ORIGIN)}]);
     try {
       let requestId:string|undefined;
-      const result=await requestJson<AssistantAnswer>('/site-assistant',{method:'POST',token,timeoutMs:60000,signal:this.controller.signal,
+      const result=await requestJson<AssistantAnswer>(`/site-assistant?artifactFormat=${SITE_ASSISTANT_ARTIFACT_FORMAT}`,{method:'POST',token,timeoutMs:60000,signal:this.controller.signal,
         onResponseHeaders:headers=>{ const value=Object.entries(headers).find(([key])=>key.toLowerCase()==='x-assistant-request-id')?.[1]; if(typeof value==='string' && /^[0-9a-f-]{36}$/i.test(value)) requestId=value; },
         body:{question,lang:getMiniProgramLocale(),thinking:'auto',history:boundAssistantHistory(history)}});
       if(job!==this.job || getStoredSession()?.token!==token) return;

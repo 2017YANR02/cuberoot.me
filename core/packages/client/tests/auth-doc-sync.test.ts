@@ -48,6 +48,7 @@ describe('/dev/auth source-review drift', () => {
       'src/pages/account-link/index.wxml', 'src/pages/account-delete/index.wxml',
       'src/pages/account-settings/index.wxml', 'src/lib/native-account-link.ts',
       'src/lib/native-route-page.ts',
+      'src/pages/assistant/index.ts',
     ]) {
       expect(sources.map(([path]) => path))
         .toContain(relative(CORE_ROOT, workspaceFixturePath('@cuberoot/miniprogram', file)).replaceAll('\\', '/'));

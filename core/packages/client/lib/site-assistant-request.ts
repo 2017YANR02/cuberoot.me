@@ -2,7 +2,7 @@ import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import { sessionFetch } from '@/lib/session-fetch';
 import type { AssistantBrowserTiming } from '@cuberoot/shared/site-assistant';
-import { SITE_ASSISTANT_BODY_BYTES, SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH, boundAssistantHistory, type AssistantMessage, type AssistantImage, type AssistantThinkingMode } from '@cuberoot/shared/site-assistant';
+import { SITE_ASSISTANT_ARTIFACT_FORMAT, SITE_ASSISTANT_BODY_BYTES, SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH, boundAssistantHistory, type AssistantMessage, type AssistantImage, type AssistantThinkingMode } from '@cuberoot/shared/site-assistant';
 
 interface AssistantRequest {
   conversationId?: string; parentId?: string; retryOf?: string;
@@ -16,6 +16,7 @@ interface AssistantRequest {
 
 /** A schema rejection happens before quota/model work, so this retry is safe. */
 export async function requestSiteAssistant(url:string,request:AssistantRequest,init:RequestInit,fetcher:typeof fetch=sessionFetch):Promise<Response> {
+  url += `${url.includes('?') ? '&' : '?'}artifactFormat=${SITE_ASSISTANT_ARTIFACT_FORMAT}`;
   request={...request,history:boundAssistantHistory(request.history)};
   const encoder=new TextEncoder();
   let body=JSON.stringify(request);
