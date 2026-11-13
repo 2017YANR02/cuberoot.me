@@ -26,6 +26,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 按逐轴 `axisOrders` 处理混合机制，保留 FaceRenamingMapper 的完整外部族名，并独立核对不增加表面分区的角尖切面与旧种子打乱兼容性。
 - 制作 Radio Web（Radiolarian 6）时按 [Radio Web 几何与验收](references/radio-web.md) 保留临界切深上方的细小翼块；不能复用 Radio Jewel 的 320 片图示冒充本项目的 440 片。
 - 制作 Radio Jam（Radiolarian 8）时按 [Radio Jam 几何与验收](references/radio-jam.md) 使用 `radio08` 实际切深，并保留每面的 15 个三角形、6 个五边形和 1 个六边形。
+- 制作 Radio Nebula（Radiolarian 12）时按 [Radio Nebula 几何与验收](references/radio-nebula.md) 使用 `1/φ⁴` 面切，保留每面 28 区、小五色角及八个可见块轨道，不与双切层的 Eitan’s Nebula 混用。
 - 制作 Cat’s Cradle（Radiolarian 5）时按 [原生 PG 结构与接线](references/native-pg-puzzles.md#cats-cradle) 保留精确切深与每面十九区，独立检查切深两侧的负例，不复用相邻 Radiolarian 的分区。
 - 制作 Radio Canon（Radiolarian 1.5）时按 [固定中心与分区验证](references/native-pg-puzzles.md#radio-canon) 保留每面七个三角形、九个四边形及二十个固定中心；分别核对中心置换与不可辨自转，不以同为 320 片的 Radio Jewel 代替本项目几何。
 - 制作 Radiolarian 3 时按 [移动中心与分区验证](references/native-pg-puzzles.md#radiolarian-3) 保留精确切深、每面十个三角形／三个四边形／三个五边形，并逐外层面转验证三个相邻中心的循环置换；不要因贴片数、块数及轨道数相同就复用 Radio Canon。
@@ -46,7 +47,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 新建或修改引擎前，必须读 [引擎范本](references/engine-templates.md)，选择对应机制并遵守末尾的通用几何约束；按上面的路径规则定位当前实现。
 
 ## 工作方式
-- 先按改动归属与并发情况选择当前工作树或隔离 worktree，再读 Ivy/SQ1/dino 等适用范本；不要为复用依赖软链其他工作树的 `node_modules`。
+- 在当前 checkout 开发，遵循根 `AGENTS.md` 的禁止 worktree 规则；可将来源核对、独立几何验证、互不重叠的跨页面接线及最终审查分给多个 agent，逐文件划定写入范围，核心引擎搭建仍按依赖顺序进行。
 - 5 个共享文件是多 AI 热点:`engine/world.ts` / `PlayerControls.tsx` / `SimPage.tsx` / `SettingDrawer.tsx` / `lib/sim-recon-link.ts`。
 - 3x3 手部 rig(`engine/hands/`)每帧轮询 `groups[axis][layer].angle`:改层角语义 / 整体转 / drop 时序会牵动手势,动完必跑穿模 oracle + 换握 oracle(方法与四机制见 memory `project_sim_hands_rig`);指法规格(哪指做哪步 / 连拨 / `p` 推法记号)权威在 `engine/hands/FINGERING.md`;其它拼图无手(`supports.hands = kind===3`)。
 - 先读 `git status`/diff,只暂存本任务新增和修改的内容,保留他人暂存与未暂存改动;无关 WIP 不阻塞,重叠时仅暂停无法安全分离的部分;默认不 push。
