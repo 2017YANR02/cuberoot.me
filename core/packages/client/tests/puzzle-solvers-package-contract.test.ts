@@ -12,6 +12,7 @@ const PACKAGE_NAME = '@cuberoot/puzzle-solvers';
 const require = createRequire(import.meta.url);
 
 const PUBLIC_SUBPATHS = [
+  'baby-fto',
   'bicube',
   'bsq',
   'cm3',
