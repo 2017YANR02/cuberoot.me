@@ -10,12 +10,27 @@
 // --set=radiocanon: review Radio Canon's fixed-center face cuts.
 // --set=radiolarian3: review Radiolarian 3's mobile-center face cuts.
 // --set=radiostar: review Radio Star's critical cut where all corners disappear.
+// --set=radio-gem-fathom: review the two deeper icosahedral cuts against Radio Star.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
 import { NATIVE_PUZZLES } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { Vector3 } from 'three';
 
 const reviewSets = {
+  'radio-gem-fathom': {
+    basename: 'radio-gem-fathom-outlines',
+    rows: [{
+      id: 'radiogem', en: 'Radio Gem (Radiolarian 13)',
+      description: 'i f 0.10557280900008412', visibleFacelets: 440,
+      prior: 'i f 0.2360679774997897', priorLabel: 'Radio Star (comparison; cuts are replaced)',
+      notes: ['Exact face-normal depth h = 1/(phi^4 + phi^2) = 1 - 2/sqrt(5); 302 visible pieces.', '15 triangles + 6 quadrilaterals + 1 hexagon per face; no jumbling.'],
+    }, {
+      id: 'radiofathom', en: 'Radio Fathom (Radiolarian 14)',
+      description: 'i f 0.05', visibleFacelets: 560,
+      prior: 'i f 0.2360679774997897', priorLabel: 'Radio Star (comparison; cuts are replaced)',
+      notes: ['Hyperspeedcube radio14 face-normal depth h = 0.05; 362 visible pieces.', '9 triangles + 18 quadrilaterals + 1 hexagon per face; no jumbling.'],
+    }],
+  },
   radiostar: {
     basename: 'radiostar-outlines',
     rows: [{

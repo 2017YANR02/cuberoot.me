@@ -52,6 +52,8 @@ describe('simulator puzzle families', () => {
       ['catscradle', 'icosahedron'],
       ['radiolarian3', 'icosahedron'],
       ['radiostar', 'icosahedron'],
+      ['radiogem', 'icosahedron'],
+      ['radiofathom', 'icosahedron'],
       ['cube2heli', 'hybrid-cuts'],
       ['cube3heli', 'hybrid-cuts'],
     ]) {

@@ -52,6 +52,8 @@ const CASES = [
   { id: 'radiojam', setup: 'Rw', alg: "G U'", manual: '2R', typed: "Gw' U" },
   { id: 'catscradle', setup: 'Rw', alg: "G U'", manual: '2R', typed: "Gw' U" },
   { id: 'radiostar', setup: 'Rw', alg: "G U'", manual: '2R', typed: "Gw' U" },
+  { id: 'radiogem', setup: 'Rw', alg: "G U'", manual: '2R', typed: "Gw' U" },
+  { id: 'radiofathom', setup: 'Rw', alg: "G U'", manual: '2R', typed: "Gw' U" },
   { id: 'icosababyface', setup: 'FREGU', alg: "HIERC2 FLACR'", manual: '2NALPO', typed: "FLACRw' HIERC" },
   { id: 'cube2heli', setup: 'F', alg: "DF U'", manual: '2DF', typed: "FLw' U", reducedTyped: 'FLw U' },
   { id: 'cube3heli', setup: 'F', alg: "DF U'", manual: '2DF', typed: "FLw' U", reducedTyped: 'FLw U' },

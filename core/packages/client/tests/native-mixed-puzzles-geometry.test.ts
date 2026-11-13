@@ -34,6 +34,11 @@ import { nativePuzzleKPuzzle, parseNativePuzzleAlg } from '@cuberoot/puzzle-solv
 // https://www.puzzleforge.com/wp/2014/05/08/radiolarian-1-5-the-radio-cannon-52014/
 // Radiolarian 3's radio03 uses 1 - (1 - 1/phi) * 4/5 and mobile centers:
 // https://www.puzzleforge.com/wp/2010/03/08/132/
+// Radio Gem's radio13 uses 1/(phi^4+phi^2), losing sixty exterior pieces:
+// https://www.puzzleforge.com/wp/2013/05/07/radiolarian-13-the-radio-gem-52013/
+// Radio Fathom's radio14 uses 0.05 and retains 362 exterior pieces:
+// https://www.puzzleforge.com/wp/2013/05/07/radiolarian-14-the-radio-fathom-52013/
+// These are the Hyperspeedcube cuts, not measured retail dimensions.
 // Radio Star's radio11 uses 1/phi^3 = sqrt(5) - 2, where corners disappear:
 // https://www.puzzleforge.com/wp/2013/11/07/radiolarian-11-the-radio-star-112013/
 // Baby Face preset: https://github.com/cubing/cubing.js/issues/127
@@ -228,6 +233,20 @@ const CASES: readonly Spec[] = [
     faces: 20, perFace: 19, raw: 420, visible: 380, pieces: 290,
     shapes: { 3: 12, 4: 3, 5: 3, 6: 1 }, unmarkedOrbit: 'CENTERS4',
     orbits: [['CENTERS', 60, 1], ['EDGES', 60, 2], ['CENTERS2', 60, 1], ['EDGES2', 30, 2], ['CENTERS3', 60, 1], ['CENTERS4', 20, 3]],
+  },
+  {
+    id: 'radiogem', faceNormals: icoNormals,
+    axes: [{ pairs: icoFacePairs, normals: icoNormals, cuts: [1 / (PHI ** 4 + PHI ** 2)], order: 3 }],
+    faces: 20, perFace: 22, raw: 480, visible: 440, pieces: 302,
+    shapes: { 3: 15, 4: 6, 6: 1 }, unmarkedOrbit: 'CENTERS4',
+    orbits: [['C5RNER', 12, 5], ['EDGES', 60, 2], ['EDGES2', 30, 2], ['CENTERS', 60, 1], ['CENTERS2', 60, 1], ['CENTERS3', 60, 1], ['CENTERS4', 20, 3]],
+  },
+  {
+    id: 'radiofathom', faceNormals: icoNormals,
+    axes: [{ pairs: icoFacePairs, normals: icoNormals, cuts: [0.05], order: 3 }],
+    faces: 20, perFace: 28, raw: 600, visible: 560, pieces: 362,
+    shapes: { 3: 9, 4: 18, 6: 1 }, unmarkedOrbit: 'CENTERS4',
+    orbits: [['EDGES', 60, 2], ['EDGES2', 60, 2], ['C5RNER', 12, 5], ['EDGES3', 30, 2], ['CENTERS', 60, 1], ['CENTERS2', 60, 1], ['CENTERS3', 60, 1], ['CENTERS4', 20, 3]],
   },
 ];
 
@@ -424,6 +443,108 @@ it('keeps Radio Star at the exact depth where all twelve corners disappear', () 
     // Both nearby depths restore twelve five-sticker corners; the intended
     // critical model consists only of 200 single- and 90 double-sticker pieces.
     expect(counts).toEqual(variant.counts);
+  }
+});
+
+it('keeps Radio Gem at the exact depth where sixty two-sticker pieces disappear', () => {
+  const spec = CASES.find(({ id }) => id === 'radiogem')!;
+  const depth = 1 / (PHI ** 4 + PHI ** 2);
+  expect(Number(NATIVE_PUZZLES.radiogem.description.split(' ')[2])).toBe(depth);
+  expect(depth).toBeCloseTo(1 - 2 / Math.sqrt(5), 14);
+  const normals = Object.values(icoNormals);
+  const area = (polygon: Vector3[]) => polygon.reduce((sum, point, i) =>
+    sum.add(point.clone().cross(polygon[(i + 1) % polygon.length])), new Vector3()).length() / 2;
+  for (const variant of [
+    { delta: -0.0001, shapes: { 3: 9, 4: 18, 6: 1 }, visible: 560, pieces: 362, double: 150 },
+    { delta: 0, shapes: { 3: 15, 4: 6, 6: 1 }, visible: 440, pieces: 302, double: 90 },
+    { delta: 0.0001, shapes: { 3: 18, 4: 3, 5: 3, 6: 4 }, visible: 560, pieces: 362, double: 150 },
+  ]) {
+    const model: Spec = { ...spec, axes: [{ ...spec.axes[0], cuts: [depth + variant.delta] }] };
+    const planes = cutPlanes(model), pieces = new Map<string, number>();
+    let visible = 0;
+    for (const normal of normals) {
+      const regions = expectedFace(model, normal);
+      expect(shapeCounts(regions), `cut offset ${variant.delta}`).toEqual(variant.shapes);
+      const areas = regions.map(area);
+      expect(Math.min(...areas)).toBeGreaterThan(0);
+      expect(areas.reduce((sum, value) => sum + value, 0)).toBeCloseTo(area(uncutFace(normal, normals)), 10);
+      visible += regions.length;
+      for (const polygon of regions) {
+        const point = center(polygon);
+        const key = planes.map(({ normal: cutNormal, offset }) => cutNormal.dot(point) > offset ? '+' : '-').join('');
+        pieces.set(key, (pieces.get(key) ?? 0) + 1);
+      }
+    }
+    expect(visible).toBe(variant.visible);
+    expect(pieces.size).toBe(variant.pieces);
+    expect([...pieces.values()].filter((count) => count === 1)).toHaveLength(200);
+    expect([...pieces.values()].filter((count) => count === 2)).toHaveLength(variant.double);
+    expect([...pieces.values()].filter((count) => count === 5)).toHaveLength(12);
+  }
+});
+
+it.each(['radiogem', 'radiofathom'] as const)('reconstructs all %s visible piece orbits without PG', (id) => {
+  const spec = CASES.find((candidate) => candidate.id === id)!;
+  const planes = cutPlanes(spec), normals = Object.values(spec.faceNormals);
+  const cellKey = (point: Vector3) => planes.map(({ normal, offset }) => normal.dot(point) > offset ? '+' : '-').join('');
+  const cells = new Map<string, Vector3[][]>();
+  for (const normal of normals) for (const polygon of expectedFace(spec, normal)) {
+    const key = cellKey(center(polygon));
+    cells.set(key, [...(cells.get(key) ?? []), polygon]);
+  }
+  expect(cells.size).toBe(spec.pieces);
+  const pieces = [...cells.values()].map((polygons) => ({ polygons, position: center(polygons.flat()) }));
+  const byCell = new Map([...cells.keys()].map((key, index) => [key, index]));
+  const parents = pieces.map((_, index) => index);
+  const root = (index: number): number => {
+    while (parents[index] !== index) index = parents[index];
+    return index;
+  };
+  // Independently construct the action on physical surface cells: neither PG
+  // orbit labels, PG permutations nor generated PG polygons enter this graph.
+  for (const axisSpec of spec.axes) for (const axis of Object.values(axisSpec.normals)) {
+    const bounds = [Infinity, ...boundaries(axisSpec), -Infinity];
+    for (let layer = 1; layer < bounds.length; layer++) {
+      const high = bounds[layer - 1], low = bounds[layer];
+      pieces.forEach((piece, index) => {
+        const q = piece.position.dot(axis);
+        if (q <= low + EPS || q >= high - EPS) return;
+        const destination = byCell.get(cellKey(piece.position.clone().applyAxisAngle(axis, -2 * Math.PI / axisSpec.order)));
+        expect(destination, `${id} physical cell destination`).toBeDefined();
+        expect(pieces[destination!].polygons.length).toBe(piece.polygons.length);
+        parents[root(index)] = root(destination!);
+      });
+    }
+  }
+  const orbits = new Map<number, { pieces: number; stickersPerPiece: number }>();
+  pieces.forEach((piece, index) => {
+    const key = root(index), orbit = orbits.get(key);
+    if (orbit) { expect(orbit.stickersPerPiece).toBe(piece.polygons.length); orbit.pieces++; }
+    else orbits.set(key, { pieces: 1, stickersPerPiece: piece.polygons.length });
+  });
+  const order = (a: number[], b: number[]) => a[0] - b[0] || a[1] - b[1];
+  const actual = [...orbits.values()].map((orbit) => [orbit.pieces, orbit.stickersPerPiece]).sort(order);
+  const expected = [[12, 5], [20, 1], [30, 2], [60, 1], [60, 1], [60, 1], [60, 2]];
+  if (id === 'radiofathom') expected.push([60, 2]);
+  expect(actual).toEqual(expected.sort(order));
+  expect(orbits.size).toBe(id === 'radiogem' ? 7 : 8);
+});
+
+it('distinguishes Radio Fathom from the same-count Radio Nebula and from critical Radio Gem', () => {
+  const fathom = CASES.find(({ id }) => id === 'radiofathom')!;
+  const gem = CASES.find(({ id }) => id === 'radiogem')!;
+  const nebula = { ...fathom, axes: [{ ...fathom.axes[0], cuts: [1 / PHI ** 4] }] };
+  expect(Number(NATIVE_PUZZLES.radiofathom.description.split(' ')[2])).toBe(0.05);
+  const area = (polygon: Vector3[]) => polygon.reduce((sum, point, i) =>
+    sum.add(point.clone().cross(polygon[(i + 1) % polygon.length])), new Vector3()).length() / 2;
+  for (const normal of Object.values(icoNormals)) {
+    const regions = expectedFace(fathom, normal);
+    expect(shapeCounts(regions)).toEqual({ 3: 9, 4: 18, 6: 1 });
+    expect(shapeCounts(expectedFace(nebula, normal))).toEqual({ 3: 18, 4: 3, 5: 3, 6: 4 });
+    expect(shapeCounts(expectedFace(gem, normal))).toEqual({ 3: 15, 4: 6, 6: 1 });
+    expect(Math.min(...regions.map(area))).toBeCloseTo(0.008028497019894474, 12);
+    expect(regions.map(area).reduce((sum, value) => sum + value, 0))
+      .toBeCloseTo(area(uncutFace(normal, Object.values(icoNormals))), 10);
   }
 });
 
@@ -654,14 +775,23 @@ describe.each(CASES)('$id independent physical model', (spec) => {
   });
 });
 
-it.each(['cube2heli', 'cube3heli'] as const)('keeps %s pieces rigid through interleaved face, edge, slice, wide and whole turns', (id) => {
+it.each(['cube2heli', 'cube3heli', 'radiogem', 'radiofathom'] as const)('keeps %s pieces rigid through interleaved layer, wide and whole turns', (id) => {
   const spec = CASES.find((candidate) => candidate.id === id)!;
   const twoHalves = id === 'cube2heli';
   const { stickers, byPolygon, puzzle } = fixture(spec);
   // Track physical source stickers geometrically; PG only supplies the state
   // being checked, never the next moving set or expected destination.
   const live = stickers.map((sticker) => ({ ...sticker, vertices: sticker.vertices.map((p) => p.clone()) }));
-  const sequence = [
+  const isIcosahedron = id === 'radiogem' || id === 'radiofathom';
+  const sequence = isIcosahedron ? [
+    { move: 'R', family: 'R', axis: 0, first: 1, last: 1, amount: 1 },
+    { move: "2U'", family: 'U', axis: 0, first: 2, last: 2, amount: -1 },
+    { move: 'Gw', family: 'G', axis: 0, first: 1, last: 2, amount: 1 },
+    { move: 'Lv', family: 'L', axis: 0, first: 1, last: 3, amount: 1 },
+    { move: "F'", family: 'F', axis: 0, first: 1, last: 1, amount: -1 },
+    { move: '2R', family: 'R', axis: 0, first: 2, last: 2, amount: 1 },
+    { move: "Uw'", family: 'U', axis: 0, first: 1, last: 2, amount: -1 },
+  ] : [
     { move: 'F', family: 'F', axis: 0, first: 1, last: 1, amount: 1 },
     { move: "UF'", family: 'UF', axis: 1, first: 1, last: 1, amount: -1 },
     { move: twoHalves ? "R'" : "2R'", family: 'R', axis: 0, first: twoHalves ? 1 : 2, last: twoHalves ? 1 : 2, amount: -1 },
@@ -705,12 +835,15 @@ it.each(['cube2heli', 'cube3heli'] as const)('keeps %s pieces rigid through inte
       expect(target!.orbit, `${step.move} orbit`).toBe(source.orbit);
       expect(pattern.patternData[target!.orbit].pieces[target!.ord], `${step.move} live piece`).toBe(source.ord);
       const orientations = spec.orbits.find(([name]) => name === source.orbit)![2];
-      expect((target!.ori - pattern.patternData[target!.orbit].orientation[target!.ord] + orientations) % orientations,
-        `${step.move} live sticker orientation`).toBe(source.ori);
+      if (source.orbit !== spec.unmarkedOrbit) {
+        expect((target!.ori - pattern.patternData[target!.orbit].orientation[target!.ord] + orientations) % orientations,
+          `${step.move} live sticker orientation`).toBe(source.ori);
+      }
     }
   }
-  expect(puzzle.algToTransformation('F UF').isIdentical(puzzle.algToTransformation('UF F')),
-    'face and edge turns genuinely interact').toBe(false);
+  const [a, b] = isIcosahedron ? ['R', 'U'] : ['F', 'UF'];
+  expect(puzzle.algToTransformation(`${a} ${b}`).isIdentical(puzzle.algToTransformation(`${b} ${a}`)),
+    'successive turns on different axes interact').toBe(false);
   const alg = parseNativePuzzleAlg(spec.id, sequence.map(({ move }) => move).join(' '));
   expect(pattern.applyAlg(alg.invert()).isIdentical(puzzle.defaultPattern())).toBe(true);
 });
@@ -818,7 +951,7 @@ afterEach(async () => {
   }
 });
 
-it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'catscradle', 'radiocanon', 'radiolarian3', 'radiostar'] as const)('animates %s moves in both directions with the real PG3D matrices and selected pieces', async (id) => {
+it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'catscradle', 'radiocanon', 'radiolarian3', 'radiostar', 'radiogem', 'radiofathom'] as const)('animates %s moves in both directions with the real PG3D matrices and selected pieces', async (id) => {
   // This is a local renderer fixture, not browser interaction evidence. The
   // real TwistyPlayer creates its real PG3D; only DOM camera attachment and
   // scheduling are suppressed because jsdom has no display or GPU.
@@ -857,7 +990,7 @@ it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radio
   // Fixed samples of the renderer's quintic easing, independently applied to
   // physical vertices. Keep existing cases at their established middle frame;
   // the newer icosahedral models check start, end and three intermediate frames.
-  const samples = id === 'radiocanon' || id === 'radiojam' || id === 'radiolarian3' || id === 'radiostar'
+  const samples = id === 'radiocanon' || id === 'radiojam' || id === 'radiolarian3' || id === 'radiostar' || id === 'radiogem' || id === 'radiofathom'
     ? [[0, 0], [0.2, 0.05792], [0.5, 0.5], [0.8, 0.94208], [1, 1]]
     : [[0.5, 0.5]];
   for (const choice of manualChoices(spec)) {

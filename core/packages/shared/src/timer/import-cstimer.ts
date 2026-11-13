@@ -124,6 +124,8 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'radiocanon': 'radiocanon', 'radiocannon': 'radiocanon', 'radiolarian1.5': 'radiocanon',
   'radiolarian3': 'radiolarian3',
   'radiostar': 'radiostar', 'radiolarian11': 'radiostar',
+  'radiogem': 'radiogem', 'radiolarian13': 'radiogem',
+  'radiofathom': 'radiofathom', 'radiolarian14': 'radiofathom',
 };
 
 /* ------------------------------------------------------------------ */
@@ -223,6 +225,12 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   if (/(?:^|[^a-z0-9])(?:radio[\s_-]*star|radiolarian[\s_-]*11)(?![a-z0-9]|\.\d)/i.test(name)) {
     return normalizeEventKey('radiostar');
   }
+  if (/(?:^|[^a-z0-9])(?:radio[\s_-]*gem|radiolarian[\s_-]*13)(?![a-z0-9]|\.\d)/i.test(name)) {
+    return normalizeEventKey('radiogem');
+  }
+  if (/(?:^|[^a-z0-9])(?:radio[\s_-]*fathom|radiolarian[\s_-]*14)(?![a-z0-9]|\.\d)/i.test(name)) {
+    return normalizeEventKey('radiofathom');
+  }
   if (tokens.some((token, index) =>
     (token === 'radio' && tokens[index + 1] === 'web')
     || (token === 'radiolarian' && tokens[index + 1] === '6'))) {
@@ -285,7 +293,8 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   }
   for (const t of tokens) {
     // Keep the complete-name checks authoritative for decimal/word suffixes.
-    if (t === 'radiolarian3' || t === 'radiolarian11' || t === 'radiostar') continue;
+    if (t === 'radiolarian3' || t === 'radiolarian11' || t === 'radiostar'
+      || t === 'radiolarian13' || t === 'radiogem' || t === 'radiolarian14' || t === 'radiofathom') continue;
     const tried = normalizeEventKey(t);
     if (tried.matched) return tried;
   }
