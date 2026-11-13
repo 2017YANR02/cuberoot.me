@@ -4,7 +4,7 @@
  */
 import { readFileSync } from 'node:fs';
 
-const source = readFileSync(new URL('../../src/routes/teaching_saas.ts', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../../src/teaching/repository/training-evidence.ts', import.meta.url), 'utf8');
 const start = source.indexOf('WITH eligible AS (', source.indexOf('async getTrainingDailyBoard'));
 const end = source.indexOf('`;', start);
 if (start < 0 || end < 0) throw new Error('Daily board query not found');

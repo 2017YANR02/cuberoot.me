@@ -1,15 +1,11 @@
 import { randomBytes } from 'node:crypto';
 import { platformQuery, enqueuePlatformEvent, type PlatformDb, type PlatformMutationResult } from './db.js';
 import type { PlatformActor } from './auth.js';
-import { badRequest, conflict, notFound } from './errors.js';
+import { conflict, notFound } from './errors.js';
+import { safeSignedMoney } from './commerce/amounts.js';
 import { decryptPlatformPrivateData } from './data_encryption.js';
 import { validateWechatPayout } from './wechat_payout.js';
 
-function safeSignedMoney(value: number | string, label = 'amount') {
-  const amount = Number(value);
-  if (!Number.isSafeInteger(amount)) badRequest(`${label} is outside the supported range`);
-  return amount;
-}
 function payoutNumber() { return `PLT-PO-${randomBytes(8).toString('hex').toUpperCase()}`; }
 
 /** Admin and instructor requests reserve the same signed ledger entries atomically. */

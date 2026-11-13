@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
 import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
@@ -15,12 +16,24 @@ it('uses local calendar days and preserves consecutive streaks across DST',()=>{
  expect(learningStreak(['2026-03-07'],'2026-03-10').current).toBe(0);
 });
 describe.skipIf(!url)('learning HTTP routes with isolated PostgreSQL',()=>{
+ const schema=`platform_learning_${randomUUID().replaceAll('-','')}`;
+ const originalEncryptionKey=process.env.PLATFORM_DATA_ENCRYPTION_KEY_V1;
+ let admin:ReturnType<typeof postgres>;
  let db:ReturnType<typeof postgres>;let first:number,second:number,outsider:number;const course=randomUUID(),lesson=randomUUID(),otherLesson=randomUUID(),quiz=randomUUID(),question=randomUUID();
  const write=(path:string,body:unknown,method='POST')=>app.request(path,{method,headers:{'Content-Type':'application/json','Idempotency-Key':randomUUID()},body:JSON.stringify(body)});
  const json=async(response:Response,status=200)=>{const body=await response.json();expect(response.status,JSON.stringify(body)).toBe(status);return body;};
  beforeAll(async()=>{
-  const parsed=new URL(url!);if(!['127.0.0.1','localhost'].includes(parsed.hostname)||parsed.pathname!=='/platform_completion')throw new Error('Explicit isolated platform_completion database required');
-  process.env.PLATFORM_DATA_ENCRYPTION_KEY_V1=Buffer.alloc(32,47).toString('base64');db=postgres(url!,{max:4,onnotice:()=>{}});state.db=db;
+  const parsed=new URL(url!);if(!['127.0.0.1','localhost'].includes(parsed.hostname))throw new Error('Explicit loopback PostgreSQL required');
+  admin=postgres(url!,{max:1,onnotice:()=>{}});
+  await admin.unsafe(`CREATE SCHEMA "${schema}"`);
+  process.env.PLATFORM_DATA_ENCRYPTION_KEY_V1=Buffer.alloc(32,47).toString('base64');
+  db=postgres(url!,{max:4,onnotice:()=>{},connection:{search_path:schema}});state.db=db;
+  await db.unsafe(`CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at=NOW(); RETURN NEW; END $$;
+    CREATE TABLE app_users(id BIGSERIAL PRIMARY KEY, display_name TEXT NOT NULL);
+    CREATE TABLE teacher_directory_entries(id BIGINT PRIMARY KEY);`);
+  for(const file of ['0066_forum.sql','0074_forum_review.sql','0167_platform_core.sql','0219_platform_lesson_grants.sql','0259_platform_learning_completion.sql']) {
+    await db.unsafe(readFileSync(new URL(`../migrations/${file}`,import.meta.url),'utf8'));
+  }
   await db.begin(async tx=>{
    const users=await tx.unsafe("INSERT INTO app_users(display_name) VALUES('Learning fixture A'),('Learning fixture B'),('Learning outsider') RETURNING id");[first,second,outsider]=users.map(row=>Number(row.id));state.userId=first;
    await tx.unsafe("INSERT INTO platform_courses(id,slug,status,current_revision,published_at) VALUES($1,$2,'published',1,NOW())",[course,`test-${course}`]);
@@ -36,7 +49,12 @@ describe.skipIf(!url)('learning HTTP routes with isolated PostgreSQL',()=>{
    await tx.unsafe(`INSERT INTO platform_quiz_questions(id,quiz_id,quiz_revision,ordinal,question_type,prompt_en,choices,answer_key_encrypted,answer_key_version) VALUES($1,$2,1,0,'single_choice','Choose','["Wrong","Correct"]',$3,$4)`,[question,quiz,encrypted.payload,encrypted.keyVersion]);
   });
  },30000);
- afterAll(async()=>{await db?.end();});
+ afterAll(async()=>{
+  await db?.end();
+  if(admin){await admin.unsafe(`DROP SCHEMA "${schema}" CASCADE`);await admin.end();}
+  if(originalEncryptionKey===undefined)delete process.env.PLATFORM_DATA_ENCRYPTION_KEY_V1;
+  else process.env.PLATFORM_DATA_ENCRYPTION_KEY_V1=originalEncryptionKey;
+ });
  it('enforces completion, averages untouched lessons, and awards completion and certificate once',async()=>{
   await json(await write('/me/certificates',{courseId:course}),409);
   await json(await write(`/me/progress/${lesson}`,{progressBps:10000,positionSeconds:90,status:'completed'},'PUT'));
@@ -87,4 +105,25 @@ describe.skipIf(!url)('learning HTTP routes with isolated PostgreSQL',()=>{
   const rewards=await db.unsafe("SELECT SUM(delta_points)::int points FROM platform_point_ledger WHERE user_id=$1 AND entry_type='achievement'",[user]);await json(await write('/me/badges/refresh',{}));expect(await db.unsafe("SELECT SUM(delta_points)::int points FROM platform_point_ledger WHERE user_id=$1 AND entry_type='achievement'",[user])).toEqual(rewards);
  });
 
+ it.each(['draft', 'archived'])('conceals %s course lessons from active learning routes', async status => {
+  await db.unsafe("UPDATE platform_courses SET status=$2,archived_at=CASE WHEN $2::varchar='archived' THEN NOW() END WHERE id=$1", [course, status]);
+  try {
+   for (const access of ['public', 'entitled']) {
+    await db.unsafe('UPDATE platform_lessons SET access_scope=$2 WHERE id=$1', [lesson, access]);
+    for (const user of [first, outsider]) {
+     state.userId = user;
+     const before = await db.unsafe('SELECT COUNT(*)::int n FROM platform_quiz_attempts WHERE user_id=$1', [user]);
+     await json(await write(`/learning/lessons/${lesson}/quiz`, { quizId: quiz, answers: { [question]: 1 } }), 404);
+     await json(await app.request(`/learning/lessons/${lesson}/state`), 404);
+     await json(await write(`/me/progress/${lesson}`, { progressBps: 10000 }, 'PUT'), 404);
+     await json(await write(`/me/notes/${lesson}`, { contentMarkdown: 'Hidden lesson' }, 'PUT'), 404);
+     expect(await db.unsafe('SELECT COUNT(*)::int n FROM platform_quiz_attempts WHERE user_id=$1', [user])).toEqual(before);
+    }
+   }
+  } finally {
+   state.userId = first;
+   await db.unsafe("UPDATE platform_courses SET status='published',archived_at=NULL WHERE id=$1", [course]);
+   await db.unsafe("UPDATE platform_lessons SET access_scope='entitled' WHERE id=$1", [lesson]);
+  }
+ });
 });

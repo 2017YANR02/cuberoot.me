@@ -2,8 +2,29 @@ import { describe, expect, it } from 'vitest';
 import { approvedQrTarget, idempotencyKey, requestHash } from '../src/platform/validation.js';
 import { PlatformApiError, badRequest } from '../src/platform/errors.js';
 import { platformRouter } from '../src/platform/http.js';
+import { addMembershipPeriod } from '../src/platform/membership-period.js';
+import { safeMoney, safeSignedMoney } from '../src/platform/commerce/amounts.js';
 
 describe('Platform boundary helpers', () => {
+  it('preserves signed ledger adjustments and rejects unsafe monetary values', () => {
+    expect(safeSignedMoney('-125')).toBe(-125);
+    expect(safeMoney('125')).toBe(125);
+    for (const value of [Number.MAX_SAFE_INTEGER + 1, Infinity, NaN, 1.5]) {
+      expect(() => safeMoney(value)).toThrow(PlatformApiError);
+      expect(() => safeSignedMoney(value)).toThrow(PlatformApiError);
+    }
+    expect(() => safeMoney(-1)).toThrow(PlatformApiError);
+  });
+
+  it('keeps paid and redeemed memberships on the same UTC calendar across DST', () => {
+    const base = new Date('2026-03-08T09:30:00Z');
+    expect(addMembershipPeriod(base, 'day', 1)).toBe('2026-03-09T09:30:00.000Z');
+    expect(addMembershipPeriod(base, 'month', 1)).toBe('2026-04-08T09:30:00.000Z');
+    expect(addMembershipPeriod(base, 'year', 1)).toBe('2027-03-08T09:30:00.000Z');
+    expect(addMembershipPeriod(base, 'lifetime', 1)).toBeNull();
+    expect(base.toISOString()).toBe('2026-03-08T09:30:00.000Z');
+  });
+
   it('accepts only safe QR targets', () => {
     expect(approvedQrTarget('/platform/courses/basic')).toBe('/platform/courses/basic');
     expect(approvedQrTarget('https://cuberoot.me/platform')).toBe('https://cuberoot.me/platform');

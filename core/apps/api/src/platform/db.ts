@@ -35,6 +35,11 @@ export async function platformTransaction<T>(run: (db: PlatformDb) => Promise<T>
   return await sql.begin(async (transaction) => run(transaction as unknown as PlatformDb)) as T;
 }
 
+/** Serialize membership grants even before their user/plan row exists. */
+export async function lockUserMemberships(db: PlatformDb, userId: number): Promise<void> {
+  await platformQuery(db, 'SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [`platform-membership:${userId}`]);
+}
+
 export async function withIdempotency(
   c: Context,
   actor: PlatformActor,

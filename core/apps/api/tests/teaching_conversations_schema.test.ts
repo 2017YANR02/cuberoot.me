@@ -1,3 +1,4 @@
+import { teachingSource, teachingDeclaration } from './teaching-source';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { workspaceFixturePath } from './workspace-fixture-path';
@@ -89,12 +90,8 @@ describe('teaching conversations schema and repository contract', () => {
   });
 
   it('uses actor then recipient then conversation locks and never upgrades a shared reply lock', async () => {
-    const route = await read('../src/routes/teaching_saas.ts');
-    const reply = sourceSection(
-      route,
-      '  async replyConversation(',
-      '  async markConversationRead(',
-    );
+    const route = await teachingSource();
+    const reply = teachingDeclaration(route, 'replyConversation');
     const scope = reply.indexOf('lockConversationActorScope');
     const recipients = reply.indexOf('lockConversationRecipientUsers');
     const conversation = reply.indexOf('FOR UPDATE');
@@ -107,22 +104,14 @@ describe('teaching conversations schema and repository contract', () => {
     expect(append).toBeGreaterThan(idempotency);
     expect(reply.slice(0, conversation)).not.toContain('FOR SHARE');
 
-    const recipientLock = sourceSection(
-      route,
-      'async function lockConversationRecipientUsers(',
-      'async function upsertConversationParticipant(',
-    );
+    const recipientLock = teachingDeclaration(route, 'lockConversationRecipientUsers');
     expect(recipientLock).toContain('.sort((left, right) => left - right)');
     expect(recipientLock).toContain('FOR KEY SHARE');
   });
 
   it('rechecks live scope for every read and mutation and conceals unauthorized resources', async () => {
-    const route = await read('../src/routes/teaching_saas.ts');
-    const scope = sourceSection(
-      route,
-      'async function lockConversationActorScope(',
-      'function conversationRow(',
-    );
+    const route = await teachingSource();
+    const scope = teachingDeclaration(route, 'lockConversationActorScope');
     expect(scope).toContain("AND status = 'active'");
     expect(scope).toContain("student.status = 'active'");
     expect(scope).toContain('FROM guardian_links');
@@ -137,11 +126,7 @@ describe('teaching conversations schema and repository contract', () => {
     ]) {
       expect(route).toContain(`async ${operation}`);
     }
-    const markRead = sourceSection(
-      route,
-      '  async markConversationRead(',
-      '  async listLearnerWeeklyReports(',
-    );
+    const markRead = teachingDeclaration(route, 'markConversationRead');
     expect(markRead).toContain("lockConversationActorScope(tx, actor, slug, studentId, 'read')");
     expect(markRead).toContain('input.lastReadSequence > lastMessageSequence');
     expect(route).toContain('DO UPDATE SET last_read_sequence = GREATEST(');
@@ -149,12 +134,8 @@ describe('teaching conversations schema and repository contract', () => {
   });
 
   it('writes deduplicated reminders in the message transaction and relates read state by identity', async () => {
-    const route = await read('../src/routes/teaching_saas.ts');
-    const append = sourceSection(
-      route,
-      'async function appendConversationMessage(',
-      'async function insertConversationAudit(',
-    );
+    const route = await teachingSource();
+    const append = teachingDeclaration(route, 'appendConversationMessage');
     expect(append).toContain("'teaching_message'");
     expect(append).toContain('teaching-message:${conversationId}:${sequence}');
     expect(append).toContain('ON CONFLICT (user_key, kind, dedupe_key)');
@@ -163,11 +144,7 @@ describe('teaching conversations schema and repository contract', () => {
     expect(append).toContain('/org/${encodeURIComponent(scope.organization.slug)}');
     expect(append).not.toContain('notify(');
 
-    const markRead = sourceSection(
-      route,
-      '  async markConversationRead(',
-      '  async listLearnerWeeklyReports(',
-    );
+    const markRead = teachingDeclaration(route, 'markConversationRead');
     expect(markRead).toContain('dedupe_key LIKE');
     expect(markRead).toContain('COALESCE(read_at, NOW())');
     expect(markRead).not.toMatch(/notifications\.link\s*=/);

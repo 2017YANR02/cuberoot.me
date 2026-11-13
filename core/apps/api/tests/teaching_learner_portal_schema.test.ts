@@ -1,17 +1,10 @@
+import { teachingSource, teachingDeclaration } from './teaching-source';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { workspaceFixturePath } from './workspace-fixture-path';
 
 async function read(relativePath: string): Promise<string> {
   return readFile(new URL(relativePath, `${new URL('.', import.meta.url).href}`), 'utf8');
-}
-
-function sourceSection(source: string, startNeedle: string, endNeedle: string): string {
-  const start = source.indexOf(startNeedle);
-  const end = source.indexOf(endNeedle, start + startNeedle.length);
-  expect(start, `${startNeedle} missing`).toBeGreaterThan(-1);
-  expect(end, `${endNeedle} missing after ${startNeedle}`).toBeGreaterThan(start);
-  return source.slice(start, end);
 }
 
 describe('teaching learner portal schema and repository contract', () => {
@@ -60,12 +53,8 @@ describe('teaching learner portal schema and repository contract', () => {
   });
 
   it('discovers live self and guardian relationships without exposing account identifiers', async () => {
-    const route = await read('../src/routes/teaching_saas.ts');
-    const section = sourceSection(
-      route,
-      'async listLearningContexts(actor, slug, requestId)',
-      'async listLearnerWeeklyReports(',
-    );
+    const route = await teachingSource();
+    const section = teachingDeclaration(route, 'listLearningContexts');
     expect(section).toContain('student.account_user_id = ?');
     expect(section).toContain('guardian.guardian_user_id = ?');
     expect(section).toContain("student.status = 'active'");
@@ -80,12 +69,9 @@ describe('teaching learner portal schema and repository contract', () => {
   });
 
   it('returns only published identity-visible reports and the latest visible feedback revision', async () => {
-    const route = await read('../src/routes/teaching_saas.ts');
-    const reports = sourceSection(
-      route,
-      'async listLearnerWeeklyReports(',
-      'async listSelfTrainingAssignments(',
-    );
+    const route = await teachingSource();
+    const reports = ['listLearnerWeeklyReports', 'getLearnerWeeklyReport', 'listLearnerLessonFeedback']
+      .map(name => teachingDeclaration(route, name)).join('\n');
     expect(reports).toContain("report.status = 'published'");
     expect(reports).toContain("report.visibility IN ('student', 'student_and_guardians')");
     expect(reports).toContain("report.visibility = 'student_and_guardians'");
@@ -93,11 +79,7 @@ describe('teaching learner portal schema and repository contract', () => {
     expect(reports).toContain('PARTITION BY feedback.session_id, feedback.student_id');
     expect(reports).toContain('WHERE visible_revision_rank = 1');
 
-    const reportMapper = sourceSection(
-      route,
-      'function learnerWeeklyReportToJson(',
-      'function selfTrainingAssignmentToJson(',
-    );
+    const reportMapper = teachingDeclaration(route, 'learnerWeeklyReportToJson');
     expect(reportMapper).toContain("row.is_self === true && visibility === 'student'");
     expect(reportMapper).toContain('feedbackCount: visibleFeedback.length');
     expect(reportMapper).not.toContain('internalNotes');

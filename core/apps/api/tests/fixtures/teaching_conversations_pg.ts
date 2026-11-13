@@ -17,7 +17,12 @@ const STUDENT_ID = '22222222-2222-4222-8222-222222222222';
 function pre0158Schema(schema: string): string {
   const conversationStart = schema.indexOf('-- 家校沟通会话、独立已读游标与不可变消息(0158)。');
   if (conversationStart < 0) throw new Error('0158 conversation schema section not found');
-  const beforeConversations = schema.slice(0, conversationStart);
+  const endMarker = 'FOR EACH ROW EXECUTE FUNCTION trg_check_teaching_conversation_message_appended();';
+  const conversationEnd = schema.indexOf(endMarker, conversationStart);
+  if (conversationEnd < 0) throw new Error('0158 conversation schema end not found');
+  // Retain later domains used by the current account-deletion service.
+  const beforeConversations = schema.slice(0, conversationStart)
+    + schema.slice(conversationEnd + endMarker.length);
   const withoutDedupeColumn = beforeConversations.replace(
     '  dedupe_key  VARCHAR(200),\n',
     '',
@@ -37,7 +42,11 @@ function pre0158Schema(schema: string): string {
       + '  WHERE dedupe_key IS NOT NULL;\n',
     '',
   );
-  if (withoutDedupeCheck.includes('dedupe_key')
+  // Other domains now have their own dedupe keys. Only notification dedupe
+  // belongs to migration 0158 and must be absent before applying it.
+  const notifications = withoutDedupeCheck.match(/CREATE TABLE notifications \([\s\S]*?\n\);/)?.[0];
+  if (!notifications || notifications.includes('dedupe_key')
+      || withoutDedupeCheck.includes('CREATE UNIQUE INDEX uq_notifications_user_kind_dedupe')
       || withoutDedupeCheck.includes('CREATE TABLE teaching_conversations')) {
     throw new Error('failed to derive the pre-0158 schema');
   }
@@ -352,6 +361,11 @@ async function main(): Promise<void> {
   if (deleteReadFailures.some((result) => statusOf(result) !== 404)) {
     throw new Error(`read/delete race had an unexpected failure: ${JSON.stringify(deleteReadRace)}`);
   }
+  // Deterministically exercise deletion winning before the rate-limit write.
+  await expectStatus(() => teachingSaasRepository.markConversationRead(
+    readDeleteGuardian, 'fixture', STUDENT_ID, conversationId,
+    { lastReadSequence: 1 }, 'read-after-delete', '6'.repeat(64), 'read-after-delete',
+  ), 404);
 
   const revokeRace = await withTimeout(Promise.allSettled([
     sql`

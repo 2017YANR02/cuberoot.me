@@ -1,3 +1,4 @@
+import { readLocalModuleSource } from '../../../scripts/read-local-module-source.mjs';
 // Drift guards for the two hardcoded-snapshot /dev pages whose source of truth
 // lives in apps/api. Both pages hand-mirror server state, so they silently
 // rot as the backend grows. These pure read-only tests turn CI red the moment the
@@ -152,7 +153,7 @@ describe('/dev/api endpoint catalog drift', () => {
   });
 
   it('lists every teaching SaaS route with the exact method and path', () => {
-    const routeSource = readFileSync(join(routesDir, 'teaching_saas.ts'), 'utf8');
+    const routeSource = readLocalModuleSource(join(routesDir, 'teaching_saas.ts'), { roots: [join(SERVER, 'src', 'teaching')] });
     const api = readFileSync(apiPage, 'utf8');
     const fromRoute = [...routeSource.matchAll(/routes\.(get|post|put|patch|delete)\(\s*'([^']+)'/g)]
       .map((match) => `${match[1].toUpperCase()} /v1${match[2]}`)
@@ -184,7 +185,11 @@ describe('/dev/api endpoint catalog drift', () => {
     ]);
     const fromRoutes = [...platformFiles]
       .flatMap(([file, mount]) => {
-        const source = readFileSync(join(routesDir, file), 'utf8');
+        const source = readLocalModuleSource(join(routesDir, file), {
+          roots: ['platform_catalog.ts', 'platform_learning.ts', 'platform_commerce.ts'].includes(file)
+            ? [join(SERVER, 'src', 'platform', file.replace('platform_', '').replace('.ts', ''))]
+            : [],
+        });
         return [...source.matchAll(/Routes\.(get|post|put|patch|delete)\(\s*'([^']+)'/g)]
           .map((match) => `${match[1].toUpperCase()} ${mount}${match[2]}`);
       })

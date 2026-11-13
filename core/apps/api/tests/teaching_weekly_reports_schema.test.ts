@@ -1,3 +1,4 @@
+import { teachingSource, teachingDeclaration } from './teaching-source';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { workspaceFixturePath } from './workspace-fixture-path';
@@ -9,14 +10,6 @@ import {
 
 async function read(relativePath: string): Promise<string> {
   return readFile(new URL(relativePath, `${new URL('.', import.meta.url).href}`), 'utf8');
-}
-
-function functionBody(source: string, functionName: string): string {
-  const start = source.indexOf(`async function ${functionName}`);
-  const end = source.indexOf('\n}\n', start);
-  expect(start, `${functionName} missing`).toBeGreaterThan(-1);
-  expect(end, `${functionName} incomplete`).toBeGreaterThan(start);
-  return source.slice(start, end + 3);
 }
 
 describe('teaching weekly reports schema and repository contract', () => {
@@ -62,9 +55,9 @@ describe('teaching weekly reports schema and repository contract', () => {
   });
 
   it('retries only the two proven generate races with a fresh whole transaction', async () => {
-    const route = await read('../src/routes/teaching_saas.ts');
-    const retry = functionBody(route, 'withWeeklyReportGenerateRetry');
-    const generate = functionBody(route, 'buildWeeklyReportAggregate');
+    const route = await teachingSource();
+    const retry = teachingDeclaration(route, 'withWeeklyReportGenerateRetry');
+    const generate = teachingDeclaration(route, 'buildWeeklyReportAggregate');
     expect(retry).toContain("'teaching_weekly_reports_revision_unique'");
     expect(retry).toContain("'uq_teaching_weekly_reports_one_draft'");
     expect(retry).toMatch(/const generateRace = code === '23505'\s*&&/);
@@ -75,8 +68,8 @@ describe('teaching weekly reports schema and repository contract', () => {
   });
 
   it('uses half-open assignment overlap and includes only outward lesson feedback', async () => {
-    const route = await read('../src/routes/teaching_saas.ts');
-    const aggregate = functionBody(route, 'buildWeeklyReportAggregate');
+    const route = await teachingSource();
+    const aggregate = teachingDeclaration(route, 'buildWeeklyReportAggregate');
     expect(aggregate).toContain('assignment.ends_at > (${weekStart}::date::timestamp AT TIME ZONE ${access.timezone})');
     expect(aggregate).not.toContain('assignment.ends_at >= (${weekStart}::date::timestamp AT TIME ZONE ${access.timezone})');
     expect(aggregate).toContain("feedback.visibility IN ('student', 'student_and_guardians')");

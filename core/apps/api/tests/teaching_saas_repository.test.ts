@@ -1,3 +1,4 @@
+import { teachingSource, teachingDeclaration } from './teaching-source';
 import { readFile } from 'node:fs/promises';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { hasTeachingPermission } from '@cuberoot/shared';
@@ -31,26 +32,15 @@ const ACTOR: TeachingActor = {
   platformSubject: 'platform-user',
 };
 
-async function teachingRouteSource(): Promise<string> {
-  return readFile(new URL('../src/routes/teaching_saas.ts', import.meta.url), 'utf8');
-}
-
 async function schemaSource(): Promise<string> {
   return readFile(new URL('../src/db/schema.pg.sql', import.meta.url), 'utf8');
-}
-
-function sourceBetween(source: string, startMarker: string, endMarker: string): string {
-  const start = source.indexOf(startMarker);
-  const end = source.indexOf(endMarker, start + startMarker.length);
-  expect(start, `${startMarker} missing`).toBeGreaterThan(-1);
-  expect(end, `${endMarker} missing after ${startMarker}`).toBeGreaterThan(start);
-  return source.slice(start, end);
 }
 
 describe('teaching SaaS repository tenant denial audit', () => {
   beforeEach(() => {
     db.query.mockReset();
-    db.query.mockResolvedValue([]);
+    db.query.mockImplementation(async (statement) =>
+      String(statement).includes('INSERT INTO teaching_mutation_rate_limits') ? [{ attempts: 1 }] : []);
     db.tx.mockReset();
     db.begin.mockReset();
     db.sql.mockClear();
@@ -89,7 +79,7 @@ describe('teaching SaaS repository tenant denial audit', () => {
 
   it('records a denied audit after a cross-organization write', async () => {
     db.tx.mockResolvedValueOnce([]);
-    db.query.mockResolvedValueOnce([]);
+    db.query.mockResolvedValueOnce([{ attempts: 1 }]);
 
     await expect(
       teachingSaasRepository.createStudent(
@@ -301,6 +291,24 @@ describe('teaching SaaS repository tenant denial audit', () => {
       expect.objectContaining<TeachingApiException>({ code: 'RATE_LIMITED', status: 429 }),
     );
 
+    expect(db.begin).not.toHaveBeenCalled();
+    expect(db.tx).not.toHaveBeenCalled();
+  });
+
+  it('conceals a deleted actor before opening the business transaction', async () => {
+    db.query.mockResolvedValueOnce([]);
+
+    await expect(teachingSaasRepository.createOrganization(
+      ACTOR,
+      { slug: 'demo', name: 'Demo', timezone: 'Asia/Shanghai' },
+      'deleted-actor-key', 'request-hash', 'request-deleted',
+    )).rejects.toEqual(expect.objectContaining<TeachingApiException>({
+      code: 'RESOURCE_NOT_FOUND', status: 404,
+    }));
+
+    const statement = String(db.query.mock.calls[0][0]);
+    expect(statement.indexOf('FROM app_users')).toBeLessThan(statement.indexOf('INSERT INTO teaching_mutation_rate_limits'));
+    expect(statement).toContain('FOR KEY SHARE');
     expect(db.begin).not.toHaveBeenCalled();
     expect(db.tx).not.toHaveBeenCalled();
   });
@@ -765,16 +773,12 @@ describe('teaching SaaS repository tenant denial audit', () => {
   });
 
   it('uses the database clock and keeps invite preview hash-only and read-only', async () => {
-    const source = await teachingRouteSource();
-    const serializer = sourceBetween(source, 'function bindingInviteToJson(', '\nfunction selfTrainingAssignmentToJson(');
+    const source = await teachingSource();
+    const serializer = teachingDeclaration(source, 'bindingInviteToJson');
     expect(serializer).toContain('row.database_now');
     expect(serializer).not.toContain('Date.now');
 
-    const preview = sourceBetween(
-      source,
-      'async previewStudentAccountBindingInvite(',
-      '\n  async consumeStudentAccountBindingInvite(',
-    );
+    const preview = teachingDeclaration(source, 'previewStudentAccountBindingInvite');
     expect(preview).toContain('input.tokenHash');
     expect(preview).toContain('clock_timestamp() AS database_now');
     expect(preview).toContain("'student-binding-preview'");
@@ -784,23 +788,15 @@ describe('teaching SaaS repository tenant denial audit', () => {
   });
 
   it('checks staff scope before current-invite reads and locks resources before revoke idempotency', async () => {
-    const source = await teachingRouteSource();
-    const current = sourceBetween(
-      source,
-      'async getCurrentStudentAccountBindingInvite(',
-      '\n  async revokeStudentAccountBindingInvite(',
-    );
+    const source = await teachingSource();
+    const current = teachingDeclaration(source, 'getCurrentStudentAccountBindingInvite');
     expect(current.indexOf('accessForRead(')).toBeLessThan(current.indexOf("requirePermission(access, 'student:manage')"));
     expect(current.indexOf("requirePermission(access, 'student:manage')")).toBeLessThan(current.indexOf('FROM student_profiles'));
     expect(current).toContain('WITH database_clock AS MATERIALIZED');
     expect(current).toContain('invite.*, database_clock.database_now');
     expect(current).toContain('invite.expires_at > database_clock.database_now');
 
-    const revoke = sourceBetween(
-      source,
-      'async revokeStudentAccountBindingInvite(',
-      '\n  async previewStudentAccountBindingInvite(',
-    );
+    const revoke = teachingDeclaration(source, 'revokeStudentAccountBindingInvite');
     const permission = revoke.indexOf("requirePermission(initialAccess, 'student:manage')");
     const transaction = revoke.indexOf('return await sql.begin');
     const studentLock = revoke.indexOf('FROM student_profiles', transaction);
@@ -820,12 +816,8 @@ describe('teaching SaaS repository tenant denial audit', () => {
   });
 
   it('uses one database instant for consume and rolls back a boundary-expired link', async () => {
-    const source = await teachingRouteSource();
-    const consume = sourceBetween(
-      source,
-      'async consumeStudentAccountBindingInvite(',
-      '\n  async listSelfTrainingAssignments(',
-    );
+    const source = await teachingSource();
+    const consume = teachingDeclaration(source, 'consumeStudentAccountBindingInvite');
     const instantQuery = consume.indexOf('WITH database_clock AS MATERIALIZED');
     const instantValue = consume.indexOf('const operationInstant = iso(invite.database_now)', instantQuery);
     const studentLink = consume.indexOf('SET account_user_id = ${actor.userId}, account_linked_at = ${operationInstant}', instantValue);
@@ -844,29 +836,17 @@ describe('teaching SaaS repository tenant denial audit', () => {
   });
 
   it('orders self evidence locks and permanently binds canonical payload hashes', async () => {
-    const source = await teachingRouteSource();
-    const selfStudent = sourceBetween(
-      source,
-      'async function boundSelfStudentForUpdate(',
-      '\nconst ACTIVE_STUDENT_SCOPE_CTE',
-    );
+    const source = await teachingSource();
+    const selfStudent = teachingDeclaration(source, 'boundSelfStudentForUpdate');
     expect(selfStudent.indexOf('FROM app_users')).toBeLessThan(selfStudent.indexOf('FROM organizations o'));
     expect(selfStudent).toContain('FOR KEY SHARE');
     expect(selfStudent).toContain('FOR UPDATE OF student');
     expect(selfStudent).toContain('clock_timestamp() AS database_now');
 
-    const canonical = sourceBetween(
-      source,
-      'function canonicalTrainingEvidencePayload(',
-      '\nasync function withRepeatableReadRetry',
-    );
+    const canonical = teachingDeclaration(source, 'canonicalTrainingEvidencePayload');
     expect(canonical).toContain('assignmentIds: input.assignmentIds ?? []');
 
-    const evidence = sourceBetween(
-      source,
-      'async createSelfTrainingEvidence(',
-      '\n  async saveAttendanceBatch(',
-    );
+    const evidence = teachingDeclaration(source, 'createSelfTrainingEvidence');
     const student = evidence.indexOf('boundSelfStudentForUpdate(');
     const databaseClock = evidence.indexOf('new Date(student.databaseNow)', student);
     const naturalLock = evidence.indexOf('INSERT INTO teaching_relation_locks', databaseClock);
@@ -894,12 +874,8 @@ describe('teaching SaaS repository tenant denial audit', () => {
   });
 
   it('locks the exact current teacher scope path before validating training selectors', async () => {
-    const source = await teachingRouteSource();
-    const studentScope = sourceBetween(
-      source,
-      'async function lockAndCheckTeacherStudentScope(',
-      '\nasync function trainingAssignmentEnvelope(',
-    );
+    const source = await teachingSource();
+    const studentScope = teachingDeclaration(source, 'lockAndCheckTeacherStudentScope');
     expect(studentScope).toContain("member.status = 'active'");
     expect(studentScope).toContain("member.role IN ('teacher', 'assistant')");
     expect(studentScope).toContain("student.status = 'active'");
@@ -918,23 +894,15 @@ describe('teaching SaaS repository tenant denial audit', () => {
     expect(exactGroupCheck).toBeGreaterThan(membershipLock);
     expect(studentScope).not.toContain('actorHasActiveStudentScope(');
 
-    const validation = sourceBetween(
-      source,
-      'async function lockAndValidateTrainingSelectors(',
-      '\nexport const teachingSaasRepository',
-    );
+    const validation = teachingDeclaration(source, 'lockAndValidateTrainingSelectors');
     expect(validation).toContain('lockAndCheckTeacherGroupScope(tx, access, actor, groupId)');
     expect(validation).toContain('lockAndCheckTeacherStudentScope(tx, access, actor, studentId)');
     expect(validation).toContain('trainingSelectorMissing(');
   });
 
   it('materializes the exact active-student union before publishing an assignment', async () => {
-    const source = await teachingRouteSource();
-    const publish = sourceBetween(
-      source,
-      'async publishTrainingAssignment(',
-      '\n  async closeTrainingAssignment(',
-    );
+    const source = await teachingSource();
+    const publish = teachingDeclaration(source, 'publishTrainingAssignment');
     const assignmentLock = publish.indexOf('FOR UPDATE OF assignment');
     const scope = publish.indexOf("assertTrainingAssignmentScope(tx, access, actor, assignment, 'manage')");
     const idempotency = publish.indexOf('beginIdempotency(', scope);
@@ -966,12 +934,8 @@ describe('teaching SaaS repository tenant denial audit', () => {
   });
 
   it('filters staff target pages by the canonical active scope before pagination', async () => {
-    const source = await teachingRouteSource();
-    const targets = sourceBetween(
-      source,
-      'async listTrainingAssignmentTargets(',
-      '\n  async listTrainingTargetEvidence(',
-    );
+    const source = await teachingSource();
+    const targets = teachingDeclaration(source, 'listTrainingAssignmentTargets');
     expect(targets.match(/WITH active_scope_actor AS/g)).toHaveLength(2);
     expect(targets.match(/member\.status = 'active'/g)).toHaveLength(2);
     expect(targets.match(/teaching_group\.status = 'active'/g)).toHaveLength(2);
@@ -985,21 +949,13 @@ describe('teaching SaaS repository tenant denial audit', () => {
   });
 
   it('replays Stage 3C mutations before mutable input state and keeps reviews append-only', async () => {
-    const source = await teachingRouteSource();
-    const create = sourceBetween(
-      source,
-      'async createTrainingAssignment(',
-      '\n  async reviseTrainingAssignment(',
-    );
+    const source = await teachingSource();
+    const create = teachingDeclaration(source, 'createTrainingAssignment');
     expect(create.indexOf('beginIdempotency(')).toBeLessThan(
       create.indexOf('lockAndValidateTrainingSelectors('),
     );
 
-    const revise = sourceBetween(
-      source,
-      'async reviseTrainingAssignment(',
-      '\n  async publishTrainingAssignment(',
-    );
+    const revise = teachingDeclaration(source, 'reviseTrainingAssignment');
     const existingScope = revise.indexOf("assertTrainingAssignmentScope(");
     const reviseIdempotency = revise.indexOf('beginIdempotency(', existingScope);
     const replacementValidation = revise.indexOf('lockAndValidateTrainingSelectors(', reviseIdempotency);
@@ -1007,11 +963,7 @@ describe('teaching SaaS repository tenant denial audit', () => {
     expect(reviseIdempotency).toBeGreaterThan(existingScope);
     expect(replacementValidation).toBeGreaterThan(reviseIdempotency);
 
-    const review = sourceBetween(
-      source,
-      'async createTrainingTargetReview(',
-      '\n  async saveAttendanceBatch(',
-    );
+    const review = teachingDeclaration(source, 'createTrainingTargetReview');
     const operation = source.match(/const TRAINING_REVIEW_CREATE_OPERATION = '([^']+)'/);
     expect(operation?.[1]).toBe('training.review.create');
     expect(operation?.[1].length).toBeLessThanOrEqual(100);
@@ -1035,7 +987,7 @@ describe('teaching SaaS repository tenant denial audit', () => {
   });
 
   it('keeps the shared review operation within both persistence column limits', async () => {
-    const [source, schema] = await Promise.all([teachingRouteSource(), schemaSource()]);
+    const [source, schema] = await Promise.all([teachingSource(), schemaSource()]);
     const operation = source.match(/const TRAINING_REVIEW_CREATE_OPERATION = '([^']+)'/)?.[1];
     expect(operation).toBeDefined();
     expect(operation!.length).toBeLessThanOrEqual(100);
@@ -1044,12 +996,8 @@ describe('teaching SaaS repository tenant denial audit', () => {
   });
 
   it('conceals assigned-session feedback reads and paginates only after scope checks', async () => {
-    const source = await teachingRouteSource();
-    const list = sourceBetween(
-      source,
-      'async listLessonFeedback(',
-      '\n  async createSession(',
-    );
+    const source = await teachingSource();
+    const list = teachingDeclaration(source, 'listLessonFeedback');
     const access = list.indexOf('accessForRead(actor.userId, slug)');
     const permission = list.indexOf("requireSessionScope(access, 'feedback:read')", access);
     const assignedScope = list.indexOf('FROM session_teachers assigned', permission);
@@ -1067,12 +1015,8 @@ describe('teaching SaaS repository tenant denial audit', () => {
   });
 
   it('locks completed-session attendance before appending idempotent lesson feedback', async () => {
-    const source = await teachingRouteSource();
-    const create = sourceBetween(
-      source,
-      'async createLessonFeedback(',
-      '\n};',
-    );
+    const source = await teachingSource();
+    const create = teachingDeclaration(source, 'createLessonFeedback');
     const rateLimit = create.indexOf('consumeMutationAttempt(');
     const transaction = create.indexOf('sql.begin(', rateLimit);
     const access = create.indexOf('accessForWrite(', transaction);
@@ -1101,24 +1045,16 @@ describe('teaching SaaS repository tenant denial audit', () => {
   });
 
   it('reads package ledgers newest-first with a stable descending bigint tie-breaker', async () => {
-    const source = await teachingRouteSource();
-    const list = sourceBetween(
-      source,
-      'async listStudentPackageLedger(',
-      '\n  async listCreditAdjustments(',
-    );
+    const source = await teachingSource();
+    const list = teachingDeclaration(source, 'listStudentPackageLedger');
     expect(list).toContain("requirePermission(access, 'package:read')");
     expect(list).toContain('ORDER BY ledger.created_at DESC, ledger.id DESC LIMIT ? OFFSET ?');
     expect(list).toContain('reversed.id AS reversed_by_ledger_id');
   });
 
   it('limits the organization adjustment feed to finance readers and indexed entry types', async () => {
-    const source = await teachingRouteSource();
-    const list = sourceBetween(
-      source,
-      'async listCreditAdjustments(',
-      '\n  async refundStudentPackageCredits(',
-    );
+    const source = await teachingSource();
+    const list = teachingDeclaration(source, 'listCreditAdjustments');
     expect(list).toContain("requirePermission(access, 'finance:read')");
     expect(list.match(/entry_type IN \('adjustment', 'refund', 'reversal', 'expiration'\)/g)).toHaveLength(2);
     expect(list).toContain('ORDER BY ledger.created_at DESC, ledger.id DESC');
@@ -1126,12 +1062,8 @@ describe('teaching SaaS repository tenant denial audit', () => {
   });
 
   it('locks package and target resources before refund and reversal idempotency', async () => {
-    const source = await teachingRouteSource();
-    const refund = sourceBetween(
-      source,
-      'async refundStudentPackageCredits(',
-      '\n  async reverseStudentPackageLedgerEntry(',
-    );
+    const source = await teachingSource();
+    const refund = teachingDeclaration(source, 'refundStudentPackageCredits');
     const refundPermission = refund.indexOf("requirePermission(access, 'finance:manage')");
     const refundPackage = refund.indexOf('lockStudentPackageForCreditMutation(', refundPermission);
     const refundIdempotency = refund.indexOf('beginIdempotency(', refundPackage);
@@ -1143,11 +1075,7 @@ describe('teaching SaaS repository tenant denial audit', () => {
     expect(refundBalance).toBeGreaterThan(refundReplay);
     expect(refund).toContain('refundLedgerIdempotencyKey(idempotencyKey)');
 
-    const reversal = sourceBetween(
-      source,
-      'async reverseStudentPackageLedgerEntry(',
-      '\n  async listWeeklyReports(',
-    );
+    const reversal = teachingDeclaration(source, 'reverseStudentPackageLedgerEntry');
     const reversalPermission = reversal.indexOf("requirePermission(access, 'finance:manage')");
     const reversalPackage = reversal.indexOf('lockStudentPackageForCreditMutation(', reversalPermission);
     const reversalTarget = reversal.indexOf('FROM lesson_credit_ledger target', reversalPackage);
@@ -1165,12 +1093,8 @@ describe('teaching SaaS repository tenant denial audit', () => {
   });
 
   it('uses one stable lock graph for makeup scheduling, completion, and cancellation', async () => {
-    const source = await teachingRouteSource();
-    const cancellationGraph = sourceBetween(
-      source,
-      'async function lockManagedCancellationGraph(',
-      '\nfunction requireLearnerScope(',
-    );
+    const source = await teachingSource();
+    const cancellationGraph = teachingDeclaration(source, 'lockManagedCancellationGraph');
     const discoveredAttempts = cancellationGraph.indexOf('const discoveredAttempts = await tx');
     const sortedSessionIds = cancellationGraph.indexOf('])].sort()', discoveredAttempts);
     const sessionLock = cancellationGraph.indexOf('ORDER BY session.id', sortedSessionIds);
@@ -1184,13 +1108,13 @@ describe('teaching SaaS repository tenant denial audit', () => {
     expect(retryRead).toBeGreaterThan(sessionForUpdate);
     expect(retryGuard).toBeGreaterThan(retryRead);
 
-    const schedule = sourceBetween(source, 'async scheduleMakeup(', '\n  async saveAttendanceBatch(');
+    const schedule = teachingDeclaration(source, 'scheduleMakeup');
     expect(schedule).toContain('const sessionIds = [sessionId, input.targetSessionId].sort()');
     expect(schedule).toContain('ORDER BY id FOR UPDATE');
     expect(schedule).toContain('ORDER BY attendance.id');
     expect(schedule).toContain('TRANSACTION_TIMESTAMP() AS operation_now');
 
-    const complete = sourceBetween(source, 'async completeSession(', '\n  async cancelSession(');
+    const complete = teachingDeclaration(source, 'completeSession');
     const completeSessionLock = complete.indexOf('FOR UPDATE OF s');
     const completeAttendanceLock = complete.indexOf('ORDER BY student_package_id NULLS LAST, id');
     const pendingLeaveLock = complete.indexOf("status = 'pending'", completeAttendanceLock);
@@ -1204,7 +1128,7 @@ describe('teaching SaaS repository tenant denial audit', () => {
     expect(attemptLock).toBeGreaterThan(expectedConflict);
     expect(packageLock).toBeGreaterThan(attemptLock);
 
-    const cancel = sourceBetween(source, 'async cancelSession(', '\n};');
+    const cancel = teachingDeclaration(source, 'cancelSession');
     const graphLock = cancel.indexOf('lockManagedCancellationGraph(');
     const cancelAttendanceLock = cancel.indexOf(
       'ORDER BY attendance.student_package_id NULLS LAST, attendance.id',
@@ -1219,15 +1143,15 @@ describe('teaching SaaS repository tenant denial audit', () => {
   });
 
   it('replays every leave mutation before mutable session or request state checks', async () => {
-    const source = await teachingRouteSource();
-    for (const [start, end, mutableCheck] of [
-      ['async createLearnerLeaveRequest(', '\n  async cancelLearnerLeaveRequest(', "sessions[0].status"],
-      ['async cancelLearnerLeaveRequest(', '\n  async listLearnerWeeklyReports(', "sessions[0].status"],
-      ['async createLeaveRequest(', '\n  async decideLeaveRequest(', 'session.status'],
-      ['async decideLeaveRequest(', '\n  async cancelLeaveRequest(', 'session.status'],
-      ['async cancelLeaveRequest(', '\n  async listMakeupAttempts(', 'session.status'],
+    const source = await teachingSource();
+    for (const [start, mutableCheck] of [
+      ['createLearnerLeaveRequest', "sessions[0].status"],
+      ['cancelLearnerLeaveRequest', "sessions[0].status"],
+      ['createLeaveRequest', 'session.status'],
+      ['decideLeaveRequest', 'session.status'],
+      ['cancelLeaveRequest', 'session.status'],
     ] as const) {
-      const mutation = sourceBetween(source, start, end);
+      const mutation = teachingDeclaration(source, start);
       const idempotency = mutation.indexOf('beginIdempotency(');
       const replay = mutation.indexOf("if ('replay' in idem) return idem.replay", idempotency);
       const stateCheck = mutation.indexOf(mutableCheck, replay);

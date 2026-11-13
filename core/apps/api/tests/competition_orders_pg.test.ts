@@ -4,27 +4,49 @@ import postgres from 'postgres';
 import { Hono } from 'hono';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-const state=vi.hoisted(()=>({db:null as unknown}));
-// Preserve the actual SQL driver, transaction, idempotency and fulfillment code.
-vi.mock('../src/db/connection.js',()=>({get sql(){return state.db;}}));
+const state=vi.hoisted(()=>{
+  const url=new URL(process.env.COMPETITION_TEST_DATABASE_URL??'postgres://fixture@127.0.0.1:1/fixture');
+  if(!['localhost','127.0.0.1'].includes(url.hostname))throw new Error('Loopback PostgreSQL required');
+  const schema=`competition_order_${process.pid}_${Math.random().toString(36).slice(2)}`;
+  return {schema,settings:{host:url.hostname,port:Number(url.port)||5432,user:decodeURIComponent(url.username),password:decodeURIComponent(url.password),database:url.pathname.slice(1),connection:{search_path:schema}},rooms:vi.fn(),participants:vi.fn()};
+});
+// Only the connection address changes: production query rewriting and transaction
+// handling run against this suite's private schema.
+vi.mock('../src/db/settings.js',()=>({databaseSettings:()=>state.settings}));
+vi.mock('../src/utils/recon_helpers.js',()=>({checkRateLimit:vi.fn(),requireAuth:vi.fn()}));
+vi.mock('livekit-server-sdk',async importOriginal=>({
+  ...await importOriginal<typeof import('livekit-server-sdk')>(),
+  RoomServiceClient:class {
+    listRooms(){return state.rooms();}
+    listParticipants(){return state.participants();}
+    deleteRoom(){return Promise.resolve();}
+  },
+}));
 vi.mock('../src/platform/auth.js',()=>({
   requirePlatformActor:async(c:{req:{header:(name:string)=>string|undefined}})=>({userId:Number(c.req.header('Test-User')??3),ownerKey:`user:${c.req.header('Test-User')??3}`,displayName:'Test entrant',isAdmin:false,viaApiKey:false,wcaId:null}),
   requirePlatformAdmin:async()=>{throw new Error('No admin in order fixture');},
 }));
-import { platformCommerceRoutes } from '../src/routes/platform_commerce.js';
-import { platformCompetitionRoutes } from '../src/routes/platform_competitions.js';
-const app=new Hono().route('/v1/platform',platformCommerceRoutes).route('/v1',platformCompetitionRoutes);
+import { sql as db } from '../src/db/connection.js';
+import { TokenVerifier } from 'livekit-server-sdk';
+const app=new Hono();
 const databaseUrl=process.env.COMPETITION_TEST_DATABASE_URL;
 
 describe.skipIf(!databaseUrl)('real competition order HTTP and PostgreSQL transaction',()=>{
-  const schema=`competition_order_${randomUUID().replaceAll('-','')}`;
+  const schema=state.schema;
   const org=randomUUID(),event=randomUUID(),ticket=randomUUID(),session=randomUUID();
-  let admin:ReturnType<typeof postgres>,db:ReturnType<typeof postgres>;
+  let admin:ReturnType<typeof postgres>;
   const migration=(name:string)=>readFileSync(new URL(`../migrations/${name}`,import.meta.url),'utf8');
   beforeAll(async()=>{
     if(!['localhost','127.0.0.1'].includes(new URL(databaseUrl!).hostname))throw new Error('Loopback PostgreSQL required');
     admin=postgres(databaseUrl!,{max:1,onnotice:()=>{}});await admin.unsafe(`CREATE SCHEMA "${schema}"`);
-    db=postgres(databaseUrl!,{max:4,connection:{search_path:schema}});state.db=db;
+    state.rooms.mockResolvedValue([]);state.participants.mockResolvedValue([]);
+    vi.stubEnv('LIVEKIT_URL','wss://competition-fixture.invalid');
+    vi.stubEnv('LIVEKIT_API_KEY','competition-fixture');
+    vi.stubEnv('LIVEKIT_API_SECRET','competition-fixture-secret-do-not-use-in-production');
+    const {platformCommerceRoutes}=await import('../src/routes/platform_commerce.js');
+    const {platformCompetitionRoutes}=await import('../src/routes/platform_competitions.js');
+    const {videoRoomsRoutes}=await import('../src/routes/video_rooms.js');
+    app.route('/v1/platform',platformCommerceRoutes).route('/v1',platformCompetitionRoutes).route('/v1',videoRoomsRoutes);
     await db.unsafe(`CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at=NOW(); RETURN NEW; END $$;
       CREATE TABLE app_users(id BIGINT PRIMARY KEY);
       CREATE TABLE teacher_directory_entries(id BIGINT PRIMARY KEY);`);
@@ -39,7 +61,7 @@ describe.skipIf(!databaseUrl)('real competition order HTTP and PostgreSQL transa
       INSERT INTO platform_event_ticket_types(id,event_id,code,title_zh,title_en,amount_minor,currency,capacity,competition_project,competition_device) VALUES('${ticket}','${event}','333','三阶','3x3',0,'CNY',1,'333','ordinary');
       INSERT INTO platform_competition_sessions(id,event_id,starts_at,ends_at,capacity,supervisor_user_id) VALUES('${session}','${event}',NOW()+INTERVAL '1 hour',NOW()+INTERVAL '2 hours',1,2);`);
   },60_000);
-  afterAll(async()=>{await db?.end();if(admin){await admin.unsafe(`DROP SCHEMA "${schema}" CASCADE`);await admin.end();}});
+  afterAll(async()=>{await db.end();if(admin){await admin.unsafe(`DROP SCHEMA "${schema}" CASCADE`);await admin.end();}vi.unstubAllEnvs();});
   const request=(user:number,key:string,clientOrderKey:string)=>app.request('/v1/platform/orders',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':key,'Test-User':String(user)},body:JSON.stringify({clientOrderKey,items:[{sellableType:'event_ticket',eventTicketTypeId:ticket,quantity:1,competitionSessionId:session,device:'ordinary'}]})});
   it('returns project arrays, registration dates and numeric zero prices in both lists',async()=>{
     for(const path of ['/v1/platform/competitions','/v1/platform/competitions/manage']){
@@ -71,6 +93,31 @@ describe.skipIf(!databaseUrl)('real competition order HTTP and PostgreSQL transa
     const full=await request(4,randomUUID(),randomUUID());expect(full.status).toBe(409);
     expect((await db.unsafe(`SELECT COUNT(*)::integer n FROM platform_orders`))[0].n).toBe(1);
   },30_000);
+  it('admits only the checked-in entrant and assigned supervisor and signs restricted room credentials',async()=>{
+    const registration=(await db.unsafe(`SELECT id,competition_video_generation generation FROM platform_event_registrations WHERE user_id=3`))[0];
+    const token=(user:number)=>app.request('/v1/video/competition/token',{method:'POST',headers:{'Content-Type':'application/json','Test-User':String(user)},body:JSON.stringify({registrationId:registration.id})});
+    // Before the session and before check-in neither party may obtain credentials.
+    expect((await token(3)).status).toBe(403);
+    await db.unsafe(`UPDATE platform_competition_sessions SET starts_at=NOW()-INTERVAL '1 minute' WHERE id=$1`,[session]);
+    expect((await token(3)).status).toBe(403);
+    await db.unsafe(`UPDATE platform_event_registrations SET checked_in_at=NOW() WHERE id=$1`,[registration.id]);
+    expect((await token(1)).status).toBe(403);
+    expect((await token(4)).status).toBe(403);
+    const verifier=new TokenVerifier('competition-fixture','competition-fixture-secret-do-not-use-in-production');
+    for(const user of [2,3]){
+      const response=await token(user);expect(response.status).toBe(200);expect(response.headers.get('Cache-Control')).toBe('no-store');
+      const body=await response.json();const room=`competition-${registration.id}-${registration.generation}`;
+      expect(body).toMatchObject({identity:`u${user}`,room,maxParticipants:2,url:'wss://competition-fixture.invalid'});
+      const claims=await verifier.verify(body.token);
+      expect(claims).toMatchObject({sub:`u${user}`,video:{roomJoin:true,room,canPublish:true,canSubscribe:true,canPublishData:false,canPublishSources:['camera','microphone']},roomConfig:{maxParticipants:2}});
+    }
+    // Simulate a committed reassignment/refund while the external capacity lookup is in flight.
+    state.rooms.mockImplementationOnce(async()=>{await db.unsafe(`UPDATE platform_event_registrations SET competition_video_generation=gen_random_uuid() WHERE id=$1`,[registration.id]);return [];});
+    expect((await token(3)).status).toBe(409);
+    state.rooms.mockImplementationOnce(async()=>{await db.unsafe(`UPDATE platform_event_registrations SET status='refunded',cancelled_at=NOW() WHERE id=$1`,[registration.id]);return [];});
+    expect((await token(3)).status).toBe(403);
+    await db.unsafe(`UPDATE platform_event_registrations SET status='confirmed',cancelled_at=NULL WHERE id=$1`,[registration.id]);
+  },30_000);
   it('stores only authoritative five-attempt results as JSON arrays and ranks the round',async()=>{
     const registration=(await db.unsafe(`SELECT id,competition_video_generation generation FROM platform_event_registrations WHERE user_id=3`))[0];
     await db.unsafe(`UPDATE platform_events SET starts_at=NOW()-INTERVAL '1 minute' WHERE id=$1`,[event]);
@@ -83,6 +130,8 @@ describe.skipIf(!databaseUrl)('real competition order HTTP and PostgreSQL transa
     expect((await finish(2)).status).toBe(200);
     const recorded=(await db.unsafe(`SELECT status,competition_video_generation generation,jsonb_typeof(competition_attempts) json_type FROM platform_event_registrations WHERE id=$1`,[registration.id]))[0];
     expect(recorded.status).toBe('attended');expect(recorded.json_type).toBe('array');expect(recorded.generation).not.toBe(registration.generation);
+    const videoAfterResult=await app.request('/v1/video/competition/token',{method:'POST',headers:{'Content-Type':'application/json','Test-User':'3'},body:JSON.stringify({registrationId:registration.id})});
+    expect(videoAfterResult.status).toBe(403);
     const results=await (await app.request(`/v1/platform/competitions/${event}/results`)).json();
     expect(results.results).toHaveLength(1);expect(results.results[0]).toMatchObject({averageCentiseconds:1200,bestCentiseconds:1000,rank:1});
   },30_000);

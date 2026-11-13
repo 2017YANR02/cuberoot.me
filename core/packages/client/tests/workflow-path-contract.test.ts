@@ -770,6 +770,7 @@ describe('deployment workflow path contracts', () => {
     const gatedSteps = {
       'Test server': 'server',
       'PostgreSQL 13 final schema snapshot': 'server',
+      'Teaching PostgreSQL 13 business regressions': 'server',
       'Verify stats-build producer contracts': 'stats',
       'Verify puzzle solvers package': 'solvers',
       'Verify Clock analyzer runtime': 'scramble_stats',
@@ -781,6 +782,25 @@ describe('deployment workflow path contracts', () => {
       expect(readStepLines('test.yml', step).lines.join('\n'), step)
         .toContain(`needs.changes.outputs.${domain} == 'true'`);
     }
+  });
+
+  it('enables Platform database business tests in the existing CI PostgreSQL service', () => {
+    const server = readStepLines('test.yml', 'Test server').lines.join('\n');
+    for (const variable of [
+      'PLATFORM_QR_TEST_DATABASE_URL', 'PLATFORM_COMMERCE_TEST_DATABASE_URL',
+      'PLATFORM_LEARNING_TEST_DATABASE_URL', 'PLATFORM_MEDIA_TEST_DATABASE_URL',
+      'COMPETITION_TEST_DATABASE_URL', 'PRODUCT_ANALYTICS_TEST_DATABASE_URL',
+      'WCA_TEAMS_PG_TEST_URL',
+    ]) {
+      expect(server, variable).toContain(`${variable}: postgres://postgres:postgres@127.0.0.1:5432/cuberoot_test`);
+    }
+    const teaching = readStepLines('test.yml', 'Teaching PostgreSQL 13 business regressions').lines.join('\n');
+    for (const fixture of ['learner_portal', 'weekly_reports', 'credit_adjustments', 'leave_makeups', 'conversations']) {
+      expect(teaching, fixture).toContain(fixture);
+    }
+    expect(teaching).toContain('tests/fixtures/teaching_${fixture}_pg.ts');
+    expect(teaching).toContain('tests/fixtures/teaching_daily_board_sql.mts');
+    expect(teaching).toContain('ON_ERROR_STOP=1');
   });
 
   it('limits Vercel rebuilds to the canonical frontend build inputs', () => {

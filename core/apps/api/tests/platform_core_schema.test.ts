@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url';
+import { readLocalModuleSource } from '../../../scripts/read-local-module-source.mjs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { workspaceFixturePath } from './workspace-fixture-path';
@@ -110,7 +112,7 @@ describe('main-site Platform PostgreSQL schema', () => {
       read('../migrations/README.md'),
       readFile(workspaceFixturePath('@cuberoot/client', 'app/[lang]/dev/schema/page.tsx'), 'utf8'),
       read('../src/utils/account_delete.ts'),
-      read('../src/routes/platform_learning.ts'),
+      readLocalModuleSource(new URL('../src/routes/platform_learning.ts', import.meta.url), { roots: [fileURLToPath(new URL('../src/platform/learning', import.meta.url))] }),
       read('./fixtures/platform_account_deletion_pg.sql'),
     ]);
 
@@ -147,12 +149,12 @@ describe('main-site Platform PostgreSQL schema', () => {
     const outboxCalls = [...learning.matchAll(/enqueuePlatformEvent\([\s\S]*?\);/g)]
       .map((match) => match[0]);
     expect(outboxCalls).toHaveLength(4);
-    expect(outboxCalls.map((call) => call.match(/'learning\.[a-z_]+'/)?.[0])).toEqual([
+    expect(outboxCalls.map((call) => call.match(/'learning\.[a-z_]+'/)?.[0]).sort()).toEqual([
       "'learning.progress_updated'",
       "'learning.course_enrolled'",
       "'learning.quiz_graded'",
       "'learning.certificate_issued'",
-    ]);
+    ].sort());
     for (const call of outboxCalls) {
       expect(call).not.toMatch(/\buserId\b/);
     }

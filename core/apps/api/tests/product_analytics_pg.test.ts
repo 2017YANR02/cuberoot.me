@@ -42,7 +42,7 @@ describe.skipIf(!url)('default product analytics with real PostgreSQL', () => {
   });
   beforeAll(async () => {
     const target = new URL(url!);
-    if (!['localhost', '127.0.0.1'].includes(target.hostname) || target.pathname !== '/product_analytics_test') throw new Error('Dedicated local product_analytics_test database required');
+    if (!['localhost', '127.0.0.1'].includes(target.hostname)) throw new Error('Explicit local PostgreSQL URL required');
     const setup = postgres(url!, { max: 1 });
     await setup.unsafe(`CREATE SCHEMA ${schema}`); await setup.end();
     db = postgres(url!, { max: 4, connection: { search_path: schema }, onnotice: () => {} }); state.db = db;

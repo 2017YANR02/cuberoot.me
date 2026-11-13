@@ -9,7 +9,7 @@ vi.mock('../src/platform/auth.js',()=>({
   requirePlatformAdmin:async()=>{if(!state.actor.isAdmin)throw Error('admin required');return state.actor;},
 }));
 vi.mock('../src/platform/refund_provider.js',()=>({assertRefundProvider:()=>{},runProviderRefund:state.provider}));
-vi.mock('../src/routes/platform_commerce.js',()=>({completePlatformFullRefund:state.complete}));
+vi.mock('../src/platform/commerce/refund-service.js',()=>({completePlatformFullRefund:state.complete}));
 vi.mock('../src/platform/db.js',()=>{
   const query=async(_db:unknown,sql:string,args:unknown[]=[])=>{
     state.queries.push(sql);

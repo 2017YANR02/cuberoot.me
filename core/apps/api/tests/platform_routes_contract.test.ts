@@ -1,19 +1,23 @@
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
+import { readLocalModuleSource } from '../../../scripts/read-local-module-source.mjs';
 import { afterEach, describe, expect, it } from 'vitest';
 import { decryptPlatformPrivateData, encryptPlatformPrivateData } from '../src/platform/data_encryption.js';
 import { PlatformApiError } from '../src/platform/errors.js';
 import { createPlatformMediaToken, platformMediaPath, verifyPlatformMediaToken } from '../src/platform/media_access.js';
 import { driveVideoNodeId } from '../src/routes/platform_catalog.js';
+import { ACTIVE_MEMBERSHIP_PREDICATE } from '../src/platform/commerce/membership-access.js';
 import {
   normalizePlatformQuizAnswer,
   normalizePlatformQuizChoices,
   platformQuizAnswersEqual,
 } from '../src/platform/quiz_answers.js';
 
-const commerceSource = readFileSync(new URL('../src/routes/platform_commerce.ts', import.meta.url), 'utf8');
+const commerceSource = readLocalModuleSource(new URL('../src/routes/platform_commerce.ts', import.meta.url), { roots: [fileURLToPath(new URL('../src/platform/commerce', import.meta.url))] });
 const instructorPayoutSource = readFileSync(new URL('../src/platform/instructor_payout.ts', import.meta.url), 'utf8');
-const catalogSource = readFileSync(new URL('../src/routes/platform_catalog.ts', import.meta.url), 'utf8');
-const learningSource = readFileSync(new URL('../src/routes/platform_learning.ts', import.meta.url), 'utf8');
+const catalogSource = readLocalModuleSource(new URL('../src/routes/platform_catalog.ts', import.meta.url), { roots: [fileURLToPath(new URL('../src/platform/catalog', import.meta.url))] });
+const learningSource = readLocalModuleSource(new URL('../src/routes/platform_learning.ts', import.meta.url), { roots: [fileURLToPath(new URL('../src/platform/learning', import.meta.url))] });
 const physicalBundleSource = readFileSync(new URL('../src/platform/physical_bundle.ts', import.meta.url), 'utf8');
 const qrSource = readFileSync(new URL('../src/routes/platform_qr.ts', import.meta.url), 'utf8');
 const envExampleSource = readFileSync(new URL('../.env.example', import.meta.url), 'utf8');
@@ -36,12 +40,31 @@ function routePaths(source: string, router: string): Set<string> {
   ));
 }
 
+function findSourceNode(source: string, predicate: (node: ts.Node) => boolean): string {
+  const file = ts.createSourceFile('contract.ts', source, ts.ScriptTarget.Latest, true);
+  let found: ts.Node | undefined;
+  function visit(node: ts.Node): void {
+    if (found) return;
+    if (predicate(node)) found = node;
+    else ts.forEachChild(node, visit);
+  }
+  visit(file);
+  expect(found, 'Contract implementation must exist').toBeDefined();
+  return found!.getText(file);
+}
+
 function routeBlock(source: string, router: string, method: string, path: string): string {
-  const marker = `${router}.${method}('${path}'`;
-  const start = source.indexOf(marker);
-  expect(start, `${method.toUpperCase()} ${path} must exist`).toBeGreaterThanOrEqual(0);
-  const next = source.indexOf(`\n${router}.`, start + marker.length);
-  return source.slice(start, next < 0 ? undefined : next);
+  return findSourceNode(source, node => ts.isCallExpression(node)
+    && ts.isPropertyAccessExpression(node.expression)
+    && ts.isIdentifier(node.expression.expression)
+    && node.expression.expression.text === router
+    && node.expression.name.text === method
+    && ts.isStringLiteral(node.arguments[0])
+    && node.arguments[0].text === path);
+}
+
+function functionBlock(source: string, name: string): string {
+  return findSourceNode(source, node => ts.isFunctionDeclaration(node) && node.name?.text === name);
 }
 
 describe('Platform typed quiz contract', () => {
@@ -246,7 +269,7 @@ describe('Platform route and security contract', () => {
     expect(createAttempt).toContain('reservation_expires_at');
     const notify = routeBlock(commerceSource, 'platformCommerceRoutes', 'post', '/payments/:provider/notify');
     expect(notify).toContain('await applyVerifiedPayment(event)');
-    const settle = commerceSource.slice(commerceSource.indexOf('async function applyVerifiedPayment('), commerceSource.indexOf("platformCommerceRoutes.post('/payments/:provider/notify'"));
+    const settle = functionBlock(commerceSource, 'applyVerifiedPayment');
     expect(settle).toContain("failure_code = 'provider_not_succeeded'");
     expect(settle).toContain("rejection_code = 'additional_provider_transaction'");
     expect(settle).toContain("failure_code = 'order_cancelled'");
@@ -257,11 +280,7 @@ describe('Platform route and security contract', () => {
     const refundRoute = routeBlock(commerceSource, 'platformCommerceRoutes', 'post', '/admin/orders/:id/refund');
     expect(refundRoute).toContain('await completePlatformFullRefund(db, actor, id, refundId, evidenceReferenceHash)');
     expect(refundRoute).toContain('const evidenceReferenceHash = hashReference(evidenceReference)');
-    const helperStart = commerceSource.indexOf('export async function completePlatformFullRefund(');
-    const helperEnd = commerceSource.indexOf("\nplatformCommerceRoutes.post('/admin/orders/:id/refund'", helperStart);
-    expect(helperStart).toBeGreaterThanOrEqual(0);
-    expect(helperEnd).toBeGreaterThan(helperStart);
-    const refund = commerceSource.slice(helperStart, helperEnd);
+    const refund = functionBlock(commerceSource, 'completePlatformFullRefund');
     expect(refund).toContain("['paid', 'partially_fulfilled', 'fulfilled']");
     expect(refund).toContain("source.entry_type = 'grant'");
     expect(refund).toContain('reversal.reversal_of_ledger_id = source.id');
@@ -310,8 +329,9 @@ describe('Platform route and security contract', () => {
     expect(memberships).toContain('membership.plan_id::text AS "planId"');
     expect(memberships).toContain('plan.slug AS "planSlug"');
     expect(memberships).toContain('plan.name_zh AS "planNameZh"');
-    expect(memberships).toContain("membership.status = 'active'");
-    expect(memberships).toContain('membership.valid_from <= NOW()');
+    expect(memberships).toContain('${ACTIVE_MEMBERSHIP_PREDICATE}');
+    expect(ACTIVE_MEMBERSHIP_PREDICATE).toContain("membership.status = 'active'");
+    expect(ACTIVE_MEMBERSHIP_PREDICATE).toContain('membership.valid_from <= NOW()');
     expect(memberships).toContain('membership.user_id = $1');
     expect(memberships).toContain('[actor.userId]');
     expect(memberships).toContain('privateNoStore(c)');
@@ -321,11 +341,7 @@ describe('Platform route and security contract', () => {
     expect(commerceSource).toContain("if (item.fulfillment_type !== 'shipment')");
     expect(commerceSource).toContain('async function refreshOrderFulfillmentStatus(');
     expect(commerceSource).toContain("THEN delivered_quantity >= quantity");
-    const handlerStart = commerceSource.indexOf('async function recordShipmentEvent(');
-    const handlerEnd = commerceSource.indexOf("platformCommerceRoutes.post('/admin/orders/:orderId/items/:itemId/ship'", handlerStart);
-    expect(handlerStart).toBeGreaterThanOrEqual(0);
-    expect(handlerEnd).toBeGreaterThan(handlerStart);
-    const handler = commerceSource.slice(handlerStart, handlerEnd);
+    const handler = functionBlock(commerceSource, 'recordShipmentEvent');
     expect(handler).toContain('requirePlatformAdmin(c)');
     expect(handler).toContain('withIdempotency(');
     expect(handler).toContain('externalReference was already recorded');

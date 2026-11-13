@@ -5,7 +5,7 @@ import { conflict, notFound } from '../platform/errors.js';
 import { platformRouter, privateNoStore } from '../platform/http.js';
 import { readJsonObject, resourceId, stringField } from '../platform/validation.js';
 import { assertRefundProvider, runProviderRefund, type RefundProviderInput } from '../platform/refund_provider.js';
-import { completePlatformFullRefund } from './platform_commerce.js';
+import { completePlatformFullRefund } from '../platform/commerce/refund-service.js';
 
 export const platformRefundRoutes = platformRouter();
 
