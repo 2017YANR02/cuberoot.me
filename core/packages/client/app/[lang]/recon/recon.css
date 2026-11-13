@@ -32,12 +32,12 @@
 }
 .recon-title-help:hover { opacity: 1; color: var(--accent); }
 
-/* NOTE: 标题区行布局 — h1+副标题靠左，LangToggle 靠右（行业标准：header 内联） */
+/* 标题与视图、计数、账号操作共用一行。 */
 .recon-page-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 0.8rem;
 }
 
@@ -46,7 +46,11 @@
 }
 
 .recon-page-header h1 {
-  margin-bottom: 0.25rem;
+  margin-bottom: 0;
+}
+
+.recon-page-header > div:first-child {
+  flex-shrink: 0;
 }
 
 /* 返回链接独占一行(块级),否则会和后面 inline-flex 的 h1 撞在一起 */
@@ -73,14 +77,8 @@
 .recon-grid-filters .record-select-input::placeholder { color: var(--foreground); opacity: 1; }
 .recon-grid-filters .record-select-popup { right: auto; width: max-content; min-width: 100%; }
 
-/* 桌面端：操作入口在首行，项目、筛选与搜索在下一行。 */
+/* 桌面端：项目、筛选与搜索共用一行。 */
 @media (min-width: 481px) {
-  .recon-toolbar::before {
-    content: '';
-    order: 2;
-    flex-basis: 100%;
-    height: 0;
-  }
   .recon-toolbar .recon-actions { order: 1; }
   .recon-toolbar-event { order: 3; }
   .recon-toolbar > .recon-grid-filters { order: 4; flex-basis: auto; }
@@ -420,8 +418,14 @@ img.recon-inline-flag {
   gap: 0;
 }
 
-.recon-toolbar > .compact-select { align-self: center; }
-.recon-toolbar > .compact-select .pp-trigger,
+.recon-page-header h1 > .compact-select { align-self: center; }
+.recon-page-header .recon-title-trigger {
+  min-height: 44px;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+}
+
 .recon-toolbar-event .pp-trigger { min-height: 44px; font-weight: 600; }
 
 /* --- 视图切换（列表 / 卡片）：仅图标与中间分隔线 --- */
@@ -649,6 +653,14 @@ img.recon-inline-flag {
 }
 
 .recon-featured { margin-bottom: 2rem; }
+
+/* Keep this short menu free of scrollbar chrome, including fractional zoom overflow. */
+.recon-filter-popup { scrollbar-width: none; }
+.recon-filter-popup::-webkit-scrollbar { display: none; }
+.recon-filter-popup .compact-select-option.active {
+  color: var(--foreground);
+  background: var(--secondary);
+}
 
 /* Grouped reconstruction filters share CompactSelect surfaces and option states. */
 .recon-filter-groups {

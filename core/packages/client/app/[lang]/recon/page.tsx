@@ -939,7 +939,40 @@ export default function ReconListPage() {
       <div className="recon-page-header">
         <div>
           <PageHeading>
-            {t('recon.title')}
+            <CompactSelect
+              unstyledTrigger
+              triggerClassName="pp-trigger recon-title-trigger"
+              showArrow
+              popupClassName="recon-filter-popup"
+              label={filterLabel}
+              items={[]}
+              onChange={() => {}}
+              ariaLabel={tr({ zh: '筛选', en: 'Filters' })}
+              valueText={filterLabel}
+              panelContent={<div className="recon-filter-groups">
+                {filterGroups.map(group => (
+                  <div key={group.label} role="group" aria-label={group.label}>
+                    <div className="recon-filter-heading">{group.label}</div>
+                    <div className="compact-select-options">
+                      {group.items.map(item => (
+                        <button
+                          key={item.value}
+                          type="button"
+                          className={'compact-select-option' + (item.selected ? ' active' : '')}
+                          aria-pressed={item.selected}
+                          onClick={item.toggle}
+                        >
+                          <span className="recon-filter-option">
+                            <Check size={14} aria-hidden="true" style={{ visibility: item.selected ? 'visible' : 'hidden' }} />
+                            {item.label}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>}
+            />
             <Link href="/recon/submit" className="recon-add-btn" title={t('recon.add')} aria-label={t('recon.add')}>
               <CirclePlus size={18} />
             </Link>
@@ -955,53 +988,6 @@ export default function ReconListPage() {
             </Link>
           </PageHeading>
         </div>
-      </div>
-
-      {curationError && <p role="alert">{curationError}</p>}
-      {!favoritesOnly && (isAdmin || !!featuredRecons?.length) && (
-        <section className="recon-featured" aria-label={tr({ zh: '复盘', en: 'Reconstructions' })}>
-          <div className="recon-grid">
-            {featuredRecons?.map(solve => <CuratedReconCard key={solve.id} solve={solve} isZh={isZh}
-              href={getDetailUrl(solve)} {...curationActions(solve)} />)}
-          </div>
-          {featuredRecons?.length === 0 && isAdmin && <p>{tr({ zh: '点击复盘卡片上的星标，将精彩复盘加入精选。', en: 'Use the star on a solve card to add it to featured solves.' })}</p>}
-        </section>
-      )}
-
-      {/* 工具栏：WCA 筛选 + 计数 + 登录；filter 全在表头 popover */}
-      <div className="recon-toolbar">
-        <CompactSelect
-          unstyledTrigger
-          triggerClassName="pp-trigger pp-trigger--active"
-          label={filterLabel}
-          items={[]}
-          onChange={() => {}}
-          ariaLabel={tr({ zh: '筛选', en: 'Filters' })}
-          valueText={filterLabel}
-          panelContent={<div className="recon-filter-groups">
-            {filterGroups.map(group => (
-              <div key={group.label} role="group" aria-label={group.label}>
-                <div className="recon-filter-heading">{group.label}</div>
-                <div className="compact-select-options">
-                  {group.items.map(item => (
-                    <button
-                      key={item.value}
-                      type="button"
-                      className={'compact-select-option' + (item.selected ? ' active' : '')}
-                      aria-pressed={item.selected}
-                      onClick={item.toggle}
-                    >
-                      <span className="recon-filter-option">
-                        <Check size={14} aria-hidden="true" style={{ visibility: item.selected ? 'visible' : 'hidden' }} />
-                        {item.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>}
-        />
         <div className="recon-view-toggle">
           <button
             className={`toggle-btn${viewMode === 'list' ? ' active' : ''}`}
@@ -1022,15 +1008,6 @@ export default function ReconListPage() {
             <LayoutGrid size={16} />
           </button>
         </div>
-        {viewMode !== 'list' && (
-          <EventSelect
-            className="recon-toolbar-event"
-            events={events}
-            value={filters.event}
-            onChange={(v) => setFilter('event', v)}
-            allLabel={t('recon.allEvents')}
-          />
-        )}
         <div className="recon-actions">
           <span className="recon-stats-count">
             {t('recon.count', { count: filtered.length })}
@@ -1047,6 +1024,30 @@ export default function ReconListPage() {
           ) : null}
           <WcaAuth href={user?.wcaId ? `/recon/person/${user.wcaId}` : '/account'} />
         </div>
+      </div>
+
+      {curationError && <p role="alert">{curationError}</p>}
+      {!favoritesOnly && (isAdmin || !!featuredRecons?.length) && (
+        <section className="recon-featured" aria-label={tr({ zh: '复盘', en: 'Reconstructions' })}>
+          <div className="recon-grid">
+            {featuredRecons?.map(solve => <CuratedReconCard key={solve.id} solve={solve} isZh={isZh}
+              href={getDetailUrl(solve)} {...curationActions(solve)} />)}
+          </div>
+          {featuredRecons?.length === 0 && isAdmin && <p>{tr({ zh: '点击复盘卡片上的星标，将精彩复盘加入精选。', en: 'Use the star on a solve card to add it to featured solves.' })}</p>}
+        </section>
+      )}
+
+      {/* 工具栏：WCA 筛选 + 计数 + 登录；filter 全在表头 popover */}
+      <div className="recon-toolbar">
+        {viewMode !== 'list' && (
+          <EventSelect
+            className="recon-toolbar-event"
+            events={events}
+            value={filters.event}
+            onChange={(v) => setFilter('event', v)}
+            allLabel={t('recon.allEvents')}
+          />
+        )}
         {/* 卡片视图：表头没了，提供一条紧凑筛选 + 排序栏（与表头共用同一份 store filter） */}
         {!loading && !error && viewMode !== 'list' && (
           <div className="recon-grid-filters">
