@@ -31,6 +31,13 @@ it('distinguishes a complete retained family from an oversized omitted family',(
   expect(result.metadata.completeFamilies).toEqual(['A4']);expect(result.metadata.omittedFamilies).toEqual(['A3']);
 });
 
+it('associates each penalty with its explicit exception references without inheriting nested exceptions',()=>{
+  const html='<html><body><version>Fixture version</version><ul><li id="A3">Inspection<ul><li id="A3c1">No moves or intentional alignment changes. Penalty: DNF. Exception: see A3c2 and A3c5.</li><li id="A3c2">An existing misalignment may be corrected within 10f limits.</li><li id="A3c5">A puzzle-specific alignment procedure is allowed.</li></ul></li></ul></body></html>';
+  const [result]=officialRegulationPassages(html,[{href:'/regulation/speed-solving',content:'A3c1'}]);
+  expect(result.metadata.exceptions).toEqual([{clause:'A3c1',text:'Exception: see A3c2 and A3c5.',references:['A3c2','A3c5']}]);
+  expect(result.metadata.clauses).toContain('A3c2');expect(result.metadata.clauses).toContain('A3c5');
+});
+
 it('resolves full-text clause references and includes their linked starting conditions in one read',()=>{
   const html='<html><body><ul><li id="A1">'+('Unrelated scope. '.repeat(1200))+'</li><li id="A3">Inspection.<ul><li id="A3a">Inspect before starting the solve (see A4d).</li></ul></li><li id="A4">Start.<ul><li id="A4d">The timer starts the solve.</li><li id="A4d1">Within 15 seconds.</li><li id="A4d1+">Exactly 15.00: +2.</li><li id="A4d2">Within 17 seconds.</li><li id="A4d2+">Exactly 17.00: DNF.</li></ul></li></ul></body></html>';
   const excerpt={href:'/regulation/full',content:'A3a 观察时间。'};
