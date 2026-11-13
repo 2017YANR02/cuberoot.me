@@ -150,42 +150,43 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       };
       const recordUsage = recordAssistantModel(config.model, thinking, origin, { round: options.round, attempt: options.attempt });
       try {
-      const response = options.onText ? streamText(request) : generateText(request);
-      let result;
-      if ('fullStream' in response) {
-        let content = '';
-        for await (const part of response.fullStream) {
-          signal.throwIfAborted();
-          if (part.type === 'error') throw part.error;
-          if (part.type === 'text-delta') {
-            content += part.text;
-            if (content.length > 64000) throw new AssistantFailure('model_unavailable', undefined, { reason: 'response_too_large' });
-            await options.onText?.(content);
+        const response = options.onText ? streamText(request) : generateText(request);
+        let result;
+        if ('fullStream' in response) {
+          let content = '';
+          for await (const part of response.fullStream) {
+            signal.throwIfAborted();
+            recordUsage.chunk(part.type);
+            if (part.type === 'error') throw part.error;
+            if (part.type === 'text-delta') {
+              content += part.text;
+              if (content.length > 64000) throw new AssistantFailure('model_unavailable', undefined, { reason: 'response_too_large' });
+              await options.onText?.(content);
+            }
           }
+          result = { toolCalls: await response.toolCalls, text: await response.text, finishReason: await response.finishReason, response: await response.response, totalUsage: await response.totalUsage };
+        } else result = await response;
+        recordUsage(result.totalUsage);
+        if (result.finishReason === 'length') throw new AssistantOutputError('output_truncated', result.finishReason);
+        if (result.toolCalls.length) {
+          if (!allowTools) throw new AssistantOutputError('unexpected_tool_call', result.finishReason);
+          const calls = result.toolCalls.map(call => ({ ...call.input as object, tool: call.toolName }));
+          // The SDK already supplies error results for invalid tool inputs. Our
+          // executor reports these calls too, so retain the native assistant and
+          // reasoning but let pending own each tool result exactly once.
+          const callIds = new Set(result.toolCalls.map(call => call.toolCallId));
+          for (const message of result.response.messages) {
+            if (message.role !== 'tool') { transcript.push(message); continue; }
+            const content = message.content.filter(part => part.type !== 'tool-result' || !callIds.has(part.toolCallId));
+            if (content.length) transcript.push({ ...message, content });
+          }
+          pending = result.toolCalls.map((call, index) => ({ raw: calls[index], id: call.toolCallId, name: call.toolName }));
+          return { calls, answer: '', sourceIds: [] as string[] };
         }
-        result = { toolCalls: await response.toolCalls, text: await response.text, finishReason: await response.finishReason, response: await response.response, totalUsage: await response.totalUsage };
-      } else result = await response;
-      recordUsage(result.totalUsage);
-      if (result.finishReason === 'length') throw new AssistantOutputError('output_truncated', result.finishReason);
-      if (result.toolCalls.length) {
-        if (!allowTools) throw new AssistantOutputError('unexpected_tool_call', result.finishReason);
-        const calls = result.toolCalls.map(call => ({ ...call.input as object, tool: call.toolName }));
-        // The SDK already supplies error results for invalid tool inputs. Our
-        // executor reports these calls too, so retain the native assistant and
-        // reasoning but let pending own each tool result exactly once.
-        const callIds = new Set(result.toolCalls.map(call => call.toolCallId));
-        for (const message of result.response.messages) {
-          if (message.role !== 'tool') { transcript.push(message); continue; }
-          const content = message.content.filter(part => part.type !== 'tool-result' || !callIds.has(part.toolCallId));
-          if (content.length) transcript.push({ ...message, content });
-        }
-        pending = result.toolCalls.map((call, index) => ({ raw: calls[index], id: call.toolCallId, name: call.toolName }));
-        return { calls, answer: '', sourceIds: [] as string[] };
-      }
-      // Retain even a malformed final response so the bounded repair is a new
-      // user turn, with the provider's reasoning preserved in its own transcript.
-      transcript.push(...result.response.messages);
-      return { calls: [] as unknown[], ...parseAssistantAnswer(result.text, result.finishReason) };
+        // Retain even a malformed final response so the bounded repair is a new
+        // user turn, with the provider's reasoning preserved in its own transcript.
+        transcript.push(...result.response.messages);
+        return { calls: [] as unknown[], ...parseAssistantAnswer(result.text, result.finishReason) };
       } catch (error) {
         // The SDK can wrap a body-read failure in APICallError. Recover only
         // our own classified cause; provider messages/bodies remain private.

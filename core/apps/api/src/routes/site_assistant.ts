@@ -15,6 +15,7 @@ import { verifySession } from '../utils/session.js';
 import { query, type QueryRunner } from '../db/connection.js';
 import { startAssistantMonitor, recordAssistantEntry } from '../utils/site_assistant_monitor.js';
 import { restoreAssistantContext, type AssistantContext } from '../utils/site_assistant_context.js';
+import { withAssistantProgress } from '../utils/site_assistant_progress.js';
 
 export async function requireAssistantUser(c: Context): Promise<{ uid: number; wcaId: string }> {
   // Paid AI requires a current CubeRoot session. Do not enter the legacy raw-WCA
@@ -80,7 +81,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
     let monitor: Awaited<ReturnType<typeof startAssistantMonitor>> | undefined;
     let priorContext: AssistantContext | undefined;
     const answer = (user: { wcaId: string }, emit?: (event: AssistantStreamEvent) => Promise<void>) => {
-      const run = () => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, history, user.wcaId, emit, parsed.data.timeZone, images, parsed.data.thinking, {}, priorContext);
+      const run = () => withAssistantProgress(emit, signal, requestStarted, () => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, history, user.wcaId, emit, parsed.data.timeZone, images, parsed.data.thinking, {}, priorContext));
       return monitor ? monitor.run(run) : run();
     };
     const failure = (error: unknown) => monitor?.finish(disconnect.signal.aborted || c.req.raw.signal.aborted ? 'cancelled' : 'error', assistantFailureCode(error));
@@ -121,6 +122,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
       }
       // Keep JSON for existing clients/benchmarks. Auth and quota failures still
       // use HTTP status codes; failures after SSE starts are typed terminal events.
+      monitor?.ready?.();
       if (c.req.header('Accept')?.includes('text/event-stream')) {
         c.header('X-Accel-Buffering', 'no');
         admitted = false; // The stream owns the concurrency slot until it closes.
@@ -135,6 +137,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
           const emit = async (event: AssistantStreamEvent) => {
             signal.throwIfAborted();
             await stream.writeSSE({ data: JSON.stringify(event) });
+            if (event.type === 'progress') monitor?.progress?.();
             if (event.type === 'answer') { emittedAnswer ||= !!event.answer; monitor?.text(event.answer); }
             if (event.type === 'done') monitor?.text(event.result.answer);
           };
@@ -192,6 +195,12 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
     return c.json({ ok: true });
   });
   const eventSchema = z.discriminatedUnion('type', [
+    z.object({ type: z.literal('timing'), timing: z.object({
+      firstProgressMs: z.number().int().min(0).max(600_000).optional(), firstAnswerMs: z.number().int().min(0).max(600_000).optional(),
+      responseMs: z.number().int().min(0).max(600_000), visibleMs: z.number().int().min(0).max(600_000), renderDelayMs: z.number().int().min(0).max(600_000),
+      wasHidden: z.boolean(), transport: z.enum(['sse','json']),
+    }).strict().refine(t => t.visibleMs >= t.responseMs && t.renderDelayMs === t.visibleMs - t.responseMs
+      && (t.firstAnswerMs === undefined || t.firstAnswerMs <= t.responseMs) && (t.firstProgressMs === undefined || t.firstProgressMs <= t.responseMs)) }).strict(),
     z.object({ type: z.literal('feedback'), value: z.enum(['helpful','incorrect','irrelevant','bad_source','bad_link','other']).nullable() }).strict(),
     z.object({ type: z.literal('click'), kind: z.enum(['action','source']), id: z.string().min(1).max(200) }).strict(),
   ]);
@@ -203,10 +212,16 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
     if (!id.success || !event.success) return c.json({ error: 'invalid_event' }, 400);
     let user;
     try { user = await deps.authenticate(c); } catch { return c.json({ error: 'login_required' }, 401); }
-    checkRateLimit(String(user.uid), {bucket:'assistant-feedback',max:30});
+    checkRateLimit(String(user.uid), {bucket:event.data.type === 'timing' ? 'assistant-timing' : 'assistant-feedback',max:30});
     const run = deps.eventsQuery ?? query;
     // Ownership and retention are enforced in the mutation, not by a browser ID.
-    if (event.data.type === 'feedback') {
+    if (event.data.type === 'timing') {
+      // Untrusted browser measurements, stored separately and only once per owned, completed request.
+      const rows = await run(`UPDATE site_assistant_requests SET metrics=jsonb_set(COALESCE(metrics,'{}'::jsonb),'{browser}',?::jsonb)
+        WHERE id=? AND user_id=? AND scope='chat' AND status='success' AND started_at>NOW()-INTERVAL '30 days'
+        AND NOT jsonb_exists(COALESCE(metrics,'{}'::jsonb),'browser') RETURNING id`, [event.data.timing, id.data, user.uid]);
+      if (!rows.length && !(await run(`SELECT id FROM site_assistant_requests WHERE id=? AND user_id=? AND scope='chat' AND status='success' AND started_at>NOW()-INTERVAL '30 days'`, [id.data, user.uid])).length) return c.json({ error: 'not_found' }, 404);
+    } else if (event.data.type === 'feedback') {
       const rows = await run(`UPDATE site_assistant_requests SET feedback=?,feedback_at=NOW(),review_status='open',review_note=NULL,reviewed_by=NULL,reviewed_at=NULL
         WHERE id=? AND user_id=? AND scope='chat' AND status IN ('success','error','cancelled') AND started_at>NOW()-INTERVAL '30 days'
         AND feedback IS DISTINCT FROM ? RETURNING id`, [event.data.value, id.data, user.uid, event.data.value]);

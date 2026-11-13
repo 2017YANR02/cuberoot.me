@@ -105,8 +105,29 @@ export function boundAssistantHistory(history: AssistantMessage[]): AssistantMes
 }
 
 export type AssistantStatus = { phase: 'planning' | 'querying' | 'writing'; tool?: string };
+/** Execution metadata only: never provider reasoning, tool arguments or draft answers. */
+export interface AssistantProgress {
+  id: number;
+  phase: 'model' | 'review' | 'tool';
+  state: 'running' | 'complete' | 'partial' | 'error';
+  tool?: string;
+  elapsedMs: number;
+  durationMs?: number;
+  sourceCount?: number;
+}
+/** Browser-reported durations from submission, separate from server measurements. */
+export interface AssistantBrowserTiming {
+  firstProgressMs?: number;
+  firstAnswerMs?: number;
+  responseMs: number;
+  visibleMs: number;
+  renderDelayMs: number;
+  wasHidden: boolean;
+  transport: 'sse' | 'json';
+}
 export type AssistantStreamEvent =
   | { type: 'status'; status: AssistantStatus }
+  | { type: 'progress'; progress: AssistantProgress }
   | { type: 'answer'; answer: string; sources: AssistantSource[] }
   | { type: 'done'; result: AssistantAnswer }
   | { type: 'error'; error: AssistantErrorCode };

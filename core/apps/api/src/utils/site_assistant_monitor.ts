@@ -23,7 +23,9 @@ const write: QueryRunner = async <T>(statement: string, params: unknown[] = []) 
 };
 export interface AssistantMetrics {
   stages: Record<string, { calls: number; ms: number; errors: number }>;
-  models: Array<{ model: string; thinking: boolean; input: number | null; output: number | null; cached: number | null; reasoning: number | null; grossCny?: number | null; cacheAdjustedCny?: {min:number;max:number}|null; tariff?: unknown; round?: number; attempt?: number; failure?: AssistantModelDiagnostic & { upstreamStatus?: number } }>;
+  models: Array<{ model: string; thinking: boolean; input: number | null; output: number | null; cached: number | null; reasoning: number | null; durationMs?: number; firstActivityMs?: number; firstTextMs?: number; grossCny?: number | null; cacheAdjustedCny?: {min:number;max:number}|null; tariff?: unknown; round?: number; attempt?: number; failure?: AssistantModelDiagnostic & { upstreamStatus?: number } }>;
+  timing?: { version: 1; requestReadyMs?: number; firstProgressMs?: number; responseReadyMs?: number };
+  toolTimings?: Record<string, { calls: number; ms: number; errors: number }>;
   embeddings: Array<{ model: string; tokens: number | null; grossCny?: number | null; tariff?: unknown }>;
   searches: Array<{ provider: string; requests: number | null; grossCny: number | null; tariff: unknown }>;
   reranks: Array<{ model: string; candidates: number; tokens: number | null; ms: number; status: string; grossCny: number | null; tariff?: unknown }>;
@@ -38,13 +40,19 @@ export function recordAssistantStage(name: string, ms: number, failed: boolean, 
   if (!metrics) return;
   const stage = metrics.stages[name] ??= { calls: 0, ms: 0, errors: 0 };
   stage.calls++; stage.ms += Math.round(ms); stage.errors += Number(failed);
-  if (tool) metrics.tools[tool] = (metrics.tools[tool] ?? 0) + 1;
+  if (tool) {
+    metrics.tools[tool] = (metrics.tools[tool] ?? 0) + 1;
+    const timing = (metrics.toolTimings ??= {})[tool] ??= { calls: 0, ms: 0, errors: 0 };
+    timing.calls++; timing.ms += Math.round(ms); timing.errors += Number(failed);
+  }
 }
 const token = (value?: number) => Number.isSafeInteger(value) && value! >= 0 ? value! : null;
 export function recordAssistantModel(model: string, thinking: boolean, origin = '', step: { round?: number; attempt?: number } = {}) {
+  const started = performance.now();
   const entry: AssistantMetrics['models'][number] = { model, thinking, ...step, input: null, output: null, cached: null, reasoning: null };
   scope.getStore()?.models.push(entry);
-  return (usage?: LanguageModelUsage, failure?: AssistantMetrics['models'][number]['failure']) => {
+  const finish = (usage?: LanguageModelUsage, failure?: AssistantMetrics['models'][number]['failure']) => {
+    entry.durationMs = Math.max(0, Math.round(performance.now() - started));
     if (usage) {
       entry.input = token(usage.inputTokens); entry.output = token(usage.outputTokens);
       entry.cached = token(usage.inputTokenDetails?.cacheReadTokens); entry.reasoning = token(usage.outputTokenDetails?.reasoningTokens);
@@ -55,6 +63,13 @@ export function recordAssistantModel(model: string, thinking: boolean, origin = 
       diagnosticLog('site_assistant_model_failure', { requestId: currentDiagnosticRequestId(), model, ...step, ...failure }, true);
     }
   };
+  return Object.assign(finish, { chunk(type: string) {
+    // Count actual provider output, not synthetic SDK start/keepalive frames.
+    if (!['text-delta','reasoning-delta','tool-input-delta','tool-call'].includes(type)) return;
+    const ms = Math.max(0, Math.round(performance.now() - started));
+    entry.firstActivityMs ??= ms;
+    if (type === 'text-delta') entry.firstTextMs ??= ms;
+  } });
 }
 export function recordAssistantEmbedding(model: string, origin = '') {
   const entry = { model, tokens: null as number | null };
@@ -155,12 +170,15 @@ export async function startAssistantMonitor(input: AssistantMonitorInput, run: Q
   } catch { failed(); throw new Error('Assistant monitoring unavailable'); }
   return {
     id,
+    ready() { (metrics.timing ??= { version: 1 }).requestReadyMs = Math.max(0, Math.round(performance.now() - started)); },
+    progress() { (metrics.timing ??= { version: 1 }).firstProgressMs ??= Math.max(0, Math.round(performance.now() - started)); },
     run<T>(callback: () => Promise<T>) { return scope.run(metrics, callback); },
     text(answer: string) { if (answer) { firstAnswer ??= Math.round(performance.now() - started); partial = answer.slice(0, SITE_ASSISTANT_ANSWER_MAX_LENGTH); } },
     async finish(status: 'success' | 'error' | 'cancelled' | 'rejected', error?: string, result?: AssistantAnswer) {
       if (finished) return;
       finished = true;
       const duration = Math.round(performance.now() - started);
+      if (status === 'success') (metrics.timing ??= { version: 1 }).responseReadyMs = duration;
       const calls = [...metrics.models, ...metrics.embeddings, ...metrics.searches, ...metrics.reranks];
       metrics.cost = { grossCny: calls.reduce((n, call) => n + (call.grossCny ?? 0), 0), unpricedCalls: calls.filter(call => call.grossCny == null).length };
       const snapshot = JSON.parse(JSON.stringify(metrics));

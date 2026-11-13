@@ -1,6 +1,7 @@
 import type { AssistantErrorCode } from '@cuberoot/shared/site-assistant';
 import { currentDiagnosticRequestId, diagnosticLog } from '../observability/request.js';
 import { recordAssistantStage } from './site_assistant_monitor.js';
+import { startAssistantProgress } from './site_assistant_progress.js';
 
 export interface AssistantModelDiagnostic {
   reason: 'empty_output' | 'invalid_json' | 'invalid_schema' | 'output_truncated' | 'unexpected_tool_call' | 'http_error' | 'network_error' | 'provider_error' | 'empty_body' | 'response_too_large' | 'aborted';
@@ -35,12 +36,15 @@ export async function assistantStage<T>(stage: 'auth' | 'quota' | 'model' | 'rev
   diagnosticLog('site_assistant_stage', { requestId, stage, phase: 'start', round });
   let code: AssistantErrorCode | undefined;
   let upstreamStatus: number | undefined;
-  try { return await run(); }
+  const progress = await startAssistantProgress(stage, tool);
+  let result: T | undefined;
+  try { result = await run(); return result; }
   catch (error) { code = assistantFailureCode(error); upstreamStatus=error instanceof AssistantFailure?error.upstreamStatus:undefined; throw error; }
   finally {
     const durationMs = Math.round(performance.now() - started);
     recordAssistantStage(stage, durationMs, !!code, tool);
     diagnosticLog('site_assistant_stage', { requestId, stage, phase: 'end', round, durationMs, code: code ?? 'ok', upstreamStatus }, !!code);
+    await progress?.(!!code, result);
   }
 }
 

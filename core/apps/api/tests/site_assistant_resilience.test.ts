@@ -6,6 +6,7 @@ import { createSiteAssistantRoutes as createRoutes } from '../src/routes/site_as
 import { AssistantFailure } from '../src/utils/site_assistant_diagnostics.js';
 import { modelResponse as model, wireEvidence } from './fixtures/site_assistant_model.js';
 import { chunkKnowledge } from '../src/utils/site_assistant_knowledge.js';
+import { withAssistantProgress } from '../src/utils/site_assistant_progress.js';
 import * as analysis from '../src/utils/site_assistant_analysis_db.js';
 vi.mock('../src/utils/site_assistant_people.js',()=>({findAssistantPeople:vi.fn(async()=>[])}));
 
@@ -277,6 +278,36 @@ describe('assistant resilience',()=>{
     const evidence=wireEvidence(JSON.parse(String(fetcher.mock.calls[2][1]?.body)));
     expect(evidence[0]).toMatchObject({outcome:{state:'blocked',reason:'invalid_page_reference'},data:{notEvidence:true,error:'invalid_page_reference'}});
     expect(fetcher.mock.calls.some(([url])=>String(url).includes('/unknown-public-route'))).toBe(false);
+  });
+  it('repairs a bad follow-up page ID without discarding evidence or reporting a source outage',async()=>{
+    const corpus={updated:'2026-11-12T00:00:00.000Z',pages:[{lang:'en' as const,href:'/help/inspection',title:'Inspection help',text:'The documented inspection reminder sounds at eight and twelve seconds.'}]};
+    const [passage]=await chunkKnowledge(corpus);
+    const calls:any[]=[];
+    const events:any[]=[];
+    let indexReads=0;
+    const fetcher=vi.fn<typeof fetch>(async(url,init)=>{
+      if(String(url).endsWith('/assistant/pages.json')) {indexReads++;return Response.json(corpus);}
+      const request=JSON.parse(String(init?.body));calls.push(request);
+      if(calls.length===1)return model({calls:[{tool:'pages',query:'inspection reminder',pageIds:[]}]});
+      if(calls.length===2)return model({calls:[{tool:'pages',query:'inspection timing',pageIds:['invented-inspection-id']}]});
+      if(calls.length===3) {
+        const evidence=wireEvidence(request);
+        expect(evidence.some(item=>item.data?.pages?.some((page:any)=>page.id===passage.id))).toBe(true);
+        expect(evidence.some(item=>item.data?.error==='invalid_page_reference')).toBe(true);
+        expect(evidence.find(item=>item.data?.error==='invalid_page_reference')?.data.instruction).toContain('Reuse an exact ID');
+        expect(request.messages.at(-1).content).toContain('The page selection was invalid.');
+        return model({calls:[{tool:'pages',query:'inspection timing',pageIds:[passage.id]}]});
+      }
+      return model({answerKind:'grounded',answer:`The reminder sounds at eight and twelve seconds. [[${passage.id}]]`,sourceIds:[passage.id]});
+    });
+    const signal=AbortSignal.timeout(5000);
+    const result=await withAssistantProgress(async event=>{events.push(event);},signal,performance.now(),()=>answerSiteQuestion('Explain the documented inspection reminders.','en',config,signal,withCatalog(fetcher)));
+    expect(result.answer).toContain('eight and twelve seconds');
+    expect(result.sources).toEqual([{id:passage.id,title:'Inspection help',href:'/help/inspection',read:true}]);
+    expect(indexReads).toBe(1);
+    expect(calls.some(request=>request.messages.some((message:any)=>message.role==='system' && message.content.includes('Compose and check the final answer directly from the ORIGINAL question')))).toBe(true);
+    expect(fetcher.mock.calls.every(([url])=>String(url).endsWith('/assistant/pages.json') || String(url).startsWith(config.baseUrl))).toBe(true);
+    expect(events.filter(event=>event.type==='progress' && event.progress.phase==='tool' && event.progress.state!=='running').map(event=>event.progress.state)).toEqual(['complete','partial','complete']);
   });
   it('logs stage timing without recording question, provider body or model key',async()=>{
     const log=vi.spyOn(console,'log').mockImplementation(()=>{});
