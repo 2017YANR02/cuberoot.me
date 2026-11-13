@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type MutableRefObject, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type MutableRefObject, type FormEvent } from 'react';
 import { ArrowDown, ArrowUp, GripVertical, ExternalLink, Plus, Trash2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
@@ -15,6 +15,7 @@ import {
   type PlatformQrLink,
 } from '@/lib/platform-qr-landing';
 import type { PlatformActionResult, PlatformEntity } from '@/lib/platform-types';
+import { usePlatformFormDraft } from './usePlatformFormDraft';
 import styles from './PlatformQrMetadataEditor.module.css';
 
 interface QrMetadataValues {
@@ -71,11 +72,17 @@ export function PlatformQrMetadataEditor({ entity, resourceId, busy, runAction, 
   const t = useT();
   const dragIndex = useRef<number | null>(null);
   const linksRef = useRef<HTMLOListElement>(null);
-  const [values, setValues] = useState(() => valuesFromEntity(entity));
+  const initial = useMemo(() => valuesFromEntity(entity), [entity]);
+  const { values, setValues, submission, isCurrent, accept } = usePlatformFormDraft(resourceId, initial);
+  const requestScope = useRef<AbortController | null>(null);
   const [savingCard, setSavingCard] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   useEffect(() => {
-    setValues(valuesFromEntity(entity));
+    const controller = new AbortController();
+    requestScope.current = controller;
+    return () => controller.abort();
+  }, [resourceId]);
+  useEffect(() => {
     setMessage(null);
   }, [entity]);
 
@@ -87,6 +94,8 @@ export function PlatformQrMetadataEditor({ entity, resourceId, busy, runAction, 
   };
 
   const saveChanges = async (): Promise<boolean> => {
+    const signal = requestScope.current?.signal;
+    if (!signal || signal.aborted) return false;
     const linkProblem = platformQrLinksProblem(values.links);
     if (linkProblem) {
       setMessage(linkProblem === 'limit'
@@ -109,10 +118,11 @@ export function PlatformQrMetadataEditor({ entity, resourceId, busy, runAction, 
     }
     setMessage(null);
     setSavingCard(true);
+    const token = submission();
     try {
-      const initial = valuesFromEntity(entity);
       let card = cardDraft;
-      if (!card && (values.intro !== initial.intro || values.term !== initial.term)) card = (await getPlatformQrCard(entity.id)).card;
+      if (!card && (values.intro !== initial.intro || values.term !== initial.term)) card = (await getPlatformQrCard(entity.id, signal)).card;
+      if (signal.aborted) return false;
       const result = await runAction(resourceId, {
         ...(card ? { card: { ...card, intro: values.intro !== initial.intro ? values.intro : card.intro, term: values.term !== initial.term ? values.term : card.term } } : {}),
         code: values.code.trim() || null,
@@ -129,13 +139,19 @@ export function PlatformQrMetadataEditor({ entity, resourceId, busy, runAction, 
           ...(item.note?.trim() ? { note: item.note.trim() } : {}),
         })),
       });
+      if (signal.aborted) return false;
+      if (result) accept(token);
+      if (result && !isCurrent(token)) {
+        setMessage(t('资料已修改，请保存后重试。', 'The details changed. Save them and retry.'));
+        return false;
+      }
       if (result) setMessage(t('资料和设计已保存。', 'Details and design saved.'));
       return Boolean(result);
     } catch (reason) {
-      setMessage(reason instanceof Error ? reason.message : t('保存二维码资料失败。', 'Could not save QR details.'));
+      if (!signal.aborted) setMessage(reason instanceof Error ? reason.message : t('保存二维码资料失败。', 'Could not save QR details.'));
       return false;
     } finally {
-      setSavingCard(false);
+      if (!signal.aborted) setSavingCard(false);
     }
   };
 

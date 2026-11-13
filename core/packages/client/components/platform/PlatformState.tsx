@@ -30,17 +30,17 @@ export function PlatformState({
     loading: {
       Icon: Spinner,
       title: t('正在加载', 'Loading'),
-      detail: t('正在从 Platform 服务获取最新数据。', 'Fetching the latest data from the Platform service.'),
+      detail: message,
     },
     empty: {
       Icon: Inbox,
       title: t('暂无内容', 'Nothing here yet'),
-      detail: t('当前筛选条件下没有可显示的真实数据。', 'No real data matches the current filters.'),
+      detail: message,
     },
     error: {
       Icon: AlertTriangle,
       title: t('服务暂不可用', 'Service unavailable'),
-      detail: message ?? t('请求没有成功。你可以重试；页面不会用演示数据代替。', 'The request did not succeed. You can retry; demo data will not be substituted.'),
+      detail: message ?? t('请稍后重试。', 'Try again later.'),
     },
     permission: {
       Icon: LockKeyhole,
@@ -55,7 +55,7 @@ export function PlatformState({
       <Icon aria-hidden />
       <div>
         <strong>{content.title}</strong>
-        <p>{content.detail}</p>
+        {content.detail ? <p>{content.detail}</p> : null}
         <div className="platform-state-actions">
           {kind === 'error' && onRetry ? (
             <button type="button" className="platform-button" onClick={onRetry}>{t('重试', 'Retry')}</button>

@@ -17,9 +17,13 @@ interface Props {
   children: (organization: TeachingOrganizationAccess) => ReactNode;
 }
 
-export default function OrgWorkspace({ orgSlug, children }: Props) {
-  const t = useT();
+export default function OrgWorkspace(props: Props) {
   const user = useAuthUser();
+  return <OrgAccountWorkspace key={`${user?.uid ?? user?.wcaId ?? 'guest'}:${props.orgSlug}`} {...props} user={user} />;
+}
+
+function OrgAccountWorkspace({ orgSlug, children, user }: Props & { user: ReturnType<typeof useAuthUser> }) {
+  const t = useT();
   const pathname = usePathname().replace(/^\/zh(?=\/|$)/, '');
   const [mounted, setMounted] = useState(false);
   const [organization, setOrganization] = useState<TeachingOrganizationAccess | null>(null);

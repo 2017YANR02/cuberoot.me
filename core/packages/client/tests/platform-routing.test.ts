@@ -385,8 +385,8 @@ describe('Platform gateway contracts', () => {
     expect(catalog.items[0]).toMatchObject({ id: 'plan-1', title: '年度课程权益' });
     expect(fetchMock.mock.calls[0][1]?.cache).toBeUndefined();
 
-    const routeViewSource = readFileSync(join(REPO, 'core', 'packages', 'client', 'components', 'platform', 'PlatformRouteView.tsx'), 'utf8');
-    const membershipSource = readFileSync(join(REPO, 'core', 'packages', 'client', 'components', 'platform', 'PlatformDomainActions.tsx'), 'utf8');
+    const routeViewSource = readFileSync(join(REPO, 'core', 'packages', 'client', 'components', 'platform', 'PlatformResourceRouteView.tsx'), 'utf8');
+    const membershipSource = readFileSync(join(REPO, 'core', 'packages', 'client', 'components', 'platform', 'PlatformMembershipCatalog.tsx'), 'utf8');
     expect(routeViewSource).toContain("definition.id !== 'membership'");
     expect(routeViewSource).toContain("definition.id !== 'me-membership'");
     expect(routeViewSource).toContain("definition.id === 'membership' || definition.id === 'me-membership' || definition.id === 'qr' ? null");

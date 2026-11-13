@@ -1,5 +1,7 @@
 # Platform 完整移植与复用跟踪
 
+2026-11-13 后续入口：[模块化与产品验收跟踪](platform-modernization-2026-11.md)。本文件保留 2026-10-04 的发布与验收历史；后续修复、角色/数据库/浏览器复验和 CI 接线以新跟踪表为准。下文旧工作目录及工作树记录不适用于当前开发规则。
+
 更新：2026-10-04。状态：**已合入main并发布；QR生成故障已修复，人工业务验收待完成**。本文件是本轮执行与复核入口；历史 `platform-product-migration-tracker.md` 的完成声明不作为本轮验收证据。
 
 当前工作入口：`/Users/eula/Documents/cuberoot.me` 的 `main`。用户追加要求直接放入main并提交、push全部；下文隔离分支及不push记录保留为实施历史，后续从main继续。
@@ -114,7 +116,7 @@
 | QR | API/card/landing与client定向回归通过；真实PG昨天5次不挪动、今天两码同访客2次/UV1，47模板/42积木完整 |
 | 数据库升级与快照 | 0258–0260 从完整基线schema升级；最新schema另库建库；860个Platform字段类型/可空性/默认值一致 |
 
-PG 集成测试只有显式设置 `PLATFORM_COMMERCE_TEST_DATABASE_URL` 或 `PLATFORM_LEARNING_TEST_DATABASE_URL` 才运行，要求本地回环地址；使用隔离schema，不能拿生产库代替。普通CI跳过这两份PG集成测试，不得把跳过写成CI已经验证数据库业务。
+PG 集成测试只有显式设置 `PLATFORM_COMMERCE_TEST_DATABASE_URL` 或 `PLATFORM_LEARNING_TEST_DATABASE_URL` 才运行，要求本地回环地址；使用隔离schema，不能拿生产库代替。2026-10-04 的普通 CI 跳过这两份 PG 集成测试。2026-11-13 本地改动已为现有 CI PG 服务补齐这些环境变量以及媒体、赛事、分析和教务回归；尚未发布运行，不能把接线或本地通过写成 CI 已通过。
 
 本轮实际查出并修复了既有保存链路缺陷：JSONB二次编码、优惠券已保存的空作用域数组无法重读、SQL参数text/varchar及int/bigint推断错误。类型检查和源码字符串检查不能替代这些真实保存回读证据。
 

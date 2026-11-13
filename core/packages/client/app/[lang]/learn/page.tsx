@@ -11,8 +11,12 @@ import { MutationMessage, teachingErrorMessage } from '@/components/teaching/Tea
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function LearningCenterPage() {
-  const t = useT();
   const user = useAuthUser();
+  return <LearningCenterAccountPage key={user?.uid ?? user?.wcaId ?? 'guest'} user={user} />;
+}
+
+function LearningCenterAccountPage({ user }: { user: ReturnType<typeof useAuthUser> }) {
+  const t = useT();
   const [mounted, setMounted] = useState(false);
   const [contexts, setContexts] = useState<TeachingLearningContext[]>([]);
   const [loading, setLoading] = useState(true);

@@ -18,8 +18,12 @@ import { MutationMessage, teachingErrorMessage, teachingRoleLabel, useOperationK
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function OrganizationsPage() {
-  const t = useT();
   const user = useAuthUser();
+  return <OrganizationsAccountPage key={user?.uid ?? user?.wcaId ?? 'guest'} user={user} />;
+}
+
+function OrganizationsAccountPage({ user }: { user: ReturnType<typeof useAuthUser> }) {
+  const t = useT();
   const operationKey = useOperationKey();
   const [mounted, setMounted] = useState(false);
   const [organizations, setOrganizations] = useState<TeachingOrganizationAccess[]>([]);

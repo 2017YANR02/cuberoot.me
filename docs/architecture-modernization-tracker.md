@@ -50,7 +50,7 @@ node --input-type=module -e 'import { activePackages } from "./scripts/check-arc
 | LAY2-10 Web 目录迁移 | 路径仍为 `core/packages/client`；原计划为“已授权，待前置”，继续前刷新基线并核对仓外 Web 配置与发布窗口 | [目录迁移方案](./core-workspace-layout-migration-plan.md) |
 | LAY2-11 旧路径兼容清理 | 等 Web 迁移及发布合同验收后再清理，不能因看到旧路径就直接删除兼容项 | 同上 |
 | LAY2-12 Web/API npm 身份改名 | 保持 `@cuberoot/client` / `@cuberoot/server`，与物理迁移分批实施 | 同上 |
-| Platform 产品与人工验收 | 后续缺口按完整移植跟踪逐项处理；旧 P0-P8 技术验收不能代表完整产品验收 | [完整移植跟踪](./platform-completion-tracker.md) |
+| Platform 产品与人工验收 | 后续缺口按完整移植跟踪逐项处理；旧 P0-P8 技术验收不能代表完整产品验收。2026-11 本地模块化与分层验证另行记账，不替代生产人工验收 | [完整移植跟踪](./platform-completion-tracker.md)、[模块化与产品验收](./platform-modernization-2026-11.md) |
 | 五端设备、签名和发布 | 按平台分别保留证据，不能拿一个平台通过替代其他平台 | [App 路线图](./mobile-app-roadmap.md) |
 | 旧资产与仓库处置 | 按清册保管，仓库删除仍由所有者执行 | [数据处置清册](./platform-data-disposition-ledger.md) |
 | 进一步提取共享模块 | 条件候选，不是待执行队列：新增真实消费者、旧债阻塞独立运行或用户指定领域时重新核对 | [候选历史快照与重开门槛](./architecture-package-candidates.md) |

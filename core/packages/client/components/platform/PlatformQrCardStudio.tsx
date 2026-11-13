@@ -2,18 +2,8 @@
 
 import { currentEntryHref } from '@/lib/entry-navigation';
 import MoreToggle from '@/components/MoreToggle';
-import {
-  type ChangeEvent,
-  type CSSProperties,
-  type MouseEvent as ReactMouseEvent,
-  type PointerEvent as ReactPointerEvent,
-  type WheelEvent,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import { Check, Copy, Download, ExternalLink, FileImage, ImageDown, Magnet, Move, Pencil, Plus, Printer, RotateCcw, Save, Trash2 } from '@app-foundation/icons/lucide';
+import { type ChangeEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type WheelEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { Download, ExternalLink, FileImage, ImageDown, Magnet, Move, Pencil, Plus, Printer, RotateCcw, Save, Trash2 } from '@app-foundation/icons/lucide';
 import { parseAsString, useQueryState } from 'nuqs';
 import { prepareImageUpload } from '@/lib/image-upload';
 import { qrAdminRequest, qrAdminEntity, type QrAdminPage, type QrAdminRow } from '@/lib/platform-qr-admin';
@@ -22,609 +12,17 @@ import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import SearchInput from '@/components/SearchInput';
 import { useT } from '@/hooks/useT';
-import {
-  DEFAULT_QR_CARD,
-  getPlatformQrCard,
-  isQrCardTextElement,
-  normalizeQrCard,
-  QR_CARD_ELEMENTS,
-  QR_CARD_FACE_COLORS,
-  QR_CARD_FONTS,
-  QR_CARD_FRONT_ARTS,
-  qrCardFaceletSpots,
-  qrCardFormulaRow,
-  qrCardArtworkDownload,
-  qrCardFontStack,
-  qrCardPublicUrl,
-  qrCardVisualCubeUrl,
-  qrCodeSvgUrl,
-  resolveQrCardContent,
-  savePlatformQrCard,
-  snapQrCardPosition,
-  type PlatformQrCard,
-  type QrCardCustomText,
-  type QrCardElement,
-  type QrCardFont,
-  type QrCardTextStyle,
-} from '@/lib/platform-qr-card';
-import {
-  assembleQrArtPrompt,
-  composeQrArtPrompt,
-  FALLBACK_QR_PROMPT_LIBRARY,
-  getQrPromptLibrary,
-  QR_PROMPT_DIMENSIONS,
-  type QrPromptDimension,
-  type QrPromptLibrary,
-} from '@/lib/platform-qr-prompt';
+import { DEFAULT_QR_CARD, getPlatformQrCard, QR_CARD_ELEMENTS, QR_CARD_FRONT_ARTS, qrCardArtworkDownload, qrCardPublicUrl, qrCodeSvgUrl, resolveQrCardContent, savePlatformQrCard, snapQrCardPosition, type PlatformQrCard, type QrCardCustomText } from '@/lib/platform-qr-card';
 import type { PlatformEntity } from '@/lib/platform-types';
 import { PlatformState } from './PlatformState';
 import styles from './PlatformQrCardStudio.module.css';
-
-type EditableElement = QrCardElement | `ct:${string}`;
-type Translate = ReturnType<typeof useT>;
+import { type EditableElement, codeOf, triggerBrowserDownload, elementName, getPosition, getScale, withPosition, withScale, patchAlgorithm, type Gesture, type InlineEdit } from './PlatformQrCardEditing';
+import { QrCardUnit } from './PlatformQrCardUnit';
+import { ElementInspector } from './PlatformQrElementInspector';
+import { useQrCardDrafts } from './useQrCardDrafts';
+import { PromptComposer } from './PlatformQrPromptComposer';
 
 const MAX_ART_BYTES = 1_500_000;
-
-const ELEMENT_SIDE: Record<QrCardElement, 'front' | 'back'> = {
-  quote: 'front',
-  brand: 'front',
-  front: 'front',
-  backText: 'back',
-  term: 'back',
-  qr: 'back',
-  alg: 'back',
-  back: 'back',
-};
-
-function codeOf(entity: PlatformEntity): string {
-  const code = entity.data?.code;
-  return typeof code === 'string' && code.trim() ? code.trim() : entity.id;
-}
-
-function cloneCard(card: PlatformQrCard): PlatformQrCard {
-  return normalizeQrCard(card);
-}
-
-function positionStyle(x = 0, y = 0, scale = 1): CSSProperties {
-  return { transform: `translate(calc(-50% + ${x}mm), calc(-50% + ${y}mm)) scale(${scale})` };
-}
-
-function shiftStyle(x = 0, y = 0, scale = 1): CSSProperties {
-  return { transform: `translate(${x}mm, ${y}mm) scale(${scale})` };
-}
-
-function printedTextStyle(style: QrCardTextStyle | undefined, baseSize: number, fallbackColor: string): CSSProperties {
-  const size = style?.size ?? 1;
-  const strokeWidth = style?.strokeW ?? 0;
-  return {
-    color: style?.color ?? fallbackColor,
-    fontFamily: qrCardFontStack(style?.font),
-    fontSize: `${baseSize * size}mm`,
-    WebkitTextStroke: strokeWidth ? `${strokeWidth}mm ${style?.stroke ?? '#ffffff'}` : undefined,
-    paintOrder: strokeWidth ? 'stroke' : undefined,
-  };
-}
-
-function triggerBrowserDownload(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.hidden = true;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
-}
-
-function elementName(t: Translate, key: EditableElement): string {
-  if (key.startsWith('ct:')) return t('自定义文字', 'Custom text');
-  return {
-    quote: t('正面文案', 'Front copy'),
-    brand: t('品牌名', 'Brand'),
-    front: t('正面艺术图', 'Front artwork'),
-    backText: t('背面介绍', 'Back introduction'),
-    term: t('短标题', 'Short title'),
-    qr: t('二维码', 'QR code'),
-    alg: t('公式', 'Algorithm'),
-    back: t('背面艺术图', 'Back artwork'),
-  }[key as QrCardElement];
-}
-
-function fontName(t: Translate, font: QrCardFont): string {
-  return {
-    sans: t('黑体', 'Sans'),
-    serif: t('宋体', 'Serif'),
-    kai: t('楷体', 'Kai'),
-    round: t('圆体', 'Rounded'),
-    mono: t('等宽', 'Mono'),
-  }[font];
-}
-
-function selectableProps(key: EditableElement, selected: EditableElement | null) {
-  return {
-    'data-card-el': key,
-    'data-selected': selected === key ? 'true' : undefined,
-  };
-}
-
-function QrCardUnit({
-  card,
-  code,
-  title,
-  selected,
-  index,
-  cropMarks = false,
-  onInlineEdit,
-}: {
-  card: PlatformQrCard;
-  code: string;
-  title: string;
-  selected: EditableElement | null;
-  index: number;
-  cropMarks?: boolean;
-  onInlineEdit?: (key: EditableElement) => void;
-}) {
-  const t = useT();
-  const frontArt = card.frontArt || QR_CARD_FRONT_ARTS[index % QR_CARD_FRONT_ARTS.length].src;
-  const backArt = card.backArt;
-  const visualCube = qrCardVisualCubeUrl(card.alg);
-  const content = resolveQrCardContent(card, title, index);
-  const layout = card.layout;
-  const textStyles = card.textStyles;
-  const artStyle = (side: 'front' | 'back'): CSSProperties => {
-    const placement = layout[side];
-    const contain = placement?.fit !== 'cover';
-    const scale = contain ? placement?.s ?? 1 : Math.max(1, placement?.s ?? 1);
-    return {
-      left: contain ? '1mm' : '-3mm',
-      top: contain ? '1mm' : '-3mm',
-      width: contain ? '18mm' : '26mm',
-      height: contain ? '38mm' : '46mm',
-      objectFit: contain ? 'contain' : 'cover',
-      transformOrigin: contain ? '9mm 19mm' : '13mm 23mm',
-      transform: `translate(${placement?.x ?? 0}mm, ${placement?.y ?? 0}mm) scale(${scale})`,
-    };
-  };
-  const editableProps = (key: EditableElement) => ({
-    ...selectableProps(key, selected),
-    onDoubleClick: onInlineEdit ? (event: ReactMouseEvent) => {
-      event.stopPropagation();
-      onInlineEdit(key);
-    } : undefined,
-  });
-
-  return (
-    <div className={styles.cardUnit} aria-label={`${title} (${code})`}>
-      <section className={`${styles.cardFace} ${styles.cardFront}`} aria-label={t('正面', 'Front')}>
-        <div className={styles.artClip} aria-hidden>
-          <img className={styles.artImage} src={frontArt} alt="" draggable={false} style={artStyle('front')} {...editableProps('front')} />
-          <span className={styles.frontShade} />
-        </div>
-        {card.customTexts.filter((item) => item.side === 'front').map((item) => (
-          <p
-            key={item.id}
-            className={`${styles.printText} ${styles.customText}`}
-            style={{ ...positionStyle(item.x, item.y), ...printedTextStyle(item.style, 2.4, '#ffffff') }}
-            {...editableProps(`ct:${item.id}`)}
-          >{item.text}</p>
-        ))}
-        {!textStyles.quote?.hidden ? (
-          <div
-            className={`${styles.printText} ${styles.quote}`}
-            style={shiftStyle(layout.quote?.x, layout.quote?.y)}
-            {...editableProps('quote')}
-          >
-            <strong style={printedTextStyle(textStyles.quote, 2.6, '#ffffff')}>{content.quoteMain}</strong>
-            {content.quoteSubs.map((line, lineIndex) => <span key={`${line}-${lineIndex}`} style={printedTextStyle(textStyles.quote, 1.4, 'rgba(255,255,255,0.85)')}>{line}</span>)}
-          </div>
-        ) : null}
-        {!textStyles.brand?.hidden ? (
-          <p
-            className={`${styles.printText} ${styles.brand}`}
-            style={{ ...shiftStyle(layout.brand?.x, layout.brand?.y), ...printedTextStyle(textStyles.brand, 1.4, 'rgba(255,255,255,0.92)') }}
-            {...editableProps('brand')}
-          >{content.brand}</p>
-        ) : null}
-      </section>
-
-      <section className={`${styles.cardFace} ${styles.cardBack}`} aria-label={t('背面', 'Back')}>
-        <div className={styles.artClip} aria-hidden>
-          {backArt ? <img className={styles.artImage} src={backArt} alt="" draggable={false} style={artStyle('back')} {...editableProps('back')} /> : (
-            <>
-              <span className={styles.backGlow} {...editableProps('back')} />
-              <span className={styles.formulaPattern}>{Array.from({ length: 16 }, (_, row) => <span key={row}>{qrCardFormulaRow(row)}</span>)}</span>
-              <span className={styles.faceletPattern}>{qrCardFaceletSpots().map((spot, spotIndex) => <i key={spotIndex} style={{ left: `${1 + spot.x * 17}mm`, top: `${1 + spot.y * 37}mm`, width: `${spot.size}mm`, height: `${spot.size}mm`, background: QR_CARD_FACE_COLORS[spot.colorIndex], opacity: spot.opacity, transform: `rotate(${spot.rotation}deg)` }} />)}</span>
-            </>
-          )}
-        </div>
-        {card.customTexts.filter((item) => item.side === 'back').map((item) => (
-          <p
-            key={item.id}
-            className={`${styles.printText} ${styles.customText}`}
-            style={{ ...positionStyle(item.x, item.y), ...printedTextStyle(item.style, 2.4, '#11111a') }}
-            {...editableProps(`ct:${item.id}`)}
-          >{item.text}</p>
-        ))}
-        {!textStyles.backText?.hidden ? (
-          <div
-            className={`${styles.printText} ${styles.backText}`}
-            style={shiftStyle(layout.backText?.x, layout.backText?.y)}
-            {...editableProps('backText')}
-          >
-            <strong style={printedTextStyle(textStyles.backText, 1.6, '#1e4acb')}>{content.backMain}</strong>
-            {content.backSub ? <span style={printedTextStyle(textStyles.backText, 1.2, '#6b7280')}>{content.backSub}</span> : null}
-          </div>
-        ) : null}
-        <div className={styles.backStack}>
-          {content.term && !textStyles.term?.hidden ? (
-            <p
-              className={`${styles.printText} ${styles.term}`}
-              style={{ ...shiftStyle(layout.term?.x, layout.term?.y), ...printedTextStyle(textStyles.term, 1.1, '#1e4acb') }}
-              {...editableProps('term')}
-            >{content.term}</p>
-          ) : null}
-          <div
-            className={styles.qr}
-            style={shiftStyle(layout.qr?.x, layout.qr?.y, layout.qr?.s)}
-            {...editableProps('qr')}
-          >
-            {/* The public SVG endpoint is the canonical QR renderer. */}
-            <img src={qrCodeSvgUrl(code)} alt="" draggable={false} />
-          </div>
-          {content.hasAlgorithm ? (
-            <div
-              className={styles.algorithm}
-              style={shiftStyle(layout.alg?.x, layout.alg?.y)}
-              {...editableProps('alg')}
-            >
-              {visualCube ? <img src={visualCube} alt={t('魔方案例', 'Cube case')} draggable={false} /> : null}
-              <span style={printedTextStyle(textStyles.alg, 1.1, '#2a5df4')}>{content.algorithmMoves}</span>
-            </div>
-          ) : null}
-        </div>
-        <span className={styles.foldMark} aria-hidden />
-      </section>
-      {cropMarks ? <div className={styles.cropMarks} aria-hidden>{Array.from({ length: 8 }, (_, mark) => <i key={mark} />)}</div> : null}
-    </div>
-  );
-}
-
-function getPosition(card: PlatformQrCard, key: EditableElement): { x: number; y: number } {
-  if (key.startsWith('ct:')) {
-    const item = card.customTexts.find((entry) => entry.id === key.slice(3));
-    return { x: item?.x ?? 0, y: item?.y ?? 0 };
-  }
-  const element = key as QrCardElement;
-  return { x: card.layout[element]?.x ?? 0, y: card.layout[element]?.y ?? 0 };
-}
-
-function getScale(card: PlatformQrCard, key: EditableElement): number {
-  if (key.startsWith('ct:')) return card.customTexts.find((entry) => entry.id === key.slice(3))?.style?.size ?? 1;
-  if (isQrCardTextElement(key)) return card.textStyles[key]?.size ?? 1;
-  return card.layout[key as QrCardElement]?.s ?? 1;
-}
-
-function withPosition(card: PlatformQrCard, key: EditableElement, x: number, y: number): PlatformQrCard {
-  if (key.startsWith('ct:')) {
-    const id = key.slice(3);
-    return { ...card, customTexts: card.customTexts.map((item) => item.id === id ? { ...item, x, y } : item) };
-  }
-  const element = key as QrCardElement;
-  return { ...card, layout: { ...card.layout, [element]: { ...card.layout[element], x, y } } };
-}
-
-function withScale(card: PlatformQrCard, key: EditableElement, scale: number): PlatformQrCard {
-  const next = Math.max(key === 'qr' ? 0.01 : key === 'front' || key === 'back' ? 0.5 : 0.3, Math.min(3, Math.round(scale * 100) / 100));
-  if (key.startsWith('ct:')) {
-    const id = key.slice(3);
-    return {
-      ...card,
-      customTexts: card.customTexts.map((item) => item.id === id
-        ? { ...item, style: { ...item.style, size: next } }
-        : item),
-    };
-  }
-  if (isQrCardTextElement(key)) {
-    return { ...card, textStyles: { ...card.textStyles, [key]: { ...card.textStyles[key], size: next } } };
-  }
-  const element = key as QrCardElement;
-  return { ...card, layout: { ...card.layout, [element]: { ...card.layout[element], x: card.layout[element]?.x ?? 0, y: card.layout[element]?.y ?? 0, s: next } } };
-}
-
-function patchStyle(card: PlatformQrCard, key: EditableElement, patch: Partial<QrCardTextStyle>): PlatformQrCard {
-  if (key.startsWith('ct:')) {
-    const id = key.slice(3);
-    return {
-      ...card,
-      customTexts: card.customTexts.map((item) => item.id === id ? { ...item, style: { ...item.style, ...patch } } : item),
-    };
-  }
-  if (!isQrCardTextElement(key)) return card;
-  return { ...card, textStyles: { ...card.textStyles, [key]: { ...card.textStyles[key], ...patch } } };
-}
-
-function patchAlgorithm(card: PlatformQrCard, field: 'name' | 'moves' | 'url', value: string): PlatformQrCard {
-  const next = { moves: '', ...card.alg, [field]: value };
-  return { ...card, alg: next.moves || next.name || next.url ? next : null };
-}
-
-interface Gesture {
-  key: EditableElement;
-  originX: number;
-  originY: number;
-  firstX: number;
-  firstY: number;
-  distance: number;
-  scale: number;
-  pxPerMm: number;
-  baseCenterX: number;
-  baseCenterY: number;
-  targetsX: number[];
-  targetsY: number[];
-}
-
-interface InlineEdit {
-  key: EditableElement;
-  value: string;
-}
-
-function ElementInspector({
-  card,
-  selected,
-  update,
-}: {
-  card: PlatformQrCard;
-  selected: EditableElement;
-  update: (updater: (card: PlatformQrCard) => PlatformQrCard) => void;
-}) {
-  const t = useT();
-  const customId = selected.startsWith('ct:') ? selected.slice(3) : null;
-  const custom = customId ? card.customTexts.find((item) => item.id === customId) : undefined;
-  const position = getPosition(card, selected);
-  const style = custom?.style ?? (!selected.startsWith('ct:') && isQrCardTextElement(selected) ? card.textStyles[selected] : undefined);
-  const isText = Boolean(custom) || (!selected.startsWith('ct:') && isQrCardTextElement(selected));
-  const hasScale = isText || selected === 'front' || selected === 'back' || selected === 'qr';
-
-  const setNumber = (field: 'x' | 'y', value: string) => {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed)) update((current) => withPosition(current, selected, field === 'x' ? parsed : position.x, field === 'y' ? parsed : position.y));
-  };
-
-  const reset = () => update((current) => {
-    if (selected.startsWith('ct:')) {
-      return {
-        ...current,
-        customTexts: current.customTexts.map((item) => item.id === customId ? { ...item, x: 0, y: 0, style: {} } : item),
-      };
-    }
-    const layout = { ...current.layout };
-    delete layout[selected as QrCardElement];
-    if (!isQrCardTextElement(selected)) return { ...current, layout };
-    const textStyles = { ...current.textStyles };
-    delete textStyles[selected];
-    return { ...current, layout, textStyles };
-  });
-
-  return (
-    <section className={styles.inspector} aria-labelledby="qr-element-title">
-      <div className={styles.sectionHeading}>
-        <div>
-          <span className={styles.kicker}>{t('选中元素', 'Selected element')}</span>
-          <h3 id="qr-element-title">{elementName(t, selected)}</h3>
-        </div>
-        <button type="button" className={styles.iconButton} onClick={reset} aria-label={t('重置当前元素', 'Reset selected element')} title={t('重置位置和样式', 'Reset position and style')}>
-          <RotateCcw aria-hidden />
-        </button>
-      </div>
-      {custom ? (
-        <>
-          <label className={styles.fieldWide}>
-            <span>{t('文字', 'Text')}</span>
-            <textarea className={`${styles.fieldControl} ${styles.fieldTextarea}`} value={custom.text} maxLength={200} rows={3} onChange={(event) => update((current) => ({ ...current, customTexts: current.customTexts.map((item) => item.id === custom.id ? { ...item, text: event.target.value } : item) }))} />
-          </label>
-          <label>
-            <span>{t('卡片面', 'Card side')}</span>
-            <select className={styles.fieldControl} value={custom.side} onChange={(event) => update((current) => ({ ...current, customTexts: current.customTexts.map((item) => item.id === custom.id ? { ...item, side: event.target.value === 'front' ? 'front' : 'back' } : item) }))}>
-              <option value="front">{t('正面', 'Front')}</option>
-              <option value="back">{t('背面', 'Back')}</option>
-            </select>
-          </label>
-        </>
-      ) : null}
-      <div className={styles.controlGrid}>
-        <label>
-          <span>{t('水平位置 mm', 'Horizontal position mm')}</span>
-          <input className={styles.fieldControl} type="number" min={-40} max={40} step={0.5} value={position.x} onChange={(event) => setNumber('x', event.target.value)} />
-        </label>
-        <label>
-          <span>{t('垂直位置 mm', 'Vertical position mm')}</span>
-          <input className={styles.fieldControl} type="number" min={-40} max={40} step={0.5} value={position.y} onChange={(event) => setNumber('y', event.target.value)} />
-        </label>
-        {hasScale ? (
-          <label className={styles.fieldWide}>
-            <span>{isText ? t('字号倍率', 'Text scale') : t('缩放倍率', 'Scale')}</span>
-            <span className={styles.rangeRow}>
-              <input className={styles.fieldRange} type="range" min={selected === 'qr' ? 0.01 : selected === 'front' || selected === 'back' ? 0.5 : 0.3} max={3} step={0.01} value={getScale(card, selected)} onChange={(event) => update((current) => withScale(current, selected, Number(event.target.value)))} />
-              <output>{getScale(card, selected).toFixed(2)}×</output>
-            </span>
-          </label>
-        ) : null}
-        {(selected === 'front' || selected === 'back') ? (
-          <label>
-            <span>{t('图片填充', 'Image fit')}</span>
-            <select className={styles.fieldControl} value={card.layout[selected]?.fit ?? 'contain'} onChange={(event) => update((current) => ({ ...current, layout: { ...current.layout, [selected]: { ...current.layout[selected], x: current.layout[selected]?.x ?? 0, y: current.layout[selected]?.y ?? 0, fit: event.target.value === 'cover' ? 'cover' : undefined } } }))}>
-              <option value="contain">{t('完整显示', 'Contain')}</option>
-              <option value="cover">{t('铺满裁切', 'Cover')}</option>
-            </select>
-          </label>
-        ) : null}
-        {isText ? (
-          <>
-            <label>
-              <span>{t('字体', 'Font')}</span>
-              <select className={styles.fieldControl} value={style?.font ?? 'sans'} onChange={(event) => update((current) => patchStyle(current, selected, { font: event.target.value as QrCardFont }))}>
-                {QR_CARD_FONTS.map((font) => <option key={font} value={font}>{fontName(t, font)}</option>)}
-              </select>
-            </label>
-            <label>
-              <span>{t('文字颜色', 'Text color')}</span>
-              <input className={styles.fieldColor} type="color" value={style?.color ?? (ELEMENT_SIDE[selected as QrCardElement] === 'front' || custom?.side === 'front' ? '#ffffff' : '#13203a')} onChange={(event) => update((current) => patchStyle(current, selected, { color: event.target.value }))} />
-            </label>
-            <label>
-              <span>{t('描边颜色', 'Stroke color')}</span>
-              <input className={styles.fieldColor} type="color" value={style?.stroke ?? '#ffffff'} onChange={(event) => update((current) => patchStyle(current, selected, { stroke: event.target.value, strokeW: style?.strokeW && style.strokeW > 0 ? style.strokeW : 0.1 }))} />
-            </label>
-            <label>
-              <span>{t('描边强度', 'Stroke width')}</span>
-              <input
-                className={styles.fieldControl}
-                type="number"
-                min={0}
-                max={1}
-                step={0.05}
-                value={style?.strokeW ?? 0}
-                onChange={(event) => {
-                  const strokeW = Number(event.target.value);
-                  update((current) => patchStyle(current, selected, strokeW > 0
-                    ? { strokeW, stroke: style?.stroke ?? '#ffffff' }
-                    : { strokeW: undefined, stroke: undefined }));
-                }}
-              />
-            </label>
-            {!custom && isQrCardTextElement(selected) ? (
-              <div className={styles.fieldWide}>
-                <BoolToggle value={Boolean(style?.hidden)} onChange={(hidden) => update((current) => patchStyle(current, selected, { hidden }))} label={t('隐藏这个元素', 'Hide this element')} />
-              </div>
-            ) : null}
-          </>
-        ) : null}
-      </div>
-    </section>
-  );
-}
-
-function PromptComposer({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const t = useT();
-  const [library, setLibrary] = useState<QrPromptLibrary>(FALLBACK_QR_PROMPT_LIBRARY);
-  const [libraryError, setLibraryError] = useState('');
-  const [selected, setSelected] = useState<Partial<Record<QrPromptDimension, string>>>({});
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void getQrPromptLibrary(controller.signal).then(setLibrary).catch((error: Error) => { if (!controller.signal.aborted) setLibraryError(error.message); });
-    return () => controller.abort();
-  }, []);
-
-  const pickBlock = (dimension: QrPromptDimension, id: string) => {
-    const next = { ...selected, [dimension]: selected[dimension] === id ? undefined : id };
-    setSelected(next);
-    onChange(composeQrArtPrompt(next, library.blocks));
-  };
-
-  const usePreset = (body: string) => {
-    setSelected({});
-    onChange(assembleQrArtPrompt(body));
-  };
-
-  const copyPrompt = async () => {
-    const prompt = value.trim();
-    if (!prompt) return;
-    try {
-      await navigator.clipboard.writeText(prompt);
-    } catch {
-      const area = document.createElement('textarea');
-      area.value = prompt;
-      area.style.position = 'fixed';
-      area.style.opacity = '0';
-      document.body.appendChild(area);
-      area.select();
-      document.execCommand('copy');
-      area.remove();
-    }
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
-  };
-
-  return (
-    <section className={styles.promptComposer} aria-labelledby="qr-prompt-title">
-      {libraryError ? <p role="alert">{libraryError}</p> : null}
-      <div className={styles.sectionHeading}>
-        <div>
-          <span className={styles.kicker}>{t('AI 艺术辅助', 'AI artwork helper')}</span>
-          <h3 id="qr-prompt-title">{t('背景图提示词组合器', 'Artwork prompt composer')}</h3>
-        </div>
-        <AppLink className={styles.detailLink} href="/platform/admin/qr/prompts" target="_blank" rel="noreferrer" prefetch={false}>
-          {t('管理提示词', 'Manage prompts')}<ExternalLink aria-hidden />
-        </AppLink>
-      </div>
-      <p className={styles.promptIntro}>{t(
-        '按维度各选一项，或直接套用整套模板；生成后仍可手动修改。复制到生图工具，下载竖版无水印原图，再上传到卡片。语录与品牌名由卡片单独叠加。',
-        'Choose one block from each dimension or use a complete preset, then edit freely. Copy it into an image generator, download a vertical unwatermarked image, and upload it to the card. Copy and brand are overlaid separately.',
-      )}</p>
-      <div className={styles.promptWorkbench}>
-        <div className={styles.promptBlocks}>
-          {QR_PROMPT_DIMENSIONS.map((dimension) => {
-            const options = library.blocks.filter((block) => block.dimension === dimension.key);
-            if (!options.length) return null;
-            return (
-              <div key={dimension.key} className={styles.promptDimension}>
-                <div><strong>{t(dimension.zh, dimension.en)}</strong><span>{t(dimension.hintZh, dimension.hintEn)}</span></div>
-                <div className={styles.promptChoices}>
-                  {options.map((block) => (
-                    <button
-                      className={styles.promptChoice}
-                      key={block.id}
-                      type="button"
-                      aria-pressed={selected[dimension.key] === block.id}
-                      title={block.body}
-                      onClick={() => pickBlock(dimension.key, block.id)}
-                    >{t(block.nameZh, block.nameEn)}</button>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-          <details className={styles.promptPresets}>
-            <MoreToggle as="summary">{t('整套现成模板', 'Complete presets')}</MoreToggle>
-            <div className={styles.promptChoices}>
-              {library.presets.map((preset) => (
-                <button className={styles.promptChoice} key={preset.id} type="button" title={preset.body} onClick={() => usePreset(preset.body)}>{t(preset.nameZh, preset.nameEn)}</button>
-              ))}
-            </div>
-          </details>
-        </div>
-        <div className={styles.promptEditor}>
-          <label>
-            <span>{t('可编辑提示词', 'Editable prompt')}</span>
-            <textarea
-              className={styles.promptTextarea}
-              value={value}
-              maxLength={4000}
-              rows={12}
-              placeholder={t('从左边选择积木或模板，也可以直接在这里编写。', 'Choose blocks or a preset on the left, or write directly here.')}
-              onChange={(event) => onChange(event.target.value)}
-            />
-          </label>
-          <div className={styles.promptActions}>
-            <button type="button" className="platform-button platform-button-primary" disabled={!value.trim()} onClick={() => { void copyPrompt(); }}>
-              {copied ? <Check aria-hidden /> : <Copy aria-hidden />}{copied ? t('已复制', 'Copied') : t('复制提示词', 'Copy prompt')}
-            </button>
-            {value.trim() ? <button type="button" className={styles.textButton} onClick={() => { setSelected({}); onChange(''); }}>{t('清空', 'Clear')}</button> : null}
-          </div>
-          <p>{t('提示词会随“保存全部”写入当前二维码，方便下次复刻或微调。', 'The prompt is stored with this QR code when you save all changes, so it can be reproduced or refined later.')}</p>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 export function PlatformQrCardStudio({
   entities,
@@ -648,7 +46,7 @@ export function PlatformQrCardStudio({
   useEffect(() => {
     const controller = new AbortController(); setCatalogBusy(true); setCatalogError('');
     void qrAdminRequest<QrAdminPage>(`?page=${catalogPage}&pageSize=50&q=${encodeURIComponent(query)}`, { signal: controller.signal })
-      .then(result => { mergeCatalog(result.items); setCatalogMore(result.page * result.pageSize < result.total); })
+      .then(result => { if (controller.signal.aborted) return; mergeCatalog(result.items); setCatalogMore(result.page * result.pageSize < result.total); })
       .catch((e: Error) => { if (!controller.signal.aborted) setCatalogError(e.message); })
       .finally(() => { if (!controller.signal.aborted) setCatalogBusy(false); });
     return () => controller.abort();
@@ -659,12 +57,10 @@ export function PlatformQrCardStudio({
     if (!identifiers.length) return;
     const controller = new AbortController();
     void Promise.all(identifiers.map(id => qrAdminRequest<QrAdminRow>(`/${encodeURIComponent(id)}`, { signal: controller.signal })))
-      .then(mergeCatalog).catch((e: Error) => { if (!controller.signal.aborted) setCatalogError(e.message); });
+      .then(rows => { if (!controller.signal.aborted) mergeCatalog(rows); }).catch((e: Error) => { if (!controller.signal.aborted) setCatalogError(e.message); });
     return () => controller.abort();
   }, [edit, codesParam]);
-  const [cards, setCards] = useState<Record<string, PlatformQrCard>>({});
-  const [drafts, setDrafts] = useState<Record<string, PlatformQrCard>>({});
-  const [dirtyIds, setDirtyIds] = useState<Set<string>>(() => new Set());
+  const { cards, drafts, dirtyIds, hydrate, edit: editDraft, saveToken, isCurrent, acceptSaved, reset } = useQrCardDrafts();
   const [loadingIds, setLoadingIds] = useState<Set<string>>(() => new Set());
   const [loadErrors, setLoadErrors] = useState<Record<string, string>>({});
   const [loadNonce, setLoadNonce] = useState(0);
@@ -702,6 +98,9 @@ export function PlatformQrCardStudio({
   }, [edit, selectedEntities, usableEntities]);
   const activeId = activeEntity?.id;
   const activeCode = activeEntity ? codeOf(activeEntity) : '';
+  const viewKey = `${activeId ?? ''}:${selectedEntities.map(entity => entity.id).join(',')}`;
+  const currentView = useRef(viewKey);
+  useEffect(() => { currentView.current = viewKey; }, [viewKey]);
   const activeCard = activeId ? drafts[activeId] ?? cards[activeId] : undefined;
   const wantedIds = useMemo(() => Array.from(new Set([...selectedEntities.map((item) => item.id), ...(activeId ? [activeId] : [])])), [activeId, selectedEntities]);
   const wantedKey = wantedIds.join('\u0000');
@@ -713,16 +112,8 @@ export function PlatformQrCardStudio({
     setLoadingIds(new Set(missing));
     void Promise.allSettled(missing.map((id) => getPlatformQrCard(id, controller.signal))).then((results) => {
       if (controller.signal.aborted) return;
-      setCards((current) => {
-        const next = { ...current };
-        results.forEach((result, index) => { if (result.status === 'fulfilled') next[missing[index]] = result.value.card; });
-        return next;
-      });
-      setDrafts((current) => {
-        const next = { ...current };
-        results.forEach((result, index) => { if (result.status === 'fulfilled' && !next[missing[index]]) next[missing[index]] = cloneCard(result.value.card); });
-        return next;
-      });
+      hydrate(Object.fromEntries(results.flatMap((result, index) => result.status === 'fulfilled'
+        ? [[missing[index], result.value.card]] : [])));
       setLoadErrors((current) => {
         const next = { ...current };
         results.forEach((result, index) => {
@@ -760,8 +151,7 @@ export function PlatformQrCardStudio({
 
   const updateDraft = (updater: (card: PlatformQrCard) => PlatformQrCard) => {
     if (!activeId) return;
-    setDrafts((current) => ({ ...current, [activeId]: updater(current[activeId] ?? cards[activeId] ?? DEFAULT_QR_CARD) }));
-    setDirtyIds((current) => new Set(current).add(activeId));
+    editDraft(activeId, updater);
     setSaveState('idle');
     setSaveMessage('');
   };
@@ -781,23 +171,22 @@ export function PlatformQrCardStudio({
 
   const save = async (): Promise<boolean> => {
     if (!activeId || !activeCard) return false;
+    const token = saveToken(activeId);
     setSaveState('saving');
     setSaveMessage('');
     try {
       if (metadataSave.current) {
-        const saved = await metadataSave.current();
+        const saved = await metadataSave.current() && isCurrent(activeId, token) && currentView.current === viewKey;
         setSaveState(saved ? 'saved' : 'error');
         setSaveMessage(saved ? t('资料和设计已保存。', 'Details and design saved.') : t('请检查下方资料设置。', 'Check the details form below.'));
         return saved;
       }
       const result = await savePlatformQrCard(activeId, activeCard);
-      setCards((current) => ({ ...current, [activeId]: result.card }));
-      setDrafts((current) => ({ ...current, [activeId]: cloneCard(result.card) }));
-      setDirtyIds((current) => {
-        const next = new Set(current);
-        next.delete(activeId);
-        return next;
-      });
+      if (!acceptSaved(activeId, result.card, token) || currentView.current !== viewKey) {
+        setSaveState('idle');
+        setSaveMessage(t('设计已修改，请保存后重试。', 'The design changed. Save it and retry.'));
+        return false;
+      }
       setSaveState('saved');
       setSaveMessage(t('已保存这枚二维码的卡片设计。', 'This QR card design has been saved.'));
       return true;
@@ -1002,12 +391,7 @@ export function PlatformQrCardStudio({
 
   const resetDraft = () => {
     if (!activeId || !cards[activeId]) return;
-    setDrafts((current) => ({ ...current, [activeId]: cloneCard(cards[activeId]) }));
-    setDirtyIds((current) => {
-      const next = new Set(current);
-      next.delete(activeId);
-      return next;
-    });
+    reset(activeId);
     setSaveState('idle');
     setInlineEdit(null);
   };
@@ -1027,25 +411,51 @@ export function PlatformQrCardStudio({
     } catch (error) { setCatalogError(error instanceof Error ? error.message : String(error)); }
     finally { setCatalogBusy(false); }
   };
+  const saveSelection = async () => {
+    const tokens = new Map(selectedEntities.map(entity => [entity.id, saveToken(entity.id)]));
+    const unchanged = () => currentView.current === viewKey
+      && selectedEntities.every(entity => isCurrent(entity.id, tokens.get(entity.id)!));
+    for (const entity of selectedEntities) {
+      const card = drafts[entity.id] ?? cards[entity.id];
+      if (!card) throw new Error(t('请等待全部卡片加载完成。', 'Wait until all cards have loaded.'));
+      if (entity.id === activeId && metadataSave.current) {
+        if (!await metadataSave.current()) throw new Error(t('请检查当前二维码资料。', 'Check the current QR details.'));
+      } else if (dirtyIds.has(entity.id)) {
+        const result = await savePlatformQrCard(entity.id, card);
+        acceptSaved(entity.id, result.card, tokens.get(entity.id)!);
+      }
+      if (!unchanged()) throw new Error(t('设计或选择已修改，请保存后重试。', 'The design or selection changed. Save it and retry.'));
+    }
+    return unchanged;
+  };
+
   const downloadBatch = async () => {
-    if (batchBusy) return; setBatchBusy(true); setSaveMessage('');
+    if (batchBusy) return;
+    setBatchBusy(true); setSaveMessage('');
     try {
+      const unchanged = await saveSelection();
       for (const [index, entity] of selectedEntities.entries()) {
-        const card = drafts[entity.id] ?? cards[entity.id];
-        if (!card) throw new Error(t('请等待全部卡片加载完成。', 'Wait until all cards have loaded.'));
-        if (entity.id === activeId && metadataSave.current) {
-          if (!await metadataSave.current()) throw new Error(t('请检查当前二维码资料。', 'Check the current QR details.'));
-        } else if (dirtyIds.has(entity.id)) {
-          const result = await savePlatformQrCard(entity.id, card);
-          setCards(current => ({ ...current, [entity.id]: result.card }));
-          setDirtyIds(current => { const next = new Set(current); next.delete(entity.id); return next; });
-        }
         const response = await fetch(qrCardPublicUrl(codeOf(entity), 'press', index), { cache: 'no-store' });
         if (!response.ok) throw new Error(t(`无法导出 ${codeOf(entity)}，后续下载已停止。`, `Could not export ${codeOf(entity)}. Remaining downloads stopped.`));
-        triggerBrowserDownload(await response.blob(), `card-${codeOf(entity)}.svg`);
+        const blob = await response.blob();
+        if (!unchanged()) throw new Error(t('设计或选择已修改，下载已停止。', 'The design or selection changed. Download stopped.'));
+        triggerBrowserDownload(blob, `card-${codeOf(entity)}.svg`);
       }
       setSaveMessage(t('所选 SVG 已下载。', 'Selected SVG files downloaded.'));
-    } catch (error) { setSaveMessage(error instanceof Error ? error.message : String(error)); }
+    } catch (error) { setSaveState('error'); setSaveMessage(error instanceof Error ? error.message : String(error)); }
+    finally { setBatchBusy(false); }
+  };
+
+  const printSelection = async () => {
+    if (batchBusy) return;
+    setBatchBusy(true); setSaveMessage('');
+    try {
+      const unchanged = await saveSelection();
+      // Paint accepted server snapshots before the browser captures the sheet.
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+      if (!unchanged()) throw new Error(t('设计或选择已修改，请保存后重试。', 'The design or selection changed. Save it and retry.'));
+      window.print();
+    } catch (error) { setSaveState('error'); setSaveMessage(error instanceof Error ? error.message : String(error)); }
     finally { setBatchBusy(false); }
   };
   const activeIndex = Math.max(0, selectedEntities.findIndex((entity) => entity.id === activeId));
@@ -1174,7 +584,7 @@ export function PlatformQrCardStudio({
                   <button type="button" className="platform-button" onClick={() => { void downloadQrOnly(); }}><Download aria-hidden />{t('单独下载二维码', 'Download QR only')}</button>
                   <AppLink className="platform-button" href={`/platform/qr/${encodeURIComponent(activeCode)}?stay=1`} target="_blank" rel="noreferrer" prefetch={false}><ExternalLink aria-hidden />{t('预览落地页', 'Preview landing page')}</AppLink>
                   <button type="button" className="platform-button" disabled={batchBusy || selectedEntities.some(entity => !drafts[entity.id])} onClick={() => { void downloadBatch(); }}><Download aria-hidden />{t('下载所选 SVG', 'Download selected SVGs')}</button>
-                  <button type="button" className="platform-button" disabled={selectedEntities.some((entity) => loadingIds.has(entity.id) || !drafts[entity.id])} onClick={() => { void save().then(saved => { if (saved) window.print(); }); }}><Printer aria-hidden />{t(`A4 打印 ${selectedEntities.length} 张`, `Print ${selectedEntities.length} on A4`)}</button>
+                  <button type="button" className="platform-button" disabled={batchBusy || selectedEntities.some((entity) => loadingIds.has(entity.id) || !drafts[entity.id])} onClick={() => { void printSelection(); }}><Printer aria-hidden />{t(`A4 打印 ${selectedEntities.length} 张`, `Print ${selectedEntities.length} on A4`)}</button>
                 </div>
                 <p className={styles.outputHint}>{t('印刷版带 3 mm 出血和裁切线；无裁切线版是 40 mm 方形成品。A4 打印使用浏览器的 100% 缩放。', 'The press file includes 3 mm bleed and crop marks; the clean file is a 40 mm square. Print A4 at 100% browser scale.')}</p>
               </>
@@ -1253,12 +663,12 @@ export function PlatformQrCardStudio({
               {artError ? <p className={styles.errorText} role="alert">{artError}</p> : null}
 
               <details><MoreToggle as="summary">{t('落地页、链接与主标题（与设计一起保存）', 'Landing page, links and main title (save with design)')}</MoreToggle>
-                <PlatformQrMetadataEditor entity={activeEntity!} resourceId={activeId!} busy={saveState === 'saving' ? `admin-save:${activeId}` : null} cardDraft={activeCard} saveRef={metadataSave} runAction={async (id, body) => {
+                <PlatformQrMetadataEditor key={activeId} entity={activeEntity!} resourceId={activeId!} busy={saveState === 'saving' ? `admin-save:${activeId}` : null} cardDraft={activeCard} saveRef={metadataSave} runAction={async (id, body) => {
+                  const token = saveToken(id);
                   const row = await qrAdminRequest<QrAdminRow>(`/${encodeURIComponent(id)}`, { method: 'PATCH', body });
                   mergeCatalog([row]);
                   const result = await getPlatformQrCard(id);
-                  setCards(current => ({ ...current, [id]: result.card })); setDrafts(current => ({ ...current, [id]: result.card }));
-                  setDirtyIds(current => { const next = new Set(current); next.delete(id); return next; });
+                  if (!acceptSaved(id, result.card, token)) throw new Error(t('设计已修改，请保存后重试。', 'The design changed. Save it and retry.'));
                   if (row.code !== activeCode) { void setEdit(row.code); void setCodes(row.code); }
                   return { id: row.id, code: row.code };
                 }} />

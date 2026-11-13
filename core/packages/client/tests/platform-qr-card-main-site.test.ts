@@ -38,7 +38,7 @@ describe('Platform QR card main-site contract', () => {
       resource: 'admin-qr',
     });
 
-    const routeView = readClient('components/platform/PlatformRouteView.tsx');
+    const routeView = readClient('components/platform/PlatformResourceRouteView.tsx');
     expect(routeView).toContain("definition.id === 'admin-qr-cards'");
     expect(routeView).toContain('<PlatformQrCardStudio');
   });
@@ -107,7 +107,7 @@ describe('Platform QR card main-site contract', () => {
     ])).toEqual([{ label: 'Safe', href: '/community' }]);
 
     const landing = readClient('components/platform/PlatformQrLanding.tsx');
-    const routeView = readClient('components/platform/PlatformRouteView.tsx');
+    const routeView = readClient('components/platform/PlatformResourceRouteView.tsx');
     expect(landing).toContain('window.location.replace(landing.target)');
     expect(landing).not.toContain('/redirect');
     expect(landing).toContain('<AppLink');
@@ -117,7 +117,7 @@ describe('Platform QR card main-site contract', () => {
 
   it('edits landing metadata as structured fields while keeping intro and term in the card contract', () => {
     const editor = readClient('components/platform/PlatformQrMetadataEditor.tsx');
-    const actions = readClient('components/platform/PlatformDomainActions.tsx');
+    const actions = readClient('components/platform/PlatformFormDefinitions.ts');
     expect(platformQrCardStudioHref(' card one ')).toBe('/platform/admin/qr/cards?codes=card%20one&edit=card%20one');
     expect(editor).toContain("type: 'redirect' | 'landing'");
     expect(editor).toContain("targetKind: 'internal_path' | 'external_url' | 'content'");
@@ -125,7 +125,7 @@ describe('Platform QR card main-site contract', () => {
     expect(editor).toContain('links: PlatformQrLink[]');
     expect(editor).toContain("t('添加链接', 'Add link')");
     expect(editor).toContain("t('删除链接', 'Delete link')");
-    expect(editor).toContain('getPlatformQrCard(entity.id)');
+    expect(editor).toContain('getPlatformQrCard(entity.id, signal)');
     expect(editor).toContain('card: { ...card, intro:');
     expect(editor).toContain('label: values.label.trim()');
     expect(editor).toContain('type: values.type');
@@ -289,6 +289,7 @@ describe('Platform QR card main-site contract', () => {
 
   it('keeps code selection, actionable empty state, printing and mobile layout in the workspace', () => {
     const studio = readClient('components/platform/PlatformQrCardStudio.tsx');
+    const cardUnit = readClient('components/platform/PlatformQrCardUnit.tsx');
     const css = readClient('components/platform/PlatformQrCardStudio.module.css');
 
     expect(studio).toMatch(/useQueryState\(\s*['"]codes['"]/);
@@ -301,7 +302,7 @@ describe('Platform QR card main-site contract', () => {
     expect(studio).toContain('qrCodeSvgUrl(');
     expect(studio).toContain('snapQrCardPosition({');
     expect(studio).toContain('altKey: event.altKey');
-    expect(studio).toContain('onDoubleClick: onInlineEdit');
+    expect(cardUnit).toContain('onDoubleClick: onInlineEdit');
     expect(studio).toContain('onPointerDown={beginGesture}');
     expect(studio).toContain('onPointerMove={moveGesture}');
     expect(studio).toContain('onWheel={zoomSelected}');

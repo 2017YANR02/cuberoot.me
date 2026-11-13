@@ -1400,15 +1400,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/components/platform/PlatformDomainActions.tsx",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/components/recon/ReconCompletionBadge.tsx",
       "importKind": "type-only",
       "mechanism": "static-import",

@@ -81,7 +81,7 @@ export function PlatformCoursePresentation({entity}:{entity:PlatformEntity}){
 
 export function PlatformLearningPath({entity}:{entity:PlatformEntity}){
   const t=useT();const user=useAuthUser();const english=t('zh','en')==='en';const [courses,setCourses]=useState<Row[]>([]);const [lessonProgress,setLessonProgress]=useState<Row[]>([]);const [error,setError]=useState('');
-  useEffect(()=>{if(!user)return;const abort=new AbortController();void Promise.all([platformLearningRequest<Row>('/me/courses',undefined,'GET',abort.signal),platformLearningRequest<Row>('/me/progress',undefined,'GET',abort.signal)]).then(([a,b])=>{setCourses(rows(a.items));setLessonProgress(rows(b.items));}).catch(reason=>{if(!abort.signal.aborted)setError(String(reason));});return()=>abort.abort();},[user]);
+  useEffect(()=>{if(!user)return;const abort=new AbortController();setError('');void Promise.all([platformLearningRequest<Row>('/me/courses',undefined,'GET',abort.signal),platformLearningRequest<Row>('/me/progress',undefined,'GET',abort.signal)]).then(([a,b])=>{if(abort.signal.aborted)return;setCourses(rows(a.items));setLessonProgress(rows(b.items));}).catch(reason=>{if(!abort.signal.aborted)setError(String(reason));});return()=>abort.abort();},[user]);
   const items=rows(entity.data?.items);
   const total=items.reduce((sum,item)=>sum+Number(item.totalLessons??(item.lessonId?1:0)),0);
   const complete=items.reduce((sum,item)=>sum+(item.lessonId?Number(lessonProgress.some(progress=>progress.lessonId===item.lessonId&&progress.status==='completed')):Number(courses.find(course=>course.id===item.courseId)?.completedLessons??0)),0);

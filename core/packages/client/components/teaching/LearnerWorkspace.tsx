@@ -16,9 +16,13 @@ interface Props {
   children: (context: TeachingLearningContext, isSelf: boolean) => ReactNode;
 }
 
-export default function LearnerWorkspace({ orgSlug, studentId, children }: Props) {
-  const t = useT();
+export default function LearnerWorkspace(props: Props) {
   const user = useAuthUser();
+  return <LearnerAccountWorkspace key={`${user?.uid ?? user?.wcaId ?? 'guest'}:${props.orgSlug}:${props.studentId}`} {...props} user={user} />;
+}
+
+function LearnerAccountWorkspace({ orgSlug, studentId, children, user }: Props & { user: ReturnType<typeof useAuthUser> }) {
+  const t = useT();
   const [mounted, setMounted] = useState(false);
   const [context, setContext] = useState<TeachingLearningContext | null>(null);
   const [error, setError] = useState('');

@@ -15,7 +15,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
   });
 
   it('keeps redemption focused on login, code entry and starting the course', () => {
-    const view = read('components/platform/PlatformRouteView.tsx');
+    const view = read('components/platform/PlatformResourceRouteView.tsx');
     const start = view.indexOf("  if (definition.id === 'account-invites') {");
     const end = view.indexOf("  const courseDetail =", start);
     const redemption = view.slice(start, end);
@@ -38,7 +38,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
   });
 
   it('marks active redeemed courses and exposes their learning entry', () => {
-    const view = read('components/platform/PlatformRouteView.tsx');
+    const view = read('components/platform/PlatformResourceRouteView.tsx') + read('components/platform/PlatformEntityList.tsx');
     const styles = read('components/platform/platform.css');
 
     expect(view).toContain("loadPlatformResource('account-courses'");
@@ -50,7 +50,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
   });
 
   it('fully expands generated redemption details without an inner scrollbar', () => {
-    const actions = read('components/platform/PlatformDomainActions.tsx');
+    const actions = read('components/platform/PlatformRedemptionCodeManager.tsx');
     const styles = read('components/platform/platform.css');
 
     expect(actions).toContain('textarea.style.height = `${textarea.scrollHeight + borderHeight}px`;');
@@ -59,7 +59,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
   });
 
   it('lets course managers upload a cover or capture the current video frame', () => {
-    const actions = read('components/platform/PlatformDomainActions.tsx');
+    const actions = read('components/platform/PlatformCourseManager.tsx');
     const content = read('components/platform/PlatformDomainContent.tsx');
     const editor = read('components/platform/PlatformLessonCoverEditor.tsx');
     const gateway = read('lib/platform-gateway.ts');
@@ -78,7 +78,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
   });
 
   it('does not expose internal API fields or status in learner course lists and lesson pages', () => {
-    const view = read('components/platform/PlatformRouteView.tsx');
+    const view = read('components/platform/PlatformEntityList.tsx');
     expect(view).toContain("const learnerContent = learnerCourses || definition.id === 'course-lesson';");
     expect(view).toContain('!learnerContent && item.status');
     expect(view).toContain('entityDisplayFields(item, t)');
@@ -124,10 +124,9 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
 
   it('keeps Platform navigation public while the homepage is driven by real role data', () => {
     const shell = read('components/platform/PlatformShell.tsx');
-    const routeView = read('components/platform/PlatformRouteView.tsx');
+    const routeView = read('components/platform/PlatformResourceRouteView.tsx');
     const styles = read('components/platform/platform.css');
-    const homeStart = routeView.indexOf('function PlatformLanding');
-    const homeEnd = routeView.indexOf('\nfunction PlatformAboutView', homeStart);
+    const home = read('components/platform/PlatformLanding.tsx');
 
     expect(shell).toContain('PLATFORM_PUBLIC_NAV');
     expect(shell).not.toMatch(/\bPLATFORM_NAV\b/);
@@ -136,10 +135,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(styles).not.toMatch(/\.platform-(track|directory|landing-links)\b/);
     expect(styles).toMatch(/\.platform-nav\s*\{[^}]*grid-template-columns:\s*repeat\(5,/s);
     expect(styles).toMatch(/\.platform-account-link\s*\{[^}]*min-height:\s*44px/s);
-    expect(homeStart).toBeGreaterThanOrEqual(0);
-    expect(homeEnd).toBeGreaterThan(homeStart);
-
-    const home = routeView.slice(homeStart, homeEnd);
+    expect(routeView).toContain('<PlatformLanding');
     expect(home).toContain('useAuthUser()');
     expect(home).toContain('useIsAdmin()');
     expect(home).toMatch(/loadPlatformResource\(\s*'account-courses'/);
@@ -154,13 +150,13 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
 
   it('keeps glass progressive without a duplicate course hero or summary', () => {
     const shell = read('components/platform/PlatformShell.tsx');
-    const view = read('components/platform/PlatformRouteView.tsx');
+    const view = read('components/platform/PlatformResourceRouteView.tsx');
     const styles = read('components/platform/platform.css');
 
     expect(shell).toContain('className="platform-nav platform-glass"');
     expect(view).not.toContain('className="platform-course-portrait"');
     expect(view).not.toContain('className="platform-portrait-link platform-glass"');
-    expect(view).toContain('!courseSection && !courseDetail && !inviteManager && !orderPage ? <p>');
+    expect(view).toContain('!courseSection && !courseDetail && !inviteManager && !orderPage && pageDescription ? <p>');
     expect(view).not.toContain('course?.summary');
     expect(styles).toContain('@supports not (backdrop-filter: blur(1px))');
     expect(styles).toContain('@media (prefers-reduced-transparency: reduce)');

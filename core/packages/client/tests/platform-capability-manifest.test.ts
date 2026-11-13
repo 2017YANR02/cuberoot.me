@@ -1,3 +1,4 @@
+import { readLocalModuleSource } from '../../../scripts/read-local-module-source.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -43,7 +44,11 @@ const manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as PlatformMani
 
 const platformApiPaths = [...PLATFORM_ROUTE_FILES]
   .flatMap(([file, mount]) => {
-    const source = readFileSync(workspaceFixturePath('@cuberoot/server', 'src', 'routes', file), 'utf8');
+    const source = readLocalModuleSource(workspaceFixturePath('@cuberoot/server', 'src', 'routes', file), {
+      roots: ['platform_catalog.ts', 'platform_learning.ts', 'platform_commerce.ts'].includes(file)
+        ? [workspaceFixturePath('@cuberoot/server', 'src', 'platform', file.replace('platform_', '').replace('.ts', ''))]
+        : [],
+    });
     return [...source.matchAll(/Routes\.(?:get|post|put|patch|delete)\(\s*'([^']+)'/g)]
       .map((match) => `${mount}${match[1]}`);
   });
