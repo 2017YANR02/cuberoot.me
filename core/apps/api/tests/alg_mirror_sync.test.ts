@@ -81,6 +81,24 @@ describe('生效范围', () => {
 });
 
 describe('一对 case', () => {
+  it('preserves a beginner pick on any counterpart without spreading it, and allows replacement and clearing', async () => {
+    db.rows = [row(1, views(["U R U' R'", "R U R' U'"]), 2), row(2, views([]), 1)];
+    await syncMirrorForCase('3x3', 'f2l', 1);
+    const picked = db.rows[0].algs[2][0];
+    picked.tags = ['beginner'];
+    await syncMirrorForCase('3x3', 'f2l', 1);
+    expect(db.rows[0].algs.flat().filter(e => e.tags?.includes('beginner')).map(e => e.alg)).toEqual([picked.alg]);
+    expect(db.rows[1].algs.flat().some(e => e.tags?.includes('beginner'))).toBe(false);
+    expect((await syncMirrorForCase('3x3', 'f2l', 2)).updated).toEqual([]);
+    db.rows[0].algs[2][0].tags = [];
+    db.rows[0].algs[0][1].tags = ['beginner'];
+    await syncMirrorForCase('3x3', 'f2l', 1);
+    expect(db.rows[0].algs.flat().filter(e => e.tags?.includes('beginner')).map(e => e.alg)).toEqual(["R U R' U'"]);
+    db.rows[0].algs[0][1].tags = [];
+    await syncMirrorForCase('3x3', 'f2l', 1);
+    expect(db.rows.flatMap(r => r.algs.flat()).some(e => e.tags?.includes('beginner'))).toBe(false);
+  });
+
   it('deletes the whole linked group from a generated row and does not recreate it on the next save', async () => {
     db.rows = [row(1, views(["U R U' R'", "R U R' U'"]), 2), row(2, views([]), 1)];
     await syncMirrorForCase('3x3', 'f2l', 1);
@@ -111,7 +129,7 @@ describe('一对 case', () => {
     const result = await syncMirrorForCase('3x3', 'f2l', 1);
     expect(result.notes).toEqual([]);
     expect(texts(1)[3]).toEqual([original]);
-    expect(texts(2)[2]).toEqual(["U2' L2 F' L' F L'"]);
+    expect(texts(2)[2]).toEqual(["U2 L2 F' L' F L'"]);
     expect((await syncMirrorForCase('3x3', 'f2l', 1)).updated).toEqual([]);
   });
 

@@ -37,7 +37,7 @@ import {
   type ParsedMove,
 } from './alg_notation';
 import type { AlgEntry } from './alg_types';
-import { algHtmlRuns, algHtmlText, escapeAlgText, sanitizeAlgHtml } from './alg-html';
+import { algHtmlRuns, algHtmlText, canonicalizeInitialU2, escapeAlgText, sanitizeAlgHtml } from './alg-html';
 
 export type { AlgEntry };
 export { relabelYMoveString };
@@ -334,7 +334,7 @@ export function regenerateMirrorAlgs(
       notes.push(`case ${c.id} 有 ${c.algs.length} 个视角,镜像同步要 ${VIEWS.length} 个 —— 整对跳过`);
       return { algsById: new Map(), notes };
     }
-    algsById.set(c.id, c.algs.map(view => view.filter(e => !e.gen)));
+    algsById.set(c.id, c.algs.map(view => view.filter(e => !e.gen).map(canonicalizeInitialU2)));
   }
   // 链断了:剥干净就收工,别拿自己当伙伴生成一堆错东西
   if (!partner) return { algsById, notes };
@@ -373,7 +373,7 @@ export function regenerateMirrorAlgs(
         if (entry.stm != null) made.stm = entry.stm;
         if (entry.sqtm != null) made.sqtm = entry.sqtm;
         if (entry.source) made.source = entry.source;
-        list.push(made);
+        list.push(canonicalizeInitialU2(made));
       }
     }));
   }

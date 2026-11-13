@@ -10,6 +10,7 @@
 import { invert as invertSkewb } from './skewb_notation';
 import type { AlgPuzzle } from './alg_catalog';
 import { canonicalize3x3WideMoves, duplicateAlgKey } from './alg_notation';
+import { canonicalizeInitialU2 } from './alg-html';
 
 export * from './alg_types';
 import type { AlgFile, AlgEntry } from './alg_types';
@@ -93,6 +94,7 @@ export function canonicalize3x3AlgFile(file: AlgFile): AlgFile {
       entry.alg = canonicalize3x3WideMoves(entry.alg);
       if (entry.setup !== undefined) entry.setup = canonicalize3x3WideMoves(entry.setup);
       if (entry.algHtml !== undefined) entry.algHtml = canonicalize3x3WideMoves(entry.algHtml);
+      Object.assign(entry, canonicalizeInitialU2(entry));
     }
     if (c.meta) {
       if (c.meta.scramble !== undefined) c.meta.scramble = canonicalize3x3WideMoves(c.meta.scramble);

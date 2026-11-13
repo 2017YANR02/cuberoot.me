@@ -30,6 +30,14 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 
 export const CATALOG: UtilEntry[] = [
   {
+    name: 'canonicalizeInitialU2',
+    sig: 'canonicalizeInitialU2<T extends { alg: string; algHtml?: string }>(entry: T): T',
+    imp: "import { canonicalizeInitialU2 } from '@cuberoot/shared/alg-html';",
+    category: 'cube',
+    zh: '三阶公式库开头 U2 的统一写法；只去掉首步半转的撇号，保留后续转动方向和富文本标记。',
+    en: 'Canonical initial U2 for the 3x3 catalog, preserving later signed turns and rich-text annotations.',
+  },
+  {
     name: 'useWcaTeams',
     sig: 'useWcaTeams(wcaIds: string[])',
     imp: "import { useWcaTeams } from '@/hooks/useWcaTeams';",

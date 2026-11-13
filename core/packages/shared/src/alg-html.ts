@@ -16,6 +16,21 @@ export function escapeAlgText(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+/** Catalog convention: only an initial U half-turn loses its direction mark.
+ * Keep later signed half-turns and all finger annotations unchanged. */
+export function canonicalizeInitialU2<T extends { alg: string; algHtml?: string }>(entry: T): T {
+  const initialTurn = /^[\s(]*U2'(?=$|[\s)URFDLBMESxyzurfdlb])/;
+  const initial = initialTurn.exec(entry.alg);
+  if (!initial) return entry;
+  const index = initial[0].length - 1;
+  const alg = entry.alg.slice(0, index) + entry.alg.slice(index + 1);
+  if (!entry.algHtml) return { ...entry, alg };
+  const htmlText = algHtmlText(entry.algHtml);
+  const htmlInitial = initialTurn.exec(htmlText);
+  const algHtml = htmlInitial ? editAlgHtmlText(entry.algHtml, [{ start: htmlInitial[0].length - 1, end: htmlInitial[0].length, text: '' }]) : entry.algHtml;
+  return { ...entry, alg, algHtml };
+}
+
 /** Apply the same textual normalization to inline markup, never accept a second move sequence. */
 export function matchingAlgHtml(text: string, html: unknown, normalize: (text: string) => string = value => value): string {
   if (html == null || html === '') return '';

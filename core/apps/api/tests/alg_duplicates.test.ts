@@ -86,6 +86,15 @@ describe('standard and community formula duplicate enforcement', () => {
     expect(mocks.query).not.toHaveBeenCalled();
   });
 
+  it.each(['POST', 'PUT'])('rejects multiple beginner picks across case orientations on %s', async method => {
+    const path = 'sets/3x3/f2l/cases' + (method === 'PUT' ? '/3930' : '');
+    const r = await send(path, method, { caseName: 'A+', sticker: {},
+      algs: [[{ alg: 'R U', tags: ['beginner'] }], [{ alg: 'L U', tags: ['beginner'] }]] });
+    expect(r.status).toBe(400);
+    expect(await r.json()).toEqual({ error: 'Only one beginner pick is allowed per case' });
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['POST', 'sets/3x3/pll/cases', "(R U R'"],
     ['PUT', 'sets/3x3/pll/cases/4309', "R U R')"],

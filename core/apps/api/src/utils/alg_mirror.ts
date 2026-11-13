@@ -21,6 +21,7 @@
 import {
   MIRROR_ALG_SYNC_SETS,
   regenerateMirrorAlgs,
+  canonicalNnnAlg,
   type AlgEntry,
   type MirrorPairCase,
 } from '@cuberoot/shared/alg-mirror';
@@ -216,6 +217,21 @@ export async function syncMirrorForCase(
   const result = regenerateMirrorAlgs(self, partner, previousAlgs);
   notes.push(...result.notes);
   await alignGeneratedAlgs(set, partnerRow && partnerRow !== selfRow ? [selfRow, partnerRow] : [selfRow], result.algsById, notes);
+
+  // A beginner pick belongs to this case and slot, regardless of provenance.
+  // Restore it after AUF alignment; never spread it to generated counterparts.
+  for (const current of partner && partner.id !== self.id ? [self, partner] : [self]) {
+    const next = result.algsById.get(current.id);
+    if (!next) continue;
+    let restored = false;
+    current.algs.forEach((view, oi) => view.forEach(entry => {
+      if (restored || !entry.tags?.includes('beginner')) return;
+      const match = next[oi]?.find(candidate => canonicalNnnAlg(candidate.alg) === canonicalNnnAlg(entry.alg));
+      if (!match) return;
+      match.tags = [...new Set([...(match.tags ?? []), 'beginner' as const])];
+      restored = true;
+    }));
+  }
 
   const before = new Map<number, string>([[self.id, canon(self.algs)]]);
   if (partner && partner.id !== self.id) before.set(partner.id, canon(partner.algs));

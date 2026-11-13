@@ -16,7 +16,7 @@ import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 import { syncMirrorAndLog, syncMirrorForCase } from '../utils/alg_mirror.js';
 import { is3x3TopLayerSet } from '@cuberoot/shared';
-import { sanitizeAlgHtmlFields } from '@cuberoot/shared/alg-html';
+import { canonicalizeInitialU2, sanitizeAlgHtmlFields } from '@cuberoot/shared/alg-html';
 import type { AlgEntry } from '@cuberoot/shared/alg';
 import {
   canonicalize3x3WideMoves, cubeOnly, findIllegalGluedCubeMoves, hasBalancedGrouping,
@@ -98,7 +98,9 @@ function canonicalize3x3FormulaJson(value: unknown): unknown {
       ? canonicalize3x3WideMoves(child)
       : canonicalize3x3FormulaJson(child);
   }
-  return normalized;
+  return typeof normalized.alg === 'string'
+    ? canonicalizeInitialU2(normalized as typeof normalized & { alg: string; algHtml?: string })
+    : normalized;
 }
 
 function canonicalize3x3CaseInput(puzzle: string, body: AlgCaseInput): AlgCaseInput {
@@ -176,6 +178,9 @@ async function validateCaseInput(puzzle: string, setSlug: string, body: AlgCaseI
   if (!body.sticker || typeof body.sticker !== 'object') return { error: 'sticker required (object)' };
   if (!Array.isArray(body.algs)) return { error: 'algs must be array' };
   assertUniqueCaseAlgs(body.algs);
+  if (body.algs.flat().filter((entry: AlgEntry) => entry.tags?.includes('beginner')).length > 1) {
+    return { error: 'Only one beginner pick is allowed per case' };
+  }
   if ((typeof body.setup === 'string' && !hasBalancedGrouping(cubeOnly(body.setup)))
     || (typeof body.standard === 'string' && !hasBalancedGrouping(cubeOnly(body.standard)))
     || containsUnbalancedGrouping(body.algs)) {
