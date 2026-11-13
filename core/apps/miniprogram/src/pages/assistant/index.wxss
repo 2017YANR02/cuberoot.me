@@ -1,0 +1,17 @@
+.assistant-toolbar, .assistant-card-head, .assistant-compose { display: flex; align-items: center; gap: 20rpx; }
+.assistant-toolbar { justify-content: space-between; }
+.assistant button { color: var(--cr-accent); font-size: 26rpx; flex-shrink: 0; padding: 16rpx 8rpx; }
+.assistant-turn { margin: 36rpx 0; }
+.assistant-question, .assistant-answer, .assistant-title, .assistant-alg { display: block; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.assistant-question, .assistant-title { font-weight: 600; }
+.assistant-question { margin-bottom: 20rpx; }
+.assistant-card { padding: 20rpx 0; }
+.assistant-image, .assistant-image image { width: 144rpx; height: 144rpx; flex-shrink: 0; }
+.assistant-image text { font-size: 22rpx; color: var(--cr-muted); }
+.assistant-card-head .assistant-title { flex: 1; min-width: 0; }
+.assistant-alg { font-family: monospace; margin-top: 12rpx; }
+.assistant-card-controls { display: flex; align-items: center; gap: 20rpx; font-size: 24rpx; color: var(--cr-muted); }
+.assistant-compose { margin: 24rpx 0; padding-bottom: env(safe-area-inset-bottom); }
+.assistant-compose textarea { flex: 1; min-width: 0; max-height: 280rpx; }
+.assistant-error { color: var(--cr-danger); display: block; }
+.assistant-pdf-canvas { position: fixed; left: -10000px; top: 0; width: 384px; height: 384px; pointer-events: none; }

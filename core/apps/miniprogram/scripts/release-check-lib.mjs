@@ -157,6 +157,7 @@ export const PUBLIC_INDEXED_PAGES = [
 
 export const EXPECTED_APP_PAGES = [
   'pages/timer/index',
+  'pages/assistant/index',
   'pages/smart-cube/index',
   'pages/external-timer/index',
   'pages/tools/index',

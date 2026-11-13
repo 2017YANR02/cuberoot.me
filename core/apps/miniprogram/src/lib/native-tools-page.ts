@@ -15,7 +15,7 @@ interface PersonResponse {
 }
 interface ToolPage { data: { mode: string; query: string; [key: string]: unknown }; setData(value: Record<string, unknown>): void; requestId?: number; active?: boolean }
 function labels() { return {
-  title: tr({ en: 'Tools', zh: '工具' }), timer: tr({ en: 'Timer', zh: '基础计时' }),
+  title: tr({ en: 'Tools', zh: '工具' }), timer: tr({ en: 'Timer', zh: '基础计时' }), assistant: tr({zh:'问 CubeRoot',en:'Ask CubeRoot'}),
   choices: [tr({ en: 'Recent competitions', zh: '近期公示比赛' }), tr({ en: 'Recent records', zh: '近期纪录' }), tr({ en: 'Personal results & rankings', zh: '个人成绩与排名' })],
   search: tr({ en: 'Search', zh: '查询' }), clear: tr({ en: 'Clear', zh: '清除' }), retry: tr({ en: 'Refresh', zh: '刷新' }),
   placeholder: tr({ en: 'WCA ID, e.g. 2017YANR02', zh: 'WCA ID，例如 2017YANR02' }),
@@ -68,6 +68,7 @@ export function createNativeToolsPageOptions() {
     onUnload() { this.onHide(); },
     active: false, requestId: 0,
     openTimer() { miniProgramApi().switchTab({ url: '/pages/timer/index' }); },
+    openAssistant() { miniProgramApi().navigateTo({url:'/pages/assistant/index'}); },
     changeMode(e: WechatMiniprogram.PickerChange) {
       const index = Number(e.detail.value);
       this.setData({ modeIndex: index, mode: ['competitions', 'records', 'person'][index] ?? 'competitions', rows: [], error: '', personName: '', loading: false, searched: false });

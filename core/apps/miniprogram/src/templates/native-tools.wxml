@@ -1,5 +1,6 @@
 <view class="page native-tools" style="{{appearanceStyle}}">
   <view class="tools-heading"><text class="page-title">{{copy.title}}</text><button hover-class="press-feedback" class="tools-button" bindtap="openTimer">{{copy.timer}}</button></view>
+  <button hover-class="press-feedback" class="tools-button" bindtap="openAssistant">{{copy.assistant}}</button>
   <picker mode="selector" range="{{copy.choices}}" value="{{modeIndex}}" bindchange="changeMode"><view class="tools-select">{{copy.choices[modeIndex]}}</view></picker>
   <view wx:if="{{mode === 'person'}}" class="tools-search">
     <input value="{{query}}" bindinput="inputQuery" bindconfirm="search" confirm-type="search" placeholder="{{copy.placeholder}}" aria-label="WCA ID" maxlength="10" />

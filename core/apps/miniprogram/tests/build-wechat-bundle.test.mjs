@@ -11,8 +11,9 @@ it.each([false, true])('loads shared native modules once and preserves page hand
     const src = join(root, 'src');
     await mkdir(src);
     await writeFile(join(src, 'state.ts'), 'export const state = { count: 0 }; export const increment = () => ++state.count;');
+    await writeFile(join(src, 'lazy.ts'), "import { increment } from './state'; export const exported = increment();");
     await writeFile(join(src, 'app.ts'), "import { increment } from './state'; App({ onLaunch: increment });");
-    await writeFile(join(src, 'page.ts'), "import { state, increment } from './state'; Page({ data: state, onTap: increment });");
+    await writeFile(join(src, 'page.ts'), "import { state, increment } from './state'; Page({ data: state, onTap: increment, onPdf: async () => (await import('./lazy')).exported });");
     const result = await buildWechatBundle({
       absWorkingDir: root, entryPoints: [join(src, 'app.ts'), join(src, 'page.ts')],
       outbase: src, outdir: join(root, 'dist'), bundle: true, metafile: true,
@@ -36,6 +37,11 @@ it.each([false, true])('loads shared native modules once and preserves page hand
     expect(page.data.count).toBe(1);
     expect(page.onTap()).toBe(2);
     expect(page.data.count).toBe(2);
+    // Native service runtimes expose require, not a browser import() loader.
+    // The export dependency must execute only on demand and only once.
+    expect(await page.onPdf()).toBe(3);
+    expect(await page.onPdf()).toBe(3);
+    expect(page.data.count).toBe(3);
     expect([...sources.keys()].some(path => path.includes(`${sep}shared${sep}`))).toBe(true);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
