@@ -41,21 +41,28 @@ it('resolves full-text clause references and includes their linked starting cond
   expect(regulationExcerptArticles({href:'/forum',content:'A4d'})).toEqual([]);
 });
 
-it('supplements a retrieved full-text rule with official clauses before answering',async()=>{
+it.each([0,5000])('supplements a retrieved full-text rule with official clauses before answering (body delay: %i ms)',async(delay)=>{
   let models=0,officialReads=0;
   const fetcher=vi.fn<typeof fetch>(async(input,init)=>{
     const url=String(input);
     if(url.endsWith('/assistant/pages.json'))return Response.json({updated:'2026-11-12T00:00:00Z',pages:[{lang:'en',href:'/regulation/full',title:'WCA Regulations',text:'5b5d puzzle defect example.'}]});
-    if(url===WCA_REGULATIONS_URL){officialReads++;return new Response(rules,{headers:{'content-type':'text/html'}});}
+    if(url===WCA_REGULATIONS_URL){
+      officialReads++;
+      return new Response(new ReadableStream({start(controller){
+        const abort=()=>{clearTimeout(timer);controller.error(init!.signal!.reason);};
+        const timer=setTimeout(()=>{init?.signal?.removeEventListener('abort',abort);controller.enqueue(new TextEncoder().encode(rules));controller.close();},delay);
+        init?.signal?.addEventListener('abort',abort,{once:true});
+      }}),{headers:{'content-type':'text/html'}});
+    }
     expect(url.startsWith(config.baseUrl)).toBe(true);models++;
     const pages=wireEvidence(JSON.parse(String(init?.body))).flatMap(item=>item.data?.pages??[]);
     expect(pages[0].content).toContain('One part with one colored face: solved');
     expect(pages[0].id).toBe('wca:regulations:5');
     return modelResponse({answerKind:'grounded',answer:'One detached center cap can remain solved. [[wca:regulations:5]]',sourceIds:['wca:regulations:5']});
   });
-  const result=await answerSiteQuestion('According to the puzzle defects rules, what happens with a detached center cap?','en',config,AbortSignal.timeout(4000),fetcher);
+  const result=await answerSiteQuestion('According to the puzzle defects rules, what happens with a detached center cap?','en',config,AbortSignal.timeout(15000),fetcher);
   expect(result.sources[0].href).toContain('worldcubeassociation.org/regulations/');expect(models).toBe(1);expect(officialReads).toBe(1);
-});
+},15000);
 
 it('keeps a full competitor chapter above the old excerpt budget, including equipment exceptions',()=>{
   const html='<html><body><ul><li id="2a">'+('x'.repeat(11600))+'</li><li id="2i">Equipment restrictions.</li><li id="2i2a">Medical aid exception.</li></ul></body></html>';

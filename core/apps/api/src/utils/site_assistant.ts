@@ -488,7 +488,9 @@ export async function answerSiteQuestion(
   const unavailableTools=new Set<string>();
   let officialRules:Promise<string>|undefined;
   const readOfficialRules=()=>officialRules??=assistantStage('page',async()=>{
-    const response=await fetcher(WCA_REGULATIONS_URL,{signal:AbortSignal.any([signal,AbortSignal.timeout(4000)]),redirect:'error',headers:{Accept:'text/html'}});
+    // The official page can take ~9 seconds to finish its body from production.
+    // Keep the request deadline and size bound, rather than abandoning valid clauses at 4 seconds.
+    const response=await fetcher(WCA_REGULATIONS_URL,{signal:AbortSignal.any([signal,AbortSignal.timeout(12000)]),redirect:'error',headers:{Accept:'text/html'}});
     checkAssistantResponse(response,'source');return limitedText(response,2_000_000);
   });
   const complete = async (round: number, finalOnly = false, draftAnswer?:string, reviewKind:'analysis'|'content'|'citation'|'evidence'='analysis', requirePhotoTool=false) => assistantStage(draftAnswer === undefined ? 'model' : 'review',async()=>{
