@@ -72,7 +72,7 @@ it.each([[7, false], [8, false], [8, true]] as const)('keeps the edit entry avai
   fixture.user = { uid, wcaId: '' }; fixture.isAdmin = isAdmin;
   await render();
   expect(host.querySelector('a[href$="/recon/submit/2795"]')).not.toBeNull();
-  expect(host.querySelectorAll('[role="tab"]')).toHaveLength(2);
+  expect([...host.querySelectorAll('[role="tab"]')].map(tab => tab.textContent)).toEqual(['Recon', 'Raw', 'Solve']);
 });
 
 it('does not expose source through the existing private-recon error gate', async () => {

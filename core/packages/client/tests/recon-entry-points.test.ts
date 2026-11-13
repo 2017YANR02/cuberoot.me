@@ -8,9 +8,9 @@ const listPage = readFileSync(join(CLIENT, 'app/[lang]/recon/page.tsx'), 'utf8')
 const submitForm = readFileSync(join(CLIENT, 'app/[lang]/recon/submit/ReconSubmitForm.tsx'), 'utf8');
 
 describe('reconstruction entry points', () => {
-  it('places the add action beside the page title', () => {
+  it('places the add action beside the category heading and filters', () => {
     expect(listPage).toMatch(
-      /<PageHeading>\s*\{t\('recon\.title'\)\}\s*<Link href="\/recon\/submit"[\s\S]*?<Link\s+href="\/recon-about"[\s\S]*?<\/PageHeading>/,
+      /<PageHeading>\s*<CompactSelect[\s\S]*?label=\{filterLabel\}[\s\S]*?\/>\s*<Link href="\/recon\/submit"[\s\S]*?<Link\s+href="\/recon-about"[\s\S]*?<\/PageHeading>/,
     );
     expect(listPage.match(/href="\/recon\/submit"/g)).toHaveLength(1);
   });
