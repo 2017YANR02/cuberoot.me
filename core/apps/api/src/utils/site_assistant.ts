@@ -9,6 +9,7 @@ import { ASSISTANT_ANSWER_POLICY, ASSISTANT_EVIDENCE_REVIEW, ASSISTANT_OUTPUT_BU
 import { assistantSearchProtectedTerms, assistantWebAvailable, assistantWebRequestScope, searchAssistantWeb } from './site_assistant_web.js';
 import { WCA_NEWS_URL, parseAssistantNews } from './site_assistant_news.js';
 import {WCA_REGULATIONS_URL,regulationExcerptArticles,regulationChapterHref,officialRegulationPassages} from './site_assistant_regulations.js';
+import {suppliedAverageAnswer} from './site_assistant_calculation.js';
 import { parseHTML } from 'linkedom';
 import { z } from 'zod';
 import { toolCallSchema, runDataTool, type AssistantToolCall, type ToolResult } from './site_assistant_tools.js';
@@ -298,6 +299,8 @@ export async function answerSiteQuestion(
       : {...result,sources,actions:result.actions?.filter(action=>sources.some(source=>source.id===action.id && source.href===action.href))};
     return rememberAssistantContext(safe,observations,priorContext);
   };
+  const suppliedAverage=!hasImages && requestedEvidence==='auto' && !experiment.forceKnowledge ? suppliedAverageAnswer(question,lang) : undefined;
+  if(suppliedAverage)return withContext({answer:suppliedAverage,sources:[],artifacts:[]});
   const explicitAlgorithms = !hasImages && requestedEvidence==='auto' && !experiment.forceKnowledge ? explicitAlgorithmDisplay(question) : undefined;
   if(explicitAlgorithms) {
     const call={tool:'algorithms' as const,...explicitAlgorithms};
