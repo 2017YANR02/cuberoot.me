@@ -1,5 +1,6 @@
 import { unstable_cache } from 'next/cache';
 import { apiUrl } from './api-base';
+import { fetchPublicApi } from './public-api-fetch-server';
 import { HOME_LAYOUT_CACHE_TAG, parseHomeLocks, parseHomeOrders, type HomeLayoutSnapshot } from './home-layout';
 
 /** Cache one complete, validated layout, never an empty fallback or half an update.
@@ -7,8 +8,7 @@ import { HOME_LAYOUT_CACHE_TAG, parseHomeLocks, parseHomeOrders, type HomeLayout
  * A failed regeneration throws so Next keeps the last successful homepage. */
 export const fetchHomeLayout = unstable_cache(async (): Promise<HomeLayoutSnapshot> => {
   const read = async (path: string) => {
-    const response = await fetch(apiUrl(path), { cache: 'no-store', signal: AbortSignal.timeout(5000) });
-    if (!response.ok) throw new Error(`Homepage layout HTTP ${response.status}`);
+    const response = await fetchPublicApi(apiUrl(path), 5000);
     return response.json() as Promise<unknown>;
   };
   const [locks, orders] = await Promise.all([

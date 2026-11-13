@@ -3,6 +3,7 @@ import { promisify } from 'node:util';
 import { unstable_cache } from 'next/cache';
 import { ALG_CATALOG, type AlgPuzzle } from '@cuberoot/shared/alg';
 import { apiUrl } from '@/lib/api-base';
+import { fetchPublicApi } from '@/lib/public-api-fetch-server';
 
 // Public PG-derived snapshots are built with the site and served from its CDN.
 // The library always checks the live API in the background; this is a cold-start
@@ -20,8 +21,7 @@ export function generateStaticParams() {
 const compress = promisify(gzip);
 const snapshot = unstable_cache(async (url: string) => {
   try {
-    const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(60000) });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const response = await fetchPublicApi(url, 60000);
     return (await compress(Buffer.from(await response.text()))).toString('base64');
   } catch (cause) {
     // Next annotates errors during rendering; DOMException.message is read-only.
