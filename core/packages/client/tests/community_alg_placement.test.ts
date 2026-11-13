@@ -26,6 +26,9 @@ const styles = readFileSync(fileURLToPath(new URL(
   '../app/[lang]/alg/alg.css',
   import.meta.url,
 )), 'utf8');
+const rowStyles = readFileSync(fileURLToPath(new URL(
+  '../components/alg-formula-row.css', import.meta.url,
+)), 'utf8');
 
 describe('community algorithm placement', () => {
   it('mounts community rows inside the formula area for both detail layouts', () => {
@@ -54,10 +57,10 @@ describe('community algorithm placement', () => {
 
   it('uses one delete icon and aligns every formula at the same inset', () => {
     expect(algEditorSource).toContain("import { Trash2,");
-    expect(algEditorSource).toContain('<Trash2 size={12} />');
+    expect(algEditorSource).toContain('<Trash2 size="1em" />');
     expect(communitySource).not.toContain('UserIdLabel');
     expect(styles).toContain('--alg-case-detail-formula-indent: 32px;');
-    expect(styles).toContain('padding-inline-start: var(--alg-case-detail-formula-indent);');
+    expect(rowStyles).toContain('padding-inline-start: var(--alg-case-detail-formula-indent, 0px);');
     expect(styles).toContain('grid-template-columns: 24px minmax(0, 1fr) auto;');
   });
 });

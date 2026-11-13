@@ -31,6 +31,7 @@
     "test": "vitest run --exclude tests/cross_trainer_reach.test.ts && vitest run tests/cross_trainer_reach.test.ts",
     "test:recon-ground-truth": "node scripts/recon-ground-truth-gate.mjs run",
     "test:watch": "vitest",
+    "test:alg-layout": "vitest run --config vitest.alg-layout.config.ts",
     "test:slow": "node scripts/test-slow.mjs",
     "test:solvers": "node scripts/test-solvers.mjs",
     "verify:clock-distribution": "pnpm --filter @cuberoot/puzzle-solvers build && tsx scripts/clock/verify_distribution.mts",

@@ -2314,6 +2314,20 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `forwardRef 暴露 AlgEditorHandle.getValue(),配合 AlgInput / CubeKeyboardSection,主要给 admin 公式编辑。`, en: `Exposes AlgEditorHandle.getValue() via forwardRef; pairs with AlgInput / CubeKeyboardSection, mainly for admin alg editing.` },
   },
   {
+    name: 'AlgInformation',
+    import: "import AlgInformation from '@/components/AlgInformation';",
+    category: 'input',
+    zh: '当前完整公式的流信息和步数，复用统一公式分析与计步。',
+    en: 'Generators and move count for the complete selected algorithm, using shared notation metrics.',
+  },
+  {
+    name: 'AlgFormulaRow',
+    import: "import AlgFormulaRow, { AlgFormulaReadRow } from '@/components/AlgFormulaRow';",
+    category: 'input',
+    zh: '公式展示、编辑和入槽分组共用的行布局；统一标签、文字和工具区尺寸。',
+    en: 'Shared row layout for reading, editing and grouped insertions, with consistent tag, notation and action geometry.',
+  },
+  {
     name: 'AlgTagLabel',
     import: "import AlgTagLabel from '@/components/AlgTagLabel';",
     category: 'input',

@@ -169,7 +169,7 @@ interface Props {
   algsAfter?: React.ReactNode;
   onRotate?: () => Promise<void>;
   editorAlgorithms?: (afterPlayer?: React.ReactNode, beforeAlgorithms?: React.ReactNode) => React.ReactNode;
-  renderMetadata?: (metadata: React.ReactNode, related: React.ReactNode) => React.ReactNode;
+  renderMetadata?: (metadata: React.ReactNode, related: React.ReactNode, selectedAlgorithm?: string) => React.ReactNode;
   subgroupEditor?: React.ReactNode;
   setupEditor?: React.ReactNode;
   editing?: boolean;
@@ -533,7 +533,7 @@ export default function AlgCaseMetaContent({
                     alg={a.text}
                     issue={caseAlgIssue(a.entry)}
                     algHtml={viewAngle === 'default' && puzzle !== 'sq1' ? a.html : undefined}
-                    len={a.len}
+                    len={renderMetadata ? undefined : a.len}
                     preferred={isPreferred}
                     onPreferredToggle={togglePreferred}
                   />,
@@ -547,7 +547,7 @@ export default function AlgCaseMetaContent({
                     alg={a.text}
                     issue={caseAlgIssue(a.entry)}
                     algHtml={viewAngle === 'default' && puzzle !== 'sq1' ? a.html : undefined}
-                    len={a.len}
+                    len={renderMetadata ? undefined : a.len}
                     preferred={isPreferred}
                     onPreferredToggle={togglePreferred}
                     playable={!previewImage && !caseAlgIssue(a.entry)}
@@ -697,7 +697,7 @@ export default function AlgCaseMetaContent({
           <Row label="speedcubedb">{m.sdbNo}</Row>
         </div>
       )}
-      </>, <AlgCaseRelationCards items={relationCards} puzzle={puzzle} set={set} viewAngle={viewAngle} orientation={orientation} />)}
+      </>, <AlgCaseRelationCards items={relationCards} puzzle={puzzle} set={set} viewAngle={viewAngle} orientation={orientation} />, playingScramble === null ? selectedAlg?.playbackAlg : undefined)}
     </>
   );
 }

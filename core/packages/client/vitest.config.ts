@@ -34,6 +34,7 @@ export default defineConfig({
     // (code-solvers-fleet-sync.test.ts 是注册哨兵,不是求解器证明,不匹配此 glob,照常每次跑。)
     exclude: [
       ...configDefaults.exclude,
+      'tests/alg-formula-layout.browser.test.ts',
       ...(process.env.RUN_SOLVER_TESTS ? [] : ['tests/**/*_solver.test.ts']),
       ...(runSlow ? [] : SLOW_TESTS),
     ],

@@ -23,10 +23,11 @@
 import { useMemo } from 'react';
 import AppLink from '@/components/AppLink';
 import { MIRROR_SETS, type AlgPuzzle } from '@cuberoot/shared';
-import { applyMirrorGen, mirrorGensFor, MIRROR_TARGET, MIRROR_VIEW, VIEWS, type MirrorGen } from '@cuberoot/shared/alg-mirror';
+import { applyMirrorGen, lrMirrorAlgHtml, mirrorGensFor, MIRROR_TARGET, MIRROR_VIEW, VIEWS, type MirrorGen } from '@cuberoot/shared/alg-mirror';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
-import { displayAlg } from '@/lib/alg_display';
+import { displayCaseAlg, displayCaseAlgHtml } from '@/lib/alg_display';
 import { tr } from '@/i18n/tr';
+import { canonicalizeInitialU2 } from '@cuberoot/shared/alg-html';
 
 /** 这个 puzzle/set 有没有镜像系统。 */
 export const hasMirror = (puzzle: string, set: string) => MIRROR_SETS.has(`${puzzle}/${set}`);
@@ -37,24 +38,26 @@ interface Variant {
   /** 落在哪个 case 的哪个视角 */
   where: string;
   alg: string;
+  html?: string;
 }
 
 function VariantRow({ v, puzzle, href }: { v: Variant; puzzle: AlgPuzzle; href?: string }) {
   const text = formatScrambleForEvent(puzzle, v.alg);
   const content = <>
       <span className="alg-mirror-label">{v.label}</span>
-      <span className="alg-mirror-where">{v.where}</span>
-      <code className="alg-mirror-alg">{text}</code>
+      <code className="alg-mirror-alg">{v.html ? <span dangerouslySetInnerHTML={{ __html: v.html }} /> : text}</code>
     </>;
   return href
-    ? <AppLink href={href} prefetch={false} className="alg-mirror-line" onClick={event => event.stopPropagation()}>{content}</AppLink>
+    ? <AppLink href={href} prefetch={false} className="alg-mirror-line" aria-label={`${v.label} ${v.where} ${text}`} onClick={event => event.stopPropagation()}>{content}</AppLink>
     : <div className="alg-mirror-line">{content}</div>;
 }
 
 export default function AlgMirrorPanel({
-  alg, puzzle, mirrorName, selfName, ori = 0, mirrorHref, selfHref,
+  alg, algHtml, puzzle, set = '', mirrorName, selfName, ori = 0, mirrorHref, selfHref,
 }: {
   alg: string;
+  algHtml?: string;
+  set?: string;
   puzzle: AlgPuzzle;
   mirrorHref?: string;
   selfHref?: string;
@@ -66,14 +69,13 @@ export default function AlgMirrorPanel({
   ori?: number;
 }) {
   const variants = useMemo<Variant[]>(() => {
-    const body = displayAlg(alg);
     // 与公式库自动生成共用筛选规则，不展示被收录规则排除的变换。
     const allowedGens = new Set(mirrorGensFor(alg));
     const partner = mirrorName ?? tr({ zh: '镜像 case', en: 'the mirror case' });
     const self = selfName ?? tr({ zh: '本 case', en: 'this case' });
     // 认不出来的记号会抛 —— 那条就不出行,不能让一条脏公式把整个面板打空
     const made = (gen: MirrorGen): string | null => {
-      try { return applyMirrorGen(body, gen); } catch { return null; }
+      try { return applyMirrorGen(alg, gen); } catch { return null; }
     };
     const at = (gen: MirrorGen) =>
       `${MIRROR_TARGET[gen] === 'self' ? self : partner} ${VIEWS[MIRROR_VIEW[gen][ori % 4]]}`;
@@ -85,9 +87,13 @@ export default function AlgMirrorPanel({
     return rows.flatMap(([key, label]) => {
       if (!allowedGens.has(key)) return [];
       const out = made(key);
-      return out ? [{ key, label, where: at(key), alg: out }] : [];
+      if (!out) return [];
+      const html = key === 'lr' ? lrMirrorAlgHtml({ alg, algHtml }, out) : undefined;
+      const entry = puzzle === '3x3' ? canonicalizeInitialU2({ alg: out, algHtml: html ?? undefined }) : { alg: out, algHtml: html ?? undefined };
+      return [{ key, label, where: at(key), alg: displayCaseAlg(puzzle, set, entry.alg),
+        html: entry.algHtml ? displayCaseAlgHtml(puzzle, set, entry.algHtml) : undefined }];
     });
-  }, [alg, mirrorName, selfName, ori]);
+  }, [alg, algHtml, puzzle, set, mirrorName, selfName, ori]);
 
   if (variants.length === 0) return null;
 

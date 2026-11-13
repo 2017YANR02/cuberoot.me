@@ -1,0 +1,133 @@
+/* One layout contract for read/edit rows. Do not size the two modes separately.
+   Grouping may change row spacing, never the mode. */
+.alg-formula-row,
+.alg-case-detail-ori-algs,
+.alg-editor-tools,
+.compact-select-popup.alg-tag-menu {
+  --alg-ui-size: 14px;
+}
+.alg-formula-row.alg-formula-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 40px;
+  column-gap: 8px;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  padding-inline-start: var(--alg-case-detail-formula-indent, 0px);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+.alg-formula-row .alg-formula-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding-block: var(--alg-formula-row-inset, 6px);
+}
+.alg-formula-row .alg-formula-value {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.alg-formula-row .alg-formula-value > .alg-formula-text {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: var(--alg-case-detail-formula-size, .92rem);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.alg-formula-row .alg-formula-value > .alg-editor-input:hover { outline: 1px solid var(--border-default); }
+.alg-formula-row .alg-formula-value > .alg-editor-input:focus { outline: 1px solid var(--accent); }
+.alg-formula-row[data-selected='true'] .alg-formula-text { font-weight: 700; }
+.alg-formula-row .alg-formula-body .alg-tag-symbol,
+.alg-editor-tools,
+.alg-editor-tools :is(button, .alg-tag-symbol, .compact-select-current),
+.compact-select-popup.alg-tag-menu,
+.alg-tag-menu :is(.compact-select-option, .alg-tag-symbol) { font-size: var(--alg-ui-size); }
+.alg-editor-tools svg,
+.alg-tag-menu svg { width: 1em; height: 1em; flex-shrink: 0; }
+.alg-formula-row .alg-formula-actions { position: relative; min-width: 0; }
+.alg-formula-row .alg-formula-read-details {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 1.2;
+}
+.alg-formula-read-details .alg-alg-len {
+  margin: 0;
+  font: inherit;
+}
+.alg-formula-row .alg-formula-actions > .alg-editor-tools {
+  position: absolute;
+  inset: 0;
+  width: 40px;
+  height: 100%;
+  max-width: none;
+  z-index: 6;
+}
+.alg-formula-row .alg-editor-tools-toggle {
+  position: absolute;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 40px;
+  min-height: 32px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+/* Center the hit target even on 27px insertion rows; lift the dots slightly
+   to align optically with the notation's capital letters. */
+.alg-formula-row .alg-editor-tools-toggle svg { transform: translateY(-1px); }
+/* anchored-panel: safe (right-aligned within the row, width capped to viewport). */
+.alg-formula-row .alg-editor-tools-group {
+  position: absolute;
+  inset-block-end: calc(100% + 6px);
+  inset-inline-end: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 32px));
+  min-height: 32px;
+  padding: 3px;
+  border: 0;
+  border-radius: 22px;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.alg-formula-row .alg-editor-tools[data-tools-open='true'] .alg-editor-tools-group {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+.f2l-edit-source-row[data-grouped='true'] .alg-formula-row { --alg-formula-row-inset: 0px; }
+.compact-select-popup.alg-tag-menu { scrollbar-width: none; }
+.compact-select-popup.alg-tag-menu::-webkit-scrollbar { display: none; }

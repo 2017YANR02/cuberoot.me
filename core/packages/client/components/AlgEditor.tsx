@@ -10,24 +10,23 @@
  * 关键: layout 内部为每行配 stable uid,React key 用 uid 而非数组下标,
  * 否则删中间行后 React 会复用旁边 DOM,AlgInput uncontrolled 内容不刷新 → 视觉错位。
  */
-import MoreToggle from '@/components/MoreToggle';
 import { useState, useRef, useImperativeHandle, useMemo, forwardRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trash2, Plus, AlertTriangle, Copy, Check, Pin, FlipHorizontal2, Tags } from '@app-foundation/icons/lucide';
+import { Trash2, Plus, AlertTriangle, Pin, Tags, Ellipsis } from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgEntry, AlgPuzzle } from '@cuberoot/shared/alg';
-import { gen as algorithmGenerators } from '@cuberoot/shared/alg-notation';
 import { resolveSimPreviewMoves } from '@/components/AlgPlayer/player-setup';
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import SortableAlgRow from '@/components/SortableAlgRow';
-import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';
-import { useCopy } from '@/hooks/useCopy';
 import { editedAlgEntry } from '@/lib/alg_editor';
 import { sanitizeAlgHtml } from '@/lib/alg_html';
+import { canonicalizeInitialU2 } from '@cuberoot/shared/alg-html';
 import { preferredAlgRef, preferredAlgSlot, usePreferredAlgs } from '@/lib/alg-preferred-algs';
-import { algTagLabel, ALG_TAGS } from '@/lib/alg_tags';
+import { algTagLabel, algTagOptions } from '@/lib/alg_tags';
 import { CompactSelect } from '@/components/CompactSelect';
 import AlgTagLabel from '@/components/AlgTagLabel';
+import AlgFormulaRow from '@/components/AlgFormulaRow';
+import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { sq1NotationText, type Sq1NotationMode } from '@/lib/sq1-pbl-notation';
 import { canonicalSq1Alg } from '@cuberoot/shared/sq1-notation';
 import { canonicalNnnAlg, mirrorCascadeOnEdit, VIEWS, type MirrorCascadeEntry } from '@cuberoot/shared/alg-mirror';
@@ -37,7 +36,6 @@ import AlgInput from '@/components/AlgEditorProjectedInput';
 import AlgDeleteConfirm, { type AlgDeleteGroup } from '@/components/AlgDeleteConfirm';
 import { displayAlg, shortOriName } from '@/lib/alg_display';
 import { tr } from '@/i18n/tr';
-import { displayedAlgorithmStm } from '@/lib/alg-metrics';
 
 /** 一条「这行没过校验」的标记。`ai` 是**编辑器里的行号**(含空行),不是入库数组的下标。 */
 export interface AlgInvalidMark { oi: number; ai: number; reason: string }
@@ -92,6 +90,8 @@ interface Props {
   onCursorMoveCount?: (n: number, oi?: number) => void;
   /** 编辑内容发生变化。内联管理页用它触发自动保存。 */
   onChange?: () => void;
+  selectedAlgorithms?: Readonly<Record<number, string | null>>;
+  onSelectAlgorithm?: (oi: number, alg: string) => void;
 }
 
 type Row = AlgEntry & { uid: string };
@@ -110,9 +110,7 @@ interface PendingRemoval {
   cascade: MirrorCascadeEntry[];
 }
 
-function RowActions({ entry, text, oi, context, mirror }: { entry: AlgEntry; text: string; oi: number; context: NonNullable<Props['caseContext']>; mirror?: AlgEditorMirror | null }) {
-  const { copied, copy } = useCopy();
-  const [mirrorOpen, setMirrorOpen] = useState(false);
+function RowActions({ entry, text, oi, context }: { entry: AlgEntry; text: string; oi: number; context: NonNullable<Props['caseContext']> }) {
   const { puzzle, set, caseObj } = context;
   const preferred = usePreferredAlgs(state => state.snapshots[`${puzzle}/${set}`]);
   const setPreferred = usePreferredAlgs(state => state.setPreferred);
@@ -120,26 +118,21 @@ function RowActions({ entry, text, oi, context, mirror }: { entry: AlgEntry; tex
   const pinned = preferred?.items[slot] === preferredAlgRef(entry);
   const notation = puzzle === 'sq1' ? sq1NotationText(text, context.sq1NotationMode ?? 'compact', set === 'pbl' && canonicalSq1Alg(text) === canonicalSq1Alg(entry.alg) ? entry.note : undefined) : null;
   const shownText = notation ? tr(notation) : text;
-  const length = displayedAlgorithmStm(puzzle, text);
   return <>
     {entry.note && !(puzzle === 'sq1' && set === 'pbl') && <span className="alg-alg-note">{tr(entry.note)}</span>}
     {notation && <code className="alg-editor-notation">{shownText}</code>}
-    {length != null && <span className="alg-alg-len" title="STM">{length}</span>}
     <button type="button" className="alg-editor-del" aria-pressed={pinned} title={pinned ? tr({ zh: '取消置顶', en: 'Unpin algorithm' }) : tr({ zh: '置顶公式', en: 'Pin algorithm' })}
-      onClick={() => setPreferred(puzzle, set, slot, pinned ? null : preferredAlgRef(entry))}><Pin size={12} fill={pinned ? 'currentColor' : 'none'} /></button>
-    <button type="button" className="alg-editor-del" title={tr({ zh: '复制', en: 'Copy' })} onClick={() => copy(shownText)}>{copied ? <Check size={12} /> : <Copy size={12} />}</button>
-    {hasMirror(puzzle, set) && <MoreToggle type="button" className="alg-editor-del" expanded={mirrorOpen} title={tr({ zh: '镜像公式', en: 'Mirrored algs' })} onClick={() => setMirrorOpen(open => !open)}><FlipHorizontal2 size={12} /></MoreToggle>}
-    {mirrorOpen && <div className="alg-editor-mirror"><AlgMirrorPanel alg={text} puzzle={puzzle} mirrorName={mirror?.partner.name ?? null} selfName={mirror?.selfName ?? caseObj.name} ori={oi} /></div>}
+      onClick={() => setPreferred(puzzle, set, slot, pinned ? null : preferredAlgRef(entry))}><Pin size="1em" fill={pinned ? 'currentColor' : 'none'} /></button>
   </>;
 }
 
-const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '3x3', formatInitialAlg, formatInitialHtml, caseContext, renderOrientation = rows => rows, renderRows, renderBeforeAdd, initialInvalid, oriNames, mirror, mirrorPending, mirrorError, onCurrentAlgChange, onCursorMoveCount, onChange }, ref) => {
+const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '3x3', formatInitialAlg, formatInitialHtml, caseContext, renderOrientation = rows => rows, renderRows, renderBeforeAdd, initialInvalid, oriNames, mirror, mirrorPending, mirrorError, onCurrentAlgChange, onCursorMoveCount, onChange, selectedAlgorithms, onSelectAlgorithm }, ref) => {
   useTranslation(); // subscribe to language changes; text via tr()
   const [layout, setLayout] = useState<Row[][]>(() => {
     const src = initialValue.length === 0
       ? [[{ alg: '' }]]
       : initialValue.map(ori => (ori.length === 0 ? [{ alg: '' }] : ori));
-    return src.map(ori => ori.map(e => ({ ...e, uid: newUid() })));
+    return src.map(ori => ori.map(e => ({ ...(puzzle === '3x3' ? canonicalizeInitialU2(e) : e), uid: newUid() })));
   });
 
   // NOTE: 用 row.uid 作 key,删行不会让别的 row 的 handle 漂移
@@ -147,6 +140,10 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
   const elements = useRef<Map<string, HTMLTextAreaElement | HTMLDivElement>>(new Map());
 
   const [focusedUid, setFocusedUid] = useState<string | null>(null);
+  const [toolsUid, setToolsUid] = useState<string | null>(null);
+  const toolsPanelRef = useRef<HTMLDivElement>(null);
+  const toolsTriggerRef = useRef<HTMLButtonElement>(null);
+  usePopoverDismiss(toolsUid !== null, () => setToolsUid(null), toolsPanelRef, toolsTriggerRef);
   const [keyboardToggleContainer, setKeyboardToggleContainer] = useState<HTMLSpanElement | null>(null);
   /** 校验没过的行:uid → 原因。按 uid 不按下标 —— 删一行下标就全串位了。 */
   const [invalid, setInvalid] = useState<Map<string, string>>(() => {
@@ -179,7 +176,8 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
   const readEntry = (row: Row): AlgEntry => {
     const { uid: _uid, ...original } = row;
     const handle = handles.current.get(row.uid);
-    return handle ? editedAlgEntry(original, formatInitialAlg?.(row.alg) ?? row.alg, initialHtmlOf(row), handle.getText(), handle.getHtml()) : original;
+    const entry = handle ? editedAlgEntry(original, formatInitialAlg?.(row.alg) ?? row.alg, initialHtmlOf(row), handle.getText(), handle.getHtml()) : original;
+    return puzzle === '3x3' ? canonicalizeInitialU2(entry) : entry;
   };
   const keyboardTargetRef = useMemo(
     () => ({ current: focusedUid ? (elements.current.get(focusedUid) ?? null) : null }),
@@ -308,14 +306,61 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
             setLayout(current => current.map((rows, i) => i === oi ? arrayMove(rows, from, to) : rows));
             onChange?.();
           }}><SortableContext items={ori.map(row => row.uid)} strategy={verticalListSortingStrategy}>
-          {((nodes: React.ReactNode[]) => renderRows ? renderRows(nodes.map((node, i) => ({ key: ori[i].uid, node })), ori, oi) : nodes)(ori.map((row, ai) => {
+          {((nodes: React.ReactNode[]) => renderRows ? renderRows(nodes.map((node, i) => ({ key: ori[i].uid, node })), ori, oi) : nodes)(ori.map(row => {
             const isFocused = focusedUid === row.uid;
             const bad = invalid.get(row.uid);
             const initialText = formatInitialAlg?.(row.alg || '') ?? (row.alg || '');
             const currentText = editedText[row.uid] ?? initialText;
             return (
               <SortableAlgRow key={row.uid} id={row.uid} draggable={!!caseContext}>
-              <div className={`alg-editor-row${ai === 0 ? ' has-gen-heading' : ''}${bad ? ' is-invalid' : ''}`}>
+              <AlgFormulaRow tags={row.tags} selected={selectedAlgorithms?.[oi] === row.alg} actions={
+                <div className="alg-editor-tools" role="toolbar" aria-label={tr({ zh: '公式操作', en: 'Algorithm actions' })}
+                  data-tools-open={toolsUid === row.uid} ref={toolsUid === row.uid ? toolsPanelRef : undefined}>
+                <button type="button" className="alg-editor-tools-toggle" aria-label={tr({ zh: '公式操作', en: 'Algorithm actions' })}
+                  ref={toolsUid === row.uid ? toolsTriggerRef : undefined}
+                  aria-expanded={toolsUid === row.uid} onClick={() => setToolsUid(current => current === row.uid ? null : row.uid)}>
+                  <Ellipsis size="1em" />
+                </button>
+                <div className="alg-editor-tools-group" data-site-surface="popover">
+                {isFocused && <span className="alg-input-keyboard-toggle" ref={setKeyboardToggleContainer} />}
+                <CompactSelect
+                  variant="plain"
+                  className="alg-tag-select"
+                  popupClassName="alg-tag-menu"
+                  openOnHover
+                  showArrow={false}
+                  label={row.tags?.length ? <span className="alg-tag-list">{row.tags.map(tag => <AlgTagLabel key={tag} tag={tag} label={algTagLabel(tag)} />)}</span> : <Tags size="1em" />}
+                  ariaLabel={tr({ zh: '公式标签', en: 'Algorithm tags' })}
+                  title={row.tags?.length ? row.tags.map(algTagLabel).join(', ') : tr({ zh: '公式标签', en: 'Algorithm tags' })}
+                  selectedValues={row.tags ?? []}
+                  items={algTagOptions(row.tags).map(tag => ({ value: tag, tooltip: algTagLabel(tag),
+                    label: <AlgTagLabel tag={tag} label={algTagLabel(tag)} showTitle={false} />,
+                  }))}
+                  onChange={tag => {
+                    setLayout(current => current.map(rows => rows.map(item => item.uid === row.uid
+                      ? { ...item, tags: item.tags?.includes(tag) ? item.tags.filter(value => value !== tag) : [...(item.tags ?? []), tag] }
+                      : tag === 'beginner' && item.tags?.includes('beginner')
+                        ? { ...item, tags: item.tags.filter(value => value !== 'beginner') }
+                      : item)));
+                    onChange?.();
+                  }}
+                />
+                {caseContext && <RowActions entry={row} text={currentText} oi={oi} context={caseContext} />}
+                {(ori.length > 1 || currentText.trim()) && (
+                  <button
+                    type="button"
+                    className="alg-editor-del alg-editor-remove"
+                    disabled={mirrorPending || !!mirrorError}
+                    onClick={() => requestRemove(oi, row.uid)}
+                    title={tr({ zh: '删此条', en: 'Remove' })}
+                    tabIndex={-1}
+                  >
+                    <Trash2 size="1em" />
+                  </button>
+                )}
+                </div>
+                </div>
+              } className={`alg-editor-row${bad ? ' is-invalid' : ''}`}>
                 <AlgInput
                   ref={(h: AlgInputHandle | null) => {
                     if (h) {
@@ -333,9 +378,9 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
                   initialText={initialText}
                   initialHtml={initialHtmlOf(row)}
                   placeholder={tr({ zh: "如 R U R' U'", en: "e.g. R U R' U'" })}
-                  className="alg-editor-input"
+                  className="alg-editor-input alg-formula-text"
                   spellCheck={false}
-                  onFocus={() => setFocusedUid(row.uid)}
+                  onFocus={() => { setFocusedUid(row.uid); onSelectAlgorithm?.(oi, row.alg); }}
                   onBlur={e => {
                     const next = e.relatedTarget as HTMLElement | null;
                     if (next && next.closest('.alg-editor')) return;
@@ -365,46 +410,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
                     }
                   }}
                 />
-                <div className="alg-editor-tools" role="toolbar" aria-label={tr({ zh: '公式操作', en: 'Algorithm actions' })}>
-                <div className="alg-editor-tools-group" data-site-surface="popover">
-                {isFocused && <span className="alg-input-keyboard-toggle" ref={setKeyboardToggleContainer} />}
-                <span className="alg-editor-gen">
-                  {ai === 0 && <span className="alg-editor-gen-heading">{tr({ zh: '流', en: 'gen' })}</span>}
-                  <code>{algorithmGenerators(currentText) || '—'}</code>
-                </span>
-                <CompactSelect
-                  variant="plain"
-                  className="alg-tag-select"
-                  openOnHover
-                  showArrow={false}
-                  label={row.tags?.length ? <span className="alg-tag-list">{row.tags.map(tag => <AlgTagLabel key={tag} tag={tag} label={algTagLabel(tag)} />)}</span> : <Tags size={13} />}
-                  ariaLabel={tr({ zh: '公式标签', en: 'Algorithm tags' })}
-                  title={row.tags?.length ? row.tags.map(algTagLabel).join(', ') : tr({ zh: '公式标签', en: 'Algorithm tags' })}
-                  selectedValues={row.tags ?? []}
-                  items={[...new Set([...ALG_TAGS, ...(row.tags ?? [])])].map(tag => ({ value: tag, label: <AlgTagLabel tag={tag} label={algTagLabel(tag)} /> }))}
-                  onChange={tag => {
-                    setLayout(current => current.map(rows => rows.map(item => item.uid === row.uid
-                      ? { ...item, tags: item.tags?.includes(tag) ? item.tags.filter(value => value !== tag) : [...(item.tags ?? []), tag] }
-                      : item)));
-                    onChange?.();
-                  }}
-                />
-                {caseContext && <RowActions entry={row} text={currentText} oi={oi} context={caseContext} mirror={mirror} />}
-                {(ori.length > 1 || currentText.trim()) && (
-                  <button
-                    type="button"
-                    className="alg-editor-del alg-editor-remove"
-                    disabled={mirrorPending || !!mirrorError}
-                    onClick={() => requestRemove(oi, row.uid)}
-                    title={tr({ zh: '删此条', en: 'Remove' })}
-                    tabIndex={-1}
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                )}
-                </div>
-                </div>
-              </div>
+              </AlgFormulaRow>
                 {bad && (
                   <div className="alg-editor-row-error">
                     <AlertTriangle size={12} />
@@ -415,6 +421,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
                   <CubeKeyboardSection
                     target={keyboardTargetRef}
                     toggleContainer={keyboardToggleContainer}
+                    iconOnly
                     enableMarks
                     mobileVisible={isFocused}
                     onActivate={() => handles.current.get(row.uid)?.focus()}

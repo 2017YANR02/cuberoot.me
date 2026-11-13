@@ -64,6 +64,8 @@ interface Props {
   /** 内联详情页中，紧跟公式编辑列表显示的附加内容。 */
   algorithmsAfter?: React.ReactNode;
   f2lLibrary?: readonly AlgCase[];
+  selectedAlgorithms?: Readonly<Record<number, string | null>>;
+  onSelectAlgorithm?: (oi: number, alg: string) => void;
   /** Share the detail page's preview state and geometry while editing. */
   previewSetup?: (oi: number, firstEntry?: AlgEntry) => string;
   previewPlayerProps?: (oi: number) => Partial<ComponentProps<typeof AlgPlayer>>;
@@ -110,7 +112,7 @@ function blankCase(puzzle: string, set: string): AlgCase {
   };
 }
 
-export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid, algorithmsAfter, f2lLibrary, previewSetup: getPreviewSetup, previewPlayerProps, renderOrientationSetup, renderPreviewImage, renderReadOnly, onClose: onClosed, onSaved, children }: Props) {
+export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid, algorithmsAfter, f2lLibrary, selectedAlgorithms, onSelectAlgorithm, previewSetup: getPreviewSetup, previewPlayerProps, renderOrientationSetup, renderPreviewImage, renderReadOnly, onClose: onClosed, onSaved, children }: Props) {
   useTranslation(); // subscribe to language changes; text via tr()
   const active = !children || !renderReadOnly;
   const initial = state.mode === 'edit' ? state.existing : blankCase(puzzle, setSlug);
@@ -574,12 +576,14 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
               ref={algEditorRef}
               puzzle={puzzle}
               initialValue={initial.algs}
+              selectedAlgorithms={selectedAlgorithms}
+              onSelectAlgorithm={onSelectAlgorithm}
               formatInitialAlg={alg => puzzle === 'sq1' ? formatSq1EditorAlg(alg) : displayCaseAlg(puzzle, setSlug, alg)}
               formatInitialHtml={html => displayCaseAlgHtml(puzzle, setSlug, html)}
               caseContext={children ? { puzzle, set: setSlug, caseObj: initial, sq1NotationMode } : undefined}
               renderRows={children && f2lLibrary && !isF2lStandard(initial) ? (rows, entries, oi) => <F2lSolutionGroups
                 cases={f2lLibrary} entries={entries} setup={commonCaseSetup(puzzle, setSlug, initial, oi)} orientation={oi}
-                editing editableRows={rows} onSelect={() => {}}>{null}</F2lSolutionGroups> : undefined}
+                editing editableRows={rows} selectedAlgorithm={selectedAlgorithms?.[oi]} onSelect={() => {}}>{null}</F2lSolutionGroups> : undefined}
               renderBeforeAdd={children ? oi => oi === 0 ? algorithmsAfter : null : undefined}
               renderOrientation={children ? (rows, oi, firstEntry) => {
                 const selected = oriPreviews[oi] ?? initial.algs[oi]?.[0];

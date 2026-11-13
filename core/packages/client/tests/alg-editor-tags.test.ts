@@ -38,6 +38,25 @@ describe('formula tag editor with the shared menu and fixed tags', () => {
   });
   afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.unstubAllGlobals(); });
 
+  it('opens tools explicitly, toggles them closed, and dismisses on Escape or outside press', async () => {
+    await render();
+    const toggle = host.querySelector<HTMLButtonElement>('.alg-editor-tools-toggle')!;
+    const tools = host.querySelector('.alg-editor-tools')!;
+    expect(tools.getAttribute('data-tools-open')).toBe('false');
+    await act(async () => toggle.click());
+    expect(tools.getAttribute('data-tools-open')).toBe('true');
+    await act(async () => toggle.click());
+    expect(tools.getAttribute('data-tools-open')).toBe('false');
+    await act(async () => toggle.click());
+    await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    expect(tools.getAttribute('data-tools-open')).toBe('false');
+    expect(document.activeElement).toBe(toggle);
+    await act(async () => toggle.click());
+    await act(async () => document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })));
+    expect(tools.getAttribute('data-tools-open')).toBe('false');
+    expect(ref.current!.getValue()).toEqual(initial);
+  });
+
   it('uses one menu per row to toggle multiple tags without changing moves, marks, metadata or another orientation', async () => {
     await render();
     expect(host.querySelectorAll('.alg-editor-row .alg-tag-select')).toHaveLength(3);
@@ -50,7 +69,20 @@ describe('formula tag editor with the shared menu and fixed tags', () => {
     expect(document.querySelector('[role="listbox"]')?.getAttribute('aria-multiselectable')).toBe('true');
     expect(document.querySelectorAll('[role="listbox"] button:not([role="option"])')).toHaveLength(0);
     expect(host.querySelector('.alg-tag-manager')).toBeNull();
-    expect([...document.querySelectorAll('[role="option"] .sr-only')].map(el => el.textContent)).toEqual(['Left OH', 'Feet', 'FMC', 'Big cube', 'Keyboard', 'Beginner pick']);
+    expect([...document.querySelectorAll('[role="option"] .sr-only')].map(el => el.textContent)).toEqual(['Mainstream', 'Beginner pick', 'Left OH', 'Feet', 'FMC', 'Big cube', 'Keyboard']);
+    const options = [...document.querySelectorAll('[role="option"]')];
+    expect(options[0].querySelector('.sr-only')?.textContent).toBe('Mainstream');
+    expect(options[0].querySelector('.lucide-flame')?.getAttribute('width')).toBe('1em');
+    expect(options[1].querySelector('.sr-only')?.textContent).toBe('Beginner pick');
+    expect(options.slice(0, 2).map(option => option.textContent)).toEqual(['Mainstream', 'Beginner pick']);
+    expect(options[0].querySelector('[title]')).toBeNull();
+    await act(async () => {
+      const hover = new MouseEvent('pointerover', { bubbles: true });
+      Object.defineProperty(hover, 'pointerType', { value: 'mouse' });
+      options[0].dispatchEvent(hover);
+    });
+    expect(document.querySelector('[role="tooltip"]')?.textContent).toBe('Mainstream');
+    expect(options.some(option => option.textContent?.includes('S style'))).toBe(false);
     expect(document.querySelector('[role="option"][aria-selected="true"]')?.textContent).toContain('Left OH');
     expect(document.querySelector('[role="option"][aria-selected="true"] .lucide-check')).toBeNull();
     await click('Feet');
@@ -62,8 +94,7 @@ describe('formula tag editor with the shared menu and fixed tags', () => {
     await click('Algorithm tags'); await click('Left OH');
     expect(ref.current!.getValue()).toEqual(initial);
     await click('Algorithm tags'); await click('Mainstream');
-    await click('Algorithm tags'); await click('S style');
-    expect(ref.current!.getValue()[0][0]).toEqual({ ...initial[0][0], tags: ['oh', 'mainstream', 's-style'] });
+    expect(ref.current!.getValue()[0][0]).toEqual({ ...initial[0][0], tags: ['oh', 'mainstream'] });
     expect(ref.current!.getValue()[1]).toEqual(initial[1]);
     await act(async () => { window.dispatchEvent(new Event('focus')); });
     expect(fetch).not.toHaveBeenCalled();
@@ -82,6 +113,24 @@ describe('formula tag editor with the shared menu and fixed tags', () => {
     })));
     expect(host.querySelector('code')?.textContent).toBe("F' L F L'");
     expect(preview).toEqual(source);
+  });
+
+  it('allows only one beginner pick across all case orientations and can clear it', async () => {
+    const onChange = vi.fn();
+    await act(async () => root.render(createElement(AlgEditor, { initialValue: initial, ref, onChange })));
+    const pick = async (index: number) => {
+      await act(async () => host.querySelectorAll<HTMLButtonElement>('.alg-tag-select button')[index].click());
+      await click('Beginner pick');
+    };
+    await pick(0);
+    expect(ref.current!.getValue()[0][0].tags).toEqual(['oh', 'beginner']);
+    await pick(2);
+    expect(ref.current!.getValue()[0][0]).toEqual(initial[0][0]);
+    expect(ref.current!.getValue()[1][0].tags).toEqual(['ft', 'beginner']);
+    expect(ref.current!.getValue().flat().filter(entry => entry.tags?.includes('beginner'))).toHaveLength(1);
+    await pick(2);
+    expect(ref.current!.getValue()).toEqual(initial);
+    expect(onChange).toHaveBeenCalledTimes(3);
   });
 
   it('draws the L and R hand marks inside the one-handed icon', async () => {

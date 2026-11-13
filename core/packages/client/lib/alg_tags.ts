@@ -3,10 +3,17 @@
  * 列表(AlgCategoryView)和元数据弹窗(AlgCaseMetaModal)共用 —— 弹窗被列表 import,
  * 常量放列表里会绕成循环依赖,所以落在这。语义见 docs/1lll-migration.md。
  */
-import { ALG_TAGS, type AlgTag } from '@cuberoot/shared/alg';
+import { ALG_TAGS as STORED_ALG_TAGS, type AlgTag } from '@cuberoot/shared/alg';
 import { tr } from '@/i18n/tr';
 
-export { ALG_TAGS };
+/** Menu order is independent of the persisted tag contract. */
+export const ALG_TAGS: readonly AlgTag[] = ['mainstream', 'beginner', ...STORED_ALG_TAGS.filter(
+  tag => tag !== 'mainstream' && tag !== 'beginner' && tag !== 's-style',
+)];
+
+export function algTagOptions(existing: readonly AlgTag[] = []): AlgTag[] {
+  return [...new Set([...ALG_TAGS, ...existing])].filter(tag => tag !== 's-style');
+}
 
 export const OH_TAG_LABEL = {
   left: () => tr({ zh: '左单', en: 'Left OH' }),
@@ -19,7 +26,7 @@ export const ALG_TAG_LABEL: Record<AlgTag, () => string> = {
   fmc: () => tr({ zh: '最少步', en: 'FMC' }),
   big: () => tr({ zh: '高阶', en: 'Big cube' }),
   key: () => tr({ zh: '键盘', en: 'Keyboard' }),
-  beginner: () => tr({ zh: '新手首选', en: 'Beginner pick' }),
+  beginner: () => tr({ zh: '入门', en: 'Beginner pick' }),
   mainstream: () => tr({ zh: '主流', en: 'Mainstream' }),
   's-style': () => tr({ zh: 'S 流', en: 'S style' }),
 };

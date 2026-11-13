@@ -917,10 +917,6 @@
 .alg-alg-text.is-karnaukh {
   white-space: pre-line;
 }
-.alg-case-detail-ori-algs .alg-alg-row {
-  justify-content: flex-start;
-  column-gap: 12px;
-}
 .alg-case-detail-ori-algs .alg-alg-text {
   flex: 0 1 auto;
   min-width: 0;
@@ -935,22 +931,26 @@
   white-space: pre-line;
 }
 .alg-alg-text u,
+.alg-mirror-alg u,
 .alg-meta-algline-code u {
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
 }
 .alg-alg-text strong,
+.alg-mirror-alg strong,
 .alg-meta-algline-code strong,
 .alg-editor-input strong {
   font-weight: inherit;
 }
 .alg-alg-text u.wavy,
+.alg-mirror-alg u.wavy,
 .alg-meta-algline-code u.wavy {
   text-decoration: underline wavy;
   text-decoration-thickness: 1px;
 }
 .alg-alg-text s,
+.alg-mirror-alg s,
 .alg-meta-algline-code s {
   text-decoration: line-through;
   text-decoration-thickness: 2px;
@@ -1039,7 +1039,6 @@
 }
 .alg-case-inline-editor .alg-editor-input:hover { border-color: var(--border-default); }
 .alg-case-inline-editor .alg-editor-input:focus { border-color: var(--accent); }
-.alg-case-inline-editor .alg-editor-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; }
 .alg-case-inline-editor .alg-editor-tools { max-width: 250px; }
 .alg-case-inline-editor .alg-alg-sortable { display: block; padding-left: 18px; margin-bottom: 6px; }
 /* Align with the input's first text line (1px border + 6px padding), even when it wraps. */
@@ -1062,7 +1061,6 @@
 .f2l-solution-composed { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .f2l-solution-play { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px 0; border: 0; background: none; color: inherit; font: inherit; font-size: 0.85rem; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
 .f2l-solution-play svg { flex-shrink: 0; }
-.f2l-solution-play[aria-pressed="true"] { color: var(--accent); }
 .alg-editor-mirror { flex-basis: 100%; min-width: 0; }
 .alg-editor-notation { flex-basis: 100%; overflow-wrap: anywhere; }
 .alg-validation-name:is(button, a) { display: flex; flex: 1; align-items: center; gap: 6px; color: inherit; font: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: start; }
@@ -1255,7 +1253,10 @@
   background: transparent;
 }
 .alg-alg-row.is-expanded .alg-alg-text,
-.alg-meta-algline.is-expanded .alg-meta-algline-code {
+.alg-meta-algline.is-expanded .alg-meta-algline-code,
+.f2l-solution-play[aria-pressed="true"],
+.f2l-prefix-spacer.is-selected,
+.f2l-edit-group-prefix.is-selected > span {
   font-weight: 700;
 }
 .alg-alg-copy-btn {
@@ -1778,6 +1779,20 @@ a.alg-community-author:hover {
   min-width: 0;
   line-height: 1.45;
 }
+.alg-meta-facts.alg-information {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  width: fit-content;
+  max-width: 100%;
+  gap: 4px 12px;
+}
+.alg-information .alg-meta-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: baseline;
+  column-gap: inherit;
+}
 .alg-meta-type-help {
   display: inline-flex;
   color: inherit;
@@ -2206,6 +2221,12 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   --alg-case-detail-formula-size: 1.125rem;
   --alg-case-detail-formula-indent: 32px;
 }
+.alg-case-detail-ori-algs .alg-case-icon {
+  width: var(--alg-ui-size);
+  height: var(--alg-ui-size);
+  align-self: center;
+  margin-top: 0;
+}
 .is-f2l-orientation-grid .alg-case-detail-ori-algs { --alg-case-detail-formula-indent: 0px; }
 .alg-meta-case-algs.alg-case-detail-ori-algs {
   --alg-case-detail-formula-indent: 0px;
@@ -2233,9 +2254,6 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 }
 .is-f2l-orientation-grid .alg-case-detail-ori-algs > .alg-case-standard .alg-case-icon { grid-area: 1 / 1; }
 .is-f2l-orientation-grid .alg-case-detail-ori-algs > .alg-case-standard code { grid-area: 1 / 2; }
-.alg-case-detail-ori-algs > .alg-alg-row {
-  padding-inline-start: var(--alg-case-detail-formula-indent);
-}
 .alg-case-detail-ori-algs > .alg-community {
   padding-inline: 0;
 }
@@ -2244,12 +2262,8 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   min-height: 32px;
   justify-content: center;
 }
-.alg-case-inline-editor .alg-case-detail-ori-algs .alg-alg-sortable {
-  padding-inline-start: var(--alg-case-detail-formula-indent);
-}
-.alg-case-inline-editor .alg-case-detail-ori-algs .alg-editor-input {
-  padding-inline: 0;
-}
+.alg-case-inline-editor .alg-case-detail-ori-algs .alg-alg-sortable { padding: 0; margin: 0; }
+.alg-case-inline-editor .alg-case-detail-ori-algs > .alg-editor-add { margin-top: 8px; min-height: 32px; }
 .alg-case-detail-ori-algs > .alg-case-standard,
 .alg-case-detail-ori-algs > .alg-admin-setup-label {
   margin: 0 0 10px;
@@ -2258,6 +2272,7 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 .alg-case-detail-ori-algs .alg-alg-row,
 .alg-case-detail-ori-algs .f2l-solution-prefix,
 .alg-case-detail-ori-algs .f2l-edit-group-prefix,
+.alg-case-detail-ori-algs .f2l-prefix-spacer,
 .alg-case-detail-ori-algs .f2l-solution-play,
 .alg-case-detail-ori-algs .f2l-solution-select,
 .alg-case-detail-ori-algs .alg-editor-input {
@@ -2769,10 +2784,10 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 .alg-mirror-toggle:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); color: var(--foreground); }
 .alg-mirror-toggle.is-on { color: var(--accent); }
 
-/* 变换、目标情况、公式三列对齐，便于逐行对照。 */
+/* 变换类型、公式两列对齐。 */
 .alg-mirror-panel {
   display: grid;
-  grid-template-columns: max-content max-content minmax(0, max-content);
+  grid-template-columns: max-content minmax(0, max-content);
   justify-content: start;
   align-items: baseline;
   column-gap: 8px;
@@ -2783,7 +2798,7 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   border-left: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
   font-size: 12px;
 }
-/* 每行的三个子元素共用网格列。 */
+/* 每行的两个子元素共用网格列。 */
 .alg-mirror-line { display: contents; }
 a.alg-mirror-line { text-decoration: none; }
 a.alg-mirror-line:hover > *,
@@ -2793,12 +2808,6 @@ a.alg-mirror-line:focus-visible > * { text-decoration: underline; }
   /* CJK 单行标签禁定宽 px —— 微信内置浏览器字体偏宽会折行 */
   white-space: nowrap;
   color: var(--muted-foreground);
-}
-.alg-mirror-where {
-  flex: none;
-  white-space: nowrap;
-  font-size: 11px;
-  color: var(--faint-foreground);
 }
 .alg-mirror-alg {
   font-family: var(--font-mono), Consolas, monospace;
@@ -2812,17 +2821,16 @@ a.alg-mirror-line:focus-visible > * { text-decoration: underline; }
   .alg-mirror-panel { display: flex; flex-direction: column; gap: 6px; }
   .alg-mirror-line {
     display: grid;
-    grid-template-columns: minmax(0, max-content) max-content;
+    grid-template-columns: minmax(0, max-content);
     grid-template-areas:
-      'label where'
-      'alg   alg';
+      'label'
+      'alg';
     justify-content: start;
     column-gap: 8px;
     row-gap: 2px;
     align-items: baseline;
   }
   .alg-mirror-label { grid-area: label; }
-  .alg-mirror-where { grid-area: where; }
   .alg-mirror-alg { grid-area: alg; }
 }
 
@@ -2850,94 +2858,12 @@ a.alg-mirror-line:focus-visible > * { text-decoration: underline; }
 .alg-editor-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; }
 .alg-editor-tools-group { display: contents; }
 
-/* Keep the collapsed ellipsis independent of the controls' intrinsic size.
-   Hover reveals the action group toward the input without squeezing its items. */
-@media (hover: hover) and (pointer: fine) {
-  .alg-case-inline-editor .alg-editor-tools {
-    position: relative;
-    width: 40px;
-    height: 40px;
-    max-width: none;
-    justify-self: end;
-    overflow: visible;
-    z-index: 2;
-  }
-  .alg-case-inline-editor .alg-editor-tools-group {
-    position: absolute;
-    inset-block-start: 0;
-    inset-inline-end: 0;
-    display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 4px;
-    box-sizing: border-box;
-    width: max-content;
-    max-width: 40px;
-    height: 40px;
-    min-height: 40px;
-    padding: 3px;
-    overflow: hidden;
-    border: 0;
-    border-radius: 22px;
-    transition: max-width 420ms cubic-bezier(.22, 1, .36, 1);
-  }
-  .alg-case-inline-editor .alg-editor-tools-group::before {
-    content: '…';
-    pointer-events: none;
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    color: var(--muted-foreground);
-    line-height: 1;
-    transition: opacity 140ms ease;
-  }
-  .alg-case-inline-editor .alg-editor-tools-group > * {
-    flex-shrink: 0;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateX(8px);
-    transition: opacity 140ms ease, transform 300ms cubic-bezier(.22, 1, .36, 1);
-  }
-  .alg-case-inline-editor .alg-editor-tools:is(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group {
-    max-width: min(320px, calc(100vw - 32px));
-    height: auto;
-  }
-  /* The expanded actions cross the row's drag handle; keep it from painting
-     or intercepting clicks over the toolbar until the actions collapse. */
-  .alg-case-inline-editor .alg-alg-sortable:has(.alg-editor-tools:is(:hover, :focus-within, :has([aria-expanded='true']))) > .alg-alg-drag-handle {
-    opacity: 0;
-    pointer-events: none;
-  }
-  .alg-case-inline-editor .alg-editor-tools:not(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group {
-    background: transparent;
-    box-shadow: none;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-  .alg-case-inline-editor .alg-editor-tools:is(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group::before {
-    opacity: 0;
-  }
-  .alg-case-inline-editor .alg-editor-tools:is(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group > * {
-    opacity: 1;
-    pointer-events: auto;
-    transform: none;
-    transition: opacity 220ms ease 100ms, transform 420ms cubic-bezier(.22, 1, .36, 1);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .alg-case-inline-editor .alg-editor-tools-group,
-    .alg-case-inline-editor .alg-editor-tools-group::before,
-    .alg-case-inline-editor .alg-editor-tools-group > * { transition: none; }
-  }
-}
-.alg-editor-row.has-gen-heading { margin-top: 18px; }
-.alg-editor-gen { position: relative; display: inline-flex; align-items: center; min-width: 6ch; min-height: 32px; white-space: nowrap; font-size: 11px; }
-.alg-editor-gen-heading { position: absolute; inset-inline-start: 0; bottom: calc(100% + 2px); font-family: var(--font-sans, inherit); white-space: nowrap; }
-.alg-editor-gen code { font: inherit; }
 .alg-editor-tools .alg-editor-del { border-color: transparent; min-width: 28px; min-height: 32px; justify-content: center; }
 .alg-editor-tools .alg-editor-del:hover { color: var(--foreground); background: var(--muted); }
 .alg-editor-tools .alg-editor-remove:hover { color: var(--destructive); }
-.alg-editor-tools .alg-alg-len { margin: 0 4px; }
+.alg-editor-tools .alg-alg-len { margin: 0 4px; display: inline-flex; align-items: center; line-height: 1; }
+.alg-editor-tools .alg-tag-select { align-self: center; }
+.alg-editor-tools .alg-tag-select .compact-select-current { display: inline-flex; align-items: center; line-height: 1; }
 .alg-editor-tools .alg-tag-select .compact-select-trigger { min-height: 32px; padding: 4px 6px; }
 .alg-admin-setup-input-row { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .alg-admin-setup-input-row .alg-admin-setup-textarea { flex: 1; min-width: 0; }
@@ -2946,7 +2872,6 @@ a.alg-mirror-line:focus-visible > * { text-decoration: underline; }
 .alg-input-keyboard-toggle .vkb-toggle { margin: 0; min-height: 32px; }
 .alg-editor .alg-tag-select, .alg-editor .alg-tag-select .compact-select-trigger { width: fit-content; max-width: 100%; }
 @media (max-width: 600px) {
-  .alg-case-inline-editor .alg-editor-row { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   .alg-case-inline-editor .alg-editor-tools { max-width: 100%; }
   .alg-case-inline-editor .alg-alg-sortable { margin-bottom: 14px; }
   .alg-editor-tools .alg-editor-del,
@@ -2954,44 +2879,17 @@ a.alg-mirror-line:focus-visible > * { text-decoration: underline; }
   .alg-editor-add { min-height: 40px; min-width: 40px; justify-content: center; }
 }
 
-.f2l-edit-groups { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 8px; min-width: 0; }
-.f2l-edit-group-prefix { grid-column: 1; position: relative; display: flex; align-items: center; padding-inline-end: 20px; font-size: .85rem; }
+.f2l-edit-groups { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: 4px; min-width: 0; }
+.f2l-edit-group-prefix { grid-column: 1; justify-self: start; position: relative; display: flex; align-items: center; padding-inline-end: 20px; font-size: .85rem; pointer-events: none; }
 /* The SVG follows the rows' height; its intrinsic aspect ratio must not stretch them. */
 .f2l-edit-group-prefix .f2l-solution-brace { position: absolute; inset-block: 0; inset-inline-end: 0; height: 100%; min-height: 0; }
 .f2l-edit-source-row { min-width: 0; --alg-case-detail-formula-indent: 0px; }
+.f2l-edit-source-row[data-grouped='true'] { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 8px; }
+.f2l-prefix-spacer { visibility: hidden; padding-inline-end: 20px; font-size: .85rem; }
 /* Put the drag handle beside the actions, not between the brace and notation. */
 .alg-case-inline-editor.is-f2l-orientation-grid .alg-alg-drag-handle { left: auto; right: 44px; }
-.alg-case-inline-editor.is-f2l-orientation-grid .alg-editor-row,
-.f2l-edit-groups .f2l-edit-source-row :is(.alg-editor-row, .f2l-read-row) { column-gap: 24px; }
-.f2l-read-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 40px;
-  gap: 8px;
-  padding-inline-start: var(--alg-case-detail-formula-indent, 32px);
-  margin-bottom: 6px;
-  min-height: 40px;
-}
-.f2l-read-row .f2l-solution-play {
-  box-sizing: border-box;
-  padding: 6px 0;
-  border: 1px solid transparent;
-  min-height: 40px;
-}
-.f2l-edit-source-row[data-grouped='true'] .f2l-read-row,
-.alg-case-inline-editor .f2l-edit-source-row[data-grouped='true'] .alg-alg-sortable { margin-bottom: 0; }
-.f2l-edit-source-row[data-grouped='true'] :is(.f2l-read-row, .f2l-solution-play),
-.alg-case-inline-editor .f2l-edit-source-row[data-grouped='true'] .alg-editor-input {
-  min-height: 0;
-  padding-block: 0;
-}
-@media (hover: hover) and (pointer: fine) {
-  .alg-case-inline-editor .f2l-edit-source-row[data-grouped='true'] .alg-editor-tools {
-    height: calc(var(--alg-case-detail-formula-size, 18px) * 1.5 + 2px);
-  }
-  .alg-case-inline-editor .f2l-edit-source-row[data-grouped='true'] .alg-editor-tools-group { inset-block-start: -5px; }
-}
-.f2l-edit-groups .alg-editor-row.has-gen-heading { margin-top: 0; }
 .alg-case-inline-editor.is-f2l-orientation-grid .alg-editor-ori { margin-top: 0; gap: 0; }
+.alg-case-inline-editor.is-f2l-orientation-grid .alg-editor-ori-name { display: none; }
 .is-f2l-orientation-grid .alg-case-detail-head { min-height: 40px; }
 @media (max-width: 900px) {
   .is-f2l-orientation-grid { --f2l-playback-width: 260px; }

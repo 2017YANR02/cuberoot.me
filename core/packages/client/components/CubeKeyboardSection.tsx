@@ -10,6 +10,7 @@ import { Keyboard } from '@app-foundation/icons/lucide';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import CubeVirtualKeyboard from './CubeVirtualKeyboard';
 import { tr } from '@/i18n/tr';
+import { Tooltip } from './Tooltip';
 
 interface Props {
   target: RefObject<HTMLTextAreaElement | HTMLDivElement | null>;
@@ -23,9 +24,11 @@ interface Props {
   mobileCollapsible?: boolean;
   /** 将开关放到输入框工具栏，键盘仍在原位置展开。 */
   toggleContainer?: HTMLElement | null;
+  /** Compact toolbar entry; keeps the same keyboard state and behavior. */
+  iconOnly?: boolean;
 }
 
-export default function CubeKeyboardSection({ target, onInput, enableMarks, onActivate, mobileVisible = true, mobileCollapsible = false, toggleContainer }: Props) {
+export default function CubeKeyboardSection({ target, onInput, enableMarks, onActivate, mobileVisible = true, mobileCollapsible = false, toggleContainer, iconOnly = false }: Props) {
   const isMobile = useIsMobile();
   const [showKeyboard, setShowKeyboard] = useState(false);
 
@@ -35,19 +38,26 @@ export default function CubeKeyboardSection({ target, onInput, enableMarks, onAc
   const labelOff = tr({ zh: '显示虚拟键盘', en: 'Show keyboard'
 });
 
+  const toggleProps = {
+    className: `vkb-toggle${showKeyboard ? ' active' : ''}${showKeyboard && !toggleContainer ? ' vkb-toggle--inline' : ''}`,
+    onClick: () => {
+      if (!showKeyboard) onActivate?.();
+      setShowKeyboard(s => !s);
+    },
+    'aria-label': showKeyboard ? labelOn : labelOff,
+  };
   const toggleBtn = !isMobile || mobileCollapsible ? (
-    <MoreToggle expanded={showKeyboard}
-      type="button"
-      className={`vkb-toggle${showKeyboard ? ' active' : ''}${showKeyboard && !toggleContainer ? ' vkb-toggle--inline' : ''}`}
-      onClick={() => {
-        if (!showKeyboard) onActivate?.();
-        setShowKeyboard(s => !s);
-      }}
-      aria-label={showKeyboard ? labelOn : labelOff}
-      title={showKeyboard ? labelOn : labelOff}
-    >
-      <Keyboard size={14} />
-    </MoreToggle>
+    <Tooltip content={toggleProps['aria-label']}>{tip => iconOnly ? (
+      <button {...tip} {...toggleProps} type="button" aria-expanded={showKeyboard}
+        onClick={event => { tip.onClick?.(event); toggleProps.onClick(); }}>
+        <Keyboard size="1em" />
+      </button>
+    ) : (
+      <MoreToggle {...tip} {...toggleProps} expanded={showKeyboard} type="button" onToggle={undefined}
+        onClick={event => { tip.onClick?.(event); toggleProps.onClick(); }}>
+        <Keyboard size={14} />
+      </MoreToggle>
+    )}</Tooltip>
   ) : null;
 
   return (

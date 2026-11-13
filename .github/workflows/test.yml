@@ -809,6 +809,16 @@ jobs:
         run: |
           pnpm --filter @cuberoot/client exec vitest run tests/cross_trainer_reach.test.ts
 
+      - name: Install Chromium for formula layout regression
+        if: ${{ matrix.shard == 1 }}
+        working-directory: core
+        run: pnpm --filter @cuberoot/client exec playwright install --with-deps chromium
+
+      - name: Check formula read/edit geometry in Chromium
+        if: ${{ matrix.shard == 1 }}
+        working-directory: core
+        run: pnpm --filter @cuberoot/client test:alg-layout
+
   # Installed App 共用 React 产品层；这里锁住共享层、Harmony Web bundle 与
   # Capacitor/Gradle 链。Tauri 的双桌面 native backend 由独立矩阵编译。
   mobile:

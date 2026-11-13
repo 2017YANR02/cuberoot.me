@@ -51,6 +51,7 @@
 - 浏览器基线跟随当前 Next 官方支持范围，禁为旧 WebView/开发者工具下调 `browserslist`；旧内核走全站启动失败提示，顶层 `ssr:false` 加载态用 `ClientLoadStatus`。CI:`browser-support-policy.test.ts` + `timer-bootstrap.test.ts`。
 - 项目菜单统一用 `components/PuzzlePicker`;WCA 筛选用默认菜单式 `WcaEventSelector`/`WcaEventMultiSelector`，师生编辑和双人计时浮层显式 `presentation="inline"`；比赛列表保留项目表头；禁页面自写项目菜单。hook + CI 守卫:`component-reuse-guard`。
 - `/alg` case 详情统一走 `AlgCaseView`:静态主图用 `CaseThumb`,动画用 `AlgPlayer`;多朝向不得省略主图或另造结构,桌面一行一朝向且动画左公式右。
+- 公式详情的普通行、编辑行和 F2L 入槽行统一复用 `AlgFormulaRow` / `AlgFormulaReadRow`；图标、文字、工具区的尺寸只在 `components/alg-formula-row.css` 定义，不按编辑模式另写补偿间距。标签图标、操作栏图标及标签菜单文字统一使用该文件唯一的 `--alg-ui-size`；Portal 菜单也接入同一声明，组件图标用 `1em`，不再写独立像素尺寸。展示标签的位置与去重完全由共享行负责，详情页和 F2L 分组只传 `tags`，不得自行追加标签；`alg-row-tags.test.ts` 同时检查渲染结果与调用方边界。工具展开与输入焦点不得改变行尺寸，切换模式须保留选中状态。涉及这些组件或公式布局 CSS 时，在 `core/` 运行 `pnpm --filter @cuberoot/client test:alg-layout`：使用实际组件及 CSS，在 Chromium 检查宽窄屏、触屏、分组、长公式和加粗状态的坐标；不启动 Next、不访问数据库。该检查已接入 client CI；本地默认使用已安装的 Chrome，CI 使用 Playwright Chromium。
 - **魔方静态图的本地绘制（2026-10-16）**：`/alg`、`/recon`、`/timer` 的应用内状态图优先复用现有 `CaseThumb` / `VisualCube` / 计时器共享绘图器，不依赖 `/v1/visualcube.svg` 的网络往返。当前题、上一个、弹窗等少量图使用 `local`；长列表、选择网格和旧成绩必须使用 `local` + `loading="lazy"`，由 `VisualCube` 复用 `LazyVisible`，在接近视口后才生成 SVG，并预留准确宽高。禁止为了本地化一次同步生成全库，也禁止把旧记录悄悄切回网络图；新增同类页面沿用此契约。动画继续用既有播放器，视频封面、静态资源与对外可分享的 SVG URL 不属本地绘图替换范围。回归见 `tests/visualcube-lazy-local.test.ts`；相关技能见 `.agents/skills/visualcube/SKILL.md`。
 - 全局固定按钮对齐内容右沿:`right: max(16px, calc((100vw - <content-max-width>) / 2))`。
 - chip/tab/下拉项不显示数量计数。

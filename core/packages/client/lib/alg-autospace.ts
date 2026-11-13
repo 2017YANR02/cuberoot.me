@@ -94,15 +94,37 @@ export function cleanAlgText(value: string, cursor: number): { value: string; cu
 
 /** contenteditable 版:逐个文本节点洗,注释状态跨节点接力。 */
 export function cleanAlgTextCE(root: HTMLElement): void {
+  const selection = window.getSelection();
+  const anchor = selection?.anchorNode;
+  const focus = selection?.focusNode;
+  let anchorOffset = selection?.anchorOffset ?? 0;
+  let focusOffset = selection?.focusOffset ?? 0;
+  let restoreSelection = false;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   let n: Node | null;
   let inCmt = false;
   while ((n = walker.nextNode())) {
     const t = n as Text;
     const r = cleanStr(t.data, inCmt);
-    inCmt = r.inCmt;
     const cleaned = r.out;
-    if (cleaned !== t.data) t.data = cleaned;
+    if (cleaned !== t.data) {
+      // Assigning Text.data resets native selection offsets to zero. Map both
+      // endpoints through the same cleanup before changing the node, retaining
+      // rich-text boundaries and selection direction.
+      if (t === anchor) {
+        anchorOffset = cleanStr(t.data.slice(0, anchorOffset), inCmt).out.length;
+        restoreSelection = true;
+      }
+      if (t === focus) {
+        focusOffset = cleanStr(t.data.slice(0, focusOffset), inCmt).out.length;
+        restoreSelection = true;
+      }
+      t.data = cleaned;
+    }
+    inCmt = r.inCmt;
+  }
+  if (restoreSelection && selection && anchor && focus) {
+    selection.setBaseAndExtent(anchor, anchorOffset, focus, focusOffset);
   }
 }
 

@@ -5,6 +5,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type HTMLAttributes,
   type ReactNode,
   type RefObject,
 } from 'react';
@@ -12,10 +13,13 @@ import { createPortal } from 'react-dom';
 
 import { usePopoverDismiss } from './usePopoverDismiss';
 import { POPOVER_GAP as PANEL_GAP, usePopoverPosition } from './usePopoverPosition';
+import { Tooltip } from './Tooltip';
 
 export interface CompactSelectItem<T extends string | number> {
   value: T;
   label: ReactNode;
+  /** Hover/focus name for icon-only options. */
+  tooltip?: string;
   disabled?: boolean;
 }
 
@@ -237,10 +241,12 @@ export function CompactSelect<T extends string | number>({
           {panelContent ?? <div className="compact-select-options">
             {items.map(item => {
               const active = selectedValues ? selectedValues.includes(item.value) : item.value === value;
-              return (
+              const option = (tip: HTMLAttributes<HTMLElement> = {}) => (
                 <button
+                  {...tip}
                   type="button"
                   role="option"
+                  aria-label={item.tooltip}
                   aria-selected={active}
                   key={item.value}
                   className={`compact-select-option${active ? ' active' : ''}`}
@@ -248,11 +254,12 @@ export function CompactSelect<T extends string | number>({
                   onPointerDown={keepEditorFocus}
                   onMouseDown={keepEditorFocus}
                   onPointerEnter={event => {
+                    tip.onPointerEnter?.(event);
                     if (!item.disabled && event.pointerType === 'mouse') onPreview?.(item.value);
                   }}
-                  onPointerLeave={() => onPreview?.(null)}
-                  onFocus={() => { if (!item.disabled) onPreview?.(item.value); }}
-                  onBlur={() => onPreview?.(null)}
+                  onPointerLeave={event => { tip.onPointerLeave?.(event); onPreview?.(null); }}
+                  onFocus={event => { tip.onFocus?.(event); if (!item.disabled) onPreview?.(item.value); }}
+                  onBlur={event => { tip.onBlur?.(event); onPreview?.(null); }}
                   onClick={() => {
                     if (item.disabled) return;
                     onChange(item.value);
@@ -262,6 +269,9 @@ export function CompactSelect<T extends string | number>({
                   {item.label}
                 </button>
               );
+              return item.tooltip
+                ? <Tooltip key={item.value} content={item.tooltip} disabled={item.disabled}>{option}</Tooltip>
+                : option();
             })}
           </div>}
           {footer?.(close)}
