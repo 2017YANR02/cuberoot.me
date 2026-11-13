@@ -34,6 +34,8 @@ describe('First Face / First Layer 全链路登记', () => {
     expect(readScrambleJob('src/variants.ts'))
       .toContain("stages: ['first_face', 'first_layer']");
     expect(readScrambleJob('src/build_comp_steps.ts'))
+      .toContain("import { COMP_STEP_TARGETS as TARGETS } from './comp_step_targets.js'");
+    expect(readScrambleJob('src/comp_step_targets.ts'))
       .toContain("{ csv: 'first_layer.csv', stages: 2, outDir: 'comp_steps_first_layer' }");
     expect(readScrambleJob('src/build_recent_scrambles.ts'))
       .toContain("metrics: ['first_face', 'first_layer']");
