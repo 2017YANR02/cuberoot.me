@@ -14,10 +14,16 @@
 // solver/NONWCA_PUZZLE_LOOP.md §1/§2); and drop it from NONWCA_TS_PLANNED.
 // guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
-import { NONWCA_TS, NONWCA_TS_PLANNED } from '@/app/[lang]/dev/solvers/_fleet';
+import { NONWCA_TS, NATIVE_TS, NONWCA_TS_PLANNED } from '@/app/[lang]/dev/solvers/_fleet';
 import { CSTIMER_SOLVABLE_IDS } from '@/lib/cstimer-scramble';
+import { NATIVE_SOLVER_IDS } from '@/lib/solver-routes';
 
 describe('/dev/solvers fleet stays in sync with the pure-TS non-WCA solvers', () => {
+  it('lists native solvers separately without conflating csTimer notation', () => {
+    expect(NATIVE_TS.map(solver => solver.event).sort()).toEqual([...NATIVE_SOLVER_IDS].sort());
+    expect(NATIVE_TS.filter(solver => CSTIMER_SOLVABLE_IDS.has(solver.event))).toEqual([]);
+    expect(new Set([...NONWCA_TS, ...NATIVE_TS].map(solver => solver.event)).size).toBe(NONWCA_TS.length + NATIVE_TS.length);
+  });
   it('found a meaningful number of solvable non-WCA puzzles', () => {
     expect(CSTIMER_SOLVABLE_IDS.size).toBeGreaterThanOrEqual(18);
   });

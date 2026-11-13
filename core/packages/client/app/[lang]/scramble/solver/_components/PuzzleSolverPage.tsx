@@ -14,7 +14,7 @@
 // in its own file — only the render skeleton and the solve-state hook are
 // shared (hooks/useSingleLineSolve.ts).
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, type ReactNode } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -51,6 +51,8 @@ export interface SolverSpec<R extends SolverResultBase> {
 
   metricLabel: (result: R) => TrText;
   badge?: (result: R) => TrText | null;
+  /** Optional solution playback; the default family still renders its text box. */
+  renderSolution?: (result: R, scramble: string) => ReactNode;
 
   caveatTitle: TrText;
   caveatBody: TrText;
@@ -183,7 +185,9 @@ export default function PuzzleSolverPage<R extends SolverResultBase>({ spec }: {
                         <span className="ivy-metric-god">{tr(spec.badge(state.result)!)}</span>
                       )}
                     </div>
-                    <div className="ivy-solbox">{state.result.solution}</div>
+                    {spec.renderSolution
+                      ? spec.renderSolution(state.result, trimmed)
+                      : <div className="ivy-solbox">{state.result.solution}</div>}
                   </>
                 )}
               </div>

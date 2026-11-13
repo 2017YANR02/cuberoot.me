@@ -55,6 +55,7 @@ export const TWISTY_PUZZLE: Partial<Record<AlgPlayerPuzzle, string>> = {
   'skewb': 'skewb',
   'fto': 'fto',
   'clock': 'clock',
+  'baby_fto': 'baby_fto',
 };
 
 /** 归一化搬去了 `lib/alg_normalize.ts`(校验器要用同一份)。这里转出去,老 import 不用改。 */
@@ -66,6 +67,8 @@ export { pickStickering };
 interface Props {
   alg: string;
   puzzle: AlgPlayerPuzzle;
+  /** Named cubing puzzles can use the same playback controls without WebGL. */
+  visualization?: '3D' | '2D';
   /** Override the rendered NxN order while retaining the selected notation grammar. */
   puzzleOrder?: number;
   set: string;
@@ -222,7 +225,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
   return <TwistyAlgPlayer {...props} moveDurationMs={moveDurationMs} ref={ref} />;
 });
 
-const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPlayer({ alg, puzzle, set, setup, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', moveDurationMs, size = 260, fillPane = false }, ref) {
+const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPlayer({ alg, puzzle, set, setup, visualization, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', moveDurationMs, size = 260, fillPane = false }, ref) {
   const hostRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
@@ -236,8 +239,8 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
     const abort = new AbortController();
     let mount: MountedTwistyPlayer | undefined;
     let replayTimer: ReturnType<typeof setInterval> | null = null;
-    const normalized = puzzle === 'clock' || puzzle === 'ivy' ? alg : normalizeAlgForTwisty(puzzle, alg);
-    const stickering = puzzle === 'clock' || puzzle === 'ivy' ? undefined : pickStickering(puzzle, set);
+    const normalized = puzzle === 'clock' || puzzle === 'ivy' || puzzle === 'baby_fto' ? alg : normalizeAlgForTwisty(puzzle, alg);
+    const stickering = puzzle === 'clock' || puzzle === 'ivy' || puzzle === 'baby_fto' ? undefined : pickStickering(puzzle, set);
     const twistyPuzzle = TWISTY_PUZZLE[puzzle];
     if (!twistyPuzzle) return;
     const setupForTwisty = resolvePlayerSetup(puzzle, alg, setup, startSolved);
@@ -258,6 +261,7 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
           hintFacelets: 'none',
           backView: 'none',
         };
+        if (visualization) opts.visualization = visualization;
         if (stickering) opts.experimentalStickering = stickering;
         mount = await mountTwistyPlayer(host, opts, { signal: abort.signal, size: fillPane ? undefined : size });
         if (cancelled) { mount.dispose(); return; }
@@ -288,7 +292,7 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
       mount?.dispose();
       if (playerRef.current === player) playerRef.current = null;
     };
-  }, [alg, puzzle, set, setup, startSolved, autoPlay, loop, controlMode, moveDurationMs, size, fillPane]);
+  }, [alg, puzzle, set, setup, visualization, startSolved, autoPlay, loop, controlMode, moveDurationMs, size, fillPane]);
 
   const handledPlayRequestRef = useRef(playRequest);
   useEffect(() => {

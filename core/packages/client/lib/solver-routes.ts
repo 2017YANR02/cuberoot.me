@@ -33,10 +33,14 @@ export const EVENT_ID = {
   bic: 'bic',
   sia123: 'sia123',
   sia222: 'sia222',
+  baby_fto: 'baby_fto',
 } as const;
 export type SolvePuzzle = keyof typeof EVENT_ID;
+/** Online solvers backed by native/cubing models, outside the csTimer fleet. */
+export const NATIVE_SOLVER_IDS = ['baby_fto'] as const satisfies readonly SolvePuzzle[];
 // 求解中心项目行 = 一个 PuzzlePicker 下拉:WCA 组 + 非 WCA 家族组(数据驱动:lib/cstimer-scramble
 // 标 solvable 的 puzzle 自动出现在对应家族),后续 puzzle 免改本组件。
 export const PUZZLE_BY_EVENT: Record<string, SolvePuzzle> = {
+  baby_fto: 'baby_fto',
   '333': '3x3', '222': '2x2x2', pyram: 'pyraminx', skewb: 'skewb', sq1: 'sq1', sq2: 'sq2', ssq1: 'ssq1', bsq: 'bsq', clock: 'clock', ivy: 'ivy', '133': '133', '223': '223', '233': '233', '334': '334', '335': '335', '336': '336', '337': '337', '8p': '8p', '15p': '15p', sfl: 'sfl', ufo: 'ufo', cm2: 'cm2', cm3: 'cm3', heli: 'heli', helicv: 'helicv', ctico: 'ctico', dmd: 'dmd', gear: 'gear', mpyrso: 'mpyrso', dino: 'dino', crz3a: 'crz3a', bic: 'bic', sia123: 'sia123', sia222: 'sia222',
 };

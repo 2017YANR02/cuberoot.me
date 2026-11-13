@@ -11,6 +11,7 @@
     },
     "runtime": {
       "./bicube": "runtime-neutral",
+      "./baby-fto": "runtime-neutral",
       "./bsq": "runtime-neutral",
       "./cm3": "runtime-neutral",
       "./clock": "runtime-neutral",
@@ -80,6 +81,11 @@
   },
   "sideEffects": false,
   "exports": {
+    "./baby-fto": {
+      "types": "./src/baby-fto.ts",
+      "node": "./dist/baby-fto.js",
+      "default": "./src/baby-fto.ts"
+    },
     "./pyraminx-duo": {
       "types": "./src/pyraminx-duo.ts",
       "node": "./dist/pyraminx-duo.js",

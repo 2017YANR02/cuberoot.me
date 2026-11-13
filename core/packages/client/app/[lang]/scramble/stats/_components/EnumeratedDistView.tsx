@@ -10,7 +10,7 @@
 //              "download sample" CSV is built here from the embedded samples.
 // Per-puzzle differences live in EnumSpec (see enumerated-specs.ts).
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Download } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
@@ -18,7 +18,7 @@ import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { tr } from '@/i18n/tr';
 import { statsUrl } from '@/lib/stats-base';
 import { computeStats, modeOf, type DistStats } from '@/lib/scramble-dist/stats';
-import { downloadCsv } from '@/lib/scramble-dist/download';
+import { downloadBlob, downloadCsv } from '@/lib/scramble-dist/download';
 import type { DistJson } from '@/lib/scramble-dist/types';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
@@ -89,6 +89,8 @@ export interface EnumSpec {
   quotient?: boolean;
   downloadExamples?: { run: () => void; label: TrText };
   downloads?: ExactDownloads;
+  /** Bounded small-state exports generated on demand, outside the UI thread. */
+  downloadStates?: (depth: number | undefined, signal: AbortSignal) => Promise<{ filename: string; blob: Blob }>;
   references?: { href: string; label: TrText }[];
   showBarLabels?: boolean;
   xTickStep?: number;
@@ -196,6 +198,37 @@ export default function EnumeratedDistView({ spec, isZh }: { spec: EnumSpec; isZ
   const [yMode, setYMode] = useState<'percent' | 'count'>('percent');
   const [chartMode, setChartMode] = useState<'pdf' | 'cdf'>('pdf');
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
+  const [downloading, setDownloading] = useState<number | 'all' | null>(null);
+  const [downloadError, setDownloadError] = useState(false);
+  const downloadController = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    setDownloading(null);
+    setDownloadError(false);
+    return () => {
+      downloadController.current?.abort();
+      downloadController.current = null;
+    };
+  }, [spec.event]);
+
+  async function downloadStates(depth?: number) {
+    if (!spec.downloadStates || downloadController.current) return;
+    const controller = new AbortController();
+    downloadController.current = controller;
+    setDownloading(depth ?? 'all');
+    setDownloadError(false);
+    try {
+      const result = await spec.downloadStates(depth, controller.signal);
+      if (!controller.signal.aborted) downloadBlob(result.filename, result.blob);
+    } catch {
+      if (!controller.signal.aborted) setDownloadError(true);
+    } finally {
+      if (downloadController.current === controller) {
+        downloadController.current = null;
+        setDownloading(null);
+      }
+    }
+  }
 
   const d = useDistData(spec.source);
 
@@ -257,6 +290,14 @@ export default function EnumeratedDistView({ spec, isZh }: { spec: EnumSpec; isZ
             {tr(spec.downloadExamples.label)}
           </button>
         )}
+        {spec.downloadStates && (
+          <button type="button" className="ivy-dl-all" onClick={() => void downloadStates()} disabled={downloading !== null}>
+            <Download size={14} aria-hidden />
+            {tr(downloading === 'all'
+              ? { zh: '正在生成…', en: 'Generating…' }
+              : { zh: '全部状态 (CSV)', en: 'All states (CSV)' })}
+          </button>
+        )}
         {spec.downloads?.allStates && (
           <a className="ivy-dl-all" href={spec.downloads.allStates.url} download>
             <Download size={14} aria-hidden />
@@ -267,6 +308,9 @@ export default function EnumeratedDistView({ spec, isZh }: { spec: EnumSpec; isZ
           </a>
         )}
       </div>
+      {downloadError && <div className="scramble-stats-error" role="alert">
+        {tr({ zh: '下载生成失败，请重试。', en: 'Could not generate the download. Please try again.' })}
+      </div>}
 
       <div className="scramble-stats-chart-wrapper">
         <DiscreteHistogram
@@ -314,6 +358,15 @@ export default function EnumeratedDistView({ spec, isZh }: { spec: EnumSpec; isZ
                   .replace('{n}', binAsset.rows.toLocaleString())}
                 {' · '}{assetSize(binAsset.bytes)}
               </a>
+            )}
+            {spec.downloadStates && (
+              <button type="button" className="ivy-dl-all" onClick={() => void downloadStates(effectiveBin)} disabled={downloading !== null}>
+                <Download size={14} aria-hidden />
+                {tr(downloading === effectiveBin
+                  ? { zh: '正在生成…', en: 'Generating…' }
+                  : { zh: '本档全部 {n} 态 (TXT)', en: 'All {n} states at this depth (TXT)' })
+                  .replace('{n}', binCount.toLocaleString())}
+              </button>
             )}
           </div>
           {spec.previewLabel && <div className="scramble-stats-examples-hint">{tr(spec.previewLabel)}</div>}
