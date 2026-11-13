@@ -1,0 +1,10 @@
+[Unit]
+Description=Clean package caches before the daily statistics update
+
+[Timer]
+OnCalendar=*-*-* 19:30:00 UTC
+RandomizedDelaySec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

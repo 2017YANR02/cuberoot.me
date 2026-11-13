@@ -1,0 +1,10 @@
+[Unit]
+Description=Compress closed CubeRoot and system log archives
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flock --nonblock --conflict-exit-code 75 /run/lock/cuberoot-logrotate.lock /root/.nvm/versions/node/v24.14.0/bin/node /usr/local/lib/cuberoot/maintenance/compress-logs.ts
+SuccessExitStatus=75
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=10min

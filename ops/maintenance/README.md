@@ -1,5 +1,24 @@
 # Server disk maintenance
 
+`deploy_nginx.yml` installs two host timers, independent of a developer's computer:
+
+- `cuberoot-log-compression.timer` checks hourly (up to five minutes of jitter).
+  It compresses only dated CubeRoot nginx/PM2 and system log archives that have
+  not changed for ten minutes and have no process references. Symlinks, hard links,
+  active logs, unknown names and existing gzip destinations are preserved. The
+  service shares `/run/lock/cuberoot-logrotate.lock` with the deployed daily
+  logrotate wrapper and skips a busy rotation. The daily wrapper waits for an
+  in-flight compression instead of skipping its daily run. Existing
+  rotation/retention and journald caps remain unchanged; `delaycompress` still
+  protects asynchronous nginx reopening, without leaving closed archives raw
+  until the next day's rotation. Root/proc inspection errors fail closed.
+- `cuberoot-package-cache-clean.timer` runs `dnf clean all` daily at 19:30 UTC
+  (03:30 Beijing time, up to five minutes of jitter), before the scheduled stats
+  run. It removes downloadable cache files, not installed packages or service data.
+
+Both timers are persistent across reboot and log results to the system journal.
+The deployer validates the units, runs each service once and enables the timers.
+
 `deploy_core.yml` ships `prune-api-releases.ts` with each API release. After
 health, solver smoke, compression service checks and `pm2 save` succeed, it
 removes old managed releases. It retains the active release, two newest

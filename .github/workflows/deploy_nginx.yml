@@ -14,6 +14,11 @@ on:
       - 'ops/systemd/cuberoot-cn-ranges.*'
       - 'ops/logrotate/nginx'
       - 'ops/journald/**'
+      - 'ops/maintenance/compress-logs.ts'
+      - 'ops/maintenance/prune-api-releases.ts'
+      - 'ops/maintenance/logrotate-daily'
+      - 'ops/systemd/cuberoot-log-compression.*'
+      - 'ops/systemd/cuberoot-package-cache-clean.*'
       - '.github/workflows/deploy_nginx.yml'
 
 # Keep activation and rollback ordered even though each run has its own staging directory.
@@ -88,6 +93,10 @@ jobs:
             "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/nginx.logrotate.new"
           scp -i ~/.ssh/id ops/journald/10-cuberoot-disk-cap.conf \
             "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/cuberoot-journald.new"
+          scp -i ~/.ssh/id ops/maintenance/compress-logs.ts ops/maintenance/prune-api-releases.ts ops/maintenance/logrotate-daily \
+            ops/systemd/cuberoot-log-compression.service ops/systemd/cuberoot-log-compression.timer \
+            ops/systemd/cuberoot-package-cache-clean.service ops/systemd/cuberoot-package-cache-clean.timer \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/"
 
       - name: Verify scanner bans in isolated nginx
         env:
@@ -368,6 +377,63 @@ jobs:
           systemctl restart systemd-journald
           journalctl --vacuum-size=512M >/dev/null
           echo "OK: journald disk cap applied"
+          REMOTE
+
+      - name: Install automatic log compression and package cache cleanup
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_STAGE" <<'REMOTE'
+          set -euo pipefail
+          DEPLOY_STAGE=$1
+          [[ "$DEPLOY_STAGE" =~ ^/tmp/cuberoot-web-ops-[0-9]+-[0-9]+$ ]] || exit 1
+          [[ -d "$DEPLOY_STAGE" && ! -L "$DEPLOY_STAGE" && -O "$DEPLOY_STAGE" ]] || exit 1
+          [[ "$(realpath -e -- "$DEPLOY_STAGE")" = "$DEPLOY_STAGE" ]] || exit 1
+          units=(cuberoot-log-compression.service cuberoot-log-compression.timer cuberoot-package-cache-clean.service cuberoot-package-cache-clean.timer)
+          systemd-analyze verify "${units[@]/#/$DEPLOY_STAGE/}"
+          /root/.nvm/versions/node/v24.14.0/bin/node --input-type=module -e "await import('file://$DEPLOY_STAGE/compress-logs.ts')"
+          sh -n "$DEPLOY_STAGE/logrotate-daily"
+          install -d -m 0755 /usr/local/lib/cuberoot/maintenance
+          backup=$(mktemp -d /var/backups/cuberoot-auto-cleanup.XXXXXXXX)
+          chmod 0700 "$backup"
+          targets=(/usr/local/lib/cuberoot/maintenance/compress-logs.ts /usr/local/lib/cuberoot/maintenance/prune-api-releases.ts /etc/cron.daily/logrotate)
+          for unit in "${units[@]}"; do targets+=("/etc/systemd/system/$unit"); done
+          for target in "${targets[@]}"; do
+            [[ ! -L "$target" ]] || exit 1
+            if [ -f "$target" ]; then cp -p -- "$target" "$backup/$(basename "$target")"; fi
+          done
+          enabled=()
+          for timer in cuberoot-log-compression.timer cuberoot-package-cache-clean.timer; do
+            if systemctl is-enabled --quiet "$timer"; then enabled+=("$timer"); fi
+          done
+          rollback() {
+            trap - ERR
+            systemctl disable --now cuberoot-log-compression.timer cuberoot-package-cache-clean.timer || true
+            for target in "${targets[@]}"; do
+              name=$(basename "$target")
+              if [ -f "$backup/$name" ]; then cp -p -- "$backup/$name" "$target"; else rm -f -- "$target"; fi
+            done
+            systemctl daemon-reload
+            if [ "${#enabled[@]}" -gt 0 ]; then systemctl enable --now "${enabled[@]}"; fi
+            echo "ERROR: automatic cleanup installation failed; configuration restored" >&2
+            exit 1
+          }
+          trap rollback ERR
+          for target in "${targets[@]}"; do
+            next=$(mktemp "$(dirname "$target")/.cuberoot-deploy.XXXXXXXX")
+            source="$DEPLOY_STAGE/$(basename "$target")"
+            mode=0644
+            if [ "$target" = /etc/cron.daily/logrotate ]; then source="$DEPLOY_STAGE/logrotate-daily"; mode=0755; fi
+            install -m "$mode" -- "$source" "$next"
+            mv -f -- "$next" "$target"
+          done
+          systemctl daemon-reload
+          systemctl start cuberoot-log-compression.service cuberoot-package-cache-clean.service
+          systemctl enable --now cuberoot-log-compression.timer cuberoot-package-cache-clean.timer
+          systemctl is-active --quiet cuberoot-log-compression.timer cuberoot-package-cache-clean.timer
+          trap - ERR
+          systemctl list-timers --all --no-pager cuberoot-log-compression.timer cuberoot-package-cache-clean.timer
           REMOTE
 
       - name: Install monthly country database refresh

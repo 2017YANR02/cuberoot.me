@@ -1,9 +1,11 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
+import { existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { processReferences, pruneReleases, pruneStaging, type DeploymentAttempt } from '../../../../ops/maintenance/prune-api-releases';
 import { capacityReport } from '../../../../ops/maintenance/stats-capacity';
+import { compressLogs, logPolicies } from '../../../../ops/maintenance/compress-logs';
 
 const temporary: string[] = [];
 afterEach(() => { for (const path of temporary.splice(0)) rmSync(path, { recursive: true, force: true }); });
@@ -20,6 +22,32 @@ function fixture() {
   symlinkSync(join(releases[6], 'dist'), join(root, 'dist'));
   return { root, releases };
 }
+
+describe('automatic log compression', () => {
+  it('losslessly compresses a closed archive and preserves active, referenced, recent and linked files', () => {
+    const root = realpathSync(mkdtempSync(join(tmpdir(), 'log-compression-')));
+    temporary.push(root);
+    const now = Date.now();
+    const names = ['www.cuberoot.me.log-20261101', 'api.cuberoot.me.log-20261101',
+      'next.cuberoot.me.log-20261101', 'static.cuberoot.me.log-20261101',
+      'dev.cuberoot.me.log-20261101', 'blog.cuberoot.me.log-20261101', 'www.cuberoot.me.log', 'mira.fans.log-20261101'];
+    for (const name of names) { writeFileSync(join(root, name), 'fixture log\n'); utimesSync(join(root, name), 1, 1); }
+    utimesSync(join(root, names[2]), new Date(now), new Date(now));
+    linkSync(join(root, names[3]), join(root, 'another-link'));
+    symlinkSync(join(root, names[4]), join(root, 'symlink.cuberoot.me.log-20261101'));
+    writeFileSync(join(root, names[5] + '.gz'), 'existing archive');
+    const policy = [{ root, pattern: logPolicies[0].pattern }];
+    const result = compressLogs(policy, [join(root, names[1]), join(root, names[4])], now);
+    expect(result.compressed).toEqual([join(root, names[0])]);
+    expect(gunzipSync(readFileSync(join(root, names[0] + '.gz'))).toString()).toBe('fixture log\n');
+    expect(existsSync(join(root, names[0]))).toBe(false);
+    for (const name of names.slice(1)) expect(readFileSync(join(root, name), 'utf8')).toBe('fixture log\n');
+    expect(readFileSync(join(root, names[5] + '.gz'), 'utf8')).toBe('existing archive');
+    expect(compressLogs(policy, [join(root, names[1]), join(root, names[4])], now).compressed).toEqual([]);
+    symlinkSync(root, join(root, 'linked-root'));
+    expect(() => compressLogs([{ root: join(root, 'linked-root'), pattern: logPolicies[0].pattern }], [], now)).toThrow('Unsafe log directory');
+  });
+});
 
 describe('server capacity and release retention', () => {
   it('deletes only staging backed by the exact completed deployment attempt, including partial uploads', () => {

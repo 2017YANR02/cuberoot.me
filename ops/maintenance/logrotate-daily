@@ -1,0 +1,9 @@
+#!/bin/sh
+# Share the lock with the hourly archive compressor, including older logrotate
+# versions without a native state-file lock. Preserve the distro daily policy.
+/usr/bin/flock --wait 660 /run/lock/cuberoot-logrotate.lock /usr/sbin/logrotate /etc/logrotate.conf
+result=$?
+if [ "$result" -ne 0 ]; then
+    /usr/bin/logger -t logrotate "ALERT exited abnormally with [$result]"
+fi
+exit "$result"

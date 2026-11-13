@@ -1,0 +1,10 @@
+[Unit]
+Description=Clean downloadable DNF package caches
+ConditionPathExists=/usr/bin/dnf
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/dnf clean all
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=5min
