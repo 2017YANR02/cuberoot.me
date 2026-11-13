@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alg } from 'cubing/alg';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
-import PlaybackScrubber from '@cuberoot/timer-ui/PlaybackScrubber';
+import ProgressSlider from '@/components/ProgressSlider';
 import { VisualCube } from '@/components/VisualCube';
 import { tr, T } from '@/i18n/tr';
 import { ORDERED_BASIC_CASES } from '../data/basic-cases';
@@ -12,6 +12,7 @@ import { F2L_INTRO_ALG, LBL_INTRO_ALG, lblIntroStickering, f2lDiagramFacelets, f
 import StudyActions from '../components/StudyActions';
 import SectionNavigation from '../components/SectionNavigation';
 import FirstTwoLayersIntro from './FirstTwoLayersIntro';
+import NonstandardIntro from './NonstandardIntro';
 import { INTRO_COMPARE_AT, INTRO_CROSS_MS, INTRO_SPLIT_MS, INTRO_VIDEO_DURATION, introEase } from '../lib/intro-timeline';
 
 function IntroComparison({ orientation, onContinue }: { orientation: string; onContinue: () => void }) {
@@ -42,6 +43,7 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
   stepId: 'lesson-1' | 'lesson-2' | 'lesson-14'; orientation: string; onNextChapter: () => void;
 }) {
   const [section, setSection] = useState<'comparison' | 'lbl' | 'f2l'>('lbl');
+  const [showTerminology, setShowTerminology] = useState(false);
   const clock = useRef(0);
   const scene = useRef<HTMLDivElement>(null);
   const [time, setTime] = useState(0);
@@ -85,16 +87,6 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
     return () => document.removeEventListener('visibilitychange', pauseHidden);
   }, []);
   useEffect(() => {
-    window.addEventListener('pointerup', endScrub);
-    window.addEventListener('pointercancel', endScrub);
-    window.addEventListener('blur', endScrub);
-    return () => {
-      window.removeEventListener('pointerup', endScrub);
-      window.removeEventListener('pointercancel', endScrub);
-      window.removeEventListener('blur', endScrub);
-    };
-  }, [endScrub]);
-  useEffect(() => {
     if (!comparisonReady || !playing) return;
     let raf = 0, last = performance.now(), rendered = last;
     const tick = (now: number) => {
@@ -113,18 +105,24 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
   // const goalDiagrams = useMemo(() => f2lGoalDiagrams(orientation), [orientation]);
   if (stepId === 'lesson-1') {
     const label = tr({ zh: 'F2L与层先法的区别', en: 'F2L vs. layer-by-layer' });
+    const terminology = tr({ zh: '术语介绍', en: 'Terminology' });
+    const openTerminology = () => {
+      setComparisonPlaying(false);
+      setLeftReady(false);
+      setRightReady(false);
+      seek(0);
+      setShowTerminology(true);
+    };
     return <div className="f2l-study-layout">
-      <SectionNavigation label={label}>
-        <div className="f2l-section-list"><p className="f2l-section-label" aria-current="true">{label}</p></div>
+      <SectionNavigation label={showTerminology ? terminology : label}>
+        <div className="f2l-section-list">
+          <button type="button" className="f2l-section-button" aria-pressed={!showTerminology} onClick={() => setShowTerminology(false)}>{label}</button>
+          <button type="button" className="f2l-section-button" aria-pressed={showTerminology} onClick={openTerminology}>{terminology}</button>
+        </div>
       </SectionNavigation>
       <div className="f2l-study-main">
-        <div className="f2l-intro-film f2l-concept-video"
-          onPointerDownCapture={event => { if (event.target instanceof HTMLInputElement && event.target.type === 'range') beginScrub(); }}
-          onKeyDownCapture={event => {
-            if (!(event.target instanceof HTMLInputElement) || event.target.type !== 'range' || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
-            event.preventDefault(); beginScrub();
-            seek(event.key === 'Home' ? 0 : event.key === 'End' ? INTRO_VIDEO_DURATION : clock.current + (['ArrowLeft', 'ArrowDown'].includes(event.key) ? -500 : 500));
-          }} onKeyUpCapture={endScrub} onBlurCapture={endScrub}>
+        {showTerminology ? <NonstandardIntro orientation={orientation} terminologyOnly /> :
+        <div className="f2l-intro-film f2l-concept-video">
         <div ref={scene} className="f2l-intro-methods" data-stage={comparisonStage} data-playing={playing}>
           <div className="f2l-intro-method">
             <FirstTwoLayersIntro key={orientation} orientation={orientation} method="lbl"
@@ -138,11 +136,14 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
           </div>
         </div>
         <div className="f2l-intro-progress">
-          <PlaybackScrubber step={time} total={INTRO_VIDEO_DURATION} disabled={!comparisonReady} onScrub={seek}
+          <ProgressSlider value={time} max={INTRO_VIDEO_DURATION} disabled={!comparisonReady} onChange={seek}
+            keyboardStep={500} onInteractionStart={beginScrub} onInteractionEnd={endScrub}
+            formatValue={value => tr({ zh: `${(value / 1000).toFixed(1)} 秒`, en: `${(value / 1000).toFixed(1)} seconds` })}
             ariaLabel={tr({ zh: '演示进度', en: 'Animation progress' })} />
         </div>
-        </div>
-        <StudyActions onContinue={onNextChapter} />
+        </div>}
+        <StudyActions onPrevious={showTerminology ? () => setShowTerminology(false) : undefined}
+          onContinue={showTerminology ? onNextChapter : openTerminology} />
       </div>
     </div>;
   }

@@ -21,6 +21,7 @@ export interface NonstandardIntroScene {
   bottomTilt?: number;
   revealLeft?: boolean;
   flashPair?: boolean;
+  fadeInPair?: boolean;
   /** The preceding shot ends at this shot's setup and camera angle. */
   continuePrevious?: boolean;
   beats?: readonly {
@@ -52,7 +53,7 @@ const topAndSlot = [...Array.from({ length: 9 }, (_, index) => `U${index}`).filt
   ...[...'FRBL'].flatMap(face => [0, 1, 2].map(index => `${face}${index}`)), ...pair];
 
 /** Each shot follows the teaching script; classification concerns only the selected pair. */
-export function nonstandardIntroScenes(edgeSetup: string, cornerSetup: string, orientation: string): NonstandardIntroScene[] {
+export function nonstandardIntroScenes(edgeSetup: string, cornerSetup: string, orientation: string, terminologyOnly = false): NonstandardIntroScene[] {
   const colors = orientedFaceColors(orientation);
   const front = CUBE_COLOR_NAMES[colors.F];
   const right = CUBE_COLOR_NAMES[colors.R];
@@ -60,7 +61,7 @@ export function nonstandardIntroScenes(edgeSetup: string, cornerSetup: string, o
     zh: `不管${front.zh}${right.zh}棱角在哪，目标槽指的都是${front.zh}${right.zh}中心块和底面夹起来的位置`,
     en: `Wherever the ${front.en}-${right.en} edge and its matching corner are, their target slot is always the space between the ${front.en} and ${right.en} centers and the bottom face`,
   };
-  return [
+  const scenes: NonstandardIntroScene[] = [
     {
       caption: { zh: '当我们复原了底十字之后', en: 'Once we have solved the bottom cross…' },
       setup: `${topSetup} F R B L`, alg: "L' B' R' F'", duration: 5900,
@@ -76,7 +77,9 @@ export function nonstandardIntroScenes(edgeSetup: string, cornerSetup: string, o
           label: { zh: '目标角', en: 'Target corner' }, highlight: corner, pulse: true, hideEdge: true },
         { at: 3500, caption: { zh: '以及对应的棱块', en: 'And its matching edge' },
           label: { zh: '目标棱', en: 'Target edge' }, highlight: edge, pulse: true, hideCorner: true },
-        { at: 7000, caption: { zh: '关注这组棱角', en: 'Focus on this pair' },
+        { at: 7000, caption: terminologyOnly
+          ? { zh: '棱块的两种颜色和角块的两种侧面色相同，它们就是一组棱角（pair）', en: 'An edge and a corner that share the same two side colors form an F2L pair' }
+          : { zh: '关注这组棱角', en: 'Focus on this pair' },
           label: { zh: '一组棱角', en: 'One pair' }, highlight: pair },
       ],
     },
@@ -137,4 +140,54 @@ export function nonstandardIntroScenes(edgeSetup: string, cornerSetup: string, o
       showBottom: true, bottomTilt: 1,
     },
   ];
+  if (!terminologyOnly) return scenes;
+  const firstNonstandard = scenes.findIndex(scene => scene.result === 'nonstandard');
+  const crossCaption = { zh: '先完成底十字', en: 'Start by solving the bottom cross' };
+  const slotCaption = { zh: '先看右前方', en: 'Look at the front-right corner of the cube' };
+  const namingCaption = { zh: '用相邻的两个侧面中心块颜色给槽命名', en: 'Name each slot after its two adjacent side centers' };
+  const firstTurnAt = 11000;
+  const turnGap = 2600;
+  const summaryAt = firstTurnAt + 3 * turnGap + 200;
+  const slotBeats = (['F', 'R', 'B', 'L'] as const).flatMap((face, index, sides) => {
+    const first = CUBE_COLOR_NAMES[colors[face]];
+    const second = CUBE_COLOR_NAMES[colors[sides[(index + 1) % sides.length]]];
+    const turned = Array<string>(index).fill('y').join(' ');
+    return [{
+      at: index === 0 ? 8500 : firstTurnAt + (index - 1) * turnGap + 100,
+      caption: namingCaption,
+      label: { zh: `${first.zh}${second.zh}槽`, en: `${first.en}–${second.en} slot` },
+      highlight: stickersAt(`${topSetup} ${turned}`, pair),
+    }, {
+      at: firstTurnAt + index * turnGap,
+      caption: namingCaption,
+      highlight: [],
+    }];
+  });
+  return [{
+    ...scenes[0], caption: crossCaption, moveDuration: 950, duration: 8600,
+    beats: [{ at: 5400, caption: { zh: '底十字做好了，接下来把剩下的棱角放回前两层', en: 'The cross is solved, so we can put the remaining edges and corners back into the first two layers' }, highlight: [] }],
+  }, {
+    caption: slotCaption,
+    setup: topSetup, alg: 'y y y y', duration: summaryAt + 5000,
+    moveStart: firstTurnAt, moveGap: turnGap, moveDuration: 950,
+    highlight: [], hidePair: true,
+    continuePrevious: true,
+    beats: [
+      { at: 0, caption: slotCaption, highlight: [] },
+      { at: 1800, caption: { zh: '底层有一个角位', en: 'There’s a corner position in the bottom layer' }, highlight: stickersAt(topSetup, corner) },
+      { at: 3600, caption: { zh: '它正上方有一个棱位', en: 'There’s an edge position directly above it' }, highlight: stickersAt(topSetup, edge) },
+      { at: 5400, caption: { zh: '两个位置合起来，就是一个槽（slot）', en: 'Together, these two positions make a slot' }, highlight: stickersAt(topSetup, pair) },
+      ...slotBeats, {
+      at: summaryAt,
+      caption: { zh: '底十字周围一共有四个槽', en: 'There are four slots around the bottom cross' },
+      highlight: stickersAt(topSetup, [
+        ...pair, 'R5', 'B3', 'R8', 'B6', 'D8',
+        'B5', 'L3', 'B8', 'L6', 'D6', 'L5', 'F3', 'L8', 'F6', 'D0',
+      ]),
+    }, {
+      at: summaryAt + 2300,
+      caption: { zh: '接下来挑一组棱角，看看它们该回哪个槽', en: 'Next, let’s pick a pair and see which slot it belongs in' },
+      highlight: [],
+    }],
+  }, { ...scenes[1], moveDuration: 950, fadeInPair: true }, ...scenes.slice(2, firstNonstandard)];
 }

@@ -121,11 +121,15 @@ function CyclingLesson({ mode }: { mode: 'notation' | 'triggers' | 'j' }) {
         return;
       }
       if (j) setSettled(true);
+      if (mode === 'notation' && index === moves.length - 1) {
+        setRunning(false);
+        return;
+      }
       if (running) timer = window.setTimeout(() => setFading(true), j ? 1800 : 1100);
     };
     frame = requestAnimationFrame(waitForTurn);
     return () => { cancelAnimationFrame(frame); clearTimeout(timer); };
-  }, [step, running, finalStep, j]);
+  }, [step, running, finalStep, j, mode, index, moves.length]);
   useEffect(() => {
     if (!fading || !running) return;
     const timer = window.setTimeout(() => {
@@ -150,7 +154,15 @@ function CyclingLesson({ mode }: { mode: 'notation' | 'triggers' | 'j' }) {
         <PlaybackBar step={index} total={moves.length - 1} playing={running}
           onScrub={select} onSkipStart={() => select(0)} onStepBack={() => select(index - 1)}
           onStepForward={() => select(index + 1)} onSkipEnd={() => select(moves.length - 1)}
-          onTogglePlay={() => { setFading(false); setRunning(value => !value); }}
+          onTogglePlay={() => {
+            if (!running && index === moves.length - 1 && step >= finalStep) {
+              select(0);
+              setRunning(true);
+            } else {
+              setFading(false);
+              setRunning(value => !value);
+            }
+          }}
           trailing={<button type="button" className="playback-bar-btn playback-bar-reset-view" aria-label={tr({ zh: '重播当前转法', en: 'Replay this turn' })} onClick={() => select(index)}><RotateCcw size={14} /></button>}
           labels={{ skipStart: tr({ zh: '第一个转法', en: 'First turn' }), stepBack: tr({ zh: '上一个转法', en: 'Previous turn' }),
             play: tr({ zh: '继续轮播', en: 'Resume slideshow' }), pause: tr({ zh: '暂停轮播', en: 'Pause slideshow' }),

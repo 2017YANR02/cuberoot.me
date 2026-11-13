@@ -148,8 +148,11 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
 .f2l-editor-stage canvas { cursor: grab; }
 .f2l-editor-stage canvas:active { cursor: grabbing; }
 .f2l-free-formulas { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; padding-top: 40px; }
-.f2l-free-formulas .f2l-stage-scramble { align-items: flex-start; width: 100%; font-size: .8rem; line-height: 1.75; }
-.f2l-free-formulas .f2l-stage-scramble code { flex: 1; min-width: 0; height: 5.25em; overflow: auto; overflow-wrap: anywhere; font-size: .8rem; line-height: 1.75; }
+.f2l-free-formulas .f2l-stage-scramble { align-items: flex-start; width: 100%; font-size: 1rem; line-height: 1.75; }
+.f2l-free-formulas .f2l-stage-scramble > .f2l-teaching-alg-icon { align-self: flex-start; margin-top: .25em; }
+.f2l-free-formulas .f2l-stage-scramble code { flex: 1; min-width: 0; height: 5.25em; overflow: auto; overflow-wrap: anywhere; font-size: 1rem; line-height: 1.75; }
+.f2l-free-formulas .f2l-caption { font-size: 1rem; }
+.f2l-free-formulas .f2l-player-alg { font-size: 1.2rem; line-height: 1.75; }
 .f2l-free-solution { display: grid; gap: 8px; width: 100%; }
 .f2l-free-alg-section[aria-current='step'] { color: var(--accent); background: var(--accent-soft); border-radius: 3px; }
 .f2l-study-layout .f2l-free-solution .f2l-player-alg { height: 5.55em; min-height: 0; padding: 0; overflow: auto; text-align: start; }
@@ -167,12 +170,49 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
 /* Shared lesson layout, footer actions and playback stages. */
 .f2l-study-layout { display: grid; grid-template-columns: var(--f2l-sidebar-width) minmax(0, 1fr); align-items: start; gap: var(--f2l-layout-gap); }
 .f2l-study-layout > .f2l-section-nav { grid-template-columns: minmax(0, 1fr); gap: 20px; margin: 0; padding: 0 24px 24px 0; border-right: 1px solid var(--border-default); }
+@media (min-width: 761px) {
+  .f2l-study-layout > .f2l-section-nav { position: sticky; top: 16px; }
+  .f2l-section-scroll { position: relative; min-width: 0; }
+  .f2l-section-viewport {
+    --f2l-fade-start: 0px;
+    --f2l-fade-end: 0px;
+    max-height: max(160px, calc(100dvh - 260px));
+    overflow-y: auto;
+    scrollbar-width: none;
+    scroll-padding-block: 28px;
+    mask-image: linear-gradient(to bottom, transparent, black var(--f2l-fade-start), black calc(100% - var(--f2l-fade-end)), transparent);
+  }
+  .f2l-section-viewport::-webkit-scrollbar { display: none; }
+  .f2l-section-viewport[data-above='true'] { --f2l-fade-start: 28px; }
+  .f2l-section-viewport[data-below='true'] { --f2l-fade-end: 28px; }
+  .f2l-section-scroll-list { display: grid; gap: 20px; }
+  .f2l-section-scroll-arrow {
+    position: absolute;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    color: var(--muted-foreground);
+    background: var(--background);
+    cursor: pointer;
+  }
+  .f2l-section-scroll-arrow[data-direction='up'] { top: 0; }
+  .f2l-section-scroll-arrow[data-direction='down'] { bottom: 0; }
+  .f2l-section-scroll-arrow:hover { color: var(--foreground); }
+  .f2l-section-scroll-arrow:focus-visible { outline: 2px solid var(--ring); }
+}
 .f2l-study-layout .f2l-section-label { gap: 8px; }
 .f2l-study-main { display: flex; flex-direction: column; min-width: 0; }
 .f2l-study-actions { position: absolute; inset: auto 0 0 calc(var(--f2l-sidebar-width) + var(--f2l-layout-gap)); display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-top: 16px; border-top: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent); }
 .f2l-study-secondary-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; min-width: 0; margin-inline-start: auto; }
 .f2l-study-actions .f2l-restart { margin-top: 0; }
 .f2l-study-dock { display: contents; }
+.f2l-dock-host { display: contents; }
 .f2l-mobile-menu-host { display: none; }
 .f2l-page .f2l-footer-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; box-sizing: border-box; width: 112px; height: 52px; min-height: 44px; flex-shrink: 0; padding: 8px 14px; border: 0; border-radius: 10px; color: var(--muted-foreground); background: transparent; font: inherit; line-height: 1.2; cursor: pointer; }
 .f2l-page .f2l-footer-next { color: var(--accent); background: var(--accent-soft); }
@@ -184,19 +224,23 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
 .f2l-intro-players { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 24px; margin-top: 20px; }
 .f2l-intro-players > .f2l-demo > h3, .f2l-extraction > h3 { text-align: center; }
 .f2l-intro-progress { width: 100%; margin-top: 12px; }
-.f2l-intro-progress .playback-scrubber { display: block; width: 100%; margin: 0; touch-action: none; }
+.f2l-intro-progress .progress-slider { display: block; width: 100%; margin: 0; touch-action: none; }
 .f2l-intro-methods { --f2l-intro-gap: 24px; --f2l-intro-scale: 1.4; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--f2l-intro-gap); margin-top: 20px; padding-top: 48px; }
 .f2l-intro-method { min-width: 0; }
 .f2l-intro-methods .f2l-concept-scene { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-.f2l-intro-methods .f2l-cube { width: min(100%, 280px); justify-self: center; margin-bottom: 48px; transform: scale(calc(1 + (var(--f2l-intro-scale) - 1) * var(--f2l-intro-joined, 1))); }
+.f2l-intro-methods .f2l-cube { width: min(100%, 280px); justify-self: center; margin-bottom: calc(8px + 40px * var(--f2l-intro-joined, 1)); transform: scale(calc(1 + (var(--f2l-intro-scale) - 1) * var(--f2l-intro-joined, 1))); }
 .f2l-intro-methods .f2l-lbl-intro .f2l-concept-caption { min-height: 0; }
-.f2l-intro-methods .f2l-concept-caption p { display: flex; align-items: center; justify-content: center; height: 3.3em; font-size: clamp(1rem, 2vw, 1.25rem); }
+.f2l-intro-methods .f2l-concept-caption p { display: flex; align-items: center; justify-content: center; height: 3.3em; margin: 0 0 12px; font-size: clamp(1rem, 2vw, 1.25rem); }
 .f2l-intro-methods:not([data-stage='compare']) .f2l-practice-segments { visibility: hidden; }
 /* Keep both WebGL scenes mounted at a fixed size; only composite transforms
    change during the split, so no canvas resize or late mount interrupts it. */
 .f2l-intro-methods > .f2l-intro-method:first-child { transform: translateX(calc((50% + var(--f2l-intro-gap) / 2) * var(--f2l-intro-joined, 1))); }
 .f2l-intro-methods > .f2l-intro-method:last-child { transform: translateX(calc((-50% - var(--f2l-intro-gap) / 2) * var(--f2l-intro-joined, 1))); opacity: var(--f2l-intro-clone-opacity, 0); }
 .f2l-intro-methods[data-stage='split'] .f2l-concept-caption { visibility: hidden; }
+@media (min-width: 901px) {
+  .f2l-intro-methods { --f2l-intro-scale: 1.2; }
+  .f2l-intro-methods .f2l-cube { width: min(100%, 340px); }
+}
 @media (max-width: 700px) {
   .f2l-intro-methods { --f2l-intro-gap: 12px; --f2l-intro-scale: 1.65; padding-top: 40px; }
   .f2l-intro-methods .f2l-practice-segment > span { padding: 5px 2px; font-size: .75rem; white-space: nowrap; }
@@ -251,6 +295,29 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
   .f2l-recognition { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .f2l-lesson { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .f2l-extraction-comparison { grid-template-columns: minmax(0, 1fr); }
+}
+@media (min-width: 761px) {
+  .f2l-page:not(.f2l-practice-page) {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    height: 100dvh;
+    padding-bottom: 12px;
+  }
+  .f2l-page:not(.f2l-practice-page) .f2l-toolbar { margin-top: 8px; }
+  .f2l-page:not(.f2l-practice-page) .f2l-chapter { min-height: 0; margin-top: 14px; }
+  .f2l-page:not(.f2l-practice-page) .f2l-chapter-body { height: 100%; min-height: 0; padding-bottom: 64px; }
+  .f2l-page:not(.f2l-practice-page) .f2l-lesson-scroll {
+    height: 100%;
+    overflow: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-width: none;
+    padding-bottom: 8px;
+    box-sizing: border-box;
+  }
+  .f2l-page:not(.f2l-practice-page) .f2l-lesson-scroll::-webkit-scrollbar { display: none; }
+  .f2l-page:not(.f2l-practice-page) .f2l-chapter-dialogue { min-height: 0; gap: 8px; margin-bottom: 12px; }
+  .f2l-page:not(.f2l-practice-page) .f2l-study-actions { padding-top: 8px; }
+  .f2l-page:not(.f2l-practice-page) .f2l-cube { max-width: min(440px, max(240px, calc(100dvh - 340px))); }
 }
 @media (max-width: 760px) {
   .f2l-chapter-dialogue { display: none; }

@@ -16,7 +16,7 @@ import './algorithm-practice.css';
 type TeachingCase = ReturnType<typeof f2lTeachingPaths>[number];
 
 export default function AlgorithmPractice({ lesson, chapter, orientation, onPrevious, onNext, onClose }: {
-  lesson: TeachingCase; chapter: 4 | 5; orientation: string;
+  lesson: TeachingCase; chapter: 4 | 5 | 'classified'; orientation: string;
   onPrevious?: () => void; onNext?: () => void; onClose: () => void;
 }) {
   const player = useRef<AlgPlayerHandle>(null);
@@ -74,7 +74,7 @@ export default function AlgorithmPractice({ lesson, chapter, orientation, onPrev
   };
   return <section className="f2l-alg-practice">
     <header className="f2l-practice-heading">
-      <h2>{tr(chapter === 4 ? { zh: '学习 F2L 公式（一）', en: 'F2L algorithms I' } : { zh: '学习 F2L 公式（二）', en: 'F2L algorithms II' })} · {lesson.name}</h2>
+      <h2>{tr(chapter === 'classified' ? { zh: 'F2L 分类教学', en: 'F2L case families' } : chapter === 4 ? { zh: '学习 F2L 公式（一）', en: 'F2L algorithms I' } : { zh: '学习 F2L 公式（二）', en: 'F2L algorithms II' })} · {lesson.name}</h2>
         <div className="f2l-practice-route-controls">
           <BoolToggle value={fixedRoute} label={tr({ zh: '指定路线', en: 'Fixed route' })} onChange={value => {
             if (value && progress.match) setRouteIndex(flow.routes.indexOf(progress.match.route));

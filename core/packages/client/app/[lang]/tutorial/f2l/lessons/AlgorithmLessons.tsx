@@ -9,16 +9,20 @@ import { VisualCube } from '@/components/VisualCube';
 import { Tooltip } from '@/components/Tooltip';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import { tr, T } from '@/i18n/tr';
+import { CUBE_COLOR_NAMES } from '@/lib/cube-colors';
+import { orientedFaceColors } from '@/lib/cube-orientation';
+import type { LocalizedText } from '../data/chapters';
 import { f2lCatalogCases, f2lCatalogDiagrams, f2lGroupName, f2lTeachingPaths } from '../lib/curriculum';
 import StudyActions from '../components/StudyActions';
 import SectionNavigation from '../components/SectionNavigation';
 import AlgorithmPractice from './AlgorithmPractice';
 import TeachingFlowGraph from '../components/TeachingFlowGraph';
+import { F2L_CLASSIFICATION, F2L_CLASSIFICATION_SECTIONS } from '../data/classification';
 
 const NO_STOPS: readonly number[] = [];
 
 export default function AlgorithmLessons({ stepId, orientation, pauseBetween, flowTeaching, onNextChapter, practice = false }: {
-  stepId: 'lesson-4' | 'lesson-5'; orientation: string; pauseBetween: boolean; flowTeaching: boolean; onNextChapter: () => void; practice?: boolean;
+  stepId: 'lesson-4' | 'lesson-15' | 'lesson-16'; orientation: string; pauseBetween: boolean; flowTeaching: boolean; onNextChapter: () => void; practice?: boolean;
 }) {
   const [caseName, setCaseName] = useQueryState('algCase', parseAsString.withDefault('').withOptions({ history: 'replace' }));
   const [{ algGroup }, setSelection] = useQueryStates({ algGroup: parseAsString, algCase: parseAsString }, { history: 'replace' });
@@ -31,8 +35,9 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
   const cases = useMemo(() => f2lCatalogCases(), []);
   const diagrams = useMemo(() => f2lCatalogDiagrams(cases, orientation), [cases, orientation]);
   const paths = useMemo(() => f2lTeachingPaths(cases), [cases]);
-  const chapter = stepId === 'lesson-4' ? 4 : 5;
-  const lessons = paths.filter(c => c.chapter === chapter);
+  const classified = stepId === 'lesson-4';
+  const chapter = stepId === 'lesson-16' ? 5 : 4;
+  const lessons = classified ? paths : paths.filter(c => c.chapter === chapter);
   const selectedLesson = lessons.find(c => c.name === caseName);
   const lesson = selectedLesson ?? lessons[0];
   const playbackKey = lesson ? lesson.name + ':' + orientation : '';
@@ -55,11 +60,19 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
   };
   const playbackStep = playback.key === playbackKey ? playback.step : 0;
   const activeSection = lesson ? Math.max(0, lesson.sections.findIndex(section => playbackStep <= section.end)) : 0;
-  const lessonGroups = [...new Set(lessons.map(c => c.group))];
-  const activeGroup = selectedLesson?.group ?? (lessonGroups.includes(algGroup ?? '') ? algGroup! : lessonGroups[0]);
+  const lessonGroups = classified ? F2L_CLASSIFICATION_SECTIONS.map(section => section.id) : [...new Set(lessons.map(c => c.group))];
+  const groupOf = (item: typeof lessons[number]) => classified
+    ? F2L_CLASSIFICATION_SECTIONS.find(section => section.cases.includes(item.name))?.id
+    : item.group;
+  const activeGroup = (selectedLesson && groupOf(selectedLesson)) ?? lessonGroups.find(group => group === algGroup) ?? lessonGroups[0];
+  const activeCategory = classified ? F2L_CLASSIFICATION_SECTIONS.find(section => section.id === activeGroup) : undefined;
+  const categoryLabel = (title: LocalizedText) => {
+    const bottom = CUBE_COLOR_NAMES[orientedFaceColors(orientation).D];
+    return tr({ zh: title.zh.replace('{bottom}', bottom.zh), en: title.en.replace('{bottom}', bottom.en) });
+  };
   const showGallery = chapter === 4 && !selectedLesson;
-  const orderedLessons = chapter === 4 ? lessonGroups.flatMap(group => lessons.filter(item => item.group === group)) : lessons;
-  const visibleLessons = chapter === 4 ? lessons.filter(c => c.group === activeGroup) : lessons;
+  const orderedLessons = chapter === 4 ? lessonGroups.flatMap(group => lessons.filter(item => groupOf(item) === group)) : lessons;
+  const visibleLessons = chapter === 4 ? orderedLessons.filter(c => groupOf(c) === activeGroup) : lessons;
   const lessonIndex = orderedLessons.indexOf(lesson);
   const sectionIndex = chapter === 4 ? lessonGroups.indexOf(activeGroup) : lessonIndex;
   const sectionCount = chapter === 4 ? lessonGroups.length : orderedLessons.length;
@@ -73,7 +86,7 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
   const previousSection = sectionIndex > 0 ? () => selectSection(sectionIndex - 1)
     : chapter === 5 ? () => {
       const previousGroups = [...new Set(paths.filter(item => item.chapter === 4).map(item => item.group))];
-      void setPracticeRoute({ step: 'lesson-4', algCase: null, algGroup: previousGroups.at(-1) ?? null, view: null });
+      void setPracticeRoute({ step: 'lesson-15', algCase: null, algGroup: previousGroups.at(-1) ?? null, view: null });
     } : undefined;
   const nextSection = () => {
     if (sectionIndex < sectionCount - 1) selectSection(sectionIndex + 1);
@@ -82,17 +95,18 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
   const movePractice = (direction: number) => {
     const next = orderedLessons[lessonIndex + direction];
     if (next) { void setCaseName(next.name); return; }
+    if (classified) return;
     const otherChapter = chapter === 4 ? 5 : 4;
     const other = paths.filter(item => item.chapter === otherChapter);
     const groups = [...new Set(other.map(item => item.group))];
     const ordered = otherChapter === 4 ? groups.flatMap(group => other.filter(item => item.group === group)) : other;
     const target = direction > 0 ? ordered[0] : ordered.at(-1);
-    if (target) void setPracticeRoute({ step: `lesson-${otherChapter}`, algCase: target.name }, { history: 'replace' });
+    if (target) void setPracticeRoute({ step: otherChapter === 4 ? 'lesson-15' : 'lesson-16', algCase: target.name }, { history: 'replace' });
   };
   if (practice && lesson) return <AlgorithmPractice key={`${stepId}:${lesson.name}:${orientation}`} lesson={lesson}
-    chapter={chapter} orientation={orientation}
+    chapter={classified ? 'classified' : chapter} orientation={orientation}
     onPrevious={lessonIndex > 0 || chapter === 5 ? () => movePractice(-1) : undefined}
-    onNext={lessonIndex < orderedLessons.length - 1 || chapter === 4 ? () => movePractice(1) : undefined}
+    onNext={lessonIndex < orderedLessons.length - 1 || (!classified && chapter === 4) ? () => movePractice(1) : undefined}
     onClose={() => { void setPracticeRoute({ view: null, algCase: lesson.name }, { history: 'push' }); }} />;
   const pickerLabel = (name: string, label: string) => <span className="f2l-section-label">
     <VisualCube view="iso" size={36} faceletColors={diagrams.find(c => c.name === name)!.facelets} alt="" />
@@ -102,7 +116,17 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
     <div className="f2l-study-layout">
 
       {!lesson ? <p><T zh="本节教学案例待补充。" en="Teaching examples for this chapter are being prepared." /></p> : <>
-        {chapter === 4 ? <SectionNavigation label={tr(f2lGroupName(activeGroup))}>
+        {classified && activeCategory ? <SectionNavigation label={categoryLabel(activeCategory.title)}>
+          <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择案例类型', en: 'Choose a case family' })}>
+            {F2L_CLASSIFICATION.map(group => <div className="f2l-section-group" key={group.title.en}>
+              <span>{tr(group.title)}</span>
+              {group.sections.map(section => <button className="f2l-section-button" key={section.id} type="button"
+                aria-pressed={activeGroup === section.id} onClick={() => void setSelection({ algGroup: section.id, algCase: null })}>
+                {categoryLabel(section.title)}
+              </button>)}
+            </div>)}
+          </div>
+        </SectionNavigation> : chapter === 4 ? <SectionNavigation label={tr(f2lGroupName(activeGroup))}>
           <div className="f2l-section-group">
             <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择情况分组', en: 'Choose a case group' })}>
               {lessonGroups.map(group => <button className="f2l-section-button" key={group} type="button" aria-pressed={activeGroup === group}
@@ -117,6 +141,7 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
           </button>)}
         </div></SectionNavigation>}
         <div className="f2l-study-main">
+          {activeCategory?.recognition && <p>{tr(activeCategory.recognition)}</p>}
           {showGallery ? <>
             <div className="f2l-recognition f2l-teaching-cases" role="group" aria-label={tr({ zh: '选择教学情况', en: 'Choose a teaching case' })}>
               {visibleLessons.map(c => <button type="button" key={c.name} className="f2l-section-button" onClick={() => void setCaseName(c.name)}>

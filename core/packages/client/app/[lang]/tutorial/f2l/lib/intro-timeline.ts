@@ -2,6 +2,7 @@ import { resolveSimMoveDurationScale } from '@/components/AlgPlayer/player-setup
 import { F2L_INTRO_SEGMENTS, LBL_INTRO_SEGMENTS } from '../data/lbl-intro';
 
 export const INTRO_CROSS_MS = 7200;
+export const INTRO_INSPECTION_RETURN_MS = 4500;
 export const INTRO_SPLIT_MS = 1200;
 export const INTRO_COMPARE_AT = INTRO_CROSS_MS + INTRO_SPLIT_MS;
 export const introEase = (t: number) => { const x = Math.max(0, Math.min(1, t)); return x * x * (3 - 2 * x); };
@@ -53,7 +54,7 @@ export function introFrame(timeline: ReturnType<typeof createIntroTimeline>, tim
   const elapsed = t - shot.start;
   let yaw = shot.yaw, pitch = 0;
   if (shot.kind === 'inspect') {
-    const arc = reduced ? 0 : introEase((elapsed - 1000) / 1500) - introEase((elapsed - 4500) / 1800);
+    const arc = reduced ? 0 : introEase((elapsed - 1000) / 1500) - introEase((elapsed - INTRO_INSPECTION_RETURN_MS) / 1800);
     pitch = -1.4 * arc;
     yaw += shot.phase === 2 ? .45 * arc : 0;
   } else if (shot.kind === 'orbit' || shot.kind === 'finish') {

@@ -1,15 +1,23 @@
 .lbl-content.lbl-solve-flow { display: block; }
 .lbl-solve-flow h2 { font-size: var(--lbl-text-emphasis); }
 .lbl-flow-canvas { overflow-x: auto; max-width: 100%; padding-block: 8px; }
+/* Animate the shared color so native and WebKit scrollbar thumbs fade together. */
+@property --flow-scroll-thumb {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
 /* Keep scrollbar geometry fixed so showing the thumb never shifts the diagram. */
 .lbl-lesson-scroll:has(.lbl-solve-flow), .lbl-solve-flow .lbl-flow-canvas {
   --flow-scroll-thumb: transparent;
   scrollbar-width: thin;
   scrollbar-color: var(--flow-scroll-thumb) transparent;
   scrollbar-gutter: stable;
+  transition: --flow-scroll-thumb 360ms ease-out;
 }
 .lbl-lesson-scroll:has(.lbl-solve-flow)[data-flow-scrolling], .lbl-solve-flow .lbl-flow-canvas[data-flow-scrolling] {
   --flow-scroll-thumb: var(--muted-foreground);
+  transition-duration: 120ms;
 }
 .lbl-lesson-scroll:has(.lbl-solve-flow)::-webkit-scrollbar, .lbl-solve-flow .lbl-flow-canvas::-webkit-scrollbar {
   display: block;
@@ -26,6 +34,9 @@
 }
 @media (forced-colors: active) {
   .lbl-lesson-scroll:has(.lbl-solve-flow), .lbl-solve-flow .lbl-flow-canvas { scrollbar-color: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lbl-lesson-scroll:has(.lbl-solve-flow), .lbl-solve-flow .lbl-flow-canvas { transition: none; }
 }
 .lbl-flow-canvas:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
 .lbl-flow-canvas > .lbl-flow-graph { display: block; width: 100%; min-width: 760px; height: auto; }

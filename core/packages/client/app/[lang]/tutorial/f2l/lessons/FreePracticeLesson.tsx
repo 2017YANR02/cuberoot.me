@@ -2,12 +2,15 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
+import { Shuffle } from '@app-foundation/icons/lucide';
+import { Tooltip } from '@/components/Tooltip';
 import { tr, T } from '@/i18n/tr';
 import { f2lPlaybackSections } from '../lib/cube-preview';
 import { buildFreePracticeCases, freePlacementKey, placeFreePiece, SOLVED_FREE_PLACEMENT } from '../lib/free-practice';
 import StudyActions from '../components/StudyActions';
 import SectionNavigation from '../components/SectionNavigation';
 import PairEditor from '../components/PairEditor';
+import FreePracticeGuide from './FreePracticeGuide';
 
 const NO_STOPS: readonly number[] = [];
 
@@ -15,6 +18,7 @@ export default function FreePracticeLesson({ orientation, pauseBetween }: { orie
   const table = useMemo(buildFreePracticeCases, []);
   const [placement, setPlacement] = useState(SOLVED_FREE_PLACEMENT);
   const [preview, setPreview] = useState(false);
+  const [guide, setGuide] = useState(false);
   const exercise = table.get(freePlacementKey(placement));
   const sections = useMemo(() => f2lPlaybackSections(exercise?.alg ?? ''), [exercise?.alg]);
   const boundaries = useMemo(() => sections.slice(0, -1).map(section => section.end), [sections]);
@@ -34,7 +38,7 @@ export default function FreePracticeLesson({ orientation, pauseBetween }: { orie
         </div>
       </SectionNavigation>
       <div className="f2l-study-main">
-        <div className="f2l-lesson f2l-study-lesson">
+        {guide ? <FreePracticeGuide table={table} orientation={orientation} onClose={() => setGuide(false)} /> : <div className="f2l-lesson f2l-study-lesson">
         <section className="f2l-demo" aria-label={tr({ zh: '自由练习魔方', en: 'Free practice cube' })}>
           <div className="f2l-cube">
             {preview && exercise ? <AlgPlayer puzzle="3x3" set="f2l-tutorial" engine="sim" setup={exercise.setup} alg={exercise.alg}
@@ -45,11 +49,14 @@ export default function FreePracticeLesson({ orientation, pauseBetween }: { orie
           </div>
         </section>
         <section className="f2l-guidance f2l-free-formulas" aria-label={tr({ zh: '练习公式', en: 'Practice algorithms' })}>
+          <button type="button" className="f2l-restart" onClick={() => setGuide(true)}><T zh="使用方法" en="How to use" /></button>
           <div className="f2l-stage-scramble" style={{ visibility: exercise?.alg ? 'visible' : 'hidden' }} aria-hidden={!exercise?.alg}>
-            <span><T zh="打乱:" en="Scramble:" /></span><code>{exercise?.alg ? exercise.setup : ''}</code>
+            <Tooltip content={tr({ zh: '打乱', en: 'Scramble' })}>{tip =>
+              <span {...tip} className="f2l-teaching-alg-icon" tabIndex={0} role="img" aria-label={tr({ zh: '打乱', en: 'Scramble' })}><Shuffle size={19} aria-hidden="true" /></span>
+            }</Tooltip><code>{exercise?.alg ? exercise.setup : ''}</code>
           </div>
           <div className="f2l-free-solution" style={{ visibility: exercise?.alg ? 'visible' : 'hidden' }} aria-hidden={!exercise?.alg}>
-            <p className="f2l-caption"><T zh="复原公式" en="Solution" /> · {exercise?.name}</p>
+            <p className="f2l-caption"><T zh="公式" en="Algorithm" /> · {exercise?.name}</p>
             <code className="f2l-alg f2l-player-alg" data-site-surface="panel">
               {sections.map((section, index) => <span key={section.start}>
                 {index > 0 && ' '}
@@ -59,14 +66,14 @@ export default function FreePracticeLesson({ orientation, pauseBetween }: { orie
           </div>
 
         </section>
-        </div>
+        </div>}
         <StudyActions>
-          <button type="button" className="f2l-restart" disabled={!preview && !exercise?.alg} onClick={() => {
+          {!guide && <button type="button" className="f2l-restart" disabled={!preview && !exercise?.alg} onClick={() => {
             setPlayback({ key: playbackKey, step: 0 });
             setPreview(current => !current);
           }}>
             {preview ? <T zh="重新摆放" en="Edit the case" /> : <T zh="演示复原" en="Play the solution" />}
-          </button>
+          </button>}
         </StudyActions>
       </div>
     </div>

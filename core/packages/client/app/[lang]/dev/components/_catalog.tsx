@@ -29,6 +29,7 @@ import { CompactSelect } from '@/components/CompactSelect';
 import { MethodStagePicker } from '@cuberoot/timer-ui/puzzle-picker';
 import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
+import ProgressSlider from '@/components/ProgressSlider';
 import { ParamSliders, type ParamSliderSpec } from '@/components/ParamSliders';
 import { NavigationLoadOverlay, LoadingBrandMark } from '@/components/StartupStatus';
 import { Spinner } from '@/components/Spinner/Spinner';
@@ -264,6 +265,21 @@ function RangeSliderDemo() {
       />
     </div>
   );
+}
+
+function ProgressSliderDemo() {
+  const [value, setValue] = useState(24.5);
+  const [adjusting, setAdjusting] = useState(false);
+  const format = (n: number) => `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, '0')}`;
+  return <div style={{ width: 340, maxWidth: '100%', display: 'grid', gap: 12 }}>
+    <output className="cg-hint">{format(value)} / {format(90)} · {tr(adjusting
+      ? { zh: '调整中', en: 'Adjusting' } : { zh: '时间进度', en: 'Timeline' })}</output>
+    <ProgressSlider value={value} max={90} step={0.1} keyboardStep={5} segmentEnds={[30, 60]}
+      onChange={setValue} onInteractionStart={() => setAdjusting(true)} onInteractionEnd={() => setAdjusting(false)}
+      ariaLabel={tr({ zh: '时间进度', en: 'Timeline' })} formatValue={format} />
+    <ProgressSlider value={45} max={100} disabled onChange={() => {}}
+      ariaLabel={tr({ zh: '禁用的进度条', en: 'Disabled progress slider' })} />
+  </div>;
 }
 
 function PlaybackBarDemo() {
@@ -1381,6 +1397,15 @@ export const CATALOG: ComponentEntry[] = [
     usage: '<ResetDefaultsButton onReset={restoreDefaults} title="全部设置与视角恢复默认" />',
     Demo: ResetDefaultsButtonDemo,
     note: { zh: '文案固定「恢复默认」,别再各页写「恢复默认设置 / 重置」等变体。', en: 'The label is fixed — don’t re-word it per page.' },
+  },
+  {
+    name: 'ProgressSlider',
+    import: "import ProgressSlider from '@/components/ProgressSlider';",
+    category: 'input',
+    zh: '独立的单值进度拖动条，支持时间或数值、分段、键盘步幅、调整开始与结束事件、结束提交和无障碍值描述。播放状态由调用方管理。',
+    en: 'Standalone progress slider for time or numeric values, with segments, keyboard increments, interaction callbacks, commit events and accessible value formatting. Playback state belongs to the caller.',
+    usage: '<ProgressSlider value={time} max={duration} step={0.1} keyboardStep={5} onChange={seek} onInteractionStart={pause} onInteractionEnd={resume} ariaLabel={label} />',
+    Demo: ProgressSliderDemo,
   },
   {
     name: 'RangeSlider',

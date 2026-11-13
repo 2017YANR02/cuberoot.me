@@ -207,11 +207,7 @@ function LblLessonView({ archive }: { archive: boolean }) {
     <div className="lbl-body">
       <aside className="lbl-sidebar">{navigation}</aside>
       <div className="lbl-learning">
-        <div className="lbl-lesson-scroll" key={`${currentChapter.id}/${currentLesson.id}/${revision}`}
-          onClick={isDaisyLift ? event => {
-            if (event.target instanceof Element && event.target.closest('button, a, input, select, textarea, [role="slider"], .playback-bar')) return;
-            setDaisyLiftIndex(index => 1 - index);
-          } : undefined}>
+        <div className="lbl-lesson-scroll" key={`${currentChapter.id}/${currentLesson.id}/${revision}`}>
           {isDaisyOverview ? <div className="lbl-daisy-overview-content">
             <LessonContent key={String(showDaisyTerms)} chapter={sourceChapter}
               lesson={showDaisyTerms ? { ...currentLesson, kind: 'terms' } : currentLesson} hostChapterId={currentChapter.id} />
@@ -221,14 +217,10 @@ function LblLessonView({ archive }: { archive: boolean }) {
           </div> : isDaisyLift ? <div className="lbl-daisy-lift-content">
             <LessonContent key={daisyLiftIndex} chapter={sourceChapter}
               lesson={{ ...currentLesson, example: currentChapter.examples[daisyLiftIndex] }} hostChapterId={currentChapter.id} />
-            <button type="button" className="lbl-guide-continue"
-              onClick={() => setDaisyLiftIndex(index => 1 - index)}
-              aria-label={tr(daisyLiftIndex === 0
-                ? { zh: '切换为左手上', en: 'Switch to lift left' }
-                : { zh: '切换为右手上', en: 'Switch to lift right' })} />
-            <span className="lbl-guide-continue-hint">{tr(daisyLiftIndex === 0
-              ? { zh: '右手上，点击空白区切换为左手', en: 'Lift right. Click an empty area to switch to the left hand.' }
-              : { zh: '左手上，点击空白区切换为右手', en: 'Lift left. Click an empty area to switch to the right hand.' })}</span>
+            <button type="button" className="lbl-guide-continue-hint lbl-daisy-lift-switch"
+              onClick={() => setDaisyLiftIndex(index => 1 - index)}>{tr(daisyLiftIndex === 0
+              ? { zh: '点击切换为左手', en: 'Click to switch to the left hand' }
+              : { zh: '点击切换为右手', en: 'Click to switch to the right hand' })}</button>
           </div> : <LessonContent chapter={sourceChapter} lesson={currentLesson} hostChapterId={currentChapter.id} onSelectLesson={id => {
             const target = sections.findIndex(item => item.id === id);
             if (target >= 0) chooseSection(target);

@@ -2,12 +2,11 @@
 
 import ChatBubble from '@/components/ChatBubble';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RotateCcw } from 'lucide-react';
 import { Color } from 'three';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import { resolveSimPreviewMoves } from '@/components/AlgPlayer/player-setup';
 import { FM_FIXED_COLOR, FM_IGNORED, stickeringMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
-import PlaybackBar from '@/components/PlaybackBar';
+import ProgressSlider from '@/components/ProgressSlider';
 import TrainingFeedbackOverlay from '@/components/TrainingFeedbackOverlay';
 import { tr, T } from '@/i18n/tr';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
@@ -24,10 +23,11 @@ const edgeStickering = () => (initial: number, face: number) => initial === 20 ?
 const cornerStickering = () => (initial: number, face: number) => initial === 23 ? FM_IGNORED : pairMask(initial, face);
 const crossMask = () => (initial: number, face: number) => initial === 20 || initial === 23 ? FM_IGNORED : pairMask(initial, face);
 
-export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, onComplete }: {
-  orientation: string; edgeSetup: string; cornerSetup: string; onComplete: (complete: boolean) => void;
+export default function NonstandardIntro({ orientation, edgeSetup = '', cornerSetup = '', onComplete, terminologyOnly = false }: {
+  orientation: string; edgeSetup?: string; cornerSetup?: string; onComplete?: (complete: boolean) => void; terminologyOnly?: boolean;
 }) {
-  const scenes = useMemo(() => nonstandardIntroScenes(edgeSetup, cornerSetup, orientation), [edgeSetup, cornerSetup, orientation]);
+  const scenes = useMemo(() => nonstandardIntroScenes(edgeSetup, cornerSetup, orientation, terminologyOnly),
+    [edgeSetup, cornerSetup, orientation, terminologyOnly]);
   const player = useRef<AlgPlayerHandle>(null);
   const [position, setPosition] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -49,21 +49,41 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
   const viewTilt = useRef(0);
   const viewYaw = useRef(0);
   const autoplay = useRef(true);
+  const pendingTime = useRef<number | null>(null);
+  const scrubbing = useRef(false);
+  const offsets = useMemo(() => {
+    const times = [0];
+    for (const shot of scenes) times.push(times[times.length - 1] + shot.duration);
+    return times;
+  }, [scenes]);
   const index = position;
   const finished = index === scenes.length - 1 && sceneDone;
   const scene = scenes[index];
   const beat = scene.beats?.findLast(item => elapsed >= item.at);
   const moveCount = useMemo(() => resolveSimPreviewMoves('3x3', scene.alg).length, [scene.alg]);
+  const applyTime = useCallback((time: number) => {
+    const handle = player.current;
+    const instance = handle?.getPlayer();
+    if (!instance) return;
+    const completed = Math.min(moveCount, Math.max(0,
+      Math.floor((time - (scene.moveStart ?? 500)) / (scene.moveGap ?? 100)) + 1));
+    instance.timestamp = completed;
+    appliedMove.current = completed - 1;
+    playerStep.current = completed;
+    elapsedRef.current = time;
+    setElapsed(time);
+    setSceneDone(time >= scene.duration);
+  }, [moveCount, scene]);
   const pairColors = useMemo(() => {
     if (!pairTransition && !scene.flashPair) return undefined;
     const colors = orientedCubeFaceColors(orientation);
-    const visibility = pairTransition ? pairVisibility : reducedMotion || !playing ? 1
+    const visibility = pairTransition ? pairVisibility : scene.fadeInPair && elapsed < 650 && !reducedMotion ? elapsed / 650 : reducedMotion || !playing ? 1
       : (1 + Math.cos((elapsed - (beat?.at ?? 0)) * Math.PI / 350)) / 2;
     return Object.fromEntries(NONSTANDARD_INTRO_PAIR_STICKERS.map(sticker => [sticker,
       new Color(FM_FIXED_COLOR[FM_IGNORED]!).lerp(new Color(colors[sticker[0] as CubeFace]),
         (beat?.hideCorner && ['D2', 'F8', 'R6'].includes(sticker)) || (beat?.hideEdge && ['F5', 'R3'].includes(sticker)) ? 0 : visibility).getStyle(),
     ]));
-  }, [orientation, pairTransition, pairVisibility, scene.flashPair, reducedMotion, playing, elapsed, beat]);
+  }, [orientation, pairTransition, pairVisibility, scene.flashPair, scene.fadeInPair, reducedMotion, playing, elapsed, beat]);
   const fadePair = useCallback((from: number, to: number, done: () => void) => {
     const start = performance.now();
     const tick = (now: number) => {
@@ -88,7 +108,7 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
     return () => preference.removeEventListener('change', update);
   }, []);
 
-  useEffect(() => { onComplete(finished); }, [finished, onComplete]);
+  useEffect(() => { onComplete?.(finished); }, [finished, onComplete]);
   useEffect(() => () => { if (transitionTimer.current !== null) clearTimeout(transitionTimer.current); }, []);
   useEffect(() => {
     setReady(false);
@@ -102,14 +122,18 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
         frame = requestAnimationFrame(check); return;
       }
       setReady(true);
+      if (pendingTime.current !== null) {
+        applyTime(pendingTime.current);
+        pendingTime.current = null;
+      }
       if (autoplay.current) {
         autoplay.current = false;
-        setPlaying(!window.matchMedia('(prefers-reduced-motion: reduce)').matches && !document.hidden);
+        setPlaying(!scrubbing.current && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && !document.hidden);
       }
     };
     frame = requestAnimationFrame(check);
     return () => cancelAnimationFrame(frame);
-  }, [index, orientation, generation]);
+  }, [index, orientation, generation, applyTime]);
 
   useEffect(() => {
     if (!ready || !playing || sceneDone || fadingOut || pairTransition) return;
@@ -137,6 +161,8 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
           viewTilt.current = tilt;
         }
         if (appliedMove.current + 1 < moveCount && elapsedRef.current >= (scene.moveStart ?? 500) + (appliedMove.current + 1) * (scene.moveGap ?? 100)) {
+          lastRendered = elapsedRef.current;
+          setElapsed(lastRendered);
           appliedMove.current += 1;
           player.current?.playMove?.(appliedMove.current);
         } else if (elapsedRef.current >= scene.duration) {
@@ -191,13 +217,39 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
     }, reducedMotion ? 0 : 450);
   }, [ready, reducedMotion, scenes, scene, index, sceneDone, moveCount, pairTransition, fadePair]);
   useEffect(() => {
-    if (sceneDone && !finished) seek(index + 1, true);
+    if (sceneDone && !finished && !scrubbing.current) seek(index + 1, true);
   }, [sceneDone, finished, index, seek]);
-  const progress = finished ? scenes.length : index + Math.min(elapsed / scene.duration, .999);
+  const seekTime = (time: number) => {
+    if (transitionTimer.current !== null) clearTimeout(transitionTimer.current);
+    transitionTimer.current = null;
+    if (pairFrame.current !== null) cancelAnimationFrame(pairFrame.current);
+    pairFrame.current = null;
+    setPairTransition(false);
+    setFadingOut(false);
+    setPlaying(false);
+    const target = Math.max(0, offsets.slice(0, -1).findLastIndex(offset => offset <= time));
+    const localTime = time - offsets[target];
+    if (target === index && ready) {
+      applyTime(localTime);
+      return;
+    }
+    pendingTime.current = localTime;
+    setElapsed(localTime);
+    setSceneDone(false);
+    autoplay.current = false;
+    if (target === index) return;
+    setReady(false);
+    setContinuous(false);
+    setInitialView(scenes[target].leftView ? frontLeft : frontRight);
+    setPosition(target);
+    setGeneration(value => value + 1);
+  };
   const emphasis = beat?.highlight ?? scene.highlight;
   const pulse = beat ? beat.pulse : true;
   const highlights = scene.flashPair ? noHighlights : !pulse || reducedMotion || !playing || Math.floor(elapsed / 900) % 2 === 0 ? emphasis : noHighlights;
-  return <section className="f2l-concept-video" data-continuous={continuous} aria-label={tr({ zh: '基态与非标概念演示', en: 'Standard and non-standard cases: concept demonstration' })}>
+  return <section className="f2l-concept-video" data-continuous={continuous} aria-label={tr(terminologyOnly
+    ? { zh: '术语介绍', en: 'Terminology' }
+    : { zh: '基态与非标概念演示', en: 'Standard and non-standard cases: concept demonstration' })}>
     <div className="f2l-concept-count">{index + 1} / {scenes.length}</div>
     <div className="f2l-concept-scene">
       <div className="f2l-cube f2l-concept-cube" data-visible={(ready || continuous) && !fadingOut}><AlgPlayer key={`${orientation}:${generation}`} ref={player} puzzle="3x3" engine="sim" set="f2l-tutorial"
@@ -218,15 +270,17 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
         <p key={tr(beat?.caption ?? scene.caption)} className="f2l-concept-line">{tr(beat?.caption ?? scene.caption)}</p>
       </div>
     </div>
-    <PlaybackBar step={progress} total={scenes.length} playing={playing && ready} disabled={!ready || fadingOut || pairTransition}
-      onScrub={value => seek(value)} onSkipStart={() => seek(0)} onStepBack={() => seek(position - 1)}
-      onTogglePlay={() => finished ? seek(0, true) : sceneDone ? seek(index, true) : setPlaying(value => !value)}
-      onStepForward={() => seek(position + 1, true)} onSkipEnd={() => seek(scenes.length - 1, true)}
-      trailing={<button type="button" className="playback-bar-btn" disabled={!ready || fadingOut || pairTransition} onClick={() => seek(0)}
-        aria-label={tr({ zh: '重置概念演示', en: 'Reset concept demonstration' })}><RotateCcw size={15} aria-hidden="true" /></button>}
-      labels={{ skipStart: tr({ zh: '回到开头', en: 'Back to the beginning' }), stepBack: tr({ zh: '上一画面', en: 'Previous scene' }),
-        play: tr({ zh: '播放概念演示', en: 'Play concept demonstration' }), pause: tr({ zh: '暂停概念演示', en: 'Pause concept demonstration' }),
-        stepForward: tr({ zh: '下一画面', en: 'Next scene' }), skipEnd: tr({ zh: '跳到结尾', en: 'Skip to the end' }),
-        scrub: tr({ zh: '概念演示播放进度', en: 'Concept demonstration progress' }) }} />
+    <div className="f2l-intro-progress">
+      <ProgressSlider value={offsets[index] + elapsed} max={offsets[offsets.length - 1]} keyboardStep={500}
+        onChange={seekTime}
+        onInteractionStart={() => { scrubbing.current = true; setPlaying(false); }}
+        onInteractionEnd={() => {
+          scrubbing.current = false;
+          if (pendingTime.current !== null) autoplay.current = true;
+          else setPlaying(!finished);
+        }}
+        formatValue={value => tr({ zh: `${(value / 1000).toFixed(1)} 秒`, en: `${(value / 1000).toFixed(1)} seconds` })}
+        ariaLabel={tr({ zh: '概念演示播放进度', en: 'Concept demonstration progress' })} />
+    </div>
   </section>;
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import ChatBubble from '@/components/ChatBubble';
+import ProgressSlider from '@/components/ProgressSlider';
 import { useEffect, useId, useMemo, useRef, useState, type ComponentProps, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { Alg } from 'cubing/alg';
@@ -12,7 +13,7 @@ import { LBL_STEPS, lblDemoView, LESSON_STICKERING, LBL_STAGE_GOALS, LBL_LEARNIN
 import SegmentedInstructions from './SegmentedInstructions';
 import { getLblAlgGroups } from './alg-cues';
 import CompleteDemo, { FishExample, WhiteCrossCompleteDemo } from './CompleteDemo';
-import { BLUE_RED_BOTTOM_CORNER_SETUP, daisyBlockedStickers, bottomCornerPreview, middleLessonHiddenStickers, middleDirectionStickers, middleEdgePreview, middleAlignmentStickers, yellowFaceNonYellowStickers, yellowFaceTouchSticker, yellowFishRecognitionStickers, type CompleteDemoStage } from './complete-demo-state';
+import { daisyBlockedStickers, bottomCornerPreview, middleLessonHiddenStickers, middleDirectionStickers, middleEdgePreview, middleAlignmentStickers, yellowFaceNonYellowStickers, yellowFaceTouchSticker, yellowFishRecognitionStickers, type CompleteDemoStage } from './complete-demo-state';
 import BasicsGuide from './BasicsGuide';
 import IntroLesson from './IntroLesson';
 import MiddleCases from './MiddleCases';
@@ -32,18 +33,12 @@ import SolveFlowchart from './SolveFlowchart';
 import { StageImage } from './StageImage';
 export { StageImage } from './StageImage';
 import EdgeObservation from './EdgeObservation';
+import SpecialCasePrelude, { cornerPreviews } from './SpecialCasePrelude';
 
 const ignoreCaseCue = () => {};
-const cornerPreviews = [
-  { setup: `(${RIGHT})2`, caption: { zh: '角块在底层，是特殊情况', en: 'A corner in the bottom layer is a special case.' } },
-  { setup: `(${RIGHT})2`, caption: { zh: '情况1：白色朝左', en: 'Case 1: White faces left' } },
-  { setup: `(${RIGHT})4`, caption: { zh: '情况2：白色朝右', en: 'Case 2: White faces right' } },
-  { setup: BLUE_RED_BOTTOM_CORNER_SETUP, caption: { zh: '情况3：颜色不对（与中心颜色不同）', en: 'Case 3: Wrong colors (different from the centers)' } },
-  { setup: BLUE_RED_BOTTOM_CORNER_SETUP, caption: { zh: '无论哪种特殊情况，都做右公式', en: 'For any of these special cases, do the right trigger' } },
-];
 
 function CornerCasePrelude({ index, onAdvance, previews = cornerPreviews, middle = false, observation = false, left = false }: {
-  index: number; onAdvance: (index: number) => void; previews?: typeof cornerPreviews; middle?: boolean; observation?: boolean; left?: boolean;
+  index: number; onAdvance: (index: number) => void; previews?: { setup: string; caption: { zh: string; en: string } }[]; middle?: boolean; observation?: boolean; left?: boolean;
 }) {
   const player = useRef<AlgPlayerHandle>(null);
   const wrapper = useRef<HTMLDivElement>(null);
@@ -270,11 +265,25 @@ function LessonPlayer({ player, interacted, yellowCase, fishLeft, middleAlignmen
   </div>;
 }
 
+const daisyBlockedPhases = [
+  { duration: 3500, step: 0 },
+  { duration: 3500, step: 0 },
+  { duration: 2400, step: 0, move: true },
+  { duration: 1500, step: 1 },
+  { duration: 2400, step: 1, move: true },
+  { duration: 1500, step: 2 },
+];
+const daisyBlockedDuration = daisyBlockedPhases.reduce((sum, phase) => sum + phase.duration, 0);
+
 function DaisyBlockedPrelude({ setup, onDone }: { setup: string; onDone: () => void }) {
   const wrapper = useRef<HTMLDivElement>(null);
   const player = useRef<AlgPlayerHandle>(null);
   const visible = usePlayerVisible(player, setup);
   const [stage, setStage] = useState(0);
+  const clock = useRef(0);
+  const [time, setTime] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [seekVersion, setSeekVersion] = useState(0);
   const stickers = useMemo(() => daisyBlockedStickers(setup), [setup]);
   const [outlineVisible, setOutlineVisible] = useState(true);
   useEffect(() => {
@@ -283,33 +292,56 @@ function DaisyBlockedPrelude({ setup, onDone }: { setup: string; onDone: () => v
     const timer = window.setInterval(() => setOutlineVisible(value => !value), 650);
     return () => window.clearInterval(timer);
   }, [visible, stage]);
-  function advance() {
-    if (!visible) return;
-    if (stage < 2) setStage(value => value + 1);
-    else onDone();
-  }
   const highlighted = stage < 2 ? outlineVisible ? [stickers[stage]] : [] : stickers;
-  const [learningArea, setLearningArea] = useState<Element | null>(null);
+  const [toolbar, setToolbar] = useState<Element | null>(null);
   useEffect(() => {
-    setLearningArea(wrapper.current?.closest('.lbl-lesson-scroll') ?? null);
+    setToolbar(wrapper.current?.closest('.lbl-learning')?.querySelector('.lbl-demo-toolbar') ?? null);
   }, []);
   useEffect(() => {
-    function continueWithSpace(event: KeyboardEvent) {
-      if (event.code !== 'Space' || event.defaultPrevented || event.repeat || event.isComposing ||
-        event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
-      if (event.target instanceof Element && event.target.closest('button, input, select, textarea, a, [contenteditable], [role="dialog"]')) return;
-      event.preventDefault();
-      advance();
+    if (!visible) return;
+    let index = 0, offset = 0;
+    while (index < daisyBlockedPhases.length - 1 && clock.current >= offset + daisyBlockedPhases[index].duration) {
+      offset += daisyBlockedPhases[index++].duration;
     }
-    document.addEventListener('keydown', continueWithSpace);
-    return () => document.removeEventListener('keydown', continueWithSpace);
-  }, [onDone, visible, stage]);
+    let elapsed = clock.current - offset;
+    const enter = () => {
+      const phase = daisyBlockedPhases[index];
+      setStage(Math.min(index, 2));
+      if (phase.move && !paused) {
+        elapsed = 0;
+        player.current?.playMove?.(phase.step);
+      } else {
+        const adapter = player.current?.getPlayer();
+        if (adapter) adapter.timestamp = phase.step;
+      }
+    };
+    enter();
+    if (paused) return;
+    let frame = 0, previous: number | undefined;
+    const tick = (now: number) => {
+      const phase = daisyBlockedPhases[index];
+      elapsed = Math.min(phase.duration, elapsed + (document.hidden ? 0 : Math.min(now - (previous ?? now), 50)));
+      previous = now;
+      clock.current = offset + elapsed;
+      setTime(clock.current);
+      if (elapsed >= phase.duration && !player.current?.isUserMovePending?.()) {
+        if (index === daisyBlockedPhases.length - 1) { onDone(); return; }
+        offset += phase.duration;
+        index++;
+        elapsed = 0;
+        enter();
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [visible, paused, seekVersion, onDone]);
   const bubbleStage = visible ? wrapper.current?.querySelector('.sim-stage') : null;
   return <div ref={wrapper} className="lbl-content lbl-content-example lbl-daisy-blocked-prelude">
     <section className="lbl-demonstration lbl-daisy-blocked-player">
       <div className="lbl-auto-player" data-visible={visible}>
-        <AlgPlayer ref={player} puzzle="3x3" engine="sim" playRequest={stage >= 2 ? 1 : 0}
-          set={LESSON_STICKERING.daisy} alg="R R' R R'" loop setup={setup} orientation="z2" sceneRot={lblDemoView()}
+        <AlgPlayer ref={player} puzzle="3x3" engine="sim"
+          set={LESSON_STICKERING.daisy} alg="R R'" setup={setup} orientation="z2" sceneRot={lblDemoView()}
           highlightedStickers={highlighted} moveDurationMs={2400}
           controlMode="none" hideResetView lockView interactionMode="none" fillPane />
       </div>
@@ -323,11 +355,13 @@ function DaisyBlockedPrelude({ setup, onDone }: { setup: string; onDone: () => v
       <p className="lbl-lead">{tr({ zh: '顶面挡住时，直接右手上会怎样？', en: 'What happens if you lift right while the top slot is occupied?' })}</p>
       <p hidden={stage < 2}>{tr({ zh: '白棱上去了，原来的白花瓣却被转走了。', en: 'The white edge moves up, but the existing white petal moves away.' })}</p>
     </section>
-    {learningArea && createPortal(<>
-      <button type="button" className="lbl-guide-continue" onClick={advance}
-        aria-label={tr({ zh: '点击学习区继续', en: 'Click the lesson area to continue' })} />
-      <span className="lbl-guide-continue-hint">{tr({ zh: '点击学习区继续', en: 'Click the lesson area to continue' })}</span>
-    </>, learningArea)}
+    {toolbar && createPortal(<div className="lbl-cross-animation-progress">
+      <ProgressSlider value={time} max={daisyBlockedDuration} keyboardStep={500}
+        onChange={value => { clock.current = value; setTime(value); setSeekVersion(version => version + 1); }}
+        onInteractionStart={() => setPaused(true)} onInteractionEnd={() => setPaused(false)}
+        formatValue={value => tr({ zh: `${(value / 1000).toFixed(1)} 秒`, en: `${(value / 1000).toFixed(1)} seconds` })}
+        ariaLabel={tr({ zh: '演示进度', en: 'Animation progress' })} />
+    </div>, toolbar)}
   </div>;
 }
 
@@ -343,6 +377,7 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   const [cornerPreview, setCornerPreview] = useState(0);
   const [edgeObservationDone, setEdgeObservationDone] = useState(false);
   const [daisyBlockedPreludeDone, setDaisyBlockedPreludeDone] = useState(false);
+  const [specialPreludeDone, setSpecialPreludeDone] = useState(false);
   const example = useMemo(() => {
     const original = lesson.example;
     if (!edgeObservationDone || chapter.id !== 'edge-position' || !original) return original;
@@ -411,6 +446,17 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   if (chapter.id === 'daisy' && lesson.id === 'case-2' && example?.setup && !daisyBlockedPreludeDone) {
     return <DaisyBlockedPrelude setup={example.setup} onDone={() => setDaisyBlockedPreludeDone(true)} />;
   }
+  if (example && !specialPreludeDone && ((chapter.id === 'corners' && lesson.id === 'case-1') || (chapter.id === 'middle' && lesson.id === 'case-2'))) {
+    const middle = chapter.id === 'middle';
+    const scenes = middle ? [
+      { setup: '', purpleStickers: ['U7', 'F1'], targetLayer: 'top' as const, caption: { zh: '棱块在顶层时\n两种状态都已学会', en: 'With the edge in the top layer\nwe’ve learned both cases' }, observation: { zh: '棱在顶层', en: 'Edge in the top layer' }, duration: 4500 },
+      { setup: '', purpleStickers: ['F5', 'R3'], caption: { zh: '有时目标棱块会出现在中层', en: 'Sometimes the target edge is in the middle layer' }, observation: { zh: '棱在中层', en: 'Edge in the middle layer' }, duration: 4500 },
+      { setup: chapter.examples[2].setup!, caption: { zh: '棱在中层时\n朝向可能不对', en: 'When the edge is in the middle layer\nit may be flipped' }, observation: { zh: '朝向反了', en: 'Flipped orientation' }, duration: 5000 },
+      { setup: `${chapter.examples[3].setup!} y`, caption: { zh: '棱在中层时\n位置也可能不对', en: 'When the edge is in the middle layer\nit may also be in the wrong slot' }, observation: { zh: '看侧面颜色', en: 'Check the side colors' }, duration: 6500 },
+      { setup: `${chapter.examples[3].setup!} y`, purple: true, caption: { zh: '无论哪种情况\n直接做「去右」公式', en: 'In either case\nuse the right insertion' }, duration: 5000 },
+    ] : cornerPreviews;
+    return <SpecialCasePrelude scenes={scenes} piece={middle ? 'edge' : 'corner'} finalAlg={middle ? chapter.examples[0].alg : RIGHT} onDone={() => setSpecialPreludeDone(true)} />;
+  }
   if (lesson.kind === 'flowchart') return <SolveFlowchart stageId={chapter.id} onSelectLesson={onSelectLesson} />;
   if (lesson.kind === 'notation') return <NotationLesson />;
   if (chapter.id === 'edge-position' && lesson.kind === 'example' && example && !edgeObservationDone) {
@@ -441,7 +487,7 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
       ? { zh: '观察棱块，该放入左边', en: 'Observe the edge. It belongs on the left.' }
       : { zh: '观察棱块，该放入右边', en: 'Observe the edge. It belongs on the right.' } },
   ] : cornerPreviews;
-  const previewCaption = cornerEjection || middleEjection || middleAlignment ? previews[cornerPreview]?.caption : undefined;
+  const previewCaption = middleAlignment ? previews[cornerPreview]?.caption : undefined;
   const stackTrigger = hostChapterId === 'corners' && triggerHandsDemo;
   const showJExplanation = hostChapterId === 'corner-position' && chapter.id === 'l-alg-learning';
   if (example) return <div className={`lbl-content lbl-content-example${stackTrigger ? ' lbl-content-trigger' : ''}${cornerEjection ? ' lbl-content-corner-ejection' : ''}${middleEjection || middleAlignment ? ' lbl-content-middle-ejection' : ''}`}>

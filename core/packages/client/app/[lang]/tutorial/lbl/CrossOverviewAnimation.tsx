@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import PlaybackScrubber from '@cuberoot/timer-ui/PlaybackScrubber';
+import ProgressSlider from '@/components/ProgressSlider';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import TrainingFeedbackOverlay from '@/components/TrainingFeedbackOverlay';
 import { tr } from '@/i18n/tr';
@@ -143,7 +143,7 @@ const bottomView = { x: -Math.PI / 2, y: 0, z: 0 };
 // The J permutation exchanges DF (green) and DL (red), leaving every white edge down.
 const swappedCrossSetup = `z2 ${CORNER_POSITION} z2`;
 const comparisonPhases: readonly {
-  duration: number; orbit?: boolean; turn?: boolean; feedback?: boolean; fadeOut?: boolean;
+  duration: number; orbit?: boolean; turn?: boolean; feedback?: boolean;
 }[] = [
   { duration: 1300 },
   { duration: 1600, orbit: true },
@@ -152,13 +152,11 @@ const comparisonPhases: readonly {
   { duration: 1400, turn: true },
   { duration: 1400, turn: true },
   { duration: 3000, feedback: true },
-  { duration: 450, fadeOut: true },
-  { duration: 180, fadeOut: true },
 ];
 const overviewDuration = phases.reduce((sum, phase) => sum + phase.duration, 0) * timingScale;
 const animationDuration = overviewDuration + comparisonPhases.reduce((sum, phase) => sum + phase.duration, 0);
 
-function CrossComparison({ reducedMotion, progress, clock, seekVersion, paused, onComplete, onFade }: PlaybackProps & { reducedMotion: boolean }) {
+function CrossComparison({ reducedMotion, progress, clock, seekVersion, paused, onFade }: Omit<PlaybackProps, 'onComplete'> & { reducedMotion: boolean }) {
   const left = useRef<AlgPlayerHandle>(null);
   const right = useRef<AlgPlayerHandle>(null);
   const leftVisible = usePlayerVisible(left, 'cross-comparison-left');
@@ -189,7 +187,7 @@ function CrossComparison({ reducedMotion, progress, clock, seekVersion, paused, 
       player.current?.orbitView?.(yaw, 0);
     }
     setPhaseIndex(index);
-    onFade(Boolean(comparisonPhases[index].fadeOut));
+    onFade(false);
     let previousTime: number | undefined;
     const tick = (now: number) => {
       const phase = comparisonPhases[index];
@@ -218,13 +216,10 @@ function CrossComparison({ reducedMotion, progress, clock, seekVersion, paused, 
         if (reducedMotion && phase.feedback) return;
         if (index === comparisonPhases.length - 1) {
           updateLoopProgress(progress, comparisonPhases, index, elapsed, 1, overviewDuration);
-          onComplete();
           return;
         }
         index += 1;
         elapsed = 0;
-        const next = comparisonPhases[index];
-        if (next.fadeOut) onFade(true);
         setPhaseIndex(index);
       }
       if (!reducedMotion) updateLoopProgress(progress, comparisonPhases, index, elapsed, 1, overviewDuration);
@@ -232,16 +227,16 @@ function CrossComparison({ reducedMotion, progress, clock, seekVersion, paused, 
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [visible, reducedMotion, progress, clock, seekVersion, paused, onComplete, onFade]);
+  }, [visible, reducedMotion, progress, clock, seekVersion, paused, onFade]);
 
   return <>{[left, right].map((player, index) => <figure key={index}>
-    <div className="lbl-cross-overview-cube" data-visible={visible && !phase.fadeOut}>
+    <div className="lbl-cross-overview-cube" data-visible={visible}>
       <AlgPlayer ref={player} puzzle="3x3" engine="sim" set={LESSON_STICKERING.cross}
         alg="" setup={index === 0 ? swappedCrossSetup : undefined} startSolved={index === 1}
         orientation="z2" sceneRot={bottomView}
         stickeringAtStep={crossStickering}
         controlMode="none" hideResetView interactionMode="none" fillPane />
-      {(phase.feedback || phase.fadeOut) && <div className="lbl-cross-comparison-feedback">
+      {phase.feedback && <div className="lbl-cross-comparison-feedback">
         <TrainingFeedbackOverlay kind={index === 0 ? 'wrong' : 'correct'}
           correctLabel={tr({ zh: '棱块侧面与中心颜色相同', en: 'The edge side colors match their centers' })}
           wrongLabel={tr({ zh: '棱块侧面与中心颜色不同', en: 'The edge side colors do not match their centers' })} />
@@ -277,17 +272,6 @@ export default function CrossOverviewAnimation({ daisy, cross }: { daisy: ReactN
   };
   const playback = { progress, clock, seekVersion, paused, onFade: setFading };
   useEffect(() => {
-    const resume = () => setPaused(false);
-    window.addEventListener('pointerup', resume);
-    window.addEventListener('pointercancel', resume);
-    window.addEventListener('blur', resume);
-    return () => {
-      window.removeEventListener('pointerup', resume);
-      window.removeEventListener('pointercancel', resume);
-      window.removeEventListener('blur', resume);
-    };
-  }, []);
-  useEffect(() => {
     setToolbar(wrapper.current?.closest('.lbl-learning')?.querySelector('.lbl-demo-toolbar') ?? null);
   }, []);
   useEffect(() => {
@@ -300,7 +284,7 @@ export default function CrossOverviewAnimation({ daisy, cross }: { daisy: ReactN
   return <><div ref={wrapper} className="lbl-cross-animation-scene" data-fading={fading}>
   <div key={`${continued}/${animate}`} ref={opening} data-opening={animate && !continued}
     className={`lbl-stage-overview lbl-cross-overview${continued ? ' lbl-cross-comparison' : ''}`}>
-    {continued ? <CrossComparison reducedMotion={false} {...playback} onComplete={restart} /> : <>
+    {continued ? <CrossComparison reducedMotion={false} {...playback} /> : <>
     <figure>{animate ? <div className="lbl-cross-overview-cube">
       <AlgPlayer puzzle="3x3" engine="sim" set={LESSON_STICKERING.daisy}
         alg="" setup="F2 R2 B2 L2" orientation="z2" sceneRot={LBL_INITIAL_VIEW}
@@ -311,16 +295,10 @@ export default function CrossOverviewAnimation({ daisy, cross }: { daisy: ReactN
     <figure>{animate ? <div className="lbl-cross-overview-cube"><CrossPlayback {...playback} onComplete={showComparison} opening={opening} /></div> : cross}</figure>
     </>}
   </div>
-  {animate && toolbar && createPortal(<div className="lbl-cross-animation-progress"
-    onPointerDownCapture={() => setPaused(true)}
-    onKeyDownCapture={event => {
-      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-      event.preventDefault();
-      setPaused(true);
-      seek(event.key === 'Home' ? 0 : event.key === 'End' ? animationDuration
-        : Math.max(0, Math.min(animationDuration, clock.current + (event.key === 'ArrowLeft' ? -500 : 500))));
-    }} onKeyUpCapture={() => setPaused(false)} onBlurCapture={() => setPaused(false)}>
-    <PlaybackScrubber step={time} total={animationDuration} onScrub={seek}
+  {animate && toolbar && createPortal(<div className="lbl-cross-animation-progress">
+    <ProgressSlider value={time} max={animationDuration} onChange={seek} keyboardStep={500}
+      onInteractionStart={() => setPaused(true)} onInteractionEnd={() => setPaused(false)}
+      formatValue={value => tr({ zh: `${(value / 1000).toFixed(1)} 秒`, en: `${(value / 1000).toFixed(1)} seconds` })}
       ariaLabel={tr({ zh: '演示进度', en: 'Animation progress' })} />
   </div>, toolbar)}
   {continued ? <p className="lbl-lead">{tr({
@@ -332,7 +310,7 @@ export default function CrossOverviewAnimation({ daisy, cross }: { daisy: ReactN
   </>}
   {!animate && <>
     <div className="lbl-stage-overview lbl-cross-comparison">
-      <CrossComparison reducedMotion {...playback} onComplete={restart} />
+      <CrossComparison reducedMotion {...playback} />
     </div>
     <p className="lbl-lead">{tr({ zh: '不但要看底面图形，还要对齐侧面颜色', en: 'Check the bottom pattern and align the side colors too.' })}</p>
   </>}

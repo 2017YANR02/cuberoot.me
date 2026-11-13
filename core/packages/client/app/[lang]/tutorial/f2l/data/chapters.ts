@@ -173,7 +173,14 @@ export const F2L_CHAPTERS = [
     ]
   },
   {
-    "id": "lesson-4",
+    id: 'lesson-4',
+    title: { zh: 'F2L 分类教学', en: 'F2L case families' },
+    question: { zh: '遇到不同的棱角位置，该怎么开始？', en: 'Where do I start when the edge and corner are in different positions?' },
+    answer: [{ zh: '按棱角的位置和朝向选择小节，再选一个案例看演示。', en: 'Choose a section based on the pieces’ position and orientation, then select a case to see the demonstration.' }],
+    tips: [],
+  },
+  {
+    "id": "lesson-15",
     "title": {
       "zh": "公式（一）",
       "en": "Algorithms (1)"
@@ -209,7 +216,7 @@ export const F2L_CHAPTERS = [
     ]
   },
   {
-    "id": "lesson-5",
+    "id": "lesson-16",
     "title": {
       "zh": "公式（二）",
       "en": "Algorithms (2)"
@@ -350,4 +357,4 @@ export const F2L_CHAPTERS = [
 export type ChapterId = typeof F2L_CHAPTERS[number]['id'];
 
 // Experiments and the former standalone lessons remain accessible outside the learning sequence.
-export const F2L_NAV_CHAPTERS = F2L_CHAPTERS.filter(chapter => !['lesson-10', 'lesson-11', 'lesson-12', 'lesson-13', 'lesson-14'].includes(chapter.id));
+export const F2L_NAV_CHAPTERS = F2L_CHAPTERS.filter(chapter => !['lesson-10', 'lesson-11', 'lesson-12', 'lesson-13', 'lesson-14', 'lesson-15', 'lesson-16'].includes(chapter.id));

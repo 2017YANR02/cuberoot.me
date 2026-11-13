@@ -28,6 +28,8 @@ import './f2l.css';
 
 export default function F2lTutorial() {
   const page = useRef<HTMLElement>(null);
+  const lessonScroll = useRef<HTMLDivElement>(null);
+  const [dockTarget, setDockTarget] = useState<HTMLDivElement | null>(null);
   const [mobileMenuTarget, setMobileMenuTarget] = useState<HTMLDivElement | null>(null);
   const [{ step: stepId }, setStepId] = useQueryStates({
     step: parseAsStringEnum(F2L_CHAPTERS.map(chapter => chapter.id)).withDefault('lesson-1').withOptions({ history: 'push', clearOnDefault: false }),
@@ -40,9 +42,10 @@ export default function F2lTutorial() {
   });
   const [caseId, setCaseId] = useQueryState('case', parseAsStringEnum(F2L_CASES.map(item => item.id)).withDefault(ORDERED_BASIC_CASES[0].id).withOptions({ history: 'replace' }));
   const [flowPathId, setFlowPathId] = useQueryState('flowAlg', parseAsStringEnum(xPlusFlow.paths.map(path => path.id)).withDefault('1'));
-  const [orientation, setOrientation] = useState('');
+  const [orientation, setOrientation] = useState("z2 y'"); // White bottom, red front.
   const [view] = useQueryState('view', parseAsString);
-  const isPractice = view === 'practice' && (stepId === 'lesson-4' || stepId === 'lesson-5');
+  const isAlgorithmLesson = stepId === 'lesson-4' || stepId === 'lesson-15' || stepId === 'lesson-16';
+  const isPractice = view === 'practice' && isAlgorithmLesson;
   const [pauseBetween, setPauseBetween] = useState(true);
   const [flowTeaching, setFlowTeaching] = useState(true);
   useEffect(() => {
@@ -91,6 +94,7 @@ export default function F2lTutorial() {
     if (next) navigate(next.id);
   };
   const chapterIndex = F2L_NAV_CHAPTERS.findIndex(chapter => chapter.id === stepId);
+  useEffect(() => { if (lessonScroll.current) lessonScroll.current.scrollTop = 0; }, [stepId, isPractice]);
   const dialogue = F2L_CHAPTERS.find(chapter => chapter.id === stepId)!;
 
   return <main className={`f2l-page${isPractice ? ' f2l-practice-page' : ''}`} ref={page}>
@@ -109,11 +113,12 @@ export default function F2lTutorial() {
     {!isPractice && <TutorialToolbar stepId={stepId} onChapterChange={navigate} />}
     <article className="f2l-chapter">
       <StudyNavigation.Provider value={{
-        mobileMenuTarget, setMobileMenuTarget,
+        mobileMenuTarget, setMobileMenuTarget, dockTarget,
         previous: chapterIndex > 0 ? () => navigate(F2L_NAV_CHAPTERS[chapterIndex - 1].id) : undefined,
         next: chapterIndex >= 0 && chapterIndex < F2L_NAV_CHAPTERS.length - 1 ? nextChapter : undefined,
       }}>
       <div className="f2l-chapter-body">
+      <div className="f2l-lesson-scroll" ref={lessonScroll}>
       {!isPractice && stepId !== 'lesson-10' && <div className="f2l-chapter-dialogue">
         <ChatBubble tail="right" className="f2l-dialogue-question">{tr(dialogue.question)}</ChatBubble>
         <ChatBubble tail="left" className="f2l-dialogue-answer">
@@ -126,13 +131,16 @@ export default function F2lTutorial() {
       {stepId === 'lesson-12' && <BasicCaseLesson orientation={orientation} pauseBetween={pauseBetween} caseId={caseId} onCaseChange={id => { void setCaseId(id); }} onNextChapter={nextChapter} />}
       {stepId === 'lesson-13' && <PracticeLesson orientation={orientation} pauseBetween={pauseBetween} caseId={caseId} onCaseChange={id => { void setCaseId(id); }} onNextChapter={nextChapter} />}
       {stepId === 'lesson-3' && <CaseCatalogLesson orientation={orientation} onNextChapter={nextChapter} />}
-      {(stepId === 'lesson-4' || stepId === 'lesson-5') && <AlgorithmLessons stepId={stepId} orientation={orientation} pauseBetween={pauseBetween} flowTeaching={flowTeaching} onNextChapter={nextChapter} practice={isPractice} />}
+      {isAlgorithmLesson && <AlgorithmLessons stepId={stepId} orientation={orientation} pauseBetween={pauseBetween} flowTeaching={flowTeaching}
+        onNextChapter={stepId === 'lesson-15' ? () => navigate('lesson-16') : stepId === 'lesson-16' ? () => navigate('lesson-6') : nextChapter} practice={isPractice} />}
       {stepId === 'lesson-6' && <ExtractionLesson orientation={orientation} pauseBetween={pauseBetween} onNextChapter={nextChapter} />}
       {stepId === 'lesson-7' && <FreePracticeLesson orientation={orientation} pauseBetween={pauseBetween} />}
       {stepId === 'lesson-10' && <FlowchartLesson orientation={orientation} pauseBetween={pauseBetween} pathId={flowPathId} onPathChange={id => { void setFlowPathId(id); }} />}
       {stepId === 'lesson-10' && <StudyActions />}
       {stepId === 'lesson-11' && <ThreeMoveLesson orientation={orientation} pauseBetween={pauseBetween} caseId={caseId}
         onCaseChange={id => { void setCaseId(id); }} onComplete={() => navigate('lesson-3')} />}
+      </div>
+      <div className="f2l-dock-host" ref={setDockTarget} />
       </div>
       </StudyNavigation.Provider>
       {!isPractice && <div className="f2l-tips-sidebar"><TeachingTips key={stepId} stepId={stepId} /></div>}

@@ -10,7 +10,7 @@ import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import type { CubeFace } from '@/lib/cube-colors';
 import { tr } from '@/i18n/tr';
 import { syncPlayerToMoveCount } from '@/lib/recon-alg-utils';
-import { createIntroTimeline, introFrame, INTRO_CROSS_MS } from '../lib/intro-timeline';
+import { createIntroTimeline, introFrame, INTRO_CROSS_MS, INTRO_INSPECTION_RETURN_MS } from '../lib/intro-timeline';
 import { LBL_INTRO_SEGMENTS, F2L_INTRO_SEGMENTS, F2L_INTRO_VIDEO_ALG, LBL_INTRO_VIDEO_ALG, LBL_INTRO_VIDEO_SETUP, LBL_INTRO_CORNER_STICKERS, LBL_INTRO_EDGE_STICKERS } from '../data/lbl-intro';
 import './nonstandard-intro.css';
 import './algorithm-practice.css';
@@ -106,7 +106,9 @@ export default function FirstTwoLayersIntro({ orientation, method, comparisonSta
     localClock.current = 0; setPlaying(true);
     setReplayVersion(value => value + 1);
   };
-  const caption = comparisonStage === 'compare' ? (pairs ? { zh: 'F2 L', en: 'F2 L' } : { zh: '层先法', en: 'LBL' })
+  const caption = comparisonStage === 'compare' ? (pairs ? { zh: 'F2L', en: 'F2L' } : { zh: '层先法', en: 'LBL' })
+    : comparison && frame.time >= INTRO_INSPECTION_RETURN_MS
+      ? { zh: '接下来，看看层先法和 F2L 各自怎么完成前两层', en: 'Next, let’s see how LBL and F2L each solve the first two layers' }
     : pairs && phase === 1 ? { zh: '每次一起复原一组棱角', en: 'Solve one corner–edge pair at a time' }
     : pairs && phase === 4 ? { zh: '四组棱角归位，前两层完成', en: 'All four pairs are in place — the first two layers are complete' } : captions[phase];
   const progressSegments = pairs ? [...segments, ...segments] : [...segments.slice(4), ...segments.slice(0, 4)];

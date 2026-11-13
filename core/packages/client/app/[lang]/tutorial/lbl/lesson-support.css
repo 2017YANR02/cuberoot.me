@@ -633,6 +633,24 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
   max-width: min(14rem, calc(50% - 8cqmin - 0.5rem));
 }
 
+.chat-bubble.lbl-cube-callout.lbl-special-case-bubble {
+  left: calc(50% + 24cqmin);
+  top: calc(50% + 18cqmin);
+  max-width: calc(50% - 24cqmin - 0.5rem);
+}
+.chat-bubble.lbl-cube-callout.lbl-special-case-bubble[data-piece='edge'] {
+  top: calc(50% - 4cqmin);
+}
+.chat-bubble.lbl-cube-callout.lbl-special-case-bubble[data-piece='edge'][data-layer='top'] {
+  top: calc(50% - 20cqmin);
+  left: calc(50% - 7cqmin);
+  transform: translate(-50%, -100%);
+  max-width: min(14rem, calc(100% - 1.5rem));
+}
+.chat-bubble.lbl-cube-callout.lbl-special-case-bubble[data-piece='corner'][data-layer='top'] {
+  top: calc(50% - 22cqmin);
+}
+
 .chat-bubble.lbl-cube-callout.lbl-edge-right-bubble {
   left: auto;
   right: max(0.5rem, calc(50% - 40cqmin));
