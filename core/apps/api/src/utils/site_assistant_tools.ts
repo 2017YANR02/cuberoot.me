@@ -12,6 +12,7 @@ import { PHOTO_ALG_SETS, POCKET_PHOTO_ALG_SETS, FOUR_PHOTO_ALG_SETS } from '@cub
 import { findAssistantPeople } from './site_assistant_people.js';
 import { analysisSchemaCall, analysisQueryCall } from './site_assistant_analysis.js';
 import { readAssistantNews } from './site_assistant_news.js';
+import { algorithmCards } from './site_assistant_algorithms.js';
 
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
 const competitionId = id.refine(value=>!/^\d{4}[A-Z]{4}\d{2}$/.test(value),'This is a person WCA ID; use wcaId, not compId.');
@@ -36,7 +37,11 @@ export const toolCallSchema = z.discriminatedUnion('tool', [
   z.object({ tool: z.literal('recon'), id: z.number().int().positive() }).strict(),
   z.object({ tool: z.literal('glossary'), query }).strict(),
   z.object({ tool: z.literal('forum'), query }).strict(),
-  z.object({ tool: z.literal('algorithms'), puzzle: id.default('3x3'), set: id.optional() }).strict(),
+  z.object({ tool: z.literal('algorithms'), puzzle: id.default('3x3'), set: id.optional(),
+    query: z.string().trim().max(100).optional(), caseId: z.number().int().positive().optional(),
+    offset: z.number().int().min(0).max(50000).optional(), limit: z.number().int().min(1).max(24).optional(),
+    alternative: z.number().int().min(0).max(500).optional(), display: z.enum(['both','image','text']).optional(),
+  }).strict(),
   z.object({ tool: z.literal('lookup_cube_photo'), imageRef: z.string().regex(/^(?:current:[0-2]|history:[0-9]:[0-2])$/),
     sets: z.union([z.literal('auto'), z.array(z.enum([...PHOTO_ALG_SETS, ...POCKET_PHOTO_ALG_SETS, ...FOUR_PHOTO_ALG_SETS])).min(1).max(PHOTO_ALG_SETS.length + POCKET_PHOTO_ALG_SETS.length + FOUR_PHOTO_ALG_SETS.length)]).default('auto'),
   }).strict(),
@@ -380,12 +385,17 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
   } else if (call.tool === 'algorithms') {
     const path=call.set ? `${api}/alg/sets/${call.puzzle}/${call.set}` : `${api}/alg/sets`;
     const data=await read(path);
-    out.evidence=call.set ? {...data,cases:data.cases?.slice(0,72)} : {
+    const cards = call.set ? algorithmCards(data, {...call, set:call.set}, lang) : undefined;
+    if (cards) out.artifacts.push(cards);
+    out.evidence=cards ? {puzzle:cards.puzzle,set:cards.set,total:cards.total,offset:cards.offset,nextOffset:cards.nextOffset,
+      items:cards.cards.map(({sticker, ...card}) => card),
+      instruction:'The UI renders these exact algorithm cards. Briefly introduce them; do not repeat moves in prose. total counts matching cases, not formulas. nextOffset means this is a partial page, never the entire set. Empty items with nonzero total can mean the requested alternative/offset is unavailable. Follow-ups must reuse these case IDs, alternative indexes and display mode.',
+    } : {
       puzzle:call.puzzle,
       sets:data.filter((set:any)=>set.puzzle===call.puzzle).map((set:any)=>({puzzle:set.puzzle,setSlug:set.setSlug,count:set.count,updatedAt:set.updatedAt})),
       instruction:'Complete catalog for this puzzle. count is the number of cases, not formulas. Use these counts for catalog questions; do not reread the catalog or fetch individual formula content to answer them. For other aggregates use analysis_schema / analysis_query.',
     };
-    out.sources.push(source('algorithms',label('公式库','Algorithms'),call.set ? `/alg/${call.puzzle}/${call.set}` : '/alg'));
+    out.sources.push(source(cards ? `algorithms:${call.puzzle}:${call.set}:${call.caseId ?? call.query ?? ''}:${call.offset ?? 0}:${call.alternative ?? 0}` : 'algorithms',cards?.title ?? label('公式库','Algorithms'),call.set ? `/alg/${call.puzzle}/${call.set}` : '/alg'));
   }
   return out;
 }

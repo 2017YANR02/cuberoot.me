@@ -86,7 +86,7 @@ describe('assistant resilience',()=>{
       .mockResolvedValueOnce(model([{tool:'algorithms',puzzle:'3x3'},{tool:'glossary',query:'PLL'}]))
       .mockResolvedValueOnce(Response.json([{puzzle:'3x3',setSlug:'pll',count:21}]))
       .mockResolvedValueOnce(new Response('',{status:403}));
-    await expect(answerSiteQuestion('List PLL cases and explain the glossary.','en',config,AbortSignal.timeout(5000),withCatalog(fetcher))).rejects.toMatchObject({code:'source_verification_required'});
+    await expect(answerSiteQuestion('How many PLL cases are there, and what does the glossary say?','en',config,AbortSignal.timeout(5000),withCatalog(fetcher))).rejects.toMatchObject({code:'source_verification_required'});
     expect(fetcher).toHaveBeenCalledTimes(3);
   });
   it('retains the failure notice when a verified fixed-tool summary replaces an invented count',async()=>{

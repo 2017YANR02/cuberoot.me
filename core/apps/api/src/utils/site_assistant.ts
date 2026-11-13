@@ -8,7 +8,9 @@ import { assistantSearchProtectedTerms, assistantWebAvailable, searchAssistantWe
 import { WCA_NEWS_URL, parseAssistantNews } from './site_assistant_news.js';
 import { parseHTML } from 'linkedom';
 import { z } from 'zod';
-import { toolCallSchema, runDataTool, type ToolResult } from './site_assistant_tools.js';
+import { toolCallSchema, runDataTool, type AssistantToolCall, type ToolResult } from './site_assistant_tools.js';
+import { explicitAlgorithmDisplay, algorithmDisplaySummary } from './site_assistant_algorithms.js';
+import { resolveAssistantAlgorithmRequest } from './site_assistant_algorithm_request.js';
 import { cubePhotoImages, requiresCubePhotoEvidence, runCubePhotoTool } from './site_assistant_cube_photo.js';
 import { describeAnalysis, runAnalysisQuery } from './site_assistant_analysis_db.js';
 import { assistantAttendanceScope, applyAttendanceScope, attendanceScopeError, attendanceRequiresAnalysis } from './site_assistant_scope.js';
@@ -127,7 +129,7 @@ recons {wcaId?:person ID,compId?:competition ID,value?,event?,limit:1..20}: sear
 recon {id:number}: read ONE reconstruction by its numeric ID, including original moves and analysis. A question naming a reconstruction number refers to this id, not a duration. Quote recorded step labels exactly. Recorded labels and moves must come from the reconstruction. General explanations may use known definitions; look up unfamiliar or source-specific annotations in glossary rather than guessing. Never invent a solution or label a reconstruction as verified beyond evidence. A personal practice location is not a WCA competition.
 glossary {query}: cubing terminology; use an exact term, phrase, or several terms such as "OLL PLL". Cite each returned term's source ID for its definition. A short heading or an empty body does not establish prerequisites or properties absent from the entry; do not attribute extra claims to that entry.
 forum {query}: public forum posts only.
-algorithms {puzzle:"3x3",set?:slug}: without set, returns the complete matching-puzzle catalog with case counts. Catalog/count questions do not need individual set reads. Specify a known set only to read its actual formula content; use analysis for custom aggregates. Keep original alg notation and comments exactly; never translate pscross/psxcross/xxcross or fingertrick symbols into invented terminology. Interpret specialized annotations only after looking them up.
+algorithms {puzzle:"3x3",set?:slug,query?:case name,caseId?:verified ID,offset?:0,limit?:24,alternative?:0,display?:"both"|"image"|"text"}: retrieve actual formula cards, not navigation. Use whenever the visitor seeks a concrete algorithm, case, move sequence or diagram, including natural questions such as "T怎么拧", "有别的手顺吗", "那Ua呢", "只看第二个", or "how do I solve this case?"; no SHOW keyword is required. Never replace such a request with a library link or moves written from memory. Definitions, counts, training and entry-only questions do not automatically request cards. Without set returns the matching-puzzle catalog/counts. With set returns structured cards rendered by every client: never repeat the sequences in prose or invent image URLs. Default display both (state diagram and copyable formula); image means diagrams only, text means formulas only. Resolve follow-ups from the latest applicable displayed cards, including in-place selections in history: preserve puzzle/set/caseId, actual alternative and display mode; wrap the next alternative within alternativeCount. "Next case" changes the case, "another formula" keeps it, and "continue" uses nextOffset and the same query filter. Displayed ordinals are positions, never database IDs. A new named set overrides the old subject. Ask one focused clarification if several cases are equally plausible. For a formula plus explanation, return the cards and explain without repeating the sequence. query filters a case name; do not put a whole natural-language request in query. Paginate large sets with nextOffset; total counts cases, not algorithms. All PLL fits in one page. Keep original notation exactly.
 statistics {id?:catalog id,tableKey?:exact provided table key,offset?:nextOffset,limit:1..20}: the site's full published statistics. Call without an id to discover the published catalog, then use an exact returned id. A matching named statistic can be selected during catalog discovery. Never use a page ID such as wca-stats. If there are multiple sections, use an exact returned tableKey matching the question. Always repeat the statistic id together with tableKey; table keys are scoped to that id. nextOffset retrieves more available sections. If the question leaves scope unspecified or asks for available conditions, STOP and answer without further tools, explaining actual available choices. Do not read arbitrarily chosen sections. Never repeat a call already in evidence. Do not combine different regions, metrics or scopes.
 pages {query:short keywords,pageIds:catalog IDs max3,audience:user|developer}: search public full-text index and read relevant public pages. Default user searches exclude /dev implementation documents. Use developer only for an explicit question about code, architecture, development or developer documentation; implementation components are not end-user instructions.
 For announced future championships, read matching announcementCatalog entries using pages and their exact IDs. A host-city announcement may precede the competition registry. An absent competition listing does not mean no announcement exists. Report the announcement's date; do not invent dates, venues or registration details absent from it. Missing details in a historical announcement are not proof they remain unpublished today. Say "the July 2025 announcement did not specify registration" rather than "there is currently no registration information". Direct visitors to later official updates when asked for current arrangements.
@@ -206,6 +208,41 @@ export async function answerSiteQuestion(
     }
     return pending;
   };
+  let requestedAlgorithms: {call:AssistantToolCall;result:ToolResult} | undefined;
+  const withAlgorithmCards = (result:AssistantAnswer):AssistantAnswer => {
+    if(requestedAlgorithms) {
+      const required=requestedAlgorithms.result;
+      const keys=new Set(required.artifacts.filter(a=>a.kind==='algorithms').map(a=>`${a.puzzle}/${a.set}`));
+      result={...result,sources:[...new Map([...result.sources,...required.sources].map(source=>[source.id,source])).values()],artifacts:[...(result.artifacts ?? []).filter(a=>a.kind!=='algorithms' || !keys.has(`${a.puzzle}/${a.set}`)),...required.artifacts]};
+    }
+    return result;
+  };
+  const explicitAlgorithms = !hasImages && !experiment.forceKnowledge ? explicitAlgorithmDisplay(question) : undefined;
+  if(explicitAlgorithms) {
+    const call={tool:'algorithms' as const,...explicitAlgorithms};
+    await emit?.({type:'status',status:{phase:'querying',tool:'algorithms'}});
+    const result=await assistantStage('tool',()=>runDataTool(call,lang,read),0,'algorithms');
+    const cards=result.artifacts.find(a=>a.kind==='algorithms');
+    if(cards?.kind==='algorithms')return withAlgorithmCards({answer:algorithmDisplaySummary(cards,lang)+result.sources.map(s=>` [[${s.id}]]`).join(''),sources:result.sources,artifacts:result.artifacts});
+  }
+  if(!hasImages && !experiment.forceKnowledge) {
+    const resolved=await resolveAssistantAlgorithmRequest(question,history,lang,(puzzle,set)=>read(`https://api.cuberoot.me/v1/alg/sets/${puzzle}/${set}`));
+    if(resolved && 'message' in resolved)return withAlgorithmCards({answer:resolved.message,sources:[],artifacts:[]});
+    if(resolved && 'selection' in resolved) {
+      const call={tool:'algorithms' as const,...resolved.selection};
+      await emit?.({type:'status',status:{phase:'querying',tool:'algorithms'}});
+      const result=await assistantStage('tool',()=>runDataTool(call,lang,read),0,'algorithms');
+      if(resolved.cards) {
+        result.artifacts=result.artifacts.map(a=>a.kind==='algorithms'?{...a,cards:resolved.cards!}:a);
+        result.evidence={...result.evidence as object,items:resolved.cards.map(({sticker:_sticker,...card})=>card)};
+      }
+      const cards=result.artifacts.find(a=>a.kind==='algorithms');
+      if(cards?.kind==='algorithms') {
+        if(!resolved.explain)return withAlgorithmCards({answer:algorithmDisplaySummary(cards,lang)+result.sources.map(s=>` [[${s.id}]]`).join(''),sources:result.sources,artifacts:result.artifacts});
+        requestedAlgorithms={call,result};
+      }
+    }
+  }
   // An isolated name has a fixed lookup path. Resolve it before a model can
   // substitute an unrelated famous namesake or ask for an already findable ID.
   // Existing conversation/image context is left to the planner for intent.
@@ -298,6 +335,13 @@ export async function answerSiteQuestion(
   const artifacts: Array<{sourceIds:string[]; artifact:NonNullable<AssistantAnswer['artifacts']>[number]}> = [];
   const called=new Set<string>();
   const failedCalls=new Set<string>();
+  if(requestedAlgorithms) {
+    const {call,result}=requestedAlgorithms;
+    result.sources.forEach(source=>sources.set(source.id,source));
+    artifacts.push(...result.artifacts.map(artifact=>({sourceIds:result.sources.map(s=>s.id),artifact})));
+    called.add(assistantToolKey(call));
+    evidence.push({id:result.sources[0].id,tool:call,data:result.evidence});
+  }
   let navigationReadRequired=false;
   let navigationDiscoveryRequired=false;
   let siteContentRequired=false;
@@ -537,6 +581,9 @@ export async function answerSiteQuestion(
       // associates it with an answer. Never lend unrelated sources to a draft.
       const cited=championIntro ? reviewed : selected;
       const citedIds=new Set(cited.map(source=>source.id));
+      const citedLibraryHrefs=new Set(cited.filter(source=>/^\/alg\//.test(source.href)).map(source=>source.href));
+      const visibleArtifacts=artifacts.filter(a=>a.artifact.kind==='cube-photo' || a.sourceIds.some(id=>citedIds.has(id))
+        || (!entryOnlyRequest && a.artifact.kind==='algorithms' && a.sourceIds.some(id=>citedLibraryHrefs.has(sources.get(id)?.href ?? ''))));
       const countOnly=/(?:^|[。？！?!；;，,]\s*)(?:请)?只(?:报|要|给|回答)(?:一个)?(?:总数|场数)(?:就好|即可)?[。.!！\s]*$|(?:^|[.!?;,]\s*)(?:please\s+)?(?:just|only)\s+(?:(?:give|report|return)\s+)?(?:the\s+)?(?:total|count)[.!\s]*$/i.test(question);
       const countSource=countOnly && cited.length===1 ? cited[0] : undefined;
       const countEvidence=countSource ? evidence.find(item=>item.id===countSource.id
@@ -560,7 +607,7 @@ export async function answerSiteQuestion(
       const reviewedCalculation=cited.some(source=>reviewedAnalysisSources.has(source.id));
       const fallback=factual && failedCalls.size ? factual+'\n\n'+{zh:'部分补充资料未能读取，以上仅包含已核实的结果。',en:'Some additional sources could not be read. Only verified results are included above.'}[lang] : factual;
       const answer=partial || championIntro || countAnswer || (reviewedCalculation ? rendered || fallback : fallback || rendered);
-      return {answer:answer || {zh:'这次没有完成回答，请重试。',en:'The answer did not complete. Please try again.'}[lang],sources:cited,actions:cited.filter(s=>/^\/(?!\/)/.test(s.href) && !/[\\\r\n]/.test(s.href)).map(s=>navigationActions.get(s.id) ?? {id:s.id,title:s.title,href:s.href}),artifacts:[...new Map(artifacts.filter(a=>a.artifact.kind==='cube-photo' || a.sourceIds.some(id=>citedIds.has(id))).map(a=>[JSON.stringify(a.artifact),a.artifact])).values()]};
+      return withAlgorithmCards({answer:answer || {zh:'这次没有完成回答，请重试。',en:'The answer did not complete. Please try again.'}[lang],sources:cited,actions:cited.filter(s=>/^\/(?!\/)/.test(s.href) && !/[\\\r\n]/.test(s.href)).map(s=>navigationActions.get(s.id) ?? {id:s.id,title:s.title,href:s.href}),artifacts:[...new Map(visibleArtifacts.map(a=>[JSON.stringify(a.artifact),a.artifact])).values()]});
   };
   const reviewAnalysis = async(step:z.infer<typeof stepSchema>,round:number,finalOnly:boolean) => {
     // One independent check before publishing a calculated answer. It can use
