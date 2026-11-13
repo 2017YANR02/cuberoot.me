@@ -164,6 +164,7 @@ interface JsonRequestOptions {
     token?: string;
     idempotencyKey?: string;
     signal?: AbortSignal;
+    onResponseHeaders?: (headers: Record<string, unknown>) => void;
 }
 
 export function requestJson<T>(path: string, options: JsonRequestOptions = {}): Promise<T> {
@@ -225,6 +226,7 @@ function requestNativeJson<T>(url: string, options: JsonRequestOptions): Promise
           settle(() => {
             const body = response.data as Record<string, unknown> | undefined;
             if (response.statusCode >= 200 && response.statusCode < 300) {
+              options.onResponseHeaders?.(response.header);
               resolve(response.data as T);
               return;
             }

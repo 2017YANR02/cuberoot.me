@@ -4,10 +4,9 @@ import { createRequire } from 'node:module';
 import { basename, dirname, extname, join, relative, resolve } from 'node:path';
 import process from 'node:process';
 
-import { build } from 'esbuild';
-
 import { BUILD_ASSETS } from './build-assets.mjs';
 import { buildWechatBundle } from './build-wechat-bundle.mjs';
+import { nativePdfPlugin } from './build-pdf-runtime.mjs';
 import { buildDouyinTabIcons } from './build-tab-icons.mjs';
 import { resolveProjectConfig } from './build-config.mjs';
 import {
@@ -128,7 +127,7 @@ async function buildProject() {
     { labelForPath: (file) => normalizedRelativePath(packageRoot, file) },
   );
   await prepareOutput(sourceFiles);
-  const buildResult = await (douyin ? build : buildWechatBundle)({
+  const buildResult = await buildWechatBundle({
     absWorkingDir: packageRoot,
     bundle: true,
     inject: [join(sourceRoot, 'lib/native-timer-runtime.ts')],
@@ -150,6 +149,7 @@ async function buildProject() {
     define: {
       __MINI_PROGRAM_TARGET__: JSON.stringify(target),
     },
+    plugins:[nativePdfPlugin(packageRoot)],
   });
   const graphInputFiles = buildGraphInputFiles(packageRoot, buildResult.metafile);
   if (douyin) {

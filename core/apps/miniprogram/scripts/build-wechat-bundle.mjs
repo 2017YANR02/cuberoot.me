@@ -16,6 +16,9 @@ export async function buildWechatBundle(options) {
   await Promise.all(result.outputFiles.map(async (file) => {
     const transformed = await transform(file.text, {
       format: 'cjs',
+      // Both native loaders use require; Chromium's dynamic import support
+      // does not make import() available in the Mini Program service sandbox.
+      supported: { 'dynamic-import': false },
       target: options.target,
       sourcefile: file.path,
       sourcemap: options.sourcemap ? 'inline' : false,

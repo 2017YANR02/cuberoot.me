@@ -1,0 +1,39 @@
+<page-meta page-style="{{appearanceStyle}}" />
+<import src="../../templates/native-appearance.wxml" />
+<template is="native-scenery" />
+<view class="page assistant" style="{{appearanceStyle}}">
+  <view class="assistant-toolbar"><text class="page-title">{{copy.title}}</text><button hover-class="press-feedback" bindtap="newChat">{{copy.newChat}}</button></view>
+  <view wx:for="{{turns}}" wx:for-item="turn" wx:for-index="t" wx:key="index" class="assistant-turn">
+    <text class="assistant-question" selectable="{{true}}">{{turn.question}}</text>
+    <text class="assistant-answer" selectable="{{true}}">{{turn.answer}}</text>
+    <view wx:for="{{turn.groups}}" wx:for-item="group" wx:for-index="g" wx:key="index">
+      <text class="assistant-title">{{group.title}}</text>
+      <view wx:for="{{group.cards}}" wx:for-item="card" wx:for-index="c" wx:key="index" id="card-{{t}}-{{g}}-{{c}}" class="assistant-card">
+        <view class="assistant-card-head">
+          <view wx:if="{{group.display !== 'text'}}" class="assistant-image"><image wx:if="{{card.image}}" src="{{card.image}}" mode="aspectFit" lazy-load="{{true}}" aria-label="{{card.name}}" binderror="imageError" data-t="{{t}}" data-g="{{g}}" data-c="{{c}}"/><text wx:elif="{{card.imageFailed}}">{{copy.imageFailed}}</text></view>
+          <text class="assistant-title">{{card.name}}</text>
+          <button hover-class="press-feedback" wx:if="{{group.display !== 'image'}}" bindtap="copyAlg" data-t="{{t}}" data-g="{{g}}" data-c="{{c}}">{{copy.copy}}</button>
+        </view>
+        <text wx:if="{{group.display !== 'image'}}" class="assistant-alg" selectable="{{true}}">{{card.alg}}</text>
+        <view wx:if="{{group.display !== 'image' && card.alternativeCount > 1}}" class="assistant-card-controls">
+          <text>{{copy.formula}} {{card.alternative + 1}}/{{card.alternativeCount}}</text>
+          <button hover-class="press-feedback" wx:if="{{!shared && card.caseId !== undefined}}" disabled="{{card.switching || pdfBusy}}" bindtap="another" data-t="{{t}}" data-g="{{g}}" data-c="{{c}}">{{card.switching ? copy.loading : card.switchFailed ? copy.retry : copy.another}}</button>
+        </view>
+        <text wx:if="{{card.switchFailed}}" class="assistant-error" aria-role="status">{{copy.switchFailed}}</text>
+      </view>
+      <button hover-class="press-feedback" wx:if="{{!shared && group.nextOffset !== undefined}}" disabled="{{busy}}" bindtap="more" data-t="{{t}}" data-g="{{g}}">{{copy.more}}</button>
+    </view>
+    <text wx:if="{{turn.other}}" class="assistant-answer" selectable="{{true}}">{{turn.other}}</text>
+    <button hover-class="press-feedback" wx:if="{{!shared && turn.requestId}}" bindtap="share" data-t="{{t}}">{{copy.share}}</button>
+    <button hover-class="press-feedback" bindtap="pdf" data-t="{{t}}" disabled="{{pdfBusy || changingFormula}}">{{pdfBusy ? copy.exporting : copy.pdf}}</button>
+  </view>
+  <text wx:if="{{busy}}" aria-role="status">{{copy.thinking}}</text>
+  <text wx:if="{{error}}" class="assistant-error" aria-role="alert">{{error}}</text>
+  <button hover-class="press-feedback" wx:if="{{needsAccount}}" bindtap="account">{{copy.account}}</button>
+  <view wx:if="{{!shared}}" class="assistant-compose">
+    <textarea value="{{draft}}" bindinput="input" maxlength="8000" auto-height="{{true}}" placeholder="{{copy.placeholder}}" disabled="{{busy}}"/>
+    <button hover-class="press-feedback" wx:if="{{draft && !busy}}" bindtap="clear">{{copy.clear}}</button>
+    <button hover-class="press-feedback" wx:if="{{busy}}" bindtap="stop">{{copy.stop}}</button><button hover-class="press-feedback" wx:else bindtap="send" disabled="{{!draft}}">{{copy.send}}</button>
+  </view>
+</view>
+<canvas type="2d" id="assistant-pdf-canvas" class="assistant-pdf-canvas" aria-hidden="true" />

@@ -10,7 +10,10 @@
     "@cuberoot/puzzle-render-core": "workspace:*",
     "@cuberoot/shared": "workspace:*",
     "@ungap/url-search-params": "^0.2.2",
-    "abort-controller": "^3.0.0"
+    "@xmldom/xmldom": "^0.9.12",
+    "abort-controller": "^3.0.0",
+    "canvg": "^4.0.3",
+    "jspdf": "^4.2.1"
   },
   "scripts": {
     "build": "node scripts/build.mjs",
@@ -27,6 +30,7 @@
     "verify": "tsc --noEmit && vitest run"
   },
   "devDependencies": {
+    "@napi-rs/canvas": "^0.1.100",
     "@types/node": "^22.0.0",
     "esbuild": "^0.28.1",
     "lucide-static": "1.8.0",
