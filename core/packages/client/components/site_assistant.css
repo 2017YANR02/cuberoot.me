@@ -35,6 +35,17 @@
 .site-assistant-citation:hover { background:var(--accent-soft); color:var(--accent); }
 .site-assistant-status { display:flex; align-items:center; gap:8px; min-height:28px; margin:12px 0; }
 .site-assistant-status-text { color:var(--muted-foreground); font-size:14px; }
+.site-assistant-progress { margin:12px 0; color:var(--muted-foreground); font-size:12px; }
+.site-assistant-progress-heading { display:flex; align-items:center; flex-wrap:wrap; gap:8px; min-height:28px; }
+.site-assistant-progress-heading .more-toggle { font-size:12px; }
+.site-assistant-progress-time { flex:none; font-variant-numeric:tabular-nums; }
+.site-assistant-progress-steps { display:flex; flex-direction:column; gap:6px; max-height:180px; overflow:auto; list-style:none; margin:6px 0; padding:0; }
+.site-assistant-progress-steps li { display:flex; align-items:baseline; gap:6px; overflow-wrap:anywhere; }
+.site-assistant-progress-steps li > svg { flex:none; align-self:center; }
+.site-assistant-progress-steps li > span:not(.site-assistant-progress-time):not(.site-assistant-progress-dot) { flex:1; min-width:0; }
+.site-assistant-progress-dot { width:5px; height:5px; margin:0 4px; flex:none; align-self:center; border-radius:50%; background:currentColor; }
+.site-assistant-progress-steps [data-state="running"] { color:var(--foreground); }
+.site-assistant-progress-steps [data-state="error"] { color:var(--destructive); }
 @supports (background-clip:text) or (-webkit-background-clip:text) {
   .site-assistant-status-text {
     background:linear-gradient(110deg,color-mix(in srgb,var(--muted-foreground) 55%,transparent) 30%,var(--foreground) 46%,var(--foreground) 54%,color-mix(in srgb,var(--muted-foreground) 55%,transparent) 70%);

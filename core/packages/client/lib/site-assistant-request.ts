@@ -1,6 +1,7 @@
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import { sessionFetch } from '@/lib/session-fetch';
+import type { AssistantBrowserTiming } from '@cuberoot/shared/site-assistant';
 import { SITE_ASSISTANT_BODY_BYTES, SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH, boundAssistantHistory, type AssistantMessage, type AssistantImage, type AssistantThinkingMode } from '@cuberoot/shared/site-assistant';
 
 interface AssistantRequest {
@@ -73,6 +74,6 @@ export function assistantImageHistory(history: AssistantMessage[], currentImages
 }
 
 export type AssistantFeedback = 'helpful' | 'incorrect' | 'irrelevant' | 'bad_source' | 'bad_link' | 'other';
-export async function sendAssistantEvent(id: string, event: { type: 'feedback'; value: AssistantFeedback | null } | { type: 'click'; kind: 'action' | 'source'; id: string }) {
+export async function sendAssistantEvent(id: string, event: { type: 'feedback'; value: AssistantFeedback | null } | { type: 'click'; kind: 'action' | 'source'; id: string } | { type: 'timing'; timing: AssistantBrowserTiming }) {
   return handleApi(await sessionFetch(apiUrl(`/v1/site-assistant/requests/${id}/events`), { method: 'POST', headers: authHeaders(), body: JSON.stringify(event), keepalive: true }));
 }

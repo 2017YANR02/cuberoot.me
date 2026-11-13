@@ -1,8 +1,7 @@
 'use client';
 
-import { rehypeAssistantReveal } from '@/lib/assistant-text-reveal';
 import { useAssistantTextReveal } from '@/hooks/useAssistantTextReveal';
-import MoreToggle from '@/components/MoreToggle';
+import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
 import { lazy, Suspense, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 const Markdown = lazy(() => import('react-markdown').catch(() => ({ default: ({ children }: { children?: string | null }) => <>{children}</> })));
@@ -23,6 +22,7 @@ import AssistantAlgorithmCards from './AssistantAlgorithmCards';
 import type { AssistantAlgorithmCard } from '@cuberoot/shared/site-assistant';
 import ReconCaseLink from './ReconCaseLink';
 import AssistantImagePreview from './AssistantImagePreview';
+import type { AssistantProgress } from '@cuberoot/shared/site-assistant';
 import { prepareAssistantImage } from '@/lib/site-assistant-images';
 import { ClearButton } from '@/components/ClearButton';
 import { CompactSelect } from '@/components/CompactSelect';
@@ -37,7 +37,7 @@ import AssistantAnswerActions from './AssistantAnswerActions';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { assistantAnswerLinks, remarkAssistantLinks } from '@/lib/assistant-answer-links';
 
-export interface AssistantTurn { createdAt?: number; requestId?: string; feedback?: AssistantFeedback|null; question:string; images?:AssistantImage[]; imagesExpired?:boolean; result?:AssistantAnswer; partial?:boolean }
+export interface AssistantTurn { createdAt?: number; finishedAt?: number; endState?: 'complete'|'stopped'|'error'; progress?: AssistantProgress[]; requestId?: string; feedback?: AssistantFeedback|null; question:string; images?:AssistantImage[]; imagesExpired?:boolean; result?:AssistantAnswer; partial?:boolean }
 interface Props {
   onAlgorithmChange?:(turn:number, artifact:number, card:number, expected:AssistantAlgorithmCard, next:AssistantAlgorithmCard)=>void;
   onAnswerRevealed?:(id:string,text:string)=>void;
@@ -67,6 +67,9 @@ const QUERY_LABELS: Record<string, {zh:string;en:string}> = {
   forum:{zh:'正在查询论坛内容',en:'Searching forum posts'},
   algorithms:{zh:'正在查询公式库',en:'Searching algorithms'},
   statistics:{zh:'正在查询统计数据',en:'Looking up statistics'},
+  analysis_schema:{zh:'正在读取数据结构',en:'Reading data definitions'},
+  analysis_query:{zh:'正在计算统计结果',en:'Calculating statistics'},
+  deliberate:{zh:'正在切换深入分析',en:'Starting deeper analysis'},
 };
 const QUESTION_EXAMPLES = [
   {id:'everyday',title:{zh:'解释与交流',en:'Everyday questions'},questions:[
@@ -138,6 +141,44 @@ function openSolverDocument(event:MouseEvent<HTMLAnchorElement>) {
     window.location.assign(event.currentTarget.href);
   }
 }
+function AssistantExecutionProgress({turn,busy,status}:{turn:AssistantTurn;busy:boolean;status:AssistantStatus}) {
+  const [expanded,setExpanded]=useState(busy);
+  const [now,setNow]=useState(Date.now);
+  const panelId=useId();
+  useEffect(()=>{ if(!busy){setExpanded(false);return;} const timer=window.setInterval(()=>setNow(Date.now()),1000);return()=>window.clearInterval(timer); },[busy]);
+  const steps=turn.progress ?? [];
+  const current=steps.findLast(step=>step.state==='running');
+  const phaseLabel=(step:AssistantProgress)=>step.phase==='tool' ? tr(QUERY_LABELS[step.tool ?? ''] ?? {zh:'正在查询资料',en:'Looking up sources'})
+    : tr(step.phase==='review' ? {zh:'正在核对证据与回答',en:'Checking evidence and answer'} : {zh:'正在分析与组织回答',en:'Analyzing and composing'});
+  const summary=busy ? current ? phaseLabel(current) : statusLabel(status)
+    : tr(turn.endState==='complete' || (turn.result && !turn.partial) ? {zh:'处理完成',en:'Completed'} : turn.endState==='error' ? {zh:'处理未完成',en:'Could not complete'} : {zh:'已停止',en:'Stopped'});
+  const elapsed=Math.max(0,((busy ? now : turn.finishedAt ?? turn.createdAt ?? now)-(turn.createdAt ?? now))/1000);
+  return <div className="site-assistant-progress">
+    <div className="site-assistant-progress-heading">
+      <span role="status" aria-live="polite">{busy && status.phase==='writing' && current?.phase==='model' ? statusLabel(status) : summary}</span>
+      <span className="site-assistant-progress-time" aria-hidden="true">{elapsed.toFixed(0)} s</span>
+      {!!steps.length && <MoreToggle expanded={expanded} onToggle={()=>setExpanded(!expanded)} aria-controls={panelId}>{tr({zh:'处理过程',en:'Activity'})}</MoreToggle>}
+    </div>
+    {!!steps.length && <MoreTogglePanel id={panelId} expanded={expanded}>
+      <ol className="site-assistant-progress-steps">{steps.map(step=>{
+        const state=step.state==='running' && !busy ? 'stopped' : step.state;
+        const label=tr(state==='complete' ? {zh:'完成',en:'Finished'} : state==='partial' ? {zh:'信息不完整',en:'Partial information'} : state==='error' ? {zh:'未成功',en:'Failed'} : state==='stopped' ? {zh:'已中断',en:'Interrupted'} : {zh:'进行中',en:'In progress'});
+        return <li key={step.id} data-state={state}>
+          {state==='complete' ? <Check size={13} aria-hidden="true"/> : state==='error' || state==='stopped' ? <X size={13} aria-hidden="true"/> : <span className="site-assistant-progress-dot" aria-hidden="true"/>}
+          <span>{phaseLabel(step).replace(/^正在/,'')} · {label}{!!step.sourceCount && <span> · {tr({zh:`已读取 ${step.sourceCount} 条来源`,en:`${step.sourceCount} sources read`})}</span>}</span>
+          {step.durationMs!==undefined && <span className="site-assistant-progress-time">{(step.durationMs/1000).toFixed(1)} s</span>}
+        </li>;
+      })}</ol>
+    </MoreTogglePanel>}
+  </div>;
+}
+
+/** Inside Suspense: notify only after the actual Markdown has committed and painted. */
+function AssistantAnswerPaint({text,animate,requestId,onComplete,complete}:{text:string;animate:boolean;requestId?:string;onComplete?:(id:string,text:string)=>void;complete:boolean}) {
+  useAssistantTextReveal(text,animate,requestId,onComplete,complete);
+  return null;
+}
+
 function answerPresentation(result:AssistantAnswer,partial?:boolean) {
   const sources=result.sources.filter(source=>isAssistantSourceHref(source.href));
   // Do not flash incomplete citation syntax as provider chunks arrive.
@@ -147,15 +188,13 @@ function answerPresentation(result:AssistantAnswer,partial?:boolean) {
   return {sources,text,withFallback};
 }
 export function SiteAssistantAnswerText({result,partial,requestId,shared=false,animate=false,onRevealComplete}:{result:AssistantAnswer;partial?:boolean;requestId?:string;shared?:boolean;animate?:boolean;onRevealComplete?:(id:string,text:string)=>void}) {
-  const visibleAnswer = useAssistantTextReveal(result.answer, animate, requestId, onRevealComplete);
-  const revealing = visibleAnswer !== result.answer;
-  const {sources,text,withFallback}=answerPresentation({...result, answer:visibleAnswer},partial || revealing);
+  const {sources,text,withFallback}=answerPresentation(result,partial);
   const resolveLink=assistantAnswerLinks(result);
   const markdown=withFallback.replace(/\[\[([^\]\n]+)\]\]/g,(_marker,id:string)=>{
     const index=sources.findIndex(source=>source.id===id);
     return index<0 ? '' : `[${index+1}](#assistant-source-${index})`;
   });
-  return <div className="site-assistant-prose"><Suspense fallback={animate ? null : <p>{text.replace(/\[\[[^\]\n]+\]\]/g, '')}</p>}><Markdown skipHtml rehypePlugins={animate ? [rehypeAssistantReveal] : []} remarkPlugins={[remarkAssistantLinks(resolveLink)]}
+  return <div className="site-assistant-prose"><Suspense fallback={<p>{text.replace(/\[\[[^\]\n]+\]\]/g, '')}</p>}><Markdown skipHtml remarkPlugins={[remarkAssistantLinks(resolveLink)]}
     allowedElements={['p','strong','em','code','pre','ul','ol','li','blockquote','h1','h2','h3','h4','hr','br','a','span']}
     components={{a:({href,children})=>{
       const match=/^#assistant-source-(\d+)$/.exec(href ?? '');
@@ -164,7 +203,7 @@ export function SiteAssistantAnswerText({result,partial,requestId,shared=false,a
       if (source?.id.startsWith('photo:') && /^\/alg\/[^/]+\/[^/]+\/[^/?#]+/.test(source.href)) return <ReconCaseLink className="site-assistant-citation" href={source.href} title={source.title}>{source.title}</ReconCaseLink>;
       if (!source && destination) return <Link className="site-assistant-inline-link" href={destination.href} {...sourceLinkProps(destination.href)} prefetch={false} onClick={event=>{if(requestId)void sendAssistantEvent(requestId,{type:'click',kind:'source',id:destination.id}).catch(()=>{});openSolverDocument(event);}}>{children}</Link>;
       return source ? <Link className="site-assistant-citation" href={source.href} {...sourceLinkProps(source.href)} onClick={event=>{if(requestId)void sendAssistantEvent(requestId,{type:'click',kind:'source',id:source.id}).catch(()=>{});openSolverDocument(event);}} prefetch={false} title={source.title} aria-label={tr({zh:`来源：${source.title}`,en:`Source: ${source.title}`})}>{source.title}</Link> : shared && href && isAssistantSourceHref(href) ? <Link href={href} {...sourceLinkProps(href)} prefetch={false}>{children}</Link> : <>{children}</>;
-    }}}>{markdown}</Markdown></Suspense></div>;
+    }}}>{markdown}</Markdown><AssistantAnswerPaint text={result.answer} animate={animate} requestId={requestId} complete={!partial} onComplete={onRevealComplete}/></Suspense></div>;
 
 }
 function Progress({chart}:{chart:AssistantChart}) {
@@ -183,9 +222,7 @@ function AssistantModal({ children, onClose, motionRef }: { children: ReactNode;
 export default function SiteAssistantDialog({onAlgorithmChange,onAnswerRevealed,turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,thinking,onThinkingChange,status={phase:'planning'},busy,error,lang,onAsk,onStop,onClose:onClosed,onNew,onFeedback,embedded=false,active=true,searchResults,onBranch}:Props) {
   const { motionRef, close: onClose } = useDialogMotion(onClosed, { enabled: !embedded });
   const [initialAnswers] = useState(() => new Set(turns.filter(turn => turn.result && !turn.partial).map(turn => turn.requestId)));
-  const [revealedAnswers, setRevealedAnswers] = useState<Record<string,string>>({});
   const onRevealComplete = useCallback((id:string, text:string) => {
-    setRevealedAnswers(previous => previous[id] === text ? previous : {...previous, [id]:text});
     onAnswerRevealed?.(id, text);
   }, [onAnswerRevealed]);
   const titleId=useId();
@@ -289,7 +326,7 @@ export default function SiteAssistantDialog({onAlgorithmChange,onAnswerRevealed,
         </div>}
         {turns.map((turn,i)=>{
           const animate = !!turn.requestId && !initialAnswers.has(turn.requestId);
-          const revealDone = !animate || (!!turn.requestId && revealedAnswers[turn.requestId] === turn.result?.answer);
+          const revealDone = !turn.partial;
           const tableLinks=new Set(turn.result?.artifacts?.flatMap(a=>a.kind==='table' ? [...a.links ?? [],...a.cellLinks?.flat() ?? []] : []) ?? []);
           const presentation=turn.result ? answerPresentation(turn.result,turn.partial) : null;
           const citedLinks=new Set(presentation?.sources.filter(source=>presentation.withFallback.includes(`[[${source.id}]]`)).map(source=>source.href));
@@ -302,7 +339,7 @@ export default function SiteAssistantDialog({onAlgorithmChange,onAnswerRevealed,
           {!!turn.images?.length && renderImages(turn.images)}<textarea ref={editInput} className="site-assistant-draft" aria-label={tr({zh:'编辑问题',en:'Edit question'})} value={editing} maxLength={SITE_ASSISTANT_QUESTION_MAX_LENGTH} rows={3} onChange={event=>setEditing(event.target.value)}/>
           <div className="site-assistant-edit-actions">{editing && <ClearButton variant="standalone" onClick={()=>setEditing('')}/>}<button type="button" className="site-assistant-action" onClick={()=>setEditing(null)}>{tr({zh:'取消',en:'Cancel'})}</button><button type="submit" className="site-assistant-action site-assistant-send" disabled={busy||editing.trim().length>SITE_ASSISTANT_QUESTION_MAX_LENGTH||(!editing.trim()&&!turn.images?.length)}>{tr({zh:'发送',en:'Send'})}</button></div>
         </form> : <div className="site-assistant-question">{turn.imagesExpired && <p className="site-assistant-note">{tr({zh:'较早的图片已释放，需要时请重新添加。',en:'Earlier images have been released. Attach them again if needed.'})}</p>}{!!turn.images?.length && renderImages(turn.images)}{turn.question && <h3>{turn.question}</h3>}<div className="site-assistant-question-actions"><button className="site-assistant-action" type="button" onClick={()=>{if(navigator.clipboard)copy(turn.question,`question-${i}`);}} title={tr(copiedKey===`question-${i}`?{zh:'已复制',en:'Copied'}:{zh:'复制问题',en:'Copy question'})}>{copiedKey===`question-${i}`?<Check size={15}/>:<Copy size={15}/>}</button>{i===turns.length-1 && <button className="site-assistant-action" type="button" disabled={busy} onClick={()=>{stop();setEditing(turn.question);}} title={tr({zh:'编辑问题',en:'Edit question'})}><Pencil size={15}/></button>}</div></div>}
-          {busy && i===turns.length-1 && <div className="site-assistant-status" role="status"><span className="site-assistant-status-text">{statusLabel(status)}</span></div>}
+          {((busy && i===turns.length-1) || !!turn.progress?.length) && <AssistantExecutionProgress key={turn.createdAt ?? turn.requestId ?? i} turn={turn} busy={busy && i===turns.length-1} status={status}/>}
           {turn.result && <div className="site-assistant-response"><SiteAssistantAnswerText result={turn.result} partial={turn.partial} requestId={turn.requestId} animate={animate} onRevealComplete={onRevealComplete}/>
           {revealDone && !turn.partial && !!actions.length && <div className="site-assistant-response-actions site-assistant-navigation">{actions.map(action=><Link key={action.id} className="site-assistant-action" href={action.href} {...sourceLinkProps(action.href)} onClick={event=>{if(turn.requestId)void sendAssistantEvent(turn.requestId,{type:'click',kind:'action',id:action.id}).catch(()=>{});openSolverDocument(event);}} prefetch={false}>{tr({zh:`打开 ${action.title}`,en:`Open ${action.title}`})}</Link>)}</div>}
           {revealDone && turn.result.artifacts?.map((a,j)=>a.kind==='algorithms'?<AssistantAlgorithmCards key={j} result={a} onAsk={busy ? undefined : question=>onAsk(question)} onChange={onAlgorithmChange && !turn.partial ? (card,expected,next)=>changeAlgorithm(i,j,card,expected,next) : undefined}/>:a.kind==='cube-photo'?<PhotoChatResult key={j} result={a}/>:a.kind==='progress'?<Progress key={j} chart={a}/>:<section key={j}><h4>{a.title}</h4><div className="site-assistant-table"><table><thead><tr>{a.columns.map((c,k)=><th key={k}>{c}</th>)}</tr></thead><tbody>{a.rows.map((row,k)=><tr key={k}>{row.map((cell,c)=>{

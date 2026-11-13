@@ -46,6 +46,30 @@ async function render(answer:AssistantAnswer,overrides:Partial<ComponentProps<ty
 }
 
 describe('assistant general conversation controls',()=>{
+  it('shows actual execution states and collapses them after completion while revealing a complete answer and table immediately',async()=>{
+    const createdAt=Date.now()-2000;
+    const turns=[{question:'对比成绩',createdAt,requestId:'fixture-request',progress:[
+      {id:1,phase:'tool' as const,state:'complete' as const,tool:'person',elapsedMs:10,durationMs:30,sourceCount:2},
+      {id:2,phase:'review' as const,state:'running' as const,elapsedMs:40},
+    ]}];
+    const props=await render({answer:'',sources:[]},{turns,busy:true});
+    expect(document.querySelector('.site-assistant-progress-heading')?.textContent).toContain('正在核对证据与回答');
+    expect(document.querySelector('.site-assistant-progress-steps')?.textContent).toContain('已读取 2 条来源');
+    const longAnswer='完整回答，不需要等待逐字播放。'.repeat(150);
+    await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,busy:false,turns:[{...turns[0],result:{answer:longAnswer,sources:[],artifacts:[{kind:'table',title:'结果',columns:['成绩'],rows:[['12.34']]}]},partial:false,endState:'complete',finishedAt:Date.now(),progress:turns[0].progress.map(p=>({...p,state:'complete' as const,durationMs:100}))}]})));
+    expect(document.querySelector('.site-assistant-prose')?.textContent).toContain(longAnswer);
+    expect(document.querySelector('.site-assistant-table')?.textContent).toContain('12.34');
+    expect(document.querySelector('.site-assistant-progress .more-toggle')?.getAttribute('aria-expanded')).toBe('false');
+    expect(document.querySelectorAll('.site-assistant-letter')).toHaveLength(0);
+    await act(async()=>document.querySelector<HTMLButtonElement>('.site-assistant-progress .more-toggle')!.click());
+    expect(document.querySelector('.site-assistant-progress .more-toggle')?.getAttribute('aria-expanded')).toBe('true');
+  });
+  it('marks a cancelled running step as interrupted, never completed',async()=>{
+    await render({answer:'',sources:[]},{busy:false,turns:[{question:'查询',createdAt:Date.now()-1000,finishedAt:Date.now(),endState:'stopped',progress:[{id:1,phase:'tool',tool:'pages',state:'running',elapsedMs:20}]}]});
+    await act(async()=>document.querySelector<HTMLButtonElement>('.site-assistant-progress .more-toggle')!.click());
+    expect(document.querySelector('.site-assistant-progress-steps [data-state="stopped"]')?.textContent).toContain('已中断');
+    expect(document.querySelector('.site-assistant-progress-steps [data-state="complete"]')).toBeNull();
+  });
   it('accepts longer writing prompts and shows an editable thinking choice',async()=>{
     const draft='内容'.repeat(1000);
     const props=await render({answer:'',sources:[]},{draft,turns:[]});

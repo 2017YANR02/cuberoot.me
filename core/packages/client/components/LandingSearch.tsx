@@ -55,7 +55,9 @@ import SiteAssistantDialog, { SiteAssistantAnswerText, type AssistantTurn } from
 import { assistantTimeoutMs, SITE_ASSISTANT_QUESTION_MAX_LENGTH, isAssistantSourceHref, readAssistantEvents, type AssistantStreamEvent, type AssistantStatus, type AssistantAnswer, type AssistantErrorCode, type AssistantImage } from '@cuberoot/shared/site-assistant';
 import { ASSISTANT_ERROR_TEXT, assistantResponseError } from '@/lib/site-assistant-errors';
 import { useAssistantThinkingMode } from '@/hooks/useAssistantThinkingMode';
-import { requestSiteAssistant, assistantImageHistory } from '@/lib/site-assistant-request';
+import { requestSiteAssistant, assistantImageHistory, sendAssistantEvent } from '@/lib/site-assistant-request';
+import { updateAssistantProgress } from '@/lib/assistant-progress';
+import type { AssistantProgress, AssistantBrowserTiming } from '@cuberoot/shared/site-assistant';
 import { assistantAnswerHistory } from '@/lib/assistant-answer-export';
 import { replaceAssistantAlgorithm } from '@cuberoot/shared/site-assistant-algorithms';
 import type { AssistantConversationSnapshot } from '@/lib/assistant-conversations';
@@ -301,8 +303,22 @@ export default function LandingSearch({
   const [pendingReveal, setPendingReveal] = useState<{id:string; text:string; complete:boolean} | null>(null);
   const [revealedAnswers, setRevealedAnswers] = useState<Record<string,string>>({});
   const completedReply = useRef<string | null>(null);
+  const browserTiming = useRef<{id?:string;started:number;answer?:string;timing:Partial<AssistantBrowserTiming>} | null>(null);
+  useEffect(()=>{
+    const visibility=()=>{if(browserTiming.current && document.hidden)browserTiming.current.timing.wasHidden=true;};
+    document.addEventListener('visibilitychange',visibility);
+    return()=>document.removeEventListener('visibilitychange',visibility);
+  },[]);
   const onAnswerRevealed = useCallback((id:string, text:string) => {
     setRevealedAnswers(previous => previous[id] === text ? previous : {...previous, [id]:text});
+    const sample=browserTiming.current;
+    if(sample?.id===id && sample.answer===text && sample.timing.responseMs!==undefined) {
+      const visibleMs=Math.max(sample.timing.responseMs,Math.round(performance.now()-sample.started));
+      browserTiming.current=null;
+      if(visibleMs<=600_000)void sendAssistantEvent(id,{type:'timing',timing:{...sample.timing,visibleMs,
+        renderDelayMs:visibleMs-sample.timing.responseMs,wasHidden:!!sample.timing.wasHidden || document.hidden,
+        responseMs:sample.timing.responseMs,transport:sample.timing.transport ?? 'json'}}).catch(()=>{});
+    }
   }, []);
   const assistantRevealing = !!pendingReveal && pendingReveal.text !== revealedAnswers[pendingReveal.id];
   const conversationOwner = conversation?.owner;
@@ -326,8 +342,8 @@ export default function LandingSearch({
     onConversationChange?.({ turns: assistantTurns, conversationId: assistantConversation.current });
   }, [assistantTurns, onConversationChange]);
 
-  const stopAssistant = () => { assistantRequest.current?.abort(); assistantRequest.current = null; setAssistantBusy(false); };
-  const closeAssistant = useCallback(() => { assistantRequest.current?.abort(); assistantRequest.current = null; setAssistantBusy(false); setAssistantDialog(false); }, []);
+  const stopAssistant = useCallback(() => { if(assistantRequest.current)setAssistantTurns(turns=>turns.map((turn,i)=>i===turns.length-1?{...turn,finishedAt:Date.now(),endState:'stopped'}:turn)); assistantRequest.current?.abort(); assistantRequest.current = null; browserTiming.current=null; setAssistantBusy(false); }, []);
+  const closeAssistant = useCallback(() => { stopAssistant(); setAssistantDialog(false); }, [stopAssistant]);
   const suggestedQuestion = workspaceEntry && !query.trim() && !currentChat?.snapshot.images.length
     && !listening && micStatus !== 'starting' && micStatus !== 'stopping'
     ? rotatingPlaceholder(isZh, placeholderDay) : '';
@@ -349,6 +365,7 @@ export default function LandingSearch({
     // Saved references remain available; release only old, unsaved inline bytes.
     const previous = completed.map((turn, index) => index < completed.length - 9 && turn.images?.some(image => !image.attachmentId) ? { ...turn, images: turn.images.filter(image => image.attachmentId), imagesExpired: true } : turn);
     const createdAt = Date.now();
+    const started=performance.now();
     const nextTurns = [...previous, { question, images, createdAt }];
     setAssistantTurns(nextTurns);
     setAssistantDialog(true);
@@ -367,10 +384,13 @@ export default function LandingSearch({
     setAssistantError(null);
     setAssistantAnswer(null);
     const timeout = setTimeout(() => controller.abort(), assistantTimeoutMs(assistantThinking));
+    const sample={started,timing:{wasHidden:document.hidden} as Partial<AssistantBrowserTiming>} as NonNullable<typeof browserTiming.current>;
+    browserTiming.current=sample;
+    let progress:AssistantProgress[]=[];
+    let completedResponse=false;
     // Streaming updates replace only this turn; older cards can change in place.
     const updateTurn=(next:AssistantTurn)=>setAssistantTurns(turns=>turns.map((turn,index)=>
       index===previous.length && turn.createdAt===createdAt ? next : turn));
-
     try {
       assistantConversation.current ??= crypto.randomUUID();
       images = await saveAssistantImages(images, assistantConversation.current, controller.signal);
@@ -382,6 +402,8 @@ export default function LandingSearch({
         history: assistantImageHistory(previous.filter(turn => !turn.partial).slice(-5).flatMap(turn => [{ role: 'user', content: turn.question, ...(turn.images?.length ? {images:turn.images} : {}) }, { role: 'assistant', content: assistantAnswerHistory(turn.result!, window.location.origin) }]), images),
       }, {headers: { ...authHeaders(), Accept: 'text/event-stream' },signal: controller.signal});
       const requestId = response.headers.get('X-Assistant-Request-Id') ?? undefined;
+      sample.id=requestId;
+      sample.timing.transport=response.headers?.get('content-type')?.includes('text/event-stream') ? 'sse' : 'json';
       if (assistantRequest.current === controller) updateTurn({ question, images, requestId, createdAt });
       if (!response.ok) {
         const failure = await response.json().catch(() => null);
@@ -392,12 +414,18 @@ export default function LandingSearch({
         if (typeof data.answer !== 'string' || !Array.isArray(data.sources)) throw new Error('invalid response');
         if (assistantRequest.current !== controller) return;
         const result: AssistantAnswer = { answer: data.answer, actions: data.actions?.filter(action => typeof action.href === 'string' && isAssistantSourceHref(action.href)), artifacts: Array.isArray(data.artifacts) ? data.artifacts : [], sources: data.sources.filter(source => typeof source.href === 'string' && isAssistantSourceHref(source.href)) };
+        const receivedMs=Math.round(performance.now()-started);
+        if(result.answer)sample.timing.firstAnswerMs ??= receivedMs;
         if (!partial) {
+          completedResponse=true;
+          sample.timing.responseMs=receivedMs;
+          sample.answer=result.answer;
           setAssistantAnswer(result);
         }
         if (requestId) setPendingReveal({id: requestId, text: result.answer, complete: !partial});
         else if (!partial && conversation) assistantConversations.replyCompleted(conversation.owner, conversation.id);
-        updateTurn({ question, images, result, partial, requestId, createdAt });
+        updateTurn({ question, images, result, partial, requestId, createdAt, progress,
+          ...(!partial ? {finishedAt:Date.now(),endState:'complete' as const} : {}) });
       };
       if (response.headers?.get('content-type')?.includes('text/event-stream')) {
         if (!response.body) throw new Error('missing stream');
@@ -406,6 +434,14 @@ export default function LandingSearch({
           if (assistantRequest.current !== controller) return;
           const event = JSON.parse(raw) as AssistantStreamEvent;
           if (event.type === 'status') setAssistantStatus(event.status);
+          else if (event.type === 'progress') {
+            const next=updateAssistantProgress(progress,event.progress);
+            if(next!==progress) {
+              progress=next;
+              sample.timing.firstProgressMs ??= Math.round(performance.now()-started);
+              setAssistantTurns(turns=>turns.map((turn,i)=>i===turns.length-1 && turn.createdAt===createdAt?{...turn,progress}:turn));
+            }
+          }
           else if (event.type === 'answer') applyAnswer(event, true);
           else if (event.type === 'done') { applyAnswer(event.result); ended = true; break; }
           else if (event.type === 'error') {
@@ -419,7 +455,14 @@ export default function LandingSearch({
       if (assistantRequest.current === controller) setAssistantError(controller.signal.aborted ? 'timeout' : error instanceof TypeError ? 'network' : 'unavailable');
     } finally {
       clearTimeout(timeout);
-      if (assistantRequest.current === controller) { assistantRequest.current = null; setAssistantBusy(false); }
+      if (assistantRequest.current === controller) {
+        assistantRequest.current = null;
+        setAssistantBusy(false);
+        if(!completedResponse) {
+          if(browserTiming.current===sample)browserTiming.current=null;
+          setAssistantTurns(turns=>turns.map((turn,i)=>i===turns.length-1 && turn.createdAt===createdAt?{...turn,finishedAt:Date.now(),endState:'error'}:turn));
+        }
+      }
     }
   };
 

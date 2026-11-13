@@ -201,7 +201,8 @@ describe('LandingSearch placeholder hydration', () => {
       expect(saved.snapshot.draft).toBe('下一问');
       expect(saved.snapshot.turns.at(-1)?.result?.answer).toBe('廉政委员会');
       expect(saved.snapshot.turns.at(-1)?.images).toEqual(savedImages);
-      expect(fetcher).toHaveBeenCalledTimes(2);
+      expect(fetcher.mock.calls.filter(([url])=>!String(url).endsWith('/events'))).toHaveLength(2);
+      expect(fetcher.mock.calls.filter(([url])=>String(url).endsWith('/events'))).toHaveLength(1);
       expect(changes).toBeLessThan(80);
     } finally { unsubscribe(); await act(async () => root.unmount()); host.remove(); }
   });
@@ -262,7 +263,7 @@ describe('LandingSearch placeholder hydration', () => {
       await act(async()=>{host.querySelector('input')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));});
       expect(fetcher.mock.calls[0][1].headers.Accept).toBe('text/event-stream');
       await emit({type:'status',status:{phase:'querying',tool:'pages'}});
-      expect(document.querySelector('.site-assistant-status')?.textContent).toContain('正在查询站内页面');
+      expect(document.querySelector('.site-assistant-progress-heading [role="status"]')?.textContent).toContain('正在查询站内页面');
       const sources=[{id:'page:/frame-count',href:'/frame-count',title:'数帧',read:true},{id:'unsafe',href:'//evil.test',title:'unsafe',read:true}];
       await emit({type:'answer',answer:'第一句。 [[page:/frame-',sources});
       expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('第一句。');
@@ -275,7 +276,7 @@ describe('LandingSearch placeholder hydration', () => {
       await act(async()=>{(document.querySelector('button[title="停止"]') as HTMLButtonElement).click();});
       expect(fetcher.mock.calls[0][1].signal.aborted).toBe(true);
       expect(document.querySelector('.site-assistant-incomplete')?.textContent).toBe('回答未完成');
-      expect(document.querySelector('.site-assistant-status')).toBeNull();
+      expect(document.querySelector('.site-assistant-progress')).toBeNull();
       await emit({type:'done',result:{answer:'late replacement',sources:[]}});
       expect(prose.textContent).not.toContain('late replacement');
     } finally { await act(async()=>root.unmount()); host.remove(); }
