@@ -52,6 +52,7 @@ export const toolCallSchema = z.discriminatedUnion('tool', [
 export type AssistantToolCall = z.infer<typeof toolCallSchema>;
 export interface ToolResult {
   evidence: unknown; sources: AssistantSource[]; artifacts: AssistantArtifact[];
+  outcome?: { state: 'success' | 'empty' | 'partial' | 'temporary_failure' | 'blocked'; reason?: string };
   /** Exact published choices, for visitors explicitly asking to choose conditions first. */
   scopeChoices?: { total: number; titles: string[] };
   reconstructionAnnotations?: string[];
