@@ -78,6 +78,34 @@ To go back to all-prod, start the frontend **without** `LOCAL_DOMAINS` set.
 - To test a **migration** locally, apply it to pg13 after seeding:
   `Get-Content migrations/00xx_*.sql | docker exec -i pg13 psql -U postgres -d cuberoot_db`.
 
+## Local chat API verification
+
+`pnpm --filter @cuberoot/server exec tsx scripts/dev-assistant.ts` (from `core/`)
+loads the real chat routes, model transport and monitoring without unrelated API
+background jobs. It binds to `127.0.0.1:3002` by default (`PORT` can override it).
+It requires `DB_HOST=127.0.0.1`, `DB_NAME=assistant_dev`, local database connection
+settings, an explicit `JWT_SECRET` and the chosen model provider configuration.
+Pass credentials through the process environment; do not commit them.
+
+Seed only the current account's public ID/WCA mapping into local `app_users`,
+plus the assistant quota, monitoring, attachments and context migrations. Existing
+browser sessions require the matching session verification secret. All chat
+records and quotas then stay in the local database. Set `SITE_ASSISTANT_OUTBOX_DIR`
+to a dedicated directory under `.local-data/`; set `SITE_ASSISTANT_KNOWLEDGE_ENABLED=0`
+when the local vector index is absent (public lexical retrieval remains available).
+
+In the client's ignored `.env.local`, set `LOCAL_DOMAINS=site-assistant` and
+`LOCAL_API_PORT=3002`, preserving any other local domains. Also set
+`NEXT_PUBLIC_SITE_ASSISTANT_API_ORIGIN=http://localhost:3002` for the direct streaming
+request (development only); this does not redirect authentication or other API domains.
+Apply `0294_assistant_message_shares.sql` and `0325_assistant_share_versions.sql` to
+the isolated database when testing share snapshots. Reload the Next config
+so its rewrites update. Responses include `X-Assistant-Backend: local`; `/health`
+on the local API identifies the database. All other domains retain their existing
+routing. To restore the default chat backend, remove `site-assistant` from
+`LOCAL_DOMAINS`, remove `NEXT_PUBLIC_SITE_ASSISTANT_API_ORIGIN`, and reload the Next
+config. Remove `LOCAL_API_PORT` only if no other local domains need it.
+
 ## Frozen before/after assistant evaluation
 
 `prepare-assistant-paired.mjs`, `run-assistant-paired.mjs`, and
