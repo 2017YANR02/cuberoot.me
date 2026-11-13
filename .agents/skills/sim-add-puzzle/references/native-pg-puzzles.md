@@ -16,6 +16,7 @@
 - [Cat’s Cradle](#cats-cradle)
 - [Radio Canon](#radio-canon)
 - [Radiolarian 3](#radiolarian-3)
+- [Radio Star](#radio-star)
 
 ## 共享入口
 
@@ -74,6 +75,7 @@
 | `radiojewel` | Radio Jewel / Radio Jewel | `i f 0.5278640450004204` | 按 [Jason Smith 的 Radiolarian 7 原作](https://www.puzzleforge.com/wp/2012/11/06/radiolarian-7-radio-jewel-112012/)和 [Hyperspeedcube 的 radio07 实现](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua)，取内切球半径 1、面切深 5−2√5；核对原作照片的中央六边形与十五个三角形，以及[实体规格的 242 个外露块](https://cubein.cn/products/radio-jewel-radiolarian-7)。保留二十色和保形 120° 面转，不包含实物的两种 jumbling，不宣称测量复刻商品尺寸。 |
 | `radiocanon` | Radio Canon / Radio Canon | `i f 0.77` | 按 [Jason Smith 的 Radiolarian 1.5 原作](https://www.puzzleforge.com/wp/2014/05/08/radiolarian-1-5-the-radio-cannon-52014/)核对固定面中心及实物分区，采用 [Hyperspeedcube 的 `radio01_5` 切深](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua) 0.77；这是已知模拟器的理想化平面模型，不是商品尺寸测量值。保留标准 120° 面转，不包含 jumbling。 |
 | `radiolarian3` | Radiolarian 3 / Radiolarian 3 | `i f 0.6944271909999159` | 按 [Jason Smith 的 Radiolarian 3 原作](https://www.puzzleforge.com/wp/2010/03/08/132/)核对更深面切及可移动中心，采用 [Hyperspeedcube 的 `radio03` 切深](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua) `1−(1−1/φ)×4/5 = (2√5−1)/5`；每面保留十个三角形、三个四边形及三个五边形，仅支持保形 120° 面转。 |
+| `radiostar` | Radio Star / Radio Star | `i f 0.2360679774997897` | 按 [Jason Smith 的 Radiolarian 11 原作](https://www.puzzleforge.com/wp/2013/11/07/radiolarian-11-the-radio-star-112013/)核对角块完全消失的切深，并采用 [Hyperspeedcube 的 `radio11` 定义](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua) `1/φ³ = √5−2`；每面十九区，仅支持保形 120° 面转，不包含原作 jumbling 或 double-jumble。 |
 
 把拼图描述视为几何数据；Dino Skewb、3×3 + Dino 与 3×3 + Helicopter 的组合描述由已核证的两类切面推导，不标注成上游预设中逐字复制的条目。
 
@@ -105,6 +107,7 @@
 | Radio Jewel | 20 | 16（15 三角形、1 六边形） | 320 | 12 个五贴片角块、30 个双贴片棱块、三组各 60 个三角中心块、20 个六边形中心块，共 242 块 | 面轴 120° |
 | Cat’s Cradle | 20 | 19（15 三角形、3 四边形、1 六边形） | 380 | 12 个五贴片角块、60+30 个双贴片棱块、两组各 60 个单贴片中心块、20 个六边形中心块，共 242 块 | 面轴 120° |
 | Radio Canon | 20 | 16（7 三角形、9 四边形） | 320 | 12 个五贴片角块、60+30 个双贴片棱块、60 个单贴片中心块、20 个固定三角中心，共 182 块 | 面轴 120° |
+| Radio Star | 20 | 19（12 三角形、3 四边形、3 五边形、1 六边形） | 380 | 60+30 个双贴片棱块、三组各 60 个单贴片中心块、20 个六边形中心，无角块，共 290 块 | 面轴 120° |
 
 - 从 `get3d()` 的 `isDup` 排除只为表示朝向而重复的贴片，再统计可见几何；开启 `orientCenters` 后 Dogic 和四阶八面体会分别返回 120、48 条贴片数据，不要把它们当成实际贴片数。
 - 对 Master FTO v2 去掉 168 条原始数据中的 16 个朝向重复片，保持 152 个真实贴片；核对普通 Master FTO 为 128 片、86 块，新版为 152 片、110 块，不把版本差异只实现为名称或配色。
@@ -253,3 +256,13 @@
 - 从独立面法向定位二十个中央三角，利用 `h < √5/3` 选择每个转面附近的三个中心，并逐面、逐正反方向核对其 120° 循环置换；同时以 Radio Canon 的外层中心置换恒等作负例。区分中心位置移动与单色中心不可辨的自转。
 - 复用二十面轴、120° 基本转角及 `A/2A/Aw/Av` 记号，验证宽转组合、对侧中层反向别名与非法层拒绝；对全部手动层及整体转体独立检查刚体终态和五个进度的切面分离，再分别验证真实 PG3D 中间矩阵、拖转选层和浏览器交互。
 - 让三入口共用 60 步练习用随机转动、完整二十面 SVG 与独立计时记录；核对普通／种子打乱、生成页比赛／批量／输入、PDF 和 csTimer 导入导出，保留 `cuberootEvent` 与非 WCA 来源说明，不宣称均匀随机状态。按实际环境分别记录三维浏览器验收和二维回退验收。
+
+## Radio Star
+
+- 将 `radiostar` 注册为 Jason Smith 的 Radio Star（Radiolarian 11），中英文菜单沿用原名；以内切球半径 1 保留精确切深 `h = 1/φ³ = √5−2`，不要用相邻 Radiolarian 的模型替代角块消失的临界结构。
+- 在注册前从 `core/` 运行 `node packages/client/scripts/native-puzzles/compare-outlines.mjs --set=radiostar`，将单面切线、放大分区和完整二十面展开图与原作照片对照；黑色 Radio Crystal 线仅作比较，不保留在新描述中。
+- 用独立正二十面体半空间分割核对每面的十二个三角形、三个四边形、三个五边形和一个六边形；从 420 条原生数据排除 40 个中心朝向重复片，保留 380 个可见贴片、290 个可见块和零个五贴片角块，不因 Cat’s Cradle 同为 380 片就复用其分区。
+- 从原始顶点的面法向投影核对 `±1`、`±h` 各出现五次；将 `h−0.001` 的 560 片和 `h+0.001` 的 500 片作为负例，分别核对两侧恢复十二个角块，避免几何容差掩盖错误切深。
+- 核对原生轨道 `CENTERS(60,1)`、`EDGES(60,2)`、`CENTERS2(60,1)`、`EDGES2(30,2)`、`CENTERS3(60,1)`、`CENTERS4(20,3)`；复用二十个面向的 `A/2A/Aw/Av`、120° 基本转角和 60 步练习用随机转动，不宣称均匀随机状态。
+- 在现有独立几何与真实 PG3D 五进度测试中覆盖全层深、正反方向、宽转组合和非法层拒绝，再单独实测浏览器拖层、播放与二维回退；在双语说明中保留仅保形转动、不含原作 jumbling 和 double-jumble 的范围。
+- 让三入口共用完整二十面 SVG、结构图标和独立 `radiostar` 计时记录；导出使用 `input` 并保留 `cuberootEvent`，导入支持 Radio Star／Radiolarian 11，并用词边界拒绝 Radiolarian 110、11.5 等相邻名称。

@@ -30,6 +30,7 @@ const CASES = [
   { id: 'catscradle', scramble: "R 2L' Gw Uv [F, U] Rw'", facelets: 380 },
   { id: 'radiocanon', scramble: "R 2L' Gw Uv [F, U] Rw'", facelets: 320 },
   { id: 'radiolarian3', scramble: "R 2L' Gw Uv [F, U] Rw'", facelets: 320 },
+  { id: 'radiostar', scramble: "R 2L' Gw Uv [F, U] Rw'", facelets: 380 },
   { id: 'icosababyface', scramble: "FREGU 2HIERC' FLACRw NALPOv", facelets: 20 },
   { id: 'cube2heli', scramble: "F DF 2DF' FLw U2 2UB' Fv DFv", facelets: 48 },
   { id: 'cube3heli', scramble: "F DF 2U' FLw Rw2 2UB' Fv DFv", facelets: 168 },

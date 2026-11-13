@@ -55,6 +55,7 @@ describe('Kilominx simulator controls', () => {
       indexer: { get: vi.fn(async () => null), addFreshListener: vi.fn(), removeFreshListener: vi.fn() },
       playingInfo: { get: vi.fn(async () => ({ playing: false })), addFreshListener: vi.fn(), removeFreshListener: vi.fn() },
       coarseTimelineInfo: { get: vi.fn(async () => null) },
+      animationTimelineLeavesRequest: { get: vi.fn(async () => null), set: vi.fn() },
     },
     experimentalSetupAlg: '',
     experimentalSetupAnchor: 'start' as 'start' | 'end',
@@ -261,6 +262,19 @@ describe('Kilominx simulator controls', () => {
     expect(player.experimentalSetupAlg).toBe(SCRAMBLE);
     expect(player.alg).toBe('U R2');
     expect(player.experimentalSetupAnchor).toBe('end');
+  });
+
+  it('rejects excessive empty commutator expansion before borrowing the player', async () => {
+    await mount();
+    let scramble = '';
+    for (let depth = 0; depth < 14; depth++) scramble = `[${scramble},]`;
+    await enter('Scramble', scramble);
+    const original = { setup: player.experimentalSetupAlg, alg: player.alg, anchor: player.experimentalSetupAnchor };
+    await act(async () => button('Animate scramble').click());
+    expect({ setup: player.experimentalSetupAlg, alg: player.alg, anchor: player.experimentalSetupAnchor }).toEqual(original);
+    expect(player.experimentalModel.animationTimelineLeavesRequest.set).not.toHaveBeenCalled();
+    expect(player.play).not.toHaveBeenCalled();
+    expect(host.querySelector('button[title="Return to algorithm"]')).toBeNull();
   });
 
   it('switches notation from current drafts atomically and keeps multi-letter moves intact while typing', async () => {
