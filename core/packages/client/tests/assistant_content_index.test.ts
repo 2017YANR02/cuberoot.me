@@ -31,6 +31,8 @@ describe('assistant build-time public content index',()=>{
   it('indexes full puzzle names and the actual solver event routes',()=>{
     expect(solverDestinations()).toContainEqual({lang:'en',href:'/scramble/solver?event=pyram',title:'Pyraminx — Solver'});
     expect(solverDestinations()).toContainEqual({lang:'zh',href:'/scramble/solver?event=222',title:'二阶 — 求解器'});
+    expect(solverDestinations()).toContainEqual({lang:'en',href:'/scramble/solver?event=baby_fto',title:'Baby FTO — Solver'});
+    expect(solverDestinations()).toContainEqual({lang:'zh',href:'/scramble/solver?event=baby_fto',title:'二阶 FTO — 求解器'});
   });
   it('reuses solver menu links while excluding external, private and state-bearing destinations',()=>{
     const links=['/zh/scramble/solver?event=222','/zh/recognize/pll','https://evil.example/scramble/solver','/zh/admin','/zh/scramble/solver?state=private','/zh/alg/3x3/_'].map(href=>`<a href="${href}">二阶求解器</a>`).join('');

@@ -6,6 +6,7 @@ import { PG_PUZZLES } from '@/app/[lang]/sim/pgCatalog';
 import { CSTIMER_EVENTS } from '@/lib/cstimer-scramble';
 import { eventDisplayName } from '@/lib/wca-events';
 import { downloadCsv } from '@/lib/scramble-dist/download';
+import { downloadBabyFtoStates } from '@/lib/scramble-dist/baby-fto-download';
 import { statsUrl } from '@/lib/stats-base';
 import type { EnumSpec, ExactDownloads, TrText } from './EnumeratedDistView';
 
@@ -54,6 +55,10 @@ interface ExactPuzzleCatalogEntry {
 }
 
 export const PRECOMPUTED_EXACT_PUZZLES = Object.keys(datasets).map(event => {
+  if (event === 'baby_fto') return {
+    id: event, zh: eventDisplayName(event, true), en: eventDisplayName(event, false),
+    icon: 'unofficial-baby_fto', simulatorEvent: event,
+  } satisfies ExactPuzzleCatalogEntry;
   if (event === 'ufo') return {
     id: event, zh: '项目 UFO 模型', en: 'Project UFO model', icon: 'unofficial-ufo',
     disableExampleLink: true,
@@ -163,6 +168,7 @@ export const PRECOMPUTED_EXACT_SPECS: Record<string, EnumSpec> = Object.fromEntr
       subgoal,
       quotient: dataset.quotient,
       downloads: downloadsAvailable ? downloadAssets[puzzle.id] : undefined,
+      downloadStates: puzzle.id === 'baby_fto' ? downloadBabyFtoStates : undefined,
       downloadExamples: {
         label: { zh: '示例及最优解 (CSV)', en: 'Examples and optimal solutions (CSV)' },
         run: () => downloadCsv(`${puzzle.id}_examples.csv`, 'optimal_length,scramble,solution',

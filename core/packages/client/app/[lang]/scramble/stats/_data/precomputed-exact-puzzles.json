@@ -2996,6 +2996,640 @@
         "reportSha256": "fe66ce4b32177e402332485e5a6ab2cb52c327998d8dae07476d41af5bd8cd7e"
       }
     },
+    "baby_fto": {
+      "total": 138240,
+      "goalCount": 1,
+      "godsNumber": 10,
+      "histogram": [
+        1,
+        8,
+        48,
+        288,
+        1632,
+        8568,
+        36114,
+        74799,
+        16547,
+        220,
+        15
+      ],
+      "examples": [
+        {
+          "depth": 0,
+          "scramble": "",
+          "solution": ""
+        },
+        {
+          "depth": 1,
+          "scramble": "U",
+          "solution": "U'"
+        },
+        {
+          "depth": 1,
+          "scramble": "U'",
+          "solution": "U"
+        },
+        {
+          "depth": 1,
+          "scramble": "F",
+          "solution": "F'"
+        },
+        {
+          "depth": 1,
+          "scramble": "F'",
+          "solution": "F"
+        },
+        {
+          "depth": 1,
+          "scramble": "BR",
+          "solution": "BR'"
+        },
+        {
+          "depth": 1,
+          "scramble": "BR'",
+          "solution": "BR"
+        },
+        {
+          "depth": 1,
+          "scramble": "BL",
+          "solution": "BL'"
+        },
+        {
+          "depth": 1,
+          "scramble": "BL'",
+          "solution": "BL"
+        },
+        {
+          "depth": 2,
+          "scramble": "U F",
+          "solution": "F' U'"
+        },
+        {
+          "depth": 2,
+          "scramble": "U F'",
+          "solution": "F U'"
+        },
+        {
+          "depth": 2,
+          "scramble": "U BR",
+          "solution": "BR' U'"
+        },
+        {
+          "depth": 2,
+          "scramble": "U BR'",
+          "solution": "BR U'"
+        },
+        {
+          "depth": 2,
+          "scramble": "U BL",
+          "solution": "BL' U'"
+        },
+        {
+          "depth": 2,
+          "scramble": "U BL'",
+          "solution": "BL U'"
+        },
+        {
+          "depth": 2,
+          "scramble": "U' F",
+          "solution": "F' U"
+        },
+        {
+          "depth": 2,
+          "scramble": "U' F'",
+          "solution": "F U"
+        },
+        {
+          "depth": 2,
+          "scramble": "U' BR",
+          "solution": "BR' U"
+        },
+        {
+          "depth": 2,
+          "scramble": "U' BR'",
+          "solution": "BR U"
+        },
+        {
+          "depth": 2,
+          "scramble": "U' BL",
+          "solution": "BL' U"
+        },
+        {
+          "depth": 2,
+          "scramble": "U' BL'",
+          "solution": "BL U"
+        },
+        {
+          "depth": 3,
+          "scramble": "U F U",
+          "solution": "U' F' U'"
+        },
+        {
+          "depth": 3,
+          "scramble": "U F U'",
+          "solution": "U F' U'"
+        },
+        {
+          "depth": 3,
+          "scramble": "U F BR",
+          "solution": "BR' F' U'"
+        },
+        {
+          "depth": 3,
+          "scramble": "U F BR'",
+          "solution": "BR F' U'"
+        },
+        {
+          "depth": 3,
+          "scramble": "U F BL",
+          "solution": "BL' F' U'"
+        },
+        {
+          "depth": 3,
+          "scramble": "U F BL'",
+          "solution": "BL F' U'"
+        },
+        {
+          "depth": 3,
+          "scramble": "U F' U",
+          "solution": "U' F U'"
+        },
+        {
+          "depth": 3,
+          "scramble": "U F' U'",
+          "solution": "U F U'"
+        },
+        {
+          "depth": 3,
+          "scramble": "U F' BR",
+          "solution": "BR' F U'"
+        },
+        {
+          "depth": 3,
+          "scramble": "U F' BR'",
+          "solution": "BR F U'"
+        },
+        {
+          "depth": 3,
+          "scramble": "U F' BL",
+          "solution": "BL' F U'"
+        },
+        {
+          "depth": 3,
+          "scramble": "U F' BL'",
+          "solution": "BL F U'"
+        },
+        {
+          "depth": 4,
+          "scramble": "U F U F",
+          "solution": "F' U' F' U'"
+        },
+        {
+          "depth": 4,
+          "scramble": "F U' F' U'",
+          "solution": "U F U F'"
+        },
+        {
+          "depth": 4,
+          "scramble": "U F U F'",
+          "solution": "F U' F' U'"
+        },
+        {
+          "depth": 4,
+          "scramble": "U F U BR",
+          "solution": "BR' U' F' U'"
+        },
+        {
+          "depth": 4,
+          "scramble": "U F U BR'",
+          "solution": "BR U' F' U'"
+        },
+        {
+          "depth": 4,
+          "scramble": "U F U BL",
+          "solution": "BL' U' F' U'"
+        },
+        {
+          "depth": 4,
+          "scramble": "U F U BL'",
+          "solution": "BL U' F' U'"
+        },
+        {
+          "depth": 4,
+          "scramble": "F' U F' U'",
+          "solution": "U F U' F"
+        },
+        {
+          "depth": 4,
+          "scramble": "U F U' F",
+          "solution": "F' U F' U'"
+        },
+        {
+          "depth": 4,
+          "scramble": "U F U' F'",
+          "solution": "F U F' U'"
+        },
+        {
+          "depth": 4,
+          "scramble": "U F U' BR",
+          "solution": "BR' U F' U'"
+        },
+        {
+          "depth": 4,
+          "scramble": "U F U' BR'",
+          "solution": "BR U F' U'"
+        },
+        {
+          "depth": 5,
+          "scramble": "F U' F' U' F",
+          "solution": "F' U F U F'"
+        },
+        {
+          "depth": 5,
+          "scramble": "F' U F' U' F'",
+          "solution": "F U F U' F"
+        },
+        {
+          "depth": 5,
+          "scramble": "F' U' F U' F'",
+          "solution": "F U F' U F"
+        },
+        {
+          "depth": 5,
+          "scramble": "F U F U' F",
+          "solution": "F' U F' U' F'"
+        },
+        {
+          "depth": 5,
+          "scramble": "BR U' BR' U' BR",
+          "solution": "BR' U BR U BR'"
+        },
+        {
+          "depth": 5,
+          "scramble": "BR' U BR' U' BR'",
+          "solution": "BR U BR U' BR"
+        },
+        {
+          "depth": 5,
+          "scramble": "BR' U' BR U' BR'",
+          "solution": "BR U BR' U BR"
+        },
+        {
+          "depth": 5,
+          "scramble": "BR U BR U' BR",
+          "solution": "BR' U BR' U' BR'"
+        },
+        {
+          "depth": 5,
+          "scramble": "BL U' BL' U' BL",
+          "solution": "BL' U BL U BL'"
+        },
+        {
+          "depth": 5,
+          "scramble": "BL' U BL' U' BL'",
+          "solution": "BL U BL U' BL"
+        },
+        {
+          "depth": 5,
+          "scramble": "BL' U' BL U' BL'",
+          "solution": "BL U BL' U BL"
+        },
+        {
+          "depth": 5,
+          "scramble": "BL U BL U' BL",
+          "solution": "BL' U BL' U' BL'"
+        },
+        {
+          "depth": 6,
+          "scramble": "F U' F' U' F U'",
+          "solution": "U F' U F U F'"
+        },
+        {
+          "depth": 6,
+          "scramble": "F' U F' U' F' U",
+          "solution": "U' F U F U' F"
+        },
+        {
+          "depth": 6,
+          "scramble": "F' U' F U' F' U'",
+          "solution": "U F U F' U F"
+        },
+        {
+          "depth": 6,
+          "scramble": "F U F U' F U",
+          "solution": "U' F' U F' U' F'"
+        },
+        {
+          "depth": 6,
+          "scramble": "BR U' BR' U' BR U'",
+          "solution": "U BR' U BR U BR'"
+        },
+        {
+          "depth": 6,
+          "scramble": "BR' U BR' U' BR' U",
+          "solution": "U' BR U BR U' BR"
+        },
+        {
+          "depth": 6,
+          "scramble": "BR' U' BR U' BR' U'",
+          "solution": "U BR U BR' U BR"
+        },
+        {
+          "depth": 6,
+          "scramble": "BR U BR U' BR U",
+          "solution": "U' BR' U BR' U' BR'"
+        },
+        {
+          "depth": 6,
+          "scramble": "BL U' BL' U' BL U'",
+          "solution": "U BL' U BL U BL'"
+        },
+        {
+          "depth": 6,
+          "scramble": "BL' U BL' U' BL' U",
+          "solution": "U' BL U BL U' BL"
+        },
+        {
+          "depth": 6,
+          "scramble": "BL' U' BL U' BL' U'",
+          "solution": "U BL U BL' U BL"
+        },
+        {
+          "depth": 6,
+          "scramble": "BL U BL U' BL U",
+          "solution": "U' BL' U BL' U' BL'"
+        },
+        {
+          "depth": 7,
+          "scramble": "F' U F' U' F' U F'",
+          "solution": "F U' F U F U' F"
+        },
+        {
+          "depth": 7,
+          "scramble": "F U F U' F U F",
+          "solution": "F' U' F' U F' U' F'"
+        },
+        {
+          "depth": 7,
+          "scramble": "BR U BR U' BR U BR",
+          "solution": "BR' U' BR' U BR' U' BR'"
+        },
+        {
+          "depth": 7,
+          "scramble": "BL U BL U' BL U BL",
+          "solution": "BL' U' BL' U BL' U' BL'"
+        },
+        {
+          "depth": 7,
+          "scramble": "F U' F' U' F U' F'",
+          "solution": "F U F' U F U F'"
+        },
+        {
+          "depth": 7,
+          "scramble": "BR U' BR' U' BR U' BR'",
+          "solution": "BR U BR' U BR U BR'"
+        },
+        {
+          "depth": 7,
+          "scramble": "F' U' F U' F' U' F",
+          "solution": "F' U F U F' U F"
+        },
+        {
+          "depth": 7,
+          "scramble": "F U' F U F U' F",
+          "solution": "F' U F' U' F' U F'"
+        },
+        {
+          "depth": 7,
+          "scramble": "F' U' F' U F' U' F'",
+          "solution": "F U F U' F U F"
+        },
+        {
+          "depth": 7,
+          "scramble": "BR' U' BR' U BR' U' BR'",
+          "solution": "BR U BR U' BR U BR"
+        },
+        {
+          "depth": 7,
+          "scramble": "BL' U' BL' U BL' U' BL'",
+          "solution": "BL U BL U' BL U BL"
+        },
+        {
+          "depth": 7,
+          "scramble": "F U F' U F U F'",
+          "solution": "F U' F' U' F U' F'"
+        },
+        {
+          "depth": 8,
+          "scramble": "U F U' F U F U' F",
+          "solution": "F' U F' U' F' U F' U'"
+        },
+        {
+          "depth": 8,
+          "scramble": "U' F' U F' U' F' U F'",
+          "solution": "F U' F U F U' F U"
+        },
+        {
+          "depth": 8,
+          "scramble": "U F' U F U F' U F",
+          "solution": "F' U' F U' F' U' F U'"
+        },
+        {
+          "depth": 8,
+          "scramble": "U BR' U' BR' U BR' U' BR'",
+          "solution": "BR U BR U' BR U BR U'"
+        },
+        {
+          "depth": 8,
+          "scramble": "U F U F' U F U F'",
+          "solution": "F U' F' U' F U' F' U'"
+        },
+        {
+          "depth": 8,
+          "scramble": "U BL' U' BL' U BL' U' BL'",
+          "solution": "BL U BL U' BL U BL U'"
+        },
+        {
+          "depth": 8,
+          "scramble": "U BR U BR' U BR U BR'",
+          "solution": "BR U' BR' U' BR U' BR' U'"
+        },
+        {
+          "depth": 8,
+          "scramble": "U F' U' F' U F' U' F'",
+          "solution": "F U F U' F U F U'"
+        },
+        {
+          "depth": 8,
+          "scramble": "U' F U' F U F U' F",
+          "solution": "F' U F' U' F' U F' U"
+        },
+        {
+          "depth": 8,
+          "scramble": "U F' U F' U' F' U F'",
+          "solution": "F U' F U F U' F U'"
+        },
+        {
+          "depth": 8,
+          "scramble": "U F' U F U F' U F'",
+          "solution": "F U' F U' F' U' F U'"
+        },
+        {
+          "depth": 8,
+          "scramble": "U BL' BR' U' BL BR U' BR'",
+          "solution": "BR U BR' BL' U BR BL U'"
+        },
+        {
+          "depth": 9,
+          "scramble": "F U F' BR' F U' F' U BR",
+          "solution": "BR' U' F U F' BR F U' F'"
+        },
+        {
+          "depth": 9,
+          "scramble": "F U F' BR F U' F' U BR'",
+          "solution": "BR U' F U F' BR' F U' F'"
+        },
+        {
+          "depth": 9,
+          "scramble": "F U F U F U' F' U' F'",
+          "solution": "F U F U F' U' F' U' F'"
+        },
+        {
+          "depth": 9,
+          "scramble": "F U F U BR' BL' BR' BL' BR'",
+          "solution": "BR BL BR BL BR U' F' U' F'"
+        },
+        {
+          "depth": 9,
+          "scramble": "F U F U BL' BR' BL' BR' BL'",
+          "solution": "BL BR BL BR BL U' F' U' F'"
+        },
+        {
+          "depth": 9,
+          "scramble": "F U F U F' U' F' U' F'",
+          "solution": "F U F U F U' F' U' F'"
+        },
+        {
+          "depth": 9,
+          "scramble": "U F U' BL' U F' U' F BL",
+          "solution": "BL' F' U F U' BL U F' U'"
+        },
+        {
+          "depth": 9,
+          "scramble": "U F U F U F' U' F' U'",
+          "solution": "U F U F U' F' U' F' U'"
+        },
+        {
+          "depth": 9,
+          "scramble": "U F U' BL U F' U' F BL'",
+          "solution": "BL F' U F U' BL' U F' U'"
+        },
+        {
+          "depth": 9,
+          "scramble": "U F U F BL' BR' BL' BR' BL'",
+          "solution": "BL BR BL BR BL F' U' F' U'"
+        },
+        {
+          "depth": 9,
+          "scramble": "U F U F U' F' U' F' U'",
+          "solution": "U F U F U F' U' F' U'"
+        },
+        {
+          "depth": 9,
+          "scramble": "U F U F BR' BL' BR' BL' BR'",
+          "solution": "BR BL BR BL BR F' U' F' U'"
+        },
+        {
+          "depth": 10,
+          "scramble": "U F U F U BR' BL' BR' BL' BR'",
+          "solution": "BR BL BR BL BR U' F' U' F' U'"
+        },
+        {
+          "depth": 10,
+          "scramble": "U F U F U BL' BR' BL' BR' BL'",
+          "solution": "BL BR BL BR BL U' F' U' F' U'"
+        },
+        {
+          "depth": 10,
+          "scramble": "U F U F U F' U' F' U' F'",
+          "solution": "F U F U F U' F' U' F' U'"
+        },
+        {
+          "depth": 10,
+          "scramble": "U F U' BR F' BL' BR' BL F BR'",
+          "solution": "BR F' BL' BR BL F BR' U F' U'"
+        },
+        {
+          "depth": 10,
+          "scramble": "U F U BR U BR' BL' U BR BL",
+          "solution": "BL' BR' U' BL BR U' BR' U' F' U'"
+        },
+        {
+          "depth": 10,
+          "scramble": "U F U BL BR F BL' BR' F BR",
+          "solution": "BR' F' BR BL F' BR' BL' U' F' U'"
+        },
+        {
+          "depth": 10,
+          "scramble": "U F U' BL F U F U' BL F",
+          "solution": "F' BL' U F' U' F' BL' U F' U'"
+        },
+        {
+          "depth": 10,
+          "scramble": "U F BL F' U' BL U' BR' U F'",
+          "solution": "F U' BR U BL' U F BL' F' U'"
+        },
+        {
+          "depth": 10,
+          "scramble": "U F U F' BR U BL BR BL' U",
+          "solution": "U' BL BR' BL' U' BR' F U' F' U'"
+        },
+        {
+          "depth": 10,
+          "scramble": "U F U' BL' BR BL' U BL' F' U",
+          "solution": "U' F BL U' BL BR' BL U F' U'"
+        },
+        {
+          "depth": 10,
+          "scramble": "U F U F' U BR F BL BR' U",
+          "solution": "U' BR BL' F' BR' U' F U' F' U'"
+        },
+        {
+          "depth": 10,
+          "scramble": "U F U' F BL U BR BL' F BR",
+          "solution": "BR' F' BL BR' U' BL' F' U F' U'"
+        },
+        {
+          "depth": 10,
+          "scramble": "U F U F U BL' U' BL' U' BL'",
+          "solution": "BL U BL U BL U' F' U' F' U'"
+        },
+        {
+          "depth": 10,
+          "scramble": "U F U F U F' BL' F' BL' F'",
+          "solution": "F BL F BL F U' F' U' F' U'"
+        },
+        {
+          "depth": 10,
+          "scramble": "U F U BR F BR' BL' BR' F' BL'",
+          "solution": "BL F BR BL BR F' BR' U' F' U'"
+        }
+      ],
+      "metric": {
+        "en": "Each U/F/R/L/D/B/BR/BL ±120° face turn counts as one move.",
+        "zh": "U/F/R/L/D/B/BR/BL 每次 ±120° 面转计一步。"
+      },
+      "scope": {
+        "en": "Complete Baby FTO space, identifying whole-puzzle rotations and ignoring invisible single-colour centre twists. Its move graph is isomorphic to Diamond, but witnesses use cubing.js Baby FTO face labels and orientation. All exported states were independently replayed with that named model.",
+        "zh": "二阶 FTO 完整状态空间，整体转动视为等价，忽略单色面心不可见的自转。动作图与钻石八面体同构；示例使用 cubing.js 二阶 FTO 的面名与朝向，全部导出状态均经该命名模型独立回放。"
+      },
+      "examplesPerDepthLimit": 12,
+      "deepestExamplesComplete": true,
+      "provenance": {
+        "generatedAt": "2026-11-13T16:28:13.202Z",
+        "reportSha256": "a99c5f0479e24d1a4af0755f50d9cc315a0650bb3c76fe6c91c7f9819c67cf3b"
+      }
+    },
     "bic": {
       "total": 1108800,
       "goalCount": 1,

@@ -23,11 +23,13 @@
 
 import PageHeading from '@/components/PageHeading';
 import AppLink from '@/components/AppLink';
-import { EVENT_ID, PUZZLE_BY_EVENT, type SolvePuzzle } from '@/lib/solver-routes';
+import { EVENT_ID, NATIVE_SOLVER_IDS, PUZZLE_BY_EVENT, type SolvePuzzle } from '@/lib/solver-routes';
 import { useParams } from 'next/navigation';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import { CSTIMER_SOLVABLE_IDS } from '@/lib/cstimer-scramble';
+import { TWIZZLE_NONWCA_APPEND } from '@/lib/cubing-scramble';
 import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from '@/lib/event-constants';
+import { eventDisplayName } from '@/lib/wca-events';
 import { useT } from '@/hooks/useT';
 import './solve_tabs.css';
 
@@ -120,6 +122,14 @@ export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
             isZh={lang === 'zh'}
             wcaEvents={ALL_WCA_SELECTOR_EVENTS}
             availableEvents={CSTIMER_SOLVABLE_IDS}
+            additionalGroups={[{
+              id: 'native-solvers', label: t('其他项目', 'Other puzzles'),
+              items: NATIVE_SOLVER_IDS.map(id => ({
+                id,
+                label: eventDisplayName(id, lang === 'zh'),
+                iconClass: TWIZZLE_NONWCA_APPEND.find(puzzle => puzzle.id === id)?.iconClass,
+              })),
+            }]}
             selectedEvent={puzzle ? EVENT_ID[puzzle] : undefined}
             linkFor={(id) => {
               const p = PUZZLE_BY_EVENT[id];

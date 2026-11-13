@@ -841,9 +841,9 @@
   {
     "name": "cubing/cubing.js",
     "url": "https://github.com/cubing/cubing.js",
-    "zh": "Twizzle 同源的 cubing.js TwistyPlayer 用于模拟器与公式播放器，并提供智能魔方实况的可选三维引擎；公式解析与各项目随机状态打乱也复用此库",
-    "en": "cubing.js TwistyPlayer, also used by Twizzle, powers simulator and alg players and the optional live smart-cube 3D engine; alg parsing and per-event random-state scrambles also share this library",
-    "long_en": "Lucas Garron's cubing.js — Pyraminx / Skewb / Megaminx canvases in `/sim` embed `TwistyPlayer` to mirror the alpha.twizzle.net/edit demo; the `Alg` parser, `randomScrambleForEvent`, and several `PuzzleID` utilities are reused across alg/recon/training pages"
+    "zh": "Twizzle 同源的 cubing.js TwistyPlayer 用于模拟器与公式播放器，并提供智能魔方实况的可选三维引擎；公式解析、各项目随机状态打乱及二阶 FTO 求解器的几何与记号也复用此库",
+    "en": "cubing.js TwistyPlayer, also used by Twizzle, powers simulator and alg players and the optional live smart-cube 3D engine; alg parsing, random-state scrambles and Baby FTO solver geometry and notation also share this library",
+    "long_en": "Lucas Garron's cubing.js — Pyraminx / Skewb / Megaminx canvases in `/sim` embed `TwistyPlayer` to mirror the alpha.twizzle.net/edit demo; the `Alg` parser, `randomScrambleForEvent`, and several `PuzzleID` utilities are reused across alg/recon/training pages. The Baby FTO exact solver uses cubing.js's named baby_fto loader and PuzzleGeometry move semantics, including the loader's invisible single-colour centre orientations and free whole-puzzle rotations. Baby FTO is isomorphic to the Diamond octahedron; its explicit cubing.js face labels and orientation convention are preserved instead of interpreting csTimer Diamond notation as interchangeable. The compact coordinate BFS and state exports are implemented in CubeRoot."
   },
   {
     "name": "huizhiLLL/DCTimer-BLE",

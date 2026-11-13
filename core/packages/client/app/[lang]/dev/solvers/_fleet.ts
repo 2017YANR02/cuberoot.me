@@ -2,8 +2,9 @@
 //
 // Extracted from page.tsx so a CI guard can import it
 // (tests/dev-solvers-fleet-sync.test.ts): the set of NONWCA_TS event ids MUST
-// equal CSTIMER_SOLVABLE_IDS (lib/cstimer-scramble.ts) — every pure-TS non-WCA
-// puzzle with `solvable:true` has exactly one row here, and NONWCA_TS_PLANNED
+// equal CSTIMER_SOLVABLE_IDS (lib/cstimer-scramble.ts) — every csTimer non-WCA
+// puzzle with `solvable:true` has exactly one row here. Native puzzles are kept
+// separately in NATIVE_TS and checked against NATIVE_SOLVER_IDS. NONWCA_TS_PLANNED
 // (not-yet-built) must be disjoint from the solvable set.
 //
 // Wiring a new non-WCA solver INCLUDES adding its row here (see
@@ -20,7 +21,7 @@
 export type TsTier = 'A' | 'B' | 'C' | 'D';
 export type TsQuality = 'optimal' | 'near' | 'bounded';
 export interface NonWcaTsSolver {
-  event: string; // cstimer event id → /scramble/solver?event=<event>
+  event: string; // solver event id → /scramble/solver?event=<event>
   zhName: string; enName: string;
   tier: TsTier;
   quality: TsQuality;
@@ -120,6 +121,14 @@ export const NONWCA_TS: NonWcaTsSolver[] = [
   { event: 'ctico', zhName: '二十面体', enName: 'Icosamate', tier: 'D', quality: 'bounded',
     states: '3,556,408,552,733,836,800,000,000,000,000,000', zhStates: '≈ 3.556×10³³ = 12!·5¹²·20!/80 (Schreier-Sims 验证)', enStates: '≈ 3.556×10³³ = 12!·5¹²·20!/80 (Schreier-Sims verified)', gods: 'cap CTICO_MAX_LENGTH=2000',
     zhMethod: '从零对易子约简 (深切顶点转二十面体): 12 个角 (Z5 取向) 用 3-循环 + Z5 扭转归位 (角取向之和与步数耦合 +1 mod5, 用前缀调到 5 倍数), 再用保持角不变的面心 3-循环归位 19 个可动面心 (1 个面心被所有转动固定); 移动语义/打乱镜像 cstimer (cs0x7f), 几何/oracle 用 cstimer poly3dlib', enMethod: 'from-scratch commutator reduction (deep-cut vertex-turning icosahedron): the 12 corners (Z5 orientation) fixed with 3-cycles + Z5 twists (orientation sum couples to move count +1 mod 5, neutralized with a prefix), then 19 movable face-centers fixed with vertex-preserving face-center 3-cycles (1 face-center is fixed by every turn); move semantics/scrambler mirror cstimer (cs0x7f), geometry/oracle from cstimer poly3dlib' },
+];
+
+/** Native notation stays separate from the csTimer compatibility catalog. */
+export const NATIVE_TS: NonWcaTsSolver[] = [
+  { event: 'baby_fto', zhName: '二阶 FTO', enName: 'Baby FTO', tier: 'A', quality: 'optimal',
+    states: '138,240', zhStates: '整体转动视为等价；单色面心自转不可见', enStates: 'modulo whole rotations; unmarked centre twists ignored', gods: 'God 10 (face-turn)',
+    zhMethod: '使用 cubing.js 二阶 FTO 记号；四个基准面的 11,520×12 乘积坐标全图 BFS，八面输入按整体朝向归一，返回原方位的最短解。与钻石八面体动作图同构，但不混用 csTimer 面名。常驻类型化数组 461,408 字节，无磁盘表；打乱统计保留完整分布、独立回放样例与按需全态导出。',
+    enMethod: 'Uses cubing.js Baby FTO notation. Full BFS over a 11,520×12 product coordinate for four reference faces; eight-face inputs are normalized by whole orientation, then shortest solutions are returned in the original frame. The move graph is isomorphic to Diamond, with no mixing of csTimer face labels. Resident typed arrays: 461,408 bytes; no disk table. Statistics include the exact histogram, independently replayed witnesses and on-demand full-state exports.' },
 ];
 
 // 已登记但尚未建求解器的 TIER D2 backlog (诚实: 未建). 见 solver/NONWCA_PUZZLE_LOOP.md §1 TIER D2 表.

@@ -79,6 +79,10 @@ const descriptions: Record<string, { metric: Bilingual; scope: Bilingual }> = {
     metric: { en: 'Each ±120° turn of one of the four generator faces counts as one move.', zh: '四个生成面中任意一次 ±120° 转动计一步。' },
     scope: { en: 'Complete Diamond octahedron space in the established 32-sticker model.', zh: '既有 32 贴纸模型下钻石八面体的完整状态空间。' },
   },
+  baby_fto: {
+    metric: { en: 'Each U/F/R/L/D/B/BR/BL ±120° face turn counts as one move.', zh: 'U/F/R/L/D/B/BR/BL 每次 ±120° 面转计一步。' },
+    scope: { en: 'Complete Baby FTO space, identifying whole-puzzle rotations and ignoring invisible single-colour centre twists. Its move graph is isomorphic to Diamond, but witnesses use cubing.js Baby FTO face labels and orientation. All exported states were independently replayed with that named model.', zh: '二阶 FTO 完整状态空间，整体转动视为等价，忽略单色面心不可见的自转。动作图与钻石八面体同构；示例使用 cubing.js 二阶 FTO 的面名与朝向，全部导出状态均经该命名模型独立回放。' },
+  },
   'lsemu-qtm': {
     metric: { en: 'Quarter-slice metric: U/U′/M/M′ cost 1; U2/M2 cost 2.', zh: '四分之一切片转度量：U/U′/M/M′ 计一步，U2/M2 计两步。' },
     scope: { en: 'Complete restricted U/M group with corner AUF and centre positions. This is not outer-face QTM of the full 3×3.', zh: '包含角 AUF 和中心位置的完整 U/M 子群；并非任意转动三阶的外层 QTM。' },
@@ -162,7 +166,7 @@ async function validateArtifact(artifact: Artifact): Promise<number> {
     const isDino = event === 'dino' || event === 'dino-mirror';
     const isRestricted333 = event === 'half' || event === 'lsemu';
     const isPyraminxTips = event === 'pyram-tips';
-    assert(catalog || event === 'skewb' || isPyramorphix || isDino || isRestricted333 || isPyraminxTips || legacyReplay || isRoux || isFmc, `${event}: missing canonical puzzle model`);
+    assert(catalog || event === 'skewb' || event === 'baby_fto' || isPyramorphix || isDino || isRestricted333 || isPyraminxTips || legacyReplay || isRoux || isFmc, `${event}: missing canonical puzzle model`);
     assert(Number.isSafeInteger(data.total) && data.total > 0);
     assert(Number.isSafeInteger(data.godsNumber) && data.godsNumber >= 0);
     assert.equal(data.histogram.length, data.godsNumber + 1);
@@ -192,6 +196,7 @@ async function validateArtifact(artifact: Artifact): Promise<number> {
     let puzzle: KPuzzle | undefined;
     if (legacyReplay || isDino || isRoux || isFmc) { /* Independent replay needs only bounded target subgroups. */ }
     else if (event === 'skewb') puzzle = await puzzles.skewb.kpuzzle();
+    else if (event === 'baby_fto') puzzle = await puzzles.baby_fto.kpuzzle();
     else if (isPyramorphix) puzzle = await puzzles['2x2x2'].kpuzzle();
     else if (isRestricted333) puzzle = await puzzles['3x3x3'].kpuzzle();
     else if (isPyraminxTips) puzzle = await puzzles.pyraminx.kpuzzle();
@@ -267,7 +272,7 @@ for (const reportPath of reports) {
   assert(description, `${report.event}: metric and full-puzzle scope must be reviewed before export`);
   assert.equal(report.completed, true);
   const existingExpected: Record<string, number> = { ivy: 29160, '223': 241920, sfl: 3041280, skewb: 3149280,
-    pyraminx_duo: 324, '133': 192, gear: 41472, ufo: 60480, cm2: 165888, dmd: 138240, '8p': 181440, bic: 1108800 };
+    pyraminx_duo: 324, '133': 192, gear: 41472, ufo: 60480, cm2: 165888, dmd: 138240, baby_fto: 138240, '8p': 181440, bic: 1108800 };
   assert(report.event === 'pyram-tips' ? report.verification?.completeViaDirectProduct === true
     && report.verification?.generatorSeparationChecks >= 16
     && report.verification?.coreReportSha256 === artifact.puzzles.tetraminx.provenance.reportSha256
@@ -297,6 +302,11 @@ for (const reportPath of reports) {
       : report.verification?.referenceHistogramMatches)
     && report.verification?.allEdgesDistanceDifferenceAtMostOne
     && report.verification?.allNonRootStatesHaveDescendingEdge, 'Full-state proof checks are required');
+  if (report.event === 'baby_fto') {
+    assert.equal(report.verification.independentlyReplayedStates, report.total);
+    assert.equal(report.verification.distinctPhysicalStates, report.total);
+    assert.deepEqual(report.histogram, artifact.puzzles.dmd.histogram, 'Baby FTO/Diamond isomorphism histogram mismatch');
+  }
   if (report.event === 'htr-dr' || report.event === 'fr-htr') {
     for (const field of ['binarySha256', 'sourceTreeSha256', 'adapterSha256', 'tableSha256'])
       assert.match(report.native[field], /^[a-f0-9]{64}$/, `Missing native provenance: ${field}`);

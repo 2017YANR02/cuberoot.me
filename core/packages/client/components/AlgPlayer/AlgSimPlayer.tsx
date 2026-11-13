@@ -356,7 +356,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     updateInteractionRef.current = updateInteraction;
     updateInteraction();
     const order = typeof puzzleKind === 'number' ? puzzleKind : undefined;
-    const name = puzzle === 'clock' || puzzle === 'ivy' ? undefined : pickStickering(puzzle, set, 'sim');
+    const name = puzzle === 'clock' || puzzle === 'ivy' || puzzle === 'baby_fto' ? undefined : pickStickering(puzzle, set, 'sim');
     if (order) {
       (cube as Cube).instancedRenderer.setFaceColorOverride(orientedCubeFaceColors(orientationRef.current));
     }

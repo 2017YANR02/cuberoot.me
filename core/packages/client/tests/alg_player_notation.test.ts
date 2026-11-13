@@ -102,6 +102,15 @@ describe('resolvePlayerSetup', () => {
     expect(resolveSimPreviewMoves('3x3', "R U R'")).toEqual(['R', 'U', "R'"]);
     expect(resolveSimPreviewMoves('ivy', "R' L' R L")).toEqual(["R'", "L'", 'R', 'L']);
   });
+
+  it('Baby FTO preserves two-letter faces and the actual scramble setup', async () => {
+    const model = await puzzles.baby_fto.kpuzzle();
+    const alg = "BR U' BL R2 F";
+    expect(resolveSimPreviewMoves('baby_fto', alg)).toEqual(['BR', "U'", 'BL', 'R2', 'F']);
+    expect(resolvePlayerSetup('baby_fto', "BL' R", 'U BR2', false)).toBe('U BR2');
+    const inverse = resolvePlayerSetup('baby_fto', alg, undefined, false);
+    expect(model.defaultPattern().applyAlg(inverse).applyAlg(alg).isIdentical(model.defaultPattern())).toBe(true);
+  });
 });
 
 describe('notation demo timing', () => {

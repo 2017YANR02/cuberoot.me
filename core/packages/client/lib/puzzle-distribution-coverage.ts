@@ -47,7 +47,7 @@ const auditedLarge = new Set(`
   cube2dino cube2littlechop dinolittlechop cube2dinolittlechop megaminxchopasaurus starminxcombo gigaminx
 `.trim().split(/\s+/));
 const completed = new Set(['ivy', '223', 'sfl', 'skewb', 'tetraminx', 'jingpyraminx', 'pyramorphix',
-  'pyramorphix-qtm', 'dino', 'dino-mirror', 'pyram-tips']);
+  'pyramorphix-qtm', 'dino', 'dino-mirror', 'pyram-tips', 'baby_fto']);
 const legacyExact: Record<string, { count: string; god: number; metric: Text }> = {
   '133': { count: '192', god: 8, metric: text('R/L/F/B 半转各一步。', 'Each R/L/F/B half turn counts as one move.') },
   gear: { count: '41,472', god: 6, metric: text('现有 33 招 FTM；一招可转同轴任意非零转量。', 'Existing 33-move FTM: any nonzero turn amount on one axis costs one move.') },

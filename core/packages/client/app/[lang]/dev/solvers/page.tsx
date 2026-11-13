@@ -18,9 +18,11 @@ import { fetchPuzzleDistribution } from '@/lib/puzzle-distribution';
 import { tr } from '@/i18n/tr';
 // 纯 TS 非 WCA 求解器舰队数据 (CI 守卫 tests/dev-solvers-fleet-sync.test.ts 锁
 // NONWCA_TS 的 event 集 == CSTIMER_SOLVABLE_IDS). 数据核实自各 solver 头注 + NONWCA_PUZZLE_LOOP.md §1/§2.
-import { NONWCA_TS, NONWCA_TS_PLANNED, TS_TIER_LABEL, TS_QUALITY } from './_fleet';
+import { NONWCA_TS, NATIVE_TS, NONWCA_TS_PLANNED, TS_TIER_LABEL, TS_QUALITY } from './_fleet';
 import NativeQuickStart from './_NativeQuickStart';
 import './solvers.css';
+
+const BROWSER_TS = [...NONWCA_TS, ...NATIVE_TS].sort((a, b) => a.tier.localeCompare(b.tier));
 
 // fetch 失败时的回退 (last-known 2026-05-30).
 const FB_SNAPSHOT = '2026-05-30';
@@ -678,7 +680,7 @@ export default function SolversPage() {
             <div className="solv-stat"><span className="solv-stat-num">128<small>GiB</small></span><span className="solv-stat-label">{tr({ zh: '验收主机内存', en: 'validation host RAM' })}</span></div>
             <div className="solv-stat"><span className="solv-stat-num">{completeN}<small>/{NATIVE.length}</small></span><span className="solv-stat-label">{zh ? '已补齐' : 'fully covered'}</span></div>
             <div className="solv-stat"><span className="solv-stat-num">0.9–1.25M<small>/s</small></span><span className="solv-stat-label">{tr({ zh: '旧机历史吞吐', en: 'previous-host throughput' })}</span></div>
-            <div className="solv-stat"><span className="solv-stat-num">{NONWCA_TS.length}</span><span className="solv-stat-label">{zh ? '纯 TS 非 WCA' : 'pure-TS non-WCA'}</span></div>
+            <div className="solv-stat"><span className="solv-stat-num">{BROWSER_TS.length}</span><span className="solv-stat-label">{zh ? '纯 TS 非 WCA' : 'pure-TS non-WCA'}</span></div>
           </div>
         </header>
 
@@ -776,7 +778,7 @@ export default function SolversPage() {
                 </tr>
               </thead>
               <tbody>
-                {NONWCA_TS.map((s) => {
+                {BROWSER_TS.map((s) => {
                   const q = TS_QUALITY[s.quality];
                   const stateNote = zh ? s.zhStates : s.enStates;
                   return (

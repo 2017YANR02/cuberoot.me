@@ -1,0 +1,14 @@
+.baby-fto-solution-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.baby-fto-solution-player {
+  display: flex;
+  justify-content: center;
+  max-width: 100%;
+  margin: 8px auto;
+}

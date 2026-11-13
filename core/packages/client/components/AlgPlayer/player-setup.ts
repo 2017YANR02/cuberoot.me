@@ -10,7 +10,7 @@ import {
 } from '@/lib/clock-notation';
 
 /** Puzzles the shared player can render, including /sim-only teaching previews. */
-export type AlgPlayerPuzzle = AlgPuzzle | 'clock' | 'ivy';
+export type AlgPlayerPuzzle = AlgPuzzle | 'clock' | 'ivy' | 'baby_fto';
 
 /** 公式动画和记号教学共用 1 STM/s 的默认节奏。 */
 export const DEFAULT_ALG_MOVE_DURATION_MS = 1000;
@@ -19,7 +19,7 @@ const SIM_FRAMES_PER_SECOND = 60;
 
 /** `/sim` 播放器的一步一项。SQ1 的 `(t, b)` 内含空格，不能按空白切。 */
 export function resolveSimPreviewMoves(puzzle: AlgPlayerPuzzle, alg: string): string[] {
-  if (puzzle === 'clock' || puzzle === 'ivy') return alg.trim().split(/\s+/).filter(Boolean);
+  if (puzzle === 'clock' || puzzle === 'ivy' || puzzle === 'baby_fto') return alg.trim().split(/\s+/).filter(Boolean);
   const normalized = normalizeAlgForTwisty(puzzle, alg);
   if (puzzle === 'sq1') {
     return parseSq1Tokens(normalized).map(token =>
@@ -105,6 +105,11 @@ export function resolvePlayerSetup(
   if (puzzle === 'clock') {
     if (setup?.trim()) return setup.trim();
     return clockStepsToString(invertClockSteps(parseClockSteps(alg)));
+  }
+  if (puzzle === 'baby_fto') {
+    if (setup?.trim()) return setup.trim();
+    // Keep the exponent when inverting: a Baby FTO R2 is not self-inverse.
+    return `(${alg.trim()})'`;
   }
   if (puzzle === 'ivy') {
     if (setup?.trim()) return setup.trim();
