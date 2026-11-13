@@ -7,7 +7,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 // 单一聚合页:左侧按家族选榜(?stat= 深链),顶部统一 region/事件/类型/年份控件,下方表格。
 // 全部 23 榜支持 world / continent / country。数据走 /v1/wca/fun/*(wca_fs_* 预计算)。
 import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useQueryState, parseAsString } from 'nuqs';
+import { useQueryState, useQueryStates, parseAsString, parseAsInteger, parseAsStringLiteral } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { RegionPicker } from '@/components/RegionPicker';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -21,6 +21,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { apiUrl } from '@/lib/api-base';
+import { loadAnnualParticipationOptions, type AnnualOptions } from '@/lib/wca-annual-options';
 import './fun_stats.css';
 import { tr } from '@/i18n/tr';
 import { useT } from "@/hooks/useT";
@@ -101,7 +102,7 @@ const FUN_STATS: FunStat[] = [
 },
   { id: 'most-solves-person', family: 'E', zh: '个人累积总复原次数', en: 'Most Career Solves (Person)', endpoint: '/v1/wca/fun/most-solves-person', shape: 'solvesPerson'
 },
-  { id: 'most-solves-person-year', family: 'E', zh: '个人年度总复原次数', en: 'Most Solves in One Year', endpoint: '/v1/wca/fun/most-solves-person-year', shape: 'solvesPerson', needsYear: true
+  { id: 'most-solves-person-year', family: 'E', zh: '个人年度复原与轮次', en: 'Annual Solves & Rounds', endpoint: '/v1/wca/fun/most-solves-person-year', shape: 'solvesPerson', needsYear: true, eventMode: 'select'
 },
   // F Top100 占席
   { id: 'top100-appearances-single', family: 'F', zh: '各项单次成绩前100占席', en: 'Top-100 Single Appearances', endpoint: '/v1/wca/fun/top100-appearances', shape: 'top100', fixed: { type: 'single' }, eventMode: 'select'
@@ -132,7 +133,7 @@ function defaultRankType(event: string): 'single' | 'average' {
   return BEST_TYPE_EVENTS.has(event) ? 'single' : 'average';
 }
 
-interface ApiResp { total?: number; rows?: Record<string, unknown>[]; years?: number[]; events?: string[]; penalties?: number[]; self?: Record<string, unknown> | null }
+interface ApiResp { total?: number; rows?: Record<string, unknown>[]; year?: number; updatedAt?: string; years?: number[]; events?: string[]; penalties?: number[]; self?: Record<string, unknown> | null }
 
 function FunStatsInner() {
   const { i18n } = useTranslation();
@@ -146,13 +147,22 @@ function FunStatsInner() {
   const statId = statParam || 'medals-all';
   const stat = STAT_BY_ID.get(statId) ?? FUN_STATS[0];
 
-  const [region, setRegion] = useState('world');
-  const [event, setEvent] = useState('333');
+  const [filters, setFilters] = useQueryStates({
+    region: parseAsString.withDefault('world'),
+    event: parseAsString,
+    year: parseAsInteger.withDefault(0),
+    sort: parseAsStringLiteral(['solve', 'attempt', 'rounds'] as const).withDefault('solve'),
+    page: parseAsInteger.withDefault(1),
+  }, { history: 'replace', scroll: false });
+  const { region, year, sort } = filters;
+  const event = filters.event || (stat.needsYear ? '' : '333');
+  const page = Math.max(1, filters.page);
+  const [annualOptions, setAnnualOptions] = useState<AnnualOptions | null>(null);
+  const years = useMemo(() => [...new Set(annualOptions?.options
+    ? annualOptions.options.filter(option => !event || option.event === event).map(option => option.year)
+    : annualOptions?.years ?? [])].sort((a, b) => b - a), [annualOptions, event]);
   const [typeAvg, setTypeAvg] = useState(false);   // C 家族单次/平均
-  const [year, setYear] = useState(0);
-  const [years, setYears] = useState<number[]>([]);
   const [selEvents, setSelEvents] = useState<Set<string>>(new Set());  // A 子集多选
-  const [page, setPage] = useState(1);
   const [size, setSize] = useState(100);
 
   const [resp, setResp] = useState<ApiResp | null>(null);
@@ -169,12 +179,12 @@ function FunStatsInner() {
 
   // F 平均变体排除无平均的项目(444bf/555bf/333mbf)
   const availableEvents = useMemo(() => {
+    if (stat.needsYear) return new Set(annualOptions?.events ?? [...ACTIVE_EVENTS, '333ft', 'magic', 'mmagic', '333mbo']);
     const base = ACTIVE_EVENTS.filter(e => !(stat.fixed?.type === 'average' && NO_AVERAGE.has(e)));
     return new Set(base);
-  }, [stat.fixed?.type]);
+  }, [stat.fixed?.type, stat.needsYear, annualOptions]);
 
   // 切榜重置分页 + 默认类型 + 清多选(避免上一个榜的子集泄漏到新榜)
-  useEffect(() => { setPage(1); }, [statId, region, event, typeAvg, year, size]);
   useEffect(() => { setSelEvents(new Set()); }, [statId]);
   useEffect(() => {
     if (stat.typeToggle) setTypeAvg(defaultRankType(event) === 'average');
@@ -183,21 +193,19 @@ function FunStatsInner() {
   // E6 年份列表
   useEffect(() => {
     if (!stat.needsYear) return;
-    let alive = true;
-    fetch(apiUrl(`/v1/wca/fun/most-solves-person-year/years?v=2&scope=${encodeURIComponent(region)}`))
-      .then(r => r.json()).then((d: { years?: number[] }) => {
-        if (!alive) return;
-        const ys = d.years ?? [];
-        setYears(ys);
-        if (!ys.includes(year)) setYear(ys[0] ?? 0);
-      }).catch(() => { if (alive) setYears([]); });
-    return () => { alive = false; };
+    const controller = new AbortController();
+    setAnnualOptions(null);
+    loadAnnualParticipationOptions(region, controller.signal)
+      .then(d => { if (!controller.signal.aborted) setAnnualOptions(d); })
+      .catch(() => { /* The main request displays errors. */ });
+    return () => controller.abort();
   }, [stat.needsYear, region]);
 
   // 主查询
   useEffect(() => {
     let alive = true;
-    const qs = new URLSearchParams({ v: '2' });
+    const controller = new AbortController();
+    const qs = new URLSearchParams({ v: stat.needsYear ? '3' : '2' });
     if (stat.fixed) for (const [k, v] of Object.entries(stat.fixed)) qs.set(k, v);
     qs.set('scope', region);
     if (stat.eventMode === 'select') qs.set('event', event);
@@ -207,18 +215,21 @@ function FunStatsInner() {
     }
     if (stat.typeToggle) qs.set('type', typeAvg ? 'average' : 'single');
     if (stat.needsYear && year) qs.set('year', String(year));
+    if (stat.needsYear) qs.set('sort', sort);
     qs.set('page', String(page));
     qs.set('size', String(size));
     setLoading(true); setErr(null);
-    fetch(apiUrl(`${stat.endpoint}?${qs.toString()}`))
-      .then(async r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    setResp(null);
+    fetch(apiUrl(`${stat.endpoint}?${qs.toString()}`), { signal: controller.signal })
+      .then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.code ?? `HTTP ${r.status}`); return d; })
       .then((d: ApiResp & { error?: string }) => { if (!alive) return; if (d.error) { setErr(d.error); setResp(null); } else setResp(d); })
       .catch(e => { if (alive) { setErr(String(e.message ?? e)); setResp(null); } })
       .finally(() => { if (alive) setLoading(false); });
-    return () => { alive = false; };
-  }, [stat, region, event, typeAvg, year, page, size, selEvents, availableEvents]);
+    return () => { alive = false; controller.abort(); };
+  }, [stat, region, event, typeAvg, year, sort, page, size, selEvents, availableEvents]);
 
   const selectStat = (id: string) => {
+    void setFilters({ page: 1 });
     void setStatParam(id);
   };
 
@@ -237,6 +248,12 @@ function FunStatsInner() {
       </p>
 
       <div className="fun-stats-layout">
+        <select className="native-select fun-stats-mobile-nav" aria-label={tr({ zh: '榜单', en: 'Leaderboard' })}
+          value={stat.id} onChange={e => selectStat(e.target.value)}>
+          {FAMILIES.map(fam => <optgroup key={fam.key} label={tr(fam)}>
+            {FUN_STATS.filter(s => s.family === fam.key).map(s => <option key={s.id} value={s.id}>{tr(s)}</option>)}
+          </optgroup>)}
+        </select>
         {/* 榜单导航 */}
         <nav className="fun-stats-nav">
           {FAMILIES.map(fam => (
@@ -263,7 +280,10 @@ function FunStatsInner() {
                 availableEvents={availableEvents}
                 isZh={isZh}
                 selectedEvent={event}
-                onSelect={setEvent}
+                allowAll={stat.needsYear}
+                allLabel={tr({ zh: '全部项目', en: 'All events' })}
+                onlyAvailable={stat.needsYear}
+                onSelect={event => { void setFilters({ event: event || null, page: 1 }); }}
               />
             )}
             {stat.eventMode === 'multi' && (
@@ -271,18 +291,18 @@ function FunStatsInner() {
                 availableEvents={availableEvents}
                 isZh={isZh}
                 selectedEvents={selEvents.size ? selEvents : availableEvents}
-                onToggle={(id) => setSelEvents(prev => {
+                onToggle={(id) => { void setFilters({ page: 1 }); setSelEvents(prev => {
                   const base = prev.size ? new Set(prev) : new Set(availableEvents);
                   if (base.has(id)) base.delete(id); else base.add(id);
                   return base;
-                })}
+                }); }}
               />
             )}
-            <RegionPicker isZh={isZh} value={region} onChange={setRegion} restrictTo={restrictTo} />
+            <RegionPicker isZh={isZh} value={region} onChange={region => { void setFilters({ region, page: 1 }); }} restrictTo={restrictTo} />
             {stat.typeToggle && !NO_AVERAGE.has(event) && (
               <select
                 value={String(typeAvg)}
-                onChange={event => setTypeAvg(event.currentTarget.value === 'true')}
+                onChange={event => { setTypeAvg(event.currentTarget.value === 'true'); void setFilters({ page: 1 }); }}
                 aria-label={tr({ zh: '平均', en: 'Average' }) + ' / ' + tr({ zh: '单次', en: 'Single'
                 })}
                 className="native-select"
@@ -292,27 +312,43 @@ function FunStatsInner() {
                 })}</option>
               </select>
             )}
-            {stat.needsYear && years.length > 0 && (
-              <select className="fun-stats-year" value={year} onChange={e => setYear(parseInt(e.target.value, 10))}>
+            {stat.needsYear && (
+              <select className="fun-stats-year" aria-label={tr({ zh: '年份', en: 'Year' })}
+                value={year} onChange={e => { void setFilters({ year: Number(e.target.value), page: 1 }); }}>
+                <option value={0}>{tr({ zh: '最新年份', en: 'Latest year' })}{resp?.year ? ` (${resp.year})` : ''}</option>
+                {year > 0 && !years.includes(year) && <option value={year}>{year}</option>}
                 {years.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            )}
+            {stat.needsYear && (
+              <select className="native-select" aria-label={tr({ zh: '排序依据', en: 'Sort by' })}
+                value={sort} onChange={e => { void setFilters({ sort: e.target.value as typeof sort, page: 1 }); }}>
+                <option value="solve">{tr({ zh: '按成功复原', en: 'Most successful solves' })}</option>
+                <option value="attempt">{tr({ zh: '按尝试次数', en: 'Most attempts' })}</option>
+                <option value="rounds">{tr({ zh: '按参赛轮次', en: 'Most rounds' })}</option>
               </select>
             )}
           </div>
 
-          {err && <div className="fun-stats-error">{tr({ zh: '加载失败:', en: 'Error: '
-        })}{err}</div>}
+          {stat.needsYear && <p className="fun-stats-intro">{tr({
+            zh: '尝试含 DNF，不含 DNS；一轮有至少一次尝试才计入轮次。地区按参赛时代表地区，年份按比赛开始日期。',
+            en: 'Attempts include DNF, exclude DNS. A round counts with at least one attempt. Region is representation at the competition; year follows its start date.',
+          })}</p>}
+          {err && <div className="fun-stats-error" role="alert">{err === 'STATS_NOT_READY'
+            ? tr({ zh: '年度分项目数据尚未更新。', en: 'Annual event data is not available yet.' })
+            : tr({ zh: '加载失败，请稍后重试。', en: 'Could not load data. Please try again later.' })}</div>}
           {loading && !resp && <ContentSkeleton variant="table" />}
 
           {resp && (
             <FunStatTable
-              stat={stat} rows={rows} resp={resp} isZh={isZh} kind={kind} event={event}
+              stat={stat} rows={rows} resp={resp} isZh={isZh} kind={kind} event={event} sort={sort}
             />
           )}
 
           {total > 0 && (
             <Paginator
               page={page} totalPages={totalPages} size={size} pageSizeOptions={PAGE_SIZE_OPTIONS}
-              isZh={isZh} onPageChange={setPage} onSizeChange={setSize}
+              isZh={isZh} onPageChange={page => { void setFilters({ page }); }} onSizeChange={size => { setSize(size); void setFilters({ page: 1 }); }}
             />
           )}
         </div>
@@ -322,9 +358,9 @@ function FunStatsInner() {
 }
 
 // ── 表格渲染(按 shape 分流)──
-function FunStatTable({ stat, rows, resp, isZh, kind, event }: {
+function FunStatTable({ stat, rows, resp, isZh, kind, event, sort }: {
   stat: FunStat; rows: Record<string, unknown>[]; resp: ApiResp; isZh: boolean;
-  kind: 'single' | 'average'; event: string;
+  kind: 'single' | 'average'; event: string; sort: 'solve' | 'attempt' | 'rounds';
 }) {
   const t = useT();
   const personCell = (r: any) => (
@@ -454,7 +490,11 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event }: {
       cols = [
         { h: t('名次', 'Rank'), cell: r => r.rank },
         { h: t('选手', 'Cuber'), cell: personCell },
-        { h: t('复原 / 尝试', 'Solves / Attempts'), cell: solveCell, cls: 'fun-cell-strong' },
+        ...(stat.needsYear ? [
+          { h: t('复原', 'Solves'), cell: (r: any) => r.solve.toLocaleString(), cls: sort === 'solve' ? 'fun-cell-strong' : undefined },
+          { h: t('尝试', 'Attempts'), cell: (r: any) => r.attempt.toLocaleString(), cls: sort === 'attempt' ? 'fun-cell-strong' : undefined },
+          { h: t('轮次', 'Rounds'), cell: (r: any) => r.rounds.toLocaleString(), cls: sort === 'rounds' ? 'fun-cell-strong' : undefined },
+        ] : [{ h: t('复原 / 尝试', 'Solves / Attempts'), cell: solveCell, cls: 'fun-cell-strong' }]),
       ];
       break;
     case 'solvesPersonComp':

@@ -1,5 +1,6 @@
 'use client';
 
+import ChatBubble from '@/components/ChatBubble';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { Color } from 'three';
@@ -196,7 +197,7 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
   const emphasis = beat?.highlight ?? scene.highlight;
   const pulse = beat ? beat.pulse : true;
   const highlights = scene.flashPair ? noHighlights : !pulse || reducedMotion || !playing || Math.floor(elapsed / 900) % 2 === 0 ? emphasis : noHighlights;
-  return <section className="f2l-concept-video" data-continuous={continuous} aria-label={tr({ zh: '标态与非标概念演示', en: 'Standard and non-standard cases: concept demonstration' })}>
+  return <section className="f2l-concept-video" data-continuous={continuous} aria-label={tr({ zh: '基态与非标概念演示', en: 'Standard and non-standard cases: concept demonstration' })}>
     <div className="f2l-concept-count">{index + 1} / {scenes.length}</div>
     <div className="f2l-concept-scene">
       <div className="f2l-cube f2l-concept-cube" data-visible={(ready || continuous) && !fadingOut}><AlgPlayer key={`${orientation}:${generation}`} ref={player} puzzle="3x3" engine="sim" set="f2l-tutorial"
@@ -205,13 +206,13 @@ export default function NonstandardIntro({ orientation, edgeSetup, cornerSetup, 
         highlightedStickers={highlights} stickeringAtStep={scene.hidePair || scene.crossOnly ? crossMask : beat?.hideCorner ? edgeStickering : beat?.hideEdge ? cornerStickering : pairStickering}
         onStepChange={step => { playerStep.current = step; }}
         moveDurationMs={scene.moveDuration ?? 220} controlMode="none" hideResetView interactionMode="none" fillPane />
-        {ready && !fadingOut && (scene.result ? elapsed >= 1000 : beat?.label) && <div className="tutorial-cube-bubble f2l-concept-result" data-target={scene.flashPair ? beat?.hideEdge ? 'corner' : beat?.hideCorner ? 'edge' : 'pair' : beat?.label ? 'slot' : undefined} data-site-surface="panel" role="status">
+        {ready && !fadingOut && (scene.result ? elapsed >= 1000 : beat?.label) && <ChatBubble tail={scene.flashPair ? 'bottom' : beat?.label ? 'top' : 'left'} className="f2l-concept-result" data-target={scene.flashPair ? beat?.hideEdge ? 'corner' : beat?.hideCorner ? 'edge' : 'pair' : beat?.label ? 'slot' : undefined} role="status">
           {scene.result ? <>
             <div className="f2l-concept-signal" aria-hidden="true"><TrainingFeedbackOverlay
               kind={scene.result === 'standard' ? 'correct' : 'wrong'} correctLabel="" wrongLabel="" /></div>
-            {scene.result === 'standard' ? <T zh="标态" en="Standard" /> : <T zh="非标态" en="Non-standard" />}
+            {scene.result === 'standard' ? <T zh="基态" en="Standard" /> : <T zh="非基态" en="Non-standard" />}
           </> : beat?.label && tr(beat.label)}
-        </div>}
+        </ChatBubble>}
       </div>
       <div className="f2l-concept-caption" aria-live="polite" aria-atomic="true">
         <p key={tr(beat?.caption ?? scene.caption)} className="f2l-concept-line">{tr(beat?.caption ?? scene.caption)}</p>

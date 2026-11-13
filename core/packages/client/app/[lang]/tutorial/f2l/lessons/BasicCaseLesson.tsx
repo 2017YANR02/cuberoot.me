@@ -45,7 +45,7 @@ export default function BasicCaseLesson({ orientation, pauseBetween, caseId, onC
         <div className="f2l-study-layout">
           <SectionNavigation label={lesson.name}>
             <div className="f2l-section-group">
-            <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择三步标态', en: 'Choose a three-move case' })}>
+            <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择三步基态', en: 'Choose a three-move case' })}>
               {chapterCases.map((item, index) => <button className="f2l-section-button" key={item.id} type="button" aria-pressed={lesson.id === item.id} onClick={() => selectCase(item.id)}>
                 <span className="f2l-section-label"><VisualCube view="iso" size={36} faceletColors={diagrams[index]} alt="" />
                   <span>{item.name}</span></span>

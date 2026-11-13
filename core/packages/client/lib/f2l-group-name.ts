@@ -1,5 +1,5 @@
 const GROUP_NAMES: Record<string, { zh: string; en: string }> = {
-  'Free Pairs': { zh: '基态', en: 'Free pairs' },
+  'Free Pairs': { zh: '基态', en: 'Free pair' },
   'Disconnected Pairs': { zh: '分离', en: 'Disconnected' },
   'Connected Pairs': { zh: '合并', en: 'Connected' },
   'Corner In Slot': { zh: '角在槽', en: 'Corner in slot' },

@@ -25,6 +25,7 @@ import {
 } from '../utils/recon_completion.js';
 import { fetchCubingAttempts } from '../utils/cubing_proxy.js';
 import { wcaIdToCubingSlug, nameToCubingSlug } from '@cuberoot/shared/cubing-slug';
+import { matchingAlgHtml } from '@cuberoot/shared/alg-html';
 import { normalizeReconSolution } from '@cuberoot/shared/recon-completion';
 import { notify, adminRecipients } from '../utils/notify.js';
 import {
@@ -727,9 +728,10 @@ reconRoutes.post('/recon/save-edit', async (c) => {
   const now = Math.floor(Date.now() / 1000);
   const normalizedFields = { ...(fields ?? {}) };
   assertReconTextLengths(normalizedFields);
-  normalizeReconSolutionRow(normalizedFields);
   const current = await query<Record<string, unknown>>('SELECT * FROM recons WHERE id = ?', [solveId]);
   if (!current.length) return c.json({ error: 'Not found' }, 404);
+  normalizeReconSolutionRow(normalizedFields, current[0]);
+  if ('solution_html' in normalizedFields) { normalizedFields.solutionHtml = normalizedFields.solution_html; delete normalizedFields.solution_html; }
   const validationErrors = validateRow(jsonToRow(normalizedFields), current[0]);
   if (validationErrors.length) return c.json({ error: 'Validation failed', fields: validationErrors }, 400);
   const competitionRow = jsonToRow(normalizedFields);
@@ -1305,6 +1307,8 @@ reconRoutes.post('/recon', async (c) => {
 
   await normalizeReconCompetitionCountry(row);
   if ('country' in row) body.country = row.country;
+  if ('solution' in row) body.solution = row.solution;
+  if ('solution_html' in row) body.solutionHtml = row.solution_html;
   const { sql, values } = buildInsert('recons', row);
   const inserted = await query<{ id: number }>(sql + ' RETURNING id', values);
   body.id = Number(inserted[0].id);
@@ -1338,7 +1342,7 @@ reconRoutes.put('/recon/:id', async (c) => {
   delete row.alternatives;
   assertReconTextLengths(row);
   normalizeReconScrambleRow(row, existing[0].event);
-  normalizeReconSolutionRow(row);
+  normalizeReconSolutionRow(row, existing[0]);
   if (Object.keys(row).length === 0) {
     return c.json({ error: 'No valid fields to update' }, 400);
   }
@@ -1417,6 +1421,7 @@ reconRoutes.delete('/recon/:id', async (c) => {
 
 interface AlternativeEntry {
   solution: string;
+  solutionHtml?: string;
   addedById: string;
   addedBy: string;
   createdAt: number;
@@ -1427,7 +1432,7 @@ function assertExpectedAlternative(current: AlternativeEntry | undefined, expect
   // Array indexes can move when another tab deletes an earlier entry. Compare
   // the raw version the caller saw before authorizing an edit or deletion.
   if (!current || !prior || typeof prior !== 'object'
-    || prior.solution !== current.solution || prior.addedById !== current.addedById
+    || prior.solution !== current.solution || (prior.solutionHtml ?? '') !== (current.solutionHtml ?? '') || prior.addedById !== current.addedById
     || prior.createdAt !== current.createdAt) {
     throw new HTTPException(409, { message: 'Alternative changed; refresh and try again' });
   }
@@ -1467,15 +1472,19 @@ reconRoutes.post('/recon/:id/alternatives', async (c) => {
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
   const id = c.req.param('id');
-  const body = await c.req.json<{ solution?: string }>();
+  const body = await c.req.json<{ solution?: string; solutionHtml?: string }>();
   assertReconTextLengths(body);
   const solution = normalizeReconSolution(body.solution ?? '').trim();
+  let solutionHtml: string;
+  try { solutionHtml = matchingAlgHtml(solution, body.solutionHtml, text => normalizeReconSolution(text).trim()); }
+  catch (error) { return c.json({ error: (error as Error).message }, 400); }
   if (!solution) return c.json({ error: 'solution required' }, 400);
   if (Buffer.byteLength(solution, 'utf8') > 65535) return c.json({ error: 'solution too long' }, 400);
 
   const alts = await updateAlternatives(id, current => {
     current.push({
       solution,
+      ...(solutionHtml ? { solutionHtml } : {}),
       addedById: authUser.wcaId,
       addedBy: authUser.name,
       createdAt: Math.floor(Date.now() / 1000),
@@ -1508,9 +1517,12 @@ reconRoutes.put('/recon/:id/alternatives/:idx', async (c) => {
   const authUser = await requireAuth(c);
   const id = c.req.param('id');
   const idx = Number(c.req.param('idx'));
-  const body = await c.req.json<{ solution?: string; expected?: unknown }>();
+  const body = await c.req.json<{ solution?: string; solutionHtml?: string; expected?: unknown }>();
   assertReconTextLengths(body);
   const solution = normalizeReconSolution(body.solution ?? '').trim();
+  let solutionHtml: string;
+  try { solutionHtml = matchingAlgHtml(solution, body.solutionHtml, text => normalizeReconSolution(text).trim()); }
+  catch (error) { return c.json({ error: (error as Error).message }, 400); }
   if (!solution) return c.json({ error: 'solution required' }, 400);
   if (Buffer.byteLength(solution, 'utf8') > 65535) return c.json({ error: 'solution too long' }, 400);
   if (!Number.isInteger(idx) || idx < 0) return c.json({ error: 'Invalid alternative index' }, 400);
@@ -1520,7 +1532,7 @@ reconRoutes.put('/recon/:id/alternatives/:idx', async (c) => {
     if (!authUser.isAdmin && current[idx].addedById !== authUser.wcaId) {
       throw new HTTPException(403, { message: 'Cannot edit others alternative' });
     }
-    current[idx] = { ...current[idx], solution };
+    current[idx] = { ...current[idx], solution, solutionHtml };
   });
   return c.json({ alternatives: await alternativesToJson(alts) });
 });

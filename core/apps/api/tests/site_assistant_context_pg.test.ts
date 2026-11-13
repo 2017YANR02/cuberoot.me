@@ -25,7 +25,7 @@ describe.skipIf(!enabled)('private context PostgreSQL and route lifecycle',()=>{
   beforeAll(async()=>{
     await admin.unsafe(`CREATE SCHEMA ${schema}`);
     await db.unsafe('CREATE TABLE app_users(id BIGINT PRIMARY KEY); INSERT INTO app_users VALUES (7),(8)');
-    for(const migration of ['0277_assistant_monitoring','0323_assistant_context'])await db.unsafe(await readFile(new URL(`../migrations/${migration}.sql`,import.meta.url),'utf8'));
+    for(const migration of ['0277_assistant_monitoring','0326_assistant_context'])await db.unsafe(await readFile(new URL(`../migrations/${migration}.sql`,import.meta.url),'utf8'));
   });
   afterAll(async()=>{await db.end();await admin.unsafe(`DROP SCHEMA ${schema} CASCADE`);await admin.end();});
   it('persists through JSON, restores through SSE, and rejects another owner or branch',async()=>{

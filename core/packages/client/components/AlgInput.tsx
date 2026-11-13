@@ -19,6 +19,9 @@ import {
   cleanAlgText, cleanAlgTextCE,
   autoSpaceAfterComment, autoCloseBracket,
 } from '@/lib/alg-autospace';
+import { sanitizeAlgHtml, escapeAlgText, replaceAlgHtmlText } from '@/lib/alg_html';
+import { insertEditorText, setEditorCaret, ensureEditorLineEnd } from '@/lib/alg-editor-dom';
+import './alg-input.css';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
 export interface AlgInputHandle {
@@ -107,7 +110,8 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
     if (!markable) return;
     const el = ceRef.current;
     if (el && !el.dataset.inited) {
-      el.innerHTML = initialHtml ?? initialText ?? '';
+      el.innerHTML = initialHtml != null ? sanitizeAlgHtml(initialHtml) : escapeAlgText(initialText);
+      ensureEditorLineEnd(el);
       el.dataset.inited = '1';
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -124,7 +128,7 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
       if (markable) {
         const el = ceRef.current;
         if (!el) return '';
-        return (el.textContent ?? '').trim();
+        return multiline ? el.textContent ?? '' : (el.textContent ?? '').trim();
       }
       return taRef.current?.value ?? '';
     },
@@ -132,14 +136,14 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
       if (markable) {
         const el = ceRef.current;
         if (!el) return '';
-        return el.innerHTML.trim();
+        return multiline ? el.innerHTML : el.innerHTML.trim();
       }
       return taRef.current?.value ?? '';
     },
     setText: (s: string) => {
       if (markable) {
         const el = ceRef.current;
-        if (el) el.innerHTML = s;
+        if (el) { el.innerHTML = sanitizeAlgHtml(s); ensureEditorLineEnd(el); }
       } else {
         const el = taRef.current;
         if (el) {
@@ -161,7 +165,7 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
       else taRef.current?.focus();
     },
     getElement: () => (markable ? ceRef.current : taRef.current),
-  }), [markable, autoResize]);
+  }), [markable, multiline, autoResize]);
 
   /** 洗一遍 + 自动加空格 + 回调。组字**结束后**也要走一遍(那时候字才真正落进 value)。 */
   const runTextareaInput = (el: HTMLTextAreaElement, inputType: string) => {
@@ -191,6 +195,15 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
     cleanAlgTextCE(el);
     // 'simple' 只给 textarea 场景(/sim 解法框);contenteditable 只有 WCA 规则版。
     if (autoSpace === true) autoSpaceMovesCE(el, inputType);
+    if (autoSpace) {
+      const text = el.textContent ?? '';
+      let adj = autoSpaceAfterComment(text, getTextBeforeCaret(el).length, inputType);
+      adj = autoCloseBracket(adj.value, adj.cursor, inputType);
+      if (adj.value !== text) {
+        el.innerHTML = replaceAlgHtmlText(el.innerHTML, adj.value);
+        setEditorCaret(el, adj.cursor);
+      }
+    }
     const text = el.textContent ?? '';
     onChange?.(text, el.innerHTML);
     onCaretChange?.(text, getTextBeforeCaret(el).length);
@@ -244,8 +257,10 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
       aria-invalid={ariaInvalid}
       aria-describedby={ariaDescribedBy}
       contentEditable
+      role="textbox"
+      aria-multiline={multiline}
       suppressContentEditableWarning
-      className={className}
+      className={`alg-rich-input ${className ?? ''}`}
       style={style}
       title={title}
       spellCheck={spellCheck}
@@ -268,8 +283,9 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
         );
       }}
       onKeyDown={e => {
-        if (!multiline && e.key === 'Enter' && !e.nativeEvent.isComposing) {
+        if (!e.defaultPrevented && e.key === 'Enter' && !e.nativeEvent.isComposing) {
           e.preventDefault();
+          if (multiline) insertEditorText(e.currentTarget, '\n');
         }
         onKeyDown?.(e);
       }}
@@ -280,7 +296,7 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
       onPaste={e => {
         e.preventDefault();
         const text = e.clipboardData.getData('text/plain');
-        document.execCommand('insertText', false, text);
+        insertEditorText(e.currentTarget, multiline ? text : text.replace(/[\r\n]+/g, ' '));
       }}
       onFocus={onFocus}
       onBlur={onBlur}

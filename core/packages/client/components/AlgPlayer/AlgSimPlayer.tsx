@@ -559,8 +559,13 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     const requestedMove = requestedMoveRef.current;
     if (requestedMove !== null) {
       requestedMoveRef.current = null;
-      twister.setup([setupAlg, ...moves.slice(0, requestedMove)].join(' '));
-      restoreGripsRef.current?.(moves.slice(0, requestedMove));
+      // Sequential requests already have the correct starting state. Re-running
+      // setup here also finishes the engine's shared tweens, snapping other
+      // simultaneously playing cubes to the end of their current turns.
+      if (last?.sequenceKey !== sequenceKey || last.setupAlg !== setupAlg || last.step !== requestedMove) {
+        twister.setup([setupAlg, ...moves.slice(0, requestedMove)].join(' '));
+        restoreGripsRef.current?.(moves.slice(0, requestedMove));
+      }
       if (typeof puzzleKind === 'number' && stickeringAtStep) {
         (m.world.cube as Cube).instancedRenderer.setStickering(stickeringAtStep(requestedMove + 1));
       }

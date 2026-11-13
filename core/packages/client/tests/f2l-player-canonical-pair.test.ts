@@ -35,8 +35,9 @@ describe('F2L detail player canonical pair', () => {
     const solvedState = solved.serialize();
     solved.dispose();
     for (const [ori, alg] of A_PLUS_PRIMARY_ALGS.entries()) {
-      expect(casePreviewSetup('3x3', set, c, ori)).toBe(oriAdjustSetup(A_PLUS_SETUP, ori));
+      expect(casePreviewSetup('3x3', set, c, ori, 'preset')).toBe(oriAdjustSetup(A_PLUS_SETUP, ori));
       const setup = casePreviewSetup('3x3', set, c, ori, 'inverse');
+      expect(casePreviewSetup('3x3', set, c, ori)).toBe(setup);
       const cube = new Cube(3);
       cube.twister.setup(`${setup} ${playbackCaseAlg('3x3', alg)}`);
       expect(cube.serialize()).toBe(solvedState);

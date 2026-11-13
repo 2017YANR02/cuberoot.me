@@ -1,3 +1,4 @@
+import ChatBubble from '@/components/ChatBubble';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Alg } from 'cubing/alg';
@@ -132,11 +133,11 @@ export default function EdgeObservation({ example, caseIndex, onDone }: {
     </section>
     <section className="lbl-explanation"><p className="lbl-lead" aria-live="polite">{tr(caption)}</p></section>
     {bubbleStage && createPortal(
-      <span className="lbl-left-thumb-overlay">
-        <span className={`lbl-left-thumb-bubble${caseIndex === 1 ? ' lbl-edge-right-bubble' : ''}`} data-site-surface="panel" role="status">
+      <div className="lbl-left-thumb-overlay">
+        <ChatBubble tail={caseIndex === 1 ? 'right' : 'left'} className={`lbl-cube-callout${caseIndex === 1 ? ' lbl-edge-right-bubble' : ''}`} role="status">
           {tr({ zh: '红色和橙色是对色', en: 'Red and orange are opposite colors' })}
-        </span>
-      </span>, bubbleStage,
+        </ChatBubble>
+      </div>, bubbleStage,
     )}
     {learningArea && createPortal(<>
       <button type="button" className="lbl-guide-continue" onClick={advance} aria-disabled={!ready} aria-label={tr({ zh: '点击学习区继续', en: 'Click the lesson area to continue' })} />

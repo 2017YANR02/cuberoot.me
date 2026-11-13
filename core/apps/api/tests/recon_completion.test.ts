@@ -10,6 +10,7 @@ import {
   checkReconRowCompletion,
   hasUnsolvedReason,
   normalizeReconScrambleRow,
+  normalizeReconSolutionRow,
 } from '../src/utils/recon_completion';
 
 describe('reconstruction completion validation', () => {
@@ -176,4 +177,31 @@ it('validates partial timing edits against database numeric strings', async () =
   expect(validateRow({ record_type: 'reconstruction', solution: 'R' }, existing)).toEqual([]);
   expect(rowToJson(existing).pickupTime).toBe(0.234);
   expect(jsonToRow({ pickupTime: 0, putdownTime: 0.1 }).pickup_time).toBe(0);
+});
+
+
+describe('reconstruction annotation persistence', () => {
+  it('normalizes marked moves and folds marked AUF without losing annotations', () => {
+    const row: Record<string, unknown> = {
+      solution: "R U'2 //PLL\nU // AUF",
+      solution_html: `<u>R</u> <s><em>U'2</em></s> //PLL\n<u class="wavy">U</u> // AUF`,
+    };
+    normalizeReconSolutionRow(row);
+    expect(row.solution).toBe("R U2' U // PLL");
+    expect(row.solution_html).toBe(`<u>R</u> <s><em>U2'</em></s> <u class="wavy">U</u> // PLL`);
+  });
+  it('rejects markup describing different moves and sanitizes matching markup', () => {
+    expect(() => normalizeReconSolutionRow({ solution: 'R', solution_html: '<u>U</u>' })).toThrow('do not match');
+    const row = { solution: 'R', solution_html: '<u onclick="bad()">R</u><script>bad()</script>' };
+    normalizeReconSolutionRow(row);
+    expect(row.solution_html).toBe('<u>R</u>');
+  });
+  it('clears stale annotations from old plain-text clients and validates formatting-only edits', () => {
+    const row: Record<string, unknown> = { solution: 'U' };
+    normalizeReconSolutionRow(row, { solution: 'R', solution_html: '<u>R</u>' });
+    expect(row.solution_html).toBeNull();
+    const marked: Record<string, unknown> = { solutionHtml: '<em>R</em>' };
+    normalizeReconSolutionRow(marked, { solution: 'R' });
+    expect(marked.solutionHtml).toBe('<em>R</em>');
+  });
 });

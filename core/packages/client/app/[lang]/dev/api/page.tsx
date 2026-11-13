@@ -275,8 +275,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'wca-fun', m: 'GET', p: '/v1/wca/fun/most-solves-person-comp', g: 'public', c: 'cdn', zh: '单场最多还原', en: 'Most solves in one comp' },
   { d: 'wca-fun', m: 'GET', p: '/v1/wca/fun/most-solves-comp', g: 'public', c: 'cdn', zh: '比赛总还原数', en: 'Most solves per comp' },
   { d: 'wca-fun', m: 'GET', p: '/v1/wca/fun/most-solves-person', g: 'public', c: 'cdn', zh: '个人总还原数', en: 'Most solves per person' },
-  { d: 'wca-fun', m: 'GET', p: '/v1/wca/fun/most-solves-person-year/years', g: 'public', c: 'cdn', zh: '可选年份列表', en: 'Available years' },
-  { d: 'wca-fun', m: 'GET', p: '/v1/wca/fun/most-solves-person-year', g: 'public', c: 'cdn', zh: '年度个人还原数', en: 'Solves per person per year' },
+  { d: 'wca-fun', m: 'GET', p: '/v1/wca/fun/most-solves-person-year/years', g: 'public', c: 'cdn', zh: '年度参与榜可选年份与项目', en: 'Available years and events for annual participation' },
+  { d: 'wca-fun', m: 'GET', p: '/v1/wca/fun/most-solves-person-year', g: 'public', c: 'cdn', zh: '年度个人复原与轮次（项目、地区、排序）', en: 'Annual solves and rounds by event, region and sort order' },
   { d: 'wca-fun', m: 'GET', p: '/v1/wca/fun/top100-appearances', g: 'public', c: 'cdn', zh: 'Top100 上榜次数', en: 'Top-100 appearances' },
 
   // ---- wca-data ----
@@ -333,10 +333,10 @@ const ENDPOINTS: Ep[] = [
   { d: 'recon', m: 'GET', p: '/v1/recon/:id/same-scramble', g: 'public', zh: '同打乱的其它复盘', en: 'Same-scramble recons' },
   { d: 'recon', m: 'POST', p: '/v1/recon/video', g: 'login', zh: '会员上传复盘视频', en: 'Member recon video upload' },
   { d: 'recon', m: 'GET', p: '/v1/recon/video/:id', g: 'public', zh: '流式读取复盘视频', en: 'Stream recon video' },
-  { d: 'recon', m: 'POST', p: '/v1/recon', g: 'login', zh: '新建复盘', en: 'Create recon' },
+  { d: 'recon', m: 'POST', p: '/v1/recon', g: 'login', zh: '新建复盘；可选 solutionHtml 保留指法记号，纯文本须与 solution 一致', en: 'Create recon; optional solutionHtml preserves annotations and must match solution text' },
   { d: 'recon', m: 'PUT', p: '/v1/recon/:id', g: 'login', zh: '编辑复盘', en: 'Edit recon' },
   { d: 'recon', m: 'DELETE', p: '/v1/recon/:id', g: 'login', zh: '删除复盘', en: 'Delete recon' },
-  { d: 'recon', m: 'POST', p: '/v1/recon/:id/alternatives', g: 'login', zh: '加替代解', en: 'Add alternative solution' },
+  { d: 'recon', m: 'POST', p: '/v1/recon/:id/alternatives', g: 'login', zh: '加替代解；支持 solutionHtml 指法记号', en: 'Add alternative solution, including solutionHtml annotations' },
   { d: 'recon', m: 'PUT', p: '/v1/recon/:id/alternatives/:idx', g: 'login', zh: '改替代解', en: 'Edit alternative' },
   { d: 'recon', m: 'DELETE', p: '/v1/recon/:id/alternatives/:idx', g: 'login', zh: '删替代解', en: 'Delete alternative' },
   { d: 'recon', m: 'GET', p: '/v1/recon/comments', g: 'public', zh: '复盘评论', en: 'Recon comments' },

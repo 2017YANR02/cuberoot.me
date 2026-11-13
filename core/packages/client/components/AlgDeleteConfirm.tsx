@@ -3,12 +3,10 @@
 /**
  * 删公式 / 删 case 的二次确认弹层。
  *
- * 存在的理由不是「再问一遍」,是**摊开连带**:镜像系统(issue #40 T5)里一条人写的公式会
- * 自动生成若干复制品,落点是**别的 case**(左右镜落伙伴的 FL、前后镜落伙伴的 BR),源一删
- * 它们跟着没 —— 站在眼前这张 case 上一条都看不见。不列出来,删就是静默的。
+ * 列出同组镜像公式，包括其他 case 和视角的对应项；从任何一条发起删除都同等处理。
  *
  * 清单谁算:调用方用 `@cuberoot/shared/alg-mirror` 的 `mirrorCascadeOnEdit` /
- * `mirrorCascadeOnDelete`,它们内部跑的是 server 入库同步的那份 `regenerateMirrorAlgs` ——
+ * `mirrorCascadeOnDelete`,与 server 入库同步共用同一份镜像删除规则 ——
  * 所以这里显示的就是保存后真会消失的那些,不是另算一版近似。
  *
  * 本组件自己不算任何东西,只负责摆:`target` 是主角(直接被删的),`cascade` 是连带。
@@ -27,13 +25,13 @@ interface Props {
   title: string;
   /** 直接被删掉的公式。空数组 = 没有可列的正文(如删一张没公式的 case)。 */
   target: AlgDeleteGroup[];
-  /** 连带被抹掉的自动生成公式。空 = 不出这一段。 */
+  /** 一起删除的对应公式。空 = 不出这一段。 */
   cascade: AlgDeleteGroup[];
   /** 连带还在算(伙伴 case 还没拉回来)—— 这期间不让点删,免得删在半路。 */
   cascadePending?: boolean;
   /** 连带算不出来的原因(拉伙伴失败之类)。有值就明说,别假装「没有连带」。 */
   cascadeError?: string | null;
-  /** 额外提醒,如「这条是生成的,删了会重新长出来」。 */
+  /** 额外提醒。 */
   note?: string | null;
   busy?: boolean;
   error?: string | null;
@@ -103,8 +101,8 @@ export default function AlgDeleteConfirm({
               <div className="alg-del-cascade-head">
                 <AlertTriangle size={13} />
                 {tr({
-                  zh: `以下 ${cascadeCount} 条自动生成的公式会一起消失`,
-                  en: `${cascadeCount} auto-generated alg${cascadeCount > 1 ? 's' : ''} will go with it`,
+                  zh: `以下 ${cascadeCount} 条对应公式会一起删除`,
+                  en: `${cascadeCount} corresponding algorithm${cascadeCount > 1 ? 's' : ''} will also be deleted`,
                 })}
               </div>
               <AlgList groups={cascade} />
@@ -123,7 +121,7 @@ export default function AlgDeleteConfirm({
           <button
             type="button"
             className="alg-admin-modal-delete alg-admin-modal-foot-btn"
-            disabled={busy || cascadePending}
+            disabled={busy || cascadePending || !!cascadeError}
             onClick={onConfirm}
           >
             <Trash2 size={14} /> {confirmLabel ?? tr({ zh: '删除', en: 'Delete' })}

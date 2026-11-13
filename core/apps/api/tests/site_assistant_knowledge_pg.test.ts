@@ -20,7 +20,7 @@ describe.skipIf(!enabled)('assistant pgvector snapshot lifecycle',()=>{
     await db`INSERT INTO site_assistant_knowledge_state(singleton,generation,corpus_hash,embedding_identity,source_updated) VALUES(true,'legacy','legacy','fixture:512',${corpus.updated})`;
     await db`INSERT INTO site_assistant_knowledge_chunks(generation,id,document_id,lang,href,title,content,fingerprint,embedding_identity,search,embedding)
       VALUES('legacy','legacy','zh:/legacy','zh','/legacy','Legacy','Legacy','legacy','fixture:512',''::tsvector,${JSON.stringify(vector(0))}::vector)`;
-    await db.unsafe(await readFile(new URL('../migrations/0324_assistant_knowledge_metadata.sql',import.meta.url),'utf8'));
+    await db.unsafe(await readFile(new URL('../migrations/0327_assistant_knowledge_metadata.sql',import.meta.url),'utf8'));
     expect((await db`SELECT chunk_count,chunk_version FROM site_assistant_knowledge_state`)[0]).toMatchObject({chunk_count:1,chunk_version:null});
   });
   afterAll(async()=>{await db.end({timeout:0});});

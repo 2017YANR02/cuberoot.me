@@ -34,10 +34,10 @@ export default function ExtractionLesson({ orientation, pauseBetween, onNextChap
   return <>
     <div className="f2l-study-layout">
 
-      <SectionNavigation label={tr(showIntro ? { zh: '认识目标槽、标态与非标', en: 'Target slots, standard and non-standard cases' } : EXTRACTION_TITLES[extractionKind])}>
+      <SectionNavigation label={tr(showIntro ? { zh: '认识目标槽、基态与非标', en: 'Target slots, standard and non-standard cases' } : EXTRACTION_TITLES[extractionKind])}>
         <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择非标类型', en: 'Choose a non-standard case type' })}>
           <button type="button" className="f2l-section-button" aria-pressed={showIntro} onClick={() => { if (!showIntro) { setIntroComplete(false); setShowIntro(true); } }}>
-            <span className="f2l-section-label"><T zh="认识目标槽、标态与非标" en="Target slots, standard and non-standard cases" /></span>
+            <span className="f2l-section-label"><T zh="认识目标槽、基态与非标" en="Target slots, standard and non-standard cases" /></span>
           </button>
           {(Object.keys(EXTRACTION_TITLES) as (keyof typeof EXTRACTION_TITLES)[]).map(kind => <button className="f2l-section-button" key={kind} type="button"
             aria-pressed={!showIntro && extractionKind === kind} onClick={() => { setShowIntro(false); setExtractionKind(kind); }}>

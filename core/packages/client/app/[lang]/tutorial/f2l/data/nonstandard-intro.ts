@@ -110,7 +110,7 @@ export function nonstandardIntroScenes(edgeSetup: string, cornerSetup: string, o
       ],
     },
     {
-      caption: { zh: '如果这两个块都在顶层或它们自己的目标槽内，称为标态', en: 'If both pieces are in the top layer or their own target slot, it is a standard case' },
+      caption: { zh: '如果这两个块都在顶层或它们自己的目标槽内，称为基态', en: 'If both pieces are in the top layer or their own target slot, it is a standard case' },
       setup: topSetup, alg: '', duration: 6000, highlight: stickersAt(topSetup, topAndSlot), hidePair: true,
       continuePrevious: true, moveDuration: 950,
     },

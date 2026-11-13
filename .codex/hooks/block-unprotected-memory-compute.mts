@@ -10,6 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { approvedEoExperimentCommand } from '../../solver/scripts/eo_stage_experiment_policy.mts';
 import { approvedStageCommand } from '../../solver/scripts/stage_candidate_policy.mts';
 import { approvedStageTableCommand } from '../../solver/scripts/stage_table_policy.mts';
+import { approvedH10Command } from '../../solver/experiments/egg-solver/h10-optimize/policy.mts';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -242,6 +243,12 @@ export function blockedCompute(command: string, depth = 0, cwd = repoRoot): stri
     // H9-only generation was explicitly authorized on 2026-10-13. The guard
     // validates the exact target, directory, threads and process-tree budget.
     const guarded = interpreterScript(words);
+    const h10Entry = words.findIndex(word => resolve(cwd, word) === resolve(repoRoot, 'solver/experiments/egg-solver/h10-optimize/benchmark.mts'));
+    if (h10Entry >= 0) {
+      const args = words.slice(h10Entry + 1);
+      if (!(guarded?.index === h10Entry && (guarded.checkOnly || args.length === 1 && ['--plan', '--plan-ternary', '--plan-split-ternary', '--plan-lanes-repeatability', '--help'].includes(args[0]))))
+        return 'Egg h10 独立受监控对照（仅限冻结入口，保留现有版本）';
+    }
     const eoEntry = words.findIndex(word => ['benchmark_eo_stages.mts', 'benchmark_stage_candidates.mts', 'run_stage_tables.mts'].includes(base(word)));
     if (eoEntry >= 0) {
       const args = words.slice(eoEntry + 1);
@@ -303,6 +310,7 @@ async function main() {
   if (approvedEoExperimentCommand(command, cwd)) return;
   if (approvedStageCommand(command, cwd)) return;
   if (approvedStageTableCommand(command, cwd)) return;
+  if (approvedH10Command(command, cwd)) return;
   // Some code-mode harnesses supply the repository cwd instead of the nested
   // exec workdir. This exact absolute entry is unambiguous in either directory;
   // it receives the same source-hash and runtime-guard checks as the shortcut.

@@ -8,7 +8,7 @@ import SolutionView from './SolutionView';
 
 export function ReconNotationBlock({ captionHeader, scramble, scrambleCubeOrder, displayScramble, optimalScrambleTag = '', solutionText, displayText, rawDisplayText, solve, playerRef, canToggle, crossLineIdx, crossNormalized, setCrossNormalized, canRemoveWaste = false, wasteRemoved = false, setWasteRemoved = () => {}, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
   captionHeader: string; scramble: string; scrambleCubeOrder: number | null; displayScramble: string; optimalScrambleTag?: string;
-  solutionText: string; displayText: string; rawDisplayText: string; solve: { event: string; pickupTime?: number | null; putdownTime?: number | null };
+  solutionText: string; displayText: string; rawDisplayText: string; solve: { solutionHtml?: string; event: string; pickupTime?: number | null; putdownTime?: number | null };
   playerRef: ComponentProps<typeof SolutionView>['playerRef']; canToggle: boolean; crossLineIdx: number; crossNormalized: boolean;
   setCrossNormalized: (update: (value: boolean) => boolean) => void;
   canRemoveWaste?: boolean; wasteRemoved?: boolean; setWasteRemoved?: (update: (value: boolean) => boolean) => void;
@@ -55,6 +55,7 @@ export function ReconNotationBlock({ captionHeader, scramble, scrambleCubeOrder,
                 cancellationLines={cancellationLines} expandedCancellationLine={expandedCancellationLine} onToggleCancellation={onToggleCancellation}
                 autoWaste
                 text={displayText}
+                html={solve.solutionHtml}
                 event={solve.event}
                 scramble={scramble}
                 sourceText={rawDisplayText}

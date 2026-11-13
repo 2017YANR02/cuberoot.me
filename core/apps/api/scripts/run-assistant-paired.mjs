@@ -68,7 +68,7 @@ if(process.argv.includes('--index')){
    await db.unsafe('CREATE EXTENSION IF NOT EXISTS vector');
    await db.unsafe(fs.readFileSync(path.join(root,'core/apps/api/migrations/0270_assistant_knowledge.sql'),'utf8'));
    const [metadata]=await db`SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name='site_assistant_knowledge_chunks' AND column_name='metadata') AS present`;
-   if(variant==='after'&&!metadata.present)await db.unsafe(fs.readFileSync(path.join(root,'core/apps/api/migrations/0324_assistant_knowledge_metadata.sql'),'utf8'));
+   if(variant==='after'&&!metadata.present)await db.unsafe(fs.readFileSync(path.join(root,'core/apps/api/migrations/0327_assistant_knowledge_metadata.sql'),'utf8'));
    // Offline preparation may retry transient embedding failures; query budgets remain unchanged.
    const result=await runtime[variant].indexKnowledge(db,corpus,runtime[variant].assistantEmbeddingConfig().identity,AbortSignal.timeout(600000),(texts,signal)=>runtime[variant].embedKnowledge(texts,signal,globalThis.fetch,{timeoutMs:30000,maxRetries:2}));
    await Promise.all(pending);pending=[];results.push({variant,result,calls:capture});capture=[];

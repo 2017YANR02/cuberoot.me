@@ -61,6 +61,7 @@ describe('F2L standard insertion references', () => {
       alg: "U2' L U L' y2",
       fullAlg: "L U L' U' L U2 L' U2' L U L' y2",
       source: 'standard',
+      sourceIndices: [0, 1],
     }]);
     expect(JSON.stringify({ library, rows })).toBe(before);
   });

@@ -26,7 +26,7 @@ const run: QueryRunner = async <T>(statement: string, params: unknown[] = []) =>
 try {
   await db.unsafe('CREATE TABLE app_users (id BIGINT PRIMARY KEY)');
   await db.unsafe(await readFile(new URL('../../migrations/0277_assistant_monitoring.sql', import.meta.url), 'utf8'));
-  await db.unsafe(await readFile(new URL('../../migrations/0323_assistant_context.sql', import.meta.url), 'utf8'));
+  await db.unsafe(await readFile(new URL('../../migrations/0326_assistant_context.sql', import.meta.url), 'utf8'));
   await db`INSERT INTO app_users VALUES (7),(8)`;
   await db`UPDATE site_assistant_monitor_state SET enabled_at=NOW()-INTERVAL '3 days'`;
   const recorder = await startAssistantMonitor({ uid: 7, question: 'PLL navigation', lang: 'en', model: 'test', streaming: true, imageCount: 0, historyCount: 0 }, run);

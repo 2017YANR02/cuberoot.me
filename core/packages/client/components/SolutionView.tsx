@@ -23,6 +23,7 @@ import NotationLine, { useNotationCases } from '@cuberoot/timer-ui/recon/Notatio
 import { findTokenPositions, syncReconPlayerCursorFromText, reconInspectionOrientations, reconWasteBrackets, showReconInspectionColors } from '@/lib/recon-alg-utils';
 import { getTextOffsetInElement, snapCaretToLine } from '@cuberoot/timer-ui/recon/text-cursor';
 import './solution_view.css';
+import { algHtmlText, algHtmlRuns } from '@cuberoot/shared/alg-html';
 
 /** 光标位置该高亮哪一个招式 token 的字符区间(与 /sim highlightRange 同规则):
  *  优先本行光标前的招式,否则本行第一个招式,否则退回光标前最后一个招式。 */
@@ -49,8 +50,9 @@ function computeHighlightRange(plainText: string, offset: number): [number, numb
   return [p.start, p.end];
 }
 
-export default function SolutionView({ text, event, scramble = '', sourceText = text, playerRef, crossLineIdx = -1, crossNormalized = false, onToggleCross, autoWaste = false, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
+export default function SolutionView({ text, html, event, scramble = '', sourceText = text, playerRef, crossLineIdx = -1, crossNormalized = false, onToggleCross, autoWaste = false, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
   text: string;
+  html?: string;
   event?: string;
   scramble?: string;
   sourceText?: string;
@@ -72,6 +74,7 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
   const [cursorOffset, setCursorOffset] = useState<number | null>(null);
   const [hlRange, setHlRange] = useState<[number, number] | null>(null);
   const plainText = useMemo(() => text.replace(/\r\n?/g, '\n'), [text]);
+  const annotations = useMemo(() => html && algHtmlText(html) === plainText ? algHtmlRuns(html) : [], [html, plainText]);
   const inspectionColors = useMemo(() => new Map((showReconInspectionColors(event) ? reconInspectionOrientations(plainText) : []).map(item => [item.line, item.colors])), [plainText, event]);
   const crossColor = useMemo(() => crossColorFromReconText(plainText), [plainText]);
   const linkComments = event === '3x3' || event === '333' || event === 'oh' || event === '333oh';
@@ -193,7 +196,7 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
           const href = f2lLinks.get(i)?.get('F2L');
           return href ? [{ ...link, href }] : [];
         }) : [];
-        return <span key={i}>{nl}<NotationLine line={line} lineStart={lineStart} className="recon-counted-line"
+        return <span key={i}>{nl}<NotationLine annotations={annotations} line={line} lineStart={lineStart} className="recon-counted-line"
           onToggleCancellation={cancellationLines?.has(i) && onToggleCancellation ? () => onToggleCancellation(i) : undefined}
           cancellationExpanded={expandedCancellationLine === i}
           cursorOffset={cursorOffset} hlRange={hlRange} wasteBrackets={wasteBrackets}

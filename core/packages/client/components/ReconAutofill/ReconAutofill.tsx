@@ -33,6 +33,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { X } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
+import { editorText, editorCaret, setEditorCaret, type AlgEditorElement } from '@/lib/alg-editor-dom';
 import { getCaretRect } from '@/lib/textarea_caret';
 import { isAlgPrefix } from '@/lib/cube3';
 import { buildCommentSuggestions } from '@/lib/popup_suggest';
@@ -44,7 +45,7 @@ import './ReconAutofill.css';
 import { tr } from '@/i18n/tr';
 
 interface Props {
-  textareaRef: RefObject<HTMLTextAreaElement | null>;
+  textareaRef: RefObject<AlgEditorElement | null>;
   value: string;
   setValue: (next: string) => void;
   /** WCA scramble — applied as the base before the user's moves. */
@@ -156,8 +157,8 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   const dismiss = useCallback(() => {
     const ta = textareaRef.current;
     if (ta) {
-      const caret = ta.selectionStart;
-      dismissedLineIdxRef.current = (ta.value.substring(0, caret).match(/\n/g) ?? []).length;
+      const caret = editorCaret(ta);
+      dismissedLineIdxRef.current = (editorText(ta).substring(0, caret).match(/\n/g) ?? []).length;
     }
     close();
   }, [textareaRef, close]);
@@ -262,11 +263,11 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     if (firstStageTokenRef.current !== myToken) return; // superseded by a newer action
     const ta2 = textareaRef.current;
     if (!ta2 || document.activeElement !== ta2) return;
-    const caret2 = ta2.selectionStart;
+    const caret2 = editorCaret(ta2);
     // Still on the same (no-cross) line with no comment? show results.
-    const { start: s2, end: e2 } = lineRange(ta2.value, caret2);
-    if (ta2.value.substring(s2, caret2).includes('//')) return;
-    if (!/^\s*$/.test(ta2.value.substring(caret2, e2))) return;
+    const { start: s2, end: e2 } = lineRange(editorText(ta2), caret2);
+    if (editorText(ta2).substring(s2, caret2).includes('//')) return;
+    if (!/^\s*$/.test(editorText(ta2).substring(caret2, e2))) return;
     setPopup(buildFirstStagePopup(caret2, res));
     setSelected(0);
   }, [textareaRef, value, scramble, buildFirstStagePopup]);
@@ -276,7 +277,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     if (!enabled) return;
     const ta = textareaRef.current;
     if (!ta) return;
-    const caret = ta.selectionStart;
+    const caret = editorCaret(ta);
     const { start, end } = lineRange(value, caret);
     const lineUpToCaret = value.substring(start, caret);
     const fullLine = value.substring(start, end);
@@ -353,7 +354,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     if (popup) return;
     const ta = textareaRef.current;
     if (!ta) return;
-    const caret = ta.selectionStart;
+    const caret = editorCaret(ta);
 
     const lineIdx = (value.substring(0, caret).match(/\n/g) ?? []).length;
     if (dismissedLineIdxRef.current === lineIdx) return;
@@ -403,7 +404,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     if (!popup) return;
     const ta = textareaRef.current;
     if (!ta) return;
-    const caret = ta.selectionStart;
+    const caret = editorCaret(ta);
     const key = `${value}\x00${caret}\x00${popup.kind}`;
     if (key === lastBuildKeyRef.current) return;
     lastBuildKeyRef.current = key;
@@ -445,7 +446,8 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
-    const onKey = (e: KeyboardEvent) => {
+    const onKey = (event: Event) => {
+      const e = event as KeyboardEvent;
       if (e.key === 'Tab') {
         // Tab always handled by us — never let it escape the textarea.
         e.preventDefault();
@@ -469,8 +471,8 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       if (!popup) return;
       if (e.key === 'Escape') {
         e.preventDefault();
-        const caret = ta.selectionStart;
-        dismissedLineIdxRef.current = (ta.value.substring(0, caret).match(/\n/g) ?? []).length;
+        const caret = editorCaret(ta);
+        dismissedLineIdxRef.current = (editorText(ta).substring(0, caret).match(/\n/g) ?? []).length;
         close();
       } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         // 首阶段三列:←→ 切 cross/xcross/xxcross 列,↑↓ 列内移动。
@@ -508,8 +510,8 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     if (!ta) return;
     const checkCaret = () => {
       if (document.activeElement !== ta) return;
-      const caret = ta.selectionStart;
-      const v = ta.value;
+      const caret = editorCaret(ta);
+      const v = editorText(ta);
       const lineIdx = (v.substring(0, caret).match(/\n/g) ?? []).length;
       if (lineIdx !== popup.lineIdx) { close(); return; }
       // 同行内但光标离开行尾(后面有非空白) → 关掉 popup
@@ -529,7 +531,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       const ta = textareaRef.current;
       if (!ta) return;
       const target = e.target as HTMLElement;
-      if (target === ta) return;
+      if (ta.contains(target)) return;
       if (target.closest?.('[data-recon-autofill]')) return;
       close();
     };
@@ -564,7 +566,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     const newCaret = p.replaceFrom + insertion.length + (advancePastExisting ? 1 : 0);
     requestAnimationFrame(() => {
       ta.focus();
-      ta.setSelectionRange(newCaret, newCaret);
+      setEditorCaret(ta, newCaret);
     });
     // 接受注释后本行视为「已读完」——记成 dismissed,否则 auto-open 会立刻拿同一条注释
     // 再弹一次(尤其最后一行 solved:caret 不前进,会无限重弹同一条 // PLL-Xx)。
@@ -589,7 +591,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     const newCaret = start + alg.length;
     requestAnimationFrame(() => {
       ta.focus();
-      ta.setSelectionRange(newCaret, newCaret);
+      setEditorCaret(ta, newCaret);
     });
     close();
   }, [value, setValue, textareaRef, close]);

@@ -154,15 +154,15 @@ export async function uploadReconVideo(file: File): Promise<{ id: number; url: s
 
 interface AltsResponse { alternatives: ReconAlternative[] }
 
-export async function addAlternative(reconId: number, solution: string): Promise<ReconAlternative[]> {
-  const r = await apiPost<AltsResponse>(`/${reconId}/alternatives`, { solution });
+export async function addAlternative(reconId: number, solution: string, solutionHtml?: string): Promise<ReconAlternative[]> {
+  const r = await apiPost<AltsResponse>(`/${reconId}/alternatives`, { solution, solutionHtml });
   return r.alternatives;
 }
 
-type AlternativeVersion = Pick<ReconAlternative, 'solution' | 'addedById' | 'createdAt'>;
+type AlternativeVersion = Pick<ReconAlternative, 'solution' | 'solutionHtml' | 'addedById' | 'createdAt'>;
 
-export async function updateAlternative(reconId: number, idx: number, solution: string, expected: AlternativeVersion): Promise<ReconAlternative[]> {
-  const r = await apiPut<AltsResponse>(`/${reconId}/alternatives/${idx}`, { solution, expected });
+export async function updateAlternative(reconId: number, idx: number, solution: string, expected: AlternativeVersion, solutionHtml?: string): Promise<ReconAlternative[]> {
+  const r = await apiPut<AltsResponse>(`/${reconId}/alternatives/${idx}`, { solution, solutionHtml, expected });
   return r.alternatives;
 }
 

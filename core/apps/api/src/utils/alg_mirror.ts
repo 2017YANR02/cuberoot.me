@@ -27,6 +27,7 @@ import {
 import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
 import { puzzles } from 'cubing/puzzles';
 import { query } from '../db/connection.js';
+import { replaceAlgHtmlText } from '@cuberoot/shared/alg-html';
 
 interface MirrorRow {
   id: number | string;
@@ -158,6 +159,7 @@ async function alignGeneratedAlgs(
         if (aligned == null) {
           notes.push(`case ${id} 第 ${view} 视角的 ${entry.gen} 生成公式无法对齐目标 case`);
         } else {
+          if (entry.algHtml && aligned !== entry.alg) entry.algHtml = replaceAlgHtmlText(entry.algHtml, aligned);
           entry.alg = aligned;
         }
       }
@@ -185,6 +187,7 @@ export async function syncMirrorForCase(
   puzzle: string,
   set: string,
   caseId: number,
+  previousAlgs?: AlgEntry[][],
 ): Promise<MirrorSyncReport> {
   if (!mirrorAlgSyncEnabled(puzzle, set)) return EMPTY;
 
@@ -210,7 +213,7 @@ export async function syncMirrorForCase(
     ? (partnerRow === selfRow ? self : toPairCase(partnerRow))
     : null;
 
-  const result = regenerateMirrorAlgs(self, partner);
+  const result = regenerateMirrorAlgs(self, partner, previousAlgs);
   notes.push(...result.notes);
   await alignGeneratedAlgs(set, partnerRow && partnerRow !== selfRow ? [selfRow, partnerRow] : [selfRow], result.algsById, notes);
 
@@ -228,9 +231,9 @@ export async function syncMirrorForCase(
 }
 
 /** 同步一遍并把结果打进日志。路由里用这个,免得每处都写一遍 try/catch。 */
-export async function syncMirrorAndLog(puzzle: string, set: string, caseId: number): Promise<void> {
+export async function syncMirrorAndLog(puzzle: string, set: string, caseId: number, previousAlgs?: AlgEntry[][]): Promise<void> {
   try {
-    const { updated, notes } = await syncMirrorForCase(puzzle, set, caseId);
+    const { updated, notes } = await syncMirrorForCase(puzzle, set, caseId, previousAlgs);
     if (updated.length) console.log(`[alg-mirror] ${puzzle}/${set} case ${caseId} → 改写 ${updated.join(', ')}`);
     for (const n of notes) console.warn(`[alg-mirror] ${n}`);
   } catch (e) {

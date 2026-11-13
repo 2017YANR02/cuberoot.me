@@ -9,7 +9,7 @@ export type { ChatBubbleTail } from './shape';
 export interface ChatBubbleProps extends Omit<ComponentPropsWithRef<'div'>, 'children' | 'color'> {
   children: ReactNode;
   tail?: ChatBubbleTail;
-  /** CSS color or variable; defaults to the site's accent. */
+  /** CSS color or variable; defaults to a soft tint of the site's accent. */
   color?: CSSProperties['backgroundColor'];
   /** Set alongside a custom color when it needs a different foreground. */
   textColor?: CSSProperties['color'];

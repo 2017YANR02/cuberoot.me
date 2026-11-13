@@ -1,11 +1,12 @@
 'use client';
 
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createElement, Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
 import CubeColorChip, { cubeColorGroups, cubeColorGroupPunctuation, f2lDisplayColors } from '../CubeColorChip';
 import { reconCommentLinks, reconCommentCaseIndex, type ReconCommentCases, type ReconCommentLink } from '@cuberoot/shared/recon/comment-links';
 import type { TimerColorLetter as CubeColorLetter } from '@cuberoot/shared/timer';
 import { loadAlg } from '@cuberoot/shared/alg';
 import './notation-line.css';
+import { algHtmlRuns } from '@cuberoot/shared/alg-html';
 
 /** Shared case-name lookup; both hosts consume the same library index. */
 export function useNotationCases(text: string, enabled = true): ReconCommentCases {
@@ -28,9 +29,10 @@ export function useNotationCases(text: string, enabled = true): ReconCommentCase
  * Source offsets remain lossless; hosts supply only playback/cursor actions and links. */
 export default function NotationLine({ line, lineStart = 0, cursorOffset = null, hlRange = null,
   wasteBrackets = new Map(), crossColor = null, links = [], colorHref, inspectionColors, diagram, trailing,
-  moves, className, state, bodyClassName = '', diagramClassName = '', chipClassName = '',
+  moves, annotations = [], className, state, bodyClassName = '', diagramClassName = '', chipClassName = '',
   commentClassName, localize = text => text.en, renderLink, onToggleCancellation, cancellationExpanded = false,
 }: {
+  annotations?: ReturnType<typeof algHtmlRuns>;
   line: string; lineStart?: number; cursorOffset?: number | null; hlRange?: [number, number] | null;
   wasteBrackets?: ReadonlyMap<number, string>; crossColor?: CubeColorLetter | null;
   links?: readonly ReconCommentLink[]; colorHref?: (colors: string) => string | undefined;
@@ -71,6 +73,10 @@ export default function NotationLine({ line, lineStart = 0, cursorOffset = null,
   // 切点:0 / 行尾 / 光标 / 高亮起止 / 色块位置 → 分段渲染。
   const movesEnd = commentStart < 0 ? line.length : commentStart;
   const cuts = new Set<number>([0, line.length]);
+  for (const run of annotations) {
+    if (run.start > lineStart && run.start < lineStart + line.length) cuts.add(run.start - lineStart);
+    if (run.end > lineStart && run.end < lineStart + line.length) cuts.add(run.end - lineStart);
+  }
   for (const range of cancellations) { cuts.add(range.start); cuts.add(range.end); }
   if (moves !== undefined) cuts.add(movesEnd);
   for (const offset of wasteBrackets.keys()) {
@@ -130,11 +136,14 @@ export default function NotationLine({ line, lineStart = 0, cursorOffset = null,
       // 原字母完全不渲染；色块 wrapper 的 data 长度负责维持点击光标的原始偏移。
       continue;
     }
+    const annotation = annotations.find(run => run.start <= lineStart + a && run.end >= lineStart + b);
+    const marked = (annotation?.tags ?? []).reduceRight<ReactNode>((child, tag) =>
+      createElement(tag.match(/^<([a-z]+)/)![1], tag.includes('wavy') ? { style: { textDecorationStyle: 'wavy' } } : {}, child), seg);
     const inHl = hasHl && a >= Math.max(0, hlS) && b <= Math.min(line.length, hlE);
     const link = links.find(link => a >= link.start && b <= link.end);
-    if (inHl) parts.push(<span key={`h${a}`} className="recon-move-current">{seg}</span>);
-    else if (link) parts.push(<Fragment key={`link${a}`}>{renderLink(link.href, seg)}</Fragment>);
-    else parts.push(seg);
+    if (inHl) parts.push(<span key={`h${a}`} className="recon-move-current">{marked}</span>);
+    else if (link) parts.push(<Fragment key={`link${a}`}>{renderLink(link.href, marked)}</Fragment>);
+    else parts.push(<Fragment key={`text${a}`}>{marked}</Fragment>);
   }
   if (wasteBrackets.has(lineStart + line.length)) parts.push(
     <span key="wasteEnd" data-recon-text-length={0}>{wasteBrackets.get(lineStart + line.length)}</span>,

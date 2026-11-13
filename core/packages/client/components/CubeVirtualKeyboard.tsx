@@ -12,9 +12,8 @@
  * - iOS Shift 三态(off / single / capslock)
  * - () 三态(点击→(),下滑→[],上滑→{})
  * - 修饰键自动禁用(撇号可接字母或半转后缀 2,w 仅接字母)
- * - space 左侧 `·` 小键(仅 !enableMarks,即 textarea 场景):短按插 `·`,长按出 ↑↓
  * - 公式联想(前缀匹配 8 条触发器公式)
- * - enableMarks: 在 space 左侧露出"记号"入口,弹出 7 项(下划/斜体/波浪/删除/↑/↓/·);
+ * - 统一记号入口:纯文本支持 ↑/↓/·;enableMarks 另支持下划/斜体/波浪/删除;
  *   四种样式把 caret 前最后一个 token 包成 inline 标签,toggle;
  *   ↑/↓/· 直接插字符。样式项仅在 contenteditable target 上生效。
  */
@@ -23,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { cleanAlgText } from '@/lib/alg-autospace';
 import { tr } from '@/i18n/tr';
 import './cube_virtual_keyboard.css';
+import { textPointAtOffset, placeCaretAtTextOffset, insertEditorText } from '@/lib/alg-editor-dom';
 
 type EditorTarget = HTMLTextAreaElement | HTMLDivElement;
 
@@ -53,7 +53,6 @@ const LONG_PRESS_VARIANTS: Record<string, string[]> = {
   R: ["R'", 'R2', 'r'],
   L: ["L'", 'L2', 'l'],
   // NOTE: space 左侧的 `·` 小键——短按插 `·`,长按插 ↑↓,记号不附加空格。
-  'dot-mark': ['↑', '↓'],
 };
 
 // NOTE: 可双击的按键集合
@@ -192,40 +191,6 @@ function findPrevTokenInfo(el: EditorTarget): PrevTokenInfo | null {
 }
 
 /** 把 root 的纯文本偏移映射回 DOM 点。边界处 start 向后、end 向前取点，避免选进相邻标签。 */
-function textPointAtOffset(
-  root: HTMLElement,
-  offset: number,
-  bias: 'forward' | 'backward',
-): { node: Text; offset: number } | null {
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  const nodes: Text[] = [];
-  let current: Node | null;
-  while ((current = walker.nextNode())) nodes.push(current as Text);
-  if (nodes.length === 0) return null;
-
-  let consumed = 0;
-  for (let i = 0; i < nodes.length; i++) {
-    const node = nodes[i];
-    const end = consumed + node.data.length;
-    if (offset < end || (offset === end && (bias === 'backward' || i === nodes.length - 1))) {
-      return { node, offset: Math.max(0, offset - consumed) };
-    }
-    consumed = end;
-  }
-  return null;
-}
-
-function placeCaretAtTextOffset(root: HTMLElement, offset: number) {
-  const sel = window.getSelection();
-  const point = textPointAtOffset(root, offset, 'backward');
-  if (!sel || !point) return;
-  const range = document.createRange();
-  range.setStart(point.node, point.offset);
-  range.collapse(true);
-  sel.removeAllRanges();
-  sel.addRange(range);
-}
-
 /** 把 caret 前最后一个 token 包成 inline 标签;若已被同标签包则去掉(toggle)。 */
 export function wrapPrevToken(el: EditorTarget, kind: 'u' | 's' | 'em' | 'wavy'): boolean {
   if (!isCE(el)) return false;
@@ -399,7 +364,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
     const el = target.current;
     if (!el) return;
     focusTarget(el);
-    document.execCommand('insertText', false, text);
+    insertEditorText(el, text);
     normAndNotify();
     updateModifierState();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -977,17 +942,11 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
           </div>
           <div className="vkb-row vkb-row-bottom">
             <button type="button" data-key="switch" className="vkb-fn vkb-key-btn">🌐</button>
-            {enableMarks && (
-              <button type="button" data-key="marks-trigger" className="vkb-fn vkb-marks-trigger vkb-key-btn"
-                title={tr({ zh: '选择记号', en: 'Choose a mark' })}>
-                ✎
-              </button>
-            )}
+            <button type="button" data-key="marks-trigger" className="vkb-fn vkb-marks-trigger vkb-key-btn"
+              title={tr({ zh: '选择记号', en: 'Choose a mark' })}>
+              ✎
+            </button>
             <button type="button" data-key="tab" className="vkb-fn vkb-tab vkb-key-btn">Tab</button>
-            {!enableMarks && (
-              <button type="button" data-key="dot-mark" data-val="·"
-                className="vkb-fn vkb-dot-mark vkb-key-btn" title="hold for ↑↓">·</button>
-            )}
             <button type="button" data-key=" " className="vkb-space vkb-key-btn">space</button>
             <button type="button" data-key="enter" className="vkb-return vkb-key-btn">return</button>
             <button type="button" data-key="backspace" className="vkb-fn vkb-fn-del vkb-key-btn">
@@ -1094,7 +1053,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
           data-site-surface="popover"
           style={{ left: marksPopupPos.left, top: marksPopupPos.top }}
         >
-          {MARK_ITEMS.map(it => (
+          {MARK_ITEMS.filter(it => enableMarks || ['mark-up', 'mark-down', 'mark-mid'].includes(it.key)).map(it => (
             <button
               type="button"
               key={it.key}

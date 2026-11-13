@@ -21,7 +21,7 @@ const RAW_CHECKBOX_HOOK = join(REPO_ROOT, 'core/packages/client/scripts/hook-det
 const MEMORY_COMPUTE_HOOK = join(HOOKS, 'block-unprotected-memory-compute.mts');
 // Deployment typechecks use a sparse checkout without .codex. Like the other
 // hook fixtures below, load the file only when this test actually executes.
-const { consumeMbpStatsApproval, mbpStatsCommand } = await import(pathToFileURL(MEMORY_COMPUTE_HOOK).href);
+const { consumeMbpStatsApproval, mbpStatsCommand, blockedCompute } = await import(pathToFileURL(MEMORY_COMPUTE_HOOK).href);
 const { readEoExperimentApproval, eoExperimentFiles, eoExperimentRelative, eoDigest } = await import(pathToFileURL(join(REPO_ROOT, 'solver/scripts/eo_stage_experiment_policy.mts')).href);
 const { readStageApproval, stageFiles, stageRelative, stageFollowupRelative, stageKeys, stageRequest, stageDigest } = await import(pathToFileURL(join(REPO_ROOT, 'solver/scripts/stage_candidate_policy.mts')).href);
 
@@ -45,6 +45,21 @@ function runAdapter(adapter: string, target: string | string[], payload: object)
 }
 
 describe('unprotected memory computation command guard', () => {
+  it('does not grant h10 approval to modified launch commands or another checkout', async () => {
+    const { approvedH10Command, command } = await import(pathToFileURL(join(REPO_ROOT, 'solver/experiments/egg-solver/h10-optimize/policy.mts')).href);
+    expect(approvedH10Command(command, '/unreviewed-checkout')).toBe(false);
+    expect(approvedH10Command(`${command} --table h11`, REPO_ROOT)).toBe(false);
+    expect(approvedH10Command(`${command}; echo done`, REPO_ROOT)).toBe(false);
+  });
+  it('keeps the isolated Egg h10 launch bounded even when mixed with read-only arguments', () => {
+    const entry = 'solver/experiments/egg-solver/h10-optimize/benchmark.mts';
+    for (const args of ['--plan', '--plan-ternary', '--plan-split-ternary', '--plan-lanes-repeatability', '--help']) expect(blockedCompute(`node ${entry} ${args}`)).toBeUndefined();
+    for (const suffix of ['--run', '--run-ternary', '--run-split-ternary', '--run-lanes-repeatability', '--plan --run', '--plan-ternary --run-ternary', '--plan-split-ternary --run-split-ternary', '--plan-lanes-repeatability --run-lanes-repeatability', '--help --run', '--run --table h11', '--run-ternary --table h11', '--run-split-ternary --table h11', '--run-lanes-repeatability --table h11'])
+      expect(blockedCompute(`node ${entry} ${suffix}`)).toContain('Egg h10');
+    expect(blockedCompute(`node ${entry} --plan; node ${entry} --run`)).toContain('Egg h10');
+    expect(blockedCompute(`node ./unreviewed.mts ${entry} --plan`)).toContain('Egg h10');
+    expect(blockedCompute(`node --check ${entry}`)).toBeUndefined();
+  });
   it('binds EO approval to reviewed code, binaries, input and an unconsumed single pass', () => {
     const scratch = join(REPO_ROOT, '.tmp/scratch');
     mkdirSync(scratch, { recursive: true });

@@ -9,6 +9,7 @@ export interface F2lInsertion {
   alg: string;
   fullAlg: string;
   source: 'standard' | 'original';
+  sourceIndices?: number[];
 }
 export interface F2lSolutionGroup {
   key: string;
@@ -73,11 +74,11 @@ export async function groupF2lSolutions(
   }
   const groups = new Map<string, F2lSolutionGroup>();
   const ungrouped: number[] = [];
-  const retainOriginal = (group: F2lSolutionGroup, suffix: string) => {
+  const retainOriginal = (group: F2lSolutionGroup, suffix: string, sourceIndex: number) => {
     const alg = simplifyAdjacentU('3x3', suffix);
-    if (!group.options.some(option => f2lMethodKey(option.alg) === f2lMethodKey(alg))) {
-      group.options.push({ alg, fullAlg: `${group.prefix} ${alg}`, source: 'original' });
-    }
+    const option = group.options.find(option => f2lMethodKey(option.alg) === f2lMethodKey(alg));
+    if (option) (option.sourceIndices ??= []).push(sourceIndex);
+    else group.options.push({ alg, fullAlg: `${group.prefix} ${alg}`, source: 'original', sourceIndices: [sourceIndex] });
   };
   entries.forEach((entry, sourceIndex) => {
     try {
@@ -96,7 +97,7 @@ export async function groupF2lSolutions(
           const existing = groups.get(key);
           if (existing) {
             existing.sourceIndices.push(sourceIndex);
-            retainOriginal(existing, moves.slice(split).join(' '));
+            retainOriginal(existing, moves.slice(split).join(' '), sourceIndex);
             return;
           }
           const options: F2lInsertion[] = [];
@@ -113,7 +114,7 @@ export async function groupF2lSolutions(
           if (!options.length) continue;
           const group = { key, prefix, standardName: c.name, standardId: c.id,
             orientation, options, sourceIndices: [sourceIndex] };
-          retainOriginal(group, moves.slice(split).join(' '));
+          retainOriginal(group, moves.slice(split).join(' '), sourceIndex);
           groups.set(key, group);
           return;
         }

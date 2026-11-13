@@ -1247,15 +1247,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/app/[lang]/recon/submit/ScramblePicker.tsx",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/app/[lang]/wca/_globe/GlobeMapClient.tsx",
       "importKind": "runtime",
       "mechanism": "static-import",

@@ -20,20 +20,15 @@
 .f2l-chapter h3 { font-size: 1.025rem; line-height: 1.6; font-weight: 600; margin: 0; }
 .f2l-chapter p { margin: 10px 0; }
 .f2l-lead { max-width: 800px; }
-/* Student and teacher chat bubbles. */
-.f2l-chapter-dialogue { display: flex; flex-direction: column; gap: 16px; margin: 0 0 28px; padding-bottom: 24px; border-bottom: 1px solid color-mix(in srgb, var(--border-default) 65%, transparent); font-size: .95rem; line-height: 1.75; }
-.f2l-chapter-dialogue > div { display: flex; flex-direction: column; gap: 4px; max-width: 90%; min-width: 0; }
-.f2l-chapter-dialogue .f2l-dialogue-question { align-self: flex-end; align-items: flex-end; }
-.f2l-chapter-dialogue .f2l-dialogue-answer { align-self: flex-start; align-items: flex-start; }
-.f2l-chapter-dialogue dt { font-size: .75rem; color: var(--muted-foreground); }
-.f2l-chapter-dialogue dd { margin: 0; padding: 12px 16px; border: 1px solid var(--border-default); border-radius: 16px; overflow-wrap: anywhere; }
-.f2l-dialogue-question dd { border-color: transparent; border-top-right-radius: 4px; background: var(--accent-soft); }
-.f2l-dialogue-answer dd { border-top-left-radius: 4px; background: color-mix(in srgb, var(--signal-info) 12%, var(--card)); }
-body[data-site-scenery] .f2l-dialogue-answer dd[data-site-surface='panel'] { background: color-mix(in srgb, var(--signal-info) 12%, var(--glass-surface-bg)); }
-.f2l-dialogue-answer p:first-child { margin-top: 0; }
-.f2l-dialogue-answer p:last-child { margin-bottom: 0; }
-.f2l-dialogue-answer p { font: inherit; }
-.f2l-dialogue-answer dt { color: var(--accent); }
+/* Chapter dialogue layout; bubble appearance lives in ChatBubble. */
+.f2l-chapter-dialogue { display: flex; flex-direction: column; gap: 16px; margin: 0 0 28px; font-size: .95rem; }
+.f2l-chapter-dialogue > .chat-bubble { max-width: calc(90% - 8px); }
+.chat-bubble.f2l-dialogue-question { align-self: flex-end; }
+.chat-bubble.f2l-dialogue-answer { align-self: flex-start; }
+.chat-bubble.f2l-dialogue-answer,
+.f2l-page .chat-bubble:not(.f2l-chapter-dialogue *) {
+  --chat-bubble-color: color-mix(in srgb, var(--signal-info) var(--chat-bubble-accent-share), var(--card));
+}
 /* Retained styles for the commented chapter 1 comparison diagram. */
 .f2l-goal { max-width: 800px; margin: 20px auto 28px; }
 .f2l-goal-diagrams { display: grid; grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr) 48px minmax(0, 1fr); align-items: center; gap: 12px; }
@@ -177,6 +172,7 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
 .f2l-study-actions { position: absolute; inset: auto 0 0 calc(var(--f2l-sidebar-width) + var(--f2l-layout-gap)); display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-top: 16px; border-top: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent); }
 .f2l-study-secondary-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; min-width: 0; margin-inline-start: auto; }
 .f2l-study-actions .f2l-restart { margin-top: 0; }
+.f2l-study-dock { display: contents; }
 .f2l-mobile-menu-host { display: none; }
 .f2l-page .f2l-footer-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; box-sizing: border-box; width: 112px; height: 52px; min-height: 44px; flex-shrink: 0; padding: 8px 14px; border: 0; border-radius: 10px; color: var(--muted-foreground); background: transparent; font: inherit; line-height: 1.2; cursor: pointer; }
 .f2l-page .f2l-footer-next { color: var(--accent); background: var(--accent-soft); }
@@ -187,6 +183,25 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
 .f2l-study-main.f2l-catalog-group { margin-top: 0; }
 .f2l-intro-players { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 24px; margin-top: 20px; }
 .f2l-intro-players > .f2l-demo > h3, .f2l-extraction > h3 { text-align: center; }
+.f2l-intro-progress { width: 100%; margin-top: 12px; }
+.f2l-intro-progress .playback-scrubber { display: block; width: 100%; margin: 0; touch-action: none; }
+.f2l-intro-methods { --f2l-intro-gap: 24px; --f2l-intro-scale: 1.4; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--f2l-intro-gap); margin-top: 20px; padding-top: 48px; }
+.f2l-intro-method { min-width: 0; }
+.f2l-intro-methods .f2l-concept-scene { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.f2l-intro-methods .f2l-cube { width: min(100%, 280px); justify-self: center; margin-bottom: 48px; transform: scale(calc(1 + (var(--f2l-intro-scale) - 1) * var(--f2l-intro-joined, 1))); }
+.f2l-intro-methods .f2l-lbl-intro .f2l-concept-caption { min-height: 0; }
+.f2l-intro-methods .f2l-concept-caption p { display: flex; align-items: center; justify-content: center; height: 3.3em; font-size: clamp(1rem, 2vw, 1.25rem); }
+.f2l-intro-methods:not([data-stage='compare']) .f2l-practice-segments { visibility: hidden; }
+/* Keep both WebGL scenes mounted at a fixed size; only composite transforms
+   change during the split, so no canvas resize or late mount interrupts it. */
+.f2l-intro-methods > .f2l-intro-method:first-child { transform: translateX(calc((50% + var(--f2l-intro-gap) / 2) * var(--f2l-intro-joined, 1))); }
+.f2l-intro-methods > .f2l-intro-method:last-child { transform: translateX(calc((-50% - var(--f2l-intro-gap) / 2) * var(--f2l-intro-joined, 1))); opacity: var(--f2l-intro-clone-opacity, 0); }
+.f2l-intro-methods[data-stage='split'] .f2l-concept-caption { visibility: hidden; }
+@media (max-width: 700px) {
+  .f2l-intro-methods { --f2l-intro-gap: 12px; --f2l-intro-scale: 1.65; padding-top: 40px; }
+  .f2l-intro-methods .f2l-practice-segment > span { padding: 5px 2px; font-size: .75rem; white-space: nowrap; }
+  .f2l-intro-methods:lang(en) .f2l-practice-segments { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .f2l-study-main > .f2l-demo { margin-top: 20px; }
 .f2l-study-layout .f2l-extraction-comparison { margin-top: 20px; gap: 24px; }
 .f2l-stage-content small { font-size: .75rem; color: var(--muted-foreground); }
@@ -222,10 +237,7 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
 }
 @media (max-width: 700px) {
   .f2l-chapter-body { min-height: 0; padding-bottom: 0; }
-  .f2l-study-actions { position: static; inset: auto; gap: 6px; padding-top: 12px; flex-wrap: wrap; }
   .f2l-page .f2l-footer-button { width: 96px; gap: 4px; padding: 8px 6px; font-size: .8rem; }
-  .f2l-chapter-dialogue { min-height: 0; }
-  .f2l-chapter-dialogue > div { max-width: 96%; }
   .f2l-intro-players { grid-template-columns: minmax(0, 1fr); }
   .f2l-study-layout { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .f2l-study-layout > .f2l-section-nav { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 0 0 20px; border-right: 0; border-bottom: 1px solid var(--border-default); }
@@ -241,11 +253,22 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
   .f2l-extraction-comparison { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 760px) {
+  .f2l-chapter-dialogue { display: none; }
   .f2l-page .f2l-chapter-body { min-height: 0; padding-bottom: 0; }
   .f2l-page .f2l-study-layout { grid-template-columns: minmax(0, 1fr); }
   .f2l-page .f2l-study-layout > .f2l-section-nav { display: none; }
-  .f2l-page .f2l-study-actions { position: static; inset: auto; gap: 6px; padding-top: 12px; flex-wrap: wrap; }
-  .f2l-mobile-menu-host { display: block; min-width: 0; margin-top: 12px; }
+  .f2l-page .f2l-chapter-body:has(.f2l-study-dock) { padding-bottom: calc(128px + env(safe-area-inset-bottom)); }
+  .f2l-page .f2l-study-dock {
+    display: block;
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 10;
+    padding: 0 max(12px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    background: var(--background);
+  }
+  .f2l-study-dock .f2l-study-actions { position: static; inset: auto; gap: 4px; padding-top: 8px; }
+  .f2l-study-dock .f2l-footer-button { width: auto; min-width: 0; height: auto; gap: 4px; padding: 8px 6px; font-size: .8rem; }
+  .f2l-mobile-menu-host { display: block; min-width: 0; }
   .f2l-mobile-menu-host:empty { display: none; }
   .f2l-mobile-menu { position: relative; min-width: 0; }
   .f2l-mobile-menu > summary { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 44px; color: var(--muted-foreground); font-size: .8rem; }

@@ -70,13 +70,13 @@ export function commonCaseSetup(puzzle: AlgPuzzle, set: string, c: AlgCase, ori 
   const base = (c as CheckedCase)[CANONICAL_CASE]
     ? c.setup
     : setupForCase(puzzle, shape ? '' : c.setup, c.algs[0]?.[0]?.alg);
-  return displayCaseScramble(puzzle, set, oriAdjustSetup(base, ori));
+  return displayCaseScramble(puzzle, set, oriAdjustSetup(base, ori), { preserveInitialRotation: true });
 }
 
 export type CaseSetupMode = 'preset' | 'inverse';
 
 /** Invert the first playback sequence, excluding its hidden finishing regrip. */
-export function casePreviewSetup(puzzle: AlgPuzzle, set: string, c: AlgCase, ori: number, mode: CaseSetupMode = 'preset'): string {
+export function casePreviewSetup(puzzle: AlgPuzzle, set: string, c: AlgCase, ori: number, mode: CaseSetupMode = 'inverse'): string {
   const first = c.algs[ori]?.[0];
   if (mode === 'inverse' && requires3x3AlgCaseSetup(puzzle, set) && first && !caseAlgIssue(first)) {
     const inverse = setupForCase(puzzle, '', playbackCaseAlg(puzzle, first.alg));

@@ -51,6 +51,25 @@ describe('SolutionView caret mapping', () => {
     vi.mocked(loadAlg).mockResolvedValue({ cases: [] } as unknown as AlgFile);
   });
 
+  it('renders stored marks while preserving move cursor offsets', async () => {
+    const text = "R U2' ·↑↓\nF // PLL";
+    await act(async () => root.render(createElement(SolutionView, {
+      text, html: `<u>R</u> <u class="wavy"><em><s>U2'</s></em></u> ·↑↓\nF // PLL`,
+      event: '333', playerRef: { current: null },
+    })));
+    const marked = host.querySelector('u em s')!;
+    expect(marked.textContent).toBe("U2'");
+    expect((marked.parentElement!.parentElement as HTMLElement).style.textDecorationStyle).toBe('wavy');
+    const range = document.createRange();
+    range.setStart(marked.firstChild!, 3);
+    range.collapse(true);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(range);
+    await act(async () => host.querySelector('pre')!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(host.querySelector('.recon-move-current')?.textContent).toBe("U2'");
+    expect(host.querySelector('.recon-move-current s')?.textContent).toBe("U2'");
+  });
+
   it('makes cancellation badges toggleable without moving the playback cursor', async () => {
     const toggle = vi.fn();
     await act(async () => root.render(createElement(SolutionView, {

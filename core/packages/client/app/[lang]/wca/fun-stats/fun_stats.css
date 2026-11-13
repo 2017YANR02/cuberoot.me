@@ -33,6 +33,7 @@
   position: sticky;
   top: 16px;
 }
+.fun-stats-mobile-nav { display: none; }
 .fun-stats-nav-group { display: flex; flex-direction: column; gap: 2px; }
 .fun-stats-nav-head {
   font-size: 0.72rem;
@@ -132,13 +133,8 @@
 /* ── 移动端 ── */
 @media (max-width: 860px) {
   .fun-stats-layout { grid-template-columns: 1fr; gap: 16px; }
-  .fun-stats-nav {
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 10px 16px;
-  }
-  .fun-stats-nav-group { flex: 0 0 auto; }
+  .fun-stats-nav { display: none; }
+  .fun-stats-mobile-nav { display: block; width: 100%; min-width: 0; }
 }
 @media (max-width: 480px) {
   .fun-stats { padding: 16px 10px 48px; }

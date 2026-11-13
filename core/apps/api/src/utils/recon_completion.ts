@@ -1,3 +1,5 @@
+import { HTTPException } from 'hono/http-exception';
+import { matchingAlgHtml } from '@cuberoot/shared/alg-html';
 import {
   checkReconCompletion,
   normalizeReconScrambleSpacing,
@@ -19,10 +21,13 @@ export function normalizeReconScrambleRow(
 }
 
 /** Canonicalise a persisted solution, including folding standalone AUF lines. */
-export function normalizeReconSolutionRow(row: Record<string, unknown>): void {
-  if (typeof row.solution === 'string') {
-    row.solution = normalizeReconSolution(row.solution);
-  }
+export function normalizeReconSolutionRow(row: Record<string, unknown>, fallback?: Record<string, unknown>): void {
+  if (!('solution' in row) && !('solution_html' in row) && !('solutionHtml' in row)) return;
+  if (typeof row.solution === 'string') row.solution = normalizeReconSolution(row.solution);
+  const htmlKey = 'solutionHtml' in row ? 'solutionHtml' : 'solution_html';
+  try {
+    row[htmlKey] = matchingAlgHtml(String(row.solution ?? fallback?.solution ?? ''), row[htmlKey], normalizeReconSolution) || null;
+  } catch (error) { throw new HTTPException(400, { message: (error as Error).message }); }
 }
 
 /** Run the authoritative end-state check on a SQL-shaped reconstruction row. */

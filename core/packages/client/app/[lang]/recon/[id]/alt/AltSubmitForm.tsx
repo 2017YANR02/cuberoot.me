@@ -45,6 +45,7 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [solution, setSolution] = useState('');
+  const [solutionHtml, setSolutionHtml] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -59,7 +60,7 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
         setParent(p);
         if (isEditing && editIdx != null) {
           const alt = p.alternatives?.[editIdx];
-          if (alt) setSolution(alt.solution);
+          if (alt) { setSolution(alt.solution); setSolutionHtml(alt.solutionHtml ?? ''); }
           else setError(t('recon.notFound'));
         }
         setLoading(false);
@@ -85,9 +86,9 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
       if (isEditing && editIdx != null) {
         const expected = parent?.alternatives?.[editIdx];
         if (!expected || parent?.id !== Number(parentId)) throw new Error(t('recon.notFound'));
-        await updateAlternative(Number(parentId), editIdx, trimmed, expected);
+        await updateAlternative(Number(parentId), editIdx, trimmed, expected, solutionHtml);
       } else {
-        await addAlternative(Number(parentId), trimmed);
+        await addAlternative(Number(parentId), trimmed, solutionHtml);
       }
       // Bust the parent recon's ISR cache so its alternatives section isn't stale.
       await revalidateRecon(parentId);
@@ -187,7 +188,8 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
               <ReconSolutionField
                 event={parent.event}
                 value={solution}
-                onChange={setSolution}
+                html={solutionHtml}
+                onChange={(text, html) => { setSolution(text); setSolutionHtml(html); }}
                 onCaretSync={(textBefore) => syncReconPlayerCursorFromText(playerRef.current, textBefore)}
                 scramble={scramble || ''}
                 isMobile={isMobile}

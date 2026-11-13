@@ -118,6 +118,27 @@ function ImagePreview({ label, children, onClose }: { label: string; children: R
 }
 
 export default function SolveFlowchart({ stageId, onSelectLesson }: { stageId: string; onSelectLesson?: (id: string) => void }) {
+  const flowRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const flow = flowRef.current;
+    const containers = [flow?.closest<HTMLElement>('.lbl-lesson-scroll'), flow?.querySelector<HTMLElement>('.lbl-flow-canvas')]
+      .filter((element): element is HTMLElement => !!element);
+    const cleanups = containers.map(element => {
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      const showScrollbar = () => {
+        if (!element.hasAttribute('data-flow-scrolling')) element.setAttribute('data-flow-scrolling', '');
+        clearTimeout(timeout);
+        timeout = setTimeout(() => element.removeAttribute('data-flow-scrolling'), 1000);
+      };
+      element.addEventListener('scroll', showScrollbar, { passive: true });
+      return () => {
+        element.removeEventListener('scroll', showScrollbar);
+        clearTimeout(timeout);
+        element.removeAttribute('data-flow-scrolling');
+      };
+    });
+    return () => cleanups.forEach(cleanup => cleanup());
+  }, [stageId]);
   const [preview, setPreview] = useState<'start' | 'done' | number | null>(null);
   const markerId = useId().replace(/:/g, '');
   const chapter = chapters.find(item => item.id === stageId)!;
@@ -132,7 +153,7 @@ export default function SolveFlowchart({ stageId, onSelectLesson }: { stageId: s
   const arrow = `url(#${markerId})`;
   const view = stageId === 'yellow-face' || stageId === 'corner-position' ? 'plan' : 'iso';
   const previewLabel = typeof preview === 'number' ? tr(stage.paths[preview][0]) : tr(preview === 'start' ? text('开始', 'Start') : chapter.goal);
-  return <section className="lbl-content lbl-solve-flow">
+  return <section ref={flowRef} className="lbl-content lbl-solve-flow">
     <div className="lbl-flow-canvas" tabIndex={0} role="region" aria-label={tr(text(`${chapter.title.zh}流程图`, `${chapter.title.en} flowchart`))}>
       <svg className="lbl-flow-graph" width="1000" height={endY + 88} viewBox={`0 0 1000 ${endY + 88}`} role="group" aria-label={tr(text(`${chapter.title.zh}，判断与操作`, `${chapter.title.en}, decisions and actions`))}>
         <defs><marker id={markerId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" className="lbl-flow-arrowhead" /></marker></defs>

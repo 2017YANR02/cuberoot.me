@@ -12,7 +12,7 @@ const sample = {
 describe('case image exports', () => {
   it('uses raw setup and selected orientation, expanding orientations only on request', () => {
     const batch = caseImageBatch({ puzzle: '3x3', set: 'f2l', cases: [sample],
-      title: '', filename: 'f2l', oriOf: () => 1, viewAngle: 'u', orientation: 'z2' });
+      title: '', filename: 'f2l', oriOf: () => 1, viewAngle: 'u', orientation: 'z2', setupMode: 'preset' });
     expect(batch.groups[0].current).toHaveLength(1);
     expect(batch.groups[0].current[0].input.setup).toBe(caseViewSetup(oriAdjustSetup(sample.setup, 1), 'u'));
     expect(batch.groups[0].current[0].input.orientation).toBe('z2');

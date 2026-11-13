@@ -9,8 +9,7 @@ type ChapterContent = {
   tips: readonly ChapterTip[];
 };
 
-export const F2L_CHAPTERS = [
-  {
+const introChapter = {
     "id": "lesson-1",
     "title": {
       "zh": "初识 F2L",
@@ -40,11 +39,14 @@ export const F2L_CHAPTERS = [
         "en": "Make sure you can solve the cube using the layer-by-layer method. See the LBL tutorial on this site."
       }
     ]
-  },
+} as const satisfies ChapterContent;
+
+export const F2L_CHAPTERS = [
+  introChapter,
   {
     "id": "lesson-2",
     "title": {
-      "zh": "三步标态",
+      "zh": "三步基态",
       "en": "Three-move cases"
     },
     "question": {
@@ -53,13 +55,13 @@ export const F2L_CHAPTERS = [
     },
     "answer": [
       {
-        "zh": "先认识什么是标态，再从最简单的四种情况开始。转动顶层对齐图形后，跟着动画学会最后三步。",
+        "zh": "先认识什么是基态，再从最简单的四种情况开始。转动顶层对齐图形后，跟着动画学会最后三步。",
         "en": "First, learn what a standard case is, then start with the four simplest cases. Turn the top layer to match the reference, then follow the animation to learn the final three moves."
       }
     ],
     "tips": [
       {
-        "zh": "最简单的3步状态一共有4种，本教程称之为“三步标态”。",
+        "zh": "最简单的3步状态一共有4种，本教程称之为“三步基态”。",
         "en": "There are four simplest cases that take just three moves. This tutorial calls them the “three-move cases”."
       },
       {
@@ -84,13 +86,13 @@ export const F2L_CHAPTERS = [
     },
     "answer": [
       {
-        "zh": "现在逐步学习怎样还原三步标态。先确认朝向，对照动画观察每一步对目标棱角的影响。",
+        "zh": "现在逐步学习怎样还原三步基态。先确认朝向，对照动画观察每一步对目标棱角的影响。",
         "en": "Now learn how to solve the three-move cases one move at a time. Check your cube orientation, then follow the animation to see how each move affects the target edge and corner."
       }
     ],
     "tips": [
       {
-        "zh": "其他标态通常也会先转化为4种3步标态之一，再3步复原。因此这4种状态一定要深刻理解。",
+        "zh": "其他基态通常也会先转化为4种3步基态之一，再3步复原。因此这4种状态一定要深刻理解。",
         "en": "Other standard cases are usually transformed into one of the four three-move cases, then solved in three moves. Make sure you understand these four cases thoroughly."
       },
       {
@@ -115,7 +117,7 @@ export const F2L_CHAPTERS = [
         "en": "Pick up your cube and solve the first two layers using the layer-by-layer method. Then apply the scramble to set up a practice case with only the last pair left to solve."
       },
       {
-        "zh": "开始复原某对棱角前仅相差 U、U′ 或 U2 属于同一个状态。先选择三步标态，按对应打乱练习，再通过顶面调整对齐并还原。",
+        "zh": "开始复原某对棱角前仅相差 U、U′ 或 U2 属于同一个状态。先选择三步基态，按对应打乱练习，再通过顶面调整对齐并还原。",
         "en": "Before solving a pair, positions differing only by U, U′ or U2 count as the same case. Choose a three-move case, apply the matching scramble, then align the top layer and solve the pair."
       }
     ],
@@ -137,7 +139,7 @@ export const F2L_CHAPTERS = [
   {
     "id": "lesson-3",
     "title": {
-      "zh": "其他标态",
+      "zh": "其他基态",
       "en": "Other cases"
     },
     "question": {
@@ -160,7 +162,7 @@ export const F2L_CHAPTERS = [
         "en": "When the other three slots are solved, the last pair cannot occupy those slots. Its pieces can only be on the top layer or in their own slot."
       },
       {
-        "zh": "仅差顶层转动的状态视为同一种，尚未完成的状态共有 41 种，称为 F2L 标态。",
+        "zh": "仅差顶层转动的状态视为同一种，尚未完成的状态共有 41 种，称为 F2L 基态。",
         "en": "Treating positions that differ only by a top-layer turn as the same case gives 41 unsolved cases, known as the standard F2L cases."
       },
       {
@@ -177,12 +179,12 @@ export const F2L_CHAPTERS = [
       "en": "Algorithms (1)"
     },
     "question": {
-      "zh": "这次不是我熟悉的四种图案了。我能不能把它变成已经会的三步标态，再还原呢？",
+      "zh": "这次不是我熟悉的四种图案了。我能不能把它变成已经会的三步基态，再还原呢？",
       "en": "This is not one of the four patterns I know. Can I turn it into a familiar three-move case and solve it from there?"
     },
     "answer": [
       {
-        "zh": "把新的情况转化成已经熟悉的三步标态，再完成最后三步。",
+        "zh": "把新的情况转化成已经熟悉的三步基态，再完成最后三步。",
         "en": "Turn each new case into a familiar three-move case, then finish the last three moves."
       }
     ],
@@ -218,7 +220,7 @@ export const F2L_CHAPTERS = [
     },
     "answer": [
       {
-        "zh": "更复杂的情况可以先转化成上一章学过的情况，再到三步标态，最后还原。按括号分段观察每次转化。",
+        "zh": "更复杂的情况可以先转化成上一章学过的情况，再到三步基态，最后还原。按括号分段观察每次转化。",
         "en": "More complex cases can first become a case from the previous chapter, then a three-move case, and finally a solved pair. Follow each transformation using the parenthesized sections."
       }
     ],
@@ -260,7 +262,7 @@ export const F2L_CHAPTERS = [
     ],
     "tips": [
       {
-        "zh": "如果目标棱或角跑到了其他槽里，就叫作非标情况。先把它们取到顶层（或目标 FR槽），便能按标态继续学习。",
+        "zh": "如果目标棱或角跑到了其他槽里，就叫作非标情况。先把它们取到顶层（或目标 FR槽），便能按基态继续学习。",
         "en": "If the target edge or corner is in another slot, this is a non-standard case. Bring the pieces to the top layer or the target FR slot, then continue with a standard case."
       },
       {
@@ -276,7 +278,7 @@ export const F2L_CHAPTERS = [
         "en": "(R U R′)(R U R′) is equivalent to R U2 R′. Removing the redundant moves is a good example of optimization."
       },
       {
-        "zh": "非标到标态的转化非常灵活，熟练后就不必拘泥于特定解法。",
+        "zh": "非标到基态的转化非常灵活，熟练后就不必拘泥于特定解法。",
         "en": "There are many ways to turn a non-standard case into a standard one. With practice, you will no longer need to stick to a particular method."
       },
       {
@@ -315,7 +317,7 @@ export const F2L_CHAPTERS = [
         "en": "Drag the cube to adjust the view."
       },
       {
-        "zh": "如果目标棱或角位于其他槽，请先按第 6 章的方法转化为标态。",
+        "zh": "如果目标棱或角位于其他槽，请先按第 6 章的方法转化为基态。",
         "en": "If the target edge or corner is in another slot, first use the method in Chapter 6 to turn it into a standard case."
       },
       {
@@ -337,14 +339,15 @@ export const F2L_CHAPTERS = [
   },
   {
     id: 'lesson-11',
-    title: { zh: '三步标态（合并预览）', en: 'Three-move cases (preview)' },
+    title: { zh: '三步基态（合并预览）', en: 'Three-move cases (preview)' },
     question: { zh: '三步就能还原一组棱角？如果图案转到了别的位置，我还能认出来吗？', en: 'Just three moves to solve a pair? Can I still recognize it when the pattern moves around the top?' },
     answer: [{ zh: '先认图案，再看懂三步，最后试着把顶层调整到熟悉的朝向。', en: 'Recognize the pattern, understand the three moves, then practise aligning the top to a familiar position.' }],
     tips: [],
-  }
+  },
+  { ...introChapter, id: 'lesson-14' },
 ] as const satisfies readonly ChapterContent[];
 
 export type ChapterId = typeof F2L_CHAPTERS[number]['id'];
 
 // Experiments and the former standalone lessons remain accessible outside the learning sequence.
-export const F2L_NAV_CHAPTERS = F2L_CHAPTERS.filter(chapter => !['lesson-10', 'lesson-11', 'lesson-12', 'lesson-13'].includes(chapter.id));
+export const F2L_NAV_CHAPTERS = F2L_CHAPTERS.filter(chapter => !['lesson-10', 'lesson-11', 'lesson-12', 'lesson-13', 'lesson-14'].includes(chapter.id));

@@ -27,6 +27,7 @@
  */
 import {
   flattenAlg,
+  MOVE_RE,
   mirrorFamily,
   mirrorKeepsAmount,
   relabelYMoveString,
@@ -36,6 +37,7 @@ import {
   type ParsedMove,
 } from './alg_notation';
 import type { AlgEntry } from './alg_types';
+import { algHtmlRuns, algHtmlText, escapeAlgText, sanitizeAlgHtml } from './alg-html';
 
 export type { AlgEntry };
 export { relabelYMoveString };
@@ -173,6 +175,63 @@ function canonicalMirrorDisplayAlg(alg: string): string {
   return canonicalNnnAlg(moves.map(renderMove).join(' '));
 }
 
+/** Locate written moves using the shared grammar. Repeated groups, comments and
+ * explicit grip/FTN notation need their own semantic mapping; never guess it. */
+function annotationMoves(text: string): Array<{ raw: string; start: number; end: number }> | null {
+  const moves: Array<{ raw: string; start: number; end: number }> = [];
+  for (let i = 0; i < text.length;) {
+    if (/[\s()]/.test(text[i])) { i++; continue; }
+    const match = MOVE_RE.exec(text.slice(i));
+    if (!match) return null;
+    moves.push({ raw: match[0], start: i, end: i + match[0].length });
+    i += match[0].length;
+  }
+  // A finishing y rotation is hidden by the library and is not a finger move.
+  while (moves.length && /^y(?:\d+)?'?$/.test(moves.at(-1)!.raw)) moves.pop();
+  return moves;
+}
+
+/** LR keeps the finger role while exchanging hands. Place source annotations on
+ * corresponding target moves, preserving the target's grouping and finishing y.
+ * null means unsupported/mismatched notation; undefined explicitly clears marks. */
+export function lrMirrorAlgHtml(source: AlgEntry, targetAlg: string): string | undefined | null {
+  const sourceText = source.algHtml ? algHtmlText(source.algHtml) : source.alg;
+  const from = annotationMoves(sourceText), original = annotationMoves(source.alg), to = annotationMoves(targetAlg);
+  if (!from || !original || !to || from.length !== to.length || from.length !== original.length) return null;
+  if (from.some((move, i) => move.raw !== original[i].raw
+    || canonicalNnnAlg(applyMirrorGen(move.raw, 'lr')) !== canonicalNnnAlg(to[i].raw))) return null;
+  if (!source.algHtml) return undefined;
+  const runs = algHtmlRuns(source.algHtml);
+  let html = '', offset = 0;
+  to.forEach((move, i) => {
+    const tags = [...new Set(runs.filter(run => run.start < from[i].end && run.end > from[i].start).flatMap(run => run.tags))];
+    html += escapeAlgText(targetAlg.slice(offset, move.start));
+    html += tags.join('') + escapeAlgText(move.raw) + tags.slice().reverse().map(tag => `</${tag.match(/^<([a-z]+)/)![1]}>`).join('');
+    offset = move.end;
+  });
+  html += escapeAlgText(targetAlg.slice(offset));
+  return /<(u|s|em|strong|sub|sup)\b/.test(html) ? sanitizeAlgHtml(html) : undefined;
+}
+
+/** Only an actual annotation edit overrides an existing independently curated
+ * counterpart. Passing the pre-save snapshot also makes removal bidirectional. */
+function syncEditedLrAnnotations(self: MirrorPairCase, partner: MirrorPairCase, previous: AlgEntry[][], notes: string[]) {
+  self.algs.forEach((view, ori) => view.forEach(entry => {
+    const prior = previous[ori]?.find(old => old.alg === entry.alg);
+    if ((prior?.algHtml ?? '') === (entry.algHtml ?? '')) return;
+    let mirrored: string;
+    try { mirrored = applyMirrorGen(entry.alg, 'lr'); }
+    catch { notes.push(`case ${self.id} ${VIEWS[ori]} 的指法记号无法无损映射到 LR 镜像`); return; }
+    const target = partner.algs[MIRROR_VIEW.lr[ori]]?.find(other =>
+      canonicalMirrorDisplayAlg(other.alg) === canonicalMirrorDisplayAlg(mirrored));
+    if (!target) return;
+    const html = lrMirrorAlgHtml(entry, target.alg);
+    if (html === null) { notes.push(`case ${self.id} ${VIEWS[ori]} 的指法记号无法无损映射到 LR 镜像`); return; }
+    if (html) target.algHtml = html;
+    else delete target.algHtml;
+  }));
+}
+
 // ---------------------------------------------------------------- 成对重算
 
 export interface MirrorPairCase {
@@ -188,14 +247,60 @@ export interface MirrorRegenResult {
   notes: string[];
 }
 
+/** Deletion is symmetric across the existing mirror orbit. Provenance is only
+ * used to recover AUF-aligned counterparts, never to restrict which row may be
+ * deleted. Work from the pre-edit snapshot so row indices survive removals. */
+function removeMirrorOrbit(self: MirrorPairCase, partner: MirrorPairCase, previous: AlgEntry[][]): void {
+  const before = [{ id: self.id, algs: previous }, ...(partner.id === self.id ? [] : [partner])];
+  const nodes = before.flatMap(c => c.algs.flatMap((view, ori) => view.map((entry, i) =>
+    ({ caseId: c.id, ori, i, entry, key: canonicalMirrorDisplayAlg(entry.alg) }))));
+  const edges = nodes.map(() => new Set<number>());
+  const connect = (a: number, b: number) => { edges[a].add(b); edges[b].add(a); };
+  nodes.forEach((node, i) => {
+    const source = node.entry.src;
+    if (node.entry.gen && source) {
+      // Draft sorting/deletion can make historical row indices stale. Validate
+      // the moves as well; alignment may only have changed the leading AUF.
+      const withoutAuf = (alg: string) => canonicalMirrorDisplayAlg(alg).replace(/^(?:U(?:2|')?(?:\s+|$))+/, '');
+      const candidates = nodes.flatMap((n, j) => {
+        if (n.caseId !== source.id || n.ori !== source.ori || n.entry.gen) return [];
+        try {
+          return withoutAuf(applyMirrorGen(n.entry.alg, node.entry.gen!)) === withoutAuf(node.entry.alg) ? [j] : [];
+        } catch { return []; }
+      });
+      const indexed = candidates.find(j => nodes[j].i === source.i);
+      const j = indexed ?? (candidates.length === 1 ? candidates[0] : undefined);
+      if (j !== undefined) connect(i, j);
+    }
+    for (const gen of MIRROR_GENS) {
+      let key: string;
+      try { key = canonicalMirrorDisplayAlg(applyMirrorGen(node.entry.alg, gen)); } catch { continue; }
+      const targetId = MIRROR_TARGET[gen] === 'self' ? node.caseId
+        : node.caseId === self.id ? partner.id : self.id;
+      nodes.forEach((other, j) => {
+        if (other.caseId === targetId && other.ori === MIRROR_VIEW[gen][node.ori] && other.key === key) connect(i, j);
+      });
+    }
+  });
+  const removed = new Set<number>();
+  nodes.forEach((node, i) => {
+    if (node.caseId === self.id && !self.algs[node.ori]?.some(e => canonicalMirrorDisplayAlg(e.alg) === node.key)) removed.add(i);
+  });
+  for (const i of removed) for (const j of edges[i]) removed.add(j);
+  const dropped = new Set([...removed].map(i => `${nodes[i].caseId}/${nodes[i].ori}/${nodes[i].key}`));
+  for (const c of partner.id === self.id ? [self] : [self, partner]) {
+    c.algs = c.algs.map((view, ori) => view.filter(e => !dropped.has(`${c.id}/${ori}/${canonicalMirrorDisplayAlg(e.alg)}`)));
+  }
+}
+
 /**
  * 把一对(或一个自镜像的)case 的镜像公式**整体重算**。
  *
  * ## 为什么是「整体重算」而不是「增量同步」
  *
  * 增量要回答「这条生成公式的源头还在不在」,于是得给每条原创公式发一个 lineage id 并跟着
- * 编辑/重排/删除维护 —— 三条路径任一漏一次就留下孤儿。整体重算把这个问题消掉:**生成条永远
- * 不是状态,只是当前原创条的函数**。改一条、删一条、拖动排序,都只是重新算一遍。
+ * 编辑/重排维护。重算仍复用已有来源信息补齐缺项；删除时先按旧快照移除整组镜像对应项，
+ * 再重算，因此任何位置的条目都有相同删除权，不会因其他位置仍有对应项而重新出现。
  *
  * §5.5 要的「排序传播」也就自动有了 —— 源那边换了顺序,生成的左右镜份跟着换,因为它们本来
  * 就是按源顺序排的。不需要单独的 reorder 端点。
@@ -212,9 +317,16 @@ export interface MirrorRegenResult {
 export function regenerateMirrorAlgs(
   self: MirrorPairCase,
   partner: MirrorPairCase | null,
+  previousSelfAlgs?: AlgEntry[][],
 ): MirrorRegenResult {
   const notes: string[] = [];
   const algsById = new Map<number, AlgEntry[][]>();
+  const clone = (c: MirrorPairCase): MirrorPairCase => ({ ...c, algs: c.algs.map(view => view.map(entry => ({ ...entry }))) });
+  const sameCase = partner?.id === self.id;
+  self = clone(self);
+  partner = sameCase ? self : partner ? clone(partner) : null;
+  if (partner && previousSelfAlgs) removeMirrorOrbit(self, partner, previousSelfAlgs);
+  if (partner && previousSelfAlgs) syncEditedLrAnnotations(self, partner, previousSelfAlgs, notes);
   const distinct = partner && partner.id !== self.id ? [self, partner] : [self];
 
   for (const c of distinct) {
@@ -251,8 +363,13 @@ export function regenerateMirrorAlgs(
         // 左右镜,只是末尾多一个页面会隐藏的 y'),自镜像 case 也常镜回同一条。
         if (!key || list.some(e => canonicalMirrorDisplayAlg(e.alg) === key)) continue;
         const made: AlgEntry = { alg, gen, src: { id: src.id, ori, i } };
+        if (gen === 'lr' && entry.algHtml) {
+          const html = lrMirrorAlgHtml(entry, alg);
+          if (html) made.algHtml = html;
+          else if (html === null) notes.push(`case ${src.id} ${VIEWS[ori]} 的指法记号无法无损映射到 LR 镜像`);
+        }
         // 步数镜像后不变;出处跟着源走(作者还是写源那条的人)。
-        // algHtml / ytId / tags 一律不带:指法标注、教学视频、单手标签讲的都是**那只手**的事。
+        // LR 的指法格式按对应动作映射；视频和单手标签仍只属于源条目。
         if (entry.stm != null) made.stm = entry.stm;
         if (entry.sqtm != null) made.sqtm = entry.sqtm;
         if (entry.source) made.source = entry.source;
@@ -265,13 +382,13 @@ export function regenerateMirrorAlgs(
 
 // ---------------------------------------------------------------- 连带删除预览
 
-/** 一条会被牵连抹掉的**自动生成**公式。 */
+/** 一条会一起删除的镜像对应公式。 */
 export interface MirrorCascadeEntry {
   /** 它落在哪张 case 上(可能不是正在编辑的这张) */
   caseId: number;
   /** 落在第几个视角,下标同 {@link VIEWS} */
   view: number;
-  gen: MirrorGen;
+  gen?: MirrorGen;
   alg: string;
 }
 
@@ -299,13 +416,12 @@ function droppedGenerated(
 }
 
 /**
- * 把 `self` 的公式换成 `nextAlgs`(通常是「删掉其中一条」)之后,**哪些生成公式会跟着没**。
+ * 把 `self` 的公式换成 `nextAlgs` 后，哪些现有的对应公式会一起删除。
  *
- * 前后各跑一遍 {@link regenerateMirrorAlgs} 再做差 —— 判据只有那一份,这里不重写一遍规则,
+ * 复用 {@link regenerateMirrorAlgs} 的双向删除规则与现有快照做差，
  * 所以列出来的就是保存后 server 真会抹掉的那些,不是另算的近似。
  *
- * 为什么删一条要问一句:生成条是源的函数,而它**落在别的 case 上**(左右镜落伙伴的 FL、
- * 前后镜落伙伴的 BR),站在眼前这张 case 上根本看不见 —— 不摊开就是静默删。
+ * 对应项可能落在别的 case 或视角，必须在确认时一并列出，不区分录入方式。
  *
  * `partner` 为 null(没建链)时恒空:没链就一条都不生成,自然也没有连带。
  */
@@ -315,10 +431,24 @@ export function mirrorCascadeOnEdit(
   nextAlgs: AlgEntry[][],
 ): MirrorCascadeEntry[] {
   if (!partner) return [];
-  return droppedGenerated(
-    regenerateMirrorAlgs(self, partner).algsById,
-    regenerateMirrorAlgs({ id: self.id, algs: nextAlgs }, partner).algsById,
-  );
+  const nextSelf = { id: self.id, algs: nextAlgs };
+  const nextPartner = partner.id === self.id ? nextSelf : { ...partner };
+  removeMirrorOrbit(nextSelf, nextPartner, self.algs);
+  // Compare the stored rows directly. Regeneration precedes server-side AUF
+  // alignment and must not make unaffected aligned rows look deleted.
+  const after = new Map([[nextSelf.id, nextSelf.algs], [nextPartner.id, nextPartner.algs]]);
+  const cascade: MirrorCascadeEntry[] = [];
+  for (const c of partner.id === self.id ? [self] : [self, partner]) {
+    c.algs.forEach((view, ori) => view.forEach(entry => {
+      const key = canonicalMirrorDisplayAlg(entry.alg);
+      // The explicitly removed rows are already shown as the dialog's targets.
+      if (c.id === self.id && !nextAlgs[ori]?.some(e => canonicalMirrorDisplayAlg(e.alg) === key)) return;
+      if (!after.get(c.id)?.[ori]?.some(e => canonicalMirrorDisplayAlg(e.alg) === key)) {
+        cascade.push({ caseId: c.id, view: ori, alg: entry.alg, ...(entry.gen ? { gen: entry.gen } : {}) });
+      }
+    }));
+  }
+  return cascade;
 }
 
 /**

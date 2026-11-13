@@ -1,3 +1,4 @@
+import { editorText, textPointAtOffset, type AlgEditorElement } from './alg-editor-dom';
 /**
  * Compute the (left, top) of the caret inside a <textarea>, using the
  * well-known mirror-div technique: clone the textarea's text content into a
@@ -44,7 +45,21 @@ export interface CaretRect {
   lineHeight: number;
 }
 
-export function getCaretRect(ta: HTMLTextAreaElement, caretIndex: number): CaretRect {
+export function getCaretRect(ta: AlgEditorElement, caretIndex: number): CaretRect {
+  if (!(ta instanceof HTMLTextAreaElement)) {
+    const point = textPointAtOffset(ta, caretIndex, 'backward');
+    if (point) {
+      const range = document.createRange();
+      range.setStart(point.node, point.offset);
+      range.collapse(true);
+      const rect = range.getClientRects()[0];
+      if (rect) {
+        const box = ta.getBoundingClientRect();
+        const style = getComputedStyle(ta);
+        return { left: rect.left - box.left + ta.offsetLeft, top: rect.top - box.top + ta.offsetTop, lineHeight: parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.2 };
+      }
+    }
+  }
   const mirror = getMirror();
   const cs = window.getComputedStyle(ta);
   for (const prop of MIRROR_PROPS) {
@@ -53,7 +68,7 @@ export function getCaretRect(ta: HTMLTextAreaElement, caretIndex: number): Caret
   }
   // Don't show scrollbars in the mirror — we want full content height.
   mirror.style.overflow = 'hidden';
-  const before = ta.value.substring(0, caretIndex);
+  const before = editorText(ta).substring(0, caretIndex);
   const marker = document.createElement('span');
   marker.textContent = '​'; // zero-width space, won't affect line height
   mirror.textContent = before.replace(/\n$/, '\n ');

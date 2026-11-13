@@ -1,5 +1,6 @@
 'use client';
 
+import ChatBubble from '@/components/ChatBubble';
 import { useEffect, useId, useMemo, useRef, useState, type ComponentProps, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { Alg } from 'cubing/alg';
@@ -236,17 +237,17 @@ function LessonPlayer({ player, interacted, yellowCase, fishLeft, middleAlignmen
       sectionPauseMs={cornerAlignment || touchCase ? 2000 : sidePauseSteps.length ? SIDE_VIEW_PAUSE_MS : undefined}
       onStepChange={value => { setStep(value); props.onStepChange?.(value); }} />
     {resultStage && createPortal(
-      <span className="lbl-left-thumb-overlay">
-        <span className={`lbl-left-thumb-bubble ${showMiddleResult ? 'lbl-middle-result-bubble' : 'lbl-corner-result-bubble'}`} data-site-surface="panel" role="status">
+      <div className="lbl-left-thumb-overlay">
+        <ChatBubble tail="left" className={`lbl-cube-callout ${showMiddleResult ? 'lbl-middle-result-bubble' : 'lbl-corner-result-bubble'}`} role="status">
           {tr(showMiddleResult
             ? { zh: '需要根据实际情况选择去右或去左', en: 'Choose the right or left insertion according to your case' }
             : { zh: '此时应根据实际情况判断白块朝向', en: 'Now check which way the white sticker faces in your case' })}
-        </span>
-      </span>,
+        </ChatBubble>
+      </div>,
       resultStage,
     )}
     {thumbStage && createPortal(
-      <span className="lbl-left-thumb-overlay">
+      <div className="lbl-left-thumb-overlay">
         <svg viewBox="0 0 32 30" aria-hidden="true">
           <defs>
             <radialGradient id={thumbShadingId} cx="35%" cy="30%" r="80%">
@@ -258,12 +259,12 @@ function LessonPlayer({ player, interacted, yellowCase, fishLeft, middleAlignmen
           <path className="lbl-left-thumb-nail" d="M12.9 10.5c2.6-2.6 6.5-4.8 9.8-5 2.8-.2 4.5 1.3 4.7 3.7.2 2.5-1.3 5-3.3 7.1-2 2-4.7 3.9-7.1 4.1-2.1.2-4.2-1.3-5.3-3.3-1.2-2.1-.7-4.7 1.2-6.6Z" />
           <path className="lbl-left-thumb-lunula" d="M11 15.1q4.7-.9 7.4 4.9c-.5.2-1 .4-1.4.4-2.1.2-4.2-1.3-5.3-3.3-.4-.6-.6-1.3-.7-2Z" />
         </svg>
-        <span className="lbl-left-thumb-bubble" data-site-surface="panel">
+        <ChatBubble tail="left" className="lbl-cube-callout">
           {yellowCase === 2
             ? tr({ zh: '顶面有 2 格非黄，左拇指碰黄。', en: 'Two non-yellow corners on top. Left thumb touches yellow.' })
             : tr({ zh: '顶面有 4 格非黄，左拇指不碰黄。', en: 'Four non-yellow corners on top. Left thumb stays off yellow.' })}
-        </span>
-      </span>,
+        </ChatBubble>
+      </div>,
       thumbStage,
     )}
   </div>;
@@ -312,11 +313,11 @@ function DaisyBlockedPrelude({ setup, onDone }: { setup: string; onDone: () => v
           highlightedStickers={highlighted} moveDurationMs={2400}
           controlMode="none" hideResetView lockView interactionMode="none" fillPane />
       </div>
-      {bubbleStage && stage < 2 && createPortal(<span className="lbl-left-thumb-overlay">
-        <span className="lbl-left-thumb-bubble lbl-daisy-blocked-bubble" data-floor={stage === 0 ? 'middle' : 'top'} data-site-surface="panel" role="status">
+      {bubbleStage && stage < 2 && createPortal(<div className="lbl-left-thumb-overlay">
+        <ChatBubble tail="left" className="lbl-cube-callout lbl-daisy-blocked-bubble" data-floor={stage === 0 ? 'middle' : 'top'} role="status">
         {tr(stage === 0 ? { zh: '二楼棱块', en: 'Middle-floor edge' }
           : { zh: '有其他棱块挡住', en: 'Another edge is in the way' })}
-      </span></span>, bubbleStage)}
+      </ChatBubble></div>, bubbleStage)}
     </section>
     <section className="lbl-explanation">
       <p className="lbl-lead">{tr({ zh: '顶面挡住时，直接右手上会怎样？', en: 'What happens if you lift right while the top slot is occupied?' })}</p>

@@ -30,9 +30,10 @@ import { CompactSelect } from '@/components/CompactSelect';
 import AlgTagLabel from '@/components/AlgTagLabel';
 import { sq1NotationText, type Sq1NotationMode } from '@/lib/sq1-pbl-notation';
 import { canonicalSq1Alg } from '@cuberoot/shared/sq1-notation';
-import { mirrorCascadeOnEdit, VIEWS, type MirrorCascadeEntry } from '@cuberoot/shared/alg-mirror';
+import { canonicalNnnAlg, mirrorCascadeOnEdit, VIEWS, type MirrorCascadeEntry } from '@cuberoot/shared/alg-mirror';
 import CubeKeyboardSection from '@/components/CubeKeyboardSection';
-import AlgInput, { type AlgInputHandle } from '@/components/AlgInput';
+import type { AlgInputHandle } from '@/components/AlgInput';
+import AlgInput from '@/components/AlgEditorProjectedInput';
 import AlgDeleteConfirm, { type AlgDeleteGroup } from '@/components/AlgDeleteConfirm';
 import { displayAlg, shortOriName } from '@/lib/alg_display';
 import { tr } from '@/i18n/tr';
@@ -73,6 +74,7 @@ interface Props {
   caseContext?: { puzzle: AlgPuzzle; set: string; caseObj: AlgCase; sq1NotationMode?: Sq1NotationMode };
   /** 第三项始终是无损语义值，不能传仅供展示的 formatInitialAlg 结果。 */
   renderOrientation?: (rows: React.ReactNode, oi: number, firstEntry: AlgEntry | undefined, entries: AlgEntry[]) => React.ReactNode;
+  renderRows?: (rows: { key: string; node: React.ReactNode }[], entries: AlgEntry[], oi: number) => React.ReactNode;
   /** 内联详情页中，在“新增公式”按钮之前插入社区公式等附加内容。 */
   renderBeforeAdd?: (oi: number) => React.ReactNode;
   /** 开局就标红的行(页面那轮全库校验已经知道谁挂了,不必等用户按一次保存才告诉他)。 */
@@ -105,8 +107,6 @@ interface PendingRemoval {
   oi: number;
   uid: string;
   alg: string;
-  /** 被删的这条本身是不是生成的(是的话删了会重新长出来,要提醒) */
-  generated: boolean;
   cascade: MirrorCascadeEntry[];
 }
 
@@ -133,7 +133,7 @@ function RowActions({ entry, text, oi, context, mirror }: { entry: AlgEntry; tex
   </>;
 }
 
-const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '3x3', formatInitialAlg, formatInitialHtml, caseContext, renderOrientation = rows => rows, renderBeforeAdd, initialInvalid, oriNames, mirror, mirrorPending, mirrorError, onCurrentAlgChange, onCursorMoveCount, onChange }, ref) => {
+const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '3x3', formatInitialAlg, formatInitialHtml, caseContext, renderOrientation = rows => rows, renderRows, renderBeforeAdd, initialInvalid, oriNames, mirror, mirrorPending, mirrorError, onCurrentAlgChange, onCursorMoveCount, onChange }, ref) => {
   useTranslation(); // subscribe to language changes; text via tr()
   const [layout, setLayout] = useState<Row[][]>(() => {
     const src = initialValue.length === 0
@@ -226,18 +226,21 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
     });
   };
 
-  const removeAlg = (oi: number, uid: string) => {
-    const remaining = layout[oi]?.filter(row => row.uid !== uid);
-    if (!remaining?.length) return;
-    setLayout(L => {
-      const ori = L[oi];
-      if (ori.length <= 1) return L;
-      handles.current.delete(uid);
-      elements.current.delete(uid);
-      return L.map((o, i) => (i === oi ? o.filter(r => r.uid !== uid) : o));
+  const removeAlg = (oi: number, uid: string, cascade: MirrorCascadeEntry[] = []) => {
+    const removed = new Set([uid]);
+    const nextLayout = layout.map((rows, view) => {
+      const keys = new Set(cascade.filter(e => e.caseId === mirror?.selfId && e.view === view).map(e => canonicalNnnAlg(e.alg)));
+      const kept = rows.filter(row => {
+        if (row.uid !== uid && !keys.has(canonicalNnnAlg(readEntry(row).alg))) return true;
+        removed.add(row.uid);
+        return false;
+      });
+      return kept.length ? kept : [{ alg: '', uid: newUid() }];
     });
-    if (focusedUid === uid) setFocusedUid(null);
-    const next = readEntry(remaining[0]);
+    setLayout(nextLayout);
+    for (const id of removed) { handles.current.delete(id); elements.current.delete(id); }
+    if (focusedUid && removed.has(focusedUid)) setFocusedUid(null);
+    const next = readEntry(nextLayout[oi][0]);
     onCurrentAlgChange?.(next.alg, next.setup, oi);
     onChange?.();
   };
@@ -270,7 +273,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
         : { id: mirror.partner.id, algs: mirror.partner.algs };
       cascade = mirrorCascadeOnEdit(self, partner, snapshot(uid));
     }
-    setPending({ oi, uid, alg, generated: !!row?.gen, cascade });
+    setPending({ oi, uid, alg, cascade });
   };
 
   /** 连带清单按「落在谁的哪个视角」归堆,一堆一行标题。 */
@@ -305,7 +308,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
             setLayout(current => current.map((rows, i) => i === oi ? arrayMove(rows, from, to) : rows));
             onChange?.();
           }}><SortableContext items={ori.map(row => row.uid)} strategy={verticalListSortingStrategy}>
-          {ori.map((row, ai) => {
+          {((nodes: React.ReactNode[]) => renderRows ? renderRows(nodes.map((node, i) => ({ key: ori[i].uid, node })), ori, oi) : nodes)(ori.map((row, ai) => {
             const isFocused = focusedUid === row.uid;
             const bad = invalid.get(row.uid);
             const initialText = formatInitialAlg?.(row.alg || '') ?? (row.alg || '');
@@ -387,10 +390,11 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
                   }}
                 />
                 {caseContext && <RowActions entry={row} text={currentText} oi={oi} context={caseContext} mirror={mirror} />}
-                {ori.length > 1 && (
+                {(ori.length > 1 || currentText.trim()) && (
                   <button
                     type="button"
                     className="alg-editor-del alg-editor-remove"
+                    disabled={mirrorPending || !!mirrorError}
                     onClick={() => requestRemove(oi, row.uid)}
                     title={tr({ zh: '删此条', en: 'Remove' })}
                     tabIndex={-1}
@@ -418,7 +422,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
                 )}
               </SortableAlgRow>
             );
-          })}
+          }))}
           {renderBeforeAdd?.(oi)}
           <button type="button" className="alg-editor-add" onClick={() => addAlg(oi)} tabIndex={-1} title={tr({ zh: '加一条', en: 'Add' })}>
             <Plus size={12} />
@@ -438,14 +442,8 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
           cascade={cascadeGroups}
           cascadePending={mirrorPending}
           cascadeError={mirrorError}
-          note={pending.generated
-            ? tr({
-                zh: '这条是镜像自动生成的 —— 删掉后会按源公式重新长出来。要真去掉,得去删它的源。',
-                en: 'This one is mirror-generated — it will come back after deletion. Delete its source instead.',
-              })
-            : tr({ zh: '确认后立即保存。', en: 'Saved immediately after confirmation.' })}
           onCancel={() => setPending(null)}
-          onConfirm={() => { removeAlg(pending.oi, pending.uid); setPending(null); }}
+          onConfirm={() => { removeAlg(pending.oi, pending.uid, pending.cascade); setPending(null); }}
         />
       )}
     </div>

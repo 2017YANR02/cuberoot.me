@@ -49,8 +49,8 @@
 .lbl-daisy-lift-content { box-sizing: border-box; min-height: 100%; padding-bottom: 48px; }
 .lbl-daisy-lift-content > .lbl-guide-continue { pointer-events: none; }
 .lbl-daisy-blocked-player { position: relative; }
-.lbl-daisy-blocked-player .lbl-left-thumb-bubble.lbl-daisy-blocked-bubble { top: calc(50% + 3cqmin); left: calc(50% + 18cqmin); max-width: min(12rem, 30cqmin); }
-.lbl-daisy-blocked-player .lbl-left-thumb-bubble.lbl-daisy-blocked-bubble[data-floor='top'] { top: calc(50% - 21cqmin); left: calc(50% + 15cqmin); }
+.lbl-daisy-blocked-player .chat-bubble.lbl-cube-callout.lbl-daisy-blocked-bubble { top: calc(50% + 3cqmin); left: calc(50% + 18cqmin); max-width: min(12rem, 30cqmin); }
+.lbl-daisy-blocked-player .chat-bubble.lbl-cube-callout.lbl-daisy-blocked-bubble[data-floor='top'] { top: calc(50% - 21cqmin); left: calc(50% + 15cqmin); }
 .lbl-demonstration, .lbl-complete .lbl-cube { height: 430px; min-width: 0; }
 .lbl-auto-player { width: 100%; height: 100%; transition: opacity 220ms ease; }
 .lbl-auto-player[data-visible='false'] { opacity: 0; }
@@ -78,13 +78,22 @@
 .lbl-cross-overview-cube[data-visible='false'] { opacity: 0; }
 .lbl-cross-overview-cube .alg-sim-player.is-fill { padding: 0; }
 .lbl-cross-overview-cube .lbl-auto-player { transition-duration: 290ms; }
-.lbl-lesson-scroll:has(.lbl-cross-overview) { position: relative; }
-.lbl-content:has(.lbl-cross-overview) { padding-bottom: 48px; }
+.lbl-cross-overview[data-opening='true'] { position: relative; padding-block: clamp(32px, 5vw, 64px); }
+.lbl-cross-overview[data-opening='true'] > :is(figure:first-child, .lbl-stage-arrow) { opacity: var(--cross-intro-opacity, 1); }
+.lbl-cross-overview[data-opening='true'] > figure:last-child { transform: translateX(var(--cross-focus-shift, 0px)) scale(var(--cross-focus-scale, 1)); }
+.lbl-cross-animation-scene { transition: opacity 290ms ease; }
+.lbl-cross-animation-scene[data-fading='true'] { opacity: 0; }
+.lbl-demo-toolbar:has(.lbl-cross-animation-progress) { flex-direction: column; align-items: stretch; gap: 12px; padding-bottom: 12px; }
+.lbl-demo-toolbar:has(.lbl-cross-animation-progress) .lbl-mobile-menu { align-self: center; order: 1; }
+.lbl-cross-animation-progress { width: 100%; }
+.lbl-cross-animation-progress .playback-scrubber { display: block; width: 100%; margin: 0; touch-action: none; }
+.lbl-cross-animation-scene > p { margin: 12px 0 0; }
 .lbl-cross-comparison > figure:last-child { grid-column: 3; }
 .lbl-cross-comparison .lbl-cross-overview-cube { pointer-events: none; }
 .lbl-cross-comparison-feedback { position: absolute; inset: 0; pointer-events: none; animation: lbl-cross-feedback 1.3s ease-in-out infinite; }
 @keyframes lbl-cross-feedback { 0%, 100% { opacity: 1; } 50% { opacity: .15; } }
 @media (prefers-reduced-motion: reduce) {
+  .lbl-cross-animation-scene { transition: none; }
   .lbl-cross-comparison-feedback { animation: none; }
 }
 .lbl-daisy-cycle { display: grid; place-items: center; width: min(100%, 440px); margin-inline: auto; }
@@ -253,6 +262,7 @@
 
 .lbl-content-pieces > .lbl-explanation > p:first-child { margin-top: 0; }
 
+.lbl-cross-animation-progress,
 .lbl-lesson-scroll {
   --lbl-text-small: 1rem;
   --lbl-text-body: 1.25rem;

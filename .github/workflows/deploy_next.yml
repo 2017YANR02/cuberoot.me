@@ -243,10 +243,10 @@ jobs:
 
       # Server side: atomic-ish swap.
       # 1. validate the fully transferred staging dir
-      # 2. snapshot current as .bak-$TS (one snapshot kept for rollback)
+      # 2. temporarily retain current as .bak-$TS for this deployment's rollback
       # 3. rename staging → live
       # 4. restart systemd (Next standalone entry: node server.js)
-      # 5. If new dir's server fails to boot in 10s, roll back from .bak.
+      # 5. Remove .bak after health succeeds; otherwise roll back from .bak.
       - name: Deploy + restart
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -265,7 +265,7 @@ jobs:
             exit 1
           fi
 
-          # Snapshot current (only the latest backup is kept; cleanup older)
+          # Keep the previous bundle only until this deployment passes health.
           if [ -d "$LIVE" ]; then
             find /www/wwwroot -maxdepth 1 -name 'toolkit-next.bak-*' -exec rm -rf {} +
             mv "$LIVE" "$BACKUP"
@@ -294,6 +294,8 @@ jobs:
             BODY=$(curl -fsSL -H "X-Cuberoot-CN-Exempt: 1" http://127.0.0.1:3002/en/ 2>/dev/null || true)
             if echo "$BODY" | grep -q "<html"; then
               echo "OK: cuberoot-next responding on :3002 with html marker"
+              rm -rf --one-file-system -- "$BACKUP"
+              echo "OK: previous Next bundle removed after healthy deployment"
               exit 0
             fi
             sleep 1

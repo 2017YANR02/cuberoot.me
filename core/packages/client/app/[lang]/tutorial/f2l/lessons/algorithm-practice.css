@@ -4,7 +4,6 @@
 .f2l-alg-practice { display: grid; grid-template-rows: auto 1fr auto; gap: 20px; }
 .f2l-practice-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .f2l-practice-heading h2 { margin: 0; font-size: 1.25rem; }
-.f2l-practice-heading > span { flex-shrink: 0; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
 .f2l-practice-content { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: 32px; min-height: 0; }
 .f2l-practice-demo { text-align: center; min-width: 0; }
 .f2l-practice-cube.f2l-cube { position: relative; height: clamp(280px, 48dvh, 460px); }

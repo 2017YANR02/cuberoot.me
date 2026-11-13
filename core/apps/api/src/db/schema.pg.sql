@@ -43,6 +43,7 @@ CREATE TABLE recons (
   regional_aoxr_record      VARCHAR(20),
   recon           TEXT,
   solution        TEXT,
+  solution_html   TEXT,
   optimal_scramble TEXT,
   wca_scramble    TEXT,
   scramble        TEXT,

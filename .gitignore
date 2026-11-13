@@ -7,8 +7,11 @@ _deploy/
 # Gemini agent data
 .data_cache/
 
-# Root workspace dependencies
-/node_modules/
+# Dependencies, package cache and build outputs at any depth
+node_modules/
+.pnpm-store/
+dist/
+.turbo/
 
 # Local macOS and Harmony build metadata
 .DS_Store

@@ -144,8 +144,8 @@ const TABLES: Table[] = [
   { name: 'sor_census_yearly', domain: 'derived', origin: '0031', purpose: { zh: '名次和年度普查(含「无领奖台」口径)', en: 'Yearly SoR census, incl. a no-podium variant' } },
   { name: 'sor_player_best', domain: 'derived', origin: 'snapshot', evolved: [22], purpose: { zh: '选手名次和最佳组合', en: 'Per-player best sum-of-ranks combination' } },
   { name: 'sor_historical_best', domain: 'derived', origin: '0033', evolved: [34], purpose: { zh: '名次和历史最佳(总和 + 排名)', en: 'SoR historical best (total + rank)' } },
-  { name: 'wca_fs_*', domain: 'derived', origin: '0028', purpose: { zh: '/wca/fun-stats 趣味统计的派生缓存家族,共 15 张', en: 'The 15-table derived family behind /wca/fun-stats' }, family: [
-    'wca_fs_country_ranks', 'wca_fs_country_ranks_meta', 'wca_fs_medals', 'wca_fs_placements', 'wca_fs_best_podiums', 'wca_fs_misser', 'wca_fs_records_person', 'wca_fs_records_comp', 'wca_fs_current_records', 'wca_fs_person_comps', 'wca_fs_comp_persons', 'wca_fs_person_comp_solves', 'wca_fs_comp_solves', 'wca_fs_person_solves', 'wca_fs_person_year_solves',
+  { name: 'wca_fs_*', domain: 'derived', origin: '0028', evolved: [324], purpose: { zh: '/wca/fun-stats 趣味统计的派生缓存家族,共 16 张', en: 'The 16-table derived family behind /wca/fun-stats' }, family: [
+    'wca_fs_country_ranks', 'wca_fs_country_ranks_meta', 'wca_fs_medals', 'wca_fs_placements', 'wca_fs_best_podiums', 'wca_fs_misser', 'wca_fs_records_person', 'wca_fs_records_comp', 'wca_fs_current_records', 'wca_fs_person_comps', 'wca_fs_comp_persons', 'wca_fs_person_comp_solves', 'wca_fs_comp_solves', 'wca_fs_person_solves', 'wca_fs_person_year_solves', 'wca_fs_person_event_year_solves',
   ] },
 
   // ── scramble ────────────────────────────────────────────
@@ -595,8 +595,10 @@ const TABLES: Table[] = [
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 325, slug: 'assistant_share_versions', desc: { zh: '按内容版本保存回答分享快照，保留切换公式前的公开链接。', en: 'Version answer snapshots by content while preserving links shared before algorithm changes.' } },
-  { n: 324, slug: 'assistant_knowledge_metadata', desc: { zh: '知识片段章节与来源元数据、发布完整性及上一完整版本回退。', en: 'Knowledge section and source metadata, publication readiness and previous snapshot rollback.' } },
-  { n: 323, slug: 'assistant_context', desc: { zh: '服务端私有证据记忆，与请求归属和 30 天内容保留期限绑定。', en: 'Private server evidence memory bound to request ownership and 30-day content retention.' } },
+  { n: 327, slug: 'assistant_knowledge_metadata', desc: { zh: '知识片段章节与来源元数据、发布完整性及上一完整版本回退。', en: 'Knowledge section and source metadata, publication readiness and previous snapshot rollback.' } },
+  { n: 326, slug: 'assistant_context', desc: { zh: '服务端私有证据记忆，与请求归属和 30 天内容保留期限绑定。', en: 'Private server evidence memory bound to request ownership and 30-day content retention.' } },
+  { n: 324, slug: 'wca_annual_participation', desc: { zh: '按项目、年份与参赛时地区统计成功、尝试和参赛轮次。', en: 'Annual per-event solves, attempts and rounds by represented country.' } },
+  { n: 323, slug: 'recon_solution_html', desc: { zh: '为复盘保存与纯文本解法对应的指法标记。', en: 'Store inline finger annotations alongside the plain reconstruction solution.' } },
   { n: 321, slug: 'diansheng_zhang_anyu', desc: { zh: '按维护者确认将张安宇（2012ZHAN08）加入点盛战队，保留其他队员归属。', en: 'Assign Anyu Zhang (2012ZHAN08) to DianSheng as confirmed by the maintainer, preserving all other memberships.' } },
   { n: 322, slug: 'vault_merge_capacity', desc: { zh: '私密资料库单条密文上限提升至 4 MiB，支持合并原图附件。', en: 'Raise the private vault encrypted item limit to 4 MiB for merging original image attachments.' } },
   { n: 319, slug: 'yj_diansheng_teams', desc: { zh: '登记永骏与点盛品牌，尚不分配队员。', en: 'Register YongJun and DianSheng brands without assigning members.' } },

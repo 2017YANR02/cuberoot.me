@@ -10,7 +10,7 @@ export const F2L_TOP_ADJUSTMENTS = ["U'", 'U2', 'U'] as const;
 export const F2L_CASES = [
   {
     id: 'r-u-r', name: 'B+', alg: "(R) (U) (R')", title: text('B+：顶层顺转', 'B+: U clockwise'),
-    observe: text('对照模型，找到带底色的目标角和与它对应的棱。这个标态用 R、U、R′ 三步完成。', 'Find the corner carrying the bottom color and its matching edge in the model. This case finishes with R, U, R′.'),
+    observe: text('对照模型，找到带底色的目标角和与它对应的棱。这个基态用 R、U、R′ 三步完成。', 'Find the corner carrying the bottom color and its matching edge in the model. This case finishes with R, U, R′.'),
     stageTitles: [
       text('初始状态 · B+', 'Initial state · B+'),
       text('右面顺时针转，抬起FR槽的同时，恰好组合好了目标棱、角。', 'Turn the right face clockwise to lift the FR slot and pair the target edge and corner at the same time.'),
@@ -40,7 +40,7 @@ export const F2L_CASES = [
   },
   {
     id: 'fi-u-f', name: 'A-', alg: "(F') (U) (F)", title: text('A-：顶层顺转', 'A-: U clockwise'),
-    observe: text('与另一种 F 类标态对照：打开和关闭槽位的动作相同，中间改用 U。', 'Compare with the other F case: the opening and closing turns stay the same; the middle move is U.'),
+    observe: text('与另一种 F 类基态对照：打开和关闭槽位的动作相同，中间改用 U。', 'Compare with the other F case: the opening and closing turns stay the same; the middle move is U.'),
     stageTitles: [
       text('初始状态 · A-', 'Initial state · A-'),
       text('前面逆时针转，抬起FR槽。', 'Turn the front face counterclockwise to lift the FR slot.'),
