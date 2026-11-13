@@ -1,5 +1,5 @@
 // 约束守卫:顶层公式集(COLL / CMLL,以及 ZBLL / 1LLL / OLLCP 那批同样用 coll 遮罩的二级选择卡)
-// 的缩略图参数只能出自 lib/alg_thumb_plan.ts —— 那里的 `cubeThumbParams` 一处决定视角 / 遮罩 /
+// 的缩略图参数只能出自 puzzle-render-core/alg-thumb-plan —— `cubeThumbParams` 一处决定视角 / 遮罩 /
 // 侧环删灰(`hideGreySides`),屏幕上的 <CaseThumb>、PDF 导出的 renderFromSimpleQuery、/recognize
 // 的题图全从它取。
 //
@@ -13,12 +13,13 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname, relative } from 'node:path';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
 const SCAN_DIRS = ['app', 'components', 'lib'];
 
 /** 唯一允许写死角块遮罩的地方 —— 遮罩表本身。 */
-const SINGLE_SOURCE = join('lib', 'alg_thumb_plan.ts');
+const SINGLE_SOURCE = workspaceFixturePath('@cuberoot/puzzle-render-core', 'src/alg-thumb-plan.ts');
 
 /** 出图组件的开标签起点。CaseVisualizer(/alg/roux 的自有渲染器)不在此列。 */
 const TAG_RE = /<(VisualCube|CaseThumb)\b/g;
@@ -57,7 +58,7 @@ describe('顶层公式集缩略图的角块遮罩只出自 CaseThumb', () => {
     for (const base of SCAN_DIRS) {
       for (const file of walk(join(ROOT, base))) {
         const rel = relative(ROOT, file);
-        if (rel === SINGLE_SOURCE) continue;
+        if (file === SINGLE_SOURCE) continue;
         const src = readFileSync(file, 'utf8');
         for (const tag of openTags(src)) {
           if (!CORNER_MASK_RE.test(tag)) continue;
@@ -76,7 +77,7 @@ describe('顶层公式集缩略图的角块遮罩只出自 CaseThumb', () => {
   });
 
   it('遮罩表还在统一缩略图计划里(改名/搬走就把上面那条判据架空了)', () => {
-    const src = readFileSync(join(ROOT, SINGLE_SOURCE), 'utf8');
+    const src = readFileSync(SINGLE_SOURCE, 'utf8');
     expect(src).toContain('CORNER_LL_MASK');
     expect(src).toContain('LEVEL2_PICKER_MASK');
   });
