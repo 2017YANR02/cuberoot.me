@@ -4,7 +4,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { parseAsString, useQueryState } from 'nuqs';
-import { WorkspaceProvider, ReportEditor, Projects, useResource, workspaceText, type WorkspaceHost, type StaffProject, type WorkReport } from '@app-foundation/workspace-ui';
+import { WorkspaceProvider, ReportEditor, Reports, ReportDetailPanel, Projects, useResource, workspaceText, type WorkspaceHost, type StaffProject, type WorkReport } from '@app-foundation/workspace-ui';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import type { Checklist, Schedule } from '@cuberoot/shared/workspace-planning';
 import MacSetupChecklist from '@/components/workspace/MacSetupChecklist';
 import { replaceSortableItems } from '@/components/SortableList';
@@ -81,6 +82,86 @@ function ExternalNavigation() {
   const [, setSelected] = useQueryState('schedule', parseAsString.withDefault(''));
   return h('button', { onClick: () => void setSelected('') }, 'External navigation');
 }
+
+it('renders account names consistently across reports, comments and pickers without changing raw data', async () => {
+  const rawName = 'Lang Yuan (袁朗)';
+  const actor = { kind: 'staff', id: 12, role: 'member', name: rawName } as const;
+  const directory = [{ id: 12, name: rawName, active: true }];
+  const report: WorkReport = { id: 'name-report', memberId: 12, name: rawName, projectId: null, projectName: null, projectActive: null, workDate: '2026-11-12', status: 'submitted', visibility: 'company', version: 1, progress: rawName, resultUrl: '', help: '', next: '', createdAt: 1, updatedAt: 1 };
+  const detail = { report, comments: [{ id: 'comment', name: rawName, body: rawName, createdAt: 1 }], revisions: [] };
+  const original = JSON.stringify({ directory, detail });
+  const api: WorkspaceHost['api'] = async <T>(action: string) => (action === 'projects' ? { projects: [] } : action.startsWith('reports?') ? { reports: [report], hasMore: false, page: 1 } : detail) as T;
+  for (const [lang, expected] of [['zh', '袁朗'], ['en', 'Lang Yuan']] as const) {
+    const nameHost: WorkspaceHost = { ...host, api, formatName: name => displayCuberName(name, lang === 'zh') };
+    await act(async () => root.render(h(WorkspaceProvider, { host: nameHost, children: h(Fragment, null,
+      h(Reports, { actor, directory }), h(ReportDetailPanel, { actor, id: report.id }),
+      h(WorkspaceMemberPicker, { name: 'memberIds', label: 'Members', members: directory, defaultValue: [12] }),
+    ) })));
+    expect([...container.querySelectorAll('.staff-report-meta strong')].map(node => node.textContent)).toEqual([expected, expected, expected]);
+    expect(container.querySelector('select[name="memberId"] option[value="12"]')?.textContent).toBe(expected);
+    expect(container.querySelector('.workspace-member-option span')?.textContent).toBe(expected);
+    expect(container.querySelector<HTMLInputElement>('input[name="memberIds"]')?.value).toBe('12');
+    expect(container.querySelector('.staff-comment .staff-preserve')?.textContent).toBe(rawName);
+    expect(JSON.stringify({ directory, detail })).toBe(original);
+  }
+});
+
+it.each([false, true])('edits and deletes a report from the feed with server permissions (super administrator: %s)', async superAdmin => {
+  const actor = { kind: 'staff', id: superAdmin ? 99 : 12, role: 'manager', name: 'Reader', canManageReports: superAdmin } as const;
+  let report: WorkReport | undefined = { id: 'editable', memberId: 12, name: 'Author', projectId: null, projectName: null, projectActive: null, workDate: '2026-11-12', startHour: 8, endHour: 13, status: 'submitted', visibility: 'company', version: 1, progress: 'Original', resultUrl: '', help: '', next: '', createdAt: 1, updatedAt: 1, canEdit: true, canDelete: true };
+  let denyDelete = true;
+  const api: WorkspaceHost['api'] = async <T>(action: string, body?: unknown): Promise<T> => {
+    if (body !== undefined) {
+      calls.push({action, body});
+      if (action === 'report') report = {...report!, ...body as Partial<WorkReport>, version: 2};
+      if (action === 'report-delete') { if (denyDelete) throw new Error('Reload before deleting'); report = undefined; }
+      return {id: 'editable'} as T;
+    }
+    return (action === 'projects' ? {projects: []} : {reports: report ? [report] : [], hasMore: false, page: 1}) as T;
+  };
+  await act(async () => root.render(h(WorkspaceProvider, {host: {...host, api}, children: h(Reports, {actor, directory: []})})));
+  await click('Edit report');
+  expect(container.querySelector<HTMLInputElement>('[name="workDate"]')?.readOnly).toBe(!superAdmin);
+  expect(container.querySelector('[name="memberId"]')).not.toBeNull(); // feed filter only; editing preserves authorship
+  expect(container.querySelector('dialog [name="memberId"]')).toBeNull();
+  const progress = container.querySelector<HTMLTextAreaElement>('textarea[name="progress"]')!;
+  await act(async () => { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(progress, 'Correction'); progress.dispatchEvent(new Event('input', {bubbles:true})); });
+  await click('Save changes');
+  expect(calls.at(-1)).toMatchObject({action:'report',body:{id:'editable',version:1,progress:'Correction'}});
+  expect(container.querySelector('dialog')).toBeNull();
+  expect(container.querySelector('.staff-preserve')?.textContent).toBe('Correction');
+  await click('Delete report');
+  expect(calls.filter(call => call.action==='report-delete')).toHaveLength(0);
+  expect(container.querySelector('dialog')?.textContent).toContain('Author');
+  await click('Confirm deletion');
+  expect(container.querySelector('dialog')?.textContent).toContain('Reload before deleting');
+  expect(container.querySelector('.staff-feed')?.textContent).toContain('Correction');
+  denyDelete=false;await click('Confirm deletion');
+  expect(calls.at(-1)).toEqual({action:'report-delete',body:{id:'editable',version:2}});
+  expect(container.querySelector('dialog')).toBeNull();
+  expect(container.querySelector('.staff-feed')?.textContent).not.toContain('Correction');
+});
+
+it('uses server permissions for detail actions and lets super administrators select an author when creating', async () => {
+  const actor = {kind:'staff',id:99,role:'manager',name:'Root',canManageReports:true} as const;
+  const report: WorkReport = { id:'other-report',memberId:12,name:'Author',projectId:null,projectName:null,projectActive:false,workDate:'2026-11-12',startHour:8,endHour:13,status:'submitted',visibility:'company',version:1,progress:'Original',resultUrl:'',help:'',next:'',createdAt:1,updatedAt:1,canEdit:false,canDelete:false };
+  const api: WorkspaceHost['api'] = async <T>(action: string, body?: unknown): Promise<T> => {
+    if(body !== undefined){calls.push({action,body});return {id:'created'} as T;}
+    return (action==='projects' ? {projects:[]} : {report,comments:[],revisions:[]}) as T;
+  };
+  const render = async (children: ReactNode) => { await act(async()=>root.render(h(WorkspaceProvider,{host:{...host,api},children}))); };
+  await render(h(ReportDetailPanel,{actor,id:report.id}));
+  expect(container.querySelector('[aria-label="Edit report"]')).toBeNull();
+  expect(container.querySelector('[aria-label="Delete report"]')).toBeNull();
+  report.canEdit=true;report.canDelete=true;
+  await render(h(ReportDetailPanel,{actor,id:report.id}));
+  await click('Edit report');
+  expect(container.querySelector('dialog')).not.toBeNull();
+  await render(h(ReportEditor,{actor,directory:[{id:99,name:'Root',active:true},{id:12,name:'Author',active:true}]}));
+  await setInput(container.querySelector<HTMLSelectElement>('[name="memberId"]')!,'12');
+  await click('Save draft');
+  expect(calls.at(-1)).toMatchObject({action:'report',body:{memberId:12,version:0,status:'draft'}});
+});
 
 it('preserves filtered member selections, retains failed edits and allows clearing all members', async () => {
   projects = [{ id: 'project', name: 'Launch', url: '', active: true, version: 1, createdAt: 0, memberIds: [1] }];

@@ -66,6 +66,50 @@ suite('independent CubeRoot workspace',()=>{
     await expect(service.post(alice,'member',{userId:4,name:'Other',role:'manager',active:true})).rejects.toMatchObject({status:403});
     expect(await q('SELECT * FROM other_application.employees')).toEqual([{id:99,name:'External employee'}]);
   });
+  it('resolves existing admin reports, directories and both comment identities from the current account',async()=>{
+    const user:Identity={uid:7,isAdmin:true,name:'尾号5007'};
+    await q("INSERT INTO app_users(id,display_name,is_admin) VALUES (7,'尾号5007',TRUE)");
+    const session=await service.get(user,'session',new URLSearchParams()) as {employee:{id:number}};
+    const id=randomUUID();
+    await service.post(user,'report',{...input(id,'submitted'),projectId:null,progress:'Admin identity regression'});
+    const adminComment=randomUUID(),staffComment=randomUUID();
+    await service.post(user,'comment',{id:adminComment,reportId:id,body:'Admin comment'});
+    await service.post({...user,isAdmin:false},'comment',{id:staffComment,reportId:id,body:'Staff comment'});
+    for(const currentName of ['Lang Yuan (袁朗)','Updated account name']) {
+      await q('UPDATE app_users SET display_name=? WHERE id=7',[currentName]);
+      // The author does not have to log in again; an unrelated reader sees the new name.
+      for(const reader of [admin,alice]) {
+        expect(await service.get(reader,'session',new URLSearchParams())).toMatchObject({directory:expect.arrayContaining([{id:session.employee.id,name:currentName,active:true}])});
+        expect(await service.get(reader,'reports',new URLSearchParams({memberId:String(session.employee.id)}))).toMatchObject({reports:[{id,name:currentName}]});
+        expect(await service.get(reader,'detail',new URLSearchParams({id}))).toMatchObject({report:{name:currentName},comments:expect.arrayContaining([{id:adminComment,name:currentName,body:'Admin comment',createdAt:expect.any(Number)},{id:staffComment,name:currentName,body:'Staff comment',createdAt:expect.any(Number)}])});
+      }
+      expect(await service.get(user,'session',new URLSearchParams())).toMatchObject({actor:{name:currentName},employee:{id:session.employee.id,name:currentName}});
+      expect(await service.get(admin,'members',new URLSearchParams())).toMatchObject({members:expect.arrayContaining([expect.objectContaining({userId:7,name:currentName})])});
+    }
+    // No profile copying or history rewriting is required to repair old records.
+    expect(await q('SELECT name FROM workspace_members WHERE user_id=7')).toEqual([{name:'尾号5007'}]);
+    expect(await q('SELECT name FROM workspace_comments WHERE report_id=?',[id])).toEqual([{name:'尾号5007'},{name:'尾号5007'}]);
+    await q('UPDATE app_users SET display_name=? WHERE id=7',['']);
+    expect(await service.get(user,'session',new URLSearchParams())).toMatchObject({actor:{name:'7'},employee:{name:'7'}});
+    await q('DELETE FROM app_users WHERE id=7');
+    expect(await service.get(admin,'detail',new URLSearchParams({id}))).toMatchObject({report:{name:'—'},comments:[{name:'—'},{name:'—'}]});
+  });
+  it('retains explicit employee names through account renames and temporary admin access',async()=>{
+    const user:Identity={uid:8,isAdmin:false,name:'Account nickname'};
+    await q("INSERT INTO app_users(id,display_name,is_admin) VALUES (8,'Account nickname',FALSE)");
+    const member=await service.post(admin,'member',{userId:8,name:'Work name',role:'member',active:true});
+    const id=randomUUID();await service.post(user,'report',{...input(id,'submitted'),projectId:null,progress:'Employee identity regression'});
+    await service.post(user,'comment',{id:randomUUID(),reportId:id,body:'Employee comment'});
+    await q("UPDATE app_users SET display_name='New account name' WHERE id=8");
+    expect(await service.get(user,'session',new URLSearchParams())).toMatchObject({actor:{name:'Work name'}});
+    expect(await service.get(admin,'detail',new URLSearchParams({id}))).toMatchObject({report:{name:'Work name'},comments:[{name:'Work name'}]});
+    await q('UPDATE app_users SET is_admin=TRUE WHERE id=8');
+    expect(await service.get({...user,isAdmin:true},'session',new URLSearchParams())).toMatchObject({employee:{id:member.id,name:'New account name'}});
+    await q('UPDATE app_users SET is_admin=FALSE WHERE id=8');
+    expect(await service.get(user,'session',new URLSearchParams())).toMatchObject({actor:{name:'Work name'}});
+    expect(await q('SELECT name FROM workspace_members WHERE user_id=8')).toEqual([{name:'Work name'}]);
+    await q('DELETE FROM app_users WHERE id=8');
+  });
   it('keeps drafts and revision history private, then exposes only submitted records',async()=>{
     report=randomUUID();await service.post(alice,'report',input(report));
     await expect(service.get(bob,'detail',new URLSearchParams({id:report}))).rejects.toMatchObject({status:404});
@@ -75,6 +119,54 @@ suite('independent CubeRoot workspace',()=>{
     await expect(service.post(bob,'report',{...input(report,'submitted'),version:2})).rejects.toMatchObject({status:403});
     await expect(service.post(alice,'report',{...input(report),version:2})).rejects.toMatchObject({status:409});
     await expect(service.post(alice,'report',{...input(report,'submitted'),version:1})).rejects.toMatchObject({status:409});
+  });
+  it('allows only the database-verified super administrator to manage other authors, drafts and archived records',async()=>{
+    const root:Identity={uid:9,isAdmin:true,name:'Root'};
+    await q('INSERT INTO app_users(id,display_name,is_admin,wca_id) VALUES (9,?,FALSE,?)',['Root',ADMIN_WCA_IDS[0]]);
+    expect(await service.get(root,'session',new URLSearchParams())).toMatchObject({actor:{canManageReports:true},employee:{canManageReports:true}});
+    expect(await service.get(admin,'session',new URLSearchParams())).toMatchObject({actor:{canManageReports:false}});
+    const id=randomUUID();const draft={...input(id),memberId:bobId,projectId:null,workDate:'2026-10-18',progress:'Delegated draft'};
+    await expect(service.post(admin,'report',{...draft,canManageReports:true})).rejects.toMatchObject({status:403});
+    await expect(service.post({...alice,isAdmin:true},'report',{...draft,canManageReports:true})).rejects.toMatchObject({status:403});
+    await service.post(root,'report',draft);
+    expect(await service.get(root,'reports',new URLSearchParams({memberId:String(bobId)}))).toMatchObject({reports:expect.arrayContaining([expect.objectContaining({id,status:'draft',canEdit:true,canDelete:true})])});
+    await expect(service.get(admin,'detail',new URLSearchParams({id}))).rejects.toMatchObject({status:404});
+    await expect(service.post(admin,'report-delete',{id,version:1})).rejects.toMatchObject({status:404});
+    expect(await service.get(bob,'detail',new URLSearchParams({id}))).toMatchObject({report:{memberId:bobId,canEdit:true},revisions:[{version:1}]});
+    expect(await q("SELECT actor FROM workspace_audit WHERE target=? AND action='report.save'",[id])).toEqual([{actor:'admin:9'}]);
+    await service.post(root,'report',{...draft,status:'submitted',version:1});
+    await service.post(bob,'comment',{id:randomUUID(),reportId:id,body:'My report'});
+    expect(await service.get(admin,'detail',new URLSearchParams({id}))).toMatchObject({report:{canEdit:false,canDelete:false},revisions:[]});
+    await expect(service.post(admin,'report',{...draft,status:'submitted',version:2})).rejects.toMatchObject({status:403});
+    await expect(service.post(admin,'report-delete',{id,version:2})).rejects.toMatchObject({status:403});
+    await expect(service.post(root,'report',{...draft,memberId:aliceId,status:'submitted',version:2})).rejects.toMatchObject({status:409});
+    const archived=randomUUID();await service.post(root,'project',{id:archived,version:0,name:'Archive',url:'',active:false,memberIds:[bobId]});
+    const revised={...draft,projectId:archived,workDate:'2026-10-17',status:'submitted',visibility:'managers',version:2,progress:'Root correction'};
+    await service.post(root,'report',revised);
+    expect(await service.get(root,'detail',new URLSearchParams({id}))).toMatchObject({report:{memberId:bobId,name:'Bob',projectId:archived,workDate:'2026-10-17',version:3,canEdit:true,canDelete:true},revisions:[{version:3},{version:2},{version:1}]});
+    expect(await service.get(bob,'detail',new URLSearchParams({id}))).toMatchObject({report:{canEdit:false,canDelete:false}});
+    await expect(service.post(root,'report',revised)).rejects.toMatchObject({status:409});
+    await expect(service.post(root,'report-delete',{id,version:2})).rejects.toMatchObject({status:409});
+    // Revocation takes effect without trusting the caller's stale admin flag.
+    await q('UPDATE app_users SET wca_id=NULL,is_admin=TRUE WHERE id=9');
+    await expect(service.post(root,'report-delete',{id,version:3})).rejects.toMatchObject({status:403});
+    await q('UPDATE app_users SET wca_id=? WHERE id=9',[ADMIN_WCA_IDS[0]]);
+    await service.post(root,'report-delete',{id,version:3});
+    for(const table of ['workspace_reports','workspace_comments','workspace_revisions'])expect(await q(`SELECT * FROM ${table} WHERE ${table==='workspace_reports'?'id':'report_id'}=?`,[id])).toEqual([]);
+    expect(await q("SELECT actor,action FROM workspace_audit WHERE target=? AND action='report.delete'",[id])).toEqual([{actor:'admin:9',action:'report.delete'}]);
+    await expect(service.post(root,'report',revised)).rejects.toMatchObject({status:409});
+    await expect(service.get(root,'detail',new URLSearchParams({id}))).rejects.toMatchObject({status:404});
+    await q('DELETE FROM app_users WHERE id=9');
+  });
+  it('allows authors to edit and delete their own submitted records with version checks',async()=>{
+    const id=randomUUID();const draft={...input(id,'submitted'),projectId:null,workDate:'2026-10-16',progress:'Author work'};
+    await service.post(alice,'report',draft);
+    expect(await service.get(alice,'reports',new URLSearchParams({memberId:String(aliceId)}))).toMatchObject({reports:expect.arrayContaining([expect.objectContaining({id,canEdit:true,canDelete:true})])});
+    await service.post(alice,'report',{...draft,version:1,progress:'Author correction'});
+    await expect(service.post(bob,'report-delete',{id,version:2})).rejects.toMatchObject({status:403});
+    await expect(service.post(alice,'report-delete',{id,version:1})).rejects.toMatchObject({status:409});
+    await service.post(alice,'report-delete',{id,version:2});
+    await expect(service.get(alice,'detail',new URLSearchParams({id}))).rejects.toMatchObject({status:404});
   });
   it('makes comment retries idempotent and rejects collisions',async()=>{
     const c={id:randomUUID(),reportId:report,body:'Reviewed'};await service.post(bob,'comment',c);await service.post(bob,'comment',c);

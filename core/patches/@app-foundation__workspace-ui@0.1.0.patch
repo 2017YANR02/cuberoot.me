@@ -95,23 +95,33 @@ index 0013ab9db150278f7afead06a15f9a9d2562fb2a..d0f4fb4fac87e79b23f862050ecb0b1a
 +    return DateInput ? (0, jsx_runtime_1.jsx)(DateInput, { ...props }) : (0, jsx_runtime_1.jsx)("input", { ...props, type: "date", onChange: event => props.onChange?.(event.target.value) });
 +}
 diff --git a/dist/contract.d.ts b/dist/contract.d.ts
-index b4d4c035327e800b7348f73ed14e4ab225eeb80e..681a5a186f3e3778e87bb574f045150961c5647a 100644
+index b4d4c035327e800b7348f73ed14e4ab225eeb80e..ec00b8fb858779fad49f3898c6ee63714e10291e 100644
 --- a/dist/contract.d.ts
 +++ b/dist/contract.d.ts
-@@ -10,6 +10,8 @@ export type WorkReport = {
+@@ -1,6 +1,7 @@
+ import type { WorkspaceActor, ReportStatus, ReportVisibility } from "@app-foundation/workspace-policy";
+ export type StaffActor = WorkspaceActor & {
+     name: string;
++    canManageReports?: boolean;
+ };
+ export type WorkReport = {
+     projectId: string | null;
+@@ -10,6 +11,10 @@ export type WorkReport = {
      memberId: number;
      name: string;
      workDate: string;
++    canEdit?: boolean;
++    canDelete?: boolean;
 +    startHour?: number | null;
 +    endHour?: number | null;
      progress: string;
      resultUrl: string;
      help: string;
 diff --git a/dist/host.d.ts b/dist/host.d.ts
-index ec499c713c06d24646870d6e16c81252a593323d..514315c69d16bd40c786e3450a6cd06b1f72b6d8 100644
+index ec499c713c06d24646870d6e16c81252a593323d..931f63aac1adad0ba09d137aabd598957ab19482 100644
 --- a/dist/host.d.ts
 +++ b/dist/host.d.ts
-@@ -1,16 +1,46 @@
+@@ -1,16 +1,48 @@
  import { type ComponentType, type ReactNode, type AnchorHTMLAttributes, type ButtonHTMLAttributes } from "react";
 +import type { MemberDirectory } from "./contract";
  export type WorkspaceApi = <T>(action: string, body?: unknown) => Promise<T>;
@@ -160,17 +170,23 @@ index ec499c713c06d24646870d6e16c81252a593323d..514315c69d16bd40c786e3450a6cd06b
 +    Dialog?: ComponentType<WorkspaceDialogProps>;
 +    DateInput?: ComponentType<WorkspaceDateProps>;
 +    MemberPicker?: ComponentType<WorkspaceMemberPickerProps>;
++    /** Presentation only: persisted names and editor values remain unchanged. */
++    formatName?: (name: string) => string;
      t: (text: string) => string;
  };
  export declare function WorkspaceProvider({ host, children }: {
 diff --git a/dist/messages.js b/dist/messages.js
-index ed6eeac01109c3cd6277682b96dbc7420e7a29f0..c851543d94c8bea4919b765631b74adeb82dcf21 100644
+index ed6eeac01109c3cd6277682b96dbc7420e7a29f0..0c3ada533de0475372dc882e2da7f2ba4ed5f4fa 100644
 --- a/dist/messages.js
 +++ b/dist/messages.js
-@@ -2,6 +2,12 @@
+@@ -2,6 +2,16 @@
  Object.defineProperty(exports, "__esModule", { value: true });
  exports.workspaceText = workspaceText;
  const en = {
++    "删除记录": "Delete report",
++    "确认删除": "Confirm deletion",
++    "删除后，记录、评论和历史版本均无法恢复。": "Deleting this report also permanently deletes its comments and revision history.",
++    "历史版本": "Revision history",
 +    "暂无工作记录": "No work reports",
 +    "开始时间": "Start time",
 +    "结束时间": "End time",
@@ -181,18 +197,21 @@ index ed6eeac01109c3cd6277682b96dbc7420e7a29f0..c851543d94c8bea4919b765631b74ade
      "记录今日进展": "Record today's progress",
      "写清结果与需要的协助；草稿仅自己可见。每个项目每天一条，可以继续补充。": "Record results and requests for help. Drafts are private. One report per project per day.",
 diff --git a/dist/panels.d.ts b/dist/panels.d.ts
-index 26a3c352bb56da7799ab3a17921352aa8e81a618..4d4d64a7c06f24c9967ae6a153f4b52dbe21c318 100644
+index 26a3c352bb56da7799ab3a17921352aa8e81a618..b3e8090a863f523c90cbac3501a2e1d64db2cf41 100644
 --- a/dist/panels.d.ts
 +++ b/dist/panels.d.ts
-@@ -1,12 +1,14 @@
+@@ -1,12 +1,16 @@
 +import { type ReactNode } from "react";
  import type { StaffActor, WorkReport, MemberDirectory } from "./contract";
- export declare function ReportEditor({ report, onSaved }: {
+-export declare function ReportEditor({ report, onSaved }: {
++export declare function ReportEditor({ report, actor, directory, onSaved }: {
      report?: WorkReport;
++    actor?: StaffActor;
++    directory?: MemberDirectory;
      onSaved?: () => void;
  }): import("react/jsx-runtime").JSX.Element;
 -export declare function Reports({ directory, mine }: {
-+export declare function Reports({ directory, mine, actions }: {
++export declare function Reports({ actor, directory, mine, actions }: {
      actor: StaffActor;
      directory: MemberDirectory;
      mine?: boolean;
@@ -201,10 +220,22 @@ index 26a3c352bb56da7799ab3a17921352aa8e81a618..4d4d64a7c06f24c9967ae6a153f4b52d
  export declare function ReportDetailPanel({ actor, id }: {
      actor: StaffActor;
 diff --git a/dist/panels.js b/dist/panels.js
-index 2a118e5869ae24647192c6c3c63f065c1147c7f8..9f070d75cfd7ff3f2d1679af20169a53dc85fa00 100644
+index 2a118e5869ae24647192c6c3c63f065c1147c7f8..cdcf082eccce4313f968ee8bb7441fee844df734 100644
 --- a/dist/panels.js
 +++ b/dist/panels.js
-@@ -18,26 +18,32 @@ function ReportEditor({ report, onSaved }) {
+@@ -9,58 +9,72 @@ const jsx_runtime_1 = require("react/jsx-runtime");
+ const react_1 = require("react");
+ const host_1 = require("./host");
+ const client_1 = require("./client");
+-function ReportEditor({ report, onSaved }) {
++function ReportEditor({ report, actor, directory = [], onSaved }) {
+     const { api, Link, Button, t } = (0, host_1.useWorkspace)();
+-    const { navigate } = (0, host_1.useWorkspace)();
++    const { navigate, formatName = name => name } = (0, host_1.useWorkspace)();
++    const manage = actor?.canManageReports === true;
+     const projects = (0, client_1.useResource)("projects");
+     const [projectId, setProjectId] = (0, react_1.useState)(report?.projectId ?? "");
+     const newId = (0, react_1.useRef)(undefined);
      (0, react_1.useEffect)(() => { if (!report)
          setWorkDate((0, client_1.today)()); }, [report]);
      const [workDate, setWorkDate] = (0, react_1.useState)(report?.workDate ?? "");
@@ -231,36 +262,50 @@ index 2a118e5869ae24647192c6c3c63f065c1147c7f8..9f070d75cfd7ff3f2d1679af20169a53
 +                    throw new Error(t("请选择工作时段"));
 +                newId.current ??= crypto.randomUUID();
 +                const saved = await api("report", { id: report?.id ?? newId.current, version: report?.version ?? 0,
++                    ...(!report && manage ? { memberId: Number((0, client_1.value)(data, "memberId")) } : {}),
 +                    projectId: projectId || null, workDate, startHour: startHour === "" ? null : Number(startHour), endHour: endHour === "" ? null : Number(endHour), progress: (0, client_1.value)(data, "progress"), resultUrl: report?.resultUrl ?? "", help: report?.help ?? "", next: report?.next ?? "",
-+                    visibility: report?.status === "submitted" ? report.visibility : (0, client_1.value)(data, "visibility"), status: report?.status === "submitted" ? "submitted" : button });
++                    visibility: report?.status === "submitted" && !manage ? report.visibility : (0, client_1.value)(data, "visibility"), status: report?.status === "submitted" && !manage ? "submitted" : button });
 +                if (onSaved)
 +                    onSaved();
 +                else
 +                    navigate(`/workspace/updates/${saved.id}`);
-+            }, children: [(0, jsx_runtime_1.jsx)(client_1.ErrorNotice, { error: projects.error, retry: projects.reload }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-form-row", children: [(0, jsx_runtime_1.jsx)(client_1.Field, { width: "medium", label: t("项目"), children: (0, jsx_runtime_1.jsxs)("select", { name: "projectId", value: projectId, disabled: Boolean(report) || !projects.data, onChange: e => setProjectId(e.target.value), children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("公司公共") }), projects.data?.projects.filter(project => project.active || project.id === report?.projectId).map(project => (0, jsx_runtime_1.jsxs)("option", { value: project.id, children: [project.name, project.active ? "" : t("（已归档）")] }, project.id))] }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("提交后谁可以看"), children: (0, jsx_runtime_1.jsxs)("select", { name: "visibility", defaultValue: report?.visibility ?? "company", disabled: report?.status === "submitted", children: [(0, jsx_runtime_1.jsx)("option", { value: "company", children: projectId ? t("项目成员") : t("公司全员") }), (0, jsx_runtime_1.jsx)("option", { value: "managers", children: projectId ? t("本人、项目内负责人及管理员") : t("本人、负责人及管理员") })] }) })] }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-form-row staff-work-hours", children: [(0, jsx_runtime_1.jsx)(client_1.Field, { width: "date", label: t("工作日期"), children: (0, jsx_runtime_1.jsx)(client_1.DateControl, { name: "workDate", value: workDate, onChange: setWorkDate, readOnly: Boolean(report), required: true }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { width: "short", label: t("开始时间"), children: (0, jsx_runtime_1.jsxs)("select", { name: "startHour", value: startHour, onChange: e => setStartHour(e.target.value), children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("选择小时") }), Array.from({ length: 24 }, (_, hour) => (0, jsx_runtime_1.jsxs)("option", { value: hour, children: [hour, ":00"] }, hour))] }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { width: "short", label: t("结束时间"), children: (0, jsx_runtime_1.jsxs)("select", { name: "endHour", value: endHour, onChange: e => setEndHour(e.target.value), children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("选择小时") }), Array.from({ length: 24 }, (_, i) => i + 1).map(hour => (0, jsx_runtime_1.jsxs)("option", { value: hour, children: [hour, ":00"] }, hour))] }) })] }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("今日进展"), children: (0, jsx_runtime_1.jsx)("textarea", { name: "progress", rows: 5, maxLength: 5000, defaultValue: report?.progress, placeholder: t("完成了什么，取得了什么结果？") }) }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-actions staff-form-actions", children: [report?.status !== "submitted" && (0, jsx_runtime_1.jsx)(Button, { action: "save", iconOnly: false, variant: "secondary", type: "submit", value: "draft", children: t("保存草稿") }), (0, jsx_runtime_1.jsx)(Button, { action: report?.status === "submitted" ? "save" : "send", iconOnly: false, type: "submit", value: "submitted", children: report?.status === "submitted" ? t("保存修改") : t("提交工作") })] }), report?.status === "submitted" && (0, jsx_runtime_1.jsx)("p", { className: "staff-muted", children: t("已提交记录保留原可见范围，修改会留下历史版本。") })] }) });
++            }, children: [(0, jsx_runtime_1.jsx)(client_1.ErrorNotice, { error: projects.error, retry: projects.reload }), !report && manage && (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("成员"), children: (0, jsx_runtime_1.jsx)("select", { name: "memberId", required: true, defaultValue: actor?.id, children: directory.map(member => (0, jsx_runtime_1.jsx)("option", { value: member.id, children: formatName(member.name) }, member.id)) }) }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-form-row", children: [(0, jsx_runtime_1.jsx)(client_1.Field, { width: "medium", label: t("项目"), children: (0, jsx_runtime_1.jsxs)("select", { name: "projectId", value: projectId, disabled: (Boolean(report) && !manage) || !projects.data, onChange: e => setProjectId(e.target.value), children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("公司公共") }), projects.data?.projects.filter(project => manage || project.active || project.id === report?.projectId).map(project => (0, jsx_runtime_1.jsxs)("option", { value: project.id, children: [project.name, project.active ? "" : t("（已归档）")] }, project.id))] }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("提交后谁可以看"), children: (0, jsx_runtime_1.jsxs)("select", { name: "visibility", defaultValue: report?.visibility ?? "company", disabled: report?.status === "submitted" && !manage, children: [(0, jsx_runtime_1.jsx)("option", { value: "company", children: projectId ? t("项目成员") : t("公司全员") }), (0, jsx_runtime_1.jsx)("option", { value: "managers", children: projectId ? t("本人、项目内负责人及管理员") : t("本人、负责人及管理员") })] }) })] }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-form-row staff-work-hours", children: [(0, jsx_runtime_1.jsx)(client_1.Field, { width: "date", label: t("工作日期"), children: (0, jsx_runtime_1.jsx)(client_1.DateControl, { name: "workDate", value: workDate, onChange: setWorkDate, readOnly: Boolean(report) && !manage, required: true }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { width: "short", label: t("开始时间"), children: (0, jsx_runtime_1.jsxs)("select", { name: "startHour", value: startHour, onChange: e => setStartHour(e.target.value), children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("选择小时") }), Array.from({ length: 24 }, (_, hour) => (0, jsx_runtime_1.jsxs)("option", { value: hour, children: [hour, ":00"] }, hour))] }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { width: "short", label: t("结束时间"), children: (0, jsx_runtime_1.jsxs)("select", { name: "endHour", value: endHour, onChange: e => setEndHour(e.target.value), children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("选择小时") }), Array.from({ length: 24 }, (_, i) => i + 1).map(hour => (0, jsx_runtime_1.jsxs)("option", { value: hour, children: [hour, ":00"] }, hour))] }) })] }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("今日进展"), children: (0, jsx_runtime_1.jsx)("textarea", { name: "progress", rows: 5, maxLength: 5000, defaultValue: report?.progress, placeholder: t("完成了什么，取得了什么结果？") }) }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-actions staff-form-actions", children: [(report?.status !== "submitted" || manage) && (0, jsx_runtime_1.jsx)(Button, { action: "save", iconOnly: false, variant: "secondary", type: "submit", value: "draft", children: t("保存草稿") }), (0, jsx_runtime_1.jsx)(Button, { action: report?.status === "submitted" ? "save" : "send", iconOnly: false, type: "submit", value: "submitted", children: report?.status === "submitted" ? t("保存修改") : t("提交工作") })] }), report?.status === "submitted" && !manage && (0, jsx_runtime_1.jsx)("p", { className: "staff-muted", children: t("已提交记录保留原可见范围，修改会留下历史版本。") })] }) });
  }
 -function Reports({ directory, mine = false }) {
-+function Reports({ directory, mine = false, actions }) {
-     const { api, Link, Button, t } = (0, host_1.useWorkspace)();
+-    const { api, Link, Button, t } = (0, host_1.useWorkspace)();
++function ReportActions({ report, actor, onSaved, onDeleted }) {
++    const { api, Button, t, formatName = name => name } = (0, host_1.useWorkspace)();
++    const [editing, setEditing] = (0, react_1.useState)(null);
++    const [deleting, setDeleting] = (0, react_1.useState)(null);
++    const canEdit = report.canEdit ?? (actor.kind === "staff" && report.memberId === actor.id && report.projectActive !== false);
++    return (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [canEdit && (0, jsx_runtime_1.jsx)(Button, { action: "edit", variant: "secondary", onClick: () => setEditing(report), children: t("编辑记录") }), report.canDelete && (0, jsx_runtime_1.jsx)(Button, { action: "delete", variant: "secondary", onClick: () => setDeleting(report), children: t("删除记录") }), editing && canEdit && (0, jsx_runtime_1.jsx)(client_1.EditorDialog, { wide: true, title: t("编辑工作记录"), onClose: () => setEditing(null), children: (0, jsx_runtime_1.jsx)(ReportEditor, { report: editing, actor: actor, onSaved: () => { setEditing(null); onSaved(); } }) }), deleting && report.canDelete && (0, jsx_runtime_1.jsx)(client_1.EditorDialog, { title: t("删除记录"), onClose: () => setDeleting(null), children: (0, jsx_runtime_1.jsxs)(client_1.Form, { submit: async () => { await api("report-delete", { id: deleting.id, version: deleting.version }); setDeleting(null); onDeleted(); }, children: [(0, jsx_runtime_1.jsxs)("p", { children: [(0, jsx_runtime_1.jsx)("strong", { children: formatName(deleting.name) }), " \u00B7 ", deleting.workDate] }), (0, jsx_runtime_1.jsx)("p", { role: "alert", children: t("删除后，记录、评论和历史版本均无法恢复。") }), (0, jsx_runtime_1.jsx)(Button, { action: "delete", type: "submit", children: t("确认删除") })] }) })] });
++}
++function Reports({ actor, directory, mine = false, actions }) {
++    const { api, Link, Button, t, formatName = name => name } = (0, host_1.useWorkspace)();
      const projects = (0, client_1.useResource)("projects");
++    const [deletedIds, setDeletedIds] = (0, react_1.useState)([]);
      const [filters, setFilters] = (0, react_1.useState)({ projectId: "", memberId: "", date: "", search: "", page: 1 });
      const params = new URLSearchParams({ mine: String(mine), ...Object.fromEntries(Object.entries(filters).map(([key, value]) => [key, String(value)])) });
      const resource = (0, client_1.useResource)(`reports?${params}`);
 -    return (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsxs)("form", { className: "staff-filters", onSubmit: e => { e.preventDefault(); const data = new FormData(e.currentTarget); setFilters({ projectId: (0, client_1.value)(data, "projectId"), memberId: (0, client_1.value)(data, "memberId"), date: (0, client_1.value)(data, "date"), search: (0, client_1.value)(data, "search"), page: 1 }); }, children: [(0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目"), children: (0, jsx_runtime_1.jsxs)("select", { name: "projectId", children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("全部项目") }), (0, jsx_runtime_1.jsx)("option", { value: "unassigned", children: t("公司公共") }), projects.data?.projects.map(project => (0, jsx_runtime_1.jsxs)("option", { value: project.id, children: [project.name, project.active ? "" : t("（已归档）")] }, project.id))] }) }), !mine && (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("成员"), children: (0, jsx_runtime_1.jsxs)("select", { name: "memberId", children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("所有成员") }), directory.map(member => (0, jsx_runtime_1.jsxs)("option", { value: member.id, children: [member.name, member.active ? "" : t("（已停用）")] }, member.id))] }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("日期"), children: (0, jsx_runtime_1.jsx)("input", { type: "date", name: "date" }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("关键词"), children: (0, jsx_runtime_1.jsx)("input", { name: "search", maxLength: 100, placeholder: t("搜索进展、协助、下一步") }) }), (0, jsx_runtime_1.jsx)(Button, { type: "submit", variant: "secondary", children: t("筛选") })] }), (0, jsx_runtime_1.jsx)(client_1.ErrorNotice, { error: projects.error, retry: projects.reload }), resource.loading && (0, jsx_runtime_1.jsx)("p", { role: "status", children: t("正在加载工作记录…") }), (0, jsx_runtime_1.jsx)(client_1.ErrorNotice, { error: resource.error, retry: resource.reload }), resource.data?.reports.length === 0 && (0, jsx_runtime_1.jsx)("div", { className: "staff-empty", children: t("当前条件下还没有工作记录。") }), (0, jsx_runtime_1.jsx)("div", { className: "staff-feed", children: resource.data?.reports.map(report => (0, jsx_runtime_1.jsxs)("article", { className: "staff-panel", children: [(0, jsx_runtime_1.jsxs)("div", { className: "staff-report-meta", children: [(0, jsx_runtime_1.jsx)("strong", { children: report.name }), (0, jsx_runtime_1.jsx)("time", { children: report.workDate }), (0, jsx_runtime_1.jsx)("span", { children: report.projectName ?? t("公司公共") }), (0, jsx_runtime_1.jsx)("span", { className: "staff-badge", children: report.status === "draft" ? t("个人草稿") : report.visibility === "company" ? (report.projectId ? t("项目共享") : t("公司共享")) : t("仅负责人") })] }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: report.progress.length > 300 ? `${report.progress.slice(0, 300)}…` : report.progress || t("尚未填写进展") }), report.help && (0, jsx_runtime_1.jsxs)("p", { className: "staff-muted", children: [t("需要协助："), report.help.slice(0, 120), report.help.length > 120 ? "…" : ""] }), (0, jsx_runtime_1.jsx)(Link, { href: `/workspace/updates/${report.id}`, children: t("查看记录与讨论 →") })] }, report.id)) }), resource.data && (0, jsx_runtime_1.jsxs)("div", { className: "staff-pagination", children: [(0, jsx_runtime_1.jsx)(Button, { variant: "secondary", disabled: filters.page <= 1, onClick: () => setFilters({ ...filters, page: filters.page - 1 }), children: t("上一页") }), (0, jsx_runtime_1.jsxs)("span", { children: [t("第"), filters.page, " ", t("页")] }), (0, jsx_runtime_1.jsx)(Button, { variant: "secondary", disabled: !resource.data.hasMore, onClick: () => setFilters({ ...filters, page: filters.page + 1 }), children: t("下一页") })] })] });
-+    return (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsxs)("form", { className: "staff-filters", onSubmit: e => { e.preventDefault(); const data = new FormData(e.currentTarget); setFilters({ projectId: (0, client_1.value)(data, "projectId"), memberId: (0, client_1.value)(data, "memberId"), date: (0, client_1.value)(data, "date"), search: (0, client_1.value)(data, "search"), page: 1 }); }, children: [(0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目"), children: (0, jsx_runtime_1.jsxs)("select", { name: "projectId", children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("全部项目") }), (0, jsx_runtime_1.jsx)("option", { value: "unassigned", children: t("公司公共") }), projects.data?.projects.map(project => (0, jsx_runtime_1.jsxs)("option", { value: project.id, children: [project.name, project.active ? "" : t("（已归档）")] }, project.id))] }) }), !mine && (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("成员"), children: (0, jsx_runtime_1.jsxs)("select", { name: "memberId", children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("所有成员") }), directory.map(member => (0, jsx_runtime_1.jsxs)("option", { value: member.id, children: [member.name, member.active ? "" : t("（已停用）")] }, member.id))] }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { width: "date", label: t("日期"), children: (0, jsx_runtime_1.jsx)(client_1.DateControl, { name: "date" }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { width: "medium", label: t("关键词"), children: (0, jsx_runtime_1.jsx)("input", { name: "search", maxLength: 100, placeholder: t("搜索进展、协助、下一步") }) }), (0, jsx_runtime_1.jsx)(Button, { action: "filter", type: "submit", variant: "secondary", children: t("筛选") }), actions && (0, jsx_runtime_1.jsx)("div", { className: "staff-toolbar-actions", children: actions })] }), (0, jsx_runtime_1.jsx)(client_1.ErrorNotice, { error: projects.error, retry: projects.reload }), resource.loading && (0, jsx_runtime_1.jsx)("p", { role: "status", children: t("正在加载工作记录…") }), (0, jsx_runtime_1.jsx)(client_1.ErrorNotice, { error: resource.error, retry: resource.reload }), resource.data?.reports.length === 0 && (0, jsx_runtime_1.jsx)("p", { className: "staff-empty", children: t("暂无工作记录") }), (0, jsx_runtime_1.jsx)("div", { className: "staff-feed", children: resource.data?.reports.map(report => (0, jsx_runtime_1.jsxs)("article", { className: "staff-panel", children: [(0, jsx_runtime_1.jsxs)("div", { className: "staff-report-meta", children: [(0, jsx_runtime_1.jsx)("strong", { children: report.name }), (0, jsx_runtime_1.jsxs)("time", { children: [report.workDate, report.startHour != null && report.endHour != null && ` · ${report.startHour}:00–${report.endHour}:00`] }), report.projectName && (0, jsx_runtime_1.jsx)("span", { children: report.projectName }), (report.status === "draft" || report.visibility !== "company" || report.projectId) && (0, jsx_runtime_1.jsx)("span", { className: "staff-badge", children: report.status === "draft" ? t("个人草稿") : report.visibility === "company" ? t("项目共享") : t("仅负责人") })] }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: report.progress.length > 300 ? `${report.progress.slice(0, 300)}…` : report.progress || t("尚未填写进展") }), report.help && (0, jsx_runtime_1.jsxs)("p", { className: "staff-muted", children: [t("需要协助："), report.help.slice(0, 120), report.help.length > 120 ? "…" : ""] }), (0, jsx_runtime_1.jsx)(Link, { href: `/workspace/updates/${report.id}`, children: t("查看记录与讨论 →") })] }, report.id)) }), resource.data && (0, jsx_runtime_1.jsxs)("div", { className: "staff-pagination", children: [(0, jsx_runtime_1.jsx)(Button, { action: "previous", variant: "secondary", disabled: filters.page <= 1, onClick: () => setFilters({ ...filters, page: filters.page - 1 }), children: t("上一页") }), (0, jsx_runtime_1.jsxs)("span", { children: [t("第"), filters.page, " ", t("页")] }), (0, jsx_runtime_1.jsx)(Button, { action: "next", variant: "secondary", disabled: !resource.data.hasMore, onClick: () => setFilters({ ...filters, page: filters.page + 1 }), children: t("下一页") })] })] });
++    return (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsxs)("form", { className: "staff-filters", onSubmit: e => { e.preventDefault(); const data = new FormData(e.currentTarget); setFilters({ projectId: (0, client_1.value)(data, "projectId"), memberId: (0, client_1.value)(data, "memberId"), date: (0, client_1.value)(data, "date"), search: (0, client_1.value)(data, "search"), page: 1 }); }, children: [(0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目"), children: (0, jsx_runtime_1.jsxs)("select", { name: "projectId", children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("全部项目") }), (0, jsx_runtime_1.jsx)("option", { value: "unassigned", children: t("公司公共") }), projects.data?.projects.map(project => (0, jsx_runtime_1.jsxs)("option", { value: project.id, children: [project.name, project.active ? "" : t("（已归档）")] }, project.id))] }) }), !mine && (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("成员"), children: (0, jsx_runtime_1.jsxs)("select", { name: "memberId", children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("所有成员") }), directory.map(member => (0, jsx_runtime_1.jsxs)("option", { value: member.id, children: [formatName(member.name), member.active ? "" : t("（已停用）")] }, member.id))] }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { width: "date", label: t("日期"), children: (0, jsx_runtime_1.jsx)(client_1.DateControl, { name: "date" }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { width: "medium", label: t("关键词"), children: (0, jsx_runtime_1.jsx)("input", { name: "search", maxLength: 100, placeholder: t("搜索进展、协助、下一步") }) }), (0, jsx_runtime_1.jsx)(Button, { action: "filter", type: "submit", variant: "secondary", children: t("筛选") }), actions && (0, jsx_runtime_1.jsx)("div", { className: "staff-toolbar-actions", children: actions })] }), (0, jsx_runtime_1.jsx)(client_1.ErrorNotice, { error: projects.error, retry: projects.reload }), resource.loading && (0, jsx_runtime_1.jsx)("p", { role: "status", children: t("正在加载工作记录…") }), (0, jsx_runtime_1.jsx)(client_1.ErrorNotice, { error: resource.error, retry: resource.reload }), resource.data?.reports.filter(report => !deletedIds.includes(report.id)).length === 0 && (0, jsx_runtime_1.jsx)("p", { className: "staff-empty", children: t("暂无工作记录") }), (0, jsx_runtime_1.jsx)("div", { className: "staff-feed", children: resource.data?.reports.filter(report => !deletedIds.includes(report.id)).map(report => (0, jsx_runtime_1.jsxs)("article", { className: "staff-panel", children: [(0, jsx_runtime_1.jsxs)("div", { className: "staff-report-meta", children: [(0, jsx_runtime_1.jsx)("strong", { children: formatName(report.name) }), (0, jsx_runtime_1.jsxs)("time", { children: [report.workDate, report.startHour != null && report.endHour != null && ` · ${report.startHour}:00–${report.endHour}:00`] }), report.projectName && (0, jsx_runtime_1.jsx)("span", { children: report.projectName }), (report.status === "draft" || report.visibility !== "company" || report.projectId) && (0, jsx_runtime_1.jsx)("span", { className: "staff-badge", children: report.status === "draft" ? t("个人草稿") : report.visibility === "company" ? t("项目共享") : t("仅负责人") })] }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: report.progress.length > 300 ? `${report.progress.slice(0, 300)}…` : report.progress || t("尚未填写进展") }), report.help && (0, jsx_runtime_1.jsxs)("p", { className: "staff-muted", children: [t("需要协助："), report.help.slice(0, 120), report.help.length > 120 ? "…" : ""] }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-actions", children: [(0, jsx_runtime_1.jsx)(Link, { href: `/workspace/updates/${report.id}`, children: t("查看记录与讨论 →") }), (0, jsx_runtime_1.jsx)(ReportActions, { report: report, actor: actor, onSaved: resource.reload, onDeleted: () => { setDeletedIds(ids => [...ids, report.id]); resource.reload(); } })] })] }, report.id)) }), resource.data && (0, jsx_runtime_1.jsxs)("div", { className: "staff-pagination", children: [(0, jsx_runtime_1.jsx)(Button, { action: "previous", variant: "secondary", disabled: filters.page <= 1, onClick: () => setFilters({ ...filters, page: filters.page - 1 }), children: t("上一页") }), (0, jsx_runtime_1.jsxs)("span", { children: [t("第"), filters.page, " ", t("页")] }), (0, jsx_runtime_1.jsx)(Button, { action: "next", variant: "secondary", disabled: !resource.data.hasMore, onClick: () => setFilters({ ...filters, page: filters.page + 1 }), children: t("下一页") })] })] });
  }
  function ReportDetailPanel({ actor, id }) {
-     const { api, Link, Button, t } = (0, host_1.useWorkspace)();
-@@ -48,19 +54,19 @@ function ReportDetailPanel({ actor, id }) {
+-    const { api, Link, Button, t } = (0, host_1.useWorkspace)();
++    const { api, Link, Button, t, navigate, formatName = name => name } = (0, host_1.useWorkspace)();
+     const detail = (0, client_1.useResource)(`detail?id=${encodeURIComponent(id)}`);
+-    const [editing, setEditing] = (0, react_1.useState)(false);
+     const commentId = (0, react_1.useRef)(undefined);
+     const [comment, setComment] = (0, react_1.useState)("");
      const report = detail.data?.report;
-     const owner = actor.kind === "staff" && report?.memberId === actor.id;
+-    const owner = actor.kind === "staff" && report?.memberId === actor.id;
      const archived = report?.projectActive === false;
 -    return (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsx)(Link, { href: "/workspace/updates", children: t("← 团队动态") }), (0, jsx_runtime_1.jsx)(client_1.ErrorNotice, { error: detail.error, retry: detail.reload }), detail.loading && (0, jsx_runtime_1.jsx)("p", { role: "status", children: t("正在加载记录…") }), report && (editing && owner && !archived ? (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsx)("button", { className: "staff-text-button", onClick: () => setEditing(false), children: t("取消编辑") }), (0, jsx_runtime_1.jsx)(ReportEditor, { report: report, onSaved: () => { setEditing(false); detail.reload(); } })] }) : (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsxs)("article", { className: "staff-panel", children: [(0, jsx_runtime_1.jsxs)("div", { className: "staff-report-meta", children: [(0, jsx_runtime_1.jsx)("strong", { children: report.name }), (0, jsx_runtime_1.jsx)("time", { children: report.workDate }), (0, jsx_runtime_1.jsx)("span", { children: report.projectName ?? t("公司公共") }), (0, jsx_runtime_1.jsx)("span", { className: "staff-badge", children: report.status === "draft" ? t("个人草稿") : report.visibility === "company" ? (report.projectId ? t("项目共享") : t("公司共享")) : t("仅本人、负责人及管理员") })] }), (0, jsx_runtime_1.jsx)("h2", { children: t("今日进展") }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: report.progress || t("尚未填写") }), report.resultUrl && (0, jsx_runtime_1.jsx)("p", { children: (0, jsx_runtime_1.jsx)("a", { href: report.resultUrl, target: "_blank", rel: "noopener noreferrer", children: t("打开成果链接 ↗") }) }), report.help && (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsx)("h3", { children: t("需要协助") }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: report.help })] }), report.next && (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsx)("h3", { children: t("下一步") }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: report.next })] }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-report-meta", children: [(0, jsx_runtime_1.jsxs)("span", { children: [t("更新于"), (0, client_1.dateTime)(report.updatedAt), " ", t("· 第"), report.version, " ", t("版")] }), owner && !archived && (0, jsx_runtime_1.jsx)(Button, { variant: "secondary", onClick: () => setEditing(true), children: t("编辑记录") })] })] }), report.status === "submitted" && (0, jsx_runtime_1.jsxs)("section", { className: "staff-panel", children: [(0, jsx_runtime_1.jsx)("h2", { children: t("讨论") }), detail.data?.comments.length === 0 && (0, jsx_runtime_1.jsx)("p", { className: "staff-muted", children: t("还没有评论，可以在这里补充信息或回应问题。") }), detail.data?.comments.map(item => (0, jsx_runtime_1.jsxs)("article", { className: "staff-comment", children: [(0, jsx_runtime_1.jsxs)("div", { className: "staff-report-meta", children: [(0, jsx_runtime_1.jsx)("strong", { children: item.name }), (0, jsx_runtime_1.jsx)("time", { children: (0, client_1.dateTime)(item.createdAt) })] }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: item.body })] }, item.id)), archived ? (0, jsx_runtime_1.jsx)("p", { className: "staff-muted", children: t("项目已归档") }) : (0, jsx_runtime_1.jsxs)(client_1.Form, { submit: async () => { commentId.current ??= crypto.randomUUID(); await api("comment", { id: commentId.current, reportId: id, body: comment }); commentId.current = undefined; setComment(""); detail.reload(); }, children: [(0, jsx_runtime_1.jsx)(client_1.Field, { label: t("添加评论"), children: (0, jsx_runtime_1.jsx)("textarea", { rows: 3, required: true, maxLength: 2000, value: comment, onChange: e => { setComment(e.target.value); commentId.current = undefined; } }) }), (0, jsx_runtime_1.jsx)(Button, { type: "submit", children: t("发布评论") })] })] }), owner && (detail.data?.revisions.length ?? 0) > 1 && (0, jsx_runtime_1.jsxs)("details", { className: "staff-panel", children: [(0, jsx_runtime_1.jsx)("summary", { children: t("历史版本（仅本人可见）") }), detail.data?.revisions.slice(1).map(revision => (0, jsx_runtime_1.jsxs)("details", { className: "staff-revision", children: [(0, jsx_runtime_1.jsxs)("summary", { children: [t("第"), revision.version, " ", t("版 ·"), (0, client_1.dateTime)(revision.createdAt)] }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: revision.snapshot.progress }), revision.snapshot.help && (0, jsx_runtime_1.jsxs)("p", { className: "staff-preserve", children: [t("需要协助："), revision.snapshot.help] }), revision.snapshot.next && (0, jsx_runtime_1.jsxs)("p", { className: "staff-preserve", children: [t("下一步："), revision.snapshot.next] }), revision.snapshot.resultUrl && (0, jsx_runtime_1.jsx)("a", { href: revision.snapshot.resultUrl, target: "_blank", rel: "noopener noreferrer", children: t("当时的成果链接 ↗") })] }, revision.version))] })] }))] });
-+    return (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsx)(Link, { href: "/workspace/updates", children: t("← 团队动态") }), (0, jsx_runtime_1.jsx)(client_1.ErrorNotice, { error: detail.error, retry: detail.reload }), detail.loading && (0, jsx_runtime_1.jsx)("p", { role: "status", children: t("正在加载记录…") }), report && (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [editing && owner && !archived && (0, jsx_runtime_1.jsx)(client_1.EditorDialog, { wide: true, title: t("编辑工作记录"), onClose: () => setEditing(false), children: (0, jsx_runtime_1.jsx)(ReportEditor, { report: report, onSaved: () => { setEditing(false); detail.reload(); } }) }), (0, jsx_runtime_1.jsxs)("article", { className: "staff-panel", children: [(0, jsx_runtime_1.jsxs)("div", { className: "staff-report-meta", children: [(0, jsx_runtime_1.jsx)("strong", { children: report.name }), (0, jsx_runtime_1.jsxs)("time", { children: [report.workDate, report.startHour != null && report.endHour != null && ` · ${report.startHour}:00–${report.endHour}:00`] }), (0, jsx_runtime_1.jsx)("span", { children: report.projectName ?? t("公司公共") }), (0, jsx_runtime_1.jsx)("span", { className: "staff-badge", children: report.status === "draft" ? t("个人草稿") : report.visibility === "company" ? (report.projectId ? t("项目共享") : t("公司共享")) : t("仅本人、负责人及管理员") })] }), (0, jsx_runtime_1.jsx)("h2", { children: t("今日进展") }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: report.progress || t("尚未填写") }), report.resultUrl && (0, jsx_runtime_1.jsx)("p", { children: (0, jsx_runtime_1.jsx)("a", { href: report.resultUrl, target: "_blank", rel: "noopener noreferrer", children: t("打开成果链接 ↗") }) }), report.help && (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsx)("h3", { children: t("需要协助") }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: report.help })] }), report.next && (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsx)("h3", { children: t("下一步") }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: report.next })] }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-report-meta", children: [(0, jsx_runtime_1.jsxs)("span", { children: [t("更新于"), (0, client_1.dateTime)(report.updatedAt), " ", t("· 第"), report.version, " ", t("版")] }), owner && !archived && (0, jsx_runtime_1.jsx)(Button, { action: "edit", variant: "secondary", onClick: () => setEditing(true), children: t("编辑记录") })] })] }), report.status === "submitted" && (0, jsx_runtime_1.jsxs)("section", { className: "staff-panel", children: [(0, jsx_runtime_1.jsx)("h2", { children: t("讨论") }), detail.data?.comments.length === 0 && (0, jsx_runtime_1.jsx)("p", { className: "staff-muted", children: t("还没有评论，可以在这里补充信息或回应问题。") }), detail.data?.comments.map(item => (0, jsx_runtime_1.jsxs)("article", { className: "staff-comment", children: [(0, jsx_runtime_1.jsxs)("div", { className: "staff-report-meta", children: [(0, jsx_runtime_1.jsx)("strong", { children: item.name }), (0, jsx_runtime_1.jsx)("time", { children: (0, client_1.dateTime)(item.createdAt) })] }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: item.body })] }, item.id)), archived ? (0, jsx_runtime_1.jsx)("p", { className: "staff-muted", children: t("项目已归档") }) : (0, jsx_runtime_1.jsxs)(client_1.Form, { submit: async () => { commentId.current ??= crypto.randomUUID(); await api("comment", { id: commentId.current, reportId: id, body: comment }); commentId.current = undefined; setComment(""); detail.reload(); }, children: [(0, jsx_runtime_1.jsx)(client_1.Field, { label: t("添加评论"), children: (0, jsx_runtime_1.jsx)("textarea", { rows: 3, required: true, maxLength: 2000, value: comment, onChange: e => { setComment(e.target.value); commentId.current = undefined; } }) }), (0, jsx_runtime_1.jsx)(Button, { action: "send", iconOnly: false, type: "submit", children: t("发布评论") })] })] }), owner && (detail.data?.revisions.length ?? 0) > 1 && (0, jsx_runtime_1.jsxs)("details", { className: "staff-panel", children: [(0, jsx_runtime_1.jsx)("summary", { children: t("历史版本（仅本人可见）") }), detail.data?.revisions.slice(1).map(revision => (0, jsx_runtime_1.jsxs)("details", { className: "staff-revision", children: [(0, jsx_runtime_1.jsxs)("summary", { children: [t("第"), revision.version, " ", t("版 ·"), (0, client_1.dateTime)(revision.createdAt)] }), (0, jsx_runtime_1.jsxs)("p", { className: "staff-muted", children: [revision.snapshot.workDate, revision.snapshot.startHour != null && revision.snapshot.endHour != null && ` · ${revision.snapshot.startHour}:00–${revision.snapshot.endHour}:00`] }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: revision.snapshot.progress }), revision.snapshot.help && (0, jsx_runtime_1.jsxs)("p", { className: "staff-preserve", children: [t("需要协助："), revision.snapshot.help] }), revision.snapshot.next && (0, jsx_runtime_1.jsxs)("p", { className: "staff-preserve", children: [t("下一步："), revision.snapshot.next] }), revision.snapshot.resultUrl && (0, jsx_runtime_1.jsx)("a", { href: revision.snapshot.resultUrl, target: "_blank", rel: "noopener noreferrer", children: t("当时的成果链接 ↗") })] }, revision.version))] })] })] });
++    return (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsx)(Link, { href: "/workspace/updates", children: t("← 团队动态") }), (0, jsx_runtime_1.jsx)(client_1.ErrorNotice, { error: detail.error, retry: detail.reload }), detail.loading && (0, jsx_runtime_1.jsx)("p", { role: "status", children: t("正在加载记录…") }), report && (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsxs)("article", { className: "staff-panel", children: [(0, jsx_runtime_1.jsxs)("div", { className: "staff-report-meta", children: [(0, jsx_runtime_1.jsx)("strong", { children: formatName(report.name) }), (0, jsx_runtime_1.jsxs)("time", { children: [report.workDate, report.startHour != null && report.endHour != null && ` · ${report.startHour}:00–${report.endHour}:00`] }), (0, jsx_runtime_1.jsx)("span", { children: report.projectName ?? t("公司公共") }), (0, jsx_runtime_1.jsx)("span", { className: "staff-badge", children: report.status === "draft" ? t("个人草稿") : report.visibility === "company" ? (report.projectId ? t("项目共享") : t("公司共享")) : t("仅本人、负责人及管理员") })] }), (0, jsx_runtime_1.jsx)("h2", { children: t("今日进展") }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: report.progress || t("尚未填写") }), report.resultUrl && (0, jsx_runtime_1.jsx)("p", { children: (0, jsx_runtime_1.jsx)("a", { href: report.resultUrl, target: "_blank", rel: "noopener noreferrer", children: t("打开成果链接 ↗") }) }), report.help && (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsx)("h3", { children: t("需要协助") }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: report.help })] }), report.next && (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsx)("h3", { children: t("下一步") }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: report.next })] }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-report-meta", children: [(0, jsx_runtime_1.jsxs)("span", { children: [t("更新于"), (0, client_1.dateTime)(report.updatedAt), " ", t("· 第"), report.version, " ", t("版")] }), (0, jsx_runtime_1.jsx)(ReportActions, { report: report, actor: actor, onSaved: detail.reload, onDeleted: () => navigate("/workspace/updates") })] })] }), report.status === "submitted" && (0, jsx_runtime_1.jsxs)("section", { className: "staff-panel", children: [(0, jsx_runtime_1.jsx)("h2", { children: t("讨论") }), detail.data?.comments.length === 0 && (0, jsx_runtime_1.jsx)("p", { className: "staff-muted", children: t("还没有评论，可以在这里补充信息或回应问题。") }), detail.data?.comments.map(item => (0, jsx_runtime_1.jsxs)("article", { className: "staff-comment", children: [(0, jsx_runtime_1.jsxs)("div", { className: "staff-report-meta", children: [(0, jsx_runtime_1.jsx)("strong", { children: formatName(item.name) }), (0, jsx_runtime_1.jsx)("time", { children: (0, client_1.dateTime)(item.createdAt) })] }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: item.body })] }, item.id)), archived ? (0, jsx_runtime_1.jsx)("p", { className: "staff-muted", children: t("项目已归档") }) : (0, jsx_runtime_1.jsxs)(client_1.Form, { submit: async () => { commentId.current ??= crypto.randomUUID(); await api("comment", { id: commentId.current, reportId: id, body: comment }); commentId.current = undefined; setComment(""); detail.reload(); }, children: [(0, jsx_runtime_1.jsx)(client_1.Field, { label: t("添加评论"), children: (0, jsx_runtime_1.jsx)("textarea", { rows: 3, required: true, maxLength: 2000, value: comment, onChange: e => { setComment(e.target.value); commentId.current = undefined; } }) }), (0, jsx_runtime_1.jsx)(Button, { action: "send", iconOnly: false, type: "submit", children: t("发布评论") })] })] }), (detail.data?.revisions.length ?? 0) > 1 && (0, jsx_runtime_1.jsxs)("details", { className: "staff-panel", children: [(0, jsx_runtime_1.jsx)("summary", { children: t("历史版本") }), detail.data?.revisions.slice(1).map(revision => (0, jsx_runtime_1.jsxs)("details", { className: "staff-revision", children: [(0, jsx_runtime_1.jsxs)("summary", { children: [t("第"), revision.version, " ", t("版 ·"), (0, client_1.dateTime)(revision.createdAt)] }), (0, jsx_runtime_1.jsxs)("p", { className: "staff-muted", children: [revision.snapshot.workDate, revision.snapshot.startHour != null && revision.snapshot.endHour != null && ` · ${revision.snapshot.startHour}:00–${revision.snapshot.endHour}:00`] }), (0, jsx_runtime_1.jsx)("p", { className: "staff-preserve", children: revision.snapshot.progress }), revision.snapshot.help && (0, jsx_runtime_1.jsxs)("p", { className: "staff-preserve", children: [t("需要协助："), revision.snapshot.help] }), revision.snapshot.next && (0, jsx_runtime_1.jsxs)("p", { className: "staff-preserve", children: [t("下一步："), revision.snapshot.next] }), revision.snapshot.resultUrl && (0, jsx_runtime_1.jsx)("a", { href: revision.snapshot.resultUrl, target: "_blank", rel: "noopener noreferrer", children: t("当时的成果链接 ↗") })] }, revision.version))] })] })] });
  }
  function Projects({ actor, directory }) {
 -    const { api, Link, Button, t } = (0, host_1.useWorkspace)();
-+    const { api, Link, Button, MemberPicker, t } = (0, host_1.useWorkspace)();
++    const { api, Link, Button, MemberPicker, t, formatName = name => name } = (0, host_1.useWorkspace)();
      const resource = (0, client_1.useResource)("projects");
      const [editing, setEditing] = (0, react_1.useState)(null);
      const newId = (0, react_1.useRef)(undefined);
@@ -278,7 +323,7 @@ index 2a118e5869ae24647192c6c3c63f065c1147c7f8..9f070d75cfd7ff3f2d1679af20169a53
 +                            memberIds: data.getAll("memberIds").map(Number) });
 +                        setEditing(null);
 +                        resource.reload();
-+                    }, children: [(0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目名称"), children: (0, jsx_runtime_1.jsx)("input", { name: "name", required: true, maxLength: 80, defaultValue: project?.name }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目网址（选填）"), children: (0, jsx_runtime_1.jsx)("input", { name: "url", type: "url", maxLength: 2000, defaultValue: project?.url }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("状态"), children: (0, jsx_runtime_1.jsxs)("select", { name: "active", defaultValue: String(project?.active ?? true), children: [(0, jsx_runtime_1.jsx)("option", { value: "true", children: t("进行中") }), (0, jsx_runtime_1.jsx)("option", { value: "false", children: t("已归档") })] }) }), MemberPicker ? (0, jsx_runtime_1.jsx)(MemberPicker, { name: "memberIds", label: t("项目成员（可多选）"), members: directory, defaultValue: project?.memberIds ?? [] }) : (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目成员（可多选）"), children: (0, jsx_runtime_1.jsx)("select", { name: "memberIds", multiple: true, size: Math.min(8, Math.max(3, directory.length)), defaultValue: project?.memberIds.map(String) ?? [], children: directory.map(member => (0, jsx_runtime_1.jsxs)("option", { value: member.id, children: [member.name, member.active ? "" : t("（已停用）")] }, member.id)) }) }), (0, jsx_runtime_1.jsx)("p", { className: "staff-muted", children: t("成员可查看项目共享记录；项目内的负责人还可查看受限记录。归档后保留历史，停止新增与修改。") }), (0, jsx_runtime_1.jsx)("div", { className: "staff-actions staff-form-actions", children: (0, jsx_runtime_1.jsx)(Button, { action: "save", type: "submit", children: t("保存项目") }) })] }, project?.id ?? "new") }), resource.data?.projects.length === 0 && (0, jsx_runtime_1.jsx)("p", { className: "staff-empty", children: t("暂无可访问的项目。") }), (0, jsx_runtime_1.jsx)("div", { className: "staff-project-list", children: resource.data?.projects.map(item => (0, jsx_runtime_1.jsxs)("article", { className: "staff-project-row", children: [(0, jsx_runtime_1.jsxs)("div", { className: "staff-project-summary", children: [(0, jsx_runtime_1.jsx)("h2", { className: "staff-project-name", children: item.url ? (0, jsx_runtime_1.jsxs)("a", { href: item.url, target: "_blank", rel: "noopener noreferrer", children: [item.name, " \u2197"] }) : item.name }), (0, jsx_runtime_1.jsx)("span", { className: "staff-muted", children: item.active ? t("进行中") : t("已归档") })] }), actor.kind === "admin" && (0, jsx_runtime_1.jsx)(Button, { action: "settings", variant: "secondary", onClick: () => setEditing(item), children: t("成员与设置") })] }, item.id)) }), actor.kind === "admin" && (0, jsx_runtime_1.jsx)(Button, { className: "workspace-project-add", action: "add", iconOnly: false, variant: "secondary", onClick: () => { newId.current = crypto.randomUUID(); setEditing("new"); }, children: t("新建项目") })] });
++                    }, children: [(0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目名称"), children: (0, jsx_runtime_1.jsx)("input", { name: "name", required: true, maxLength: 80, defaultValue: project?.name }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目网址（选填）"), children: (0, jsx_runtime_1.jsx)("input", { name: "url", type: "url", maxLength: 2000, defaultValue: project?.url }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("状态"), children: (0, jsx_runtime_1.jsxs)("select", { name: "active", defaultValue: String(project?.active ?? true), children: [(0, jsx_runtime_1.jsx)("option", { value: "true", children: t("进行中") }), (0, jsx_runtime_1.jsx)("option", { value: "false", children: t("已归档") })] }) }), MemberPicker ? (0, jsx_runtime_1.jsx)(MemberPicker, { name: "memberIds", label: t("项目成员（可多选）"), members: directory, defaultValue: project?.memberIds ?? [] }) : (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目成员（可多选）"), children: (0, jsx_runtime_1.jsx)("select", { name: "memberIds", multiple: true, size: Math.min(8, Math.max(3, directory.length)), defaultValue: project?.memberIds.map(String) ?? [], children: directory.map(member => (0, jsx_runtime_1.jsxs)("option", { value: member.id, children: [formatName(member.name), member.active ? "" : t("（已停用）")] }, member.id)) }) }), (0, jsx_runtime_1.jsx)("p", { className: "staff-muted", children: t("成员可查看项目共享记录；项目内的负责人还可查看受限记录。归档后保留历史，停止新增与修改。") }), (0, jsx_runtime_1.jsx)("div", { className: "staff-actions staff-form-actions", children: (0, jsx_runtime_1.jsx)(Button, { action: "save", type: "submit", children: t("保存项目") }) })] }, project?.id ?? "new") }), resource.data?.projects.length === 0 && (0, jsx_runtime_1.jsx)("p", { className: "staff-empty", children: t("暂无可访问的项目。") }), (0, jsx_runtime_1.jsx)("div", { className: "staff-project-list", children: resource.data?.projects.map(item => (0, jsx_runtime_1.jsxs)("article", { className: "staff-project-row", children: [(0, jsx_runtime_1.jsxs)("div", { className: "staff-project-summary", children: [(0, jsx_runtime_1.jsx)("h2", { className: "staff-project-name", children: item.url ? (0, jsx_runtime_1.jsxs)("a", { href: item.url, target: "_blank", rel: "noopener noreferrer", children: [item.name, " \u2197"] }) : item.name }), (0, jsx_runtime_1.jsx)("span", { className: "staff-muted", children: item.active ? t("进行中") : t("已归档") })] }), actor.kind === "admin" && (0, jsx_runtime_1.jsx)(Button, { action: "settings", variant: "secondary", onClick: () => setEditing(item), children: t("成员与设置") })] }, item.id)) }), actor.kind === "admin" && (0, jsx_runtime_1.jsx)(Button, { className: "workspace-project-add", action: "add", iconOnly: false, variant: "secondary", onClick: () => { newId.current = crypto.randomUUID(); setEditing("new"); }, children: t("新建项目") })] });
  }
 diff --git a/src/client.tsx b/src/client.tsx
 index 6ed636e011b9052afbc4d7bce30642b353ab6d83..2bebb0112930d140a086b75e6f0b4b538eda9fec 100644
@@ -344,22 +389,27 @@ index 6ed636e011b9052afbc4d7bce30642b353ab6d83..2bebb0112930d140a086b75e6f0b4b53
 +  return DateInput ? <DateInput {...props} /> : <input {...props} type="date" onChange={event => props.onChange?.(event.target.value)} />;
 +}
 diff --git a/src/contract.ts b/src/contract.ts
-index 17582ae10f2315e79ac75465eaaebf713e1da10a..e7ac6e81ab63219876896105f5405302ca50a8f1 100644
+index 17582ae10f2315e79ac75465eaaebf713e1da10a..f9e965ec49d0cf440544667f909dab4a368ed408 100644
 --- a/src/contract.ts
 +++ b/src/contract.ts
-@@ -4,6 +4,7 @@ export type StaffActor = WorkspaceActor & { name: string };
+@@ -1,9 +1,10 @@
+ import type { WorkspaceActor, ReportStatus, ReportVisibility } from "@app-foundation/workspace-policy";
+-export type StaffActor = WorkspaceActor & { name: string };
+-
++export type StaffActor = WorkspaceActor & { name: string; canManageReports?: boolean };
  export type WorkReport = {
    projectId: string | null; projectName: string | null; projectActive: boolean | null;
    id: string; memberId: number; name: string; workDate: string;
++  canEdit?: boolean; canDelete?: boolean;
 +  startHour?: number | null; endHour?: number | null;
    progress: string; resultUrl: string; help: string; next: string;
    visibility: ReportVisibility; status: ReportStatus;
    version: number; createdAt: number; updatedAt: number;
 diff --git a/src/host.tsx b/src/host.tsx
-index 72de41233ebddb139f9b27849b4eba2225b51b87..0821bc6990a4253e4c36f6e74c64fa6d0c859f7d 100644
+index 72de41233ebddb139f9b27849b4eba2225b51b87..0853216842f0a50151c79eccdb833c9f27b99932 100644
 --- a/src/host.tsx
 +++ b/src/host.tsx
-@@ -1,11 +1,20 @@
+@@ -1,11 +1,22 @@
  "use client";
  import { createContext, useContext, type ComponentType, type ReactNode, type AnchorHTMLAttributes, type ButtonHTMLAttributes } from "react";
 +import type { MemberDirectory } from "./contract";
@@ -378,15 +428,21 @@ index 72de41233ebddb139f9b27849b4eba2225b51b87..0821bc6990a4253e4c36f6e74c64fa6d
 +  Dialog?: ComponentType<WorkspaceDialogProps>;
 +  DateInput?: ComponentType<WorkspaceDateProps>;
 +  MemberPicker?: ComponentType<WorkspaceMemberPickerProps>;
++  /** Presentation only: persisted names and editor values remain unchanged. */
++  formatName?: (name: string) => string;
    t: (text: string) => string;
  };
  const Context = createContext<WorkspaceHost | null>(null);
 diff --git a/src/messages.ts b/src/messages.ts
-index 5fc4e9791e41cca4db0fcbd3f4c9dc41135d229a..68205f6e8d848ab8a9c32a38812074390c222779 100644
+index 5fc4e9791e41cca4db0fcbd3f4c9dc41135d229a..ab34582a1c71944b1e989fb9e30671ae24a55424 100644
 --- a/src/messages.ts
 +++ b/src/messages.ts
-@@ -1,4 +1,10 @@
+@@ -1,4 +1,14 @@
  const en: Record<string, string> = {
++  "删除记录": "Delete report",
++  "确认删除": "Confirm deletion",
++  "删除后，记录、评论和历史版本均无法恢复。": "Deleting this report also permanently deletes its comments and revision history.",
++  "历史版本": "Revision history",
 +  "暂无工作记录": "No work reports",
 +  "开始时间": "Start time",
 +  "结束时间": "End time",
@@ -397,10 +453,10 @@ index 5fc4e9791e41cca4db0fcbd3f4c9dc41135d229a..68205f6e8d848ab8a9c32a3881207439
    "记录今日进展": "Record today's progress",
    "写清结果与需要的协助；草稿仅自己可见。每个项目每天一条，可以继续补充。": "Record results and requests for help. Drafts are private. One report per project per day.",
 diff --git a/src/panels.tsx b/src/panels.tsx
-index 377c241ead98ceccf1d09a8b5a5979887a7060dc..70d5a2675d2d8af0eb99e6d85d825795db96b236 100644
+index 377c241ead98ceccf1d09a8b5a5979887a7060dc..c0c4a30ecf8041c0b64278a2834c3c6eef20c57c 100644
 --- a/src/panels.tsx
 +++ b/src/panels.tsx
-@@ -1,7 +1,7 @@
+@@ -1,98 +1,121 @@
  "use client";
 -import { useEffect, useRef, useState } from "react";
 +import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -408,9 +464,14 @@ index 377c241ead98ceccf1d09a8b5a5979887a7060dc..70d5a2675d2d8af0eb99e6d85d825795
 -import { useResource, Form, Field, ErrorNotice, value, dateTime, today } from "./client";
 +import { useResource, Form, Field, ErrorNotice, EditorDialog, DateControl, value, dateTime, today } from "./client";
  import type { ReportDetail, StaffActor, WorkReport, MemberDirectory, ProjectList, StaffProject } from "./contract";
- export function ReportEditor({ report, onSaved }: { report?: WorkReport; onSaved?: () => void }) {
+-export function ReportEditor({ report, onSaved }: { report?: WorkReport; onSaved?: () => void }) {
++export function ReportEditor({ report, actor, directory = [], onSaved }: { report?: WorkReport; actor?: StaffActor; directory?: MemberDirectory; onSaved?: () => void }) {
    const { api, Link, Button, t } = useWorkspace();
-@@ -11,28 +11,33 @@ export function ReportEditor({ report, onSaved }: { report?: WorkReport; onSaved
+-  const { navigate } = useWorkspace();
++  const { navigate, formatName = name => name } = useWorkspace();
++  const manage = actor?.canManageReports === true;
+   const projects = useResource<ProjectList>("projects");
+   const [projectId, setProjectId] = useState(report?.projectId ?? "");
    const newId = useRef<string | undefined>(undefined);
    useEffect(() => { if (!report) setWorkDate(today()); }, [report]);
    const [workDate, setWorkDate] = useState(report?.workDate ?? "");
@@ -425,17 +486,21 @@ index 377c241ead98ceccf1d09a8b5a5979887a7060dc..70d5a2675d2d8af0eb99e6d85d825795
        newId.current ??= crypto.randomUUID();
        const saved = await api<{ id: string }>("report", { id: report?.id ?? newId.current, version: report?.version ?? 0,
 -        projectId: projectId || null, workDate, progress: value(data, "progress"), resultUrl: value(data, "resultUrl"), help: value(data, "help"), next: value(data, "next"),
+-        visibility: report?.status === "submitted" ? report.visibility : value(data, "visibility"), status: report?.status === "submitted" ? "submitted" : button });
++        ...(!report && manage ? { memberId: Number(value(data, "memberId")) } : {}),
 +        projectId: projectId || null, workDate, startHour: startHour === "" ? null : Number(startHour), endHour: endHour === "" ? null : Number(endHour), progress: value(data, "progress"), resultUrl: report?.resultUrl ?? "", help: report?.help ?? "", next: report?.next ?? "",
-         visibility: report?.status === "submitted" ? report.visibility : value(data, "visibility"), status: report?.status === "submitted" ? "submitted" : button });
++        visibility: report?.status === "submitted" && !manage ? report.visibility : value(data, "visibility"), status: report?.status === "submitted" && !manage ? "submitted" : button });
        if (onSaved) onSaved(); else navigate(`/workspace/updates/${saved.id}`);
      }}>
        <ErrorNotice error={projects.error} retry={projects.reload} />
 -      <Field label={t("项目")}><select name="projectId" value={projectId} disabled={Boolean(report) || !projects.data} onChange={e => setProjectId(e.target.value)}><option value="">{t("公司公共")}</option>{projects.data?.projects.filter(project => project.active || project.id === report?.projectId).map(project => <option key={project.id} value={project.id}>{project.name}{project.active ? "" : t("（已归档）")}</option>)}</select></Field>
 -      <div className="staff-form-row"><Field label={t("工作日期")}><input type="date" name="workDate" value={workDate} onChange={e => setWorkDate(e.target.value)} readOnly={Boolean(report)} required /></Field>
-+      <div className="staff-form-row"><Field width="medium" label={t("项目")}><select name="projectId" value={projectId} disabled={Boolean(report) || !projects.data} onChange={e => setProjectId(e.target.value)}><option value="">{t("公司公共")}</option>{projects.data?.projects.filter(project => project.active || project.id === report?.projectId).map(project => <option key={project.id} value={project.id}>{project.name}{project.active ? "" : t("（已归档）")}</option>)}</select></Field>
-         <Field label={t("提交后谁可以看")}><select name="visibility" defaultValue={report?.visibility ?? "company"} disabled={report?.status === "submitted"}><option value="company">{projectId ? t("项目成员") : t("公司全员")}</option><option value="managers">{projectId ? t("本人、项目内负责人及管理员") : t("本人、负责人及管理员")}</option></select></Field></div>
+-        <Field label={t("提交后谁可以看")}><select name="visibility" defaultValue={report?.visibility ?? "company"} disabled={report?.status === "submitted"}><option value="company">{projectId ? t("项目成员") : t("公司全员")}</option><option value="managers">{projectId ? t("本人、项目内负责人及管理员") : t("本人、负责人及管理员")}</option></select></Field></div>
++      {!report && manage && <Field label={t("成员")}><select name="memberId" required defaultValue={actor?.id}>{directory.map(member => <option key={member.id} value={member.id}>{formatName(member.name)}</option>)}</select></Field>}
++      <div className="staff-form-row"><Field width="medium" label={t("项目")}><select name="projectId" value={projectId} disabled={(Boolean(report) && !manage) || !projects.data} onChange={e => setProjectId(e.target.value)}><option value="">{t("公司公共")}</option>{projects.data?.projects.filter(project => manage || project.active || project.id === report?.projectId).map(project => <option key={project.id} value={project.id}>{project.name}{project.active ? "" : t("（已归档）")}</option>)}</select></Field>
++        <Field label={t("提交后谁可以看")}><select name="visibility" defaultValue={report?.visibility ?? "company"} disabled={report?.status === "submitted" && !manage}><option value="company">{projectId ? t("项目成员") : t("公司全员")}</option><option value="managers">{projectId ? t("本人、项目内负责人及管理员") : t("本人、负责人及管理员")}</option></select></Field></div>
 +      <div className="staff-form-row staff-work-hours">
-+        <Field width="date" label={t("工作日期")}><DateControl name="workDate" value={workDate} onChange={setWorkDate} readOnly={Boolean(report)} required /></Field>
++        <Field width="date" label={t("工作日期")}><DateControl name="workDate" value={workDate} onChange={setWorkDate} readOnly={Boolean(report) && !manage} required /></Field>
 +        <Field width="short" label={t("开始时间")}><select name="startHour" value={startHour} onChange={e => setStartHour(e.target.value)}><option value="">{t("选择小时")}</option>{Array.from({ length: 24 }, (_, hour) => <option key={hour} value={hour}>{hour}:00</option>)}</select></Field>
 +        <Field width="short" label={t("结束时间")}><select name="endHour" value={endHour} onChange={e => setEndHour(e.target.value)}><option value="">{t("选择小时")}</option>{Array.from({ length: 24 }, (_, i) => i + 1).map(hour => <option key={hour} value={hour}>{hour}:00</option>)}</select></Field>
 +      </div>
@@ -444,68 +509,99 @@ index 377c241ead98ceccf1d09a8b5a5979887a7060dc..70d5a2675d2d8af0eb99e6d85d825795
 -      <p className="staff-muted">{t("请确认链接中的资料也已设置合适的访问权限。")}</p>
 -      <div className="staff-form-row"><Field label={t("需要协助（选填）")}><textarea name="help" rows={3} maxLength={2000} defaultValue={report?.help} placeholder={t("卡在哪里，需要什么帮助？")} /></Field><Field label={t("下一步（选填）")}><textarea name="next" rows={3} maxLength={2000} defaultValue={report?.next} placeholder={t("准备推进什么？")} /></Field></div>
 -      <div className="staff-actions">{report?.status !== "submitted" && <Button variant="secondary" type="submit" value="draft">{t("保存草稿")}</Button>}<Button type="submit" value="submitted">{report?.status === "submitted" ? t("保存修改") : t("提交工作")}</Button></div>
-+      <div className="staff-actions staff-form-actions">{report?.status !== "submitted" && <Button action="save" iconOnly={false} variant="secondary" type="submit" value="draft">{t("保存草稿")}</Button>}<Button action={report?.status === "submitted" ? "save" : "send"} iconOnly={false} type="submit" value="submitted">{report?.status === "submitted" ? t("保存修改") : t("提交工作")}</Button></div>
-       {report?.status === "submitted" && <p className="staff-muted">{t("已提交记录保留原可见范围，修改会留下历史版本。")}</p>}
+-      {report?.status === "submitted" && <p className="staff-muted">{t("已提交记录保留原可见范围，修改会留下历史版本。")}</p>}
++      <div className="staff-actions staff-form-actions">{(report?.status !== "submitted" || manage) && <Button action="save" iconOnly={false} variant="secondary" type="submit" value="draft">{t("保存草稿")}</Button>}<Button action={report?.status === "submitted" ? "save" : "send"} iconOnly={false} type="submit" value="submitted">{report?.status === "submitted" ? t("保存修改") : t("提交工作")}</Button></div>
++      {report?.status === "submitted" && !manage && <p className="staff-muted">{t("已提交记录保留原可见范围，修改会留下历史版本。")}</p>}
      </Form></section>;
  }
 -export function Reports({ directory, mine = false }: { actor: StaffActor; directory: MemberDirectory; mine?: boolean }) {
-+export function Reports({ directory, mine = false, actions }: { actor: StaffActor; directory: MemberDirectory; mine?: boolean; actions?: ReactNode }) {
-   const { api, Link, Button, t } = useWorkspace();
+-  const { api, Link, Button, t } = useWorkspace();
++function ReportActions({ report, actor, onSaved, onDeleted }: { report: WorkReport; actor: StaffActor; onSaved: () => void; onDeleted: () => void }) {
++  const { api, Button, t, formatName = name => name } = useWorkspace();
++  const [editing, setEditing] = useState<WorkReport | null>(null);
++  const [deleting, setDeleting] = useState<WorkReport | null>(null);
++  const canEdit = report.canEdit ?? (actor.kind === "staff" && report.memberId === actor.id && report.projectActive !== false);
++  return <>
++    {canEdit && <Button action="edit" variant="secondary" onClick={() => setEditing(report)}>{t("编辑记录")}</Button>}
++    {report.canDelete && <Button action="delete" variant="secondary" onClick={() => setDeleting(report)}>{t("删除记录")}</Button>}
++    {editing && canEdit && <EditorDialog wide title={t("编辑工作记录")} onClose={() => setEditing(null)}><ReportEditor report={editing} actor={actor} onSaved={() => { setEditing(null); onSaved(); }} /></EditorDialog>}
++    {deleting && report.canDelete && <EditorDialog title={t("删除记录")} onClose={() => setDeleting(null)}>
++      <Form submit={async () => { await api("report-delete", { id: deleting.id, version: deleting.version }); setDeleting(null); onDeleted(); }}>
++        <p><strong>{formatName(deleting.name)}</strong> · {deleting.workDate}</p>
++        <p role="alert">{t("删除后，记录、评论和历史版本均无法恢复。")}</p>
++        <Button action="delete" type="submit">{t("确认删除")}</Button>
++      </Form>
++    </EditorDialog>}
++  </>;
++}
++export function Reports({ actor, directory, mine = false, actions }: { actor: StaffActor; directory: MemberDirectory; mine?: boolean; actions?: ReactNode }) {
++  const { api, Link, Button, t, formatName = name => name } = useWorkspace();
    const projects = useResource<ProjectList>("projects");
++  const [deletedIds, setDeletedIds] = useState<string[]>([]);
    const [filters, setFilters] = useState({ projectId: "", memberId: "", date: "", search: "", page: 1 });
-@@ -41,18 +46,18 @@ export function Reports({ directory, mine = false }: { actor: StaffActor; direct
+   const params = new URLSearchParams({ mine: String(mine), ...Object.fromEntries(Object.entries(filters).map(([key, value]) => [key, String(value)])) });
+   const resource = useResource<{ reports: WorkReport[]; hasMore: boolean; page: number }>(`reports?${params}`);
    return <><form className="staff-filters" onSubmit={e => { e.preventDefault(); const data = new FormData(e.currentTarget); setFilters({ projectId: value(data, "projectId"), memberId: value(data, "memberId"), date: value(data, "date"), search: value(data, "search"), page: 1 }); }}>
      <Field label={t("项目")}><select name="projectId"><option value="">{t("全部项目")}</option><option value="unassigned">{t("公司公共")}</option>{projects.data?.projects.map(project => <option key={project.id} value={project.id}>{project.name}{project.active ? "" : t("（已归档）")}</option>)}</select></Field>
-     {!mine && <Field label={t("成员")}><select name="memberId"><option value="">{t("所有成员")}</option>{directory.map(member => <option key={member.id} value={member.id}>{member.name}{member.active ? "" : t("（已停用）")}</option>)}</select></Field>}
+-    {!mine && <Field label={t("成员")}><select name="memberId"><option value="">{t("所有成员")}</option>{directory.map(member => <option key={member.id} value={member.id}>{member.name}{member.active ? "" : t("（已停用）")}</option>)}</select></Field>}
 -    <Field label={t("日期")}><input type="date" name="date" /></Field><Field label={t("关键词")}><input name="search" maxLength={100} placeholder={t("搜索进展、协助、下一步")} /></Field><Button type="submit" variant="secondary">{t("筛选")}</Button>
++    {!mine && <Field label={t("成员")}><select name="memberId"><option value="">{t("所有成员")}</option>{directory.map(member => <option key={member.id} value={member.id}>{formatName(member.name)}{member.active ? "" : t("（已停用）")}</option>)}</select></Field>}
 +    <Field width="date" label={t("日期")}><DateControl name="date" /></Field><Field width="medium" label={t("关键词")}><input name="search" maxLength={100} placeholder={t("搜索进展、协助、下一步")} /></Field><Button action="filter" type="submit" variant="secondary">{t("筛选")}</Button>{actions && <div className="staff-toolbar-actions">{actions}</div>}
    </form>
      <ErrorNotice error={projects.error} retry={projects.reload} />
      {resource.loading && <p role="status">{t("正在加载工作记录…")}</p>}<ErrorNotice error={resource.error} retry={resource.reload} />
 -    {resource.data?.reports.length === 0 && <div className="staff-empty">{t("当前条件下还没有工作记录。")}</div>}
-+    {resource.data?.reports.length === 0 && <p className="staff-empty">{t("暂无工作记录")}</p>}
-     <div className="staff-feed">{resource.data?.reports.map(report => <article className="staff-panel" key={report.id}>
+-    <div className="staff-feed">{resource.data?.reports.map(report => <article className="staff-panel" key={report.id}>
 -      <div className="staff-report-meta"><strong>{report.name}</strong><time>{report.workDate}</time><span>{report.projectName ?? t("公司公共")}</span><span className="staff-badge">{report.status === "draft" ? t("个人草稿") : report.visibility === "company" ? (report.projectId ? t("项目共享") : t("公司共享")) : t("仅负责人")}</span></div>
-+      <div className="staff-report-meta"><strong>{report.name}</strong><time>{report.workDate}{report.startHour != null && report.endHour != null && ` · ${report.startHour}:00–${report.endHour}:00`}</time>{report.projectName && <span>{report.projectName}</span>}{(report.status === "draft" || report.visibility !== "company" || report.projectId) && <span className="staff-badge">{report.status === "draft" ? t("个人草稿") : report.visibility === "company" ? t("项目共享") : t("仅负责人")}</span>}</div>
++    {resource.data?.reports.filter(report => !deletedIds.includes(report.id)).length === 0 && <p className="staff-empty">{t("暂无工作记录")}</p>}
++    <div className="staff-feed">{resource.data?.reports.filter(report => !deletedIds.includes(report.id)).map(report => <article className="staff-panel" key={report.id}>
++      <div className="staff-report-meta"><strong>{formatName(report.name)}</strong><time>{report.workDate}{report.startHour != null && report.endHour != null && ` · ${report.startHour}:00–${report.endHour}:00`}</time>{report.projectName && <span>{report.projectName}</span>}{(report.status === "draft" || report.visibility !== "company" || report.projectId) && <span className="staff-badge">{report.status === "draft" ? t("个人草稿") : report.visibility === "company" ? t("项目共享") : t("仅负责人")}</span>}</div>
        <p className="staff-preserve">{report.progress.length > 300 ? `${report.progress.slice(0, 300)}…` : report.progress || t("尚未填写进展")}</p>
        {report.help && <p className="staff-muted">{t("需要协助：")}{report.help.slice(0, 120)}{report.help.length > 120 ? "…" : ""}</p>}
-       <Link href={`/workspace/updates/${report.id}`}>{t("查看记录与讨论 →")}</Link>
+-      <Link href={`/workspace/updates/${report.id}`}>{t("查看记录与讨论 →")}</Link>
++      <div className="staff-actions"><Link href={`/workspace/updates/${report.id}`}>{t("查看记录与讨论 →")}</Link><ReportActions report={report} actor={actor} onSaved={resource.reload} onDeleted={() => { setDeletedIds(ids => [...ids, report.id]); resource.reload(); }} /></div>
      </article>)}</div>
 -    {resource.data && <div className="staff-pagination"><Button variant="secondary" disabled={filters.page <= 1} onClick={() => setFilters({ ...filters, page: filters.page - 1 })}>{t("上一页")}</Button><span>{t("第")}{filters.page} {t("页")}</span><Button variant="secondary" disabled={!resource.data.hasMore} onClick={() => setFilters({ ...filters, page: filters.page + 1 })}>{t("下一页")}</Button></div>}
 +    {resource.data && <div className="staff-pagination"><Button action="previous" variant="secondary" disabled={filters.page <= 1} onClick={() => setFilters({ ...filters, page: filters.page - 1 })}>{t("上一页")}</Button><span>{t("第")}{filters.page} {t("页")}</span><Button action="next" variant="secondary" disabled={!resource.data.hasMore} onClick={() => setFilters({ ...filters, page: filters.page + 1 })}>{t("下一页")}</Button></div>}
    </>;
  }
  export function ReportDetailPanel({ actor, id }: { actor: StaffActor; id: string }) {
-@@ -65,34 +70,33 @@ export function ReportDetailPanel({ actor, id }: { actor: StaffActor; id: string
-   const owner = actor.kind === "staff" && report?.memberId === actor.id;
+-  const { api, Link, Button, t } = useWorkspace();
++  const { api, Link, Button, t, navigate, formatName = name => name } = useWorkspace();
+   const detail = useResource<ReportDetail>(`detail?id=${encodeURIComponent(id)}`);
+-  const [editing, setEditing] = useState(false);
+   const commentId = useRef<string | undefined>(undefined);
+   const [comment, setComment] = useState("");
+   const report = detail.data?.report;
+-  const owner = actor.kind === "staff" && report?.memberId === actor.id;
    const archived = report?.projectActive === false;
    return <><Link href="/workspace/updates">{t("← 团队动态")}</Link><ErrorNotice error={detail.error} retry={detail.reload} />{detail.loading && <p role="status">{t("正在加载记录…")}</p>}
 -    {report && (editing && owner && !archived ? <><button className="staff-text-button" onClick={() => setEditing(false)}>{t("取消编辑")}</button><ReportEditor report={report} onSaved={() => { setEditing(false); detail.reload(); }} /></> : <>
 -      <article className="staff-panel"><div className="staff-report-meta"><strong>{report.name}</strong><time>{report.workDate}</time><span>{report.projectName ?? t("公司公共")}</span><span className="staff-badge">{report.status === "draft" ? t("个人草稿") : report.visibility === "company" ? (report.projectId ? t("项目共享") : t("公司共享")) : t("仅本人、负责人及管理员")}</span></div>
 +    {report && <>
-+      {editing && owner && !archived && <EditorDialog wide title={t("编辑工作记录")} onClose={() => setEditing(false)}><ReportEditor report={report} onSaved={() => { setEditing(false); detail.reload(); }} /></EditorDialog>}
-+      <article className="staff-panel"><div className="staff-report-meta"><strong>{report.name}</strong><time>{report.workDate}{report.startHour != null && report.endHour != null && ` · ${report.startHour}:00–${report.endHour}:00`}</time><span>{report.projectName ?? t("公司公共")}</span><span className="staff-badge">{report.status === "draft" ? t("个人草稿") : report.visibility === "company" ? (report.projectId ? t("项目共享") : t("公司共享")) : t("仅本人、负责人及管理员")}</span></div>
++      <article className="staff-panel"><div className="staff-report-meta"><strong>{formatName(report.name)}</strong><time>{report.workDate}{report.startHour != null && report.endHour != null && ` · ${report.startHour}:00–${report.endHour}:00`}</time><span>{report.projectName ?? t("公司公共")}</span><span className="staff-badge">{report.status === "draft" ? t("个人草稿") : report.visibility === "company" ? (report.projectId ? t("项目共享") : t("公司共享")) : t("仅本人、负责人及管理员")}</span></div>
          <h2>{t("今日进展")}</h2><p className="staff-preserve">{report.progress || t("尚未填写")}</p>
          {report.resultUrl && <p><a href={report.resultUrl} target="_blank" rel="noopener noreferrer">{t("打开成果链接 ↗")}</a></p>}
          {report.help && <><h3>{t("需要协助")}</h3><p className="staff-preserve">{report.help}</p></>}{report.next && <><h3>{t("下一步")}</h3><p className="staff-preserve">{report.next}</p></>}
 -        <div className="staff-report-meta"><span>{t("更新于")}{dateTime(report.updatedAt)} {t("· 第")}{report.version} {t("版")}</span>{owner && !archived && <Button variant="secondary" onClick={() => setEditing(true)}>{t("编辑记录")}</Button>}</div>
-+        <div className="staff-report-meta"><span>{t("更新于")}{dateTime(report.updatedAt)} {t("· 第")}{report.version} {t("版")}</span>{owner && !archived && <Button action="edit" variant="secondary" onClick={() => setEditing(true)}>{t("编辑记录")}</Button>}</div>
++        <div className="staff-report-meta"><span>{t("更新于")}{dateTime(report.updatedAt)} {t("· 第")}{report.version} {t("版")}</span><ReportActions report={report} actor={actor} onSaved={detail.reload} onDeleted={() => navigate("/workspace/updates")} /></div>
        </article>
        {report.status === "submitted" && <section className="staff-panel"><h2>{t("讨论")}</h2>{detail.data?.comments.length === 0 && <p className="staff-muted">{t("还没有评论，可以在这里补充信息或回应问题。")}</p>}
-         {detail.data?.comments.map(item => <article key={item.id} className="staff-comment"><div className="staff-report-meta"><strong>{item.name}</strong><time>{dateTime(item.createdAt)}</time></div><p className="staff-preserve">{item.body}</p></article>)}
+-        {detail.data?.comments.map(item => <article key={item.id} className="staff-comment"><div className="staff-report-meta"><strong>{item.name}</strong><time>{dateTime(item.createdAt)}</time></div><p className="staff-preserve">{item.body}</p></article>)}
++        {detail.data?.comments.map(item => <article key={item.id} className="staff-comment"><div className="staff-report-meta"><strong>{formatName(item.name)}</strong><time>{dateTime(item.createdAt)}</time></div><p className="staff-preserve">{item.body}</p></article>)}
          {archived ? <p className="staff-muted">{t("项目已归档")}</p> : <Form submit={async () => { commentId.current ??= crypto.randomUUID(); await api("comment", { id: commentId.current, reportId: id, body: comment }); commentId.current = undefined; setComment(""); detail.reload(); }}>
 -          <Field label={t("添加评论")}><textarea rows={3} required maxLength={2000} value={comment} onChange={e => { setComment(e.target.value); commentId.current = undefined; }} /></Field><Button type="submit">{t("发布评论")}</Button>
 +          <Field label={t("添加评论")}><textarea rows={3} required maxLength={2000} value={comment} onChange={e => { setComment(e.target.value); commentId.current = undefined; }} /></Field><Button action="send" iconOnly={false} type="submit">{t("发布评论")}</Button>
          </Form>}</section>}
 -      {owner && (detail.data?.revisions.length ?? 0) > 1 && <details className="staff-panel"><summary>{t("历史版本（仅本人可见）")}</summary>{detail.data?.revisions.slice(1).map(revision => <details className="staff-revision" key={revision.version}><summary>{t("第")}{revision.version} {t("版 ·")}{dateTime(revision.createdAt)}</summary><p className="staff-preserve">{revision.snapshot.progress}</p>{revision.snapshot.help && <p className="staff-preserve">{t("需要协助：")}{revision.snapshot.help}</p>}{revision.snapshot.next && <p className="staff-preserve">{t("下一步：")}{revision.snapshot.next}</p>}{revision.snapshot.resultUrl && <a href={revision.snapshot.resultUrl} target="_blank" rel="noopener noreferrer">{t("当时的成果链接 ↗")}</a>}</details>)}</details>}
 -    </>)}
-+      {owner && (detail.data?.revisions.length ?? 0) > 1 && <details className="staff-panel"><summary>{t("历史版本（仅本人可见）")}</summary>{detail.data?.revisions.slice(1).map(revision => <details className="staff-revision" key={revision.version}><summary>{t("第")}{revision.version} {t("版 ·")}{dateTime(revision.createdAt)}</summary><p className="staff-muted">{revision.snapshot.workDate}{revision.snapshot.startHour != null && revision.snapshot.endHour != null && ` · ${revision.snapshot.startHour}:00–${revision.snapshot.endHour}:00`}</p><p className="staff-preserve">{revision.snapshot.progress}</p>{revision.snapshot.help && <p className="staff-preserve">{t("需要协助：")}{revision.snapshot.help}</p>}{revision.snapshot.next && <p className="staff-preserve">{t("下一步：")}{revision.snapshot.next}</p>}{revision.snapshot.resultUrl && <a href={revision.snapshot.resultUrl} target="_blank" rel="noopener noreferrer">{t("当时的成果链接 ↗")}</a>}</details>)}</details>}
++      {(detail.data?.revisions.length ?? 0) > 1 && <details className="staff-panel"><summary>{t("历史版本")}</summary>{detail.data?.revisions.slice(1).map(revision => <details className="staff-revision" key={revision.version}><summary>{t("第")}{revision.version} {t("版 ·")}{dateTime(revision.createdAt)}</summary><p className="staff-muted">{revision.snapshot.workDate}{revision.snapshot.startHour != null && revision.snapshot.endHour != null && ` · ${revision.snapshot.startHour}:00–${revision.snapshot.endHour}:00`}</p><p className="staff-preserve">{revision.snapshot.progress}</p>{revision.snapshot.help && <p className="staff-preserve">{t("需要协助：")}{revision.snapshot.help}</p>}{revision.snapshot.next && <p className="staff-preserve">{t("下一步：")}{revision.snapshot.next}</p>}{revision.snapshot.resultUrl && <a href={revision.snapshot.resultUrl} target="_blank" rel="noopener noreferrer">{t("当时的成果链接 ↗")}</a>}</details>)}</details>}
 +    </>}
    </>;
  }
  export function Projects({ actor, directory }: { actor: StaffActor; directory: MemberDirectory }) {
 -  const { api, Link, Button, t } = useWorkspace();
-+  const { api, Link, Button, MemberPicker, t } = useWorkspace();
++  const { api, Link, Button, MemberPicker, t, formatName = name => name } = useWorkspace();
    const resource = useResource<ProjectList>("projects");
    const [editing, setEditing] = useState<StaffProject | "new" | null>(null);
    const newId = useRef<string | undefined>(undefined);
@@ -522,14 +618,15 @@ index 377c241ead98ceccf1d09a8b5a5979887a7060dc..70d5a2675d2d8af0eb99e6d85d825795
        <Form key={project?.id ?? "new"} submit={async data => {
          await api("project", { id: project?.id ?? newId.current, version: project?.version ?? 0,
            name: value(data, "name"), url: value(data, "url"), active: value(data, "active") === "true",
-@@ -102,20 +106,18 @@ export function Projects({ actor, directory }: { actor: StaffActor; directory: M
+@@ -102,20 +125,18 @@ export function Projects({ actor, directory }: { actor: StaffActor; directory: M
          <Field label={t("项目名称")}><input name="name" required maxLength={80} defaultValue={project?.name} /></Field>
          <Field label={t("项目网址（选填）")}><input name="url" type="url" maxLength={2000} defaultValue={project?.url} /></Field>
          <Field label={t("状态")}><select name="active" defaultValue={String(project?.active ?? true)}><option value="true">{t("进行中")}</option><option value="false">{t("已归档")}</option></select></Field>
 -        <Field label={t("项目成员（可多选）")}><select name="memberIds" multiple size={Math.min(8, Math.max(3, directory.length))} defaultValue={project?.memberIds.map(String) ?? []}>
-+        {MemberPicker ? <MemberPicker name="memberIds" label={t("项目成员（可多选）")} members={directory} defaultValue={project?.memberIds ?? []} /> : <Field label={t("项目成员（可多选）")}><select name="memberIds" multiple size={Math.min(8, Math.max(3, directory.length))} defaultValue={project?.memberIds.map(String) ?? []}>
-           {directory.map(member => <option key={member.id} value={member.id}>{member.name}{member.active ? "" : t("（已停用）")}</option>)}
+-          {directory.map(member => <option key={member.id} value={member.id}>{member.name}{member.active ? "" : t("（已停用）")}</option>)}
 -        </select></Field>
++        {MemberPicker ? <MemberPicker name="memberIds" label={t("项目成员（可多选）")} members={directory} defaultValue={project?.memberIds ?? []} /> : <Field label={t("项目成员（可多选）")}><select name="memberIds" multiple size={Math.min(8, Math.max(3, directory.length))} defaultValue={project?.memberIds.map(String) ?? []}>
++          {directory.map(member => <option key={member.id} value={member.id}>{formatName(member.name)}{member.active ? "" : t("（已停用）")}</option>)}
 +        </select></Field>}
          <p className="staff-muted">{t("成员可查看项目共享记录；项目内的负责人还可查看受限记录。归档后保留历史，停止新增与修改。")}</p>
 -        <div className="staff-actions"><Button type="submit">{t("保存项目")}</Button><Button type="button" variant="secondary" onClick={() => setEditing(null)}>{t("取消")}</Button></div>

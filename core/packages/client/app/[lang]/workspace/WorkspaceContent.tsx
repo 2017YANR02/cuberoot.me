@@ -3,7 +3,7 @@ import PageBackLink from '@/components/PageBackLink';
 import { Suspense, useMemo, useState, type AnchorHTMLAttributes } from 'react';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
-import { WorkspaceProvider, WorkspaceLoginFrame, ReportEditor, Reports, ReportDetailPanel, Projects, ErrorNotice, Form, Field, useResource, value, RequestError, workspaceText, type StaffActor, type MemberDirectory } from '@app-foundation/workspace-ui';
+import { WorkspaceProvider, WorkspaceLoginFrame, ReportEditor, Reports, ReportDetailPanel, Projects, ErrorNotice, Form, Field, useResource, useWorkspace, value, RequestError, workspaceText, type StaffActor, type MemberDirectory } from '@app-foundation/workspace-ui';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
@@ -23,6 +23,7 @@ import Checklists from './Checklists';
 import Schedules from './Schedules';
 import { WorkspaceButton as Button, WorkspaceDialog, WorkspaceMemberPicker } from './WorkspaceControls';
 import { DateInput } from '@/components/DateInput';
+import { displayCuberName } from '@/lib/cuber-name-display';
 
 // Product adapter: only CubeRoot auth headers and CubeRoot API are used here.
 async function api<T>(action: string, body?: unknown): Promise<T> {
@@ -41,7 +42,7 @@ function Link({href,...props}:AnchorHTMLAttributes<HTMLAnchorElement>&{href:stri
 const sections=['mine','updates','projects','checklists','schedule','members','detail','onboarding','offboarding','sop','quality'] as const;
 function Workspace() {
   const lang=useLang();const router=useRouter();
-  const host=useMemo(()=>({api,Link,Button,Dialog:WorkspaceDialog,DateInput,MemberPicker:WorkspaceMemberPicker,t:(text:string)=>workspaceText(lang,text),navigate:(href:string)=>router.push(`${lang==='zh'?'/zh':''}${workspaceHref(href)}`)}),[lang,router]);
+  const host=useMemo(()=>({api,Link,Button,Dialog:WorkspaceDialog,DateInput,MemberPicker:WorkspaceMemberPicker,formatName:(name:string)=>displayCuberName(name,lang==='zh'),t:(text:string)=>workspaceText(lang,text),navigate:(href:string)=>router.push(`${lang==='zh'?'/zh':''}${workspaceHref(href)}`)}),[lang,router]);
   return <WorkspaceProvider host={host}><WorkspaceContent /></WorkspaceProvider>;
 }
 function WorkspaceContent() {
@@ -63,7 +64,7 @@ function SignedInWorkspace() {
     {handbook&&<div className="staff-start staff-workspace-handbook">{section==='offboarding'?<Offboarding />:section==='sop'?<Sop />:section==='quality'?<QualityStandards />:<Onboarding />}</div>}
     {actor&&<>
       {section==='mine'&&employee&&<MyWork actor={employee} directory={session.data!.directory} />}
-      {section==='updates'&&<Reports actor={actor} directory={session.data!.directory} />}
+      {section==='updates'&&employee&&<Reports actor={employee} directory={session.data!.directory} actions={<CreateReport actor={employee} directory={session.data!.directory} />} />}
       {section==='projects'&&<Projects actor={actor} directory={session.data!.directory} />}
       {section==='checklists'&&<Checklists />}
       {section==='schedule'&&<Schedules actor={actor} />}
@@ -73,15 +74,19 @@ function SignedInWorkspace() {
   </main>;
 }
 function MyWork({ actor, directory }: { actor: StaffActor; directory: MemberDirectory }) {
+  return <Reports actor={actor} directory={directory} mine actions={<CreateReport actor={actor} directory={directory} />} />;
+}
+function CreateReport({ actor, directory }: { actor: StaffActor; directory: MemberDirectory }) {
   const t = useT();
   const [editing, setEditing] = useState(false);
-  return <><Reports actor={actor} directory={directory} mine actions={<Button action="add" onClick={() => setEditing(true)}>{t('记录今日进展', 'Record today’s progress')}</Button>} />
-    {editing && <WorkspaceDialog wide title={t('记录今日进展', 'Record today’s progress')} onClose={() => setEditing(false)}><ReportEditor /></WorkspaceDialog>}
+  return <><Button action="add" onClick={() => setEditing(true)}>{t('记录今日进展', 'Record today’s progress')}</Button>
+    {editing && <WorkspaceDialog wide title={t('记录今日进展', 'Record today’s progress')} onClose={() => setEditing(false)}><ReportEditor actor={actor} directory={directory} /></WorkspaceDialog>}
   </>;
 }
 type Member={id:number;userId:number;name:string;role:'member'|'manager';active:boolean;adminAccess:boolean};
 function Members({onSaved}:{onSaved:()=>void}) {
   const t=useT();const resource=useResource<{members:Member[]}>('members');
+  const {formatName = name => name}=useWorkspace();
   const [editing, setEditing] = useState<Member | 'new' | null>(null);
   const [search, setSearch] = useState('');
   const reload=()=>{resource.reload();onSaved();};
@@ -97,7 +102,7 @@ function Members({onSaved}:{onSaved:()=>void}) {
     <ErrorNotice error={resource.error} retry={resource.reload} />
     {resource.loading && <p role="status">{t('正在加载…','Loading…')}</p>}
     {members?.length === 0 && <p className="staff-empty">{t('暂无匹配成员','No matching members')}</p>}
-    <div className="staff-feed">{members?.map(member => <article key={member.id} className="workspace-member-row"><div><h2>{member.name}</h2><p className="staff-muted">{t('CubeRoot ID','CubeRoot ID')} · {member.userId}</p></div><span>{member.adminAccess ? t('管理员','Administrator') : member.role === 'manager' ? t('负责人','Manager') : t('成员','Member')}</span><span className="staff-muted">{member.active ? t('已启用','Active') : t('已停用','Inactive')}</span>{member.adminAccess ? <span className="staff-muted">{t('自动开通','Automatic access')}</span> : <Button action="edit" variant="secondary" onClick={() => setEditing(member)}>{t('编辑成员','Edit member')}</Button>}</article>)}</div>
+    <div className="staff-feed">{members?.map(member => <article key={member.id} className="workspace-member-row"><div><h2>{formatName(member.name)}</h2><p className="staff-muted">{t('CubeRoot ID','CubeRoot ID')} · {member.userId}</p></div><span>{member.adminAccess ? t('管理员','Administrator') : member.role === 'manager' ? t('负责人','Manager') : t('成员','Member')}</span><span className="staff-muted">{member.active ? t('已启用','Active') : t('已停用','Inactive')}</span>{member.adminAccess ? <span className="staff-muted">{t('自动开通','Automatic access')}</span> : <Button action="edit" variant="secondary" onClick={() => setEditing(member)}>{t('编辑成员','Edit member')}</Button>}</article>)}</div>
     {editing && <WorkspaceDialog title={editing === 'new' ? t('开通员工权限','Enable employee access') : t('编辑成员','Edit member')} onClose={() => setEditing(null)}>{form(editing === 'new' ? undefined : editing)}</WorkspaceDialog>}
   </>;
 }

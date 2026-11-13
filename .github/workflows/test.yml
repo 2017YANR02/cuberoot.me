@@ -640,6 +640,7 @@ jobs:
           COMPETITION_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/cuberoot_test
           PRODUCT_ANALYTICS_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/cuberoot_test
           WCA_TEAMS_PG_TEST_URL: postgres://postgres:postgres@127.0.0.1:5432/cuberoot_test
+          WORKSPACE_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/cuberoot_test
           DB_HOST: 127.0.0.1
           DB_PORT: '5432'
           DB_USER: postgres

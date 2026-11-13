@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Plus, Check, Pencil, Trash2, X, RefreshCw, Search, Copy, Settings2, ChevronLeft, ChevronRight, Send } from '@app-foundation/icons/lucide';
 import type { WorkspaceButtonProps, WorkspaceDialogProps, WorkspaceMemberPickerProps } from '@app-foundation/workspace-ui';
+import { useWorkspace } from '@app-foundation/workspace-ui';
 import { Tooltip } from '@/components/Tooltip';
 import { SearchInput } from '@/components/SearchInput';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
@@ -21,6 +22,7 @@ export function WorkspaceButton({ action, iconOnly = true, variant, size, childr
 
 export function WorkspaceMemberPicker({ name, label, members, defaultValue }: WorkspaceMemberPickerProps) {
   const t = useT();
+  const { formatName = name => name } = useWorkspace();
   const [selected, setSelected] = useState(() => [...new Set(defaultValue)]);
   const [query, setQuery] = useState('');
   const options = [...members, ...defaultValue.filter(id => !members.some(member => member.id === id)).map(id => ({ id, name: `${t('成员', 'Member')} #${id}`, active: false }))];
@@ -33,7 +35,7 @@ export function WorkspaceMemberPicker({ name, label, members, defaultValue }: Wo
       {visible.map(member => <label className="workspace-member-option" key={member.id}>
         {/* allow-checkbox: Select project members, not an immediate settings toggle. */}
         <input className="workspace-member-checkbox" type="checkbox" checked={selected.includes(member.id)} onChange={event => setSelected(ids => event.target.checked ? [...ids, member.id] : ids.filter(id => id !== member.id))} />
-        <span>{member.name}</span>{!member.active && <small>{t('已停用', 'Inactive')}</small>}
+        <span>{formatName(member.name)}</span>{!member.active && <small>{t('已停用', 'Inactive')}</small>}
       </label>)}
       {!visible.length && <p className="staff-muted">{query ? t('未找到成员', 'No matching members') : t('暂无成员', 'No members')}</p>}
     </div>

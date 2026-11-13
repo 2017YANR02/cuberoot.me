@@ -790,7 +790,7 @@ describe('deployment workflow path contracts', () => {
       'PLATFORM_QR_TEST_DATABASE_URL', 'PLATFORM_COMMERCE_TEST_DATABASE_URL',
       'PLATFORM_LEARNING_TEST_DATABASE_URL', 'PLATFORM_MEDIA_TEST_DATABASE_URL',
       'COMPETITION_TEST_DATABASE_URL', 'PRODUCT_ANALYTICS_TEST_DATABASE_URL',
-      'WCA_TEAMS_PG_TEST_URL',
+      'WCA_TEAMS_PG_TEST_URL', 'WORKSPACE_TEST_DATABASE_URL',
     ]) {
       expect(server, variable).toContain(`${variable}: postgres://postgres:postgres@127.0.0.1:5432/cuberoot_test`);
     }
