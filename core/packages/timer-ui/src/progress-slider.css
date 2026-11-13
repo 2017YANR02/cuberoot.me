@@ -1,0 +1,8 @@
+.progress-slider { flex: 1; min-width: 60px; touch-action: pan-y; }
+
+input[type='range'].progress-slider.progress-slider::-webkit-slider-runnable-track {
+  background-image: var(--segment-gaps), linear-gradient(to right, var(--accent) 0%, var(--accent) var(--pct, 0%), color-mix(in srgb, var(--foreground) 15%, transparent) var(--pct, 0%), color-mix(in srgb, var(--foreground) 15%, transparent) 100%);
+}
+input[type='range'].progress-slider.progress-slider::-moz-range-track {
+  background-image: var(--segment-gaps), linear-gradient(to right, var(--accent) 0%, var(--accent) var(--pct, 0%), color-mix(in srgb, var(--foreground) 15%, transparent) var(--pct, 0%), color-mix(in srgb, var(--foreground) 15%, transparent) 100%);
+}
