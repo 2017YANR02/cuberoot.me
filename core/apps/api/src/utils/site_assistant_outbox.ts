@@ -6,12 +6,12 @@ import type { QueryRunner } from '../db/connection.js';
 // Linux shares the systemd-managed state directory with the sandboxed indexer.
 export const assistantOutboxDirectory = () => process.env.SITE_ASSISTANT_OUTBOX_DIR || (process.platform === 'linux' ? '/var/lib/cuberoot-assistant/outbox' : join(homedir(), '.local/state/cuberoot/assistant-outbox'));
 export interface AssistantCompletion { id: string; createdAt: string; params: unknown[] }
-const update = `UPDATE site_assistant_requests SET status=?,error_code=?,finished_at=?,duration_ms=?,first_answer_ms=?,answer=?,response=?,metrics=?
+const update = `UPDATE site_assistant_requests SET status=?,error_code=?,finished_at=?,duration_ms=?,first_answer_ms=?,answer=?,response=?,metrics=?,assistant_context=?
   WHERE id=? AND status IN ('running','interrupted')`;
 export async function applyAssistantCompletion(item: AssistantCompletion, run: QueryRunner) {
   // Replay only updates existing records: deletion of an account cannot resurrect its chats.
-  const params = [...item.params];
-  if (Date.now() - Date.parse(item.createdAt) > 30 * 86400_000) { params[5] = null; params[6] = null; }
+  const params = item.params.length === 9 ? [...item.params.slice(0, 8), null, item.params[8]] : [...item.params];
+  if (Date.now() - Date.parse(item.createdAt) > 30 * 86400_000) { params[5] = null; params[6] = null; params[8] = null; }
   await run(update, params);
 }
 export async function saveAssistantCompletion(item: AssistantCompletion, directory = assistantOutboxDirectory()) {
@@ -41,8 +41,8 @@ export async function replayAssistantCompletions(run: QueryRunner, directory = a
     const path=join(directory,name);
     try {
       const item=JSON.parse(await readFile(path,'utf8')) as AssistantCompletion;
-      if (Array.isArray(item.params) && Date.now()-Date.parse(item.createdAt)>30*86400_000 && (item.params[5]!=null || item.params[6]!=null)) {
-        item.params[5]=null;item.params[6]=null;await saveAssistantCompletion(item,directory);
+      if (Array.isArray(item.params) && Date.now()-Date.parse(item.createdAt)>30*86400_000 && (item.params[5]!=null || item.params[6]!=null || (item.params.length===10 && item.params[8]!=null))) {
+        item.params[5]=null;item.params[6]=null;if(item.params.length===10)item.params[8]=null;await saveAssistantCompletion(item,directory);
       }
     } catch(error) { if((error as NodeJS.ErrnoException).code!=='ENOENT') throw error; }
   }
@@ -52,7 +52,7 @@ export async function replayAssistantCompletions(run: QueryRunner, directory = a
       const info = await stat(path);
       if (info.size > 256_000) throw new Error('Invalid outbox entry');
       const item = JSON.parse(await readFile(path, 'utf8')) as AssistantCompletion;
-      if (!Array.isArray(item.params) || item.params.length !== 9 || item.id + '.json' !== name || item.params[8] !== item.id || !Number.isFinite(Date.parse(item.createdAt))) throw new Error('Invalid outbox entry');
+      if (!Array.isArray(item.params) || ![9,10].includes(item.params.length) || item.id + '.json' !== name || item.params.at(-1) !== item.id || !Number.isFinite(Date.parse(item.createdAt))) throw new Error('Invalid outbox entry');
       await applyAssistantCompletion(item, run);
       await unlink(path);
     } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }

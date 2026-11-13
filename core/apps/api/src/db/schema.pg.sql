@@ -9348,6 +9348,7 @@ CREATE TABLE site_assistant_requests (
   question TEXT,
   answer TEXT,
   response JSONB,
+  assistant_context JSONB,
   duration_ms INTEGER,
   first_answer_ms INTEGER,
   metrics JSONB NOT NULL DEFAULT '{}'

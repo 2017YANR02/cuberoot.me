@@ -14,7 +14,7 @@ export const SITE_ASSISTANT_IMAGE_BYTES = 768 * 1024;
 export const SITE_ASSISTANT_BODY_BYTES = 3_300_000;
 /** Saved attachments use an opaque ID and empty data; bytes are resolved only after owner authentication. */
 export interface AssistantImage { mediaType: 'image/png' | 'image/jpeg' | 'image/webp'; data: string; attachmentId?: string }
-export type AssistantErrorCode = 'request_too_large' | 'invalid_image' | 'vision_unavailable' | 'login_required' | 'wca_link_required' | 'account_forbidden' | 'daily_limit' | 'busy' | 'verification_required' | 'source_verification_required' | 'timeout' | 'network' | 'model_unavailable' | 'source_unavailable' | 'unavailable';
+export type AssistantErrorCode = 'request_too_large' | 'invalid_image' | 'vision_unavailable' | 'login_required' | 'wca_link_required' | 'account_forbidden' | 'daily_limit' | 'busy' | 'verification_required' | 'source_verification_required' | 'timeout' | 'network' | 'model_unavailable' | 'model_output_invalid' | 'model_rate_limited' | 'source_unavailable' | 'unavailable';
 export interface AssistantSource { id: string; title: string; href: string; read: boolean }
 /** Render only adapter-verified source metadata. Never apply this to model-authored links. */
 export function isAssistantSourceHref(href: string): boolean {
@@ -151,6 +151,8 @@ export const ASSISTANT_ERROR_TEXT: Record<AssistantErrorCode, { zh: string; en: 
   timeout: { zh: '这次查询超时了，请稍后重试。', en: 'This query timed out. Please try again shortly.' },
   network: { zh: '连接中断，请检查网络后重试。', en: 'The connection was interrupted. Check your network and retry.' },
   model_unavailable: { zh: '模型服务暂时无法回答，请稍后重试。', en: 'The model service is temporarily unavailable. Please try again later.' },
+  model_output_invalid: { zh: '回答生成未完成，请重试。', en: 'The answer could not be completed. Please try again.' },
+  model_rate_limited: { zh: '模型服务当前请求较多，请稍后重试。', en: 'The model service is receiving too many requests. Please try again shortly.' },
   source_unavailable: { zh: '查询资料时发生错误，请稍后重试。', en: 'A data source could not be read. Please try again later.' },
   unavailable: { zh: '问答服务暂时不可用，请稍后重试。', en: 'The assistant is temporarily unavailable. Please try again later.' },
 };

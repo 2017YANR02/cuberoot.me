@@ -548,6 +548,9 @@ jobs:
           createdb -h 127.0.0.1 -U postgres assistant_analysis_test
           psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d assistant_analysis_test -c 'CREATE EXTENSION vector'
           pnpm --filter @cuberoot/server exec vitest run tests/site_assistant_analysis_pg.test.ts tests/site_assistant_knowledge_pg.test.ts
+          createdb -h 127.0.0.1 -U postgres assistant_monitor_test
+          DB_NAME=assistant_monitor_test pnpm --filter @cuberoot/server exec vitest run tests/site_assistant_context_pg.test.ts
+          DB_NAME=assistant_monitor_test pnpm --filter @cuberoot/server exec tsx tests/fixtures/site_assistant_monitor_pg.ts
 
       - name: Verify stats-build producer contracts
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.stats == 'true' }}

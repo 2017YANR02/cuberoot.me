@@ -124,10 +124,13 @@ describe('assistant streaming', () => {
   it('holds a site-specific draft until the actual page content has been read',async()=>{
     const corpus={version:2,updated:'2026-10-10T00:00:00.000Z',pages:[{lang:'zh' as const,href:'/timer',title:'计时器',text:'打开训练菜单，选择公式集。'}]};
     const events:AssistantStreamEvent[]=[];
+    let modelCalls=0;
     const fetcher=vi.fn<typeof fetch>(async(url,init)=>{
       if(String(url).endsWith('/assistant/pages.json'))return Response.json(corpus);
       const context=JSON.parse(JSON.parse(String(init?.body)).messages[1].content);
-      const value=context.round===0?{answerKind:'site_content',answer:'UNVERIFIED instructions',sourceIds:[]}:{answerKind:'site_content',answer:'打开训练菜单，选择公式集。',sourceIds:context.sources.map((source:{id:string})=>source.id)};
+      // The server may pre-read an explicitly requested page before round 0.
+      // Make the first draft invalid, then let the isolated review use real IDs.
+      const value=++modelCalls===1?{answerKind:'site_content',answer:'UNVERIFIED instructions',sourceIds:[]}:{answerKind:'site_content',answer:'打开训练菜单，选择公式集。',sourceIds:context.sources.map((source:{id:string})=>source.id)};
       return new Response(new ReadableStream({start(controller){
         controller.enqueue(frame({choices:[{index:0,delta:{role:'assistant',content:JSON.stringify(value)},finish_reason:'stop'}]}));
         controller.enqueue(frame('[DONE]'));controller.close();
@@ -137,7 +140,7 @@ describe('assistant streaming', () => {
     expect(answer.answer).toContain('打开训练菜单');
     expect(answer.sources.some(source=>source.read)).toBe(true);
     expect(events.filter(event=>event.type==='answer').some(event=>event.answer.includes('UNVERIFIED'))).toBe(false);
-    expect(events).toContainEqual({type:'status',status:{phase:'querying',tool:'pages'}});
+    expect(fetcher.mock.calls.filter(([url])=>String(url).endsWith('/assistant/pages.json'))).toHaveLength(1);
   });
 
   it('holds concurrency slots until streams finish and maps post-header failures', async () => {

@@ -2,8 +2,15 @@ import type { AssistantErrorCode } from '@cuberoot/shared/site-assistant';
 import { currentDiagnosticRequestId, diagnosticLog } from '../observability/request.js';
 import { recordAssistantStage } from './site_assistant_monitor.js';
 
+export interface AssistantModelDiagnostic {
+  reason: 'empty_output' | 'invalid_json' | 'invalid_schema' | 'output_truncated' | 'unexpected_tool_call' | 'http_error' | 'network_error' | 'provider_error' | 'empty_body' | 'response_too_large' | 'aborted';
+  finishReason?: string;
+  issues?: Array<{ path: string; code: string }>;
+}
+
 export class AssistantFailure extends Error {
-  constructor(public readonly code: AssistantErrorCode, public readonly upstreamStatus?: number) { super(code); }
+  constructor(public readonly code: AssistantErrorCode, public readonly upstreamStatus?: number,
+    public readonly diagnostic?: AssistantModelDiagnostic, public readonly retryAfterMs?: number) { super(code); }
 }
 export function assistantFailureCode(error: unknown): AssistantErrorCode {
   if (error instanceof AssistantFailure) return error.code;
@@ -42,5 +49,12 @@ export function checkAssistantResponse(response: Response, source: 'model' | 'so
   if (response.headers.get('x-cuberoot-verification-required') === '1' || /\/(?:zh\/|en\/)?competition-verify(?:[/?]|$)/.test(location) || (source === 'source' && [401, 403].includes(response.status))) {
     throw new AssistantFailure('source_verification_required',response.status);
   }
-  if (!response.ok) throw new AssistantFailure(source === 'model' ? 'model_unavailable' : 'source_unavailable',response.status);
+  if (!response.ok) {
+    const retryAfter = response.headers.get('retry-after');
+    const retryAfterMs = retryAfter === null ? undefined : /^\d+(?:\.\d+)?$/.test(retryAfter)
+      ? Number(retryAfter) * 1000 : Math.max(0, Date.parse(retryAfter) - Date.now());
+    throw new AssistantFailure(source === 'model' ? response.status === 429 ? 'model_rate_limited' : 'model_unavailable' : 'source_unavailable', response.status,
+      source === 'model' ? { reason: 'http_error' } : undefined,
+      Number.isFinite(retryAfterMs) ? retryAfterMs : undefined);
+  }
 }

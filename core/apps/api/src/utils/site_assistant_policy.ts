@@ -4,7 +4,7 @@ import { SITE_ASSISTANT_ANSWER_MAX_LENGTH, type AssistantThinkingMode } from '@c
 export function assistantToolKey(call:Record<string,unknown>) {
   const stable=(value:unknown):unknown => Array.isArray(value)?value.map(stable):value && typeof value==='object'
     ? Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>[k,stable(v)])):value;
-  const {title,description,...queryCall}=call;
+  const {title,description,goal,...queryCall}=call;
   return JSON.stringify(stable(call.tool==='analysis_query'?queryCall:call));
 }
 

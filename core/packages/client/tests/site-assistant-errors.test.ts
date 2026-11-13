@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { assistantResponseError, ASSISTANT_ERROR_TEXT } from '@/lib/site-assistant-errors';
 
 describe('assistant failures',()=>{
+  it.each(['model_output_invalid','model_rate_limited','model_unavailable'] as const)('preserves %s from the API and provides both translations',code=>{
+    expect(assistantResponseError(new Response('',{status:503}),{error:code})).toBe(code);
+    expect(ASSISTANT_ERROR_TEXT[code].zh).toBeTruthy();
+    expect(ASSISTANT_ERROR_TEXT[code].en).toBeTruthy();
+  });
   it('distinguishes login, WCA binding and suspended accounts from CAPTCHA',()=>{
     expect(assistantResponseError(new Response('',{status:401}),null)).toBe('login_required');
     expect(assistantResponseError(new Response('',{status:403}),{error:'wca_link_required'})).toBe('wca_link_required');

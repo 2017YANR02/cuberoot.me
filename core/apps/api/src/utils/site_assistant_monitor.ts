@@ -8,9 +8,11 @@ import postgres from 'postgres';
 import { databaseSettings } from '../db/settings.js';
 import type { QueryRunner } from '../db/connection.js';
 import { assistantOutboxDirectory, replayAssistantFaults, applyAssistantCompletion, saveAssistantCompletion, removeAssistantCompletion, replayAssistantCompletions } from './site_assistant_outbox.js';
+import { assistantAnswerContext } from './site_assistant_context.js';
 import { assistantPrice } from './site_assistant_pricing.js';
 import { checkAssistantAlerts, archiveAssistantDays } from './site_assistant_monitor_jobs.js';
-import { diagnosticLog } from '../observability/request.js';
+import { currentDiagnosticRequestId, diagnosticLog } from '../observability/request.js';
+import type { AssistantModelDiagnostic } from './site_assistant_diagnostics.js';
 
 // Separate, small pool: monitoring must not consume the application's query slots.
 const db = postgres({ ...databaseSettings(), max: 2, connect_timeout: 2, idle_timeout: 20,
@@ -21,7 +23,7 @@ const write: QueryRunner = async <T>(statement: string, params: unknown[] = []) 
 };
 export interface AssistantMetrics {
   stages: Record<string, { calls: number; ms: number; errors: number }>;
-  models: Array<{ model: string; thinking: boolean; input: number | null; output: number | null; cached: number | null; reasoning: number | null; grossCny?: number | null; cacheAdjustedCny?: {min:number;max:number}|null; tariff?: unknown }>;
+  models: Array<{ model: string; thinking: boolean; input: number | null; output: number | null; cached: number | null; reasoning: number | null; grossCny?: number | null; cacheAdjustedCny?: {min:number;max:number}|null; tariff?: unknown; round?: number; attempt?: number; failure?: AssistantModelDiagnostic & { upstreamStatus?: number } }>;
   embeddings: Array<{ model: string; tokens: number | null; grossCny?: number | null; tariff?: unknown }>;
   searches: Array<{ provider: string; requests: number | null; grossCny: number | null; tariff: unknown }>;
   reranks: Array<{ model: string; candidates: number; tokens: number | null; ms: number; status: string; grossCny: number | null; tariff?: unknown }>;
@@ -39,13 +41,19 @@ export function recordAssistantStage(name: string, ms: number, failed: boolean, 
   if (tool) metrics.tools[tool] = (metrics.tools[tool] ?? 0) + 1;
 }
 const token = (value?: number) => Number.isSafeInteger(value) && value! >= 0 ? value! : null;
-export function recordAssistantModel(model: string, thinking: boolean, origin = '') {
-  const entry = { model, thinking, input: null as number | null, output: null as number | null, cached: null as number | null, reasoning: null as number | null };
+export function recordAssistantModel(model: string, thinking: boolean, origin = '', step: { round?: number; attempt?: number } = {}) {
+  const entry: AssistantMetrics['models'][number] = { model, thinking, ...step, input: null, output: null, cached: null, reasoning: null };
   scope.getStore()?.models.push(entry);
-  return (usage: LanguageModelUsage) => {
-    entry.input = token(usage.inputTokens); entry.output = token(usage.outputTokens);
-    entry.cached = token(usage.inputTokenDetails?.cacheReadTokens); entry.reasoning = token(usage.outputTokenDetails?.reasoningTokens);
-    Object.assign(entry, assistantPrice(model, origin, entry.input, entry.output, entry.cached));
+  return (usage?: LanguageModelUsage, failure?: AssistantMetrics['models'][number]['failure']) => {
+    if (usage) {
+      entry.input = token(usage.inputTokens); entry.output = token(usage.outputTokens);
+      entry.cached = token(usage.inputTokenDetails?.cacheReadTokens); entry.reasoning = token(usage.outputTokenDetails?.reasoningTokens);
+      Object.assign(entry, assistantPrice(model, origin, entry.input, entry.output, entry.cached));
+    }
+    if (failure) {
+      entry.failure = failure;
+      diagnosticLog('site_assistant_model_failure', { requestId: currentDiagnosticRequestId(), model, ...step, ...failure }, true);
+    }
   };
 }
 export function recordAssistantEmbedding(model: string, origin = '') {
@@ -160,7 +168,7 @@ export async function startAssistantMonitor(input: AssistantMonitorInput, run: Q
         snapshot.retrievals = snapshot.retrievals.map((item: AssistantMetrics['retrievals'][number]) => ({ ...item, hits: [] }));
         snapshot.retrievalDetailsTruncated = true;
       }
-      const item = { id, createdAt: startedAt, params: [status, error ?? null, new Date().toISOString(), duration, firstAnswer, redactAssistantText(result?.answer ?? partial).slice(0, SITE_ASSISTANT_ANSWER_MAX_LENGTH), result ? safeResponse(result) : null, snapshot, id] };
+      const item = { id, createdAt: startedAt, params: [status, error ?? null, new Date().toISOString(), duration, firstAnswer, redactAssistantText(result?.answer ?? partial).slice(0, SITE_ASSISTANT_ANSWER_MAX_LENGTH), result ? safeResponse(result) : null, snapshot, result ? assistantAnswerContext(result) ?? null : null, id] };
       // Disk journal survives PM2 reloads and DB outages. Test runners supply their own DB.
       let path: string | undefined;
       if (run === write) { try { path = await saveAssistantCompletion(item); } catch { failed(); } }
@@ -188,9 +196,9 @@ export async function cleanAssistantMonitoring(run: QueryRunner = write) {
   await archiveAssistantDays(run);
   await run(`UPDATE site_assistant_requests SET status='interrupted',error_code='process_interrupted',finished_at=NOW()
     WHERE status='running' AND started_at < NOW() - CASE WHEN scope='index' THEN INTERVAL '20 minutes' ELSE INTERVAL '2 minutes' END`);
-  await run(`UPDATE site_assistant_requests SET question=NULL,answer=NULL,response=NULL,review_note=NULL WHERE id IN (
+  await run(`UPDATE site_assistant_requests SET question=NULL,answer=NULL,response=NULL,assistant_context=NULL,review_note=NULL WHERE id IN (
     SELECT id FROM site_assistant_requests WHERE started_at < NOW() - INTERVAL '30 days'
-    AND (question IS NOT NULL OR answer IS NOT NULL OR response IS NOT NULL OR review_note IS NOT NULL) ORDER BY started_at LIMIT 1000)`);
+    AND (question IS NOT NULL OR answer IS NOT NULL OR response IS NOT NULL OR assistant_context IS NOT NULL OR review_note IS NOT NULL) ORDER BY started_at LIMIT 1000)`);
   await run(`DELETE FROM site_assistant_requests WHERE id IN (
     SELECT id FROM site_assistant_requests WHERE started_at < NOW() - INTERVAL '90 days' ORDER BY started_at LIMIT 1000)`);
   await run("DELETE FROM site_assistant_audit WHERE at < NOW() - INTERVAL '90 days'");

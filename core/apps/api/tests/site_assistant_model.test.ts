@@ -1,5 +1,6 @@
-import {it,expect,vi} from 'vitest';
+import {it,expect,vi,afterEach} from 'vitest';
 import {createAssistantModel} from '../src/utils/site_assistant_model.js';
+afterEach(()=>vi.restoreAllMocks());
 const config={key:'fixture',baseUrl:'https://api.deepseek.com',model:'deepseek-flash'};
 const options={system:'Use JSON for the answer.',context:{question:'question'},finalOnly:false,thinking:true,effort:'low' as const,maxTokens:2048};
 it('retains ordinary conversation roles and bounds older context without duplicating it in the question',async()=>{
@@ -36,6 +37,59 @@ it('sends actual image parts in their original turns through the compatible prov
   expect(request.messages.some((message:any)=>message.role==='assistant'&&message.content==='First answer')).toBe(true);
 });
 const response=(message:object,finish='stop')=>Response.json({id:'test',created:1,model:config.model,choices:[{index:0,finish_reason:finish,message:{role:'assistant',...message}}],usage:{prompt_tokens:1,completion_tokens:1,total_tokens:2}});
+it.each([false,true])('classifies output failures and logs only safe validation metadata (stream=%s)',async streaming=>{
+  const warn=vi.spyOn(console,'warn').mockImplementation(()=>{});
+  const cases=[
+    {content:'   ',reason:'empty_output'},
+    {content:'private-output-not-json',reason:'invalid_json'},
+    {content:JSON.stringify({answer:{private:'private-output'},sourceIds:'private-source'}),reason:'invalid_schema'},
+    {content:JSON.stringify({answer:' \n ',sourceIds:[]}),reason:'invalid_schema'},
+    {content:JSON.stringify({answer:'Done',sourceIds:[]}),finish:'length',reason:'output_truncated'},
+  ];
+  for(const fixture of cases) {
+    const finish=fixture.finish ?? 'stop';
+    const wire=streaming ? new Response('data: '+JSON.stringify({id:'test',object:'chat.completion.chunk',created:1,model:config.model,choices:[{index:0,delta:{role:'assistant',content:fixture.content},finish_reason:finish}]})+'\n\ndata: [DONE]\n\n',{headers:{'content-type':'text/event-stream'}})
+      : response({content:fixture.content},finish);
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValue(wire);
+    await expect(createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'').complete({...options,round:4,attempt:1,...(streaming?{onText:async()=>{}}:{})})).rejects.toMatchObject({
+      code:'model_output_invalid',diagnostic:{reason:fixture.reason,finishReason:finish},
+    });
+  }
+  const logs=warn.mock.calls.map(([line])=>JSON.parse(String(line)));
+  expect(logs).toContainEqual(expect.objectContaining({event:'site_assistant_model_failure',round:4,attempt:1,reason:'invalid_schema',issues:[{path:'answer',code:'invalid_type'},{path:'sourceIds',code:'invalid_type'}]}));
+  expect(JSON.stringify(logs)).not.toContain('private-output');
+  expect(JSON.stringify(logs)).not.toContain('private-source');
+});
+it.each([false,true])('classifies an interrupted response body as transport failure (stream=%s)',async streaming=>{
+  const warn=vi.spyOn(console,'warn').mockImplementation(()=>{});
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValue(new Response(new ReadableStream({start(controller){
+    controller.error(new TypeError('private-connection-details'));
+  }}),{headers:{'content-type':streaming?'text/event-stream':'application/json'}}));
+  await expect(createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'').complete({...options,...(streaming?{onText:async()=>{}}:{})})).rejects.toMatchObject({
+    code:'model_unavailable',diagnostic:{reason:'network_error'},
+  });
+  expect(JSON.stringify(warn.mock.calls)).not.toContain('private-connection-details');
+});
+it('separates Qwen tool planning from structured answer repair',async()=>{
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(response({content:'Intro {"answer":"bad","sourceIds":[]}'}))
+    .mockResolvedValueOnce(response({content:JSON.stringify({answer:'Repaired',sourceIds:[]})}));
+  const model=createAssistantModel({...config,model:'qwen-plus',baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1'},fetcher,AbortSignal.timeout(2000),'');
+  await expect(model.complete({...options,thinking:false})).rejects.toThrow('Invalid assistant answer format');
+  expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).not.toHaveProperty('response_format');
+  await model.complete({...options,thinking:false,allowTools:false,requireStructuredAnswer:true,followUp:'Repair JSON only.'});
+  expect(JSON.parse(String(fetcher.mock.calls[1][1]?.body))).toMatchObject({tool_choice:'none',response_format:{type:'json_object'}});
+});
+it('records only one executor result for an SDK-rejected native call',async()=>{
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(response({content:null,tool_calls:[{id:'invalid-date',type:'function',function:{name:'competitions',arguments:JSON.stringify({from:'2025-02-01',to:'2025-02-29',limit:50})}}]},'tool_calls'))
+    .mockResolvedValueOnce(response({content:JSON.stringify({answer:'Need valid input',sourceIds:[]})}));
+  const model=createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'');
+  const step=await model.complete(options);
+  expect(step.calls).toHaveLength(1);
+  model.record(step.calls[0],{error:'Invalid calendar date and limit'});
+  await model.complete({...options,finalOnly:true});
+  const request=JSON.parse(String(fetcher.mock.calls[1][1]?.body));
+  expect(request.messages.filter((m:any)=>m.role==='tool'&&m.tool_call_id==='invalid-date')).toEqual([{role:'tool',tool_call_id:'invalid-date',content:JSON.stringify({error:'Invalid calendar date and limit'})}]);
+});
 it.each(['```json\n%s\n```','\n%s\n```'])('accepts a compatible vision JSON fence but retains schema validation: %s',async wrapper=>{
   const fetcher=vi.fn<typeof fetch>().mockResolvedValue(response({content:wrapper.replace('%s',JSON.stringify({answer:'12.34',sourceIds:[]}))}));
   const model=createAssistantModel({...config,baseUrl:'https://bailian.example/v1'},fetcher,AbortSignal.timeout(2000),'');

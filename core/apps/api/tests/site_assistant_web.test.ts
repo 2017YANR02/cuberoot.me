@@ -51,8 +51,9 @@ describe('assistant public web search', () => {
     expect(request.input.messages[1].content).toEqual([{ text: call.query }]);
     expect(JSON.stringify(request)).not.toContain('sk-test');
     expect(result.sources).toHaveLength(1);
-    expect(result.sources[0]).toMatchObject({ href: 'https://example.org/official-update', read: true });
-    expect(result.evidence).toMatchObject({ status: 'ok', dateFilterEnforced: false, sources: [{ publishedAt: null, snippet: null }] });
+    expect(result.sources[0]).toMatchObject({ href: 'https://example.org/official-update', read: false });
+    expect(result.evidence).toMatchObject({ status: 'partial', dateFilterEnforced: false, verifiedSourceIds: [], sources: [{ publishedAt: null, snippet: null }] });
+    expect(fetcher).toHaveBeenCalledTimes(1);
     expect((result.evidence as { synthesis: string }).synthesis).toContain(`[${result.sources[0].id}]`);
     expect(monitor.model).toHaveBeenCalledWith(expect.objectContaining({ inputTokens: 200, outputTokens: 40 }));
     expect(monitor.search).toHaveBeenCalledWith(1);

@@ -13,6 +13,59 @@ const createSiteAssistantRoutes = (deps: Omit<Parameters<typeof createRoutes>[0]
 const secret='test-only-service-signing-secret-32-chars';
 afterEach(()=>{vi.restoreAllMocks();vi.unstubAllEnvs();});
 describe('assistant resilience',()=>{
+  it('repairs invalid final fields from existing evidence without repeating data reads',async()=>{
+    const requests:any[]=[];
+    let dataReads=0;
+    const fetcher=vi.fn<typeof fetch>(async (url,init)=>{
+      if(String(url).endsWith('/wiki/terms')) { dataReads++; return Response.json({sections:[]}); }
+      const body=JSON.parse(String(init?.body)); requests.push(body);
+      if(requests.length===1)return model([{tool:'glossary',query:'CFOP'}]);
+      if(requests.length===2)return model({answer:{text:'private-invalid-answer'}});
+      return model({answerKind:'general',answer:'No matching glossary entry was found.',sourceIds:[]});
+    });
+    const answer=await answerSiteQuestion('Look up CFOP.','en',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(answer.answer).toBe('No matching glossary entry was found.');
+    expect(dataReads).toBe(1);
+    expect(requests[2].tool_choice).toBe('none');
+    expect(requests[2].messages.at(-1).content).toContain('answer: invalid_type');
+    expect(wireEvidence(requests[2])).toEqual(wireEvidence(requests[1]));
+    expect(requests).toHaveLength(3);
+  });
+  it('stops after one output repair and returns a distinct failure',async()=>{
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>model({answer:'   '}));
+    await expect(answerSiteQuestion('Explain rain.','en',config,AbortSignal.timeout(5000),withCatalog(fetcher))).rejects.toMatchObject({code:'model_output_invalid'});
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(String(fetcher.mock.calls[1][1]?.body)).tool_choice).toBe('none');
+  });
+  it.each([429,503])('backs off once for HTTP %s without turning transport recovery into format repair',async status=>{
+    vi.useFakeTimers();
+    try {
+      const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(new Response('',{status,headers:{'retry-after':'1'}})).mockResolvedValueOnce(model({answer:'Recovered.'}));
+      const pending=answerSiteQuestion('Explain rain.','en',config,new AbortController().signal,withCatalog(fetcher));
+      await vi.advanceTimersByTimeAsync(999);
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1);
+      expect((await pending).answer).toBe('Recovered.');
+      expect(fetcher).toHaveBeenCalledTimes(2);
+      const body=JSON.parse(String(fetcher.mock.calls[1][1]?.body));
+      expect(body.tool_choice).toBe('auto');
+      expect(body.messages.at(-1).content).not.toContain('previous answer failed validation');
+    } finally { vi.useRealTimers(); }
+  });
+  it('honors a long Retry-After without retrying early',async()=>{
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValue(new Response('',{status:429,headers:{'retry-after':'60'}}));
+    await expect(answerSiteQuestion('Explain rain.','en',config,AbortSignal.timeout(5000),withCatalog(fetcher))).rejects.toMatchObject({code:'model_rate_limited',upstreamStatus:429,retryAfterMs:60000});
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it('does not start a retry when the original request is aborted during backoff',async()=>{
+    const controller=new AbortController();
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValue(new Response('',{status:503,headers:{'retry-after':'1'}}));
+    const pending=answerSiteQuestion('Explain rain.','en',config,controller.signal,withCatalog(fetcher));
+    const rejection=expect(pending).rejects.toThrow();
+    await vi.waitFor(()=>expect(fetcher).toHaveBeenCalledTimes(1));
+    controller.abort(); await rejection;
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
   it('answers from the formula catalog when a documentation search has no matches',async()=>{
     const answer={answerKind:'grounded',answer:'可以查询 PLL。[[algorithms]]',sourceIds:['algorithms']};
     const fetcher=vi.fn<typeof fetch>()
@@ -52,10 +105,15 @@ describe('assistant resilience',()=>{
     expect(fetcher).toHaveBeenCalledTimes(4);
     expect(fetcher.mock.calls[1][0]).toBe(fetcher.mock.calls[2][0]);
   });
-  it('stops after a second source timeout and does not retry an aborted request',async()=>{
-    const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(model([{tool:'glossary',query:'CFOP'}])).mockRejectedValue(new DOMException('timeout','TimeoutError'));
-    await expect(answerSiteQuestion('CFOP','en',config,AbortSignal.timeout(5000),withCatalog(fetcher))).rejects.toMatchObject({code:'timeout'});
-    expect(fetcher).toHaveBeenCalledTimes(3);
+  it('isolates a source timeout after bounded retries and does not retry an aborted request',async()=>{
+    let dataReads=0,modelCalls=0;
+    const fetcher=vi.fn<typeof fetch>(async url=>{
+      if(String(url).endsWith('/wiki/terms')){dataReads++;throw new DOMException('timeout','TimeoutError');}
+      return ++modelCalls===1?model([{tool:'glossary',query:'CFOP'}]):model({answerKind:'general',answer:'The requested definition is temporarily unavailable; I cannot confirm it.'});
+    });
+    const result=await answerSiteQuestion('CFOP','en',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(dataReads).toBe(2);expect(modelCalls).toBe(3);
+    expect(result.answer).toContain('cannot confirm');expect(result.sources).toEqual([]);
     const controller=new AbortController();
     const aborted=vi.fn<typeof fetch>().mockResolvedValueOnce(model([{tool:'glossary',query:'CFOP'}])).mockImplementationOnce(async()=>{controller.abort();throw new TypeError('fetch failed');});
     await expect(answerSiteQuestion('CFOP','en',config,controller.signal,withCatalog(aborted))).rejects.toThrow();
@@ -70,12 +128,13 @@ describe('assistant resilience',()=>{
       .mockRejectedValueOnce(new TypeError('private-network-detail'))
       .mockRejectedValueOnce(new TypeError('private-network-detail'))
       .mockResolvedValueOnce(model([{tool:'glossary',query:'PLL'}]))
+      .mockResolvedValueOnce(model(answer))
       .mockResolvedValueOnce(model(answer));
     const result=await answerSiteQuestion('How many PLL cases are there, and what does the glossary say?','en',config,AbortSignal.timeout(5000),withCatalog(fetcher));
     expect(result.answer).toBe(answer.answer);
     expect(result.sources.map(source=>source.id)).toEqual(['algorithms']);
     expect(fetcher.mock.calls.filter(([url])=>String(url).endsWith('/wiki/terms'))).toHaveLength(2);
-    expect(fetcher).toHaveBeenCalledTimes(6);
+    expect(fetcher).toHaveBeenCalledTimes(7);
     const evidence=wireEvidence(JSON.parse(String(fetcher.mock.calls[5][1]?.body)));
     expect(evidence.filter((entry:any)=>entry.tool.tool==='glossary')).toHaveLength(2);
     expect(evidence.filter((entry:any)=>entry.tool.tool==='glossary').every((entry:any)=>entry.data.notEvidence)).toBe(true);
@@ -93,7 +152,8 @@ describe('assistant resilience',()=>{
     const sourceId='person-competitions:2017YANR02:all:all';
     const modelFetch=vi.fn<typeof fetch>()
       .mockResolvedValueOnce(model([{tool:'person_competitions',wcaId:'2017YANR02'},{tool:'glossary',query:'CFOP'}]))
-      .mockResolvedValueOnce(model({answerKind:'grounded',answer:'999 competitions. The glossary could not be read.',sourceIds:[sourceId]}));
+      .mockResolvedValueOnce(model({answerKind:'grounded',answer:'999 competitions. The glossary could not be read.',sourceIds:[sourceId]}))
+      .mockResolvedValueOnce(model({answerKind:'grounded',answer:'1 competition. The glossary could not be read.',sourceIds:[sourceId]}));
     const fetcher:typeof fetch=async(input,init)=>{
       const url=new URL(String(input));
       if(url.pathname.endsWith('/person-page'))return Response.json({profile:{person:{name:'Ruimin Yan (颜瑞民)'}},results:[{competition_id:'A'}],comps:[{id:'A',start_date:'2026-01-01'}]});
@@ -106,7 +166,7 @@ describe('assistant resilience',()=>{
     expect(result.answer).not.toContain('999');
     expect(result.answer).toContain('Some additional sources could not be read.');
     expect(result.sources.map(source=>source.id)).toEqual([sourceId]);
-    expect(modelFetch).toHaveBeenCalledTimes(2);
+    expect(modelFetch).toHaveBeenCalledTimes(3);
   });
   it('accepts native tool calls without retry, while still validating every tool',async()=>{
     const fetcher=vi.fn<typeof fetch>()

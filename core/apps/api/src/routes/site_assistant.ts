@@ -14,6 +14,7 @@ import { assistantImageSchema, inlineAssistantImageSchema, readAssistantAttachme
 import { verifySession } from '../utils/session.js';
 import { query, type QueryRunner } from '../db/connection.js';
 import { startAssistantMonitor, recordAssistantEntry } from '../utils/site_assistant_monitor.js';
+import { restoreAssistantContext, type AssistantContext } from '../utils/site_assistant_context.js';
 
 export async function requireAssistantUser(c: Context): Promise<{ uid: number; wcaId: string }> {
   // Paid AI requires a current CubeRoot session. Do not enter the legacy raw-WCA
@@ -52,7 +53,7 @@ const inputSchema = z.object({
   .refine(input => (input.images?.length ?? 0) + input.history.reduce((count, message) => count + (message.images?.length ?? 0), 0) <= SITE_ASSISTANT_MAX_IMAGES, { path: ['images'] });
 
 // Burst limits are per process; the daily shared limit is atomic and durable.
-export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuestion; config: typeof assistantConfig; now: () => number; reserve: typeof reserveAssistantQuestion; authenticate: typeof requireAssistantUser; monitor?: typeof startAssistantMonitor; eventsQuery?: QueryRunner; entry?: typeof recordAssistantEntry; readAttachment?: typeof readAssistantAttachment; saveAttachment?: typeof saveAssistantAttachment } = { answer: answerSiteQuestion, config: assistantConfig, now: Date.now, reserve: reserveAssistantQuestion, authenticate: requireAssistantUser, monitor: startAssistantMonitor, entry: recordAssistantEntry, readAttachment: readAssistantAttachment, saveAttachment: saveAssistantAttachment }) {
+export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuestion; config: typeof assistantConfig; now: () => number; reserve: typeof reserveAssistantQuestion; authenticate: typeof requireAssistantUser; monitor?: typeof startAssistantMonitor; eventsQuery?: QueryRunner; contextQuery?: QueryRunner; entry?: typeof recordAssistantEntry; readAttachment?: typeof readAssistantAttachment; saveAttachment?: typeof saveAssistantAttachment } = { answer: answerSiteQuestion, config: assistantConfig, now: Date.now, reserve: reserveAssistantQuestion, authenticate: requireAssistantUser, monitor: startAssistantMonitor, entry: recordAssistantEntry, readAttachment: readAssistantAttachment, saveAttachment: saveAssistantAttachment }) {
   const routes = new Hono();
   let active = 0;
   let minute = 0;
@@ -77,8 +78,9 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
     const signal = AbortSignal.any([disconnect.signal, c.req.raw.signal, AbortSignal.timeout(assistantTimeoutMs(parsed.data.thinking) - 2000)]);
     let admitted = false, recordingFailed = false;
     let monitor: Awaited<ReturnType<typeof startAssistantMonitor>> | undefined;
+    let priorContext: AssistantContext | undefined;
     const answer = (user: { wcaId: string }, emit?: (event: AssistantStreamEvent) => Promise<void>) => {
-      const run = () => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, history, user.wcaId, emit, parsed.data.timeZone, images, parsed.data.thinking);
+      const run = () => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, history, user.wcaId, emit, parsed.data.timeZone, images, parsed.data.thinking, {}, priorContext);
       return monitor ? monitor.run(run) : run();
     };
     const failure = (error: unknown) => monitor?.finish(disconnect.signal.aborted || c.req.raw.signal.aborted ? 'cancelled' : 'error', assistantFailureCode(error));
@@ -93,6 +95,9 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
       signal.throwIfAborted();
       try { monitor = await deps.monitor?.({ uid: user.uid, startedAt: requestStarted, question: parsed.data.question, lang: parsed.data.lang, model: config.model, streaming: !!c.req.header('Accept')?.includes('text/event-stream'), imageCount: (parsed.data.images?.length ?? 0) + history.reduce((n, m) => n + (m.images?.length ?? 0), 0), historyCount: history.length, conversationId: parsed.data.conversationId, parentId: parsed.data.parentId, retryOf: parsed.data.retryOf, thinking: parsed.data.thinking }); } catch(error) { recordingFailed=true;throw error; }
       if (monitor?.id) c.header('X-Assistant-Request-Id', monitor.id);
+      if(parsed.data.conversationId && parsed.data.parentId) {
+        priorContext=await restoreAssistantContext(deps.contextQuery ?? query,user.uid,parsed.data.conversationId,parsed.data.parentId).catch(()=>undefined);
+      }
       signal.throwIfAborted();
       const now = deps.now();
       if (Math.floor(now / 60000) !== minute) { minute = Math.floor(now / 60000); minuteCount = 0; clients.clear(); }

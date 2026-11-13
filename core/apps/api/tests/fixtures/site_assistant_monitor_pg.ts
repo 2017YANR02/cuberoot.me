@@ -26,6 +26,7 @@ const run: QueryRunner = async <T>(statement: string, params: unknown[] = []) =>
 try {
   await db.unsafe('CREATE TABLE app_users (id BIGINT PRIMARY KEY)');
   await db.unsafe(await readFile(new URL('../../migrations/0277_assistant_monitoring.sql', import.meta.url), 'utf8'));
+  await db.unsafe(await readFile(new URL('../../migrations/0323_assistant_context.sql', import.meta.url), 'utf8'));
   await db`INSERT INTO app_users VALUES (7),(8)`;
   await db`UPDATE site_assistant_monitor_state SET enabled_at=NOW()-INTERVAL '3 days'`;
   const recorder = await startAssistantMonitor({ uid: 7, question: 'PLL navigation', lang: 'en', model: 'test', streaming: true, imageCount: 0, historyCount: 0 }, run);
@@ -108,8 +109,10 @@ try {
   } finally { await rm(outbox,{recursive:true,force:true}); }
   const delivered:unknown[]=[];const deliver=async(value:unknown)=>{delivered.push(value);};
   await checkAssistantAlerts(run,2,deliver);await checkAssistantAlerts(run,2,deliver);
-  assert.equal(delivered.length,1);
-  await checkAssistantAlerts(run,0,deliver);assert.equal(delivered.length,2);
+  assert.equal((await db`SELECT active FROM site_assistant_alerts WHERE code='recording'`)[0].active,true);
+  assert.equal(delivered.length,0); // Recording faults are dashboard-only diagnostics.
+  await checkAssistantAlerts(run,0,deliver);assert.equal(delivered.length,0);
+  assert.equal((await db`SELECT active FROM site_assistant_alerts WHERE code='recording'`)[0].active,false);
   await cleanAssistantMonitoring(run);
   assert.equal((await db`SELECT status FROM site_assistant_requests WHERE id=${stale}`)[0].status, 'interrupted');
   assert.equal((await db`SELECT question FROM site_assistant_requests WHERE id=${expired}`)[0].question, null);

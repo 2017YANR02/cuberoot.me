@@ -23,7 +23,7 @@ export const toolCallSchema = z.discriminatedUnion('tool', [
   analysisSchemaCall,
   analysisQueryCall,
   z.object({ tool: z.literal('deliberate') }).strict(),
-  z.object({ tool: z.literal('web_search'), query: z.string().trim().min(2).max(300), recency: z.enum(['any','day','week','month','year']).default('any') }).strict(),
+  z.object({ tool: z.literal('web_search'), query: z.string().trim().min(2).max(300), recency: z.enum(['any','day','week','month','year']).default('any'), from: date.optional(), to: date.optional(), dateBasis: z.enum(['publication','event']).optional() }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
   z.object({ tool: z.literal('news'), from: date.optional(), to: date.optional(), limit: z.number().int().min(1).max(10).default(5) }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
   z.object({ tool: z.literal('records'), event, region: z.string().regex(/^(world|[A-Z]{2})$/).default('world') }).strict(),
   z.object({ tool: z.literal('find_person'), query }).strict(),
