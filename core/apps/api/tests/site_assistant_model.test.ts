@@ -12,6 +12,16 @@ it('retains ordinary conversation roles and bounds older context without duplica
   expect(JSON.parse(request.messages.at(-1).content)).toEqual({question:'question'});
   expect(result.answerKind).toBe('general');
 });
+it('omits unavailable query schemas and all tool schemas for final-only generation',async()=>{
+  const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>response({content:JSON.stringify({answerKind:'general',answer:'Done',sourceIds:[]})}));
+  const model=createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'');
+  await model.complete({...options,unavailableTools:['analysis_query']});
+  const planning=JSON.parse(String(fetcher.mock.calls[0][1]?.body));
+  expect(planning.tools.some((tool:any)=>tool.function.name==='analysis_schema')).toBe(true);
+  expect(planning.tools.some((tool:any)=>tool.function.name==='analysis_query')).toBe(false);
+  await model.complete({...options,finalOnly:true});
+  expect(JSON.parse(String(fetcher.mock.calls[1][1]?.body)).tools).toBeUndefined();
+});
 it('enables bounded reasoning for supported Qwen while unknown compatible providers stay fast',async()=>{
   const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>response({content:JSON.stringify({answer:'Done',sourceIds:[]})}));
   const qwen={...config,model:'qwen3.8-flash',baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1'};
@@ -77,7 +87,7 @@ it('separates Qwen tool planning from structured answer repair',async()=>{
   await expect(model.complete({...options,thinking:false})).rejects.toThrow('Invalid assistant answer format');
   expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).not.toHaveProperty('response_format');
   await model.complete({...options,thinking:false,allowTools:false,requireStructuredAnswer:true,followUp:'Repair JSON only.'});
-  expect(JSON.parse(String(fetcher.mock.calls[1][1]?.body))).toMatchObject({tool_choice:'none',response_format:{type:'json_object'}});
+  expect(JSON.parse(String(fetcher.mock.calls[1][1]?.body))).toMatchObject({response_format:{type:'json_object'}});
 });
 it('records only one executor result for an SDK-rejected native call',async()=>{
   const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(response({content:null,tool_calls:[{id:'invalid-date',type:'function',function:{name:'competitions',arguments:JSON.stringify({from:'2025-02-01',to:'2025-02-29',limit:50})}}]},'tool_calls'))
@@ -107,7 +117,7 @@ it('round trips native tool IDs and reasoning only through the provider transcri
   const request=JSON.parse(String(fetcher.mock.calls[1][1]?.body));
   expect(request.messages.find((m:any)=>m.role==='assistant').reasoning_content).toBe('provider-private-reasoning');
   expect(request.messages.find((m:any)=>m.role==='tool')).toMatchObject({tool_call_id:'native-id',content:JSON.stringify({sources:[{id:'timer'}]})});
-  expect(request.tool_choice).toBe('none');
+  expect(request.tools).toBeUndefined();
 });
 it.each([false,true])('returns one result per tool call after SDK input validation fails (stream=%s)',async stream=>{
   const toolCalls=[

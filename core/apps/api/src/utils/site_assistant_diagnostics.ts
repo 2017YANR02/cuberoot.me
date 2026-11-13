@@ -29,7 +29,7 @@ export function assistantDeadline<T>(run: () => Promise<T>, signal: AbortSignal)
 }
 
 /** Never log questions, identities, URLs, evidence, provider bodies or credentials. */
-export async function assistantStage<T>(stage: 'auth' | 'quota' | 'model' | 'data' | 'page' | 'tool' | 'total', run: () => Promise<T>, round?: number, tool?: string): Promise<T> {
+export async function assistantStage<T>(stage: 'auth' | 'quota' | 'model' | 'review' | 'data' | 'page' | 'tool' | 'total', run: () => Promise<T>, round?: number, tool?: string): Promise<T> {
   const started = performance.now();
   const requestId = currentDiagnosticRequestId();
   diagnosticLog('site_assistant_stage', { requestId, stage, phase: 'start', round });

@@ -26,13 +26,16 @@ describe('reviewed analysis answer presentation', () => {
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'analysis_schema',datasets:['results','persons','competitions']},
         {tool:'analysis_query',title:source.title,description:'Earlier analysis',query:{from:{dataset:'results',as:'r'},select:[{as:'count',label:'Count',expr:{fn:'count',args:[]}}]}},
         {tool:'analysis_query',title:winnerSource.title,description:'Winners',query:championQuery}]}))
-      .mockResolvedValueOnce(modelResponse({answerKind:'grounded',answer:'保留两份分析的说明。',sourceIds}))
       .mockResolvedValueOnce(modelResponse({answerKind:'grounded',answer:'保留两份分析的说明。',sourceIds,reviewedSourceIds:sourceIds}));
     const result=await answerSiteQuestion('上周末谁拿了冠军？','zh',config,AbortSignal.timeout(5000),fetcher);
     expect(result.answer).toBe(selectBoth
       ? `保留两份分析的说明。 [[${source.id}]] [[${winnerSource.id}]]`
       : '2024-03-02~03 期间举办的比赛，三阶决赛冠军如下：[[analysis:winners]]');
     expect(result.artifacts).toEqual(selectBoth?[table,winnerTable]:[winnerTable]);
+    const review=JSON.parse(String(fetcher.mock.calls[1][1]?.body));
+    expect(review.messages[0].content).toContain('Every requested calculated measure');
+    expect(JSON.parse(review.messages[1].content).draftAnswer).toBeUndefined();
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
   it.each([true,false])('uses the actual winner query only after the table is reviewed: %s',async reviewed=>{
@@ -43,7 +46,6 @@ describe('reviewed analysis answer presentation', () => {
     const prose='最快是第三位；赛历其余 30 场尚未导入决赛。';
     const fetcher=vi.fn<typeof fetch>()
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'analysis_schema',datasets:['results','persons','competitions']},{tool:'analysis_query',title:winnerSource.title,description:'A description is not evidence',query:championQuery}]}))
-      .mockResolvedValueOnce(modelResponse({answerKind:'grounded',answer:prose,sourceIds:[winnerSource.id]}))
       .mockResolvedValueOnce(modelResponse({answerKind:'grounded',answer:prose,sourceIds:[winnerSource.id],reviewedSourceIds:reviewed?[winnerSource.id]:[]}));
     const result=await answerSiteQuestion('上周末谁拿了冠军？','zh',config,AbortSignal.timeout(5000),fetcher);
     if(reviewed) {
@@ -62,7 +64,7 @@ describe('reviewed analysis answer presentation', () => {
     ['今年参加了 26 场，比去年少 4 场；今年统计截至目前。', '今年参加了 26 场，比去年少 4 场；今年统计截至目前。 [[analysis:comparison]]'],
     ['今年参加了 26 场。[analysis:comparison]', '今年参加了 26 场。[[analysis:comparison]]'],
     ['', '现场计算结果见下表。 [[analysis:comparison]]'],
-  ])('preserves the reviewed conclusion and uses a summary only for empty prose: %s', async (answer, expected) => {
+  ])('preserves the reviewed conclusion and repairs empty prose before displaying the table: %s', async (answer, expected) => {
     vi.mocked(runAnalysisQuery).mockResolvedValue({
       sources: [source], factualSummary: '现场计算结果见下表。', artifacts: [table],
       evidence: { rows: table.rows },
@@ -72,12 +74,17 @@ describe('reviewed analysis answer presentation', () => {
         { tool: 'analysis_schema', datasets: ['results'] },
         { tool: 'analysis_query', title: source.title, description: 'Distinct competitions and their difference', query: {} },
       ] }))
-      .mockResolvedValueOnce(modelResponse({ answerKind: 'grounded', answer: '初步结果。', sourceIds: [source.id] }))
       .mockResolvedValueOnce(modelResponse({ answerKind: 'grounded', answer, sourceIds: [source.id], reviewedSourceIds: [source.id] }));
+    if(!answer)fetcher.mockResolvedValueOnce(modelResponse({answerKind:'grounded',answer:'现场计算结果见下表。',sourceIds:[source.id],reviewedSourceIds:[source.id]}));
     const result = await answerSiteQuestion('比较我今年和去年的参赛次数', 'zh', config, AbortSignal.timeout(5000), fetcher, [], '2017YANR02');
     expect(result.answer).toBe(expected);
     expect(result.sources).toEqual([source]);
     expect(result.artifacts).toEqual([table]);
-    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(fetcher).toHaveBeenCalledTimes(answer?2:3);
+    if(!answer) {
+      const repair=JSON.parse(String(fetcher.mock.calls[2][1]?.body));
+      expect(repair.tools).toBeUndefined();
+      expect(repair.messages.at(-1).content).toContain('a non-empty plain string');
+    }
   });
 });

@@ -44,7 +44,7 @@ it('reads an explicitly requested page before a general-labelled draft and disti
   expect(result.sources[0].read).toBe(true);
   expect(requests.length).toBeGreaterThan(0);
 });
-it('recomposes from full evidence without carrying the earlier draft or assistant history',async()=>{
+it('composes from full evidence without an unused draft or assistant history',async()=>{
   vi.stubEnv('SITE_ASSISTANT_KNOWLEDGE_ENABLED','0');
   const corpus={version:2,updated:'2026-10-10T00:00:00Z',pages:[{lang:'zh',href:'/timer',title:'计时器训练',text:'先选择项目，再开始练习。'}]};
   let calls=0;
@@ -52,15 +52,14 @@ it('recomposes from full evidence without carrying the earlier draft or assistan
     if(String(input).endsWith('/assistant/pages.json'))return Response.json(corpus);
     const body=JSON.parse(String(init?.body));calls++;
     const context=JSON.parse(body.messages.find((m:any)=>m.role==='user'&&m.content.startsWith('{')).content);
-    if(calls===1)return modelResponse({answerKind:'site_content',answer:'UNVERIFIED_DRAFT',sourceIds:[context.sources[0].id]});
-    expect(body.tool_choice).toBe('none');
+    expect(body.tool_choice).toBe('auto');
     expect(JSON.stringify(body)).not.toContain('UNVERIFIED_DRAFT');
     expect(JSON.stringify(body)).not.toContain('EARLIER_ASSISTANT_CLAIM');
     expect(wireEvidence(body)[0].data.pages[0].content).toContain('先选择项目');
     return modelResponse({answerKind:'site_content',answer:'先选择项目，再开始练习。',sourceIds:[context.sources[0].id]});
   });
   const result=await answerSiteQuestion('请根据页面资料说明计时器训练步骤。','zh',config,AbortSignal.timeout(3000),fetcher,[{role:'assistant',content:'EARLIER_ASSISTANT_CLAIM'}]);
-  expect(result.answer).toContain('先选择项目');expect(calls).toBe(2);
+  expect(result.answer).toContain('先选择项目');expect(calls).toBe(1);
 });
 it('revalidates citations invented by the final reviewer',async()=>{
   vi.stubEnv('SITE_ASSISTANT_KNOWLEDGE_ENABLED','0');
@@ -68,10 +67,10 @@ it('revalidates citations invented by the final reviewer',async()=>{
   const fetcher=vi.fn<typeof fetch>(async(input,init)=>{
     if(String(input).endsWith('/assistant/pages.json'))return Response.json(corpus);
     const context=JSON.parse(JSON.parse(String(init?.body)).messages.find((m:any)=>m.role==='user').content);
-    return modelResponse(++calls===1?{answerKind:'site_content',answer:'选择练习项目。',sourceIds:[context.sources[0].id]}:{answerKind:'site_content',answer:'Unsupported [[forged]]',sourceIds:['forged']});
+    calls++;return modelResponse({answerKind:'grounded',answer:'Unsupported [[forged]]',sourceIds:['forged']});
   });
   const result=await answerSiteQuestion('请按页面资料说明计时器训练。','zh',config,AbortSignal.timeout(3000),fetcher);
-  expect(result.answer).not.toContain('Unsupported');expect(result.sources).toEqual([]);expect(calls).toBe(2);
+  expect(result.answer).not.toContain('Unsupported');expect(result.sources).toEqual([]);expect(calls).toBe(3);
 });
 it('does not release a grounded answer when no evidence was read',async()=>{
   const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>modelResponse({answerKind:'grounded',answer:'Unverified 37 competitions',sourceIds:[]}));
@@ -89,15 +88,13 @@ it('accepts a pure evidence-gap answer but not a mixed gap and unsupported asser
     const fetcher=vi.fn<typeof fetch>(async(input,init)=>{
       if(String(input).endsWith('/assistant/pages.json'))return Response.json(corpus);
       const context=JSON.parse(JSON.parse(String(init?.body)).messages.find((message:any)=>message.role==='user'&&message.content.startsWith('{')).content);
-      const answer=++calls===1
-        ? {answerKind:'site_content',answer:'计时器支持一键云同步。',sourceIds:[context.sources[0].id]}
-        : {answerKind:'site_content',answer:reviewAnswer,sourceIds:[]};
+      calls++;const answer={answerKind:'site_content',answer:reviewAnswer,sourceIds:[]};
       return modelResponse(answer);
     });
     const result=await answerSiteQuestion('计时器云同步功能是否可用？','zh',config,AbortSignal.timeout(3000),fetcher);
     if(expected==='gap') { expect(result.answer).toBe(reviewAnswer);expect(result.sources).toEqual([]); }
     else { expect(result.answer).not.toContain('支持一键同步');expect(result.sources).toEqual([]); }
-    expect(calls).toBe(2);
+    expect(calls).toBe(expected==='gap'?1:3);
   }
 });
 const priorTableSource={id:'rankings',title:'2025 测试排名',href:'/wca/results',read:true};
@@ -279,7 +276,7 @@ it('does not substitute navigation for an explicitly required but unavailable pa
   const fetcher=vi.fn<typeof fetch>(async(input,init)=>{
     if(String(input).endsWith('/assistant/pages.json'))return new Response('',{status:404});
     calls++;const body=JSON.parse(String(init?.body));
-    if(calls===2)expect(body.tool_choice).toBe('none');
+    if(calls===2)expect(body.tools).toBeUndefined();
     return modelResponse({answerKind:'general',answer:'当前页面资料无法取得，无法确认具体步骤。',sourceIds:[]});
   });
   const result=await answerSiteQuestion('请根据页面资料说明计时器。','zh',config,AbortSignal.timeout(3000),fetcher);

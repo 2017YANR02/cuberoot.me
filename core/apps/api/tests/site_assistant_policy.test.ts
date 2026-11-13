@@ -23,4 +23,10 @@ describe('assistant effort policy', () => {
     expect(assistantReasoningPolicy('deep',{tools:[],repair:false,review:false})).toEqual({thinking:true,effort:'high',maxTokens:16384});
     expect(assistantReasoningPolicy('fast',{tools:['analysis_query','deliberate','web_search'],repair:true,review:true})).toEqual({thinking:false,effort:'high',maxTokens:4096});
   });
+  it('uses low effort only for ordinary auto evidence review',()=>{
+    expect(assistantReasoningPolicy('auto',{tools:['glossary'],repair:false,review:true}).effort).toBe('low');
+    expect(assistantReasoningPolicy('auto',{tools:['pages'],repair:false,review:true,criticalReview:true}).effort).toBe('high');
+    expect(assistantReasoningPolicy('auto',{tools:['analysis_query'],repair:false,review:true}).effort).toBe('high');
+    expect(assistantReasoningPolicy('deep',{tools:['glossary'],repair:false,review:true}).effort).toBe('high');
+  });
 });

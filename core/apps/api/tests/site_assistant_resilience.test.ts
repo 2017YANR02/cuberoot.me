@@ -6,6 +6,7 @@ import { createSiteAssistantRoutes as createRoutes } from '../src/routes/site_as
 import { AssistantFailure } from '../src/utils/site_assistant_diagnostics.js';
 import { modelResponse as model, wireEvidence } from './fixtures/site_assistant_model.js';
 import { chunkKnowledge } from '../src/utils/site_assistant_knowledge.js';
+import * as analysis from '../src/utils/site_assistant_analysis_db.js';
 vi.mock('../src/utils/site_assistant_people.js',()=>({findAssistantPeople:vi.fn(async()=>[])}));
 
 const config={key:'private-model-key',baseUrl:'https://model.example/v1',model:'test'};
@@ -13,6 +14,28 @@ const createSiteAssistantRoutes = (deps: Omit<Parameters<typeof createRoutes>[0]
 const secret='test-only-service-signing-secret-32-chars';
 afterEach(()=>{vi.restoreAllMocks();vi.unstubAllEnvs();});
 describe('assistant resilience',()=>{
+  it('allows an independent calculation after a public search fails',async()=>{
+    const source={id:'analysis:independent',title:'Competition count',href:'/wca/results',read:true};
+    const table={kind:'table' as const,title:source.title,columns:['Count'],rows:[['7']]};
+    const query=vi.spyOn(analysis,'runAnalysisQuery').mockResolvedValue({sources:[source],artifacts:[table],evidence:{rows:[['7']]}});
+    let models=0;
+    const fetcher=vi.fn<typeof fetch>(async(url,init)=>{
+      if(String(url).endsWith('/wiki/terms'))return Response.json({sections:[{entries:[{id:1,head:'TPS',body:'Turns per second.'}]}]});
+      if(String(url).includes('/forum/search'))return new Response('',{status:503});
+      const request=JSON.parse(String(init?.body));
+      if(++models===1)return model([{tool:'glossary',query:'TPS'},{tool:'forum',query:'TPS'}]);
+      if(models===2) {
+        expect(request.tools.some((tool:any)=>tool.function.name==='forum')).toBe(false);
+        return model([{tool:'analysis_schema',datasets:['results']},{tool:'analysis_query',title:source.title,description:'Distinct competitions',query:{}}]);
+      }
+      return model({answerKind:'grounded',answer:'TPS means turns per second. The count is 7; the forum could not be checked. [[wiki:1]] [[analysis:independent]]',sourceIds:['wiki:1',source.id],reviewedSourceIds:[source.id]});
+    });
+    const result=await answerSiteQuestion('Define TPS, find its forum discussion, and count my competitions.','en',config,AbortSignal.timeout(5000),withCatalog(fetcher),[],'2017YANR02');
+    expect(query).toHaveBeenCalledTimes(1);
+    expect(result.artifacts).toEqual([table]);
+    expect(result.sources.map(item=>item.id)).toEqual(['wiki:1',source.id]);
+    expect(result.answer).toContain('forum could not be checked');
+  });
   it('repairs invalid final fields from existing evidence without repeating data reads',async()=>{
     const requests:any[]=[];
     let dataReads=0;
@@ -26,7 +49,7 @@ describe('assistant resilience',()=>{
     const answer=await answerSiteQuestion('Look up CFOP.','en',config,AbortSignal.timeout(5000),withCatalog(fetcher));
     expect(answer.answer).toBe('No matching glossary entry was found.');
     expect(dataReads).toBe(1);
-    expect(requests[2].tool_choice).toBe('none');
+    expect(requests[2].tools).toBeUndefined();
     expect(requests[2].messages.at(-1).content).toContain('answer: invalid_type');
     expect(wireEvidence(requests[2])).toEqual(wireEvidence(requests[1]));
     expect(requests).toHaveLength(3);
@@ -35,7 +58,7 @@ describe('assistant resilience',()=>{
     const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>model({answer:'   '}));
     await expect(answerSiteQuestion('Explain rain.','en',config,AbortSignal.timeout(5000),withCatalog(fetcher))).rejects.toMatchObject({code:'model_output_invalid'});
     expect(fetcher).toHaveBeenCalledTimes(2);
-    expect(JSON.parse(String(fetcher.mock.calls[1][1]?.body)).tool_choice).toBe('none');
+    expect(JSON.parse(String(fetcher.mock.calls[1][1]?.body)).tools).toBeUndefined();
   });
   it.each([429,503])('backs off once for HTTP %s without turning transport recovery into format repair',async status=>{
     vi.useFakeTimers();
@@ -90,7 +113,7 @@ describe('assistant resilience',()=>{
         .mockResolvedValueOnce(model({answer:'本周 WCA 官方消息：公告已更新。[[news:update]]',sourceIds:['news:update']}));
       const result=await answerSiteQuestion('这周魔方圈有什么新闻？','zh',config,new AbortController().signal,withCatalog(fetcher),[],undefined,undefined,'Asia/Shanghai');
       expect(fetcher.mock.calls[1][0]).toBe('https://www.worldcubeassociation.org/rss.xml');
-      expect(fetcher).toHaveBeenCalledTimes(4); // Includes the final evidence review.
+      expect(fetcher).toHaveBeenCalledTimes(3); // Includes the final evidence review.
       expect(result.sources[0].href).toBe('https://www.worldcubeassociation.org/posts/update');
       const evidence=wireEvidence(JSON.parse(String(fetcher.mock.calls[2][1]?.body)));
       expect(evidence[0].data).toMatchObject({from:'2026-10-19',to:'2026-10-25',timeZone:'Asia/Shanghai'});
@@ -134,7 +157,10 @@ describe('assistant resilience',()=>{
     expect(result.answer).toBe(answer.answer);
     expect(result.sources.map(source=>source.id)).toEqual(['algorithms']);
     expect(fetcher.mock.calls.filter(([url])=>String(url).endsWith('/wiki/terms'))).toHaveLength(2);
-    expect(fetcher).toHaveBeenCalledTimes(7);
+    expect(fetcher).toHaveBeenCalledTimes(6);
+    const remaining=JSON.parse(String(fetcher.mock.calls[4][1]?.body));
+    expect(remaining.tool_choice).toBe('auto');
+    expect(remaining.tools.some((tool:any)=>tool.function.name==='glossary')).toBe(false);
     const evidence=wireEvidence(JSON.parse(String(fetcher.mock.calls[5][1]?.body)));
     expect(evidence.filter((entry:any)=>entry.tool.tool==='glossary')).toHaveLength(2);
     expect(evidence.filter((entry:any)=>entry.tool.tool==='glossary').every((entry:any)=>entry.data.notEvidence)).toBe(true);
@@ -166,7 +192,7 @@ describe('assistant resilience',()=>{
     expect(result.answer).not.toContain('999');
     expect(result.answer).toContain('Some additional sources could not be read.');
     expect(result.sources.map(source=>source.id)).toEqual([sourceId]);
-    expect(modelFetch).toHaveBeenCalledTimes(3);
+    expect(modelFetch).toHaveBeenCalledTimes(2);
   });
   it('accepts native tool calls without retry, while still validating every tool',async()=>{
     const fetcher=vi.fn<typeof fetch>()
@@ -244,9 +270,13 @@ describe('assistant resilience',()=>{
   it('does not turn an invented page ID into an on-demand URL',async()=>{
     const fetcher=vi.fn<typeof fetch>()
       .mockResolvedValueOnce(model({calls:[{tool:'pages',query:'unknown',pageIds:['page:/unknown-public-route']}]}))
-      .mockResolvedValueOnce(Response.json({updated:'2026-10-26T00:00:00.000Z',pages:[]}));
-    await expect(answerSiteQuestion('Read it','en',config,AbortSignal.timeout(5000),withCatalog(fetcher))).rejects.toMatchObject({code:'source_unavailable'});
-    expect(fetcher).toHaveBeenCalledTimes(2);
+      .mockResolvedValueOnce(Response.json({updated:'2026-10-26T00:00:00.000Z',pages:[]}))
+      .mockImplementation(async()=>model({answerKind:'general',answer:'I could not verify that page.',sourceIds:[]}));
+    const result=await answerSiteQuestion('Read it','en',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(result.sources).toEqual([]);
+    const evidence=wireEvidence(JSON.parse(String(fetcher.mock.calls[2][1]?.body)));
+    expect(evidence[0]).toMatchObject({outcome:{state:'blocked',reason:'invalid_page_reference'},data:{notEvidence:true,error:'invalid_page_reference'}});
+    expect(fetcher.mock.calls.some(([url])=>String(url).includes('/unknown-public-route'))).toBe(false);
   });
   it('logs stage timing without recording question, provider body or model key',async()=>{
     const log=vi.spyOn(console,'log').mockImplementation(()=>{});

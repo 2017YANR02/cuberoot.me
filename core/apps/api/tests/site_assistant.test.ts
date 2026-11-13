@@ -118,7 +118,6 @@ describe('site assistant grounding', () => {
   it('preserves a reviewed evidence gap without displaying rejected calculations',async()=>{
     vi.mocked(runAnalysisQuery).mockReset().mockResolvedValue({sources:[{id:'analysis:wrong',title:'Wrong',href:'/wca/results',read:true}],artifacts:[{kind:'table',title:'Wrong',columns:['Count'],rows:[['178']]}],evidence:{rows:[['178']]}});
     const model=vi.fn().mockResolvedValueOnce(modelResponse({calls:[{tool:'analysis_schema',datasets:['results']},{tool:'analysis_query',title:'Wrong',description:'Count',query:{}}]}))
-      .mockResolvedValueOnce(modelResponse({answer:'178',sourceIds:['analysis:wrong']}))
       .mockResolvedValueOnce(modelResponse({answer:'The available imported results cannot verify an event that just happened.',sourceIds:[],reviewedSourceIds:[]}));
     const result=await answerSiteQuestion('Was a record broken just now?','en',config,AbortSignal.timeout(5000),withCatalog(model));
     expect(result.artifacts).toEqual([]);expect(result.sources).toEqual([]);
@@ -191,7 +190,7 @@ describe('site assistant grounding', () => {
     expect(result.answer).toBe(answer);
     expect(result.answer.length).toBe(SITE_ASSISTANT_ANSWER_MAX_LENGTH);
     expect(result.sources.map(source=>source.id)).toEqual(['wiki:92']);
-    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(fetcher).toHaveBeenCalledTimes(3);
   });
   it('repairs invented provenance on a retrieved factual answer without citing all available sources',async()=>{
     const fetcher=vi.fn<typeof fetch>()
@@ -228,7 +227,6 @@ describe('site assistant grounding', () => {
       .mockResolvedValueOnce(modelResponse({calls:[call]}))
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'analysis_schema',datasets:['results']},call]}))
       .mockResolvedValueOnce(modelResponse({calls:[call]}))
-      .mockResolvedValueOnce(modelResponse({answer:'Computed from the imported results.',sourceIds:['analysis:test']}))
       .mockResolvedValueOnce(modelResponse({answer:'Computed from the imported results.',sourceIds:['analysis:test'],reviewedSourceIds:['analysis:test']}));
     const answer=await answerSiteQuestion('Compare my competition counts by month','en',config,AbortSignal.timeout(5000),withCatalog(model),[],'2017YANR02');
     expect(runAnalysisQuery).toHaveBeenCalledTimes(2);
@@ -239,7 +237,7 @@ describe('site assistant grounding', () => {
     expect(repair.max_tokens).toBe(4096);
     expect(answer.artifacts).toHaveLength(1);expect(answer.sources.map(s=>s.id)).toEqual(['analysis:test']);
   });
-  it('reviews a computed draft and executes the missing derived measure before returning it',async()=>{
+  it('checks computed data independently of prior prose and retrieves the missing derived measure',async()=>{
     const call={tool:'analysis_query',title:'Monthly comparison',description:'Counts and differences',query:{}};
     vi.mocked(runAnalysisQuery).mockReset()
       .mockResolvedValueOnce({sources:[{id:'analysis:counts',title:'Counts',href:'/wca/results',read:true}],artifacts:[{kind:'table',title:'Counts',columns:['Month','Count'],rows:[['1','1'],['2','1']]}],evidence:{rows:[['1','1'],['2','1']]}})
@@ -247,13 +245,15 @@ describe('site assistant grounding', () => {
     const model=vi.fn<typeof fetch>()
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'analysis_schema',datasets:['results']}]}))
       .mockResolvedValueOnce(modelResponse({calls:[call]}))
-      .mockResolvedValueOnce(modelResponse({answer:'Both months have no predecessor.',sourceIds:['analysis:counts']}))
       .mockResolvedValueOnce(modelResponse({calls:[{...call,query:{corrected:true}}]}))
-      .mockResolvedValueOnce(modelResponse({answer:'Computed counts and differences are below.',sourceIds:['analysis:complete']}))
       .mockResolvedValueOnce(modelResponse({answer:'Computed counts and differences are below.',sourceIds:['analysis:complete'],reviewedSourceIds:['analysis:complete']}));
-    const result=await answerSiteQuestion('Compare monthly counts and differences','en',config,AbortSignal.timeout(5000),withCatalog(model));
-    const review=JSON.parse(String(model.mock.calls[3][1]?.body));
-    expect(JSON.parse(review.messages[1].content).draftAnswer).toBeUndefined();
+    const result=await answerSiteQuestion('Compare monthly counts and differences','en',config,AbortSignal.timeout(5000),withCatalog(model),[
+      {role:'user',content:'What was the earlier monthly comparison?'},
+      {role:'assistant',content:'Both months have no predecessor.'},
+    ]);
+    const review=JSON.parse(String(model.mock.calls[2][1]?.body));
+    const context=review.messages.filter((message:any)=>message.role==='user').flatMap((message:any)=>{try{return [JSON.parse(message.content)];}catch{return [];}}).find((value:any)=>value.question);
+    expect(context.draftAnswer).toBeUndefined();
     expect(JSON.stringify(review.messages)).not.toContain('Both months have no predecessor.');
     expect(review.messages[0].content).toContain('Every requested calculated measure');
     expect(review.messages.at(-1)).toMatchObject({role:'user'});
@@ -271,7 +271,6 @@ describe('site assistant grounding', () => {
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'analysis_schema',datasets:['results']}]}))
       .mockResolvedValueOnce(modelResponse({calls:[call]}))
       .mockResolvedValueOnce(modelResponse({calls:[{...call,query:{step:2}}]}))
-      .mockResolvedValueOnce(modelResponse({answer:'All measures are complete.',sourceIds:['analysis:partial']}))
       .mockResolvedValueOnce(modelResponse({answer:'All measures are complete.',sourceIds:['analysis:partial'],reviewedSourceIds:['analysis:partial']}));
     const result=await answerSiteQuestion('Compare the counts and changes','en',config,AbortSignal.timeout(5000),withCatalog(model));
     expect(result.answer).toContain('Some calculations could not be completed');
@@ -343,7 +342,7 @@ describe('site assistant grounding', () => {
     expect(request.messages[1].content).toContain('未公布具体比赛日期');
     expect(result.actions?.map(a=>a.href)).toEqual(['/wca/wc-2027']);
     expect(result.sources[0].read).toBe(true);
-    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
   it('retains the actual topic when the model searches with a broad paraphrase',async()=>{
     const destinations=[...Array.from({length:15},(_,i)=>({lang:'en',href:`/map-${i}`,title:`Site map ${i}`})),{lang:'en',href:'/dev/architecture',title:'Architecture Atlas'}];
@@ -489,7 +488,7 @@ describe('site assistant grounding', () => {
     const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000),fetcher,[{role:'user',content:'Max Park 的全部 PB'}],'2017YANR02');
     expect(result.answer).toBe('颜瑞民共参加过 42 场比赛。 [[person:2017YANR02]]');
     expect(result.artifacts).toEqual([]);
-    expect(fetcher).toHaveBeenCalledTimes(5);
+    expect(fetcher).toHaveBeenCalledTimes(4);
     const request=JSON.parse(String(fetcher.mock.calls[0][1]?.body));
     expect(request.messages.some((m:any)=>m.role==='user' && m.content.includes('"viewerWcaId":"2017YANR02"'))).toBe(true);
   });
@@ -864,18 +863,17 @@ describe('site assistant grounding', () => {
       if(String(input).endsWith('/assistant/pages.json'))return Response.json(corpus);
       if(responses.length)return responses.shift()!;
       const request=JSON.parse(String(init?.body));
-      if(request.tool_choice!=='none') {
+      if(!request.messages.some((m:any)=>typeof m.content==='string' && m.content.includes('Compose and check the final answer'))) {
         const passage=JSON.parse(request.messages[1].content).sources.find((source:any)=>source.read);
         return modelResponse({answerKind:'site_content',answer:'That feature does not exist.',sourceIds:[passage.id]});
       }
-      expect(request.tool_choice).toBe('none');
       expect(request.messages.at(-1).content).toContain('absent documentation means unable to verify');
       return modelResponse({answer:'The available documentation does not establish whether this feature is supported.',sourceIds:[]});
     });
     const result=await answerSiteQuestion('Does the timer support this feature?','en',config,AbortSignal.timeout(5000),withCatalog(model));
     expect(result.answer).toBe('The available documentation does not establish whether this feature is supported.');
     expect(result.sources).toEqual([]);
-    expect(model.mock.calls.filter(([url])=>String(url).includes('/chat/completions'))).toHaveLength(3);
+    expect(model.mock.calls.filter(([url])=>String(url).includes('/chat/completions'))).toHaveLength(2);
   });
   it('requires content evidence before explaining a navigation destination',async()=>{
     const corpus={version:2,updated:'2026-10-10T00:00:00.000Z',pages:[{lang:'zh',href:'/timer',title:'计时器训练',text:'打开训练菜单，选择公式集，再选择要练习的情况。'}]};
@@ -885,7 +883,7 @@ describe('site assistant grounding', () => {
       if(responses.length)return responses.shift()!;
       const messages=JSON.parse(String(init?.body)).messages;
       expect(messages.at(-1).role).toBe('user');
-      expect(messages.at(-1).content).toMatch(/actual passage IDs|final evidence check/);
+      expect(messages.at(-1).content).toMatch(/actual passage IDs|Compose and check the final answer/);
       const passage=JSON.parse(messages[1].content).sources.find((source:{read?:boolean})=>source.read);
       return modelResponse({answer:'打开训练菜单，选择公式集，再选择要练习的情况。',sourceIds:[passage.id]});
     });
@@ -908,8 +906,10 @@ describe('site assistant grounding', () => {
     expect(fetcher.mock.calls.some(([url])=>String(url).endsWith('/zh/tools/dynamic-fixture'))).toBe(true);
   });
   it('rejects an unindexed page selection without fetching a model-authored path',async()=>{
-    const fetcher=vi.fn<typeof fetch>(async (input)=>String(input).endsWith('/assistant/pages.json')?Response.json({updated:'2026-10-30T00:00:00.000Z',pages:[]}):modelResponse({calls:[{tool:'pages',query:'unknown',pageIds:['/tools/unindexed-fixture']}]}));
-    await expect(answerSiteQuestion('Read the page.','en',config,AbortSignal.timeout(5000),withCatalog(fetcher))).rejects.toMatchObject({code:'source_unavailable'});
+    let attempts=0;
+    const fetcher=vi.fn<typeof fetch>(async (input)=>String(input).endsWith('/assistant/pages.json')?Response.json({updated:'2026-10-30T00:00:00.000Z',pages:[]}):modelResponse(++attempts===1?{calls:[{tool:'pages',query:'unknown',pageIds:['/tools/unindexed-fixture']}]}:{answerKind:'general',answer:'The requested page could not be verified.',sourceIds:[]}));
+    const result=await answerSiteQuestion('Read the page.','en',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(result.sources).toEqual([]);
     expect(fetcher.mock.calls.some(([url])=>String(url).includes('/tools/unindexed-fixture'))).toBe(false);
   });
   it('does not treat a loading shell and metadata as page evidence',()=>{

@@ -21,7 +21,7 @@ describe('stage4 evidence type consistency',()=>{
     });
     const result=await answerSiteQuestion('查TPS的百科定义和论坛主题，有资料的部分先答，查不到的部分说明状态。','zh',config,AbortSignal.timeout(3000),fetcher,[],undefined,undefined,'UTC',[],'fast');
     expect(result.answer).toContain('每秒转动步数');expect(result.answer).toContain('无法核实');expect(result.sources.map(source=>source.id)).toEqual(['wiki:1']);
-    expect(calls).toBe(3);
+    expect(calls).toBe(2);
   });
   it.each(['先回答TPS的百科定义和论坛主题，有资料的部分先答，查不到的部分明确说明。','查TPS的百科定义与论坛，有资料的部分先回答；没有资料的部分说明状态。'])('keeps comma-separated partial availability independent: %s',question=>{
     expect(requestedAssistantEvidence(question)).toBe('auto');
@@ -39,7 +39,7 @@ describe('stage4 evidence type consistency',()=>{
       return new Response('',{status:503});
     });
     const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(4000),fetcher,[],undefined,undefined,'UTC',[],'fast');
-    expect(result.answer).toContain('前两层');expect(result.sources.map(s=>s.id)).toEqual(['wiki:1']);expect(calls).toBe(3);
+    expect(result.answer).toContain('前两层');expect(result.sources.map(s=>s.id)).toEqual(['wiki:1']);expect(calls).toBe(2);
   });
   it('does not expose a tool failure as a citeable observation in drafting or isolated review',async()=>{
     let calls=0,seen=0;
@@ -54,21 +54,21 @@ describe('stage4 evidence type consistency',()=>{
       return new Response('',{status:503});
     });
     const result=await answerSiteQuestion('查DNS百科定义和论坛主题，独立部分先回答。','zh',config,AbortSignal.timeout(4000),fetcher,[],undefined,undefined,'UTC',[],'fast');
-    expect(seen).toBeGreaterThanOrEqual(2);expect(result.answer).toContain('未开始尝试');expect(result.sources.map(s=>s.id)).toEqual(['wiki:1']);
+    expect(seen).toBe(1);expect(result.answer).toContain('未开始尝试');expect(result.sources.map(s=>s.id)).toEqual(['wiki:1']);
   });
-  it.each(['draft','review'])('keeps the retrieved glossary when %s mislabels it as site_content',async phase=>{
+  it.each(['site_content','grounded'])('keeps the retrieved glossary with answer kind %s',async answerKind=>{
     let calls=0;
     const fetcher=vi.fn<typeof fetch>(async input=>{
       if(String(input).startsWith(config.baseUrl)) {
         calls++;
         if(calls===1)return modelResponse([{tool:'glossary',query:'DNS'},{tool:'forum',query:'DNS'}]);
-        return modelResponse({answerKind:(phase==='draft'||calls>2)?'site_content':'grounded',answer:'DNS 表示未开始尝试；论坛暂时无法核实。 [[wiki:1]]',sourceIds:['wiki:1']});
+        return modelResponse({answerKind,answer:'DNS 表示未开始尝试；论坛暂时无法核实。 [[wiki:1]]',sourceIds:['wiki:1']});
       }
       if(String(input).endsWith('/wiki/terms'))return Response.json({sections:[{entries:[{id:1,head:'DNS',body:'DNS 表示未开始尝试。'}]}]});
       return new Response('',{status:503});
     });
     const result=await answerSiteQuestion('查DNS百科定义和论坛主题，独立部分先回答。','zh',config,AbortSignal.timeout(4000),fetcher,[],undefined,undefined,'UTC',[],'fast');
-    expect(result.answer).toContain('未开始尝试');expect(result.sources.map(s=>s.id)).toEqual(['wiki:1']);expect(calls).toBe(3);
+    expect(result.answer).toContain('未开始尝试');expect(result.sources.map(s=>s.id)).toEqual(['wiki:1']);expect(calls).toBe(2);
   });
   it.each(['empty','invented','feature'])('keeps the final evidence guard for %s evidence',async kind=>{
     let calls=0;

@@ -8,6 +8,7 @@ import { partialAssistantAnswer, partialAssistantAnswerKind } from './site_assis
 import { ASSISTANT_ANSWER_POLICY, ASSISTANT_EVIDENCE_REVIEW, ASSISTANT_OUTPUT_BUDGET, ASSISTANT_SITE_NAMES, assistantReasoningPolicy, assistantToolKey } from './site_assistant_policy.js';
 import { assistantSearchProtectedTerms, assistantWebAvailable, assistantWebRequestScope, searchAssistantWeb } from './site_assistant_web.js';
 import { WCA_NEWS_URL, parseAssistantNews } from './site_assistant_news.js';
+import {WCA_REGULATIONS_URL,regulationExcerptArticles,regulationChapterHref,officialRegulationPassages} from './site_assistant_regulations.js';
 import { parseHTML } from 'linkedom';
 import { z } from 'zod';
 import { toolCallSchema, runDataTool, type AssistantToolCall, type ToolResult } from './site_assistant_tools.js';
@@ -123,18 +124,18 @@ find_person {query:name}: resolve names or WCA IDs from imported WCA competitors
 person {wcaId,event:"333" or "all",progress:false,view:"records"|"profile",metric?:"single"|"average",rankings?:boolean}: Use view:"profile" for lifetime profile facts without a PB table; filtered participation belongs to person_competitions. For a request for ONLY one PB metric, set metric to that metric and rankings:false unless rankings were requested. Do not retrieve or display the other metric, rankings or progression just because they are available. Omit metric for both single and average. For all official PBs/PRs across events use event:"all" in ONE call. progress:true requires ONE specific event; set metric if only that progression was requested. For comparison call person for each identified person.
 person_countries {wcaId,event?:event ID,from?:ISO date,to?:ISO date}: countries/regions where ONE person has officially competed, grouped by competition host location, with counts of distinct competitions. Supports optional event and inclusive competition START-date filters on complete imported results. Prefer this tool to analysis for a person's country list, including year/event-filtered follow-ups; retain all active attendanceScope filters. The event filter selects exactly one event; event exclusions, multiple-event unions/intersections and other extra predicates require analysis_schema then analysis_query. No filters means lifetime/all events. Never substitute nationality, a global leaderboard or personal bests for participation.
 person_competitions {wcaId,event?:event ID,from?:ISO date,to?:ISO date,groupBy?:"year"}: count ONE person's distinct competitions from complete imported results, optionally filtered by event and inclusive competition START dates. Prefer this tool for simple counts, including year/event-filtered follow-ups; retain all active attendanceScope filters. Request groupBy:"year" ONLY for a requested year-by-year breakdown; omit it for a total. The event filter selects exactly one event. Event exclusions, multiple-event unions/intersections or grouped comparisons, monthly/weekly grouping, country filters and calculated changes require analysis_schema and analysis_query; do not call this single-event tool repeatedly for a multi-event scope. Use timeContext for relative dates. Missing dates are reported separately; this covers published participation, not future registrations.
-rankings {event,type:"single"|"average",country:"" or ISO2 or _Asia/_Europe/_Africa/_North America/_South America/_Oceania,year?:number,limit:1..20}: current or year-end rankings.
+rankings {event,type:"single"|"average",country:"" or ISO2 or _Asia/_Europe/_Africa/_North America/_South America/_Oceania,year?:number,limit:1..20}: cumulative current or year-end rankings. A year-qualified ranking defaults to the year-end snapshot: call this tool directly, without analysis_schema or a parallel annual-performance query. Earlier-year PBs remain eligible through the cutoff. Row dates are achievement dates. Use analysis_query instead ONLY when the user explicitly asks for performances achieved within that year rather than a ranking snapshot.
 competitions {query:"",country:"" or ISO2,upcoming:true,from?:ISO date,to?:ISO date,limit:1..20}: find competitions and IDs; query matches name/city/id. from/to filter competitions overlapping an inclusive date range. Use English place/name keywords for this index.
 timeContext is computed from the server clock in the visitor's time zone. A time zone is NOT the visitor's location. For nearby recommendations, ask for a city/area if the user has not supplied one; never infer residence/current location from timeZone, past competitions or language. Use its concrete periods for relative years/days/weeks/months across ALL topics, never your training cutoff or a date in old conversation history. Weeks start Monday. Use from/to for dated competition queries and upcoming:false for historical periods. Time resolution is not factual evidence: still read the appropriate tools. Multiple periods, weekday-qualified weeks, rolling durations or dates relative to another event require careful interpretation; do not silently substitute one period or the current clock for an explicit event anchor. Ask a brief clarification if ambiguous.
 For historical World Championship dates use competitions with query:"WC" (all editions) or "WC 2025 2023" (selected years), upcoming:false, limit:20. Dates are start_date/end_date of actual competitions, not solve dates or registration dates. Do not invent missing editions.
 scrambles {compId,event:"333",round:"f"}: official scramble groups. First resolve unknown competition IDs.
 recons {wcaId?:person ID,compId?:competition ID,value?,event?,limit:1..20}: search published reconstructions. Person IDs like 2017YANR02 MUST go in wcaId, never compId; a competition ID looks like BeijingSummer2025. Value is a solve duration in seconds, NEVER a reconstruction ID; event uses 333 for 3x3. This list does not contain full solutions.
 recon {id:number}: read ONE reconstruction by its numeric ID, including original moves and analysis. A question naming a reconstruction number refers to this id, not a duration. Quote recorded step labels exactly. Recorded labels and moves must come from the reconstruction. General explanations may use known definitions; look up unfamiliar or source-specific annotations in glossary rather than guessing. Never invent a solution or label a reconstruction as verified beyond evidence. A personal practice location is not a WCA competition.
-glossary {query}: cubing terminology; use an exact term, phrase, or several terms such as "OLL PLL". Cite each returned term's source ID for its definition. A short heading or an empty body does not establish prerequisites or properties absent from the entry; do not attribute extra claims to that entry.
+glossary {query}: cubing terminology; use an exact term, phrase, or several terms such as "OLL PLL". Cite each returned term's source ID for its definition. A short heading or an empty body does not establish prerequisites or properties absent from the entry; do not attribute extra claims to that entry. For a request for this entry, its title/definition plus an honest empty-body qualification completes the glossary part. Do not expand to pages/tutorials merely to fill an empty glossary body or replace a failed independent forum read. Further tools remain appropriate for a separate requested calculation or site-feature explanation. Glossary facts use answerKind grounded, even with an optional navigation link.
 forum {query}: public forum posts only.
 algorithms {puzzle:"3x3",set?:slug,query?:case name,caseId?:verified ID,offset?:0,limit?:24,alternative?:0,display?:"both"|"image"|"text"}: retrieve actual formula cards, not navigation. Use whenever the visitor seeks a concrete algorithm, case, move sequence or diagram, including natural questions such as "T怎么拧", "有别的手顺吗", "那Ua呢", "只看第二个", or "how do I solve this case?"; no SHOW keyword is required. Never replace such a request with a library link or moves written from memory. Definitions, counts, training and entry-only questions do not automatically request cards. Without set returns the matching-puzzle catalog/counts. With set returns structured cards rendered by every client: never repeat the sequences in prose or invent image URLs. Default display both (state diagram and copyable formula); image means diagrams only, text means formulas only. Resolve follow-ups from the latest applicable displayed cards, including in-place selections in history: preserve puzzle/set/caseId, actual alternative and display mode; wrap the next alternative within alternativeCount. "Next case" changes the case, "another formula" keeps it, and "continue" uses nextOffset and the same query filter. Displayed ordinals are positions, never database IDs. A new named set overrides the old subject. Ask one focused clarification if several cases are equally plausible. For a formula plus explanation, return the cards and explain without repeating the sequence. query filters a case name; do not put a whole natural-language request in query. Paginate large sets with nextOffset; total counts cases, not algorithms. All PLL fits in one page. Keep original notation exactly.
 statistics {id?:catalog id,tableKey?:exact provided table key,offset?:nextOffset,limit:1..20}: the site's full published statistics. Call without an id to discover the published catalog, then use an exact returned id. A matching named statistic can be selected during catalog discovery. Never use a page ID such as wca-stats. If there are multiple sections, use an exact returned tableKey matching the question. Always repeat the statistic id together with tableKey; table keys are scoped to that id. nextOffset retrieves more available sections. If the question leaves scope unspecified or asks for available conditions, STOP and answer without further tools, explaining actual available choices. Do not read arbitrarily chosen sections. Never repeat a call already in evidence. Do not combine different regions, metrics or scopes.
-pages {query:short keywords,pageIds:catalog IDs max3,audience:user|developer}: search public full-text index and read relevant public pages. Default user searches exclude /dev implementation documents. Use developer only for an explicit question about code, architecture, development or developer documentation; implementation components are not end-user instructions.
+pages {query:short keywords,pageIds:catalog IDs or returned source IDs/public index hrefs max3,audience:user|developer}: search public full-text index and read relevant public pages. Use an empty pageIds array to search when no exact ID is known; never invent IDs. Default user searches exclude /dev implementation documents. Use developer only for an explicit question about code, architecture, development or developer documentation; implementation components are not end-user instructions.
 For announced future championships, read matching announcementCatalog entries using pages and their exact IDs. A host-city announcement may precede the competition registry. An absent competition listing does not mean no announcement exists. Report the announcement's date; do not invent dates, venues or registration details absent from it. Missing details in a historical announcement are not proof they remain unpublished today. Say "the July 2025 announcement did not specify registration" rather than "there is currently no registration information". Direct visitors to later official updates when asked for current arrangements.
 navigation {query:short topic keywords,kind:"all"|"algorithms"|"training"|"solver",pageIds:returned destination IDs max3}: find EXISTING pages across the entire website: tools, trainers, solvers, tutorials, algorithms, statistics, forums, math, developer documentation, account and administration entry pages. Use this for requests to navigate to a site section or find an entry (including requests to generate/create a trainer or solver). For explicit questions about documented steps, rules or page contents, use pages directly; navigation is optional destination discovery, not a prerequisite. It returns verified destination IDs, titles and hrefs. Use kind:"algorithms" for learning formulas, kind:"training" for formula/recognition drills, kind:"solver" for solving, and kind:"all" for timers and all other pages. Put only the topic/puzzle in query (e.g. "OLL PLL", "Pyraminx", "二阶"), not intent words such as learn/train/solver that match unrelated tools; normalize OL/PL to OLL/PLL in a 3x3 algorithm context. For a request to open/use/show a page, finish with the answer after finding the destination; title and description suffice to identify the link. Do not call pages to read the destination unless the visitor explicitly requests an explanation of its content. Cite ONLY destinations that fit the request in sourceIds. For requests to learn OLL/PLL or other formulas, ALWAYS select the library pages as the primary destinations; /select practice pages are optional secondary links. For trainer requests, select /select; recognition is a separate drill. If the puzzle or training goal is unclear, ask a short clarification with sourceIds:[] and no destination selection. An incomplete catalog search never proves a tool does not exist; try the puzzle name alone or a shorter alias before reporting no match. Never claim to have created a new tool or automatically opened a page: the UI displays links the visitor can click. Do not guess URLs, query parameters or capabilities. For a named competitor, competition, reconstruction, forum thread or statistic, resolve it using the existing find_person/competitions/recons/recon/forum/statistics tools and select their verified source IDs as destinations. Never guess entity IDs. For claims about the site feature's actual behavior use pages; ordinary general explanations can use your knowledge. Account/admin links only open their existing entry pages; do not claim to access private data or perform a write.
 Use native tool calls with these names and arguments. Only the declared fields are accepted. If the user specifies a result count, set limit to that count. Max 4 calls per round, 10 across 4 rounds. You can issue independent calls together. Only structured analysis plans may compute new results from the stored datasets; tools accept no raw SQL, arbitrary URL, executable code or writes. This does not prohibit explaining math, writing sample code, or reasoning from data supplied by the user.
@@ -222,8 +223,9 @@ export async function answerSiteQuestion(
   priorContext?: AssistantContext,
 ): Promise<AssistantAnswer> {
   const hasImages = images.length > 0 || history.some(message => message.role === 'user' && message.images?.length);
+  const entryIntent=question.replace(/(?:不用|无需|不要|不必)(?:再|详细)?(?:介绍|解释|讲解)?(?:教程|步骤|说明)[。！!？?\s]*/g,'');
   const entryOnlyRequest=!hasImages && /入口|链接|网址|\b(?:entry|link|url)\b/i.test(question)
-    && !/怎么|如何|步骤|教程|说明|介绍|解释|讲解|总结|原理|区别|功能|多少|几(?:个|次|场|秒)|是谁|比较|分析|统计|计算|翻译|写|生成|\b(?:how|why|explain|compare|summarize|write|translate|calculate|steps|tutorial|instructions?|features?|results?|records?|count)\b/i.test(question);
+    && !/怎么|如何|步骤|教程|说明|介绍|解释|讲解|总结|原理|区别|功能|多少|几(?:个|次|场|秒)|是谁|比较|分析|统计|计算|翻译|写|生成|\b(?:how|why|explain|compare|summarize|write|translate|calculate|steps|tutorial|instructions?|features?|results?|records?|count)\b/i.test(entryIntent);
   const requestedEvidence = hasImages ? 'auto' : requestedAssistantEvidence(question);
   const searchProtectedTerms=assistantSearchProtectedTerms([...history.map(message=>message.content),question],viewerWcaId);
   // Keep verified identity available to the planner regardless of wording.
@@ -439,7 +441,7 @@ export async function answerSiteQuestion(
     result.sources.forEach(source=>sources.set(source.id,source));
     artifacts.push(...result.artifacts.map(artifact=>({sourceIds:result.sources.map(s=>s.id),artifact})));
     called.add(assistantToolKey(call));
-    evidence.push({id:result.sources[0].id,tool:call,data:result.evidence});
+    evidence.push({id:result.sources[0].id,tool:call,data:boundAssistantEvidence(result.evidence,14000)});
   }
   let navigationReadRequired=false;
   let navigationDiscoveryRequired=false;
@@ -449,7 +451,7 @@ export async function answerSiteQuestion(
     // requests still require pages, and unsupported text still receives review.
     const cited=[...value.sourceIds,...[...value.answer.matchAll(/\[\[([^\]\n]+)\]\]/g)].map(match=>match[1])];
     if(value.answerKind==='site_content' && requestedEvidence==='auto' && !siteContentRequired
-      && cited.length>0 && cited.every(id=>glossarySourceIds.has(id)))value.answerKind='grounded';
+      && cited.some(id=>glossarySourceIds.has(id)) && cited.every(id=>glossarySourceIds.has(id) || navigationActions.has(id)))value.answerKind='grounded';
     return value;
   };
   let attemptedCalls=0;
@@ -479,12 +481,22 @@ export async function answerSiteQuestion(
       : '';
   let requiredFollowUpReadFailed=false;
   let requiredFollowUpResult: ToolResult | undefined;
-  const complete = async (round: number, finalOnly = false, draftAnswer?:string, reviewKind:'analysis'|'content'|'citation'|'evidence'='analysis', requirePhotoTool=false) => assistantStage('model',async()=>{
+  const evidenceChecked=new WeakSet<object>();
+  const unavailableTools=new Set<string>();
+  let officialRules:Promise<string>|undefined;
+  const readOfficialRules=()=>officialRules??=assistantStage('page',async()=>{
+    const response=await fetcher(WCA_REGULATIONS_URL,{signal:AbortSignal.any([signal,AbortSignal.timeout(4000)]),redirect:'error',headers:{Accept:'text/html'}});
+    checkAssistantResponse(response,'source');return limitedText(response,2_000_000);
+  });
+  const complete = async (round: number, finalOnly = false, draftAnswer?:string, reviewKind:'analysis'|'content'|'citation'|'evidence'='analysis', requirePhotoTool=false) => assistantStage(draftAnswer === undefined ? 'model' : 'review',async()=>{
     const isolated = draftAnswer!==undefined && (reviewKind==='evidence' || reviewKind==='analysis');
     const readFollowUp=pendingReadFollowUp;
     pendingReadFollowUp='';
+    const documentationGapInstruction=pageSourceIds.size>0
+      ? '\nIf the read passages describe the requested site feature but do not document the specific capability being asked about, open with "the available documentation does not confirm this capability". Do not open with an unconditional yes/no about that capability. State any independently supported general requirement separately. A navigation search cannot prove feature behavior or nonexistence. Do not repeat discovery or the same page merely to prove absence; a further read needs a concrete missing section, conflicting claim, or independent requested fact.'
+      : '';
     const reviewInstruction=draftAnswer===undefined?'':reviewKind==='evidence'
-      ? '\nPerform the final evidence check, with no further tools. Compose a fresh answer from the ORIGINAL question and actual evidence; no previous assistant draft is evidence. Match each source-specific conclusion to its exact passage or result. Lead with one clear supported conclusion. Before returning, ensure the opening conclusion and the rest of the answer agree; remove discarded hypotheses, contradictory alternatives and invented conditions. Keep the source topic, conditions, units and time scope. If your prior knowledge differs, do not silently correct the supplied source. Delete unsupported feature-existence claims: absent documentation means unable to verify, NEVER no/unsupported/not launched. Delete claims outside the requested date period, even when presented as rumors, caveats or background. An incomplete RSS feed cannot prove no event occurred. A time zone and past competition history do not locate the visitor; if their city is essential and missing, ask only for the city, without suggested local events or location guesses. Remove facts, alternative scopes and instructions not requested by the user. For a link-only question return only the matching entry, without a tutorial. For feature instructions use only the documented steps. Preserve independent supported parts and explicitly identify what cannot be confirmed. Use only supporting source IDs and omit unrelated retrieved sources. If no external claim can be verified, use answerKind general and explain the gap; never invent citations or claim a search happened. Do not describe this review.'
+      ? '\nCompose and check the final answer directly from the ORIGINAL question and actual evidence; no previous assistant draft is evidence. '+(finalOnly?'No further tools.':'If a specific material fact is missing, request only the necessary available tool; never requery an unavailable service with different wording.')+' Match each source-specific conclusion to its exact passage or result. Lead with one clear supported conclusion. Ensure the opening conclusion and the rest agree; remove contradictory alternatives and invented conditions. Keep source topic, conditions, units and timeBasis: cumulative year-end snapshots retain earlier-year achievements, whereas news/event lists use the requested occurrence/publication interval. Official regulatory clauses take precedence over explanatory page summaries. Read the full applicable clause family, prerequisites, exceptions and overriding clauses before assigning a penalty. An example about one kind of component does not establish a penalty for a different kind. Do not conflate the start of a timer with the first physical move; if the scenario does not establish the regulated trigger, state the conditional result. Delete unsupported feature-existence claims: absent documentation means unable to verify, NEVER no/unsupported/not launched. An incomplete RSS feed cannot prove no event occurred. A time zone and past competition history do not locate the visitor; if their city is essential and missing, ask only for the city. Remove facts, alternative scopes and instructions not requested. For link-only questions return only the matching entry. For feature instructions use only documented steps. Preserve independent supported parts and identify the narrow verification gap. Use only supporting source IDs; if none establish an external claim, explain the gap without invented citations. Do not describe this review.'
       : reviewKind==='content'
       ? '\nReview the explanation against the retrieved readable passages. The draft cites only navigation labels, which cannot support usage instructions. Use the actual passage IDs marked read:true in sources for the supported factual sentences and sourceIds. Remove claims unsupported by those passages. Navigation IDs may accompany links, but cannot be the only citations for an explanation. Do not perform further reads.'
       : reviewKind==='citation' ? '\nRepair the answer citations against the supplied sources. The draft has no valid supporting source IDs. Use exact IDs only for claims actually supported by that source; do not cite unrelated evidence. Remove unsupported current/site/data claims and state any verification limitation. If this is independent general knowledge, set answerKind to general and use sourceIds:[] instead. Do not perform further reads.'
@@ -496,21 +508,21 @@ export async function answerSiteQuestion(
     // Route by the work actually selected, rather than a language-specific
     // complexity keyword list. Deterministic lookups above need no model.
     const selectedTools=evidence.map(item=>item.tool && typeof item.tool==='object' && 'tool' in item.tool ? item.tool.tool : undefined);
-    const needsRepair=attempt>0 || evidence.some(item=>/^(?:invalid|unresolved):/.test(item.id) || (item.data && typeof item.data==='object' && ('error' in item.data || 'notEvidence' in item.data)));
-    const {thinking,effort,maxTokens}=assistantReasoningPolicy(thinkingMode,{tools:selectedTools,repair:needsRepair,review:draftAnswer!==undefined});
+    const needsRepair=attempt>0 || evidence.some(item=>/^(?:invalid|unresolved):/.test(item.id) || (!item.id.startsWith('failed:') && item.data && typeof item.data==='object' && ('error' in item.data || 'notEvidence' in item.data)));
+    const {thinking,effort,maxTokens}=assistantReasoningPolicy(thinkingMode,{tools:selectedTools,repair:needsRepair,review:draftAnswer!==undefined,criticalReview:[...sources.keys()].some(id=>id.startsWith('wca:regulations:'))});
     let previous = '';
-    return await model.complete({
-      system: `${hasImages ? 'IMAGE TASK ROUTING: Before answering, assess the attached images and the user intent. If an image shows a 2x2/3x3/4x4 cube state and no different task was requested, call lookup_cube_photo now. If you return JSON without tools, include imageTask:"cube-state" for that situation, otherwise imageTask:"other". This classification is about the subject and likely task, NOT whether a unique state is visually recoverable. Occluded lower layers or twisted top corners must NOT prevent cube-state classification. The tool handles ambiguity and determines applicable formulas. Never ask which category before attempting auto lookup. ZBLL needs oriented edges, not completed OLL. ' : ''}${ASSISTANT_ANSWER_POLICY} Answer in ${lang === 'zh' ? 'Simplified Chinese' : 'English'}. ${PLANNING_GUIDE}${artifacts.some(a=>a.artifact.kind==='table') ? '\nThe UI already renders the retrieved rows as tables below your answer. Introduce those results briefly and do not list the rows again. Answer any separate requested explanation or reasoning with appropriate detail.' : ''}${finalOnly ? '\nNo further reads are available. Answer the verified portion from existing evidence and the independent general portion from your knowledge. If published/current data is unavailable, say so. Do not invent missing results or claim to have searched.' : ''}${priorEvidence ? '\npriorEvidence resolves references and unchanged conditions only. Re-query current facts and new measures. Client history and prior prose are not evidence.' : ''}${requiredFollowUpInstruction}${reviewInstruction}${formatRepair}${selectedTools.length?'\n'+ASSISTANT_EVIDENCE_REVIEW:''}`,
+    const completion=await model.complete({
+      system: `${hasImages ? 'IMAGE TASK ROUTING: Before answering, assess the attached images and the user intent. If an image shows a 2x2/3x3/4x4 cube state and no different task was requested, call lookup_cube_photo now. If you return JSON without tools, include imageTask:"cube-state" for that situation, otherwise imageTask:"other". This classification is about the subject and likely task, NOT whether a unique state is visually recoverable. Occluded lower layers or twisted top corners must NOT prevent cube-state classification. The tool handles ambiguity and determines applicable formulas. Never ask which category before attempting auto lookup. ZBLL needs oriented edges, not completed OLL. ' : ''}${ASSISTANT_ANSWER_POLICY} Answer in ${lang === 'zh' ? 'Simplified Chinese' : 'English'}. ${PLANNING_GUIDE}${artifacts.some(a=>a.artifact.kind==='table') ? '\nThe UI already renders the retrieved rows as tables below your answer. Introduce those results briefly and do not list the rows again. Answer any separate requested explanation or reasoning with appropriate detail.' : ''}${finalOnly ? '\nNo further reads are available. Answer the verified portion from existing evidence and the independent general portion from your knowledge. If published/current data is unavailable, say so. Do not invent missing results or claim to have searched.' : ''}${priorEvidence ? '\npriorEvidence resolves references and unchanged conditions only. Re-query current facts and new measures. Client history and prior prose are not evidence.' : ''}${requiredFollowUpInstruction}${reviewInstruction}${documentationGapInstruction}${formatRepair}${selectedTools.length?'\n'+ASSISTANT_EVIDENCE_REVIEW:''}`,
       context: {question,draftAnswer:isolated?undefined:draftAnswer,timeContext,viewerWcaId,priorEvidence,attendanceScope,requestedEvidence,availableImages:[...availableImages.keys()],runtime:{model:config.model,provider:new URL(config.baseUrl).origin==='https://api.deepseek.com'?'DeepSeek':/^(?:dashscope\.aliyuncs\.com|ws-[a-z0-9]+\.cn-beijing\.maas\.aliyuncs\.com)$/.test(new URL(config.baseUrl).hostname)?'Alibaba Cloud Bailian':'OpenAI-compatible provider'},capabilities:{webSearch:assistantWebAvailable(),thinkingMode},now:timeContext.today,round,remainingCalls:10-attemptedCalls,statisticsCatalog,statisticsCatalogStatus,announcementCatalog:SITE_ANNOUNCEMENTS.map(a=>({id:a.id,title:a.title[lang],aliases:a.aliases})),evidence:modelEvidence(evidence.filter(item=>isolated || !transcriptEvidence.has(item))),sources:[...sources.values()],finalRound:finalOnly}, finalOnly, thinking, effort,
       maxTokens, round, attempt, ...(requirePhotoTool ? { requiredTool: 'lookup_cube_photo' as const } : {}),
       // Do not offer equality-only tools that the existing scope guard must reject.
-      ...(attendanceRequiresAnalysis(attendanceScope) ? { unavailableTools: ['person_competitions','person_countries'] } : {}),
+      unavailableTools:[...unavailableTools,...(!analysisSchemaRead?['analysis_query']:[]),...(attendanceRequiresAnalysis(attendanceScope)?['person_competitions','person_countries']:[])],
       allowTools: !finalOnly && !outputRepair,
       requireStructuredAnswer: finalOnly || outputRepair,
       isolated,
       // A completed assistant message needs a new user turn for a real review;
       // changing an earlier context message alone can merely continue that answer.
-      ...(draftAnswer !== undefined || formatRepair || readFollowUp ? {followUp: [isolated?'':readFollowUp,draftAnswer !== undefined ? (isolated?'':JSON.stringify({originalQuestion:question,draftAnswer}))+reviewInstruction : '',formatRepair].filter(Boolean).join('\n')} : {}),
+      ...(draftAnswer !== undefined || formatRepair || readFollowUp ? {followUp: [readFollowUp,draftAnswer !== undefined ? (isolated?'':JSON.stringify({originalQuestion:question,draftAnswer}))+reviewInstruction : '',formatRepair].filter(Boolean).join('\n')} : {}),
       ...(emit ? {onText: async (content: string) => {
         const forcedRead = (round === 0 && (requestedReconId || requestedAnnouncements.length))
           || (hasImages && !artifacts.some(a => a.artifact.kind === 'cube-photo'));
@@ -524,6 +536,8 @@ export async function answerSiteQuestion(
         }
       }} : {}),
     });
+    if(draftAnswer!==undefined && reviewKind==='evidence' && !completion.calls.length)evidenceChecked.add(completion);
+    return completion;
     } catch(error) {
       signal.throwIfAborted();
       // One recovery under the same deadline/reservation. Format failures only
@@ -551,6 +565,14 @@ export async function answerSiteQuestion(
       evidence:{pages:announcements.map(a=>({id:a.id,title:a.title[lang],href:a.href,sourceUrl:a.sourceUrl,sourceMonth:a.sourceMonth,content:a.paragraphs.map(p=>p[lang]).join('\n')})),instruction:'Historical announcement, not live registration status. Missing dates/venue/registration here must be described as absent from this dated source, never as currently unpublished.'},
       sources:announcements.map(a=>({id:a.id,title:a.title[lang],href:a.href,read:true})),artifacts:[],
     };
+    const officialSelections=call.pageIds.flatMap(id=>{
+      const href=sources.has(id)?regulationChapterHref(id):undefined;
+      return href?[{href,content:call.query}]:[];
+    });
+    if(officialSelections.length===call.pageIds.length && officialSelections.length) {
+      const pages=officialRegulationPassages(await readOfficialRules(),officialSelections,call.query);
+      return {evidence:{pages,coverage:'Official clause families, including exceptions. relatedOmitted means the chapter is incomplete; do not infer missing qualifications.'},sources:pages.map(p=>({id:p.id,title:p.title,href:p.href,read:true})),artifacts:[]};
+    }
     const selected: Array<{id:string;title:string;href:string;content:string;metadata?:unknown;relatedOmitted?:boolean}>=directory.filter(p=>call.pageIds.includes(p.id) && (includeDeveloper || !isDeveloperKnowledge(p.href))).map(p=>({id:p.id,title:p.title[lang],href:p.href,content:''}));
     let updated: string | undefined;
     let sourceScope:string[]=[],navigationOnly:string[]=[];
@@ -563,7 +585,10 @@ export async function answerSiteQuestion(
       if(!call.pageIds.length && !hrefs.length)hrefs.push(...knowledgePageReferences(corpus,question,lang).filter(href=>includeDeveloper || !isDeveloperKnowledge(href)));
       sourceScope=hrefs;
       navigationOnly=corpus.pages.filter(p=>p.lang===lang && hrefs.includes(p.href) && !p.text.trim() && !p.sections?.some(s=>s.text.trim())).map(p=>p.href);
-      if(call.pageIds.length && !hrefs.length) throw new AssistantFailure('source_unavailable');
+      if(call.pageIds.length && !hrefs.length) return {
+        sources:[],artifacts:[],outcome:{state:'blocked',reason:'invalid_page_reference'},
+        evidence:{notEvidence:true,error:'invalid_page_reference',pages:[],instruction:'None of these page IDs resolves to a permitted public page. This is an invalid selection, not a source outage or proof that a page/feature does not exist. Reuse an exact ID from the returned sources/catalog, or search with pageIds:[] and focused query keywords. Previously read evidence remains valid; never invent a URL or cite this result.'},
+      };
       // Dynamic pages may only have a title/link in the public index. Carry
       // verified selections into the same bounded HTML reader as directory pages.
       // A model-authored page:/ ID alone must never authorize a URL read.
@@ -604,7 +629,21 @@ export async function answerSiteQuestion(
     signal.throwIfAborted();
     const denied=reads.find((result):result is PromiseRejectedResult=>result.status==='rejected' && assistantFailureCode(result.reason)==='source_verification_required');
     if(denied)throw denied.reason;
-    const readable=selected.filter(p=>p.content);
+    let readable=selected.filter(p=>p.content);
+    const isRuleExcerpt=(p:{href:string;content:string})=>regulationExcerptArticles(p,call.query).length>0;
+    if(readable.some(isRuleExcerpt)) {
+      try {
+        const official=officialRegulationPassages(await readOfficialRules(),readable,call.query);
+        if(official.length) {
+          // Authoritative clauses get the evidence budget before summaries and
+          // visual-guide examples. Keep unrelated requested documents available.
+          readable=[...official,...readable.filter(p=>!isRuleExcerpt(p))];
+        } else readable=readable.map(p=>isRuleExcerpt(p)?{...p,relatedOmitted:true,content:'Official clause coverage could not be established. These explanatory excerpts alone cannot establish an unconditional penalty.\n'+p.content}:p);
+      } catch {
+        signal.throwIfAborted();
+        readable=readable.map(p=>isRuleExcerpt(p)?{...p,relatedOmitted:true,content:'The official regulations could not be read. These explanatory excerpts may omit exceptions; do not assert an unconditional penalty.\n'+p.content}:p);
+      }
+    }
     if(!readable.length) {
       if(navigationOnly.length)return {sources:[],artifacts:[],evidence:{notEvidence:true,pages:[],sourceScope,unavailablePages:navigationOnly,instruction:'The requested public page entry exists, but its body could not be read. Its features and location relationships remain unknown. Do not substitute a different page or infer that a feature is absent.'}};
       const failed=reads.find((result):result is PromiseRejectedResult=>result.status==='rejected');
@@ -757,7 +796,7 @@ export async function answerSiteQuestion(
         || (requestedEvidence==='pages' && (pageSourceIds.size===0 || !citesPage(value)) && !isEvidenceGapOnlyAnswer(value.answer));
       // Every model exit, including duplicate/budget exits, reaches this check.
       // The same main model recomposes from raw evidence in an isolated context.
-      const requiresReview=!analysisRevision && (invalid(step) || failedTools.size>0 || siteContentRequired || (citesReadable(step) && !deterministicSummary(step)) || (sources.size>0 && evidence.some(item=>item.tool && typeof item.tool==='object' && 'tool' in item.tool && EVIDENCE_REVIEW_TOOLS.has(String(item.tool.tool)))));
+      const requiresReview=!analysisRevision && (invalid(step) || (!evidenceChecked.has(step) && (failedTools.size>0 || siteContentRequired || (citesReadable(step) && !deterministicSummary(step)) || (sources.size>0 && evidence.some(item=>item.tool && typeof item.tool==='object' && 'tool' in item.tool && EVIDENCE_REVIEW_TOOLS.has(String(item.tool.tool)))))));
       if(requiresReview && requestedEvidence!=='navigation') {
         await emit?.({type:'answer',answer:'',sources:[...sources.values()]});
         step=normalizeContentKind(await complete(round,true,step.answer,'evidence'));
@@ -827,11 +866,31 @@ export async function answerSiteQuestion(
     // the remaining normal tool budget to fill missing measures or repair the
     // query; successful SQL execution alone does not establish semantic coverage.
     if(!step.calls.length && analysisRevision>0 && reviewedAnalysisRevision!==analysisRevision && analysisReviewCalls<2) {
-      reviewedAnalysisRevision=analysisRevision;analysisReviewCalls++;
+      analysisReviewCalls++;
       step=await complete(round,finalOnly,step.answer);
-      if(!step.calls.length) for(const id of step.reviewedSourceIds ?? []) if(id.startsWith('analysis:') && sources.has(id))reviewedAnalysisSources.add(id);
+      if(!step.calls.length) {
+        reviewedAnalysisRevision=analysisRevision;
+        for(const id of step.reviewedSourceIds ?? []) if(id.startsWith('analysis:') && sources.has(id))reviewedAnalysisSources.add(id);
+      }
     }
     return step;
+  };
+  const independentReadFallback=():AssistantAnswer|undefined=>{
+    if(!unavailableTools.size || requestedEvidence!=='auto' || hasImages || analysisRevision)return;
+    const supported=observations.flatMap(({call,result})=>{
+      if(call.tool!=='glossary' || assistantToolOutcome(result).state!=='success')return [];
+      const data=result.evidence as {entries?:Array<{sourceId:string;head?:string;headZh?:string;headEn?:string;body?:string;bodyZh?:string;bodyEn?:string}>;truncated?:boolean};
+      if(data.truncated || !data.entries?.length || data.entries.length>3)return [];
+      return data.entries.flatMap(entry=>{
+        const source=result.sources.find(s=>s.id===entry.sourceId && s.read);
+        const text=[(lang==='zh'?entry.headZh:entry.headEn)||entry.head,(lang==='zh'?entry.bodyZh:entry.bodyEn)||entry.body].filter(Boolean).join('：');
+        return source && text && text.length<=3000?[{source,text}]:[];
+      });
+    });
+    if(!supported.length)return;
+    const names:Record<string,{zh:string;en:string}>={forum:{zh:'论坛',en:'Forum'},pages:{zh:'页面资料',en:'Page documentation'},news:{zh:'公告',en:'News'},web_search:{zh:'联网检索',en:'Web search'}};
+    const missing=[...unavailableTools].map(tool=>names[tool]?.[lang] ?? {zh:'补充数据源',en:'Additional data source'}[lang]).join('、');
+    return {answer:supported.map(({text,source})=>`${{zh:'词条原文',en:'Glossary entry'}[lang]}：${text} [[${source.id}]]`).join('\n\n')+'\n\n'+{zh:`${missing}暂时无法读取，相关内容未能核实。`,en:`${missing} could not be read; those details remain unverified.`}[lang],sources:supported.map(s=>s.source),artifacts:[]};
   };
   // Private benchmark control, deliberately absent from the HTTP request schema.
   // Same six-passage/context/tool budgets as ordinary retrieval; no hidden extra round.
@@ -889,8 +948,21 @@ export async function answerSiteQuestion(
   }
   for (let round=0;round<=4;round++) {
     await emit?.({type:'status',status:{phase:'planning'}});
+    // Failed services are excluded by unavailableTools. Independent requested
+    // reads may still be necessary, even when some readable facts already exist.
     const finalOnly=round===4 || attemptedCalls>=10;
-    let step=normalizeContentKind(await reviewAnalysis(await complete(round,finalOnly),round,finalOnly));
+    // The isolated check never consumed the discarded draft. Compose directly
+    // from the same evidence, preserving query repair and citation validation.
+    let step:z.infer<typeof stepSchema>;
+    try {
+      step=normalizeContentKind(analysisRevision>0 && reviewedAnalysisRevision!==analysisRevision
+        ? await reviewAnalysis({calls:[],answer:'',sourceIds:[]},round,finalOnly)
+        : await complete(round,finalOnly,!hasImages && [...sources.values()].some(source=>source.read) && !analysisRevision?'':undefined,'evidence'));
+    } catch(error) {
+      const fallback=error instanceof AssistantOutputError ? independentReadFallback():undefined;
+      if(fallback)return withContext(fallback);
+      throw error;
+    }
     if (hasImages && !step.calls.length && !step.imageTask && !photoEvidenceRequired
       && !artifacts.some(a => a.artifact.kind === 'cube-photo') && !finalOnly) {
       pendingReadFollowUp = 'Before answering, classify the task from the actual attached image and request. Return JSON with imageTask:"cube-state" if it shows a 2x2/3x3/4x4 cube state and no different task was requested, or imageTask:"other" otherwise; include answerKind, answer and sourceIds. This is only subject/task classification: occluded bottom layers and uncertain stickers do not make a cube photo "other". You may directly call lookup_cube_photo with sets:"auto" for cube-state. Do not ask the visitor which category they want.';
@@ -931,7 +1003,7 @@ export async function answerSiteQuestion(
       pendingReadFollowUp='Readable website passages have now been supplied in the updated evidence. Replace the earlier unverified draft with an answer supported by these passages and cite their exact IDs.';
     }
     const citesRead=(answer:z.infer<typeof stepSchema>)=>[...answer.sourceIds,...[...answer.answer.matchAll(/\[\[([^\]\n]+)\]\]/g)].map(match=>match[1])].some(id=>pageSourceIds.has(id));
-    if(!step.calls.length && siteContentRequired && pageSourceIds.size>0 && !citesRead(step)) {
+    if(!step.calls.length && siteContentRequired && pageSourceIds.size>0 && !citesRead(step) && !isEvidenceGapOnlyAnswer(step.answer)) {
       await emit?.({type:'answer',answer:'',sources:[...sources.values()]});
       step=await complete(round,true,step.answer,'content');
       // finish() rechecks the revised answer and can preserve an honest gap.
@@ -966,6 +1038,11 @@ export async function answerSiteQuestion(
       try {
       const parsed=toolCallSchema.safeParse(raw);
       if (!parsed.success) { evidence.push({id:`invalid:${evidence.length}`,tool:raw,data:{error:'Invalid tool arguments. Correct the call before drawing any factual conclusion.',issues:parsed.error.issues.map(issue=>({path:issue.path,message:issue.message}))}}); continue; }
+      if(unavailableTools.has(parsed.data.tool)) {
+        duplicates++;
+        evidence.push({id:`failed:${evidence.length}`,tool:parsed.data,outcome:{state:'temporary_failure',reason:'request_circuit_open'},data:{notEvidence:true,status:'temporary_failure',instruction:'This service already failed in this request. Changing search words cannot repair an outage. Use independent evidence and state the gap.'}});
+        continue;
+      }
       if((parsed.data.tool==='web_search' || parsed.data.tool==='news') && (webScope.ambiguous || (parsed.data.tool==='news' && webScope.dateBasis==='event'))) {
         unresolvedWebScope=!!webScope.ambiguous;
         failedTools.add(parsed.data.tool);
@@ -1064,8 +1141,12 @@ export async function answerSiteQuestion(
         for (const s of result.sources) sources.set(s.id,s);
         if(parsed.data.tool==='pages') for(const source of result.sources) if(source.read) pageSourceIds.add(source.id);
         if(parsed.data.tool==='pages' && result.evidence && typeof result.evidence==='object' && 'notEvidence' in result.evidence) {
-          siteContentRequired=false;
-          pendingReadFollowUp='The documentation search returned no matching passages. Answer from other already-read evidence with answerKind grounded and its source IDs, or acknowledge the documentation gap with answerKind general. Do not invent website usage instructions.';
+          if(result.outcome?.reason==='invalid_page_reference') {
+            pendingReadFollowUp='The page selection was invalid. Correct it using an exact returned source/catalog ID or search with pageIds:[]; do not repeat the invalid IDs. Preserve existing evidence and cite only successfully read sources. No claim about page existence or content follows from an invalid selection.';
+          } else {
+            siteContentRequired=false;
+            pendingReadFollowUp='The documentation search returned no matching passages. Answer from other already-read evidence with answerKind grounded and its source IDs, or acknowledge the documentation gap with answerKind general. Do not invent website usage instructions.';
+          }
         }
         if(result.factualSummary && (parsed.data.tool!=='person' || asksForAllPersonalRecords
           || (parsed.data.metric && parsed.data.rankings===false && !parsed.data.progress && parsed.data.event!=='all'))) for(const s of result.sources) {
@@ -1086,6 +1167,7 @@ export async function answerSiteQuestion(
         // Access/identity/validation failures and unresolved dependencies still
         // terminate. A transient public read cannot erase independent evidence.
         if(!transient || parsed.data.tool==='analysis_query' || parsed.data.tool==='find_person')throw error instanceof AssistantFailure ? error : new AssistantFailure('source_unavailable');
+        unavailableTools.add(parsed.data.tool);
         failedTools.add(parsed.data.tool);called.add(assistantToolKey(parsed.data));failedCalls.add(assistantToolKey(parsed.data));
         evidence.push({id:`failed:${evidence.length}`,tool:parsed.data,outcome:{state:'temporary_failure',reason:'public_read_unavailable'},data:{notEvidence:true,status:'temporary_failure',
           instruction:'This independent public read temporarily failed. No facts about its subject were obtained. Preserve other supported parts and explain this narrow gap. Do not infer zero, absence, success or permission from failure. Never use a failed identity/dependency to construct another call.'}});
@@ -1100,7 +1182,7 @@ export async function answerSiteQuestion(
     signal.throwIfAborted();
     if(duplicates===calls.length) {
       if(step.answer.trim() && sources.size) return finish(step,round);
-      const final=await reviewAnalysis(await complete(round+1,true),round+1,true);
+      const final=await reviewAnalysis(await complete(round+1,true,!hasImages && [...sources.values()].some(source=>source.read) && !analysisRevision?'':undefined,'evidence'),round+1,true);
       if(final.calls.length || !final.answer.trim()) throw new AssistantFailure('model_unavailable');
       return finish(final,round+1);
     }

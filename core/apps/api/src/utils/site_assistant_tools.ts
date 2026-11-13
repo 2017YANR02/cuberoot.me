@@ -326,7 +326,10 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
   } else if (call.tool === 'rankings') {
     const [data,updated] = await Promise.all([read(url(`${api}/wca/historical-ranks`, {event:call.event,type:call.type,country:call.country,year:call.year ?? new Date().getUTCFullYear(),size:call.limit,page:1})),freshness()]);
     const rows = data.rows.map((r:any)=>[String(r.rank),name(r.name),r.wcaId,formatWcaResult(r.value,call.event,call.type),r.iso2,compName(r.compId,r.compName,r.compDate),r.compDate]);
-    out.evidence={updated,...call,total:data.total,columns:['rank','person','wcaId','result','country','competition','date'],rows};
+    const year=call.year ?? new Date().getUTCFullYear();
+    out.evidence={updated,...call,year,timeBasis:{kind:'cumulative_snapshot',through:`${year}-12-31`,coverageThrough:updated,
+      rowDate:'Date of the competition where this personal best was achieved, NOT the ranking snapshot date.',
+      instruction:'Include personal bests achieved in earlier years. This is the cumulative ranking through year end (or latest import for the current year), not a list of results achieved during that year. Do not discard an earlier result or call it out-of-period. For results achieved within a date interval use analysis_query instead.'},total:data.total,columns:['rank','person','wcaId','result','country','competition','date'],rows};
     out.sources.push(source('rankings',label('WCA 排名','WCA rankings'),'/wca/results'));
     table(label('排名','Rankings'),[label('名次','Rank'),label('选手','Person'),'WCA ID',label('成绩','Result'),label('地区','Country'),label('比赛','Competition'),label('日期','Date')],rows,data.rows.map((r:any)=>`/wca/persons/${r.wcaId}`),['text','text','text','text','country','text','date'],data.rows.map((r:any)=>[null,null,null,null,null,r.compId ? `/wca/comp/${r.compId}` : null,null]));
   } else if (call.tool === 'competitions') {

@@ -110,15 +110,22 @@ describe('personal attendance scope', () => {
     ['我2025年三阶参加过多少场比赛？',true],
     ['我所有年份全部项目参加过多少场比赛？',true],
   ])('offers attendance tools only when they can express the known scope: %s',async(question,available)=>{
-    const fetcher=vi.fn<typeof fetch>(async()=>modelResponse({answerKind:'general',answer:'Scope fixture.',sourceIds:[]}));
+    let calls=0;
+    const fetcher=vi.fn<typeof fetch>(async()=>++calls===1
+      ? modelResponse([{tool:'analysis_schema',datasets:['results']}])
+      : modelResponse({answerKind:'general',answer:'Scope fixture.',sourceIds:[]}));
     await answerSiteQuestion(question,'zh',{key:'test',baseUrl:'https://model.example/v1',model:'test'},AbortSignal.timeout(3000),fetcher,[],'2017YANR02');
     const request=JSON.parse(String(fetcher.mock.calls[0][1]?.body));
     const tools=request.tools.map((tool:{function:{name:string}})=>tool.function.name);
     expect(tools.includes('person_competitions')).toBe(available);
     expect(tools.includes('person_countries')).toBe(available);
     expect(tools).toContain('analysis_schema');
-    expect(tools).toContain('analysis_query');
+    expect(tools).not.toContain('analysis_query');
     expect(tools).toContain('person');
+    const prepared=JSON.parse(String(fetcher.mock.calls[1][1]?.body)).tools.map((tool:{function:{name:string}})=>tool.function.name);
+    expect(prepared).toContain('analysis_query');
+    expect(prepared.includes('person_competitions')).toBe(available);
+    expect(prepared.includes('person_countries')).toBe(available);
   });
   it('understands an unspaced year and bare year/event continuations for the established subject', () => {
     expect(scope('那我去过哪些国家比赛？', [{role:'user',content:'我2025年三阶参加过多少场比赛？'}])?.date?.from).toBe('2025-01-01');

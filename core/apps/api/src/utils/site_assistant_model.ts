@@ -133,7 +133,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       }
       if(options.followUp) transcript.push({role:'user',content:options.followUp});
       const request = {
-        model, tools: options.unavailableTools?.length
+        model, tools: !allowTools ? undefined : options.unavailableTools?.length
           ? Object.fromEntries(Object.entries(tools).filter(([name])=>!options.unavailableTools!.includes(name))) : tools,
         toolChoice: !allowTools ? 'none' as const
           : options.requiredTool ? { type: 'tool' as const, toolName: options.requiredTool } : 'auto' as const,
