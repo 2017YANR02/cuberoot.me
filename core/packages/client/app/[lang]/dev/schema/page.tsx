@@ -594,8 +594,8 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
-  { n: 324, slug: 'assistant_knowledge_metadata', desc: { zh: '知识片段章节与来源元数据、发布完整性及上一完整版本回退。', en: 'Knowledge section and source metadata, publication readiness and previous snapshot rollback.' } },
   { n: 325, slug: 'assistant_share_versions', desc: { zh: '按内容版本保存回答分享快照，保留切换公式前的公开链接。', en: 'Version answer snapshots by content while preserving links shared before algorithm changes.' } },
+  { n: 324, slug: 'assistant_knowledge_metadata', desc: { zh: '知识片段章节与来源元数据、发布完整性及上一完整版本回退。', en: 'Knowledge section and source metadata, publication readiness and previous snapshot rollback.' } },
   { n: 323, slug: 'assistant_context', desc: { zh: '服务端私有证据记忆，与请求归属和 30 天内容保留期限绑定。', en: 'Private server evidence memory bound to request ownership and 30-day content retention.' } },
   { n: 321, slug: 'diansheng_zhang_anyu', desc: { zh: '按维护者确认将张安宇（2012ZHAN08）加入点盛战队，保留其他队员归属。', en: 'Assign Anyu Zhang (2012ZHAN08) to DianSheng as confirmed by the maintainer, preserving all other memberships.' } },
   { n: 322, slug: 'vault_merge_capacity', desc: { zh: '私密资料库单条密文上限提升至 4 MiB，支持合并原图附件。', en: 'Raise the private vault encrypted item limit to 4 MiB for merging original image attachments.' } },

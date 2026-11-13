@@ -14,9 +14,17 @@ const caseSchema = z.object({
 export type EvaluationCase = z.infer<typeof caseSchema>;
 
 /** Matching models and corpora alone do not establish a controlled comparison. */
-export function compareBenchmarkMetadata(a: Record<string, unknown>, b: Record<string, unknown>) {
-  const required = ['model', 'providerOrigin', 'corpusGeneration', 'codeFingerprint', 'casesFingerprint', 'configurationFingerprint'];
+export function compareBenchmarkMetadata(a: Record<string, unknown>, b: Record<string, unknown>, comparison:
+  {mode:'retrieval'} | {mode:'code'; expectedCodeFingerprints:readonly [string,string]} = {mode:'retrieval'}) {
+  const required = ['model', 'providerOrigin', 'corpusGeneration', 'casesFingerprint', 'configurationFingerprint'];
+  if(comparison.mode==='retrieval') required.push('codeFingerprint');
+  else required.push('fixtureFingerprint','budgetFingerprint','requestCache','providerCache','surface');
   const mismatches = required.filter(key => !a[key] || !b[key] || a[key] !== b[key]);
+  if(comparison.mode==='code') {
+    const [before,after]=comparison.expectedCodeFingerprints;
+    if(!before || !after || before===after || a.codeFingerprint!==before || b.codeFingerprint!==after) mismatches.push('codeFingerprint');
+    if(a.codeScope!=='executed-bundle' || b.codeScope!=='executed-bundle') mismatches.push('codeScope');
+  }
   return { comparable: mismatches.length === 0, mismatches };
 }
 export function parseEvaluationCases(input: unknown) {

@@ -30,13 +30,18 @@ function summarize(run: ReturnType<typeof load>, ids?: Set<string>) {
     perCase };
 }
 const a = load(baseline), b = candidate ? load(candidate) : undefined;
-const comparison = b ? compareBenchmarkMetadata(a.meta, b.meta) : undefined;
+const mode=value('comparison') ?? 'retrieval';
+if(!['retrieval','code'].includes(mode))throw new Error('Unknown comparison mode');
+const contract=mode==='code'
+  ? {mode:'code' as const,expectedCodeFingerprints:[value('baseline-code') ?? '',value('candidate-code') ?? ''] as const}
+  : {mode:'retrieval' as const};
+const comparison = b ? compareBenchmarkMetadata(a.meta, b.meta,contract) : undefined;
 const comparable = comparison?.comparable ?? null;
 const pairedIds = b ? new Set(a.rows.filter(r => b.rows.some(s => s.id === r.id)).map(r => r.id)) : undefined;
 writeFileSync(output, JSON.stringify({
   boundary: 'Structural checks are not answer-accuracy scores. Small-sample latency is descriptive, not an SLO. Provider cache, model aliases and changing external data are uncontrolled.',
   baseline: { meta: a.meta, complete: a.complete, ...summarize(a) },
-  ...(b ? { candidate: { meta:b.meta, complete:b.complete, ...summarize(b) }, comparison: { comparable, pairedCases:pairedIds!.size,
+  ...(b ? { candidate: { meta:b.meta, complete:b.complete, ...summarize(b) }, comparison: { mode,comparable, pairedCases:pairedIds!.size,
     ...(comparable ? { baseline:summarize(a,pairedIds), candidate:summarize(b,pairedIds) } : { mismatches: comparison?.mismatches, reason:'Code, cases, runtime configuration or sources differ or lack fingerprints; do not attribute the difference to retrieval policy.' }) } } : {}),
 },null,2)+'\n');
 console.log(JSON.stringify({ output, baselineCases:a.rows.length, candidateCases:b?.rows.length, comparable }));

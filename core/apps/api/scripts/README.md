@@ -77,3 +77,30 @@ To go back to all-prod, start the frontend **without** `LOCAL_DOMAINS` set.
   repo-root `.password.md`; nothing secret is committed. Re-run anytime to reset.
 - To test a **migration** locally, apply it to pg13 after seeding:
   `Get-Content migrations/00xx_*.sql | docker exec -i pg13 psql -U postgres -d cuberoot_db`.
+
+## Frozen before/after assistant evaluation
+
+`prepare-assistant-paired.mjs`, `run-assistant-paired.mjs`, and
+`analyze-assistant-paired.mjs` use persistent evidence under `.local-data/`.
+Set `ASSISTANT_EVALUATION_DIR` to a new repository-relative run directory. For a
+follow-up comparison, set `ASSISTANT_EVALUATION_BASE` when preparing: the prior
+run's frozen `after.mjs` becomes the unchanged control, and reviewed source
+overrides in the new directory become the treatment. Preparation rejects missing
+unfrozen dependencies. Preserve the original questions, source bodies and local
+SQL fixture; never run the initial data seeder over an existing evaluation.
+
+The runner requires explicit `--run` or `--index`, reads provider credentials from
+the local API environment, and records usage in a bounded paid ledger. Optional
+`config.json.knowledgeDatabases` maps `before`/`after` to existing isolated local
+indexes. Never point these at production. Execute from `core/`, for example
+`ASSISTANT_EVALUATION_DIR=.local-data/<run> node --max-old-space-size=768 apps/api/scripts/run-assistant-paired.mjs --run`.
+Use `analyze-assistant-paired.mjs --review` to export anonymous answers, then
+record the frozen rubric's scores in `manual-grades.json` before generating the
+comparison. The runner calls real generation/embedding services, while business
+HTTP responses are frozen; reported durations are not production end-to-end
+latencies. No deployment is performed by these scripts.
+
+Before a paid run, follow `docs/contributing/compute.md` and the latest evaluation
+report: explicit authorization, the preserved resource baseline and the external
+resource guard are required. The runner's own 2 GiB check does not replace them.
+A protection stop must not be automatically resumed.

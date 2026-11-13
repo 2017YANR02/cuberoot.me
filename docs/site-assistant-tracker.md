@@ -1,5 +1,12 @@
 # CubeRoot site assistant
 
+## Local RAG and memory implementation (2026-11-12)
+
+See [the implementation and verification record](assistant-rag-memory-optimization-2026-11-12.md)
+for structured retrieval, private conversation evidence, failure isolation, index
+rollback, migrations 0323/0324 and isolated PostgreSQL tests. These changes remain
+local; the production acceptance below is historical and does not validate them.
+
 ## Production acceptance (2026-10-10)
 
 The release is live. PR [#125](https://github.com/2017YANR02/cuberoot.me/pull/125)

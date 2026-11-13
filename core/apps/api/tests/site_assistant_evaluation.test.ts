@@ -4,6 +4,16 @@ import { parseEvaluationCases, auditKnowledge, evaluateStructure, compareBenchma
 import { selectEvaluationCases } from '../scripts/benchmark-site-assistant.js';
 const cases = parseEvaluationCases(JSON.parse(readFileSync(new URL('../../../../docs/benchmarks/assistant-phase1-cases.json', import.meta.url), 'utf8')));
 describe('assistant evaluation boundaries', () => {
+  it('allows only the predeclared code variable for frozen code A/B comparisons',()=>{
+    const a={model:'model',providerOrigin:'https://fixture.example',corpusGeneration:'corpus',codeFingerprint:'before',codeScope:'executed-bundle',casesFingerprint:'cases',configurationFingerprint:'config',fixtureFingerprint:'fixture',budgetFingerprint:'budget',requestCache:'fresh',providerCache:'disabled',surface:'isolated fixture'};
+    const b={...a,codeFingerprint:'after'};
+    const contract={mode:'code' as const,expectedCodeFingerprints:['before','after'] as const};
+    expect(compareBenchmarkMetadata(a,b).comparable).toBe(false);
+    expect(compareBenchmarkMetadata(a,b,contract).comparable).toBe(true);
+    expect(compareBenchmarkMetadata(a,{...b,codeFingerprint:'undeclared'},contract).mismatches).toContain('codeFingerprint');
+    expect(compareBenchmarkMetadata(a,{...b,fixtureFingerprint:'changed'},contract).mismatches).toContain('fixtureFingerprint');
+    expect(compareBenchmarkMetadata(a,{...b,codeScope:'unbundled-unverified'},contract).mismatches).toContain('codeScope');
+  });
   it('rejects comparisons between different local code, cases or missing provenance', () => {
     const meta = { model: 'model', providerOrigin: 'https://provider.example', corpusGeneration: 'corpus', codeFingerprint: 'code', casesFingerprint: 'cases', configurationFingerprint: 'config' };
     expect(compareBenchmarkMetadata(meta, { ...meta })).toEqual({ comparable: true, mismatches: [] });
