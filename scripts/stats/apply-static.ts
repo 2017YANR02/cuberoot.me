@@ -24,8 +24,28 @@ function filePath(root: string, relative: string): string {
 async function hash(path: string): Promise<string | null> {
   if (!existsSync(path)) return null;
   const digest = createHash('sha1');
+  // Competition shards are small: avoid creating hundreds of thousands of streams.
+  if (lstatSync(path).size <= 1024 * 1024) return digest.update(readFileSync(path)).digest('hex');
   for await (const chunk of createReadStream(path)) digest.update(chunk);
   return digest.digest('hex');
+}
+
+/** Check unchanged files too. Repair absence, but never overwrite unknown remote content. */
+export async function auditStaticDelta(root: string, candidates: StaticChange[]): Promise<StaticChange[]> {
+  check(lstatSync(root).isDirectory() && !lstatSync(root).isSymbolicLink(), 'Static destination must be a real directory');
+  check(Array.isArray(candidates) && new Set(candidates.map(c => c.path)).size === candidates.length, 'Invalid static candidates');
+  const changes: StaticChange[] = [];
+  let checked = 0;
+  for (const c of candidates) {
+    check([c.before, c.after].every(value => value === null || /^[a-f0-9]{40}$/.test(value)), 'Invalid static checksum');
+    const actual = await hash(filePath(root, c.path));
+    checked++;
+    if (checked % 10000 === 0) console.error(`[audit] ${checked}/${candidates.length}`);
+    if (actual === c.after) continue;
+    check(actual === null || actual === c.before, `Concurrent static update: ${c.path}; preserve unknown remote content`);
+    changes.push({ ...c, before: actual });
+  }
+  return changes;
 }
 
 export async function applyStaticDelta(root: string, archive: string | null, changes: StaticChange[]): Promise<void> {
@@ -68,5 +88,7 @@ export async function applyStaticDelta(root: string, archive: string | null, cha
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [root, archive] = process.argv.slice(2);
   check(root?.startsWith('/') && archive, 'Usage: apply-static.ts DESTINATION ARCHIVE|-');
-  await applyStaticDelta(root, archive === '-' ? null : archive, JSON.parse(readFileSync(0, 'utf8')));
+  const changes = JSON.parse(readFileSync(0, 'utf8'));
+  if (archive === '--audit') console.log(JSON.stringify(await auditStaticDelta(root, changes)));
+  else await applyStaticDelta(root, archive === '-' ? null : archive, changes);
 }

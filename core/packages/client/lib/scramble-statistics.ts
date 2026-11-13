@@ -34,6 +34,6 @@ export async function fetchScrambleStatistics(compId: string, scramble: string, 
   return {
     steps,
     optimalScramble: match?.optimal_scramble ?? undefined,
-    failed: tables.some(result => result.status === 'rejected') || (resolveOriginal && official === null),
+    failed: tables.some(result => result.status === 'rejected' || result.value === null) || (resolveOriginal && official === null),
   };
 }

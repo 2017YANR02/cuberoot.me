@@ -10,16 +10,28 @@ import { exists, repoRoot, taskProgress, wcaDir } from './common.js';
 import { managed } from '../wca-data/snapshot.ts';
 import { withLocalLock } from '../wca-data/local-lock.ts';
 import type { StaticChange } from './apply-static.ts';
-const unmanaged = (name: string) => !managed(`scramble/${name.slice(2)}`);
+// Exact puzzle corpora have an independent immutable Release/receipt lifecycle.
+const unmanaged = (name: string) => !name.startsWith('./exact-puzzles/') && !managed(`scramble/${name.slice(2)}`);
 
 export type PublishOptions = {
   root?: string; manifest?: string; host?: string; destination?: string;
   dryRun?: boolean; baseline?: boolean; verifyAll?: boolean;
   /** Injected by offline tests. Production uses local tar/scp/ssh. */
   command?: (program: string, args: string[], input?: string) => Promise<void>;
+  capture?: (program: string, args: string[], input: string) => Promise<string>;
 };
 
 function shellQuote(value: string): string { return `'${value.replaceAll("'", "'\\''")}'`; }
+async function capture(program: string, args: string[], input: string): Promise<string> {
+  const child = spawn(program, args, { stdio: ['pipe', 'pipe', 'inherit'] });
+  const chunks: Buffer[] = [];
+  child.stdout.on('data', chunk => chunks.push(chunk));
+  child.stdin.on('error', () => { /* Exit status below reports a disconnected remote. */ });
+  child.stdin.end(input);
+  const exit = await new Promise<number>((done, fail) => { child.once('error', fail); child.once('close', code => done(code ?? 1)); });
+  if (exit !== 0) throw new Error(`${program} audit exited with ${exit}`);
+  return Buffer.concat(chunks).toString('utf8');
+}
 export async function command(program: string, args: string[], input?: string): Promise<void> {
   // Match the Release and exact-puzzle packers: --no-xattrs alone still lets
   // macOS tar add AppleDouble sidecars, which the server correctly rejects.
@@ -62,6 +74,9 @@ async function publishUnlocked(options: PublishOptions): Promise<{ changed: stri
   const exec = options.command ?? command;
   const scratch = await mkdtemp(join(tmpdir(), 'scramble-publish-'));
   const current = join(scratch, 'current.sha1');
+  const remote = `/tmp/cuberoot-scramble-${randomUUID()}.tgz`;
+  const remoteScript = `${remote}.ts`;
+  let uploadedScript = false;
   try {
     const realCache = `${manifest}.cache.json`;
     const cache = options.dryRun ? join(scratch, 'cache.json') : realCache;
@@ -80,14 +95,33 @@ async function publishUnlocked(options: PublishOptions): Promise<{ changed: stri
       await writeFile(temp, currentText);
       await rename(temp, manifest);
     };
-    if (options.baseline) {
-      if (!options.dryRun) await save();
-      console.log(`[baseline] ${now.size} files${options.dryRun ? ' (dry-run)' : ''}`);
-      return { changed: [...now.keys()], deleted: [] };
-    }
     const previous = await exists(manifest) ? new Map([...parseManifest(await readFile(manifest, 'utf8'))].filter(([name]) => unmanaged(name))) : null;
-    const changed = [...now].filter(([name, hash]) => previous?.get(name) !== hash).map(([name]) => name);
-    const deleted = previous ? [...previous.keys()].filter(name => !now.has(name)) : [];
+    const candidates: StaticChange[] = [...new Set([...now.keys(), ...(previous?.keys() ?? [])])]
+      .map(path => ({ path, before: previous?.get(path) ?? null, after: now.get(path) ?? null }));
+    let changes = candidates.filter(c => c.before !== c.after);
+    const audit = async (expected: StaticChange[]) => {
+      const output = await (options.capture ?? capture)('ssh', [host,
+        `flock -w 120 /tmp/cuberoot-scramble-static.lock node ${shellQuote(remoteScript)} ${shellQuote(destination)} --audit`], JSON.stringify(expected));
+      const result: StaticChange[] = JSON.parse(output);
+      const byPath = new Map(expected.map(c => [c.path, c]));
+      if (!Array.isArray(result) || new Set(result.map(c => c.path)).size !== result.length
+        || result.some(c => !byPath.has(c.path) || c.after !== byPath.get(c.path)!.after
+          || (c.before !== null && c.before !== byPath.get(c.path)!.before))) throw new Error('Invalid remote audit result');
+      return result;
+    };
+    if (!options.dryRun) {
+      await exec('scp', [fileURLToPath(new URL('./apply-static.ts', import.meta.url)), `${host}:${remoteScript}`]);
+      uploadedScript = true;
+      console.log(`[audit] checking ${candidates.length} remote files`);
+      changes = await audit(candidates);
+    }
+    const changed = changes.filter(c => c.after !== null).map(c => c.path);
+    const deleted = changes.filter(c => c.after === null).map(c => c.path);
+    if (options.baseline && !options.dryRun) {
+      if (changes.length) throw new Error('Cannot establish baseline: remote files do not match local data. Publish to repair first.');
+      await save();
+      return { changed: [], deleted: [] };
+    }
     console.log(`[publish] changed ${changed.length}, deleted ${deleted.length}, baseline ${previous ? 'present' : 'missing'}`);
     if (options.dryRun) return { changed, deleted };
     const transferTotal = 1 + (changed.length ? 2 : 0) + (changed.length || deleted.length ? 2 : 0);
@@ -95,8 +129,6 @@ async function publishUnlocked(options: PublishOptions): Promise<{ changed: stri
     const advance = () => taskProgress('static:transfer', ++transferred, transferTotal);
     taskProgress('static:transfer', 0, transferTotal);
 
-    const remote = `/tmp/cuberoot-scramble-${randomUUID()}.tgz`;
-    const remoteScript = `${remote}.ts`;
     if (changed.length) {
       const list = join(scratch, 'changed.txt');
       const archive = join(scratch, 'delta.tgz');
@@ -107,19 +139,20 @@ async function publishUnlocked(options: PublishOptions): Promise<{ changed: stri
       advance();
     }
     if (changed.length || deleted.length) {
-      const changes: StaticChange[] = [...changed, ...deleted].map(path => ({ path, before: previous?.get(path) ?? null, after: now.get(path) ?? null }));
-      await exec('scp', [fileURLToPath(new URL('./apply-static.ts', import.meta.url)), `${host}:${remoteScript}`]);
       advance();
-      const cleanup = `rm -f -- ${shellQuote(remote)} ${shellQuote(remoteScript)}`;
       // Check expected hashes and apply the entire delta under one server lock.
       const apply = `node ${shellQuote(remoteScript)} ${shellQuote(destination)} ${shellQuote(changed.length ? remote : '-')}`;
-      await exec('ssh', [host, `trap ${shellQuote(cleanup)} EXIT; flock -w 120 /tmp/cuberoot-scramble-static.lock ${apply}`], JSON.stringify(changes));
+      await exec('ssh', [host, `flock -w 120 /tmp/cuberoot-scramble-static.lock ${apply}`], JSON.stringify(changes));
       advance();
     }
+    const remaining = await audit(candidates.map(c => ({ ...c, before: c.after })));
+    if (remaining.length) throw new Error(`Remote verification failed: ${remaining.length} files still missing`);
+    console.log(`[audit] verified ${now.size} remote files; publication baseline may advance`);
     await save();
     advance();
     return { changed, deleted };
   } finally {
+    if (uploadedScript) await exec('ssh', [host, `rm -f -- ${shellQuote(remote)} ${shellQuote(remoteScript)}`]).catch(error => console.warn('Remote temporary cleanup failed', error));
     await rm(scratch, { recursive: true, force: true });
   }
 }

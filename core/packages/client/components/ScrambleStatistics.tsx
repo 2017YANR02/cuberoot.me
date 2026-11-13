@@ -59,7 +59,7 @@ function StatisticsBody({ compId, scramble, optimalScramble, resolveOriginal = f
   const missing = hasStages && (Object.keys(COMP_STEP_STAGES) as CompStepsVariant[])
     .some(variant => COMP_STEP_STAGES[variant].some((_, index) => valueFor(variant, index) === null));
   const renderValue = (value: number | null) => value === null
-    ? <span className="scramble-statistics-missing" aria-label={tr({ zh: '尚未统计', en: 'Not yet computed' })}>—</span>
+    ? <span className="scramble-statistics-missing" aria-label={tr({ zh: '暂无统计数据', en: 'Statistics unavailable' })}>—</span>
     : <b>{value}</b>;
 
   const header = (
@@ -114,7 +114,7 @@ function StatisticsBody({ compId, scramble, optimalScramble, resolveOriginal = f
       {data && !hasStages && <p className="scramble-statistics-status">
         {tr({ zh: '此打乱暂无阶段统计', en: 'Stage statistics are not yet available for this scramble' })}
       </p>}
-      {missing && !data?.failed && <p className="scramble-statistics-status">{tr({ zh: '— 尚未统计', en: '— Not yet computed' })}</p>}
+      {missing && !data?.failed && <p className="scramble-statistics-status">{tr({ zh: '— 暂无统计数据', en: '— Statistics unavailable' })}</p>}
       {data?.failed && <p className="scramble-statistics-status" role="status">
         {tr({ zh: '部分统计加载失败', en: 'Some statistics could not be loaded' })}
         {' '}<button type="button" className="scramble-statistics-retry" onClick={() => setAttempt(value => value + 1)}>{tr({ zh: '重试', en: 'Retry' })}</button>

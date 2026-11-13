@@ -56,3 +56,27 @@ test('changed source, unknown existing data and symlinks fail without modifying 
   assert.equal(readFileSync(join(root, 'outside/keep.txt'), 'utf8'), 'keep');
   assert.equal(readFileSync(join(live, 'file.txt'), 'utf8'), 'old');
 });
+
+test('audit repairs unchanged missing files, preserves unknown content and confirms complete publication', async t => {
+  const { live, source, archive } = fixture(t);
+  const { auditStaticDelta } = await import('./apply-static.ts');
+  const expected = [{ path: './WC2025.json', before: sha('computed'), after: sha('computed') }];
+  const repair = await auditStaticDelta(live, expected);
+  assert.deepEqual(repair, [{ ...expected[0], before: null }]);
+  writeFileSync(join(source, 'WC2025.json'), 'computed'); pack(source, archive, ['./WC2025.json']);
+  await applyStaticDelta(live, archive, repair);
+  assert.deepEqual(await auditStaticDelta(live, expected), []);
+  writeFileSync(join(live, 'WC2025.json'), 'another publisher');
+  await assert.rejects(auditStaticDelta(live, expected), /Concurrent static update/);
+  assert.equal(readFileSync(join(live, 'WC2025.json'), 'utf8'), 'another publisher');
+});
+
+test('audit rechecks application races rather than overwriting a concurrent update', async t => {
+  const { live, source, archive } = fixture(t);
+  const { auditStaticDelta } = await import('./apply-static.ts');
+  const repair = await auditStaticDelta(live, [{ path: './race.txt', before: sha('old'), after: sha('ours') }]);
+  writeFileSync(join(source, 'race.txt'), 'ours'); pack(source, archive, ['./race.txt']);
+  writeFileSync(join(live, 'race.txt'), 'theirs');
+  await assert.rejects(applyStaticDelta(live, archive, repair), /Concurrent static update/);
+  assert.equal(readFileSync(join(live, 'race.txt'), 'utf8'), 'theirs');
+});

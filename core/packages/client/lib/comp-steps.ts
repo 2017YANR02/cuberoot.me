@@ -36,7 +36,8 @@ export function fetchCompSteps(compId: string, variant: CompStepsVariant): Promi
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < 5 * 60_000) return hit.promise;
   const dir = variant === 'std' ? 'comp_steps' : `comp_steps_${variant}`;
-  const promise = fetch(statsUrl(`/stats/scramble/${dir}/${encodeURIComponent(compId)}.json`))
+  // Revalidate HTTP caches too: a previously cached 404 must recover after publication.
+  const promise = fetch(statsUrl(`/stats/scramble/${dir}/${encodeURIComponent(compId)}.json`), { cache: 'no-cache' })
     .then(async response => {
       if (response.status === 404) return null;
       if (!response.ok) throw new Error(`Competition steps: ${response.status}`);
@@ -54,6 +55,9 @@ export function fetchCompSteps(compId: string, variant: CompStepsVariant): Promi
   cache.set(key, { at: Date.now(), promise });
   if (cache.size > 48) cache.delete(cache.keys().next().value!);
   void promise.catch(() => { if (cache.get(key)?.promise === promise) cache.delete(key); });
+  void promise.then(result => {
+    if (result === null && cache.get(key)?.promise === promise) cache.delete(key);
+  }, () => {});
   return promise;
 }
 

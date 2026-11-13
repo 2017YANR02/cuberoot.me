@@ -38,6 +38,8 @@ export async function runLocalForPublish(args: string[], execute = runTs): Promi
 export async function publishPipeline(options: Options): Promise<void> {
   if (!existsSync(join(repoRoot, 'stats/.stats-release-base.json'))) throw new Error('Statistics publication baseline missing; hydrate the latest Release before computing (pnpm stats:hydrate). Existing local files are preserved.');
   if (!options.publishOnly) await runLocalForPublish(options.localArgs);
+  // Missing variants or per-bottom results must not become a successful full publication.
+  if (options.jobs.includes('stages')) await runTs(join(jobDir, 'src/validate_comp_steps.ts'), [join(repoRoot, 'stats/scramble')]);
   const stampValue = await stamp();
   const operations = [
     ...(options.jobs.includes('stages') ? ['mirror', 'steps'] : []),

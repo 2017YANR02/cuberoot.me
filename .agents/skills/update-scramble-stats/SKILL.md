@@ -21,6 +21,8 @@ pnpm stats:scramble:local --plan
 
 用户运行日常一键命令或明确要求跑完自动发布时，按该次授权执行发布。已有本地产物只需发布时运行 `pnpm stats:scramble --publish-only`，不重复计算。底层 `stats:scramble:publish --publish` 同样灌 PG、更新最新 Release 并上传独立在线分片；兼容旧 `--push` 参数，但不再提交或推送统计文件。发布失败时保持对应 SHA1/PG manifest，供下次重试。只读独立分片差异预览在仓库根运行 `./core/node_modules/.bin/tsx scripts/stats/publish-static.ts --dry-run`，`--verify-all` 忽略哈希缓存重算。
 
+发布完整性（2026-11-13）：日常入口发布 stages 前，必须通过全部比赛、打乱、变体及六底色值的覆盖检查（validate_comp_steps.ts），缺数据不发布。独立分片发布每次先按实际远端 SHA1 核对全部候选文件，补传远端缺失项；不以本地 publish_manifest.sha1 中“已有”代替远端存在。远端未知内容视为并发冲突，保留并停止。上传后再次全量核验，通过才推进本地基线。--baseline 也须远端与本地完全一致，不能凭本地文件初始化“已发布”。--verify-all 只控制本地哈希缓存，远端核验始终执行；--dry-run 是离线本地差异预览，不代表远端完整性。修复线上缺失先复用已有结果，不重复求解。`exact-puzzles/` 属独立不可变数据包发布流程，通用静态发布不得上传或删除它，即使旧基线含这些路径也要排除。
+
 统计发布通过同一个 `wca-data-latest` Release，基于本地 `stats/.stats-release-base.json` 生成 owner 补丁，并在全局发布锁内合并。并发修改同一文件时停止，保留结果和基线；不覆盖其他任务的新结果。新 checkout 先在 `core/` 运行 `pnpm stats:hydrate`，再开始计算；hydrate 不覆盖不同的本地文件。成功发布后只推进该 owner 的基线，失败可重试，不需要提交 Git。
 
 | job | 内容 | 主要产物 |

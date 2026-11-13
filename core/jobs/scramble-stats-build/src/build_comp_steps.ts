@@ -11,7 +11,7 @@
 //     - 333/oh/ft/fm:面转打乱,原始=去宽层串。fm 的 "R' U' F …" 包裹也照样匹配。
 //     - bf(盲拧):原始带宽层定向,但值取变体 csv(对去宽层态算,十字与原始态一致)。
 //   收 333 系列(333/333oh/333ft/333fm/333bf);跳过 333mbf(一把多方块,逐方块无法对应)。
-//   变体 csv 缺(f2leo 系未 backfill)→ 跳过该变体,不动其旧目录。
+//   WCA 变体 CSV 缺失、漏 ID 或无效值时停止，不把不完整统计生成成正式分片。
 // 体积大(~100MB / 上万文件),gitignore + 只 scp 到 static;dev 本地直接读。
 //
 // Run: pnpm --filter @cuberoot/scramble-stats-build build:comp-steps
@@ -29,26 +29,7 @@ const FAMILY = new Set(['333', '333oh', '333ft', '333fm', '333bf']);
 const BADGE_FROM_STD = [1, 0, 3, 2, 5, 4];
 
 // 变体 → (csv 文件名, 阶段数, 输出目录)。三者列布局一致(id + 阶段×6 角度),只差阶段数。
-interface Target { csv: string; stages: number; outDir: string }
-const TARGETS: Target[] = [
-  { csv: 'std.csv', stages: 5, outDir: 'comp_steps' },
-  { csv: 'daisy.csv', stages: 1, outDir: 'comp_steps_daisy' },
-  { csv: 'first_layer.csv', stages: 2, outDir: 'comp_steps_first_layer' },
-  { csv: 'eo.csv', stages: 5, outDir: 'comp_steps_eo' },
-  { csv: 'pseudo.csv', stages: 4, outDir: 'comp_steps_pseudo' },
-  { csv: 'pseudo_pair.csv', stages: 4, outDir: 'comp_steps_pseudo_pair' },
-  { csv: 'pair.csv', stages: 4, outDir: 'comp_steps_pair' },
-  { csv: 'f2leo.csv', stages: 4, outDir: 'comp_steps_f2leo' },
-  { csv: 'pseudo_f2leo.csv', stages: 4, outDir: 'comp_steps_pseudo_f2leo' },
-  // 块类(UI key 123/222/223;123 的 CSV 管道名是 roux)
-  { csv: 'roux.csv', stages: 2, outDir: 'comp_steps_123' },
-  { csv: '222.csv', stages: 1, outDir: 'comp_steps_222' },
-  { csv: '223.csv', stages: 1, outDir: 'comp_steps_223' },
-  // 双 1x2x3(UI key 123x2;CSV 管道名 f2b)+ EOLine 系 + DR
-  { csv: 'f2b.csv', stages: 1, outDir: 'comp_steps_123x2' },
-  { csv: 'eoline.csv', stages: 2, outDir: 'comp_steps_eoline' },
-  { csv: 'dr.csv', stages: 1, outDir: 'comp_steps_dr' },
-];
+import { COMP_STEP_TARGETS as TARGETS } from './comp_step_targets.js';
 
 // 与 client useCompSteps.normScramble 一致:trim + 多空格压单空格。
 const normKey = (s: string): string => s.trim().replace(/\s+/g, ' ');
@@ -58,7 +39,7 @@ function rl(p: string) {
 }
 
 // 一个变体 csv → 按 comp 分组写出。idComp/idKey 为 333 系列(由 split_mbf 预先建好,跨变体共享)。
-async function buildTarget(
+export async function buildTarget(
   csvPath: string,
   stages: number,
   outDir: string,
@@ -69,6 +50,7 @@ async function buildTarget(
   const byComp = new Map<string, Record<string, number[]>>();
   let first = true;
   let rows = 0;
+  const seen = new Set<string>();
   for await (const line of rl(csvPath)) {
     if (!line) continue;
     if (first) { first = false; continue; }
@@ -82,11 +64,16 @@ async function buildTarget(
       const base = 1 + s * 6;
       for (const j of BADGE_FROM_STD) vals.push(Number(c[base + j]));
     }
+    if (c.length !== 1 + stages * 6 || c.slice(1).some(value => !/^\d+$/.test(value))
+      || vals.some(value => !Number.isInteger(value) || value < 0)
+      || seen.has(c[0])) throw new Error(`Invalid/duplicate stage row: ${csvPath}: ${c[0]}`);
+    seen.add(c[0]);
     let m = byComp.get(comp);
     if (!m) { m = {}; byComp.set(comp, m); }
     m[key] = vals;
     rows++;
   }
+  if (seen.size !== idKey.size) throw new Error(`Incomplete stage results: ${csvPath}: ${seen.size}/${idKey.size} IDs`);
   fs.rmSync(outDir, { recursive: true, force: true });
   fs.mkdirSync(outDir, { recursive: true });
   let bytes = 0;
@@ -129,17 +116,15 @@ async function main() {
   }
   console.log(`  ${idComp.size} 个 333 系列打乱`);
 
-  // 2) 每个变体 csv(存在才处理)→ 各自目录。std 永远在;f2leo 系缺则跳过(待 backfill)。
-  const availableTargets = TARGETS.filter(tgt => fs.existsSync(path.join(csvDir, tgt.csv)));
-  const report = taskProgress('比赛阶段表', availableTargets.length);
+  // 2) 全部变体必须存在；不能静默跳过后发布。
+  for (const tgt of TARGETS) {
+    if (!fs.existsSync(path.join(csvDir, tgt.csv))) throw new Error(`Missing stage CSV: ${tgt.csv}; backfill before building competition statistics`);
+  }
+  const report = taskProgress('比赛阶段表', TARGETS.length);
   report(0);
   let completedTargets = 0;
   for (const tgt of TARGETS) {
     const csvPath = path.join(csvDir, tgt.csv);
-    if (!fs.existsSync(csvPath)) {
-      console.warn(`[skip] ${tgt.csv} 不存在 → 不产 ${tgt.outDir}(待 backfill)`);
-      continue;
-    }
     const outDir = path.join(repoRoot, 'stats', 'scramble', tgt.outDir);
     await buildTarget(csvPath, tgt.stages, outDir, idComp, idKey);
     report(++completedTargets);
@@ -147,4 +132,6 @@ async function main() {
   console.log('done');
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((e) => { console.error(e); process.exit(1); });
+}

@@ -6,7 +6,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { promisify } from 'node:util';
-import { command, parseManifest, publishScrambleIncremental } from './publish-static.js';
+import { command, parseManifest, publishScrambleIncremental as publish } from './publish-static.js';
+
+const publishScrambleIncremental = (options: Parameters<typeof publish>[0]) => publish({
+  capture: async (_program, _args, input) => JSON.stringify(JSON.parse(input).filter((c: { before: string | null; after: string | null }) => c.before !== c.after)),
+  ...options,
+});
 
 test('macOS metadata does not add unlisted AppleDouble files to the publication tar', { skip: process.platform !== 'darwin' }, async () => {
   const dir = await mkdtemp(join(tmpdir(), 'scramble-mac-tar-'));
@@ -76,7 +81,7 @@ test('publisher preserves baseline on remote failure and sends expected hashes f
     };
     await assert.rejects(() => publishScrambleIncremental({ root, manifest, host: 'fixture', destination: '/tmp/scramble', command: run }));
     assert.equal(await readFile(manifest, 'utf8'), old);
-    assert.deepEqual(JSON.parse(calls.at(-1)!.input!), [
+    assert.deepEqual(JSON.parse(calls.findLast(c => c.input)!.input!), [
       { path: './中文 空格.txt', before: null, after: createHash('sha1').update('new').digest('hex') },
       { path: './gone.txt', before: 'b'.repeat(40), after: null },
     ]);
@@ -96,6 +101,8 @@ test('direct static publication never uploads or deletes Release-owned files, ev
   try {
     const root = join(dir, 'scramble'), manifest = join(dir, 'baseline.sha1');
     await mkdir(root); await mkdir(join(root, 'comp_steps'));
+    await mkdir(join(root, 'exact-puzzles'));
+    await writeFile(join(root, 'exact-puzzles/corpus.gz'), 'independent owner');
     await writeFile(join(root, 'distribution.json'), '{}');
     await writeFile(join(root, 'comp_steps/example.json'), '{}');
     const calls: { program: string; args: string[]; input?: string }[] = [];
@@ -103,7 +110,7 @@ test('direct static publication never uploads or deletes Release-owned files, ev
     const first = await publishScrambleIncremental({ root, manifest, command });
     assert.deepEqual(first.changed, ['./comp_steps/example.json']);
     assert(!calls.some(c => c.args.some(a => /scramble\.new|scramble\.prev|mv scramble/.test(a))));
-    await writeFile(manifest, `${'a'.repeat(40)}  ./distribution.json\n${'b'.repeat(40)}  ./no_bar.json\n`);
+    await writeFile(manifest, `${'a'.repeat(40)}  ./distribution.json\n${'b'.repeat(40)}  ./no_bar.json\n${'c'.repeat(40)}  ./exact-puzzles/corpus.gz\n`);
     const next = await publishScrambleIncremental({ root, manifest, command });
     assert.deepEqual(next.deleted, []); assert.deepEqual(next.changed, ['./comp_steps/example.json']);
   } finally { await rm(dir, { recursive: true, force: true }); }
@@ -129,7 +136,7 @@ test('overlapping publishers keep their own uploads and apply deletion in one lo
         uploads.add(args[1]);
         if (wait) { firstUploaded(); await blocked; }
       }
-      if (program === 'ssh') {
+      if (program === 'ssh' && input) {
         applies.push(args[1]);
         assert.match(args[1], /flock -w 120 \/tmp\/cuberoot-scramble-static.lock/);
         assert.match(args[1], /node .*\.tgz\.ts/);
@@ -146,5 +153,29 @@ test('overlapping publishers keep their own uploads and apply deletion in one lo
     assert.equal(uploads.size, 2); assert.equal(applies.length, 2);
     assert.equal(await readFile(firstOptions.manifest, 'utf8'), `${createHash('sha1').update('first').digest('hex')}  ./state.txt\n`);
     assert.equal(await readFile(secondOptions.manifest, 'utf8'), `${createHash('sha1').update('second').digest('hex')}  ./state.txt\n`);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('unchanged local baseline repairs missing remote files and refuses unverified baselines', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'scramble-repair-'));
+  try {
+    const root = join(dir, 'source'), manifest = join(dir, 'baseline.sha1');
+    await mkdir(root); await writeFile(join(root, 'WC2025.txt'), 'computed');
+    const digest = createHash('sha1').update('computed').digest('hex');
+    const baseline = `${digest}  ./WC2025.txt\n`;
+    await writeFile(manifest, baseline);
+    let missing = true;
+    const capture = async (_program: string, _args: string[], input: string) => JSON.stringify(missing ? JSON.parse(input).map((c: object) => ({ ...c, before: null })) : []);
+    const command = async (program: string, _args: string[], input?: string) => {
+      if (program === 'ssh' && input) missing = false;
+    };
+    await assert.rejects(publishScrambleIncremental({ root, manifest, capture, command, baseline: true }), /Cannot establish baseline/);
+    assert.equal(await readFile(manifest, 'utf8'), baseline);
+    const result = await publishScrambleIncremental({ root, manifest, capture, command });
+    assert.deepEqual(result.changed, ['./WC2025.txt']);
+    assert.equal(missing, false);
+    missing = true;
+    await assert.rejects(publishScrambleIncremental({ root, manifest, capture, command: async () => {} }), /Remote verification failed/);
+    assert.equal(await readFile(manifest, 'utf8'), baseline);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });

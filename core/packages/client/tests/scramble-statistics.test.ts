@@ -39,6 +39,7 @@ describe('precomputed scramble statistics', () => {
     expect(a).toBe(b);
     expect(a?.get('R U')).toEqual([-1, 0, 6, 5, 7, 6]);
     expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher.mock.calls[0][1]).toEqual({ cache: 'no-cache' });
   });
 
   it('retries failed shards and distinguishes errors from unpublished data', async () => {
@@ -66,4 +67,18 @@ describe('precomputed scramble statistics', () => {
     expect(data.optimalScramble).toBe(optimal);
     expect(data.failed).toBe(true);
   });
+});
+
+it('reports a missing published shard as a load failure and allows immediate recovery', async () => {
+  let repaired = false;
+  const fetcher = vi.fn(async () => repaired
+    ? new Response(JSON.stringify({ 'R U': Array(30).fill(3) }))
+    : new Response('', { status: 404 }));
+  vi.stubGlobal('fetch', fetcher);
+  const missing = await fetchScrambleStatistics('StatsMissingRepair2026', 'R U', false);
+  expect(missing.failed).toBe(true);
+  repaired = true;
+  const recovered = await fetchScrambleStatistics('StatsMissingRepair2026', 'R U', false);
+  expect(recovered.failed).toBe(false);
+  expect(recovered.steps.daisy).toEqual(Array(30).fill(3));
 });

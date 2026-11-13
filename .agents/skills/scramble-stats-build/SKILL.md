@@ -5,7 +5,7 @@ description: "Use when regenerating `stats/scramble/*.json` or touching `core/jo
 
 # Scramble Stats Build
 
-把 `D:\cube\solver` 产的 7 份 CSV 聚合成 `stats/scramble/distribution.json`,给 `/scramble-stats` 用。**支持多个 set**(WCA 历史 + state-based 数据集),UI 上 dropdown 切换。某个变体 CSV 缺失时**跳过**(打 `[skip] <key>: missing CSV ...` 警告,不再抛错),回填后再纳入。
+把 `D:\cube\solver` 产的各阶段 CSV 聚合成 `stats/scramble/distribution.json`,给 `/scramble-stats` 用。**支持多个 set**(WCA 历史 + state-based 数据集),UI 上 dropdown 切换。分布聚合允许可选数据集缺少变体 CSV 时跳过并报警；这不代表 WCA 发布完整。2026-11-13 起，WCA 比赛分片生成要求全部变体 CSV 存在且覆盖所有比赛打乱 ID、各阶段六底色均为有效非负整数，缺失即失败并保留旧分片。日常 stages 发布前还会逐场核对 15 类分片的比赛与打乱覆盖；不得将局部结果标为完整发布。
 
 ## 跑
 
@@ -34,6 +34,8 @@ CSV 数据全 gitignored(`D:/cube/scramble/`),几百 MB 永不进 git。`config.
 
 - `D:/cube/scramble/<set>/`:**所有打乱数据**(无论是 WCA 真实历史 or 由状态空间穷举/采样产生的合成 scramble),都放这里。每个 set 一个子目录,内含 `stat/` + `scrambles.txt`(+ 可选 `README.md`)。
 - C++ analyzer 源码 / 二进制 / `state2scramble` 等中间工具留在 `D:/cube/solver/` 或 `D:/cube/solver_wip/`,**不**进数据目录
+
+完整比赛阶段变体、文件名和阶段数以 `core/jobs/scramble-stats-build/src/comp_step_targets.ts` 为准，生成器和覆盖检查共用此清单。以下表格说明十字族列格式，不是完整任务清单。
 
 ## CSV schema
 
