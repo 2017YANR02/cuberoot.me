@@ -127,6 +127,7 @@ describe('shared timer scramble preview', () => {
     { event: 'radiojewel', faces: 20 },
     { event: 'radioweb', faces: 20 },
     { event: 'radiojam', faces: 20 },
+    { event: 'radionebula', faces: 20 },
     { event: 'catscradle', faces: 20 },
     { event: 'radiolarian3', faces: 20 },
   ] as const)('renders the complete $event net and recovers from invalid input', async ({ event, faces }) => {
@@ -401,7 +402,7 @@ describe('shared timer scramble preview', () => {
       'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
       'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
       'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
-      'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'catscradle', 'radiolarian3',
+      'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'radionebula', 'catscradle', 'radiolarian3',
     ] as const) {
       expect(timerCubePreviewAspect(event)).toBe(nativePuzzleSvgAspect(event));
     }

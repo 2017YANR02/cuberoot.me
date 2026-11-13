@@ -320,6 +320,11 @@ describe('TwistySection without WebGL', () => {
       invalid: '4R', absent: ['3R', '3Rw'],
     },
     {
+      id: 'radionebula', setup: 'R', alg: '2R', move: 'Rw', order: 3,
+      controls: [{ move: 'R', order: 3 }, { move: '2R', order: 3 }, { move: 'Rw', order: 3 }],
+      invalid: '4R', absent: ['3R', '3Rw'],
+    },
+    {
       id: 'catscradle', setup: 'R', alg: '2R', move: 'Rw', order: 3,
       controls: [{ move: 'R', order: 3 }, { move: '2R', order: 3 }, { move: 'Rw', order: 3 }],
       invalid: '4R', absent: ['3R', '3Rw'],

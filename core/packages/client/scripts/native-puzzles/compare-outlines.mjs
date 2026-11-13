@@ -9,12 +9,22 @@
 // --set=catscradle: review Cat's Cradle's critical face-cut depth.
 // --set=radiocanon: review Radio Canon's fixed-center face cuts.
 // --set=radiolarian3: review Radiolarian 3's mobile-center face cuts.
+// --set=radionebula: review Radio Nebula's deep face cuts and small corners.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
 import { NATIVE_PUZZLES } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { Vector3 } from 'three';
 
 const reviewSets = {
+  radionebula: {
+    basename: 'radionebula-outlines',
+    rows: [{
+      id: 'radionebula', en: 'Radio Nebula (Radiolarian 12)',
+      description: 'i f 0.1458980337503154', visibleFacelets: 560,
+      prior: 'i f 0.3333333333333333', priorLabel: 'Radio Crystal (comparison; cuts are replaced)',
+      notes: ['Face-normal depth h = 1/phi^4 = (7 - 3 sqrt(5))/2, following Hyperspeedcube radio12.', '28 regions per face: 18 triangles, 3 quadrilaterals, 3 pentagons and 4 hexagons; no jumbling.'],
+    }],
+  },
   radiolarian3: {
     basename: 'radiolarian3-outlines',
     rows: [{

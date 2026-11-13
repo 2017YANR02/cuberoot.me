@@ -32,6 +32,7 @@ const CASES = [
   { id: 'radiojewel', stickers: 320, moves: 60, outer: 20, inner: 20, wide: 20 },
   { id: 'radioweb', stickers: 440, moves: 60, outer: 20, inner: 20, wide: 20 },
   { id: 'radiojam', stickers: 440, moves: 60, outer: 20, inner: 20, wide: 20 },
+  { id: 'radionebula', stickers: 560, moves: 60, outer: 20, inner: 20, wide: 20 },
   { id: 'catscradle', stickers: 380, moves: 60, outer: 20, inner: 20, wide: 20 },
   { id: 'radiocanon', stickers: 320, moves: 60, outer: 20, inner: 20, wide: 20 },
   { id: 'radiolarian3', stickers: 320, moves: 60, outer: 20, inner: 20, wide: 20 },

@@ -27,6 +27,7 @@ const CASES = [
   { id: 'radiojewel', scramble: "R 2L' Gw Uv [F, U] Rw'", facelets: 320 },
   { id: 'radioweb', scramble: "R 2L' Gw Uv [F, U] Rw'", facelets: 440 },
   { id: 'radiojam', scramble: "R 2L' Gw Uv [F, U] Rw'", facelets: 440 },
+  { id: 'radionebula', scramble: "R 2L' Gw Uv [F, U] Rw'", facelets: 560 },
   { id: 'catscradle', scramble: "R 2L' Gw Uv [F, U] Rw'", facelets: 380 },
   { id: 'radiocanon', scramble: "R 2L' Gw Uv [F, U] Rw'", facelets: 320 },
   { id: 'radiolarian3', scramble: "R 2L' Gw Uv [F, U] Rw'", facelets: 320 },

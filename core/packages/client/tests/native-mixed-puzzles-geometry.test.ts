@@ -34,6 +34,9 @@ import { nativePuzzleKPuzzle, parseNativePuzzleAlg } from '@cuberoot/puzzle-solv
 // https://www.puzzleforge.com/wp/2014/05/08/radiolarian-1-5-the-radio-cannon-52014/
 // Radiolarian 3's radio03 uses 1 - (1 - 1/phi) * 4/5 and mobile centers:
 // https://www.puzzleforge.com/wp/2010/03/08/132/
+// Radio Nebula's radio12 uses 1/phi^4 and restores twelve small corners:
+// https://www.puzzleforge.com/wp/2013/03/07/radiolarian-12-the-radio-nebula-32013/
+// Its depth is the Hyperspeedcube radio12 model, not measured retail dimensions.
 // Baby Face preset: https://github.com/cubing/cubing.js/issues/127
 // 3x3 + Skewb is the independent superposition of the standard 3x3 and Skewb
 // cut families, not a measured reproduction of an inaccessible original post.
@@ -219,6 +222,13 @@ const CASES: readonly Spec[] = [
     faces: 20, perFace: 22, raw: 480, visible: 440, pieces: 302,
     shapes: { 3: 15, 5: 6, 6: 1 }, unmarkedOrbit: 'CENTERS4',
     orbits: [['EDGES', 60, 2], ['C5RNER', 12, 5], ['CENTERS', 60, 1], ['CENTERS2', 60, 1], ['EDGES2', 30, 2], ['CENTERS3', 60, 1], ['CENTERS4', 20, 3]],
+  },
+  {
+    id: 'radionebula', faceNormals: icoNormals,
+    axes: [{ pairs: icoFacePairs, normals: icoNormals, cuts: [1 / PHI ** 4], order: 3 }],
+    faces: 20, perFace: 28, raw: 600, visible: 560, pieces: 362,
+    shapes: { 3: 18, 4: 3, 5: 3, 6: 4 }, unmarkedOrbit: 'CENTERS4',
+    orbits: [['C5RNER', 12, 5], ['EDGES', 60, 2], ['EDGES2', 30, 2], ['EDGES3', 60, 2], ['CENTERS', 60, 1], ['CENTERS2', 60, 1], ['CENTERS3', 60, 1], ['CENTERS4', 20, 3]],
   },
 ];
 
@@ -591,14 +601,22 @@ describe.each(CASES)('$id independent physical model', (spec) => {
   });
 });
 
-it.each(['cube2heli', 'cube3heli'] as const)('keeps %s pieces rigid through interleaved face, edge, slice, wide and whole turns', (id) => {
+it.each(['cube2heli', 'cube3heli', 'radionebula'] as const)('keeps %s pieces rigid through interleaved layer, wide and whole turns', (id) => {
   const spec = CASES.find((candidate) => candidate.id === id)!;
   const twoHalves = id === 'cube2heli';
   const { stickers, byPolygon, puzzle } = fixture(spec);
   // Track physical source stickers geometrically; PG only supplies the state
   // being checked, never the next moving set or expected destination.
   const live = stickers.map((sticker) => ({ ...sticker, vertices: sticker.vertices.map((p) => p.clone()) }));
-  const sequence = [
+  const sequence = id === 'radionebula' ? [
+    { move: 'R', family: 'R', axis: 0, first: 1, last: 1, amount: 1 },
+    { move: "2U'", family: 'U', axis: 0, first: 2, last: 2, amount: -1 },
+    { move: 'Gw', family: 'G', axis: 0, first: 1, last: 2, amount: 1 },
+    { move: 'Fv', family: 'F', axis: 0, first: 1, last: 3, amount: 1 },
+    { move: "Kw'", family: 'K', axis: 0, first: 1, last: 2, amount: -1 },
+    { move: '2H', family: 'H', axis: 0, first: 2, last: 2, amount: 1 },
+    { move: 'C', family: 'C', axis: 0, first: 1, last: 1, amount: 1 },
+  ] : [
     { move: 'F', family: 'F', axis: 0, first: 1, last: 1, amount: 1 },
     { move: "UF'", family: 'UF', axis: 1, first: 1, last: 1, amount: -1 },
     { move: twoHalves ? "R'" : "2R'", family: 'R', axis: 0, first: twoHalves ? 1 : 2, last: twoHalves ? 1 : 2, amount: -1 },
@@ -642,12 +660,15 @@ it.each(['cube2heli', 'cube3heli'] as const)('keeps %s pieces rigid through inte
       expect(target!.orbit, `${step.move} orbit`).toBe(source.orbit);
       expect(pattern.patternData[target!.orbit].pieces[target!.ord], `${step.move} live piece`).toBe(source.ord);
       const orientations = spec.orbits.find(([name]) => name === source.orbit)![2];
-      expect((target!.ori - pattern.patternData[target!.orbit].orientation[target!.ord] + orientations) % orientations,
-        `${step.move} live sticker orientation`).toBe(source.ori);
+      if (source.orbit !== spec.unmarkedOrbit) {
+        expect((target!.ori - pattern.patternData[target!.orbit].orientation[target!.ord] + orientations) % orientations,
+          `${step.move} live sticker orientation`).toBe(source.ori);
+      }
     }
   }
-  expect(puzzle.algToTransformation('F UF').isIdentical(puzzle.algToTransformation('UF F')),
-    'face and edge turns genuinely interact').toBe(false);
+  const [a, b] = id === 'radionebula' ? ['R', 'U'] : ['F', 'UF'];
+  expect(puzzle.algToTransformation(`${a} ${b}`).isIdentical(puzzle.algToTransformation(`${b} ${a}`)),
+    'turns on distinct axes interact').toBe(false);
   const alg = parseNativePuzzleAlg(spec.id, sequence.map(({ move }) => move).join(' '));
   expect(pattern.applyAlg(alg.invert()).isIdentical(puzzle.defaultPattern())).toBe(true);
 });
@@ -755,7 +776,7 @@ afterEach(async () => {
   }
 });
 
-it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'catscradle', 'radiocanon', 'radiolarian3'] as const)('animates %s moves in both directions with the real PG3D matrices and selected pieces', async (id) => {
+it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'catscradle', 'radiocanon', 'radiolarian3', 'radionebula'] as const)('animates %s moves in both directions with the real PG3D matrices and selected pieces', async (id) => {
   // This is a local renderer fixture, not browser interaction evidence. The
   // real TwistyPlayer creates its real PG3D; only DOM camera attachment and
   // scheduling are suppressed because jsdom has no display or GPU.
@@ -794,7 +815,7 @@ it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radio
   // Fixed samples of the renderer's quintic easing, independently applied to
   // physical vertices. Keep existing cases at their established middle frame;
   // the newer icosahedral models check start, end and three intermediate frames.
-  const samples = id === 'radiocanon' || id === 'radiojam' || id === 'radiolarian3'
+  const samples = id === 'radiocanon' || id === 'radiojam' || id === 'radiolarian3' || id === 'radionebula'
     ? [[0, 0], [0.2, 0.05792], [0.5, 0.5], [0.8, 0.94208], [1, 1]]
     : [[0.5, 0.5]];
   for (const choice of manualChoices(spec)) {
@@ -852,4 +873,92 @@ it('distinguishes Radio Jam from same-count Radio Web and preserves all of its s
   expect([...counts.values()].filter((n) => n === 1)).toHaveLength(200);
   expect([...counts.values()].filter((n) => n === 2)).toHaveLength(90);
   expect([...counts.values()].filter((n) => n === 5)).toHaveLength(12);
+});
+
+it('reconstructs radionebula corners, surface cells and all eight orbits independently of PG', () => {
+  const spec = CASES.find(({ id }) => id === 'radionebula')!;
+  const depth = 1 / PHI ** 4;
+  expect(Number(NATIVE_PUZZLES.radionebula.description.split(' ')[2])).toBeCloseTo(depth, 14);
+  expect(depth).toBeCloseTo((7 - 3 * Math.sqrt(5)) / 2, 14);
+  // Radio Star has no surface corners. Radio Nebula adds small five-sticker
+  // corners and a second wing orbit; retaining a neighboring name/outline is
+  // insufficient, even when a nearby cut preserves the number of regions.
+  const star: Spec = { ...spec, axes: [{ ...spec.axes[0], cuts: [1 / PHI ** 3] }] };
+  const planes = cutPlanes(spec);
+  const pieceKey = (point: Vector3) => planes.map(({ normal, offset }) => normal.dot(point) > offset ? '+' : '-').join('');
+  const cells = new Map<string, Vector3[][]>();
+  for (const normal of Object.values(icoNormals)) {
+    const regions = expectedFace(spec, normal);
+    expect(shapeCounts(regions)).toEqual({ 3: 18, 4: 3, 5: 3, 6: 4 });
+    expect(shapeCounts(expectedFace(star, normal))).toEqual({ 3: 12, 4: 3, 5: 3, 6: 1 });
+    for (const delta of [-0.0001, 0.0001]) {
+      const nearby: Spec = { ...spec, axes: [{ ...spec.axes[0], cuts: [depth + delta] }] };
+      const nearbyRegions = expectedFace(nearby, normal);
+      expect(shapeCounts(nearbyRegions), 'Nebula is not a vanishing-piece critical cut').toEqual(spec.shapes);
+      expect(nearbyRegions.map(polygonKey).sort()).not.toEqual(regions.map(polygonKey).sort());
+    }
+    for (const region of regions) {
+      const key = pieceKey(center(region));
+      const cell = cells.get(key);
+      if (cell) cell.push(region);
+      else cells.set(key, [region]);
+    }
+  }
+  expect(cells.size).toBe(362);
+  const shapes = [...cells.values()].reduce<Record<string, number>>((counts, polygons) => {
+    const shape = polygons.map((polygon) => polygon.length).sort((a, b) => a - b).join('/');
+    counts[shape] = (counts[shape] ?? 0) + 1;
+    return counts;
+  }, {});
+  expect(shapes).toEqual({ '3': 120, '6': 80, '3/3': 120, '5/5': 30, '4/4/4/4/4': 12 });
+
+  // Compute connected components from independently rotated halfspace cells,
+  // never from the implementation's orbit labels or move permutations.
+  const keys = [...cells.keys()];
+  const indices = new Map(keys.map((key, i) => [key, i]));
+  const positions = keys.map((key) => center(cells.get(key)!.flat()));
+  const parent = keys.map((_, i) => i);
+  const root = (index: number): number => {
+    while (parent[index] !== index) {
+      parent[index] = parent[parent[index]];
+      index = parent[index];
+    }
+    return index;
+  };
+  const { stickers, puzzle } = fixture(spec);
+  for (const [family, axis] of Object.entries(icoNormals)) {
+    let moved = 0;
+    positions.forEach((position, source) => {
+      if (position.dot(axis) <= depth) return;
+      const destination = pieceKey(position.clone().applyAxisAngle(axis, -2 * Math.PI / 3));
+      const target = indices.get(destination);
+      expect(target, `${family} independently rotated cell`).toBeDefined();
+      parent[root(source)] = root(target!);
+      if (source !== target) moved++;
+    });
+    expect(moved, `${family} moving positions excluding in-place orientation`).toBe(153);
+    const move = puzzle.moveToTransformation(family).transformationData;
+    expect(Object.values(move).reduce((count, orbit) =>
+      count + orbit.permutation.filter((piece, slot) => piece !== slot).length, 0)).toBe(moved);
+    expect(move.C5RNER.permutation.filter((piece, slot) => piece !== slot)).toHaveLength(6);
+    expect(move.CENTERS4.permutation.filter((piece, slot) => piece !== slot)).toHaveLength(9);
+  }
+  const components = new Map<number, string[]>();
+  keys.forEach((key, index) => {
+    const representative = root(index);
+    const component = components.get(representative);
+    if (component) component.push(key);
+    else components.set(representative, [key]);
+  });
+  expect([...components.values()].map((component) => component.length).sort((a, b) => a - b))
+    .toEqual([12, 20, 30, 60, 60, 60, 60, 60]);
+  const actualOrbitByCell = new Map(stickers.map((sticker) => [pieceKey(sticker.center), sticker.orbit]));
+  const matchedOrbits = new Set<string>();
+  for (const component of components.values()) {
+    const actualOrbits = new Set(component.map((key) => actualOrbitByCell.get(key)));
+    expect(actualOrbits.size).toBe(1);
+    expect(actualOrbits.has(undefined)).toBe(false);
+    for (const orbit of actualOrbits) matchedOrbits.add(orbit!);
+  }
+  expect(matchedOrbits.size).toBe(8);
 });
