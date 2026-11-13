@@ -1,6 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import {assistantPdfDocument} from '@/lib/assistant-pdf';
 import {documentExportBlocks, documentExportText} from '@/lib/document-export';
+import type {AssistantAlgorithms} from '@cuberoot/shared/site-assistant';
 
 describe('assistant PDF Markdown', () => {
   it('preserves roles, Markdown structure and literal user input', async () => {
@@ -52,4 +53,17 @@ it('exports structured tables and chart values without flattening them into Mark
   expect(doc.content!.find(node => node.type === 'pdfChart')?.pdfChart).toEqual([
     {date:'2026-01-01', value:8653, label:'1:26.53'},
   ]);
+});
+
+it('exports library diagrams and exact algorithms in the requested display mode', async () => {
+  const artifact: AssistantAlgorithms = {kind:'algorithms', version:1, title:'PLL', display:'both', puzzle:'3x3',set:'pll',offset:0,total:1,cards:[{
+    name:'T',caseId:1,puzzle:'3x3',set:'pll',href:'/alg/3x3/pll#case-1',alg:"R U R' U' R' F R2 U' R' U' R U R' F'",sticker:{kind:'raw',tag:'pll',attrs:{}},alternative:0,alternativeCount:1,
+  }]};
+  for (const display of ['both','image','text'] as const) {
+    const doc = await assistantPdfDocument('展示 T', '如下', 'zh', [{...artifact,display}]);
+    const diagrams = doc.content!.filter(node => node.type==='pdfSvg');
+    expect(diagrams.length).toBe(display==='text' ? 0 : 1);
+    expect(documentExportText(doc).includes(artifact.cards[0].alg)).toBe(display!=='image');
+    if (display!=='text') expect(doc.content!.find(node => node.type==='pdfSvg')?.pdfSvg).toContain('<svg');
+  }
 });

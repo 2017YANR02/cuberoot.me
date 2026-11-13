@@ -313,6 +313,36 @@ describe('LandingSearch placeholder hydration', () => {
     } finally {await act(async()=>root.unmount());host.remove();}
   });
 
+  it('retains an earlier card selection while the next answer streams',async()=>{
+    let stream!:ReadableStreamDefaultController<Uint8Array>,requests=0;
+    const original="R U R'",selected="R U2 R'",sticker={kind:'raw',tag:'',attrs:{}};
+    const first={answer:'T 公式',sources:[],artifacts:[{kind:'algorithms',version:1,title:'PLL',puzzle:'3x3',set:'pll',display:'text',offset:0,total:1,
+      cards:[{caseId:1,name:'T',puzzle:'3x3',set:'pll',href:'/alg/3x3/pll#T',alg:original,sticker,alternative:0,alternativeCount:2}]}]};
+    const fetcher=vi.fn().mockImplementation(async(input:RequestInfo|URL)=>{
+      if(String(input).includes('/alg/sets/'))return Response.json({puzzle:'3x3',set:'pll',cases:[{id:1,name:'T',sticker,algs:[[{alg:original},{alg:selected}]]}]});
+      requests++;
+      return requests===1 ? Response.json(first) : new Response(new ReadableStream<Uint8Array>({start(c){stream=c;}}),{headers:{'Content-Type':'text/event-stream'}});
+    });
+    vi.stubGlobal('fetch',fetcher);
+    const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host);
+    const emit=async(event:unknown)=>act(async()=>stream.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`)));
+    try {
+      await act(async()=>root.render(createElement(LandingSearch,{cards:[],lang:'zh',query:'展示 T 公式',persistentResults:true})));
+      await act(async()=>host.querySelector<HTMLButtonElement>('button[aria-label="提问"]')!.click());
+      const textarea=document.querySelector<HTMLTextAreaElement>('textarea[aria-label="继续提问"]')!;
+      await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(textarea,'继续讲解');textarea.dispatchEvent(new Event('input',{bubbles:true}));});
+      await act(async()=>document.querySelector('.site-assistant-compose')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+      await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="更换 T 公式"]')!.click());
+      expect(document.querySelector('.assistant-algorithms')?.textContent).toContain(selected);
+      await emit({type:'answer',answer:'正在讲解',sources:[]});
+      await emit({type:'done',result:{answer:'讲解完成',sources:[]}});
+      expect(document.querySelector('.assistant-algorithms')?.textContent).toContain(selected);
+      expect(document.querySelector('.assistant-algorithms')?.textContent).toContain('公式 2/2');
+      expect(document.querySelectorAll('.site-assistant-turn')).toHaveLength(2);
+      expect(requests).toBe(2);
+    } finally {await act(async()=>root.unmount());host.remove();}
+  });
+
   it('regenerates and edits the latest question without feeding its old answer into history', async () => {
     const fetcher=vi.fn().mockImplementation(async()=>Response.json({answer:'回答',sources:[]}));vi.stubGlobal('fetch',fetcher);
     const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host);

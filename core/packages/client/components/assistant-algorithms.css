@@ -1,0 +1,9 @@
+.assistant-algorithms { min-width: 0; }
+.assistant-algorithms .cube-photo-formulas { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.assistant-algorithms .cube-photo-formula { min-width: 0; }
+.assistant-algorithms .cube-photo-sequence code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.assistant-algorithms .cube-photo-formula-title { min-width: 0; }
+.assistant-algorithms-more { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 12px; color: var(--muted-foreground); }
+.assistant-algorithm-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 8px 14px; font-size: .8rem; color: var(--muted-foreground); }
+.assistant-algorithm-controls .cube-photo-expand { margin: 0; padding: 0; }
+.assistant-algorithm-error { margin: 0; padding: 0 14px 8px; font-size: .8rem; color: var(--destructive); }

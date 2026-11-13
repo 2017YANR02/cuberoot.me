@@ -57,6 +57,7 @@ import { ASSISTANT_ERROR_TEXT, assistantResponseError } from '@/lib/site-assista
 import { useAssistantThinkingMode } from '@/hooks/useAssistantThinkingMode';
 import { requestSiteAssistant, assistantImageHistory } from '@/lib/site-assistant-request';
 import { assistantAnswerHistory } from '@/lib/assistant-answer-export';
+import { replaceAssistantAlgorithm } from '@cuberoot/shared/site-assistant-algorithms';
 import type { AssistantConversationSnapshot } from '@/lib/assistant-conversations';
 import { ALG_PUZZLES, type AlgCase } from '@cuberoot/shared/alg';
 
@@ -366,18 +367,22 @@ export default function LandingSearch({
     setAssistantError(null);
     setAssistantAnswer(null);
     const timeout = setTimeout(() => controller.abort(), assistantTimeoutMs(assistantThinking));
+    // Streaming updates replace only this turn; older cards can change in place.
+    const updateTurn=(next:AssistantTurn)=>setAssistantTurns(turns=>turns.map((turn,index)=>
+      index===previous.length && turn.createdAt===createdAt ? next : turn));
+
     try {
       assistantConversation.current ??= crypto.randomUUID();
       images = await saveAssistantImages(images, assistantConversation.current, controller.signal);
       if (assistantRequest.current !== controller) return;
-      setAssistantTurns([...previous, { question, images, createdAt }]);
+      updateTurn({ question, images, createdAt });
       const response = await requestSiteAssistant(apiUrl('/v1/site-assistant'), {
         conversationId: assistantConversation.current, parentId: previous.at(-1)?.requestId, retryOf: replaceLast ? assistantTurns.at(-1)?.requestId : undefined,
         question, lang, thinking: assistantThinking, ...(images.length ? {images} : {}), timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,
         history: assistantImageHistory(previous.filter(turn => !turn.partial).slice(-5).flatMap(turn => [{ role: 'user', content: turn.question, ...(turn.images?.length ? {images:turn.images} : {}) }, { role: 'assistant', content: assistantAnswerHistory(turn.result!, window.location.origin) }]), images),
       }, {headers: { ...authHeaders(), Accept: 'text/event-stream' },signal: controller.signal});
       const requestId = response.headers.get('X-Assistant-Request-Id') ?? undefined;
-      if (assistantRequest.current === controller) setAssistantTurns([...previous, { question, images, requestId, createdAt }]);
+      if (assistantRequest.current === controller) updateTurn({ question, images, requestId, createdAt });
       if (!response.ok) {
         const failure = await response.json().catch(() => null);
         if (assistantRequest.current === controller) setAssistantError(assistantResponseError(response, failure));
@@ -392,7 +397,7 @@ export default function LandingSearch({
         }
         if (requestId) setPendingReveal({id: requestId, text: result.answer, complete: !partial});
         else if (!partial && conversation) assistantConversations.replyCompleted(conversation.owner, conversation.id);
-        setAssistantTurns([...previous, { question, images, result, partial, requestId, createdAt }]);
+        updateTurn({ question, images, result, partial, requestId, createdAt });
       };
       if (response.headers?.get('content-type')?.includes('text/event-stream')) {
         if (!response.body) throw new Error('missing stream');
@@ -1051,7 +1056,11 @@ export default function LandingSearch({
         </div>
   );
 
-  const assistantView = <SiteAssistantDialog onAnswerRevealed={onAnswerRevealed} onBranch={index => { assistantConversations.branch(owner, crypto.randomUUID(), assistantTurns.slice(0, index + 1)); router.push(`${langPrefix}/chat`); }} searchResults={conversation?.active && query.trim() && !assistantBusy ? searchResults : undefined} embedded={!!conversation} active={conversation?.active ?? true} key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} thinking={assistantThinking} onThinkingChange={setAssistantThinking} lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={(question, replaceLast, images) => void askAssistant(question, replaceLast, images)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { assistantConversation.current = null; stopAssistant(); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />;
+  const assistantView = <SiteAssistantDialog onAlgorithmChange={(index,artifact,card,expected,next)=>setAssistantTurns(turns=>turns.map((turn,i)=> {
+    if(i!==index || !turn.result) return turn;
+    const result=replaceAssistantAlgorithm(turn.result,artifact,card,expected,next);
+    return result===turn.result ? turn : {...turn,result};
+  }))} onAnswerRevealed={onAnswerRevealed} onBranch={index => { assistantConversations.branch(owner, crypto.randomUUID(), assistantTurns.slice(0, index + 1)); router.push(`${langPrefix}/chat`); }} searchResults={conversation?.active && query.trim() && !assistantBusy ? searchResults : undefined} embedded={!!conversation} active={conversation?.active ?? true} key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} thinking={assistantThinking} onThinkingChange={setAssistantThinking} lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={(question, replaceLast, images) => void askAssistant(question, replaceLast, images)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { assistantConversation.current = null; stopAssistant(); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />;
   if (conversation) return assistantView;
 
   return (

@@ -11,7 +11,10 @@
       "sanitize-html": "runtime-neutral",
       "cubing": "runtime-neutral",
       "react": "react-dom",
-      "react-dom": "react-dom"
+      "react-dom": "react-dom",
+      "mdast-util-from-markdown": "runtime-neutral",
+      "mdast-util-gfm": "runtime-neutral",
+      "micromark-extension-gfm": "runtime-neutral"
     },
     "runtime": {
       "./wca-stat-catalog": "runtime-neutral",
@@ -145,6 +148,7 @@
       "./page-catalog": "runtime-neutral",
       "./product-analytics": "runtime-neutral",
       "./site-assistant": "runtime-neutral",
+      "./site-assistant-algorithms": "runtime-neutral",
       "./site-announcements": "runtime-neutral",
       "./cube-agents": "runtime-neutral",
       "./wca-format-result": "runtime-neutral",
@@ -271,7 +275,10 @@
       "./notification-push": "runtime-neutral",
       "./alg-catalog": "runtime-neutral",
       "./alg-types": "runtime-neutral",
-      "./timer/cube-orientation": "runtime-neutral"
+      "./timer/cube-orientation": "runtime-neutral",
+      "./document-export": "runtime-neutral",
+      "./assistant-pdf": "runtime-neutral",
+      "./pdf-fonts": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
@@ -753,6 +760,7 @@
     "./platform": "./src/platform.ts",
     "./site-directory": "./src/site_directory.ts",
     "./site-assistant": "./src/site_assistant.ts",
+    "./site-assistant-algorithms": "./src/site_assistant_algorithms.ts",
     "./site-announcements": "./src/site_announcements.ts",
     "./cube-agents": "./src/cube_agents.ts",
     "./wca-format-result": {
@@ -999,7 +1007,10 @@
     },
     "./alg-catalog": "./src/alg_catalog.ts",
     "./alg-types": "./src/alg_types.ts",
-    "./timer/cube-orientation": "./src/timer/cube-orientation.ts"
+    "./timer/cube-orientation": "./src/timer/cube-orientation.ts",
+    "./document-export": "./src/document_export.ts",
+    "./assistant-pdf": "./src/assistant_pdf.ts",
+    "./pdf-fonts": "./src/pdf_fonts.ts"
   },
   "scripts": {
     "dev:build": "pnpm run build",
@@ -1017,13 +1028,17 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "opencc-js": "^1.0.5",
-    "typescript": "~5.7.0"
+    "typescript": "~5.7.0",
+    "jspdf": "^4.2.1"
   },
   "dependencies": {
     "sanitize-html": "^2.18.1",
     "sql.js": "^1.14.2",
     "@cuberoot/puzzle-solvers": "workspace:*",
     "axios": "^1.20.0",
-    "cubing": "^0.63.3"
+    "cubing": "^0.63.3",
+    "mdast-util-from-markdown": "^2.0.3",
+    "mdast-util-gfm": "^3.1.0",
+    "micromark-extension-gfm": "^3.0.0"
   }
 }

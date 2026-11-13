@@ -3,7 +3,7 @@
 import { rehypeAssistantReveal } from '@/lib/assistant-text-reveal';
 import { useAssistantTextReveal } from '@/hooks/useAssistantTextReveal';
 import MoreToggle from '@/components/MoreToggle';
-import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 const Markdown = lazy(() => import('react-markdown').catch(() => ({ default: ({ children }: { children?: string | null }) => <>{children}</> })));
 const WrHistoryChart = lazy(() => import('@/components/wca-stats/WrHistoryChart').catch(() => ({ default: () => null })));
@@ -19,6 +19,8 @@ import { useSpeechToText } from '@/hooks/useSpeechToText';
 import { Tooltip } from '@/components/Tooltip';
 import { sendAssistantEvent, type AssistantFeedback } from '@/lib/site-assistant-request';
 import PhotoChatResult from './cube-photo/PhotoChatResult';
+import AssistantAlgorithmCards from './AssistantAlgorithmCards';
+import type { AssistantAlgorithmCard } from '@cuberoot/shared/site-assistant';
 import ReconCaseLink from './ReconCaseLink';
 import AssistantImagePreview from './AssistantImagePreview';
 import { prepareAssistantImage } from '@/lib/site-assistant-images';
@@ -37,6 +39,7 @@ import { assistantAnswerLinks, remarkAssistantLinks } from '@/lib/assistant-answ
 
 export interface AssistantTurn { createdAt?: number; requestId?: string; feedback?: AssistantFeedback|null; question:string; images?:AssistantImage[]; imagesExpired?:boolean; result?:AssistantAnswer; partial?:boolean }
 interface Props {
+  onAlgorithmChange?:(turn:number, artifact:number, card:number, expected:AssistantAlgorithmCard, next:AssistantAlgorithmCard)=>void;
   onAnswerRevealed?:(id:string,text:string)=>void;
   embedded?:boolean; active?:boolean; searchResults?:ReactNode; onBranch?:(index:number)=>void;
   turns:AssistantTurn[]; status?:AssistantStatus; busy:boolean; error:AssistantErrorCode|null; lang:'zh'|'en';
@@ -177,7 +180,7 @@ function AssistantModal({ children, onClose, motionRef }: { children: ReactNode;
   return createPortal(<div ref={motionRef} className="site-assistant-backdrop" {...backdrop}>{children}</div>, document.body);
 }
 
-export default function SiteAssistantDialog({onAnswerRevealed,turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,thinking,onThinkingChange,status={phase:'planning'},busy,error,lang,onAsk,onStop,onClose:onClosed,onNew,onFeedback,embedded=false,active=true,searchResults,onBranch}:Props) {
+export default function SiteAssistantDialog({onAlgorithmChange,onAnswerRevealed,turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,thinking,onThinkingChange,status={phase:'planning'},busy,error,lang,onAsk,onStop,onClose:onClosed,onNew,onFeedback,embedded=false,active=true,searchResults,onBranch}:Props) {
   const { motionRef, close: onClose } = useDialogMotion(onClosed, { enabled: !embedded });
   const [initialAnswers] = useState(() => new Set(turns.filter(turn => turn.result && !turn.partial).map(turn => turn.requestId)));
   const [revealedAnswers, setRevealedAnswers] = useState<Record<string,string>>({});
@@ -234,6 +237,11 @@ export default function SiteAssistantDialog({onAnswerRevealed,turns,draft,images
   const {copy,copiedKey}=useCopy();
   const dialog=useRef<HTMLDivElement>(null);
   const messages=useRef<HTMLDivElement>(null);
+  const cardScroll=useRef<number|null>(null);
+  const changeAlgorithm=(turn:number,artifact:number,card:number,expected:AssistantAlgorithmCard,next:AssistantAlgorithmCard)=>{
+    cardScroll.current=messages.current?.scrollTop ?? null;
+    onAlgorithmChange?.(turn,artifact,card,expected,next);
+  };
   const follow=useRef(true);
   const turnCount=useRef(turns.length);
   const input=useRef<HTMLTextAreaElement>(null);
@@ -241,9 +249,10 @@ export default function SiteAssistantDialog({onAnswerRevealed,turns,draft,images
   const {listening,error:micError,start,stop}=useSpeechToText({lang:lang==='zh'?'zh-CN':'en-US',onResult:setDraft});
   useEffect(()=>{if(!active)stop();},[active,stop]);
   useEffect(()=>{if(!active)return;const previous=document.activeElement as HTMLElement;input.current?.focus({preventScroll:true});return()=>{if(!embedded)previous?.focus();};},[active,embedded]);
-  useEffect(()=>{
+  useLayoutEffect(()=>{
     if(turns.length!==turnCount.current) { follow.current=true; turnCount.current=turns.length; }
     const node=messages.current;
+    if(node && cardScroll.current!==null) { node.scrollTop=cardScroll.current; cardScroll.current=null; return; }
     if(node && follow.current) node.scrollTop=turns.length ? node.scrollHeight : 0;
   },[turns,busy,error,status]);
   useEffect(()=>{
@@ -296,7 +305,7 @@ export default function SiteAssistantDialog({onAnswerRevealed,turns,draft,images
           {busy && i===turns.length-1 && <div className="site-assistant-status" role="status"><span className="site-assistant-status-text">{statusLabel(status)}</span></div>}
           {turn.result && <div className="site-assistant-response"><SiteAssistantAnswerText result={turn.result} partial={turn.partial} requestId={turn.requestId} animate={animate} onRevealComplete={onRevealComplete}/>
           {revealDone && !turn.partial && !!actions.length && <div className="site-assistant-response-actions site-assistant-navigation">{actions.map(action=><Link key={action.id} className="site-assistant-action" href={action.href} {...sourceLinkProps(action.href)} onClick={event=>{if(turn.requestId)void sendAssistantEvent(turn.requestId,{type:'click',kind:'action',id:action.id}).catch(()=>{});openSolverDocument(event);}} prefetch={false}>{tr({zh:`打开 ${action.title}`,en:`Open ${action.title}`})}</Link>)}</div>}
-          {revealDone && turn.result.artifacts?.map((a,j)=>a.kind==='cube-photo'?<PhotoChatResult key={j} result={a}/>:a.kind==='progress'?<Progress key={j} chart={a}/>:<section key={j}><h4>{a.title}</h4><div className="site-assistant-table"><table><thead><tr>{a.columns.map((c,k)=><th key={k}>{c}</th>)}</tr></thead><tbody>{a.rows.map((row,k)=><tr key={k}>{row.map((cell,c)=>{
+          {revealDone && turn.result.artifacts?.map((a,j)=>a.kind==='algorithms'?<AssistantAlgorithmCards key={j} result={a} onAsk={busy ? undefined : question=>onAsk(question)} onChange={onAlgorithmChange && !turn.partial ? (card,expected,next)=>changeAlgorithm(i,j,card,expected,next) : undefined}/>:a.kind==='cube-photo'?<PhotoChatResult key={j} result={a}/>:a.kind==='progress'?<Progress key={j} chart={a}/>:<section key={j}><h4>{a.title}</h4><div className="site-assistant-table"><table><thead><tr>{a.columns.map((c,k)=><th key={k}>{c}</th>)}</tr></thead><tbody>{a.rows.map((row,k)=><tr key={k}>{row.map((cell,c)=>{
             const kind=a.columnKinds?.[c];
             const href=a.cellLinks?.[k]?.[c] ?? (c===0 ? a.links?.[k] : undefined);
             const compId=href && /^\/wca\/comp\/([A-Za-z0-9_-]+)$/.exec(href)?.[1];
@@ -305,7 +314,7 @@ export default function SiteAssistantDialog({onAnswerRevealed,turns,draft,images
             return <td key={c} className={kind==='date' ? 'site-assistant-date' : kind==='country' ? 'site-assistant-country' : undefined}>{href && isAssistantSourceHref(href) ? <Link prefetch={false} href={href} {...sourceLinkProps(href)}>{content}</Link> : content}</td>;
           })}</tr>)}</tbody></table></div></section>)}
         </div>}
-          {turn.result && revealDone && !(busy && i===turns.length-1) && <AssistantAnswerActions key={turn.requestId ?? i} turn={turn} lang={lang} active={active} onFeedback={onFeedback} onRetry={i===turns.length-1 && !error && !busy && editing===null ? ()=>onAsk(turn.question,true,turn.images) : undefined} onBranch={onBranch && !turn.partial && !busy ? ()=>onBranch(i) : undefined} preview={<SiteAssistantAnswerText result={turn.result}/>}/>}
+          {turn.result && revealDone && !(busy && i===turns.length-1) && <AssistantAnswerActions key={turn.requestId ?? i} turn={turn} lang={lang} active={active} onFeedback={onFeedback} onRetry={i===turns.length-1 && !error && !busy && editing===null ? ()=>onAsk(turn.question,true,turn.images) : undefined} onBranch={onBranch && !turn.partial && !busy ? ()=>onBranch(i) : undefined} preview={<><SiteAssistantAnswerText result={turn.result}/>{turn.result.artifacts?.filter(a=>a.kind==='algorithms').map((a,j)=><AssistantAlgorithmCards key={j} result={a}/>)}</>}/>}
           {turn.partial && !(busy && i===turns.length-1) && <p className="site-assistant-incomplete">{tr({zh:'回答未完成',en:'Answer incomplete'})}</p>}
         </section>;})}
         {error && (error==='login_required'||error==='wca_link_required' ?
