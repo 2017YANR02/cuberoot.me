@@ -1,5 +1,5 @@
 import { recognizePocket } from './pocket';
-import type { AlgFile } from '../alg';
+import type { AlgFile } from '../alg_types';
 import { detectCubePhoto, type PhotoPixels, type CubePhotoDetection } from './detect';
 import type { CubeCorners } from './geometry';
 import { recognizePhoto, recognizeFour, type CubeColor, type PhotoRecognition } from './recognize';

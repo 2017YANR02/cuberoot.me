@@ -268,7 +268,10 @@
       "./cube-photo/result": "runtime-neutral",
       "./testing/cube-photo": "runtime-neutral",
       "./testing/cube-photo-algs": "asset",
-      "./notification-push": "runtime-neutral"
+      "./notification-push": "runtime-neutral",
+      "./alg-catalog": "runtime-neutral",
+      "./alg-types": "runtime-neutral",
+      "./timer/cube-orientation": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
@@ -993,7 +996,10 @@
     "./notification-push": {
       "node": "./dist/notification_push.js",
       "default": "./src/notification_push.ts"
-    }
+    },
+    "./alg-catalog": "./src/alg_catalog.ts",
+    "./alg-types": "./src/alg_types.ts",
+    "./timer/cube-orientation": "./src/timer/cube-orientation.ts"
   },
   "scripts": {
     "dev:build": "pnpm run build",

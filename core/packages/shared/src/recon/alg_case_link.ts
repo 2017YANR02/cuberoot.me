@@ -13,7 +13,7 @@
  * ZBLL / 1LLL / OLLCP 等先选一级分类，再在同一列表中显示所有细分组。
  * PLL 的 Adj Swap 等仅为文案分区；umbrella 的概览卡不替代可定位 case 的一级列表。
  */
-import { type AlgCase } from '../alg';
+import { type AlgCase } from '../alg_types';
 import { getAlgSetMeta, ALG_PUZZLES, type AlgPuzzle } from '../alg_catalog';
 import { ollCommentName, primaryCaseName } from './alg_case_display';
 import { trimTrailingCharacter } from '../string-utils';

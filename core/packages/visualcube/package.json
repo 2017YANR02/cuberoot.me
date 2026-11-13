@@ -6,7 +6,8 @@
   "cuberoot": {
     "kind": "library",
     "runtime": {
-      ".": "mixed"
+      ".": "mixed",
+      "./svg": "mixed"
     }
   },
   "main": "./dist/index.js",
@@ -16,6 +17,10 @@
       "types": "./dist/index.d.ts",
       "node": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./svg": {
+      "types": "./dist/preset.d.ts",
+      "default": "./src/preset.ts"
     }
   },
   "files": ["dist", "src"],
