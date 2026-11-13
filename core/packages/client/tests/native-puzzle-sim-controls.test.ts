@@ -547,7 +547,7 @@ describe('native scramble preview with the real detached Twisty model', () => {
     const customTimeline = uniformSimTimeline(leaves)
       .map((leaf) => ({ ...leaf, start: leaf.start * 2, end: leaf.end * 2 })) as TimelineRequest;
     model.animationTimelineLeavesRequest.set(request === 'automatic' ? null : customTimeline);
-    current.timestamp = 0;
+    current.timestamp = 'start';
     await act(async () => root.render(createElement(PlayerControls, {
       active: true, world: null, activeCube: null, clearFrozen: () => {}, setup: scramble, alg,
       onSetupChange: () => {}, onAlgChange: () => {}, order: 3, puzzleKind: 'radiostar',
@@ -558,7 +558,7 @@ describe('native scramble preview with the real detached Twisty model', () => {
     })));
     const originalIndexer = await model.indexer.get();
     await act(async () => {
-      current.timestamp = alg ? originalIndexer.indexToMoveStartTimestamp(1 as Parameters<typeof originalIndexer.indexToMoveStartTimestamp>[0]) : 0;
+      current.timestamp = alg ? originalIndexer.indexToMoveStartTimestamp(1 as Parameters<typeof originalIndexer.indexToMoveStartTimestamp>[0]) : 'start';
     });
     const originalTimeline = await model.animationTimelineLeavesRequest.get();
     const originalTimestamp = (await model.detailedTimelineInfo.get()).timestamp;
