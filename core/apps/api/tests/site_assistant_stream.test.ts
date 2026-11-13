@@ -16,6 +16,21 @@ const request = () => new Request('https://api.example/site-assistant', { method
 const deps = { config: () => config, now: Date.now, reserve: async () => ({ allowed: true, retryAfter: 60 }), authenticate: async () => ({ uid: 1, wcaId: '2017YANR02' }) };
 
 describe('assistant streaming', () => {
+  it.each([['',false],['',true],['?artifactFormat=algorithms-v1',false],['?artifactFormat=algorithms-v1',true]] as const)('negotiates formula cards for rolling deployments: %s stream=%s',async(query,stream)=>{
+    const result: Awaited<ReturnType<typeof answerSiteQuestion>>={answer:'PLL',sources:[],artifacts:[{
+      kind:'algorithms',version:1,title:'PLL',puzzle:'3x3',set:'pll',display:'both',offset:0,total:1,
+      cards:[{caseId:1,name:'T',puzzle:'3x3',set:'pll',alg:"R U R'",alternative:1,alternativeCount:2,href:'/alg/3x3/pll#T',sticker:{kind:'raw',tag:'pll',attrs:{}}}],
+    }]};
+    const route=createSiteAssistantRoutes({...deps,answer:async()=>result});
+    const response=await route.request(`/site-assistant${query}`,{method:'POST',headers:{Accept:stream?'text/event-stream':'application/json'},body:JSON.stringify({question:'T怎么拧',lang:'zh'})});
+    expect(response.status).toBe(200);
+    let received;
+    if(stream){for await(const data of readAssistantEvents(response.body!)){const event=JSON.parse(data);if(event.type==='done')received=event.result;}}
+    else received=await response.json();
+    expect(received.artifacts).toEqual(query ? result.artifacts : [{kind:'table',title:'PLL',columns:['Case','公式'],rows:[['T',"R U R'"]],links:['/alg/3x3/pll#T']}]);
+    expect(result.artifacts?.[0].kind).toBe('algorithms');
+  });
+
   it('decodes split UTF-8, CRLF and multiline SSE data without exposing comments', async () => {
     const bytes = encoder.encode(': keepalive\r\ndata: 中文\r\ndata: second\r\n\r\ndata: [DONE]\n\n');
     const body = new ReadableStream<Uint8Array>({ start(c) { for (const byte of bytes) c.enqueue(new Uint8Array([byte])); c.close(); } });

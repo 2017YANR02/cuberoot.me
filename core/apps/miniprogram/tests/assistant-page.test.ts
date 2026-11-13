@@ -33,7 +33,7 @@ describe('native assistant',()=>{
     expect(mocks.request.mock.calls.at(-1)![1].body.algorithms[0].cards[0].alg).toBe("R U2 R'");
     mocks.request.mockResolvedValueOnce(result);await p.ask('解释当前公式');
     expect(mocks.request.mock.calls.at(-1)![1].body.history[1].content).toContain('alternative=1/2');
-    expect(mocks.request.mock.calls.filter(([url])=>url==='/site-assistant')).toHaveLength(1);
+    expect(mocks.request.mock.calls.filter(([url])=>url==='/site-assistant?artifactFormat=algorithms-v1')).toHaveLength(1);
   });
   it('keeps the old card on failure and permits a retry without adding a conversation',async()=>{
     const p=page();p.onShow();p.records=[{question:'T',result:structuredClone(result)}];p.render();

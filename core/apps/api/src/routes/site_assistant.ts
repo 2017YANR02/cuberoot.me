@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { getIp } from '../utils/analytics_helpers.js';
 import { answerSiteQuestion, assistantConfig } from '../utils/site_assistant.js';
 import { reserveAssistantQuestion } from '../utils/site_assistant_quota.js';
-import { assistantTimeoutMs, boundAssistantHistory, SITE_ASSISTANT_QUESTION_MAX_LENGTH, SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH, SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_IMAGE_BYTES, SITE_ASSISTANT_BODY_BYTES, type AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
+import { assistantTimeoutMs, boundAssistantHistory, SITE_ASSISTANT_ARTIFACT_FORMAT, SITE_ASSISTANT_QUESTION_MAX_LENGTH, SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH, SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_IMAGE_BYTES, SITE_ASSISTANT_BODY_BYTES, type AssistantAnswer, type AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
 import { AssistantFailure, assistantDeadline, assistantFailureCode, assistantStage } from '../utils/site_assistant_diagnostics.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { getUserById } from '../utils/account.js';
@@ -69,6 +69,16 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
       throw error;
     }));
     if (!parsed.success) { const error = parsed.error.issues.some(issue => issue.path.includes('images')) ? 'invalid_image' : 'invalid_question'; await deps.entry?.(error); return c.json({ error }, 400); }
+    // API and clients deploy independently; older renderers assume every
+    // unfamiliar artifact is a table. Preserve formulas without crashing them.
+    const present = (result: AssistantAnswer): AssistantAnswer => c.req.query('artifactFormat') === SITE_ASSISTANT_ARTIFACT_FORMAT ? result : {
+      ...result, artifacts: result.artifacts?.map(artifact => artifact.kind === 'algorithms' ? {
+        kind: 'table', title: artifact.title,
+        columns: ['Case', {zh:'公式',en:'Algorithm'}[parsed.data.lang]],
+        rows: artifact.cards.map(card => [card.name, card.alg]),
+        links: artifact.cards.map(card => card.href),
+      } : artifact),
+    };
     let history = boundAssistantHistory(parsed.data.history);
     let images = parsed.data.images;
     const hasImages = !!parsed.data.images?.length || history.some(message => !!message.images?.length);
@@ -136,7 +146,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
           let emittedAnswer = false;
           const emit = async (event: AssistantStreamEvent) => {
             signal.throwIfAborted();
-            await stream.writeSSE({ data: JSON.stringify(event) });
+            await stream.writeSSE({ data: JSON.stringify(event.type === 'done' ? {...event, result: present(event.result)} : event) });
             if (event.type === 'progress') monitor?.progress?.();
             if (event.type === 'answer') { emittedAnswer ||= !!event.answer; monitor?.text(event.answer); }
             if (event.type === 'done') monitor?.text(event.result.answer);
@@ -156,7 +166,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
       const result = await answer(user);
       signal.throwIfAborted();
       await monitor?.finish('success', undefined, result);
-      return c.json(result);
+      return c.json(present(result));
     },signal)); } catch(error) {
       // Provider bodies can contain request details. Never expose them to clients/logs.
       await failure(error)?.catch(() => {});

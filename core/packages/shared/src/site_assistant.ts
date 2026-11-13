@@ -1,4 +1,6 @@
 export const SITE_ASSISTANT_DAILY_LIMIT = 1000;
+/** Explicit opt-in keeps older clients on their supported table presentation. */
+export const SITE_ASSISTANT_ARTIFACT_FORMAT = 'algorithms-v1';
 export { resolveAssistantTime, resolveAssistantYears } from './site_assistant_time';
 export const SITE_ASSISTANT_TIMEOUT_MS = 60_000;
 /** Match the question and history limits accepted by the assistant API. */

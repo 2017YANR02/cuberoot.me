@@ -1,6 +1,7 @@
 import {build,type PluginBuild} from 'esbuild';
 import {runInNewContext} from 'node:vm';
 import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {describe,expect,it} from 'vitest';
 import {createCanvas,Image} from '@napi-rs/canvas';
 // @ts-expect-error build tooling is plain ESM.
@@ -10,7 +11,7 @@ describe('PDF bundle in native Mini Program sandboxes',()=>{
   it.each(['wechat','douyin'])('loads %s without browser globals or DOM entity decoding',async target=>{
     const root=resolve(import.meta.dirname,'..');
     const bundled=await build({absWorkingDir:root,entryPoints:['src/lib/assistant-pdf.ts'],bundle:true,write:false,format:'iife',globalName:'NativePdf',platform:'browser',target:'chrome91',minify:true,define:{__MINI_PROGRAM_TARGET__:JSON.stringify(target)},plugins:[
-      {name:'offline-test-fonts',setup(b:PluginBuild){b.onResolve({filter:/^@cuberoot\/shared\/pdf-fonts$/},()=>({path:resolve(root,'tests/fixtures/pdf-core-fonts.ts')}));}},nativePdfPlugin(root),
+      {name:'offline-test-fonts',setup(b:PluginBuild){b.onResolve({filter:/^@cuberoot\/shared\/pdf-fonts$/},()=>({path:fileURLToPath(new URL('./fixtures/pdf-core-fonts.ts',import.meta.url))}));}},nativePdfPlugin(root),
     ]});
     const files=new Map<string,ArrayBuffer>();let opened:any;
     const api={env:{USER_DATA_PATH:'native://user'},

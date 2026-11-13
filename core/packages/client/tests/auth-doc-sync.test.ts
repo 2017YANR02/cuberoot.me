@@ -11,6 +11,9 @@ const page = (sources = entries, reason = 'Reviewed sign-in, linking, merging an
   `/* auth-doc-review ${JSON.stringify({ fingerprint: fingerprintAuthSources(sources), reason })} */`;
 
 describe('/dev/auth source-review drift', () => {
+  it('tracks restored assistant context ownership', () => {
+    expect(isAuthDocSource('apps/api/src/utils/site_assistant_context.ts')).toBe(true);
+  });
   it('tracks notification destinations and account isolation', () => {
     for (const path of ['apps/mobile/src/native/notification-open.ts', 'packages/app-ui/src/notification-navigation.ts',
       'packages/shared/src/notification_push.ts']) expect(isAuthDocSource(path)).toBe(true);
@@ -48,6 +51,7 @@ describe('/dev/auth source-review drift', () => {
       'src/pages/account-link/index.wxml', 'src/pages/account-delete/index.wxml',
       'src/pages/account-settings/index.wxml', 'src/lib/native-account-link.ts',
       'src/lib/native-route-page.ts',
+      'src/pages/assistant/index.ts',
     ]) {
       expect(sources.map(([path]) => path))
         .toContain(relative(CORE_ROOT, workspaceFixturePath('@cuberoot/miniprogram', file)).replaceAll('\\', '/'));

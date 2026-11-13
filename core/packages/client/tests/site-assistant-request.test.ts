@@ -83,6 +83,7 @@ describe('assistant rolling deployment compatibility',()=>{
     const signal=new AbortController().signal;
     expect(await requestSiteAssistant('/v1/site-assistant',body,{signal,headers:{Accept:'text/event-stream'}},fetcher)).toBe(done);
     expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher.mock.calls.map(([url])=>url)).toEqual(['/v1/site-assistant?artifactFormat=algorithms-v1','/v1/site-assistant?artifactFormat=algorithms-v1']);
     const {thinking:_,...compatible}=body;
     expect(JSON.parse(String(fetcher.mock.calls[1][1]?.body))).toEqual(compatible);
     expect(fetcher.mock.calls[1][1]).toMatchObject({signal,headers:{Accept:'text/event-stream'}});

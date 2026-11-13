@@ -41,7 +41,7 @@ it('renders and copies the exact verified moves, opens the existing case modal a
   expect(host.querySelectorAll('[data-alg-set]')).toHaveLength(1);
   expect(host.querySelector('code')?.textContent).toBe(match.alg);
   expect(host.querySelector('a[href*="attachment="]')?.getAttribute('href')).toBe(`/alg/photo?attachment=${result.attachmentId}`);
-  await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="复制 PLL 公式"]')!.click());
+  await act(async () => host.querySelector<HTMLButtonElement>(`[aria-label="复制 ${match.name} 公式"]`)!.click());
   expect(writeText).toHaveBeenCalledWith(match.alg);
   await act(async () => host.querySelector<HTMLAnchorElement>(`a[href="${match.href}"]`)!.click());
   await vi.waitFor(() => expect(document.querySelector('[role="dialog"] [data-embedded="true"]')).not.toBeNull());
