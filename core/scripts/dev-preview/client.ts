@@ -7,7 +7,7 @@ import { parseArgs } from 'node:util';
 import { createConnection } from 'node:net';
 import { publicKey, slug } from './model.ts';
 import { launchAgentXml, taskXml } from './autostart.ts';
-import { retryable } from './retry.ts';
+import { retryable, TunnelRetryPolicy } from './retry.ts';
 
 interface Profile { version: number; id: string; host: string; sshPort: number; sshUser: string; localPort: number; remotePort: number; url: string; hostKey: string; publicKey: string; repo: string }
 const { values: v, positionals } = parseArgs({ allowPositionals: true, options: {
@@ -87,7 +87,7 @@ async function run() {
     if (existsSync(lock) && readFileSync(lock, 'utf8') === String(pid)) unlinkSync(lock);
   }
   writeFileSync(lock, String(process.pid), { flag: 'wx', mode: 0o600 });
-  let dev: ChildProcess | undefined, tunnel: ChildProcess | undefined, stopped = false;
+  let dev: ChildProcess | undefined, tunnel: ChildProcess | undefined, stopped = false, tunnelPaused = false;
   let release: (() => void) | undefined;
   const cleanup = () => { stopped = true; stopChild(tunnel); stopChild(dev); release?.(); if (existsSync(lock) && readFileSync(lock, 'utf8') === String(process.pid)) unlinkSync(lock); };
   // Detached children do not receive the terminal's hangup automatically.
@@ -109,27 +109,40 @@ async function run() {
     }
     await localCheck(p); log(`Local service ready. Connecting ${p.url}`);
     if (v.open) void (async () => {
-      while (!stopped) {
+      while (!stopped && !tunnelPaused) {
         try {
           if(await healthy(p.url, 5000)) {
-            if(stopped)return;
+            if(stopped || tunnelPaused)return;
             openBrowser(p.url); return;
           }
         } catch { /* Wait for the tunnel and Next compilation. */ }
         await delay(5000);
       }
-      if(!stopped)log(`Preview is not ready yet: ${p.url}`);
+      if(!stopped && !tunnelPaused)log(`Preview is not ready yet: ${p.url}`);
     })();
+    const reconnect = new TunnelRetryPolicy();
     while (!stopped) {
       let sshError='';
+      const started = performance.now();
       tunnel = child('ssh', sshArgs(p), undefined, true);
       tunnel.stderr?.on('data', chunk => { sshError=(sshError+String(chunk)).slice(-8192); log(String(chunk).trim()); });
       const code = await new Promise<number | null>(resolve => {
         tunnel!.once('error', e => { sshError=e.message;log(`SSH error: ${e.message}`); resolve(1); });
         tunnel!.once('exit', resolve);
       });
-      if (!stopped && code !== 0 && !retryable({message:sshError})) throw Error(`SSH needs attention: ${sshError || `exit ${code}`}`);
-      if (!stopped) { log(`SSH exited (${code}); retrying in 10 seconds`); await delay(10_000); }
+      if (stopped) break;
+      const wait = reconnect.next(code, sshError, performance.now() - started);
+      if (wait === null) {
+        tunnelPaused = true;
+        log(`SSH needs attention; tunnel retries paused: ${sshError || `exit ${code}`}`);
+        log(`Local frontend is still running: http://127.0.0.1:${p.localPort}/zh. Fix the tunnel problem, then run cuberoot again. Ctrl+C stops this session.`);
+        // Preserve the frontend and session ownership even for permanent SSH errors.
+        // Signals and authenticated restart still clean up this runner's children.
+        while (!stopped) await delay(60_000);
+      } else {
+        log(`SSH exited (${code}); local frontend stays running; retrying in ${wait / 1000} seconds`);
+        await delay(wait);
+      }
     }
   } finally { cleanup(); }
 }

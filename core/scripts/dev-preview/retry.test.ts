@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { retry, retryable, retryDelay, RetryableError } from './retry.ts';
+import { retry, retryable, retryDelay, RetryableError, TunnelRetryPolicy } from './retry.ts';
 
 test('temporary failures resume the same operation with capped backoff', async () => {
   let attempts=0; const waits:number[]=[];
@@ -32,4 +32,24 @@ test('stopping enrollment interrupts a long retry wait without another attempt',
   const controller=new AbortController();let attempts=0;
   await assert.rejects(retry(async()=>{attempts++;throw new RetryableError('offline');},{signal:controller.signal,notify:()=>controller.abort()}),{name:'AbortError'});
   assert.equal(attempts,1);
+});
+
+test('tunnel reconnect tolerates stale listeners with bounded retries and resets after recovery', () => {
+  const policy = new TunnelRetryPolicy();
+  const forwarding = 'WARNING: connection is not using a post-quantum key exchange algorithm.\nError: remote port forwarding failed for listen port 7106';
+  assert.equal(policy.next(255, 'Connection closed by remote host.', 120_000), 10_000);
+  assert.deepEqual(Array.from({ length: 6 }, () => policy.next(255, forwarding, 300)), [20_000, 40_000, 60_000, 60_000, 60_000, 60_000]);
+  assert.equal(policy.next(255, forwarding, 300), null);
+  assert.equal(policy.next(255, 'Broken pipe', 120_000), 10_000);
+  assert.equal(policy.next(255, forwarding, 300), 20_000);
+  assert.equal(retryable({ message: forwarding }), false, 'provisioning retains its strict policy');
+});
+
+test('tunnel network backoff is capped and authentication/configuration errors pause immediately', () => {
+  const policy = new TunnelRetryPolicy();
+  assert.deepEqual(Array.from({ length: 5 }, () => policy.next(255, 'Connection timed out', 100)), [10_000, 20_000, 40_000, 60_000, 60_000]);
+  for (const message of ['Permission denied (publickey)', 'Host key verification failed', 'REMOTE HOST IDENTIFICATION HAS CHANGED', 'Bad configuration option', 'spawn ssh ENOENT', 'Permission denied\nremote port forwarding failed for listen port 7106']) {
+    assert.equal(new TunnelRetryPolicy().next(255, message, 100), null, message);
+  }
+  assert.equal(new TunnelRetryPolicy().next(0, '', 120_000), 10_000);
 });
