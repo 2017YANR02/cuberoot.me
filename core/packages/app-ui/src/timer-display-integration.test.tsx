@@ -66,7 +66,9 @@ describe('shared display preferences', () => {
     expect(app).toContain('compact={store!.settings.compactScramble}');
     expect(app).toMatch(/<div className="surface-chrome">\s*<TimerGoalProgress[\s\S]*?<TimerRoundPanel[\s\S]*?<\/div>/);
     const rule = css.slice(0, css.indexOf('/* Web and installed'));
-    for (const target of ['.surface-chrome', '.timer-workspace-panel', '.shell-rail > *', '[data-timer-hide-while-running]']) expect(rule).toContain(target);
+    for (const target of ['.surface-chrome', '.timer-workspace-panel', '[data-timer-hide-while-running]']) expect(rule).toContain(target);
+    expect(rule).toContain(".shell-rail > :not(.solver-panel[data-layout='rail'])");
+    expect(rule).not.toContain('.shell-rail > *');
     expect(rule).toContain('visibility: hidden');
     expect(rule).not.toContain('display: none');
     expect(rule).not.toContain('@media');

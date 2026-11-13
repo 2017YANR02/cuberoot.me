@@ -7,6 +7,7 @@ import type { StackmatMicSource } from '@cuberoot/shared/timer/external/stackmat
 import { activeTimerSolves, createTimerStoreData, type TimerPhase, type TimerStoreData } from '@cuberoot/shared/timer';
 import { cubeMove, SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
 import { decodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
+import { TIMER_WIDE_QUERY } from '@cuberoot/timer-ui';
 import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -115,7 +116,7 @@ beforeEach(async () => {
   wideViewport = false;
   mediaListeners.clear();
   vi.stubGlobal('matchMedia', (query: string) => ({
-    get matches() { return query === '(min-width: 1024px)' && wideViewport; },
+    get matches() { return query === TIMER_WIDE_QUERY && wideViewport; },
     addEventListener: (_: string, fn: () => void) => mediaListeners.add(fn),
     removeEventListener: (_: string, fn: () => void) => mediaListeners.delete(fn),
   }));
