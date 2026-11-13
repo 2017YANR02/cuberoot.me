@@ -2488,6 +2488,16 @@ export const CATALOG: ComponentEntry[] = [
     en: `Static Square-1 state diagram using the shared SQ1 SVG renderer, with full-puzzle and top-layer modes.`,
   },
   {
+    name: 'AlgorithmReplyCard',
+    import: "import { AlgorithmReplyCard } from '@/components/AlgorithmReplyCard';",
+    category: 'display', zh: 'Agent 与拍照识别共用的状态图、名称和可复制公式。', en: 'Shared diagram, name and copyable algorithm for assistant and photo replies.',
+  },
+  {
+    name: 'AssistantAlgorithmCards',
+    import: "import AssistantAlgorithmCards from '@/components/AssistantAlgorithmCards';",
+    category: 'display', zh: 'Agent 的公式卡片列表、显示模式与后续查询。', en: 'Assistant algorithm cards, display modes and follow-up queries.',
+  },
+  {
     name: 'CaseThumb',
     import: "import { CaseThumb } from '@/components/CaseThumb';",
     category: 'display',

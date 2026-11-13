@@ -1,8 +1,7 @@
 'use client';
 import { useId, useState } from 'react';
 import { Check, ChevronDown, Copy } from 'lucide-react';
-import ReconCaseLink from '@/components/ReconCaseLink';
-import { CaseThumb } from '@/components/CaseThumb';
+import { AlgorithmReplyCard } from '@/components/AlgorithmReplyCard';
 import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
 import { COLOR_RGB, type CubeColor } from '@cuberoot/shared/cube-photo/recognize';
@@ -37,18 +36,7 @@ export default function PhotoAlgorithmCards({ stateKey, sets, results, error = f
         const open = !!key && expanded === key;
         const panelId = `${id}-${set}-alternatives`, toggleId = `${panelId}-toggle`;
         return <article key={set} className="cube-photo-formula" data-site-surface="panel" data-alg-set={set}>
-          <div className="cube-photo-formula-heading">{match ? <ReconCaseLink href={match.href} className="cube-photo-formula-title">
-            <CaseThumb local puzzle={match.puzzle ?? '3x3'} set={set} size={48} alt=""
-              alg={match.thumbnail?.alg ?? match.body ?? match.alg} setup={match.thumbnail?.setup}
-              sticker={match.thumbnail?.sticker ?? { kind: 'raw', tag: '', attrs: {} }} />
-            <h3>{!match.name.toLowerCase().startsWith(label.toLowerCase()) && label}<span className="cube-photo-case-name">{match.name}</span></h3>
-          </ReconCaseLink> : <h3>{label}</h3>}
-            {match && <button className="cube-photo-copy" aria-label={tr({ zh: `复制 ${label} 公式`, en: `Copy ${label} algorithm` })} onClick={() => copy(match.alg, set)}>{copiedKey === set ? <Check size={16} /> : <Copy size={16} />}</button>}
-          </div>
-          {match ? <div className="cube-photo-sequence"><code>{match.alg}</code><small>{match.turns} STM</small></div> : <p className="cube-photo-note">{result?.status === 'error' || error
-            ? tr({ zh: '公式库加载失败，请重试。', en: 'Could not load the algorithm library. Retry.' })
-            : result?.status === 'missing' ? tr({ zh: '当前公式库中未找到通过验证的公式。', en: 'No verified algorithm found in the current library.' })
-              : tr({ zh: '正在检索与验证…', en: 'Finding and verifying an algorithm…' })}</p>}
+          {match ? <AlgorithmReplyCard thumbnailAlg={match.thumbnail?.alg ?? match.body ?? match.alg} card={{puzzle:match.puzzle ?? '3x3', set, name:match.name, href:match.href, alg:match.alg, setup:match.thumbnail?.setup, sticker:match.thumbnail?.sticker ?? {kind:'raw',tag:'',attrs:{}}}} title={<>{!match.name.toLowerCase().startsWith(label.toLowerCase()) && label}<span className="cube-photo-case-name">{match.name}</span></>} suffix={<small>{match.turns} STM</small>}/> : <><h3>{label}</h3><p className="cube-photo-note">{tr(result?.status === 'error' || error ? {zh:'公式库加载失败，请重试。',en:'Could not load the algorithm library. Retry.'} : result?.status === 'missing' ? {zh:'当前公式库中未找到通过验证的公式。',en:'No verified algorithm found in the current library.'} : {zh:'正在检索与验证…',en:'Finding and verifying an algorithm…'})}</p></>}
           {key && alternatives.length > 0 && <>
             <button className="cube-photo-expand" id={toggleId} aria-expanded={open} aria-controls={panelId}
               onClick={() => setExpanded(open ? null : key)}>

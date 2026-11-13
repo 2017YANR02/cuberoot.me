@@ -40,7 +40,55 @@ export interface AssistantChart {
   kind: 'progress'; title: string; event: string; metric: 'single' | 'average';
   points: Array<{ date: string; value: number; label: string; person: string }>;
 }
-export type AssistantArtifact = AssistantTable | AssistantChart | import('./cube-photo/result').CubePhotoArtifact;
+export interface AssistantAlgorithmCard {
+  caseId?: number; name: string; href: string;
+  puzzle: import('./alg_catalog').AlgPuzzle; set: string;
+  alg: string; setup?: string; sticker: import('./alg_types').AlgSticker;
+  alternative: number; alternativeCount: number;
+}
+export interface AssistantAlgorithms {
+  kind: 'algorithms'; version: 1; title: string;
+  display: 'both' | 'image' | 'text';
+  puzzle: import('./alg_catalog').AlgPuzzle; set: string; query?: string; caseId?: number;
+  offset: number; total: number; nextOffset?: number;
+  cards: AssistantAlgorithmCard[];
+}
+/** Validate persisted/shared cards before passing their data to a renderer. */
+export function isAssistantAlgorithms(value: unknown): value is AssistantAlgorithms {
+  if (!value || typeof value !== 'object') return false;
+  const a = value as AssistantAlgorithms;
+  const text = (v: unknown, max = 4000): v is string => typeof v === 'string' && v.length <= max;
+  const index = (v: unknown): v is number => Number.isSafeInteger(v) && Number(v) >= 0;
+  const puzzle = (v: unknown) => ['2x2','3x3','4x4','5x5','6x6','7x7','sq1','pyraminx','skewb','megaminx','fto'].includes(String(v));
+  const set = (v: unknown) => text(v,100) && /^[a-z0-9-]+$/i.test(v);
+  const sticker = (v: unknown) => {
+    if (!v || typeof v !== 'object') return false;
+    const s = v as Record<string,unknown>;
+    if (s.kind === 'f2l') return text(s.fl,1000);
+    if (s.kind === 'face') return ['us','ub','uf','ul','ur'].every(k=>text(s[k],1000)) && ['mask','scheme'].every(k=>s[k]===undefined || text(s[k],1000));
+    if (s.kind !== 'raw' || !text(s.tag,100) || !s.attrs || typeof s.attrs !== 'object' || Array.isArray(s.attrs)) return false;
+    const attrs = Object.entries(s.attrs);
+    return attrs.length<=30 && attrs.every(([k,v])=>/^[a-zA-Z0-9_-]+$/.test(k) && text(v,2000)
+      && (k!=='image' || /^(?:images|alg|puzzles)\/[a-zA-Z0-9_./-]+$/.test(v) && !v.includes('..')));
+  };
+  return a.kind==='algorithms' && a.version===1 && text(a.title,200) && puzzle(a.puzzle) && set(a.set)
+    && ['both','image','text'].includes(a.display) && index(a.offset) && index(a.total)
+    && (a.nextOffset===undefined || index(a.nextOffset) && a.nextOffset>a.offset && a.nextOffset<a.total)
+    && (a.query===undefined || text(a.query,100)) && (a.caseId===undefined || index(a.caseId))
+    && Array.isArray(a.cards) && a.cards.length<=24 && a.cards.every(c=>c && text(c.name,200) && text(c.alg)
+      && (c.setup===undefined || text(c.setup)) && puzzle(c.puzzle) && set(c.set) && c.puzzle===a.puzzle && c.set===a.set
+      && text(c.href,2000) && /^\/alg\//.test(c.href) && isAssistantSourceHref(c.href)
+      && index(c.alternative) && index(c.alternativeCount) && c.alternative<c.alternativeCount
+      && (c.caseId===undefined || index(c.caseId)) && sticker(c.sticker));
+}
+/** Complete snapshots, also used by native clients and follow-up context. */
+export function assistantAlgorithmsText(a: AssistantAlgorithms): string {
+  return [a.title, `puzzle=${a.puzzle}; set=${a.set}; offset=${a.offset}; total=${a.total}; display=${a.display}${a.query ? `; query=${encodeURIComponent(a.query)}` : ''}`,
+    ...a.cards.map((c, i) => `${i + 1}. ${c.name} [caseId=${c.caseId ?? ''}; alternative=${c.alternative}/${c.alternativeCount}] (${c.href})\n${c.alg}`),
+    ...(a.nextOffset === undefined ? [] : [`nextOffset=${a.nextOffset}`]),
+  ].join('\n');
+}
+export type AssistantArtifact = AssistantTable | AssistantChart | AssistantAlgorithms | import('./cube-photo/result').CubePhotoArtifact;
 export interface AssistantAnswer {
   answer: string; sources: AssistantSource[]; artifacts?: AssistantArtifact[];
   /** Verified destinations selected from site catalogs or public data adapters. */
@@ -86,3 +134,23 @@ export async function* readAssistantEvents(body: ReadableStream<Uint8Array>): As
     }
   } finally { await reader.cancel(); reader.releaseLock(); }
 }
+
+export { assistantAnswerText, assistantAnswerHistory, assistantSpokenText } from './site_assistant_export';
+
+export const ASSISTANT_ERROR_TEXT: Record<AssistantErrorCode, { zh: string; en: string }> = {
+  request_too_large: { zh: '内容超过发送上限。请缩小图片或缩短本条消息后重试。', en: 'This message exceeds the sending limit. Reduce image sizes or shorten this message and retry.' },
+  invalid_image: { zh: '图片无法发送。请使用 JPG、PNG 或 WebP，每次最多 3 张，并尝试缩小图片。', en: 'Images could not be sent. Use up to 3 JPG, PNG or WebP images and try reducing their size.' },
+  vision_unavailable: { zh: '图片识别暂时不可用，请稍后重试。', en: 'Image understanding is temporarily unavailable. Please try again later.' },
+  login_required: { zh: '请先登录并绑定 WCA 账号，再使用 AI 问答。普通搜索仍可使用。', en: 'Sign in and link your WCA account to use AI. Regular search is still available.' },
+  wca_link_required: { zh: '请在账号页绑定 WCA 账号，再使用 AI 问答。普通搜索仍可使用。', en: 'Link your WCA account on the account page to use AI. Regular search is still available.' },
+  account_forbidden: { zh: '当前账号无法使用 AI 问答。', en: 'AI questions are unavailable for this account.' },
+  daily_limit: { zh: `全站今日 ${SITE_ASSISTANT_DAILY_LIMIT} 次提问额度已用完，北京时间零点恢复。`, en: `The site’s daily allowance of ${SITE_ASSISTANT_DAILY_LIMIT} questions is used up. It resets at midnight Beijing time (UTC+8).` },
+  busy: { zh: '当前提问较多，请稍后重试。', en: 'Too many requests right now. Please try again shortly.' },
+  verification_required: { zh: '访问验证已失效，请完成验证后重新提问。', en: 'Access verification is required. Complete verification, then ask again.' },
+  source_verification_required: { zh: '资料来源要求验证或拒绝访问，暂时无法读取。请稍后重试。', en: 'A source requires verification or has denied access. Please try again later.' },
+  timeout: { zh: '这次查询超时了，请稍后重试。', en: 'This query timed out. Please try again shortly.' },
+  network: { zh: '连接中断，请检查网络后重试。', en: 'The connection was interrupted. Check your network and retry.' },
+  model_unavailable: { zh: '模型服务暂时无法回答，请稍后重试。', en: 'The model service is temporarily unavailable. Please try again later.' },
+  source_unavailable: { zh: '查询资料时发生错误，请稍后重试。', en: 'A data source could not be read. Please try again later.' },
+  unavailable: { zh: '问答服务暂时不可用，请稍后重试。', en: 'The assistant is temporarily unavailable. Please try again later.' },
+};
