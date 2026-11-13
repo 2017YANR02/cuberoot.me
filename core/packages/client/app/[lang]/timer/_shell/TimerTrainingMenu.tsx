@@ -126,7 +126,7 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
     if (entry.timer.type222) setType222(entry.timer.type222);
     updateSettings({ ...(source ? { scrambleSource: source } : entry.id !== 'solve' ? { scrambleSource: 'random' as const } : {}) });
     navigate(null, entry.timer.event, sameContent, {
-      source: source === 'manual' ? 'manual' : null,
+      source: source ?? (entry.id !== 'solve' ? 'random' : null),
       scramble222: entry.timer.type222 ?? null,
     });
   };

@@ -166,7 +166,6 @@ export function encodeTimerPracticeSearch(search: Search): URLSearchParams {
   params.delete('scramble222');
   if (params.get('event') === '333') params.delete('event');
   if (params.get('players') === '1') params.delete('players');
-  if (params.get('source') === 'random') params.delete('source');
   // Stable order makes equivalent entry points produce byte-identical links.
   const ordered = new URLSearchParams();
   for (const key of ['event', ...PUBLIC_KEYS, ...Object.values(ALIASES)]) {

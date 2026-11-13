@@ -10,6 +10,9 @@ describe('public practice URL contract', () => {
   });
 
   it('separates random states from random selection and recall', () => {
+    expect(canonical('').has('source')).toBe(false);
+    expect(canonical('source=random').toString()).toBe('source=random');
+    expect(encode(decode('source=random')).toString()).toBe('source=random');
     expect(canonical('event=zbll').toString()).toBe('content=zbll');
     expect(decode('content=zbll').get('event')).toBe('zbll');
     expect(decode('content=zbll').has('training')).toBe(false);

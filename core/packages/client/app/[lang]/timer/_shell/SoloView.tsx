@@ -518,11 +518,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const pllChainOriginRef = useRef<string | undefined>(undefined);
   const supportsSmartCube = timerSupportsSmartCubeAutoTiming(event);
   const [sourceParam, setSourceParam] = useQueryState('source');
-  // URL owns the public source choice. Other sources retain their existing
+  // A plain timer URL starts with WCA scrambles. Other sources retain their existing
   // detailed settings; no stored preference may override a shared cases/random link.
   useEffect(() => {
     if (competition.enabled) return;
-    const source = sourceParam === 'manual' ? 'manual' : sourceParam === 'wca' ? 'wca' : 'random';
+    const source = sourceParam === 'manual' ? 'manual' : sourceParam === null || sourceParam === 'wca' ? 'wca' : 'random';
     if (getSettings().scrambleSource !== source) updateSettings({ scrambleSource: source });
   }, [sourceParam, competition.enabled]);
   useEffect(() => { persistItem('cuberoot-timer.event', event); }, [event]);
@@ -3455,7 +3455,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             onTrainingChange={onSelectCases}
             onChange={(scrambleSource) => {
               updateSettings({ scrambleSource });
-              void setSourceParam(scrambleSource === 'random' ? null : scrambleSource);
+              void setSourceParam(scrambleSource === 'wca' ? null : scrambleSource);
             }}
             realValue="wca"
             realMenuContent={<div ref={setWcaSourceSlot} />}
