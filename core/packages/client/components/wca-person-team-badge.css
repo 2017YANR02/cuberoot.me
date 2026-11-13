@@ -24,6 +24,8 @@ table .wca-person-identity { white-space: nowrap; }
 
 .wca-person-team-slot {
   display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.2em;
   align-items: center;
   justify-content: center;
   vertical-align: middle;
@@ -34,6 +36,8 @@ table .wca-person-identity { white-space: nowrap; }
 /* One compact logo column aligns every flag; right alignment keeps narrow logos
    close to the flag instead of leaving half an empty slot between them. */
 table .wca-person-team-slot {
+  flex-direction: column;
+  align-items: flex-end;
   width: var(--wca-person-team-column);
   min-width: var(--wca-person-team-column);
   flex: 0 0 var(--wca-person-team-column);

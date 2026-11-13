@@ -625,9 +625,9 @@ export const CATALOG: UtilEntry[] = [
 
   // ── wca ───────────────────────────────────
   {
-    name: 'requestWcaPersonTeam / saveWcaPersonTeam',
-    sig: 'requestWcaPersonTeam(wcaId: string): void; saveWcaPersonTeam(wcaId: string, name: string): Promise<{ team: WcaTeam | null }>',
-    imp: "import { requestWcaPersonTeam, saveWcaPersonTeam } from '@/lib/wca-team-directory';",
+    name: 'requestWcaPersonTeams / saveWcaPersonTeams',
+    sig: 'requestWcaPersonTeams(wcaId: string): void; saveWcaPersonTeams(wcaId: string, names: string[]): Promise<{ teams: WcaTeam[] }>',
+    imp: "import { requestWcaPersonTeams, saveWcaPersonTeams } from '@/lib/wca-team-directory';",
     category: 'wca',
     zh: '战队标志共享缓存：合并同一批选手请求，每次最多 100 人，缓存一分钟；保存成功立即同步已挂载标志。展示优先用 WcaPersonTeamBadge。',
     en: 'Shared team cache: batch up to 100 people per request, cache for one minute, and notify mounted badges after a successful save. Prefer WcaPersonTeamBadge for display.',

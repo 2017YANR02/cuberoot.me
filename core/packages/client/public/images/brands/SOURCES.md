@@ -36,3 +36,9 @@ Added 2026-11-09:
 | --- | --- | --- |
 | `yj.png` | https://www.yjcube.com/theme/skin-yj/images/1.png (https://www.yjcube.com/) | Official footer emblem, original transparent 200×128 PNG; source colors and internal white artwork preserved. No verified SVG found. |
 | `diansheng.png` | https://www.dianshengtoys.com/images/logo.png (https://www.dianshengtoys.com/) | Official header logo, original transparent 74×73 PNG; source colors and white cube grid preserved. No verified SVG found. |
+
+Added 2026-11-12:
+
+| Asset | Source | Notes |
+| --- | --- | --- |
+| `cubicle.png` | https://www.thecubicle.com/cdn/shop/collections/Cubicle_Logo_3.png?v=1784902555 (https://www.thecubicle.com/) | Official transparent color emblem, unchanged 300×300 PNG. No verified original SVG found on the official site or through web search; do not wrap this raster in SVG. |

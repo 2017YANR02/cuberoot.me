@@ -3356,8 +3356,8 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
   const user = useAuthUser();
   const [teamFilter, setTeamFilter] = useState('');
   const directory = useWcaTeams(Object.values(data.users).flatMap(u => u.wcaid ? [u.wcaid] : []));
-  const teamById = new Map(directory.assignments.map(a => [a.wcaId, String(a.teamId)]));
-  const matchesTeam = (u: User) => !teamFilter || teamById.get(u.wcaid ?? '') === teamFilter;
+  const filteredTeamMembers = new Set(directory.assignments.filter(a => String(a.teamId) === teamFilter).map(a => a.wcaId));
+  const matchesTeam = (u: User) => !teamFilter || filteredTeamMembers.has(u.wcaid ?? '');
   const teamSelector = <ListSelect
     value={teamFilter} onChange={setTeamFilter}
     items={wcaTeamSelectItems(directory.teams)}

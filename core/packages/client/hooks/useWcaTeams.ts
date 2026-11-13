@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { useAuthUser } from '@/lib/auth-store';
 import type { WcaTeamsResponse } from '@/lib/wca-teams-api';
-import { fetchWcaTeamDirectory, saveWcaPersonTeam } from '@/lib/wca-team-directory';
+import { fetchWcaTeamDirectory, saveWcaPersonTeams } from '@/lib/wca-team-directory';
 
 export function useWcaTeams(wcaIds: string[]) {
   const user = useAuthUser();
@@ -33,13 +33,13 @@ export function useWcaTeams(wcaIds: string[]) {
     failed,
     isAdmin: isAdminWcaId(user?.wcaId),
     retry: () => setRevision(value => value + 1),
-    save: async (wcaId: string, name: string) => {
-      const { team } = await saveWcaPersonTeam(wcaId, name);
+    save: async (wcaId: string, names: string[]) => {
+      const { teams } = await saveWcaPersonTeams(wcaId, names);
       setData(current => ({
-        teams: team && !current.teams.some(item => item.id === team.id) ? [...current.teams, team] : current.teams,
+        teams: [...current.teams, ...teams.filter(team => !current.teams.some(item => item.id === team.id))],
         assignments: [
           ...current.assignments.filter(item => item.wcaId !== wcaId),
-          ...(team ? [{ wcaId, teamId: team.id }] : []),
+          ...teams.map(team => ({ wcaId, teamId: team.id })),
         ],
       }));
     },

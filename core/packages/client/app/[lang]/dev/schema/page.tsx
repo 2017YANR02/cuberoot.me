@@ -594,6 +594,8 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 329, slug: 'cubicle_roster', desc: { zh: '加入 Cubicle 战队及已核对身份的成员，保留原战队归属。', en: 'Add Cubicle and verified roster members, preserving their other teams.' } },
+  { n: 328, slug: 'wca_multiple_teams', desc: { zh: '选手可同时加入多个战队，保留既有归属和成员编号。', en: 'Allow multiple teams per cuber while preserving existing memberships and member IDs.' } },
   { n: 325, slug: 'assistant_share_versions', desc: { zh: '按内容版本保存回答分享快照，保留切换公式前的公开链接。', en: 'Version answer snapshots by content while preserving links shared before algorithm changes.' } },
   { n: 327, slug: 'assistant_knowledge_metadata', desc: { zh: '知识片段章节与来源元数据、发布完整性及上一完整版本回退。', en: 'Knowledge section and source metadata, publication readiness and previous snapshot rollback.' } },
   { n: 326, slug: 'assistant_context', desc: { zh: '服务端私有证据记忆，与请求归属和 30 天内容保留期限绑定。', en: 'Private server evidence memory bound to request ownership and 30-day content retention.' } },

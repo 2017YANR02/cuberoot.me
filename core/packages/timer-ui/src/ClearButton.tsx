@@ -4,6 +4,7 @@ import type { JSX } from 'react';
 
 export interface ClearButtonProps {
   onClick: () => void;
+  disabled?: boolean;
   variant?: 'inline' | 'standalone';
   preserveFocus?: boolean;
   className?: string;
@@ -13,6 +14,7 @@ export interface ClearButtonProps {
 
 export function ClearButton({
   onClick,
+  disabled = false,
   variant = 'inline',
   preserveFocus,
   className,
@@ -27,6 +29,7 @@ export function ClearButton({
   return (
     <button
       type="button"
+      disabled={disabled}
       className={classNames}
       onMouseDown={preserveFocus ? (event) => event.preventDefault() : undefined}
       onClick={onClick}

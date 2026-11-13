@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { query } from '../db/connection.js';
+import { query, withTransaction } from '../db/connection.js';
 import { requireAdminOrApiKey } from '../utils/recon_helpers.js';
 import { normalizeWcaId, parseTeacherLookupIds } from '../utils/wca_teachers.js';
 import { wcaTeamFilter } from '../utils/wca_relation_filters.js';
@@ -22,12 +22,20 @@ wcaTeamRoutes.get('/wca/teams', async (c) => {
     const params = [...relation.params, ...(search ? [`%${search}%`, `%${search}%`] : [])];
     const [teams, members, total] = await Promise.all([
       query<{ id: number; name: string; count: number }>(`SELECT t.id, t.name, COUNT(a.member_id)::int AS count FROM wca_teams t LEFT JOIN wca_person_teams a ON a.team_id = t.id GROUP BY t.id ORDER BY t.id`),
-      query(`SELECT a.member_id AS "memberId", a.wca_id AS "wcaId", COALESCE(s.name, a.name, a.wca_id) AS name, co.iso2, t.id AS "teamId", t.name AS "teamName",
+      query(`WITH members AS (
+          SELECT DISTINCT ON (COALESCE(a.wca_id, '@' || a.member_id)) a.*
+          FROM wca_person_teams a LEFT JOIN wca_persons s ON s.wca_id = a.wca_id
+          ${where} ORDER BY COALESCE(a.wca_id, '@' || a.member_id), a.member_id
+        )
+        SELECT a.member_id AS "memberId", a.wca_id AS "wcaId", COALESCE(s.name, a.name, a.wca_id) AS name, co.iso2, t.id AS "teamId", t.name AS "teamName",
+          (SELECT json_agg(json_build_object('id', mt.id, 'name', mt.name) ORDER BY mt.id)
+           FROM wca_person_teams ma JOIN wca_teams mt ON mt.id = ma.team_id
+           WHERE ma.wca_id = a.wca_id OR (a.wca_id IS NULL AND ma.member_id = a.member_id)) AS teams,
           best.average AS "bestAverage", best.single AS "bestSingle",
           best.competitions AS "competitionCount", best.wins AS "championshipCount",
           NULLIF(sr.ranks_world[${cubeRankIndex}], 0) AS "singleWorldRank",
           NULLIF(ar.ranks_world[${cubeRankIndex}], 0) AS "averageWorldRank"
-        FROM wca_person_teams a LEFT JOIN wca_persons s ON s.wca_id = a.wca_id JOIN wca_teams t ON t.id = a.team_id
+        FROM members a LEFT JOIN wca_persons s ON s.wca_id = a.wca_id JOIN wca_teams t ON t.id = a.team_id
         LEFT JOIN wca_countries co ON co.id = s.country_id
         LEFT JOIN wca_person_ranks sr ON sr.wca_id = s.wca_id AND sr.is_avg = FALSE
         LEFT JOIN wca_person_ranks ar ON ar.wca_id = s.wca_id AND ar.is_avg = TRUE
@@ -38,14 +46,14 @@ wcaTeamRoutes.get('/wca/teams', async (c) => {
             COUNT(*) FILTER (WHERE round_type_id IN (${finalRoundSql}) AND pos = 1)::int AS wins
           FROM wca_person_results r WHERE r.wca_id = s.wca_id
         ) best ON TRUE
-        ${where} ORDER BY best.average ASC NULLS LAST, a.wca_id ASC NULLS LAST, a.member_id LIMIT ? OFFSET ?`, [...params, size, (page - 1) * size]),
-      query<{ count: number }>(`SELECT COUNT(*)::int AS count FROM wca_person_teams a LEFT JOIN wca_persons s ON s.wca_id = a.wca_id ${where}`, params),
+        ORDER BY best.average ASC NULLS LAST, a.wca_id ASC NULLS LAST, a.member_id LIMIT ? OFFSET ?`, [...params, size, (page - 1) * size]),
+      query<{ count: number }>(`SELECT COUNT(DISTINCT COALESCE(a.wca_id, '@' || a.member_id))::int AS count FROM wca_person_teams a LEFT JOIN wca_persons s ON s.wca_id = a.wca_id ${where}`, params),
     ]);
     return c.json({ teams, members, total: total[0]?.count ?? 0, page, size });
   }
   const teams = await query<{ id: number; name: string }>('SELECT id, name FROM wca_teams ORDER BY id');
   const assignments = ids.length ? await query<{ wcaId: string; teamId: number }>(
-    'SELECT wca_id AS "wcaId", team_id AS "teamId" FROM wca_person_teams WHERE wca_id IN (' + ids.map(() => '?').join(',') + ')', ids,
+    'SELECT wca_id AS "wcaId", team_id AS "teamId" FROM wca_person_teams WHERE wca_id IN (' + ids.map(() => '?').join(',') + ') ORDER BY wca_id, team_id', ids,
   ) : [];
   return c.json({ teams, assignments });
 });
@@ -76,26 +84,36 @@ wcaTeamRoutes.put('/wca/teams/:wcaId', async (c) => {
   c.header('Cache-Control', 'no-store');
   const wcaId = normalizeWcaId(c.req.param('wcaId'));
   if (!wcaId) return c.json({ error: 'invalid WCA ID' }, 400);
-  const body = await c.req.json<{ name?: unknown }>().catch(() => null);
-  if (!body || typeof body.name !== 'string') return c.json({ error: 'invalid team name' }, 400);
-  const name = body.name.replace(/\s+/g, ' ').trim();
-  if (name.length > 80 || /[\u0000-\u001f\u007f]/.test(name)) return c.json({ error: 'invalid team name' }, 400);
-  const people = await query('SELECT wca_id FROM wca_persons WHERE wca_id = ?', [wcaId]);
-  if (!people.length) return c.json({ error: 'person not found' }, 404);
-  if (!name) {
-    await query('DELETE FROM wca_person_teams WHERE wca_id = ?', [wcaId]);
-    return c.json({ team: null });
+  const body = await c.req.json<{ names?: unknown }>().catch(() => null);
+  // Reject the old singular payload: an old editor must not erase extra memberships.
+  if (!body || !Array.isArray(body.names) || body.names.length > 20
+    || body.names.some(name => typeof name !== 'string')) return c.json({ error: 'invalid team names' }, 400);
+  const names = (body.names as string[]).map(name => name.replace(/\s+/g, ' ').trim());
+  if (names.some(name => !name || name.length > 80 || /[\u0000-\u001f\u007f]/.test(name))) {
+    return c.json({ error: 'invalid team name' }, 400);
   }
-  // One statement keeps custom-team creation and assignment atomic, including concurrent saves.
-  const teams = await query<{ id: number; name: string }>(
-    `WITH team AS (
-       INSERT INTO wca_teams (name) VALUES (?)
-       ON CONFLICT (lower(name)) DO UPDATE SET name = wca_teams.name
-       RETURNING id, name
-     ), assignment AS (
-       INSERT INTO wca_person_teams (wca_id, team_id) SELECT ?, id FROM team
-       ON CONFLICT (wca_id) DO UPDATE SET team_id = EXCLUDED.team_id, updated_at = NOW()
-     ) SELECT id, name FROM team`, [name, wcaId],
-  );
-  return c.json({ team: teams[0] });
+  const uniqueNames = [...new Map(names.map(name => [name.toLowerCase(), name])).values()]
+    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  const teams = await withTransaction(async tx => {
+    // Serialize edits for one person, including when they currently have no team.
+    const people = await tx('SELECT wca_id FROM wca_persons WHERE wca_id = ? FOR UPDATE', [wcaId]);
+    if (!people.length) return null;
+    const selected: Array<{ id: number; name: string }> = [];
+    for (const name of uniqueNames) {
+      const [team] = await tx<{ id: number; name: string }>(
+        `INSERT INTO wca_teams (name) VALUES (?)
+         ON CONFLICT (lower(name)) DO UPDATE SET name = wca_teams.name RETURNING id, name`, [name]);
+      selected.push(team);
+    }
+    await tx('DELETE FROM wca_person_teams WHERE wca_id = ?'
+      + (selected.length ? ' AND team_id NOT IN (' + selected.map(() => '?').join(',') + ')' : ''),
+    [wcaId, ...selected.map(team => team.id)]);
+    for (const team of selected) {
+      await tx(`INSERT INTO wca_person_teams (wca_id, team_id) VALUES (?, ?)
+        ON CONFLICT (wca_id, team_id) DO NOTHING`, [wcaId, team.id]);
+    }
+    return selected.sort((a, b) => a.id - b.id);
+  });
+  if (!teams) return c.json({ error: 'person not found' }, 404);
+  return c.json({ teams });
 });

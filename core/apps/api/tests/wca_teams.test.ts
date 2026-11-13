@@ -1,7 +1,7 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import { HTTPException } from 'hono/http-exception';
 const mocks = vi.hoisted(() => ({ query: vi.fn(), requireAdminOrApiKey: vi.fn() }));
-vi.mock('../src/db/connection.js', () => ({ query: mocks.query }));
+vi.mock('../src/db/connection.js', () => ({ query: mocks.query, withTransaction: (run: (query: typeof mocks.query) => unknown) => run(mocks.query) }));
 vi.mock('../src/utils/recon_helpers.js', () => ({ requireAdminOrApiKey: mocks.requireAdminOrApiKey }));
 import { wcaTeamRoutes } from '../src/routes/wca_teams.js';
 const put = (body: unknown) => wcaTeamRoutes.request('/wca/teams/2017YANR02', {
@@ -26,7 +26,7 @@ it('returns directory counts and paginated member results without modifying assi
 });
 it('rejects non-admin writes before touching the database', async () => {
   mocks.requireAdminOrApiKey.mockRejectedValue(new HTTPException(403));
-  expect((await put({ name: 'GAN' })).status).toBe(403);
+  expect((await put({ names: ['GAN', 'Cubicle'] })).status).toBe(403);
   expect((await createMember({ name: 'New Member', teamId: 1 })).status).toBe(403);
   expect(mocks.query).not.toHaveBeenCalled();
 });
@@ -50,18 +50,25 @@ it('rejects missing identities and invalid teams before writing', async () => {
   expect((await createMember({ name: 'Member', teamId: 99 })).status).toBe(404);
 });
 it('rejects malformed and overlong names before database writes', async () => {
-  for (const name of [null, {}, 'x'.repeat(81)]) expect((await put({ name })).status).toBe(400);
+  for (const names of [null, {}, ['x'.repeat(81)], [''], [null], Array(21).fill('Team')]) {
+    expect((await put({ names })).status).toBe(400);
+  }
+  expect((await put({ name: 'GAN' })).status).toBe(400);
   expect(mocks.query).not.toHaveBeenCalled();
 });
-it('normalizes a custom name and atomically assigns it to an existing cuber', async () => {
-  mocks.query.mockResolvedValueOnce([{ wca_id: '2017YANR02' }]).mockResolvedValueOnce([{ id: 4, name: 'Team A' }]);
-  const response = await put({ name: '  Team   A  ' });
-  expect(await response.json()).toEqual({ team: { id: 4, name: 'Team A' } });
-  expect(mocks.query.mock.calls[1][1]).toEqual(['Team A', '2017YANR02']);
+it('normalizes and deduplicates custom names, keeping all selected memberships', async () => {
+  mocks.query.mockResolvedValue([]).mockResolvedValueOnce([{ wca_id: '2017YANR02' }])
+    .mockResolvedValueOnce([{ id: 4, name: 'Team A' }]).mockResolvedValueOnce([{ id: 5, name: 'Team B' }]);
+  const response = await put({ names: ['  Team   A  ', 'Team B', 'Team A'] });
+  expect(await response.json()).toEqual({ teams: [{ id: 4, name: 'Team A' }, { id: 5, name: 'Team B' }] });
+  expect(mocks.query.mock.calls[1][1]).toEqual(['Team A']);
+  expect(mocks.query.mock.calls[3][1]).toEqual(['2017YANR02', 4, 5]);
+  expect(mocks.query.mock.calls[4][1]).toEqual(['2017YANR02', 4]);
+  expect(mocks.query.mock.calls[5][1]).toEqual(['2017YANR02', 5]);
 });
 it('clears only the selected cuber assignment', async () => {
   mocks.query.mockResolvedValueOnce([{ wca_id: '2017YANR02' }]).mockResolvedValueOnce([]);
-  expect(await (await put({ name: '' })).json()).toEqual({ team: null });
+  expect(await (await put({ names: [] })).json()).toEqual({ teams: [] });
   expect(mocks.query).toHaveBeenLastCalledWith('DELETE FROM wca_person_teams WHERE wca_id = ?', ['2017YANR02']);
 });
 it('rejects invalid lookup IDs without querying', async () => {

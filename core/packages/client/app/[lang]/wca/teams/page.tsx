@@ -12,6 +12,7 @@ import { SearchInput } from '@/components/SearchInput';
 import { Tooltip } from '@/components/Tooltip';
 import { WcaRelationColumnHeader } from '@/components/WcaRelationColumnHeader';
 import { wcaTeamSelectItems } from '@/components/wca-team-select-items';
+import type { WcaTeam } from '@/lib/wca-teams-api';
 import Paginator from '@/components/wca-stats/Paginator';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
 import AppLink from '@/components/AppLink';
@@ -28,6 +29,7 @@ interface Directory {
   teams: Team[];
   members: Array<{
     memberId: number; wcaId: string | null; name: string; iso2: string | null; teamId: number; teamName: string;
+    teams?: WcaTeam[];
     bestAverage: number | null; bestSingle?: number | null; competitionCount?: number; championshipCount?: number;
     singleWorldRank?: number | null; averageWorldRank?: number | null;
   }>;
@@ -112,8 +114,8 @@ function TeamsDirectory() {
         <th><Tooltip content={tr({ zh: '全部项目累计决赛冠军次数（含加入战队前）', en: 'Career event wins in finals, including before joining the team' })}>
           {tip => <span {...tip} tabIndex={0}>{tr({ zh: '夺冠次数', en: 'Titles' })}</span>}
         </Tooltip></th></tr></thead>
-      <tbody>{!loading && !failed && data?.members.map(member => <tr key={member.memberId ?? member.wcaId}>
-        <td><WcaPersonIdentity team={{ id: member.teamId, name: member.teamName }} flag={member.iso2 && <Flag iso2={member.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}>{member.wcaId
+      <tbody>{!loading && !failed && data?.members.map(member => <tr key={member.wcaId ?? member.memberId}>
+        <td><WcaPersonIdentity teams={member.teams ?? [{ id: member.teamId, name: member.teamName }]} flag={member.iso2 && <Flag iso2={member.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}>{member.wcaId
             ? <PersonLink wcaId={member.wcaId} name={member.name} isZh={isZh} showTeam={false} />
             : <span>{displayCuberName(member.name, isZh)}</span>}
             {member.wcaId && <span className="wca-team-person-id">{member.wcaId}</span>}

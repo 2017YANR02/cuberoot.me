@@ -3,6 +3,7 @@ import './cubing-brand-label.css';
 
 /** Shared brand assets; unknown/custom teams keep their original text. */
 const brands = [
+  { aliases: ['cubicle', 'thecubicle', 'the cubicle', 'team cubicle'], src: '/images/brands/cubicle.png', circle: false },
   { aliases: ['mfg', 'mfg 战队', 'mfg战队', 'mfg cube'], src: '/images/brands/mfg.svg', circle: false },
   { aliases: ['speedace'], src: '/images/brands/speedace.png', circle: false, width: '4em' },
   { aliases: ['宇宙爆速社-启航队'], src: '/images/brands/speedace-qihang.png', circle: false, width: '6.2em' },

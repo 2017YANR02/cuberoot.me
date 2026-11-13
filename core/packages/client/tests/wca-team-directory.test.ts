@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { WcaTeamsResponse } from '@/lib/wca-teams-api';
 
-const api = vi.hoisted(() => ({ listWcaTeams: vi.fn(), saveWcaTeam: vi.fn() }));
+const api = vi.hoisted(() => ({ listWcaTeams: vi.fn(), saveWcaTeams: vi.fn() }));
 vi.mock('@/lib/wca-teams-api', () => api);
 const empty: WcaTeamsResponse = { teams: [], assignments: [] };
 
@@ -9,7 +9,7 @@ beforeEach(() => {
   vi.resetModules();
   vi.useFakeTimers();
   api.listWcaTeams.mockReset().mockResolvedValue(empty);
-  api.saveWcaTeam.mockReset();
+  api.saveWcaTeams.mockReset();
 });
 afterEach(() => { vi.useRealTimers(); });
 
@@ -19,16 +19,16 @@ it('batches and deduplicates people, skips invalid IDs, and caches absent teams 
   // WCA IDs have exactly two trailing digits; use a second surname for person 101.
   ids[99] = '2023TESS01';
   ids[100] = '2023TESS02';
-  for (const id of [...ids, ...ids, '', 'u123']) directory.requestWcaPersonTeam(id);
+  for (const id of [...ids, ...ids, '', 'u123']) directory.requestWcaPersonTeams(id);
   await vi.runAllTimersAsync();
   expect(api.listWcaTeams.mock.calls.map(([batch]) => batch.length)).toEqual([100, 1]);
   expect(api.listWcaTeams.mock.calls.flatMap(([batch]) => batch)).toEqual(ids);
-  expect(directory.getWcaPersonTeam(ids[0])).toBeNull();
-  directory.requestWcaPersonTeam(ids[0]);
+  expect(directory.getWcaPersonTeams(ids[0])).toEqual([]);
+  directory.requestWcaPersonTeams(ids[0]);
   await vi.runAllTimersAsync();
   expect(api.listWcaTeams).toHaveBeenCalledTimes(2);
   await vi.advanceTimersByTimeAsync(60_000);
-  directory.requestWcaPersonTeam(ids[0]);
+  directory.requestWcaPersonTeams(ids[0]);
   await vi.runAllTimersAsync();
   expect(api.listWcaTeams).toHaveBeenCalledTimes(3);
 });
@@ -37,14 +37,14 @@ it('deduplicates in-flight requests and allows retry after failure without recor
   const directory = await import('@/lib/wca-team-directory');
   let reject!: (error: Error) => void;
   api.listWcaTeams.mockReturnValueOnce(new Promise((_, fail) => { reject = fail; }));
-  directory.requestWcaPersonTeam('2023GENG02');
+  directory.requestWcaPersonTeams('2023GENG02');
   await vi.advanceTimersByTimeAsync(0);
-  directory.requestWcaPersonTeam('2023GENG02');
+  directory.requestWcaPersonTeams('2023GENG02');
   expect(api.listWcaTeams).toHaveBeenCalledTimes(1);
   reject(new Error('offline'));
   await vi.runAllTimersAsync();
-  expect(directory.getWcaPersonTeam('2023GENG02')).toBeUndefined();
-  directory.requestWcaPersonTeam('2023GENG02');
+  expect(directory.getWcaPersonTeams('2023GENG02')).toBeUndefined();
+  directory.requestWcaPersonTeams('2023GENG02');
   await vi.runAllTimersAsync();
   expect(api.listWcaTeams).toHaveBeenCalledTimes(2);
 });
@@ -54,17 +54,28 @@ it('notifies badges after edits and prevents an older fetch from undoing a saved
   const listener = vi.fn();
   const unsubscribe = directory.subscribeWcaTeams(listener);
   const gan = { id: 1, name: 'GAN' };
-  for (const saved of [gan, null]) {
+  const cubicle = { id: 2, name: 'Cubicle' };
+  for (const saved of [[gan, cubicle], [gan], []]) {
     let resolve!: (data: WcaTeamsResponse) => void;
     api.listWcaTeams.mockReturnValueOnce(new Promise<WcaTeamsResponse>(done => { resolve = done; }));
     const reading = directory.fetchWcaTeamDirectory(['2023GENG02']);
-    api.saveWcaTeam.mockResolvedValueOnce({ team: saved });
-    await directory.saveWcaPersonTeam('2023GENG02', saved?.name ?? '');
-    expect(directory.getWcaPersonTeam('2023GENG02')).toEqual(saved);
+    api.saveWcaTeams.mockResolvedValueOnce({ teams: saved });
+    await directory.saveWcaPersonTeams('2023GENG02', saved.map(team => team.name));
+    expect(directory.getWcaPersonTeams('2023GENG02')).toEqual(saved);
     expect(listener).toHaveBeenCalled();
-    resolve({ teams: [gan], assignments: saved ? [] : [{ wcaId: '2023GENG02', teamId: 1 }] });
+    resolve({ teams: [gan], assignments: saved.length ? [] : [{ wcaId: '2023GENG02', teamId: 1 }] });
     await reading;
-    expect(directory.getWcaPersonTeam('2023GENG02')).toEqual(saved);
+    expect(directory.getWcaPersonTeams('2023GENG02')).toEqual(saved);
   }
   unsubscribe();
+});
+
+it('retains every membership and a stable snapshot for badges', async () => {
+  const directory = await import('@/lib/wca-team-directory');
+  const teams = [{ id: 1, name: 'MFG' }, { id: 2, name: 'Cubicle' }];
+  api.listWcaTeams.mockResolvedValueOnce({ teams, assignments: teams.map(team => ({ wcaId: '2023XIUY01', teamId: team.id })) });
+  await directory.fetchWcaTeamDirectory(['2023XIUY01']);
+  const snapshot = directory.getWcaPersonTeams('2023XIUY01');
+  expect(snapshot).toEqual(teams);
+  expect(directory.getWcaPersonTeams('2023XIUY01')).toBe(snapshot);
 });

@@ -9196,12 +9196,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS wca_teams_name_unique ON wca_teams (lower(name
 INSERT INTO wca_teams (name) VALUES ('GAN'), ('魔域'), ('MFG') ON CONFLICT DO NOTHING;
 CREATE TABLE IF NOT EXISTS wca_person_teams (
   member_id SERIAL PRIMARY KEY,
-  wca_id VARCHAR(10) CONSTRAINT wca_person_teams_wca_id_unique UNIQUE,
+  wca_id VARCHAR(10),
   name VARCHAR(80),
   team_id INTEGER NOT NULL REFERENCES wca_teams(id),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT wca_person_teams_identity_check
-    CHECK (wca_id IS NOT NULL OR (name IS NOT NULL AND length(btrim(name)) > 0))
+    CHECK (wca_id IS NOT NULL OR (name IS NOT NULL AND length(btrim(name)) > 0)),
+  CONSTRAINT wca_person_teams_person_team_unique UNIQUE (wca_id, team_id)
 );
 
 -- Public assistant knowledge passages: schema_assistant_knowledge.pg.sql (0270).

@@ -82,6 +82,12 @@ WCA 自学来源增量 `0185_wca_self_taught.sql` 允许老师关系的老师 ID
 
 会员编号增量 `0212_membership_vip_id.sql` 为新旧会员分配唯一、稳定的数字编号；对外由 API 统一格式化为 `VIP` 前缀。撤销只结束权益，不再删除会员记录和编号。
 
+## 待发布迁移
+
+`0328_wca_multiple_teams.sql` 将 WCA ID 唯一约束改为 `(wca_id, team_id)` 组合唯一，保留旧成员编号及全部归属。`0329_cubicle_roster.sql` 按维护者名单增加 Cubicle 的 14 位成员归属，不替换原厂商战队；身份核对及姓名差异确认见 [导入记录](../../../../docs/data-imports/cubicle-2026-11-12.md)。目录按 WCA ID 去重，无 WCA ID 的同名成员仍按独立 `member_id` 计数。先迁移并部署 API，再发布客户端；新版 PUT 要求 `names` 数组，旧版单个 `name` 请求会被拒绝，避免旧编辑器清空新增归属。
+
+2026-11-13 只读核对生产 ledger：`0325_assistant_share_versions.sql`、`0326_assistant_context.sql`、`0327_assistant_knowledge_metadata.sql` 已应用，两个 WCA 文件未应用。因此仅将尚未提交的 WCA 文件从冲突的 0325/0326 改为 0328/0329，SQL 字节和 SHA-256 保持不变，并同步文档与测试引用。不得修改已应用的助手迁移。
+
 ## 已应用 migration 不能改
 
 `0307_qiyi_team_to_mfg.sql` 记录维护者确认的奇艺战队整体更名，保留原战队编号和杨品修等全部成员；存在独立 MFG 目录项时先迁移其成员，再合并目录。此迁移只改战队资料，不改表结构，可安全重放；厂商品牌素材不因此全部改名。
