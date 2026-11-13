@@ -8,7 +8,7 @@ import { partialAssistantAnswer, partialAssistantAnswerKind } from './site_assis
 import { ASSISTANT_ANSWER_POLICY, ASSISTANT_EVIDENCE_REVIEW, ASSISTANT_OUTPUT_BUDGET, ASSISTANT_SITE_NAMES, assistantReasoningPolicy, assistantToolKey } from './site_assistant_policy.js';
 import { assistantSearchProtectedTerms, assistantWebAvailable, assistantWebRequestScope, searchAssistantWeb } from './site_assistant_web.js';
 import { WCA_NEWS_URL, parseAssistantNews } from './site_assistant_news.js';
-import {WCA_REGULATIONS_URL,regulationExcerptArticles,regulationChapterHref,officialRegulationPassages} from './site_assistant_regulations.js';
+import {WCA_REGULATIONS_URL,regulationExcerptArticles,regulationChapterHref,officialRegulationPassages,regulationFollowUpRead,savedRegulationChapter} from './site_assistant_regulations.js';
 import {suppliedAverageAnswer} from './site_assistant_calculation.js';
 import { parseHTML } from 'linkedom';
 import { z } from 'zod';
@@ -569,11 +569,12 @@ export async function answerSiteQuestion(
       sources:announcements.map(a=>({id:a.id,title:a.title[lang],href:a.href,read:true})),artifacts:[],
     };
     const officialSelections=call.pageIds.flatMap(id=>{
-      const href=sources.has(id)?regulationChapterHref(id):undefined;
+      const href=sources.has(id)?regulationChapterHref(id):savedRegulationChapter(priorContext,id);
       return href?[{href,content:call.query}]:[];
     });
     if(officialSelections.length===call.pageIds.length && officialSelections.length) {
       const pages=officialRegulationPassages(await readOfficialRules(),officialSelections,call.query);
+      if(!pages.length)return {sources:[],artifacts:[],outcome:{state:'partial',reason:'official_clause_unavailable'},evidence:{notEvidence:true,pages:[],instruction:'The fresh official read did not establish the requested clauses. Use another focused read if needed; prior replies and saved source references do not establish current rule contents.'}};
       return {evidence:{pages,coverage:'Official clause families, including exceptions. relatedOmitted means the chapter is incomplete; do not infer missing qualifications.'},sources:pages.map(p=>({id:p.id,title:p.title,href:p.href,read:true})),artifacts:[]};
     }
     const selected: Array<{id:string;title:string;href:string;content:string;metadata?:unknown;relatedOmitted?:boolean}>=directory.filter(p=>call.pageIds.includes(p.id) && (includeDeveloper || !isDeveloperKnowledge(p.href))).map(p=>({id:p.id,title:p.title[lang],href:p.href,content:''}));
@@ -827,6 +828,8 @@ export async function answerSiteQuestion(
       // associates it with an answer. Never lend unrelated sources to a draft.
       const cited=championIntro ? reviewed : selected;
       const citedIds=new Set(cited.map(source=>source.id));
+      // Navigation and formula tools have distinct IDs for the same canonical
+      // library. Selecting that library must not silently discard its cards.
       const citedLibraryHrefs=new Set(cited.filter(source=>/^\/alg\//.test(source.href)).map(source=>source.href));
       const visibleArtifacts=artifacts.filter(a=>a.artifact.kind==='cube-photo' || a.sourceIds.some(id=>citedIds.has(id))
         || (!entryOnlyRequest && a.artifact.kind==='algorithms' && a.sourceIds.some(id=>citedLibraryHrefs.has(sources.get(id)?.href ?? ''))));
@@ -895,10 +898,13 @@ export async function answerSiteQuestion(
     const missing=[...unavailableTools].map(tool=>names[tool]?.[lang] ?? {zh:'补充数据源',en:'Additional data source'}[lang]).join('、');
     return {answer:supported.map(({text,source})=>`${{zh:'词条原文',en:'Glossary entry'}[lang]}：${text} [[${source.id}]]`).join('\n\n')+'\n\n'+{zh:`${missing}暂时无法读取，相关内容未能核实。`,en:`${missing} could not be read; those details remain unverified.`}[lang],sources:supported.map(s=>s.source),artifacts:[]};
   };
-  // Private benchmark control, deliberately absent from the HTTP request schema.
-  // Same six-passage/context/tool budgets as ordinary retrieval; no hidden extra round.
-  if (experiment.forceKnowledge || requestedEvidence==='pages') {
-    const call = { tool: 'pages' as const, query: question.slice(0, 500), pageIds: [] as string[], audience:'user' as const };
+  // Explicit documentation requests and unambiguous saved rule references can
+  // read their known source before planning. The private benchmark switch stays
+  // absent from the HTTP schema; ordinary evidence/tool budgets still apply.
+  const ruleFollowUp=!hasImages && requestedEvidence==='auto' && !experiment.forceKnowledge
+    ? regulationFollowUpRead(question,lang,priorContext) : undefined;
+  if (experiment.forceKnowledge || requestedEvidence==='pages' || ruleFollowUp) {
+    const call = ruleFollowUp ?? { tool: 'pages' as const, query: question.slice(0, 500), pageIds: [] as string[], audience:'user' as const };
     attemptedCalls++;
     if(requestedEvidence==='pages') navigationReadRequired=true;
     try {
@@ -909,9 +915,10 @@ export async function answerSiteQuestion(
       const text = JSON.stringify(result.evidence);
       evidenceCharacters += Math.min(text.length, 14000);
       evidence.push({ id: result.sources[0]?.id ?? 'benchmark:prefetch', tool: call, data: boundAssistantEvidence(result.evidence,14000) });
+      if(ruleFollowUp && result.sources.length)pendingReadFollowUp='The referenced official clauses have now been read afresh. Answer context.question, the CURRENT follow-up, with one concise bullet per newly requested situation: its final recorded outcome, the decisive condition and a supporting citation. Preserve exact endpoints. Distinguish a rule requirement from the condition that VIOLATES it: never describe satisfying a requirement as triggering its penalty. For an exact-boundary question, use the explicit boundary clarification as the reason, without paraphrasing ambiguous within/before wording. Do not repeat the earlier overview, add unrelated penalty scenarios or speculate about cumulative penalties that cannot change the final outcome. Apply overriding clauses before stating the result. These clauses are a candidate source, not a restriction on the task: read any other necessary source if they do not establish a requested case. The saved reference selected this read; the prior reply is not evidence.';
     } catch(error) {
       signal.throwIfAborted();
-      if(requestedEvidence==='pages' && error instanceof AssistantFailure && error.code==='source_verification_required') throw error;
+      if((requestedEvidence==='pages' || ruleFollowUp) && error instanceof AssistantFailure && error.code==='source_verification_required') throw error;
       evidence.push({ id: 'benchmark:prefetch', tool: call, data: { notEvidence: true, error: 'Requested page evidence is unavailable. State the verification gap for source-specific claims, and preserve independently answerable parts. Do not substitute unrelated datasets or claim no matching facts exist.' } });
     }
   }

@@ -1,4 +1,6 @@
 import {parseHTML} from 'linkedom';
+import {knowledgeTokens} from './site_assistant_knowledge.js';
+import type {AssistantContext} from './site_assistant_context.js';
 
 // Fixed authority, never a model/user supplied fetch destination. This reader
 // supplements the public site's explanatory excerpts with the actual clauses.
@@ -12,6 +14,33 @@ export function regulationChapterHref(sourceId:string){
 }
 type Excerpt={href:string;content:string};
 const clauseReferences=(text:string)=>text.match(/\b(?:\d+[a-z]|[A-Z]\d)[a-z\d]*\+*/g)??[];
+export function savedRegulationChapter(context:AssistantContext|undefined,id:string) {
+  const source=context?.sources.find(source=>source.id===id && source.read && source.href.startsWith(WCA_REGULATIONS_URL+'#'));
+  return source ? regulationChapterHref(source.id) : undefined;
+}
+
+/** A saved reference chooses what to read again, never what answer to give.
+ * Only an unambiguous official chapter with an actual prior clause query is
+ * eligible. Shared content words justify a speculative read; all other tools
+ * remain available if the fresh clauses do not answer the current question. */
+export function regulationFollowUpRead(question:string,lang:'zh'|'en',context?:AssistantContext) {
+  if(context?.sources.length!==1)return;
+  const source=context.sources[0],href=savedRegulationChapter(context,source.id);
+  if(!href)return;
+  const article=regulationArticle(href);
+  const contentWords=(text:string)=>knowledgeTokens(text,lang).filter(word=>
+    /\p{L}/u.test(word) && (/\p{Script=Han}/u.test(word)?word.length>=2:word.length>=5));
+  const words=new Set(contentWords(question));
+  const queries=context.observations.flatMap(observation=>{
+    if(observation.call.tool!=='pages' || !observation.sourceIds.includes(source.id))return [];
+    const query=observation.call.query;
+    if(!clauseReferences(query).some(id=>id.match(/^(\d+|[A-Z])/)?.[0]===article)
+      || !contentWords(query).some(word=>words.has(word)))return [];
+    return [query];
+  });
+  if(!queries.length)return;
+  return {tool:'pages' as const,query:[question.slice(0,350),queries[0].slice(0,149)].join('\n'),pageIds:[source.id],audience:'user' as const};
+}
 export function regulationExcerptArticles(excerpt:Excerpt,query=''):string[] {
   const article=regulationArticle(excerpt.href);
   if(article)return [article];
