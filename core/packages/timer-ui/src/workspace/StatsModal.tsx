@@ -12,9 +12,6 @@ import {
   pbSingleIndex,
   subXBreakdown,
   bestSingle,
-  bestAverageOfN,
-  bestMeanOfN,
-  bestBestOfN,
   eventDefaultFormat,
   sdOfLastN,
   sdOfBestAoN,
@@ -79,22 +76,6 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose, on
   const subX = useMemo(() => subXBreakdown(solves), [solves]);
   const streak = useMemo(() => longestSolveDayStreak(solves), [solves]);
   const best = bestSingle(solves, event);
-
-  // Numeric ms values for the WCA records overlay. We can't reuse the
-  // formatted strings on `summary` because the overlay needs to compute
-  // a numeric gap against the WR.
-  const userPbSingleMs = useMemo<number | null>(() => {
-    const v = bestSingle(solves, event);
-    return v !== null && Number.isFinite(v) ? v : null;
-  }, [solves, event]);
-  const userPbAvgMs = useMemo<number | null>(() => {
-    let v: number | null;
-    if (fmt.kind === 'ao5')      v = bestAverageOfN(solves, fmt.n);
-    else if (fmt.kind === 'mo3') v = bestMeanOfN(solves, fmt.n);
-    else if (fmt.kind === 'bo3') v = bestBestOfN(solves, fmt.n);
-    else                          v = bestSingle(solves, event);
-    return v !== null && Number.isFinite(v) ? v : null;
-  }, [solves, fmt.kind, fmt.n, event]);
 
   // Time-period buckets — current and previous period, computed once per render.
   const periods = useMemo(() => {
@@ -344,8 +325,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose, on
         <div data-tab="overview">
           <RecordsOverlay
             event={event}
-            userPbSingleMs={userPbSingleMs}
-            userPbAvgMs={userPbAvgMs}
+            solves={solves}
             isZh={isZh}
           />
         </div>

@@ -7,6 +7,27 @@ export interface WcaRecordRow {
   c: string; cn: string; d: string; de?: string; a: number[] | null;
 }
 
+/** Published by records-build and consumed by the records page and timer. */
+export interface WcaRecordsBundle { updated: string; rows: WcaRecordRow[] }
+
+export const WCA_WORLD_RECORDS_PATH = '/stats/records/history/world.json';
+
+/** Reject failed/partial responses instead of presenting them as current records. */
+export function parseWcaRecordsBundle(value: unknown): WcaRecordsBundle | null {
+  if (!value || typeof value !== 'object') return null;
+  const bundle = value as Partial<WcaRecordsBundle>;
+  if (typeof bundle.updated !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(bundle.updated)
+    || !Array.isArray(bundle.rows) || bundle.rows.length === 0) return null;
+  if (!bundle.rows.every(row => row && typeof row === 'object'
+    && typeof row.e === 'string' && (row.t === 's' || row.t === 'a')
+    && Number.isInteger(row.v) && typeof row.l === 'string'
+    && typeof row.p === 'string' && typeof row.pn === 'string'
+    && typeof row.c === 'string' && typeof row.cn === 'string'
+    && typeof row.d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(row.d)
+    && (row.a === null || (Array.isArray(row.a) && row.a.every(Number.isInteger))))) return null;
+  return bundle as WcaRecordsBundle;
+}
+
 /** Select all tied best valid records, preserving the records page's display order. */
 export function selectCurrentRecords<T extends WcaRecordRow>(rows: readonly T[]): T[] {
   const best = new Map<string, { value: number; rows: T[] }>();

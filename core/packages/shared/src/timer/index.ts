@@ -89,7 +89,7 @@ export * from './local-battle-scramble';
 export * from './local-battle-csv';
 export * from './local-battle-settings';
 
-export * from './wca-record-snapshot';
+export * from './wca-records';
 export * from './solve-metrics';
 export * from './record-badge';
 

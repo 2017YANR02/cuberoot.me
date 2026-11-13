@@ -1,17 +1,15 @@
 'use client';
 
-import type { CSSProperties } from 'react';
-import type { EventId } from '@cuberoot/shared/timer';
-import { formatMs } from '@cuberoot/shared/timer';
-import { getWcaRecord, WR_AS_OF } from '@cuberoot/shared/timer';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { compareTimerWcaRecord, hasTimerWcaRecords, selectTimerWcaRecords, type EventId, type Solve } from '@cuberoot/shared/timer';
+import { parseWcaRecordsBundle, WCA_WORLD_RECORDS_PATH, type WcaRecordRow, type WcaRecordsBundle } from '@cuberoot/shared/wca-records';
+import { statsUrl } from '@cuberoot/shared/stats-base';
+import { displayCuberName } from '@cuberoot/shared/cuber-name-display';
 import { useWorkspaceText } from './localization';
 
 interface Props {
   event: EventId;
-  /** PB single in ms; null/undefined when user has no valid solve. */
-  userPbSingleMs: number | null;
-  /** Best ao5/mo3/etc. (whatever counts as user's "average PB"). */
-  userPbAvgMs: number | null;
+  solves: Solve[];
   isZh: boolean;
 }
 
@@ -41,48 +39,39 @@ const dividerStyle: CSSProperties = {
 function recordRow(tr: (copy: {en:string;zh:string}) => string, opts: {
   label: string;
   yourLabel: string;
-  wrMs: number | undefined;
-  wrText: string | undefined;
-  holder: string | undefined;
-  date: string | undefined;
-  userMs: number | null;
+  records: WcaRecordRow[];
+  solves: Solve[];
   isZh: boolean;
   gapLabel: string;
 }) {
-  const { label, yourLabel, wrMs, wrText, holder, date, userMs, gapLabel } = opts;
-  if (wrMs === undefined && !wrText) return null;
-
-  const wrDisplay = wrText !== undefined ? wrText : formatMs(wrMs ?? null);
-  const userDisplay = userMs !== null && Number.isFinite(userMs) ? formatMs(userMs) : null;
-
-  const gapMs =
-    wrMs !== undefined && userMs !== null && Number.isFinite(userMs)
-      ? userMs - wrMs
-      : null;
+  const { label, yourLabel, records, solves, isZh, gapLabel } = opts;
+  const record = records[0];
+  if (!record) return null;
+  const { recordText, pbText, gap, gapText } = compareTimerWcaRecord(record, solves);
 
   return (
     <div style={rowStyle}>
       <span style={labelStyle}>{label}</span>
       <div style={subRowStyle}>
-        <span style={valueStyle}>{wrDisplay}</span>
-        {(holder || date) && (
-          <span style={{ opacity: 0.7, fontSize: '0.9em' }}>
-            {holder ?? ''}{holder && date ? ', ' : ''}{date ?? ''}
+        <span style={valueStyle}>{recordText}</span>
+        {records.map((row) => (
+          <span key={`${row.p}:${row.c}:${row.d}`} style={{ opacity: 0.7, fontSize: '0.9em' }}>
+            {displayCuberName(row.pn, isZh)}, {row.d}
           </span>
-        )}
-        {userDisplay !== null ? (
+        ))}
+        {pbText !== null ? (
           <>
             <span style={{ opacity: 0.5 }}>—</span>
             <span style={labelStyle}>{yourLabel}</span>
-            <span style={valueStyle}>{userDisplay}</span>
-            {gapMs !== null && gapMs > 0 && (
+            <span style={valueStyle}>{pbText}</span>
+            {gap !== null && gap > 0 && (
               <span style={{ color: 'var(--destructive)', fontVariantNumeric: 'tabular-nums' }}>
-                ({gapLabel} {formatMs(gapMs)})
+                ({gapLabel} {gapText})
               </span>
             )}
-            {gapMs !== null && gapMs <= 0 && (
+            {gap !== null && gap <= 0 && (
               <span style={{ color: 'var(--signal-success)' }}>
-                ({tr({ zh: '已超 WR', en: 'beat WR' })})
+                ({gap === 0 ? tr({ zh: '持平 WR', en: 'equal to WR' }) : tr({ zh: '已超 WR', en: 'beat WR' })})
               </span>
             )}
           </>
@@ -99,23 +88,41 @@ function recordRow(tr: (copy: {en:string;zh:string}) => string, opts: {
 
 export default function RecordsOverlay({
   event,
-  userPbSingleMs,
-  userPbAvgMs,
+  solves,
   isZh,
 }: Props) {
   const tr = useWorkspaceText();
-  const rec = getWcaRecord(event);
-  if (!rec) return null;
+  const supported = hasTimerWcaRecords(event);
+  const [bundle, setBundle] = useState<WcaRecordsBundle | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    if (!supported) return;
+    const controller = new AbortController();
+    setBundle(null);
+    setFailed(false);
+    fetch(statsUrl(WCA_WORLD_RECORDS_PATH), { signal: controller.signal })
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then(value => {
+        const data = parseWcaRecordsBundle(value);
+        if (!data) throw new Error('Invalid WCA record history');
+        if (!controller.signal.aborted) setBundle(data);
+      })
+      .catch(() => { if (!controller.signal.aborted) setFailed(true); });
+    return () => controller.abort();
+  }, [supported, retry]);
+  const records = useMemo(() => selectTimerWcaRecords(event, bundle?.rows ?? []), [event, bundle]);
+  if (!supported) return null;
 
   const singleRow = recordRow(tr, {
     label: tr({ zh: 'WR 单次', en: 'WR single'
     }),
     yourLabel: tr({ zh: '你的 PB', en: 'your PB' }),
-    wrMs: rec.wrSingleMs,
-    wrText: rec.singleText,
-    holder: rec.wrSingleHolder,
-    date: rec.wrSingleDate,
-    userMs: userPbSingleMs ?? null,
+    records: records.filter(row => row.t === 's'),
+    solves,
     isZh,
     gapLabel: tr({ zh: '差', en: 'gap' }),
   });
@@ -123,26 +130,28 @@ export default function RecordsOverlay({
   const avgRow = recordRow(tr, {
     label: tr({ zh: 'WR 平均', en: 'WR average' }),
     yourLabel: tr({ zh: '你的最佳平均', en: 'your best avg' }),
-    wrMs: rec.wrAverageMs,
-    wrText: rec.averageText,
-    holder: rec.wrAverageHolder,
-    date: rec.wrAverageDate,
-    userMs: userPbAvgMs ?? null,
+    records: records.filter(row => row.t === 'a'),
+    solves,
     isZh,
     gapLabel: tr({ zh: '差', en: 'gap' }),
   });
 
-  if (!singleRow && !avgRow) return null;
-
   return (
     <div className="modal-section">
       <h3 className="settings-h3">
-        {tr({ zh: 'WCA 记录', en: 'WCA records'
+        {tr({ zh: 'WCA 纪录', en: 'WCA records'
         })}
-        <span style={{ marginLeft: 8, opacity: 0.55, fontSize: '0.8em', fontWeight: 'normal' }}>
-          ({tr({ zh: '截至', en: 'as of' })} {WR_AS_OF})
-        </span>
+        {bundle && <span style={{ marginLeft: 8, opacity: 0.55, fontSize: '0.8em', fontWeight: 'normal' }}>
+          ({tr({ zh: '数据更新', en: 'updated' })} {bundle.updated})
+        </span>}
       </h3>
+      {!bundle && <div role="status">
+        {failed ? <>
+          {tr({ zh: 'WCA 纪录加载失败', en: 'Could not load WCA records' })}{' '}
+          <button type="button" onClick={() => setRetry(value => value + 1)}>{tr({ zh: '重试', en: 'Retry' })}</button>
+        </> : tr({ zh: '加载中…', en: 'Loading…' })}
+      </div>}
+      {bundle && !records.length && <div>{tr({ zh: '暂无 WCA 纪录', en: 'No WCA records available' })}</div>}
       <div>
         {singleRow}
         {singleRow && avgRow && <div style={dividerStyle} />}
