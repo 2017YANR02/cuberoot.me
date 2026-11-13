@@ -50,7 +50,7 @@ import { assistantConversations, assistantOwner, type AssistantConversation } fr
 import { tr } from '@/i18n/tr';
 import { useAuthUser, authActions } from '@/lib/auth-store';
 import { authHeaders } from '@/lib/admin-api';
-import { apiUrl } from '@/lib/api-base';
+import { assistantStreamApiUrl } from '@/lib/api-base';
 import SiteAssistantDialog, { SiteAssistantAnswerText, type AssistantTurn } from '@/components/SiteAssistantDialog';
 import { assistantTimeoutMs, SITE_ASSISTANT_QUESTION_MAX_LENGTH, isAssistantSourceHref, readAssistantEvents, type AssistantStreamEvent, type AssistantStatus, type AssistantAnswer, type AssistantErrorCode, type AssistantImage } from '@cuberoot/shared/site-assistant';
 import { ASSISTANT_ERROR_TEXT, assistantResponseError } from '@/lib/site-assistant-errors';
@@ -376,7 +376,7 @@ export default function LandingSearch({
       images = await saveAssistantImages(images, assistantConversation.current, controller.signal);
       if (assistantRequest.current !== controller) return;
       updateTurn({ question, images, createdAt });
-      const response = await requestSiteAssistant(apiUrl('/v1/site-assistant'), {
+      const response = await requestSiteAssistant(assistantStreamApiUrl(), {
         conversationId: assistantConversation.current, parentId: previous.at(-1)?.requestId, retryOf: replaceLast ? assistantTurns.at(-1)?.requestId : undefined,
         question, lang, thinking: assistantThinking, ...(images.length ? {images} : {}), timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,
         history: assistantImageHistory(previous.filter(turn => !turn.partial).slice(-5).flatMap(turn => [{ role: 'user', content: turn.question, ...(turn.images?.length ? {images:turn.images} : {}) }, { role: 'assistant', content: assistantAnswerHistory(turn.result!, window.location.origin) }]), images),

@@ -5,6 +5,7 @@ vi.mock('@/lib/web-session', () => ({ getWebAccessToken: mocks.exchange }));
 vi.mock('@/lib/api-base', () => ({
   apiUrl: (path: string) => `https://api.cuberoot.me${path}`,
   directApiUrl: (path: string) => `https://api.cuberoot.me${path}`,
+  assistantStreamApiUrl: () => 'http://localhost:3002/v1/site-assistant',
 }));
 import { sessionFetch } from '@/lib/session-fetch';
 
@@ -16,6 +17,14 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('web session fetch boundary', () => {
+  it('allows the configured local assistant endpoint but no other paths on that origin', async () => {
+    await sessionFetch('http://localhost:3002/v1/site-assistant', {headers:{Authorization:'Bearer web-session:a'}});
+    expect(new Headers(mocks.fetch.mock.calls[0][1].headers).get('Authorization')).toBe('Bearer short-access');
+    for (const path of ['/v1/auth/me','/v1/site-assistant-other','/private']) {
+      await expect(sessionFetch(`http://localhost:3002${path}`, {headers:{Authorization:'Bearer web-session:a'}})).rejects.toThrow('outside');
+    }
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
+  });
   it('preserves public requests and existing native/preview bearer credentials', async () => {
     const publicInit = { signal: new AbortController().signal };
     await sessionFetch('https://static.cuberoot.me/stats/a.json', publicInit);

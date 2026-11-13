@@ -55,6 +55,12 @@ export function streamApiUrl(path: string): string {
   return directApiUrl(path);
 }
 
+/** Isolate local assistant work without redirecting auth or other API domains. */
+export function assistantStreamApiUrl(): string {
+  const localOrigin = process.env.NODE_ENV === 'development' ? process.env.NEXT_PUBLIC_SITE_ASSISTANT_API_ORIGIN : undefined;
+  return localOrigin ? `${localOrigin.replace(/\/$/, '')}/v1/site-assistant` : streamApiUrl('/v1/site-assistant');
+}
+
 /** WebSocket equivalent of streamApiUrl: always connect to the API origin directly. */
 export function websocketApiUrl(path: string): string {
   const url = new URL(path, process.env.NEXT_PUBLIC_API_ORIGIN || 'https://api.cuberoot.me');
