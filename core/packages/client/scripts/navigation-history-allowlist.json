@@ -270,7 +270,7 @@
     "reason": "线上比赛管理功能或具体报名详情"
   },
   {
-    "path": "components/platform/PlatformRouteView.tsx",
+    "path": "components/platform/PlatformResourceRouteView.tsx",
     "call": "useQueryState('lesson') history='push'",
     "reason": "打开具体课程课时"
   },
