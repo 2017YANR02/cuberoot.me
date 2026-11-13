@@ -11,6 +11,21 @@ const sectionSchema=z.object({id:z.string().min(1).max(150),title:z.string().max
 const pageSchema = z.object({ lang: z.enum(['zh', 'en']), href: publicHref, title: z.string().max(500), text: z.string().max(60000),sourceType:z.enum(['rule','tutorial','help','reference']).optional(),sourceVersion:z.string().max(100).optional(),sourceUpdated:z.string().max(40).refine(value=>!Number.isNaN(Date.parse(value))).optional(),sections:z.array(sectionSchema).max(1000).optional() });
 export const knowledgeIndexSchema = z.object({ version: z.number().optional(), updated: z.string().datetime(),releaseId:z.string().max(150).optional(), pages: z.array(pageSchema).max(10000) });
 export type KnowledgeIndex = z.infer<typeof knowledgeIndexSchema>;
+/** The structured corpus is about 11 MB; match the online reader's bounded JSON budget. */
+export async function readKnowledgeIndex(response:Response):Promise<KnowledgeIndex> {
+  if(!response.ok || !response.body)throw new Error('Public knowledge artifact unavailable');
+  const chunks:Uint8Array[]=[];let size=0;
+  const reader=response.body.getReader();
+  try {
+    for(;;) {
+      const {done,value}=await reader.read();if(done)break;
+      size+=value.byteLength;
+      if(size>20_000_000)throw new RangeError('Public knowledge artifact exceeds 20 MB');
+      chunks.push(value);
+    }
+  } finally {await reader.cancel();}
+  return knowledgeIndexSchema.parse(JSON.parse(Buffer.concat(chunks).toString('utf8')));
+}
 export interface KnowledgeChunk { id: string; documentId: string; lang: 'zh' | 'en'; href: string; title: string; content: string; fingerprint: string; sectionId?:string;sectionTitle?:string; sectionPath?:string[];clause?:string;parentId?:string;relatedIds?:string[];sourceType?:'rule'|'tutorial'|'help'|'reference';sourceVersion?:string;sourceUpdated?:string;relatedOmitted?:boolean }
 export const knowledgeHash = (value: string) => createHash('sha256').update(value).digest('hex');
 const segmenters = { zh: new Intl.Segmenter('zh', { granularity: 'word' }), en: new Intl.Segmenter('en', { granularity: 'word' }) };

@@ -2,7 +2,7 @@ import { startAssistantMonitor } from '../utils/site_assistant_monitor.js';
 /** Offline worker. Only the fixed public build artifact is sent to the embedding provider. */
 import { createCompetitionProof, COMPETITION_SERVICE_HEADER } from '@cuberoot/shared/competition-access';
 import { assistantEmbeddingConfig, embedKnowledge } from '../utils/site_assistant_embedding.js';
-import { knowledgeIndexSchema } from '../utils/site_assistant_knowledge.js';
+import { readKnowledgeIndex } from '../utils/site_assistant_knowledge.js';
 import { knowledgeDatabase, indexKnowledge, rollbackKnowledge } from '../utils/site_assistant_knowledge_db.js';
 
 let phase='configuration';
@@ -30,12 +30,7 @@ async function main() {
   const headers: Record<string,string> = { Accept: 'application/json' };
   if (process.env.COMPETITION_ACCESS_SECRET) headers[COMPETITION_SERVICE_HEADER] = await createCompetitionProof(process.env.COMPETITION_ACCESS_SECRET, 'service', '/assistant/pages.json');
   const response = await fetch('https://next.cuberoot.me/assistant/pages.json', { headers, redirect: 'error', signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]) });
-  if (!response.ok || !response.body) throw new Error('Public knowledge artifact unavailable');
-  const chunks: Uint8Array[]=[]; let size=0;
-  const reader=response.body.getReader();
-  try { for(;;) { const {done,value}=await reader.read(); if(done) break; size+=value.byteLength; if(size>8_000_000) throw new Error('Public knowledge artifact exceeds 8 MB'); chunks.push(value); } }
-  finally { await reader.cancel(); }
-  const index = knowledgeIndexSchema.parse(JSON.parse(Buffer.concat(chunks).toString('utf8')));
+  const index = await readKnowledgeIndex(response);
   if(index.version !== 2 && index.version !== 3) throw new Error('Deploy a supported version 2 or 3 public content index before enabling knowledge indexing');
   let embedded=0;
   const budget=Number(process.env.SITE_ASSISTANT_EMBEDDING_JOB_LIMIT || 2000);

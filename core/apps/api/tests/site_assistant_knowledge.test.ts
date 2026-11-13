@@ -1,6 +1,6 @@
 import { afterEach,describe,it,expect,vi } from 'vitest';
 import { embedKnowledge } from '../src/utils/site_assistant_embedding.js';
-import { chunkKnowledge, knowledgeIndexSchema, knowledgeTokens, lexicalKnowledge, knowledgeGeneration } from '../src/utils/site_assistant_knowledge.js';
+import { chunkKnowledge, knowledgeIndexSchema, knowledgeTokens, lexicalKnowledge, knowledgeGeneration, readKnowledgeIndex } from '../src/utils/site_assistant_knowledge.js';
 const index = {updated:'2026-10-10T00:00:00.000Z',pages:[
   {lang:'zh' as const,href:'/timer?training=home',title:'计时器训练',text:'打开计时器训练菜单，选择项目与公式集。\n\n选择要练习的情况，再开始公式训练。'},
   {lang:'zh' as const,href:'/wca',title:'WCA 比赛',text:'世界魔方协会比赛与选手成绩。'},
@@ -8,6 +8,17 @@ const index = {updated:'2026-10-10T00:00:00.000Z',pages:[
   {lang:'zh' as const,href:'/empty',title:'只有导航',text:''},
 ]};
 afterEach(()=>vi.unstubAllEnvs());
+it('reads structured public corpora above 8 MB while rejecting oversized or invalid artifacts',async()=>{
+  const corpus={...index,pages:Array.from({length:180},(_,i)=>({...index.pages[0],href:`/public-${i}`,text:'a'.repeat(60000)}))};
+  expect((await readKnowledgeIndex(Response.json(corpus))).pages).toHaveLength(180);
+  const cancel=vi.fn();
+  let sent=0;
+  const body=new ReadableStream<Uint8Array>({pull(controller){controller.enqueue(new Uint8Array(1_000_000));sent++;},cancel});
+  await expect(readKnowledgeIndex(new Response(body))).rejects.toThrow('exceeds 20 MB');
+  expect(cancel).toHaveBeenCalledOnce();expect(sent).toBeLessThanOrEqual(22);
+  await expect(readKnowledgeIndex(Response.json({pages:[]}))).rejects.toThrow();
+  await expect(readKnowledgeIndex(new Response('',{status:503}))).rejects.toThrow('unavailable');
+});
 it('keeps implementation documents out of user retrieval while allowing explicit developer searches',async()=>{
   const corpus={...index,pages:[...index.pages,{lang:'zh' as const,href:'/dev/components',title:'计时器训练',text:'计时器训练：TimerLocalBattlePage 组件。'}]};
   expect((await lexicalKnowledge(corpus,'计时器训练','zh',[],false)).some(p=>p.href.startsWith('/dev'))).toBe(false);
