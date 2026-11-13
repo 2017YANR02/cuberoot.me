@@ -1,5 +1,5 @@
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
-import {officialRegulationPassages,regulationExcerptArticles,WCA_REGULATIONS_URL} from '../src/utils/site_assistant_regulations.js';
+import {officialRegulationPassages,regulationExcerptArticles,WCA_REGULATIONS_URL,WCA_REGULATIONS_MIRROR_URL,savedRegulationChapter} from '../src/utils/site_assistant_regulations.js';
 import {runDataTool} from '../src/utils/site_assistant_tools.js';
 import {answerSiteQuestion} from '../src/utils/site_assistant.js';
 import {modelResponse,wireEvidence} from './fixtures/site_assistant_model.js';
@@ -46,6 +46,7 @@ it.each([0,5000])('supplements a retrieved full-text rule with official clauses 
   const fetcher=vi.fn<typeof fetch>(async(input,init)=>{
     const url=String(input);
     if(url.endsWith('/assistant/pages.json'))return Response.json({updated:'2026-11-12T00:00:00Z',pages:[{lang:'en',href:'/regulation/full',title:'WCA Regulations',text:'5b5d puzzle defect example.'}]});
+    if(url===WCA_REGULATIONS_MIRROR_URL)return new Response(rules.replace('<version>','<p class="reg-doc-version">').replace('</version>','</p>'));
     if(url===WCA_REGULATIONS_URL){
       officialReads++;
       return new Response(new ReadableStream({start(controller){
@@ -61,13 +62,31 @@ it.each([0,5000])('supplements a retrieved full-text rule with official clauses 
     return modelResponse({answerKind:'grounded',answer:'One detached center cap can remain solved. [[wca:regulations:5]]',sourceIds:['wca:regulations:5']});
   });
   const result=await answerSiteQuestion('According to the puzzle defects rules, what happens with a detached center cap?','en',config,AbortSignal.timeout(15000),fetcher);
-  expect(result.sources[0].href).toContain('worldcubeassociation.org/regulations/');expect(models).toBe(1);expect(officialReads).toBe(1);
+  expect(result.sources[0].href).toContain(delay>4000?WCA_REGULATIONS_MIRROR_URL:WCA_REGULATIONS_URL);expect(models).toBe(1);expect(officialReads).toBe(1);
 },15000);
 
 it('keeps a full competitor chapter above the old excerpt budget, including equipment exceptions',()=>{
   const html='<html><body><ul><li id="2a">'+('x'.repeat(11600))+'</li><li id="2i">Equipment restrictions.</li><li id="2i2a">Medical aid exception.</li></ul></body></html>';
   const [result]=officialRegulationPassages(html,[{href:'/regulation/competitors',content:'2a eligibility'}]);
   expect(result.metadata.clauses).toEqual(['2a','2i','2i2a']);expect(result.relatedOmitted).toBe(false);
+});
+
+it('uses the versioned English full-text mirror after an official transport failure without claiming a live official read',async()=>{
+  const mirror=rules.replace('<version>','<p class="reg-doc-version">').replace('</version>','</p>');
+  const fetcher=vi.fn<typeof fetch>(async(input,init)=>{
+    const url=String(input);
+    if(url.endsWith('/assistant/pages.json'))return Response.json({updated:'2026-11-12T00:00:00Z',pages:[{lang:'en',href:'/regulation/defects',title:'Puzzle defects',text:'5b5d edge-piece example.'}]});
+    if(url===WCA_REGULATIONS_URL)throw new DOMException('Timed out','TimeoutError');
+    if(url===WCA_REGULATIONS_MIRROR_URL)return new Response(mirror);
+    const pages=wireEvidence(JSON.parse(String(init?.body))).flatMap(item=>item.data?.pages??[]);
+    expect(pages[0].metadata).toMatchObject({snapshot:true,sourceVersion:'Version: April 1, 2026'});
+    expect(pages[0].content).toContain('One part with one colored face: solved');
+    return modelResponse({answerKind:'grounded',answer:'Under the April 2026 rules, one detached center cap can remain solved. [[wca:regulations:5]]',sourceIds:['wca:regulations:5']});
+  });
+  const result=await answerSiteQuestion('According to the puzzle defects rules, what happens with a detached center cap?','en',config,AbortSignal.timeout(5000),fetcher);
+  expect(result.sources[0].href).toBe(WCA_REGULATIONS_MIRROR_URL+'#5b');
+  expect(savedRegulationChapter({sources:result.sources} as any,'wca:regulations:5')).toBe('/regulation/defects');
+  expect(officialRegulationPassages(rules,[{href:'/regulation/defects',content:'5b5'}],'',WCA_REGULATIONS_MIRROR_URL)).toEqual([]);
 });
 
 it('resolves a returned official source ID for a focused follow-up without refetching or inventing a URL',async()=>{

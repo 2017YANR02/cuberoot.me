@@ -5,6 +5,7 @@ import type {AssistantContext} from './site_assistant_context.js';
 // Fixed authority, never a model/user supplied fetch destination. This reader
 // supplements the public site's explanatory excerpts with the actual clauses.
 export const WCA_REGULATIONS_URL='https://www.worldcubeassociation.org/regulations/';
+export const WCA_REGULATIONS_MIRROR_URL='https://next.cuberoot.me/en/regulation/full';
 const articles:Record<string,string>={officials:'1',competitors:'2',puzzles:'3',scrambling:'4',defects:'5',environment:'7',events:'9','solved-state':'10',incidents:'11',notation:'12','speed-solving':'A',blindfolded:'B','one-handed':'C','fewest-moves':'E','multi-blind':'H','head-to-head':'I'};
 export function regulationArticle(href:string){return articles[href.replace(/^\/regulation\//,'').split('#')[0]];}
 export function regulationChapterHref(sourceId:string){
@@ -15,7 +16,7 @@ export function regulationChapterHref(sourceId:string){
 type Excerpt={href:string;content:string};
 const clauseReferences=(text:string)=>text.match(/\b(?:\d+[a-z]|[A-Z]\d)[a-z\d]*\+*/g)??[];
 export function savedRegulationChapter(context:AssistantContext|undefined,id:string) {
-  const source=context?.sources.find(source=>source.id===id && source.read && source.href.startsWith(WCA_REGULATIONS_URL+'#'));
+  const source=context?.sources.find(source=>source.id===id && source.read && [WCA_REGULATIONS_URL,WCA_REGULATIONS_MIRROR_URL].some(url=>source.href.startsWith(url+'#')));
   return source ? regulationChapterHref(source.id) : undefined;
 }
 
@@ -54,10 +55,12 @@ export function regulationExcerptArticles(excerpt:Excerpt,query=''):string[] {
 /** Preserve whole clause families, including + examples and overriding rules.
  * Small chapters are read in full; large ones use explicit references from the
  * retrieved chapter. Incompleteness is visible, never filled by model memory. */
-export function officialRegulationPassages(html:string,excerpts:Excerpt[],query='') {
+export function officialRegulationPassages(html:string,excerpts:Excerpt[],query='',sourceUrl=WCA_REGULATIONS_URL) {
   const {document}=parseHTML(html);
-  const version=document.querySelector('version')?.textContent?.trim()
+  const version=document.querySelector('version,.reg-doc-version')?.textContent?.trim()
     ?? document.body.textContent?.match(/Version:\s*[^\n]+/)?.[0]?.slice(0,100);
+  const snapshot=sourceUrl===WCA_REGULATIONS_MIRROR_URL;
+  if(snapshot && !document.querySelector('.reg-doc-version')?.textContent?.trim())return [];
   const clauses=[...document.querySelectorAll('li[id]')].flatMap(node=>{
     const id=node.id;if(!/^(?:\d+[a-z]|[A-Z]\d)[a-z\d]*\+*$/.test(id))return [];
     const own=node.cloneNode(true) as typeof node;own.querySelectorAll('ul,ol').forEach(child=>child.remove());
@@ -90,7 +93,7 @@ export function officialRegulationPassages(html:string,excerpts:Excerpt[],query=
       kept.push(...group);remaining-=size;
     }
     if(!kept.length)return [];
-    return [{id:`wca:regulations:${article}`,title:`WCA Regulations — Article ${article}`,href:WCA_REGULATIONS_URL+`#${kept[0].id}`,
-      content:kept.map(c=>c.text).join('\n'),metadata:{sourceType:'rule',authority:'WCA official regulations',sourceVersion:version,clauses:kept.map(c=>c.id)},relatedOmitted:kept.length!==chapter.length}];
+    return [{id:`wca:regulations:${article}`,title:`WCA Regulations — Article ${article}`,href:sourceUrl+`#${kept[0].id}`,
+      content:kept.map(c=>c.text).join('\n'),metadata:{sourceType:'rule',authority:'WCA official regulations',sourceVersion:version,...(snapshot?{snapshot:true,canonicalUrl:WCA_REGULATIONS_URL,instruction:'Published official English full-text snapshot at the stated version. Do not claim the current official site was verified; cite this mirror and state the version when relevant.'}:{}),clauses:kept.map(c=>c.id)},relatedOmitted:kept.length!==chapter.length}];
   });
 }

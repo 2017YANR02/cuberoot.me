@@ -8,7 +8,7 @@ import { partialAssistantAnswer, partialAssistantAnswerKind } from './site_assis
 import { ASSISTANT_ANSWER_POLICY, ASSISTANT_EVIDENCE_REVIEW, ASSISTANT_OUTPUT_BUDGET, ASSISTANT_SITE_NAMES, assistantReasoningPolicy, assistantToolKey } from './site_assistant_policy.js';
 import { assistantSearchProtectedTerms, assistantWebAvailable, assistantWebRequestScope, searchAssistantWeb } from './site_assistant_web.js';
 import { WCA_NEWS_URL, parseAssistantNews } from './site_assistant_news.js';
-import {WCA_REGULATIONS_URL,regulationExcerptArticles,regulationChapterHref,officialRegulationPassages,regulationFollowUpRead,savedRegulationChapter} from './site_assistant_regulations.js';
+import {WCA_REGULATIONS_URL,WCA_REGULATIONS_MIRROR_URL,regulationExcerptArticles,regulationChapterHref,officialRegulationPassages,regulationFollowUpRead,savedRegulationChapter} from './site_assistant_regulations.js';
 import {suppliedAverageAnswer} from './site_assistant_calculation.js';
 import { parseHTML } from 'linkedom';
 import { z } from 'zod';
@@ -487,11 +487,23 @@ export async function answerSiteQuestion(
   const evidenceChecked=new WeakSet<object>();
   const unavailableTools=new Set<string>();
   let officialRules:Promise<string>|undefined;
+  let officialRulesSource=WCA_REGULATIONS_URL;
   const readOfficialRules=()=>officialRules??=assistantStage('page',async()=>{
-    // The official page can take ~9 seconds to finish its body from production.
-    // Keep the request deadline and size bound, rather than abandoning valid clauses at 4 seconds.
-    const response=await fetcher(WCA_REGULATIONS_URL,{signal:AbortSignal.any([signal,AbortSignal.timeout(12000)]),redirect:'error',headers:{Accept:'text/html'}});
-    checkAssistantResponse(response,'source');return limitedText(response,2_000_000);
+    // Bound the slow official transport, then use the separately versioned
+    // published English full text. Never substitute explanatory excerpts.
+    const fetchRules=async(url:string,timeout:number)=>{
+      const response=await fetcher(url,{signal:AbortSignal.any([signal,AbortSignal.timeout(timeout)]),redirect:'error',headers:{Accept:'text/html'}});
+      checkAssistantResponse(response,'source');return limitedText(response,2_000_000);
+    };
+    try {return await fetchRules(WCA_REGULATIONS_URL,4000);}
+    catch(error) {
+      signal.throwIfAborted();
+      const transient=error instanceof TypeError || assistantFailureCode(error)==='timeout' || (error instanceof AssistantFailure && [502,503,504].includes(error.upstreamStatus ?? 0));
+      if(!transient)throw error;
+      const html=await fetchRules(WCA_REGULATIONS_MIRROR_URL,4000);
+      officialRulesSource=WCA_REGULATIONS_MIRROR_URL;
+      return html;
+    }
   });
   const complete = async (round: number, finalOnly = false, draftAnswer?:string, reviewKind:'analysis'|'content'|'citation'|'evidence'='analysis', requirePhotoTool=false) => assistantStage(draftAnswer === undefined ? 'model' : 'review',async()=>{
     const isolated = draftAnswer!==undefined && (reviewKind==='evidence' || reviewKind==='analysis');
@@ -575,7 +587,8 @@ export async function answerSiteQuestion(
       return href?[{href,content:call.query}]:[];
     });
     if(officialSelections.length===call.pageIds.length && officialSelections.length) {
-      const pages=officialRegulationPassages(await readOfficialRules(),officialSelections,call.query);
+      const html=await readOfficialRules();
+      const pages=officialRegulationPassages(html,officialSelections,call.query,officialRulesSource);
       if(!pages.length)return {sources:[],artifacts:[],outcome:{state:'partial',reason:'official_clause_unavailable'},evidence:{notEvidence:true,pages:[],instruction:'The fresh official read did not establish the requested clauses. Use another focused read if needed; prior replies and saved source references do not establish current rule contents.'}};
       return {evidence:{pages,coverage:'Official clause families, including exceptions. relatedOmitted means the chapter is incomplete; do not infer missing qualifications.'},sources:pages.map(p=>({id:p.id,title:p.title,href:p.href,read:true})),artifacts:[]};
     }
@@ -639,7 +652,8 @@ export async function answerSiteQuestion(
     const isRuleExcerpt=(p:{href:string;content:string})=>regulationExcerptArticles(p,call.query).length>0;
     if(readable.some(isRuleExcerpt)) {
       try {
-        const official=officialRegulationPassages(await readOfficialRules(),readable,call.query);
+        const html=await readOfficialRules();
+        const official=officialRegulationPassages(html,readable,call.query,officialRulesSource);
         if(official.length) {
           // Authoritative clauses get the evidence budget before summaries and
           // visual-guide examples. Keep unrelated requested documents available.
