@@ -36,7 +36,7 @@ import {
   type MirrorAxis,
   type ParsedMove,
 } from './alg_notation';
-import type { AlgEntry } from './alg';
+import type { AlgEntry } from './alg_types';
 import { algHtmlRuns, algHtmlText, escapeAlgText, sanitizeAlgHtml } from './alg-html';
 
 export type { AlgEntry };

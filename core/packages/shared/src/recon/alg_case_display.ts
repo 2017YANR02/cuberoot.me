@@ -9,7 +9,7 @@
  * 同一份映射既给 /alg/3x3/{oll,pll} 列表展示用,也给 recon 自动补全的注释
  * (`// OLL-S+` / `// PLL-Gd`)用。
  */
-import type { AlgCase } from '../alg';
+import type { AlgCase } from '../alg_types';
 import { ALG_CATALOG, type AlgPuzzle } from '../alg_catalog';
 import { displaySq1ShapeName } from '../sq1_shapes';
 export { SQ1_SHAPE_NAMES } from '../sq1_shapes';

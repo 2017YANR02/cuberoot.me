@@ -133,7 +133,12 @@
       "./clock-svg": "runtime-neutral",
       "./pyraminx-svg": "runtime-neutral",
       "./skewb-svg": "runtime-neutral",
-      "./wca-preview-svg": "runtime-neutral"
+      "./wca-preview-svg": "runtime-neutral",
+      "./alg-thumb-plan": "runtime-neutral",
+      "./fto-eif-image": "runtime-neutral",
+      "./fto-draw-elements": "runtime-neutral",
+      "./support/alg-orientation": "runtime-neutral",
+      "./alg-case-image": "mixed"
     }
   },
   "sideEffects": false,
@@ -276,7 +281,12 @@
     "./clock-svg": "./src/clock-svg.ts",
     "./pyraminx-svg": "./src/pyraminx-svg.ts",
     "./skewb-svg": "./src/skewb-svg.ts",
-    "./wca-preview-svg": "./src/wca-preview-svg.ts"
+    "./wca-preview-svg": "./src/wca-preview-svg.ts",
+    "./alg-thumb-plan": "./src/alg-thumb-plan.ts",
+    "./fto-eif-image": "./src/fto-eif-image.ts",
+    "./fto-draw-elements": "./src/fto-draw-elements.ts",
+    "./support/alg-orientation": "./src/support/alg-orientation.ts",
+    "./alg-case-image": "./src/alg-case-image.ts"
   },
   "scripts": {
     "dev:build": "pnpm run build",

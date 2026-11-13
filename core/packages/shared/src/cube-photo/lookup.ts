@@ -1,4 +1,4 @@
-import type { AlgEntry, AlgFile, AlgSticker } from '../alg';
+import type { AlgEntry, AlgFile, AlgSticker } from '../alg_types';
 import { mergeAdjacentMoves, stm, toMoveStringStrict } from '../alg_notation';
 import { primaryCaseName } from '../recon/alg_case_display';
 import { algCaseDetailHref, buildCaseSlugMap } from '../recon/alg_case_link';
