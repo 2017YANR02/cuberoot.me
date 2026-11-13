@@ -212,6 +212,13 @@ export const NATIVE_PUZZLES = {
     axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
     scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 440,
   },
+  // Jason Smith's Radiolarian 11; Hyperspeedcube radio11 uses 1/phi^3.
+  // At h = sqrt(5) - 2 the twelve corners disappear; preserve the exact cut.
+  radiostar: {
+    description: 'i f 0.2360679774997897', zh: 'Radio Star', en: 'Radio Star', textLabel: 'Star',
+    axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
+    scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 380,
+  },
 } as const;
 
 export type NativePuzzleId = keyof typeof NATIVE_PUZZLES;

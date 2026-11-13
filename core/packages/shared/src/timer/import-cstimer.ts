@@ -123,6 +123,7 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'radiolarian5': 'catscradle',
   'radiocanon': 'radiocanon', 'radiocannon': 'radiocanon', 'radiolarian1.5': 'radiocanon',
   'radiolarian3': 'radiolarian3',
+  'radiostar': 'radiostar', 'radiolarian11': 'radiostar',
 };
 
 /* ------------------------------------------------------------------ */
@@ -218,6 +219,10 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   if (/(?:^|[^a-z0-9])radiolarian[\s_-]*3(?![a-z0-9]|\.\d)/i.test(name)) {
     return normalizeEventKey('radiolarian3');
   }
+  // Match the full name before tokenization can discard a numeric suffix.
+  if (/(?:^|[^a-z0-9])(?:radio[\s_-]*star|radiolarian[\s_-]*11)(?![a-z0-9]|\.\d)/i.test(name)) {
+    return normalizeEventKey('radiostar');
+  }
   if (tokens.some((token, index) =>
     (token === 'radio' && tokens[index + 1] === 'web')
     || (token === 'radiolarian' && tokens[index + 1] === '6'))) {
@@ -279,8 +284,8 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
     return normalizeEventKey('cube2heli');
   }
   for (const t of tokens) {
-    // The complete name above must reject decimal suffixes such as 3.5.
-    if (t === 'radiolarian3') continue;
+    // Keep the complete-name checks authoritative for decimal/word suffixes.
+    if (t === 'radiolarian3' || t === 'radiolarian11' || t === 'radiostar') continue;
     const tried = normalizeEventKey(t);
     if (tried.matched) return tried;
   }

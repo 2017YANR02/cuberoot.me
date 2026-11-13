@@ -29,6 +29,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 制作 Cat’s Cradle（Radiolarian 5）时按 [原生 PG 结构与接线](references/native-pg-puzzles.md#cats-cradle) 保留精确切深与每面十九区，独立检查切深两侧的负例，不复用相邻 Radiolarian 的分区。
 - 制作 Radio Canon（Radiolarian 1.5）时按 [固定中心与分区验证](references/native-pg-puzzles.md#radio-canon) 保留每面七个三角形、九个四边形及二十个固定中心；分别核对中心置换与不可辨自转，不以同为 320 片的 Radio Jewel 代替本项目几何。
 - 制作 Radiolarian 3 时按 [移动中心与分区验证](references/native-pg-puzzles.md#radiolarian-3) 保留精确切深、每面十个三角形／三个四边形／三个五边形，并逐外层面转验证三个相邻中心的循环置换；不要因贴片数、块数及轨道数相同就复用 Radio Canon。
+- 制作 Radio Star（Radiolarian 11）时按 [无角块临界切深验证](references/native-pg-puzzles.md#radio-star) 保留 `sqrt(5)-2` 的精度，独立核对每面十九区、290 个可见块及切深两侧重新出现的十二个角块。
 - 对二阶＋直升机等可见切缝重合的组合保留全部机制切面；分别核对 90° 面轴与 180° 棱轴、逐轴层数及交错转动，不以相同展开图或图标判定机制相同，见 [原生 PG 结构与接线](references/native-pg-puzzles.md#二阶直升机)。
 - 对 Radio Jewel 等恰有小块消失的临界切深保留解析精度，独立核对面分区、可见块数及切深两侧的负例，并在双语说明中写明保形转动与 jumbling 的支持边界。
 - 原生播放器在首次构造前检测 WebGL 能力，不可用时直接切换同一具名模型的二维展开图；跳过全部 3D 初始化，手动按钮经原生招式回调记录，导出调用原生二维 SVG 下载。
@@ -46,7 +47,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 新建或修改引擎前，必须读 [引擎范本](references/engine-templates.md)，选择对应机制并遵守末尾的通用几何约束；按上面的路径规则定位当前实现。
 
 ## 工作方式
-- 先按改动归属与并发情况选择当前工作树或隔离 worktree，再读 Ivy/SQ1/dino 等适用范本；不要为复用依赖软链其他工作树的 `node_modules`。
+- 遵循根 `AGENTS.md` 在当前 checkout 工作，不创建或切换 Git worktree；再读 Ivy/SQ1/dino 等适用范本，不软链其他 checkout 的 `node_modules`。
 - 5 个共享文件是多 AI 热点:`engine/world.ts` / `PlayerControls.tsx` / `SimPage.tsx` / `SettingDrawer.tsx` / `lib/sim-recon-link.ts`。
 - 3x3 手部 rig(`engine/hands/`)每帧轮询 `groups[axis][layer].angle`:改层角语义 / 整体转 / drop 时序会牵动手势,动完必跑穿模 oracle + 换握 oracle(方法与四机制见 memory `project_sim_hands_rig`);指法规格(哪指做哪步 / 连拨 / `p` 推法记号)权威在 `engine/hands/FINGERING.md`;其它拼图无手(`supports.hands = kind===3`)。
 - 先读 `git status`/diff,只暂存本任务新增和修改的内容,保留他人暂存与未暂存改动;无关 WIP 不阻塞,重叠时仅暂停无法安全分离的部分;默认不 push。

@@ -34,6 +34,8 @@ import { nativePuzzleKPuzzle, parseNativePuzzleAlg } from '@cuberoot/puzzle-solv
 // https://www.puzzleforge.com/wp/2014/05/08/radiolarian-1-5-the-radio-cannon-52014/
 // Radiolarian 3's radio03 uses 1 - (1 - 1/phi) * 4/5 and mobile centers:
 // https://www.puzzleforge.com/wp/2010/03/08/132/
+// Radio Star's radio11 uses 1/phi^3 = sqrt(5) - 2, where corners disappear:
+// https://www.puzzleforge.com/wp/2013/11/07/radiolarian-11-the-radio-star-112013/
 // Baby Face preset: https://github.com/cubing/cubing.js/issues/127
 // 3x3 + Skewb is the independent superposition of the standard 3x3 and Skewb
 // cut families, not a measured reproduction of an inaccessible original post.
@@ -220,6 +222,13 @@ const CASES: readonly Spec[] = [
     shapes: { 3: 15, 5: 6, 6: 1 }, unmarkedOrbit: 'CENTERS4',
     orbits: [['EDGES', 60, 2], ['C5RNER', 12, 5], ['CENTERS', 60, 1], ['CENTERS2', 60, 1], ['EDGES2', 30, 2], ['CENTERS3', 60, 1], ['CENTERS4', 20, 3]],
   },
+  {
+    id: 'radiostar', faceNormals: icoNormals,
+    axes: [{ pairs: icoFacePairs, normals: icoNormals, cuts: [1 / PHI ** 3], order: 3 }],
+    faces: 20, perFace: 19, raw: 420, visible: 380, pieces: 290,
+    shapes: { 3: 12, 4: 3, 5: 3, 6: 1 }, unmarkedOrbit: 'CENTERS4',
+    orbits: [['CENTERS', 60, 1], ['EDGES', 60, 2], ['CENTERS2', 60, 1], ['EDGES2', 30, 2], ['CENTERS3', 60, 1], ['CENTERS4', 20, 3]],
+  },
 ];
 
 const center = (points: Vector3[]) => points.reduce((sum, point) => sum.add(point), new Vector3()).divideScalar(points.length);
@@ -362,6 +371,60 @@ it('keeps Cat’s Cradle at its critical depth and preserves all nineteen region
   expect([...counts.values()].filter((n) => n === 1)).toHaveLength(140);
   expect([...counts.values()].filter((n) => n === 2)).toHaveLength(90);
   expect([...counts.values()].filter((n) => n === 5)).toHaveLength(12);
+});
+
+it('keeps Radio Star at the exact depth where all twelve corners disappear', () => {
+  const spec = CASES.find(({ id }) => id === 'radiostar')!;
+  const depth = 1 / PHI ** 3;
+  expect(Number(NATIVE_PUZZLES.radiostar.description.split(' ')[2])).toBe(depth);
+  expect(depth).toBeCloseTo(Math.sqrt(5) - 2, 14);
+  const normals = Object.values(icoNormals);
+  const vertices = new Map(normals.flatMap((normal) => uncutFace(normal, normals)
+    .map((vertex) => [polygonKey([vertex]), vertex] as const)));
+  expect(vertices.size).toBe(12);
+  for (const vertex of vertices.values()) {
+    // Five nonincident face cuts pass through every original vertex at h.
+    // Derive that critical value from the uncut solid, independently of PG.
+    const projections = normals.map((normal) => normal.dot(vertex));
+    for (const value of [-1, -depth, depth, 1]) {
+      expect(projections.filter((projection) => Math.abs(projection - value) < EPS)).toHaveLength(5);
+    }
+  }
+  const area = (polygon: Vector3[]) => polygon.reduce((sum, point, i) =>
+    sum.add(point.clone().cross(polygon[(i + 1) % polygon.length])), new Vector3()).length() / 2;
+  const variants = [
+    { delta: -0.001, shapes: { 3: 18, 4: 3, 5: 3, 6: 4 }, visible: 560, pieces: 362, counts: { 1: 200, 2: 150, 5: 12 } },
+    { delta: 0, shapes: { 3: 12, 4: 3, 5: 3, 6: 1 }, visible: 380, pieces: 290, counts: { 1: 200, 2: 90 } },
+    { delta: 0.001, shapes: { 3: 12, 4: 9, 5: 3, 6: 1 }, visible: 500, pieces: 362, counts: { 1: 260, 2: 90, 5: 12 } },
+  ] as const;
+  for (const variant of variants) {
+    const model: Spec = { ...spec, axes: [{ ...spec.axes[0], cuts: [depth + variant.delta] }] };
+    const planes = cutPlanes(model);
+    const pieces = new Map<string, number>();
+    let visible = 0;
+    for (const normal of normals) {
+      const regions = expectedFace(model, normal);
+      expect(shapeCounts(regions), `cut offset ${variant.delta}`).toEqual(variant.shapes);
+      const areas = regions.map(area);
+      expect(Math.min(...areas)).toBeGreaterThan(0);
+      expect(areas.reduce((sum, value) => sum + value, 0)).toBeCloseTo(area(uncutFace(normal, normals)), 10);
+      visible += regions.length;
+      for (const polygon of regions) {
+        const point = center(polygon);
+        const key = planes.map(({ normal: cutNormal, offset }) => cutNormal.dot(point) > offset ? '+' : '-').join('');
+        pieces.set(key, (pieces.get(key) ?? 0) + 1);
+      }
+    }
+    expect(visible).toBe(variant.visible);
+    expect(pieces.size).toBe(variant.pieces);
+    const counts = [...pieces.values()].reduce<Record<number, number>>((result, stickers) => {
+      result[stickers] = (result[stickers] ?? 0) + 1;
+      return result;
+    }, {});
+    // Both nearby depths restore twelve five-sticker corners; the intended
+    // critical model consists only of 200 single- and 90 double-sticker pieces.
+    expect(counts).toEqual(variant.counts);
+  }
 });
 
 it('retains Radio Web wings, closes every face without gaps and distinguishes both neighboring designs', () => {
@@ -755,7 +818,7 @@ afterEach(async () => {
   }
 });
 
-it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'catscradle', 'radiocanon', 'radiolarian3'] as const)('animates %s moves in both directions with the real PG3D matrices and selected pieces', async (id) => {
+it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'catscradle', 'radiocanon', 'radiolarian3', 'radiostar'] as const)('animates %s moves in both directions with the real PG3D matrices and selected pieces', async (id) => {
   // This is a local renderer fixture, not browser interaction evidence. The
   // real TwistyPlayer creates its real PG3D; only DOM camera attachment and
   // scheduling are suppressed because jsdom has no display or GPU.
@@ -794,7 +857,7 @@ it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radio
   // Fixed samples of the renderer's quintic easing, independently applied to
   // physical vertices. Keep existing cases at their established middle frame;
   // the newer icosahedral models check start, end and three intermediate frames.
-  const samples = id === 'radiocanon' || id === 'radiojam' || id === 'radiolarian3'
+  const samples = id === 'radiocanon' || id === 'radiojam' || id === 'radiolarian3' || id === 'radiostar'
     ? [[0, 0], [0.2, 0.05792], [0.5, 0.5], [0.8, 0.94208], [1, 1]]
     : [[0.5, 0.5]];
   for (const choice of manualChoices(spec)) {

@@ -9,12 +9,22 @@
 // --set=catscradle: review Cat's Cradle's critical face-cut depth.
 // --set=radiocanon: review Radio Canon's fixed-center face cuts.
 // --set=radiolarian3: review Radiolarian 3's mobile-center face cuts.
+// --set=radiostar: review Radio Star's critical cut where all corners disappear.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
 import { NATIVE_PUZZLES } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { Vector3 } from 'three';
 
 const reviewSets = {
+  radiostar: {
+    basename: 'radiostar-outlines',
+    rows: [{
+      id: 'radiostar', en: 'Radio Star (Radiolarian 11)',
+      description: 'i f 0.2360679774997897', visibleFacelets: 380,
+      prior: 'i f 0.3333333333333333', priorLabel: 'Radio Crystal (comparison; cuts are replaced)',
+      notes: ['Exact face-normal depth h = 1/phi^3 = sqrt(5) - 2; all twelve corners disappear.', '12 triangles + 3 quadrilaterals + 3 pentagons + 1 hexagon per face; no jumbling.'],
+    }],
+  },
   radiolarian3: {
     basename: 'radiolarian3-outlines',
     rows: [{

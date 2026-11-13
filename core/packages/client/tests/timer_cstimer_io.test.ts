@@ -287,6 +287,7 @@ describe.each([
   { event: 'catscradle', nameEn: 'Cat’s Cradle', nameZh: 'Cat’s Cradle' },
   { event: 'radiocanon', nameEn: 'Radio Canon', nameZh: 'Radio Canon' },
   { event: 'radiolarian3', nameEn: 'Radiolarian 3', nameZh: 'Radiolarian 3' },
+  { event: 'radiostar', nameEn: 'Radio Star', nameZh: 'Radio Star' },
 ] as const)('$event csTimer compatibility', ({ event, nameEn, nameZh }) => {
   it('preserves renamed sessions and mixed native notation through both import APIs', () => {
     const solve = {
@@ -447,6 +448,45 @@ describe('Radiolarian 3 session-name boundaries', () => {
     });
     expect(parseCstimerExport(raw)[0].event === 'radiolarian3').toBe(matches);
     expect(importCstimerJson(raw)?.radiolarian3?.[0].event === 'radiolarian3').toBe(matches);
+  });
+});
+
+describe('Radio Star session-name boundaries', () => {
+  it.each([
+    ['Radio Star.', true],
+    ['RadioStar. Practice', true],
+    ['Session_Radio-Star_Practice', true],
+    ['Radiolarian11', true],
+    ['Radiolarian 11 practice', true],
+    ['Session_Radiolarian_11.', true],
+    ['Session_Radiolarian11_Practice', true],
+    ['练习：Radio Star（Radiolarian 11）', true],
+    ['Radiolarian110', false],
+    ['Radiolarian 110 practice', false],
+    ['Radiolarian11.5', false],
+    ['Session_Radiolarian11.5_Practice', false],
+    ['Radiolarian 11.0', false],
+    ['Radiolarian11th', false],
+    ['XRadiolarian 11', false],
+    ['Radio Starship practice', false],
+    ['RadioStar110', false],
+    ['RadioStar.5 Practice', false],
+    ['XRadio Star Practice', false],
+    ['XRadioStar Practice', false],
+  ] as const)('recognizes only the complete puzzle name in %s', (name, matches) => {
+    const raw = JSON.stringify({
+      session1: [[[0, 8_765], "R 2L' Gw", '', 1_700_000_000]],
+      properties: { sessionData: { 1: { name, opt: { scrType: 'input' } } } },
+    });
+    const session = parseCstimerExport(raw)[0];
+    const byEvent = importCstimerJson(raw);
+    if (matches) {
+      expect(session).toMatchObject({ event: 'radiostar', matched: true });
+      expect(byEvent?.radiostar?.[0]).toMatchObject({ event: 'radiostar', scramble: "R 2L' Gw" });
+    } else {
+      expect(session.event).not.toBe('radiostar');
+      expect(byEvent?.radiostar).toBeUndefined();
+    }
   });
 });
 
