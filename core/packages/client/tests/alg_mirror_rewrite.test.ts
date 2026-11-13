@@ -374,7 +374,7 @@ describe('regenerateMirrorAlgs', () => {
     const flipped = regenerateMirrorAlgs(
       { id: 1, algs: views(["U2 R U2 R'", "U R U' R'"]) }, { id: 2, algs: views([]) },
     ).algsById.get(2)![1];
-    expect(first.map(e => e.alg)).toEqual(["U' L' U L", "U2' L' U2' L"]);
-    expect(flipped.map(e => e.alg)).toEqual(["U2' L' U2' L", "U' L' U L"]);
+    expect(first.map(e => e.alg)).toEqual(["U' L' U L", "U2 L' U2' L"]);
+    expect(flipped.map(e => e.alg)).toEqual(["U2 L' U2' L", "U' L' U L"]);
   });
 });

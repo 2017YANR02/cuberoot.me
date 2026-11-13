@@ -20,7 +20,7 @@ describe('algorithm group headings', () => {
 
   it('renders imported formula emphasis at the surrounding text weight', () => {
     const weightRule = styles.match(
-      /\.alg-alg-text strong,\s*\.alg-meta-algline-code strong,\s*\.alg-editor-input strong\s*\{([^}]*)\}/,
+      /\.alg-alg-text strong,\s*\.alg-mirror-alg strong,\s*\.alg-meta-algline-code strong,\s*\.alg-editor-input strong\s*\{([^}]*)\}/,
     )?.[1] ?? '';
     expect(weightRule).toContain('font-weight: inherit');
   });

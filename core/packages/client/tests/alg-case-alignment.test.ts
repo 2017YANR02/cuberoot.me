@@ -163,6 +163,9 @@ describe('one public case state for every algorithm set', () => {
     }
     // Exact post-dedupe exception identities are reviewable; accepting extra
     // bad rows or dropping a unique displayed row cannot turn this test green.
+    // Initial U2 normalization merges one U2/U2' duplicate in each orientation
+    // of ZBLS #5368; its remaining rows still pass every state check above.
+    if (key === '3x3/zbls') expect(aligned.cases.find(c => c.id === 5368)!.algs.map(rows => rows.length)).toEqual([1, 3, 1, 3]);
     expect({ total, adjusted, unmatched }).toEqual(expected);
     // Every set remains printable even when a source alternative is unresolved.
     const sheet = algSheetFromCases({ puzzle, set: file.set, cases: aligned.cases, title: key, filename: key, allOris: true, maxAlgs: Infinity });

@@ -21,7 +21,8 @@ describe('algorithm player placement', () => {
     expect(category).toMatch(/<Link\s+href=\{caseDetailHref\(c\)\}\s+className="alg-case-cardlink"/);
     expect(category).not.toContain("setEditorState({ mode: 'edit'");
     expect(detail).toContain('isAdmin && caseObj.id != null');
-    expect(detail).not.toContain('editMode');
+    expect(detail).toContain("useQueryState('edit', parseAsBoolean.withDefault(false))");
+    expect(detail).toContain('const editing = isAdmin && (embedded ? editingCase === caseKey : editMode);');
     expect(category).toContain('onClose={() => setEditorState(null)}');
   });
 
