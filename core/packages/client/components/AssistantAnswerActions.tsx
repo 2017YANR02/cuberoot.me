@@ -24,7 +24,8 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
   const [failure, setFailure] = useState('');
   const [speaking, setSpeaking] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const [shareId, setShareId] = useState<string | null>(null);
+  const [shared, setShared] = useState<{result: AssistantTurn['result']; id: string} | null>(null);
+  const shareId = shared && shared.result === turn.result ? shared.id : null;
   const [pdfBusy, setPdfBusy] = useState(false);
   const utterance = useRef<SpeechSynthesisUtterance | null>(null);
   const speechJob = useRef(0);
@@ -89,6 +90,6 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
       <Tooltip content={tr({ zh: '转换为 PDF', en: 'Export as PDF' })}>{tip => <button {...tip} className="site-assistant-action assistant-pdf-action" aria-label={tr({ zh: '转换为 PDF', en: 'Export as PDF' })} type="button" disabled={pdfBusy} onClick={() => void pdf()}><FileText size={18}/><span>PDF</span></button>}</Tooltip>
     </div>
     {failure && <p className="site-assistant-voice-error" role="status">{failure}</p>}
-    {shareOpen && <AssistantShareDialog turn={turn} lang={lang} preview={preview} text={exportText()} shareId={shareId} onShareId={setShareId} onClose={() => setShareOpen(false)}/>}
+    {shareOpen && <AssistantShareDialog turn={turn} lang={lang} preview={preview} text={exportText()} shareId={shareId} onShareId={id=>setShared(id ? {result:turn.result,id} : null)} onClose={() => setShareOpen(false)}/>}
   </>;
 }

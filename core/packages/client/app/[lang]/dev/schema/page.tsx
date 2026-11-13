@@ -51,7 +51,7 @@ const TABLES: Table[] = [
   { name: 'recon_captures', domain: 'recon', origin: '0298', purpose: { zh: '私有原片与原始魔方记录绑定、完整性和时间对齐状态', en: 'Private original video and cube recording bindings, integrity and alignment state' } },
   { name: 'recon_capture_revisions', domain: 'recon', origin: '0298', purpose: { zh: '视频采集样本的人工对齐锚点版本', en: 'Human alignment anchor revisions for video captures' } },
   { name: 'career_applications', domain: 'community', origin: '0295', purpose: { zh: '管理员可查看的招聘申请及附件', en: 'Private career applications and attachments for administrators' } },
-  { name: 'site_assistant_shares', domain: 'community', origin: '0294', purpose: { zh: '用户主动创建的单条文字分享；可撤销，注销级联删除', en: 'Explicit single-message public snapshots; revocable, cascade on account deletion' } },
+  { name: 'site_assistant_shares', domain: 'community', origin: '0294', purpose: { zh: '按内容版本保存单条回答与公式卡片分享；可撤销，注销级联删除', en: 'Versioned single-answer and algorithm-card snapshots; revocable, cascade on account deletion' } },
   { name: 'wca_translation_sync', domain: 'comp', origin: '0289', purpose: { zh: '官方译文同步版本、来源许可与失败状态', en: 'Official translation sync provenance, licenses and failure state' } },
   { name: 'wca_translation_units', domain: 'comp', origin: '0289', purpose: { zh: '可检索的官方英中条目与翻译状态', en: 'Searchable official English–Chinese units and translation states' } },
   { name: 'recon_intake', domain: 'recon', origin: '0286', purpose: { zh: '复盘收录、原始记录、批注、确认版本和领取租约', en: 'Reconstruction intake, recordings, annotations, approvals and leases' } },
@@ -594,6 +594,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 325, slug: 'assistant_share_versions', desc: { zh: '按内容版本保存回答分享快照，保留切换公式前的公开链接。', en: 'Version answer snapshots by content while preserving links shared before algorithm changes.' } },
   { n: 321, slug: 'diansheng_zhang_anyu', desc: { zh: '按维护者确认将张安宇（2012ZHAN08）加入点盛战队，保留其他队员归属。', en: 'Assign Anyu Zhang (2012ZHAN08) to DianSheng as confirmed by the maintainer, preserving all other memberships.' } },
   { n: 322, slug: 'vault_merge_capacity', desc: { zh: '私密资料库单条密文上限提升至 4 MiB，支持合并原图附件。', en: 'Raise the private vault encrypted item limit to 4 MiB for merging original image attachments.' } },
   { n: 319, slug: 'yj_diansheng_teams', desc: { zh: '登记永骏与点盛品牌，尚不分配队员。', en: 'Register YongJun and DianSheng brands without assigning members.' } },
