@@ -1,4 +1,4 @@
-import { apiUrl, directApiUrl } from './api-base';
+import { apiUrl, directApiUrl, assistantStreamApiUrl } from './api-base';
 import { getWebAccessToken } from './web-session';
 
 const WEB_SESSION_PREFIX = 'web-session:';
@@ -8,6 +8,8 @@ function trustedSessionTarget(input: RequestInfo | URL): { url: URL; authSuffix?
   const base = typeof window === 'undefined' ? directApiUrl('/') : window.location.href;
   const target = new URL(input instanceof Request ? input.url : String(input), base);
   if (!['http:', 'https:'].includes(target.protocol) || target.username || target.password) return null;
+  const assistant = new URL(assistantStreamApiUrl(), base);
+  if (target.origin === assistant.origin && target.pathname === assistant.pathname) return {url:target};
   const apiTargets = [new URL(apiUrl('/v1/'), base), new URL(directApiUrl('/v1/'), base)];
   const api = apiTargets.find(api => target.origin === api.origin && target.pathname.startsWith(api.pathname));
   if (api) {
