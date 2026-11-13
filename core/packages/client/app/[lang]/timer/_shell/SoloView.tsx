@@ -3072,7 +3072,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // connected, including a second connection added during an ongoing solve.
   const distractionFree = !showTrainingCubes && timer.phase === 'running' && !prefersReducedMotion;
   // Opt-in, and stronger than `distractionFree`: that one only fades
-  // .surface-chrome, this also takes the side panel and the solver rail. It is
+  // .surface-chrome, this also takes the results panel; docked solutions stay. It is
   // NOT gated on prefers-reduced-motion — the user asked for things to be
   // hidden, not animated; the reduced-motion block below drops the transition.
   const hideAllUi = !showTrainingCubes && timerHidesRunningUi(timer.phase, settings);

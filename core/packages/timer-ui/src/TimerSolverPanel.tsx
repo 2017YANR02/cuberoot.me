@@ -232,6 +232,17 @@ export default function TimerSolverPanel({
     try { if (localStorage.getItem(LS_FULL) === '1') setFullPref(true); } catch { /* 隐私模式:留左栏 */ }
   }, []);
 
+  // Expanding/rotating an already open phone sheet restores the side-by-side
+  // view. Explicit fullscreen remains fullscreen, and the solver host stays mounted.
+  const previousDock = useRef(isDesktopRail);
+  useEffect(() => {
+    if (!previousDock.current && isDesktopRail && sheetOpen && !fullPref) {
+      setRailOpen(true);
+      onSheetOpenChange(false);
+    }
+    previousDock.current = isDesktopRail;
+  }, [isDesktopRail, sheetOpen, fullPref, onSheetOpenChange]);
+
   const sheetOpenRef = useRef(sheetOpen);
   sheetOpenRef.current = sheetOpen;
   const closeSheet = useCallback(() => onSheetOpenChange(false), [onSheetOpenChange]);
@@ -315,7 +326,7 @@ export default function TimerSolverPanel({
           onClick={() => { if (sheetOpen) closeSheet(); else toggle(); }}>
           <Lightbulb size={18} aria-hidden="true" />
         </button>, triggerSlot)}
-      {((isDesktopRail && open) || !triggerSlot) && <aside className="solver-panel surface-chrome" data-open={open} data-layout={isDesktopRail ? 'rail' : 'trigger'} data-no-timer>
+      {((isDesktopRail && open) || !triggerSlot) && <aside className={`solver-panel${isDesktopRail ? '' : ' surface-chrome'}`} data-open={open} data-layout={isDesktopRail ? 'rail' : 'trigger'} data-no-timer>
         {/* display:contents 兜底(见 shell.css):除「桌面左栏已展开」外,头部仍是
             单独一颗 pill,加这层不改任何现有形态。 */}
         <div className="solver-panel-headrow">

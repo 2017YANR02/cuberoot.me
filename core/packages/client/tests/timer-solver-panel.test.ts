@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import TimerSolverPanel from '@cuberoot/timer-ui/TimerSolverPanel';
 import { TimerSoloPage } from '@cuberoot/timer-ui/TimerSoloPage';
+import { TimerWorkspace } from '@cuberoot/timer-ui';
 
 const fixture = vi.hoisted(() => ({ nested: false, mounts: 0 }));
 let reportBlocking: ((blocked: boolean) => void) | undefined;
@@ -21,7 +22,8 @@ vi.mock('@cuberoot/timer-ui/TimerSolverBody', () => ({ default: (props: {
     createElement('input', { 'aria-label': 'solver input' }), createElement('button', null, 'last'));
 } }));
 
-let root: Root; let host: HTMLDivElement; let width: number;
+let root: Root; let host: HTMLDivElement; let width: number; let height: number;
+const viewportListeners = new Set<() => void>();
 let back: (() => boolean) | null; let externalClose: () => void;
 let previous: ReturnType<typeof vi.fn<() => void>>; let next: ReturnType<typeof vi.fn<() => void>>;
 const registerBack = (fn: (() => boolean) | null) => { back = fn; };
@@ -35,10 +37,18 @@ function Harness({ request = 0, ready = false }: { request?: number; ready?: boo
 async function click(selector: string) { await act(async () => document.querySelector<HTMLButtonElement>(selector)!.click()); }
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-  width = 1280; fixture.nested = false; fixture.mounts = 0; back = null;
+  width = 1280; height = 720; viewportListeners.clear(); fixture.nested = false; fixture.mounts = 0; back = null;
   previous = vi.fn(); next = vi.fn(); localStorage.clear();
-  vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('min-width') ? width >= 1024 : width <= 560,
-    addEventListener() {}, removeEventListener() {} }));
+  vi.stubGlobal('matchMedia', (query: string) => ({ get matches() {
+    return query.split(',').some(part => {
+      const minWidth = Number(part.match(/min-width: (\d+)px/)?.[1] ?? 0);
+      const maxWidth = Number(part.match(/max-width: (\d+)px/)?.[1] ?? Infinity);
+      const minHeight = Number(part.match(/min-height: (\d+)px/)?.[1] ?? 0);
+      return width >= minWidth && width <= maxWidth && height >= minHeight
+        && (!part.includes('orientation: landscape') || width > height);
+    });
+  }, addEventListener(_event: string, callback: () => void) { viewportListeners.add(callback); },
+  removeEventListener(_event: string, callback: () => void) { viewportListeners.delete(callback); } }));
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
 });
 
@@ -154,8 +164,9 @@ function TopbarHarness() {
     solver: createElement(Harness),
   });
 }
-it.each([390, 1280])('keeps the topbar light and one solver at width %i', async (viewport) => {
+it.each([390, 951, 1280])('keeps the topbar light and one solver at width %i', async (viewport) => {
   width = viewport;
+  height = 600;
   localStorage.setItem('timer.solverHints.panelOpen', '0');
   await act(async () => root.render(createElement(TopbarHarness)));
   const trigger = document.querySelector('.solver-trigger-slot .solver-light-trigger')!;
@@ -169,4 +180,38 @@ it.each([390, 1280])('keeps the topbar light and one solver at width %i', async 
   expect(trigger.getAttribute('data-lit')).toBe('false');
   expect(fixture.mounts).toBe(0);
   expect(document.querySelector('.solver-panel')).toBeNull();
+});
+
+it('restores an open phone sheet to the left dock when unfolded, without changing the selected view', async () => {
+  width = 466; height = 600;
+  await act(async () => root.render(createElement(TopbarHarness)));
+  await click('.solver-light-trigger');
+  await click('.solver-view-select');
+  const steps = [...document.querySelectorAll<HTMLButtonElement>('[role="option"]')].find(item => item.textContent === 'Step-by-step')!;
+  await act(async () => steps.click());
+  await act(async () => { width = 951; viewportListeners.forEach(notify => notify()); });
+  expect(document.querySelector('.solver-sheet')).toBeNull();
+  expect(document.querySelector('.timer-solver-rail .solver-panel-body [data-view="steps"]')).not.toBeNull();
+  expect(fixture.mounts).toBe(1);
+  await act(async () => { width = 669; height = 850; viewportListeners.forEach(notify => notify()); });
+  expect(document.querySelector('.solver-panel-body')).toBeNull();
+  await click('.solver-light-trigger');
+  expect(document.querySelector('.solver-sheet [data-view="steps"]')).not.toBeNull();
+  // An ordinary short phone landscape still uses the sheet.
+  await act(async () => { width = 852; height = 393; viewportListeners.forEach(notify => notify()); });
+  expect(document.querySelector('.solver-sheet')).not.toBeNull();
+  expect(fixture.mounts).toBe(1);
+});
+
+it('docks reconstruction on the right alongside solutions on Duo landscape, then releases it in portrait', async () => {
+  width = 951; height = 600;
+  await act(async () => root.render(createElement(TimerWorkspace, {
+    recap: createElement('section', { 'aria-label': 'Solve reconstruction' }, 'Recorded moves'),
+  }, createElement(TopbarHarness))));
+  expect(document.querySelector('.timer-workspace[data-wide-layout][data-recap-open]')).not.toBeNull();
+  expect(document.querySelector('.timer-solver-rail .solver-panel-body')).not.toBeNull();
+  expect(document.querySelector('.timer-workspace-panel.shell-recap-rail [aria-label="Solve reconstruction"]')).not.toBeNull();
+  await act(async () => { width = 669; height = 850; viewportListeners.forEach(notify => notify()); });
+  expect(document.querySelector('.shell-recap-rail')).toBeNull();
+  expect(document.querySelector('.solver-panel-body')).toBeNull();
 });

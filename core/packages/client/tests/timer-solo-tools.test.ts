@@ -106,18 +106,19 @@ it('BLD preserves per-cube selection and resets it for a new scramble', async ()
   await act(async () => root.render(createElement(Bld, { ...props, scramble: 'Solve 1 of 2: F\nSolve 2 of 2: L' })));
   expect(select.value).toBe('0');
 });
-it('Solo moves a single solver between topbar and rail, preserving source/timing/footer order', async () => {
+it('Solo keeps one solver host mounted across viewport changes, preserving source/timing/footer order', async () => {
   const props = { topbar: { controls: createElement('button', null, 'source') },
     stage: { source: 'configuration', statistics: 'statistics', devices: 'devices' },
     timing: { phase: 'idle' as const, digits: '0.00', colorClass: '', surfaceRef: { current: null } }, solver: createElement('div', { 'data-fixture-solver': true }, 'solver'),
     narrowRecap: createElement('div', { 'data-fixture-recap': true }, 'recap') };
   await act(async () => root.render(createElement(TimerSoloPage, props)));
   expect(container.querySelectorAll('[data-fixture-solver]')).toHaveLength(1);
-  expect(container.querySelector('.shell-topbar [data-fixture-solver]')).not.toBeNull();
+  const solverHost = container.querySelector('.timer-solver-rail [data-fixture-solver]');
+  expect(solverHost).not.toBeNull();
   expect(container.querySelector('[data-fixture-recap]')).not.toBeNull();
   await act(async () => { width = 1280; resize.forEach(fn => fn()); });
   expect(container.querySelectorAll('[data-fixture-solver]')).toHaveLength(1);
-  expect(container.querySelector('.timer-solver-rail [data-fixture-solver]')).not.toBeNull();
+  expect(container.querySelector('.timer-solver-rail [data-fixture-solver]')).toBe(solverHost);
   expect(container.querySelector('[data-fixture-recap]')).toBeNull();
   await act(async () => root.render(createElement(TimerSoloPage, { ...props, stage: { ...props.stage, fullscreen: true } })));
   expect(container.querySelector('.timer-solo-topbar--fullscreen')).not.toBeNull();

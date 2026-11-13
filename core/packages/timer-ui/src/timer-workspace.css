@@ -1,6 +1,7 @@
 /* Hide controls without unmounting or changing the timer's geometry. Explicit
- * hiding also removes keyboard focus targets and works with reduced motion. */
-:is(.hide-ui, [data-timer-hide-ui]) :is(.surface-chrome, .timer-workspace-panel, .shell-rail > *, [data-timer-hide-while-running]) {
+ * hiding also removes keyboard focus targets and works with reduced motion.
+ * Docked solutions remain available alongside the running timer. */
+:is(.hide-ui, [data-timer-hide-ui]) :is(.surface-chrome, .timer-workspace-panel, .shell-rail > :not(.solver-panel[data-layout='rail']), [data-timer-hide-while-running]) {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -27,8 +28,12 @@
   height: var(--timer-workspace-height, calc(100dvh - var(--page-notice-h, 0px)));
   overflow: hidden;
 }
-.timer-workspace[data-wide-layout][data-panel-open] { grid-template-columns: minmax(0, 1fr) var(--timer-right-dock-width, 360px); }
-.timer-workspace[data-wide-layout][data-recap-open] { grid-template-columns: minmax(0, 1fr) var(--timer-right-dock-width, clamp(340px, 30vw, 480px)); }
+.timer-workspace[data-wide-layout][data-panel-open] { grid-template-columns: minmax(0, 1fr) min(var(--timer-right-dock-width, 360px), var(--timer-right-dock-limit, 100vw)); }
+.timer-workspace[data-wide-layout][data-recap-open] { grid-template-columns: minmax(0, 1fr) min(var(--timer-right-dock-width, clamp(340px, 30vw, 480px)), var(--timer-right-dock-limit, 100vw)); }
+/* Compact inner screens need narrower side panels than a desktop workspace. */
+@media (min-width: 800px) and (max-width: 1023px) and (min-height: 500px) and (orientation: landscape) {
+  .timer-workspace.timer-workspace { --timer-right-dock-width: clamp(260px, 28vw, 300px); --timer-right-dock-limit: 30vw; }
+}
 .timer-workspace[data-wide-layout] > .shell-topbar { grid-area: topbar; }
 .timer-workspace[data-wide-layout] .timer-workspace-main { grid-area: main; }
 .timer-workspace[data-wide-layout] .timer-workspace-main--with-toolbar { grid-row: 1 / -1; }
@@ -51,10 +56,10 @@
 
 .timer-workspace[data-wide-layout] .timer-workspace-divider--right {
   display: flex;
-  right: calc(var(--timer-right-dock-width, 360px) - 12px);
+  right: calc(min(var(--timer-right-dock-width, 360px), var(--timer-right-dock-limit, 100vw)) - 12px);
 }
 .timer-workspace[data-wide-layout][data-recap-open] > .timer-workspace-divider--right {
-  right: calc(var(--timer-right-dock-width, clamp(340px, 30vw, 480px)) - 12px);
+  right: calc(min(var(--timer-right-dock-width, clamp(340px, 30vw, 480px)), var(--timer-right-dock-limit, 100vw)) - 12px);
 }
 .timer-workspace[data-wide-layout] .timer-solver-stage:has(.timer-workspace-divider.is-dragging) { transition: none; }
 .timer-workspace[data-wide-layout] .timer-workspace-divider--left { left: calc(var(--shell-left-inset) - 12px); }

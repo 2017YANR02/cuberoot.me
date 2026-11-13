@@ -4,14 +4,16 @@ import { ResizeDivider } from '@app-foundation/navigation-ui/resize-divider';
 import '@app-foundation/navigation-ui/resize-divider.css';
 import { useHostViewportLayout } from './host-viewport';
 
-export const TIMER_WIDE_QUERY = '(min-width: 1024px)';
+// Unfolded landscape can use compact docks on either side of the timer.
+// Keep this in sync with timer-solver-panel.css and timing-surface.css.
+export const TIMER_WIDE_QUERY = '(min-width: 1024px), (min-width: 800px) and (min-height: 500px) and (orientation: landscape)';
 function subscribe(notify: () => void) {
   if (typeof window.matchMedia !== 'function') return () => {};
   const query = window.matchMedia(TIMER_WIDE_QUERY);
   query.addEventListener('change', notify);
   return () => query.removeEventListener('change', notify);
 }
-/** Desktop defaults stay at 1024px; native results docks can use safe content geometry. */
+/** Native results docks use safe content geometry; Web also supports unfolded landscape. */
 export function useTimerWideLayout({ useHostContent = false }: { useHostContent?: boolean } = {}) {
   const host = useHostViewportLayout();
   const desktop = useSyncExternalStore(subscribe, () => typeof window.matchMedia === 'function' && window.matchMedia(TIMER_WIDE_QUERY).matches, () => false);

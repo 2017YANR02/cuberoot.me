@@ -80,6 +80,9 @@
 .solver-panel-body .stsv-controls { justify-content: center; }
 .solver-panel-body .stsv-angles { justify-content: center; }
 .solver-panel-body .stsv-result { margin-inline: auto; }
+/* The adjacent timer already shows the scramble. Keep the editor and the
+   standalone sheet's reference visible. */
+.timer-solver-rail .solver-panel[data-layout='rail'] .solver-scramble-row { display: none; }
 /* 打乱原文 — 面板/浮层里解法讲的是哪条打乱。同 .scramble-strip 的记号字体,但只做正文
    大小:这里是对照用的参考行,不是要人隔着房间读的主视觉。窄栏放不下就折行。 */
 .solver-panel-loading {
@@ -199,7 +202,13 @@
 /* Desktop: solutions dock on the left of .timer-solver-stage. The right grid column
    belongs to the latest reconstruction or the Times/Chart/Stats panel.
    Matching left padding keeps the timer and its bottom controls clear of the rail. */
-@media (min-width: 1024px) {
+@media (min-width: 1024px), (min-width: 800px) and (min-height: 500px) and (orientation: landscape) {
+  /* Share the left dock's width with the topbar so its controls center over
+     the timing canvas. The workspace grid already excludes the right dock. */
+  .timer-workspace:has(.timer-solver-stage:not([data-stage-fullscreen='true']) .solver-panel[data-open='true']) .shell-topbar.timer-solo-topbar {
+    grid-template-columns: min(var(--timer-left-dock-width, var(--solver-rail-w)), var(--solver-rail-limit, 100vw)) minmax(0, 1fr) auto;
+    column-gap: 0;
+  }
   .timer-solver-stage {
     --shell-left-inset: 0px;
     padding-left: var(--shell-left-inset);
@@ -227,7 +236,7 @@
   /* :not(.fullscreen) so fullscreen (rail hidden via display:none) doesn't keep a
      phantom left pad — :has() still matches display:none panels otherwise. */
   .timer-solver-stage:not([data-stage-fullscreen='true']):has(.timer-solver-rail .solver-panel[data-open='true']) {
-    --shell-left-inset: var(--timer-left-dock-width, var(--solver-rail-w));
+    --shell-left-inset: min(var(--timer-left-dock-width, var(--solver-rail-w)), var(--solver-rail-limit, 100vw));
   }
   .timer-workspace:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail {
     top: 0;
@@ -235,7 +244,7 @@
     bottom: 0;
     align-items: stretch;
     gap: 0;
-    width: var(--timer-left-dock-width, var(--solver-rail-w));
+    width: min(var(--timer-left-dock-width, var(--solver-rail-w)), var(--solver-rail-limit, 100vw));
     border-right: 1px solid var(--shell-divider, var(--border-default));
     background: var(--background);
     overflow-y: auto;
@@ -306,6 +315,12 @@
     max-width: 300px;
     margin: 0 auto;
   }
+}
+
+/* Unfolded phones reserve the middle for timing when both docks are open. */
+@media (min-width: 800px) and (max-width: 1023px) and (min-height: 500px) and (orientation: landscape) {
+  .timer-workspace { --solver-rail-w: 42vw; --solver-rail-limit: 42vw; }
+  .timer-workspace[data-panel-open] { --solver-rail-w: 30vw; --solver-rail-limit: 30vw; }
 }
 
 /* The dock can be narrow even on a wide screen. Relax centering before

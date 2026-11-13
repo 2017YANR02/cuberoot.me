@@ -54,6 +54,13 @@
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 12px;
 }
+/* Keep compact tablets and unfolded portrait screens at four set entries per row. */
+@media (max-width: 900px) {
+  .alg-bento { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 800px) and (max-width: 1023px) and (orientation: landscape) {
+  .alg-bento { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
 .alg-bento .alg-card {
   width: 100%;
   background: transparent;

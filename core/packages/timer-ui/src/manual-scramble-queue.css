@@ -25,6 +25,12 @@
   line-height: 1.5;
 }
 
+/* iOS zooms narrow, small-text editors on focus and can retain that zoom after
+   dismissal/rotation. Use a readable input size on touch screens, including folds. */
+@media (pointer: coarse) {
+  .scramble-src-manual-input { font-size: 16px; }
+}
+
 .scramble-src-manual-input:focus {
   outline: none;
   border-color: var(--accent);

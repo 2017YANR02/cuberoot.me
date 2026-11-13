@@ -30,7 +30,7 @@
 
 /* Keep the desktop workspace within the viewport; previews use the remaining
    height after the scramble, readout and fixed footer have been laid out. */
-@media (min-width: 1024px) {
+@media (min-width: 1024px), (min-width: 800px) and (min-height: 500px) and (orientation: landscape) {
   .timer-shell.timer-workspace.timer-workspace {
     height: calc(100dvh - var(--page-notice-h, 0px));
     min-height: 0;
@@ -450,7 +450,7 @@
 .timer-shell .shell-topbar { position: relative; z-index: 43; background: var(--background); }
 /* stat-rail is an absolute bottom-LEFT overlay (see .shell-stat-rail); the
    bottom-RIGHT deskpet can't overlap it, so it needs no lift/solid bg. */
-@media (min-width: 1024px) {
+@media (min-width: 1024px), (min-width: 800px) and (min-height: 500px) and (orientation: landscape) {
   /* Docked right rail covers exactly where the deskpet rests. */
   .timer-shell .shell-panel--rail { position: relative; z-index: 42; }
 }

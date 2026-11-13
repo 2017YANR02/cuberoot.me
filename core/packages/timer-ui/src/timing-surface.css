@@ -337,7 +337,7 @@
   --cube-h: calc(var(--timer-cube-h) * var(--solo-cube-scale, 1));
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1024px), (min-width: 800px) and (min-height: 500px) and (orientation: landscape) {
   .timer-solo-main { container-type: inline-size; }
   .timing-surface.timing-surface--solo {
     min-height: 0;
