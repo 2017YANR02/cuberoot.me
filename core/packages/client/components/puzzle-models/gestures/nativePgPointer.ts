@@ -28,6 +28,8 @@ interface Options {
   enabled: () => boolean;
   depth: () => 'auto' | NativePuzzleDragDepth;
   pinching: () => boolean;
+  /** Only an explicitly owned software-3D SVG may stand in for the native canvas. */
+  svgSurface?: (surface: SVGSVGElement) => boolean;
 }
 
 interface Gesture {
@@ -145,7 +147,10 @@ export function attachNativePgPointer(
   const eventVantage = (event: Event): [Vantage, THREE.Camera] | null => {
     const path = event.composedPath();
     if (path.some((target) => target instanceof Element && target.matches(CONTROL_SELECTOR))) return null;
-    if (!path.some((target) => target instanceof Element && target.tagName === 'CANVAS')) return null;
+    if (!path.some((target) => target instanceof Element && (
+      target.tagName === 'CANVAS'
+      || (target instanceof SVGSVGElement && opts.svgSurface?.(target))
+    ))) return null;
     for (const [vantage, camera] of vantages) if (path.includes(vantage)) return [vantage, camera];
     return null;
   };

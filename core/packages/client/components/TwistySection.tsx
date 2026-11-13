@@ -13,6 +13,9 @@ import { applyTwistyCoreOpacity } from './twistyCoreOpacity';
 import { simSpeedToTps, uniformSimTimeline } from '@/lib/sim_timing';
 import { pgAlgError } from '@/lib/pg-alg-validation';
 import type { TwistyPlaybackPlayer } from '@/lib/twisty-playback';
+import {
+  setNativePgSoftwareView, supportsNativePgSoftware3D, type NativePgSoftwareView,
+} from '@/lib/native-pg-software-view';
 import { tr } from '@/i18n/tr';
 import { applyFreeOrbitDelta, ORBIT_K } from '@/app/[lang]/sim/engine/viewControls';
 import { useT } from '@/hooks/useT';
@@ -196,6 +199,10 @@ export default function TwistySection({
   // Decide before constructing the first player: a failed 3D scene cannot provide
   // its initial-object promise, while the native SVG player needs no WebGL context.
   const [use2D, setUse2D] = useState<boolean | null>(null);
+  const software3D = use2D === true && externalControls && supportsNativePgSoftware3D(nativePuzzleId);
+  const [softwareStatus, setSoftwareStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const softwareViewRef = useRef<NativePgSoftwareView | null>(null);
+  const softwareSettingsRef = useRef(settings);
   const webglCheckedRef = useRef(false);
   const [fallbackTurnAmount, setFallbackTurnAmount] = useState(1);
   useEffect(() => {
@@ -423,6 +430,55 @@ export default function TwistySection({
     // puzzleDescription 不入 deps:改 cut 深度时原地 set(见下方 effect),不重建 player。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [Ctor, puzzle, nativePuzzleId, fillPane, twistOnClick, hideControls, externalControls, use2D]);
+
+  // Keep the native model/controller as the sole timeline, but display its real
+  // 3D geometry through the CPU projection when a GPU context is unavailable.
+  // The SVG host owns its scene and never asks the 2D player for a WebGL vantage.
+  useEffect(() => {
+    const player = playerInstRef.current;
+    const host = containerRef.current;
+    if (!software3D || !nativePuzzleId || !player || !host) return;
+    let current = true;
+    let view: NativePgSoftwareView | undefined;
+    setSoftwareStatus('loading');
+    // Captures/companion must not mistake the hidden timeline's 2D SVG for the
+    // visible view while its geometry is still loading.
+    setNativePgSoftwareView(player, { getSvg: () => null, updateSettings() {}, dispose() {} });
+    void import('./puzzle-models/nativePgSvgView').then(({ attachNativePgSvgView }) => {
+      if (!current || playerInstRef.current !== player) return undefined;
+      return attachNativePgSvgView(host, player, nativePuzzleId, {
+        settings: () => softwareSettingsRef.current,
+        depth: () => nativeDragDepthRef.current,
+        enabled: () => pointerTurnsRef.current && nativeInputValidRef.current,
+        current: () => current && playerInstRef.current === player,
+        onScaleChange: (scale) => onScaleChangeRef.current?.(scale),
+        label: t('立体魔方', '3D puzzle'),
+      });
+    }).then((next) => {
+      if (!next) return;
+      if (!current || playerInstRef.current !== player) { next.dispose(); return; }
+      view = next;
+      softwareViewRef.current = next;
+      setNativePgSoftwareView(player, next);
+      setSoftwareStatus('ready');
+    }).catch((error: unknown) => {
+      if (!current || playerInstRef.current !== player) return;
+      console.warn('[sim] Native compatibility 3D view failed:', error);
+      setNativePgSoftwareView(player, null);
+      setSoftwareStatus('failed');
+    });
+    return () => {
+      current = false;
+      setNativePgSoftwareView(player, null);
+      if (softwareViewRef.current === view) softwareViewRef.current = null;
+      view?.dispose();
+    };
+  }, [software3D, nativePuzzleId, playerNonce, t]);
+
+  useEffect(() => {
+    softwareSettingsRef.current = settings && backView !== undefined ? { ...settings, backView } : settings;
+    softwareViewRef.current?.updateSettings();
+  }, [settings, backView]);
 
   // puzzleDescription 原地同步 — 改 cut 深度(Puzzle Cuts 编辑器)时不重建 player,
   // 对齐 alpha.twizzle.net/explore 的丝滑切割:只把新 description set 到已存在的 player。
@@ -1343,15 +1399,18 @@ export default function TwistySection({
   }, [nativePuzzleId, playerNonce, puzzleDescription, use2D, backView, settings?.backView]);
 
   return (
-    <div className={`twisty-section${fillPane ? ' twisty-section--fill' : ''}${use2D ? ' twisty-section--2d' : ''}${nativePuzzleId ? ' twisty-section--manual' : ''}`}>
+    <div className={`twisty-section${fillPane ? ' twisty-section--fill' : ''}${use2D && (!software3D || softwareStatus === 'failed') ? ' twisty-section--2d' : ''}${nativePuzzleId ? ' twisty-section--manual' : ''}`}>
       {puzzleDescription && pgInputError && <div role="alert">
         {tr({ zh: '公式不适用于当前项目，请修改输入。', en: 'This algorithm is not valid for the selected puzzle. Please edit the input.' })}
         {' '}{pgInputError}
       </div>}
-      <div ref={containerRef} className="twisty-container" />
+      <div ref={containerRef} className={`twisty-container${software3D && softwareStatus !== 'failed' ? ' twisty-container--software' : ''}`} />
       {(use2D || nativePuzzleId) && (
         <div className="twisty-fallback">
-          {use2D && <p className="twisty-fallback-notice" role="status">
+          {software3D && softwareStatus === 'loading' && <p className="twisty-fallback-notice" role="status">
+            {t('正在加载立体模型…', 'Loading the 3D model…')}
+          </p>}
+          {use2D && (!software3D || softwareStatus === 'failed') && <p className="twisty-fallback-notice" role="status">
             {t('3D 不可用，已显示二维展开图', '3D is unavailable. Showing a 2D net.')}
           </p>}
           {!nativeInputValid && <p className="twisty-native-error" role="alert">
@@ -1359,8 +1418,8 @@ export default function TwistySection({
           </p>}
           {nativePuzzleId && <NativePuzzleControls
             id={nativePuzzleId}
-            disabled={playerNonce === 0 || !nativeInputValid || settings?.pointerTurns === false}
-            showDragDepth={use2D === false}
+            disabled={playerNonce === 0 || (software3D && softwareStatus === 'loading') || !nativeInputValid || settings?.pointerTurns === false}
+            showDragDepth={use2D === false || (software3D && softwareStatus === 'ready')}
             depth={nativeDragDepth}
             onDepthChange={setNativeDragDepth}
             onMove={(token) => {

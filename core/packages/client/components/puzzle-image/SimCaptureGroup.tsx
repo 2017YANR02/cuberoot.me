@@ -19,6 +19,7 @@ import type World from '@/app/[lang]/sim/engine/world';
 import type { ExportProgress } from '@/app/[lang]/sim/sim_export';
 import { useT } from '@/hooks/useT';
 import { saveBlob, snapshotSvgElement, svgBlob, svgToRasterBlob } from '@/lib/puzzle-image/image-export';
+import { getNativePgSoftwareView } from '@/lib/native-pg-software-view';
 import './puzzle-image.css';
 
 /**
@@ -141,6 +142,15 @@ export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge })
     // Reuse the live SVG projection instead of constructing an offscreen player.
     const tp = simBridge.getTwistyPlayer?.() as TwistyPlayerLike | null;
     try {
+      const softwareView = getNativePgSoftwareView(tp);
+      if (softwareView) {
+        const node = softwareView.getSvg();
+        if (node) {
+          const frame = snapshotSvgElement(node);
+          saveBlob(await svgToRasterBlob(frame.svg, frame), `sim-${Date.now()}.png`);
+        }
+        return;
+      }
       if (await downloadTwisty2DScreenshot(tp)) return;
       const svg = await currentTwistySvg(tp);
       if (svg) saveBlob(await svgToRasterBlob(svg, { width: 2048, height: 2048 }), `sim-${Date.now()}.png`);
@@ -180,6 +190,12 @@ export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge })
         }
       } else {
         const tp = simBridge.getTwistyPlayer?.() as TwistyPlayerLike | null;
+        const softwareView = getNativePgSoftwareView(tp);
+        if (softwareView) {
+          const node = softwareView.getSvg();
+          if (node) saveBlob(svgBlob(snapshotSvgElement(node).svg), `sim-${Date.now()}.svg`);
+          return;
+        }
         if (await downloadTwisty2DScreenshot(tp)) return;
         svg = await currentTwistySvg(tp) ?? undefined;
         if (!svg) return;

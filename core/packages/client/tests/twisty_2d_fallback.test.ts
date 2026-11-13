@@ -8,6 +8,8 @@ import TwistySection from '@/components/TwistySection';
 import SimCaptureGroup from '@/components/puzzle-image/SimCaptureGroup';
 import { NATIVE_PUZZLES } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { nativePuzzleKPuzzle } from '@cuberoot/puzzle-solvers/native-puzzle-model';
+import { getNativePgSoftwareView } from '@/lib/native-pg-software-view';
+import { attachNativePgSvgView } from '@/components/puzzle-models/nativePgSvgView';
 
 const probe = vi.hoisted(() => ({
   webglAvailable: vi.fn(() => false),
@@ -29,10 +31,16 @@ vi.mock('three/addons/capabilities/WebGL.js', () => ({
   default: { isWebGL2Available: probe.webglAvailable },
 }));
 
-vi.mock('@/hooks/useT', () => ({ useT: () => (_zh: string, en: string) => en }));
+vi.mock('@/hooks/useT', () => {
+  const translate = (_zh: string, en: string) => en;
+  return { useT: () => translate };
+});
 vi.mock('@/i18n/tr', () => ({ tr: ({ en }: { en: string }) => en }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ i18n: { language: 'en' } }) }));
 vi.mock('@/components/twistyCoreOpacity', () => ({ applyTwistyCoreOpacity: probe.coreOpacity }));
+// Automatic mocking also covers overlapping dynamic imports during replacement.
+vi.mock('@/components/puzzle-models/nativePgSvgView');
+const attachSvgView = vi.mocked(attachNativePgSvgView);
 
 vi.mock('cubing/twisty', () => ({
   TwistyPlayer: vi.fn(function (options: Record<string, unknown>) {
@@ -110,9 +118,34 @@ describe('TwistySection without WebGL', () => {
   let root: Root;
   const onUserMove = vi.fn<(move: string) => void>();
 
+  function softwareView(container: HTMLElement) {
+    // Only the rendering boundary is mocked here. The real registry, component
+    // lifecycle, move wrapper and input validation remain active.
+    const viewRoot = document.createElement('div');
+    viewRoot.className = 'twisty-software3d';
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    viewRoot.appendChild(svg);
+    container.appendChild(viewRoot);
+    return {
+      getSvg: () => svg,
+      updateSettings: vi.fn(),
+      resetView: vi.fn(),
+      dispose: vi.fn(() => viewRoot.remove()),
+    };
+  }
+
+  function deferredView() {
+    type View = Awaited<ReturnType<typeof attachNativePgSvgView>>;
+    let resolve!: (view: View) => void;
+    let reject!: (error: Error) => void;
+    const promise = new Promise<View>((done, fail) => { resolve = done; reject = fail; });
+    return { promise, resolve, reject };
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
     probe.webglAvailable.mockReturnValue(false);
+    attachSvgView.mockImplementation(async (container) => softwareView(container));
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
     host = document.createElement('div');
     document.body.appendChild(host);
@@ -385,6 +418,125 @@ describe('TwistySection without WebGL', () => {
     await act(async () => { await vi.dynamicImportSettled(); });
   }
 
+  const softwareCases = nativeCases.filter(({ id }) => id === 'radiogem' || id === 'radiofathom');
+
+  it.each(softwareCases)('$id uses a registered interactive 3D view for the external-controls simulator without initializing WebGL', async (spec) => {
+    await mountNative(spec, { externalControls: true });
+
+    expect(probe.construct).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      experimentalPuzzleDescription: NATIVE_PUZZLES[spec.id].description,
+      visualization: '2D', experimentalSetupAlg: spec.setup, alg: spec.alg,
+      controlPanel: 'none',
+    }));
+    expect(attachSvgView).toHaveBeenCalledOnce();
+    const [container, player, id, options] = attachSvgView.mock.calls[0];
+    const view = await attachSvgView.mock.results[0].value;
+    expect(container).toBe(host.querySelector('.twisty-container'));
+    expect(container.firstElementChild).toBe(player);
+    expect(id).toBe(spec.id);
+    expect(getNativePgSoftwareView(player)).toBe(view);
+    expect(view.getSvg()?.isConnected).toBe(true);
+    expect(container.classList.contains('twisty-container--software')).toBe(true);
+    expect(host.querySelector('.twisty-section--2d')).toBeNull();
+    expect(host.textContent).not.toContain('2D net');
+    expect(options.current()).toBe(true);
+    expect(options.enabled()).toBe(true);
+    expect(options.settings()).toMatchObject({ scale: 50, coreOpacity: 55, dragEmpty: 'view' });
+    const depth = host.querySelector<HTMLSelectElement>('select[aria-label="Drag layer"]')!;
+    expect(depth).not.toBeNull();
+    expect(options.depth()).toBe('auto');
+    await act(async () => {
+      depth.value = 'wide';
+      depth.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    expect(options.depth()).toBe('wide');
+
+    probe.algWrite.mockClear();
+    probe.setupWrite.mockClear();
+    probe.timelineWrite.mockClear();
+    await mountNative(spec, { externalControls: true, alg: 'notAMove' });
+    expect(options.enabled()).toBe(false);
+    expect(probe.algWrite).not.toHaveBeenCalled();
+    expect(probe.setupWrite).not.toHaveBeenCalled();
+    expect(probe.timelineWrite).not.toHaveBeenCalled();
+    expect(host.querySelector('[role="alert"]')).not.toBeNull();
+    expect(host.querySelector<HTMLButtonElement>('.twisty-native-controls .twisty-fallback-move')!.disabled).toBe(true);
+    expect(getNativePgSoftwareView(player)).toBe(view);
+
+    await mountNative(spec, { externalControls: true });
+    expect(options.enabled()).toBe(true);
+    expect(attachSvgView).toHaveBeenCalledOnce();
+    expect(host.querySelector('[role="alert"]')).toBeNull();
+    expect(probe.threeObject).not.toHaveBeenCalled();
+    expect(probe.vantage).not.toHaveBeenCalled();
+    expect(probe.coreOpacity).not.toHaveBeenCalled();
+  });
+
+  it('keeps initialization visibly pending and restores the usable native net if the compatibility view fails', async () => {
+    const pending = deferredView();
+    attachSvgView.mockReturnValueOnce(pending.promise);
+    const spec = softwareCases[0];
+    await mountNative(spec, { externalControls: true });
+    const container = host.querySelector('.twisty-container')!;
+    const player = container.firstElementChild!;
+    expect(container.classList.contains('twisty-container--software')).toBe(true);
+    expect(host.textContent).toContain('Loading the 3D model');
+    expect(host.querySelector('select[aria-label="Drag layer"]')).toBeNull();
+    expect(host.querySelector<HTMLButtonElement>('.twisty-native-controls .twisty-fallback-move')!.disabled).toBe(true);
+    expect(getNativePgSoftwareView(player)).toBeDefined();
+    expect(getNativePgSoftwareView(player)!.getSvg()).toBeNull();
+
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await act(async () => { pending.reject(new Error('compatibility geometry unavailable')); });
+    expect(container.classList.contains('twisty-container--software')).toBe(false);
+    expect(host.querySelector('.twisty-section--2d')).not.toBeNull();
+    expect(host.querySelector('[role="status"]')?.textContent).toContain('2D net');
+    expect(host.querySelector('select[aria-label="Drag layer"]')).toBeNull();
+    expect(getNativePgSoftwareView(player)).toBeUndefined();
+    const turn = host.querySelector<HTMLButtonElement>('.twisty-native-controls .twisty-fallback-move')!;
+    expect(turn.disabled).toBe(false);
+    await act(async () => turn.click());
+    expect(onUserMove).toHaveBeenCalledOnce();
+    expect(probe.threeObject).not.toHaveBeenCalled();
+    expect(probe.vantage).not.toHaveBeenCalled();
+  });
+
+  it('disposes a late compatibility view after puzzle replacement without overwriting the new player registry', async () => {
+    const pending = deferredView();
+    attachSvgView.mockReturnValueOnce(pending.promise);
+    await mountNative(softwareCases[0], { externalControls: true });
+    const [oldContainer, oldPlayer, , oldOptions] = attachSvgView.mock.calls[0];
+
+    await mountNative(softwareCases[1], { externalControls: true });
+    expect(attachSvgView).toHaveBeenCalledTimes(2);
+    const [, newPlayer, , newOptions] = attachSvgView.mock.calls[1];
+    const newView = await attachSvgView.mock.results[1].value;
+    expect(newPlayer).not.toBe(oldPlayer);
+    expect(oldOptions.current()).toBe(false);
+    expect(newOptions.current()).toBe(true);
+    const lateView = softwareView(oldContainer);
+    await act(async () => { pending.resolve(lateView); });
+    expect(lateView.dispose).toHaveBeenCalledOnce();
+    expect(getNativePgSoftwareView(oldPlayer)).toBeUndefined();
+    expect(getNativePgSoftwareView(newPlayer)).toBe(newView);
+    expect(host.querySelectorAll('.twisty-software3d')).toHaveLength(1);
+
+    await act(async () => root.render(null));
+    expect(newView.dispose).toHaveBeenCalledOnce();
+    expect(newOptions.current()).toBe(false);
+    expect(getNativePgSoftwareView(newPlayer)).toBeUndefined();
+  });
+
+  it.each(softwareCases)('$id keeps the existing GPU view when WebGL is available', async (spec) => {
+    probe.webglAvailable.mockReturnValue(true);
+    await mountNative(spec, { externalControls: true });
+    const options = probe.construct.mock.calls[0][0];
+    expect(options.visualization ?? '3D').toBe('3D');
+    expect(attachSvgView).not.toHaveBeenCalled();
+    expect(host.querySelector('.twisty-container--software')).toBeNull();
+    expect(host.querySelector('.twisty-section--2d')).toBeNull();
+  });
+
   it.each(nativeCases)('$id constructs directly in 2D and sends a selected native move/angle through the public wrapper once', async (spec) => {
     await mountNative(spec);
     expect(probe.construct).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
@@ -395,6 +547,7 @@ describe('TwistySection without WebGL', () => {
     expect(probe.threeObject).not.toHaveBeenCalled();
     expect(probe.vantage).not.toHaveBeenCalled();
     expect(probe.coreOpacity).not.toHaveBeenCalled();
+    expect(attachSvgView).not.toHaveBeenCalled();
     expect(host.querySelector('[role="status"]')?.textContent).toContain('2D net');
     expect(host.querySelector('select[aria-label="Drag layer"]')).toBeNull();
     const move = host.querySelector<HTMLSelectElement>('select[aria-label="Move notation"]')!;
@@ -531,6 +684,8 @@ describe('TwistySection without WebGL', () => {
     expect(probe.construct).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
       controlPanel: 'none', background: 'none',
     }));
+    expect(attachSvgView).not.toHaveBeenCalled();
+    expect(host.querySelector('[role="status"]')?.textContent).toContain('2D net');
     expect(probe.construct.mock.calls[0][0]).not.toHaveProperty('timestamp');
     expect(player.timestamp).toBe(0);
     expect(player.controlPanel).toBe('none');

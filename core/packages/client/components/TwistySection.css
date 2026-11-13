@@ -10,6 +10,46 @@
   margin-bottom: 12px;
 }
 
+.twisty-container.twisty-container--software {
+  position: relative;
+  overflow: hidden;
+}
+
+/* The hidden native player supplies the timeline, not the displayed picture. */
+.twisty-container--software > twisty-player {
+  display: none;
+}
+
+.twisty-software3d {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+
+.twisty-software3d > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.twisty-software3d-backview {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 25%;
+  aspect-ratio: 1;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.twisty-software3d-backview > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 /* cubing/twisty(~592KB)是动态 import 的,player 落地前 container 是空的。fill 模式
    的高度由父页面给(recon 的 player-pane),非 fill 模式这里兜一个下限 —— 否则 chunk
    一到,下文被顶开一次。player 挂上后 :empty 自动失效,不影响任何已有布局。 */

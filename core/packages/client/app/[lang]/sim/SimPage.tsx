@@ -100,6 +100,7 @@ import { isPgInteractionPuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles
 import { isTwistyPuzzle } from './twistyPuzzles';
 import AlgsPanel from './AlgsPanel';
 import PuzzleImageStudio, { type SimBridge } from '@/components/puzzle-image/PuzzleImageStudio';
+import { getNativePgSoftwareView } from '@/lib/native-pg-software-view';
 import type { DrawExport } from '@/components/puzzle-draw/types';
 import type { TwistyPlayerLike } from '@/components/puzzle-image/SimCaptureGroup';
 import type { TwistyPlaybackPlayer } from '@/lib/twisty-playback';
@@ -2250,13 +2251,28 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
         if (exportedSig) { exportedSig = ''; publishEngineSvg(null); }
         return;
       }
+      const softwareView = getNativePgSoftwareView(tp);
+      if (softwareView) {
+        stopNativeCompanion?.();
+        stopNativeCompanion = undefined;
+        nativeCompanionPlayer = null;
+        native2DActive = true;
+        twistyView = null;
+        const svg = softwareView.getSvg()?.outerHTML ?? null;
+        if (svg !== exportedSig) {
+          exportedSig = svg ?? '';
+          publishEngineSvg(svg);
+          setEngineSvgUnavailable(false);
+        }
+        return;
+      }
       if (isPgInteractionPuzzleId(puzzleParam)) {
         if (nativeCompanionPlayer !== tp) {
           stopNativeCompanion?.();
           nativeCompanionPlayer = tp;
           native2DActive = true;
           stopNativeCompanion = attachNative2DCompanion(tp as unknown as Native2DCompanionPlayer, {
-            current: () => !disposed && twistyPlayerRef.current === tp,
+            current: () => !disposed && twistyPlayerRef.current === tp && !getNativePgSoftwareView(tp),
             onUpdate: (frame) => {
               native2DActive = frame.status !== 'inactive';
               // The exact native SVG already includes the actual timeline

@@ -86,6 +86,7 @@ import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { pgRandomScramble } from '@/lib/pg-scramble';
 import { generateNativePuzzleScramble, isNativePuzzleId, isPgInteractionPuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { parseNativePuzzleAlg, simplifyNativePuzzleAlg } from '@cuberoot/puzzle-solvers/native-puzzle-model';
+import { getNativePgSoftwareView } from '@/lib/native-pg-software-view';
 import { cloudOptimalScramble } from '@/lib/cloud-optimal-scramble';
 import { useAuthUser, authActions } from '@/lib/auth-store';
 import { formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg, simplifySq1Alg, invertSq1Alg } from '@cuberoot/shared/sq1-notation';
@@ -2797,6 +2798,7 @@ export default function PlayerControls({
           onClick={() => {
             const next = { ...settings, scale: DEFAULT_SETTINGS.scale, viewAngle: DEFAULT_SETTINGS.viewAngle, viewGradient: DEFAULT_SETTINGS.viewGradient };
             onSettingsChange(next);
+            getNativePgSoftwareView(twistyPlayerRef?.current)?.resetView?.();
             if (world) resetWorldView(world, next);
           }}>{t('重置视角', 'Reset view')}</button>}
         {canvasTools}
@@ -2881,7 +2883,11 @@ export default function PlayerControls({
             {t('快捷键', 'Shortcuts')}
           </button>
           <ResetDefaultsButton
-            onReset={() => { onSettingsChange(DEFAULT_SETTINGS); if (world) resetWorldView(world, DEFAULT_SETTINGS); }}
+            onReset={() => {
+              onSettingsChange(DEFAULT_SETTINGS);
+              getNativePgSoftwareView(twistyPlayerRef?.current)?.resetView?.();
+              if (world) resetWorldView(world, DEFAULT_SETTINGS);
+            }}
             title={t('全部设置与视角恢复默认(不含快捷键)', 'Reset all settings & view to defaults (shortcuts unaffected)')}
           />
         </div>

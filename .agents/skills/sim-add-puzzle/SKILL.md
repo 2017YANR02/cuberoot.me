@@ -33,7 +33,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 制作 Radio Gem／Radio Fathom 时按 [深切二十面体分区](references/native-pg-puzzles.md#radio-gem-与-radio-fathom) 分别保留 Gem 的临界切深 `1/(φ⁴+φ²)` 和 Fathom 的 `0.05`，独立核对 440／560 贴片及 7／8 个可见块轨道，不复用同片数项目的分区。
 - 对二阶＋直升机等可见切缝重合的组合保留全部机制切面；分别核对 90° 面轴与 180° 棱轴、逐轴层数及交错转动，不以相同展开图或图标判定机制相同，见 [原生 PG 结构与接线](references/native-pg-puzzles.md#二阶直升机)。
 - 对 Radio Jewel 等恰有小块消失的临界切深保留解析精度，独立核对面分区、可见块数及切深两侧的负例，并在双语说明中写明保形转动与 jumbling 的支持边界。
-- 原生播放器在首次构造前检测 WebGL 能力，不可用时直接切换同一具名模型的二维展开图；跳过全部 3D 初始化，手动按钮经原生招式回调记录，导出调用原生二维 SVG 下载。
+- 原生播放器在首次构造前检测 WebGL 能力；`/sim` 的 Radio Gem／Radio Fathom 无 WebGL 时按 [兼容立体视图](references/native-pg-puzzles.md#兼容立体视图) 投影真实三维表面、复用原生时间线与拖层，导出当前立体帧；其余项目及内嵌播放器保留同模型二维回退，跳过原生 WebGL 初始化。
 - 先定转动元素:**面/层**(NxN/SQ1)、**角**(绕体对角线 120°,Dino/Redi/Ivy/Rex)、**棱**(绕棱中点轴 180°,Heli)、**面**(绕面法线,Megaminx/FTO)——它定轴集 + 状态周期表 + pivot 朝向。
 - 要打乱/解法但没 solver → 先按 skill `new-substep-solver` 分流；多个运行时共用的纯模型与生成器放 `@cuberoot/puzzle-solvers` 的公开出口，再回来接渲染，client `lib/` 只保留必要适配。
 - 保持原多面体形状的标准转才做；深切魔方的 jumble（转出原外形）不做。
@@ -178,7 +178,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 干净 worktree/新 clone 在 `core/` 运行 `pnpm --filter @cuberoot/client run build:deps`，按当前 `package.json` 构建完整共享依赖链，避免只构建 shared/visualcube 后漏掉新 package 出口。
 - `pnpm --filter @cuberoot/client typecheck`(tsgo)。
 - 用当前允许的浏览器工具打开实际可达的 `/zh/sim?puzzle=x`：① solved 对账参考轮廓；② 随机打乱立即应用终态，再单独播放打乱动画；③ 拖可抓件转动并核对新增 token，拖空白转视角；中心属于可抓件时按其当前归属选合法转轴。
-- WebGL 不可用时实测二维手动按钮、记录、公式播放和分享恢复，单独报告二维证据；这些动作、原生 tap 或离线手势测试都不能写成真实 3D 拖拽验收通过。
+- WebGL 不可用时按项目的实际显示路径验收；兼容立体模式必须在真实浏览器检查立体表面、拖层新增 token、视角、播放中间帧及当前帧导出，二维回退单独验证按钮、记录、播放和分享，不能以二维、原生 tap 或离线手势证据代替立体拖拽实测。
 - 图像浮层逐个 kind 实测 solved 和打乱态与 3D 的可见面、切分数、颜色、状态一致;测试锁 `schematicPoly` 朝外绕向和可见小面数,禁只验主画布或拿一个 kind 代测。
 - 转动动画抓中间帧；需确定性逐帧检查时用持久化本地脚本调用真实引擎 `beginMove`，独立渲染至少五个进度，并记录取证方式。浏览器内只使用当前工具允许的 UI、DOM、截图与日志，不注入私有 World 句柄；离线帧不能代替浏览器拖拽验收。
 - 遮挡定位在本地引擎 fixture 中分别隐藏 body/core 对照，再用 raycast 输出最近命中的角色与颜色图，区分 moving/stationary；不要仅凭一张截图推断几何错误。
