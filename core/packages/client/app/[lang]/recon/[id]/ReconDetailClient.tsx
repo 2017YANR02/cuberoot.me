@@ -3,6 +3,7 @@
 import PageHeading from '@/components/PageHeading';
 import PageBackLink from '@/components/PageBackLink';
 import MoreToggle from '@/components/MoreToggle';
+import dynamic from 'next/dynamic';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
 import { useCopy } from '@/hooks/useCopy';
 import { reconVideoGroups } from '@/lib/recon-video-url';
@@ -95,7 +96,11 @@ import { exportReconImages, type ReconImageFont, type ReconImageStyle } from './
 import { buildSimQuery, simPuzzleForReconEvent } from '@/lib/sim-recon-link';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
 
+const StageSolver = dynamic(() => import('@/components/StageSolver'), { ssr: false });
+
 const NOTATION_VIEWS = ['recon', 'source'] as const;
+const SOLVER_NOTATION_VIEWS = ['recon', 'source', 'solver'] as const;
+type NotationView = typeof SOLVER_NOTATION_VIEWS[number];
 
 const YOUTUBE_LOGO = '/assets/youtube_logo.svg';
 const BILIBILI_LOGO = '/assets/bilibili_logo.svg';
@@ -324,8 +329,10 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   const [crossNormalized, setCrossNormalized] = useState(false);
   const [wasteRemoved, setWasteRemoved] = useState(false);
   const [expandedCancellation, setExpandedCancellation] = useState<{ text: string; line: number } | null>(null);
-  const [sourceViewId, setSourceViewId] = useState<number | null>(null);
-  const sourceView = sourceViewId === solve.id;
+  const [selectedView, setSelectedView] = useState<{ id: number; view: NotationView } | null>(null);
+  const notationView = selectedView?.id === solve.id ? selectedView.view : 'recon';
+  const sourceView = notationView === 'source';
+  const solverView = notationView === 'solver';
   const sourceText = [scramble, solutionText].filter(Boolean).join('\n');
   const { copiedKey, copy: copySource } = useCopy();
   const imageRef = useRef<HTMLDivElement>(null);
@@ -348,6 +355,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   const puzzleId = getPuzzleId(solve.event);
   const scrambleCubeOrder = /^[2-7]x[2-7]x[2-7]$/.test(puzzleId) ? parseInt(puzzleId, 10) : null;
   const orientedText = crossNormalized && normalizedText ? normalizedText : solutionText;
+  const canSolveScramble = scrambleCubeOrder === 3 && Boolean(scramble.trim());
   const wasteFreeText = useMemo(() => scrambleCubeOrder === 3
     ? removeReconWaste(orientedText, scramble) : null, [scrambleCubeOrder, orientedText, scramble]);
   const baseDisplayText = wasteRemoved && wasteFreeText !== null ? wasteFreeText : orientedText;
@@ -416,8 +424,20 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   );
 
   return (
+    <>
+            {solve.recordType !== 'timing' && (solutionText || canSolveScramble) && <div className="detail-header-block detail-notation-toolbar">
+              <LiquidGlassChips items={canSolveScramble ? SOLVER_NOTATION_VIEWS : NOTATION_VIEWS} value={notationView}
+                onChange={view => setSelectedView({ id: solve.id, view })}
+                getLabel={view => view === 'solver' ? tr({ zh: '求解', en: 'Solve' }) : view === 'source' ? tr({ zh: '原始', en: 'Raw' }) : tr({ zh: '复盘', en: 'Recon' })}
+                ariaLabel={tr({ zh: '复盘展示方式', en: 'Reconstruction view' })} />
+              {!solverView && <><button type="button" className="detail-source-copy" title={notationCopyLabel} onClick={() => copySource(sourceView ? sourceText : fullCopyText, notationCopyKey)}>
+                {copiedKey === notationCopyKey ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+                <span className="sr-only" aria-live="polite">{copiedKey === notationCopyKey ? tr({ zh: '已复制', en: 'Copied' }) : notationCopyLabel}</span>
+              </button>
+              <ReconImageDownload onDownload={downloadImage} /></>}
+            </div>}
     <div className="detail-layout">
-      {solve.recordType !== 'timing' && <div className="detail-player-pane">
+      {solve.recordType !== 'timing' && !solverView && <div className="detail-player-pane">
         {/* 有解法 → 播放复盘;无解法(只录了 WCA 成绩 + 打乱)→ alg 为空,
             player 停在 setup(打乱)后的 3D 状态,至少能看到这个打乱。 */}
         <ReconPlayerCanvas
@@ -439,19 +459,9 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
 
         {solve.recordType !== 'timing' && (scramble || solutionText) && (
           <div className="detail-section">
-            {solutionText && <div className="detail-notation-toolbar">
-              <LiquidGlassChips items={NOTATION_VIEWS} value={sourceView ? 'source' : 'recon'}
-                onChange={view => setSourceViewId(view === 'source' ? solve.id : null)}
-                getLabel={view => view === 'source' ? tr({ zh: '原始', en: 'Raw' }) : tr({ zh: '复盘', en: 'Recon' })}
-                ariaLabel={tr({ zh: '复盘展示方式', en: 'Reconstruction view' })} />
-              <button type="button" className="detail-source-copy" title={notationCopyLabel} onClick={() => copySource(sourceView ? sourceText : fullCopyText, notationCopyKey)}>
-                {copiedKey === notationCopyKey ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
-                <span className="sr-only" aria-live="polite">{copiedKey === notationCopyKey ? tr({ zh: '已复制', en: 'Copied' }) : notationCopyLabel}</span>
-              </button>
-              <ReconImageDownload onDownload={downloadImage} />
-            </div>}
+            {solverView && canSolveScramble && <StageSolver key={solve.id} scramble={scramble} lang={isZh ? 'zh' : 'en'} compact />}
             {sourceView && <pre className="detail-source-text" tabIndex={0} aria-label={tr({ zh: '复盘原文', en: 'Reconstruction source' })}><code>{sourceText}</code></pre>}
-            <div className="detail-scramble-solution" ref={imageRef} hidden={sourceView}>
+            <div className="detail-scramble-solution" ref={imageRef} hidden={sourceView || solverView}>
             <ReconNotationBlock captionHeader={captionHeader} scramble={scramble} scrambleCubeOrder={scrambleCubeOrder}
               cancellationLines={cancellationLines} expandedCancellationLine={expandedCancellationLine}
               onToggleCancellation={line => setExpandedCancellation(expandedCancellationLine === line ? null : { text: baseDisplayText, line })}
@@ -557,6 +567,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
         <CommentsView comments={comments} reconId={solve.id} onUpdate={onUpdate} />
       </div>
     </div>
+    </>
   );
 }
 
@@ -1077,7 +1088,6 @@ function SameScrambleNav({ solve, initial }: { solve: ReconSolve; initial?: Reco
                 <WcaPersonTeamBadge wcaId={s.personId} linked={false} />{s.personId && <Flag iso2={personFlagIso2(s.personId)} className="yt-comment-flag" />}
                 {displayCuberName(s.person ?? '', isZh)}
               </span>
-              {s.method && <span className="ss-method">{s.method}</span>}
             </Link>
           );
         })}
