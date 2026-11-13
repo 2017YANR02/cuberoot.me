@@ -22,17 +22,44 @@ function isPublicRoute(route: string) {
 export function indexPublicHtml(route: string, html: string) {
   if (!isPublicRoute(route)) return null;
   const { document } = parseHTML(html);
+  if (!document.documentElement) return null;
   if (document.querySelector('meta[name="robots"]')?.getAttribute('content')?.includes('noindex')) return null;
   const title = document.querySelector('title')?.textContent ?? route;
   document.querySelectorAll('div[hidden][id]').forEach(n=>{if (/^S:[0-9a-f]+$/i.test(n.id)) n.removeAttribute('hidden');});
   document.querySelectorAll('header,footer').forEach(n=>{if(!n.closest('main,article'))n.remove();});
   document.querySelectorAll('script,style,nav,form,button,[hidden],[aria-hidden="true"]').forEach(n=>n.remove());
+  const sourceType=/regulation|rules/.test(route)?'rule' as const:/tutorial|guide/.test(route)?'tutorial' as const:/help|timer|frame-count/.test(route)?'help' as const:'reference' as const;
+  const sourceVersion=document.querySelector('meta[name="source-version"]')?.getAttribute('content')?.slice(0,100);
+  const modified=document.querySelector('meta[property="article:modified_time"],meta[itemprop="dateModified"]')?.getAttribute('content') ?? undefined;
+  const sourceUpdated=modified && !Number.isNaN(Date.parse(modified))?modified:undefined;
+  const sections:Array<{id:string;title:string;path:string[];clause?:string;parentId?:string;relatedIds?:string[];text:string}>=[];
+  const scope=document.querySelector('main') ?? document.body;
+  const headings:Array<{level:number;title:string;id:string}>=[];
+  let remaining=60000;
+  for(const node of scope?.querySelectorAll('h1,h2,h3,h4,p,li,pre,tr') ?? []) {
+    const own=node.cloneNode(true) as typeof node;
+    if(node.matches('p,li,pre,tr'))own.querySelectorAll('p,li,pre,tr').forEach(child=>child.remove());
+    const text=own.textContent?.replace(/\s+/g,' ').trim();if(!text || remaining<=0)continue;
+    const clause=/^\s*([A-Za-z]?\d+[a-z]?(?:\d+)?\+?)(?:[).:：-]|\s)/.exec(text)?.[1];
+    const heading=/^H[1-4]$/.test(node.tagName);
+    if(heading){const level=Number(node.tagName[1]);while(headings.length && headings.at(-1)!.level>=level)headings.pop();}
+    if(heading || clause || !sections.length) {
+      const preferred=(node.id || clause || `section-${sections.length}`).slice(0,130);
+      const id=sections.some(s=>s.id===preferred)?`${preferred}-${sections.length}`:preferred;
+      const parentClause=clause?sections.filter(s=>s.clause && clause!==s.clause && clause.startsWith(s.clause)
+        && !(/\d$/.test(s.clause) && /^\d/.test(clause.slice(s.clause.length)))).sort((a,b)=>b.clause!.length-a.clause!.length)[0]:undefined;
+      sections.push({id,title:(heading?text:clause ?? title).slice(0,500),path:[...headings.map(h=>h.title),...(heading?[text]:clause?[clause]:[])].slice(0,8).map(t=>t.slice(0,500)),clause,parentId:parentClause?.id ?? headings.at(-1)?.id,relatedIds:[],text:''});
+      if(heading)headings.push({level:Number(node.tagName[1]),title:text.slice(0,500),id});
+    }
+    const section=sections.at(-1)!;const part=text.slice(0,Math.max(0,remaining-2));section.text+=(section.text?'\n\n':'')+part;remaining-=part.length+2;
+    section.relatedIds=[...new Set([...(section.relatedIds ?? []),...([...node.querySelectorAll('a[href^="#"]')].map(a=>a.getAttribute('href')!.slice(1,151)))])].slice(0,30);
+  }
   // Preserve paragraphs/headings so retrieval can cite a relevant section.
   document.querySelectorAll('h1,h2,h3,h4,p,li,pre,tr,section,article').forEach(node=>node.appendChild(document.createTextNode('\n\n')));
   const body=(document.querySelector('main') ?? document.body)?.textContent ?? '';
   const text=body.replace(/[^\S\n]+/g,' ').replace(/ *\n */g,'\n').replace(/\n{3,}/g,'\n\n').trim();
   if (text.length<80) return null;
-  return { lang:route.startsWith('/zh/')?'zh':'en', href:route.replace(/^\/(en|zh)/,''),title,text:text.slice(0,60000) };
+  return { lang:route.startsWith('/zh/')?'zh':'en', href:route.replace(/^\/(en|zh)/,''),title,text:text.slice(0,60000),sourceType,sourceVersion,sourceUpdated,sections:sections.slice(0,1000) };
 }
 
 /** On-demand public pages are in the existing sitemap but have no build HTML.
@@ -50,7 +77,7 @@ export function discoverPublicPages(xml: string, labels: Map<string,string>, ren
       const route=`/${lang}${href}`;
       if (!isPublicRoute(route) || rendered.has(route)) continue;
       rendered.add(route);
-      pages.push({lang,href,title:labels.get(route) ?? href.split('/').filter(Boolean).join(' · '),text:''});
+      pages.push({lang,href,title:labels.get(route) ?? href.split('/').filter(Boolean).join(' · '),text:'',sourceType:'reference',sourceVersion:undefined,sourceUpdated:undefined,sections:[]});
     }
   }
   return pages;
@@ -177,12 +204,14 @@ async function main() {
     const href='/timer';
     const text=TIMER_TRAINING_HELP.paragraphs.map(p=>p[lang]).join('\n\n');
     const existing=pages.find(page=>page.lang===lang && page.href===href);
-    if(existing) existing.text=[existing.text,text].filter(Boolean).join('\n\n');
-    else pages.push({lang,href,title:TIMER_TRAINING_HELP.title[lang],text});
+    if(existing) {existing.text=[existing.text,text].filter(Boolean).join('\n\n');existing.sections.push({id:'training-help',title:TIMER_TRAINING_HELP.title[lang],path:[TIMER_TRAINING_HELP.title[lang]],text});}
+    else pages.push({lang,href,title:TIMER_TRAINING_HELP.title[lang],text,sourceType:'help',sourceVersion:undefined,sourceUpdated:undefined,sections:[{id:'training-help',title:TIMER_TRAINING_HELP.title[lang],path:[TIMER_TRAINING_HELP.title[lang]],text}]});
     destinations.set(lang+href,{...destinations.get(lang+href),lang,href,title:TIMER_TRAINING_HELP.title[lang]});
   }
   await mkdir('public/assistant',{recursive:true});
-  await writeFile('public/assistant/pages.json',JSON.stringify({version:2,updated:new Date().toISOString(),pages,destinations:[...destinations.values()]}));
+  const releaseId=process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || undefined;
+  const coverage={pages:pages.length,bodyPages:pages.filter(p=>p.text.trim()).length,navigationOnly:pages.filter(p=>!p.text.trim()).length,structuredPages:pages.filter(p=>p.sections.length).length};
+  await writeFile('public/assistant/pages.json',JSON.stringify({version:3,updated:new Date().toISOString(),releaseId,coverage,pages,destinations:[...destinations.values()]}));
   console.log(`Assistant content index: ${pages.length} public pages (${discovered.length} read on demand)`);
 }
 if (path.basename(process.argv[1] ?? '')==='build-assistant-index.ts') {

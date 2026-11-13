@@ -27,7 +27,7 @@ export interface AssistantMetrics {
   reranks: Array<{ model: string; candidates: number; tokens: number | null; ms: number; status: string; grossCny: number | null; tariff?: unknown }>;
   policy: { version: string; thinking: AssistantThinkingMode };
   tools: Record<string, number>;
-  retrievals: Array<{ mode: string; reason?: string; generation?: string; hits: Array<{ id: string; href: string; score?: number }> }>;
+  retrievals: Array<{ mode: string; reason?: string; generation?: string; expectedGeneration?:string;releaseId?:string;expectedReleaseId?:string;indexReady?:boolean;coverage?:{pages:number;bodyPages:number;navigationOnly:number;structuredPages:number;datedPages:number};degradedMs?:number;alert?:boolean;hits: Array<{ id: string; href: string; score?: number }> }>;
   cost?: { grossCny: number; unpricedCalls: number };
 }
 const scope = new AsyncLocalStorage<AssistantMetrics>();
@@ -66,9 +66,23 @@ export function recordAssistantSearch(origin: string) {
   };
 }
 
+let degradation:{since:number;lastAlert:number}|undefined;
+export function assistantRetrievalHealth(value:{mode:string;reason?:string},now=Date.now()) {
+  if(value.mode==='hybrid'){degradation=undefined;return {degradedMs:0,alert:false};}
+  // Local fallback is recorded after the cause. It must not begin an incident
+  // merely because a healthy hybrid search returned no relevant candidates.
+  if(value.mode==='local_lexical' && !degradation)return {degradedMs:0,alert:false};
+  degradation ??={since:now,lastAlert:0};
+  const degradedMs=Math.max(0,now-degradation.since);
+  const alert=degradedMs>=15*60_000 && now-degradation.lastAlert>=15*60_000;
+  if(alert)degradation.lastAlert=now;
+  return {degradedMs,alert};
+}
 export function recordAssistantRetrieval(value: AssistantMetrics['retrievals'][number]) {
+  const health=assistantRetrievalHealth(value);
+  if(health.alert && !process.env.VITEST)console.warn(JSON.stringify({event:'site_assistant_retrieval_degraded',mode:value.mode,reason:value.reason,degradedMs:health.degradedMs}));
   const metrics = scope.getStore();
-  if (metrics && metrics.retrievals.length < 30) metrics.retrievals.push({ ...value, hits: value.hits.slice(0, 6).map(hit => ({ id: hit.id, href: hit.href, ...(hit.score == null ? {} : { score: Number(hit.score) }) })) });
+  if (metrics && metrics.retrievals.length < 30) metrics.retrievals.push({ ...value,...health, hits: value.hits.slice(0, 6).map(hit => ({ id: hit.id, href: hit.href, ...(hit.score == null ? {} : { score: Number(hit.score) }) })) });
 }
 
 export function recordAssistantRerank(model: string, candidates: number, origin = '') {

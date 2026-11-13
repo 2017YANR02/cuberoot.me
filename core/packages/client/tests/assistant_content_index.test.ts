@@ -94,9 +94,22 @@ describe('assistant build-time public content index',()=>{
   it('discovers on-demand chapters from the site sitemap without reindexing excluded pages',()=>{
     const xml='<urlset>'+['math/group/what-is-a-group','courses/secret','account','wiki','math/group/what-is-a-group'].map(p=>`<url><loc>https://cuberoot.me/${p}</loc></url>`).join('')+'<url><loc>https://evil.example/math</loc></url></urlset>';
     const pages=discoverPublicPages(xml,new Map([['/zh/math/group/what-is-a-group','什么是群']]),new Set(['/en/wiki','/zh/wiki']));
-    expect(pages).toEqual([
+    expect(pages.map(({lang,href,title,text})=>({lang,href,title,text}))).toEqual([
       {lang:'en',href:'/math/group/what-is-a-group',title:'math · group · what-is-a-group',text:''},
       {lang:'zh',href:'/math/group/what-is-a-group',title:'什么是群',text:''},
     ]);
+  });
+  it('retains parent rule text and nested exceptions with source metadata',()=>{
+    const result=indexPublicHtml('/zh/regulations',`<html><head><title>规则</title><meta name="source-version" content="2026-10"><meta property="article:modified_time" content="2026-10-01"></head><body><main><h1>参赛规则</h1><ul><li id="2e">2e 报名需要年满十二岁。<ul><li id="2e1">2e1 例外：十一岁选手获得监护人书面同意可以报名。</li></ul></li></ul><p>${'其他说明。'.repeat(20)}</p></main></body></html>`)!;
+    expect(result).toMatchObject({sourceType:'rule',sourceVersion:'2026-10',sourceUpdated:'2026-10-01'});
+    expect(result.sections.find(s=>s.id==='2e')?.text).toContain('需要年满十二岁');
+    expect(result.sections.find(s=>s.id==='2e')?.text).not.toContain('十一岁');
+    expect(result.sections.find(s=>s.id==='2e1')).toMatchObject({parentId:'2e',clause:'2e1'});
+    expect(indexPublicHtml('/zh/regulations','<html><body><main>'+result.text.repeat(2)+'</main></body></html>')?.sourceUpdated).toBeUndefined();
+  });
+  it('does not treat a shared digit prefix as a parent rule',()=>{
+    const result=indexPublicHtml('/zh/regulations','<html><body><main><p>1 第一条</p><p>10 第十条</p><p>2e 报名</p><p>2e1 一项条件</p><p>2e10 另一项条件</p><p>'+('正文。'.repeat(30))+'</p></main></body></html>')!;
+    expect(result.sections.find(section=>section.clause==='10')?.parentId).toBeUndefined();
+    expect(result.sections.find(section=>section.clause==='2e10')?.parentId).toBe('2e');
   });
 });

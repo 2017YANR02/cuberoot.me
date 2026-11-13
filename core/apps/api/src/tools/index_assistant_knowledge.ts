@@ -3,10 +3,21 @@ import { startAssistantMonitor } from '../utils/site_assistant_monitor.js';
 import { createCompetitionProof, COMPETITION_SERVICE_HEADER } from '@cuberoot/shared/competition-access';
 import { assistantEmbeddingConfig, embedKnowledge } from '../utils/site_assistant_embedding.js';
 import { knowledgeIndexSchema } from '../utils/site_assistant_knowledge.js';
-import { knowledgeDatabase, indexKnowledge } from '../utils/site_assistant_knowledge_db.js';
+import { knowledgeDatabase, indexKnowledge, rollbackKnowledge } from '../utils/site_assistant_knowledge_db.js';
 
 let phase='configuration';
 async function main() {
+  const argument=(name:string)=>process.argv.find(value=>value.startsWith(`--${name}=`))?.slice(name.length+3);
+  const rollbackFrom=argument('rollback-from'),rollbackTo=argument('rollback-to');
+  if(rollbackFrom || rollbackTo) {
+    phase='rollback';
+    if(process.platform!=='linux')throw new Error('Run operational rollback on the Linux server; local fixtures use rollbackKnowledge directly');
+    if(!/^[a-f0-9]{64}$/.test(rollbackFrom ?? '') || !/^[a-f0-9]{64}$/.test(rollbackTo ?? ''))throw new Error('Explicit current and target generation hashes are required');
+    const db=knowledgeDatabase();
+    try {console.log(JSON.stringify({event:'assistant_knowledge_rollback',...await rollbackKnowledge(db,rollbackFrom!,rollbackTo!)}));}
+    finally {await db.end({timeout:0});}
+    return;
+  }
   if (process.env.SITE_ASSISTANT_KNOWLEDGE_ENABLED === '0') { console.log('Assistant knowledge indexing disabled'); return; }
   const config = assistantEmbeddingConfig();
   if (!config) throw new Error('Embedding configuration is missing');
@@ -25,7 +36,7 @@ async function main() {
   try { for(;;) { const {done,value}=await reader.read(); if(done) break; size+=value.byteLength; if(size>8_000_000) throw new Error('Public knowledge artifact exceeds 8 MB'); chunks.push(value); } }
   finally { await reader.cancel(); }
   const index = knowledgeIndexSchema.parse(JSON.parse(Buffer.concat(chunks).toString('utf8')));
-  if(index.version !== 2) throw new Error('Deploy the version 2 public content index before enabling knowledge indexing');
+  if(index.version !== 2 && index.version !== 3) throw new Error('Deploy a supported version 2 or 3 public content index before enabling knowledge indexing');
   let embedded=0;
   const budget=Number(process.env.SITE_ASSISTANT_EMBEDDING_JOB_LIMIT || 2000);
   if(!Number.isSafeInteger(budget) || budget<1 || budget>30000) throw new Error('Invalid embedding job budget');

@@ -6,7 +6,12 @@ CREATE TABLE IF NOT EXISTS site_assistant_knowledge_state (
   corpus_hash text NOT NULL,
   embedding_identity text NOT NULL,
   source_updated timestamptz NOT NULL,
-  published_at timestamptz NOT NULL DEFAULT now()
+  published_at timestamptz NOT NULL DEFAULT now(),
+  release_id text,
+  chunk_version text,
+  coverage jsonb NOT NULL DEFAULT '{}',
+  chunk_count integer NOT NULL DEFAULT 0,
+  previous_snapshot jsonb
 );
 CREATE TABLE IF NOT EXISTS site_assistant_knowledge_chunks (
   generation text NOT NULL,
@@ -20,6 +25,7 @@ CREATE TABLE IF NOT EXISTS site_assistant_knowledge_chunks (
   embedding_identity text NOT NULL,
   search tsvector NOT NULL,
   embedding vector(512) NOT NULL,
+  metadata jsonb NOT NULL DEFAULT '{}',
   PRIMARY KEY (generation,id)
 );
 CREATE INDEX IF NOT EXISTS assistant_knowledge_search ON site_assistant_knowledge_chunks USING gin(search);

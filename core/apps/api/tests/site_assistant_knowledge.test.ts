@@ -30,6 +30,15 @@ it('retries an offline timeout but not access denial or caller cancellation',asy
   expect(aborted).not.toHaveBeenCalled();
 });
 describe('assistant public knowledge retrieval',()=>{
+  it('keeps repeated legacy paragraph labels distinct without accepting duplicate explicit section IDs',async()=>{
+    const corpus={...index,pages:[{...index.pages[0],text:'1. OLL solves orientation.\n\n2. PLL solves permutation.\n\n1. Another numbered example.'}]};
+    const chunks=await chunkKnowledge(corpus);
+    expect(chunks.map(c=>c.clause)).toEqual(['1','2','1']);
+    expect(new Set(chunks.map(c=>c.sectionId)).size).toBe(3);
+    expect(chunks.map(c=>c.content).join('\n')).toContain('Another numbered example.');
+    const section={id:'1',title:'One',path:['One'],text:'Some content.'};
+    await expect(chunkKnowledge({...index,pages:[{...corpus.pages[0],sections:[section,section]}]})).rejects.toThrow('Duplicate knowledge section');
+  });
   it('segments Chinese words, restricts language, and keeps source citations',async()=>{
     expect(knowledgeTokens('计时器训练','zh')).toContain('训练');
     const hits=await lexicalKnowledge(index,'怎么练公式','zh');
