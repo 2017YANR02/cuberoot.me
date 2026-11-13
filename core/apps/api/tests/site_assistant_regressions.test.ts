@@ -24,10 +24,11 @@ it('retrieves the complete defect family and examples instead of lending an edge
   expect(result[0].content.match(/One part with one colored face/g)).toHaveLength(1);
 });
 
-it('does not present a partially retained family as a complete rule',()=>{
+it('distinguishes a complete retained family from an oversized omitted family',()=>{
   const html='<html><body><ul><li id="A3">'+('Inspection. '.repeat(2000))+'</li><li id="A4">Timer start.<ul><li id="A4d">The timer starts the solve.</li></ul></li></ul></body></html>';
   const [result]=officialRegulationPassages(html,[{href:'/regulation/speed-solving',content:'A3 A4d'}]);
   expect(result.metadata.clauses).toEqual(['A4','A4d']);expect(result.relatedOmitted).toBe(true);
+  expect(result.metadata.completeFamilies).toEqual(['A4']);expect(result.metadata.omittedFamilies).toEqual(['A3']);
 });
 
 it('resolves full-text clause references and includes their linked starting conditions in one read',()=>{
@@ -36,6 +37,7 @@ it('resolves full-text clause references and includes their linked starting cond
   const [result]=officialRegulationPassages(html,[excerpt]);
   expect(result.id).toBe('wca:regulations:A');
   expect(result.metadata.clauses).toEqual(['A3','A3a','A4','A4d','A4d1','A4d1+','A4d2','A4d2+']);
+  expect(result.metadata.completeFamilies).toEqual(['A3','A4']);expect(result.metadata.omittedFamilies).toEqual(['A1']);
   expect(result.relatedOmitted).toBe(true);
   expect(regulationExcerptArticles({href:'/regulation/full',content:'Unknown article Z9'})).toEqual([]);
   expect(regulationExcerptArticles({href:'/forum',content:'A4d'})).toEqual([]);

@@ -93,7 +93,10 @@ export function officialRegulationPassages(html:string,excerpts:Excerpt[],query=
       kept.push(...group);remaining-=size;
     }
     if(!kept.length)return [];
+    const family=(id:string)=>id.match(/^(?:\d+[a-z]|[A-Z]\d)/)![0];
+    const completeFamilies=[...new Set(kept.map(c=>family(c.id)))];
+    const omittedFamilies=[...new Set(chapter.map(c=>family(c.id)))].filter(id=>!completeFamilies.includes(id));
     return [{id:`wca:regulations:${article}`,title:`WCA Regulations — Article ${article}`,href:sourceUrl+`#${kept[0].id}`,
-      content:kept.map(c=>c.text).join('\n'),metadata:{sourceType:'rule',authority:'WCA official regulations',sourceVersion:version,...(snapshot?{snapshot:true,canonicalUrl:WCA_REGULATIONS_URL,instruction:'Published official English full-text snapshot at the stated version. Do not claim the current official site was verified; cite this mirror and state the version when relevant.'}:{}),clauses:kept.map(c=>c.id)},relatedOmitted:kept.length!==chapter.length}];
+      content:kept.map(c=>c.text).join('\n'),metadata:{sourceType:'rule',authority:'WCA official regulations',sourceVersion:version,...(snapshot?{snapshot:true,canonicalUrl:WCA_REGULATIONS_URL,instruction:'Published official English full-text snapshot at the stated version. Do not claim the current official site was verified; cite this mirror and state the version when relevant.'}:{}),clauses:kept.map(c=>c.id),completeFamilies,omittedFamilies,coverageInstruction:'Every listed completeFamily includes all its clauses, qualifications and examples from this source. Only omittedFamilies are missing from this chapter. Use relevant exceptions actually supplied when the user asks about special cases; an incomplete chapter does not make included families incomplete. Other chapters are outside this read; request a focused follow-up if their contents are needed.'},relatedOmitted:kept.length!==chapter.length}];
   });
 }
