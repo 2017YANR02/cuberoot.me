@@ -1,5 +1,31 @@
 .f2l-concept-video { min-width: 0; }
-.f2l-concept-count { text-align: right; color: var(--muted-foreground); font-size: .875rem; font-variant-numeric: tabular-nums; }
+.f2l-terminology-stage { position: relative; }
+.f2l-terminology-summary { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 40px; padding: 16px; text-align: center; }
+.f2l-terminology-triangle { position: relative; width: min(100%, 620px); height: 430px; flex-shrink: 0; margin-inline: auto; }
+.f2l-terminology-term { position: absolute; top: 36px; left: 50%; width: 140px; margin-left: -70px; transform: translate(var(--term-x, 0px), var(--term-y, 0px)); transition: transform 500ms cubic-bezier(.22, 1, .36, 1); }
+.f2l-terminology-term:nth-child(2) { top: 194px; left: 24%; }
+.f2l-terminology-term:nth-child(3) { top: 194px; left: 76%; }
+.f2l-terminology-triangle[data-active-term='0'] .f2l-terminology-term:nth-child(2) { --term-x: -10px; --term-y: 8px; }
+.f2l-terminology-triangle[data-active-term='0'] .f2l-terminology-term:nth-child(3) { --term-x: 10px; --term-y: 8px; }
+.f2l-terminology-triangle[data-active-term='1'] .f2l-terminology-term:first-child { --term-x: 8px; --term-y: -8px; }
+.f2l-terminology-triangle[data-active-term='1'] .f2l-terminology-term:nth-child(3) { --term-x: 12px; }
+.f2l-terminology-triangle[data-active-term='2'] .f2l-terminology-term:first-child { --term-x: -8px; --term-y: -8px; }
+.f2l-terminology-triangle[data-active-term='2'] .f2l-terminology-term:nth-child(2) { --term-x: -12px; }
+.f2l-page .f2l-terminology-summary h3 { margin: 12px 0 0; font-size: clamp(1rem, 2vw, 1.25rem); }
+.f2l-terminology-thumbnail { display: inline-flex; width: 88px; aspect-ratio: 1; padding: 0; border: 0; background: none; cursor: zoom-in; transform-origin: center bottom; transition: transform 500ms cubic-bezier(.22, 1, .36, 1); }
+.f2l-terminology-thumbnail > .puzzle-art { width: 100% !important; height: auto !important; }
+.f2l-terminology-term[data-active='true'] .f2l-terminology-thumbnail { transform: scale(1.65); cursor: zoom-out; }
+.f2l-terminology-thumbnail:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.f2l-terminology-description { position: absolute; inset: auto 0 0; height: 86px; }
+.f2l-terminology-description p { position: absolute; inset: 0; margin: 0; padding-inline: 12px; font-size: 1rem; line-height: 1.7; opacity: 0; transform: translateY(5px); transition: opacity 250ms ease, transform 350ms ease; pointer-events: none; }
+.f2l-terminology-description p[data-visible='true'] { opacity: 1; transform: translateY(0); }
+@media (max-width: 700px) {
+  .f2l-terminology-summary { padding-inline: 0; }
+  .f2l-terminology-description p { font-size: .875rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .f2l-terminology-term, .f2l-terminology-thumbnail, .f2l-terminology-description p { transition: none; }
+}
 .f2l-concept-scene { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 28px; }
 .f2l-concept-caption { min-width: 0; text-align: center; }
 .f2l-concept-caption p { font-size: 1.5rem; line-height: 1.65; }
@@ -24,7 +50,7 @@
 .f2l-concept-result svg { flex-shrink: 0; }
 .f2l-concept-video > .playback-bar { max-width: 560px; margin-inline: auto; }
 /* PlaybackBar's five standard controls: keep play (third) and the trailing reset. */
-.f2l-concept-video .playback-bar-controls > .playback-bar-btn:is(:nth-child(1), :nth-child(2), :nth-child(4), :nth-child(5)) { display: none; }
+.f2l-lbl-intro > .playback-bar .playback-bar-controls > .playback-bar-btn:is(:nth-child(1), :nth-child(2), :nth-child(4), :nth-child(5)) { display: none; }
 .f2l-concept-video .playback-bar-controls { flex-wrap: nowrap; }
 @media (max-width: 700px) {
   .f2l-concept-scene { grid-template-columns: minmax(0, 1fr); gap: 8px; }

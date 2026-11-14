@@ -4,3 +4,5 @@
 /* The three shots run continuously; transport offers pause and replay only. */
 .f2l-lbl-intro > .playback-bar .playback-bar-scrub { display: none; }
 .f2l-lbl-intro .f2l-concept-caption { min-height: 180px; display: flex; flex-direction: column; justify-content: center; }
+.f2l-intro-methods .f2l-cube { position: relative; }
+.chat-bubble.f2l-intro-result { position: absolute; bottom: 85%; left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 8px); font-size: .875rem; line-height: 1.5; text-align: center; pointer-events: none; }

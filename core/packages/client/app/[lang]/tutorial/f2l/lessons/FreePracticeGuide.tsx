@@ -64,7 +64,7 @@ export default function FreePracticeGuide({ table, orientation, onClose }: {
         </div>
       </section>
       <section className="f2l-guidance">
-        <p className="f2l-caption"><T zh="使用方法" en="How to use" /> · {index + 1}/{scenes.length}</p>
+        <p className="f2l-caption"><T zh="使用方法" en="How to use" /></p>
         <p aria-live="polite">{tr(scene.text)}</p>
         {index >= 6 && exercise?.alg && <div className="f2l-free-guide-algs">
           <p className="f2l-free-guide-scramble"><Tooltip content={tr({ zh: '打乱', en: 'Scramble' })}>{tip =>

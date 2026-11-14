@@ -39,6 +39,7 @@ const edge = ['F5', 'R3'];
 const corner = ['D2', 'F8', 'R6'];
 const pair = [...edge, ...corner];
 export { pair as NONSTANDARD_INTRO_PAIR_STICKERS };
+export const TERMINOLOGY_OUTRO_MS = 3400;
 const topSetup = "R U R'";
 const setupOf = (name: string) => catalog.cases.find(item => item.name === name)!.setup;
 const homeStickers = [...'URFDLB'].flatMap(face => Array.from({ length: 9 }, (_, index) => `${face}${index}`));
@@ -189,5 +190,6 @@ export function nonstandardIntroScenes(edgeSetup: string, cornerSetup: string, o
       caption: { zh: '接下来挑一组棱角，看看它们该回哪个槽', en: 'Next, let’s pick a pair and see which slot it belongs in' },
       highlight: [],
     }],
-  }, { ...scenes[1], moveDuration: 950, fadeInPair: true }, ...scenes.slice(2, firstNonstandard)];
+  }, { ...scenes[1], moveDuration: 950, fadeInPair: true }, ...scenes.slice(2, firstNonstandard).map((scene, index, remaining) =>
+    index === remaining.length - 1 ? { ...scene, duration: scene.duration + TERMINOLOGY_OUTRO_MS } : scene)];
 }

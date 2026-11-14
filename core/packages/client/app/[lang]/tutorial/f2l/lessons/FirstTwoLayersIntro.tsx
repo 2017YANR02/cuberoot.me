@@ -5,6 +5,7 @@ import { Color } from 'three';
 import { RotateCcw } from 'lucide-react';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import PlaybackBar from '@/components/PlaybackBar';
+import ChatBubble from '@/components/ChatBubble';
 import { FM_FIXED_COLOR, FM_IGNORED } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import type { CubeFace } from '@/lib/cube-colors';
@@ -108,12 +109,11 @@ export default function FirstTwoLayersIntro({ orientation, method, comparisonSta
   };
   const caption = comparisonStage === 'compare' ? (pairs ? { zh: 'F2L', en: 'F2L' } : { zh: '层先法', en: 'LBL' })
     : comparison && frame.time >= INTRO_INSPECTION_RETURN_MS
-      ? { zh: '接下来，看看层先法和 F2L 各自怎么完成前两层', en: 'Next, let’s see how LBL and F2L each solve the first two layers' }
+      ? { zh: '看看层先法和 F2L 各自怎么完成前两层', en: 'Let’s see how LBL and F2L each solve the first two layers' }
     : pairs && phase === 1 ? { zh: '每次一起复原一组棱角', en: 'Solve one corner–edge pair at a time' }
     : pairs && phase === 4 ? { zh: '四组棱角归位，前两层完成', en: 'All four pairs are in place — the first two layers are complete' } : captions[phase];
   const progressSegments = pairs ? [...segments, ...segments] : [...segments.slice(4), ...segments.slice(0, 4)];
   return <section className="f2l-concept-video f2l-lbl-intro" data-continuous="true" aria-label={pairs ? 'F2L' : tr({ zh: '层先法的前两层', en: 'The first two layers with LBL' })}>
-    {!comparison && <div className="f2l-concept-count">{phase === 0 ? 1 : phase < 3 ? 2 : 3} / 3</div>}
     <div className="f2l-concept-scene">
       <div className="f2l-cube">
         <AlgPlayer ref={player} puzzle="3x3" engine="sim" set="f2l-overview"
@@ -121,6 +121,9 @@ export default function FirstTwoLayersIntro({ orientation, method, comparisonSta
           fillPane controlMode="none" hideResetView interactionMode="none"
           moveDurationMs={timeline.moveMs}
           stickerColorOverrides={overrides} />
+        {comparisonStage === 'compare' && pairs && phase === 4 && <ChatBubble tail="bottom" className="f2l-intro-result" role="status">
+          {tr({ zh: '同时复原前2层，更高效', en: 'Solve the first two layers together, more efficiently' })}
+        </ChatBubble>}
       </div>
       <div className="f2l-concept-caption" aria-live="polite">
         <p>{tr(caption)}</p>

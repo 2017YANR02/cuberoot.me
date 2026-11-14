@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alg } from 'cubing/alg';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import ProgressSlider from '@/components/ProgressSlider';
+import VideoControls from '../components/VideoControls';
+import VideoStage from '../components/VideoStage';
 import { VisualCube } from '@/components/VisualCube';
 import { tr, T } from '@/i18n/tr';
 import { ORDERED_BASIC_CASES } from '../data/basic-cases';
@@ -123,6 +125,7 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
       <div className="f2l-study-main">
         {showTerminology ? <NonstandardIntro orientation={orientation} terminologyOnly /> :
         <div className="f2l-intro-film f2l-concept-video">
+        <VideoStage>
         <div ref={scene} className="f2l-intro-methods" data-stage={comparisonStage} data-playing={playing}>
           <div className="f2l-intro-method">
             <FirstTwoLayersIntro key={orientation} orientation={orientation} method="lbl"
@@ -135,11 +138,18 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
               controlledPlaying={playing} onReady={prepareRight} />
           </div>
         </div>
+        </VideoStage>
         <div className="f2l-intro-progress">
           <ProgressSlider value={time} max={INTRO_VIDEO_DURATION} disabled={!comparisonReady} onChange={seek}
             keyboardStep={500} onInteractionStart={beginScrub} onInteractionEnd={endScrub}
             formatValue={value => tr({ zh: `${(value / 1000).toFixed(1)} 秒`, en: `${(value / 1000).toFixed(1)} seconds` })}
             ariaLabel={tr({ zh: '演示进度', en: 'Animation progress' })} />
+          <VideoControls playing={playing} disabled={!comparisonReady}
+            onTogglePlay={() => {
+              if (comparisonComplete) { seek(0); setComparisonPlaying(true); }
+              else setComparisonPlaying(value => !value);
+            }}
+            onReplay={() => { seek(0); setComparisonPlaying(true); }} />
         </div>
         </div>}
         <StudyActions onPrevious={showTerminology ? () => setShowTerminology(false) : undefined}

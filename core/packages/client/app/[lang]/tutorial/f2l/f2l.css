@@ -223,7 +223,11 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
 .f2l-study-main.f2l-catalog-group { margin-top: 0; }
 .f2l-intro-players { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 24px; margin-top: 20px; }
 .f2l-intro-players > .f2l-demo > h3, .f2l-extraction > h3 { text-align: center; }
-.f2l-intro-progress { width: 100%; margin-top: 12px; }
+.f2l-intro-progress { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 12px; }
+.f2l-intro-progress > .f2l-video-controls { order: -1; flex: 0 0 auto; margin-top: 0; }
+.f2l-intro-progress > .progress-slider { flex: 1 1 0; min-width: 0; }
+.f2l-video-controls { margin-top: 12px; }
+.f2l-video-viewport, .f2l-video-stage { display: contents; }
 .f2l-intro-progress .progress-slider { display: block; width: 100%; margin: 0; touch-action: none; }
 .f2l-intro-methods { --f2l-intro-gap: 24px; --f2l-intro-scale: 1.4; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--f2l-intro-gap); margin-top: 20px; padding-top: 48px; }
 .f2l-intro-method { min-width: 0; }
@@ -307,6 +311,8 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
   .f2l-page:not(.f2l-practice-page) .f2l-chapter { min-height: 0; margin-top: 14px; }
   .f2l-page:not(.f2l-practice-page) .f2l-chapter-body { height: 100%; min-height: 0; padding-bottom: 64px; }
   .f2l-page:not(.f2l-practice-page) .f2l-lesson-scroll {
+    display: flex;
+    flex-direction: column;
     height: 100%;
     overflow: auto;
     overscroll-behavior-y: contain;
@@ -315,11 +321,69 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
     box-sizing: border-box;
   }
   .f2l-page:not(.f2l-practice-page) .f2l-lesson-scroll::-webkit-scrollbar { display: none; }
-  .f2l-page:not(.f2l-practice-page) .f2l-chapter-dialogue { min-height: 0; gap: 8px; margin-bottom: 12px; }
+  .f2l-page:not(.f2l-practice-page) .f2l-chapter-dialogue { height: clamp(84px, calc(25dvh - 106px), 144px); min-height: 0; gap: 8px; margin-bottom: 12px; overflow-y: auto; flex-shrink: 0; }
+  .f2l-page:not(.f2l-practice-page) .f2l-chapter-dialogue > .chat-bubble { flex-shrink: 0; }
+  .f2l-page:not(.f2l-practice-page) .f2l-study-layout { flex: 1 1 0; min-height: 0; align-items: stretch; }
+  .f2l-page:not(.f2l-practice-page) .f2l-section-nav { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+  .f2l-page:not(.f2l-practice-page) .f2l-study-main {
+    container-type: size;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-width: thin;
+  }
+  .f2l-page:not(.f2l-practice-page) .f2l-study-main > * { flex-shrink: 0; }
+  .f2l-page:not(.f2l-practice-page) .f2l-study-main:has(.f2l-video-viewport) { overflow: clip; }
+  /* Each film uses the same stage and transport space, regardless of its number of cubes. */
+  .f2l-page .f2l-study-main > :is(.f2l-concept-video, .f2l-free-guide) {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+  .f2l-page .f2l-video-viewport { display: block; position: relative; flex: 1 1 0; min-height: 0; }
+  .f2l-page .f2l-video-stage {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    height: 496px;
+    transform: translateY(-50%) scale(var(--f2l-video-scale, 1));
+    transform-origin: center;
+  }
+  .f2l-page .f2l-video-stage > :is(.f2l-concept-scene, .f2l-study-lesson, .f2l-intro-methods) {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: visible;
+    align-items: center;
+    margin-top: 0;
+  }
+  .f2l-page .f2l-free-guide .f2l-video-stage > .f2l-study-lesson { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .f2l-page .f2l-study-main > :is(.f2l-concept-video, .f2l-free-guide) > :is(.f2l-intro-progress, .f2l-free-guide-progress) {
+    box-sizing: border-box;
+    height: 104px;
+    flex: 0 0 104px;
+    margin-top: 0;
+    padding: 8px 0 0;
+  }
+  /* Reserve every shot's caption/progress footprint before playback starts. */
+  .f2l-page .f2l-study-main > .f2l-concept-video > .f2l-intro-progress { height: 48px; flex-basis: 48px; }
+  .f2l-page .f2l-intro-methods { box-sizing: border-box; padding-top: 16px; }
+  .f2l-page .f2l-intro-methods > .f2l-intro-method,
+  .f2l-page .f2l-intro-methods .f2l-lbl-intro { height: 100%; min-height: 0; }
+  .f2l-page .f2l-intro-methods .f2l-concept-scene { height: 100%; grid-template-rows: minmax(0, 1fr) 150px; }
+  .f2l-page .f2l-intro-methods .f2l-cube { width: min(100%, 360px); margin-bottom: 0; align-self: center; }
+  .f2l-page .f2l-intro-methods .f2l-concept-caption { height: 150px; }
+  .f2l-page .f2l-intro-methods .f2l-concept-caption p { height: 52px; flex-shrink: 0; }
+  .f2l-page .f2l-intro-methods[data-stage='cross'] .f2l-concept-caption p { transform: translateY(24px); }
   .f2l-page:not(.f2l-practice-page) .f2l-study-actions { padding-top: 8px; }
   .f2l-page:not(.f2l-practice-page) .f2l-cube { max-width: min(440px, max(240px, calc(100dvh - 340px))); }
+  .f2l-page:not(.f2l-practice-page) .f2l-video-stage .f2l-cube { max-width: 440px; }
 }
 @media (max-width: 760px) {
+  /* Reserve the opening cube's clearance throughout the split animation. */
+  .f2l-intro-methods .f2l-cube { margin-bottom: 48px; }
   .f2l-chapter-dialogue { display: none; }
   .f2l-page .f2l-chapter-body { min-height: 0; padding-bottom: 0; }
   .f2l-page .f2l-study-layout { grid-template-columns: minmax(0, 1fr); }
