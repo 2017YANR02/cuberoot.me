@@ -1,5 +1,25 @@
 # Local full-stack dev (edit DB data before push)
 
+## Historical reconstruction completion
+
+`Deploy Core` bundles `src/tools/recheck_recon_completion.ts` and runs it after the
+new API passes health checks (except disk-dashboard-only releases). It recalculates
+derived completion statuses using the deployed checker and clears obsolete reasons
+only for solved records. Recorded algorithms and other content are not rewritten.
+
+On the server, from `/root/core-api`, preview with
+`node --max-old-space-size=512 --env-file=.env dist/recheck-recon-completion.mjs`.
+Add `--apply --backup-dir=/root/core-api/backups/recon-completion` to apply.
+Private, durable JSON backups are flushed before the transaction; conditional
+updates skip concurrent edits. Inspect the `.result.json` files for applied IDs.
+The pending cache queue survives interruptions; rerunning completes invalidation
+on both Next deployments. A cache failure or skipped concurrent edit fails the
+maintenance step so an incomplete refresh cannot be reported as successful.
+
+Backups contain the original input and derived fields. To undo a correction,
+restore only the affected derived fields after verifying the input still matches
+that snapshot, then invalidate the corresponding reconstruction pages.
+
 For push acceptance, use `pnpm --filter @cuberoot/server push:acceptance` from `core/` and the [separate acceptance entry](../../../../docs/record-notification-setup.md#6-隔离-api-与推送验收入口). This loopback fixture API does not load production auth, `.env`, PG, monitors or provider transports. The selective production proxy described below is not a push isolation environment.
 
 ## Manual SOR player-best refresh

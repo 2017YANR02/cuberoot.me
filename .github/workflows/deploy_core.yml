@@ -229,6 +229,7 @@ jobs:
             "$API_DIR/dist/search-worker-entry.js" \
             "$API_DIR/dist/drive-video.mjs" \
             "$API_DIR/dist/index-assistant-knowledge.mjs" \
+            "$API_DIR/dist/recheck-recon-completion.mjs" \
             "root@${{ secrets.DEPLOY_HOST }}:${STAGING_RELEASE}/dist/"
 
           rsync -ltz --chmod=F644 \
@@ -490,6 +491,13 @@ jobs:
           pm2 save
           trap - ERR
           echo "activated release $release_id"
+          # Derived reconstruction statuses must track the deployed validator.
+          # Back up changed rows, compare inputs before writing, and invalidate both Next caches.
+          # Failure reports an incomplete deployment without rolling back a healthy API.
+          if [ "$disk_only" != true ]; then
+            node --max-old-space-size=512 --env-file=.env dist/recheck-recon-completion.mjs \
+              --apply --backup-dir=/root/core-api/backups/recon-completion
+          fi
           # Run only after all health/smoke/service checks passed. A cleanup
           # failure reports a failed deployment without rolling back a healthy API.
           node "$final/prune-api-releases.ts" --apply --previous "$previous_dist"

@@ -1,13 +1,14 @@
 /** Invalidate every independently deployed Next cache after a committed write.
  * Destinations are operator configuration, never supplied by an HTTP caller. */
-export async function revalidateReconPages(id: string | number): Promise<void> {
-  return revalidateContentPages('recon', id);
+export async function revalidateReconPages(id: string | number, options?: { strict?: boolean }): Promise<void> {
+  return revalidateContentPages('recon', id, options);
 }
 
-export async function revalidateContentPages(kind: 'recon' | 'forum' | 'alg' | 'home', id?: string | number): Promise<void> {
+export async function revalidateContentPages(kind: 'recon' | 'forum' | 'alg' | 'home', id?: string | number, options?: { strict?: boolean }): Promise<void> {
   const secret = process.env.RECON_REVALIDATE_SECRET;
   const urls = (process.env.RECON_REVALIDATE_URLS ?? '').split(',').map(s => s.trim()).filter(Boolean);
   if (!secret || urls.length === 0) {
+    if (options?.strict) throw new Error('Reconstruction cache invalidation is not configured');
     console.warn('[recon-cache] invalidation is not configured');
     return;
   }
@@ -27,5 +28,6 @@ export async function revalidateContentPages(kind: 'recon' | 'forum' | 'alg' | '
       }
     }
     console.error('[recon-cache] invalidation failed', { id: String(id), url });
+    if (options?.strict) throw new Error(`Reconstruction cache invalidation failed for ${id}`);
   }));
 }
