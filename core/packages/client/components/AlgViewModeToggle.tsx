@@ -5,8 +5,8 @@ import '@cuberoot/timer-ui/compact-select.css';
  * 「图 / 公式」列表视图开关 —— `/alg` 下**所有 case 列表页**共用这一份。
  *
  * 语义:
- *   - `cards` = 只看图(默认，密排画廊,点整卡进详情页看公式)。
- *   - `full`  = 开启「公式展开」后显示内联公式。
+ *   - `cards` = 只看图(密排画廊,点整卡进详情页看公式)。
+ *   - `full`  = 默认开启「公式展开」，显示内联公式。
  *
  * 偏好存 localStorage(`alg-list-view`):这是**跨页显示偏好**,不是页内可分享状态,
  * 所以不进 URL。用户切换一次,全站的 case 列表都生效。
@@ -50,9 +50,9 @@ function subscribe(cb: () => void): () => void {
 function getSnapshot(): AlgViewMode {
   if (current === null) {
     try {
-      current = localStorage.getItem(ALG_VIEW_MODE_KEY) === 'full' ? 'full' : 'cards';
+      current = localStorage.getItem(ALG_VIEW_MODE_KEY) === 'cards' ? 'cards' : 'full';
     } catch {
-      current = 'cards';
+      current = 'full';
     }
   }
   return current;
@@ -60,7 +60,7 @@ function getSnapshot(): AlgViewMode {
 
 /** 服务端 / 注水那一帧一律给默认值 —— 预渲染的 HTML 里就是它。 */
 function getServerSnapshot(): AlgViewMode {
-  return 'cards';
+  return 'full';
 }
 
 /**
