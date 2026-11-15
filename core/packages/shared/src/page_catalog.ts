@@ -498,6 +498,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'forum/mine': { title: { zh: '我的帖子', en: 'My forum posts' } },
   'forum/review': { title: { zh: '论坛审核', en: 'Forum moderation' } },
   'forum/search': { title: { zh: '论坛搜索', en: 'Forum search' } },
+  'draw': { title: {zh:'抽奖',en:'Lucky Draw'}, description: {zh:'自定义名单、比赛报名选手抽奖与盲拧联想词训练。',en:'Draw from custom lists or competition registrations and practice blindfolded letter-pair associations.'} },
   'frame-count': {
     title: { zh: '数帧', en: 'Frame Count' },
     description: {

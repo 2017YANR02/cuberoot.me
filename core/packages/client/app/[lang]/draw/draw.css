@@ -1,0 +1,186 @@
+.draw-page {
+  max-width: 1100px;
+  margin: auto;
+  padding: 24px;
+  color: var(--foreground);
+}
+.draw-page:fullscreen {
+  overflow: auto;
+  background: var(--background);
+  max-width: none;
+}
+.draw-options,
+.draw-actions,
+.draw-counts {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.draw-options {
+  justify-content: space-between;
+}
+.draw-counts {
+  justify-content: space-between;
+  font-variant-numeric: tabular-nums;
+}
+.draw-page button:not(.bool-toggle-label):not(.pill-toggle),
+.draw-page input,
+.draw-page textarea {
+  font: inherit;
+  color: inherit;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--background);
+}
+.draw-page button {
+  cursor: pointer;
+}
+.draw-page button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.draw-page button:focus-visible {
+  outline: 2px solid var(--ring);
+}
+.draw-page textarea {
+  display: block;
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+}
+.draw-page input[type="number"] {
+  width: 72px;
+  margin-left: 8px;
+}
+.draw-page pre {
+  max-height: 240px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+.draw-page label {
+  display: block;
+}
+.draw-editor p {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.draw-stage {
+  min-height: 300px;
+  display: grid;
+  place-items: center;
+  perspective: 1000px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--muted);
+}
+.draw-cloud {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 28px;
+  width: 100%;
+  max-height: 420px;
+  overflow: hidden;
+}
+.draw-card {
+  padding: 16px;
+  min-width: 90px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--card);
+  text-align: center;
+}
+.draw-card small {
+  display: block;
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+.is-3d .draw-cloud {
+  transform-style: preserve-3d;
+  transform: rotateX(12deg);
+}
+.is-3d .draw-cloud .draw-card {
+  transform: rotateY(calc(var(--i) * 19deg)) rotateZ(calc(var(--i) * 7deg));
+  animation: draw-float 5s ease-in-out infinite alternate;
+  animation-delay: calc(var(--i) * -0.3s);
+}
+.draw-winners {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 24px;
+}
+.winner strong {
+  font-size: clamp(28px, 6vw, 64px);
+}
+.winner p {
+  font-size: 22px;
+}
+.draw-primary {
+  position: sticky;
+  bottom: 0;
+  padding: 12px;
+  background: var(--background);
+  justify-content: center;
+}
+.draw-page .draw-primary button:last-child {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  min-width: 180px;
+}
+.is-drawing .draw-cloud {
+  animation: draw-spin 0.9s ease-in-out;
+}
+@keyframes draw-float {
+  to {
+    transform: translateY(12px) rotateY(calc(var(--i) * 19deg + 20deg))
+      rotateZ(calc(var(--i) * 7deg));
+  }
+}
+@keyframes draw-spin {
+  50% {
+    transform: rotateY(180deg) scale(0.85);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .draw-page * {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+@media (max-width: 600px) {
+  .draw-page {
+    padding: 16px;
+  }
+  .draw-options {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .draw-stage {
+    min-height: 260px;
+  }
+  .draw-actions input {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+.draw-page ol {
+  list-style: decimal;
+  padding-inline-start: 28px;
+}
+.draw-page li {
+  padding: 6px 0;
+}
+.draw-page .bool-toggle-label {
+  padding: 0;
+  border: 0;
+  background: none;
+}
