@@ -98,6 +98,17 @@ To go back to all-prod, start the frontend **without** `LOCAL_DOMAINS` set.
 - To test a **migration** locally, apply it to pg13 after seeding:
   `Get-Content migrations/00xx_*.sql | docker exec -i pg13 psql -U postgres -d cuberoot_db`.
 
+## Local draw API verification
+
+For read-only lucky-draw competition search and registration import, run
+`pnpm --filter @cuberoot/server exec tsx scripts/dev-draw.ts` from `core/`.
+This mounts the real draw routes on `127.0.0.1:3003` without a database or background jobs.
+Add `draw` to `LOCAL_DOMAINS` and set `LOCAL_API_PORT_DRAW=3003` in the client's
+ignored `.env.local`. Per-domain ports override `LOCAL_API_PORT`, so existing
+local domains keep their own service. Next reloads its config to apply the proxy.
+Responses include `X-Draw-Backend: local`; competition and registration data come
+from the real CubingChina source. This does not deploy the API to production.
+
 ## Local chat API verification
 
 `pnpm --filter @cuberoot/server exec tsx scripts/dev-assistant.ts` (from `core/`)

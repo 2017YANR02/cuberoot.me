@@ -342,7 +342,7 @@ const nextConfig: NextConfig = {
               .filter((d) => d && d !== 'recon-capture-local')
               .map((d) => ({
                 source: `/v1/${d}/:path*`,
-                destination: `http://127.0.0.1:${process.env.LOCAL_API_PORT || '3001'}/v1/${d}/:path*`,
+                destination: `http://127.0.0.1:${process.env[`LOCAL_API_PORT_${d.toUpperCase().replaceAll('-', '_')}`] || process.env.LOCAL_API_PORT || '3001'}/v1/${d}/:path*`,
               }))
           : []),
         // Dev: proxy backend so loadAlg() etc. don't trip CORS from 127.0.0.1.
