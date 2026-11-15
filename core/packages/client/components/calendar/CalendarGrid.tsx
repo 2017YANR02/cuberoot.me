@@ -8,7 +8,8 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
-import type { CalendarOptions, DateSelectArg, EventClickArg, EventDropArg, DatesSetArg } from '@fullcalendar/core';
+import './calendar-grid.css';
+import type { CalendarOptions, EventInput, DateSelectArg, EventClickArg, EventDropArg, DatesSetArg } from '@fullcalendar/core';
 import type { DateClickArg, EventResizeDoneArg } from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -19,8 +20,8 @@ import luxonPlugin from '@fullcalendar/luxon3';
 // 光写 locale="zh-cn" 不够 —— 语言包得真的加载进来,否则 allDayText / moreLinkText /
 // noEventsText 静默退回英文(「all-day」「+2 more」混在中文表头里)。
 import zhCn from '@fullcalendar/core/locales/zh-cn';
-import type { FcEvent, ViewKey } from '../_lib/format';
-import { useCalendarSwipe } from '../_lib/useCalendarSwipe';
+import type { ViewKey } from '@/lib/calendar-format';
+import { useCalendarSwipe } from '@/hooks/useCalendarSwipe';
 
 export interface GridRange {
   start: number;
@@ -40,7 +41,7 @@ interface Props {
   view: ViewKey;
   /** 初始日期;之后的跳转走 ref 上的方法(避免每次 prop 变化都重建视图) */
   initialDate: number;
-  events: FcEvent[];
+  events: EventInput[];
   tz: string;
   /** 全天行左槽那个「GMT+08」 */
   tzLabel: string;
@@ -52,6 +53,10 @@ interface Props {
   mobile?: boolean;
   headerExpanded?: boolean;
   editable: boolean;
+  slotMinutes?: number;
+  snapMinutes?: number;
+  allDaySlot?: boolean;
+  slotEventOverlap?: boolean;
   /** 拖出一段空白 → 新建 */
   onSelect?: (start: number, end: number, allDay: boolean) => void;
   /** 点一下空白格。做什么由上层按当前视图决定(新建 / 跳到那天)。 */
@@ -138,9 +143,10 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
           // 拖出一格就能新建;不加这个的话月视图里的单击会被当成 0 长度选区吞掉。
           selectMinDistance={1}
           scrollTime="07:00:00"
-          slotDuration="00:30:00"
-          snapDuration="00:15:00"
-          allDaySlot
+          slotDuration={{ minutes: props.slotMinutes ?? 30 }}
+          snapDuration={{ minutes: props.snapMinutes ?? 15 }}
+          allDaySlot={props.allDaySlot ?? true}
+          slotEventOverlap={props.slotEventOverlap ?? true}
           // Google 在全天那行的左槽写的是网格所在时区的偏移(GMT+08),不是「全天」——
           // 一屏之内唯一说明「这些时间按哪儿算」的地方,而我们还带时区选择器,更该有。
           allDayContent={() => props.tzLabel}
@@ -208,7 +214,7 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
           }}
           eventContent={(arg) => {
             // 受邀未回应的块画成描边款,和自己的实心块区分开(Google 同样处理)。
-            const p = arg.event.extendedProps as FcEvent['extendedProps'];
+            const p = arg.event.extendedProps as { invited?: boolean; rsvp?: string; location?: string };
             const cls = `cal-chip${p.invited ? ' is-invited' : ''}${p.rsvp === 'pending' ? ' is-pending' : ''}`;
             // 月 / 年 / 日程视图里,定时事件是「一个色点 + 一行字」(FullCalendar 的 dot-event),
             // 块本身不上色 —— 自定义 eventContent 会把它自带的点吃掉,得自己补,否则整月一片

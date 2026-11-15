@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CalEvent } from '@cuberoot/shared/calendar';
 import { EMPTY_SEARCH_FILTERS, searchOccurrences, searchWindow } from '@/app/[lang]/calendar/_lib/search';
-import { dayStart } from '@/app/[lang]/calendar/_lib/format';
+import { dayStart } from '@/lib/calendar-format';
 
 const tz = 'Asia/Shanghai';
 const start = dayStart(tz, '2026-10-30');

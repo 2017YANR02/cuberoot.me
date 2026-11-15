@@ -3,7 +3,7 @@
  * 三部分:
  *   0. 配色钉死成 Google 的(见下一段),token 名不变;
  *   1. 页面骨架(顶栏 / 左栏 / 弹窗 / 芯片),纯自有类名 cal-*;
- *   2. FullCalendar 的皮肤覆盖(.cal-grid .fc-*)—— 它自带的 CSS 变量能一次性接管
+ *   2. FullCalendar 的皮肤覆盖(.cal-page .cal-grid .fc-*)—— 它自带的 CSS 变量能一次性接管
  *      边框、今日底色、now 指示线,所以这里改的是变量,不是逐条压样式。
  *
  * 衍生色一律 color-mix,不手写 rgba;深浅两套靠 token 自动翻。
@@ -275,7 +275,7 @@ html:root[data-theme=dark]:has(.cal-page) {
   padding: 6px 10px 10px;
 }
 
-.cal-grid { height: 100%; touch-action: pan-y pinch-zoom; }
+
 
 .cal-empty {
   flex: 1 1 auto;
@@ -1064,194 +1064,6 @@ html:root[data-theme=dark]:has(.cal-page) {
 /* 视图切换器贴合内容宽,不钉 min-width */
 .cal-view-select { flex: 0 0 auto; }
 
-/* ── FullCalendar 皮肤 ────────────────────────────────────────────────── */
-
-.cal-grid .fc {
-  --fc-border-color: var(--border-default);
-  --fc-page-bg-color: var(--background);
-  --fc-neutral-bg-color: var(--muted);
-  /* Google 只用表头那个蓝圆点名今天,列身几乎不染(暗色下完全不染)—— 整列刷一层
-     accent 会把当天的事件块压得看不清,也不是 Google 的样子。 */
-  --fc-today-bg-color: var(--cal-today-wash);
-  --fc-now-indicator-color: var(--destructive);
-  --fc-event-border-color: transparent;
-  --fc-list-event-hover-bg-color: color-mix(in srgb, var(--foreground) 6%, transparent);
-  --fc-highlight-color: color-mix(in srgb, var(--accent) 18%, transparent);
-  font-family: inherit;
-  font-size: 16px;
-  color: var(--foreground);
-}
-
-.cal-grid .fc a { color: inherit; text-decoration: none; }
-
-.cal-grid .fc .fc-col-header-cell-cushion,
-.cal-grid .fc .fc-daygrid-day-number,
-.cal-grid .fc .fc-timegrid-slot-label-cushion,
-.cal-grid .fc .fc-list-day-text,
-.cal-grid .fc .fc-list-day-side-text {
-  color: var(--muted-foreground);
-  font-weight: 500;
-  padding: 4px 6px;
-}
-
-.cal-grid .fc .fc-day-today .fc-daygrid-day-number,
-.cal-grid .fc .fc-day-today .fc-col-header-cell-cushion { color: var(--accent); font-weight: 700; }
-
-/* 周 / 日视图表头两行:星期在上、日号在下,今天的日号套实心圆(照 Google)。 */
-.cal-dayhead {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  line-height: 1.1;
-}
-
-.cal-dayhead-wd { font-size: 14px; letter-spacing: 0.02em; }
-
-.cal-dayhead-num {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 26px;
-  height: 26px;
-  padding: 0 4px;
-  border-radius: 999px;
-  font-size: 17px;
-  font-weight: 400;
-  color: var(--foreground);
-}
-
-.cal-dayhead-num.is-today {
-  background: var(--accent);
-  color: var(--accent-foreground);
-  font-weight: 600;
-}
-
-/* navLinks 把表头和月格里的日期变成了 <a>:它是「只看这一天」的按钮,不是正文链接,
-   所以去掉下划线,改成 Google 那种悬停有底色的圆。 */
-.cal-grid .fc a.fc-col-header-cell-cushion,
-.cal-grid .fc a.fc-daygrid-day-number { text-decoration: none; }
-
-.cal-grid .fc a.fc-col-header-cell-cushion:hover .cal-dayhead-num {
-  background: color-mix(in srgb, var(--foreground) 12%, transparent);
-}
-
-.cal-grid .fc a.fc-col-header-cell-cushion:hover .cal-dayhead-num.is-today {
-  background: color-mix(in srgb, var(--accent) 86%, black);
-}
-
-.cal-grid .fc a.fc-daygrid-day-number:hover {
-  text-decoration: none;
-  color: var(--accent);
-}
-
-/* 今天那一列的表头整体已被上面的规则染成 accent 色;圆圈里的字要跟着背景走。 */
-.cal-grid .fc .fc-day-today .fc-col-header-cell-cushion .cal-dayhead-num.is-today {
-  color: var(--accent-foreground);
-}
-
-.cal-grid .fc .fc-timegrid-slot { height: 2.4em; }
-
-.cal-grid .fc .fc-scrollgrid { border-color: var(--border-default); }
-
-/* 表头行和「全天」行不该有滚动条。FullCalendar 一旦发现主体要竖向滚动,就把 scrollgrid
-   每一段都设成 overflow-y:scroll(SimpleScrollGrid 的 forceYScrollbars),好让各段列宽
-   按同样的宽度对齐。macOS 的浮层滚动条看不见,Windows 的经典滚动条会把它们画出来 ——
-   于是表头右侧多两条永远拉不动的假滚动条(带上下箭头那种)。
-   只藏这两段的滚动条外观:列宽是 FullCalendar 按「容器宽 − 滚动条宽」算好后写死在
-   <table style="width:…"> 上的,和这里画不画那条无关,所以空槽还在、列照样对齐。
-   主体那段是 -liquid,排除在外,真滚动条留着。 */
-.cal-grid .fc-scrollgrid-section:not(.fc-scrollgrid-section-liquid) .fc-scroller {
-  scrollbar-width: none;
-}
-.cal-grid .fc-scrollgrid-section:not(.fc-scrollgrid-section-liquid) .fc-scroller::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-
-.cal-grid .fc-theme-standard td,
-.cal-grid .fc-theme-standard th { border-color: var(--border-default); }
-
-.cal-grid .fc .fc-daygrid-day.fc-day-other .fc-daygrid-day-number { color: var(--faint-foreground); }
-
-.cal-grid .fc-event { border: none; border-radius: 6px; overflow: hidden; cursor: pointer; }
-
-.cal-grid .fc-timegrid-event .fc-event-main { padding: 1px 4px; }
-
-.cal-chip {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  line-height: 1.25;
-  overflow: hidden;
-  font-size: 14px;
-}
-
-.cal-chip-time { opacity: 0.85; font-variant-numeric: tabular-nums; }
-.cal-chip-title { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cal-chip-loc { opacity: 0.8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-/* 月视图里一格一行,时间和标题排一行更省空间 */
-.cal-grid .fc-daygrid-event .cal-chip,
-.cal-grid .fc-list-event .cal-chip { flex-direction: row; gap: 4px; align-items: baseline; }
-/* 这两处是一行「● 时间 标题」,时间要回到标题前面(DOM 里标题在前,见 CalendarGrid) */
-.cal-grid .fc-daygrid-event .cal-chip-time,
-.cal-grid .fc-list-event .cal-chip-time { order: -1; }
-.cal-grid .fc-daygrid-event .cal-chip-loc { display: none; }
-
-/* dot-event 的色点:标记事件属于哪个日历,块本身不上色时全靠它 */
-.cal-chip-dot {
-  flex: 0 0 auto;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  align-self: center;
-}
-
-/* 受邀未回应:描边款 */
-.cal-grid .fc-event:has(.cal-chip.is-pending) {
-  background: transparent !important;
-  border: 1px dashed currentColor;
-}
-
-.cal-grid .fc-event:has(.cal-chip.is-pending) .cal-chip { color: var(--foreground); }
-
-/* 当前时刻:Google 画的是「一条实线 + 线头一个实心圆点」,圆点在列内。
-   FullCalendar 默认在时间轴那侧摆一个三角箭头,形状和位置都不是这个意思。 */
-.cal-grid .fc .fc-timegrid-now-indicator-arrow { display: none; }
-
-.cal-grid .fc .fc-timegrid-now-indicator-line {
-  --cal-now-line: 2px;   /* 线厚 */
-  --cal-now-dot: 12px;   /* 圆点直径 */
-  border-width: var(--cal-now-line) 0 0;
-  border-top-style: solid;
-}
-
-.cal-grid .fc .fc-timegrid-now-indicator-line::before {
-  content: '';
-  position: absolute;
-  /* 绝对定位的子元素以父元素的 **padding box** 为原点,而这条线画的是 border-top ——
-     padding box 已经在线下面了。所以先减掉线厚回到线的上沿,再上移半个点径,最后补回
-     半个线厚,圆心才真落在线的中线上。写死一个数会在改线厚 / 点径时悄悄错位。 */
-  top: calc(-1 * var(--cal-now-line) - var(--cal-now-dot) / 2 + var(--cal-now-line) / 2);
-  left: 0;
-  width: var(--cal-now-dot);
-  height: var(--cal-now-dot);
-  border-radius: 50%;
-  background: var(--fc-now-indicator-color);
-}
-
-.cal-grid .fc .fc-multimonth {
-  border: none;
-  background: transparent;
-}
-
-.cal-grid .fc .fc-multimonth-title { color: var(--foreground); font-size: 16px; }
-
-.cal-grid .fc .fc-list { border-color: var(--border-default); }
-.cal-grid .fc .fc-list-day-cushion { background: var(--muted); }
-.cal-grid .fc .fc-list-empty { background: transparent; color: var(--muted-foreground); }
-
 /* ── 窄屏 ─────────────────────────────────────────────────────────────── */
 
 @media (max-width: 900px) {
@@ -1289,19 +1101,19 @@ html:root[data-theme=dark]:has(.cal-page) {
   .cal-search { margin-left: auto; }
   .cal-search-field { width: 96px; }
   .cal-main { padding: 4px 6px 8px; }
-  .cal-grid .fc { font-size: 14px; }
+  .cal-page .cal-grid .fc { font-size: 14px; }
   .cal-fab { right: 16px; bottom: 16px; }
 }
 
 @media (max-width: 640px) {
   /* 周视图一列只有 ~45px:时间串会折成两行,把标题整个挤没。位置本来就说明了时间,
      窄屏只留标题(Google 手机端同样只显示标题)。月 / 日程视图是一行文字,不受影响。 */
-  .cal-grid .fc-timegrid-event .cal-chip-time { display: none; }
-  .cal-grid .fc-timegrid-event .cal-chip-title { white-space: normal; }
+  .cal-page .cal-grid .fc-timegrid-event .cal-chip-time { display: none; }
+  .cal-page .cal-grid .fc-timegrid-event .cal-chip-title { white-space: normal; }
 
   /* 月 / 年格子同理:一格 ~50px,时间串一占,标题就被省略号吃干净 —— 屏幕上只剩
      「● 12:00」,等于没说是什么事。留标题去时间,时间点进去看。 */
-  .cal-grid .fc-daygrid-event .cal-chip-time { display: none; }
+  .cal-page .cal-grid .fc-daygrid-event .cal-chip-time { display: none; }
 }
 
 @media (max-width: 480px) {
@@ -1338,9 +1150,9 @@ html:root[data-theme=dark]:has(.cal-page) {
 /* 手机端沿用同一份日历数据，导航按移动日历排布。 */
 .cal-mobile-topbar, .cal-mobile-sidebar-head, .cal-mobile-sidebar-foot { display: none; }
 .cal-event-sheet-handle, .cal-event-done { display: none; }
-.cal-grid { overflow: hidden; }
-.cal-grid > .cal-swipe-content { height: 100%; }
-.cal-grid, .cal-mobile-month { position: relative; isolation: isolate; }
+
+
+.cal-mobile-month { position: relative; isolation: isolate; }
 .cal-swipe-active > .cal-swipe-content {
   position: relative;
   z-index: 3;
@@ -1486,29 +1298,29 @@ html:root[data-theme=dark]:has(.cal-page) {
   .cal-mobile-month-option.is-current { background: var(--cal-mobile-selection); color: var(--cal-mobile-selection-ink); border-color: transparent; }
   .cal-mobile-year { flex: 0 0 auto; font-size: 14px; }
   .cal-main { padding: 0; }
-  .cal-grid .fc { --fc-page-bg-color: var(--cal-mobile-canvas); --fc-today-bg-color: transparent; }
-  .cal-grid .fc .fc-scrollgrid { border-left: 0; border-top: 0; }
-  .cal-grid .fc .fc-col-header { background: var(--cal-mobile-chrome); }
-  .cal-page--month-expanded .cal-grid .fc .fc-col-header { background: var(--cal-mobile-canvas); }
+  .cal-page .cal-grid .fc { --fc-page-bg-color: var(--cal-mobile-canvas); --fc-today-bg-color: transparent; }
+  .cal-page .cal-grid .fc .fc-scrollgrid { border-left: 0; border-top: 0; }
+  .cal-page .cal-grid .fc .fc-col-header { background: var(--cal-mobile-chrome); }
+  .cal-page--month-expanded .cal-page .cal-grid .fc .fc-col-header { background: var(--cal-mobile-canvas); }
   .cal-page--month-expanded .cal-main { padding-top: 8px; }
   .cal-page--month-expanded .cal-mobile-month { box-shadow: 0 4px 8px color-mix(in srgb, var(--background) 30%, transparent); z-index: 1; }
-  .cal-grid .fc .fc-col-header .fc-timegrid-axis { border: none; vertical-align: top; padding-top: 5px; }
-  .cal-grid .fc .fc-col-header .fc-timegrid-axis-cushion { display: inline-grid; place-items: center; min-width: 29px; height: 20px; padding: 0 4px; border-radius: 6px; background: var(--cal-mobile-week); font-size: 12px; font-weight: 500; }
-  .cal-grid .fc .fc-col-header-cell { border: none; }
-  .cal-grid .fc .fc-col-header-cell-cushion { padding: 0 0 7px; }
-  .cal-grid .cal-dayhead { gap: 4px; }
-  .cal-grid .cal-dayhead-wd { font-size: 12px; }
-  .cal-grid .cal-dayhead-num { width: 32px; height: 32px; font-size: 17px; }
-  .cal-grid .fc-day-past .cal-dayhead-num { color: var(--muted-foreground); }
-  .cal-grid .cal-dayhead-num.is-today { background: var(--cal-mobile-today); color: var(--cal-mobile-today-ink); }
-  .cal-grid .fc .fc-day-today .cal-dayhead-wd { color: var(--cal-mobile-today); }
-  .cal-grid .fc .fc-day-today .fc-col-header-cell-cushion .cal-dayhead-num.is-today { color: var(--cal-mobile-today-ink); }
-  .cal-grid .fc .fc-timegrid-axis { width: 43px; }
-  .cal-grid .fc .fc-timegrid-slot-label-cushion { font-size: 12px; padding-inline: 3px; }
-  .cal-grid .fc .fc-timegrid-slot { height: 29px; }
-  .cal-grid .fc .fc-timegrid-event .fc-event-main { padding: 2px; }
-  .cal-grid .cal-chip { font-size: 13px; line-height: 1.2; }
-  .cal-grid .fc-timegrid-axis .fc-timegrid-axis-cushion { font-size: 11px; }
+  .cal-page .cal-grid .fc .fc-col-header .fc-timegrid-axis { border: none; vertical-align: top; padding-top: 5px; }
+  .cal-page .cal-grid .fc .fc-col-header .fc-timegrid-axis-cushion { display: inline-grid; place-items: center; min-width: 29px; height: 20px; padding: 0 4px; border-radius: 6px; background: var(--cal-mobile-week); font-size: 12px; font-weight: 500; }
+  .cal-page .cal-grid .fc .fc-col-header-cell { border: none; }
+  .cal-page .cal-grid .fc .fc-col-header-cell-cushion { padding: 0 0 7px; }
+  .cal-page .cal-grid .cal-dayhead { gap: 4px; }
+  .cal-page .cal-grid .cal-dayhead-wd { font-size: 12px; }
+  .cal-page .cal-grid .cal-dayhead-num { width: 32px; height: 32px; font-size: 17px; }
+  .cal-page .cal-grid .fc-day-past .cal-dayhead-num { color: var(--muted-foreground); }
+  .cal-page .cal-grid .cal-dayhead-num.is-today { background: var(--cal-mobile-today); color: var(--cal-mobile-today-ink); }
+  .cal-page .cal-grid .fc .fc-day-today .cal-dayhead-wd { color: var(--cal-mobile-today); }
+  .cal-page .cal-grid .fc .fc-day-today .fc-col-header-cell-cushion .cal-dayhead-num.is-today { color: var(--cal-mobile-today-ink); }
+  .cal-page .cal-grid .fc .fc-timegrid-axis { width: 43px; }
+  .cal-page .cal-grid .fc .fc-timegrid-slot-label-cushion { font-size: 12px; padding-inline: 3px; }
+  .cal-page .cal-grid .fc .fc-timegrid-slot { height: 29px; }
+  .cal-page .cal-grid .fc .fc-timegrid-event .fc-event-main { padding: 2px; }
+  .cal-page .cal-grid .cal-chip { font-size: 13px; line-height: 1.2; }
+  .cal-page .cal-grid .fc-timegrid-axis .fc-timegrid-axis-cushion { font-size: 11px; }
   .cal-sidebar { width: min(340px, 75vw); padding: calc(20px + env(safe-area-inset-top)) 16px 24px; border: none; }
   .cal-scrim { background: color-mix(in srgb, var(--background) 45%, transparent); }
   .cal-sidebar > :is(.cal-create-btn, .cal-mini) { display: none; }
@@ -1532,7 +1344,7 @@ html:root[data-theme=dark]:has(.cal-page) {
   body[data-site-scenery] .cal-mobile-topbar .cal-mobile-search-input { background-color: transparent !important; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
   .cal-mobile-search-input::placeholder { color: var(--muted-foreground); }
   .cal-mobile-search-input::-webkit-search-cancel-button { display: none; }
-  .cal-page--search .cal-grid { visibility: hidden; pointer-events: none; }
+  .cal-page--search .cal-page .cal-grid { visibility: hidden; pointer-events: none; }
   .cal-page--search .cal-fab { display: none; }
   .cal-page--search .cal-results { position: absolute; inset: 0; width: auto; max-width: none; max-height: none; border: none; border-radius: 0; box-shadow: none; background: var(--cal-mobile-canvas); overflow-y: auto; }
   .cal-page--search .cal-results-head { padding: 14px 18px; }
@@ -1622,9 +1434,9 @@ html:root[data-theme=dark]:has(.cal-page) {
 @media (min-width: 901px) {
   .cal-page { background: var(--muted); }
   .cal-main { background: var(--background); }
-  .cal-grid .fc .fc-scrollgrid { border: 0; }
-  .cal-grid .fc-scrollgrid > :is(thead, tbody) > tr > :is(td, th) { border-right: 0; }
-  .cal-grid .fc-scrollgrid > tbody > tr:last-child > td { border-bottom: 0; }
-  .cal-grid :is(.fc-col-header, .fc-scrollgrid-sync-table) tr > :last-child { border-right: 0; }
+  .cal-page .cal-grid .fc .fc-scrollgrid { border: 0; }
+  .cal-page .cal-grid .fc-scrollgrid > :is(thead, tbody) > tr > :is(td, th) { border-right: 0; }
+  .cal-page .cal-grid .fc-scrollgrid > tbody > tr:last-child > td { border-bottom: 0; }
+  .cal-page .cal-grid :is(.fc-col-header, .fc-scrollgrid-sync-table) tr > :last-child { border-right: 0; }
 }
 @media (max-width: 900px) { .cal-sidebar-corner { display: none; } }

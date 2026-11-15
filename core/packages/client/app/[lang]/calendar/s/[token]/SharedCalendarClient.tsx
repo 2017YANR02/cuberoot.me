@@ -20,10 +20,10 @@ import { colorHex, readableInk } from '@/lib/calendar-colors';
 import { useEffectiveTheme } from '@/lib/theme';
 import { expandRange } from '@/lib/calendar-store';
 import { fetchPublicCalendar, icsFeedUrl, type PublicCalendar } from '@/lib/calendar-api';
-import CalendarGrid, { type GridHandle, type GridRange } from '../../_components/CalendarGrid';
+import CalendarGrid, { type GridHandle, type GridRange } from '@/components/calendar/CalendarGrid';
 import {
   rangeTitle, toFcEvents, VIEW_KEYS, VIEW_LABELS, isViewKey, type ViewKey,
-} from '../../_lib/format';
+} from '@/lib/calendar-format';
 import '../../calendar.css';
 
 const DAY = 86_400_000;

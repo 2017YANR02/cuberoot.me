@@ -2,7 +2,7 @@
 import { act, createElement, useRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { useCalendarSwipe } from '@/app/[lang]/calendar/_lib/useCalendarSwipe';
+import { useCalendarSwipe } from '@/hooks/useCalendarSwipe';
 
 let host: HTMLDivElement;
 let root: Root;

@@ -1,6 +1,6 @@
 import type { CalEvent, EventOccurrence } from '@cuberoot/shared/calendar';
 import { expandRange } from '@/lib/calendar-store';
-import { addDaysToKey, dayStart } from './format';
+import { addDaysToKey, dayStart } from '@/lib/calendar-format';
 
 export interface SearchFilters {
   calendar: string;

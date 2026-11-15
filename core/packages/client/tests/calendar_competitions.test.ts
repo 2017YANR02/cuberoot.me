@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { mergeCalendarCompetitions } from '@/app/[lang]/calendar/_lib/competitions';
-import { dayStart, defaultEventEnd } from '@/app/[lang]/calendar/_lib/format';
+import { dayStart, defaultEventEnd } from '@/lib/calendar-format';
 import type { Comp } from '@/lib/comp-search';
 
 const comp = (id: string, start = '2026-09-28', end = start): Comp => ({ id, name: `${id} 2026`, start_date: start, end_date: end, city: 'Shanghai', country: 'CN' });

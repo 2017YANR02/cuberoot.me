@@ -801,6 +801,7 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 };
 
 export const CATALOG: ComponentEntry[] = [
+  { name: 'CalendarGrid', import: "import CalendarGrid from '@/components/calendar/CalendarGrid'", category: 'more', zh: '个人日历和工作日历共用网格，支持时区、周视图和可配置时间粒度。', en: 'Shared personal/work calendar grid with time zones, week views and configurable time slots.' },
   {
     name: 'ChatBubble',
     import: "import ChatBubble from '@/components/ChatBubble';",

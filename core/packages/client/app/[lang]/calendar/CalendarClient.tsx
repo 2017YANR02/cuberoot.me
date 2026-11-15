@@ -35,7 +35,7 @@ import { zoneLabel, zoneOptions, zoneSearchTerms } from '@/lib/tz-zones';
 import { expandRange, parseOccurrenceKey, useCalendarStore } from '@/lib/calendar-store';
 import { exportIcs, fetchEvents, listImports, undoImport } from '@/lib/calendar-api';
 import { importCalendarFile, type ImportProgress } from './_lib/import';
-import CalendarGrid, { type GridHandle, type GridRange } from './_components/CalendarGrid';
+import CalendarGrid, { type GridHandle, type GridRange } from '@/components/calendar/CalendarGrid';
 import EventDialog, { type DialogDraft } from './_components/EventDialog';
 import ShareDialog from './_components/ShareDialog';
 import ScopePrompt from './_components/ScopePrompt';
@@ -51,7 +51,7 @@ import { useWcaCalendar } from './_lib/useWcaCalendar';
 import {
   dayKeyIn, dayStart, defaultEventEnd, formatClock, formatLongDate, rangeTitle, toFcEvents,
   VIEW_KEYS, VIEW_LABELS, isViewKey, type ViewKey,
-} from './_lib/format';
+} from '@/lib/calendar-format';
 import './calendar.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 

@@ -4,8 +4,8 @@ import { Fragment, useLayoutEffect, useMemo, useRef } from 'react';
 import { DateTime } from 'luxon';
 import MonthGrid from '@/components/MonthGrid';
 import { tr, useLang } from '@/i18n/tr';
-import { addDaysToKey, dayKeyIn, type FcEvent } from '../_lib/format';
-import { useCalendarSwipe } from '../_lib/useCalendarSwipe';
+import { addDaysToKey, dayKeyIn, type FcEvent } from '@/lib/calendar-format';
+import { useCalendarSwipe } from '@/hooks/useCalendarSwipe';
 
 interface Props {
   monthKey: string;

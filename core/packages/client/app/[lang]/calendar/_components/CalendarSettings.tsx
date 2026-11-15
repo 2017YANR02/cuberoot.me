@@ -7,7 +7,7 @@ import BoolToggle from '@/components/BoolToggle';
 import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
 import type { CalendarPrefs } from '@/lib/calendar-store';
 import { tr } from '@/i18n/tr';
-import { VIEW_KEYS, VIEW_LABELS } from '../_lib/format';
+import { VIEW_KEYS, VIEW_LABELS } from '@/lib/calendar-format';
 
 export const SETTINGS_SECTIONS = ['general', 'events', 'view', 'shortcuts', 'import'] as const;
 export type SettingsSection = typeof SETTINGS_SECTIONS[number];

@@ -1,0 +1,190 @@
+.cal-grid { height: 100%; touch-action: pan-y pinch-zoom; overflow: hidden; position: relative; isolation: isolate; }
+.cal-grid > .cal-swipe-content { height: 100%; }
+/* ── FullCalendar 皮肤 ────────────────────────────────────────────────── */
+
+.cal-grid .fc {
+  --fc-border-color: var(--border-default);
+  --fc-page-bg-color: var(--background);
+  --fc-neutral-bg-color: var(--muted);
+  /* Google 只用表头那个蓝圆点名今天,列身几乎不染(暗色下完全不染)—— 整列刷一层
+     accent 会把当天的事件块压得看不清,也不是 Google 的样子。 */
+  --fc-today-bg-color: var(--cal-today-wash, transparent);
+  --fc-now-indicator-color: var(--destructive);
+  --fc-event-border-color: transparent;
+  --fc-list-event-hover-bg-color: color-mix(in srgb, var(--foreground) 6%, transparent);
+  --fc-highlight-color: color-mix(in srgb, var(--accent) 18%, transparent);
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--foreground);
+}
+
+.cal-grid .fc a { color: inherit; text-decoration: none; }
+
+.cal-grid .fc .fc-col-header-cell-cushion,
+.cal-grid .fc .fc-daygrid-day-number,
+.cal-grid .fc .fc-timegrid-slot-label-cushion,
+.cal-grid .fc .fc-list-day-text,
+.cal-grid .fc .fc-list-day-side-text {
+  color: var(--muted-foreground);
+  font-weight: 500;
+  padding: 4px 6px;
+}
+
+.cal-grid .fc .fc-day-today .fc-daygrid-day-number,
+.cal-grid .fc .fc-day-today .fc-col-header-cell-cushion { color: var(--accent); font-weight: 700; }
+
+/* 周 / 日视图表头两行:星期在上、日号在下,今天的日号套实心圆(照 Google)。 */
+.cal-dayhead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  line-height: 1.1;
+}
+
+.cal-dayhead-wd { font-size: 14px; letter-spacing: 0.02em; }
+
+.cal-dayhead-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--foreground);
+}
+
+.cal-dayhead-num.is-today {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-weight: 600;
+}
+
+/* navLinks 把表头和月格里的日期变成了 <a>:它是「只看这一天」的按钮,不是正文链接,
+   所以去掉下划线,改成 Google 那种悬停有底色的圆。 */
+.cal-grid .fc a.fc-col-header-cell-cushion,
+.cal-grid .fc a.fc-daygrid-day-number { text-decoration: none; }
+
+.cal-grid .fc a.fc-col-header-cell-cushion:hover .cal-dayhead-num {
+  background: color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+
+.cal-grid .fc a.fc-col-header-cell-cushion:hover .cal-dayhead-num.is-today {
+  background: color-mix(in srgb, var(--accent) 86%, black);
+}
+
+.cal-grid .fc a.fc-daygrid-day-number:hover {
+  text-decoration: none;
+  color: var(--accent);
+}
+
+/* 今天那一列的表头整体已被上面的规则染成 accent 色;圆圈里的字要跟着背景走。 */
+.cal-grid .fc .fc-day-today .fc-col-header-cell-cushion .cal-dayhead-num.is-today {
+  color: var(--accent-foreground);
+}
+
+.cal-grid .fc .fc-timegrid-slot { height: 2.4em; }
+
+.cal-grid .fc .fc-scrollgrid { border-color: var(--border-default); }
+
+/* 表头行和「全天」行不该有滚动条。FullCalendar 一旦发现主体要竖向滚动,就把 scrollgrid
+   每一段都设成 overflow-y:scroll(SimpleScrollGrid 的 forceYScrollbars),好让各段列宽
+   按同样的宽度对齐。macOS 的浮层滚动条看不见,Windows 的经典滚动条会把它们画出来 ——
+   于是表头右侧多两条永远拉不动的假滚动条(带上下箭头那种)。
+   只藏这两段的滚动条外观:列宽是 FullCalendar 按「容器宽 − 滚动条宽」算好后写死在
+   <table style="width:…"> 上的,和这里画不画那条无关,所以空槽还在、列照样对齐。
+   主体那段是 -liquid,排除在外,真滚动条留着。 */
+.cal-grid .fc-scrollgrid-section:not(.fc-scrollgrid-section-liquid) .fc-scroller {
+  scrollbar-width: none;
+}
+.cal-grid .fc-scrollgrid-section:not(.fc-scrollgrid-section-liquid) .fc-scroller::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.cal-grid .fc-theme-standard td,
+.cal-grid .fc-theme-standard th { border-color: var(--border-default); }
+
+.cal-grid .fc .fc-daygrid-day.fc-day-other .fc-daygrid-day-number { color: var(--faint-foreground); }
+
+.cal-grid .fc-event { border: none; border-radius: 6px; overflow: hidden; cursor: pointer; }
+
+.cal-grid .fc-timegrid-event .fc-event-main { padding: 1px 4px; }
+
+.cal-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.25;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+.cal-chip-time { opacity: 0.85; font-variant-numeric: tabular-nums; }
+.cal-chip-title { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-chip-loc { opacity: 0.8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 月视图里一格一行,时间和标题排一行更省空间 */
+.cal-grid .fc-daygrid-event .cal-chip,
+.cal-grid .fc-list-event .cal-chip { flex-direction: row; gap: 4px; align-items: baseline; }
+/* 这两处是一行「● 时间 标题」,时间要回到标题前面(DOM 里标题在前,见 CalendarGrid) */
+.cal-grid .fc-daygrid-event .cal-chip-time,
+.cal-grid .fc-list-event .cal-chip-time { order: -1; }
+.cal-grid .fc-daygrid-event .cal-chip-loc { display: none; }
+
+/* dot-event 的色点:标记事件属于哪个日历,块本身不上色时全靠它 */
+.cal-chip-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  align-self: center;
+}
+
+/* 受邀未回应:描边款 */
+.cal-grid .fc-event:has(.cal-chip.is-pending) {
+  background: transparent !important;
+  border: 1px dashed currentColor;
+}
+
+.cal-grid .fc-event:has(.cal-chip.is-pending) .cal-chip { color: var(--foreground); }
+
+/* 当前时刻:Google 画的是「一条实线 + 线头一个实心圆点」,圆点在列内。
+   FullCalendar 默认在时间轴那侧摆一个三角箭头,形状和位置都不是这个意思。 */
+.cal-grid .fc .fc-timegrid-now-indicator-arrow { display: none; }
+
+.cal-grid .fc .fc-timegrid-now-indicator-line {
+  --cal-now-line: 2px;   /* 线厚 */
+  --cal-now-dot: 12px;   /* 圆点直径 */
+  border-width: var(--cal-now-line) 0 0;
+  border-top-style: solid;
+}
+
+.cal-grid .fc .fc-timegrid-now-indicator-line::before {
+  content: '';
+  position: absolute;
+  /* 绝对定位的子元素以父元素的 **padding box** 为原点,而这条线画的是 border-top ——
+     padding box 已经在线下面了。所以先减掉线厚回到线的上沿,再上移半个点径,最后补回
+     半个线厚,圆心才真落在线的中线上。写死一个数会在改线厚 / 点径时悄悄错位。 */
+  top: calc(-1 * var(--cal-now-line) - var(--cal-now-dot) / 2 + var(--cal-now-line) / 2);
+  left: 0;
+  width: var(--cal-now-dot);
+  height: var(--cal-now-dot);
+  border-radius: 50%;
+  background: var(--fc-now-indicator-color);
+}
+
+.cal-grid .fc .fc-multimonth {
+  border: none;
+  background: transparent;
+}
+
+.cal-grid .fc .fc-multimonth-title { color: var(--foreground); font-size: 16px; }
+
+.cal-grid .fc .fc-list { border-color: var(--border-default); }
+.cal-grid .fc .fc-list-day-cushion { background: var(--muted); }
+.cal-grid .fc .fc-list-empty { background: transparent; color: var(--muted-foreground); }
+
