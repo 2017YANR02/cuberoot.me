@@ -57,7 +57,10 @@ function buildSimulator(watch = false) {
     // makes the embedded Watch target look for WatchJS.o in the iPhone folder.
     '-destination', watch ? 'generic/platform=watchOS Simulator' : 'generic/platform=iOS Simulator',
     '-derivedDataPath', join(tmpdir(), 'cuberoot-mobile-ios-derived-data'),
-    'CODE_SIGNING_ALLOWED=NO',
+    // Simulator Keychain needs the application-identifier entitlement that
+    // Xcode generates during signing. Ad-hoc signing uses no certificate and
+    // keeps the project's existing Team and per-target entitlements.
+    'CODE_SIGN_IDENTITY=-',
     'build',
   ], { cwd: join(MOBILE_ROOT, 'ios', 'App') });
 }
