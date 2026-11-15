@@ -86,7 +86,6 @@ import { toLocalIsoDate } from '@cuberoot/shared/iso-date';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import {
   MAX_TIMER_BACKUP_BYTES,
-  DEFAULT_SOLO_LAYOUT,
   DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
   DEFAULT_TIMER_BY_STEPS_SETTINGS,
   DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
@@ -590,8 +589,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const [solverBlocking, setSolverBlocking] = useState(false);
   const solverBlockingRef = useRef(false); solverBlockingRef.current = solverBlocking;
   const [layoutEditing, setLayoutEditing] = useState(false);
-  const expandedSoloSpacing = (['scrambleGap', 'sourceGap', 'timerGap', 'cubeGap'] as const)
-    .some(key => (store?.settings.soloLayout[key] ?? DEFAULT_SOLO_LAYOUT[key]) > DEFAULT_SOLO_LAYOUT[key]);
   const layoutEditingRef = useRef(false);
   const finishLayoutEditing = useCallback(() => { layoutEditingRef.current = false; setLayoutEditing(false); }, []);
   useEffect(() => { if (view !== 'timer' || timerMode !== 1) finishLayoutEditing(); }, [view, timerMode, finishLayoutEditing]);
@@ -4059,8 +4056,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
 
 
 
-      <TimerWorkspace className="view-container" data-fit-viewport="" active={timerMode === 1 && timerVisible}
-        data-spacing-flow={expandedSoloSpacing ? '' : undefined}
+      <TimerWorkspace className="view-container" soloLayout={store?.settings.soloLayout} active={timerMode === 1 && timerVisible}
         data-live-reconstruction={liveSolutionPanel ? '' : undefined}
         panelOpen={dockHistory && !liveSolutionPanel} recap={liveSolutionPanel ?? solveRecap}>
         {timerVisible && timerMode === 1 && (

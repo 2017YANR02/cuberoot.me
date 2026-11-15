@@ -26,16 +26,17 @@ export interface TimerSoloPageProps {
 export function TimerSoloPage({ title, resizeLabel = 'Resize panel', topbar, stage, timing, solver, afterTiming, narrowRecap, hints, history, tools }: TimerSoloPageProps) {
   const wide = useTimerWideLayout();
   const [solverTriggerSlot, setSolverTriggerSlot] = useState<HTMLSpanElement | null>(null);
+  const [previewHost, setPreviewHost] = useState<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const { surfaceRef, onContextMenu, onMouseDown, onMouseUp, onPointerDown, onPointerUp, onPointerCancel, ...canvas } = timing;
   return <SolverTriggerContext.Provider value={solverTriggerSlot}>
     <TimerTopbar {...topbar} className={`timer-solo-topbar${stage.fullscreen ? ' timer-solo-topbar--fullscreen' : ''}${topbar.className ? ` ${topbar.className}` : ''}`}
       controls={<>{solver && <span className="solver-trigger-slot" ref={setSolverTriggerSlot} />}{topbar.controls}</>} />
-    <TimerStageLayout {...stage} inputRef={surfaceRef}
+    <TimerStageLayout {...stage} inputRef={surfaceRef} previewHostRef={timing.cornerSlot ? setPreviewHost : undefined}
       inputHandlers={{ onContextMenu, onMouseDown, onMouseUp, onPointerDown, onPointerUp, onPointerCancel }}
       className={`timer-solo-main timer-workspace-main timer-solver-stage${stage.className ? ` ${stage.className}` : ''}`}>
       {title && <h1 className="sr-only">{title}</h1>}
-      <TimingSurface {...canvas} surfaceRef={canvasRef} layout="solo" />
+      <TimingSurface {...canvas} surfaceRef={canvasRef} layout="solo" previewHost={previewHost} />
       {!wide && narrowRecap && <div data-no-timer style={{ display: 'contents' }}>{narrowRecap}</div>}
       <div className="timer-solo-after-timing surface-chrome" data-no-timer hidden={stage.fullscreen}>
         {afterTiming}

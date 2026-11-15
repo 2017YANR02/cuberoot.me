@@ -379,14 +379,16 @@
   }
 }
 
-/* Installed hosts all provide a bounded workspace above navigation. Keep a
+/* Web and installed hosts provide a bounded workspace above navigation. Keep a
  * viewport-unit baseline for older WebViews, then refine it to actual content
  * dimensions when container queries are available. */
 .timer-workspace[data-fit-viewport] { height: 100%; overflow: hidden; --timer-right-dock-width: 300px; }
+.timer-workspace[data-fit-viewport] .timer-solo-main { overflow: auto; }
+.timer-stage-preview { --timer-preview-docked: 0; display: none; }
 .timer-workspace[data-fit-viewport] .timing-surface--solo {
-  flex: 1 1 0;
-  min-height: 0;
-  grid-template-rows: auto minmax(0, 1fr);
+  flex: 1 0 auto;
+  min-height: min-content;
+  grid-template-rows: auto auto;
   padding-top: var(--solo-scramble-gap, 16px);
   row-gap: var(--solo-timer-gap, 20px);
   --timer-scramble-fs: clamp(16px, 4vw, 28px);
@@ -400,9 +402,8 @@
   --timer-readout-max-size: min(20vh, 22vw);
 }
 .timer-workspace[data-fit-viewport] .timing-surface-scramble-top {
-  max-height: 32vh;
-  overflow-y: auto;
-  touch-action: pan-y;
+  max-height: none;
+  overflow: visible;
 }
 .timer-workspace[data-fit-viewport] .timing-surface-sub { min-height: 0; max-height: 55%; }
 .timer-workspace[data-fit-viewport] .timing-surface-cube { min-height: 0; }
@@ -424,7 +425,7 @@
     .timer-workspace[data-fit-viewport] .shell-stat { grid-template-columns: auto auto; column-gap: 6px; align-self: auto; }
     .timer-workspace[data-fit-viewport] .timer-stage-footer { padding-block: 4px; }
   }
-  @media (min-width: 520px) and (max-height: 500px) and (orientation: landscape) {
+  @media (min-width: 520px) and (max-height: 650px) and (orientation: landscape) {
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo {
       flex: 1 0 auto;
       min-height: min-content;
@@ -442,31 +443,25 @@
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .scramble-src-row { margin-top: calc(min(var(--solo-source-gap, 16px), 4px) - 8px); }
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .trainer-case { margin-top: 0; }
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface-cube-frame { flex-shrink: 0; --timer-cube-h: clamp(36px, 12vh, 72px); }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] {
-      --timer-side-preview-width: clamp(120px, 25vw, 220px);
+    /* A single preview moves into the footer, so long content scrolls in
+       normal flow and can never run underneath a fixed corner image. */
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timer-stage-preview {
+      --timer-preview-docked: 1;
+      display: flex;
+      flex: 0 0 auto;
+      justify-content: center;
+      width: clamp(120px, 25vw, 220px);
+      margin-left: auto;
     }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-scramble-top {
-      width: 100%;
-    }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-core {
-      --timer-readout-side-preview: 1;
-      display: grid;
-      grid-template-columns: var(--timer-side-preview-width) minmax(0, 1fr) var(--timer-side-preview-width);
-      grid-template-rows: auto;
-      column-gap: 16px;
-      align-items: center;
-    }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timer-display-wrap { grid-column: 2; grid-row: 1; width: 100%; min-width: 0; }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-sub { grid-column: 3; grid-row: 1; }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timer-display-value { margin-inline: auto; }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-cube-frame { --timer-cube-h: clamp(60px, 16vh, 120px); }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden])[data-has-rankings="true"] { grid-template-columns: minmax(0, 1fr) auto auto auto; }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timing-surface-cube-frame { --timer-cube-h: clamp(60px, 24vh, 120px); }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timer-stage-devices:empty { display: none; }
   }
 }
 @supports (container-type: size) {
   .timer-workspace[data-fit-viewport] .timer-solo-main { container: timer-stage / size; }
   .timer-workspace[data-fit-viewport] .timing-surface--solo { --timer-scramble-fs: clamp(16px, 4cqw, 28px); }
   .timer-workspace[data-fit-viewport] .timing-surface-core { --timer-readout-max-size: min(24cqh, 22cqw); }
-  .timer-workspace[data-fit-viewport] .timing-surface-scramble-top { max-height: 40cqh; }
   .timer-workspace[data-fit-viewport] .timing-surface-cube-frame { --timer-cube-h: min(30cqw, 26cqh); }
   @container timer-stage (max-height: 350px) {
     .timer-workspace[data-fit-viewport] .timer-stage-footer { padding-block: 4px; }
@@ -477,7 +472,7 @@
     .timer-workspace[data-fit-viewport] .shell-stat { grid-template-columns: auto auto; column-gap: 6px; align-self: auto; }
     .timer-workspace[data-fit-viewport] .timer-stage-footer { padding-block: 4px; }
   }
-  @container timer-stage (min-width: 520px) and (max-height: 500px) {
+  @container timer-stage (min-width: 520px) and (max-height: 650px) and (min-aspect-ratio: 1/1) {
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo {
       flex: 1 0 auto;
       min-height: min-content;
@@ -495,24 +490,19 @@
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .scramble-src-row { margin-top: calc(min(var(--solo-source-gap, 16px), 4px) - 8px); }
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .trainer-case { margin-top: 0; }
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface-cube-frame { flex-shrink: 0; --timer-cube-h: clamp(36px, 18cqh, 72px); }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] {
-      --timer-side-preview-width: clamp(120px, 25cqw, 220px);
+    /* A single preview moves into the footer, so long content scrolls in
+       normal flow and can never run underneath a fixed corner image. */
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timer-stage-preview {
+      --timer-preview-docked: 1;
+      display: flex;
+      flex: 0 0 auto;
+      justify-content: center;
+      width: clamp(120px, 25cqw, 220px);
+      margin-left: auto;
     }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-scramble-top {
-      width: 100%;
-    }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-core {
-      --timer-readout-side-preview: 1;
-      display: grid;
-      grid-template-columns: var(--timer-side-preview-width) minmax(0, 1fr) var(--timer-side-preview-width);
-      grid-template-rows: auto;
-      column-gap: 16px;
-      align-items: center;
-    }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timer-display-wrap { grid-column: 2; grid-row: 1; width: 100%; min-width: 0; }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-sub { grid-column: 3; grid-row: 1; }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timer-display-value { margin-inline: auto; }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-cube-frame { --timer-cube-h: clamp(60px, 24cqh, 120px); }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden])[data-has-rankings="true"] { grid-template-columns: minmax(0, 1fr) auto auto auto; }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timing-surface-cube-frame { --timer-cube-h: clamp(60px, 24cqh, 120px); }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timer-stage-devices:empty { display: none; }
   }
 }
 

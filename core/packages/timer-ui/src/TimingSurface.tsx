@@ -10,12 +10,14 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
+  useState,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
   type RefObject,
   type CSSProperties,
 } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface TimingSurfaceProps {
   phase: 'idle' | 'inspecting' | 'holding' | 'ready' | 'running' | 'stopped';
@@ -35,6 +37,8 @@ export interface TimingSurfaceProps {
   cubeFooter?: ReactNode;
   /** Natural aspect of a preview filling the shared corner frame. */
   cornerAspect?: number;
+  /** Solo's footer owns the preview only when its container has room. */
+  previewHost?: HTMLElement | null;
   children?: ReactNode;
   digitsCorner?: ReactNode;
   readoutLabel?: ReactNode;
@@ -63,6 +67,7 @@ export default function TimingSurface({
   cornerSlot,
   cubeFooter,
   cornerAspect,
+  previewHost,
   children,
   digitsCorner,
   readoutLabel,
@@ -82,6 +87,16 @@ export default function TimingSurface({
   const coreRef = useRef<HTMLDivElement>(null);
   const readoutWrapRef = useRef<HTMLDivElement>(null);
   const readoutRef = useRef<HTMLDivElement>(null);
+  const [previewDocked, setPreviewDocked] = useState(false);
+  useLayoutEffect(() => {
+    if (!previewHost || typeof ResizeObserver === 'undefined') return;
+    const update = () => setPreviewDocked(getComputedStyle(previewHost).getPropertyValue('--timer-preview-docked').trim() === '1');
+    const observer = new ResizeObserver(update);
+    observer.observe(previewHost);
+    if (previewHost.parentElement?.parentElement) observer.observe(previewHost.parentElement.parentElement);
+    update();
+    return () => observer.disconnect();
+  }, [previewHost]);
   useEffect(() => {
     const surface = surfaceRef.current;
     if (!surface) return;
@@ -150,6 +165,15 @@ export default function TimingSurface({
       if (frame !== null) cancelAnimationFrame(frame);
     };
   }, [scrambleAbove]);
+  const preview = cornerSlot && <div className="timing-surface-cube surface-chrome">
+    {sharedLayout
+      ? <div className="timing-surface-cube-frame"
+          style={cornerAspect !== undefined && Number.isFinite(cornerAspect) && cornerAspect > 0
+            ? { '--timer-cube-aspect': cornerAspect } as CSSProperties
+            : undefined}>{cornerSlot}</div>
+      : cornerSlot}
+    {cubeFooter}
+  </div>;
   return (
     <div
       ref={surfaceRef}
@@ -182,15 +206,7 @@ export default function TimingSurface({
         <div className="timing-surface-sub">
           {children}
           {!scrambleAbove && scrambleSlot && <div className="timing-surface-scramble surface-chrome">{scrambleSlot}</div>}
-          {cornerSlot && <div className="timing-surface-cube surface-chrome">
-            {sharedLayout
-              ? <div className="timing-surface-cube-frame"
-                  style={cornerAspect !== undefined && Number.isFinite(cornerAspect) && cornerAspect > 0
-                    ? { '--timer-cube-aspect': cornerAspect } as CSSProperties
-                    : undefined}>{cornerSlot}</div>
-              : cornerSlot}
-            {cubeFooter}
-          </div>}
+          {previewDocked && previewHost ? createPortal(preview, previewHost) : preview}
         </div>
       </div>
     </div>

@@ -37,6 +37,36 @@ describe('shared timer complete-readout fitting', () => {
   const fit = () => Number(host.querySelector<HTMLElement>('.timer-display-value')!.style.getPropertyValue('--timer-readout-fit')) || 1;
   const resize = async () => act(async () => { notify([], {} as ResizeObserver); const pending = frames.splice(0); pending.forEach((callback) => callback(0)); });
 
+  it('moves one preview between the canvas and footer on rotation without replacing the readout or leaking observers', async () => {
+    const callbacks: ResizeObserverCallback[] = [];
+    vi.stubGlobal('ResizeObserver', class {
+      constructor(callback: ResizeObserverCallback) { callbacks.push(callback); }
+      observe() {}
+      disconnect = disconnect;
+    });
+    const footer = document.createElement('div');
+    document.body.append(footer);
+    const draw = () => act(async () => root.render(createElement(TimingSurface, {
+      layout: 'solo', phase: 'idle', colorClass: '', surfaceRef: createRef<HTMLDivElement>(),
+      digits: '0.00', cornerSlot: createElement('span', null, 'preview'), previewHost: footer,
+    })));
+    try {
+      await draw();
+      const readout = host.querySelector('.timer-display-value');
+      for (const docked of [true, true, false, true, false]) {
+        footer.style.setProperty('--timer-preview-docked', docked ? '1' : '0');
+        await act(async () => callbacks.forEach(callback => callback([], {} as ResizeObserver)));
+        expect(document.querySelectorAll('.timing-surface-cube')).toHaveLength(1);
+        expect(Boolean(footer.querySelector('.timing-surface-cube'))).toBe(docked);
+        expect(host.querySelector('.timer-display-value')).toBe(readout);
+      }
+      expect(callbacks).toHaveLength(2);
+      await act(async () => root.render(null));
+      expect(disconnect).toHaveBeenCalledTimes(2);
+      expect(footer.childElementCount).toBe(0);
+    } finally { footer.remove(); }
+  });
+
   it.each(['DNF', 'DNS'])('keeps %s as text while drawing its LCD capital D, then returns to numeric timing', async (penalty) => {
     await render(penalty);
     const readout = host.querySelector('.timer-display-value')!;

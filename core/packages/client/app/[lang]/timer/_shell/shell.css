@@ -28,6 +28,13 @@
   overflow: visible;
 }
 
+/* Web supplies its notice-aware viewport; shared Solo rules own the canvas. */
+.timer-shell.timer-workspace[data-fit-viewport] {
+  height: calc(100dvh - var(--page-notice-h, 0px));
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* Keep the desktop workspace within the viewport; previews use the remaining
    height after the scramble, readout and fixed footer have been laid out. */
 @media (min-width: 1024px), (min-width: 800px) and (min-height: 500px) and (orientation: landscape) {

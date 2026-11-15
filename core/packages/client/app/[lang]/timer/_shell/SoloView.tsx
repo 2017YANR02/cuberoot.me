@@ -3351,7 +3351,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   );
 
   return (
-    <TimerWorkspace resizeLabel={tr({ zh: '拖动调整侧栏宽度', en: 'Drag to resize panel' })} panelOpen={Boolean(panelTab) && !liveSolutionPanel} recap={liveSolutionPanel ?? solveRecap}
+    <TimerWorkspace soloLayout={settings.soloLayout} resizeLabel={tr({ zh: '拖动调整侧栏宽度', en: 'Drag to resize panel' })} panelOpen={Boolean(panelTab) && !liveSolutionPanel} recap={liveSolutionPanel ?? solveRecap}
       className={`timer-shell${fullscreen ? ' fullscreen' : ''}${distractionFree ? ' is-solving' : ''}${hideAllUi ? ' hide-ui' : ''}${isDesktop && (panelTab || recapSolve || liveSolutionPanel) ? ' panel-open' : ''}${isDesktop && (liveSolutionPanel || (recapSolve && !panelTab)) ? ' recap-open' : ''}`}
       data-layout-editing={layoutEditing ? '' : undefined}
       data-solving={timer.phase === 'running' ? 'true' : undefined}
