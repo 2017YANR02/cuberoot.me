@@ -143,6 +143,7 @@ export default function CubePhotoTool() {
     <div className="cube-photo-toolbar">
         <div inert={busy} aria-disabled={busy}>
         <WcaEventSelector availableEvents={PHOTO_EVENTS} selectedEvent={photoEvent}
+          showTriggerLabel
           isZh={i18n.language.startsWith('zh')}
           onSelect={value => {
             const size = value === '444' ? 4 : value === '222' ? 2 : 3;

@@ -18,6 +18,7 @@ import { tr } from '@/i18n/tr';
 
 interface WcaEventSelectorProps {
   presentation?: 'menu' | 'inline';
+  showTriggerLabel?: boolean;
   popupFooter?: ReactNode;
   availableEvents: Set<string>;
   isZh: boolean;
@@ -60,7 +61,7 @@ export default function WcaEventSelector({
   selectedEvents, onToggle, badges, topBadges, onlyAvailable, onRemove, appendEvents,
   collapsibleAppend, onExpandedChange, linkFor, searchable,
   containerClassName = 'wca-stats-event-selector',
-  presentation = 'menu', popupFooter,
+  presentation = 'menu', popupFooter, showTriggerLabel,
 }: WcaEventSelectorProps) {
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
@@ -132,6 +133,7 @@ export default function WcaEventSelector({
     if (allowAll && !isMulti) official.unshift({ id: '', label: renderedAllLabel });
     return (
       <PuzzlePicker
+        showTriggerLabel={showTriggerLabel}
         isZh={isZh}
         selectedEvent={selectedEvent}
         selectedEvents={selectedEvents}

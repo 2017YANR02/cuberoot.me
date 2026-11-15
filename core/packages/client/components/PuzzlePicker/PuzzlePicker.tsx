@@ -79,6 +79,7 @@ interface Props {
   placeholderLabel?: string;
   /** 是否显示收起态图标;纯文本触发器可关闭。 */
   showTriggerIcon?: boolean;
+  showTriggerLabel?: boolean;
   showArrow?: boolean;
   /** 是否显示每项的图标/文字徽标;纯文本 catalog 可关闭。 */
   showItemIcons?: boolean;
@@ -97,7 +98,7 @@ const menuLabel = (label: string): string => label.replaceAll('魔方', '').repl
 
 export default function PuzzlePicker({
   isZh = false, selectedEvent, selectedEvents, wcaEvents, availableEvents, onSelect, onToggle, linkFor,
-  discovery, groups: suppliedGroups, additionalGroups, placeholderLabel, showArrow = false, showTriggerIcon = true, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
+  discovery, groups: suppliedGroups, additionalGroups, placeholderLabel, showArrow = false, showTriggerIcon = true, showTriggerLabel = false, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
 }: Props) {
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
@@ -203,7 +204,7 @@ export default function PuzzlePicker({
       selectedEvent={selectedEvent ?? ''}
       onSelect={onSelect}
       puzzleLabel={menuLabel(placeholderLabel ?? tr({ zh: '项目', en: 'Puzzle' }))}
-      triggerLabel={showTriggerIcon && showItemIcons ? undefined : triggerLabel}
+      triggerLabel={showTriggerLabel || !showTriggerIcon || !showItemIcons ? triggerLabel : undefined}
       showItemIcons={showItemIcons}
       dataNoTimer={dataNoTimer}
     />;
@@ -271,6 +272,7 @@ export default function PuzzlePicker({
             ))}
           </span>
         ) : <span className="pp-trigger-label">{triggerLabel}</span>}
+        {showSelectedIcons && showTriggerLabel && <span className="pp-trigger-label">{triggerLabel}</span>}
         {showArrow && <ChevronDown size={14} className="pp-trigger-chevron" />}
       </button>
       {open && (
