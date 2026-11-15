@@ -12,6 +12,7 @@ type Snapshot = { ready: boolean; enabled: boolean };
 type Session = { owner: string; subjectToken: string; sessionId: string; touched: number };
 const SESSION_KEY = 'cuberoot:analytics:session:v1';
 const IDLE_MS = 30 * 60_000;
+const ATTRIBUTION_MS = 30 * 60_000;
 let snapshot: Snapshot = { ready: false, enabled: false };
 const listeners = new Set<() => void>();
 let session: Session | null = null;
@@ -24,7 +25,7 @@ const deferred = new Set<() => void>();
 let failures = 0;
 let retryAfter = 0;
 type Attribution = Pick<ProductAnalyticsEvent, 'sourceViewId' | 'sourcePlacement' | 'sourcePosition'>;
-let page: { value: NonNullable<ReturnType<typeof analyticsPage>>; path: string; viewId: string; entryPoint: ProductAnalyticsEvent['entryPoint']; attribution: Attribution } | null = null;
+let page: { value: NonNullable<ReturnType<typeof analyticsPage>>; path: string; viewId: string; entryPoint: ProductAnalyticsEvent['entryPoint']; attribution: Attribution; attributedAt?: number } | null = null;
 let pendingEntry: { feature: string; source: 'home' | 'search'; at: number; attribution: Attribution } | null = null;
 const used = new Set<string>();
 
@@ -121,17 +122,26 @@ export function analyticsNavigate(pathname: string): void {
     const previous = page;
     const value = analyticsPage(path);
     page = null; used.clear();
-    if (!value) return;
+    if (!value) { pendingEntry = null; return; }
     let entryPoint: ProductAnalyticsEvent['entryPoint'] = previous ? 'internal' : 'direct';
     let attribution: Attribution = {};
+    let attributedAt: number | undefined;
     if (pendingEntry && pendingEntry.feature === value.feature && Date.now() - pendingEntry.at < 30_000) {
       entryPoint = pendingEntry.source; attribution = pendingEntry.attribution;
+      attributedAt = pendingEntry.at;
+    }
+    else if (!pendingEntry && previous?.value.feature === value.feature && previous.attributedAt !== undefined
+      && Date.now() - previous.attributedAt < ATTRIBUTION_MS) {
+      // Keep the original entry through list/category/detail navigation within a
+      // feature. Crossing features or private routes ends this attribution chain.
+      entryPoint = previous.entryPoint; attribution = previous.attribution;
+      attributedAt = previous.attributedAt;
     }
     else if (!previous && document.referrer) {
       try { entryPoint = new URL(document.referrer).origin === location.origin ? 'internal' : 'external'; } catch { /* no raw referrer leaves browser */ }
     }
     pendingEntry = null;
-    page = { value, path, viewId: crypto.randomUUID(), entryPoint, attribution };
+    page = { value, path, viewId: crypto.randomUUID(), entryPoint, attribution, attributedAt };
     trackAnalytics('web.page_view');
   } catch { page = null; /* A page must still render if telemetry is unavailable. */ }
 }
@@ -144,9 +154,11 @@ export function trackAnalytics(name: ProductAnalyticsEvent['name'], extra: Parti
 }
 
 function enqueueEvent(name: ProductAnalyticsEvent['name'], extra: Partial<ProductAnalyticsEvent>, target: NonNullable<typeof page>, occurredAt = new Date().toISOString()) {
+  const expired = target.attributedAt !== undefined && Date.parse(occurredAt) - target.attributedAt >= ATTRIBUTION_MS;
   queued.push({ id: crypto.randomUUID(), name, occurredAt, viewId: target.viewId,
       ...target.value, language: /^\/zh(?:\/|$)/.test(target.path) ? 'zh' : 'en',
-      deviceClass: matchMedia('(max-width: 767px)').matches ? 'mobile' : 'desktop', entryPoint: target.entryPoint, ...target.attribution, ...extra });
+      deviceClass: matchMedia('(max-width: 767px)').matches ? 'mobile' : 'desktop',
+      entryPoint: expired ? 'internal' : target.entryPoint, ...(expired ? {} : target.attribution), ...extra });
   if (queued.length > 200) queued.shift();
   if (queued.length >= ANALYTICS_BATCH_SIZE) void flushAnalytics();
 }

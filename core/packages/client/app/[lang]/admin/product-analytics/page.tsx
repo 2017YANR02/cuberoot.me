@@ -62,7 +62,6 @@ export default function ProductAnalyticsPage() {
     { value: 'public', label: t('公开用户', 'Public users') },
     { value: 'member', label: t('登录用户', 'Signed-in users') },
     { value: 'anonymous', label: t('匿名会话', 'Anonymous sessions') },
-    { value: 'admin', label: t('管理员', 'Administrators') },
   ];
   const viewItems: Array<{ value: View; label: string }> = [
     { value: 'features', label: t('功能总览', 'Feature overview') },

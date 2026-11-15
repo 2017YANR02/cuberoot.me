@@ -7,7 +7,7 @@ vi.mock('@/lib/web-session', () => ({ peekWebAccessToken: (marker: string) => ma
 vi.mock('@/lib/session-fetch', () => ({ sessionFetch: network }));
 vi.mock('@/lib/api-base', () => ({ apiUrl: (path: string) => path }));
 vi.mock('next/navigation', () => ({ usePathname: () => '/' }));
-import { analyticsNavigate, analyticsSnapshot, flushAnalytics, initializeAnalytics, trackAnalytics, trackPageInteraction, stopAnalytics, trackFeatureUse } from '@/lib/product-analytics';
+import { analyticsEntryTarget, analyticsNavigate, analyticsSnapshot, flushAnalytics, initializeAnalytics, trackAnalytics, trackPageInteraction, stopAnalytics, trackFeatureUse } from '@/lib/product-analytics';
 import { observeAnalyticsEntries } from '@/components/ProductAnalytics';
 
 describe('default browser analytics', () => {
@@ -19,6 +19,52 @@ describe('default browser analytics', () => {
     vi.stubGlobal('matchMedia', () => ({ matches: false }));
   });
   afterEach(() => { stopAnalytics(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); document.body.innerHTML = ''; });
+
+  it.each([
+    { feature: 'algdb', paths: ['/alg', '/alg/3x3/pll', '/alg/3x3/pll/ua'], action: 'alg_play' as const },
+    { feature: 'recon', paths: ['/recon', '/recon/2796'], action: 'recon_play' as const },
+  ])('attributes $feature list-to-detail use to the original home entry', async ({ feature, paths, action }) => {
+    vi.useFakeTimers(); await initializeAnalytics(); analyticsNavigate('/');
+    analyticsEntryTarget(feature, 'main', 1);
+    paths.forEach(analyticsNavigate);
+    trackFeatureUse(action); trackFeatureUse(action);
+    // Deferred operations must retain their source even if navigation happens first.
+    analyticsNavigate('/timer'); await flushAnalytics();
+    const events = network.mock.calls.flatMap(call => JSON.parse(call[1].body).events);
+    const uses = events.filter(e => e.name === 'web.feature_use');
+    expect(uses).toHaveLength(1);
+    expect(uses[0]).toMatchObject({ action, entryPoint: 'home', sourceViewId: events[0].viewId, sourcePlacement: 'main', sourcePosition: 1 });
+    expect(uses[0].viewId).not.toBe(events[0].viewId);
+  });
+
+  it.each(['/timer', '/account'])('ends entry attribution after visiting %s', async path => {
+    vi.useFakeTimers(); await initializeAnalytics(); analyticsNavigate('/');
+    analyticsEntryTarget('algdb', 'main', 1); analyticsNavigate('/alg');
+    analyticsNavigate(path); analyticsNavigate('/alg/3x3/pll/ua'); trackFeatureUse('alg_play');
+    await flushAnalytics();
+    const use = network.mock.calls.flatMap(call => JSON.parse(call[1].body).events).find(e => e.name === 'web.feature_use');
+    expect(use.sourceViewId).toBeUndefined();
+    expect(use.entryPoint).not.toBe('home');
+  });
+
+  it('uses the latest explicit entry and preserves search attribution across details', async () => {
+    vi.useFakeTimers(); await initializeAnalytics(); analyticsNavigate('/');
+    analyticsEntryTarget('algdb', 'main', 1); analyticsNavigate('/alg');
+    analyticsEntryTarget('algdb', 'search', 2); analyticsNavigate('/alg/3x3');
+    analyticsNavigate('/alg/3x3/pll/ua'); trackFeatureUse('alg_play'); await flushAnalytics();
+    const events = network.mock.calls.flatMap(call => JSON.parse(call[1].body).events);
+    expect(events.find(e => e.name === 'web.feature_use')).toMatchObject({entryPoint:'search', sourceViewId:events[1].viewId, sourcePlacement:'search', sourcePosition:2});
+  });
+
+  it('expires attribution after 30 minutes even when the session remains active', async () => {
+    vi.useFakeTimers(); await initializeAnalytics(); analyticsNavigate('/');
+    analyticsEntryTarget('algdb', 'main', 1); analyticsNavigate('/alg');
+    vi.setSystemTime(Date.now() + 20 * 60_000); analyticsNavigate('/alg/3x3/pll');
+    vi.setSystemTime(Date.now() + 10 * 60_000); trackFeatureUse('alg_play'); await flushAnalytics();
+    const use = network.mock.calls.flatMap(call => JSON.parse(call[1].body).events).find(e => e.name === 'web.feature_use');
+    expect(use).toMatchObject({entryPoint:'internal'});
+    expect(use.sourceViewId).toBeUndefined();
+  });
 
   it('collects anonymous activity by default; normalizes URLs and deduplicates use', async () => {
     await initializeAnalytics();
