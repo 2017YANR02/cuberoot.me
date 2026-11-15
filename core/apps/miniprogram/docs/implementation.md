@@ -397,4 +397,4 @@ pnpm --filter @cuberoot/miniprogram release:check
 
 | ID | 路径 | 能力 |
 | --- | --- | --- |
-| `draw` | `/lucky-draw` / `pages/lucky-draw/index` | 网页与原生抽奖、比赛报名导入、联想词训练；待发布与真机验收 |
+| `draw` | `/lucky-draw` | 工具页 WebView 内直接打开同一网站页面；无独立原生抽奖页或原生入口。抽奖、比赛搜索与盲拧训练统一维护。 |

@@ -3,6 +3,7 @@ import { join, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 import { SITE_DIRECTORY_GROUPS } from '@cuberoot/shared/site-directory';
+import { nativeWebDestination } from '../src/lib/native-web-destination';
 
 import { resolveWorkspacePath } from '../../../scripts/resolve-workspace-path.mjs';
 
@@ -27,6 +28,11 @@ const platformRoutesSource = readFileSync(join(websiteRoot, 'lib', 'platform-rou
 const trackingSource = readFileSync(join(coreRoot, 'apps', 'miniprogram', 'docs', 'implementation.md'), 'utf8');
 
 describe('mini program web routes', () => {
+  it('keeps WeChat lucky draw on the website instead of redirecting to a native UI', () => {
+    expect(resolveWebRoute('draw')?.url).toBe('https://cuberoot.me/zh/lucky-draw#wechat_redirect');
+    expect(nativeWebDestination('/zh/lucky-draw')).toBeNull();
+    expect(resolveWebRouteShare('draw')?.path).toBe('/pages/web/index?key=draw');
+  });
   it('resolves the website timer route', () => {
     expect(resolveWebRoute('timer')).toEqual({
       title: '计时',

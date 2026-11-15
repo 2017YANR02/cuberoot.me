@@ -55,6 +55,15 @@ describe('shared web-view page state', () => {
     vi.unstubAllGlobals();
   });
 
+  it('keeps lucky draw in the generic website route', () => {
+    const options = createWebViewPageOptions() as any;
+    const page = { ...options, ...createContext() };
+    page.onLoad({ key: 'draw' });
+    expect(page.data.src).toBe('https://cuberoot.me/zh/lucky-draw#wechat_redirect');
+    expect(page.data.errorMessage).toBe('');
+    page.onUnload();
+  });
+
   it('transfers a tool route to the tools tab and resets home even when that tab is already loaded', () => {
     const switchTab = vi.fn();
     Object.assign(wx, { switchTab });

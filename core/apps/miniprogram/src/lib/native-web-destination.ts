@@ -12,7 +12,6 @@ export function nativeWebDestination(path: string): NativeWebDestination | null 
   if (bare === '/chat') return {method:'redirectTo',url:'/pages/assistant/index'};
   const share = /^\/chat\/share\?id=([A-Za-z0-9_-]{24})$/.exec(bare);
   if (share) return {method:'redirectTo',url:`/pages/assistant/index?shareId=${share[1]}`};
-  if (bare === '/lucky-draw') return { method: 'redirectTo', url: '/pages/lucky-draw/index' };
   if (bare === '/contact') return { method: 'redirectTo', url: '/pages/contact/index' };
   if (bare === '/privacy') return { method: 'redirectTo', url: '/pages/privacy/index' };
   if (bare === '/timer') return { method: 'switchTab', url: '/pages/timer/index' };
