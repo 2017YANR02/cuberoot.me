@@ -1,6 +1,8 @@
-import type { TimerColorLetter as ColorLetter } from '@cuberoot/shared/timer';
+import { TIMER_COLOR_NAMES, type TimerColorLetter as ColorLetter } from '@cuberoot/shared/timer';
 
 export const CUBE_COLOR_LETTERS = 'WYGBOR';
+const COLOR_LETTER_BY_NAME = new Map(Object.entries(TIMER_COLOR_NAMES)
+  .map(([letter, name]) => [name.en.toLowerCase(), letter]));
 
 /** 这段文字是不是纯色字母(1~2 片)。调用方拿它决定要不要摆色块。 */
 export function isCubeColorLetters(s: string): boolean {
@@ -30,18 +32,20 @@ export interface CubeColorGroup {
 
 /**
  * 找出复盘标注里的配色组。开头允许单色十字,其余位置只认双色 F2L 槽位,避免把
- * 注释中的单个转动字母当作颜色。
+ * 注释中的单个转动字母当作颜色。完整英文颜色名也可表示单色，保留原文范围。
  */
 export function cubeColorGroups(label: string): CubeColorGroup[] {
   const groups: CubeColorGroup[] = [];
-  const candidates = label.matchAll(/[WYGBOR]{1,2}/g);
+  const candidates = label.matchAll(/[A-Za-z]+/g);
   for (const match of candidates) {
-    const colors = match[0];
+    const namedColor = COLOR_LETTER_BY_NAME.get(match[0].toLowerCase());
+    const colors = namedColor ?? match[0];
+    if (!isCubeColorLetters(colors)) continue;
     const start = match.index;
-    const end = start + colors.length;
+    const end = start + match[0].length;
     const beforeOk = start === 0 || /[\s(+/]/.test(label[start - 1]);
     const afterOk = end === label.length || /[\s/+).]/.test(label[end]);
-    if (beforeOk && afterOk && (start === 0 || colors.length === 2)) {
+    if (beforeOk && afterOk && (namedColor || start === 0 || colors.length === 2)) {
       groups.push({ colors, start, end });
     }
   }

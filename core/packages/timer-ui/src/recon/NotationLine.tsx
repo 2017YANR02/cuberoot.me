@@ -65,7 +65,7 @@ export default function NotationLine({ line, lineStart = 0, cursorOffset = null,
         end: group.end + labelStart,
       }))
     : [];
-  const colorsAt = new Map(labelColorGroups.map(group => [group.start, group.colors]));
+  const colorsAt = new Map(labelColorGroups.map(group => [group.start, group]));
   const hiddenBrackets = cubeColorGroupPunctuation(line, labelColorGroups);
   const cancellations = commentStart < 0 ? [] : [...line.slice(commentStart + 2).matchAll(/\bcancel\s+into\b/gi)]
     .map(match => ({ start: commentStart + 2 + match.index!, end: commentStart + 2 + match.index! + match[0].length }));
@@ -116,12 +116,13 @@ export default function NotationLine({ line, lineStart = 0, cursorOffset = null,
       );
       continue;
     }
-    const colors = colorsAt.get(a);
-    if (colors) {
+    const colorGroup = colorsAt.get(a);
+    if (colorGroup) {
+      const { colors, start, end } = colorGroup;
       const chip = <CubeColorChip colors={f2lDisplayColors(colors, crossColor)} className={`recon-label-chip ${chipClassName}`} localize={localize} />;
       const f2lHref = colorHref?.(colors);
       parts.push(
-        <span key={`color${a}`} data-recon-text-length={colors.length}>
+        <span key={`color${a}`} data-recon-text-length={end - start}>
           {f2lHref
             ? renderLink(f2lHref, chip)
             : chip}

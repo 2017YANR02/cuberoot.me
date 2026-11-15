@@ -74,6 +74,16 @@ describe('leadingCubeColors', () => {
 });
 
 describe('cubeColorGroups', () => {
+  it('recognizes complete color names without shortening source offsets', () => {
+    for (const [name, colors] of [['yellow', 'Y'], ['white', 'W'], ['green', 'G'], ['blue', 'B'], ['orange', 'O'], ['red', 'R']]) {
+      expect(cubeColorGroups(name)).toEqual([{ colors, start: 0, end: name.length }]);
+      expect(cubeColorGroups(name.toUpperCase())).toEqual([{ colors, start: 0, end: name.length }]);
+    }
+    expect(cubeColorGroups('green/orange')).toEqual([
+      { colors: 'G', start: 0, end: 5 }, { colors: 'O', start: 6, end: 12 },
+    ]);
+    expect(cubeColorGroups('yellowish redone blue2')).toEqual([]);
+  });
   it('找出 xxcross 与连续 F2L 标注里的每一组颜色', () => {
     expect(cubeColorGroups('Y xxcross (BR+GO)')).toEqual([
       { colors: 'Y', start: 0, end: 1 },
@@ -142,6 +152,16 @@ describe('cross color extraction', () => {
 });
 
 describe('SolutionView color labels', () => {
+  it('renders a single yellow sticker and preserves the six-character cursor span', () => {
+    const html = renderToStaticMarkup(createElement(SolutionView, {
+      text: "R U // yellow\nR' // WB",
+      playerRef: { current: null },
+    }));
+    expect(html).toMatch(/data-recon-text-length="6"><span[^>]*recon-label-chip/);
+    expect(html).toContain('aria-label="Yellow"');
+    expect(html).not.toContain('// yellow');
+    expect(html).toMatch(/data-recon-text-length="2"><span[^>]*recon-label-chip/);
+  });
   it('色块替代的颜色字母全部退出可见布局', () => {
     const text = [
       '// W xcross (GO)',
