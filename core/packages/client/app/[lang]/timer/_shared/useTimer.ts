@@ -26,6 +26,8 @@ import { useTimerSoundFeedback } from '@cuberoot/timer-ui';
 export type { SolveResult, TimerPhase } from '@cuberoot/shared/timer';
 
 export interface TimerHandle {
+  /** Capture the canonical clock without depending on rendering cadence. */
+  snapshot: () => TimerMachineState;
   phase: TimerPhase;
   /** Live elapsed ms while running; final ms after stop. */
   displayMs: number;
@@ -254,6 +256,7 @@ export function useTimer(
 
   return {
     phase,
+    snapshot: () => machineRef.current,
     displayMs,
     inspectionDisplayMs,
     lastMs,

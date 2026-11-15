@@ -24,6 +24,14 @@
 
 本节保留总体范围、当前验收入口与待完成检查。按日期的旧实现批次已归入[历史记录](history/mobile-app-history.md)，其中旧开关、商店状态和“未实现”不代表当前状态。只有完成实现并取得对应验证证据后才打勾；只完成代码但缺少真机、账号或商店证据的项目保持未勾选，并注明依赖条件。
 
+### 2026-11-15 计时器实时分享第一版（本地，未发布）
+
+- Web Solo 与共享 App 的「设置 → 计时 → 实时分享」接入同一 `@cuberoot/timer-ui/live-share`，支持生成、复制、二维码与结束分享；观看端为 `/timer/watch`，复用计时显示、成绩行、统计、智能魔方和复盘组件，不挂载计时控制器、BLE 或成绩写入逻辑。
+- 范围：单人计时，当前分组最近最多 200 条摘要（另限 512 KiB），实时打乱、计时状态/精度、魔方姿态、带时间戳的动作及完整停表记录；历史详情按需读取。每个链接 4 小时、最多 16 个观看者。观看凭证放 URL fragment，发布与观看凭证分离；PG 只存权限哈希与生命周期，实况只驻留单 API 进程，重启后发布者补快照。
+- 源码：`core/packages/shared/src/timer/live-share.ts`、`core/packages/timer-ui/src/timer-live-share.ts`、`core/packages/timer-ui/src/TimerLiveWatch.tsx`、`core/apps/api/src/timer_live_relay.ts`。上线需要 migration `0330_timer_live_shares.sql` 和新增 WebSocket nginx location；尚未执行线上迁移或部署。
+- 本地验证：隔离 PG 16 的 migration 与真实 HTTP/WebSocket；Web 和 mobile Vite 宿主的创建、复制/二维码、实时起停、成绩同步、多人独立详情、手机布局、撤销及再次创建。浏览器仅将新增分享 API/WS 定向到本机 3006，未向生产创建分享；屏蔽入站消息后自动重连恢复，无浏览器异常。类型检查、mobile 前端生产构建、架构边界及 13 项新增 Relay/连接生命周期测试通过。截图与验证摘要在 `.local-data/timer-live-share/`；本轮测试服务已关闭，原 Web 开发服务保留。
+- 复盘离线回归：16 个文件通过，308 项通过、19 项既有跳过；云端同步门禁因既有 `2467:truth_rule_changed` 阻挡，未修改基准或上传测试报告。未完成实体 GAN 16 UI 的 BLE 教学链路、原生安装包与跨网延迟验收；不据浏览器测试宣称五端真机完成。
+
 ### 2026-11-15 第三轮计时单屏验收（本地提交，未发布）
 
 后续按用户要求统一横屏纵向排列，取消打乱与计时左右分区，详见[纵向布局复验](mobile-timer-vertical-layout-2026-11-15.md)。默认三阶七组视口保持单屏且上下顺序正确；iPhone、Duo模拟器与Mac原生包取得限定页面证据。长打乱和主动放大的自定义布局保留不重叠的滚动兜底。

@@ -57,6 +57,7 @@ import { tr } from '@/i18n/tr';
 import '@/components/wca-source.css';
 
 interface Props {
+  liveShare?: React.ReactNode;
   onClose: () => void;
   actions: readonly MoreMenuItem[];
   presenceControl?: React.ReactNode;
@@ -108,7 +109,7 @@ function SettingsSection({ category, activeCategory, title, children, headerCont
   );
 }
 
-export default function SettingsPanel({ onClose, event, actions, presenceControl, playersControl, mergeSlotRef, onDataReplaced }: Props) {
+export default function SettingsPanel({ onClose, event, actions, presenceControl, playersControl, mergeSlotRef, onDataReplaced, liveShare }: Props) {
   const s = useSettings();
   const douyin = useDouyinToolSurface();
   const optimalUser = useAuthUser();
@@ -273,6 +274,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
             )}
 
         <TimerTimingSettingsSections
+          liveShare={liveShare}
           active={activeCategory === 'timer'}
           fixedHoldMs={usesStackmatPads(s) ? STACKMAT_PAD_HOLD_MS : undefined}
           localize={tr}

@@ -834,6 +834,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Record daily practice solve times and view averages. Includes WCA-standard scrambles, smart-cube support, step-by-step analysis and cloud backup.',
     },
   },
+  'timer/watch': { title: { zh: '计时器实况', en: 'Live Timer' } },
   'timer/accuracy': {
     title: { zh: '智能魔方计时精度', en: 'Smart-cube timing accuracy' },
     description: {

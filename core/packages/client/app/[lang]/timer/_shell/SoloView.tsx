@@ -1,4 +1,9 @@
 'use client';
+import { useTimerLiveShare, TimerLiveShareSettings, TimerLiveShareStatus } from '@cuberoot/timer-ui/live-share';
+import { captureTimerLiveAttempt, timerLiveHistory, timerLiveCompletedAttempt, timerLiveSolveDetail, type TimerLiveCompletion } from '@cuberoot/shared/timer/live-share';
+import { applyOrientation } from '@cuberoot/shared/smart-cube/orientation';
+import { apiUrl as liveApiUrl, websocketApiUrl } from '@/lib/api-base';
+import { browserClipboardTransport } from '@cuberoot/timer-ui';
 import PageBackLink from '@/components/PageBackLink';
 import { usesStackmatPads } from '@/components/stackmat-catalog';
 import TimerReadout from '../_components/TimerReadout';
@@ -1436,6 +1441,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [attemptSplitState, setAttemptSplitState] = useState<TimerAttemptSplitState>({ stages: {} });
   const [attemptSplitRecorder] = useState(() => new TimerAttemptSplitRecorder(setAttemptSplitState));
   const attemptStartedAtRef = useRef(0);
+  const liveCompletionRef = useRef<TimerLiveCompletion | null>(null);
   const timerDisplayMsRef = useRef(0);
 
   const recordSolve = useCallback((res: SolveResult) => {
@@ -1469,6 +1475,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     reconstructionAnalyzer.handoff(`live-${attemptStartedAtRef.current}`, solve.id);
     // Inspection actually used (0 when inspection was off / never entered).
     if (res.inspectionMs > 0) solve.inspectionMs = Math.round(res.inspectionMs);
+    liveCompletionRef.current = { context: getActiveSessionId(), solve };
     setLastPenalty(solve.penalty);
 
     // 破纪录(单次/Ao5/Ao12)时桌宠开心一下;不再弹横幅,纪录改在统计面板用 PR 标体现。
@@ -1534,6 +1541,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     }
     eventAtStartRef.current = event;
     attemptStartedAtRef.current = startedAtMs;
+    liveCompletionRef.current = null;
     attemptSplitRecorder.begin({
       bldMemo: settings.bldMemo && isBldEvent(eventAtStartRef.current),
       multiStage: settings.multiStage && timerSupportsStageSplits(eventAtStartRef.current),
@@ -2997,6 +3005,34 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const trainingStatistics = useMemo(() => timerTrainingSummaries(solves, event, settings.trainingStartMode),
     [solves, event, settings.trainingStartMode]);
   const inspectionLimit = settings.inspectionSec;
+  const liveShareHistory = useMemo(() => timerLiveHistory(Object.values(byEvent).flat()), [byEvent]);
+  const liveShare = useTimerLiveShare({ apiUrl: liveApiUrl, websocketUrl: websocketApiUrl('/v1/timer/live-shares/socket') }, {
+    snapshot: () => {
+      const machine = timer.snapshot();
+      const now = performance.now();
+      return {
+        state: { context: getActiveSessionId(), sessionName: activePrintSessionName ?? '', event, scramble,
+          phase: machine.phase, elapsedMs: machine.phase === 'running' ? Math.max(0, now - (machine.startedAtMs ?? now)) : machine.lastMs ?? 0,
+          inspectionMs: machine.inspectionStartedAtMs === null ? 0 : Math.max(0, now - machine.inspectionStartedAtMs),
+          inspectionSec: inspectionLimit, sampledAt: Date.now(), lastPenalty, trainingObservation: trainingTimingActive, timingEnabled: settings.timingEnabled, hideTime: settings.hideTime,
+          precision: settings.precision, runningPrecision: settings.runningPrecision },
+        cube: { connected: cubeConnected, facelets: bluetoothCube.facelets, moves: liveMoves, algAnchored,
+          quaternion: cubeConnected && settings.gyroEnabled && gyroQuatRef.current ? applyOrientation(gyroQuatRef.current, calibrationReferenceRef.current,
+            { basis: sensorBasisForBrand(bluetoothCube.status.brand), mirror: mirrorForBrand(bluetoothCube.status.brand) }) : null },
+        attempt: machine.phase === 'stopped' ? timerLiveCompletedAttempt(liveCompletionRef.current, getActiveSessionId(), event) : captureTimerLiveAttempt(smartCubeAttemptProducerRef.current, machine.phase === 'running' ? {
+          startedAt: attemptStartedAtRef.current, event: eventAtStartRef.current, scramble: scrambleAtStartRef.current,
+          trainingStartMode: machine.trainingStartMode } : null),
+        history: liveShareHistory,
+      };
+    },
+    detail: (id, context) => {
+      if (context !== getActiveSessionId()) return null;
+      const solve = Object.values(byEvent).flat().find(s => s.id === id);
+      return solve ? timerLiveSolveDetail(solve) : null;
+    },
+  }, !competition.enabled && !multiEnabled);
+  const liveShareSettings = <TimerLiveShareSettings controller={liveShare} language={isZh ? 'zh' : 'en'} copy={browserClipboardTransport}
+    watchBase={typeof window === 'undefined' ? 'https://cuberoot.me/timer/watch' : `${window.location.origin}${isZh ? '/zh' : ''}/timer/watch`} />;
   const colorClass = useMemo(() => {
     if (timer.phase === 'holding') return 'holding';
     if (timer.phase === 'ready') return 'ready';
@@ -3366,6 +3402,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           brand: <PageBackLink fallback="/" className="tb-btn shell-topbar-home" data-no-timer />,
           controls: (
           <>
+          <TimerLiveShareStatus controller={liveShare} language={isZh ? 'zh' : 'en'} />
           {trainingOrg && trainingAssignment && <AppLink className="tb-btn" data-no-timer prefetch={false} href={`/training/${encodeURIComponent(trainingOrg)}?assignment=${encodeURIComponent(trainingAssignment)}`}>{tr({ zh: '训练打卡进度', en: 'Training check-in progress' })}</AppLink>}
           {showReconTestEntry(isAdmin, cubeConnected, event, competition.enabled) && <ReconTestPicker
             canSelect={cubeConnected && (timer.phase === 'idle' || timer.phase === 'stopped')}
@@ -3820,7 +3857,7 @@ children: <>
       {layoutEditing && <SoloLayoutEditor surfaceRef={surfaceRef}
         contentKey={`${displayScramble}:${settings.showCubePreview}:${cubeConnected}`}
         onDone={finishLayoutEditing} />}
-      {settingsOpen && <SettingsPanel event={event} actions={douyin ? moreItems.filter(item => !['more.drill', 'more.bld-helper', 'more.solver', 'more.bulk'].includes(item.id)) : moreItems} playersControl={playersControl} presenceControl={presenceControl} mergeSlotRef={setMergeSlot} onClose={closeSettings} onDataReplaced={() => { trainingRound.reset(); setByEvent(loadAll()); }} />}
+      {settingsOpen && <SettingsPanel liveShare={liveShareSettings} event={event} actions={douyin ? moreItems.filter(item => !['more.drill', 'more.bld-helper', 'more.solver', 'more.bulk'].includes(item.id)) : moreItems} playersControl={playersControl} presenceControl={presenceControl} mergeSlotRef={setMergeSlot} onClose={closeSettings} onDataReplaced={() => { trainingRound.reset(); setByEvent(loadAll()); }} />}
 
       {infoToast && (
         <TimerInfoToast

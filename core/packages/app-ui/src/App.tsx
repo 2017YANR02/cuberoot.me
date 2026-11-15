@@ -1,6 +1,9 @@
 import { NotificationOpenQueue } from './notification-navigation';
 import { TimerResultsSessionBar } from '@cuberoot/timer-ui';
 import { AutoRecapDismissGesture } from '@cuberoot/shared/timer/reconstruct/recap';
+import { useTimerLiveShare, TimerLiveShareSettings, TimerLiveShareStatus } from '@cuberoot/timer-ui/live-share';
+import { captureTimerLiveAttempt, timerLiveHistory, timerLiveCompletedAttempt, timerLiveSolveDetail, type TimerLiveCompletion } from '@cuberoot/shared/timer/live-share';
+import { applyOrientation } from '@cuberoot/shared/smart-cube/orientation';
 import { timerTrainingSummaries } from '@cuberoot/timer-ui';
 import { createPortal } from 'react-dom';
 import { useTimerWcaCompetitionFilters, TimerPracticeContentPicker, TimerPracticeMethodPicker, TimerResultsTabs, TimerSoloLayoutEditor } from '@cuberoot/timer-ui';
@@ -2405,6 +2408,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const [attemptSplitState, setAttemptSplitState] = useState<TimerAttemptSplitState>({ stages: {} });
   const [attemptSplitRecorder] = useState(() => new TimerAttemptSplitRecorder(setAttemptSplitState));
   const attemptStartedAtRef = useRef(0);
+  const liveCompletionRef = useRef<TimerLiveCompletion | null>(null);
   const { solve: liveSolve, publish: publishLiveSolve, clear: clearLiveSolve } = useLiveSmartCubeAttempt(
     smartCubeAttemptProducerRef.current, () => timerPhaseRef.current === 'running' && attemptRef.current
       ? { startedAt: attemptStartedAtRef.current, event: attemptRef.current.event, scramble: attemptRef.current.scramble }
@@ -2445,6 +2449,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       timeMs: result.timeMs,
     };
     Object.assign(solve, smartCubeAttemptProducerRef.current.finishSolveFields(solve));
+    liveCompletionRef.current = { context: sessionId, solve: { ...solve, id: crypto.randomUUID(), ts: Date.now() } };
     const ownerAtSaveStart = wcaAutoMarkOwnerKey(authSessionRef.current);
     const recapRevision = recapAttemptRevisionRef.current;
     const priorSolveIds = new Set((storeRef.current?.database.dataBySession[sessionId]?.[solve.event] ?? []).map((item) => item.id));
@@ -2545,6 +2550,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         };
       }
       attemptStartedAtRef.current = startedAtMs;
+      liveCompletionRef.current = null;
       clearLiveSolve();
       smartCubeAttemptDeviceRef.current = connectedSmartCubeRef.current;
       attemptSplitRecorder.begin({
@@ -2982,6 +2988,32 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     timingEnabled,
   });
   let timerInstruction: string = timingEnabled ? copy.holdToArm : copy.nextScramble;
+  const liveShareHistory = useMemo(() => timerLiveHistory(allSessionSolves), [allSessionSolves]);
+  const liveShareApiUrl = mobileApiUrl;
+  const liveShare = useTimerLiveShare({ apiUrl: liveShareApiUrl, websocketUrl: liveShareApiUrl('/v1/timer/live-shares/socket').replace(/^http/, 'ws') }, {
+    snapshot: () => {
+      const machine = timer.machine, now = performance.now();
+      return {
+        state: { context: store?.database.activeSessionId ?? '', sessionName: activePrintSessionName ?? '', event: activeEvent, scramble,
+          phase: machine.phase, elapsedMs: machine.phase === 'running' ? Math.max(0, now - (machine.startedAtMs ?? now)) : machine.lastMs ?? 0,
+          inspectionMs: machine.inspectionStartedAtMs === null ? 0 : Math.max(0, now - machine.inspectionStartedAtMs),
+          inspectionSec: machine.inspectionSec ?? store?.settings.inspectionSec ?? 0, sampledAt: Date.now(), lastPenalty,
+          trainingObservation: Boolean(machine.trainingStartMode), timingEnabled, hideTime: hideRunningTime, precision: resultPrecision, runningPrecision },
+        cube: { connected: smartCube.phase === 'connected', facelets: smartCube.facelets || null, moves: smartCubeAnchor.moves, algAnchored: smartCubeAnchor.algAnchored,
+          quaternion: smartCube.phase === 'connected' && store?.settings.gyroEnabled && smartCubeQuatRef.current
+            ? applyOrientation(smartCubeQuatRef.current, calibrationReferenceRef.current,
+              { basis: sensorBasisForBrand(smartCube.model), mirror: mirrorForBrand(smartCube.model) }) : null },
+        attempt: machine.phase === 'stopped' ? timerLiveCompletedAttempt(liveCompletionRef.current, store?.database.activeSessionId ?? '', activeEvent) : captureTimerLiveAttempt(smartCubeAttemptProducerRef.current, machine.phase === 'running' && attemptRef.current ? {
+          startedAt: attemptStartedAtRef.current, event: attemptRef.current.event, scramble: attemptRef.current.scramble,
+          trainingStartMode: machine.trainingStartMode } : null), history: liveShareHistory,
+      };
+    },
+    detail: (id, context) => {
+      if (context !== store?.database.activeSessionId) return null;
+      const solve = allSessionSolves.find(s => s.id === id);
+      return solve ? timerLiveSolveDetail(solve) : null;
+    },
+  }, !!store && timerMode === 1 && (timerVisible || view === 'history'));
   if (timer.machine.phase === 'running') timerInstruction = copy.tapToStop;
   if (timer.machine.phase === 'holding') timerInstruction = copy.keepHolding;
   if (timer.machine.phase === 'ready') timerInstruction = copy.releaseToStart;
@@ -4058,6 +4090,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
               ),
           controls: (
                 <>
+                  <TimerLiveShareStatus controller={liveShare} language={language} />
                   {smartCubeDeviceCenter}
                   <TimerPuzzlePicker
                     showArrow={false}
@@ -4820,6 +4853,8 @@ children: <>
 
             </>}
             <TimerTimingSettingsSections active={settingsCategory === 'timer'}
+              liveShare={<TimerLiveShareSettings controller={liveShare} language={language} copy={text => host.writeClipboardText(text)}
+                watchBase={`${SITE_ORIGIN}${language === 'zh' ? '/zh' : ''}/timer/watch`} />}
               localize={(value) => value[language]}
               onChange={updateSettings}
               renderBooleanControl={({ disabled, label, onChange, value }) => (
