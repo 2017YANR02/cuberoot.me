@@ -8,11 +8,11 @@ describe('shared timer complete-readout fitting', () => {
   let host: HTMLDivElement, root: Root;
   let notify: ResizeObserverCallback;
   let frames: FrameRequestCallback[];
-  let available: number, natural: number;
+  let available: number, natural: number, column: number;
   const disconnect = vi.fn();
   beforeEach(() => {
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
-    frames = []; available = 320; natural = 600;
+    frames = []; available = 320; natural = 600; column = 0;
     vi.stubGlobal('ResizeObserver', class {
       constructor(callback: ResizeObserverCallback) { notify = callback; }
       observe() {}
@@ -21,7 +21,10 @@ describe('shared timer complete-readout fitting', () => {
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { frames.push(callback); return frames.length; });
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
     host = document.createElement('div'); document.body.append(host); root = createRoot(host);
-    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(function (this: HTMLElement) { return this.classList.contains('timing-surface-core') ? available : 0; });
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('timing-surface-core') ? available
+        : this.classList.contains('timer-display-wrap') ? column : 0;
+    });
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       return { width: natural * (Number(this.style.getPropertyValue('--timer-readout-fit')) || 1) } as DOMRect;
     });
@@ -80,6 +83,37 @@ describe('shared timer complete-readout fitting', () => {
     natural = 150; await render('0.00'); await resize(); expect(fit()).toBe(1);
     natural = 400; available = 200; await resize(); expect(fit()).toBe(0.495);
     available = 800; await resize(); expect(fit()).toBe(1);
+  });
+  it('fits the assigned readout column without remounting, then restores full width when preview closes', async () => {
+    available = 800; column = 300;
+    const draw = (preview: boolean) => act(async () => root.render(createElement(TimingSurface, {
+      layout: 'solo', phase: 'stopped', colorClass: '', surfaceRef: createRef<HTMLDivElement>(),
+      digits: '1:48:13.982+', cornerSlot: preview ? createElement('span', null, 'cube') : undefined,
+    })));
+    await draw(true);
+    const core = host.querySelector<HTMLElement>('.timing-surface-core')!;
+    const readout = host.querySelector('.timer-display-value');
+    expect(host.querySelector('.timing-surface')?.hasAttribute('data-cube-preview')).toBe(true);
+    core.style.setProperty('--timer-readout-side-preview', '1');
+    await resize(); expect(fit()).toBe(0.496666);
+    await resize(); expect(fit()).toBe(0.496666);
+    column = 220; await resize(); expect(fit()).toBe(0.363333);
+    column = 0; await resize(); expect(fit()).toBe(1);
+    column = 300; await resize(); expect(fit()).toBe(0.496666);
+    await draw(false); core.style.removeProperty('--timer-readout-side-preview'); await resize();
+    expect(host.querySelector('.timing-surface')?.hasAttribute('data-cube-preview')).toBe(false);
+    expect(host.querySelector('.timing-surface-core')).toBe(core);
+    expect(host.querySelector('.timer-display-value')).toBe(readout);
+    expect(fit()).toBe(1);
+  });
+  it('ignores the content-sized wrapper in ordinary flow instead of shrinking again on every callback', async () => {
+    await render('1:48:13.982+');
+    expect(fit()).toBe(0.53);
+    for (let pass = 0; pass < 4; pass++) {
+      column = natural * fit();
+      await resize();
+      expect(fit()).toBe(0.53);
+    }
   });
   it('does no per-tick fitting and cancels a queued resize when unmounted', async () => {
     await render('12.34');

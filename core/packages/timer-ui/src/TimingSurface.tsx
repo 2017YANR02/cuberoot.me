@@ -80,6 +80,7 @@ export default function TimingSurface({
   const scrambleAbove = sharedLayout || placeScrambleAbove;
   const running = phase === 'running';
   const coreRef = useRef<HTMLDivElement>(null);
+  const readoutWrapRef = useRef<HTMLDivElement>(null);
   const readoutRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const surface = surfaceRef.current;
@@ -116,7 +117,12 @@ export default function TimingSurface({
       const measuredWidth = readout.getBoundingClientRect().width;
       const naturalWidth = measuredWidth / previous;
       // Leave one CSS pixel per side for fractional glyph/layout rounding.
-      const available = Math.max(0, core.clientWidth - 2);
+      // Only the side-preview grid gives the wrapper an independent column
+      // width. In ordinary flow it is content-sized, so using it as the limit
+      // would shrink the readout again on each observer notification.
+      const split = getComputedStyle(core).getPropertyValue('--timer-readout-side-preview').trim() === '1';
+      const columnWidth = split ? readoutWrapRef.current?.clientWidth : 0;
+      const available = Math.max(0, Math.min(core.clientWidth, columnWidth || Infinity) - 2);
       if (naturalWidth <= 0 || available <= 0) return;
       // Font layout rounds individual glyph/span widths to subpixels. Chasing
       // that noise can alternate fit ratios forever, triggering one observer
@@ -138,6 +144,7 @@ export default function TimingSurface({
     // not every timer tick. A same-width 12.34 → 12.35 causes no layout work.
     observer.observe(core);
     observer.observe(readout);
+    if (readoutWrapRef.current) observer.observe(readoutWrapRef.current);
     return () => {
       observer.disconnect();
       if (frame !== null) cancelAnimationFrame(frame);
@@ -149,6 +156,7 @@ export default function TimingSurface({
       aria-label={ariaLabel}
       className={`timing-surface${sharedLayout ? ` timing-surface--${layout}` : ''}${scrambleAbove ? ' timing-surface--scramble-above' : ''}${running ? ' surface--running' : ''}${className ? ` ${className}` : ''}`}
       data-timer-pad={interactive ? '' : undefined}
+      data-cube-preview={cornerSlot ? '' : undefined}
       onContextMenu={onContextMenu}
       onMouseDown={onMouseDown}
       onMouseUp={onMouseUp}
@@ -161,7 +169,7 @@ export default function TimingSurface({
       {scrambleAbove && scrambleSlot && <div className="timing-surface-scramble timing-surface-scramble-top surface-chrome">{scrambleSlot}</div>}
       <div className="timing-surface-core" ref={coreRef}>
         {readoutLabel}
-        <div className="timer-display-wrap">
+        <div className="timer-display-wrap" ref={readoutWrapRef}>
           <div
             ref={digitsRef}
             className={`timer-display ${colorClass}`}

@@ -415,7 +415,7 @@
 .timer-workspace[data-fit-viewport] .timer-stage-statistics { flex: 0 1 auto; min-width: 0; }
 .timer-workspace[data-fit-viewport] .timer-stage-footer .shell-stat-rail { min-width: 0; max-width: 100%; }
 @supports not (container-type: size) {
-  @media (max-height: 600px) {
+  @media (max-height: 460px) {
     .timer-workspace[data-fit-viewport] .timer-stage-footer .shell-stat-rail { flex-direction: row; flex-wrap: wrap; gap: 2px 12px; }
     .timer-workspace[data-fit-viewport] .timer-stage-footer { padding-block: 4px; }
   }
@@ -437,6 +437,23 @@
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .scramble-src-row { margin-top: calc(min(var(--solo-source-gap, 16px), 4px) - 8px); }
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .trainer-case { margin-top: 0; }
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface-cube-frame { flex-shrink: 0; --timer-cube-h: clamp(36px, 12vh, 72px); }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] {
+      --timer-side-preview-width: clamp(120px, 25vw, 220px);
+    }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-scramble-top {
+      width: calc(100% - var(--timer-side-preview-width) - 16px);
+    }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-core {
+      --timer-readout-side-preview: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) var(--timer-side-preview-width);
+      grid-template-rows: auto;
+      column-gap: 16px;
+      align-items: center;
+    }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timer-display-wrap { width: 100%; min-width: 0; }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timer-display-value { margin-inline: auto; }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-cube-frame { --timer-cube-h: clamp(60px, 24vh, 120px); }
   }
 }
 @supports (container-type: size) {
@@ -445,7 +462,7 @@
   .timer-workspace[data-fit-viewport] .timing-surface-core { --timer-readout-max-size: min(24cqh, 22cqw); }
   .timer-workspace[data-fit-viewport] .timing-surface-scramble-top { max-height: 40cqh; }
   .timer-workspace[data-fit-viewport] .timing-surface-cube-frame { --timer-cube-h: min(30cqw, 26cqh); }
-  @container timer-stage (max-height: 500px) {
+  @container timer-stage (max-height: 350px) {
     .timer-workspace[data-fit-viewport] .timer-stage-footer .shell-stat-rail { flex-direction: row; flex-wrap: wrap; gap: 2px 12px; }
     .timer-workspace[data-fit-viewport] .timer-stage-footer { padding-block: 4px; }
   }
@@ -467,6 +484,23 @@
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .scramble-src-row { margin-top: calc(min(var(--solo-source-gap, 16px), 4px) - 8px); }
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .trainer-case { margin-top: 0; }
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface-cube-frame { flex-shrink: 0; --timer-cube-h: clamp(36px, 18cqh, 72px); }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] {
+      --timer-side-preview-width: clamp(120px, 25cqw, 220px);
+    }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-scramble-top {
+      width: calc(100% - var(--timer-side-preview-width) - 16px);
+    }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-core {
+      --timer-readout-side-preview: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) var(--timer-side-preview-width);
+      grid-template-rows: auto;
+      column-gap: 16px;
+      align-items: center;
+    }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timer-display-wrap { width: 100%; min-width: 0; }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timer-display-value { margin-inline: auto; }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-cube-frame { --timer-cube-h: clamp(60px, 36cqh, 120px); }
   }
 }
 

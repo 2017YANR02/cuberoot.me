@@ -155,14 +155,22 @@ describe('mobile visible viewport layout', () => {
     expect(app).toContain('<TimerWorkspace className="view-container" data-fit-viewport=""');
     expect(surfaceCss).toContain('@supports not (container-type: size)');
     expect(surfaceCss).toContain('@container timer-stage (min-width: 520px) and (max-height: 500px)');
-    // Rotation may compact the vertical stack, never move the readout beside
-    // the scramble. This covers both the legacy media and container branches.
-    const fitRules = [...surfaceCss.matchAll(/[^{}]*\.timer-workspace\[data-fit-viewport\][^{}]*\{([^}]*)\}/g)];
-    for (const [, declarations] of fitRules) {
+    // Only the core can split into readout/preview columns. The outer canvas
+    // still puts the scramble above the core, aligned with the readout column.
+    const fitRules = [...surfaceCss.matchAll(/([^{}]*\.timer-workspace\[data-fit-viewport\][^{}]*)\{([^}]*)\}/g)];
+    for (const [, selector, declarations] of fitRules) {
       const columns = declarations.match(/grid-template-columns:\s*([^;]+);/)?.[1];
-      if (columns) expect(columns).toBe('minmax(0, 1fr)');
+      if (columns && columns !== 'minmax(0, 1fr)') {
+        expect(selector).toContain('.timing-surface--solo[data-cube-preview] .timing-surface-core');
+        expect(selector).toContain(':not([data-spacing-flow])');
+        expect(columns).toBe('minmax(0, 1fr) var(--timer-side-preview-width)');
+        expect(declarations).toContain('display: grid');
+      }
       expect(declarations).not.toMatch(/grid-column:\s*2\b/);
     }
+    expect(surfaceCss).toContain('width: calc(100% - var(--timer-side-preview-width) - 16px)');
+    expect(surfaceCss).toContain('@container timer-stage (max-height: 350px)');
+    expect(surfaceCss).toContain('@media (max-height: 460px)');
     expect(surfaceCss).toContain('--timer-readout-max-size: clamp(40px, 18cqh, 64px)');
     expect(surfaceCss).toContain('--timer-cube-h: clamp(36px, 18cqh, 72px)');
     expect(surfaceCss).toContain('.timing-surface-sub { flex: 0 0 auto; height: auto; max-height: none; }');
