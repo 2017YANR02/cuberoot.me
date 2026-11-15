@@ -92,8 +92,8 @@ export function AlgCaseRelationCards({
           return { filename: image.name, groups: [{ id: item.key, label: item.name, current: [image], all: [image] }] };
         }}>{card}</AlgImageDownloadButton> : card}
           {training && item.caseObj?.id != null && <label className="alg-related-train-select">
-            {/* allow-checkbox: 用户明确要求关联情况默认全选，以复选框取消不想练的情况。 */}
-            <input type="checkbox"
+            {/* allow-checkbox: 关联情况多选网格，用户要求默认全选并用复选框取消不想练的情况。 */}
+            <input type="checkbox" className="alg-related-train-checkbox"
               aria-label={tr({ zh: `训练 ${item.name}`, en: `Train ${item.name}` })}
               checked={selected.includes(item.caseObj.id)}
               onChange={event => {

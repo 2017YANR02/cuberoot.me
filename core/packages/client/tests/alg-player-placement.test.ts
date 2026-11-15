@@ -78,7 +78,8 @@ describe('algorithm player placement', () => {
     expect(detail).toContain("(set === 'f2l' || set === 'adv-f2l')");
     expect(detail).toMatch(/F2L_DETAIL_ORIENTATION_ORDER = new Map\(\[\s*\['BL', 0\],[\s\S]*?\['BR', 1\],[\s\S]*?\['FL', 2\],[\s\S]*?\['FR', 3\]/);
     expect(detail).toContain("useF2lOrientationGrid ? ' is-f2l-orientation-grid' : ''");
-    expect(detail).toContain('size={useF2lOrientationGrid ? 220 : 260}');
+    expect(detail).toContain('size={ALG_CASE_PREVIEW_SIZE}');
+    expect(detail).toContain('size: ALG_CASE_PREVIEW_SIZE');
     expect(detail).toContain("editor ? ' is-editing' : ''");
     expect(detail).toMatch(/className="alg-case-detail-ori-main alg-player-list-layout"[\s\S]*?className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?className="alg-case-detail-ori-algs alg-player-list-options"/);
     expect(detail).toContain("import { AlgCaseRelationCards, type AlgCaseRelationCardItem } from '@/components/AlgCaseRelationCards'");
@@ -86,7 +87,7 @@ describe('algorithm player placement', () => {
     expect(detail).toMatch(/const leanRelationCards = \(editor\?: InlineCaseEditorParts\): AlgCaseRelationCardItem\[\] => \(\[[\s\S]*?\]\)\.sort\(\(a, b\) => \([\s\S]*?compareAlgGroupLabel\(a\.name, b\.name\)/);
     expect(detail).toMatch(/\.map\(\(member, index\): AlgCaseRelationCardItem => \(\{[\s\S]*?current: member\.current,[\s\S]*?href: member\.current \|\| onEmbeddedCaseChange \? undefined : hrefFor\(member\.caseObj\)/);
     expect(detail).toContain('items={leanRelationCards(editor)}');
-    expect(relations).toContain('className="alg-meta-related-grid alg-meta-top-grid"');
+    expect(relations).toContain('className={`alg-meta-related-grid alg-meta-top-grid');
     expect(relations).toMatch(/<CaseThumb[\s\S]*?size=\{76\}/);
     expect(relations).toContain('alg-meta-related-card${item.current ? \' is-self is-current\' : \'\'}');
     expect(detail).not.toContain('alg-case-detail-lean-aside');
