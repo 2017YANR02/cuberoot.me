@@ -277,3 +277,23 @@
 .rc-details--registration .rc-place > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rc-pill--upcoming { color: var(--accent); background: var(--accent-soft); }
 .rc-pill--reopened { color: var(--signal-info); background: color-mix(in srgb, var(--signal-info) 14%, transparent); }
+
+.reg-filter .compact-select-trigger.compact-select-trigger--unstyled {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.reg-zone-label { display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+.reg-filter .compact-select-current { display: flex; align-items: center; }
+.reg-filter .compact-select-trigger svg { flex: none; }

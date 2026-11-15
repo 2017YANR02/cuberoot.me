@@ -5,7 +5,7 @@
 // 比赛,置顶为「已关注」组,跨设备同步(server PG comp_follows)。
 // 取数 + 分组纯逻辑在 lib/comp-registration.ts;关注 API 在 lib/comp-follows.ts。
 import { useEffect, useMemo, useState } from 'react';
-import { Star, LogIn } from '@app-foundation/icons/lucide';
+import { Star, LogIn, Clock3 } from '@app-foundation/icons/lucide';
 import type { Comp } from '@/lib/comp-search';
 import {
   buildRegView,
@@ -23,19 +23,16 @@ import { useRetainedState } from '@/hooks/useRetainedState';
 import { apiUrl } from '@/lib/api-base';
 import { loadFlagData, personFlagIso2, countryToIso2 } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
-import { CompactSelect } from '@/components/CompactSelect';
-import { Flag } from '@/components/Flag';
+import { ListSelect } from '@/components/ListSelect';
+import { zoneSelectItems, zoneLabel } from '@/lib/tz-zones';
+import { localZone, wallPartsIn, timeKey } from '@cuberoot/shared/tz';
 import './registration_comps.css';
 
 // ── 文案 ────────────────────────────────────────────────────────────────────
-function pad2(n: number): string { return n < 10 ? `0${n}` : `${n}`; }
-function clockOf(at: number): string { const d = new Date(at); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
-function mdOf(at: number): string { const d = new Date(at); return `${d.getMonth() + 1}-${d.getDate()}`; }
-const WEEKDAY_ZH = ['日', '一', '二', '三', '四', '五', '六'];
-const WEEKDAY_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-function weekdayOf(at: number, isZh: boolean): string {
-  const d = new Date(at).getDay();
-  return isZh ? `周${WEEKDAY_ZH[d]}` : WEEKDAY_EN[d];
+function clockOf(at: number, tz: string): string { return timeKey(wallPartsIn(tz, new Date(at))); }
+function mdOf(at: number, tz: string): string { const d = wallPartsIn(tz, new Date(at)); return d.mo + '-' + d.d; }
+function weekdayOf(at: number, isZh: boolean, tz: string): string {
+  return new Intl.DateTimeFormat(isZh ? 'zh-CN' : 'en-US', { timeZone: tz, weekday: 'short' }).format(at);
 }
 
 function bucketLabel(key: RegBucketKey): string {
@@ -57,24 +54,24 @@ function actionWord(kind: RegItem['kind']): string {
   return tr({ zh: '截止', en: 'Closes' });
 }
 
-/** 里程碑的「何时」标签,始终带本地时区时刻(new Date 本地化,即用户所在时区)。
+/** 里程碑的「何时」标签，使用所选显示时区。
  *  day 模式:日分组里靠组标题,近三天只补时刻,再远补星期/日期 + 时刻;
  *  followed 模式:无组标题,带相对日 + 时刻。 */
-function whenLabel(item: RegItem, now: number, isZh: boolean, mode: 'day' | 'followed'): string {
+function whenLabel(item: RegItem, now: number, isZh: boolean, mode: 'day' | 'followed', tz: string): string {
   if (item.kind === 'closed' || item.kind === 'unknown') return '';
-  const diff = localDayDiff(item.at, now);
-  const clock = clockOf(item.at);
+  const diff = localDayDiff(item.at, now, tz);
+  const clock = clockOf(item.at, tz);
   if (mode === 'day') {
     if (diff <= 2) return clock;   // 组标题已说今天/明天/后天
-    if (diff <= 6) return `${weekdayOf(item.at, isZh)} ${clock}`;
-    return `${mdOf(item.at)} ${clock}`;
+    if (diff <= 6) return `${weekdayOf(item.at, isZh, tz)} ${clock}`;
+    return `${mdOf(item.at, tz)} ${clock}`;
   }
   let day: string;
   if (diff <= 0) day = tr({ zh: '今天', en: 'Today' });
   else if (diff === 1) day = tr({ zh: '明天', en: 'Tomorrow' });
   else if (diff === 2) day = tr({ zh: '后天', en: 'In 2 days' });
-  else if (diff <= 6) day = weekdayOf(item.at, isZh);
-  else day = mdOf(item.at);
+  else if (diff <= 6) day = weekdayOf(item.at, isZh, tz);
+  else day = mdOf(item.at, tz);
   return `${day} ${clock}`;
 }
 
@@ -91,12 +88,13 @@ function pillTone(item: RegItem): CompCardTone {
 }
 
 // ── 卡片 ────────────────────────────────────────────────────────────────────
-function RegistrationCard({ item, isZh, lang, now, mode, followed, onToggle, showFollow }: {
+function RegistrationCard({ item, isZh, lang, now, mode, tz, followed, onToggle, showFollow }: {
   item: RegItem;
   isZh: boolean;
   lang: 'zh' | 'en';
   now: number;
   mode: 'day' | 'followed';
+  tz: string;
   followed: boolean;
   onToggle: (id: string) => void;
   showFollow: boolean;
@@ -110,7 +108,7 @@ function RegistrationCard({ item, isZh, lang, now, mode, followed, onToggle, sho
       follow={showFollow ? { followed, onToggle } : null}
       roundsSeed={wcaRoundsSeed(item.comp.rounds)}
       registrationTiming={{
-        label: item.kind === 'closed' || item.kind === 'unknown' ? '' : `${whenLabel(item, now, isZh, mode)} ${actionWord(item.kind)}`,
+        label: item.kind === 'closed' || item.kind === 'unknown' ? '' : `${whenLabel(item, now, isZh, mode, tz)} ${actionWord(item.kind)}`,
         urgent: item.kind === 'close' && item.at - now <= 86_400_000,
       }}
     />
@@ -129,6 +127,12 @@ export function RegistrationView({ comps, isZh, lang, loggedIn, follows, toggle 
   const [choice, setChoice] = useRetainedState<{ owner: string; country: string } | null>('home:registration-country', null);
   const [flagVersion, setFlagVersion] = useState(0);
   const [now, setNow] = useState(0);
+  const [zone, setZone] = useRetainedState('home:registration-timezone', '');
+  const [deviceZone, setDeviceZone] = useState('UTC');
+  useEffect(() => setDeviceZone(localZone()), []);
+  const tz = zone || deviceZone;
+  const zoneDay = Math.floor(now / 86400_000);
+  const zoneItems = useMemo(() => [{ value: '', label: tr({ zh: '时区', en: 'Time zone' }) }, ...zoneSelectItems(isZh, new Date(zoneDay * 86400_000))], [isZh, zoneDay]);
   const [cn, setCn] = useState<CubingRegistrations>({});
   const [sourceFailed, setSourceFailed] = useState(false);
   useEffect(() => {
@@ -173,19 +177,22 @@ export function RegistrationView({ comps, isZh, lang, loggedIn, follows, toggle 
   const countries = useMemo(() => [...new Set([...comps.map(c => c.country.toLowerCase()), defaultCountry].filter(Boolean))]
     .sort((a, b) => countryName(a, isZh).localeCompare(countryName(b, isZh), lang)), [comps, defaultCountry, isZh, lang]);
   const filtered = useMemo(() => country ? comps.filter(c => c.country.toLowerCase() === country) : comps, [comps, country]);
-  const view = useMemo(() => buildRegView(filtered, now, follows, cn), [filtered, now, follows, cn]);
+  const view = useMemo(() => buildRegView(filtered, now, follows, cn, tz), [filtered, now, follows, cn, tz]);
   const allLabel = tr({ zh: '全部国家', en: 'All countries' });
 
   return (
     <div className="reg-comps">
       <div className="reg-toolbar">
-        <CompactSelect
+        <ListSelect
+          portal searchable showArrow={false} maxVisible={50} className="reg-filter"
+          searchPlaceholder={tr({ zh: '搜索国家', en: 'Search countries' })}
           ariaLabel={tr({ zh: '国家筛选', en: 'Filter by country' })}
-          label={country ? countryName(country, isZh) : allLabel}
+          allLabel={allLabel}
           value={country}
-          items={[{ value: '', label: allLabel }, ...countries.map(iso2 => ({ value: iso2, label: <><Flag iso2={iso2} /> {countryName(iso2, isZh)}</> }))]}
+          items={[{ value: '', label: allLabel }, ...countries.map(iso2 => ({ value: iso2, label: countryName(iso2, isZh), country: iso2, searchTerms: [iso2, countryName(iso2, true), countryName(iso2, false)].join(' ') }))]}
           onChange={value => setChoice({ owner, country: value })}
         />
+        <ListSelect className="reg-filter reg-zone-filter" showArrow={false} maxVisible={50} selectedLabel={<span className="reg-zone-label"><Clock3 size={15} aria-hidden="true" /><span>{zoneLabel(tz, isZh)}</span></span>} searchPlaceholder={tr({ zh: '搜索时区', en: 'Search time zones' })} items={zoneItems} value={zone} onChange={setZone} allLabel={tr({ zh: '时区', en: 'Time zone' })} searchable portal ariaLabel={tr({ zh: '时区', en: 'Time zone' })} />
       </div>
       {sourceFailed && (!country || country === 'cn') && <p className="reg-source-note" role="status">{tr({ zh: '粗饼报名状态暂不可用', en: 'Cubing China registration status is unavailable' })}</p>}
       {now > 0 && view.total === 0 && <p className="reg-source-note">{tr({ zh: '暂无符合条件的比赛', en: 'No matching competitions' })}</p>}
@@ -198,7 +205,7 @@ export function RegistrationView({ comps, isZh, lang, loggedIn, follows, toggle 
           <div className="reg-cards">
             {view.followed.map((it) => (
               <RegistrationCard
-                key={`f-${it.comp.id}`} item={it} isZh={isZh} lang={lang} now={now}
+                key={`f-${it.comp.id}`} item={it} isZh={isZh} lang={lang} now={now} tz={tz}
                 mode="followed" followed onToggle={toggle} showFollow
               />
             ))}
@@ -212,7 +219,7 @@ export function RegistrationView({ comps, isZh, lang, loggedIn, follows, toggle 
           <div className="reg-cards">
             {b.items.map((it) => (
               <RegistrationCard
-                key={`${b.key}-${it.comp.id}`} item={it} isZh={isZh} lang={lang} now={now}
+                key={`${b.key}-${it.comp.id}`} item={it} isZh={isZh} lang={lang} now={now} tz={tz}
                 mode="day" followed={false} onToggle={toggle} showFollow={loggedIn}
               />
             ))}

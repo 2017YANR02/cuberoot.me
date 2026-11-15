@@ -12,7 +12,7 @@ vi.mock('@/hooks/useRetainedState', async () => {
 });
 vi.mock('@/lib/country-flags', () => ({ loadFlagData: () => new Promise<number>(resolve => { state.resolve = () => { state.flag = 'us'; resolve(1); }; }), personFlagIso2: () => state.flag, countryToIso2: (s: string) => s.toLowerCase() }));
 vi.mock('@/lib/country-name', () => ({ countryName: (s: string) => s }));
-vi.mock('@/components/CompactSelect', () => ({ CompactSelect: ({ value, onChange, items }: any) => createElement('select', { value, onChange: (e: any) => onChange(e.target.value) }, items.map((i: any) => createElement('option', { key: i.value, value: i.value }, i.value || 'all'))) }));
+vi.mock('@/components/ListSelect', () => ({ ListSelect: ({ value, onChange, items }: any) => createElement('select', { value, onChange: (e: any) => onChange(e.target.value) }, items.map((i: any) => createElement('option', { key: i.value, value: i.value }, i.value || 'all'))) }));
 vi.mock('@/components/Flag', () => ({ Flag: () => null }));
 vi.mock('@/components/CompCardWithRounds', () => ({ wcaRoundsSeed: () => undefined, CompCardWithRounds: ({ comp }: any) => createElement('span', { 'data-country': comp.country }, comp.id) }));
 vi.mock('@/i18n/tr', () => ({ tr: (s: { en: string }) => s.en }));
