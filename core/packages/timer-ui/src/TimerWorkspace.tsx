@@ -13,8 +13,8 @@ function subscribe(notify: () => void) {
   query.addEventListener('change', notify);
   return () => query.removeEventListener('change', notify);
 }
-/** Native results docks use safe content geometry; Web also supports unfolded landscape. */
-export function useTimerWideLayout({ useHostContent = false }: { useHostContent?: boolean } = {}) {
+/** Every native timer slot uses safe content geometry; Web also supports unfolded landscape. */
+export function useTimerWideLayout({ useHostContent = true }: { useHostContent?: boolean } = {}) {
   const host = useHostViewportLayout();
   const desktop = useSyncExternalStore(subscribe, () => typeof window.matchMedia === 'function' && window.matchMedia(TIMER_WIDE_QUERY).matches, () => false);
   // A native reserved area reduces the actual workspace width. Require enough

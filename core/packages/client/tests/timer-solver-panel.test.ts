@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import TimerSolverPanel from '@cuberoot/timer-ui/TimerSolverPanel';
 import { TimerSoloPage } from '@cuberoot/timer-ui/TimerSoloPage';
-import { TimerWorkspace } from '@cuberoot/timer-ui';
+import { TimerWorkspace, setHostViewportLayout, useTimerWideLayout } from '@cuberoot/timer-ui';
 
 const fixture = vi.hoisted(() => ({ nested: false, mounts: 0 }));
 let reportBlocking: ((blocked: boolean) => void) | undefined;
@@ -71,7 +71,7 @@ it('swipes once, ignores inputs and vertical scrolling, and cancels a drag when 
   await pointer(sheet, 'pointerdown', 100, 0); await pointer(sheet, 'pointermove', 0, 1);
   expect(previous).toHaveBeenCalledTimes(1);
 });
-afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.unstubAllGlobals(); });
+afterEach(async () => { await act(async () => root.unmount()); host.remove(); setHostViewportLayout(null); vi.unstubAllGlobals(); });
 
 it('keeps one solver while docking/fullscreen, persists collapse, and does not reopen after browser Back', async () => {
   await act(async () => root.render(createElement(Harness)));
@@ -214,4 +214,37 @@ it('docks reconstruction on the right alongside solutions on Duo landscape, then
   await act(async () => { width = 669; height = 850; viewportListeners.forEach(notify => notify()); });
   expect(document.querySelector('.shell-recap-rail')).toBeNull();
   expect(document.querySelector('.solver-panel-body')).toBeNull();
+});
+
+it('keeps exactly one live recap and one solver while native content folds below the wide browser viewport', async () => {
+  function NativeHarness() {
+    const surfaceRef = useRef<HTMLDivElement>(null);
+    const wide = useTimerWideLayout({ useHostContent: true });
+    const recap = createElement('section', { 'data-live-recap': true }, 'Recorded moves');
+    return createElement(TimerWorkspace, { recap }, createElement(TimerSoloPage, {
+      topbar: { controls: null }, stage: {},
+      timing: { phase: 'running', digits: '12.34', colorClass: '', surfaceRef },
+      narrowRecap: !wide ? recap : undefined, solver: createElement(Harness),
+    }));
+  }
+  const content = async (contentWidth: number, contentHeight: number) => act(async () => {
+    setHostViewportLayout({ bounds: { x: 0, y: 0, width: 1280, height: 720 },
+      content: { x: 0, y: 0, width: contentWidth, height: contentHeight } });
+  });
+  await content(1200, 600);
+  await act(async () => root.render(createElement(NativeHarness)));
+  for (const [contentWidth, contentHeight, wide] of [[1200, 600, true], [1200, 500, false], [740, 600, false], [951, 600, true]] as const) {
+    await content(contentWidth, contentHeight);
+    expect(document.querySelectorAll('[data-live-recap]')).toHaveLength(1);
+    expect(Boolean(document.querySelector('.shell-recap-rail [data-live-recap]'))).toBe(wide);
+    expect(Boolean(document.querySelector('.timer-workspace-divider--left'))).toBe(wide);
+    expect(Boolean(document.querySelector('.timer-solver-rail .solver-panel-body'))).toBe(wide);
+    expect(document.querySelector('.timing-surface')?.textContent).toContain('12.34');
+    if (!wide) {
+      await click('.solver-light-trigger');
+      expect(document.querySelector('.solver-sheet')).not.toBeNull();
+      expect(fixture.mounts).toBe(1);
+      await click('.solver-sheet-close');
+    } else expect(fixture.mounts).toBe(1);
+  }
 });
