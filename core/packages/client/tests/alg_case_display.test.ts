@@ -164,6 +164,19 @@ describe('EPLL 前缀(U+/U-/H/Z 加 E)', () => {
 });
 
 describe('displayAlgCaseName 按 set 路由', () => {
+  it('compacts OLLCP numeric names consistently without changing source names', () => {
+    for (let group = 1; group <= 57; group++) {
+      for (let index = 1; index <= 6; index++) {
+        for (const prefix of ['OLLCP', 'OLLCP ']) {
+          const name = `${prefix}${group} ${index}`;
+          expect(displayAlgCaseName('3x3', 'ollcp', name)).toBe(`OLLCP${group}${index}`);
+        }
+      }
+    }
+    expect(displayAlgCaseName('3x3', 'ollcp', 'OLLCP231')).toBe('OLLCP231');
+    expect(displayAlgCaseName('3x3', 'ollcp', '23')).toBe('23');
+    expect(displayAlgCaseName('3x3', 'ollcp', 'DPi (2)')).toBe('DPi (2)');
+  });
   it('2x2 LS1–LS9 去掉套名中的连字符', () => {
     expect(displayAlgCaseName('2x2', 'ls2', 'LS-2 Hammer 1')).toBe('LS2 Hammer 1');
     expect(displayAlgCaseName('2x2', 'ls9', 'LS-9 PBL 6')).toBe('LS9 PBL 6');

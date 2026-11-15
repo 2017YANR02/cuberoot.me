@@ -189,6 +189,7 @@ export function displayAlgCaseName(puzzle: string, set: string, name: string): s
   // cycles, viewed directly at each face, including the bottom face.
   if (puzzle === 'sq1' && set === 'ep') return name.replace(/\bU([ab])\b/gi, (_, variant: string) => variant.toLowerCase() === 'a' ? 'U+' : 'U-');
   if (puzzle === '3x3' && set === 'oll') return displayOllName(name);
+  if (puzzle === '3x3' && set === 'ollcp') return name.replace(/^OLLCP\s*(\d+)\s+(\d+)$/i, 'OLLCP$1$2');
   if (puzzle === '3x3' && set === 'pll') return displayPllName(name);
   if (puzzle === '3x3' && set === 'zbll') return displayZbllName(name);
   if (puzzle === '3x3' && set === 'coll') return displayCollName(name);
