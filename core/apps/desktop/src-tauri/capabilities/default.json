@@ -7,7 +7,10 @@
   "permissions": [
     "core:default",
     "deep-link:default",
-    "opener:allow-open-url",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://cuberoot.me/*" }]
+    },
     "blec:default"
   ]
 }
