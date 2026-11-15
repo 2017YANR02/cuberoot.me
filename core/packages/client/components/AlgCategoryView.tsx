@@ -23,7 +23,7 @@ import { parseAsBoolean, parseAsInteger, parseAsString, parseAsStringEnum } from
 import { useTrainingQueryState as useQueryState, useTrainingQueryStates as useQueryStates, useTrainingRouter } from '@/lib/training-host';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, Shuffle, Plus, ShieldCheck, AlertTriangle, HelpCircle, Pencil, Check } from '@app-foundation/icons/lucide';
+import { Shuffle, Plus, ShieldCheck, AlertTriangle, HelpCircle, Pencil, Check } from '@app-foundation/icons/lucide';
 import { Tooltip } from '@/components/Tooltip';
 import { TimerPracticeContentPicker } from '@cuberoot/timer-ui';
 import { segToEvent } from '@cuberoot/shared/timer';
@@ -1234,7 +1234,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         <span className="alg-case-index"> ({displayAlgCaseName(puzzleParam, set, c.name).replace(/^ZBLL\s+/i, '').replace(/\s+/g, '')})</span>
                       )}
                     </span>
-                    <ChevronRight size={14} aria-hidden="true" />
                     </Link>
                     {/* 字母制主名接管之后,站上原来那个名字(`1LLL 6 7` / `ZBLL L 34`)降为副名 —— 不丢。
                         但 PLL 的 OLLCP 名剥掉 `PLL-` 前缀后就等于站上的名字,再挂一个副名纯属重复。 */}

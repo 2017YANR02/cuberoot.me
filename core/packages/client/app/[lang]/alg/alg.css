@@ -683,7 +683,7 @@
 }
 .alg-case {
   background: var(--card);
-  border: 1px solid var(--border-default);
+  border: 1px solid transparent;
   border-radius: 10px;
   padding: 12px;
   display: flex;
