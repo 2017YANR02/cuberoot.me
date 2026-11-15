@@ -52,4 +52,16 @@ describe('account flow documentation', () => {
     expect(dev).toContain("href: '/dev/auth'");
     expect(page).not.toMatch(/\bfetch\s*\(|account-api|useAuthStore|identity-choice/);
   });
+
+  it.each(['zh', 'en'])('separates checkout ownership and anonymous timer capabilities from sign-in in %s', (lang) => {
+    locale.lang = lang;
+    const html = renderToStaticMarkup(createElement(AuthFlowPage));
+    for (const text of lang === 'zh' ? [
+      '网站首付并签约', '付款和签约分别确认', '换号或退出清除订单',
+      '不把付款人的微信身份绑定', '计时直播无需登录', '账号退出不代替停止直播',
+    ] : [
+      'Website payment with enrollment', 'Confirm payment and enrollment separately', 'Account changes or sign-out clear the order',
+      'does not bind the payer', 'Live timer sharing requires no sign-in', 'signing out does not replace stopping the stream',
+    ]) expect(html).toContain(text);
+  });
 });

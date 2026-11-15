@@ -45,6 +45,17 @@ describe('/dev/auth source-review drift', () => {
   it('tracks membership signing identity and handoff boundaries', () => {
     for (const path of [...['src/payment/membership-handoff.ts', 'src/routes/membership_subscriptions.ts'].map(file => relative(CORE_ROOT, workspaceFixturePath('@cuberoot/server', file))), relative(CORE_ROOT, workspaceFixturePath('@cuberoot/miniprogram', 'src/pages/membership/index.ts')), 'packages/client/lib/membership-api.ts', 'packages/client/app/[lang]/membership/AutoRenewModal.tsx']) expect(isAuthDocSource(path)).toBe(true);
   });
+  it('tracks payment enrollment ownership and anonymous timer capabilities', () => {
+    for (const path of [
+      'apps/api/src/payment/membership-checkout.ts', 'apps/api/src/payment/membership-enrollment.ts',
+      'apps/api/src/payment/membership-renewal-policy.ts', 'apps/api/src/payment/membership-contracts.ts',
+      'apps/api/src/payment/membership-renewals.ts', 'apps/api/migrations/0333_membership_payment_enrollment.sql',
+      'packages/client/app/[lang]/membership/PayModal.tsx',
+      'apps/api/src/routes/timer_live_shares.ts', 'apps/api/src/timer_live_relay.ts',
+      'apps/api/migrations/0330_timer_live_shares.sql', 'packages/shared/src/timer/live-share.ts',
+      'packages/timer-ui/src/timer-live-share.ts',
+    ]) expect(isAuthDocSource(path)).toBe(true);
+  });
   it('requires the real page to acknowledge the current authentication sources', () => {
     const sources = collectAuthDocSources();
     expect(sources.length).toBeGreaterThan(20);
