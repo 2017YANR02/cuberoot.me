@@ -30,8 +30,9 @@
 - 同一 Tauri 宿主增加 `microsoft-store` 编译渠道：商店版使用 MSIX 协议注册并停用官网 EXE 更新入口，网站会员/账号与其他宿主沿用原实现。普通 Vite 预览保留，不要求 Tauri IPC。
 - 增加真实包身份/版本校验、既有图标复用、Windows SDK MakeAppx 打包、来源提交与 SHA-256 收据，以及仅 Windows 手动构建的 CI 定义；不上传商店、不发布官网、不触发其他平台。
 - 本地证据：打包校验 4 项、渠道隔离 2 项、既有 Windows 更新 UI 2 项及账号文档 95 项通过；Desktop 类型检查与 Web production build、脚本定向类型检查、架构边界、workflow actionlint 和 diff 检查通过。Mac 上 `cargo check --locked --features microsoft-store` 通过，仅证明 macOS 编译兼容；不覆盖 Windows 专属编译分支。Chrome 隔离外网的 production bundle 预览正常挂载“计时 / 工具 / 我的”，无 pageerror；不代表 Windows 原生验收。
-- 合成身份的 `store:check` 通过，仅验证代码和现有图标；真实公司账号、Partner Center 配置及 Windows CI 尚未核验/运行。独立审查发现并修复浏览器预览依赖原生 IPC 的回归，保留 WebView2 与跨渠道共存为正式发行门槛。本轮未提交或推送。
-- 待完成：微软公司账号及 Product identity 核验、Windows 原生 MSIX/认证工具检查、测试签名或商店测试分发、WebView2 缺失处理、安装升级与数据保留、登录冷/热回跳、GAN 16 UI/Stackmat、真实付款退款。旧 EXE 与 MSIX 共享 single-instance 身份，先退出另一渠道再测试；迁移/共存方案未验收。未注册、提交或发布商店，不将 Windows 或五端总体标为完成。
+- 合成身份的 `store:check` 通过，仅验证代码和现有图标；Partner Center 包身份及 Windows CI 尚未核验/运行。独立审查发现并修复浏览器预览依赖原生 IPC 的回归，保留 WebView2 与跨渠道共存为正式发行门槛。基础代码已按所有者要求本地提交 `b5237695d0`，本任务未推送。
+- 公司注册：Store Developer 已通过 D-U-N-S 匹配 `Shanghai CubeRoot Technology Co.,Ltd.`（上海魔方根科技有限公司），填写注册号、官网及公司公开地址，验证 `ruiminyan@cuberoot.me`；联系人与客服号码按所有者确认填写，不存入 Git。所有者在协议弹窗处明确授权接受 Microsoft Developer Agreement，已提交。目前 `Mandatory due diligence` 为 `Checking`，`Finish account setup` 禁用；页面提示最长可能需要 2 个工作日并邮件通知。公司账号尚未完成核验，应用尚未创建，不能猜填正式包身份。
+- 待完成：微软公司账号及 Product identity 核验、Windows 原生 MSIX/认证工具检查、测试签名或商店测试分发、WebView2 缺失处理、安装升级与数据保留、登录冷/热回跳、GAN 16 UI/Stackmat、真实付款退款。旧 EXE 与 MSIX 共享 single-instance 身份，先退出另一渠道再测试；迁移/共存方案未验收。未提交应用审核或公开发布，不将 Windows 或五端总体标为完成。
 
 ### 2026-11-15 计时器实时分享第一版（本地，未发布）
 
