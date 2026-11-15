@@ -1,0 +1,120 @@
+diff --git a/dist/index.d.ts b/dist/index.d.ts
+index 2c2a0699cca9d9a5e0c87e25e920c83c89cfd562..9c17111c4eba4fb10d57700579c366c388aab068 100644
+--- a/dist/index.d.ts
++++ b/dist/index.d.ts
+@@ -12,7 +12,6 @@ export type ReportStatus = "draft" | "submitted";
+ export type ReportVisibility = "company" | "managers";
+ export type ReportState = {
+     memberId: number;
+-    projectId: string | null;
+     workDate: string;
+     status: ReportStatus;
+     visibility: ReportVisibility;
+@@ -21,16 +20,10 @@ export type ReportState = {
+ export type ReportReadScope = {
+     ownMemberId: number | null;
+     submittedVisibilities: readonly ReportVisibility[];
+-    /** null means all projects; [] means only legacy, unassigned reports. */
+-    projectIds: readonly string[] | null;
+ };
+-export declare function reportReadScope(actor: WorkspaceActor, assignedProjects: readonly string[]): ReportReadScope;
++export declare function reportReadScope(actor: WorkspaceActor): ReportReadScope;
+ export declare function canReadReport(scope: ReportReadScope, report: ReportState): boolean;
+-export declare function canWriteProject(actor: WorkspaceActor, project: {
+-    active: boolean;
+-    assigned: boolean;
+-} | null): boolean;
+-export type ReportChangeDecision = "allow" | "not-author" | "stale-version" | "date-fixed" | "project-fixed" | "submission-fixed";
+-export declare function decideReportChange(actor: WorkspaceActor, previous: ReportState | null, next: Pick<ReportState, "projectId" | "workDate" | "status" | "visibility" | "version">): ReportChangeDecision;
++export type ReportChangeDecision = "allow" | "not-author" | "stale-version" | "date-fixed" | "submission-fixed";
++export declare function decideReportChange(actor: WorkspaceActor, previous: ReportState | null, next: Pick<ReportState, "workDate" | "status" | "visibility" | "version">): ReportChangeDecision;
+ export declare function isWorkDate(value: unknown): value is string;
+ export declare function isResultUrl(value: unknown): value is string;
+diff --git a/dist/index.js b/dist/index.js
+index f23d319b358c67d68b5fb144f4e70e0b10721e31..e7923722bd425d48272df7a653efa1cad84a4a77 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -2,26 +2,19 @@
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.reportReadScope = reportReadScope;
+ exports.canReadReport = canReadReport;
+-exports.canWriteProject = canWriteProject;
+ exports.decideReportChange = decideReportChange;
+ exports.isWorkDate = isWorkDate;
+ exports.isResultUrl = isResultUrl;
+-function reportReadScope(actor, assignedProjects) {
++function reportReadScope(actor) {
+     return {
+         ownMemberId: actor.kind === "staff" ? actor.id : null,
+         submittedVisibilities: actor.role === "member" ? ["company"] : ["company", "managers"],
+-        projectIds: actor.kind === "admin" ? null : [...new Set(assignedProjects)],
+     };
+ }
+ function canReadReport(scope, report) {
+-    if (report.projectId !== null && scope.projectIds !== null && !scope.projectIds.includes(report.projectId))
+-        return false;
+     return scope.ownMemberId === report.memberId
+         || (report.status === "submitted" && scope.submittedVisibilities.includes(report.visibility));
+ }
+-function canWriteProject(actor, project) {
+-    return actor.kind === "staff" && (project === null || (project.active && project.assigned));
+-}
+ function decideReportChange(actor, previous, next) {
+     if (actor.kind !== "staff" || (previous && previous.memberId !== actor.id))
+         return "not-author";
+@@ -29,8 +22,6 @@ function decideReportChange(actor, previous, next) {
+         return "stale-version";
+     if (previous && previous.workDate !== next.workDate)
+         return "date-fixed";
+-    if (previous && previous.projectId !== next.projectId)
+-        return "project-fixed";
+     if (previous?.status === "submitted" && (next.status !== "submitted" || next.visibility !== previous.visibility))
+         return "submission-fixed";
+     return "allow";
+diff --git a/src/index.ts b/src/index.ts
+index 3456c9b6794e65c13d8cbd402e722b049e02a89e..686dae98cb8f89dd89b8bfb46ba14123b1af9979 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -6,7 +6,6 @@ export type ReportStatus = "draft" | "submitted";
+ export type ReportVisibility = "company" | "managers";
+ export type ReportState = {
+   memberId: number;
+-  projectId: string | null;
+   workDate: string;
+   status: ReportStatus;
+   visibility: ReportVisibility;
+@@ -15,31 +14,23 @@ export type ReportState = {
+ export type ReportReadScope = {
+   ownMemberId: number | null;
+   submittedVisibilities: readonly ReportVisibility[];
+-  /** null means all projects; [] means only legacy, unassigned reports. */
+-  projectIds: readonly string[] | null;
+ };
+-export function reportReadScope(actor: WorkspaceActor, assignedProjects: readonly string[]): ReportReadScope {
++export function reportReadScope(actor: WorkspaceActor): ReportReadScope {
+   return {
+     ownMemberId: actor.kind === "staff" ? actor.id : null,
+     submittedVisibilities: actor.role === "member" ? ["company"] : ["company", "managers"],
+-    projectIds: actor.kind === "admin" ? null : [...new Set(assignedProjects)],
+   };
+ }
+ export function canReadReport(scope: ReportReadScope, report: ReportState): boolean {
+-  if (report.projectId !== null && scope.projectIds !== null && !scope.projectIds.includes(report.projectId)) return false;
+   return scope.ownMemberId === report.memberId
+     || (report.status === "submitted" && scope.submittedVisibilities.includes(report.visibility));
+ }
+-export function canWriteProject(actor: WorkspaceActor, project: { active: boolean; assigned: boolean } | null): boolean {
+-  return actor.kind === "staff" && (project === null || (project.active && project.assigned));
+-}
+-export type ReportChangeDecision = "allow" | "not-author" | "stale-version" | "date-fixed" | "project-fixed" | "submission-fixed";
++export type ReportChangeDecision = "allow" | "not-author" | "stale-version" | "date-fixed" | "submission-fixed";
+ export function decideReportChange(actor: WorkspaceActor, previous: ReportState | null,
+-  next: Pick<ReportState, "projectId" | "workDate" | "status" | "visibility" | "version">): ReportChangeDecision {
++  next: Pick<ReportState, "workDate" | "status" | "visibility" | "version">): ReportChangeDecision {
+   if (actor.kind !== "staff" || (previous && previous.memberId !== actor.id)) return "not-author";
+   if ((previous?.version ?? 0) !== next.version) return "stale-version";
+   if (previous && previous.workDate !== next.workDate) return "date-fixed";
+-  if (previous && previous.projectId !== next.projectId) return "project-fixed";
+   if (previous?.status === "submitted" && (next.status !== "submitted" || next.visibility !== previous.visibility)) return "submission-fixed";
+   return "allow";
+ }
