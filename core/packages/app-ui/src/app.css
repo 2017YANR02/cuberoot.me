@@ -312,6 +312,9 @@ button {
   border: 0;
 }
 
+/* Portaled source controls leave no content in this host. */
+.mobile-scramble-source-config:empty { display: none; }
+
 .mobile-scramble-source-config .scramble-src-manual {
   width: min(100%, 44rem);
   margin: 0 auto;

@@ -155,6 +155,18 @@ describe('mobile visible viewport layout', () => {
     expect(app).toContain('<TimerWorkspace className="view-container" data-fit-viewport=""');
     expect(surfaceCss).toContain('@supports not (container-type: size)');
     expect(surfaceCss).toContain('@container timer-stage (min-width: 520px) and (max-height: 500px)');
+    // Rotation may compact the vertical stack, never move the readout beside
+    // the scramble. This covers both the legacy media and container branches.
+    const fitRules = [...surfaceCss.matchAll(/[^{}]*\.timer-workspace\[data-fit-viewport\][^{}]*\{([^}]*)\}/g)];
+    for (const [, declarations] of fitRules) {
+      const columns = declarations.match(/grid-template-columns:\s*([^;]+);/)?.[1];
+      if (columns) expect(columns).toBe('minmax(0, 1fr)');
+      expect(declarations).not.toMatch(/grid-column:\s*2\b/);
+    }
+    expect(surfaceCss).toContain('--timer-readout-max-size: clamp(40px, 18cqh, 64px)');
+    expect(surfaceCss).toContain('--timer-cube-h: clamp(36px, 18cqh, 72px)');
+    expect(surfaceCss).toContain('.timing-surface-sub { flex: 0 0 auto; height: auto; max-height: none; }');
+    expect(surfaceCss).toMatch(/:not\(\[data-spacing-flow\]\) \.timing-surface--solo \{\s*flex: 1 0 auto;\s*min-height: min-content;/);
     expect(surfaceCss).toMatch(/\.timer-workspace\[data-fit-viewport\] \.timing-surface-scramble-top \{\s*max-height: 32vh;\s*overflow-y: auto;/);
     expect(surfaceCss).toContain('padding-top: var(--solo-scramble-gap, 16px)');
     expect(surfaceCss).toContain('row-gap: var(--solo-timer-gap, 20px)');
