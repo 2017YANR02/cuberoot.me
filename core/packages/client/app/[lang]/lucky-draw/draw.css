@@ -93,10 +93,24 @@
 .draw-list-tools {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
-.draw-list-tools .draw-actions:first-of-type {
-  margin-top: 0;
+.draw-list-tools > section {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+.draw-list-tools .draw-section-title,
+.draw-list-tools .draw-actions {
+  margin: 0;
+}
+.draw-saved-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 40px 40px;
+  gap: 4px;
+}
+.draw-saved-row > span {
+  overflow-wrap: anywhere;
 }
 .draw-input-row {
   gap: 8px;

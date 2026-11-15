@@ -209,7 +209,7 @@ export default function DrawPage() {
                      />
                   </div>
                   {v.saved.map((s, i) => (
-                    <div className="draw-actions" key={s.name}>
+                    <div className="draw-actions draw-saved-row" key={s.name}>
                       <span>{s.name}</span>
                       <DrawIconButton icon={FolderOpen} label={`${l.load} · ${s.name}`} onClick={() => act("load", i)} />
                       <DrawIconButton icon={Trash2} label={`${l.remove} · ${s.name}`} onClick={() => act("remove", i)} />
