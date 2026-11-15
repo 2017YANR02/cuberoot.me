@@ -2902,7 +2902,6 @@ a.alg-mirror-line:focus-visible > * { text-decoration: underline; }
   body[data-site-scenery] .alg-case,
   body[data-site-scenery] .alg-admin-modal {
     background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
     box-shadow: var(--glass-shadow);
     -webkit-backdrop-filter: var(--glass-filter);
     backdrop-filter: var(--glass-filter);
@@ -2911,6 +2910,7 @@ a.alg-mirror-line:focus-visible > * { text-decoration: underline; }
   body[data-site-scenery] .alg-pdf-menu,
   body[data-site-scenery] .alg-admin-modal {
     background: var(--glass-popover-bg);
+    border-color: var(--glass-border);
   }
 }
 .alg-editor-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; }
