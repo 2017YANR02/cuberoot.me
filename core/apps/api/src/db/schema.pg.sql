@@ -9416,28 +9416,15 @@ CREATE TABLE workspace_members (
   role TEXT NOT NULL CHECK (role IN ('member','manager')),
   active BOOLEAN NOT NULL DEFAULT TRUE
 );
-CREATE TABLE workspace_projects (
-  id UUID PRIMARY KEY, name TEXT NOT NULL CHECK (length(name) BETWEEN 1 AND 80),
-  url TEXT NOT NULL DEFAULT '', active BOOLEAN NOT NULL DEFAULT TRUE,
-  version INTEGER NOT NULL CHECK (version > 0), created_at INTEGER NOT NULL
-);
-CREATE TABLE workspace_project_members (
-  project_id UUID NOT NULL REFERENCES workspace_projects(id),
-  member_id INTEGER NOT NULL REFERENCES workspace_members(id),
-  PRIMARY KEY(project_id,member_id)
-);
-CREATE INDEX workspace_project_members_member ON workspace_project_members(member_id);
 CREATE TABLE workspace_reports (
   id UUID PRIMARY KEY, member_id INTEGER NOT NULL REFERENCES workspace_members(id),
-  project_id UUID REFERENCES workspace_projects(id), work_date DATE NOT NULL,
+  work_date DATE NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('draft','submitted')),
   visibility TEXT NOT NULL CHECK (visibility IN ('company','managers')),
   version INTEGER NOT NULL CHECK(version > 0), payload JSONB NOT NULL,
   created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
 );
-CREATE UNIQUE INDEX workspace_reports_company_day ON workspace_reports(member_id,work_date) WHERE project_id IS NULL;
-CREATE UNIQUE INDEX workspace_reports_project_day ON workspace_reports(member_id,project_id,work_date) WHERE project_id IS NOT NULL;
-CREATE INDEX workspace_reports_project ON workspace_reports(project_id,work_date);
+CREATE INDEX workspace_reports_member_date ON workspace_reports(member_id,work_date);
 CREATE TABLE workspace_revisions (
   report_id UUID NOT NULL REFERENCES workspace_reports(id), version INTEGER NOT NULL,
   snapshot JSONB NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY(report_id,version)
@@ -9471,7 +9458,6 @@ BEGIN
     DELETE FROM workspace_comments WHERE report_id IN
       (SELECT id FROM workspace_reports WHERE member_id = member_key AND status = 'draft');
     DELETE FROM workspace_reports WHERE member_id = member_key AND status = 'draft';
-    DELETE FROM workspace_project_members WHERE member_id = member_key;
     UPDATE workspace_members SET active = FALSE, name = '—' WHERE id = member_key;
     UPDATE workspace_comments SET name = '—' WHERE actor = 'staff:' || member_key::text;
   END IF;
@@ -9537,10 +9523,9 @@ CREATE TABLE recon_intake_revisions (
   PRIMARY KEY (case_id, revision)
 );
 
--- Shared company/project checklists; archived lists remain readable.
+-- Workspace-wide checklists; archived lists remain readable.
 CREATE TABLE workspace_checklists (
   id UUID PRIMARY KEY,
-  project_id UUID REFERENCES workspace_projects(id),
   name TEXT NOT NULL CHECK (length(name) BETWEEN 1 AND 80),
   items JSONB NOT NULL CHECK (jsonb_typeof(items) = 'array'),
   active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -9548,12 +9533,10 @@ CREATE TABLE workspace_checklists (
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
-CREATE INDEX workspace_checklists_project ON workspace_checklists(project_id);
 
--- Reusable team schedules. A schedule belongs to one fixed access scope.
+-- Workspace-wide team schedules.
 CREATE TABLE workspace_schedules (
   id UUID PRIMARY KEY,
-  project_id UUID REFERENCES workspace_projects(id),
   name TEXT NOT NULL CHECK (length(name) BETWEEN 1 AND 80),
   tasks JSONB NOT NULL CHECK (jsonb_typeof(tasks) = 'array'),
   active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -9561,7 +9544,6 @@ CREATE TABLE workspace_schedules (
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
-CREATE INDEX workspace_schedules_project ON workspace_schedules(project_id);
 -- Read-only upstream translation mirror; no user data or locally edited translations.
 CREATE TABLE wca_translation_sync (
   id SMALLINT PRIMARY KEY CHECK (id = 1),

@@ -20,8 +20,8 @@ suite('independent CubeRoot workspace',()=>{
   const alice:Identity={uid:2,isAdmin:false,name:'Alice'};
   const bob:Identity={uid:3,isAdmin:false,name:'Bob'};
   const unassigned:Identity={uid:4,isAdmin:false,name:'Unassigned'};
-  let aliceId:number,bobId:number; const project=randomUUID();let report:string;
-  const input=(id:string,status='draft')=>({id,projectId:project,version:0,workDate:'2026-10-19',status,visibility:'company',progress:'Delivered',resultUrl:'https://example.com/result',help:'',next:''});
+  let aliceId:number,bobId:number; let report:string;
+  const input=(id:string,status='draft')=>({id,version:0,workDate:'2026-10-19',status,visibility:'company',progress:'Delivered',resultUrl:'https://example.com/result',help:'',next:''});
   beforeAll(async()=>{
     await q('CREATE SCHEMA workspace_fixture');await q('SET search_path TO workspace_fixture');
     await q('CREATE TABLE app_users(id BIGINT PRIMARY KEY,display_name TEXT,is_admin BOOLEAN,forum_banned BOOLEAN DEFAULT FALSE,merged_into_user_id BIGINT,wca_id TEXT)');
@@ -29,11 +29,11 @@ suite('independent CubeRoot workspace',()=>{
     await sql.unsafe(readFileSync(new URL('../migrations/0281_workspace.sql',import.meta.url),'utf8'));
     await sql.unsafe(readFileSync(new URL('../migrations/0282_workspace_account_deletion.sql',import.meta.url),'utf8'));
     await sql.unsafe(readFileSync(new URL('../migrations/0284_workspace_admin_access.sql',import.meta.url),'utf8'));
+    for (const file of ['0291_workspace_checklists','0292_workspace_schedules','0293_workspace_remove_checklist_categories','0332_workspace_remove_projects']) await sql.unsafe(readFileSync(new URL('../migrations/'+file+'.sql',import.meta.url),'utf8'));
     // A separate application's account record is not in CubeRoot app_users.
     await q('CREATE SCHEMA other_application');await q('CREATE TABLE other_application.employees(id INT PRIMARY KEY,name TEXT)');await q("INSERT INTO other_application.employees VALUES (99,'External employee')");
     aliceId=(await service.post(admin,'member',{userId:2,name:'Alice',role:'member',active:true})).id as number;
     bobId=(await service.post(admin,'member',{userId:3,name:'Bob',role:'member',active:true})).id as number;
-    await service.post(admin,'project',{id:project,version:0,name:'CubeRoot',url:'https://cuberoot.me',active:true,memberIds:[aliceId,bobId]});
   });
   afterAll(async()=>{await q('DROP SCHEMA workspace_fixture CASCADE');await q('DROP SCHEMA other_application CASCADE');await sql.end();});
   it('keeps existing WCA administrator access without a duplicate employee grant',async()=>{
@@ -47,12 +47,12 @@ suite('independent CubeRoot workspace',()=>{
     const again=await service.get(admin,'session',new URLSearchParams()) as typeof session;
     expect(again.employee.id).toBe(session.employee.id);
     expect(await q('SELECT user_id::int AS uid FROM workspace_members WHERE admin_access ORDER BY user_id')).toEqual([{uid:1},{uid:5},{uid:6}]);
-    const id=randomUUID();await service.post(admin,'report',{...input(id),projectId:null,progress:'Admin work'});
+    const id=randomUUID();await service.post(admin,'report',{...input(id),progress:'Admin work'});
     expect(await service.get(admin,'detail',new URLSearchParams({id}))).toMatchObject({report:{memberId:session.employee.id},revisions:[{version:1}]});
     await expect(service.get({uid:6,isAdmin:true,name:'DB admin'},'detail',new URLSearchParams({id}))).rejects.toMatchObject({status:404});
-    await service.post(admin,'report',{...input(id,'submitted'),projectId:null,version:1,progress:'Admin work'});
+    await service.post(admin,'report',{...input(id,'submitted'),version:1,progress:'Admin work'});
     expect(await service.get(admin,'reports',new URLSearchParams({mine:'true'}))).toMatchObject({reports:[{id}]});
-    await expect(service.post({uid:6,isAdmin:true,name:'DB admin'},'report',{...input(id,'submitted'),projectId:null,version:2})).rejects.toMatchObject({status:403});
+    await expect(service.post({uid:6,isAdmin:true,name:'DB admin'},'report',{...input(id,'submitted'),version:2})).rejects.toMatchObject({status:403});
     // Derived access disappears with administrator status; explicit grants survive.
     await service.post(admin,'member',{userId:5,name:'Explicit',role:'member',active:true});
     await q('UPDATE app_users SET is_admin=FALSE,wca_id=NULL WHERE id IN (5,6)');
@@ -71,7 +71,7 @@ suite('independent CubeRoot workspace',()=>{
     await q("INSERT INTO app_users(id,display_name,is_admin) VALUES (7,'尾号5007',TRUE)");
     const session=await service.get(user,'session',new URLSearchParams()) as {employee:{id:number}};
     const id=randomUUID();
-    await service.post(user,'report',{...input(id,'submitted'),projectId:null,progress:'Admin identity regression'});
+    await service.post(user,'report',{...input(id,'submitted'),progress:'Admin identity regression'});
     const adminComment=randomUUID(),staffComment=randomUUID();
     await service.post(user,'comment',{id:adminComment,reportId:id,body:'Admin comment'});
     await service.post({...user,isAdmin:false},'comment',{id:staffComment,reportId:id,body:'Staff comment'});
@@ -98,7 +98,7 @@ suite('independent CubeRoot workspace',()=>{
     const user:Identity={uid:8,isAdmin:false,name:'Account nickname'};
     await q("INSERT INTO app_users(id,display_name,is_admin) VALUES (8,'Account nickname',FALSE)");
     const member=await service.post(admin,'member',{userId:8,name:'Work name',role:'member',active:true});
-    const id=randomUUID();await service.post(user,'report',{...input(id,'submitted'),projectId:null,progress:'Employee identity regression'});
+    const id=randomUUID();await service.post(user,'report',{...input(id,'submitted'),progress:'Employee identity regression'});
     await service.post(user,'comment',{id:randomUUID(),reportId:id,body:'Employee comment'});
     await q("UPDATE app_users SET display_name='New account name' WHERE id=8");
     expect(await service.get(user,'session',new URLSearchParams())).toMatchObject({actor:{name:'Work name'}});
@@ -120,12 +120,12 @@ suite('independent CubeRoot workspace',()=>{
     await expect(service.post(alice,'report',{...input(report),version:2})).rejects.toMatchObject({status:409});
     await expect(service.post(alice,'report',{...input(report,'submitted'),version:1})).rejects.toMatchObject({status:409});
   });
-  it('allows only the database-verified super administrator to manage other authors, drafts and archived records',async()=>{
+  it('allows only the database-verified super administrator to manage other authors, drafts and submitted records',async()=>{
     const root:Identity={uid:9,isAdmin:true,name:'Root'};
     await q('INSERT INTO app_users(id,display_name,is_admin,wca_id) VALUES (9,?,FALSE,?)',['Root',ADMIN_WCA_IDS[0]]);
     expect(await service.get(root,'session',new URLSearchParams())).toMatchObject({actor:{canManageReports:true},employee:{canManageReports:true}});
     expect(await service.get(admin,'session',new URLSearchParams())).toMatchObject({actor:{canManageReports:false}});
-    const id=randomUUID();const draft={...input(id),memberId:bobId,projectId:null,workDate:'2026-10-18',progress:'Delegated draft'};
+    const id=randomUUID();const draft={...input(id),memberId:bobId,workDate:'2026-10-18',progress:'Delegated draft'};
     await expect(service.post(admin,'report',{...draft,canManageReports:true})).rejects.toMatchObject({status:403});
     await expect(service.post({...alice,isAdmin:true},'report',{...draft,canManageReports:true})).rejects.toMatchObject({status:403});
     await service.post(root,'report',draft);
@@ -140,11 +140,10 @@ suite('independent CubeRoot workspace',()=>{
     await expect(service.post(admin,'report',{...draft,status:'submitted',version:2})).rejects.toMatchObject({status:403});
     await expect(service.post(admin,'report-delete',{id,version:2})).rejects.toMatchObject({status:403});
     await expect(service.post(root,'report',{...draft,memberId:aliceId,status:'submitted',version:2})).rejects.toMatchObject({status:409});
-    const archived=randomUUID();await service.post(root,'project',{id:archived,version:0,name:'Archive',url:'',active:false,memberIds:[bobId]});
-    const revised={...draft,projectId:archived,workDate:'2026-10-17',status:'submitted',visibility:'managers',version:2,progress:'Root correction'};
+    const revised={...draft,workDate:'2026-10-17',status:'submitted',visibility:'managers',version:2,progress:'Root correction'};
     await service.post(root,'report',revised);
-    expect(await service.get(root,'detail',new URLSearchParams({id}))).toMatchObject({report:{memberId:bobId,name:'Bob',projectId:archived,workDate:'2026-10-17',version:3,canEdit:true,canDelete:true},revisions:[{version:3},{version:2},{version:1}]});
-    expect(await service.get(bob,'detail',new URLSearchParams({id}))).toMatchObject({report:{canEdit:false,canDelete:false}});
+    expect(await service.get(root,'detail',new URLSearchParams({id}))).toMatchObject({report:{memberId:bobId,name:'Bob',workDate:'2026-10-17',version:3,canEdit:true,canDelete:true},revisions:[{version:3},{version:2},{version:1}]});
+    expect(await service.get(bob,'detail',new URLSearchParams({id}))).toMatchObject({report:{canEdit:true,canDelete:true}});
     await expect(service.post(root,'report',revised)).rejects.toMatchObject({status:409});
     await expect(service.post(root,'report-delete',{id,version:2})).rejects.toMatchObject({status:409});
     // Revocation takes effect without trusting the caller's stale admin flag.
@@ -159,7 +158,7 @@ suite('independent CubeRoot workspace',()=>{
     await q('DELETE FROM app_users WHERE id=9');
   });
   it('allows authors to edit and delete their own submitted records with version checks',async()=>{
-    const id=randomUUID();const draft={...input(id,'submitted'),projectId:null,workDate:'2026-10-16',progress:'Author work'};
+    const id=randomUUID();const draft={...input(id,'submitted'),workDate:'2026-10-16',progress:'Author work'};
     await service.post(alice,'report',draft);
     expect(await service.get(alice,'reports',new URLSearchParams({memberId:String(aliceId)}))).toMatchObject({reports:expect.arrayContaining([expect.objectContaining({id,canEdit:true,canDelete:true})])});
     await service.post(alice,'report',{...draft,version:1,progress:'Author correction'});
@@ -173,23 +172,19 @@ suite('independent CubeRoot workspace',()=>{
     await expect(service.post(alice,'comment',c)).rejects.toMatchObject({status:409});
     const detail=await service.get(alice,'detail',new URLSearchParams({id:report}));expect(detail).toHaveProperty('comments.length',1);
   });
-  it('checks membership before search, applies removal and archived write restrictions',async()=>{
-    await service.post(admin,'project',{id:project,version:1,name:'CubeRoot',url:'',active:true,memberIds:[aliceId]});
-    expect(await service.get(bob,'reports',new URLSearchParams({search:'Delivered'}))).toMatchObject({reports:[]});
-    await expect(service.get(bob,'detail',new URLSearchParams({id:report}))).rejects.toMatchObject({status:404});
-    await service.post(admin,'project',{id:project,version:2,name:'CubeRoot',url:'',active:false,memberIds:[aliceId]});
-    await expect(service.post(alice,'comment',{id:randomUUID(),reportId:report,body:'Late'})).rejects.toMatchObject({status:403});
-    expect(await service.get(alice,'detail',new URLSearchParams({id:report}))).toHaveProperty('report.projectActive',false);
+  it('checks current employee access before searches and rejects removed project endpoints',async()=>{
+    await expect(service.get(admin,'projects',new URLSearchParams())).rejects.toMatchObject({status:404});
+    await expect(service.post(admin,'project',{})).rejects.toMatchObject({status:404});
+    expect(await service.get(bob,'reports',new URLSearchParams({search:'Delivered'}))).toMatchObject({reports:expect.arrayContaining([expect.objectContaining({id:report})])});
     await service.post(admin,'member',{userId:2,name:'Alice',role:'member',active:false});
     await expect(service.get(alice,'session',new URLSearchParams())).rejects.toMatchObject({status:403});
   });
   it('deletes private drafts and credentials while retaining anonymous submitted team history',async()=>{
     await service.post(admin,'member',{userId:2,name:'Alice',role:'member',active:true});
-    const draft=randomUUID();await service.post(alice,'report',{...input(draft),projectId:null});
+    const draft=randomUUID();await service.post(alice,'report',{...input(draft),});
     await q('DELETE FROM app_users WHERE id=2');
     expect(await q('SELECT id FROM workspace_reports WHERE id=?',[draft])).toEqual([]);
     expect(await q('SELECT report_id FROM workspace_revisions WHERE report_id=?',[report])).toEqual([]);
-    expect(await q('SELECT member_id FROM workspace_project_members WHERE member_id=?',[aliceId])).toEqual([]);
     expect(await q('SELECT user_id,name,active FROM workspace_members WHERE id=?',[aliceId])).toEqual([{user_id:null,name:'—',active:false}]);
     expect(await service.get(admin,'detail',new URLSearchParams({id:report}))).toHaveProperty('report.name','—');
     await expect(service.get(alice,'session',new URLSearchParams())).rejects.toMatchObject({status:401});

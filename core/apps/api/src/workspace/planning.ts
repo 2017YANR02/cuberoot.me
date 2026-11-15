@@ -6,7 +6,7 @@ import { isPlanningDate, scheduleRange, type Checklist, type Schedule, type Work
 const uuid = z.string().uuid();
 const version = z.number().int().nonnegative();
 const boardInput = z.object({
-  id: uuid, projectId: uuid.nullable(), version,
+  id: uuid, version,
   name: z.string().trim().min(1).max(80), active: z.boolean(),
 });
 export const checklistInput = boardInput.extend({
@@ -24,31 +24,28 @@ export const scheduleInput = boardInput.extend({
   .refine(value => (scheduleRange(value.tasks)?.days ?? 0) <= 732, 'Schedule exceeds two years');
 
 type PlanningAccess = {
-  memberId: number; admin: boolean; manager: boolean;
-  projectWrite: (id: string | null) => Promise<void>;
+  manager: boolean;
   audit: (action: string, id: string) => Promise<void>;
   fail: (message: string, status: number) => never;
 };
 
 export function planningService(q: QueryRunner, access: PlanningAccess) {
-  const columns = 'b.id,b.project_id AS "projectId",b.name,b.active,b.version,p.name AS "projectName",p.active AS "projectActive"';
-  const readable = access.admin ? 'TRUE' : '(b.project_id IS NULL OR EXISTS(SELECT 1 FROM workspace_project_members pm WHERE pm.project_id=b.project_id AND pm.member_id=?))';
-  const params = access.admin ? [] : [access.memberId];
+  const columns = 'b.id,b.name,b.active,b.version';
   function pageOptions(search: URLSearchParams) {
     const page = z.number().int().min(1).max(10000).parse(Number(search.get('page') || 1));
     return { page, active: search.get('archived') === 'true' ? '' : ' AND b.active', offset: (page - 1) * 20 };
   }
   async function existing(id: string, table: 'workspace_checklists' | 'workspace_schedules' = 'workspace_checklists') {
-    const [row] = await q<WorkspaceBoard>(`SELECT ${columns} FROM ${table} b LEFT JOIN workspace_projects p ON p.id=b.project_id WHERE b.id=? AND ${readable}`, [id, ...params]);
+    const [row] = await q<WorkspaceBoard>(`SELECT ${columns} FROM ${table} b WHERE b.id=?`, [id]);
     return row;
   }
   return {
     async schedules(search = new URLSearchParams()) {
       const { page, active, offset } = pageOptions(search);
-      const rows = await q<Schedule>(`SELECT ${columns},b.tasks FROM workspace_schedules b LEFT JOIN workspace_projects p ON p.id=b.project_id WHERE ${readable}${active} ORDER BY b.created_at,b.id LIMIT 21 OFFSET ?`, [...params, offset]);
+      const rows = await q<Schedule>(`SELECT ${columns},b.tasks FROM workspace_schedules b WHERE TRUE${active} ORDER BY b.created_at,b.id LIMIT 21 OFFSET ?`, [offset]);
       const id = search.get('id');
-      const [selected] = id ? await q<Schedule>(`SELECT ${columns},b.tasks FROM workspace_schedules b LEFT JOIN workspace_projects p ON p.id=b.project_id WHERE b.id=? AND ${readable}${active}`, [uuid.parse(id), ...params]) : [];
-      const withAccess = (row: Schedule) => ({ ...row, canEdit: access.manager && row.projectActive !== false });
+      const [selected] = id ? await q<Schedule>(`SELECT ${columns},b.tasks FROM workspace_schedules b WHERE b.id=?${active}`, [uuid.parse(id)]) : [];
+      const withAccess = (row: Schedule) => ({ ...row, canEdit: access.manager });
       return { schedules: rows.slice(0,20).map(withAccess), selected: selected ? withAccess(selected) : null, hasMore: rows.length > 20, page };
     },
     async saveSchedule(input: unknown) {
@@ -56,14 +53,12 @@ export function planningService(q: QueryRunner, access: PlanningAccess) {
       const data = scheduleInput.parse(input);
       const old = await existing(data.id, 'workspace_schedules');
       if (!old && data.version !== 0) access.fail('排期不存在或无权访问 / Schedule unavailable', 404);
-      if (old && old.projectId !== data.projectId) access.fail('不能更改共享范围 / Scope cannot change', 409);
       if ((old?.version ?? 0) !== data.version) access.fail('排期已更新，请重新加载 / Reload schedule before saving', 409);
-      await access.projectWrite(data.projectId);
       const time = Math.floor(Date.now() / 1000);
       if (old) {
         await q('UPDATE workspace_schedules SET name=?,tasks=?,active=?,version=?,updated_at=? WHERE id=?', [data.name,data.tasks,data.active,data.version+1,time,data.id]);
       } else {
-        await q('INSERT INTO workspace_schedules(id,project_id,name,tasks,active,version,created_at,updated_at) VALUES (?,?,?,?,?,1,?,?)', [data.id,data.projectId,data.name,data.tasks,data.active,time,time]);
+        await q('INSERT INTO workspace_schedules(id,name,tasks,active,version,created_at,updated_at) VALUES (?,?,?,?,1,?,?)', [data.id,data.name,data.tasks,data.active,time,time]);
       }
       await access.audit('schedule.save', data.id);
       return { id: data.id, version: data.version + 1 };
@@ -74,7 +69,6 @@ export function planningService(q: QueryRunner, access: PlanningAccess) {
       const old = await existing(data.id, 'workspace_schedules');
       if (!old) access.fail('排期不存在或无权访问 / Schedule unavailable', 404);
       if (old.version !== data.version) access.fail('排期已更新，请重新加载 / Reload schedule before deleting', 409);
-      await access.projectWrite(old.projectId);
       const deleted = await q<{ id: string }>('DELETE FROM workspace_schedules WHERE id=? AND version=? RETURNING id', [data.id, data.version]);
       if (!deleted.length) access.fail('排期已更新，请重新加载 / Reload schedule before deleting', 409);
       await access.audit('schedule.delete', data.id);
@@ -82,22 +76,20 @@ export function planningService(q: QueryRunner, access: PlanningAccess) {
     },
     async checklists(search = new URLSearchParams()) {
       const { page, active, offset } = pageOptions(search);
-      const rows = await q<Checklist>(`SELECT ${columns},b.items FROM workspace_checklists b LEFT JOIN workspace_projects p ON p.id=b.project_id WHERE ${readable}${active} ORDER BY b.created_at,b.id LIMIT 21 OFFSET ?`, [...params,offset]);
-      return { checklists: rows.slice(0,20).map(row => ({ ...row, canEdit: row.projectActive !== false })), hasMore: rows.length > 20, page, itemArchiveSupported: true };
+      const rows = await q<Checklist>(`SELECT ${columns},b.items FROM workspace_checklists b WHERE TRUE${active} ORDER BY b.created_at,b.id LIMIT 21 OFFSET ?`, [offset]);
+      return { checklists: rows.slice(0,20).map(row => ({ ...row, canEdit: true })), hasMore: rows.length > 20, page, itemArchiveSupported: true };
     },
     async saveChecklist(input: unknown) {
       const data = checklistInput.parse(input);
       const old = await existing(data.id);
-      // An inaccessible existing ID must not be overwritten through an upsert.
+      // A deleted record must not be recreated by a stale save.
       if (!old && data.version !== 0) access.fail('清单不存在或无权访问 / Checklist unavailable', 404);
-      if (old && old.projectId !== data.projectId) access.fail('不能更改共享范围 / Scope cannot change', 409);
       if ((old?.version ?? 0) !== data.version) access.fail('清单已更新，请重新加载 / Reload checklist before saving', 409);
-      await access.projectWrite(data.projectId);
       const time = Math.floor(Date.now() / 1000);
       if (old) {
         await q('UPDATE workspace_checklists SET name=?,items=?,active=?,version=?,updated_at=? WHERE id=?', [data.name,data.items,data.active,data.version+1,time,data.id]);
       } else {
-        await q('INSERT INTO workspace_checklists(id,project_id,name,items,active,version,created_at,updated_at) VALUES (?,?,?,?,?,1,?,?)', [data.id,data.projectId,data.name,data.items,data.active,time,time]);
+        await q('INSERT INTO workspace_checklists(id,name,items,active,version,created_at,updated_at) VALUES (?,?,?,?,1,?,?)', [data.id,data.name,data.items,data.active,time,time]);
       }
       await access.audit('checklist.save', data.id);
       return { id: data.id, version: data.version + 1 };
@@ -107,7 +99,6 @@ export function planningService(q: QueryRunner, access: PlanningAccess) {
       const old = await existing(data.id);
       if (!old) access.fail('清单不存在或无权访问 / Checklist unavailable', 404);
       if (old.version !== data.version) access.fail('清单已更新，请重新加载 / Reload checklist before deleting', 409);
-      await access.projectWrite(old.projectId);
       const deleted = await q<{ id: string }>('DELETE FROM workspace_checklists WHERE id=? AND version=? RETURNING id', [data.id, data.version]);
       if (!deleted.length) access.fail('清单已更新，请重新加载 / Reload checklist before deleting', 409);
       await access.audit('checklist.delete', data.id);

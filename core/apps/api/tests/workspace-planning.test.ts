@@ -10,20 +10,20 @@ describe('workspace planning JSON parameter encoding', () => {
   it.each(['checklist', 'schedule'] as const)('keeps %s arrays through the production driver on create and update', async kind => {
     const driver = postgres(); // No connection: exercise the installed production serializer.
     const id = randomUUID();
-    let old: { id: string; projectId: null; version: number } | undefined;
+    let old: { id: string; version: number } | undefined;
     let expected: unknown[] = [];
     const q: QueryRunner = async <T>(text: string, params: unknown[] = []) => {
       if (text.startsWith('SELECT')) return (old ? [old] : []) as T[];
       const inserting = text.startsWith('INSERT');
-      const index = inserting ? 3 : 1;
+      const index = inserting ? 2 : 1;
       const encoded = driver.options.serializers[3802](params[index]);
       expect(JSON.parse(String(encoded))).toEqual(expected);
-      old = { id, projectId: null, version: (old?.version ?? 0) + 1 };
+      old = { id, version: (old?.version ?? 0) + 1 };
       return [];
     };
     const service = planningService(q, {
-      memberId: 1, admin: true, manager: true,
-      projectWrite: async () => {}, audit: async () => {},
+      manager: true,
+      audit: async () => {},
       fail: message => { throw new Error(message); },
     });
     const item = kind === 'checklist'
@@ -32,7 +32,7 @@ describe('workspace planning JSON parameter encoding', () => {
     try {
       for (const [version, entries] of [[], [item], []].entries()) {
         expected = entries;
-        const input = { id, projectId: null, name: 'Plan', active: true, version };
+        const input = { id, name: 'Plan', active: true, version };
         if (kind === 'checklist') await service.saveChecklist({ ...input, items: entries });
         else await service.saveSchedule({ ...input, tasks: entries });
       }
@@ -41,7 +41,7 @@ describe('workspace planning JSON parameter encoding', () => {
 });
 
 it('accepts named checklists without categories and ignores legacy category input', () => {
-  const input = { id: randomUUID(), projectId: null, name: 'Release', version: 0, active: true, items: [] };
+  const input = { id: randomUUID(), name: 'Release', version: 0, active: true, items: [] };
   expect(checklistInput.parse(input)).toEqual(input);
   expect(checklistInput.parse({ ...input, category: 'Old group' })).toEqual(input);
 });
@@ -61,8 +61,8 @@ suite('workspace shared planning persistence', () => {
   const bob: Identity = { uid: 3, isAdmin: false, name: 'Bob' };
   const outsider: Identity = { uid: 4, isAdmin: false, name: 'Outside' };
   let aliceId: number, bobId: number;
-  const project = randomUUID();
   const legacyChecklist = randomUUID();
+  const legacyProject = randomUUID(), legacyReportA = randomUUID(), legacyReportB = randomUUID();
   const legacyItems = [{ id: randomUUID(), text: 'Keep this task', done: true }];
   const schema = `workspace_planning_${randomUUID().replaceAll('-', '')}`;
   const sqlParams = (sql: string) => { let n = 0; return sql.replace(/\?/g, () => `$${++n}`); };
@@ -91,42 +91,55 @@ suite('workspace shared planning persistence', () => {
     }
     await q("INSERT INTO workspace_checklists(id,project_id,name,category,items,active,version,created_at,updated_at) VALUES (?,NULL,'Legacy','Old group',?,FALSE,7,1,2)", [legacyChecklist, legacyItems]);
     await exec(readFileSync(new URL('../migrations/0293_workspace_remove_checklist_categories.sql', import.meta.url), 'utf8'));
+    await q("INSERT INTO workspace_projects(id,name,version,created_at) VALUES (?,'Retired project',1,1)",[legacyProject]);
+    const [legacyMember] = await q<{id:number}>("INSERT INTO workspace_members(user_id,name,role) VALUES (4,'Outside','manager') RETURNING id");
+    await q('INSERT INTO workspace_project_members(project_id,member_id) VALUES (?,?)',[legacyProject,legacyMember.id]);
+    await q('UPDATE workspace_checklists SET project_id=? WHERE id=?',[legacyProject,legacyChecklist]);
+    for (const [id, projectId] of [[legacyReportA,legacyProject],[legacyReportB,null]]) {
+      await q("INSERT INTO workspace_reports(id,member_id,project_id,work_date,status,visibility,version,payload,created_at,updated_at) VALUES (?,?,?,'2026-01-01','submitted','company',1,?,1,1)",[id,legacyMember.id,projectId,{progress:'Keep original report'}]);
+      await q('INSERT INTO workspace_revisions(report_id,version,snapshot,created_at) VALUES (?,1,?,1)',[id,{projectId,projectName:'Retired project',projectActive:true,progress:'Keep original revision'}]);
+    }
+    await exec(readFileSync(new URL('../migrations/0332_workspace_remove_projects.sql', import.meta.url), 'utf8'));
     service = createWorkspaceService(q, transaction);
     aliceId = (await service.post(admin, 'member', { userId: 2, name: 'Alice', role: 'manager', active: true })).id as number;
     bobId = (await service.post(admin, 'member', { userId: 3, name: 'Bob', role: 'member', active: true })).id as number;
     await service.post(admin, 'member', { userId: 4, name: 'Outside', role: 'manager', active: true });
-    await service.post(admin, 'project', { id: project, version: 0, name: 'Project', url: '', active: true, memberIds: [aliceId, bobId] });
   }, 30000);
   afterAll(async () => { if (exec) await exec(`DROP SCHEMA ${schema} CASCADE`); await close?.(); });
-  const checklist = (projectId: string | null = project) => ({ id: randomUUID(), projectId, version: 0, name: 'Release', active: true, items: [{ id: randomUUID(), text: 'Review', done: false }] });
+  const checklist = () => ({ id: randomUUID(), version: 0, name: 'Release', active: true, items: [{ id: randomUUID(), text: 'Review', done: false }] });
 
-  it('drops only the category column and retains pre-migration checklist content and versions', async () => {
+  it('removes categories and projects while retaining checklist content and versions', async () => {
     const [row] = await q('SELECT * FROM workspace_checklists WHERE id=?', [legacyChecklist]);
-    expect(row).toMatchObject({ id: legacyChecklist, project_id: null, name: 'Legacy', items: legacyItems, active: false, version: 7, created_at: 1, updated_at: 2 });
+    expect(row).toMatchObject({ id: legacyChecklist, name: 'Legacy', items: legacyItems, active: false, version: 7, created_at: 1, updated_at: 2 });
     expect(row).not.toHaveProperty('category');
+    expect(row).not.toHaveProperty('project_id');
   });
 
-  it('persists shared checklists, permits member completion, rejects stale writes and scope changes', async () => {
+  it('removes project tables and metadata without merging same-day reports', async () => {
+    expect(await q('SELECT id FROM workspace_reports WHERE id=ANY(?::uuid[]) ORDER BY id',[[legacyReportA,legacyReportB]])).toHaveLength(2);
+    expect(await q('SELECT snapshot FROM workspace_revisions WHERE report_id=ANY(?::uuid[])',[[legacyReportA,legacyReportB]])).toEqual([{snapshot:{progress:'Keep original revision'}},{snapshot:{progress:'Keep original revision'}}]);
+    expect(await q("SELECT to_regclass('workspace_projects') AS projects,to_regclass('workspace_project_members') AS members")).toEqual([{projects:null,members:null}]);
+    await expect(service.get(admin,'projects',new URLSearchParams())).rejects.toMatchObject({status:404});
+    await expect(service.post(admin,'project',{})).rejects.toMatchObject({status:404});
+  });
+
+  it('persists shared checklists, permits member completion, rejects stale writes across the whole workspace', async () => {
     const input = checklist();
     await service.post(alice, 'checklist', input);
     expect(await service.get(bob, 'checklists', new URLSearchParams())).toMatchObject({ checklists: [{ id: input.id, version: 1, canEdit: true, items: input.items }] });
     const done = { ...input, version: 1, items: input.items.map(item => ({ ...item, done: true })) };
     await service.post(bob, 'checklist', done);
     await expect(service.post(alice, 'checklist', done)).rejects.toMatchObject({ status: 409 });
-    await expect(service.post(alice, 'checklist', { ...done, version: 2, projectId: null })).rejects.toMatchObject({ status: 409 });
-    expect(await service.get(outsider, 'checklists', new URLSearchParams())).toMatchObject({ checklists: [] });
+    expect(await service.get(outsider, 'checklists', new URLSearchParams())).toMatchObject({ checklists: expect.arrayContaining([expect.objectContaining({ id: input.id })]) });
     const response = await service.get(bob, 'checklists', new URLSearchParams());
     expect(response).not.toHaveProperty('categories');
     expect(response).not.toHaveProperty('checklists.0.category');
-    await expect(service.post(outsider, 'checklist', { ...done, version: 2 })).rejects.toMatchObject({ status: 404 });
-    await expect(service.post(outsider, 'checklist', { ...input, projectId: null })).rejects.toMatchObject({ code: '23505' });
     expect(await service.get(alice, 'checklists', new URLSearchParams())).toMatchObject({ checklists: [{ version: 2, items: [{ done: true }] }] });
   });
 
   it('deletes entire checklists with access, version and audit checks', async () => {
     const input = checklist();
     await service.post(alice, 'checklist', input);
-    await expect(service.post(outsider, 'checklist-delete', { id: input.id, version: 1 })).rejects.toMatchObject({ status: 404 });
     await expect(service.post(bob, 'checklist-delete', { id: input.id, version: 0 })).rejects.toMatchObject({ status: 409 });
     expect(await q('SELECT id FROM workspace_checklists WHERE id=?', [input.id])).toHaveLength(1);
     expect(await service.post(bob, 'checklist-delete', { id: input.id, version: 1 })).toEqual({ id: input.id });
@@ -137,7 +150,7 @@ suite('workspace shared planning persistence', () => {
   });
 
   it('retains report hours and revision snapshots across older clients', async () => {
-    const input = { id: randomUUID(), projectId: null, version: 0, workDate: '2026-10-19', status: 'submitted', visibility: 'company', progress: 'Done', resultUrl: '', help: '', next: '', startHour: 9, endHour: 18 };
+    const input = { id: randomUUID(), version: 0, workDate: '2026-10-19', status: 'submitted', visibility: 'company', progress: 'Done', resultUrl: '', help: '', next: '', startHour: 9, endHour: 18 };
     await service.post(alice, 'report', input);
     const { startHour, endHour, ...legacy } = input;
     await service.post(alice, 'report', { ...legacy, version: 1 });
@@ -146,14 +159,13 @@ suite('workspace shared planning persistence', () => {
     expect(await service.get(alice, 'detail', new URLSearchParams({ id: input.id }))).toHaveProperty('report.version', 2);
   });
 
-  it('restricts schedule edits to assigned managers, persists edits and rejects invalid timelines', async () => {
+  it('restricts schedule edits to managers, persists edits and rejects invalid timelines', async () => {
     const task = { id: randomUUID(), group: 'Product', name: 'Build', owner: '', start: '2026-12-30', end: '2027-01-02', kind: 'task', progress: 50 };
-    const input = { id: randomUUID(), name: 'Plan', projectId: project, version: 0, active: true, tasks: [task] };
+    const input = { id: randomUUID(), name: 'Plan', version: 0, active: true, tasks: [task] };
     await expect(service.post(bob, 'schedule', input)).rejects.toMatchObject({ status: 403 });
-    await expect(service.post(outsider, 'schedule', input)).rejects.toMatchObject({ status: 403 });
     await service.post(alice, 'schedule', input);
     expect(await service.get(bob, 'schedules', new URLSearchParams())).toMatchObject({ schedules: [{ canEdit: false, tasks: [task] }] });
-    expect(await service.get(outsider, 'schedules', new URLSearchParams({ id: input.id }))).toMatchObject({ schedules: [], selected: null });
+    expect(await service.get(outsider, 'schedules', new URLSearchParams({ id: input.id }))).toMatchObject({ schedules: [{ id: input.id }], selected: { id: input.id } });
     await service.post(admin, 'schedule', { ...input, version: 1, tasks: [{ ...task, progress: 100 }] });
     await expect(service.post(alice, 'schedule', { ...input, version: 1 })).rejects.toMatchObject({ status: 409 });
     for (const tasks of [[{ ...task, end: '2026-02-31' }], [{ ...task, kind: 'milestone' }], [{ ...task, progress: 101 }], [task, task], [{ ...task, end: '2030-01-01' }]]) {
@@ -163,44 +175,34 @@ suite('workspace shared planning persistence', () => {
   });
 
   it('restricts schedule deletion to authorized managers with version and audit checks', async () => {
-    const input = { id: randomUUID(), name: 'Disposable plan', projectId: project, version: 0, active: true, tasks: [{ id: randomUUID(), group: 'Release', name: 'Ship', owner: '', start: '2026-10-25', end: '2026-10-25', kind: 'milestone', progress: 0 }] };
+    const input = { id: randomUUID(), name: 'Disposable plan', version: 0, active: true, tasks: [{ id: randomUUID(), group: 'Release', name: 'Ship', owner: '', start: '2026-10-25', end: '2026-10-25', kind: 'milestone', progress: 0 }] };
     await service.post(alice, 'schedule', input);
     await expect(service.post(bob, 'schedule-delete', { id: input.id, version: 1 })).rejects.toMatchObject({ status: 403 });
-    await expect(service.post(outsider, 'schedule-delete', { id: input.id, version: 1 })).rejects.toMatchObject({ status: 404 });
     await expect(service.post(alice, 'schedule-delete', { id: input.id, version: 0 })).rejects.toMatchObject({ status: 409 });
     expect(await q('SELECT id FROM workspace_schedules WHERE id=?', [input.id])).toHaveLength(1);
     expect(await service.post(alice, 'schedule-delete', { id: input.id, version: 1 })).toEqual({ id: input.id });
     expect(await q('SELECT id FROM workspace_schedules WHERE id=?', [input.id])).toHaveLength(0);
     expect(await q("SELECT target FROM workspace_audit WHERE action='schedule.delete' AND target=?", [input.id])).toEqual([{ target: input.id }]);
     await expect(service.post(alice, 'schedule-delete', { id: input.id, version: 1 })).rejects.toMatchObject({ status: 404 });
-    const company = { ...input, id: randomUUID(), projectId: null, active: false };
+    const company = { ...input, id: randomUUID(), active: false };
     await service.post(alice, 'schedule', company);
     await service.post(admin, 'schedule-delete', { id: company.id, version: 1 });
     expect(await q('SELECT id FROM workspace_schedules WHERE id=?', [company.id])).toHaveLength(0);
   });
 
-  it('rejects malformed items and protects archived projects and revoked members', async () => {
+  it('rejects malformed items and revoked members', async () => {
     const input = checklist();
     await expect(service.post(alice, 'checklist', { ...input, items: [input.items[0], input.items[0]] })).rejects.toThrow();
-    await service.post(admin, 'project', { id: project, version: 1, name: 'Project', url: '', active: false, memberIds: [aliceId, bobId] });
-    await expect(service.post(bob, 'checklist', input)).rejects.toMatchObject({ status: 403 });
-    expect(await service.get(bob, 'checklists', new URLSearchParams())).toMatchObject({ checklists: [{ canEdit: false }] });
-    const archived = await service.get(bob, 'checklists', new URLSearchParams()) as { checklists: { id: string; version: number }[] };
-    await expect(service.post(bob, 'checklist-delete', archived.checklists[0])).rejects.toMatchObject({ status: 403 });
-    const schedules = await service.get(alice, 'schedules', new URLSearchParams()) as { schedules: { id: string; version: number }[] };
-    expect(schedules).toMatchObject({ schedules: [{ canEdit: false }] });
-    await expect(service.post(alice, 'schedule-delete', schedules.schedules[0])).rejects.toMatchObject({ status: 403 });
-    await expect(service.post(alice, 'schedule', { ...schedules.schedules[0], active: true })).rejects.toMatchObject({ status: 403 });
     await service.post(admin, 'member', { userId: 3, name: 'Bob', role: 'member', active: false });
     await expect(service.get(bob, 'checklists', new URLSearchParams())).rejects.toMatchObject({ status: 403 });
-    await expect(service.post(bob, 'checklist-delete', archived.checklists[0])).rejects.toMatchObject({ status: 403 });
+    await expect(service.post(bob, 'checklist-delete', {id:input.id,version:0})).rejects.toMatchObject({ status: 403 });
   });
 
   it('preserves shared company content after its author account is deleted', async () => {
-    const input = checklist(null);
+    const input = checklist();
     await service.post(alice, 'checklist', input);
     await q('DELETE FROM app_users WHERE id=?', [alice.uid]);
-    expect(await service.get(outsider, 'checklists', new URLSearchParams())).toMatchObject({ checklists: [{ id: input.id }] });
+    expect(await service.get(outsider, 'checklists', new URLSearchParams())).toMatchObject({ checklists: expect.arrayContaining([expect.objectContaining({ id: input.id })]) });
     await expect(service.get(alice, 'checklists', new URLSearchParams())).rejects.toMatchObject({ status: 401 });
   });
 
