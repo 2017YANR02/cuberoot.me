@@ -202,6 +202,110 @@ describe('installed app multiplayer modes', () => {
     expect(host.querySelector('.timer-display.holding')).not.toBeNull();
   });
 
+  it.each([
+    [false, 'holding', 'pointerup'], [true, 'holding', 'pointerup'],
+    [false, 'ready', 'pointerup'], [true, 'ready', 'pointerup'],
+    [false, 'holding', 'pointercancel'], [true, 'holding', 'pointercancel'],
+    [false, 'ready', 'pointercancel'], [true, 'ready', 'pointercancel'],
+  ] as const)('cancels the original press after orientation changes from landscape=%s in %s with %s', async (landscape, phase, end) => {
+    const media = Object.assign(new EventTarget(), { matches: landscape });
+    vi.stubGlobal('matchMedia', vi.fn(() => media));
+    await act(async () => root.render(<LocalBattleMode {...baseProps} playerCount={2} />));
+    vi.useFakeTimers();
+    const surface = (id: number) => host.querySelector<HTMLElement>(`[data-player-id="${id}"] .timing-surface`)!;
+    const original = surface(0);
+    await act(async () => dispatchPointer(original, 'pointerdown', 41));
+    if (phase === 'ready') await act(async () => vi.advanceTimersByTimeAsync(350));
+    expect(original.querySelector('.timer-display')?.classList).toContain(phase);
+
+    await act(async () => {
+      media.matches = !landscape;
+      media.dispatchEvent(new Event('change'));
+    });
+    // Side/versus use different parents, so the browser loses the old capture.
+    expect(original.isConnected).toBe(false);
+    expect(surface(0).querySelector('.timer-display')?.classList).toContain('idle');
+    await act(async () => dispatchPointer(document.body, end, 41));
+    expect(surface(0).querySelector('.timer-display')?.classList).toContain('idle');
+    expect(surface(1).querySelector('.timer-display')?.classList).toContain('idle');
+    await act(async () => vi.advanceTimersByTimeAsync(350));
+    expect(host.querySelector('.timer-display.holding, .timer-display.ready')).toBeNull();
+  });
+
+  it.each([true, false])('keeps pointer ownership and running time across rotation with capture support=%s', async (captureSupported) => {
+    const media = Object.assign(new EventTarget(), { matches: false });
+    vi.stubGlobal('matchMedia', vi.fn(() => media));
+    if (!captureSupported) {
+      Object.defineProperty(HTMLElement.prototype, 'setPointerCapture', { configurable: true, value: undefined });
+      Object.defineProperty(HTMLElement.prototype, 'hasPointerCapture', { configurable: true, value: undefined });
+    }
+    await act(async () => root.render(<LocalBattleMode {...baseProps} playerCount={2} />));
+    vi.useFakeTimers();
+    const surface = (id: number) => host.querySelector<HTMLElement>(`[data-player-id="${id}"] .timing-surface`)!;
+    const phase = (id: number, value: string) => expect(surface(id).querySelector('.timer-display')?.classList).toContain(value);
+    const rotate = async () => act(async () => {
+      media.matches = !media.matches;
+      media.dispatchEvent(new Event('change'));
+    });
+
+    await act(async () => dispatchPointer(surface(0), 'pointerdown', 41));
+    await rotate();
+    await act(async () => dispatchPointer(surface(1), 'pointerdown', 42));
+    await act(async () => vi.advanceTimersByTimeAsync(350));
+    phase(1, 'ready');
+    // The old finger lands in the other player's new region; it cannot start it.
+    await act(async () => {
+      dispatchPointer(surface(1), 'pointerup', 41);
+      dispatchPointer(surface(1), 'pointercancel', 41);
+    });
+    phase(1, 'ready');
+    await act(async () => dispatchPointer(surface(1), 'pointerup', 42));
+    phase(1, 'running');
+    await rotate();
+    phase(1, 'running');
+    phase(0, 'idle');
+    await act(async () => vi.advanceTimersByTimeAsync(1000));
+    await act(async () => {
+      dispatchPointer(surface(1), 'pointerdown', 43);
+      dispatchPointer(surface(1), 'pointerup', 43);
+    });
+    phase(1, 'stopped');
+    expect(surface(1).querySelector('.timer-display')?.textContent).toBe('1.000');
+  });
+
+  it('preserves keyboard preparation when pointer surfaces rotate', async () => {
+    const media = Object.assign(new EventTarget(), { matches: false });
+    vi.stubGlobal('matchMedia', vi.fn(() => media));
+    await act(async () => root.render(<LocalBattleMode {...baseProps} playerCount={2} />));
+    vi.useFakeTimers();
+    await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' })));
+    await act(async () => vi.advanceTimersByTimeAsync(350));
+    await act(async () => {
+      media.matches = true;
+      media.dispatchEvent(new Event('change'));
+    });
+    expect(host.querySelector('[data-player-id="0"] .timer-display.ready')).not.toBeNull();
+    await act(async () => window.dispatchEvent(new KeyboardEvent('keyup', { key: ' ' })));
+    expect(host.querySelector('[data-player-id="0"] .timer-display.running')).not.toBeNull();
+  });
+
+  it.each(['blur', 'lostpointercapture'])('releases pointer ownership after %s so the next press works', async (type) => {
+    await act(async () => root.render(<LocalBattleMode {...baseProps} playerCount={2} />));
+    vi.useFakeTimers();
+    const surface = host.querySelector<HTMLElement>('[data-player-id="0"] .timing-surface')!;
+    await act(async () => dispatchPointer(surface, 'pointerdown', 51));
+    await act(async () => vi.advanceTimersByTimeAsync(350));
+    await act(async () => {
+      if (type === 'blur') window.dispatchEvent(new Event('blur'));
+      else dispatchPointer(surface, type, 51);
+    });
+    expect(surface.querySelector('.timer-display')?.classList).toContain('idle');
+    await act(async () => dispatchPointer(surface, 'pointerdown', 52));
+    await act(async () => vi.advanceTimersByTimeAsync(350));
+    await act(async () => dispatchPointer(surface, 'pointerup', 52));
+    expect(surface.querySelector('.timer-display')?.classList).toContain('running');
+  });
+
   it('renders a working retry after local scramble generation fails', async () => {
     vi.mocked(generateTimerScramble)
       .mockResolvedValueOnce({

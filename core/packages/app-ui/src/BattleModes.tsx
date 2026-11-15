@@ -107,6 +107,7 @@ import {
   createRef,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -298,6 +299,8 @@ export function LocalBattleMode({
   const roundStoreRef = useRef<ReturnType<typeof createLocalBattleRoundStore> | null>(null);
   const keyStoreRef = useRef<ReturnType<typeof createLocalBattleKeyStore> | null>(null);
   const holdTimersRef = useRef(new Map<number, number>());
+  const playerPointersRef = useRef(new Map<number, number>());
+  const previousLayoutRef = useRef({ layout, playerCount: state.playerCount });
   const surfaceRefs = useMemo(
     () => Array.from({ length: 4 }, () => createRef<HTMLDivElement>()),
     [],
@@ -486,6 +489,42 @@ export function LocalBattleMode({
     onActivityChange(active);
   }, [active, onActivityChange]);
 
+  const cancelPointerPresses = useCallback(() => {
+    const pressedPlayers = [...playerPointersRef.current];
+    playerPointersRef.current.clear();
+    for (const [playerId, pointerId] of pressedPlayers) {
+      const surface = surfaceRefs[playerId].current;
+      if (surface?.hasPointerCapture?.(pointerId)) surface.releasePointerCapture(pointerId);
+      dispatch({ type: 'player-timer', playerId, action: { type: 'cancel-press' } });
+    }
+  }, [dispatch, surfaceRefs]);
+
+  useLayoutEffect(() => {
+    const previous = previousLayoutRef.current;
+    previousLayoutRef.current = { layout, playerCount: state.playerCount };
+    if (previous.layout === layout && previous.playerCount === state.playerCount) return;
+    // Side/versus replace the player surfaces and release their captures.
+    // Match Web's surface cleanup: cancel only owned presses, never a run or
+    // a keyboard/smart-cube preparation that does not depend on these nodes.
+    cancelPointerPresses();
+  }, [cancelPointerPresses, layout, state.playerCount]);
+
+  useEffect(() => {
+    const onLostCapture = (event: PointerEvent) => {
+      for (const [playerId, pointerId] of playerPointersRef.current) {
+        if (pointerId !== event.pointerId) continue;
+        playerPointersRef.current.delete(playerId);
+        dispatch({ type: 'player-timer', playerId, action: { type: 'cancel-press' } });
+      }
+    };
+    window.addEventListener('blur', cancelPointerPresses);
+    window.addEventListener('lostpointercapture', onLostCapture, true);
+    return () => {
+      window.removeEventListener('blur', cancelPointerPresses);
+      window.removeEventListener('lostpointercapture', onLostCapture, true);
+    };
+  }, [cancelPointerPresses, dispatch]);
+
   useEffect(() => {
     if (!visiblePlayers.some((player) => (
       player.timer.phase === 'running' || player.timer.phase === 'inspecting'
@@ -501,10 +540,11 @@ export function LocalBattleMode({
 
   useEffect(() => {
     if (!inputBlocked && !historyOpen && !settingsOpen) return;
+    cancelPointerPresses();
     for (let playerId = 0;playerId < stateRef.current.playerCount;playerId += 1) {
       dispatch({ type: 'player-timer', playerId, action: { type: 'cancel-press' } });
     }
-  }, [dispatch, inputBlocked, historyOpen, settingsOpen]);
+  }, [cancelPointerPresses, dispatch, inputBlocked, historyOpen, settingsOpen]);
 
   useEffect(() => {
     const down = new Set<string>();
@@ -684,13 +724,17 @@ export function LocalBattleMode({
             })} />,
             interactive: player.scramble.length > 0,
             onContextMenu: (event) => event.preventDefault(),
-            onPointerCancel: () => dispatch({
-              type: 'player-timer', playerId: player.id, action: { type: 'cancel-press' },
-            }),
+            onPointerCancel: (event) => {
+              if (playerPointersRef.current.get(player.id) !== event.pointerId) return;
+              playerPointersRef.current.delete(player.id);
+              dispatch({ type: 'player-timer', playerId: player.id, action: { type: 'cancel-press' } });
+            },
             onPointerDown: (event) => {
-              if (inputBlockedRef.current || event.button !== 0 || shouldIgnoreTimerTarget(event.target)) return;
+              if (inputBlockedRef.current || event.button !== 0 || shouldIgnoreTimerTarget(event.target)
+                || playerPointersRef.current.has(player.id)) return;
               event.preventDefault();
-              event.currentTarget.setPointerCapture(event.pointerId);
+              playerPointersRef.current.set(player.id, event.pointerId);
+              event.currentTarget.setPointerCapture?.(event.pointerId);
               setWinners([]);
               dispatch({
                 type: 'player-timer',
@@ -699,8 +743,9 @@ export function LocalBattleMode({
               });
             },
             onPointerUp: (event) => {
-              if (shouldIgnoreTimerTarget(event.target)) return;
-              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              if (playerPointersRef.current.get(player.id) !== event.pointerId) return;
+              playerPointersRef.current.delete(player.id);
+              if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
                 event.currentTarget.releasePointerCapture(event.pointerId);
               }
               dispatch({
