@@ -150,6 +150,30 @@ afterEach(async () => {
 });
 
 describe('installed App GAN lifecycle integration', () => {
+  it('keeps a loaded account form visible when native sign-in fails', async () => {
+    let authError = false;
+    const accountHost: InstalledAppHost = { ...host,
+      getNetworkStatus: async () => true,
+      useAuth: () => ({ ...host.useAuth('en'), error: authError }),
+    };
+    await act(async () => root.render(<App host={accountHost} />));
+    const accountButton = [...container.querySelectorAll<HTMLButtonElement>('button')]
+      .find(button => button.textContent?.trim() === 'Me');
+    expect(accountButton).toBeDefined();
+    await act(async () => accountButton!.click());
+    const frame = container.querySelector<HTMLIFrameElement>('.web-surface--account iframe')!;
+    await act(async () => frame.dispatchEvent(new Event('load')));
+    expect(frame.getAttribute('aria-hidden')).toBe('false');
+
+    authError = true;
+    await act(async () => root.render(<App host={accountHost} />));
+
+    expect(container.querySelector('.web-surface--account iframe')).toBe(frame);
+    expect(frame.getAttribute('aria-hidden')).toBe('false');
+    expect(container.querySelector('.web-surface--account .web-surface-state')).toBeNull();
+    expect(container.textContent).toContain('Account sign-in is temporarily unavailable. Try again.');
+  });
+
   it('opens notification destinations in the real Tools surface after auth, reuses the shell and ignores duplicate/foreign taps', async () => {
     let loading = true;
     let receive!: (value: import('@cuberoot/shared/notification-push').NotificationOpen) => void;

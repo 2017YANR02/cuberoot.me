@@ -2164,7 +2164,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     // Browser.open resolves before the login callback. Report later callback failures too.
     if (auth.busy) return;
     if (auth.error) {
-      setWebSurfaceStatus((current) => ({ ...current, account: 'error' }));
+      // A native sign-in failure does not invalidate the loaded account page.
+      // Keep its form available for retry while reporting the failed handoff.
       announce(copy.authError);
     }
   }, [announce, auth.busy, auth.error, copy.authError]);
