@@ -1137,7 +1137,18 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           <EventIcon event={puzzleParam} className="alg-cat-title-icon" title={puzzleParam} />
           {collection ? setHeading : <TimerPracticeContentPicker entries={setChoices} selectedId={set} label={setHeading}
             language={isZh ? 'zh' : 'en'} onSelect={next => navigation.push(`${isZh ? '/zh' : ''}/alg/${puzzleParam}/${next}`)} />}
-          {subgroupDisplay && <span className="alg-cat-subgroup"> {subgroupDisplay}</span>}
+          {subgroupDisplay && (set === 'zbll' && data && !collection
+            ? <TimerPracticeContentPicker
+                entries={groupAlgCases(data.cases).tops.map(group => ({
+                  id: group.label.toLowerCase(),
+                  title: { zh: displayZbllToken(group.label), en: displayZbllToken(group.label) },
+                }))}
+                selectedId={subParentSlug ?? subgroupSlug ?? ''}
+                label={subgroupDisplay}
+                language={isZh ? 'zh' : 'en'}
+                onSelect={next => navigation.push(`${isZh ? '/zh' : ''}/alg/${puzzleParam}/${set}/${encodeURIComponent(next)}${sq1QuerySuffix}`)}
+              />
+            : <span className="alg-cat-subgroup"> {subgroupDisplay}</span>)}
         </PageHeading>
         {isAdmin && !collection && <Tooltip content={editingOrder ? tr({ zh: '完成排序', en: 'Finish reordering' }) : tr({ zh: '编辑排序', en: 'Edit order' })}>
           {tip => <button {...tip} type="button" className="alg-order-toggle" aria-pressed={editingOrder}
