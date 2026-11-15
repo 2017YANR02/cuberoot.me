@@ -294,6 +294,6 @@
   white-space: nowrap;
   cursor: pointer;
 }
-.reg-zone-label { display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+.reg-filter-label { display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
 .reg-filter .compact-select-current { display: flex; align-items: center; }
 .reg-filter .compact-select-trigger svg { flex: none; }

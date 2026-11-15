@@ -5,7 +5,7 @@
 // 比赛,置顶为「已关注」组,跨设备同步(server PG comp_follows)。
 // 取数 + 分组纯逻辑在 lib/comp-registration.ts;关注 API 在 lib/comp-follows.ts。
 import { useEffect, useMemo, useState } from 'react';
-import { Star, LogIn, Clock3 } from '@app-foundation/icons/lucide';
+import { Star, LogIn, Clock3, Globe } from '@app-foundation/icons/lucide';
 import type { Comp } from '@/lib/comp-search';
 import {
   buildRegView,
@@ -24,6 +24,7 @@ import { apiUrl } from '@/lib/api-base';
 import { loadFlagData, personFlagIso2, countryToIso2 } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
 import { ListSelect } from '@/components/ListSelect';
+import { Flag } from '@/components/Flag';
 import { zoneSelectItems, zoneLabel } from '@/lib/tz-zones';
 import { localZone, wallPartsIn, timeKey } from '@cuberoot/shared/tz';
 import './registration_comps.css';
@@ -188,11 +189,12 @@ export function RegistrationView({ comps, isZh, lang, loggedIn, follows, toggle 
           searchPlaceholder={tr({ zh: '搜索国家', en: 'Search countries' })}
           ariaLabel={tr({ zh: '国家筛选', en: 'Filter by country' })}
           allLabel={allLabel}
+          selectedLabel={<span className="reg-filter-label">{country ? <Flag iso2={country} className="rc-flag" /> : <Globe size={15} aria-hidden="true" />}<span>{country ? countryName(country, isZh) : allLabel}</span></span>}
           value={country}
           items={[{ value: '', label: allLabel }, ...countries.map(iso2 => ({ value: iso2, label: countryName(iso2, isZh), country: iso2, searchTerms: [iso2, countryName(iso2, true), countryName(iso2, false)].join(' ') }))]}
           onChange={value => setChoice({ owner, country: value })}
         />
-        <ListSelect className="reg-filter reg-zone-filter" showArrow={false} maxVisible={50} selectedLabel={<span className="reg-zone-label"><Clock3 size={15} aria-hidden="true" /><span>{zoneLabel(tz, isZh)}</span></span>} searchPlaceholder={tr({ zh: '搜索时区', en: 'Search time zones' })} items={zoneItems} value={zone} onChange={setZone} allLabel={tr({ zh: '时区', en: 'Time zone' })} searchable portal ariaLabel={tr({ zh: '时区', en: 'Time zone' })} />
+        <ListSelect className="reg-filter reg-zone-filter" showArrow={false} maxVisible={50} selectedLabel={<span className="reg-filter-label"><Clock3 size={15} aria-hidden="true" /><span>{zoneLabel(tz, isZh)}</span></span>} searchPlaceholder={tr({ zh: '搜索时区', en: 'Search time zones' })} items={zoneItems} value={zone} onChange={setZone} allLabel={tr({ zh: '时区', en: 'Time zone' })} searchable portal ariaLabel={tr({ zh: '时区', en: 'Time zone' })} />
       </div>
       {sourceFailed && (!country || country === 'cn') && <p className="reg-source-note" role="status">{tr({ zh: '粗饼报名状态暂不可用', en: 'Cubing China registration status is unavailable' })}</p>}
       {now > 0 && view.total === 0 && <p className="reg-source-note">{tr({ zh: '暂无符合条件的比赛', en: 'No matching competitions' })}</p>}
