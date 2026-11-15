@@ -15,7 +15,7 @@ interface PersonResponse {
 }
 interface ToolPage { data: { mode: string; query: string; [key: string]: unknown }; setData(value: Record<string, unknown>): void; requestId?: number; active?: boolean }
 function labels() { return {
-  title: tr({ en: 'Tools', zh: '工具' }), timer: tr({ en: 'Timer', zh: '基础计时' }), assistant: tr({zh:'问 CubeRoot',en:'Ask CubeRoot'}),
+  draw: tr({zh:'抽奖',en:'Lucky Draw'}), title: tr({ en: 'Tools', zh: '工具' }), timer: tr({ en: 'Timer', zh: '基础计时' }), assistant: tr({zh:'问 CubeRoot',en:'Ask CubeRoot'}),
   choices: [tr({ en: 'Recent competitions', zh: '近期公示比赛' }), tr({ en: 'Recent records', zh: '近期纪录' }), tr({ en: 'Personal results & rankings', zh: '个人成绩与排名' })],
   search: tr({ en: 'Search', zh: '查询' }), clear: tr({ en: 'Clear', zh: '清除' }), retry: tr({ en: 'Refresh', zh: '刷新' }),
   placeholder: tr({ en: 'WCA ID, e.g. 2017YANR02', zh: 'WCA ID，例如 2017YANR02' }),
@@ -67,6 +67,7 @@ export function createNativeToolsPageOptions() {
     onHide() { this.active = false; this.requestId = (this.requestId ?? 0) + 1; },
     onUnload() { this.onHide(); },
     active: false, requestId: 0,
+    openDraw() { miniProgramApi().navigateTo({url:'/pages/draw/index'}); },
     openTimer() { miniProgramApi().switchTab({ url: '/pages/timer/index' }); },
     openAssistant() { miniProgramApi().navigateTo({url:'/pages/assistant/index'}); },
     changeMode(e: WechatMiniprogram.PickerChange) {

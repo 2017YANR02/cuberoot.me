@@ -16,7 +16,8 @@
     "pages/payment/index",
     "pages/membership/index",
     "pages/preferences/index",
-    "pages/payouts/index"
+    "pages/payouts/index",
+    "pages/draw/index"
   ],
   "lazyCodeLoading": "requiredComponents",
   "navigateToMiniProgramAppIdList": [

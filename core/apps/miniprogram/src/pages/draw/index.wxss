@@ -1,0 +1,121 @@
+.draw-page {
+  padding: 28rpx;
+  background: var(--cr-bg);
+  color: var(--cr-text);
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+.options {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+.actions,
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12rpx;
+  margin: 20rpx 0;
+}
+.counts {
+  justify-content: space-between;
+}
+button {
+  font-size: 26rpx;
+  margin: 0;
+  padding: 16rpx 24rpx;
+  min-height: 76rpx;
+  border: 1rpx solid var(--cr-line);
+  border-radius: 12rpx;
+  line-height: 1.4;
+  background: var(--cr-surface);
+  color: var(--cr-text);
+}
+input,
+textarea {
+  padding: 16rpx;
+  border: 1rpx solid var(--cr-line);
+  border-radius: 12rpx;
+  margin: 12rpx 0;
+  box-sizing: border-box;
+  width: 100%;
+}
+textarea {
+  height: 300rpx;
+}
+.note {
+  display: block;
+  font-size: 24rpx;
+  color: var(--cr-muted);
+}
+.preview {
+  max-height: 300rpx;
+  white-space: pre-wrap;
+}
+.stage {
+  min-height: 480rpx;
+  perspective: 1000px;
+  overflow: hidden;
+  background: var(--cr-surface);
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cloud,
+.winners {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20rpx;
+  padding: 32rpx;
+  max-height: 600rpx;
+  overflow: hidden;
+}
+.card {
+  border: 1rpx solid var(--cr-line);
+  background: var(--cr-bg);
+  padding: 24rpx;
+  border-radius: 16rpx;
+  overflow-wrap: anywhere;
+  text-align: center;
+  min-width: 80rpx;
+}
+.winner {
+  font-size: 64rpx;
+  max-width: 90%;
+}
+.answer {
+  display: block;
+  font-size: 36rpx;
+}
+.is-3d .cloud {
+  transform-style: preserve-3d;
+}
+.is-3d .card {
+  animation: float 4s ease-in-out infinite alternate;
+}
+.drawing .cloud {
+  animation: spin 0.9s;
+}
+.primary {
+  position: sticky;
+  bottom: 0;
+  background: var(--cr-bg);
+  padding: 16rpx 0;
+}
+.primary button:last-child {
+  background: var(--cr-accent);
+  color: var(--cr-bg);
+}
+@keyframes float {
+  to {
+    translate: 0 16rpx;
+  }
+}
+@keyframes spin {
+  50% {
+    transform: rotateY(180deg);
+  }
+}

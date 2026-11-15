@@ -35,7 +35,7 @@ export function douyinContentAvailable(href: string): boolean {
     }
     return path === '/' || path === '/account' || path === '/contact' || path === '/privacy' || path === '/terms'
       || path === '/auth/miniprogram' || path === '/calc' || path === '/timezone'
-      || path === '/calendar' || path === '/frame-count'
+      || path === '/draw' || path === '/calendar' || path === '/frame-count'
       || path === '/wca' || path.startsWith('/wca/');
   } catch { return false; }
 }
