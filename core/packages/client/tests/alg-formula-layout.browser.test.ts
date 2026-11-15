@@ -38,7 +38,7 @@ const entries: AlgEntry[] = [
   { alg: "U' R U R' U R' F R F'" },
 ];
 
-async function markup(editing: boolean, grouped: boolean, selected: boolean, toolsOpen = false, menuOpen = false) {
+async function markup(editing: boolean, grouped: boolean, selected: boolean, toolsOpen = false, menuOpen = false, toolsRow = 0) {
   const host = document.createElement('div');
   document.body.append(host);
   const root = createRoot(host);
@@ -62,7 +62,7 @@ async function markup(editing: boolean, grouped: boolean, selected: boolean, too
     }) : h('div', { className: 'alg-case-detail-ori-algs' }, grouped ? group(rows) : rows, add))));
     if (!editing && grouped && selected) await act(async () => host.querySelector<HTMLElement>('.f2l-solution-play')!.click());
     if (editing) expect(host.querySelector('.alg-formula-generator, .alg-editor-gen')).toBeNull();
-    if (toolsOpen) await act(async () => host.querySelector<HTMLButtonElement>('.alg-editor-tools-toggle')!.click());
+    if (toolsOpen) await act(async () => host.querySelectorAll<HTMLButtonElement>('.alg-editor-tools-toggle')[toolsRow].click());
     if (menuOpen) await act(async () => host.querySelector<HTMLButtonElement>('.alg-tag-select button')!.click());
     return host.innerHTML + (menuOpen ? document.querySelector('.alg-tag-menu')?.outerHTML ?? '' : '');
   } finally { await act(async () => root.unmount()); host.remove(); }
@@ -98,8 +98,8 @@ for (const { width, touch } of [{ width: 390, touch: true }, { width: 390, touch
     // These fixtures must never reach production, including accidental future fetches.
     await page.route('**/*', route => route.abort());
     try {
-      const show = async (editing: boolean, toolsOpen = false) => {
-        const html = await markup(editing, grouped, selected, toolsOpen);
+      const show = async (editing: boolean, toolsOpen = false, toolsRow = 0) => {
+        const html = await markup(editing, grouped, selected, toolsOpen, false, toolsRow);
         await page.setContent(`<meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style><style>
           body { margin: 16px; font-family: Arial, sans-serif; }
           .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
@@ -140,6 +140,14 @@ for (const { width, touch } of [{ width: 390, touch: true }, { width: 390, touch
         return dots.y + dots.height / 2 - (box.y + box.height / 2);
       }));
       expect(dotsOffsets).toEqual([-1, -1, -1]);
+      // A later row's translucent toolbar must not blend with preceding dots.
+      expect(await show(true, true, 1)).toEqual(editing);
+      const toggles = page.locator('.alg-editor-tools-toggle');
+      expect(await toggles.nth(0).isVisible()).toBe(false);
+      expect(await toggles.nth(1).isVisible()).toBe(true);
+      expect(await toggles.nth(2).isVisible()).toBe(false);
+      expect(await show(true)).toEqual(editing);
+      for (const toggle of await toggles.all()) expect(await toggle.isVisible()).toBe(true);
     } finally { await page.close(); }
   });
 }

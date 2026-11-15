@@ -103,6 +103,12 @@
 /* Center the hit target even on 27px insertion rows; lift the dots slightly
    to align optically with the notation's capital letters. */
 .alg-formula-row .alg-editor-tools-toggle svg { transform: translateY(-1px); }
+/* Floating menus can cover an adjacent row; keep its dots from showing
+   through the translucent surface until the active menu closes. */
+.alg-editor:has(.alg-editor-tools[data-tools-open='true'])
+  .alg-editor-tools[data-tools-open='false'] .alg-editor-tools-toggle {
+  visibility: hidden;
+}
 /* anchored-panel: safe (right-aligned within the row, width capped to viewport). */
 .alg-formula-row .alg-editor-tools-group {
   position: absolute;
