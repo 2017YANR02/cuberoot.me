@@ -63,8 +63,8 @@ function SignedInWorkspace() {
     {!handbook&&session.loading&&<p role="status"><LoadingIndicator>{t('正在加载…','Loading…')}</LoadingIndicator></p>}
     {handbook&&<div className="staff-start staff-workspace-handbook">{section==='offboarding'?<Offboarding />:section==='sop'?<Sop />:section==='quality'?<QualityStandards />:<Onboarding />}</div>}
     {actor&&<>
-      {section==='mine'&&employee&&<MyWork actor={employee} directory={session.data!.directory} />}
-      {section==='updates'&&employee&&<Reports actor={employee} directory={session.data!.directory} actions={<CreateReport actor={employee} directory={session.data!.directory} />} />}
+      {section==='mine'&&employee&&<WorkReports actor={employee} directory={session.data!.directory} mine />}
+      {section==='updates'&&employee&&<WorkReports actor={employee} directory={session.data!.directory} />}
       {section==='projects'&&<Projects actor={actor} directory={session.data!.directory} />}
       {section==='checklists'&&<Checklists />}
       {section==='schedule'&&<Schedules actor={actor} />}
@@ -73,13 +73,11 @@ function SignedInWorkspace() {
     </>}
   </main>;
 }
-function MyWork({ actor, directory }: { actor: StaffActor; directory: MemberDirectory }) {
-  return <Reports actor={actor} directory={directory} mine actions={<CreateReport actor={actor} directory={directory} />} />;
-}
-function CreateReport({ actor, directory }: { actor: StaffActor; directory: MemberDirectory }) {
+function WorkReports({ actor, directory, mine }: { actor: StaffActor; directory: MemberDirectory; mine?: boolean }) {
   const t = useT();
   const [editing, setEditing] = useState(false);
-  return <><Button action="add" onClick={() => setEditing(true)}>{t('记录今日进展', 'Record today’s progress')}</Button>
+  return <>
+    <Reports actor={actor} directory={directory} mine={mine} actions={<Button action="add" onClick={() => setEditing(true)}>{t('记录今日进展', 'Record today’s progress')}</Button>} />
     {editing && <WorkspaceDialog wide title={t('记录今日进展', 'Record today’s progress')} onClose={() => setEditing(false)}><ReportEditor actor={actor} directory={directory} /></WorkspaceDialog>}
   </>;
 }
