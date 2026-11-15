@@ -59,7 +59,7 @@ import { localizeCity } from '@/lib/city-localize';
 import { getSimilarComps, type SeriesComp } from '@/lib/comp-series';
 import { getSameCityComps } from '@/lib/comp-city';
 import { onIdle } from '@/lib/on-idle';
-import { compLinkProps, compHref, compResultHref, parseCompResultPath, resolveCompRecord } from '@/lib/comp-link';
+import { compLinkProps, compHref, compResultHref, parseCompResultPath, resolveCompResultPath, resolveCompRecord } from '@/lib/comp-link';
 import { calcCompetitionHref } from '@/lib/calc-link';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import BoolToggle from '@/components/BoolToggle';
@@ -890,13 +890,16 @@ export default function CompDetailPage() {
     | { kind: 'mine' };
   const [localModal, setLocalModal] = useState<ModalState | null>(null);
   const openedResult = useRef(false);
-  const modal = localModal ?? (resultPath ? { kind: 'round' as const, ...resultPath } : null);
+  const resolvedResult = resultPath && data?.slug === slug ? resolveCompResultPath(data, resultPath) : null;
+  const modal = localModal ?? (resolvedResult ? { kind: 'round' as const, ...resolvedResult } : null);
   useEffect(() => { setLocalModal(null); }, [pathname]);
   const localHref = (href: string) => `${isZh ? '/zh' : ''}${href}`;
   const setModal = (next: ModalState | null) => {
     if (next?.kind === 'round') {
       setLocalModal(null);
-      const href = localHref(compResultHref(slug, next));
+      const person = data?.users[String(next.number)];
+      if (!person) return;
+      const href = localHref(compResultHref(slug, next, person));
       if (resultPath) router.replace(href, { scroll: false });
       else {
         openedResult.current = true;
@@ -920,7 +923,7 @@ export default function CompDetailPage() {
   useEffect(() => {
     if (!recordParam || !data || data.slug !== slug || !fullLoaded) return;
     const target = resolveCompRecord(data, eventParam, recordParam);
-    if (target) router.replace(`${isZh ? '/zh' : ''}${compResultHref(slug, target)}`, { scroll: false });
+    if (target) router.replace(`${isZh ? '/zh' : ''}${compResultHref(slug, target, data.users[String(target.number)])}`, { scroll: false });
   }, [recordParam, data, slug, fullLoaded, eventParam, isZh, router]);
   const [compInfo, setCompInfo] = useState<CompInfo | null>(null);
   const [compInfoSettled, setCompInfoSettled] = useState(false);
@@ -2153,6 +2156,12 @@ export default function CompDetailPage() {
           </>
         ) : !isPsych ? (
           <>
+            {resultPath && !resolvedResult && fullLoaded && (
+              <p role="status">{tr({
+                zh: '此链接无法唯一确定选手，请从成绩表选择选手。',
+                en: 'This link cannot uniquely identify a competitor. Select a competitor from the results.',
+              })}</p>
+            )}
             {(!isWca || hasMyResults || !showCombined) && (
               <div className="comp-selectors">
                 {!showCombined && <SearchInput
@@ -2880,7 +2889,7 @@ const ResultsTableRow = memo(function ResultsTableRow({
       <td className="td-person comp-result-person-cell">
         <WcaPersonIdentity wcaId={u.wcaid} flag={<Flag iso2={regionToIso2(u.region)} spanClassName="country-flag" imgClassName="country-flag-ct" />}>
           <Link
-            href={compResultHref(compId ?? '', { eventId: r.e, roundId: r.r, number: r.n })}
+            href={compResultHref(compId ?? '', { eventId: r.e, roundId: r.r }, u)}
             prefetch={false}
             onClick={e => e.stopPropagation()}
             onNavigate={e => { e.preventDefault(); onClickCuber(r.n); }}

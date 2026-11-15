@@ -25,7 +25,7 @@ export function recordResultHref(data: CompData, target: RecordResultTarget): st
       && (target.type === 'average' ? row.a === target.value : row.b === target.value || row.v.includes(target.value));
   });
   if (matches.length !== 1) throw new Error('Record result is not uniquely available yet');
-  return compResultHref(data.slug, { eventId: target.eventId, roundId, number: matches[0].n });
+  return compResultHref(data.slug, { eventId: target.eventId, roundId }, data.users[String(matches[0].n)]);
 }
 
 /** Compare pre-competition PRs and earlier rounds, never the current result itself. */

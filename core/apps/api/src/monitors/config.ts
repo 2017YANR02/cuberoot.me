@@ -1,4 +1,4 @@
-import { compResultHref, type CompResultLocation } from '@cuberoot/shared/wca-comp-link';
+import { compResultHref, type CompResultLocation, type CompResultPerson } from '@cuberoot/shared/wca-comp-link';
 
 /**
  * 监控套件配置 —— 移植自 Python config.json,改走 env。
@@ -75,12 +75,12 @@ export function siteCompUrlFromCubingAlias(
   roundNumber?: number | null,
   zh = false,
   wcaCompetitionId?: string,
-  result?: CompResultLocation,
+  result?: CompResultLocation & CompResultPerson,
 ): string | null {
   if (!alias || !isWcaCubingComp(compType)) return null;
   const compId = wcaCompetitionId || alias.replace(/-/g, '');
   if (result && result.roundId && Number.isSafeInteger(result.number) && result.number > 0) {
-    return `${SITE_BASE}${zh ? '/zh' : ''}${compResultHref(compId, result)}`;
+    return `${SITE_BASE}${zh ? '/zh' : ''}${compResultHref(compId, result, result)}`;
   }
   return siteCompUrl(compId, eventId, roundNumber, zh);
 }

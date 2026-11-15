@@ -176,7 +176,7 @@ export async function pushFemaleRecords(firstRun: boolean): Promise<void> {
   for (const r of records) {
     if (pushed.has(r.id)) continue;
     const text = await formatInferred(r);
-    const url = `${SITE_BASE}${compResultHref(r.compId, { eventId: r.eventId, roundId: r.roundId, number: r.personNumber })}`;
+    const url = `${SITE_BASE}${compResultHref(r.compId, { eventId: r.eventId, roundId: r.roundId }, { wcaid: r.personWcaId, name: r.personName })}`;
     if (await sendBark({ title: text.cn, body: text.en, url, group: 'WCA Records', sound: 'multiwayinvitation' })) {
       await markPushed(MONITOR, [r.id]);
     }

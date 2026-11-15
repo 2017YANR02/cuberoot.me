@@ -13,10 +13,34 @@ export interface CompLinkOpts {
 
 export { compResultHref, type CompResultLocation } from '@cuberoot/shared/wca-comp-link';
 
-export function parseCompResultPath(path: string): CompResultLocation | null {
-  const match = /\/comp\/[^/]+\/result\/([a-z0-9]+)\/([a-z0-9]+)\/([1-9]\d*)\/?$/.exec(path);
-  if (!match || !Number.isSafeInteger(Number(match[3]))) return null;
-  return { eventId: match[1], roundId: match[2], number: Number(match[3]) };
+type CompResultPath = Pick<CompResultLocation, 'eventId' | 'roundId'> &
+  ({ wcaId: string } | { personName: string } | { legacyNumber: number });
+
+export function parseCompResultPath(path: string): CompResultPath | null {
+  const match = /\/comp\/[^/]+\/result\/([a-z0-9]+)\/([a-z0-9]+)\/([^/]+)\/?$/.exec(path);
+  if (!match) return null;
+  let identity: string;
+  try { identity = decodeURIComponent(match[3]); } catch { return null; }
+  const round = { eventId: match[1], roundId: match[2] };
+  if (/^[1-9]\d*$/.test(identity) && Number.isSafeInteger(Number(identity))) {
+    return { ...round, legacyNumber: Number(identity) };
+  }
+  if (/^\d{4}[A-Z]{4}\d{2}$/.test(identity)) return { ...round, wcaId: identity };
+  if (identity.startsWith('name:') && identity.slice(5).trim()) return { ...round, personName: identity.slice(5) };
+  return null;
+}
+
+/** Resolve anew on every snapshot; never treat an old sequence number as an identity. */
+export function resolveCompResultPath(data: {
+  users: Record<string, { name: string; wcaid?: string | null }>;
+  resultsByRound: Record<string, { n: number }[]>;
+}, target: CompResultPath): CompResultLocation | null {
+  if ('legacyNumber' in target) return null;
+  const matches = (data.resultsByRound[`${target.eventId}:${target.roundId}`] ?? []).filter(row => {
+    const user = data.users[String(row.n)];
+    return user && ('wcaId' in target ? user.wcaid === target.wcaId : user.name === target.personName);
+  });
+  return matches.length === 1 ? { eventId: target.eventId, roundId: target.roundId, number: matches[0].n } : null;
 }
 
 /** The news feed has names and values, but not always a round or registration number. */

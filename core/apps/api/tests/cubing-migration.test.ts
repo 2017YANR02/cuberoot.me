@@ -92,17 +92,17 @@ describe('cubing.com migration consumers', () => {
     expect(events.find(event => event.uid === `cubing-${id}-na`)).toMatchObject({ tag: 'PR', attemptResult: 369 });
     expect((await scanComp(comp, new Set())).some(event => event.tag === 'PR')).toBe(false);
   });
-  it('links record notices to the result modal using the competitor number and final round ID', async () => {
+  it('links record notices to the result modal using the WCA identity and final round ID', async () => {
     mockResults(true);
     const events = await scanComp(comp, new Set(['樊轶恒']));
     const record = events.find(event => event.tag === 'NR')!;
     expect(record.personNumber).toBe(3);
     expect(record.roundId).toBe('f');
     expect(siteCompUrlFromCubingAlias('Beijing-Autumn-Rivalry-2026', 'WCA', '777', 2, true,
-      'BeijingAutumnRivalry2026', { eventId: '777', roundId: 'f', number: 112 }))
-      .toBe('https://cuberoot.me/zh/wca/comp/BeijingAutumnRivalry2026/result/777/f/112');
+      'BeijingAutumnRivalry2026', { eventId: '777', roundId: 'f', number: 112, wcaid: '2020FANY01', name: 'Yiheng Fan' }))
+      .toBe('https://cuberoot.me/zh/wca/comp/BeijingAutumnRivalry2026/result/777/f/2020FANY01');
     expect(siteCompUrlFromCubingAlias(comp.alias, 'other', '777', 2, true, undefined,
-      { eventId: '777', roundId: 'f', number: 112 })).toBeNull();
+      { eventId: '777', roundId: 'f', number: 112, wcaid: '2020FANY01', name: 'Yiheng Fan' })).toBeNull();
   });
   it('does not downgrade an adjudicated FWR to an upstream personal record', () => {
     const prs = [{
