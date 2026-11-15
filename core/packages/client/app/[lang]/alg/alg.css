@@ -498,25 +498,43 @@
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
 }
 
-/* ── 两级 umbrella 落地页就地展开(ZBLL / OLLCP…,顶层组不多)──
-   每组一行:首格「组封面卡」(点开/折叠)+ 其后二级子组卡,**同一网格、等宽等高、魔方图一样大**;
-   点封面就地展开/收起,省掉进 /zbll/u 那一跳。一行放不下就自然折行(容器封顶 1200px)。 */
-.alg-l2-index {
+/* Shared group cover occupies one case column; the animated panel owns the rest. */
+.alg-group-section {
+  --alg-group-gap: 10px;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 12px 24px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  padding: 16px 24px 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--alg-group-gap);
 }
-/* 每组自己一个网格(封面卡 + 子组卡都是 .alg-card)。列宽收紧到桌面能一行放下一整组
-   (ZBLL:封面 + 6 子组 = 7 个)。封面的强调底 / chevron 见 components/AlgCard.css。 */
-.alg-l2-grid {
-  max-width: none;
-  margin: 0;
-  padding: 0;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+.alg-group-covers > .alg-card {
+  width: 100%;
+  align-self: start;
+  box-sizing: border-box;
+  padding: 14px 12px;
   gap: 10px;
+}
+.alg-group-covers > .alg-card .alg-card-thumb { min-height: 0; }
+.alg-group-covers > .alg-card:hover { transform: none; }
+.alg-group-covers > .alg-card .alg-card-title { font-size: 16px; font-weight: 700; letter-spacing: normal; }
+.alg-group-covers > .alg-card .alg-card-foot,
+.alg-group-section .alg-case-list.is-cards .alg-case-name { min-height: 24px; line-height: 24px; }
+.alg-group-section .alg-case-cube { line-height: 0; }
+.alg-group-covers { display: flex; flex-direction: column; gap: var(--alg-group-gap); min-width: 0; }
+.alg-group-panels { grid-column: 2 / -1; min-width: 0; display: grid; align-items: start; }
+.alg-group-panels > .more-toggle-panel { grid-area: 1 / 1; min-width: 0; }
+.alg-group-section .alg-case-list { gap: var(--alg-group-gap); }
+.alg-group-section .alg-case-list.is-cards { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+@media (max-width: 900px) {
+  .alg-group-section { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .alg-group-section .alg-case-list.is-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .alg-group-section { --alg-group-gap: 8px; grid-template-columns: repeat(3, minmax(0, 1fr)); padding-inline: 12px; }
+  .alg-group-section .alg-case-list.is-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .alg-group-covers > .alg-card { padding: 14px 4px; }
 }
 
 .alg-case-list {
@@ -1433,7 +1451,6 @@ a.alg-community-author:hover {
   /* is-f2l-thumb 要一并写出来:两个类的选择器比这条单类的更特殊,不列就压不住。 */
   .alg-subgroup-grid,
   .alg-subgroup-grid.is-f2l-thumb { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 12px; }
-  .alg-l2-index { padding: 12px 12px 0; gap: 12px; }
   .alg-bento .alg-card,
   .alg-subgroup-grid .alg-card { padding: 8px 4px 7px; gap: 5px; border-radius: 8px; }
   .alg-bento .alg-card-thumb,

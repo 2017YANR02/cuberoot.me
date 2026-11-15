@@ -19,6 +19,7 @@ interface AlgCardProps {
   onClick?: () => void;
   prefetch?: boolean;
   ariaLabel?: string;
+  ariaControls?: string;
   tooltip?: string;
   /** 组封面(可展开):淡强调底 + 角标箭头。传当前展开状态。 */
   expand?: 'open' | 'closed';
@@ -26,7 +27,7 @@ interface AlgCardProps {
 }
 
 export default function AlgCard({
-  thumb, title, sub, href, onClick, prefetch = false, ariaLabel, tooltip, expand, className,
+  thumb, title, sub, href, onClick, prefetch = false, ariaLabel, ariaControls, tooltip, expand, className,
 }: AlgCardProps) {
   const cls = `alg-card${expand ? ' alg-card--cover' : ''}${className ? ` ${className}` : ''}`;
   const body = (
@@ -46,7 +47,7 @@ export default function AlgCard({
       </Link>
     );
   }
-  if (expand) return <MoreToggle expanded={expand === 'open'} className={cls} onClick={onClick} aria-label={ariaLabel} title={tooltip}>{body}</MoreToggle>;
+  if (expand) return <MoreToggle expanded={expand === 'open'} className={cls} onClick={onClick} aria-label={ariaLabel} aria-controls={ariaControls} title={tooltip}>{body}</MoreToggle>;
   return (
     <button
       type="button"

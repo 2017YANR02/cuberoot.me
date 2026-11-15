@@ -78,4 +78,6 @@
   left: 8px;
   display: inline-flex;
   color: var(--muted-foreground);
+  transform: rotate(-90deg);
 }
+.alg-card.more-toggle.is-open > .more-toggle-chevron { transform: rotate(90deg); }

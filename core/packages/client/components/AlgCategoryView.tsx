@@ -65,7 +65,7 @@ import { useAlgViewMode } from '@/components/AlgViewModeToggle';
 import { usePageScrollRestoration } from '@/hooks/usePageScrollRestoration';
 import { useTrainingHost, useTrainingSearchParams } from '@/lib/training-host';
 import AlgListSettings, { useAlgCaseNumberVisibility } from '@/components/AlgListSettings';
-import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
+import AlgGroupSection from '@/components/AlgGroupSection';
 import AlgPdfButton from '@/components/AlgPdfButton';
 import AlgImageDownloadButton from '@/components/AlgImageDownloadButton';
 import { caseImageBatch } from '@/lib/alg-case-images';
@@ -83,7 +83,7 @@ import { f2lGroupName } from '@/lib/f2l-group-name';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { sortByCp } from '@/lib/alg_cp_order';
 import { groupAlgCases } from '@/lib/alg-case-groups';
-import { compareAlgGroupLabel, sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
+import { sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
 import { CUBE_ORIENTATIONS, visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
 import { algTagLabel, ALG_TAGS, OH_TAG_LABEL } from '@/lib/alg_tags';
 import AlgTagLabel from '@/components/AlgTagLabel';
@@ -289,13 +289,7 @@ function AlgRow({ entry, puzzle, set, invalid, notationStyle, viewAngle, ohHand,
   );
 }
 
-/**
- * umbrella set 的落地页(`/alg/<p>/<set>`)。
- *
- * 两级 umbrella 且顶层组不多(ZBLL 7 组 / OLLCP…:子组形如 `U/UR`)——**就地展开**:每组一行,
- * 2x2 / COLL 直接展开各组 case；其他 umbrella 集合只提供一级分类卡片。
- * 进入一级分类后，细分组作为同页的文字分区，不再增加选择页。
- */
+/** Large umbrella sets retain their category navigation; inline lists use AlgGroupSection. */
 function SubgroupIndex({
   puzzle, set, cases, ollByGroup, querySuffix, orientation,
 }: {
@@ -308,33 +302,10 @@ function SubgroupIndex({
   querySuffix?: string;
   orientation: string;
 }) {
-  // 一级分类及其所有 case。
-  const inlineCases = puzzle === '2x2' || (puzzle === '3x3' && set === 'coll');
-  const caseSlugs = useMemo(() => buildCaseSlugMap(cases, set), [set, cases]);
-  const tops = useMemo(() => {
-    return groupAlgCases(cases).tops.map(group => [group.label, {
-      sample: group.sample,
-      cases: inlineCases
-        ? [...group.allCases].sort((a, b) => compareAlgGroupLabel(primaryCaseName(puzzle, set, a), primaryCaseName(puzzle, set, b)))
-        : group.allCases,
-    }] as const);
-  }, [cases, inlineCases, puzzle, set]);
-
-  // 小集合保留就地展开；大集合先选一级分类。
-  const inlineExpand = inlineCases && tops.length <= 10;
-  const childCardCount = tops.reduce((total, [, group]) => total + group.cases.length, 0);
-  const defaultCollapsed = cases.length > 100 || childCardCount > 48;
-  // 仅记录手动选择，让异步数据刷新后未操作的分组仍遵循规模规则。
-  const [collapsedOverrides, setCollapsedOverrides] = useState<Map<string, boolean>>(() => new Map());
-  const toggle = (t: string) => setCollapsedOverrides(prev => {
-    const next = new Map(prev);
-    next.set(t, !(prev.get(t) ?? defaultCollapsed));
-    return next;
-  });
+  const tops = useMemo(() => groupAlgCases(cases).tops, [cases]);
 
   const useF2lThumb = puzzle === '3x3' && set === 'zbls';
   const useSvStyle = usesSvThumbStyle(puzzle, set);
-  const pickerMask = LEVEL2_PICKER_MASK[set];
   // 窄屏这两个网格都是四列(alg.css 的 480 断点),110px 的图会撑破格子 —— 图跟着降档。
   // 只能从这里给:缩略图的宽高是 React 出的(inline style / img 属性),CSS 压不住。
   const mobile = useIsMobile(480);
@@ -343,84 +314,42 @@ function SubgroupIndex({
   const svSmallThumbSize = mobile ? 19 : 48;
 
   // 卡片网格:单级 umbrella(直接链到 case),或组太多的两级 umbrella(链到二级选择页)。
-  if (!inlineExpand) {
-    return (
-      <div className={`alg-subgroup-grid${useF2lThumb ? ' is-f2l-thumb' : ''}`}>
-        {tops.map(([topLabel, { sample }]) => {
-          const firstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
-          const slug = encodeURIComponent(topLabel.toLowerCase()) || '_'; // slug 用原名(避免 "+" 进 URL)
-          const dispTop = set === 'zbll' ? displayZbllToken(topLabel) : displayAlgCaseName(puzzle, set, topLabel);
-          const ollName = ollByGroup.get(topLabel);
-          return (
-            <AlgCard
-              key={topLabel || '_root_'}
-              className="alg-card--subgroup-plain"
-              href={`/alg/${puzzle}/${set}/${slug}${querySuffix ?? ''}`}
-              // zbls 的顶层组分的是 F2L 对(A+ / A− …),顶层朝向留给组内的 case 分 ——
-              // 组封面画上黄色只会让 A+ 那 8 张看着都一样,所以这里就画 F2L(顶层灰)。
-              /* 组封面可能形成很长的列表；接近视口后才在本地生成 SVG。 */
-              thumb={useF2lThumb
-                ? <VisualCube local setup={sample.setup} algorithm={firstAlg} view="f2l" scheme={visualCubeSchemeForOrientation(orientation)} size={thumbSize} loading="lazy" />
-                : useSvStyle
-                  ? (
-                    <div className="alg-case-cube is-dual">
-                      <SvThumbImages
-                        puzzle={puzzle}
-                        set={set}
-                        sticker={sample.sticker}
-                        alg={firstAlg}
-                        setup={sample.setup}
-                        largeSize={svLargeThumbSize}
-                        smallSize={svSmallThumbSize}
-                        orientation={orientation}
-                      />
-                    </div>
-                  )
-                  : <VisualCube local setup={sample.setup} algorithm={firstAlg} view="oll" scheme={visualCubeSchemeForOrientation(orientation, true)} size={thumbSize} loading="lazy" hideGreySides />}
-              title={ollName ?? (useF2lThumb ? (dispTop || tr({ zh: '其他', en: 'Other' })) : `${set.toUpperCase()} ${dispTop || tr({ zh: '其他', en: 'Other' })}`)}
-              sub={ollName && set !== 'ollcp' && set !== 'zbll' ? `${set.toUpperCase()} ${dispTop}` : undefined}
-            />
-          );
-        })}
-      </div>
-    );
-  }
-
-  // 就地展开:每组一行 —— 封面卡(点开/折叠)+ 二级子组卡,同一网格等宽等高。
   return (
-    <div className="alg-l2-index">
-      {tops.map(([topLabel, e]) => {
-        const showCover = !(puzzle === '2x2' && (set === 'ortega-oll' || set === 'ortega-pbl'));
-        const isCollapsed = showCover && (collapsedOverrides.get(topLabel) ?? defaultCollapsed);
-        const firstAlg = e.sample.algs.flat()[0]?.alg ?? e.sample.standard ?? '';
+    <div className={`alg-subgroup-grid${useF2lThumb ? ' is-f2l-thumb' : ''}`}>
+      {tops.map(({ label: topLabel, sample }) => {
+        const firstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
+        const slug = encodeURIComponent(topLabel.toLowerCase()) || '_'; // slug 用原名(避免 "+" 进 URL)
         const dispTop = set === 'zbll' ? displayZbllToken(topLabel) : displayAlgCaseName(puzzle, set, topLabel);
-        // 封面卡标题不必再带 set 名(页首 H1 已写 ZBLL)。1lll 组号是纯数字 → 换字母制 OLL 名。
         const ollName = ollByGroup.get(topLabel);
-        const title = ollName ?? (dispTop || (set === 'ortega-oll' ? 'OLL' : tr({ zh: '其他', en: 'Other' })));
         return (
-          <div key={topLabel || '_root_'} className="alg-subgroup-grid alg-l2-grid">
-            {showCover && <AlgCard
-              expand={isCollapsed ? 'closed' : 'open'}
-              onClick={() => toggle(topLabel)}
-              tooltip={isCollapsed ? tr({ zh: '展开', en: 'Expand' }) : tr({ zh: '收起', en: 'Collapse' })}
-              thumb={set === 'ortega-pbl'
-                ? <CaseThumb loading="lazy" local puzzle={puzzle} set={set} sticker={e.sample.sticker} alg={firstAlg} setup={e.sample.setup} size={thumbSize} orientation={orientation} />
-                : <VisualCube loading="lazy" local setup={e.sample.setup} algorithm={firstAlg} view="oll" scheme={visualCubeSchemeForOrientation(orientation, true)} puzzleSize={puzzle === '2x2' ? 2 : 3} size={thumbSize} hideGreySides />}
-              title={title}
-            />}
-            {!isCollapsed && e.cases.map(sample => {
-              const subFirstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
-              return (
-                <AlgCard
-                  key={sample.id ?? sample.name}
-                  className="alg-card--subgroup-plain"
-                  href={`${algCaseDetailHref(puzzle, set, (sample.id != null && caseSlugs.byId.get(sample.id)) || caseSlugBase(set, sample))}${querySuffix ?? ''}`}
-                  thumb={<CaseThumb local puzzle={puzzle} set={set} sticker={sample.sticker} alg={subFirstAlg} setup={sample.setup} size={thumbSize} mask={pickerMask} loading="lazy" orientation={orientation} />}
-                  title={primaryCaseName(puzzle, set, sample)}
-                />
-              );
-            })}
-          </div>
+          <AlgCard
+            key={topLabel || '_root_'}
+            className="alg-card--subgroup-plain"
+            href={`/alg/${puzzle}/${set}/${slug}${querySuffix ?? ''}`}
+            // zbls 的顶层组分的是 F2L 对(A+ / A− …),顶层朝向留给组内的 case 分 ——
+            // 组封面画上黄色只会让 A+ 那 8 张看着都一样,所以这里就画 F2L(顶层灰)。
+            /* 组封面可能形成很长的列表；接近视口后才在本地生成 SVG。 */
+            thumb={useF2lThumb
+              ? <VisualCube local setup={sample.setup} algorithm={firstAlg} view="f2l" scheme={visualCubeSchemeForOrientation(orientation)} size={thumbSize} loading="lazy" />
+              : useSvStyle
+                ? (
+                  <div className="alg-case-cube is-dual">
+                    <SvThumbImages
+                      puzzle={puzzle}
+                      set={set}
+                      sticker={sample.sticker}
+                      alg={firstAlg}
+                      setup={sample.setup}
+                      largeSize={svLargeThumbSize}
+                      smallSize={svSmallThumbSize}
+                      orientation={orientation}
+                    />
+                  </div>
+                )
+                : <VisualCube local setup={sample.setup} algorithm={firstAlg} view="oll" scheme={visualCubeSchemeForOrientation(orientation, true)} size={thumbSize} loading="lazy" hideGreySides />}
+            title={ollName ?? (useF2lThumb ? (dispTop || tr({ zh: '其他', en: 'Other' })) : `${set.toUpperCase()} ${dispTop || tr({ zh: '其他', en: 'Other' })}`)}
+            sub={ollName && set !== 'ollcp' && set !== 'zbll' ? `${set.toUpperCase()} ${dispTop}` : undefined}
+          />
         );
       })}
     </div>
@@ -1032,15 +961,21 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
 
   const trainingHost = useTrainingHost();
   const listQuery = useTrainingSearchParams();
-  usePageScrollRestoration(!!data && !trainingHost, 'alg-scroll', `${puzzleParam}/${set}/${subgroupParam ?? ''}?${listQuery.toString()}`);
+  const scrollQuery = new URLSearchParams(listQuery.toString());
+  // Disclosure changes must not restore an old scroll position during their transition.
+  scrollQuery.delete('open-group');
+  usePageScrollRestoration(!!data && !trainingHost, 'alg-scroll', `${puzzleParam}/${set}/${subgroupParam ?? ''}?${scrollQuery}`);
 
   if (!validPuzzle || !meta) {
     return <div className="alg-root"><div className="alg-empty">Unknown set: {puzzleParam}/{set}</div></div>;
   }
 
+  const inlineCaseGroups = (puzzleParam === '2x2' || (puzzleParam === '3x3' && set === 'coll'))
+    && groupAlgCases(orderedCases).tops.length <= 10;
   const showSubgroupPicker = !collection && !!meta.umbrella && !subgroupParam
-    && !showAllCases && !optimalFilterActive;
-  const canCollapseGroups = set === 'zbll' && !!subgroupParam && !collection;
+    && !inlineCaseGroups && !showAllCases && !optimalFilterActive;
+  const canCollapseGroups = !showSubgroupPicker && grouped.some(group => group.subgroup !== '')
+    && !(puzzleParam === '2x2' && (set === 'ortega-oll' || set === 'ortega-pbl'));
   const accordion = canCollapseGroups && collapseGroups;
   const headerCaseCount = categoryHeaderCaseCount(
     scopedCases.length,
@@ -1131,6 +1066,264 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const f2lSlots = data && !showSubgroupPicker && puzzleParam === '3x3' && (set === 'f2l' || set === 'adv-f2l')
     ? (data.cases[0]?.oriNames ?? []).map(shortOriName)
     : [];
+
+  const renderGroupCases = (cases: AlgCase[]) => (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext
+          items={cases.map(c => c.id).filter((x): x is number => typeof x === 'number')}
+          strategy={rectSortingStrategy}
+        >
+      <div className={`alg-case-list${effectiveView === 'cards' ? ' is-cards' : ''}`}>
+        {cases.map(c => {
+          const rawOri = caseOri[c.name] ?? activeOri;
+          const oriIdx = rawOri < c.algs.length ? rawOri : 0;
+          const allAlgsForOri = c.algs[oriIdx] ?? c.algs[0] ?? [];
+          const preferenceSet = c.srcSet ?? set;
+          const preferenceSlot = preferredAlgSlot(c, oriIdx);
+          const preferredRef = preferredSnapshots[`${puzzleParam}/${preferenceSet}`]?.items[preferenceSlot];
+          const displayAlgsForOri = algsUnderFilter(c, oriIdx, allAlgsForOri);
+          // 右手条目来自镜像 partner，沿用 partner 的原始优先级；当前 case 的左手置顶记录不适用。
+          const algsForOri = rightHandOh
+            ? displayAlgsForOri
+            : sortPreferredAlgs(displayAlgsForOri, preferredRef).map(row => row.entry);
+          const oriCount = c.algs.length;
+          // 缩略图始终用**未筛选**的首条 —— 筛选只该影响公式列表,不该换掉 case 的图
+          const firstAlg = allAlgsForOri[0]?.alg ?? c.standard ?? '';
+          const orientedSetup = casePreviewSetup(puzzleParam as AlgPuzzle, set, c, oriIdx, setupMode);
+          const primaryName = primaryCaseName(puzzleParam, set, c);
+          // LS 页首已经写明 LS1–LS9；卡片只留 Hammer 1 / PBL 2 等组内名称，避免重复套名。
+          const defaultCardName = puzzleParam === '2x2' && /^ls[1-9]$/.test(set)
+            ? primaryName.replace(/^LS[1-9]\s+/, '')
+            : primaryName;
+          const cardName = isSq1Ep && sq1EpNumericNames
+            ? (sq1EpNumericCaseName(c.name) ?? defaultCardName)
+            : defaultCardName;
+          // 筛了标签就别拖:看到的是子集,拖出来的顺序对不上真实数组
+          const dragAlgs = canReorder && c.id != null && !filtering && showOtherAlgs;
+          const rows = effectiveView === 'full' ? (showOtherAlgs ? algsForOri : algsForOri.slice(0, 1)).map((entry, displayIdx) => {
+            // 校验结果 / 拖动 id 都按**未筛选**的下标走(标签筛选只是个视图)——
+            // 拿对象身份换回真下标
+            const trueIdx = allAlgsForOri.indexOf(entry);
+            const row = (
+              <AlgRow
+                entry={entry}
+                puzzle={puzzleParam as AlgPuzzle}
+                set={set}
+                invalid={isAdmin && c.id != null && trueIdx >= 0 ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
+                notationStyle={displayedNotationStyle}
+                viewAngle={effectiveViewAngle}
+                ohHand={rightHandOh ? 'right' : undefined}
+                sq1NotationMode={sq1NotationMode}
+                sourceKarnaukh={isSq1Pbl}
+
+              />
+            );
+            const key = `${entry.altId ?? entry.alg}::${trueIdx >= 0 ? trueIdx : displayIdx}`;
+            // 不拖的时候不加额外外壳，保持列表 DOM 和间距一致。
+            return dragAlgs
+              ? (
+                <SortableAlgRow key={key} id={algDragId(c.id!, oriIdx, trueIdx)} draggable>
+                  {row}
+                </SortableAlgRow>
+              )
+              : <Fragment key={key}>{row}</Fragment>;
+          }) : [];
+
+          return (
+            <SortableCard key={c.id ?? c.name} id={c.id ?? 0} draggable={canReorder && c.id != null}>
+            <AlgImageDownloadButton build={() => caseImageBatch({
+              ...buildExportOptions(), cases: [c], filename: `${puzzleParam}-${set}-${c.name}`,
+            })}>
+            <article
+              data-alg-motion-case={c.id ?? c.name}
+              data-alg-motion-ori={oriIdx}
+              className={`alg-case${flashId === c.id ? ' is-flash' : ''}${selectedId === c.id ? ' is-selected' : ''}${isAdmin && c.id != null && invalidIds.has(c.id) ? ' is-invalid' : ''}`}
+              id={c.id != null ? `case-${c.id}` : undefined}
+              title={isAdmin && c.id != null && invalidIds.has(c.id)
+                ? tr({ zh: '这个 case 有公式校验不通过', en: 'This case has failing algs' })
+                : undefined}
+            >
+              {/* 整卡跳到这张 case 的独立页(缩略图 + 名字 = 跳转区;公式/复制/社区区
+                  z-index 抬到覆盖层之上,照常交互)。真 <a>,中键可新开。 */}
+              <Link
+                href={caseDetailHref(c)}
+                className="alg-case-cardlink"
+                prefetch={false}
+                aria-label={cardName}
+              />
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAlgDragEnd(c, oriIdx)}>
+                <SortableContext
+                  items={dragAlgs ? algsForOri.map(e => algDragId(c.id!, oriIdx, allAlgsForOri.indexOf(e))) : []}
+                  strategy={verticalListSortingStrategy}
+                >
+              <div className="alg-case-head">
+                <div className={`alg-case-cube${useSvDualThumb || useZbllDualThumb ? ' is-dual' : ''}`}>
+                  {useSvDualThumb ? (
+                    <>
+                      {/* SV / VLS / WV 共用 /sim 的 VLS 可见区:
+                          黄色块上的非黄色贴纸置灰；外围灰色侧环不提供识别信息，直接隐藏。
+                          小图保留立体拿方，但沿用同一遮罩。 */}
+                      <SvThumbImages
+                        onRotate={isAdmin && c.id != null && canChooseViewAngle ? () => rotateCase(c) : undefined}
+                        puzzle={puzzleParam as AlgPuzzle}
+                        set={set}
+                        sticker={c.sticker}
+                        alg={firstAlg || c.setup || ''}
+                        setup={orientedSetup}
+                        largeSize={dualLargeThumbSize}
+                        smallSize={dualSmallThumbSize}
+                        simplifyRecognition={recognitionSimplified}
+                        viewAngle={effectiveViewAngle}
+                        orientation={effectiveOrientation}
+                      />
+                    </>
+                  ) : useZbllDualThumb ? (
+                    <>
+                      <CaseThumb local
+                        onRotate={isAdmin && c.id != null && canChooseViewAngle ? () => rotateCase(c) : undefined}
+                        puzzle={puzzleParam as AlgPuzzle}
+                        set={set}
+                        sticker={c.sticker}
+                        alg={firstAlg || c.setup || ''}
+                        setup={orientedSetup}
+                        size={dualLargeThumbSize}
+                        loading="lazy"
+                        simplifyRecognition
+                        viewAngle={effectiveViewAngle}
+                        orientation={effectiveOrientation}
+                      />
+                      <CaseThumb local
+                        onRotate={isAdmin && c.id != null && canChooseViewAngle ? () => rotateCase(c) : undefined}
+                        puzzle={puzzleParam as AlgPuzzle}
+                        set={set}
+                        sticker={c.sticker}
+                        alg={firstAlg || c.setup || ''}
+                        setup={orientedSetup}
+                        size={dualSmallThumbSize}
+                        loading="lazy"
+                        viewAngle={effectiveViewAngle}
+                        orientation={effectiveOrientation}
+                      />
+                    </>
+                  ) : (
+                    <CaseThumb local
+                        onRotate={isAdmin && c.id != null && canChooseViewAngle ? () => rotateCase(c) : undefined}
+                      puzzle={puzzleParam as AlgPuzzle}
+                      set={set}
+                      sticker={c.sticker}
+                      alg={firstAlg || c.setup || ''}
+                      setup={orientedSetup}
+                      size={accordion ? (narrow ? 60 : 110) : undefined}
+                      /* 大集只在接近视口时本地生成图，禁止移除 loading="lazy"
+                         后同步绘制整份题库，也不再依赖网络 SVG。 */
+                      loading="lazy"
+                      sq1BlackTop={sq1BlackTop}
+                      simplifyRecognition={recognitionSimplified}
+                      viewAngle={effectiveViewAngle}
+                      orientation={effectiveOrientation}
+                    />
+                  )}
+                </div>
+                <div className="alg-case-info">
+                  <div className="alg-case-name">
+                    <Link href={caseDetailHref(c)} prefetch={false} className="alg-case-detail-link"
+                      aria-label={tr({ zh: `查看 ${cardName} 详情`, en: `View ${cardName} details` })}>
+                    <span data-alg-shared-title={cardName} className={`alg-case-letter${set === 'zbll' ? ' alg-case-letter--zbll' : ''}`}>
+                      {cardName}
+                      {set === 'zbll' && c.meta?.ollcp && (
+                        <span className="alg-case-index"> ({displayAlgCaseName(puzzleParam, set, c.name).replace(/^ZBLL\s+/i, '').replace(/\s+/g, '')})</span>
+                      )}
+                    </span>
+                    <ChevronRight size={14} aria-hidden="true" />
+                    </Link>
+                    {/* 字母制主名接管之后,站上原来那个名字(`1LLL 6 7` / `ZBLL L 34`)降为副名 —— 不丢。
+                        但 PLL 的 OLLCP 名剥掉 `PLL-` 前缀后就等于站上的名字,再挂一个副名纯属重复。 */}
+                    {(() => {
+                      if (!c.meta?.ollcp || set === 'zbll') return null;
+                      const disp = displayAlgCaseName(puzzleParam, set, c.name);
+                      const primary = primaryCaseName(puzzleParam, set, c);
+                      return disp.startsWith(primary) ? null : <span className="alg-case-index">{disp}</span>;
+                    })()}
+                    {showCaseNumbers && c.number != null && <span className="alg-case-index">#{c.number}</span>}
+                    {oriCount > 1 && (f2lSlots.length > 1 ? (
+                      <F2lSlotSelector compact className="alg-case-slot-mini"
+                        ariaLabel={tr({ zh: `顺时针切换槽位：${shortOriName(c.oriNames?.[oriIdx] ?? '')}`, en: `Rotate slot clockwise: ${shortOriName(c.oriNames?.[oriIdx] ?? '')}` })}
+                        selected={[shortOriName(c.oriNames?.[oriIdx] ?? '')]}
+                        onCycle={() => {
+                          const slots = ['FR', 'FL', 'BL', 'BR'];
+                          const current = slots.indexOf(shortOriName(c.oriNames?.[oriIdx] ?? ''));
+                          for (let offset = 1; offset <= slots.length; offset++) {
+                            const next = slots[(current + offset) % slots.length];
+                            const index = c.oriNames?.findIndex(name => shortOriName(name) === next) ?? -1;
+                            if (index >= 0) { setCaseOri(prev => ({ ...prev, [c.name]: index })); break; }
+                          }
+                        }}
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        className="alg-case-y-btn"
+                        onClick={() => setCaseOri(prev => ({ ...prev, [c.name]: (oriIdx + 1) % oriCount }))}
+                        title={`${shortOriName(c.oriNames?.[oriIdx] ?? '')} → ${shortOriName(c.oriNames?.[(oriIdx + 1) % oriCount] ?? '')}`}
+                      >
+                        <span className="alg-case-y-current">{shortOriName(c.oriNames?.[oriIdx] ?? '')}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {effectiveView === 'full' && orientedSetup && (
+                    <SetupLine
+                      puzzle={puzzleParam}
+                      setup={displayCaseScramble(puzzleParam, set,
+                        caseViewSetup(orientedSetup, effectiveViewAngle))}
+                      notationStyle={displayedNotationStyle}
+                      sq1NotationMode={sq1NotationMode}
+                    />
+                  )}
+                  {rows.length > 0 && <div className="alg-case-algs">{rows[0]}</div>}
+                </div>
+              </div>
+              {effectiveView === 'full' && showOtherAlgs && (<>
+              {rows.length > 1 && <div className="alg-case-algs">{rows.slice(1)}</div>}
+              <CommunityAlgs
+                puzzle={puzzleParam}
+                setSlug={set}
+                caseName={c.name}
+                sticker={c.sticker}
+                setup={c.setup}
+                firstAlg={c.algs[0]?.[0]?.alg}
+                standardAlgs={c.algs.flat()}
+                submissions={submissionsByCase.get(c.name) ?? []}
+                allowAdd={false}
+                compact
+                preferredRef={preferredRef}
+                onPreferredToggle={(submission, preferred) => setPreferred(
+                  puzzleParam as AlgPuzzle,
+                  preferenceSet,
+                  preferenceSlot,
+                  preferred ? null : preferredAlgRef({ alg: submission.alg }),
+                )}
+                notationStyle={displayedNotationStyle}
+                viewAngle={effectiveViewAngle}
+                onPatch={(action) => {
+                  setSubmissions(prev => {
+                    if (action.type === 'add') return [...prev, action.submission];
+                    if (action.type === 'update') return prev.map(s => s.id === action.submission.id ? action.submission : s);
+                    return prev.filter(s => s.id !== action.id);
+                  });
+                }}
+              />
+              </>)}
+                </SortableContext>
+              </DndContext>
+            </article>
+            </AlgImageDownloadButton>
+            </SortableCard>
+          );
+        })}
+      </div>
+        </SortableContext>
+      </DndContext>
+  );
 
   return (
     <div className="alg-root" ref={motionRoot}
@@ -1546,311 +1739,42 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         </div>
       )}
 
-      {data && !showSubgroupPicker && grouped.map((group) => {
-        const { key, subgroup, cases, paritySection, startsParitySection, sectionCaseCount } = group;
-        const showHeader = accordion || grouped.length > 1 || (!subgroupParam && subgroup !== '');
-        const panelId = `alg-group-${encodeURIComponent(key)}`;
-        const expanded = !accordion || expandedGroup === key;
-        const groupTitle = isSq1Ep
-          ? (sq1EpNumericNames
-            ? `${sq1EpNumericLayerName(subgroup) ?? subgroup}.*`
-            : tr({ zh: `上层 ${displayAlgCaseName(puzzleParam, set, subgroup)}`, en: `Top ${displayAlgCaseName(puzzleParam, set, subgroup)}` }))
-          : (set === 'f2l' ? tr(f2lGroupName(subgroup)) : ollByGroup.get(subgroup)
-            ?? displayAlgCaseName(puzzleParam, set, set === 'zbll' && subgroupParam ? subgroup.split('/').slice(1).join('/') || subgroup : subgroup)
-            ?? tr({ zh: '其他', en: 'Other' }));
-        return (
-          <Fragment key={key}>
-          {startsParitySection && paritySection === 'unclassified' && (
-            <div className="alg-ep-parity-section">
-              <h2>
-                {tr({ zh: '待确认', en: 'Review needed' })}
-                <span>{sectionCaseCount}</span>
-              </h2>
-              <p>
-                {tr({ zh: '名称无法自动判定，暂不误标', en: 'Names that cannot be classified are left unmarked' })}
-              </p>
-            </div>
-          )}
-          <section className="alg-subgroup">
-            {showHeader && (
-              <h2 className="alg-subgroup-title">
-                {accordion ? <MoreToggle expanded={expanded} aria-controls={panelId}
-                  onClick={() => setExpandedGroup(current => current === key ? null : key)}>
-                  <CaseThumb local loading="lazy"
-                    puzzle={puzzleParam as AlgPuzzle} set={set}
-                    sticker={cases[0].sticker}
-                    alg={cases[0].algs.flat()[0]?.alg ?? cases[0].standard ?? ''}
-                    setup={cases[0].setup}
-                    mask={LEVEL2_PICKER_MASK[set]}
-                    size={narrow ? 60 : 72}
-                    orientation={effectiveOrientation}
-                    viewAngle={effectiveViewAngle}
-                    alt=""
-                  />
-                  {groupTitle}
-                </MoreToggle> : groupTitle}
-              </h2>
-            )}
-            <MoreTogglePanel id={panelId} expanded={expanded}>
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext
-                  items={cases.map(c => c.id).filter((x): x is number => typeof x === 'number')}
-                  strategy={rectSortingStrategy}
-                >
-              <div className={`alg-case-list${effectiveView === 'cards' ? ' is-cards' : ''}`}>
-                {cases.map(c => {
-                  const rawOri = caseOri[c.name] ?? activeOri;
-                  const oriIdx = rawOri < c.algs.length ? rawOri : 0;
-                  const allAlgsForOri = c.algs[oriIdx] ?? c.algs[0] ?? [];
-                  const preferenceSet = c.srcSet ?? set;
-                  const preferenceSlot = preferredAlgSlot(c, oriIdx);
-                  const preferredRef = preferredSnapshots[`${puzzleParam}/${preferenceSet}`]?.items[preferenceSlot];
-                  const displayAlgsForOri = algsUnderFilter(c, oriIdx, allAlgsForOri);
-                  // 右手条目来自镜像 partner，沿用 partner 的原始优先级；当前 case 的左手置顶记录不适用。
-                  const algsForOri = rightHandOh
-                    ? displayAlgsForOri
-                    : sortPreferredAlgs(displayAlgsForOri, preferredRef).map(row => row.entry);
-                  const oriCount = c.algs.length;
-                  // 缩略图始终用**未筛选**的首条 —— 筛选只该影响公式列表,不该换掉 case 的图
-                  const firstAlg = allAlgsForOri[0]?.alg ?? c.standard ?? '';
-                  const orientedSetup = casePreviewSetup(puzzleParam as AlgPuzzle, set, c, oriIdx, setupMode);
-                  const primaryName = primaryCaseName(puzzleParam, set, c);
-                  // LS 页首已经写明 LS1–LS9；卡片只留 Hammer 1 / PBL 2 等组内名称，避免重复套名。
-                  const defaultCardName = puzzleParam === '2x2' && /^ls[1-9]$/.test(set)
-                    ? primaryName.replace(/^LS[1-9]\s+/, '')
-                    : primaryName;
-                  const cardName = isSq1Ep && sq1EpNumericNames
-                    ? (sq1EpNumericCaseName(c.name) ?? defaultCardName)
-                    : defaultCardName;
-                  // 筛了标签就别拖:看到的是子集,拖出来的顺序对不上真实数组
-                  const dragAlgs = canReorder && c.id != null && !filtering && showOtherAlgs;
-                  const rows = effectiveView === 'full' ? (showOtherAlgs ? algsForOri : algsForOri.slice(0, 1)).map((entry, displayIdx) => {
-                    // 校验结果 / 拖动 id 都按**未筛选**的下标走(标签筛选只是个视图)——
-                    // 拿对象身份换回真下标
-                    const trueIdx = allAlgsForOri.indexOf(entry);
-                    const row = (
-                      <AlgRow
-                        entry={entry}
-                        puzzle={puzzleParam as AlgPuzzle}
-                        set={set}
-                        invalid={isAdmin && c.id != null && trueIdx >= 0 ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
-                        notationStyle={displayedNotationStyle}
-                        viewAngle={effectiveViewAngle}
-                        ohHand={rightHandOh ? 'right' : undefined}
-                        sq1NotationMode={sq1NotationMode}
-                        sourceKarnaukh={isSq1Pbl}
-
-                      />
-                    );
-                    const key = `${entry.altId ?? entry.alg}::${trueIdx >= 0 ? trueIdx : displayIdx}`;
-                    // 不拖的时候不加额外外壳，保持列表 DOM 和间距一致。
-                    return dragAlgs
-                      ? (
-                        <SortableAlgRow key={key} id={algDragId(c.id!, oriIdx, trueIdx)} draggable>
-                          {row}
-                        </SortableAlgRow>
-                      )
-                      : <Fragment key={key}>{row}</Fragment>;
-                  }) : [];
-
-                  return (
-                    <SortableCard key={c.id ?? c.name} id={c.id ?? 0} draggable={canReorder && c.id != null}>
-                    <AlgImageDownloadButton build={() => caseImageBatch({
-                      ...buildExportOptions(), cases: [c], filename: `${puzzleParam}-${set}-${c.name}`,
-                    })}>
-                    <article
-                      data-alg-motion-case={c.id ?? c.name}
-                      data-alg-motion-ori={oriIdx}
-                      className={`alg-case${flashId === c.id ? ' is-flash' : ''}${selectedId === c.id ? ' is-selected' : ''}${isAdmin && c.id != null && invalidIds.has(c.id) ? ' is-invalid' : ''}`}
-                      id={c.id != null ? `case-${c.id}` : undefined}
-                      title={isAdmin && c.id != null && invalidIds.has(c.id)
-                        ? tr({ zh: '这个 case 有公式校验不通过', en: 'This case has failing algs' })
-                        : undefined}
-                    >
-                      {/* 整卡跳到这张 case 的独立页(缩略图 + 名字 = 跳转区;公式/复制/社区区
-                          z-index 抬到覆盖层之上,照常交互)。真 <a>,中键可新开。 */}
-                      <Link
-                        href={caseDetailHref(c)}
-                        className="alg-case-cardlink"
-                        prefetch={false}
-                        aria-label={cardName}
-                      />
-                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAlgDragEnd(c, oriIdx)}>
-                        <SortableContext
-                          items={dragAlgs ? algsForOri.map(e => algDragId(c.id!, oriIdx, allAlgsForOri.indexOf(e))) : []}
-                          strategy={verticalListSortingStrategy}
-                        >
-                      <div className="alg-case-head">
-                        <div className={`alg-case-cube${useSvDualThumb || useZbllDualThumb ? ' is-dual' : ''}`}>
-                          {useSvDualThumb ? (
-                            <>
-                              {/* SV / VLS / WV 共用 /sim 的 VLS 可见区:
-                                  黄色块上的非黄色贴纸置灰；外围灰色侧环不提供识别信息，直接隐藏。
-                                  小图保留立体拿方，但沿用同一遮罩。 */}
-                              <SvThumbImages
-                                onRotate={isAdmin && c.id != null && canChooseViewAngle ? () => rotateCase(c) : undefined}
-                                puzzle={puzzleParam as AlgPuzzle}
-                                set={set}
-                                sticker={c.sticker}
-                                alg={firstAlg || c.setup || ''}
-                                setup={orientedSetup}
-                                largeSize={dualLargeThumbSize}
-                                smallSize={dualSmallThumbSize}
-                                simplifyRecognition={recognitionSimplified}
-                                viewAngle={effectiveViewAngle}
-                                orientation={effectiveOrientation}
-                              />
-                            </>
-                          ) : useZbllDualThumb ? (
-                            <>
-                              <CaseThumb local
-                                onRotate={isAdmin && c.id != null && canChooseViewAngle ? () => rotateCase(c) : undefined}
-                                puzzle={puzzleParam as AlgPuzzle}
-                                set={set}
-                                sticker={c.sticker}
-                                alg={firstAlg || c.setup || ''}
-                                setup={orientedSetup}
-                                size={dualLargeThumbSize}
-                                loading="lazy"
-                                simplifyRecognition
-                                viewAngle={effectiveViewAngle}
-                                orientation={effectiveOrientation}
-                              />
-                              <CaseThumb local
-                                onRotate={isAdmin && c.id != null && canChooseViewAngle ? () => rotateCase(c) : undefined}
-                                puzzle={puzzleParam as AlgPuzzle}
-                                set={set}
-                                sticker={c.sticker}
-                                alg={firstAlg || c.setup || ''}
-                                setup={orientedSetup}
-                                size={dualSmallThumbSize}
-                                loading="lazy"
-                                viewAngle={effectiveViewAngle}
-                                orientation={effectiveOrientation}
-                              />
-                            </>
-                          ) : (
-                            <CaseThumb local
-                                onRotate={isAdmin && c.id != null && canChooseViewAngle ? () => rotateCase(c) : undefined}
-                              puzzle={puzzleParam as AlgPuzzle}
-                              set={set}
-                              sticker={c.sticker}
-                              alg={firstAlg || c.setup || ''}
-                              setup={orientedSetup}
-                              /* 大集只在接近视口时本地生成图，禁止移除 loading="lazy"
-                                 后同步绘制整份题库，也不再依赖网络 SVG。 */
-                              loading="lazy"
-                              sq1BlackTop={sq1BlackTop}
-                              simplifyRecognition={recognitionSimplified}
-                              viewAngle={effectiveViewAngle}
-                              orientation={effectiveOrientation}
-                            />
-                          )}
-                        </div>
-                        <div className="alg-case-info">
-                          <div className="alg-case-name">
-                            <Link href={caseDetailHref(c)} prefetch={false} className="alg-case-detail-link"
-                              aria-label={tr({ zh: `查看 ${cardName} 详情`, en: `View ${cardName} details` })}>
-                            <span data-alg-shared-title={cardName} className={`alg-case-letter${set === 'zbll' ? ' alg-case-letter--zbll' : ''}`}>
-                              {cardName}
-                              {set === 'zbll' && c.meta?.ollcp && (
-                                <span className="alg-case-index"> ({displayAlgCaseName(puzzleParam, set, c.name).replace(/^ZBLL\s+/i, '').replace(/\s+/g, '')})</span>
-                              )}
-                            </span>
-                            <ChevronRight size={14} aria-hidden="true" />
-                            </Link>
-                            {/* 字母制主名接管之后,站上原来那个名字(`1LLL 6 7` / `ZBLL L 34`)降为副名 —— 不丢。
-                                但 PLL 的 OLLCP 名剥掉 `PLL-` 前缀后就等于站上的名字,再挂一个副名纯属重复。 */}
-                            {(() => {
-                              if (!c.meta?.ollcp || set === 'zbll') return null;
-                              const disp = displayAlgCaseName(puzzleParam, set, c.name);
-                              const primary = primaryCaseName(puzzleParam, set, c);
-                              return disp.startsWith(primary) ? null : <span className="alg-case-index">{disp}</span>;
-                            })()}
-                            {showCaseNumbers && c.number != null && <span className="alg-case-index">#{c.number}</span>}
-                            {oriCount > 1 && (f2lSlots.length > 1 ? (
-                              <F2lSlotSelector compact className="alg-case-slot-mini"
-                                ariaLabel={tr({ zh: `顺时针切换槽位：${shortOriName(c.oriNames?.[oriIdx] ?? '')}`, en: `Rotate slot clockwise: ${shortOriName(c.oriNames?.[oriIdx] ?? '')}` })}
-                                selected={[shortOriName(c.oriNames?.[oriIdx] ?? '')]}
-                                onCycle={() => {
-                                  const slots = ['FR', 'FL', 'BL', 'BR'];
-                                  const current = slots.indexOf(shortOriName(c.oriNames?.[oriIdx] ?? ''));
-                                  for (let offset = 1; offset <= slots.length; offset++) {
-                                    const next = slots[(current + offset) % slots.length];
-                                    const index = c.oriNames?.findIndex(name => shortOriName(name) === next) ?? -1;
-                                    if (index >= 0) { setCaseOri(prev => ({ ...prev, [c.name]: index })); break; }
-                                  }
-                                }}
-                              />
-                            ) : (
-                              <button
-                                type="button"
-                                className="alg-case-y-btn"
-                                onClick={() => setCaseOri(prev => ({ ...prev, [c.name]: (oriIdx + 1) % oriCount }))}
-                                title={`${shortOriName(c.oriNames?.[oriIdx] ?? '')} → ${shortOriName(c.oriNames?.[(oriIdx + 1) % oriCount] ?? '')}`}
-                              >
-                                <span className="alg-case-y-current">{shortOriName(c.oriNames?.[oriIdx] ?? '')}</span>
-                              </button>
-                            ))}
-                          </div>
-                          {effectiveView === 'full' && orientedSetup && (
-                            <SetupLine
-                              puzzle={puzzleParam}
-                              setup={displayCaseScramble(puzzleParam, set,
-                                caseViewSetup(orientedSetup, effectiveViewAngle))}
-                              notationStyle={displayedNotationStyle}
-                              sq1NotationMode={sq1NotationMode}
-                            />
-                          )}
-                          {rows.length > 0 && <div className="alg-case-algs">{rows[0]}</div>}
-                        </div>
-                      </div>
-                      {effectiveView === 'full' && showOtherAlgs && (<>
-                      {rows.length > 1 && <div className="alg-case-algs">{rows.slice(1)}</div>}
-                      <CommunityAlgs
-                        puzzle={puzzleParam}
-                        setSlug={set}
-                        caseName={c.name}
-                        sticker={c.sticker}
-                        setup={c.setup}
-                        firstAlg={c.algs[0]?.[0]?.alg}
-                        standardAlgs={c.algs.flat()}
-                        submissions={submissionsByCase.get(c.name) ?? []}
-                        allowAdd={false}
-                        compact
-                        preferredRef={preferredRef}
-                        onPreferredToggle={(submission, preferred) => setPreferred(
-                          puzzleParam as AlgPuzzle,
-                          preferenceSet,
-                          preferenceSlot,
-                          preferred ? null : preferredAlgRef({ alg: submission.alg }),
-                        )}
-                        notationStyle={displayedNotationStyle}
-                        viewAngle={effectiveViewAngle}
-                        onPatch={(action) => {
-                          setSubmissions(prev => {
-                            if (action.type === 'add') return [...prev, action.submission];
-                            if (action.type === 'update') return prev.map(s => s.id === action.submission.id ? action.submission : s);
-                            return prev.filter(s => s.id !== action.id);
-                          });
-                        }}
-                      />
-                      </>)}
-                        </SortableContext>
-                      </DndContext>
-                    </article>
-                    </AlgImageDownloadButton>
-                    </SortableCard>
-                  );
-                })}
+      {data && !showSubgroupPicker && <AlgGroupSection
+        collapsible={accordion} expandedGroup={expandedGroup}
+        onToggle={key => void setExpandedGroup(current => current === key ? null : key)}
+        renderCases={renderGroupCases}
+        groups={grouped.map(group => {
+          const { key, subgroup, cases, paritySection, startsParitySection, sectionCaseCount } = group;
+          const showHeading = grouped.length > 1 || (!subgroupParam && subgroup !== '');
+          const groupTitle = isSq1Ep
+            ? (sq1EpNumericNames
+              ? `${sq1EpNumericLayerName(subgroup) ?? subgroup}.*`
+              : tr({ zh: `上层 ${displayAlgCaseName(puzzleParam, set, subgroup)}`, en: `Top ${displayAlgCaseName(puzzleParam, set, subgroup)}` }))
+            : (set === 'f2l' ? tr(f2lGroupName(subgroup)) : ollByGroup.get(subgroup)
+              ?? displayAlgCaseName(puzzleParam, set, set === 'zbll' && subgroupParam ? subgroup.split('/').slice(1).join('/') || subgroup : subgroup)
+              ?? tr({ zh: '其他', en: 'Other' }));
+          return {
+            key, title: groupTitle, showHeading, cases,
+            before: startsParitySection && paritySection === 'unclassified' ? (
+              <div className="alg-ep-parity-section">
+                <h2>{tr({ zh: '待确认', en: 'Review needed' })}<span>{sectionCaseCount}</span></h2>
+                <p>{tr({ zh: '名称无法自动判定，暂不误标', en: 'Names that cannot be classified are left unmarked' })}</p>
               </div>
-                </SortableContext>
-              </DndContext>
-            </MoreTogglePanel>
-          </section>
-          </Fragment>
-        );
-      })}
+            ) : null,
+            thumb: inlineCaseGroups
+              ? <VisualCube local loading="lazy" setup={cases[0].setup}
+                  algorithm={cases[0].algs.flat()[0]?.alg ?? cases[0].standard ?? ''}
+                  view="oll" scheme={visualCubeSchemeForOrientation(effectiveOrientation, true)}
+                  puzzleSize={puzzleParam === '2x2' ? 2 : 3} size={narrow ? 60 : 110} hideGreySides />
+              : <CaseThumb local loading="lazy" puzzle={puzzleParam as AlgPuzzle} set={set}
+                  sticker={cases[0].sticker}
+                  alg={cases[0].algs.flat()[0]?.alg ?? cases[0].standard ?? ''}
+                  setup={cases[0].setup} mask={LEVEL2_PICKER_MASK[set]}
+                  size={narrow ? 60 : 110} orientation={effectiveOrientation}
+                  viewAngle={effectiveViewAngle} sq1BlackTop={sq1BlackTop} alt="" />,
+          };
+        })}
+      />}
 
       {editorState && (
         <AdminCaseEditor
