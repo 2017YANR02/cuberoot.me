@@ -4,6 +4,7 @@ import { canReadReport, reportReadScope, canWriteProject, decideReportChange, is
 import type { QueryRunner } from '../db/connection.js';
 import { reportHoursInput } from './report-hours.js';
 import { planningService } from './planning.js';
+import { workCalendarService } from './work-calendar.js';
 
 export type Actor = WorkspaceActor & { name: string; memberId?: number; canManageReports?: boolean };
 export type Identity = { uid: number; isAdmin: boolean; name: string };
@@ -110,12 +111,18 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
       projectWrite: id => projectWrite(q, a, id), audit: (action, id) => audit(q, a, action, id),
       fail: (message, status) => { throw new WorkspaceError(message, status); } });
   }
+  function workCalendar(q: QueryRunner, a: Actor, identity: Identity) {
+    return workCalendarService(q, { userId: identity.uid, admin: a.kind === 'admin',
+      audit: (action, id) => audit(q, a, action, id),
+      fail: (message, status) => { throw new WorkspaceError(message, status); } });
+  }
   return {
     async get(identity: Identity, action: string, search: URLSearchParams) {
       return transact(async query => {
       await query("SELECT pg_advisory_xact_lock(2812026)");
       const a = await actor(query,identity);
       switch(action) {
+        case 'work-calendar': return workCalendar(query, a, identity).list(search);
         case 'session': return {actor:a,employee:employee(a),directory:await directory(query)};
         case 'members': admin(a); return {members:await query(`SELECT id,user_id::int AS "userId",name,role,(active OR admin_access) AS active,admin_access AS "adminAccess" FROM ${memberSource} m WHERE user_id IS NOT NULL ORDER BY id`)};
         case 'projects': {
@@ -143,6 +150,8 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
     async post(identity: Identity, action: string, input: unknown) {
       return write(identity,async(q,a)=>{
         switch(action){
+          case 'work-pattern': return workCalendar(q, a, identity).savePattern(input);
+          case 'work-exception': return workCalendar(q, a, identity).saveException(input);
           case 'checklist': return planning(q, a).saveChecklist(input);
           case 'checklist-delete': return planning(q, a).deleteChecklist(input);
           case 'schedule': return planning(q, a).saveSchedule(input);

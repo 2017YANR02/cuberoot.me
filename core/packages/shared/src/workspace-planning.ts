@@ -37,3 +37,5 @@ export function copyScheduleTasks(tasks: readonly ScheduleTask[], start: string,
   const offset = range ? planningDay(start) - range.start : 0;
   return tasks.map(task => ({ ...task, id: id(), start: planningDate(planningDay(task.start) + offset), end: planningDate(planningDay(task.end) + offset), progress: 0 }));
 }
+
+export * from './work-calendar';
