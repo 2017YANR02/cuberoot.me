@@ -414,6 +414,7 @@ const TABLES: Table[] = [
   ] },
 
   // ── user artifacts ──────────────────────────────────────
+  { name: 'timer_live_shares', domain: 'studio', origin: '0330', purpose: { zh: '临时计时器实时分享权限与生命周期', en: 'Temporary timer live-sharing capabilities and lifecycle' } },
   { name: 'timer_backups', domain: 'studio', origin: '0020', purpose: { zh: '计时器成绩云备份(单快照覆盖)', en: 'Cloud backup of timer sessions (single overwrite snapshot)' }, cols: [
     { name: 'wca_id (PK)' }, { name: 'blob', note: { zh: '导出的 JSON', en: 'exported JSON' } }, { name: 'byte_size, solve_count, updated_at' },
   ] },
@@ -596,6 +597,7 @@ const TABLES: Table[] = [
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 332, slug: 'workspace_remove_projects', desc: { zh: '删除工作台项目及归属，保留全部报告、清单与排期', en: 'Remove workspace projects and associations, preserving all reports, checklists and schedules' } },
   { n: 331, slug: 'workspace_work_calendar', desc: { zh: '管理员每周工作时间、生效区间和临时调整；账号删除级联清理', en: 'Administrator weekly working hours, effective periods and day overrides; cascade on account deletion' } },
+  { n: 330, slug: 'timer_live_shares', desc: { zh: '计时器实时分享的独立发布/观看凭证哈希、到期与撤销状态；不保存实况成绩。', en: 'Timer live-share publisher/viewer capability hashes, expiry and revocation; no live solve storage.' } },
   { n: 329, slug: 'cubicle_roster', desc: { zh: '加入 Cubicle 战队及已核对身份的成员，保留原战队归属。', en: 'Add Cubicle and verified roster members, preserving their other teams.' } },
   { n: 328, slug: 'wca_multiple_teams', desc: { zh: '选手可同时加入多个战队，保留既有归属和成员编号。', en: 'Allow multiple teams per cuber while preserving existing memberships and member IDs.' } },
   { n: 325, slug: 'assistant_share_versions', desc: { zh: '按内容版本保存回答分享快照，保留切换公式前的公开链接。', en: 'Version answer snapshots by content while preserving links shared before algorithm changes.' } },

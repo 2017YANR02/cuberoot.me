@@ -77,6 +77,7 @@ import { appReleaseRoutes } from './routes/app_releases.js';
 import { appBootDiagnosticRoutes } from './routes/app_boot_diagnostics.js';
 import { timerPresenceRoutes } from './routes/timer_presence.js';
 import { timerReplaySharesRoutes } from './routes/timer_replay_shares.js';
+import { timerLiveSharesRoutes, timerLiveRelay } from './routes/timer_live_shares.js';
 import { calendarRoutes, startCalendarReminderSweep } from './routes/calendar.js';
 import { wcaScheduleRoutes } from './routes/wca_schedule.js';
 import { wcaScramblesRoutes } from './routes/wca_scrambles.js';
@@ -255,6 +256,7 @@ app.route('/v1', appReleaseRoutes);
 app.route('/v1', appBootDiagnosticRoutes);
 app.route('/v1', timerPresenceRoutes);
 app.route('/v1', timerReplaySharesRoutes);
+app.route('/v1', timerLiveSharesRoutes);
 app.route('/v1', calendarRoutes);
 app.route('/v1', wcaScheduleRoutes);
 app.route('/v1', wcaScramblesRoutes);
@@ -375,6 +377,19 @@ app.get('/v1/calc/live', upgradeWebSocket((c) => {
     onClose() {
       connection?.handleClose();
     },
+  };
+}));
+app.get('/v1/timer/live-shares/socket', upgradeWebSocket((c) => {
+  let connection: ReturnType<typeof timerLiveRelay.connect> | undefined;
+  return {
+    onOpen(_event, ws) {
+      connection = timerLiveRelay.connect({
+        get bufferedAmount() { return ws.raw?.bufferedAmount ?? 0; },
+        send(data) { ws.send(data); }, close(code, reason) { ws.close(code, reason); },
+      }, getIp(c));
+    },
+    onMessage(event) { connection?.handleMessage(event.data); },
+    onClose() { connection?.handleClose(); },
   };
 }));
 app.route('/v1', smsReceiptRoutes);

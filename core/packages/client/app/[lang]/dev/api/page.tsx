@@ -70,7 +70,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   career_applications account_auth account_face admin_assistant admin_dashboard admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
 //   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents downloads drive feedback forum friends geo health historical_ranks pb private_vault
 //   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops remote_access dev_preview page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth recon_intake recon_capture scramble_555 teacher_directory teaching teaching_saas
-//   smart_cube_macs scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
+//   smart_cube_macs scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_live_shares timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wca_teams wca_training_institutions wca_translations wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
 //   enterprise_verification contests workspace app_releases
@@ -1104,6 +1104,9 @@ const ENDPOINTS: Ep[] = [
   { d: 'timer', m: 'GET', p: '/v1/timer/presence', g: 'admin', c: 'no-store', zh: '管理员读取当前计时人数、账号、成绩、IP 城市与智能魔方设备', en: 'Admin live timer users, accounts, results, IP cities, and smart-cube devices' },
   { d: 'timer', m: 'POST', p: '/v1/timer/presence', g: 'public', c: 'no-store', zh: '计时页短期心跳（登录可选，最多 4 人）', en: 'Short-lived timer heartbeat (optional login, up to four people)' },
   { d: 'smart-cube', m: 'GET', p: '/v1/smart-cube/relay', g: 'public', c: 'no-store', zh: '小程序原生蓝牙与网站计时器之间的临时 WebSocket 中继', en: 'Ephemeral WebSocket relay between Mini Program native BLE and the web timer' },
+  { d: 'timer', m: 'POST', p: '/v1/timer/live-shares', g: 'public', c: 'no-store', zh: '创建 4 小时有效的只读实况链接，返回独立发布/观看凭证', en: 'Create a four-hour live share with separate publisher and viewer capabilities' },
+  { d: 'timer', m: 'DELETE', p: '/v1/timer/live-shares/:id', g: 'public', c: 'no-store', zh: '凭发布凭证撤销分享并断开观看者', en: 'Revoke a share using its publisher capability and disconnect viewers' },
+  { d: 'timer', m: 'GET', p: '/v1/timer/live-shares/socket', g: 'public', c: 'no-store', zh: '凭证鉴权的 WebSocket；只读观看、快照/增量与成绩详情', en: 'Capability-authenticated WebSocket for read-only viewing, snapshot/deltas and solve details' },
   { d: 'live', m: 'GET', p: '/v1/calc/live', g: 'public', c: 'no-store', zh: '成绩计算器主播与只读观看者之间的临时 WebSocket 直播', en: 'Ephemeral WebSocket relay between a score-calculator host and read-only viewers' },
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms', g: 'public', zh: '按项目建联机对战房间；打乱由服务端共用生成器产生，并单次返回 playerId + 私有 capability + 房间码', en: 'Create an online battle room for an event; the shared server-side generator creates the scramble, and playerId, a private capability, and the room code are returned once' },
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/join', g: 'public', zh: '加入对战房间；单次签发该玩家的私有 capability', en: 'Join a battle room and receive that player’s private capability once' },

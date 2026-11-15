@@ -1,5 +1,23 @@
 # Local full-stack dev (edit DB data before push)
 
+## Isolated timer live sharing
+
+`dev-timer-live.ts` mounts only the timer-sharing HTTP routes and WebSocket relay.
+It requires explicit loopback `DB_HOST`, a non-production `DB_PORT`, and `DB_NAME`;
+it does not load `.env`, production background jobs, or apply migrations for you.
+Apply `migrations/0330_timer_live_shares.sql` to an isolated local database first.
+From `core/`:
+
+```sh
+DB_HOST=127.0.0.1 DB_PORT=55434 DB_NAME=postgres DB_USER=your_local_pg_user PORT=3006 pnpm --filter @cuberoot/server exec tsx scripts/dev-timer-live.ts
+```
+
+For browser automation, redirect only `/v1/timer/live-shares` HTTP requests and
+`/v1/timer/live-shares/socket` WebSockets to this server. The ordinary Web dev
+proxy and installed App still default to production API addresses; starting this
+server alone does not redirect either client. Keep this isolation in tests so
+creating or revoking a test share never writes to production.
+
 ## Historical reconstruction completion
 
 `Deploy Core` bundles `src/tools/recheck_recon_completion.ts` and runs it after the

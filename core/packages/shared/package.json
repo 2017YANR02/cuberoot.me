@@ -46,6 +46,7 @@
       "./timer/replay-input": "runtime-neutral",
       "./timer/replay-verified": "runtime-neutral",
       "./timer/replay-client": "runtime-neutral",
+      "./timer/live-share": "runtime-neutral",
       "./timer/import-timer": "runtime-neutral",
       "./timer/import-cstimer": "runtime-neutral",
       "./timer/import-dctimer": "runtime-neutral",
@@ -419,6 +420,11 @@
     "./timer/replay-client": {
       "node": "./dist/timer/replay-client.js",
       "default": "./src/timer/replay-client.ts"
+    },
+    "./timer/live-share": {
+      "types": "./src/timer/live-share.ts",
+      "node": "./dist/timer/live-share.js",
+      "default": "./src/timer/live-share.ts"
     },
     "./timer/import-timer": {
       "node": "./dist/timer/import-timer.js",
