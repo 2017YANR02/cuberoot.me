@@ -24,7 +24,7 @@ const coreRoot = resolve(import.meta.dirname, '..', '..', '..');
 const websiteRoot = resolve(coreRoot, resolveWorkspacePath('@cuberoot/client'));
 const websiteConfigSource = readFileSync(join(websiteRoot, 'next.config.ts'), 'utf8');
 const platformRoutesSource = readFileSync(join(websiteRoot, 'lib', 'platform-routes.ts'), 'utf8');
-const trackingSource = readFileSync(join(coreRoot, 'docs', 'MINIPROGRAM.md'), 'utf8');
+const trackingSource = readFileSync(join(coreRoot, 'apps', 'miniprogram', 'docs', 'implementation.md'), 'utf8');
 
 describe('mini program web routes', () => {
   it('resolves the website timer route', () => {
