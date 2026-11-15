@@ -6,6 +6,7 @@
 
 | 任务 | 必读入口 |
 | --- | --- |
+| 文档归属、合并、迁移、Agent 阅读顺序 | [文档总入口](docs/README.md)；[文档维护流程](docs/contributing/documentation.md) |
 | 模块归属、依赖、架构、upstream / fork | [架构边界与模块归属](docs/contributing/architecture.md)；当前状态见[架构跟踪表](docs/architecture/architecture-modernization-tracker.md) |
 | 本地启动、预览域名、工作树、构建/测试、代码量、流量排查、智能魔方验证 | [开发与验证](docs/contributing/development.md)；安装见[本地开发环境](docs/contributing/local-setup.md) |
 | commit / push / PR、CI、部署、数据库迁移 | [发布授权与部署契约](docs/contributing/release.md) |

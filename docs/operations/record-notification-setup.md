@@ -1,6 +1,6 @@
 # 纪录与比赛通知：邮件及 Android / iOS 推送配置
 
-2026-11-08 更新。本地实现不等于生产已启用；最新验收状态见 [App 路线图](../product/apps/mobile-app-roadmap.md#2026-09-15-纪录订阅与通知未完成)。本轮没有购买套餐、注册开发者身份或向真实用户群发。
+2026-11-08 更新。本地实现不等于生产已启用；当前入口见 [App 路线图](../product/apps/mobile-app-roadmap.md)，原批次约束见[通知历史记录](../product/apps/history/mobile-app-history.md#2026-09-15-纪录订阅与通知未完成)。本轮没有购买套餐、注册开发者身份或向真实用户群发。
 
 ## 共用行为
 

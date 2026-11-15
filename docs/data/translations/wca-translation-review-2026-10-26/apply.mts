@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 
 const round = dirname(fileURLToPath(import.meta.url));
-const root = resolve(round, '../..');
+const root = resolve(round, '../../../..');
 const read = (p: string): any => JSON.parse(readFileSync(p, 'utf8'));
 const hash = (v: unknown) => createHash('sha256').update(JSON.stringify(v)).digest('hex');
 const atomic = (p: string, v: unknown) => {

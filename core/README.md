@@ -4,6 +4,10 @@ pnpm + Turbo monorepo，承载现役产品 app、共享 package 和离线 job；
 
 本文的所有 pnpm 命令都从 `core/` 执行；现役 pnpm 应用以 `pnpm-workspace.yaml` 与各 manifest 为准；Web 位于 `packages/client`，另有 Cargo app `apps/fmc-solver`。`packages/platform` 只是 workspace 外归档。
 
+## 文档入口
+
+跨模块任务从[文档总入口](../docs/README.md)按任务加载；具体实现先读所属模块 README 与 AGENTS。五端从[共享 App 产品层](packages/app-ui/README.md)进入 [Mobile](apps/mobile/README.md)、[Desktop](apps/desktop/README.md)、[Harmony](apps/harmony/README.md)；[小程序手册](apps/miniprogram/docs/README.md)独立运行。原 core/docs 的支付、账号与移植资料已归入对应专题，不再重复维护第二份总手册。
+
 ## 工作区
 
 ```

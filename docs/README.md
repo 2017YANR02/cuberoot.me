@@ -1,58 +1,59 @@
-# CubeRoot 文档索引
+# CubeRoot 文档入口
 
-状态：`ACTIVE`。最后更新：2026-11-15。
+这里按任务导航。跨模块合同放在本目录；模块自己的实现、命令和平台适配放在模块 README / docs；历史决策留在对应主题的 `history/`。当前实现以源码和配置核对，发布、设备与外部审核以各自证据核对。
 
-本页是文档状态和权威入口的索引，不替代代码、schema、workflow 或各专题跟踪表。
+## Agent 接手流程
 
-## 状态约定
+1. 读取根 [AGENTS.md](../AGENTS.md)，检查 Git 状态；按任务加载其指向的贡献规则、目录内 AGENTS 与相关 skill。不要从历史记录推断新的执行授权。
+2. 从下表进入一个专题。先读当前合同和跟踪表，再定位模块 README、manifest、源码、schema、migration 或 workflow；跨端任务必须继续读共享层与每个受影响宿主的边界。
+3. 遇到“为什么这样设计”、替代关系或旧例外，再读专题 `history/`。保留决策的日期、适用条件、失败证据与尚未验收项，不把旧待办重新当成现行计划。
+4. 修改前确认唯一维护位置；修改后按受影响路径做必要构建、检查和实际验收。源码存在、本地通过、已提交、已推送、已部署、真机通过、平台审核通过分别报告。
+5. 同步当前合同/进度与必要历史依据；文件移动同时修复 Markdown、AGENTS、skill、源码、脚本、测试和 CI 引用。按[文档维护流程](contributing/documentation.md)校验后，再按当次授权提交或发布。
 
-| 状态 | 含义 |
+## 按任务进入
+
+| 任务 | 阅读入口与下一步 |
 | --- | --- |
-| `ACTIVE` | 当前执行计划或仍在验收/观察的跟踪表；允许更新状态和下一步 |
-| `REFERENCE` | 当前契约、操作说明或事实登记；实现变化时必须同步 |
-| `COMPLETED` | 已完成工作的验收证据；不再作为新任务清单 |
-| `HISTORICAL` | 特定时点的审计或迁移快照；其中旧命令和未完成项不代表当前待办 |
-| `RETIRED` | 退役 runtime 或目录；禁止继续开发、构建、测试、部署，恢复须单独授权 |
+| 开发环境、协作、验证与发布规则 | [贡献与工作流程](contributing/README.md) → 对应规则；新环境从 local-setup 开始 |
+| 模块归属、共享契约、架构迁移 | [架构](architecture/README.md) → 当前跟踪表 → manifest / 边界守卫 |
+| 五端 App 与计时一致性 | [App](product/apps/README.md) → 单一来源/三栏合同 → parity 与 inventory → 共享层及宿主 |
+| 微信 / 抖音小程序 | [模块手册](../core/apps/miniprogram/docs/README.md) → 实现/原生计时/审核 → 构建及平台验收 |
+| 会员、付款、权益与订阅 | [会员与支付](product/payments/README.md) → 具体渠道合同 → API / 服务商证据 |
+| 备案、主体、认证和商店上架 | [合规](compliance/README.md) → 对应平台；App 和小程序当前进度仍在各自跟踪表 |
+| 助手、工作台、复盘、赛事和社区产品 | [产品目录](product/README.md) → 对应专题 → 实现与验收记录 |
+| WCA 数据、公式、翻译、统计与生成物 | [数据](data/README.md) → owner / 原始输入 / 生成与发布链；求解先读计算保护 |
+| 故障、部署、监控、通知和远程接入 | [运维](operations/README.md) → 当前 workflow / ops；事故在主题历史中 |
+| 排版、主题、素材、玻璃和 Space | [设计](design/README.md) → 共享组件/来源 → 浏览器或资产验证 |
+| 文档归属、合并、迁移和引用修复 | [文档维护](contributing/documentation.md) → [路径对照](contributing/documentation-migrations.json) |
 
-同一主题冲突时，优先级为：运行源码/schema/workflow → 本页列出的 `ACTIVE` 跟踪表 → `REFERENCE` 文档 → `COMPLETED`/`HISTORICAL` 记录。本索引的分类是权威状态；活跃跟踪表还必须在文件内写当前状态，历史快照不得覆盖当前 tracker。
+## 目录边界
 
-## 当前入口
+```text
+docs/
+  contributing/   有效工作规则、开发环境、文档维护
+  architecture/   跨模块边界、共享契约、迁移跟踪
+  product/        产品合同、当前进度、验收及主题历史
+  compliance/     备案、认证、商店与渠道申请
+  data/           数据管道、生成物、原稿/审校证据、求解统计
+  operations/     运维手册、监控与事件历史
+  design/         视觉合同、素材和场景设计
+core/apps/<app>/
+  README.md       模块职责、源码入口和本模块命令
+  docs/           确有需要的平台手册；不复制跨端合同
+core/packages/<package>/README.md
+                  共享包公开出口、消费者与验证入口
+```
 
-| 领域 | 权威入口 | 状态 | 用途 |
-| --- | --- | --- | --- |
-| 架构现代化 | [architecture-modernization-tracker.md](./architecture/architecture-modernization-tracker.md) | `ACTIVE` | 当前边界、未完成事项与证据入口 |
-| 架构历史验收 | [architecture-modernization-history.md](./architecture/history/architecture-modernization-history.md) | `HISTORICAL` | 原批次、提交、审核与验收；不作为当前待办 |
-| Core 目录迁移 | [core-workspace-layout-migration-plan.md](./architecture/core-workspace-layout-migration-plan.md) | `ACTIVE` | 当前路径、未完成迁移与历史映射分开维护 |
-| package 候选快照 | [architecture-package-candidates.md](./architecture/history/architecture-package-candidates.md) | `HISTORICAL` | 候选证据与重开门槛；消费者和路径需重新核对 |
-| Platform 当前产品验收 | [platform-modernization-2026-11.md](./product/platform/platform-modernization-2026-11.md) | `ACTIVE` | 模块化与后续产品验收入口 |
-| Platform 完整移植历史 | [platform-completion-tracker.md](./product/platform/history/platform-completion-tracker.md) | `HISTORICAL` | 2026-10 的迁移取舍、发布与验收证据 |
-| 新人入门与提交 | [CONTRIBUTING.md](../CONTRIBUTING.md) | `REFERENCE` | 权限开通、直接推送 main、自查验证及可选 PR 流程 |
-| 下载页与安装包分发 | [app-downloads.md](./product/apps/app-downloads.md) | `REFERENCE` | 官网下载入口、APK 启用条件与匿名点击日志汇总 |
-| 好友轻量聊天 | [friend-chat-design.md](./product/collaboration/friend-chat-design.md) | `ACTIVE` | 已实现共享聊天与贴纸；当前源码定位及历史设计决策，发布/设备状态另核 |
-| 音乐播放器 | [music-player-tracker.md](./product/community/music-player-tracker.md) | `ACTIVE` | `/music`、DeskPet 悬浮音频中心、曲库转码与静态媒体发布 |
-| 后台与增长监控 | [admin-observability-tracker.md](./operations/observability/admin-observability-tracker.md) | `ACTIVE` | `/admin` 首页、用户注册与会员增长的口径、实施和验收 |
-| 架构现状锐评 | [architecture-audit-2026-08.md](./architecture/history/architecture-audit-2026-08.md) | `HISTORICAL` | 2026-08 审计快照；当前状态以 tracker 为准 |
-| Platform 产品迁移 | [platform-product-migration-tracker.md](./product/platform/history/platform-product-migration-tracker.md) | `HISTORICAL` | 技术接入历史与旧站对照说明；后续产品验收转完整移植跟踪 |
-| Platform 数据处置 | [platform-data-disposition-ledger.md](./product/platform/platform-data-disposition-ledger.md) | `ACTIVE` | 旧数据逐项保管、迁移和处置 |
-| Platform surface | [platform-product-surface-ledger.md](./product/platform/history/platform-product-surface-ledger.md) | `COMPLETED` | 已验收的页面/Handler/Action 守恒证据 |
-| Platform 源码迁入 | [platform-migration.md](./product/platform/history/platform-migration.md) | `HISTORICAL` | 独立前端迁入与退役记录，不是当前开发手册 |
-| Platform 统一方案 | [platform-unification-plan.md](./product/platform/history/platform-unification-plan.md) | `COMPLETED` | 已完成阶段的设计和验收依据 |
-| 生成物 | [generated-artifacts.md](./data/artifacts/generated-artifacts.md) | `REFERENCE` | source、output、重建入口、owner 和漂移策略 |
-| 开发环境 | [development.md](./contributing/local-setup.md) | `REFERENCE` | 本地开发与常用验证 |
-| 部署与运维 | [workflows](../.github/workflows/) / [nginx](../ops/nginx/README.md) / [故障排除](./operations/troubleshooting.md) | `REFERENCE` | workflow 和 ops 是部署、配置、回滚的事实源 |
-| WCA 统计管道 | [stats-pipeline.md](./data/wca/stats-pipeline.md) | `REFERENCE` | 统计生成、加载和发布边界 |
-| Recon API | [recon-api.md](./product/recon/recon-api.md) | `REFERENCE` | Recon 接口契约 |
-| SEO/GEO | [seo-geo-plan.md](./operations/observability/seo-geo-plan.md) | `REFERENCE` | metadata、索引和内容策略 |
-| 五端 App 单一来源 | [cross-platform-app-contract.md](./product/apps/cross-platform-app-contract.md) | `ACTIVE` | Android/iOS/HarmonyOS NEXT/Windows/macOS 宿主、共享层与总体完成口径 |
-| 五端 App 迭代历史 | [mobile-app-history.md](./product/apps/history/mobile-app-history.md) | `HISTORICAL` | 分批实现、失败修正、验证与重要决策；不当作当前命令或待办 |
-| 本轮文档核对 | [documentation-alignment-2026-11-15.md](./architecture/history/documentation-alignment-2026-11-15.md) | `REFERENCE` | 代码证据、清理范围与仍需实测的边界 |
-| 五端 App 路线图 | [mobile-app-roadmap.md](./product/apps/mobile-app-roadmap.md) | `ACTIVE` | 五端实现、设备、发布和长期维护进度 |
-| 中国大陆 Android 分发 | [china-android-distribution.md](./compliance/china-android-distribution.md) | `REFERENCE` | 厂商商店上架要求、官网 APK、备案与签名；2026-10-13 调研快照，提审前复核平台规则 |
-| 五端三栏合同 | [mobile-three-tab-contract.md](./product/apps/mobile-three-tab-contract.md) | `ACTIVE` | 计时/工具/我的结构、网站复用策略和五端协作边界 |
-| App `/timer` 一致性 | [mobile-timer-parity-tracker.md](./product/apps/mobile-timer-parity-tracker.md) | `ACTIVE` | 网站与已安装客户端的计时器完整 UI/UX、复用边界与逐项验收 |
-| App `/timer` 零遗漏审计 | [mobile-timer-zero-omission-audit.md](./product/apps/mobile-timer-zero-omission-audit.md) | `ACTIVE` | Tracker 的强制 inventory 附录：43 项、可达 surface、状态矩阵和 parity guard 设计 |
-| 小程序迭代历史 | [MINIPROGRAM-history.md](../core/apps/miniprogram/docs/history/iterations.md) | `HISTORICAL` | 平台选择、WebView/原生化、BLE 与发布决策原始记录 |
-| 小程序 | [../core/apps/miniprogram/docs/implementation.md](../core/apps/miniprogram/docs/implementation.md) | `REFERENCE` | 小程序实现、构建和发布契约 |
-| 抖音原生化审核核查 | [douyin-native-review-audit.md](../core/apps/miniprogram/docs/douyin-native-review-audit.md) | `REFERENCE` | 页面、网页入口、原生构建守卫及尚未完成的验收 |
+`core/docs/` 已撤销，原资料归入产品主题或小程序模块。`research/reconer/`、`solver/`、`ops/`、`core/jobs/`、`core/scripts/` 保留就近文档与独立入口；进入研究/求解目录先读其专属规则。`tools/`、`vendor/` 等第三方文档保持原结构，产品 URL `/docs` 和 `/documentation` 也不属于本次目录迁移。
 
-未列出的专题文档仍可作为局部证据；涉及继续实施前，先核对其日期、状态和对应现役代码。
+## 如何判断资料用途
+
+| 类型 | 用法 |
+| --- | --- |
+| AGENTS / contributing / skill | 当前工作指令；按任务加载，不能用实现现状覆盖授权和保护要求 |
+| 当前合同、REFERENCE | 描述职责、接口与维护方式；实现变化时同步 |
+| ACTIVE / 当前跟踪 | 记录下一步和独立验收边界；与源码冲突时先核对事实再修文档 |
+| COMPLETED / HISTORICAL / history | 保留当时的决策和证据；不代表后续版本已经通过，也不作为当前待办 |
+| RETIRED | 退役模块；保留历史，不继续构建、测试或开发，恢复须另有授权 |
+
+专题索引负责导航，正文负责合同，跟踪表负责进度，源码/schema/workflow 负责实现事实。平台状态以最近一次明确证据为准，不能仅凭代码和日期推算审核通过。

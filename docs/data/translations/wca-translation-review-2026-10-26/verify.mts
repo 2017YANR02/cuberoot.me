@@ -4,7 +4,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 const dir = dirname(fileURLToPath(import.meta.url));
-const root = resolve(dir, '../..');
+const root = resolve(dir, '../../../..');
 const read = (p: string): any => JSON.parse(readFileSync(p, 'utf8'));
 const hash = (v: unknown) => createHash('sha256').update(JSON.stringify(v)).digest('hex');
 const report = read(resolve(dir, 'final-report.json'));
