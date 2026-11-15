@@ -19,7 +19,7 @@
  * 的 `experimentalStickering` 同名,所以 `pickStickering` 一份两用。
  */
 
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { invertMoveString } from '@cuberoot/shared/alg-notation';
 import SimStage from '@/components/sim-embed/SimStage';
 import { useT } from '@/hooks/useT';
@@ -685,7 +685,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   }, [playing, loop, resetAfterPlayback, sequenceKey, step, moves.length, hasCustomTiming, previewTiming.stepMs, replayRequest, jumpToStep, stepForward, highlightDaisyAlignment, pauseAfterSteps, sectionPauseMs, timedSectionPauses]);
 
   return (
-    <div className={`alg-sim-player${fillPane ? ' is-fill' : ''}`}>
+    <div className={`alg-sim-player${fillPane ? ' is-fill' : ''}`} style={{ '--alg-player-size': `${size}px` } as CSSProperties}>
       {showHands && handsUnavailable && <small role="status">{t('手部模型加载失败', 'Could not load the hand models')}</small>}
       <SimStage
         size={size}

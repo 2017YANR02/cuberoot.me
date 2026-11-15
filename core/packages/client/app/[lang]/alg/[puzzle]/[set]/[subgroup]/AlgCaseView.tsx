@@ -48,6 +48,7 @@ import AlgPdfButton from '@/components/AlgPdfButton';
 import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
 import {
   cubeThumbParams,
+  ALG_CASE_PREVIEW_SIZE,
   DEFAULT_ALG_CUBE_ORIENTATION,
   supportsCaseViewAngle,
   supportsCubeOrientation,
@@ -562,11 +563,11 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
     resetAfterPlayback: canChooseSetupMode,
     sceneRot: useF2lOrientationGrid && ['FL', 'BL'].includes(shortOriName(oriNames?.[oi] ?? ''))
       ? F2L_LEFT_SCENE_ROT : undefined,
-    size: useF2lOrientationGrid ? 220 : 260,
+    size: ALG_CASE_PREVIEW_SIZE,
   });
   const renderPreviewImage = (setup: string, alg: string, oi: number) => {
     const image = <CaseThumb local puzzle={puzzle} set={set} sticker={caseObj.sticker}
-      alg={alg} setup={setup} size={useF2lOrientationGrid ? 220 : 260}
+      alg={alg} setup={setup} size={ALG_CASE_PREVIEW_SIZE}
       viewAngle={effectiveViewAngle} orientation={effectiveOrientation} sq1BlackTop={sq1BlackTop} />;
     return <div className="alg-case-preview-image">
       {editing ? image : <AlgImageDownloadButton build={() => caseImageBatch({

@@ -9,6 +9,20 @@
   padding: 8px 0 4px;
 }
 
+/* Fixed previews use the same size for the cube and transport. Keep the
+   controls usable at small sizes by reducing spacing instead of scaling icons. */
+.alg-sim-player:not(.is-fill) > .playback-bar {
+  width: min(100%, var(--alg-player-size));
+}
+.alg-sim-player:not(.is-fill) > .playback-bar .playback-bar-controls {
+  gap: clamp(0px, calc((var(--alg-player-size) - 180px) / 5), 7px);
+}
+.alg-sim-player:not(.is-fill) > .playback-bar .playback-bar-btn {
+  flex: 1;
+  min-width: 24px;
+  padding-inline: 0;
+}
+
 /* 公式详情和教学演示共用同一个「左侧播放器、右侧可选列表」外壳。
    播放器本身仍由 AlgPlayer 统一提供动画、进度条和五个播放控件。 */
 .alg-player-list-layout {

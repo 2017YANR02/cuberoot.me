@@ -33,7 +33,7 @@ import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer';
 import CubeKeyboardSection from '@/components/CubeKeyboardSection';
 import { syncPlayerToMoveCount } from '@/lib/recon-alg-utils';
 import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
-import { DEFAULT_ALG_CUBE_ORIENTATION } from '@/lib/alg_thumb_plan';
+import { ALG_CASE_PREVIEW_SIZE, DEFAULT_ALG_CUBE_ORIENTATION } from '@/lib/alg_thumb_plan';
 import { tr } from '@/i18n/tr';
 import { SQ1_NOTATION_MODES, type Sq1NotationMode } from '@/lib/sq1-pbl-notation';
 
@@ -599,7 +599,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
                       ref={handle => { if (handle) oriPlayers.current.set(oi, handle); else oriPlayers.current.delete(oi); }}
                       alg={previewPlayerProps ? playbackCaseAlg(puzzle, selected?.alg ?? '') : selected?.alg ?? ''}
                       setup={orientationSetup}
-                      puzzle={puzzle} set={setSlug} orientation={orientation} size={260}
+                      puzzle={puzzle} set={setSlug} orientation={orientation} size={ALG_CASE_PREVIEW_SIZE}
                       playRequest={groupPlayRequests[oi] ?? 0} autoPlay={(groupPlayRequests[oi] ?? 0) > 0}
                       {...previewPlayerProps?.(oi)}
                     />}

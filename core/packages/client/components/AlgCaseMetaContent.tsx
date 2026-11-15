@@ -20,6 +20,7 @@ import type { AlgCase, AlgCaseMeta, AlgPuzzle } from '@cuberoot/shared';
 import { displayedAlgorithmStm } from '@/lib/alg-metrics';
 import { AlgCaseRelationCards, type AlgCaseRelationCardItem } from '@/components/AlgCaseRelationCards';
 import AlgPlayer from '@/components/AlgPlayer';
+import { ALG_CASE_PREVIEW_SIZE } from '@/lib/alg_thumb_plan';
 import { useCopy } from '@/hooks/useCopy';
 import { ALG_SET_UNIVERSE, LL_UNIVERSE_TOTAL, caseOrbit, probabilityFraction } from '@/lib/alg_probability';
 import { alignScrambleToSetup, caseScramble } from '@/lib/alg_scramble';
@@ -502,7 +503,7 @@ export default function AlgCaseMetaContent({
                 setup={scramblePlaybackAlg !== null ? undefined : caseViewSetup(caseObj.setup, viewAngle)}
                 startSolved={scramblePlaybackAlg !== null}
                 orientation={orientation}
-                size={260}
+                size={ALG_CASE_PREVIEW_SIZE}
                 autoPlay={playRequest > 0}
                 playRequest={playRequest}
               />)}

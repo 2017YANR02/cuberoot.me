@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
 import SimStage from '@/components/sim-embed/SimStage';
 import { useT } from '@/hooks/useT';
@@ -220,7 +220,7 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
   }, [jumpToStep, loop, parsedAlg.groups, playing, previewTiming.stepMs, replayRequest, step, stepForward]);
 
   return (
-    <div className={`alg-sim-player${fillPane ? ' is-fill' : ''}`}>
+    <div className={`alg-sim-player${fillPane ? ' is-fill' : ''}`} style={{ '--alg-player-size': `${size}px` } as CSSProperties}>
       <SimStage
         size={size}
         mount={mount}

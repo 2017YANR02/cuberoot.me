@@ -2398,8 +2398,8 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   }
   .alg-case-detail-ori-player .alg-sim-player { padding-block: 0; }
   .alg-case-detail-ori-player .sim-stage-canvas {
-    width: clamp(120px, calc(100dvh - 190px), 260px) !important;
-    height: clamp(120px, calc(100dvh - 190px), 260px) !important;
+    max-width: max(120px, calc(100dvh - 190px));
+    max-height: max(120px, calc(100dvh - 190px));
   }
 }
 
