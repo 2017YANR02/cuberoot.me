@@ -31,6 +31,11 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
+export function RoomQrCode({ url }: { url: string }) {
+  const svg = useMemo(() => renderSVG(url, { border: 2, ecc: 'M', blackColor: '#111', whiteColor: '#fff' }), [url]);
+  return <div className="room-qr-code" dangerouslySetInnerHTML={{ __html: svg }} />;
+}
+
 /** Runtime-shared invite modal used by Web and every installed React host. */
 export function RoomQrModal({ code, labels, onClose, url, writeClipboardText }: RoomQrModalProps) {
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
@@ -42,10 +47,6 @@ export function RoomQrModal({ code, labels, onClose, url, writeClipboardText }: 
   const backdrop = useModalBackdrop(() => onCloseRef.current());
   const titleId = useId();
   onCloseRef.current = onClose;
-  const svg = useMemo(
-    () => renderSVG(url, { border: 2, ecc: 'M', blackColor: '#111', whiteColor: '#fff' }),
-    [url],
-  );
 
   useEffect(() => {
     mountedRef.current = true;
@@ -121,7 +122,7 @@ export function RoomQrModal({ code, labels, onClose, url, writeClipboardText }: 
           <X size={18} />
         </button>
         <h2 id={titleId}>{labels.scanToJoin}</h2>
-        <div className="room-qr-code" dangerouslySetInnerHTML={{ __html: svg }} />
+        <RoomQrCode url={url} />
         <div className="room-qr-code-text">{code}</div>
         <button
           className="room-qr-link"

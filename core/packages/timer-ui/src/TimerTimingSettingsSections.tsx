@@ -20,6 +20,7 @@ export interface TimerBooleanControlProps {
 }
 
 export interface TimerTimingSettingsSectionsProps {
+  liveShare?: ReactNode;
   /** False keeps non-Timing settings categories out of the DOM, like Web SettingsPanel. */
   active?: boolean;
   /** Hosts with mandatory timing omit the legacy untimed-practice control. */
@@ -188,6 +189,7 @@ export function TimerBooleanSettingRow({
  * their already-canonical switch primitive.
  */
 export function TimerTimingSettingsSections({
+  liveShare,
   active = true,
   timingRequired = false,
   fixedHoldMs,
@@ -209,6 +211,7 @@ export function TimerTimingSettingsSections({
 
   return (
     <>
+      {liveShare}
       <TimerSettingsSection title={localize(TIMER_TIMING_SECTION_COPY.timing)}>
         {!timingRequired && <TimerBooleanSettingRow
           field={TIMING_FIELDS.timingEnabled}

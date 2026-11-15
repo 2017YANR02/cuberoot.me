@@ -144,6 +144,7 @@
       "./timer-tools.css": "react-dom",
       "./timer-bld-helper.css": "react-dom",
       "./TimerSoloPage": "react-dom",
+      "./live-share": "react-dom",
       "./timer-solo-page.css": "react-dom",
       "./scramble-preview": "react-dom",
       "./native-cube-scene": "mixed",
@@ -159,7 +160,8 @@
       "./reconstruct/report-content": "mixed",
       "./reconstruct/report-notation": "mixed",
       "./reconstruct/report-player": "mixed",
-      "./tooltip": "react-dom"
+      "./tooltip": "react-dom",
+      "./live-watch": "react-dom"
     }
   },
   "exports": {
@@ -290,6 +292,7 @@
     "./timer-tools.css": "./src/timer-tools.css",
     "./timer-bld-helper.css": "./src/timer-bld-helper.css",
     "./TimerSoloPage": "./src/TimerSoloPage.tsx",
+    "./live-share": "./src/live-share.ts",
     "./timer-solo-page.css": "./src/timer-solo-page.css",
     "./scramble-preview": "./src/TimerScramblePreview.tsx",
     "./native-cube-scene": "./src/NativeCubeScene.ts",
@@ -305,7 +308,8 @@
     "./reconstruct/report-content": "./src/reconstruct/report-content.ts",
     "./reconstruct/report-notation": "./src/reconstruct/report-notation.ts",
     "./reconstruct/report-player": "./src/reconstruct/report-player.ts",
-    "./tooltip": "./src/Tooltip.tsx"
+    "./tooltip": "./src/Tooltip.tsx",
+    "./live-watch": "./src/TimerLiveWatch.tsx"
   },
   "sideEffects": [
     "./src/index.ts",

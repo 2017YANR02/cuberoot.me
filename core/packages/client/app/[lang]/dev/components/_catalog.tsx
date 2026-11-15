@@ -1944,11 +1944,11 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The single print lifecycle and report DOM shared by the Web, Android, and iOS timers. It freezes the current result, scramble/source, session, full summary, and every solve only after a request, waits for layout/fonts, then delegates to a thin host transport. Global print isolation, repeated page headers, long scramble/comment wrapping, and bilingual font fallbacks live in one implementation. Android/iOS may only add system-print bridges, never a second HTML/PDF template.',
   },
   {
-    name: 'TimerTimingSettingsSections',
-    import: "import { TimerTimingSettingsSections } from '@cuberoot/timer-ui';",
+    name: 'TimerTimingSettingsSections / TimerLiveShareSettings / TimerLiveWatch / useTimerLiveShare / useTimerLiveConnection / RoomQrCode',
+    import: "import { TimerTimingSettingsSections } from '@cuberoot/timer-ui'; import { TimerLiveShareSettings, useTimerLiveShare } from '@cuberoot/timer-ui/live-share'; import { TimerLiveWatch } from '@cuberoot/timer-ui/live-watch';",
     category: 'more',
-    zh: 'Web、Android 与 iOS 计时器共用的“计时”设置 8 字段 UI；字段顺序、双语标签、按住阈值、观察开关和两类精度选项都来自 @cuberoot/shared/timer 的 settings-contract。宿主只注入持久化和平台已有的布尔开关视觉原语，不得另写字段列表或归一化。',
-    en: 'The eight-field Timing settings UI shared by the Web, Android, and iOS timers. Field order, bilingual copy, hold threshold, inspection toggle, and both precision selectors come from @cuberoot/shared/timer settings-contract. Hosts only inject persistence and their existing switch visual primitive; they must not duplicate the field list or normalization.',
+    zh: 'Web、Android 与 iOS 计时器共用的“计时”设置 8 字段 UI；字段顺序、双语标签、按住阈值、观察开关和两类精度选项都来自 @cuberoot/shared/timer 的 settings-contract。实时分享共用连接 hook、权限协议和只读观看页，复用成绩行、计时显示、智能魔方与复盘组件。宿主只注入持久化和平台已有的布尔开关视觉原语，不得另写字段列表或归一化。',
+    en: 'The eight-field Timing settings UI shared by the Web, Android, and iOS timers. Field order, bilingual copy, hold threshold, inspection toggle, and both precision selectors come from @cuberoot/shared/timer settings-contract. Live sharing reuses one connection hook, capability protocol, and read-only viewer with the existing timer, history, cube and reconstruction components. Hosts only inject persistence and their existing switch visual primitive; they must not duplicate the field list or normalization.',
   },
   {
     name: 'BatteryLevelIcon',
