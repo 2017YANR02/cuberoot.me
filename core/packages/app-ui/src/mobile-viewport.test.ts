@@ -1,6 +1,10 @@
 import { readFileSync } from 'node:fs';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_SOLO_LAYOUT } from '@cuberoot/shared/timer';
+import { TimerWorkspace } from '@cuberoot/timer-ui';
 
 import {
   COMPACT_VIEWPORT_HEIGHT_PX,
@@ -152,37 +156,41 @@ describe('mobile visible viewport layout', () => {
   });
 
   it('fits every installed solo workspace, with an older-WebView baseline and preserved layout preferences', () => {
-    expect(app).toContain('<TimerWorkspace className="view-container" data-fit-viewport=""');
+    expect(app).toContain('<TimerWorkspace className="view-container" soloLayout={store?.settings.soloLayout}');
+    const normal = renderToStaticMarkup(createElement(TimerWorkspace, { soloLayout: DEFAULT_SOLO_LAYOUT }));
+    const expanded = renderToStaticMarkup(createElement(TimerWorkspace, {
+      soloLayout: { ...DEFAULT_SOLO_LAYOUT, scrambleGap: 200, timerGap: 200 },
+    }));
+    expect(normal).toContain('data-fit-viewport=""');
+    expect(normal).not.toContain('data-spacing-flow');
+    expect(expanded).toContain('data-fit-viewport=""');
+    expect(expanded).toContain('data-spacing-flow=""');
+    expect(renderToStaticMarkup(createElement(TimerWorkspace))).not.toContain('data-fit-viewport');
     expect(surfaceCss).toContain('@supports not (container-type: size)');
-    expect(surfaceCss).toContain('@container timer-stage (min-width: 520px) and (max-height: 500px)');
-    // Only the core can split into readout/preview columns. The outer canvas
-    // keeps full-width scramble and a readout centered by equal side columns.
+    expect(surfaceCss).toContain('@media (min-width: 520px) and (max-height: 650px) and (orientation: landscape)');
+    expect(surfaceCss).toContain('@container timer-stage (min-width: 520px) and (max-height: 650px) and (min-aspect-ratio: 1/1)');
+    // Scramble and readout stay vertically arranged. Footer/statistic grids
+    // may add columns, keeping the one preview in the lower-right normal flow.
     const fitRules = [...surfaceCss.matchAll(/([^{}]*\.timer-workspace\[data-fit-viewport\][^{}]*)\{([^}]*)\}/g)];
     for (const [, selector, declarations] of fitRules) {
       const columns = declarations.match(/grid-template-columns:\s*([^;]+);/)?.[1];
-      if (columns && columns !== 'minmax(0, 1fr)') {
-        expect(selector).toContain('.timing-surface--solo[data-cube-preview] .timing-surface-core');
-        expect(selector).toContain(':not([data-spacing-flow])');
-        expect(columns).toBe('var(--timer-side-preview-width) minmax(0, 1fr) var(--timer-side-preview-width)');
-        expect(declarations).toContain('display: grid');
-      }
-      if (/grid-column:\s*2\b/.test(declarations)) expect(selector).toContain('.timer-display-wrap');
+      if (columns && selector.includes('.timing-surface')) expect(columns).toBe('minmax(0, 1fr)');
+      if (selector.includes('.timer-stage-preview')) expect(declarations).not.toMatch(/position:\s*(?:absolute|fixed)/);
     }
-    expect(surfaceCss).not.toContain('width: calc(100% - var(--timer-side-preview-width) - 16px)');
-    expect(surfaceCss).toContain('.timing-surface-sub { grid-column: 3; grid-row: 1; }');
+    expect(surfaceCss).toMatch(/\.timer-workspace\[data-fit-viewport\] \.timing-surface-core \{[^}]*display: flex;[^}]*flex-direction: column;/);
+    expect(surfaceCss).toContain('.timer-stage-preview .timing-surface-cube { align-items: flex-end; }');
+    expect(surfaceCss).toMatch(/\.timer-stage-footer:not\(\[hidden\]\) \.timer-stage-preview \{[^}]*--timer-preview-docked: 1;[^}]*justify-content: flex-end;[^}]*margin-left: auto;/);
     expect(surfaceCss).toContain('@container timer-stage (max-height: 240px)');
     expect(surfaceCss).toContain('@media (max-height: 350px)');
     expect(surfaceCss).toContain('--timer-readout-max-size: clamp(40px, 18cqh, 64px)');
     expect(surfaceCss).toContain('--timer-cube-h: clamp(36px, 18cqh, 72px)');
     expect(surfaceCss).toContain('.timing-surface-sub { flex: 0 0 auto; height: auto; max-height: none; }');
-    expect(surfaceCss).toMatch(/:not\(\[data-spacing-flow\]\) \.timing-surface--solo \{\s*flex: 1 0 auto;\s*min-height: min-content;/);
-    expect(surfaceCss).toMatch(/\.timer-workspace\[data-fit-viewport\] \.timing-surface-scramble-top \{\s*max-height: 32vh;\s*overflow-y: auto;/);
+    expect(surfaceCss).toMatch(/\.timer-workspace\[data-fit-viewport\] \.timing-surface--solo \{\s*flex: 1 0 auto;\s*min-height: min-content;/);
+    expect(surfaceCss).toContain('.timer-workspace[data-fit-viewport] .timer-solo-main { overflow: auto; }');
+    expect(surfaceCss).toMatch(/\.timer-workspace\[data-fit-viewport\] \.timing-surface-scramble-top \{\s*max-height: none;\s*overflow: visible;/);
     expect(surfaceCss).toContain('padding-top: var(--solo-scramble-gap, 16px)');
     expect(surfaceCss).toContain('row-gap: var(--solo-timer-gap, 20px)');
     expect(surfaceCss).toContain('height: calc(var(--timer-cube-h) * var(--solo-cube-scale, 1))');
-    expect(app).toContain("(['scrambleGap', 'sourceGap', 'timerGap', 'cubeGap'] as const)");
-    expect(app).toContain('> DEFAULT_SOLO_LAYOUT[key]');
-    expect(app).toContain("data-spacing-flow={expandedSoloSpacing ? '' : undefined}");
     expect(surfaceCss).toMatch(/\[data-spacing-flow\] \.timing-surface--solo \{\s*flex: 1 0 auto;\s*min-height: min-content;/);
     expect(surfaceCss).toMatch(/\[data-spacing-flow\] \.timing-surface-core \{[^}]*height: auto;/);
   });

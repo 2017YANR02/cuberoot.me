@@ -293,7 +293,13 @@ describe('mobile displayed-scramble history', () => {
     expect(page).toContain('...canvas } = timing');
     expect(page).toContain('<TimerStageLayout {...stage} inputRef={surfaceRef}');
     expect(page).toContain('inputHandlers={{ onContextMenu, onMouseDown, onMouseUp, onPointerDown, onPointerUp, onPointerCancel }}');
-    expect(page).toContain('<TimingSurface {...canvas} surfaceRef={canvasRef} layout="solo" />');
+    const canvasTags = page.match(/<TimingSurface\b[^>]*\/>/g);
+    expect(canvasTags).toHaveLength(1);
+    expect(canvasTags![0]).toContain('{...canvas}');
+    expect(canvasTags![0]).toContain('surfaceRef={canvasRef}');
+    expect(canvasTags![0]).toContain('layout="solo"');
+    expect(canvasTags![0]).toContain('previewHost={previewHost}');
+    expect(page).toContain('previewHostRef={timing.cornerSlot ? setPreviewHost : undefined}');
     expect(app.match(/<TimerDeviceCenter/g)).toHaveLength(1);
     expect(app).not.toContain('app-shell--device-footer');
     expect(css).not.toContain('touch-action: pan-y');
