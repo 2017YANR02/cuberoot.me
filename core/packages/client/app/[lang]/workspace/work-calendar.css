@@ -1,6 +1,21 @@
 .work-calendar { min-width: 0; }
-.work-calendar-range { font-size: 1rem; font-variant-numeric: tabular-nums; }
-.work-calendar .workspace-toolbar { align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.work-calendar-range { font-size: 1rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.work-calendar .work-calendar-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 12px; }
+.work-calendar-nav, .work-calendar-paging, .work-calendar-filters, .work-calendar-actions { display: flex; align-items: center; }
+.work-calendar-nav { gap: 12px; }
+.work-calendar-paging, .work-calendar-actions { gap: 2px; flex-shrink: 0; }
+.work-calendar-filters { flex: 0 1 auto; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.staff-workspace .work-calendar-toolbar .staff-field { flex: 0 1 auto; min-width: 0; width: auto; margin: 0; }
+.staff-workspace .work-calendar-toolbar .work-calendar-person { max-width: 12rem; }
+.staff-workspace .work-calendar-toolbar .work-calendar-zone { flex: 0 1 12rem; width: 12rem; max-width: 100%; }
+.work-calendar-toolbar .list-select { width: 100%; }
+.work-calendar-toolbar .list-select-trigger { height: var(--workspace-control-height); min-height: var(--workspace-control-height); font-size: 16px; }
+.work-calendar-toolbar .staff-input { width: 100%; }
+.work-calendar-today.btn { padding-inline: 10px; border: 0; background: transparent; box-shadow: none; color: var(--foreground); }
+.work-calendar-today.btn:is(:hover, :focus-visible) { background: var(--accent-soft); color: var(--accent); }
+.work-calendar .staff-error { margin-block: 8px; }
+.work-calendar .staff-error p { margin: 0; }
+.work-calendar-legend:empty { display: none; }
 .work-calendar .staff-field { width: auto; max-width: 100%; }
 .work-calendar-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-block: 12px; color: var(--muted-foreground); font-size: 13px; }
 .work-calendar-legend > span { display: inline-flex; align-items: center; gap: 6px; }
@@ -13,6 +28,11 @@
 .work-hours-row .staff-field { flex: 1; min-width: 0; }
 .work-hours-row select { width: 100%; }
 @media (max-width: 600px) {
+  .work-calendar .work-calendar-toolbar { gap: 8px; }
+  .work-calendar-nav { flex: 1 1 100%; gap: 8px; }
+  .work-calendar-filters { flex: 1 1 100%; }
+  .staff-workspace .work-calendar-toolbar .work-calendar-zone { flex: 1 1 8rem; width: 8rem; }
+  .work-calendar-actions { margin-left: auto; }
   .work-calendar-grid { height: 66dvh; min-height: 400px; }
   .work-calendar .cal-grid .fc { font-size: 13px; }
   .work-calendar .cal-chip { font-size: 12px; }

@@ -26,10 +26,10 @@ function useWeekdays() {
   const t = useT();
   return [t('周日', 'Sunday'), t('周一', 'Monday'), t('周二', 'Tuesday'), t('周三', 'Wednesday'), t('周四', 'Thursday'), t('周五', 'Friday'), t('周六', 'Saturday')];
 }
-function ZonePicker({ value, onChange, label }: { value: string; onChange: (zone: string) => void; label: string }) {
+function ZonePicker({ value, onChange, label, compact = false }: { value: string; onChange: (zone: string) => void; label: string; compact?: boolean }) {
   const lang = useLang();
   const items = useMemo(() => zoneOptions().map(z => ({ value: z.tz, label: zoneLabel(z.tz, lang === 'zh'), searchTerms: zoneSearchTerms(z) })), [lang]);
-  return <div className="staff-field"><span>{label}</span><ListSelect items={items} value={value} onChange={onChange} allLabel="" clearable={false} searchable ariaLabel={label} /></div>;
+  return <div className={`staff-field${compact ? ' work-calendar-zone' : ''}`}><span className={compact ? 'sr-only' : undefined}>{label}</span><ListSelect items={items} value={value} onChange={onChange} allLabel="" clearable={false} searchable ariaLabel={label} /></div>;
 }
 function SlotsEditor({ slots, onChange, weekday }: { slots: WorkSlot[]; onChange: (slots: WorkSlot[]) => void; weekday?: number }) {
   const t = useT(), weekdays = useWeekdays();
@@ -124,16 +124,20 @@ function WorkCalendarBoard({ now }: { now: number }) {
     openDay(ownDate, [...daySlots(data, period, ownDate), { weekday: weekdayOf(ownDate), startHour: a.h, endHour }]);
   }
   return <section className="work-calendar workspace-controls">
-    <div className="workspace-toolbar staff-actions">
-      <div className="staff-actions"><Button action="previous" variant="secondary" onClick={() => grid.current?.prev()}>{t('上一页', 'Previous')}</Button><Button variant="secondary" onClick={() => grid.current?.today()}>{t('今天', 'Today')}</Button><Button action="next" variant="secondary" onClick={() => grid.current?.next()}>{t('下一页', 'Next')}</Button></div>
-      <strong className="work-calendar-range">{rangeTitle(view, range.anchor, tz, lang === 'zh', range.start, range.end)}</strong>
-      <Field label={t('视图', 'View')}><select value={view} onChange={e => void setView(e.target.value as typeof viewParam)}><option value="timeGridWeek">{t('周', 'Week')}</option><option value="timeGridDay">{t('日', 'Day')}</option><option value="listMonth">{t('日程', 'Agenda')}</option></select></Field>
-      <Field label={t('人员', 'People')}><select value={person} onChange={e => void setPerson(e.target.value)}><option value="all">{t('全部人员', 'Everyone')}</option><option value="mine">{t('只看自己', 'Only me')}</option>{data?.members.map(m => <option key={m.userId} value={m.userId}>{formatName(m.name)}</option>)}</select></Field>
-      <ZonePicker value={tz} onChange={setTz} label={t('显示时区', 'Display time zone')} />
-      <div className="staff-actions"><Button action="edit" iconOnly={false} disabled={!ready} onClick={() => data && setEditing({ kind: 'weekly', date: focusDate, data })}>{t('我的工作时间', 'My working hours')}</Button><Button variant="secondary" disabled={!ready} onClick={() => openDay(focusDate)}>{t('调整当天', 'Adjust day')}</Button><Button action="reload" variant="secondary" onClick={resource.reload}>{t('重新加载', 'Reload')}</Button></div>
+    <div className="workspace-toolbar work-calendar-toolbar">
+      <div className="work-calendar-nav">
+        <div className="work-calendar-paging"><Button action="previous" variant="secondary" onClick={() => grid.current?.prev()}>{t('上一页', 'Previous')}</Button><Button className="work-calendar-today" variant="secondary" onClick={() => grid.current?.today()}>{t('今天', 'Today')}</Button><Button action="next" variant="secondary" onClick={() => grid.current?.next()}>{t('下一页', 'Next')}</Button></div>
+        <strong className="work-calendar-range">{rangeTitle(view, range.anchor, tz, lang === 'zh', range.start, range.end)}</strong>
+      </div>
+      <div className="work-calendar-filters">
+        <label className="staff-field"><span className="sr-only">{t('视图', 'View')}</span><select className="staff-input" value={view} onChange={e => void setView(e.target.value as typeof viewParam)}><option value="timeGridWeek">{t('周', 'Week')}</option><option value="timeGridDay">{t('日', 'Day')}</option><option value="listMonth">{t('日程', 'Agenda')}</option></select></label>
+        <label className="staff-field work-calendar-person"><span className="sr-only">{t('人员', 'People')}</span><select className="staff-input" value={person} onChange={e => void setPerson(e.target.value)}><option value="all">{t('全部人员', 'Everyone')}</option><option value="mine">{t('只看自己', 'Only me')}</option>{data?.members.map(m => <option key={m.userId} value={m.userId}>{formatName(m.name)}</option>)}</select></label>
+        <ZonePicker compact value={tz} onChange={setTz} label={t('显示时区', 'Display time zone')} />
+      </div>
+      <div className="work-calendar-actions"><Button action="edit" disabled={!ready} onClick={() => data && setEditing({ kind: 'weekly', date: focusDate, data })}>{t('我的工作时间', 'My working hours')}</Button><Button action="settings" variant="secondary" disabled={!ready} onClick={() => openDay(focusDate)}>{t('调整当天', 'Adjust day')}</Button><Button action="reload" variant="secondary" onClick={resource.reload}>{t('重新加载', 'Reload')}</Button></div>
     </div>
     <div className="work-calendar-legend">{data?.members.map(m => <span key={m.userId}><i aria-hidden style={{ backgroundColor: colorHex(workCalendarColor(m.userId), theme) }} />{formatName(m.name)}</span>)}</div>
-    <ErrorNotice error={resource.error} retry={resource.reload} /><ErrorNotice error={message} />
+    <ErrorNotice error={resource.error} /><ErrorNotice error={message} />
     {resource.loading && <p role="status"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p>}
     {!resource.loading && !resource.error && !filtered.length && <p className="staff-muted">{t('此范围暂无工作时间', 'No working hours in this range')}</p>}
     <div className="work-calendar-grid" aria-busy={resource.loading}>
