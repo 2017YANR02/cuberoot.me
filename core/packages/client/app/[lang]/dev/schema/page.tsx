@@ -594,6 +594,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 332, slug: 'workspace_remove_projects', desc: { zh: '删除工作台项目及归属，保留全部报告、清单与排期', en: 'Remove workspace projects and associations, preserving all reports, checklists and schedules' } },
   { n: 331, slug: 'workspace_work_calendar', desc: { zh: '管理员每周工作时间、生效区间和临时调整；账号删除级联清理', en: 'Administrator weekly working hours, effective periods and day overrides; cascade on account deletion' } },
   { n: 329, slug: 'cubicle_roster', desc: { zh: '加入 Cubicle 战队及已核对身份的成员，保留原战队归属。', en: 'Add Cubicle and verified roster members, preserving their other teams.' } },
   { n: 328, slug: 'wca_multiple_teams', desc: { zh: '选手可同时加入多个战队，保留既有归属和成员编号。', en: 'Allow multiple teams per cuber while preserving existing memberships and member IDs.' } },
