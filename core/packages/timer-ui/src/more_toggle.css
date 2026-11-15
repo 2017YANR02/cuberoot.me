@@ -59,8 +59,26 @@ details[open] > .more-toggle-summary > .more-toggle-chevron { transform: rotate(
 .more-toggle-panel[data-open="true"][data-animate="false"] > .more-toggle-panel-content { overflow: visible; }
 .more-toggle-panel[data-animate="false"],
 [data-animate="false"] > .more-toggle-chevron { transition: none; }
+/* Horizontal reveal keeps the destination width stable, so text and grids never reflow. */
+.more-toggle-panel[data-axis="horizontal"] {
+  grid-template-rows: 1fr;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 220ms ease, visibility 0s linear 220ms;
+}
+.more-toggle-panel[data-axis="horizontal"][data-open="true"] {
+  clip-path: inset(0);
+  transition-delay: 0s;
+}
+.more-toggle-panel[data-axis="horizontal"][data-open="false"][data-settled="true"],
+.more-toggle-panel[data-axis="horizontal"][data-open="false"][data-animate="false"] { display: none; }
+@starting-style {
+  .more-toggle-panel[data-axis="horizontal"][data-open="true"][data-settled="false"] { clip-path: inset(0 100% 0 0); }
+}
+.more-toggle-panel[data-axis="horizontal"][data-animate="false"] { transition: none; }
 @media (prefers-reduced-motion: reduce) {
-  .more-toggle-chevron, .more-toggle-panel,
+  .more-toggle-chevron, .more-toggle-panel, .more-toggle-panel[data-axis="horizontal"],
   details:has(> .more-toggle-summary)::details-content { transition: none; animation: none; }
   .more-toggle-panel[data-open="true"] > .more-toggle-panel-content { overflow: visible; }
+  .more-toggle-panel[data-axis="horizontal"][data-open="false"] { display: none; }
+  .more-toggle-panel[data-axis="horizontal"][data-open="true"] { clip-path: none; }
 }

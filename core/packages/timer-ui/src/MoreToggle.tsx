@@ -34,23 +34,24 @@ export default function MoreToggle(props: ButtonProps | SummaryProps) {
 
 export type PanelProps = ComponentPropsWithRef<'div'> & MotionProps & {
   expanded: boolean;
+  axis?: 'vertical' | 'horizontal';
   /** Mount before the first expansion; visited content stays mounted for closing. */
   keepMounted?: boolean;
   contentClassName?: string;
 };
 
 /** Content companion for controlled buttons. Keep the panel itself mounted. */
-export function MoreTogglePanel({ expanded, animate = true, keepMounted = false, children,
+export function MoreTogglePanel({ expanded, animate = true, axis = 'vertical', keepMounted = false, children,
   className, contentClassName, onTransitionEnd, ...rest }: PanelProps) {
   const [visited, setVisited] = useState(expanded);
-  const [motion, setMotion] = useState({ expanded, settled: expanded });
+  const [motion, setMotion] = useState({ expanded, settled: true });
   if (expanded && !visited) setVisited(true);
   if (motion.expanded !== expanded) setMotion({ expanded, settled: false });
   return <div {...rest} className={`more-toggle-panel${className ? ` ${className}` : ''}`}
-    data-open={expanded} data-animate={animate} data-settled={motion.settled}
+    data-open={expanded} data-animate={animate} data-axis={axis} data-settled={motion.settled}
     inert={!expanded} aria-hidden={!expanded} onTransitionEnd={event => {
-      if (event.target === event.currentTarget && event.propertyName === 'grid-template-rows') {
-        setMotion({ expanded, settled: expanded });
+      if (event.target === event.currentTarget && event.propertyName === (axis === 'horizontal' ? 'clip-path' : 'grid-template-rows')) {
+        setMotion({ expanded, settled: true });
       }
       onTransitionEnd?.(event);
     }}>
