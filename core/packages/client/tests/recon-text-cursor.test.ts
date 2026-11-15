@@ -1,7 +1,20 @@
 // @vitest-environment jsdom
 import { expect, it, vi } from 'vitest';
 import { getTextOffsetInElement, snapCaretToLine } from '@cuberoot/timer-ui/recon/text-cursor';
-import { findTokenPositions, syncReconPlayerCursorFromText } from '@/lib/recon-alg-utils';
+import { findTokenPositions, reconPlaybackTokenPositions, syncReconPlayerCursorFromText } from '@/lib/recon-alg-utils';
+
+it('maps every played repeat back to its full source move, including layer prefixes', () => {
+  const text = "x' y // insp\n(4r 3Bw2 (U 5r')2)2 // yellow\n3-4Rw2'";
+  const positions = reconPlaybackTokenPositions(text);
+  expect(positions.map(token => text.slice(token.start, token.end))).toEqual([
+    "x'", 'y', '4r', '3Bw2', 'U', "5r'", 'U', "5r'",
+    '4r', '3Bw2', 'U', "5r'", 'U', "5r'", "3-4Rw2'",
+  ]);
+  expect(positions[2].start).toBe(positions[8].start);
+  expect(reconPlaybackTokenPositions("R2'U // comment").map(token => token.text)).toEqual(["R2'", 'U']);
+  expect(reconPlaybackTokenPositions("R'2 U").map(token => token.text)).toEqual(["R'2", 'U']);
+  expect(reconPlaybackTokenPositions('[R, U]')).toEqual([]);
+});
 
 it('M2 is one cursor step, with no boundary between M and 2', () => {
   const text = 'R M2 U';

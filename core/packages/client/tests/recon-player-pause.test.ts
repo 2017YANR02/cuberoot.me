@@ -1,8 +1,12 @@
 // @vitest-environment jsdom
-import { act, createElement, createRef } from 'react';
+import { act, createElement, createRef, Fragment } from 'react';
 import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
 import ReconPlayerBase, { type ReconPlayerHandle, type ReconPlayerAdapter } from '@/components/recon/ReconPlayerBase';
+import SolutionView from '@/components/SolutionView';
+vi.mock('@/components/ReconLineDiagrams', () => ({
+  useReconLineDiagrams: () => ({ diagramAt: () => null, f2lLinks: new Map(), f2lLoading: false, libraryLinks: new Map() }),
+}));
 vi.mock('@cuberoot/puzzle-render-core/sim/mountSimWorld', () => ({
   mountSimWorld: () => ({ world: {}, renderer: { domElement: document.createElement('canvas') }, invalidate() {}, dispose() {} }),
 }));
@@ -23,14 +27,15 @@ it.each([false, true])('keeps text seeks paused until explicit Play (overlay=%s)
     parseMoves: alg => alg.split(' '), setupPuzzle() {}, applyPrefix, pushMove,
   };
   try {
-    await act(async () => root.render(createElement(ReconPlayerBase, {
+    await act(async () => root.render(createElement(Fragment, null, createElement(ReconPlayerBase, {
       scramble: '', alg: 'R U F L D', adapter, playerRef, hideControls,
-    })));
+    }), createElement(SolutionView, { text: 'R U F L D', event: '7x7', playerRef }))));
     await act(async () => { await new Promise(resolve => setTimeout(resolve, 50)); });
     vi.useFakeTimers();
     await act(async () => playerRef.current!.jumpToMoveCount(1, true));
     await act(async () => vi.advanceTimersByTime(520));
     expect(pushMove).toHaveBeenLastCalledWith(expect.anything(), 'U');
+    expect(host.querySelector('.recon-move-current')?.textContent).toBe('U');
     const pause = Array.from(host.querySelectorAll('button')).find(button =>
       /pause|暂停/i.test(`${button.title} ${button.getAttribute('aria-label')}`));
     expect(pause).toBeDefined();
@@ -40,13 +45,17 @@ it.each([false, true])('keeps text seeks paused until explicit Play (overlay=%s)
     expect(applyPrefix).toHaveBeenLastCalledWith(expect.anything(), '', ['R', 'U', 'F', 'L', 'D'], 3);
     await act(async () => vi.advanceTimersByTime(2000));
     expect(pushMove).not.toHaveBeenCalled();
+    expect(host.querySelector('.recon-move-current')?.textContent).toBe('F');
     await act(async () => playerRef.current!.play());
     await act(async () => vi.advanceTimersByTime(520));
     expect(pushMove).toHaveBeenLastCalledWith(expect.anything(), 'L');
+    expect(host.querySelector('.recon-move-current')?.textContent).toBe('L');
     pushMove.mockClear();
     await act(async () => playerRef.current!.jumpToMoveCount(0, true));
+    expect(host.querySelector('.recon-move-current')).toBeNull();
     await act(async () => vi.advanceTimersByTime(520));
     expect(pushMove).toHaveBeenLastCalledWith(expect.anything(), 'R');
+    expect(host.querySelector('.recon-move-current')?.textContent).toBe('R');
   } finally {
     await act(async () => root.unmount()); host.remove();
     vi.useRealTimers(); vi.unstubAllGlobals();

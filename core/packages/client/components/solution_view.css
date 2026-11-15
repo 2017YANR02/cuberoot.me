@@ -25,7 +25,8 @@
   border-radius: 6px;
   border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
   white-space: pre-wrap;
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: normal;
   overflow: visible;
   margin: 0;
 }
@@ -106,7 +107,9 @@
   line-height: 1.7;
   color: var(--foreground);
   padding: 0;
-  word-break: break-all;
+  /* Keep move prefixes and suffixes together (3Bw, Fw2, Rw'). */
+  word-break: normal;
+  overflow-wrap: normal;
 }
 .detail-scramble-solution .detail-solution-text {
   background: transparent;

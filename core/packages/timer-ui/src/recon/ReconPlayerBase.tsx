@@ -32,6 +32,8 @@ const PLAY_INTERVAL_MS = 520;
  *  `__kind` 是拼图标签,卸载时用它确认「这个 ref 还是我放的」再清空。 */
 export interface ReconPlayerHandle {
   __kind: string;
+  /** Current notation step, including play / pause / scrub / single-step changes. */
+  subscribeStep(listener: (step: number) => void): () => void;
   /** 跳到「已走 n 步」的那一帧并停下(复盘表单的光标同步、换解法时回到开头)。 */
   jumpToMoveCount(n: number, autoplay?: boolean): void;
   /** 从当前位置自动播下去;已在结尾则先回开头(与画面里那颗播放键同一套语义)。 */
@@ -107,6 +109,7 @@ export default function ReconPlayerBase<M>({
   const scrambleRef = useRef(scramble);
   const movesRef = useRef<M[]>(adapter.parseMoves(alg));
   const stepRef = useRef(0);
+  const stepListeners = useRef(new Set<(step: number) => void>());
 
   const [ready, setReady] = useState(false);
   const [step, setStepState] = useState(0);
@@ -121,6 +124,10 @@ export default function ReconPlayerBase<M>({
     stepRef.current = n;
     setStepState(n);
   }, []);
+
+  useEffect(() => {
+    for (const listener of stepListeners.current) listener(step);
+  }, [step]);
 
   /** Reset to the scramble, then snap the first `n` solution moves on top. */
   const applyStep = useCallback((n: number) => {
@@ -306,6 +313,11 @@ export default function ReconPlayerBase<M>({
     const { kind } = adapterRef.current;
     const handle: ReconPlayerHandle = {
       __kind: kind,
+      subscribeStep: listener => {
+        stepListeners.current.add(listener);
+        listener(stepRef.current);
+        return () => { stepListeners.current.delete(listener); };
+      },
       jumpToMoveCount: (n: number, autoplay = false) => {
         jumpToStep(n);
         if (autoplay && !userPausedRef.current) {

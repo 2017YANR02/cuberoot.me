@@ -20,7 +20,8 @@ import { tr } from '@/i18n/tr';
 import { computeStm, reconFreePairLines } from '@/lib/recon-stats';
 import { crossColorFromReconText } from '@/components/CubeColorChip/CubeColorChip';
 import NotationLine, { useNotationCases } from '@cuberoot/timer-ui/recon/NotationLine';
-import { findTokenPositions, syncReconPlayerCursorFromText, reconInspectionOrientations, reconWasteBrackets, showReconInspectionColors } from '@/lib/recon-alg-utils';
+import { findTokenPositions, reconPlaybackTokenPositions, syncReconPlayerCursorFromText, reconInspectionOrientations, reconWasteBrackets, showReconInspectionColors } from '@/lib/recon-alg-utils';
+import type { ReconPlayerHandle } from '@cuberoot/timer-ui/recon/ReconPlayerBase';
 import { getTextOffsetInElement, snapCaretToLine } from '@cuberoot/timer-ui/recon/text-cursor';
 import './solution_view.css';
 import { algHtmlText, algHtmlRuns } from '@cuberoot/shared/alg-html';
@@ -88,6 +89,36 @@ export default function SolutionView({ text, html, event, scramble = '', sourceT
     setCursorOffset(null);
     setHlRange(null);
   }, [text]);
+
+  useEffect(() => {
+    const positions = reconPlaybackTokenPositions(plainText);
+    let bound: ReconPlayerHandle | null = null;
+    let unsubscribe: (() => void) | undefined;
+    const bind = () => {
+      const player = playerRef.current as ReconPlayerHandle | null;
+      if (player === bound) return;
+      unsubscribe?.();
+      unsubscribe = undefined;
+      bound = player;
+      if (player?.__kind !== 'nxn-cuber' || !player.subscribeStep) return;
+      unsubscribe = player.subscribeStep(step => {
+        const token = positions[step - 1];
+        const offset = token?.end ?? null;
+        cursorOffsetRef.current = offset;
+        setCursorOffset(offset);
+        setHlRange(previous => {
+          if (!token) return null;
+          return previous?.[0] === token.start && previous[1] === token.end
+            ? previous : [token.start, token.end];
+        });
+      });
+    };
+    // Refs are assigned by lazy players without rerendering this sibling.
+    // Watch only the handle identity; live progress arrives through the subscription.
+    bind();
+    const timer = window.setInterval(bind, 100);
+    return () => { window.clearInterval(timer); unsubscribe?.(); };
+  }, [plainText, playerRef]);
 
   const syncToOffset = useCallback((text: string, offset: number, autoplay = false) => {
     syncReconPlayerCursorFromText(playerRef.current, text.substring(0, offset), autoplay);

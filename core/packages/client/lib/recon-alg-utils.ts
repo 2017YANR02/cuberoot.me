@@ -151,7 +151,7 @@ export interface TokenPosition {
   text: string;
 }
 
-const TOKEN_RE = /[RUFLDBrufldbxyzMSE]w?[2']?'?/g;
+const TOKEN_RE = /(?:\d+(?:-\d+)?)?[RUFLDBrufldbxyzMSE]w?(?:\d+'?|'\d*)?/g;
 
 export function findTokenPositions(text: string): TokenPosition[] {
   if (!text) return [];
@@ -173,6 +173,32 @@ export function findTokenPositions(text: string): TokenPosition[] {
     offset += line.length + 1;
   }
   return tokens;
+}
+
+/** NxN playback expands repeats, but each played move still points to its original text. */
+export function reconPlaybackTokenPositions(text: string): TokenPosition[] {
+  const code = text.replace(/\/\/[^\n]*/g, comment => ' '.repeat(comment.length));
+  const positions = new Map(findTokenPositions(text).map(token => [token.start, token]));
+  const stack: TokenPosition[][] = [[]];
+  const parts = new RegExp(`\\(|\\)(\\d+)?|${TOKEN_RE.source}`, 'g');
+  for (const match of code.matchAll(parts)) {
+    if (match[0] === '(') stack.push([]);
+    else if (match[0].startsWith(')')) {
+      if (stack.length === 1) return [];
+      const group = stack.pop()!;
+      const count = match[1] === undefined ? 1 : Number(match[1]);
+      for (let i = 0; i < count; i++) stack.at(-1)!.push(...group);
+    } else {
+      const token = positions.get(match.index);
+      if (token) stack.at(-1)!.push(token);
+    }
+  }
+  if (stack.length !== 1) return [];
+  const result = stack[0];
+  const played = cleanForPlayer(text).trim().split(/\s+/).filter(Boolean);
+  // Don't display a plausible but wrong highlight for an unsupported notation.
+  return played.length === result.length && result.every((token, i) => cleanForPlayer(token.text) === played[i])
+    ? result : [];
 }
 
 /** A separate, equivalent 3x3 solution; keep source line comments and never edit the record. */
