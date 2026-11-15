@@ -151,6 +151,21 @@ describe('mobile visible viewport layout', () => {
     expect(css).not.toMatch(/\.battle-(?:local-tools|net-timer)[^{]*\.shell-device-center\s*\{/);
   });
 
+  it('fits every installed solo workspace, with an older-WebView baseline and preserved layout preferences', () => {
+    expect(app).toContain('<TimerWorkspace className="view-container" data-fit-viewport=""');
+    expect(surfaceCss).toContain('@supports not (container-type: size)');
+    expect(surfaceCss).toContain('@container timer-stage (min-width: 520px) and (max-height: 500px)');
+    expect(surfaceCss).toMatch(/\.timer-workspace\[data-fit-viewport\] \.timing-surface-scramble-top \{\s*max-height: 32vh;\s*overflow-y: auto;/);
+    expect(surfaceCss).toContain('padding-top: var(--solo-scramble-gap, 16px)');
+    expect(surfaceCss).toContain('row-gap: var(--solo-timer-gap, 20px)');
+    expect(surfaceCss).toContain('height: calc(var(--timer-cube-h) * var(--solo-cube-scale, 1))');
+    expect(app).toContain("(['scrambleGap', 'sourceGap', 'timerGap', 'cubeGap'] as const)");
+    expect(app).toContain('> DEFAULT_SOLO_LAYOUT[key]');
+    expect(app).toContain("data-spacing-flow={expandedSoloSpacing ? '' : undefined}");
+    expect(surfaceCss).toMatch(/\[data-spacing-flow\] \.timing-surface--solo \{\s*flex: 1 0 auto;\s*min-height: min-content;/);
+    expect(surfaceCss).toMatch(/\[data-spacing-flow\] \.timing-surface-core \{[^}]*height: auto;/);
+  });
+
   it('uses the shared settings dialog and its wrapping rules on narrow screens', () => {
     const settingsCss = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/timer-settings-panel.css')), 'utf8');
     expect(app).toContain('<TimerSettingsPanel');
