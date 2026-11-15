@@ -1933,6 +1933,47 @@ a.alg-community-author:hover {
   padding-bottom: 12px;
   margin-bottom: 12px;
 }
+.alg-related-train-select {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 28px;
+  margin-top: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.alg-related-train-select input { width: 16px; height: 16px; margin: 0; cursor: inherit; accent-color: var(--accent); }
+.alg-meta-related-grid.alg-meta-top-grid.alg-related-training-grid {
+  display: grid;
+  grid-template-columns: max-content repeat(var(--alg-related-columns), minmax(0, 86px));
+  align-items: end;
+  gap: 8px;
+}
+.alg-related-training-grid .alg-related-download-card { min-width: 0; }
+.alg-related-training-grid .alg-image-download-target,
+.alg-related-training-grid .alg-meta-related-card { width: 100%; box-sizing: border-box; }
+.alg-related-training-grid .alg-meta-related-card svg { max-width: 100%; height: auto; }
+.alg-related-training-action { display: flex; align-items: center; min-height: 28px; white-space: nowrap; }
+.alg-related-training-action .alg-train-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 28px;
+  padding: 3px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.alg-related-training-action a.alg-train-cta:hover {
+  background: color-mix(in srgb, var(--accent) 88%, var(--foreground));
+  color: var(--accent-foreground);
+}
+.alg-related-training-action [aria-disabled='true'] { opacity: .45; }
 .alg-meta-related-card {
   display: flex;
   flex-direction: column;

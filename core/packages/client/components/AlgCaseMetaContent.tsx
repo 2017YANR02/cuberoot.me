@@ -698,7 +698,7 @@ export default function AlgCaseMetaContent({
           <Row label="speedcubedb">{m.sdbNo}</Row>
         </div>
       )}
-      </>, <AlgCaseRelationCards items={relationCards} puzzle={puzzle} set={set} viewAngle={viewAngle} orientation={orientation} />, playingScramble === null ? selectedAlg?.playbackAlg : undefined)}
+      </>, <AlgCaseRelationCards items={relationCards} puzzle={puzzle} set={set} training={playable && !editing} viewAngle={viewAngle} orientation={orientation} />, playingScramble === null ? selectedAlg?.playbackAlg : undefined)}
     </>
   );
 }

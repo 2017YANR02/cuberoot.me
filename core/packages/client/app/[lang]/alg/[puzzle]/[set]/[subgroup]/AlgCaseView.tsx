@@ -862,6 +862,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
 
       </div>
       {!m && <CaseDetailsTabs related={<AlgCaseRelationCards items={leanRelationCards(editor)} puzzle={puzzle} set={set}
+        training={!editor}
         sq1BlackTop={sq1BlackTop} viewAngle={effectiveViewAngle} orientation={effectiveOrientation} />} metadata={<div className="alg-meta-facts">
         {editor?.subgroup ? <div className="alg-meta-subgroup-editor">{editor.subgroup}</div>
           : caseObj.subgroup && <div className="alg-meta-row"><span className="alg-meta-key">{tr({ zh: '子集', en: 'Subset' })}</span><span className="alg-meta-val">{caseObj.subgroup}</span></div>}

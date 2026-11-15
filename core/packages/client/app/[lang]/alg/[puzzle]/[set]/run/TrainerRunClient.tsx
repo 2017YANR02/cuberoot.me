@@ -35,7 +35,7 @@ import BoolToggle from '@/components/BoolToggle';
 import AlgCaseMetaModal from '@/components/AlgCaseMetaModal';
 import AlgPdfButton from '@/components/AlgPdfButton';
 import { CaseThumb } from '@/components/CaseThumb';
-import { caseKey, findCaseByKey } from '@/lib/trainer-case-key';
+import { caseKey, caseKeysFromIds, findCaseByKey } from '@/lib/trainer-case-key';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { displayZbllToken } from '@/lib/alg_case_display';
 import {
@@ -186,6 +186,8 @@ export default function TrainerRunClient() {
   // 深链模式:进度总览页的「复习 N」直接带 ?mode=memo 进来。只应用一次,之后用户自己切不再被覆盖。
   const [modeParam, setModeParam] = useQueryState('mode');
   const [drawParam] = useQueryState('draw');
+  const [caseIdsParam] = useQueryState('cases');
+  const caseSelectionApplied = useRef<string | null>(null);
   // 进度清单的「专练」:case key 已预置在独立会话里,虚拟集按 key 反建这批 case。
   const [drillParam] = useQueryState('drill');
   const modeApplied = useRef(false);
@@ -529,7 +531,7 @@ export default function TrainerRunClient() {
       trainingHost, storePuzzle, storeSet, cases.length, loadSession, loadMixSession, loadRetry]);
 
   useEffect(() => {
-    if (storePuzzle !== '3x3' || storeSet !== 'zbll' || puzzle !== '3x3' || setSlug !== 'zbll' || !cases.length || doubleZbll || roomParam || (trainingHost && modeParam === 'memo')) return;
+    if (storePuzzle !== '3x3' || storeSet !== 'zbll' || puzzle !== '3x3' || setSlug !== 'zbll' || !cases.length || doubleZbll || roomParam || caseIdsParam !== null || (trainingHost && modeParam === 'memo')) return;
     let active = true;
     try {
       if (localStorage.getItem('trainer:double-zbll') === '1') {
@@ -540,7 +542,7 @@ export default function TrainerRunClient() {
       }
     } catch { /* storage disabled: remain in the explicitly selected mode */ }
     return () => { active = false; };
-  }, [storePuzzle, storeSet, puzzle, setSlug, cases, doubleZbll, roomParam, !!trainingHost, modeParam]);
+  }, [storePuzzle, storeSet, puzzle, setSlug, cases, doubleZbll, roomParam, caseIdsParam, !!trainingHost, modeParam]);
 
   // 双槽位基态在 loadSession 前已准备；增强 PSF2L 的后缀还要按真实魔方状态筛选,
   // 放到后台继续准备。候选到位后立即重出当前题。
@@ -600,18 +602,31 @@ export default function TrainerRunClient() {
   }, [hosted, sessionReady, modeParam, roomParam, splitEligible]);
 
   // scope slug → 该组全部 case key(与 AlgCategoryView 的 top/sub 两级匹配同一套约定)
+  const linkedCaseKeys = useMemo(() => isMix || virtual || roomParam ? null : caseKeysFromIds(cases, caseIdsParam),
+    [cases, caseIdsParam, isMix, virtual, roomParam]);
   const scopedKeys = useMemo(() => {
+    if (linkedCaseKeys !== null) return linkedCaseKeys;
     // 虚拟集的 ?scope= 决定的是「装哪一批 case」,装进来的整批就是范围,不用再筛一次
     if (virtual || !scopeSlug || cases.length === 0) return null;
     const parts = (c: AlgCase) => (c.subgroup || '').toLowerCase().split('/');
     const isTop = cases.some(c => parts(c)[0] === scopeSlug);
     const hit = cases.filter(c => (isTop ? parts(c)[0] : parts(c)[1]) === scopeSlug);
     return hit.length > 0 ? hit.map(caseKey) : null;
-  }, [cases, scopeSlug, virtual]);
+  }, [cases, scopeSlug, virtual, linkedCaseKeys]);
 
   useEffect(() => {
-    if (sessionReady) setScope(scopedKeys);
-  }, [sessionReady, scopedKeys, setScope]);
+    if (!sessionReady || cases.length === 0) return;
+    if (linkedCaseKeys !== null) {
+      const signature = `${puzzle}/${sessionId}:${caseIdsParam}`;
+      if (caseSelectionApplied.current !== signature) {
+        caseSelectionApplied.current = signature;
+        const state = useTrainerStore.getState();
+        state.setDoubleZbll(false);
+        state.setSelected(linkedCaseKeys);
+      }
+    } else caseSelectionApplied.current = null;
+    setScope(scopedKeys);
+  }, [sessionReady, cases.length, puzzle, sessionId, caseIdsParam, linkedCaseKeys, scopedKeys, setScope]);
 
   // 记忆模式没勾选 case 时回落到本页可见的整套(有 scope 就是该组)。
   const allKeys = useMemo(() => cases.map(caseKey), [cases]);

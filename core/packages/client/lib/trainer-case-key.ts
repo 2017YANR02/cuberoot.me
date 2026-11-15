@@ -13,6 +13,13 @@ export function caseKey(c: { subgroup: string; name: string; srcSet?: string }):
   return c.srcSet ? `${c.srcSet}:${raw}` : raw;
 }
 
+/** Explicit library IDs never fall back to the whole set when stale or invalid. */
+export function caseKeysFromIds(cases: readonly AlgCase[], ids: string | null): string[] | null {
+  if (ids === null) return null;
+  const selected = new Set(ids.split(',').filter(id => /^[1-9]\d*$/.test(id)).map(Number));
+  return [...new Set(cases.filter(c => c.id != null && selected.has(c.id)).map(caseKey))];
+}
+
 /**
  * 按数组身份缓存 key → case 的索引。虚拟集(LSLL)一场能有 15,552 个 case,而每次渲染
  * 都要查当前 / 上一个 / 下一个 / 历史里每一条 —— 线性 find 会把一次渲染变成几十万次比较。

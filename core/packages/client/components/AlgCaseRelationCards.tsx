@@ -1,7 +1,9 @@
 'use client';
 
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared/alg';
+import { useState, type CSSProperties } from 'react';
 import Link from '@/components/AppLink';
+import { tr } from '@/i18n/tr';
 import AlgImageDownloadButton from '@/components/AlgImageDownloadButton';
 import { CaseThumb } from '@/components/CaseThumb';
 import type { CaseViewAngle } from '@/lib/alg_display';
@@ -26,6 +28,7 @@ export function AlgCaseRelationCards({
   viewAngle = 'default',
   orientation,
   sq1BlackTop = true,
+  training = false,
 }: {
   items: readonly AlgCaseRelationCardItem[];
   puzzle: AlgPuzzle;
@@ -33,7 +36,11 @@ export function AlgCaseRelationCards({
   viewAngle?: CaseViewAngle;
   orientation?: string;
   sq1BlackTop?: boolean;
+  training?: boolean;
 }) {
+  const [excludedIds, setExcludedIds] = useState<number[]>([]);
+  const selected = [...new Set(items.flatMap(item => item.caseObj?.id != null && !excludedIds.includes(item.caseObj.id) ? [item.caseObj.id] : []))];
+  const trainHref = `/alg/${puzzle}/${set}/run?${new URLSearchParams({ cases: selected.join(','), mode: 'train' })}`;
   const content = (item: AlgCaseRelationCardItem) => item.caseObj ? (
     <>
       <CaseThumb
@@ -62,7 +69,13 @@ export function AlgCaseRelationCards({
   );
 
   return (
-    <div className="alg-meta-related-grid alg-meta-top-grid">
+    <div className={`alg-meta-related-grid alg-meta-top-grid${training ? ' alg-related-training-grid' : ''}`}
+      style={training ? { '--alg-related-columns': items.length } as CSSProperties : undefined}>
+    {training && <div className="alg-related-training-action">
+      {selected.length > 0
+        ? <Link className="alg-train-cta" href={trainHref} prefetch={false}>{tr({ zh: '训练', en: 'Train' })}</Link>
+        : <span className="alg-train-cta" aria-disabled="true">{tr({ zh: '训练', en: 'Train' })}</span>}
+    </div>}
       {items.map(item => {
         const className = `alg-meta-related-card${item.current ? ' is-self is-current' : ''}${item.caseObj ? '' : ' is-plain'}`;
         const card = item.current || (!item.href && !item.onSelect)
@@ -77,7 +90,21 @@ export function AlgCaseRelationCards({
             setup: item.caseObj!.setup, sq1BlackTop, viewAngle, orientation,
           } };
           return { filename: image.name, groups: [{ id: item.key, label: item.name, current: [image], all: [image] }] };
-        }}>{card}</AlgImageDownloadButton> : card}</div>;
+        }}>{card}</AlgImageDownloadButton> : card}
+          {training && item.caseObj?.id != null && <label className="alg-related-train-select">
+            {/* allow-checkbox: 用户明确要求关联情况默认全选，以复选框取消不想练的情况。 */}
+            <input type="checkbox"
+              aria-label={tr({ zh: `训练 ${item.name}`, en: `Train ${item.name}` })}
+              checked={selected.includes(item.caseObj.id)}
+              onChange={event => {
+                const checked = event.currentTarget.checked;
+                setExcludedIds(current => checked
+                  ? current.filter(id => id !== item.caseObj!.id)
+                  : [...new Set([...current, item.caseObj!.id!])]);
+              }}
+            />
+          </label>}
+        </div>;
       })}
     </div>
   );
