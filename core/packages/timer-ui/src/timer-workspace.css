@@ -25,8 +25,13 @@
   grid-template-columns: minmax(0, 1fr) 0;
   grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas: 'topbar panel' 'main panel';
-  height: var(--timer-workspace-height, calc(100dvh - var(--page-notice-h, 0px)));
+  height: var(--timer-workspace-height, calc(100vh - var(--page-notice-h, 0px)));
   overflow: hidden;
+}
+@supports (height: 100dvh) {
+  .timer-workspace.timer-workspace[data-wide-layout] {
+    height: var(--timer-workspace-height, calc(100dvh - var(--page-notice-h, 0px)));
+  }
 }
 .timer-workspace[data-wide-layout][data-panel-open] { grid-template-columns: minmax(0, 1fr) min(var(--timer-right-dock-width, 360px), var(--timer-right-dock-limit, 100vw)); }
 .timer-workspace[data-wide-layout][data-recap-open] { grid-template-columns: minmax(0, 1fr) min(var(--timer-right-dock-width, clamp(340px, 30vw, 480px)), var(--timer-right-dock-limit, 100vw)); }

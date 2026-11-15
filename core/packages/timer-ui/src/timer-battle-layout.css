@@ -1,5 +1,5 @@
 .timer-battle-layout {
-  --timer-scramble-fs: clamp(11px, min(2vw, 2.6dvh), 20px);
+  --timer-scramble-fs: clamp(11px, min(2vw, 2.6vh), 20px);
   --timer-scramble-src-fs: 12px;
   display: flex;
   flex: 1;
@@ -34,7 +34,7 @@
 .timer-battle-pair[data-flipped] { flex-direction: column-reverse; }
 .timer-battle-pair[data-flipped] > .timer-battle-scramble { transform: rotate(180deg); }
 .timer-battle-scramble {
-  --timer-cube-h: min(18vw, 11dvh, 110px);
+  --timer-cube-h: min(18vw, 11vh, 110px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -82,8 +82,8 @@
 }
 .timer-battle-layout .timer-battle-row { min-height: 0; }
 .timer-battle-layout .timer-battle-scramble {
-  --timer-cube-h: min(18vw, 12dvh, 100px);
-  --timer-scramble-fs: clamp(11px, min(2vw, 2.6dvh), 20px);
+  --timer-cube-h: min(18vw, 12vh, 100px);
+  --timer-scramble-fs: clamp(11px, min(2vw, 2.6vh), 20px);
   flex: 0 1 auto;
   min-height: 0;
   max-height: 55%;
@@ -92,33 +92,57 @@
 }
 
 .timer-battle-layout .timing-surface--local {
-  container-type: size;
-  --timer-cube-h: min(18vw, 22cqh, 100px);
-  --timer-readout-max-size: min(28cqh, 10dvh);
-  --timer-scramble-fs: clamp(11px, min(2vw, 2.6dvh), 20px);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
+  --timer-cube-h: min(18vw, 11vh, 100px);
+  --timer-readout-max-size: 10vh;
+  --timer-scramble-fs: clamp(11px, min(2vw, 2.6vh), 20px);
+  display: flex;
+  flex-direction: column;
   align-items: stretch;
-}
-.timer-battle-layout .timing-surface--local:has(.timing-surface-scramble-top) {
-  grid-template-rows: minmax(0, 1fr) minmax(0, 2fr);
-}
-.timer-battle-layout .timing-surface--local:not(:has(.timing-surface-scramble-top)) {
-  --timer-readout-max-size: min(60cqh, 12dvh);
 }
 .timer-battle-layout .timing-surface-scramble-top {
   position: static;
   inset: auto;
   transform: none;
-  max-height: 100%;
+  flex: 0 1 auto;
+  max-height: 55%;
   min-height: 0;
   width: 100%;
 }
 .timer-battle-layout .timing-surface-core {
+  flex: 1 1 auto;
   min-height: 0;
   justify-content: center;
   gap: 4px;
+}
+
+@supports (height: 100dvh) {
+  .timer-battle-layout { --timer-scramble-fs: clamp(11px, min(2vw, 2.6dvh), 20px); }
+  .timer-battle-scramble { --timer-cube-h: min(18vw, 11dvh, 110px); }
+  .timer-battle-layout .timer-battle-scramble {
+    --timer-cube-h: min(18vw, 12dvh, 100px);
+    --timer-scramble-fs: clamp(11px, min(2vw, 2.6dvh), 20px);
+  }
+  .timer-battle-layout .timing-surface--local {
+    --timer-readout-max-size: 10dvh;
+    --timer-scramble-fs: clamp(11px, min(2vw, 2.6dvh), 20px);
+  }
+}
+@supports (height: 1cqh) and (height: 1dvh) and selector(:has(*)) {
+  .timer-battle-layout .timing-surface--local {
+    container-type: size;
+    --timer-cube-h: min(18vw, 22cqh, 100px);
+    --timer-readout-max-size: min(28cqh, 10dvh);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .timer-battle-layout .timing-surface--local:has(.timing-surface-scramble-top) {
+    grid-template-rows: minmax(0, 1fr) minmax(0, 2fr);
+  }
+  .timer-battle-layout .timing-surface--local:not(:has(.timing-surface-scramble-top)) {
+    --timer-readout-max-size: min(60cqh, 12dvh);
+  }
+  .timer-battle-layout .timing-surface-scramble-top { max-height: 100%; }
 }
 .timer-battle-layout .timing-surface-sub {
   position: static;
@@ -142,7 +166,9 @@
 /* Keep selectors and actions together in the centered controls column.
    Leave room for the home affordance. Include its variant explicitly
    so the shared chrome rule cannot override this through stylesheet order. */
-.shell-topbar.timer-battle-toolbar,
+.shell-topbar.timer-battle-toolbar {
+  grid-template-columns: minmax(max-content, 1fr) max-content minmax(max-content, 1fr);
+}
 .shell-topbar.timer-battle-toolbar:has(.shell-topbar-home) {
   grid-template-columns: minmax(max-content, 1fr) max-content minmax(max-content, 1fr);
 }

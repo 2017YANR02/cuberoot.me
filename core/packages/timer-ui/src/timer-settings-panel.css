@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: var(--modal-overlay, color-mix(in srgb, var(--background) 70%, transparent));
+  background: var(--modal-overlay, var(--background));
 }
 .timer-modal.settings-modal {
   --timer-settings-section-bg: var(--muted);
@@ -17,14 +17,19 @@
   border: 1px solid var(--border-default);
   border-radius: 8px;
 }
-@media (prefers-color-scheme: dark) {
-  html:not([data-theme='light']):not([data-palette-scheme='light']) .timer-modal.settings-modal {
+@supports (color: color-mix(in srgb, black, white)) {
+  .timer-settings-overlay {
+    background: var(--modal-overlay, color-mix(in srgb, var(--background) 70%, transparent));
+  }
+  @media (prefers-color-scheme: dark) {
+    html:not([data-theme='light']):not([data-palette-scheme='light']) .timer-modal.settings-modal {
+      --timer-settings-section-bg: color-mix(in srgb, var(--foreground) 7%, var(--muted));
+    }
+  }
+  html[data-theme='dark']:not([data-palette-scheme='light']) .timer-modal.settings-modal,
+  html[data-palette-scheme='dark'] .timer-modal.settings-modal {
     --timer-settings-section-bg: color-mix(in srgb, var(--foreground) 7%, var(--muted));
   }
-}
-html[data-theme='dark']:not([data-palette-scheme='light']) .timer-modal.settings-modal,
-html[data-palette-scheme='dark'] .timer-modal.settings-modal {
-  --timer-settings-section-bg: color-mix(in srgb, var(--foreground) 7%, var(--muted));
 }
 .settings-modal-close { display: grid; place-items: center; border: 0; border-radius: 6px; cursor: pointer; }
 .settings-modal .settings-section h2 { margin: 0 0 6px; font-size: 18px; }
@@ -37,7 +42,7 @@ html[data-palette-scheme='dark'] .timer-modal.settings-modal {
 .timer-modal.settings-modal {
   width: min(800px, calc(100vw - 32px));
   max-width: 800px;
-  height: min(640px, calc(100dvh - 32px));
+  height: min(640px, calc(100vh - 32px));
   max-height: none;
   padding: 0;
   overflow: hidden;
@@ -45,6 +50,9 @@ html[data-palette-scheme='dark'] .timer-modal.settings-modal {
   flex-direction: column;
 }
 .settings-modal:focus { outline: none; }
+@supports (height: 100dvh) {
+  .timer-modal.settings-modal { height: min(640px, calc(100dvh - 32px)); }
+}
 .settings-modal-head {
   flex: none;
   display: flex;
@@ -263,10 +271,13 @@ html[data-palette-scheme='dark'] .timer-modal.settings-modal {
   .timer-modal.settings-modal {
     --timer-settings-enter-scale: 1;
     width: 100%;
-    height: 100dvh;
+    height: 100vh;
     max-width: none;
     border: 0;
     border-radius: 0;
+  }
+  @supports (height: 100dvh) {
+    .timer-modal.settings-modal { height: 100dvh; }
   }
   .settings-modal-head {
     padding: max(14px, env(safe-area-inset-top)) 16px 12px;
