@@ -1855,15 +1855,18 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
   const getFlatSvg = useCallback(() => containerRef.current?.querySelector<SVGSVGElement>(
     '.sim-clock .iclock-svg, .sim-net > .sim-net-svg',
   ) ?? null, []);
+  const getImageSvg = useCallback(() => imageHost?.querySelector<SVGSVGElement>('.vc-preview svg') ?? null, [imageHost]);
 
   const simBridge = useMemo<SimBridge>(() => ({
     getCanvas, getWorld, getRenderer,
-    getSvg: flatMode ? getFlatSvg : undefined,
+    // Drawing exports follow the selected image view (including plan), not the
+    // live 3D canvas shown in the small companion window.
+    getSvg: captureMode ? getImageSvg : flatMode ? getFlatSvg : undefined,
     // cubing.js TwistyPlayer(自定义切割 / PG 目录拼图 / renderer='cubing'):
     // 引擎 world 不在场时,截图组从它的 vantage 取 scene+camera 做 SVG 投影 / PNG。
     getTwistyPlayer: () => twistyPlayerRef.current,
     setup: seed?.capture?.setup ?? setupParam, alg: seed?.capture?.alg ?? algParam,
-  }), [getCanvas, getWorld, getRenderer, flatMode, getFlatSvg, setupParam, algParam, seed]);
+  }), [getCanvas, getWorld, getRenderer, captureMode, getImageSvg, flatMode, getFlatSvg, setupParam, algParam, seed]);
 
   useEffect(() => {
     if (!snapshotRef) return;
