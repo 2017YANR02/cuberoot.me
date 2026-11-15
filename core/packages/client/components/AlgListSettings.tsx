@@ -91,7 +91,7 @@ export default function AlgListSettings({
         <BoolToggle
           value={view === 'full'}
           onChange={show => onViewChange(show ? 'full' : 'cards')}
-          label={tr({ zh: '公式', en: 'Algorithms' })}
+          label={tr({ zh: '公式展开', en: 'Expand algorithms' })}
         />
       )}
       {notationStyle && onNotationStyleChange && (

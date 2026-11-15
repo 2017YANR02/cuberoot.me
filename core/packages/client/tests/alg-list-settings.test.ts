@@ -17,7 +17,7 @@ describe('shared algorithm list settings', () => {
     expect(shared).toContain('usePopoverDismiss(open && !modal, () => setOpen(false), rootRef, triggerRef)');
     expect(settings).toContain("value={view === 'full'}");
     expect(settings).toContain("onChange={show => onViewChange(show ? 'full' : 'cards')}");
-    expect(settings).toContain("label={tr({ zh: '公式', en: 'Algorithms' })}");
+    expect(settings).toContain("label={tr({ zh: '公式展开', en: 'Expand algorithms' })}");
     expect(settings).toContain('<AlgNotationStyleSelect value={notationStyle} onChange={onNotationStyleChange} />');
     expect(settings).toContain("localStorage.getItem(ALG_CASE_NUMBERS_KEY) === 'true'");
     expect(settings).toContain("label={tr({ zh: '数字编号', en: 'Numeric IDs' })}");
