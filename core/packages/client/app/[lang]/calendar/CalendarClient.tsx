@@ -31,7 +31,7 @@ import { localZone, isValidZone, formatOffset, zoneOffsetMinutes } from '@cubero
 import { calendarCompetitionId, eventsToIcs, type CalEvent, type CalendarImport, type EditScope } from '@cuberoot/shared/calendar';
 import { colorHex, readableInk } from '@/lib/calendar-colors';
 import { useEffectiveTheme } from '@/lib/theme';
-import { zoneLabel, zoneOptions, zoneSearchTerms } from '@/lib/tz-zones';
+import { zoneSelectItems } from '@/lib/tz-zones';
 import { expandRange, parseOccurrenceKey, useCalendarStore } from '@/lib/calendar-store';
 import { exportIcs, fetchEvents, listImports, undoImport } from '@/lib/calendar-api';
 import { importCalendarFile, type ImportProgress } from './_lib/import';
@@ -548,11 +548,7 @@ export default function CalendarClient() {
     return () => window.removeEventListener('keydown', onKey);
   }, [dialog, shareOpen, scopeAsk, sidebarOpen, settingsOpen, prefs.keyboardShortcuts, setSettingsSection, setViewParam, openCreateNow, mobileSearch, desktopSearch, closeSearch, monthExpanded, isMobile]);
 
-  const zoneItems = useMemo(() => zoneOptions().map((z) => ({
-    value: z.tz,
-    label: `${zoneLabel(z.tz, isZh)} ${formatOffset(zoneOffsetMinutes(z.tz, new Date()))}`,
-    searchTerms: zoneSearchTerms(z),
-  })), [isZh]);
+  const zoneItems = useMemo(() => zoneSelectItems(isZh, new Date()), [isZh]);
 
   // ── 未登录 ──────────────────────────────────────────────────────────────
   const loginHref = `/account${nextQuery(`${lang === 'zh' ? '/zh' : ''}/calendar`)}`;

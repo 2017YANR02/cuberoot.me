@@ -1,3 +1,4 @@
+import { formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
 // /timezone 的时区目录 —— 常用城市的双语名 + 国旗码,外加平台自带的全量 IANA 列表兜底。
 //
 // 为什么手维护:Intl 能给出「中国标准时间」这种时区名,给不出「上海 / 洛杉矶」这种城市名的
@@ -223,4 +224,9 @@ export function zoneOptions(): ZoneEntry[] {
 /** 一条时区的可搜文本(双语名 + IANA id + 别名),喂给 ListSelect 的 searchTerms。 */
 export function zoneSearchTerms(z: ZoneEntry): string {
   return `${z.tz} ${z.tz.replace(/[_/]/g, ' ')} ${z.zh} ${z.en} ${z.alias ?? ''}`;
+}
+
+/** Shared calendar and registration menu options. */
+export function zoneSelectItems(isZh: boolean, at: Date) {
+  return zoneOptions().map(z => ({ value: z.tz, label: zoneLabel(z.tz, isZh) + " " + formatOffset(zoneOffsetMinutes(z.tz, at)), searchTerms: zoneSearchTerms(z) }));
 }

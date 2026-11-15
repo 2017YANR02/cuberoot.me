@@ -1,3 +1,4 @@
+import { wallPartsIn, dayDelta } from '@cuberoot/shared/tz';
 // Registration instants are compared as epoch milliseconds; grouping uses the viewer's calendar.
 import type { Comp } from './comp-search';
 import type { CubingRegistration } from '@cuberoot/shared/cubing-live';
@@ -39,7 +40,8 @@ export function nextRegMilestone(c: Comp, now: number, cn?: CubingRegistration):
 }
 
 /** Calendar arithmetic avoids 23/25-hour days at daylight-saving transitions. */
-export function localDayDiff(atMs: number, now: number): number {
+export function localDayDiff(atMs: number, now: number, timeZone?: string): number {
+  if (timeZone) return dayDelta(wallPartsIn(timeZone, new Date(now)), wallPartsIn(timeZone, new Date(atMs)));
   const day = (ms: number) => { const d = new Date(ms); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()); };
   return (day(atMs) - day(now)) / MS_DAY;
 }
@@ -51,7 +53,7 @@ function bucketOf(diff: number): RegBucketKey {
   return 'later';
 }
 
-export function buildRegView(comps: Comp[], now: number, followed: ReadonlySet<string>, cn: CubingRegistrations = {}): RegView {
+export function buildRegView(comps: Comp[], now: number, followed: ReadonlySet<string>, cn: CubingRegistrations = {}, timeZone?: string): RegView {
   const horizon = now + REG_HORIZON_DAYS * MS_DAY;
   const followedItems: RegItem[] = [];
   const byBucket = new Map<RegBucketKey, RegItem[]>();
@@ -63,7 +65,7 @@ export function buildRegView(comps: Comp[], now: number, followed: ReadonlySet<s
     const m = nextRegMilestone(c, now, cn[c.id]);
     if (!m || (!followed.has(c.id) && m.at > horizon)) continue;
     if (followed.has(c.id)) { followedItems.push(m); continue; }
-    const key = m.kind === 'closed' ? 'closed' : m.kind === 'unknown' ? 'unknown' : bucketOf(localDayDiff(m.at, now));
+    const key = m.kind === 'closed' ? 'closed' : m.kind === 'unknown' ? 'unknown' : bucketOf(localDayDiff(m.at, now, timeZone));
     const items = byBucket.get(key) ?? [];
     items.push(m);
     byBucket.set(key, items);

@@ -125,3 +125,13 @@ describe('countActionableReg', () => {
     expect(buildRegView([{ ...cnComp, end_date: '2020-01-01' }], NOW, new Set(['cn']), { cn }).total).toBe(0);
   });
 });
+
+it('regroups the same registration instant in the selected time zone', () => {
+  const now = Date.parse('2026-11-15T00:00:00Z');
+  const at = Date.parse('2026-11-15T12:00:00Z');
+  expect(localDayDiff(at, now, 'America/Los_Angeles')).toBe(1);
+  expect(localDayDiff(at, now, 'Asia/Shanghai')).toBe(0);
+  const c = { ...comp('zone', null, null), start_date: '2026-12-01', end_date: '2026-12-01', registration_open: new Date(at).toISOString() };
+  expect(buildRegView([c], now, new Set(), {}, 'America/Los_Angeles').buckets[0].key).toBe('tomorrow');
+  expect(buildRegView([c], now, new Set(), {}, 'Asia/Shanghai').buckets[0].key).toBe('today');
+});
