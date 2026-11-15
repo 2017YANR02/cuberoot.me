@@ -99,22 +99,38 @@ async function fetchWithTimeout(
 export class InstalledAuthClient {
   private finishing: Promise<WebSession | null> | null = null;
   private starting: Promise<void> | null = null;
+  private sessionRevision = 0;
+  private storageWrites: Promise<void> = Promise.resolve();
   // Android may deliver the same intent through appUrlOpen and getLaunchUrl.
   // Remember only a successfully consumed callback, never a session to replay.
   private completedCallback: string | null = null;
 
   constructor(private readonly runtime: MobileAuthRuntime) {}
 
-  private async saveSession(session: WebSession): Promise<void> {
-    await this.runtime.storage.setItem(SESSION_KEY, JSON.stringify(session));
+  // Network and native-storage calls can finish after logout or a newer login.
+  // Serialize writes so an already-running native write also precedes logout.
+  private mutateStorage(revision: number, write: () => Promise<void>): Promise<boolean> {
+    const operation = this.storageWrites.then(async () => {
+      if (revision !== this.sessionRevision) return false;
+      await write();
+      return revision === this.sessionRevision;
+    });
+    this.storageWrites = operation.then(() => undefined, () => undefined);
+    return operation;
   }
 
-  private async clearSession(): Promise<void> {
-    await this.runtime.storage.removeItem(SESSION_KEY);
+  private saveSession(session: WebSession, revision: number): Promise<boolean> {
+    return this.mutateStorage(revision, () => this.runtime.storage.setItem(SESSION_KEY, JSON.stringify(session)));
   }
 
-  private async readSession(): Promise<WebSession | null> {
+  private clearSession(revision: number): Promise<boolean> {
+    return this.mutateStorage(revision, () => this.runtime.storage.removeItem(SESSION_KEY));
+  }
+
+  private async readSession(revision: number): Promise<WebSession | null> {
+    await this.storageWrites;
     const raw = await this.runtime.storage.getItem(SESSION_KEY);
+    if (revision !== this.sessionRevision) return null;
     if (!raw) return null;
     try {
       const session = decodeWebSession(JSON.parse(raw));
@@ -122,11 +138,11 @@ export class InstalledAuthClient {
     } catch {
       // Invalid secure-storage data is removed below.
     }
-    await this.clearSession();
+    await this.clearSession(revision);
     return null;
   }
 
-  private async refreshIfNeeded(session: WebSession): Promise<WebSession | null> {
+  private async refreshIfNeeded(session: WebSession, revision: number): Promise<WebSession | null> {
     const expiresAt = jwtExpiresAt(session.token);
     if (expiresAt === null || expiresAt - this.runtime.now() > REFRESH_BEFORE_MS) return session;
     try {
@@ -135,44 +151,47 @@ export class InstalledAuthClient {
         `${API_ORIGIN}/v1/auth/refresh`,
         { method: 'POST', headers: { Authorization: `Bearer ${session.token}` } },
       );
+      if (revision !== this.sessionRevision) return null;
       if (response.status === 401) {
-        await this.clearSession();
+        await this.clearSession(revision);
         return null;
       }
       if (!response.ok) return session;
       const refreshed = decodeWebSession(await response.json());
+      if (revision !== this.sessionRevision) return null;
       if (!refreshed) return session;
-      await this.saveSession(refreshed);
-      return refreshed;
+      return await this.saveSession(refreshed, revision) ? refreshed : null;
     } catch {
-      return session;
+      return revision === this.sessionRevision ? session : null;
     }
   }
 
   async restore(): Promise<WebSession | null> {
-    const stored = await this.readSession();
+    const revision = this.sessionRevision;
+    const stored = await this.readSession(revision);
     if (!stored) return null;
-    const session = await this.refreshIfNeeded(stored);
-    if (!session) return null;
+    const session = await this.refreshIfNeeded(stored, revision);
+    if (!session || revision !== this.sessionRevision) return null;
     try {
       const response = await fetchWithTimeout(
         this.runtime.fetcher,
         `${API_ORIGIN}/v1/auth/me`,
         { headers: { Authorization: `Bearer ${session.token}` } },
       );
+      if (revision !== this.sessionRevision) return null;
       if (response.status === 401) {
-        await this.clearSession();
+        await this.clearSession(revision);
         return null;
       }
       if (!response.ok) return session;
       const envelope = decodeWebSessionUserEnvelope(await response.json());
+      if (revision !== this.sessionRevision) return null;
       if (!envelope) return session;
       const validated = { ...session, user: envelope.user };
-      await this.saveSession(validated);
-      return validated;
+      return await this.saveSession(validated, revision) ? validated : null;
     } catch {
       // Offline startup retains the last valid local session.
-      return session;
+      return revision === this.sessionRevision ? session : null;
     }
   }
 
@@ -192,10 +211,12 @@ export class InstalledAuthClient {
     language: SupportedLanguage,
     provider: MobileAuthProvider | null,
   ): Promise<void> {
+    const revision = this.sessionRevision;
     const appId = await this.runtime.getAppId();
     const callbackUrl = `${appId}://auth/callback`;
     if (!isMobileAuthCallbackUrl(callbackUrl)) throw new Error('unsupported app identity');
 
+    await this.storageWrites;
     let pending = decodePending(await this.runtime.storage.getItem(PENDING_KEY));
     if (pending && this.runtime.now() - pending.createdAt > PENDING_TTL_MS) pending = null;
     const created = !pending;
@@ -214,7 +235,9 @@ export class InstalledAuthClient {
       throw new Error('mobile auth randomness unavailable');
     }
 
-    if (created) await this.runtime.storage.setItem(PENDING_KEY, JSON.stringify(pending));
+    if (revision !== this.sessionRevision) return;
+    if (created && !await this.mutateStorage(revision,
+      () => this.runtime.storage.setItem(PENDING_KEY, JSON.stringify(pending)))) return;
 
     const url = new URL('/auth/mobile', SITE_ORIGIN);
     url.searchParams.set('callback_url', callbackUrl);
@@ -225,13 +248,14 @@ export class InstalledAuthClient {
     try {
       await this.runtime.openBrowser(url.toString());
     } catch (error) {
-      if (created) await this.runtime.storage.removeItem(PENDING_KEY);
+      if (created) await this.mutateStorage(revision, () => this.runtime.storage.removeItem(PENDING_KEY));
       throw error;
     }
   }
 
   async issueWebSessionTicket(): Promise<WebSessionTicketEnvelope> {
-    const session = await this.readSession();
+    const revision = this.sessionRevision;
+    const session = await this.readSession(revision);
     if (!session) throw new Error('mobile auth session unavailable');
     const response = await fetchWithTimeout(
       this.runtime.fetcher,
@@ -242,9 +266,11 @@ export class InstalledAuthClient {
         cache: 'no-store',
       },
     );
-    if (response.status === 401) await this.clearSession();
+    if (revision !== this.sessionRevision) throw new Error('mobile auth session changed');
+    if (response.status === 401) await this.clearSession(revision);
     if (!response.ok) throw new Error('web session ticket request failed');
     const ticket = decodeWebSessionTicketEnvelope(await response.json());
+    if (revision !== this.sessionRevision) throw new Error('mobile auth session changed');
     if (!ticket) throw new Error('invalid web session ticket response');
     return ticket;
   }
@@ -259,13 +285,16 @@ export class InstalledAuthClient {
   }
 
   private async finishOnce(callbackUrl: string): Promise<WebSession | null> {
+    const revision = this.sessionRevision;
     const callback = decodeMobileAuthCallback(callbackUrl);
     if (!callback || this.completedCallback === callbackUrl) return null;
+    await this.storageWrites;
     const pending = decodePending(await this.runtime.storage.getItem(PENDING_KEY));
+    if (revision !== this.sessionRevision) return null;
     if (!pending) throw new Error('mobile auth request unavailable');
     if (callback.state !== pending.state) throw new Error('mobile auth state mismatch');
     if (this.runtime.now() - pending.createdAt > PENDING_TTL_MS) {
-      await this.runtime.storage.removeItem(PENDING_KEY);
+      await this.mutateStorage(revision, () => this.runtime.storage.removeItem(PENDING_KEY));
       throw new Error('mobile auth request expired');
     }
 
@@ -281,27 +310,33 @@ export class InstalledAuthClient {
         }),
       },
     );
+    if (revision !== this.sessionRevision) return null;
     if (!response.ok) {
-      if (response.status === 401) await this.runtime.storage.removeItem(PENDING_KEY);
+      if (response.status === 401) await this.mutateStorage(revision, () => this.runtime.storage.removeItem(PENDING_KEY));
       throw new Error('mobile auth exchange failed');
     }
     const session = decodeWebSession(await response.json());
+    if (revision !== this.sessionRevision) return null;
     if (!session) throw new Error('invalid mobile auth session');
-    await this.saveSession(session);
-    await this.runtime.storage.removeItem(PENDING_KEY);
+    const nextRevision = ++this.sessionRevision;
+    if (!await this.saveSession(session, nextRevision)) return null;
+    if (!await this.mutateStorage(nextRevision, () => this.runtime.storage.removeItem(PENDING_KEY))) return null;
     this.completedCallback = callbackUrl;
     try {
       await this.runtime.closeBrowser();
     } catch {
       // Some Android browser implementations close themselves after the deep link.
     }
-    return session;
+    return nextRevision === this.sessionRevision ? session : null;
   }
 
   async logout(): Promise<void> {
-    await Promise.all([
-      this.runtime.storage.removeItem(SESSION_KEY),
-      this.runtime.storage.removeItem(PENDING_KEY),
-    ]);
+    const revision = ++this.sessionRevision;
+    await this.mutateStorage(revision, async () => {
+      await Promise.all([
+        this.runtime.storage.removeItem(SESSION_KEY),
+        this.runtime.storage.removeItem(PENDING_KEY),
+      ]);
+    });
   }
 }
