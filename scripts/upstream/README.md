@@ -14,7 +14,7 @@ Clone roots are resolved from `CUBE_UPSTREAM_DIR`, defaulting to a `cube` direct
 
 The BLDDB task builds a detached worktree pinned to `origin/v2`, verifies the candidate and its provenance, then switches `tools/blddb` with rollback on failure. csTimer scramble sources use a three-way merge against `UPSTREAM.txt`; conflicts stop before writing merged files. RecordRanks is special: a non-dry-run task verifies the fork, builds it, pushes **that fork**, then updates `ops/contests/recordranks-ref.txt`. The CubeRoot repository is never committed or pushed by this command. Review the diff and deployment boundary before running a non-dry-run task.
 
-The generated artifact ledger is `docs/generated-artifacts.json`; successful child tasks update their structured `UPSTREAM.txt` records from the verified clone commit. Tests use local fixture clones and do not download or publish upstream data:
+The generated artifact ledger is `docs/data/artifacts/generated-artifacts.json`; successful child tasks update their structured `UPSTREAM.txt` records from the verified clone commit. Tests use local fixture clones and do not download or publish upstream data:
 
 ```sh
 pnpm --dir core exec tsx --test ../scripts/upstream/tests/upstream-sync-contract.test.ts

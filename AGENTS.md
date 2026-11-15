@@ -6,8 +6,8 @@
 
 | 任务 | 必读入口 |
 | --- | --- |
-| 模块归属、依赖、架构、upstream / fork | [架构边界与模块归属](docs/contributing/architecture.md)；当前状态见[架构跟踪表](docs/architecture-modernization-tracker.md) |
-| 本地启动、预览域名、工作树、构建/测试、代码量、流量排查、智能魔方验证 | [开发与验证](docs/contributing/development.md)；安装见[本地开发环境](docs/development.md) |
+| 模块归属、依赖、架构、upstream / fork | [架构边界与模块归属](docs/contributing/architecture.md)；当前状态见[架构跟踪表](docs/architecture/architecture-modernization-tracker.md) |
+| 本地启动、预览域名、工作树、构建/测试、代码量、流量排查、智能魔方验证 | [开发与验证](docs/contributing/development.md)；安装见[本地开发环境](docs/contributing/local-setup.md) |
 | commit / push / PR、CI、部署、数据库迁移 | [发布授权与部署契约](docs/contributing/release.md) |
 | React、CSS、组件、弹窗、菜单、图标、身份展示、主题、图片与导航 | [前端组件与交互规范](docs/contributing/frontend.md) |
 | URL、路由迁移、SSR/SSG、metadata/SEO、API 地址/缓存、nuqs | [网址与渲染契约](docs/contributing/routing.md) |
@@ -25,13 +25,13 @@
 - `core/packages/app-ui` 是已安装客户端的共享 React 产品层，通过 capability adapter 调用系统能力；`core/apps/{mobile,desktop,harmony}` 是薄宿主。小程序独立运行，不复用 React DOM；FMC 是独立 Cargo/HTTP 服务。
 - `core/packages/shared` 仅承载有真实跨端消费者的稳定契约、纯规则与模型；页面和适配留在所属 app。`core/jobs/*` 是离线任务；`core/packages/platform` 已退役，不测试、不构建、不部署、不新增依赖。
 - 新依赖禁止 `package → app`、`app → 其他 app 源码`、`server → client/public`、`miniprogram → React DOM/Next`、跨包 deep import 和现役包引用退役 platform；既有违规不得扩大。
-- 事实源：workspace/package manifest、源码路由/schema/migration、workflow/ops、[生成物清单](docs/generated-artifacts.json)。架构判断注明当前提交及源码/配置证据，不重复维护完整清单。
-- 一般业务、job、自动化优先 TypeScript，求解器/大表优先 Rust；新增 Python 先查[迁移跟踪表](docs/python-to-typescript-rust-tracker.md)，不得重新引入已退役 `.ps1` / `pwsh` 依赖。
+- 事实源：workspace/package manifest、源码路由/schema/migration、workflow/ops、[生成物清单](docs/data/artifacts/generated-artifacts.json)。架构判断注明当前提交及源码/配置证据，不重复维护完整清单。
+- 一般业务、job、自动化优先 TypeScript，求解器/大表优先 Rust；新增 Python 先查[迁移跟踪表](docs/architecture/python-to-typescript-rust-tracker.md)，不得重新引入已退役 `.ps1` / `pwsh` 依赖。
 - upstream/fork 受保护部分先按模块归属核对并询问用户，只改获准的新增/包装部分。进入 `research/reconer/` 先读其 `AGENTS.md`、`roadmap.md`、`plan.md`、`human.md`。
 
 ## 工作与验证
 
-- **临时目录约束**：`.tmp/`、`tmp/` 只存可丢弃中间物。运行必需的表、冻结版本、证据、断点、待提交结果和唯一源码禁止放入临时目录；持久本地数据用 `.local-data/`，源码进入所属模块。新增临时文件只用 `.tmp/{png,scratch,cache}/`；正式入口不得依赖它们。迁移映射、逐行例外及双机同步见 [本地文件生命周期](docs/local-artifact-lifecycle.md)。不以修改例外、关闭 Hook 或移动回 `.tmp` 绕过检查。
+- **临时目录约束**：`.tmp/`、`tmp/` 只存可丢弃中间物。运行必需的表、冻结版本、证据、断点、待提交结果和唯一源码禁止放入临时目录；持久本地数据用 `.local-data/`，源码进入所属模块。新增临时文件只用 `.tmp/{png,scratch,cache}/`；正式入口不得依赖它们。迁移映射、逐行例外及双机同步见 [本地文件生命周期](docs/data/artifacts/local-artifact-lifecycle.md)。不以修改例外、关闭 Hook 或移动回 `.tmp` 绕过检查。
 
 - 维护者要求（2026-11-11）：所有项目不创建、不使用 Git worktree，也不自动切换到已有工作树。始终在现有本地 checkout 开发、验证、提交和推送；遇到未提交修改或同步冲突，先备份、在当前目录合并并保留其他任务的修改，不以隔离为由创建工作树。
 - 新功能先搜索并复用已有组件、数据、工具、资源和契约；可共用内嵌逻辑先抽到合适公共模块，禁止复制改名或增加无必要的层/package。

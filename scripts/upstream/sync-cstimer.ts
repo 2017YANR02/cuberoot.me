@@ -5,7 +5,7 @@ import { assertClone, assertFiles, command, git, parseOptions, readUtf8, repoRoo
 
 interface Input { root: string; upstream: string; skipPull?: boolean }
 export function syncCstimer({ root, upstream, skipPull = false }: Input): void {
-  assertFiles(root, ['scripts/upstream/sync-cstimer.ts', 'scripts/upstream/lib.ts', 'docs/generated-artifacts.json']);
+  assertFiles(root, ['scripts/upstream/sync-cstimer.ts', 'scripts/upstream/lib.ts', 'docs/data/artifacts/generated-artifacts.json']);
   assertClone(upstream);
   if (!skipPull) command('git', ['-C', upstream, 'pull', '--ff-only', 'origin', 'master']);
   if (process.platform === 'win32') {

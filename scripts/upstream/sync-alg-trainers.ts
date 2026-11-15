@@ -8,7 +8,7 @@ interface Config { rootFiles: string[]; trainerDirs: string[]; analytics: { trac
 const getClicky = /\s*<script\s+async\s+data-id="[^"]*"\s+src="\/\/static\.getclicky\.com\/js"\s*>\s*<\/script>/gm;
 
 export function syncAlgTrainers({ root, upstream, dryRun = false }: Input): void {
-  assertFiles(root, ['scripts/upstream/sync-alg-trainers.ts', 'scripts/upstream/lib.ts', '.sync/alg_trainers_config.json', 'docs/generated-artifacts.json']);
+  assertFiles(root, ['scripts/upstream/sync-alg-trainers.ts', 'scripts/upstream/lib.ts', '.sync/alg_trainers_config.json', 'docs/data/artifacts/generated-artifacts.json']);
   assertClone(upstream);
   const config = JSON.parse(readUtf8(join(root, '.sync/alg_trainers_config.json'))) as Config;
   const dest = join(root, 'tools/alg_trainers');

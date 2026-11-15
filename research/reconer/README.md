@@ -24,7 +24,7 @@
 | `scripts/evaluate-reconstruction.ts` / `src/evaluation.ts` | 推理结束后读取答案，按完整视频评分；不调用解码器 |
 | `src/rotation-perms.ts` / `src/anchored-search.ts` | 物理转动语义和双端锚定；旧诊断默认行为与新独立入口的持握语义显式区分 |
 
-这是仓库外层的独立研究 package。以下命令均在 `research/reconer/` 执行，不在 `core/`。Python 仅用于 PyTorch 科研基线，数据编排与动作评分使用 TypeScript，例外已登记于 [迁移跟踪](../../docs/python-to-typescript-rust-tracker.md)。
+这是仓库外层的独立研究 package。以下命令均在 `research/reconer/` 执行，不在 `core/`。Python 仅用于 PyTorch 科研基线，数据编排与动作评分使用 TypeScript，例外已登记于 [迁移跟踪](../../docs/architecture/python-to-typescript-rust-tracker.md)。
 
 ## 先接收素材
 

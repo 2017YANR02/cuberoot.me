@@ -117,7 +117,7 @@ describe('reconstruction ground-truth commit gate', () => {
     try {
       expect(run('git', ['init', '-q']).status).toBe(0);
       for (const path of ['core/scripts/recon-ground-truth-gate.mjs',
-        'scripts/local-artifacts/check.mjs', 'docs/local-artifact-policy.json',
+        'scripts/local-artifacts/check.mjs', 'docs/data/artifacts/local-artifact-policy.json',
         'core/scripts/recon-staged-snapshot.mjs',
         'core/scripts/recon-ground-truth-results.mts',
         'core/packages/client/lib/recon-test-history.server.ts',

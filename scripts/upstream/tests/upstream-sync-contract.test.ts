@@ -42,7 +42,7 @@ test('Solver dry run previews without changing repository files', () => {
     write(join(clone, 'index.html'), '<html><head><meta charset="UTF-8"></head><body style="background-color: #121212"><h1>Hello</h1><script src="analytics.js" defer></script></body></html>');
     write(join(project, '.sync/page_config.json'), JSON.stringify({ rootFiles: [], rootDirs: [], pages: [{ upstream: 'index.html', subdir: 'solver', i18nTitle: 'solver.title' }], analytics: { trackingId: 'G-TEST' } }));
     write(join(project, '.sync/menu_template.html'), '<a href="/">Home</a>');
-    write(join(project, 'docs/generated-artifacts.json'), '{}');
+    write(join(project, 'docs/data/artifacts/generated-artifacts.json'), '{}');
     write(join(project, 'scripts/upstream/sync-rubiks-solver-demo.ts'), 'fixture');
     write(join(project, 'scripts/upstream/lib.ts'), 'fixture');
     write(join(project, 'tools/sw.js'), "\t'analytics.js',\n");
@@ -66,7 +66,7 @@ test('shared version writer records verified clone SHA and rejects escape paths'
     git(clone, 'add', 'README.md');
     execFileSync('git', ['-C', clone, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test', 'commit', '-qm', 'fixture']);
     const artifact = { id: 'fixture', source: { url: 'https://github.com/example/upstream', ref: { type: 'branch', value: 'main' } }, license: { spdx: 'MIT' }, patchOwner: ['scripts/upstream/lib.ts'], outputs: ['tools/fixture/**'], versionRecord: { format: 'structured-v1', path: 'tools/fixture/UPSTREAM.txt' } };
-    write(join(project, 'docs/generated-artifacts.json'), JSON.stringify({ artifacts: [artifact] }));
+    write(join(project, 'docs/data/artifacts/generated-artifacts.json'), JSON.stringify({ artifacts: [artifact] }));
     versionRecord(project, 'fixture', clone);
     const record = readFileSync(join(project, artifact.versionRecord.path), 'utf8');
     assert.match(record, new RegExp(`Commit: ${git(clone, 'rev-parse', 'HEAD')}`));
@@ -115,7 +115,7 @@ test('csTimer scramble performs a three-way merge and preserves CubeRoot exports
     write(join(project, 'scripts/upstream/lib.ts'), 'fixture');
     write(join(project, 'scripts/upstream/sync-cstimer-scramble.ts'), 'fixture');
     const artifact = { id: 'tools.cstimer-scramble', source: { url: 'https://github.com/cs0x7f/cstimer', ref: { type: 'branch', value: 'master' } }, license: { spdx: 'GPL-3.0-only' }, patchOwner: ['scripts/upstream/sync-cstimer-scramble.ts'], outputs: ['tools/cstimer-scramble/**'], versionRecord: { format: 'structured-v1', path: 'tools/cstimer-scramble/UPSTREAM.txt' } };
-    write(join(project, 'docs/generated-artifacts.json'), JSON.stringify({ artifacts: [artifact] }));
+    write(join(project, 'docs/data/artifacts/generated-artifacts.json'), JSON.stringify({ artifacts: [artifact] }));
     write(join(clone, 'src/js/scramble/pyraminx.js'), 'const solveScramble = () => 2;\nconst selfCheck = () => true;\n');
     git(clone, 'add', '.');
     execFileSync('git', ['-C', clone, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test', 'commit', '-qm', 'upstream update']);

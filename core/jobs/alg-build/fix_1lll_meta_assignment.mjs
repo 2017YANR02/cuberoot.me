@@ -6,7 +6,7 @@
  * ══ 错在哪 ════════════════════════════════════════════════════════════════════
  *
  * phase0 的 row→case 是**状态轨道 join**:拿这一行的公式解出来的态去配站上的 case。
- * 但有 19 行的公式本身就解错了 case(`docs/1lll-sheet-issues.md` §2),其中 7 行**一条对的
+ * 但有 19 行的公式本身就解错了 case(`docs/data/algorithms/1lll-sheet-issues.md` §2),其中 7 行**一条对的
  * 都没有**。这些行只能靠「组内消去 + CP 约束 + 多数派投票」落位,而下面这 8 张恰好落错。
  *
  * 落错之后表现为:`meta.inv` / `meta.mirror` 指向的 case **不是**本 case 的逆态 / 镜像态
@@ -231,7 +231,7 @@ const out = [
   '-- 0102_fix_1lll_meta_assignment.sql — 8 张 1lll case 的 meta 挂错了行(生成脚本:',
   '-- jobs/alg-build/fix_1lll_meta_assignment.mjs,推导与证据写在该文件头)。',
   '--',
-  '-- phase0 的 row→case 是状态轨道 join,但有 7 行「一条对的公式都没有」(docs/1lll-sheet-issues.md §2),',
+  '-- phase0 的 row→case 是状态轨道 join,但有 7 行「一条对的公式都没有」(docs/data/algorithms/1lll-sheet-issues.md §2),',
   '-- 只能靠组内消去 + CP 约束 + 多数派投票落位,下面这 8 张落错 —— 表现为 12 张 case 页顶上的',
   '-- 「逆」「镜像」缩略图指错人,外加这 8 张的 OLLCP 名 / 角换 / 最优步数 / 出现概率全是别人的。',
   '--',

@@ -11,7 +11,7 @@
 - Incidents log：遍历 `/api/v0/incidents` 的全部分页，只读公开已解决事件。
 - Disciplinary log：遍历全部列表页，逐篇读取完整正文（列表摘要不完整）。
 - Posts：以 `Accept: application/json` 完整遍历 `/posts?page=N`，读取每篇 `body`（包括 `<!-- break -->` 之后全文），校验总页数稳定、非空、ID/URL 唯一，末尾重读第一页检测分页移动。按官方 URL 与 Disciplinary 去重，已有纪律条目保持原 key/hash；其他公告使用 `posts:/posts/<slug>`。
-- `posts-baseline.json` 是新增 Posts 范围的首次完整基线，与原 `baseline.json` 合并比较；不覆盖原日志基线，不给历史文章批量开票。完整历史译文进度见 `docs/wca-post-translations/progress.json`。
+- `posts-baseline.json` 是新增 Posts 范围的首次完整基线，与原 `baseline.json` 合并比较；不覆盖原日志基线，不给历史文章批量开票。完整历史译文进度见 `docs/data/translations/wca-post-translations/progress.json`。
 - 不跟随论坛、附件或正文中的其他链接；用户指定的 Forum 文章由翻译任务另行处理。
 - `baseline.json` 是首次抓取的内容指纹，不是翻译完成清单。历史全量翻译仍交给订阅内 dot / ChatGPT；监测不为已有历史内容批量制造 drift 票。
 - 每次全量读取，能发现老文章正文修订。Incidents 只比较公开正文和标题；更新时间、标签和关联比赛元数据变化不产生翻译任务。2026-11-11 核对的 142 条提醒标题和正文与 2026-10-22 快照完全一致；旧指纹到正文指纹的有证据映射保存在 `incident-hash-aliases.json`，兼容旧 baseline/Issue，不重置基线。真实标题或正文修订仍产生待办。

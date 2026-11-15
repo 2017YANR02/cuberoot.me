@@ -15,7 +15,7 @@
  *
  * 收尾 AUF **存进库**(站长拍板):前端 displayAlg() 显示时才剥掉,所以魔友看到的一个字不变。
  *
- * ⚠ 两道过滤缺一不可 —— 详见 docs/1lll-migration.md §4.3':
+ * ⚠ 两道过滤缺一不可 —— 详见 docs/data/algorithms/1lll-migration.md §4.3':
  *   1. **显式的 9 个 LL 集合名单**。`sticker.kind === 'face'` 不能用:vls/wv/sv 也是 face,
  *      但它们是最后一槽集合。非 LL 集合的 474 条起手 y 公式,改写成功率 0/474。
  *   2. **逐条实证**。对不上就原样保留,并给出真诊断。

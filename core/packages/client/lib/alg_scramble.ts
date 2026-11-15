@@ -13,7 +13,7 @@
  *
  * ── 为什么 ② 还要再印证一次 `meta.inv` ────────────────────────────────────────
  * 这个指针**真的错过**:2026-08-04 查出 8 张 1lll case 的整块 meta 挂到了别人的行上,连带
- * 12 张的 `inv` 指向不是自己的逆态(migration `0102`,始末见 `docs/1lll-sheet-issues.md`
+ * 12 张的 `inv` 指向不是自己的逆态(migration `0102`,始末见 `docs/data/algorithms/1lll-sheet-issues.md`
  * §元数据层)。照着错指针取公式,屏幕上写着这个名字、手上打出来是另一个 case,**静默教错**。
  *
  * 0102 之后线上指针已全部与状态对齐(守卫 `alg-build/verify_meta_pointers.mjs`),但这层印证

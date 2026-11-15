@@ -1,5 +1,5 @@
 /**
- * Phase 2 的产出:给站长看的问题清单 → `docs/1lll-sheet-issues.md`。
+ * Phase 2 的产出:给站长看的问题清单 → `docs/data/algorithms/1lll-sheet-issues.md`。
  *
  * 依赖 phase2_validate.mjs 的 `.local-data/phase1/phase2_report.json` 和 `.local-data/phase1/repairs.json`。
  *
@@ -150,5 +150,5 @@ p('| `IM == Inv∘Mirror == Mirror∘Inv` | 3915 / 3915,零不一致 |');
 p();
 p('剔掉上面那些坏公式之后,INV / MIRROR / IM 三个关系的**残差为零**。');
 
-fs.writeFileSync(path.join(ROOT, 'docs/1lll-sheet-issues.md'), L.join('\n') + '\n');
-console.log('→ docs/1lll-sheet-issues.md');
+fs.writeFileSync(path.join(ROOT, 'docs/data/algorithms/1lll-sheet-issues.md'), L.join('\n') + '\n');
+console.log('→ docs/data/algorithms/1lll-sheet-issues.md');

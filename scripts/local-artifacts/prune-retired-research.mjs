@@ -100,7 +100,7 @@ if (mode === '--plan') {
       'The owner authorized removal of duplicate generated tables, the Opt9 main table, nxopt22/corner96 research tables and old target caches.\n' +
       'Opt10, its opt9-generated/small-memory.bin dependency, current Opt8 artifacts, canonical solver/tables, source snapshots, reports and resource stop history remain.\n' +
       'Missing files listed in ../migrations/retention-2026-11-09/plan.json are intentional retirement, not failed migration. Do not regenerate or restore them automatically.\n' +
-      'Historical report hashes describe the original experiment, not availability of every original payload. See docs/local-artifact-lifecycle.md and the cleanup receipts.\n');
+      'Historical report hashes describe the original experiment, not availability of every original payload. See docs/data/artifacts/local-artifact-lifecycle.md and the cleanup receipts.\n');
   }
   try {
     for (const file of candidates) {

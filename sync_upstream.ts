@@ -18,7 +18,7 @@ assertFiles(root, [
   'scripts/upstream/sync-cstimer-scramble.ts', 'scripts/upstream/sync-rubiks-solver-demo.ts',
   'scripts/upstream/sync-alg-trainers.ts', 'scripts/upstream/sync-blddb.ts',
   'scripts/upstream/sync-recordranks.ts', '.sync/page_config.json', '.sync/menu_template.html',
-  '.sync/alg_trainers_config.json', '.sync/blddb_postprocess.mjs', 'docs/generated-artifacts.json',
+  '.sync/alg_trainers_config.json', '.sync/blddb_postprocess.mjs', 'docs/data/artifacts/generated-artifacts.json',
 ]);
 if (options.validateOnly) {
   console.log(`Upstream sync graph and internal dependencies validated: ${root}`);

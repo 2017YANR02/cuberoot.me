@@ -12,7 +12,7 @@ for(let i=0;i<args.length;i++){
  if(args[i]==='--only'&&args[i+1]){only=args[++i];continue;}
  throw Error('Usage: migrate.mjs [--apply] [--only SOURCE]');
 }
-const contract=JSON.parse(fs.readFileSync(resolve(root,'docs/local-artifact-paths.json'),'utf8'));
+const contract=JSON.parse(fs.readFileSync(resolve(root,'docs/data/artifacts/local-artifact-paths.json'),'utf8'));
 if(only&&!contract.mappings.some(entry=>entry.from===only))throw Error('Unregistered migration source');
 const safe=p=>{const f=resolve(root,p),r=relative(root,f);if(!r||r.startsWith('../')||isAbsolute(r))throw Error('Unsafe migration path');return f;};
 if(apply&&process.platform!=='win32'){

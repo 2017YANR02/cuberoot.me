@@ -1,6 +1,6 @@
 /**
  * Phase 0 —— **状态轨道 join**:把站长那张表的 3915 行,和站上 3918 个 LL case 对上。
- * 产出 `.local-data/phase0/mapping.json` + 冲突报告。见 docs/1lll-migration.md §8。
+ * 产出 `.local-data/phase0/mapping.json` + 冲突报告。见 docs/data/algorithms/1lll-migration.md §8。
  *
  * case 身份 / 朝向类 / 角置换类的定义与证明:见 ll_ident.mjs。
  *

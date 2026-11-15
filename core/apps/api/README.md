@@ -1,6 +1,6 @@
 # @cuberoot/server
 
-现役 Hono API 和 PostgreSQL 数据层，拥有独立运行进程和部署产物；API→Web 源码依赖、Web public 运行时读取及宽泛部署触发已完成收口，验收记录见[当前架构跟踪](../../../docs/architecture-modernization-tracker.md)。`package.json`、`src/`、`migrations/` 和 `.github/workflows/deploy_core.yml` 是局部事实源。
+现役 Hono API 和 PostgreSQL 数据层，拥有独立运行进程和部署产物；API→Web 源码依赖、Web public 运行时读取及宽泛部署触发已完成收口，验收记录见[当前架构跟踪](../../../docs/architecture/architecture-modernization-tracker.md)。`package.json`、`src/`、`migrations/` 和 `.github/workflows/deploy_core.yml` 是局部事实源。
 
 ## 边界
 

@@ -15,7 +15,7 @@
 当前状态见：
 
 - [`../../../docs/platform-product-migration-tracker.md`](../../../docs/platform-product-migration-tracker.md)
-- [`../../../docs/architecture-modernization-tracker.md`](../../../docs/architecture-modernization-tracker.md)
+- [`../../../docs/architecture/architecture-modernization-tracker.md`](../../../docs/architecture/architecture-modernization-tracker.md)
 - [`../../../docs/platform-data-disposition-ledger.md`](../../../docs/platform-data-disposition-ledger.md)
 
 旧实现细节保存在 Git 历史中，不再把旧命令复制到现役文档。

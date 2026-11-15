@@ -9,10 +9,10 @@ import {
 } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const STRUCTURED_HEADER = '# Generated from docs/generated-artifacts.json. Do not edit.';
+const STRUCTURED_HEADER = '# Generated from docs/data/artifacts/generated-artifacts.json. Do not edit.';
 const VERSIONED_KINDS = new Set(['vendored-sync', 'upstream-fork-deploy']);
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const ledgerPath = resolve(repoRoot, 'docs/generated-artifacts.json');
+const ledgerPath = resolve(repoRoot, 'docs/data/artifacts/generated-artifacts.json');
 
 function asArray(value) {
   return Array.isArray(value) ? value : value == null ? [] : [value];
@@ -505,7 +505,7 @@ export function validateLedger(ledger, { root = repoRoot } = {}) {
     }
   }
 
-  const docsPath = resolve(root, 'docs/generated-artifacts.md');
+  const docsPath = resolve(root, 'docs/data/artifacts/generated-artifacts.md');
   const agentsPath = resolve(root, 'AGENTS.md');
   if (existsSync(docsPath)) {
     const docs = readFileSync(docsPath, 'utf8');
@@ -518,9 +518,11 @@ export function validateLedger(ledger, { root = repoRoot } = {}) {
     }
   }
   if (existsSync(agentsPath)) {
-    const agents = readFileSync(agentsPath, 'utf8');
-    if (!agents.includes('`docs/generated-artifacts.json` 定义生成物')
-        || !agents.includes('`docs/generated-artifacts.md` 解释维护方式')) {
+    const architectureRulesPath = resolve(root, 'docs/contributing/architecture.md');
+    const agents = readFileSync(agentsPath, 'utf8')
+      + (existsSync(architectureRulesPath) ? readFileSync(architectureRulesPath, 'utf8') : '');
+    if (!agents.includes('`docs/data/artifacts/generated-artifacts.json` 定义生成物')
+        || !agents.includes('`docs/data/artifacts/generated-artifacts.md` 解释维护方式')) {
       fail('AGENTS.md must identify the JSON ledger as fact source and Markdown as guidance');
     }
   }

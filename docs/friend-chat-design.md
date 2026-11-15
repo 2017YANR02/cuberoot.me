@@ -42,7 +42,7 @@
 | `core/apps/api/src/utils/app_user_auth.ts` | 将登录凭证解析成 canonical `app_users.id` | 身份来自服务器，客户端不传发送人 UID |
 | `core/apps/api/src/utils/account_merge.ts` | 通过数据库外键枚举拒绝暂不支持合并的业务数据，返回 linked_data；好友域也在此边界内 | 聊天首版延续此规则，不悄悄合并或丢弃历史 |
 | `core/apps/api/src/utils/account_delete.ts` | 私有数据清理与所有权漂移守卫 | 新表必须登记注销语义并跑现有守卫 |
-| `docs/shared-foundation-auth.md` | 已安装的 `@app-foundation/messaging` 用于邮件传输 | 它不是现成的好友 IM，首版无需改动它或发布新的外部包 |
+| `docs/architecture/shared-foundation-auth.md` | 已安装的 `@app-foundation/messaging` 用于邮件传输 | 它不是现成的好友 IM，首版无需改动它或发布新的外部包 |
 | `.github/workflows/deploy_next.yml`、`test.yml` | 网站部署与 client 测试当前未把 app-ui 列为输入 | 网站新增共享 UI 依赖时，同步补路径监听，避免共享界面单独变更不触发网站更新 |
 
 遵守 `docs/cross-platform-app-contract.md` 与 `docs/mobile-three-tab-contract.md`：shared 不含 React 页面/数据库，app-ui 不反向引用 client，宿主不复制业务 UI。本设计与现有分层不冲突。

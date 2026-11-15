@@ -21,7 +21,7 @@ const project = { directory: core, url: 'http://127.0.0.1:3000/zh', command: [pr
 
 if (existsSync(devsite)) {
   // Use the existing host tool's registration API, including the Python launcher.
-  if (process.platform === 'win32') throw Error('An existing devsite was found. Register this project with devsite add; see docs/development.md.');
+  if (process.platform === 'win32') throw Error('An existing devsite was found. Register this project with devsite add; see docs/contributing/local-setup.md.');
   execFileSync(devsite, ['add', 'cuberoot', core, project.url, '--', ...project.command], { stdio: 'inherit' });
 } else {
   mkdirSync(dirname(launcherPath), { recursive: true });

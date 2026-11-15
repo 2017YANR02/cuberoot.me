@@ -20,7 +20,7 @@
 output/rootbeast-desk-video/source/*.html linguist-generated=true
 output/rootbeast-desk-video-collection/source/scenes/*.html linguist-generated=true
 
-# 已确认的生成源码；来源与生成命令见 docs/generated-artifacts.json
+# 已确认的生成源码；来源与生成命令见 docs/data/artifacts/generated-artifacts.json
 # [lang] 是目录名，使用 [[] 匹配字面量左方括号。
 core/packages/event-icon/src/svg-map-event.ts linguist-generated=true
 core/packages/event-icon/src/svg-map-unofficial.ts linguist-generated=true
@@ -35,7 +35,7 @@ core/packages/client/app/[[]lang]/sim/engine/pgFacts.generated.ts linguist-gener
 core/packages/client/app/[[]lang]/scramble/gen/_tnoodle-i18n.ts linguist-generated=true
 core/packages/client/app/fonts-wenkai.css linguist-generated=true
 
-# 第三方同步边界见 docs/generated-artifacts.json；不排除整个 tools 目录。
+# 第三方同步边界见 docs/data/artifacts/generated-artifacts.json；不排除整个 tools 目录。
 tools/cstimer/** linguist-vendored=true
 tools/cstimer-scramble/** linguist-vendored=true
 tools/alg_trainers/** linguist-vendored=true

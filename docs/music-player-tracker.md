@@ -223,7 +223,7 @@ type MusicTrackV1 = {
 
 结论：第一阶段不复制任何候选源码、不安装播放器依赖，使用浏览器原生 `HTMLAudioElement`、Media Session 和项目内最小 LRC 解析器。Feishin 只提供 UX 参考；以后真需要多端服务端时优先单独评估 Navidrome；只有明确接受 AGPL 且需要逐词歌词时，才隔离验证 Apple Music Like Lyrics 的 `core + react`，不采用 `react-full`。
 
-当前采用状态：`NO THIRD-PARTY CODE`，因此不新增 Credits。将来实际采用时只在 `core/packages/client/app/[lang]/about/credits_data.json` 登记一次；若 vendored 生成物进入仓库，再同步登记 `docs/generated-artifacts.json`。
+当前采用状态：`NO THIRD-PARTY CODE`，因此不新增 Credits。将来实际采用时只在 `core/packages/client/app/[lang]/about/credits_data.json` 登记一次；若 vendored 生成物进入仓库，再同步登记 `docs/data/artifacts/generated-artifacts.json`。
 
 ## 测试矩阵
 

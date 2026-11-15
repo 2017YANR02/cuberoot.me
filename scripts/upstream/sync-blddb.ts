@@ -14,7 +14,7 @@ const gitLines = (dir: string, ...args: string[]) => lines(git(dir, ...args));
 const patchWrite = (path: string, text: string) => writeUtf8(path, text.replace(/\r\n/g, '\n'));
 
 export function syncBlddb({ root, upstream, skipPull = false, skipInstall = false }: Input): void {
-  assertFiles(root, ['scripts/upstream/sync-blddb.ts', 'scripts/upstream/lib.ts', '.sync/blddb_postprocess.mjs', 'docs/generated-artifacts.json']);
+  assertFiles(root, ['scripts/upstream/sync-blddb.ts', 'scripts/upstream/lib.ts', '.sync/blddb_postprocess.mjs', 'docs/data/artifacts/generated-artifacts.json']);
   assertClone(upstream);
   const primary = { head: git(upstream, 'rev-parse', '--verify', 'HEAD'), status: git(upstream, 'status', '--porcelain=v1', '--untracked-files=all'), stash: git(upstream, 'stash', 'list', '--format=%H') };
   assertOnlyAgents([

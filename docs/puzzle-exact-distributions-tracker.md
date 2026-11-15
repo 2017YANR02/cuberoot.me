@@ -119,7 +119,7 @@
 - 单项执行器：`core/packages/client/scripts/small-puzzle-distribution-worker.ts`。
 - Tetraminx 精确模型：`core/packages/client/scripts/tetraminx-exact-distribution.mts`。
 - Jing / Pyramorphix 模型与共同有界 BFS 同目录；导出入口 `export-exact-puzzle-distributions.mts` 只读取已完成报告，不重新枚举。
-- 网站消费 `_data/precomputed-exact-puzzles.json` 中的小型直方图及有界样例，登记在 `docs/generated-artifacts.json`。共 27 项静态分布、4,663 个独立回放样例，672,172 字节；旧结果复核与同一状态空间的不同计步/目标分别标明。
+- 网站消费 `_data/precomputed-exact-puzzles.json` 中的小型直方图及有界样例，登记在 `docs/data/artifacts/generated-artifacts.json`。共 27 项静态分布、4,663 个独立回放样例，672,172 字节；旧结果复核与同一状态空间的不同计步/目标分别标明。
 - 包装器的只读系统查询及 Node 子进程契约登记在 `core/architecture-boundaries.json`。
 - 生成给网站消费的数据时，由对应生成入口登记来源和验证方式，不手抄完整结果、不提交大体积统计快照。
 

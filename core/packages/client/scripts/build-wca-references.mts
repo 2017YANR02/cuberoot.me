@@ -6,7 +6,7 @@ import type { RegulationReference } from '../lib/regulation-references';
 import { sanitize } from './wca-content.mts';
 
 const client = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const entriesDir = resolve(client, '../../../docs/wca-reference-translations/entries');
+const entriesDir = resolve(client, '../../../docs/data/translations/wca-reference-translations/entries');
 const out = resolve(client, 'app/[lang]/regulation/_data');
 const ids = new Set<string>();
 const references: RegulationReference[] = readdirSync(entriesDir).filter(name => name.endsWith('.json')).sort().map(name => {

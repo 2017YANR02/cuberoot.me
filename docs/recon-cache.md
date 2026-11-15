@@ -54,7 +54,7 @@ The same authenticated receiver also accepts `{ "kind": "forum", "id": "42" }`
 to expire a forum thread's metadata, or `{ "kind": "forum" }` for moderation
 that can affect several threads. Successful forum content writes notify both
 deployments; views and reactions do not. The forum fallback ISR interval is
-one hour. See [public-content-cache.md](public-content-cache.md) for the separate
+one hour. See [public-content-cache.md](architecture/public-content-cache.md) for the separate
 revision-based public API response cache and its load/freshness boundaries.
 
 The receiver also accepts `{ "kind": "alg" }` without an ID. Successful writes

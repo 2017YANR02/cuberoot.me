@@ -400,8 +400,8 @@ jobs:
             /solver/experiments/cube48opt-rust/README.md
             /docs/double-zbll-trainer.md
             /docs/benchmarks/assistant-phase1-cases.json
-            /docs/generated-artifacts.json
-            /docs/generated-artifacts.md
+            /docs/data/artifacts/generated-artifacts.json
+            /docs/data/artifacts/generated-artifacts.md
             /docs/platform-capability-manifest.json
             /docs/platform-unification-plan.md
             /sync_upstream.ts
@@ -410,8 +410,8 @@ jobs:
             /scripts/stats/
             /scripts/wca-data/
             /scripts/local-artifacts/
-            /docs/local-artifact-policy.json
-            /docs/local-artifact-paths.json
+            /docs/data/artifacts/local-artifact-policy.json
+            /docs/data/artifacts/local-artifact-paths.json
             /ops/contests/recordranks-ref.txt
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
@@ -705,8 +705,8 @@ jobs:
             /solver/experiments/cube48opt-rust/README.md
             /docs/double-zbll-trainer.md
             /docs/benchmarks/assistant-phase1-cases.json
-            /docs/generated-artifacts.json
-            /docs/generated-artifacts.md
+            /docs/data/artifacts/generated-artifacts.json
+            /docs/data/artifacts/generated-artifacts.md
             /docs/platform-capability-manifest.json
             /docs/platform-unification-plan.md
             /sync_upstream.ts
@@ -715,8 +715,8 @@ jobs:
             /scripts/stats/
             /scripts/wca-data/
             /scripts/local-artifacts/
-            /docs/local-artifact-policy.json
-            /docs/local-artifact-paths.json
+            /docs/data/artifacts/local-artifact-policy.json
+            /docs/data/artifacts/local-artifact-paths.json
             /ops/contests/recordranks-ref.txt
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf

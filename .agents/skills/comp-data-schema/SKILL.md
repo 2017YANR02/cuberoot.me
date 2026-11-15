@@ -56,4 +56,4 @@ description: "Use when touching WCA competition JSON (upcoming_comps/all_past_co
 - 本地审阅新目录：在 `core/` 运行 `pnpm --filter @cuberoot/stats-build exec tsx src/bin/fetch_upcoming_comps.ts --catalog-only --output /tmp/all_upcoming_comps.json`；正式数据必须由生成器产生，不能手补单场比赛。
 
 - 日常同步使用轻量 `competition_index` + 持久化 HTTP 快照，按 id 合并，不用索引缺席推断删除。只有明确取消、或已结束且历史目录已收录时移出。缓存失效/丢失仅分批补抓，不能退回全量详情刷新。
-- `--incremental` 为默认行为；旧 `--refresh` 也不再清空缓存。WCIF 条件校验与分批无条件复核用于发现报名变动（人数相同仍可能换人）；具体周期、冷启动上限和失败语义见 [upcoming-sync.md](../../../docs/upcoming-sync.md)。
+- `--incremental` 为默认行为；旧 `--refresh` 也不再清空缓存。WCIF 条件校验与分批无条件复核用于发现报名变动（人数相同仍可能换人）；具体周期、冷启动上限和失败语义见 [upcoming-sync.md](../../../docs/data/wca/upcoming-sync.md)。

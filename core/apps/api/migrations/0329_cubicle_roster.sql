@@ -1,5 +1,5 @@
 -- Maintainer roster supplied 2026-11-12. All 14 identities confirmed:
--- docs/data-imports/cubicle-2026-11-12.md
+-- docs/data/imports/cubicle-2026-11-12.md
 -- Add retailer sponsorships without replacing any manufacturer/team assignment.
 INSERT INTO wca_teams (name) VALUES ('Cubicle') ON CONFLICT (lower(name)) DO NOTHING;
 

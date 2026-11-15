@@ -27,13 +27,13 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | `tools/` / `stats/` | `static.cuberoot.me` 的 upstream/教学资源与本地生成数据；统计快照由 `wca-data-latest` Release 管理，不再提交 Git |
 | `ops/` / `docs/` / `.github/workflows` | 运维、状态/设计记录和 CI/部署契约 |
 
-事实源按优先级核对：`core/pnpm-workspace.yaml` 与各 `package.json` 定义 pnpm workspace/命令，Cargo app 由自身 `Cargo.toml` 定义；源码路由、shared schema 和 migration 定义运行契约；`.github/workflows` 与 `ops/` 定义发布边界；`docs/generated-artifacts.json` 定义生成物，`docs/generated-artifacts.md` 解释维护方式；`docs/architecture-modernization-tracker.md` 是当前架构执行入口，历史验收单独保存在 `docs/architecture-modernization-history.md`。架构建议须注明检查提交与具体源码/配置证据；路径和 package 身份复用现有 workspace resolver，部署路径合同从 manifest 依赖推导，文档不重复维护完整清单。
+事实源按优先级核对：`core/pnpm-workspace.yaml` 与各 `package.json` 定义 pnpm workspace/命令，Cargo app 由自身 `Cargo.toml` 定义；源码路由、shared schema 和 migration 定义运行契约；`.github/workflows` 与 `ops/` 定义发布边界；`docs/data/artifacts/generated-artifacts.json` 定义生成物，`docs/data/artifacts/generated-artifacts.md` 解释维护方式；`docs/architecture/architecture-modernization-tracker.md` 是当前架构执行入口，历史验收单独保存在 `docs/architecture/history/architecture-modernization-history.md`。架构建议须注明检查提交与具体源码/配置证据；路径和 package 身份复用现有 workspace resolver，部署路径合同从 manifest 依赖推导，文档不重复维护完整清单。
 
 新代码归属：页面和平台适配留在所属 app；稳定、运行时中性且有真实多端消费者的契约/纯逻辑才进共享 package；只因两份文件相似不拆 package。
 
-新的一般业务代码、统计/生成 job 和仓库自动化优先 TypeScript，求解器与大表生成优先 Rust；现存 Python 的迁移状态和必须保留的 Blender/研究/上游例外见 `docs/python-to-typescript-rust-tracker.md`。新增 Python 入口前先核对该跟踪表，避免把已经迁出的管道接回 Python。
+新的一般业务代码、统计/生成 job 和仓库自动化优先 TypeScript，求解器与大表生成优先 Rust；现存 Python 的迁移状态和必须保留的 Blender/研究/上游例外见 `docs/architecture/python-to-typescript-rust-tracker.md`。新增 Python 入口前先核对该跟踪表，避免把已经迁出的管道接回 Python。
 
-仓库自有 PowerShell 脚本已迁为 TypeScript 或退役，清单和验证边界见 `docs/powershell-to-typescript-tracker.md`。新增自动化入口使用 TypeScript；调用方、CI、hook 配置和文档不得重新引入 `.ps1` 或把 `pwsh` 当作 TS 入口的依赖。
+仓库自有 PowerShell 脚本已迁为 TypeScript 或退役，清单和验证边界见 `docs/architecture/powershell-to-typescript-tracker.md`。新增自动化入口使用 TypeScript；调用方、CI、hook 配置和文档不得重新引入 `.ps1` 或把 `pwsh` 当作 TS 入口的依赖。
 
 新增生产依赖禁止 `package -> app`、`app A -> app B 源码`、`server -> client/client public`、`miniprogram -> React DOM/Next`、跨包 deep import 和任何现役包对 `packages/platform` 的引用；已有违规在架构跟踪表里递减，不得扩大。
 

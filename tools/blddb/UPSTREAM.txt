@@ -1,4 +1,4 @@
-# Generated from docs/generated-artifacts.json. Do not edit.
+# Generated from docs/data/artifacts/generated-artifacts.json. Do not edit.
 Artifact: tools.blddb
 Source: https://github.com/nbwzx/blddb
 Ref: branch v2

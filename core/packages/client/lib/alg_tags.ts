@@ -1,7 +1,7 @@
 /**
  * 公式标签的展示名(站长 1LLL 表里的 `[oh]` / `[fmc]` 等)。
  * 列表(AlgCategoryView)和元数据弹窗(AlgCaseMetaModal)共用 —— 弹窗被列表 import,
- * 常量放列表里会绕成循环依赖,所以落在这。语义见 docs/1lll-migration.md。
+ * 常量放列表里会绕成循环依赖,所以落在这。语义见 docs/data/algorithms/1lll-migration.md。
  */
 import { ALG_TAGS as STORED_ALG_TAGS, type AlgTag } from '@cuberoot/shared/alg';
 import { tr } from '@/i18n/tr';

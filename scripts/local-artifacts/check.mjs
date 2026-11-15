@@ -4,13 +4,13 @@ import {execFileSync} from 'node:child_process';
 import {dirname, resolve, relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 export const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
-const policyPath=resolve(root,'docs/local-artifact-policy.json');
+const policyPath=resolve(root,'docs/data/artifacts/local-artifact-policy.json');
 export const policy=fs.existsSync(policyPath)?JSON.parse(fs.readFileSync(policyPath,'utf8')):{exceptions:[]};
 const source=/\.(?:[cm]?[jt]sx?|rs|py|rb|sh|json|ya?ml)$/;
 const excluded=/^(?:tools\/|solver\/vendor\/|core\/patches\/|.*\/node_modules\/|.*\/vendor\/)/;
 export function temporaryReferences(file,text){
  if(!source.test(file)||excluded.test(file)||/(?:\.test\.|\/tests\/|\/testdata\/|\/fixtures\/)/.test(file))return [];
- if(['docs/local-artifact-paths.json','docs/local-artifact-policy.json'].includes(file)||file.startsWith('scripts/local-artifacts/')||file==='.codex/hooks/block-persistent-temp.mts')return [];
+ if(['docs/data/artifacts/local-artifact-paths.json','docs/data/artifacts/local-artifact-policy.json'].includes(file)||file.startsWith('scripts/local-artifacts/')||file==='.codex/hooks/block-persistent-temp.mts')return [];
  return text.split('\n').flatMap((line,i)=>{
   const trimmed=line.trim();if(/^(?:\/\/|\*|#)/.test(trimmed))return [];
   // Match path literals, including join(root, '.tmp', 'name'); atomic foo+'.tmp' is allowed.

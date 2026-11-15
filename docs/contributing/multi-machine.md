@@ -20,7 +20,7 @@ GitHub `origin` 是代码交换中心；每台电脑保留独立 checkout、依�
 4. 第一台再次同步最终提交；核对两台 HEAD 与 `origin/main` 一致，工作区状态如实报告。若期间又出现新改动，保留并单独说明，不为了清空状态而覆盖。
 5. 跟踪最终变更实际影响的 CI 和部署；没有改动的新 HEAD 不会重新触发所有 workflow，结合最后一次触及该模块的提交核验。遵守[发布验证范围](release.md#发布验证范围)，不额外运行无关原生打包，不跟进 CodeQL。
 
-不以 rsync、网盘或双向文件同步镜像工作仓库，尤其不同步 `.git`、`node_modules`、`.next`、PID、锁、`.env`、私钥和运行中的数据库。大表、断点与结果按[本地文件生命周期](../local-artifact-lifecycle.md)交接，保持单写者。新电脑不能凭复制来的 PID/资源基线续跑旧任务。
+不以 rsync、网盘或双向文件同步镜像工作仓库，尤其不同步 `.git`、`node_modules`、`.next`、PID、锁、`.env`、私钥和运行中的数据库。大表、断点与结果按[本地文件生命周期](../data/artifacts/local-artifact-lifecycle.md)交接，保持单写者。新电脑不能凭复制来的 PID/资源基线续跑旧任务。
 
 ## 本仓库 Git 配置
 

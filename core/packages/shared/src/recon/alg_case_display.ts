@@ -197,7 +197,7 @@ export function displayAlgCaseName(puzzle: string, set: string, name: string): s
 
 /**
  * case 的主名。有 `meta.ollcp`(1LLL 表导入的 case)就用它 —— 站长定的字母制命名优先,
- * 站上原来那个数字制名字降为副名(docs/1lll-migration.md §7 B8)。
+ * 站上原来那个数字制名字降为副名(docs/data/algorithms/1lll-migration.md §7 B8)。
  *
  * 去掉当前 set 的冗余前缀,组名与编号紧排,例如 `EG1 S 1` → `S1`。
  */

@@ -112,7 +112,7 @@ export function gaInlineCode(id: string): string {
 }
 
 export function versionRecord(root: string, id: string, clone: string, output?: string): void {
-  const ledger = JSON.parse(readUtf8(join(root, 'docs/generated-artifacts.json'))) as { artifacts: Array<any> };
+  const ledger = JSON.parse(readUtf8(join(root, 'docs/data/artifacts/generated-artifacts.json'))) as { artifacts: Array<any> };
   const matches = ledger.artifacts.filter(item => item.id === id);
   if (matches.length !== 1) throw new Error(`Expected one artifact ${id}; found ${matches.length}`);
   const artifact = matches[0];
@@ -126,7 +126,7 @@ export function versionRecord(root: string, id: string, clone: string, output?: 
   const date = git(clone, 'show', '-s', '--format=%cI', 'HEAD');
   const recordPath = resolve(root, output ?? artifact.versionRecord.path);
   if (!recordPath.startsWith(resolve(root) + sep)) throw new Error(`${id} version record escapes repository: ${recordPath}`);
-  const lines = ['# Generated from docs/generated-artifacts.json. Do not edit.', `Artifact: ${id}`, `Source: ${artifact.source.url}`, `Ref: ${artifact.source.ref.type} ${artifact.source.ref.value}`, `Commit: ${sha}`, `Date: ${date}`, `License: ${artifact.license.spdx}`, 'Patch owners:', ...artifact.patchOwner.map((value: string) => `- ${value}`), 'Outputs:', ...artifact.outputs.map((value: string) => `- ${value}`)];
+  const lines = ['# Generated from docs/data/artifacts/generated-artifacts.json. Do not edit.', `Artifact: ${id}`, `Source: ${artifact.source.url}`, `Ref: ${artifact.source.ref.type} ${artifact.source.ref.value}`, `Commit: ${sha}`, `Date: ${date}`, `License: ${artifact.license.spdx}`, 'Patch owners:', ...artifact.patchOwner.map((value: string) => `- ${value}`), 'Outputs:', ...artifact.outputs.map((value: string) => `- ${value}`)];
   writeUtf8(recordPath, lines.join('\n') + '\n');
 }
 export function assertClone(path: string): void { if (!existsSync(join(path, '.git'))) throw new Error(`Not a git clone: ${path}`); }

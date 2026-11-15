@@ -62,7 +62,7 @@ All contributors with write access may push directly to `main` after self-review
 and necessary validation, then verify CI and deployment results. PRs are optional;
 another person's approval is not required. Force pushes and main deletion remain blocked.
 
-Use the Node version in [`.node-version`](./.node-version) and the pnpm version
+Use the Node version in [`.node-version`](.node-version) and the pnpm version
 declared by [`core/package.json`](./core/package.json).
 
 ```bash

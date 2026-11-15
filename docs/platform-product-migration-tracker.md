@@ -403,6 +403,6 @@ P9 退出条件：
 
 ## 10. 与其他任务的协调
 
-- [architecture-modernization-tracker.md](./architecture-modernization-tracker.md) 的 Batch 1 已完成，Batch 2 已获准执行依赖基线、候选清单与新增违规守卫；后续源码批次仍按该 tracker 独立刷新基线、审核和授权。
+- [architecture-modernization-tracker.md](./architecture/architecture-modernization-tracker.md) 的 Batch 1 已完成，Batch 2 已获准执行依赖基线、候选清单与新增违规守卫；后续源码批次仍按该 tracker 独立刷新基线、审核和授权。
 - `teaching_saas.ts` 的渐进拆分可先补 characterization tests，但 Platform 不 import 它的内部 repository；只通过稳定 API 与 client helper 复用。
 - `server/src/index.ts`、shared exports、migration ledger、`page-meta.ts`、sitemap 与首页卡片是串行集成热点，保持单一 owner。

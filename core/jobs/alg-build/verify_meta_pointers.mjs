@@ -7,7 +7,7 @@
  *
  *   · 页面上的「校验」按钮(`client/lib/alg_validation_scan.ts`)只跑 `setup + alg → 目标态`,
  *     一条一条验公式。它**从不读 meta**,所以一张 `inv` 指错的 case 照样「全部通过」。
- *   · `docs/1lll-sheet-issues.md` §元数据层验的是这三列**作为置换**自不自洽(是不是对合、
+ *   · `docs/data/algorithms/1lll-sheet-issues.md` §元数据层验的是这三列**作为置换**自不自洽(是不是对合、
  *     `IM == Inv∘Mirror`)。那是**闭合性**检查 —— 把 A↔B、C↔D 整体换成 A↔D、C↔B 依然
  *     100% 通过,因为它压根没问「B 到底是不是 A 的逆态」。
  *

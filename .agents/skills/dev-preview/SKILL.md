@@ -5,7 +5,7 @@ description: 配置、检查或撤销 CubeRoot 同事/电脑的 dev-姓名-设�
 
 # 开发预览接入
 
-用户给出姓名与电脑后，按 [接入手册](../../../docs/dev-preview-onboarding.md) 完成整个流程。
+用户给出姓名与电脑后，按 [接入手册](../../../docs/contributing/dev-preview-onboarding.md) 完成整个流程。
 
 - 事实源：`ops/dev-preview/machines.json`。先运行 `node core/scripts/dev-preview/cli.ts plan`；用 `register` 分配端口，禁止凭记忆选择。
 - 默认命名 `dev-<owner>-<device>.cuberoot.me`，owner/device 用小写 ASCII 和连字符。已在目标电脑时自行识别 OS、仓库路径和服务状态；只有缺少访问目标电脑的方式、身份有歧义时才询问。

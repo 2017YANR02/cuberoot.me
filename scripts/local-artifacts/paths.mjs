@@ -2,7 +2,7 @@ import {readFileSync} from 'node:fs';
 import {dirname, resolve, relative, isAbsolute} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
-const {mappings}=JSON.parse(readFileSync(resolve(root,'docs/local-artifact-paths.json'),'utf8'));
+const {mappings}=JSON.parse(readFileSync(resolve(root,'docs/data/artifacts/local-artifact-paths.json'),'utf8'));
 /** Resolve only registered moves. Historical evidence bytes and hashes stay unchanged. */
 export function relocatedArtifactPath(recorded, repositoryRoot=root) {
  if(typeof recorded!=='string')throw Error('Missing recorded artifact path');

@@ -279,7 +279,7 @@
 来源与实现：
 
 - 和平饭店依据[新浪图床实拍](https://n.sinaimg.cn/sinakd20119/320/w717h403/20220831/51c5-e438a768e27ecac8115bad5575bd3b71.jpg)，原文章已不可用；原汇丰大楼依据[携程游客实拍](https://you.ctrip.com/sight/shanghai2/1831446.html)。其余 11 栋继续逐栋对照 Asisbiz 摄影集。网页唯一来源数据 `credits_data.json` 更新照片用途、查阅日期与精度边界，共 50 个外部链接。照片年代不等于当前租户现状，没有根据建筑历史名称虚构今天的招牌。
-- 复用仓库现有文泉驿微米黑及 Three.js 官方 TTFLoader / FontLoader / ExtrudeGeometry，生成 58 字形、33,997 字节的本地字体子集；保留原字体作者与 Apache-2.0 元数据，并随资产附上完整许可证。字体由 `scripts/build-shanghai-sign-font.mjs` 从文字清单生成，已登记 `docs/generated-artifacts.json`。没有新增 GitHub 依赖或运行时外链照片。
+- 复用仓库现有文泉驿微米黑及 Three.js 官方 TTFLoader / FontLoader / ExtrudeGeometry，生成 58 字形、33,997 字节的本地字体子集；保留原字体作者与 Apache-2.0 元数据，并随资产附上完整许可证。字体由 `scripts/build-shanghai-sign-font.mjs` 从文字清单生成，已登记 `docs/data/artifacts/generated-artifacts.json`。没有新增 GitHub 依赖或运行时外链照片。
 - 字体轮廓生成有厚度的字面，按建筑和材质合并。和平饭店增加双面竖牌、支架、入口雨篷、门框和把手；入口仍为封闭外观，未改成可进入的室内。品牌专用字体、银行图形商标、盘谷银行神鸟标志、灯牌弧形顶部等仍待补齐。
 
 实际网页审图：

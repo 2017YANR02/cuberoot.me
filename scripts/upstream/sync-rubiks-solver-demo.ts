@@ -8,7 +8,7 @@ interface Page { upstream: string; subdir: string; i18nTitle?: string }
 interface Config { rootFiles: string[]; rootDirs?: string[]; pages: Page[]; analytics: { trackingId: string } }
 
 export function syncSolver({ root, upstream, dryRun = false }: Input): void {
-  assertFiles(root, ['scripts/upstream/sync-rubiks-solver-demo.ts', 'scripts/upstream/lib.ts', '.sync/page_config.json', '.sync/menu_template.html', 'docs/generated-artifacts.json']);
+  assertFiles(root, ['scripts/upstream/sync-rubiks-solver-demo.ts', 'scripts/upstream/lib.ts', '.sync/page_config.json', '.sync/menu_template.html', 'docs/data/artifacts/generated-artifacts.json']);
   assertClone(upstream);
   const config = JSON.parse(readUtf8(join(root, '.sync/page_config.json'))) as Config;
   const menu = readUtf8(join(root, '.sync/menu_template.html'));

@@ -7,12 +7,12 @@ import {markdown} from './wca-content.mts';
 import {buildRegulationLinkIndex} from './build-regulation-link-index.mts';
 const client=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const root=resolve(client,'../../..');
-const ledger=resolve(root,'docs/wca-post-translations');
+const ledger=resolve(root,'docs/data/translations/wca-post-translations');
 const read=(p:string)=>JSON.parse(readFileSync(p,'utf8'));
 const digest=(v:unknown)=>createHash('sha256').update(JSON.stringify(v)).digest('hex');
 const progress=read(resolve(ledger,'progress.json'));
 const logs=read(resolve(client,'app/[lang]/regulation/_data/logs.json'));
-const logProgress=read(resolve(root,'docs/wca-log-translations/progress.json'));
+const logProgress=read(resolve(root,'docs/data/translations/wca-log-translations/progress.json'));
 const articles=progress.entries.flatMap((row:any)=>{
  const id=row.url.split('/').at(-1);
  if(row.status==='linked_existing_disciplinary'){

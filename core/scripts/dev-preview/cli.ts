@@ -68,7 +68,7 @@ async function main() {
   if (v.registry && ['register', 'render', 'activate'].includes(command)) throw Error('Alternate registry cannot change production artifacts');
   switch (command) {
     case 'help':
-      console.log('Dev preview: plan | register --owner NAME --device DEVICE --os mac|windows | render [--check] | authorize --id ID --request FILE --out FILE | certificate --id ID | activate --id ID | verify --id ID | revoke --id ID\nRun from core: pnpm exec tsx scripts/dev-preview/cli.ts COMMAND\nFull workflow: docs/dev-preview-onboarding.md'); return;
+      console.log('Dev preview: plan | register --owner NAME --device DEVICE --os mac|windows | render [--check] | authorize --id ID --request FILE --out FILE | certificate --id ID | activate --id ID | verify --id ID | revoke --id ID\nRun from core: pnpm exec tsx scripts/dev-preview/cli.ts COMMAND\nFull workflow: docs/contributing/dev-preview-onboarding.md'); return;
     case 'plan': console.log(JSON.stringify(v.id ? plan(machine()) : r.machines.map(plan), null, 2)); return;
     case 'register': {
       const owner = slug(v.owner ?? ''), device = slug(v.device ?? '');

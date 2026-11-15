@@ -272,7 +272,7 @@
         {"file":"core/apps/api/src/utils/image_thumbnail.ts","contains":"const timer = setTimeout(() => { failed = true; child.kill('SIGKILL'); }, 2500);"},
         {"file":"core/apps/api/src/utils/image_thumbnail.ts","contains":"if (active < 2)"},
         {"file":"core/apps/api/src/utils/image_thumbnail.ts","contains":"if (waiters.size >= 8)"},
-        {"file":"docs/generated-artifacts.md","contains":"Gallery thumbnails are runtime derivatives"}
+        {"file":"docs/data/artifacts/generated-artifacts.md","contains":"Gallery thumbnails are runtime derivatives"}
       ]
     },
     {

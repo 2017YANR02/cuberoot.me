@@ -11,7 +11,7 @@ const required: Record<string, string[]> = { 'scramble_sq1_new.js': ['solveScram
 const lf = (text: string) => text.replace(/\r\n/g, '\n');
 
 export function syncCstimerScramble({ root, upstream, skipPull = false }: Input): void {
-  assertFiles(root, ['scripts/upstream/sync-cstimer-scramble.ts', 'scripts/upstream/lib.ts', 'docs/generated-artifacts.json']);
+  assertFiles(root, ['scripts/upstream/sync-cstimer-scramble.ts', 'scripts/upstream/lib.ts', 'docs/data/artifacts/generated-artifacts.json']);
   assertClone(upstream);
   if (!skipPull) gitPrint(upstream, 'pull', '--ff-only', 'origin', 'master');
   const dest = join(root, 'tools/cstimer-scramble');

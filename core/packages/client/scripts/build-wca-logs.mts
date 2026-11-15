@@ -7,7 +7,7 @@ import {markdown,sanitize} from './wca-content.mts';
 import {buildRegulationLinkIndex} from './build-regulation-link-index.mts';
 const client=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const root=resolve(client,'../../..');
-const ledgerRoot=resolve(root,'docs/wca-log-translations');
+const ledgerRoot=resolve(root,'docs/data/translations/wca-log-translations');
 const read=(p:string)=>JSON.parse(readFileSync(resolve(ledgerRoot,p),'utf8'));
 const digest=(v:unknown)=>createHash('sha256').update(JSON.stringify(v)).digest('hex');
 const p=read('progress.json');
