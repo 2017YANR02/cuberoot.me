@@ -53,7 +53,9 @@ async function publish(candidate: string, out: string) {
     const archive = join(out, m.archive.name);
     if (!existsSync(archive)) download(r, m.archive.name, archive);
     unpack(archive, m, join(out, 'verified'));
-    run('scp', [...options, archive, manifestPath, join(scripts, 'common.ts'), join(scripts, 'deploy.ts'), `${host}:${remote}/`], { timeout: 180_000 });
+    // Match statistics snapshot transfers: a healthy cross-region connection can
+    // take longer than three minutes. SSH still bounds connection/liveness waits.
+    run('scp', [...options, archive, manifestPath, join(scripts, 'common.ts'), join(scripts, 'deploy.ts'), `${host}:${remote}/`], { timeout: 600_000 });
     const deploy = (action: string) => remoteRun(`flock -w 120 /tmp/cuberoot-wca-data.lock node ${remote}/deploy.ts ${action} /www/wwwroot/toolkit/stats${action === 'activate' ? ` ${remote}/${m.archive.name} ${remote}/${candidate}` : action === 'finalize' ? ` ${m.archive.sha256}` : ''}`);
     // A prior interrupted publish may have switched live data without advancing the Release.
     // Recover to the last committed Release before accepting a new candidate.
