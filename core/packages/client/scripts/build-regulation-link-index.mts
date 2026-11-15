@@ -28,6 +28,7 @@ export function buildRegulationLinkIndex() {
   // Announcements are the canonical reading destination for duplicated log items.
   for (const row of posts) addSupplements(row, `/regulation/post/${row.id}`);
   sources.set('https://forum.worldcubeassociation.org/t/statement-from-the-wca-integrity-committee-regarding-a-recent-investigation/68143', '/regulation/post/wic-investigation-2026');
+  sources.set('https://forum.worldcubeassociation.org/t/statement-from-the-wca-appeals-committee-regarding-a-recent-appeal/68299', '/regulation/post/wac-appeal-2026');
   const archive = sources.get('https://www.worldcubeassociation.org/archive/forum_topics/388#p1640');
   if (archive) sources.set('https://www.worldcubeassociation.org/forum/viewtopic.php?f=9&t=388', archive);
   if (existsSync(resolve(data, 'references-index.json'))) {

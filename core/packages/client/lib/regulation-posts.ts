@@ -2,6 +2,15 @@ import posts from '@/app/[lang]/regulation/_data/posts-index.json';
 
 // Canonical article metadata shared by headings, indexes, SEO and homepage pins.
 export const REG_NEWS = {
+  "wac-appeal-2026": {
+    "id": "wac-appeal-2026",
+    // User-supplied forum text has only a relative timestamp; retain month precision.
+    "date": "2026-11",
+    "title": {
+      "zh": "WCA 申诉委员会关于近期申诉的声明",
+      "en": "Statement from the WCA Appeals Committee Regarding a Recent Appeal"
+    }
+  },
   "wic-investigation-2026": {
     "id": "wic-investigation-2026",
     "date": "2026-10",

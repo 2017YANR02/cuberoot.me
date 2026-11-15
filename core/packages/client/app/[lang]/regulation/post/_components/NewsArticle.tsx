@@ -40,6 +40,61 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
   const no = t('不可', 'No');
   return <div className="reg-page news-article-page"><div className="reg-wrap">
     <div className="news-list">
+{slug === 'wac-appeal-2026' && (<article className="news-item" id={REG_NEWS['wac-appeal-2026'].id}>
+            <PostHeading href="/regulation/post" backLabel={t('公告', 'Posts')}>{tr(REG_NEWS['wac-appeal-2026'].title)}</PostHeading>
+            <div className="news-meta">
+              <span className="news-date">{REG_NEWS['wac-appeal-2026'].date}</span>
+              <SourceLink
+                source
+                href="https://forum.worldcubeassociation.org/t/statement-from-the-wca-appeals-committee-regarding-a-recent-appeal/68299"
+                label={t('WCA 论坛官方声明', 'Official WCA Forum statement')}
+              />
+              <PostFeatureAction post={REG_NEWS['wac-appeal-2026']} />
+            </div>
+            <p className="news-lede">
+              {t(
+                'WCA 申诉委员会（WAC）已完成对一项申诉的审查。该申诉针对的是 WCA 廉政委员会（WIC）此前在 2026 年 10 月 21 日《关于近期调查的声明》中公布的一项纪律处分决定。',
+                'The WCA Appeals Committee (WAC) has concluded its review of an appeal concerning a disciplinary decision previously announced by the WCA Integrity Committee (WIC) on October 21, 2026 in its statement regarding a recent investigation.',
+              )}
+            </p>
+            <p className="news-lede">
+              {t(
+                '涉事选手尚未成年。出于 WIC 原声明中所述的隐私保护考虑，我们不会公开该选手的身份，并请社区成员不要猜测其身份。',
+                'The competitor involved is a minor. Consistent with the privacy considerations outlined in WIC’s original statement, we will not identify the competitor and ask the Community to refrain from speculation regarding their identity.',
+              )}
+            </p>
+            <p className="news-lede">
+              {t(
+                '经审查申诉及相关案件材料，WAC 决定撤销对该选手的禁赛处分。本决定立即生效，该选手可以参加 WCA 比赛。',
+                'Following a review of the appeal and the relevant case materials, WAC has decided to overturn the suspension imposed on the competitor. This decision takes effect immediately, and the competitor is eligible to participate in WCA competitions.',
+              )}
+            </p>
+            <p className="news-lede">
+              {t(
+                'WAC 的决定仅涉及禁赛处分。针对各次尝试作出的判罚及取消成绩的处理保持不变，由此对该选手官方成绩作出的调整也保持不变。',
+                'WAC’s decision is limited to the suspension. The penalties and disqualifications applied to individual attempts remain unchanged, as do the resulting adjustments to the competitor’s official results.',
+              )}
+            </p>
+            <p className="news-lede">
+              {t(
+                '委员会依据适用的 WCA 议案和申诉程序，对禁赛处分进行了评估，并据此作出本决定。这不应被理解为推翻此前对违反竞赛规则的认定。',
+                'The Committee’s decision reflects its assessment of the suspension under the applicable WCA motions and appeals process. It should not be interpreted as a reversal of the underlying regulatory findings.',
+              )}
+            </p>
+            <p className="news-lede">
+              {t(
+                '为尊重选手隐私及申诉程序的保密要求，WAC 不会公开讨论作出本决定所依据的具体情况或审议过程。',
+                'Out of respect for the competitor’s privacy and the confidentiality of the appeals process, WAC will not publicly discuss the specific circumstances or deliberations that led to this decision.',
+              )}
+            </p>
+            <p className="news-lede">
+              {t(
+                '本声明旨在向 WCA 社区公布申诉结果，并澄清相关情况。我们请大家继续尊重该选手的隐私。',
+                'This statement is intended to communicate the outcome of the appeal and provide clarity to the WCA Community. We ask that the competitor’s privacy continue to be respected.',
+              )}
+            </p>
+            <p className="news-lede">{t('WCA 申诉委员会', 'WCA Appeals Committee')}</p>
+          </article>)}
 {slug === 'wic-investigation-2026' && (<article className="news-item" id={REG_NEWS['wic-investigation-2026'].id}>
             <PostHeading href="/regulation/post" backLabel={t('公告', 'Posts')}>{tr(REG_NEWS['wic-investigation-2026'].title)}</PostHeading>
             <div className="news-meta">
