@@ -1943,7 +1943,7 @@ a.alg-community-author:hover {
   font-size: 12px;
   cursor: pointer;
 }
-.alg-related-train-select input { width: 16px; height: 16px; margin: 0; cursor: inherit; accent-color: var(--accent); }
+.alg-related-train-checkbox { width: 16px; height: 16px; margin: 0; cursor: inherit; accent-color: var(--accent); }
 .alg-meta-related-grid.alg-meta-top-grid.alg-related-training-grid {
   display: grid;
   grid-template-columns: max-content repeat(var(--alg-related-columns), minmax(0, 86px));
