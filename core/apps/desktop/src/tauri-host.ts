@@ -1,7 +1,7 @@
 import { printDesktopDocument } from './native-print';
 import { openDesktopExternal } from './native-external';
 import { createStackmatMicSource } from '@cuberoot/timer-ui/external';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke, isTauri } from '@tauri-apps/api/core';
 import { getVersion } from '@tauri-apps/api/app';
 import { getCurrent, onOpenUrl } from '@tauri-apps/plugin-deep-link';
 import { openUrl } from '@tauri-apps/plugin-opener';
@@ -23,6 +23,7 @@ import { browserClipboardTransport } from '@cuberoot/timer-ui';
 
 import packageInfo from '../package.json';
 import { TauriBleTransport } from './tauri-ble-transport';
+import { withDesktopDistribution } from './distribution';
 
 const desktopSecureStorage = {
   getItem: (key: string) => invoke<string | null>('secure_get', { key }),
@@ -95,3 +96,9 @@ export const desktopHost: InstalledAppHost = {
   version: packageInfo.version,
   ...(navigator.userAgent.includes('Windows') ? { getWindowsUpdateInfo: async () => ({ versionName: await getVersion() }) } : {}),
 };
+
+export async function loadDesktopHost(): Promise<InstalledAppHost> {
+  if (!isTauri()) return desktopHost;
+  const [channel, version] = await Promise.all([invoke<string>('desktop_distribution'), getVersion()]);
+  return withDesktopDistribution(desktopHost, channel, version);
+}

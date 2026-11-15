@@ -5,6 +5,9 @@ description = "CubeRoot desktop host"
 authors = ["CubeRoot"]
 edition = "2021"
 
+[features]
+microsoft-store = []
+
 [lib]
 name = "cuberoot_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]

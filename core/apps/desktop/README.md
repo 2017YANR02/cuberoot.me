@@ -5,3 +5,5 @@
 先读[五端文档入口](../../../docs/product/apps/README.md)与[共享产品层](../../packages/app-ui/README.md)，再查本目录 `package.json`、`src/`、`src-tauri/` 的实现与权限。构建、签名、公证、安装和设备验收分平台记录在[路线图](../../../docs/product/apps/mobile-app-roadmap.md)。
 
 命令从 `core/` 执行：`pnpm --filter @cuberoot/desktop typecheck` 验证宿主；`pnpm --filter @cuberoot/desktop build` 构建 Web 资产；`pnpm --filter @cuberoot/desktop tauri:build` 才构建原生应用。按实际变更选择检查，不把 Web 资产构建称为原生发行验收。发布前读[发布契约](../../../docs/contributing/release.md)。
+
+Windows 商店采用 MSIX，入口为 `pnpm --filter @cuberoot/desktop store:check` / `build:store`；需要 Partner Center 真实包身份。配置、独立 Windows CI、未签名产物及会员支付边界见[上架基础](../../../docs/compliance/windows-store-submission.md)。官网 EXE 继续使用原发布流程。

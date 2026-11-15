@@ -1,0 +1,79 @@
+name: Windows Store candidate
+run-name: Windows Store ${{ inputs.version }} (build only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: Exact reviewed main commit (40-character SHA)
+        required: true
+        type: string
+      version:
+        description: Store package version Major.Minor.Build.0 (higher than previous submissions)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+concurrency:
+  group: windows-store-candidate
+  cancel-in-progress: false
+
+jobs:
+  package:
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      SOURCE_COMMIT: ${{ inputs.source_commit }}
+      WINDOWS_STORE_VERSION: ${{ inputs.version }}
+      WINDOWS_STORE_IDENTITY_NAME: ${{ vars.WINDOWS_STORE_IDENTITY_NAME }}
+      WINDOWS_STORE_PUBLISHER: ${{ vars.WINDOWS_STORE_PUBLISHER }}
+      WINDOWS_STORE_PUBLISHER_DISPLAY_NAME: ${{ vars.WINDOWS_STORE_PUBLISHER_DISPLAY_NAME }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_commit }}
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout: |
+            core
+            .github/workflows
+            tools/cstimer-scramble
+            tools/solver/rust-cross
+      - name: Validate source
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_COMMIT" =~ ^[a-f0-9]{40}$ ]]
+          git merge-base --is-ancestor "$SOURCE_COMMIT" origin/main
+          test "$(git rev-parse HEAD)" = "$SOURCE_COMMIT"
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+      - name: Validate Store configuration before building
+        working-directory: core/apps/desktop
+        shell: bash
+        run: node scripts/windows-store.ts check
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: core/package.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - name: Install dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+      - name: Validate desktop host
+        working-directory: core
+        run: pnpm --filter @cuberoot/desktop test
+      - name: Build unsigned MSIX with SDK validation
+        working-directory: core
+        run: pnpm --filter @cuberoot/desktop build:store
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-store-${{ inputs.version }}-${{ github.run_id }}
+          path: .local-data/windows-store/*/artifacts/*
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30

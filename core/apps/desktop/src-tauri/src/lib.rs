@@ -10,10 +10,21 @@ mod native_print;
 const SERVICE: &str = "me.cuberoot.app";
 
 #[tauri::command]
+fn desktop_distribution() -> &'static str {
+    if cfg!(all(target_os = "windows", feature = "microsoft-store")) {
+        "microsoft-store"
+    } else {
+        "direct"
+    }
+}
+
+#[tauri::command]
 fn prepare_auth_callback(_app: tauri::AppHandle) -> Result<(), String> {
     // Standalone Windows binaries have no installer to register their login callback.
     // Register only when signing in, not every time a second installation is launched.
-    #[cfg(target_os = "windows")]
+    // MSIX owns protocol registration through AppxManifest.xml. Never overwrite
+    // that association with the executable's versioned WindowsApps path.
+    #[cfg(all(target_os = "windows", not(feature = "microsoft-store")))]
     {
         use tauri_plugin_deep_link::DeepLinkExt;
         _app.deep_link().register_all().map_err(|error| error.to_string())?;
@@ -67,7 +78,7 @@ pub fn run() {
                 let _ = screen_awake::apply(false);
             }
         })
-        .invoke_handler(tauri::generate_handler![prepare_auth_callback, screen_awake::set_keep_awake, native_print::print_document, file_export::export_file, secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe, ble_address::ble_device_mac])
+        .invoke_handler(tauri::generate_handler![desktop_distribution, prepare_auth_callback, screen_awake::set_keep_awake, native_print::print_document, file_export::export_file, secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe, ble_address::ble_device_mac])
         .run(tauri::generate_context!())
         .expect("error while running CubeRoot");
 }

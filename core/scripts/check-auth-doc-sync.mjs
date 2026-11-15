@@ -79,6 +79,7 @@ const EXACT = new Set([
   'apps/mobile/src/native/record-push-plugin.ts',
   'apps/api/src/routes/notifications.ts', 'apps/api/src/utils/push_device.ts',
   'apps/desktop/src-tauri/src/lib.rs', 'apps/harmony/src/harmony-host.ts',
+  'apps/desktop/scripts/windows-store.ts',
   'apps/harmony/entry/src/main/ets/bridge/HarmonyBridge.ets',
   'apps/harmony/entry/src/main/ets/bridge/DeepLinkInbox.ets',
   'apps/harmony/entry/src/main/ets/entryability/EntryAbility.ets',
@@ -88,6 +89,7 @@ const NATIVE_NAME = /^(?:AppDelegate\.swift|SceneDelegate\.swift|AppleMembership
 const CONFIG = [
   'packages/client/proxy.ts',
   'apps/desktop/src-tauri/tauri.conf.json', 'apps/desktop/src-tauri/capabilities/default.json',
+  'apps/desktop/src-tauri/Cargo.toml',
   'apps/harmony/entry/src/main/module.json5',
 ];
 const NAME = /auth|account|identity|session|login|signin|oauth|apple|google|wechat|douyin|alipay|social|pkce|password|credential|logout|signout|revoke|token/i;

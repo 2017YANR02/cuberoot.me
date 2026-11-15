@@ -24,6 +24,15 @@
 
 本节保留总体范围、当前验收入口与待完成检查。按日期的旧实现批次已归入[历史记录](history/mobile-app-history.md)，其中旧开关、商店状态和“未实现”不代表当前状态。只有完成实现并取得对应验证证据后才打勾；只完成代码但缺少真机、账号或商店证据的项目保持未勾选，并注明依赖条件。
 
+### 2026-11-15 Windows Microsoft Store 基础（本地，未送审）
+
+- 所有者选定公司账号、免费 MSIX 上架、复用既有会员支付，首版不接微软内购。配置与送审入口见[Windows 上架基础](../../compliance/windows-store-submission.md)。
+- 同一 Tauri 宿主增加 `microsoft-store` 编译渠道：商店版使用 MSIX 协议注册并停用官网 EXE 更新入口，网站会员/账号与其他宿主沿用原实现。普通 Vite 预览保留，不要求 Tauri IPC。
+- 增加真实包身份/版本校验、既有图标复用、Windows SDK MakeAppx 打包、来源提交与 SHA-256 收据，以及仅 Windows 手动构建的 CI 定义；不上传商店、不发布官网、不触发其他平台。
+- 本地证据：打包校验 4 项、渠道隔离 2 项、既有 Windows 更新 UI 2 项及账号文档 95 项通过；Desktop 类型检查与 Web production build、脚本定向类型检查、架构边界、workflow actionlint 和 diff 检查通过。Mac 上 `cargo check --locked --features microsoft-store` 通过，仅证明 macOS 编译兼容；不覆盖 Windows 专属编译分支。Chrome 隔离外网的 production bundle 预览正常挂载“计时 / 工具 / 我的”，无 pageerror；不代表 Windows 原生验收。
+- 合成身份的 `store:check` 通过，仅验证代码和现有图标；真实公司账号、Partner Center 配置及 Windows CI 尚未核验/运行。独立审查发现并修复浏览器预览依赖原生 IPC 的回归，保留 WebView2 与跨渠道共存为正式发行门槛。本轮未提交或推送。
+- 待完成：微软公司账号及 Product identity 核验、Windows 原生 MSIX/认证工具检查、测试签名或商店测试分发、WebView2 缺失处理、安装升级与数据保留、登录冷/热回跳、GAN 16 UI/Stackmat、真实付款退款。旧 EXE 与 MSIX 共享 single-instance 身份，先退出另一渠道再测试；迁移/共存方案未验收。未注册、提交或发布商店，不将 Windows 或五端总体标为完成。
+
 ### 2026-11-15 计时器实时分享第一版（本地，未发布）
 
 - Web Solo 与共享 App 的「设置 → 计时 → 实时分享」接入同一 `@cuberoot/timer-ui/live-share`，支持生成、复制、二维码与结束分享；观看端为 `/timer/watch`，复用计时显示、成绩行、统计、智能魔方和复盘组件，不挂载计时控制器、BLE 或成绩写入逻辑。

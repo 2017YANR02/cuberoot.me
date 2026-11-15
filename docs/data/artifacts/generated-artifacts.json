@@ -1469,6 +1469,8 @@
           "core/packages/app-ui/src/**",
           "core/apps/desktop/package.json",
           "core/apps/desktop/vite.config.ts",
+          "core/apps/desktop/scripts/windows-store.ts",
+          ".github/workflows/windows_store.yml",
           "core/apps/desktop/src/**",
           "core/apps/desktop/src-tauri/Cargo.toml",
           "core/apps/desktop/src-tauri/Cargo.lock",
@@ -1486,7 +1488,10 @@
       },
       "owner": "core/apps/desktop",
       "workingDirectory": "core",
-      "command": "pnpm --filter @cuberoot/desktop build; pnpm --filter @cuberoot/desktop tauri:build",
+      "command": "pnpm --filter @cuberoot/desktop build; pnpm --filter @cuberoot/desktop tauri:build; for a configured Windows Store candidate: pnpm --filter @cuberoot/desktop build:store",
+      "outputs": [
+        ".local-data/windows-store/*/artifacts/**"
+      ],
       "transientOutputs": [
         "core/apps/desktop/dist/**",
         "core/apps/desktop/src-tauri/target/**",
@@ -1494,7 +1499,8 @@
       ],
       "verification": [
         "run the Tauri native build separately on Windows and macOS",
-        "verify each produced installer or bundle independently; record installation, BLE, signing, notarization, and distribution evidence separately"
+        "verify each produced installer or bundle independently; record installation, BLE, signing, notarization, and distribution evidence separately",
+        "Store candidates require real Partner Center identity and a clean source commit; MakeAppx validates the unsigned MSIX, receipt records hashes; this is not Store signing, installation, submission or acceptance"
       ],
       "driftPolicy": "The same Tauri source owns both desktop platforms, but an artifact produced on one OS is not build or installation evidence for the other. Unsigned local bundles are not signed, notarized, or released artifacts."
     },

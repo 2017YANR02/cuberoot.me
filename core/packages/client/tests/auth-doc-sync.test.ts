@@ -26,7 +26,8 @@ describe('/dev/auth source-review drift', () => {
   it('tracks the administrator release boundary and Windows handoff adapters', () => {
     for (const path of ['apps/api/src/routes/app_releases.ts', 'apps/api/src/releases/service.ts',
       'packages/client/lib/app-release-api.ts', 'packages/client/app/[lang]/download/ReleaseManager.tsx',
-      'apps/desktop/src/tauri-host.ts', 'apps/desktop/src-tauri/src/lib.rs']) expect(isAuthDocSource(path)).toBe(true);
+      'apps/desktop/src/tauri-host.ts', 'apps/desktop/src-tauri/src/lib.rs',
+      'apps/desktop/scripts/windows-store.ts', 'apps/desktop/src-tauri/Cargo.toml']) expect(isAuthDocSource(path)).toBe(true);
   });
   it('tracks private smart-cube addresses and their account lifecycle', () => {
     for (const path of [...['src/routes/smart_cube_macs.ts', 'migrations/0285_smart_cube_macs.sql']

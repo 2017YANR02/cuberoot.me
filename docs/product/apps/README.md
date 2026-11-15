@@ -9,6 +9,7 @@
 ## 文档与登记
 
 - [下载页与安装包分发](app-downloads.md)
+- [Windows Microsoft Store 上架基础](../../compliance/windows-store-submission.md)
 - [Apple Watch 复盘与现有平台对照](apple-watch-replay-parity-audit.md)
 - [CubeRoot Apple Watch 计时器第一版](apple-watch-timer.md)
 - [CubeRoot 五端 App 单一来源合同](cross-platform-app-contract.md)
