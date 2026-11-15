@@ -115,7 +115,7 @@ export function TimerStatRail({
 }: TimerStatRailProps) {
   const copy = STAT_RAIL_COPY[language];
   const items: TimerStatItem[] = summary.count > 0 ? STAT_RAIL_KEYS.map(key => key === 'count'
-    ? { label: copy.count, value: `${summary.solved}/${summary.count}` }
+    ? { value: `${summary.solved}/${summary.count}` }
     : { label: key, value: summary[key] }) : [];
   return (
     <button
@@ -139,7 +139,7 @@ export function TimerStatRail({
           </span>)}
       </span> : items.length > 0 ? items.map(({ label, value }, index) => (
         <span className="shell-stat" key={`${label ?? 'value'}-${index}`}>
-          {label && <span className="shell-stat-lbl">{label}</span>}
+          <span className="shell-stat-lbl">{label}</span>
           <span className="shell-stat-val">{value}</span>
         </span>
       )) : (

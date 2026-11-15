@@ -13,7 +13,7 @@ describe('shared timer statistics entry copy', () => {
       row.querySelector('.shell-stat-lbl')?.textContent ?? '',
       row.querySelector('.shell-stat-val')?.textContent,
     ])).toEqual([
-      [{ en: 'Count', zh: '次数' }[language], '5/6'], ['best', '9.87'], ['ao5', '12.00'], ['ao12', '—'],
+      ['', '5/6'], ['best', '9.87'], ['ao5', '12.00'], ['ao12', '—'],
     ]);
     expect(host.querySelector('button')?.title).toBe(
       { en: 'Open times and statistics', zh: '打开成绩与统计' }[language],
