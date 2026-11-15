@@ -51,9 +51,18 @@ export interface CubingCompetition {
   acceptedCount: number;
   registrationStartTime: string | null;
   registrationEndTime: string | null;
+  cancellationEndTime?: string | null;
+  registrationReopenTime?: string | null;
+  hasBeenFull?: boolean;
+  tba?: boolean;
   locations: { regionIso2: string; venue: string; venueZh: string; competitorLimit: number }[];
   events: { eventId: string; roundCount: number; dualRounds?: boolean }[];
 }
+
+/** Public registration inputs only; never forward the full upstream competition object. */
+export type CubingRegistration = Pick<CubingCompetition,
+  'registrationStartTime' | 'registrationEndTime' | 'cancellationEndTime' |
+  'registrationReopenTime' | 'hasBeenFull' | 'tba'>;
 
 /** Equal-date rows have unstable pagination order. Fetch the complete list in one page. */
 export async function fetchCubingCompetitions(request: typeof fetch = fetch): Promise<CubingCompetition[]> {

@@ -398,6 +398,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'live', m: 'GET', p: '/v1/cubing-live/:slug/round/:event/:round', g: 'public', zh: '粗饼单轮成绩刷新', en: 'Cubing China round refresh' },
   { d: 'live', m: 'GET', p: '/v1/cubing-live/:slug/stream', g: 'public', c: 'no-store', zh: '粗饼成绩更新事件', en: 'Cubing China live result events' },
   { d: 'live', m: 'GET', p: '/v1/cubing-live-stream/:slug', g: 'public', zh: '实时成绩流(SSE)', en: 'Live result stream (SSE)' },
+  { d: 'live', m: 'GET', p: '/v1/cubing-registration', g: 'public', zh: '粗饼比赛报名时间与满员状态', en: 'Cubing China registration times and capacity state' },
   { d: 'live', m: 'GET', p: '/v1/cubing-zh/:wcaId', g: 'public', zh: '国内选手中文信息', en: 'CN cuber Chinese info' },
 
   // ---- alg ----

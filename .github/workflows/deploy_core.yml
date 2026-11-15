@@ -56,7 +56,7 @@ jobs:
           sparse-checkout: |
             .node-version
             core
-            docs/benchmarks
+            docs/product/assistant/benchmarks
             ops/nginx
             ops/systemd
             ops/bin

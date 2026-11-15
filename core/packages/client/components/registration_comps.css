@@ -264,3 +264,16 @@
 @media (max-width: 560px) {
   .reg-cards { grid-template-columns: minmax(0, 1fr); }
 }
+
+.reg-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 1rem; }
+.reg-source-note { color: var(--muted-foreground); font-size: 0.75rem; }
+.reg-source-note { margin: 0; }
+.rc-registration { display: flex; align-items: center; flex-wrap: wrap; gap: 0.25rem 0.6rem; }
+.rc-registration-time { color: var(--muted-foreground); font-size: 0.75rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rc-registration-time.is-urgent { color: var(--destructive); font-weight: 600; }
+.rc-details.rc-details--registration { display: flex; align-items: baseline; gap: 0.6rem; min-width: 0; }
+.rc-details--registration .rc-meta { flex: none; }
+.rc-details--registration .rc-place { min-width: 0; flex-wrap: nowrap; }
+.rc-details--registration .rc-place > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rc-pill--upcoming { color: var(--accent); background: var(--accent-soft); }
+.rc-pill--reopened { color: var(--signal-info); background: color-mix(in srgb, var(--signal-info) 14%, transparent); }

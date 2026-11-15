@@ -8,7 +8,8 @@
  */
 import { recordResultHref, tiedBeforeResult, type RecordResultTarget } from '../utils/record_result_link.js';
 import { Hono } from 'hono';
-import { fetchCubingLiveRound, fetchCubingCompetitors, findCubingCompetition } from '../utils/cubing_source.js';
+import { fetchCubingLiveRound, fetchCubingCompetitors, fetchCubingCompetitions, findCubingCompetition } from '../utils/cubing_source.js';
+import type { CubingRegistration } from '@cuberoot/shared/cubing-live';
 import { openCubingStream } from '../utils/cubing_stream.js';
 import { streamSSE } from 'hono/streaming';
 import { fetchCubingMeta as scrapeMeta, collectCubingResults as collectCompData } from '../utils/cubing_live.js';
@@ -26,6 +27,30 @@ import { getUpcomingComps } from '../utils/upcoming_comps_cache.js';
 import { wcaIdToCubingSlug, nameToCubingSlug } from '@cuberoot/shared/cubing-slug';
 
 export const cubingLiveRoutes = new Hono();
+
+cubingLiveRoutes.get('/cubing-registration', async (c) => {
+  try {
+    const competitions = await fetchCubingCompetitions();
+    const registrations: Record<string, CubingRegistration> = {};
+    const today = new Date(Date.now() + 8 * 3600_000).toISOString().slice(0, 10);
+    for (const comp of competitions) {
+      if (!comp.wcaCompetitionId || (comp.endDate || comp.startDate) < today || comp.status === 'cancelled') continue;
+      registrations[comp.wcaCompetitionId] = {
+        registrationStartTime: comp.registrationStartTime,
+        registrationEndTime: comp.registrationEndTime,
+        cancellationEndTime: comp.cancellationEndTime ?? null,
+        registrationReopenTime: comp.registrationReopenTime ?? null,
+        hasBeenFull: comp.hasBeenFull === true,
+        tba: comp.tba === true,
+      };
+    }
+    c.header('Cache-Control', 'public, max-age=60, s-maxage=120');
+    return c.json({ registrations });
+  } catch {
+    c.header('Cache-Control', 'no-store');
+    return c.json({ error: 'Registration source unavailable' }, 502);
+  }
+});
 
 // ─── 类型 ──────────────────────────────────────────────────────────────────
 

@@ -1,10 +1,10 @@
 'use client';
 
-// 「报名」— 首页 OngoingComps 的报名标签内容。全世界比赛,按下一个报名里程碑
-// (开放/截止)的本地日分组:今天/明天/后天/本周内/更晚。登录用户可「盯一下」关注的
+// 「报名」— 按国家筛选，显示当前报名状态及按用户本地日分组的下一个里程碑。
+// 登录用户可「盯一下」关注的
 // 比赛,置顶为「已关注」组,跨设备同步(server PG comp_follows)。
 // 取数 + 分组纯逻辑在 lib/comp-registration.ts;关注 API 在 lib/comp-follows.ts。
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Star, LogIn } from '@app-foundation/icons/lucide';
 import type { Comp } from '@/lib/comp-search';
 import {
@@ -12,12 +12,19 @@ import {
   localDayDiff,
   type RegItem,
   type RegBucketKey,
+  type CubingRegistrations,
 } from '@/lib/comp-registration';
 import { type CompFollowState } from '@/components/CompFollow';
-import { authActions } from '@/lib/auth-store';
+import { authActions, useAuthUser } from '@/lib/auth-store';
 import { type CompCardTone } from '@/components/CompCard';
 import { CompCardWithRounds, wcaRoundsSeed } from '@/components/CompCardWithRounds';
 import { tr } from '@/i18n/tr';
+import { useRetainedState } from '@/hooks/useRetainedState';
+import { apiUrl } from '@/lib/api-base';
+import { loadFlagData, personFlagIso2, countryToIso2 } from '@/lib/country-flags';
+import { countryName } from '@/lib/country-name';
+import { CompactSelect } from '@/components/CompactSelect';
+import { Flag } from '@/components/Flag';
 import './registration_comps.css';
 
 // ── 文案 ────────────────────────────────────────────────────────────────────
@@ -36,13 +43,16 @@ function bucketLabel(key: RegBucketKey): string {
     case 'today': return tr({ zh: '今天', en: 'Today' });
     case 'tomorrow': return tr({ zh: '明天', en: 'Tomorrow' });
     case 'dayAfter': return tr({ zh: '后天', en: 'In 2 days' });
-    case 'soon': return tr({ zh: '本周内', en: 'This week' });
+    case 'soon': return tr({ zh: '未来 7 天', en: 'Next 7 days' });
     case 'later': return tr({ zh: '更晚', en: 'Later' });
+    case 'closed': return tr({ zh: '报名结束', en: 'Registration closed' });
+    case 'unknown': return tr({ zh: '报名待定', en: 'Registration pending' });
   }
 }
 
 function actionWord(kind: RegItem['kind']): string {
-  if (kind === 'closed') return tr({ zh: '报名已截止', en: 'Closed' });
+  if (kind === 'closed' || kind === 'unknown') return '';
+  if (kind === 'reopen') return tr({ zh: '重开', en: 'Reopens' });
   if (kind === 'open') return tr({ zh: '开放', en: 'Opens' });
   return tr({ zh: '截止', en: 'Closes' });
 }
@@ -51,7 +61,7 @@ function actionWord(kind: RegItem['kind']): string {
  *  day 模式:日分组里靠组标题,近三天只补时刻,再远补星期/日期 + 时刻;
  *  followed 模式:无组标题,带相对日 + 时刻。 */
 function whenLabel(item: RegItem, now: number, isZh: boolean, mode: 'day' | 'followed'): string {
-  if (item.kind === 'closed') return '';
+  if (item.kind === 'closed' || item.kind === 'unknown') return '';
   const diff = localDayDiff(item.at, now);
   const clock = clockOf(item.at);
   if (mode === 'day') {
@@ -68,11 +78,16 @@ function whenLabel(item: RegItem, now: number, isZh: boolean, mode: 'day' | 'fol
   return `${day} ${clock}`;
 }
 
-/** 报名状态 pill 的色调:已截止灰;开放 accent;截止默认 amber,24h 内 urgent(红)。 */
-function pillTone(item: RegItem, now: number): CompCardTone {
-  if (item.kind === 'closed') return 'closed';
-  if (item.kind === 'open') return 'open';
-  return item.at - now <= 86_400_000 ? 'urgent' : 'close';
+const STATUS_LABELS = {
+  upcoming: { zh: '尚未开放', en: 'Not yet open' },
+  open: { zh: '报名中', en: 'Registration open' },
+  reopened: { zh: '重开报名中', en: 'Registration reopened' },
+  paused: { zh: '报名暂停', en: 'Registration paused' },
+  closed: { zh: '报名结束', en: 'Registration closed' },
+  unknown: { zh: '状态待确认', en: 'Status unconfirmed' },
+};
+function pillTone(item: RegItem): CompCardTone {
+  return { upcoming: 'upcoming', open: 'open', reopened: 'reopened', paused: 'close', closed: 'closed', unknown: 'closed' }[item.status] as CompCardTone;
 }
 
 // ── 卡片 ────────────────────────────────────────────────────────────────────
@@ -91,10 +106,13 @@ function RegistrationCard({ item, isZh, lang, now, mode, followed, onToggle, sho
       comp={item.comp}
       isZh={isZh}
       lang={lang}
-      pill={{ when: whenLabel(item, now, isZh, mode), word: actionWord(item.kind), tone: pillTone(item, now) }}
-      dimmed={item.kind === 'closed'}
+      pill={{ word: tr(STATUS_LABELS[item.status]), tone: pillTone(item) }}
       follow={showFollow ? { followed, onToggle } : null}
       roundsSeed={wcaRoundsSeed(item.comp.rounds)}
+      registrationTiming={{
+        label: item.kind === 'closed' || item.kind === 'unknown' ? '' : `${whenLabel(item, now, isZh, mode)} ${actionWord(item.kind)}`,
+        urgent: item.kind === 'close' && item.at - now <= 86_400_000,
+      }}
     />
   );
 }
@@ -106,13 +124,71 @@ export function RegistrationView({ comps, isZh, lang, loggedIn, follows, toggle 
   lang: 'zh' | 'en';
 } & Pick<CompFollowState, 'loggedIn' | 'follows' | 'toggle'>) {
   const login = authActions.login;
-  // allow-hydration-volatile-state: parent renders this view only after its client-side comp fetch.
-  // now 在组件生命周期内固定,避免 useMemo 依赖每帧抖动(首页不会开几小时)。
-  const [now] = useState(() => Date.now());
-  const view = useMemo(() => buildRegView(comps, now, follows), [comps, now, follows]);
+  const user = useAuthUser();
+  const owner = user ? String(user.uid ?? user.wcaId) : '';
+  const [choice, setChoice] = useRetainedState<{ owner: string; country: string } | null>('home:registration-country', null);
+  const [flagVersion, setFlagVersion] = useState(0);
+  const [now, setNow] = useState(0);
+  const [cn, setCn] = useState<CubingRegistrations>({});
+  const [sourceFailed, setSourceFailed] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void loadFlagData({ persons: !!user?.wcaId }).then(v => { if (active) setFlagVersion(v); }).catch(() => {});
+    return () => { active = false; };
+  }, [user?.wcaId]);
+  const defaultCountry = useMemo(() => user?.country
+    ? countryToIso2(user.country) || user.country.toLowerCase()
+    : user?.wcaId ? countryToIso2(personFlagIso2(user.wcaId)) : '', [user, flagVersion]);
+  const country = choice?.owner === owner ? choice.country : defaultCountry;
+  useEffect(() => {
+    const tick = () => setNow(Date.now());
+    tick();
+    const timer = window.setInterval(tick, 30_000);
+    window.addEventListener('focus', tick);
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', tick); };
+  }, []);
+  useEffect(() => {
+    if (!comps.some(c => c.country.toLowerCase() === 'cn')) return;
+    let active = true;
+    let pending = false;
+    const controller = new AbortController();
+    const refresh = async () => {
+      if (pending || document.hidden) return;
+      pending = true;
+      try {
+        const res = await fetch(apiUrl('/v1/cubing-registration?v=1'), { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15_000)]) });
+        if (!res.ok) throw new Error('registration source');
+        const data = await res.json() as { registrations: CubingRegistrations };
+        if (!data.registrations || typeof data.registrations !== 'object') throw new Error('registration data');
+        if (active) { setCn(data.registrations); setSourceFailed(false); }
+      } catch {
+        if (active) { setCn({}); setSourceFailed(true); }
+      } finally { pending = false; }
+    };
+    void refresh();
+    const timer = window.setInterval(refresh, 120_000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { active = false; controller.abort(); window.clearInterval(timer); document.removeEventListener('visibilitychange', refresh); };
+  }, [comps]);
+  const countries = useMemo(() => [...new Set([...comps.map(c => c.country.toLowerCase()), defaultCountry].filter(Boolean))]
+    .sort((a, b) => countryName(a, isZh).localeCompare(countryName(b, isZh), lang)), [comps, defaultCountry, isZh, lang]);
+  const filtered = useMemo(() => country ? comps.filter(c => c.country.toLowerCase() === country) : comps, [comps, country]);
+  const view = useMemo(() => buildRegView(filtered, now, follows, cn), [filtered, now, follows, cn]);
+  const allLabel = tr({ zh: '全部国家', en: 'All countries' });
 
   return (
     <div className="reg-comps">
+      <div className="reg-toolbar">
+        <CompactSelect
+          ariaLabel={tr({ zh: '国家筛选', en: 'Filter by country' })}
+          label={country ? countryName(country, isZh) : allLabel}
+          value={country}
+          items={[{ value: '', label: allLabel }, ...countries.map(iso2 => ({ value: iso2, label: <><Flag iso2={iso2} /> {countryName(iso2, isZh)}</> }))]}
+          onChange={value => setChoice({ owner, country: value })}
+        />
+      </div>
+      {sourceFailed && (!country || country === 'cn') && <p className="reg-source-note" role="status">{tr({ zh: '粗饼报名状态暂不可用', en: 'Cubing China registration status is unavailable' })}</p>}
+      {now > 0 && view.total === 0 && <p className="reg-source-note">{tr({ zh: '暂无符合条件的比赛', en: 'No matching competitions' })}</p>}
       {loggedIn && view.followed.length > 0 && (
         <section className="reg-group">
           <h3 className="reg-group-head reg-group-head--fav">

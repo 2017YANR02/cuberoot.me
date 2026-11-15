@@ -1,58 +1,48 @@
-// 首页「报名」标签的取数 + 分组逻辑（纯函数，便于回归测试）。
-// 数据源：all_upcoming_comps.json 的 registration_open / registration_close（全世界比赛，ISO 8601 UTC）。
-// 思路：每场比赛取「下一个需要行动的报名里程碑」——
-//   还没开放 → open（即将开放，热门赛抢位）；报名中 → close（即将截止，最后机会）；已截止 → 不显示。
-// 再按里程碑发生的「用户本地日历日」分组：今天 / 明天 / 后天 / 本周内 / 更晚。一场比赛只出现一次。
+// Registration instants are compared as epoch milliseconds; grouping uses the viewer's calendar.
 import type { Comp } from './comp-search';
+import type { CubingRegistration } from '@cuberoot/shared/cubing-live';
 
-export type RegKind = 'open' | 'close';
-
-export interface RegItem {
-  comp: Comp;
-  /** 'open'=报名将开放；'close'=报名将截止；'closed'=报名已截止（仅「已关注」里仍想盯的比赛）。 */
-  kind: RegKind | 'closed';
-  /** 里程碑时刻 epoch ms（kind='closed' 时为 registration_close）。 */
-  at: number;
-}
-
-export type RegBucketKey = 'today' | 'tomorrow' | 'dayAfter' | 'soon' | 'later';
-
-export interface RegBucket {
-  key: RegBucketKey;
-  items: RegItem[];
-}
-
-export interface RegView {
-  /** 关注的、仍在 upcoming 集合里的比赛（有里程碑→open/close；报名已截止→closed）。 */
-  followed: RegItem[];
-  /** 其余比赛按下一个里程碑本地日分组。 */
-  buckets: RegBucket[];
-  /** 可行动条目数（用于标签可见性，不含 closed）。 */
-  total: number;
-}
-
+export type RegKind = 'open' | 'close' | 'reopen' | 'closed' | 'unknown';
+export type RegStatus = 'upcoming' | 'open' | 'reopened' | 'paused' | 'closed' | 'unknown';
+export interface RegItem { comp: Comp; kind: RegKind; status: RegStatus; at: number }
+export type RegBucketKey = 'today' | 'tomorrow' | 'dayAfter' | 'soon' | 'later' | 'closed' | 'unknown';
+export interface RegBucket { key: RegBucketKey; items: RegItem[] }
+export interface RegView { followed: RegItem[]; buckets: RegBucket[]; total: number }
+export type CubingRegistrations = Readonly<Record<string, CubingRegistration>>;
 const MS_DAY = 86_400_000;
-/** 展示视野上界（天）：更晚才开放/截止的比赛不进列表，避免被几个月后的大赛刷屏。 */
 export const REG_HORIZON_DAYS = 60;
+const BUCKET_ORDER: RegBucketKey[] = ['today', 'tomorrow', 'dayAfter', 'soon', 'later', 'closed', 'unknown'];
 
-const BUCKET_ORDER: RegBucketKey[] = ['today', 'tomorrow', 'dayAfter', 'soon', 'later'];
+/** Require an explicit offset: a UTC timestamp must never silently become browser wall time. */
+function instant(value: string | null | undefined): number {
+  return value && /(?:Z|[+-]\d{2}:\d{2})$/i.test(value) ? Date.parse(value) : NaN;
+}
 
-/** 比赛的下一个「需要行动」的报名里程碑：还没开放→open；报名中→close；已截止/无数据→null。 */
-export function nextRegMilestone(c: Comp, now: number): RegItem | null {
-  const open = c.registration_open ? Date.parse(c.registration_open) : NaN;
-  const close = c.registration_close ? Date.parse(c.registration_close) : NaN;
-  if (Number.isFinite(open) && now < open) return { comp: c, kind: 'open', at: open };
-  if (Number.isFinite(close) && now < close) return { comp: c, kind: 'close', at: close };
+/** Cubing's registration rules include an early pause after having filled, even after withdrawals.
+ * Source: cubing.com competition status helper, verified 2026-11-15.
+ * Unknown CN inputs are not represented as a confirmed open registration. */
+export function nextRegMilestone(c: Comp, now: number, cn?: CubingRegistration): RegItem | null {
+  const open = instant(cn ? cn.registrationStartTime : c.registration_open);
+  const close = instant(cn ? cn.registrationEndTime : c.registration_close);
+  const item = (kind: RegKind, status: RegStatus, at: number): RegItem => ({ comp: c, kind, status, at });
+  if (cn?.tba) return item('unknown', 'unknown', now);
+  if (Number.isFinite(open) && now < open) return item('open', 'upcoming', open);
+  if (Number.isFinite(close) && now >= close) return item('closed', 'closed', close);
+  if (cn) {
+    const reopen = instant(cn.registrationReopenTime);
+    const withdraw = instant(cn.cancellationEndTime);
+    if (reopen > now && (cn.hasBeenFull || !(withdraw > now))) return item('reopen', 'paused', reopen);
+    if (close > now) return item('close', reopen <= now ? 'reopened' : 'open', close);
+  }
+  if (close > now) return item('close', c.country.toLowerCase() === 'cn' ? 'unknown' : 'open', close);
   return null;
 }
 
-/** 本地日历日差：里程碑当天 00:00 与今天 00:00 相隔几天（用户本地时区）。 */
+/** Calendar arithmetic avoids 23/25-hour days at daylight-saving transitions. */
 export function localDayDiff(atMs: number, now: number): number {
-  const a = new Date(atMs); a.setHours(0, 0, 0, 0);
-  const n = new Date(now); n.setHours(0, 0, 0, 0);
-  return Math.round((a.getTime() - n.getTime()) / MS_DAY);
+  const day = (ms: number) => { const d = new Date(ms); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()); };
+  return (day(atMs) - day(now)) / MS_DAY;
 }
-
 function bucketOf(diff: number): RegBucketKey {
   if (diff <= 0) return 'today';
   if (diff === 1) return 'tomorrow';
@@ -61,67 +51,33 @@ function bucketOf(diff: number): RegBucketKey {
   return 'later';
 }
 
-/**
- * 构建「报名」标签视图。关注的比赛只进 followed，不在日分组里重复。
- * @param followed 用户关注的 comp id 集合（未登录传空集）。
- */
-export function buildRegView(comps: Comp[], now: number, followed: ReadonlySet<string>): RegView {
+export function buildRegView(comps: Comp[], now: number, followed: ReadonlySet<string>, cn: CubingRegistrations = {}): RegView {
   const horizon = now + REG_HORIZON_DAYS * MS_DAY;
-  const dayItems: RegItem[] = [];
   const followedItems: RegItem[] = [];
-
-  for (const c of comps) {
-    if (followed.has(c.id)) {
-      const m = nextRegMilestone(c, now);
-      if (m) followedItems.push(m);
-      else {
-        const close = c.registration_close ? Date.parse(c.registration_close) : NaN;
-        if (Number.isFinite(close)) followedItems.push({ comp: c, kind: 'closed', at: close });
-      }
-      continue;
-    }
-    const m = nextRegMilestone(c, now);
-    if (m && m.at <= horizon) dayItems.push(m);
-  }
-
-  // followed：有里程碑的按时间升序在前，closed 沉底
-  followedItems.sort((a, b) => {
-    const ac = a.kind === 'closed' ? 1 : 0;
-    const bc = b.kind === 'closed' ? 1 : 0;
-    if (ac !== bc) return ac - bc;
-    return a.at - b.at;
-  });
-
-  // 日分组：组内按里程碑时刻升序（纯时间序，open/close 混排）
   const byBucket = new Map<RegBucketKey, RegItem[]>();
-  for (const it of dayItems) {
-    const k = bucketOf(localDayDiff(it.at, now));
-    const arr = byBucket.get(k) ?? [];
-    arr.push(it);
-    byBucket.set(k, arr);
+  for (const c of comps) {
+    // CN dates use Beijing. Elsewhere retain through the last possible local day;
+    // longitude estimates cannot model political time zones or daylight-saving time.
+    const today = new Date(now + (c.country.toLowerCase() === 'cn' ? 8 : -12) * 3600_000).toISOString().slice(0, 10);
+    if ((c.end_date || c.start_date) < today) continue;
+    const m = nextRegMilestone(c, now, cn[c.id]);
+    if (!m || (!followed.has(c.id) && m.at > horizon)) continue;
+    if (followed.has(c.id)) { followedItems.push(m); continue; }
+    const key = m.kind === 'closed' ? 'closed' : m.kind === 'unknown' ? 'unknown' : bucketOf(localDayDiff(m.at, now));
+    const items = byBucket.get(key) ?? [];
+    items.push(m);
+    byBucket.set(key, items);
   }
-  const buckets: RegBucket[] = [];
-  for (const k of BUCKET_ORDER) {
-    const arr = byBucket.get(k);
-    if (!arr || arr.length === 0) continue;
-    arr.sort((a, b) => a.at - b.at);
-    buckets.push({ key: k, items: arr });
-  }
-
-  return {
-    followed: followedItems,
-    buckets,
-    total: dayItems.length + followedItems.filter((i) => i.kind !== 'closed').length,
-  };
+  const compare = (a: RegItem, b: RegItem) => a.at - b.at || a.comp.id.localeCompare(b.comp.id);
+  followedItems.sort((a, b) => Number(a.kind === 'closed') - Number(b.kind === 'closed') || compare(a, b));
+  const buckets = BUCKET_ORDER.flatMap(key => {
+    const items = byBucket.get(key);
+    return items?.length ? [{ key, items: items.sort(compare) }] : [];
+  });
+  return { followed: followedItems, buckets, total: followedItems.length + buckets.reduce((n, b) => n + b.items.length, 0) };
 }
 
-/** 标签徽标用：视野内可行动的报名比赛数（不含已截止）。 */
+/** Includes ended registration for competitions that have not ended. */
 export function countActionableReg(comps: Comp[], now: number): number {
-  const horizon = now + REG_HORIZON_DAYS * MS_DAY;
-  let n = 0;
-  for (const c of comps) {
-    const m = nextRegMilestone(c, now);
-    if (m && m.at <= horizon) n++;
-  }
-  return n;
+  return buildRegView(comps, now, new Set()).total;
 }

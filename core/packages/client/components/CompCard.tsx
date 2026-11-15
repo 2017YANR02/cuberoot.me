@@ -35,7 +35,7 @@ export interface CompCardComp {
   events?: string[];
 }
 
-export type CompCardTone = 'open' | 'close' | 'urgent' | 'closed';
+export type CompCardTone = 'open' | 'close' | 'urgent' | 'closed' | 'upcoming' | 'reopened';
 export interface CompCardPill {
   when?: string;
   word: string;
@@ -64,7 +64,7 @@ export interface CompCardFollow {
   onRequireLogin?: () => void;
 }
 
-export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLimit, eventRounds, topCubers, compactDetails = false, showCountryFlag = true, children }: {
+export function CompCard({ comp, isZh, lang, pill, registrationTiming, dimmed, follow, competitorLimit, eventRounds, topCubers, compactDetails = false, showCountryFlag = true, children }: {
   comp: CompCardComp;
   isZh: boolean;
   lang: 'zh' | 'en';
@@ -73,6 +73,8 @@ export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLim
   showCountryFlag?: boolean;
   /** 报名状态 pill(调用方按各自里程碑口径算好);null/缺省则不渲染 pill */
   pill?: CompCardPill | null;
+  /** Registration view: status/time together, then date/location together. */
+  registrationTiming?: { label: string; urgent?: boolean };
   /** 已截止 / 已取消等淡化样式 */
   dimmed?: boolean;
   /** 关注星(角标);缺省不渲染 */
@@ -114,9 +116,15 @@ export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLim
           {showCountryFlag && <Flag iso2={comp.country} spanClassName="rc-flag" imgClassName="rc-flag-img" />}
           <span className="rc-name">{displayName}</span>
         </div>
-        <div className={compactDetails ? 'rc-details rc-details--compact' : 'rc-details'}>
-          <div className="rc-meta">
+        {registrationTiming && (
+          <div className="rc-registration">
             {pill && <RegPill pill={pill} />}
+            {registrationTiming.label && <span className={`rc-registration-time${registrationTiming.urgent ? ' is-urgent' : ''}`}>{registrationTiming.label}</span>}
+          </div>
+        )}
+        <div className={registrationTiming ? 'rc-details rc-details--registration' : compactDetails ? 'rc-details rc-details--compact' : 'rc-details'}>
+          <div className="rc-meta">
+            {!registrationTiming && pill && <RegPill pill={pill} />}
             <span className="rc-date">{dateStr}</span>
           </div>
           {(city || !!competitorLimit) && <div className="rc-place">

@@ -5,6 +5,7 @@ import {
   buildRegView,
   countActionableReg,
   REG_HORIZON_DAYS,
+  localDayDiff,
 } from '@/lib/comp-registration';
 
 const MS_DAY = 86_400_000;
@@ -39,8 +40,8 @@ describe('nextRegMilestone', () => {
     expect(m?.kind).toBe('close');
     expect(m?.at).toBe(NOW + 10 * MS_DAY);
   });
-  it('已截止 → null', () => {
-    expect(nextRegMilestone(comp('c', -30, -1), NOW)).toBeNull();
+  it('已截止 → closed', () => {
+    expect(nextRegMilestone(comp('c', -30, -1), NOW)?.status).toBe('closed');
   });
   it('无报名字段 → null', () => {
     expect(nextRegMilestone(comp('d', null, null), NOW)).toBeNull();
@@ -61,15 +62,15 @@ describe('buildRegView 分组', () => {
   it('按本地日分桶且有序', () => {
     const v = buildRegView(comps, NOW, new Set());
     const keys = v.buckets.map((b) => b.key);
-    expect(keys).toEqual(['today', 'tomorrow', 'dayAfter', 'soon', 'later']);
+    expect(keys).toEqual(['today', 'tomorrow', 'dayAfter', 'soon', 'later', 'closed']);
     expect(v.buckets[0].items[0].comp.id).toBe('today-close');
-    expect(v.total).toBe(5); // closed + beyond 被排除
+    expect(v.total).toBe(6); // 未结束比赛的 closed 保留
   });
 
-  it('超视野与已截止不计入', () => {
+  it('超视野排除、已截止保留', () => {
     const v = buildRegView(comps, NOW, new Set());
     const ids = v.buckets.flatMap((b) => b.items.map((i) => i.comp.id));
-    expect(ids).not.toContain('closed');
+    expect(ids).toContain('closed');
     expect(ids).not.toContain('beyond');
   });
 
@@ -87,13 +88,40 @@ describe('buildRegView 分组', () => {
 });
 
 describe('countActionableReg', () => {
-  it('数视野内可行动场次,排除已截止/超视野', () => {
+  it('报名结束仍保留入口，超视野排除', () => {
     const comps: Comp[] = [
       comp('a', -5, 3),
       comp('b', 2, 30),
       comp('c', -30, -1),                 // 已截止
       comp('d', -5, REG_HORIZON_DAYS + 5), // 超视野
     ];
-    expect(countActionableReg(comps, NOW)).toBe(2);
+    expect(countActionableReg(comps, NOW)).toBe(3);
+  });
+});
+
+ describe('Cubing registration and timezone boundaries', () => {
+  const cnComp = { ...comp('cn', -5, 10), country: 'cn' };
+  const cn = { registrationStartTime: iso(-5), registrationEndTime: iso(10), cancellationEndTime: iso(5), registrationReopenTime: iso(6), hasBeenFull: false };
+  it('distinguishes open, early pause, scheduled pause, reopen and close', () => {
+    expect(nextRegMilestone(cnComp, NOW, cn)?.status).toBe('open');
+    expect(nextRegMilestone(cnComp, NOW, { ...cn, hasBeenFull: true })?.status).toBe('paused');
+    expect(nextRegMilestone(cnComp, NOW + 5 * MS_DAY, cn)?.status).toBe('paused');
+    expect(nextRegMilestone(cnComp, NOW + 6 * MS_DAY, cn)?.status).toBe('reopened');
+    expect(nextRegMilestone(cnComp, NOW + 10 * MS_DAY, cn)?.status).toBe('closed');
+    expect(nextRegMilestone(cnComp, NOW)?.status).toBe('unknown');
+  });
+  it('uses instants, not browser wall time, and rejects an ambiguous timestamp', () => {
+    const c = { ...cn, registrationStartTime: '2026-11-15T20:00:00+08:00', registrationEndTime: '2026-11-16T12:00:00Z', registrationReopenTime: null };
+    expect(nextRegMilestone(cnComp, Date.parse('2026-11-15T11:59:59Z'), c)?.status).toBe('upcoming');
+    expect(nextRegMilestone(cnComp, Date.parse('2026-11-15T12:00:00Z'), c)?.status).toBe('open');
+    expect(nextRegMilestone({ ...comp('invalid', null, null), registration_open: '2026-11-15 20:00:00' }, NOW)).toBeNull();
+  });
+  it('groups by calendar date across DST and midnight', () => {
+    expect(localDayDiff(new Date(2026, 2, 9, 0, 1).getTime(), new Date(2026, 2, 8, 0, 1).getTime())).toBe(1);
+    expect(localDayDiff(new Date(2026, 10, 2, 0, 1).getTime(), new Date(2026, 10, 1, 0, 1).getTime())).toBe(1);
+    expect(localDayDiff(new Date(2026, 10, 15, 0, 1).getTime(), new Date(2026, 10, 14, 23, 59).getTime())).toBe(1);
+  });
+  it('does not show competitions that already ended', () => {
+    expect(buildRegView([{ ...cnComp, end_date: '2020-01-01' }], NOW, new Set(['cn']), { cn }).total).toBe(0);
   });
 });
