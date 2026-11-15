@@ -18,10 +18,12 @@ await build({ entryPoints: [resolve(root, 'src/watch-scene-runtime.ts')],
 
 // QuickJS supports native private fields; downlevel WeakMaps retain large
 // cubing.js analysis graphs and exceeded the bounded renderer memory budget.
+// Use dependency-provided browser resolution for the HTML parser's optional
+// Node I/O. The bundle still runs in QuickJS without a DOM or browser globals.
 await build({ entryPoints: [resolve(root, 'src/watch-replay-runtime.ts')],
   outfile: resolve(dirname(outfile), 'WatchReplay.js'), bundle: true, format: 'iife',
-  platform: 'neutral', target: 'es2022', minify: true, conditions: ['import'],
-  mainFields: ['module', 'main'], legalComments: 'inline' });
+  platform: 'browser', target: 'es2022', minify: true, conditions: ['import'],
+  mainFields: ['browser', 'module', 'main'], legalComments: 'inline' });
 
 // The exact public AlgFiles stay on disk and are loaded by set on demand.
 const directory = resolve(dirname(outfile), 'WatchAlgorithms');
@@ -44,7 +46,8 @@ for (const set of ['oll','pll','zbll','ollcp','1lll','coll','ell','zbls','vls','
 }
 const builder = resolve(dirname(outfile), 'watch-lookup-build.mjs');
 await build({ entryPoints: [resolve(root, 'scripts/watch-lookup-build.ts')], outfile: builder,
-  bundle: true, platform: 'node', format: 'esm', target: 'es2022' });
+  bundle: true, platform: 'node', format: 'esm', target: 'es2022',
+  banner: { js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" } });
 const version = createHash('sha256').update(await readFile(builder)).update(JSON.stringify(files)).digest('hex');
 const algorithmFile = resolve(dirname(outfile), 'WatchAlgData.json');
 let previous: any;
@@ -62,7 +65,7 @@ export { createReconstructionAnalyzer } from '@cuberoot/timer-ui/reconstruct/ana
 export { prepareReconstruction } from '@cuberoot/shared/timer/reconstruct/recon-text';
 export { detectSolveMethod } from '@cuberoot/shared/timer/reconstruct/method-walk';
 export * from '@cuberoot/timer-ui/reconstruct/history-model';
-`,resolveDir:root,sourcefile:'watch-analysis-fingerprint.ts'},write:false,bundle:true,format:'esm',platform:'neutral',target:'es2022',minify:true,conditions:['import'],mainFields:['module','main']});
+`,resolveDir:root,sourcefile:'watch-analysis-fingerprint.ts'},write:false,bundle:true,format:'esm',platform:'browser',target:'es2022',minify:true,conditions:['import'],mainFields:['browser','module','main']});
 const analysisVersion=createHash('sha256').update(analysisBundle.outputFiles[0].text)
   .update(await readFile(resolve(root,'src/watch-replay-runtime.ts'))).update(version).digest('hex');
 const installedData=JSON.parse(await readFile(algorithmFile,'utf8'));

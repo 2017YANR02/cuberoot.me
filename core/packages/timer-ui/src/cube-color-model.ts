@@ -1,4 +1,4 @@
-import { TIMER_COLOR_NAMES, type TimerColorLetter as ColorLetter } from '@cuberoot/shared/timer';
+import { TIMER_COLOR_NAMES, type TimerColorLetter as ColorLetter } from '@cuberoot/shared/timer/color-subsets';
 
 export const CUBE_COLOR_LETTERS = 'WYGBOR';
 const COLOR_LETTER_BY_NAME = new Map(Object.entries(TIMER_COLOR_NAMES)
