@@ -1186,7 +1186,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             {canCollapseGroups && <BoolToggle
               value={collapseGroups}
               onChange={value => { setExpandedGroup(null); void setCollapseGroups(value); }}
-              label={tr({ zh: '分类互斥展开', en: 'Expand one group at a time' })}
+              label={tr({ zh: '分类展开', en: 'Expand groups' })}
             />}
             {requires3x3AlgCaseSetup(puzzleParam as AlgPuzzle, set) && <AlgSetupModeSelect
               value={setupMode} onChange={mode => void setSetupMode(mode)} />}
