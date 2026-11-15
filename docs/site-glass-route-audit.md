@@ -1,5 +1,7 @@
 # 全站背景与玻璃 路由审核附录
 
+> 2026-11-15 文档核对：截图、计数和路径属于原记录时点；缺失的本机附件不作为可复验的现行证据。原路径保留供追溯，未据缺失附件改写当时决策。
+
 扫描日期：2026-09-10。此附录来自当前工作区源码与本地数据，允许存在其他 AI 的未提交改动；后续实施或路由变更后须重新核对集合。
 
 本文件保存静态全量枚举；实施已开始，真实浏览证据另见 site-glass-rollout.md 及三个审核记录。下方“候选”分类与尚未更新的逐页状态均不能视为视觉通过。
@@ -393,7 +395,7 @@
 | [core/packages/client/app/[lang]/sheets/edit/page.tsx](<../core/packages/client/app/[lang]/sheets/edit/page.tsx>) | `/sheets/edit` | 文档/表格/文件工作区（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/sheets/page.tsx](<../core/packages/client/app/[lang]/sheets/page.tsx>) | `/sheets` | 文档/表格/文件工作区（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/sim/page.tsx](<../core/packages/client/app/[lang]/sim/page.tsx>) | `/sim` | 画布/媒体/沉浸工具（候选） | 待浏览 |
-| [core/packages/client/app/[lang]/sim/stages/page.tsx](<../core/packages/client/app/[lang]/sim/stages/page.tsx>) | `/sim/stages` | 画布/媒体/沉浸工具（候选） | 待浏览 |
+| `core/packages/client/app/[lang]/sim/stages/page.tsx`（历史路径，现已不存在） | `/sim/stages` | 画布/媒体/沉浸工具（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/site/page.tsx](<../core/packages/client/app/[lang]/site/page.tsx>) | `/site` | 其他产品页（待确认表面） | 待浏览 |
 | [core/packages/client/app/[lang]/solver/page.tsx](<../core/packages/client/app/[lang]/solver/page.tsx>) | `/solver` | 本地工具 iframe 壳（核对 upstream 边界） | 待浏览 |
 | [core/packages/client/app/[lang]/space/page.tsx](<../core/packages/client/app/[lang]/space/page.tsx>) | `/space` | 画布/媒体/沉浸工具（候选） | 待浏览 |

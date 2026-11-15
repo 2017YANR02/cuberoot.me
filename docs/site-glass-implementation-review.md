@@ -1,5 +1,7 @@
 # 全站背景与玻璃：实施独立审核
 
+> 2026-11-15 文档核对：截图、计数和路径属于原记录时点；缺失的本机附件不作为可复验的现行证据。原路径保留供追溯，未据缺失附件改写当时决策。
+
 日期：2026-09-10。审核 Agent：`implementation_review`。
 
 本次审核覆盖共享背景、玻璃材质、外观入口与主页接入，结合源码和本地 Chromium 浏览器实测。产品代码未由审核 Agent 修改；本文件是唯一获准写入的审核产物。未暂存、提交或发布。
@@ -35,8 +37,8 @@
 
 截图：
 
-- [外观比较页 390px](../.tmp/png/site-glass-review-appearance-390.png)
-- [Stroop 390px](../.tmp/png/site-glass-review-stroop-390.png)
+- 外观比较页 390px（历史引用：`../.tmp/png/site-glass-review-appearance-390.png`；当前路径不存在）
+- Stroop 390px（历史引用：`../.tmp/png/site-glass-review-stroop-390.png`；当前路径不存在）
 
 Stroop 的黑色题目刺激区域承担颜色识别功能，不能以“所有黑色区域都透明”作为验收条件。玻璃规则应覆盖承载交互的界面表面，并保留此类必要内容底色。
 

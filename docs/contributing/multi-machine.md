@@ -6,7 +6,7 @@ GitHub `origin` 是代码交换中心；每台电脑保留独立 checkout、依�
 
 - 开始任务先 `git status --short --branch`。工作区干净时执行 `git sync`（`git pull --rebase --no-autostash`）；有改动时先检查归属，不自动暂存、提交或切分支。
 - 短任务沿用当前 checkout/main。需要跨天、跨设备交接或与其他任务改同一模块时，使用 `codex/<任务名>` 功能分支；不要建立长期的 mini/mbp 分支。分支跟任务走，同一分支同一时刻由一台机器写入。
-- 同一 checkout 的多个 AI 不同时执行 Git 提交、rebase、切分支。发布者先收拢本轮已完成改动；其他任务继续编辑时，重新核对文件差异后再提交。需要真正隔离的并行任务才使用独立 worktree，遵循仓库的创建入口。
+- 同一 checkout 的多个 AI 不同时执行 Git 提交、rebase、切分支。发布者先收拢本轮已完成改动；其他任务继续编辑时，重新核对文件差异后再提交。按 2026-11-11 维护者要求，不创建或使用 worktree，也不切换到已有工作树；在当前 checkout 先备份、限定文件归属并顺序整合。
 - 普通任务仍不自动 commit/push。获准发布后先审阅并提交本轮改动，再 `git sync`、解决冲突、做必要验证，最后 `git push`。先提交形成可追溯快照，避免 dirty pull 的自动 stash 恢复冲突。
 - push 被拒绝表示别人先推送了：重新 fetch/rebase、核对冲突和验证，再正常 push；不使用强推。已经分享的功能分支如需重写历史，先协调所有消费者，不直接 force-push。
 

@@ -23,12 +23,15 @@ cuberoot.me/
 ├── core/                  pnpm + Turbo monorepo — active apps, shared packages, and offline jobs
 │   ├── apps/
 │   │   ├── api/           Hono + PostgreSQL 13 — WCA OAuth, reconstructions, algorithm library
-│   │   ├── mobile/        React + Capacitor — native mobile application
-│   │   ├── miniprogram/   WeChat Mini Program — independent native runtime
+│   │   ├── mobile/        Capacitor — Android/iOS thin host
+│   │   ├── desktop/       Tauri — Windows/macOS thin host
+│   │   ├── harmony/       ArkTS + ArkWeb — HarmonyOS NEXT thin host
+│   │   ├── miniprogram/   WeChat/Douyin Mini Programs — independent runtime
 │   │   └── fmc-solver/    Rust FMC solver service — independent Cargo workspace and deployment
 │   ├── packages/
 │   │   ├── client/        React 19 + Next.js 16 (App Router) — current Web application
 │   │   ├── platform/      Retired read-only archive; its product surfaces now live under client /platform
+│   │   ├── app-ui/        Shared React product layer for all five installed clients
 │   │   └── ...            Reusable libraries with public package boundaries
 │   └── jobs/
 │       ├── alg-build/     Offline algorithm data and SQL generators
@@ -39,7 +42,7 @@ cuberoot.me/
 ├── research/              Independent research projects
 │   └── reconer/           Automated reconstruction from speedsolving video
 ├── tools/                 Upstream forks, served from static.cuberoot.me
-├── stats/                 Generated statistics JSON (committed)
+├── stats/                 Generated statistics snapshots (wca-data-latest Release; hydrate locally)
 ├── ops/                   nginx vhosts, systemd units, deployment scripts
 └── docs/                  Design notes and runbooks
 ```
@@ -69,7 +72,7 @@ pnpm install
 pnpm --filter @cuberoot/client dev         # http://127.0.0.1:3000/
 pnpm --filter @cuberoot/client typecheck   # tsgo, the fast daily check
 pnpm --filter @cuberoot/client test
-pnpm --filter @cuberoot/client build
+pnpm --filter @cuberoot/client build       # only with the dev server stopped
 ```
 
 API calls are proxied to production through Next.js rewrites, so the full site

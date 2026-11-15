@@ -1,12 +1,12 @@
 # Platform 完整移植与复用跟踪
 
-2026-11-13 后续入口：[模块化与产品验收跟踪](platform-modernization-2026-11.md)。本文件保留 2026-10-04 的发布与验收历史；后续修复、角色/数据库/浏览器复验和 CI 接线以新跟踪表为准。下文旧工作目录及工作树记录不适用于当前开发规则。
+状态：`HISTORICAL`。2026-11-13 后续入口：[模块化与产品验收跟踪](platform-modernization-2026-11.md)。本文件保留 2026-10-04 的发布与验收历史；后续修复、角色/数据库/浏览器复验和 CI 接线以新跟踪表为准。下文旧工作目录及工作树记录不适用于当前开发规则。
 
-更新：2026-10-04。状态：**已合入main并发布；QR生成故障已修复，人工业务验收待完成**。本文件是本轮执行与复核入口；历史 `platform-product-migration-tracker.md` 的完成声明不作为本轮验收证据。
+更新：2026-10-04。状态：**已合入main并发布；QR生成故障已修复，人工业务验收待完成**。当时本文件是执行与复核入口；历史 `platform-product-migration-tracker.md` 的完成声明不作为本轮验收证据。
 
-当前工作入口：`/Users/eula/Documents/cuberoot.me` 的 `main`。用户追加要求直接放入main并提交、push全部；下文隔离分支及不push记录保留为实施历史，后续从main继续。
+历史工作入口（不再适用）：`/Users/eula/Documents/cuberoot.me` 的 `main`。用户追加要求直接放入main并提交、push全部；下文隔离分支及不push记录保留为实施历史，后续从main继续。
 
-## 授权与工作边界
+## 当时的授权与工作边界（不构成当前授权）
 
 - 用户要求补齐旧 Platform 的有效功能与 UI/UX，主站已有能力必须复用；允许自行判断冗余并记录取舍。
 - 本轮默认不 push、不部署、不改变生产数据。工作分支 `codex/platform-completion`，独立工作目录 `/Users/eula/Documents/cuberoot-platform-completion`，基线 `563618f807396d35c074d0092d83f1bddf6d9f58`。不修改其他 AI 使用的主工作目录。

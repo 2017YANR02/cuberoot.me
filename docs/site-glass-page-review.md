@@ -1,5 +1,7 @@
 # 全站玻璃 页面 CSS 适配审核
 
+> 2026-11-15 文档核对：截图、计数和路径属于原记录时点；缺失的本机附件不作为可复验的现行证据。原路径保留供追溯，未据缺失附件改写当时决策。
+
 状态：页面样式实现已落地，静态检查通过；浏览器集成与逐页视觉验收尚未完成。不得据此标记全站已验收。
 
 本记录由独立页面 CSS Agent 维护。本轮不暂存、不提交、不推送。
@@ -50,7 +52,7 @@
 | [alg/_trainer/trainer.css](../core/packages/client/app/[lang]/alg/_trainer/trainer.css) | 静态通过，视觉待验收 |
 | [calc/calc.css](../core/packages/client/app/[lang]/calc/calc.css) | 静态通过，视觉待验收 |
 | [calc/_components/average_mode/average_mode.css](../core/packages/client/app/[lang]/calc/_components/average_mode/average_mode.css) | 静态通过，视觉待验收 |
-| [calc-about/calc_about.css](../core/packages/client/app/[lang]/calc-about/calc_about.css) | 静态通过，视觉待验收 |
+| calc-about/calc_about.css（历史引用：`../core/packages/client/app/[lang]/calc-about/calc_about.css`；当前路径不存在） | 静态通过，视觉待验收 |
 | [calendar/calendar.css](../core/packages/client/app/[lang]/calendar/calendar.css) | 静态通过，视觉待验收 |
 | [comp-sim/comp-sim.css](../core/packages/client/app/[lang]/comp-sim/comp-sim.css) | 静态通过，视觉待验收 |
 | [contact/contact.css](../core/packages/client/app/[lang]/contact/contact.css) | 静态通过，视觉待验收 |
@@ -105,12 +107,12 @@
 | [dev/stack/stack_landing.css](../core/packages/client/app/[lang]/dev/stack/stack_landing.css) | 静态通过，视觉待验收 |
 | [dev/stack/ts_intro.css](../core/packages/client/app/[lang]/dev/stack/ts_intro.css) | 静态通过，视觉待验收 |
 | [dev/tokens/tokens.css](../core/packages/client/app/[lang]/dev/tokens/tokens.css) | 静态通过，视觉待验收 |
-| [dev/utils/utils_ref.css](../core/packages/client/app/[lang]/dev/utils/utils_ref.css) | 静态通过，视觉待验收 |
+| dev/utils/utils_ref.css（历史引用：`../core/packages/client/app/[lang]/dev/utils/utils_ref.css`；当前路径不存在） | 静态通过，视觉待验收 |
 | [dev/wca-site/wca-site_intro.css](../core/packages/client/app/[lang]/dev/wca-site/wca-site_intro.css) | 静态通过，视觉待验收 |
 | [docs/edit/editor.css](../core/packages/client/app/[lang]/docs/edit/editor.css) | 静态通过，视觉待验收 |
 | [feedback/admin/feedback-admin.css](../core/packages/client/app/[lang]/feedback/admin/feedback-admin.css) | 静态通过，视觉待验收 |
 | [feedback/feedback.css](../core/packages/client/app/[lang]/feedback/feedback.css) | 静态通过，视觉待验收 |
-| [frame-count-about/frame_count_about.css](../core/packages/client/app/[lang]/frame-count-about/frame_count_about.css) | 静态通过，视觉待验收 |
+| frame-count-about/frame_count_about.css（历史引用：`../core/packages/client/app/[lang]/frame-count-about/frame_count_about.css`；当前路径不存在） | 静态通过，视觉待验收 |
 | [math/demigod/demigod.css](../core/packages/client/app/[lang]/math/demigod/demigod.css) | 静态通过，视觉待验收 |
 | [math/god/god.css](../core/packages/client/app/[lang]/math/god/god.css) | 静态通过，视觉待验收 |
 | [math/god/_components/sq1/sq1.css](../core/packages/client/app/[lang]/math/god/_components/sq1/sq1.css) | 静态通过，视觉待验收 |
@@ -121,19 +123,19 @@
 | [math/unit-distance/unit_distance.css](../core/packages/client/app/[lang]/math/unit-distance/unit_distance.css) | 静态通过，视觉待验收 |
 | [memo/colpi/colpi.css](../core/packages/client/app/[lang]/memo/colpi/colpi.css) | 静态通过，视觉待验收 |
 | [mosaic/mosaic.css](../core/packages/client/app/[lang]/mosaic/mosaic.css) | 静态通过，视觉待验收 |
-| [mosaic-about/mosaic_about.css](../core/packages/client/app/[lang]/mosaic-about/mosaic_about.css) | 静态通过，视觉待验收 |
-| [nemesizer-about/nemesizer_about.css](../core/packages/client/app/[lang]/nemesizer-about/nemesizer_about.css) | 静态通过，视觉待验收 |
+| mosaic-about/mosaic_about.css（历史引用：`../core/packages/client/app/[lang]/mosaic-about/mosaic_about.css`；当前路径不存在） | 静态通过，视觉待验收 |
+| nemesizer-about/nemesizer_about.css（历史引用：`../core/packages/client/app/[lang]/nemesizer-about/nemesizer_about.css`；当前路径不存在） | 静态通过，视觉待验收 |
 | [paint/paint.css](../core/packages/client/app/[lang]/paint/paint.css) | 静态通过，视觉待验收 |
 | [recon/submit/recon_submit.css](../core/packages/client/app/[lang]/recon/submit/recon_submit.css) | 静态通过，视觉待验收 |
 | [recon/[id]/recon_detail.css](../core/packages/client/app/[lang]/recon/[id]/recon_detail.css) | 静态通过，视觉待验收 |
-| [recon-about/recon_about.css](../core/packages/client/app/[lang]/recon-about/recon_about.css) | 静态通过，视觉待验收 |
+| recon-about/recon_about.css（历史引用：`../core/packages/client/app/[lang]/recon-about/recon_about.css`；当前路径不存在） | 静态通过，视觉待验收 |
 | [regulation/events/events.css](../core/packages/client/app/[lang]/regulation/events/events.css) | 静态通过，视觉待验收 |
 | [regulation/one-handed/one-handed.css](../core/packages/client/app/[lang]/regulation/one-handed/one-handed.css) | 静态通过，视觉待验收 |
 | [regulation/regulation.css](../core/packages/client/app/[lang]/regulation/regulation.css) | 静态通过，视觉待验收 |
-| [scramble/555-about/scramble_555_about.css](../core/packages/client/app/[lang]/scramble/555-about/scramble_555_about.css) | 静态通过，视觉待验收 |
+| scramble/555-about/scramble_555_about.css（历史引用：`../core/packages/client/app/[lang]/scramble/555-about/scramble_555_about.css`；当前路径不存在） | 静态通过，视觉待验收 |
 | [scramble/analyzer/analyze.css](../core/packages/client/app/[lang]/scramble/analyzer/analyze.css) | 静态通过，视觉待验收 |
 | [scramble/gen/gen.css](../core/packages/client/app/[lang]/scramble/gen/gen.css) | 静态通过，视觉待验收 |
-| [scramble/gen-about/gen_about.css](../core/packages/client/app/[lang]/scramble/gen-about/gen_about.css) | 静态通过，视觉待验收 |
+| scramble/gen-about/gen_about.css（历史引用：`../core/packages/client/app/[lang]/scramble/gen-about/gen_about.css`；当前路径不存在） | 静态通过，视觉待验收 |
 | [scramble/pattern/patterns.css](../core/packages/client/app/[lang]/scramble/pattern/patterns.css) | 静态通过，视觉待验收 |
 | [scramble/solver/sq1_solver.css](../core/packages/client/app/[lang]/scramble/solver/sq1_solver.css) | 静态通过，视觉待验收 |
 | [scramble/stats/scramble_stats.css](../core/packages/client/app/[lang]/scramble/stats/scramble_stats.css) | 静态通过，视觉待验收 |
@@ -152,12 +154,12 @@
 | [wca/comp/calendar_page.css](../core/packages/client/app/[lang]/wca/comp/calendar_page.css) | 静态通过，视觉待验收 |
 | [wca/comp/comp.css](../core/packages/client/app/[lang]/wca/comp/comp.css) | 静态通过，视觉待验收 |
 | [wca/comp/stats/calendar_stats.css](../core/packages/client/app/[lang]/wca/comp/stats/calendar_stats.css) | 静态通过，视觉待验收 |
-| [wca/comp-about/comp_about.css](../core/packages/client/app/[lang]/wca/comp-about/comp_about.css) | 静态通过，视觉待验收 |
-| [wca/globe-about/globe_about.css](../core/packages/client/app/[lang]/wca/globe-about/globe_about.css) | 静态通过，视觉待验收 |
+| wca/comp-about/comp_about.css（历史引用：`../core/packages/client/app/[lang]/wca/comp-about/comp_about.css`；当前路径不存在） | 静态通过，视觉待验收 |
+| wca/globe-about/globe_about.css（历史引用：`../core/packages/client/app/[lang]/wca/globe-about/globe_about.css`；当前路径不存在） | 静态通过，视觉待验收 |
 | [wca/prediction/_components/lucky.css](../core/packages/client/app/[lang]/wca/prediction/_components/lucky.css) | 静态通过，视觉待验收 |
 | [wca/prediction/_components/prediction.css](../core/packages/client/app/[lang]/wca/prediction/_components/prediction.css) | 静态通过，视觉待验收 |
 | [wca/prediction/_components/prediction333.css](../core/packages/client/app/[lang]/wca/prediction/_components/prediction333.css) | 静态通过，视觉待验收 |
-| [wca/prediction-about/prediction_about.css](../core/packages/client/app/[lang]/wca/prediction-about/prediction_about.css) | 静态通过，视觉待验收 |
+| wca/prediction-about/prediction_about.css（历史引用：`../core/packages/client/app/[lang]/wca/prediction-about/prediction_about.css`；当前路径不存在） | 静态通过，视觉待验收 |
 | [wca/_globe/globe.css](../core/packages/client/app/[lang]/wca/_globe/globe.css) | 静态通过，视觉待验收 |
 | [wca/_wca_stats.css](../core/packages/client/app/[lang]/wca/_wca_stats.css) | 静态通过，视觉待验收 |
 | [wca/_wca_stats_extra.css](../core/packages/client/app/[lang]/wca/_wca_stats_extra.css) | 静态通过，视觉待验收 |

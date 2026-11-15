@@ -1,6 +1,6 @@
 # CubeRoot 文档索引
 
-状态：`ACTIVE`。最后更新：2026-10-22。
+状态：`ACTIVE`。最后更新：2026-11-15。
 
 本页是文档状态和权威入口的索引，不替代代码、schema、workflow 或各专题跟踪表。
 
@@ -24,14 +24,15 @@
 | 架构历史验收 | [architecture-modernization-history.md](./architecture-modernization-history.md) | `HISTORICAL` | 原批次、提交、审核与验收；不作为当前待办 |
 | Core 目录迁移 | [core-workspace-layout-migration-plan.md](./core-workspace-layout-migration-plan.md) | `ACTIVE` | 当前路径、未完成迁移与历史映射分开维护 |
 | package 候选快照 | [architecture-package-candidates.md](./architecture-package-candidates.md) | `HISTORICAL` | 候选证据与重开门槛；消费者和路径需重新核对 |
-| Platform 完整移植 | [platform-completion-tracker.md](./platform-completion-tracker.md) | `ACTIVE` | 后续产品缺口与人工业务验收的当前入口 |
+| Platform 当前产品验收 | [platform-modernization-2026-11.md](./platform-modernization-2026-11.md) | `ACTIVE` | 模块化与后续产品验收入口 |
+| Platform 完整移植历史 | [platform-completion-tracker.md](./platform-completion-tracker.md) | `HISTORICAL` | 2026-10 的迁移取舍、发布与验收证据 |
 | 新人入门与提交 | [CONTRIBUTING.md](../CONTRIBUTING.md) | `REFERENCE` | 权限开通、直接推送 main、自查验证及可选 PR 流程 |
 | 下载页与安装包分发 | [app-downloads.md](./app-downloads.md) | `REFERENCE` | 官网下载入口、APK 启用条件与匿名点击日志汇总 |
-| 好友轻量聊天 | [friend-chat-design.md](./friend-chat-design.md) | `ACTIVE` | 设计提案：跨端共享、一对一文字、权限与持久化；尚未实现或部署 |
+| 好友轻量聊天 | [friend-chat-design.md](./friend-chat-design.md) | `ACTIVE` | 已实现共享聊天与贴纸；当前源码定位及历史设计决策，发布/设备状态另核 |
 | 音乐播放器 | [music-player-tracker.md](./music-player-tracker.md) | `ACTIVE` | `/music`、DeskPet 悬浮音频中心、曲库转码与静态媒体发布 |
 | 后台与增长监控 | [admin-observability-tracker.md](./admin-observability-tracker.md) | `ACTIVE` | `/admin` 首页、用户注册与会员增长的口径、实施和验收 |
 | 架构现状锐评 | [architecture-audit-2026-08.md](./architecture-audit-2026-08.md) | `HISTORICAL` | 2026-08 审计快照；当前状态以 tracker 为准 |
-| Platform 产品迁移 | [platform-product-migration-tracker.md](./platform-product-migration-tracker.md) | `ACTIVE` | 技术接入历史与旧站对照说明；后续产品验收转完整移植跟踪 |
+| Platform 产品迁移 | [platform-product-migration-tracker.md](./platform-product-migration-tracker.md) | `HISTORICAL` | 技术接入历史与旧站对照说明；后续产品验收转完整移植跟踪 |
 | Platform 数据处置 | [platform-data-disposition-ledger.md](./platform-data-disposition-ledger.md) | `ACTIVE` | 旧数据逐项保管、迁移和处置 |
 | Platform surface | [platform-product-surface-ledger.md](./platform-product-surface-ledger.md) | `COMPLETED` | 已验收的页面/Handler/Action 守恒证据 |
 | Platform 源码迁入 | [platform-migration.md](./platform-migration.md) | `HISTORICAL` | 独立前端迁入与退役记录，不是当前开发手册 |
@@ -43,11 +44,14 @@
 | Recon API | [recon-api.md](./recon-api.md) | `REFERENCE` | Recon 接口契约 |
 | SEO/GEO | [seo-geo-plan.md](./seo-geo-plan.md) | `REFERENCE` | metadata、索引和内容策略 |
 | 五端 App 单一来源 | [cross-platform-app-contract.md](./cross-platform-app-contract.md) | `ACTIVE` | Android/iOS/HarmonyOS NEXT/Windows/macOS 宿主、共享层与总体完成口径 |
+| 五端 App 迭代历史 | [mobile-app-history.md](./mobile-app-history.md) | `HISTORICAL` | 分批实现、失败修正、验证与重要决策；不当作当前命令或待办 |
+| 本轮文档核对 | [documentation-alignment-2026-11-15.md](./documentation-alignment-2026-11-15.md) | `REFERENCE` | 代码证据、清理范围与仍需实测的边界 |
 | 五端 App 路线图 | [mobile-app-roadmap.md](./mobile-app-roadmap.md) | `ACTIVE` | 五端实现、设备、发布和长期维护进度 |
 | 中国大陆 Android 分发 | [china-android-distribution.md](./china-android-distribution.md) | `REFERENCE` | 厂商商店上架要求、官网 APK、备案与签名；2026-10-13 调研快照，提审前复核平台规则 |
 | 五端三栏合同 | [mobile-three-tab-contract.md](./mobile-three-tab-contract.md) | `ACTIVE` | 计时/工具/我的结构、网站复用策略和五端协作边界 |
 | App `/timer` 一致性 | [mobile-timer-parity-tracker.md](./mobile-timer-parity-tracker.md) | `ACTIVE` | 网站与已安装客户端的计时器完整 UI/UX、复用边界与逐项验收 |
 | App `/timer` 零遗漏审计 | [mobile-timer-zero-omission-audit.md](./mobile-timer-zero-omission-audit.md) | `ACTIVE` | Tracker 的强制 inventory 附录：43 项、可达 surface、状态矩阵和 parity guard 设计 |
+| 小程序迭代历史 | [MINIPROGRAM-history.md](../core/docs/MINIPROGRAM-history.md) | `HISTORICAL` | 平台选择、WebView/原生化、BLE 与发布决策原始记录 |
 | 小程序 | [../core/docs/MINIPROGRAM.md](../core/docs/MINIPROGRAM.md) | `REFERENCE` | 小程序实现、构建和发布契约 |
 | 抖音原生化审核核查 | [douyin-native-review-audit.md](douyin-native-review-audit.md) | `REFERENCE` | 页面、网页入口、原生构建守卫及尚未完成的验收 |
 

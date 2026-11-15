@@ -1,5 +1,7 @@
 # 全站背景与液态玻璃实施方案
 
+> 2026-11-15 文档核对：截图、计数和路径属于原记录时点；缺失的本机附件不作为可复验的现行证据。原路径保留供追溯，未据缺失附件改写当时决策。
+
 日期：2026-09-10。状态：已按用户授权实施全站共享层与页面适配，逐页视觉验收尚未完成；暂不提交。本文和[逐页审计清单](site-glass-route-audit.md)共同维护。
 
 ## 1. 目标和本轮边界
@@ -206,6 +208,6 @@ Platform 的 catch-all 要展开当前注册表，而不是只验一个模板；
 - 已全量枚举页面模板，审核 Agent 核对了动态注册表、iframe 和主题边界；这是源码盘点，不是 335 页视觉验收。
 - 本地 Playwright 已读取主页：存在 1 个景层、1 个光学入口，卡片装饰层背景透明并引用共享 SVG filter；主页截图已查看。
 - 本地 `/zh/appearance` 已读取：页面完整呈现但无主页景层，文案仍描述仅主页。首次导航超时，后续核对文档状态 complete 和 `.ac-page` 存在，未把超时直接当作页面故障。
-- 调试截图：[主页基线](../.tmp/png/site-glass-plan-home-baseline.png)、[外观页基线](../.tmp/png/site-glass-plan-appearance-baseline.png)。临时文件不纳入后续 Git 提交。
+- 调试截图：主页基线（历史引用：`../.tmp/png/site-glass-plan-home-baseline.png`；当前路径不存在）、外观页基线（历史引用：`../.tmp/png/site-glass-plan-appearance-baseline.png`；当前路径不存在）。临时文件不纳入后续 Git 提交。
 - 架构 Agent 提出的旧共享渐变、暗锁自动图、body portal、单引擎和伪元素冲突已纳入第 3–4 节；路由 Agent 提出的 catch-all 展开、权限页与 fork 内部边界已纳入第 5–7 节。
 - 文档独立终审通过，无阻塞问题；Reviewer 全量复核了 335 个页面模板、103 个 Platform 注册项和 63 个本地统计入口，确认清单无遗漏、重复或多余项。方案审核当时通过；之后的产品实施与验收进展见文首本次记录。

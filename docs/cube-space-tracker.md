@@ -1,5 +1,7 @@
 # 魔方空间跟踪
 
+> 2026-11-15 文档核对：截图、计数和路径属于原记录时点；缺失的本机附件不作为可复验的现行证据。原路径保留供追溯，未据缺失附件改写当时决策。
+
 更新日期：2026-11-03；最新操作、恢复和运行开销优化见第二十九至三十二轮，前文保留历史阶段记录。
 
 ## 当前目标与范围
@@ -74,7 +76,7 @@ Use case: stylized-concept.
 
 同一栋极简玻璃住宅的宽阔魔方客厅，浅银色高反射地面清楚倒映窗框、展台和魔方，一整面银镜墙，细缝白色吊顶，大面积落地窗。中央低矮的白色方形展台承托一颗醒目的彩色三阶魔方，旁边较小的金色镜面魔方和二阶魔方分散摆放；贴墙只有一张简洁低矮的浅色沙发。镜面反射鲜明，日光柔和，结构轮廓清楚，连续空地至少占房间一半，具有安静、洁净、极简的现代空间感。
 
-- 图片：[镜面简约](../.tmp/png/cube-space-minimal-mirror-v1.png)。
+- 图片：镜面简约（历史引用：`../.tmp/png/cube-space-minimal-mirror-v1.png`；当前路径不存在）。
 
 ### 2. 镜面赛博朋克
 
@@ -86,7 +88,7 @@ Use case: stylized-concept.
 
 同一栋赛博朋克住宅内的双层挑高魔方休闲室，黑色镜面地板、烟灰镜墙、抛光深色金属和透明观景窗，顶面与展台边缘有青蓝、品红线性灯。中央是三个错落但低矮的方块展台，放着彩色三阶魔方、金色镜面魔方和五魔方，一侧有简洁深色沙发，远侧一段直线楼梯连向夹层。窗外是湿润的夜色城市。黑色镜面地板映出魔方和霓虹，但魔方受到中性补光，标准面色清楚不染成一片紫；空间足够明亮辨认边界，中间留出大块可自由摆放的地面，科技感强但没有视觉杂乱。
 
-- 图片：[镜面赛博朋克](../.tmp/png/cube-space-cyberpunk-mirror-v1.png)。
+- 图片：镜面赛博朋克（历史引用：`../.tmp/png/cube-space-cyberpunk-mirror-v1.png`；当前路径不存在）。
 
 ### 3. 现代镜面住宅
 
@@ -98,7 +100,7 @@ Use case: stylized-concept.
 
 同一栋现代庭院住宅的双层通高客厅，以高亮抛光石材地板形成清晰镜面倒影，局部整高银镜墙、镜面不锈钢茶几、暖木墙板和浅色织物沙发。大面积落地玻璃面向庭院，傍晚日光与柔和暖白灯光相结合。中间独立方形矮展台放一颗彩色三阶魔方，金色镜面魔方与二阶魔方散放在独立小展台上，魔方区域与休息区相邻且边界清楚。地面反光非常明显，沙发和木饰面提供视觉平衡；房间中间保留宽阔空地以便移动魔方和切换观察角度。真实、温暖、精致，具备鲜明镜面质感。
 
-- 图片：[现代镜面住宅](../.tmp/png/cube-space-modern-mirror-v1.png)。
+- 图片：现代镜面住宅（历史引用：`../.tmp/png/cube-space-modern-mirror-v1.png`；当前路径不存在）。
 
 ## 初版实装边界（历史记录，以下限制已由最新迭代更新）
 
@@ -128,10 +130,10 @@ Use case: stylized-concept.
 
 以下是本地可交互页面的截图，和上方生成的概念图区分保存；均在被 Git 忽略的 `.tmp/png/`。
 
-- [简约室内](../.tmp/png/space-room-minimal-interior.png)、[简约外观](../.tmp/png/space-room-minimal-exterior.png)。
-- [赛博室内](../.tmp/png/space-room-cyberpunk-interior.png)、[赛博外观](../.tmp/png/space-room-cyberpunk-exterior.png)。
-- [现代室内](../.tmp/png/space-room-modern-interior.png)、[现代外观](../.tmp/png/space-room-modern-exterior.png)。
-- [手机深色界面](../.tmp/png/space-room-mobile-dark.png)。
+- 简约室内（历史引用：`../.tmp/png/space-room-minimal-interior.png`；当前路径不存在）、简约外观（历史引用：`../.tmp/png/space-room-minimal-exterior.png`；当前路径不存在）。
+- 赛博室内（历史引用：`../.tmp/png/space-room-cyberpunk-interior.png`；当前路径不存在）、赛博外观（历史引用：`../.tmp/png/space-room-cyberpunk-exterior.png`；当前路径不存在）。
+- 现代室内（历史引用：`../.tmp/png/space-room-modern-interior.png`；当前路径不存在）、现代外观（历史引用：`../.tmp/png/space-room-modern-exterior.png`；当前路径不存在）。
+- 手机深色界面（历史引用：`../.tmp/png/space-room-mobile-dark.png`；当前路径不存在）。
 
 ## 电影质感迭代记录
 
@@ -147,7 +149,7 @@ Use case: stylized-concept.
 ### 本轮验证
 
 - 客户端 `pnpm --filter @cuberoot/client typecheck` 通过；`tests/cube_space.test.ts` 6 项通过。最后的 FXAA 调整再次通过 typecheck。
-- 九种模型通过页面导入并实际渲染，导出文件包含全部九种模型和赛博朋克风格：[导出样本](../.tmp/png/space-verified-nine-models.json)。随后恢复六个初始物件，未留下测试新增物件。
+- 九种模型通过页面导入并实际渲染，导出文件包含全部九种模型和赛博朋克风格：导出样本（历史引用：`../.tmp/png/space-verified-nine-models.json`；当前路径不存在）。随后恢复六个初始物件，未留下测试新增物件。
 - 桌面二阶魔方拖动后坐标从 `[-3.4, 1.8]` 变为 `[-1.69595373986, 1.57788795617]`，撤销恢复原坐标；方向键移动与撤销正常。
 - 390px 下发送真实触控事件：单指移动魔方并撤销；双指缩放将相机距离从 `35` 改为 `21.875`，没有改动布局。此为浏览器触控模拟，不等于真实手机性能测试。
 - 手机画布曾被桌面 canvas 内联高度撑开；根因是移动端仍保留 `flex: 1`。改为 `flex: none` 后，390×844 视口画布高约 `489.52px`，视角控件留在画布底部，物件工具在下方自然换行。
@@ -159,10 +161,10 @@ Use case: stylized-concept.
 
 ### 前四轮网页截图（历史）
 
-- [简约室内](../.tmp/png/space-cinematic-final-minimal-interior.png)、[简约外观](../.tmp/png/space-cinematic-final-minimal-exterior.png)。
-- [现代室内](../.tmp/png/space-cinematic-final-modern-interior.png)、[现代外观](../.tmp/png/space-cinematic-final-modern-exterior.png)。
-- [赛博室内](../.tmp/png/space-cinematic-final-cyberpunk-interior.png)、[赛博外观](../.tmp/png/space-cinematic-final-cyberpunk-exterior.png)。
-- [手机界面](../.tmp/png/space-cinematic-mobile.png)、[九种模型](../.tmp/png/space-cinematic-nine-models.png)。
+- 简约室内（历史引用：`../.tmp/png/space-cinematic-final-minimal-interior.png`；当前路径不存在）、简约外观（历史引用：`../.tmp/png/space-cinematic-final-minimal-exterior.png`；当前路径不存在）。
+- 现代室内（历史引用：`../.tmp/png/space-cinematic-final-modern-interior.png`；当前路径不存在）、现代外观（历史引用：`../.tmp/png/space-cinematic-final-modern-exterior.png`；当前路径不存在）。
+- 赛博室内（历史引用：`../.tmp/png/space-cinematic-final-cyberpunk-interior.png`；当前路径不存在）、赛博外观（历史引用：`../.tmp/png/space-cinematic-final-cyberpunk-exterior.png`；当前路径不存在）。
+- 手机界面（历史引用：`../.tmp/png/space-cinematic-mobile.png`；当前路径不存在）、九种模型（历史引用：`../.tmp/png/space-cinematic-nine-models.png`；当前路径不存在）。
 
 ### 尚未完成的画质验收
 
@@ -176,11 +178,11 @@ Use case: stylized-concept.
 
 通过内置 image_gen 生成现代风五个独立主镜头，并针对外观裁切和客厅魔方进行了第二轮修改，共保存七张图。逐张检查后，五个必备空间齐全；主卫的双台盆、浴缸、淋浴、独立厕间及坐便器均可辨认。简约、赛博朋克保留同一建筑与全部房间的替换提示词，本轮尚未生成这两套新别墅图片。
 
-- [大别墅外观](../.tmp/png/villa-modern-exterior-v2.png)
-- [挑高客厅](../.tmp/png/villa-modern-living-v2.png)
-- [收藏书房](../.tmp/png/villa-modern-study-v1.png)
-- [主卧套房](../.tmp/png/villa-modern-bedroom-v1.png)
-- [完整主卫](../.tmp/png/villa-modern-bathroom-v1.png)
+- 大别墅外观（历史引用：`../.tmp/png/villa-modern-exterior-v2.png`；当前路径不存在）
+- 挑高客厅（历史引用：`../.tmp/png/villa-modern-living-v2.png`；当前路径不存在）
+- 收藏书房（历史引用：`../.tmp/png/villa-modern-study-v1.png`；当前路径不存在）
+- 主卧套房（历史引用：`../.tmp/png/villa-modern-bedroom-v1.png`；当前路径不存在）
+- 完整主卫（历史引用：`../.tmp/png/villa-modern-bathroom-v1.png`；当前路径不存在）
 
 以上是当时生成的概念图；当时仅修改文档和保存图片。后续真实三维实现及检查结果见下一节，概念图不能代替网页验收。
 
@@ -209,10 +211,10 @@ Use case: stylized-concept.
 
 ### 第五、六轮网页截图（历史）
 
-- 住宅：[客厅](../core/.tmp/png/space-v6-living.png)、[书房](../core/.tmp/png/space-v6-study.png)、[卧室](../core/.tmp/png/space-v6-bedroom.png)、[卫生间](../core/.tmp/png/space-v6-bathroom.png)、[外观](../core/.tmp/png/space-v6-exterior.png)。
-- 风格：[简约](../core/.tmp/png/space-v6-minimal.png)、[复古](../core/.tmp/png/space-v6-vintage.png)、[意大利](../core/.tmp/png/space-v6-italian.png)、[日式](../core/.tmp/png/space-v6-japanese.png)、[顶层公寓外观](../core/.tmp/png/space-v6-penthouse-exterior.png)、[赛博室内](../core/.tmp/png/space-v6-cyberpunk.png)、[赛博外观](../core/.tmp/png/space-v6-cyberpunk-exterior.png)。
-- 公司：[办公室 406](../core/.tmp/png/space-v6-office.png)、[公共休息区](../core/.tmp/png/space-v6-lounge.png)、[电话亭](../core/.tmp/png/space-v6-booths.png)。
-- 操作：[手机转层](../core/.tmp/png/space-turn-mobile-v6.png)、[三阶转层](../core/.tmp/png/space-turn-v6-333.png)、[SQ1 转层](../core/.tmp/png/space-turn-v6-sq1.png)。
+- 住宅：客厅（历史引用：`../core/.tmp/png/space-v6-living.png`；当前路径不存在）、书房（历史引用：`../core/.tmp/png/space-v6-study.png`；当前路径不存在）、卧室（历史引用：`../core/.tmp/png/space-v6-bedroom.png`；当前路径不存在）、卫生间（历史引用：`../core/.tmp/png/space-v6-bathroom.png`；当前路径不存在）、外观（历史引用：`../core/.tmp/png/space-v6-exterior.png`；当前路径不存在）。
+- 风格：简约（历史引用：`../core/.tmp/png/space-v6-minimal.png`；当前路径不存在）、复古（历史引用：`../core/.tmp/png/space-v6-vintage.png`；当前路径不存在）、意大利（历史引用：`../core/.tmp/png/space-v6-italian.png`；当前路径不存在）、日式（历史引用：`../core/.tmp/png/space-v6-japanese.png`；当前路径不存在）、顶层公寓外观（历史引用：`../core/.tmp/png/space-v6-penthouse-exterior.png`；当前路径不存在）、赛博室内（历史引用：`../core/.tmp/png/space-v6-cyberpunk.png`；当前路径不存在）、赛博外观（历史引用：`../core/.tmp/png/space-v6-cyberpunk-exterior.png`；当前路径不存在）。
+- 公司：办公室 406（历史引用：`../core/.tmp/png/space-v6-office.png`；当前路径不存在）、公共休息区（历史引用：`../core/.tmp/png/space-v6-lounge.png`；当前路径不存在）、电话亭（历史引用：`../core/.tmp/png/space-v6-booths.png`；当前路径不存在）。
+- 操作：手机转层（历史引用：`../core/.tmp/png/space-turn-mobile-v6.png`；当前路径不存在）、三阶转层（历史引用：`../core/.tmp/png/space-turn-v6-333.png`；当前路径不存在）、SQ1 转层（历史引用：`../core/.tmp/png/space-turn-v6-sq1.png`；当前路径不存在）。
 
 ### 材料与剩余边界
 
@@ -243,10 +245,10 @@ Use case: stylized-concept.
 
 ### 第七轮真实网页截图
 
-- 现代住宅：[外观](../core/.tmp/png/space-v7-final-exterior.png)、[客厅](../core/.tmp/png/space-v7-final-living.png)、[书房](../core/.tmp/png/space-v7-final-study.png)、[卧室](../core/.tmp/png/space-v7-final-bedroom.png)、[卫生间](../core/.tmp/png/space-v7-final-bathroom.png)。
-- 其他风格：[简约](../core/.tmp/png/space-v7-reviewed-minimal.png)、[复古](../core/.tmp/png/space-v7-final-vintage.png)、[意大利](../core/.tmp/png/space-v7-reviewed-italian.png)、[日式](../core/.tmp/png/space-v7-reviewed-japanese.png)、[顶层公寓](../core/.tmp/png/space-v7-final-penthouse.png)、[赛博客厅](../core/.tmp/png/space-v7-final-cyberpunk.png)、[赛博外观](../core/.tmp/png/space-v7-final-cyberpunk-exterior.png)。简约、意大利、日式截图拍摄于本轮最后一次茶几尺寸调整之前。
-- 公司：[办公室 406](../core/.tmp/png/space-v7-final-office.png)、[公共休息区](../core/.tmp/png/space-v7-final-lounge.png)、[电话亭](../core/.tmp/png/space-v7-final-booths.png)。
-- 操作：[真实转层](../core/.tmp/png/space-v7-turn.png)、[375px 菜单](../core/.tmp/png/space-v7-mobile-375.png)、[320px 菜单](../core/.tmp/png/space-v7-mobile-320.png)。
+- 现代住宅：外观（历史引用：`../core/.tmp/png/space-v7-final-exterior.png`；当前路径不存在）、客厅（历史引用：`../core/.tmp/png/space-v7-final-living.png`；当前路径不存在）、书房（历史引用：`../core/.tmp/png/space-v7-final-study.png`；当前路径不存在）、卧室（历史引用：`../core/.tmp/png/space-v7-final-bedroom.png`；当前路径不存在）、卫生间（历史引用：`../core/.tmp/png/space-v7-final-bathroom.png`；当前路径不存在）。
+- 其他风格：简约（历史引用：`../core/.tmp/png/space-v7-reviewed-minimal.png`；当前路径不存在）、复古（历史引用：`../core/.tmp/png/space-v7-final-vintage.png`；当前路径不存在）、意大利（历史引用：`../core/.tmp/png/space-v7-reviewed-italian.png`；当前路径不存在）、日式（历史引用：`../core/.tmp/png/space-v7-reviewed-japanese.png`；当前路径不存在）、顶层公寓（历史引用：`../core/.tmp/png/space-v7-final-penthouse.png`；当前路径不存在）、赛博客厅（历史引用：`../core/.tmp/png/space-v7-final-cyberpunk.png`；当前路径不存在）、赛博外观（历史引用：`../core/.tmp/png/space-v7-final-cyberpunk-exterior.png`；当前路径不存在）。简约、意大利、日式截图拍摄于本轮最后一次茶几尺寸调整之前。
+- 公司：办公室 406（历史引用：`../core/.tmp/png/space-v7-final-office.png`；当前路径不存在）、公共休息区（历史引用：`../core/.tmp/png/space-v7-final-lounge.png`；当前路径不存在）、电话亭（历史引用：`../core/.tmp/png/space-v7-final-booths.png`；当前路径不存在）。
+- 操作：真实转层（历史引用：`../core/.tmp/png/space-v7-turn.png`；当前路径不存在）、375px 菜单（历史引用：`../core/.tmp/png/space-v7-mobile-375.png`；当前路径不存在）、320px 菜单（历史引用：`../core/.tmp/png/space-v7-mobile-320.png`；当前路径不存在）。
 
 ### 验证与资产
 
@@ -313,19 +315,19 @@ Use case: stylized-concept.
 | 车辆已加载后，同一客厅机位每帧提交 | 5,336 draw calls，12,919,336 三角形 | 隐藏远处车辆后 3,916 draw calls，10,063,000 三角形 |
 | 上述帧的 CPU 提交采样 | 43.6 ms | 25 ms；不是 GPU 帧率 |
 
-- 首载数据保存在 [space-v8-cold.json](../core/.tmp/png/space-v8-cold.json)。第八轮仍有 1,481 ms、416 ms 等主线程长任务，不能据此宣称完全无卡顿。
+- 首载数据保存在 space-v8-cold.json（历史引用：`../core/.tmp/png/space-v8-cold.json`；当前路径不存在）。第八轮仍有 1,481 ms、416 ms 等主线程长任务，不能据此宣称完全无卡顿。
 - 八风格暖切换从点击至模型加载及视角静止：简约 3,002 ms、赛博 4,276 ms、现代 2,707 ms、复古 5,031 ms、意大利 2,725 ms、顶层 3,972 ms、日式 2,655 ms、公司 1,244 ms。首次切换仍需等待。
 - v1/v2/v3 共 58 个发布资产，40,898,346 字节。新增车辆 GLB 为 11,778,688 字节，按接近车库加载，不计入默认现代客厅的首次资源；实测 HTTP 200、`model/gltf-binary`、`Cache-Control: public, max-age=2592000`。
 - Car Concept 来自 Khronos glTF Sample Assets，© 2024 DGG、Eric Chadwick，CC BY 4.0；出处、许可、商标与材质修改已写入统一 `about/credits_data.json`。关闭车辆的透射通道并保留透明玻璃近似，避免新增全场景透射渲染。公司原始实拍没有复制到公共资产。
 
 ### 第八轮真实网页截图
 
-- 现代住宅：[最终预览](../core/.tmp/png/space-v8-preview-final.png)、[外观](../core/.tmp/png/space-v8-exterior-final.png)、[客厅](../core/.tmp/png/space-v8-living-r3.png)、[书房](../core/.tmp/png/space-v8-study-r3.png)、[卧室](../core/.tmp/png/space-v8-bedroom-r3.png)、[卫生间](../core/.tmp/png/space-v8-bathroom-r3.png)。
-- 配套翼：[车库](../core/.tmp/png/space-v8-garage-final.png)、[影音室](../core/.tmp/png/space-v8-cinema-r2.png)、[健身房](../core/.tmp/png/space-v8-gym-r2.png)。
-- 风格：[简约](../core/.tmp/png/space-v8-minimal-final.png)、[复古](../core/.tmp/png/space-v8-vintage-final.png)、[意大利](../core/.tmp/png/space-v8-italian-final.png)、[日式](../core/.tmp/png/space-v8-japanese-final.png)、[顶层公寓](../core/.tmp/png/space-v8-penthouse-final.png)、[赛博客厅](../core/.tmp/png/space-v8-cyberpunk-final.png)、[赛博外观](../core/.tmp/png/space-v8-cyber-exterior-final.png)。
-- 公司：[办公室 406](../core/.tmp/png/space-v8-company-final.png)、[公共休息区](../core/.tmp/png/space-v8-lounge-final.png)、[电话亭](../core/.tmp/png/space-v8-booths-final.png)。
-- 高层外观：[桌面顶层公寓](../core/.tmp/png/space-v8-penthouse-exterior-final.png)、[375px 顶层公寓](../core/.tmp/png/space-v8-mobile-penthouse.png)。
-- 窄屏：[375px 触控漫游](../core/.tmp/png/space-v8-touch-375.png)、[320px 触控漫游](../core/.tmp/png/space-v8-touch-320.png)、[320px 风格菜单](../core/.tmp/png/space-v8-menu-320.png)。
+- 现代住宅：最终预览（历史引用：`../core/.tmp/png/space-v8-preview-final.png`；当前路径不存在）、外观（历史引用：`../core/.tmp/png/space-v8-exterior-final.png`；当前路径不存在）、客厅（历史引用：`../core/.tmp/png/space-v8-living-r3.png`；当前路径不存在）、书房（历史引用：`../core/.tmp/png/space-v8-study-r3.png`；当前路径不存在）、卧室（历史引用：`../core/.tmp/png/space-v8-bedroom-r3.png`；当前路径不存在）、卫生间（历史引用：`../core/.tmp/png/space-v8-bathroom-r3.png`；当前路径不存在）。
+- 配套翼：车库（历史引用：`../core/.tmp/png/space-v8-garage-final.png`；当前路径不存在）、影音室（历史引用：`../core/.tmp/png/space-v8-cinema-r2.png`；当前路径不存在）、健身房（历史引用：`../core/.tmp/png/space-v8-gym-r2.png`；当前路径不存在）。
+- 风格：简约（历史引用：`../core/.tmp/png/space-v8-minimal-final.png`；当前路径不存在）、复古（历史引用：`../core/.tmp/png/space-v8-vintage-final.png`；当前路径不存在）、意大利（历史引用：`../core/.tmp/png/space-v8-italian-final.png`；当前路径不存在）、日式（历史引用：`../core/.tmp/png/space-v8-japanese-final.png`；当前路径不存在）、顶层公寓（历史引用：`../core/.tmp/png/space-v8-penthouse-final.png`；当前路径不存在）、赛博客厅（历史引用：`../core/.tmp/png/space-v8-cyberpunk-final.png`；当前路径不存在）、赛博外观（历史引用：`../core/.tmp/png/space-v8-cyber-exterior-final.png`；当前路径不存在）。
+- 公司：办公室 406（历史引用：`../core/.tmp/png/space-v8-company-final.png`；当前路径不存在）、公共休息区（历史引用：`../core/.tmp/png/space-v8-lounge-final.png`；当前路径不存在）、电话亭（历史引用：`../core/.tmp/png/space-v8-booths-final.png`；当前路径不存在）。
+- 高层外观：桌面顶层公寓（历史引用：`../core/.tmp/png/space-v8-penthouse-exterior-final.png`；当前路径不存在）、375px 顶层公寓（历史引用：`../core/.tmp/png/space-v8-mobile-penthouse.png`；当前路径不存在）。
+- 窄屏：375px 触控漫游（历史引用：`../core/.tmp/png/space-v8-touch-375.png`；当前路径不存在）、320px 触控漫游（历史引用：`../core/.tmp/png/space-v8-touch-320.png`；当前路径不存在）、320px 风格菜单（历史引用：`../core/.tmp/png/space-v8-menu-320.png`；当前路径不存在）。
 
 ### 当前剩余与交付边界
 
@@ -368,8 +370,8 @@ Use case: stylized-concept.
 
 ### 真实网页截图与边界
 
-- [19 种天气总览](../core/.tmp/png/space-v9-contact.png)、[下雨客厅](../core/.tmp/png/space-v9-rain-living.png)、[下雪](../core/.tmp/png/space-v9-snow-final.png)、[台风](../core/.tmp/png/space-v9-typhoon-final.png)、[龙卷风](../core/.tmp/png/space-v9-tornado-final.png)、[泥石流](../core/.tmp/png/space-v9-mudslide-final.png)、[彩虹](../core/.tmp/png/space-v9-rainbow-final.png)。
-- [赛博下雪](../core/.tmp/png/space-v9-cyberpunk-snow.png)、[高层龙卷风](../core/.tmp/png/space-v9-penthouse-tornado.png)、[公司室内下雨](../core/.tmp/png/space-v9-company-rain.png)、[公司室外下雨](../core/.tmp/png/space-v9-company-exterior-rain.png)、[375px 菜单](../core/.tmp/png/space-v9-menu-375.png)、[320px 菜单](../core/.tmp/png/space-v9-menu-320.png)。
+- 19 种天气总览（历史引用：`../core/.tmp/png/space-v9-contact.png`；当前路径不存在）、下雨客厅（历史引用：`../core/.tmp/png/space-v9-rain-living.png`；当前路径不存在）、下雪（历史引用：`../core/.tmp/png/space-v9-snow-final.png`；当前路径不存在）、台风（历史引用：`../core/.tmp/png/space-v9-typhoon-final.png`；当前路径不存在）、龙卷风（历史引用：`../core/.tmp/png/space-v9-tornado-final.png`；当前路径不存在）、泥石流（历史引用：`../core/.tmp/png/space-v9-mudslide-final.png`；当前路径不存在）、彩虹（历史引用：`../core/.tmp/png/space-v9-rainbow-final.png`；当前路径不存在）。
+- 赛博下雪（历史引用：`../core/.tmp/png/space-v9-cyberpunk-snow.png`；当前路径不存在）、高层龙卷风（历史引用：`../core/.tmp/png/space-v9-penthouse-tornado.png`；当前路径不存在）、公司室内下雨（历史引用：`../core/.tmp/png/space-v9-company-rain.png`；当前路径不存在）、公司室外下雨（历史引用：`../core/.tmp/png/space-v9-company-exterior-rain.png`；当前路径不存在）、375px 菜单（历史引用：`../core/.tmp/png/space-v9-menu-375.png`；当前路径不存在）、320px 菜单（历史引用：`../core/.tmp/png/space-v9-menu-320.png`；当前路径不存在）。
 - 龙卷风和泥石流仍为程序化视觉效果，不计算建筑破坏、地形侵蚀或真实流体；积雪为材质覆盖，没有厚度增长。高层泥流位于下方地面，从顶层住宅默认机位可能被楼体遮挡。
 - 公司沿用实拍中的深色反射窗与封闭室内；默认办公室机位不会透过该窗展示室外天气，可从“视角→建筑外观”查看。公司外立面、街景和未知窗外环境仍未重建。
 - 整体电影级写实画质仍未验收通过。本轮交付天气可选、渲染联动和存档交互；近景家具、城市远景和灾害效果的美术品质仍需继续打磨。
@@ -389,10 +391,10 @@ Use case: stylized-concept.
 | [takustaqu / atmosphere](https://github.com/takustaqu/atmosphere) | 1 | 天空着色器含雨雪与雷暴预设，未达到用户要求的项目热度 |
 
 - ABYSSAL 已审阅 Weather、Atmosphere、Clouds、SkyRenderer、Lightning、Rain、Waterspout 和共享 uniform 的实现；取证版本为 `d2bae38301ff43bc1d43bfdfd9477a552ca5420b`，MIT。源码仅下载到忽略的 `core/.tmp/png/abyssal-source/`，没有安装或引入生产页面。
-- 在无头 Chromium 中运行上游演示，实际选择暴风雨及 LOW/HIGH 档，截图：[LOW](../core/.tmp/png/abyssal-demo-storm.png)、[HIGH](../core/.tmp/png/abyssal-demo-storm-high.png)。两个档位的云层截图仍有明显颗粒和块状痕迹；不能将上游的 cinematic 描述作为本项目美术验收结果。演示界面显示的帧率也不代表住宅集成后的实测性能。
+- 在无头 Chromium 中运行上游演示，实际选择暴风雨及 LOW/HIGH 档，截图：LOW（历史引用：`../core/.tmp/png/abyssal-demo-storm.png`；当前路径不存在）、HIGH（历史引用：`../core/.tmp/png/abyssal-demo-storm-high.png`；当前路径不存在）。两个档位的云层截图仍有明显颗粒和块状痕迹；不能将上游的 cinematic 描述作为本项目美术验收结果。演示界面显示的帧率也不代表住宅集成后的实测性能。
 - 接入需处理 Weather 对海洋参数的引用、共享 uniform 的生命周期、屏幕空间云层与镜面相机、房屋遮雨、缩放单位、渲染目标及材质释放，以及静态/减少动态效果。必须保留当前 19 种天气、魔方交互与存档契约。
 - 已向用户提出选型：接受较少星数的 ABYSSAL 以完整风暴效果优先，或坚持较高星数、先接入 Takram 大气和云层。该取舍来自用户此前“必须是比较火的项目”的约束，尚未收到选择，未擅自将低星项目视为满足原条件。
-- 本轮此前对本地闪电做了分叉、光晕和脉冲的实验性修改，截图：[修改前](../core/.tmp/png/space-lightning-before.png)、[实验](../core/.tmp/png/space-lightning-r1.png)。这部分仍是本地实现，未通过写实画质验收；后续按开源选型替换或整理，不计为开源系统接入成果。
+- 本轮此前对本地闪电做了分叉、光晕和脉冲的实验性修改，截图：修改前（历史引用：`../core/.tmp/png/space-lightning-before.png`；当前路径不存在）、实验（历史引用：`../core/.tmp/png/space-lightning-r1.png`；当前路径不存在）。这部分仍是本地实现，未通过写实画质验收；后续按开源选型替换或整理，不计为开源系统接入成果。
 - 当前 client typecheck 通过；既有 `tests/cube_space.test.ts` 13 项通过。这些检查不覆盖尚未发生的开源集成，也不证明实验闪电的画质。浏览器调试前的布局存储已恢复；未增加依赖、未运行 Next build、未提交或发布。
 
 ## 第十一轮：ABYSSAL 天气接入与六轮视觉迭代
@@ -421,7 +423,7 @@ Use case: stylized-concept.
 ### 实测结果
 
 - client `typecheck` 通过；`vitest run tests/cube_space.test.ts` 共 14 项通过。新增检查覆盖上游闪电实例隔离、活动/排队闪电清除与残余闪光归零，保留全部九类魔方与 19 种天气存档回归。
-- 真实菜单完成八种风格乘 19 种天气的 152 个组合；引擎均为 ready，未发现着色器编译失败。结果见 [验证数据](../core/.tmp/png/abyssal-validation.json)。现代住宅全部 19 种留存截图；功能切换通过不等于每个画面都通过写实验收。
+- 真实菜单完成八种风格乘 19 种天气的 152 个组合；引擎均为 ready，未发现着色器编译失败。结果见 验证数据（历史引用：`../core/.tmp/png/abyssal-validation.json`；当前路径不存在）。现代住宅全部 19 种留存截图；功能切换通过不等于每个画面都通过写实验收。
 - 暴雨中点击三阶 `R`，已保存动作从 `R` 变为 `R R`，天气时间继续推进；撤销后完整布局 JSON 与转动前一致。客厅、卫生间、公司办公室分别检查了室内遮雨。
 - 关闭动态天气及模拟系统减少动态效果时，天气时间均稳定在 `32.2345` 秒，待渲染帧、闪光强度、活动闪电与排队闪电均为 0。
 - 相同现代外观机位连续两轮“晴天→泥石流→龙卷风→下雪→晴天”，几何体计数每轮均 `419→422→420→420→419`，纹理均为 88，没有逐轮增长；计数不等于显存字节数。
@@ -430,7 +432,7 @@ Use case: stylized-concept.
 
 ### 截图与尚未达标项
 
-- [最终雷暴](../core/.tmp/png/abyssal-final-storm.png)、[第六轮闪电形状](../core/.tmp/png/abyssal-r6-lightning.png)、[龙卷风](../core/.tmp/png/abyssal-r5-tornado.png)、[下雨客厅](../core/.tmp/png/abyssal-living-rain.png)、[下雨卫生间](../core/.tmp/png/abyssal-bathroom-rain.png)、[公司室内](../core/.tmp/png/abyssal-company-rain.png)、[375px 菜单](../core/.tmp/png/abyssal-mobile-375.png)、[320px 菜单](../core/.tmp/png/abyssal-mobile-320.png)。闪电形状截图为方便审图，临时将一次闪电延长到 30 秒；该调试没有写入生产代码，正常闪电使用上游短脉冲时序。
+- 最终雷暴（历史引用：`../core/.tmp/png/abyssal-final-storm.png`；当前路径不存在）、第六轮闪电形状（历史引用：`../core/.tmp/png/abyssal-r6-lightning.png`；当前路径不存在）、龙卷风（历史引用：`../core/.tmp/png/abyssal-r5-tornado.png`；当前路径不存在）、下雨客厅（历史引用：`../core/.tmp/png/abyssal-living-rain.png`；当前路径不存在）、下雨卫生间（历史引用：`../core/.tmp/png/abyssal-bathroom-rain.png`；当前路径不存在）、公司室内（历史引用：`../core/.tmp/png/abyssal-company-rain.png`；当前路径不存在）、375px 菜单（历史引用：`../core/.tmp/png/abyssal-mobile-375.png`；当前路径不存在）、320px 菜单（历史引用：`../core/.tmp/png/abyssal-mobile-320.png`；当前路径不存在）。闪电形状截图为方便审图，临时将一次闪电延长到 30 秒；该调试没有写入生产代码，正常闪电使用上游短脉冲时序。
 - 已完成开源天气模块集成及上述兼容性验证。电影级写实画质仍未验收通过：龙卷风与山体仍有程序化观感，体积云细节和建筑间接光仍可改进，公司封闭反射窗不展示窗外天气。
 - 未做实体手机首载、发热和 GPU 帧率测试。未运行 Next build、未提交或发布；本地入口为 [魔方空间](http://127.0.0.1:3000/zh/space)。
 
@@ -468,11 +470,11 @@ Use case: stylized-concept.
 - 暂停时海洋时间稳定为 `59.7852`，待渲染帧为 0；恢复后前进到 `60.3019`。模拟系统减少动态效果后时间再次稳定，待渲染帧和闪光强度均为 0。原有环境动态大风运行时，隐藏的海洋时间不前进。
 - 固定各环境机位，连续两轮孤岛→原有环境，几何体均为 `427→430`，纹理均为 `111→115`，没有逐轮增长；此处是 renderer 资源数量，不是显存字节数。房间 InstancedMesh 增加显式释放。
 - 375px 重载确认 FFT 64、投影网格 128×96；375px 和 320px 的两个环境选项及 19 个天气选项均在视口内，无横向溢出，天气菜单可滚到最后。英文环境选项及两个海景机位实际检查通过。
-- 最终重载及台风检查没有浏览器警告、错误或着色器编译失败。详细数据：[浏览器验证记录](../core/.tmp/png/ocean-validation.json)。未运行 Next build，未验证实体手机发热/GPU 帧率或生产发布。
+- 最终重载及台风检查没有浏览器警告、错误或着色器编译失败。详细数据：浏览器验证记录（历史引用：`../core/.tmp/png/ocean-validation.json`；当前路径不存在）。未运行 Next build，未验证实体手机发热/GPU 帧率或生产发布。
 
 ### 实际网页截图与待办
 
-- [孤岛全景](../core/.tmp/png/ocean-final-island.png)、[晴天海边](../core/.tmp/png/ocean-final-sunny-shore.png)、[大风](../core/.tmp/png/ocean-final-windy.png)、[台风大浪](../core/.tmp/png/ocean-final-typhoon.png)、[客厅](../core/.tmp/png/ocean-final-living.png)、[公司孤岛](../core/.tmp/png/ocean-final-company.png)、[375px](../core/.tmp/png/ocean-menu-375.png)、[320px](../core/.tmp/png/ocean-menu-320.png)。临时截图与数据位于忽略目录，仅本机可查看。
+- 孤岛全景（历史引用：`../core/.tmp/png/ocean-final-island.png`；当前路径不存在）、晴天海边（历史引用：`../core/.tmp/png/ocean-final-sunny-shore.png`；当前路径不存在）、大风（历史引用：`../core/.tmp/png/ocean-final-windy.png`；当前路径不存在）、台风大浪（历史引用：`../core/.tmp/png/ocean-final-typhoon.png`；当前路径不存在）、客厅（历史引用：`../core/.tmp/png/ocean-final-living.png`；当前路径不存在）、公司孤岛（历史引用：`../core/.tmp/png/ocean-final-company.png`；当前路径不存在）、375px（历史引用：`../core/.tmp/png/ocean-menu-375.png`；当前路径不存在）、320px（历史引用：`../core/.tmp/png/ocean-menu-320.png`；当前路径不存在）。临时截图与数据位于忽略目录，仅本机可查看。
 - 海面已具备实际几何起伏、多尺度波纹和天气联动，但电影级写实仍未验收通过：近岸形态、远处波纹过渡、风暴海面的材质与泡沫仍需美术迭代。岛屿绿化与礁石也有程序化观感。
 - 海岸泡沫和浅水衰减是视觉近似，没有流体冲岸、海浪翻卷、飞溅粒子、侵蚀或建筑受灾物理；没有接入上游海啸事件。公司沿用封闭反射窗，办公室默认机位仍看不到窗外大海。
 - 本轮没有执行 commit 或 push；期间部分实现被并行任务提交 `db4d4cff40` 收入，本轮后续泡沫修正与文档仍以实际工作区状态为准，未回退或改写该提交。
@@ -498,11 +500,11 @@ Use case: stylized-concept.
 - 两轮“原有环境 → 孤岛大海”，固定建筑外观机位并等待模型、纹理及环境贴图加载完毕后，几何体均 `431 → 432`，纹理均 `119 → 119`。最初未等待模型的检查出现不一致，修正验证脚本后按严格相等复测通过；计数不是显存字节数。
 - 暂停时海洋时间稳定；真实 UI 转动三阶 `R` 后存档从 `R` 变成 `R R`，海洋时间继续推进，撤销恢复完整布局 JSON。结束时已恢复检查前的原有环境、晴天及原始布局，存档逐字一致。
 - 375px 无横向溢出；最终海面检查浏览器错误、警告均为 0。未运行 Next build，未测实体手机帧率、发热或生产发布；未执行 commit / push。
-- 可重跑的 GPU 与资源检查：[Playwright 脚本](../core/.tmp/png/ocean-polish-check.js)，[最终数据](../core/.tmp/png/ocean-polish-validation.json)。这些产物在本机忽略目录中。
+- 可重跑的 GPU 与资源检查：Playwright 脚本（历史引用：`../core/.tmp/png/ocean-polish-check.js`；当前路径不存在），最终数据（历史引用：`../core/.tmp/png/ocean-polish-validation.json`；当前路径不存在）。这些产物在本机忽略目录中。
 
 ### 截图与继续打磨项
 
-- [晴天近岸](../core/.tmp/png/ocean-polish-final-coast.png)、[台风海面](../core/.tmp/png/ocean-polish-final-typhoon.png)、[375px 海面](../core/.tmp/png/ocean-polish-final-375.png)。截图为实际网页，暂停在指定时刻用于对照，非生成概念图。
+- 晴天近岸（历史引用：`../core/.tmp/png/ocean-polish-final-coast.png`；当前路径不存在）、台风海面（历史引用：`../core/.tmp/png/ocean-polish-final-typhoon.png`；当前路径不存在）、375px 海面（历史引用：`../core/.tmp/png/ocean-polish-final-375.png`；当前路径不存在）。截图为实际网页，暂停在指定时刻用于对照，非生成概念图。
 - 尚未达标：风暴白沫覆盖仍偏少，缺少翻卷与飞溅；近岸波带仍有规则感，远处高光和波纹过渡仍需精修；岛屿地形、植被与礁石仍能看出程序化造型。本轮数值与交互检查通过不等于电影级视觉通过。
 - 此轮结束时上海只完成调研；后续城市实现在第十五轮及[上海黄浦江双岸跟踪文档](shanghai-huangpu-space-tracker.md)单独记录，不把海洋修正记为上海建模进展。
 
@@ -537,13 +539,13 @@ Use case: stylized-concept.
 - 第十一版实际读取台风第 0、12、45 秒三组 GPU 纹理，桌面/窄屏无 NaN/Infinity，泡沫在 0–1 内。GPU 浪高/CPU 频谱目标：桌面 `1.001 / 0.983 / 0.954`，窄屏 `0.947 / 0.831 / 0.908`；导数最大相对误差约 `0.074 / 0.120`。第十二、十三版未改变频谱计算；窄屏第 12 秒约低 17%，不能宣称手机与桌面同等精度。
 - 桌面、窄屏均读回飞溅位置/年龄，存在有效活粒子且有限；暂停 500–600ms 后纹理逐项不变、海洋时间不前进。系统减少动态效果时天气帧请求和闪光归零；原有环境继续运行大风时，隐藏的海洋保持停止。
 - 第十三版重新加载，实际复查海边低机位、全岛鸟瞰、客厅镜面，毛毛雨/下雨/暴雨及卫生间。未发现不可运行着色器或室内贯穿雨线。低视角微法线修正的对照不是换亮度参数或生成概念图。
-- 第十三版另复查 375px 海面，4,096 个飞溅预算中 3,290 个活粒子，读回值有限；暂停 500ms 后逐项不变、海洋时间停止，无横向溢出，浏览器错误和警告均为零。[截图](../core/.tmp/png/storm-spray-v13-mobile.png)、[可重跑脚本](../core/.tmp/png/space-final-narrow.js)、[记录](../core/.tmp/png/space-final-narrow.json)。这是模拟窄屏，未测实体手机。
-- 第十六版重载后复查孤岛、上海日景和上海夜景各 19 种天气，共 57 组；引擎均 ready、不可运行着色器为零。桌面 16,384 粒子中 14,066 个存活，375px 的 4,096 粒子中 3,593 个存活；位置和速度双附件全量读回均有限，暂停 500ms 后两附件逐项一致、海洋时间不动，每粒子保持两个三角形。数据：[最终 57 组及 GPU 检查](../core/.tmp/png/space-polish-final.json)，[重跑脚本](../core/.tmp/png/space-polish-final.js)。
+- 第十三版另复查 375px 海面，4,096 个飞溅预算中 3,290 个活粒子，读回值有限；暂停 500ms 后逐项不变、海洋时间停止，无横向溢出，浏览器错误和警告均为零。截图（历史引用：`../core/.tmp/png/storm-spray-v13-mobile.png`；当前路径不存在）、可重跑脚本（历史引用：`../core/.tmp/png/space-final-narrow.js`；当前路径不存在）、记录（历史引用：`../core/.tmp/png/space-final-narrow.json`；当前路径不存在）。这是模拟窄屏，未测实体手机。
+- 第十六版重载后复查孤岛、上海日景和上海夜景各 19 种天气，共 57 组；引擎均 ready、不可运行着色器为零。桌面 16,384 粒子中 14,066 个存活，375px 的 4,096 粒子中 3,593 个存活；位置和速度双附件全量读回均有限，暂停 500ms 后两附件逐项一致、海洋时间不动，每粒子保持两个三角形。数据：最终 57 组及 GPU 检查（历史引用：`../core/.tmp/png/space-polish-final.json`；当前路径不存在），重跑脚本（历史引用：`../core/.tmp/png/space-polish-final.js`；当前路径不存在）。
 - 泡沫、波纹、天气和 curl 烘焙目标按实际 UnsignedByte 格式读回，桌面/窄屏共 16 组横纵接缝检查通过，且图像内部差异非零。桌面泡沫横向接缝平均差由约 0.135 降至 0.0144，内部相邻差约 0.0161；最终接缝不超过内部差的两倍加 1/255。此项证明消除了额外重复接缝，不证明纹理已经具有电影质感。
-- 两轮完整加载后的资源计数见[资源记录](../core/.tmp/png/space-resource-final.json)：原有环境 `432/123`、孤岛 `433/123`、上海 `800/116`（几何体/纹理），两轮严格一致；不是显存或帧率测量。窄屏和失败恢复记录见[验证 JSON](../core/.tmp/png/space-mobile-check.json)。
-- 网页截图：[第十三版近景](../core/.tmp/png/storm-spray-v13.png)、[同机位侧岸对照](../core/.tmp/png/storm-coast-v13-winding.png)、[全岛](../core/.tmp/png/storm-final-island-v13.png)、[镜面客厅](../core/.tmp/png/storm-final-mirror-v13.png)、[暴雨卫生间](../core/.tmp/png/rain-final-bathroom.png)。截图与脚本都在本机忽略目录，非生成图。
-- 最新真实网页审图：[第十六版风暴近岸](../core/.tmp/png/storm-spray-final-v16.png)、[侧岸](../core/.tmp/png/storm-coast-final-v16.png)、[375px 风暴](../core/.tmp/png/storm-spray-final-v16-mobile.png)。水片试验已撤回，不能把最终截图描述为具有连续翻卷水片。
-- 全部检查后恢复开始前的浏览器布局，刷新后完整存档与备份逐字一致，保留六个魔方及首枚的 `R` 状态；城市场景已卸载，最终浏览器错误和警告均为零：[恢复记录](../core/.tmp/png/space-restored-final.json)。
+- 两轮完整加载后的资源计数见资源记录（历史引用：`../core/.tmp/png/space-resource-final.json`；当前路径不存在）：原有环境 `432/123`、孤岛 `433/123`、上海 `800/116`（几何体/纹理），两轮严格一致；不是显存或帧率测量。窄屏和失败恢复记录见验证 JSON（历史引用：`../core/.tmp/png/space-mobile-check.json`；当前路径不存在）。
+- 网页截图：第十三版近景（历史引用：`../core/.tmp/png/storm-spray-v13.png`；当前路径不存在）、同机位侧岸对照（历史引用：`../core/.tmp/png/storm-coast-v13-winding.png`；当前路径不存在）、全岛（历史引用：`../core/.tmp/png/storm-final-island-v13.png`；当前路径不存在）、镜面客厅（历史引用：`../core/.tmp/png/storm-final-mirror-v13.png`；当前路径不存在）、暴雨卫生间（历史引用：`../core/.tmp/png/rain-final-bathroom.png`；当前路径不存在）。截图与脚本都在本机忽略目录，非生成图。
+- 最新真实网页审图：第十六版风暴近岸（历史引用：`../core/.tmp/png/storm-spray-final-v16.png`；当前路径不存在）、侧岸（历史引用：`../core/.tmp/png/storm-coast-final-v16.png`；当前路径不存在）、375px 风暴（历史引用：`../core/.tmp/png/storm-spray-final-v16-mobile.png`；当前路径不存在）。水片试验已撤回，不能把最终截图描述为具有连续翻卷水片。
+- 全部检查后恢复开始前的浏览器布局，刷新后完整存档与备份逐字一致，保留六个魔方及首枚的 `R` 状态；城市场景已卸载，最终浏览器错误和警告均为零：恢复记录（历史引用：`../core/.tmp/png/space-restored-final.json`；当前路径不存在）。
 - 未运行 Next build、未提交或发布；没有实体手机帧率/发热证据。
 
 ### 尚未通过的电影级要求
@@ -572,7 +574,7 @@ Use case: stylized-concept.
 - [x] 太阳方向、阴影、天空/镜面环境光、城市窗光及江面太阳反光共用时间。当前为固定春秋分与地方太阳时近似，具体计算范围和参考公式见[来源索引](space-sources.md)。
 - [x] 画面右下角增加缩放滑块，沿用 OrbitControls 距离和限值，向右拉近、向左拉远；键盘、滚轮同步。室内最远距离受房间边界限制；漫游时禁用，巡游时拖动即接管。魔方大小仍由原来的物件大小控件设置。
 - [x] 320px/375px 触摸与无溢出验证；修正缩放栏与漫游方向键重叠，检查四种系统/显式明暗组合。桌面城市 4–24,000 米、室内约 0.2–5.9703 米端点和滚轮同步实测通过。
-- [x] 时间/地图两份相关测试共 24 项和 client typecheck 通过；全天 1,440 个分钟值均验证。浏览器检查六个时刻、全部 19 种天气、存档与英文标签，记录见 [clock-zoom-check.json](../core/.tmp/png/clock-zoom-check.json) 和 [clock-zoom-ui.json](../core/.tmp/png/clock-zoom-ui.json)。
+- [x] 时间/地图两份相关测试共 24 项和 client typecheck 通过；全天 1,440 个分钟值均验证。浏览器检查六个时刻、全部 19 种天气、存档与英文标签，记录见 clock-zoom-check.json（历史引用：`../core/.tmp/png/clock-zoom-check.json`；当前路径不存在） 和 clock-zoom-ui.json（历史引用：`../core/.tmp/png/clock-zoom-ui.json`；当前路径不存在）。
 - [x] 孤岛台风实际运行后暂停，再切换四个时刻：天气时间保持约 0.2502 秒、FFT 时间保持约 1.0838 秒，飞沫读纹理标识不变、reset 为 false，资源数量保持 431 几何体/119 纹理。此项验证时钟不会重置模拟；不是完整加载后的资源基线或 GPU 数值复测。
 - [x] 页面增加“来源与致谢”链接到统一 `/about`，技术索引记录 GitHub 固定版本、地图/材质/模型/太阳公式来源与日期；未下载和未集成的项目单独说明。
 - [ ] 确认用户所说“徐家汇家园”的准确小区，再校准目的地；当前入口仅名“徐家汇”。
@@ -587,7 +589,7 @@ Use case: stylized-concept.
 - 来源名称、链接和中英文用途直接读取统一 `about/credits_data.json` 中 `space: true` 的七项条目，不维护独立来源副本。
 - 上海说明明确建筑由 OSM 平面轮廓拉伸，使用记录高度、楼层数 × 3.2 米或默认 12 米；多数楼高使用默认值，地标、立面和窗光为程序化简化模型，不是实景扫描。场景状态提示同步去掉容易误解的“部分楼高”表述。
 - client typecheck 通过；浏览器检查全部七项链接、默认展开、键盘收放、中英文、1440/375/320px 无横向溢出，以及系统/显式明暗四种组合。收放说明保持同一个 3D canvas，交互检查未收到 pageerror。
-- 窄屏截图见 [space-sources-mobile320.png](../core/.tmp/png/space-sources-mobile320.png)。没有新增测试、运行 Next build、提交或发布；本轮未改动城市几何或天气渲染，不更新此前的视觉达标结论。
+- 窄屏截图见 space-sources-mobile320.png（历史引用：`../core/.tmp/png/space-sources-mobile320.png`；当前路径不存在）。没有新增测试、运行 Next build、提交或发布；本轮未改动城市几何或天气渲染，不更新此前的视觉达标结论。
 
 ## 第十八轮：上海精细建筑与桥梁第一批
 
@@ -596,7 +598,7 @@ Use case: stylized-concept.
 - [x] 南浦、卢浦、外白渡分别建模，补索锚、桥下梁、桁架节点与夜间轮廓；引桥采用实际 OSM 道路连接计算坡度，修复跨越主桥下方的绿道被错误抬高。
 - [x] 汤臣四塔与和平饭店第一版细化；补阳台、石材、冠顶、铜缝和内院，增加独立近景机位。部分尺度有官方来源，其他估算在专项表中明确记录。
 - [x] 四轮实际网页审图，包含日景、傍晚和夜景；来源区由七项扩展至 13 项，双语用途、原始链接和查阅日期可在网页直接查看。
-- [x] 最终 typecheck、28 项相关测试、三个原环境/上海往返周期及 375px/320px 窄屏机位和来源检查通过。零控制台 error / 不可运行 shader，有一次 X4000 编译 warning；详见 [replica-final-check.json](../core/.tmp/png/replica-final-check.json)。
+- [x] 最终 typecheck、28 项相关测试、三个原环境/上海往返周期及 375px/320px 窄屏机位和来源检查通过。零控制台 error / 不可运行 shader，有一次 X4000 编译 warning；详见 replica-final-check.json（历史引用：`../core/.tmp/png/replica-final-check.json`；当前路径不存在）。
 - [ ] 外滩其余历史建筑、陆家嘴所有地块、其余桥梁与远端范围继续施工；没有任何片区通过完整 1:1 或电影级验收。江海关、汇丰和汤臣裙房列为下一批。
 
 未运行 Next build、提交或发布；截图保存在本地忽略目录，未将实拍参考或临时验证图加入运行资产。
@@ -613,7 +615,7 @@ Use case: stylized-concept.
 - [x] 实际网页检查六个键盘方向、六个 CDP 触摸方向、双指移动加环顾、触摸取消、失焦停止、巡游接管、切回环绕位置不跳、步行和预设视角回归。320px / 375px / 1280px 控件位于画布内且不重叠，中英文无横向溢出；系统与显式明暗四种组合可读。
 - [x] 三轮无人机/环绕切换，当前已加载场景的几何体与纹理计数保持 624 / 44；不可运行 shader 为零，最终中文页面控制台 error / warning 均为零。这是模式切换资源检查，不代表全部异步资产的加载基线或实体手机性能。
 
-实际网页截图：[桌面](../core/.tmp/png/drone-final-desktop.png)、[320px](../core/.tmp/png/drone-final-mobile320.png)、[375px](../core/.tmp/png/drone-final-mobile375.png)、[英文窄屏](../core/.tmp/png/drone-final-english320.png)。关键数值见[验证记录](../core/.tmp/png/drone-check.json)。均为本地忽略目录中的验证产物。
+实际网页截图：桌面（历史引用：`../core/.tmp/png/drone-final-desktop.png`；当前路径不存在）、320px（历史引用：`../core/.tmp/png/drone-final-mobile320.png`；当前路径不存在）、375px（历史引用：`../core/.tmp/png/drone-final-mobile375.png`；当前路径不存在）、英文窄屏（历史引用：`../core/.tmp/png/drone-final-english320.png`；当前路径不存在）。关键数值见验证记录（历史引用：`../core/.tmp/png/drone-check.json`；当前路径不存在）。均为本地忽略目录中的验证产物。
 
 未运行 Next build、提交或发布；未测实体手机。上海逐栋精细复刻和海洋电影级待办保持原有验收状态，本轮只交付镜头操作。
 
@@ -629,7 +631,7 @@ Use case: stylized-concept.
 - [x] 实际按键验证 R / F / E / Q 升降、松键停止、相反方向抵消、同向多个键独立释放、输入框内按键不移动镜头，以及 1 米和 6000 米高度边界。320px 中英文控件可用、无横向溢出。
 - [x] client typecheck 与两份相关测试 `cube_space.test.ts` / `space_shanghai.test.ts` 共 31 项通过；浏览器最终检查未发现控制台 error / warning。
 
-本地证据：[修复前](../core/.tmp/png/drone-flicker-before.png)、[修复后](../core/.tmp/png/drone-flicker-after.png)、[逐帧和按键记录](../core/.tmp/png/drone-flicker-check.json)、[复测脚本](../core/.tmp/png/drone-flicker-check.js)、[中文 320px](../core/.tmp/png/drone-rf-zh320.png)、[英文 320px](../core/.tmp/png/drone-rf-en320.png)。均为真实浏览器验证产物，保存在忽略目录。
+本地证据：修复前（历史引用：`../core/.tmp/png/drone-flicker-before.png`；当前路径不存在）、修复后（历史引用：`../core/.tmp/png/drone-flicker-after.png`；当前路径不存在）、逐帧和按键记录（历史引用：`../core/.tmp/png/drone-flicker-check.json`；当前路径不存在）、复测脚本（历史引用：`../core/.tmp/png/drone-flicker-check.js`；当前路径不存在）、中文 320px（历史引用：`../core/.tmp/png/drone-rf-zh320.png`；当前路径不存在）、英文 320px（历史引用：`../core/.tmp/png/drone-rf-en320.png`；当前路径不存在）。均为真实浏览器验证产物，保存在忽略目录。
 
 未运行 Next build、提交或发布；未测实体手机。本轮验证限于上述镜头与输入场景，不改变上海精细复刻和海洋电影级待办的验收状态。
 
@@ -643,7 +645,7 @@ Use case: stylized-concept.
 - [x] 动态天气开启时实际长按 W / S / A / D / R / F，记录 128 个合成画面；最大相邻帧平均 RGB 差为 1.770（0–255），未再出现整片江水突闪。平移保持高度，R / F 正常升降，六个键松开后均停止移动。
 - [x] 人工检查真实网页的 417 米同机位修复前后、6000 米俯视、南浦大桥、23:59 夜间反射及 320px 窄屏。窄屏无横向溢出；client typecheck 和 `cube_space.test.ts` / `space_shanghai.test.ts` 共 31 项测试通过。
 
-本地证据：[417 米修复前](../core/.tmp/png/river-depth-v2-before-417.png)、[同机位修复后](../core/.tmp/png/river-depth-v2-after-417.png)、[6000 米](../core/.tmp/png/river-depth-v2-6000.png)、[南浦大桥](../core/.tmp/png/river-depth-v2-nanpu.png)、[夜间](../core/.tmp/png/river-depth-v2-night.png)、[320px](../core/.tmp/png/river-depth-v2-mobile320.png)。数据与复测脚本：[旧新对照](../core/.tmp/png/river-depth-v2-before-after.json)、[最终源码扫描](../core/.tmp/png/river-depth-v2-final.json)、[扫描脚本](../core/.tmp/png/river-depth-scan.js)、[完整场景遮挡](../core/.tmp/png/river-occlusion-v2-final.json)、[遮挡脚本](../core/.tmp/png/river-occlusion-v2.js)、[按键逐帧记录](../core/.tmp/png/river-input-v2-final.json)、[按键脚本](../core/.tmp/png/river-input-v2.js)。均为本地忽略目录中的验证产物。
+本地证据：417 米修复前（历史引用：`../core/.tmp/png/river-depth-v2-before-417.png`；当前路径不存在）、同机位修复后（历史引用：`../core/.tmp/png/river-depth-v2-after-417.png`；当前路径不存在）、6000 米（历史引用：`../core/.tmp/png/river-depth-v2-6000.png`；当前路径不存在）、南浦大桥（历史引用：`../core/.tmp/png/river-depth-v2-nanpu.png`；当前路径不存在）、夜间（历史引用：`../core/.tmp/png/river-depth-v2-night.png`；当前路径不存在）、320px（历史引用：`../core/.tmp/png/river-depth-v2-mobile320.png`；当前路径不存在）。数据与复测脚本：旧新对照（历史引用：`../core/.tmp/png/river-depth-v2-before-after.json`；当前路径不存在）、最终源码扫描（历史引用：`../core/.tmp/png/river-depth-v2-final.json`；当前路径不存在）、扫描脚本（历史引用：`../core/.tmp/png/river-depth-scan.js`；当前路径不存在）、完整场景遮挡（历史引用：`../core/.tmp/png/river-occlusion-v2-final.json`；当前路径不存在）、遮挡脚本（历史引用：`../core/.tmp/png/river-occlusion-v2.js`；当前路径不存在）、按键逐帧记录（历史引用：`../core/.tmp/png/river-input-v2-final.json`；当前路径不存在）、按键脚本（历史引用：`../core/.tmp/png/river-input-v2.js`；当前路径不存在）。均为本地忽略目录中的验证产物。
 
 以上覆盖所列镜头与本机浏览器，未测实体手机或全部显卡。未运行 Next build、提交或发布；上海逐栋复刻与海洋电影级质量继续按原有待办验收。
 
@@ -661,7 +663,7 @@ Use case: stylized-concept.
 - [x] 七种水色切换保持同一水面对象，检查时几何体 / 纹理计数保持 648 / 70；天气资源加载稳定后三轮晴天和彩虹往返，几何体分别为 651 / 652、纹理保持 74，无持续增长。刷新恢复彩虹、16:00 和所选水色，00:00 彩虹隐藏。
 - [x] 320px 中英文输入和下拉菜单可操作、无横向溢出；飞行设置宽 273px，右沿 289px。系统浅色、系统深色、显式浅色配深色系统、显式深色配浅色系统四种组合均可读。最终浏览器无控制台 error；一次完整重载出现四条 WebGLProgram 编译 warning（精度、循环内导数及 FXAA 变量），没有 shader 编译失败或空白画面。
 
-本地真实网页证据：[彩虹与浅蓝江水桌面](../core/.tmp/png/space-controls-rainbow-final.png)、[深蓝水面第二轮](../core/.tmp/png/river-deepBlue-refined.png)、[中文 320px](../core/.tmp/png/space-custom-zh320.png)、[英文 320px](../core/.tmp/png/space-custom-en320.png)、[核心交互复测脚本](../core/.tmp/png/space-controls-check.cjs)。来源用途同步记录于[技术来源索引](space-sources.md)，网页来源入口继续复用统一致谢数据。
+本地真实网页证据：彩虹与浅蓝江水桌面（历史引用：`../core/.tmp/png/space-controls-rainbow-final.png`；当前路径不存在）、深蓝水面第二轮（历史引用：`../core/.tmp/png/river-deepBlue-refined.png`；当前路径不存在）、中文 320px（历史引用：`../core/.tmp/png/space-custom-zh320.png`；当前路径不存在）、英文 320px（历史引用：`../core/.tmp/png/space-custom-en320.png`；当前路径不存在）、核心交互复测脚本（历史引用：`../core/.tmp/png/space-controls-check.cjs`；当前路径不存在）。来源用途同步记录于[技术来源索引](space-sources.md)，网页来源入口继续复用统一致谢数据。
 
 未运行 Next build、提交或发布；未测实体手机或全部显卡。本轮完成上述操作与外观设置，不改变上海逐栋 1:1 复刻和海洋电影级质量的原有待办状态。
 
@@ -676,7 +678,7 @@ Use case: stylized-concept.
 - [x] 修复方向按钮悬停时透明背景叠在深色场景上导致文字难辨：沿用主题颜色混合不透明背景。系统浅色、系统深色、显式浅色配深色系统、显式深色配浅色系统四种组合的悬停文字对比度分别约 14.81 / 13.03 / 14.81 / 13.03。
 - [x] client typecheck 通过；`cube_space.test.ts` 24 项测试通过。后续仅调整布局与按钮状态颜色，未改动相机、水面或建筑渲染代码。
 
-本地真实网页证据：[上海 417 米](../core/.tmp/png/drone-arrows-shanghai.png)、[桌面](../core/.tmp/png/drone-arrows-desktop.png)、[中文 320px](../core/.tmp/png/drone-arrows-zh320.png)、[英文 320px](../core/.tmp/png/drone-arrows-en320.png)。[交互脚本](../core/.tmp/png/drone-arrow-controls-check.cjs)、[37 项检查记录](../core/.tmp/png/drone-arrow-controls-check.json)、[上海检查记录](../core/.tmp/png/drone-arrows-shanghai-check.json)、[明暗主题记录](../core/.tmp/png/drone-arrows-theme-check.json)。均为忽略目录中的本地验证产物。
+本地真实网页证据：上海 417 米（历史引用：`../core/.tmp/png/drone-arrows-shanghai.png`；当前路径不存在）、桌面（历史引用：`../core/.tmp/png/drone-arrows-desktop.png`；当前路径不存在）、中文 320px（历史引用：`../core/.tmp/png/drone-arrows-zh320.png`；当前路径不存在）、英文 320px（历史引用：`../core/.tmp/png/drone-arrows-en320.png`；当前路径不存在）。交互脚本（历史引用：`../core/.tmp/png/drone-arrow-controls-check.cjs`；当前路径不存在）、37 项检查记录（历史引用：`../core/.tmp/png/drone-arrow-controls-check.json`；当前路径不存在）、上海检查记录（历史引用：`../core/.tmp/png/drone-arrows-shanghai-check.json`；当前路径不存在）、明暗主题记录（历史引用：`../core/.tmp/png/drone-arrows-theme-check.json`；当前路径不存在）。均为忽略目录中的本地验证产物。
 
 未运行 Next build、提交或发布；触摸检查为浏览器模拟，未测实体手机。本轮仅修正无人机输入与相关控件，不改变场景精细复刻的原有待办状态。
 
@@ -691,7 +693,7 @@ Use case: stylized-concept.
 - [x] 最终 client typecheck 及两份相关测试共 33 项通过。三个环境切换周期的几何体/纹理数量稳定，无不可运行 shader；检查不是全天气矩阵或实体手机测试。
 - [ ] 当前石材偏平、夜景照明简化、庭院空旷，周边通用楼模和道路仍粗糙。建筑与城市均未通过 1:1 或电影级验收；海洋白沫、飞溅等原有美术待办状态不变。
 
-尺寸依据、三轮截图及后续逐栋清单见[上海精细复刻跟踪第二批](shanghai-replica-tracker.md#第二批江海关汇丰与汤臣裙房庭院)，[结构化验收记录](../core/.tmp/png/shanghai-r7-validation.json)。未运行 Next build、提交或发布。
+尺寸依据、三轮截图及后续逐栋清单见[上海精细复刻跟踪第二批](shanghai-replica-tracker.md#第二批江海关汇丰与汤臣裙房庭院)，结构化验收记录（历史引用：`../core/.tmp/png/shanghai-r7-validation.json`；当前路径不存在）。未运行 Next build、提交或发布。
 
 ## 第二十五轮：外滩立面与材质细化
 
@@ -703,7 +705,7 @@ Use case: stylized-concept.
 - [x] 页面来源区新增 Three.js 官方阴影文档，更新建筑资料用途和估算边界；中英文共有 16 个外部来源链接。无新增运行模型或贴图依赖。
 - [ ] 柱头、雕像、侧后立面、周边通用楼模与道路仍简化，夜景为近似洗墙，未达 1:1 或电影级。窄屏顶部控件过高、雨天石材表现及实体手机性能继续待验。
 
-截图、准确资源计数、通知接口一次 500 与验证范围见[第三批专项跟踪](shanghai-replica-tracker.md#第三批外滩窗洞石材与近景阴影)和[第三批验收记录](../core/.tmp/png/bund-r9-validation.json)。未运行 Next build、提交或发布；海洋及其余上海逐栋待办不缩减。
+截图、准确资源计数、通知接口一次 500 与验证范围见[第三批专项跟踪](shanghai-replica-tracker.md#第三批外滩窗洞石材与近景阴影)和第三批验收记录（历史引用：`../core/.tmp/png/bund-r9-validation.json`；当前路径不存在）。未运行 Next build、提交或发布；海洋及其余上海逐栋待办不缩减。
 
 ## 第二十六轮：上海三座超高层与外滩夜景
 
@@ -715,7 +717,7 @@ Use case: stylized-concept.
 - [x] r10–r14 多轮真实网页审图；最终 typecheck 与 39 项相关测试通过，三次环境切换资源稳定。中文 320px / 390px 与英文 320px 入口可用，无整页横向溢出；最终复查无 error / warning 或不可运行 shader。
 - [ ] 三塔平面、裙房、幕墙及灯光仍须精确校准；周边通用楼模、外滩其余建筑、完整景观与夜间反射未达到 1:1 或电影级。320px 英文顶部控件过高，实体手机性能及雨天石材未专项验证。
 
-详细依据、逐轮截图和资源数量见[第四批专项跟踪](shanghai-replica-tracker.md#第四批外滩街道分层夜景与上海三座超高层)及[验收记录](../core/.tmp/png/shanghai-r14-validation.json)。未运行 Next build、提交或发布；原海洋白沫、飞溅和上海全区域待办继续保留。
+详细依据、逐轮截图和资源数量见[第四批专项跟踪](shanghai-replica-tracker.md#第四批外滩街道分层夜景与上海三座超高层)及验收记录（历史引用：`../core/.tmp/png/shanghai-r14-validation.json`；当前路径不存在）。未运行 Next build、提交或发布；原海洋白沫、飞溅和上海全区域待办继续保留。
 
 ## 第二十七轮：外滩逐栋实拍重建
 
@@ -726,13 +728,13 @@ Use case: stylized-concept.
 - [x] 最终 client typecheck 通过，42 项相关测试通过，含全部新楼匹配、有限几何、空输入和实际门窗射线回归。最终三次环境切换资源稳定，最后复查窗口 0 error / warning，无不可运行 shader。
 - [ ] 尚缺精确开间、层高、石雕、侧后立面与现场灯光校准，背景街区和道路景观仍简化，不能认定 1:1 或电影级。窄屏顶部控件过高、实体手机性能及其他区域的完整待办保留。
 
-逐栋来源、五轮截图和资源数量见[第五批专项跟踪](shanghai-replica-tracker.md#第五批外滩逐栋实拍重建)与[结构化验收](../core/.tmp/png/bund-r19-validation.json)。没有新增在线模型服务，未运行 Next build 或发布；本批及此前同任务改动在验证后仅作本地提交，不 push。
+逐栋来源、五轮截图和资源数量见[第五批专项跟踪](shanghai-replica-tracker.md#第五批外滩逐栋实拍重建)与结构化验收（历史引用：`../core/.tmp/png/bund-r19-validation.json`；当前路径不存在）。没有新增在线模型服务，未运行 Next build 或发布；本批及此前同任务改动在验证后仅作本地提交，不 push。
 
 ## 第二十八轮：上海雨夜与灯光实拍校准
 
 2026-09-08。对照上海日常外滩照明报道和新华社外滩/陆家嘴夜景实拍，完成 r21–r28 八次代码与实际截图迭代：统一城市雾与天空地平线、修复雨天地面过度镜面反光、隔离别墅曝光参数、重做稳定窗光与三塔轮廓照明、增强江面波纹倒影，并增加中央江岸暖光、道路照明和船舱窗光。东方明珠减少整球粉色发光，改暗壳与蓝绿灯点。
 
-最终 client typecheck 和 47 项针对性回归通过；r27 三轮回到城市的资源对象数量相同，最终 shader / 控制台无错误。雨景检查覆盖 00:00、12:00、18:00、20:00、23:59；中英文 320px 来源区均显示 47 个外部链接。每轮截图、根因实证、资源预热差异与验证限制见[第六批专项跟踪](shanghai-replica-tracker.md#第六批上海夜景雨夜地平线与江面反射)及[结构化验收](../core/.tmp/png/night-r28-validation.json)。
+最终 client typecheck 和 47 项针对性回归通过；r27 三轮回到城市的资源对象数量相同，最终 shader / 控制台无错误。雨景检查覆盖 00:00、12:00、18:00、20:00、23:59；中英文 320px 来源区均显示 47 个外部链接。每轮截图、根因实证、资源预热差异与验证限制见[第六批专项跟踪](shanghai-replica-tracker.md#第六批上海夜景雨夜地平线与江面反射)及结构化验收（历史引用：`../core/.tmp/png/night-r28-validation.json`；当前路径不存在）。
 
 **GTA6 / 赛博朋克 2077 画质仍未达标。** 真实逐栋城市资产、街道交通、滨江设施、现场照明与间接光仍需补足；未将当前修正标作电影级完成，也未缩减此前别墅、海洋及桥梁待办。未跑 Next build 或发布，仅本地提交，不 push。
 

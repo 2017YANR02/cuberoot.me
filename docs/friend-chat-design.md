@@ -1,6 +1,14 @@
 # 好友轻量聊天设计
 
-状态：`ACTIVE — IMPLEMENTED LOCALLY; RELEASE / DEVICE ACCEPTANCE PENDING`。日期：2026-09-27。
+状态：`ACTIVE — IMPLEMENTED LOCALLY; RELEASE / DEVICE ACCEPTANCE PENDING`。设计日期：2026-09-27；源码核对：2026-11-15。
+
+## 当前实现入口
+
+当前已有 `shared/src/chat` 契约、`app-ui/src/chat/ChatPanel.tsx` 共享 UI、Web `lib/chat-adapter.ts`、API `routes/chat.ts` 与 `chat_repository.ts`；API 已在 `src/index.ts` 挂载。源码还包含贴纸上传/读取/改名接口和共享贴纸组件，不能再把“纯文字首版、不含图片”描述为完整现状。此处只核对实现，不据代码推断今天的部署或设备验收。
+
+## 原设计与验收记录（2026-09-27）
+
+以下保留原方案、取舍和当时验证边界，不是新的实施队列。后续实现以以上代码入口为准。
 
 本文记录代码分析、实施设计和本地实现边界。现有好友系统已增加轻量交流能力，业务逻辑与界面放在共享层；迁移仅在本地独立测试库验证，尚未部署或取得设备验收。共享范围为 CubeRoot 仓库内的网站与五端，不抽到跨项目 app-foundation。
 
