@@ -86,6 +86,7 @@ const CARD_VISUALS: Partial<Record<SiteDirectoryEntry['id'], CardVisual>> = {
   contests: { iconImg: '/icons/upstream/recordranks.png' },
   'online-competitions': { Icon: Trophy },
   'comp-sim': { Icon: Radio },
+  draw: { Icon: Trophy },
   'frame-count': { Icon: Film },
   solver: { iconImg: '/icons/upstream/solver.png' },
   mosaic: { Icon: Grid2x2 },

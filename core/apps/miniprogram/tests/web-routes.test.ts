@@ -122,14 +122,14 @@ describe('mini program web routes', () => {
     }
   });
 
-  it('derives all 60 homepage destinations from the shared ordered catalog', () => {
-    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 3, 6, 13, 18, 12, 3]);
-    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 3, 6, 13, 18, 12, 3]);
-    expect(listWebTools()).toHaveLength(60);
+  it('derives all 61 homepage destinations from the shared ordered catalog', () => {
+    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 3, 7, 11, 8, 10, 14, 3]);
+    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 3, 7, 11, 8, 10, 14, 3]);
+    expect(listWebTools()).toHaveLength(61);
     expect(listWebTools()).toContainEqual(expect.objectContaining({ id: 'gallery', href: '/gallery' }));
     expect(resolveWebTool('lettering')).toMatchObject({ id: 'lettering', key: 'lettering', href: '/lettering', action: 'web' });
-    expect(new Set(listWebTools().map((tool) => tool.id))).toHaveProperty('size', 60);
-    expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(57);
+    expect(new Set(listWebTools().map((tool) => tool.id))).toHaveProperty('size', 61);
+    expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(58);
     expect(resolveWebTool('documents')).toMatchObject({ id: 'documents', href: '/docs', title: '协作文档' });
     expect(resolveWebTool('spreadsheets')).toBeNull();
     expect(resolveWebRoute('paper-odyssey')).toMatchObject({
@@ -195,7 +195,7 @@ describe('mini program web routes', () => {
       path: '/pages/web/index?key=alg',
     });
     const routeBackedTools = listWebTools().filter((tool) => tool.key !== null);
-    expect(routeBackedTools).toHaveLength(57);
+    expect(routeBackedTools).toHaveLength(58);
     expect(routeBackedTools.every((tool) => resolveWebRouteShare(tool.key) !== null)).toBe(true);
     expect(resolveWebRouteShare('account')?.path).toBe('/pages/web/index?key=home&path=%2Fzh%2Faccount');
     expect(resolveWebRouteShare('privacy')?.path).toBe('/pages/web/index?key=home&path=%2Fzh%2Fprivacy');

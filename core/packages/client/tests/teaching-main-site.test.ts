@@ -20,7 +20,7 @@ describe('main-site teaching architecture', () => {
   });
 
   it('exposes both teaching entry points on the main homepage', () => {
-    const learnEntries = SITE_DIRECTORY_GROUPS.find((group) => group.id === 'learn')?.entries ?? [];
+    const learnEntries = SITE_DIRECTORY_GROUPS.find((group) => group.id === 'collaborate')?.entries ?? [];
     expect(learnEntries.find((entry) => entry.id === 'teaching-management')).toMatchObject({ href: '/org', internal: true });
     expect(learnEntries.find((entry) => entry.id === 'learning-center')).toMatchObject({ href: '/learn', internal: true });
     expect(SITE_DIRECTORY_TEXTS.teachingManagement).toEqual({ en: 'Teaching', zh: '教学管理' });
@@ -29,7 +29,7 @@ describe('main-site teaching architecture', () => {
 
   it('keeps the restored legacy host isolated as a temporary comparison site', () => {
     const nginx = readFileSync(join(REPO, 'ops', 'nginx', 'platform.cuberoot.me.conf'), 'utf8');
-    const learnEntries = SITE_DIRECTORY_GROUPS.find((group) => group.id === 'learn')?.entries ?? [];
+    const learnEntries = SITE_DIRECTORY_GROUPS.find((group) => group.id === 'collaborate')?.entries ?? [];
     expect(nginx).toContain('旧 Cube Platform 验收对照站');
     expect(nginx).toMatch(/proxy_pass\s+http:\/\/127\.0\.0\.1:3004;/);
     expect(nginx).not.toContain('return 410;');
