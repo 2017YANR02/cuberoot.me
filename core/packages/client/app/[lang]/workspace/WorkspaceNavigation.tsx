@@ -4,7 +4,7 @@ import { Suspense, type ReactNode, type MouseEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
 import { NavigationShell } from '@app-foundation/navigation-ui';
-import { Activity, BookOpen, ClipboardList, FolderKanban, LayoutDashboard, LogOut, ScanEye, ShieldCheck, UserRoundPlus, Users, Workflow, Wrench } from '@app-foundation/icons/lucide';
+import { Activity, BookOpen, CalendarDays, ClipboardList, FolderKanban, LayoutDashboard, LogOut, ScanEye, ShieldCheck, UserRoundPlus, Users, Workflow, Wrench } from '@app-foundation/icons/lucide';
 import '@app-foundation/navigation-ui/navigation.css';
 import '@app-foundation/workspace-ui/workspace.css';
 import AppLink from '@/components/AppLink';
@@ -29,7 +29,7 @@ function Navigation({ children }: { children: ReactNode }) {
     { id: 'projects', label: t('项目', 'Projects'), Icon: FolderKanban },
     { id: 'checklists', label: t('清单', 'Checklists'), Icon: ClipboardList },
     { id: 'schedule', label: t('排期', 'Schedule'), Icon: FolderKanban },
-    ...(admin ? [{ id: 'members', label: t('成员与权限', 'Members and access'), Icon: ShieldCheck }] : []),
+    ...(admin ? [{ id: 'work-calendar', label: t('工作日历', 'Work calendar'), Icon: CalendarDays }, { id: 'members', label: t('成员与权限', 'Members and access'), Icon: ShieldCheck }] : []),
     { id: 'onboarding', label: t('入职', 'Onboarding'), Icon: UserRoundPlus },
     { id: 'sop', label: 'SOP', Icon: Workflow },
     { id: 'quality', label: t('质量标准', 'Quality standards'), Icon: ScanEye },

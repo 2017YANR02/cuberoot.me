@@ -29,6 +29,7 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 ];
 
 export const CATALOG: UtilEntry[] = [
+  { name: 'useCalendarSwipe', sig: 'useCalendarSwipe(container, previous, next)', imp: "import { useCalendarSwipe } from '@/hooks/useCalendarSwipe';", category: 'hook', zh: '个人日历与工作日历共用触屏翻页、拖动互斥和点击保护。', en: 'Shared calendar swipe paging, drag coordination and tap suppression.' },
   {
     name: 'canonicalizeInitialU2',
     sig: 'canonicalizeInitialU2<T extends { alg: string; algHtml?: string }>(entry: T): T',

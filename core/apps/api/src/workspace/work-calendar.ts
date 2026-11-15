@@ -2,11 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
 import { isValidZone } from '@cuberoot/shared/tz';
-import { workSlotsValid, type WorkCalendarData, type WorkPeriod, type WorkException } from '@cuberoot/shared/workspace-planning';
-import { isWorkDate } from '@app-foundation/workspace-policy';
+import { isPlanningDate, workSlotsValid, type WorkCalendarData, type WorkPeriod, type WorkException } from '@cuberoot/shared/workspace-planning';
 import type { QueryRunner } from '../db/connection.js';
 
-const date = z.string().refine(isWorkDate).refine(d => d >= '1970-01-01' && d <= '2100-12-31');
+const date = z.string().refine(isPlanningDate).refine(d => d >= '1970-01-01' && d <= '2100-12-31');
 const slots = z.array(z.object({ weekday: z.number().int().min(0).max(6), startHour: z.number().int().min(0).max(23), endHour: z.number().int().min(1).max(24) }).strict()).max(168).refine(workSlotsValid, '工作时间重叠或无效 / Overlapping or invalid hours');
 const version = z.number().int().min(0);
 export const workPatternInput = z.object({ version, from: date, tz: z.string().max(100).refine(isValidZone), slots }).strict();
