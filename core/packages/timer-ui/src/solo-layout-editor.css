@@ -1,8 +1,12 @@
 [data-layout-editing] { overflow-anchor: none; }
 
-[data-layout-editing] .timing-surface--solo :is(.scramble-text, .scramble-src-row, .timer-display-wrap, .timing-surface-cube-frame) {
+[data-layout-editing] .timing-surface--solo :is(.scramble-text, .scramble-src-row, .timer-display-wrap, .timing-surface-cube-frame),
+[data-layout-editing] .timer-stage-preview .timing-surface-cube-frame {
   position: relative;
 }
+.timer-stage-preview .solo-layout-handle--move { display: none; }
+.timer-stage-preview .solo-layout-handles { inset: 0; }
+.timer-stage-preview .solo-layout-handle--size { right: 0; bottom: 0; }
 .solo-layout-handles {
   position: absolute;
   inset: -5px;

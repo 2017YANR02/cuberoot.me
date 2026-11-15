@@ -385,6 +385,7 @@
 .timer-workspace[data-fit-viewport] { height: 100%; overflow: hidden; --timer-right-dock-width: 300px; }
 .timer-workspace[data-fit-viewport] .timer-solo-main { overflow: auto; }
 .timer-stage-preview { --timer-preview-docked: 0; display: none; }
+.timer-stage-preview .timing-surface-cube { align-items: flex-end; }
 .timer-workspace[data-fit-viewport] .timing-surface--solo {
   flex: 1 0 auto;
   min-height: min-content;
@@ -466,8 +467,9 @@
       --timer-preview-docked: 1;
       display: flex;
       flex: 0 0 auto;
-      justify-content: center;
-      width: clamp(120px, 25vw, 220px);
+      justify-content: flex-end;
+      width: calc(clamp(120px, 25vw, 220px) * var(--solo-cube-scale, 1));
+      max-width: 50%;
       margin-left: auto;
     }
     .timer-workspace.timer-workspace[data-fit-viewport] .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden])[data-has-rankings="true"] { grid-template-columns: minmax(0, 1fr) auto auto auto; }
@@ -513,8 +515,9 @@
       --timer-preview-docked: 1;
       display: flex;
       flex: 0 0 auto;
-      justify-content: center;
-      width: clamp(120px, 25cqw, 220px);
+      justify-content: flex-end;
+      width: calc(clamp(120px, 25cqw, 220px) * var(--solo-cube-scale, 1));
+      max-width: 50%;
       margin-left: auto;
     }
     .timer-workspace.timer-workspace[data-fit-viewport] .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden])[data-has-rankings="true"] { grid-template-columns: minmax(0, 1fr) auto auto auto; }

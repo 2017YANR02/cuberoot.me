@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import { Check, GripHorizontal, MoveVertical, RotateCcw } from 'lucide-react';
 import { DEFAULT_SOLO_LAYOUT, type SoloLayout } from '@cuberoot/shared/timer';
 import './solo-layout-editor.css';
+import { fitSoloSpacing } from './solo-spacing-fit';
 
 const regions = [
   { selector: '.scramble-text', gap: 'scrambleGap', scale: 'scrambleFontScale', label: { zh: '打乱文字', en: 'Scramble' }, min: 0.6, max: 2.5 },
@@ -65,6 +66,11 @@ function layoutPreview(surface: HTMLElement, before: TimerSoloLayoutSettings) {
   return {
     apply(settings: TimerSoloLayoutSettings) {
       for (const override of overrides) override.element.style.setProperty(override.property, override.value(settings));
+      // Measure the same fitted whitespace the live canvas will render. Stored
+      // large gaps must not prevent resizing after rotation or a window shrink.
+      if (surface.matches('.timer-solo-main') && surface.closest('[data-spacing-flow]')) {
+        fitSoloSpacing(surface, settings.soloLayout);
+      }
     },
     restore() {
       overrides.forEach(({ element, property }, index) => {
@@ -83,7 +89,19 @@ export function TimerSoloLayoutEditor({ surfaceRef, contentKey, onDone, getSetti
   const tr = (value: { en: string; zh: string }) => value[language];
   const [targets, setTargets] = useState<Element[][]>([]);
   useEffect(() => {
-    setTargets(regions.map(region => Array.from(surfaceRef.current?.querySelectorAll(regionSelectors?.[region.gap] ?? region.selector) ?? [])));
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    const collect = () => {
+      const next = regions.map(region => Array.from(surface.querySelectorAll(regionSelectors?.[region.gap] ?? region.selector)));
+      setTargets(previous => previous.length === next.length && next.every((elements, index) =>
+        elements.length === previous[index].length && elements.every((element, item) => element === previous[index][item])) ? previous : next);
+    };
+    collect();
+    // Rotation moves the single preview between canvas and footer. Rebind its
+    // handles; inserting those handles must not schedule another state change.
+    const observer = new MutationObserver(collect);
+    observer.observe(surface, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, [surfaceRef, contentKey, regionSelectors]);
   useEffect(() => {
     const escape = (event: KeyboardEvent) => {
@@ -100,6 +118,7 @@ export function TimerSoloLayoutEditor({ surfaceRef, contentKey, onDone, getSetti
       timerFontScale: settings.timerFontScale, scrambleFontScale: settings.scrambleFontScale };
     const requested = { ...before, ...patch };
     const elements = targets.flat().flatMap(element => [element, ...element.querySelectorAll('.timer-display-value, .solo-layout-handle')])
+      .concat(Array.from(surface.querySelectorAll('.timer-stage-footer')))
       .filter(element => element.isConnected);
     const baseline = viewportOverflow(elements);
     const preview = layoutPreview(surface, before);

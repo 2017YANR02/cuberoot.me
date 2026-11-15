@@ -7,11 +7,12 @@ import { TimerSoloLayoutEditor, type TimerSoloLayoutSettings } from '@cuberoot/t
 
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
-function mountEditor(rotated = false) {
+function mountEditor(rotated = false, fitted = false) {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   vi.stubGlobal('innerWidth', 600);
   vi.stubGlobal('innerHeight', 400);
   let settings: TimerSoloLayoutSettings = { soloLayout: { ...DEFAULT_SOLO_LAYOUT }, timerFontScale: 1, scrambleFontScale: 1 };
+  if (fitted) settings.soloLayout.timerGap = 200;
   const writes = vi.fn();
   // jsdom has no layout engine. These rectangles model a following preview and
   // an opposite-facing player whose top edge moves upward when digits grow.
@@ -20,7 +21,8 @@ function mountEditor(rotated = false) {
     const previewGap = Number.parseFloat(surface?.style.getPropertyValue('--solo-timer-gap') || '');
     const gap = Number.isFinite(previewGap) ? previewGap : settings.soloLayout.timerGap;
     if (this.matches('.timing-surface-cube-frame')) {
-      return new DOMRect(100, 200 + gap, 100, 100);
+      const scale = parseFloat(surface?.style.getPropertyValue('--solo-cube-scale') || '') || settings.soloLayout.cubeScale;
+      return new DOMRect(100, 200 + gap, 100 * scale, 100 * scale);
     }
     if (this.matches('.timer-display-wrap')) {
       const scale = parseFloat((this.querySelector('.timer-display') as HTMLElement).style.fontSize) / 40;
@@ -29,13 +31,25 @@ function mountEditor(rotated = false) {
     }
     return new DOMRect();
   });
+  if (fitted) {
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(400);
+    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      const preview = this.querySelector('.timing-surface-cube-frame');
+      return Math.max(400, preview?.getBoundingClientRect().bottom ?? 0);
+    });
+  }
   function Harness() {
     const surfaceRef = useRef<HTMLDivElement>(null);
     const [value, setValue] = useState(settings);
-    return h('div', { ref: surfaceRef, 'data-scale': value.timerFontScale },
+    const [docked, setDocked] = useState(false);
+    return h('div', { ref: surfaceRef, 'data-scale': value.timerFontScale,
+      className: fitted ? 'timer-solo-main' : undefined, 'data-spacing-flow': fitted ? '' : undefined,
+      style: fitted ? { '--solo-timer-gap': '40px' } as React.CSSProperties : undefined },
       h('div', { 'data-flipped': rotated ? true : undefined }, h('div', { className: 'timer-display-wrap' },
         h('div', { className: 'timer-display', style: { fontSize: `${40 * value.timerFontScale}px` } }, '0.000'))),
-      h('div', { className: 'timing-surface-cube-frame' }),
+      h('div', { key: docked ? 'footer' : 'inline', className: docked ? 'timer-stage-preview' : undefined },
+        h('div', { className: 'timing-surface-cube-frame' })),
+      h('button', { onClick: () => setDocked(!docked), 'data-rotate': '' }, 'Rotate'),
       h(TimerSoloLayoutEditor, { surfaceRef, contentKey: 'fixture', language: 'en', onDone() {},
         getSettings: () => settings,
         updateSettings: patch => { settings = { ...settings, ...patch }; writes(settings); setValue(settings); },
@@ -90,6 +104,31 @@ it('uses the visible viewport width and offset when limiting enlargement', () =>
     editor.drag('size', 1000);
     expect(editor.settings().timerFontScale).toBe(1.4);
     expect(editor.host.querySelector('.timer-display-wrap')!.getBoundingClientRect().right).toBe(240);
+    expect(editor.writes).toHaveBeenCalledTimes(1);
+  } finally { editor.close(); }
+});
+
+it('resizes a preview after saved gaps have been fitted to a smaller viewport', () => {
+  const editor = mountEditor(false, true);
+  try {
+    const button = editor.host.querySelector('.timing-surface-cube-frame .solo-layout-handle--size')!;
+    act(() => button.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })));
+    expect(editor.settings().soloLayout.cubeScale).toBe(1.05);
+    expect(editor.settings().soloLayout.timerGap).toBe(200);
+    expect(editor.host.querySelector<HTMLElement>('[data-scale]')!.style.getPropertyValue('--solo-timer-gap')).toBe('40px');
+  } finally { editor.close(); }
+});
+
+it('rebinds resize handles when rotation remounts the preview in the footer', async () => {
+  const editor = mountEditor();
+  try {
+    const original = editor.host.querySelector('.timing-surface-cube-frame');
+    await act(async () => editor.host.querySelector<HTMLButtonElement>('[data-rotate]')!.click());
+    const preview = editor.host.querySelector('.timer-stage-preview .timing-surface-cube-frame')!;
+    expect(preview).not.toBe(original);
+    expect(preview.querySelectorAll('.solo-layout-handle--size')).toHaveLength(1);
+    act(() => preview.querySelector('.solo-layout-handle--size')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })));
+    expect(editor.settings().soloLayout.cubeScale).toBe(1.05);
     expect(editor.writes).toHaveBeenCalledTimes(1);
   } finally { editor.close(); }
 });
