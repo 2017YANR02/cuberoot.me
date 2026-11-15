@@ -312,14 +312,19 @@ describe('移动端复盘不再挤压计时区', () => {
   it('打乱和来源区完整展开，计时数字在后续行中排布', () => {
     const sharedSurface = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timing-surface.css')));
     // Canonical flow rules now live in the shared surface consumed by all hosts.
-    // Inspect the final matching rule so an earlier base style cannot mask drift.
-    const surface = [...sharedSurface.matchAll(/\.timing-surface--solo,\s*\.timing-surface--net\s*\{([^}]*)\}/g)].at(-1)?.[1];
-    expect(surface).toBeDefined();
-    expect(surface).toContain('flex: 1 0 auto;');
+    // Later @supports rules only override individual properties. Inspect the
+    // last declaration of each property, not just the last partial rule block.
+    const surfaceRules = [...sharedSurface.matchAll(/\.timing-surface--solo,\s*\.timing-surface--net\s*\{([^}]*)\}/g)];
+    expect(surfaceRules.length).toBeGreaterThan(0);
+    const surface = surfaceRules.map(rule => rule[1]).join('\n');
+    const finalValue = (property: string) => [...surface.matchAll(new RegExp(`(?:^|[;\\s])${property}:\\s*([^;]+);`, 'g'))].at(-1)?.[1];
+    expect(finalValue('flex')).toBe('1 0 auto');
     expect(surface).not.toContain('container-type: size');
-    expect(surface).toContain('grid-template-rows: auto auto;');
-    expect(surface).toContain('align-content: center;');
-    expect(surface).toContain('row-gap: clamp(12px, 2dvh, 24px);');
+    expect(finalValue('grid-template-columns')).toBe('minmax(0, 1fr)');
+    expect(finalValue('grid-template-rows')).toBe('auto auto');
+    expect(finalValue('align-content')).toBe('center');
+    expect(finalValue('row-gap')).toBe('clamp(12px, 2dvh, 24px)');
+    expect(surface).toContain('row-gap: clamp(12px, 2vh, 24px);');
     expect(sharedSurface).toMatch(/\.timing-surface:is\([^}]+\) \.timing-surface-scramble-top\s*\{[^}]*max-height:\s*none;[^}]*overflow:\s*visible/);
     expect(sharedSurface).toMatch(/\.timer-stage-source\s*\{[^}]*max-height:\s*none;[^}]*overflow:\s*visible/);
   });

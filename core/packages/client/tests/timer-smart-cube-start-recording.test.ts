@@ -32,6 +32,7 @@ describe('Web solo attempt recording lifecycle', () => {
     const ref = <T>(current: T) => ({ current });
     const entry = { scramble: 'R U', wca: null, scrambleSource: null, caseId: 'fixture' };
     const clearLiveSolve = vi.fn();
+    const liveCompletionRef = ref<unknown>(null);
     const context: Record<string, unknown> = {
       performance: { now: () => 1_000 },
       competitionRef: ref({ enabled: false }),
@@ -45,6 +46,7 @@ describe('Web solo attempt recording lifecycle', () => {
       caseIdAtStartRef: ref(null),
       eventAtStartRef: ref('333'),
       attemptStartedAtRef: ref(0),
+      liveCompletionRef,
       attemptSplitRecorder: { begin: vi.fn() },
       event: '333',
       isPllChain: false,
@@ -74,8 +76,10 @@ describe('Web solo attempt recording lifecycle', () => {
       ? node.arguments[0] : undefined, context);
 
     for (const startedAt of [1_000, 2_000]) {
+      liveCompletionRef.current = { context: 'previous-session', solve: { id: 'previous-solve' } };
       if (mode !== 'external timer') expect(startFromCube(startedAt)).toBe(true);
       else onStart(startedAt);
+      expect(liveCompletionRef.current).toBeNull();
       // A move can arrive before the running-phase effect has flushed.
       expect(producer.recordMove('R', startedAt)).toBe(true);
       runningEffect();
