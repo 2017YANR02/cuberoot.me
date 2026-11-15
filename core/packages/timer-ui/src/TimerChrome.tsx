@@ -99,8 +99,8 @@ export interface TimerStatRailProps {
 }
 
 const STAT_RAIL_COPY = {
-  en: { empty: 'Times', title: 'Open times and statistics' },
-  zh: { empty: '成绩', title: '打开成绩与统计' },
+  en: { empty: 'Times', count: 'Count', title: 'Open times and statistics' },
+  zh: { empty: '成绩', count: '次数', title: '打开成绩与统计' },
 } as const;
 const STAT_RAIL_KEYS = ['count', 'best', 'ao5', 'ao12'] as const;
 
@@ -115,7 +115,7 @@ export function TimerStatRail({
 }: TimerStatRailProps) {
   const copy = STAT_RAIL_COPY[language];
   const items: TimerStatItem[] = summary.count > 0 ? STAT_RAIL_KEYS.map(key => key === 'count'
-    ? { value: `${summary.solved}/${summary.count}` }
+    ? { label: copy.count, value: `${summary.solved}/${summary.count}` }
     : { label: key, value: summary[key] }) : [];
   return (
     <button
@@ -130,7 +130,7 @@ export function TimerStatRail({
       {trainingSummaries ? <span className="shell-stat-training">
         <span />
         {STAT_RAIL_KEYS.map(key =>
-          <span key={key} className="shell-stat-lbl">{key === 'count' ? ({ en: 'Count', zh: '次数' }[language]) : key}</span>)}
+          <span key={key} className="shell-stat-lbl">{key === 'count' ? copy.count : key}</span>)}
         {[{ en: 'Observation', zh: '观察' }, { en: 'Execution', zh: '执行' }, { en: 'Total', zh: '总时间' }].map((copy, index) =>
           <span className="shell-stat-training-row" key={copy.en}>
             <span className="shell-stat-lbl">{copy[language]}</span>
@@ -143,7 +143,7 @@ export function TimerStatRail({
           <span className="shell-stat-val">{value}</span>
         </span>
       )) : (
-        <span className="shell-stat"><span className="shell-stat-val">{copy.empty}</span></span>
+        <span className="shell-stat-empty">{copy.empty}</span>
       )}
     </button>
   );

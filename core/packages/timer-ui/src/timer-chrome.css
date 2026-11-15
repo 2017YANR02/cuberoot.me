@@ -319,27 +319,31 @@
 }
 
 .shell-stat {
-  display: flex;
+  display: grid;
+  grid-template-columns: 34px minmax(48px, 1fr);
   align-items: baseline;
-  gap: 6px;
+  column-gap: 12px;
+  align-self: stretch;
   font-family: var(--font-sans);
-  line-height: 1.55;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .shell-stat-lbl {
   color: var(--muted-foreground);
-  font-size: 11px;
-}
-
-.shell-stat-lbl::after {
-  content: ':';
+  font-size: 12px;
+  font-weight: 400;
 }
 
 .shell-stat-val {
   color: var(--foreground);
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
+  text-align: right;
 }
+
+.shell-stat-empty { font-family: var(--font-sans); font-size: 13px; line-height: 1.4; }
 
 @media (max-width: 800px) {
   .shell-topbar {
@@ -380,9 +384,6 @@
     bottom: 8px;
   }
 
-  .shell-stat-val {
-    font-size: 13px;
-  }
 }
 
 /* Keep the home affordance in the first column at every viewport width. */
@@ -462,7 +463,6 @@
   line-height: 1.55;
 }
 .shell-stat-training-row { display: contents; }
-.shell-stat-training .shell-stat-lbl::after { content: none; }
 .shell-stat-training .shell-stat-val { text-align: right; font-size: 12px; line-height: 1.3; }
 
 .shell-topbar .shell-topbar-left .timer-difficulty-trigger {

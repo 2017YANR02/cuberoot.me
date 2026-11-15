@@ -421,6 +421,7 @@
   }
   @media (max-height: 350px) {
     .timer-workspace[data-fit-viewport] .timer-stage-footer .shell-stat-rail { flex-direction: row; flex-wrap: wrap; gap: 2px 12px; }
+    .timer-workspace[data-fit-viewport] .shell-stat { grid-template-columns: auto auto; column-gap: 6px; align-self: auto; }
     .timer-workspace[data-fit-viewport] .timer-stage-footer { padding-block: 4px; }
   }
   @media (min-width: 520px) and (max-height: 500px) and (orientation: landscape) {
@@ -473,6 +474,7 @@
   }
   @container timer-stage (max-height: 240px) {
     .timer-workspace[data-fit-viewport] .timer-stage-footer .shell-stat-rail { flex-direction: row; flex-wrap: wrap; gap: 2px 12px; }
+    .timer-workspace[data-fit-viewport] .shell-stat { grid-template-columns: auto auto; column-gap: 6px; align-self: auto; }
     .timer-workspace[data-fit-viewport] .timer-stage-footer { padding-block: 4px; }
   }
   @container timer-stage (min-width: 520px) and (max-height: 500px) {
