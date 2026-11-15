@@ -19,7 +19,7 @@ import '@cuberoot/timer-ui/compact-select.css';
  */
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { captureAlgCaseNavigation, useAlgViewTransition } from '@/hooks/useAlgViewTransition';
-import { parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
+import { parseAsBoolean, parseAsInteger, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState, useTrainingQueryStates as useQueryStates, useTrainingRouter } from '@/lib/training-host';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
@@ -62,6 +62,8 @@ const ValidationReportModal = dynamic(() => import('@/components/ValidationRepor
 import SortableAlgRow from '@/components/SortableAlgRow';
 import SortableCard from '@/components/SortableCard';
 import { useAlgViewMode } from '@/components/AlgViewModeToggle';
+import { usePageScrollRestoration } from '@/hooks/usePageScrollRestoration';
+import { useTrainingHost, useTrainingSearchParams } from '@/lib/training-host';
 import AlgListSettings, { useAlgCaseNumberVisibility } from '@/components/AlgListSettings';
 import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
 import AlgPdfButton from '@/components/AlgPdfButton';
@@ -531,7 +533,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const [error, setError] = useState<string | null>(null);
   const [activeOri, setActiveOri] = useState(0);
   const [sq1EpNumericNames, setSq1EpNumericNames] = useState(false);
-  const [sq1EpHasParity, setSq1EpHasParity] = useState(false);
+  const [sq1EpHasParity, setSq1EpHasParity] = useQueryState('parity', parseAsBoolean.withDefault(false));
   const [caseOri, setCaseOri] = useState<Record<string, number>>({});
   const [submissions, setSubmissions] = useState<AlgSubmission[]>([]);
   const user = useAuthUser();
@@ -645,7 +647,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const [view, changeView] = useAlgViewMode();
   const [showCaseNumbers, setShowCaseNumbers] = useAlgCaseNumberVisibility();
   const [collapseGroups, setCollapseGroups] = useQueryState('collapse-groups', parseAsBoolean.withDefault(false));
-  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [expandedGroup, setExpandedGroup] = useQueryState('open-group', parseAsString);
   // 图 / 公式偏好仅决定情况列表的呈现，不绕过分类导航。
 
   /** 这个 set 里实际出现过的标签 —— 没有就不渲染筛选器 */
@@ -1027,6 +1029,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     },
     [effectiveOrientation, effectiveViewAngle, sq1NotationMode, slugMap, puzzleParam, set, sq1BlackTop, setupMode],
   );
+
+  const trainingHost = useTrainingHost();
+  const listQuery = useTrainingSearchParams();
+  usePageScrollRestoration(!!data && !trainingHost, 'alg-scroll', `${puzzleParam}/${set}/${subgroupParam ?? ''}?${listQuery.toString()}`);
 
   if (!validPuzzle || !meta) {
     return <div className="alg-root"><div className="alg-empty">Unknown set: {puzzleParam}/{set}</div></div>;

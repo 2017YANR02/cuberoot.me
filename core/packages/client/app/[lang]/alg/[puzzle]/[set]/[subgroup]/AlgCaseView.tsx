@@ -56,6 +56,7 @@ import {
 import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';
 import { algCaseHref, algCaseDetailHref, buildCaseSlugMap } from '@/lib/alg_case_link';
 import { primaryCaseName, displayAlgCaseName } from '@/lib/alg_case_display';
+import { useRecentAlgCases } from '@/lib/alg-recent';
 import { compareAlgGroupLabel } from '@/lib/alg_group_order';
 import { adjacentAlgCases, siblingAlgCases } from '@/lib/alg_case_navigation';
 import {
@@ -432,6 +433,12 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
 
   /** 全集唯一 slug 表(生成关联链接 / 社区区都要);和列表页、落地解析同一份算法。 */
   const slugMap = useMemo(() => buildCaseSlugMap(data.cases, set), [data, set]);
+  const recentSlug = caseObj.id != null ? slugMap.byId.get(caseObj.id) : undefined;
+  useEffect(() => {
+    if (embedded || !recentSlug) return;
+    useRecentAlgCases.getState().remember({ puzzle, set, name: caseObj.name,
+      href: algCaseDetailHref(puzzle, set, recentSlug) });
+  }, [embedded, puzzle, set, recentSlug, caseObj.name]);
   const hrefFor = (c: AlgCase, slot?: string) => {
     const href = algCaseDetailHref(puzzle, set, (c.id != null && slugMap.byId.get(c.id)) || '');
     let target = keepOrientation(keepViewAngle(keepScrambleKind(keepSq1Notation(keepSq1Top(href)))));

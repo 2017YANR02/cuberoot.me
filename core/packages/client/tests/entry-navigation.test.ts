@@ -30,6 +30,19 @@ beforeEach(() => visit('/'));
 afterEach(() => { dispose(); vi.restoreAllMocks(); });
 
 describe('local entry navigation', () => {
+  it('retains algorithm list filters on return without copying editor state or credentials', () => {
+    const list = '/zh/alg/3x3/zbll/u?tag=oh&hand=right&diagram=simplified&moves=12&op=lte&metric=htm&collapse-groups=true&open-group=U%2FU1';
+    visit(list + '&edit=true&token=secret');
+    go('/zh/alg/3x3/zbll/u-1');
+    expect(back()).toBe(list);
+    go(back()!, 'return');
+    expect(current()).toBe(list);
+    expect(JSON.stringify(window.history.state)).not.toContain('secret');
+  });
+  it('keeps algorithm-only filters out of unrelated navigation snapshots', () => {
+    visit('/shop?tag=oh&moves=12&open-group=U&q=mat'); go('/contact');
+    expect(back()).toBe('/shop?q=mat');
+  });
   it('preserves recent-scramble filters and loaded count only on that page', () => {
     const source = '/zh/scramble/recent?view=custom&method=eo&stage=xc&colors=W&moves=4&match=max&count=48&scope=recent';
     visit(source);
