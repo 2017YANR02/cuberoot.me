@@ -170,8 +170,8 @@ describe('mobile visible viewport layout', () => {
     }
     expect(surfaceCss).not.toContain('width: calc(100% - var(--timer-side-preview-width) - 16px)');
     expect(surfaceCss).toContain('.timing-surface-sub { grid-column: 3; grid-row: 1; }');
-    expect(surfaceCss).toContain('@container timer-stage (max-height: 350px)');
-    expect(surfaceCss).toContain('@media (max-height: 460px)');
+    expect(surfaceCss).toContain('@container timer-stage (max-height: 240px)');
+    expect(surfaceCss).toContain('@media (max-height: 350px)');
     expect(surfaceCss).toContain('--timer-readout-max-size: clamp(40px, 18cqh, 64px)');
     expect(surfaceCss).toContain('--timer-cube-h: clamp(36px, 18cqh, 72px)');
     expect(surfaceCss).toContain('.timing-surface-sub { flex: 0 0 auto; height: auto; max-height: none; }');
