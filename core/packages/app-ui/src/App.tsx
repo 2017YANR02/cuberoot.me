@@ -345,6 +345,7 @@ import {
 } from './mobile-viewport';
 import type { InstalledAppHost } from './platform';
 import { startWebSurfaceHandshake } from './web-surface-handshake';
+import { installedWebEntryUrl } from './web-surface-url';
 import {
   solveMobileRandomDifficultyCase,
   solveMobileSmartCubeFixup,
@@ -616,10 +617,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const fallbackLanguage = preferredLanguage();
   const language = store?.settings.language ?? fallbackLanguage;
   const copy = COPY[language];
-  const toolsWebUrl = toolsEntryRoute
+  const toolsWebUrl = installedWebEntryUrl(toolsEntryRoute
     ? siteRouteUrl(language, toolsEntryRoute)
-    : siteUrl(language);
-  const accountWebUrl = accountUrl(language);
+    : siteUrl(language), language);
+  const accountWebUrl = installedWebEntryUrl(accountUrl(language), language);
   const auth = host.useAuth(language);
   const activeAuthSession = wcaAutoMarkLiveSession(auth.session, auth.busy);
   const authSessionRef = useRef(auth.session);

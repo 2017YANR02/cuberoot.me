@@ -169,13 +169,13 @@ describe('installed App GAN lifecycle integration', () => {
     loading = false;
     await act(async () => root.render(<App host={notificationHost} />));
     const first = container.querySelector<HTMLIFrameElement>('iframe')!;
-    expect(new URL(first.src).pathname).toBe('/wca/comp/Test2026');
+    expect(new URL(first.src).pathname).toBe('/en/wca/comp/Test2026');
     expect(first.closest<HTMLElement>('.web-surface')?.hidden).toBe(false);
     await act(async () => receive(tap));
     expect(container.querySelector('iframe')).toBe(first);
     await act(async () => receive({ ...tap, notificationId: '43', link: '/wca/comp/Next2026' }));
     const second = container.querySelector<HTMLIFrameElement>('iframe')!;
-    expect(new URL(second.src).pathname).toBe('/wca/comp/Next2026');
+    expect(new URL(second.src).pathname).toBe('/en/wca/comp/Next2026');
     expect(second).not.toBe(first);
     await act(async () => receive({ ...tap, notificationId: '44', recipientUid: '8' }));
     expect(container.querySelector('iframe')).toBe(second);

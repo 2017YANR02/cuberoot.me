@@ -65,7 +65,9 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（同一 Tauri 工程�
 - 两个 surface 复用同一加载/离线/错误/重试 UI；宿主在线且 iframe 发出可见加载事件即可展示页面，同时有界重试 init（当前最多约 10 秒），同源且来自该 iframe 的导航 ACK 可提前停止。ACK 用于返回栈、外链和账号桥能力，不能在生产 bridge 尚未部署时被错误地当作页面可见性的前置条件。
 - 跨域 iframe 的初始空白、弱网挂起、HTTP 5xx 和 frame 拒绝不能仅靠父页面 `load/error` 可靠区分；不得用假定时器冒充检测成功。共享层先可靠处理宿主 Network 离线，其他故障以生产 bridge ACK 或已授权的通用宿主能力补齐，不为五个平台各造 WebView 回调。
 
-“我的”必须直接使用未改写的当前语言 `/account` 或 `/zh/account`，不附带 `auth=mobile`。登录入口与网站同样由 `/v1/auth/providers` 的当前配置决定；网站显示邮箱、手机、WCA、Google、微信、QQ 或支付宝中的哪些方式，App 就必须显示并最终支持同一组，不建 Mobile provider 白名单。
+“我的”必须使用当前语言 `/account` 或 `/zh/account` 对应的唯一网站账号页，不附带 `auth=mobile`。安装端 iframe 的首次入口使用网站已有显式语言路径（英文 `/en/account`、中文 `/zh/account`；工具首页与产品深链同理），避免裸英文地址被宿主的中文 `Accept-Language` 或网站旧 Cookie 改到中文。网站 canonical、分享地址与外部链接仍沿用英文裸路径；这不新增账号页面或路由。`?lang=en` 会先写入 `SameSite=Lax` Cookie 再跳回裸路径，不能替代第三方 Cookie 不可用时的显式入口。网站报告的后续导航地址与重试目标保持原样，不强行为静态工具、资源或认证地址添加语言前缀，也不通过导航 ACK 反复改写语言。
+
+登录入口与网站同样由 `/v1/auth/providers` 的当前配置决定；网站显示邮箱、手机、WCA、Google、微信、QQ 或支付宝中的哪些方式，App 就必须显示并最终支持同一组，不建 Mobile provider 白名单。
 
 `auth=mobile` 是另一条“系统浏览器登录 → 90 秒 PKCE 单次票据 → 原生安全存储”交接流程的参数。未指定 provider 时它会把 `LoginForm` 切成 `firstPartyOnly`；由 Account bridge 明确传入第三方 provider 时，系统浏览器可显示网站 canonical SSO 列表并继续同一条 PKCE 流。把该参数用于“我的”iframe 仍是明确的 parity 回归，不是合规优化。
 
