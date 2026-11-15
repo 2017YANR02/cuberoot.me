@@ -17,6 +17,14 @@ export function isMobileEmbedAppleLink(target: EventTarget | null): boolean {
     && Boolean(target.closest('[data-mobile-account-link="apple"]'));
 }
 
+/** Release iframe keyboard focus before its LoginForm opens the native Browser. */
+export function blurMobileEmbedAuthEntry(target: EventTarget | null): void {
+  if (!(target instanceof Element)) return;
+  const authEntry = target.closest('[data-mobile-auth-entry]');
+  const focused = target.ownerDocument.activeElement;
+  if (focused instanceof HTMLElement && authEntry?.contains(focused)) focused.blur();
+}
+
 /**
  * Map every interaction inside the canonical LoginForm to a native Browser
  * handoff. Provider buttons retain their provider; email/phone/password use the

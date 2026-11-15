@@ -18,7 +18,7 @@ import {
   type MobileEmbedInitMessage,
 } from '@cuberoot/shared/mobile-embed';
 import { applySession, getSessionToken, authActions, getAuthUser, subscribeAuthUser } from '@/lib/auth-store';
-import { isMobileEmbedAppleLink, mobileEmbedAccountAuthRequest, mobileEmbedSupportsApple } from '@/lib/mobile-embed-auth';
+import { blurMobileEmbedAuthEntry, isMobileEmbedAppleLink, mobileEmbedAccountAuthRequest, mobileEmbedSupportsApple } from '@/lib/mobile-embed-auth';
 import { exchangeWebSessionTicket } from '@/lib/web-session-handoff';
 import { tr } from '@/i18n/tr';
 import { installedContentUnavailable } from '@cuberoot/shared/installed-content';
@@ -125,7 +125,12 @@ export default function MobileEmbedBridge() {
         }, 15_000);
         pendingManagement = { requestId, timeout };
         postToParent(mobileEmbedAccountManageMessage(uid, requestId));
-      } else if (authRequest) postToParent(authRequest);
+      } else if (authRequest) {
+        // Pointer focus happens before click. Do not leave the iframe keyboard
+        // active behind Browser, where it would return after canceling sign-in.
+        blurMobileEmbedAuthEntry(event.target);
+        postToParent(authRequest);
+      }
       return true;
     };
 
