@@ -1570,6 +1570,17 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               <h2 className="alg-subgroup-title">
                 {accordion ? <MoreToggle expanded={expanded} aria-controls={panelId}
                   onClick={() => setExpandedGroup(current => current === key ? null : key)}>
+                  <CaseThumb local loading="lazy"
+                    puzzle={puzzleParam as AlgPuzzle} set={set}
+                    sticker={cases[0].sticker}
+                    alg={cases[0].algs.flat()[0]?.alg ?? cases[0].standard ?? ''}
+                    setup={cases[0].setup}
+                    mask={LEVEL2_PICKER_MASK[set]}
+                    size={narrow ? 60 : 72}
+                    orientation={effectiveOrientation}
+                    viewAngle={effectiveViewAngle}
+                    alt=""
+                  />
                   {groupTitle}
                 </MoreToggle> : groupTitle}
               </h2>
