@@ -415,6 +415,23 @@
 }
 .timer-workspace[data-fit-viewport] .timer-stage-statistics { flex: 0 1 auto; min-width: 0; }
 .timer-workspace[data-fit-viewport] .timer-stage-footer .shell-stat-rail { min-width: 0; max-width: 100%; }
+/* Preserve saved spacing in roomy layouts. Short landscape rules below
+ * override its rendered gaps without changing the saved preferences. */
+.timer-workspace[data-fit-viewport][data-spacing-flow] .timing-surface--solo {
+  flex: 1 0 auto;
+  min-height: min-content;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  padding-top: var(--solo-scramble-gap, 16px);
+}
+.timer-workspace[data-fit-viewport][data-spacing-flow] .timing-surface-core {
+  grid-row: 2;
+  grid-column: 1;
+  height: auto;
+  min-height: min-content;
+}
+.timer-workspace[data-fit-viewport][data-spacing-flow] .timing-surface-sub { height: auto; max-height: none; }
+
 @supports not (container-type: size) {
   @media (max-height: 460px) {
     .timer-workspace[data-fit-viewport] .timer-stage-footer { padding-block: 4px; }
@@ -426,26 +443,26 @@
     .timer-workspace[data-fit-viewport] .timer-stage-footer { padding-block: 4px; }
   }
   @media (min-width: 520px) and (max-height: 650px) and (orientation: landscape) {
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo {
+    .timer-workspace.timer-workspace[data-fit-viewport] .timing-surface--solo {
       flex: 1 0 auto;
       min-height: min-content;
       padding: min(var(--solo-scramble-gap, 16px), 4px) 12px 4px;
       row-gap: min(var(--solo-timer-gap, 20px), 4px);
       --timer-scramble-fs: clamp(16px, 2.8vw, 20px);
     }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface-core {
+    .timer-workspace.timer-workspace[data-fit-viewport] .timing-surface-core {
       height: auto;
       min-height: min-content;
       gap: min(var(--solo-cube-gap, 8px), 4px);
       --timer-readout-max-size: clamp(40px, 13vh, 64px);
     }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface-sub { flex: 0 0 auto; height: auto; max-height: none; }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .scramble-src-row { margin-top: calc(min(var(--solo-source-gap, 16px), 4px) - 8px); }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .trainer-case { margin-top: 0; }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface-cube-frame { flex-shrink: 0; --timer-cube-h: clamp(36px, 12vh, 72px); }
+    .timer-workspace.timer-workspace[data-fit-viewport] .timing-surface-sub { flex: 0 0 auto; height: auto; max-height: none; }
+    .timer-workspace.timer-workspace[data-fit-viewport] .scramble-src-row { margin-top: calc(min(var(--solo-source-gap, 16px), 4px) - 8px); }
+    .timer-workspace.timer-workspace[data-fit-viewport] .trainer-case { margin-top: 0; }
+    .timer-workspace.timer-workspace[data-fit-viewport] .timing-surface-cube-frame { flex-shrink: 0; --timer-cube-h: clamp(36px, 12vh, 72px); }
     /* A single preview moves into the footer, so long content scrolls in
        normal flow and can never run underneath a fixed corner image. */
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timer-stage-preview {
+    .timer-workspace.timer-workspace[data-fit-viewport] .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timer-stage-preview {
       --timer-preview-docked: 1;
       display: flex;
       flex: 0 0 auto;
@@ -453,9 +470,9 @@
       width: clamp(120px, 25vw, 220px);
       margin-left: auto;
     }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden])[data-has-rankings="true"] { grid-template-columns: minmax(0, 1fr) auto auto auto; }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timing-surface-cube-frame { --timer-cube-h: clamp(60px, 24vh, 120px); }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timer-stage-devices:empty { display: none; }
+    .timer-workspace.timer-workspace[data-fit-viewport] .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden])[data-has-rankings="true"] { grid-template-columns: minmax(0, 1fr) auto auto auto; }
+    .timer-workspace.timer-workspace[data-fit-viewport] .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timing-surface-cube-frame { --timer-cube-h: clamp(60px, 24vh, 120px); }
+    .timer-workspace.timer-workspace[data-fit-viewport] .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timer-stage-devices:empty { display: none; }
   }
 }
 @supports (container-type: size) {
@@ -473,26 +490,26 @@
     .timer-workspace[data-fit-viewport] .timer-stage-footer { padding-block: 4px; }
   }
   @container timer-stage (min-width: 520px) and (max-height: 650px) and (min-aspect-ratio: 1/1) {
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo {
+    .timer-workspace.timer-workspace[data-fit-viewport] .timing-surface--solo {
       flex: 1 0 auto;
       min-height: min-content;
       padding: min(var(--solo-scramble-gap, 16px), 4px) 12px 4px;
       row-gap: min(var(--solo-timer-gap, 20px), 4px);
       --timer-scramble-fs: clamp(16px, min(2.8cqw, 8cqh), 20px);
     }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface-core {
+    .timer-workspace.timer-workspace[data-fit-viewport] .timing-surface-core {
       height: auto;
       min-height: min-content;
       gap: min(var(--solo-cube-gap, 8px), 4px);
       --timer-readout-max-size: clamp(40px, 18cqh, 64px);
     }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface-sub { flex: 0 0 auto; height: auto; max-height: none; }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .scramble-src-row { margin-top: calc(min(var(--solo-source-gap, 16px), 4px) - 8px); }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .trainer-case { margin-top: 0; }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface-cube-frame { flex-shrink: 0; --timer-cube-h: clamp(36px, 18cqh, 72px); }
+    .timer-workspace.timer-workspace[data-fit-viewport] .timing-surface-sub { flex: 0 0 auto; height: auto; max-height: none; }
+    .timer-workspace.timer-workspace[data-fit-viewport] .scramble-src-row { margin-top: calc(min(var(--solo-source-gap, 16px), 4px) - 8px); }
+    .timer-workspace.timer-workspace[data-fit-viewport] .trainer-case { margin-top: 0; }
+    .timer-workspace.timer-workspace[data-fit-viewport] .timing-surface-cube-frame { flex-shrink: 0; --timer-cube-h: clamp(36px, 18cqh, 72px); }
     /* A single preview moves into the footer, so long content scrolls in
        normal flow and can never run underneath a fixed corner image. */
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timer-stage-preview {
+    .timer-workspace.timer-workspace[data-fit-viewport] .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timer-stage-preview {
       --timer-preview-docked: 1;
       display: flex;
       flex: 0 0 auto;
@@ -500,26 +517,8 @@
       width: clamp(120px, 25cqw, 220px);
       margin-left: auto;
     }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden])[data-has-rankings="true"] { grid-template-columns: minmax(0, 1fr) auto auto auto; }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timing-surface-cube-frame { --timer-cube-h: clamp(60px, 24cqh, 120px); }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timer-stage-devices:empty { display: none; }
+    .timer-workspace.timer-workspace[data-fit-viewport] .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden])[data-has-rankings="true"] { grid-template-columns: minmax(0, 1fr) auto auto auto; }
+    .timer-workspace.timer-workspace[data-fit-viewport] .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timing-surface-cube-frame { --timer-cube-h: clamp(60px, 24cqh, 120px); }
+    .timer-workspace.timer-workspace[data-fit-viewport] .timer-solo-main[data-cube-preview] .timer-stage-footer:not([hidden]) .timer-stage-devices:empty { display: none; }
   }
 }
-
-/* Enlarged saved spacing may outlive the viewport where it was edited. Keep
- * those regions in natural flow so the stage can scroll without overlap;
- * default spacing and preview scaling retain the compact single-screen fit. */
-.timer-workspace[data-fit-viewport][data-spacing-flow] .timing-surface--solo {
-  flex: 1 0 auto;
-  min-height: min-content;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto;
-  padding-top: var(--solo-scramble-gap, 16px);
-}
-.timer-workspace[data-fit-viewport][data-spacing-flow] .timing-surface-core {
-  grid-row: 2;
-  grid-column: 1;
-  height: auto;
-  min-height: min-content;
-}
-.timer-workspace[data-fit-viewport][data-spacing-flow] .timing-surface-sub { height: auto; max-height: none; }
