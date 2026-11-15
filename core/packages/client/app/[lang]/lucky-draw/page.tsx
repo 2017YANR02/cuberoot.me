@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import PageHeading from "@/components/PageHeading";
+import MoreToggle, { MoreTogglePanel } from "@/components/MoreToggle";
 import BoolToggle from "@/components/BoolToggle";
 import { ClearButton } from "@/components/ClearButton";
 import { tr } from "@/i18n/tr";
@@ -102,9 +103,14 @@ export default function DrawPage() {
           </div>
           {v.message && <p role="status">{v.message}</p>}
           <div className="draw-actions">
-            <button onClick={() => act("edit")} disabled={v.busy}>
+            <MoreToggle
+              expanded={v.editing}
+              onToggle={() => act("edit")}
+              disabled={v.busy}
+              aria-controls="draw-editor"
+            >
               {l.editor}
-            </button>
+            </MoreToggle>
             <button
               onClick={() => act("reset")}
               disabled={v.busy || !v.session.history.length}
@@ -120,92 +126,117 @@ export default function DrawPage() {
               {l.fullscreen}
             </button>
           </div>
-          {v.editing && (
+          <MoreTogglePanel expanded={v.editing} id="draw-editor">
             <section className="draw-editor">
-              <label>
-                {l.list}
-                <textarea
-                  value={v.draft}
-                  maxLength={500000}
-                  onChange={(e) => input("draft", e.target.value)}
-                  placeholder={l.hint}
-                />
-              </label>
-              <p>{l.hint}</p>
-              <p>{l.editNote}</p>
-              {!!v.duplicates && (
-                <p>
-                  {l.duplicates} ({v.duplicates}){" "}
-                  <button onClick={() => act("dedupe")}>{l.dedupe}</button>
-                </p>
-              )}
-              <div className="draw-actions">
-                <button onClick={() => act("apply")}>{l.apply}</button>
-                <button onClick={() => act("clear")}>{l.clear}</button>
-              </div>
-              {v.session.training && (
-                <div>
-                  <label>
-                    {l.letters}
-                    <input
-                      value={v.letters}
-                      onChange={(e) => input("letters", e.target.value)}
-                    />
-                  </label>
-                  <button onClick={() => act("builtin")}>{l.builtin}</button>
-                  <button onClick={() => act("weak")}>{l.weak}</button>
-                </div>
-              )}
-              <div className="draw-actions">
-                <input
-                  aria-label={l.name}
-                  placeholder={l.name}
-                  value={v.listName}
-                  onChange={(e) => input("listName", e.target.value)}
-                />
-                <button
-                  disabled={!v.listName.trim() || !v.draft.trim()}
-                  onClick={() => act("save")}
-                >
-                  {l.save}
-                </button>
-              </div>
-              {v.saved.map((s, i) => (
-                <div className="draw-actions" key={s.name}>
-                  <span>{s.name}</span>
-                  <button onClick={() => act("load", i)}>{l.load}</button>
-                  <button onClick={() => act("remove", i)}>{l.remove}</button>
-                </div>
-              ))}
-              <div className="draw-actions">
-                <input
-                  aria-label={l.query}
-                  placeholder={l.query}
-                  value={v.query}
-                  onChange={(e) => input("query", e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") act("search");
-                  }}
-                />
-                {!!v.query && (
-                  <ClearButton onClick={() => input("query", "")} />
+              <div className="draw-list-editor">
+                <label>
+                  <span className="draw-section-title">{l.list}</span>
+                  <textarea
+                    value={v.draft}
+                    maxLength={500000}
+                    onChange={(e) => input("draft", e.target.value)}
+                    aria-describedby="draw-list-format draw-list-note"
+                    placeholder={tr({
+                      zh: "小明\n小红\n#12 小方",
+                      en: "Alex\nSam\n#12 Taylor",
+                    })}
+                  />
+                </label>
+                <p id="draw-list-format">{l.hint}</p>
+                {!!v.duplicates && (
+                  <p>
+                    {l.duplicates} ({v.duplicates}){" "}
+                    <button onClick={() => act("dedupe")}>{l.dedupe}</button>
+                  </p>
                 )}
-                <button disabled={v.loading} onClick={() => act("search")}>
-                  {l.search}
-                </button>
-              </div>
-              {v.competitions.map((c, i) => (
-                <div className="draw-actions" key={c.id}>
-                  <span>
-                    {c.name} · {c.date}
-                  </span>
-                  <button disabled={v.loading} onClick={() => act("import", i)}>
-                    {l.import}
+                <div className="draw-actions">
+                  <button className="draw-apply" onClick={() => act("apply")}>
+                    {l.apply}
                   </button>
+                  <button onClick={() => act("clear")}>{l.clear}</button>
                 </div>
-              ))}
-              {v.preview && (
+                <p id="draw-list-note">{l.editNote}</p>
+                {v.session.training && (
+                  <div className="draw-training-settings">
+                    <label>
+                      {l.letters}
+                      <input
+                        value={v.letters}
+                        onChange={(e) => input("letters", e.target.value)}
+                      />
+                    </label>
+                    <div className="draw-actions">
+                      <button onClick={() => act("builtin")}>
+                        {l.builtin}
+                      </button>
+                      <button onClick={() => act("weak")}>{l.weak}</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="draw-list-tools">
                 <section>
+                  <h2 className="draw-section-title">{l.saved}</h2>
+                  <div className="draw-actions draw-input-row">
+                    <input
+                      aria-label={l.name}
+                      placeholder={l.name}
+                      value={v.listName}
+                      onChange={(e) => input("listName", e.target.value)}
+                    />
+                    <button
+                      disabled={!v.listName.trim() || !v.draft.trim()}
+                      onClick={() => act("save")}
+                    >
+                      {l.save}
+                    </button>
+                  </div>
+                  {v.saved.map((s, i) => (
+                    <div className="draw-actions" key={s.name}>
+                      <span>{s.name}</span>
+                      <button onClick={() => act("load", i)}>{l.load}</button>
+                      <button onClick={() => act("remove", i)}>
+                        {l.remove}
+                      </button>
+                    </div>
+                  ))}
+                </section>
+                <section>
+                  <h2 className="draw-section-title">{l.import}</h2>
+                  <div className="draw-actions draw-input-row">
+                    <input
+                      aria-label={l.query}
+                      placeholder={l.query}
+                      value={v.query}
+                      onChange={(e) => input("query", e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") act("search");
+                      }}
+                    />
+                    {!!v.query && (
+                      <ClearButton onClick={() => input("query", "")} />
+                    )}
+                    <button disabled={v.loading} onClick={() => act("search")}>
+                      {l.search}
+                    </button>
+                  </div>
+                  {v.competitions.map((c, i) => (
+                    <div className="draw-actions" key={c.id}>
+                      <span>
+                        {c.name} · {c.date}
+                      </span>
+                      <button
+                        disabled={v.loading}
+                        onClick={() => act("import", i)}
+                      >
+                        {l.import}
+                      </button>
+                    </div>
+                  ))}
+                </section>
+              </div>
+              {v.preview && (
+                <section className="draw-import-preview">
                   <h2>
                     {l.preview} · {v.source}
                   </h2>
@@ -221,7 +252,7 @@ export default function DrawPage() {
                 </section>
               )}
             </section>
-          )}
+          </MoreTogglePanel>
           <div className="draw-counts">
             <span>
               {l.remaining} {v.remaining}

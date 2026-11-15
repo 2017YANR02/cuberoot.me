@@ -19,7 +19,8 @@
   margin: 12px 0;
 }
 .draw-options {
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 16px 28px;
 }
 .draw-counts {
   justify-content: space-between;
@@ -63,9 +64,62 @@
 .draw-page label {
   display: block;
 }
+.draw-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 24px;
+  padding: 12px 0;
+}
+.draw-editor > *,
+.draw-list-tools > * {
+  min-width: 0;
+}
+.draw-section-title {
+  display: block;
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.draw-list-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.draw-list-tools .draw-actions:first-of-type {
+  margin-top: 0;
+}
+.draw-input-row {
+  gap: 8px;
+}
+.draw-input-row input {
+  flex: 1;
+  min-width: 0;
+  width: 120px;
+}
+.draw-input-row button {
+  flex-shrink: 0;
+}
+.draw-import-preview {
+  grid-column: 1 / -1;
+}
+.draw-page .draw-editor button.draw-apply {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.draw-training-settings input {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+}
+.draw-options > label {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
 .draw-editor p {
   color: var(--muted-foreground);
   font-size: 13px;
+  margin: 6px 0;
 }
 .draw-stage {
   min-height: 300px;
@@ -155,13 +209,18 @@
     transform: none !important;
   }
 }
+@media (max-width: 760px) {
+  .draw-editor {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+}
 @media (max-width: 600px) {
   .draw-page {
     padding: 16px;
   }
   .draw-options {
-    display: grid;
-    grid-template-columns: 1fr;
+    gap: 12px 24px;
   }
   .draw-stage {
     min-height: 260px;
