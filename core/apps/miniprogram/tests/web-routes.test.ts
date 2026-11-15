@@ -123,8 +123,8 @@ describe('mini program web routes', () => {
   });
 
   it('derives all 61 homepage destinations from the shared ordered catalog', () => {
-    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 3, 7, 11, 8, 10, 14, 3]);
-    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 3, 7, 11, 8, 10, 14, 3]);
+    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 3, 7, 11, 18, 14, 3]);
+    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 3, 7, 11, 18, 14, 3]);
     expect(listWebTools()).toHaveLength(61);
     expect(listWebTools()).toContainEqual(expect.objectContaining({ id: 'gallery', href: '/gallery' }));
     expect(resolveWebTool('lettering')).toMatchObject({ id: 'lettering', key: 'lettering', href: '/lettering', action: 'web' });

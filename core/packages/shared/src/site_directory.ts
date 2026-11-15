@@ -214,12 +214,6 @@ export const SITE_DIRECTORY_GROUPS = [
       { id: 'notation', href: '/notation', internal: true, tier: 'medium', nameKey: 'notation' },
       { id: 'math-hub', href: '/math', internal: true, tier: 'medium', nameKey: 'theoryGroup' },
       { id: 'why-cube', href: '/why-cube', internal: true, tier: 'medium', nameKey: 'whyCube' },
-    ],
-  },
-  {
-    id: 'collaborate', placement: 'section', eyebrow: {en:'COLLABORATE',zh:'协作'},
-    title: {en:'Teaching & collaboration',zh:'教学与协作'}, sub:{en:'',zh:''},
-    entries: [
       { id: 'platform', href: '/platform', internal: true, tier: 'medium', nameKey: 'platform', lockedForNonAdmin: true },
       { id: 'teaching-management', href: '/org', internal: true, tier: 'medium', nameKey: 'teachingManagement', lockedForNonAdmin: true },
       { id: 'learning-center', href: '/learn', internal: true, tier: 'medium', nameKey: 'learningCenter', lockedForNonAdmin: true },
