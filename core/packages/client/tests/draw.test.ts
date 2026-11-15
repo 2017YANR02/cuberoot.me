@@ -13,6 +13,45 @@ import {
   type DrawView,
 } from "@cuberoot/shared/draw/controller";
 describe("draw rounds", () => {
+  it("imports the selected source alias and leaves the list unchanged until preview is applied", async () => {
+    let view: DrawView;
+    const paths: string[] = [];
+    const c = createDrawController({
+      read: () => null,
+      write: () => {},
+      confirm: async () => true,
+      random: () => 0,
+      copy: async () => {},
+      translate: (v) => v.en,
+      update: (v) => {
+        view = v;
+      },
+      request: async <T>(path: string) => {
+        paths.push(path);
+        return { text: "#12 Alex\n#30 Sam" } as T;
+      },
+    });
+    c.start();
+    c.input("draft", "Original");
+    await c.act("apply");
+    c.selectCompetition({
+      id: "Example-Open-2026",
+      name: "Example Open",
+      date: "2026-11-15",
+    });
+    await c.act("import");
+    expect(paths).toEqual([
+      "/draw/competitions/Example-Open-2026/registrations",
+    ]);
+    expect(view!.session.text).toBe("Original");
+    expect(view!.preview).toBe("#12 Alex\n#30 Sam");
+    await c.act("replace");
+    expect(view!.session.entries.map((entry) => entry.number)).toEqual([
+      "12",
+      "30",
+    ]);
+    c.dispose();
+  });
   it("preserves distinct tickets with identical names and original numbers", () => {
     let s = replaceList(freshSession(), "#12 Alex\nAlex\nAlex");
     expect(duplicateCount(s.entries)).toBe(1);

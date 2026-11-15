@@ -10,6 +10,22 @@ drawRoutes.get("/draw/competitions", async (c) => {
   try {
     const rows = await fetchCubingCompetitions();
     c.header("Cache-Control", "public, max-age=120");
+    if (c.req.query("picker") === "1") {
+      return c.json({
+        competitions: rows
+          .slice()
+          .sort((a, b) => b.startDate.localeCompare(a.startDate))
+          .map((r) => ({
+            id: r.alias,
+            name: r.name,
+            name_zh: r.nameZh,
+            country: r.locations[0]?.regionIso2 ?? "",
+            start_date: r.startDate,
+            end_date: r.endDate || r.startDate,
+            events: r.events.map((e) => e.eventId),
+          })),
+      });
+    }
     return c.json({
       competitions: rows
         .filter((r) =>

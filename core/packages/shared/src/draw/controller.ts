@@ -233,6 +233,15 @@ export function createDrawController(a: Adapter) {
       generation++;
       if (timer) clearTimeout(timer);
     },
+    selectCompetition(comp: Competition) {
+      generation++;
+      v.query = comp.name;
+      v.competitions = [comp];
+      v.preview = "";
+      v.message = "";
+      v.loading = false;
+      emit();
+    },
     input(key: "draft" | "query" | "listName" | "letters", value: string) {
       v = { ...v, [key]: value, message: "" };
       if (key === "query") {

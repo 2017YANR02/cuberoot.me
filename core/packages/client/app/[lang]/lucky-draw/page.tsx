@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import PageHeading from "@/components/PageHeading";
 import MoreToggle, { MoreTogglePanel } from "@/components/MoreToggle";
 import BoolToggle from "@/components/BoolToggle";
-import { ClearButton } from "@/components/ClearButton";
+import DrawCompetitionPicker from "./DrawCompetitionPicker";
 import { tr } from "@/i18n/tr";
 import { apiUrl } from "@/lib/api-base";
 import {
@@ -203,36 +203,20 @@ export default function DrawPage() {
                 </section>
                 <section>
                   <h2 className="draw-section-title">{l.import}</h2>
-                  <div className="draw-actions draw-input-row">
-                    <input
-                      aria-label={l.query}
-                      placeholder={l.query}
-                      value={v.query}
-                      onChange={(e) => input("query", e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") act("search");
-                      }}
-                    />
-                    {!!v.query && (
-                      <ClearButton onClick={() => input("query", "")} />
-                    )}
-                    <button disabled={v.loading} onClick={() => act("search")}>
-                      {l.search}
-                    </button>
-                  </div>
-                  {v.competitions.map((c, i) => (
-                    <div className="draw-actions" key={c.id}>
-                      <span>
-                        {c.name} · {c.date}
-                      </span>
-                      <button
-                        disabled={v.loading}
-                        onClick={() => act("import", i)}
-                      >
-                        {l.import}
-                      </button>
-                    </div>
-                  ))}
+                  <DrawCompetitionPicker
+                    value={v.query}
+                    onChange={(value) => input("query", value)}
+                    isZh={i18n.language.startsWith("zh")}
+                    onPick={(comp) => {
+                      controller.current?.selectCompetition(comp);
+                      act("import");
+                    }}
+                  />
+                  {v.loading && (
+                    <p role="status">
+                      {tr({ zh: "正在导入…", en: "Importing…" })}
+                    </p>
+                  )}
                 </section>
               </div>
               {v.preview && (

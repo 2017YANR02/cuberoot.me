@@ -40,6 +40,11 @@ const COMPS: Comp[] = [
 ];
 
 describe('competition province search', () => {
+  it('searches source-provided Chinese names without requiring the WCA name dictionary', () => {
+    const comp = { ...COMPS[0], id: 'Example-Open-2026', name: 'Example Open 2026', name_zh: '示例公开赛' };
+    expect(searchComps('示例', [comp])).toEqual([comp]);
+    expect(searchComps('Example', [comp])).toEqual([comp]);
+  });
   it.each(['福建', 'Fujian'])('finds a Chinese competition from its bare city using %s', (query) => {
     expect(searchComps(query, COMPS).map((c) => c.id)).toEqual(['XiamenOpen2013']);
   });

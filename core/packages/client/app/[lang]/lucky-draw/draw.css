@@ -26,7 +26,8 @@
   justify-content: space-between;
   font-variant-numeric: tabular-nums;
 }
-.draw-page button:not(.bool-toggle-label):not(.pill-toggle),
+.draw-page
+  button:not(:where(.bool-toggle-label, .pill-toggle, .comp-picker button)),
 .draw-page input,
 .draw-page textarea {
   font: inherit;
@@ -35,6 +36,9 @@
   border-radius: 8px;
   padding: 10px;
   background: var(--background);
+}
+.draw-page .comp-picker-input--with-clear {
+  padding-right: 30px;
 }
 .draw-page button {
   cursor: pointer;

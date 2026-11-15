@@ -60,7 +60,7 @@ export function CompPickerSummary({ comp, isZh }: { comp: Comp; isZh: boolean })
   return <>
     <Flag iso2={comp.country} />
     <span className="comp-picker-main">
-      <span className="comp-picker-name">{localizeCompName(comp.id, comp.name, isZh)}</span>
+      <span className="comp-picker-name">{localizeCompName(comp.id, comp.name, isZh, { explicitNameZh: comp.name_zh })}</span>
       <span className="comp-picker-meta">
         <span className="comp-picker-id">{comp.id}</span>
         {comp.city ? <> · {localizeCity(comp.city, isZh, comp.country)}</> : null}

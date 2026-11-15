@@ -10,6 +10,8 @@ import { statsUrl } from './stats-base';
 export interface Comp {
   id: string;
   name: string;
+  /** Source-provided Chinese name, including non-WCA competitions. */
+  name_zh?: string;
   city?: string;
   country: string;
   start_date: string;
@@ -182,7 +184,7 @@ export function searchComps(query: string, comps: Comp[], limit = 20): Comp[] {
   for (const c of comps) {
     const id = c.id.toLowerCase();
     const name = c.name.toLowerCase();
-    const nameZh = compNameZh(c.name);
+    const nameZh = c.name_zh || compNameZh(c.name);
     const city = (c.city || '').toLowerCase();
     const cityZh = c.city ? localizeCity(c.city, true, c.country) : '';
     const province = c.country.toUpperCase() === 'CN' && c.city
