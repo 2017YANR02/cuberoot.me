@@ -441,17 +441,18 @@
       --timer-side-preview-width: clamp(120px, 25vw, 220px);
     }
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-scramble-top {
-      width: calc(100% - var(--timer-side-preview-width) - 16px);
+      width: 100%;
     }
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-core {
       --timer-readout-side-preview: 1;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) var(--timer-side-preview-width);
+      grid-template-columns: var(--timer-side-preview-width) minmax(0, 1fr) var(--timer-side-preview-width);
       grid-template-rows: auto;
       column-gap: 16px;
       align-items: center;
     }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timer-display-wrap { width: 100%; min-width: 0; }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timer-display-wrap { grid-column: 2; grid-row: 1; width: 100%; min-width: 0; }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-sub { grid-column: 3; grid-row: 1; }
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timer-display-value { margin-inline: auto; }
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-cube-frame { --timer-cube-h: clamp(60px, 24vh, 120px); }
   }
@@ -488,17 +489,18 @@
       --timer-side-preview-width: clamp(120px, 25cqw, 220px);
     }
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-scramble-top {
-      width: calc(100% - var(--timer-side-preview-width) - 16px);
+      width: 100%;
     }
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-core {
       --timer-readout-side-preview: 1;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) var(--timer-side-preview-width);
+      grid-template-columns: var(--timer-side-preview-width) minmax(0, 1fr) var(--timer-side-preview-width);
       grid-template-rows: auto;
       column-gap: 16px;
       align-items: center;
     }
-    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timer-display-wrap { width: 100%; min-width: 0; }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timer-display-wrap { grid-column: 2; grid-row: 1; width: 100%; min-width: 0; }
+    .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-sub { grid-column: 3; grid-row: 1; }
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timer-display-value { margin-inline: auto; }
     .timer-workspace[data-fit-viewport]:not([data-spacing-flow]) .timing-surface--solo[data-cube-preview] .timing-surface-cube-frame { --timer-cube-h: clamp(60px, 36cqh, 120px); }
   }

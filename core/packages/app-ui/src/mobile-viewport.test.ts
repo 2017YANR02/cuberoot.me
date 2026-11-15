@@ -156,19 +156,20 @@ describe('mobile visible viewport layout', () => {
     expect(surfaceCss).toContain('@supports not (container-type: size)');
     expect(surfaceCss).toContain('@container timer-stage (min-width: 520px) and (max-height: 500px)');
     // Only the core can split into readout/preview columns. The outer canvas
-    // still puts the scramble above the core, aligned with the readout column.
+    // keeps full-width scramble and a readout centered by equal side columns.
     const fitRules = [...surfaceCss.matchAll(/([^{}]*\.timer-workspace\[data-fit-viewport\][^{}]*)\{([^}]*)\}/g)];
     for (const [, selector, declarations] of fitRules) {
       const columns = declarations.match(/grid-template-columns:\s*([^;]+);/)?.[1];
       if (columns && columns !== 'minmax(0, 1fr)') {
         expect(selector).toContain('.timing-surface--solo[data-cube-preview] .timing-surface-core');
         expect(selector).toContain(':not([data-spacing-flow])');
-        expect(columns).toBe('minmax(0, 1fr) var(--timer-side-preview-width)');
+        expect(columns).toBe('var(--timer-side-preview-width) minmax(0, 1fr) var(--timer-side-preview-width)');
         expect(declarations).toContain('display: grid');
       }
-      expect(declarations).not.toMatch(/grid-column:\s*2\b/);
+      if (/grid-column:\s*2\b/.test(declarations)) expect(selector).toContain('.timer-display-wrap');
     }
-    expect(surfaceCss).toContain('width: calc(100% - var(--timer-side-preview-width) - 16px)');
+    expect(surfaceCss).not.toContain('width: calc(100% - var(--timer-side-preview-width) - 16px)');
+    expect(surfaceCss).toContain('.timing-surface-sub { grid-column: 3; grid-row: 1; }');
     expect(surfaceCss).toContain('@container timer-stage (max-height: 350px)');
     expect(surfaceCss).toContain('@media (max-height: 460px)');
     expect(surfaceCss).toContain('--timer-readout-max-size: clamp(40px, 18cqh, 64px)');
