@@ -25,11 +25,14 @@ describe('homepage card order', () => {
     ]);
   });
 
-  it('groups the competition system, online competitions, and simulation first', () => {
+  it('groups competition tools first and keeps simulation in training', () => {
     const toolCards = SECTIONS.find(({ id }) => id === 'tool')?.cards;
+    const trainingCards = SECTIONS.find(({ id }) => id === 'train')?.cards;
 
     expect(PRIMARY_CARDS.some(({ id }) => id === 'comp-sim')).toBe(false);
-    expect(toolCards?.slice(0, 3).map(({ id }) => id)).toEqual(['contests', 'online-competitions', 'comp-sim']);
+    expect(toolCards?.slice(0, 3).map(({ id }) => id)).toEqual(['contests', 'online-competitions', 'draw']);
+    expect(toolCards?.some(({ id }) => id === 'comp-sim')).toBe(false);
+    expect(trainingCards?.[0]).toEqual(expect.objectContaining({ id: 'comp-sim', href: '/comp-sim' }));
   });
 
   it('links the learning section to the complete notation guide', () => {
