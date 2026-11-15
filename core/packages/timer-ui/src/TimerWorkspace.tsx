@@ -4,6 +4,7 @@ import { ResizeDivider } from '@app-foundation/navigation-ui/resize-divider';
 import '@app-foundation/navigation-ui/resize-divider.css';
 import { useHostViewportLayout } from './host-viewport';
 import { DEFAULT_SOLO_LAYOUT, type SoloLayout } from '@cuberoot/shared/timer';
+import { observeSoloSpacing } from './solo-spacing-fit';
 
 // Unfolded landscape can use compact docks on either side of the timer.
 // Keep this in sync with timer-solver-panel.css and timing-surface.css.
@@ -33,6 +34,11 @@ export function TimerWorkspace({ active = true, panelOpen = false, recap, soloLa
   const wide = useTimerWideLayout({ useHostContent: true });
   const recapOpen = active && wide && !panelOpen && Boolean(recap);
   const workspaceRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const stage = workspaceRef.current?.querySelector<HTMLElement>('.timer-solo-main');
+    if (!active || !expandedSpacing || !soloLayout || !stage || typeof ResizeObserver === 'undefined') return;
+    return observeSoloSpacing(stage, soloLayout);
+  }, [active, expandedSpacing, soloLayout]);
   useLayoutEffect(() => {
     const workspace = workspaceRef.current;
     if (!workspace || !active || !wide || typeof ResizeObserver === 'undefined') return;
