@@ -3,9 +3,16 @@ import { checkAssistantAlerts } from '../src/utils/site_assistant_monitor_jobs.j
 
 vi.mock('../src/utils/notify.js', () => ({ notify: vi.fn(), adminRecipients: () => ['admin'] }));
 
-async function check(n: number, errors: number, failureSpan: number, active = false) {
+async function check(n: number, errors: number, failureSpan: number, active = false,
+  recovery = { n: 0, errors: 0 }, retryRecovery = false) {
   const alerts = new Map<string, { code: string; active: boolean; details: unknown; opened_at: string; resolved_at: string | null }>();
   const run = vi.fn(async (sql: string, params?: unknown[]) => {
+    if (sql.includes('AS recovery_requests')) {
+      expect(sql).toContain("AND started_at > (SELECT opened_at FROM site_assistant_alerts WHERE code='error_rate')");
+      expect(sql).toContain("status IN ('success','error','interrupted')");
+      expect(sql).toContain('ORDER BY started_at DESC,id DESC LIMIT 10');
+      return [recovery];
+    }
     if (sql.startsWith('SELECT COUNT')) return [{ n, errors, failure_span: failureSpan, p95: 60000, missing: 10 }];
     if (sql.startsWith('SELECT COALESCE')) return [{ cost: 100 }];
     if (sql.includes('FROM site_assistant_monitor_state')) return [{ recent_failure: true }];
@@ -17,7 +24,7 @@ async function check(n: number, errors: number, failureSpan: number, active = fa
     if (sql.startsWith('SELECT * FROM site_assistant_alerts')) {
       expect(sql).toContain("code='error_rate'");
       const alert = alerts.get('error_rate')!;
-      return alert.active !== active ? [alert] : [];
+      return alert.active !== active || retryRecovery ? [alert] : [];
     }
     return [];
   });
@@ -46,6 +53,27 @@ describe('assistant alert noise and recovery', () => {
   it('reports recovery only with sufficient healthy traffic', async () => {
     const { alerts, deliver } = await check(10, 0, 0, true);
     expect(alerts.get('error_rate')?.active).toBe(false);
+    expect(deliver).toHaveBeenCalledTimes(1);
+    expect(deliver.mock.calls[0][0].excerpt).toContain('10 次请求中 10 次成功');
+  });
+  it('recovers after ten consecutive successes spread across quiet windows', async () => {
+    const { alerts, deliver } = await check(0, 0, 0, true, { n: 10, errors: 0 });
+    expect(alerts.get('error_rate')?.active).toBe(false);
+    expect(deliver).toHaveBeenCalledTimes(1);
+    expect(deliver.mock.calls[0][0].excerpt).toContain('最近 10 次请求中 10 次成功');
+  });
+  it.each([[9, 0], [10, 1]])('keeps the incident open with %i recent requests and %i errors', async (n, errors) => {
+    const { alerts, deliver } = await check(0, 0, 0, true, { n, errors });
+    expect(alerts.get('error_rate')?.active).toBe(true);
+    expect(deliver).not.toHaveBeenCalled();
+  });
+  it('does not recover while the current window still has failures', async () => {
+    const { alerts, deliver } = await check(1, 1, 0, true, { n: 10, errors: 0 });
+    expect(alerts.get('error_rate')?.active).toBe(true);
+    expect(deliver).not.toHaveBeenCalled();
+  });
+  it('retries a pending recovery notification using the same evidence', async () => {
+    const { deliver } = await check(0, 0, 0, false, { n: 10, errors: 0 }, true);
     expect(deliver).toHaveBeenCalledTimes(1);
     expect(deliver.mock.calls[0][0].excerpt).toContain('10 次请求中 10 次成功');
   });

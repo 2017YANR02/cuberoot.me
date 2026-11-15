@@ -5,6 +5,7 @@ import { scanComp, isChinaInWindow, suppressAdjudicatedRecordPrs } from '../src/
 import { siteCompUrlFromCubingAlias } from '../src/monitors/config';
 import { formatCompMessage } from '../src/monitors/cubing_comp';
 import fixture from './fixtures/cubing-live-xian.json';
+import { cubingHttp } from '../src/utils/cubing_source';
 
 vi.mock('../src/db/connection.js', () => ({ query: vi.fn() }));
 vi.mock('../src/monitors/bark.js', () => ({ sendBark: vi.fn(() => { throw new Error('No notifications in tests'); }) }));
@@ -31,7 +32,7 @@ function mockResults(records = false) {
     return Response.json(payload);
   }));
 }
-afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
+afterEach(() => { cubingHttp.clear(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 describe('cubing.com migration consumers', () => {
   it('requests a complete page to avoid unstable equal-date ordering and rejects partial data', async () => {
     const fetcher = vi.fn(async (url: string) => Response.json({
@@ -64,9 +65,10 @@ describe('cubing.com migration consumers', () => {
     const calls = vi.mocked(fetch).mock.calls.length;
     expect(await fetchCubingAttempts(comp.alias, 'clock', 'f', 'MISSING')).toBeNull();
     expect(vi.mocked(fetch).mock.calls).toHaveLength(calls);
-    vi.advanceTimersByTime(15_001);
+    vi.advanceTimersByTime(60_001);
     await fetchCubingAttempts(comp.alias, 'clock', 'f', '2023LIUY04');
-    expect(vi.mocked(fetch).mock.calls.length).toBe(calls * 2);
+    // Metadata remains shared for five minutes; expired rounds/results refresh independently.
+    expect(vi.mocked(fetch).mock.calls.length).toBe(calls + 2);
     expect(await fetchCubingAttempts(comp.alias, 'clock', 'c', '2023LIUY04')).toEqual([2.81, -1, 4, 3.58, 3.48]);
   });
   it('identifies the API client so public round requests do not receive the Node-UA HTML challenge', async () => {

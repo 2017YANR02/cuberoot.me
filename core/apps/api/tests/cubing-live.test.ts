@@ -3,10 +3,11 @@ import fixture from './fixtures/cubing-live-xian.json';
 import { cubingRoundMeta, normalizeCubingRound } from '@cuberoot/shared/cubing-live';
 import { collectCubingResults, fetchCubingMeta } from '../src/utils/cubing_live';
 import { cubingLiveRoutes } from '../src/routes/cubing_live';
+import { cubingHttp } from '../src/utils/cubing_source';
 
 vi.mock('../src/db/connection.js', () => ({ query: vi.fn() }));
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { cubingHttp.clear(); vi.unstubAllGlobals(); });
 
 describe('new cubing.com live API', () => {
   it('passes SSE events and heartbeats through without buffering or caching', async () => {
@@ -34,8 +35,10 @@ describe('new cubing.com live API', () => {
     expect(invalid.status).toBe(400);
     expect(upstream).toHaveBeenCalledTimes(1);
     upstream.mockImplementation(async () => Response.json({ ...fixture.results['clock:3'], results: [] }));
+    cubingHttp.invalidate('Xian-One-More-Clock-2026', 'clock', 3);
     expect((await cubingLiveRoutes.request(path)).headers.get('cache-control')).toBe('no-store');
     upstream.mockImplementation(async () => new Response('', { status: 503 }));
+    cubingHttp.invalidate('Xian-One-More-Clock-2026', 'clock', 3);
     const failed = await cubingLiveRoutes.request(path);
     expect(failed.status).toBe(502);
     expect(failed.headers.get('cache-control')).toBe('no-store');

@@ -3,6 +3,7 @@ import { wcaIdToCubingSlug } from '@cuberoot/shared/cubing-slug';
 import type { CompetitionGroupAward } from '@cuberoot/shared/cubing-live';
 import { query } from '../db/connection.js';
 import { readGroupAwards, refreshGroupAwards } from '../utils/competition_group_awards.js';
+import { findCubingCompetition } from '../utils/cubing_source.js';
 export const competitionGroupAwardsRoutes = new Hono();
 competitionGroupAwardsRoutes.get('/group-awards/competitions/:id', async c => {
   c.header('Cache-Control', 'no-store');
@@ -12,7 +13,12 @@ competitionGroupAwardsRoutes.get('/group-awards/competitions/:id', async c => {
   const cached = await readGroupAwards(id);
   if (cached && Date.now() - new Date(cached.fetched_at).getTime() < 300_000) return c.json({ rows: cached.rows, coverage: 'collected', stale: false });
   try {
-    const rows = await refreshGroupAwards(cached?.cubing_slug || alias || wcaIdToCubingSlug(id), id);
+    // Only a complete directory can rule out a competition; outages still use known aliases.
+    const listed = await findCubingCompetition(id).catch(() => undefined);
+    if (listed === null) return cached
+      ? c.json({ rows: cached.rows, coverage: 'collected', stale: true })
+      : c.json({ error: 'Category awards unavailable' }, 404);
+    const rows = await refreshGroupAwards(cached?.cubing_slug || listed?.alias || alias || wcaIdToCubingSlug(id), id);
     if (rows.length) c.header('Cache-Control', 'public, max-age=60');
     return c.json({ rows, coverage: 'collected', stale: false });
   } catch (error) {

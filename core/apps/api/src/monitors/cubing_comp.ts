@@ -1,5 +1,6 @@
 /** New competition announcements from the public paginated API. */
-import { fetchCubingCompetitions, type CubingCompetition as CubingComp } from '@cuberoot/shared/cubing-live';
+import type { CubingCompetition as CubingComp } from '@cuberoot/shared/cubing-live';
+import { fetchCubingCompetitions } from '../utils/cubing_source.js';
 import { sendBark } from './bark.js';
 import { countPushed, getPushedSet, markPushed, type MonitorId } from './state.js';
 import { POLL_INTERVAL_MS, siteCompUrlFromCubingAlias, formatDateRangeIso } from './config.js';

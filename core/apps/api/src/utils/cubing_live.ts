@@ -1,4 +1,5 @@
-import { cubingRoundMeta, cubingUser, fetchCubingJson, fetchCubingLiveRound, fetchCubingCompetitors, type CubingRound } from '@cuberoot/shared/cubing-live';
+import { cubingRoundMeta, cubingUser, type CubingRound } from '@cuberoot/shared/cubing-live';
+import { fetchCubingJson, fetchCubingLiveRound, fetchCubingCompetitors } from './cubing_source.js';
 
 interface Competition {
   id: number; name: string; type: string;
@@ -6,14 +7,13 @@ interface Competition {
 }
 
 export async function fetchCubingMeta(slug: string) {
-  const [competition, rounds] = await Promise.all([
-    fetchCubingJson<Competition>(slug),
-    fetchCubingJson<CubingRound[]>(slug, '/live/rounds').catch(error => {
-      // Upcoming competitions expose their roster before live results are enabled.
-      if (error?.status === 404) return [];
-      throw error;
-    }),
-  ]);
+  // Confirm existence before requesting dependent resources (a cached 404 stops here).
+  const competition = await fetchCubingJson<Competition>(slug);
+  const rounds = await fetchCubingJson<CubingRound[]>(slug, '/live/rounds').catch(error => {
+    // Upcoming competitions expose their roster before live results are enabled.
+    if (error?.status === 404) return [];
+    throw error;
+  });
   if (!Number.isSafeInteger(competition.id) || competition.id <= 0 || !competition.name
     || !Array.isArray(competition.events) || !Array.isArray(rounds)) throw new Error('Invalid cubing.com competition');
   const events = competition.events.map(event => ({

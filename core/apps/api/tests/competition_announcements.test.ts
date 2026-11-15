@@ -10,7 +10,7 @@ vi.mock('../src/monitors/state.js', () => ({
   countPushed: mocks.count, getPushedSet: mocks.pushed, markPushed: mocks.mark,
 }));
 vi.mock('../src/monitors/poll.js', () => ({ startPoller: mocks.poll }));
-vi.mock('@cuberoot/shared/cubing-live', () => ({ fetchCubingCompetitions: mocks.cubing }));
+vi.mock('../src/utils/cubing_source.js', () => ({ fetchCubingCompetitions: mocks.cubing }));
 
 const wcaComp = {
   id: 'FMCZhengzhou2026', name: 'FMC Zhengzhou 2026', country_iso2: 'CN',

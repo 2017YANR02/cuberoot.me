@@ -8,7 +8,8 @@
  */
 import { recordResultHref, tiedBeforeResult, type RecordResultTarget } from '../utils/record_result_link.js';
 import { Hono } from 'hono';
-import { fetchCubingLiveRound, fetchCubingCompetitors } from '@cuberoot/shared/cubing-live';
+import { fetchCubingLiveRound, fetchCubingCompetitors, findCubingCompetition } from '../utils/cubing_source.js';
+import { openCubingStream } from '../utils/cubing_stream.js';
 import { streamSSE } from 'hono/streaming';
 import { fetchCubingMeta as scrapeMeta, collectCubingResults as collectCompData } from '../utils/cubing_live.js';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
@@ -1413,6 +1414,7 @@ async function probeSources(wcaId: string): Promise<ProbeResult> {
   const hit = probeCache.get(wcaId);
   if (hit && Date.now() - hit.at < PROBE_TTL_MS) return hit;
   const heuristicSlug = wcaIdToCubingSlug(wcaId);
+  const listed = await findCubingCompetition(wcaId).catch(() => undefined);
   const [wcaInfo, heuristicMeta, wcaLiveId] = await Promise.all([
     // GET(非 HEAD)顺带拿 name,用于校正 cubing slug —— 无横杠 WCA ID 反推会把内部大写词误拆(GraDUAL→Gra-DUAL).
     fetch(`${WCA_API_BASE}/competitions/${encodeURIComponent(wcaId)}`)
@@ -1421,12 +1423,12 @@ async function probeSources(wcaId: string): Promise<ProbeResult> {
         return { ok: true, name: (await r.json() as { name?: string }).name };
       })
       .catch(() => ({ ok: false, name: undefined as string | undefined })),
-    scrapeMeta(heuristicSlug).catch(() => null),
+    listed === null ? Promise.resolve(null) : scrapeMeta(listed?.alias ?? heuristicSlug).catch(() => null),
     probeWcaLive(wcaId),
   ]);
   let cubingMeta = heuristicMeta;
   // 启发式 slug 404 但按真实比赛名推出的 slug 不同(仅内部大写词比赛会出现)→ 用比赛名再抓一次.
-  if (!cubingMeta && wcaInfo.name) {
+  if (!cubingMeta && listed !== null && wcaInfo.name) {
     const nameSlug = nameToCubingSlug(wcaInfo.name);
     if (nameSlug && nameSlug !== heuristicSlug) cubingMeta = await scrapeMeta(nameSlug).catch(() => null);
   }
@@ -1599,10 +1601,9 @@ async function loadCompInner(wcaId: string, choice: SourceChoice = 'auto', onPro
 
         const pFast = (async () => {
           const cubingSlug = wcaIdToCubingSlug(wcaId);
-          const [data, probe, scraped] = await Promise.all([
+          const [data, probe] = await Promise.all([
             loadFromWca(wcaId, onProgress),
             probeSources(wcaId),
-            scrapeCompetitors(cubingSlug).catch(() => ({} as Record<string, User>)),
           ]);
           const available: SourceId[] = ['wca'];
           if (probe.cubingMeta) available.push('cubing');
@@ -1625,6 +1626,8 @@ async function loadCompInner(wcaId: string, choice: SourceChoice = 'auto', onPro
             return wcaLiveData;
           }
 
+          const scraped = Object.keys(data.users).length === 0 && probe.cubingMeta
+            ? await scrapeCompetitors(probe.cubingMeta.slug ?? cubingSlug).catch(() => ({} as Record<string, User>)) : {};
           let finalData = data;
           if (Object.keys(data.users).length === 0 && Object.keys(scraped).length > 0) {
             await enrichUsersWithChineseNames(scraped);
@@ -1710,13 +1713,12 @@ async function loadCompInner(wcaId: string, choice: SourceChoice = 'auto', onPro
       }
     }
 
-    // WCA 命中 announcement 但 users={} 且 cubing probe 也 null (未办的中国比赛 — /live 重定向)
-    // → 用 WCA cell_name 推 cubing slug 直抓 /competitors 补报名表.源仍记 'wca'.
-    // /competitors HTML 只给英文名,在 server 端 JOIN wca_persons 拼"English (中文)"全名.
+    // Only fetch a missing roster for a competition actually present in Cubing China's directory.
     if (choice === 'auto' && data.source === 'wca' && Object.keys(data.users).length === 0) {
-      const cubingSlug = nameToCubingSlug(data.name);
       try {
-        const competitorUsers = await scrapeCompetitors(cubingSlug, onProgress);
+        const listed = await findCubingCompetition(wcaId);
+        const cubingSlug = listed?.alias;
+        const competitorUsers = cubingSlug ? await scrapeCompetitors(cubingSlug, onProgress) : {};
         if (Object.keys(competitorUsers).length > 0) {
           await enrichUsersWithChineseNames(competitorUsers);
           data = { ...data, users: competitorUsers, cubingSlug };
@@ -1725,7 +1727,7 @@ async function loadCompInner(wcaId: string, choice: SourceChoice = 'auto', onPro
           await enrichPersonalRecords(data);
         }
       } catch (e) {
-        console.warn(`[cubing-live] competitors fallback failed for ${cubingSlug}:`, (e as Error).message);
+        console.warn(`[cubing-live] competitors fallback failed for ${wcaId}:`, (e as Error).message);
       }
     }
 
@@ -2139,24 +2141,10 @@ cubingLiveRoutes.get('/cubing-live/:slug/stream', async (c) => {
   const { slug } = c.req.param();
   c.header('Cache-Control', 'no-store');
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(slug)) return c.json({ error: 'invalid slug' }, 400);
-  const abort = new AbortController();
-  const timeout = setTimeout(() => abort.abort(), 15_000);
   try {
-    const response = await fetch(`https://api.cubing.com/competitions/${encodeURIComponent(slug)}/live/stream`, {
-      headers: { accept: 'text/event-stream' }, signal: AbortSignal.any([abort.signal, c.req.raw.signal]),
-    });
-    if (!response.ok || !response.headers.get('content-type')?.includes('text/event-stream') || !response.body) {
-      await response.body?.cancel();
-      return c.json({ error: 'cubing.com live stream unavailable' }, 502);
-    }
-    // Preserve SSE event names, reconnect semantics and upstream heartbeats.
-    return new Response(response.body, { headers: {
-      'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no',
-    } });
+    return await openCubingStream(slug, c.req.raw.signal);
   } catch {
     return c.json({ error: 'cubing.com live stream unavailable' }, 502);
-  } finally {
-    clearTimeout(timeout);
   }
 });
 
@@ -2169,7 +2157,7 @@ cubingLiveRoutes.get('/cubing-live/:slug/round/:event/:round', async (c) => {
     return c.json({ error: 'invalid round' }, 400);
   }
   try {
-    const snapshot = await fetchCubingLiveRound(slug, event, Number(round), roundTypeId, c.req.raw.signal);
+    const snapshot = await fetchCubingLiveRound(slug, event, Number(round), roundTypeId, c.req.raw.signal, true);
     // SSE invalidations must see corrections immediately, including deleted results.
     return c.json(snapshot);
   } catch (error) {

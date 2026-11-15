@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { cubingUser, fetchCubingJson, type CompetitionGroupAward } from '@cuberoot/shared/cubing-live';
+import { cubingUser, type CompetitionGroupAward } from '@cuberoot/shared/cubing-live';
+import { fetchCubingJson } from './cubing_source.js';
 import { query } from '../db/connection.js';
 
 const category = z.object({ type: z.enum(['age', 'female', 'newcomer']), age: z.number().int().positive().optional(), under: z.boolean().optional() });
@@ -48,9 +49,10 @@ export function refreshGroupAwards(slug: string, expectedId?: string): Promise<C
   const running = pending.get(slug);
   if (running) return running;
   const promise = (async () => {
-    const [raw, podiums, rounds] = await Promise.all([fetchCubingJson(slug), fetchCubingJson(slug, '/live/podiums'), fetchCubingJson(slug, '/live/rounds')]);
+    const raw = await fetchCubingJson(slug);
     const comp = competitionSchema.parse(raw);
     if (expectedId && expectedId !== comp.alias && expectedId !== comp.wcaCompetitionId) throw new Error('Mismatched award competition');
+    const [podiums, rounds] = await Promise.all([fetchCubingJson(slug, '/live/podiums'), fetchCubingJson(slug, '/live/rounds')]);
     const fetchedAt = new Date().toISOString();
     const rows = parseCompetitionGroupAwards(raw, podiums, rounds, fetchedAt);
     // One atomic snapshot replaces all rows, including corrections and withdrawn awards.

@@ -34,9 +34,28 @@ export async function checkAssistantAlerts(run: QueryRunner, pending: number, de
   const [state] = await run<{ recent_failure: boolean }>(`SELECT last_failure_at>NOW()-INTERVAL '15 minutes' AS recent_failure FROM site_assistant_monitor_state WHERE id=TRUE`);
   const previous = await run<{ code: string; active: boolean }>('SELECT code,active FROM site_assistant_alerts');
   const wasActive = (code: string) => previous.some(alert => alert.code === code && alert.active);
-  // Low traffic is unknown, not recovery. Require a healthy, adequately sized window.
+  // Quiet windows alone cannot prove recovery. For low traffic, also accept ten
+  // consecutive completed successes after this incident opened, across windows.
+  let recovered = window.n >= 10 && window.errors / window.n < 0.1;
+  let recoveryRequests = window.n;
+  let recoverySuccesses = window.n - window.errors;
+  // Include resolved incidents so a failed recovery notification can be retried.
+  if (previous.some(alert => alert.code === 'error_rate') && !recovered && window.errors === 0) {
+    const [recent] = await run<{ n: number; errors: number }>(`SELECT COUNT(*)::int AS n,
+      COUNT(*) FILTER(WHERE status<>'success')::int AS errors FROM (
+        SELECT status FROM site_assistant_requests
+        WHERE scope='chat' AND status IN ('success','error','interrupted')
+          AND started_at > (SELECT opened_at FROM site_assistant_alerts WHERE code='error_rate')
+        ORDER BY started_at DESC,id DESC LIMIT 10
+      ) AS recovery_requests`);
+    recovered = recent.n === 10 && recent.errors === 0;
+    if (recovered) {
+      recoveryRequests = recent.n;
+      recoverySuccesses = recent.n - recent.errors;
+    }
+  }
   const errorActive = wasActive('error_rate')
-    ? !(window.n >= 10 && window.errors / window.n < 0.1)
+    ? !recovered
     : window.n >= 10 && window.errors / window.n >= 0.2 && (window.failure_span ?? 0) >= 300;
   const budget = Number(process.env.SITE_ASSISTANT_DAILY_COST_ALERT_CNY || 20);
   const checks = [
@@ -58,11 +77,11 @@ export async function checkAssistantAlerts(run: QueryRunner, pending: number, de
   const pendingAlerts = await run<{ code: string; active: boolean; opened_at: string; resolved_at: string | null; details: { requests: number; errors: number } }>(`SELECT * FROM site_assistant_alerts WHERE code='error_rate' AND notified_at IS NULL AND (active OR resolved_at IS NOT NULL)`);
   for (const alert of pendingAlerts) {
     // Also validate retried recoveries left by an earlier tick or the old policy.
-    if (!alert.active && !(window.n >= 10 && window.errors / window.n < 0.1)) continue;
+    if (!alert.active && !recovered) continue;
     await deliver({ recipients: adminRecipients(), kind: 'assistant_alert', actorKey: 'system:assistant', actorName: '',
       title: 'CubeRoot AI', excerpt: alert.active
         ? `AI 助手持续回答失败：最近 15 分钟 ${alert.details.requests} 次请求中 ${alert.details.errors} 次失败，请检查服务。 / AI replies are failing persistently (${alert.details.errors}/${alert.details.requests} requests). Check the service.`
-        : `AI 助手回答已恢复：最近 15 分钟 ${alert.details.requests} 次请求中 ${alert.details.requests - alert.details.errors} 次成功。 / AI replies have recovered (${alert.details.requests - alert.details.errors}/${alert.details.requests} requests succeeded).`,
+        : `AI 助手回答已恢复：最近 ${recoveryRequests} 次请求中 ${recoverySuccesses} 次成功。 / AI replies have recovered (${recoverySuccesses}/${recoveryRequests} recent requests succeeded).`,
       link: '/admin#chat-monitoring', dedupeKey: `assistant:${alert.code}:${alert.active}:${new Date(alert.opened_at).toISOString()}:${alert.resolved_at ? new Date(alert.resolved_at).toISOString() : ''}` });
     await run('UPDATE site_assistant_alerts SET notified_at=NOW() WHERE code=? AND opened_at=? AND active=?', [alert.code, alert.opened_at, alert.active]);
   }

@@ -56,12 +56,12 @@ export interface CubingCompetition {
 }
 
 /** Equal-date rows have unstable pagination order. Fetch the complete list in one page. */
-export async function fetchCubingCompetitions(): Promise<CubingCompetition[]> {
+export async function fetchCubingCompetitions(request: typeof fetch = fetch): Promise<CubingCompetition[]> {
   const competitions = new Map<number, CubingCompetition>();
   let take = 2000;
   let total = 0;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const response = await fetch(`https://api.cubing.com/competitions?skip=0&take=${take}`, {
+    const response = await request(`https://api.cubing.com/competitions?skip=0&take=${take}`, {
       headers: { accept: 'application/json', 'User-Agent': 'cuberoot.me-server/1.0 (+https://cuberoot.me)' }, signal: AbortSignal.timeout(15_000),
     });
     if (!response.ok) throw new Error(`cubing.com competitions: HTTP ${response.status}`);
@@ -82,8 +82,8 @@ export async function fetchCubingCompetitions(): Promise<CubingCompetition[]> {
 }
 
 /** Public accepted registrations include newcomers without WCA IDs. */
-export async function fetchCubingCompetitors(slug: string) {
-  const roster = await fetchCubingJson<{ number: number; user: Omit<CubingCompetitor, 'number'>; registrationEvents: { eventId: string }[] }[]>(slug, '/competitors');
+export async function fetchCubingCompetitors(slug: string, request: typeof fetch = fetch) {
+  const roster = await fetchCubingJson<{ number: number; user: Omit<CubingCompetitor, 'number'>; registrationEvents: { eventId: string }[] }[]>(slug, '/competitors', undefined, request);
   if (!Array.isArray(roster)) throw new Error('Invalid cubing.com roster');
   const users: Record<string, ReturnType<typeof cubingUser> & { eventIds: string[] }> = {};
   for (const entry of roster) {
@@ -95,8 +95,8 @@ export async function fetchCubingCompetitors(slug: string) {
   return users;
 }
 
-export async function fetchCubingJson<T>(slug: string, path = '', signal?: AbortSignal): Promise<T> {
-  const response = await fetch(`https://api.cubing.com/competitions/${encodeURIComponent(slug)}${path}`, {
+export async function fetchCubingJson<T>(slug: string, path = '', signal?: AbortSignal, request: typeof fetch = fetch): Promise<T> {
+  const response = await request(`https://api.cubing.com/competitions/${encodeURIComponent(slug)}${path}`, {
     // The public API challenges Node's default UA with HTML, even with HTTP 200.
     // Identify our client consistently with the other server-side WCA readers.
     headers: { accept: 'application/json', 'User-Agent': 'cuberoot.me-server/1.0 (+https://cuberoot.me)' },
@@ -153,10 +153,10 @@ export function normalizeCubingRound(payload: { round: CubingRound; results: Cub
   return { round, users, results };
 }
 
-export async function fetchCubingLiveRound(slug: string, eventId: string, roundNumber: number, roundTypeId: string, signal?: AbortSignal) {
+export async function fetchCubingLiveRound(slug: string, eventId: string, roundNumber: number, roundTypeId: string, signal?: AbortSignal, request: typeof fetch = fetch) {
   if (!Number.isSafeInteger(roundNumber) || roundNumber < 1) throw new Error('Invalid cubing.com round number');
   const payload = await fetchCubingJson<{ round: CubingRound; results: CubingResult[] }>(
-    slug, `/live/results/${encodeURIComponent(eventId)}/${roundNumber}`, signal,
+    slug, `/live/results/${encodeURIComponent(eventId)}/${roundNumber}`, signal, request,
   );
   if (payload.round?.eventId !== eventId || payload.round?.roundNumber !== roundNumber) throw new Error('Mismatched cubing.com round');
   return normalizeCubingRound(payload, roundTypeId);

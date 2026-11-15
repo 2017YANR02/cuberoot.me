@@ -1,5 +1,6 @@
 /** Poll public REST rounds; preserve record and watched-person PR deduplication. */
-import { fetchCubingCompetitions, fetchCubingJson, normalizeCubingRound, type CubingCompetition as CubingComp, type CubingRound, type CubingResult } from '@cuberoot/shared/cubing-live';
+import { normalizeCubingRound, type CubingCompetition as CubingComp, type CubingRound, type CubingResult } from '@cuberoot/shared/cubing-live';
+import { fetchCubingCompetitions, fetchCubingJson, cubingRecordInterval } from '../utils/cubing_source.js';
 import { fetchCubingMeta } from '../utils/cubing_live.js';
 import { resolveRecordResult } from '../routes/cubing_live.js';
 import { sendBark } from './bark.js';
@@ -14,6 +15,7 @@ import { enrichRecordTags, type CompData } from '../routes/cubing_live.js';
 
 const MONITOR: MonitorId = 'cubing_record';
 const WINDOW_DAYS = 30;
+const nextScan = new Map<number, number>();
 
 interface WsUser {
   name?: string;
@@ -63,7 +65,8 @@ const listCompetitions = fetchCubingCompetitions;
 export function isChinaInWindow(comp: CubingComp, now: number, windowSeconds: number): boolean {
   if (!comp.live || !comp.locations.some(location => ['CN', 'HK', 'MO', 'TW'].includes(location.regionIso2))) return false;
   const start = Date.parse(comp.startDate + 'T00:00:00+08:00') / 1000;
-  return now - windowSeconds <= start && start <= now + 86400;
+  const end = Date.parse((comp.endDate || comp.startDate) + 'T23:59:59+08:00') / 1000;
+  return now - windowSeconds <= end && start <= now;
 }
 
 function compIso2(comp: CubingComp): string {
@@ -311,13 +314,13 @@ function wanted(ev: InternalEvent): boolean {
 }
 
 /** 对一批纪录事件过滤 + 按 groupKey 聚合 + 推送。无首跑静默吸收(未 known 全推)。 */
-async function processEvents(events: InternalEvent[]): Promise<void> {
+async function processEvents(events: InternalEvent[]): Promise<boolean> {
   const candidates = events.filter(wanted);
-  if (candidates.length === 0) return;
+  if (candidates.length === 0) return true;
 
   const pushed = await getPushedSet(MONITOR, candidates.map((e) => e.uid));
   const fresh = candidates.filter((e) => !pushed.has(e.uid));
-  if (fresh.length === 0) return;
+  if (fresh.length === 0) return true;
 
   // 按 groupKey 聚合(同一 row 的 sr+ar 落到同一组),组内 single 先。
   const groups = new Map<string, InternalEvent[]>();
@@ -327,6 +330,7 @@ async function processEvents(events: InternalEvent[]): Promise<void> {
     arr.push(ev);
   }
 
+  let delivered = true;
   for (const group of groups.values()) {
     group.sort((a, b) => (a.recType === 'single' ? 0 : 1) - (b.recType === 'single' ? 0 : 1));
     const uids = group.map((e) => e.uid);
@@ -336,12 +340,15 @@ async function processEvents(events: InternalEvent[]): Promise<void> {
       if (await sendBark({ title: cn, body: en, url, group: 'WCA Records', sound: 'multiwayinvitation' })) {
         await markPushed(MONITOR, uids);
       } else {
+        delivered = false;
         console.warn(`[cubing-record] push failed, will retry: ${uids.join(',')}`);
       }
     } catch (e) {
+      delivered = false;
       console.warn(`[cubing-record] format/push error for ${uids.join(',')}: ${(e as Error).message}`);
     }
   }
+  return delivered;
 }
 
 // ─── 主循环 ─────────────────────────────────────────────────────────────────
@@ -358,16 +365,21 @@ async function runOnce(): Promise<void> {
   }
   const windowSec = WINDOW_DAYS * 86400;
   const targets = comps.filter((c) => isChinaInWindow(c, now, windowSec));
-  console.log(`[cubing-record] CN comps in last ${WINDOW_DAYS} days: ${targets.length}`);
+  const targetIds = new Set(targets.map(comp => comp.id));
+  for (const id of nextScan.keys()) if (!targetIds.has(id)) nextScan.delete(id);
+  const due = targets.filter(comp => (nextScan.get(comp.id) ?? 0) <= Date.now());
+  console.log(`[cubing-record] due ${due.length}/${targets.length} comps in last ${WINDOW_DAYS} days`);
 
   // 关注选手 key(PR 监控用),空则相 2 跳过。每轮取一次(watched.ts 内有 60s 缓存)。
   const watchedKeys = await getWatchedMatchKeys();
 
-  for (const comp of targets) {
+  for (const comp of due) {
     try {
       const events = await scanComp(comp, watchedKeys);
       if (events.length > 0) console.log(`[cubing-record] ${comp.alias}: ${events.length} record events`);
-      await processEvents(events);
+      const delivered = await processEvents(events);
+      // Anchor to the poll tick, not completion: otherwise a 60s interval skips the next tick.
+      nextScan.set(comp.id, now * 1000 + (delivered ? cubingRecordInterval(comp, now * 1000) : POLL_INTERVAL_MS.cubingRecord));
     } catch (e) {
       console.warn(`[cubing-record] scan comp ${comp.alias} failed: ${(e as Error).message}`);
     }
