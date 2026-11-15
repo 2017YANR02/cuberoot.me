@@ -47,8 +47,6 @@ import Sq1ToolNav from '@/components/Sq1ToolNav';
 import SortableCard from '@/components/SortableCard';
 import { reorderAlgCatalog } from '@/lib/alg_sets_api';
 import { useIsAdmin } from '@/lib/auth-store';
-import { useRecentAlgCases } from '@/lib/alg-recent';
-import { displayAlgCaseName } from '@/lib/alg_case_display';
 import { usePageScrollRestoration } from '@/hooks/usePageScrollRestoration';
 import { useTrainingHost } from '@/lib/training-host';
 
@@ -214,10 +212,6 @@ export default function AlgPuzzleClient({ initialCatalog = null }: { initialCata
   const [catalog, setCatalog] = useState(initialCatalog);
   const activeCatalog = catalog?.puzzle === puzzle ? catalog : null;
   const trainingHost = useTrainingHost();
-  const recent = useRecentAlgCases(state => state.items);
-  const hydrateRecent = useRecentAlgCases(state => state.hydrate);
-  const clearRecent = useRecentAlgCases(state => state.clear);
-  useEffect(() => { hydrateRecent(); }, [hydrateRecent]);
   const counts = useMemo(() => Object.fromEntries(activeCatalog?.sets.map(s => [s.slug, s.count]) ?? []), [activeCatalog]);
   const firstCases = useMemo(() => Object.fromEntries(activeCatalog?.sets.map(s => [s.slug, s.first]) ?? []), [activeCatalog]);
   const thumbnailSetups = useMemo(() => Object.fromEntries(activeCatalog?.sets.map(s => [s.slug, s.thumbnailSetup]) ?? []), [activeCatalog]);
@@ -430,18 +424,6 @@ export default function AlgPuzzleClient({ initialCatalog = null }: { initialCata
           ]}
         />
       </div>
-
-      {!picking && recent.some(item => item.puzzle === puzzle) && (
-        <nav className="alg-mix-saved" aria-label={tr({ zh: '最近查看', en: 'Recently viewed' })}>
-          <span className="alg-train-modules-label">{tr({ zh: '最近查看', en: 'Recently viewed' })}</span>
-          {recent.filter(item => item.puzzle === puzzle).slice(0, 6).map(item => (
-            <Link key={item.href} href={item.href} className="alg-mix-saved-link" prefetch={false}>
-              {item.set.toUpperCase()} · {displayAlgCaseName(puzzle, item.set, item.name)}
-            </Link>
-          ))}
-          <ClearButton onClick={() => clearRecent(puzzle)} ariaLabel={tr({ zh: '清除最近查看', en: 'Clear recently viewed' })} />
-        </nav>
-      )}
 
       {puzzle === 'sq1' && <Sq1ToolNav />}
 
