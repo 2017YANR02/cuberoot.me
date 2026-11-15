@@ -141,7 +141,7 @@ export default function MemoRecallPage(): JSX.Element {
   const loadAssoc = useCallback(() => {
     if (assoc || assocLoading) return;
     setAssocLoading(true);
-    import('../_data/assoc-words.json')
+    import('@cuberoot/shared/draw/words')
       .then((mod) => {
         const data = (mod.default ?? mod) as Record<string, string>;
         setAssoc(data);

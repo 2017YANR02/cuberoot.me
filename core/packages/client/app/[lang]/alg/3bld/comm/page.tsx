@@ -110,7 +110,7 @@ export default function CommLibraryPage(): JSX.Element {
         const [corner, edge, a] = await Promise.all([
           loadAlg(PUZZLE, SET_SLUG.corner, { fresh: isAdmin }),
           loadAlg(PUZZLE, SET_SLUG.edge, { fresh: isAdmin }),
-          import('../_data/assoc-words.json'),
+          import('@cuberoot/shared/draw/words'),
         ]);
         if (!alive) return;
         setFiles({ corner, edge });
