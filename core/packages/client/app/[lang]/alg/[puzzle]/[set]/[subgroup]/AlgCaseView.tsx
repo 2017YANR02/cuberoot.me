@@ -720,7 +720,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
         {([['previous', adjacent.previous], ['next', adjacent.next]] as const).map(([direction, target]) => {
           const label = direction === 'previous' ? tr({ zh: '上一条', en: 'Previous' }) : tr({ zh: '下一条', en: 'Next' });
           const content = <>{direction === 'previous' && <ChevronLeft size={16} />}{label}{direction === 'next' && <ChevronRight size={16} />}</>;
-          return <Fragment key={direction}>{target ? <Link href={hrefFor(target, mobileSlot)} prefetch={false} className="alg-case-navigation-link"
+          return <Fragment key={direction}>{target ? <Link href={hrefFor(target, mobileSlot)} replace prefetch={false} className="alg-case-navigation-link"
             data-case-direction={direction} aria-keyshortcuts={direction === 'previous' ? 'ArrowLeft' : 'ArrowRight'}
             onClick={event => { if (editor && !editor.confirmDiscard()) event.preventDefault(); }}
             aria-label={`${label}: ${primaryCaseName(puzzle, set, target)}`}>{content}</Link>
