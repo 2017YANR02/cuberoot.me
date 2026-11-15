@@ -29,7 +29,7 @@
     <button class="nt-control" bindtap="nextScramble" disabled="{{busy || generating}}" aria-label="{{copy.next}}" hover-class="press-feedback"><image class="nt-icon" src="/assets/tabbar/chevron-right.png" aria-hidden="true" /></button>
   </view>
   <button hover-class="press-feedback" hidden="{{hideChrome}}" class="nt-stats" bindtap="openSheet" data-sheet="statistics" disabled="{{busy}}">
-    <block wx:if="{{summary.count}}"><text>{{summary.solved}}/{{summary.count}}</text><text>{{copy.mean}} {{summary.mean}}</text><text>{{copy.best}} {{summary.best}}</text><text>mo3 {{summary.mo3}}</text><text>ao5 {{summary.ao5}}</text><text>ao12 {{summary.ao12}}</text></block>
+    <block wx:if="{{summary.count}}"><text>{{summary.solved}}/{{summary.count}}</text><text>{{copy.best}} {{summary.best}}</text><text>ao5 {{summary.ao5}}</text><text>ao12 {{summary.ao12}}</text></block>
     <text wx:else>{{copy.statistics}}</text>
   </button>
   <text wx:if="{{rankLine}}" hidden="{{hideChrome}}" class="nt-rank" aria-label="{{copy.rankHint}}">{{rankLine}}</text>

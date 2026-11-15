@@ -12,7 +12,10 @@
 .nt-clock--ready .nt-time { color: var(--cr-ready); }
 .nt-clock--holding .nt-time, .nt-error { color: var(--cr-danger); }
 .nt-error { display: block; line-height: 1.5; }
-.nt-stats { font-size: 25rpx; flex-wrap: wrap; color: var(--cr-muted); justify-content: center; }
+.nt-stats { font-size: 25rpx; flex-direction: column; align-items: flex-start; gap: 2rpx; color: var(--cr-muted); justify-content: flex-start; }
+@media (orientation: landscape) and (max-height: 500px) {
+  .nt-stats { flex-direction: row; flex-wrap: wrap; gap: 8rpx 16rpx; }
+}
 .nt-backdrop { position: fixed; inset: 0; background: color-mix(in srgb, var(--cr-text) 35%, transparent); z-index: 100; display: flex; align-items: flex-end; }
 .nt-sheet { width: 100%; background: var(--cr-surface); color: var(--cr-text); padding: 24rpx 32rpx calc(36rpx + env(safe-area-inset-bottom)); border-radius: 28rpx 28rpx 0 0; box-sizing: border-box; }
 .nt-sheet-header { font-size: 36rpx; font-weight: 650; }

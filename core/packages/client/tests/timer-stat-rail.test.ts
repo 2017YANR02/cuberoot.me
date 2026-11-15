@@ -13,8 +13,7 @@ describe('shared timer statistics entry copy', () => {
       row.querySelector('.shell-stat-lbl')?.textContent ?? '',
       row.querySelector('.shell-stat-val')?.textContent,
     ])).toEqual([
-      ['', '5/6'], ['mean', '12.34'], ['best', '9.87'],
-      ['mo3', '11.23'], ['ao5', '12.00'], ['ao12', '—'],
+      ['', '5/6'], ['best', '9.87'], ['ao5', '12.00'], ['ao12', '—'],
     ]);
     expect(host.querySelector('button')?.title).toBe(
       { en: 'Open times and statistics', zh: '打开成绩与统计' }[language],
@@ -36,6 +35,18 @@ describe('shared timer statistics entry copy', () => {
       language: 'zh', summary: { ...summary, solved: 0, mean: 'DNF', best: 'DNF' },
     }));
     expect(host.querySelector('.shell-stat-val')?.textContent).toBe('0/6');
-    expect(host.querySelectorAll('.shell-stat')).toHaveLength(6);
+    expect(host.querySelectorAll('.shell-stat')).toHaveLength(4);
+  });
+
+  it.each(['en', 'zh'] as const)('uses the same four columns for training summaries in %s', language => {
+    const host = document.createElement('div');
+    host.innerHTML = renderToStaticMarkup(createElement(TimerStatRail, {
+      language, summary, trainingSummaries: [summary, { ...summary, count: 4 }, { ...summary, count: 3 }],
+    }));
+    expect([...host.querySelectorAll('.shell-stat-training > .shell-stat-lbl')].map(node => node.textContent))
+      .toEqual([{ en: 'Count', zh: '次数' }[language], 'best', 'ao5', 'ao12']);
+    expect([...host.querySelectorAll('.shell-stat-training-row')].map(row =>
+      [...row.querySelectorAll('.shell-stat-val')].map(node => node.textContent)))
+      .toEqual([['6', '9.87', '12.00', '—'], ['4', '9.87', '12.00', '—'], ['3', '9.87', '12.00', '—']]);
   });
 });

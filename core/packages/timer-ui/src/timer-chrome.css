@@ -455,7 +455,7 @@
 /* Training measures share rows so observation, execution and total align. */
 .shell-stat-training {
   display: grid;
-  grid-template-columns: auto repeat(6, minmax(0, 1fr));
+  grid-template-columns: auto repeat(4, minmax(0, 1fr));
   column-gap: 8px;
   align-items: baseline;
   font-family: var(--font-sans);

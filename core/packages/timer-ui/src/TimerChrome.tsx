@@ -102,6 +102,7 @@ const STAT_RAIL_COPY = {
   en: { empty: 'Times', title: 'Open times and statistics' },
   zh: { empty: '成绩', title: '打开成绩与统计' },
 } as const;
+const STAT_RAIL_KEYS = ['count', 'best', 'ao5', 'ao12'] as const;
 
 export function TimerStatRail({
   ariaExpanded,
@@ -113,14 +114,9 @@ export function TimerStatRail({
   onClick,
 }: TimerStatRailProps) {
   const copy = STAT_RAIL_COPY[language];
-  const items: TimerStatItem[] = summary.count > 0 ? [
-    { value: `${summary.solved}/${summary.count}` },
-    { label: 'mean', value: summary.mean },
-    { label: 'best', value: summary.best },
-    { label: 'mo3', value: summary.mo3 },
-    { label: 'ao5', value: summary.ao5 },
-    { label: 'ao12', value: summary.ao12 },
-  ] : [];
+  const items: TimerStatItem[] = summary.count > 0 ? STAT_RAIL_KEYS.map(key => key === 'count'
+    ? { value: `${summary.solved}/${summary.count}` }
+    : { label: key, value: summary[key] }) : [];
   return (
     <button
       aria-expanded={ariaExpanded}
@@ -133,12 +129,12 @@ export function TimerStatRail({
     >
       {trainingSummaries ? <span className="shell-stat-training">
         <span />
-        {(['count', 'mean', 'best', 'mo3', 'ao5', 'ao12'] as const).map(key =>
+        {STAT_RAIL_KEYS.map(key =>
           <span key={key} className="shell-stat-lbl">{key === 'count' ? ({ en: 'Count', zh: '次数' }[language]) : key}</span>)}
         {[{ en: 'Observation', zh: '观察' }, { en: 'Execution', zh: '执行' }, { en: 'Total', zh: '总时间' }].map((copy, index) =>
           <span className="shell-stat-training-row" key={copy.en}>
             <span className="shell-stat-lbl">{copy[language]}</span>
-            {(['count', 'mean', 'best', 'mo3', 'ao5', 'ao12'] as const).map(key =>
+            {STAT_RAIL_KEYS.map(key =>
               <span className="shell-stat-val" key={key}>{trainingSummaries[index]?.[key]}</span>)}
           </span>)}
       </span> : items.length > 0 ? items.map(({ label, value }, index) => (
