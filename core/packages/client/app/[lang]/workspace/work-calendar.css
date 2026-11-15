@@ -26,7 +26,7 @@
 .work-hours-editor { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
 .work-hours-row { display: flex; align-items: flex-end; gap: 8px; width: 100%; }
 .work-hours-row .staff-field { flex: 1; min-width: 0; }
-.work-hours-row select { width: 100%; }
+.work-hours-row .work-hours-select { width: 100%; }
 @media (max-width: 600px) {
   .work-calendar .work-calendar-toolbar { gap: 8px; }
   .work-calendar-nav { flex: 1 1 100%; gap: 8px; }

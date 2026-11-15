@@ -36,9 +36,9 @@ function SlotsEditor({ slots, onChange, weekday }: { slots: WorkSlot[]; onChange
   const patch = (index: number, field: keyof WorkSlot, value: number) => onChange(slots.map((s, i) => i === index ? { ...s, [field]: value } : s));
   return <div className="work-hours-editor">
     {slots.map((slot, index) => <div className="work-hours-row" key={index}>
-      {weekday === undefined && <Field label={t('每周', 'Every week')}><select name={`weekday-${index}`} value={slot.weekday} onChange={e => patch(index, 'weekday', Number(e.target.value))}>{[1, 2, 3, 4, 5, 6, 0].map(day => <option key={day} value={day}>{weekdays[day]}</option>)}</select></Field>}
-      <Field label={t('开始', 'Start')}><select name={`start-${index}`} value={slot.startHour} onChange={e => patch(index, 'startHour', Number(e.target.value))}>{hours.slice(0, 24).map(hour => <option key={hour} value={hour}>{clock(hour)}</option>)}</select></Field>
-      <Field label={t('结束', 'End')}><select name={`end-${index}`} value={slot.endHour} onChange={e => patch(index, 'endHour', Number(e.target.value))}>{hours.slice(1).map(hour => <option key={hour} value={hour}>{clock(hour)}</option>)}</select></Field>
+      {weekday === undefined && <Field label={t('每周', 'Every week')}><select className="work-hours-select" name={`weekday-${index}`} value={slot.weekday} onChange={e => patch(index, 'weekday', Number(e.target.value))}>{[1, 2, 3, 4, 5, 6, 0].map(day => <option key={day} value={day}>{weekdays[day]}</option>)}</select></Field>}
+      <Field label={t('开始', 'Start')}><select className="work-hours-select" name={`start-${index}`} value={slot.startHour} onChange={e => patch(index, 'startHour', Number(e.target.value))}>{hours.slice(0, 24).map(hour => <option key={hour} value={hour}>{clock(hour)}</option>)}</select></Field>
+      <Field label={t('结束', 'End')}><select className="work-hours-select" name={`end-${index}`} value={slot.endHour} onChange={e => patch(index, 'endHour', Number(e.target.value))}>{hours.slice(1).map(hour => <option key={hour} value={hour}>{clock(hour)}</option>)}</select></Field>
       <Button action="delete" variant="secondary" onClick={() => onChange(slots.filter((_, i) => i !== index))}>{t('删除时段', 'Remove time slot')}</Button>
     </div>)}
     <Button action="add" iconOnly={false} variant="secondary" onClick={() => onChange([...slots, { weekday: weekday ?? 1, startHour: 10, endHour: 19 }])}>{t('添加时段', 'Add time slot')}</Button>

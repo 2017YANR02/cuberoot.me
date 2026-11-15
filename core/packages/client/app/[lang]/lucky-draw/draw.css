@@ -26,8 +26,7 @@
   justify-content: space-between;
   font-variant-numeric: tabular-nums;
 }
-.draw-page input,
-.draw-page textarea {
+.draw-page .draw-input {
   font: inherit;
   color: inherit;
   border: 1px solid var(--border-default);
@@ -38,7 +37,7 @@
 .draw-page .comp-picker-input--with-clear {
   padding-right: 30px;
 }
-.draw-page button:not(:where(.bool-toggle-label, .pill-toggle, .comp-picker button)) {
+.draw-page .draw-button {
   font: inherit;
   color: inherit;
   padding: 10px;
@@ -46,23 +45,23 @@
   background: transparent;
   cursor: pointer;
 }
-.draw-page button:not(:where(.bool-toggle-label, .pill-toggle, .comp-picker button)):hover:not(:disabled) {
+.draw-page .draw-button:hover:not(:disabled) {
   color: var(--accent);
 }
-.draw-page button:disabled {
+.draw-page .draw-button:disabled {
   opacity: 0.45;
   cursor: default;
 }
-.draw-page button:focus-visible {
+.draw-page .draw-button:focus-visible {
   outline: 2px solid var(--ring);
 }
-.draw-page textarea {
+.draw-page .draw-list-input {
   display: block;
   width: 100%;
   min-height: 180px;
   resize: vertical;
 }
-.draw-page input[type="number"] {
+.draw-page .draw-count-input {
   width: 72px;
   margin-left: 8px;
 }
@@ -115,23 +114,23 @@
 .draw-input-row {
   gap: 8px;
 }
-.draw-input-row input {
+.draw-input-row .draw-input {
   flex: 1;
   min-width: 0;
   width: 120px;
 }
-.draw-input-row button {
+.draw-input-row .draw-button {
   flex-shrink: 0;
 }
 .draw-import-preview {
   grid-column: 1 / -1;
 }
-.draw-page .draw-editor button.draw-apply {
+.draw-page .draw-editor .draw-button.draw-apply {
   background: var(--primary);
   color: var(--primary-foreground);
   border-radius: 8px;
 }
-.draw-training-settings input {
+.draw-training-settings .draw-input {
   display: block;
   width: 100%;
   margin-top: 8px;
@@ -292,7 +291,7 @@
   background: var(--background);
   justify-content: center;
 }
-.draw-page .draw-primary button:last-child {
+.draw-page .draw-primary .draw-button.draw-submit {
   background: var(--primary);
   color: var(--primary-foreground);
   min-width: 180px;
@@ -321,7 +320,7 @@
     min-height: 390px;
   }
 
-  .draw-actions input {
+  .draw-actions .draw-input {
     min-width: 0;
     max-width: 100%;
   }
@@ -341,9 +340,9 @@
 }
 
 
-.draw-actions > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-.draw-page button.draw-icon-button { width: 40px; height: 40px; padding: 0; flex-shrink: 0; }
-.draw-page button.draw-icon-button:hover:not(:disabled) { color: var(--accent); }
+.draw-actions > .draw-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.draw-page .draw-icon-button { width: 40px; height: 40px; padding: 0; flex-shrink: 0; }
+.draw-page .draw-icon-button:hover:not(:disabled) { color: var(--accent); }
 .is-3d .draw-orbit { position: absolute; inset: 0; padding: 0; transform-style: preserve-3d; }
 .is-3d.is-sphere .draw-slot { width: 90px; height: 62px; margin: -31px 0 0 -45px; }
 .is-3d.is-sphere .draw-slot .draw-card { animation: none; }

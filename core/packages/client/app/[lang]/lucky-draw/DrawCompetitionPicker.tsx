@@ -66,6 +66,7 @@ export default function DrawCompetitionPicker({
       </label>
       <CompPicker
         inputId="draw-competition"
+        inputClassName="draw-input"
         value={value}
         onChange={onChange}
         isZh={isZh}
@@ -87,7 +88,7 @@ export default function DrawCompetitionPicker({
       {status === "error" && (
         <p role="status">
           {tr({ zh: "比赛加载失败", en: "Unable to load competitions" })}{" "}
-          <button onClick={() => setAttempt((n) => n + 1)}>
+          <button className="draw-button" onClick={() => setAttempt((n) => n + 1)}>
             {tr({ zh: "重试", en: "Retry" })}
           </button>
         </p>

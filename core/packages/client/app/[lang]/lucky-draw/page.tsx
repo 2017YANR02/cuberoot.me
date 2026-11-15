@@ -14,6 +14,7 @@ import DrawCandidates from "./DrawCandidates";
 import { tr } from "@/i18n/tr";
 import { apiUrl } from "@/lib/api-base";
 import { copyClipboardText } from "@/lib/clipboard";
+import { persistItem } from "@/lib/safe-storage";
 import {
   createDrawController,
   labels,
@@ -29,7 +30,7 @@ function DrawIconButton({ icon: Icon, label, ...props }: ComponentProps<"button"
   label: string;
 }) {
   return <Tooltip content={label}>{tip => (
-    <button {...tip} {...props} type="button" className="draw-icon-button" aria-label={label}>
+    <button {...tip} {...props} type="button" className="draw-button draw-icon-button" aria-label={label}>
       <Icon size={18} aria-hidden="true" />
     </button>
   )}</Tooltip>;
@@ -50,8 +51,9 @@ export default function DrawPage() {
   useEffect(() => {
     const c = createDrawController({
       read: () => JSON.parse(localStorage.getItem(DRAW_STORAGE_KEY) || "null"),
-      write: (value) =>
-        localStorage.setItem(DRAW_STORAGE_KEY, JSON.stringify(value)),
+      write: (value) => {
+        if (!persistItem(DRAW_STORAGE_KEY, JSON.stringify(value))) throw new Error("Draw persistence failed");
+      },
       confirm: async (message) => window.confirm(message),
       random: () => crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296,
       copy: async (text) => {
@@ -111,6 +113,7 @@ export default function DrawPage() {
               <label>
                 {l.count}
                 <input
+                  className="draw-input draw-count-input"
                   type="number"
                   min="1"
                   max="100"
@@ -128,6 +131,7 @@ export default function DrawPage() {
           {v.message && <p role="status">{v.message}</p>}
           <div className="draw-actions">
             <MoreToggle
+              className="draw-button"
               expanded={v.editing}
               onToggle={() => act("edit")}
               disabled={v.busy}
@@ -152,6 +156,7 @@ export default function DrawPage() {
                 <label>
                   <span className="draw-section-title">{l.list}</span>
                   <textarea
+                    className="draw-input draw-list-input"
                     value={v.draft}
                     maxLength={500000}
                     onChange={(e) => input("draft", e.target.value)}
@@ -166,11 +171,11 @@ export default function DrawPage() {
                 {!!v.duplicates && (
                   <p>
                     {l.duplicates} ({v.duplicates}){" "}
-                    <button onClick={() => act("dedupe")}>{l.dedupe}</button>
+                    <button className="draw-button" onClick={() => act("dedupe")}>{l.dedupe}</button>
                   </p>
                 )}
                 <div className="draw-actions">
-                  <button className="draw-apply" onClick={() => act("apply")}>
+                  <button className="draw-button draw-apply" onClick={() => act("apply")}>
                     {l.apply}
                   </button>
                   <DrawIconButton icon={Eraser} label={l.clear} onClick={() => act("clear")} />
@@ -180,15 +185,16 @@ export default function DrawPage() {
                     <label>
                       {l.letters}
                       <input
+                        className="draw-input"
                         value={v.letters}
                         onChange={(e) => input("letters", e.target.value)}
                       />
                     </label>
                     <div className="draw-actions">
-                      <button onClick={() => act("builtin")}>
+                      <button className="draw-button" onClick={() => act("builtin")}>
                         {l.builtin}
                       </button>
-                      <button onClick={() => act("weak")}>{l.weak}</button>
+                      <button className="draw-button" onClick={() => act("weak")}>{l.weak}</button>
                     </div>
                   </div>
                 )}
@@ -198,6 +204,7 @@ export default function DrawPage() {
                   <h2 className="draw-section-title">{l.saved}</h2>
                   <div className="draw-actions draw-input-row">
                     <input
+                      className="draw-input"
                       aria-label={l.name}
                       placeholder={l.name}
                       value={v.listName}
@@ -244,9 +251,9 @@ export default function DrawPage() {
                   </p>
                   <pre>{v.preview}</pre>
                   <div className="draw-actions">
-                    <button onClick={() => act("replace")}>{l.replace}</button>
-                    <button onClick={() => act("append")}>{l.append}</button>
-                    <button onClick={() => act("cancel")}>{l.cancel}</button>
+                    <button className="draw-button" onClick={() => act("replace")}>{l.replace}</button>
+                    <button className="draw-button" onClick={() => act("append")}>{l.append}</button>
+                    <button className="draw-button" onClick={() => act("cancel")}>{l.cancel}</button>
                   </div>
                 </section>
               )}
@@ -287,17 +294,18 @@ export default function DrawPage() {
           </section>
           <div className="draw-actions draw-primary">
             {v.session.training && !!v.last.length && !v.revealed && (
-              <button onClick={() => act("reveal")} disabled={v.busy}>
+              <button className="draw-button" onClick={() => act("reveal")} disabled={v.busy}>
                 {l.reveal}
               </button>
             )}
             {v.session.training && v.revealed && (
               <>
-                <button onClick={() => act("known")}>{l.known}</button>
-                <button onClick={() => act("unknown")}>{l.unknown}</button>
+                <button className="draw-button" onClick={() => act("known")}>{l.known}</button>
+                <button className="draw-button" onClick={() => act("unknown")}>{l.unknown}</button>
               </>
             )}
             <button
+              className="draw-button draw-submit"
               disabled={v.busy || !v.remaining}
               onClick={() => act("draw")}
             >
