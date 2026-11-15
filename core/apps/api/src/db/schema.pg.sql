@@ -526,6 +526,7 @@ CREATE TABLE membership_contracts (
   period_count INTEGER NOT NULL CHECK (period_count > 0),
   terms_version TEXT NOT NULL CHECK (btrim(terms_version) <> ''),
   enrollment_serial BIGINT UNIQUE,
+  signing_method TEXT NOT NULL DEFAULT 'pure' CHECK (signing_method IN ('pure', 'payment')),
   consented_at TIMESTAMPTZ,
   next_debit_at TIMESTAMPTZ,
   debit_cycle INTEGER NOT NULL DEFAULT 0 CHECK (debit_cycle >= 0),
@@ -545,11 +546,15 @@ CREATE TABLE membership_renewal_debits (
   out_trade_no VARCHAR(32) PRIMARY KEY,
   contract_id UUID NOT NULL REFERENCES membership_contracts(id),
   cycle INTEGER NOT NULL CHECK (cycle >= 0),
+  trade_type TEXT NOT NULL DEFAULT 'PAP' CHECK (trade_type IN ('PAP', 'NATIVE', 'MWEB')),
+  checkout_url TEXT,
+  checkout_expires_at TIMESTAMPTZ,
   status TEXT NOT NULL DEFAULT 'prepared' CHECK (status IN ('prepared', 'submitted', 'paid', 'failed', 'cancelled')),
   submitted_at TIMESTAMPTZ,
   last_query_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE(contract_id, cycle)
+  UNIQUE(contract_id, cycle),
+  CONSTRAINT membership_checkout_first_cycle CHECK (trade_type = 'PAP' OR cycle = 0)
 );
 CREATE INDEX idx_membership_renewal_debits_pending ON membership_renewal_debits(last_query_at)
   WHERE status = 'submitted';

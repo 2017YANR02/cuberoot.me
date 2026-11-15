@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { renewalAvailability, enrollMembershipSubscription, createMembershipMiniLink } from '@/lib/membership-api';
+import { renewalAvailability, enrollMembershipSubscription, createMembershipMiniLink, type MembershipPlan } from '@/lib/membership-api';
+import PayModal from './PayModal';
 import { SiWechat } from 'react-icons/si';
 import { ClearButton } from '@/components/ClearButton';
 import AppLink from '@/components/AppLink';
@@ -15,9 +16,12 @@ interface Props {
   planSlug?: string;
   priceCents?: number;
   onClose: () => void;
+  plan?: MembershipPlan;
+  isZh?: boolean;
+  onPaid?: () => void;
 }
 
-export default function AutoRenewModal({ price, period, planSlug, priceCents, onClose }: Props) {
+export default function AutoRenewModal({ price, period, planSlug, priceCents, onClose, plan, isZh = false, onPaid }: Props) {
   const [agreed, setAgreed] = useState(false);
   const [availability, setAvailability] = useState<Awaited<ReturnType<typeof renewalAvailability>> | null>(null);
   const [miniLink, setMiniLink] = useState<Awaited<ReturnType<typeof createMembershipMiniLink>> | null>(null);
@@ -59,6 +63,11 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
       };
 
   const backdropProps = useModalDismiss(onClose);
+
+  if (availability?.channel === 'payment' && available && plan) return <PayModal
+    plan={plan} isZh={isZh} onClose={onClose} onPaid={onPaid ?? (() => {})} renewalTermsVersion={availability.termsVersion}
+    channels={{ alipay: false, wechat: true, wechatNative: availability.paymentChannels?.wechatNative === true,
+      wechatH5: availability.paymentChannels?.wechatH5 === true, cardCn: false, cardGlobal: false }} />;
 
   return (
     <div className="mem-pay-backdrop" {...backdropProps}>

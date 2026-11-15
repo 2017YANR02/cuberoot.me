@@ -1,23 +1,37 @@
 import { randomBytes } from 'node:crypto';
 import { query, withTransaction } from '../db/connection.js';
-import { applyPapayDebit, papayConfig, papayConfigured, queryPapayDebit } from './wechat-papay.js';
+import { applyPapayDebit, closePapayCheckout, papayConfig, papayConfigured, queryPapayDebit } from './wechat-papay.js';
 import { synchronizeMembershipContract, type MembershipContractRow } from './membership-contracts.js';
 import { grantMembershipInTransaction } from './membership-settlement.js';
 import { renewalReleased, renewalPilotAllowed, renewalDebitAllowed, renewalPlanConfigured, RENEWAL_TEMPLATES, type RenewalSlug } from './membership-renewal-policy.js';
 
 type Contract = MembershipContractRow & { consented_at: Date | null; debit_cycle: number; next_debit_at: Date | null };
-type Debit = { out_trade_no: string; contract_id: string; cycle: number; status: string };
+type Debit = { out_trade_no: string; contract_id: string; cycle: number; status: string; trade_type: 'PAP' | 'NATIVE' | 'MWEB'; checkout_expires_at: Date | string | null };
 
 /** Provider callbacks only wake reconciliation. The signed query, saved order and merchant must all agree. */
 export async function reconcileRenewalDebit(orderNo: string): Promise<boolean> {
   const [candidate] = await query<Debit>('SELECT * FROM membership_renewal_debits WHERE out_trade_no = ?', [orderNo]);
   if (!candidate) return false;
+  if (candidate.status === 'submitted' && candidate.trade_type !== 'PAP' && candidate.checkout_expires_at
+    && new Date(candidate.checkout_expires_at).getTime() <= Date.now()) {
+    try { await closePapayCheckout(orderNo); } catch { /* Query a paid or uncertain order; never assume closed. */ }
+  }
   const remote = await queryPapayDebit(orderNo);
   if (remote.trade_state !== 'SUCCESS') {
     if (['CLOSED', 'REVOKED', 'PAYERROR'].includes(remote.trade_state)) {
       await withTransaction(async tx => {
+        const [binding] = await tx<{ wca_id: string }>('SELECT wca_id FROM membership_contracts WHERE id = ?', [candidate.contract_id]);
+        if (!binding) return;
+        await tx("SELECT id FROM app_users WHERE wca_id = ? OR 'u' || id::text = ? FOR UPDATE", [binding.wca_id, binding.wca_id]);
+        await tx('SELECT id FROM membership_contracts WHERE id = ? FOR UPDATE', [candidate.contract_id]);
         const changed = await tx("UPDATE membership_renewal_debits SET status = 'failed' WHERE out_trade_no = ? AND status = 'submitted' RETURNING out_trade_no", [orderNo]);
         if (changed.length) await tx("UPDATE membership_orders SET status = 'failed' WHERE out_trade_no = ? AND status = 'pending'", [orderNo]);
+        // Payment-only enrollment cannot sign without a successful payment. A signed,
+        // bound CLOSED result releases an unused reservation; elapsed time never does.
+        if (remote.trade_state === 'CLOSED' && candidate.trade_type !== 'PAP' && candidate.cycle === 0) {
+          await tx(`UPDATE membership_contracts SET state = 'terminated', verified_at = now()
+            WHERE id = ? AND signing_method = 'payment' AND state = 'pending' AND contract_id IS NULL AND debit_cycle = 0`, [candidate.contract_id]);
+        }
       });
     }
     // ACCEPT/NOTPAY/USERPAYING remain pending, including the 24-hour notification window.
@@ -31,7 +45,7 @@ export async function reconcileRenewalDebit(orderNo: string): Promise<boolean> {
     const [contract] = await tx<Contract>('SELECT * FROM membership_contracts WHERE id = ? FOR UPDATE', [candidate.contract_id]);
     const [debit] = await tx<Debit>('SELECT * FROM membership_renewal_debits WHERE out_trade_no = ? FOR UPDATE', [orderNo]);
     if (!contract || !debit || !['submitted', 'paid'].includes(debit.status)) return false;
-    if (contract.appid !== appid || contract.mch_id !== mchId || remote.trade_type !== 'PAP'
+    if (contract.appid !== appid || contract.mch_id !== mchId || remote.trade_type !== debit.trade_type
       || remote.fee_type && remote.fee_type !== 'CNY'
       || !/^\d+$/.test(remote.total_fee) || Number(remote.total_fee) !== contract.price_cents
       || !remote.transaction_id) throw new Error('renewal payment mismatch');
@@ -71,12 +85,13 @@ async function prepareDebit(id: string, owner: string): Promise<string | null> {
     if (!account) return null;
     const [contract] = await tx<Contract>(`SELECT * FROM membership_contracts WHERE id = ? AND wca_id = ?
       AND state = 'active' AND cancellation_requested_at IS NULL AND consented_at IS NOT NULL
+      AND (signing_method <> 'payment' OR debit_cycle > 0)
       AND (debit_cycle = 0 OR next_debit_at <= now()) FOR UPDATE`, [id, owner]);
     if (!contract || !renewalPlanConfigured(contract.plan_slug)
       || RENEWAL_TEMPLATES[contract.plan_slug as RenewalSlug]?.id !== contract.plan_id
       || !renewalDebitAllowed(owner, contract.debit_cycle)) return null;
     const [existing] = await tx<Debit>('SELECT * FROM membership_renewal_debits WHERE contract_id = ? AND cycle = ?', [id, contract.debit_cycle]);
-    if (existing) return existing.status === 'prepared' ? existing.out_trade_no : null;
+    if (existing) return existing.status === 'prepared' && existing.trade_type === 'PAP' ? existing.out_trade_no : null;
     const [membership] = await tx<{ expires_at: Date | null }>('SELECT expires_at FROM memberships WHERE wca_id = ?', [owner]);
     if (membership && membership.expires_at === null) return null;
     if (contract.debit_cycle > 0 && membership?.expires_at && new Date(membership.expires_at).getTime() > Date.now() + 86400000) {
@@ -94,7 +109,7 @@ async function prepareDebit(id: string, owner: string): Promise<string | null> {
 async function submitDebit(no: string): Promise<void> {
   // Persist the attempt BEFORE network I/O. A crash cannot produce a second automatic debit request.
   const [attempt] = await query<Debit>(`UPDATE membership_renewal_debits SET status = 'submitted', submitted_at = now()
-    WHERE out_trade_no = ? AND status = 'prepared' RETURNING *`, [no]);
+    WHERE out_trade_no = ? AND status = 'prepared' AND trade_type = 'PAP' RETURNING *`, [no]);
   if (!attempt) return;
   await withTransaction(async tx => {
     const [binding] = await tx<{ wca_id: string }>('SELECT wca_id FROM membership_contracts WHERE id = ?', [attempt.contract_id]);
@@ -131,6 +146,7 @@ export async function runMembershipRenewalsOnce(): Promise<void> {
     const due = await query<Contract>(`SELECT * FROM membership_contracts c WHERE state = 'active'
       AND (?::boolean OR (wca_id = ? AND debit_cycle = 0))
       AND cancellation_requested_at IS NULL AND consented_at IS NOT NULL
+      AND (signing_method <> 'payment' OR debit_cycle > 0)
       AND (debit_cycle = 0 OR next_debit_at <= now())
       AND NOT EXISTS (SELECT 1 FROM membership_renewal_debits d WHERE d.contract_id = c.id AND d.cycle = c.debit_cycle AND d.status <> 'prepared')
       ORDER BY next_debit_at NULLS FIRST, created_at LIMIT 10`, [renewalReleased(), process.env.WECHAT_PAPAY_PILOT_OWNER ?? '']);

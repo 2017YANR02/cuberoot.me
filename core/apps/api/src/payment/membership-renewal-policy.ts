@@ -6,13 +6,22 @@ export const RENEWAL_TEMPLATES = {
   enterprise_monthly_auto_renew: { get id() { return process.env.WECHAT_PAPAY_ENTERPRISE_MONTHLY_PLAN_ID ?? ''; }, cents: 29900, period: 'month' },
 } as const;
 export type RenewalSlug = keyof typeof RENEWAL_TEMPLATES;
-export function renewalChannel(env: Readonly<Record<string, string | undefined>> = process.env): 'h5' | 'miniprogram' {
+export function renewalChannel(env: Readonly<Record<string, string | undefined>> = process.env): 'h5' | 'miniprogram' | 'payment' {
+  if (env.WECHAT_PAPAY_SIGNING_CHANNEL === 'payment') return 'payment';
   return env.WECHAT_PAPAY_SIGNING_CHANNEL === 'miniprogram' ? 'miniprogram' : 'h5';
+}
+export function renewalPaymentChannels(env: Readonly<Record<string, string | undefined>> = process.env) {
+  const approved = Boolean(env.WECHAT_PAPAY_APPID && env.WECHAT_PAPAY_PAYMENT_APPROVED === env.WECHAT_PAPAY_APPID
+    && env.WECHAT_APPID === env.WECHAT_PAPAY_APPID && env.WECHAT_MCHID === env.WECHAT_PAPAY_MCHID);
+  return { wechatNative: approved && env.WECHAT_PAPAY_PAYMENT_NATIVE_ENABLED === 'true',
+    wechatH5: approved && env.WECHAT_PAPAY_PAYMENT_H5_ENABLED === 'true' && env.WECHAT_H5_ENABLED === 'true' };
 }
 export function renewalReleased(env: Readonly<Record<string, string | undefined>> = process.env): boolean {
   return env.WECHAT_PAPAY_MONTHLY_APPROVED === '225492'
     && env.WECHAT_PAPAY_YEARLY_APPROVED === '225493'
-    && (renewalChannel(env) === 'miniprogram'
+    && (renewalChannel(env) === 'payment'
+      ? Object.values(renewalPaymentChannels(env)).some(Boolean)
+      : renewalChannel(env) === 'miniprogram'
       ? env.WECHAT_PAPAY_MINI_RELEASED === 'wx1f92ba91b7e42015'
         && env.WECHAT_PAPAY_APPID === 'wx1f92ba91b7e42015'
         && env.WECHAT_MINI_APP_ID === env.WECHAT_PAPAY_APPID

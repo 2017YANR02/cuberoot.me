@@ -595,6 +595,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 333, slug: 'membership_payment_enrollment', desc: { zh: '支付中签约首期订单、收银台类型与签约方式，防止重复扣首期', en: 'Payment enrollment method and first checkout, preventing duplicate initial debits' } },
   { n: 332, slug: 'workspace_remove_projects', desc: { zh: '删除工作台项目及归属，保留全部报告、清单与排期', en: 'Remove workspace projects and associations, preserving all reports, checklists and schedules' } },
   { n: 331, slug: 'workspace_work_calendar', desc: { zh: '管理员每周工作时间、生效区间和临时调整；账号删除级联清理', en: 'Administrator weekly working hours, effective periods and day overrides; cascade on account deletion' } },
   { n: 330, slug: 'timer_live_shares', desc: { zh: '计时器实时分享的独立发布/观看凭证哈希、到期与撤销状态；不保存实况成绩。', en: 'Timer live-share publisher/viewer capability hashes, expiry and revocation; no live solve storage.' } },

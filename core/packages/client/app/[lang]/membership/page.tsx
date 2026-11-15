@@ -430,6 +430,10 @@ export default function MembershipPage() {
         onClose={() => setBuyPlan(null)} onPaid={() => { setBuyPlan(null); setJustPaid(true); refreshMembership(); }} />}
       {selectedAutoRenewPlan && (selectedAutoRenewPlan.period === 'month' || selectedAutoRenewPlan.period === 'year') && (
         <AutoRenewModal
+          key={user?.uid}
+          plan={selectedAutoRenewPlan}
+          isZh={isZh}
+          onPaid={refreshMembership}
           planSlug={selectedAutoRenewPlan.slug}
           priceCents={selectedAutoRenewPlan.priceCents}
           price={fmtPrice(selectedAutoRenewPlan.priceCents, selectedAutoRenewPlan.currency)}

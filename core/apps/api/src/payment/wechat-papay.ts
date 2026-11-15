@@ -126,7 +126,7 @@ export async function createPapayEnrollment(contract: PapayContract, serial: str
   return url.href;
 }
 
-async function paymentRequest(action: 'pappayapply' | 'orderquery', fields: Fields): Promise<Fields> {
+async function paymentRequest(action: 'pappayapply' | 'orderquery' | 'contractorder' | 'closeorder', fields: Fields): Promise<Fields> {
   const { appid, mchId, key } = config();
   const request = { ...fields, appid, mch_id: mchId, nonce_str: randomBytes(16).toString('hex') };
   const response = await fetch(`https://api.mch.weixin.qq.com/pay/${action}`, {
@@ -137,6 +137,46 @@ async function paymentRequest(action: 'pappayapply' | 'orderquery', fields: Fiel
   const result = parsePapayResponse(await readResponse(response), key);
   if (result.appid !== appid || result.mch_id !== mchId) throw new PapayUnavailable();
   return result;
+}
+
+export type PapayCheckoutTrade = 'NATIVE' | 'MWEB';
+export async function createPapayCheckout(contract: PapayContract, input: {
+  orderNo: string; serial: string; cents: number; tradeType: PapayCheckoutTrade;
+  ip: string; displayAccount: string; expiresAt: Date;
+}): Promise<string> {
+  const { appid, mchId } = config();
+  if (contract.appid !== appid || contract.mch_id !== mchId || !isIP(input.ip)
+    || !Number.isSafeInteger(input.cents) || input.cents <= 0 || !/^[a-zA-Z0-9]{1,32}$/.test(input.orderNo)
+    || !/^[1-9]\d{0,18}$/.test(input.serial) || !['NATIVE', 'MWEB'].includes(input.tradeType)) throw new PapayUnavailable();
+  const timeExpire = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit',
+    day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' })
+    .format(input.expiresAt).replace(/\D/g, '');
+  const result = await paymentRequest('contractorder', {
+    contract_mchid: mchId, contract_appid: appid, out_trade_no: input.orderNo,
+    device_info: 'WEB', body: 'CubeRoot 会员', total_fee: String(input.cents), fee_type: 'CNY',
+    spbill_create_ip: input.ip, trade_type: input.tradeType, product_id: contract.plan_id,
+    plan_id: contract.plan_id, contract_code: contract.contract_code, request_serial: input.serial,
+    contract_display_account: input.displayAccount, notify_url: PAPAY_PAYMENT_NOTIFY,
+    contract_notify_url: PAPAY_CONTRACT_NOTIFY, time_expire: timeExpire,
+  });
+  if (result.contract_result_code !== 'SUCCESS' || result.out_trade_no !== input.orderNo
+    || result.trade_type !== input.tradeType || !result.prepay_id
+    || result.contract_code && result.contract_code !== contract.contract_code
+    || result.plan_id && result.plan_id !== contract.plan_id) throw new PapayUnavailable();
+  return validatePapayCheckoutUrl(input.tradeType, input.tradeType === 'NATIVE' ? result.code_url : result.mweb_url);
+}
+
+export function validatePapayCheckoutUrl(tradeType: PapayCheckoutTrade, value: string): string {
+  const url = new URL(value);
+  const valid = tradeType === 'NATIVE'
+    ? url.protocol === 'weixin:' && url.hostname === 'wxpay'
+    : url.protocol === 'https:' && url.hostname === 'wx.tenpay.com' && url.pathname === '/cgi-bin/mmpayweb-bin/checkmweb';
+  if (!valid || url.username || url.password || url.port) throw new PapayUnavailable();
+  return url.href;
+}
+
+export async function closePapayCheckout(orderNo: string): Promise<void> {
+  await paymentRequest('closeorder', { out_trade_no: orderNo });
 }
 
 /** Acceptance is not proof of payment. A lost response must be reconciled using the SAME order. */
@@ -157,7 +197,7 @@ export async function queryPapayDebit(orderNo: string): Promise<Fields> {
 export function verifyPapayPaymentNotification(xml: string): Fields {
   const { appid, mchId, key } = config();
   const result = parsePapayResponse(xml, key);
-  if (result.appid !== appid || result.mch_id !== mchId || result.trade_type !== 'PAP' || !result.out_trade_no) {
+  if (result.appid !== appid || result.mch_id !== mchId || !['PAP', 'NATIVE', 'MWEB'].includes(result.trade_type) || !result.out_trade_no) {
     throw new PapayUnavailable();
   }
   return result;

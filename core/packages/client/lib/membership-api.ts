@@ -59,6 +59,7 @@ export interface Membership {
 }
 
 export interface MembershipSubscription {
+  billingMethod?: 'debit' | 'checkout' | null;
   billingStatus?: 'prepared' | 'submitted' | 'paid' | 'failed' | 'cancelled' | null;
   id: string;
   planSlug: string;
@@ -77,8 +78,25 @@ export interface MembershipSubscriptions {
   subscriptions: MembershipSubscription[];
   managementAvailable: boolean;
 }
-export async function renewalAvailability(): Promise<{ available: boolean; plans?: Record<string, boolean>; pilot?: boolean; pilotPayment?: boolean; termsVersion: string; channel?: 'h5' | 'miniprogram' }> {
+export async function renewalAvailability(): Promise<{ available: boolean; plans?: Record<string, boolean>; pilot?: boolean; pilotPayment?: boolean; termsVersion: string; channel?: 'h5' | 'miniprogram' | 'payment'; paymentChannels?: { wechatNative: boolean; wechatH5: boolean } }> {
   return handleApi(await sessionFetch(apiUrl('/v1/membership/subscriptions/availability'), { headers: authHeaders(), cache: 'no-store' }));
+}
+export async function createMembershipCheckout(planSlug: string, priceCents: number, termsVersion: string,
+  clientType: 'pc' | 'wap', language: 'zh' | 'en'): Promise<OrderInfo> {
+  return handleApi(await sessionFetch(apiUrl('/v1/membership/subscriptions/checkout'), {
+    method: 'POST', headers: authHeaders(), cache: 'no-store',
+    body: JSON.stringify({ planSlug, priceCents, termsVersion, agreed: true, clientType, language }),
+  }));
+}
+export interface MembershipCheckoutStatus {
+  status: string;
+  paymentVerified: boolean;
+  subscription: MembershipSubscription;
+}
+export async function getMembershipCheckoutStatus(orderNo: string): Promise<MembershipCheckoutStatus> {
+  return handleApi(await sessionFetch(apiUrl(`/v1/membership/subscriptions/checkout/${encodeURIComponent(orderNo)}`), {
+    headers: authHeaders(false), cache: 'no-store',
+  }));
 }
 export async function createMembershipMiniLink(planSlug: string): Promise<{ urlLink: string; qrCodeDataUrl: string; expiresIn: number }> {
   return handleApi(await sessionFetch(apiUrl('/v1/membership/subscriptions/mini-link'), {

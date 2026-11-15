@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { XMLBuilder, XMLParser } from 'fast-xml-parser';
-import { applyPapayDebit, createPapayEnrollment, queryPapayDebit, verifyPapayPaymentNotification, cancelPapayContract, papayConfigured, parsePapayResponse, queryPapayContract, signPapay, verifyPapayNotification } from '../src/payment/wechat-papay.js';
+import { applyPapayDebit, createPapayCheckout, createPapayEnrollment, queryPapayDebit, verifyPapayPaymentNotification, cancelPapayContract, papayConfigured, parsePapayResponse, queryPapayContract, signPapay, verifyPapayNotification } from '../src/payment/wechat-papay.js';
 
 const key = '192006250b4c09247ec02edce69f6a2d';
 const contract = { appid: 'wxd930ea5d5a258f4f', mch_id: '10000100', plan_id: '123', contract_code: 'own-order', contract_id: 'wx-contract' };
@@ -49,7 +49,29 @@ describe('WeChat APIv2 entrusted-payment contract transport', () => {
     fetchMock.mockResolvedValueOnce(new Response(xml({ ...responseFields, out_trade_no: 'OTHER', trade_state: 'SUCCESS' })));
     await expect(queryPapayDebit('R123')).rejects.toThrow();
     expect(() => verifyPapayPaymentNotification('<xml><return_code>SUCCESS</return_code></xml>')).toThrow();
-    expect(() => verifyPapayPaymentNotification(xml({ ...responseFields, out_trade_no: 'R123', trade_type: 'NATIVE' }))).toThrow();
+    expect(() => verifyPapayPaymentNotification(xml({ ...responseFields, out_trade_no: 'R123', trade_type: 'APP' }))).toThrow();
+  });
+  it.each(['NATIVE', 'MWEB'] as const)('authenticates %s payment enrollment and keeps payment and signing notifications separate', async tradeType => {
+    const checkoutUrl = tradeType === 'NATIVE' ? 'weixin://wxpay/s/fixture' : 'https://wx.tenpay.com/cgi-bin/mmpayweb-bin/checkmweb?prepay_id=fixture';
+    const fields = { ...responseFields, out_trade_no: 'C123', contract_result_code: 'SUCCESS', trade_type: tradeType,
+      prepay_id: 'fixture', [tradeType === 'NATIVE' ? 'code_url' : 'mweb_url']: checkoutUrl };
+    fetchMock.mockResolvedValueOnce(new Response(xml(fields)));
+    const input = { orderNo: 'C123', serial: '123', cents: 2999, tradeType, ip: '127.0.0.1',
+      displayAccount: 'CubeRoot u1', expiresAt: new Date('2026-11-15T12:00:00Z') };
+    expect(await createPapayCheckout(contract, input)).toBe(checkoutUrl);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://api.mch.weixin.qq.com/pay/contractorder');
+    const request = new XMLParser({ parseTagValue: false }).parse(init.body).xml;
+    expect(request).toMatchObject({ appid: contract.appid, contract_appid: contract.appid, mch_id: contract.mch_id,
+      contract_mchid: contract.mch_id, trade_type: tradeType, total_fee: '2999', time_expire: '20261115200000' });
+    expect(request.notify_url).not.toBe(request.contract_notify_url);
+    expect(request.sign).toBe(signPapay(request, key));
+    expect(verifyPapayPaymentNotification(xml({ ...responseFields, out_trade_no: 'C123', trade_type: tradeType })).out_trade_no).toBe('C123');
+    for (const change of [{ contract_result_code: 'FAIL' }, { out_trade_no: 'other' }, { appid: 'other' },
+      { [tradeType === 'NATIVE' ? 'code_url' : 'mweb_url']: 'https://evil.example/pay' }]) {
+      fetchMock.mockResolvedValueOnce(new Response(xml({ ...fields, ...change })));
+      await expect(createPapayCheckout(contract, input)).rejects.toThrow();
+    }
   });
   it('matches the official MD5 example exactly', () => {
     expect(signPapay({ appid: contract.appid, mch_id: contract.mch_id, device_info: '1000', body: 'test', nonce_str: 'ibuaiVcKdpRxkhJA' }, key))

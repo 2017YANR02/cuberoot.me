@@ -80,8 +80,8 @@ export async function listMembershipContracts(owner: string) {
     const result = row.state === 'terminated' ? publicContract(row, 'verified')
       : !papayConfigured() ? publicContract(row, 'unavailable') : await synchronizeMembershipContract(row.id, owner, false);
     if (result) {
-      const [billing] = await query<{ status: string }>('SELECT status FROM membership_renewal_debits WHERE contract_id = ? ORDER BY cycle DESC LIMIT 1', [row.id]);
-      subscriptions.push({ ...result, billingStatus: billing?.status ?? null });
+      const [billing] = await query<{ status: string; trade_type: string }>('SELECT status, trade_type FROM membership_renewal_debits WHERE contract_id = ? ORDER BY cycle DESC LIMIT 1', [row.id]);
+      subscriptions.push({ ...result, billingStatus: billing?.status ?? null, billingMethod: billing?.trade_type === 'PAP' ? 'debit' as const : billing ? 'checkout' as const : null });
     }
   }
   return { subscriptions, managementAvailable: papayConfigured() };

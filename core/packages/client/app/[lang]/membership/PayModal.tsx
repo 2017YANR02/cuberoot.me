@@ -17,6 +17,9 @@ import { useModalDismiss } from '@/hooks/useModalDismiss';
 import {
   createOrder,
   getOrderStatus,
+  createMembershipCheckout,
+  getMembershipCheckoutStatus,
+  type MembershipCheckoutStatus,
   type MembershipPlan,
   type OrderInfo,
   type PayChannels,
@@ -36,9 +39,10 @@ interface Props {
   isZh: boolean;
   onClose: () => void;
   onPaid: () => void;
+  renewalTermsVersion?: string;
 }
 
-export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Props) {
+export default function PayModal({ plan, channels, isZh, onClose, onPaid, renewalTermsVersion }: Props) {
   const directApp = useWebMembershipAvailable();
   const smallScreen = useIsMobile();
   const isMobile = directApp || smallScreen;
@@ -55,6 +59,9 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
   const [err, setErr] = useState<string | null>(null);
   const [needsExternalBrowser, setNeedsExternalBrowser] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const [renewalResult, setRenewalResult] = useState<MembershipCheckoutStatus | null>(null);
+  const paymentReported = useRef(false);
   const pollRef = useRef<number | null>(null);
   const pollGeneration = useRef(0);
   const active = useRef(true);
@@ -73,6 +80,11 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
     pollGeneration.current++;
     if (pollRef.current !== null) window.clearTimeout(pollRef.current);
     setOrder(null);
+    setAgreed(false);
+    setRenewalResult(null);
+    setErr(null);
+    setCreating(false);
+    paymentReported.current = false;
   }, [uid]);
 
   async function openAppCheckout(info: OrderInfo) {
@@ -89,6 +101,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
 
   async function start(ch: PaymentChannel) {
     if (installedMembershipStore()) return;
+    if (renewalTermsVersion && (!agreed || ch !== 'wechat' || directApp)) return;
     if (directApp && !uid) {
       setErr(tr({ zh: '请重新登录后再支付。', en: 'Please sign in again before paying.' }));
       return;
@@ -106,7 +119,9 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
     orderUid.current = startingUid;
     completed.current = false;
     try {
-      const info = directApp
+      const info = renewalTermsVersion
+        ? await createMembershipCheckout(plan.slug, plan.priceCents, renewalTermsVersion, isMobile ? 'wap' : 'pc', isZh ? 'zh' : 'en')
+        : directApp
         ? await createOrder(plan.slug, ch, 'wap', isZh ? 'zh' : 'en', 'android-direct')
         : await createOrder(plan.slug, ch, isMobile ? 'wap' : 'pc', isZh ? 'zh' : 'en');
       if (!active.current || getAuthUser()?.uid !== startingUid) return;
@@ -152,9 +167,10 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
       setOrder(info);
       pollStatus(info.outTradeNo);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : String(e));
+      if (!active.current || getAuthUser()?.uid !== startingUid) return;
+      setErr(renewalTermsVersion ? tr({ zh: '暂时无法发起支付，请检查已有付款和自动续费记录后重试。', en: 'Unable to start checkout. Check your existing payment and renewal authorization before retrying.' }) : e instanceof Error ? e.message : String(e));
     } finally {
-      setCreating(false);
+      if (active.current && getAuthUser()?.uid === startingUid) setCreating(false);
     }
   }
 
@@ -169,12 +185,21 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
   function pollStatus(no: string, tries = 0, generation = ++pollGeneration.current) {
     if (pollRef.current !== null) window.clearTimeout(pollRef.current);
     const current = () => active.current && !completed.current && generation === pollGeneration.current
-      && (!directApp || getAuthUser()?.uid === orderUid.current);
+      && getAuthUser()?.uid === orderUid.current;
     if (!current()) return;
-    getOrderStatus(no)
+    (renewalTermsVersion ? getMembershipCheckoutStatus(no) : getOrderStatus(no))
       .then((r) => {
         if (!current()) return;
-        if (r.status === 'paid') { completed.current = true; onPaid(); return; }
+        if ('subscription' in r) {
+          setRenewalResult(r);
+          if (r.status === 'paid') {
+            if (!paymentReported.current) { paymentReported.current = true; onPaid(); }
+            if ((r.subscription.state === 'active' && !r.subscription.cancellationRequested && r.subscription.syncStatus === 'verified')
+              || r.subscription.state === 'terminated' || tries >= 120) { completed.current = true; return; }
+            pollRef.current = window.setTimeout(() => pollStatus(no, tries + 1, generation), 4000);
+            return;
+          }
+        } else if (r.status === 'paid') { completed.current = true; onPaid(); return; }
         if (r.status === 'pending' && tries < 120) {
           pollRef.current = window.setTimeout(() => pollStatus(no, tries + 1, generation), 2500);
         } else {
@@ -206,6 +231,12 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
 
         {!order ? (
           <>
+            {renewalTermsVersion && <div className="mem-autorenew-consent">
+              {/* allow-checkbox: explicit renewal consent is never preselected */}
+              <input id="mem-checkout-consent" type="checkbox" className="mem-autorenew-consent-input" checked={agreed} onChange={event => setAgreed(event.target.checked)} />
+              <span><label htmlFor="mem-checkout-consent">{tr({ zh: '我已阅读并同意', en: 'I have read and agree to ' })}</label>
+                <AppLink href="/membership/renewal-terms" target="_blank" rel="noopener" prefetch={false}>{tr({ zh: '自动续费服务协议', en: 'the Auto-renewal Agreement' })}</AppLink></span>
+            </div>}
             <div className="mem-pay-channels">
               {showAlipay && (
                 <button className="mem-pay-ch mem-pay-ch-alipay" disabled={creating} onClick={() => start('alipay')}>
@@ -217,7 +248,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
                 </button>
               )}
               {showWechat && (
-                <button className="mem-pay-ch mem-pay-ch-wechat" disabled={creating} onClick={() => needsExternalBrowser ? copyMembershipLink() : start('wechat')}>
+                <button className="mem-pay-ch mem-pay-ch-wechat" disabled={creating || Boolean(renewalTermsVersion && !agreed)} onClick={() => needsExternalBrowser ? copyMembershipLink() : start('wechat')}>
                   {creating && channel === 'wechat'
                     ? <Spinner size={16} />
                     : <SiWechat size={18} aria-hidden="true" />}
@@ -225,7 +256,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
                     ? linkCopied
                       ? tr({ zh: '链接已复制', en: 'Link copied' })
                       : tr({ zh: '复制链接，在浏览器中支付', en: 'Copy link to pay in your browser' })
-                    : tr({ zh: '微信支付', en: 'WeChat Pay' })}
+                    : renewalTermsVersion ? tr({ zh: '微信支付并开通自动续费', en: 'Pay with WeChat and enable auto-renewal' }) : tr({ zh: '微信支付', en: 'WeChat Pay' })}
                 </button>
               )}
               {showCardCn && (
@@ -252,6 +283,15 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
             )}
             {err && <div className="mem-pay-err">{err}</div>}
           </>
+        ) : renewalResult?.status === 'paid' ? (
+          <div role="status">
+            <p>{tr({ zh: '付款成功，会员已开通。', en: 'Payment received. Your membership is active.' })}</p>
+            <p>{renewalResult.subscription.state === 'active' && !renewalResult.subscription.cancellationRequested && renewalResult.subscription.syncStatus === 'verified'
+              ? tr({ zh: '自动续费已开通。', en: 'Auto-renewal is active.' })
+              : renewalResult.subscription.state === 'terminated' ? tr({ zh: '自动续费已取消。', en: 'Auto-renewal has ended.' })
+                : tr({ zh: '自动续费尚未确认。若付款时未开启自动续费，本次仅开通已付会员。', en: 'Auto-renewal is not confirmed. If you left it off at checkout, this payment only activates the paid membership period.' })}</p>
+            <AppLink href="/membership/subscription" prefetch={false}>{tr({ zh: '管理自动续费', en: 'Manage auto-renewal' })}</AppLink>
+          </div>
         ) : (
           <>
             {directApp ? (
@@ -268,7 +308,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
                 <img src={order.qrcode} alt="payment QR" width={220} height={220} />
                 <figcaption>
                   {channel === 'wechat'
-                    ? tr({ zh: '请用微信扫码支付', en: 'Scan with WeChat to pay'
+                    ? renewalTermsVersion ? tr({ zh: '微信扫码付款，并在收银台开启自动续费', en: 'Scan with WeChat and enable auto-renewal at checkout' }) : tr({ zh: '请用微信扫码支付', en: 'Scan with WeChat to pay'
                     })
                     : tr({ zh: '请用支付宝扫码支付', en: 'Scan with Alipay to pay'
                     })}
@@ -293,6 +333,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
             })}
             </div>
             {err && <div className="mem-pay-err" role="status">{err}</div>}
+            {err && <button className="mem-pay-go-link" onClick={() => { setErr(null); pollStatus(order.outTradeNo); }}>{tr({ zh: '检查支付结果', en: 'Check payment status' })}</button>}
             <p className="mem-pay-tip">
               <Check size={12} /> {tr({ zh: '支付完成后本页会自动开通,可稍候片刻', en: 'Membership activates automatically once paid — give it a moment'
             })}

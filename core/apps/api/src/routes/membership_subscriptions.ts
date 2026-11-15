@@ -14,6 +14,8 @@ import { renewalChannel } from '../payment/membership-renewal-policy.js';
 import { issueMembershipHandoff, readMembershipHandoff } from '../payment/membership-handoff.js';
 import { exchangeWechatMiniProgramCode, generateWechatMiniProgramUrlLink } from '../utils/wechat_miniprogram.js';
 import { findUserByIdentity } from '../utils/account.js';
+import { createMembershipCheckout, getMembershipCheckout, membershipCheckoutAvailable, refreshMembershipCheckouts } from '../payment/membership-checkout.js';
+import { renewalPaymentChannels } from '../payment/membership-renewal-policy.js';
 
 export const membershipSubscriptionRoutes = new Hono();
 membershipSubscriptionRoutes.get('/membership/subscriptions/availability', async (c) => {
@@ -21,11 +23,11 @@ membershipSubscriptionRoutes.get('/membership/subscriptions/availability', async
   const user = await optionalAuth(c);
   const enterpriseEligible = !!user && await canPurchaseEnterpriseMembership(user.wcaId);
   const pilot = !renewalReleased() && renewalPilotAllowed(user?.wcaId);
-  return c.json({ available: miniEnrollmentAvailable(user?.wcaId) || (renewalChannel() === 'h5' && renewalReleased() && papayConfigured()
+  return c.json({ available: (membershipCheckoutAvailable() && papayConfigured()) || miniEnrollmentAvailable(user?.wcaId) || (renewalChannel() === 'h5' && renewalReleased() && papayConfigured()
     && process.env.WECHAT_PAPAY_DEBIT_ENABLED === 'true' && process.env.WECHAT_PAPAY_SYNC_ENABLED === 'true'),
   pilot, pilotPayment: pilot && process.env.WECHAT_PAPAY_PILOT_DEBIT_ENABLED === 'true',
   plans: Object.fromEntries(Object.keys(RENEWAL_TEMPLATES).map(slug => [slug, renewalPlanConfigured(slug) && (!slug.startsWith('enterprise_') || enterpriseEligible)])),
-  termsVersion: RENEWAL_TERMS_VERSION, channel: renewalChannel() });
+  termsVersion: RENEWAL_TERMS_VERSION, channel: renewalChannel(), paymentChannels: renewalPaymentChannels() });
 });
 for (const path of ['/membership/subscriptions', '/membership/subscriptions/*']) {
   membershipSubscriptionRoutes.use(path, async (c, next) => {
@@ -33,6 +35,33 @@ for (const path of ['/membership/subscriptions', '/membership/subscriptions/*'])
     await next();
   });
 }
+membershipSubscriptionRoutes.post('/membership/subscriptions/checkout', bodyLimit({ maxSize: 4096 }), async (c) => {
+  const user = await requireAuth(c);
+  checkRateLimit(user.wcaId, { bucket: 'membership-enroll', max: 5 });
+  if (!membershipCheckoutAvailable() || !papayConfigured()) return c.json({ error: 'auto-renewal unavailable' }, 503);
+  const body = await c.req.json().catch(() => null);
+  try {
+    const checkout = await createMembershipCheckout(user.wcaId, body, getIp(c));
+    const { checkoutUrl, tradeType, ...details } = checkout;
+    const info = { ...details, channel: 'wechat' as const, provider: 'wechat' };
+    if (tradeType === 'NATIVE') return c.json({ ...info, qrcode: await QRCode.toDataURL(checkoutUrl, { margin: 1, width: 240 }) });
+    const url = new URL(checkoutUrl);
+    const returnUrl = new URL(body?.language === 'zh' ? '/zh/membership/subscription' : '/membership/subscription',
+      process.env.PUBLIC_SITE_ORIGIN || 'https://cuberoot.me');
+    url.searchParams.set('redirect_url', returnUrl.href);
+    return c.json({ ...info, url: url.href });
+  } catch (error) {
+    return c.json({ error: 'unable to start subscription payment; check existing payment and subscription' }, error instanceof PapayUnavailable ? 503 : 409);
+  }
+});
+membershipSubscriptionRoutes.get('/membership/subscriptions/checkout/:orderNo', async (c) => {
+  const user = await requireAuth(c);
+  checkRateLimit(user.wcaId, { bucket: 'membership-checkout-status', max: 30 });
+  const no = c.req.param('orderNo');
+  if (!/^C[a-f0-9]{30}$/.test(no)) return c.json({ error: 'checkout not found' }, 404);
+  const result = await withLockRetry(c, () => getMembershipCheckout(user.wcaId, no));
+  return result ? c.json(result) : c.json({ error: 'checkout not found' }, 404);
+});
 membershipSubscriptionRoutes.post('/membership/subscriptions/enroll', bodyLimit({ maxSize: 4096 }), async (c) => {
   const user = await requireAuth(c);
   checkRateLimit(user.wcaId, { bucket: 'membership-enroll', max: 5 });
@@ -136,6 +165,7 @@ async function withLockRetry<T>(c: Context, action: () => Promise<T>): Promise<T
 membershipSubscriptionRoutes.get('/membership/subscriptions', async (c) => {
   const user = await requireAuth(c);
   checkRateLimit(user.wcaId, { bucket: 'membership-contract-query', max: 20 });
+  await refreshMembershipCheckouts(user.wcaId);
   return c.json(await withLockRetry(c, () => listMembershipContracts(user.wcaId)));
 });
 membershipSubscriptionRoutes.post('/membership/subscriptions/:id/cancel', async (c) => {

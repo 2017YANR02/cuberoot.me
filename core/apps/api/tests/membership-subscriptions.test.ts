@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { HTTPException } from 'hono/http-exception';
 
-const mocks = vi.hoisted(() => ({ query: vi.fn(), tx: vi.fn(), cancel: vi.fn(), remoteQuery: vi.fn(), configured: vi.fn() }));
+const mocks = vi.hoisted(() => ({ query: vi.fn(), tx: vi.fn(), cancel: vi.fn(), remoteQuery: vi.fn(), configured: vi.fn(),
+  checkoutAvailable: vi.fn(() => false), checkout: vi.fn(), checkoutStatus: vi.fn() }));
+vi.mock('../src/payment/membership-checkout.js', () => ({ refreshMembershipCheckouts: vi.fn(), membershipCheckoutAvailable: mocks.checkoutAvailable,
+  createMembershipCheckout: mocks.checkout, getMembershipCheckout: mocks.checkoutStatus }));
 vi.mock('../src/db/connection.js', () => ({ query: mocks.query, withTransaction: (run: (tx: unknown) => unknown) => run(mocks.tx) }));
 vi.mock('../src/payment/wechat-papay.js', () => ({ cancelPapayContract: mocks.cancel, queryPapayContract: mocks.remoteQuery, papayConfigured: mocks.configured }));
 vi.mock('../src/utils/recon_helpers.js', () => ({
@@ -21,6 +24,47 @@ function request(method: string, path: string, body?: unknown, auth = true) {
   });
 }
 const cancel = (body: unknown = { confirm: true }) => request('POST', `/${id}/cancel`, body);
+
+describe('payment enrollment checkout API', () => {
+  const orderNo = 'C' + 'a'.repeat(30);
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.configured.mockReturnValue(true);
+    mocks.checkoutAvailable.mockReturnValue(true);
+    mocks.checkout.mockResolvedValue({ outTradeNo: orderNo, tradeType: 'NATIVE', checkoutUrl: 'weixin://wxpay/s/fixture' });
+  });
+  it('requires authentication for creation and status, and gates new sales', async () => {
+    expect((await request('POST', '/checkout', {}, false)).status).toBe(401);
+    expect((await request('GET', `/checkout/${orderNo}`, undefined, false)).status).toBe(401);
+    mocks.checkoutAvailable.mockReturnValue(false);
+    expect((await request('POST', '/checkout', {})).status).toBe(503);
+    expect(mocks.checkout).not.toHaveBeenCalled();
+    expect(mocks.checkoutStatus).not.toHaveBeenCalled();
+  });
+  it('returns an uncached Native QR using the shared checkout response contract', async () => {
+    const res = await request('POST', '/checkout', { agreed: true });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Cache-Control')).toBe('no-store');
+    expect(await res.json()).toEqual({ outTradeNo: orderNo, channel: 'wechat', provider: 'wechat', qrcode: expect.stringMatching(/^data:image\/png;base64,/) });
+    expect(mocks.checkout).toHaveBeenCalledWith('u42', { agreed: true }, expect.any(String));
+  });
+  it('returns H5 to the local subscription page, ignoring a supplied redirect', async () => {
+    mocks.checkout.mockResolvedValueOnce({ outTradeNo: orderNo, tradeType: 'MWEB', checkoutUrl: 'https://wx.tenpay.com/cgi-bin/mmpayweb-bin/checkmweb?prepay_id=fixture' });
+    const res = await request('POST', '/checkout', { language: 'zh', redirect_url: 'https://untrusted.example' });
+    const url = new URL((await res.json()).url);
+    expect(new URL(url.searchParams.get('redirect_url')!).pathname).toBe('/zh/membership/subscription');
+    expect(url.href).not.toContain('untrusted.example');
+  });
+  it('keeps owned status queries available after sales close and hides missing orders', async () => {
+    mocks.checkoutAvailable.mockReturnValue(false);
+    mocks.checkoutStatus.mockResolvedValueOnce({ status: 'paid', paymentVerified: true, subscription: { state: 'pending' } }).mockResolvedValueOnce(null);
+    expect((await request('GET', '/checkout/bad')).status).toBe(404);
+    expect(mocks.checkoutStatus).not.toHaveBeenCalled();
+    expect((await request('GET', `/checkout/${orderNo}`)).status).toBe(200);
+    expect(mocks.checkoutStatus).toHaveBeenCalledWith('u42', orderNo);
+    expect((await request('GET', `/checkout/${orderNo}`)).status).toBe(404);
+  });
+});
 
 describe('owned membership cancellation API', () => {
   beforeEach(() => {
