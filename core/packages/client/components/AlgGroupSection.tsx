@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import type { AlgCase } from '@cuberoot/shared';
+import type { AlgCase } from '@cuberoot/shared/alg-types';
 import AlgCard from '@/components/AlgCard';
 import { MoreTogglePanel } from '@/components/MoreToggle';
 
