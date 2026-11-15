@@ -2,7 +2,7 @@
 /** @module Reusable schedules with grouped tasks, milestones and shifted copies. */
 import { useEffect, useRef, useState } from 'react';
 import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
-import { ErrorNotice, Field, Form, EditorDialog, useResource, useWorkspace, value, today, type ProjectList, type StaffActor } from '@app-foundation/workspace-ui';
+import { ErrorNotice, Field, Form, EditorDialog, useResource, useWorkspace, value, today, type StaffActor } from '@app-foundation/workspace-ui';
 import { copyScheduleTasks, planningDate, scheduleRange, type Schedule, type ScheduleTask } from '@cuberoot/shared/workspace-planning';
 import { useT } from '@/hooks/useT';
 import { DateInput } from '@/components/DateInput';
@@ -16,7 +16,6 @@ export default function Schedules({ actor }: { actor: StaffActor }) {
   const [scale, setScale] = useQueryState('scale', parseAsStringEnum(['fit', 'day', 'week', 'month']).withDefault('fit'));
   const [status, setStatus] = useState('active');
   const resource = useResource<{ schedules: Schedule[]; selected: Schedule | null; hasMore: boolean }>(`schedules?${new URLSearchParams({ page: String(page), archived: String(status === 'all'), id: selected })}`);
-  const projects = useResource<ProjectList>('projects');
   const [editing, setEditing] = useState<'new' | 'settings' | 'copy' | null>(null);
   const [removing, setRemoving] = useState(false);
   const [deletedIds, setDeletedIds] = useState(() => new Set<string>());
@@ -65,7 +64,6 @@ export default function Schedules({ actor }: { actor: StaffActor }) {
       </div>
     </div>
     <ErrorNotice error={resource.error} retry={resource.reload} />
-    <ErrorNotice error={projects.error} retry={projects.reload} />
     {resource.loading && <p role="status">{t('正在加载…', 'Loading…')}</p>}
     {editing && editorScope === (schedule?.id ?? null) && <EditorDialog title={editing === 'new' ? t('新建排期', 'New schedule') : editing === 'copy' ? t('复制排期', 'Copy schedule') : t('排期设置', 'Schedule settings')} onClose={() => setEditing(null)}>
       <Form key={`${editing}:${schedule?.id ?? ''}`} submit={async (data, action) => {
@@ -77,14 +75,13 @@ export default function Schedules({ actor }: { actor: StaffActor }) {
           }, 'schedule-delete');
           return;
         }
-        if (!projects.data || !resource.data) throw new Error(t('请先加载排期和项目', 'Load schedules and projects first'));
+        if (!resource.data) throw new Error(t('请先加载排期', 'Load schedules first'));
         const current = editing === 'settings' ? schedule : undefined;
         const tasks = editing === 'copy' && schedule ? copyScheduleTasks(schedule.tasks, value(data, 'start'), () => crypto.randomUUID()) : current?.tasks ?? [];
-        await mutate({ id: current?.id ?? newId.current, version: current?.version ?? 0, name: value(data, 'name'), projectId: current ? current.projectId : value(data, 'projectId') || null, active: value(data, 'active') === 'true', tasks }, saved => { void setSelected(saved.id); setEditing(null); });
+        await mutate({ id: current?.id ?? newId.current, version: current?.version ?? 0, name: value(data, 'name'), active: value(data, 'active') === 'true', tasks }, saved => { void setSelected(saved.id); setEditing(null); });
       }}>
         <Field label={t('名称', 'Name')}><input name="name" required maxLength={80} defaultValue={editing === 'settings' ? schedule?.name : editing === 'copy' ? `${schedule?.name ?? ''} ${t('副本', 'copy')}`.slice(0, 80) : ''} /></Field>
         <div className="staff-form-row">
-          <Field label={t('共享范围', 'Shared with')}><select name="projectId" disabled={editing === 'settings' || !projects.data} defaultValue={editing === 'new' ? '' : schedule?.projectId ?? ''}><option value="">{t('公司全员', 'All employees')}</option>{projects.data?.projects.filter(project => project.active || project.id === schedule?.projectId).map(project => <option key={project.id} value={project.id}>{project.name}</option>)}</select></Field>
           <Field label={t('状态', 'Status')}><select name="active" defaultValue={String(editing === 'settings' ? schedule?.active : true)}><option value="true">{t('进行中', 'Active')}</option><option value="false">{t('已归档', 'Archived')}</option></select></Field>
         </div>
         {editing === 'copy' && !!schedule?.tasks.length && <Field width="date" label={t('新的开始日期', 'New start date')}><DateInput name="start" required defaultValue={planningDate(scheduleRange(schedule.tasks)!.start)} /></Field>}
@@ -93,7 +90,7 @@ export default function Schedules({ actor }: { actor: StaffActor }) {
       </Form>
     </EditorDialog>}
     {schedule && <>
-      <div className="workspace-list-heading workspace-schedule-heading"><span className="staff-muted">{schedule.projectName ?? t('公司全员', 'All employees')}{!schedule.active && ` · ${t('已归档', 'Archived')}`}</span>
+      <div className="workspace-list-heading workspace-schedule-heading"><span className="staff-muted">{!schedule.active && t('已归档', 'Archived')}</span>
         {range && <span className="staff-muted">{planningDate(range.start)} – {planningDate(range.end)}</span>}
         {editable && <div className="staff-toolbar-actions"><Button className="workspace-text-action" action="add" iconOnly={false} variant="secondary" onClick={() => editTask({ id: crypto.randomUUID(), name: '', group: groups[0] ?? t('默认分组', 'General'), owner: '', start: today(), end: today(), kind: 'task', progress: 0 })}>{t('新增任务', 'New task')}</Button></div>}
       </div>

@@ -73,6 +73,23 @@ describe('retired common-competitor view', () => {
   });
 });
 
+it('retires only the workspace projects section in every locale', async () => {
+  const config = await nextConfig.rewrites!();
+  if (Array.isArray(config)) throw new Error('Expected ordered rewrites');
+  const rule = config.beforeFiles!.find(rule => rule.has?.some(item => item.key === 'section' && item.value === 'projects'))!;
+  expect(rule.destination).toBe('/404');
+  for (const prefix of ['', '/zh', '/en']) {
+    expect(getPathMatch(rule.source)(prefix + '/admin/team')).toBeTruthy();
+    const res = await request('https://cuberoot.me' + prefix + '/admin/team?section=projects', FORWARDED_HTTPS);
+    expect(res.headers.get('location')).toBeNull();
+    expect(res.headers.get('x-middleware-rewrite')).toBeNull();
+    expect(res.headers.get('x-robots-tag')).toBe('noindex, nofollow');
+  }
+  for (const section of ['mine', 'updates', 'schedule', 'checklists', 'work-calendar', 'members', 'projects']) {
+    expect(isRetiredRoute('/admin/team', new URLSearchParams({section}))).toBe(section === 'projects');
+  }
+});
+
 describe('retired algorithm trainers', () => {
   it('redirects before rendering and scopes invitations, repeated cases and assignment attribution', async () => {
     const res = await request('http://localhost:3000/zh/alg/333/oll/run?room=invite&case=A&case=B&scope=ocll&mode=memo&trainingOrg=school');

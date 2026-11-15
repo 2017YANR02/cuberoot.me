@@ -4,14 +4,14 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { parseAsString, useQueryState } from 'nuqs';
-import { WorkspaceProvider, ReportEditor, Reports, ReportDetailPanel, Projects, useResource, workspaceText, type WorkspaceHost, type StaffProject, type WorkReport } from '@app-foundation/workspace-ui';
+import { WorkspaceProvider, ReportEditor, Reports, ReportDetailPanel, useResource, workspaceText, type WorkspaceHost, type WorkReport } from '@app-foundation/workspace-ui';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import type { Checklist, Schedule } from '@cuberoot/shared/workspace-planning';
 import MacSetupChecklist from '@/components/workspace/MacSetupChecklist';
 import { replaceSortableItems } from '@/components/SortableList';
 import Checklists from '@/app/[lang]/workspace/Checklists';
 import Schedules from '@/app/[lang]/workspace/Schedules';
-import { WorkspaceButton, WorkspaceDialog, WorkspaceMemberPicker } from '@/app/[lang]/workspace/WorkspaceControls';
+import { WorkspaceButton, WorkspaceDialog } from '@/app/[lang]/workspace/WorkspaceControls';
 import { DateInput } from '@/components/DateInput';
 import ScheduleTimeline from '@/app/[lang]/workspace/ScheduleTimeline';
 
@@ -21,7 +21,6 @@ let root: Root;
 let calls: { action: string; body: unknown }[];
 let lists: Checklist[];
 let schedules: Schedule[];
-let projects: StaffProject[];
 let rejectSave = false;
 let pendingSave: Promise<void> | undefined;
 let pendingRead: Promise<void> | undefined;
@@ -38,13 +37,13 @@ const host: WorkspaceHost = {
       if (action === 'checklist-delete') lists = lists.filter(list => list.id !== (body as Checklist).id);
       if (action === 'schedule-delete') schedules = schedules.filter(row => row.id !== (body as Schedule).id);
       if (action === 'schedule') {
-        const saved = { ...body as Schedule, version: (body as Schedule).version + 1, canEdit: true, projectName: null, projectActive: null };
+        const saved = { ...body as Schedule, version: (body as Schedule).version + 1, canEdit: true, };
         schedules = schedules.some(row => row.id === saved.id) ? schedules.map(row => row.id === saved.id ? saved : row) : [...schedules, saved];
       }
       return { id: (body as { id: string }).id, version: (body as { version: number }).version + 1 } as T;
     }
     const params = new URLSearchParams(action.split('?')[1]);
-    const result = action === 'projects' ? { projects } : action.startsWith('checklists') ? { checklists: lists, hasMore: false } : { schedules, selected: schedules.find(row => row.id === params.get('id')) ?? null, hasMore: false };
+    const result = action.startsWith('checklists') ? { checklists: lists, hasMore: false } : { schedules, selected: schedules.find(row => row.id === params.get('id')) ?? null, hasMore: false };
     if (pendingRead) await pendingRead;
     return result as T;
   },
@@ -53,16 +52,15 @@ const host: WorkspaceHost = {
   Button: WorkspaceButton,
   Dialog: WorkspaceDialog,
   DateInput,
-  MemberPicker: WorkspaceMemberPicker,
 };
 beforeEach(() => {
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
   HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   container = document.createElement('div'); document.body.append(container); root = createRoot(container); calls = []; rejectSave = false; pendingSave = undefined; pendingRead = undefined;
-  lists = [{ id: 'list', projectId: null, name: 'Launch', version: 1, active: true, canEdit: true, projectName: null, projectActive: null, items: [{ id: 'a', text: 'First', done: false }, { id: 'b', text: 'Second', done: false }] }];
-  projects = [];
-  schedules = [{ id: 'schedule', projectId: null, name: 'Launch', version: 1, active: true, canEdit: true, projectName: null, projectActive: null, tasks: [{ id: 'task', name: 'Build', group: 'Product', owner: '', start: '2026-12-30', end: '2027-01-02', progress: 50, kind: 'task' }] }];
+  lists = [{ id: 'list', name: 'Launch', version: 1, active: true, canEdit: true, items: [{ id: 'a', text: 'First', done: false }, { id: 'b', text: 'Second', done: false }] }];
+
+  schedules = [{ id: 'schedule', name: 'Launch', version: 1, active: true, canEdit: true, tasks: [{ id: 'task', name: 'Build', group: 'Product', owner: '', start: '2026-12-30', end: '2027-01-02', progress: 50, kind: 'task' }] }];
 });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
 async function mount(node: ReactNode) { await act(async () => root.render(h(NuqsTestingAdapter, { hasMemory: true, children: h(WorkspaceProvider, { host, children: node }) }))); }
@@ -87,20 +85,17 @@ it('renders account names consistently across reports, comments and pickers with
   const rawName = 'Lang Yuan (袁朗)';
   const actor = { kind: 'staff', id: 12, role: 'member', name: rawName } as const;
   const directory = [{ id: 12, name: rawName, active: true }];
-  const report: WorkReport = { id: 'name-report', memberId: 12, name: rawName, projectId: null, projectName: null, projectActive: null, workDate: '2026-11-12', status: 'submitted', visibility: 'company', version: 1, progress: rawName, resultUrl: '', help: '', next: '', createdAt: 1, updatedAt: 1 };
+  const report: WorkReport = { id: 'name-report', memberId: 12, name: rawName, workDate: '2026-11-12', status: 'submitted', visibility: 'company', version: 1, progress: rawName, resultUrl: '', help: '', next: '', createdAt: 1, updatedAt: 1 };
   const detail = { report, comments: [{ id: 'comment', name: rawName, body: rawName, createdAt: 1 }], revisions: [] };
   const original = JSON.stringify({ directory, detail });
-  const api: WorkspaceHost['api'] = async <T>(action: string) => (action === 'projects' ? { projects: [] } : action.startsWith('reports?') ? { reports: [report], hasMore: false, page: 1 } : detail) as T;
+  const api: WorkspaceHost['api'] = async <T>(action: string) => (action.startsWith('reports?') ? { reports: [report], hasMore: false, page: 1 } : detail) as T;
   for (const [lang, expected] of [['zh', '袁朗'], ['en', 'Lang Yuan']] as const) {
     const nameHost: WorkspaceHost = { ...host, api, formatName: name => displayCuberName(name, lang === 'zh') };
     await act(async () => root.render(h(WorkspaceProvider, { host: nameHost, children: h(Fragment, null,
       h(Reports, { actor, directory }), h(ReportDetailPanel, { actor, id: report.id }),
-      h(WorkspaceMemberPicker, { name: 'memberIds', label: 'Members', members: directory, defaultValue: [12] }),
     ) })));
     expect([...container.querySelectorAll('.staff-report-meta strong')].map(node => node.textContent)).toEqual([expected, expected, expected]);
     expect(container.querySelector('select[name="memberId"] option[value="12"]')?.textContent).toBe(expected);
-    expect(container.querySelector('.workspace-member-option span')?.textContent).toBe(expected);
-    expect(container.querySelector<HTMLInputElement>('input[name="memberIds"]')?.value).toBe('12');
     expect(container.querySelector('.staff-comment .staff-preserve')?.textContent).toBe(rawName);
     expect(JSON.stringify({ directory, detail })).toBe(original);
   }
@@ -108,7 +103,7 @@ it('renders account names consistently across reports, comments and pickers with
 
 it.each([false, true])('edits and deletes a report from the feed with server permissions (super administrator: %s)', async superAdmin => {
   const actor = { kind: 'staff', id: superAdmin ? 99 : 12, role: 'manager', name: 'Reader', canManageReports: superAdmin } as const;
-  let report: WorkReport | undefined = { id: 'editable', memberId: 12, name: 'Author', projectId: null, projectName: null, projectActive: null, workDate: '2026-11-12', startHour: 8, endHour: 13, status: 'submitted', visibility: 'company', version: 1, progress: 'Original', resultUrl: '', help: '', next: '', createdAt: 1, updatedAt: 1, canEdit: true, canDelete: true };
+  let report: WorkReport | undefined = { id: 'editable', memberId: 12, name: 'Author', workDate: '2026-11-12', startHour: 8, endHour: 13, status: 'submitted', visibility: 'company', version: 1, progress: 'Original', resultUrl: '', help: '', next: '', createdAt: 1, updatedAt: 1, canEdit: true, canDelete: true };
   let denyDelete = true;
   const api: WorkspaceHost['api'] = async <T>(action: string, body?: unknown): Promise<T> => {
     if (body !== undefined) {
@@ -117,7 +112,7 @@ it.each([false, true])('edits and deletes a report from the feed with server per
       if (action === 'report-delete') { if (denyDelete) throw new Error('Reload before deleting'); report = undefined; }
       return {id: 'editable'} as T;
     }
-    return (action === 'projects' ? {projects: []} : {reports: report ? [report] : [], hasMore: false, page: 1}) as T;
+    return ({reports: report ? [report] : [], hasMore: false, page: 1}) as T;
   };
   await act(async () => root.render(h(WorkspaceProvider, {host: {...host, api}, children: h(Reports, {actor, directory: []})})));
   await click('Edit report');
@@ -144,10 +139,10 @@ it.each([false, true])('edits and deletes a report from the feed with server per
 
 it('uses server permissions for detail actions and lets super administrators select an author when creating', async () => {
   const actor = {kind:'staff',id:99,role:'manager',name:'Root',canManageReports:true} as const;
-  const report: WorkReport = { id:'other-report',memberId:12,name:'Author',projectId:null,projectName:null,projectActive:false,workDate:'2026-11-12',startHour:8,endHour:13,status:'submitted',visibility:'company',version:1,progress:'Original',resultUrl:'',help:'',next:'',createdAt:1,updatedAt:1,canEdit:false,canDelete:false };
+  const report: WorkReport = { id:'other-report',memberId:12,name:'Author',workDate:'2026-11-12',startHour:8,endHour:13,status:'submitted',visibility:'company',version:1,progress:'Original',resultUrl:'',help:'',next:'',createdAt:1,updatedAt:1,canEdit:false,canDelete:false };
   const api: WorkspaceHost['api'] = async <T>(action: string, body?: unknown): Promise<T> => {
     if(body !== undefined){calls.push({action,body});return {id:'created'} as T;}
-    return (action==='projects' ? {projects:[]} : {report,comments:[],revisions:[]}) as T;
+    return ({report,comments:[],revisions:[]}) as T;
   };
   const render = async (children: ReactNode) => { await act(async()=>root.render(h(WorkspaceProvider,{host:{...host,api},children}))); };
   await render(h(ReportDetailPanel,{actor,id:report.id}));
@@ -163,25 +158,6 @@ it('uses server permissions for detail actions and lets super administrators sel
   expect(calls.at(-1)).toMatchObject({action:'report',body:{memberId:12,version:0,status:'draft'}});
 });
 
-it('preserves filtered member selections, retains failed edits and allows clearing all members', async () => {
-  projects = [{ id: 'project', name: 'Launch', url: '', active: true, version: 1, createdAt: 0, memberIds: [1] }];
-  await mount(h(Projects, { actor: { kind: 'admin', id: 1, role: 'admin', name: 'Admin' }, directory: [{ id: 1, name: 'Alex', active: true }, { id: 2, name: 'Vicky', active: true }] }));
-  await click('Members and settings');
-  const search = container.querySelector<HTMLInputElement>('[aria-label="Search members"]')!;
-  await setInput(search, 'Vicky');
-  await act(async () => container.querySelector<HTMLInputElement>('.workspace-member-option input')!.click());
-  rejectSave = true;
-  await click('Save project');
-  expect(calls.at(-1)).toMatchObject({ action: 'project', body: { memberIds: [1, 2] } });
-  expect(container.querySelector('dialog')).not.toBeNull();
-  expect(container.querySelector('.workspace-member-picker [role="status"]')?.textContent).toContain('2');
-  await setInput(search, '');
-  for (const checkbox of [...container.querySelectorAll<HTMLInputElement>('.workspace-member-option input')]) await act(async () => checkbox.click());
-  rejectSave = false;
-  await click('Save project');
-  expect(calls.at(-1)).toMatchObject({ action: 'project', body: { memberIds: [] } });
-  expect(container.querySelector('dialog')).toBeNull();
-});
 
 it('uses bare icon actions while keeping explicit report submissions styled as buttons', async () => {
   await mount(h(Fragment, null, h(WorkspaceButton, { action: 'add', children: 'New task' }), h(WorkspaceButton, { action: 'send', iconOnly: false, children: 'Submit report' })));
@@ -290,8 +266,7 @@ it('uses the installed patched report editor to submit integer hours and reject 
 
 it('preserves historical optional report data when editing progress in the simplified form', async () => {
   const report: WorkReport = {
-    id: 'report', memberId: 1, name: 'Alex', projectId: null, projectName: null, projectActive: null,
-    workDate: '2026-10-27', startHour: 9, endHour: 18, progress: 'Shipped',
+    id: 'report', memberId: 1, name: 'Alex', workDate: '2026-10-27', startHour: 9, endHour: 18, progress: 'Shipped',
     resultUrl: 'https://example.com/result', help: 'Review', next: 'Follow up',
     visibility: 'company', status: 'submitted', version: 2, createdAt: 1, updatedAt: 1,
   };
@@ -440,7 +415,7 @@ it('creates a checklist using only its name and sharing settings', async () => {
   expect(container.querySelector('[name="category"]')).toBeNull();
   await setInput(container.querySelector<HTMLInputElement>('[name="name"]')!, 'Named list');
   await click('Save');
-  expect(calls.at(-1)).toMatchObject({ action: 'checklist', body: { name: 'Named list', projectId: null, active: true, items: [] } });
+  expect(calls.at(-1)).toMatchObject({ action: 'checklist', body: { name: 'Named list', active: true, items: [] } });
   expect(calls.at(-1)?.body).not.toHaveProperty('category');
 });
 
@@ -516,7 +491,7 @@ it('does not restore a deleted checklist from an older pending read', async () =
   expect(container.querySelector('.workspace-checklist')).toBeNull();
 });
 
-it('hides checklist deletion when the project is read-only', async () => {
+it('hides checklist deletion when editing is unavailable', async () => {
   lists[0].canEdit = false;
   await mount(h(Checklists));
   expect(container.querySelector('[aria-label="Delete checklist: Launch"]')).toBeNull();

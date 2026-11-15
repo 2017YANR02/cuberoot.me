@@ -87,7 +87,6 @@ export default function MacSetupChecklist() {
 
   const initial: Checklist = {
     id: CHECKLIST_ID, name: t('软件清单', 'Software checklist'),
-    projectId: null, projectName: null, projectActive: null,
     active: true, canEdit: true, version: 0,
     items: SOFTWARE.map(([name, zh, en], index) => ({
       id: `0764ec50-b12a-46c1-b309-${String(index + 1).padStart(12, '0')}`,

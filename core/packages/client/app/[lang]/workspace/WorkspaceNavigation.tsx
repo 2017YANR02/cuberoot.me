@@ -26,7 +26,6 @@ function Navigation({ children }: { children: ReactNode }) {
   const teamItems = [
     { id: 'mine', label: t('我的工作', 'My work'), Icon: ClipboardList },
     { id: 'updates', label: t('团队动态', 'Team updates'), Icon: Users },
-    { id: 'projects', label: t('项目', 'Projects'), Icon: FolderKanban },
     { id: 'checklists', label: t('清单', 'Checklists'), Icon: ClipboardList },
     { id: 'schedule', label: t('排期', 'Schedule'), Icon: FolderKanban },
     ...(admin ? [{ id: 'work-calendar', label: t('工作日历', 'Work calendar'), Icon: CalendarDays }, { id: 'members', label: t('成员与权限', 'Members and access'), Icon: ShieldCheck }] : []),

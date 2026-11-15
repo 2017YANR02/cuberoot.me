@@ -20,10 +20,14 @@ it('separates team and administrator navigation and follows localized management
   expect(node.textContent).toContain('Team collaboration');
   expect(node.querySelector<HTMLAnchorElement>('.staff-brand')?.getAttribute('href')).toBe('/');
   expect(node.textContent).not.toContain('Site management');
+  expect(node.textContent).not.toContain('Work calendar');
+  expect(node.querySelector('a[href*="projects"]')).toBeNull();
   expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('My work');
   state.admin = true; state.pathname = '/zh/admin/releases';
   await act(async () => root.render(createElement(WorkspaceNavigation, null, 'Content')));
   expect(node.textContent).toContain('Site management');
+  expect(node.textContent).toContain('Work calendar');
+  expect(node.querySelector('a[href*="projects"]')).toBeNull();
   expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('Operations');
   expect(node.querySelector<HTMLAnchorElement>('a[href="/account"]')?.textContent).toBe('Admin');
   const group = [...node.querySelectorAll('details')].find(item => item.textContent?.includes('Site management'))!;

@@ -3,7 +3,7 @@ import path from "node:path";
 import dns from "node:dns";
 import { readdirSync } from "node:fs";
 import { PLATFORM_CANONICAL_REWRITES } from "./lib/platform-routes";
-import { RETIRED_ROUTES, RETIRED_COMP_VIEWS } from "./lib/retired-routes";
+import { RETIRED_ROUTES, RETIRED_COMP_VIEWS, RETIRED_WORKSPACE_SECTIONS } from "./lib/retired-routes";
 import { usesLocalStats, PUBLISHED_STATS_ORIGIN } from "@cuberoot/shared/stats-base";
 import { WCA_STAT_PAGE_IDS } from "@cuberoot/shared/wca-stat-catalog";
 
@@ -256,6 +256,11 @@ const nextConfig: NextConfig = {
         ...RETIRED_COMP_VIEWS.map(view => ({
           source: '/:lang(en|zh)?/wca/comp/:slug',
           has: [{ type: 'query' as const, key: 'view', value: view }],
+          destination: '/404',
+        })),
+        ...RETIRED_WORKSPACE_SECTIONS.map(section => ({
+          source: '/:lang(en|zh)?/admin/team',
+          has: [{ type: 'query' as const, key: 'section', value: section }],
           destination: '/404',
         })),
         // Platform canonical aliases keep their /platform/* URL while serving

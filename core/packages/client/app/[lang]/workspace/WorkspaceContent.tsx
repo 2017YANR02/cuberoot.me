@@ -1,10 +1,11 @@
 'use client';
 import dynamic from 'next/dynamic';
+import { notFound } from 'next/navigation';
 import PageBackLink from '@/components/PageBackLink';
 import { Suspense, useMemo, useState, type AnchorHTMLAttributes } from 'react';
-import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
+import { parseAsString, useQueryState } from 'nuqs';
 import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
-import { WorkspaceProvider, WorkspaceLoginFrame, ReportEditor, Reports, ReportDetailPanel, Projects, ErrorNotice, Form, Field, useResource, useWorkspace, value, RequestError, workspaceText, type StaffActor, type MemberDirectory } from '@app-foundation/workspace-ui';
+import { WorkspaceProvider, WorkspaceLoginFrame, ReportEditor, Reports, ReportDetailPanel, ErrorNotice, Form, Field, useResource, useWorkspace, value, RequestError, workspaceText, type StaffActor, type MemberDirectory } from '@app-foundation/workspace-ui';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
@@ -22,7 +23,7 @@ import QualityStandards from '../dev/team/QualityStandards';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Checklists from './Checklists';
 import Schedules from './Schedules';
-import { WorkspaceButton as Button, WorkspaceDialog, WorkspaceMemberPicker } from './WorkspaceControls';
+import { WorkspaceButton as Button, WorkspaceDialog } from './WorkspaceControls';
 import { DateInput } from '@/components/DateInput';
 import { displayCuberName } from '@/lib/cuber-name-display';
 
@@ -42,10 +43,10 @@ export function workspaceHref(href: string) {
   return parts[1] ? `/admin/team?section=${encodeURIComponent(parts[1])}` : '/admin/team';
 }
 function Link({href,...props}:AnchorHTMLAttributes<HTMLAnchorElement>&{href:string}) { return <AppLink {...props} href={workspaceHref(href)} prefetch={false} />; }
-const sections=['mine','updates','projects','checklists','schedule','work-calendar','members','detail','onboarding','offboarding','sop','quality'] as const;
+const sections=['mine','updates','checklists','schedule','work-calendar','members','detail','onboarding','offboarding','sop','quality'] as const;
 function Workspace() {
   const lang=useLang();const router=useRouter();
-  const host=useMemo(()=>({api,Link,Button,Dialog:WorkspaceDialog,DateInput,MemberPicker:WorkspaceMemberPicker,formatName:(name:string)=>displayCuberName(name,lang==='zh'),t:(text:string)=>workspaceText(lang,text),navigate:(href:string)=>router.push(`${lang==='zh'?'/zh':''}${workspaceHref(href)}`)}),[lang,router]);
+  const host=useMemo(()=>({api,Link,Button,Dialog:WorkspaceDialog,DateInput,formatName:(name:string)=>displayCuberName(name,lang==='zh'),t:(text:string)=>workspaceText(lang,text),navigate:(href:string)=>router.push(`${lang==='zh'?'/zh':''}${workspaceHref(href)}`)}),[lang,router]);
   return <WorkspaceProvider host={host}><WorkspaceContent /></WorkspaceProvider>;
 }
 function WorkspaceContent() {
@@ -53,10 +54,11 @@ function WorkspaceContent() {
   return user ? <SignedInWorkspace key={user.uid} /> : <WorkspaceLoginFrame brand="CubeRoot"><h1>{t('Workspace','Workspace')}</h1><Button onClick={()=>authActions.login()}>{t('登录 CubeRoot','Sign in to CubeRoot')}</Button></WorkspaceLoginFrame>;
 }
 function SignedInWorkspace() {
-  const t=useT();const [section]=useQueryState('section',parseAsStringEnum([...sections]).withDefault('mine'));
+  const t=useT();const [section]=useQueryState('section',parseAsString.withDefault('mine'));
   const [id]=useQueryState('id',parseAsString.withDefault(''));
   const session=useResource<{actor:StaffActor;employee:StaffActor;directory:MemberDirectory}>('session');const actor=session.data?.actor;const employee=session.data?.employee;
-  const items=[{key:'mine',label:t('我的工作','My work')},{key:'updates',label:t('团队动态','Team updates')},{key:'projects',label:t('项目','Projects')},{key:'checklists',label:t('清单','Checklists')},{key:'schedule',label:t('总排期','Schedule')},...(actor?.kind==='admin'?[{key:'work-calendar',label:t('工作日历','Work calendar')},{key:'members',label:t('成员与权限','Members and access')}]:[])];
+  if (!(sections as readonly string[]).includes(section)) notFound();
+  const items=[{key:'mine',label:t('我的工作','My work')},{key:'updates',label:t('团队动态','Team updates')},{key:'checklists',label:t('清单','Checklists')},{key:'schedule',label:t('总排期','Schedule')},...(actor?.kind==='admin'?[{key:'work-calendar',label:t('工作日历','Work calendar')},{key:'members',label:t('成员与权限','Members and access')}]:[])];
   const handbookItems = [{ key: 'onboarding', label: t('入职','Onboarding') }, { key: 'sop', label: 'SOP' }, { key: 'quality', label: t('质量标准','Quality standards') }, { key: 'offboarding', label: t('离职','Offboarding') }];
   const handbook = handbookItems.some(item => item.key === section);
   return <main className={handbook ? 'staff-handbook-main' : undefined}>
@@ -68,7 +70,6 @@ function SignedInWorkspace() {
     {actor&&<>
       {section==='mine'&&employee&&<WorkReports actor={employee} directory={session.data!.directory} mine />}
       {section==='updates'&&employee&&<WorkReports actor={employee} directory={session.data!.directory} />}
-      {section==='projects'&&<Projects actor={actor} directory={session.data!.directory} />}
       {section==='checklists'&&<Checklists />}
       {section==='schedule'&&<Schedules actor={actor} />}
       {section==='work-calendar'&&(actor.kind==='admin'?<WorkCalendar />:<p>{t('需要管理员权限','Administrator access required')}</p>)}

@@ -11,8 +11,11 @@ export const RETIRED_ROUTES = [
 ] as const;
 
 export const RETIRED_COMP_VIEWS = ['common'] as const;
+export const RETIRED_WORKSPACE_SECTIONS = ['projects'] as const;
 
 export function isRetiredRoute(path: string, searchParams?: URLSearchParams): boolean {
+  if (/^\/admin\/team\/?$/.test(path)
+    && RETIRED_WORKSPACE_SECTIONS.some(section => section === searchParams?.get('section'))) return true;
   if (/^\/wca\/comp\/[^/]+\/?$/.test(path)
     && RETIRED_COMP_VIEWS.some(view => view === searchParams?.get('view'))) return true;
   return RETIRED_ROUTES.some(route => path === route.path
