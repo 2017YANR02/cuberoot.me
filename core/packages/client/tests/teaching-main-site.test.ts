@@ -13,7 +13,7 @@ function readClient(path: string): string {
 
 describe('main-site teaching architecture', () => {
   it('keeps the main client as the only teaching frontend', () => {
-    const plan = readFileSync(join(REPO, 'docs', 'platform-unification-plan.md'), 'utf8');
+    const plan = readFileSync(join(REPO, 'docs', 'product', 'platform', 'history', 'platform-unification-plan.md'), 'utf8');
     expect(plan).toContain('`core/packages/client` 是唯一 Web 前端');
     expect(plan).toContain('旧 Platform 计时历史不迁移');
     expect(plan).toContain('`core/packages/platform` 只作为历史归档来源');

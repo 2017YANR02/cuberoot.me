@@ -33,7 +33,7 @@ import type {
 } from '@/lib/platform-types';
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
-const manifest = JSON.parse(readFileSync(join(REPO, 'docs', 'platform-capability-manifest.json'), 'utf8')) as {
+const manifest = JSON.parse(readFileSync(join(REPO, 'docs', 'product', 'platform', 'platform-capability-manifest.json'), 'utf8')) as {
   capabilities: Array<{ kind: string; mappings: [string, string][] }>;
 };
 

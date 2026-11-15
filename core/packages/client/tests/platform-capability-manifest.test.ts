@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { workspaceFixturePath } from './workspace-fixture-path';
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
-const MANIFEST_PATH = join(REPO, 'docs', 'platform-capability-manifest.json');
+const MANIFEST_PATH = join(REPO, 'docs', 'product', 'platform', 'platform-capability-manifest.json');
 const CLIENT_TESTS = workspaceFixturePath('@cuberoot/client', 'tests');
 const SERVER_TESTS = workspaceFixturePath('@cuberoot/server', 'tests');
 const PLATFORM_ROUTE_FILES = new Map([

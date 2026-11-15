@@ -266,8 +266,8 @@ const TEST_PATHS = [
   `!${packagePath('platform', '**')}`,
   repoPath('solver', '333opt', 'inject.mjs'),
   repoPath('solver', '333opt', 'data_paths.mjs'),
-  repoPath('docs', 'platform-capability-manifest.json'),
-  repoPath('docs', 'platform-unification-plan.md'),
+  repoPath('docs', 'product', 'platform', 'platform-capability-manifest.json'),
+  repoPath('docs', 'product', 'platform', 'history', 'platform-unification-plan.md'),
   'sync_upstream.ts',
   repoPath('.sync', '**'),
   repoPath('scripts', 'upstream', '**'),
@@ -727,7 +727,7 @@ describe('deployment workflow path contracts', () => {
       [appPath('api', 'src', 'index.ts'), false],
       [appPath('mobile', 'src', 'App.tsx'), false],
       [repoPath('.github', 'workflows', 'deploy_next.yml'), false],
-      [repoPath('docs', 'platform-unification-plan.md'), false],
+      [repoPath('docs', 'product', 'platform', 'history', 'platform-unification-plan.md'), false],
     ] as const;
 
     for (const [path, expected] of cases) {
