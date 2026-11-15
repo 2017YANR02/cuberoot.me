@@ -76,6 +76,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   enterprise_verification contests workspace app_releases
 //   mcp mcp_oauth onboarding timer_replay_shares site_assistant site_assistant_shares cube_agents
 //   membership_gallery
+// draw — GET /v1/draw/competitions; GET /v1/draw/competitions/:id/registrations (public accepted registrations)
 // competition_group_awards
 //   product_analytics
 // ─ covers-routes-end ─

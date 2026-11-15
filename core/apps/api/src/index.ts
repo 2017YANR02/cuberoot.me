@@ -1,3 +1,4 @@
+import { drawRoutes } from './routes/draw.js';
 import { startWechatPayoutRecovery } from './platform/wechat_payout.js';
 import { workspaceRoutes } from "./routes/workspace.js";
 import { Hono } from 'hono';
@@ -229,6 +230,7 @@ app.route('/v1', petRoutes);
 app.route('/v1', nemesizerRoutes);
 app.route('/v1', cubingLiveRoutes);
 app.route('/v1', competitionGroupAwardsRoutes);
+app.route('/v1', drawRoutes);
 app.route('/v1', cnCompNamesRoutes);
 app.route('/v1', wikiRoutes);
 app.route('/v1', articleRoutes);
