@@ -83,7 +83,7 @@ import { f2lGroupName } from '@/lib/f2l-group-name';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { sortByCp } from '@/lib/alg_cp_order';
 import { groupAlgCases } from '@/lib/alg-case-groups';
-import { sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
+import { compareAlgGroupLabel, sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
 import { CUBE_ORIENTATIONS, visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
 import { algTagLabel, ALG_TAGS, OH_TAG_LABEL } from '@/lib/alg_tags';
 import AlgTagLabel from '@/components/AlgTagLabel';
@@ -890,6 +890,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     return optimallyFiltered.filter(c => c.algs.some(ori => ori.some(a => a.tags?.includes(tagFilter))));
   }, [data, scopedCases, optimalFilterActive, resolvedOptimalMetric, optimalComparison, optimalMoves, effectiveView, tagFilter, availableTags, canChooseOhHand, ohHand, computedHtm]);
 
+  const inlineCaseGroups = (puzzleParam === '2x2' || (puzzleParam === '3x3' && set === 'coll'))
+    && groupAlgCases(orderedCases).tops.length <= 10;
+  const keepInlineCaseOrder = inlineCaseGroups && !!meta?.umbrella && !subgroupParam && !collection && !optimalFilterActive;
   const grouped = useMemo(() => {
     const buildGroups = (
       cases: typeof visibleCases,
@@ -906,7 +909,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       return Array.from(map.entries()).map(([subgroup, subgroupCases], index) => ({
         key: section ? `${section}:${subgroup}` : subgroup || '_root_',
         subgroup,
-        cases: subgroupCases,
+        cases: keepInlineCaseOrder ? [...subgroupCases].sort((a, b) => compareAlgGroupLabel(
+          primaryCaseName(puzzleParam, set, a), primaryCaseName(puzzleParam, set, b),
+        )) : subgroupCases,
         paritySection: section,
         startsParitySection: section !== null && index === 0,
         sectionCaseCount: cases.length,
@@ -924,7 +929,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       ),
       ...buildGroups(unclassified, 'unclassified', true),
     ];
-  }, [isSq1Ep, sq1EpHasParity, visibleCases]);
+  }, [isSq1Ep, sq1EpHasParity, visibleCases, keepInlineCaseOrder, puzzleParam, set]);
 
   const motionRoot = useRef<HTMLDivElement>(null);
   const motionLayout = useMemo(() => ({ grouped, effectiveView, showOtherAlgs }), [grouped, effectiveView, showOtherAlgs]);
@@ -970,8 +975,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     return <div className="alg-root"><div className="alg-empty">Unknown set: {puzzleParam}/{set}</div></div>;
   }
 
-  const inlineCaseGroups = (puzzleParam === '2x2' || (puzzleParam === '3x3' && set === 'coll'))
-    && groupAlgCases(orderedCases).tops.length <= 10;
   const showSubgroupPicker = !collection && !!meta.umbrella && !subgroupParam
     && !inlineCaseGroups && !showAllCases && !optimalFilterActive;
   const canCollapseGroups = !showSubgroupPicker && grouped.some(group => group.subgroup !== '')
