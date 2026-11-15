@@ -14,6 +14,15 @@ const catalog = {
 };
 
 describe('MYCSA public registrations', () => {
+  it('counts FTO registrations alongside the existing events without losing the roster', () => {
+    expect(parseMycsaRoster({ CompDetails: details, list: [
+      { ...row, events: '3x3x3,Face Turning Octahedron,Face Turning Octahedron' },
+      { ...row, WCAID: '', events: 'Face Turning Octahedron' },
+    ] }, sourceId, id)).toEqual({
+      competitors: [geng], registered: 2, eventRegs: { '3': 1, fto: 2 },
+    });
+  });
+
   it('uses approved registrations only, counts newcomers and normalizes event totals', () => {
     const body = { CompDetails: details, list: [row,
       { ...row, approved: false }, { ...row, deleted: true }, { ...row, waitingList: true },

@@ -10,6 +10,7 @@ const EVENT_SHORT: Record<string, string> = {
   '3x3x3 Blindfolded': '3bf', '3x3x3 Fewest Moves': 'fm', '3x3x3 One-Handed': 'oh',
   Megaminx: 'minx', Pyraminx: 'py', Clock: 'clock', Skewb: 'sk', 'Square-1': 'sq1',
   '4x4x4 Blindfolded': '4bf', '5x5x5 Blindfolded': '5bf', '3x3x3 Multi-Blind': 'mbf',
+  'Face Turning Octahedron': 'fto',
 };
 type Row = Record<string, unknown>;
 function isRow(value: unknown): value is Row {
