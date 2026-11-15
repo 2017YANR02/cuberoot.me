@@ -26,8 +26,6 @@
   justify-content: space-between;
   font-variant-numeric: tabular-nums;
 }
-.draw-page
-  button:not(:where(.bool-toggle-label, .pill-toggle, .comp-picker button)),
 .draw-page input,
 .draw-page textarea {
   font: inherit;
@@ -40,8 +38,16 @@
 .draw-page .comp-picker-input--with-clear {
   padding-right: 30px;
 }
-.draw-page button {
+.draw-page button:not(:where(.bool-toggle-label, .pill-toggle, .comp-picker button)) {
+  font: inherit;
+  color: inherit;
+  padding: 10px;
+  border: 0;
+  background: transparent;
   cursor: pointer;
+}
+.draw-page button:not(:where(.bool-toggle-label, .pill-toggle, .comp-picker button)):hover:not(:disabled) {
+  color: var(--accent);
 }
 .draw-page button:disabled {
   opacity: 0.45;
@@ -126,6 +132,7 @@
   margin: 6px 0;
 }
 .draw-stage {
+  --draw-shadow: color-mix(in srgb, var(--foreground) 14%, transparent);
   position: relative;
   min-height: 220px;
   display: grid;
@@ -135,7 +142,7 @@
   background: var(--muted);
 }
 .draw-stage.is-3d {
-  min-height: 420px;
+  min-height: 440px;
   perspective: 850px;
   background: radial-gradient(
     ellipse at 50% 55%,
@@ -169,13 +176,12 @@
 }
 .is-3d .draw-cloud {
   position: absolute;
-  inset: 50% auto auto 50%;
-  width: 440px;
-  height: 340px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   padding: 0;
-  transform: translate(-50%, -50%);
   transform-style: preserve-3d;
-  transition: opacity 300ms;
+  transition: opacity 450ms;
   pointer-events: none;
 }
 .is-3d .draw-slot {
@@ -199,13 +205,12 @@
   align-items: center;
   justify-content: center;
   padding: 10px;
-  box-shadow: 0 10px 22px color-mix(in srgb, var(--foreground) 4%, transparent);
+  box-shadow: 0 8px 20px var(--draw-shadow);
   overflow: hidden;
-  animation: draw-card-float 4s ease-in-out infinite alternate;
-  animation-delay: var(--delay);
+  backface-visibility: hidden;
 }
 .is-3d .draw-slot strong {
-  font-size: 20px;
+  font-size: 21px;
   line-height: 1.2;
   font-weight: 550;
   max-height: 3.6em;
@@ -224,15 +229,6 @@
 .is-3d.has-result .draw-cloud {
   opacity: 0.12;
 }
-.has-result .draw-slot .draw-card {
-  animation-play-state: paused;
-}
-.is-pool.is-drawing .draw-slot {
-  animation: draw-card-shuffle 900ms ease-in-out both;
-}
-.is-pool.is-drawing .draw-slot .draw-card {
-  animation-play-state: paused;
-}
 .draw-winners {
   position: relative;
   z-index: 1;
@@ -245,15 +241,16 @@
   max-height: 520px;
   overflow: auto;
   width: 100%;
+  /* Paint the shadow after the scroll viewport clips its contents. */
+  filter: drop-shadow(0 24px 32px var(--draw-shadow));
 }
 .draw-winners .winner {
   min-width: min(210px, 100%);
   padding: 28px 36px;
   border-color: var(--accent);
-  box-shadow: 0 20px 48px color-mix(in srgb, var(--foreground) 12%, transparent);
 }
 .is-3d .winner {
-  animation: draw-result-in 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: draw-result-in 650ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .winner strong {
   font-size: clamp(48px, 6vw, 64px);
@@ -263,29 +260,10 @@
   font-size: 22px;
   margin: 14px 0 0;
 }
-@keyframes draw-card-float {
-  from {
-    transform: translateY(-6px) rotateY(-4deg);
-  }
-  to {
-    transform: translateY(8px) rotateY(4deg);
-  }
-}
-@keyframes draw-card-shuffle {
-  35%,
-  65% {
-    transform: translate3d(
-        calc(var(--x) * 0.28),
-        calc(var(--y) * 0.28),
-        calc(var(--z) * 0.5)
-      )
-      rotateY(calc(var(--yaw) * -1)) rotateZ(calc(var(--tilt) * -1));
-  }
-}
 @keyframes draw-result-in {
   from {
     opacity: 0;
-    transform: translateY(24px) scale(0.75) rotateY(-25deg);
+    transform: translateY(30px) scale(0.72) rotateY(-35deg);
   }
   to {
     opacity: 1;
@@ -303,6 +281,7 @@
   background: var(--primary);
   color: var(--primary-foreground);
   min-width: 180px;
+  border-radius: 8px;
 }
 @media (prefers-reduced-motion: reduce) {
   .draw-page * {
@@ -324,11 +303,9 @@
     gap: 12px 24px;
   }
   .draw-stage.is-3d {
-    min-height: 340px;
+    min-height: 390px;
   }
-  .is-3d .draw-cloud {
-    transform: translate(-50%, -50%) scale(0.8);
-  }
+
   .draw-actions input {
     min-width: 0;
     max-width: 100%;
@@ -348,19 +325,40 @@
   background: none;
 }
 
-@media (max-width: 400px) {
-  .is-3d .draw-cloud {
-    transform: translate(-50%, -50%) scale(0.68);
-  }
-}
 
 .draw-actions > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .draw-page button.draw-icon-button { width: 40px; height: 40px; padding: 0; flex-shrink: 0; }
-.draw-page button.draw-icon-button:hover:not(:disabled) { background: var(--muted); }
+.draw-page button.draw-icon-button:hover:not(:disabled) { color: var(--accent); }
 .is-3d .draw-orbit { position: absolute; inset: 0; padding: 0; transform-style: preserve-3d; }
-.is-3d.is-sphere .draw-orbit { animation: draw-orbit 24s linear infinite; }
-.is-3d.is-sphere .draw-slot { width: 90px; height: 64px; margin: -32px 0 0 -45px; }
-.is-3d.is-sphere .draw-slot .draw-card { animation: draw-face 24s linear infinite; }
-.is-sphere.has-result .draw-orbit, .is-sphere.has-result .draw-slot .draw-card { animation-play-state: paused; }
-@keyframes draw-orbit { to { transform: rotateY(360deg); } }
-@keyframes draw-face { to { transform: rotateY(-360deg); } }
+.is-3d.is-sphere .draw-slot { width: 90px; height: 62px; margin: -31px 0 0 -45px; }
+.is-3d.is-sphere .draw-slot .draw-card { animation: none; }
+.is-3d.is-sphere .draw-slot strong { font-size: 16px; letter-spacing: .04em; }
+
+
+.draw-stage.is-3d::before {
+  content: "";
+  position: absolute;
+  width: 58%;
+  height: 50px;
+  left: 21%;
+  bottom: 25px;
+  border-radius: 50%;
+  background: var(--draw-shadow);
+  filter: blur(18px);
+  pointer-events: none;
+}
+@media (max-width: 600px) {
+  .is-3d.is-sphere .draw-slot { width: 70px; height: 52px; margin: -26px 0 0 -35px; }
+  .is-3d.is-sphere .draw-slot strong { font-size: 13px; }
+  .is-3d.is-pool .draw-slot { width: 92px; height: 70px; margin: -35px 0 0 -46px; }
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]):not([data-palette-scheme="light"]) .draw-stage {
+    --draw-shadow: color-mix(in srgb, var(--background) 75%, transparent);
+  }
+}
+html[data-theme="dark"]:not([data-palette-scheme="light"]) .draw-stage,
+html[data-palette-scheme="dark"] .draw-stage {
+  --draw-shadow: color-mix(in srgb, var(--background) 75%, transparent);
+}

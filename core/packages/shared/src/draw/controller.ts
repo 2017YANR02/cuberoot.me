@@ -314,7 +314,7 @@ export function createDrawController(a: Adapter) {
             timer = setTimeout(() => {
               v.busy = false;
               emit();
-            }, 900);
+            }, s.training ? 850 : 1500);
           return;
         }
         if (action === "reveal") v.revealed = true;

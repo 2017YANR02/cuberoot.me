@@ -10,6 +10,7 @@ import PageHeading from "@/components/PageHeading";
 import MoreToggle, { MoreTogglePanel } from "@/components/MoreToggle";
 import BoolToggle from "@/components/BoolToggle";
 import DrawCompetitionPicker from "./DrawCompetitionPicker";
+import DrawCandidates from "./DrawCandidates";
 import { tr } from "@/i18n/tr";
 import { apiUrl } from "@/lib/api-base";
 import { copyClipboardText } from "@/lib/clipboard";
@@ -21,7 +22,6 @@ import {
 import {
   DRAW_STORAGE_KEY,
   resultsText,
-  drawStageCards,
 } from "@cuberoot/shared/draw";
 import "./draw.css";
 function DrawIconButton({ icon: Icon, label, ...props }: ComponentProps<"button"> & {
@@ -267,23 +267,7 @@ export default function DrawPage() {
             aria-busy={v.busy}
           >
             {(v.session.stage || !v.last.length || v.busy) && (
-              <div className="draw-cloud" aria-hidden="true"><div
-                className="draw-orbit"
-                key={`${v.session.training}:${v.session.text}:${v.session.history.length}`}
-              >
-                {drawStageCards(v.session, v.last, v.busy).map((t) => (
-                  <div
-                    className="draw-slot"
-                    key={t.id}
-                    style={t.pose as React.CSSProperties}
-                  >
-                    <div className="draw-card">
-                      <strong>{t.name}</strong>
-                      {t.number && <small>#{t.number}</small>}
-                    </div>
-                  </div>
-                ))}
-              </div></div>
+              <DrawCandidates session={v.session} last={v.last} busy={v.busy} />
             )}
             {!!v.last.length && !v.busy && (
               <div className="draw-winners">
