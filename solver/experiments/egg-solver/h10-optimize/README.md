@@ -1,6 +1,6 @@
 # 32G Egg：保留原版的独立实验
 
-结果与维护者约束见[跟踪报告](../../../../docs/egg-h10-optimization-tracker.md)。本轮没有晋升候选；此目录不接入日常统计或线上 Timer。
+结果与维护者约束见[跟踪报告](../../../../docs/data/solvers/egg-h10-optimization-tracker.md)。本轮没有晋升候选；此目录不接入日常统计或线上 Timer。
 
 来源为 [ArhanChaudhary/egg-solver](https://github.com/ArhanChaudhary/egg-solver) 的本地固定提交 `8810d69b5f9b6a82d7c72d3a709e93acc319958d`，即上游 `947c20d93564f150aad9c292486ab730a329b86c` 加已验收的 macOS 无缓存文件 I/O 修复。本机原仓库 `/Users/cuberoot/Developer/egg-solver` 未修改。完整来源、上游材料和依赖许可文件保留在源码归档；本目录只保存实验补丁与编排。
 

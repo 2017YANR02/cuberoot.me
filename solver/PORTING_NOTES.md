@@ -901,7 +901,7 @@ FR 提取原构造的前两步，复用 192 元目标闭包和 3,456 陪集图�
 程序与完整 Rust 源码树哈希，检查独立物理陪集双射及全部生成元边，并用
 cubing.js 回放每档最短见证。原生子进程继承串行 guard 的进程组；
 构造预算 24 / 4 MiB，正式计算仅由 guard 调度。编译与静态检查不冒称
-一次枚举结果，实测证据归 `docs/puzzle-exact-distributions-tracker.md`。
+一次枚举结果，实测证据归 `docs/data/solvers/puzzle-exact-distributions-tracker.md`。
 
 ## 2026-11-10: EO 多槽位剪枝单轮对照
 

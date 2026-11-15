@@ -50,7 +50,7 @@
 
 `refine_alibaba_glazing.py` 的首轮预览与 `--apply` 完成后，依次运行 `--polish-glass` 预览/保存、`--balance-night` 预览/保存；随后使用既有 `refine_alibaba_courtyard_lighting.py --district y` 预览/保存。该灯脚本默认仍为原 Z 轮次。**当前四步已应用，不要重新运行**；既有修订、候选报告和源指纹守卫会拒绝重复或基于旧工程保存。后续继续从当前规范工程增量编辑。
 
-四轮报告、备份和最终网页截图位于 `.tmp/png/space-alibaba-refinement-20260912/`，保存结果及资产版本见[迁移跟踪最新记录](../../../docs/space-blender-tracker.md)。照片仍仅作参考，没有新增运行贴图或第三方代码来源。
+四轮报告、备份和最终网页截图位于 `.tmp/png/space-alibaba-refinement-20260912/`，保存结果及资产版本见[迁移跟踪最新记录](../../../docs/design/space/space-blender-tracker.md)。照片仍仅作参考，没有新增运行贴图或第三方代码来源。
 
 ## 树冠与硬质景观材质增量
 
@@ -107,6 +107,6 @@
 
 `refine_alibaba_campus.py` 是 Y 区首次增量脚本，`refine_alibaba_districts.py` 是 X/Z 首次增量脚本，默认只生成候选；`--apply` 先备份并校验磁盘源未被他人修改，再保存规范工程。工程已有对应修订时拒绝重建，避免覆盖人工编辑。X/Z 脚本还要求 Y 已存在并校验其几何未变。日常继续编辑当前 `design/space/scenes/shanghai.blend`，然后运行 `cd core && pnpm space:batch --asset shanghai`；不要回用新增园区之前的整城候选覆盖现有工程。
 
-Blender 预设相机：`Alibaba whole campus`、`Alibaba X Art Tower`、`Alibaba campus`、`Alibaba courtyard`、`Alibaba Z campus`、`Alibaba Z courtyard`。网页对应“阿里园区全景”“X 区艺岛”“Y 区主楼”“Y 区中庭”“Z 区方案”“Z 区中庭”。实际保存、导出和网页审查结果以 [迁移跟踪](../../../docs/space-blender-tracker.md) 最新记录为准。
+Blender 预设相机：`Alibaba whole campus`、`Alibaba X Art Tower`、`Alibaba campus`、`Alibaba courtyard`、`Alibaba Z campus`、`Alibaba Z courtyard`。网页对应“阿里园区全景”“X 区艺岛”“Y 区主楼”“Y 区中庭”“Z 区方案”“Z 区中庭”。实际保存、导出和网页审查结果以 [迁移跟踪](../../../docs/design/space/space-blender-tracker.md) 最新记录为准。
 
 剩余精度项：X 的测绘高度和准确折线、Z 的竣工状态与现场照片、完整下沉庭院和地下楼梯、真实室内、招牌字体、灯具实测配光、现场贴图、道路与植物细节。当前覆盖三个地块及公共空间，但这些构件仍有估算，不标记测绘 1:1 或电影级完成。

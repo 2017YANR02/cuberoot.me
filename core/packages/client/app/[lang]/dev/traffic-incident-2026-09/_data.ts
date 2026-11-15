@@ -1,4 +1,4 @@
-// Historical observations, not live monitoring. Source: docs/traffic-incident-2026-09-22-25.md.
+// Historical observations, not live monitoring. Source: docs/operations/history/traffic-incident-2026-09-22-25.md.
 export const TIMELINE = [
   { date: '09.22', time: 'PDT', zh: '计算器访问量突增', en: 'Calculator traffic spikes', detail: { zh: '全天 Analytics 记录 9,531 次页面浏览。次日抽查发现比赛与选手参数被快速遍历，包含无头浏览器声明。', en: 'Analytics records 9,531 page views for the day. The next day’s sample shows rapid changes in competition and competitor parameters, including a headless-browser claim.' } },
   { date: '09.24', time: '≈ 09:25', zh: '暂停 Vercel 生产访问', en: 'Pause Vercel production', detail: { zh: 'Vercel 生产暂停；自有主站随后上线维护公告。验证、封页与停站也影响了正常读者。', en: 'Vercel production is paused; the self-hosted site later shows a maintenance notice. Challenges, route blocks and downtime also affect legitimate readers.' } },
@@ -18,7 +18,7 @@ export const FIREWALL_SNAPSHOTS = [
 export const REPO = 'https://github.com/2017YANR02/cuberoot.me/blob/main/';
 export const ASSETS = '/assets/incidents/2026-09/';
 
-// Follow-up records from docs/traffic-defense.md and docs/traffic-monitor.md.
+// Follow-up records from docs/operations/observability/traffic-defense.md and docs/operations/observability/traffic-monitor.md.
 // Dates below use PDT, like the original timeline; deployment status is explicit.
 export const FOLLOW_UP = [
   { date: '09.25', time: '13:37', title: { zh: '限流触发自动停站，随后修正判断口径', en: 'Rate limits trip maintenance; reporting is corrected' }, detail: { zh: '两分钟内比赛 API 出现 322 次 429，旧守护规则触发维护；这不等于应用已过载。随后补齐比赛详情子页的限流，区分维护 503、限流 429、拒绝 403 与真正服务错误；已拦截请求不再单独触发停站，避免恢复后立即再次关闭。小时 Bark 告警也补上统计时段和拦截分类。', en: 'The competition API returned 322 rate-limit responses over two minutes and the old guard triggered maintenance; this did not establish application overload. Limits were extended to competition subpages. Reporting now separates maintenance 503s, rate-limit 429s, denied 403s and service errors. Blocked traffic alone no longer retriggers maintenance; hourly Bark alerts include time windows and block categories.' } },

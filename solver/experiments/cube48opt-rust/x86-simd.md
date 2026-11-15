@@ -79,7 +79,7 @@ AVX2 speeds up these kernels by about 4.7–4.8× and 5.8× versus scalar.
 Do not apply these factors to whole solves: random PDB reads, search scheduling,
 memory bandwidth and the chosen search features are outside this measurement.
 Full same-table solver measurements are recorded below; production rollout is
-tracked separately in `docs/cubeopt-native-rollout.md`.
+tracked separately in `docs/data/solvers/cubeopt-native-rollout.md`.
 
 Local raw evidence: `.local-data/cubeopt-reverse/x86-simd-20261021-c53Ib1/` at repository
 root, containing `fixtures-manifest.json`, `correctness.json`, `kernels.json`,

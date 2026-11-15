@@ -1,6 +1,6 @@
 # 设备图片来源
 
-维护规范见[前端组件与交互规范](contributing/frontend.md#主题颜色)。图片位于 `core/packages/client/public/images/dev/infrastructure/`，由 `lib/infrastructure-costs.ts` 引用。
+维护规范见[前端组件与交互规范](../contributing/frontend.md#主题颜色)。图片位于 `core/packages/client/public/images/dev/infrastructure/`，由 `lib/infrastructure-costs.ts` 引用。
 
 | 文件 | 对应设备 | 来源与处理 |
 | --- | --- | --- |

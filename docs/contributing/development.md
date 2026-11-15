@@ -6,7 +6,7 @@
 
 打乱统计的日常一键入口在 `core/` 运行 `pnpm stats:scramble`：默认增量运行全部作业，成功后自动灌线上 PG、通过同一个 `wca-data-latest` Release 发布最新统计，并增量上传独立在线分片；统计产物不再提交 Git。明确只想本地计算时用 `pnpm stats:scramble:local`；仅跑指定作业用 `--jobs stages|333opt|puzzles`，只读查看路径与计划用 `pnpm stats:scramble:local --plan`。新 checkout 先运行 `pnpm stats:hydrate` 恢复校验后的数据及发布基线。运行日常一键命令即明确授权本轮统计发布；其他代码 push 仍遵守部署章节。
 
-创建或修改 Mac 快捷指令用 [mac-shortcuts skill](../../.agents/skills/mac-shortcuts/SKILL.md)；本机「跑打乱统计」实例见 [docs/mac-stats-shortcut.md](../mac-stats-shortcut.md)。
+创建或修改 Mac 快捷指令用 [mac-shortcuts skill](../../.agents/skills/mac-shortcuts/SKILL.md)；本机「跑打乱统计」实例见 [docs/operations/mac-stats-shortcut.md](../operations/mac-stats-shortcut.md)。
 
 改 `core/apps/miniprogram/src/` 后必须在 `core/` 运行 `pnpm --filter @cuberoot/miniprogram build` 刷新开发者工具读取的 `dist/`；该命令不跑测试。
 WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过小程序 build 并在微信开发者工具关闭项目后重开做干净编译。
@@ -23,7 +23,7 @@ Mac mini 复用既有常驻 FRP；MacBook Pro 的 preview runner 管理独立 SS
 
 - **代码量统计（维护者要求，2026-10-22）**：用户说“统计代码量”“看看代码统计”等时，AI 直接运行 `cloc` 并汇总结果，不只提供命令让用户自行执行。默认在仓库根目录用 `cloc --vcs=git` 统计 Git 跟踪文件的当前本地内容，按需补充语言和主要模块统计；明确区分代码、注释、空行，以及数据、资源、第三方和生成内容，不把总行数称为自研代码量。维护者 Mac 已通过 Homebrew 安装 cloc；换环境先检查可用性。
 
-流量异常排查先读 [`docs/traffic-monitor.md`](../traffic-monitor.md) 与 [`docs/traffic-defense.md`](../traffic-defense.md)（当前防护、费用保护、暂停及恢复步骤），2026-09-22 `/zh/calc` 峰值的证据见 [`docs/traffic-incident-2026-09-22.md`](../traffic-incident-2026-09-22.md)。先核对报表的 `coverage`：自动来源分析目前只覆盖自有服务器 nginx；Vercel 请求在现有 Firewall 和 Logs 中按时间与路径核查。Analytics 是浏览器事件，自有线路也可能上报，不能等同于 Vercel 页面线路；停用时不得为了监控自行重新开启。User-Agent 和浏览器名称不能证明是真人；不要把 nginx 请求数当作全站访客数，也不要为监控启用额外收费项。
+流量异常排查先读 [`docs/operations/observability/traffic-monitor.md`](../operations/observability/traffic-monitor.md) 与 [`docs/operations/observability/traffic-defense.md`](../operations/observability/traffic-defense.md)（当前防护、费用保护、暂停及恢复步骤），2026-09-22 `/zh/calc` 峰值的证据见 [`docs/operations/history/traffic-incident-2026-09-22.md`](../operations/history/traffic-incident-2026-09-22.md)。先核对报表的 `coverage`：自动来源分析目前只覆盖自有服务器 nginx；Vercel 请求在现有 Firewall 和 Logs 中按时间与路径核查。Analytics 是浏览器事件，自有线路也可能上报，不能等同于 Vercel 页面线路；停用时不得为了监控自行重新开启。User-Agent 和浏览器名称不能证明是真人；不要把 nginx 请求数当作全站访客数，也不要为监控启用额外收费项。
 
 使用 pnpm 12.6.0；运行 core 命令前核实 CWD，在仓库根时先进入 `core/`；`ERR_PNPM_NO_PKG_MANIFEST` 时先检查执行目录。
 改 `core/packages/shared/src/**` 后完成前必须在 `core/` 运行 `pnpm --filter @cuberoot/shared build` 刷新 `dist`;“不用检查”只跳过测试/校验,不跳过该构建。

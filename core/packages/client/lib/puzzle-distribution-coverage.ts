@@ -1,5 +1,5 @@
 /** Finite catalog audit; no solvers, BFS or distance tables are loaded here.
- * Evidence: docs/puzzle-exact-candidate-inventory.md and the reproducible
+ * Evidence: docs/data/solvers/puzzle-exact-candidate-inventory.md and the reproducible
  * scripts/audit-exact-puzzle-candidates.mts projection certificates.
  */
 import exactData from '../app/[lang]/scramble/stats/_data/precomputed-exact-puzzles.json';

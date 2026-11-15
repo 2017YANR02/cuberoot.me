@@ -86,7 +86,7 @@ directory's `cli100/`, and `.local-data/egg-h8-skylake-20261109/`. Timings exclu
 loading; CLI uses whole-batch wall time while both services sum sequential
 request/reply times. The local loader-receipt fallback and the AVX-512 build
 receipt's corrected compiler-host field are explicitly retained alongside raw
-evidence. See `docs/egg-solver-performance-analysis.md` and the task tracker.
+evidence. See `docs/data/solvers/egg-solver-performance-analysis.md` and the task tracker.
 
 ## Intel cloud diagnosis and accepted T0 candidate
 

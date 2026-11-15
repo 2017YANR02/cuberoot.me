@@ -11,7 +11,7 @@
 
 ### 2026-11-08：推送隔离 API 与专用验收入口（本地实现，未发布）
 
-API 第一批本地提交 `26be5a4ac3`；Mobile 入口、发布保护和说明作为第二批提交。使用方法见[隔离验收入口](../../../record-notification-setup.md#6-隔离-api-与推送验收入口)。普通 App 的生产登录/API 地址没有全局改动，验收必须明确使用专用入口。
+API 第一批本地提交 `26be5a4ac3`；Mobile 入口、发布保护和说明作为第二批提交。使用方法见[隔离验收入口](../../../operations/record-notification-setup.md#6-隔离-api-与推送验收入口)。普通 App 的生产登录/API 地址没有全局改动，验收必须明确使用专用入口。
 
 - 独立 Hono fixture API 固定监听 `127.0.0.1:3339`，不加载正常 server、`.env`、PG、监控、邮件或推送发送器。随机配对令牌通过被忽略的 owner-only 文件交接，拒绝覆盖遗留文件；测试身份只有 A/B 两个临时用户，整轮一小时失效，绑定上限一台设备，设备凭据和 CID/token 不输出、不持久化。复用现有设备字段校验和四类通知 payload 契约。
 - 独立 Vite 入口 `127.0.0.1:4175` / `dist-push-acceptance` 不加载生产 App、登录客户端、Keychain 或 WebSurface。浏览器模拟 native adapter，设备绑定仍使用真实 `RecordPushController`，冷/热通知监听和点击队列复用原实现；目标路径只显示，不导航线上。API origin 限私网/loopback IPv4，fetch 禁 cookie、重定向和生产回退，并核对响应标记；CSP 限定连接目标、禁止 iframe。
@@ -27,7 +27,7 @@ API 第一批本地提交 `26be5a4ac3`；Mobile 入口、发布保护和说明�
 
 - 新增 `pnpm --filter @cuberoot/server apns:check`，支持 `--push-env-file` 显式读取 API `.env` 或被忽略的 `.env.apns.local`；只选取 APNs 五项，环境变量优先，不执行配置文件或启动 API/worker。默认未配置可报告 disabled/missing；`--require-enabled` 要求双开关和完整凭据，半组配置、无效开关、未知 APNs 字段、topic/环境或不合格私钥均失败。
 - 私钥检查限于当前本地进程：文件可读、大小受限、Unix owner-only 权限、未加密 EC P-256 和本地签名/验签。不打印 Team ID、Key ID、路径、内容或签名，不生成 provider JWT、不请求 APNs。`--environment` 只声明期望环境；key 的 Apple 授权、是否撤销、团队/topic/环境范围、部署进程读取权限均不能由此证明。
-- 本轮实际检查本机 API `.env` 与当前环境：`RECORD_PUSH_ENABLED`、`APNS_ENABLED`、`APNS_TEAM_ID`、`APNS_KEY_ID`、`APNS_PRIVATE_KEY_PATH` 五项均缺失，未读取任何真实 APNs 私钥；production 的 `--require-enabled` 正确失败。需要准备 APNs 授权 key 的 Team ID、Key ID、受保护 `.p8` 文件路径，联调具备隔离条件后再启用两个开关。完整[变量与使用清单](../../../record-notification-setup.md#apns-本地离线检查与凭据清单)已补齐；本轮未重查服务器或 Apple 控制台，不推断它们已配置。
+- 本轮实际检查本机 API `.env` 与当前环境：`RECORD_PUSH_ENABLED`、`APNS_ENABLED`、`APNS_TEAM_ID`、`APNS_KEY_ID`、`APNS_PRIVATE_KEY_PATH` 五项均缺失，未读取任何真实 APNs 私钥；production 的 `--require-enabled` 正确失败。需要准备 APNs 授权 key 的 Team ID、Key ID、受保护 `.p8` 文件路径，联调具备隔离条件后再启用两个开关。完整[变量与使用清单](../../../operations/record-notification-setup.md#apns-本地离线检查与凭据清单)已补齐；本轮未重查服务器或 Apple 控制台，不推断它们已配置。
 - 源码签名环境核对：Xcode Debug/Release 仍同为 `me.cuberoot.app`，`APNS_ENVIRONMENT` 分别为 development/production，写入 entitlement 与 Info.plist；Swift 映射到 sandbox/production。未重新签名、导出或验最终产物，不能把源码一致写成签名环境验收。
 - 验证：新增离线检查 6 项与既有 APNs 传输 4 项共 10 项通过（临时合成私钥与本地传输 fixture）；API typecheck、检查脚本独立类型检查通过。实际 pnpm 文件参数入口、必需配置失败退出、私有配置 ignore 和 diff 检查通过；独立审阅确认无凭据输出或运行时门禁漂移。
 - 用户要求继续跳过真机。本轮无安装、真实推送、生产配置/数据库变更、部署或 push；未重跑无变化的原生构建。Apple 授权、最终签名产物、真实送达和点击仍待验收，总体继续 **NOT COMPLETE**。
@@ -38,7 +38,7 @@ API 第一批本地提交 `26be5a4ac3`；Mobile 入口、发布保护和说明�
 
 - `app_release.yml` 的 Android 产物构建步骤已接入正式包个推 App ID 和 OPPO/vivo/小米/魅族/荣耀客户端参数，供 direct APK / Play AAB 使用；签名、发布凭据仍在各自受保护 job，服务端 App Key / Master Secret 不注入客户端构建。未修改 GitHub 配置或触发 workflow。
 - 新增 `android:push:check debug|release` 与被忽略的本地配置文件入口 `--push-env-file`；与 Debug/direct/Play 构建共用加载和校验，Gradle 与检查器共用厂商清单。报告只显示名称、状态和缺项；未启用可构建，半组参数、缺基础 App ID、必需通道缺项、控制变量拼错或文件含服务端/未知字段会失败。`ANDROID_PUSH_REQUIRED` / `ANDROID_PUSH_VENDORS` 声明实际构建要求，不能用检查通过推断控制台有效或真机送达。
-- 当前缺项：再次只读检查确认仓库级 `GETUI_*` secrets 与 `ANDROID_PUSH_*` variables 名称清单为空；本机没有 `.env.android-push.local`，当前进程的正式/调试客户端参数也均缺失。需要补两套匹配包名的 `APP_ID`，以及所需厂商的 OPPO `APP_KEY/APP_SECRET`、vivo/小米/魅族 `APP_ID/APP_KEY`、荣耀 `APP_ID`（正式前缀 `GETUI_`，调试前缀 `GETUI_DEBUG_`）。完整变量名、存放位置和命令见[配置清单](../../../record-notification-setup.md#ci-注入位置与凭据清单)。API 的个推 App Key / Master Secret 与 APNs 凭据仍按上一节配置审计待补，本轮没有重新检查服务器或厂商控制台。
+- 当前缺项：再次只读检查确认仓库级 `GETUI_*` secrets 与 `ANDROID_PUSH_*` variables 名称清单为空；本机没有 `.env.android-push.local`，当前进程的正式/调试客户端参数也均缺失。需要补两套匹配包名的 `APP_ID`，以及所需厂商的 OPPO `APP_KEY/APP_SECRET`、vivo/小米/魅族 `APP_ID/APP_KEY`、荣耀 `APP_ID`（正式前缀 `GETUI_`，调试前缀 `GETUI_DEBUG_`）。完整变量名、存放位置和命令见[配置清单](../../../operations/record-notification-setup.md#ci-注入位置与凭据清单)。API 的个推 App Key / Master Secret 与 APNs 凭据仍按上一节配置审计待补，本轮没有重新检查服务器或厂商控制台。
 - 验证：6 项配置/凭据输出/工作流边界定向检查通过，Mobile typecheck 通过；实际 pnpm Debug/Release 检查入口通过，必需配置缺失在 Gradle 前失败；JDK 21 下通过新的 pnpm Debug 入口完成 Vite build、Capacitor sync、Android APK 构建。该 APK 没有真实推送参数。独立审阅发现并修复了 Node 测试被 Vitest 误收集、pnpm 提前处理 `--env-file` 两个入口问题；最终 Vitest 文件列表不收集 `.node-test.ts`，专用 `--push-env-file` 已实跑。
 - 工作流定向检查通过；本机 actionlint 1.7.12 对既有 `concurrency.queue` 报不认识，仅在临时副本去掉该既有字段后其余校验通过，未改动原工作流的并发设置。未声称 GitHub CI 已执行。
 - 用户要求继续跳过真机验收。本轮无安装、无真实推送、无 API 部署/迁移、无 push；代码和文档分批本地提交，其他人的工作区修改保留。真实厂商构建、签名匹配、送达和点击验收仍待完成，总体继续 **NOT COMPLETE**。
@@ -98,7 +98,7 @@ API 第一批本地提交 `26be5a4ac3`；Mobile 入口、发布保护和说明�
 | 通知收件箱 | `utils/notify.ts` 写 `notifications`，支持 `dedupeKey`，邮件按验证邮箱及总开关旁路发送 | 邮件失败没有独立补发队列；公示/报名提醒尚未成为事件生产者 |
 | 手机系统推送 | `utils/record_push.ts` 从站内消息建立设备投递队列，严格筛选 `wca_record` | 新增比赛站内消息不会自动触发手机推送；APNs payload 和 Swift 接收也限制纪录类型 |
 
-上表 API 路径相对 `core/apps/api/src`，Web 路径相对 `core/packages/client`。既有纪录配置见 [record-notification-setup.md](../../../record-notification-setup.md)。
+上表 API 路径相对 `core/apps/api/src`，Web 路径相对 `core/packages/client`。既有纪录配置见 [record-notification-setup.md](../../../operations/record-notification-setup.md)。
 
 **各端接入层级**
 
@@ -385,7 +385,7 @@ API 第一批本地提交 `26be5a4ac3`；Mobile 入口、发布保护和说明�
 
 - 网站验证码页报告 iframe 环境，API 对嵌入页面签发 `SameSite=None; Partitioned`，普通浏览器保留 Lax；验证码、签名与 7 天期限不变。工具仍在 App 内打开，无系统浏览器跳转，也没有复制工具页或新增宿主代码。
 - macOS 27 的 WKWebView 隔离探针在 `tauri://localhost` 内验证旧 Cookie 不回传、分区 Cookie 回传；API 的 10 项专项通过。此证据不等于线上 CubeRoot App 全流程验收。
-- 待网站/API 发布及 macOS、iOS、Android、Windows、HarmonyOS 实机验收。旧 WebKit 不支持分区 Cookie，不能据此宣称已覆盖所有系统版本。详情见 `docs/traffic-defense.md` 的同日记录。
+- 待网站/API 发布及 macOS、iOS、Android、Windows、HarmonyOS 实机验收。旧 WebKit 不支持分区 Cookie，不能据此宣称已覆盖所有系统版本。详情见 `docs/operations/observability/traffic-defense.md` 的同日记录。
 
 
 ### 2026-10-05：macOS 原生真实 MAC 适配（本地）

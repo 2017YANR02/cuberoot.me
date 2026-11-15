@@ -10,5 +10,5 @@
 - 数据在 static origin 的路由(教程等)可在 `generateMetadata` 里 fetch —— 前提是该路由 `generateStaticParams` 返回空,build 期不会发请求;枚举进 sitemap 则另开 `force-dynamic` 的 `*-sitemap.xml/route.ts`(`app/sitemap.ts` 必须无网络 I/O)。
 - 只在部分语言存在的内容(教程 609 篇里仅 60 篇双语):缺失语言那侧发 `noindex, follow`,sitemap 只列真实存在的语言,hreflang 只在双语条目成对出现。
 - 长文页(math/regulation 等)配 `<h1>` + `components/JsonLd` 的 `Article`;禁编造 `SearchAction`/日期/评分。
-- 背景与实测数据见 `docs/seo-geo-plan.md`。
+- 背景与实测数据见 `docs/operations/observability/seo-geo-plan.md`。
 

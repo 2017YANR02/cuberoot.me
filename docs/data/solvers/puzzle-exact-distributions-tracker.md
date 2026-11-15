@@ -2,7 +2,7 @@
 
 更新：2026-10-23。状态：**第四轮交付；新批量计算保留资源保护停止状态**。累计接入 45 份完整分布入口：27 份本地模型结果（其中 UFO 的实体对应关系待核验）、17 份公开完整精确直方图，以及 1 份待独立复核的 Redi 作者报告。保留 4,663 条独立回放样例和 27 套全态或完整陪集代表下载。用户已授权本轮本地提交；推送、生产部署，以及实际 1.36 GB 发布包准备、全量恢复与生产激活尚未执行。
 
-第一轮结果：[完整分布合并 CSV](../.local/small-puzzle-distributions-20261023/all-distributions.csv)、[汇总与资源证据](../.local/small-puzzle-distributions-20261023/final-summary.json)。手机预览：<https://dev.cuberoot.me/zh/scramble/stats?event=tetraminx>。
+第一轮结果：[完整分布合并 CSV](../../../.local/small-puzzle-distributions-20261023/all-distributions.csv)、[汇总与资源证据](../../../.local/small-puzzle-distributions-20261023/final-summary.json)。手机预览：<https://dev.cuberoot.me/zh/scramble/stats?event=tetraminx>。
 
 手机直达：[233 HTM](https://dev.cuberoot.me/zh/scramble/stats?event=233-htm-exact)、[233 QTM](https://dev.cuberoot.me/zh/scramble/stats?event=233-qtm-exact)、[Skewb Ultimate](https://dev.cuberoot.me/zh/scramble/stats?event=skewb-ultimate-exact)、[Bicube QTM](https://dev.cuberoot.me/zh/scramble/stats?event=bic-qtm-exact)、[Redi 作者报告](https://dev.cuberoot.me/zh/scramble/stats?event=redi-published)。这些是本机开发预览，不是生产发布。
 
@@ -76,31 +76,31 @@
 
 27 套下载共 **407 个 gzip 文件，1,358,102,234 字节，130,213,764 行**。行数跨不同计步/目标，且 HTR/FR 为完整陪集代表，不能视作唯一物理状态数。全态 CSV 使用 `optimal_length,scramble`，每个非空深度另有 TXT；identity 恰好一行，AC/MC 的 identity 位于 2/3 步档。
 
-- [前 15 套流式校验](../.local/small-puzzle-distributions-20261023/offline-download-verification.jsonl)：234 文件、5,746,476 行。
-- [新增 12 套流式校验](../.local/small-puzzle-distributions-20261023/full-state-download-verification.jsonl)：173 文件、124,467,288 行；验证进程 RSS 峰值 194.36 MiB。
+- [前 15 套流式校验](../../../.local/small-puzzle-distributions-20261023/offline-download-verification.jsonl)：234 文件、5,746,476 行。
+- [新增 12 套流式校验](../../../.local/small-puzzle-distributions-20261023/full-state-download-verification.jsonl)：173 文件、124,467,288 行；验证进程 RSS 峰值 194.36 MiB。
 - 所有文件已核 SHA-256、解压行数、CSV 深度频数和 identity。第三轮将文件同卷迁移至忽略的 `stats/scramble/exact-puzzles/<event>/<sha256>/<file>`，字节未改，不再进入 Next 的 public 打包边界。正式发布走独立 Release 资产清单，不提交 Git，也不把开发预览冒充正式部署。
-- 长导出每 250,000 行落盘断点，保留距离表与同一 PID；完成结果经生成键、直方图和各文件 SHA 校验后复用。[故障回归](../.local/small-puzzle-distributions-20261023/download-resume-check.json) 已验证按行恢复、丢弃未提交尾部、完成结果零迭代复用及拒绝生成器漂移。
+- 长导出每 250,000 行落盘断点，保留距离表与同一 PID；完成结果经生成键、直方图和各文件 SHA 校验后复用。[故障回归](../../../.local/small-puzzle-distributions-20261023/download-resume-check.json) 已验证按行恢复、丢弃未提交尾部、完成结果零迭代复用及拒绝生成器漂移。
 - Dino 双口径共用 PID 98860 和原始 20 MB 距离表；Tetraminx/含尖 Pyraminx 共用 PID 99809，不在逻辑批次间重启或重载表。
 
-第二轮五批计算及导出总墙钟 **149.71 秒**（不含开发、资料调查和页面验收）；进程树采样峰值 **438.36 MiB**，保守可用余量最低 **7.84 GiB**，沿原系统启动标识 Swapouts **0 → 0**、压力 **1**，无 OOM 或保护中止。[完整资源汇总](../.local/small-puzzle-distributions-20261023/second-pass-compute-summary.json)。监测不等同于操作系统强制禁止换出。
+第二轮五批计算及导出总墙钟 **149.71 秒**（不含开发、资料调查和页面验收）；进程树采样峰值 **438.36 MiB**，保守可用余量最低 **7.84 GiB**，沿原系统启动标识 Swapouts **0 → 0**、压力 **1**，无 OOM 或保护中止。[完整资源汇总](../../../.local/small-puzzle-distributions-20261023/second-pass-compute-summary.json)。监测不等同于操作系统强制禁止换出。
 
 ## 第一轮执行证据
 
 首轮正式串行运行共 1.50 秒；工作进程最高 RSS 145.78 MiB，监测进程树峰值 258.06 MiB，保守空闲余量最低 12.76 GiB，Swapouts 0 → 0。各项耗时包含导入、枚举、样例和校验，详见原始记录；不是跨机器性能承诺。
 
-结果：[完整分布 CSV](../.local/small-puzzle-distributions-20261023/distributions.csv)、[汇总](../.local/small-puzzle-distributions-20261023/summary.json)、[逐项结果与校验](../.local/small-puzzle-distributions-20261023/run-report.json)、[资源采样](../.local/small-puzzle-distributions-20261023/resources.jsonl)。这些本机证据不提交 Git。
+结果：[完整分布 CSV](../../../.local/small-puzzle-distributions-20261023/distributions.csv)、[汇总](../../../.local/small-puzzle-distributions-20261023/summary.json)、[逐项结果与校验](../../../.local/small-puzzle-distributions-20261023/run-report.json)、[资源采样](../../../.local/small-puzzle-distributions-20261023/resources.jsonl)。这些本机证据不提交 Git。
 
-第二批 [网站样例记录](../.local/small-puzzle-distributions-20261023/site-witnesses/run-report.json)：Jing 完整计算 390.3 ms / RSS 115.5 MiB；Tetraminx 因新增网站样例需求扩至每档 12 例及最深全部 32 例，耗时 103.2 ms / RSS 94.6 MiB。原始 PG 内部动作记号只在导出时转换为网站标准记号，并逐条核对转换前后 transformation 完全一致。
+第二批 [网站样例记录](../../../.local/small-puzzle-distributions-20261023/site-witnesses/run-report.json)：Jing 完整计算 390.3 ms / RSS 115.5 MiB；Tetraminx 因新增网站样例需求扩至每档 12 例及最深全部 32 例，耗时 103.2 ms / RSS 94.6 MiB。原始 PG 内部动作记号只在导出时转换为网站标准记号，并逐条核对转换前后 transformation 完全一致。
 
-第三批 [Pyramorphix 记录](../.local/small-puzzle-distributions-20261023/pyramorphix/run-report.json)：HTM 67.5 ms / RSS 104.9 MiB；QTM 59.2 ms / RSS 89.4 MiB。单色平块朝向不作为可见状态，不能用普通二阶完全复原判定替代。两种分布均与 [Jaap 的完整搜索](https://www.jaapsch.net/puzzles/pyramorf.htm) 一致。所有批次沿用首批系统启动标识和 Swapouts=0 基线。
+第三批 [Pyramorphix 记录](../../../.local/small-puzzle-distributions-20261023/pyramorphix/run-report.json)：HTM 67.5 ms / RSS 104.9 MiB；QTM 59.2 ms / RSS 89.4 MiB。单色平块朝向不作为可见状态，不能用普通二阶完全复原判定替代。两种分布均与 [Jaap 的完整搜索](https://www.jaapsch.net/puzzles/pyramorf.htm) 一致。所有批次沿用首批系统启动标识和 Swapouts=0 基线。
 
-第四批 [Dino 记录](../.local/small-puzzle-distributions-20261023/dino/run-report.json)：完整枚举、双目标推导及样例校验共 4,563.6 ms；工作进程峰值 RSS 176.17 MiB。逐层断点使用同一 PID 65671，最终保存 19,958,400 字节距离表及 SHA-256；不在层间重启或重载模型。单目标/双目标直方图均与 [Jaap 的 Dino 搜索](https://www.jaapsch.net/puzzles/dinocube.htm) 一致。
+第四批 [Dino 记录](../../../.local/small-puzzle-distributions-20261023/dino/run-report.json)：完整枚举、双目标推导及样例校验共 4,563.6 ms；工作进程峰值 RSS 176.17 MiB。逐层断点使用同一 PID 65671，最终保存 19,958,400 字节距离表及 SHA-256；不在层间重启或重载模型。单目标/双目标直方图均与 [Jaap 的 Dino 搜索](https://www.jaapsch.net/puzzles/dinocube.htm) 一致。
 
-第五批 [受限三阶记录](../.local/small-puzzle-distributions-20261023/restricted333/run-report.json)：half 78.3 ms / RSS 99.1 MiB；lsemu 56.1 ms / RSS 84.6 MiB。没有假称外部参考直方图；精确性来自完整闭包、根距离为 0、全部边距离差不超过 1、所有非根状态有降距边，以及独立 cubing.js 转移和样例回放。
+第五批 [受限三阶记录](../../../.local/small-puzzle-distributions-20261023/restricted333/run-report.json)：half 78.3 ms / RSS 99.1 MiB；lsemu 56.1 ms / RSS 84.6 MiB。没有假称外部参考直方图；精确性来自完整闭包、根距离为 0、全部边距离差不超过 1、所有非根状态有降距边，以及独立 cubing.js 转移和样例回放。
 
 五批运行总墙钟约 7.96 秒（不含研究、开发、网站验证）；进程树采样峰值 **297.58 MiB**，最低保守可用内存 **11.59 GiB**，同一系统启动内 Swapouts 始终 **0**、压力等级始终 **1**，无 OOM 或资源停止。采样峰值不当作操作系统强制内存上限。
 
-含小尖金字塔另用 [20.4 ms 的精确组合](../.local/small-puzzle-distributions-20261023/derived/pyram-tips.json) 完成，工作进程峰值 RSS 98.3 MiB。相对尖角坐标为 `(CORNERS2.orientation − CORNERS.orientation) mod 3`；16 个合法生成元各作用于唯一因子，验证 1,024 次独立转移、81 个尖角状态和已有 149 个主体样例，得到 `coreHistogram × [1,8,24,32,16]`。下界为各因子距离之和，拼接最短因子路径达到下界，因此得到完整最短距离分布，无需枚举 7,558 万状态或创建对应表。未把继承的主体边证书冒充一次新的全图扫描。
+含小尖金字塔另用 [20.4 ms 的精确组合](../../../.local/small-puzzle-distributions-20261023/derived/pyram-tips.json) 完成，工作进程峰值 RSS 98.3 MiB。相对尖角坐标为 `(CORNERS2.orientation − CORNERS.orientation) mod 3`；16 个合法生成元各作用于唯一因子，验证 1,024 次独立转移、81 个尖角状态和已有 149 个主体样例，得到 `coreHistogram × [1,8,24,32,16]`。下界为各因子距离之和，拼接最短因子路径达到下界，因此得到完整最短距离分布，无需枚举 7,558 万状态或创建对应表。未把继承的主体边证书冒充一次新的全图扫描。
 
 ## 候选队列
 
@@ -125,7 +125,7 @@
 
 网站入口 `/zh/scramble/stats?event=<id>`，id 为 `ivy`、`223`、`sfl`、`tetraminx`、`jingpyraminx`、`pyramorphix`、`pyramorphix-qtm`、`dino`、`dino-mirror`、`half`、`lsemu`、`pyram-tips`；Skewb 使用 `?event=skewb&src=all` 保留 WCA 真题。下载分别明确标为「完整分布」与「示例及最优解」，有界样例不称作全部状态清单。
 
-保护异常回归：[mock 脚本与实际输出](../.local/small-puzzle-distributions-20261023/guard-verification/README.md)。验证记录写入失败仍先发终止信号并安排 KILL、保留锁，以及跨输出目录复用已完成结果并检查 CSV SHA。mock 不冒充实际 OS 信号或禁换出机制。
+保护异常回归：[mock 脚本与实际输出](../../../.local/small-puzzle-distributions-20261023/guard-verification/README.md)。验证记录写入失败仍先发终止信号并安排 KILL、保留锁，以及跨输出目录复用已完成结果并检查 CSV SHA。mock 不冒充实际 OS 信号或禁换出机制。
 
 ## 验证与交付记录
 
@@ -136,8 +136,8 @@
 | Client typecheck、两个共享 package 构建 | 通过；开发服务运行期间未做 Next build |
 | 最小预览回归 | 第一轮 13 项；第二轮先覆盖 25 项 4,383 例，再只检查新增 HTR/FR 280 例与公开 3 份计数边界。后一次 4/4 通过，43 ms，均无 BFS |
 | 架构边界检查 | 通过：225 个既有精确身份、246 处引用、36 个手动合同 |
-| 浏览器功能验收 | Headless Chrome：13 项 HTTP 200、God/态数、最深档数量、实际下载 CSV 逐档一致，无 pageerror；[首十项](../.local/small-puzzle-distributions-20261023/browser-smoke.json)、[追加三项](../.local/small-puzzle-distributions-20261023/browser-smoke-additional.json)。Dino 双目标 0 步档另确认保留两个状态 |
-| 手机预览（375px） | 新增首 12 项实际 `dev.cuberoot.me` 页面、下载 SHA/解压行数、无水平溢出均通过；[首批记录](../.local/small-puzzle-distributions-20261023/browser-mobile-delivery-all.json)。HTR/FR 与公开 3 项，以及 Roux 三个 identity 边界均通过，0 pageErrors、0 水平溢出；[最终记录](../.local/small-puzzle-distributions-20261023/browser-mobile-final-all.json)。公开 127 档 CSV 逐行核验；一处测试选择器误判及恢复已记入证据 |
+| 浏览器功能验收 | Headless Chrome：13 项 HTTP 200、God/态数、最深档数量、实际下载 CSV 逐档一致，无 pageerror；[首十项](../../../.local/small-puzzle-distributions-20261023/browser-smoke.json)、[追加三项](../../../.local/small-puzzle-distributions-20261023/browser-smoke-additional.json)。Dino 双目标 0 步档另确认保留两个状态 |
+| 手机预览（375px） | 新增首 12 项实际 `dev.cuberoot.me` 页面、下载 SHA/解压行数、无水平溢出均通过；[首批记录](../../../.local/small-puzzle-distributions-20261023/browser-mobile-delivery-all.json)。HTR/FR 与公开 3 项，以及 Roux 三个 identity 边界均通过，0 pageErrors、0 水平溢出；[最终记录](../../../.local/small-puzzle-distributions-20261023/browser-mobile-final-all.json)。公开 127 档 CSV 逐行核验；一处测试选择器误判及恢复已记入证据 |
 | 下载完整性 | 407/407 gzip 的 SHA、行数、分档总数及 identity 校验通过；不是仅检查文件存在 |
 | 其余有限目录候选盘点 | 完成；具体范围、同构复用、超限与证据限制见候选文档，不声称穷尽无限自定义模型 |
 | 提交 / 推送 / 部署 | 本轮获授权进行本地提交，哈希见交付消息及本机提交收据；未推送、未生产部署 |
@@ -156,19 +156,19 @@
 | `bic-qtm-exact` | 1,108,800 态，36 档 | 35 | Jaap 全状态联合表行和核对；HTM 列和与本机已有分布一致，未误用 440 个形状表 |
 | `redi-published` | 作者报告 1,571,364,748,800 态，20 档 | 作者报告 19 | Shuang Chen 2017；深层尚无后续独立核验记录，单列待复核，不并入公开精确结果 |
 
-以上只读公开计数与 CSV 下载，没有重新计算巨量状态，也没有全态打乱资产或逐档独立回放样例；柱子禁点，图下明确说明。SQ1 计数从数学页抽为单一公共数据源，原数学页继续复用。资料逐档校验见 [15p 来源核对](../.local/small-puzzle-distributions-20261023/published-15p-source-check.json)、[Domino / Ultimate](../.local/small-puzzle-distributions-20261023/published-domino-ultimate-source-check.json)、[Bicube](../.local/small-puzzle-distributions-20261023/published-bicube-source-check.json)、[Redi](../.local/small-puzzle-distributions-20261023/published-redi-source-check.json)。三阶 HTM/QTM 已知直径与深度分布估计分开，不冒充完整精确直方图。
+以上只读公开计数与 CSV 下载，没有重新计算巨量状态，也没有全态打乱资产或逐档独立回放样例；柱子禁点，图下明确说明。SQ1 计数从数学页抽为单一公共数据源，原数学页继续复用。资料逐档校验见 [15p 来源核对](../../../.local/small-puzzle-distributions-20261023/published-15p-source-check.json)、[Domino / Ultimate](../../../.local/small-puzzle-distributions-20261023/published-domino-ultimate-source-check.json)、[Bicube](../../../.local/small-puzzle-distributions-20261023/published-bicube-source-check.json)、[Redi](../../../.local/small-puzzle-distributions-20261023/published-redi-source-check.json)。三阶 HTM/QTM 已知直径与深度分布估计分开，不冒充完整精确直方图。
 
 Redi 计数为十二棱偶排列与八固定角朝向的完整域 `12!/2 × 3⁸`；48 种对称仅用于压缩计算，不再除总数。原作者另行暴搜确认了 0–8 步，发帖时计划继续检查深层；目前未找到后续核验记录，因此界面摘要和最大步数均明确加“作者报告”。
 
 ## 第三轮交付与资源边界
 
-- 407 个 gzip 仅做同卷 rename，迁移前逐文件 stat 核对大小、目标不存在及同卷；不读正文、不重新枚举。原完整校验仍对应相同字节；[操作清单](../.local/small-puzzle-distributions-20261023/asset-path-migration.json) 保留源/目标、大小、SHA 和旧清单 SHA，原始计算报告未改。
+- 407 个 gzip 仅做同卷 rename，迁移前逐文件 stat 核对大小、目标不存在及同卷；不读正文、不重新枚举。原完整校验仍对应相同字节；[操作清单](../../../.local/small-puzzle-distributions-20261023/asset-path-migration.json) 保留源/目标、大小、SHA 和旧清单 SHA，原始计算报告未改。
 - 下载清单 SHA 为 `176ac3d459e1e66efafd098a5c27c8740ba8695b666e9cb8afd53eaf5455b822`。开发环境走流式 `/stats/`，避免把最大 286 MB 文件整体读入 Node 内存。
-- [资产入口与发布步骤](../scripts/exact-puzzles/README.md) 已实现独立的按项目 tar、内容 SHA 清单、恢复、Release 上传和静态站逐文件验证。复用 `wca-data-latest`，不扩大日常 WCA 快照尺寸限制，不改共享 Release body，也不把大文件打进 Next。
+- [资产入口与发布步骤](../../../scripts/exact-puzzles/README.md) 已实现独立的按项目 tar、内容 SHA 清单、恢复、Release 上传和静态站逐文件验证。复用 `wca-data-latest`，不扩大日常 WCA 快照尺寸限制，不改共享 Release body，也不把大文件打进 Next。
 - 生产下载入口绑定完整清单的已发布验证收据；当前收据为空，因此生产隐藏全态/逐档下载，完整直方图和有界样例 CSV 仍可用。微型 gzip 的打包→空目录恢复、重复恢复、损坏和路径拒绝夹具通过；本轮未准备或恢复整套 1.36 GB 发布包，也未上传或激活生产文件。
-- 2026-10-23 16:00 UTC 复核发现同一次开机 Swapouts 已由原 0 增至 16 页、压力等级 1。当时无本任务求解进程；该系统累计值无法归因到本任务，既有计算结束时的 0 换出证据仍按原时间有效。已写入[资源保护停止记录](../.local/small-puzzle-distributions-20261023/protected-stop.json)，禁止重置基线或自动续算。之后仅做可逆元数据迁移、源码、小夹具与正常页面验证，不启动新枚举或大文件批校验。
+- 2026-10-23 16:00 UTC 复核发现同一次开机 Swapouts 已由原 0 增至 16 页、压力等级 1。当时无本任务求解进程；该系统累计值无法归因到本任务，既有计算结束时的 0 换出证据仍按原时间有效。已写入[资源保护停止记录](../../../.local/small-puzzle-distributions-20261023/protected-stop.json)，禁止重置基线或自动续算。之后仅做可逆元数据迁移、源码、小夹具与正常页面验证，不启动新枚举或大文件批校验。
 - 新图标按嵌入立方体的十二面体及四个斜转切平面生成，与普通 Skewb 分开；共享 SVG / 图标目录注册完成，图标目录回归 3/3 通过。
-- 新增五页的 375×812 手机回归通过：110 个 CSV 档位逐行一致、0 水平溢出、公开表无伪造样例入口，Redi 三个目录入口均显示待独立复核。迁移后的 Duo 全态下载实取 904 字节，SHA 与全部 324 行吻合；Ivy 0 档 21 字节也经实际开发域名核验。见[手机记录](../.local/small-puzzle-distributions-20261023/browser-mobile-third.json)。
+- 新增五页的 375×812 手机回归通过：110 个 CSV 档位逐行一致、0 水平溢出、公开表无伪造样例入口，Redi 三个目录入口均显示待独立复核。迁移后的 Duo 全态下载实取 904 字节，SHA 与全部 324 行吻合；Ivy 0 档 21 字节也经实际开发域名核验。见[手机记录](../../../.local/small-puzzle-distributions-20261023/browser-mobile-third.json)。
 - 客户端 typecheck、图标目录 3 项、公开计数 1 项、生产发布收据 1 项、资产恢复小夹具及相关严格 TypeScript 检查均通过。架构检查当前为 227 个既有身份、248 处引用、37 个手动合同。新增 `.github/workflows/exact_puzzle_assets.yml` 仅跑小夹具，不下载或重算语料；尚未 push，不能声称远端 CI 已通过。
 - 手机验证脚本曾因 10 秒 hydration 等待、把含 `redi` 的五个名称都当作 Redi 本体，以及向仍在运行的 React 页面注入图标夹具而失败。已分别延长有界等待、按结果状态筛选、在空白页隔离夹具；只续验失败部分，最终页面错误数为 0，未为通过测试修改产品语义。
 
@@ -212,4 +212,4 @@ Redi 计数为十二棱偶排列与八固定角朝向的完整域 `12!/2 × 3⁸
 
 手机直达：[Cmetrick Mini HTM](https://dev.cuberoot.me/zh/scramble/stats?event=cm2-neutral-htm)、[Cmetrick QTM](https://dev.cuberoot.me/zh/scramble/stats?event=cm3-neutral-qtm)、[223 QTM](https://dev.cuberoot.me/zh/scramble/stats?event=223-qtm-exact)、[Gear 基础转](https://dev.cuberoot.me/zh/scramble/stats?event=gear-single-exact)、[Super Floppy QTM](https://dev.cuberoot.me/zh/scramble/stats?event=sfl-qtm-exact)、[Rubik’s UFO](https://dev.cuberoot.me/zh/scramble/stats?event=rubiks-ufo-ftm-exact)、[Netblock UFO](https://dev.cuberoot.me/zh/scramble/stats?event=netblock-ufo-ftm-exact)。
 
-第四轮验证：新增 10 入口在真实 `dev.cuberoot.me` 的 375 × 812 手机视口逐项检查上帝之数和完整 CSV，146 档逐行与数据源一致，另检查旧 UFO 的模型说明及待核验覆盖状态；11 项均无水平溢出，0 pageErrors。客户端 typecheck、公开表/UFO 边界 2 项窄回归、图标目录 3 项回归通过。未重复运行全状态枚举。[手机记录](../.local/small-puzzle-distributions-20261023/browser-mobile-fourth.json)与[交付汇总](../.local/small-puzzle-distributions-20261023/fourth-pass-delivery-summary.json)。
+第四轮验证：新增 10 入口在真实 `dev.cuberoot.me` 的 375 × 812 手机视口逐项检查上帝之数和完整 CSV，146 档逐行与数据源一致，另检查旧 UFO 的模型说明及待核验覆盖状态；11 项均无水平溢出，0 pageErrors。客户端 typecheck、公开表/UFO 边界 2 项窄回归、图标目录 3 项回归通过。未重复运行全状态枚举。[手机记录](../../../.local/small-puzzle-distributions-20261023/browser-mobile-fourth.json)与[交付汇总](../../../.local/small-puzzle-distributions-20261023/fourth-pass-delivery-summary.json)。

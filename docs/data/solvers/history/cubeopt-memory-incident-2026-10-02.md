@@ -13,7 +13,7 @@
 
 ## 已实施
 
-1. `/etc/ssh/sshd_config` 增加 [root 超时策略](../ops/ssh/root-session-guard.conf)。`sshd -t` 通过后 reload；root 生效值 60 秒 / 3 次，macmini-tunnel 保持原策略。新失效会话在认证日志出现 `Timeout, client not responding`，短命令 canary 已回收。
+1. `/etc/ssh/sshd_config` 增加 [root 超时策略](../../../../ops/ssh/root-session-guard.conf)。`sshd -t` 通过后 reload；root 生效值 60 秒 / 3 次，macmini-tunnel 保持原策略。新失效会话在认证日志出现 `Timeout, client not responding`，短命令 canary 已回收。
 2. 原配置备份：`/var/backups/sshd_config.before-session-guard-20261002T025009Z`。reload 不改变旧连接的设置。
 3. 先清理一个确定闲置会话，确认其父子进程均退出、SSH/API/Next 正常，再对候选重新核对并 SIGTERM 3,897 个闲置会话。审计保存在服务器 `/var/backups/cuberoot-idle-ssh-cleanup-20261002T0300.json`。不使用全局 pkill，不影响正在执行命令的连接。
 4. CubeOpt 加载前按实际表大小加 1 GiB 余量检查 Linux MemAvailable；不足时拒绝加载。流式加载期间保留 256 MiB 最低余量并处理短读。这是资源保护，不能代替连接泄漏的修复。

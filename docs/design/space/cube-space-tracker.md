@@ -39,12 +39,12 @@
 
 基础版代码入口：
 
-- [SpacePage.tsx](../core/packages/client/app/[lang]/space/SpacePage.tsx)：页面交互与保存。
-- [space-scene.ts](../core/packages/client/app/[lang]/space/space-scene.ts)：Three.js 场景、视角与拖动。
-- [space-room.ts](../core/packages/client/app/[lang]/space/space-room.ts)：八套场景、材质、镜面及资源释放。
-- [space-turn.ts](../core/packages/client/app/[lang]/space/space-turn.ts)：共用模拟器的转层接入。
-- [space-state.ts](../core/packages/client/app/[lang]/space/space-state.ts)：布局契约与校验。
-- [puzzle-models](../core/packages/client/components/puzzle-models/)：与模拟器共用的模型。
+- [SpacePage.tsx](../../../core/packages/client/app/[lang]/space/SpacePage.tsx)：页面交互与保存。
+- [space-scene.ts](../../../core/packages/client/app/[lang]/space/space-scene.ts)：Three.js 场景、视角与拖动。
+- [space-room.ts](../../../core/packages/client/app/[lang]/space/space-room.ts)：八套场景、材质、镜面及资源释放。
+- [space-turn.ts](../../../core/packages/client/app/[lang]/space/space-turn.ts)：共用模拟器的转层接入。
+- [space-state.ts](../../../core/packages/client/app/[lang]/space/space-state.ts)：布局契约与校验。
+- [puzzle-models](../../../core/packages/client/components/puzzle-models/)：与模拟器共用的模型。
 
 本地预览：[魔方空间](http://localhost:3000/zh/space)。本轮验证记录见文末。
 
@@ -784,7 +784,7 @@ Use case: stylized-concept.
 2026-11-03。此前 Mac 只有正式导出清单，模型请求返回 404；维护者确认资产仍在 Windows，并明确要求剪切迁移、删除旧备份。
 
 - 通过已有直连 SSH/SFTP 迁移正式 25 份 `.blend`、25 份 GLB、贴图，以及旧资产盘、历史候选和配套资料。文件在 Mac 逐一核对 SHA-256 后，重新校验 Windows 源文件并删除；另起连接核实 34 个源目录不存在。未涉及其他项目模型。维护者要求删除的自动备份、`backups/` 和 `shanghai-before-*` 快照共 65 份、7,401,188,548 字节，两端均已清理。
-- Mac 最终保留 2,007 个文件、10,617,111,467 字节，其中 200 个模型文件。正式工程/网页资源保留仓库路径，历史候选与初始捕获归档到 `/Users/eula/Documents/CubeRoot-Assets/space/`，该目录的 `migration-20261103.json` 保存来源、目标和逐文件指纹。具体目录见 [Blender 编辑流程](../design/space/README.md)。重资产仍未进入 Git 或 LFS。
+- Mac 最终保留 2,007 个文件、10,617,111,467 字节，其中 200 个模型文件。正式工程/网页资源保留仓库路径，历史候选与初始捕获归档到 `/Users/eula/Documents/CubeRoot-Assets/space/`，该目录的 `migration-20261103.json` 保存来源、目标和逐文件指纹。具体目录见 [Blender 编辑流程](../../../design/space/README.md)。重资产仍未进入 Git 或 LFS。
 - 恢复后检查 190 个本地网页资源全部可读；26 个 GLB（含原有车辆资源）的 HTTP Range 文件头、版本和长度均正确。网页模型已恢复可下载，不将这项检查当作真实浏览器画质或帧率验收。
 - 复用 GLTFLoader 的实际字节进度，按清单中的解压后文件大小显示下载百分比与 MB，每跨 1% 更新一次。城市和房间并行下载时分别追踪；下载结束后显示“正在准备场景”，仍等原有场景就绪通知才开放编辑。切换环境或重试重置相应进度，忽略旧实例及 WebGL 失效后的通知。缓存命中和缺少 Content-Length 的响应也可完成状态转换。
 - 日常 Blender 导出使用系统临时目录并自动清理中间 GLB，移除 Windows `E:` 盘依赖；不重新生成或保存覆盖已迁移的正式 `.blend`。

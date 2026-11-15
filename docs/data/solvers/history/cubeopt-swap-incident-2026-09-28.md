@@ -90,7 +90,7 @@ API health 返回 `status:ok, db:connected`。
 该次备份未进入数据导出，不能将其认定为此次换页的来源。
 
 09:19 UTC 后续 API 发布 `827ac576e0` 已增加持续诊断，详见
-[请求观测说明](request-observability.md#cubeopt-最优求解监控2026-09-28)。
+[请求观测说明](../../../operations/observability/request-observability.md#cubeopt-最优求解监控2026-09-28)。
 这次发布按标准流程重启 API 并重新预热求解器；与上面的免重启 cgroup 修改分开记账。
 09:24 UTC 三个相同随机状态样本完整请求分别为 3,166、1,423、2,637 ms，
 全部返回 18 HTM 解且经 cubing.js 校验还原正确。求解进程 swap 为 0，

@@ -38,7 +38,7 @@ Mac 点击入口调用上述正式命令，不复制策略。本机快捷指令�
 
 本地源码修改不代表线上放行。发布时除 Next/Vercel 应用部署，还需更新 active WAF 中对应规则，使其路径条件与 `ops/vercel-ban-relay/competition-rule.json` 一致；保留原有 cookie、国家、阈值与封禁时长。两条线路均需用无验证 Cookie 的 GET/HEAD 核对上述页面及中文页面直接可达，并确认普通受保护页仍进入验证码。未推送、未修改线上 WAF 时不得标记上线完成。
 
-面向普通读者和开发者的完整复盘：[2026-09-22—25 事件日志](traffic-incident-2026-09-22-25.md)，页面 `/zh/dev/traffic-incident-2026-09`；含真实 Vercel 截图、可视化与判断纠正。本文件保留操作细节与历史状态。
+面向普通读者和开发者的完整复盘：[2026-09-22—25 事件日志](../history/traffic-incident-2026-09-22-25.md)，页面 `/zh/dev/traffic-incident-2026-09`；含真实 Vercel 截图、可视化与判断纠正。本文件保留操作细节与历史状态。
 
 2026-09-25 增加阿里云本地 `cuberoot-traffic-guard.timer` 自动止损，规则、恢复方法与 Vercel 覆盖缺口见 [traffic-monitor.md](traffic-monitor.md)。守护程序按分钟检查主站、公开预览和独立 API 的日志；异常时三者进入维护/503，并通过 Bark 告警。Vercel 独立线路仍由其平台防护、WAF 与预算暂停保护，本地守护程序无法代替 Vercel 线路的实时流量判断。
 
@@ -383,7 +383,7 @@ Analytics 是浏览器上报的数据集，不能直接等同于 Vercel 页面�
 
 ## 参考
 
-- [既有流量监控](traffic-monitor.md)、[09-22 事件证据](traffic-incident-2026-09-22.md)
+- [既有流量监控](traffic-monitor.md)、[09-22 事件证据](../history/traffic-incident-2026-09-22.md)
 - [Vercel 暂停项目](https://vercel.com/docs/projects/managing-projects#pausing-a-project)、[费用保护](https://vercel.com/docs/spend-management)
 - [Vercel WAF 限流](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting)、[WAF 拦截流量计费政策](https://vercel.com/changelog/web-application-firewall-mitigated-traffic-is-free-on-vercel)
 - [停用 Web Analytics](https://vercel.com/docs/analytics/using-web-analytics)、[Analytics 价格](https://vercel.com/docs/analytics/limits-and-pricing)

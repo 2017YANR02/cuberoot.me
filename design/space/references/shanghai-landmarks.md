@@ -59,7 +59,7 @@
 - [24 栋日景总览](../../../.tmp/png/space-landmarks/refined-day-bund.png)：用于逐栋比较屋面、立面与窗格；模型移到临时检查舞台，未改变城市中的实际位置。
 - [汇丰夜间近景](../../../.tmp/png/space-landmarks/refined-night-12-bund.png)：修正首次构图与穹顶欠曝后重渲染，使用检查用投光；不是网页夜景或现场灯位复原。
 
-上述临时图片不入 Git。导出后实际资源加载、两侧开口射线、石材贴图/UV、时钟、船与交通绑定检查通过，完整数值和剩余项见[迁移跟踪](../../../docs/space-blender-tracker.md#2026-09-08-三件套与外滩-24-栋-blender-细部)。
+上述临时图片不入 Git。导出后实际资源加载、两侧开口射线、石材贴图/UV、时钟、船与交通绑定检查通过，完整数值和剩余项见[迁移跟踪](../../../docs/design/space/space-blender-tracker.md#2026-09-08-三件套与外滩-24-栋-blender-细部)。
 
 ## 第二批：亚细亚与上海总会屋顶和入口
 
@@ -75,7 +75,7 @@
 - [上海总会第三轮日景](../../../.tmp/png/space-bund12/round3-day-2-bund.png)
 - [保存后上海总会夜间检查](../../../.tmp/png/space-bund12/final-night-2-bund.png)
 
-夜间图使用检查灯光，不能作为现场配光或网页光照验收。新圆窗、阁楼窗、山花、相邻窗和雨棚两侧共 11 条实际导出射线检查通过。当前源工程 93,515,600 字节，GLB 285,677,784 字节，修订为 `bund-entrances-20260908`；完整哈希和验证范围见[迁移跟踪](../../../docs/space-blender-tracker.md#2026-09-08-亚细亚与上海总会屋顶入口)。
+夜间图使用检查灯光，不能作为现场配光或网页光照验收。新圆窗、阁楼窗、山花、相邻窗和雨棚两侧共 11 条实际导出射线检查通过。当前源工程 93,515,600 字节，GLB 285,677,784 字节，修订为 `bund-entrances-20260908`；完整哈希和验证范围见[迁移跟踪](../../../docs/design/space/space-blender-tracker.md#2026-09-08-亚细亚与上海总会屋顶入口)。
 
 ## 第三批：亚细亚凹廊与上海总会双亭
 
@@ -94,7 +94,7 @@
 - [保存后亚细亚夜间检查](../../../.tmp/png/space-bund-details/final-night-1-bund.png)
 - [保存后上海总会夜间检查](../../../.tmp/png/space-bund-details/final-night-2-bund.png)
 
-修订 `bund-galleries-20260909` 已保存；本批 1:1、现场灯位和电影级画质仍未通过。导出数值、射线检查及网页验证边界见[迁移跟踪](../../../docs/space-blender-tracker.md#2026-09-09-凹廊与双亭增量精修)。
+修订 `bund-galleries-20260909` 已保存；本批 1:1、现场灯位和电影级画质仍未通过。导出数值、射线检查及网页验证边界见[迁移跟踪](../../../docs/design/space/space-blender-tracker.md#2026-09-09-凹廊与双亭增量精修)。
 
 ## 第四批：上海总会窗组与檐口
 
@@ -108,7 +108,7 @@
 - [第三轮侧面日景](../../../.tmp/png/space-bund-windows/round3-day-oblique.png)
 - [保存后夜间结构检查](../../../.tmp/png/space-bund-windows/final-night-bund.png)
 
-夜间图采用临时检查投光，配光仍偏平、玻璃反射过亮，不能当成现场灯位复原或网页最终夜景。侧面窗列、屋顶老虎窗与瓦片、花饰雕刻、转角旧线脚仍需精修。修订 `bund-windows-20260909` 已保存到源工程；原 586 个具名稳定 ID 全部保留，新增 4 个网格。完整导出与验证数值见[迁移跟踪](../../../docs/space-blender-tracker.md)。1:1 和电影级仍未通过。
+夜间图采用临时检查投光，配光仍偏平、玻璃反射过亮，不能当成现场灯位复原或网页最终夜景。侧面窗列、屋顶老虎窗与瓦片、花饰雕刻、转角旧线脚仍需精修。修订 `bund-windows-20260909` 已保存到源工程；原 586 个具名稳定 ID 全部保留，新增 4 个网格。完整导出与验证数值见[迁移跟踪](../../../docs/design/space/space-blender-tracker.md)。1:1 和电影级仍未通过。
 
 ## 第五批：汇丰柱廊、江海关铜饰与和平饭店铜顶
 
@@ -134,7 +134,7 @@
 - [江海关日间近景](../../../.tmp/png/bund-hero-details/round2-13-day-close.png)与[夜间近景](../../../.tmp/png/bund-hero-details/round2-13-night-close.png)
 - [和平饭店铜顶日景](../../../.tmp/png/bund-hero-details/round2-20-day-close.png)与[夜间近景](../../../.tmp/png/bund-hero-details/round2-20-night-close.png)
 
-夜间图使用临时检查投光，灯光和舞台不保存、不导出。新增灯具只有外壳和发光灯面，网页仍用既有共享外墙灯光；未做现场灯位和光度测量。和平饭店铜顶仍欠曝，汇丰柱材偏白，部分玻璃偏亮；这些明确为未通过项。源工程已保存 `bund-hero-details-20260909` 修订并导出，53 处实际 GLB 细部射线通过，凹槽实测模型深度约 0.05794 m；这验证导出结构，没有证明建筑测绘 1:1、网页最终夜景或电影级画质。完整数值见[迁移跟踪](../../../docs/space-blender-tracker.md)。
+夜间图使用临时检查投光，灯光和舞台不保存、不导出。新增灯具只有外壳和发光灯面，网页仍用既有共享外墙灯光；未做现场灯位和光度测量。和平饭店铜顶仍欠曝，汇丰柱材偏白，部分玻璃偏亮；这些明确为未通过项。源工程已保存 `bund-hero-details-20260909` 修订并导出，53 处实际 GLB 细部射线通过，凹槽实测模型深度约 0.05794 m；这验证导出结构，没有证明建筑测绘 1:1、网页最终夜景或电影级画质。完整数值见[迁移跟踪](../../../docs/design/space/space-blender-tracker.md)。
 
 ## 第六批：江海关窗带与和平饭店上部立面
 
@@ -149,7 +149,7 @@
 - [和平饭店保存后日景](../../../.tmp/png/bund-frontages/saved-round3-20-day-close.png)与[夜间结构检查](../../../.tmp/png/bund-frontages/saved-round3-20-night-close.png)
 - [江海关钟下格栅](../../../.tmp/png/bund-frontages/saved-round3-tower-13-day-close.png)
 
-上述图片均已实际查看；临时 Cycles 检查灯光不保存、不导出。夜间玻璃反射仍过亮、铜顶仍欠曝，不能据此宣称现场配光完成。新立面 85 条实际 GLB 射线及更新后的铜饰/柱槽/铜顶 71 条检查通过，严格检查首次命中的材质、位置和凹入深度。尺寸与装饰仍属照片估计，1:1、网页 GPU 画质及电影级验收未通过；资源数值见[迁移跟踪](../../../docs/space-blender-tracker.md)。
+上述图片均已实际查看；临时 Cycles 检查灯光不保存、不导出。夜间玻璃反射仍过亮、铜顶仍欠曝，不能据此宣称现场配光完成。新立面 85 条实际 GLB 射线及更新后的铜饰/柱槽/铜顶 71 条检查通过，严格检查首次命中的材质、位置和凹入深度。尺寸与装饰仍属照片估计，1:1、网页 GPU 画质及电影级验收未通过；资源数值见[迁移跟踪](../../../docs/design/space/space-blender-tracker.md)。
 
 ## 第七批：和平饭店临江窗带与底层拱窗
 
@@ -167,7 +167,7 @@
 - [入口拱窗与招牌](../../../.tmp/png/bund-peace-facade/saved-entrance-20-day-close.png)
 - [夜间窗带结构检查](../../../.tmp/png/bund-peace-facade/saved-20-night-close.png)
 
-夜间图采用临时检查投光，舞台与灯光不保存、不导出；部分玻璃偏亮、铜顶照明偏暗，配光尚非现场复原。这些图不能替代网页 GPU 灯光验收。源工程修订为 `peace-riverfront-20260909`，导出和实际 GLB 检查见[迁移跟踪](../../../docs/space-blender-tracker.md)。
+夜间图采用临时检查投光，舞台与灯光不保存、不导出；部分玻璃偏亮、铜顶照明偏暗，配光尚非现场复原。这些图不能替代网页 GPU 灯光验收。源工程修订为 `peace-riverfront-20260909`，导出和实际 GLB 检查见[迁移跟踪](../../../docs/design/space/space-blender-tracker.md)。
 
 ## 第八批：江海关屋顶侧亭与钟楼基座
 
@@ -179,7 +179,7 @@
 
 保存后的[日间近景](../../../.tmp/png/bund-next/saved-13-day-close.png)、[整栋日景](../../../.tmp/png/bund-next/saved-wide-13-day.png)及[夜间结构检查](../../../.tmp/png/bund-next/saved-13-night-close.png)均已查看。夜间钟楼基座有生硬横向阴影，局部玻璃反射和深处屋顶连接仍需打磨；临时检查配光不等于现场照明。钟面刻度、侧后立面、准确石雕及可靠测绘尺寸尚未校准，当前仍是照片估算，1:1 和电影级未通过。
 
-修订 `customs-roof-20260910` 已保存；37 条新结构射线与此前全部建筑细部检查通过，验证部件、洞口和深度的导出一致性，不证明测绘精度。源工程恢复、导出大小和检查证据见[迁移跟踪](../../../docs/space-blender-tracker.md)。
+修订 `customs-roof-20260910` 已保存；37 条新结构射线与此前全部建筑细部检查通过，验证部件、洞口和深度的导出一致性，不证明测绘精度。源工程恢复、导出大小和检查证据见[迁移跟踪](../../../docs/design/space/space-blender-tracker.md)。
 
 ## 第九批：汇丰六柱间距纠错
 
@@ -194,4 +194,4 @@
 - [候选日间柱廊](../../../.tmp/png/space-parallel-20260910/hsbc/columns-candidate-02-12-day-close.png)：三组窗带重新露出，柱头和柱脚同步对齐。
 - [保存后夜间结构检查](../../../.tmp/png/space-parallel-20260910/hsbc/columns-saved-12-night-close.png)：临时 Cycles 检查灯光，未保存和导出为现场照明。
 
-这两图已打开查看；柱头叶饰仍简化，石材偏白、完整窗轴及招牌字形仍需对照，穹顶雕塑、旗杆和侧后立面也未完成。此轮仅纠正有明确照片证据的柱列关系，不代表全楼 1:1 或电影级通过。实际网页和导出证据继续记入[迁移跟踪](../../../docs/space-blender-tracker.md)。
+这两图已打开查看；柱头叶饰仍简化，石材偏白、完整窗轴及招牌字形仍需对照，穹顶雕塑、旗杆和侧后立面也未完成。此轮仅纠正有明确照片证据的柱列关系，不代表全楼 1:1 或电影级通过。实际网页和导出证据继续记入[迁移跟踪](../../../docs/design/space/space-blender-tracker.md)。

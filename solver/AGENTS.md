@@ -20,9 +20,9 @@ nxopt22 本轮已完成：WCA1000 / 16线程 / 单轮不预热整批耗时504.90
 
 2026-10-15 最新授权“可以测试了”：维护者撤销上一条延后，允许测试已准备的四个 Opt9 WASM 候选 A 专用查表、B padded、C 组合、D select；承接已经说明的独立同 boot / Swapouts 48 监控范围，旧 16→48 停止记录全部保留。沿用同一 WCA1000 原序、16 搜索线程、每版一次、不预热，复用原版成绩，不发布。先完成 C/D 缺少的小数据验证，顺序经现有 guard 测试，一次只加载一份主表；各候选独立固定构件/源码快照/输出/receipt，共用本轮保护停止边界，任一新增换出或资源保护触发后整个本轮停止，禁止换候选变相续跑。内存门槛不降低，当前暂停记录仅为历史，不是仍需重复询问的许可关卡。此条不授权其他档位或长期任务。
 
-2026-10-15 历史暂缓阶段（已由上条“可以测试了”取代）：维护者回复“先保留代码，不测试”，随后要求内存有限时先多准备几个版本。该阶段仅编译独立 Opt9 WASM 候选，没有加载主表或启动新测试。`opt9-batch` / `padded-state` 的小数据检查在暂停前完成；组合 `opt9-batch-padded` 与 `opt9-select` 当时仅输出 `draft-*` / `draft-metadata.json`，明确 `verified=false` / `benchmarkEligible=false`。这些原草稿和保护记录仍保留；最新构建及测试状态见 `../docs/optimal-solver-benchmark.md`。
+2026-10-15 历史暂缓阶段（已由上条“可以测试了”取代）：维护者回复“先保留代码，不测试”，随后要求内存有限时先多准备几个版本。该阶段仅编译独立 Opt9 WASM 候选，没有加载主表或启动新测试。`opt9-batch` / `padded-state` 的小数据检查在暂停前完成；组合 `opt9-batch-padded` 与 `opt9-select` 当时仅输出 `draft-*` / `draft-metadata.json`，明确 `verified=false` / `benchmarkEligible=false`。这些原草稿和保护记录仍保留；最新构建及测试状态见 `../docs/data/solvers/optimal-solver-benchmark.md`。
 
-2026-10-15 当前任务：维护者重新明确要求优化 **CubeRoot Opt9 WASM 16G**，目标快于保留的 cube48opt9 WASM 83.655909546 秒。沿用固定 WCA1000 原序、16 个搜索线程、每个新候选单轮零预热；只在本机，保留旧源码/构件/结果，不重跑原版，不发布。此前“仅 Opt8”限制不再限制本轮 Opt9 开发，但旧 coset 的 Swapouts 16→48 保护停止不可复用或重启，Opt8 专属 48 receipt 不能作为 Opt9 新运行的许可。当前先完成独立 `wasm-opt9-batch`（固定 Opt9 坐标与批量读取，关闭 coset/root/lazy）编译及小数据验证；大表运行须经内存复核和独立 guard scope，不降低门槛、不静默重设旧基线。另将 `wasm-padded-state` 搜索帧布局作为隔离候选验证，其 SIMD 简化与旧 V5 同类，不能宣称新突破或未经实测晋升。进展和冻结证据见 `../docs/optimal-solver-benchmark.md` 最新章节。
+2026-10-15 当前任务：维护者重新明确要求优化 **CubeRoot Opt9 WASM 16G**，目标快于保留的 cube48opt9 WASM 83.655909546 秒。沿用固定 WCA1000 原序、16 个搜索线程、每个新候选单轮零预热；只在本机，保留旧源码/构件/结果，不重跑原版，不发布。此前“仅 Opt8”限制不再限制本轮 Opt9 开发，但旧 coset 的 Swapouts 16→48 保护停止不可复用或重启，Opt8 专属 48 receipt 不能作为 Opt9 新运行的许可。当前先完成独立 `wasm-opt9-batch`（固定 Opt9 坐标与批量读取，关闭 coset/root/lazy）编译及小数据验证；大表运行须经内存复核和独立 guard scope，不降低门槛、不静默重设旧基线。另将 `wasm-padded-state` 搜索帧布局作为隔离候选验证，其 SIMD 简化与旧 V5 同类，不能宣称新突破或未经实测晋升。进展和冻结证据见 `../docs/data/solvers/optimal-solver-benchmark.md` 最新章节。
 
 2026-10-15 研究存档指引：维护者要求仅从比较页隐藏 Opt8 coset 39.7 秒实验行，源码、冻结构件、原始结果与保护记录全部保留。后续 AI 先读 [Opt8 WASM 实验存档](experiments/cube48opt-rust/opt8-wasm-experiments.md#2026-10-15-coset-page-row-archived-research-retained)，不能把页面隐藏理解为删除研究或重新运行旧标签；既有运行规则不变。
 
@@ -30,9 +30,9 @@ nxopt22 本轮已完成：WCA1000 / 16线程 / 单轮不预热整批耗时504.90
 
 2026-10-15 最新任务：维护者明确要求补测原版 cube48opt Opt8 WASM，仅本机、同一固定 WCA100 原序、4 个搜索线程、单轮、不预热，与已保留 Rust WASM 正式版 33.368675666 秒比较。原版 WASM 字节不改，私有 JS wrapper 可复用已验证的线程 mailbox 兼容修复；统一 Node 24.21.0 / TurboFan（`--no-liftoff`），表加载与独立验解不计入求解时间。沿用本轮已批准的同一 boot / Swapouts 48，不覆盖任何旧保护/结果，出现新增换出立即停止，不自动重试。Rust padded 状态布局实验仍暂停，本任务不跑 Rust、Opt9 或其他档位，不发布。
 
-2026-10-15 最新维护者指令“不需要发布”：后续本任务仅本地，不再提交、推送、发布。新 WASM `lazy-normal-four` / `lazy-normal`（含根界跳层与延后普通侧群乘法）已分别冻结到 build-UXKCJq / build-ZR8n93，完成小内存正确性检查。维护者针对“保留旧停止记录、经内存复核为本轮建立 Swapouts 48 新基线”的明确问题回复“你就先优化和测试 opt8”，因此仅授权本轮 Opt8 100 条 / 4 线程 / 每候选单轮零预热，新 `opt8-lazy` scope；不得运行 Opt9。旧 Swapouts 16→48 保护停止仍原样保留且禁止重启，新 scope 继续新增换出立即停止、独占大表与至少 2 GiB 余量保护，不自动重试。详情见 `../docs/optimal-solver-benchmark.md`。
+2026-10-15 最新维护者指令“不需要发布”：后续本任务仅本地，不再提交、推送、发布。新 WASM `lazy-normal-four` / `lazy-normal`（含根界跳层与延后普通侧群乘法）已分别冻结到 build-UXKCJq / build-ZR8n93，完成小内存正确性检查。维护者针对“保留旧停止记录、经内存复核为本轮建立 Swapouts 48 新基线”的明确问题回复“你就先优化和测试 opt8”，因此仅授权本轮 Opt8 100 条 / 4 线程 / 每候选单轮零预热，新 `opt8-lazy` scope；不得运行 Opt9。旧 Swapouts 16→48 保护停止仍原样保留且禁止重启，新 scope 继续新增换出立即停止、独占大表与至少 2 GiB 余量保护，不自动重试。详情见 `../docs/data/solvers/optimal-solver-benchmark.md`。
 
-2026-10-15 WASM 两档优化：网站按 Opt8 8 GB / WCA100 / 4 线程、Opt9 16 GB / WCA1000 / 16 线程分别比较，各候选一轮不预热，原版不重跑。新 `coset-batch-four` 实测 Opt8 39.668 秒，慢于保留正式版 33.369 秒，不晋升；新 `coset-batch` Opt9 在载表阶段系统 Swapouts 16→48 触发保护，0 条结果，无性能结论。`.local-data/cubeopt-reverse/wasm-opt8-opt9-20261015/stop.json` 与所有旧记录保留，不重设基线、不重启、不复用标签。新源码及构件已冻结，小数据证明/验解通过，但正式原生与服务器 WASM 未替换。详细证据见 `../docs/optimal-solver-benchmark.md`。下方历史授权不得覆盖此次保护停止。
+2026-10-15 WASM 两档优化：网站按 Opt8 8 GB / WCA100 / 4 线程、Opt9 16 GB / WCA1000 / 16 线程分别比较，各候选一轮不预热，原版不重跑。新 `coset-batch-four` 实测 Opt8 39.668 秒，慢于保留正式版 33.369 秒，不晋升；新 `coset-batch` Opt9 在载表阶段系统 Swapouts 16→48 触发保护，0 条结果，无性能结论。`.local-data/cubeopt-reverse/wasm-opt8-opt9-20261015/stop.json` 与所有旧记录保留，不重设基线、不重启、不复用标签。新源码及构件已冻结，小数据证明/验解通过，但正式原生与服务器 WASM 未替换。详细证据见 `../docs/data/solvers/optimal-solver-benchmark.md`。下方历史授权不得覆盖此次保护停止。
 
 2026-10-14 维护者新增长期任务要求：必须可验证地断点续算；同一个完整任务的求解器及大表常驻，批次边界不退出、不重载、不定时轮换。仅完成、用户停止、错误、授权到期或资源保护触发时退出，保留结果、原 boot/Swapouts 基线及保护记录。双底 Opt10 通过既有 guard 的 `double-zbll-opt10-session` 入口常驻；其他研究/单批入口时限不变。验收须检查连续批次使用同一 guard/native PID。详见根 AGENTS.md 和 docs/product/timer/double-zbll-trainer.md。
 
@@ -68,7 +68,7 @@ nxopt22 本轮已完成：WCA1000 / 16线程 / 单轮不预热整批耗时504.90
 进程树预算为 15,169,187,432 字节表加 2 GiB，启动再留 3 GiB；共享旧 Swapouts 基线、锁与停止记录。
 H7/H10 旧表保留，不并行驻留计算，不授权 H10/H11 重建。H9 校验完成后，Rust 求解按既有 h48 守卫执行。
 
-H48 h10 求解及算法对照按根 `AGENTS.md` 的 2026-10-12 更新执行：允许原版与实验版在持续运行时监控下启动，无需系统级防换出机制或单次 hash 许可；新增换出、压力异常、RSS 超限或保守余量不足 2 GiB 即停止并保留结果。H10/H11 大表重建仍受原启动限制。算法探索记录见 `../docs/h48-algorithm-research.md`，保留原版源码、程序和主表，候选通过独立补丁构建。
+H48 h10 求解及算法对照按根 `AGENTS.md` 的 2026-10-12 更新执行：允许原版与实验版在持续运行时监控下启动，无需系统级防换出机制或单次 hash 许可；新增换出、压力异常、RSS 超限或保守余量不足 2 GiB 即停止并保留结果。H10/H11 大表重建仍受原启动限制。算法探索记录见 `../docs/data/solvers/h48-algorithm-research.md`，保留原版源码、程序和主表，候选通过独立补丁构建。
 
 cube48opt Opt1–9 Rust 独立研究按根 `AGENTS.md` 的 2026-10-12 专项授权执行：建表、查表、求解、验证与基准必须由 `experiments/cube48opt-rust/guard.mts` 启动，`CUBEOPT_VARIANT=1..9` 选择档位；入口按模式设置预算，持续检查进程树 RSS、内存压力、同次系统启动的 Swapouts 及至少 2 GiB 余量，保护触发后保留结果且不得重设基线自动重启。不得直接启动该研究原生程序的 `solve`、`oracle.mjs generate|query|solve`、`validate.mjs` 或 `benchmark.mjs`；静态 `inspect`、`small`、`verify-small` 和小表坐标校验可直接运行。这是独立研究入口，不替换下述日常 H10 统计与统一建表流程，不授权 H10/H11 大表重建，也不代表操作系统已禁用 swap。
 
@@ -251,7 +251,7 @@ solver 系列(6 analyzer + table_generator)全部移植并 golden bit-exact,剩�
 
 2026-10-15 Opt8 native quarter candidate completed: WCA100 / 4 search threads / one pass / no warmup, 26.402382370999998 seconds, 100 independently verified optimal solutions, Swapouts48 unchanged. Page selects this result. Scope opt8-native-quarter-wca100-4-20261015 is consumed; do not rerun. Preserved baseline33.593746037, binary and table remain intact. Non-default opt8-native-quarter feature only applies to variant8. Isolated measured source and executable: `.local-data/cubeopt-reverse/opt8-native-quarter-source-20261015/`. 32G still not authorized to run.
 
-2026-10-15 Opt8 native 6 solves/s follow-up completed: five new single-pass WCA100/4-thread candidates (specialized 29.881s, search 29.848s, batch 34.523s, search/native-cpu 27.434s, quarter/native-cpu 40.114s) all verified 100 optimal solutions, guard exit0, Swapouts48 unchanged. None beat retained quarter26.402s; page remains3.8/s, target6/s not achieved. Every new receipt is consumed; do not rerun or replace the selected result with an experimental one. Frozen source/binaries/raw output and negative findings are retained; read `../docs/optimal-solver-benchmark.md` section “Opt8 native follow-up toward 6 solves/s” and `.local-data/cubeopt-reverse/opt8-native-6ps-20261015-summary.json` before further optimization. Background CPU workload was observed; single-pass differences do not isolate compiler/algorithm effects. A/B/C features remain non-default. No publish and still no32G testing.
+2026-10-15 Opt8 native 6 solves/s follow-up completed: five new single-pass WCA100/4-thread candidates (specialized 29.881s, search 29.848s, batch 34.523s, search/native-cpu 27.434s, quarter/native-cpu 40.114s) all verified 100 optimal solutions, guard exit0, Swapouts48 unchanged. None beat retained quarter26.402s; page remains3.8/s, target6/s not achieved. Every new receipt is consumed; do not rerun or replace the selected result with an experimental one. Frozen source/binaries/raw output and negative findings are retained; read `../docs/data/solvers/optimal-solver-benchmark.md` section “Opt8 native follow-up toward 6 solves/s” and `.local-data/cubeopt-reverse/opt8-native-6ps-20261015-summary.json` before further optimization. Background CPU workload was observed; single-pass differences do not isolate compiler/algorithm effects. A/B/C features remain non-default. No publish and still no32G testing.
 
 ## 2026-10-17 日常统计切换正式 Opt10
 

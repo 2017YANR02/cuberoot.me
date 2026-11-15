@@ -1,12 +1,12 @@
 # 魔方空间技术来源索引
 
-更新日期：2026-09-08；下表技术版本核对日期仍分别保留。魔方空间页面底部“本页来源与建模说明”默认展开，直接展示各项目链接、用途及上海轮廓拉伸和高度估算说明，也可收起；“查看全站致谢”进入 `/about`。公开致谢的唯一数据源是 [credits_data.json](../core/packages/client/app/[lang]/about/credits_data.json)，`space: true` 标记本页使用的条目。本文件记录技术版本、实际用途和未接入的边界，不维护第二份产品致谢列表。
+更新日期：2026-09-08；下表技术版本核对日期仍分别保留。魔方空间页面底部“本页来源与建模说明”默认展开，直接展示各项目链接、用途及上海轮廓拉伸和高度估算说明，也可收起；“查看全站致谢”进入 `/about`。公开致谢的唯一数据源是 [credits_data.json](../../../core/packages/client/app/[lang]/about/credits_data.json)，`space: true` 标记本页使用的条目。本文件记录技术版本、实际用途和未接入的边界，不维护第二份产品致谢列表。
 
 | 来源 | 版本与日期证据 | 实际使用及本地位置 |
 | --- | --- | --- |
 | [Three.js](https://github.com/mrdoob/three.js/tree/r183)，MIT | 当前安装版本 `0.183.2`；本轮核对于 2026-09-07 | 同一个 WebGL 渲染器、OrbitControls、TransformControls、物理材质、Reflector、Water 和后期处理。滚轮与滑块在环绕模式控制相机距离，在无人机和漫游模式控制镜头视角，不改变物件尺寸。江水法线图固定为 r183，来源与 SHA-256 在下方 SOURCE 清单；本站在 Water 材质上增加水色预设和漫反射着色，保留倒影与高光 |
-| [ABYSSAL / natural-disasters](https://github.com/Token-Gremlin/natural-disasters/tree/d2bae38301ff43bc1d43bfdfd9477a552ca5420b)，MIT | 本地记录固定提交 `d2bae38301ff43bc1d43bfdfd9477a552ca5420b`；2026-09-07 核对本地来源记录，本轮未重新比对远端整树 | 大气、体积云、雨幕、分叉闪电、龙卷风、FFT 海浪、白沫及 GPU 飞沫。逐项适配及保留范围见 [UPSTREAM.md](../core/packages/client/app/[lang]/space/abyssal/UPSTREAM.md)；许可证在同目录。雪、冰雹、扬尘、泥石流、彩虹、表面湿润和岛屿轮廓为本站实现，未宣称全部来自上游 |
-| [OpenStreetMap contributors](https://www.openstreetmap.org/copyright)，ODbL 1.0 | 本地提取日期 2026-09-07；各响应和对象具有各自更新时间 | 黄浦江及双岸、徐家汇方向的水域、建筑轮廓、道路、绿地。原始缓存不发布；[生成脚本](../core/scripts/build-shanghai-space.mjs)和 [SOURCE.json](../core/packages/client/public/assets/space/shanghai-v1/SOURCE.json)记录实际范围、原点、快照、楼高缺失率与水纹来源。使用 WGS84 投影，不混入偏移地图坐标；缺少楼高时使用 12 米默认值 |
+| [ABYSSAL / natural-disasters](https://github.com/Token-Gremlin/natural-disasters/tree/d2bae38301ff43bc1d43bfdfd9477a552ca5420b)，MIT | 本地记录固定提交 `d2bae38301ff43bc1d43bfdfd9477a552ca5420b`；2026-09-07 核对本地来源记录，本轮未重新比对远端整树 | 大气、体积云、雨幕、分叉闪电、龙卷风、FFT 海浪、白沫及 GPU 飞沫。逐项适配及保留范围见 [UPSTREAM.md](../../../core/packages/client/app/[lang]/space/abyssal/UPSTREAM.md)；许可证在同目录。雪、冰雹、扬尘、泥石流、彩虹、表面湿润和岛屿轮廓为本站实现，未宣称全部来自上游 |
+| [OpenStreetMap contributors](https://www.openstreetmap.org/copyright)，ODbL 1.0 | 本地提取日期 2026-09-07；各响应和对象具有各自更新时间 | 黄浦江及双岸、徐家汇方向的水域、建筑轮廓、道路、绿地。原始缓存不发布；[生成脚本](../../../core/scripts/build-shanghai-space.mjs)和 [SOURCE.json](../../../core/packages/client/public/assets/space/shanghai-v1/SOURCE.json)记录实际范围、原点、快照、楼高缺失率与水纹来源。使用 WGS84 投影，不混入偏移地图坐标；缺少楼高时使用 12 米默认值 |
 | [Poly Haven](https://polyhaven.com/license)，CC0 | 本轮核对现有资产清单于 2026-09-07；此前逐项下载日期未记录，不补写为本轮下载 | 本地 `public/assets/space/v1/`、`v2/` 中的环境光、石材、木地板、织物、沙发、扶手椅、抱枕和植物。资产名见公开致谢的 Poly Haven 条目。运行时不依赖外部 CDN |
 | [Car Concept](https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept)，CC BY 4.0 | Eric Chadwick / Darmstadt Graphics Group，2024；原下载提交与日期未记录 | 本地 `public/assets/space/v3/car-concept.glb`，用于车库；本站调整尺寸及玻璃渲染，原作者与模型贴图来源保留在公开致谢 |
 | [huazhechen/cuber](https://github.com/huazhechen/cuber) | 沿用仓库现有 `/sim` 移植，未在本轮重新下载或复制一份引擎 | `/space` 直接复用 `/sim` 已有魔方模型与转动逻辑。现有移植的精确上游版本未在本轮追溯；本轮时间、地图和缩放改动不更新魔方引擎 |
@@ -67,15 +67,15 @@
 
 2026-09-08。25 份静态场景迁入仓库本地 `.blend`，后续通过 Blender 5.2.1 LTS 内置的 [Khronos glTF-Blender-IO](https://github.com/KhronosGroup/glTF-Blender-IO) 导出网页 GLB。首次捕获使用 Three.js GLTFExporter；迁移、打包去重和运行时绑定脚本为本站实现，未复制 Blender 插件源码。网页来源仍统一维护在 `credits_data.json`，中英文入口已验证可见。
 
-Blender 负责静态模型编辑，Three.js 保留魔方转动、天气、水面、交通和时间等交互。原有建筑、摄影与天气来源继续适用，格式迁移不会提高原始几何的实测准确度，也不代表完成电影级美术。源工程、资源包和日常编辑流程见[Blender 编辑说明](../design/space/README.md)，全量验证与剩余工作见[迁移跟踪](space-blender-tracker.md)。
+Blender 负责静态模型编辑，Three.js 保留魔方转动、天气、水面、交通和时间等交互。原有建筑、摄影与天气来源继续适用，格式迁移不会提高原始几何的实测准确度，也不代表完成电影级美术。源工程、资源包和日常编辑流程见[Blender 编辑说明](../../../design/space/README.md)，全量验证与剩余工作见[迁移跟踪](space-blender-tracker.md)。
 
-金茂的 Blender 精修新增幕墙承建方 [Permasteelisa](https://www.permasteelisagroup.com/historic-project/jin-mao-tower/) 的俯拍、塔冠与幕墙细部照片作为对照，并结合既有 SOM 日夜实拍。尺寸事实、照片估算与三轮审图记录见[金茂参考档案](../design/space/references/jin-mao.md)和[Blender 跟踪](space-blender-tracker.md#2026-09-08-金茂-blender-精修)。该来源的用途和查阅日期已加入网页中英文来源入口；无新增建筑库或运行照片贴图。
+金茂的 Blender 精修新增幕墙承建方 [Permasteelisa](https://www.permasteelisagroup.com/historic-project/jin-mao-tower/) 的俯拍、塔冠与幕墙细部照片作为对照，并结合既有 SOM 日夜实拍。尺寸事实、照片估算与三轮审图记录见[金茂参考档案](../../../design/space/references/jin-mao.md)和[Blender 跟踪](space-blender-tracker.md#2026-09-08-金茂-blender-精修)。该来源的用途和查阅日期已加入网页中英文来源入口；无新增建筑库或运行照片贴图。
 
 ## 上海地标 Blender 细部参考
 
 2026-09-08 再次查看 [KPF 环球金融中心项目](https://www.kpf.com/project/shanghai-world-financial-center)的远景照片及结构立面图，并查看 [Gensler 上海中心竣工照片](https://www.gensler.com/projects/shanghai-tower)，用于 Blender 实体框格、开口内衬、浅银蓝玻璃、银色接缝与倾斜冠部。结构图不作为实拍，既有设计研究不等于竣工测绘；框格节距、内冠支撑和开口尺寸仍有估算。两条用途说明维护在网页唯一来源 `credits_data.json`，Gensler 照片条目为本批新增。
 
-外滩继续使用已有逐栋摄影来源，检查 24 栋联系表并补看亚细亚、上海总会与英国领事馆实拍，排除总会内景及误标为领事馆的半岛酒店照片。石材法线/粗糙度是本站可重复生成的程序纹理；照片只在本地供建模对照，未复制为运行贴图，没有新增第三方建筑库。逐栋差异、实际保存版本与日夜检查图见[上海地标档案](../design/space/references/shanghai-landmarks.md)，验证和未达标项见[Blender 跟踪](space-blender-tracker.md#2026-09-08-三件套与外滩-24-栋-blender-细部)。
+外滩继续使用已有逐栋摄影来源，检查 24 栋联系表并补看亚细亚、上海总会与英国领事馆实拍，排除总会内景及误标为领事馆的半岛酒店照片。石材法线/粗糙度是本站可重复生成的程序纹理；照片只在本地供建模对照，未复制为运行贴图，没有新增第三方建筑库。逐栋差异、实际保存版本与日夜检查图见[上海地标档案](../../../design/space/references/shanghai-landmarks.md)，验证和未达标项见[Blender 跟踪](space-blender-tracker.md#2026-09-08-三件套与外滩-24-栋-blender-细部)。
 
 ## 亚细亚与上海总会入口实拍对照
 

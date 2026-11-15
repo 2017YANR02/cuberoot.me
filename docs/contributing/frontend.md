@@ -4,7 +4,7 @@
 
 ## 移动端布局检查记录
 
-主要功能页的竖屏/横屏问题、复现条件、修复顺序和接手验收见 [2026-11-09 Web 移动端布局清单](../mobile-web-layout-audit-2026-11-09.md)。这是待办与历史检查记录，不替代下述组件规范。
+主要功能页的竖屏/横屏问题、复现条件、修复顺序和接手验收见 [2026-11-09 Web 移动端布局清单](../design/history/mobile-web-layout-audit-2026-11-09.md)。这是待办与历史检查记录，不替代下述组件规范。
 
 ## 代码风格
 
@@ -65,13 +65,13 @@
 
 `/dev/expenses` 与 `/dev/infrastructure` 新增设备时，同次补齐对应型号、配色的产品图，不用通用图标、其他型号或空白占位；`infrastructure-costs.ts` 的 `imageSrc` 保持必填。设备名称按用户提供的完整型号保留，不能省略屏幕版本等型号区别；普通屏幕版不能替代 PROLED XDR 版。优先官方素材或用户提供的图片，复用现有 `.infra-equipment-art` / `.infra-equipment-image` 的尺寸、比例、留白和对齐。
 
-设备图片必须是实际透明背景的产品抠图，不能把白底、棋盘格或其他底色烘焙进图片。仅检查 PNG/WebP 的 `hasAlpha` 不够：还要检查产品外空白区域的像素透明度，并在深色、浅色背景上预览。透明图片用 `next/image` 时保留 `unoptimized`，本地曾实测 Next 图片优化把它们转成白底 JPEG。替换已浏览过的同名图片时更换资源 URL，避免缓存继续显示旧图。设备图片来源见[素材记录](../equipment-images.md)。
+设备图片必须是实际透明背景的产品抠图，不能把白底、棋盘格或其他底色烘焙进图片。仅检查 PNG/WebP 的 `hasAlpha` 不够：还要检查产品外空白区域的像素透明度，并在深色、浅色背景上预览。透明图片用 `next/image` 时保留 `unoptimized`，本地曾实测 Next 图片优化把它们转成白底 JPEG。替换已浏览过的同名图片时更换资源 URL，避免缓存继续显示旧图。设备图片来源见[素材记录](../design/equipment-images.md)。
 
 写任何 CSS 色值前调 `theme-tokens` skill(token 表 + dark-locked 页清单 + color-mix 规则);禁 `#888 #aaa` 等硬码灰阶。
 
 透明背景材质只在 `glass-material.css` 定义，旧样式由 `site-surfaces.css` 适配；新表面复用 `data-site-surface="panel|popover|heading"`，禁页面另造透明度/blur，保留状态色和无障碍回退，详 `theme-tokens` skill。
 
-多余底框只约束已确认的位置，复用现有材质 Hook/CI；截图巡检按需运行，不作为日常开发或提交的额外门槛，不凭候选自动扩大禁用范围，详 `docs/glass-menu-regression.md`。
+多余底框只约束已确认的位置，复用现有材质 Hook/CI；截图巡检按需运行，不作为日常开发或提交的额外门槛，不凭候选自动扩大禁用范围，详 `docs/design/glass/glass-menu-regression.md`。
 
 - 按钮/链接的短悬停提示统一使用 `components/Tooltip`（`<Tooltip content={tr({zh,en})}>{(tip) => <button {...tip}>…</button>}</Tooltip>`），禁止另写页面级提示气泡或用 native `title` 代替需要设计样式的提示。触发属性放在实际按钮上；已有同名事件须组合调用。写入 Hook 和 CI 共用材质扫描器拦截 `content: attr(data-tooltip/data-tip/title)` 伪元素气泡（不覆盖任意 JSX 或动态样式）；组件负责 hover/focus、Escape、可移入提示、Portal 和视口钳制，页面不再定义 blur/透明度。可交互内容不放 Tooltip，点击展开的说明继续用 InfoTooltip。Portal 继承全站主题；局部配色预览须单独核验。
 

@@ -26,7 +26,7 @@
 
 ### 2026-11-15 第一轮 AI 验收（本地提交，未发布）
 
-详见[本轮验收报告](../../mobile-ai-acceptance-2026-11-15.md)：聚焦共享“计时/我的”，修复短视口统计不可达、会话竞态、嵌入页语言、Mac 浏览器交接权限及模拟器 Keychain 签名。浏览器布局、Mac 原生窗口/滚动、真实默认浏览器登录回跳与冷启动会话恢复取得证据；iPhone 18 Pro/Duo 模拟器最终包已覆盖安装启动，记录横竖屏与设置适配。网站登录桥焦点修复仅本地提交，未部署，取消登录后的键盘恢复和手机触摸滚动仍待验。未执行实体 iPhone、Android、Windows 或 Watch 页面验收及 BLE 实物验收；不改变五端整体完成、商店发布或真机门槛。
+详见[本轮验收报告](mobile-ai-acceptance-2026-11-15.md)：聚焦共享“计时/我的”，修复短视口统计不可达、会话竞态、嵌入页语言、Mac 浏览器交接权限及模拟器 Keychain 签名。浏览器布局、Mac 原生窗口/滚动、真实默认浏览器登录回跳与冷启动会话恢复取得证据；iPhone 18 Pro/Duo 模拟器最终包已覆盖安装启动，记录横竖屏与设置适配。网站登录桥焦点修复仅本地提交，未部署，取消登录后的键盘恢复和手机触摸滚动仍待验。未执行实体 iPhone、Android、Windows 或 Watch 页面验收及 BLE 实物验收；不改变五端整体完成、商店发布或真机门槛。
 
 ### 2026-10-04 Google Play 首发内购（开发中，未开通）
 
@@ -60,7 +60,7 @@
 - [x] 配置继续复用「我的 → 消息」订阅页面和 iOS 系统通知权限，不新增第二套订阅 UI；/dev/auth 中英文流程与守卫已同步覆盖 Swift 适配器。
 - [ ] APNs key/topic、实际签名环境、线上迁移/配置和开发/生产真机送达；本轮没有 push、上线或向真实用户发送消息。
 
-2026-09-27 原分支验证记录（不替代本次远端主线整合验证）：隔离 PostgreSQL 16 schema 执行 0239→0249 迁移、真实设备登记路由、账号隔离和队列重试/失效清理；APNs 请求用本地 HTTP/2 接收端与临时测试 EC key 验证 JWT、topic、环境、payload 和错误分类，未访问真实 Apple 推送端点。API 类型检查、通知偏好回归、APNs/个推/PG 11 tests、Mobile 类型检查与全部 30 tests、schema ledger 6 tests、auth documentation 65 tests 已通过；Mobile Web build 与 iOS sync 完成。Xcode 无签名 iOS Simulator 构建成功（arm64/x86_64），产物 Info.plist 的推送环境为 development；这不代表真实签名、安装或 APNs 送达。配置见 [record-notification-setup.md](../../record-notification-setup.md)。
+2026-09-27 原分支验证记录（不替代本次远端主线整合验证）：隔离 PostgreSQL 16 schema 执行 0239→0249 迁移、真实设备登记路由、账号隔离和队列重试/失效清理；APNs 请求用本地 HTTP/2 接收端与临时测试 EC key 验证 JWT、topic、环境、payload 和错误分类，未访问真实 Apple 推送端点。API 类型检查、通知偏好回归、APNs/个推/PG 11 tests、Mobile 类型检查与全部 30 tests、schema ledger 6 tests、auth documentation 65 tests 已通过；Mobile Web build 与 iOS sync 完成。Xcode 无签名 iOS Simulator 构建成功（arm64/x86_64），产物 Info.plist 的推送环境为 development；这不代表真实签名、安装或 APNs 送达。配置见 [record-notification-setup.md](../../operations/record-notification-setup.md)。
 
 ### 2026-09-15 纪录订阅与通知（未完成）
 
@@ -71,7 +71,7 @@
 - [ ] iOS APNs 凭据、签名及真机送达未验收；2026-09-27 已按所有者要求补 wca_record 通道源码，见上方增量记录。HarmonyOS NEXT、Windows/macOS 原生通知适配尚未实现，站内消息与邮件不能替代系统推送证据。
 - [ ] 生产迁移、部署和真实收信验收；本轮没有向真实用户发送测试消息。
 
-本地证据：迁移 0238 在 PostgreSQL 13 事务中验证建表、JSONB 与级联删除后回滚；API 通知相关回归、shared build、client/server typecheck 通过；Playwright 使用隔离 API fixture 验证 390px/1280px 设置页、地区选择和保存请求，无页面横向溢出。迁移 0239 在本机 PG13 隔离 schema 中执行真实绑定/撤销路由及队列重试/去重测试；Getui HTTP 使用 mock，未向服务商发送。Mobile 25 tests、app-ui 299 tests、Mobile/API/app-ui/client 类型检查与 Mobile Web build/Android sync 已通过。Android `:app:assembleDebug --max-workers=14` 构建成功；基础 debug 合并 manifest 已确认无电话状态、任务列表、全量应用列表或后台定位权限，明文流量关闭。SDK 编译有上游 D8 stack-map 和原生库 strip 警告；2026-09-16 的 CI（ab783cbeab，run 35061047653）已完成 release APK/AAB 构建和临时证书签名验证，权限白名单需同步四项推送权限；尚未证明 R8、16KB 页兼容、真实厂商配置或真机运行，不代表发布或真机到达；具体配置见 [record-notification-setup.md](../../record-notification-setup.md)。
+本地证据：迁移 0238 在 PostgreSQL 13 事务中验证建表、JSONB 与级联删除后回滚；API 通知相关回归、shared build、client/server typecheck 通过；Playwright 使用隔离 API fixture 验证 390px/1280px 设置页、地区选择和保存请求，无页面横向溢出。迁移 0239 在本机 PG13 隔离 schema 中执行真实绑定/撤销路由及队列重试/去重测试；Getui HTTP 使用 mock，未向服务商发送。Mobile 25 tests、app-ui 299 tests、Mobile/API/app-ui/client 类型检查与 Mobile Web build/Android sync 已通过。Android `:app:assembleDebug --max-workers=14` 构建成功；基础 debug 合并 manifest 已确认无电话状态、任务列表、全量应用列表或后台定位权限，明文流量关闭。SDK 编译有上游 D8 stack-map 和原生库 strip 警告；2026-09-16 的 CI（ab783cbeab，run 35061047653）已完成 release APK/AAB 构建和临时证书签名验证，权限白名单需同步四项推送权限；尚未证明 R8、16KB 页兼容、真实厂商配置或真机运行，不代表发布或真机到达；具体配置见 [record-notification-setup.md](../../operations/record-notification-setup.md)。
 
 ### 2026-09-12 计时输入防干扰
 

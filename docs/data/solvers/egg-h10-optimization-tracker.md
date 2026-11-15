@@ -71,7 +71,7 @@
 - 实验源码、程序、原始日志与正式成绩分别保存在持久目录内；原版及旧成绩不覆盖。最终机读汇总为 `.local-data/egg-h10-optimize-20261112/final-report.json`。
 - 初始保护入口测试 230 项通过；每次增加独立候选入口后，针对新增命令边界的测试再次通过。两组原有 NEON 检查共 6 项、两组坐标候选检查共 10 项通过。Hook 仅完成脚本逻辑与运行入口验证，未做新 Codex 会话的信任/实际拒绝验收；实际计算全程由独立资源监控保护。
 
-后续先读[实验源码说明](../solver/experiments/egg-solver/h10-optimize/README.md)。`used.json` 已消费，不得删除后重跑。三次执行各有冻结的 `execution-code/`，避免用后续扩展后的脚本冒充旧运行源码。
+后续先读[实验源码说明](../../../solver/experiments/egg-solver/h10-optimize/README.md)。`used.json` 已消费，不得删除后重跑。三次执行各有冻结的 `execution-code/`，避免用后续扩展后的脚本冒充旧运行源码。
 
 ## 24 lanes 重复性验证（2026-11-12，执行前固定）
 

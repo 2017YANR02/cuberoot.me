@@ -81,7 +81,7 @@ detail = refine_customs_junctions.author(customs_root, archive)
 
 最终 GLB 的 53 处江海关表面检查全部通过，包括六层回折、玻璃与五个倾斜投光器。`web-customs-day-final.png`、`web-customs-night-final.png` 已在真实网页渲染并打开复查，证据位于 `.tmp/png/space-parallel-20260910/`：回折连续、玻璃色偏减轻、时钟与新增灯具正常；21:00 的基座仍有硬明暗分界，底层与窗带偏暗，不能认定夜景已还原。五盏临时 Cycles 检查灯没有保存或导出。
 
-最终上海工程 122,328,032 字节，GLB 为 310,649,984 字节；备份、哈希、全部稳定 ID 和运行绑定记录见[本批跟踪](../../../docs/space-blender-tracker.md#2026-09-10-三栋细部合并与网页首帧修复)。
+最终上海工程 122,328,032 字节，GLB 为 310,649,984 字节；备份、哈希、全部稳定 ID 和运行绑定记录见[本批跟踪](../../../docs/design/space/space-blender-tracker.md#2026-09-10-三栋细部合并与网页首帧修复)。
 
 ## 2026-09-10 网页夜景照明保存与复验
 
@@ -100,4 +100,4 @@ detail = refine_customs_junctions.author(customs_root, archive)
 
 独立审图认为候选 3 在预设、斜侧和远景均未出现阻断本轮落地的新问题。**这不等于整栋夜景或 1:1 验收通过**：两级塔冠仍偏暗，横向檐线缺少实拍的暖亮层次，基座在远景仍偏整片，斜侧照明较单薄；实际灯具布局、侧后立面、色温与光度仍待核对。三张静态视点也不能证明缩放过程完全没有亮度跳变。
 
-主流程已保存修订 `customs-night-lighting-20260910` 并正常导出，正式 GLB 为 310,655,468 字节。最终正面、斜侧、远景夜图及日图 `final-preset-night.png`、`final-oblique-night.png`、`final-far-night.png`、`final-preset-day.png` 已逐张打开复查：入口与基座的改善保持，双圆斑未复发，日间六灯全零。真实网页确认最终哈希且无候选注入；完整导出合同检查通过。源备份、哈希、保留检查及运行证据见[本轮跟踪](../../../docs/space-blender-tracker.md#2026-09-10-江海关基座与入口夜景配光)。后续单独细化冠部与檐口，以上未达标项继续保留。
+主流程已保存修订 `customs-night-lighting-20260910` 并正常导出，正式 GLB 为 310,655,468 字节。最终正面、斜侧、远景夜图及日图 `final-preset-night.png`、`final-oblique-night.png`、`final-far-night.png`、`final-preset-day.png` 已逐张打开复查：入口与基座的改善保持，双圆斑未复发，日间六灯全零。真实网页确认最终哈希且无候选注入；完整导出合同检查通过。源备份、哈希、保留检查及运行证据见[本轮跟踪](../../../docs/design/space/space-blender-tracker.md#2026-09-10-江海关基座与入口夜景配光)。后续单独细化冠部与檐口，以上未达标项继续保留。

@@ -15,7 +15,7 @@
 - 数据窗口：2026-09-22，Vercel 仪表盘 America/Los_Angeles（PDT，UTC−7）；筛选 `/zh/calc`，Production。
 - 9,268 Visitors、9,531 Page Views、95% Bounce Rate。Visitors 是 Analytics 的统计标识，不是已核验的自然人数。Analytics 也可能由阿里云线路页面上报，不能直接当作 Vercel 页面线路流量。
 - 2026-09-25 10:01:28 UTC 重新打开同一历史窗口，界面显示以上数值。截图保留完整视口；侧栏和在线人数为截图时状态，不属于 9 月 22 日统计。
-- 图片：[Vercel 历史曲线](../core/packages/client/public/assets/incidents/2026-09/vercel-analytics-sep22-v2.png)。
+- 图片：[Vercel 历史曲线](../../../core/packages/client/public/assets/incidents/2026-09/vercel-analytics-sep22-v2.png)。
 - 图片修订：首版 PNG 的曲线和时间轴挤在左侧，页面直接使用了该文件。9 月 25 日重截完整视口，更换为 v2 地址，并检查保存的文件与页面显示。v1 留作修订记录，不再用于正文。
 - [历史查询](https://vercel.com/cube-root/cuberoot-me/analytics?filter=%7B%22path%22%3A%7B%22values%22%3A%5B%22%2Fzh%2Fcalc%22%5D%2C%22operator%22%3A%22eq%22%7D%7D&from=1790060400&to=1790146740&client_type=client_name&page_type=hostname)，需项目权限。
 
@@ -31,7 +31,7 @@
 
 2026-09-25 09:38:18 UTC 实际控制台显示：计算器临时 Deny；计算器和比赛 API 单 IP 限流；比赛及选手详情超额 Challenge；Bot Protection 为 Challenge；AI Bots 为 Deny。截图只证明当时配置处于相应状态，不证明命中率或永久有效。
 
-图片：[Vercel 规则](../core/packages/client/public/assets/incidents/2026-09/vercel-firewall-rules-sep25-v1.png)。截取内容区域，不含个人账户、访客 IP、令牌与浏览器书签。未点击启用、禁用或发布按钮。
+图片：[Vercel 规则](../../../core/packages/client/public/assets/incidents/2026-09/vercel-firewall-rules-sep25-v1.png)。截取内容区域，不含个人账户、访客 IP、令牌与浏览器书签。未点击启用、禁用或发布按钮。
 
 ## 时间线
 
@@ -50,7 +50,7 @@
 | 09-25 01:34–01:44 | 分入口观察恢复窗口 | 自有主站 1,503 请求，独立 API 1,541；Vercel 另有十分钟快照 |
 | 09-25 约 01:58–02:01 | 自有服务器分钟守护程序实际执行成功 | 定时器 enabled/active；无触发理由；未在生产人为制造超阈值停站 |
 
-详细发布与 HTTP 证据见 [防护记录](traffic-defense.md)。
+详细发布与 HTTP 证据见 [防护记录](../observability/traffic-defense.md)。
 
 ## 数字口径
 
@@ -71,7 +71,7 @@
 4. 费用：停用 Analytics；保留当时 $10 额外用量预算与自动暂停。固定套餐与已发生费用仍存在，预算检查有延迟，不能保证精确账单硬上限。没有购买新的监控服务。
 5. 自动响应：服务器每分钟第 15 秒读取最近两个完整分钟；极高的单分钟或持续两分钟超阈值，切主站维护页、next/API 503，并尝试 Bark 通知；不会自行重开。
 
-守护程序初始阈值与恢复步骤以 [traffic-monitor.md](traffic-monitor.md) 和 [traffic-guard.ts](../core/scripts/traffic-guard.ts) 为准。此保护按请求量及错误判断，不识别人类或机器人，真实热门流量也可能触发。扫描日志尾部有 32 MiB/文件上限，无法承诺无漏报；服务器本身不可用时本地守护也无法运行。
+守护程序初始阈值与恢复步骤以 [traffic-monitor.md](../observability/traffic-monitor.md) 和 [traffic-guard.ts](../../../core/scripts/traffic-guard.ts) 为准。此保护按请求量及错误判断，不识别人类或机器人，真实热门流量也可能触发。扫描日志尾部有 32 MiB/文件上限，无法承诺无漏报；服务器本身不可用时本地守护也无法运行。
 
 **覆盖缺口：本地自动停站不覆盖 Vercel-only 请求。** Vercel 仍依赖独立平台防护与预算保护；没有实现免费的全站逐请求监控与瞬时自动关闭。分钟检查存在等待与重载时间，不能承诺“异常出现的同一秒停止”。
 
@@ -94,7 +94,7 @@
 
 ## 公开参考
 
-- [最初证据](traffic-incident-2026-09-22.md)、[完整处置档案](traffic-defense.md)、[监控与恢复手册](traffic-monitor.md)
+- [最初证据](traffic-incident-2026-09-22.md)、[完整处置档案](../observability/traffic-defense.md)、[监控与恢复手册](../observability/traffic-monitor.md)
 - [Next.js 预取](https://nextjs.org/docs/app/guides/prefetching)：可解释“点击前出现请求”，不能倒推所有访问正常。
 - [Vercel Attack Mode](https://vercel.com/docs/vercel-firewall/attack-mode)、[Spend Management](https://vercel.com/docs/spend-management)
 - [验证 Bingbot](https://www.bing.com/webmasters/help/how-to-verify-bingbot-3905dc26)、[Lightpanda 上游](https://github.com/lightpanda-io/browser)

@@ -94,7 +94,7 @@ Full results: `.local-data/cubeopt-reverse/wasm-opt8-opt9-20261015/opt8-report.j
 The subsequent separate Opt9 candidate stopped during table loading when
 system Swapouts rose from 16 to 48. It solved zero cases. The shared scope is
 now stopped: do not retry either consumed label or reset the approved baseline.
-See `docs/optimal-solver-benchmark.md` for the preserved guard evidence.
+See `docs/data/solvers/optimal-solver-benchmark.md` for the preserved guard evidence.
 
 ## Candidate: quarter equivalence + fixed contexts
 

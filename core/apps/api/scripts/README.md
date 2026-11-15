@@ -20,7 +20,7 @@ Backups contain the original input and derived fields. To undo a correction,
 restore only the affected derived fields after verifying the input still matches
 that snapshot, then invalidate the corresponding reconstruction pages.
 
-For push acceptance, use `pnpm --filter @cuberoot/server push:acceptance` from `core/` and the [separate acceptance entry](../../../../docs/record-notification-setup.md#6-隔离-api-与推送验收入口). This loopback fixture API does not load production auth, `.env`, PG, monitors or provider transports. The selective production proxy described below is not a push isolation environment.
+For push acceptance, use `pnpm --filter @cuberoot/server push:acceptance` from `core/` and the [separate acceptance entry](../../../../docs/operations/record-notification-setup.md#6-隔离-api-与推送验收入口). This loopback fixture API does not load production auth, `.env`, PG, monitors or provider transports. The selective production proxy described below is not a push isolation environment.
 
 ## Manual SOR player-best refresh
 

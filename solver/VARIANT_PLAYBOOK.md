@@ -225,7 +225,7 @@ eoline 的 yk 与 yk+2 同目标(get_stats/enumerate 只跑 yk 0/1),dr 对 y 完
 3. **其他 puzzle 复用各自模型**
    - `pocket_solver.rs`、`pyraminx_solver.rs`、`skewb_solver.rs`、`sq1_solver.rs` 已有整解引擎及独立统计管线，见 §8 与 `SOLVER_LOOP.md`。SQ1 子阶段、Pyraminx V、Skewb Face 等新目标应先核对这些实现；它们不使用 3×3 的 8 角 12 棱坐标。
 
-上述 HTR/FR 已完成有界离线计算与独立见证回放；资源和全空间验证证据见 `docs/puzzle-exact-distributions-tracker.md`。计算授权及保护停止状态仍以当次任务和原记录为准，不因这里列出结果而重新运行大表。
+上述 HTR/FR 已完成有界离线计算与独立见证回放；资源和全空间验证证据见 `docs/data/solvers/puzzle-exact-distributions-tracker.md`。计算授权及保护停止状态仍以当次任务和原记录为准，不因这里列出结果而重新运行大表。
 
 ## 8. 非 3x3 puzzle 统计管线范式(EPIC 3,2x2x2 pocket 先行,2026-06-11)
 

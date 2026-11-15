@@ -8,7 +8,7 @@ export function sceneDaylight(timeOfDay: string) {
   const [hours, minutes] = timeOfDay.split(':').map(Number);
   const angle = ((hours * 60 + minutes) / 720 - 1) * Math.PI;
   const latitude = THREE.MathUtils.degToRad(31.2534);
-  // NOAA hour-angle/zenith equations: docs/space-sources.md.
+  // NOAA hour-angle/zenith equations: docs/design/space/space-sources.md.
   // ponytail: fixed equinox and local solar time; calendar/time-zone astronomy needs a date/location control.
   const direction = new THREE.Vector3(-Math.sin(angle), Math.cos(latitude) * Math.cos(angle), Math.sin(latitude) * Math.cos(angle));
   const elevation = Math.asin(direction.y);

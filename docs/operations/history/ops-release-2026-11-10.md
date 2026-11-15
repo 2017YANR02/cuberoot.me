@@ -1,6 +1,6 @@
 # 2026-11-10 双机同步发布与磁盘恢复
 
-两台 Mac 的开发启动与同步约定见 [多机开发](contributing/multi-machine.md)。本轮将 Mac mini 与 MBP 的已有修改顺序提交、rebase、推送并同步，保留各机独立的预览通道和本地数据。
+两台 Mac 的开发启动与同步约定见 [多机开发](../../contributing/multi-machine.md)。本轮将 Mac mini 与 MBP 的已有修改顺序提交、rebase、推送并同步，保留各机独立的预览通道和本地数据。
 
 ## 线上磁盘事件
 

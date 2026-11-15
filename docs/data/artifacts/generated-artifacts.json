@@ -286,7 +286,7 @@
       },
       "license": {
         "spdx": "LicenseRef-CubeRoot",
-        "evidence": "LICENSE; existing asset provenance is listed in docs/space-sources.md and the website credits"
+        "evidence": "LICENSE; existing asset provenance is listed in docs/design/space/space-sources.md and the website credits"
       },
       "owner": "design/space/scripts/export_scene.py",
       "workingDirectory": ".",

@@ -13,4 +13,4 @@ description: 在 macOS 上为 CubeRoot 本地任务创建或修改 Apple 快捷�
 
 先用无副作用的 `--plan`、小型探针或已有进程保护验证启动链路；核实快捷指令确实保存、目标终端/脚本确实启动，且未重复运行昂贵任务。只有用户要求实际执行时才启动完整任务。记录本机特有的路径和验证结果；另一台 Mac 应重新核对，不能假定个人 `.command` 文件已经存在。
 
-本机已完成的「跑打乱统计」及 `~/Documents` 路径问题见 [实例记录](../../../docs/mac-stats-shortcut.md)。这是一台机器的观察，不是所有 Mac 的限制。仓库内发布、commit 和 push 仍遵循 AGENTS 的授权与工作流边界；创建快捷指令不自动授权发布。
+本机已完成的「跑打乱统计」及 `~/Documents` 路径问题见 [实例记录](../../../docs/operations/mac-stats-shortcut.md)。这是一台机器的观察，不是所有 Mac 的限制。仓库内发布、commit 和 push 仍遵循 AGENTS 的授权与工作流边界；创建快捷指令不自动授权发布。

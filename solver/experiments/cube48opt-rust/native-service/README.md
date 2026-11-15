@@ -59,4 +59,4 @@ The build and deployment receipt are retained under
 
 The smoke checks the production protocol and lifecycle. The full-solve
 performance comparison and release decision belong in
-`docs/cubeopt-native-rollout.md`; a passing smoke alone is not a speed claim.
+`docs/data/solvers/cubeopt-native-rollout.md`; a passing smoke alone is not a speed claim.

@@ -110,7 +110,7 @@ App 已允许通过系统浏览器创建同一网站账号，并提供 App 内�
 - `@capacitor/haptics`：只在计时器 ready 和停止时提供设备触觉反馈，不读取或上传数据
 - `@capacitor-community/bluetooth-le`：用户主动连接时扫描并连接附近的兼容智能魔方；设备名称/地址用于本机连接与 GAN 密钥派生，转动和状态在本机处理，不上传扫描列表、地址或实时魔方数据
 - `@aparajita/capacitor-secure-storage`：将 CubeRoot 会话保存在 iOS Keychain 或 Android Keystore 保护的加密存储中；禁用 iCloud 同步
-- Android 个推 `gtsdk 3.3.15.0` / `gtc 3.3.3.0`：纪录系统通知；仅客户端/服务端配置齐全且登录、同意 SDK 隐私、允许系统通知后初始化。条件厂商依赖见 [配置说明](../record-notification-setup.md)。安全存储另保存设备随机撤销凭据，退出断网时重试，不保留旧 JWT。
+- Android 个推 `gtsdk 3.3.15.0` / `gtc 3.3.3.0`：纪录系统通知；仅客户端/服务端配置齐全且登录、同意 SDK 隐私、允许系统通知后初始化。条件厂商依赖见 [配置说明](../operations/record-notification-setup.md)。安全存储另保存设备随机撤销凭据，退出断网时重试，不保留旧 JWT。
 - React / React DOM：本地界面渲染
 - `@cuberoot/shared`：网站与 App 共用的计时数据模型、迁移和打乱逻辑
 - `@cuberoot/timer-ui`：网站与 App 共用的计时界面组件和七段字体

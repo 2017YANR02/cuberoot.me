@@ -30,7 +30,7 @@
 
 ## Space / Blender
 
-Space 的 `.blend` 源工程及必要原始贴图纳入版本管理时必须使用 Git LFS，禁普通 Git 强制加入；`.blend1`、缓存和临时渲染不入库；当前暂缓 LFS 配置与资产上传，后续编辑先读 `design/space/README.md` 和 `docs/space-blender-tracker.md`。
+Space 的 `.blend` 源工程及必要原始贴图纳入版本管理时必须使用 Git LFS，禁普通 Git 强制加入；`.blend1`、缓存和临时渲染不入库；当前暂缓 LFS 配置与资产上传，后续编辑先读 `design/space/README.md` 和 `docs/design/space/space-blender-tracker.md`。
 
 ## 论坛视频时长
 

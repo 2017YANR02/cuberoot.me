@@ -11,7 +11,7 @@ function Lettering({ label, x, y, width, height, color = '#15191c' }: {
   return <path d={glyph.path} fill={color} transform={`translate(${x} ${y}) scale(${width / glyph.width} ${height / glyph.height}) translate(${-glyph.x} ${-glyph.y})`}/>;
 }
 
-// Separately drawn housings. Reference photographs and variant notes live in docs/stackmat-artwork.md.
+// Separately drawn housings. Reference photographs and variant notes live in docs/design/stackmat-artwork.md.
 const STRAIGHT_BODY = 'M63 43Q16 43 10 82Q3 126 52 136L225 151Q280 156 307 178Q400 224 493 178Q520 156 575 151L748 136Q797 126 790 82Q784 43 737 43L540 43L525 31H275L260 43Z';
 const G4_BODY = 'M60 21Q12 12 7 57Q2 94 39 119L235 200Q255 211 281 215Q400 263 519 215Q545 211 565 200L761 119Q798 94 793 57Q788 12 740 21L552 72Q531 78 513 68Q400 21 287 68Q269 78 248 72Z';
 

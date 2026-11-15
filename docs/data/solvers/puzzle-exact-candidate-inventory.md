@@ -29,7 +29,7 @@
 
 Jing 与 Pyramorphix 独立依据：[Jaap 的 Pyraminx / Jing 全分布](https://www.jaapsch.net/puzzles/pyraminx.htm)、[真实 Pyramorphix 全分布及 DBL/U/R/F 模型](https://www.jaapsch.net/puzzles/pyramorf.htm)。Dino 目标区别见 [Jaap 的 Dino 全分布](https://www.jaapsch.net/puzzles/dinocube.htm)。没有独立直方图的两个受限模型，已通过完整闭包、全边距离差 ≤1、每个非根状态有降距边、独立动作与样例回放证明最短性，未声称外部直方图一致。它们共导出 532 个独立回放样例。串行调度、网站导出数量与原始证据见[主跟踪表](puzzle-exact-distributions-tracker.md)，时间为本机单轮实测。
 
-含小尖 Pyraminx 的依据是**动作图直积分解**：定义相对尖角为 `CORNERS2.orientation - CORNERS.orientation (mod 3)`，八个主转保持这些相对角，八个小尖转各只改变一个相对角。脚本独立核验全部 16 个生成元及主体棱编号重标号，故任意路径下界为主体最短距离加非零尖角数，串接各因子的最短路径达到该下界。全分布来自已完成主体报告的哈希可追溯卷积；未进行新的全图扫描，也未声称存在独立的含小尖直方图参考。原始[报告](../.local/small-puzzle-distributions-20261023/derived/pyram-tips.json)及 [CSV](../.local/small-puzzle-distributions-20261023/derived/pyram-tips.csv)保存在本地生成物目录。
+含小尖 Pyraminx 的依据是**动作图直积分解**：定义相对尖角为 `CORNERS2.orientation - CORNERS.orientation (mod 3)`，八个主转保持这些相对角，八个小尖转各只改变一个相对角。脚本独立核验全部 16 个生成元及主体棱编号重标号，故任意路径下界为主体最短距离加非零尖角数，串接各因子的最短路径达到该下界。全分布来自已完成主体报告的哈希可追溯卷积；未进行新的全图扫描，也未声称存在独立的含小尖直方图参考。原始[报告](../../../.local/small-puzzle-distributions-20261023/derived/pyram-tips.json)及 [CSV](../../../.local/small-puzzle-distributions-20261023/derived/pyram-tips.csv)保存在本地生成物目录。
 
 以下实现已保存完整距离分布；重复计算只能算复核或为网站补充样例，不算新增实体结果：
 
@@ -94,7 +94,7 @@ csTimer 的 `112` 只有同一轴 R/R2/R'，是可直接算出的四态循环（
 
 ## 28 个 native 模型：小度数投影排除证据
 
-只读取当前 `NATIVE_PUZZLES` 描述，以 `getPuzzleGeometryByDesc` 的 `allMoves:true, orientCenters:false, addRotations:false` 生成模型。独立使用仓库 csTimer `grouplib.SchreierSims` 求一个或两个轨道的群阶，没有枚举群元素或求最短路。探针 Node heap 上限 128 MiB，每个群阶调用 VM 超时 1.5 秒。**证据留存限制：原探针为内联执行，原脚本和 stdout 未保存；没有为补档重复运行。** 本地[审计说明](../.local/small-puzzle-distributions-20261023/candidate-audit/README.md)及[记录值快照](../.local/small-puzzle-distributions-20261023/candidate-audit/recorded-native-projections.json)明确区分记录值与缺失的原始运行证据；下列数值不是可直接恢复的完整原始日志。
+只读取当前 `NATIVE_PUZZLES` 描述，以 `getPuzzleGeometryByDesc` 的 `allMoves:true, orientCenters:false, addRotations:false` 生成模型。独立使用仓库 csTimer `grouplib.SchreierSims` 求一个或两个轨道的群阶，没有枚举群元素或求最短路。探针 Node heap 上限 128 MiB，每个群阶调用 VM 超时 1.5 秒。**证据留存限制：原探针为内联执行，原脚本和 stdout 未保存；没有为补档重复运行。** 本地[审计说明](../../../.local/small-puzzle-distributions-20261023/candidate-audit/README.md)及[记录值快照](../../../.local/small-puzzle-distributions-20261023/candidate-audit/recorded-native-projections.json)明确区分记录值与缺失的原始运行证据；下列数值不是可直接恢复的完整原始日志。
 
 由 `pg.get3d().stickers` 的 orbit/ord/ori/color 得到同色片签名；投影群阶除以各同色签名重数阶乘、不可见自转对称数、最大整转数（立方/八面体 24，二十/十二面体 60）。所得是**保守可见状态下界**，不是完整精确总数。忽略其他轨道只会降低此下界；故下表每行超过 50,000,000 即足以排除。jumbling 如有额外状态，也不会降低该下界。
 
@@ -135,90 +135,90 @@ csTimer 的 `112` 只有同一轴 R/R2/R'，是可直接算出的四态循环（
 
 第二轮不重复全空间 BFS。新增 `core/packages/client/scripts/audit-exact-puzzle-candidates.mts` 将每个投影的生成元置换、颜色签名、同色/不可见朝向除数、整转上界、精确群阶和保守状态下界全部保存；每次群阶调用限 1.5 秒、置换度数不超过 80，Node heap 上限 128 MiB。各目录保留当次源码副本及 SHA256 manifest。先前内联探针原输出缺失仍是历史事实，以下新证据已补上可复核来源。
 
-- [28 个 native 首批证据](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/manifest.json)：其中 Radio Crystal 的朝向展开度数 120 触及探针 cap，未尝试；改用 60 度纯排列投影的完整证据在下一批。
-- [旧 PG 目录及 Radio Crystal 证据](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/manifest.json)。
-- [金字塔/斜转等联合轨道证据](../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/manifest.json)：避免把单个小轨道误判成完整小空间。
-- [Gigaminx 角/棱投影证据](../.local/small-puzzle-distributions-20261023/candidate-audit/minx-second-pass/manifest.json)。更高阶五魔沿用相同的可见角块运动投影，不为重复排除而构建巨大几何。
+- [28 个 native 首批证据](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/manifest.json)：其中 Radio Crystal 的朝向展开度数 120 触及探针 cap，未尝试；改用 60 度纯排列投影的完整证据在下一批。
+- [旧 PG 目录及 Radio Crystal 证据](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/manifest.json)。
+- [金字塔/斜转等联合轨道证据](../../../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/manifest.json)：避免把单个小轨道误判成完整小空间。
+- [Gigaminx 角/棱投影证据](../../../.local/small-puzzle-distributions-20261023/candidate-audit/minx-second-pass/manifest.json)。更高阶五魔沿用相同的可见角块运动投影，不为重复排除而构建巨大几何。
 
 本轮共检查 69 个不同 PG/native ID；其中 67 个具有超过五千万的已记录可见状态下界。另两个 morphix PG 模型的小群是保形子群，继续按不忠实完整实体模型排除。所有 28 个 native 都已取得足够的超限投影证据。
 
 | ID | 核验投影 | 置换度数 | 去同色与整转后的状态下界 | 原始证据 |
 | --- | --- | ---: | ---: | --- |
-| astrominx | CENTERS | 60 | 18965687731971083484653607874462124667510117975982080000000000000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/astrominx.json) |
-| astrominxbigchop | CENTERS | 60 | 37931375463942166969307215748924249335020235951964160000000000000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/astrominxbigchop.json) |
-| bigchop | CENTERS | 60 | 15554234651182784842851540158043249992941735505052303360 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/bigchop.json) |
-| catscradle | CENTERS3 | 20 | 20274183401472000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/catscradle.json) |
-| chopasaurus | CENTERS | 60 | 7777117325591392421425770079021624996470867752526151680 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/chopasaurus.json) |
-| christophersjewel | EDGES | 24 | 40874803200 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/christophersjewel.json) |
-| circoradiolarian | C5RNER | 60 | 194906250000000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/circoradiolarian.json) |
-| comboctahedron | EDGES | 24 | 40874803200 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/comboctahedron.json) |
-| compycube | EDGES + CORNERS + CORNERS2 + CENTERS | 54 | 785682374400 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/compycube.json) |
-| cube2dino | EDGES | 48 | 6311527524141840000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/cube2dino.json) |
-| cube2dinolittlechop | CENTERS | 24 | 135277939046250 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/cube2dinolittlechop.json) |
-| cube2heli | CENTERS | 24 | 135277939046250 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/cube2heli.json) |
-| cube2littlechop | CENTERS | 24 | 135277939046250 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/cube2littlechop.json) |
-| cube3dino | EDGES | 48 | 6311527524141840000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/cube3dino.json) |
-| cube3heli | EDGES | 48 | 6311527524141840000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/cube3heli.json) |
-| cube3skewb | CENTERS | 24 | 135277939046250 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/cube3skewb.json) |
-| dinolittlechop | CENTERS | 24 | 67638969523125 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/dinolittlechop.json) |
-| dinoocta | C4RNER + CENTERS + EDGES + CENTERS2 + CENTERS3 + CENTERS4 | 80 | 47112200068792320000000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/dinoocta.json) |
-| dinoskewb | EDGES + CENTERS | 36 | 37344162240000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/dinoskewb.json) |
-| dogic | CENTERS2 | 20 | 20274183401472000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/dogic.json) |
-| eitansstar | EDGES:permutation | 60 | 64579359509837737184920823071333303277335537957347665233920000000000000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/eitansstar.json) |
-| elitepentultimate | EDGES:permutation | 60 | 64579359509837737184920823071333303277335537957347665233920000000000000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/elitepentultimate.json) |
-| emperorpyraminx | EDGES + EDGES2 | 48 | 1167005070000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/emperorpyraminx.json) |
-| emperortetraminx | EDGES + EDGES2 | 48 | 1167005070000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/emperortetraminx.json) |
-| eto | EDGES | 48 | 6311527524141840000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/eto.json) |
-| fto5 | EDGES + EDGES2 | 48 | 2390026383360000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/fto5.json) |
-| fto6 | CENTERS + EDGES | 36 | 1844156160000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/fto6.json) |
-| gigaminx | EDGES:permutation | 60 | 64579359509837737184920823071333303277335537957347665233920000000000000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/minx-second-pass/gigaminx.json) |
-| heliskewb | CENTERS | 24 | 67638969523125 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/heliskewb.json) |
-| hyperx | CENTERS | 24 | 135277939046250 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/hyperx.json) |
-| icosababyface | CENTERS | 20 | 20274183401472000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/icosababyface.json) |
-| icosamate | CENTERS | 20 | 20274183401472000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/icosamate.json) |
-| icosaminx | EDGES | 60 | 1186721206316493019736003416424448000000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/icosaminx.json) |
-| lattice | EDGES + EDGES2 | 48 | 2390026383360000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/lattice.json) |
-| latticex | EDGES | 48 | 6311527524141840000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/latticex.json) |
-| littlechop | CENTERS | 24 | 67638969523125 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/littlechop.json) |
-| masterbrilic | CORNERS:permutation | 20 | 20274183401472000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/masterbrilic.json) |
-| masterfto | C4RNER + EDGES | 48 | 114960384000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/masterfto.json) |
-| masterftov2 | C4RNER + EDGES | 48 | 114960384000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/masterftov2.json) |
-| masterpentultimate | CENTERS2 | 60 | 7777117325591392421425770079021624996470867752526151680 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/masterpentultimate.json) |
-| masterpyraminx | EDGES + EDGES2 | 36 | 3592512000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/masterpyraminx.json) |
-| masterskewb | EDGES + CORNERS + CORNERS2 | 48 | 1047576499200 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/masterskewb.json) |
-| mastertetraminx | EDGES + EDGES2 | 36 | 3592512000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/mastertetraminx.json) |
-| megaminxchopasaurus | CENTERS | 60 | 7777117325591392421425770079021624996470867752526151680 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/megaminxchopasaurus.json) |
-| octahedron4 | CENTERS | 24 | 15391623287040000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/octahedron4.json) |
-| octastar | EDGES | 48 | 3155763762070920000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/octastar.json) |
-| pentultimate | CORNERS | 60 | 23563902142421896679424000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/pentultimate.json) |
-| professorpyraminx | EDGES + EDGES2 | 48 | 1167005070000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/professorpyraminx.json) |
-| professorskewb | EDGES + EDGES2 | 48 | 2390026383360000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/professorskewb.json) |
-| professortetraminx | EDGES + EDGES2 | 48 | 1167005070000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/professortetraminx.json) |
-| pyraminxcrystal | EDGES | 60 | 1186721206316493019736003416424448000000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/pyraminxcrystal.json) |
-| quadx | EDGES | 24 | 81749606400 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/quadx.json) |
-| radiocanon | C5RNER | 60 | 194906250000000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/radiocanon.json) |
-| radiochop | EDGES:permutation | 60 | 64579359509837737184920823071333303277335537957347665233920000000000000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/radiochop.json) |
-| radiocrystal | EDGES:permutation | 60 | 64579359509837737184920823071333303277335537957347665233920000000000000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/radiocrystal.json) |
-| radiojam | CENTERS4 | 20 | 20274183401472000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/radiojam.json) |
-| radiojewel | CENTERS4 | 20 | 20274183401472000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/radiojewel.json) |
-| radioweb | CENTERS4 | 20 | 20274183401472000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/radioweb.json) |
-| redicosahedron | EDGES | 60 | 1186721206316493019736003416424448000000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/redicosahedron.json) |
-| redicosahedroncenters | EDGES | 60 | 1186721206316493019736003416424448000000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/redicosahedroncenters.json) |
-| royalpyraminx | EDGES + EDGES2 | 48 | 1167005070000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/royalpyraminx.json) |
-| royaltetraminx | EDGES + EDGES2 | 48 | 1167005070000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/royaltetraminx.json) |
-| starminx | EDGES | 60 | 1186721206316493019736003416424448000000 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/starminx.json) |
-| starminx2 | CENTERS | 60 | 7777117325591392421425770079021624996470867752526151680 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/starminx2.json) |
-| starminxcombo | CENTERS | 60 | 7777117325591392421425770079021624996470867752526151680 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/starminxcombo.json) |
-| superz | CENTERS | 24 | 135277939046250 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/superz.json) |
-| trajbersoctahedron | EDGES | 24 | 40874803200 | [JSON](../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/trajbersoctahedron.json) |
+| astrominx | CENTERS | 60 | 18965687731971083484653607874462124667510117975982080000000000000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/astrominx.json) |
+| astrominxbigchop | CENTERS | 60 | 37931375463942166969307215748924249335020235951964160000000000000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/astrominxbigchop.json) |
+| bigchop | CENTERS | 60 | 15554234651182784842851540158043249992941735505052303360 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/bigchop.json) |
+| catscradle | CENTERS3 | 20 | 20274183401472000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/catscradle.json) |
+| chopasaurus | CENTERS | 60 | 7777117325591392421425770079021624996470867752526151680 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/chopasaurus.json) |
+| christophersjewel | EDGES | 24 | 40874803200 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/christophersjewel.json) |
+| circoradiolarian | C5RNER | 60 | 194906250000000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/circoradiolarian.json) |
+| comboctahedron | EDGES | 24 | 40874803200 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/comboctahedron.json) |
+| compycube | EDGES + CORNERS + CORNERS2 + CENTERS | 54 | 785682374400 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/compycube.json) |
+| cube2dino | EDGES | 48 | 6311527524141840000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/cube2dino.json) |
+| cube2dinolittlechop | CENTERS | 24 | 135277939046250 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/cube2dinolittlechop.json) |
+| cube2heli | CENTERS | 24 | 135277939046250 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/cube2heli.json) |
+| cube2littlechop | CENTERS | 24 | 135277939046250 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/cube2littlechop.json) |
+| cube3dino | EDGES | 48 | 6311527524141840000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/cube3dino.json) |
+| cube3heli | EDGES | 48 | 6311527524141840000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/cube3heli.json) |
+| cube3skewb | CENTERS | 24 | 135277939046250 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/cube3skewb.json) |
+| dinolittlechop | CENTERS | 24 | 67638969523125 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/dinolittlechop.json) |
+| dinoocta | C4RNER + CENTERS + EDGES + CENTERS2 + CENTERS3 + CENTERS4 | 80 | 47112200068792320000000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/dinoocta.json) |
+| dinoskewb | EDGES + CENTERS | 36 | 37344162240000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/dinoskewb.json) |
+| dogic | CENTERS2 | 20 | 20274183401472000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/dogic.json) |
+| eitansstar | EDGES:permutation | 60 | 64579359509837737184920823071333303277335537957347665233920000000000000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/eitansstar.json) |
+| elitepentultimate | EDGES:permutation | 60 | 64579359509837737184920823071333303277335537957347665233920000000000000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/elitepentultimate.json) |
+| emperorpyraminx | EDGES + EDGES2 | 48 | 1167005070000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/emperorpyraminx.json) |
+| emperortetraminx | EDGES + EDGES2 | 48 | 1167005070000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/emperortetraminx.json) |
+| eto | EDGES | 48 | 6311527524141840000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/eto.json) |
+| fto5 | EDGES + EDGES2 | 48 | 2390026383360000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/fto5.json) |
+| fto6 | CENTERS + EDGES | 36 | 1844156160000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/fto6.json) |
+| gigaminx | EDGES:permutation | 60 | 64579359509837737184920823071333303277335537957347665233920000000000000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/minx-second-pass/gigaminx.json) |
+| heliskewb | CENTERS | 24 | 67638969523125 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/heliskewb.json) |
+| hyperx | CENTERS | 24 | 135277939046250 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/hyperx.json) |
+| icosababyface | CENTERS | 20 | 20274183401472000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/icosababyface.json) |
+| icosamate | CENTERS | 20 | 20274183401472000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/icosamate.json) |
+| icosaminx | EDGES | 60 | 1186721206316493019736003416424448000000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/icosaminx.json) |
+| lattice | EDGES + EDGES2 | 48 | 2390026383360000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/lattice.json) |
+| latticex | EDGES | 48 | 6311527524141840000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/latticex.json) |
+| littlechop | CENTERS | 24 | 67638969523125 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/littlechop.json) |
+| masterbrilic | CORNERS:permutation | 20 | 20274183401472000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/masterbrilic.json) |
+| masterfto | C4RNER + EDGES | 48 | 114960384000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/masterfto.json) |
+| masterftov2 | C4RNER + EDGES | 48 | 114960384000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/masterftov2.json) |
+| masterpentultimate | CENTERS2 | 60 | 7777117325591392421425770079021624996470867752526151680 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/masterpentultimate.json) |
+| masterpyraminx | EDGES + EDGES2 | 36 | 3592512000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/masterpyraminx.json) |
+| masterskewb | EDGES + CORNERS + CORNERS2 | 48 | 1047576499200 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/masterskewb.json) |
+| mastertetraminx | EDGES + EDGES2 | 36 | 3592512000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/mastertetraminx.json) |
+| megaminxchopasaurus | CENTERS | 60 | 7777117325591392421425770079021624996470867752526151680 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/megaminxchopasaurus.json) |
+| octahedron4 | CENTERS | 24 | 15391623287040000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/octahedron4.json) |
+| octastar | EDGES | 48 | 3155763762070920000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/octastar.json) |
+| pentultimate | CORNERS | 60 | 23563902142421896679424000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/pentultimate.json) |
+| professorpyraminx | EDGES + EDGES2 | 48 | 1167005070000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/professorpyraminx.json) |
+| professorskewb | EDGES + EDGES2 | 48 | 2390026383360000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/professorskewb.json) |
+| professortetraminx | EDGES + EDGES2 | 48 | 1167005070000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/professortetraminx.json) |
+| pyraminxcrystal | EDGES | 60 | 1186721206316493019736003416424448000000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/pyraminxcrystal.json) |
+| quadx | EDGES | 24 | 81749606400 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/quadx.json) |
+| radiocanon | C5RNER | 60 | 194906250000000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/radiocanon.json) |
+| radiochop | EDGES:permutation | 60 | 64579359509837737184920823071333303277335537957347665233920000000000000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/radiochop.json) |
+| radiocrystal | EDGES:permutation | 60 | 64579359509837737184920823071333303277335537957347665233920000000000000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/radiocrystal.json) |
+| radiojam | CENTERS4 | 20 | 20274183401472000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/radiojam.json) |
+| radiojewel | CENTERS4 | 20 | 20274183401472000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/radiojewel.json) |
+| radioweb | CENTERS4 | 20 | 20274183401472000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/radioweb.json) |
+| redicosahedron | EDGES | 60 | 1186721206316493019736003416424448000000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/redicosahedron.json) |
+| redicosahedroncenters | EDGES | 60 | 1186721206316493019736003416424448000000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/redicosahedroncenters.json) |
+| royalpyraminx | EDGES + EDGES2 | 48 | 1167005070000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/royalpyraminx.json) |
+| royaltetraminx | EDGES + EDGES2 | 48 | 1167005070000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/joint-second-pass/royaltetraminx.json) |
+| starminx | EDGES | 60 | 1186721206316493019736003416424448000000 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/starminx.json) |
+| starminx2 | CENTERS | 60 | 7777117325591392421425770079021624996470867752526151680 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/starminx2.json) |
+| starminxcombo | CENTERS | 60 | 7777117325591392421425770079021624996470867752526151680 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/starminxcombo.json) |
+| superz | CENTERS | 24 | 135277939046250 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/second-pass/superz.json) |
+| trajbersoctahedron | EDGES | 24 | 40874803200 | [JSON](../../../.local/small-puzzle-distributions-20261023/candidate-audit/catalog-second-pass/trajbersoctahedron.json) |
 
 恐龙八面体的六轨完整标签群阶为 `1899129720737872352378880000000`；其可见状态保守下界仍为 `47112200068792320000000`。旧的 88,704,000 只是两轨投影，不能当成整体大小。其它轨道共享转动生成元；本轮没有找到可像独立小尖一样证明最短距离相加的新完整分解。群论直积或独立 PDB 本身不足以证明距离分布可卷积。
 
-二阶镜面已用 [audit-mirror2-isomorphism.mts](../core/packages/client/scripts/audit-mirror2-isomorphism.mts) 核验：[证书](../.local/small-puzzle-distributions-20261023/candidate-audit/mirror2-isomorphism.json)。8 个无序尺寸三元组互不相同，每块的 3 个轴长也不同，24 个角块/扭转组合可区分；其逻辑引擎仍为 `Cube(2)`。因此按形状还原、忽略整转时，完整图与标准二阶同构，HTM/QTM 分布及最优样例可直接转用，不是新 BFS。
+二阶镜面已用 [audit-mirror2-isomorphism.mts](../../../core/packages/client/scripts/audit-mirror2-isomorphism.mts) 核验：[证书](../../../.local/small-puzzle-distributions-20261023/candidate-audit/mirror2-isomorphism.json)。8 个无序尺寸三元组互不相同，每块的 3 个轴长也不同，24 个角块/扭转组合可区分；其逻辑引擎仍为 `Cube(2)`。因此按形状还原、忽略整转时，完整图与标准二阶同构，HTM/QTM 分布及最优样例可直接转用，不是新 BFS。
 
 新增交付优先项为 Pyraminx Duo（324 态、God 4、现有完整直方图但旧统计页未接）和二阶镜面同构入口。Floppy、Gear、项目 UFO 模型（实体对应待核验）、CM2、Diamond、8-puzzle、Bicube 已有完整数学结果；补充离线样例/全态下载属于交付完善，不冒称新增求得上帝之数。Clock 的完整公开分布已在项目内收录，直接复用。
 
-网站逐项范围数据来自 [puzzle-distribution-coverage.ts](../core/packages/client/lib/puzzle-distribution-coverage.ts)：从现役 PG、sim、csTimer 与 shape-mod 名录汇集，每项可搜索，并区分完整结果、同构复用、超预算、已有部分结果与缺少可靠完整模型。动态自定义切割与任意训练动作集仍不作穷尽承诺。
+网站逐项范围数据来自 [puzzle-distribution-coverage.ts](../../../core/packages/client/lib/puzzle-distribution-coverage.ts)：从现役 PG、sim、csTimer 与 shape-mod 名录汇集，每项可搜索，并区分完整结果、同构复用、超预算、已有部分结果与缺少可靠完整模型。动态自定义切割与任意训练动作集仍不作穷尽承诺。
 
 ## 提交前最终有限目录审计（2026-10-23）
 

@@ -1,6 +1,6 @@
 # CubeRoot 微信 / 抖音小程序
 
-微信与抖音共用平台适配、登录和 BLE 驱动。微信计时与工具页仍通过 `web-view` 复用网站运行界面；抖音因主功能页面原生要求，使用原生计时和查询页面，直接消费共享纯逻辑，不导入 Web/React 源码。`package.json`、`src/`、两个项目配置模板与 [`../../docs/MINIPROGRAM.md`](docs/implementation.md) 是局部事实源。
+微信与抖音共用平台适配、登录和 BLE 驱动。微信计时与工具页仍通过 `web-view` 复用网站运行界面；抖音因主功能页面原生要求，使用原生计时和查询页面，直接消费共享纯逻辑，不导入 Web/React 源码。`package.json`、`src/`、两个项目配置模板与 [实现手册](docs/implementation.md) 是局部事实源。
 
 ## 抖音原生主页面
 
