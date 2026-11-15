@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { computeAoxr, aoxrKey } from '@/components/persons/logic/aoxr';
 import { parseAoxrWorldRecords } from '@/lib/aoxr-records';
+import { summarizeAoxr } from '@/lib/wca-aoxr';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 
 // 选手页 AoXR 列的口径回归:必须与世界榜 /wca/wr_aoxr
@@ -11,6 +12,34 @@ import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 
 let nextId = 1;
 const ROUND_IDS = ['1', '2', '3', 'f'];
+
+describe('competition AoXR summary', () => {
+  const hongKongRounds = [400, 396, 402, 414].map((average, i) => ({
+    round_type_id: ROUND_IDS[i]!, average,
+  }));
+
+  it('matches Geng Xuanyi’s four rounds at Hong Kong Championship 2026', () => {
+    expect(summarizeAoxr('333', hongKongRounds)).toEqual({ x: 4, sum: 1612, value: 403 });
+  });
+
+  it('does not turn an unloaded scheduled round or duplicate live round into another tier', () => {
+    expect(summarizeAoxr('333', hongKongRounds.map((r, i) => i === 1 ? { ...r, average: 0 } : r))).toBeNull();
+    expect(summarizeAoxr('333', hongKongRounds.filter((_, i) => i !== 1), ROUND_IDS)).toBeNull();
+    expect(summarizeAoxr('333', [hongKongRounds[0]!, hongKongRounds[0]!, hongKongRounds[3]!])).toBeNull();
+  });
+
+  it('does not require A finalists to enter a scheduled B final', () => {
+    const completed = [{ round_type_id: '1', average: 500 }, { round_type_id: 'f', average: 520 }];
+    expect(summarizeAoxr('333', completed, ['1', 'b', 'f']))
+      .toEqual(summarizeAoxr('333', completed));
+    expect(summarizeAoxr('333', completed, ['1', 'b', 'f']))
+      .toEqual({ x: 2, sum: 1020, value: 510 });
+    expect(summarizeAoxr('333', [{ round_type_id: '1', average: 500 }, { round_type_id: 'b', average: 520 }], ['1', 'b', 'f']))
+      .toBeNull();
+    expect(summarizeAoxr('333', [...completed, { round_type_id: 'b', average: -1 }], ['1', 'b', 'f']))
+      .toBeNull();
+  });
+});
 
 function comp(id: string, start_date: string): WcaCompetition {
   return { id, name: id, city: '', country_iso2: 'CN', start_date, end_date: start_date };

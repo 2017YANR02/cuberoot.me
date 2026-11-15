@@ -13,16 +13,8 @@
 // 自己另算一份「官方 + 直播」的名次,与成绩表 prRank / prRankLive 的分层一致。
 
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
-import { isMbldEvent } from '@/lib/mbf-average';
+import { summarizeAoxr } from '@/lib/wca-aoxr';
 import { aoxrRecordKey } from '@/lib/aoxr-records';
-
-/** 世界榜只有 Ao1R…Ao4R 四档(ROUND_COUNTS)。WCA 一场比赛单项目不会超过 4 轮,
- *  这里只作防御上限:真出现异常数据时留空,而不是算出个查无此档的 Ao5R。 */
-const MAX_ROUNDS = 4;
-
-/** 决赛轮次 id:f 决赛 / c 组合决赛。b(B-决赛)不算 —— A 决赛在其之后照常举行,
- *  打 B-决赛的人并没有打满该项目的所有轮次。 */
-const FINAL_ROUND_TYPES = new Set(['f', 'c']);
 
 export interface AoxrCell {
   /** 轮数 X(1..4) */
@@ -41,12 +33,8 @@ export const aoxrKey = (compId: string, eventId: string): string => `${compId}|$
 interface Bucket {
   compId: string;
   eventId: string;
-  averages: number[];
+  rounds: WcaResultRow[];
   hasLive: boolean;
-  /** 打过决赛轮 = 打满该项目所有轮次 */
-  reachedFinal: boolean;
-  /** 有轮次没打出有效平均(DNF / 未过及格线)→ 整场不出值 */
-  hasDnfRound: boolean;
 }
 
 /** 本人全部 results(需已叠加成绩变更链)+ comps → (比赛 × 项目) → AoXR 格 */
@@ -61,26 +49,25 @@ export function computeAoxr(
 
   const buckets = new Map<string, Bucket>();
   for (const r of results) {
-    if (isMbldEvent(r.event_id)) continue;
     const key = aoxrKey(r.competition_id, r.event_id);
     let b = buckets.get(key);
     if (!b) {
       b = {
         compId: r.competition_id, eventId: r.event_id,
-        averages: [], hasLive: false, reachedFinal: false, hasDnfRound: false,
+        rounds: [], hasLive: false,
       };
       buckets.set(key, b);
     }
-    if (r.average > 0) b.averages.push(r.average);
-    else b.hasDnfRound = true;
+    b.rounds.push(r);
     if (r.live) b.hasLive = true;
-    if (FINAL_ROUND_TYPES.has(r.round_type_id)) b.reachedFinal = true;
   }
 
   // 时间序 = 比赛日期 → 比赛 id(同日多场时稳定),与 computePrRank 同口径
   const ordered = [...buckets.entries()]
-    .filter(([, b]) => b.reachedFinal && !b.hasDnfRound
-      && b.averages.length >= 1 && b.averages.length <= MAX_ROUNDS)
+    .flatMap(([key, b]) => {
+      const summary = summarizeAoxr(b.eventId, b.rounds);
+      return summary ? [[key, { ...b, summary }] as const] : [];
+    })
     .sort((a, b) => {
       const da = compDate.get(a[1].compId) ?? '';
       const db = compDate.get(b[1].compId) ?? '';
@@ -89,17 +76,14 @@ export function computeAoxr(
     });
   if (ordered.length === 0) return out;
 
-  const valueOf = (b: Bucket): number =>
-    Math.round(b.averages.reduce((s, v) => s + v, 0) / b.averages.length);
-
   // dense rank:该场发生「当时」,同 (项目, X 档) 已见过的严格更优的不同值数 + 1
   const rankPass = (includeLive: boolean): Map<string, number> => {
     const ranks = new Map<string, number>();
     const seen = new Map<string, Set<number>>();
     for (const [key, b] of ordered) {
       if (!includeLive && b.hasLive) continue;
-      const v = valueOf(b);
-      const bk = `${b.eventId}|${b.averages.length}`;
+      const v = b.summary.value;
+      const bk = `${b.eventId}|${b.summary.x}`;
       const s = seen.get(bk) ?? new Set<number>();
       let less = 0;
       for (const prev of s) if (prev < v) less++;
@@ -116,13 +100,12 @@ export function computeAoxr(
 
   for (const [key, b] of ordered) {
     out.set(key, {
-      x: b.averages.length,
-      value: valueOf(b),
+      x: b.summary.x,
+      value: b.summary.value,
       prRank: (b.hasLive ? liveRanks?.get(key) : officialRanks.get(key)) ?? null,
       unofficial: b.hasLive,
       ...(!b.hasLive && records?.worldRecords?.has(aoxrRecordKey(
-        records.wcaId, b.compId, b.eventId, b.averages.length,
-        b.averages.reduce((sum, value) => sum + value, 0),
+        records.wcaId, b.compId, b.eventId, b.summary.x, b.summary.sum,
       )) ? { record: 'WR' as const } : {}),
     });
   }

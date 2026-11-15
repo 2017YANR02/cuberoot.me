@@ -66,6 +66,7 @@ import BoolToggle from '@/components/BoolToggle';
 import type { CompPersonalRecordSlot } from '@cuberoot/shared';
 import { EventIcon } from '@/components/EventIcon';
 import { formatWcaResult } from '@/lib/wca-format-result';
+import { summarizeAoxr } from '@/lib/wca-aoxr';
 import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
 import { UnofficialMark } from '@/components/UnofficialMark';
 import { rememberRecent } from '@/lib/comp-recent';
@@ -3726,13 +3727,22 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, personal = false, lo
       for (const rd of ev.rs) {
         const arr = data.resultsByRound[roundKey(ev.i, rd.i)] || [];
         const hit = arr.find(r => r.n === number);
-        if (hit) evRows.push({ ev, rd, result: hit });
+        if (hit) {
+          const { approved: chain } = splitChainByStatus(u.wcaid
+            ? changeMap?.get(personRoundChangeKey(u.wcaid, ev.i, rd.i)) : undefined);
+          evRows.push({ ev, rd, result: {
+            ...hit,
+            b: effectiveFieldValue(chain, 'best', hit.b),
+            a: effectiveFieldValue(chain, 'average', hit.a),
+            v: effectiveAttempts(chain, hit.v),
+          } });
+        }
       }
       evRows.reverse();
       out.push(...evRows);
     }
     return out;
-  }, [u, data, number]);
+  }, [u, data, number, changeMap]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -3838,6 +3848,10 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, personal = false, lo
               : tr({ zh: '暂无成绩', en: 'No results' })}</div>
           ) : (
             groups.map(g => {
+              const aoxr = summarizeAoxr(g.ev.i, g.entries.map(en => ({
+                round_type_id: en.rd.i,
+                average: en.result.a,
+              })), g.ev.rs.map(rd => rd.i));
               // mo3/bo3 项目只出实际把数列,不渲染空的 4/5(与主成绩表同口径)
               const attemptCount = g.entries.reduce(
                 (m, en) => Math.max(m, formatAttemptCount(en.rd.f), trimEmptyAttempts(en.result.v).length),
@@ -3899,6 +3913,14 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, personal = false, lo
                         </tr>
                       );
                     })}
+                    {aoxr && aoxr.x > 1 && <tr>
+                      <td colSpan={3} title={tr({
+                        zh: '打满全部轮次，且每轮都有有效平均；各轮平均再取平均。',
+                        en: 'The mean of all round averages, after completing every round with a valid average.',
+                      })}><strong>Ao{aoxr.x}R</strong></td>
+                      <td><strong>{highlight(formatWcaResult(aoxr.value, g.ev.i, 'average'))}</strong></td>
+                      <td colSpan={attemptCount} />
+                    </tr>}
                   </tbody>
                 </table>
               </div>
