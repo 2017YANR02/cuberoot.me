@@ -25,6 +25,40 @@ export interface SavedList {
   training: boolean;
 }
 export const DRAW_STORAGE_KEY = "cuberoot.draw.v1";
+/** Shared card-pool geometry; both renderers keep faces readable within a shallow 3D volume. */
+export function drawStageCards(
+  session: Session,
+  last: Ticket[] = [],
+  busy = false,
+) {
+  const pool = candidates(session);
+  const tickets = busy
+    ? [
+        ...new Map(
+          [...last, ...pool].map((ticket) => [ticket.id, ticket]),
+        ).values(),
+      ]
+    : pool;
+  const count = Math.min(tickets.length, 16);
+  const columns = Math.min(count, 4);
+  const rows = Math.ceil(count / Math.max(columns, 1));
+  return tickets.slice(0, count).map((ticket, i) => {
+    const row = Math.floor(i / columns);
+    const inRow = Math.min(columns, count - row * columns);
+    const phase = i * 2.3;
+    return {
+      ...ticket,
+      pose: {
+        "--x": `${Math.round(((i % columns) - (inRow - 1) / 2) * 88 + Math.sin(phase) * 10)}px`,
+        "--y": `${Math.round((row - (rows - 1) / 2) * 74 + Math.cos(phase) * 10)}px`,
+        "--z": `${count === 1 ? 0 : ((i % 3) - 1) * 42}px`,
+        "--yaw": `${Math.round(Math.sin(phase) * 16)}deg`,
+        "--tilt": `${Math.round(Math.cos(phase) * 13)}deg`,
+        "--delay": `${(-i * 0.29).toFixed(2)}s`,
+      },
+    };
+  });
+}
 export const freshSession = (): Session => ({
   text: "",
   entries: [],

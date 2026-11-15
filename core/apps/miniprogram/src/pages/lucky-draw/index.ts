@@ -6,7 +6,7 @@ import {
 import {
   DRAW_STORAGE_KEY,
   resultsText,
-  candidates,
+  drawStageCards,
 } from "@cuberoot/shared/draw";
 import { miniProgramApi } from "../../lib/platform";
 import {
@@ -59,14 +59,14 @@ Page({
         this.setData({
           view: v,
           copy: v.copy,
-          cards: candidates(v.session)
-            .slice(0, 24)
-            .map((t, i) => ({
-              ...t,
-              style: `transform:rotateY(${i * 19}deg) rotateZ(${i * 7}deg);animation-delay:${i * -0.3}s`,
-            })),
+          cards: drawStageCards(v.session, v.last, v.busy).map((t) => ({
+            ...t,
+            style: Object.entries(t.pose)
+              .map(([key, value]) => `${key}:${value}`)
+              .join(";"),
+          })),
           history: v.session.history
-            .slice()
+            .slice(0, v.busy ? -v.last.length : undefined)
             .reverse()
             .map((r, i) => ({
               ...r.ticket,

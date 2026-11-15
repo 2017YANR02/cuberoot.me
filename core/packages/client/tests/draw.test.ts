@@ -7,12 +7,32 @@ import {
   decodeSession,
   weakList,
   duplicateCount,
+  drawStageCards,
 } from "@cuberoot/shared/draw";
 import {
   createDrawController,
   type DrawView,
 } from "@cuberoot/shared/draw/controller";
 describe("draw rounds", () => {
+  it("keeps the selected ticket in the shuffle and bounds the shared 3D card pool", () => {
+    const initial = replaceList(
+      freshSession(),
+      Array.from({ length: 30 }, (_, i) => `Item ${i}`).join("\n"),
+    );
+    const result = draw(initial, () => 0, 1);
+    const last = result.history.map((row) => row.ticket);
+    const shuffling = drawStageCards(result, last, true);
+    expect(shuffling).toHaveLength(16);
+    expect(shuffling.map((card) => card.id)).toContain(last[0].id);
+    expect(drawStageCards(result).map((card) => card.id)).not.toContain(
+      last[0].id,
+    );
+    expect(new Set(shuffling.map((card) => card.id)).size).toBe(16);
+    for (const card of shuffling) {
+      expect(Math.abs(parseFloat(card.pose["--yaw"]))).toBeLessThanOrEqual(16);
+      expect(Math.abs(parseFloat(card.pose["--tilt"]))).toBeLessThanOrEqual(13);
+    }
+  });
   it("imports the selected source alias and leaves the list unchanged until preview is applied", async () => {
     let view: DrawView;
     const paths: string[] = [];

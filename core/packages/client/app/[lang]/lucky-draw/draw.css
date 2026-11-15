@@ -126,23 +126,30 @@
   margin: 6px 0;
 }
 .draw-stage {
-  min-height: 300px;
+  position: relative;
+  min-height: 220px;
   display: grid;
   place-items: center;
-  perspective: 1000px;
   overflow: hidden;
   border-radius: 16px;
   background: var(--muted);
+}
+.draw-stage.is-3d {
+  min-height: 420px;
+  perspective: 850px;
+  background: radial-gradient(
+    ellipse at 50% 55%,
+    color-mix(in srgb, var(--accent) 7%, var(--muted)),
+    var(--muted) 75%
+  );
 }
 .draw-cloud {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
   justify-content: center;
-  padding: 28px;
+  padding: 24px;
   width: 100%;
-  max-height: 420px;
-  overflow: hidden;
 }
 .draw-card {
   padding: 16px;
@@ -156,30 +163,134 @@
 }
 .draw-card small {
   display: block;
-  font-size: 14px;
+  font-size: 12px;
   color: var(--muted-foreground);
+  margin-top: 6px;
 }
 .is-3d .draw-cloud {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 440px;
+  height: 340px;
+  padding: 0;
+  transform: translate(-50%, -50%);
   transform-style: preserve-3d;
-  transform: rotateX(12deg);
+  transition: opacity 300ms;
+  pointer-events: none;
 }
-.is-3d .draw-cloud .draw-card {
-  transform: rotateY(calc(var(--i) * 19deg)) rotateZ(calc(var(--i) * 7deg));
-  animation: draw-float 5s ease-in-out infinite alternate;
-  animation-delay: calc(var(--i) * -0.3s);
+.is-3d .draw-slot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 112px;
+  height: 82px;
+  margin: -41px 0 0 -56px;
+  transform-style: preserve-3d;
+  transform: translate3d(var(--x), var(--y), var(--z)) rotateY(var(--yaw))
+    rotateZ(var(--tilt));
+}
+.is-3d .draw-slot .draw-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--foreground) 4%, transparent);
+  overflow: hidden;
+  animation: draw-card-float 4s ease-in-out infinite alternate;
+  animation-delay: var(--delay);
+}
+.is-3d .draw-slot strong {
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 550;
+  max-height: 3.6em;
+  overflow: hidden;
+}
+.is-3d .draw-slot .draw-card::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 7px;
+  height: 7px;
+  border-left: 1px solid var(--accent);
+  border-top: 1px solid var(--accent);
+}
+.is-3d.has-result .draw-cloud {
+  opacity: 0.12;
+}
+.has-result .draw-slot .draw-card {
+  animation-play-state: paused;
+}
+.is-drawing .draw-slot {
+  animation: draw-card-shuffle 900ms ease-in-out both;
+}
+.is-drawing .draw-slot .draw-card {
+  animation-play-state: paused;
 }
 .draw-winners {
+  position: relative;
+  z-index: 1;
   display: flex;
   gap: 18px;
   flex-wrap: wrap;
   justify-content: center;
-  padding: 24px;
+  align-items: center;
+  padding: 32px;
+  max-height: 520px;
+  overflow: auto;
+  width: 100%;
+}
+.draw-winners .winner {
+  min-width: min(210px, 100%);
+  padding: 28px 36px;
+  border-color: var(--accent);
+  box-shadow: 0 20px 48px color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+.is-3d .winner {
+  animation: draw-result-in 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .winner strong {
-  font-size: clamp(28px, 6vw, 64px);
+  font-size: clamp(48px, 6vw, 64px);
+  line-height: 1.2;
 }
 .winner p {
   font-size: 22px;
+  margin: 14px 0 0;
+}
+@keyframes draw-card-float {
+  from {
+    transform: translateY(-6px) rotateY(-4deg);
+  }
+  to {
+    transform: translateY(8px) rotateY(4deg);
+  }
+}
+@keyframes draw-card-shuffle {
+  35%,
+  65% {
+    transform: translate3d(
+        calc(var(--x) * 0.28),
+        calc(var(--y) * 0.28),
+        calc(var(--z) * 0.5)
+      )
+      rotateY(calc(var(--yaw) * -1)) rotateZ(calc(var(--tilt) * -1));
+  }
+}
+@keyframes draw-result-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.75) rotateY(-25deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 .draw-primary {
   position: sticky;
@@ -193,24 +304,10 @@
   color: var(--primary-foreground);
   min-width: 180px;
 }
-.is-drawing .draw-cloud {
-  animation: draw-spin 0.9s ease-in-out;
-}
-@keyframes draw-float {
-  to {
-    transform: translateY(12px) rotateY(calc(var(--i) * 19deg + 20deg))
-      rotateZ(calc(var(--i) * 7deg));
-  }
-}
-@keyframes draw-spin {
-  50% {
-    transform: rotateY(180deg) scale(0.85);
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   .draw-page * {
     animation: none !important;
-    transform: none !important;
+    transition: none !important;
   }
 }
 @media (max-width: 760px) {
@@ -226,8 +323,11 @@
   .draw-options {
     gap: 12px 24px;
   }
-  .draw-stage {
-    min-height: 260px;
+  .draw-stage.is-3d {
+    min-height: 340px;
+  }
+  .is-3d .draw-cloud {
+    transform: translate(-50%, -50%) scale(0.8);
   }
   .draw-actions input {
     min-width: 0;
@@ -246,4 +346,10 @@
   padding: 0;
   border: 0;
   background: none;
+}
+
+@media (max-width: 400px) {
+  .is-3d .draw-cloud {
+    transform: translate(-50%, -50%) scale(0.68);
+  }
 }

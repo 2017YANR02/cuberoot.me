@@ -15,7 +15,7 @@ import {
 import {
   DRAW_STORAGE_KEY,
   resultsText,
-  candidates,
+  drawStageCards,
 } from "@cuberoot/shared/draw";
 import "./draw.css";
 export default function DrawPage() {
@@ -246,29 +246,33 @@ export default function DrawPage() {
             </span>
           </div>
           <section
-            className={`draw-stage ${v.session.stage ? "is-3d" : ""} ${v.busy ? "is-drawing" : ""}`}
+            className={`draw-stage ${v.session.stage ? "is-3d" : ""} ${v.busy ? "is-drawing" : ""} ${v.last.length && !v.busy ? "has-result" : ""}`}
             aria-live="polite"
             aria-busy={v.busy}
           >
-            {!v.last.length || v.busy ? (
-              <div className="draw-cloud">
-                {candidates(v.session)
-                  .slice(0, 24)
-                  .map((t, i) => (
-                    <div
-                      className="draw-card"
-                      key={t.id}
-                      style={{ "--i": i } as React.CSSProperties}
-                    >
-                      {t.name}
+            {(v.session.stage || !v.last.length || v.busy) && (
+              <div className="draw-cloud" aria-hidden="true">
+                {drawStageCards(v.session, v.last, v.busy).map((t) => (
+                  <div
+                    className="draw-slot"
+                    key={t.id}
+                    style={t.pose as React.CSSProperties}
+                  >
+                    <div className="draw-card">
+                      <strong>{t.name}</strong>
                       {t.number && <small>#{t.number}</small>}
                     </div>
-                  ))}
+                  </div>
+                ))}
               </div>
-            ) : (
+            )}
+            {!!v.last.length && !v.busy && (
               <div className="draw-winners">
                 {v.last.map((t) => (
-                  <div className="draw-card winner" key={t.id}>
+                  <div
+                    className="draw-card winner"
+                    key={`${v.session.history.length}-${t.id}`}
+                  >
                     <strong>{t.name}</strong>
                     {t.number && <small>#{t.number}</small>}
                     {v.session.training && v.revealed && (
@@ -302,18 +306,21 @@ export default function DrawPage() {
             <div className="draw-actions">
               <h2>{l.history}</h2>
               <button
-                disabled={!v.session.history.length}
+                disabled={v.busy || !v.session.history.length}
                 onClick={() => act("copy")}
               >
                 {l.copy}
               </button>
-              <button disabled={!v.session.history.length} onClick={download}>
+              <button
+                disabled={v.busy || !v.session.history.length}
+                onClick={download}
+              >
                 {l.export}
               </button>
             </div>
             <ol reversed>
               {v.session.history
-                .slice()
+                .slice(0, v.busy ? -v.last.length : undefined)
                 .reverse()
                 .map((r, i) => (
                   <li key={v.session.history.length - i}>
