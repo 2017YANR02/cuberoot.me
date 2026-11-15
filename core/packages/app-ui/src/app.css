@@ -378,7 +378,9 @@ button {
 .mobile-timer-stage {
   position: relative;
   display: flex;
-  min-height: 520px;
+  /* The stage scrolls inside the space above navigation, including short
+     landscape and keyboard viewports. Its contents own their minimum size. */
+  min-height: 0;
   flex: 1;
   flex-direction: column;
   overflow: auto;
@@ -815,23 +817,13 @@ button {
 }
 
 @media (orientation: landscape) and (max-height: 560px) {
-  .mobile-timer-stage {
-    min-height: 430px;
-  }
-
   .mobile-cube-preview {
     display: none;
   }
 }
 
-/* The IME can leave only ~461 CSS px on the OPPO test device. Keep the
-   focused editor in the outer scroll container, then compact the timer stage
-   enough that digits, scramble, preview and bottom actions are reachable
-   together above the three-tab navigation. */
-.app-shell--compact-viewport .mobile-timer-stage {
-  min-height: 350px;
-}
-
+/* Compact the preview when the IME reduces the visible viewport. The stage
+   keeps scrolling within the remaining space above navigation. */
 .app-shell--compact-viewport .mobile-cube-preview {
   width: 120px;
   height: 90px;

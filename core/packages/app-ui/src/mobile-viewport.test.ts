@@ -105,9 +105,14 @@ describe('mobile visible viewport layout', () => {
       'toast',
     ]);
     expect(css).toMatch(/\.view-container \{[^}]*overflow-x: hidden;[^}]*overflow-y: auto;/s);
-    expect(css).toMatch(/\.mobile-timer-stage \{[^}]*min-height: 520px;/s);
+    expect(css).toMatch(/\.mobile-timer-stage \{[^}]*min-height: 0;[^}]*overflow: auto;/s);
     expect(surfaceCss).toMatch(/\.timing-surface--solo,\s*\.timing-surface--net \{[^}]*min-height: 280px;/s);
-    expect(css).toMatch(/\.app-shell--compact-viewport \.mobile-timer-stage \{[^}]*min-height: 350px;/s);
+    // Every viewport override must let this inner scrollport shrink above nav.
+    const stageRules = [...css.matchAll(/[^{}]*\.mobile-timer-stage\s*\{([^}]*)\}/g)];
+    for (const [, declarations] of stageRules) {
+      const minimum = declarations.match(/min-height:\s*([^;]+);/)?.[1];
+      if (minimum) expect(minimum).toBe('0');
+    }
     expect(css).not.toMatch(/\.mobile-timer-stage \.timing-surface-(?:core|sub)\s*\{/);
     expect(app).toContain('const primaryNavRef = useRef<HTMLElement>(null)');
     expect(app).toContain('primaryNavRef.current?.getBoundingClientRect().height ?? 0');
