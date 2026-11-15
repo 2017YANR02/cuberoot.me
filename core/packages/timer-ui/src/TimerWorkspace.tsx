@@ -1,4 +1,4 @@
-import { useSyncExternalStore, type HTMLAttributes, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useSyncExternalStore, type HTMLAttributes, type ReactNode } from 'react';
 import './timer-workspace.css';
 import { ResizeDivider } from '@app-foundation/navigation-ui/resize-divider';
 import '@app-foundation/navigation-ui/resize-divider.css';
@@ -27,7 +27,20 @@ export function TimerWorkspace({ active = true, panelOpen = false, recap, resize
 }) {
   const wide = useTimerWideLayout({ useHostContent: true });
   const recapOpen = active && wide && !panelOpen && Boolean(recap);
-  return <div {...props} className={`${className}${active ? ' timer-workspace timer-no-selection' : ''}`}
+  const workspaceRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const workspace = workspaceRef.current;
+    if (!workspace || !active || !wide || typeof ResizeObserver === 'undefined') return;
+    // Watch the rail as well as the host: expanding a previously collapsed dock
+    // must share the same width budget as resizing the native window.
+    const constrain = () => constrainDockWidths(workspace);
+    const observer = new ResizeObserver(constrain);
+    observer.observe(workspace);
+    for (const panel of workspace.querySelectorAll('.timer-solver-rail, .timer-workspace-panel')) observer.observe(panel);
+    constrain();
+    return () => observer.disconnect();
+  }, [active, wide, panelOpen, recapOpen]);
+  return <div {...props} ref={workspaceRef} className={`${className}${active ? ' timer-workspace timer-no-selection' : ''}`}
     data-wide-layout={wide ? '' : undefined}
     data-panel-open={active && (panelOpen || recapOpen) ? '' : undefined} data-recap-open={recapOpen ? '' : undefined}>
     {children}
@@ -40,15 +53,41 @@ export function TimerWorkspace({ active = true, panelOpen = false, recap, resize
   </div>;
 }
 
+const MIN_TIMER_WIDTH = 320;
+function openDock(workspace: HTMLElement, side: 'left' | 'right') {
+  if (side === 'right') return workspace.hasAttribute('data-panel-open')
+    ? workspace.querySelector<HTMLElement>('.timer-workspace-panel') : null;
+  const rail = workspace.querySelector<HTMLElement>('.timer-solver-stage:not([data-stage-fullscreen="true"]) .timer-solver-rail');
+  return rail?.querySelector('.solver-panel[data-layout="rail"][data-open="true"]') ? rail : null;
+}
+
+/** Pixel preferences survive resizing, but cannot consume the timing canvas. */
+function constrainDockWidths(workspace: HTMLElement) {
+  const available = Math.max(0, workspace.clientWidth - MIN_TIMER_WIDTH);
+  if (!workspace.clientWidth) return;
+  const docks = (['left', 'right'] as const).map(side => ({ side, width: openDock(workspace, side)?.getBoundingClientRect().width ?? 0 }))
+    .filter(dock => dock.width > 0);
+  const total = docks.reduce((sum, dock) => sum + dock.width, 0);
+  if (total <= available) return;
+  const minimum = Math.min(240, available / docks.length);
+  const bases = docks.map(dock => Math.min(dock.width, minimum));
+  const baseTotal = bases.reduce((sum, width) => sum + width, 0);
+  const flexible = total - baseTotal;
+  for (const [index, dock] of docks.entries()) {
+    const width = Math.floor(bases[index] + (flexible > 0 ? (dock.width - bases[index]) / flexible * (available - baseTotal) : 0));
+    workspace.style.setProperty(`--timer-${dock.side}-dock-width`, `${width}px`);
+  }
+}
+
 /** One pointer/keyboard resizing contract for both desktop dock boundaries. */
 export function TimerWorkspaceDivider({ side, label }: { side: 'left' | 'right'; label: string }) {
   const panel = (element: HTMLElement) => element.closest('.timer-workspace')?.querySelector<HTMLElement>(side === 'left' ? '.timer-solver-rail' : '.timer-workspace-panel');
   const resize = (element: HTMLElement, requested: number) => {
     const workspace = element.closest<HTMLElement>('.timer-workspace');
     if (!workspace) return;
-    const other = workspace.querySelector<HTMLElement>(side === 'left' ? '.timer-workspace-panel' : '.timer-solver-rail');
+    const other = openDock(workspace, side === 'left' ? 'right' : 'left');
     const otherWidth = other?.getBoundingClientRect().width ?? 0;
-    const maximum = Math.max(160, workspace.clientWidth - otherWidth - 320);
+    const maximum = Math.max(0, workspace.clientWidth - otherWidth - MIN_TIMER_WIDTH);
     const next = Math.round(Math.max(Math.min(240, maximum), Math.min(requested, maximum)));
     workspace.style.setProperty(side === 'left' ? '--timer-left-dock-width' : '--timer-right-dock-width', `${next}px`);
     return next;
