@@ -7,8 +7,8 @@
 .work-calendar-filters { flex: 0 1 auto; flex-wrap: wrap; gap: 8px; min-width: 0; }
 .staff-workspace .work-calendar-toolbar .staff-field { flex: 0 1 auto; min-width: 0; width: auto; margin: 0; }
 .staff-workspace .work-calendar-toolbar .work-calendar-person { max-width: 12rem; }
-.staff-workspace .work-calendar-toolbar .work-calendar-zone { flex: 0 1 12rem; width: 12rem; max-width: 100%; }
-.work-calendar-toolbar .list-select { width: 100%; }
+.staff-workspace .work-calendar-toolbar .work-calendar-zone { flex: 0 1 auto; width: max-content; max-width: 100%; }
+.work-calendar-toolbar .list-select { width: max-content; max-width: 100%; }
 .work-calendar-toolbar .list-select-trigger { height: var(--workspace-control-height); min-height: var(--workspace-control-height); font-size: 16px; }
 .work-calendar-toolbar .staff-input { width: 100%; }
 .work-calendar-today.btn { padding-inline: 10px; border: 0; background: transparent; box-shadow: none; color: var(--foreground); }
@@ -31,7 +31,6 @@
   .work-calendar .work-calendar-toolbar { gap: 8px; }
   .work-calendar-nav { flex: 1 1 100%; gap: 8px; }
   .work-calendar-filters { flex: 1 1 100%; }
-  .staff-workspace .work-calendar-toolbar .work-calendar-zone { flex: 1 1 8rem; width: 8rem; }
   .work-calendar-actions { margin-left: auto; }
   .work-calendar-grid { height: 66dvh; min-height: 400px; }
   .work-calendar .cal-grid .fc { font-size: 13px; }
