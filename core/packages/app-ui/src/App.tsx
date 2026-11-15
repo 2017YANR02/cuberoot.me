@@ -5064,7 +5064,7 @@ children: <>
               <a className="site-link" href={privacyUrl(language)} onClick={openExternal} rel="noreferrer" target="_blank">
                 {copy.privacy}<span aria-hidden="true">↗</span>
               </a>
-              <a className="site-link" href="mailto:yrmfxc@gmail.com">{copy.support}</a>
+              <a className="site-link" href="mailto:yrmfxc@gmail.com" onClick={openExternal}>{copy.support}</a>
               <span>{copy.version} {host.version}</span>
             </div>
             </>}

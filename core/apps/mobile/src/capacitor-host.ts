@@ -2,6 +2,7 @@ import { addNotificationOpenListener } from './native/notification-open';
 import { watchTimerPort } from './watch-timer';
 import { uuRemote } from './uu-remote';
 import { exportNativeFile } from './native-export';
+import { openNativeExternal } from './native-external';
 import { createStackmatMicSource } from '@cuberoot/timer-ui/external';
 import { NativeBleTransport } from './bluetooth/native-ble-transport';
 import { handleAppleMembership } from './apple-membership';
@@ -9,7 +10,6 @@ import { handleGoogleMembership } from './google-membership';
 import { usesDirectPayments, usesGooglePayments } from './distribution';
 import { handleWebMembership } from './web-membership';
 import { App as NativeApp } from '@capacitor/app';
-import { Browser } from '@capacitor/browser';
 import { Clipboard } from '@capacitor/clipboard';
 import { Capacitor } from '@capacitor/core';
 import { Network } from '@capacitor/network';
@@ -48,7 +48,7 @@ export const capacitorHost: InstalledAppHost = {
     client: mobileNetBattleClient,
     sessions: mobileNetBattleSessionStore,
   },
-  openExternal: async (url) => Browser.open({ url }),
+  openExternal: openNativeExternal,
   print: printTimerDocument,
   exportFile: exportNativeFile,
   writeClipboardText: (text) => Clipboard.write({ string: text }),

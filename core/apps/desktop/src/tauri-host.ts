@@ -1,4 +1,5 @@
 import { printDesktopDocument } from './native-print';
+import { openDesktopExternal } from './native-external';
 import { createStackmatMicSource } from '@cuberoot/timer-ui/external';
 import { invoke } from '@tauri-apps/api/core';
 import { getVersion } from '@tauri-apps/api/app';
@@ -82,7 +83,7 @@ export const desktopHost: InstalledAppHost = {
   getNetworkStatus: async () => navigator.onLine,
   isInstalled: () => true,
   netBattle: desktopNetBattle,
-  openExternal: openUrl,
+  openExternal: openDesktopExternal,
   print: printDesktopDocument,
   async exportFile(text, filename) {
     if (!await invoke<boolean>('export_file', { text, filename })) throw new DOMException('Export cancelled', 'AbortError');
