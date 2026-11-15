@@ -63,6 +63,7 @@ import SortableAlgRow from '@/components/SortableAlgRow';
 import SortableCard from '@/components/SortableCard';
 import { useAlgViewMode } from '@/components/AlgViewModeToggle';
 import AlgListSettings, { useAlgCaseNumberVisibility } from '@/components/AlgListSettings';
+import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
 import AlgPdfButton from '@/components/AlgPdfButton';
 import AlgImageDownloadButton from '@/components/AlgImageDownloadButton';
 import { caseImageBatch } from '@/lib/alg-case-images';
@@ -643,6 +644,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   // AlgViewModeToggle 里,`/alg` 下所有 case 列表页共用同一个偏好。
   const [view, changeView] = useAlgViewMode();
   const [showCaseNumbers, setShowCaseNumbers] = useAlgCaseNumberVisibility();
+  const [collapseGroups, setCollapseGroups] = useQueryState('collapse-groups', parseAsBoolean.withDefault(false));
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   // 图 / 公式偏好仅决定情况列表的呈现，不绕过分类导航。
 
   /** 这个 set 里实际出现过的标签 —— 没有就不渲染筛选器 */
@@ -1031,6 +1034,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
 
   const showSubgroupPicker = !collection && !!meta.umbrella && !subgroupParam
     && !showAllCases && !optimalFilterActive;
+  const canCollapseGroups = set === 'zbll' && !!subgroupParam && !collection;
+  const accordion = canCollapseGroups && collapseGroups;
   const headerCaseCount = categoryHeaderCaseCount(
     scopedCases.length,
     visibleCases.length,
@@ -1146,7 +1151,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                 selectedId={subParentSlug ?? subgroupSlug ?? ''}
                 label={subgroupDisplay}
                 language={isZh ? 'zh' : 'en'}
-                onSelect={next => navigation.push(`${isZh ? '/zh' : ''}/alg/${puzzleParam}/${set}/${encodeURIComponent(next)}${sq1QuerySuffix}`)}
+                onSelect={next => {
+                  const query = new URLSearchParams(sq1Query);
+                  if (collapseGroups) query.set('collapse-groups', 'true');
+                  setExpandedGroup(null);
+                  navigation.push(`${isZh ? '/zh' : ''}/alg/${puzzleParam}/${set}/${encodeURIComponent(next)}${query.size ? `?${query}` : ''}`);
+                }}
               />
             : <span className="alg-cat-subgroup"> {subgroupDisplay}</span>)}
         </PageHeading>
@@ -1173,6 +1183,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                 }
               : {})}
           >
+            {canCollapseGroups && <BoolToggle
+              value={collapseGroups}
+              onChange={value => { setExpandedGroup(null); void setCollapseGroups(value); }}
+              label={tr({ zh: '分类互斥展开', en: 'Expand one group at a time' })}
+            />}
             {requires3x3AlgCaseSetup(puzzleParam as AlgPuzzle, set) && <AlgSetupModeSelect
               value={setupMode} onChange={mode => void setSetupMode(mode)} />}
             {!collection?.cardsOnly && <BoolToggle
@@ -1527,7 +1542,16 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
 
       {data && !showSubgroupPicker && grouped.map((group) => {
         const { key, subgroup, cases, paritySection, startsParitySection, sectionCaseCount } = group;
-        const showHeader = grouped.length > 1 || (!subgroupParam && subgroup !== '');
+        const showHeader = accordion || grouped.length > 1 || (!subgroupParam && subgroup !== '');
+        const panelId = `alg-group-${encodeURIComponent(key)}`;
+        const expanded = !accordion || expandedGroup === key;
+        const groupTitle = isSq1Ep
+          ? (sq1EpNumericNames
+            ? `${sq1EpNumericLayerName(subgroup) ?? subgroup}.*`
+            : tr({ zh: `上层 ${displayAlgCaseName(puzzleParam, set, subgroup)}`, en: `Top ${displayAlgCaseName(puzzleParam, set, subgroup)}` }))
+          : (set === 'f2l' ? tr(f2lGroupName(subgroup)) : ollByGroup.get(subgroup)
+            ?? displayAlgCaseName(puzzleParam, set, set === 'zbll' && subgroupParam ? subgroup.split('/').slice(1).join('/') || subgroup : subgroup)
+            ?? tr({ zh: '其他', en: 'Other' }));
         return (
           <Fragment key={key}>
           {startsParitySection && paritySection === 'unclassified' && (
@@ -1544,15 +1568,13 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           <section className="alg-subgroup">
             {showHeader && (
               <h2 className="alg-subgroup-title">
-                {isSq1Ep
-                  ? (sq1EpNumericNames
-                    ? `${sq1EpNumericLayerName(subgroup) ?? subgroup}.*`
-                    : tr({ zh: `上层 ${displayAlgCaseName(puzzleParam, set, subgroup)}`, en: `Top ${displayAlgCaseName(puzzleParam, set, subgroup)}` }))
-                  : (set === 'f2l' ? tr(f2lGroupName(subgroup)) : ollByGroup.get(subgroup)
-                    ?? displayAlgCaseName(puzzleParam, set, set === 'zbll' && subgroupParam ? subgroup.split('/').slice(1).join('/') || subgroup : subgroup)
-                    ?? tr({ zh: '其他', en: 'Other' }))}
+                {accordion ? <MoreToggle expanded={expanded} aria-controls={panelId}
+                  onClick={() => setExpandedGroup(current => current === key ? null : key)}>
+                  {groupTitle}
+                </MoreToggle> : groupTitle}
               </h2>
             )}
+            <MoreTogglePanel id={panelId} expanded={expanded}>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext
                   items={cases.map(c => c.id).filter((x): x is number => typeof x === 'number')}
@@ -1807,6 +1829,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               </div>
                 </SortableContext>
               </DndContext>
+            </MoreTogglePanel>
           </section>
           </Fragment>
         );
