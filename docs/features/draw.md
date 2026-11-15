@@ -1,6 +1,6 @@
 # 抽奖
 
-入口：网页 `/draw`（中文 `/zh/draw`），原生小程序 `pages/draw/index`。首页「工具」组统一从 `site_directory.ts` 提供入口。
+入口：网页 `/lucky-draw`（中文 `/zh/lucky-draw`），原生小程序 `pages/lucky-draw/index`。首页「工具」组统一从 `site_directory.ts` 提供入口。
 
 ## 能力与规则
 

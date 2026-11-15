@@ -67,7 +67,7 @@ export function createNativeToolsPageOptions() {
     onHide() { this.active = false; this.requestId = (this.requestId ?? 0) + 1; },
     onUnload() { this.onHide(); },
     active: false, requestId: 0,
-    openDraw() { miniProgramApi().navigateTo({url:'/pages/draw/index'}); },
+    openDraw() { miniProgramApi().navigateTo({url:'/pages/lucky-draw/index'}); },
     openTimer() { miniProgramApi().switchTab({ url: '/pages/timer/index' }); },
     openAssistant() { miniProgramApi().navigateTo({url:'/pages/assistant/index'}); },
     changeMode(e: WechatMiniprogram.PickerChange) {

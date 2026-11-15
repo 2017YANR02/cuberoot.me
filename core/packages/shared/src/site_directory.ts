@@ -182,7 +182,7 @@ export const SITE_DIRECTORY_GROUPS = [
     entries: [
       { id: 'contests', href: '/contests', internal: true, tier: 'medium', nameKey: 'contests' },
       { id: 'online-competitions', href: '/platform/events/online', internal: true, tier: 'medium', nameKey: 'onlineCompetitions' },
-      { id: 'draw', href: '/draw', internal: true, tier: 'medium', nameKey: 'draw' },
+      { id: 'draw', href: '/lucky-draw', internal: true, tier: 'medium', nameKey: 'draw' },
       { id: 'frame-count', href: '/frame-count', internal: true, tier: 'medium', nameKey: 'frameCount' },
       { id: 'solver', href: '/solver', internal: true, tier: 'medium', nameKey: 'solver' },
       { id: 'mosaic', href: '/mosaic', internal: true, tier: 'medium', nameKey: 'mosaic' },

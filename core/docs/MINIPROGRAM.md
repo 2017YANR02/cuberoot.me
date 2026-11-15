@@ -953,4 +953,4 @@ pnpm --filter @cuberoot/miniprogram release:check
 
 | ID | 路径 | 能力 |
 | --- | --- | --- |
-| `draw` | `/draw` / `pages/draw/index` | 网页与原生抽奖、比赛报名导入、联想词训练；待发布与真机验收 |
+| `draw` | `/lucky-draw` / `pages/lucky-draw/index` | 网页与原生抽奖、比赛报名导入、联想词训练；待发布与真机验收 |

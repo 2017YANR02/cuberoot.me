@@ -133,6 +133,6 @@ Page({
     });
   },
   onShareAppMessage() {
-    return { title: this.data.copy.title, path: "/pages/draw/index" };
+    return { title: this.data.copy.title, path: "/pages/lucky-draw/index" };
   },
 });

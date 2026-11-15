@@ -173,7 +173,7 @@ export const EXPECTED_APP_PAGES = [
   'pages/membership/index',
   'pages/preferences/index',
   'pages/payouts/index',
-  'pages/draw/index',
+  'pages/lucky-draw/index',
 ];
 
 export const EXPECTED_TAB_BAR = [
