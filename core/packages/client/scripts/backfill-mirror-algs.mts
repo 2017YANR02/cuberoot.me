@@ -1,6 +1,6 @@
 /** Preview all legacy mirror pairs. After deploying the updated server, --apply
  * resyncs them via the existing endpoint, without editing individual originals.
- * Build/run commands are documented in docs/issue-40-alg-mirror-plan.md.
+ * Build/run commands are documented in docs/product/cubing/history/issue-40-alg-mirror-plan.md.
  */
 import type { AlgCase } from '@cuberoot/shared/alg';
 import { MIRROR_ALG_SYNC_SETS, regenerateMirrorAlgs } from '@cuberoot/shared/alg-mirror';

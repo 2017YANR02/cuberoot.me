@@ -1,6 +1,6 @@
 # CubeRoot 微信 / 抖音小程序
 
-微信与抖音共用平台适配、登录和 BLE 驱动。微信计时与工具页仍通过 `web-view` 复用网站运行界面；抖音因主功能页面原生要求，使用原生计时和查询页面，直接消费共享纯逻辑，不导入 Web/React 源码。`package.json`、`src/`、两个项目配置模板与 [`../../docs/MINIPROGRAM.md`](../../docs/MINIPROGRAM.md) 是局部事实源。
+微信与抖音共用平台适配、登录和 BLE 驱动。微信计时与工具页仍通过 `web-view` 复用网站运行界面；抖音因主功能页面原生要求，使用原生计时和查询页面，直接消费共享纯逻辑，不导入 Web/React 源码。`package.json`、`src/`、两个项目配置模板与 [`../../docs/MINIPROGRAM.md`](docs/implementation.md) 是局部事实源。
 
 ## 抖音原生主页面
 
@@ -14,10 +14,10 @@
 
 - 协议与隐私入口使用 `pages/privacy` 原生离线页；全文由 `@cuberoot/shared/privacy` 与网站共同消费，修改政策时只维护共享数据。第三方政策及支持邮箱提供复制入口。
 - 联系页使用无需登录的 `pages/contact`，与账号页共用 `native-contact` 数据、模板和样式；微信提供原联系目录，抖音提供平台反馈指引。旧抖音网页链接按实际路径映射到原生页，未支持的页面及参数明确提示，不再全部切到工具首页；抖音账号旧链接也转到原生账号安全页，微信保留网页流程。
-- 抖音构建检查全部登记页面和包内所有 TTML（含组件与未引用模板），拒绝引入 `web-view`；旧 WCA 参数不再触发浏览器授权。这证明本地产物的渲染边界，不代表全部深链、真机和平台审核已验收；完整清单见[原生化审核核查](../../../docs/douyin-native-review-audit.md)。
+- 抖音构建检查全部登记页面和包内所有 TTML（含组件与未引用模板），拒绝引入 `web-view`；旧 WCA 参数不再触发浏览器授权。这证明本地产物的渲染边界，不代表全部深链、真机和平台审核已验收；完整清单见[原生化审核核查](docs/douyin-native-review-audit.md)。
 
 - `native-timer.ts` 复用共享计时状态机、打乱、罚时、统计与智能魔方控制器；`timer-store.ts` 从早期微信原生计时器（`7cb3e75349`，当时位于 `core/packages/miniprogram`）恢复，沿用 `cuberoot:timer` 存储格式与 `TimerStoreSettings`。网站 WebView 的 localStorage 成绩不会自动迁入原生存储。
-- `native-timer-page.ts` / `templates/native-timer.wxml` 适配小程序触摸、设置、成绩及生命周期。支持15个计时项目的本地打乱图、智能魔方实况图、观察计时、分组/成绩编辑、共享滚动统计、手动打乱、真题搜索与日期选择、单行排名、CSV/csTimer/Speedstacks导出及备份恢复；不包含FMC、多盲成绩录入或旧网页全部高级设置。接入与实际验收状态见[原生计时器跟踪](../../../docs/douyin-native-timer-tracker.md)。
+- `native-timer-page.ts` / `templates/native-timer.wxml` 适配小程序触摸、设置、成绩及生命周期。支持15个计时项目的本地打乱图、智能魔方实况图、观察计时、分组/成绩编辑、共享滚动统计、手动打乱、真题搜索与日期选择、单行排名、CSV/csTimer/Speedstacks导出及备份恢复；不包含FMC、多盲成绩录入或旧网页全部高级设置。接入与实际验收状态见[原生计时器跟踪](docs/douyin-native-timer-tracker.md)。
 - 顶部直接选择项目与打乱来源；设置按共享契约分为计时、智能魔方、打乱、外观和数据，已接紧凑打乱、字号及运行中隐藏界面。统计支持日期范围、汇总、滚动均值和共享分箱的原生成绩分布；详情显示原始时间、罚时、来源、设备及已有分段，修改罚时/备注后保留详情上下文。未提供的声音、3D/姿态、跨组图表等仍按跟踪表记为缺口。
 - `native-tools-page.ts` 通过现有公共 API 原生展示近期公示比赛、近期纪录与 WCA ID 个人成绩/排名。教程、课程与专项训练继续下线。
 - 蓝牙由 `getSmartCubeSession()` 保存在 App 实例，避免每个独立页面 bundle 创建不同连接；原生模式不需要网页中继 WebSocket。旧微信网页中继路径保留。

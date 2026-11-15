@@ -1,7 +1,7 @@
 /*
  * Does the trainer's difficulty MEAN what the rest of the site means by it?
  *
- * The generator promises one thing above all (docs/cross-trainer-difficulty.md §0.2): "标准 ·
+ * The generator promises one thing above all (docs/product/timer/cross-trainer-difficulty.md §0.2): "标准 ·
  * 十字 · 白 · 5 步" is the same statement whether you draw it from WCA scrambles or generate it.
  * Every other test in this directory checks the generator against itself — its own tables, its own
  * histograms, its own oracle. This one checks it against something it did not write:
@@ -46,7 +46,7 @@ const CASES: Case[] = [
   { dir: 'comp_steps_eoline', offset: 0, variant: 'eoline', stage: 'eo' },
   { dir: 'comp_steps_eoline', offset: 6, variant: 'eoline', stage: 'eoline' },
   { dir: 'comp_steps_222', offset: 0, variant: '222', stage: 'block222' },
-  // Known divergences, measured 2026-08-03 and tracked in docs/cross-trainer-difficulty.md §6.1.
+  // Known divergences, measured 2026-08-03 and tracked in docs/product/timer/cross-trainer-difficulty.md §6.1.
   // Both are the same shape of mistake: the port pairs one F2L slot's corner with that same slot's
   // edge, while the engine lets the two come from DIFFERENT slots (16 combinations, not 4).
   { dir: 'comp_steps_pseudo', offset: 6, variant: 'pseudo', stage: 'pseudo_xcross', hits: 822 },

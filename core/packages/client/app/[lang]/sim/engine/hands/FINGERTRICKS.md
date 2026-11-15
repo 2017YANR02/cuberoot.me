@@ -1,6 +1,6 @@
 # /sim 手部指法规格(FINGERTRICKS)
 
-跨 `/alg`、教程与模拟器的记号含义、富文本/纯文本转换和 AI 编辑规则，统一见 [指法记号契约](../../../../../../../../docs/fingertrick-notation.md)。本文是 `/sim` 动作编排、握姿和几何标定的权威来源；下文 §2 / §7 分别记录模拟器现有写法与完整 FTN 设计，不能视为全部已实现。
+跨 `/alg`、教程与模拟器的记号含义、富文本/纯文本转换和 AI 编辑规则，统一见 [指法记号契约](../../../../../../../../docs/product/cubing/fingertrick-notation.md)。本文是 `/sim` 动作编排、握姿和几何标定的权威来源；下文 §2 / §7 分别记录模拟器现有写法与完整 FTN 设计，不能视为全部已实现。
 改指法 → 先改这里 → 再改 `handsRig.ts` 的 `classifyHandGesture`(映射)与 `applyHand`(编排)→ 同步 `tests/hands_gestures.test.ts`。
 穿模禁令 / oracle / 标定方法见 memory `project_sim_hands_rig`(不在本文档重复)。
 
@@ -109,7 +109,7 @@ GRIP=1 pnpm --filter @cuberoot/client exec vitest run tests/_pose_probe.test.ts
 
 **`p` 记号定义(2026-07-08 本文档发明)**:
 - 语法:招式 token 尾接小写 `p`,与招式之间无空格(`U'p` ✓;`U' p` ✗)。助记:push / 推 / 平推。
-- 推法含义统一见仓库 `docs/fingertrick-notation.md`：`Up`=L2 推 U、`U'p`=R2 推 U'、`Dp`=R4 推 D、`D'p`=L4 推 D'。当前仅 `U'p` 已编排；其余三种已定义但尚待编排。
+- 推法含义统一见仓库 `docs/product/cubing/fingertrick-notation.md`：`Up`=L2 推 U、`U'p`=R2 推 U'、`Dp`=R4 推 D、`D'p`=L4 推 D'。当前仅 `U'p` 已编排；其余三种已定义但尚待编排。
 - 上述四种之外的转动带 `p` 暂无统一定义；当前解析器剥掉后按默认指法播放（不报错）。已定义但未编排的推法也会回落默认动作，不能据此称为推法已支持。
 - 剥除函数与 `stripGripMarks` 同层处理:invert / mirror / 反推打乱 / recon 手递前都必须剥。
 - `↑↓·` 与 `p` 是 FTN(§7)的糖形式,完整编码语法见 §7.1。

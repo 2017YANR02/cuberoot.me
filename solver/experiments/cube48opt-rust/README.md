@@ -60,7 +60,7 @@ node --experimental-strip-types solver/experiments/cube48opt-rust/run-opt10.mts
 
 **2026-10-13 Opt10 代码阶段**：维护者已取消 H9 建表与测试。自有 Rust Opt10 的原生生成、独立表格式及搜索接入已实现，完成有界小数据验证；尚未生成/加载约 31.13 GB 大表，不能据此声称性能提升。默认 CLI 与研究 guard 禁止 Opt10 大表运行；执行边界、数学条件和剩余验收见 [Opt10 开发跟踪](opt10-development.md)。原 Opt1–9/H7/H10 程序与表继续保留。
 
-**2026-10-13 双底批处理补充**：独立 `target/zbll` 构建现已为 H10 增加共享一份只读表的状态级多线程调度。64 个双底状态与全部 60 个历史状态的 1/16 线程及 C 16 线程对照共 1,116 解通过，Rust 跨线程/轮次 620 次非时间字段比较完全一致；正式两轮混合批处理时间比为 1.426×。这只补充该固定程序的 H10 验收，不代表其他 H 档真实表已验证。旧 release 程序未覆盖，原始报告在 `.local-data/zbll-rust-acceptance-20261013-v3/`；续算契约见 `docs/double-zbll-trainer.md`。
+**2026-10-13 双底批处理补充**：独立 `target/zbll` 构建现已为 H10 增加共享一份只读表的状态级多线程调度。64 个双底状态与全部 60 个历史状态的 1/16 线程及 C 16 线程对照共 1,116 解通过，Rust 跨线程/轮次 620 次非时间字段比较完全一致；正式两轮混合批处理时间比为 1.426×。这只补充该固定程序的 H10 验收，不代表其他 H 档真实表已验证。旧 release 程序未覆盖，原始报告在 `.local-data/zbll-rust-acceptance-20261013-v3/`；续算契约见 `docs/product/timer/double-zbll-trainer.md`。
 
 三阶魔方 HTM 最短解研究。Rust 自己完成状态运算、坐标、表读取、IDA* 与正逆搜索，求解过程中不调用 WASM 或 C 求解器。当前实现 Apple Silicon 原生路径及可移植标量路径；实际验收环境为 macOS arm64，未验收 Intel Mac。
 

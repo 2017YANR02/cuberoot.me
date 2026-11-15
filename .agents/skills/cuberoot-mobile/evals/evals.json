@@ -11,7 +11,7 @@
         "先检查 Mac 工具链和 Xcode 付费 Team，并明确 Personal Team 不能替代商店签名资格",
         "仅在 @capacitor/ios 或 ios 目录缺失时添加平台，依赖版本与现有 Capacitor 兼容，随后 build 和 cap sync ios",
         "把 Simulator、iPhone 真机、Archive、上传和 TestFlight 作为独立证据门槛，不提前宣称完成",
-        "更新 docs/mobile-app-roadmap.md 时只按证据勾选，并遵守用户要求不 push",
+        "更新 docs/product/apps/mobile-app-roadmap.md 时只按证据勾选，并遵守用户要求不 push",
         "不提交证书私钥、provisioning profile、API private key 或本机 Xcode 产物"
       ]
     },

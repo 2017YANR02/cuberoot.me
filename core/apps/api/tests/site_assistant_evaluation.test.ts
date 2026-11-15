@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { parseEvaluationCases, auditKnowledge, evaluateStructure, compareBenchmarkMetadata } from '../scripts/assistant-evaluation.js';
 import { selectEvaluationCases } from '../scripts/benchmark-site-assistant.js';
-const cases = parseEvaluationCases(JSON.parse(readFileSync(new URL('../../../../docs/benchmarks/assistant-phase1-cases.json', import.meta.url), 'utf8')));
+const cases = parseEvaluationCases(JSON.parse(readFileSync(new URL('../../../../docs/product/assistant/benchmarks/assistant-phase1-cases.json', import.meta.url), 'utf8')));
 describe('assistant evaluation boundaries', () => {
   it('allows only the predeclared code variable for frozen code A/B comparisons',()=>{
     const a={model:'model',providerOrigin:'https://fixture.example',corpusGeneration:'corpus',codeFingerprint:'before',codeScope:'executed-bundle',casesFingerprint:'cases',configurationFingerprint:'config',fixtureFingerprint:'fixture',budgetFingerprint:'budget',requestCache:'fresh',providerCache:'disabled',surface:'isolated fixture'};

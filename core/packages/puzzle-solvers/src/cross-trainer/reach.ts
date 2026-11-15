@@ -39,7 +39,7 @@ interface StageReach {
  * 数字对 fixed 也是合法下界。
  *
  * 重新生成:distribution.json 换了就重跑
- *   python 脚本见 docs/cross-trainer-difficulty.md §5
+ *   python 脚本见 docs/product/timer/cross-trainer-difficulty.md §5
  */
 export const TRAINER_GOD: Record<string, ByColor> = {
   'std/cross': [8, 8, 8, 8],
@@ -64,7 +64,7 @@ export const TRAINER_GOD: Record<string, ByColor> = {
 
 /**
  * 实测:按线上一条打乱的预算(`GEN_BUDGET_MS` = 3 s)**连抽 5 次都中**的最大步数。
- * 比 god 浅的那一段就是置灰区。重测脚本见 docs/cross-trainer-difficulty.md 附录 A;
+ * 比 god 浅的那一段就是置灰区。重测脚本见 docs/product/timer/cross-trainer-difficulty.md 附录 A;
  * 守卫见 tests/cross_trainer_reach.test.ts(同样用 3 s 预算,允许像取题池那样重试)。
  */
 const DRAW: Record<string, StageReach> = {

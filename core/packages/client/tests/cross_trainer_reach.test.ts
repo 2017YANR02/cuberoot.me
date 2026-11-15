@@ -1,7 +1,7 @@
 /*
  * The slider only offers what the generator can actually deliver.
  *
- * `lib/cross-trainer/reach` is a measured table (see docs/cross-trainer-difficulty.md §5) and a
+ * `lib/cross-trainer/reach` is a measured table (see docs/product/timer/cross-trainer-difficulty.md §5) and a
  * table can rot: change a sampler and a difficulty the panel still offers starts coming back
  * "can't generate that". So every offered cell is re-drawn here — the top of the range must
  * produce a case of exactly that length, and 0 must produce one too, since the low end is the

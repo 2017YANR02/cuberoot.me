@@ -6,9 +6,9 @@
 
 继续工作时按以下入口判断事实：
 
-- 产品、发布、角色态与观察窗口：[`../../../docs/platform-product-migration-tracker.md`](../../../docs/platform-product-migration-tracker.md)
-- 页面和行为守恒：[`../../../docs/platform-product-surface-ledger.md`](../../../docs/platform-product-surface-ledger.md)
-- 数据逐项处置：[`../../../docs/platform-data-disposition-ledger.md`](../../../docs/platform-data-disposition-ledger.md)
+- 产品、发布、角色态与观察窗口：[`../../../docs/product/platform/history/platform-product-migration-tracker.md`](../../../docs/product/platform/history/platform-product-migration-tracker.md)
+- 页面和行为守恒：[`../../../docs/product/platform/history/platform-product-surface-ledger.md`](../../../docs/product/platform/history/platform-product-surface-ledger.md)
+- 数据逐项处置：[`../../../docs/product/platform/platform-data-disposition-ledger.md`](../../../docs/product/platform/platform-data-disposition-ledger.md)
 - 当前架构边界：[`../../../docs/architecture/architecture-modernization-tracker.md`](../../../docs/architecture/architecture-modernization-tracker.md)
 - 归档目录规则：[`AGENTS.md`](./AGENTS.md)
 

@@ -18,7 +18,7 @@
  * `@cuberoot/shared/alg-notation`(`M`/`m`/`x` 落在镜面法向轴上,**不取反**,那条豁免栽过两次)。
  *
  * 只对 `MIRROR_SETS` 里的 set 显示 —— 别的 set 要么不是单槽、要么伙伴不在库里,详见
- * docs/issue-40-alg-mirror-plan.md §5.7。
+ * docs/product/cubing/history/issue-40-alg-mirror-plan.md §5.7。
  */
 import { useMemo } from 'react';
 import AppLink from '@/components/AppLink';

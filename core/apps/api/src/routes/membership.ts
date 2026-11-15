@@ -2,7 +2,7 @@
  * /v1/membership — 会员订阅 (membership / subscription)。
  *
  * 身份沿用 WCA OAuth(wca_id),不建本站账号。按周期一次性付款(月/年/永久)+ 手动续费;
- * 自动代扣尚未接通,申请与上线门槛见 docs/wechat-autorenew-application.md。
+ * 自动代扣尚未接通,申请与上线门槛见 docs/compliance/wechat-autorenew-application.md。
  * 支付多 provider:官方支付宝 / 官方微信支付(有营业执照 + 备案)优先,虎皮椒聚合支付兜底;
  * 银行卡使用 Airwallex 托管收银台,中国银联卡和国际卡各自独立开关;
  * 异步 notify 验签后入账;都未配置时 admin 仍可手动开通。渠道可用性由 /plans 的 channels 暴露。
@@ -931,7 +931,7 @@ membershipRoutes.put('/membership/admin/plans/:slug', async (c) => {
 });
 
 // ───────────────────── 虎皮椒(xunhupay)provider ─────────────────────
-// NOTE: 请求/响应字段名以官方文档为准(docs/MEMBERSHIP.md 记录核对来源)。
+// NOTE: 请求/响应字段名以官方文档为准(docs/product/payments/MEMBERSHIP.md 记录核对来源)。
 //   total_fee 为「元」字符串(两位小数);time 为 unix 秒;notify_url 必须公网可达。
 //   响应里取收银台 url 与二维码图 url_qrcode;notify 验签后回字面量 'success'。
 

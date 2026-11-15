@@ -46,7 +46,7 @@ export { relabelYMoveString };
  * 吃镜像系统(issue #40 T5)的 set —— **`puzzle/set` 全名**,client 与 server 共用这一份。
  *
  * 门槛:每个 case 有且仅有一个 F2L 槽、槽已归一到 FR、镜像伙伴**就在同一个 set 里**。
- * 八个候选逐一核过(`scripts/mirror-link-plan.mts`,结果见 docs/issue-40-alg-mirror-plan.md §5.7),
+ * 八个候选逐一核过(`scripts/mirror-link-plan.mts`,结果见 docs/product/cubing/history/issue-40-alg-mirror-plan.md §5.7),
  * 只有这三个够格:
  *
  *   f2l   41 案:38 配对 + 3 自镜像,一个不缺;± 命名与状态判据 38/38 全对

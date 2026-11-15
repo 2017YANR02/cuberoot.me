@@ -31,10 +31,10 @@ node --input-type=module -e 'import { activePackages } from "./scripts/check-arc
 | --- | --- |
 | Web | `core/packages/client` 是唯一 Web 前端，包名 `@cuberoot/client`；尚未迁往 `apps/web` |
 | API | `core/apps/api`，包名仍为 `@cuberoot/server`；API→Web 源码依赖、Web public 运行时读取与宽泛部署触发已按 BND-02/03/06 关闭，见下方提交证据。不得把这些历史问题重新写成现存债务 |
-| 已安装客户端 | `core/packages/app-ui` 是 Android、iOS、HarmonyOS NEXT、Windows、macOS 的共享 React 产品层；Mobile、Desktop、Harmony 薄宿主通过 capability adapter 提供平台能力；各端构建、设备与发布状态见[路线图](../mobile-app-roadmap.md) |
+| 已安装客户端 | `core/packages/app-ui` 是 Android、iOS、HarmonyOS NEXT、Windows、macOS 的共享 React 产品层；Mobile、Desktop、Harmony 薄宿主通过 capability adapter 提供平台能力；各端构建、设备与发布状态见[路线图](../product/apps/mobile-app-roadmap.md) |
 | 小程序 | `core/apps/miniprogram` 是独立运行时，不引入 React DOM/Next |
 | FMC | `core/apps/fmc-solver` 独立构建部署，线上入口保持 `/v1/fmc/*` |
-| Platform | 正式能力属于主站，不新建独立产品 app；`core/packages/platform` 是 workspace 外归档。产品缺口与验收以[当前模块化与产品验收](../platform-modernization-2026-11.md)为准；旧站临时对照与资产处置见各自专题，不沿用历史“始终 410”描述 |
+| Platform | 正式能力属于主站，不新建独立产品 app；`core/packages/platform` 是 workspace 外归档。产品缺口与验收以[当前模块化与产品验收](../product/platform/platform-modernization-2026-11.md)为准；旧站临时对照与资产处置见各自专题，不沿用历史“始终 410”描述 |
 | 离线任务与资产 | job 归属以 workspace 配置为准；`stats/`、`tools/`、`solver/` 保持各自数据、静态资源和引擎边界 |
 | 自动化 | 新入口优先 TypeScript；PowerShell 迁移结果见[专门跟踪表](./powershell-to-typescript-tracker.md)，历史 PS1 验收不是现役命令 |
 
@@ -50,9 +50,9 @@ node --input-type=module -e 'import { activePackages } from "./scripts/check-arc
 | LAY2-10 Web 目录迁移 | 路径仍为 `core/packages/client`；原计划为“已授权，待前置”，继续前刷新基线并核对仓外 Web 配置与发布窗口 | [目录迁移方案](./core-workspace-layout-migration-plan.md) |
 | LAY2-11 旧路径兼容清理 | 等 Web 迁移及发布合同验收后再清理，不能因看到旧路径就直接删除兼容项 | 同上 |
 | LAY2-12 Web/API npm 身份改名 | 保持 `@cuberoot/client` / `@cuberoot/server`，与物理迁移分批实施 | 同上 |
-| Platform 产品与人工验收 | 后续缺口按 2026-11 模块化与产品验收跟踪逐项处理；旧 P0-P8 技术验收不能代表完整产品验收。2026-11 本地模块化与分层验证另行记账，不替代生产人工验收 | [完整移植跟踪](../platform-completion-tracker.md)、[模块化与产品验收](../platform-modernization-2026-11.md) |
-| 五端设备、签名和发布 | 按平台分别保留证据，不能拿一个平台通过替代其他平台 | [App 路线图](../mobile-app-roadmap.md) |
-| 旧资产与仓库处置 | 按清册保管，仓库删除仍由所有者执行 | [数据处置清册](../platform-data-disposition-ledger.md) |
+| Platform 产品与人工验收 | 后续缺口按 2026-11 模块化与产品验收跟踪逐项处理；旧 P0-P8 技术验收不能代表完整产品验收。2026-11 本地模块化与分层验证另行记账，不替代生产人工验收 | [完整移植跟踪](../product/platform/history/platform-completion-tracker.md)、[模块化与产品验收](../product/platform/platform-modernization-2026-11.md) |
+| 五端设备、签名和发布 | 按平台分别保留证据，不能拿一个平台通过替代其他平台 | [App 路线图](../product/apps/mobile-app-roadmap.md) |
+| 旧资产与仓库处置 | 按清册保管，仓库删除仍由所有者执行 | [数据处置清册](../product/platform/platform-data-disposition-ledger.md) |
 | 进一步提取共享模块 | 条件候选，不是待执行队列：新增真实消费者、旧债阻塞独立运行或用户指定领域时重新核对 | [候选历史快照与重开门槛](./history/architecture-package-candidates.md) |
 
 ## 4. 已关闭事项的证据入口

@@ -73,8 +73,8 @@ export default function RegressionCaseDetail({ intakeId, replaySource, onChange,
   const copyTask = async () => {
     try {
       await navigator.clipboard.writeText(tr({
-        zh: `处理智能魔方复盘待办队列${item ? `，先处理 ${item.id}` : ''}。阅读 docs/recon-intake-workflow.md，使用 core/ 的 pnpm recon:intake 命令领取和续期任务，从原始记录复现问题，保留人工预期，修正规则并验证已有回归，回写结果。仅本地修改，不提交、不推送。`,
-        en: `Process the smart cube reconstruction queue${item ? `, starting with ${item.id}` : ''}. Read docs/recon-intake-workflow.md. Use pnpm recon:intake in core/ to claim and renew tasks, reproduce from raw recordings, preserve human expectations, fix general rules, run existing regressions and report results. Local changes only; do not commit or push.`,
+        zh: `处理智能魔方复盘待办队列${item ? `，先处理 ${item.id}` : ''}。阅读 docs/product/recon/recon-intake-workflow.md，使用 core/ 的 pnpm recon:intake 命令领取和续期任务，从原始记录复现问题，保留人工预期，修正规则并验证已有回归，回写结果。仅本地修改，不提交、不推送。`,
+        en: `Process the smart cube reconstruction queue${item ? `, starting with ${item.id}` : ''}. Read docs/product/recon/recon-intake-workflow.md. Use pnpm recon:intake in core/ to claim and renew tasks, reproduce from raw recordings, preserve human expectations, fix general rules, run existing regressions and report results. Local changes only; do not commit or push.`,
       }));
       setCopied(true);
     } catch (e) { setError(String(e)); }

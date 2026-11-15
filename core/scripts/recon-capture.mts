@@ -42,7 +42,7 @@ function help() {
   console.log('recon:capture show ID');
   console.log('recon:capture pull ID --out /absolute/path/to/sample-directory');
   console.log('Read-only. Reuse the same directory to resume the same sample revision. No decoding, label approval or training is performed.');
-  console.log('See docs/recon-capture-workflow.md.');
+  console.log('See docs/product/recon/recon-capture-workflow.md.');
 }
 
 interface CliOptions { command: 'help' | 'list' | 'show' | 'pull'; id?: string; out?: string; status?: string }

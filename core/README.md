@@ -37,7 +37,7 @@ core/jobs/
 |---|---|
 | 本地开发(PostgreSQL API / WCA 导出数据 / dev server / upstream sync) | [../docs/contributing/local-setup.md](../docs/contributing/local-setup.md) |
 | 统计管线用法 | [../docs/data/wca/stats-pipeline.md](../docs/data/wca/stats-pipeline.md) |
-| Recon API contract | [../docs/recon-api.md](../docs/recon-api.md) |
+| Recon API contract | [../docs/product/recon/recon-api.md](../docs/product/recon/recon-api.md) |
 | 部署与运维 | [workflows](../.github/workflows/) / [nginx](../ops/nginx/README.md) / [故障排除](../docs/troubleshooting.md) |
 | AI 行为指引 | [../AGENTS.md](../AGENTS.md) |
 | 文档状态与事实源 | [../docs/README.md](../docs/README.md) |

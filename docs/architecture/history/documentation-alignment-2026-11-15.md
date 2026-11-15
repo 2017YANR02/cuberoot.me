@@ -20,8 +20,8 @@
 
 ## 清理方式与历史保留
 
-- App 路线图开头 402 行日期批次移入 [mobile-app-history.md](../../mobile-app-history.md)；小程序迭代区 888 行移入 [MINIPROGRAM-history.md](../../../core/docs/MINIPROGRAM-history.md)。原文完整保留，仅把必要的页内链接改为原文档链接；原小节锚点保留查找入口。产品合同、当前状态和待验收清单仍在主文档。
-- Platform 旧迁移/完整移植记录明确为 `HISTORICAL`，当前入口统一指向 [platform-modernization-2026-11.md](../../platform-modernization-2026-11.md)。不删除不恢复独立运行时、不迁移虚构数据、复用主站账号等重要取舍。
+- App 路线图开头 402 行日期批次移入 [mobile-app-history.md](../../product/apps/history/mobile-app-history.md)；小程序迭代区 888 行移入 [MINIPROGRAM-history.md](../../../core/apps/miniprogram/docs/history/iterations.md)。原文完整保留，仅把必要的页内链接改为原文档链接；原小节锚点保留查找入口。产品合同、当前状态和待验收清单仍在主文档。
+- Platform 旧迁移/完整移植记录明确为 `HISTORICAL`，当前入口统一指向 [platform-modernization-2026-11.md](../../product/platform/platform-modernization-2026-11.md)。不删除不恢复独立运行时、不迁移虚构数据、复用主站账号等重要取舍。
 - 640 处失效相对链接中，628 处指向本机临时或本地资料，12 处指向已不存在的源码路径。将这些链接/图片改为明确的历史引用文本，保留原路径与说明，避免空白图片或把旧路径当当前事实。没有恢复、伪造或删除附件，也没有以附件缺失否定历史决策。
 - 不因清理历史而解除原有计算保护、upstream 修改限制、发布条件或真机验收要求。旧批次授权不作为新任务授权。
 

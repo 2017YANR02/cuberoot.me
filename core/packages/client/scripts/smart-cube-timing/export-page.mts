@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../../../../..', import.meta.url));
 const client = resolve(root, 'core/packages/client');
-const reportPath = 'docs/benchmarks/smart-cube-timing-cold-start-2026-11-06.json';
+const reportPath = 'docs/product/timer/benchmarks/smart-cube-timing-cold-start-2026-11-06.json';
 const bytes = readFileSync(resolve(root, reportPath));
 const sha256 = createHash('sha256').update(bytes).digest('hex');
 const report = JSON.parse(bytes.toString()) as {

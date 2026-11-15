@@ -26,7 +26,7 @@
 
 ## 指法记号（公式库 / 教程 / 模拟器）
 
-改指法、`algHtml` 标记含义、指法导入/导出或 AI 公式转换前，先读 [统一指法记号契约](../fingertrick-notation.md)。保留富文本和纯文本两种写法，共用语义；删除线表示中指、斜体表示拇指，下划线须结合转动与来源判断，禁全部替换成 `p`。动作编排另读 `core/packages/client/app/[lang]/sim/engine/hands/FINGERTRICKS.md`；严格区分记号规格、解析支持和动画验收。
+改指法、`algHtml` 标记含义、指法导入/导出或 AI 公式转换前，先读 [统一指法记号契约](../product/cubing/fingertrick-notation.md)。保留富文本和纯文本两种写法，共用语义；删除线表示中指、斜体表示拇指，下划线须结合转动与来源判断，禁全部替换成 `p`。动作编排另读 `core/packages/client/app/[lang]/sim/engine/hands/FINGERTRICKS.md`；严格区分记号规格、解析支持和动画验收。
 
 ## Space / Blender
 

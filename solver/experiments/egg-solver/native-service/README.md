@@ -27,7 +27,7 @@ distribution. Existing CubeRoot Opt8 tables are incompatible with egg.
 Generation and benchmarking on the 16 GB Alibaba host require the existing
 production solver to be stopped first, a single resident table, resource limits and
 an exit trap restoring production. Never start large calculations in CI.
-The release gate is documented in `docs/timer-optimal-egg-tracker.md`.
+The release gate is documented in `docs/product/timer/timer-optimal-egg-tracker.md`.
 
 Local/CI adapter tests use only a roughly 30 MB h0 table. They exercise multiple
 requests, invalid syntax, solved states and known shallow optimal lengths.
@@ -118,7 +118,7 @@ existing table is hard-linked with its generation-time digest lineage, not
 copied or rescanned. The previous working egg bundle remains available for rollback;
 the old Opt8 table was explicitly retired by the user.
 The production status and deployment receipts are tracked in
-`docs/timer-optimal-egg-tracker.md`.
+`docs/product/timer/timer-optimal-egg-tracker.md`.
 
 The subsequent Nov 11 ECS experiment tested 100 cases per candidate, once with
 no warmup. Current T0/40 lanes took 40.339816 s; prefault, T1 and 24 lanes took

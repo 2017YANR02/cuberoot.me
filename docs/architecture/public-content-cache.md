@@ -53,7 +53,7 @@ local regression tests are not a capacity benchmark.
 Forum SEO invalidation reuses the protected recon webhook after successful
 thread/post writes and moderation. Views and reactions do not notify Next.
 Configure both independent Next destinations as described in
-[recon-cache.md](../recon-cache.md). Failed webhook delivery is logged and retried
+[recon-cache.md](../product/recon/recon-cache.md). Failed webhook delivery is logged and retried
 once, without a persistent queue. It cannot guarantee immediate SEO freshness
 during an outage; forum ISR remains a one-hour fallback. Direct SQL changes to
 forum content require explicit notification after commit.

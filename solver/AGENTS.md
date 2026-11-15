@@ -34,7 +34,7 @@ nxopt22 本轮已完成：WCA1000 / 16线程 / 单轮不预热整批耗时504.90
 
 2026-10-15 WASM 两档优化：网站按 Opt8 8 GB / WCA100 / 4 线程、Opt9 16 GB / WCA1000 / 16 线程分别比较，各候选一轮不预热，原版不重跑。新 `coset-batch-four` 实测 Opt8 39.668 秒，慢于保留正式版 33.369 秒，不晋升；新 `coset-batch` Opt9 在载表阶段系统 Swapouts 16→48 触发保护，0 条结果，无性能结论。`.local-data/cubeopt-reverse/wasm-opt8-opt9-20261015/stop.json` 与所有旧记录保留，不重设基线、不重启、不复用标签。新源码及构件已冻结，小数据证明/验解通过，但正式原生与服务器 WASM 未替换。详细证据见 `../docs/optimal-solver-benchmark.md`。下方历史授权不得覆盖此次保护停止。
 
-2026-10-14 维护者新增长期任务要求：必须可验证地断点续算；同一个完整任务的求解器及大表常驻，批次边界不退出、不重载、不定时轮换。仅完成、用户停止、错误、授权到期或资源保护触发时退出，保留结果、原 boot/Swapouts 基线及保护记录。双底 Opt10 通过既有 guard 的 `double-zbll-opt10-session` 入口常驻；其他研究/单批入口时限不变。验收须检查连续批次使用同一 guard/native PID。详见根 AGENTS.md 和 docs/double-zbll-trainer.md。
+2026-10-14 维护者新增长期任务要求：必须可验证地断点续算；同一个完整任务的求解器及大表常驻，批次边界不退出、不重载、不定时轮换。仅完成、用户停止、错误、授权到期或资源保护触发时退出，保留结果、原 boot/Swapouts 基线及保护记录。双底 Opt10 通过既有 guard 的 `double-zbll-opt10-session` 入口常驻；其他研究/单批入口时限不变。验收须检查连续批次使用同一 guard/native PID。详见根 AGENTS.md 和 docs/product/timer/double-zbll-trainer.md。
 
 2026-10-14 Opt8 WASM 最新任务：维护者要求先在本机优化/对比，固定 WCA 前100条、4线程、每版一轮、不预热，本机正确且更快后替换线上，不再做服务器性能测试。现用 V4 本机 37.794 秒；quarter-fixed 研究构件 32.324 秒；与线上 ABI 匹配的四线程发布构件 build-FcRcSF 为33.369秒（减少11.71%），均100条独立验解/最优长度通过。原 V4 保留，表不重建，Opt8 退休表仅只读用于本次实验。Mac Node v24.21.0 默认/Liftoff 路径在4GiB以上地址有已复现坐标错误；两版统一使用 --no-liftoff，300次有界高地址检查通过。失败的零结果首跑与旧资源基线保留，专用 opt8-local-policy.mts 只放行固定构件和协议，禁止自动重复标签。原生 Opt9/Opt10 正式选择不变。详见 experiments/cube48opt-rust/opt8-wasm-experiments.md；发布完成另以事务、当前指针及 READY 证据为准。
 

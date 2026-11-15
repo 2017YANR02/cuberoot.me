@@ -12,15 +12,15 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
 先读仓库根 `AGENTS.md`，再只加载本次需要的资料：
 
 - 日常产品实现：先读 `core/packages/app-ui/package.json` 与相关 `src/`；再按目标宿主读取 `core/apps/mobile`、`core/apps/desktop` 或 `core/apps/harmony` 的 package/config/源码。Android/iOS 任务另读 `core/apps/mobile/README.md`。
-- 五端架构、HarmonyOS 或桌面客户端：必须完整读取 `docs/cross-platform-app-contract.md`；进度再读 `docs/mobile-app-roadmap.md`。共享源码、宿主源码、本机构建、安装、设备/实体电脑、签名/公证和发布是不同证据层级。
-- 修改 App `/timer`：必须完整读取 `docs/mobile-timer-parity-tracker.md` 与
-  `docs/mobile-timer-zero-omission-audit.md`；涉及真题、随机或手动来源时再读
-  `docs/mobile-timer-source-adversarial-audit.md`。这些文件仍标记 `NOT COMPLETE` 时，
+- 五端架构、HarmonyOS 或桌面客户端：必须完整读取 `docs/product/apps/cross-platform-app-contract.md`；进度再读 `docs/product/apps/mobile-app-roadmap.md`。共享源码、宿主源码、本机构建、安装、设备/实体电脑、签名/公证和发布是不同证据层级。
+- 修改 App `/timer`：必须完整读取 `docs/product/apps/mobile-timer-parity-tracker.md` 与
+  `docs/product/apps/mobile-timer-zero-omission-audit.md`；涉及真题、随机或手动来源时再读
+  `docs/product/apps/mobile-timer-source-adversarial-audit.md`。这些文件仍标记 `NOT COMPLETE` 时，
   不得根据局部截图、一个项目或一条 happy path 声称“完全一致”。
-- 修改底部导航、工具页或账号页：必须读取 `docs/mobile-three-tab-contract.md`；
+- 修改底部导航、工具页或账号页：必须读取 `docs/product/apps/mobile-three-tab-contract.md`；
   三栏固定为“计时 / 工具 / 我的”，工具与账号深链以网站路由为内容事实源，原生壳只负责
   导航、安全区、登录桥与平台能力，不复制网站卡片或另造账号 UI。
-- 账号、上架或进度：再读 `docs/mobile-app-roadmap.md` 与 `docs/mobile-store-submission.md`。
+- 账号、上架或进度：再读 `docs/product/apps/mobile-app-roadmap.md` 与 `docs/compliance/mobile-store-submission.md`。
 - 修改共享契约：再读 `core/packages/shared` 中相关入口与消费者。
 - iOS 首次接入、签名或 TestFlight：读 [references/ios-release.md](references/ios-release.md)。
 
@@ -28,7 +28,7 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
 
 ## 守住五端唯一架构
 
-- 五端是一个产品，不是五套业务实现。最高优先级合同是 `docs/cross-platform-app-contract.md`。
+- 五端是一个产品，不是五套业务实现。最高优先级合同是 `docs/product/apps/cross-platform-app-contract.md`。
 - `core/packages/app-ui` 已是五端唯一 React 产品层；三栏、导航状态、安装端认证客户端、在线 surface 容器和计时产品组合只在这里维护。
 - `core/apps/mobile` 是 Android/iOS 的 React + Vite + Capacitor 薄宿主；两端不各写业务 UI，也不为统一原生框架而迁移已经成立的 Capacitor 工程。
 - `core/apps/harmony` 是 HarmonyOS NEXT 的 ArkTS + ArkWeb 薄宿主；不得用 ArkUI 重写三栏、计时器或账号。源码、unsigned HAP、设备安装、BLE、签名与发布必须分别取证。
@@ -49,7 +49,7 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
 
 ## 开发电脑与 Windows/macOS 客户端
 
-“在 Windows/Mac 上开发”与“构建 Windows/macOS 客户端”是两件事。前者遵循下面的 Git 交接；后者必须遵循 `docs/cross-platform-app-contract.md`，由同一个 `core/apps/desktop` 工程输出两端，不得复制 Mobile。
+“在 Windows/Mac 上开发”与“构建 Windows/macOS 客户端”是两件事。前者遵循下面的 Git 交接；后者必须遵循 `docs/product/apps/cross-platform-app-contract.md`，由同一个 `core/apps/desktop` 工程输出两端，不得复制 Mobile。
 
 - 两台电脑各自完整 clone 同一仓库，并通过 Git 同步源码。
 - 两台电脑可同时在 `main` 开发，每项任务形成 commit。
@@ -98,6 +98,6 @@ description: "Use for CubeRoot installed-client work across Android, iOS, Harmon
 
 五端总体状态只有在 Android/iOS/HarmonyOS NEXT/Windows/macOS 都具备各自 build、安装、系统 adapter、设备/实体电脑和发布证据后才能完成。某一端通过、PWA 可安装、Android 兼容层运行或共享代码存在，都不能替代其他平台证据。
 
-`docs/mobile-app-roadmap.md` 是唯一进度账本。只在有实现与验证证据时把 `[ ]` 改为 `[x]`，并在“当前证据”写命令、设备/控制台结果或 commit。用户口头确认设备、安装或付款可记作已具备条件，但不能替代 build、真机、签名或商店状态证据。
+`docs/product/apps/mobile-app-roadmap.md` 是唯一进度账本。只在有实现与验证证据时把 `[ ]` 改为 `[x]`，并在“当前证据”写命令、设备/控制台结果或 commit。用户口头确认设备、安装或付款可记作已具备条件，但不能替代 build、真机、签名或商店状态证据。
 
 用户要求审计或任务涉及签名、发布时，让独立 agent 检查重复实现、跨包边界、五平台回归、凭据泄漏、路线图勾选和发布证据，处理发现后再提交。

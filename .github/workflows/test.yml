@@ -28,8 +28,8 @@ on:
       - '!core/packages/platform/**'
       - 'solver/333opt/inject.mjs'
       - 'solver/333opt/data_paths.mjs'
-      - 'docs/platform-capability-manifest.json'
-      - 'docs/platform-unification-plan.md'
+      - 'docs/product/platform/platform-capability-manifest.json'
+      - 'docs/product/platform/history/platform-unification-plan.md'
       - 'sync_upstream.ts'
       - '.sync/**'
       - 'scripts/upstream/**'
@@ -153,8 +153,8 @@ jobs:
               - 'core/packages/timer-ui/**'
               - 'core/packages/vendor-sr-puzzlegen/**'
               - 'core/packages/visualcube/**'
-              - 'docs/platform-capability-manifest.json'
-              - 'docs/platform-unification-plan.md'
+              - 'docs/product/platform/platform-capability-manifest.json'
+              - 'docs/product/platform/history/platform-unification-plan.md'
               - 'sync_upstream.ts'
               - '.sync/**'
               - 'scripts/upstream/**'
@@ -197,7 +197,7 @@ jobs:
               - 'core/packages/stack-kernel/**'
               - 'core/packages/timer-ui/**'
               - 'core/packages/visualcube/**'
-              - 'docs/platform-capability-manifest.json'
+              - 'docs/product/platform/platform-capability-manifest.json'
             desktop:
               - '.node-version'
               - '.github/workflows/test.yml'
@@ -398,12 +398,12 @@ jobs:
             /solver/experiments/egg-solver/h10-optimize/policy.mts
             # Materialize the hook test workdir without checking out solver tables.
             /solver/experiments/cube48opt-rust/README.md
-            /docs/double-zbll-trainer.md
-            /docs/benchmarks/assistant-phase1-cases.json
+            /docs/product/timer/double-zbll-trainer.md
+            /docs/product/assistant/benchmarks/assistant-phase1-cases.json
             /docs/data/artifacts/generated-artifacts.json
             /docs/data/artifacts/generated-artifacts.md
-            /docs/platform-capability-manifest.json
-            /docs/platform-unification-plan.md
+            /docs/product/platform/platform-capability-manifest.json
+            /docs/product/platform/history/platform-unification-plan.md
             /sync_upstream.ts
             /.sync/
             /scripts/upstream/
@@ -703,12 +703,12 @@ jobs:
             /solver/experiments/egg-solver/h10-optimize/policy.mts
             # Materialize the hook test workdir without checking out solver tables.
             /solver/experiments/cube48opt-rust/README.md
-            /docs/double-zbll-trainer.md
-            /docs/benchmarks/assistant-phase1-cases.json
+            /docs/product/timer/double-zbll-trainer.md
+            /docs/product/assistant/benchmarks/assistant-phase1-cases.json
             /docs/data/artifacts/generated-artifacts.json
             /docs/data/artifacts/generated-artifacts.md
-            /docs/platform-capability-manifest.json
-            /docs/platform-unification-plan.md
+            /docs/product/platform/platform-capability-manifest.json
+            /docs/product/platform/history/platform-unification-plan.md
             /sync_upstream.ts
             /.sync/
             /scripts/upstream/

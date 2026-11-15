@@ -15,7 +15,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | `core/packages/app-ui` | Android、iOS、HarmonyOS NEXT、Windows 和 macOS 唯一共享的 React 产品层；不调用原生 API，只通过宿主 capability adapter 使用系统能力 |
 | `core/apps/mobile` | Android/iOS 共用的 Capacitor 薄宿主；业务 UI 从 `@cuberoot/app-ui` 消费 |
 | `core/apps/desktop` | Windows/macOS 共用的单一 Tauri 薄宿主；构建、安装、BLE、签名与公证证据分平台记账 |
-| `core/apps/harmony` | HarmonyOS NEXT 的 ArkTS + ArkWeb 薄宿主；当前实现与 HAP 构建证据见 `docs/mobile-app-roadmap.md` |
+| `core/apps/harmony` | HarmonyOS NEXT 的 ArkTS + ArkWeb 薄宿主；当前实现与 HAP 构建证据见 `docs/product/apps/mobile-app-roadmap.md` |
 | `core/apps/miniprogram` | 微信 / 抖音小程序独立运行时，不复用 React DOM UI |
 | `core/apps/fmc-solver` | vendored cubelib Cargo workspace 与独立 HTTP 服务；专用 workflow 构建部署，线上入口保持 `/v1/fmc/*` |
 | `core/packages/shared` | 稳定契约、纯规则与跨端数据模型；公式数据以 PG `alg_sets/alg_cases` 为准 |

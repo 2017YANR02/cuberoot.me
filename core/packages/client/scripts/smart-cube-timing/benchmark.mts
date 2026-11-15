@@ -232,7 +232,7 @@ async function main() {
   const output = values.out ? resolve(values.out) : join(artifactRoot, 'runs', `${generatedAt.replaceAll(':', '-')}-${process.pid}`);
   const oracle = await loadCstimer(cache, values.offline);
   const harnessChecks = verifyHarness(oracle);
-  const baselinePath = values.baseline ? resolve(values.baseline) : join(repoRoot, 'docs/benchmarks/smart-cube-timing-2026-11-06.json');
+  const baselinePath = values.baseline ? resolve(values.baseline) : join(repoRoot, 'docs/product/timer/benchmarks/smart-cube-timing-2026-11-06.json');
   const baselineBytes = readFileSync(baselinePath);
   const baseline = JSON.parse(baselineBytes.toString()) as Baseline;
   assert.equal(baseline.metadata.cstimerCommit, CSTIMER_COMMIT, 'baseline csTimer revision changed');
@@ -241,7 +241,7 @@ async function main() {
   const beforeById = new Map(baseline.cases.map(row => [row.id, row]));
   assert.equal(beforeById.size, baseline.cases.length, 'duplicate baseline case IDs');
   assert.equal(beforeById.size, scenarios().length, 'baseline corpus size changed');
-  const previousPath = values.previous ? resolve(values.previous) : join(repoRoot, 'docs/benchmarks/smart-cube-timing-fix-2026-11-06.json');
+  const previousPath = values.previous ? resolve(values.previous) : join(repoRoot, 'docs/product/timer/benchmarks/smart-cube-timing-fix-2026-11-06.json');
   const previousBytes = readFileSync(previousPath);
   const previous = JSON.parse(previousBytes.toString()) as Baseline;
   assert.equal(previous.metadata.corpusSha256, baseline.metadata.corpusSha256, 'previous fix corpus changed');

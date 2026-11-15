@@ -6,6 +6,6 @@
 
 现役 `/platform/*` 随 `packages/client` 发布，相关 API 和 PostgreSQL migration 随 `packages/server` 发布。实际发布契约以仓库根 `AGENTS.md`、`.github/workflows/` 和 `ops/` 为准。
 
-如确需法证恢复旧资产，必须先获得用户明确授权，在隔离副本中完成，并遵守 [`../../../docs/platform-data-disposition-ledger.md`](../../../docs/platform-data-disposition-ledger.md)；不得把恢复副本暴露为公共服务。
+如确需法证恢复旧资产，必须先获得用户明确授权，在隔离副本中完成，并遵守 [`../../../docs/product/platform/platform-data-disposition-ledger.md`](../../../docs/product/platform/platform-data-disposition-ledger.md)；不得把恢复副本暴露为公共服务。
 
-当前迁移和观察状态见 [`../../../docs/platform-product-migration-tracker.md`](../../../docs/platform-product-migration-tracker.md)。
+当前迁移和观察状态见 [`../../../docs/product/platform/history/platform-product-migration-tracker.md`](../../../docs/product/platform/history/platform-product-migration-tracker.md)。

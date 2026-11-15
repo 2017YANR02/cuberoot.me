@@ -85,6 +85,6 @@ test('oversized Play notes fail before requesting a release', async () => {
   }), /at most 500/);
 });
 test('website/API-only work skips APK builds while shared/native changes are included', () => {
-  for (const path of ['core/packages/client/app/page.tsx', 'core/apps/api/src/index.ts', 'docs/app-downloads.md']) assert.equal(affectsAndroidBuild(path), false);
+  for (const path of ['core/packages/client/app/page.tsx', 'core/apps/api/src/index.ts', 'docs/product/apps/app-downloads.md']) assert.equal(affectsAndroidBuild(path), false);
   for (const path of ['core/packages/timer-ui/src/Timer.tsx', 'core/packages/shared/src/rule.ts', 'core/apps/mobile/src/capacitor-host.ts', 'core/pnpm-lock.yaml', 'core/scripts/build-cubing-worker.mjs']) assert.equal(affectsAndroidBuild(path), true);
 });

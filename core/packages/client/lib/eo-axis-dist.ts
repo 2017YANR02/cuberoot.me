@@ -7,7 +7,7 @@
  * 一条轴的 EO 只有 2,048 个态(12 位翻转字,总翻转数恒为偶 → 第 12 位由前 11 位定死),
  * BFS 一瞬间就跑完,直径 7。但站内说的「EO,白色」不是某一条轴:白/黄底面对应 U/D 轴,
  * 剩下 L/R 与 F/B 两条轴都是合法的 ZZ 起手,分析器两条都算、取更小
- * (`solver/src/eoline_solver.rs`,口径核对见 `docs/cross-trainer-difficulty.md` §6.1)。
+ * (`solver/src/eoline_solver.rs`,口径核对见 `docs/product/timer/cross-trainer-difficulty.md` §6.1)。
  * 于是四档底色实际只有两种问法:
  *
  *   单色底 / 双色底  —— 一对对面色共用一条面轴 → 垂直轴恒为那两条 → **两条轴取最优**

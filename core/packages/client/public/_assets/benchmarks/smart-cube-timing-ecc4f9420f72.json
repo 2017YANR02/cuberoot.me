@@ -27,7 +27,7 @@
       "isGiiSolved": "32b138e30547352accba6f4294951d0f4a7ba98ef91195d254410e30cbcdc4ef"
     },
     "baseline": {
-      "path": "docs/benchmarks/smart-cube-timing-2026-11-06.json",
+      "path": "docs/product/timer/benchmarks/smart-cube-timing-2026-11-06.json",
       "sha256": "f00dda3bb4ccd4d4056a7e37fdcd5ae80bb3f29971592dd65992ab973a4892cb",
       "generatedAt": "2026-11-07T03:43:23.708Z",
       "node": "v24.21.0",
@@ -74,7 +74,7 @@
       "scope": "synthetic normalized callbacks; no hardware, UI, protocol decoding or persistence"
     },
     "previousFix": {
-      "path": "docs/benchmarks/smart-cube-timing-fix-2026-11-06.json",
+      "path": "docs/product/timer/benchmarks/smart-cube-timing-fix-2026-11-06.json",
       "sha256": "768dca390ea4f1036bd955f9d4876cc31716737624f364ca8e3b70ebea06dcda",
       "generatedAt": "2026-11-07T04:18:25.869Z",
       "node": "v24.21.0",
@@ -101,7 +101,7 @@
         "isGiiSolved": "32b138e30547352accba6f4294951d0f4a7ba98ef91195d254410e30cbcdc4ef"
       },
       "baseline": {
-        "path": "docs/benchmarks/smart-cube-timing-2026-11-06.json",
+        "path": "docs/product/timer/benchmarks/smart-cube-timing-2026-11-06.json",
         "sha256": "f00dda3bb4ccd4d4056a7e37fdcd5ae80bb3f29971592dd65992ab973a4892cb",
         "generatedAt": "2026-11-07T03:43:23.708Z",
         "node": "v24.21.0",

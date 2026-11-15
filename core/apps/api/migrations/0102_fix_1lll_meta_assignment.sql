@@ -1,7 +1,7 @@
 -- 0102_fix_1lll_meta_assignment.sql — 8 张 1lll case 的 meta 挂错了行(生成脚本:
 -- packages/alg-build/fix_1lll_meta_assignment.mjs,推导与证据写在该文件头)。
 --
--- phase0 的 row→case 是状态轨道 join,但有 7 行「一条对的公式都没有」(docs/data/algorithms/1lll-sheet-issues.md §2),
+-- phase0 的 row→case 是状态轨道 join,但有 7 行「一条对的公式都没有」(docs/1lll-sheet-issues.md §2),
 -- 只能靠组内消去 + CP 约束 + 多数派投票落位,下面这 8 张落错 —— 表现为 12 张 case 页顶上的
 -- 「逆」「镜像」缩略图指错人,外加这 8 张的 OLLCP 名 / 角换 / 最优步数 / 出现概率全是别人的。
 --

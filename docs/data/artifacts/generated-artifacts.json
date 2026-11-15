@@ -12,8 +12,8 @@
       "source": {
         "locator": "Frozen 441-case software timing report and its CSV; no new benchmark run",
         "paths": [
-          "docs/benchmarks/smart-cube-timing-cold-start-2026-11-06.json",
-          "docs/benchmarks/smart-cube-timing-cold-start-2026-11-06.csv"
+          "docs/product/timer/benchmarks/smart-cube-timing-cold-start-2026-11-06.json",
+          "docs/product/timer/benchmarks/smart-cube-timing-cold-start-2026-11-06.csv"
         ]
       },
       "license": {
@@ -516,7 +516,7 @@
         "locator": "operator-provided read-only music source",
         "paths": [
           "scripts/music/prepare-music.ts",
-          "docs/music-player-tracker.md"
+          "docs/product/community/music-player-tracker.md"
         ]
       },
       "license": {
@@ -1132,10 +1132,10 @@
       },
       "owner": [
         "core/packages/client/scripts/best2x2",
-        "core/docs/best-2x2-algs-port.md"
+        "docs/product/cubing/ports/best-2x2-algs-port.md"
       ],
       "workingDirectory": "core",
-      "command": "follow core/docs/best-2x2-algs-port.md through fetch, report, build-import, verify-import, and verify-finder",
+      "command": "follow docs/product/cubing/ports/best-2x2-algs-port.md through fetch, report, build-import, verify-import, and verify-finder",
       "transientOutputs": [],
       "verification": [
         "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-import.mts .local-data/best2x2/import.json",
@@ -1751,7 +1751,7 @@
       "verification": [
         "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-import.mts .local-data/best2x2/import.json",
         "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-finder.mts .local-data/best2x2/import.json",
-        "core/docs/best-2x2-algs-port.md"
+        "docs/product/cubing/ports/best-2x2-algs-port.md"
       ],
       "driftPolicy": "This owner starts at the reviewed import JSON and owns only the immutable published migration. Never rewrite 0104 after publication; changed data requires a newly numbered migration."
     },

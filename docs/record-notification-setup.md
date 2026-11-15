@@ -1,6 +1,6 @@
 # 纪录与比赛通知：邮件及 Android / iOS 推送配置
 
-2026-11-08 更新。本地实现不等于生产已启用；最新验收状态见 [App 路线图](mobile-app-roadmap.md#2026-09-15-纪录订阅与通知未完成)。本轮没有购买套餐、注册开发者身份或向真实用户群发。
+2026-11-08 更新。本地实现不等于生产已启用；最新验收状态见 [App 路线图](product/apps/mobile-app-roadmap.md#2026-09-15-纪录订阅与通知未完成)。本轮没有购买套餐、注册开发者身份或向真实用户群发。
 
 ## 共用行为
 
@@ -94,7 +94,7 @@ pnpm --filter @cuberoot/mobile android:apk:direct --push-env-file .env.android-p
 
 仓库级 Actions **variables** 使用 `ANDROID_PUSH_REQUIRED`（建议推送正式接入后设 `true`）与 `ANDROID_PUSH_VENDORS`。默认缺少配置时日志明确报告各通道 disabled，不把普通构建成功记作推送就绪。这里只接入工作流定义，不自动创建或修改 GitHub secrets/variables。
 
-API 服务端另需 `GETUI_APP_ID`、`GETUI_APP_KEY`、`GETUI_MASTER_SECRET`；调试应用使用对应 `GETUI_DEBUG_` 三项。后两项禁止放进上述客户端配置或 workflow。厂商服务端授权还需按各控制台配置到个推，本地检查不能证明控制台开通、包名/签名匹配或密钥有效。当前缺项与实际验证记录以[路线图](mobile-app-roadmap.md)为准。
+API 服务端另需 `GETUI_APP_ID`、`GETUI_APP_KEY`、`GETUI_MASTER_SECRET`；调试应用使用对应 `GETUI_DEBUG_` 三项。后两项禁止放进上述客户端配置或 workflow。厂商服务端授权还需按各控制台配置到个推，本地检查不能证明控制台开通、包名/签名匹配或密钥有效。当前缺项与实际验证记录以[路线图](product/apps/mobile-app-roadmap.md)为准。
 
 ### 真机验收（另行安排）
 
@@ -139,7 +139,7 @@ pnpm --filter @cuberoot/server apns:check --push-env-file .env.apns.local --envi
 - 全部未配置且 APNs 未开启时报告 disabled/missing，可退出成功。提供部分凭据、APNs 已开启却缺凭据、开关不是 `0/1`、不支持的 topic/环境或私钥不合格时失败。`--require-enabled` 额外要求两个开关都为 `1` 且凭据完整；该参数只检查，不设置开关。不要为通过检查直接开启生产全队列。
 - 私钥检查包含当前检查进程可读取、普通文件且不超过 16 KiB、未加密 EC P-256，以及本地签名/验签。Unix 文件不得给予 group/other 权限，建议 `0600`；Windows 需另查 ACL。不打印 Team ID、Key ID、私钥路径、内容、签名或原始文件/加密库异常。相对私钥路径按 API 工作目录解析，建议使用绝对路径。
 - 默认 topic 为 `me.cuberoot.app`，与当前 Xcode Debug/Release 相同。服务端保留对 `me.cuberoot.app.debug` 的兼容，但这不代表当前有该 Bundle ID 的 iOS 签名包。`--environment sandbox|production` 仅记录**期望环境**，不会从 `.p8` 推断环境、Team、Key ID、授权 topic、是否撤销或 Apple 控制台状态。
-- 私钥本地有效、`Runtime configuration gate: configured` 和退出码 0 均不等于推送可用。最终仍须核对实际导出 App 的 entitlement / Info.plist / profile 环境一致、Apple key 授权及服务器运行用户可读；检查进程可读不证明生产进程可读。当前缺项与验证结果记录在[路线图](mobile-app-roadmap.md)，真机送达与点击另行验收。
+- 私钥本地有效、`Runtime configuration gate: configured` 和退出码 0 均不等于推送可用。最终仍须核对实际导出 App 的 entitlement / Info.plist / profile 环境一致、Apple key 授权及服务器运行用户可读；检查进程可读不证明生产进程可读。当前缺项与验证结果记录在[路线图](product/apps/mobile-app-roadmap.md)，真机送达与点击另行验收。
 
 ### 构建与权限
 

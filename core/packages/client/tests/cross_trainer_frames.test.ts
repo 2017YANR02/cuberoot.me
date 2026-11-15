@@ -182,7 +182,7 @@ describe('cross-trainer / registry', () => {
   /**
    * A colour's EOCross is the better of its TWO perpendicular axes — the site's caliber
    * (`solver/src/eo_cross_solver.rs` folds each colour's two symmetries with a min; see
-   * docs/cross-trainer-difficulty.md §6.1). Measured here with tables built DIRECTLY for each
+   * docs/product/timer/cross-trainer-difficulty.md §6.1). Measured here with tables built DIRECTLY for each
    * (face, axis), so no rotation is involved and the canonical frame is not consulted.
    */
   const eoBest = (state: CubieCube, faces: readonly number[], cap: number): number => {

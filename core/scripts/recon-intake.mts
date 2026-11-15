@@ -73,7 +73,7 @@ function run(args: string[]) {
 async function main() {
   if (command === 'help') {
     console.log('recon:intake list | show ID | claim ID | renew ID | check ID | publish ID | interrupt ID | export');
-    console.log('check runs the candidate then existing regression gate; publish retries a saved result. See docs/recon-intake-workflow.md.');
+    console.log('check runs the candidate then existing regression gate; publish retries a saved result. See docs/product/recon/recon-intake-workflow.md.');
     return;
   }
   if (command === 'list') {
