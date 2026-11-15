@@ -155,7 +155,7 @@ export default function DrawPage() {
                     value={v.draft}
                     maxLength={500000}
                     onChange={(e) => input("draft", e.target.value)}
-                    aria-describedby="draw-list-format draw-list-note"
+                    aria-describedby="draw-list-format"
                     placeholder={tr({
                       zh: "小明\n小红\n#12 小方",
                       en: "Alex\nSam\n#12 Taylor",
@@ -175,7 +175,6 @@ export default function DrawPage() {
                   </button>
                   <DrawIconButton icon={Eraser} label={l.clear} onClick={() => act("clear")} />
                 </div>
-                <p id="draw-list-note">{l.editNote}</p>
                 {v.session.training && (
                   <div className="draw-training-settings">
                     <label>
