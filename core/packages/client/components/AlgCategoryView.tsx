@@ -375,7 +375,7 @@ function SubgroupIndex({
                   )
                   : <VisualCube local setup={sample.setup} algorithm={firstAlg} view="oll" scheme={visualCubeSchemeForOrientation(orientation, true)} size={thumbSize} loading="lazy" hideGreySides />}
               title={ollName ?? (useF2lThumb ? (dispTop || tr({ zh: '其他', en: 'Other' })) : `${set.toUpperCase()} ${dispTop || tr({ zh: '其他', en: 'Other' })}`)}
-              sub={ollName && set !== 'ollcp' ? `${set.toUpperCase()} ${dispTop}` : undefined}
+              sub={ollName && set !== 'ollcp' && set !== 'zbll' ? `${set.toUpperCase()} ${dispTop}` : undefined}
             />
           );
         })}
@@ -1538,7 +1538,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                     ? `${sq1EpNumericLayerName(subgroup) ?? subgroup}.*`
                     : tr({ zh: `上层 ${displayAlgCaseName(puzzleParam, set, subgroup)}`, en: `Top ${displayAlgCaseName(puzzleParam, set, subgroup)}` }))
                   : (set === 'f2l' ? tr(f2lGroupName(subgroup)) : ollByGroup.get(subgroup)
-                    ?? displayAlgCaseName(puzzleParam, set, subgroup)
+                    ?? displayAlgCaseName(puzzleParam, set, set === 'zbll' && subgroupParam ? subgroup.split('/').slice(1).join('/') || subgroup : subgroup)
                     ?? tr({ zh: '其他', en: 'Other' }))}
               </h2>
             )}
