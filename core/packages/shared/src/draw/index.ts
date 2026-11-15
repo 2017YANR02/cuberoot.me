@@ -25,7 +25,7 @@ export interface SavedList {
   training: boolean;
 }
 export const DRAW_STORAGE_KEY = "cuberoot.draw.v1";
-/** Shared card-pool geometry; both renderers keep faces readable within a shallow 3D volume. */
+/** Shared geometry: ordinary draws orbit a sphere; blindfold training uses a shallow card pool. */
 export function drawStageCards(
   session: Session,
   last: Ticket[] = [],
@@ -39,10 +39,22 @@ export function drawStageCards(
         ).values(),
       ]
     : pool;
-  const count = Math.min(tickets.length, 16);
+  const count = Math.min(tickets.length, session.training ? 16 : 24);
   const columns = Math.min(count, 4);
   const rows = Math.ceil(count / Math.max(columns, 1));
   return tickets.slice(0, count).map((ticket, i) => {
+    if (!session.training) {
+      const y = count === 1 ? 0 : 1 - 2 * (i + 0.5) / count;
+      const radius = count === 1 ? 0 : 150;
+      const ring = Math.sqrt(1 - y * y);
+      const angle = i * Math.PI * (3 - Math.sqrt(5));
+      return { ...ticket, pose: {
+        "--x": `${Math.round(radius * ring * Math.cos(angle))}px`,
+        "--y": `${Math.round(radius * y)}px`,
+        "--z": `${Math.round(radius * ring * Math.sin(angle))}px`,
+        "--yaw": "0deg", "--tilt": "0deg", "--delay": "0s",
+      } };
+    }
     const row = Math.floor(i / columns);
     const inRow = Math.min(columns, count - row * columns);
     const phase = i * 2.3;

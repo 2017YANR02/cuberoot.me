@@ -1,12 +1,18 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  RotateCcw, Maximize, Minimize, Eraser, Save, FolderOpen,
+  Trash2, Copy, Download, List, Shuffle, type LucideIcon,
+} from "@app-foundation/icons/lucide";
+import { Tooltip } from "@/components/Tooltip";
 import PageHeading from "@/components/PageHeading";
 import MoreToggle, { MoreTogglePanel } from "@/components/MoreToggle";
 import BoolToggle from "@/components/BoolToggle";
 import DrawCompetitionPicker from "./DrawCompetitionPicker";
 import { tr } from "@/i18n/tr";
 import { apiUrl } from "@/lib/api-base";
+import { copyClipboardText } from "@/lib/clipboard";
 import {
   createDrawController,
   labels,
@@ -18,6 +24,16 @@ import {
   drawStageCards,
 } from "@cuberoot/shared/draw";
 import "./draw.css";
+function DrawIconButton({ icon: Icon, label, ...props }: ComponentProps<"button"> & {
+  icon: LucideIcon;
+  label: string;
+}) {
+  return <Tooltip content={label}>{tip => (
+    <button {...tip} {...props} type="button" className="draw-icon-button" aria-label={label}>
+      <Icon size={18} aria-hidden="true" />
+    </button>
+  )}</Tooltip>;
+}
 export default function DrawPage() {
   const { i18n } = useTranslation();
   const [v, setView] = useState<DrawView>();
@@ -25,6 +41,12 @@ export default function DrawPage() {
     null,
   );
   const root = useRef<HTMLDivElement>(null);
+  const [fullscreen, setFullscreen] = useState(false);
+  useEffect(() => {
+    const sync = () => setFullscreen(document.fullscreenElement === root.current);
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
   useEffect(() => {
     const c = createDrawController({
       read: () => JSON.parse(localStorage.getItem(DRAW_STORAGE_KEY) || "null"),
@@ -32,7 +54,9 @@ export default function DrawPage() {
         localStorage.setItem(DRAW_STORAGE_KEY, JSON.stringify(value)),
       confirm: async (message) => window.confirm(message),
       random: () => crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296,
-      copy: (text) => navigator.clipboard.writeText(text),
+      copy: async (text) => {
+        if (!(await copyClipboardText(text))) throw new Error("Copy failed");
+      },
       request: async <T,>(path: string) => {
         const r = await fetch(apiUrl("/v1" + path));
         if (!r.ok) throw new Error("Request failed");
@@ -109,22 +133,18 @@ export default function DrawPage() {
               disabled={v.busy}
               aria-controls="draw-editor"
             >
-              {l.editor}
+              <List size={18} aria-hidden="true" />{l.editor}
             </MoreToggle>
-            <button
+            <DrawIconButton icon={RotateCcw} label={l.reset}
               onClick={() => act("reset")}
               disabled={v.busy || !v.session.history.length}
-            >
-              {l.reset}
-            </button>
-            <button
+             />
+            <DrawIconButton icon={fullscreen ? Minimize : Maximize} label={fullscreen ? l.exitFullscreen : l.fullscreen}
               onClick={() => {
                 if (document.fullscreenElement) void document.exitFullscreen();
                 else void root.current?.requestFullscreen().catch(() => {});
               }}
-            >
-              {l.fullscreen}
-            </button>
+            />
           </div>
           <MoreTogglePanel expanded={v.editing} id="draw-editor">
             <section className="draw-editor">
@@ -153,7 +173,7 @@ export default function DrawPage() {
                   <button className="draw-apply" onClick={() => act("apply")}>
                     {l.apply}
                   </button>
-                  <button onClick={() => act("clear")}>{l.clear}</button>
+                  <DrawIconButton icon={Eraser} label={l.clear} onClick={() => act("clear")} />
                 </div>
                 <p id="draw-list-note">{l.editNote}</p>
                 {v.session.training && (
@@ -184,20 +204,16 @@ export default function DrawPage() {
                       value={v.listName}
                       onChange={(e) => input("listName", e.target.value)}
                     />
-                    <button
+                    <DrawIconButton icon={Save} label={l.save}
                       disabled={!v.listName.trim() || !v.draft.trim()}
                       onClick={() => act("save")}
-                    >
-                      {l.save}
-                    </button>
+                     />
                   </div>
                   {v.saved.map((s, i) => (
                     <div className="draw-actions" key={s.name}>
                       <span>{s.name}</span>
-                      <button onClick={() => act("load", i)}>{l.load}</button>
-                      <button onClick={() => act("remove", i)}>
-                        {l.remove}
-                      </button>
+                      <DrawIconButton icon={FolderOpen} label={`${l.load} · ${s.name}`} onClick={() => act("load", i)} />
+                      <DrawIconButton icon={Trash2} label={`${l.remove} · ${s.name}`} onClick={() => act("remove", i)} />
                     </div>
                   ))}
                 </section>
@@ -246,12 +262,15 @@ export default function DrawPage() {
             </span>
           </div>
           <section
-            className={`draw-stage ${v.session.stage ? "is-3d" : ""} ${v.busy ? "is-drawing" : ""} ${v.last.length && !v.busy ? "has-result" : ""}`}
+            className={`draw-stage ${v.session.training ? "is-pool" : "is-sphere"} ${v.session.stage ? "is-3d" : ""} ${v.busy ? "is-drawing" : ""} ${v.last.length && !v.busy ? "has-result" : ""}`}
             aria-live="polite"
             aria-busy={v.busy}
           >
             {(v.session.stage || !v.last.length || v.busy) && (
-              <div className="draw-cloud" aria-hidden="true">
+              <div className="draw-cloud" aria-hidden="true"><div
+                className="draw-orbit"
+                key={`${v.session.training}:${v.session.text}:${v.session.history.length}`}
+              >
                 {drawStageCards(v.session, v.last, v.busy).map((t) => (
                   <div
                     className="draw-slot"
@@ -264,7 +283,7 @@ export default function DrawPage() {
                     </div>
                   </div>
                 ))}
-              </div>
+              </div></div>
             )}
             {!!v.last.length && !v.busy && (
               <div className="draw-winners">
@@ -299,24 +318,20 @@ export default function DrawPage() {
               disabled={v.busy || !v.remaining}
               onClick={() => act("draw")}
             >
-              {v.busy ? l.busy : v.remaining ? l.next : l.empty}
+              <Shuffle size={18} aria-hidden="true" />{v.busy ? l.busy : v.remaining ? l.next : l.empty}
             </button>
           </div>
           <section>
             <div className="draw-actions">
               <h2>{l.history}</h2>
-              <button
+              <DrawIconButton icon={Copy} label={l.copy}
                 disabled={v.busy || !v.session.history.length}
                 onClick={() => act("copy")}
-              >
-                {l.copy}
-              </button>
-              <button
+               />
+              <DrawIconButton icon={Download} label={l.export}
                 disabled={v.busy || !v.session.history.length}
                 onClick={download}
-              >
-                {l.export}
-              </button>
+              />
             </div>
             <ol reversed>
               {v.session.history

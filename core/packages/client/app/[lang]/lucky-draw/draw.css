@@ -143,7 +143,7 @@
     var(--muted) 75%
   );
 }
-.draw-cloud {
+.draw-orbit {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
@@ -227,10 +227,10 @@
 .has-result .draw-slot .draw-card {
   animation-play-state: paused;
 }
-.is-drawing .draw-slot {
+.is-pool.is-drawing .draw-slot {
   animation: draw-card-shuffle 900ms ease-in-out both;
 }
-.is-drawing .draw-slot .draw-card {
+.is-pool.is-drawing .draw-slot .draw-card {
   animation-play-state: paused;
 }
 .draw-winners {
@@ -353,3 +353,14 @@
     transform: translate(-50%, -50%) scale(0.68);
   }
 }
+
+.draw-actions > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.draw-page button.draw-icon-button { width: 40px; height: 40px; padding: 0; flex-shrink: 0; }
+.draw-page button.draw-icon-button:hover:not(:disabled) { background: var(--muted); }
+.is-3d .draw-orbit { position: absolute; inset: 0; padding: 0; transform-style: preserve-3d; }
+.is-3d.is-sphere .draw-orbit { animation: draw-orbit 24s linear infinite; }
+.is-3d.is-sphere .draw-slot { width: 90px; height: 64px; margin: -32px 0 0 -45px; }
+.is-3d.is-sphere .draw-slot .draw-card { animation: draw-face 24s linear infinite; }
+.is-sphere.has-result .draw-orbit, .is-sphere.has-result .draw-slot .draw-card { animation-play-state: paused; }
+@keyframes draw-orbit { to { transform: rotateY(360deg); } }
+@keyframes draw-face { to { transform: rotateY(-360deg); } }

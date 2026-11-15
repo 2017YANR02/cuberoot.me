@@ -16,7 +16,7 @@ import {
 describe("draw rounds", () => {
   it("keeps the selected ticket in the shuffle and bounds the shared 3D card pool", () => {
     const initial = replaceList(
-      freshSession(),
+      { ...freshSession(), training: true },
       Array.from({ length: 30 }, (_, i) => `Item ${i}`).join("\n"),
     );
     const result = draw(initial, () => 0, 1);
@@ -32,6 +32,18 @@ describe("draw rounds", () => {
       expect(Math.abs(parseFloat(card.pose["--yaw"]))).toBeLessThanOrEqual(16);
       expect(Math.abs(parseFloat(card.pose["--tilt"]))).toBeLessThanOrEqual(13);
     }
+  });
+  it("distributes ordinary draw cards across a bounded sphere with readable faces", () => {
+    const session = replaceList(freshSession(), Array.from({ length: 50 }, (_, i) => `Name ${i}`).join("\n"));
+    const cards = drawStageCards(session);
+    expect(cards).toHaveLength(24);
+    expect(cards.some(c => parseFloat(c.pose["--z"]) < -100)).toBe(true);
+    expect(cards.some(c => parseFloat(c.pose["--z"]) > 100)).toBe(true);
+    for (const { pose } of cards) {
+      expect(Math.abs(Math.hypot(...["--x", "--y", "--z"].map(k => parseFloat(pose[k as keyof typeof pose]))) - 150)).toBeLessThan(1);
+      expect(pose["--yaw"]).toBe("0deg");
+    }
+    expect(drawStageCards(replaceList(freshSession(), "Solo"))[0].pose["--x"]).toBe("0px");
   });
   it("imports the selected source alias and leaves the list unchanged until preview is applied", async () => {
     let view: DrawView;
