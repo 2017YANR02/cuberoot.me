@@ -41,7 +41,7 @@ import dynamic from 'next/dynamic';
 import { SET_GOAL } from '@/lib/alg_goals';
 import { VisualCube } from '@/components/VisualCube';
 import { CaseThumb } from '@/components/CaseThumb';
-import { EventIcon } from '@/components/EventIcon';
+import AlgPuzzlePicker from '@/components/AlgPuzzlePicker';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import F2lSlotSelector from '@/components/F2lSlotSelector';
 import {
@@ -1338,7 +1338,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       <div className="alg-cat-header alg-cat-header--list">
 
         <PageHeading backHref={backTo} titleClassName="alg-cat-title">
-          <EventIcon event={puzzleParam} className="alg-cat-title-icon" title={puzzleParam} />
+          <AlgPuzzlePicker current={puzzleParam} isZh={isZh} linkFor={id => ({ href: `/alg/${id}` })} />
           {collection ? setHeading : <TimerPracticeContentPicker entries={setChoices} selectedId={set} label={setHeading}
             language={isZh ? 'zh' : 'en'} onSelect={next => navigation.push(`${isZh ? '/zh' : ''}/alg/${puzzleParam}/${next}`)} />}
           {subgroupDisplay && (set === 'zbll' && data && !collection
