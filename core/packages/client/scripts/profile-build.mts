@@ -9,7 +9,7 @@ export function buildStages(scripts: Record<string, string>): string[][] {
   const expand = (script: string, expandingDeps = false): string[][] => script.split('&&').flatMap(part => {
     const command = part.trim();
     if (command === 'pnpm run build:deps' && !expandingDeps) return expand(scripts['build:deps'], true);
-    if (!/^[\w@./:=+-]+(?:\s+[\w@./:=+-]+)*$/.test(command) || command === 'pnpm run build:deps') {
+    if (!/^[\w@./:=+-]+(?:\s+[\w@./:=+^-]+)*$/.test(command) || command === 'pnpm run build:deps') {
       throw new Error(`Unsupported build command for profiling: ${command}`);
     }
     return [command.split(/\s+/)];
@@ -47,10 +47,12 @@ export function profileBuild(
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const cwd = fileURLToPath(new URL('../', import.meta.url));
   const { scripts } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-  const result = profileBuild(buildStages(scripts), (command, args) => spawnSync(command, args, {
+  // cmd.exe treats a bare ^ as an escape; keep validated arguments literal.
+  const windows = process.platform === 'win32';
+  const result = profileBuild(buildStages(scripts), (command, args) => spawnSync(command, windows ? args.map(arg => `"${arg}"`) : args, {
     cwd,
     stdio: 'inherit',
-    shell: process.platform === 'win32',
+    shell: windows,
   }), markdown => {
     console.log(markdown);
     if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdown);

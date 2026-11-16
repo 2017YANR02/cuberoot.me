@@ -14,6 +14,14 @@ describe('build profiling', () => {
     expect(() => buildStages({ build: 'pnpm run build:deps', 'build:deps': 'pnpm run build:deps' })).toThrow();
   });
 
+  it('passes Turbo dependency selectors intact while rejecting shell operators', () => {
+    expect(buildStages({ build: 'turbo run build:ci --filter=@cuberoot/client^...' }))
+      .toEqual([['turbo', 'run', 'build:ci', '--filter=@cuberoot/client^...']]);
+    for (const build of ['node build.mjs | cat', 'node build.mjs; echo done', 'node $(echo build.mjs)', 'node build.mjs > output']) {
+      expect(() => buildStages({ build })).toThrow('Unsupported build command');
+    }
+  });
+
   it.each([
     { status: 7, signal: null },
     { status: null, signal: 'SIGTERM' as const },
