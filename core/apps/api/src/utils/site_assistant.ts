@@ -453,6 +453,7 @@ export async function answerSiteQuestion(
   const sources = new Map<string, AssistantAnswer['sources'][number]>();
   const pageSourceIds = new Set<string>();
   const metadataSourceIds = new Set<string>();
+  let metadataPrefetchComplete = false;
   const runtimeSourceIds = new Set<string>();
   const runtimeEvidenceRequired=requestedEvidence==='statistics_metadata' && requestsStatisticsRuntime(evidenceQuestion);
   const metadataEvidenceRequired=requestedEvidence==='statistics_metadata';
@@ -560,7 +561,7 @@ export async function answerSiteQuestion(
       context: {question,draftAnswer:isolated?undefined:draftAnswer,timeContext,viewerWcaId,priorEvidence,attendanceScope,requestedEvidence,availableImages:[...availableImages.keys()],runtime:{model:config.model,provider:config.provider==='openai'?'OpenAI':new URL(config.baseUrl).origin==='https://api.deepseek.com'?'DeepSeek':/^(?:dashscope\.aliyuncs\.com|ws-[a-z0-9]+\.cn-beijing\.maas\.aliyuncs\.com)$/.test(new URL(config.baseUrl).hostname)?'Alibaba Cloud Bailian':'OpenAI-compatible provider'},capabilities:{webSearch:assistantWebAvailable(),thinkingMode},now:timeContext.today,round,remainingCalls:10-attemptedCalls,statisticsCatalog,statisticsCatalogStatus,announcementCatalog:SITE_ANNOUNCEMENTS.map(a=>({id:a.id,title:a.title[lang],aliases:a.aliases})),evidence:modelEvidence(evidence.filter(item=>isolated || !transcriptEvidence.has(item))),sources:[...sources.values()],finalRound:finalOnly}, finalOnly, thinking, effort,
       maxTokens, round, attempt, ...(requirePhotoTool ? { requiredTool: 'lookup_cube_photo' as const } : {}),
       // Do not offer equality-only tools that the existing scope guard must reject.
-      unavailableTools:[...unavailableTools,...(!analysisSchemaRead?['analysis_query']:[]),...(attendanceRequiresAnalysis(attendanceScope)?['person_competitions','person_countries']:[])],
+      unavailableTools:[...unavailableTools,...(metadataPrefetchComplete?['statistics_metadata']:[]),...(!analysisSchemaRead?['analysis_query']:[]),...(attendanceRequiresAnalysis(attendanceScope)?['person_competitions','person_countries']:[])],
       allowTools: !finalOnly && !outputRepair,
       requireStructuredAnswer: finalOnly || outputRepair,
       isolated,
@@ -962,6 +963,13 @@ export async function answerSiteQuestion(
     for(const source of result.sources) {sources.set(source.id,source);if(source.read)metadataSourceIds.add(source.id);}
     evidenceCharacters+=JSON.stringify(result.evidence).length;
     evidence.push({id:result.sources[0]?.id ?? 'metadata:missing',tool:call,data:result.evidence});
+    // The complete directory is already in evidence. Re-offering the same tool
+    // caused a redundant catalog read and a second model round in production.
+    // Keep focused contracts/provenance reads available when explicitly requested;
+    // unrelated tools remain available for independently requested facts.
+    metadataPrefetchComplete = metadataEvidenceRequired
+      && (result.evidence as { completeRegisteredCatalog?: boolean }).completeRegisteredCatalog === true
+      && !/产物契约|完整契约|来源哈希|源码哈希|溯源|provenance|artifact contracts?|source hashes?/i.test(evidenceQuestion);
     if(requestsStatisticsRuntime(evidenceQuestion)) for(const id of statisticsRuntimePrefetchIds(evidenceQuestion)) {
       const runtimeCall={tool:'statistics_metadata' as const,...(id?{id}:{scope:'all' as const}),view:'runtime' as const};
       attemptedCalls++;
