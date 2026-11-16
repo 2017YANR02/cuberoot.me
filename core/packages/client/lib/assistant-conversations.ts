@@ -16,7 +16,7 @@ export interface AssistantConversation {
   pinned?: boolean;
   unreadReply?: boolean;
   responding?: 'thinking' | 'writing';
-  pending?: { question: string; images: AssistantImage[] };
+  pending?: { question: string; images: AssistantImage[]; messageId?: string };
 }
 interface Workspace { activeId: string; conversations: AssistantConversation[]; open: boolean; opened: boolean }
 const empty: Workspace = { activeId: '', conversations: [], open: false, opened: false };
@@ -96,12 +96,12 @@ export function createAssistantConversations() {
       const found = read(owner).conversations.find(item => item.id === id);
       if (found) this.update(owner, id, { ...found.snapshot, ...patch });
     },
-    submit(owner: string, id: string, question: string, images: AssistantImage[]) {
+    submit(owner: string, id: string, question: string, images: AssistantImage[], messageId?: string) {
       const current = read(owner);
       const found = current.conversations.find(item => item.id === id);
       if (!found || found.pending) return false;
       write(owner, { ...current, open: true, opened: true, conversations: current.conversations.map(item => item.id === id
-        ? { ...item, pending: { question, images }, snapshot: { ...item.snapshot, draft: '', images: [] } } : item) });
+        ? { ...item, pending: { question, images, ...(messageId ? { messageId } : {}) }, snapshot: { ...item.snapshot, draft: '', images: [] } } : item) });
       return true;
     },
     takeSubmission(owner: string, id: string) {
