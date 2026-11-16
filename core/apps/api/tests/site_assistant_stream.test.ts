@@ -208,7 +208,7 @@ describe('assistant streaming', () => {
     expect(fetcher.mock.calls.filter(([url])=>String(url).endsWith('/assistant/pages.json'))).toHaveLength(1);
   });
 
-  it('holds concurrency slots until streams finish and maps post-header failures', async () => {
+  it('streams independent accounts concurrently and maps post-header failures', async () => {
     let finish!: () => void;
     const pending = new Promise<void>(resolve => { finish = resolve; });
     const answer = vi.fn<typeof answerSiteQuestion>().mockImplementation(async (_q,_l,_c,_s,_f,_h,_w,emit) => {
@@ -216,12 +216,15 @@ describe('assistant streaming', () => {
       await pending;
       throw new AssistantFailure('source_unavailable');
     });
-    const route = createSiteAssistantRoutes({ ...deps, answer });
-    const responses = await Promise.all(Array.from({ length: 4 }, () => route.fetch(request())));
-    expect((await route.fetch(request())).status).toBe(429);
-    expect(responses[0].headers.get('X-Accel-Buffering')).toBe('no');
-    expect(responses[0].headers.get('Cache-Control')).toBe('no-store');
-    finish();
+    let uid=0;
+    const route = createSiteAssistantRoutes({ ...deps, answer, authenticate:async()=>({uid:++uid,wcaId:'2017YANR02'}) });
+    const responses = await Promise.all(Array.from({ length: 12 }, () => route.fetch(request())));
+    try {
+      expect(responses.map(response=>response.status)).toEqual(Array(12).fill(200));
+      expect(answer).toHaveBeenCalledTimes(12);
+      expect(responses[0].headers.get('X-Accel-Buffering')).toBe('no');
+      expect(responses[0].headers.get('Cache-Control')).toBe('no-store');
+    } finally {finish();}
     for (const response of responses) {
       const events = []; for await (const data of readAssistantEvents(response.body!)) events.push(JSON.parse(data));
       expect(events.at(-1)).toEqual({ type: 'error', error: 'source_unavailable' });
