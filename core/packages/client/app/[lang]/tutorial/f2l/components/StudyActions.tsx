@@ -1,7 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { T } from '@/i18n/tr';
+import { tr } from '@/i18n/tr';
 
 export const StudyNavigation = createContext<{
   previous?: () => void; next?: () => void;
@@ -16,14 +16,15 @@ export default function StudyActions({ onPrevious, onContinue, continueDisabled 
   const navigation = useContext(StudyNavigation);
   const previous = onPrevious ?? navigation.previous;
   const next = onContinue ?? navigation.next;
-  const dock = <div className="f2l-study-dock"><div className="f2l-mobile-menu-host" ref={navigation.setMobileMenuTarget} />
+  const dock = <div className="f2l-study-dock">
   <footer className="f2l-study-actions">
-    <button type="button" className="f2l-footer-button" disabled={!previous} onClick={previous}>
-      <ArrowLeft size={17} aria-hidden="true" /><T zh="上一节" en="Previous" />
+    <button type="button" className="f2l-footer-button tutorial-page-button" aria-label={tr({ zh: '上一节', en: 'Previous section' })} disabled={!previous} onClick={previous}>
+      <ArrowLeft size={17} aria-hidden="true" />
     </button>
+    <div className="tutorial-section-menu-host" ref={navigation.setMobileMenuTarget} />
     <div className="f2l-study-secondary-actions">{children}</div>
-    <button type="button" className="f2l-footer-button f2l-footer-next" disabled={!next || continueDisabled} onClick={next}>
-      <T zh="下一节" en="Next" /><ArrowRight size={17} aria-hidden="true" />
+    <button type="button" className="f2l-footer-button f2l-footer-next tutorial-page-button" aria-label={tr({ zh: '下一节', en: 'Next section' })} disabled={!next || continueDisabled} onClick={next}>
+      <ArrowRight size={17} aria-hidden="true" />
     </button>
   </footer></div>;
   return navigation.dockTarget ? createPortal(dock, navigation.dockTarget) : dock;

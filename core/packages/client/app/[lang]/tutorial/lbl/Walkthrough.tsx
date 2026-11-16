@@ -1,11 +1,13 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronLeft } from '@app-foundation/icons/lucide';
+import { useCallback, useMemo, useState } from 'react';
+import { ChevronLeft } from '@app-foundation/icons/lucide';
 import { NavigationMenu } from '@app-foundation/navigation-ui';
 import AppLink from '@/components/AppLink';
 import { T, tr } from '@/i18n/tr';
 import { Demonstration } from './CompleteDemo';
+import SectionMenu from '../components/SectionMenu';
+import TutorialNavigationShell, { sectionItems, sectionLink } from '../components/TutorialNavigationShell';
 import ChapterNavigation from '../components/ChapterNavigation';
 import { buildCompleteDemo, buildWalkthroughRun, walkthroughCrossPhases } from './complete-demo-state';
 import { LBL_STEPS } from './content';
@@ -15,7 +17,6 @@ const IGNORE_CASE_CUE = () => {};
 export default function Walkthrough() {
   const [runIndex, setRunIndex] = useState(0);
   const [selected, setSelected] = useState(0);
-  const exampleMenu = useRef<HTMLDetailsElement>(null);
   const scramble = LBL_LESSON_RUNS[runIndex].scramble;
   const run = useMemo(() => buildWalkthroughRun(scramble, true), [scramble]);
   const stages = useMemo(() => {
@@ -34,27 +35,12 @@ export default function Walkthrough() {
   const advanceStage = useCallback(() => setSelected(index => Math.min(index + 1, stages.length - 1)), [stages.length]);
   const examples = LBL_LESSON_RUNS.map((_, index) => ({
     id: String(index),
-    href: `#example-${index}`,
+    onSelect: () => { if (index !== runIndex) { setRunIndex(index); setSelected(0); } },
     label: tr({ zh: `示例 ${index + 1}`, en: `Example ${index + 1}` }),
-    icon: null,
+
     active: index === runIndex,
   }));
-  const exampleNavigation = <NavigationMenu items={examples} collapsed={false}
-    label={tr({ zh: '示例', en: 'Examples' })}
-    renderLink={({ children, href, className, onClick, ...props }) => <button type="button"
-      className={`lbl-section-button ${className ?? ''}`} aria-label={props['aria-label']} aria-current={props['aria-current']}
-      onClick={() => {
-        const index = Number(href.replace('#example-', ''));
-        if (index !== runIndex) {
-          setRunIndex(index);
-          setSelected(0);
-        }
-        if (exampleMenu.current?.open) {
-          exampleMenu.current.open = false;
-          exampleMenu.current.querySelector('summary')?.focus();
-        }
-        onClick?.();
-      }}>{children}</button>} />;
+  const exampleNavigation = <NavigationMenu items={sectionItems(examples)} collapsed={false} label={tr({ zh: '示例', en: 'Examples' })} renderLink={sectionLink(examples)} />;
   return <main className="lbl-page lbl-walkthrough">
     <header className="lbl-header">
       <AppLink href="/tutorial/lbl" prefetch={false}>
@@ -66,8 +52,7 @@ export default function Walkthrough() {
       id: stage.id, title: tr(stage.lesson.title), completed: stages.indexOf(stage) < selected,
     }))} label={tr({ zh: '播放范围', en: 'Playback range' })} selected={selected}
       onSelect={setSelected} />
-    <div className="lbl-body">
-      <aside className="lbl-sidebar">{exampleNavigation}</aside>
+    <TutorialNavigationShell className="lbl-body" sections={{ items: examples }}>
       <div className="lbl-learning">
         <div className="lbl-lesson-scroll">
           <div className="lbl-walkthrough-meta">
@@ -82,12 +67,9 @@ export default function Walkthrough() {
           </div>
         </div>
         <div className="lbl-demo-toolbar">
-          <details className="lbl-mobile-menu" ref={exampleMenu}>
-            <summary><span className="lbl-section-count">{runIndex + 1}/{examples.length}</span><span>{examples[runIndex].label}</span><ChevronDown size={15} /></summary>
-            <div className="lbl-section-popover" data-site-surface="popover">{exampleNavigation}</div>
-          </details>
+          <SectionMenu label={examples[runIndex].label}>{exampleNavigation}</SectionMenu>
         </div>
       </div>
-    </div>
+    </TutorialNavigationShell>
   </main>;
 }

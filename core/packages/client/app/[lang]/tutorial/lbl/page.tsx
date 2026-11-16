@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { NavigationMenu } from '@app-foundation/navigation-ui';
 import { parseAsString, useQueryState, useQueryStates } from 'nuqs';
-import { ArrowLeft, ArrowRight, ChevronDown, ChevronLeft } from '@app-foundation/icons/lucide';
+import { ArrowLeft, ArrowRight, ChevronLeft } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { T, tr } from '@/i18n/tr';
 import { activeChapters, chapters as allChapters, lessonSourceChapter, practiceExampleOrder, practiceReviewLocation } from './curriculum';
@@ -11,6 +11,8 @@ import LessonContent from './LessonContent';
 import LessonThumbnail from './LessonThumbnail';
 import PracticeRoute from './PracticeRoute';
 import Walkthrough from './Walkthrough';
+import SectionMenu from '../components/SectionMenu';
+import TutorialNavigationShell, { sectionItems, sectionLink } from '../components/TutorialNavigationShell';
 import ChapterNavigation from '../components/ChapterNavigation';
 import './lesson-support.css';
 import '@app-foundation/navigation-ui/navigation.css';
@@ -59,7 +61,6 @@ function LblLessonView({ archive }: { archive: boolean }) {
   const sourceChapter = lessonSourceChapter(currentChapter, currentLesson);
   const isDaisyLift = currentChapter.id === 'daisy' && currentLesson.id === 'case-0';
   const isDaisyOverview = currentChapter.id === 'daisy' && currentLesson.kind === 'overview';
-  const menu = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     if ((!isDaisyLift && (!isDaisyOverview || showDaisyTerms))) return;
     function switchHandWithSpace(event: KeyboardEvent) {
@@ -112,30 +113,12 @@ function LblLessonView({ archive }: { archive: boolean }) {
       // Navigation still works when browser storage is unavailable.
     }
   }, [chapters, linkedStep, linkedCase, storageKey, legacyStorageKey, setPracticeRoute]);
-  useEffect(() => {
-    const closeOutside = (event: PointerEvent) => {
-      if (menu.current && !menu.current.contains(event.target as Node)) menu.current.open = false;
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && menu.current?.open) {
-        menu.current.open = false;
-        menu.current.querySelector('summary')?.focus();
-      }
-    };
-    document.addEventListener('pointerdown', closeOutside);
-    document.addEventListener('keydown', closeOnEscape);
-    return () => {
-      document.removeEventListener('pointerdown', closeOutside);
-      document.removeEventListener('keydown', closeOnEscape);
-    };
-  }, []);
   const goToLesson = useCallback((chapterIndex: number, sectionIndex: number) => {
     setChapter(chapterIndex);
     setSection(sectionIndex);
     setDaisyLiftIndex(0);
     setShowDaisyTerms(false);
     setRevision(value => value + 1);
-    if (menu.current) menu.current.open = false;
     const target = chapters[chapterIndex];
     const step = chapterStep(target.id);
     appliedRoute.current = { step, case: null };
@@ -180,14 +163,10 @@ function LblLessonView({ archive }: { archive: boolean }) {
     else chooseSection(next);
   }
   const items = sections.map((label, index) => ({
-    id: label.id, href: `#section-${index}`, label: tr(label.title), active: section === index,
-    icon: <LessonThumbnail chapter={lessonSourceChapter(currentChapter, label)} lesson={label} />,
+    id: label.id, onSelect: () => chooseSection(index), label: tr(label.title), active: section === index,
+    icon: <LessonThumbnail chapter={lessonSourceChapter(currentChapter, label)} lesson={label} size={18} />,
   }));
-  // The shared menu owns item styling; the host owns lesson selection.
-  const navigation = <NavigationMenu items={items} collapsed={false} label={tr({ zh: '本章小节', en: 'Chapter sections' })}
-    renderLink={({ children, href, onClick, className, ...props }) => {
-      return <button className={`lbl-section-button ${className ?? ''}`} aria-label={props['aria-label']} aria-current={props['aria-current']} type="button" onMouseDown={keepMouseNavigationUnfocused} onClick={() => { chooseSection(Number(href.replace('#section-', ''))); onClick?.(); }}>{children}</button>;
-    }} />;
+  const navigation = <NavigationMenu items={sectionItems(items)} collapsed={false} label={tr({ zh: '本章小节', en: 'Chapter sections' })} renderLink={sectionLink(items)} />;
 
   const chapterNavigation = <ChapterNavigation label={tr({ zh: '课程章节', en: 'Course chapters' })} selected={chapter}
       items={chapters.map(item => ({ id: item.id, title: <>{tr(item.title)}{item.archived && <T zh="（归档）" en=" (Archived)" />}</> }))}
@@ -204,8 +183,7 @@ function LblLessonView({ archive }: { archive: boolean }) {
       </div>
     </header>
     {chapterNavigation}
-    <div className="lbl-body">
-      <aside className="lbl-sidebar">{navigation}</aside>
+    <TutorialNavigationShell className="lbl-body" sections={{ items }}>
       <div className="lbl-learning">
         <div className="lbl-lesson-scroll" key={`${currentChapter.id}/${currentLesson.id}/${revision}`}>
           {isDaisyOverview ? <div className="lbl-daisy-overview-content">
@@ -226,24 +204,20 @@ function LblLessonView({ archive }: { archive: boolean }) {
             if (target >= 0) chooseSection(target);
           }} />}
         </div>
-        <div className="lbl-demo-toolbar">
-          <details className="lbl-mobile-menu" ref={menu}>
-            <summary><span className="lbl-section-count">{section + 1}/{sections.length}</span><span>{tr(currentLesson.title)}</span><ChevronDown size={15} /></summary>
-            <div className="lbl-section-popover" data-site-surface="popover">{navigation}</div>
-          </details>
-        </div>
+        <div className="lbl-demo-toolbar" />
         <footer className="lbl-footer">
-          <button className="lbl-footer-button" type="button" disabled={chapter === 0 && section === 0} onClick={() => advance(-1)}><ArrowLeft size={17} /><T zh="上一节" en="Previous" /></button>
+          <button className="lbl-footer-button tutorial-page-button" aria-label={tr({ zh: '上一节', en: 'Previous section' })} type="button" disabled={chapter === 0 && section === 0} onClick={() => advance(-1)}><ArrowLeft size={17} aria-hidden="true" /></button>
+          <SectionMenu label={tr(currentLesson.title)}>{navigation}</SectionMenu>
           <div className="lbl-footer-actions" id="lbl-footer-actions">
             {currentLesson.kind !== 'overview' && currentLesson.kind !== 'complete' && currentLesson.kind !== 'flowchart' && currentLesson.kind !== 'layers' &&
             !(currentLesson.kind === 'terms' && ['daisy', 'middle'].includes(sourceChapter.id)) &&
-            sourceChapter.id !== 'structure' && sourceChapter.examples.length > 0 && <button className="lbl-footer-button lbl-footer-next lbl-practice-button" type="button" onClick={() => { const order = practiceExampleOrder(currentChapter); const index = isDaisyLift ? daisyLiftIndex : (currentLesson.practiceIndices?.[0] ?? order[0]); void setPracticeRoute({ view: 'practice', step: currentChapter.id, case: currentLesson.id === 'white-edge' ? 'white-edge' : String(Math.max(0, order.indexOf(index)) + 1) }, { history: 'push' }); }}>
-            <T zh="练习本节" en="Practice this lesson" /><ArrowRight size={17} aria-hidden="true" />
+            sourceChapter.id !== 'structure' && sourceChapter.examples.length > 0 && <button className="lbl-footer-button lbl-footer-next lbl-practice-button tutorial-practice-button" type="button" onClick={() => { const order = practiceExampleOrder(currentChapter); const index = isDaisyLift ? daisyLiftIndex : (currentLesson.practiceIndices?.[0] ?? order[0]); void setPracticeRoute({ view: 'practice', step: currentChapter.id, case: currentLesson.id === 'white-edge' ? 'white-edge' : String(Math.max(0, order.indexOf(index)) + 1) }, { history: 'push' }); }}>
+            <T zh="练习" en="Practice" />
           </button>}
           </div>
-          <button className="lbl-footer-button lbl-footer-next" type="button" disabled={chapter === chapters.length - 1 && section === sections.length - 1} onClick={() => advance(1)}><T zh="下一节" en="Next" /><ArrowRight size={17} /></button>
+          <button className="lbl-footer-button lbl-footer-next tutorial-page-button" aria-label={tr({ zh: '下一节', en: 'Next section' })} type="button" disabled={chapter === chapters.length - 1 && section === sections.length - 1} onClick={() => advance(1)}><ArrowRight size={17} aria-hidden="true" /></button>
         </footer>
       </div>
-    </div>
+    </TutorialNavigationShell>
   </main>;
 }

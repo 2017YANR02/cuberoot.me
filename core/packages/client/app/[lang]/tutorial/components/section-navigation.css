@@ -1,0 +1,40 @@
+.tutorial-section-popover { --af-nav-text: var(--muted-foreground); --af-nav-active: var(--foreground); --af-nav-hover: var(--card); --af-nav-selected: var(--card); }
+.tutorial-section-menu { display: none; }
+@media (max-width: 760px) {
+  .tutorial-section-menu { display: block; position: relative; min-width: 0; }
+  .tutorial-section-menu > summary { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 44px; color: var(--muted-foreground); font-size: .8rem; }
+  .tutorial-section-menu > summary > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tutorial-section-menu > summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+  /* anchored-panel: safe (picker centered in footer; width capped to viewport). */
+  .tutorial-section-popover { box-sizing: border-box; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: min(260px, calc(100vw - 48px)); max-height: min(480px, 65dvh); overflow-y: auto; overscroll-behavior: contain; padding: 8px; z-index: 5; border: 1px solid var(--border-default); border-radius: 12px; }
+  :is(.lbl-page .lbl-footer, .f2l-study-dock .f2l-study-actions) { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 4px; }
+  :is(.lbl-footer .lbl-footer-actions, .f2l-study-actions .f2l-study-secondary-actions) { grid-row: 2; grid-column: 1 / -1; justify-self: center; margin-inline-start: 0; }
+  :is(.lbl-footer .lbl-footer-actions, .f2l-study-actions .f2l-study-secondary-actions):empty { display: none; }
+  :is(.lbl-footer, .f2l-study-actions) > button:last-child { grid-column: 3; grid-row: 1; }
+}
+
+:is(.lbl-page .lbl-footer, .f2l-page .f2l-study-actions) :is(.tutorial-page-button, .tutorial-practice-button, .tutorial-example-button) { height: 44px; min-height: 44px; }
+:is(.lbl-page .lbl-footer, .f2l-page .f2l-study-actions) > .tutorial-page-button { width: 44px; min-width: 44px; padding: 0; }
+
+@media (max-width: 760px) {
+  :is(.lbl-page .lbl-footer, .f2l-study-dock .f2l-study-actions):has(.tutorial-practice-button, .tutorial-example-button) { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+  :is(.lbl-footer .lbl-footer-actions, .f2l-study-actions .f2l-study-secondary-actions):has(.tutorial-practice-button, .tutorial-example-button) { grid-row: 1; grid-column: 3; }
+  :is(.lbl-footer, .f2l-study-actions):has(.tutorial-practice-button, .tutorial-example-button) > button:last-child { grid-column: 4; }
+  :is(.lbl-page .lbl-footer, .f2l-page .f2l-study-actions) :is(.tutorial-practice-button, .tutorial-example-button) { width: auto; padding-inline: 12px; }
+}
+
+.lbl-page .lbl-footer .tutorial-example-button { width: auto; padding-inline: 10px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* Keep tutorial footer actions colored, including touch browsers' sticky hover. */
+:is(.lbl-page .lbl-footer, .f2l-page .f2l-study-actions) :is(.tutorial-page-button, .tutorial-practice-button, .tutorial-example-button) {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+:is(.lbl-page .lbl-footer, .f2l-page .f2l-study-actions) :is(.tutorial-page-button, .tutorial-practice-button, .tutorial-example-button):hover:not(:disabled) {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+:is(.lbl-page .lbl-footer, .f2l-page .f2l-study-actions) :is(.tutorial-page-button, .tutorial-practice-button, .tutorial-example-button):disabled {
+  opacity: 1;
+  color: color-mix(in srgb, var(--accent) 40%, transparent);
+}

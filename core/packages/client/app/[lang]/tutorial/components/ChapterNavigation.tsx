@@ -29,12 +29,12 @@ export default function ChapterNavigation({ items, selected, label, onSelect, on
     resize.observe(nav);
     return () => resize.disconnect();
   }, [selected]);
-  return <nav className="lbl-chapters" ref={navRef} aria-label={label}>
-    <div className="lbl-chapter-track" style={{ '--chapter': selected, '--chapter-count': items.length } as CSSProperties}>
-      {selected >= 0 && <span className="lbl-indicator" aria-hidden="true" />}
-      {items.map((item, index) => <button key={item.id} className="lbl-chapter-button" type="button"
+  return <nav className="tutorial-chapters" ref={navRef} aria-label={label}>
+    <div className="tutorial-chapter-track" style={{ '--chapter': selected, '--chapter-count': items.length } as CSSProperties}>
+      {selected >= 0 && <span className="tutorial-chapter-indicator" aria-hidden="true" />}
+      {items.map((item, index) => <button key={item.id} className="tutorial-chapter-button" type="button"
         aria-current={selected === index ? 'step' : undefined} onMouseDown={onMouseDown} onClick={() => onSelect(index)}>
-        <span className="lbl-chapter-line" data-completed={item.completed || undefined} /><span>{item.title}</span>
+        <span className="tutorial-chapter-line" data-completed={item.completed || undefined} /><span>{item.title}</span>
       </button>)}
     </div>
   </nav>;

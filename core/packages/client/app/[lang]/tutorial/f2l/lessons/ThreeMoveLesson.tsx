@@ -1,5 +1,7 @@
 'use client';
 
+import TutorialNavigationShell from '../../components/TutorialNavigationShell';
+
 import { useMemo, useRef, useState } from 'react';
 import { Alg } from 'cubing/alg';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
@@ -128,15 +130,8 @@ export default function ThreeMoveLesson({ orientation, pauseBetween, caseId, onC
       else onComplete();
     }
   };
-  return <div className="f2l-study-layout f2l-merged-lesson">
-    <SectionNavigation label={lesson.name}>
-      <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择三步基态', en: 'Choose a three-move case' })}>
-        {ORDERED_BASIC_CASES.map((item, index) => <button type="button" className="f2l-section-button" key={item.id}
-          aria-pressed={item.id === lesson.id} onClick={() => onCaseChange(item.id)}>
-          <span className="f2l-section-label"><VisualCube local view="iso" size={48} faceletColors={diagrams[index]} alt="" /><span>{item.name}</span></span>
-        </button>)}
-      </div>
-    </SectionNavigation>
+  return <TutorialNavigationShell className="f2l-study-layout f2l-merged-lesson">
+    <SectionNavigation label={lesson.name} items={ORDERED_BASIC_CASES.map((item, index) => ({ id: String(item.id), label: item.name, active: item.id === lesson.id, onSelect: () => onCaseChange(item.id), icon: <VisualCube local view="iso" size={48} faceletColors={diagrams[index]} alt=""/> }))} />
     <div className="f2l-study-main">
       <div className="f2l-merged-parts" role="group" aria-label={tr({ zh: '学习环节', en: 'Learning sections' })}>
         {THREE_MOVE_PARTS.map((item, index) => <button type="button" key={index} className="f2l-section-button"
@@ -155,5 +150,5 @@ export default function ThreeMoveLesson({ orientation, pauseBetween, caseId, onC
         {part === 2 && !exercise && <button type="button" className="f2l-restart" onClick={startExercise}><T zh="自己调整顶层" en="Try aligning it" /></button>}
       </StudyActions>
     </div>
-  </div>;
+  </TutorialNavigationShell>;
 }

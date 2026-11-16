@@ -7,7 +7,7 @@
 .f2l-merged-controls > .f2l-restart { margin-top: 0; }
 .f2l-merged-lesson .f2l-cube { position: relative; }
 @media (max-width: 700px) {
-  .f2l-merged-lesson .f2l-section-nav > .f2l-section-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .f2l-merged-lesson .tutorial-section-navigation > .f2l-section-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .f2l-merged-lesson .f2l-section-label { flex-direction: column; }
   .f2l-merged-lesson .f2l-recognition { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import TutorialNavigationShell from '../../components/TutorialNavigationShell';
+
 import { useCallback, useMemo, useState } from 'react';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import { Shuffle } from '@app-foundation/icons/lucide';
@@ -30,14 +32,10 @@ export default function FreePracticeLesson({ orientation, pauseBetween }: { orie
 
   return <>
 
-    <div className="f2l-study-layout">
-      <SectionNavigation label={tr({ zh: '自由练习', en: 'Free practice' })}>
-        <div className="f2l-section-list"><p className="f2l-section-label" aria-current="true"><T zh="自由练习" en="Free practice" /></p></div>
-        <div className="f2l-guidance" aria-live="polite">
-          {!exercise && <p><T zh="暂未收录这个情况的教学解法。" en="A teaching solution for this case is not available yet." /></p>}
-        </div>
-      </SectionNavigation>
+    <TutorialNavigationShell className="f2l-study-layout">
+      <SectionNavigation label={tr({ zh: '自由练习', en: 'Free practice' })} items={[{ id: 'section-0', label: tr({ zh: "自由练习", en: "Free practice" }), active: true, onSelect: () => { } }]} />
       <div className="f2l-study-main">
+{!exercise && <p role="status"><T zh="暂未收录这个情况的教学解法。" en="A teaching solution for this case is not available yet." /></p>}
         {guide ? <FreePracticeGuide table={table} orientation={orientation} onClose={() => setGuide(false)} /> : <div className="f2l-lesson f2l-study-lesson">
         <section className="f2l-demo" aria-label={tr({ zh: '自由练习魔方', en: 'Free practice cube' })}>
           <div className="f2l-cube">
@@ -77,6 +75,6 @@ export default function FreePracticeLesson({ orientation, pauseBetween }: { orie
         </div>}
         <StudyActions />
       </div>
-    </div>
+    </TutorialNavigationShell>
   </>;
 }

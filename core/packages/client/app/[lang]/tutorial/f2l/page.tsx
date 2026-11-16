@@ -87,9 +87,9 @@ export default function F2lTutorial() {
       }
       // Reuse the primary section buttons so each lesson keeps its own selection/reset logic.
       // Secondary controls (AUF choices and the case dropdown) retain their own keyboard handling.
-      const sectionList = root.querySelector('.f2l-section-nav .f2l-section-list');
-      const sections = Array.from(sectionList?.querySelectorAll<HTMLButtonElement>('button.f2l-section-button') ?? []);
-      const selected = sections.findIndex(button => button.getAttribute('aria-pressed') === 'true');
+      const sectionList = root.querySelector('.tutorial-navigation-shell .af-nav-sidebar');
+      const sections = Array.from(sectionList?.querySelectorAll<HTMLButtonElement>('button.af-nav-link') ?? []);
+      const selected = sections.findIndex(button => button.getAttribute('aria-current') === 'page');
       if (selected >= 0) sections[selected + direction]?.click();
     };
     document.addEventListener('keydown', onArrowKey);

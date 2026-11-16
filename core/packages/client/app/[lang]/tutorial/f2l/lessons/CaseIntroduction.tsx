@@ -1,4 +1,6 @@
 'use client';
+
+import TutorialNavigationShell from '../../components/TutorialNavigationShell';
 import ChatBubble from '@/components/ChatBubble';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alg } from 'cubing/alg';
@@ -211,12 +213,8 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
     setManualStage(true);
     handle.playMove?.(index);
   };
-  return <div className="f2l-study-layout">
-    <SectionNavigation label={tr({ zh: '三步基态', en: 'Three-move cases' })}>
-      <div className="f2l-section-list">
-        <p className="f2l-section-label" aria-current="true"><T zh="三步基态" en="Three-move cases" /></p>
-      </div>
-    </SectionNavigation>
+  return <TutorialNavigationShell className="f2l-study-layout">
+    <SectionNavigation label={tr({ zh: '三步基态', en: 'Three-move cases' })} items={[{ id: 'section-0', label: tr({ zh: "三步基态", en: "Three-move cases" }), active: true, onSelect: () => { } }]} />
     <div className="f2l-study-main"><div ref={root} className="f2l-case-introduction" data-phase={phase}>
     <div className="f2l-case-grid">{ORDERED_BASIC_CASES.map((item, index) => <div key={item.id} className="f2l-case-item" data-selected={selected === index} data-hidden={selected !== null && selected !== index}>
       <div className="f2l-case-model" ref={element => { cubes.current[index] = element; }}
@@ -282,5 +280,5 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
     {phase === 'learn' && controlsVisible && <div className="f2l-case-return-row" style={{ visibility: returnReady ? 'visible' : 'hidden' }}><button type="button" className="f2l-case-return-text" disabled={!returnReady} onClick={() => {
       if (selected !== null && !players.current[selected]?.isUserMovePending?.()) setPhase('return');
     }}><T zh="点击返回选择" en="Click to return to case selection" /></button></div>}
-  </div><StudyActions /></div></div>;
+  </div><StudyActions /></div></TutorialNavigationShell>;
 }

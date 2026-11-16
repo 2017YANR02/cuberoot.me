@@ -1,5 +1,7 @@
 'use client';
 
+import TutorialNavigationShell from '../../components/TutorialNavigationShell';
+
 import { useMemo, useState } from 'react';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { VisualCube } from '@/components/VisualCube';
@@ -36,26 +38,10 @@ export default function ExtractionLesson({ orientation, pauseBetween, onNextChap
   const smartExtraction = useMemo(() => extraction ? f2lSmartExtraction(extraction.setup) : '', [extraction]);
   const kinds = Object.keys(EXTRACTION_TITLES) as (keyof typeof EXTRACTION_TITLES)[];
   return <>
-    <div className="f2l-study-layout">
+    <TutorialNavigationShell className="f2l-study-layout">
 
       <SectionNavigation label={tr(video === 'intro' ? { zh: '认识非标', en: 'Recognizing non-standard cases' }
-        : video === 'treatment' ? NONSTANDARD_TREATMENT_TITLE : EXTRACTION_TITLES[extractionKind])}>
-        <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择非标类型', en: 'Choose a non-standard case type' })}>
-          <button type="button" className="f2l-section-button" aria-pressed={video === 'intro'} onClick={() => setVideo('intro')}>
-            <span className="f2l-section-label"><T zh="认识非标" en="Recognizing non-standard cases" /></span>
-          </button>
-          <button type="button" className="f2l-section-button" aria-pressed={video === 'treatment'} onClick={() => setVideo('treatment')}>
-            <span className="f2l-section-label">{tr(NONSTANDARD_TREATMENT_TITLE)}</span>
-          </button>
-          {includeExamples && kinds.map(kind => <button className="f2l-section-button" key={kind} type="button"
-            aria-pressed={!video && extractionKind === kind} onClick={() => { setVideo(null); setExtractionKind(kind); }}>
-            <span className="f2l-section-label">
-              <VisualCube view="iso" size={36} faceletColors={f2lDiagramFacelets(examples.find(item => item.kind === kind)!.setup, orientation)} alt="" />
-              <span>{tr(EXTRACTION_TITLES[kind])}</span>
-            </span>
-          </button>)}
-        </div>
-      </SectionNavigation>
+        : video === 'treatment' ? NONSTANDARD_TREATMENT_TITLE : EXTRACTION_TITLES[extractionKind])} items={[{ id: 'section-0', label: tr({ zh: "认识非标", en: "Recognizing non-standard cases" }), active: video === 'intro', onSelect: () => setVideo('intro') }, { id: 'section-1', label: tr(NONSTANDARD_TREATMENT_TITLE), active: video === 'treatment', onSelect: () => setVideo('treatment') }, ...(includeExamples ? kinds.map((kind) => ({ id: String(kind), label: tr(EXTRACTION_TITLES[kind]), active: !video && extractionKind === kind, onSelect: () => { setVideo(null); setExtractionKind(kind); }, icon: <VisualCube view="iso" size={36} faceletColors={f2lDiagramFacelets(examples.find(item => item.kind === kind)!.setup, orientation)} alt=""/> })) : [])]} />
       <div className="f2l-study-main">
         {video === 'treatment' ? <NonstandardIntro key={`treatment:${orientation}`} orientation={orientation}
           scenes={treatmentScenes} title={NONSTANDARD_TREATMENT_TITLE} showSceneNumber />
@@ -91,6 +77,6 @@ export default function ExtractionLesson({ orientation, pauseBetween, onNextChap
           }}><T zh="换一个例子" en="Try another example" /></button>}
         </StudyActions>
       </div>
-    </div>
+    </TutorialNavigationShell>
   </>;
 }

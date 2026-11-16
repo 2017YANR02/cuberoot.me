@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight } from '@app-foundation/icons/lucide';
 import { persistItem } from '@/lib/safe-storage';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import AlgPlaybackControls from '@/components/AlgPlayer/AlgPlaybackControls';
@@ -64,7 +63,7 @@ export function FishExample({ left }: { left: boolean }) {
 function DemoToolbar({ onNext, index, total }: { onNext: () => void; index: number; total: number }) {
   const [host, setHost] = useState<HTMLElement | null>(null);
   useEffect(() => { setHost(document.getElementById('lbl-footer-actions')); }, []);
-  return host ? createPortal(<div className="lbl-complete-toolbar"><button type="button" className="lbl-footer-button lbl-footer-next" onClick={onNext}><T zh={`例${index + 1}/${total}`} en={`Example ${index + 1}/${total}`} /><ArrowRight size={17} aria-hidden="true" /></button></div>, host) : null;
+  return host ? createPortal(<div className="lbl-complete-toolbar"><button type="button" className="lbl-footer-button lbl-footer-next tutorial-example-button" aria-label={tr({ zh: `例${index + 1}/${total}，切换到下一个示例`, en: `Example ${index + 1} of ${total}, show next example` })} onClick={onNext}><T zh={`例${index + 1}/${total}`} en={`Ex. ${index + 1}/${total}`} /></button></div>, host) : null;
 }
 
 export function WhiteCrossCompleteDemo() {

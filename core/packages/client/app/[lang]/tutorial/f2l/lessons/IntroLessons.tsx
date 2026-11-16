@@ -1,5 +1,7 @@
 'use client';
 
+import TutorialNavigationShell from '../../components/TutorialNavigationShell';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { Alg } from 'cubing/alg';
@@ -126,13 +128,8 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
       setComparisonPlaying(!document.hidden && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
       void setIntroSection(null);
     };
-    return <div className="f2l-study-layout">
-      <SectionNavigation label={showTerminology ? terminology : label}>
-        <div className="f2l-section-list">
-          <button type="button" className="f2l-section-button" aria-pressed={!showTerminology} onClick={openComparison}>{label}</button>
-          <button type="button" className="f2l-section-button" aria-pressed={showTerminology} onClick={openTerminology}>{terminology}</button>
-        </div>
-      </SectionNavigation>
+    return <TutorialNavigationShell className="f2l-study-layout">
+      <SectionNavigation label={showTerminology ? terminology : label} items={[{ id: 'section-0', label, active: !showTerminology, onSelect: openComparison }, { id: 'section-1', label: terminology, active: showTerminology, onSelect: openTerminology }]} />
       <div className="f2l-study-main">
         {showTerminology ? <NonstandardIntro orientation={orientation} terminologyOnly /> :
         <div className="f2l-intro-film f2l-concept-video">
@@ -166,17 +163,11 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
         <StudyActions onPrevious={showTerminology ? openComparison : undefined}
           onContinue={showTerminology ? onNextChapter : openTerminology} />
       </div>
-    </div>;
+    </TutorialNavigationShell>;
   }
 
-  return <>{stepId === 'lesson-14' && <div className="f2l-study-layout">
-        <SectionNavigation label={tr(section === 'comparison' ? { zh: 'F2L与层先法的区别', en: 'F2L vs. layer-by-layer' } : section === 'lbl' ? { zh: '层先法的前两层', en: 'The first two layers with LBL' } : { zh: 'F2L', en: 'F2L' })}>
-          <div className="f2l-section-list">
-            <button type="button" className="f2l-section-button" aria-pressed={section === 'comparison'} onClick={() => setSection('comparison')}><T zh="F2L与层先法的区别" en="F2L vs. layer-by-layer" /></button>
-            <button type="button" className="f2l-section-button" aria-pressed={section === 'lbl'} onClick={() => setSection('lbl')}><T zh="层先法的前两层" en="The first two layers with LBL" /></button>
-            <button type="button" className="f2l-section-button" aria-pressed={section === 'f2l'} onClick={() => setSection('f2l')}>F2L</button>
-          </div>
-        </SectionNavigation>
+  return <>{stepId === 'lesson-14' && <TutorialNavigationShell className="f2l-study-layout">
+        <SectionNavigation label={tr(section === 'comparison' ? { zh: 'F2L与层先法的区别', en: 'F2L vs. layer-by-layer' } : section === 'lbl' ? { zh: '层先法的前两层', en: 'The first two layers with LBL' } : { zh: 'F2L', en: 'F2L' })} items={[{ id: 'section-2', label: tr({ zh: "F2L与层先法的区别", en: "F2L vs. layer-by-layer" }), active: section === 'comparison', onSelect: () => setSection('comparison') }, { id: 'section-3', label: tr({ zh: "层先法的前两层", en: "The first two layers with LBL" }), active: section === 'lbl', onSelect: () => setSection('lbl') }, { id: 'section-4', label: "F2L", active: section === 'f2l', onSelect: () => setSection('f2l') }]} />
         <div className="f2l-study-main">
         {/* {goalDiagrams && <figure className="f2l-goal">
           <div className="f2l-goal-diagrams">
@@ -218,12 +209,10 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
           <StudyActions onPrevious={() => setSection('lbl')} onContinue={onNextChapter} />
         </>}
         </div>
-      </div>}
+      </TutorialNavigationShell>}
 
-      {stepId === 'lesson-2' && <div className="f2l-study-layout">
-        <SectionNavigation label={tr({ zh: '认识四种三步基态', en: 'Meet the four three-move cases' })}>
-          <div className="f2l-section-list"><p className="f2l-section-label" aria-current="true"><T zh="认识四种三步基态" en="Meet the four three-move cases" /></p></div>
-        </SectionNavigation>
+      {stepId === 'lesson-2' && <TutorialNavigationShell className="f2l-study-layout">
+        <SectionNavigation label={tr({ zh: '认识四种三步基态', en: 'Meet the four three-move cases' })} items={[{ id: 'section-5', label: tr({ zh: "认识四种三步基态", en: "Meet the four three-move cases" }), active: true, onSelect: () => { } }]} />
         <div className="f2l-study-main">
 
         <div className="f2l-recognition">
@@ -235,7 +224,7 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
 
         <StudyActions onContinue={onNextChapter} />
         </div>
-      </div>}
+      </TutorialNavigationShell>}
 
 </>;
 }

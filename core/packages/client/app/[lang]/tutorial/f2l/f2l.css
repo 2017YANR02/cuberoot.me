@@ -43,7 +43,7 @@
 .f2l-goal-f2l-arrow span { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); font-size: .85rem; font-weight: 600; }
 .f2l-goal figcaption { margin-top: 16px; text-align: center; color: var(--muted-foreground); font-size: .9rem; }
 /* In-chapter section navigation. */
-.f2l-section-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 12px; margin: 20px 0; }
+.f2l-page .tutorial-section-navigation { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 12px; margin: 20px 0; }
 .f2l-section-group { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
 .f2l-section-group > span { font-size: .75rem; color: var(--muted-foreground); }
 .f2l-section-group .compact-select { max-width: 100%; }
@@ -59,7 +59,7 @@
 .f2l-section-label .puzzle-art { flex-shrink: 0; }
 .f2l-section-label > span { white-space: normal; }
 .f2l-section-label { display: flex; align-items: center; gap: 8px; min-width: 0; text-align: start; font-size: .85rem; line-height: 1.5; font-weight: 500; }
-.f2l-page :is(.f2l-section-nav, .f2l-section-popover) :is(.f2l-section-button, .f2l-section-list > p[aria-current='true']) {
+.f2l-page :is(.tutorial-section-navigation, .tutorial-section-popover) :is(.f2l-section-button, .f2l-section-list > p[aria-current='true']) {
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -71,9 +71,9 @@
   font-weight: 400;
   line-height: 1.25;
 }
-.f2l-page :is(.f2l-section-nav, .f2l-section-popover) .f2l-section-label { font: inherit; }
+.f2l-page :is(.tutorial-section-navigation, .tutorial-section-popover) .f2l-section-label { font: inherit; }
 /* Navigation thumbnails can be restored without changing the lesson content. */
-.f2l-page :is(.f2l-section-nav, .f2l-section-popover) .f2l-section-label .puzzle-art { display: none; }
+.f2l-page :is(.tutorial-section-navigation, .tutorial-section-popover) .f2l-section-label .puzzle-art { display: none; }
 .f2l-teaching-guidance { padding-top: 8px; }
 .f2l-teaching-guidance ol { display: grid; gap: 16px; padding-left: 24px; margin: 18px 0; }
 .f2l-teaching-guidance li { padding-left: 4px; }
@@ -186,9 +186,9 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
 .f2l-extraction-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; margin-top: 24px; }
 /* Shared lesson layout, footer actions and playback stages. */
 .f2l-study-layout { display: grid; grid-template-columns: var(--f2l-sidebar-width) minmax(0, 1fr); align-items: start; gap: var(--f2l-layout-gap); }
-.f2l-study-layout > .f2l-section-nav { grid-template-columns: minmax(0, 1fr); gap: 20px; margin: 0; padding: 0 24px 24px 0; border-right: 1px solid var(--border-default); }
+.f2l-study-layout > .tutorial-section-navigation { grid-template-columns: minmax(0, 1fr); gap: 20px; margin: 0; padding: 0 24px 24px 0; border-right: 1px solid var(--border-default); }
 @media (min-width: 761px) {
-  .f2l-study-layout > .f2l-section-nav { position: sticky; top: 16px; }
+  .f2l-study-layout > .tutorial-section-navigation { position: sticky; top: 16px; }
   .f2l-section-scroll { position: relative; min-width: 0; }
   .f2l-section-viewport {
     --f2l-fade-start: 0px;
@@ -230,7 +230,7 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
 .f2l-study-actions .f2l-restart { margin-top: 0; }
 .f2l-study-dock { display: contents; }
 .f2l-dock-host { display: contents; }
-.f2l-mobile-menu-host { display: none; }
+.tutorial-section-menu-host { display: none; }
 .f2l-page .f2l-footer-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; box-sizing: border-box; width: 112px; height: 52px; min-height: 44px; flex-shrink: 0; padding: 8px 14px; border: 0; border-radius: 10px; color: var(--muted-foreground); background: transparent; font: inherit; line-height: 1.2; cursor: pointer; }
 .f2l-page .f2l-footer-next { color: var(--accent); background: var(--accent-soft); }
 .f2l-page .f2l-footer-button svg { flex-shrink: 0; }
@@ -305,10 +305,10 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
   .f2l-page .f2l-footer-button { width: 96px; gap: 4px; padding: 8px 6px; font-size: .8rem; }
   .f2l-intro-players { grid-template-columns: minmax(0, 1fr); }
   .f2l-study-layout { grid-template-columns: minmax(0, 1fr); gap: 20px; }
-  .f2l-study-layout > .f2l-section-nav { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 0 0 20px; border-right: 0; border-bottom: 1px solid var(--border-default); }
+  .f2l-study-layout > .tutorial-section-navigation { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 0 0 20px; border-right: 0; border-bottom: 1px solid var(--border-default); }
   .f2l-page { padding: 16px 16px 40px; }
   .f2l-chapter { margin-top: 24px; }
-  .f2l-section-nav { gap: 8px; }
+  .tutorial-section-navigation { gap: 8px; }
   .f2l-section-label { font-size: .75rem; }
   .f2l-goal-diagrams { grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr) 24px minmax(0, 1fr); gap: 4px; }
   .f2l-goal-cube { font-size: .75rem; }
@@ -341,7 +341,7 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
   .f2l-page:not(.f2l-practice-page) .f2l-chapter-dialogue { height: clamp(84px, calc(25dvh - 106px), 144px); min-height: 0; gap: 8px; margin-bottom: 12px; overflow-y: auto; flex-shrink: 0; }
   .f2l-page:not(.f2l-practice-page) .f2l-chapter-dialogue > .chat-bubble { flex-shrink: 0; }
   .f2l-page:not(.f2l-practice-page) .f2l-study-layout { flex: 1 1 0; min-height: 0; align-items: stretch; }
-  .f2l-page:not(.f2l-practice-page) .f2l-section-nav { min-height: 0; grid-template-rows: minmax(0, 1fr); overflow: clip; }
+  .f2l-page:not(.f2l-practice-page) .tutorial-section-navigation { min-height: 0; grid-template-rows: minmax(0, 1fr); overflow: clip; }
   .f2l-page:not(.f2l-practice-page) .f2l-section-scroll { min-height: 0; }
   .f2l-page:not(.f2l-practice-page) .f2l-section-viewport { height: 100%; max-height: 100%; }
   .f2l-page:not(.f2l-practice-page) .f2l-study-main {
@@ -406,7 +406,7 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
   .f2l-chapter-dialogue { display: none; }
   .f2l-page .f2l-chapter-body { min-height: 0; padding-bottom: 0; }
   .f2l-page .f2l-study-layout { grid-template-columns: minmax(0, 1fr); }
-  .f2l-page .f2l-study-layout > .f2l-section-nav { display: none; }
+  .f2l-page .f2l-study-layout > .tutorial-section-navigation { display: none; }
   .f2l-page .f2l-chapter-body:has(.f2l-study-dock) { padding-bottom: calc(128px + env(safe-area-inset-bottom)); }
   .f2l-page .f2l-study-dock {
     display: block;
@@ -418,12 +418,6 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
   }
   .f2l-study-dock .f2l-study-actions { position: static; inset: auto; gap: 4px; padding-top: 8px; }
   .f2l-study-dock .f2l-footer-button { width: auto; min-width: 0; height: auto; gap: 4px; padding: 8px 6px; font-size: .8rem; }
-  .f2l-mobile-menu-host { display: block; min-width: 0; }
-  .f2l-mobile-menu-host:empty { display: none; }
-  .f2l-mobile-menu { position: relative; min-width: 0; }
-  .f2l-mobile-menu > summary { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 44px; color: var(--muted-foreground); font-size: .8rem; }
-  .f2l-mobile-menu > summary > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .f2l-mobile-menu > summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
-  /* anchored-panel: safe (centered in the content column, capped below viewport width). */
-  .f2l-section-popover { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: min(260px, calc(100vw - 48px)); max-height: min(480px, 65dvh); overflow-y: auto; overscroll-behavior: contain; padding: 8px; z-index: 5; border: 1px solid var(--border-default); border-radius: 12px; }
+  .tutorial-section-menu-host { display: block; min-width: 0; }
+  .tutorial-section-menu-host:empty { display: none; }
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import TutorialNavigationShell from '../../components/TutorialNavigationShell';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { VisualCube } from '@/components/VisualCube';
@@ -39,17 +41,8 @@ export default function PracticeLesson({ orientation, pauseBetween, onNextChapte
     const current = player.current?.getPlayer();
     if (current) current.timestamp = index;
   };
-  return <div className="f2l-study-layout">
-        <SectionNavigation label={lesson.name}>
-          <div className="f2l-section-group">
-            <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择三步基态', en: 'Choose a three-move case' })}>
-              {ORDERED_BASIC_CASES.map((item, index) => <button className="f2l-section-button" key={item.id} type="button"
-                aria-pressed={lesson.id === item.id} onClick={() => onCaseChange(item.id)}>
-                <span className="f2l-section-label"><VisualCube view="iso" size={36} faceletColors={diagrams[index]} alt="" /><span>{item.name}</span></span>
-              </button>)}
-            </div>
-          </div>
-        </SectionNavigation>
+  return <TutorialNavigationShell className="f2l-study-layout">
+        <SectionNavigation label={lesson.name} items={ORDERED_BASIC_CASES.map((item, index) => ({ id: String(item.id), label: item.name, active: lesson.id === item.id, onSelect: () => onCaseChange(item.id), icon: <VisualCube view="iso" size={36} faceletColors={diagrams[index]} alt=""/> }))} />
         <div className="f2l-study-main">
           <div className="f2l-lesson f2l-study-lesson">
             <section className="f2l-demo" aria-label={tr({ zh: '三步基态练习演示', en: 'Three-move case practice demonstration' })}>
@@ -85,5 +78,5 @@ export default function PracticeLesson({ orientation, pauseBetween, onNextChapte
               else onNextChapter();
             }} />
         </div>
-      </div>;
+      </TutorialNavigationShell>;
 }

@@ -1,8 +1,9 @@
 'use client';
 
+import TutorialNavigationShell from '../../components/TutorialNavigationShell';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsString, useQueryState, useQueryStates } from 'nuqs';
-import { ArrowRight } from 'lucide-react';
 import { Shuffle, Wand2 } from '@app-foundation/icons/lucide';
 import { Alg } from 'cubing/alg';
 import { VisualCube } from '@/components/VisualCube';
@@ -102,29 +103,13 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
     onPrevious={lessonIndex > 0 || chapter === 5 ? () => movePractice(-1) : undefined}
     onNext={lessonIndex < orderedLessons.length - 1 || (!classified && chapter === 4) ? () => movePractice(1) : undefined}
     onClose={() => { void setPracticeRoute({ view: null, algCase: lesson.name }, { history: 'push' }); }} />;
-  const pickerLabel = (name: string, label: string) => <span className="f2l-section-label">
-    <VisualCube view="iso" size={36} faceletColors={diagrams.find(c => c.name === name)!.facelets} alt="" />
-    <span>{label}</span>
-  </span>;
+  const sectionIcon = (name: string) => <VisualCube local view="iso" size={18} faceletColors={diagrams.find(c => c.name === name)!.facelets} alt="" />;
   return <>
-    <div className="f2l-study-layout">
+    <TutorialNavigationShell className="f2l-study-layout">
 
       {!lesson ? <p><T zh="本节教学案例待补充。" en="Teaching examples for this chapter are being prepared." /></p> : <>
         {classified && activeCategory ? <ClassifiedSectionNavigation active={activeCategory} orientation={orientation}
-          onSelect={id => void setSelection({ algGroup: id, algCase: null })} /> : chapter === 4 ? <SectionNavigation label={tr(f2lGroupName(activeGroup))}>
-          <div className="f2l-section-group">
-            <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择情况分组', en: 'Choose a case group' })}>
-              {lessonGroups.map(group => <button className="f2l-section-button" key={group} type="button" aria-pressed={activeGroup === group}
-                onClick={() => void setSelection({ algGroup: group, algCase: null })}>
-                {pickerLabel(lessons.find(c => c.group === group)!.name, tr(f2lGroupName(group)))}
-              </button>)}
-            </div>
-          </div>
-        </SectionNavigation> : <SectionNavigation label={lesson.name}><div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择教学情况', en: 'Choose a teaching case' })}>
-          {visibleLessons.map(c => <button className="f2l-section-button" key={c.name} type="button" aria-pressed={lesson.name === c.name} onClick={() => setCaseName(c.name)}>
-            {pickerLabel(c.name, c.name)}
-          </button>)}
-        </div></SectionNavigation>}
+          onSelect={id => void setSelection({ algGroup: id, algCase: null })} /> : chapter === 4 ? <SectionNavigation label={tr(f2lGroupName(activeGroup))} items={lessonGroups.map((group) => ({ id: String(group), icon: sectionIcon(lessons.find(c => c.group === group)!.name), label: tr(f2lGroupName(group)), active: activeGroup === group, onSelect: () => void setSelection({ algGroup: group, algCase: null }) }))} /> : <SectionNavigation label={lesson.name} items={visibleLessons.map((c) => ({ id: String(c.name), icon: sectionIcon(c.name), label: c.name, active: lesson.name === c.name, onSelect: () => setCaseName(c.name) }))} />}
         <div className="f2l-study-main">
           {activeCategory?.recognition && <p>{tr(activeCategory.recognition)}</p>}
           {showGallery ? <>
@@ -194,12 +179,12 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
             </button>
           </div>}
           <StudyActions onPrevious={previousSection} onContinue={nextSection}>
-            <button type="button" className="f2l-footer-button f2l-footer-next" onClick={() => {
+            <button type="button" className="f2l-footer-button f2l-footer-next tutorial-practice-button" onClick={() => {
               void setPracticeRoute({ view: 'practice', algCase: lesson.name }, { history: 'push' });
-            }}><T zh="练习本节" en="Practice this lesson" /><ArrowRight size={17} aria-hidden="true" /></button>
+            }}><T zh="练习" en="Practice" /></button>
           </StudyActions>
           </>}
         </div>
       </>}
-    </div></>;
+    </TutorialNavigationShell></>;
 }

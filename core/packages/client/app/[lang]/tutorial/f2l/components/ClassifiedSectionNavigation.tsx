@@ -17,15 +17,9 @@ export default function ClassifiedSectionNavigation({ active, orientation, onSel
     zh: title.zh.replace('{bottom}', bottom.zh),
     en: title.en.replace('{bottom}', bottom.en),
   });
-  return <SectionNavigation label={label(active.title)}>
-    <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择案例类型', en: 'Choose a case family' })}>
-      {F2L_CLASSIFICATION.map(group => <div className="f2l-section-group" key={group.title.en}>
-        <span>{tr(group.title)}</span>
-        {group.sections.map(section => <button className="f2l-section-button" key={section.id} type="button"
-          aria-pressed={active.id === section.id} onClick={() => onSelect(section.id)}>
-          {label(section.title)}
-        </button>)}
-      </div>)}
-    </div>
-  </SectionNavigation>;
+  return <SectionNavigation label={label(active.title)} items={[]} groups={F2L_CLASSIFICATION.map(group => ({
+    id: group.title.en, label: tr(group.title), items: group.sections.map(section => ({
+      id: section.id, label: label(section.title), active: active.id === section.id, onSelect: () => onSelect(section.id),
+    })),
+  }))} />;
 }

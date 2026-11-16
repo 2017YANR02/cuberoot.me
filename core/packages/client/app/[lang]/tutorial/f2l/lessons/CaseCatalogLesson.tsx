@@ -1,5 +1,7 @@
 'use client';
 
+import TutorialNavigationShell from '../../components/TutorialNavigationShell';
+
 import { useMemo } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { VisualCube } from '@/components/VisualCube';
@@ -19,7 +21,7 @@ export default function CaseCatalogLesson({ orientation, onNextChapter }: { orie
     if (section) void setGroup(section.id);
   };
   return <>
-    <div className="f2l-study-layout">
+    <TutorialNavigationShell className="f2l-study-layout">
 
       <ClassifiedSectionNavigation active={selected} orientation={orientation} onSelect={select} />
       <section className="f2l-catalog-group f2l-study-main">
@@ -34,6 +36,6 @@ export default function CaseCatalogLesson({ orientation, onNextChapter }: { orie
           else onNextChapter();
         }} />
       </section>
-    </div>
+    </TutorialNavigationShell>
   </>;
 }

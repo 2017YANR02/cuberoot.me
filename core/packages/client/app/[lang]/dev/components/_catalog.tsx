@@ -801,6 +801,13 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 };
 
 export const CATALOG: ComponentEntry[] = [
+  {
+    name: 'TutorialNavigationShell',
+    import: "import TutorialNavigationShell from '@/app/[lang]/tutorial/components/TutorialNavigationShell';",
+    category: 'nav',
+    zh: 'LBL 与 F2L 共用的小节导航外壳，复用 NavigationShell 的桌面折叠，移动端保留底部菜单。',
+    en: 'Shared LBL and F2L section layout using NavigationShell desktop collapse and footer menus on mobile.',
+  },
   { name: 'CalendarGrid', import: "import CalendarGrid from '@/components/calendar/CalendarGrid'", category: 'more', zh: '个人日历和工作日历共用网格，支持时区、周视图和可配置时间粒度。', en: 'Shared personal/work calendar grid with time zones, week views and configurable time slots.' },
   {
     name: 'ChatBubble',
@@ -814,6 +821,13 @@ export const CATALOG: ComponentEntry[] = [
       en: 'tail: left / right / top / bottom / none. color and textColor accept CSS colors or variables; defaults use a soft accent tint and the theme text color. Supply a readable textColor for custom backgrounds. fontSize is optional; callers control placement and visibility.',
     },
     Demo: ChatBubbleDemo,
+  },
+  {
+    name: 'SectionMenu',
+    import: "import SectionMenu from '@/app/[lang]/tutorial/components/SectionMenu';",
+    category: 'more',
+    zh: '层先法与 F2L 翻页区共用的移动端小节菜单。',
+    en: 'Shared mobile section menu for LBL and F2L tutorial footers.',
   },
   {
     name: 'ChapterNavigation',

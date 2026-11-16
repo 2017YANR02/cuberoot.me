@@ -1,0 +1,38 @@
+.tutorial-navigation-shell.af-navigation {
+  --af-nav-expanded: var(--f2l-sidebar-width, 220px);
+  --af-nav-header-height: 0px;
+  --af-nav-font-size: 1rem;
+  --tutorial-nav-icon-size: 18px;
+  --tutorial-nav-column-size: 36px;
+  --af-nav-sidebar-bg: var(--background);
+  --af-nav-content-bg: var(--background);
+  --af-nav-text: var(--muted-foreground);
+  --af-nav-active: var(--foreground);
+  --af-nav-hover: var(--muted);
+  --af-nav-selected: var(--muted);
+  display: block; min-width: 0; min-height: 0;
+}
+.tutorial-navigation-shell > .af-nav-body > .af-nav-corner { display: none; }
+.tutorial-navigation-shell > .af-nav-body { height: 100%; min-height: 0; }
+.tutorial-navigation-shell > .af-nav-body > .af-nav-sidebar {
+  position: relative; top: auto; height: 100%; min-height: 0;
+}
+.tutorial-navigation-shell > .af-nav-body > .af-nav-main { min-width: 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); padding-left: var(--f2l-layout-gap, 20px); }
+.tutorial-navigation-shell .af-nav-link { height: 68px; gap: 12px; line-height: 1.4; }
+/* Match the row icon center: 10px row padding + half the icon column, minus half the 38px toggle. */
+.tutorial-navigation-shell .af-nav-toggle { margin-inline-start: calc(10px + var(--tutorial-nav-column-size) / 2 - 19px); }
+.tutorial-navigation-shell .af-nav-label { white-space: normal; }
+.tutorial-navigation-shell .af-nav-icon { width: var(--tutorial-nav-column-size); height: var(--tutorial-nav-column-size); flex-basis: var(--tutorial-nav-column-size); display: grid; place-items: center; }
+.tutorial-navigation-shell .af-nav-icon :is(svg, .lbl-thumbnail, .puzzle-art) { width: var(--tutorial-nav-icon-size); height: var(--tutorial-nav-icon-size); max-width: var(--tutorial-nav-icon-size); max-height: var(--tutorial-nav-icon-size); }
+/* Keep the icon column fixed; the collapsed rail includes both row and sidebar padding. */
+.tutorial-navigation-shell.af-navigation[data-collapsed='true'] { --af-nav-width: 76px; }
+.tutorial-navigation-shell[data-collapsed='true'] .af-nav-link { gap: 0; }
+.tutorial-navigation-shell .af-nav-icon .lbl-thumbnail-play { display: none; }
+@media (min-width: 761px) {
+  .f2l-chapter-body:has(.tutorial-navigation-shell[data-collapsed='true']) .f2l-study-actions { left: calc(76px + var(--f2l-layout-gap)); }
+}
+@media (max-width: 760px) {
+  .tutorial-navigation-shell.af-navigation > .af-nav-body { grid-template-columns: minmax(0, 1fr); }
+  .tutorial-navigation-shell.af-navigation > .af-nav-body > :is(.af-nav-sidebar, .af-nav-corner) { display: none; }
+  .tutorial-navigation-shell.af-navigation > .af-nav-body > .af-nav-main { padding-left: 0; }
+}
