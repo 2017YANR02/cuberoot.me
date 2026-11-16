@@ -73,9 +73,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
   const routes = new Hono();
   const runs = deps.runs ?? assistantRunStore();
   const inbox=deps.queue?.store ?? durableAssistantStore,worker=deps.queue?.worker ?? durableAssistantWorker;
-  let active = 0;
   let minute = 0;
-  let minuteCount = 0;
   const clients = new Map<string, number>();
   routes.use('/site-assistant', async (c, next) => { await next(); c.header('Cache-Control', 'no-store'); });
   routes.use('/site-assistant', bodyLimit({ maxSize: SITE_ASSISTANT_BODY_BYTES, onError: async c => { await deps.entry?.('invalid_image'); return c.json({ error: 'invalid_image' }, 413); } }));
@@ -171,7 +169,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
     // Authentication is part of the same total deadline and precedes quota/model work.
     const disconnect = new AbortController();
     const signal = AbortSignal.any([disconnect.signal, c.req.raw.signal, AbortSignal.timeout(assistantTimeoutMs(parsed.data.thinking) - 2000)]);
-    let admitted = false, recordingFailed = false;
+    let recordingFailed = false;
     let runOwner: number | undefined;
     let stopWatching: (()=>void) | undefined;
     const finishRun = async (state:'completed'|'cancelled'|'error') => {
@@ -223,19 +221,15 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
       }
       signal.throwIfAborted();
       const now = deps.now();
-      if (Math.floor(now / 60000) !== minute) { minute = Math.floor(now / 60000); minuteCount = 0; clients.clear(); }
-      const ip = getIp(c);
+      if (Math.floor(now / 60000) !== minute) { minute = Math.floor(now / 60000); clients.clear(); }
       const accountKey = `uid:${user.uid}`;
-      if ((clients.get(ip) ?? 0) >= 6 || (clients.get(accountKey) ?? 0) >= 6 || minuteCount >= 30 || active >= 4) {
+      if ((clients.get(accountKey) ?? 0) >= 6) {
         c.header('Retry-After', '60');
         await monitor?.finish('rejected', 'busy');
         await finishRun('error');
         return c.json({ error: 'busy' }, 429);
       }
-      clients.set(ip, (clients.get(ip) ?? 0) + 1);
       clients.set(accountKey, (clients.get(accountKey) ?? 0) + 1);
-      minuteCount++; active++;
-      admitted = true;
       const quota = await assistantStage('quota',()=>deps.reserve());
       signal.throwIfAborted();
       if (!quota.allowed) {
@@ -249,7 +243,6 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
       monitor?.ready?.();
       if (c.req.header('Accept')?.includes('text/event-stream')) {
         c.header('X-Accel-Buffering', 'no');
-        admitted = false; // The stream owns the concurrency slot until it closes.
         return streamSSE(c, async stream => {
           stream.onAbort(() => disconnect.abort('user_cancel'));
           // A deep model can be silent longer than a proxy's idle-read timeout.
@@ -276,7 +269,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
           } catch (error) {
             const state=await failure(error).catch(() => undefined);
             if (!c.req.raw.signal.aborted) await stream.writeSSE({ data: JSON.stringify(state==='cancelled' ? {type:'cancelled'} : { type: 'error', error: assistantFailureCode(error) }) }).catch(()=>{});
-          } finally { clearInterval(heartbeat); stopWatching?.(); disconnect.abort(); active--; }
+          } finally { clearInterval(heartbeat); stopWatching?.(); disconnect.abort(); }
         });
       }
       const result = await answer(user);
@@ -290,7 +283,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
       if (!monitor) await deps.entry?.(recordingFailed ? 'recording_unavailable' : assistantFailureCode(error));
       const code=assistantFailureCode(error);
       return c.json({ error: code }, code==='login_required'?401:code==='wca_link_required'||code==='account_forbidden'?403:code==='timeout'?504:503);
-    } finally { if (admitted) active--; }
+    }
   });
   routes.use('/site-assistant/attachments*', async (c, next) => {
     c.header('Cache-Control', 'private, no-store'); c.header('X-Robots-Tag', 'noindex, nofollow');

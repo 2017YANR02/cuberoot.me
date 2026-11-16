@@ -19,7 +19,7 @@ export function createAssistantQueueWorker(deps:{
   authorize:(uid:number)=>Promise<string>; reserve:typeof reserveAssistantQuestion;
   attachment?:typeof readAssistantAttachment; monitor?:typeof startAssistantMonitor;
 }) {
-  let scanning=false,closed=false;
+  let scanning=false,rescan=false,closed=false;
   const tasks=new Set<Promise<void>>();
   const controllers=new Set<AbortController>();
   async function execute(claim:AssistantClaim) {
@@ -143,14 +143,20 @@ export function createAssistantQueueWorker(deps:{
     } finally {done=true;clearTimeout(poll);controllers.delete(lifetime);}
   }
   const kick=async()=>{
-    if(closed || scanning)return;
+    if(closed)return;
+    if(scanning){rescan=true;return;}
     scanning=true;
     try {
-      while(!closed && tasks.size<4) {
-        const claim=await deps.store.claim();if(!claim)break;
-        const task=execute(claim);tasks.add(task);
-        void task.finally(()=>{tasks.delete(task);if(!closed)void kick().catch(()=>{});});
-      }
+      do {
+        rescan=false;
+        // Each conversation has its own database lease. An unrelated conversation
+        // must not wait for another user's model request to finish.
+        while(!closed) {
+          const claim=await deps.store.claim();if(!claim)break;
+          const task=execute(claim);tasks.add(task);
+          void task.finally(()=>{tasks.delete(task);if(!closed)void kick().catch(()=>{});});
+        }
+      } while(rescan && !closed);
     } finally {scanning=false;}
   };
   return {

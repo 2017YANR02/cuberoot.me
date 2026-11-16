@@ -996,16 +996,16 @@ describe('site assistant authenticated route', () => {
     expect((await route.fetch(ask())).status).toBe(200);
   });
 
-  it('bounds concurrency and releases slots after failed requests', async () => {
+  it('runs independent accounts concurrently without a shared IP or site-wide cap', async () => {
     let reject!: (reason: Error) => void;
     const pending = new Promise<never>((_resolve, fail) => { reject = fail; });
     const answer = vi.fn().mockReturnValue(pending);
-    const route = createSiteAssistantRoutes({ answer, config: () => config, now: Date.now });
-    const requests = Array.from({ length: 4 }, () => route.fetch(ask()));
-    await vi.waitFor(() => expect(answer).toHaveBeenCalledTimes(4));
-    expect((await route.fetch(ask())).status).toBe(429);
+    let uid=0;
+    const route = createRoutes({ answer, config: () => config, now: Date.now, authenticate:async()=>({uid:++uid,wcaId:'2017YANR02'}),reserve:async()=>({allowed:true,retryAfter:0}) });
+    const requests = Array.from({ length: 32 }, () => route.fetch(ask()));
+    await vi.waitFor(() => expect(answer).toHaveBeenCalledTimes(32));
     reject(new Error('upstream unavailable'));
-    expect((await Promise.all(requests)).map(response => response.status)).toEqual([503, 503, 503, 503]);
+    expect((await Promise.all(requests)).map(response => response.status)).toEqual(Array(32).fill(503));
     answer.mockResolvedValue({ answer: 'restored', sources: [] });
     expect((await route.fetch(ask())).status).toBe(200);
   });
