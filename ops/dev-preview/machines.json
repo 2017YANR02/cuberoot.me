@@ -57,7 +57,7 @@
       "os": "mac",
       "owner": "lzz",
       "device": "macbook-pro",
-      "status": "pending",
+      "status": "active",
       "aliases": [],
       "localPort": 3000,
       "transport": "ssh",
