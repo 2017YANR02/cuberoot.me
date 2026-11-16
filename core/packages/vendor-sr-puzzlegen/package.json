@@ -26,7 +26,8 @@
   "scripts": {
     "dev:build": "pnpm run build",
     "build": "tsc -b",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "build:ci": "pnpm run build"
   },
   "devDependencies": {
     "typescript": "~5.7.0"

@@ -30,6 +30,7 @@ on:
       - 'core/scripts/resolve-workspace-path.mjs'
       - 'core/scripts/build-cubing-worker.mjs'
       - 'core/scripts/vercel-ignore-build.ts'
+      - 'core/scripts/ci/wait-web-checks.ts'
       - 'ops/systemd/cuberoot-next.service'
       - '.github/workflows/deploy_next.yml'
 
@@ -38,6 +39,10 @@ on:
 concurrency:
   group: deploy-next
   cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
 
 jobs:
   deploy:
@@ -141,6 +146,15 @@ jobs:
             echo "- Regular files: $(find .next/standalone -type f | wc -l)"
             echo "- Symlinks: $(find .next/standalone -type l | wc -l)"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # Building can overlap CI, but no upload or live mutation is permitted
+      # until this exact commit passes the Test workflow's web-specific gate.
+      - name: Require successful Web checks for this commit
+        timeout-minutes: 31
+        working-directory: core
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/ci/wait-web-checks.ts
 
       - name: Setup SSH
         env:

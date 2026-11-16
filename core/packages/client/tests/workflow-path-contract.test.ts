@@ -245,6 +245,7 @@ const NEXT_PATHS = [
   corePath('scripts', 'resolve-workspace-path.mjs'),
   corePath('scripts', 'build-cubing-worker.mjs'),
   corePath('scripts', 'vercel-ignore-build.ts'),
+  corePath('scripts', 'ci', 'wait-web-checks.ts'),
   repoPath('ops', 'systemd', 'cuberoot-next.service'),
   repoPath('.github', 'workflows', 'deploy_next.yml'),
 ] as const;
@@ -703,6 +704,40 @@ describe('deployment workflow path contracts', () => {
     }
   });
 
+  it('gates web deployment on complete same-SHA web evidence without native jobs', () => {
+    const workflow = readWorkflow('test.yml');
+    const gate = workflow.split('\n  web-checks:\n')[1].split('\n  pr-checks:\n')[0];
+    expect(gate).toContain('needs: [changes, test, client-tests, analyzer-worker, client-selection-audit]');
+    expect(gate).not.toContain('desktop');
+    expect(gate).not.toContain('mobile');
+    const run = readStepRun('test.yml', 'Require successful web checks');
+    const script = run.split('\n').slice(1, -1).join('\n');
+    const pass = {
+      changes: { result: 'success', outputs: { client: 'true', analyzer: 'false' } },
+      test: { result: 'success' }, 'client-tests': { result: 'success' },
+      'client-selection-audit': { result: 'success' }, 'analyzer-worker': { result: 'skipped' },
+    };
+    const execute = (jobs: Record<string, unknown>) => {
+      let status = 0;
+      runInNewContext(script, { process: { env: { NEEDS_JSON: JSON.stringify(jobs) }, exit: (code: number) => { status = code; } } });
+      return status;
+    };
+    expect(execute(pass)).toBe(0);
+    for (const name of Object.keys(pass)) {
+      const missing = { ...pass } as Record<string, unknown>;
+      delete missing[name];
+      expect(execute(missing), `missing ${name}`).toBe(1);
+      for (const result of ['failure', 'cancelled']) expect(execute({ ...pass, [name]: { result } })).toBe(1);
+    }
+    expect(execute({ ...pass, 'client-tests': { result: 'skipped' } })).toBe(1);
+    expect(execute({ ...pass, 'client-selection-audit': { result: 'skipped' } })).toBe(1);
+    expect(readStepLines('test.yml', 'Verify complete shadow evidence').lines.join('\n')).toContain('--results .local-data/ci/client-results-2.json');
+    expect(readStepLines('test.yml', 'Compare shadow selection with actual results').lines.join('\n')).toContain('--partial');
+    const deploy = readWorkflow('deploy_next.yml');
+    expect(deploy.indexOf('Require successful Web checks for this commit')).toBeGreaterThan(0);
+    expect(deploy.indexOf('Require successful Web checks for this commit')).toBeLessThan(deploy.indexOf('rsync standalone + systemd unit'));
+  });
+
   it('runs desktop UI checks when its dependency closure or workflow changes', () => {
     const workflow = readWorkflow('test.yml');
     const desktopPaths = readStepFilterPaths('test.yml', 'Detect affected inputs', 'desktop');
@@ -822,14 +857,15 @@ describe('deployment workflow path contracts', () => {
   it('shards the complete client suite without duplicating the isolated cross trainer test', () => {
     const workflow = readWorkflow('test.yml');
     expect(workflow).toContain('shard: [1, 2]');
-    expect(readStepRun('test.yml', 'Test client shard')).toBe(
-      'pnpm --filter @cuberoot/client exec vitest run --exclude tests/cross_trainer_reach.test.ts --shard=${{ matrix.shard }}/2',
-    );
+    const shardRun = readStepRun('test.yml', 'Test client shard');
+    expect(shardRun).toContain('turbo run test:ci --filter=@cuberoot/client -- --shard=${{ matrix.shard }}/2');
+    expect(shardRun).toContain('--reporter=json');
+    expect(readWorkspacePackage('@cuberoot/client').manifest.scripts?.['test:ci']).toBe('vitest run --exclude tests/cross_trainer_reach.test.ts');
     expect(readStepRun('test.yml', 'Test cross trainer reachability')).toBe(
       'pnpm --filter @cuberoot/client exec vitest run tests/cross_trainer_reach.test.ts',
     );
     expect(workflow).toMatch(
-      /- name: Test cross trainer reachability\n\s+if: \$\{\{ matrix\.shard == 1 \}\}/,
+      /- name: Test cross trainer reachability\n\s+if: \$\{\{ !cancelled\(\) && matrix\.shard == 1 \}\}/,
     );
     expect(workflow).not.toContain('- name: Test fast suite');
   });
@@ -849,7 +885,6 @@ describe('deployment workflow path contracts', () => {
       join(REPO_ROOT, 'core', 'packages', 'client', 'package.json'),
       'utf8',
     )) as { scripts: Record<string, string> };
-    const clientDepBuilds = clientPackage.scripts['build:deps'].split(' && ');
     const coreBuilds = readStepRun('deploy_core.yml', 'Build shared deps').split('\n');
     const mobileBuilds = readStepRun('test.yml', 'Build mobile workspace dependencies').split('\n');
 
@@ -857,8 +892,15 @@ describe('deployment workflow path contracts', () => {
       'pnpm --filter @cuberoot/client build:deps',
     );
     expect(clientPackage.scripts.build).toMatch(/^pnpm run build:deps && /);
-    expect(clientDepBuilds).toContain(renderBuild);
-    expect(clientDepBuilds).toContain(solverBuild);
+    expect(clientPackage.scripts['build:deps']).toBe('turbo run build:ci --filter=@cuberoot/client^...');
+    for (const name of ['shared', 'visualcube', 'vendor-sr-puzzlegen', 'puzzle-render-core', 'puzzle-solvers']) {
+      expect(readWorkspacePackage(`@cuberoot/${name}`).manifest.scripts?.['build:ci'], name).toBe('pnpm run build');
+    }
+    expect(readWorkspacePackage('@cuberoot/stack-kernel').manifest.scripts?.['build:ci']).toBeUndefined();
+    const turbo = JSON.parse(readFileSync(join(REPO_ROOT, 'core/turbo.json'), 'utf8'));
+    expect(turbo.tasks['build:ci'].dependsOn).toEqual(['^build:ci']);
+    expect(turbo.tasks['build:ci'].outputs).toEqual(['dist/**', '*.tsbuildinfo']);
+    expect(turbo.tasks['@cuberoot/client#test:ci'].cache).toBe(false);
     expect(coreBuilds).toContain(renderBuild);
     expect(coreBuilds).toContain(solverBuild);
     // The app-ui timer tests resolve render-core's Node SVG exports. A local
@@ -914,7 +956,7 @@ describe('deployment workflow path contracts', () => {
   it('bypasses path enumeration for full manual and scheduled runs', () => {
     const { lines } = readStepLines('test.yml', 'Detect affected inputs');
     expect(lines.join('\n')).toContain(
-      "if: ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'schedule' }}",
+      "if: ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'schedule' && steps.baseline.outputs.full != 'true' }}",
     );
     // Every downstream job must still run with absent filter outputs.
     const workflow = readWorkflow('test.yml');

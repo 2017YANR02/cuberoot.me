@@ -1049,7 +1049,8 @@
     "dev:build": "pnpm run build",
     "build": "tsc -b",
     "generate:timer-trainer-cases": "node scripts/build-timer-trainer-case-data.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:ci": "pnpm run build"
   },
   "peerDependencies": {
     "react": "^19.0.0",

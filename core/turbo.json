@@ -26,6 +26,21 @@
       "dependsOn": ["^dev:build"],
       "cache": false,
       "persistent": true
+    },
+    "build:ci": {
+      "dependsOn": ["^build:ci"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tsconfig.base.json",
+        "$TURBO_ROOT$/../.node-version",
+        "$TURBO_ROOT$/packages/stack-kernel/pkg/**"
+      ],
+      "outputs": ["dist/**", "*.tsbuildinfo"],
+      "env": ["NODE_ENV"]
+    },
+    "@cuberoot/client#test:ci": {
+      "cache": false,
+      "passThroughEnv": ["CHECK_CITY_TRANSLATION_COVERAGE"]
     }
   }
 }

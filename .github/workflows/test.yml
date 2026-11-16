@@ -92,21 +92,24 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+      actions: read
     outputs:
       client: ${{ steps.analyzer.outputs.client }}
-      workflow_contract: ${{ steps.filter.outputs.workflow_contract }}
-      mobile: ${{ steps.filter.outputs.mobile }}
-      desktop: ${{ steps.filter.outputs.desktop }}
+      workflow_contract: ${{ steps.baseline.outputs.full == 'true' && 'true' || steps.filter.outputs.workflow_contract }}
+      mobile: ${{ steps.baseline.outputs.full == 'true' && 'true' || steps.filter.outputs.mobile }}
+      desktop: ${{ steps.baseline.outputs.full == 'true' && 'true' || steps.filter.outputs.desktop }}
       analyzer: ${{ steps.analyzer.outputs.run }}
-      server: ${{ steps.filter.outputs.server }}
-      stats: ${{ steps.filter.outputs.stats }}
-      solvers: ${{ steps.filter.outputs.solvers }}
-      scramble_stats: ${{ steps.filter.outputs.scramble_stats }}
-      miniprogram: ${{ steps.filter.outputs.miniprogram }}
-      upstream: ${{ steps.filter.outputs.upstream }}
-      desktop_native: ${{ steps.filter.outputs.desktop_native }}
-      mobile_native: ${{ steps.filter.outputs.mobile_native }}
+      server: ${{ steps.baseline.outputs.full == 'true' && 'true' || steps.filter.outputs.server }}
+      stats: ${{ steps.baseline.outputs.full == 'true' && 'true' || steps.filter.outputs.stats }}
+      solvers: ${{ steps.baseline.outputs.full == 'true' && 'true' || steps.filter.outputs.solvers }}
+      scramble_stats: ${{ steps.baseline.outputs.full == 'true' && 'true' || steps.filter.outputs.scramble_stats }}
+      miniprogram: ${{ steps.baseline.outputs.full == 'true' && 'true' || steps.filter.outputs.miniprogram }}
+      upstream: ${{ steps.baseline.outputs.full == 'true' && 'true' || steps.filter.outputs.upstream }}
+      desktop_native: ${{ steps.baseline.outputs.full == 'true' && 'true' || steps.filter.outputs.desktop_native }}
+      mobile_native: ${{ steps.baseline.outputs.full == 'true' && 'true' || steps.filter.outputs.mobile_native }}
       analyzer_manifest: ${{ steps.filter.outputs.analyzer_manifest }}
+      comparison_base: ${{ steps.baseline.outputs.sha }}
+      comparison_full: ${{ steps.baseline.outputs.full }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -117,12 +120,34 @@ jobs:
             /core/package.json
           filter: blob:none
 
+      # Include unverified changes from failed/cancelled pushes, not just HEAD~1.
+      - name: Select verified comparison base
+        id: baseline
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let sha = context.payload.pull_request?.base?.sha;
+            if (context.eventName === 'push') {
+              try {
+                const runs = await github.rest.actions.listWorkflowRuns({
+                  ...context.repo, workflow_id: 'test.yml', branch: 'main',
+                  event: 'push', status: 'success', per_page: 1,
+                });
+                sha = runs.data.workflow_runs[0]?.head_sha;
+              } catch (error) {
+                core.warning(`No verified base available: ${error.message}`);
+              }
+            }
+            core.setOutput('sha', sha || '');
+            core.setOutput('full', !sha || ['schedule', 'workflow_dispatch'].includes(context.eventName));
+
       - name: Detect affected inputs
         # Full runs already select every job; avoid exporting a repository-sized file list.
-        if: ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'schedule' }}
+        if: ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'schedule' && steps.baseline.outputs.full != 'true' }}
         id: filter
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
+          base: ${{ steps.baseline.outputs.sha || github.event.before }}
           list-files: json
           filters: |
             workflow_contract:
@@ -316,9 +341,10 @@ jobs:
         env:
           SOURCE_CHANGED: ${{ steps.filter.outputs.analyzer }}
           MANIFEST_CHANGED: ${{ steps.filter.outputs.analyzer_manifest }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          BASE_SHA: ${{ steps.baseline.outputs.sha }}
           CLIENT_CHANGED: ${{ steps.filter.outputs.client }}
           CLIENT_FILES: ${{ steps.filter.outputs.client_files }}
+          FULL_CHECK: ${{ steps.baseline.outputs.full }}
         run: |
           node --input-type=module <<'NODE'
           import { execFileSync } from 'node:child_process';
@@ -326,8 +352,9 @@ jobs:
           // Scheduling-only edits need the workflow contract check, not the client runtime suite.
           const contractFiles = new Set(['.github/workflows/test.yml', 'core/packages/client/tests/workflow-path-contract.test.ts', 'core/packages/client/vercel.json', 'core/scripts/vercel-ignore-build.ts']);
           const clientFiles = JSON.parse(process.env.CLIENT_FILES || '[]');
-          const client = process.env.CLIENT_CHANGED === 'true' && (clientFiles.length === 0 || clientFiles.some(path => !contractFiles.has(path)));
-          let affected = process.env.SOURCE_CHANGED === 'true';
+          const full = process.env.FULL_CHECK === 'true';
+          const client = full || (process.env.CLIENT_CHANGED === 'true' && (clientFiles.length === 0 || clientFiles.some(path => !contractFiles.has(path))));
+          let affected = full || process.env.SOURCE_CHANGED === 'true';
           if (!affected && process.env.MANIFEST_CHANGED === 'true') {
             const base = process.env.BASE_SHA;
             const path = 'core/packages/client/package.json';
@@ -509,6 +536,14 @@ jobs:
       # tsc 启动校验它们的 dist/.d.ts 必须存在(TS6305)。所以先 build 再 typecheck。
       # skewb-notation 测试也走 shared 的 node 导出(dist),Clock/SQ2 的 Node 测试走
       # puzzle-solvers 的 node 导出,同样都要先 build。
+      - name: Restore dependency build cache
+        uses: actions/cache@v4
+        with:
+          path: core/.turbo/cache
+          key: ${{ runner.os }}-turbo-deps-${{ hashFiles('.node-version', 'core/pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-deps-${{ hashFiles('.node-version', 'core/pnpm-lock.yaml') }}-
+
       - name: Build shared deps
         working-directory: core
         run: |
@@ -518,6 +553,10 @@ jobs:
         if: ${{ needs.changes.outputs.workflow_contract == 'true' && needs.changes.outputs.client != 'true' && github.event_name != 'workflow_dispatch' && github.event_name != 'schedule' }}
         working-directory: core
         run: pnpm --filter @cuberoot/client exec vitest run tests/workflow-path-contract.test.ts
+
+      - name: Verify affected selection and deployment gate
+        working-directory: core
+        run: node --test scripts/ci/*.test.ts
 
       - name: First-time identity choice PostgreSQL 13 regression
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.server == 'true' }}
@@ -765,6 +804,14 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
+      - name: Restore dependency build cache
+        uses: actions/cache@v4
+        with:
+          path: core/.turbo/cache
+          key: ${{ runner.os }}-turbo-deps-${{ hashFiles('.node-version', 'core/pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-deps-${{ hashFiles('.node-version', 'core/pnpm-lock.yaml') }}-
+
       - name: Build client dependencies
         working-directory: core
         run: pnpm --filter @cuberoot/client build:deps
@@ -796,27 +843,58 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: node scripts/recon-ground-truth-results.mts publish-ci ..
 
+      # Shadow mode: observe selection, but keep executing the complete shard.
+      - name: Plan affected client tests
+        working-directory: core
+        env:
+          BASE_SHA: ${{ needs.changes.outputs.comparison_base }}
+          FULL_CHECK: ${{ needs.changes.outputs.comparison_full }}
+          SHARD: ${{ matrix.shard }}
+        run: |
+          mkdir -p ../.local-data/ci
+          if [ -n "$BASE_SHA" ]; then
+            git fetch --no-tags --depth=1 origin "$BASE_SHA" || true
+          fi
+          pnpm --filter @cuberoot/client exec vitest list --filesOnly --json="$GITHUB_WORKSPACE/.local-data/ci/client-inventory-$SHARD.json" --exclude tests/cross_trainer_reach.test.ts
+          args=()
+          if [ "$FULL_CHECK" = true ]; then args+=(--full); fi
+          node scripts/ci/client-test-plan.ts plan --base "$BASE_SHA" --head "$GITHUB_SHA" --tests "$GITHUB_WORKSPACE/.local-data/ci/client-inventory-$SHARD.json" --output "$GITHUB_WORKSPACE/.local-data/ci/client-plan-$SHARD.json" "${args[@]}"
+
       - name: Test client shard
         working-directory: core
         env:
           # Live competition data drifts independently of code; audit it weekly.
           CHECK_CITY_TRANSLATION_COVERAGE: ${{ github.event_name == 'schedule' && '1' || '0' }}
         run: |
-          pnpm --filter @cuberoot/client exec vitest run --exclude tests/cross_trainer_reach.test.ts --shard=${{ matrix.shard }}/2
+          pnpm exec turbo run test:ci --filter=@cuberoot/client -- --shard=${{ matrix.shard }}/2 --reporter=default --reporter=json --outputFile.json="$GITHUB_WORKSPACE/.local-data/ci/client-results-${{ matrix.shard }}.json"
+
+      - name: Compare shadow selection with actual results
+        if: ${{ always() }}
+        working-directory: core
+        run: node scripts/ci/client-test-plan.ts compare --partial --head "$GITHUB_SHA" --plan "$GITHUB_WORKSPACE/.local-data/ci/client-plan-${{ matrix.shard }}.json" --results "$GITHUB_WORKSPACE/.local-data/ci/client-results-${{ matrix.shard }}.json"
+
+      - name: Retain test selection evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-selection-${{ matrix.shard }}
+          path: .local-data/ci/*-${{ matrix.shard }}.json
+          retention-days: 30
+          if-no-files-found: warn
 
       - name: Test cross trainer reachability
-        if: ${{ matrix.shard == 1 }}
+        if: ${{ !cancelled() && matrix.shard == 1 }}
         working-directory: core
         run: |
           pnpm --filter @cuberoot/client exec vitest run tests/cross_trainer_reach.test.ts
 
       - name: Install Chromium for formula layout regression
-        if: ${{ matrix.shard == 1 }}
+        if: ${{ !cancelled() && matrix.shard == 1 }}
         working-directory: core
         run: pnpm --filter @cuberoot/client exec playwright install --with-deps chromium
 
       - name: Check formula read/edit geometry in Chromium
-        if: ${{ matrix.shard == 1 }}
+        if: ${{ !cancelled() && matrix.shard == 1 }}
         working-directory: core
         run: pnpm --filter @cuberoot/client test:alg-layout
 
@@ -1140,11 +1218,69 @@ jobs:
         working-directory: core
         run: pnpm --filter @cuberoot/client test:slow
 
+  client-selection-audit:
+    name: Audit client selection coverage
+    needs: client-tests
+    if: ${{ !cancelled() && needs.client-tests.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.node-version
+            /core/scripts/ci/
+            /core/scripts/resolve-workspace-path.mjs
+            /core/packages/client/package.json
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: client-selection-*
+          merge-multiple: true
+          path: .local-data/ci
+      - name: Verify complete shadow evidence
+        run: node core/scripts/ci/client-test-plan.ts compare --head "$GITHUB_SHA" --plan .local-data/ci/client-plan-1.json --plan .local-data/ci/client-plan-2.json --results .local-data/ci/client-results-1.json --results .local-data/ci/client-results-2.json --output .local-data/ci/client-comparison.json
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: client-selection-comparison
+          path: .local-data/ci/client-comparison.json
+          retention-days: 30
+          if-no-files-found: warn
+
+  # Production web deployments depend only on web-relevant checks for this SHA.
+  web-checks:
+    name: Web checks
+    if: ${{ always() && inputs.scope != 'core' }}
+    needs: [changes, test, client-tests, analyzer-worker, client-selection-audit]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Require successful web checks
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          node --input-type=module <<'NODE'
+          const jobs = JSON.parse(process.env.NEEDS_JSON);
+          const required = ['changes', 'test', 'client-tests', 'analyzer-worker', 'client-selection-audit'];
+          const failed = required.some(name => !jobs[name] || !['success', 'skipped'].includes(jobs[name].result))
+            || jobs.changes?.result !== 'success' || jobs.test?.result !== 'success'
+            || (jobs.changes?.outputs?.client === 'true' && (jobs['client-tests']?.result !== 'success' || jobs['client-selection-audit']?.result !== 'success'))
+            || (jobs.changes?.outputs?.analyzer === 'true' && jobs['analyzer-worker']?.result !== 'success');
+          if (failed) process.exit(1);
+          NODE
+
   # Keep this dependency list complete: the workflow contract test guards drift.
   pr-checks:
     name: PR checks
     if: ${{ always() }}
-    needs: [changes, test, client-tests, mobile, desktop-ui, desktop, analyzer-worker, app-release-contract]
+    needs: [changes, test, client-tests, mobile, desktop-ui, desktop, analyzer-worker, app-release-contract, client-selection-audit, web-checks]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     permissions: {}

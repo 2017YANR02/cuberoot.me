@@ -73,6 +73,7 @@ pnpm --filter @cuberoot/client lint
 - 改 worker/kociemba/scramble 生成器或相关 utils 的算法、计算或输出行为时，按具体回归风险补必要 fixture；纯重构、样式、文案及无行为变化的 utils 改动不自动要求新增测试。先看同类怎么写;worker 回归走 `_*_runner.cjs` 模式(见 `tests/analyzer_worker.test.ts`)。
 - 回归 baseline 用 `toBe()` 锁数值,改算法主动改 baseline 当 review 信号,禁放宽成 `toBeGreaterThan`。
 - CI `.github/workflows/test.yml`(PR + push main:typecheck + test)。
+- 前端业务筛选先以影子模式对照完整测试；Turbo 依赖构建缓存、筛选证据与网页发布门槛以 [CI 实现说明](../../core/scripts/ci/README.md) 为准。未完成真实 CI 对照前，不把候选清单直接用于跳过测试。
 
 ## Skill 路由
 

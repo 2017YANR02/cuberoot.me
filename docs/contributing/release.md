@@ -18,9 +18,9 @@
 - 云工作区的终端 `git push` 缺凭据时，先核对已授权 GitHub 连接器的实际写入能力；可用则按团队直推政策或用户指定的 PR 流程继续。流程见 [GitHub 提交通道](../operations/troubleshooting.md#github-提交通道)。新会话重新核对能力，分别报告终端认证、远端提交和正式部署状态。
 - 主域 DNS 分线路:一路自有服务器 nginx→127.0.0.1:3002(systemd `cuberoot-next`;vhost `ops/nginx/`,改 nginx 走 `deploy_nginx.yml`);一路 Vercel(push 自动 build)。
 - `static.cuberoot.me`:服 `{tools,stats}/`,CORS:*。`next.cuberoot.me`:同一自有 Next 服务的直连别名,同 :3002,不是独立预发布实例。
-- Next standalone:`deploy_next.yml`(push client/shared/visualcube 触发)CI build→scp→原子换+健康检查+失败回滚;unit `ops/systemd/cuberoot-next.service`。
+- Next standalone:`deploy_next.yml`(push client/shared/visualcube 触发)CI build→同一提交的 `Web checks`→scp→原子换+健康检查+失败回滚;unit `ops/systemd/cuberoot-next.service`。门槛范围及 Vercel 独立配置见 [CI 实现说明](../../core/scripts/ci/README.md#production-release-boundary)。
 - Vercel 用 `VERCEL=1` gate 跳过 standalone;`app/{stats,tools}/[...slug]/route.ts` 在 Vercel fallback 拉 static.cuberoot.me。
-- Vercel CLI 本机已登录:`vercel logs https://www.cuberoot.me` 自查 5xx,免截图。
+- Vercel 日志优先使用已授权连接器；使用 `vercel logs https://www.cuberoot.me` 前核对当前机器的 CLI 安装和登录状态，不沿用旧机器的登录结论。控制台要求两步验证时由用户在浏览器完成，不传递验证码或复制令牌。
 - CORS allowlist:server `src/index.ts`,函数式放行 `*.vercel.app` + 主域。
 - 后端 Hono 服 api.cuberoot.me(nginx→127.0.0.1:3001)。
 - DB 迁移随 push 自动跑(`deploy_core.yml` reload 前 `apply_migrations.sh`),禁说要手动 ssh。
