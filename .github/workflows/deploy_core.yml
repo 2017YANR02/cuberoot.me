@@ -220,10 +220,25 @@ jobs:
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
             "test ! -e '${STAGING_RELEASE}' && mkdir -p '${STAGING_RELEASE}/dist/cubeopt'"
 
+          # Seed independent copies as rsync delta bases, never hardlink the live
+          # release. Checksums below still compare every file with this CI build.
+          ssh -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
+            -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
+            bash -s -- "$STAGING_RELEASE" <<'SEED_RELEASE'
+          set -euo pipefail
+          staging="$1"
+          live=/root/core-api/dist
+          for file in server.bundle.js server.bundle.js.map search-worker-entry.js drive-video.mjs index-assistant-knowledge.mjs recheck-recon-completion.mjs; do
+            if [ -f "$live/$file" ]; then cp -p "$live/$file" "$staging/dist/$file"; fi
+          done
+          if [ -d "$live/photo-runtime" ]; then cp -a "$live/photo-runtime" "$staging/dist/"; fi
+          echo 'Prepared previous release as transfer base; live release unchanged'
+          SEED_RELEASE
+
           # server bundle + cubing.js Node worker; the battle-room authority
           # generates scrambles in this sibling worker at runtime.
-          rsync -ltz --chmod=F644 \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+          rsync -ltz --checksum --info=progress2 --timeout=120 --chmod=F644 \
+            -e "ssh -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             "$API_DIR/dist/server.bundle.js" \
             "$API_DIR/dist/server.bundle.js.map" \
             "$API_DIR/dist/search-worker-entry.js" \
@@ -239,10 +254,10 @@ jobs:
             "root@${{ secrets.DEPLOY_HOST }}:${STAGING_RELEASE}/"
 
           # Native image decoder and bounded photo worker, built for the runner's Linux architecture.
-          rsync -rltz --chmod=D755,F644 \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            "$API_DIR/dist/photo-runtime" \
-            "root@${{ secrets.DEPLOY_HOST }}:${STAGING_RELEASE}/dist/"
+          rsync -rltz --checksum --delete-delay --info=progress2 --timeout=120 --chmod=D755,F644 \
+            -e "ssh -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            "$API_DIR/dist/photo-runtime/" \
+            "root@${{ secrets.DEPLOY_HOST }}:${STAGING_RELEASE}/dist/photo-runtime/"
 
           # CubeOpt 子进程和生产管理器冒烟入口与主 bundle 同版本部署；大表由
           # 独立、可校验的 API artifact store 管理，不进入常规 rsync。
