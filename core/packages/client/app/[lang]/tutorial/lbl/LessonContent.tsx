@@ -20,7 +20,7 @@ import IntroLesson from './IntroLesson';
 import MiddleCases from './MiddleCases';
 import LastLayerTerms from './LastLayerTerms';
 import { chapters, type Lesson } from './curriculum';
-import { PieceLesson, NotationLesson, TriggerOverview, JOverview, JExplanation } from './IntroContent';
+import { PieceLesson, NotationLesson, TriggerOverview, JOverview } from './IntroContent';
 import { usePlayerVisible } from './use-player-visible';
 import { useSideTurnView } from './use-side-turn-view';
 import { SIDE_VIEW_PAUSE_MS, SIDE_VIEW_TURN_MS } from './schedule-demo-play';
@@ -457,7 +457,6 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   ] : cornerPreviews;
   const previewCaption = middleAlignment ? previews[cornerPreview]?.caption : undefined;
   const stackTrigger = hostChapterId === 'corners' && triggerHandsDemo;
-  const showJExplanation = hostChapterId === 'corner-position' && chapter.id === 'l-alg-learning';
   if (example) return <div className={`lbl-content lbl-content-example${stackTrigger ? ' lbl-content-trigger' : ''}${cornerEjection ? ' lbl-content-corner-ejection' : ''}${middleEjection || middleAlignment ? ' lbl-content-middle-ejection' : ''}`}>
     <section {...playbackProps} className="lbl-demonstration" aria-label={tr({ zh: '魔方演示', en: 'Cube demonstration' })}
       onInputCapture={event => {
@@ -500,7 +499,6 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
         selectedStepStart={selectedStepStart}
         onLine={onSelectLesson ? () => onSelectLesson('case-0') : undefined}
         onFish={onSelectLesson ? () => onSelectLesson(chapter.examples.indexOf(example) === 2 ? 'sune-learning-0' : 'sune-learning-1') : undefined}
-        introduction={showJExplanation ? <JExplanation /> : undefined}
         exampleIndex={lesson.id === 'white-edge' ? 1 : chapter.examples.indexOf(lesson.example!)} instruction={tr(lesson.id !== 'white-edge' && ['corners', 'cross'].includes(chapter.id) ? chapter.paragraphs[0] ?? example.hint : example.hint)}
         onStepClick={moveCount => {
           interacted.current = true;

@@ -3,16 +3,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { FM_IGNORED, FM_REGULAR } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
 import { engineHomeSid } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex';
-import { buildSimpleOptions, renderCubeSVG } from '@cuberoot/visualcube';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import PlaybackBar from '@/components/PlaybackBar';
 import AppLink from '@/components/AppLink';
 import { RotateCcw } from '@app-foundation/icons/lucide';
 import { tr, T } from '@/i18n/tr';
-import { CORNER_POSITION, J_LESSON_MASK, LBL_BASICS, LBL_INITIAL_VIEW, LEFT, RIGHT } from './content';
+import { J_ALG, J_LESSON_MASK, LBL_BASICS, LBL_INITIAL_VIEW, LEFT, RIGHT } from './content';
 import { resolvePlayerSetup } from '@/components/AlgPlayer/player-setup';
 import { rightTopCornerStickers } from './complete-demo-state';
-import { ALG_LESSONS } from './alg-lessons';
+import AlgSteps from './AlgSteps';
 import { useCubeOrbit } from './use-cube-orbit';
 import { usePlayerVisible } from './use-player-visible';
 import { getLblAlgGroups, opensOnLeft } from './alg-cues';
@@ -40,13 +39,9 @@ export function PieceLesson({ id }: { id: string }) {
 
 const notationMoves = ['R', 'L', 'U', 'F', "R'", "L'", "U'", "F'", 'R2', 'L2', 'U2', 'F2', 'd', "d'"];
 const triggerMoves = [LEFT, RIGHT];
-const jMoves = [CORNER_POSITION];
-const jStartCorners = rightTopCornerStickers(resolvePlayerSetup('3x3', CORNER_POSITION, undefined, false));
+const jMoves = [J_ALG];
+const jStartCorners = rightTopCornerStickers(resolvePlayerSetup('3x3', J_ALG, undefined, false));
 const jEndCorners = rightTopCornerStickers('');
-const jSwapDiagram = renderCubeSVG({
-  ...buildSimpleOptions({ view: 'plan', mask: 'coll', sch: 'yogwrb', size: 144, alg: CORNER_POSITION }),
-  arrows: 'U2U8-s8,U8U2-s8',
-});
 const faces = [
   { zh: '右层', en: 'Right face' }, { zh: '左层', en: 'Left face' },
   { zh: '顶层', en: 'Top face' }, { zh: '前层', en: 'Front face' },
@@ -61,19 +56,12 @@ export function NotationLesson() { return <CyclingLesson mode="notation" />; }
 export function TriggerOverview() { return <CyclingLesson mode="triggers" />; }
 export function JOverview() { return <CyclingLesson mode="j" />; }
 
-export function JExplanation() {
-  return <>
-    <span className="puzzle-art lbl-j-swap-diagram" aria-hidden="true" dangerouslySetInnerHTML={{ __html: jSwapDiagram }} />
-    <p><T zh="一条较长公式，可分三段记忆" en="A longer algorithm you can learn in three parts" /></p>
-    <p>{tr(ALG_LESSONS.find(item => item.id === 'l-alg-learning')!.algs[0].naming)}</p>
-  </>;
-}
 
 function CyclingLesson({ mode }: { mode: 'notation' | 'triggers' | 'j' }) {
   const triggers = mode === 'triggers';
   const j = mode === 'j';
   const moves = j ? jMoves : triggers ? triggerMoves : notationMoves;
-  const finalStep = j ? getLblAlgGroups('corner-position', CORNER_POSITION).flat().length : triggers ? 4 : 1;
+  const finalStep = j ? getLblAlgGroups('corner-position', J_ALG).flat().length : triggers ? 4 : 1;
   const [index, setIndex] = useState(0);
   const [fading, setFading] = useState(false);
   const [playRequest, setPlayRequest] = useState(0);
@@ -171,7 +159,7 @@ function CyclingLesson({ mode }: { mode: 'notation' | 'triggers' | 'j' }) {
       </div>}
     </section>
     <section className={`lbl-explanation lbl-notation-copy${j ? ' lbl-j-overview-copy' : ''}`} aria-live="polite">
-      {j ? <JExplanation /> : triggers ? <>
+      {j ? <AlgSteps step="corner-position" alg={J_ALG} /> : triggers ? <>
         <p className="lbl-lead"><T zh="左公式和右公式是简短的手法。" en="The left and right triggers are short move sequences." /></p>
         <p><T zh="在后面章节会反复出现，组合成其他长公式。" en="They appear throughout later chapters as parts of longer algorithms." /></p>
         <p><T zh="反复练习，形成肌肉记忆。" en="Practise until the moves become muscle memory." /></p>

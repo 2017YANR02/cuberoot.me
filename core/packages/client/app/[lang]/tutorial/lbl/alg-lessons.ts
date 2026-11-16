@@ -1,4 +1,4 @@
-import { LBL_STEPS, LEFT, RIGHT, LEFT_SUNE, RIGHT_SUNE, CORNER_POSITION } from './content';
+import { LBL_STEPS, LEFT, RIGHT, LEFT_SUNE, RIGHT_SUNE, J_ALG } from './content';
 
 type Text = { zh: string; en: string };
 export type AlgLesson = { id: string; after: string; title: Text; usage: Text; algs: { title: Text; alg: string; left: boolean; naming: Text }[] };
@@ -22,8 +22,8 @@ export const ALG_LESSONS: AlgLesson[] = [
   { id: 'l-alg-learning', after: 'yellow-face', title: { zh: '公式学习：J公式', en: 'Learn the J algorithm' },
     usage: { zh: '', en: '' },
     algs: [
-      { title: { zh: 'J公式', en: 'J algorithm' }, alg: CORNER_POSITION, left: false,
-        naming: { zh: 'J公式交换了右侧两个角块的位置', en: 'The J algorithm swaps the two corners on the right.' } },
+      { title: { zh: 'J公式', en: 'J algorithm' }, alg: J_ALG, left: false,
+        naming: { zh: '', en: '' } },
     ] },
 ];
 
