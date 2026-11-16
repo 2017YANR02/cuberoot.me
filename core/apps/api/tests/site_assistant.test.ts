@@ -642,10 +642,12 @@ describe('site assistant grounding', () => {
       const chunks=[{choices:[{delta:{reasoning_content:privateReasoning}}]},{choices:[{delta:{content},finish_reason:finish}]}];
       return new Response(chunks.map(c=>`data: ${JSON.stringify(c)}\n\n`).join('')+'data: [DONE]\n\n',{headers:{'Content-Type':'text/event-stream'}});
     };
-    const result=await answerSiteQuestion('查选手','zh',{...config,baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),withCatalog(fetcher),[],undefined,stream?async event=>{events.push(event);}:undefined);
+    const result=await answerSiteQuestion('查选手','zh',{...config,baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),withCatalog(fetcher),[],undefined,stream?async event=>{events.push(event);}:undefined,'UTC',[],'deep');
     expect(result.answer).toBe('请提供选手姓名。');
     expect(bodies).toHaveLength(2);
-    expect(bodies[1]).toMatchObject({thinking:{type:'enabled'},reasoning_effort:'high',max_tokens:16384});
+    expect(bodies[0]).toMatchObject({thinking:{type:'enabled'},reasoning_effort:'high',max_tokens:16384});
+    expect(bodies[1]).toMatchObject({thinking:{type:'disabled'},max_tokens:4096});
+    expect(bodies[1]).not.toHaveProperty('reasoning_effort');
     expect(JSON.stringify({result,events,bodies,logs:vi.mocked(console.log).mock.calls})).not.toContain('private-reasoning');
   });
   it('keeps tabular statistics factual when the final model prose contradicts the actual value',async()=>{
