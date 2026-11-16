@@ -21,6 +21,30 @@ afterEach(() => {
 });
 
 describe('sim TPS timing', () => {
+  it('freezes a single cube mid-turn and preserves its queued move on resume', () => {
+    const pausedCube = new Cube(3), otherCube = new Cube(3);
+    try {
+      timing.frames = 60;
+      pausedCube.twister.push('R U');
+      otherCube.twister.push('F');
+      tweener.update(15);
+      const groups = Object.values(pausedCube.table.groups).flat();
+      const angles = groups.map(group => group.angle);
+      expect(angles.some(angle => angle !== 0)).toBe(true);
+      pausedCube.twister.setAnimationPaused(true);
+      tweener.update(60);
+      expect(groups.map(group => group.angle)).toEqual(angles);
+      expect(pausedCube.twister.backlog).toBe(2);
+      expect(otherCube.twister.backlog).toBe(0);
+      pausedCube.twister.setAnimationPaused(false);
+      tweener.update(45);
+      expect(pausedCube.twister.backlog).toBe(1);
+      tweener.update(60);
+      expect(pausedCube.twister.backlog).toBe(0);
+    } finally {
+      pausedCube.dispose(); otherCube.dispose();
+    }
+  });
   it('maps the slider to exact bounded TPS durations', () => {
     expect(simSpeedToTicks(0)).toBe(120);
     expect(simSpeedToTps(0)).toBe(0.5);

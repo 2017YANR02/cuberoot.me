@@ -4,6 +4,27 @@ import { Tweener } from '@cuberoot/puzzle-render-core/engine/tweener';
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe('shared animation loop startup', () => {
+  it('pauses one tween without stopping another or charging paused time on resume', () => {
+    let now = 0;
+    vi.spyOn(performance, 'now').mockImplementation(() => now);
+    vi.stubGlobal('requestAnimationFrame', undefined);
+    const clock = new Tweener();
+    const pausedValues: number[] = [], otherValues: number[] = [];
+    const first = clock.tween(0, 1, 60, v => { pausedValues.push(v); return v === 1; }, 'linear');
+    clock.tween(0, 1, 60, v => { otherValues.push(v); return v === 1; }, 'linear');
+    now = 250; clock.loop(now);
+    expect(pausedValues).toEqual([.25]);
+    first.setPaused(true);
+    now = 1250; clock.loop(now);
+    expect(pausedValues).toEqual([.25]);
+    expect(otherValues).toEqual([.25, 1]);
+    now = 5000; first.setPaused(false);
+    now = 5250; clock.loop(now);
+    expect(pausedValues).toEqual([.25, .5]);
+    now = 5750; clock.loop(now);
+    expect(pausedValues).toEqual([.25, .5, 1]);
+    expect(clock.length).toBe(0);
+  });
   it('starts once on the first tween and preserves elapsed-time and pause behavior', () => {
     vi.spyOn(performance, 'now').mockReturnValue(100);
     const frames: FrameRequestCallback[] = [];

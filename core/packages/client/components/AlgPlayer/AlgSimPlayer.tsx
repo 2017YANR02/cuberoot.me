@@ -179,6 +179,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   const [playing, setPlaying] = useState(false);
   const [replayRequest, setReplayRequest] = useState(0);
   const [ready, setReady] = useState(false);
+  const animationPaused = useRef(false);
   const playbackStartStep = useRef(0);
   const onStepChangeRef = useRef(onStepChange);
   onStepChangeRef.current = onStepChange;
@@ -220,6 +221,11 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   );
   useImperativeHandle(ref, () => ({
     getPlayer: () => seekPlayer,
+    setAnimationPaused: (paused: boolean) => {
+      animationPaused.current = paused;
+      const mount = mountRef.current;
+      if (mount && typeof mount.world.puzzleKind === 'number') (mount.world.cube as Cube).twister.setAnimationPaused(paused);
+    },
     playMove: (index: number) => {
       if (!ready || !Number.isInteger(index) || index < 0 || index >= moves.length) return;
       setPlaying(false);
@@ -254,6 +260,10 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     },
   }), [seekPlayer, ready, interactionMode, controlMode, puzzle, puzzleKind, moves.length, showHands, handsUnavailable]);
   const mountRef = useRef<SimMount | null>(null);
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (ready && animationPaused.current && mount && typeof mount.world.puzzleKind === 'number') (mount.world.cube as Cube).twister.setAnimationPaused(true);
+  }, [ready]);
   const handsRef = useRef<HandsRig | null>(null);
   const restoreGripsRef = useRef<((prefix: string[]) => void) | null>(null);
   const alignmentRef = useRef<ReturnType<typeof import('./daisy-alignment').attachDaisyAlignment> | null>(null);

@@ -8,6 +8,7 @@ export class Tween {
   value = 0;
   private current: number;
   private lastUpdateMs: number;
+  private paused = false;
 
   constructor(
     public begin: number,
@@ -22,6 +23,13 @@ export class Tween {
   }
 
   finish(): void { this.callback(this.end); }
+
+  /** Freeze only this animation; resuming must not consume paused wall time. */
+  setPaused(paused: boolean): void {
+    if (this.paused === paused) return;
+    this.paused = paused;
+    this.lastUpdateMs = performance.now();
+  }
 
   /** Wall time belongs to this animation, never to an earlier global frame. */
   updateAt(frameMs: number, paused = false): boolean {
@@ -43,7 +51,7 @@ export class Tween {
 
   /** Deterministic manual ticks remain available to headless/video exporters. */
   update(deltaTicks = 1): boolean {
-    if (!Number.isFinite(deltaTicks) || deltaTicks <= 0) return false;
+    if (this.paused || !Number.isFinite(deltaTicks) || deltaTicks <= 0) return false;
     this.value += deltaTicks;
     const progress = Math.max(0, Math.min(1, this.value / this.duration));
     const eased = this.easing === 'linear' ? progress : 1 - (1 - progress) ** 2;

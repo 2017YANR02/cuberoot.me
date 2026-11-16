@@ -440,6 +440,16 @@ export default class Twister {
     }
   }
 
+  private animationPaused = false;
+  /** Pause this cube's active and subsequently queued turns, never other views. */
+  setAnimationPaused(paused: boolean): void {
+    this.animationPaused = paused;
+    this.pauseTween?.setPaused(paused);
+    for (const groups of Object.values(this.cube.table.groups)) {
+      for (const group of groups) group.setAnimationPaused(paused);
+    }
+  }
+
   finish(): void {
     while (this.queue.length > 0) {
       tweener.finish();
@@ -905,6 +915,7 @@ export default class Twister {
           }
           return false;
         });
+        this.pauseTween.setPaused(this.animationPaused);
       }
       return success;
     }

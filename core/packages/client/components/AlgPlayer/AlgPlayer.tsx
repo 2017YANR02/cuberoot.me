@@ -28,6 +28,8 @@ import './alg-sim-player.css';
 export interface AlgPlayerHandle {
   /** Sim: restore the preceding state, animate this zero-based move, then pause. */
   playMove?: (index: number) => void;
+  /** Sim NxN: freeze/resume this cube at its current turn angle. */
+  setAnimationPaused?: (paused: boolean) => void;
   /** Move only the embedded simulator view, without turning any puzzle layers. */
   orbitView?: (dx: number, dy: number) => void;
   resetView?: (durationMs?: number) => void | Promise<void>;

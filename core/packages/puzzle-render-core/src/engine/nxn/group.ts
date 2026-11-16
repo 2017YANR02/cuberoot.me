@@ -250,6 +250,12 @@ export default class CubeGroup extends THREE.Group {
 
   get remainingTicks(): number { return this.tween?.remainingTicks ?? 0; }
 
+  private animationPaused = false;
+  setAnimationPaused(paused: boolean): void {
+    this.animationPaused = paused;
+    this.tween?.setPaused(paused);
+  }
+
   accelerateRealtime(ticks: number): void { this.tween?.shortenRemaining(ticks); }
 
   twist(
@@ -298,6 +304,7 @@ export default class CubeGroup extends THREE.Group {
         }
         return false;
       }, easing);
+      this.tween.setPaused(this.animationPaused);
     }
     return true;
   }
