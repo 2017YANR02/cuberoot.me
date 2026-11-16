@@ -1655,11 +1655,18 @@ export const CATALOG: ComponentEntry[] = [
     },
   },
   {
-    name: 'AlgMirrorPanel',
-    import: "import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';",
+    name: 'AlgCaseRows',
+    import: "import { AlgCaseReadRow, AlgCaseSetupRow } from '@/components/AlgCaseRows';",
     category: 'more',
-    zh: '一条公式的三份镜像,行内展开(issue #40 T5)。槽统一在 FR 之后,左右镜(M 平面)和前后镜(S 平面)给的是同一个伙伴 case,区别只在落到它的哪个 y 视角(FL / BR);y² 那份不是镜像,是本 case 自己的 BL 视角。重写走 @cuberoot/shared/alg-mirror 的 applyMirrorGen —— 与 server 入库同步同一个函数,所以面板上看到的字符串就是同步会写进库的那条;落在镜面法向轴上的 M/m/x 不取反,别自己重推。用 hasMirror(puzzle, set) 决定出不出这个入口,名单是 MIRROR_SETS(只有 f2l / zbls / cls,逐一核过,理由见 docs/product/cubing/history/issue-40-alg-mirror-plan.md §5.7)。',
-    en: 'The three mirrors of a single alg, expanded inline (issue #40 T5). With the slot normalised to FR, the left-right (M plane) and front-back (S plane) mirrors land on the same partner case — they differ only in which y view of it (FL / BR); the y² row is not a mirror at all but this case seen from BL. Rewriting goes through applyMirrorGen in @cuberoot/shared/alg-mirror — the very function the server sync uses, so what the panel shows is what sync would store; M/m/x sit on the mirror plane’s normal and keep their sign, so do not re-derive them. Gate the entry point on hasMirror(puzzle, set); the list is MIRROR_SETS (f2l / zbls / cls only, each audited — see docs/product/cubing/history/issue-40-alg-mirror-plan.md §5.7).',
+    zh: '所有公式详情页和情况弹窗共用的阅读行、打乱行。与 AlgEditor 共用 AlgFormulaRow 的图标及尺寸，统一选中加粗、富文本记号、SQ1 显示和镜像展开；传无损 entry，播放和编辑仍使用原值。禁止为富元数据公式集单独维护行或复制/置顶工具栏。',
+    en: 'Shared algorithm and setup rows for all case details and case dialogs. Shares AlgFormulaRow geometry and icons with AlgEditor, including selection weight, rich marks, SQ1 notation and mirror disclosure. Pass lossless entries; playback and editing keep raw values. Do not maintain separate rows or copy/pin toolbars for metadata-rich sets.',
+  },
+  {
+    name: 'AlgMirrorPanel',
+    import: "import AlgMirrorPanel, { hasMirror, supportsAlgMirrorPreview } from '@/components/AlgMirrorPanel';",
+    category: 'more',
+    zh: 'NxN 公式共用的行内镜像预览，点击公式展开 LR / FB 镜像，y2 旋转仅限 F2L。所有套系统一通过 mirrorGensFor 隐藏含 B/b/Bw 的整条结果。supportsAlgMirrorPreview 控制可预览项目；hasMirror 只标识 F2L / ZBLS / CLS 单槽关联与槽位链接，不扩展数据库同步范围。复用 shared/alg-mirror 的变换与 LR 富文本标记映射，传无损 alg 和 algHtml，展示格式由面板处理。',
+    en: 'Shared inline NxN preview for LR / FB mirrors; y2 rotation is F2L-only. Every set uses mirrorGensFor to hide entire variants containing B/b/Bw. supportsAlgMirrorPreview gates puzzle support; hasMirror only identifies F2L / ZBLS / CLS slot relations and links, without extending database sync. Reuses shared/alg-mirror transformations and LR rich-text marks. Pass lossless alg and algHtml; the panel handles display formatting.',
   },
   {
     name: 'CompPicker',

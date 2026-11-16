@@ -949,27 +949,23 @@
   white-space: pre-line;
 }
 .alg-alg-text u,
-.alg-mirror-alg u,
-.alg-meta-algline-code u {
+.alg-mirror-alg u {
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
 }
 .alg-alg-text strong,
 .alg-mirror-alg strong,
-.alg-meta-algline-code strong,
 .alg-editor-input strong {
   font-weight: inherit;
 }
 .alg-alg-text u.wavy,
-.alg-mirror-alg u.wavy,
-.alg-meta-algline-code u.wavy {
+.alg-mirror-alg u.wavy {
   text-decoration: underline wavy;
   text-decoration-thickness: 1px;
 }
 .alg-alg-text s,
-.alg-mirror-alg s,
-.alg-meta-algline-code s {
+.alg-mirror-alg s {
   text-decoration: line-through;
   text-decoration-thickness: 2px;
 }
@@ -1151,7 +1147,7 @@
   resize: none;
   overflow: hidden;
   font-family: inherit !important;
-  font-size: 0.85rem !important;
+  font-size: var(--alg-case-detail-formula-size, 0.85rem) !important;
   white-space: nowrap;
 }
 
@@ -1181,10 +1177,8 @@
 .alg-alg-drag-handle:focus-visible { opacity: 1; }
 .alg-alg-drag-handle:hover { color: var(--accent); }
 .alg-alg-drag-handle:active { cursor: grabbing; }
-/* handle 占的那点位置从行的左内边距里让出来,别把公式文本挤动。
-   `.alg-meta-algline` 是 case 详情页(富元数据正文)里的公式行,同一个 handle 也压它。 */
-.alg-alg-sortable .alg-alg-row,
-.alg-alg-sortable .alg-meta-algline { padding-left: 18px; }
+/* 拖拽手柄使用行的预留空间。 */
+.alg-alg-sortable .alg-alg-row { padding-left: 18px; }
 /* 触屏没有 hover:一直显出来,否则管理员在手机上根本拖不动 */
 @media (hover: none) {
   .alg-alg-drag-handle { opacity: 1; }
@@ -1271,7 +1265,6 @@
   background: transparent;
 }
 .alg-alg-row.is-expanded .alg-alg-text,
-.alg-meta-algline.is-expanded .alg-meta-algline-code,
 .f2l-solution-play[aria-pressed="true"],
 .f2l-prefix-spacer.is-selected,
 .f2l-edit-group-prefix.is-selected > span {
@@ -2286,23 +2279,25 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   margin-top: 0;
 }
 .is-f2l-orientation-grid .alg-case-detail-ori-algs { --alg-case-detail-formula-indent: 0px; }
-.alg-meta-case-algs.alg-case-detail-ori-algs {
-  --alg-case-detail-formula-indent: 0px;
-}
-.alg-case-detail-ori-algs > .alg-case-standard {
+.alg-case-detail-ori-algs .alg-case-standard-detail,
+.alg-case-inline-editor .alg-case-detail-ori-algs .alg-admin-setup-label {
   display: grid;
   grid-template-columns: 24px minmax(0, 1fr) auto;
   column-gap: 8px;
+  align-items: center;
 }
-.alg-case-detail-ori-algs > .alg-case-standard .alg-case-icon {
+.alg-case-detail-ori-algs .alg-admin-setup-label > span:first-child { display: flex; align-items: center; }
+.alg-case-detail-ori-algs .alg-admin-setup-label > span:first-child svg { width: var(--alg-ui-size); height: var(--alg-ui-size); }
+.alg-case-detail-ori-algs .alg-admin-setup-label > :is(.vkb, .vkb-suggest-bar) { grid-column: 2 / -1; }
+.alg-case-detail-ori-algs .alg-case-standard-detail .alg-case-icon {
   justify-self: start;
 }
 /* Reserve one U-prime move plus its space, using the notation's actual font metrics. */
-.is-f2l-orientation-grid .alg-case-detail-ori-algs > .alg-case-standard {
+.is-f2l-orientation-grid .alg-case-detail-ori-algs .alg-case-standard-detail {
   grid-template-columns: max-content minmax(0, 1fr);
   column-gap: 0;
 }
-.is-f2l-orientation-grid .alg-case-detail-ori-algs > .alg-case-standard::before {
+.is-f2l-orientation-grid .alg-case-detail-ori-algs .alg-case-standard-detail::before {
   content: "U'\00a0";
   visibility: hidden;
   grid-area: 1 / 1;
@@ -2310,8 +2305,8 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   line-height: 1.5;
   padding-inline-start: 1px;
 }
-.is-f2l-orientation-grid .alg-case-detail-ori-algs > .alg-case-standard .alg-case-icon { grid-area: 1 / 1; }
-.is-f2l-orientation-grid .alg-case-detail-ori-algs > .alg-case-standard code { grid-area: 1 / 2; }
+.is-f2l-orientation-grid .alg-case-detail-ori-algs .alg-case-standard-detail .alg-case-icon { grid-area: 1 / 1; }
+.is-f2l-orientation-grid .alg-case-detail-ori-algs .alg-case-standard-detail code { grid-area: 1 / 2; }
 .alg-case-detail-ori-algs > .alg-community {
   padding-inline: 0;
 }
@@ -2322,11 +2317,11 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 }
 .alg-case-inline-editor .alg-case-detail-ori-algs .alg-alg-sortable { padding: 0; margin: 0; }
 .alg-case-inline-editor .alg-case-detail-ori-algs > .alg-editor-add { margin-top: 8px; min-height: 32px; }
-.alg-case-detail-ori-algs > .alg-case-standard,
-.alg-case-detail-ori-algs > .alg-admin-setup-label {
+.alg-case-detail-ori-algs .alg-case-standard-detail,
+.alg-case-inline-editor .alg-case-detail-ori-algs .alg-admin-setup-label {
   margin: 0 0 10px;
 }
-.alg-case-detail-ori-algs > .alg-case-standard code,
+.alg-case-detail-ori-algs .alg-case-standard-detail code,
 .alg-case-detail-ori-algs .alg-alg-row,
 .alg-case-detail-ori-algs .f2l-solution-prefix,
 .alg-case-detail-ori-algs .f2l-edit-group-prefix,
@@ -2486,17 +2481,9 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 .alg-meta-scramble-row > .alg-meta-scramble-kind {
   flex: none;
 }
-.alg-meta-scramble-row > .alg-meta-algline {
+.alg-meta-scramble-row > .alg-case-standard-detail {
   flex: 1;
   min-width: 0;
-}
-.alg-meta-scramble-prefix {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-  color: var(--muted-foreground);
 }
 .alg-meta-scramble-kind {
   align-self: center;
@@ -2516,14 +2503,6 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   min-width: 0;
 }
 .alg-meta-setup-editor[hidden] { display: none; }
-.alg-case-inline-editor .alg-meta-setup-editor .alg-admin-setup-label { margin: 0; }
-.alg-meta-setup-editor .alg-admin-setup-label > span:first-child {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-}
 .alg-case-inline-editor .alg-admin-setup-label .alg-admin-setup-textarea {
   width: 100%;
   min-width: 0;
@@ -2537,10 +2516,15 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 }
 .alg-case-inline-editor .alg-admin-setup-textarea:hover { border-color: var(--border-default); }
 .alg-case-inline-editor .alg-admin-setup-textarea:focus { border-color: var(--accent); }
-@media (max-width: 479px) {
-  .alg-meta-scramble-row:has(.alg-meta-setup-editor) { flex-wrap: wrap; }
-  .alg-meta-setup-editor { flex-basis: 100%; }
+.alg-case-inline-editor .alg-case-detail-ori-algs .alg-admin-setup-textarea {
+  border: 0;
+  padding: 0;
+  min-height: 0;
+  line-height: 1.5;
+  white-space: nowrap;
 }
+.alg-case-inline-editor .alg-case-detail-ori-algs .alg-admin-setup-textarea:hover { outline: 1px solid var(--border-default); }
+.alg-case-inline-editor .alg-case-detail-ori-algs .alg-admin-setup-textarea:focus { outline: 1px solid var(--accent); }
 
 .alg-view-angle {
   display: inline-flex;
@@ -2561,31 +2545,6 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 }
 .alg-meta-refs { margin-top: 12px; }
 
-.alg-meta-algline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-.alg-meta-algline.is-playable { cursor: pointer; }
-.alg-meta-algline-label {
-  flex: none;
-  font-size: 11px;
-  color: var(--muted-foreground);
-}
-/* 一条公式 = 一行。折行会把 `(R U R' U')` 这种成组的手法从中间劈开,读起来就废了。
-   弹窗宽度按最长的一条(78 字符)配的,桌面端一行放得下;窄屏放不下就横向滑 ——
-   但那根滚动条不显示(丑,且它一出现就说明「有东西你看不见」,滑动本身已经够提示了)。 */
-.alg-meta-algline-code {
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
-  font-family: var(--font-mono, Consolas, monospace);
-  font-size: 12px;
-}
-.alg-meta-algline-code::-webkit-scrollbar { display: none; }
 .alg-case-standard-detail {
   align-items: center;
   padding-inline-end: 8px;
@@ -2599,17 +2558,6 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   scrollbar-width: none;
 }
 .alg-case-standard-detail code::-webkit-scrollbar { display: none; }
-.alg-meta-copy {
-  flex: none;
-  display: inline-flex;
-  padding: 2px;
-  border: none;
-  background: none;
-  color: var(--muted-foreground);
-  cursor: pointer;
-}
-.alg-meta-copy:hover { color: var(--accent); }
-
 .alg-meta-optimal {
   display: flex;
   align-items: center;
@@ -2623,9 +2571,8 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   color: var(--muted-foreground);
 }
 .alg-meta-optimal-len > strong { color: var(--foreground); }
-/* 让公式行撑满剩余宽度,复制按钮才能四行对齐在同一条右边线上,而不是各自贴着
-   长短不一的公式文字尾巴。 */
-.alg-meta-optimal .alg-meta-algline {
+/* 最优打乱撑满剩余宽度。 */
+.alg-meta-optimal .alg-case-standard-detail {
   flex: 1;
   min-width: 0;
 }
@@ -2644,17 +2591,11 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
 }
 .alg-meta-case-player-layout {
   flex: 1;
   min-width: 0;
-}
-.alg-meta-algline-len {
-  flex: none;
-  font-size: 11px;
-  color: var(--faint-foreground);
-  font-variant-numeric: tabular-nums;
 }
 /* 从 `#<case 名>` 锚点跳进来的那张卡,闪一下 —— 不然一组七十个 case,滚过去也认不出是哪张。
    闪光本身的色值在下面那组「边框优先级」里定(要压过红框 / 黄框,得排在它们后面)。 */
@@ -2859,8 +2800,9 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 /* 每行的两个子元素共用网格列。 */
 .alg-mirror-line { display: contents; }
 a.alg-mirror-line { text-decoration: none; }
-a.alg-mirror-line:hover > *,
-a.alg-mirror-line:focus-visible > * { text-decoration: underline; }
+button.alg-mirror-line { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: inherit; cursor: pointer; }
+:is(a, button).alg-mirror-line:hover > *,
+:is(a, button).alg-mirror-line:focus-visible > * { text-decoration: underline; }
 .alg-mirror-label {
   flex: none;
   /* CJK 单行标签禁定宽 px —— 微信内置浏览器字体偏宽会折行 */

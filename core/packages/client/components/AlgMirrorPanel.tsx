@@ -17,8 +17,9 @@
  * 函数**,所以这里看到的字符串就是同步会写进库的那条,一字不差。规则本身在
  * `@cuberoot/shared/alg-notation`(`M`/`m`/`x` 落在镜面法向轴上,**不取反**,那条豁免栽过两次)。
  *
- * 只对 `MIRROR_SETS` 里的 set 显示 —— 别的 set 要么不是单槽、要么伙伴不在库里,详见
- * docs/product/cubing/history/issue-40-alg-mirror-plan.md §5.7。
+ * NxN 公式集共用此预览及“不含 B 族”的结果筛选，y2 只用于 F2L。
+ * MIRROR_SETS 只控制单槽关联和槽位链接，不限制预览入口，
+ * 也不因预览而扩大数据库自动生成/同步范围。
  */
 import { useMemo } from 'react';
 import AppLink from '@/components/AppLink';
@@ -32,6 +33,9 @@ import { canonicalizeInitialU2 } from '@cuberoot/shared/alg-html';
 /** 这个 puzzle/set 有没有镜像系统。 */
 export const hasMirror = (puzzle: string, set: string) => MIRROR_SETS.has(`${puzzle}/${set}`);
 
+/** 现有镜面变换适用于 NxN；其他魔方的同名字母不是同一种转动。 */
+export const supportsAlgMirrorPreview = (puzzle: string) => /^([2-7])x\1$/.test(puzzle);
+
 interface Variant {
   key: MirrorGen;
   label: string;
@@ -41,7 +45,7 @@ interface Variant {
   html?: string;
 }
 
-function VariantRow({ v, puzzle, href }: { v: Variant; puzzle: AlgPuzzle; href?: string }) {
+function VariantRow({ v, puzzle, href, onSelect }: { v: Variant; puzzle: AlgPuzzle; href?: string; onSelect?: () => void }) {
   const text = formatScrambleForEvent(puzzle, v.alg);
   const content = <>
       <span className="alg-mirror-label">{v.label}</span>
@@ -49,11 +53,12 @@ function VariantRow({ v, puzzle, href }: { v: Variant; puzzle: AlgPuzzle; href?:
     </>;
   return href
     ? <AppLink href={href} prefetch={false} className="alg-mirror-line" aria-label={`${v.label} ${v.where} ${text}`} onClick={event => event.stopPropagation()}>{content}</AppLink>
+    : onSelect ? <button type="button" className="alg-mirror-line" aria-label={`${v.label} ${v.where} ${text}`} onClick={event => { event.stopPropagation(); onSelect(); }}>{content}</button>
     : <div className="alg-mirror-line">{content}</div>;
 }
 
 export default function AlgMirrorPanel({
-  alg, algHtml, puzzle, set = '', mirrorName, selfName, ori = 0, mirrorHref, selfHref,
+  alg, algHtml, puzzle, set = '', mirrorName, selfName, ori = 0, mirrorHref, selfHref, onMirrorSelect, onSelfSelect,
 }: {
   alg: string;
   algHtml?: string;
@@ -61,6 +66,8 @@ export default function AlgMirrorPanel({
   puzzle: AlgPuzzle;
   mirrorHref?: string;
   selfHref?: string;
+  onMirrorSelect?: () => void;
+  onSelfSelect?: () => void;
   /** 伙伴 case 的显示名;没建链时传 undefined,只标视角不标 case */
   mirrorName?: string | null;
   /** 本 case 的显示名(y² 那行落在自己身上) */
@@ -68,17 +75,22 @@ export default function AlgMirrorPanel({
   /** 这条公式所在的视角(0=FR 1=FL 2=BL 3=BR)。只影响「落到哪一栏」的说明。 */
   ori?: number;
 }) {
+  const singleSlot = hasMirror(puzzle, set);
   const variants = useMemo<Variant[]>(() => {
-    // 与公式库自动生成共用筛选规则，不展示被收录规则排除的变换。
-    const allowedGens = new Set(mirrorGensFor(alg));
+    if (!supportsAlgMirrorPreview(puzzle)) return [];
+    // 所有套系复用同一结果筛选；背面转动隐藏整条，不删除公式中的步骤。
+    const allowY2 = puzzle === '3x3' && (set === 'f2l' || set === 'adv-f2l');
+    const allowedGens = new Set(mirrorGensFor(alg).filter(gen => gen !== 'y2' || allowY2));
     const partner = mirrorName ?? tr({ zh: '镜像 case', en: 'the mirror case' });
     const self = selfName ?? tr({ zh: '本 case', en: 'this case' });
     // 认不出来的记号会抛 —— 那条就不出行,不能让一条脏公式把整个面板打空
     const made = (gen: MirrorGen): string | null => {
       try { return applyMirrorGen(alg, gen); } catch { return null; }
     };
-    const at = (gen: MirrorGen) =>
-      `${MIRROR_TARGET[gen] === 'self' ? self : partner} ${VIEWS[MIRROR_VIEW[gen][ori % 4]]}`;
+    const at = (gen: MirrorGen) => {
+      const name = MIRROR_TARGET[gen] === 'self' ? self : partner;
+      return singleSlot ? `${name} ${VIEWS[MIRROR_VIEW[gen][ori % 4]]}` : name;
+    };
     const rows: Array<[MirrorGen, string]> = [
       ['lr', tr({ zh: 'LR镜像', en: 'LR-mirror' })],
       ['fb', tr({ zh: 'FB镜像', en: 'FB-mirror' })],
@@ -93,7 +105,7 @@ export default function AlgMirrorPanel({
       return [{ key, label, where: at(key), alg: displayCaseAlg(puzzle, set, entry.alg),
         html: entry.algHtml ? displayCaseAlgHtml(puzzle, set, entry.algHtml) : undefined }];
     });
-  }, [alg, algHtml, puzzle, set, mirrorName, selfName, ori]);
+  }, [alg, algHtml, puzzle, set, mirrorName, selfName, ori, singleSlot]);
 
   if (variants.length === 0) return null;
 
@@ -102,8 +114,8 @@ export default function AlgMirrorPanel({
       {variants.map(v => {
         const base = MIRROR_TARGET[v.key] === 'self' ? selfHref : mirrorHref;
         const slot = VIEWS[MIRROR_VIEW[v.key][ori % 4]];
-        const href = base ? `${base}${base.includes('?') ? '&' : '?'}slot=${slot}#slot-${slot}` : undefined;
-        return <VariantRow key={v.key} v={v} puzzle={puzzle} href={href} />;
+        const href = base && singleSlot ? `${base}${base.includes('?') ? '&' : '?'}slot=${slot}#slot-${slot}` : base;
+        return <VariantRow key={v.key} v={v} puzzle={puzzle} href={href} onSelect={MIRROR_TARGET[v.key] === 'self' ? onSelfSelect : onMirrorSelect} />;
       })}
     </div>
   );

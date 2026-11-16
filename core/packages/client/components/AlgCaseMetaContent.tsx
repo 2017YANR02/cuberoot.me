@@ -13,15 +13,14 @@ import { caseAlgIssue, caseCoepEntry } from '@/lib/alg_case_alignment';
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { Copy, Check, HelpCircle, Pin, Shuffle } from '@app-foundation/icons/lucide';
+import { HelpCircle, Shuffle } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import type { AlgCase, AlgCaseMeta, AlgPuzzle } from '@cuberoot/shared';
-import { displayedAlgorithmStm } from '@/lib/alg-metrics';
 import { AlgCaseRelationCards, type AlgCaseRelationCardItem } from '@/components/AlgCaseRelationCards';
 import AlgPlayer from '@/components/AlgPlayer';
+import { AlgCaseReadRow, AlgCaseSetupRow } from '@/components/AlgCaseRows';
 import { ALG_CASE_PREVIEW_SIZE } from '@/lib/alg_thumb_plan';
-import { useCopy } from '@/hooks/useCopy';
 import { ALG_SET_UNIVERSE, LL_UNIVERSE_TOTAL, caseOrbit, probabilityFraction } from '@/lib/alg_probability';
 import { alignScrambleToSetup, caseScramble } from '@/lib/alg_scramble';
 import {
@@ -30,98 +29,24 @@ import {
   SCRAMBLE_KINDS,
   type ScrambleKind,
 } from '@/lib/trainer-scramble';
-import { algTagLabel } from '@/lib/alg_tags';
 import { ALG_COMBO_TYPES, algComboTypeHref, algComboTypeInfo } from '@/lib/alg_combo_types';
 import { primaryCaseName } from '@/lib/alg_case_display';
-import { sanitizeAlgHtml } from '@/lib/alg_html';
 import {
   caseViewAlg,
   caseViewSetup,
   displayCaseScramble,
-  displayCaseAlg,
-  displayCaseAlgHtml,
   type CaseViewAngle,
 } from '@/lib/alg_display';
-import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { tr } from '@/i18n/tr';
 import {
   findPreferredAlg,
-  preferredAlgRef,
   preferredAlgSlot,
-  sortPreferredAlgs,
   usePreferredAlgs,
 } from '@/lib/alg-preferred-algs';
 
 const METRIC_LABEL: Record<string, string> = {
   etm: 'ETM', htm: 'HTM', qtm: 'QTM', stm: 'STM', sqtm: 'SQTM', atm: 'ATM',
 };
-
-/** 一行「可复制的公式 + 右侧标签」(`len` 给了就在右边挂步数徽章)。 */
-function AlgLine({
-  label, alg, algHtml, len, prefix, playable = false, selected = false, onPlay, preferred = false, onPreferredToggle, issue,
-}: {
-  label: string;
-  alg: string;
-  algHtml?: string;
-  len?: number;
-  prefix?: ReactNode;
-  playable?: boolean;
-  selected?: boolean;
-  onPlay?: () => void;
-  preferred?: boolean;
-  onPreferredToggle?: () => void;
-  issue?: string;
-}) {
-  const { copied, copy } = useCopy();
-  return (
-    <div
-      className={`alg-meta-algline${playable ? ' is-playable' : ''}${selected ? ' is-expanded' : ''}`}
-      role={playable ? 'button' : undefined}
-      tabIndex={playable ? 0 : undefined}
-      aria-pressed={playable ? selected : undefined}
-      onClick={playable ? onPlay : undefined}
-      onKeyDown={playable ? (event) => {
-        if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
-          event.preventDefault();
-          onPlay?.();
-        }
-      } : undefined}
-      title={playable ? tr({ zh: '播放动画', en: 'Play animation' }) : undefined}
-    >
-      {prefix}
-      <code className="alg-meta-algline-code">
-        {algHtml
-          ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
-          : alg}
-      </code>
-      {label && <span className="alg-meta-algline-label">{label}</span>}
-      {issue && <span className="alg-alg-note" title={issue}>{tr({ zh: '原公式与本图不匹配', en: 'Source algorithm does not match this case' })}</span>}
-      {len != null && <span className="alg-meta-algline-len" title="STM">{len}</span>}
-      {onPreferredToggle && (
-        <button
-          type="button"
-          className="alg-meta-copy alg-meta-primary"
-          onClick={(event) => { event.stopPropagation(); onPreferredToggle(); }}
-          title={preferred
-            ? tr({ zh: '取消置顶', en: 'Unpin algorithm' })
-            : tr({ zh: '置顶公式', en: 'Pin algorithm' })}
-          aria-pressed={preferred}
-        >
-          <Pin size={13} fill={preferred ? 'currentColor' : 'none'} aria-hidden="true" />
-        </button>
-      )}
-      <button
-        type="button"
-        className="alg-meta-copy"
-        disabled={!!issue}
-        onClick={(event) => { event.stopPropagation(); copy(alg); }}
-        title={tr({ zh: '复制', en: 'Copy' })}
-      >
-        {copied ? <Check size={12} /> : <Copy size={12} />}
-      </button>
-    </div>
-  );
-}
 
 /** 规格表中的一条「标签 + 值」。 */
 function Row({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
@@ -148,7 +73,7 @@ interface Props {
   /**
    * 公式列表的外壳 / 每一行的外壳。默认原样返回 —— 只有 case 详情页的 admin 会传:
    * 它拿这两个口子把公式行包进 dnd-kit(DndContext + SortableAlgRow),好拖顺序。
-   * 展示逻辑仍在这里,不在外面复制一份 AlgLine。
+   * 公式行由 AlgCaseRows 统一渲染，外壳不再另做文字、图标或操作栏。
    */
   algsWrap?: (rows: React.ReactNode) => React.ReactNode;
   algRowWrap?: (row: React.ReactNode, index: number) => React.ReactNode;
@@ -164,8 +89,6 @@ interface Props {
   playable?: boolean;
   /** Replace the detail player with a static case diagram, without mounting an animation. */
   previewImage?: ReactNode;
-  /** 管理员拖拽时保持数据库原始顺序，避免个人置顶改变拖拽索引。 */
-  preserveAlgOrder?: boolean;
   /** 详情页的社区公式紧跟主公式列表；训练弹窗不传。 */
   algsAfter?: React.ReactNode;
   onRotate?: () => Promise<void>;
@@ -187,7 +110,6 @@ export default function AlgCaseMetaContent({
   orientation,
   playable = false,
   previewImage,
-  preserveAlgOrder = false,
   algsAfter,
   onRotate, editorAlgorithms, subgroupEditor, setupEditor, editing = false,
   renderMetadata,
@@ -198,45 +120,40 @@ export default function AlgCaseMetaContent({
    * 不能让 `caseObj.meta` 直接是 undefined —— `m.no` / `m.sym` 会当场抛。
    */
   const m = (caseObj.meta ?? {}) as AlgCaseMeta;
+  // 与相关情况卡共用 meta.mirror（表编号）和导航契约，不能把它当数据库 id。
+  const mirrorCase = m.mirror == null ? undefined : byNo.get(m.mirror);
+  const mirror = mirrorCase ? {
+    partner: primaryCaseName(puzzle, set, mirrorCase),
+    self: primaryCaseName(puzzle, set, caseObj),
+    partnerHref: jump.kind === 'link' ? jump.href(mirrorCase) : undefined,
+    selfHref: jump.kind === 'link' ? jump.href(caseObj) : undefined,
+    onPartnerSelect: jump.kind === 'callback' ? () => jump.onJump(mirrorCase) : undefined,
+    onSelfSelect: jump.kind === 'callback' ? () => jump.onJump(caseObj) : undefined,
+  } : undefined;
   const [selectedAlgKey, setSelectedAlgKey] = useState<string | null>(null);
+  const [expandedAlgKey, setExpandedAlgKey] = useState<string | null>(null);
   const [playingScramble, setPlayingScramble] = useState<string | null>(null);
   const [playRequest, setPlayRequest] = useState(0);
   const preferenceSet = caseObj.srcSet ?? set;
   const preferenceKey = `${puzzle}/${preferenceSet}`;
   const preferredSnapshot = usePreferredAlgs(state => state.snapshots[preferenceKey]);
   const loadPreferred = usePreferredAlgs(state => state.load);
-  const setPreferred = usePreferredAlgs(state => state.setPreferred);
-  const preferredSlot = preferredAlgSlot(caseObj);
-  const preferredRef = preferredSnapshot?.items[preferredSlot];
 
   useEffect(() => { loadPreferred(puzzle, preferenceSet); }, [loadPreferred, preferenceSet, puzzle]);
 
-  /** 文字、步数和复制使用显示式；动画保留公共 case 的完整收尾。 */
-  const algs = useMemo(() => {
-    const entries = preserveAlgOrder
-      ? (caseObj.algs[0] ?? []).map((entry, originalIndex) => ({ entry, originalIndex }))
-      : sortPreferredAlgs(caseObj.algs[0] ?? [], preferredRef);
-    return entries.map(({ entry: a, originalIndex }) => {
-    const playbackAlg = caseViewAlg(a.alg, viewAngle);
-    const shown = displayCaseAlg(puzzle, set, playbackAlg);
-    return {
-      key: a.altId ?? shown,
-      entry: a,
-      originalIndex,
-      ref: preferredAlgRef(a),
-      playbackAlg,
-      text: formatScrambleForEvent(puzzle, shown),
-      html: a.algHtml ? displayCaseAlgHtml(puzzle, set, a.algHtml) : undefined,
-      len: displayedAlgorithmStm(puzzle, shown) ?? undefined,
-      tags: a.tags ?? [],
-    };
-    });
-  }, [caseObj.algs, preferredRef, preserveAlgOrder, puzzle, set, viewAngle]);
+  // 阅读和编辑始终沿用同一顺序；个人置顶只影响列表页的首选展示。
+  const algs = useMemo(() => (caseObj.algs[0] ?? []).map((entry, originalIndex) => ({
+    key: entry.altId ?? entry.alg,
+    entry,
+    originalIndex,
+    playbackAlg: caseViewAlg(entry.alg, viewAngle),
+  })), [caseObj.algs, viewAngle]);
   const selectedAlg = algs.find(a => !caseAlgIssue(a.entry) && `${a.key}:${a.originalIndex}` === selectedAlgKey)
     ?? algs.find(a => !caseAlgIssue(a.entry));
 
   useEffect(() => {
     setSelectedAlgKey(null);
+    setExpandedAlgKey(null);
     setPlayingScramble(null);
     setPlayRequest(0);
   }, [caseObj.id, caseObj.name]);
@@ -421,42 +338,27 @@ export default function AlgCaseMetaContent({
   ];
   const metadataScramble = (text: string) => {
     const aligned = alignScrambleToSetup(puzzle, text, caseObj.setup);
-    return <AlgLine label=""
-      alg={displayCaseScramble(puzzle, set, caseViewSetup(aligned ?? text, viewAngle))}
+    return <AlgCaseSetupRow puzzle={puzzle}
+      setup={displayCaseScramble(puzzle, set, caseViewSetup(aligned ?? text, viewAngle))}
       issue={aligned ? undefined : tr({ zh: '原打乱与本图不匹配', en: 'Source scramble does not match this case' })}
     />;
   };
 
   const scrambleContent = (setupEditor || scramble || (selectedScrambleKind === 'cstimer' && inverseScramble)) && (
-    <div className="alg-meta-section">
       <div className="alg-meta-scramble-row">
-        {editingSetup && (
-          <>
-            <h3 aria-label={tr({ zh: '打乱', en: 'Scramble' })}>
-              <Shuffle size={16} aria-hidden="true" />
-            </h3>
-          </>
-        )}
         {setupEditor && <div className="alg-meta-setup-editor" hidden={!editingSetup}>{setupEditor}</div>}
         {!editingSetup && (scramble ? (
-          <AlgLine
-            prefix={(
-              <span className="alg-meta-scramble-prefix">
-                <span role="img" aria-label={tr({ zh: '打乱', en: 'Scramble' })}>
-                  <Shuffle size={16} aria-hidden="true" />
-                </span>
-              </span>
-            )}
-            label={scramble.fromInvCase && (!onScrambleKindChange || selectedScrambleKind === 'cstimer')
-              ? tr({ zh: '逆 case', en: 'Inv case' })
-              : ''}
-            alg={scramble.text}
-            playable={playable && !editing && !previewImage}
+          <AlgCaseSetupRow
+            puzzle={puzzle}
+            setup={scramble.text}
+            note={scramble.fromInvCase && (!onScrambleKindChange || selectedScrambleKind === 'cstimer')
+              ? tr({ zh: '逆 case', en: 'Inv case' }) : undefined}
             selected={!previewImage && scrambleSelected}
-            onPlay={() => {
+            onPlay={playable && !editing && !previewImage ? () => {
               setPlayingScramble(rawScramble!.text);
+              setExpandedAlgKey(null);
               setPlayRequest(current => current + 1);
-            }}
+            } : undefined}
           />
         ) : (
           <>
@@ -469,7 +371,6 @@ export default function AlgCaseMetaContent({
           </>
         ))}
       </div>
-    </div>
   );
 
   return (
@@ -515,51 +416,18 @@ export default function AlgCaseMetaContent({
             {algsWrap(algs.map((a) => {
               const rowKey = `${a.key}:${a.originalIndex}`;
               const selected = playable && !previewImage && playingScramble === null && selectedAlg === a;
-              const isPreferred = a.ref === preferredRef;
-              const label = [
-                isPreferred ? tr({ zh: '已置顶', en: 'Pinned' }) : '',
-                a.tags.map(t => algTagLabel(t)).join(' '),
-              ].filter(Boolean).join(' ');
-              const togglePreferred = () => setPreferred(
-                puzzle,
-                preferenceSet,
-                preferredSlot,
-                isPreferred ? null : a.ref,
-              );
-              if (!playable) {
-                return algRowWrap(
-                  <AlgLine
-                    key={rowKey}
-                    label={label}
-                    alg={a.text}
-                    issue={caseAlgIssue(a.entry)}
-                    algHtml={viewAngle === 'default' && puzzle !== 'sq1' ? a.html : undefined}
-                    len={renderMetadata ? undefined : a.len}
-                    preferred={isPreferred}
-                    onPreferredToggle={togglePreferred}
-                  />,
-                  a.originalIndex,
-                );
-              }
+              const expanded = playingScramble === null && selectedAlg === a && expandedAlgKey === rowKey;
               return algRowWrap(
-                <div key={rowKey} className="alg-meta-playable-row">
-                  <AlgLine
-                    label={label}
-                    alg={a.text}
-                    issue={caseAlgIssue(a.entry)}
-                    algHtml={viewAngle === 'default' && puzzle !== 'sq1' ? a.html : undefined}
-                    len={renderMetadata ? undefined : a.len}
-                    preferred={isPreferred}
-                    onPreferredToggle={togglePreferred}
-                    playable={!previewImage && !caseAlgIssue(a.entry)}
-                    selected={selected}
-                    onPlay={() => {
-                      setPlayingScramble(null);
-                      setSelectedAlgKey(rowKey);
-                      setPlayRequest(current => current + 1);
-                    }}
-                  />
-                </div>,
+                <AlgCaseReadRow key={rowKey} entry={a.entry} puzzle={puzzle} set={set} viewAngle={viewAngle} mirror={mirror}
+                  selected={selected} actionsVisible={expanded}
+                  onSelect={playable ? () => {
+                    setExpandedAlgKey(expanded ? null : rowKey);
+                    if (expanded) return;
+                    setPlayingScramble(null);
+                    setSelectedAlgKey(rowKey);
+                    if (!previewImage) setPlayRequest(current => current + 1);
+                  } : undefined}
+                />,
                 a.originalIndex,
               );
             }))}
@@ -686,9 +554,8 @@ export default function AlgCaseMetaContent({
       {(m.coep?.alg || m.coep?.scramble) && (
         <div className="alg-meta-section">
           <h3>COEP</h3>
-          {m.coep.alg && <AlgLine label={tr({ zh: '公式', en: 'Alg' })}
-            alg={displayCaseAlg(puzzle, set, caseViewAlg(coep?.alg ?? m.coep.alg, viewAngle))}
-            issue={coep ? caseAlgIssue(coep) : tr({ zh: '尚未校验', en: 'Not yet validated' })} />}
+          {m.coep.alg && <AlgCaseReadRow entry={coep ?? { alg: m.coep.alg }} puzzle={puzzle} set={set} viewAngle={viewAngle}
+            invalid={coep ? caseAlgIssue(coep) : tr({ zh: '尚未校验', en: 'Not yet validated' })} />}
           {m.coep.scramble && metadataScramble(m.coep.scramble)}
         </div>
       )}

@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
-import { act, createElement } from 'react';
+import { act, createElement, type ComponentProps } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { AlgCase } from '@cuberoot/shared/alg';
 
 const mocks = vi.hoisted(() => ({ copy: vi.fn(), load: vi.fn(), prefer: vi.fn(), changeKind: vi.fn() }));
 vi.mock('@/i18n/tr', () => ({ tr: (value: { en: string }) => value.en }));
+vi.mock('@/components/AppLink', () => ({ default: ({ prefetch: _prefetch, ...props }: ComponentProps<'a'> & { prefetch?: boolean }) => createElement('a', props) }));
 vi.mock('@/hooks/useCopy', () => ({ useCopy: () => ({ copied: false, copy: mocks.copy }) }));
 vi.mock('@/components/AlgCaseRelationCards', () => ({ AlgCaseRelationCards: () => null }));
 vi.mock('@/components/AlgPlayer', () => ({
@@ -54,8 +55,8 @@ afterEach(async () => { await act(async () => root.unmount()); host.remove(); to
 
 it('plays the full raw scramble from solved, replays it, and restores the solution setup', async () => {
   await render();
-  const scramble = host.querySelector<HTMLElement>('.alg-meta-scramble-row [role="button"]')!;
-  const solution = host.querySelector<HTMLElement>('.alg-meta-playable-row [role="button"]')!;
+  const scramble = host.querySelector<HTMLElement>('.alg-meta-scramble-row .alg-case-standard-detail[role="button"]')!;
+  const solution = host.querySelector<HTMLElement>('.alg-alg-row[role="button"]')!;
   // Top-layer display rewrites the trailing rotation; playback must keep the raw y.
   expect(scramble.querySelector('code')!.textContent).toBe("R U R' U");
   expect(player()).toMatchObject({ alg: example.algs[0][0].alg, setup: example.setup, startSolved: false });
@@ -70,36 +71,76 @@ it('plays the full raw scramble from solved, replays it, and restores the soluti
   expect(player()).toMatchObject({ alg: example.algs[0][0].alg, setup: example.setup, startSolved: false, playRequest: 3 });
 });
 
-it('keeps copy and scramble-type controls independent of playback', async () => {
+it('keeps scramble settings independent of playback and shares F2L row controls', async () => {
   await render();
-  const row = host.querySelector<HTMLElement>('.alg-meta-scramble-row [role="button"]')!;
-  const copy = row.querySelector<HTMLButtonElement>('.alg-meta-copy')!;
+  expect(host.querySelector('.alg-meta-copy, .alg-meta-primary, .alg-meta-algline')).toBeNull();
+  expect(host.querySelectorAll('.alg-formula-row')).toHaveLength(1);
   await act(async () => {
-    copy.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-    copy.click();
     const select = toolbar.querySelector<HTMLSelectElement>('select')!;
-    select.click();
     select.value = 'rand';
     select.dispatchEvent(new Event('change', { bubbles: true }));
   });
-  expect(mocks.copy).toHaveBeenCalledWith("R U R' U");
   expect(mocks.changeKind).toHaveBeenCalledWith('rand');
   expect(player().playRequest).toBe(0);
-  expect(player().startSolved).toBe(false);
 });
 
-it('unmounts animation in diagram-only mode while preserving algorithms and copy controls', async () => {
+it('expands mirrors on explicit PLL selection and collapses without replaying', async () => {
+  await render();
+  const solution = host.querySelector<HTMLElement>('.alg-alg-row[role="button"]')!;
+  expect(solution.getAttribute('aria-expanded')).toBe('false');
+  expect(host.querySelector('.alg-mirror-panel')).toBeNull();
+  await act(async () => solution.click());
+  expect(solution.getAttribute('aria-expanded')).toBe('true');
+  expect(host.querySelectorAll('.alg-mirror-line')).toHaveLength(2);
+  expect(player().alg).toBe(example.algs[0][0].alg);
+  expect(player().playRequest).toBe(1);
+  await act(async () => solution.click());
+  expect(solution.getAttribute('aria-expanded')).toBe('false');
+  expect(host.querySelector('.alg-case-detail-ori-algs .more-toggle-panel')?.getAttribute('aria-hidden')).toBe('true');
+  expect(player().playRequest).toBe(1);
+});
+
+it('unmounts animation in diagram-only mode while keeping the shared mirror interaction', async () => {
   await render();
   expect(host.querySelector('output')).not.toBeNull();
   await render(true);
   expect(host.querySelector('output')).toBeNull();
   expect(host.querySelector('[aria-label="Case diagram"]')).not.toBeNull();
-  expect(host.querySelector('.alg-meta-scramble-row [role="button"]')).toBeNull();
-  expect(host.querySelector('.alg-meta-playable-row [role="button"]')).toBeNull();
-  const copy = host.querySelector<HTMLButtonElement>('.alg-meta-scramble-row .alg-meta-copy')!;
-  await act(async () => copy.click());
-  expect(mocks.copy).toHaveBeenCalledWith("R U R' U");
+  expect(host.querySelector('.alg-meta-scramble-row .alg-case-standard-detail[role="button"]')).toBeNull();
+  const solution = host.querySelector<HTMLElement>('.alg-alg-row[role="button"]')!;
+  await act(async () => solution.click());
+  expect(solution.getAttribute('aria-expanded')).toBe('true');
+  expect(host.querySelector('output')).toBeNull();
   await render();
   expect(host.querySelector('[aria-label="Case diagram"]')).toBeNull();
   expect(player()).toMatchObject({ alg: example.algs[0][0].alg, startSolved: false });
+});
+
+it('links PLL mirrors through the existing case relationship and navigation URL', async () => {
+  const partner: AlgCase = { ...example, id: 99, name: 'Ga', meta: { no: 7 } };
+  const current: AlgCase = { ...example, name: 'Gc', meta: { no: 1, mirror: 7 }, algs: [[{ alg: "R' F R F'" }]] };
+  await act(async () => root.render(createElement(AlgCaseMetaContent, {
+    caseObj: current, puzzle: '3x3', set: 'pll', byNo: new Map([[7, partner]]), playable: true,
+    jump: { kind: 'link', href: c => `/alg/3x3/pll/${c.name.toLowerCase()}?angle=y2` },
+  })));
+  await act(async () => host.querySelector<HTMLElement>('.alg-alg-row')!.click());
+  const link = host.querySelector<HTMLAnchorElement>('.alg-mirror-line')!;
+  expect(link.tagName).toBe('A');
+  expect(link.getAttribute('href')).toBe('/alg/3x3/pll/ga?angle=y2');
+  expect(link.getAttribute('aria-label')).toBe("LR-mirror Ga L F' L' F");
+  expect(host.querySelectorAll('.alg-mirror-line')).toHaveLength(1);
+});
+
+it('uses the host callback for embedded mirror navigation', async () => {
+  const partner: AlgCase = { ...example, id: 99, name: 'Ga', meta: { no: 7 } };
+  const current: AlgCase = { ...example, meta: { no: 1, mirror: 7 } };
+  const onJump = vi.fn();
+  await act(async () => root.render(createElement(AlgCaseMetaContent, {
+    caseObj: current, puzzle: '3x3', set: 'pll', byNo: new Map([[7, partner]]), playable: true,
+    jump: { kind: 'callback', onJump },
+  })));
+  await act(async () => host.querySelector<HTMLElement>('.alg-alg-row')!.click());
+  await act(async () => host.querySelector<HTMLButtonElement>('button.alg-mirror-line')!.click());
+  expect(onJump).toHaveBeenCalledExactlyOnceWith(partner);
+  expect(player().playRequest).toBe(1);
 });

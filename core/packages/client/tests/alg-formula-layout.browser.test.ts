@@ -8,17 +8,26 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, type Browser, type Page } from '@playwright/test';
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
-import type { AlgEntry } from '@cuberoot/shared/alg';
+import type { AlgEntry, AlgCase } from '@cuberoot/shared/alg';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({}) }));
 vi.mock('@/i18n/tr', () => ({ tr: (value: { en: string }) => value.en }));
 vi.mock('@/components/CubeKeyboardSection', () => ({ default: () => null }));
-vi.mock('@/components/AlgMirrorPanel', () => ({ default: () => null, hasMirror: () => false }));
+vi.mock('@/components/AlgMirrorPanel', () => ({ default: () => null, hasMirror: () => false, supportsAlgMirrorPreview: () => false }));
+vi.mock('@/components/AlgPlayer', () => ({ default: () => null }));
+vi.mock('@/lib/alg-preferred-algs', () => ({
+  usePreferredAlgs: (select: (state: unknown) => unknown) => select({ snapshots: {}, load() {}, setPreferred() {} }),
+  preferredAlgSlot: () => '1', preferredAlgRef: () => 'ref', findPreferredAlg: () => undefined,
+}));
+vi.mock('@/lib/alg_scramble', () => ({ caseScramble: () => ({ text: "R U R'", fromInvCase: false }), alignScrambleToSetup: () => null }));
 vi.mock('@/lib/f2l-solution-groups', () => ({ groupF2lSolutions: async () => ({
   groups: [{ key: 'pair', prefix: "U' R U R'", sourceIndices: [0, 2], options: [] }], ungrouped: [1],
 }) }));
-import AlgEditor from '@/components/AlgEditor';
-import { AlgFormulaReadRow } from '@/components/AlgFormulaRow';
+import AlgEditor, { type AlgEditorHandle } from '@/components/AlgEditor';
+import { AlgCaseReadRow } from '@/components/AlgCaseRows';
+import AlgCaseMetaContent from '@/components/AlgCaseMetaContent';
+import AlgInput from '@/components/AlgInput';
+import { Shuffle } from '@app-foundation/icons/lucide';
 import F2lSolutionGroups from '@/components/F2lSolutionGroups';
 
 let browser: Browser;
@@ -38,6 +47,27 @@ const entries: AlgEntry[] = [
   { alg: "U' R U R' U R' F R F'" },
 ];
 
+it('opens legacy mismatched markup as the visible algorithm and saves that same sequence', async () => {
+  const host = document.createElement('div');
+  document.body.append(host);
+  const root = createRoot(host);
+  let editor: AlgEditorHandle | null = null;
+  const legacy = { alg: "U F U' F'", algHtml: "U R U' R'<u></u>", altId: 'eo-fl' };
+  try {
+    await act(async () => root.render(h(AlgCaseReadRow, { entry: legacy, puzzle: '3x3', set: 'zbls' })));
+    expect(host.textContent).toBe(legacy.alg);
+    await act(async () => root.render(h(AlgEditor, {
+      ref: value => { editor = value; }, initialValue: [[legacy]],
+    })));
+    const input = host.querySelector<HTMLElement>('[contenteditable="true"]')!;
+    expect(input.textContent).toBe(legacy.alg);
+    expect(editor!.getValue()).toEqual([[{ alg: legacy.alg, altId: legacy.altId }]]);
+    await act(async () => { input.focus(); input.blur(); });
+    expect(input.textContent).toBe(legacy.alg);
+    expect(editor!.getValue()).toEqual([[{ alg: legacy.alg, altId: legacy.altId }]]);
+  } finally { await act(async () => root.unmount()); host.remove(); }
+});
+
 async function markup(editing: boolean, grouped: boolean, selected: boolean, toolsOpen = false, menuOpen = false, toolsRow = 0) {
   const host = document.createElement('div');
   document.body.append(host);
@@ -48,10 +78,9 @@ async function markup(editing: boolean, grouped: boolean, selected: boolean, too
     selectedAlgorithm: selectedAlgorithms[0], editing, editableRows,
   });
   const add = h('button', { className: 'alg-editor-add' }, '+');
-  const rows = entries.map((entry, i) => h(AlgFormulaReadRow, {
-    key: i, tags: entry.tags, selected: selected && i === 0, className: 'alg-alg-row',
-    actions: selected && i === 0 ? h('span', { className: 'alg-alg-len' }, '8') : null,
-  }, entry.alg));
+  const rows = entries.map((entry, i) => h(AlgCaseReadRow, {
+    key: i, entry, puzzle: '3x3', set: 'f2l', selected: selected && i === 0,
+  }));
   try {
     await act(async () => root.render(h('div', {
       className: `alg-root is-f2l-orientation-grid${editing ? ' alg-case-inline-editor' : ''}`,
@@ -175,4 +204,48 @@ for (const width of [390, 1280]) it(`shares icon and text sizes between the port
     expect(sizes.toolbar.every(size => size[0] === 14 && size[1] === 14)).toBe(true);
     expect(new Set(sizes.text)).toEqual(new Set(['14px']));
   } finally { await page.close(); }
+});
+
+// Exercise the actual metadata-rich list, not a second hand-written read fixture.
+for (const width of [390, 1280]) it(`keeps PLL read/edit row geometry and icons at ${width}px`, async () => {
+  const host = document.createElement('div');
+  document.body.append(host);
+  const root = createRoot(host);
+  const page = await browser.newPage({ viewport: { width, height: 1000 } });
+  await page.route('**/*', route => route.abort());
+  const caseObj = { id: 1, name: 'Gc', subgroup: '', setup: '', algs: [entries], meta: {} } as AlgCase;
+  const show = async (editing: boolean) => {
+    await act(async () => root.render(h('div', { className: 'alg-case-detail alg-case-inline-editor' },
+      h(AlgCaseMetaContent, {
+        caseObj, puzzle: '3x3', set: 'pll', byNo: new Map(), jump: { kind: 'callback', onJump() {} },
+        playable: true, editing, renderMetadata: () => null,
+        setupEditor: h('label', { className: 'alg-admin-setup-label' },
+          h('span', null, h(Shuffle, { size: 16 })),
+          // jsdom has no scrollHeight: let Chromium size this one-line fixture naturally.
+          h('span', { className: 'alg-admin-setup-input-row' }, h(AlgInput, { initialText: "R U R'", className: 'alg-admin-setup-textarea', multiline: false, rows: 1 }))),
+        editorAlgorithms: (_afterPlayer, beforeAlgorithms) => h(AlgEditor, {
+          initialValue: [entries], selectedAlgorithms: { 0: entries[0].alg },
+          renderOrientation: rows => h('div', { className: 'alg-case-detail-ori-algs alg-player-list-options' }, beforeAlgorithms, rows),
+        }),
+      }))));
+    await page.setContent(`<style>${css}</style><style>
+      body { margin: 16px; font-family: Arial, sans-serif; }
+      .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; }
+    </style>${host.innerHTML}`);
+    return page.locator('.alg-formula-row:visible').evaluateAll(rows => rows.map(row => {
+      const value = row.querySelector('.alg-formula-text')!;
+      const box = value.getBoundingClientRect();
+      const iconSizes = [...row.querySelectorAll('.alg-formula-body .alg-tag-symbol svg')].map(icon => {
+        const b = icon.getBoundingClientRect(); return [b.width, b.height];
+      });
+      return { width: box.width, height: box.height, x: box.x - row.getBoundingClientRect().x,
+        y: box.y - row.closest('.alg-case-detail-ori-algs')!.getBoundingClientRect().y,
+        rowHeight: row.getBoundingClientRect().height, iconSizes, text: value.textContent };
+    }));
+  };
+  try {
+    const reading = await show(false);
+    expect(reading).toHaveLength(3);
+    expect(await show(true)).toEqual(reading);
+  } finally { await act(async () => root.unmount()); host.remove(); await page.close(); }
 });
