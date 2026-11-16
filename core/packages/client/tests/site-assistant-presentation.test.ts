@@ -46,18 +46,40 @@ async function render(answer:AssistantAnswer,overrides:Partial<ComponentProps<ty
 }
 
 describe('assistant general conversation controls',()=>{
-  it('sends a frozen quote while running and preserves the draft if acceptance fails',async()=>{
+  it('sends a frozen text selection while running and preserves the draft if acceptance fails',async()=>{
     const onAsk=vi.fn().mockResolvedValue(false),onDraftChange=vi.fn();
     const turn={messageId:'run-one',answerVersion:3,question:'统计 2020—2025 年中国选手的三阶成绩',partial:true,result:{answer:'共涉及 128 场比赛。',sources:[]}};
     const props=await render(turn.result,{turns:[turn],draft:'只看平均成绩',busy:true,onAsk,onDraftChange});
     expect(document.querySelector<HTMLTextAreaElement>('.site-assistant-compose textarea')!.disabled).toBe(false);
-    await act(async()=>document.querySelector<HTMLButtonElement>('[aria-label="引用回答"]')!.click());
+    const paragraph=document.querySelector('.site-assistant-response p')!;
+    const range=document.createRange();range.selectNodeContents(paragraph);
+    window.getSelection()!.removeAllRanges();window.getSelection()!.addRange(range);
+    await act(async()=>paragraph.dispatchEvent(new Event('pointerup',{bubbles:true})));
+    await act(async()=>document.querySelector<HTMLButtonElement>('.site-assistant-quote-selection')!.click());
     await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,turns:[{...turn,answerVersion:4,result:{answer:turn.result.answer+'后续内容。',sources:[]}}]})));
     expect(document.querySelector('.site-assistant-compose .site-assistant-quote-text')?.textContent).toBe(turn.result.answer);
     await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="调整当前任务"][type="submit"]')!.click());
     expect(onAsk).toHaveBeenCalledWith('只看平均成绩',false,[],[{messageId:'run-one:assistant',messageVersion:3,role:'assistant',selectedText:turn.result.answer,sourceStatus:'partial'}],'steer');
     expect(onDraftChange).not.toHaveBeenCalled();
     expect(document.querySelector('.site-assistant-compose .site-assistant-quote')).not.toBeNull();
+  });
+  it('shows the answer quote only together with the completed answer toolbar',async()=>{
+    const turn={messageId:'run-one',question:'解释概率',partial:true,result:{answer:'概率表示事件发生的可能性。',sources:[]}};
+    const props=await render(turn.result,{turns:[turn],busy:true});
+    const expectHidden=()=>{
+      expect(document.querySelector('[aria-label="引用回答"]')).toBeNull();
+      expect(document.querySelector('.assistant-answer-toolbar')).toBeNull();
+    };
+    expectHidden();
+    await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,turns:[{...turn,partial:false}]})));
+    expectHidden();
+    await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,busy:false,turns:[{...turn,partial:false,endState:'complete'}]})));
+    const toolbar=document.querySelector('.assistant-answer-toolbar')!;
+    expect(document.querySelectorAll('[aria-label="引用回答"]')).toHaveLength(1);
+    expect(toolbar.querySelector('[aria-label="引用回答"]')).not.toBeNull();
+    expect(toolbar.querySelector('[aria-label="复制"]')).not.toBeNull();
+    await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,busy:false,turns:[{...turn,endState:'stopped'}]})));
+    expectHidden();
   });
   it('quotes an exact selection from an older message outside the history window',async()=>{
     const turns=Array.from({length:12},(_,i)=>({messageId:`turn-${i}`,question:`Question ${i}`,result:{answer:`Answer ${i}: exact phrase.`,sources:[]}}));
