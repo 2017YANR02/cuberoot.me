@@ -1,63 +1,74 @@
 {
-  "version": 1,
   "domain": "cuberoot.me",
   "server": "47.97.30.181",
+  "version": 1,
   "adminSsh": "cuberoot",
+  "machines": [
+    {
+      "os": "mac",
+      "owner": "ruimin",
+      "device": "mac-mini",
+      "status": "active",
+      "aliases": [
+        "dev-mac-mini.cuberoot.me",
+        "dev.cuberoot.me"
+      ],
+      "localPort": 3000,
+      "transport": "frp",
+      "remotePort": 7100,
+      "certificate": "dev-machines"
+    },
+    {
+      "os": "windows",
+      "owner": "ruimin",
+      "device": "alienware",
+      "status": "active",
+      "aliases": [
+        "dev-alienware.cuberoot.me"
+      ],
+      "localPort": 3000,
+      "transport": "frp",
+      "remotePort": 7103,
+      "certificate": "dev-machines"
+    },
+    {
+      "os": "windows",
+      "owner": "czy",
+      "device": "y9000p",
+      "status": "active",
+      "aliases": [],
+      "localPort": 3000,
+      "transport": "ssh",
+      "remotePort": 7105,
+      "certificate": "dev-czy-y9000p"
+    },
+    {
+      "os": "mac",
+      "owner": "ruimin",
+      "device": "macbook-pro",
+      "status": "active",
+      "aliases": [],
+      "localPort": 3000,
+      "transport": "ssh",
+      "remotePort": 7106,
+      "certificate": "dev-ruimin-macbook-pro"
+    },
+    {
+      "os": "mac",
+      "owner": "lzz",
+      "device": "macbook-pro",
+      "status": "pending",
+      "aliases": [],
+      "localPort": 3000,
+      "transport": "ssh",
+      "remotePort": 7107,
+      "certificate": "dev-lzz-macbook-pro"
+    }
+  ],
   "reservedPorts": [
     7101,
     7102,
     7199,
     7104
-  ],
-  "machines": [
-    {
-      "owner": "ruimin",
-      "device": "mac-mini",
-      "os": "mac",
-      "transport": "frp",
-      "status": "active",
-      "localPort": 3000,
-      "remotePort": 7100,
-      "certificate": "dev-machines",
-      "aliases": [
-        "dev-mac-mini.cuberoot.me",
-        "dev.cuberoot.me"
-      ]
-    },
-    {
-      "owner": "ruimin",
-      "device": "alienware",
-      "os": "windows",
-      "transport": "frp",
-      "status": "active",
-      "localPort": 3000,
-      "remotePort": 7103,
-      "certificate": "dev-machines",
-      "aliases": [
-        "dev-alienware.cuberoot.me"
-      ]
-    },
-    {
-      "owner": "czy",
-      "device": "y9000p",
-      "os": "windows",
-      "transport": "ssh",
-      "status": "active",
-      "localPort": 3000,
-      "remotePort": 7105,
-      "certificate": "dev-czy-y9000p",
-      "aliases": []
-    },
-    {
-      "owner": "ruimin",
-      "device": "macbook-pro",
-      "os": "mac",
-      "transport": "ssh",
-      "status": "active",
-      "localPort": 3000,
-      "remotePort": 7106,
-      "certificate": "dev-ruimin-macbook-pro",
-      "aliases": []
-    }
   ]
 }
