@@ -159,9 +159,9 @@ function AssistantExecutionProgress({turn,busy,status,stopping}:{turn:AssistantT
   const elapsed=Math.max(0,((busy ? now : turn.finishedAt ?? turn.createdAt ?? now)-(turn.createdAt ?? now))/1000);
   return <div className="site-assistant-progress" data-active={busy && !stopping}>
     <div className="site-assistant-progress-heading">
-      <span role="status" aria-live="polite">{busy && !stopping && status.phase==='writing' && current?.phase==='model' ? statusLabel(status) : summary}</span>
+      <span className="site-assistant-progress-active-text" role="status" aria-live="polite">{busy && !stopping && status.phase==='writing' && current?.phase==='model' ? statusLabel(status) : summary}</span>
       <span className="site-assistant-progress-time" aria-hidden="true">{elapsed.toFixed(0)} s</span>
-      {!!steps.length && <MoreToggle expanded={expanded} onToggle={()=>setExpanded(!expanded)} aria-controls={panelId}>{tr({zh:'处理过程',en:'Activity'})}</MoreToggle>}
+      {!!steps.length && <MoreToggle expanded={expanded} onToggle={()=>setExpanded(!expanded)} aria-controls={panelId}><span className="site-assistant-progress-active-text">{tr({zh:'处理过程',en:'Activity'})}</span></MoreToggle>}
     </div>
     {!!steps.length && <MoreTogglePanel id={panelId} expanded={expanded}>
       <ol className="site-assistant-progress-steps">{steps.map(step=>{
@@ -169,7 +169,7 @@ function AssistantExecutionProgress({turn,busy,status,stopping}:{turn:AssistantT
         const label=tr(state==='complete' ? {zh:'完成',en:'Finished'} : state==='partial' ? {zh:'信息不完整',en:'Partial information'} : state==='error' ? {zh:'未成功',en:'Failed'} : state==='stopped' ? {zh:'已中断',en:'Interrupted'} : {zh:'进行中',en:'In progress'});
         return <li key={step.id} data-state={state}>
           {state==='complete' ? <Check size={13} aria-hidden="true"/> : state==='error' || state==='stopped' ? <X size={13} aria-hidden="true"/> : <span className="site-assistant-progress-dot" aria-hidden="true"/>}
-          <span>{phaseLabel(step).replace(/^正在/,'')} · {label}{!!step.sourceCount && <span> · {tr({zh:`已读取 ${step.sourceCount} 条来源`,en:`${step.sourceCount} sources read`})}</span>}</span>
+          <span className={state==='running' ? 'site-assistant-progress-active-text' : undefined}>{phaseLabel(step).replace(/^正在/,'')} · {label}{!!step.sourceCount && <span> · {tr({zh:`已读取 ${step.sourceCount} 条来源`,en:`${step.sourceCount} sources read`})}</span>}</span>
           {step.durationMs!==undefined && <span className="site-assistant-progress-time">{(step.durationMs/1000).toFixed(0)} s</span>}
         </li>;
       })}</ol>
