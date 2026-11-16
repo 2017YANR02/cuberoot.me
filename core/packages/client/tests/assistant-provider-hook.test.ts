@@ -21,7 +21,11 @@ it('keeps discovery separate from chat and removes OpenAI when eligibility chang
   await act(async () => root.render(createElement(View, { active: true })));
   expect(fetcher.mock.calls[0][0]).toMatch(/\/site-assistant\/providers$/);
   expect(fetcher.mock.calls[0][1]).toMatchObject({ cache: 'no-store' });
-  expect(state!.provider).toBe('bailian'); expect(state!.openaiAvailable).toBe(true);
+  expect(state!.provider).toBe('openai'); expect(state!.openaiAvailable).toBe(true);
+  await act(async () => state!.setProvider('bailian'));
+  fetcher.mockResolvedValueOnce(Response.json({ providers: ['bailian', 'openai'] }));
+  await act(async () => window.dispatchEvent(new Event('focus')));
+  expect(state!.provider).toBe('bailian');
   await act(async () => state!.setProvider('openai'));
   expect(host.textContent).toBe('openai');
   fetcher.mockResolvedValueOnce(Response.json({ providers: ['bailian'] }));

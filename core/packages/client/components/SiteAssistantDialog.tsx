@@ -8,7 +8,7 @@ const Markdown = lazy(() => import('react-markdown').catch(() => ({ default: ({ 
 const WrHistoryChart = lazy(() => import('@/components/wca-stats/WrHistoryChart').catch(() => ({ default: () => null })));
 import { useCopy } from '@/hooks/useCopy';
 import { createPortal } from 'react-dom';
-import { ArrowUp, ArrowDown, ArrowRight, Check, Copy, Pencil, Maximize2, Minimize2, MessageSquarePlus, ImagePlus, Plus, Mic, Square, Quote, X } from '@app-foundation/icons/lucide';
+import { ArrowUp, ArrowDown, ArrowRight, Check, Copy, Pencil, Maximize2, Minimize2, MessageSquarePlus, Image as ImageIcon, Plus, Mic, Square, Quote, X } from '@app-foundation/icons/lucide';
 import { SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_QUESTION_MAX_LENGTH, isAssistantSourceHref, type AssistantImage, type AssistantAnswer, type AssistantChart, type AssistantStatus, type AssistantErrorCode, type AssistantThinkingMode, type AssistantProvider } from '@cuberoot/shared/site-assistant';
 import { ASSISTANT_ERROR_TEXT } from '@/lib/site-assistant-errors';
 import { authActions } from '@/lib/auth-store';
@@ -230,6 +230,7 @@ export default function SiteAssistantDialog({onAlgorithmChange,onAnswerRevealed,
     onAnswerRevealed?.(id, text);
   }, [onAnswerRevealed]);
   const titleId=useId();
+  const providerLabel=provider==='openai'?'GPT-5.4-mini':'Qwen3.8-Flash';
   const thinkingItems=[
     {value:'auto' as const,label:tr({zh:'自动思考',en:'Auto thinking'})},
     {value:'fast' as const,label:tr({zh:'快速回答',en:'Quick answer'})},
@@ -428,17 +429,17 @@ export default function SiteAssistantDialog({onAlgorithmChange,onAnswerRevealed,
         <textarea className="site-assistant-draft" onPaste={event=>{const files=Array.from(event.clipboardData.files);if(files.length){event.preventDefault();void addImages(files);}}} ref={input} aria-label={tr({zh:'继续提问',en:'Ask a follow-up'})} placeholder={tr({zh:'随心输入',en:'Type anything'})} maxLength={SITE_ASSISTANT_QUESTION_MAX_LENGTH} rows={1} disabled={editing!==null} value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing&&!window.matchMedia?.('(pointer: coarse)').matches){e.preventDefault();submit();}}}/>
         {draft.length>=SITE_ASSISTANT_QUESTION_MAX_LENGTH*.9 && <span className="site-assistant-input-count" role="status">{draft.length}/{SITE_ASSISTANT_QUESTION_MAX_LENGTH}</span>}
         <div className="site-assistant-input-actions">
-          <CompactSelect className="site-assistant-attachments" triggerClassName="site-assistant-action" popupClassName="site-assistant-menu" unstyledTrigger
+          <CompactSelect className="site-assistant-attachments" triggerClassName="site-assistant-action" popupClassName="site-assistant-menu site-assistant-attachment-menu" unstyledTrigger
             label={<Plus size={20}/>} ariaLabel={tr({zh:'添加附件',en:'Add attachments'})}
-            items={[{value:'images',label:<span className="site-assistant-attachment-option"><ImagePlus size={19}/>{tr({zh:'添加图片',en:'Add images'})}</span>}]}
+            items={[{value:'images',label:<span className="site-assistant-attachment-option"><span className="site-assistant-attachment-icon" aria-hidden="true"><ImageIcon size={22}/></span>{tr({zh:'照片',en:'Photos'})}</span>}]}
             onChange={()=>imageInput.current?.click()} disabled={submitting||editing!==null||processingImages||images.length>=SITE_ASSISTANT_MAX_IMAGES}/>
-          {!busy && openaiAvailable && onProviderChange && <CompactSelect className="site-assistant-thinking site-assistant-provider" popupClassName="site-assistant-menu"
-            items={[{value:'bailian' as const,label:tr({zh:'阿里云',en:'Alibaba Cloud'})},{value:'openai' as const,label:'OpenAI'}]}
-            value={provider} onChange={onProviderChange} label={provider==='openai'?'OpenAI':tr({zh:'阿里云',en:'Alibaba Cloud'})}
-            ariaLabel={tr({zh:'AI 服务',en:'AI provider'})} disabled={busy} variant="plain" showArrow preserveFocus/>}
-          {!busy && <CompactSelect className="site-assistant-thinking" popupClassName="site-assistant-menu" items={thinkingItems} value={thinking} onChange={onThinkingChange} label={thinkingItems.find(item=>item.value===thinking)!.label} ariaLabel={tr({zh:'思考模式',en:'Thinking mode'})} variant="plain" showArrow preserveFocus/>}
+          {!busy && (openaiAvailable && onProviderChange ? <CompactSelect className="site-assistant-thinking site-assistant-provider" popupClassName="site-assistant-menu"
+            items={[{value:'openai' as const,label:'GPT-5.4-mini'},{value:'bailian' as const,label:'Qwen3.8-Flash'}]}
+            value={provider} onChange={onProviderChange} label={providerLabel}
+            ariaLabel={tr({zh:'AI 服务',en:'AI provider'})} variant="plain" preserveFocus/> : <span className="site-assistant-thinking site-assistant-provider site-assistant-provider-label">{providerLabel}</span>)}
+          {!busy && <CompactSelect className="site-assistant-thinking" popupClassName="site-assistant-menu" items={thinkingItems} value={thinking} onChange={onThinkingChange} label={thinkingItems.find(item=>item.value===thinking)!.label} ariaLabel={tr({zh:'思考模式',en:'Thinking mode'})} variant="plain" preserveFocus/>}
           <button className="site-assistant-action site-assistant-mic" type="button" disabled={editing!==null} onClick={()=>listening?stop():void start()} title={tr({zh:'语音输入',en:'Voice input'})} aria-pressed={listening}><Mic size={19}/></button>
-          {busy && <CompactSelect className="site-assistant-thinking" popupClassName="site-assistant-menu" items={[{value:'steer' as const,label:tr({zh:'调整当前任务',en:'Adjust current task'})},{value:'queue' as const,label:tr({zh:'加入队列',en:'Add to queue'})}]} value={deliveryMode} onChange={setDeliveryMode} label={deliveryMode==='steer'?tr({zh:'调整当前任务',en:'Adjust current task'}):tr({zh:'加入队列',en:'Add to queue'})} ariaLabel={tr({zh:'发送方式',en:'Delivery mode'})} variant="plain" showArrow preserveFocus/>}
+          {busy && <CompactSelect className="site-assistant-thinking" popupClassName="site-assistant-menu" items={[{value:'steer' as const,label:tr({zh:'调整当前任务',en:'Adjust current task'})},{value:'queue' as const,label:tr({zh:'加入队列',en:'Add to queue'})}]} value={deliveryMode} onChange={setDeliveryMode} label={deliveryMode==='steer'?tr({zh:'调整当前任务',en:'Adjust current task'}):tr({zh:'加入队列',en:'Add to queue'})} ariaLabel={tr({zh:'发送方式',en:'Delivery mode'})} variant="plain" preserveFocus/>}
           {busy && <Tooltip content={tr(stopping?{zh:'正在停止',en:'Stopping'}:{zh:'停止',en:'Stop'})}>{tip=><button {...tip} className="site-assistant-action site-assistant-send" type="button" disabled={stopping} onClick={onStop} aria-label={tr({zh:'停止',en:'Stop'})}><Square size={16} fill="currentColor"/></button>}</Tooltip>}
           {(!busy || draft.trim() || images.length>0) && <Tooltip content={tr(busy?(deliveryMode==='steer'?{zh:'调整当前任务',en:'Adjust current task'}:{zh:'加入队列',en:'Add to queue'}):{zh:'发送',en:'Send'})}>{tip=><button {...tip} className="site-assistant-action site-assistant-send" type="submit" disabled={stopping||submitting||(!draft.trim()&&!images.length)||draft.trim().length>SITE_ASSISTANT_QUESTION_MAX_LENGTH||editing!==null||processingImages} aria-label={tr(busy?(deliveryMode==='steer'?{zh:'调整当前任务',en:'Adjust current task'}:{zh:'加入队列',en:'Add to queue'}):{zh:'发送',en:'Send'})}><ArrowUp size={20}/></button>}</Tooltip>}
         </div>

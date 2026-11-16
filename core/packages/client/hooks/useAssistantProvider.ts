@@ -6,7 +6,7 @@ import { sessionFetch } from '@/lib/session-fetch';
 
 /** This is display state only. Every send is independently checked by the API. */
 export function useAssistantProvider(active: boolean) {
-  const [selected, setSelected] = useState<AssistantProvider>('bailian');
+  const [selected, setSelected] = useState<AssistantProvider>('openai');
   const [openaiAvailable, setOpenaiAvailable] = useState(false);
   useEffect(() => {
     if (!active) return;

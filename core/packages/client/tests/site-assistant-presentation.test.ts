@@ -91,16 +91,18 @@ describe('assistant general conversation controls',()=>{
     await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,busy:false,paused:true})));
     expect(document.body.textContent).toContain('任务和队列已暂停');expect(document.body.textContent).toContain('恢复执行');
   });
-  it('only offers the provider menu when OpenAI is available and discloses the selected processor',async()=>{
+  it('shows the current model even when only Bailian is available and discloses the selected processor',async()=>{
     const onProviderChange=vi.fn();
     const props=await render({answer:'',sources:[]},{turns:[],embedded:true,openaiAvailable:false,onProviderChange});
     expect(document.querySelector('[aria-label="AI 服务"]')).toBeNull();
+    expect(document.querySelector('.site-assistant-provider')?.textContent).toBe('Qwen3.8-Flash');
     await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,openaiAvailable:true,provider:'openai'})));
     const button=document.querySelector<HTMLButtonElement>('[aria-label="AI 服务"]')!;
-    expect(button.textContent).toContain('OpenAI');
+    expect(button.textContent).toContain('GPT-5.4-mini');
     expect(document.body.textContent).toContain('将交由 OpenAI 处理');
     await act(async()=>button.click());
-    const option=[...document.querySelectorAll<HTMLElement>('[role="option"]')].find(node=>node.textContent?.includes('阿里云'))!;
+    expect([...document.querySelectorAll('[role="option"]')].map(node=>node.textContent)).toEqual(['GPT-5.4-mini','Qwen3.8-Flash']);
+    const option=[...document.querySelectorAll<HTMLElement>('[role="option"]')].find(node=>node.textContent?.includes('Qwen3.8-Flash'))!;
     expect(option).toBeDefined();
     await act(async()=>option.click());
     expect(onProviderChange).toHaveBeenCalledWith('bailian');
