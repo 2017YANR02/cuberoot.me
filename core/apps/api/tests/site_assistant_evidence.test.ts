@@ -61,6 +61,41 @@ it('composes from full evidence without an unused draft or assistant history',as
   const result=await answerSiteQuestion('请根据页面资料说明计时器训练步骤。','zh',config,AbortSignal.timeout(3000),fetcher,[{role:'assistant',content:'EARLIER_ASSISTANT_CLAIM'}]);
   expect(result.answer).toContain('先选择项目');expect(calls).toBe(1);
 });
+it('keeps a personal-results review on the current question and repairs only its format',async()=>{
+  const question='为我查看我的 WCA 成绩';
+  const previousQuestions=['用简单的例子解释什么是概率。','wca它的规则是什么？','展示 PLL','展示 OLL'];
+  const history=previousQuestions.flatMap(content=>[{role:'user' as const,content},{role:'assistant' as const,content:'EARLIER_ASSISTANT_CLAIM'}]);
+  const requests:any[]=[];
+  const provider={key:'fixture',baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1',model:'qwen3.8-flash'};
+  const fetcher=vi.fn<typeof fetch>(async(input,init)=>{
+    const url=new URL(String(input));
+    if(url.pathname.endsWith('/meta'))return Response.json({lastImportedAt:'2026-11-16'});
+    if(url.pathname.endsWith('/wca/person-page')) {
+      expect(url.searchParams.get('wcaId')).toBe('2017YANR02');
+      return Response.json({profile:{person:{name:'Ruimin Yan (颜瑞民)'},personal_records:{333:{single:{best:800},average:{best:1000}}}}});
+    }
+    expect(url.origin).toBe('https://dashscope.aliyuncs.com');
+    const body=JSON.parse(String(init?.body));requests.push(body);
+    if(requests.length===1)return modelResponse([{tool:'person',wcaId:'2017YANR02',event:'all',progress:false}]);
+    return modelResponse({answerKind:'grounded',answer:'个人最佳成绩见下表。 [[person:2017YANR02]]',sourceIds:requests.length===2?'person:2017YANR02':['person:2017YANR02']});
+  });
+  const result=await answerSiteQuestion(question,'zh',provider,AbortSignal.timeout(5000),fetcher,history,'2017YANR02',undefined,'UTC',[],'deep');
+  expect(requests).toHaveLength(3);
+  for(const review of requests.slice(1)) {
+    expect(review.messages.some((message:any)=>message.role==='user' && previousQuestions.includes(message.content))).toBe(false);
+    expect(JSON.stringify(review.messages)).not.toContain('EARLIER_ASSISTANT_CLAIM');
+    const historyContext=JSON.parse(review.messages[1].content);
+    expect(historyContext.previousUserMessages).toEqual(previousQuestions);
+    expect(review.messages.at(-1).content).toContain(JSON.stringify({currentQuestion:question,instruction:'Answer only this current question; earlier questions are context, not additional pending requests.'}));
+    expect(wireEvidence(review)[0].tool).toMatchObject({tool:'person',wcaId:'2017YANR02'});
+  }
+  expect(requests[1].enable_thinking).toBe(true);
+  expect(requests[2]).toMatchObject({enable_thinking:false,response_format:{type:'json_object'}});
+  expect(requests[2].tools).toBeUndefined();
+  expect(fetcher.mock.calls.filter(([url])=>String(url).includes('/wca/person-page'))).toHaveLength(1);
+  expect(result.sources.map(source=>source.id)).toEqual(['person:2017YANR02']);
+  expect(result.artifacts?.[0]).toMatchObject({kind:'table',rows:[['三阶','8.00','—','10.00','—']]});
+});
 it('revalidates citations invented by the final reviewer',async()=>{
   vi.stubEnv('SITE_ASSISTANT_KNOWLEDGE_ENABLED','0');
   const corpus={version:2,updated:'2026-10-10T00:00:00Z',pages:[{lang:'zh',href:'/timer',title:'计时器训练',text:'选择练习项目。'}]};let calls=0;

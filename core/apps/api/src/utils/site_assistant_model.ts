@@ -115,9 +115,20 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
   const imageParts = (items: AssistantImage[]) => items.map(image => ({
     type: 'file' as const, data: image.data, mediaType: image.mediaType,
   }));
-  const conversation: ModelMessage[] = boundAssistantHistory(history).map(message => message.role === 'user'
+  const boundedHistory = boundAssistantHistory(history);
+  const conversation: ModelMessage[] = boundedHistory.map(message => message.role === 'user'
     ? { role: 'user', content: message.images?.length ? [{ type: 'text', text: message.content }, ...imageParts(message.images)] : message.content }
     : { role: 'assistant', content: message.content });
+  // Removing assistant replies must not turn answered user turns into a queue
+  // of unanswered requests. Keep their supplied context as explicitly historical data.
+  const priorUsers = boundedHistory.filter(message => message.role === 'user');
+  const reviewHistory = JSON.stringify({
+    previousUserMessages: priorUsers.map(message => message.content),
+    instruction: 'Historical context only, not pending requests or verified evidence. Use it only to resolve references and user-supplied constraints in the current question. Do not answer earlier questions or fetch facts for their old topics.',
+  });
+  const reviewImages = priorUsers.flatMap(message => imageParts(message.images ?? []));
+  const reviewConversation: ModelMessage[] = priorUsers.length ? [{ role: 'user', content: reviewImages.length
+    ? [{ type: 'text', text: reviewHistory }, ...reviewImages] : reviewHistory }] : [];
   const transcript: ModelMessage[] = [];
   let pending: Array<{ raw: object; id: string; name: string; result?: unknown }> = [];
   return {
@@ -151,8 +162,8 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
           ? Object.fromEntries(Object.entries(tools).filter(([name])=>!options.unavailableTools!.includes(name))) : tools,
         toolChoice: !allowTools ? 'none' as const
           : options.requiredTool ? { type: 'tool' as const, toolName: options.requiredTool } : 'auto' as const,
-        system: options.system + '\nAll prose and presentation instructions apply inside the answer string. The final response must be one JSON object with answer and sourceIds, without Markdown fences or text outside that object.',
-        messages: [...(options.isolated ? conversation.filter(message=>message.role==='user') : conversation), { role: 'user' as const, content: images.length ? [{ type: 'text' as const, text: JSON.stringify(options.context) }, ...imageParts(images)] : JSON.stringify(options.context) }, ...(options.isolated ? options.followUp ? [{role:'user' as const,content:options.followUp}] : [] : transcript)],
+        system: options.system + '\nAll prose and presentation instructions apply inside the answer string. The final response must be one JSON object with answer and sourceIds, without Markdown fences or text outside that object. sourceIds must be an array of source ID strings, even for a single source; use [] when there are none, never a string or null.',
+        messages: [...(options.isolated ? reviewConversation : conversation), { role: 'user' as const, content: images.length ? [{ type: 'text' as const, text: JSON.stringify(options.context) }, ...imageParts(images)] : JSON.stringify(options.context) }, ...(options.isolated ? options.followUp ? [{role:'user' as const,content:options.followUp}] : [] : transcript)],
         ...(openai || deepseek ? { output: Output.object({schema:answerSchema}) } : {}),
         maxOutputTokens: openai ? Math.min(ASSISTANT_OPENAI_MAX_TOKENS, thinking ? options.maxTokens : 4096) : thinking ? options.maxTokens : Math.min(options.maxTokens, 4096), maxRetries: 0, abortSignal: signal,
         ...(thinking || openai ? {} : { temperature: 0 }),

@@ -51,6 +51,10 @@ describe('natural-language formula requests',()=>{
 });
 
 describe('formula follow-ups from the actual shared history',()=>{
+  it('keeps a bare numeric case reference in the previous OLL set',async()=>{
+    const previous=history(oll,{puzzle:'3x3',set:'oll'});
+    expect(await resolveAssistantAlgorithmRequest('57',previous,'zh',load)).toMatchObject({selection:{set:'oll',caseId:3002}});
+  });
   it.each(['那 Ua 呢','Ua','只看第一个case'])('resolves a new case in the previous set: %s',async question=>{
     const previous=question.includes('第') ? history(pll,{puzzle:'3x3',set:'pll'}) : history();
     expect(await resolveAssistantAlgorithmRequest(question,previous,'zh',load)).toMatchObject({selection:{set:'pll',caseId:901}});
@@ -82,6 +86,11 @@ describe('formula follow-ups from the actual shared history',()=>{
     const previous=[...history(),{role:'user' as const,content:'天气怎么样'},{role:'assistant' as const,content:'请提供城市'}];
     expect(await resolveAssistantAlgorithmRequest('继续',previous,'zh',load)).toBeUndefined();
     expect(await resolveAssistantAlgorithmRequest('换一条',[{role:'user',content:history()[1].content}],'zh',load)).toBeUndefined();
+  });
+  it.each(['为我查看我的 WCA 成绩','看看我的参赛记录','给我讲讲概率'])('does not read the previous formula set for a new subject: %s',async question=>{
+    const read=vi.fn(load);
+    expect(await resolveAssistantAlgorithmRequest(question,history(),'zh',read)).toBeUndefined();
+    expect(read).not.toHaveBeenCalled();
   });
   it('a new explicit set takes precedence over old cards',async()=>{
     expect(await resolveAssistantAlgorithmRequest('现在给我 OLL57 的公式',history(),'zh',load)).toMatchObject({selection:{set:'oll',caseId:3002}});

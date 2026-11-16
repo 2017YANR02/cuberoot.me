@@ -581,7 +581,7 @@ export async function answerSiteQuestion(
       maxTokens, round, attempt, ...(requirePhotoTool ? { requiredTool: 'lookup_cube_photo' as const } : {}),
       // Preserve requested deep reasoning on the first pass; repair its JSON or
       // omitted prose from the same verified facts without repeating reasoning.
-      ...(metadataPrefetchComplete && (outputRepair || metadataCompositionRepair) ? {thinking:false} : {}),
+      ...(outputRepair || (metadataPrefetchComplete && metadataCompositionRepair) ? {thinking:false} : {}),
       // Do not offer equality-only tools that the existing scope guard must reject.
       unavailableTools:[...unavailableTools,...(!analysisSchemaRead?['analysis_query']:[]),...(attendanceRequiresAnalysis(attendanceScope)?['person_competitions','person_countries']:[])],
       allowTools: !finalOnly && !outputRepair,
@@ -589,7 +589,7 @@ export async function answerSiteQuestion(
       isolated,
       // A completed assistant message needs a new user turn for a real review;
       // changing an earlier context message alone can merely continue that answer.
-      ...(draftAnswer !== undefined || formatRepair || readFollowUp ? {followUp: [readFollowUp,draftAnswer !== undefined ? (isolated?(metadataPrefetchComplete?JSON.stringify({currentQuestion:question,instruction:'Answer only this current question; earlier questions are context, not additional pending requests.'}):''):JSON.stringify({originalQuestion:question,draftAnswer}))+reviewInstruction : '',formatRepair].filter(Boolean).join('\n')} : {}),
+      ...(draftAnswer !== undefined || formatRepair || readFollowUp ? {followUp: [readFollowUp,draftAnswer !== undefined ? (isolated?JSON.stringify({currentQuestion:question,instruction:'Answer only this current question; earlier questions are context, not additional pending requests.'}):JSON.stringify({originalQuestion:question,draftAnswer}))+reviewInstruction : '',formatRepair].filter(Boolean).join('\n')} : {}),
       ...(emit ? {onText: async (content: string) => {
         const forcedRead = (round === 0 && (requestedReconId || requestedAnnouncements.length))
           || (hasImages && !artifacts.some(a => a.artifact.kind === 'cube-photo'));

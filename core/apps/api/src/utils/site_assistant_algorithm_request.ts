@@ -93,6 +93,7 @@ export async function resolveAssistantAlgorithmRequest(question:string,history:A
     const recent=lastUser ? setsIn(lastUser.content,puzzle ?? '3x3') : [];
     if(recent.length===1)targets=recent;
   }
+  const inheritedTarget=targets.length>0 && !explicit && !perm;
   // Conventional "T 公式" names default to PLL only without another subject.
   if(!targets.length && /(?<![a-z])(?:T|Ua|Ub|Ga|Gb|Gc|Gd|Ja|Jb|Ra|Rb|Na|Nb|Aa|Ab|H|Z|Y|V|F|E)\s*(?:公式|换位|怎么(?:拧|转|做)|如何(?:拧|转|做))|(?:公式|换位)\s*(?:T|Ua|Ub|Ga|Gb|Gc|Gd|Ja|Jb|Ra|Rb|Na|Nb|Aa|Ab|H|Z|Y|V|F|E)(?![a-z])/i.test(text)
     && (!puzzle || puzzle==='3x3'))targets=[{puzzle:'3x3',set:'pll',length:0}];
@@ -114,12 +115,15 @@ export async function resolveAssistantAlgorithmRequest(question:string,history:A
   const priorGroups=previous?.groups.filter(g=>g.puzzle===target.puzzle && g.set===target.set) ?? [];
   const prior=priorGroups.length===1 ? priorGroups[0] : undefined;
   const short=clean(text.replace(/(?:那|呢|吧|吗|的|公式|case|[?？。!！])/gi,''));
+  const implicitCase=!!prior && /^[a-z0-9][a-z0-9+-]{0,11}$/i.test(short);
   const meta=getAlgSetMeta(target.puzzle,target.set);
   const namedCase=explicit && [meta?.slug,meta?.short,meta?.zh,meta?.en].some(name=>name &&
     new RegExp(`^${escape(name)}\\s*(?:的\\s*)?[a-z0-9][a-z0-9+\\-\\s]{0,11}[?？]?$`,'i').test(text));
   // Mentioning a set in a page, glossary or reconstruction question is not a
   // request to fetch its formulas. Keep concise case names such as "PLL T".
-  if(!formula && !want && !contextual && !perm && !namedCase && !(prior && short.length<=12))return;
+  if(!formula && !want && !contextual && !perm && !namedCase && !implicitCase)return;
+  // A display verb alone does not carry the last formula subject into a new request.
+  if(inheritedTarget && !formula && !contextual && !implicitCase)return;
   if(!explicit && !perm && previous && !previous.immediate && !formula && !refer)return;
 
   const data=await load(target.puzzle,target.set);
