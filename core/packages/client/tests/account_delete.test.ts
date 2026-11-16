@@ -198,6 +198,16 @@ describe('清单 ↔ schema', () => {
     expect(SCHEMA_SNAPSHOT_SQL).toMatch(attachmentTable);
   });
 
+  it('持久聊天及工具检查点通过账号和会话外键级联删除', () => {
+    for (const [table, migration] of [['site_assistant_runs','0334_assistant_run_control.sql'], ['site_assistant_conversations','0335_assistant_durable_queue.sql']]) {
+      expect(NOT_USER_OWNED[table]).toContain('级联删除');
+      const owner = new RegExp(`CREATE TABLE ${table}\\s*\\([\\s\\S]*?user_id\\s+BIGINT\\s+NOT NULL\\s+REFERENCES app_users\\(id\\)\\s+ON DELETE CASCADE`);
+      expect(readFileSync(join(SERVER, 'migrations', migration), 'utf8')).toMatch(owner);
+      expect(SCHEMA_SNAPSHOT_SQL).toMatch(owner);
+    }
+    expect(SCHEMA_SNAPSHOT_SQL).toMatch(/CREATE TABLE site_assistant_messages\s*\([\s\S]*?conversation_id\s+UUID\s+NOT NULL\s+REFERENCES site_assistant_conversations\(id\)\s+ON DELETE CASCADE/);
+  });
+
   it('豁免名单里的每张表都存在于受版本控制的 schema 来源', () => {
     for (const table of Object.keys(NOT_USER_OWNED)) {
       expect(SCHEMA.has(table), `豁免表 ${table} 不在 schema snapshot 或 migration 里`).toBe(true);

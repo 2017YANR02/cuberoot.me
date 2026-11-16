@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 
+import { webcrypto } from 'node:crypto';
+import type { AssistantAnswer, AssistantQueueSnapshot } from '@cuberoot/shared/site-assistant';
 import { act, createElement, StrictMode, type AnchorHTMLAttributes, type ReactNode } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -9,7 +11,7 @@ import type { ReconHit } from '@/lib/site-search';
 const searchState = vi.hoisted(() => ({ recons: [] as ReconHit[] }));
 
 const authState = vi.hoisted(() => ({ user: { uid: 66, wcaId: '2017YANR02' } as { uid: number; wcaId: string } | null, login: vi.fn() }));
-vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => authState.user, useAuthStore: { getState: () => authState } }));
+vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => authState.user, getAuthUser: () => authState.user, useAuthStore: { getState: () => authState } }));
 vi.mock('@/lib/admin-api', async original => ({ ...await original<object>(), authHeaders: () => ({ 'Content-Type': 'application/json', Authorization: 'Bearer session-test' }) }));
 
 const routeState = vi.hoisted(() => ({ lang: 'zh' as 'zh' | 'en' }));
@@ -85,7 +87,8 @@ describe('LandingSearch placeholder hydration', () => {
     changeAppLanguage('zh');
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     vi.useFakeTimers();
-    vi.spyOn(crypto, 'randomUUID').mockReturnValue('00000000-0000-4000-8000-000000000066');
+    let serial=0;
+    vi.stubGlobal('crypto', { subtle: webcrypto.subtle, randomUUID: () => `00000000-0000-4000-8000-${String(++serial).padStart(12,'0')}` });
   });
 
   afterEach(() => {
@@ -136,325 +139,169 @@ describe('LandingSearch placeholder hydration', () => {
     }
   });
 
-  it('shares the home draft and attachments, submits once, and retains a background reply when closed', async () => {
-    vi.stubGlobal('matchMedia', vi.fn(() => ({matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn()})));
-    authState.user = { uid: 777, wcaId: '2017YANR02' };
-    const owner = assistantOwner(authState.user);
-    let finish!: (response: Response) => void;
-    const images = [{ mediaType: 'image/png' as const, data: 'dGVzdA==' }];
-    const savedImages = [{ ...images[0], attachmentId: '11111111-1111-4111-8111-111111111111' }];
-    const fetcher = vi.fn((input: RequestInfo | URL) => String(input).endsWith('/site-assistant/attachments')
-      ? Promise.resolve(Response.json(savedImages[0])) : new Promise<Response>(resolve => { finish = resolve; }));
-    vi.stubGlobal('fetch', fetcher);
-    let changes = 0;
-    const unsubscribe = assistantConversations.subscribe(() => { if (++changes > 80) throw new Error('workspace notification loop'); });
-    function SharedSurface() {
-      const state = useAssistantWorkspace(owner);
-      return createElement('div', null,
-        createElement(LandingSearch, { cards: [], lang: 'zh', workspaceEntry: true }),
-        state.opened && state.conversations.map(chat => createElement(AssistantConversationView, {
-          key: chat.id, owner, conversation: chat, active: state.open && state.activeId === chat.id, cards: [], lang: 'zh',
-        })),
-      );
-    }
-    const host = document.createElement('div'); document.body.appendChild(host);
-    const root = createRoot(host);
-    const inputText = async (element: HTMLInputElement | HTMLTextAreaElement, text: string) => act(async () => {
-      const prototype = element instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
-      Object.getOwnPropertyDescriptor(prototype, 'value')!.set!.call(element, text);
-      element.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-    try {
-      await act(async () => root.render(createElement(StrictMode, null, createElement(SharedSurface))));
-      await inputText(host.querySelector('input[aria-label="全站搜索"]')!, 'WIC');
-      await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="添加"]')!.click());
-      await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="图片提问"]')!.click());
-      const chatId = assistantConversations.read(owner).activeId;
-      expect(host.querySelector<HTMLTextAreaElement>('textarea[aria-label="继续提问"]')!.value).toBe('WIC');
-      await inputText(host.querySelector('textarea[aria-label="继续提问"]')!, '解释 WIC');
-      await act(async () => {
-        assistantConversations.patch(owner, chatId, { images });
-        assistantConversations.setOpen(owner, false);
-      });
-      expect(host.querySelector<HTMLInputElement>('input[aria-label="全站搜索"]')!.value).toBe('解释 WIC');
-      await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="提问"]')!.click());
-      expect(fetcher).toHaveBeenCalledTimes(2);
-      const calls = fetcher.mock.calls as unknown as [string, RequestInit][];
-      expect(String(calls[0][0])).toContain('/site-assistant/attachments');
-      expect(JSON.parse(calls[0][1].body as string)).toMatchObject({ conversationId: chatId, image: images[0] });
-      const body = JSON.parse(calls[1][1].body as string);
-      expect(body).toMatchObject({ question: '解释 WIC', images: savedImages });
-      await inputText(host.querySelector('textarea[aria-label="继续提问"]')!, '下一问');
-      await act(async () => assistantConversations.setOpen(owner, false));
-      await act(async () => {
-        assistantConversations.create(owner, 'other-chat');
-        assistantConversations.setOpen(owner, true);
-      });
-      await act(async () => finish(Response.json({ answer: '廉政委员会', sources: [] }, {headers: {'X-Assistant-Request-Id': 'background-reveal'}})));
-      // Paint acknowledgement is inside Markdown's Suspense boundary. Its real
-      // module load must settle before advancing the fake animation-frame clock.
-      await act(async () => { await import('react-markdown'); });
-      const background = () => assistantConversations.read(owner).conversations.find(chat => chat.id === chatId)!;
-      expect(background().responding).toBe('writing');
-      expect(background().unreadReply).not.toBe(true);
-      for (let i = 0; i < 40 && !background().unreadReply; i++) {
-        await act(async () => { await vi.advanceTimersByTimeAsync(25); });
+  // Exercise the actual queue HTTP client. Only the server is simulated; POST
+  // receipts and GET snapshots are separate, as they are in production.
+  function queueServer(answer?: AssistantAnswer) {
+    let snapshot: AssistantQueueSnapshot = { conversationId: '', revision: 0, paused: false, recovering: false, messages: [] };
+    let disconnected = false;
+    let rejection: {error: string; status: number} | undefined;
+    const posts: Array<{url:string; init:RequestInit; body: {id:string; mode:'steer'|'queue'; input: import('@cuberoot/shared/site-assistant').AssistantDurableInput}}> = [];
+    const fetcher=vi.fn(async (input: RequestInfo|URL, init: RequestInit = {}) => {
+      const url=String(input), match=/\/conversations\/([^/?]+)(?:\/(messages|stop|resume))?/.exec(url);
+      if(url.endsWith('/events')) return Response.json({ok:true});
+      if(url.endsWith('/attachments')) return Response.json({mediaType:'image/png',data:'dGVzdA==',attachmentId:'11111111-1111-4111-8111-111111111111'});
+      if(!match) throw new Error(`Unexpected fixture request: ${url}`);
+      snapshot.conversationId=match[1];
+      if(match[2]==='messages') {
+        const body=JSON.parse(String(init.body)); posts.push({url,init,body});
+        if(rejection)return Response.json({error:rejection.error},{status:rejection.status});
+        const targetId=snapshot.activeId;
+        snapshot.messages.push({id:body.id,sequence:posts.length,mode:body.mode,input:body.input,
+          state:targetId?'applied':answer?'completed':'running',...(targetId?{targetId}:{}),
+          answer:targetId?undefined:answer,progress:[],attempts:1,createdAt:Date.now(),updatedAt:Date.now(),requestId:body.id});
+        if(!targetId && !answer)snapshot.activeId=body.id;
+        snapshot.revision++;
+        return Response.json({id:body.id},{status:202});
       }
-      expect(background().responding).toBeUndefined();
-      expect(background().unreadReply).toBe(true);
-      expect(assistantConversations.read(owner).activeId).toBe('other-chat');
-      await act(async () => assistantConversations.select(owner, chatId));
-      expect(background().unreadReply).toBe(false);
-      const saved = assistantConversations.read(owner).conversations.find(chat => chat.id === chatId)!;
-      expect(saved.snapshot.draft).toBe('下一问');
-      expect(saved.snapshot.turns.at(-1)?.result?.answer).toBe('廉政委员会');
-      expect(saved.snapshot.turns.at(-1)?.images).toEqual(savedImages);
-      expect(fetcher.mock.calls.filter(([url])=>!String(url).endsWith('/events'))).toHaveLength(2);
-      expect(fetcher.mock.calls.filter(([url])=>String(url).endsWith('/events'))).toHaveLength(1);
-      expect(changes).toBeLessThan(80);
-    } finally { unsubscribe(); await act(async () => root.unmount()); host.remove(); }
-  });
-
-  it('consumes a queued homepage submission once when the workspace first mounts in StrictMode', async () => {
-    authState.user = { uid: 778, wcaId: '2017YANR02' };
-    const owner = assistantOwner(authState.user);
-    assistantConversations.create(owner, 'cold-chat');
-    assistantConversations.submit(owner, 'cold-chat', '首次提问', []);
-    const fetcher = vi.fn().mockResolvedValue(Response.json({ answer: '已收到', sources: [] }));
-    vi.stubGlobal('fetch', fetcher);
-    function Workspace() {
-      const state = useAssistantWorkspace(owner);
-      return createElement(AssistantConversationView, { owner, conversation: state.conversations[0], active: true, lang: 'zh', cards: [] });
-    }
-    const host = document.createElement('div'); document.body.appendChild(host); const root = createRoot(host);
-    try {
-      await act(async () => root.render(createElement(StrictMode, null, createElement(Workspace))));
-      expect(fetcher).toHaveBeenCalledTimes(1);
-      expect(fetcher.mock.calls[0][1].signal.aborted).toBe(false);
-      expect(assistantConversations.read(owner).conversations[0].snapshot.turns.at(-1)?.result?.answer).toBe('已收到');
-    } finally { await act(async () => root.unmount()); host.remove(); }
-  });
-
-  it('only asks on submission, ignores IME Enter and renders a real source link', async () => {
-    const fetcher = vi.fn().mockResolvedValue(Response.json({ answer: '打开数帧页面。', sources: [{ id: 'frame-count', title: '数帧', href: '/frame-count', read: true }] }));
-    vi.stubGlobal('fetch', fetcher);
-    const host = document.createElement('div');
-    document.body.appendChild(host);
-    const root = createRoot(host);
-    await act(async () => { root.render(createElement(LandingSearch, { cards: [], lang: 'zh', query: '视频怎么数帧', persistentResults: true })); });
-    const input = host.querySelector('input')!;
-    expect(fetcher).not.toHaveBeenCalled();
-    await act(async () => { input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true })); });
-    expect(fetcher).not.toHaveBeenCalled();
-    await act(async () => { input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
-    expect(fetcher).toHaveBeenCalledTimes(1);
-    expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer session-test');
-    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ conversationId: '00000000-0000-4000-8000-000000000066', question: '视频怎么数帧', lang: 'zh', provider: 'bailian', thinking: 'auto', timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone, history: [] });
-    // The dialog and its controls render immediately; formatting arrives in its own chunk.
-    await act(async () => { await import('react-markdown'); });
-    expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('打开数帧页面。数帧');
-    expect(host.textContent).not.toContain('未找到匹配项');
-    expect(document.querySelector('.site-assistant-prose a.site-assistant-citation')?.getAttribute('href')).toBe('/zh/frame-count');
-    await act(async () => root.unmount());
-    host.remove();
-  });
-
-  it('shows live stages and inline citations before completion, then retains stopped text', async () => {
-    let stream!: ReadableStreamDefaultController<Uint8Array>;
-    const fetcher=vi.fn().mockResolvedValue(new Response(new ReadableStream<Uint8Array>({start(c){stream=c;}}), {headers:{'Content-Type':'text/event-stream'}}));
-    vi.stubGlobal('fetch',fetcher);
-    const host=document.createElement('div'); document.body.appendChild(host);
-    const root=createRoot(host);
-    const emit=async (event:unknown)=>{await act(async()=>{stream.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`));});};
-    try {
-      await act(async()=>{root.render(createElement(LandingSearch,{cards:[],lang:'zh',query:'怎么数帧',persistentResults:true}));});
-      await act(async()=>{host.querySelector('input')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));});
-      expect(fetcher.mock.calls[0][1].headers.Accept).toBe('text/event-stream');
-      await emit({type:'status',status:{phase:'querying',tool:'pages'}});
-      expect(document.querySelector('.site-assistant-progress-heading [role="status"]')?.textContent).toContain('正在查询站内页面');
-      const sources=[{id:'page:/frame-count',href:'/frame-count',title:'数帧',read:true},{id:'unsafe',href:'//evil.test',title:'unsafe',read:true}];
-      await emit({type:'answer',answer:'第一句。 [[page:/frame-',sources});
-      expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('第一句。');
-      await emit({type:'answer',answer:'第一句。 [[page:/frame-count]] 第二句。 [[unsafe]] [[unknown]]',sources});
-      const prose=document.querySelector('.site-assistant-prose')!;
-      expect(prose.textContent).toBe('第一句。 数帧 第二句。');
-      expect(prose.querySelectorAll('a')).toHaveLength(1);
-      expect(prose.querySelector('a')?.getAttribute('href')).toBe('/zh/frame-count');
-      expect(document.querySelector('.site-assistant-sources')).toBeNull();
-      await act(async()=>{(document.querySelector('button[title="停止"]') as HTMLButtonElement).click();});
-      expect(fetcher.mock.calls[0][1].signal.aborted).toBe(true);
-      expect(document.querySelector('.site-assistant-incomplete')?.textContent).toBe('回答未完成');
-      expect(document.querySelector('.site-assistant-progress')).toBeNull();
-      await emit({type:'done',result:{answer:'late replacement',sources:[]}});
-      expect(prose.textContent).not.toContain('late replacement');
-    } finally { await act(async()=>root.unmount()); host.remove(); }
-  });
-
-  it('keeps retrieved web sources through the request boundary and persists thinking choice',async()=>{
-    localStorage.setItem('cuberoot.assistant.thinking','deep');
-    const fetcher=vi.fn().mockImplementation(async()=>Response.json({answer:'查到的资料。 [[external]]',sources:[{id:'external',title:'来源',href:'https://docs.example.org/reference',read:true}]}));
-    vi.stubGlobal('fetch',fetcher);
-    const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host);
-    try {
-      await act(async()=>root.render(createElement(LandingSearch,{cards:[],lang:'zh',query:'a'.repeat(1200),persistentResults:true})));
-      await act(async()=>host.querySelector<HTMLButtonElement>('button[aria-label="提问"]')!.click());
-      expect(JSON.parse(fetcher.mock.calls[0][1].body)).toMatchObject({thinking:'deep',question:'a'.repeat(1200)});
-      expect(document.querySelector('a[href="https://docs.example.org/reference"]')).not.toBeNull();
-      expect(document.querySelector('button[aria-label="思考模式"]')?.textContent).toContain('深入思考');
-      await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="思考模式"]')!.click());
-      await act(async()=>Array.from(document.querySelectorAll<HTMLButtonElement>('[role="option"]')).find(option=>option.textContent==='快速回答')!.click());
-      expect(localStorage.getItem('cuberoot.assistant.thinking')).toBe('fast');
-      await act(async()=>document.querySelector<HTMLButtonElement>('button[title="新对话"]')!.click());
-      expect(document.querySelector('button[aria-label="思考模式"]')?.textContent).toContain('快速回答');
-    } finally {await act(async()=>root.unmount());host.remove();}
-  });
-
-  it('reports a dropped stream and keeps the partial answer visibly incomplete', async () => {
-    const payload='data: '+JSON.stringify({type:'answer',answer:'已收到的内容',sources:[]})+'\n\n';
-    vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response(payload,{headers:{'Content-Type':'text/event-stream'}})));
-    const host=document.createElement('div'); document.body.appendChild(host); const root=createRoot(host);
-    try {
-      await act(async()=>{root.render(createElement(LandingSearch,{cards:[],lang:'zh',query:'怎么数帧',persistentResults:true}));});
-      await act(async()=>{host.querySelector('input')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));});
-      expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('已收到的内容');
-      expect(document.querySelector('[role="alert"]')?.textContent).toContain('连接中断');
-      expect(document.querySelector('.site-assistant-incomplete')?.textContent).toBe('回答未完成');
-    } finally {await act(async()=>root.unmount());host.remove();}
-  });
-
-  it('retains an earlier card selection while the next answer streams',async()=>{
-    let stream!:ReadableStreamDefaultController<Uint8Array>,requests=0;
-    const original="R U R'",selected="R U2 R'",sticker={kind:'raw',tag:'',attrs:{}};
-    const first={answer:'T 公式',sources:[],artifacts:[{kind:'algorithms',version:1,title:'PLL',puzzle:'3x3',set:'pll',display:'text',offset:0,total:1,
-      cards:[{caseId:1,name:'T',puzzle:'3x3',set:'pll',href:'/alg/3x3/pll#T',alg:original,sticker,alternative:0,alternativeCount:2}]}]};
-    const fetcher=vi.fn().mockImplementation(async(input:RequestInfo|URL)=>{
-      if(String(input).includes('/alg/sets/'))return Response.json({puzzle:'3x3',set:'pll',cases:[{id:1,name:'T',sticker,algs:[[{alg:original},{alg:selected}]]}]});
-      requests++;
-      return requests===1 ? Response.json(first) : new Response(new ReadableStream<Uint8Array>({start(c){stream=c;}}),{headers:{'Content-Type':'text/event-stream'}});
+      if(match[2]==='stop') {snapshot.paused=true;snapshot.messages.forEach(message=>{if(message.state==='running')message.state='stopped';});snapshot.activeId=undefined;snapshot.revision++;}
+      if(match[2]==='resume') {snapshot.paused=false;const message=snapshot.messages.find(message=>message.state==='stopped');if(message){message.state='running';snapshot.activeId=message.id;}snapshot.revision++;}
+      if(disconnected && !match[2])throw new TypeError('offline');
+      return Response.json(snapshot);
     });
     vi.stubGlobal('fetch',fetcher);
+    return {fetcher,posts,get snapshot(){return snapshot;},set disconnected(value:boolean){disconnected=value;},reject(error:string,status:number){rejection={error,status};},
+      async update(change:(snapshot:AssistantQueueSnapshot)=>void){change(snapshot);snapshot.revision++;await act(async()=>{await vi.advanceTimersByTimeAsync(1000);});}};
+  }
+  // Node's real WebCrypto digest finishes outside the fake clock.
+  async function settle() { await act(async()=>{for(let i=0;i<12;i++)await new Promise<void>(resolve=>{void import('node:timers').then(({setImmediate})=>setImmediate(resolve));});}); }
+  async function mountChat(query='怎么数帧') {
     const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host);
-    const emit=async(event:unknown)=>act(async()=>stream.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`)));
+    await act(async()=>root.render(createElement(LandingSearch,{cards:[],lang:'zh',query,persistentResults:true})));
+    return {host,root,async submit(){await act(async()=>host.querySelector<HTMLButtonElement>('button[aria-label="提问"]')!.click());await settle();},async close(){await act(async()=>root.unmount());host.remove();}};
+  }
+  async function click(selector:string) {await act(async()=>document.querySelector<HTMLButtonElement>(selector)!.click());await settle();}
+  async function type(selector:string,text:string) {await act(async()=>{const element=document.querySelector<HTMLInputElement|HTMLTextAreaElement>(selector)!;const prototype=element instanceof HTMLTextAreaElement?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(prototype,'value')!.set!.call(element,text);element.dispatchEvent(new Event('input',{bubbles:true}));});}
+
+  it('only submits once after IME composition and renders the durable answer with a real source link',async()=>{
+    const server=queueServer({answer:'打开数帧页面。',sources:[{id:'frame-count',title:'数帧',href:'/frame-count',read:true}]});
+    const chat=await mountChat('视频怎么数帧');
     try {
-      await act(async()=>root.render(createElement(LandingSearch,{cards:[],lang:'zh',query:'展示 T 公式',persistentResults:true})));
-      await act(async()=>host.querySelector<HTMLButtonElement>('button[aria-label="提问"]')!.click());
-      const textarea=document.querySelector<HTMLTextAreaElement>('textarea[aria-label="继续提问"]')!;
-      await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(textarea,'继续讲解');textarea.dispatchEvent(new Event('input',{bubbles:true}));});
-      await act(async()=>document.querySelector('.site-assistant-compose')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
-      await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="更换 T 公式"]')!.click());
-      expect(document.querySelector('.assistant-algorithms')?.textContent).toContain(selected);
-      await emit({type:'answer',answer:'正在讲解',sources:[]});
-      await emit({type:'done',result:{answer:'讲解完成',sources:[]}});
-      expect(document.querySelector('.assistant-algorithms')?.textContent).toContain(selected);
+      expect(server.posts).toHaveLength(0);
+      await act(async()=>chat.host.querySelector('input')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',isComposing:true,bubbles:true})));
+      expect(server.posts).toHaveLength(0);
+      await act(async()=>chat.host.querySelector('input')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));await settle();
+      expect(server.posts).toHaveLength(1);
+      expect(server.posts[0].init.headers).toMatchObject({Authorization:'Bearer session-test'});
+      expect(server.posts[0].body).toMatchObject({mode:'steer',input:{question:'视频怎么数帧',lang:'zh',provider:'bailian',thinking:'auto',history:[]}});
+      await act(async()=>{await import('react-markdown');});
+      expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('打开数帧页面。数帧');
+      expect(document.querySelector('.site-assistant-citation')?.getAttribute('href')).toBe('/zh/frame-count');
+    } finally {await chat.close();}
+  });
+
+  it('shares drafts and saved images, consumes a homepage submission once in StrictMode, and retains its background reply',async()=>{
+    vi.stubGlobal('matchMedia',vi.fn(()=>({matches:false,addEventListener:vi.fn(),removeEventListener:vi.fn()})));
+    authState.user={uid:777,wcaId:'2017YANR02'};const owner=assistantOwner(authState.user);const server=queueServer();
+    function Surface(){const state=useAssistantWorkspace(owner);return createElement('div',null,createElement(LandingSearch,{cards:[],lang:'zh',workspaceEntry:true}),state.opened&&state.conversations.map(chat=>createElement(AssistantConversationView,{key:chat.id,owner,conversation:chat,active:state.open&&state.activeId===chat.id,cards:[],lang:'zh'})));}
+    const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host);let changes=0;
+    const unsubscribe=assistantConversations.subscribe(()=>{if(++changes>100)throw Error('workspace notification loop');});
+    try {
+      await act(async()=>root.render(createElement(StrictMode,null,createElement(Surface))));
+      await type('input[aria-label="全站搜索"]','WIC');await click('button[aria-label="添加"]');await click('button[aria-label="图片提问"]');
+      const chatId=assistantConversations.read(owner).activeId;
+      expect(document.querySelector<HTMLTextAreaElement>('textarea[aria-label="继续提问"]')?.value).toBe('WIC');
+      await type('textarea[aria-label="继续提问"]','解释 WIC');
+      await act(async()=>{assistantConversations.patch(owner,chatId,{images:[{mediaType:'image/png',data:'dGVzdA=='}]});assistantConversations.setOpen(owner,false);});
+      expect(host.querySelector<HTMLInputElement>('input[aria-label="全站搜索"]')?.value).toBe('解释 WIC');
+      await click('button[aria-label="提问"]');
+      expect(server.posts).toHaveLength(1);expect(server.posts[0].body.input).toMatchObject({question:'解释 WIC',images:[{attachmentId:'11111111-1111-4111-8111-111111111111'}]});
+      await type('textarea[aria-label="继续提问"]','下一问');
+      await act(async()=>{assistantConversations.setOpen(owner,false);assistantConversations.create(owner,'other-chat');assistantConversations.setOpen(owner,true);});
+      await server.update(snapshot=>{snapshot.activeId=undefined;Object.assign(snapshot.messages[0],{state:'completed',answer:{answer:'廉政委员会',sources:[]}});});
+      await act(async()=>{await import('react-markdown');});
+      const original=()=>assistantConversations.read(owner).conversations.find(chat=>chat.id===chatId)!;
+      for(let i=0;i<40&&!original().unreadReply;i++)await act(async()=>{await vi.advanceTimersByTimeAsync(25);});
+      expect(original().snapshot.draft).toBe('下一问');expect(original().snapshot.turns[0].result?.answer).toBe('廉政委员会');
+      expect(original().unreadReply).toBe(true);expect(assistantConversations.read(owner).activeId).toBe('other-chat');expect(server.posts).toHaveLength(1);
+      await act(async()=>assistantConversations.select(owner,chatId));expect(original().unreadReply).toBe(false);
+    }finally{unsubscribe();await act(async()=>root.unmount());host.remove();}
+  });
+
+  it('renders live progress and partial citations, accepts consecutive updates, and stops and resumes the same task',async()=>{
+    const server=queueServer();const chat=await mountChat();
+    try {
+      await chat.submit();
+      await server.update(snapshot=>{snapshot.messages[0].progress=[{id:1,phase:'tool',state:'complete',tool:'pages',elapsedMs:12}];snapshot.messages[0].answer={answer:'第一句。 [[page]] [[unsafe]]',sources:[{id:'page',title:'数帧',href:'/frame-count',read:true},{id:'unsafe',title:'unsafe',href:'//evil.test',read:true}]};});
+      expect(document.querySelector('.site-assistant-prose')?.textContent).toContain('第一句。');expect(document.querySelectorAll('.site-assistant-prose a')).toHaveLength(1);
+      for(const question of ['只讲操作','最后用两行']) {await type('textarea[aria-label="继续提问"]',question);await act(async()=>document.querySelector('.site-assistant-compose')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));await settle();}
+      expect(server.posts.map(post=>post.body.input.question)).toEqual(['怎么数帧','只讲操作','最后用两行']);
+      expect(server.snapshot.messages.slice(1).every(message=>message.targetId===server.posts[0].body.id)).toBe(true);
+      await click('button[aria-label="停止"]');expect(server.snapshot.paused).toBe(true);expect(document.body.textContent).toContain('回答未完成');
+      await act(async()=>Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find(button=>button.textContent==='恢复执行')!.click());await settle();expect(server.snapshot.paused).toBe(false);expect(server.posts).toHaveLength(3);
+      await server.update(snapshot=>{snapshot.activeId=undefined;Object.assign(snapshot.messages[0],{state:'completed',answer:{answer:'第一行\n第二行',sources:[]},updatedAt:Date.now()});});
+      expect(document.querySelector('.site-assistant-prose')?.textContent).toContain('第一行');
+    }finally{await chat.close();}
+  });
+
+  it('keeps partial output through a polling outage and recovers without resubmitting',async()=>{
+    const server=queueServer();const chat=await mountChat();
+    try {await chat.submit();await server.update(snapshot=>{snapshot.messages[0].answer={answer:'已收到的内容',sources:[]};});
+      server.disconnected=true;await server.update(()=>{});expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('已收到的内容');
+      expect(server.snapshot.messages[0].state).toBe('running');server.disconnected=false;
+      await server.update(snapshot=>{snapshot.activeId=undefined;Object.assign(snapshot.messages[0],{state:'completed',answer:{answer:'恢复后的完整回答',sources:[]},updatedAt:Date.now()});});
+      expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('恢复后的完整回答');expect(server.posts).toHaveLength(1);
+    }finally{await chat.close();}
+  });
+
+  it('consumes an already queued homepage submission once on a cold StrictMode mount',async()=>{
+    authState.user={uid:778,wcaId:'2017YANR02'};const owner=assistantOwner(authState.user);
+    assistantConversations.create(owner,'cold-chat');assistantConversations.submit(owner,'cold-chat','首次提问',[]);
+    const server=queueServer({answer:'已收到',sources:[]});
+    function Workspace(){const state=useAssistantWorkspace(owner);return createElement(AssistantConversationView,{owner,conversation:state.conversations[0],active:true,lang:'zh',cards:[]});}
+    const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host);
+    try{await act(async()=>root.render(createElement(StrictMode,null,createElement(Workspace))));await settle();
+      expect(server.posts).toHaveLength(1);expect(server.posts[0].init.signal?.aborted).toBe(false);
+      expect(assistantConversations.read(owner).conversations[0].snapshot.turns[0].result?.answer).toBe('已收到');
+    }finally{await act(async()=>root.unmount());host.remove();}
+  });
+
+  it('retains an earlier card selection while subsequent queue snapshots arrive',async()=>{
+    const original="R U R'",selected="R U2 R'",sticker={kind:'raw' as const,tag:'',attrs:{}};
+    const server=queueServer({answer:'T 公式',sources:[],artifacts:[{kind:'algorithms',version:1,title:'PLL',puzzle:'3x3',set:'pll',display:'text',offset:0,total:1,cards:[{caseId:1,name:'T',puzzle:'3x3',set:'pll',href:'/alg/3x3/pll#T',alg:original,sticker,alternative:0,alternativeCount:2}]}]});
+    vi.stubGlobal('fetch',(input:RequestInfo|URL,init?:RequestInit)=>String(input).includes('/alg/sets/')?Promise.resolve(Response.json({puzzle:'3x3',set:'pll',cases:[{id:1,name:'T',sticker,algs:[[{alg:original},{alg:selected}]]}]})):server.fetcher(input,init));
+    const chat=await mountChat('展示 T 公式');
+    try{await chat.submit();await click('button[aria-label="更换 T 公式"]');expect(document.querySelector('.assistant-algorithms')?.textContent).toContain(selected);
+      await type('textarea[aria-label="继续提问"]','继续讲解');await act(async()=>document.querySelector('.site-assistant-compose')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));await settle();
+      expect(server.posts).toHaveLength(2);expect(document.querySelector('.assistant-algorithms')?.textContent).toContain(selected);
       expect(document.querySelector('.assistant-algorithms')?.textContent).toContain('公式 2/2');
-      expect(document.querySelectorAll('.site-assistant-turn')).toHaveLength(2);
-      expect(requests).toBe(2);
-    } finally {await act(async()=>root.unmount());host.remove();}
+    }finally{await chat.close();}
   });
 
-  it('regenerates and edits the latest question without feeding its old answer into history', async () => {
-    const fetcher=vi.fn().mockImplementation(async()=>Response.json({answer:'回答',sources:[]}));vi.stubGlobal('fetch',fetcher);
-    const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host);
-    const click=async(selector:string)=>{await act(async()=>{(document.querySelector(selector) as HTMLButtonElement).click();});};
-    try {
-      await act(async()=>root.render(createElement(LandingSearch,{cards:[],lang:'zh',query:'第一问',persistentResults:true})));
-      await click('button[aria-label="提问"]');
-      await click('button[aria-label="重试"]');
-      expect(JSON.parse(fetcher.mock.calls[1][1].body)).toEqual({conversationId:'00000000-0000-4000-8000-000000000066',question:'第一问',lang:'zh',provider:'bailian',thinking:'auto',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
-      expect(document.querySelectorAll('.site-assistant-turn')).toHaveLength(1);
-      await click('button[title="编辑问题"]');
-      const textarea=document.querySelector('textarea[aria-label="编辑问题"]') as HTMLTextAreaElement;
-      await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(textarea,'改过的问题');textarea.dispatchEvent(new Event('input',{bubbles:true}));});
-      await act(async()=>{document.querySelector('.site-assistant-edit')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));});
-      expect(JSON.parse(fetcher.mock.calls[2][1].body)).toEqual({conversationId:'00000000-0000-4000-8000-000000000066',question:'改过的问题',lang:'zh',provider:'bailian',thinking:'auto',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
-      expect(document.querySelector('.site-assistant-question h3')?.textContent).toBe('改过的问题');
-      expect(document.querySelectorAll('.site-assistant-turn')).toHaveLength(1);
-    } finally {await act(async()=>root.unmount());host.remove();}
+  it('preserves thinking choice and validated external sources',async()=>{
+    localStorage.setItem('cuberoot.assistant.thinking','deep');const server=queueServer({answer:'查到的资料。 [[external]]',sources:[{id:'external',title:'来源',href:'https://docs.example.org/reference',read:true}]});const chat=await mountChat('a'.repeat(1200));
+    try{await chat.submit();expect(server.posts[0].body.input).toMatchObject({thinking:'deep',question:'a'.repeat(1200)});expect(document.querySelector('a[href="https://docs.example.org/reference"]')).not.toBeNull();
+      await click('button[aria-label="思考模式"]');await act(async()=>Array.from(document.querySelectorAll<HTMLButtonElement>('[role="option"]')).find(option=>option.textContent==='快速回答')!.click());expect(localStorage.getItem('cuberoot.assistant.thinking')).toBe('fast');
+    }finally{await chat.close();}
   });
 
-  it('keeps a composer draft on close, renders safe rich text and copies the answer with data', async () => {
-    const answer={answer:'## 练习\n\n- **逐帧**查看 [[page]]\n- 慢放\n\n[不可信](https://evil.test) <script>bad()</script>',sources:[{id:'page',title:'数帧',href:'/frame-count',read:true}],artifacts:[{kind:'table',title:'数据',columns:['项目','成绩'],rows:[['三阶','5.00']]}]};
-    vi.stubGlobal('fetch',vi.fn().mockImplementation(async()=>Response.json(answer)));
-    const writeText=vi.fn().mockResolvedValue(undefined);vi.stubGlobal('navigator',{...navigator,clipboard:{writeText}});
-    const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host);
-    const click=async(selector:string)=>{await act(async()=>{(document.querySelector(selector) as HTMLButtonElement).click();});};
-    try {
-      await act(async()=>root.render(createElement(LandingSearch,{cards:[],lang:'zh',query:'数帧',persistentResults:true})));
-      await click('button[aria-label="提问"]');
-      expect(document.querySelector('.site-assistant-prose h2')?.textContent).toBe('练习');
-      expect(document.querySelectorAll('.site-assistant-prose li')).toHaveLength(2);
-      expect(document.querySelectorAll('.site-assistant-prose a')).toHaveLength(1);
-      expect(document.querySelector('.site-assistant-prose script')).toBeNull();
-      await click('button[aria-label="复制"]');
-      expect(writeText.mock.calls[0][0]).toContain('项目\t成绩\n三阶\t5.00');
-      expect(writeText.mock.calls[0][0]).toContain('[数帧](');
-      const textarea=document.querySelector('textarea[aria-label="继续提问"]') as HTMLTextAreaElement;
-      await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(textarea,'尚未发送');textarea.dispatchEvent(new Event('input',{bubbles:true}));});
-      await click('button[title="关闭"]');
-      expect(document.querySelector('.landing-search-answer-text')?.textContent).not.toContain('[[page]]');
-      await click('button[aria-label="提问"]');
-      expect((document.querySelector('textarea[aria-label="继续提问"]') as HTMLTextAreaElement).value).toBe('尚未发送');
-      await click('button[title="全屏"]');
-      expect(document.querySelector('.site-assistant-dialog')?.classList.contains('is-expanded')).toBe(true);
-      const messages=document.querySelector('.site-assistant-messages')!;
-      Object.defineProperties(messages,{scrollHeight:{value:2000,configurable:true},clientHeight:{value:500,configurable:true},scrollTop:{value:0,writable:true,configurable:true}});
-      await act(async()=>messages.dispatchEvent(new Event('scroll',{bubbles:true})));
-      await click('button[title="回到最新消息"]');
-      expect(messages.scrollTop).toBe(2000);
-      await click('button[title="新对话"]');
-      expect((document.querySelector('textarea[aria-label="继续提问"]') as HTMLTextAreaElement).value).toBe('');
-    } finally {await act(async()=>root.unmount());host.remove();}
+  it('keeps a composer draft, safe rich text and copied table data when closing and reopening',async()=>{
+    queueServer({answer:'## 练习\n\n- **逐帧**查看 [[page]]\n- 慢放\n\n[不可信](https://evil.test) <script>bad()</script>',sources:[{id:'page',title:'数帧',href:'/frame-count',read:true}],artifacts:[{kind:'table',title:'数据',columns:['项目','成绩'],rows:[['三阶','5.00']]}]});
+    const writeText=vi.fn().mockResolvedValue(undefined);vi.stubGlobal('navigator',{...navigator,clipboard:{writeText}});const chat=await mountChat();
+    try{await chat.submit();expect(document.querySelector('.site-assistant-prose h2')?.textContent).toBe('练习');expect(document.querySelectorAll('.site-assistant-prose li')).toHaveLength(2);expect(document.querySelectorAll('.site-assistant-prose a')).toHaveLength(1);expect(document.querySelector('.site-assistant-prose script')).toBeNull();
+      await click('button[aria-label="复制"]');expect(writeText.mock.calls[0][0]).toContain('项目\t成绩\n三阶\t5.00');
+      await type('textarea[aria-label="继续提问"]','尚未发送');await click('button[title="关闭"]');await chat.submit();expect(document.querySelector<HTMLTextAreaElement>('textarea[aria-label="继续提问"]')?.value).toBe('尚未发送');
+      await click('button[title="全屏"]');expect(document.querySelector('.site-assistant-dialog')?.classList.contains('is-expanded')).toBe(true);
+      await click('button[title="新对话"]');expect(document.querySelector<HTMLTextAreaElement>('textarea[aria-label="继续提问"]')?.value).toBe('');
+    }finally{await chat.close();}
   });
 
-  it('keeps anonymous questions out of the paid API', async () => {
-    authState.user = null;
-    const fetcher = vi.fn(); vi.stubGlobal('fetch', fetcher);
-    const host = document.createElement('div'); document.body.appendChild(host);
-    const root = createRoot(host);
-    try {
-      await act(async () => { root.render(createElement(LandingSearch, { cards: [], lang: 'zh', query: '世界纪录', persistentResults: true })); });
-      await act(async () => { host.querySelector('button[aria-label="提问"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
-      expect(fetcher).not.toHaveBeenCalled();
-      expect(document.body.textContent).toContain('登录后继续聊天');
-      expect(host.querySelector('input')?.value).toBe('世界纪录');
-    } finally { await act(async () => root.unmount()); host.remove(); }
+  it('keeps anonymous questions out of the API',async()=>{
+    authState.user=null;const server=queueServer();const chat=await mountChat('世界纪录');
+    try{await chat.submit();expect(server.fetcher).not.toHaveBeenCalled();expect(document.body.textContent).toContain('请先登录并绑定 WCA 账号');expect(chat.host.querySelector('input')?.value).toBe('世界纪录');}finally{await chat.close();}
   });
-
-  it('cancels stale questions when the user edits and keeps regular search on provider failure', async () => {
-    let resolve!: (value: unknown) => void;
-    const fetcher = vi.fn().mockImplementationOnce(() => new Promise(done => { resolve = done; }))
-      .mockResolvedValueOnce(Response.json({ error: 'model_unavailable' }, { status: 503 }));
-    vi.stubGlobal('fetch', fetcher);
-    const host = document.createElement('div');
-    document.body.appendChild(host);
-    const root = createRoot(host);
-    const props = { cards: [], lang: 'zh' as const, persistentResults: true };
-    await act(async () => { root.render(createElement(LandingSearch, { ...props, query: '旧问题' })); });
-    await act(async () => { host.querySelector('button[aria-label="提问"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
-    const signal = fetcher.mock.calls[0][1].signal;
-    await act(async () => { root.render(createElement(LandingSearch, { ...props, query: '新问题' })); });
-    expect(signal.aborted).toBe(true);
-    await act(async () => { resolve({ ok: true, json: async () => ({ answer: '过期回答', sources: [] }) }); });
-    expect(host.textContent).not.toContain('过期回答');
-    await act(async () => { host.querySelector('button[aria-label="提问"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
-    expect(document.body.textContent).toContain('暂时无法回答');
-    expect(host.querySelector('input')?.value).toBe('新问题');
-    await act(async () => root.unmount());
-    host.remove();
-  });
-
-  it('explains the site-wide daily quota without clearing the search query', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ error: 'daily_limit' }, { status: 429 })));
-    const host = document.createElement('div');
-    document.body.appendChild(host);
-    const root = createRoot(host);
-    await act(async () => { root.render(createElement(LandingSearch, { cards: [], lang: 'zh', query: '世界纪录', persistentResults: true })); });
-    await act(async () => { host.querySelector('button[aria-label="提问"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
-    expect(document.body.textContent).toContain('全站今日 1000 次提问额度已用完');
-    expect(document.body.textContent).toContain('北京时间零点恢复');
-    expect(host.querySelector('input')?.value).toBe('世界纪录');
-    await act(async () => root.unmount());
-    host.remove();
+  it.each([['daily_limit',429,'全站今日 1000 次提问额度已用完'],['model_unavailable',503,'暂时无法回答']] as const)('preserves the search query on %s rejection',async(error,status,text)=>{
+    const server=queueServer();server.reject(error,status);const chat=await mountChat('世界纪录');
+    try{await chat.submit();expect(document.body.textContent).toContain(text);expect(chat.host.querySelector('input')?.value).toBe('世界纪录');expect(server.posts).toHaveLength(1);}finally{await chat.close();}
   });
 
   it('服务器与客户端跨 UTC 日期时首帧仍一致,挂载后再显示当天文案', async () => {
