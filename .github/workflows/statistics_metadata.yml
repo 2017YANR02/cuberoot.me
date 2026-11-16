@@ -1,0 +1,49 @@
+name: Statistics metadata drift
+on:
+  pull_request:
+    paths: &inputs
+      - 'scripts/assistant/**'
+      - 'core/apps/api/src/generated/statistics-metadata.json'
+      - 'docs/data/artifacts/generated-artifacts.json'
+      - 'docs/contributing/compute.md'
+      - 'docs/product/timer/double-zbll-trainer.md'
+      - 'core/jobs/stats-build/src/bin/**'
+      - 'core/package.json'
+      - 'scripts/stats/update-local.ts'
+      - 'scripts/stats/update-published.ts'
+      - 'scripts/exact-puzzles/cli.ts'
+      - 'core/packages/client/scripts/export-exact-puzzle-distributions.mts'
+      - 'core/packages/client/scripts/summarize-double-zbll.mts'
+      - 'solver/lsll/README.md'
+      - 'solver/lsll/update_lsll.mts'
+      - '.github/workflows/stats.yml'
+      - '.github/workflows/statistics_metadata.yml'
+  push:
+    branches: [main]
+    paths: *inputs
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            .github/workflows
+            core/apps/api/src/generated
+            core/jobs/stats-build/src/bin
+            core/packages/client/scripts
+            scripts/assistant
+            scripts/stats
+            scripts/exact-puzzles
+            docs/data/artifacts
+            docs/contributing
+            docs/product/timer
+            solver/lsll
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - run: node scripts/assistant/build-statistics-metadata.ts

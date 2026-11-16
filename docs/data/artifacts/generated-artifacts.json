@@ -2012,6 +2012,33 @@
         "Apply migration twice to isolated PostgreSQL and verify 32 L2C / 3 L2E cases and 40 algorithms"
       ],
       "driftPolicy": "Review source changes before importing. Published migration is immutable; use a new migration for subsequent corrections."
+    },
+    {
+      "id": "server.statistics-metadata",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "Reviewed computation families plus executable workflow, heavy-stat classification and artifact contracts",
+        "paths": [
+          "scripts/assistant/statistics-metadata-definitions.ts",
+          "docs/data/artifacts/generated-artifacts.json",
+          ".github/workflows/stats.yml",
+          "core/jobs/stats-build/src/bin/compute_all.ts"
+        ]
+      },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "Repository-owned configuration and maintenance metadata"
+      },
+      "owner": "scripts/assistant/build-statistics-metadata.ts",
+      "workingDirectory": ".",
+      "command": "node scripts/assistant/build-statistics-metadata.ts --write",
+      "outputs": [
+        "core/apps/api/src/generated/statistics-metadata.json"
+      ],
+      "verification": [
+        "node scripts/assistant/build-statistics-metadata.ts"
+      ],
+      "driftPolicy": "Regenerate after declared source changes and review semantic descriptions. Read-only small-file generation never runs jobs or fetches logs. API bundles its own JSON; runtime never reads Web or solver files. Unknown live run/publication status must remain unknown."
     }
   ]
 }

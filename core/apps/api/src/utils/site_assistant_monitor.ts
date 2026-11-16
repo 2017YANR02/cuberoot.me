@@ -22,6 +22,7 @@ const write: QueryRunner = async <T>(statement: string, params: unknown[] = []) 
   return await db.unsafe(statement.replace(/\?/g, () => `$${++index}`), params as never[]) as unknown as T[];
 };
 export interface AssistantMetrics {
+  answerRejections?: Array<{ reason: string }>;
   stages: Record<string, { calls: number; ms: number; errors: number }>;
   models: Array<{ model: string; thinking: boolean; input: number | null; output: number | null; cached: number | null; reasoning: number | null; durationMs?: number; firstActivityMs?: number; firstTextMs?: number; grossCny?: number | null; cacheAdjustedCny?: {min:number;max:number}|null; tariff?: unknown; round?: number; attempt?: number; failure?: AssistantModelDiagnostic & { upstreamStatus?: number } }>;
   timing?: { version: 1; requestReadyMs?: number; firstProgressMs?: number; responseReadyMs?: number };
@@ -35,6 +36,12 @@ export interface AssistantMetrics {
   cost?: { grossCny: number; unpricedCalls: number };
 }
 const scope = new AsyncLocalStorage<AssistantMetrics>();
+/** Static reason codes only; no question, draft, identifiers or source text. */
+export function recordAssistantAnswerRejection(reason: string) {
+  const metrics = scope.getStore();
+  if (metrics && (metrics.answerRejections?.length ?? 0) < 8) (metrics.answerRejections ??= []).push({ reason });
+  diagnosticLog('site_assistant_answer_rejected', { requestId: currentDiagnosticRequestId(), reason }, true);
+}
 export function recordAssistantStage(name: string, ms: number, failed: boolean, tool?: string) {
   const metrics = scope.getStore();
   if (!metrics) return;

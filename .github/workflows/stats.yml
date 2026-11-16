@@ -1,4 +1,4 @@
-# GitHub Actions CI 配置：每周自动下载 WCA 数据库、计算统计、抓取 Upcoming Comps、推送更新
+# GitHub Actions CI 配置：每日导入 WCA 数据库、计算并发布统计；Upcoming Comps 由独立工作流更新
 name: Update Stats
 
 on:

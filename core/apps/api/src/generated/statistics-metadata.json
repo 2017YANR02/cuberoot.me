@@ -1,0 +1,439 @@
+{
+  "schemaVersion": 1,
+  "version": "e677408ed4734ad14741af49d3838ffac53d54f79553c1c31098901b7a330d3a",
+  "coverage": {
+    "level": "registered-families",
+    "statement": "Returns all registered main families including dependencies, not proof that every costly statistic or experimental solver has been enumerated.",
+    "excluded": [
+      {
+        "artifact": "stats.upcoming",
+        "reason": "Separate lightweight feed synchronization."
+      },
+      {
+        "artifact": "stats.competition-calendar",
+        "reason": "Derived index; no heavy-cost evidence."
+      },
+      {
+        "artifact": "stats.world-bests",
+        "reason": "External scraping; no heavy-cost evidence."
+      },
+      {
+        "artifact": "client.code-language-history",
+        "reason": "Manual Git-history snapshot; cost not measured here. CI/page reads reuse it."
+      }
+    ],
+    "gaps": [
+      "Per-target exact-enumeration costs",
+      "Comparable CPU/memory measurements",
+      "Live Actions runs",
+      "Local progress",
+      "Current publication receipts/data cutoff",
+      "Unregistered experimental jobs"
+    ]
+  },
+  "provenance": [
+    {
+      "path": ".github/workflows/stats.yml",
+      "sha256": "d2e27c096962f3cd911e83fc3c5aa55a1e957585975bb8d9b894bcb24d94171e",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/.github/workflows/stats.yml"
+    },
+    {
+      "path": "core/jobs/stats-build/src/bin/compute_all.ts",
+      "sha256": "28512969889a3ea2920f40d50595b08e00e8b2dd8449ca3f2bdda53977e02fd1",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/core/jobs/stats-build/src/bin/compute_all.ts"
+    },
+    {
+      "path": "core/jobs/stats-build/src/bin/historical_ranks_build.ts",
+      "sha256": "55690e84b67395f68aca58a185750bd6a5341e71c58363a03b24c6fac2101041",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/core/jobs/stats-build/src/bin/historical_ranks_build.ts"
+    },
+    {
+      "path": "core/jobs/stats-build/src/bin/sor_over_time_build.ts",
+      "sha256": "65369e9d6998bc8131d6f643cb8ef1bc581077e0a08de49f303db8c9c45494a2",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/core/jobs/stats-build/src/bin/sor_over_time_build.ts"
+    },
+    {
+      "path": "core/jobs/stats-build/src/bin/sor_over_time_daily_build.ts",
+      "sha256": "e94ed0d596858e99792ec639d4fff29fc8628273df9b0b929488469bc4c47d27",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/core/jobs/stats-build/src/bin/sor_over_time_daily_build.ts"
+    },
+    {
+      "path": "core/package.json",
+      "sha256": "063e10967da748a1d5301546d56ccb59946c9fed343c283b3718c724cdca3e4d",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/core/package.json"
+    },
+    {
+      "path": "core/packages/client/scripts/export-exact-puzzle-distributions.mts",
+      "sha256": "ea04092624675f7277fd3e4a922cfd2498bafc2a303a4b460b95f5b7abcda14e",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/core/packages/client/scripts/export-exact-puzzle-distributions.mts"
+    },
+    {
+      "path": "core/packages/client/scripts/summarize-double-zbll.mts",
+      "sha256": "086a6ca9d97055a8640cb9edc2689be5275f5ec6d1b3226b12b379e7b1c87995",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/core/packages/client/scripts/summarize-double-zbll.mts"
+    },
+    {
+      "path": "docs/contributing/compute.md",
+      "sha256": "a3f323b3eb1d1545c03a694d910bf0e9902e607945fcab57025a3f39ae69f791",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/docs/contributing/compute.md"
+    },
+    {
+      "path": "docs/data/artifacts/generated-artifacts.json",
+      "sha256": "fd3a73029996b0dd28abf449acabf793a87ed2ea083848413fc57c30d99bed28",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/docs/data/artifacts/generated-artifacts.json"
+    },
+    {
+      "path": "docs/product/timer/double-zbll-trainer.md",
+      "sha256": "62f74379682d32dd9d537a7010340b6f9ac784fea76f75fef1ea423bb4798a36",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/docs/product/timer/double-zbll-trainer.md"
+    },
+    {
+      "path": "scripts/assistant/statistics-metadata-definitions.ts",
+      "sha256": "1dac4bc9ae4693fe3d09d12aca4602f1ce9edc3b177185bc277be691b88ae90d",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/scripts/assistant/statistics-metadata-definitions.ts"
+    },
+    {
+      "path": "scripts/exact-puzzles/cli.ts",
+      "sha256": "413dd01ac231f58b122ec7a6ca80f0c1d30938dd711c979924cd1f2a763c1ecd",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/scripts/exact-puzzles/cli.ts"
+    },
+    {
+      "path": "scripts/stats/update-local.ts",
+      "sha256": "ced4b981ad7b8ec3565994e6df10a9859fbfe158dce5496a7875f2bbd5548d2f",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/scripts/stats/update-local.ts"
+    },
+    {
+      "path": "scripts/stats/update-published.ts",
+      "sha256": "34661bb778944bd5729751b5eb4266d63dc6ed0093aecc27d6d7816bbb28a934",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/scripts/stats/update-published.ts"
+    },
+    {
+      "path": "solver/lsll/README.md",
+      "sha256": "9e086a62d26771c5fc8267492475ae78e56c842b6ecc25ff04db169b6baea2e9",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/solver/lsll/README.md"
+    },
+    {
+      "path": "solver/lsll/update_lsll.mts",
+      "sha256": "3543aa54bb8d1b894bd6a57b6122a82f8eb78d19b91f71c49f75019e19da947a",
+      "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/solver/lsll/update_lsll.mts"
+    }
+  ],
+  "entries": [
+    {
+      "id": "wca-heavy",
+      "name": {
+        "zh": "WCA 大规模成绩聚合",
+        "en": "WCA heavy aggregations"
+      },
+      "category": "statistics",
+      "pages": [
+        "/wca"
+      ],
+      "artifacts": [
+        {
+          "id": "stats.wca",
+          "owner": [
+            "core/jobs/stats-build",
+            ".github/workflows/stats.yml"
+          ],
+          "command": "pnpm --filter @cuberoot/stats-build compute <stat-id>; run the complete compute_all.ts, transfer, and load sequence only through .github/workflows/stats.yml",
+          "outputs": [
+            "stats/*.json",
+            "stats/records/**",
+            "stats/historical/**",
+            "stats/sor_over_time/**",
+            "stats/top10_history/**",
+            "stats/comp_city/**",
+            "stats/record_place_details_v1/**",
+            "stats/record_place_details_v2/**",
+            "stats/prediction/**"
+          ]
+        }
+      ],
+      "sources": [
+        "core/jobs/stats-build/src/bin/compute_all.ts",
+        ".github/workflows/stats.yml"
+      ],
+      "scope": "Podium/PR streaks, moving averages, completed solves, round top-three sums and other heavyStatIds extracted from the isolation list.",
+      "basis": "Imported WCA results; each statistic retains its own scope.",
+      "cost": "HEAVY_STATS is a memory-isolation classification, NOT a CPU ranking or uniform measured memory threshold. Individual entries have exceptions; comparable CPU measurements are unknown.",
+      "update": {
+        "trigger": "workflow",
+        "execution": "GitHub Actions runner",
+        "strategy": "compute_all computes selected statistics from the imported dump; stats_filter can restrict IDs. Other builders/imports have separate strategies."
+      },
+      "publication": "Validated JSON owner patches publish to wca-data-latest/static statistics. Database builders have separate transfer/load steps. Code push only syntax-checks this workflow.",
+      "workflow": {
+        "path": ".github/workflows/stats.yml",
+        "cron": [
+          "0 20 * * *"
+        ],
+        "timeZone": "UTC",
+        "manual": true,
+        "jobConditions": {
+          "syntax-check": "github.event_name == 'push'",
+          "build": "github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'"
+        }
+      },
+      "heavyStatIds": [
+        "longest_streak_of_podiums",
+        "longest_streak_of_personal_records",
+        "wr_dominance",
+        "best_result_off_podium",
+        "consecutive_sub_5_average",
+        "wr_newcomer",
+        "most_completed_solves",
+        "most_competitions_before_winning",
+        "smallest_diff_between_single_and_average",
+        "most_frequent_results",
+        "moving_average",
+        "round_top3_sum"
+      ]
+    },
+    {
+      "id": "wca-history",
+      "name": {
+        "zh": "WCA 历史排名与纪录演化",
+        "en": "WCA historical ranks and records"
+      },
+      "category": "statistics",
+      "pages": [
+        "/wca/results",
+        "/wca/records"
+      ],
+      "artifacts": [
+        {
+          "id": "stats.wca",
+          "owner": [
+            "core/jobs/stats-build",
+            ".github/workflows/stats.yml"
+          ],
+          "command": "pnpm --filter @cuberoot/stats-build compute <stat-id>; run the complete compute_all.ts, transfer, and load sequence only through .github/workflows/stats.yml",
+          "outputs": [
+            "stats/*.json",
+            "stats/records/**",
+            "stats/historical/**",
+            "stats/sor_over_time/**",
+            "stats/top10_history/**",
+            "stats/comp_city/**",
+            "stats/record_place_details_v1/**",
+            "stats/record_place_details_v2/**",
+            "stats/prediction/**"
+          ]
+        }
+      ],
+      "sources": [
+        ".github/workflows/stats.yml",
+        "core/jobs/stats-build/src/bin/historical_ranks_build.ts",
+        "core/jobs/stats-build/src/bin/sor_over_time_build.ts",
+        "core/jobs/stats-build/src/bin/sor_over_time_daily_build.ts"
+      ],
+      "scope": "Historical ranking snapshots, historical best SOR, daily SOR evolution and historical WR/CR/NR records.",
+      "basis": "Historical result replay and time-series snapshots, not only current personal bests.",
+      "cost": "Large historical result replay/aggregation; no comparable CPU or memory measurement registered.",
+      "update": {
+        "trigger": "workflow",
+        "execution": "GitHub Actions runner",
+        "strategy": "Full workflow builds rank snapshots; best-rank SOR consumes those TSVs; daily SOR replays competition-day results. Separate wca_results_flat imports use competition fingerprint deltas. Do not label the entire chain incremental."
+      },
+      "publication": "Historical ranks/best SOR transfer TSV/load SQL into PostgreSQL; daily SOR and record histories publish JSON.",
+      "workflow": {
+        "path": ".github/workflows/stats.yml",
+        "cron": [
+          "0 20 * * *"
+        ],
+        "timeZone": "UTC",
+        "manual": true,
+        "jobConditions": {
+          "syntax-check": "github.event_name == 'push'",
+          "build": "github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'"
+        }
+      }
+    },
+    {
+      "id": "scramble",
+      "name": {
+        "zh": "比赛打乱阶段难度与最优步数",
+        "en": "Competition scramble difficulty and optimal lengths"
+      },
+      "category": "statistics",
+      "pages": [
+        "/scramble/stats"
+      ],
+      "artifacts": [
+        {
+          "id": "stats.scramble",
+          "owner": [
+            "core/jobs/scramble-stats-build",
+            "solver"
+          ],
+          "command": "pnpm --filter @cuberoot/scramble-stats-build build:<target>; build:example-shards only splits existing JSON without solvers; use the matching runbook or skill for the complete heavy pipeline",
+          "outputs": [
+            "stats/scramble/**"
+          ]
+        }
+      ],
+      "sources": [
+        "scripts/stats/update-local.ts",
+        "scripts/stats/update-published.ts",
+        "core/package.json"
+      ],
+      "scope": "stages (Cross/XCross and other 3x3 goals), 333opt (whole-cube optimal), puzzles (2x2, Pyraminx, Skewb, Clock, SQ1 and selected puzzle jobs).",
+      "basis": "Competition scramble corpus, not a uniform full-state distribution.",
+      "cost": "Per-scramble stage/optimal solving, including expensive 3x3/SQ1 searches; no measured cross-job CPU ordering.",
+      "update": {
+        "trigger": "manual",
+        "execution": "Local computation machine",
+        "strategy": "Explicit stages/333opt/puzzles entry: incremental fetching, missing-result backfill and checkpoint continuation. Cached/publish-only modes reuse results. Unresolved puzzle states remain marked unresolved and may accompany a partial publication."
+      },
+      "publication": "Publishing entry loads relevant PG tables, submits the Release and incrementally publishes static shards. Local-only entry does not publish.",
+      "commands": {
+        "stats:scramble": "tsx ../scripts/stats/update-published.ts --publish",
+        "stats:scramble:local": "tsx ../scripts/stats/update-local.ts"
+      }
+    },
+    {
+      "id": "exact-distributions",
+      "name": {
+        "zh": "精确分布与全状态数据集",
+        "en": "Exact distributions and full-state datasets"
+      },
+      "category": "statistics",
+      "pages": [
+        "/scramble/stats"
+      ],
+      "artifacts": [
+        {
+          "id": "client.precomputed-exact-puzzle-distributions",
+          "owner": "core/packages/client/scripts/export-exact-puzzle-distributions.mts",
+          "command": "node --import tsx scripts/export-exact-puzzle-distributions.mts --report <completed-local-report.json> --write",
+          "outputs": [
+            "core/packages/client/app/[lang]/scramble/stats/_data/precomputed-exact-puzzles.json"
+          ]
+        },
+        {
+          "id": "client.exact-puzzle-state-downloads",
+          "owner": "core/packages/client/scripts/export-exact-state-downloads.mts",
+          "command": "node --max-old-space-size=128 --import tsx packages/client/scripts/measure-small-puzzle-distributions.mts --events <reviewed-events> --output-dir <new-local-directory>",
+          "outputs": [
+            "stats/scramble/exact-puzzles/**",
+            "core/packages/client/app/[lang]/scramble/stats/_data/exact-puzzle-downloads.json",
+            "core/packages/client/app/[lang]/scramble/stats/_data/exact-puzzle-publication.json"
+          ]
+        }
+      ],
+      "sources": [
+        "docs/data/artifacts/generated-artifacts.json",
+        "core/packages/client/scripts/export-exact-puzzle-distributions.mts",
+        "scripts/exact-puzzles/cli.ts"
+      ],
+      "scope": "Registered exact puzzle/goal histograms, farthest-state witnesses and full-state downloads.",
+      "basis": "Full-state exact distances with explicit move metric/frame; some distributions derive from existing verified tables.",
+      "cost": "Depends on enumerated states and method. Small BFS, closed-form counts and reading histograms are NOT automatically heavy. Per-target CPU measurements are not registered here.",
+      "update": {
+        "trigger": "manual",
+        "execution": "Resource-guarded offline computation",
+        "strategy": "Enumerate or reuse verified tables, validate counts/witnesses, then export histograms. Full-state downloads stream separately; summary export does not rerun BFS."
+      },
+      "publication": "Compact histogram JSON ships with Web code. Large full-state downloads use a separate verified asset/manifest chain."
+    },
+    {
+      "id": "lsll",
+      "name": {
+        "zh": "LSLL 批量最优解",
+        "en": "LSLL batch optimal solutions"
+      },
+      "category": "statistics",
+      "pages": [
+        "/alg/lsll"
+      ],
+      "artifacts": [],
+      "sources": [
+        "solver/lsll/README.md",
+        "solver/lsll/update_lsll.mts"
+      ],
+      "scope": "Trainable LSLL case optimal solutions and lengths; excludes O class.",
+      "basis": "Minimum HTM over pre/post AUF equivalence, not one display representative.",
+      "cost": "Batch optimal solving of case AUF images. Owner README historical benchmarks are not a current site-wide CPU ranking.",
+      "update": {
+        "trigger": "manual",
+        "execution": "Local solver machine",
+        "strategy": "Batch solving checkpoints by case key; update_lsll exports cases and applies row-manifest differences. --export-only skips loading; --solve explicitly requests solving."
+      },
+      "publication": "Exported CSV is diffed against the target PG row manifest, then changed rows load into PostgreSQL."
+    },
+    {
+      "id": "double-zbll",
+      "name": {
+        "zh": "双底 ZBLL 题库与摘要",
+        "en": "Double-bottom ZBLL corpus and summary"
+      },
+      "category": "statistics",
+      "pages": [
+        "/alg/double-zbll-about"
+      ],
+      "artifacts": [
+        {
+          "id": "trainer.double-zbll",
+          "owner": [
+            "core/jobs/alg-build/src/double-zbll-select.mts",
+            "core/packages/client/scripts/install-double-zbll.mts",
+            "core/packages/client/scripts/summarize-double-zbll.mts"
+          ],
+          "command": "pnpm --filter @cuberoot/alg-build double-zbll:export, then pnpm --filter @cuberoot/client double-zbll:install ../.local-data/double-zbll-symmetry-v2/export, then pnpm --filter @cuberoot/client double-zbll:summary",
+          "outputs": [
+            "core/packages/client/public/data/double-zbll/manifest.json",
+            "core/packages/client/public/data/double-zbll/pairs-*.bin",
+            "core/packages/client/public/data/double-zbll/cases-*.json",
+            "core/packages/client/app/[lang]/alg/double-zbll-about/statistics.json"
+          ]
+        }
+      ],
+      "sources": [
+        "docs/product/timer/double-zbll-trainer.md",
+        "core/packages/client/scripts/summarize-double-zbll.mts"
+      ],
+      "scope": "Batch optimal solving, candidate selection and resulting corpus length distributions.",
+      "basis": "Frozen case/candidate corpus, canonical AUF and explicit selection criteria.",
+      "cost": "Upstream batch solving is heavy. Summary refresh only aggregates installed corpus data without loading solver tables.",
+      "update": {
+        "trigger": "manual",
+        "execution": "Local solving/export then corpus installation",
+        "strategy": "Reuse verified solve journals, export/install the corpus and regenerate its summary when it changes. CI/browser startup does not rerun heavy solving."
+      },
+      "publication": "Verified hash-named corpus assets/manifest and compact statistics JSON ship through the artifact owner."
+    },
+    {
+      "id": "solver-tables",
+      "name": {
+        "zh": "求解器预计算表（依赖）",
+        "en": "Solver precomputed tables (dependencies)"
+      },
+      "category": "dependency",
+      "pages": [
+        "/dev/solvers"
+      ],
+      "artifacts": [
+        {
+          "id": "solver.tables-wasm",
+          "owner": "solver",
+          "command": "follow the matching solver loop or runbook; use available CPU parallelism by default",
+          "outputs": []
+        }
+      ],
+      "sources": [
+        "docs/data/artifacts/generated-artifacts.json",
+        "docs/contributing/compute.md"
+      ],
+      "scope": "Pruning/distance tables supporting statistics; not an ordinary statistical leaderboard.",
+      "basis": "Solver-specific coordinates, metrics and verified formats.",
+      "cost": "Some builds require substantial memory/CPU; table size alone is not a CPU measurement.",
+      "update": {
+        "trigger": "manual",
+        "execution": "Explicitly authorized resource-guarded machine",
+        "strategy": "Generate/verify the table family and reuse it across solves. Ordinary CI/page opening does not rebuild large tables. Metadata reads never start or authorize computation."
+      },
+      "publication": "Large local tables stay outside Git; runtime artifacts have their own deployment contracts."
+    }
+  ]
+}

@@ -93,3 +93,13 @@ SSE 每 15 秒发送一次不可见的协议保活注释，避免深入思考期
 上述为隔离调用当前代码、真实供应商与现有公开数据；没有写入正式聊天监控，没有替代浏览器、生产入口或维护者验收。原始本地报告在 `.local/assistant-modernization-20261023/`。服务端聊天相关测试 221 项通过、5 项依赖环境跳过；前端相关测试 49 项通过，另完成认证文档检查、前后端类型检查及共享包构建。
 
 持续评测复用 `apps/api/scripts/benchmark-site-assistant.ts`，显式 `--run` 才执行付费调用；程序接口可传历史、时区与思考模式。Markdown 的 `expected` 是人工验收准则，不是自动语义判分。更换模型后重点复查：直接回答是否滥用工具、连续追问、时间范围、来源相关性、未覆盖功能的诚实回答，以及失败时的费用和监控记录。不要只看 HTTP 成功率。
+
+## 统计维护元数据
+
+`statistics_metadata` 读取 API 自带的小型生成目录；`statistics` 继续读取统计结果。全目录调用返回登记总数、全部七类、覆盖缺口和来源 ID，按 id 读取附加产物合同及来源 SHA-256。登记覆盖 WCA 重聚合、历史排名/纪录、比赛打乱、精确分布/全状态数据、LSLL、双底 ZBLL 和求解表依赖；不宣称枚举了所有实验任务。
+
+生成器为 [build-statistics-metadata.ts](../../../scripts/assistant/build-statistics-metadata.ts)，口径由 [definitions](../../../scripts/assistant/statistics-metadata-definitions.ts) 维护。cron/job 条件、HEAVY_STATS、命令及产物从对应配置提取；仓库级生成器只读取小型源码，API 运行时不跨包读取文件。修改来源后运行 `node scripts/assistant/build-statistics-metadata.ts --write` 并审阅口径；轻量 drift workflow 检查内容哈希，不启动计算。
+
+成本/生成/更新问题优先预读全目录，补充实现资料使用 developer 范围。维护主张允许引用元数据；页面操作仍需页面正文，引用 ID 和最终证据复核保持有效。统一拒答原因写入已有请求 metrics.answerRejections。
+
+运行状态暂未接入：lastRun.status、failedStage、lastSuccessAt、lastPublishedAt、publishedDataVersion、sourceDataCutoff 均为 unknown。配置频率、实际运行、成功执行与线上发布是独立事实；不得把源文件版本哈希当作统计数据版本。源码链接指向 main，可能先于已部署目录变化，以随包目录的内容哈希识别本次读取版本。
