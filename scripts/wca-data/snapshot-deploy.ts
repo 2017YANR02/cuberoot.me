@@ -63,6 +63,20 @@ export function rollbackSnapshot(root: string) {
 export function finalizeSnapshot(root: string, hash: string) {
   check(current(root) === safeHash(hash), 'Unexpected active statistics snapshot');
   const m = validate(JSON.parse(readFileSync(join(base(root), 'current/_inventory.json'), 'utf8')));
+  // A small receipt lives beside the active inventory, outside managed data.
+  // Only finalize/recovery after the Release commit reaches this point. Never
+  // use inventory generation time or a Release asset upload as publication time.
+  const receiptPath = join(base(root), 'current/publication.json');
+  const files = [...m.files].sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
+  const inventoryVersion = sha(Buffer.from(JSON.stringify(files)));
+  if (existsSync(receiptPath)) {
+    const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'));
+    check(receipt.schema === 1 && receipt.archiveSha256 === hash && receipt.inventoryVersion === inventoryVersion, 'Publication receipt mismatch');
+  } else {
+    writeFileSync(`${receiptPath}.next`, JSON.stringify({ schema: 1, archiveSha256: hash, inventoryVersion,
+      publishedAt: new Date().toISOString(), timestampBasis: 'publication-finalized', sourceCommit: m.sourceCommit }));
+    renameSync(`${receiptPath}.next`, receiptPath);
+  }
   if (existsSync(journal(root))) {
     const tx = JSON.parse(readFileSync(journal(root), 'utf8'));
     for (const name of tx.previousUnits) if (!units(m).includes(name)) {

@@ -16,6 +16,13 @@ test('incremental staging verifies the complete inventory, preserves old hardlin
   cpSync(source, live, { recursive: true });
   const base = await packSnapshot(source, await inventory(source, commit), join(root, 'base'));
   await activateSnapshot(live, join(root, 'base', base.name), base, 'none', noop); finalizeSnapshot(live, base.sha256);
+  const receiptPath = join(live, '.stats-data/current/publication.json');
+  const receiptBytes = readFileSync(receiptPath, 'utf8'), receipt = JSON.parse(receiptBytes);
+  assert.equal(receipt.archiveSha256, base.sha256);
+  assert.equal(receipt.timestampBasis, 'publication-finalized');
+  assert(Number.isFinite(Date.parse(receipt.publishedAt)));
+  finalizeSnapshot(live, base.sha256);
+  assert.equal(readFileSync(receiptPath, 'utf8'), receiptBytes, 'idempotent finalize must retain the original timestamp');
   put(source, 'world_bests.json', '[3]');
   const next = await inventory(source, commit), a = await packSnapshot(source, next, join(root, 'next'));
   const bytes = Buffer.from(JSON.stringify(next)), digest = sha(bytes), inventoryFile = join(root, '_inventory.json'); writeFileSync(inventoryFile, bytes);
@@ -29,12 +36,14 @@ test('incremental staging verifies the complete inventory, preserves old hardlin
   }
   const failed = await stage('failed');
   await assert.rejects(activateSnapshot(live, '', a, base.sha256, async () => { throw Error('public failure'); }, failed), /public failure/);
+  assert.equal(readFileSync(receiptPath, 'utf8'), receiptBytes, 'failed publication retains old receipt');
   assert.equal(readFileSync(join(live, 'world_bests.json'), 'utf8'), '[2]');
   const prepared = await stage('success');
   await activateSnapshot(live, '', a, base.sha256, noop, prepared);
   const datasets = join(live, '.stats-data/datasets');
   assert.equal(statSync(join(datasets, base.sha256, 'data/all_past_comps.json')).ino, statSync(join(datasets, a.sha256, 'data/all_past_comps.json')).ino);
   finalizeSnapshot(live, a.sha256);
+  assert.equal(JSON.parse(readFileSync(receiptPath, 'utf8')).archiveSha256, a.sha256);
   assert.equal(readFileSync(join(live, 'all_past_comps.json'), 'utf8'), '[1]');
   assert.equal(readFileSync(join(live, 'world_bests.json'), 'utf8'), '[3]');
   assert.deepEqual(readdirSync(datasets), [a.sha256]);
