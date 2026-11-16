@@ -9306,6 +9306,14 @@ CREATE TABLE remote_access_host (
   singleton BOOLEAN PRIMARY KEY DEFAULT TRUE CHECK(singleton),
   seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+CREATE TABLE dev_preview_worker (
+  singleton BOOLEAN PRIMARY KEY DEFAULT TRUE CHECK (singleton),
+  lease_hash TEXT,
+  worker_name TEXT,
+  expires_at TIMESTAMPTZ,
+  checkpoint JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 CREATE TABLE IF NOT EXISTS dev_preview_requests (
   id UUID PRIMARY KEY,
   user_id BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,

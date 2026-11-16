@@ -146,6 +146,22 @@ SSH 限制依据：[OpenSSH sshd_config](https://man.openbsd.org/sshd_config)、
 
 ## 网页申请与自动开通
 
+### 双机后台协调（2026-11-16，本地实现，待发布）
+
+负责人只需在入门页批准一次。Mac mini 与 MacBook Pro 均可运行 `core/scripts/dev-preview/provision.ts`，共享服务端的独占租约和恢复进度；不创建或使用 Git worktree。两台各自持有阿里云 OAuth 登录，任一电脑授权失效时在领取前停止，不占住队列。
+
+`0336_dev_preview_worker_lease.sql` 增加单例协调记录。每次执行领取随机租约，服务端只保存摘要，120 秒到期，工作进程每 30 秒续期；续期失败立即停止本轮子进程。过期执行者不能续期、修改断点、释放新持有者的租约或回写开通状态。失联后，另一台从同一个申请、端口、设备清单和发布 SHA 恢复，不重新生成同事密钥。独立工作令牌仍不能批准申请。
+
+程序从本机现有 checkout 加载，生成物保存在 `.local-data/dev-preview-worker/<run-id>/`，成功后只清理自己可重建的副本，失败保留。发布使用独立 Git index，仅将三份设备生成物提交到最新远端 main；不切换分支、不修改开发者的 index、工作目录或未提交代码，不强推。远端设备清单出现并发改动时停止等待核对；其他源码提交不被夹带。源码更新通过现有 Git 流程完成，不在后台 rebase 开发目录。
+
+主机配置继续使用 `~/.config/cuberoot-preview/host.json`，权限 600；`checkout` 指本机已有 checkout，`aliyun` 是本机 CLI 的绝对路径，`dnsProfile` 使用本机独立授权，`token` 是专用工作令牌。`enabled: false` 可登记启动项但不领取任务。LaunchAgent `me.cuberoot.dev-preview` 每 30 秒执行一轮，只在该用户登录且电脑在线时工作。
+
+升级顺序：备份两机主机配置与旧断点；从旧 worker 导出 `handover.json`（当前申请 ID、registry、baseSha、已发布 commits，不含私钥或 OAuth 凭据）；先发布协调 API 与迁移，再更新两机脚本和启动项并启用。新 API 拒绝没有租约的旧 worker，不能直接让两份旧版程序同时运行。首次领取将旧断点导入共享记录，保留已分配端口；现有 failed 申请仍由负责人确认重试。尚未完成线上发布与双机实际接管验收时，不报告已启用。
+
+局部验证：`node --test core/scripts/dev-preview/worker-runtime.test.ts` 检查提交边界、推送回执恢复与失租终止；API `dev_preview_lease.test.ts` 使用显式指定的本地测试 PostgreSQL 验证并发领取、到期接管和旧租约拒绝，不能指向应用数据库。
+
+以下单机专用 checkout、工作树及本机断点的旧流程仅说明升级前行为；双机启用后以上述协调流程为准，工作树禁令始终优先。
+
 新员工在 `/zh/account/get-started` 登录后填写姓名/设备标识，点击申请，复制一次配置指令给本机 AI。AI 先按仓库版本检查 Git、Node、pnpm、OpenSSH 和项目依赖，再在 `core/` 执行页面提供的 `node scripts/dev-preview/enroll.ts --ticket …`。接入码仅用于这一台电脑，首次绑定有效期 24 小时；未绑定时可在页面重新生成，旧码立即失效。密钥仍由现有 client.ts 生成，私钥不离开电脑。
 
 绑定公钥后，负责人在同页批准。工作服务复用 cli.ts，按登记→独立 SSH 授权→DNS→HTTP 发布→证书→HTTPS/API/Next 发布执行。设备自动领取公开连接配置并更新同一仓库的 cuberoot 登记，随后自动启动同一个现有 runner，不再传两个 JSON 文件或另输启动命令。入门指令应先安全同步最新代码，即使旧版 enroll.ts 已存在也不能跳过更新。DNS、SSH、HTTP 408/429/5xx 等临时网络故障自动退避重试，最长间隔 5 分钟；工作服务将重试次数与时间保存在本机检查点，重启不清零。权限、主机密钥、DNS 冲突、代码/部署失败等无法安全自动修复的问题显示需要负责人处理；同事端继续等待原申请，不因失败退出、换密钥或绕过审批。注册账号不自动获得审批权。

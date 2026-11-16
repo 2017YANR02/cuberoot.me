@@ -2,13 +2,31 @@ import {beforeEach,expect,it,vi} from 'vitest';
 import {Hono} from 'hono';
 import jwt from 'jsonwebtoken';
 vi.mock('@cuberoot/shared/dev-preview',()=>({DEV_PREVIEW_HOSTS:['dev-legacy-old.cuberoot.me']}));
-const mock=vi.hoisted(()=>({auth:vi.fn(),query:vi.fn()}));
+const mock=vi.hoisted(()=>({auth:vi.fn(),query:vi.fn(),lease:vi.fn()}));
 vi.mock('../src/utils/recon_helpers.js',()=>({requireAuth:mock.auth,checkRateLimit:vi.fn()}));
-vi.mock('../src/db/connection.js',()=>({query:mock.query,withTransaction:async(f:(q:typeof mock.query)=>unknown)=>f(mock.query)}));
+vi.mock('../src/db/connection.js',()=>{
+  const q=(sql:string,args?:unknown[])=>sql.includes('FROM dev_preview_worker')?mock.lease(sql,args):mock.query(sql,args);
+  return {query:q,withTransaction:async(f:(query:typeof q)=>unknown)=>f(q)};
+});
 import {devPreviewRoutes} from '../src/routes/dev_preview';
 const app=new Hono().route('/v1',devPreviewRoutes);
-const post=(p:string,b:unknown,token='')=>app.request('/v1/dev-preview/'+p,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify(b)});
-beforeEach(()=>{vi.resetAllMocks();vi.stubEnv('DEV_PREVIEW_HOST_TOKEN','x'.repeat(40));mock.auth.mockResolvedValue({uid:2,name:'Employee',isAdmin:true,realWcaId:'OTHER'});mock.query.mockResolvedValue([]);});
+const post=(p:string,b:unknown,token='')=>app.request('/v1/dev-preview/'+p,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`,'X-Preview-Lease':'a'.repeat(64)},body:JSON.stringify(b)});
+beforeEach(()=>{vi.resetAllMocks();vi.stubEnv('DEV_PREVIEW_HOST_TOKEN','x'.repeat(40));mock.auth.mockResolvedValue({uid:2,name:'Employee',isAdmin:true,realWcaId:'OTHER'});mock.query.mockResolvedValue([]);mock.lease.mockResolvedValue([{singleton:true}]);});
+it('rejects the old worker protocol even with a valid host token',async()=>{
+  const r=await app.request('/v1/dev-preview/host/next',{headers:{Authorization:`Bearer ${'x'.repeat(40)}`}});
+  expect(r.status).toBe(409);expect(mock.query).not.toHaveBeenCalled();
+});
+it('allows an authenticated worker to acquire its first lease without already holding one',async()=>{
+  mock.query.mockResolvedValueOnce([{checkpoint:{}}]);
+  const response=await post('host/lease',{worker:'macbook'},'x'.repeat(40));
+  expect(response.status).toBe(200);expect((await response.json()).lease).toMatch(/^[a-f0-9]{64}$/);
+  expect(mock.lease).not.toHaveBeenCalled();
+});
+it('fences a worker whose lease expires between middleware and the mutation transaction',async()=>{
+  mock.lease.mockResolvedValueOnce([{singleton:true}]).mockResolvedValueOnce([]);
+  expect((await post('host/id',{status:'failed',failureCode:'dns'},'x'.repeat(40))).status).toBe(409);
+  expect(mock.query).not.toHaveBeenCalled();
+});
 it('only the real owner can approve infrastructure changes',async()=>{expect((await post('requests/id/decision',{decision:'approved'})).status).toBe(403);expect(mock.query).not.toHaveBeenCalled();});
 it('rejects impersonation even for the owner',async()=>{mock.auth.mockResolvedValue({uid:1,isAdmin:true,realWcaId:'2017YANR02'});expect((await post('requests/id/decision',{decision:'approved'},jwt.sign({previewId:'fake'},'test'))).status).toBe(403);expect(mock.query).not.toHaveBeenCalled();});
 it('scopes employee requests and never returns ticket hashes',async()=>{await app.request('/v1/dev-preview/requests');expect(mock.query.mock.calls[0][0]).toContain('WHERE user_id=?');expect(mock.query.mock.calls[0][0]).not.toContain('ticket_hash');expect(mock.query.mock.calls[0][1]).toEqual([2]);});
@@ -40,7 +58,7 @@ it('health reports are restricted to already provisioned requests and outages cl
   expect((await post('host/id/health',{connected:true},'x'.repeat(40))).status).toBe(409);
 });
 it('health queue and employee list require fresh independent evidence',async()=>{
-  await app.request('/v1/dev-preview/host/health-next',{headers:{Authorization:`Bearer ${'x'.repeat(40)}`}});
+  await app.request('/v1/dev-preview/host/health-next',{headers:{Authorization:`Bearer ${'x'.repeat(40)}`,'X-Preview-Lease':'a'.repeat(64)}});
   expect(mock.query.mock.calls[0][0]).toContain('ORDER BY health_checked_at NULLS FIRST');
   expect(mock.query.mock.calls[0][0]).toContain("INTERVAL '5 minutes'");
 });

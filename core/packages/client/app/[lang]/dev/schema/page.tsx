@@ -69,6 +69,7 @@ const TABLES: Table[] = [
   { name: 'site_assistant_recording_faults', domain: 'community', origin: '0277', purpose: { zh: '跨进程持久记录故障计数，无用户内容', en: 'Durable recording fault counters across process restarts, no user content' } },
   { name: 'site_assistant_monitor_state', domain: 'community', origin: '0277', purpose: { zh: '聊天监控启用与清理时间', en: 'Chat monitoring activation and cleanup times' } },
   { name: 'membership_renewal_debits', domain: 'commerce', origin: '0276', purpose: { zh: '微信续费周期与扣款查证记录；每期唯一订单', en: 'WeChat renewal cycles and reconciliation with one order per cycle' } },
+  { name: 'dev_preview_worker', domain: 'community', origin: '0336', purpose: { zh: '双机开通服务的独占租约与共享恢复进度', en: 'Exclusive lease and shared recovery checkpoint for provisioning workers' } },
   { name: 'dev_preview_requests', domain: 'community', origin: '0273', purpose: { zh: '开发电脑接入申请及开通状态', en: 'Development computer enrollment and provisioning state' } },
   { name: 'dev_preview_events', domain: 'community', origin: '0273', purpose: { zh: '开发网址审批与执行审计', en: 'Preview approval and provisioning audit' } },
   { name: 'site_assistant_knowledge_state', domain: 'community', origin: '0270', purpose: { zh: '当前完整公开知识库快照与来源版本', en: 'Current complete public knowledge snapshot and source revision' } },
@@ -598,6 +599,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 336, slug: 'dev_preview_worker_lease', desc: { zh: '开发网址双机协调、到期接管及共享恢复进度，不授予审批权限', en: 'Coordinate preview workers with lease expiry and shared recovery; no approval permission' } },
   { n: 335, slug: 'assistant_durable_queue', desc: { zh: '持久聊天收件、执行租约、工具检查点与恢复', en: 'Durable chat inbox, execution leases, tool checkpoints and recovery' } },
   { n: 334, slug: 'assistant_run_control', desc: { zh: '聊天执行状态、跨进程停止与会话串行约束', en: 'Chat run state, cross-worker cancellation and serialized conversations' } },
   { n: 333, slug: 'membership_payment_enrollment', desc: { zh: '支付中签约首期订单、收银台类型与签约方式，防止重复扣首期', en: 'Payment enrollment method and first checkout, preventing duplicate initial debits' } },

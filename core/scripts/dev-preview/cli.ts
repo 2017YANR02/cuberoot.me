@@ -32,9 +32,13 @@ const { values: v, positionals } = parseArgs({ allowPositionals: true, options: 
   owner: { type: 'string' }, device: { type: 'string' }, os: { type: 'string' },
   id: { type: 'string' }, request: { type: 'string' }, out: { type: 'string' },
   registry: { type: 'string' }, check: { type: 'boolean' },
+  workspace: { type: 'string' },
 } });
 const command = positionals[0] ?? 'help';
-const registryPath = resolve(v.registry ?? resolve(root, 'ops/dev-preview/machines.json'));
+// A coordinated worker writes only persistent generated artifacts, never its checkout.
+const outputRoot = v.workspace ? resolve(v.workspace) : root;
+if (v.workspace && v.registry) throw Error('Choose a workspace or a test registry, not both');
+const registryPath = resolve(v.registry ?? resolve(outputRoot, 'ops/dev-preview/machines.json'));
 const r: Registry = validate(JSON.parse(readFileSync(registryPath, 'utf8')));
 const ssh = (script: string) => execFileSync('ssh', ['-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', r.adminSsh, 'bash -s'], { input: script, encoding: 'utf8', timeout: 180_000, maxBuffer: 4 * 1024 * 1024 });
 const save = () => writeFileSync(registryPath, JSON.stringify(validate(r), null, 2) + '\n');
@@ -49,7 +53,7 @@ function render(check = false) {
     ['ops/nginx/dev-machines.conf', nginx(r)],
     ['core/packages/shared/src/dev-preview.ts', origins(r)],
   ]) {
-    const file = resolve(root, path);
+    const file = resolve(outputRoot, path);
     if (check) { if (readFileSync(file, 'utf8') !== content) throw Error(`Generated file drift: ${path}`); }
     else writeFileSync(file, content);
   }

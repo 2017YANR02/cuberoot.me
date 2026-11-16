@@ -6,6 +6,7 @@ import { DEV_PREVIEW_HOSTS } from '@cuberoot/shared/dev-preview';
 import { normalizeRemoteKey } from '@cuberoot/shared/remote-access';
 import { query, withTransaction } from '../db/connection.js';
 import { requireAuth, checkRateLimit, type WcaUser } from '../utils/recon_helpers.js';
+import { devPreviewLeaseRoutes, leaseHash } from './dev_preview_lease.js';
 
 export const devPreviewRoutes = new Hono();
 const owner = (u: WcaUser) => u.isAdmin && u.realWcaId === '2017YANR02';
@@ -15,7 +16,7 @@ const slug = (s: unknown): s is string => typeof s === 'string' && /^[a-z0-9]+(?
 const fields = "id,user_id,user_name,owner_slug,device_slug,os,public_key,status,profile,created_at,updated_at,verified_at,COALESCE(status='ready' AND verified_at>NOW()-INTERVAL '5 minutes',FALSE) AS connected,(SELECT substring(e.action from 8) FROM dev_preview_events e WHERE e.request_id=dev_preview_requests.id AND e.action LIKE 'failed:%' ORDER BY e.id DESC LIMIT 1) AS failure_code";
 type Request = {id: string; user_id: number; owner_slug: string; device_slug: string; os: string; status: string; public_key: string | null; profile: unknown; verified_at?: string | Date | null};
 
-devPreviewRoutes.use('/dev-preview/*', bodyLimit({maxSize: 8192}));
+devPreviewRoutes.use('/dev-preview/*', (c,next)=>bodyLimit({maxSize:c.req.path.endsWith('/host/lease/checkpoint')?262144:8192})(c,next));
 devPreviewRoutes.use('/dev-preview/*', async (c,next) => { c.header('Cache-Control','no-store'); await next(); });
 devPreviewRoutes.use('/dev-preview/requests*', async (c,next) => {
   const decoded = jwt.decode((c.req.header('Authorization') ?? '').replace(/^Bearer /,''));
@@ -93,6 +94,15 @@ devPreviewRoutes.use('/dev-preview/host/*',async(c,next)=>{
   if(!enabled()||!timingSafeEqual(Buffer.from(hash(supplied)),Buffer.from(hash(expected))))return c.json({error:'Host only'},401);
   await next();
 });
+devPreviewRoutes.route('/dev-preview/host/lease',devPreviewLeaseRoutes);
+// Old single-host workers cannot mutate the queue after coordinated workers ship.
+devPreviewRoutes.use('/dev-preview/host/*',async(c,next)=>{
+  const lease=c.req.header('X-Preview-Lease')??'';
+  if(!/^[a-f0-9]{64}$/.test(lease))return c.json({error:'Worker lease required'},409);
+  const [held]=await query('SELECT singleton FROM dev_preview_worker WHERE singleton AND lease_hash=? AND expires_at>NOW()',[leaseHash(lease)]);
+  if(!held)return c.json({error:'Worker lease expired'},409);
+  await next();
+});
 devPreviewRoutes.get('/dev-preview/host/next',async c=>{
   const [r]=await query(`SELECT ${fields} FROM dev_preview_requests WHERE status IN ('approved','provisioning') ORDER BY CASE WHEN status='provisioning' THEN 0 ELSE 1 END,created_at LIMIT 1`);
   return c.json(r??null);
@@ -110,7 +120,11 @@ devPreviewRoutes.get('/dev-preview/host/:id',async c=>{
 devPreviewRoutes.post('/dev-preview/host/:id/health',async c=>{
   const b=await c.req.json().catch(()=>null);
   if(typeof b?.connected!=='boolean')return c.json({error:'Invalid health result'},400);
-  const rows=await query("UPDATE dev_preview_requests SET verified_at=CASE WHEN ? THEN NOW() ELSE NULL END,health_checked_at=NOW() WHERE id::text=? AND status='ready' RETURNING id",[b.connected,c.req.param('id')]);
+  const rows=await withTransaction(async q=>{
+    const [held]=await q('SELECT singleton FROM dev_preview_worker WHERE singleton AND lease_hash=? AND expires_at>NOW() FOR UPDATE',[leaseHash(c.req.header('X-Preview-Lease')??'')]);
+    if(!held)return [];
+    return q("UPDATE dev_preview_requests SET verified_at=CASE WHEN ? THEN NOW() ELSE NULL END,health_checked_at=NOW() WHERE id::text=? AND status='ready' RETURNING id",[b.connected,c.req.param('id')]);
+  });
   return rows.length?c.json({ok:true}):c.json({error:'Request is not provisioned'},409);
 });
 devPreviewRoutes.post('/dev-preview/host/:id',async c=>{
@@ -118,6 +132,8 @@ devPreviewRoutes.post('/dev-preview/host/:id',async c=>{
   if(!['provisioning','ready','failed'].includes(b?.status))return c.json({error:'Invalid state'},400);
   if(b.status==='failed' && b.failureCode!==undefined && !['checkout','identity','authorization','dns','certificate','deployment'].includes(b.failureCode))return c.json({error:'Invalid failure code'},400);
   const ok=await withTransaction(async q=>{
+    const [held]=await q('SELECT singleton FROM dev_preview_worker WHERE singleton AND lease_hash=? AND expires_at>NOW() FOR UPDATE',[leaseHash(c.req.header('X-Preview-Lease')??'')]);
+    if(!held)return false;
     const [r]=await q<Request>("SELECT * FROM dev_preview_requests WHERE id::text=? AND status IN ('approved','provisioning') FOR UPDATE",[c.req.param('id')]);
     if(!r)return false;
     if(b.status==='ready'){
