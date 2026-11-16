@@ -10,6 +10,7 @@ on:
       - 'core/packages/visualcube/**'
       - 'core/packages/puzzle-render-core/**'
       - 'core/packages/puzzle-solvers/**'
+      - 'core/packages/stack-kernel/**'
       - 'core/packages/vendor-sr-puzzlegen/**'
       - 'core/package.json'
       - 'core/pnpm-lock.yaml'
@@ -26,6 +27,7 @@ on:
       - 'core/packages/visualcube/**'
       - 'core/packages/puzzle-render-core/**'
       - 'core/packages/puzzle-solvers/**'
+      - 'core/packages/stack-kernel/**'
       - 'core/packages/vendor-sr-puzzlegen/**'
       - 'core/package.json'
       - 'core/pnpm-lock.yaml'
@@ -82,8 +84,10 @@ jobs:
       - name: Build API workspace dependencies
         working-directory: core
         run: |
+          pnpm --filter @cuberoot/puzzle-solvers build
           pnpm --filter @cuberoot/shared build
           pnpm --filter @cuberoot/visualcube build
+          pnpm --filter @cuberoot/vendor-sr-puzzlegen build
           pnpm --filter @cuberoot/puzzle-render-core build
       - name: Verify durable messages and completed tool reuse across process loss
         timeout-minutes: 3
