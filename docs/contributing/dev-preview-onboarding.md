@@ -146,7 +146,7 @@ SSH 限制依据：[OpenSSH sshd_config](https://man.openbsd.org/sshd_config)、
 
 ## 网页申请与自动开通
 
-### 双机后台协调（2026-11-16，本地实现，待发布）
+### 双机后台协调（2026-11-16，已发布）
 
 负责人只需在入门页批准一次。Mac mini 与 MacBook Pro 均可运行 `core/scripts/dev-preview/provision.ts`，共享服务端的独占租约和恢复进度；不创建或使用 Git worktree。两台各自持有阿里云 OAuth 登录，任一电脑授权失效时在领取前停止，不占住队列。
 
@@ -159,6 +159,8 @@ SSH 限制依据：[OpenSSH sshd_config](https://man.openbsd.org/sshd_config)、
 升级顺序：备份两机主机配置与旧断点；从旧 worker 导出 `handover.json`（当前申请 ID、registry、baseSha、已发布 commits，不含私钥或 OAuth 凭据）；先发布协调 API 与迁移，再更新两机脚本和启动项并启用。新 API 拒绝没有租约的旧 worker，不能直接让两份旧版程序同时运行。首次领取将旧断点导入共享记录，保留已分配端口；现有 failed 申请仍由负责人确认重试。尚未完成线上发布与双机实际接管验收时，不报告已启用。
 
 局部验证：`node --test core/scripts/dev-preview/worker-runtime.test.ts` 检查提交边界、推送回执恢复与失租终止；API `dev_preview_lease.test.ts` 使用显式指定的本地测试 PostgreSQL 验证并发领取、到期接管和旧租约拒绝，不能指向应用数据库。
+
+2026-11-16 上线记录：0336 迁移已由 Actions 应用，Mac mini 与 MacBook Pro 的 LaunchAgent 均已启用，正常轮询退出码为 0；共享记录已接收旧申请断点。原有 failed 申请保持等待负责人重试。两机分别验证了 DNS 读取权限；并发与过期接管已通过本地 PostgreSQL 回归，未执行线上故障演练或电脑重启验收。
 
 以下单机专用 checkout、工作树及本机断点的旧流程仅说明升级前行为；双机启用后以上述协调流程为准，工作树禁令始终优先。
 
