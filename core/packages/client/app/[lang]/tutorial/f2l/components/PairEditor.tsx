@@ -11,10 +11,11 @@ import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import { tr, T } from '@/i18n/tr';
 
 /** Editor only: reuse the same mount, controller taps and orbit gestures as /predict. */
-export default function PairEditor({ setup, orientation, onPiece, guide, onReady }: {
+export default function PairEditor({ setup, orientation, onPiece, guide, onReady, hideResetView = false }: {
   setup: string; orientation: string; onPiece: (position: number) => void;
   guide?: { position: number; clicking: boolean };
   onReady?: () => void;
+  hideResetView?: boolean;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const engine = useRef<SimMount | null>(null);
@@ -96,8 +97,11 @@ export default function PairEditor({ setup, orientation, onPiece, guide, onReady
         point.project(instance.world.camera);
         const canvas = instance.renderer.domElement.getBoundingClientRect();
         const bounds = host.current.getBoundingClientRect();
-        element.style.left = `${canvas.left - bounds.left + (point.x + 1) * canvas.width / 2}px`;
-        element.style.top = `${canvas.top - bounds.top + (1 - point.y) * canvas.height / 2}px`;
+        // Convert projected screen coordinates back to local coordinates when the film is scaled.
+        if (bounds.width && bounds.height) {
+          element.style.left = `${(canvas.left - bounds.left + (point.x + 1) * canvas.width / 2) * host.current.clientWidth / bounds.width}px`;
+          element.style.top = `${(canvas.top - bounds.top + (1 - point.y) * canvas.height / 2) * host.current.clientHeight / bounds.height}px`;
+        }
       }
       frame = requestAnimationFrame(project);
     };
@@ -107,7 +111,7 @@ export default function PairEditor({ setup, orientation, onPiece, guide, onReady
 
   return <div className="f2l-editor-stage" ref={host}>
     <SimStage size={size} mount={mount} onReady={() => { setReady(true); latest.current.onReady?.(); }}
-      onResetView={() => resetView.current?.()} busyLabel={tr({ zh: '正在加载练习魔方', en: 'Loading the practice cube' })} />
+      onResetView={hideResetView ? undefined : () => resetView.current?.()} busyLabel={tr({ zh: '正在加载练习魔方', en: 'Loading the practice cube' })} />
     {guide && <div ref={pointer} className="f2l-guide-pointer" data-clicking={guide.clicking} aria-hidden="true"><span /><MousePointer2 size={60} /></div>}
     {loadFailed && <p role="alert"><T zh="魔方加载失败，请刷新页面重试。" en="The cube could not be loaded. Please refresh the page to try again." /></p>}
   </div>;

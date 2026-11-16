@@ -13,9 +13,18 @@
 @keyframes f2l-guide-tap-dot { 0%, 100% { opacity: 0; transform: scale(.6); } 25%, 55% { opacity: .9; transform: scale(1); } }
 .f2l-free-guide-progress { width: 100%; padding-block: 20px 8px; }
 .f2l-free-guide-progress > .progress-slider { display: block; width: 100%; }
-.f2l-free-guide-controls { display: flex; justify-content: center; gap: 12px; margin-top: 12px; }
-.f2l-free-guide-controls > .f2l-restart { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; }
 .f2l-free-guide .f2l-guidance { font-size: 1.2rem; line-height: 1.8; }
+.f2l-free-guide .f2l-free-guide-copy {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  align-self: center;
+  justify-items: start;
+  block-size: 300px;
+  gap: 8px;
+}
+.f2l-free-guide-copy-body { width: 100%; overflow: auto; }
+.f2l-free-guide .f2l-free-guide-copy-body > p:first-child { margin-top: 0; }
+.f2l-free-guide .f2l-free-guide-copy > .f2l-restart { margin-top: 0; }
 .f2l-free-guide .f2l-caption { font-size: 1rem; }
 .f2l-free-guide-algs { font-size: 1.05rem; overflow-wrap: anywhere; }
 .f2l-free-guide-scramble { display: flex; align-items: baseline; gap: 10px; }

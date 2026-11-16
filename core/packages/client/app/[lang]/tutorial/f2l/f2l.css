@@ -179,6 +179,8 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
 .f2l-guidance h3:not(:first-child) { margin-top: 24px; }
 .f2l-restart { min-height: 40px; padding: 8px 14px; border: 1px solid var(--border-default); border-radius: 10px; background: transparent; color: var(--foreground); font: inherit; font-size: .9rem; line-height: 1.5; cursor: pointer; }
 .f2l-restart { margin-top: 16px; }
+.f2l-free-cube-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.f2l-free-cube-actions .f2l-restart { margin-top: 0; }
 .f2l-catalog-group { margin-top: 32px; }
 .f2l-extraction { position: relative; display: flex; flex-direction: column; align-items: center; min-width: 0; gap: 12px; }
 .f2l-extraction-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; margin-top: 24px; }

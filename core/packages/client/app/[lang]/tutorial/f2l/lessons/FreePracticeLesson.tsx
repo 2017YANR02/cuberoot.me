@@ -45,11 +45,19 @@ export default function FreePracticeLesson({ orientation, pauseBetween }: { orie
               orientation={orientation} fillPane autoPlay moveDurationMs={850} sectionPauseMs={2000}
               onStepChange={step => setPlayback({ key: playbackKey, step })}
               pauseAfterSteps={pauseBetween ? boundaries : NO_STOPS} />
-              : <PairEditor setup={exercise?.setup ?? ''} orientation={orientation} onPiece={choosePiece} />}
+              : <PairEditor setup={exercise?.setup ?? ''} orientation={orientation} onPiece={choosePiece} hideResetView />}
+          </div>
+          <div className="f2l-free-cube-actions">
+            <button type="button" className="f2l-restart" disabled={!preview && !exercise?.alg} onClick={() => {
+              setPlayback({ key: playbackKey, step: 0 });
+              setPreview(current => !current);
+            }}>
+              {preview ? <T zh="重新摆放" en="Edit the case" /> : <T zh="演示复原" en="Play the solution" />}
+            </button>
+            <button type="button" className="f2l-restart" onClick={() => setGuide(true)}><T zh="使用方法" en="How to use" /></button>
           </div>
         </section>
         <section className="f2l-guidance f2l-free-formulas" aria-label={tr({ zh: '练习公式', en: 'Practice algorithms' })}>
-          <button type="button" className="f2l-restart" onClick={() => setGuide(true)}><T zh="使用方法" en="How to use" /></button>
           <div className="f2l-stage-scramble" style={{ visibility: exercise?.alg ? 'visible' : 'hidden' }} aria-hidden={!exercise?.alg}>
             <Tooltip content={tr({ zh: '打乱', en: 'Scramble' })}>{tip =>
               <span {...tip} className="f2l-teaching-alg-icon" tabIndex={0} role="img" aria-label={tr({ zh: '打乱', en: 'Scramble' })}><Shuffle size={19} aria-hidden="true" /></span>
@@ -67,14 +75,7 @@ export default function FreePracticeLesson({ orientation, pauseBetween }: { orie
 
         </section>
         </div>}
-        <StudyActions>
-          {!guide && <button type="button" className="f2l-restart" disabled={!preview && !exercise?.alg} onClick={() => {
-            setPlayback({ key: playbackKey, step: 0 });
-            setPreview(current => !current);
-          }}>
-            {preview ? <T zh="重新摆放" en="Edit the case" /> : <T zh="演示复原" en="Play the solution" />}
-          </button>}
-        </StudyActions>
+        <StudyActions />
       </div>
     </div>
   </>;

@@ -1,17 +1,18 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Play, Pause, RotateCcw } from 'lucide-react';
 import { Shuffle } from '@app-foundation/icons/lucide';
 import { Tooltip } from '@/components/Tooltip';
 import ProgressSlider from '@/components/ProgressSlider';
 import { tr, T } from '@/i18n/tr';
 import PairEditor from '../components/PairEditor';
+import VideoControls from '../components/VideoControls';
+import VideoStage from '../components/VideoStage';
 import { freePlacementKey, placeFreePiece, SOLVED_FREE_PLACEMENT, type FreePracticeCase } from '../lib/free-practice';
 import './free-practice-guide.css';
 
 const scenes = [
-  { position: 25, click: false, text: { zh: '先选择棱块的位置。可以选择顶层或 FR 槽；非标态先按“非标转化”一章处理。', en: 'First choose the edge position, on the top layer or in the FR slot. For other slots, follow the nonstandard-case lesson first.' } },
+  { position: 25, click: false, text: { zh: '先选择棱块的位置。可以选择顶层或 FR 槽；非标态先按“非标态”一章处理。', en: 'First choose the edge position, on the top layer or in the FR slot. For other slots, follow the nonstandard-case lesson first.' } },
   { position: 25, click: true, text: { zh: '点击一个棱位，目标棱块就会放到这里。', en: 'Click an edge position to place the target edge there.' } },
   { position: 25, click: true, text: { zh: '再次点击同一个棱位，棱块翻转，切换到另一种朝向。', en: 'Click the same edge again to flip it to its other orientation.' } },
   { position: 26, click: true, text: { zh: '再点击一个角位，放入与它对应的角块。', en: 'Next, click a corner position to place the matching corner.' } },
@@ -29,6 +30,9 @@ export default function FreePracticeGuide({ table, orientation, onClose }: {
   table: Map<string, FreePracticeCase>; orientation: string; onClose: () => void;
 }) {
   const clock = useRef(0);
+  const root = useRef<HTMLDivElement>(null);
+  const pausedAnimations = useRef<Animation[]>([]);
+  const resumeAfterScrub = useRef(false);
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [ready, setReady] = useState(false);
@@ -36,6 +40,19 @@ export default function FreePracticeGuide({ table, orientation, onClose }: {
   const elapsed = time - index * sceneDuration;
   const clicked = elapsed >= clickAt;
   const scene = scenes[index];
+  const clicking = scene.click && elapsed >= clickAt - 150 && elapsed < clickAt + 450;
+  useEffect(() => {
+    if (playing) {
+      for (const animation of pausedAnimations.current) if (animation.playState === 'paused') animation.play();
+      pausedAnimations.current = [];
+    } else {
+      for (const animation of root.current?.getAnimations({ subtree: true }) ?? []) {
+        if (animation.playState !== 'running') continue;
+        animation.pause();
+        pausedAnimations.current.push(animation);
+      }
+    }
+  }, [playing, index, clicking]);
   const exercise = useMemo(() => {
     let placement = SOLVED_FREE_PLACEMENT;
     for (let i = 0; i <= index; i++) if (scenes[i].click && (i < index || clicked)) placement = placeFreePiece(placement, scenes[i].position);
@@ -55,16 +72,18 @@ export default function FreePracticeGuide({ table, orientation, onClose }: {
     return () => cancelAnimationFrame(frame);
   }, [ready, playing]);
   const seek = (value: number) => { clock.current = value; setTime(value); };
-  return <div className="f2l-free-guide">
+  return <div className="f2l-free-guide" data-playing={playing} ref={root}>
+    <VideoStage>
     <div className="f2l-lesson f2l-study-lesson">
       <section className="f2l-demo" aria-label={tr({ zh: '使用方法演示', en: 'How to use free practice' })}>
         <div className="f2l-cube f2l-free-guide-cube">
           <PairEditor setup={exercise?.setup ?? ''} orientation={orientation} onPiece={ignorePiece} onReady={() => setReady(true)}
-            guide={{ position: scene.position, clicking: scene.click && elapsed >= clickAt - 150 && elapsed < clickAt + 450 }} />
+            guide={{ position: scene.position, clicking }} hideResetView />
         </div>
       </section>
-      <section className="f2l-guidance">
+      <section className="f2l-guidance f2l-free-guide-copy">
         <p className="f2l-caption"><T zh="使用方法" en="How to use" /></p>
+        <div className="f2l-free-guide-copy-body" key={index}>
         <p aria-live="polite">{tr(scene.text)}</p>
         {index >= 6 && exercise?.alg && <div className="f2l-free-guide-algs">
           <p className="f2l-free-guide-scramble"><Tooltip content={tr({ zh: '打乱', en: 'Scramble' })}>{tip =>
@@ -72,23 +91,20 @@ export default function FreePracticeGuide({ table, orientation, onClose }: {
           }</Tooltip><code>{exercise.setup}</code></p>
           <p><T zh="公式" en="Algorithm" /> · {exercise.name}</p><code>{exercise.alg}</code>
         </div>}
+        </div>
         <button type="button" className="f2l-restart" onClick={onClose}><T zh="开始练习" en="Start practicing" /></button>
       </section>
     </div>
+    </VideoStage>
     <div className="f2l-free-guide-progress">
       <ProgressSlider value={time} max={total} disabled={!ready} keyboardStep={1000}
-        onChange={seek} onInteractionStart={() => setPlaying(false)} onInteractionEnd={() => setPlaying(true)}
+        onChange={seek}
+        onInteractionStart={() => { resumeAfterScrub.current = playing && clock.current < total; setPlaying(false); }}
+        onInteractionEnd={() => setPlaying(resumeAfterScrub.current && clock.current < total)}
         ariaLabel={tr({ zh: '使用方法演示进度', en: 'Guide progress' })} />
-      <div className="f2l-free-guide-controls">
-        <Tooltip content={tr(playing ? { zh: '暂停', en: 'Pause' } : { zh: '播放', en: 'Play' })}>{tip =>
-          <button {...tip} type="button" className="f2l-restart" aria-label={tr(playing ? { zh: '暂停', en: 'Pause' } : { zh: '播放', en: 'Play' })} disabled={!ready} onClick={() => { if (time >= total) seek(0); setPlaying(value => !value); }}>
-            {playing ? <Pause size={21} aria-hidden="true" /> : <Play size={21} aria-hidden="true" />}
-          </button>
-        }</Tooltip>
-        <Tooltip content={tr({ zh: '重播', en: 'Replay' })}>{tip =>
-          <button {...tip} type="button" className="f2l-restart" aria-label={tr({ zh: '重播', en: 'Replay' })} onClick={() => { seek(0); setPlaying(true); }}><RotateCcw size={21} aria-hidden="true" /></button>
-        }</Tooltip>
-      </div>
+      <VideoControls playing={playing}
+        onTogglePlay={() => { if (time >= total) { seek(0); setPlaying(true); } else setPlaying(value => !value); }}
+        onReplay={() => { seek(0); setPlaying(true); }} />
     </div>
   </div>;
 }
