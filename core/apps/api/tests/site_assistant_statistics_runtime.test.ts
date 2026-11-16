@@ -129,6 +129,33 @@ it('preformats the previous local calendar day without replacing raw instants', 
   expect(success.lastSuccessAt).toBe('2026-11-13T07:44:24Z');
   expect(success.displayTimes.lastSuccessAt).toBe('2026-11-12 23:44:24 GMT-8 (America/Los_Angeles)');
 });
+it.each([false,true])('repairs runtime prose omissions even with every source selected; still incomplete=%s', async stillIncomplete => {
+  const config={key:'fixture',baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1',model:'qwen3.8-flash'};let calls=0;
+  const ids=['statistics-runtime:wca-last-run','statistics-runtime:wca-heavy-last-success','statistics-runtime:active-snapshot','statistics-runtime:historical-database'];
+  const fetcher=vi.fn<typeof fetch>(async(input,init)=>{
+    if(!String(input).startsWith(config.baseUrl))return Response.json(await baseRead(String(input)));
+    const request=JSON.parse(String(init?.body));expect(request.tools??[]).toEqual([]);calls++;
+    expect(request.enable_thinking).toBe(calls===1);
+    if(calls===2)expect(request.messages.at(-1).content).toContain('previous prose omitted');
+    const answer=calls===1 || stillIncomplete ? '最近运行失败，原因是在' : '最近运行失败。 [[statistics-runtime:wca-last-run]] 最近成功为 2026-11-13。 [[statistics-runtime:wca-heavy-last-success]] 当前版本 '+version+'。 [[statistics-runtime:active-snapshot]] 数据库导入为 2026-11-14，与成功时间不同。 [[statistics-runtime:historical-database]]';
+    return modelResponse({answerKind:'grounded',answer,sourceIds:ids});
+  });
+  const result=answerSiteQuestion('WCA 统计最近运行、最近成功和当前版本是什么？数据库导入时间相同吗？','zh',config,AbortSignal.timeout(5000),fetcher,[],undefined,undefined,'UTC',[],'deep');
+  if(stillIncomplete)await expect(result).rejects.toMatchObject({code:'model_output_invalid'});
+  else expect((await result).answer).toContain('与成功时间不同');
+  expect(calls).toBe(2);
+});
+it('repairs a broken deep JSON object without repeating its reasoning pass', async () => {
+  const config={key:'fixture',baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1',model:'qwen3.8-flash'};let calls=0;
+  const fetcher=vi.fn<typeof fetch>(async(input,init)=>{
+    if(!String(input).startsWith(config.baseUrl))return Response.json(await baseRead(String(input)));
+    const request=JSON.parse(String(init?.body));calls++;expect(request.enable_thinking).toBe(calls===1);
+    if(calls===1)return Response.json({id:'test',created:1,model:'test',choices:[{index:0,finish_reason:'stop',message:{role:'assistant',content:JSON.stringify({answerKind:'grounded',answer:'当前版本为',unexpected:'misplaced prose'})}}]});
+    return modelResponse({answerKind:'grounded',answer:version+' [[statistics-runtime:active-snapshot]]',sourceIds:['statistics-runtime:active-snapshot']});
+  });
+  const result=await answerSiteQuestion('WCA 统计当前线上版本是什么？','zh',config,AbortSignal.timeout(5000),fetcher,[],undefined,undefined,'UTC',[],'deep');
+  expect(result.answer).toContain(version);expect(calls).toBe(2);
+});
 it('passes the visitor timezone through tool dispatch and observes daylight saving time', async () => {
   const result=await runDataTool(toolCallSchema.parse({tool:'statistics_metadata',id:'double-zbll',view:'runtime'}) as any,'en',async url=>({...await baseRead(url),generatedAt:'2026-07-01T00:30:00Z'}),undefined,undefined,'America/Los_Angeles');
   const entry=data(result).entries[0];
