@@ -335,6 +335,16 @@ export async function answerSiteQuestion(
       : {...result,sources,actions:result.actions?.filter(action=>sources.some(source=>source.id===action.id && source.href===action.href))};
     return rememberAssistantContext(safe,observations,priorContext);
   };
+  // An unqualified request to view one's records has a complete structured
+  // answer. Keep the authenticated identity and raw results out of prose generation.
+  const ownRecordOverview = /^(?:请\s*)?(?:(?:帮我|为我|给我)\s*)?(?:(?:查看|查询|展示|显示|看看|看一下|查一下)\s*)?我的\s*(?:WCA\s*成绩|官方(?:个人)?(?:最佳|最好)?成绩|个人(?:最佳|最好)成绩|(?:WCA\s*)?(?:PB|PR))[。？！!?\s]*$|^(?:please\s+)?(?:show|view|check|look up|list)\s+my\s+(?:WCA\s+(?:results|records|personal bests)|official\s+personal bests)[.!?\s]*$/i.test(question.trim());
+  if (!skipDirectAnswers && !hasImages && requestedEvidence==='auto' && selfWcaId && ownRecordOverview) {
+    const call={tool:'person' as const,wcaId:selfWcaId,event:'all' as const,progress:false};
+    await emit?.({type:'status',status:{phase:'querying',tool:'person'}});
+    const result=await assistantStage('tool',()=>runDataTool(call,lang,read),0,'person');
+    observations.push({call,result});
+    return withContext({answer:result.factualSummary!+result.sources.map(source=>` [[${source.id}]]`).join(''),sources:result.sources,artifacts:result.artifacts});
+  }
   const suppliedAverage=!hasImages && requestedEvidence==='auto' && !skipDirectAnswers ? suppliedAverageAnswer(question,lang) : undefined;
   if(suppliedAverage)return withContext({answer:suppliedAverage,sources:[],artifacts:[]});
   const explicitAlgorithms = !hasImages && requestedEvidence==='auto' && !skipDirectAnswers ? explicitAlgorithmDisplay(question) : undefined;
@@ -880,6 +890,8 @@ export async function answerSiteQuestion(
         if([...value.answer.matchAll(/\[\[([^\]\n]+)\]\]/g)].some(match=>!sources.has(match[1]))) return 'invalid_source_id';
         if(ids(value).some(id=>id.startsWith('web:') && !verifiedWebSourceIds.has(id))) return 'unverified_web_source';
         if(needsCitation(value) && !citesReadable(value)) return 'missing_required_evidence';
+        if(observations.some(({call,result})=>call.tool==='person' && result.sources.some(source=>source.read))
+          && !ids(value).some(id=>sources.get(id)?.read && id.startsWith('person:')) && !isEvidenceGapOnlyAnswer(value.answer)) return 'missing_person_evidence';
         if(requiredFollowUpReadFailed && !isEvidenceGapOnlyAnswer(value.answer)) return 'required_read_failed';
         if(value.answerKind==='site_content' && !citesContent(value) && !mayAbstainWithoutEvidence(value)) return 'missing_page_evidence';
         if(requestedEvidence==='pages' && !citesPage(value) && !isEvidenceGapOnlyAnswer(value.answer)) return 'missing_page_evidence';

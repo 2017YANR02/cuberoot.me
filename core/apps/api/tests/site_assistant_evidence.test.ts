@@ -62,7 +62,7 @@ it('composes from full evidence without an unused draft or assistant history',as
   expect(result.answer).toContain('先选择项目');expect(calls).toBe(1);
 });
 it('keeps a personal-results review on the current question and repairs only its format',async()=>{
-  const question='为我查看我的 WCA 成绩';
+  const question='分析我的 WCA 成绩';
   const previousQuestions=['用简单的例子解释什么是概率。','wca它的规则是什么？','展示 PLL','展示 OLL'];
   const history=previousQuestions.flatMap(content=>[{role:'user' as const,content},{role:'assistant' as const,content:'EARLIER_ASSISTANT_CLAIM'}]);
   const requests:any[]=[];
@@ -95,6 +95,36 @@ it('keeps a personal-results review on the current question and repairs only its
   expect(fetcher.mock.calls.filter(([url])=>String(url).includes('/wca/person-page'))).toHaveLength(1);
   expect(result.sources.map(source=>source.id)).toEqual(['person:2017YANR02']);
   expect(result.artifacts?.[0]).toMatchObject({kind:'table',rows:[['三阶','8.00','—','10.00','—']]});
+});
+it.each(['为我查看我的 WCA 成绩','查看我的 WCA 成绩','Show my WCA results'])('renders an authenticated record overview directly from data: %s',async question=>{
+  const fetcher=vi.fn<typeof fetch>(async input=>{
+    const url=new URL(String(input));
+    if(url.pathname.endsWith('/meta'))return Response.json({lastImportedAt:'2026-11-16'});
+    expect(url.pathname).toBe('/v1/wca/person-page');
+    expect(url.searchParams.get('wcaId')).toBe('2019LIUZ14');
+    return Response.json({profile:{person:{name:'Zezhen Liu (刘泽震)'},personal_records:{333:{single:{best:750},average:{best:803}},222:{single:{best:237},average:{best:348}}}}});
+  });
+  const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000),fetcher,[
+    {role:'user',content:'展示 OLL'},{role:'assistant',content:'UNVERIFIED OLL AND PB 9.97'},
+  ],'2019LIUZ14',undefined,'UTC',[],'deep');
+  expect(fetcher).toHaveBeenCalledTimes(2);
+  expect(result.sources).toMatchObject([{id:'person:2019LIUZ14',read:true}]);
+  expect(result.answer).toBe('已列出刘泽震全部 2 个有成绩项目的官方个人最佳成绩。 [[person:2019LIUZ14]]');
+  expect(result.artifacts?.[0]).toMatchObject({kind:'table',rows:[['三阶','7.50','—','8.03','—'],['二阶','2.37','—','3.48','—']]});
+});
+it('rejects an uncited general-labelled personal result after evidence review',async()=>{
+  let models=0;
+  const fetcher=vi.fn<typeof fetch>(async input=>{
+    const url=new URL(String(input));
+    if(url.pathname.endsWith('/meta'))return Response.json({lastImportedAt:'2026-11-16'});
+    if(url.pathname.endsWith('/wca/person-page'))return Response.json({profile:{person:{name:'Zezhen Liu (刘泽震)'},personal_records:{333:{single:{best:750},average:{best:803}}}}});
+    return ++models===1 ? modelResponse([{tool:'person',wcaId:'2019LIUZ14',event:'all',progress:false}])
+      : modelResponse({answerKind:'general',answer:'你的三阶单次最好为 9.97 秒。',sourceIds:[]});
+  });
+  const result=await answerSiteQuestion('分析我的 WCA 成绩','zh',config,AbortSignal.timeout(5000),fetcher,[],'2019LIUZ14');
+  expect(result.answer).toBe('现有证据未能支持可靠结论，暂时无法确认。');
+  expect(result.sources).toEqual([]);
+  expect(models).toBe(3);
 });
 it('revalidates citations invented by the final reviewer',async()=>{
   vi.stubEnv('SITE_ASSISTANT_KNOWLEDGE_ENABLED','0');
