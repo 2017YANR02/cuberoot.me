@@ -1,5 +1,6 @@
 .f2l-concept-video { min-width: 0; }
 .f2l-terminology-stage { position: relative; }
+.f2l-concept-scene-number { position: absolute; top: 0; right: 0; font-size: .875rem; font-variant-numeric: tabular-nums; }
 .f2l-terminology-summary { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 40px; padding: 16px; text-align: center; }
 .f2l-terminology-triangle { position: relative; width: min(100%, 620px); height: 430px; flex-shrink: 0; margin-inline: auto; }
 .f2l-terminology-term { position: absolute; top: 36px; left: 50%; width: 140px; margin-left: -70px; transform: translate(var(--term-x, 0px), var(--term-y, 0px)); transition: transform 500ms cubic-bezier(.22, 1, .36, 1); }
@@ -17,8 +18,13 @@
 .f2l-terminology-term[data-active='true'] .f2l-terminology-thumbnail { transform: scale(1.65); cursor: zoom-out; }
 .f2l-terminology-thumbnail:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
 .f2l-terminology-description { position: absolute; inset: auto 0 0; height: 86px; }
-.f2l-terminology-description p { position: absolute; inset: 0; margin: 0; padding-inline: 12px; font-size: 1rem; line-height: 1.7; opacity: 0; transform: translateY(5px); transition: opacity 250ms ease, transform 350ms ease; pointer-events: none; }
-.f2l-terminology-description p[data-visible='true'] { opacity: 1; transform: translateY(0); }
+.f2l-terminology-description p { position: absolute; inset: 0; margin: 0; padding-inline: 12px; font-size: 1rem; line-height: 1.7; opacity: 0; transition: opacity 250ms ease; pointer-events: none; }
+.f2l-terminology-description p[data-visible='true'] { opacity: 1; }
+@media (min-width: 761px) {
+  .f2l-terminology-thumbnail { width: 128px; margin-top: -40px; }
+  .f2l-terminology-term[data-active='true'] .f2l-terminology-thumbnail { transform: scale(1.5); }
+  .f2l-terminology-term:first-child[data-active='true'] .f2l-terminology-thumbnail { transform: translateY(24px) scale(1.5); }
+}
 @media (max-width: 700px) {
   .f2l-terminology-summary { padding-inline: 0; }
   .f2l-terminology-description p { font-size: .875rem; }
@@ -29,10 +35,28 @@
 .f2l-concept-scene { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 28px; }
 .f2l-concept-caption { min-width: 0; text-align: center; }
 .f2l-concept-caption p { font-size: 1.5rem; line-height: 1.65; }
-.f2l-concept-line { animation: f2l-concept-line-in 450ms ease-out; }
+.f2l-concept-reference { display: grid; grid-template-columns: 120px minmax(0, 1fr); align-items: center; gap: 16px; margin: 16px 0 0; padding: 16px; border: 1px solid var(--border-default); border-radius: 14px; text-align: left; }
+.f2l-concept-reference figcaption { min-width: 0; font-size: 1.125rem; }
+.f2l-concept-reference .alg-formula-row { font-family: monospace; }
+.f2l-reference-segment { display: inline-block; }
+.f2l-reference-segment[data-active='true'] { color: var(--accent); animation: f2l-reference-pulse 1.2s ease-in-out infinite; }
+@keyframes f2l-reference-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+.f2l-concept-video[data-playing='false'] .f2l-reference-segment { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .f2l-reference-segment[data-active='true'] { animation: none; }
+}
+.chat-bubble.f2l-concept-comparison { position: absolute; top: 8%; left: 50%; transform: translateX(-50%); width: max-content; max-width: 90%; font-size: 1.125rem; pointer-events: none; }
+.chat-bubble.f2l-concept-comparison[data-target='edge'] { top: 50%; left: 66%; right: auto; bottom: auto; transform: translateY(-50%); max-width: 34%; }
+@media (min-width: 761px) {
+  .f2l-concept-caption:has(.f2l-concept-reference) { display: flex; flex-direction: column; align-self: stretch; padding-block: 16px; }
+  .f2l-concept-caption:has(.f2l-concept-reference) .f2l-concept-explanation { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+  .f2l-concept-reference { flex-shrink: 0; }
+}
+.f2l-concept-line { white-space: pre-line; animation: f2l-concept-line-in 450ms ease-out; }
 .f2l-concept-video[data-continuous='true'] .f2l-concept-line { animation: none; }
 @keyframes f2l-concept-line-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-.f2l-concept-cube > .alg-sim-player { opacity: 0; transition: opacity 450ms ease-in-out; }
+.f2l-concept-cube > .alg-sim-player { opacity: 0; }
+.f2l-concept-video[data-playing='false'] .f2l-concept-line { animation: none; }
 .f2l-concept-cube[data-visible='true'] > .alg-sim-player { opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
   .f2l-concept-cube > .alg-sim-player { transition: none; }
@@ -52,7 +76,33 @@
 /* PlaybackBar's five standard controls: keep play (third) and the trailing reset. */
 .f2l-lbl-intro > .playback-bar .playback-bar-controls > .playback-bar-btn:is(:nth-child(1), :nth-child(2), :nth-child(4), :nth-child(5)) { display: none; }
 .f2l-concept-video .playback-bar-controls { flex-wrap: nowrap; }
+.f2l-concept-scene[data-summary='true'] { grid-template-columns: minmax(0, 1fr); }
+.f2l-concept-scene[data-summary='true'] > :is(.f2l-concept-cube, .f2l-concept-caption) { display: none; }
+.f2l-treatment-summary { --f2l-summary-art: 96px; display: flex; flex-direction: column; justify-content: center; gap: 16px; width: 100%; min-width: 0; padding: 8px 12px; text-align: center; }
+.f2l-treatment-paths { display: grid; gap: 14px; width: min(100%, 760px); margin-inline: auto; }
+/* Shared rows keep annotations out of the cube/arrow alignment band. */
+.f2l-treatment-path { display: grid; grid-auto-flow: column; grid-template-columns: minmax(0, 1fr) minmax(56px, .7fr) minmax(0, 1fr) minmax(80px, .9fr) minmax(0, 1fr); grid-template-rows: auto var(--f2l-summary-art) auto; gap: 4px 8px; }
+.f2l-treatment-path figure, .f2l-treatment-link { grid-row: 1 / span 3; display: grid; grid-template-rows: subgrid; grid-template-columns: minmax(0, 1fr); justify-items: center; min-width: 0; margin: 0; }
+.f2l-treatment-path .puzzle-art { grid-row: 2; align-self: center; max-width: min(100%, var(--f2l-summary-art)); height: auto !important; }
+.f2l-treatment-path .puzzle-art > svg { width: 100%; height: auto; }
+.f2l-treatment-path figcaption { grid-row: 3; font-size: 1.125rem; line-height: 1.5; }
+.f2l-treatment-path small { display: block; color: var(--muted-foreground); font-size: .75rem; }
+.f2l-treatment-link { color: var(--muted-foreground); font-size: .875rem; overflow-wrap: anywhere; }
+.f2l-treatment-link svg { grid-row: 2; align-self: center; width: 100%; height: 24px; }
+.f2l-treatment-link > * { grid-column: 1; }
+/* Anchor labels six pixels from the arrow, without moving its center line. */
+.f2l-treatment-link > :is(span, strong) { grid-row: 2; align-self: center; transform: translateY(calc(50% + 18px)); }
+.f2l-treatment-link > strong { transform: translateY(calc(-50% - 18px)); }
+.f2l-treatment-link[data-adjustment='true'] { color: var(--accent); }
+.f2l-treatment-link strong { padding: 3px 9px; border-radius: 6px; background: var(--accent-soft); font-weight: 600; }
+.f2l-treatment-summary > p { margin: 0; font-size: 1.125rem; line-height: 1.8; white-space: pre-line; }
 @media (max-width: 700px) {
+  .f2l-treatment-summary { --f2l-summary-art: clamp(48px, 18vw, 80px); padding-inline: 0; gap: 20px; }
+  .f2l-treatment-path { grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr) 60px minmax(0, 1fr); column-gap: 4px; }
+  .f2l-treatment-path figcaption { font-size: .875rem; }
+  .f2l-treatment-link { font-size: .75rem; }
+  .f2l-treatment-link strong { padding-inline: 3px; }
+  .f2l-treatment-summary > p { font-size: .9375rem; }
   .f2l-concept-scene { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .f2l-concept-caption { min-height: 180px; }
   .f2l-concept-caption p { font-size: 1.25rem; }

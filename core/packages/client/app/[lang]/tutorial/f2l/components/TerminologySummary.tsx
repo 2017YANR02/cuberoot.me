@@ -23,11 +23,11 @@ export default function TerminologySummary({ orientation }: { orientation: strin
       description: { zh: '一个角块和与它对应的棱块', en: 'A corner and its matching edge' },
       alt: { zh: '高亮显示一组对应的棱角', en: 'One matching corner and edge highlighted' } },
     { title: { zh: '槽', en: 'Slot' }, subtitle: 'slot',
-      description: { zh: '底层角位与它上方的棱位；棱角归位的槽就是目标槽', en: 'A bottom-layer corner position and the edge position above it. Where a pair belongs is its target slot.' },
+      description: { zh: '底层角位与它上方的棱位', en: 'A bottom-layer corner position and the edge position above it' },
       alt: { zh: '描边标出右前槽的角位和棱位', en: 'The corner and edge positions of the front-right slot outlined' } },
-    { title: { zh: '基态', en: 'Standard case' }, subtitle: 'standard case',
-      description: { zh: '目标棱角都在顶层或自己的目标槽内', en: 'Both target pieces are in the top layer or their own target slot' },
-      alt: { zh: '基态示例：目标棱角都在顶层', en: 'Standard case example: both target pieces in the top layer' } },
+    { title: { zh: '标态', en: 'Standard case' }, subtitle: 'standard case',
+      description: { zh: '目标棱角都在顶层或自己的目标槽内，共41种标态', en: 'Both target pieces are in the top layer or their own target slot. There are 41 standard cases.' },
+      alt: { zh: '标态示例：目标棱角都在顶层', en: 'Standard case example: both target pieces in the top layer' } },
   ];
   return <div className="f2l-terminology-triangle" data-active-term={active ?? ''}
     onPointerLeave={event => { if (event.pointerType === 'mouse') setActive(null); }}

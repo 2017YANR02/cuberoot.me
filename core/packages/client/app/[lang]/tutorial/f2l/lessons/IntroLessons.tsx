@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { parseAsString, useQueryState } from 'nuqs';
 import { Alg } from 'cubing/alg';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import ProgressSlider from '@/components/ProgressSlider';
@@ -45,14 +46,16 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
   stepId: 'lesson-1' | 'lesson-2' | 'lesson-14'; orientation: string; onNextChapter: () => void;
 }) {
   const [section, setSection] = useState<'comparison' | 'lbl' | 'f2l'>('lbl');
-  const [showTerminology, setShowTerminology] = useState(false);
+  const [introSection, setIntroSection] = useQueryState('section', parseAsString);
+  const showTerminology = stepId === 'lesson-1' && introSection === 'terminology';
   const clock = useRef(0);
   const scene = useRef<HTMLDivElement>(null);
   const [time, setTime] = useState(0);
   const [seekVersion, setSeekVersion] = useState(0);
-  const [comparisonPlaying, setComparisonPlaying] = useState(false);
+  const [comparisonPlaying, setComparisonPlaying] = useState(true);
   const [scrubbing, setScrubbing] = useState(false);
   const scrubbingActive = useRef(false);
+  const resumeAfterScrub = useRef(false);
   const [leftReady, setLeftReady] = useState(false);
   const [rightReady, setRightReady] = useState(false);
   const comparisonReady = leftReady && rightReady;
@@ -61,10 +64,14 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
   const comparisonStage = time < INTRO_CROSS_MS ? 'cross' : time < INTRO_COMPARE_AT ? 'split' : 'compare';
   const prepareLeft = useCallback(() => setLeftReady(true), []);
   const prepareRight = useCallback(() => setRightReady(true), []);
-  const beginScrub = () => { scrubbingActive.current = true; setScrubbing(true); };
+  const beginScrub = () => {
+    if (scrubbingActive.current) return;
+    resumeAfterScrub.current = playing;
+    scrubbingActive.current = true; setScrubbing(true);
+  };
   const endScrub = useCallback(() => {
     if (!scrubbingActive.current) return;
-    scrubbingActive.current = false; setScrubbing(false); setComparisonPlaying(true);
+    scrubbingActive.current = false; setScrubbing(false); setComparisonPlaying(resumeAfterScrub.current);
   }, []);
   const updateSplit = useCallback((value: number) => {
     const progress = Math.max(0, Math.min(1, (value - INTRO_CROSS_MS) / INTRO_SPLIT_MS));
@@ -81,8 +88,8 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
     setSeekVersion(version => version + 1);
   }, [updateSplit]);
   useEffect(() => {
-    if (comparisonReady) setComparisonPlaying(!document.hidden && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  }, [comparisonReady]);
+    if (document.hidden || window.matchMedia('(prefers-reduced-motion: reduce)').matches) setComparisonPlaying(false);
+  }, []);
   useEffect(() => {
     const pauseHidden = () => { if (document.hidden) setComparisonPlaying(false); };
     document.addEventListener('visibilitychange', pauseHidden);
@@ -113,12 +120,16 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
       setLeftReady(false);
       setRightReady(false);
       seek(0);
-      setShowTerminology(true);
+      void setIntroSection('terminology');
+    };
+    const openComparison = () => {
+      setComparisonPlaying(!document.hidden && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      void setIntroSection(null);
     };
     return <div className="f2l-study-layout">
       <SectionNavigation label={showTerminology ? terminology : label}>
         <div className="f2l-section-list">
-          <button type="button" className="f2l-section-button" aria-pressed={!showTerminology} onClick={() => setShowTerminology(false)}>{label}</button>
+          <button type="button" className="f2l-section-button" aria-pressed={!showTerminology} onClick={openComparison}>{label}</button>
           <button type="button" className="f2l-section-button" aria-pressed={showTerminology} onClick={openTerminology}>{terminology}</button>
         </div>
       </SectionNavigation>
@@ -144,7 +155,7 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
             keyboardStep={500} onInteractionStart={beginScrub} onInteractionEnd={endScrub}
             formatValue={value => tr({ zh: `${(value / 1000).toFixed(1)} 秒`, en: `${(value / 1000).toFixed(1)} seconds` })}
             ariaLabel={tr({ zh: '演示进度', en: 'Animation progress' })} />
-          <VideoControls playing={playing} disabled={!comparisonReady}
+          <VideoControls playing={playing}
             onTogglePlay={() => {
               if (comparisonComplete) { seek(0); setComparisonPlaying(true); }
               else setComparisonPlaying(value => !value);
@@ -152,7 +163,7 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
             onReplay={() => { seek(0); setComparisonPlaying(true); }} />
         </div>
         </div>}
-        <StudyActions onPrevious={showTerminology ? () => setShowTerminology(false) : undefined}
+        <StudyActions onPrevious={showTerminology ? openComparison : undefined}
           onContinue={showTerminology ? onNextChapter : openTerminology} />
       </div>
     </div>;

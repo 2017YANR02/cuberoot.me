@@ -41,7 +41,7 @@ const introChapter = {
     ]
 } as const satisfies ChapterContent;
 
-export const F2L_CHAPTERS = [
+const chapters = [
   introChapter,
   {
     "id": "lesson-2",
@@ -55,8 +55,8 @@ export const F2L_CHAPTERS = [
     },
     "answer": [
       {
-        "zh": "先认识什么是基态，再从最简单的四种情况开始。转动顶层对齐图形后，跟着动画学会最后三步。",
-        "en": "First, learn what a standard case is, then start with the four simplest cases. Turn the top layer to match the reference, then follow the animation to learn the final three moves."
+        "zh": "从最简单的四种情况开始，转动顶层对齐图形后，跟着动画学会三步转动。",
+        "en": "Start with the four simplest cases. Turn the top layer to match the pattern, then follow the animation to learn the three moves."
       }
     ],
     "tips": [
@@ -92,7 +92,7 @@ export const F2L_CHAPTERS = [
     ],
     "tips": [
       {
-        "zh": "其他基态通常也会先转化为4种3步基态之一，再3步复原。因此这4种状态一定要深刻理解。",
+        "zh": "其他标态通常也会先转化为4种3步基态之一，再3步复原。因此这4种状态一定要深刻理解。",
         "en": "Other standard cases are usually transformed into one of the four three-move cases, then solved in three moves. Make sure you understand these four cases thoroughly."
       },
       {
@@ -139,12 +139,12 @@ export const F2L_CHAPTERS = [
   {
     "id": "lesson-3",
     "title": {
-      "zh": "其他基态",
-      "en": "Other cases"
+      "zh": "其他标态",
+      "en": "Other standard cases"
     },
     "question": {
-      "zh": "我会这四种了，可其他情况长什么样呢？",
-      "en": "I know these four cases now, but what do the others look like?"
+      "zh": "我会最简单的情况了，可其他情况长什么样呢？",
+      "en": "I can solve the simplest cases now, but what do the others look like?"
     },
     "answer": [
       {
@@ -162,7 +162,7 @@ export const F2L_CHAPTERS = [
         "en": "When the other three slots are solved, the last pair cannot occupy those slots. Its pieces can only be on the top layer or in their own slot."
       },
       {
-        "zh": "仅差顶层转动的状态视为同一种，尚未完成的状态共有 41 种，称为 F2L 基态。",
+        "zh": "仅差顶层转动的状态视为同一种，尚未完成的状态共有 41 种，称为 F2L 标态。",
         "en": "Treating positions that differ only by a top-layer turn as the same case gives 41 unsolved cases, known as the standard F2L cases."
       },
       {
@@ -252,9 +252,9 @@ export const F2L_CHAPTERS = [
     ]
   },
   {
-    "id": "lesson-6",
+    "id": "lesson-5",
     "title": {
-      "zh": "非标转化",
+      "zh": "非标态",
       "en": "Non-standard cases"
     },
     "question": {
@@ -269,7 +269,7 @@ export const F2L_CHAPTERS = [
     ],
     "tips": [
       {
-        "zh": "如果目标棱或角跑到了其他槽里，就叫作非标情况。先把它们取到顶层（或目标 FR槽），便能按基态继续学习。",
+        "zh": "如果目标棱或角跑到了其他槽里，就叫作非标情况。先把它们取到顶层（或目标 FR槽），便能按标态继续学习。",
         "en": "If the target edge or corner is in another slot, this is a non-standard case. Bring the pieces to the top layer or the target FR slot, then continue with a standard case."
       },
       {
@@ -285,7 +285,7 @@ export const F2L_CHAPTERS = [
         "en": "(R U R′)(R U R′) is equivalent to R U2 R′. Removing the redundant moves is a good example of optimization."
       },
       {
-        "zh": "非标到基态的转化非常灵活，熟练后就不必拘泥于特定解法。",
+        "zh": "非标到标态的转化非常灵活，熟练后就不必拘泥于特定解法。",
         "en": "There are many ways to turn a non-standard case into a standard one. With practice, you will no longer need to stick to a particular method."
       },
       {
@@ -299,7 +299,7 @@ export const F2L_CHAPTERS = [
     ]
   },
   {
-    "id": "lesson-7",
+    "id": "lesson-6",
     "title": {
       "zh": "自由练习",
       "en": "Free practice"
@@ -324,8 +324,8 @@ export const F2L_CHAPTERS = [
         "en": "Drag the cube to adjust the view."
       },
       {
-        "zh": "如果目标棱或角位于其他槽，请先按第 6 章的方法转化为基态。",
-        "en": "If the target edge or corner is in another slot, first use the method in Chapter 6 to turn it into a standard case."
+        "zh": "如果目标棱或角位于其他槽，请先按第 5 章的方法转化为标态。",
+        "en": "If the target edge or corner is in another slot, first use the method in Chapter 5 to turn it into a standard case."
       },
       {
         "zh": "点击“重新摆放”可返回刚才设置的情况。",
@@ -354,7 +354,18 @@ export const F2L_CHAPTERS = [
   { ...introChapter, id: 'lesson-14' },
 ] as const satisfies readonly ChapterContent[];
 
+export const F2L_CHAPTERS = [
+  ...chapters.map(chapter => chapter.id === 'lesson-5' ? {
+    ...chapter,
+    answer: [{
+      zh: '先看棱和角的相对位置，找到相似的标态，借用它的转化方式。',
+      en: 'Look at the relative positions of the edge and corner, then find a similar standard case and use the same approach to transform it.',
+    }],
+  } : chapter),
+  { ...chapters.find(chapter => chapter.id === 'lesson-5')!, id: 'lesson-17' },
+] as const satisfies readonly ChapterContent[];
+
 export type ChapterId = typeof F2L_CHAPTERS[number]['id'];
 
 // Experiments and the former standalone lessons remain accessible outside the learning sequence.
-export const F2L_NAV_CHAPTERS = F2L_CHAPTERS.filter(chapter => !['lesson-10', 'lesson-11', 'lesson-12', 'lesson-13', 'lesson-14', 'lesson-15', 'lesson-16'].includes(chapter.id));
+export const F2L_NAV_CHAPTERS = F2L_CHAPTERS.filter(chapter => !['lesson-10', 'lesson-11', 'lesson-12', 'lesson-13', 'lesson-14', 'lesson-15', 'lesson-16', 'lesson-17'].includes(chapter.id));

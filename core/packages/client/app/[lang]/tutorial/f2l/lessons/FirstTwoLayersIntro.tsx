@@ -35,7 +35,7 @@ export default function FirstTwoLayersIntro({ orientation, method, comparisonSta
   const player = useRef<AlgPlayerHandle>(null);
   const timeline = useMemo(() => createIntroTimeline(method, comparison), [method, comparison]);
   const [frame, setFrame] = useState(() => introFrame(timeline, 0, false));
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState(true);
   const running = controlledPlaying ?? playing;
   const [ready, setReady] = useState(false);
   const [replayVersion, setReplayVersion] = useState(0);
@@ -53,12 +53,15 @@ export default function FirstTwoLayersIntro({ orientation, method, comparisonSta
     const check = () => {
       if (!player.current?.getPlayer() || player.current.isUserMovePending?.()) { raf = requestAnimationFrame(check); return; }
       const preference = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      setReduced(preference); setReady(true); setPlaying(!preference && !document.hidden);
+      setReduced(preference); setReady(true);
+      if (preference || document.hidden) setPlaying(false);
       onReady?.();
     };
     raf = requestAnimationFrame(check);
     return () => cancelAnimationFrame(raf);
   }, [onReady]);
+
+  useEffect(() => { player.current?.setAnimationPaused?.(!running); }, [running, ready]);
 
   useEffect(() => {
     pendingSeek.current = true;
@@ -140,7 +143,7 @@ export default function FirstTwoLayersIntro({ orientation, method, comparisonSta
         </div>
       </div>
     </div>
-    {!comparison && <PlaybackBar step={frame.time} total={timeline.duration} playing={playing} disabled={!ready}
+    {!comparison && <PlaybackBar step={frame.time} total={timeline.duration} playing={playing}
       onScrub={() => {}} onSkipStart={reset} onStepBack={() => {}} onStepForward={() => {}} onSkipEnd={() => {}}
       onTogglePlay={() => frame.time >= timeline.duration ? reset() : setPlaying(value => !value)}
       trailing={<button type="button" className="playback-bar-btn" onClick={reset} aria-label={tr({ zh: '重新播放', en: 'Replay' })}><RotateCcw size={15} aria-hidden="true" /></button>}
