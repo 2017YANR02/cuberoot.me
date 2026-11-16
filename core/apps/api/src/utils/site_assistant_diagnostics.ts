@@ -1,3 +1,4 @@
+import { assistantExecutionBoundary } from './site_assistant_execution.js';
 import type { AssistantErrorCode } from '@cuberoot/shared/site-assistant';
 import { currentDiagnosticRequestId, diagnosticLog } from '../observability/request.js';
 import { recordAssistantStage } from './site_assistant_monitor.js';
@@ -31,6 +32,7 @@ export function assistantDeadline<T>(run: () => Promise<T>, signal: AbortSignal)
 
 /** Never log questions, identities, URLs, evidence, provider bodies or credentials. */
 export async function assistantStage<T>(stage: 'auth' | 'quota' | 'model' | 'review' | 'data' | 'page' | 'tool' | 'total', run: () => Promise<T>, round?: number, tool?: string): Promise<T> {
+  if(['tool','model','review'].includes(stage))await assistantExecutionBoundary();
   const started = performance.now();
   const requestId = currentDiagnosticRequestId();
   diagnosticLog('site_assistant_stage', { requestId, stage, phase: 'start', round });

@@ -17,7 +17,7 @@ export const SITE_ASSISTANT_IMAGE_BYTES = 768 * 1024;
 export const SITE_ASSISTANT_BODY_BYTES = 3_300_000;
 /** Saved attachments use an opaque ID and empty data; bytes are resolved only after owner authentication. */
 export interface AssistantImage { mediaType: 'image/png' | 'image/jpeg' | 'image/webp'; data: string; attachmentId?: string }
-export type AssistantErrorCode = 'provider_unavailable' | 'provider_region_unavailable' | 'request_too_large' | 'invalid_image' | 'vision_unavailable' | 'login_required' | 'wca_link_required' | 'account_forbidden' | 'daily_limit' | 'busy' | 'verification_required' | 'source_verification_required' | 'timeout' | 'network' | 'model_unavailable' | 'model_output_invalid' | 'model_rate_limited' | 'source_unavailable' | 'unavailable';
+export type AssistantErrorCode = 'conversation_full' | 'steering_full' | 'provider_unavailable' | 'provider_region_unavailable' | 'request_too_large' | 'invalid_image' | 'vision_unavailable' | 'login_required' | 'wca_link_required' | 'account_forbidden' | 'daily_limit' | 'busy' | 'verification_required' | 'source_verification_required' | 'timeout' | 'network' | 'model_unavailable' | 'model_output_invalid' | 'model_rate_limited' | 'source_unavailable' | 'unavailable';
 export interface AssistantSource { id: string; title: string; href: string; read: boolean }
 /** Render only adapter-verified source metadata. Never apply this to model-authored links. */
 export function isAssistantSourceHref(href: string): boolean {
@@ -98,6 +98,16 @@ export interface AssistantAnswer {
   actions?: Array<{ id: string; title: string; href: string }>;
 }
 export interface AssistantMessage { role: 'user' | 'assistant'; content: string; images?: AssistantImage[] }
+/** Immutable browser snapshot. It is user-provided context, never verified evidence. */
+export interface AssistantReference {
+  messageId: string;
+  messageVersion: number;
+  role: 'user' | 'assistant';
+  selectedText: string;
+  sourceStatus: 'complete' | 'partial' | 'stopped';
+}
+export const SITE_ASSISTANT_REFERENCE_MAX_LENGTH = 12000;
+export type AssistantRunState = 'running' | 'stopping' | 'completed' | 'cancelled' | 'error' | 'interrupted';
 /** Keep recent complete turns within a bounded context, without summarizing away user meaning. */
 export function boundAssistantHistory(history: AssistantMessage[]): AssistantMessage[] {
   const recent = history.slice(-10);
@@ -110,6 +120,7 @@ export function boundAssistantHistory(history: AssistantMessage[]): AssistantMes
 export type AssistantStatus = { phase: 'planning' | 'querying' | 'writing'; tool?: string };
 /** Execution metadata only: never provider reasoning, tool arguments or draft answers. */
 export interface AssistantProgress {
+  reused?: boolean;
   id: number;
   phase: 'model' | 'review' | 'tool';
   state: 'running' | 'complete' | 'partial' | 'error';
@@ -129,6 +140,7 @@ export interface AssistantBrowserTiming {
   transport: 'sse' | 'json';
 }
 export type AssistantStreamEvent =
+  | { type: 'cancelled' }
   | { type: 'status'; status: AssistantStatus }
   | { type: 'progress'; progress: AssistantProgress }
   | { type: 'answer'; answer: string; sources: AssistantSource[] }
@@ -162,6 +174,8 @@ export async function* readAssistantEvents(body: ReadableStream<Uint8Array>): As
 export { assistantAnswerText, assistantAnswerHistory, assistantSpokenText } from './site_assistant_export';
 
 export const ASSISTANT_ERROR_TEXT: Record<AssistantErrorCode, { zh: string; en: string }> = {
+  conversation_full: {zh:'本会话已达到消息上限，请新建会话。',en:'This chat has reached its message limit. Start a new chat.'},
+  steering_full: {zh:'当前任务的补充内容已达上限，请改为加入队列。',en:'This task has reached its update limit. Add your message to the queue instead.'},
   provider_unavailable: { zh: '所选模型暂不可用，请切换到阿里云。', en: 'The selected provider is unavailable. Please switch to Alibaba Cloud.' },
   provider_region_unavailable: { zh: '当前地区无法使用 OpenAI，请切换到阿里云。', en: 'OpenAI is unavailable in your current region. Please switch to Alibaba Cloud.' },
   request_too_large: { zh: '内容超过发送上限。请缩小图片或缩短本条消息后重试。', en: 'This message exceeds the sending limit. Reduce image sizes or shorten this message and retry.' },
@@ -182,3 +196,21 @@ export const ASSISTANT_ERROR_TEXT: Record<AssistantErrorCode, { zh: string; en: 
   source_unavailable: { zh: '查询资料时发生错误，请稍后重试。', en: 'A data source could not be read. Please try again later.' },
   unavailable: { zh: '问答服务暂时不可用，请稍后重试。', en: 'The assistant is temporarily unavailable. Please try again later.' },
 };
+
+/** Owner-only durable inbox. Tool checkpoints never leave the server. */
+export type AssistantDeliveryMode = 'steer' | 'queue';
+export interface AssistantDurableInput {
+  question: string; lang: 'zh'|'en'; thinking: AssistantThinkingMode; provider: AssistantProvider;
+  timeZone: string; images?: AssistantImage[]; references?: AssistantReference[];
+  history: AssistantMessage[];
+}
+export interface AssistantQueuedMessage {
+  id: string; sequence: number; targetId?: string; mode: AssistantDeliveryMode;
+  state: 'queued'|'running'|'applied'|'completed'|'stopped'|'error';
+  input: AssistantDurableInput; answer?: AssistantAnswer; progress: AssistantProgress[];
+  error?: AssistantErrorCode; requestId?: string; attempts: number; createdAt: number; updatedAt: number;
+}
+export interface AssistantQueueSnapshot {
+  conversationId: string; revision:number; paused: boolean; activeId?: string; recovering: boolean;
+  messages: AssistantQueuedMessage[];
+}

@@ -1,3 +1,4 @@
+import { durableAssistantWorker } from './utils/site_assistant_worker.js';
 import { drawRoutes } from './routes/draw.js';
 import { startWechatPayoutRecovery } from './platform/wechat_payout.js';
 import { workspaceRoutes } from "./routes/workspace.js";
@@ -482,5 +483,6 @@ const server = serve({ fetch: app.fetch, port: PORT, hostname: '0.0.0.0' }, () =
   console.log(`Trainer API running on port ${PORT}`);
 });
 const stopRuntimeDiagnostics = startRuntimeDiagnostics();
-server.once('close', () => { void stopRuntimeDiagnostics(); });
+const stopAssistantWorker = durableAssistantWorker.start();
+server.once('close', () => { void stopRuntimeDiagnostics(); void stopAssistantWorker(); });
 injectWebSocket(server);

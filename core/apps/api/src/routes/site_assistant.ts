@@ -1,3 +1,6 @@
+import { RateLimitError } from '../utils/rate_limit.js';
+import { durableAssistantStore, durableAssistantWorker } from '../utils/site_assistant_worker.js';
+import { AssistantQueueConflict } from '../utils/site_assistant_queue.js';
 import { Hono, type Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { streamSSE } from 'hono/streaming';
@@ -18,6 +21,8 @@ import { query, type QueryRunner } from '../db/connection.js';
 import { startAssistantMonitor, recordAssistantEntry } from '../utils/site_assistant_monitor.js';
 import { restoreAssistantContext, type AssistantContext } from '../utils/site_assistant_context.js';
 import { withAssistantProgress } from '../utils/site_assistant_progress.js';
+import { assistantRunStore, watchAssistantRun } from '../utils/site_assistant_runs.js';
+import { SITE_ASSISTANT_REFERENCE_MAX_LENGTH } from '@cuberoot/shared/site-assistant';
 
 export async function requireAssistantUser(c: Context): Promise<{ uid: number; wcaId: string }> {
   // Paid AI requires a current CubeRoot session. Do not enter the legacy raw-WCA
@@ -44,6 +49,12 @@ export async function requireAssistantUser(c: Context): Promise<{ uid: number; w
 
 const imagesSchema = z.array(assistantImageSchema).max(SITE_ASSISTANT_MAX_IMAGES);
 const inputSchema = z.object({
+  runId: z.string().uuid().optional(),
+  references: z.array(z.object({
+    messageId: z.string().min(1).max(100), messageVersion: z.number().int().min(1),
+    role: z.enum(['user','assistant']), selectedText: z.string().min(1).max(SITE_ASSISTANT_REFERENCE_MAX_LENGTH),
+    sourceStatus: z.enum(['complete','partial','stopped']),
+  }).strict()).max(3).optional(),
   conversationId: z.string().uuid().optional(), parentId: z.string().uuid().optional(), retryOf: z.string().uuid().optional(),
   question: z.string().trim().max(SITE_ASSISTANT_QUESTION_MAX_LENGTH), lang: z.enum(['zh', 'en']),
   thinking: z.enum(['auto', 'fast', 'deep']).default('auto'),
@@ -53,18 +64,81 @@ const inputSchema = z.object({
   viewerWcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/).optional(),
   history: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().max(SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH), images: imagesSchema.optional() }).strict()
     .refine(message => message.role === 'user' || !message.images?.length, { path: ['images'] })).max(10).default([]),
-}).strict().refine(input => input.question.length > 0 || !!input.images?.length)
+}).strict().refine(input => !input.runId || !!input.conversationId)
+  .refine(input => input.question.length > 0 || !!input.images?.length)
   .refine(input => (input.images?.length ?? 0) + input.history.reduce((count, message) => count + (message.images?.length ?? 0), 0) <= SITE_ASSISTANT_MAX_IMAGES, { path: ['images'] });
 
 // Burst limits are per process; the daily shared limit is atomic and durable.
-export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuestion; config: typeof assistantConfig; country?: typeof resolveIpCountry; now: () => number; reserve: typeof reserveAssistantQuestion; authenticate: typeof requireAssistantUser; monitor?: typeof startAssistantMonitor; eventsQuery?: QueryRunner; contextQuery?: QueryRunner; entry?: typeof recordAssistantEntry; readAttachment?: typeof readAssistantAttachment; saveAttachment?: typeof saveAssistantAttachment } = { answer: answerSiteQuestion, config: assistantConfig, now: Date.now, reserve: reserveAssistantQuestion, authenticate: requireAssistantUser, monitor: startAssistantMonitor, entry: recordAssistantEntry, readAttachment: readAssistantAttachment, saveAttachment: saveAssistantAttachment }) {
+export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuestion; config: typeof assistantConfig; country?: typeof resolveIpCountry; now: () => number; reserve: typeof reserveAssistantQuestion; authenticate: typeof requireAssistantUser; monitor?: typeof startAssistantMonitor; queue?: {store:typeof durableAssistantStore;worker:Pick<typeof durableAssistantWorker,'kick'>}; runs?: ReturnType<typeof assistantRunStore>; eventsQuery?: QueryRunner; contextQuery?: QueryRunner; entry?: typeof recordAssistantEntry; readAttachment?: typeof readAssistantAttachment; saveAttachment?: typeof saveAssistantAttachment } = { answer: answerSiteQuestion, config: assistantConfig, now: Date.now, reserve: reserveAssistantQuestion, authenticate: requireAssistantUser, monitor: startAssistantMonitor, entry: recordAssistantEntry, readAttachment: readAssistantAttachment, saveAttachment: saveAssistantAttachment }) {
   const routes = new Hono();
+  const runs = deps.runs ?? assistantRunStore();
+  const inbox=deps.queue?.store ?? durableAssistantStore,worker=deps.queue?.worker ?? durableAssistantWorker;
   let active = 0;
   let minute = 0;
   let minuteCount = 0;
   const clients = new Map<string, number>();
   routes.use('/site-assistant', async (c, next) => { await next(); c.header('Cache-Control', 'no-store'); });
   routes.use('/site-assistant', bodyLimit({ maxSize: SITE_ASSISTANT_BODY_BYTES, onError: async c => { await deps.entry?.('invalid_image'); return c.json({ error: 'invalid_image' }, 413); } }));
+  routes.use('/site-assistant/runs/*', bodyLimit({ maxSize: 1024 }));
+  routes.use('/site-assistant/runs/*', async(c,next)=>{c.header('Cache-Control','private, no-store');await next();});
+  routes.on(['GET','POST'], ['/site-assistant/runs/:id','/site-assistant/runs/:id/cancel'], async c=>{
+    if ((c.req.method==='POST') !== c.req.path.endsWith('/cancel')) return c.notFound();
+    let user;
+    try { user=await deps.authenticate(c); } catch { return c.json({error:'login_required'},401); }
+    const id=z.string().uuid().safeParse(c.req.param('id'));
+    if(!id.success) return c.json({error:'not_found'},404);
+    try {
+      let state;
+      if(c.req.method==='POST') {
+        checkRateLimit(String(user.uid),{bucket:'assistant-cancel',max:60});
+        const body=z.object({conversationId:z.string().uuid()}).strict().safeParse(await c.req.json().catch(()=>null));
+        if(!body.success)return c.json({error:'invalid_request'},400);
+        state=await runs.cancel(user.uid,body.data.conversationId,id.data);
+      } else state=await runs.read(user.uid,id.data);
+      return state ? c.json({state}) : c.json({error:'not_found'},404);
+    } catch { return c.json({error:'unavailable'},503); }
+  });
+  routes.use('/site-assistant/conversations/*', bodyLimit({maxSize:200_000}));
+  routes.use('/site-assistant/conversations/*',async(c,next)=>{c.header('Cache-Control','private, no-store');await next();});
+  routes.on(['GET','POST'], ['/site-assistant/conversations/:conversation','/site-assistant/conversations/:conversation/messages','/site-assistant/conversations/:conversation/stop','/site-assistant/conversations/:conversation/resume'],async c=>{
+    let user;
+    try {user=await deps.authenticate(c);} catch(error){return c.json({error:assistantFailureCode(error)},401);}
+    const conversation=z.string().uuid().safeParse(c.req.param('conversation'));
+    if(!conversation.success)return c.json({error:'not_found'},404);
+    const action=c.req.path.split('/').at(-1);
+    try {
+      if(c.req.method==='POST') {
+        checkRateLimit(String(user.uid),{bucket:action==='messages'?'assistant-inbox':'assistant-control',max:action==='messages'?30:60});
+        if(action==='messages') {
+          const body=z.object({id:z.string().uuid(),mode:z.enum(['queue','steer']),input:inputSchema}).strict().safeParse(await c.req.json().catch(()=>null));
+          if(!body.success)return c.json({error:'invalid_question'},400);
+          const input=body.data.input;
+          if(input.images?.some(image=>!('attachmentId' in image)) || input.history.some(message=>message.images?.some(image=>!('attachmentId' in image))))return c.json({error:'invalid_image'},400);
+          const config=deps.config(!!input.images?.length || input.history.some(message=>!!message.images?.length),input.provider);
+          if(!config)return c.json({error:'provider_unavailable'},503);
+          const country=input.provider==='openai'?await (deps.country ?? resolveIpCountry)(getIp(c)).catch(()=>null):undefined;
+          if(input.provider==='openai' && !assistantOpenAICountrySupported(country))return c.json({error:'provider_region_unavailable'},403);
+          // Verify attachment ownership before accepting a durable message.
+          await resolveAssistantImages(user.uid,[...(input.images ?? []),...input.history.flatMap(message=>message.images ?? [])],deps.readAttachment ?? readAssistantAttachment);
+          const {question,lang,thinking,provider,timeZone='UTC',images,references}=input;
+          await inbox.enqueue(user.uid,conversation.data,body.data.id,body.data.mode,{question,lang,thinking,provider,timeZone,images,references,history:boundAssistantHistory(input.history)},country ?? undefined);
+          void worker.kick();
+          return c.json({id:body.data.id},202);
+        }
+        if(action!=='stop' && action!=='resume')return c.notFound();
+        await inbox.control(user.uid,conversation.data,action);
+        void worker.kick();
+      } else if(action!==conversation.data)return c.notFound();
+      const after=c.req.query('after');
+      if(c.req.method==='GET' && after && /^\d+$/.test(after) && await inbox.revision(user.uid,conversation.data)===Number(after))return c.body(null,304);
+      const snapshot=await inbox.snapshot(user.uid,conversation.data);
+      return snapshot?c.json(snapshot):c.json({error:'not_found'},404);
+    } catch(error) {
+      if(error instanceof RateLimitError){c.header('Retry-After',String(error.retryAfterSeconds));return c.json({error:'busy'},429);}
+      if(error instanceof AssistantQueueConflict)return c.json({error:error.message},error.message==='not_found'?404:409);
+      return c.json({error:assistantFailureCode(error)},503);
+    }
+  });
   routes.get('/site-assistant/providers', async c => {
     c.header('Cache-Control', 'private, no-store');
     const providers: Array<'bailian' | 'openai'> = [];
@@ -98,14 +172,28 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
     const disconnect = new AbortController();
     const signal = AbortSignal.any([disconnect.signal, c.req.raw.signal, AbortSignal.timeout(assistantTimeoutMs(parsed.data.thinking) - 2000)]);
     let admitted = false, recordingFailed = false;
+    let runOwner: number | undefined;
+    let stopWatching: (()=>void) | undefined;
+    const finishRun = async (state:'completed'|'cancelled'|'error') => {
+      stopWatching?.();
+      if(runOwner===undefined || !parsed.data.runId)return state;
+      return runs.finish(runOwner,parsed.data.runId,state);
+    };
     let monitor: Awaited<ReturnType<typeof startAssistantMonitor>> | undefined;
     let priorContext: AssistantContext | undefined;
     const answer = (user: { wcaId: string }, emit?: (event: AssistantStreamEvent) => Promise<void>) => {
-      const run = () => withAssistantProgress(emit, signal, requestStarted, () => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, history, user.wcaId, emit, parsed.data.timeZone, images, parsed.data.thinking, {}, priorContext));
+      const run = () => withAssistantProgress(emit, signal, requestStarted, () => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, history, user.wcaId, emit, parsed.data.timeZone, images, parsed.data.thinking, {}, priorContext, parsed.data.references));
       return monitor ? monitor.run(run) : run();
     };
-    const failure = (error: unknown) => monitor?.finish(disconnect.signal.aborted || c.req.raw.signal.aborted ? 'cancelled' : 'error', assistantFailureCode(error));
-    try { return await assistantStage('total',()=>assistantDeadline(async()=>{
+    const failure = async (error: unknown) => {
+      const cancelled=disconnect.signal.reason==='user_cancel' || c.req.raw.signal.aborted;
+      const state=await finishRun(cancelled ? 'cancelled' : 'error');
+      await monitor?.finish(state==='cancelled' ? 'cancelled' : 'error', assistantFailureCode(error));
+      return state;
+    };
+    // Controlled runs retain ownership until their execution promise settles.
+    const deadline = <T,>(work:()=>Promise<T>) => parsed.data.runId ? work() : assistantDeadline(work,signal);
+    try { return await assistantStage('total',()=>deadline(async()=>{
       const user = await assistantStage('auth',()=>deps.authenticate(c));
       signal.throwIfAborted();
       if (parsed.data.provider === 'openai') {
@@ -115,6 +203,12 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
           return c.json({ error: 'provider_region_unavailable' }, 403);
         }
         config.visitorCountry = country!.toUpperCase();
+      }
+      if(parsed.data.runId && parsed.data.conversationId) {
+        if(!await runs.start(user.uid,parsed.data.conversationId,parsed.data.runId)) return c.json({error:'busy'},409);
+        runOwner=user.uid;
+        stopWatching=watchAssistantRun(runs,user.uid,parsed.data.runId,disconnect);
+        signal.throwIfAborted();
       }
       const readAttachment = deps.readAttachment ?? readAssistantAttachment;
       images = images ? await resolveAssistantImages(user.uid, images, readAttachment) : undefined;
@@ -135,6 +229,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
       if ((clients.get(ip) ?? 0) >= 6 || (clients.get(accountKey) ?? 0) >= 6 || minuteCount >= 30 || active >= 4) {
         c.header('Retry-After', '60');
         await monitor?.finish('rejected', 'busy');
+        await finishRun('error');
         return c.json({ error: 'busy' }, 429);
       }
       clients.set(ip, (clients.get(ip) ?? 0) + 1);
@@ -146,6 +241,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
       if (!quota.allowed) {
         c.header('Retry-After', String(quota.retryAfter));
         await monitor?.finish('rejected', 'daily_limit');
+        await finishRun('error');
         return c.json({ error: 'daily_limit' }, 429);
       }
       // Keep JSON for existing clients/benchmarks. Auth and quota failures still
@@ -155,7 +251,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
         c.header('X-Accel-Buffering', 'no');
         admitted = false; // The stream owns the concurrency slot until it closes.
         return streamSSE(c, async stream => {
-          stream.onAbort(() => disconnect.abort());
+          stream.onAbort(() => disconnect.abort('user_cancel'));
           // A deep model can be silent longer than a proxy's idle-read timeout.
           // SSE comments keep the transport alive without inventing progress or text.
           const heartbeat = setInterval(() => {
@@ -171,23 +267,26 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
           };
           try {
             await emit({ type: 'status', status: { phase: 'planning' } });
-            const result = await assistantStage('total', () => assistantDeadline(() => answer(user, emit), signal));
+            const result = await assistantStage('total', () => deadline(() => answer(user, emit)));
+            signal.throwIfAborted();
+            if(await finishRun('completed')!=='completed') throw new AssistantFailure('timeout');
             if (!emittedAnswer && result.answer) await emit({type:'answer',answer:result.answer,sources:result.sources});
             await monitor?.finish('success', undefined, result);
             await emit({ type: 'done', result });
           } catch (error) {
-            await failure(error)?.catch(() => {});
-            if (!disconnect.signal.aborted) await stream.writeSSE({ data: JSON.stringify({ type: 'error', error: assistantFailureCode(error) }) });
-          } finally { clearInterval(heartbeat); disconnect.abort(); active--; }
+            const state=await failure(error).catch(() => undefined);
+            if (!c.req.raw.signal.aborted) await stream.writeSSE({ data: JSON.stringify(state==='cancelled' ? {type:'cancelled'} : { type: 'error', error: assistantFailureCode(error) }) }).catch(()=>{});
+          } finally { clearInterval(heartbeat); stopWatching?.(); disconnect.abort(); active--; }
         });
       }
       const result = await answer(user);
       signal.throwIfAborted();
+      if(await finishRun('completed')!=='completed') throw new AssistantFailure('timeout');
       await monitor?.finish('success', undefined, result);
       return c.json(present(result));
-    },signal)); } catch(error) {
+    })); } catch(error) {
       // Provider bodies can contain request details. Never expose them to clients/logs.
-      await failure(error)?.catch(() => {});
+      await failure(error).catch(() => {});
       if (!monitor) await deps.entry?.(recordingFailed ? 'recording_unavailable' : assistantFailureCode(error));
       const code=assistantFailureCode(error);
       return c.json({ error: code }, code==='login_required'?401:code==='wca_link_required'||code==='account_forbidden'?403:code==='timeout'?504:503);

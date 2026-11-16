@@ -1,3 +1,4 @@
+import { checkpointAssistantTool } from './site_assistant_execution.js';
 import { z } from 'zod';
 import { formatWcaResult } from '@cuberoot/shared/wca-format-result';
 import { selectCurrentRecords, personalRecordFlags, type WcaRecordRow } from '@cuberoot/shared/wca-records';
@@ -141,7 +142,7 @@ function selectAttendance(data: {results: Array<{competition_id: string; event_i
 }
 
 /** Only fixed public origins/endpoints. Never forwards cookies or credentials. */
-export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'navigation'|'analysis_schema'|'analysis_query'|'web_search'|'deliberate'|'lookup_cube_photo'}>, lang: 'zh'|'en', read: JsonReader, findPeople = findAssistantPeople,today=new Date().toISOString().slice(0,10),timeZone='UTC'): Promise<ToolResult> {
+async function executeDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'navigation'|'analysis_schema'|'analysis_query'|'web_search'|'deliberate'|'lookup_cube_photo'}>, lang: 'zh'|'en', read: JsonReader, findPeople = findAssistantPeople,today=new Date().toISOString().slice(0,10),timeZone='UTC'): Promise<ToolResult> {
   if (call.tool === 'statistics_metadata') return call.view === 'runtime' ? readStatisticsRuntime(call, lang, read) : readStatisticsMetadata(call, lang);
   if (call.tool === 'news') return readAssistantNews(call, lang, read, timeZone);
   const label = (zh: string, en: string) => ({ zh, en })[lang];
@@ -406,4 +407,9 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     out.sources.push(source(cards ? `algorithms:${call.puzzle}:${call.set}:${call.caseId ?? call.query ?? ''}:${call.offset ?? 0}:${call.alternative ?? 0}` : 'algorithms',cards?.title ?? label('公式库','Algorithms'),call.set ? `/alg/${call.puzzle}/${call.set}` : '/alg'));
   }
   return out;
+}
+
+/** Read-only tool checkpoints share the exact validated call, locale and date. */
+export async function runDataTool(...args: Parameters<typeof executeDataTool>): Promise<ToolResult> {
+  return checkpointAssistantTool(args[0],()=>executeDataTool(...args));
 }
