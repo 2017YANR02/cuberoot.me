@@ -18,6 +18,41 @@ beforeEach(() => {
   mocks.query.mockResolvedValue([]);
 });
 describe('remote access security boundary', () => {
+  it.each(['pending', 'approved', 'active'])('blocks a second key while a %s request exists for the device type', async status => {
+    mocks.query.mockImplementation(async (sql: string) => {
+      if (sql.includes('lower(trim(device))') && sql.includes(`'${status}'`)) return [{ id }];
+      return [];
+    });
+    const response = await call('requests', { publicKey: key, device: ' mac ' });
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ code: 'REMOTE_ACCESS_EXISTS', id });
+    expect(mocks.query.mock.calls[0]).toEqual(['SELECT id FROM app_users WHERE id=? FOR UPDATE', [2]]);
+    expect(mocks.query.mock.calls.find(([sql]) => sql.includes('lower(trim(device))'))?.[1]).toEqual([2, 'mac']);
+    expect(mocks.query.mock.calls.some(([sql]) => sql.startsWith('INSERT'))).toBe(false);
+  });
+  it('reuses the same active key when a successful submission is retried', async () => {
+    mocks.query.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id, user_id: 2, status: 'pending' }]);
+    const response = await call('requests', { publicKey: key, device: 'Mac' });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ id });
+    expect(mocks.query.mock.calls.some(([sql]) => sql.startsWith('INSERT'))).toBe(false);
+  });
+  it.each(['rejected', 'revoked'])('does not reuse a %s key', async status => {
+    mocks.query.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id, user_id: 2, status }]);
+    expect((await call('requests', { publicKey: key, device: 'Mac' })).status).toBe(409);
+    expect(mocks.query.mock.calls.some(([sql]) => sql.startsWith('INSERT'))).toBe(false);
+  });
+  it('accepts a new key when the device type has no open request, preserving history', async () => {
+    mocks.query.mockImplementation(async (sql: string) => sql.includes('COUNT(*)') ? [{ n: 1 }] : []);
+    const response = await call('requests', { publicKey: key, device: ' Windows ' });
+    expect(response.status).toBe(200);
+    expect(mocks.query.mock.calls.find(([sql]) => sql.startsWith('INSERT INTO remote_access_requests'))?.[1]?.[3]).toBe('Windows');
+    expect(mocks.query.mock.calls.some(([sql]) => /^(DELETE|UPDATE)/.test(sql))).toBe(false);
+  });
+  it('rejects invented device types that could bypass the enrollment limit', async () => {
+    expect((await call('requests', { publicKey: key, device: 'Mac 2' })).status).toBe(400);
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
   it('does not let an ordinary website admin approve OS access', async () => {
     mocks.auth.mockResolvedValue({ uid: 2, isAdmin: true, realWcaId: '2020TEST01' });
     expect((await call(`requests/${id}/decision`, { decision: 'approved' })).status).toBe(403);

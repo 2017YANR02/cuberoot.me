@@ -59,7 +59,7 @@ remoteAccessRoutes.get('/remote-access/requests', async c => {
   const canApprove = owner(user);
   if (!enabled()) return c.json({ enabled: false, canApprove, hostOnline: false, requests: [] });
   const requests = await query<RemoteAccessRequest>(
-    `SELECT * FROM remote_access_requests ${canApprove ? '' : 'WHERE user_id = ?'} ORDER BY created_at DESC LIMIT 200`, canApprove ? [] : [user.uid]);
+    `SELECT * FROM remote_access_requests ${canApprove ? '' : 'WHERE user_id = ?'} ORDER BY created_at DESC, id DESC LIMIT 200`, canApprove ? [] : [user.uid]);
   const [host] = await query<{online: boolean}>('SELECT seen_at > NOW() - INTERVAL \'90 seconds\' AS online FROM remote_access_host WHERE singleton');
   return c.json({ enabled: true, canApprove, hostOnline: host?.online ?? false, requests });
 });
@@ -73,19 +73,29 @@ remoteAccessRoutes.post('/remote-access/requests', async c => {
   try { publicKey = normalizeRemoteKey(body?.publicKey); } catch { return c.json({ error: 'Invalid public key' }, 400); }
   if (typeof body?.device !== 'string' || !body.device.trim() || body.device.length > 80 || /[\x00-\x1f]/.test(body.device))
     return c.json({ error: 'Invalid device name' }, 400);
+  const device = ['Mac', 'Windows', 'Computer'].find(value => value.toLowerCase() === body.device.trim().toLowerCase());
+  if (!device) return c.json({ error: 'Invalid device type' }, 400);
   const fingerprint = 'SHA256:' + createHash('sha256').update(Buffer.from(publicKey.split(' ')[1], 'base64')).digest('base64').replace(/=+$/, '');
   const result = await withTransaction(async q => {
     await q('SELECT id FROM app_users WHERE id=? FOR UPDATE', [user.uid]);
-    const existing = await q<{id: string; user_id: number}>('SELECT id, user_id FROM remote_access_requests WHERE public_key=?', [publicKey]);
-    if (existing.length) return Number(existing[0].user_id) === user.uid ? { id: existing[0].id } : null;
+    const existing = await q<{id: string; user_id: number; status: string}>('SELECT id, user_id, status FROM remote_access_requests WHERE public_key=?', [publicKey]);
+    // Retrying the same key is idempotent; retired keys never become active again.
+    if (existing.length) return Number(existing[0].user_id) === user.uid && ['pending', 'approved', 'active'].includes(existing[0].status)
+      ? { id: existing[0].id } : null;
+    // The account row lock serializes concurrent enrollments across tabs and clients.
+    const [current] = await q<{id: string}>(
+      "SELECT id FROM remote_access_requests WHERE user_id=? AND lower(trim(device))=? AND status IN ('pending','approved','active') ORDER BY created_at DESC, id DESC LIMIT 1",
+      [user.uid, device.toLowerCase()]);
+    if (current) return { id: current.id, code: 'REMOTE_ACCESS_EXISTS' as const };
     const [count] = await q<{n: number}>("SELECT COUNT(*)::int AS n FROM remote_access_requests WHERE user_id=? AND status IN ('pending','approved','active')", [user.uid]);
     if (count.n >= 10) return null;
     const id = randomUUID();
     await q('INSERT INTO remote_access_requests(id,user_id,user_name,device,public_key,fingerprint) VALUES (?,?,?,?,?,?)',
-      [id, user.uid, user.name.slice(0,200), body.device.trim(), publicKey, fingerprint]);
+      [id, user.uid, user.name.slice(0,200), device, publicKey, fingerprint]);
     await q("INSERT INTO remote_access_events(request_id,actor_id,action) VALUES (?,?,'requested')", [id,user.uid]);
     return { id };
   });
+  if (result && 'code' in result) return c.json({ ...result, error: 'An open request already exists for this device type' }, 409);
   return result ? c.json(result) : c.json({ error: 'Request limit or key already registered' }, 409);
 });
 remoteAccessRoutes.post('/remote-access/requests/:id/decision', async c => {

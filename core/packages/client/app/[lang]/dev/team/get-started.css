@@ -48,6 +48,30 @@
 .staff-start-device-detail { color: var(--muted-foreground); font-size: .85rem; }
 .staff-start-steps > li + li { border-top: 1px solid var(--border-default); padding-top: 16px; }
 .staff-start-development .staff-start-inline-action { cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.staff-start-optional { min-width: 0; }
+.staff-start-optional > h3 { margin-bottom: 12px; color: var(--muted-foreground); }
+.remote-access-groups, .remote-access-requests { list-style: none; margin: 0; padding: 0; }
+.remote-access-groups > li + li { margin-top: 24px; }
+.remote-access-groups > li > details > summary { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; }
+.remote-access-requests { display: grid; }
+.remote-access-request { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 14px 0; border-bottom: 1px solid var(--border-default); }
+.remote-access-meta { display: grid; gap: 4px; min-width: 0; }
+.remote-access-meta time, .remote-access-key { color: var(--muted-foreground); font-size: .76rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.remote-access-key code { font-size: inherit; }
+.remote-access-status { display: flex; align-items: center; gap: 7px; font-size: .85rem; font-weight: 550; }
+.remote-access-status::before { content: ''; width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: var(--muted-foreground); }
+.remote-access-status[data-status="active"]::before { background: var(--signal-success); }
+.remote-access-status[data-status="pending"]::before, .remote-access-status[data-status="approved"]::before { background: var(--signal-warning); }
+.remote-access-status[data-status="rejected"], .remote-access-status[data-status="revoked"] { color: var(--muted-foreground); }
+.remote-access-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.remote-access-actions:empty { display: none; }
+.remote-access .remote-access-button { display: inline-flex; justify-content: center; align-items: center; min-height: 40px; padding: 8px 12px; border: 1px solid var(--border-default); border-radius: 10px; background: transparent; color: var(--foreground); font: inherit; font-size: .8rem; line-height: 1.4; text-decoration: none; cursor: pointer; }
+.remote-access .remote-access-button:hover { background: var(--muted); }
+.remote-access .remote-access-button.remote-access-button-primary { border-color: var(--primary); background: var(--primary); color: var(--primary-foreground); }
+.remote-access .remote-access-button.remote-access-button-revoke { border-color: transparent; color: var(--muted-foreground); }
+.remote-access .remote-access-button.remote-access-button-revoke:hover { color: var(--destructive); }
+.remote-access .remote-access-button:disabled { opacity: .5; cursor: default; }
+.staff-start .remote-access-order { margin: 24px 0 4px; color: var(--muted-foreground); font-size: .75rem; }
 .staff-start-preview-form { display: grid; gap: 16px; }
 .staff-start-preview-form label { display: grid; gap: 6px; min-width: 0; }
 .staff-start-preview-control { box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--input); border-radius: 12px; background: var(--background); color: var(--foreground); font: inherit; }
