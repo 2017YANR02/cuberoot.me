@@ -48,6 +48,64 @@ export function statisticsRuntimePrefetchIds(question: string): Array<string | u
   return ids.length && ids.length <= 3 ? ids : [undefined];
 }
 
+/** Preserve verified runtime facts when prose/JSON generation fails. Values come
+ * only from the already validated observations, never a maintained answer text. */
+export function statisticsRuntimeFactFallback(question: string, lang: 'zh' | 'en', results: ToolResult[]) {
+  const sources=new Map(results.flatMap(result=>result.sources).filter(source=>source.read).map(source=>[source.id,source]));
+  type Entry={sourceId?:string;kind?:string;displayTimes?:Record<string,string>;publishedDataVersion?:string;lastRun?:{status?:string;conclusion?:string;failedStage?:unknown};sourceDataCutoff?:string};
+  const views=results.map(result=>result.evidence as {view?:string;entries?:Entry[];gaps?:Array<{scope:string;reason:string}>}).filter(view=>view?.view==='runtime');
+  if(!views.length)return undefined;
+  const entries=[...new Map(views.flatMap(view=>view.entries??[]).filter(entry=>entry.sourceId && sources.has(entry.sourceId)).map(entry=>[entry.sourceId!,entry])).values()];
+  const zh=lang==='zh';
+  const wantsRun=/运行|执行|失败|\b(?:runs?|execution|attempt|fail\w*)\b/i.test(question);
+  const wantsSuccess=/最近(?:一次)?成功|上次成功|最后(?:一次)?成功|\b(?:last|latest)\s+(?:\w+\s+){0,2}success(?:ful)?\b/i.test(question);
+  const wantsVersion=/版本|发布|\b(?:versions?|publish\w*|publication)\b/i.test(question);
+  const wantsImport=/导入|数据库|\b(?:import\w*|database)\b/i.test(question);
+  const rows=new Map<string,Set<string>>();
+  const add=(text:string,id?:string)=>{const ids=rows.get(text)??new Set<string>();if(id&&sources.has(id))ids.add(id);rows.set(text,ids);};
+  const time=(entry:Entry,key:string)=>entry.displayTimes?.[key];
+  for(const entry of entries) {
+    const id=entry.sourceId!;
+    if(entry.kind==='last-run' && wantsRun && entry.lastRun) {
+      const raw=entry.lastRun.conclusion??entry.lastRun.status??'unknown';
+      const states:Record<string,string>={success:'成功',failure:'失败',in_progress:'运行中',queued:'排队中',cancelled:'已取消',timed_out:'超时',unknown:'未知'};
+      let text=(zh?'最近运行：':'Latest run: ')+(zh?states[raw]??raw:raw);
+      if(time(entry,'lastRun.startedAt'))text+=(zh?'；开始于 ':'; started ')+time(entry,'lastRun.startedAt');
+      if(time(entry,'lastRun.finishedAt'))text+=(zh?'；结束于 ':'; finished ')+time(entry,'lastRun.finishedAt');
+      const failed=entry.lastRun.failedStage;
+      if(Array.isArray(failed)&&failed.length&&failed.every(value=>typeof value==='string'))text+=(zh?'；失败步骤：':'; failed steps: ')+failed.join('、');
+      add(text,id);
+    }
+    if(entry.kind==='last-success' && wantsSuccess && time(entry,'lastSuccessAt'))add((zh?'最近已核实的成功计算及发布流程：':'Last verified successful computation-and-publication workflow: ')+time(entry,'lastSuccessAt'),id);
+    if(entry.kind==='publication' && wantsVersion && typeof entry.publishedDataVersion==='string') {
+      const corpus=id==='statistics-runtime:double-zbll-publication';
+      let text=(zh?(corpus?'当前双底 ZBLL 题库版本：':'当前静态统计快照版本：'):(corpus?'Current double-ZBLL corpus version: ':'Current static statistics snapshot version: '))+entry.publishedDataVersion;
+      const generated=time(entry,corpus?'generatedAt':'snapshotGeneratedAt');
+      if(generated)text+=(zh?'；生成于 ':'; generated ')+generated;
+      const receipt=entries.find(item=>item.kind==='publication-receipt'&&item.publishedDataVersion===entry.publishedDataVersion);
+      if(receipt&&time(receipt,'lastPublishedAt'))text+=(zh?'；发布于 ':'; published ')+time(receipt,'lastPublishedAt');
+      else text+=zh?'。生成时间不等于发布时间，精确发布时间暂无可核验回执。':'. Generation time is not publication time; no matching publication receipt is available.';
+      add(text,id);if(receipt?.sourceId)add(text,receipt.sourceId);
+    }
+    if(entry.kind==='database-import' && wantsImport && time(entry,'lastImportedAt'))add((zh?'历史排名数据库最近导入：':'Historical ranking database last imported: ')+time(entry,'lastImportedAt')+(zh?'。这是独立的数据库导入时间，不代表整个工作流成功或静态快照发布。':'. This independent database import does not establish whole-workflow success or static publication.'),id);
+    if(entry.kind==='source-cutoff' && /截点|截至|\bcutoff\b/i.test(question) && entry.sourceDataCutoff)add((zh?'已发布 WCA 二进制数据截点（不代表所有统计或 PG）：':'Published WCA binary cutoff (not all statistics or PG): ')+entry.sourceDataCutoff,id);
+  }
+  if(wantsRun&&!entries.some(entry=>entry.kind==='last-run')&&views.some(view=>view.gaps?.some(gap=>gap.scope==='wca-last-run')))add(zh?'最近运行：未取得完整、可核验的运行记录，无法确认。':'Latest run: complete verifiable run records are unavailable.');
+  if(wantsSuccess&&!entries.some(entry=>entry.kind==='last-success')&&views.some(view=>view.gaps?.some(gap=>gap.scope.endsWith('-last-success'))))add(zh?'最近成功：当前有界历史记录未能确认，不能用数据库导入时间代替。':'Last success: not established by the bounded history; database import time is not a substitute.');
+  if(wantsRun||wantsSuccess)for(const scope of new Set(views.flatMap(view=>view.gaps??[]).filter(gap=>gap.reason==='local_run_receipts_not_uploaded').map(gap=>gap.scope))) {
+    const source=sources.get('statistics-metadata:'+scope.replace(/-local-runs$/,''));
+    add((source?source.title+'：':'')+(zh?'最近本地运行及成功时间未知，当前未接入可核验的本地运行回执。':'Local run and success times are unknown; verifiable local run receipts are not connected.'),source?.id);
+  }
+  if(wantsImport && /相同|一样|\bsame\b/i.test(question)) {
+    const imported=entries.find(entry=>entry.kind==='database-import');
+    const other=entries.flatMap(entry=>entry.kind==='last-run'&&wantsRun?[time(entry,'lastRun.startedAt')]:entry.kind==='last-success'&&wantsSuccess?[time(entry,'lastSuccessAt')]:entry.kind==='publication'&&wantsVersion?[time(entry,'snapshotGeneratedAt')]:[]).filter(Boolean);
+    if(imported&&time(imported,'lastImportedAt')&&other.length&&other.every(value=>value!==time(imported,'lastImportedAt')))add(zh?'数据库导入时间与上述已核实时间均不相同。':'The database import time differs from the verified times shown above.',imported.sourceId);
+  }
+  if(!rows.size)return undefined;
+  const used=new Set([...rows.values()].flatMap(ids=>[...ids]));
+  return {answer:(zh?'已核实的运行信息：':'Verified runtime information:')+'\n\n'+[...rows].map(([text,ids])=>text+([...ids].map(id=>' [['+id+']]').join(''))).join('\n\n'),sources:[...used].map(id=>sources.get(id)!),actions:[],artifacts:[]};
+}
+
 /** Public fixed endpoints only. Cache has explicit observation times; never serve
  * expired success as fresh after an outage. Tests inject a read without sharing cache. */
 async function readObserved(url: string, read: JsonReader, now: () => number) {

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { expect, it, vi } from 'vitest';
-import { readStatisticsRuntime, statisticsRuntimePrefetchIds } from '../src/utils/site_assistant_statistics_runtime.js';
+import { readStatisticsRuntime, statisticsRuntimePrefetchIds, statisticsRuntimeFactFallback } from '../src/utils/site_assistant_statistics_runtime.js';
+import { readStatisticsMetadata } from '../src/utils/site_assistant_statistics_metadata.js';
 import { runDataTool, toolCallSchema } from '../src/utils/site_assistant_tools.js';
 import { boundAssistantToolResult } from '../src/utils/site_assistant_evidence.js';
 import { answerSiteQuestion } from '../src/utils/site_assistant.js';
@@ -141,9 +142,36 @@ it.each([false,true])('repairs runtime prose omissions even with every source se
     return modelResponse({answerKind:'grounded',answer,sourceIds:ids});
   });
   const result=answerSiteQuestion('WCA 统计最近运行、最近成功和当前版本是什么？数据库导入时间相同吗？','zh',config,AbortSignal.timeout(5000),fetcher,[],undefined,undefined,'UTC',[],'deep');
-  if(stillIncomplete)await expect(result).rejects.toMatchObject({code:'model_output_invalid'});
-  else expect((await result).answer).toContain('与成功时间不同');
+  const answer=(await result).answer;
+  if(stillIncomplete){expect(answer).toContain('最近运行：失败');expect(answer).toContain(version);expect(answer).not.toContain('原因是在');}
+  else expect(answer).toContain('与成功时间不同');
   expect(calls).toBe(2);
+});
+it('preserves verified facts after both JSON-format attempts fail', async () => {
+  const config={key:'fixture',baseUrl:'https://model.example/v1',model:'test'};let calls=0;
+  const fetcher=vi.fn<typeof fetch>(async input=>{
+    if(!String(input).startsWith(config.baseUrl))return Response.json(await baseRead(String(input)));
+    calls++;return modelResponse({answer:'半句',sourceIds:'invalid'});
+  });
+  const result=await answerSiteQuestion('WCA 统计最近运行、最近成功和当前版本是什么？数据库导入时间相同吗？','zh',config,AbortSignal.timeout(5000),fetcher);
+  expect(calls).toBe(2);expect(result.answer).toContain(version);expect(result.answer).toContain('2026-11-13 22:00:00');expect(result.answer).toContain('均不相同');expect(result.sources.every(source=>source.read)).toBe(true);
+});
+it('renders only requested facts and keeps receipt, generation and import separate', async () => {
+  const runtime=await readStatisticsRuntime({id:'wca-history'},'zh',baseRead);
+  const result=statisticsRuntimeFactFallback('WCA 当前发布版本和数据库导入时间？','zh',[runtime])!;
+  expect(result.answer).toContain(version);expect(result.answer).toContain('发布于 2026-11-15 23:10:00');expect(result.answer).toContain('2026-11-14 21:00:00');expect(result.answer).not.toContain('最近运行');expect(result.answer).not.toContain('暂无可核验回执');
+  const success=statisticsRuntimeFactFallback('WCA 最近成功时间？','zh',[runtime])!;
+  expect(success.answer).not.toContain(version);expect(success.answer).not.toContain('数据库');expect(success.answer.match(/最近已核实/g)).toHaveLength(1);
+});
+it('keeps independent versions and unknown fields when GitHub or local receipts are unavailable', async () => {
+  const runtime=await readStatisticsRuntime({},'en',async url=>{if(url.startsWith('https://api.github.com')||url.endsWith('/publication.json'))throw Error('unavailable');return baseRead(url);});
+  const result=statisticsRuntimeFactFallback('All latest runs, last success and current published versions','en',[readStatisticsMetadata({},'en'),runtime])!;
+  expect(result.answer).toContain(version);expect(result.answer).toContain('d'.repeat(16));expect(result.answer).toContain('no matching publication receipt');expect(result.answer).toContain('Local run and success times are unknown');expect(result.answer).toContain('Latest run: complete verifiable run records are unavailable');
+  expect(result.answer).not.toContain('Last verified successful');
+});
+it('does not render an entry without its paired readable source', async () => {
+  const runtime=await readStatisticsRuntime({id:'double-zbll'},'en',baseRead);
+  expect(statisticsRuntimeFactFallback('Current version','en',[{...runtime,sources:[]}])).toBeUndefined();
 });
 it('repairs a broken deep JSON object without repeating its reasoning pass', async () => {
   const config={key:'fixture',baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1',model:'qwen3.8-flash'};let calls=0;

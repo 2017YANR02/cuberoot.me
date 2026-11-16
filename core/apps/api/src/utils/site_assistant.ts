@@ -1,7 +1,7 @@
 import { assistantExecutionBoundary, assistantExecutionMessages, checkpointAssistantTool } from './site_assistant_execution.js';
 import { setTimeout as retryDelay } from 'node:timers/promises';
 import { requestsStatisticsMetadata, statisticsMetadataFollowUp, assistantPageAudience, readStatisticsMetadata } from './site_assistant_statistics_metadata.js';
-import { requestsStatisticsRuntime, statisticsRuntimePrefetchIds, readStatisticsRuntime } from './site_assistant_statistics_runtime.js';
+import { requestsStatisticsRuntime, statisticsRuntimePrefetchIds, readStatisticsRuntime, statisticsRuntimeFactFallback } from './site_assistant_statistics_runtime.js';
 import { recordAssistantAnswerRejection, recordAssistantRetrieval } from './site_assistant_monitor.js';
 import { knowledgeIndexSchema, lexicalKnowledge, isDeveloperKnowledge, knowledgeQuery, knowledgeChunkMetadata, knowledgePageReferences } from './site_assistant_knowledge.js';
 import { boundAssistantEvidence, boundAssistantToolResult, assistantToolOutcome } from './site_assistant_evidence.js';
@@ -973,6 +973,8 @@ export async function answerSiteQuestion(
     }
     return step;
   };
+  const runtimeFactFallback=()=>metadataPrefetchComplete && runtimeEvidenceRequired
+    ? statisticsRuntimeFactFallback(evidenceQuestion,lang,observations.map(item=>item.result)) : undefined;
   const independentReadFallback=():AssistantAnswer|undefined=>{
     if(!unavailableTools.size || requestedEvidence!=='auto' || hasImages || analysisRevision)return;
     const supported=observations.flatMap(({call,result})=>{
@@ -1093,7 +1095,7 @@ export async function answerSiteQuestion(
         ? await reviewAnalysis({calls:[],answer:'',sourceIds:[]},round,finalOnly)
         : await complete(round,finalOnly,!hasImages && [...sources.values()].some(source=>source.read) && !analysisRevision?'':undefined,'evidence'));
     } catch(error) {
-      const fallback=error instanceof AssistantOutputError ? independentReadFallback():undefined;
+      const fallback=error instanceof AssistantOutputError ? runtimeFactFallback()??independentReadFallback():undefined;
       if(fallback)return withContext(fallback);
       throw error;
     }
@@ -1175,8 +1177,17 @@ export async function answerSiteQuestion(
       if(missing().length) {
         metadataCompositionRepair=true;
         pendingReadFollowUp='The previous prose omitted requested runtime facts even though sourceIds selected them. Write a complete answer to currentQuestion, covering these missing source groups with the verified values and inline citations: '+JSON.stringify(missing())+'. Keep latest attempt, last successful computation, active version and database import separate. Finish every sentence. Reuse existing evidence; no new reads are needed.';
-        step=normalizeContentKind(await complete(round,true,step.answer,'evidence'));
-        if(missing().length) throw new AssistantFailure('model_output_invalid');
+        try {step=normalizeContentKind(await complete(round,true,step.answer,'evidence'));}
+        catch(error) {
+          const fallback=error instanceof AssistantOutputError ? runtimeFactFallback():undefined;
+          if(fallback)return withContext(fallback);
+          throw error;
+        }
+        if(missing().length) {
+          const fallback=runtimeFactFallback();
+          if(fallback)return withContext(fallback);
+          throw new AssistantFailure('model_output_invalid');
+        }
       }
     }
     if(metadataInventoryRequired && !step.calls.length) {
