@@ -1,7 +1,7 @@
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import { sessionFetch } from '@/lib/session-fetch';
-import type { AssistantBrowserTiming } from '@cuberoot/shared/site-assistant';
+import type { AssistantBrowserTiming, AssistantProvider } from '@cuberoot/shared/site-assistant';
 import { SITE_ASSISTANT_ARTIFACT_FORMAT, SITE_ASSISTANT_BODY_BYTES, SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH, boundAssistantHistory, type AssistantMessage, type AssistantImage, type AssistantThinkingMode } from '@cuberoot/shared/site-assistant';
 
 interface AssistantRequest {
@@ -12,6 +12,7 @@ interface AssistantRequest {
   history:AssistantMessage[];
   timeZone:string;
   thinking?:AssistantThinkingMode;
+  provider?:AssistantProvider;
 }
 
 /** A schema rejection happens before quota/model work, so this retry is safe. */
@@ -32,6 +33,16 @@ export async function requestSiteAssistant(url:string,request:AssistantRequest,i
   if(response.status!==400)return response;
   let failure=await response.clone().json().catch(()=>null);
   if(failure?.error!=='invalid_question')return response;
+  // Never send an explicit OpenAI question to another provider on an old API.
+  if (request.provider === 'openai') return Response.json({ error: 'provider_unavailable' }, { status: 503 });
+  if (request.provider === 'bailian') {
+    const { provider: _provider, ...compatible } = request;
+    request = compatible;
+    response = await fetcher(url, { ...init, method: 'POST', body: JSON.stringify(request) });
+    if (response.status !== 400) return response;
+    failure = await response.clone().json().catch(() => null);
+    if (failure?.error !== 'invalid_question') return response;
+  }
   // Thinking was added after conversation tracking. Preserve trace IDs and images
   // on servers that already support them but do not yet accept this preference.
   if (request.thinking) {

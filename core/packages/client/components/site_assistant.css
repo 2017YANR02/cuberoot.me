@@ -180,6 +180,12 @@
 body:has(.deskpet-search-workspace:not([inert])) { overflow:hidden; }
 body:has(.deskpet-search-workspace:not([inert])) .chat-route-placeholder { display:none; }
 @media(max-width:767px) {
+  .site-assistant-input-actions:has(.site-assistant-provider) { display:grid; grid-template-columns:44px minmax(0,1fr) 44px 44px; }
+  .site-assistant-input-actions:has(.site-assistant-provider) .site-assistant-provider { grid-column:1 / 3; grid-row:1; justify-self:start; max-width:100%; }
+  .site-assistant-input-actions:has(.site-assistant-provider) .site-assistant-thinking:not(.site-assistant-provider) { grid-column:3 / 5; grid-row:1; justify-self:end; max-width:100%; }
+  .site-assistant-input-actions:has(.site-assistant-provider) .site-assistant-attachments { grid-column:1; grid-row:2; }
+  .site-assistant-input-actions:has(.site-assistant-provider) .site-assistant-mic { grid-column:3; grid-row:2; }
+  .site-assistant-input-actions:has(.site-assistant-provider) .site-assistant-send { grid-column:4; grid-row:2; }
   .site-assistant-embedded .site-assistant-messages { padding:16px 14px; }
   .site-assistant-embedded .site-assistant-compose { flex:none; padding:8px max(10px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left)); }
   .site-assistant-embedded .site-assistant-input { padding:12px 8px 6px; border-radius:22px; gap:6px; }

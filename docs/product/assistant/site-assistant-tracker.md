@@ -1,5 +1,45 @@
 # CubeRoot site assistant
 
+## Regional OpenAI option (2026-11-15, local implementation)
+
+The website defaults to Alibaba Cloud Bailian. `/v1/site-assistant/providers`
+returns visitor-specific options without caching; POST admission independently
+resolves the nginx-overwritten connection IP through the local MMDB before
+reserving quota. Unknown and unsupported locations use Bailian. The official
+OpenAI country list is recorded in shared `site_assistant_openai.ts`; Ukraine is
+excluded pending subdivision checks because the official list has territorial
+exceptions. IP geolocation is an operational filter, not proof of residence.
+
+Both website deployments currently call the Hangzhou API (region verified from
+instance metadata). OpenAI model requests therefore use the dedicated Vercel
+hostname and the signed `/api/site-assistant/openai/chat/completions` route pinned
+to `iad1`. The standalone route fails closed. The signature binds the exact body,
+country, path and a 60-second expiry; browsers receive neither secret. The relay
+only calls the fixed official OpenAI endpoint with `gpt-5.4-mini`, bounded tokens,
+`store: false`, and a 4 MB request limit. Larger image/context payloads are rejected
+explicitly. Existing retrieval, tools, login, daily quota and monitoring remain
+in the API. OpenAI token usage is recorded; CNY pricing remains unknown rather
+than treating promotional credits as zero cost. Provider invoices/grant records
+remain authoritative for dollars and remaining credit.
+
+Activation requires `OPENAI_API_KEY` in **Vercel only**, a dedicated random
+`SITE_ASSISTANT_OPENAI_RELAY_SECRET` of at least 32 characters in both services,
+and `SITE_ASSISTANT_OPENAI_RELAY_ORIGIN` set to the existing Vercel-only
+`https://google-api.cuberoot.me` origin in the API. Production connectivity checks
+returned 200 from Hangzhou; the default `cuberoot-me.vercel.app` DNS was unreachable.
+The config also accepts `*.vercel.app` for installations where it is reachable,
+but rejects the split-DNS main domains. After deploying and testing the relay, set
+`SITE_ASSISTANT_OPENAI_ENABLED=1` in the API. Keep the existing Bailian key/base/model
+configured. Never put these secrets in `NEXT_PUBLIC_*`, Git, screenshots or logs.
+Disabling the flag hides OpenAI and rejects explicit OpenAI requests; the client
+does not silently send those requests to another provider.
+
+Validation: shared build and API/client typechecks passed; 215 focused API,
+relay, request, presentation and endpoint-catalog tests passed. The full docs
+checker still reports existing missing local artifact links outside this change.
+Status: restricted Chat Completions key and shared relay secret configured in
+Vercel production; rollout and real OpenAI end-to-end acceptance are pending.
+
 ## Local RAG and memory implementation (2026-11-12)
 
 See [the implementation and verification record](history/assistant-rag-memory-optimization-2026-11-12.md)

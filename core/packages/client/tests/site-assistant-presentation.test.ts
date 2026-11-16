@@ -46,6 +46,22 @@ async function render(answer:AssistantAnswer,overrides:Partial<ComponentProps<ty
 }
 
 describe('assistant general conversation controls',()=>{
+  it('only offers the provider menu when OpenAI is available and discloses the selected processor',async()=>{
+    const onProviderChange=vi.fn();
+    const props=await render({answer:'',sources:[]},{turns:[],embedded:true,openaiAvailable:false,onProviderChange});
+    expect(document.querySelector('[aria-label="AI 服务"]')).toBeNull();
+    await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,openaiAvailable:true,provider:'openai'})));
+    const button=document.querySelector<HTMLButtonElement>('[aria-label="AI 服务"]')!;
+    expect(button.textContent).toContain('OpenAI');
+    expect(document.body.textContent).toContain('将交由 OpenAI 处理');
+    await act(async()=>button.click());
+    const option=[...document.querySelectorAll<HTMLElement>('[role="option"]')].find(node=>node.textContent?.includes('阿里云'))!;
+    expect(option).toBeDefined();
+    await act(async()=>option.click());
+    expect(onProviderChange).toHaveBeenCalledWith('bailian');
+    await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,openaiAvailable:true,provider:'openai',busy:true})));
+    expect(document.querySelector<HTMLButtonElement>('[aria-label="AI 服务"]')!.disabled).toBe(true);
+  });
   it('shows actual execution states and collapses them after completion while revealing a complete answer and table immediately',async()=>{
     const createdAt=Date.now()-2000;
     const turns=[{question:'对比成绩',createdAt,requestId:'fixture-request',progress:[
