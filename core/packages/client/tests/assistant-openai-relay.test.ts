@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { POST as responsesPOST } from '@/app/api/site-assistant/openai/responses/route';
 import { POST } from '@/app/api/site-assistant/openai/chat/completions/route';
+import { readFileSync } from 'node:fs';
 import { ASSISTANT_OPENAI_RESPONSES_PATH, ASSISTANT_OPENAI_MODEL, assistantOpenAICountrySupported, signAssistantOpenAI, verifyAssistantOpenAI } from '@cuberoot/shared/site-assistant-openai';
 
 const secret = 'fixture-server-relay-secret-at-least-32-chars';
@@ -11,6 +12,27 @@ async function request(text = body, country = 'US') {
   const proof = await signAssistantOpenAI(secret, country, text);
   return new Request('https://fixture.vercel.app/api/site-assistant/openai/chat/completions', { method: 'POST', body: text, headers: { 'x-assistant-country': country, 'x-assistant-proof': proof } });
 }
+
+it.each(['chat/completions','responses'] as const)('opts the %s relay into runtime cancellation and forwards abort before the first chunk',async protocol=>{
+  const config=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));
+  expect(config.functions[`app/api/site-assistant/openai/${protocol}/route.ts`].supportsCancellation).toBe(true);
+  const controller=new AbortController();
+  let signal:AbortSignal|undefined;
+  const fetcher=vi.fn(async(_url:unknown,init:RequestInit)=>{
+    signal=init.signal!;
+    return await new Promise<Response>((_resolve,reject)=>signal!.addEventListener('abort',()=>reject(signal!.reason),{once:true}));
+  });
+  vi.stubGlobal('fetch',fetcher);
+  const text=protocol==='responses' ? JSON.stringify({model:ASSISTANT_OPENAI_MODEL,store:false,max_output_tokens:4096,input:[{role:'user',content:'hi'}],stream:true}) : body;
+  const path=protocol==='responses' ? ASSISTANT_OPENAI_RESPONSES_PATH : undefined;
+  const proof=await signAssistantOpenAI(secret,'US',text,Date.now(),path);
+  const pending=(protocol==='responses'?responsesPOST:POST)(new Request('https://fixture/api',{method:'POST',body:text,signal:controller.signal,headers:{'x-assistant-country':'US','x-assistant-proof':proof}}));
+  await vi.waitFor(()=>expect(signal).toBeDefined());
+  controller.abort();
+  await pending;
+  expect(signal!.aborted).toBe(true);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});
 
 it('rejects altered bodies, countries, expired signatures and missing signatures', async () => {
   const proof = await signAssistantOpenAI(secret, 'US', body, 1_800_000_000_000);

@@ -7,6 +7,12 @@
       "regions": [
         "iad1"
       ]
+    },
+    "app/api/site-assistant/openai/responses/route.ts": {
+      "supportsCancellation": true
+    },
+    "app/api/site-assistant/openai/chat/completions/route.ts": {
+      "supportsCancellation": true
     }
   }
 }

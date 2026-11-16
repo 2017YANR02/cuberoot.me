@@ -1,5 +1,6 @@
 import {describe,it,expect,vi} from 'vitest';
 import {requestSiteAssistant,assistantImageHistory} from '@/lib/site-assistant-request';
+import {cancelAssistantRun} from '@/lib/site-assistant-request';
 import { assistantResponseError } from '@/lib/site-assistant-errors';
 import { SITE_ASSISTANT_BODY_BYTES, SITE_ASSISTANT_IMAGE_BYTES, SITE_ASSISTANT_QUESTION_MAX_LENGTH, SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH, type AssistantImage, type AssistantMessage } from '@cuberoot/shared/site-assistant';
 
@@ -11,6 +12,25 @@ it('does not silently downgrade an explicit OpenAI request on an older server',a
   expect(fetcher).toHaveBeenCalledTimes(1);
 });
 const image:AssistantImage={mediaType:'image/png',data:'fixture'};
+it('never downgrades a controlled request or drops a quote on an older API',async()=>{
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValue(Response.json({error:'invalid_question'},{status:400}));
+  const references=[{messageId:'old:assistant',messageVersion:1,role:'assistant' as const,selectedText:'128 competitions',sourceStatus:'partial' as const}];
+  const response=await requestSiteAssistant('/v1/site-assistant',{...request,runId:'run',references,thinking:'deep'},{},fetcher);
+  expect(response.status).toBe(400);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body)).references).toEqual(references);
+});
+it('waits past accepted cancellation and preserves a completion race',async()=>{
+  const fetcher=vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(Response.json({state:'stopping'}))
+    .mockResolvedValueOnce(Response.json({state:'completed'}));
+  expect(await cancelAssistantRun('run','conversation',fetcher)).toBe('completed');
+  expect(fetcher.mock.calls.map(([url])=>String(url))).toEqual([
+    'https://api.cuberoot.me/v1/site-assistant/runs/run/cancel',
+    'https://api.cuberoot.me/v1/site-assistant/runs/run',
+  ]);
+  expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).toEqual({conversationId:'conversation'});
+});
 it('retains complete recent image groups and marks older omitted images',()=>{
   const history=assistantImageHistory([
     {role:'user',content:'old',images:[image,image]}, {role:'assistant',content:'old reply'},

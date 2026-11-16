@@ -25,6 +25,18 @@ describe('web session fetch boundary', () => {
     }
     expect(mocks.fetch).toHaveBeenCalledTimes(1);
   });
+  it('allows only owned-run control paths on the configured assistant origin',async()=>{
+    const id='11111111-1111-4111-8111-111111111111';
+    for(const suffix of [`/runs/${id}`,`/runs/${id}/cancel`]) await sessionFetch(`http://localhost:3002/v1/site-assistant${suffix}`,{headers:{Authorization:'Bearer web-session:a'}});
+    for(const suffix of ['/runs','/runs/invalid','/runs/'+id+'/admin','/other']) await expect(sessionFetch(`http://localhost:3002/v1/site-assistant${suffix}`,{headers:{Authorization:'Bearer web-session:a'}})).rejects.toThrow('outside');
+    expect(mocks.fetch).toHaveBeenCalledTimes(2);
+  });
+  it('limits durable inbox access to the configured exact control routes',async()=>{
+    const id='11111111-1111-4111-8111-111111111111';
+    for(const suffix of ['', '/messages','/stop','/resume'])await sessionFetch(`http://localhost:3002/v1/site-assistant/conversations/${id}${suffix}`,{headers:{Authorization:'Bearer web-session:a'}});
+    for(const path of ['/conversations','/conversations/invalid','/conversations/'+id+'/checkpoints','/conversations/'+id+'/messages/extra'])await expect(sessionFetch(`http://localhost:3002/v1/site-assistant${path}`,{headers:{Authorization:'Bearer web-session:a'}})).rejects.toThrow('outside');
+    expect(mocks.fetch).toHaveBeenCalledTimes(4);
+  });
   it('preserves public requests and existing native/preview bearer credentials', async () => {
     const publicInit = { signal: new AbortController().signal };
     await sessionFetch('https://static.cuberoot.me/stats/a.json', publicInit);

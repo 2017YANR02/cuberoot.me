@@ -46,6 +46,51 @@ async function render(answer:AssistantAnswer,overrides:Partial<ComponentProps<ty
 }
 
 describe('assistant general conversation controls',()=>{
+  it('sends a frozen quote while running and preserves the draft if acceptance fails',async()=>{
+    const onAsk=vi.fn().mockResolvedValue(false),onDraftChange=vi.fn();
+    const turn={messageId:'run-one',answerVersion:3,question:'统计 2020—2025 年中国选手的三阶成绩',partial:true,result:{answer:'共涉及 128 场比赛。',sources:[]}};
+    const props=await render(turn.result,{turns:[turn],draft:'只看平均成绩',busy:true,onAsk,onDraftChange});
+    expect(document.querySelector<HTMLTextAreaElement>('.site-assistant-compose textarea')!.disabled).toBe(false);
+    await act(async()=>document.querySelector<HTMLButtonElement>('[aria-label="引用回答"]')!.click());
+    await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,turns:[{...turn,answerVersion:4,result:{answer:turn.result.answer+'后续内容。',sources:[]}}]})));
+    expect(document.querySelector('.site-assistant-compose .site-assistant-quote-text')?.textContent).toBe(turn.result.answer);
+    await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="调整当前任务"][type="submit"]')!.click());
+    expect(onAsk).toHaveBeenCalledWith('只看平均成绩',false,[],[{messageId:'run-one:assistant',messageVersion:3,role:'assistant',selectedText:turn.result.answer,sourceStatus:'partial'}],'steer');
+    expect(onDraftChange).not.toHaveBeenCalled();
+    expect(document.querySelector('.site-assistant-compose .site-assistant-quote')).not.toBeNull();
+  });
+  it('quotes an exact selection from an older message outside the history window',async()=>{
+    const turns=Array.from({length:12},(_,i)=>({messageId:`turn-${i}`,question:`Question ${i}`,result:{answer:`Answer ${i}: exact phrase.`,sources:[]}}));
+    const onAsk=vi.fn().mockResolvedValue(true);
+    await render(turns[0].result,{turns,draft:'Explain this',onAsk});
+    const paragraph=document.querySelector('.site-assistant-response p')!;
+    const range=document.createRange();range.setStart(paragraph.firstChild!,10);range.setEnd(paragraph.firstChild!,22);
+    window.getSelection()!.removeAllRanges();window.getSelection()!.addRange(range);
+    await act(async()=>paragraph.dispatchEvent(new Event('pointerup',{bubbles:true})));
+    await act(async()=>document.querySelector<HTMLButtonElement>('.site-assistant-quote-selection')!.click());
+    await act(async()=>document.querySelector<HTMLButtonElement>('.site-assistant-compose button[type="submit"]')!.click());
+    expect(onAsk.mock.calls[0][3]).toEqual([{messageId:'turn-0:assistant',messageVersion:1,role:'assistant',selectedText:'exact phrase',sourceStatus:'complete'}]);
+    expect(document.querySelector('.site-assistant-compose .site-assistant-quote')).toBeNull();
+  });
+  it('distinguishes stopping from confirmed stop and prevents duplicate submissions while stopping',async()=>{
+    const props=await render({answer:'',sources:[]},{busy:true,stopping:true,draft:'new conditions',turns:[{question:'original',createdAt:Date.now()}]});
+    expect(document.querySelector('.site-assistant-progress-heading')?.textContent).toContain('正在停止');
+    expect(document.querySelector<HTMLButtonElement>('button[aria-label="调整当前任务"][type="submit"]')?.disabled).toBe(true);
+    await act(async()=>document.querySelector('form.site-assistant-compose')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+    expect(props.onAsk).not.toHaveBeenCalled();
+  });
+  it('queues a follow-up explicitly and keeps active progress on the running task',async()=>{
+    const onAsk=vi.fn().mockResolvedValue(true);
+    const props=await render({answer:'',sources:[]},{busy:true,activeMessageId:'root',draft:'next task',onAsk,turns:[{messageId:'root',question:'running',deliveryState:'running',progress:[{id:1,phase:'tool',tool:'statistics',state:'running',elapsedMs:10}]},{messageId:'next',question:'queued',deliveryState:'queued'}]});
+    expect(document.querySelectorAll('.site-assistant-turn')[0].textContent).toContain('处理过程');
+    expect(document.querySelectorAll('.site-assistant-turn')[1].textContent).toContain('已排队');
+    await act(async()=>document.querySelector<HTMLButtonElement>('[aria-label="发送方式"]')!.click());
+    await act(async()=>Array.from(document.querySelectorAll<HTMLElement>('[role="option"]')).find(option=>option.textContent?.includes('加入队列'))!.click());
+    await act(async()=>document.querySelector<HTMLButtonElement>('.site-assistant-compose button[type="submit"]')!.click());
+    expect(onAsk).toHaveBeenCalledWith('next task',false,[],[],'queue');
+    await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,busy:false,paused:true})));
+    expect(document.body.textContent).toContain('任务和队列已暂停');expect(document.body.textContent).toContain('恢复执行');
+  });
   it('only offers the provider menu when OpenAI is available and discloses the selected processor',async()=>{
     const onProviderChange=vi.fn();
     const props=await render({answer:'',sources:[]},{turns:[],embedded:true,openaiAvailable:false,onProviderChange});
@@ -60,7 +105,7 @@ describe('assistant general conversation controls',()=>{
     await act(async()=>option.click());
     expect(onProviderChange).toHaveBeenCalledWith('bailian');
     await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,openaiAvailable:true,provider:'openai',busy:true})));
-    expect(document.querySelector<HTMLButtonElement>('[aria-label="AI 服务"]')!.disabled).toBe(true);
+    expect(document.querySelector('[aria-label="AI 服务"]')).toBeNull();
   });
   it('shows actual execution states and collapses them after completion while revealing a complete answer and table immediately',async()=>{
     const createdAt=Date.now()-2000;
@@ -97,12 +142,13 @@ describe('assistant general conversation controls',()=>{
     await act(async()=>{Array.from(document.querySelectorAll<HTMLButtonElement>('[role="option"]')).find(option=>option.textContent==='深入思考')!.click();});
     expect(props.onThinkingChange).toHaveBeenCalledWith('deep');
     await act(async()=>document.querySelector<HTMLButtonElement>('.site-assistant-compose button[type="submit"]')!.click());
-    expect(props.onAsk).toHaveBeenCalledWith(draft,false,[]);
+    expect(props.onAsk).toHaveBeenCalledWith(draft,false,[],[],'queue');
   });
   it('only shows the length count near the limit and keeps the mode fixed during generation',async()=>{
     await render({answer:'',sources:[]},{draft:'x'.repeat(SITE_ASSISTANT_QUESTION_MAX_LENGTH),busy:true});
     expect(document.querySelector('.site-assistant-input-count')?.textContent).toBe(`${SITE_ASSISTANT_QUESTION_MAX_LENGTH}/${SITE_ASSISTANT_QUESTION_MAX_LENGTH}`);
-    expect(document.querySelector<HTMLButtonElement>('button[aria-label="思考模式"]')?.disabled).toBe(true);
+    expect(document.querySelector('button[aria-label="思考模式"]')).toBeNull();
+    expect(document.querySelector('button[aria-label="发送方式"]')).not.toBeNull();
   });
 });
 
@@ -112,7 +158,7 @@ describe('assistant image interactions',()=>{
   it('sends image-only messages and keeps original images for regeneration and edits',async()=>{
     const props=await render(empty,{images:[image],turns:[{question:'',images:[image],result:empty}]});
     await act(async()=>{document.querySelector<HTMLButtonElement>('.site-assistant-compose button[type="submit"]')!.click();});
-    expect(props.onAsk).toHaveBeenCalledWith('',false,[image]);
+    expect(props.onAsk).toHaveBeenCalledWith('',false,[image],[],'queue');
     expect(props.onImagesChange).toHaveBeenCalledWith([]);
     await act(async()=>{document.querySelector<HTMLButtonElement>('button[aria-label="重试"]')!.click();});
     expect(props.onAsk).toHaveBeenCalledWith('',true,[image]);
@@ -231,7 +277,7 @@ it('opens a single-message share preview without publishing it and offers branch
   const onBranch=vi.fn();
   await render(result,{onBranch,turns:[{question:'PLL?',result,createdAt:1793034000000}]});
   const labels=Array.from(document.querySelectorAll('.assistant-answer-toolbar button')).map(el=>el.getAttribute('aria-label'));
-  expect(labels.slice(0,3)).toEqual(['复制','朗读','分享']);
+  expect(labels.slice(0,4)).toEqual(['引用回答','复制','朗读','分享']);
   await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="分享"]')!.click());
   expect(document.querySelector('.assistant-share-dialog')?.textContent).toContain('分享这条消息的公开链接');
   expect(fetcher.mock.calls.some(([url])=>String(url).includes('/site-assistant/shares'))).toBe(false);

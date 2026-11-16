@@ -9,7 +9,9 @@ function trustedSessionTarget(input: RequestInfo | URL): { url: URL; authSuffix?
   const target = new URL(input instanceof Request ? input.url : String(input), base);
   if (!['http:', 'https:'].includes(target.protocol) || target.username || target.password) return null;
   const assistant = new URL(assistantStreamApiUrl(), base);
-  if (target.origin === assistant.origin && target.pathname === assistant.pathname) return {url:target};
+  const assistantPath=target.pathname.slice(assistant.pathname.length);
+  if (target.origin === assistant.origin && target.pathname.startsWith(assistant.pathname)
+    && (assistantPath==='' || /^\/runs\/[0-9a-f-]{36}(?:\/cancel)?$/i.test(assistantPath) || /^\/conversations\/[0-9a-f-]{36}(?:\/(?:messages|stop|resume))?$/i.test(assistantPath))) return {url:target};
   const apiTargets = [new URL(apiUrl('/v1/'), base), new URL(directApiUrl('/v1/'), base)];
   const api = apiTargets.find(api => target.origin === api.origin && target.pathname.startsWith(api.pathname));
   if (api) {

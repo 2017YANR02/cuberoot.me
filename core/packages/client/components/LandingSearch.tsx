@@ -1,5 +1,8 @@
 'use client';
 import { saveAssistantImages } from '@/lib/site-assistant-images';
+import { getAuthUser } from '@/lib/auth-store';
+import { assistantQueueRequest, AssistantQueueError } from '@/lib/assistant-queue';
+import type { AssistantDeliveryMode, AssistantQueueSnapshot, AssistantDurableInput } from '@cuberoot/shared/site-assistant';
 
 /**
  * Landing-page site search — full port of packages/client-vite/src/components/LandingSearch.tsx.
@@ -49,17 +52,15 @@ import { ensureAssistantConversation, useAssistantWorkspace } from '@/hooks/useA
 import { assistantConversations, assistantOwner, type AssistantConversation } from '@/lib/assistant-conversations';
 import { tr } from '@/i18n/tr';
 import { useAuthUser, authActions } from '@/lib/auth-store';
-import { authHeaders } from '@/lib/admin-api';
-import { assistantStreamApiUrl } from '@/lib/api-base';
 import SiteAssistantDialog, { SiteAssistantAnswerText, type AssistantTurn } from '@/components/SiteAssistantDialog';
-import { assistantTimeoutMs, SITE_ASSISTANT_QUESTION_MAX_LENGTH, isAssistantSourceHref, readAssistantEvents, type AssistantStreamEvent, type AssistantStatus, type AssistantAnswer, type AssistantErrorCode, type AssistantImage } from '@cuberoot/shared/site-assistant';
-import { ASSISTANT_ERROR_TEXT, assistantResponseError } from '@/lib/site-assistant-errors';
+import { SITE_ASSISTANT_QUESTION_MAX_LENGTH, type AssistantStatus, type AssistantAnswer, type AssistantErrorCode, type AssistantImage } from '@cuberoot/shared/site-assistant';
+import { ASSISTANT_ERROR_TEXT } from '@/lib/site-assistant-errors';
 import { useAssistantThinkingMode } from '@/hooks/useAssistantThinkingMode';
 import { useAssistantProvider } from '@/hooks/useAssistantProvider';
-import { requestSiteAssistant, assistantImageHistory, sendAssistantEvent } from '@/lib/site-assistant-request';
-import { updateAssistantProgress } from '@/lib/assistant-progress';
-import type { AssistantProgress, AssistantBrowserTiming } from '@cuberoot/shared/site-assistant';
-import { assistantAnswerHistory } from '@/lib/assistant-answer-export';
+import { assistantImageHistory, sendAssistantEvent } from '@/lib/site-assistant-request';
+import type { AssistantBrowserTiming } from '@cuberoot/shared/site-assistant';
+import { assistantTurnHistory } from '@/lib/assistant-turn-history';
+import type { AssistantReference } from '@cuberoot/shared/site-assistant';
 import { replaceAssistantAlgorithm } from '@cuberoot/shared/site-assistant-algorithms';
 import type { AssistantConversationSnapshot } from '@/lib/assistant-conversations';
 import { ALG_PUZZLES, type AlgCase } from '@cuberoot/shared/alg';
@@ -272,7 +273,20 @@ export default function LandingSearch({
   const setAssistantImages = useCallback((images: AssistantImage[]) => updateConversation ? updateConversation({ images }) : setLocalImages(images), [updateConversation]);
   const [assistantThinking, setAssistantThinking] = useAssistantThinkingMode();
   const { provider: assistantProvider, setProvider: setAssistantProvider, openaiAvailable } = useAssistantProvider(assistantDialog || !!conversation?.active);
-  const [assistantTurns, setAssistantTurns] = useState<AssistantTurn[]>(conversation?.initial.turns ?? []);
+  const [assistantTurns, setAssistantTurnsState] = useState<AssistantTurn[]>(conversation?.initial.turns ?? []);
+  const turnsRef=useRef(assistantTurns);
+  const setAssistantTurns=useCallback((update:AssistantTurn[]|((turns:AssistantTurn[])=>AssistantTurn[]))=>{
+    const next=typeof update==='function' ? update(turnsRef.current) : update;
+    turnsRef.current=next;setAssistantTurnsState(next);
+  },[]);
+  const submissionEpoch=useRef(0);
+  const [durableId,setDurableId]=useState<string|null>(conversation?.initial.conversationId ?? null);
+  const [queueRefresh,setQueueRefresh]=useState(0);
+  const latestSnapshot=useRef<{id:string;revision:number}>({id:'',revision:-1});
+  const [queueSnapshot,setQueueSnapshot]=useState<AssistantQueueSnapshot>();
+  const pendingDelivery=useRef<{key:string;id:string;input:AssistantDurableInput}|undefined>(conversation?.initial.delivery);
+  const [assistantStopping,setAssistantStopping]=useState(false);
+  const [stopUnconfirmed,setStopUnconfirmed]=useState(false);
   const assistantConversation = useRef<string | null>(conversation?.initial.conversationId ?? null);
   const assistantRequest = useRef<AbortController | null>(null);
   const [assistantBusy, setAssistantBusy] = useState(false);
@@ -281,12 +295,14 @@ export default function LandingSearch({
   const [assistantAnswer, setAssistantAnswer] = useState<AssistantAnswer | null>(null);
 
   useEffect(() => {
-    if (conversation) return;
+    submissionEpoch.current++;
     assistantRequest.current?.abort();
     assistantRequest.current = null;
+    if (conversation) return;
     setAssistantBusy(false);
     setAssistantTurns([]);
     assistantConversation.current = null;
+    setDurableId(null);setQueueSnapshot(undefined);pendingDelivery.current=undefined;
     setAssistantDraft('');
     setAssistantImages([]);
     setAssistantAnswer(null);
@@ -294,18 +310,19 @@ export default function LandingSearch({
   }, [assistantUser?.uid, assistantUser?.wcaId]);
 
   useEffect(() => {
+    submissionEpoch.current++;
     assistantRequest.current?.abort();
     assistantRequest.current = null;
     setAssistantBusy(false);
     setAssistantError(null);
     setAssistantAnswer(null);
-    return () => { assistantRequest.current?.abort(); assistantRequest.current = null; };
+    return () => { submissionEpoch.current++; assistantRequest.current?.abort(); assistantRequest.current = null; };
   }, [conversation ? '' : query, lang]);
 
   const [pendingReveal, setPendingReveal] = useState<{id:string; text:string; complete:boolean} | null>(null);
   const [revealedAnswers, setRevealedAnswers] = useState<Record<string,string>>({});
   const completedReply = useRef<string | null>(null);
-  const browserTiming = useRef<{id?:string;started:number;answer?:string;timing:Partial<AssistantBrowserTiming>} | null>(null);
+  const browserTiming = useRef<{id?:string;messageId?:string;started:number;answer?:string;timing:Partial<AssistantBrowserTiming>} | null>(null);
   useEffect(()=>{
     const visibility=()=>{if(browserTiming.current && document.hidden)browserTiming.current.timing.wasHidden=true;};
     document.addEventListener('visibilitychange',visibility);
@@ -344,128 +361,129 @@ export default function LandingSearch({
     onConversationChange?.({ turns: assistantTurns, conversationId: assistantConversation.current });
   }, [assistantTurns, onConversationChange]);
 
-  const stopAssistant = useCallback(() => { if(assistantRequest.current)setAssistantTurns(turns=>turns.map((turn,i)=>i===turns.length-1?{...turn,finishedAt:Date.now(),endState:'stopped'}:turn)); assistantRequest.current?.abort(); assistantRequest.current = null; browserTiming.current=null; setAssistantBusy(false); }, []);
-  const closeAssistant = useCallback(() => { stopAssistant(); setAssistantDialog(false); }, [stopAssistant]);
+  const applyQueue=useCallback((snapshot:AssistantQueueSnapshot)=>{
+    if(latestSnapshot.current.id===snapshot.conversationId && latestSnapshot.current.revision>snapshot.revision)return;
+    latestSnapshot.current={id:snapshot.conversationId,revision:snapshot.revision};
+    setQueueSnapshot(snapshot);
+    setAssistantStopping(snapshot.paused && !!snapshot.activeId);
+    const pending=snapshot.messages.some(message=>message.state==='queued' || message.state==='running');
+    setAssistantBusy(!!snapshot.activeId || (!snapshot.paused && pending));
+    const active=snapshot.messages.find(message=>message.id===snapshot.activeId);
+    const step=active?.progress.at(-1);
+    setAssistantStatus(step?.phase==='tool'?{phase:'querying',tool:step.tool}:step?.phase==='model'?{phase:'writing'}:{phase:'planning'});
+    setAssistantTurns(previous=>{
+      const ids=new Set(snapshot.messages.map(message=>message.id));
+      const legacy=previous.filter(turn=>!turn.messageId || !ids.has(turn.messageId));
+      return [...legacy,...snapshot.messages.map(message=>{
+        const old=previous.find(turn=>turn.messageId===message.id);
+        const result=message.state==='completed' && old?.endState==='complete' && old.serverAnswerUpdatedAt===message.updatedAt?old.result:message.answer;
+        return {...old,messageId:message.id,question:message.input.question,images:message.input.images,references:message.input.references,
+          createdAt:message.createdAt,requestId:message.requestId,result,progress:message.progress,
+          serverAnswerUpdatedAt:message.updatedAt,deliveryState:message.state,targetId:message.targetId,
+          answerVersion:result && JSON.stringify(result)!==JSON.stringify(old?.result)?(old?.answerVersion ?? 0)+1:old?.answerVersion,
+          partial:!!result && message.state!=='completed',
+          endState:message.state==='completed'?'complete' as const:message.state==='stopped'?'stopped' as const:message.state==='error'?'error' as const:undefined,
+          finishedAt:['completed','stopped','error'].includes(message.state)?message.updatedAt:undefined};
+      })];
+    });
+    const sample=browserTiming.current;
+    const measured=sample?.messageId?snapshot.messages.find(message=>message.id===sample.messageId):undefined;
+    if(sample && measured) {
+      sample.id=measured.requestId;
+      const elapsed=Math.round(performance.now()-sample.started);
+      if(measured.progress.length)sample.timing.firstProgressMs ??=elapsed;
+      if(measured.answer?.answer)sample.timing.firstAnswerMs ??=elapsed;
+      if(measured.state==='completed' && measured.answer){sample.answer=measured.answer.answer;sample.timing.responseMs ??=elapsed;}
+    }
+    const last=snapshot.messages.filter(message=>!message.targetId).at(-1);
+    setAssistantError(last?.error ?? null);
+    if(last?.answer && last.requestId)setPendingReveal({id:last.requestId,text:last.answer.answer,complete:last.state==='completed'});
+    if(last?.state==='completed' && last.answer)setAssistantAnswer(last.answer);
+  },[setAssistantTurns]);
+  useEffect(()=>{
+    if(!durableId || !assistantUser?.uid)return;
+    const controller=new AbortController();let timer:ReturnType<typeof setTimeout>|undefined;
+    const uid=assistantUser.uid;let fingerprint='',pollDelay=1000;
+    const poll=async()=>{
+      try {
+        const data=await assistantQueueRequest(durableId,'',undefined,AbortSignal.any([controller.signal,AbortSignal.timeout(15_000)]),undefined,latestSnapshot.current.id===durableId?latestSnapshot.current.revision:undefined);
+        if(controller.signal.aborted || getAuthUser()?.uid!==uid)return;
+        if(data && 'messages' in data) {
+          const next=JSON.stringify(data);
+          if(next!==fingerprint){fingerprint=next;applyQueue(data);}
+          pollDelay=data.activeId || (!data.paused && data.messages.some(message=>message.state==='queued'))?1000:10000;
+        }
+      } catch { /* Keep saved progress and retry; a dropped connection does not stop execution. */ }
+      if(!controller.signal.aborted)timer=setTimeout(()=>void poll(),pollDelay);
+    };
+    void poll();
+    return()=>{controller.abort();clearTimeout(timer);};
+  },[durableId,assistantUser?.uid,applyQueue,queueRefresh]);
+  const stopAssistant=useCallback(async()=>{
+    const id=assistantConversation.current,uid=getAuthUser()?.uid;if(!id)return true;
+    setAssistantStopping(true);setStopUnconfirmed(false);
+    try {
+      const snapshot=await assistantQueueRequest(id,'stop');
+      setQueueRefresh(value=>value+1);
+      if(id!==assistantConversation.current || getAuthUser()?.uid!==uid)return true;
+      if(snapshot && 'messages' in snapshot)applyQueue(snapshot);
+      return true;
+    } catch {setStopUnconfirmed(true);setAssistantStopping(false);return false;}
+  },[applyQueue]);
+  const resumeAssistant=async()=>{
+    const id=assistantConversation.current,uid=getAuthUser()?.uid;if(!id)return;
+    try {const snapshot=await assistantQueueRequest(id,'resume');setQueueRefresh(value=>value+1);if(snapshot && 'messages' in snapshot && id===assistantConversation.current && getAuthUser()?.uid===uid)applyQueue(snapshot);}
+    catch(error){setAssistantError(error instanceof AssistantQueueError?error.code:'network');}
+  };
+  const closeAssistant=useCallback(()=>{submissionEpoch.current++;setAssistantDialog(false);},[]);
   const suggestedQuestion = workspaceEntry && !query.trim() && !currentChat?.snapshot.images.length
     && !listening && micStatus !== 'starting' && micStatus !== 'stopping'
     ? rotatingPlaceholder(isZh, placeholderDay) : '';
-  const askAssistant = async (question = query.trim() || suggestedQuestion, replaceLast = false, images: AssistantImage[] = []) => {
-    question = question.trim();
-    if (workspaceEntry) {
-      const chat = ensureAssistantConversation(owner);
-      const attachments = images.length ? images : chat.snapshot.images;
-      if ((!question && !attachments.length) || question.length > SITE_ASSISTANT_QUESTION_MAX_LENGTH) return;
-      micStop();
-      setOpen(false);
-      setPlusMenuOpen(false);
-      assistantConversations.submit(owner, chat.id, question, attachments);
-      router.push(`${langPrefix}/chat`);
-      return;
+  const submitting=useRef(false);
+  const askAssistant=async(question=query.trim() || suggestedQuestion,_replaceLast=false,images:AssistantImage[]=[],references:AssistantReference[]=[],mode:AssistantDeliveryMode='steer')=>{
+    if(submitting.current)return false;
+    question=question.trim();
+    if(workspaceEntry) {
+      const chat=ensureAssistantConversation(owner),attachments=images.length?images:chat.snapshot.images;
+      if((!question&&!attachments.length)||question.length>SITE_ASSISTANT_QUESTION_MAX_LENGTH)return false;
+      micStop();setOpen(false);setPlusMenuOpen(false);
+      assistantConversations.submit(owner,chat.id,question,attachments);router.push(`${langPrefix}/chat`);return true;
     }
-    if ((!question && !images.length) || question.length > SITE_ASSISTANT_QUESTION_MAX_LENGTH || assistantRequest.current) return;
-    const completed = (replaceLast ? assistantTurns.slice(0, -1) : assistantTurns).filter(turn => turn.result);
-    // Saved references remain available; release only old, unsaved inline bytes.
-    const previous = completed.map((turn, index) => index < completed.length - 9 && turn.images?.some(image => !image.attachmentId) ? { ...turn, images: turn.images.filter(image => image.attachmentId), imagesExpired: true } : turn);
-    const createdAt = Date.now();
-    const started=performance.now();
-    const nextTurns = [...previous, { question, images, createdAt }];
-    setAssistantTurns(nextTurns);
-    setAssistantDialog(true);
-    micStop();
-    if (!assistantUser || !/^\d{4}[A-Z]{4}\d{2}$/.test(assistantUser.wcaId)) {
-      setAssistantError(assistantUser ? 'wca_link_required' : 'login_required');
-      setAssistantAnswer(null);
-      return;
+    if((!question&&!images.length)||question.length>SITE_ASSISTANT_QUESTION_MAX_LENGTH)return false;
+    if(!assistantUser || !/^\d{4}[A-Z]{4}\d{2}$/.test(assistantUser.wcaId)) {
+      setAssistantError(assistantUser?'wca_link_required':'login_required');return false;
     }
-    const controller = new AbortController();
-    assistantRequest.current = controller;
-    setOpen(true);
-    setPendingReveal(null);
-    setAssistantBusy(true);
-    setAssistantStatus({ phase: 'planning' });
-    setAssistantError(null);
-    setAssistantAnswer(null);
-    const timeout = setTimeout(() => controller.abort(), assistantTimeoutMs(assistantThinking));
-    const sample={started,timing:{wasHidden:document.hidden} as Partial<AssistantBrowserTiming>} as NonNullable<typeof browserTiming.current>;
-    browserTiming.current=sample;
-    let progress:AssistantProgress[]=[];
-    let completedResponse=false;
-    // Streaming updates replace only this turn; older cards can change in place.
-    const updateTurn=(next:AssistantTurn)=>setAssistantTurns(turns=>turns.map((turn,index)=>
-      index===previous.length && turn.createdAt===createdAt ? next : turn));
+    submitting.current=true;const epoch=submissionEpoch.current,ownerAtSubmit=owner,submitStarted=performance.now();
+    const controller=new AbortController();assistantRequest.current=controller;
     try {
-      assistantConversation.current ??= crypto.randomUUID();
-      images = await saveAssistantImages(images, assistantConversation.current, controller.signal);
-      if (assistantRequest.current !== controller) return;
-      updateTurn({ question, images, createdAt });
-      const response = await requestSiteAssistant(assistantStreamApiUrl(), {
-        conversationId: assistantConversation.current, parentId: previous.at(-1)?.requestId, retryOf: replaceLast ? assistantTurns.at(-1)?.requestId : undefined,
-        question, lang, provider: assistantProvider, thinking: assistantThinking, ...(images.length ? {images} : {}), timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,
-        history: assistantImageHistory(previous.filter(turn => !turn.partial).slice(-5).flatMap(turn => [{ role: 'user', content: turn.question, ...(turn.images?.length ? {images:turn.images} : {}) }, { role: 'assistant', content: assistantAnswerHistory(turn.result!, window.location.origin) }]), images),
-      }, {headers: { ...authHeaders(), Accept: 'text/event-stream' },signal: controller.signal});
-      const requestId = response.headers.get('X-Assistant-Request-Id') ?? undefined;
-      sample.id=requestId;
-      sample.timing.transport=response.headers?.get('content-type')?.includes('text/event-stream') ? 'sse' : 'json';
-      if (assistantRequest.current === controller) updateTurn({ question, images, requestId, createdAt });
-      if (!response.ok) {
-        const failure = await response.json().catch(() => null);
-        if (assistantRequest.current === controller) setAssistantError(assistantResponseError(response, failure));
-        return;
+      const id=assistantConversation.current ?? crypto.randomUUID();
+      assistantConversation.current=id;setDurableId(id);
+      // Save the conversation pointer even when the acceptance response is lost.
+      onConversationChange?.({conversationId:id});
+      const saved=await saveAssistantImages(images,id,controller.signal);
+      const content=JSON.stringify({id,question,images:saved,references,mode,lang,provider:assistantProvider,thinking:assistantThinking});
+      const key=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(content)))).map(byte=>byte.toString(16).padStart(2,'0')).join('');
+      let delivery=pendingDelivery.current;
+      if(!delivery || delivery.key!==key) {
+        const history=await Promise.all(assistantImageHistory(assistantTurnHistory(turnsRef.current,window.location.origin),saved).map(async message=>message.images?.length?{...message,images:await saveAssistantImages(message.images,id,controller.signal)}:message));
+        delivery={key,id:crypto.randomUUID(),input:{question,images:saved,references,lang,provider:assistantProvider,thinking:assistantThinking,timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history}};
+        if(epoch!==submissionEpoch.current || assistantOwner(getAuthUser())!==ownerAtSubmit)return false;
+        pendingDelivery.current=delivery;
+        onConversationChange?.({delivery,images:saved});
       }
-      const applyAnswer = (data: AssistantAnswer, partial = false) => {
-        if (typeof data.answer !== 'string' || !Array.isArray(data.sources)) throw new Error('invalid response');
-        if (assistantRequest.current !== controller) return;
-        const result: AssistantAnswer = { answer: data.answer, actions: data.actions?.filter(action => typeof action.href === 'string' && isAssistantSourceHref(action.href)), artifacts: Array.isArray(data.artifacts) ? data.artifacts : [], sources: data.sources.filter(source => typeof source.href === 'string' && isAssistantSourceHref(source.href)) };
-        const receivedMs=Math.round(performance.now()-started);
-        if(result.answer)sample.timing.firstAnswerMs ??= receivedMs;
-        if (!partial) {
-          completedResponse=true;
-          sample.timing.responseMs=receivedMs;
-          sample.answer=result.answer;
-          setAssistantAnswer(result);
-        }
-        if (requestId) setPendingReveal({id: requestId, text: result.answer, complete: !partial});
-        else if (!partial && conversation) assistantConversations.replyCompleted(conversation.owner, conversation.id);
-        updateTurn({ question, images, result, partial, requestId, createdAt, progress,
-          ...(!partial ? {finishedAt:Date.now(),endState:'complete' as const} : {}) });
-      };
-      if (response.headers?.get('content-type')?.includes('text/event-stream')) {
-        if (!response.body) throw new Error('missing stream');
-        let ended = false;
-        for await (const raw of readAssistantEvents(response.body)) {
-          if (assistantRequest.current !== controller) return;
-          const event = JSON.parse(raw) as AssistantStreamEvent;
-          if (event.type === 'status') setAssistantStatus(event.status);
-          else if (event.type === 'progress') {
-            const next=updateAssistantProgress(progress,event.progress);
-            if(next!==progress) {
-              progress=next;
-              sample.timing.firstProgressMs ??= Math.round(performance.now()-started);
-              setAssistantTurns(turns=>turns.map((turn,i)=>i===turns.length-1 && turn.createdAt===createdAt?{...turn,progress}:turn));
-            }
-          }
-          else if (event.type === 'answer') applyAnswer(event, true);
-          else if (event.type === 'done') { applyAnswer(event.result); ended = true; break; }
-          else if (event.type === 'error') {
-            setAssistantError(assistantResponseError(response, { error: event.error })); ended = true; break;
-          }
-        }
-        if (!ended) throw new TypeError('incomplete assistant stream');
-      } else applyAnswer(await response.json());
-
-    } catch(error) {
-      if (assistantRequest.current === controller) setAssistantError(controller.signal.aborted ? 'timeout' : error instanceof TypeError ? 'network' : 'unavailable');
-    } finally {
-      clearTimeout(timeout);
-      if (assistantRequest.current === controller) {
-        assistantRequest.current = null;
-        setAssistantBusy(false);
-        if(!completedResponse) {
-          if(browserTiming.current===sample)browserTiming.current=null;
-          setAssistantTurns(turns=>turns.map((turn,i)=>i===turns.length-1 && turn.createdAt===createdAt?{...turn,finishedAt:Date.now(),endState:'error'}:turn));
-        }
-      }
-    }
+      if(epoch!==submissionEpoch.current || assistantOwner(getAuthUser())!==ownerAtSubmit)return false;
+      await assistantQueueRequest(id,'messages',{id:delivery.id,mode,input:delivery.input},AbortSignal.any([controller.signal,AbortSignal.timeout(20_000)]));
+      if(epoch!==submissionEpoch.current || assistantOwner(getAuthUser())!==ownerAtSubmit)return false;
+      if(mode==='queue' || !queueSnapshot?.activeId)browserTiming.current={messageId:delivery.id,started:submitStarted,timing:{wasHidden:document.hidden,transport:'json'}};
+      setQueueRefresh(value=>value+1);
+      pendingDelivery.current=undefined;
+      onConversationChange?.({delivery:undefined});
+      setAssistantDialog(true);micStop();setAssistantError(null);setStopUnconfirmed(false);
+      const snapshot=await assistantQueueRequest(id).catch(()=>undefined);
+      if(epoch===submissionEpoch.current && snapshot && 'messages' in snapshot)applyQueue(snapshot);
+      return true;
+    } catch(error){if(epoch===submissionEpoch.current)setAssistantError(error instanceof AssistantQueueError?error.code:'network');return false;}
+    finally{submitting.current=false;if(assistantRequest.current===controller)assistantRequest.current=null;}
   };
 
   // Only the mounted conversation consumes a homepage submission. The atomic
@@ -1105,7 +1123,7 @@ export default function LandingSearch({
     if(i!==index || !turn.result) return turn;
     const result=replaceAssistantAlgorithm(turn.result,artifact,card,expected,next);
     return result===turn.result ? turn : {...turn,result};
-  }))} onAnswerRevealed={onAnswerRevealed} onBranch={index => { assistantConversations.branch(owner, crypto.randomUUID(), assistantTurns.slice(0, index + 1)); router.push(`${langPrefix}/chat`); }} searchResults={conversation?.active && query.trim() && !assistantBusy ? searchResults : undefined} embedded={!!conversation} active={conversation?.active ?? true} key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} provider={assistantProvider} onProviderChange={setAssistantProvider} openaiAvailable={openaiAvailable} thinking={assistantThinking} onThinkingChange={setAssistantThinking} lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={(question, replaceLast, images) => void askAssistant(question, replaceLast, images)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { assistantConversation.current = null; stopAssistant(); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />;
+  }))} onAnswerRevealed={onAnswerRevealed} onBranch={index => { assistantConversations.branch(owner, crypto.randomUUID(), assistantTurns.slice(0, index + 1)); router.push(`${langPrefix}/chat`); }} searchResults={conversation?.active && query.trim() && !assistantBusy ? searchResults : undefined} embedded={!!conversation} active={conversation?.active ?? true} key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} provider={assistantProvider} onProviderChange={setAssistantProvider} openaiAvailable={openaiAvailable} thinking={assistantThinking} onThinkingChange={setAssistantThinking} lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} stopping={assistantStopping} paused={queueSnapshot?.paused} recovering={queueSnapshot?.recovering} activeMessageId={queueSnapshot?.activeId} onResume={resumeAssistant} stopUnconfirmed={stopUnconfirmed} error={assistantError} onAsk={askAssistant} onStop={()=>{submissionEpoch.current++;void stopAssistant();}} onClose={closeAssistant} onNew={() => { submissionEpoch.current++; assistantConversation.current = null; setDurableId(null);setQueueSnapshot(undefined);pendingDelivery.current=undefined;setAssistantBusy(false);setAssistantStopping(false); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />;
   if (conversation) return assistantView;
 
   return (

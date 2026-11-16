@@ -3,6 +3,7 @@ import type { AssistantTurn } from '@/components/SiteAssistantDialog';
 import { persistItem } from '@/lib/safe-storage';
 
 export interface AssistantConversationSnapshot {
+  delivery?: {key:string;id:string;input:import('@cuberoot/shared/site-assistant').AssistantDurableInput};
   draft: string;
   images: AssistantImage[];
   turns: AssistantTurn[];
@@ -37,6 +38,8 @@ export function createAssistantConversations() {
           imagesExpired: turn.images?.some(image => !image.attachmentId) || turn.imagesExpired,
         })),
       } }));
+      // Durable inboxes remain discoverable after refresh without caching all answer content.
+      if(restored.has(owner))persistItem(`cuberoot-assistant-recent:${owner}`,JSON.stringify(next.conversations.filter(item=>!item.pinned && item.snapshot.conversationId).slice(-30).map(item=>({...item,pending:undefined,responding:undefined,snapshot:{...item.snapshot,images:item.snapshot.images.filter(image=>image.attachmentId),turns:[]}}))));
       if (restored.has(owner)) persistItem(`cuberoot-assistant-pinned:${owner}`, JSON.stringify(pinned));
     } catch { /* The current page session remains usable when storage is unavailable. */ }
     listeners.forEach(listener => listener());
@@ -49,9 +52,11 @@ export function createAssistantConversations() {
       if (typeof window === 'undefined' || restored.has(owner)) return;
       restored.add(owner);
       try {
-        const saved = JSON.parse(localStorage.getItem(`cuberoot-assistant-pinned:${owner}`) || '[]');
+        const pinned=JSON.parse(localStorage.getItem(`cuberoot-assistant-pinned:${owner}`) || '[]');
+        const recent=JSON.parse(localStorage.getItem(`cuberoot-assistant-recent:${owner}`) || '[]');
+        const saved=[...(Array.isArray(pinned)?pinned.map(item=>({...item,pinned:true})):[]),...(Array.isArray(recent)?recent:[])];
         if (!Array.isArray(saved)) return;
-        const conversations = saved.filter(item => item && typeof item.id === 'string' && item.snapshot && Array.isArray(item.snapshot.turns)).map(item => ({ ...item, pinned: true, pending: undefined, responding: undefined }));
+        const conversations = saved.filter(item => item && typeof item.id === 'string' && item.snapshot && Array.isArray(item.snapshot.turns)).map(item => ({ ...item, pending: undefined, responding: undefined }));
         const current = read(owner);
         const existing = new Set(current.conversations.map(item => item.id));
         if (conversations.length) write(owner, { ...current, activeId: current.activeId || conversations[0].id, conversations: [...current.conversations, ...conversations.filter(item => !existing.has(item.id))] });
@@ -131,7 +136,7 @@ export function createAssistantConversations() {
     update(owner: string, id: string, snapshot: AssistantConversationSnapshot) {
       const current = read(owner);
       const found = current.conversations.find(item => item.id === id);
-      if (!found || (found.snapshot.draft === snapshot.draft && found.snapshot.images === snapshot.images && found.snapshot.turns === snapshot.turns && found.snapshot.conversationId === snapshot.conversationId)) return;
+      if (!found || (found.snapshot.draft === snapshot.draft && found.snapshot.images === snapshot.images && found.snapshot.turns === snapshot.turns && found.snapshot.conversationId === snapshot.conversationId && found.snapshot.delivery === snapshot.delivery)) return;
       write(owner, { ...current, conversations: current.conversations.map(item => item.id === id ? { ...item, snapshot } : item) });
     },
   };

@@ -54,6 +54,21 @@ describe('assistant workspace conversations', () => {
       expect(again.read('alice').conversations).toEqual([]);
     } finally { vi.unstubAllGlobals(); }
   });
+  it('restores unpinned durable inbox pointers and unconfirmed delivery IDs without caching answers',()=>{
+    const data=new Map<string,string>();vi.stubGlobal('window',{});vi.stubGlobal('localStorage',{getItem:(key:string)=>data.get(key) ?? null,setItem:(key:string,value:string)=>data.set(key,value)});
+    try {
+      const store=createAssistantConversations();store.restorePinned('alice');store.create('alice','chat');
+      store.patch('alice','chat',{conversationId:'server-conversation',turns:[{question:'private',result:{answer:'large answer',sources:[]}}]});
+      const delivery={id:'stable-message',key:'digest',input:{question:'new',lang:'en' as const,provider:'bailian' as const,thinking:'auto' as const,timeZone:'UTC',history:[]}};
+      store.patch('alice','chat',{delivery});
+      expect(data.get('cuberoot-assistant-recent:alice')).not.toContain('large answer');
+      const reopened=createAssistantConversations();reopened.restorePinned('alice');reopened.restorePinned('bob');
+      expect(reopened.read('alice').conversations[0].snapshot).toMatchObject({conversationId:'server-conversation',turns:[],delivery});
+      expect(reopened.read('alice').conversations[0].pinned).toBeUndefined();expect(reopened.read('bob').conversations).toEqual([]);
+      reopened.patch('alice','chat',{delivery:undefined});
+      const final=createAssistantConversations();final.restorePinned('alice');expect(final.read('alice').conversations[0].snapshot.delivery).toBeUndefined();
+    } finally {vi.unstubAllGlobals();}
+  });
   it('branches through the selected answer without changing or aliasing the original', () => {
     const store = createAssistantConversations();
     store.create('alice', 'original');

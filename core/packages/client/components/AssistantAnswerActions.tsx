@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, Copy, ThumbsUp, ThumbsDown, Volume2, Square, Share, RefreshCw, Ellipsis, GitBranch, ChevronRight, FileText } from '@app-foundation/icons/lucide';
+import { Check, Copy, ThumbsUp, ThumbsDown, Volume2, Square, Share, RefreshCw, Ellipsis, GitBranch, ChevronRight, FileText, Quote } from '@app-foundation/icons/lucide';
 import { CompactSelect } from '@/components/CompactSelect';
 import { Tooltip } from '@/components/Tooltip';
 import { useCopy } from '@/hooks/useCopy';
@@ -14,8 +14,8 @@ function Action({ label, children, onClick, disabled, pressed }: { label: string
   return <Tooltip content={label}>{tip => <button {...tip} type="button" className="site-assistant-action" aria-label={label} aria-pressed={pressed} disabled={disabled} onClick={onClick}>{children}</button>}</Tooltip>;
 }
 
-export default function AssistantAnswerActions({ turn, lang, active, onRetry, onBranch, onFeedback, preview }: {
-  turn: AssistantTurn; lang: 'zh' | 'en'; active: boolean; onRetry?: () => void; onBranch?: () => void;
+export default function AssistantAnswerActions({ turn, lang, active, onRetry, onBranch, onQuote, onFeedback, preview }: {
+  turn: AssistantTurn; lang: 'zh' | 'en'; active: boolean; onRetry?: () => void; onBranch?: () => void; onQuote?: () => void;
   onFeedback: (id: string, value: AssistantFeedback | null) => void; preview: ReactNode;
 }) {
   const { copied, copy } = useCopy();
@@ -74,6 +74,7 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
   const timestamp = turn.createdAt ? new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(turn.createdAt) : null;
   return <>
     <div className="site-assistant-response-actions assistant-answer-toolbar">
+      {onQuote && <Action label={tr({zh:'引用回答',en:'Quote answer'})} onClick={onQuote}><Quote size={18}/></Action>}
       <Action label={tr(copied ? { zh: '已复制', en: 'Copied' } : { zh: '复制', en: 'Copy' })} onClick={() => copy(exportText())}>{copied ? <Check size={18}/> : <Copy size={18}/>}</Action>
       {turn.requestId && !turn.partial && <CompactSelect side="top" unstyledTrigger triggerClassName="site-assistant-action" popupClassName="assistant-action-menu" className="assistant-toolbar-menu" ariaLabel={tr({ zh: '评价回答', en: 'Rate response' })} label={feedback ? feedback === 'helpful' ? <ThumbsUp size={18}/> : <ThumbsDown size={18}/> : <span className="assistant-feedback-symbol"><ThumbsUp size={12}/><ThumbsDown size={12}/></span>} disabled={pending} value={feedback === 'helpful' ? 'helpful' : feedback ? 'other' : undefined} onChange={value => void saveFeedback(value)} items={[
         { value: 'helpful' as const, label: <span className="assistant-menu-label"><ThumbsUp size={19}/>{tr({ zh: '回复优秀', en: 'Good response' })}</span> },
