@@ -4,6 +4,7 @@ import { useAssistantTextReveal } from '@/hooks/useAssistantTextReveal';
 import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
 import { lazy, Suspense, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
+import remarkGfm from 'remark-gfm';
 const Markdown = lazy(() => import('react-markdown').catch(() => ({ default: ({ children }: { children?: string | null }) => <>{children}</> })));
 const WrHistoryChart = lazy(() => import('@/components/wca-stats/WrHistoryChart').catch(() => ({ default: () => null })));
 import { useCopy } from '@/hooks/useCopy';
@@ -198,9 +199,9 @@ export function SiteAssistantAnswerText({result,partial,requestId,shared=false,a
     const index=sources.findIndex(source=>source.id===id);
     return index<0 ? '' : `[${index+1}](#assistant-source-${index})`;
   });
-  return <div className="site-assistant-prose"><Suspense fallback={<p>{text.replace(/\[\[[^\]\n]+\]\]/g, '')}</p>}><Markdown skipHtml remarkPlugins={[remarkAssistantLinks(resolveLink)]}
-    allowedElements={['p','strong','em','code','pre','ul','ol','li','blockquote','h1','h2','h3','h4','hr','br','a','span']}
-    components={{a:({href,children})=>{
+  return <div className="site-assistant-prose"><Suspense fallback={<p>{text.replace(/\[\[[^\]\n]+\]\]/g, '')}</p>}><Markdown skipHtml remarkPlugins={[remarkGfm,remarkAssistantLinks(resolveLink)]}
+    allowedElements={['p','strong','em','del','code','pre','ul','ol','li','blockquote','h1','h2','h3','h4','hr','br','a','span','table','thead','tbody','tr','th','td']}
+    components={{table:({children})=><div className="site-assistant-table"><table>{children}</table></div>,a:({href,children})=>{
       const match=/^#assistant-source-(\d+)$/.exec(href ?? '');
       const source=match ? sources[Number(match[1])] : undefined;
       const destination=href ? resolveLink(href) : undefined;

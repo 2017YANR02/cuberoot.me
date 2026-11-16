@@ -220,6 +220,33 @@ describe('assistant image interactions',()=>{
 });
 
 describe('assistant linked table presentation',()=>{
+  it('renders Markdown result tables and leaves missing scores empty',async()=>{
+    await render({answer:'个人最好成绩：\n\n| 项目 | 单次 | 平均 |\n| --- | --- | --- |\n| 三阶 | 7.50 | 8.03 |\n| 单手 | 15.82 |',sources:[]});
+    const table=document.querySelector('.site-assistant-prose .site-assistant-table table')!;
+    expect([...table.querySelectorAll('th')].map(cell=>cell.textContent)).toEqual(['项目','单次','平均']);
+    expect([...table.querySelectorAll('tbody tr')].map(row=>[...row.querySelectorAll('td')].map(cell=>cell.textContent))).toEqual([
+      ['三阶','7.50','8.03'],['单手','15.82',''],
+    ]);
+  });
+  it('updates a streaming table without losing cells when the answer completes',async()=>{
+    const header='| 项目 | 单次 | 平均 |\n| --- | --- | --- |\n';
+    const turn={question:'成绩',partial:true,result:{answer:header+'| 三阶 | 7.',sources:[]}};
+    const props=await render(turn.result,{busy:true,turns:[turn]});
+    expect([...document.querySelectorAll('.site-assistant-prose td')].map(cell=>cell.textContent)).toEqual(['三阶','7.','']);
+    await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,busy:false,turns:[{...turn,partial:false,result:{answer:header+'| 三阶 | 7.50 | 8.03 |',sources:[]}}]})));
+    expect([...document.querySelectorAll('.site-assistant-prose td')].map(cell=>cell.textContent)).toEqual(['三阶','7.50','8.03']);
+  });
+  it('preserves table citations and code while rejecting unverified links',async()=>{
+    const person={id:'person:2019LIUZ14',title:'个人成绩',href:'/wca/persons/2019LIUZ14',read:true};
+    const table='| 项目 | 来源 |\n| --- | --- |\n| ~~旧值~~ `333` | [[person:2019LIUZ14]] |\n| [未知](https://example.com) | — |';
+    await render({answer:table+'\n\n```text\n'+table+'\n```',sources:[person]});
+    expect(document.querySelectorAll('.site-assistant-prose table')).toHaveLength(1);
+    expect(document.querySelector('td code')?.textContent).toBe('333');
+    expect(document.querySelector('td del')?.textContent).toBe('旧值');
+    expect(document.querySelector('td .site-assistant-citation')?.getAttribute('href')).toBe('/zh/wca/persons/2019LIUZ14');
+    expect(document.querySelector('a[href="https://example.com"]')).toBeNull();
+    expect(document.querySelector('pre code')?.textContent).toContain('| --- | --- |');
+  });
   it.each([false,true])('omits actions already shown as citations (explicit: %s)',async(explicit)=>{
     const person={id:'person:2017YANR02',title:'颜瑞民',href:'/wca/persons/2017YANR02',read:true};
     await render({
