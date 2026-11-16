@@ -81,9 +81,7 @@ it('answers the original question from metadata even when labelled site_content,
   const fetcher = vi.fn<typeof fetch>(async (input, init) => {
     expect(String(input)).toMatch(/^https:\/\/model\.example\//);
     const request = JSON.parse(String(init?.body)); requests.push(request);
-    expect(request.tools?.some((tool: any) => tool.function?.name === "statistics_metadata")).toBe(false);
-    expect(request.tools?.some((tool: any) => tool.function?.name === "deliberate")).toBe(false);
-    expect(request.tools?.some((tool: any) => tool.function?.name === "pages")).toBe(true);
+    expect(request.tools ?? []).toEqual([]);
     const evidence = wireEvidence(request);
     expect(evidence.some((item: any) => item.tool?.tool === 'statistics_metadata')).toBe(true);
     return modelResponse({ answerKind: 'site_content', answer, sourceIds });
@@ -100,7 +98,7 @@ it('preserves supported metadata when a supplemental service is unavailable', as
     if (++rounds === 1) return modelResponse([{ tool: 'pages', query: '双底 ZBLL 更新', audience: 'developer', pageIds: [] }]);
     return modelResponse({ answerKind: 'site_content', answer: `双底 ZBLL 摘要读取已有题库，不加载求解大表。 [[${sourceId}]] 补充页面无法读取，最近执行状态未知。`, sourceIds: [sourceId] });
   });
-  const result = await answerSiteQuestion('双底 ZBLL 统计如何更新？', 'zh', config, AbortSignal.timeout(5000), fetcher);
+  const result = await answerSiteQuestion('双底 ZBLL 统计如何更新？请核对完整产物契约。', 'zh', config, AbortSignal.timeout(5000), fetcher);
   expect(result.answer).toContain('不加载求解大表'); expect(result.answer).toContain('状态未知');
   expect(result.sources.map(source => source.id)).toEqual([sourceId]);
 });
@@ -117,4 +115,38 @@ it('does not let metadata stand in for UI instructions on a mixed question', asy
   });
   const result = await answerSiteQuestion('站内统计如何更新，以及如何使用统计筛选？', 'zh', config, AbortSignal.timeout(5000), fetcher);
   expect(result.answer).not.toContain('点击一键更新'); expect(result.sources).toEqual([]);
+});
+
+it('retains independent result reads for an explicitly mixed maintenance question', async () => {
+  const sourceId='statistics-metadata:wca-heavy';
+  const fetcher=vi.fn<typeof fetch>(async (_input,init)=>{
+    const request=JSON.parse(String(init?.body));
+    expect(request.tools?.some((tool:any)=>tool.function?.name==='records')).toBe(true);
+    expect(request.tool_choice).not.toBe('none');
+    return modelResponse({answerKind:'site_content',answer:`统计按工作流更新。 [[${sourceId}]]`,sourceIds:[sourceId]});
+  });
+  await answerSiteQuestion('统计如何更新？另外查一下三阶世界纪录是多少。','zh',config,AbortSignal.timeout(5000),fetcher);
+});
+
+it.each(['auto','deep'] as const)('composes already-read metadata in %s mode and keeps the current question explicit', async mode => {
+  const sourceId='statistics-metadata:wca-heavy';
+  const fetcher=vi.fn<typeof fetch>(async (_input,init)=>{
+    const request=JSON.parse(String(init?.body));
+    expect(request.tools ?? []).toEqual([]);
+    expect(request.enable_thinking).toBe(mode==='deep');
+    expect(request.messages.at(-1).content).toContain('currentQuestion');
+    return modelResponse({answerKind:'site_content',answer:`WCA 统计由工作流更新。 [[${sourceId}]]`,sourceIds:[sourceId]});
+  });
+  await answerSiteQuestion('WCA 统计如何更新？','zh',{key:'fixture',baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1',model:'qwen3.8-flash'},AbortSignal.timeout(5000),fetcher,[{role:'user',content:'站内有哪些重计算统计？'}],undefined,undefined,'UTC',[],mode);
+});
+
+it('repairs omitted registered families without reopening tool reads', async () => {
+  const ids=readStatisticsMetadata({},'zh').sources.map(source=>source.id);let calls=0;
+  const fetcher=vi.fn<typeof fetch>(async(_input,init)=>{
+    const request=JSON.parse(String(init?.body));expect(request.tools??[]).toEqual([]);
+    const selected=++calls===1?ids.slice(0,1):ids;
+    return modelResponse({answerKind:'site_content',answer:'已核实的各统计家族按配置更新。 '+selected.map(id=>`[[${id}]]`).join(' '),sourceIds:selected});
+  });
+  const result=await answerSiteQuestion('目前站内有哪些统计是计算量很大的？分别以什么方式更新？','zh',config,AbortSignal.timeout(5000),fetcher);
+  expect(calls).toBe(2);expect(result.sources.map(source=>source.id)).toEqual(ids);
 });

@@ -143,7 +143,7 @@ function selectAttendance(data: {results: Array<{competition_id: string; event_i
 
 /** Only fixed public origins/endpoints. Never forwards cookies or credentials. */
 async function executeDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'navigation'|'analysis_schema'|'analysis_query'|'web_search'|'deliberate'|'lookup_cube_photo'}>, lang: 'zh'|'en', read: JsonReader, findPeople = findAssistantPeople,today=new Date().toISOString().slice(0,10),timeZone='UTC'): Promise<ToolResult> {
-  if (call.tool === 'statistics_metadata') return call.view === 'runtime' ? readStatisticsRuntime(call, lang, read) : readStatisticsMetadata(call, lang);
+  if (call.tool === 'statistics_metadata') return call.view === 'runtime' ? readStatisticsRuntime(call, lang, read, Date.now, timeZone) : readStatisticsMetadata(call, lang);
   if (call.tool === 'news') return readAssistantNews(call, lang, read, timeZone);
   const label = (zh: string, en: string) => ({ zh, en })[lang];
   const name = (raw: string) => displayCuberName(raw, lang === 'zh');

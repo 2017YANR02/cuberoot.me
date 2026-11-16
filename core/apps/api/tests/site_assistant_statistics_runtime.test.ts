@@ -116,5 +116,24 @@ it('prefetches and cites fresh runtime facts through the complete answer path', 
     return modelResponse({ answerKind: 'site_content', answer: '最近运行失败，失败步骤是容量检查。 [[statistics-runtime:wca-last-run]] 最近成功流程是 11 月 13 日。 [[statistics-runtime:wca-heavy-last-success]] 当前静态版本另见快照。 [[statistics-runtime:active-snapshot]]', sourceIds: ['statistics-runtime:wca-last-run', 'statistics-runtime:wca-heavy-last-success', 'statistics-runtime:active-snapshot'] });
   });
   const result = await answerSiteQuestion('WCA 统计最近运行成功了吗，当前发布版本是什么？', 'zh', config, AbortSignal.timeout(5000), fetcher);
-  expect(result.answer).toContain('最近运行失败'); expect(result.sources).toHaveLength(3);
+  expect(result.answer).toContain('最近运行失败'); expect(result.answer).toContain(version); expect(result.sources).toHaveLength(3);
+});
+
+it('preformats the previous local calendar day without replacing raw instants', async () => {
+  const result=await readStatisticsRuntime({id:'wca-heavy'},'zh',async url=>{
+    const value=await baseRead(url);
+    if(url.includes('/runs/1/')) value.jobs[0].completed_at='2026-11-13T07:44:24Z';
+    return value;
+  },Date.now,'America/Los_Angeles');
+  const success=data(result).entries.find((e:any)=>e.kind==='last-success');
+  expect(success.lastSuccessAt).toBe('2026-11-13T07:44:24Z');
+  expect(success.displayTimes.lastSuccessAt).toBe('2026-11-12 23:44:24 GMT-8 (America/Los_Angeles)');
+});
+it('passes the visitor timezone through tool dispatch and observes daylight saving time', async () => {
+  const result=await runDataTool(toolCallSchema.parse({tool:'statistics_metadata',id:'double-zbll',view:'runtime'}) as any,'en',async url=>({...await baseRead(url),generatedAt:'2026-07-01T00:30:00Z'}),undefined,undefined,'America/Los_Angeles');
+  const entry=data(result).entries[0];
+  expect(entry.generatedAt).toBe('2026-07-01T00:30:00Z');
+  expect(entry.displayTimes.generatedAt).toBe('2026-06-30 17:30:00 GMT-7 (America/Los_Angeles)');
+  expect(entry.lastPublishedAt).toBe('unknown');
+  expect(entry.displayTimes.lastPublishedAt).toBeUndefined();
 });

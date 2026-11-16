@@ -62,15 +62,30 @@ async function readObserved(url: string, read: JsonReader, now: () => number) {
 }
 
 /** No log downloads, archives, SQL, local processes or user-selected URLs. */
-export async function readStatisticsRuntime(call: { id?: string; scope?: 'all' }, lang: 'zh' | 'en', read: JsonReader, now = Date.now): Promise<ToolResult> {
+export async function readStatisticsRuntime(call: { id?: string; scope?: 'all' }, lang: 'zh' | 'en', read: JsonReader, now = Date.now, timeZone = 'UTC'): Promise<ToolResult> {
   const allIds = ['wca-heavy', 'wca-history', 'scramble', 'exact-distributions', 'lsll', 'double-zbll', 'solver-tables'];
   const families = call.id ? allIds.filter(id => id === call.id) : allIds;
   if (!families.length) return { evidence: { notEvidence: true, error: 'metadata_missing', availableIds: allIds }, sources: [], artifacts: [], outcome: { state: 'empty', reason: 'metadata_missing' } };
+  // Preserve raw instants and provide exact local presentation beside them.
+  // Models must not do timezone arithmetic or relabel UTC dates as local dates.
+  const options: Intl.DateTimeFormatOptions = { timeZone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23', timeZoneName: 'shortOffset' };
+  let formatter: Intl.DateTimeFormat;
+  try { formatter = new Intl.DateTimeFormat('en-GB', options); }
+  catch { formatter = new Intl.DateTimeFormat('en-GB', { ...options, timeZone: 'UTC' }); }
+  const displayTimeZone = formatter.resolvedOptions().timeZone;
+  const displayTimes = (value: Record<string, unknown>, prefix = ''): Record<string, string> => Object.fromEntries(Object.entries(value).flatMap(([key, field]): Array<[string, string]> => {
+    const path = prefix + key;
+    if (typeof field === 'string' && iso.safeParse(field).success) {
+      const parts = Object.fromEntries(formatter.formatToParts(new Date(field)).map(part => [part.type, part.value]));
+      return [[path, parts.year+'-'+parts.month+'-'+parts.day+' '+parts.hour+':'+parts.minute+':'+parts.second+' '+parts.timeZoneName+' ('+displayTimeZone+')']];
+    }
+    return field && typeof field === 'object' && !Array.isArray(field) ? Object.entries(displayTimes(field as Record<string, unknown>, path+'.')) : [];
+  }));
   const entries: Array<Record<string, unknown>> = [];
   const sources: ToolResult['sources'] = [];
   const gaps: Array<{ scope: string; reason: string }> = [];
   const add = (id: string, title: string, href: string, value: Record<string, unknown>, at: number) => {
-    entries.push({ id, sourceId: id, ...value, observedAt: new Date(at).toISOString(), cacheMaxAgeSeconds: ttl / 1000 });
+    entries.push({ id, sourceId: id, ...value, displayTimes: displayTimes(value), observedAt: new Date(at).toISOString(), cacheMaxAgeSeconds: ttl / 1000 });
     sources.push({ id, title, href, read: true });
   };
   const attempt = async (scope: string, run: () => Promise<void>) => {
@@ -195,8 +210,8 @@ export async function readStatisticsRuntime(call: { id?: string; scope?: 'all' }
   });
   for (const family of families.filter(id => !id.startsWith('wca-'))) gaps.push({ scope: `${family}-local-runs`, reason: 'local_run_receipts_not_uploaded' });
   for (const family of families.filter(id => ['lsll', 'exact-distributions', 'solver-tables'].includes(id))) gaps.push({ scope: `${family}-publication`, reason: 'publication_status_not_connected' });
-  return { evidence: { view: 'runtime', entries, returned: entries.length, requestedFamilies: families, gaps,
+  return { evidence: { view: 'runtime', displayTimeZone, entries, returned: entries.length, requestedFamilies: families, gaps,
     historyCoverage: 'Latest 10 runs per schedule/dispatch event; last-success search checks at most 5 successful candidates. Push syntax checks are excluded. Unknown or missing receipts do not mean no run or no published data.',
-    instruction: 'Cite runtime entry sourceIds for run/version claims, metadata IDs only for configuration. Keep last attempt, last successful pipeline, active static snapshot, PG import and corpus version separate. Preserve known fields when another source fails. Inventory generatedAt, manifest generatedAt and GitHub updated_at are NOT publication timestamps. Report unconnected local run/publication fields as unknown; do not infer CPU rankings from elapsed run time. Versions refer only to the channel and scope stated in each entry. Present dates in the visitor timeZone from context.timeContext, identifying the zone. Explain gaps naturally without dumping internal reason codes; run IDs and raw internal field names are unnecessary unless requested. ObservedAt is when the source was read; reads may be cached for 15 minutes.',
+    instruction: 'Cite runtime entry sourceIds for run/version claims, metadata IDs only for configuration. Keep last attempt, last successful pipeline, active static snapshot, PG import and corpus version separate. Preserve known fields when another source fails. Inventory generatedAt, manifest generatedAt and GitHub updated_at are NOT publication timestamps. Report unconnected local run/publication fields as unknown; do not infer CPU rankings from elapsed run time. For version questions include the full publishedDataVersion identifier; generation/import timestamps are never substitutes. Versions refer only to the channel and scope stated in each entry. Use the exact preformatted displayTimes for dates/times in displayTimeZone, identifying that zone. Do not recalculate from raw UTC instants or relabel UTC calendar dates as local dates. Raw timestamp fields remain the lossless source values. Explain gaps naturally without dumping internal reason codes; run IDs and raw internal field names are unnecessary unless requested. ObservedAt is when the source was read; reads may be cached for 15 minutes.',
   }, sources, artifacts: [], outcome: gaps.some(g => g.reason === 'source_unavailable_or_invalid') ? { state: 'partial', reason: 'runtime_source_unavailable' } : { state: 'success' } };
 }
