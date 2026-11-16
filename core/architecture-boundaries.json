@@ -21,6 +21,23 @@
   },
   "manualContracts": [
     {
+      "id": "assistant-durable-process-restart-regression",
+      "from": "apps/api/tests/fixtures/site_assistant_restart_pg.ts",
+      "to": "apps/api/tests/fixtures/site_assistant_restart_worker_pg.ts",
+      "phase": "subprocess-native",
+      "mechanism": "Fork a fixed test worker with IPC, terminate it with SIGINT/SIGTERM/SIGKILL and restart against the same isolated PostgreSQL schema.",
+      "owner": "assistant maintainers",
+      "rationale": "Durable messages and completed tool checkpoints must survive actual process loss, which an in-process worker mock cannot establish.",
+      "replacement": "Keep the fixed fixture entry, loopback-only assistant_restart_test database, explicit opt-in and child cleanup; never use production credentials or external model calls.",
+      "subprocessCalls": [
+        { "file": "apps/api/tests/fixtures/site_assistant_restart_pg.ts", "mechanism": "fork", "target": "<dynamic>", "count": 1 }
+      ],
+      "evidence": [
+        { "file": "core/apps/api/tests/fixtures/site_assistant_restart_pg.ts", "contains": "ASSISTANT_RESTART_PG_TEST" },
+        { "file": "core/apps/api/tests/fixtures/site_assistant_restart_worker_pg.ts", "contains": "External HTTP is forbidden" }
+      ]
+    },
+    {
       "id": "smart-cube-timing-benchmark-git-revision",
       "from": "packages/client/scripts/smart-cube-timing/benchmark.mts",
       "to": "local git rev-parse HEAD",

@@ -57,13 +57,14 @@ describe('architecture boundary guard', () => {
     // One bounded git revision probe records the smart-cube timing benchmark provenance.
     // Five AUF-runner identities were migrated into the existing exact subprocess
     // contract in e2699e638; no new boundary exception is introduced here.
-    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 42);
+    // One fixed child worker exercises actual assistant process loss and restart.
+    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 43);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(139);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
   it('keeps every semantic edge contract tied to live repository evidence', () => {
-    expect(MANIFEST.manualContracts).toHaveLength(38);
+    expect(MANIFEST.manualContracts).toHaveLength(39);
     expect(validateManifestSchema(MANIFEST)).toEqual([]);
     expect(validateManualContracts(MANIFEST.manualContracts)).toEqual([]);
     expect(new Set(MANIFEST.manualContracts.map((item: { phase: string }) => item.phase))).toEqual(new Set([
