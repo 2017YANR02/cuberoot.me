@@ -1,0 +1,107 @@
+name: Assistant recovery
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/assistant_recovery.yml'
+      - '.node-version'
+      - 'core/apps/api/**'
+      - 'core/packages/shared/**'
+      - 'core/packages/visualcube/**'
+      - 'core/packages/puzzle-render-core/**'
+      - 'core/packages/puzzle-solvers/**'
+      - 'core/packages/vendor-sr-puzzlegen/**'
+      - 'core/package.json'
+      - 'core/pnpm-lock.yaml'
+      - 'core/pnpm-workspace.yaml'
+      - 'core/tsconfig.base.json'
+      - 'core/patches/**'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/assistant_recovery.yml'
+      - '.node-version'
+      - 'core/apps/api/**'
+      - 'core/packages/shared/**'
+      - 'core/packages/visualcube/**'
+      - 'core/packages/puzzle-render-core/**'
+      - 'core/packages/puzzle-solvers/**'
+      - 'core/packages/vendor-sr-puzzlegen/**'
+      - 'core/package.json'
+      - 'core/pnpm-lock.yaml'
+      - 'core/pnpm-workspace.yaml'
+      - 'core/tsconfig.base.json'
+      - 'core/patches/**'
+  schedule:
+    - cron: '43 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: assistant-recovery-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  restart:
+    name: SIGINT / SIGTERM / SIGKILL recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: assistant_restart_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d assistant_restart_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .node-version
+            core
+          filter: blob:none
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: core/package.json
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: core/pnpm-lock.yaml
+      - name: Install dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+      - name: Build API workspace dependencies
+        working-directory: core
+        run: |
+          pnpm --filter @cuberoot/shared build
+          pnpm --filter @cuberoot/visualcube build
+          pnpm --filter @cuberoot/puzzle-render-core build
+      - name: Verify durable messages and completed tool reuse across process loss
+        timeout-minutes: 3
+        working-directory: core
+        shell: bash
+        env:
+          ASSISTANT_RESTART_PG_TEST: '1'
+          DB_HOST: 127.0.0.1
+          DB_PORT: '5432'
+          DB_USER: postgres
+          DB_PASS: postgres
+          DB_NAME: assistant_restart_test
+        # Fixed model/data fixtures; actual HTTP receipts, PG commits, process
+        # signals and 45s lease expiry. No production credentials or model calls.
+        run: pnpm --filter @cuberoot/server exec tsx tests/fixtures/site_assistant_restart_pg.ts 2>&1 | tee "$RUNNER_TEMP/assistant-recovery.log"
+      - uses: actions/upload-artifact@v6
+        if: ${{ always() }}
+        with:
+          name: assistant-recovery-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/assistant-recovery.log
+          retention-days: 14
