@@ -12,7 +12,7 @@ exceptions. IP geolocation is an operational filter, not proof of residence.
 
 Both website deployments currently call the Hangzhou API (region verified from
 instance metadata). OpenAI model requests therefore use the dedicated Vercel
-hostname and the signed `/api/site-assistant/openai/chat/completions` route pinned
+hostname and the signed `/api/site-assistant/openai/responses` route pinned
 to `iad1`. The standalone route fails closed. The signature binds the exact body,
 country, path and a 60-second expiry; browsers receive neither secret. The relay
 only calls the fixed official OpenAI endpoint with `gpt-5.4-mini`, bounded tokens,
@@ -22,7 +22,13 @@ in the API. OpenAI token usage is recorded; CNY pricing remains unknown rather
 than treating promotional credits as zero cost. Provider invoices/grant records
 remain authoritative for dollars and remaining credit.
 
-Activation requires `OPENAI_API_KEY` in **Vercel only**, a dedicated random
+The Responses API preserves reasoning alongside function tools. GPT-5.4-mini
+rejects that combination on Chat Completions; the legacy signed route remains
+available only for rollout compatibility. Native reasoning items stay in the
+server-side SDK transcript, with encrypted continuation when `store: false`.
+Relay error logs contain only HTTP status and the OpenAI request ID.
+
+Activation requires `OPENAI_API_KEY` with Responses write permission in **Vercel only**, a dedicated random
 `SITE_ASSISTANT_OPENAI_RELAY_SECRET` of at least 32 characters in both services,
 and `SITE_ASSISTANT_OPENAI_RELAY_ORIGIN` set to the existing Vercel-only
 `https://google-api.cuberoot.me` origin in the API. Production connectivity checks

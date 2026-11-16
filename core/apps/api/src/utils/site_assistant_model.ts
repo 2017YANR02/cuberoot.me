@@ -1,7 +1,7 @@
 import { generateText, streamText, Output, NoObjectGeneratedError, tool, type ModelMessage, type ToolSet } from 'ai';
 import { createDeepSeek } from '@ai-sdk/deepseek';
 import { createOpenAI } from '@ai-sdk/openai';
-import { ASSISTANT_OPENAI_BODY_BYTES, ASSISTANT_OPENAI_MAX_TOKENS, signAssistantOpenAI } from '@cuberoot/shared/site-assistant-openai';
+import { ASSISTANT_OPENAI_RESPONSES_PATH, ASSISTANT_OPENAI_BODY_BYTES, ASSISTANT_OPENAI_MAX_TOKENS, signAssistantOpenAI } from '@cuberoot/shared/site-assistant-openai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { z } from 'zod';
 import { SITE_ASSISTANT_ANSWER_MAX_LENGTH, boundAssistantHistory, type AssistantImage, type AssistantMessage } from '@cuberoot/shared/site-assistant';
@@ -61,7 +61,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       const headers = new Headers(init?.headers);
       headers.delete('authorization');
       headers.set('x-assistant-country', config.visitorCountry ?? '');
-      headers.set('x-assistant-proof', await signAssistantOpenAI(config.key, config.visitorCountry ?? '', body));
+      headers.set('x-assistant-proof', await signAssistantOpenAI(config.key, config.visitorCountry ?? '', body, Date.now(), ASSISTANT_OPENAI_RESPONSES_PATH));
       init = { ...init, headers };
     }
     let response: Response;
@@ -96,7 +96,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
     }), { status: response.status, headers: response.headers });
   };
   const model = openai
-    ? createOpenAI({ apiKey: 'server-relay', baseURL: config.baseUrl, fetch: boundedFetch }).chat(config.model)
+    ? createOpenAI({ apiKey: 'server-relay', baseURL: config.baseUrl, fetch: boundedFetch }).responses(config.model)
     : deepseek
     ? createDeepSeek({ apiKey: config.key, baseURL: config.baseUrl, fetch: boundedFetch })(config.model)
     : createOpenAICompatible({ name: 'bailian', apiKey: config.key, baseURL: config.baseUrl, fetch: boundedFetch })(config.model);
