@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { webcrypto } from 'node:crypto';
+import { createHash } from 'node:crypto';
+import { setImmediate } from 'node:timers';
 import type { AssistantAnswer, AssistantQueueSnapshot } from '@cuberoot/shared/site-assistant';
 import { act, createElement, StrictMode, type AnchorHTMLAttributes, type ReactNode } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
@@ -88,7 +89,9 @@ describe('LandingSearch placeholder hydration', () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     vi.useFakeTimers();
     let serial=0;
-    vi.stubGlobal('crypto', { subtle: webcrypto.subtle, randomUUID: () => `00000000-0000-4000-8000-${String(++serial).padStart(12,'0')}` });
+    // Keep the browser's async digest contract without racing Node's worker pool
+    // against fake timers on a loaded CI runner.
+    vi.stubGlobal('crypto', { subtle: { digest: async (_algorithm: string, data: Uint8Array) => Uint8Array.from(createHash('sha256').update(data).digest()).buffer }, randomUUID: () => `00000000-0000-4000-8000-${String(++serial).padStart(12,'0')}` });
   });
 
   afterEach(() => {
@@ -172,8 +175,8 @@ describe('LandingSearch placeholder hydration', () => {
     return {fetcher,posts,get snapshot(){return snapshot;},set disconnected(value:boolean){disconnected=value;},reject(error:string,status:number){rejection={error,status};},
       async update(change:(snapshot:AssistantQueueSnapshot)=>void){change(snapshot);snapshot.revision++;await act(async()=>{await vi.advanceTimersByTimeAsync(1000);});}};
   }
-  // Node's real WebCrypto digest finishes outside the fake clock.
-  async function settle() { await act(async()=>{for(let i=0;i<12;i++)await new Promise<void>(resolve=>{void import('node:timers').then(({setImmediate})=>setImmediate(resolve));});}); }
+  // Drain the async receipt/snapshot microtasks without advancing UI timers.
+  async function settle() { await act(async()=>{await new Promise<void>(resolve=>setImmediate(resolve));}); }
   async function mountChat(query='怎么数帧') {
     const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host);
     await act(async()=>root.render(createElement(LandingSearch,{cards:[],lang:'zh',query,persistentResults:true})));
