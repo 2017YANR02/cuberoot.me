@@ -82,6 +82,7 @@ it('answers the original question from metadata even when labelled site_content,
     expect(String(input)).toMatch(/^https:\/\/model\.example\//);
     const request = JSON.parse(String(init?.body)); requests.push(request);
     expect(request.tools?.some((tool: any) => tool.function?.name === "statistics_metadata")).toBe(false);
+    expect(request.tools?.some((tool: any) => tool.function?.name === "deliberate")).toBe(false);
     expect(request.tools?.some((tool: any) => tool.function?.name === "pages")).toBe(true);
     const evidence = wireEvidence(request);
     expect(evidence.some((item: any) => item.tool?.tool === 'statistics_metadata')).toBe(true);
