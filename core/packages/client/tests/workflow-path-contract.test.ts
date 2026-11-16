@@ -1,9 +1,10 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
 import { STAGE_SOLVER_ASSETS } from '../../../scripts/copy-stage-solver-assets.mts';
+import { buildStages } from '../scripts/profile-build.mts';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 
@@ -40,6 +41,7 @@ function readWorkspacePackage(packageName: string): {
   root: string;
   manifest: {
     dependencies?: Record<string, string>;
+    optionalDependencies?: Record<string, string>;
     scripts?: Record<string, string>;
   };
 } {
@@ -63,6 +65,7 @@ function readWorkspacePackage(packageName: string): {
       'utf8',
     )) as {
       dependencies?: Record<string, string>;
+      optionalDependencies?: Record<string, string>;
       scripts?: Record<string, string>;
     },
   };
@@ -79,7 +82,7 @@ function workspaceDependencyClosure(packageName: string): string[] {
     visited.add(current);
     const { root, manifest } = readWorkspacePackage(current);
     roots.add(`${root}/**`);
-    for (const [dependency, version] of Object.entries(manifest.dependencies ?? {})) {
+    for (const [dependency, version] of Object.entries({ ...manifest.dependencies, ...manifest.optionalDependencies })) {
       if (dependency.startsWith('@cuberoot/') && version.startsWith('workspace:')) {
         pending.push(dependency);
       }
@@ -241,9 +244,14 @@ const NEXT_PATHS = [
   corePath('pnpm-lock.yaml'),
   corePath('pnpm-workspace.yaml'),
   corePath('tsconfig.base.json'),
+  corePath('turbo.json'),
   corePath('patches', '**'),
+  corePath('vendor', 'continuous-corners-*.tgz'),
+  ...['careers-ui', 'icons', 'navigation-ui', 'registration-ui']
+    .map(name => corePath('vendor', 'app-foundation', `app-foundation-${name}-*.tgz`)),
   corePath('scripts', 'resolve-workspace-path.mjs'),
   corePath('scripts', 'build-cubing-worker.mjs'),
+  corePath('scripts', 'copy-maplibre-assets.mts'),
   corePath('scripts', 'vercel-ignore-build.ts'),
   corePath('scripts', 'ci', 'wait-web-checks.ts'),
   repoPath('ops', 'systemd', 'cuberoot-next.service'),
@@ -569,6 +577,43 @@ describe('deployment workflow path contracts', () => {
 
     for (const [path, expected] of cases) {
       expect(workflowTriggers(nextPaths, [path]), path).toBe(expected);
+    }
+  });
+
+  it('checks and deploys every script in the actual client build plan and its Turbo config', () => {
+    const { root, manifest } = readWorkspacePackage('@cuberoot/client');
+    const stages = buildStages(manifest.scripts!);
+    const inputs = stages.flat()
+      .filter(argument => /(?:^|\/)scripts\/.*\.[cm]?[jt]s$/.test(argument))
+      .map(argument => relative(REPO_ROOT, resolve(REPO_ROOT, root, argument)).replaceAll('\\', '/'));
+    expect(inputs.length).toBeGreaterThan(0);
+    const clientPaths = readStepFilterPaths('test.yml', 'Detect affected inputs', 'client');
+    for (const path of [...inputs, corePath('turbo.json')]) {
+      expect(workflowTriggers(nextPaths, [path]), `deploy: ${path}`).toBe(true);
+      expect(workflowTriggers(testPushPaths, [path]), `test workflow: ${path}`).toBe(true);
+      expect(workflowTriggers(clientPaths, [path]), `client checks: ${path}`).toBe(true);
+    }
+  });
+
+  it('checks and deploys local packages consumed by the client dependency closure', () => {
+    const clientPaths = readStepFilterPaths('test.yml', 'Detect affected inputs', 'client');
+    const inputs = workspaceDependencyClosure('@cuberoot/client').flatMap(pattern => {
+      const root = pattern.slice(0, -3);
+      const manifest = JSON.parse(readFileSync(join(REPO_ROOT, root, 'package.json'), 'utf8'));
+      return Object.values<string>({ ...manifest.dependencies, ...manifest.optionalDependencies })
+        .filter(version => version.startsWith('file:'))
+        .map(version => relative(REPO_ROOT, resolve(REPO_ROOT, root, version.slice(5))).replaceAll('\\', '/'));
+    });
+    expect(inputs.length).toBeGreaterThan(0);
+    for (const path of new Set(inputs)) {
+      expect(workflowTriggers(nextPaths, [path]), `deploy: ${path}`).toBe(true);
+      expect(workflowTriggers(clientPaths, [path]), `client checks: ${path}`).toBe(true);
+    }
+    for (const path of ['core/vendor/app-foundation/README.md',
+      'core/vendor/app-foundation/app-foundation-payments-0.1.3.tgz',
+      'core/vendor/app-foundation/app-foundation-workspace-ui-0.1.0.tgz']) {
+      expect(workflowTriggers(nextPaths, [path]), `unconsumed deploy input: ${path}`).toBe(false);
+      expect(workflowTriggers(clientPaths, [path]), `unconsumed client input: ${path}`).toBe(false);
     }
   });
 
