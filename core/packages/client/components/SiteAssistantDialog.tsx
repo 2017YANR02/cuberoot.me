@@ -46,6 +46,8 @@ interface Props {
   turns:AssistantTurn[]; status?:AssistantStatus; busy:boolean; paused?:boolean; recovering?:boolean; activeMessageId?:string; onResume?:()=>void; stopping?:boolean; stopUnconfirmed?:boolean; error:AssistantErrorCode|null; lang:'zh'|'en';
   images:AssistantImage[]; onImagesChange:(images:AssistantImage[])=>void;
   draft:string; onDraftChange:(draft:string)=>void;
+  onAuthSend?:(question:string,images:AssistantImage[],references:AssistantReference[])=>boolean;
+  authSendLabel?:string; authPlaceholder?:string; authNotice?:string;
   provider?:AssistantProvider; onProviderChange?:(provider:AssistantProvider)=>void; openaiAvailable?:boolean;
   thinking:AssistantThinkingMode; onThinkingChange:(mode:AssistantThinkingMode)=>void;
   onFeedback:(id:string,value:AssistantFeedback|null)=>void;
@@ -221,7 +223,7 @@ function AssistantModal({ children, onClose, motionRef }: { children: ReactNode;
   return createPortal(<div ref={motionRef} className="site-assistant-backdrop" {...backdrop}>{children}</div>, document.body);
 }
 
-export default function SiteAssistantDialog({onAlgorithmChange,onAnswerRevealed,turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,provider='bailian',onProviderChange,openaiAvailable=false,thinking,onThinkingChange,status={phase:'planning'},busy,paused=false,recovering=false,activeMessageId,onResume,stopping=false,stopUnconfirmed=false,error,lang,onAsk,onStop,onClose:onClosed,onNew,onFeedback,embedded=false,active=true,searchResults,onBranch}:Props) {
+export default function SiteAssistantDialog({onAuthSend,authSendLabel,authPlaceholder,authNotice,onAlgorithmChange,onAnswerRevealed,turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,provider='bailian',onProviderChange,openaiAvailable=false,thinking,onThinkingChange,status={phase:'planning'},busy,paused=false,recovering=false,activeMessageId,onResume,stopping=false,stopUnconfirmed=false,error,lang,onAsk,onStop,onClose:onClosed,onNew,onFeedback,embedded=false,active=true,searchResults,onBranch}:Props) {
   const [deliveryMode,setDeliveryMode]=useState<'steer'|'queue'>('steer');
   const isRunning=(turn:AssistantTurn,index:number)=>busy && (activeMessageId?turn.messageId===activeMessageId:index===turns.length-1);
   const { motionRef, close: onClose } = useDialogMotion(onClosed, { enabled: !embedded });
@@ -350,6 +352,7 @@ export default function SiteAssistantDialog({onAlgorithmChange,onAnswerRevealed,
     if(submitLock.current || stopping || processing.current || editing!==null || (!draft.trim() && !images.length) || draft.trim().length>SITE_ASSISTANT_QUESTION_MAX_LENGTH)return;
     submitLock.current=true;setSubmitting(true);stop();
     try {
+      if (authSendLabel && onAuthSend) { onAuthSend(draft, images, reference ? [reference] : []); return; }
       const accepted=await onAsk(draft.trim(),false,images,reference?[reference]:[],busy?deliveryMode:'queue');
       if(accepted!==false){if(input.current?.value===draft)setDraft('');setImages([]);setReference(current=>current===reference?null:current);setImageError(null);}
     } finally {submitLock.current=false;setSubmitting(false);}
@@ -426,7 +429,7 @@ export default function SiteAssistantDialog({onAlgorithmChange,onAnswerRevealed,
         <input ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={event=>{const files=Array.from(event.target.files ?? []);event.target.value='';void addImages(files);}}/>
         {reference && quoteCard(reference,true)}
         {!!images.length && renderImages(images,true)}
-        <textarea className="site-assistant-draft" onPaste={event=>{const files=Array.from(event.clipboardData.files);if(files.length){event.preventDefault();void addImages(files);}}} ref={input} aria-label={tr({zh:'继续提问',en:'Ask a follow-up'})} placeholder={tr({zh:'随心输入',en:'Type anything'})} maxLength={SITE_ASSISTANT_QUESTION_MAX_LENGTH} rows={1} disabled={editing!==null} value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing&&!window.matchMedia?.('(pointer: coarse)').matches){e.preventDefault();submit();}}}/>
+        <textarea className="site-assistant-draft" onPaste={event=>{const files=Array.from(event.clipboardData.files);if(files.length){event.preventDefault();void addImages(files);}}} ref={input} aria-label={tr({zh:'继续提问',en:'Ask a follow-up'})} placeholder={authPlaceholder ?? tr({zh:'随心输入',en:'Type anything'})} maxLength={SITE_ASSISTANT_QUESTION_MAX_LENGTH} rows={1} disabled={editing!==null} value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing&&!window.matchMedia?.('(pointer: coarse)').matches){e.preventDefault();submit();}}}/>
         {draft.length>=SITE_ASSISTANT_QUESTION_MAX_LENGTH*.9 && <span className="site-assistant-input-count" role="status">{draft.length}/{SITE_ASSISTANT_QUESTION_MAX_LENGTH}</span>}
         <div className="site-assistant-input-actions">
           <CompactSelect className="site-assistant-attachments" triggerClassName="site-assistant-action" popupClassName="site-assistant-menu site-assistant-attachment-menu" unstyledTrigger
@@ -441,10 +444,11 @@ export default function SiteAssistantDialog({onAlgorithmChange,onAnswerRevealed,
           <button className="site-assistant-action site-assistant-mic" type="button" disabled={editing!==null} onClick={()=>listening?stop():void start()} title={tr({zh:'语音输入',en:'Voice input'})} aria-pressed={listening}><Mic size={19}/></button>
           {busy && <CompactSelect className="site-assistant-thinking" popupClassName="site-assistant-menu" items={[{value:'steer' as const,label:tr({zh:'调整当前任务',en:'Adjust current task'})},{value:'queue' as const,label:tr({zh:'加入队列',en:'Add to queue'})}]} value={deliveryMode} onChange={setDeliveryMode} label={deliveryMode==='steer'?tr({zh:'调整当前任务',en:'Adjust current task'}):tr({zh:'加入队列',en:'Add to queue'})} ariaLabel={tr({zh:'发送方式',en:'Delivery mode'})} variant="plain" preserveFocus/>}
           {busy && <Tooltip content={tr(stopping?{zh:'正在停止',en:'Stopping'}:{zh:'停止',en:'Stop'})}>{tip=><button {...tip} className="site-assistant-action site-assistant-send" type="button" disabled={stopping} onClick={onStop} aria-label={tr({zh:'停止',en:'Stop'})}><Square size={16} fill="currentColor"/></button>}</Tooltip>}
-          {(!busy || draft.trim() || images.length>0) && <Tooltip content={tr(busy?(deliveryMode==='steer'?{zh:'调整当前任务',en:'Adjust current task'}:{zh:'加入队列',en:'Add to queue'}):{zh:'发送',en:'Send'})}>{tip=><button {...tip} className="site-assistant-action site-assistant-send" type="submit" disabled={stopping||submitting||(!draft.trim()&&!images.length)||draft.trim().length>SITE_ASSISTANT_QUESTION_MAX_LENGTH||editing!==null||processingImages} aria-label={tr(busy?(deliveryMode==='steer'?{zh:'调整当前任务',en:'Adjust current task'}:{zh:'加入队列',en:'Add to queue'}):{zh:'发送',en:'Send'})}><ArrowUp size={20}/></button>}</Tooltip>}
+          {(!busy || draft.trim() || images.length>0) && <Tooltip content={authSendLabel ?? tr(busy?(deliveryMode==='steer'?{zh:'调整当前任务',en:'Adjust current task'}:{zh:'加入队列',en:'Add to queue'}):{zh:'发送',en:'Send'})}>{tip=><button {...tip} className={`site-assistant-action site-assistant-send${authSendLabel ? ' site-assistant-auth-send' : ''}`} type="submit" disabled={stopping||submitting||(!draft.trim()&&!images.length)||draft.trim().length>SITE_ASSISTANT_QUESTION_MAX_LENGTH||editing!==null||processingImages} aria-label={authSendLabel ?? tr(busy?(deliveryMode==='steer'?{zh:'调整当前任务',en:'Adjust current task'}:{zh:'加入队列',en:'Add to queue'}):{zh:'发送',en:'Send'})}>{authSendLabel ?? <ArrowUp size={20}/>}</button>}</Tooltip>}
         </div>
       </div>{processingImages && <p role="status">{tr({zh:'正在处理图片…',en:'Preparing images…'})}</p>}
       {quoteError && <p role="alert">{tr({zh:'引用内容较长，请选中需要引用的片段。',en:'This quote is too long. Select a shorter passage.'})}</p>}
+      {authNotice && <p className="site-assistant-note" role="alert">{authNotice}</p>}
       {paused && !stopping && <p className="site-assistant-note" role="status">{tr({zh:'任务和队列已暂停',en:'Task and queue paused'})} <button type="button" className="site-assistant-action" disabled={stopping} onClick={onResume}>{tr({zh:'恢复执行',en:'Resume'})}</button></p>}
       {recovering && <p className="site-assistant-note" role="status">{tr({zh:'正在恢复已保存的进度',en:'Restoring saved progress'})}</p>}
       {stopUnconfirmed && <p role="alert">{tr({zh:'尚未确认停止，请重试停止。补充内容仍保留在输入框。',en:'Stop has not been confirmed. Try stopping again. Your draft is still in the input.'})}</p>}

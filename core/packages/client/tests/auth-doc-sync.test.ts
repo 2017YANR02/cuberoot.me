@@ -130,6 +130,8 @@ describe('/dev/auth source-review drift', () => {
     ['@cuberoot/server', 'src/routes/mcp.ts'], ['@cuberoot/server', 'src/routes/mcp_oauth.ts'],
     ['@cuberoot/server', 'src/routes/site_assistant.ts'],
     ['@cuberoot/client', 'components/LandingSearch.tsx'], ['@cuberoot/client', 'components/SiteAssistantDialog.tsx'],
+    ['@cuberoot/client', 'components/DeskPet.tsx'],
+    ['@cuberoot/client', 'lib/assistant-auth-continuation.ts'], ['@cuberoot/client', 'lib/assistant-conversations.ts'],
     ['@cuberoot/client', 'app/[lang]/account/mcp/page.tsx'],
     ['@cuberoot/client', 'app/[lang]/admin/page.tsx'],
     ['@cuberoot/client', 'app/[lang]/calendar/_components/GoogleBackupPanel.tsx'],
@@ -174,7 +176,7 @@ describe('/dev/auth source-review drift', () => {
     expect(isAuthDocSource(relative(CORE_ROOT, workspaceFixturePath(pkg, path)))).toBe(true);
   });
   it.each([
-    ['@cuberoot/client', 'components/DeskPet.tsx'], ['@cuberoot/app-ui', 'src/auth/installed-auth.test.ts'],
+    ['@cuberoot/client', 'components/Spinner/Spinner.tsx'], ['@cuberoot/app-ui', 'src/auth/installed-auth.test.ts'],
     ['@cuberoot/mobile', 'dist/auth.js'], ['@cuberoot/server', 'tests/account.test.ts'],
   ])('excludes unrelated/generated/test %s/%s', (pkg, path) => {
     expect(isAuthDocSource(relative(CORE_ROOT, workspaceFixturePath(pkg, path)))).toBe(false);

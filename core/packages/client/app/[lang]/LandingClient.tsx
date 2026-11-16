@@ -28,7 +28,7 @@ import OnboardingGuideModal from '@/components/OnboardingGuideModal';
 import { isOnboardingGuided, markOnboardingGuided } from '@/lib/onboarding';
 import './home-background.css';
 import { useTranslation } from 'react-i18next';
-import { useAuthUser, nextQuery } from '@/lib/auth-store';
+import { useAuthUser, nextQuery, authActions } from '@/lib/auth-store';
 import { fmtVipId } from '@/lib/membership-format';
 import LandingSearch from '@/components/LandingSearch';
 import ContactDetails from '@/components/ContactDetails';
@@ -540,6 +540,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         <HeaderToggles />
         {!user ? (
           <Link href={`/account${nextQuery(pathname)}`} className="landing-auth-btn is-login" prefetch={false}
+            onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); authActions.login(); } }}
             aria-label={tr({ zh: '登录', en: 'Log in' })} title={tr({ zh: '登录', en: 'Log in' })}>
             <LogIn size={16} aria-hidden />
             <span>{tr({ zh: '登录', en: 'Log in' })}</span>

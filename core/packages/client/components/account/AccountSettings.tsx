@@ -23,6 +23,7 @@ import { Flag } from '@/components/Flag';
 import { CountryInput } from '@/components/CountryInput/CountryInput';
 import { CompactSelect } from '@/components/CompactSelect';
 import { DateInput } from '@/components/DateInput';
+import { assistantAuthContinuation } from '@/lib/assistant-auth-continuation';
 import { AccountPanel, LoginForm, IdentityChoicePanel, WcaLinkPrompt, DeleteAccountPanel, type SignedIn } from '@/components/AuthPanel';
 import { getIdentityChoice, useIdentityChoice } from '@/lib/identity-choice';
 import { useT } from '@/hooks/useT';
@@ -802,7 +803,10 @@ export default function AccountSettings({ embedded = false }: { embedded?: boole
 
   /** 拿到会话后该去哪:有回跳就回去,否则留在本页。 */
   const leave = useCallback(() => {
-    if (next.current) { router.replace(next.current); return; }
+    if (next.current) {
+      const assistantReturn = assistantAuthContinuation.complete(next.current, getAuthUser()?.uid);
+      router.replace(next.current, assistantReturn ? { scroll: false } : undefined); return;
+    }
     setMode('me');
   }, [router]);
 
@@ -811,7 +815,7 @@ export default function AccountSettings({ embedded = false }: { embedded?: boole
    * 一遍会很烦,用 WCA 注册的人本来就有。问不问都不拦路:引导那步随时可跳过。
    */
   const settle = useCallback((info?: SignedIn) => {
-    if (mobileAuth) { leave(); return; }
+    if (mobileAuth || assistantAuthContinuation.matches(next.current)) { leave(); return; }
     if (info?.isNew && !info.hasWca) { setMode('onboard'); return; }
     leave();
   }, [leave, mobileAuth]);
@@ -837,6 +841,10 @@ export default function AccountSettings({ embedded = false }: { embedded?: boole
     }
     // 三方(微信/QQ/支付宝)注册那条路:授权是整页跳走再回来的,回来时人已不在 LoginForm 里,
     // 拿不到 onDone —— 靠回调页留下的标记把同一步引导接上。
+    if (!isMobileAuth && !getIdentityChoice() && assistantAuthContinuation.complete(next.current, u.uid)) {
+      takeWcaLinkPrompt();
+      leave(); return;
+    }
     setMode(takeWcaLinkPrompt() && !u.wcaId ? 'onboard' : 'me');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -959,7 +967,7 @@ export default function AccountSettings({ embedded = false }: { embedded?: boole
           next.current = safeNext(new URLSearchParams(original.hash.slice(1)).get('next')) ?? safeNext(original.searchParams.get('next'));
         } else next.current = returnPath;
         if (original.searchParams.get('auth') === 'mobile') { leave(); return; }
-        if (info.isNew && !info.hasWca) setMode('onboard'); else leave();
+        settle(info);
       }} /> : mode === 'login' ? (
         <div data-mobile-auth-entry>
           {linkProvider === 'apple' ? <p>{t('请先在浏览器中登录与 App 相同的账号，再主动点击绑定 Apple。', 'Sign in to the same account as your app in this browser, then choose Link next to Apple.')}</p> : null}

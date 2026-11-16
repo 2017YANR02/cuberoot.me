@@ -65,6 +65,7 @@ const EXACT = new Set([
   'apps/api/migrations/0277_assistant_monitoring.sql',
   'apps/api/src/utils/site_assistant_outbox.ts',
   'packages/client/components/LandingSearch.tsx', 'packages/client/components/SiteAssistantDialog.tsx',
+  'packages/client/components/DeskPet.tsx',
   'apps/miniprogram/src/lib/navigation.ts', 'apps/miniprogram/src/lib/web-routes.ts',
   'apps/miniprogram/src/pages/web/index.ts',
   'apps/miniprogram/src/lib/native-route-page.ts',

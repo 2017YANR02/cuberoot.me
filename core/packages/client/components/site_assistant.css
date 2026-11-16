@@ -90,6 +90,7 @@
 .site-assistant-mic:hover { background:var(--card); }
 .site-assistant-action[aria-pressed=true] { background:var(--accent-soft); color:var(--accent); }
 .site-assistant-send,.site-assistant-send:hover { background:var(--primary); color:var(--primary-foreground); }
+.site-assistant-input-actions .site-assistant-action.site-assistant-auth-send { width:auto; padding-inline:12px; border-radius:999px; font-size:12px; white-space:nowrap; }
 .site-assistant-note,.site-assistant-status { color:var(--muted-foreground); font-size:12px; }
 .site-assistant-voice-error { margin:6px 0; color:var(--destructive); font-size:12px; line-height:1.5; }
 .site-assistant-note { margin:10px 0 0; text-align:center; }

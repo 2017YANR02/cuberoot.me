@@ -1,4 +1,5 @@
 'use client';
+import { assistantAuthContinuation, assistantReturnPath, canUseAssistant } from '@/lib/assistant-auth-continuation';
 import { currentEntryHref } from '@/lib/entry-navigation';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { installedPetAvailable } from '@/lib/installed-content';
@@ -335,19 +336,50 @@ export default function DeskPet() {
   const workspace = useAssistantWorkspace(owner);
   const pathname = usePathname();
   const router = useRouter();
-  const searchOpen = /^\/(?:zh\/|en\/)?chat\/?$/.test(pathname || '');
+  const chatRoute = /^\/(?:zh\/|en\/)?chat\/?$/.test(pathname || '');
+  const [authOverlay, setAuthOverlay] = useState<{ pathname: string | null; owner: string } | null>(null);
+  const searchOpen = chatRoute || (authOverlay?.pathname === pathname && authOverlay.owner === owner);
+  const restoredAuthDraft = useRef('');
   const setSearchOpen = useCallback((open: boolean) => {
     const prefix = pathname?.startsWith('/zh') ? '/zh' : '';
     if (open) {
       assistantConversations.setOpen(owner, true);
       if (!searchOpen) router.push(`${prefix}/chat`);
-    } else if (searchOpen) router.push(prefix || '/');
-  }, [owner, pathname, router, searchOpen]);
+    } else {
+      setAuthOverlay(null);
+      assistantConversations.setOpen(owner, false);
+      if (chatRoute) router.push(prefix || '/');
+    }
+  }, [owner, pathname, router, searchOpen, chatRoute]);
   // Pet gesture listeners live across navigation; always use the current route
   // and account without restarting the animation/gesture lifecycle.
   const searchNavigationRef = useRef(setSearchOpen);
   useLayoutEffect(() => { searchNavigationRef.current = setSearchOpen; }, [setSearchOpen]);
   useEffect(() => { assistantConversations.setOpen(owner, searchOpen); }, [owner, searchOpen]);
+  useEffect(() => {
+    if (!user?.uid) return;
+    const saved = assistantAuthContinuation.read();
+    const stamp = saved && JSON.stringify([saved.id, user.uid, saved.expiresAt]);
+    if (!saved || restoredAuthDraft.current === stamp) return;
+    const draft = assistantAuthContinuation.takeReturn(assistantReturnPath(), user.uid);
+    if (!draft) return;
+    restoredAuthDraft.current = stamp!;
+    assistantConversations.restorePinned(owner);
+    assistantConversations.create(owner, draft.id);
+    assistantConversations.select(owner, draft.id);
+    const existing = assistantConversations.read(owner).conversations.find(chat => chat.id === draft.id)!;
+    assistantConversations.patch(owner, draft.id, {
+      draft: existing.snapshot.draft || draft.text,
+      conversationId: existing.snapshot.conversationId ?? (draft.send && canUseAssistant(user) ? draft.id : null),
+    });
+    assistantConversations.patch('guest', draft.id, { draft: '', images: [] });
+    if (draft.send && canUseAssistant(user)) assistantConversations.submit(owner, draft.id, draft.text, [], draft.id);
+    // Keep the product URL intact; this is a dismissible return overlay, not a
+    // navigation to /chat. The normal chat route remains unchanged.
+    setAuthOverlay({ pathname, owner });
+    assistantConversations.setOpen(owner, true);
+    requestAnimationFrame(() => window.scrollTo({ top: draft.scrollY, behavior: 'instant' }));
+  }, [owner, pathname, user]);
   useEffect(() => {
     setHidden(false);
   }, [visible]);

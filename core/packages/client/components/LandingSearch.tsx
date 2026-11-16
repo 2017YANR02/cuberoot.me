@@ -1,4 +1,5 @@
 'use client';
+import { assistantAuthContinuation, assistantReturnPath, canUseAssistant } from '@/lib/assistant-auth-continuation';
 import { saveAssistantImages } from '@/lib/site-assistant-images';
 import { getAuthUser } from '@/lib/auth-store';
 import { assistantQueueRequest, AssistantQueueError } from '@/lib/assistant-queue';
@@ -226,6 +227,30 @@ export default function LandingSearch({
   const assistantUser = useAuthUser();
   const owner = assistantOwner(assistantUser);
   const workspace = useAssistantWorkspace(owner);
+  const assistantAllowed = canUseAssistant(assistantUser);
+  const authSendLabel = tr(assistantUser ? { zh: '绑定 WCA 并发送', en: 'Link WCA and send' } : { zh: '登录并发送', en: 'Sign in and send' });
+  const authPlaceholder = tr(assistantUser ? { zh: '绑定 WCA 后使用 Agent', en: 'Link WCA to chat' } : { zh: '登录后使用 Agent', en: 'Sign in to chat' });
+  const [authNotice, setAuthNotice] = useState('');
+  const saveAuthDraft = useCallback((text: string, send = false) => {
+    const id = conversation?.id ?? ensureAssistantConversation(owner).id;
+    const saved = assistantAuthContinuation.read();
+    return assistantAuthContinuation.save({ id, text, uid: assistantUser?.uid ?? null,
+      returnTo: saved?.id === id ? saved.returnTo : assistantReturnPath(),
+      scrollY: saved?.id === id ? saved.scrollY : window.scrollY }, send);
+  }, [conversation?.id, owner, assistantUser?.uid]);
+  const rememberDraft = useCallback((text: string) => {
+    if (!assistantAllowed || (conversation && assistantAuthContinuation.read()?.id === conversation.id)) saveAuthDraft(text);
+    setAuthNotice('');
+  }, [assistantAllowed, conversation?.id, saveAuthDraft]);
+  useEffect(() => {
+    if (!workspaceEntry || assistantUser) return;
+    const saved = assistantAuthContinuation.read();
+    if (!saved || saved.uid !== null || saved.returnTo !== assistantReturnPath()) return;
+    if (saved.phase === 'auth') assistantAuthContinuation.save(saved);
+    assistantConversations.create(owner, saved.id);
+    assistantConversations.patch(owner, saved.id, { draft: saved.text });
+    assistantConversations.select(owner, saved.id);
+  }, [workspaceEntry, owner, assistantUser]);
   const currentChat = workspace.conversations.find(chat => chat.id === workspace.activeId);
   const params = useParams<{ lang?: string }>();
   // Pattern B: English is the bare path → empty prefix; only Chinese is /zh.
@@ -234,13 +259,14 @@ export default function LandingSearch({
   const [internalQuery, setInternalQuery] = useState('');
   const query = conversation ? conversation.initial.draft : workspaceEntry ? currentChat?.snapshot.draft ?? '' : controlledQuery ?? internalQuery;
   const setQuery = useCallback((value: string) => {
+    rememberDraft(value);
     if (workspaceEntry) {
       assistantConversations.patch(owner, ensureAssistantConversation(owner).id, { draft: value });
       return;
     }
     if (controlledQuery === undefined) setInternalQuery(value);
     onQueryChange?.(value);
-  }, [controlledQuery, onQueryChange, workspaceEntry, owner]);
+  }, [controlledQuery, onQueryChange, workspaceEntry, owner, rememberDraft]);
   const [open, setOpen] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
   const [voiceText, setVoiceText] = useState('');
@@ -436,13 +462,36 @@ export default function LandingSearch({
     catch(error){setAssistantError(error instanceof AssistantQueueError?error.code:'network');}
   };
   const closeAssistant=useCallback(()=>{submissionEpoch.current++;setAssistantDialog(false);},[]);
-  const suggestedQuestion = workspaceEntry && !query.trim() && !currentChat?.snapshot.images.length
+  const suggestedQuestion = assistantAllowed && workspaceEntry && !query.trim() && !currentChat?.snapshot.images.length
     && !listening && micStatus !== 'starting' && micStatus !== 'stopping'
     ? rotatingPlaceholder(isZh, placeholderDay) : '';
+  const beginAssistantAuth = (question: string, images: AssistantImage[] = [], references: AssistantReference[] = []) => {
+    if (images.length || references.length || (workspaceEntry && currentChat?.snapshot.images.length)) {
+      setAuthNotice(tr({ zh: '登录续发暂时只支持文字，请先移除图片或引用。', en: 'Sign-in continuation supports text only. Remove images or quotes first.' }));
+      return false;
+    }
+    if (!question.trim() || question.length > SITE_ASSISTANT_QUESTION_MAX_LENGTH) return false;
+    if (!saveAuthDraft(question, true)) {
+      setAuthNotice(tr({ zh: '无法保存问题，请允许浏览器存储后重试。', en: 'Could not save your question. Allow browser storage and try again.' }));
+      return false;
+    }
+    micStop(); setOpen(false);
+    if (assistantUser) {
+      sessionStorage.setItem('wca_oauth_intent', 'link');
+      authActions.loginWithWca(assistantReturnPath());
+    } else authActions.login();
+    return false;
+  };
   const submitting=useRef(false);
-  const askAssistant=async(question=query.trim() || suggestedQuestion,_replaceLast=false,images:AssistantImage[]=[],references:AssistantReference[]=[],mode:AssistantDeliveryMode='steer')=>{
+  const askAssistant=async(question=query.trim() || suggestedQuestion,_replaceLast=false,images:AssistantImage[]=[],references:AssistantReference[]=[],mode:AssistantDeliveryMode='steer',messageId?:string)=>{
     if(submitting.current)return false;
     question=question.trim();
+    if (!assistantAllowed) {
+      // Suggestions only fill the composer. Only the explicit sign-in/send
+      // action arms an automatic submission after authentication.
+      rememberDraft(question); setAssistantDraft(question); setAssistantDialog(true);
+      return false;
+    }
     if(workspaceEntry) {
       const chat=ensureAssistantConversation(owner),attachments=images.length?images:chat.snapshot.images;
       if((!question&&!attachments.length)||question.length>SITE_ASSISTANT_QUESTION_MAX_LENGTH)return false;
@@ -466,7 +515,7 @@ export default function LandingSearch({
       let delivery=pendingDelivery.current;
       if(!delivery || delivery.key!==key) {
         const history=await Promise.all(assistantImageHistory(assistantTurnHistory(turnsRef.current,window.location.origin),saved).map(async message=>message.images?.length?{...message,images:await saveAssistantImages(message.images,id,controller.signal)}:message));
-        delivery={key,id:crypto.randomUUID(),input:{question,images:saved,references,lang,provider:assistantProvider,thinking:assistantThinking,timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history}};
+        delivery={key,id:messageId ?? crypto.randomUUID(),input:{question,images:saved,references,lang,provider:assistantProvider,thinking:assistantThinking,timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history}};
         if(epoch!==submissionEpoch.current || assistantOwner(getAuthUser())!==ownerAtSubmit)return false;
         pendingDelivery.current=delivery;
         onConversationChange?.({delivery,images:saved});
@@ -475,6 +524,7 @@ export default function LandingSearch({
       await assistantQueueRequest(id,'messages',{id:delivery.id,mode,input:delivery.input},AbortSignal.any([controller.signal,AbortSignal.timeout(20_000)]));
       if(epoch!==submissionEpoch.current || assistantOwner(getAuthUser())!==ownerAtSubmit)return false;
       if(mode==='queue' || !queueSnapshot?.activeId)browserTiming.current={messageId:delivery.id,started:submitStarted,timing:{wasHidden:document.hidden,transport:'json'}};
+      if (conversation?.id) assistantAuthContinuation.clear(conversation.id);
       setQueueRefresh(value=>value+1);
       pendingDelivery.current=undefined;
       onConversationChange?.({delivery:undefined});
@@ -494,7 +544,11 @@ export default function LandingSearch({
     queueMicrotask(() => {
       if (!active || assistantRequest.current) return;
       const pending = assistantConversations.takeSubmission(conversation.owner, conversation.id);
-      if (pending) void askAssistant(pending.question, false, pending.images);
+      if (pending) void askAssistant(pending.question, false, pending.images, [], pending.messageId ? 'queue' : 'steer', pending.messageId).then(accepted => {
+        if (!accepted && !assistantConversations.read(conversation.owner).conversations.find(chat => chat.id === conversation.id)?.snapshot.draft) {
+          assistantConversations.patch(conversation.owner, conversation.id, { draft: pending.question, images: pending.images });
+        }
+      });
     });
     return () => { active = false; };
   }, [conversation?.pending, conversation?.owner, conversation?.id, assistantBusy]);
@@ -1123,7 +1177,7 @@ export default function LandingSearch({
     if(i!==index || !turn.result) return turn;
     const result=replaceAssistantAlgorithm(turn.result,artifact,card,expected,next);
     return result===turn.result ? turn : {...turn,result};
-  }))} onAnswerRevealed={onAnswerRevealed} onBranch={index => { assistantConversations.branch(owner, crypto.randomUUID(), assistantTurns.slice(0, index + 1)); router.push(`${langPrefix}/chat`); }} searchResults={conversation?.active && query.trim() && !assistantBusy ? searchResults : undefined} embedded={!!conversation} active={conversation?.active ?? true} key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} provider={assistantProvider} onProviderChange={setAssistantProvider} openaiAvailable={openaiAvailable} thinking={assistantThinking} onThinkingChange={setAssistantThinking} lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} stopping={assistantStopping} paused={queueSnapshot?.paused} recovering={queueSnapshot?.recovering} activeMessageId={queueSnapshot?.activeId} onResume={resumeAssistant} stopUnconfirmed={stopUnconfirmed} error={assistantError} onAsk={askAssistant} onStop={()=>{submissionEpoch.current++;void stopAssistant();}} onClose={closeAssistant} onNew={() => { submissionEpoch.current++; assistantConversation.current = null; setDurableId(null);setQueueSnapshot(undefined);pendingDelivery.current=undefined;setAssistantBusy(false);setAssistantStopping(false); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />;
+  }))} onAnswerRevealed={onAnswerRevealed} onBranch={index => { assistantConversations.branch(owner, crypto.randomUUID(), assistantTurns.slice(0, index + 1)); router.push(`${langPrefix}/chat`); }} searchResults={conversation?.active && query.trim() && !assistantBusy ? searchResults : undefined} embedded={!!conversation} active={conversation?.active ?? true} key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} provider={assistantProvider} onProviderChange={setAssistantProvider} openaiAvailable={openaiAvailable} thinking={assistantThinking} onThinkingChange={setAssistantThinking} lang={lang} draft={assistantDraft} onDraftChange={value => { rememberDraft(value); setAssistantDraft(value); }} authSendLabel={assistantAllowed ? undefined : authSendLabel} authPlaceholder={assistantAllowed ? undefined : authPlaceholder} authNotice={authNotice} onAuthSend={beginAssistantAuth} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} stopping={assistantStopping} paused={queueSnapshot?.paused} recovering={queueSnapshot?.recovering} activeMessageId={queueSnapshot?.activeId} onResume={resumeAssistant} stopUnconfirmed={stopUnconfirmed} error={assistantError} onAsk={askAssistant} onStop={()=>{submissionEpoch.current++;void stopAssistant();}} onClose={closeAssistant} onNew={() => { submissionEpoch.current++; assistantConversation.current = null; setDurableId(null);setQueueSnapshot(undefined);pendingDelivery.current=undefined;setAssistantBusy(false);setAssistantStopping(false); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />;
   if (conversation) return assistantView;
 
   return (
@@ -1192,7 +1246,7 @@ export default function LandingSearch({
               if (e.key === 'Escape') {
                 setOpen(false);
                 (e.target as HTMLInputElement).blur();
-              } else if (e.key === 'ArrowRight' && !query && !e.nativeEvent.isComposing && e.keyCode !== 229
+              } else if (e.key === 'ArrowRight' && assistantAllowed && !query && !e.nativeEvent.isComposing && e.keyCode !== 229
                 && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey
                 && !listening && micStatus !== 'starting' && micStatus !== 'stopping') {
                 e.preventDefault();
@@ -1208,12 +1262,13 @@ export default function LandingSearch({
               } else if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) {
                 e.preventDefault();
                 if (yearMatch || pasteIntent) goFirstResult();
-                else void askAssistant();
+                else if (assistantAllowed) void askAssistant();
+                else beginAssistantAuth(query);
               }
             }}
             placeholder={micStatus === 'starting' ? tr({ zh: '正在启动语音输入…', en: 'Starting voice input…' })
               : micStatus === 'stopping' ? tr({ zh: '正在等待识别结果…', en: 'Waiting for speech results…' })
-                : listening ? tr({ zh: '请说…', en: 'Listening…' }) : rotatingPlaceholder(isZh, placeholderDay)}
+                : listening ? tr({ zh: '请说…', en: 'Listening…' }) : assistantAllowed ? rotatingPlaceholder(isZh, placeholderDay) : authPlaceholder}
             aria-label={tr({ zh: '全站搜索', en: 'Site search' })}
           />
 
@@ -1228,10 +1283,10 @@ export default function LandingSearch({
           >
             <Mic size={16} strokeWidth={1.75} />
           </button>}</Tooltip>
-            <button type="button" className="landing-search-mic landing-search-send" disabled={assistantBusy || !!currentChat?.pending || (!query.trim() && !suggestedQuestion && !(workspaceEntry && currentChat?.snapshot.images.length)) || query.trim().length > SITE_ASSISTANT_QUESTION_MAX_LENGTH}
-              onClick={() => void askAssistant()}
-              aria-label={tr({ zh: '提问', en: 'Ask' })} title={tr({ zh: '提问（回车）', en: 'Ask (Enter)' })}>
-              <ArrowUp size={20} strokeWidth={1.75} />
+            <button type="button" className={`landing-search-mic landing-search-send${assistantAllowed ? '' : ' landing-search-auth-send'}`} disabled={assistantBusy || !!currentChat?.pending || (!query.trim() && !suggestedQuestion && !(workspaceEntry && currentChat?.snapshot.images.length)) || query.trim().length > SITE_ASSISTANT_QUESTION_MAX_LENGTH}
+              onClick={() => { if (assistantAllowed) void askAssistant(); else beginAssistantAuth(query); }}
+              aria-label={assistantAllowed ? tr({ zh: '提问', en: 'Ask' }) : authSendLabel} title={assistantAllowed ? tr({ zh: '提问（回车）', en: 'Ask (Enter)' }) : authSendLabel}>
+              {assistantAllowed ? <ArrowUp size={20} strokeWidth={1.75} /> : authSendLabel}
             </button>
         </div>}
         {plusMenuOpen && (
@@ -1264,6 +1319,7 @@ export default function LandingSearch({
         </p>
       )}
 
+      {authNotice && <p className="landing-search-speech-status" role="alert">{authNotice}</p>}
       {assistantDialog && assistantView}
 
       {showDropdown && !assistantDialog && searchResults}

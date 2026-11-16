@@ -375,6 +375,15 @@
   cursor: default;
 }
 
+.landing-search-mic.landing-search-send.landing-search-auth-send {
+  flex-basis: auto;
+  width: auto;
+  padding-inline: 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .landing-search-mic.is-listening {
   color: #e54848;
   background: color-mix(in srgb, #e54848 15%, transparent);

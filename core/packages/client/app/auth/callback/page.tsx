@@ -4,11 +4,13 @@
 // The WCA assertion is exchanged for a canonical session before anything is persisted.
 
 import { useEffect, useRef, useState } from 'react';
+import { assistantAuthContinuation } from '@/lib/assistant-auth-continuation';
 import { useRouter } from 'next/navigation';
 import { apiUrl } from '@/lib/api-base';
 import { sessionFetch } from '@/lib/session-fetch';
 import {
   applySession,
+  getAuthUser,
   getRolePreview,
   getSessionToken,
 } from '@/lib/auth-store';
@@ -111,6 +113,7 @@ export default function AuthCallbackPage() {
       if (!(await applySession(result.token, result.user, () => mounted.current && !signal.aborted))) throw new Error(tr({ zh: '无法保存登录状态，请检查浏览器存储后重试。', en: 'Could not save your session. Check browser storage and retry.' }));
       const pending = getIdentityChoice();
       if (pending?.stage === 'authenticate' && result.user.uid) updateIdentityChoice(pending.ticket, { stage: 'confirm', expectedUid: result.user.uid, otherIdentityRejected: false });
+      if (!pending) assistantAuthContinuation.complete(identityReturnPath(returnUrl || '/recon'), getAuthUser()?.uid);
       router.replace(pending ? identityChoiceEntryPath() : identityReturnPath(returnUrl || '/recon'));
     } catch (err) {
       if (!mounted.current || signal.aborted) return;
@@ -132,7 +135,10 @@ export default function AuthCallbackPage() {
       if (result.token && result.user && !(await applySession(result.token, result.user, () => mounted.current && !signal.aborted))) {
         throw new Error(tr({ zh: '无法保存账号状态，请重试。', en: 'Could not save your account session. Please retry.' }));
       }
-      if (mounted.current && !signal.aborted) router.replace(identityReturnPath(returnUrl || '/'));
+      if (mounted.current && !signal.aborted) {
+        const assistantReturn = assistantAuthContinuation.complete(identityReturnPath(returnUrl || '/'), getAuthUser()?.uid);
+        router.replace(identityReturnPath(returnUrl || '/'), assistantReturn ? { scroll: false } : undefined);
+      }
     } catch (error) {
       if (!mounted.current || signal.aborted) return;
       setErrorMsg(tr({ zh: `绑定失败：${(error as Error).message}`, en: `Link failed: ${(error as Error).message}` }));
