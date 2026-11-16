@@ -15,6 +15,8 @@
 .f2l-case-model { position: relative; width: 100%; aspect-ratio: 1; transform-origin: top left; pointer-events: none; }
 .f2l-case-introduction[data-phase='learn'] .f2l-case-item[data-selected='true'] .f2l-case-model { pointer-events: auto; }
 .f2l-case-model > .alg-sim-player { position: absolute; inset: 0; }
+/* Renderer sizes are whole pixels; grid cells can be fractional pixels wide. */
+.f2l-case-model canvas { max-width: 100%; }
 /* Keep the canvas allocation identical with and without playback controls. */
 .f2l-case-model > .alg-sim-player > .playback-bar { position: absolute; top: 100%; left: 50%; right: auto; margin: 0; width: min(260px, var(--case-controls-width, 100%)); transform: translateX(-50%) scale(var(--case-controls-scale, 1)); transform-origin: top center; }
 .f2l-case-hit { position: absolute; inset: 0; appearance: none; padding: 0; border: 0; background: transparent; cursor: pointer; }
@@ -60,6 +62,23 @@
   .chat-bubble.f2l-case-alignment-status { left: 50%; max-width: calc(100% - 16px); }
   .f2l-case-return-row, .f2l-case-prompt { top: 1020px; }
   .f2l-case-reference { justify-content: center; }
+}
+@media (min-width: 761px) {
+  .f2l-case-introduction { height: 100%; min-height: 0; }
+  .f2l-case-grid { width: min(100%, calc(400cqh - 320px)); margin-inline: auto; }
+  .f2l-case-return-row, .f2l-case-prompt { top: auto; bottom: 0; padding: 6px 0; }
+  .f2l-case-introduction .f2l-case-narration,
+  .f2l-case-introduction .f2l-case-narration[data-alignment='false'] { top: calc(50% - 20px); }
+  .f2l-case-introduction .f2l-case-narration[data-alignment='true'] { top: calc(40px + var(--case-player-size, 390px) / 2); }
+  .f2l-case-introduction .f2l-case-alignment-caption { top: calc(40px + var(--case-player-size, 390px) + 12px); font-size: 1rem; line-height: 1.5; }
+  .f2l-case-reference-sheet { gap: 8px; padding: 12px 16px; }
+  .f2l-case-reference-sheet .puzzle-art { max-width: min(160px, max(80px, calc(var(--case-player-size, 390px) * .5))); max-height: min(160px, max(80px, calc(var(--case-player-size, 390px) * .5))); }
+  .f2l-case-reference-sheet .puzzle-art > svg { width: 100%; height: 100%; }
+  .f2l-study-layout .f2l-stage-list.f2l-case-stages { margin: 0; font-size: clamp(.8rem, 3.5cqh, 1rem); line-height: 1.4; }
+  .f2l-case-stages > li + li { margin-top: 4px; padding-top: 4px; }
+  .f2l-case-stages .f2l-stage-button { padding: 2px 8px; }
+  .f2l-case-stage-moves { gap: 8px; }
+  .f2l-case-move { padding: 0 10px; }
 }
 @media (prefers-reduced-motion: reduce) { .f2l-case-item, .f2l-case-prompt, .f2l-case-name { transition: none; } }
 @media (prefers-reduced-motion: reduce) { .f2l-case-narration { transition: none; animation: none; } }

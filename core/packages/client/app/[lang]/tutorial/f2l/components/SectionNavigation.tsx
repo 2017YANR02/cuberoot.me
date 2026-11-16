@@ -50,10 +50,11 @@ export default function SectionNavigation({ label, children }: { label: string; 
     if (mobile || !element || !selected) return;
     const view = element.getBoundingClientRect();
     const item = selected.getBoundingClientRect();
-    const top = view.top + (element.scrollTop > 1 ? 28 : 0);
-    const bottom = view.bottom - (element.scrollHeight - element.clientHeight - element.scrollTop > 1 ? 28 : 0);
-    if (item.top < top) element.scrollTop -= top - item.top;
-    else if (item.bottom > bottom) element.scrollTop += item.bottom - bottom;
+    const top = element.scrollTop + item.top - view.top + (item.height - element.clientHeight) / 2;
+    element.scrollTo({
+      top: Math.max(0, Math.min(top, element.scrollHeight - element.clientHeight)),
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+    });
   }, [label, mobile]);
 
   const scrollList = (direction: -1 | 1) => {

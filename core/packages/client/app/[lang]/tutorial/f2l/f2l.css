@@ -59,6 +59,21 @@
 .f2l-section-label .puzzle-art { flex-shrink: 0; }
 .f2l-section-label > span { white-space: normal; }
 .f2l-section-label { display: flex; align-items: center; gap: 8px; min-width: 0; text-align: start; font-size: .85rem; line-height: 1.5; font-weight: 500; }
+.f2l-page :is(.f2l-section-nav, .f2l-section-popover) :is(.f2l-section-button, .f2l-section-list > p[aria-current='true']) {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  block-size: 50px;
+  margin: 0;
+  padding-block: 4px;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.25;
+}
+.f2l-page :is(.f2l-section-nav, .f2l-section-popover) .f2l-section-label { font: inherit; }
+/* Navigation thumbnails can be restored without changing the lesson content. */
+.f2l-page :is(.f2l-section-nav, .f2l-section-popover) .f2l-section-label .puzzle-art { display: none; }
 .f2l-teaching-guidance { padding-top: 8px; }
 .f2l-teaching-guidance ol { display: grid; gap: 16px; padding-left: 24px; margin: 18px 0; }
 .f2l-teaching-guidance li { padding-left: 4px; }
@@ -324,7 +339,9 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
   .f2l-page:not(.f2l-practice-page) .f2l-chapter-dialogue { height: clamp(84px, calc(25dvh - 106px), 144px); min-height: 0; gap: 8px; margin-bottom: 12px; overflow-y: auto; flex-shrink: 0; }
   .f2l-page:not(.f2l-practice-page) .f2l-chapter-dialogue > .chat-bubble { flex-shrink: 0; }
   .f2l-page:not(.f2l-practice-page) .f2l-study-layout { flex: 1 1 0; min-height: 0; align-items: stretch; }
-  .f2l-page:not(.f2l-practice-page) .f2l-section-nav { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+  .f2l-page:not(.f2l-practice-page) .f2l-section-nav { min-height: 0; grid-template-rows: minmax(0, 1fr); overflow: clip; }
+  .f2l-page:not(.f2l-practice-page) .f2l-section-scroll { min-height: 0; }
+  .f2l-page:not(.f2l-practice-page) .f2l-section-viewport { height: 100%; max-height: 100%; }
   .f2l-page:not(.f2l-practice-page) .f2l-study-main {
     container-type: size;
     min-height: 0;

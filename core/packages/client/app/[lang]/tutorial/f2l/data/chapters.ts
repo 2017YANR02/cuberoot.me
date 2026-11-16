@@ -174,9 +174,9 @@ const chapters = [
   },
   {
     id: 'lesson-4',
-    title: { zh: 'F2L 分类教学', en: 'F2L case families' },
-    question: { zh: '遇到不同的棱角位置，该怎么开始？', en: 'Where do I start when the edge and corner are in different positions?' },
-    answer: [{ zh: '按棱角的位置和朝向选择小节，再选一个案例看演示。', en: 'Choose a section based on the pieces’ position and orientation, then select a case to see the demonstration.' }],
+    title: { zh: '标态公式', en: 'Standard-case algorithms' },
+    question: { zh: '我认得这些情况了，该怎么还原？', en: 'I recognize these cases now. How do I solve them?' },
+    answer: [{ zh: '跟着演示，把它们转化成你熟悉的三步基态，再还原。', en: 'Follow the demo to turn each one into a familiar three-move case, then solve it.' }],
     tips: [],
   },
   {

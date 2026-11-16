@@ -9,15 +9,13 @@ import { VisualCube } from '@/components/VisualCube';
 import { Tooltip } from '@/components/Tooltip';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import { tr, T } from '@/i18n/tr';
-import { CUBE_COLOR_NAMES } from '@/lib/cube-colors';
-import { orientedFaceColors } from '@/lib/cube-orientation';
-import type { LocalizedText } from '../data/chapters';
+import ClassifiedSectionNavigation from '../components/ClassifiedSectionNavigation';
 import { f2lCatalogCases, f2lCatalogDiagrams, f2lGroupName, f2lTeachingPaths } from '../lib/curriculum';
 import StudyActions from '../components/StudyActions';
 import SectionNavigation from '../components/SectionNavigation';
 import AlgorithmPractice from './AlgorithmPractice';
 import TeachingFlowGraph from '../components/TeachingFlowGraph';
-import { F2L_CLASSIFICATION, F2L_CLASSIFICATION_SECTIONS } from '../data/classification';
+import { F2L_CLASSIFICATION_SECTIONS } from '../data/classification';
 
 const NO_STOPS: readonly number[] = [];
 
@@ -66,10 +64,6 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
     : item.group;
   const activeGroup = (selectedLesson && groupOf(selectedLesson)) ?? lessonGroups.find(group => group === algGroup) ?? lessonGroups[0];
   const activeCategory = classified ? F2L_CLASSIFICATION_SECTIONS.find(section => section.id === activeGroup) : undefined;
-  const categoryLabel = (title: LocalizedText) => {
-    const bottom = CUBE_COLOR_NAMES[orientedFaceColors(orientation).D];
-    return tr({ zh: title.zh.replace('{bottom}', bottom.zh), en: title.en.replace('{bottom}', bottom.en) });
-  };
   const showGallery = chapter === 4 && !selectedLesson;
   const orderedLessons = chapter === 4 ? lessonGroups.flatMap(group => lessons.filter(item => groupOf(item) === group)) : lessons;
   const visibleLessons = chapter === 4 ? orderedLessons.filter(c => groupOf(c) === activeGroup) : lessons;
@@ -116,17 +110,8 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
     <div className="f2l-study-layout">
 
       {!lesson ? <p><T zh="本节教学案例待补充。" en="Teaching examples for this chapter are being prepared." /></p> : <>
-        {classified && activeCategory ? <SectionNavigation label={categoryLabel(activeCategory.title)}>
-          <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择案例类型', en: 'Choose a case family' })}>
-            {F2L_CLASSIFICATION.map(group => <div className="f2l-section-group" key={group.title.en}>
-              <span>{tr(group.title)}</span>
-              {group.sections.map(section => <button className="f2l-section-button" key={section.id} type="button"
-                aria-pressed={activeGroup === section.id} onClick={() => void setSelection({ algGroup: section.id, algCase: null })}>
-                {categoryLabel(section.title)}
-              </button>)}
-            </div>)}
-          </div>
-        </SectionNavigation> : chapter === 4 ? <SectionNavigation label={tr(f2lGroupName(activeGroup))}>
+        {classified && activeCategory ? <ClassifiedSectionNavigation active={activeCategory} orientation={orientation}
+          onSelect={id => void setSelection({ algGroup: id, algCase: null })} /> : chapter === 4 ? <SectionNavigation label={tr(f2lGroupName(activeGroup))}>
           <div className="f2l-section-group">
             <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择情况分组', en: 'Choose a case group' })}>
               {lessonGroups.map(group => <button className="f2l-section-button" key={group} type="button" aria-pressed={activeGroup === group}
@@ -204,7 +189,7 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
             </div>
           </div>
           {chapter === 4 && <div className="f2l-alg-return-row">
-            <button type="button" className="f2l-case-return-text" onClick={() => void setSelection({ algGroup: lesson.group, algCase: null })}>
+            <button type="button" className="f2l-case-return-text" onClick={() => void setSelection({ algGroup: activeGroup, algCase: null })}>
               <T zh="点击返回选择" en="Click to return to case selection" />
             </button>
           </div>}

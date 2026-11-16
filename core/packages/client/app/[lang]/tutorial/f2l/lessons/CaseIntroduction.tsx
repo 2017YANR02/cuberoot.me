@@ -21,6 +21,15 @@ import './case-introduction.css';
 const TARGET_PAIR_STICKERS = ['F5', 'R3', 'D2', 'F8', 'R6'] as const;
 const NO_HIGHLIGHTS: readonly string[] = [];
 
+function casePlayerLayout(container: HTMLDivElement) {
+  const bounds = container.getBoundingClientRect();
+  const desktop = window.matchMedia('(min-width: 761px)').matches;
+  const leftWidth = window.matchMedia('(max-width: 700px)').matches ? bounds.width : bounds.width * .48;
+  const top = desktop ? 40 : 60;
+  const size = Math.min(390, leftWidth, desktop ? Math.max(100, bounds.height - 180) : Infinity);
+  return { bounds, leftWidth, top, size };
+}
+
 export default function CaseIntroduction({ orientation }: { orientation: string }) {
   const root = useRef<HTMLDivElement>(null);
   const players = useRef<(AlgPlayerHandle | null)[]>([]);
@@ -54,15 +63,12 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
     if (selected === null || phase !== 'transition') return;
     const element = cubes.current[selected]!;
     const start = element.getBoundingClientRect();
-    const bounds = root.current!.getBoundingClientRect();
-    const narrow = window.matchMedia('(max-width: 700px)').matches;
-    const leftWidth = narrow ? bounds.width : bounds.width * .48;
-    const endSize = Math.min(390, leftWidth);
-    const large = Math.min(endSize * 1.35, bounds.width * .9);
+    const { bounds, leftWidth, top, size: endSize } = casePlayerLayout(root.current!);
+    const large = Math.min(endSize * 1.35, bounds.width * .9, bounds.height - top - 48);
     const frame = (x: number, y: number, size: number) => ({ transform: `translate(${x-start.x}px, ${y-start.y}px) scale(${size/start.width})` });
-    const center = frame(bounds.x + (bounds.width-large)/2, bounds.y+60, large);
+    const center = frame(bounds.x + (bounds.width-large)/2, bounds.y+top, large);
     const animation = element.animate([{ transform: 'none', offset: 0 }, { ...center, offset: .2 }, { ...center, offset: .75 },
-      { ...frame(bounds.x + (leftWidth - endSize) / 2, bounds.y+60, endSize), offset: 1 }], {
+      { ...frame(bounds.x + (leftWidth - endSize) / 2, bounds.y+top, endSize), offset: 1 }], {
       duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 3600, easing: 'ease-in-out', fill: 'forwards' });
     motion.current = animation;
     animation.onfinish = () => setPhase('prepare');
@@ -73,18 +79,16 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
     const element = cubes.current[selected]!;
     const container = root.current!;
     const place = () => {
-      const bounds = container.getBoundingClientRect();
+      const { bounds, leftWidth, top, size } = casePlayerLayout(container);
       const origin = element.parentElement!.getBoundingClientRect();
-      const leftWidth = window.matchMedia('(max-width: 700px)').matches ? bounds.width : bounds.width * .48;
-      const size = Math.min(390, leftWidth);
       container.style.setProperty('--case-player-size', `${size}px`);
-      const transform = `translate(${bounds.x + (leftWidth - size) / 2 - origin.x}px, ${bounds.y + 60 - origin.y - element.offsetTop}px) scale(${size / element.offsetWidth})`;
+      const transform = `translate(${bounds.x + (leftWidth - size) / 2 - origin.x}px, ${bounds.y + top - origin.y - element.offsetTop}px) scale(${size / element.offsetWidth})`;
       motion.current?.cancel(); motion.current = null;
       if (element.style.transform !== transform) element.style.transform = transform;
-      element.style.setProperty('--case-controls-width', `${size}px`);
+      element.style.setProperty('--case-controls-width', `${Math.min(260, leftWidth)}px`);
       element.style.setProperty('--case-controls-scale', `${element.offsetWidth / size}`);
       const playbackBar = element.querySelector('.playback-bar');
-      const contentHeight = `${playbackBar ? Math.max(size, playbackBar.getBoundingClientRect().bottom - (bounds.y + 60)) : size}px`;
+      const contentHeight = `${playbackBar ? Math.max(size, playbackBar.getBoundingClientRect().bottom - (bounds.y + top)) : size}px`;
       if (container.style.getPropertyValue('--case-player-content-height') !== contentHeight) container.style.setProperty('--case-player-content-height', contentHeight);
     };
     place();
