@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "ec13cd2b958cb0961ff13bc3d213e027dc42226ea39fb7b061cf2178b40d74fb",
+  "version": "937bb9731a2acaacc72779728772712f21d54a8193102ca94cdaf0243a81b702",
   "coverage": {
     "level": "registered-families",
     "statement": "Returns all registered main families including dependencies, not proof that every costly statistic or experimental solver has been enumerated.",
@@ -73,7 +73,7 @@
     },
     {
       "path": "docs/contributing/compute.md",
-      "sha256": "a3f323b3eb1d1545c03a694d910bf0e9902e607945fcab57025a3f39ae69f791",
+      "sha256": "525921e43287cd56b0b5923d02eac7c87bc871351eb505fb8e4b0794f83a2ad8",
       "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/docs/contributing/compute.md"
     },
     {
