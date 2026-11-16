@@ -347,7 +347,7 @@ export default function NonstandardIntro({ orientation, edgeSetup = '', cornerSe
           </> : beat?.label && tr(beat.label)}
         </ChatBubble>}
       </div>
-      <div className="f2l-concept-caption" style={{ opacity: sceneOpacity }} aria-hidden={sceneOpacity === 0} aria-live="polite" aria-atomic="true">
+      <div className={`f2l-concept-caption${!scene.displayAlg && !scene.reference ? ' tutorial-single-caption' : ''}`} style={{ opacity: sceneOpacity }} aria-hidden={sceneOpacity === 0} aria-live="polite" aria-atomic="true">
         <div className="f2l-concept-explanation">
           <p key={tr(beat?.caption ?? scene.caption)} className="f2l-concept-line">{tr(beat?.caption ?? scene.caption)}</p>
           {scene.displayAlg && <code>{scene.displayAlg}</code>}

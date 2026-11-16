@@ -382,7 +382,7 @@ function Thought({ text, detail, alg, caseIndex, outlines, playing, revision, on
     return () => window.clearTimeout(timer);
   }, [key, text, detail, alg, caseIndex, outlines, playing, revision, displayed.key, displayed.revision]);
   const showMoveCues = fishMoves && displayed.alg === fishMoves.alg;
-  return <div className="lbl-complete-thought" aria-live="polite">
+  return <div className={`lbl-complete-thought${!displayed.detail && !displayed.alg ? ' tutorial-single-caption' : ''}`} aria-live="polite">
     <p data-fading={fading} className={showMoveCues ? 'lbl-fish-alg-caption' : undefined}>
       <span>{fishMoves ? displayed.text.split(/(左|右|\bleft\b|\bright\b)/i).map((part, index) =>
         index % 2 ? <span className="lbl-direction-emphasis" key={index}>{part}</span> : part) : displayed.text}</span>

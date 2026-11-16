@@ -93,7 +93,7 @@ export default function SpecialCasePrelude({ scenes, piece, finalAlg, onDone }: 
         <ChatBubble tail={piece === 'edge' && scene.targetLayer === 'top' ? 'bottom' : 'left'} className="lbl-cube-callout lbl-special-case-bubble" data-piece={piece} data-layer={scene.targetLayer ?? 'bottom'} role="status">{tr(scene.observation ?? scene.caption)}</ChatBubble>
       </div>, bubbleStage)}
     </section>
-    <section className="lbl-explanation">
+    <section className={`lbl-explanation${index < scenes.length - 1 ? ' tutorial-single-caption' : ''}`}>
       <p className="lbl-lead lbl-corner-case-caption" style={{ whiteSpace: 'pre-line', textAlign: 'center', opacity: eased }}>{tr(scene.caption)}</p>
       {index === scenes.length - 1 && <AlgSteps step={piece === 'corner' ? 'trigger-learning' : 'middle'} alg={finalAlg} />}
     </section>

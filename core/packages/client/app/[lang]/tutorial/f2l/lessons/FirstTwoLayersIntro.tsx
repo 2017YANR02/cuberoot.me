@@ -128,7 +128,7 @@ export default function FirstTwoLayersIntro({ orientation, method, comparisonSta
           {tr({ zh: '同时复原前2层，更高效', en: 'Solve the first two layers together, more efficiently' })}
         </ChatBubble>}
       </div>
-      <div className="f2l-concept-caption" aria-live="polite">
+      <div className="f2l-concept-caption tutorial-single-caption" aria-live="polite">
         <p>{tr(caption)}</p>
         <div className="f2l-practice-segments" aria-hidden={comparison && comparisonStage !== 'compare'} aria-label={tr({ zh: '逐块还原进度', en: 'Piece-by-piece progress' })}>
           {progressSegments.map((segment, index) => {

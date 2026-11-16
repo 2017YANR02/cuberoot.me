@@ -26,6 +26,7 @@ import FreePracticeLesson from './lessons/FreePracticeLesson';
 import FlowchartLesson from './lessons/FlowchartLesson';
 import ThreeMoveLesson from './lessons/ThreeMoveLesson';
 import './f2l.css';
+import '../components/single-caption.css';
 
 export default function F2lTutorial() {
   const page = useRef<HTMLElement>(null);

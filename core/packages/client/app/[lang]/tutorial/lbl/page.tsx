@@ -17,6 +17,7 @@ import ChapterNavigation from '../components/ChapterNavigation';
 import './lesson-support.css';
 import '@app-foundation/navigation-ui/navigation.css';
 import './lbl.css';
+import '../components/single-caption.css';
 
 const lessonStorageKey = 'lbl:current-lesson';
 const legacyLessonStorageKey = 'lbl2:current-lesson';
