@@ -1238,5 +1238,130 @@
     "date": "2026-10-22",
     "zh": "WCA 规则、公告与事件档案扩展 + 团队质量标准独立展示 + 层先法连续演练与枫叶 3Y 教程完善 + 顶色训练统计与Radio Jam加入",
     "en": "Expanded WCA rules, announcements and incident archives + dedicated team quality standards + continuous LBL walkthroughs and Ivy 3Y lessons + top-color training statistics and Radio Jam"
+  },
+  {
+    "date": "2026-10-23",
+    "zh": "WCA 翻译参考入口加入 + 比赛地址复制与地图跳转 + 首页内容与工作区导航整理 + 并发编辑保护",
+    "en": "WCA translation reference + competition address copying and map links + homepage and workspace navigation + concurrent editing safeguards"
+  },
+  {
+    "date": "2026-10-24",
+    "zh": "拓展十字结构排序实验加入 + 智能魔方复盘阶段边界与宽转修正 + 本地对战罚时交互统一",
+    "en": "XCross structural ranking experiment + smart cube reconstruction stage and wide-turn fixes + consistent local battle penalty controls"
+  },
+  {
+    "date": "2026-10-25",
+    "zh": "客户端共享训练、布局与在线对战 + Windows 下载与管理员发布入口 + 工作区甘特图和清单 + WCA 官方译文检索",
+    "en": "Shared client training, layouts and online battles + Windows downloads and administrator publishing + workspace Gantt charts and checklists + official WCA translation lookup"
+  },
+  {
+    "date": "2026-10-26",
+    "zh": "独立聊天和会话分享加入 + 招聘申请与管理入口 + 魔方文字预览 + WCA 译文搜索与公告审校",
+    "en": "Dedicated chat and shared conversations + careers applications and administration + cube lettering preview + WCA translation search and announcement review"
+  },
+  {
+    "date": "2026-10-27",
+    "zh": "加密保险箱支持原图与导入回读 + 管理工作区合并导航 + 智能魔方复盘和高级 F2L 识别 + 微信佣金提现接入",
+    "en": "Encrypted vault images and import verification + unified administration workspace + smart cube reconstruction and advanced F2L recognition + WeChat commission payouts"
+  },
+  {
+    "date": "2026-10-28",
+    "zh": "三维住所按统一设计重建 + Root Beast 互动与睡眠行为 + WCA 锦标赛公告翻译",
+    "en": "Redesigned 3D residence + Root Beast interactions and sleep routines + WCA championship announcement translations"
+  },
+  {
+    "date": "2026-10-29",
+    "zh": "日历加入滑动切换和移动月份选择 + 复盘采集与参考窗口 + 桌宠搜索和定位调整",
+    "en": "Swipe navigation and mobile month selection in calendars + reconstruction capture and reference windows + companion search and positioning"
+  },
+  {
+    "date": "2026-10-30",
+    "zh": "品牌战队目录加入 + 应用签名发布迁至独立云端任务 + Clawd 故事相册 + 共享返回导航与整页账号设置",
+    "en": "Brand and team directory + isolated cloud signing and app publishing + Clawd story gallery + shared return navigation and full-page account settings"
+  },
+  {
+    "date": "2026-10-31",
+    "zh": "CFZB 与多魔方训练加入 + 协作文档和表格统一入口 + 阶段解法渐进展示 + 聊天导出和流式阅读完善",
+    "en": "CFZB and multi-cube training + unified documents and spreadsheets + progressive stage solutions + improved chat exports and streamed reading"
+  },
+  {
+    "date": "2026-11-01",
+    "zh": "国家纪录保持时长与跨城连续参赛统计 + 类别奖项展示 + 相册私密与发布审核 + 多魔方训练和参赛排除管理",
+    "en": "National record longevity and cross-city competition streaks + category awards + private photos and publication review + multi-cube training and attendance exclusions"
+  },
+  {
+    "date": "2026-11-02",
+    "zh": "拍照查公式和技术说明加入 + 聊天支持私密图片查公式 + 智能魔方实时分析与打乱纠错 + WCA 引用阅读页",
+    "en": "Photo algorithm lookup and technical reference + private image lookup in chat + smart cube live analysis and scramble correction + WCA reference reading pages"
+  },
+  {
+    "date": "2026-11-03",
+    "zh": "产品使用分析后台加入 + 拍照识别补全不确定颜色 + 层先法移动教学完善 + 聊天检索与首页提问修正",
+    "en": "Product usage analytics dashboard + uncertain-color completion in photo recognition + mobile LBL teaching improvements + chat lookup and homepage question fixes"
+  },
+  {
+    "date": "2026-11-04",
+    "zh": "WCA 成绩、纪录与关系筛选统一 + 摄像头与二阶拍照识别 + 教师公开签名 + 魔方文字动画",
+    "en": "Unified WCA results, records and relationship filters + camera capture and 2×2 photo recognition + public teacher signatures + animated cube lettering"
+  },
+  {
+    "date": "2026-11-05",
+    "zh": "层先法教程重写 + 商店商品与订单支付接入管理员预览 + 协作文档权限与评论 + 架构日志合并入口",
+    "en": "Rewritten LBL tutorial + merchandise and order payments in administrator preview + document sharing permissions and comments + consolidated architecture log"
+  },
+  {
+    "date": "2026-11-06",
+    "zh": "六阶末两中心与末两棱公式库加入 + 情况标题快速切换 + StackMat 显示与智能魔方校时完善 + 全站入口返回统一",
+    "en": "6×6 last-two-center and last-two-edge catalogs + case switching from headings + StackMat display and smart cube timing calibration + entry-aware return navigation"
+  },
+  {
+    "date": "2026-11-07",
+    "zh": "Baby FTO 与 Radiolarian 3 模拟器加入 + PLL 连拧接入计时器 + 四阶特殊情况拍照识别 + 对话框与页面切换动效统一",
+    "en": "Baby FTO and Radiolarian 3 simulators + PLL chains in the timer + 4×4 parity photo recognition + shared dialog and page transitions"
+  },
+  {
+    "date": "2026-11-08",
+    "zh": "论坛个人帖子、版块筛选与行内回复 + 比赛订阅收件箱和设备推送接入 + 智能魔方计时准确性说明 + 首页导航预渲染",
+    "en": "Personal forum posts, board filtering and inline replies + competition inbox subscriptions and device push integration + smart cube timing accuracy reference + prerendered homepage navigation"
+  },
+  {
+    "date": "2026-11-09",
+    "zh": "移动端横屏与安全区域布局修正 + 管理后台整合 AI 账单 + 本地产物迁移与退役 + 求解器实测和开发预览完善",
+    "en": "Mobile landscape and safe-area layout fixes + AI billing in administration + local artifact migration and retirement + solver measurements and development previews"
+  },
+  {
+    "date": "2026-11-10",
+    "zh": "多人智能魔方复盘持久化与姿态同步 + 开发参考目录支持检索 + Egg 统计引擎接入 + 短横屏工具布局完善",
+    "en": "Persistent multiplayer smart cube reconstructions and pose synchronization + searchable development references + Egg statistics integration + compact landscape tool layouts"
+  },
+  {
+    "date": "2026-11-11",
+    "zh": "近期打乱浏览入口加入 + 加密记录可合并并保留原件 + 管理员账号删除 + Egg 求解服务与统计增量发布完善",
+    "en": "Recent scramble browser + encrypted record merging with recoverable originals + administrator account deletion + Egg solving and incremental statistics publication"
+  },
+  {
+    "date": "2026-11-12",
+    "zh": "聊天公式卡片与 PDF 导出 + 可追溯知识检索和执行进度 + 年度参赛与还原次数排名 + Radio Star 模拟器与架构流程图",
+    "en": "Chat algorithm cards and PDF exports + traceable knowledge retrieval and execution progress + annual participation and solve rankings + Radio Star simulator and infrastructure diagrams"
+  },
+  {
+    "date": "2026-11-13",
+    "zh": "公式行与镜像指法展示统一 + 复盘增加求解视图 + Baby FTO 精确求解和 Radio Gem、Radio Fathom 模拟器 + 工作报告权限完善",
+    "en": "Shared algorithm rows and annotated mirrors + solver view in reconstructions + exact Baby FTO solving and Radio Gem and Radio Fathom simulators + work report permissions"
+  },
+  {
+    "date": "2026-11-14",
+    "zh": "关联情况可选训练 + F2L 入门动画与术语复习 + 复盘指法颜色和播放同步 + WCA 上诉声明补充",
+    "en": "Training for selected related cases + F2L introduction and terminology review + reconstruction notation colors and playback sync + WCA appeals statement"
+  },
+  {
+    "date": "2026-11-15",
+    "zh": "抽签和盲拧联想训练加入 + 计时直播与观战入口 + 工作周历与自助工时 + 聊天任务持久恢复和报名微信支付",
+    "en": "Lucky draw and blindfolded association training + live timing and spectator entry + weekly work calendar and self-service hours + durable chat recovery and WeChat enrollment payments"
+  },
+  {
+    "date": "2026-11-16",
+    "zh": "聊天草稿登录续发与独立任务恢复 + 公式镜像指法同步和图标统一 + PLL 情况与朝向选择训练 + 教程移动播放和开发预览接入完善",
+    "en": "Chat drafts resume after sign-in and tasks recover independently + synchronized mirror notation and consistent icons + PLL case and orientation training + mobile tutorial playback and development previews"
   }
 ]

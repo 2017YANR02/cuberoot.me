@@ -1564,4 +1564,531 @@ export const LATE_MODELS: Record<keyof typeof LATE_DESIGNS, Build> = {
       for (let i = 0; i < 4; i++) rod(a, r, [1.8 + side * .3, 2.08, .75 + i * .35], [1.8 + side * 1.8, 1.85, .75 + i * .35], .025);
     }
   },
+  '2026-10-23': (a, r) => {
+    // Venue addresses and map links: an upright accordion atlas exposes streets across four folds.
+    const p = a.palette;
+    const folds: P[] = [[-3.6, 3.5, .6], [-1.2, 3.5, -.35], [1.2, 3.5, .6], [3.6, 3.5, -.35]];
+    folds.forEach(([x, y, z], i) => {
+      const leaf = new T.Group(); leaf.position.set(x, y, z); leaf.rotation.y = i % 2 ? -.38 : .38; r.add(leaf);
+      a.box(leaf, [2.6, 5.2, .12], [0, 0, 0], p.paper);
+      for (const dx of [-.7, .4]) rod(a, leaf, [dx, -2.2, .08], [dx, 2.2, .08], .035, p.jade);
+      for (let j = 0; j < 5; j++) rod(a, leaf, [-1.15, -1.8 + j * .85, .08], [1.15, -1.8 + j * .85, .08], .035, p.jade);
+      for (let j = 0; j < 3; j++) a.box(leaf, [.6, .42, .12], [-.15, -1.4 + j * 1.55, .17], p.limestone);
+    });
+    a.line(r, [[-4.6, 2.2, 1.2], [-2.5, 3.1, 1.2], [-1.1, 2.4, .5], [1.5, 4.7, 1.1]], .095, p.vermilion);
+    const pin = new T.Group(); pin.position.set(1.5, 5.55, 1.1); r.add(pin);
+    a.ring(pin, .65, .18, [0, .35, 0], p.vermilion);
+    fin(a, pin, [[-.55, 0], [.55, 0], [0, -1]], [0, .15, 0], p.vermilion, .15);
+    a.cylinder(r, 1.2, .18, [-4.5, 1.05, 2], p.forest);
+    fin(a, r, [[0, -.75], [.2, 0], [0, .75], [-.2, 0]], [-4.5, 1.2, 2], p.gold, .08).rotation.x = -Math.PI / 2;
+    rod(a, r, [-4.5, .9, -1.6], [-3.6, 5.8, -.5], .09, p.forest);
+  },
+  '2026-10-24': (a, r) => {
+    // XC/XXC structural ranking: candidate blocks descend through a fork with adjustable scoring gates.
+    const p = a.palette;
+    const branches: P[][] = [ [[0, 7, -1], [0, 5.5, -1], [-3.5, 3.2, .4], [-4.7, 1.4, 1.4]], [[0, 5.5, -1], [3.6, 4.1, -.2], [4.7, 1.4, 1.4]] ];
+    for (const path of branches) for (const dz of [-.5, .5]) a.line(r, path.map(([x, y, z]) => [x, y, z + dz]), .13, p.forest);
+    for (const [x, y, z] of [[-2, 4.2, -.1], [2.3, 4.7, -.5]] as P[]) {
+      rod(a, r, [x, 1, z - .9], [x, y + 1.4, z - .9], .12, p.jade);
+      rod(a, r, [x, y + 1.3, z - .9], [x, y + 1.3, z + 1], .12, p.jade);
+      a.box(r, [.8, .13, 1.8], [x, y + .3, z], p.gold);
+      for (let i = 0; i < 4; i++) a.box(r, [.5, .06, .05], [x + .2, y + .5 + i * .22, z - .75], p.paper);
+    }
+    for (const [x, y, z] of [[0, 7.7, -1], [-3.7, 3.3, .5], [3.8, 3.9, 0]] as P[]) {
+      a.box(r, [.8, .8, .8], [x, y, z], p.paper);
+      a.box(r, [.25, .83, .83], [x, y, z], p.vermilion);
+      a.box(r, [.83, .25, .83], [x, y, z], p.gold);
+    }
+    for (const x of [-4.7, 4.7]) {
+      a.box(r, [2.2, .3, 2.6], [x, 1, 1.5], p.paper);
+      for (const dx of [-1, 1]) a.box(r, [.16, 1, 2.6], [x + dx, 1.4, 1.5], p.jade);
+    }
+    card(a, r, [0, 2.1, 1], 1.8, 2.2);
+  },
+  '2026-10-25': (a, r) => {
+    // Editable Gantt schedules: independent time bars travel along an open rack with a movable date cursor.
+    const p = a.palette;
+    for (const x of [-4.6, 4.6]) { a.box(r, [.3, 6.8, .5], [x, 4.3, -.8], p.forest); a.box(r, [1.2, .3, 2.5], [x, 1, -.5], p.jade); }
+    for (let lane = 0; lane < 5; lane++) {
+      const y = 2 + lane * 1.2, start = [-3.8, -1.9, -3, .1, -1][lane], width = [3.1, 4.4, 1.8, 3.5, 2.6][lane];
+      rod(a, r, [-4.6, y, -.8], [4.6, y, -.8], .08, p.gold);
+      a.box(r, [width, .55, .4], [start + width / 2, y, -.42], lane % 2 ? p.jade : p.paper);
+      for (const x of [start, start + width]) { a.ring(r, .16, .055, [x, y, -.15], p.gold); }
+      a.box(r, [.16, .75, .6], [start + .3, y, -.35], p.vermilion);
+    }
+    a.box(r, [8.8, .6, .3], [0, 7.6, -.8], p.paper);
+    for (let i = 0; i < 12; i++) { a.box(r, [.04, .24, .06], [-4 + i * .73, 7.6, -.6], p.forest); }
+    a.box(r, [.09, 6.8, .16], [2.2, 4.4, .2], p.vermilion);
+    fin(a, r, [[-.35, .4], [.35, .4], [0, -.25]], [2.2, 8, .2], p.vermilion, .15);
+    const hour = a.cylinder(r, .85, .3, [-3.1, 1.2, 2], p.paper); hour.rotation.x = Math.PI / 2;
+    rod(a, r, [-3.1, 1.2, 2.2], [-3.1, 1.8, 2.2], .04); rod(a, r, [-3.1, 1.2, 2.2], [-2.7, 1, 2.2], .04);
+  },
+  '2026-10-26': (a, r) => {
+    // Cube lettering: loose type cubes gather into an R, with an open composing stick and proof strip.
+    const p = a.palette;
+    const rows = ['1110', '1001', '1110', '1010', '1001'];
+    rows.forEach((row, iy) => [...row].forEach((on, ix) => {
+      if (on !== '1') return;
+      const x = -3.2 + ix * 1.15, y = 6.8 - iy * 1.15;
+      a.box(r, [1.04, 1.04, .95], [x, y, -.5], p.paper);
+      a.box(r, [.8, .8, .07], [x, y, .02], p.jade);
+      for (const dy of [-.26, .26]) rod(a, r, [x - .34, y + dy, .09], [x + .34, y + dy, .09], .025, p.gold);
+    }));
+    a.box(r, [7.8, .3, 2.4], [-.1, 1.4, -.5], p.forest);
+    a.box(r, [.3, 6.4, 1.5], [-4.05, 4.45, -.6], p.gold);
+    for (let i = 0; i < 3; i++) {
+      const piece = a.box(r, [1, 1, 1], [2.5 + i * .8, 2 + i * 1.55, .2 - i * .5], i === 1 ? p.vermilion : p.paper); piece.rotation.set(.12, -.35 + i * .2, i * .2);
+      rod(a, r, [3.4, 1, -1.8], [2.5 + i * .8, 1.5 + i * 1.55, .2 - i * .5], .07, p.jade);
+    }
+    a.box(r, [5.8, .15, 1.1], [-.8, 1, 2], p.paper);
+    for (let i = 0; i < 8; i++) a.box(r, [.35, .07, .55], [-3.2 + i * .66, 1.12, 2], p.gold);
+  },
+  '2026-10-27': (a, r) => {
+    // Encrypted originals: an opened concertina photo folio sits inside an offset combination-lock frame.
+    const p = a.palette;
+    a.box(r, [7.4, .35, 4.8], [0, 1, -.4], p.forest);
+    const cover = a.box(r, [.3, 5.5, 4.8], [-3.6, 3.8, -.4], p.jade); cover.rotation.z = -.15;
+    for (let i = 0; i < 5; i++) {
+      const panel = new T.Group(); panel.position.set(-2.6 + i * 1.3, 3.3, i % 2 ? -.8 : .2); panel.rotation.y = i % 2 ? -.58 : .58; r.add(panel);
+      a.box(panel, [1.55, 3.8, .13], [0, 0, 0], p.paper);
+      a.box(panel, [1.27, 2.5, .04], [0, .3, .1], p.limestone);
+      fin(a, panel, [[-.6, -.6], [-.15, .45], [.2, -.05], [.6, .7], [.6, -.6]], [0, .3, .13], p.jade, .035);
+      a.mesh(panel, new T.SphereGeometry(.18, 10, 8), p.gold, [-.3, 1.1, .18]);
+      rod(a, panel, [-.5, -1.4, .11], [.4, -1.4, .11], .035, p.gold);
+    }
+    const lock = new T.Group(); lock.position.set(3.8, 3.2, 2); r.add(lock);
+    a.box(lock, [2.1, 1.7, .65], [0, 0, 0], p.gold);
+    arc(a, lock, .7, 0, Math.PI, [0, .9, -.1], p.forest, .14);
+    for (let i = 0; i < 3; i++) { a.box(lock, [.4, .8, .12], [-.58 + i * .58, 0, .4], p.paper); for (const dy of [-.2, .2]) a.box(lock, [.2, .04, .05], [-.58 + i * .58, dy, .49], p.forest); }
+    rod(a, r, [3.4, 1, 1.3], [3.8, 2.4, 2], .13, p.jade);
+  },
+  '2026-10-28': (a, r) => {
+    // The cube residence and Root Beast routines: a cutaway courtyard contains a curled sleeping companion.
+    const p = a.palette;
+    slab(a, r, [0, 1, -.6], 9, 6);
+    for (const [x, z, h] of [[-3, -1.6, 5.8], [0, -2, 7.2], [3, -1.8, 4.4], [-3.3, 1.2, 3]] as P[]) {
+      a.box(r, [2.3, h, 2.2], [x, 1 + h / 2, z], p.paper);
+      for (let j = 0; j < Math.floor(h / 1.2); j++) for (let k = 0; k < 2; k++) a.box(r, [.7, .6, .07], [x - .55 + k * 1.1, 1.7 + j * 1.2, z + 1.14], j % 2 ? p.jade : p.gold);
+      a.box(r, [2.5, .15, 2.4], [x, 1 + h, z], p.forest);
+    }
+    a.box(r, [7.9, .28, 1.3], [0, 4.8, -.6], p.jade);
+    for (let i = 0; i < 8; i++) rod(a, r, [-3.5 + i, 4.9, .08], [-3.5 + i, 5.4, .08], .035);
+    a.mesh(r, new T.SphereGeometry(1.1, 10, 7), p.jade, [1.1, 2, 1.3]).scale.set(1.4, .7, 1);
+    const head = a.mesh(r, new T.SphereGeometry(.65, 8, 6), p.paper, [2.2, 2.2, 1.8]); head.scale.y = .85;
+    for (const x of [1.9, 2.5]) fin(a, r, [[-.2, 0], [.2, 0], [0, .5]], [x, 2.6, 1.7], p.gold, .2);
+    for (const x of [2.05, 2.4]) arc(a, r, .1, Math.PI, Math.PI, [x, 2.2, 2.35], p.forest, .025);
+    const tail = arc(a, r, 1.25, .5, Math.PI * 1.5, [.7, 1.75, 1.4], p.jade, .23); tail.rotation.x = Math.PI / 2;
+    for (let i = 0; i < 3; i++) a.box(r, [1.5, .25, .7], [3.4, 1.2 + i * .28, 1.3 - i * .6], p.limestone);
+  },
+  '2026-10-29': (a, r) => {
+    // Reconstruction capture: a tilted sample board is traced by an articulated pickup arm into a labelled tray.
+    const p = a.palette;
+    const board = new T.Group(); board.position.set(-1.8, 3.5, 0); board.rotation.x = -.28; r.add(board);
+    a.box(board, [4.8, 4.9, .3], [0, 0, 0], p.forest);
+    a.box(board, [4.2, 4.2, .12], [0, 0, .23], p.paper);
+    a.box(board, [1.7, .55, .4], [0, 2.3, .3], p.gold);
+    a.line(board, [[-1.7, 1.4, .35], [-.6, 1.4, .35], [-.6, .4, .35], [.6, .4, .35], [.6, -1, .35], [1.6, -1, .35]], .1, p.vermilion);
+    for (const [x, y] of [[-1.7, 1.4], [-.6, .4], [.6, -1], [1.6, -1]]) joint(a, board, [x, y, .38], .16);
+    for (const x of [-3.6, 0]) rod(a, r, [x, 1, -1.5], [x, 5.5, -.7], .11, p.jade);
+    a.cylinder(r, 1.2, .45, [3.2, 1.1, -.9], p.forest);
+    const points: P[] = [[3.2, 1.3, -.9], [3.2, 5.8, -.9], [1.3, 7, -.2], [-.1, 5.2, 1]];
+    for (let i = 0; i < points.length - 1; i++) { rod(a, r, points[i], points[i + 1], .18, p.jade); joint(a, r, points[i], .3); }
+    a.mesh(r, new T.ConeGeometry(.33, .8, 8), p.gold, [-.1, 4.85, 1]).rotation.z = Math.PI;
+    a.box(r, [2.8, .22, 2], [3.3, 1.3, 2], p.paper);
+    for (let i = 0; i < 3; i++) card(a, r, [2.6 + i * .7, 2 + i * .12, 2], .6, 1.1);
+  },
+  '2026-10-30': (a, r) => {
+    // Brand and team directory: four relief shields stand on a radial, spoke-supported display carousel.
+    const p = a.palette;
+    a.cylinder(r, 2.5, .5, [0, 1.1, -.4], p.forest);
+    a.cylinder(r, .3, 5.7, [0, 4.1, -.4], p.gold);
+    const crown = a.mesh(r, new T.OctahedronGeometry(.65), p.paper, [0, 7.5, -.4]); crown.rotation.y = .3;
+    for (let i = 0; i < 4; i++) {
+      const angle = i * Math.PI / 2 + .35, x = Math.cos(angle) * 3.1, z = -.4 + Math.sin(angle) * 2.2, y = 4.5 + (i % 2) * .7;
+      rod(a, r, [0, y + .9, -.4], [x, y + .9, z], .11, p.gold);
+      rod(a, r, [0, 2, -.4], [x, y - 1.5, z], .09, p.jade);
+      const shield = new T.Group(); shield.position.set(x, y, z); shield.rotation.y = -.15 + angle * .12; r.add(shield);
+      fin(a, shield, [[-1, 1.5], [1, 1.5], [.85, -.7], [0, -1.6], [-.85, -.7]], [0, 0, 0], p.paper, .25);
+      if (i === 0) { a.ring(shield, .6, .13, [0, .25, .3], p.vermilion); rod(a, shield, [-.5, -.65, .3], [.5, 1, .3], .09, p.vermilion); }
+      if (i === 1) for (const side of [-1, 1]) fin(a, shield, [[0, -.8], [side * .7, .8], [0, .4]], [0, .1, .3], p.jade, .1);
+      if (i === 2) for (let j = 0; j < 3; j++) a.box(shield, [1.1 - j * .25, .22, .12], [0, -.4 + j * .55, .35], p.gold);
+      if (i === 3) { a.box(shield, [.28, 2, .12], [0, .1, .35], p.forest); a.box(shield, [1.3, .28, .12], [0, .3, .35], p.forest); }
+    }
+    for (let i = 0; i < 10; i++) { const angle = i * Math.PI / 5; joint(a, r, [Math.cos(angle) * 2.2, 1.42, -.4 + Math.sin(angle) * 2.2], .08); }
+  },
+  '2026-10-31': (a, r) => {
+    // Multi-cube practice: a visible loop of conveyor slats carries differently oriented cubes past timing gates.
+    const p = a.palette;
+    for (const x of [-4.2, 4.2]) {
+      const roller = a.cylinder(r, .8, 2.4, [x, 2.1, -.4], p.jade); roller.rotation.x = Math.PI / 2;
+      for (const z of [-1.7, .9]) { a.ring(r, .8, .1, [x, 2.1, z], p.gold); rod(a, r, [x, 1, z], [x, 2.1, z], .15, p.forest); }
+    }
+    for (let i = 0; i < 17; i++) for (const y of [1.35, 2.85]) a.box(r, [.45, .1, 2.3], [-4 + i * .5, y, -.4], p.paper);
+    for (let i = 0; i < 3; i++) {
+      const x = -3 + i * 3, y = 3.55;
+      const cube = new T.Group(); cube.position.set(x, y, -.4); cube.rotation.y = i * .35; r.add(cube);
+      a.box(cube, [1.3, 1.3, 1.3], [0, 0, 0], p.forest);
+      for (let ix = 0; ix < 2; ix++) for (let iy = 0; iy < 2; iy++) a.box(cube, [.53, .53, .06], [-.31 + ix * .62, -.31 + iy * .62, .68], i === 1 ? p.vermilion : p.jade);
+      rod(a, r, [x + .8, 1, -1.8], [x + .8, 6.2 - i * .5, -1.8], .1, p.gold);
+      a.box(r, [1.1, .65, .2], [x + .8, 6.1 - i * .5, -1.6], p.paper);
+      for (let j = 0; j <= i; j++) a.box(r, [.13, .35, .05], [x + .5 + j * .24, 6.1 - i * .5, -1.45], p.forest);
+    }
+    rod(a, r, [-4.2, 1.6, 1.5], [4.2, 1.6, 1.5], .06, p.gold);
+  },
+  '2026-11-01': (a, r) => {
+    // Competition streaks: exposed numeral wheels count a route through a low skyline of venues.
+    const p = a.palette;
+    a.box(r, [8.4, .4, 3.4], [0, 1, -.6], p.forest);
+    rod(a, r, [-4.2, 4.6, -.6], [4.2, 4.6, -.6], .22, p.gold);
+    for (let i = 0; i < 3; i++) {
+      const x = -2.5 + i * 2.4;
+      const wheel = a.cylinder(r, 1.75, 1.6, [x, 4.6, -.6], p.paper); wheel.rotation.z = Math.PI / 2;
+      for (const dx of [-.8, .8]) { const rim = a.ring(r, 1.75, .1, [x + dx, 4.6, -.6], p.jade); rim.rotation.y = Math.PI / 2; }
+      for (let j = 0; j < 10; j++) {
+        const angle = j * Math.PI / 5, y = 4.6 + Math.cos(angle) * 1.8, z = -.6 + Math.sin(angle) * 1.8;
+        const mark = a.box(r, [.6, .08, .3], [x, y, z], j === i + 2 ? p.vermilion : p.forest); mark.rotation.x = -angle;
+      }
+      rod(a, r, [x, 1.2, -.6], [x, 2.8, -.6], .15, p.jade);
+    }
+    for (let i = 0; i < 6; i++) {
+      const x = -4.2 + i * 1.65, h = [.8, 1.4, 1, 1.8, 1.2, .7][i];
+      a.box(r, [.9, h, .7], [x, 1.3 + h / 2, 2.1], p.limestone);
+      fin(a, r, [[-.55, 0], [.55, 0], [0, .5]], [x, 1.3 + h, 2.1], p.jade, .7);
+    }
+    a.line(r, [[-4.7, 1.15, 2.8], [-2.7, 1.15, 3.1], [-.5, 1.15, 2.8], [1.8, 1.15, 3.1], [4.5, 1.15, 2.8]], .07, p.vermilion);
+    a.box(r, [7.6, .18, .5], [0, 6.5, 1], p.gold);
+  },
+  '2026-11-02': (a, r) => {
+    // Photo inference: three open reading leaves unfold above a sample, with projection paths and uncertain cells.
+    const p = a.palette;
+    const plinth = fin(a, r, [[-4.7, -1.8], [-3.4, -2.8], [3.4, -2.8], [4.7, -1.8], [4.1, 2.4], [-4.1, 2.4]], [0, 1.2, -.2], p.limestone, .3);
+    plinth.rotation.x = Math.PI / 2;
+    a.box(r, [3.3, .3, 2.9], [0, 1.5, .7], p.forest);
+    a.box(r, [2.7, .17, 2.4], [0, 1.74, .7], p.paper);
+    const leaves: [P, P][] = [[[-3.2, 4.5, -.9], [0, .62, -.18]], [[3.2, 4.5, -.9], [0, -.62, .18]], [[0, 7.2, -1.6], [-.62, 0, 0]]];
+    leaves.forEach(([position, angles], face) => {
+      const leaf = new T.Group(); leaf.position.set(...position); leaf.rotation.set(...angles); r.add(leaf);
+      fin(a, leaf, [[-1.7, -1.6], [1.7, -1.6], [1.7, 1.3], [.9, 1.8], [-1.7, 1.8]], [0, 0, 0], p.paper, .16);
+      for (let iy = 0; iy < 3; iy++) for (let ix = 0; ix < 3; ix++) {
+        const x = -.94 + ix * .94, y = -.9 + iy * .94;
+        if (ix === face && iy === 1) {
+          for (const dx of [-.37, .37]) a.box(leaf, [.07, .8, .07], [x + dx, y, .23], p.gold);
+          for (const dy of [-.37, .37]) a.box(leaf, [.8, .07, .07], [x, y + dy, .23], p.gold);
+        } else a.box(leaf, [.76, .76, .08], [x, y, .23], [p.jade, p.gold, p.vermilion][(ix + iy + face) % 3]);
+      }
+      for (let i = 0; i < 4; i++) a.box(leaf, [.14, .07, .07], [-.8 + i * .52, -1.35, .23], p.forest);
+    });
+    for (const side of [-1, 1]) {
+      fin(a, r, [[0, 0], [side * 1.2, 0], [side * 1.2, 2.3], [side * .45, 3.4], [0, 2.6]], [side * 2.7, 1.4, -1.3], p.jade, .4);
+      rod(a, r, [side * 3.6, 5.7, -1.7], [side * 1.1, 7.4, -2.2], .14, p.forest);
+    }
+    const sample = new T.Group(); sample.position.set(0, 2.7, .9); sample.rotation.y = .6; r.add(sample);
+    a.box(sample, [1.5, 1.5, 1.5], [0, 0, 0], p.paper);
+    for (let ix = 0; ix < 3; ix++) for (let iy = 0; iy < 3; iy++) {
+      a.box(sample, [.41, .41, .05], [-.49 + ix * .49, -.49 + iy * .49, .78], ix === 2 && iy === 1 ? p.limestone : p.jade);
+      a.box(sample, [.41, .05, .41], [-.49 + ix * .49, .78, -.49 + iy * .49], p.gold);
+    }
+    a.line(r, [[-.6, 3.1, 1], [-1.4, 3.7, .1], [-2.2, 4.6, -.2]], .04, p.gold);
+    a.line(r, [[.6, 3.1, 1], [1.4, 3.7, .1], [2.2, 4.6, -.2]], .04, p.gold);
+    rod(a, r, [0, 3.6, .9], [0, 6.3, -.7], .04, p.vermilion);
+    for (let i = 0; i < 3; i++) a.box(r, [.55, .12, .55], [2.2 + i * .7, 1.45, 1.4], [p.jade, p.gold, p.vermilion][i]);
+  },
+  '2026-11-03': (a, r) => {
+    // Product-usage analytics: a cylindrical paper plotter carries traces beneath an XY recording carriage.
+    const p = a.palette;
+    a.box(r, [9, .4, 4.6], [0, 1, -.3], p.forest);
+    const drum = a.cylinder(r, 1.65, 6.6, [0, 2.9, -.3], p.paper); drum.rotation.z = Math.PI / 2;
+    for (const x of [-3.4, 3.4]) { const rim = a.ring(r, 1.68, .16, [x, 2.9, -.3], p.jade); rim.rotation.y = Math.PI / 2; rod(a, r, [x, 1.1, -.3], [x, 2.9, -.3], .18, p.gold); }
+    for (let i = 0; i < 9; i++) { const ring = a.ring(r, 1.67, .018, [-3 + i * .75, 2.9, -.3], p.gold); ring.rotation.y = Math.PI / 2; }
+    const trace: P[] = Array.from({ length: 19 }, (_, i) => { const t = .5 + Math.sin(i * .65) * .32; return [-3 + i / 3, 2.9 + Math.cos(t) * 1.7, -.3 + Math.sin(t) * 1.7]; });
+    a.line(r, trace, .055, p.vermilion);
+    for (const x of [-4.1, 4.1]) rod(a, r, [x, 1.2, -1.8], [x, 6.7, -1.8], .15, p.jade);
+    for (const y of [5.8, 6.7]) rod(a, r, [-4.1, y, -1.8], [4.1, y, -1.8], .1, p.gold);
+    a.box(r, [1.25, 1.3, .6], [.8, 6.2, -1.5], p.paper);
+    rod(a, r, [.8, 6, -1.2], [.8, 4.8, .7], .1, p.forest);
+    a.mesh(r, new T.ConeGeometry(.18, .7, 6), p.vermilion, [.8, 4.55, .7]).rotation.z = Math.PI;
+    for (let i = 0; i < 3; i++) a.box(r, [.45, .4 + i * .45, .45], [-3.6 + i * .7, 1.4 + i * .225, 2.4], p.gold);
+  },
+  '2026-11-04': (a, r) => {
+    // Animated cube lettering: a wall of individually hinged square tiles reveals the letter A while turning.
+    const p = a.palette;
+    for (const x of [-4.1, 4.1]) a.box(r, [.3, 7.6, .4], [x, 4.7, -.9], p.forest);
+    for (const y of [1.2, 8.4]) rod(a, r, [-4.1, y, -.9], [4.1, y, -.9], .15, p.gold);
+    const glyph = ['01110', '11011', '10001', '11111', '10001'];
+    glyph.forEach((row, iy) => [...row].forEach((on, ix) => {
+      const x = -2.9 + ix * 1.45, y = 7.6 - iy * 1.42;
+      const tile = new T.Group(); tile.position.set(x, y, -.8); tile.rotation.y = ix === 3 ? .9 : ix === 4 ? 1.35 : 0; r.add(tile);
+      a.box(tile, [1.26, 1.26, .3], [0, 0, 0], p.paper);
+      a.box(tile, [1.05, 1.05, .04], [0, 0, .19], on === '1' ? p.jade : p.limestone);
+      rod(a, r, [x, y - .72, -.8], [x, y + .72, -.8], .04, p.gold);
+    }));
+    for (const x of [-4.1, 4.1]) a.box(r, [1.5, .25, 3], [x, 1, -.8], p.jade);
+    a.line(r, [[3.2, 2, 1.4], [4.8, 2, 1.4], [5.3, 3, 1.4], [4.8, 4, 1.4]], .09, p.vermilion);
+    fin(a, r, [[-.5, .15], [.3, .45], [.1, -.4]], [4.7, 4, 1.4], p.vermilion, .12);
+  },
+  '2026-11-05': (a, r) => {
+    // Shop preview and renewed beginner lessons: an open merchandise window faces a staircase of lesson blocks.
+    const p = a.palette;
+    a.box(r, [5.3, .3, 3.3], [-2.2, 1.1, -.8], p.forest);
+    for (const x of [-4.7, .3]) rod(a, r, [x, 1.2, -1.8], [x, 6.4, -1.8], .2, p.jade);
+    a.box(r, [5.6, .25, 3.6], [-2.2, 6.5, -.6], p.paper);
+    for (let i = 0; i < 7; i++) {
+      const x = -4.6 + i * .8;
+      const stripe = a.box(r, [.76, .12, 3.7], [x, 6.7, -.6], i % 2 ? p.paper : p.gold); stripe.rotation.x = .12;
+      fin(a, r, [[-.38, .35], [.38, .35], [.38, -.15], [0, -.45], [-.38, -.15]], [x, 6.2, 1.25], i % 2 ? p.paper : p.gold, .12);
+    }
+    a.box(r, [4.8, .25, 2.3], [-2.2, 2.3, -.2], p.paper);
+    for (let i = 0; i < 3; i++) { a.box(r, [.85, 1.1, .8], [-3.7 + i * 1.5, 3, -.3], p.jade); a.box(r, [.7, .55, .05], [-3.7 + i * 1.5, 3, .15], p.gold); }
+    for (let i = 0; i < 4; i++) {
+      const x = 1.5 + i * 1.1, h = 1 + i * 1.2;
+      a.box(r, [1.05, h, 2.4], [x, 1.1 + h / 2, -.6], p.limestone);
+      a.box(r, [.8, .8, .8], [x, 1.6 + h, -.6], p.paper);
+      a.box(r, [.6, .6, .04], [x, 1.6 + h, -.17], i === 3 ? p.vermilion : p.jade);
+    }
+    card(a, r, [-4.2, 4.8, -1.5], 1, 1.1);
+  },
+  '2026-11-06': (a, r) => {
+    // Verified 6×6 center and edge catalogs: an exploded center grid meets a separate paired-edge assembly jig.
+    const p = a.palette;
+    const grid = new T.Group(); grid.position.set(-2.1, 4.6, -.6); grid.rotation.set(-.18, -.18, .12); r.add(grid);
+    for (let iy = 0; iy < 6; iy++) for (let ix = 0; ix < 6; ix++) {
+      const center = ix > 0 && ix < 5 && iy > 0 && iy < 5;
+      a.box(grid, [.56, .56, center ? .7 : .25], [-1.65 + ix * .66, -1.65 + iy * .66, center ? .3 : 0], center ? p.jade : p.paper);
+    }
+    for (const x of [-4, -.3]) rod(a, r, [x, 1, -1.2], [x, 6.9, -1.2], .14, p.forest);
+    a.box(r, [3, .4, 3.6], [3, 1.1, -.2], p.forest);
+    for (let layer = 0; layer < 3; layer++) {
+      const y = 2.1 + layer * 1.7;
+      for (let i = 0; i < 4; i++) a.box(r, [.62, .62, .62], [2 + i * .68, y, -.3], i % 2 ? p.gold : p.paper);
+      for (const x of [1.5, 4.5]) { a.box(r, [.2, .9, 1], [x, y, -.3], p.jade); rod(a, r, [x, 1.3, -.3], [x, 6.4, -.3], .07, p.gold); }
+      if (layer < 2) a.line(r, [[3.6, y + .4, .4], [4.8, y + .9, .4], [3.6, y + 1.4, .4]], .055, p.vermilion);
+    }
+    for (let i = 0; i < 4; i++) a.box(r, [.6, .22, .6], [-3.2 + i * .7, 1.2, 1.4], p.gold);
+  },
+  '2026-11-07': (a, r) => {
+    // Radiolarian 3 and Baby FTO: a spined open skeleton and a compact octahedron occupy unlike specimen mounts.
+    const p = a.palette;
+    a.cylinder(r, 1.8, .35, [-2.7, 1.1, -.5], p.forest);
+    rod(a, r, [-2.7, 1.3, -.5], [-2.7, 4.8, -.5], .16, p.gold);
+    a.mesh(r, new T.IcosahedronGeometry(1.25, 0), p.paper, [-2.7, 5.5, -.5]);
+    for (let i = 0; i < 12; i++) {
+      const azimuth = i * Math.PI * (3 - Math.sqrt(5)), elevation = Math.acos(1 - 2 * (i + .5) / 12);
+      const d = new T.Vector3(Math.sin(elevation) * Math.cos(azimuth), Math.cos(elevation), Math.sin(elevation) * Math.sin(azimuth));
+      const start = d.clone().multiplyScalar(1.1).add(new T.Vector3(-2.7, 5.5, -.5)), end = d.clone().multiplyScalar(2.8).add(new T.Vector3(-2.7, 5.5, -.5));
+      rod(a, r, start.toArray() as P, end.toArray() as P, .095, p.jade);
+      a.mesh(r, new T.OctahedronGeometry(.25), p.gold, end.toArray() as P);
+    }
+    a.box(r, [3, .35, 3], [3, 1.1, -.4], p.paper);
+    for (const dx of [-1.1, 1.1]) rod(a, r, [3 + dx, 1.3, -.4], [3, 3, -.4], .14, p.forest);
+    const octahedron = a.mesh(r, new T.OctahedronGeometry(1.7), p.jade, [3, 4.4, -.4]); octahedron.rotation.y = .45;
+    for (let i = 0; i < 4; i++) { const angle = i * Math.PI / 2 + .45; rod(a, r, [3, 6.1, -.4], [3 + Math.cos(angle) * 1.7, 4.4, -.4 + Math.sin(angle) * 1.7], .055, p.gold); }
+    card(a, r, [3, 2, 1.4], 2.1, .85);
+  },
+  '2026-11-08': (a, r) => {
+    // Personal forum feeds and competition subscriptions: replies step out from a noticeboard towards a mail slot.
+    const p = a.palette;
+    a.box(r, [4, 5.6, .3], [-2.6, 4.1, -1.4], p.forest);
+    a.box(r, [3.5, 5.1, .12], [-2.6, 4.1, -1.17], p.paper);
+    for (const x of [-4, -1.2]) rod(a, r, [x, 1, -1.4], [x, 7.2, -1.4], .11, p.gold);
+    card(a, r, [-2.6, 5.7, -.95], 2.6, 1.1, p.jade);
+    for (let i = 0; i < 3; i++) {
+      const x = -.1 + i * 1.6, y = 4.8 - i * 1.15, z = -.6 + i * .6;
+      a.line(r, [[-2.6, 5, -.9], [-2.6, y, -.9], [x - .65, y, z]], .055, p.gold);
+      card(a, r, [x, y, z], 1.55, .95);
+      fin(a, r, [[0, 0], [.5, 0], [0, -.4]], [x - .5, y - .45, z], p.paper, .12);
+    }
+    a.box(r, [2.3, 2.8, 2], [4.1, 2.7, -1.5], p.jade);
+    a.box(r, [1.6, .22, .09], [4.1, 3.35, -.45], p.forest);
+    fin(a, r, [[-1.3, 0], [1.3, 0], [0, .9]], [4.1, 4.1, -1.5], p.paper, 2);
+    const envelope = new T.Group(); envelope.position.set(4.1, 5.7, -.7); envelope.rotation.z = -.2; r.add(envelope);
+    a.box(envelope, [1.9, 1.1, .15], [0, 0, 0], p.paper);
+    a.line(envelope, [[-.9, .5, .1], [0, -.15, .1], [.9, .5, .1]], .04, p.vermilion);
+    rod(a, r, [4.1, 4.8, -1.5], [4.1, 6.4, -1.5], .035, p.gold);
+  },
+  '2026-11-09': (a, r) => {
+    // Persistent artifact migration: a cantilever crane transfers a labelled archive crate between open bays.
+    const p = a.palette;
+    a.box(r, [2.5, .6, 3.2], [-3.7, 1.1, -.7], p.limestone);
+    for (const x of [-4.3, -3.1]) rod(a, r, [x, 1.4, -.7], [x, 7.4, -.7], .16, p.forest);
+    for (let i = 0; i < 4; i++) {
+      const y = 1.6 + i * 1.4;
+      rod(a, r, [-4.3, y, -.7], [-3.1, y + 1.2, -.7], .07, p.jade);
+      rod(a, r, [-3.1, y, -.7], [-4.3, y + 1.2, -.7], .07, p.jade);
+    }
+    a.line(r, [[-5, 7.4, -.7], [-3.7, 8.4, -.7], [4.8, 7.4, -.7], [-5, 7.4, -.7]], .14, p.gold);
+    for (let i = 0; i < 5; i++) rod(a, r, [-3.6 + i * 1.6, 7.5, -.7], [-3.7, 8.4, -.7], .045, p.jade);
+    a.box(r, [1.3, .7, 1.2], [-5, 7, -.7], p.forest);
+    for (const x of [1.2, 2.4]) rod(a, r, [x, 7.4, -.7], [x, 4.8, -.7], .035, p.forest);
+    a.box(r, [2.3, 1.9, 1.9], [1.8, 3.9, -.7], p.paper);
+    for (const dx of [-.7, .7]) a.box(r, [.14, 2, 2], [1.8 + dx, 3.9, -.7], p.jade);
+    card(a, r, [1.8, 4, .3], .75, .7, p.gold);
+    for (const x of [-.2, 4.3]) {
+      a.box(r, [2.4, .22, 2.8], [x, 1.1, .4], p.paper);
+      a.box(r, [2.4, 1.2, .18], [x, 1.75, -1], p.jade);
+      for (const dx of [-1.1, 1.1]) a.box(r, [.18, 1.2, 2.8], [x + dx, 1.75, .4], p.jade);
+    }
+  },
+  '2026-11-10': (a, r) => {
+    // Live gyroscope synchronization: two tilted cube mounts share a jointed angular drive and calibrated scales.
+    const p = a.palette;
+    const mounts: [P, number, number][] = [[[-3.2, 4.3, -.5], .35, -.35], [[3.2, 5.3, -.5], .35, -.35]];
+    mounts.forEach(([at, tilt, turn]) => {
+      const pivot = new T.Group(); pivot.position.set(...at); pivot.rotation.set(tilt, turn, .18); r.add(pivot);
+      a.box(pivot, [2.4, 2.4, 2.4], [0, 0, 0], p.paper);
+      for (let ix = 0; ix < 3; ix++) for (let iy = 0; iy < 3; iy++) a.box(pivot, [.64, .64, .05], [-.76 + ix * .76, -.76 + iy * .76, 1.23], (ix + iy) % 3 ? p.jade : p.gold);
+      rod(a, r, [at[0], 1, at[2]], [at[0], at[1] - 1.6, at[2]], .22, p.forest);
+      joint(a, r, [at[0], at[1] - 1.5, at[2]], .4);
+      a.cylinder(r, 1.6, .2, [at[0], 1.1, at[2]], p.jade);
+      for (let i = 0; i < 7; i++) {
+        const angle = i / 6 * Math.PI;
+        rod(a, r, [at[0] + Math.cos(angle) * 1.35, 1.25, at[2] + Math.sin(angle) * 1.35], [at[0] + Math.cos(angle) * 1.55, 1.25, at[2] + Math.sin(angle) * 1.55], .025, p.paper);
+      }
+    });
+    const drive: P[] = [[-3.2, 2.5, -.5], [-1.1, 2.5, .4], [1.1, 3.5, .4], [3.2, 3.5, -.5]];
+    for (let i = 0; i < drive.length - 1; i++) { rod(a, r, drive[i], drive[i + 1], .15, p.gold); joint(a, r, drive[i], .28); }
+    for (const x of [-1.1, 1.1]) { a.box(r, [.6, .6, .6], [x, x < 0 ? 2.5 : 3.5, .4], p.vermilion); }
+    a.line(r, [[-2, 7.1, -.7], [0, 7.5, -.7], [2, 7.1, -.7]], .065, p.gold);
+    fin(a, r, [[-.5, .3], [.35, 0], [-.5, -.3]], [2.1, 7.1, -.7], p.gold, .12);
+  },
+  '2026-11-11': (a, r) => {
+    // Recoverable vault merging: two independent folios slide into a central clamp, with originals kept in side cradles.
+    const p = a.palette;
+    for (const z of [-1.3, 1.3]) rod(a, r, [-5.3, 1.8, z], [5.3, 1.8, z], .13, p.forest);
+    for (const x of [-4.6, 4.6]) {
+      a.box(r, [1.7, .25, 3.4], [x, 1.7, 0], p.jade);
+      for (const dx of [-.65, .65]) rod(a, r, [x + dx, 1, -1], [x + dx, 3, -1], .08, p.gold);
+      for (let i = 0; i < 3; i++) a.box(r, [1.2, 2.2, .13], [x, 2.9, -.6 + i * .3], p.paper);
+    }
+    const sheets: [number, number][] = [[-2.5, -.32], [2.5, .32]];
+    for (const [x, turn] of sheets) {
+      const folio = new T.Group(); folio.position.set(x, 4.1, 0); folio.rotation.z = turn; r.add(folio);
+      a.box(folio, [2.2, 3.2, .25], [0, 0, 0], p.paper);
+      a.box(folio, [.25, 3.2, .3], [x < 0 ? -1 : 1, 0, 0], p.jade);
+      for (let i = 0; i < 5; i++) a.box(folio, [1.3, .06, .06], [0, 1 - i * .45, .2], p.gold);
+      rod(a, r, [x, 1.9, -.8], [x, 2.7, -.8], .1, p.forest);
+    }
+    for (const z of [-1.1, 1.1]) a.box(r, [.5, 5.7, .3], [0, 4.7, z], p.forest);
+    a.box(r, [2, .35, 2.6], [0, 7.4, 0], p.gold);
+    a.box(r, [.8, 3.3, .8], [0, 4.7, 0], p.jade);
+    for (let i = 0; i < 7; i++) a.box(r, [1.2, .18, 1], [0, 3.3 + i * .42, 0], p.paper);
+    a.ring(r, .6, .12, [0, 8, 0], p.vermilion);
+    a.line(r, [[-3.1, 2.1, 1.8], [-3.7, 2.5, 1.8], [-4.5, 2.5, 1.8]], .06, p.gold);
+  },
+  '2026-11-12': (a, r) => {
+    // Selectable algorithm answers and PDF export: indexed cards lift from a sorting tray into a folded booklet.
+    const p = a.palette;
+    a.box(r, [4.3, .4, 4.3], [-2.5, 1.2, -.5], p.forest);
+    for (let i = 0; i < 5; i++) {
+      const z = -2.1 + i * .75, h = i === 2 ? 6.3 : 3.8 - i * .3;
+      a.box(r, [3.4, h, .13], [-2.5, 1.4 + h / 2, z], p.paper);
+      a.box(r, [.7, .45, .16], [-3.6 + i * .5, 1.6 + h, z], i === 2 ? p.vermilion : p.gold);
+      for (let row = 0; row < 2; row++) for (let col = 0; col < 3; col++) a.box(r, [.44, .44, .06], [-3.3 + col * .6, 1.9 + h - row * .6 - 1.7, z + .11], p.jade);
+      rod(a, r, [-3.7, 2, z + .12], [-1.5, 2, z + .12], .035, p.gold);
+    }
+    const booklet = new T.Group(); booklet.position.set(2.6, 4.2, .4); booklet.rotation.y = -.4; r.add(booklet);
+    for (let leaf = 0; leaf < 4; leaf++) {
+      const panel = new T.Group(); panel.position.set((leaf % 2) * 1.65 - .8, 0, -leaf * .3); panel.rotation.y = leaf % 2 ? -.35 : .35; booklet.add(panel);
+      a.box(panel, [1.85, 4.7, .1], [0, 0, 0], p.paper);
+      for (let i = 0; i < 6; i++) a.box(panel, [1.2, .045, .04], [0, 1.6 - i * .55, .08], p.jade);
+      for (const y of [-1.8, 1.8]) joint(a, panel, [-.75, y, .07], .06);
+    }
+    for (const x of [1.6, 3.6]) rod(a, r, [x, 1, -.7], [x, 2, -.1], .12, p.gold);
+    a.line(r, [[-1, 7, -.6], [.2, 7.7, -.6], [1.9, 7.2, -.6]], .075, p.gold);
+    fin(a, r, [[-.4, .3], [.4, 0], [-.4, -.3]], [2, 7.2, -.6], p.vermilion, .12);
+  },
+  '2026-11-13': (a, r) => {
+    // Exact Baby FTO solving: triangular faces peel from an octahedron around a rotating solution cradle.
+    const p = a.palette;
+    a.cylinder(r, 3.4, .3, [0, 1.1, -.5], p.forest);
+    for (let i = 0; i < 12; i++) {
+      const angle = i * Math.PI / 6;
+      rod(a, r, [Math.cos(angle) * 2.8, 1.3, -.5 + Math.sin(angle) * 2.8], [Math.cos(angle) * 3.2, 1.3, -.5 + Math.sin(angle) * 3.2], .04, p.gold);
+    }
+    rod(a, r, [0, 1.3, -.5], [0, 4.8, -.5], .23, p.gold);
+    a.mesh(r, new T.OctahedronGeometry(1.9), p.limestone, [0, 4.7, -.5]);
+    const vertices = [[0, 1.9, 0], [1.9, 0, 0], [0, 0, 1.9], [-1.9, 0, 0], [0, 0, -1.9], [0, -1.9, 0]].map(v => new T.Vector3(v[0], v[1], v[2]));
+    const faces = [[0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 1], [5, 2, 1], [5, 3, 2], [5, 4, 3], [5, 1, 4]];
+    faces.forEach((indices, i) => {
+      const tri = indices.map(index => vertices[index]);
+      const center = tri.reduce((sum, v) => sum.add(v), new T.Vector3()).divideScalar(3), normal = center.clone().normalize();
+      const offset = normal.clone().multiplyScalar(i < 4 ? 1.7 : .7).add(new T.Vector3(0, 4.7, -.5));
+      const xAxis = tri[1].clone().sub(tri[0]).normalize(), yAxis = new T.Vector3().crossVectors(normal, xAxis).normalize();
+      const outline = tri.map(v => { const point = v.clone().sub(center); return [point.dot(xAxis), point.dot(yAxis)] as [number, number]; });
+      const face = fin(a, r, outline, center.clone().add(offset).toArray() as P, i % 2 ? p.paper : p.jade, .09);
+      face.quaternion.setFromRotationMatrix(new T.Matrix4().makeBasis(xAxis, yAxis, normal));
+      a.line(r, [...tri, tri[0]].map(v => v.clone().add(offset).toArray() as P), .06, p.gold);
+      rod(a, r, center.clone().add(new T.Vector3(0, 4.7, -.5)).toArray() as P, center.clone().add(offset).toArray() as P, .045, p.vermilion);
+    });
+    const handle = a.cylinder(r, .2, 2.2, [4.1, 1.6, -.5], p.jade); handle.rotation.z = Math.PI / 2;
+    a.cylinder(r, .28, .65, [5.2, 1.9, -.5], p.gold);
+  },
+  '2026-11-14': (a, r) => {
+    // Training selected related cases: discrete hinged shutters surround a selector needle and a removable case tile.
+    const p = a.palette;
+    a.cylinder(r, 1.8, .35, [0, 1.1, -.7], p.jade);
+    a.box(r, [.6, 3, .7], [0, 2.6, -.7], p.forest);
+    const dial = new T.Group(); dial.position.set(0, 5, -.5); dial.rotation.x = -.1; r.add(dial);
+    a.ring(dial, 2.7, .18, [0, 0, 0], p.paper);
+    a.ring(dial, 2.3, .06, [0, 0, 0], p.gold);
+    for (let i = 0; i < 6; i++) {
+      const angle = i * Math.PI / 3 + Math.PI / 6, x = Math.cos(angle) * 3.2, y = Math.sin(angle) * 3.2;
+      rod(a, dial, [Math.cos(angle) * 2.3, Math.sin(angle) * 2.3, 0], [x, y, 0], .09, p.jade);
+      const shutter = new T.Group(); shutter.position.set(x, y, .1); shutter.rotation.y = i === 1 ? .75 : 0; dial.add(shutter);
+      a.box(shutter, [1.35, 1.35, .2], [0, 0, 0], p.paper);
+      for (let row = 0; row < 2; row++) for (let col = 0; col < 2; col++) a.box(shutter, [.46, .46, .06], [-.27 + col * .54, -.27 + row * .54, .15], (i + row + col) % 3 ? p.jade : p.gold);
+      if (i === 1 || i === 4) a.line(shutter, [[-.3, -.25, .23], [-.05, -.5, .23], [.4, .15, .23]], .07, p.vermilion);
+    }
+    fin(a, dial, [[-.2, -.5], [.2, -.5], [0, 2]], [0, 0, .35], p.vermilion, .16).rotation.z = -Math.PI / 3;
+    joint(a, dial, [0, 0, .6], .22);
+    a.box(r, [1.5, .25, 1.7], [3.9, 1.1, 1.4], p.paper);
+    a.box(r, [1.1, 1.1, 1.1], [3.9, 1.8, 1.4], p.jade);
+  },
+  '2026-11-15': (a, r) => {
+    // Lucky draw: an open faceted cage holds individual tickets, with a crank and a single-card delivery chute.
+    const p = a.palette;
+    for (const x of [-3.8, 3.8]) {
+      fin(a, r, [[-1.2, 0], [1.2, 0], [.25, 4], [-.25, 4]], [x, 1.1, -.7], p.jade, .5);
+      rod(a, r, [x, 5, -1.2], [x, 5, 0], .2, p.gold);
+    }
+    for (const x of [-3, 3]) {
+      const hoop = a.ring(r, 2.25, .14, [x, 5, -.5], p.gold); hoop.rotation.y = Math.PI / 2;
+      for (let i = 0; i < 6; i++) { const angle = i * Math.PI / 3; rod(a, r, [x, 5, -.5], [x, 5 + Math.cos(angle) * 2.25, -.5 + Math.sin(angle) * 2.25], .055, p.paper); }
+    }
+    for (let i = 0; i < 10; i++) {
+      const angle = i * Math.PI / 5;
+      rod(a, r, [-3, 5 + Math.cos(angle) * 2.25, -.5 + Math.sin(angle) * 2.25], [3, 5 + Math.cos(angle) * 2.25, -.5 + Math.sin(angle) * 2.25], .085, p.jade);
+    }
+    for (let i = 0; i < 9; i++) {
+      const ticket = new T.Group(); ticket.position.set(-2.4 + i * .6, 4.5 + (i % 3) * .55, -.5 + (i % 2) * .55); ticket.rotation.set(.2 * i, .25, -.5 + i * .14); r.add(ticket);
+      card(a, ticket, [0, 0, 0], .65, 1, i === 4 ? p.vermilion : p.paper);
+    }
+    a.line(r, [[3.8, 5, -.7], [4.8, 5, -.7], [4.8, 3.8, -.7], [5.5, 3.8, -.7]], .16, p.gold);
+    a.cylinder(r, .25, .8, [5.5, 3.8, -.7], p.forest).rotation.x = Math.PI / 2;
+    fin(a, r, [[-1.1, 0], [1.1, 0], [.8, 2], [-.8, 2]], [0, 1.2, 2.3], p.paper, .2).rotation.x = -.5;
+    card(a, r, [0, 2, 2.6], .8, 1.2, p.gold);
+    a.box(r, [2.8, .2, 1.7], [0, 1, 2.9], p.jade);
+  },
+  '2026-11-16': (a, r) => {
+    // Login continuation and resumable drafts: an interrupted paper feed is rejoined at an indexed splice table.
+    const p = a.palette;
+    a.box(r, [4.2, .35, 3.4], [0, 3.2, -.4], p.forest);
+    for (const x of [-1.7, 1.7]) for (const z of [-1.7, .9]) rod(a, r, [x, 1, z], [x, 3.1, z], .12, p.jade);
+    for (const [x, y, radius] of [[-4.1, 5.4, 1.65], [4.1, 2.8, 1.2]] as P[]) {
+      const roll = a.cylinder(r, radius, 2.2, [x, y, -.4], p.paper); roll.rotation.x = Math.PI / 2;
+      for (const z of [-1.55, .75]) {
+        a.ring(r, radius, .1, [x, y, z], p.gold);
+        a.ring(r, .32, .09, [x, y, z], p.forest);
+        for (let i = 0; i < 5; i++) { const angle = i * Math.PI * .4; rod(a, r, [x + Math.cos(angle) * .4, y + Math.sin(angle) * .4, z], [x + Math.cos(angle) * (radius - .15), y + Math.sin(angle) * (radius - .15), z], .04, p.jade); }
+      }
+      rod(a, r, [x, 1, -.4], [x, y, -.4], .17, p.jade);
+    }
+    const leftFeed = a.box(r, [3, .12, 2.1], [-2.35, 4.1, -.4], p.paper); leftFeed.rotation.z = -.5;
+    const rightFeed = a.box(r, [3.1, .12, 2.1], [2.4, 3.5, -.4], p.paper); rightFeed.rotation.z = .12;
+    for (const x of [-.8, .8]) a.box(r, [1.4, .1, 2.1], [x, 3.45, -.4], p.paper);
+    a.box(r, [.45, .1, 2.25], [0, 3.56, -.4], p.vermilion);
+    for (let i = 0; i < 6; i++) a.box(r, [.07, .08, .32], [-1.5 + i * .6, 3.58, .25], p.gold);
+    for (const x of [-1.4, 1.4]) { a.box(r, [.3, .6, 2.6], [x, 3.75, -.4], p.jade); a.ring(r, .25, .07, [x, 4.2, .7], p.gold); }
+    rod(a, r, [0, 3.4, -1.8], [0, 6.7, -1.8], .1, p.forest);
+    fin(a, r, [[-.6, .6], [.6, .6], [.6, -.6], [0, -.2], [-.6, -.6]], [0, 6.1, -1.8], p.vermilion, .15);
+  },
 };
