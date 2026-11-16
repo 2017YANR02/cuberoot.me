@@ -1,5 +1,6 @@
 'use client';
 
+import useTeachingFollow from '../../components/useTeachingFollow';
 import TutorialNavigationShell from '../../components/TutorialNavigationShell';
 import ChatBubble from '@/components/ChatBubble';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -43,6 +44,7 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
   const [seekVersion, setSeekVersion] = useState(0);
   const [manualStage, setManualStage] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(false);
+  const { paneProps, playbackProps } = useTeachingFollow(step, `${selected}:${orientation}:${controlsVisible}`);
   const [referenceFading, setReferenceFading] = useState(false);
   const [adjustment, setAdjustment] = useState<string | null>(null);
   const [alignmentComplete, setAlignmentComplete] = useState(false);
@@ -216,7 +218,7 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
   return <TutorialNavigationShell className="f2l-study-layout">
     <SectionNavigation label={tr({ zh: '三步基态', en: 'Three-move cases' })} items={[{ id: 'section-0', label: tr({ zh: "三步基态", en: "Three-move cases" }), active: true, onSelect: () => { } }]} />
     <div className="f2l-study-main"><div ref={root} className="f2l-case-introduction" data-phase={phase}>
-    <div className="f2l-case-grid">{ORDERED_BASIC_CASES.map((item, index) => <div key={item.id} className="f2l-case-item" data-selected={selected === index} data-hidden={selected !== null && selected !== index}>
+    <div {...playbackProps} className="f2l-case-grid">{ORDERED_BASIC_CASES.map((item, index) => <div key={item.id} className="f2l-case-item" data-selected={selected === index} data-hidden={selected !== null && selected !== index}>
       <div className="f2l-case-model" ref={element => { cubes.current[index] = element; }}
         onPointerDownCapture={event => {
           if (phase === 'learn' && controlsVisible && event.target instanceof Element && event.target.closest('button, input, [role="slider"]')) setManualStage(true);
@@ -244,7 +246,7 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
     {showPairHint && <ChatBubble tail="bottom" className="f2l-case-alignment-status" role="status">
       <T zh="组合好目标棱和角" en="Pair up the target edge and corner" />
     </ChatBubble>}
-    {phase === 'learn' && lesson && reference && <div key={controlsVisible ? 'stages' : 'alignment'} className="f2l-case-narration" data-alignment={!controlsVisible} data-fading={referenceFading}>
+    {phase === 'learn' && lesson && reference && <div key={controlsVisible ? 'stages' : 'alignment'} {...paneProps} className={`f2l-case-narration${controlsVisible ? ' tutorial-follow-pane' : ''}`} data-alignment={!controlsVisible} data-fading={referenceFading}>
       {!controlsVisible ? <><div className="f2l-case-reference">
         <ArrowLeftRight className="f2l-case-reference-arrow" size={40} strokeWidth={1.5} aria-hidden="true" />
         <figure className="f2l-case-reference-sheet">

@@ -1,5 +1,6 @@
 'use client';
 
+import useTeachingFollow from '../../components/useTeachingFollow';
 import TutorialNavigationShell from '../../components/TutorialNavigationShell';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -58,6 +59,7 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
     segmentFrame.current = requestAnimationFrame(advance);
   };
   const playbackStep = playback.key === playbackKey ? playback.step : 0;
+  const { paneProps, playbackProps } = useTeachingFollow(playbackStep, `${stepId}:${playbackKey}`);
   const activeSection = lesson ? Math.max(0, lesson.sections.findIndex(section => playbackStep <= section.end)) : 0;
   const lessonGroups = classified ? F2L_CLASSIFICATION_SECTIONS.map(section => section.id) : [...new Set(lessons.map(c => c.group))];
   const groupOf = (item: typeof lessons[number]) => classified
@@ -138,13 +140,13 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
           <div className={`f2l-lesson f2l-study-lesson f2l-algorithm-columns${flowTeaching ? ' f2l-integrated-example' : ''}`}
             onPointerDownCapture={event => { if ((event.target as Element).closest('.alg-sim-player, .f2l-flow-node')) cancelSegment(); }}
             onKeyDownCapture={event => { if ((event.target as Element).closest('.alg-sim-player, .f2l-flow-node')) cancelSegment(); }}>
-            <section className="f2l-demo">
+            <section {...playbackProps} className="f2l-demo">
               <div className="f2l-cube"><AlgPlayer ref={player} key={orientation} puzzle="3x3" set="f2l-tutorial" engine="sim" setup={lesson.setup} alg={lesson.alg}
                 orientation={orientation} fillPane moveDurationMs={850}
                 onStepChange={step => { actualStep.current = step; setPlayback({ key: playbackKey, step }); }}
                 sectionPauseMs={2000} pauseAfterSteps={pauseBetween ? lesson.sections.slice(0, -1).map(section => section.end) : NO_STOPS} /></div>
             </section>
-            <div className="f2l-path-explanation">
+            <div {...paneProps} className="f2l-path-explanation tutorial-follow-pane">
             <section className="f2l-guidance f2l-teaching-guidance">
 
               <ol className="f2l-stage-list" aria-label={tr({ zh: '转化阶段', en: 'Transformation stages' })}>

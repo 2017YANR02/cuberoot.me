@@ -1,5 +1,6 @@
 'use client';
 
+import useTeachingFollow from '../../components/useTeachingFollow';
 import TutorialNavigationShell from '../../components/TutorialNavigationShell';
 
 import { useMemo, useRef, useState } from 'react';
@@ -26,6 +27,7 @@ function ThreeMoveFilm({ lesson, orientation, pauseBetween, alignment }: {
 }) {
   const player = useRef<AlgPlayerHandle>(null);
   const [step, setStep] = useState(0);
+  const { paneProps, playbackProps } = useTeachingFollow(step, `${lesson.id}:${orientation}:${alignment}`);
   const setup = useMemo(() => new Alg(lesson.alg).invert().expand().toString(), [lesson]);
   const alg = alignment ? '(U) (U) (U) (U)' : lesson.alg;
   const sections = useMemo(() => f2lPlaybackSections(alg), [alg]);
@@ -37,13 +39,13 @@ function ThreeMoveFilm({ lesson, orientation, pauseBetween, alignment }: {
       : { zh: `图案转到了另一个位置，但它仍然是 ${lesson.name}。`, en: `The pattern has moved around the top, but it is still ${lesson.name}.` })
     : tr(lesson.stageTitles[current]);
   return <div className="f2l-lesson f2l-study-lesson">
-    <section className="f2l-demo" aria-label={tr({ zh: '三步基态短片', en: 'Three-move walkthrough' })}>
+    <section {...playbackProps} className="f2l-demo" aria-label={tr({ zh: '三步基态短片', en: 'Three-move walkthrough' })}>
       <div className="f2l-cube"><AlgPlayer ref={player} puzzle="3x3" engine="sim" set="f2l-tutorial"
         setup={setup} alg={alg} orientation={orientation} fillPane moveDurationMs={1100}
         onStepChange={setStep} pauseAfterSteps={pauseBetween ? boundaries : NO_STOPS} sectionPauseMs={2000} /></div>
       <p className="f2l-film-caption" aria-live="polite">{caption}</p>
     </section>
-    <section className="f2l-guidance">
+    <section {...paneProps} className={`f2l-guidance${alignment ? '' : ' tutorial-follow-pane'}`}>
       {alignment ? <figure className="f2l-merged-reference">
         <VisualCube local view="iso" size={200} faceletColors={f2lDiagramFacelets(setup, orientation)} alt={lesson.name} />
         <figcaption><T zh="教材图形" en="Reference pattern" /> · {lesson.name}</figcaption>

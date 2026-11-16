@@ -1,5 +1,6 @@
 'use client';
 
+import useTeachingFollow from '../../components/useTeachingFollow';
 import TutorialNavigationShell from '../../components/TutorialNavigationShell';
 
 import { useCallback, useMemo, useState } from 'react';
@@ -27,6 +28,7 @@ export default function FreePracticeLesson({ orientation, pauseBetween }: { orie
   const playbackKey = freePlacementKey(placement) + ':' + orientation;
   const [playback, setPlayback] = useState({ key: '', step: 0 });
   const playbackStep = playback.key === playbackKey ? playback.step : 0;
+  const { paneProps, playbackProps } = useTeachingFollow(playbackStep, `${playbackKey}:${preview}`);
   const activeSection = Math.max(0, sections.findIndex(section => playbackStep <= section.end));
   const choosePiece = useCallback((position: number) => setPlacement(current => placeFreePiece(current, position)), []);
 
@@ -37,7 +39,7 @@ export default function FreePracticeLesson({ orientation, pauseBetween }: { orie
       <div className="f2l-study-main">
 {!exercise && <p role="status"><T zh="暂未收录这个情况的教学解法。" en="A teaching solution for this case is not available yet." /></p>}
         {guide ? <FreePracticeGuide table={table} orientation={orientation} onClose={() => setGuide(false)} /> : <div className="f2l-lesson f2l-study-lesson">
-        <section className="f2l-demo" aria-label={tr({ zh: '自由练习魔方', en: 'Free practice cube' })}>
+        <section {...playbackProps} className="f2l-demo" aria-label={tr({ zh: '自由练习魔方', en: 'Free practice cube' })}>
           <div className="f2l-cube">
             {preview && exercise ? <AlgPlayer puzzle="3x3" set="f2l-tutorial" engine="sim" setup={exercise.setup} alg={exercise.alg}
               orientation={orientation} fillPane autoPlay moveDurationMs={850} sectionPauseMs={2000}
@@ -63,7 +65,7 @@ export default function FreePracticeLesson({ orientation, pauseBetween }: { orie
           </div>
           <div className="f2l-free-solution" style={{ visibility: exercise?.alg ? 'visible' : 'hidden' }} aria-hidden={!exercise?.alg}>
             <p className="f2l-caption"><T zh="公式" en="Algorithm" /> · {exercise?.name}</p>
-            <code className="f2l-alg f2l-player-alg" data-site-surface="panel">
+            <code {...paneProps} className="f2l-alg f2l-player-alg tutorial-follow-pane" data-site-surface="panel">
               {sections.map((section, index) => <span key={section.start}>
                 {index > 0 && ' '}
                 <span className="f2l-free-alg-section" aria-current={preview && activeSection === index ? 'step' : undefined}>{section.alg}</span>

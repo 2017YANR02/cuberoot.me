@@ -802,6 +802,13 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'useTeachingFollow',
+    import: "import useTeachingFollow from '@/app/[lang]/tutorial/components/useTeachingFollow';",
+    category: 'more',
+    zh: 'LBL 与 F2L 共用的移动端教学步骤滚动跟随；手动阅读时暂停，操作播放控件或步骤后恢复。',
+    en: 'Shared mobile teaching-step scroll following for LBL and F2L; yields to manual reading and resumes on playback or step actions.',
+  },
+  {
     name: 'TutorialNavigationShell',
     import: "import TutorialNavigationShell from '@/app/[lang]/tutorial/components/TutorialNavigationShell';",
     category: 'nav',

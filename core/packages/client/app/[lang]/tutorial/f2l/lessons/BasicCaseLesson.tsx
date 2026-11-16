@@ -1,5 +1,6 @@
 'use client';
 
+import useTeachingFollow from '../../components/useTeachingFollow';
 import TutorialNavigationShell from '../../components/TutorialNavigationShell';
 
 import { useMemo, useRef, useState } from 'react';
@@ -24,6 +25,7 @@ export default function BasicCaseLesson({ orientation, pauseBetween, caseId, onC
   const playbackKey = lesson.id + ':' + orientation;
   const [playback, setPlayback] = useState({ key: '', step: 0 });
   const playbackStep = playback.key === playbackKey ? playback.step : 0;
+  const { paneProps, playbackProps } = useTeachingFollow(playbackStep, playbackKey);
   const setPlaybackStep = (step: number) => setPlayback({ key: playbackKey, step });
   const sections = useMemo(() => f2lPlaybackSections(lesson.alg), [lesson.alg]);
   const boundaries = useMemo(() => sections.slice(0, -1).map(section => section.end), [sections]);
@@ -48,7 +50,7 @@ export default function BasicCaseLesson({ orientation, pauseBetween, caseId, onC
           <SectionNavigation label={lesson.name} items={chapterCases.map((item, index) => ({ id: String(item.id), label: item.name, active: lesson.id === item.id, onSelect: () => selectCase(item.id), icon: <VisualCube view="iso" size={36} faceletColors={diagrams[index]} alt=""/> }))} />
           <div className="f2l-study-main">
             <div className="f2l-lesson f2l-study-lesson">
-              <section className="f2l-demo" aria-label={tr({ zh: '魔方演示', en: 'Cube demonstration' })}>
+              <section {...playbackProps} className="f2l-demo" aria-label={tr({ zh: '魔方演示', en: 'Cube demonstration' })}>
                 <div className="f2l-cube">
                   <AlgPlayer key={orientation} ref={player} puzzle="3x3" set="f2l-tutorial" engine="sim"
                     alg={lesson.alg} orientation={orientation} fillPane moveDurationMs={850}
@@ -57,7 +59,7 @@ export default function BasicCaseLesson({ orientation, pauseBetween, caseId, onC
                 <code className="f2l-alg f2l-player-alg" data-site-surface="panel">{lesson.alg}</code>
 
               </section>
-              <section className="f2l-guidance">
+              <section {...paneProps} className="f2l-guidance tutorial-follow-pane">
 
                 <ol className="f2l-stage-list">
                   <li><button type="button" className="f2l-stage-button" aria-current={playbackStep === 0 ? 'step' : undefined} onClick={() => seek(0)}>

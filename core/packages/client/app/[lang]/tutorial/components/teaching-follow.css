@@ -1,0 +1,19 @@
+@media (max-width: 760px) {
+  .tutorial-follow-pane {
+    min-height: 0;
+    max-height: min(clamp(160px, 30dvh, 300px), var(--tutorial-pane-available-height, 300px));
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    overflow-anchor: none;
+  }
+  .lbl-page .lbl-content-example:has(> .tutorial-follow-pane .lbl-demo-stages) {
+    height: 100%;
+    grid-template-rows: auto minmax(160px, 1fr);
+    align-items: stretch;
+  }
+  .lbl-page .lbl-content-example > .tutorial-follow-pane:has(.lbl-demo-stages) {
+    max-height: 100%;
+    align-self: stretch;
+  }
+  .f2l-page .f2l-path-explanation.tutorial-follow-pane { display: block; position: relative; }
+}

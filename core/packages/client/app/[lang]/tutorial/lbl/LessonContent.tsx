@@ -1,5 +1,6 @@
 'use client';
 
+import useTeachingFollow from '../components/useTeachingFollow';
 import ChatBubble from '@/components/ChatBubble';
 import VideoProgress from '../components/VideoProgress';
 import { useEffect, useId, useMemo, useRef, useState, type ComponentProps, type RefObject } from 'react';
@@ -407,38 +408,8 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
     frame = requestAnimationFrame(waitForTurn);
     return () => cancelAnimationFrame(frame);
   }, [move, moveCount, moveReplay]);
-  const explanation = useRef<HTMLElement>(null);
-  const following = useRef(true);
-  const lastRow = useRef<HTMLElement | null>(null);
-  const [followRevision, setFollowRevision] = useState(0);
-  useEffect(() => {
-    const pane = explanation.current;
-    if (!pane || !following.current || !window.matchMedia('(max-width: 760px)').matches) return;
-    const row = pane.querySelector<HTMLElement>('[data-current-step]');
-    if (!row || row === lastRow.current || pane.scrollHeight <= pane.clientHeight) return;
-    lastRow.current = row;
-
-    const bounds = pane.getBoundingClientRect();
-    const stepBounds = row.getBoundingClientRect();
-    const top = bounds.top + 12;
-    const bottom = bounds.bottom - 12;
-    if (stepBounds.top >= top && stepBounds.bottom <= bottom) return;
-    const offset = stepBounds.top < top || stepBounds.height > bottom - top
-      ? stepBounds.top - top : stepBounds.bottom - bottom;
-    pane.scrollBy({ top: offset, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
-  }, [move, followRevision, finalMoveSettled, selectedStepStart]);
-  function pauseFollowing() {
-    if (!following.current) return;
-    following.current = false;
-    const pane = explanation.current;
-    pane?.scrollTo({ top: pane.scrollTop, behavior: 'instant' });
-  }
-  function resumeFollowing() {
-    if (following.current) return;
-    following.current = true;
-    lastRow.current = null;
-    setFollowRevision(value => value + 1);
-  }
+  const { paneProps, playbackProps, resume: resumeFollowing } = useTeachingFollow(
+    `${move}:${finalMoveSettled}:${selectedStepStart}`, `${chapter.id}:${lesson.id}`);
   if (chapter.id === 'structure' && ['facelet', 'centers', 'corners', 'edges'].includes(lesson.id)) return <PieceLesson id={lesson.id} />;
   if (chapter.id === 'daisy' && lesson.id === 'case-2' && example?.setup && !daisyBlockedPreludeDone) {
     return <DaisyBlockedPrelude setup={example.setup} onDone={() => setDaisyBlockedPreludeDone(true)} />;
@@ -488,10 +459,8 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   const stackTrigger = hostChapterId === 'corners' && triggerHandsDemo;
   const showJExplanation = hostChapterId === 'corner-position' && chapter.id === 'l-alg-learning';
   if (example) return <div className={`lbl-content lbl-content-example${stackTrigger ? ' lbl-content-trigger' : ''}${cornerEjection ? ' lbl-content-corner-ejection' : ''}${middleEjection || middleAlignment ? ' lbl-content-middle-ejection' : ''}`}>
-    <section className="lbl-demonstration" aria-label={tr({ zh: '魔方演示', en: 'Cube demonstration' })}
-      onClickCapture={event => {
-        if (event.target instanceof Element && event.target.closest('.playback-bar button:not(:disabled):not(.playback-bar-reset-view)')) resumeFollowing();
-      }} onInputCapture={event => {
+    <section {...playbackProps} className="lbl-demonstration" aria-label={tr({ zh: '魔方演示', en: 'Cube demonstration' })}
+      onInputCapture={event => {
         if (event.target instanceof Element && event.target.closest('.playback-bar-scrub')) {
           setSelectedStepStart(null);
           resumeFollowing();
@@ -520,8 +489,7 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
           setMove(step);
         }} />}
     </section>
-    <section ref={explanation} className="lbl-explanation" aria-label={tr({ zh: '公式、口诀与解释', en: 'Algorithm, cues and explanation' })}
-      onTouchMove={pauseFollowing} onWheel={pauseFollowing}>
+    <section {...paneProps} className="lbl-explanation tutorial-follow-pane" aria-label={tr({ zh: '公式、口诀与解释', en: 'Algorithm, cues and explanation' })}>
       {previewCaption ? <>
         <p className="lbl-lead lbl-corner-case-caption" aria-live="polite">{middleAlignment && cornerPreview === 2
           ? tr(previewCaption).split(/(左|右|\bleft\b|\bright\b)/i).map((part, index) => index % 2 ? <span className="lbl-direction-emphasis" key={index}>{part}</span> : part)
