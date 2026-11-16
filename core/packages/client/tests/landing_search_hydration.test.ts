@@ -191,6 +191,9 @@ describe('LandingSearch placeholder hydration', () => {
         assistantConversations.setOpen(owner, true);
       });
       await act(async () => finish(Response.json({ answer: '廉政委员会', sources: [] }, {headers: {'X-Assistant-Request-Id': 'background-reveal'}})));
+      // Paint acknowledgement is inside Markdown's Suspense boundary. Its real
+      // module load must settle before advancing the fake animation-frame clock.
+      await act(async () => { await import('react-markdown'); });
       const background = () => assistantConversations.read(owner).conversations.find(chat => chat.id === chatId)!;
       expect(background().responding).toBe('writing');
       expect(background().unreadReply).not.toBe(true);
