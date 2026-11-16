@@ -465,6 +465,15 @@ export const PRIVACY_DOCUMENT: readonly PrivacyNode[] = [
     ]
   },
   {
+    "tag": "p",
+    "children": [
+      {
+        "zh": "为支持 Web 聊天排队、调整任务和中断恢复，私有会话另行保存原始消息、必要上下文、引用、附件标识、回答和工具检查点。会话接口按登录账号隔离，检查点不通过该接口返回；会话闲置 30 天后按小时清理，账号注销时级联删除。浏览器保存最近会话入口、草稿和未确认发送的数据，置顶会话继续保存在本机。关闭页面不会取消已经接收的任务，可使用停止按钮暂停任务与队列。",
+        "en": "To support Web chat queues, task updates and recovery, private conversations separately retain original messages, necessary context, quotations, attachment references, answers and tool checkpoints. Conversation APIs isolate data by signed-in account and do not return checkpoints. Conversations are cleaned hourly after 30 days of inactivity and cascade-deleted when the account is deleted. Your browser stores recent conversation links, drafts and unconfirmed submissions; pinned chats remain stored locally. Closing the page does not cancel accepted work. Use Stop to pause the task and queue."
+      }
+    ]
+  },
+  {
     "tag": "h2",
     "children": [
       {

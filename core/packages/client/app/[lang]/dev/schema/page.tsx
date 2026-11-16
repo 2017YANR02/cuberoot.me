@@ -58,6 +58,9 @@ const TABLES: Table[] = [
   { name: 'recon_intake_revisions', domain: 'recon', origin: '0286', purpose: { zh: '原始批注与人工预期的版本历史', en: 'Version history of annotations and human expectations' } },
   { name: 'recon_intake_runs', domain: 'recon', origin: '0286', purpose: { zh: '复盘待办的不可变测试报告', en: 'Immutable intake test reports' } },
   { name: 'recon_test_runs', domain: 'recon', origin: '0278', purpose: { zh: '智能魔方自动回归检查历史、逐例结果和显示差异', en: 'Smart cube regression history, case results and display differences' } },
+  { name: 'site_assistant_conversations', domain: 'community', origin: '0335', purpose: { zh: '私有聊天队列、暂停状态与可恢复执行租约；账号删除级联清理', en: 'Private chat queues, pause state and recoverable execution leases; cascade on account deletion' } },
+  { name: 'site_assistant_messages', domain: 'community', origin: '0335', purpose: { zh: '持久消息、补充要求、工具断点与进度；会话删除级联清理', en: 'Durable messages, steering, tool checkpoints and progress; cascade on conversation deletion' } },
+  { name: 'site_assistant_runs', domain: 'community', origin: '0334', purpose: { zh: '聊天执行控制，不存正文，按账号隔离并级联删除', en: 'Owner-scoped chat run control without message content; cascade on account deletion' } },
   { name: 'site_assistant_requests', domain: 'community', origin: '0277', purpose: { zh: '管理员聊天监控：问答保留 30 天、指标保留 90 天，注销级联删除', en: 'Admin chat monitoring: 30-day content, 90-day metrics, cascade on account deletion' } },
   { name: 'site_assistant_entry_daily', domain: 'community', origin: '0277', purpose: { zh: '未通过准入的匿名日计数', en: 'Anonymous daily admission failures' } },
   { name: 'site_assistant_daily', domain: 'community', origin: '0277', purpose: { zh: '无身份日汇总，保留两年', en: 'Anonymous daily totals retained for two years' } },
@@ -595,6 +598,8 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 335, slug: 'assistant_durable_queue', desc: { zh: '持久聊天收件、执行租约、工具检查点与恢复', en: 'Durable chat inbox, execution leases, tool checkpoints and recovery' } },
+  { n: 334, slug: 'assistant_run_control', desc: { zh: '聊天执行状态、跨进程停止与会话串行约束', en: 'Chat run state, cross-worker cancellation and serialized conversations' } },
   { n: 333, slug: 'membership_payment_enrollment', desc: { zh: '支付中签约首期订单、收银台类型与签约方式，防止重复扣首期', en: 'Payment enrollment method and first checkout, preventing duplicate initial debits' } },
   { n: 332, slug: 'workspace_remove_projects', desc: { zh: '删除工作台项目及归属，保留全部报告、清单与排期', en: 'Remove workspace projects and associations, preserving all reports, checklists and schedules' } },
   { n: 331, slug: 'workspace_work_calendar', desc: { zh: '管理员每周工作时间、生效区间和临时调整；账号删除级联清理', en: 'Administrator weekly working hours, effective periods and day overrides; cascade on account deletion' } },
