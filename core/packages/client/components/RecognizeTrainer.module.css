@@ -50,6 +50,8 @@
 
 .guideRow {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 12px;
 }
 
@@ -215,6 +217,114 @@
 
 .response {
   display: contents;
+}
+
+.scope {
+  width: min(100%, 880px);
+  margin-inline: auto;
+  padding: 16px;
+}
+
+.scopeActions,
+.scopeFooter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scopeActions {
+  margin-bottom: 20px;
+}
+
+.scopeActions > span,
+.scopeCase > span {
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+}
+
+.scopeGroups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  gap: 20px 24px;
+}
+
+.scopeGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.scopeCase {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 0 0 48px;
+  padding-inline: 4px;
+}
+
+.scopeDirections {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+}
+
+.scopeDirection {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  min-width: 0;
+  padding: 4px 0;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.scopeDirection[aria-pressed='true'],
+.scopeCase[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--foreground);
+}
+
+.scopeDirection:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.scopeDirection > span:first-child,
+.scopeDirection img {
+  max-width: 100%;
+  height: auto;
+}
+
+.scopeCheck {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  color: var(--accent);
+}
+
+.scopeFooter {
+  position: sticky;
+  bottom: 0;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding: 12px;
+  background: var(--card);
+  border-radius: 8px;
+}
+
+.scopeFooter > span {
+  margin-right: auto;
 }
 
 /* PLL has 21 short answers: keep all of them beside the case on short screens.

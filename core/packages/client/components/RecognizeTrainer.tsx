@@ -17,6 +17,7 @@ import { CaseThumb } from '@/components/CaseThumb';
 import { tr } from '@/i18n/tr';
 import styles from './RecognizeTrainer.module.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { Check } from 'lucide-react';
 
 type BilingualText = { zh: string; en: string };
 
@@ -98,6 +99,14 @@ export default function RecognizeTrainer({
   const restartEvaluation = useStore((s) => s.restartEvaluation);
   const startPersonalized = useStore((s) => s.startPersonalized);
   const currentCaseFn = useStore((s) => s.currentCase);
+  const selectedKeys = useStore((s) => s.selectedKeys);
+  const setSelectedKeys = useStore((s) => s.setSelectedKeys);
+  const [scopeDraft, setScopeDraft] = useState<string[] | null>(null);
+  const openScope = () => {
+    pausePlay();
+    setScopeDraft(selectedKeys ?? recog.allKeys());
+  };
+  useEffect(() => { setScopeDraft(null); }, [recog.id]);
 
   // 半截的前缀(`G_` / `1_`)。判定读 ref 不读 state:两次击键落在同一帧时,state 还没更新,
   // 后一次会拿到旧的 null 而把前一次白敲。state 只用来显示。
@@ -144,6 +153,7 @@ export default function RecognizeTrainer({
 
   const handleKeyPress = useCallback(
     (e: KeyboardEvent) => {
+      if (scopeDraft !== null) return;
       if (typeof document !== 'undefined' && (document.querySelector('.modal.show') || document.querySelector('.noteInput:focus'))) {
         return;
       }
@@ -194,7 +204,7 @@ export default function RecognizeTrainer({
       // 已经攒了前缀时,别让无关键落到别处去(原 PLL 逻辑就是这么拦的)。
       if (pending) e.preventDefault();
     },
-    [setPendingKey, pausePlay, resumePlay, submitAnswer, giveUpOnCase, recog]
+    [setPendingKey, pausePlay, resumePlay, submitAnswer, giveUpOnCase, recog, scopeDraft]
   );
 
   useEffect(() => {
@@ -247,6 +257,73 @@ export default function RecognizeTrainer({
     );
   }
 
+  if (scopeDraft !== null && recog.id === 'pll') {
+    const allKeys = recog.allKeys();
+    const selected = new Set(scopeDraft);
+    const toggleKeys = (keys: string[]) => {
+      const remove = keys.every((key) => selected.has(key));
+      setScopeDraft(allKeys.filter((key) => keys.includes(key) ? !remove : selected.has(key)));
+    };
+    return (
+      <TrainerShell backHref={backHref} title={pageTitle} intro={pageIntro} showSq1Tools={showSq1Tools}>
+        <section className={styles.scope} aria-labelledby="pll-scope-title">
+          <h2 id="pll-scope-title">{tr({ zh: '训练范围', en: 'Training scope' })}</h2>
+          <div className={styles.scopeActions}>
+            <button type="button" className="btn-secondary" onClick={() => setScopeDraft(allKeys)}>
+              {tr({ zh: '全选', en: 'Select all' })}
+            </button>
+            <button type="button" className="btn-secondary" onClick={() => setScopeDraft([])}>
+              {tr({ zh: '清空', en: 'Clear' })}
+            </button>
+            <span role="status">{tr({ zh: `已选 ${scopeDraft.length} 个方向`, en: `${scopeDraft.length} orientations selected` })}</span>
+          </div>
+          <div className={styles.scopeGroups}>
+            {recog.buttons().map(({ value: name, label }) => {
+              const keys = allKeys.filter((key) => key.startsWith(`${name}/`));
+              const count = keys.filter((key) => selected.has(key)).length;
+              return (
+                <div key={name} className={styles.scopeGroup} role="group" aria-label={label}>
+                  <button type="button" className={`btn-secondary ${styles.scopeCase}`}
+                    aria-pressed={count === keys.length}
+                    aria-label={tr({ zh: `${label} 全部方向`, en: `All ${label} orientations` })}
+                    onClick={() => toggleKeys(keys)}>
+                    <strong>{label}</strong><span>{count}/{keys.length}</span>
+                  </button>
+                  <div className={styles.scopeDirections}>
+                    {keys.map((key, index) => {
+                      const rotation = key.split('/')[1];
+                      const preview = recog.image({ name, rotation, dTurn: '', colorShift: 0, crossColor: 'w' }, false);
+                      const direction = tr({ zh: `方向 ${index + 1}`, en: `View ${index + 1}` });
+                      return (
+                        <button key={key} type="button" className={styles.scopeDirection}
+                          aria-pressed={selected.has(key)} aria-label={`${label} ${direction}`}
+                          onClick={() => toggleKeys([key])}>
+                          <VisualCube setup={preview.setup} view={preview.view} size={64} local loading="lazy" alt="" />
+                          <span>{direction}</span>
+                          {selected.has(key) && <Check className={styles.scopeCheck} size={14} aria-hidden="true" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className={styles.scopeFooter} data-site-surface="panel">
+            {scopeDraft.length === 0 && <span role="status">{tr({ zh: '至少选择一个方向', en: 'Select at least one orientation' })}</span>}
+            <button type="button" className="btn-secondary" onClick={() => setScopeDraft(null)}>
+              {tr({ zh: '取消', en: 'Cancel' })}
+            </button>
+            <button type="button" className="btn-primary" disabled={scopeDraft.length === 0}
+              onClick={() => { if (setSelectedKeys(scopeDraft)) { setPendingKey(null); setScopeDraft(null); } }}>
+              {tr({ zh: '应用并重新开始', en: 'Apply and restart' })}
+            </button>
+          </div>
+        </section>
+      </TrainerShell>
+    );
+  }
+
   if (gameState === 'evaluationDone') {
     const mistakeCount = results.filter((r) => r.mistake !== '').length;
     const correctCount = results.filter((r) => r.mistake === '').length;
@@ -268,6 +345,9 @@ export default function RecognizeTrainer({
           </p>
         )}
         <div className={styles.doneActions}>
+          {recog.id === 'pll' && <button className="btn-secondary" type="button" onClick={openScope}>
+            {tr({ zh: '训练范围', en: 'Training scope' })}
+          </button>}
           <button className="btn-primary" type="button" onClick={startPersonalized}>
             {tr({ zh: '个性化训练（弱项加强）', en: 'Personalized (focus weak cases)' })}
           </button>
@@ -288,6 +368,9 @@ export default function RecognizeTrainer({
     <div className={`${styles.trainer}${recog.id === 'pll' ? ` ${styles.pllTrainer}` : ''} training-page`}>
       {recognitionGuideHref && (
         <div className={styles.guideRow}>
+          {recog.id === 'pll' && <button className="btn-secondary" type="button" onClick={openScope}>
+            {tr({ zh: '训练范围', en: 'Training scope' })}
+          </button>}
           <Link
             className="btn-secondary"
             href={recognitionGuideHref}
@@ -338,6 +421,7 @@ export default function RecognizeTrainer({
                 size={image.size}
                 hideGreySides={image.hideGreySides}
                 alt={imageAlt}
+                local
               />
             )}
           </div>

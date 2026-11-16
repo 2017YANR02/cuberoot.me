@@ -13,6 +13,7 @@ import {
   evalResultsToNewQueue,
   DEFAULT_ALLOWED_CROSS_COLORS,
   randomCrossColor,
+  caseToKey,
   type RecognitionResult,
 } from './pll-helpers';
 import { RECOGNIZE_SETS, type RecognizeSet, type RecognizeSetId } from './recognize-sets';
@@ -28,6 +29,8 @@ interface SessionState {
   mistake: string;
   currentRecognitionStarted: string;
   allowedCrossColors: string[];
+  /** null keeps the full set, including cases added in future updates. */
+  selectedKeys: string[] | null;
   timerStartMs: number | null;
   timerElapsedMs: number;
 }
@@ -43,6 +46,7 @@ interface SessionActions {
   startPersonalized: () => void;
   setAllowedCrossColors: (colors: string[]) => void;
   setTrainMode: (mode: TrainMode) => void;
+  setSelectedKeys: (keys: string[]) => boolean;
 
   startTimer: () => void;
   stopTimer: () => number;
@@ -53,11 +57,19 @@ interface SessionActions {
 }
 
 const generateEvaluationQueue = (
-  recog: RecognizeSet, allowedCrossColors: string[],
+  recog: RecognizeSet, allowedCrossColors: string[], selectedKeys: string[] | null,
 ): PllCaseInstance[] =>
   shuffle(keysToCases(
-    recog.allKeys(), allowedCrossColors, recog.includeNoAuf, recog.turnOptions,
+    availableKeys(recog, selectedKeys), allowedCrossColors, recog.includeNoAuf, recog.turnOptions,
   ));
+
+const availableKeys = (recog: RecognizeSet, selectedKeys: string[] | null): string[] => {
+  const all = recog.allKeys();
+  if (selectedKeys === null) return all;
+  const selected = new Set(selectedKeys);
+  const valid = all.filter((key) => selected.has(key));
+  return valid.length > 0 ? valid : all;
+};
 
 /**
  * 一个识别训练器 = 一个独立的持久化 store。PLL 和 OLL 各存各的 localStorage key,
@@ -75,6 +87,7 @@ function createSessionStore(recog: RecognizeSet) {
       mistake: '',
       currentRecognitionStarted: new Date().toISOString(),
       allowedCrossColors: [...DEFAULT_ALLOWED_CROSS_COLORS],
+      selectedKeys: null,
       timerStartMs: null,
       timerElapsedMs: 0,
 
@@ -100,7 +113,7 @@ function createSessionStore(recog: RecognizeSet) {
         const updatedQueue = s.mistake !== '' ? s.queue.slice(1) : s.queue;
         if (updatedQueue.length === 0 && s.results.length === 0) {
           set({
-            queue: generateEvaluationQueue(recog, DEFAULT_ALLOWED_CROSS_COLORS),
+            queue: generateEvaluationQueue(recog, s.allowedCrossColors, s.selectedKeys),
             gameState: 'paused',
           });
         } else {
@@ -191,7 +204,7 @@ function createSessionStore(recog: RecognizeSet) {
 
       restartEvaluation: () => {
         set({
-          queue: generateEvaluationQueue(recog, get().allowedCrossColors),
+          queue: generateEvaluationQueue(recog, get().allowedCrossColors, get().selectedKeys),
           results: [],
           mistake: '',
           gameState: 'paused',
@@ -200,11 +213,13 @@ function createSessionStore(recog: RecognizeSet) {
 
       startPersonalized: () => {
         const s = get();
+        const keys = availableKeys(recog, s.selectedKeys);
+        const selected = new Set(keys);
         set({
           queue: evalResultsToNewQueue(
-            resultsToEvalResults(s.results),
+            resultsToEvalResults(s.results.filter((result) => selected.has(caseToKey(result.pllCase)))),
             s.allowedCrossColors,
-            recog.allKeys(),
+            keys,
             recog.turnOptions,
           ),
           results: [],
@@ -237,6 +252,24 @@ function createSessionStore(recog: RecognizeSet) {
 
       setTrainMode: (mode: TrainMode) => {
         set({ trainMode: mode });
+      },
+
+      setSelectedKeys: (keys: string[]) => {
+        const requested = new Set(keys);
+        const all = recog.allKeys();
+        const valid = all.filter((key) => requested.has(key));
+        if (valid.length === 0) return false;
+        const selectedKeys = valid.length === all.length ? null : valid;
+        set({
+          selectedKeys,
+          queue: generateEvaluationQueue(recog, get().allowedCrossColors, selectedKeys),
+          results: [],
+          mistake: '',
+          gameState: 'paused',
+          timerStartMs: null,
+          timerElapsedMs: 0,
+        });
+        return true;
       },
 
       startTimer: () => {
@@ -286,6 +319,7 @@ function createSessionStore(recog: RecognizeSet) {
         mistake: state.mistake,
         currentRecognitionStarted: state.currentRecognitionStarted,
         allowedCrossColors: state.allowedCrossColors,
+        selectedKeys: state.selectedKeys,
       }),
     }
   )
