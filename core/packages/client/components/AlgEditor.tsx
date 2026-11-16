@@ -20,7 +20,7 @@ import { SortableContext, arrayMove, verticalListSortingStrategy, sortableKeyboa
 import SortableAlgRow from '@/components/SortableAlgRow';
 import { editedAlgEntry } from '@/lib/alg_editor';
 import { sanitizeAlgHtml } from '@/lib/alg_html';
-import { canonicalizeInitialU2 } from '@cuberoot/shared/alg-html';
+import { canonicalizeInitialU2, consistentAlgEntry } from '@cuberoot/shared/alg-html';
 import { preferredAlgRef, preferredAlgSlot, usePreferredAlgs } from '@/lib/alg-preferred-algs';
 import { algTagLabel, algTagOptions } from '@/lib/alg_tags';
 import { CompactSelect } from '@/components/CompactSelect';
@@ -132,7 +132,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
     const src = initialValue.length === 0
       ? [[{ alg: '' }]]
       : initialValue.map(ori => (ori.length === 0 ? [{ alg: '' }] : ori));
-    return src.map(ori => ori.map(e => ({ ...(puzzle === '3x3' ? canonicalizeInitialU2(e) : e), uid: newUid() })));
+    return src.map(ori => ori.map(e => ({ ...consistentAlgEntry(puzzle === '3x3' ? canonicalizeInitialU2(e) : e), uid: newUid() })));
   });
 
   // NOTE: 用 row.uid 作 key,删行不会让别的 row 的 handle 漂移

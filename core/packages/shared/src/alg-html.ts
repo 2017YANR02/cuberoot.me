@@ -40,6 +40,23 @@ export function matchingAlgHtml(text: string, html: unknown, normalize: (text: s
   return clean;
 }
 
+/** Catalog markup may change spacing, but never moves, grouping or grip notation. */
+export function algHtmlMatchesText(text: string, html: unknown): boolean {
+  return html == null || html === '' || (typeof html === 'string'
+    && algHtmlText(html).replace(/\s+/g, '') === text.replace(/\s+/g, ''));
+}
+
+/** Legacy read/edit fallback. Never let stale presentation become a second algorithm. */
+export function consistentAlgEntry<T extends { alg: string; algHtml?: string }>(entry: T): T {
+  if (entry.algHtml == null) return entry;
+  const html = algHtmlMatchesText(entry.alg, entry.algHtml) ? sanitizeAlgHtml(entry.algHtml) : '';
+  if (!html || !algHtmlRuns(html).some(run => run.tags.length)) {
+    const { algHtml: _discarded, ...plain } = entry;
+    return plain as T;
+  }
+  return html === entry.algHtml ? entry : { ...entry, algHtml: html };
+}
+
 /** Source offsets and allowed inline tags, shared by editors and notation renderers. */
 export function algHtmlRuns(html: string): Array<{ start: number; end: number; text: string; tags: string[] }> {
   const runs: Array<{ start: number; end: number; text: string; tags: string[] }> = [];

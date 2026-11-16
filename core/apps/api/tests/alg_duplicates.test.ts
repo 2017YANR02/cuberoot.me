@@ -11,7 +11,7 @@ vi.mock('../src/utils/recon_helpers.js', () => ({
   requireAuth: async () => mocks.user, requireAdmin: vi.fn(), requireAdminOrApiKey: vi.fn(async () => mocks.user), checkRateLimit: vi.fn(),
 }));
 vi.mock('../src/utils/account.js', () => ({ publicUserIdsForOwnerKeys: async () => new Map() }));
-vi.mock('../src/utils/alg_mirror.js', () => ({ syncMirrorAndLog: vi.fn(), syncMirrorForCase: vi.fn() }));
+vi.mock('../src/utils/alg_mirror.js', () => ({ syncMirrorAndLog: vi.fn(), syncMirrorForCase: vi.fn(), syncLinkedCaseAnnotations: vi.fn(async () => ({ notes: [], updated: 0 })) }));
 vi.mock('../src/utils/alg_case_setup.js', () => ({ validateRequiredAlgCaseSetup: async () => null }));
 
 import { algRoutes } from '../src/routes/alg';
@@ -95,6 +95,15 @@ describe('standard and community formula duplicate enforcement', () => {
     expect(mocks.query).not.toHaveBeenCalled();
   });
 
+  it.each(['POST', 'PUT'])('rejects hidden move sequences in annotations on %s', async method => {
+    const path = 'sets/3x3/zbls/cases' + (method === 'PUT' ? '/6049' : '');
+    const r = await send(path, method, { caseName: 'EO', sticker: {},
+      algs: [[{ alg: "U F U' F'", algHtml: "U <u>R</u> U' R'" }]] });
+    expect(r.status).toBe(400);
+    expect(await r.json()).toEqual({ error: 'Solution annotations do not match the solution' });
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['POST', 'sets/3x3/pll/cases', "(R U R'"],
     ['PUT', 'sets/3x3/pll/cases/4309', "R U R')"],
@@ -158,10 +167,10 @@ describe('standard and community formula duplicate enforcement', () => {
     });
     const response = await send(`sets/${puzzle}/test/cases/7`, 'PUT', {
       caseName: 'A', sticker: {},
-      algs: [[{ alg: 'R U', algHtml: '<u class="wavy" onclick="bad()">R</u> U <<x>img src=x onerror=alert(1)>' }]],
+      algs: [[{ alg: 'R U', algHtml: '<u class="wavy" onclick="bad()">R</u> U <img src=x onerror=alert(1)>' }]],
     });
     expect(response.status).toBe(200);
     const update = mocks.query.mock.calls.find(([sql]) => sql.startsWith('UPDATE alg_cases'));
-    expect(update?.[1][5]).toEqual([[{ alg: 'R U', algHtml: '<u class="wavy">R</u> U &lt;img src=x onerror=alert(1)&gt;' }]]);
+    expect(update?.[1][5]).toEqual([[{ alg: 'R U', algHtml: '<u class="wavy">R</u> U ' }]]);
   });
 });

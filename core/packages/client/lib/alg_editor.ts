@@ -1,8 +1,10 @@
 import type { AlgEntry } from '@cuberoot/shared/alg';
-import { editAlgHtmlText, sanitizeAlgHtml } from './alg_html';
+import { algHtmlMatchesText, consistentAlgEntry, editAlgHtmlText, sanitizeAlgHtml } from '@cuberoot/shared/alg-html';
 
 /** Preserve hidden finishing moves and metadata when only presentation changed. */
 export function editedAlgEntry(original: AlgEntry, initialText: string, initialHtml: string | undefined, text: string, html: string): AlgEntry {
+  original = consistentAlgEntry(original);
+  if (!algHtmlMatchesText(text, html)) throw new Error('Solution annotations do not match the solution');
   const cleanHtml = sanitizeAlgHtml(html);
   const marks = (value: string) => /<(u|s|em|strong|sub|sup)\b/i.test(value);
   const sameMarks = !marks(cleanHtml) && !marks(initialHtml ?? '')

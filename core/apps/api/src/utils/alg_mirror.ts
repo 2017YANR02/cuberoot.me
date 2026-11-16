@@ -11,23 +11,27 @@
  *    排序都走同一条路,不会留孤儿。理由写在 `regenerateMirrorAlgs` 的注释里。
  * 2. **没建链就什么都不做**(除了把残留的生成条剥掉)。已建链的 case 从四个视角的原创条
  *    重算；全量 mirror-links 同步也会覆盖旧公式，不依赖用户逐条重新保存。
- * 3. **只对 `MIRROR_ALG_SYNC_SETS` 生效**(3x3 f2l / zbls)。cls 有伙伴但只存一个视角,
+ * 3. **公式生成只对 `MIRROR_ALG_SYNC_SETS` 生效**(3x3 f2l / zbls)。cls 有伙伴但只存一个视角,
  *    生成的公式没有格子可放,见那个常量的注释。
  *
  * 自动生成条还要按目标 case 的 setup 做一次状态对齐。镜像几何能保证公式手性正确，却不能
  * 保证自镜像 case 在目标槽位仍是同一个 AUF；少数对称 case 需要在公式开头补 U / U2 / U'。
  * 这里尝试四种起手 AUF 并只改生成条，人写的公式仍由 AdminCaseEditor 的完整校验负责。
+ * 单视角 NxN 库另通过 syncLinkedCaseAnnotations 同步已有 LR 对应条目的指法，
+ * 不生成公式、不改变上述生成范围；复用同一共享记号映射器。
  */
 import {
   MIRROR_ALG_SYNC_SETS,
   regenerateMirrorAlgs,
   canonicalNnnAlg,
+  syncExistingLrAnnotations,
+  hasAlgFingertricks,
   type AlgEntry,
   type MirrorPairCase,
 } from '@cuberoot/shared/alg-mirror';
 import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
 import { puzzles } from 'cubing/puzzles';
-import { query } from '../db/connection.js';
+import { query, type QueryRunner } from '../db/connection.js';
 import { replaceAlgHtmlText } from '@cuberoot/shared/alg-html';
 
 interface MirrorRow {
@@ -45,6 +49,50 @@ export interface MirrorSyncReport {
 }
 
 const EMPTY: MirrorSyncReport = { updated: [], notes: [] };
+
+/** Single-view sets already store their curated LR partners in meta.mirror
+ * (table number, not DB id). Update existing counterparts in the same write
+ * transaction. Do not broaden the four-slot generation allowlist. */
+export async function syncLinkedCaseAnnotations(
+  run: QueryRunner, puzzle: string, set: string,
+  self: { id: number | string; algs: unknown; meta: unknown; mirror_case_id?: number | string | null },
+  previous: AlgEntry[][],
+): Promise<MirrorSyncReport> {
+  if (!/^([2-7])x\1$/.test(puzzle) || mirrorAlgSyncEnabled(puzzle, set)) return EMPTY;
+  const meta = self.meta as { no?: number; mirror?: number } | null;
+  const linkedId = self.mirror_case_id == null ? null : Number(self.mirror_case_id);
+  if (linkedId == null && (!Number.isInteger(meta?.no) || !Number.isInteger(meta?.mirror))) return EMPTY;
+  const views = self.algs as AlgEntry[][];
+  if (!Array.isArray(views) || views.length !== 1) return EMPTY;
+  const rows = await run<{ id: number | string; algs: AlgEntry[][]; meta: { no: number; mirror?: number } | null; mirror_case_id?: number | string | null }>(
+    `SELECT id, algs, meta, mirror_case_id FROM alg_cases WHERE puzzle = ? AND set_slug = ? AND ${linkedId == null ? "meta->>'no'" : 'id'} = ? FOR UPDATE`,
+    [puzzle, set, linkedId ?? String(meta!.mirror)],
+  );
+  const reciprocal = linkedId == null ? rows[0]?.meta?.mirror === meta!.no
+    : rows[0]?.mirror_case_id != null && Number(rows[0].mirror_case_id) === Number(self.id);
+  if (rows.length !== 1 || !reciprocal || rows[0].algs.length !== 1) {
+    return { updated: [], notes: [`case ${self.id}: missing or ambiguous reciprocal LR annotation partner`] };
+  }
+  const partner = rows[0];
+  const algs = structuredClone(partner.algs);
+  const notes = syncExistingLrAnnotations(views[0], algs[0], previous[0] ?? []);
+  const own = Number(partner.id) === Number(self.id) ? algs : structuredClone(views);
+  // A newly added existing counterpart should inherit marks too. Only new
+  // entries qualify: never refill an explicit clear on an existing formula.
+  const added = own[0].filter(entry => !hasAlgFingertricks(entry) && !(previous[0] ?? []).some(old =>
+    (entry.altId && old.altId === entry.altId) || old.alg === entry.alg));
+  notes.push(...syncExistingLrAnnotations(algs[0], added));
+  const writes = Number(partner.id) === Number(self.id)
+    ? [{ id: Number(self.id), before: views, after: own }]
+    : [{ id: Number(partner.id), before: partner.algs, after: algs }, { id: Number(self.id), before: views, after: own }];
+  const updated: number[] = [];
+  for (const write of writes) {
+    if (canon(write.before) === canon(write.after)) continue;
+    await run('UPDATE alg_cases SET algs = ?::jsonb, updated_at = NOW() WHERE id = ?', [write.after, write.id]);
+    updated.push(write.id);
+  }
+  return { updated, notes };
+}
 
 export const mirrorAlgSyncEnabled = (puzzle: string, set: string) =>
   MIRROR_ALG_SYNC_SETS.has(`${puzzle}/${set}`);

@@ -27,6 +27,8 @@
  */
 import {
   flattenAlg,
+  cubeOnly,
+  hasBalancedGrouping,
   MOVE_RE,
   mirrorFamily,
   mirrorKeepsAmount,
@@ -36,8 +38,8 @@ import {
   type MirrorAxis,
   type ParsedMove,
 } from './alg_notation';
-import type { AlgEntry } from './alg_types';
-import { algHtmlRuns, algHtmlText, canonicalizeInitialU2, escapeAlgText, sanitizeAlgHtml } from './alg-html';
+import type { AlgEntry, AlgFile } from './alg_types';
+import { algHtmlMatchesText, algHtmlRuns, algHtmlText, canonicalizeInitialU2, editAlgHtmlText, escapeAlgText, sanitizeAlgHtml } from './alg-html';
 
 export type { AlgEntry };
 export { relabelYMoveString };
@@ -99,14 +101,27 @@ export const MIRROR_TARGET: Record<MirrorGen, 'partner' | 'self'> = {
 };
 
 function rewrite(alg: string, f: (m: ParsedMove) => { family: string; amount: number }): string {
-  const { moves, junk } = tokenizeMoves(flattenAlg(alg));
+  const { junk } = tokenizeMoves(flattenAlg(alg));
   if (junk.length) throw new Error(`认不出来的记号:${junk.join(' ')}`);
-  return moves.map(m => {
+  const clean = cubeOnly(alg);
+  // Keep the written group and its exponent. Mirroring commutes with repetition
+  // and group inversion; expanding first destroys the author's presentation.
+  const text = hasBalancedGrouping(clean) ? clean : flattenAlg(clean);
+  const out: string[] = [];
+  for (let i = 0; i < text.length;) {
+    if (/\s/.test(text[i])) { i++; continue; }
+    const group = /^(\(|\)\d*'?)/.exec(text.slice(i));
+    if (group) { out.push(group[0]); i += group[0].length; continue; }
+    const match = MOVE_RE.exec(text.slice(i));
+    if (!match) throw new Error(`认不出来的记号:${text.slice(i)}`);
+    const m = tokenizeMoves(match[0]).moves[0];
     const next = f(m);
     // Preserve signed half turns for fingertricks and animation; only comparison
     // keys may normalize equivalent final states.
-    return renderMove({ layer: m.layer, ...next });
-  }).join(' ');
+    out.push(renderMove({ layer: m.layer, ...next }));
+    i += match[0].length;
+  }
+  return out.join(' ').replace(/\(\s+/g, '(').replace(/\s+\)/g, ')');
 }
 
 /** 镜像一条公式。`axis` 是镜面:`M` = 左右、`S` = 前后、`E` = 上下。 */
@@ -121,7 +136,7 @@ export function mirrorMoveString(alg: string, axis: MirrorAxis): string {
 export function applyMirrorGen(alg: string, gen: MirrorGen): string {
   if (gen === 'lr') return mirrorMoveString(alg, 'M');
   if (gen === 'fb') return mirrorMoveString(alg, 'S');
-  return relabelYMoveString(alg, 2);
+  return rewrite(alg, m => tokenizeMoves(relabelYMoveString(renderMove(m), 2)).moves[0]);
 }
 
 /** F 族 / B 族 —— `Fw` 与 `f` 是同一件事的两种写法,都要认。 */
@@ -175,61 +190,315 @@ function canonicalMirrorDisplayAlg(alg: string): string {
   return canonicalNnnAlg(moves.map(renderMove).join(' '));
 }
 
-/** Locate written moves using the shared grammar. Repeated groups, comments and
- * explicit grip/FTN notation need their own semantic mapping; never guess it. */
-function annotationMoves(text: string): Array<{ raw: string; start: number; end: number }> | null {
+/** Existing partner cases can require different starting/finishing AUF.
+ * This key is only for matching annotations, never for changing stored moves. */
+function canonicalAnnotationBody(alg: string): string {
+  // A variant with an unconfirmed grip/FTN is not the same written execution.
+  // Do not silently strip that distinction and then guess its finger mapping.
+  if (/[↑·\[\]]/.test(alg) || /↓↓/.test(alg)) return `unmapped-grip:${alg}`;
+  return canonicalMirrorDisplayAlg(alg).replace(/^(?:U(?:2|')?(?:\s+|$))+/, '').replace(/(?:^|\s)(?:U(?:2|')?(?:\s+|$))+$/, '').trim();
+}
+
+/** Locate written moves, retaining group exponents outside move spans. Comments
+ * and explicit grip/FTN notation still need semantic mapping; never guess it. */
+function annotationMoves(text: string, keepFinalRotation = false): Array<{ raw: string; start: number; end: number }> | null {
+  if (!hasBalancedGrouping(text)) return null;
   const moves: Array<{ raw: string; start: number; end: number }> = [];
   for (let i = 0; i < text.length;) {
-    if (/[\s()]/.test(text[i])) { i++; continue; }
+    // '=' / '*' are upstream equivalence labels, not grip instructions.
+    // The maintainer confirmed ↓ spacing: attached = right, spaced = left.
+    // Annotation matching keeps the destination grip; generation swaps it.
+    if (/[\s(=*↓]/.test(text[i])) { i++; continue; }
+    const endGroup = /^\)\d*'?/.exec(text.slice(i));
+    if (endGroup) { i += endGroup[0].length; continue; }
     const match = MOVE_RE.exec(text.slice(i));
     if (!match) return null;
     moves.push({ raw: match[0], start: i, end: i + match[0].length });
     i += match[0].length;
   }
   // A finishing y rotation is hidden by the library and is not a finger move.
-  while (moves.length && /^y(?:\d+)?'?$/.test(moves.at(-1)!.raw)) moves.pop();
+  while (!keepFinalRotation && moves.length && /^y(?:\d+)?'?$/.test(moves.at(-1)!.raw)) moves.pop();
   return moves;
+}
+
+/** Create the written LR counterpart without copying case-specific metadata.
+ * Preserve formatting on parentheses, exponents and spaces as well as moves.
+ * Grip arrows require an explicit convention; the caller must opt in. */
+export function lrMirrorEntry(source: AlgEntry, options: { mirrorDownGrip?: boolean } = {}): AlgEntry | null {
+  const entry = writtenLrMirrorEntry(source, options);
+  return entry ? canonicalizeInitialU2(entry) : null;
+}
+
+function writtenLrMirrorEntry(source: AlgEntry, options: { mirrorDownGrip?: boolean }): AlgEntry | null {
+  if (!algHtmlMatchesText(source.alg, source.algHtml)) return null;
+  const text = source.algHtml ? algHtmlText(source.algHtml) : source.alg;
+  if ((!options.mirrorDownGrip && text.includes('↓')) || /↓↓/.test(text)) return null;
+  const parseText = options.mirrorDownGrip ? text.replace(/↓/g, ' ') : text;
+  const moves = annotationMoves(parseText, true);
+  if (!moves) return null;
+  const runs = algHtmlRuns(source.algHtml ?? escapeAlgText(text));
+  const slice = (start: number, end: number) => runs.filter(r => r.start < end && r.end > start).map(r =>
+    r.tags.join('') + escapeAlgText(r.text.slice(Math.max(0, start - r.start), end - r.start))
+      + r.tags.slice().reverse().map(t => `</${t.match(/^<([a-z]+)/)![1]}>`).join('')).join('');
+  const edits = moves.map(move => ({ ...move, replacement: applyMirrorGen(move.raw, 'lr') }));
+  if (options.mirrorDownGrip) {
+    for (const match of text.matchAll(/↓\s*/g)) {
+      edits.push({ raw: match[0], start: match.index, end: match.index + match[0].length,
+        replacement: match[0].length === 1 ? '↓ ' : '↓' });
+    }
+  }
+  let html = '', offset = 0;
+  for (const edit of edits.sort((a, b) => a.start - b.start)) {
+    const tags = [...new Set(runs.filter(r => r.start < edit.end && r.end > edit.start).flatMap(r => r.tags))];
+    html += slice(offset, edit.start) + tags.join('') + escapeAlgText(edit.replacement)
+      + tags.slice().reverse().map(t => `</${t.match(/^<([a-z]+)/)![1]}>`).join('');
+    offset = edit.end;
+  }
+  html += slice(offset, text.length);
+  const alg = algHtmlText(html);
+  if (canonicalNnnAlg(alg) !== canonicalNnnAlg(applyMirrorGen(source.alg, 'lr'))) return null;
+  return { alg, ...(source.algHtml ? { algHtml: sanitizeAlgHtml(html) } : {}) };
 }
 
 /** LR keeps the finger role while exchanging hands. Place source annotations on
  * corresponding target moves, preserving the target's grouping and finishing y.
  * null means unsupported/mismatched notation; undefined explicitly clears marks. */
 export function lrMirrorAlgHtml(source: AlgEntry, targetAlg: string): string | undefined | null {
+  const written = writtenLrMirrorEntry(source, { mirrorDownGrip: true });
+  if (written && written.alg.replace(/\s+/g, '') === targetAlg.replace(/\s+/g, '')) return written.algHtml;
+  return mappedAlgHtml(source, targetAlg, alg => applyMirrorGen(alg, 'lr'));
+}
+
+function mappedAlgHtml(source: AlgEntry, targetAlg: string, transform: (alg: string) => string, targetHtml?: string): string | undefined | null {
+  if (!algHtmlMatchesText(source.alg, source.algHtml)) return null;
   const sourceText = source.algHtml ? algHtmlText(source.algHtml) : source.alg;
-  const from = annotationMoves(sourceText), original = annotationMoves(source.alg), to = annotationMoves(targetAlg);
-  if (!from || !original || !to || from.length !== to.length || from.length !== original.length) return null;
-  if (from.some((move, i) => move.raw !== original[i].raw
-    || canonicalNnnAlg(applyMirrorGen(move.raw, 'lr')) !== canonicalNnnAlg(to[i].raw))) return null;
-  if (!source.algHtml) return undefined;
-  const runs = algHtmlRuns(source.algHtml);
+  let from = annotationMoves(sourceText), to = annotationMoves(targetAlg);
+  const original = annotationMoves(source.alg);
+  if (!from || !original || !to || from.length !== original.length) return null;
+  // Written spans alone cannot distinguish (R U)2 from (R U)3 or (R U)'.
+  if (from.some((move, i) => move.raw !== original[i].raw)) return null;
+  if (canonicalMirrorDisplayAlg(transform(source.alg)) !== canonicalMirrorDisplayAlg(targetAlg)) {
+    if (canonicalAnnotationBody(transform(source.alg)) !== canonicalAnnotationBody(targetAlg)) return null;
+    const trimAuf = (moves: NonNullable<typeof from>, text: string) => {
+      const kept = [...moves];
+      while (kept.length && /^U(?:2'?|')?$/.test(kept[0].raw) && !text.slice(0, kept[0].start).includes('(')) kept.shift();
+      while (kept.length && /^U(?:2'?|')?$/.test(kept.at(-1)!.raw) && !text.slice(kept.at(-1)!.end).includes(')')) kept.pop();
+      return kept;
+    };
+    from = trimAuf(from, sourceText);
+    to = trimAuf(to, targetAlg);
+  }
+  if (!from.length || from.length !== to.length || from.some((move, i) =>
+    canonicalNnnAlg(transform(move.raw)) !== canonicalNnnAlg(to![i].raw))) return null;
+  const runs = algHtmlRuns(source.algHtml ?? escapeAlgText(source.alg));
+  const untouched = (start: number, end: number) => targetHtml
+    ? editAlgHtmlText(targetHtml, [{ start: end, end: algHtmlText(targetHtml).length, text: '' }, { start: 0, end: start, text: '' }])
+    : escapeAlgText(targetAlg.slice(start, end));
   let html = '', offset = 0;
   to.forEach((move, i) => {
     const tags = [...new Set(runs.filter(run => run.start < from[i].end && run.end > from[i].start).flatMap(run => run.tags))];
-    html += escapeAlgText(targetAlg.slice(offset, move.start));
+    html += untouched(offset, move.start);
     html += tags.join('') + escapeAlgText(move.raw) + tags.slice().reverse().map(tag => `</${tag.match(/^<([a-z]+)/)![1]}>`).join('');
     offset = move.end;
   });
-  html += escapeAlgText(targetAlg.slice(offset));
+  html += untouched(offset, targetAlg.length);
   return /<(u|s|em|strong|sub|sup)\b/.test(html) ? sanitizeAlgHtml(html) : undefined;
 }
 
-/** Only an actual annotation edit overrides an existing independently curated
- * counterpart. Passing the pre-save snapshot also makes removal bidirectional. */
-function syncEditedLrAnnotations(self: MirrorPairCase, partner: MirrorPairCase, previous: AlgEntry[][], notes: string[]) {
-  self.algs.forEach((view, ori) => view.forEach(entry => {
-    const prior = previous[ori]?.find(old => old.alg === entry.alg);
-    if ((prior?.algHtml ?? '') === (entry.algHtml ?? '')) return;
+/** Fill missing finger roles, preserving target typography. Strong/sub/sup are
+ * not finger roles; their presence must not block an s/u/em annotation. */
+export function hasAlgFingertricks(entry: AlgEntry): boolean {
+  return !!entry.algHtml && algHtmlRuns(entry.algHtml).some(run => run.tags.some(tag => /^<(s|u|em)(?:\s|>)/.test(tag)));
+}
+
+function mergeMissingFingertricks(source: AlgEntry, target: AlgEntry, transform: (alg: string) => string): { html?: string; conflict?: boolean; unsupported?: boolean } {
+  const text = target.algHtml ? algHtmlText(target.algHtml) : target.alg;
+  const projected = mappedAlgHtml(source, text, transform);
+  const moves = annotationMoves(text);
+  if (projected === null || !moves) return { unsupported: true };
+  if (!projected) return { html: target.algHtml };
+  const incoming = algHtmlRuns(projected);
+  const existing = algHtmlRuns(target.algHtml ?? escapeAlgText(text));
+  const fingerTags = (runs: typeof incoming, start: number, end: number) => [...new Set(runs
+    .filter(r => r.start < end && r.end > start).flatMap(r => r.tags)
+    .filter(tag => /^<(s|u|em)(?:\s|>)/.test(tag)))].sort();
+  const additions = new Map<number, string[]>();
+  for (const move of moves) {
+    const from = fingerTags(incoming, move.start, move.end);
+    const to = fingerTags(existing, move.start, move.end);
+    if (!from.length) continue;
+    if (to.length) {
+      if (JSON.stringify(from) !== JSON.stringify(to)) return { conflict: true };
+      continue;
+    }
+    for (let i = move.start; i < move.end; i++) additions.set(i, from);
+  }
+  if (!additions.size) return { html: target.algHtml };
+  let out = '', active: string[] = [];
+  for (const run of existing) {
+    for (let i = 0; i < run.text.length; i++) {
+      const tags = [...run.tags, ...(additions.get(run.start + i) ?? [])];
+      let common = 0;
+      while (common < active.length && active[common] === tags[common]) common++;
+      out += active.slice(common).reverse().map(tag => `</${tag.match(/^<([a-z]+)/)![1]}>`).join('');
+      out += tags.slice(common).join('') + escapeAlgText(run.text[i]);
+      active = tags;
+    }
+  }
+  out += active.slice().reverse().map(tag => `</${tag.match(/^<([a-z]+)/)![1]}>`).join('');
+  return { html: sanitizeAlgHtml(out) };
+}
+
+/** Sync annotations onto existing LR counterparts, without generating algorithms
+ * or copying case-specific metadata. With a pre-save snapshot, explicit edits
+ * (including clearing) win; without one, only fill missing legacy annotations.
+ * Both slot-based and single-view sets use this same mapping. Mutates targets. */
+export function syncExistingLrAnnotations(
+  source: AlgEntry[], targets: AlgEntry[], previous?: AlgEntry[],
+): string[] {
+  return syncExistingAnnotations(source, targets, previous, alg => applyMirrorGen(alg, 'lr'), 'LR');
+}
+
+function syncExistingAnnotations(
+  source: AlgEntry[], targets: AlgEntry[], previous: AlgEntry[] | undefined,
+  transform: (alg: string) => string, label: string,
+): string[] {
+  const notes: string[] = [];
+  const pending = new Map<AlgEntry, Set<string | undefined>>();
+  for (const entry of source) {
+    if (!previous && !hasAlgFingertricks(entry)) continue;
+    const prior = previous?.find(old => entry.altId && old.altId === entry.altId)
+      ?? previous?.find(old => old.alg === entry.alg);
+    if (previous ? (prior?.algHtml ?? '') === (entry.algHtml ?? '') : !entry.algHtml) continue;
+    if (previous && !hasAlgFingertricks(entry) && (!prior || !hasAlgFingertricks(prior))) continue;
     let mirrored: string;
-    try { mirrored = applyMirrorGen(entry.alg, 'lr'); }
-    catch { notes.push(`case ${self.id} ${VIEWS[ori]} 的指法记号无法无损映射到 LR 镜像`); return; }
-    const target = partner.algs[MIRROR_VIEW.lr[ori]]?.find(other =>
-      canonicalMirrorDisplayAlg(other.alg) === canonicalMirrorDisplayAlg(mirrored));
-    if (!target) return;
-    const html = lrMirrorAlgHtml(entry, target.alg);
-    if (html === null) { notes.push(`case ${self.id} ${VIEWS[ori]} 的指法记号无法无损映射到 LR 镜像`); return; }
+    try { mirrored = transform(entry.alg); }
+    catch { notes.push(`${label} annotation mapping unsupported: ${entry.alg}`); continue; }
+    const matches = targets.filter(other =>
+      canonicalAnnotationBody(other.alg) === canonicalAnnotationBody(mirrored));
+    for (const target of matches) {
+      let html = mappedAlgHtml(entry, target.algHtml ? algHtmlText(target.algHtml) : target.alg, transform, target.algHtml);
+      if (html === null) { notes.push(`${label} annotation mapping unsupported: ${entry.alg}`); continue; }
+      if (!previous) {
+        const merged = mergeMissingFingertricks(entry, target, transform);
+        if (merged.unsupported) { notes.push(`${label} annotation mapping unsupported: ${entry.alg}`); continue; }
+        if (merged.conflict) { notes.push(`${label} annotation conflict: ${entry.alg} / ${target.alg}`); continue; }
+        html = merged.html;
+        if (html === target.algHtml) continue;
+      }
+      const proposals = pending.get(target) ?? new Set<string | undefined>();
+      proposals.add(html);
+      pending.set(target, proposals);
+    }
+  }
+  for (const [target, proposals] of pending) {
+    if (proposals.size !== 1) {
+      notes.push(`${label} annotation conflict: multiple counterparts for ${target.alg}`);
+      continue;
+    }
+    const html = proposals.values().next().value;
     if (html) target.algHtml = html;
     else delete target.algHtml;
-  }));
+  }
+  return notes;
+}
+
+/** The same case's four stored orientations are face relabelings, not FB mirrors.
+ * Match complete algorithms, never array positions; preserve destination text.
+ * Snapshot all inputs so a propagated mark cannot become a new source mid-pass. */
+export function syncCaseOrientationAnnotations(views: AlgEntry[][], previous?: AlgEntry[][]): string[] {
+  if (views.length !== VIEWS.length) return [];
+  const source = structuredClone(views);
+  const notes: string[] = [];
+  views.forEach((targets, to) => {
+    const pending = targets.map(() => new Set<string | undefined>());
+    source.forEach((entries, from) => {
+      if (from === to) return;
+      const copies = structuredClone(targets);
+      notes.push(...syncExistingAnnotations(entries, copies, previous?.[from],
+        alg => relabelYMoveString(alg, to - from), `${VIEWS[from]}→${VIEWS[to]}`));
+      copies.forEach((entry, i) => {
+        if (entry.algHtml !== targets[i].algHtml) pending[i].add(entry.algHtml);
+      });
+    });
+    targets.forEach((entry, i) => {
+      if (pending[i].size > 1) { notes.push(`Orientation annotation conflict: ${entry.alg}`); return; }
+      if (!pending[i].size) return;
+      const html = pending[i].values().next().value;
+      if (html) entry.algHtml = html;
+      else delete entry.algHtml;
+    });
+  });
+  return notes;
+}
+
+/** Read-only library audit/repair plan. Uses stored case relations, never names
+ * or guessed cube states. Unsupported puzzles/links remain visible in coverage. */
+export function planExistingLrAnnotationRepairs(file: AlgFile) {
+  const cases = structuredClone(file.cases);
+  const byId = new Map(cases.map(c => [c.id, c]));
+  const byNo = new Map<number, typeof cases>();
+  for (const c of cases) if (c.meta) byNo.set(c.meta.no, [...(byNo.get(c.meta.no) ?? []), c]);
+  const notes: string[] = [];
+  const missing: Array<{ caseId: number; partnerId: number; ori: number; targetOri: number; index: number; entry: AlgEntry }> = [];
+  const unsupported = !/^([2-7])x\1$/.test(file.puzzle);
+  if (MIRROR_ALG_SYNC_SETS.has(`${file.puzzle}/${file.set}`)) {
+    for (const c of cases) notes.push(...syncCaseOrientationAnnotations(c.algs).map(note => `case ${c.id} ${c.name}: ${note}`));
+  }
+  let marked = 0, fingerMarked = 0, linkedMarked = 0, unmatchedMarked = 0, mismatchedHtml = 0;
+  for (const c of file.cases) {
+    const formatted = c.algs.flat().filter(e => e.algHtml);
+    const entries = formatted.filter(hasAlgFingertricks);
+    marked += formatted.length;
+    fingerMarked += entries.length;
+    for (const entry of formatted) {
+      if (algHtmlText(entry.algHtml!).replace(/\s+/g, '') !== entry.alg.replace(/\s+/g, '')) {
+        mismatchedHtml++;
+        notes.push(`case ${c.id} ${c.name}: annotation text differs from algorithm: ${entry.alg}`);
+      }
+    }
+    if (unsupported) continue;
+    const numbered = c.meta?.mirror == null ? [] : byNo.get(c.meta.mirror) ?? [];
+    const partner = c.mirrorCaseId != null ? byId.get(c.mirrorCaseId) : numbered.length === 1 ? numbered[0] : undefined;
+    const reciprocal = c.mirrorCaseId != null ? partner?.mirrorCaseId === c.id
+      : c.meta != null && partner?.meta?.mirror === c.meta.no;
+    if (!partner || !reciprocal) {
+      if (entries.length) notes.push(`case ${c.id} ${c.name}: ${entries.length} marked entries without a reciprocal LR case relation`);
+      continue;
+    }
+    const slots = MIRROR_SETS.has(`${file.puzzle}/${file.set}`) && c.algs.length === 4 && partner.algs.length === 4;
+    if (!slots && (c.algs.length !== 1 || partner.algs.length !== 1)) {
+      if (entries.length) notes.push(`case ${c.id} ${c.name}: unsupported LR view mapping`);
+      continue;
+    }
+    linkedMarked += entries.length;
+    c.algs.forEach((view, ori) => {
+      const targets = partner.algs[slots ? MIRROR_VIEW.lr[ori] : 0];
+      for (const entry of view.filter(hasAlgFingertricks)) {
+        try {
+          const mirrored = applyMirrorGen(entry.alg, 'lr');
+          if (!targets.some(target => canonicalAnnotationBody(target.alg) === canonicalAnnotationBody(mirrored))) {
+            unmatchedMarked++;
+            if (c.id != null && partner.id != null) missing.push({ caseId: c.id, partnerId: partner.id, ori,
+              targetOri: slots ? MIRROR_VIEW.lr[ori] : 0, index: view.indexOf(entry), entry });
+            notes.push(`case ${c.id} ${c.name}: no existing LR counterpart for ${entry.alg}`);
+          }
+        } catch { /* syncExistingLrAnnotations reports unsupported notation. */ }
+      }
+      notes.push(...syncExistingLrAnnotations(view, targets).map(note => `case ${c.id} ${c.name}: ${note}`));
+    });
+  }
+  // LR filling may have introduced the first marked entry on a partner case.
+  if (MIRROR_ALG_SYNC_SETS.has(`${file.puzzle}/${file.set}`)) {
+    for (const c of cases) notes.push(...syncCaseOrientationAnnotations(c.algs).map(note => `case ${c.id} ${c.name}: ${note}`));
+  }
+  return { cases, notes, missing, coverage: { cases: cases.length, entries: file.cases.reduce((n, c) => n + c.algs.flat().length, 0), marked, fingerMarked, linkedMarked, unmatchedMarked, mismatchedHtml, unsupported } };
+}
+
+function syncEditedLrAnnotations(self: MirrorPairCase, partner: MirrorPairCase, previous: AlgEntry[][], notes: string[]) {
+  self.algs.forEach((view, ori) => {
+    notes.push(...syncExistingLrAnnotations(view, partner.algs[MIRROR_VIEW.lr[ori]] ?? [], previous[ori] ?? []));
+  });
 }
 
 // ---------------------------------------------------------------- 成对重算
@@ -326,6 +595,7 @@ export function regenerateMirrorAlgs(
   self = clone(self);
   partner = sameCase ? self : partner ? clone(partner) : null;
   if (partner && previousSelfAlgs) removeMirrorOrbit(self, partner, previousSelfAlgs);
+  notes.push(...syncCaseOrientationAnnotations(self.algs, previousSelfAlgs));
   if (partner && previousSelfAlgs) syncEditedLrAnnotations(self, partner, previousSelfAlgs, notes);
   const distinct = partner && partner.id !== self.id ? [self, partner] : [self];
 

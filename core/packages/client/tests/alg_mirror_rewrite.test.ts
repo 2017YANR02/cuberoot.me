@@ -167,6 +167,18 @@ describe('落在镜面法线轴上的不取反 —— 这个错犯过两次', ()
 // ─────────────────────────────────────────────────── 2. 贴纸反射 oracle
 
 describe('贴纸反射 oracle:重写公式再跑 == 跑完再照镜子', () => {
+  it('preserves written repetition, nested groups and group inversion in every transform', () => {
+    expect(applyMirrorGen("F (R U R' U')2 F'", 'lr')).toBe("F' (L' U' L U)2 F");
+    expect(applyMirrorGen("F ((R U)2 R')3' F'", 'lr')).toBe("F' ((L' U')2 L)3' F");
+    expect(applyMirrorGen("F (R U)2 F'", 'fb')).toBe("B' (R' U')2 B");
+    expect(applyMirrorGen("F (R U)2 F'", 'y2')).toBe("B (L U)2 B'");
+    for (const gen of ['lr', 'fb', 'y2'] as const) {
+      const source = "F ((R U)2 R')3' F'";
+      expect(canonicalNnnAlg(applyMirrorGen(source, gen)))
+        .toBe(canonicalNnnAlg(applyMirrorGen(canonicalNnnAlg(source), gen)));
+      expect(applyMirrorGen(applyMirrorGen(source, gen), gen)).toBe(source);
+    }
+  });
   it(`${ALL.length} 条公式逐块相等(含 M/S/E、宽招、x/y/z)`, () => {
     let checked = 0;
     for (const alg of ALL) {

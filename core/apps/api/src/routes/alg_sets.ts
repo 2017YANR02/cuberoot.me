@@ -14,9 +14,9 @@ import { withAlgWrite, assertNoExistingAlg, assertUniqueCaseAlgs } from '../util
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
-import { syncMirrorAndLog, syncMirrorForCase } from '../utils/alg_mirror.js';
+import { syncLinkedCaseAnnotations, syncMirrorAndLog, syncMirrorForCase } from '../utils/alg_mirror.js';
 import { is3x3TopLayerSet } from '@cuberoot/shared';
-import { canonicalizeInitialU2, sanitizeAlgHtmlFields } from '@cuberoot/shared/alg-html';
+import { algHtmlMatchesText, canonicalizeInitialU2, sanitizeAlgHtmlFields } from '@cuberoot/shared/alg-html';
 import type { AlgEntry } from '@cuberoot/shared/alg';
 import {
   canonicalize3x3WideMoves, cubeOnly, findIllegalGluedCubeMoves, hasBalancedGrouping,
@@ -177,6 +177,10 @@ async function validateCaseInput(puzzle: string, setSlug: string, body: AlgCaseI
   if (body.standard && body.standard.length > TEXT_MAX) return { error: 'standard too long' };
   if (!body.sticker || typeof body.sticker !== 'object') return { error: 'sticker required (object)' };
   if (!Array.isArray(body.algs)) return { error: 'algs must be array' };
+  if (body.algs.flat().some((entry: AlgEntry) => !entry || typeof entry.alg !== 'string'
+    || !algHtmlMatchesText(entry.alg, entry.algHtml))) {
+    return { error: 'Solution annotations do not match the solution' };
+  }
   assertUniqueCaseAlgs(body.algs);
   if (body.algs.flat().filter((entry: AlgEntry) => entry.tags?.includes('beginner')).length > 1) {
     return { error: 'Only one beginner pick is allowed per case' };
@@ -402,7 +406,7 @@ algSetsRoutes.put('/alg/sets/:puzzle/:set/cases/:id', async (c) => {
     previousAlgs = before[0]?.algs;
     await assertNoExistingAlg(query, puzzle, set, body.caseName!.trim(),
       (body.algs as Array<Array<{ alg: string }>>).flat().map(e => e.alg), { standardWrite: true });
-    return query<AlgCaseRow>(
+    const saved = await query<AlgCaseRow>(
       `UPDATE alg_cases SET
          name = ?, subgroup = ?, setup = ?, standard = ?,
          sticker = ?::jsonb, algs = ?::jsonb,
@@ -417,6 +421,11 @@ algSetsRoutes.put('/alg/sets/:puzzle/:set/cases/:id', async (c) => {
         id, puzzle, set,
       ],
     );
+    if (saved[0]) {
+      const report = await syncLinkedCaseAnnotations(query, puzzle, set, saved[0], previousAlgs ?? []);
+      for (const note of report.notes) console.warn(`[alg-mirror] ${note}`);
+    }
+    return saved;
   });
   if (updated.length === 0) return c.json({ error: 'Not found' }, 404);
   // 公式改了 → 伙伴那边的自动镜像份重算。case 内拖拽重排走的也是这条 PUT,

@@ -206,8 +206,8 @@ describe('自镜像', () => {
 
     const generatedLr = (id: number) => db.rows.find(r => r.id === id)!.algs[1]
       .find(entry => entry.gen === 'lr')?.alg;
-    expect(generatedLr(5169)).toBe("L2' U2' F' L2' F U2' L U' L");
-    expect(generatedLr(5170)).toBe("U2 y' U F' L U2' L2' U' L2 U' F' L' F2");
+    expect(generatedLr(5169)).toBe("(L2' U2' F' L2' F) (U2' L U' L)");
+    expect(generatedLr(5170)).toBe("U2 y' U F' L U2' (L2' U' L2 U') F' L' F2");
     expect(generatedLr(6081)).toBe("U F' L' U' L U F");
     for (const current of db.rows) {
       const previous = structuredClone(current.algs);

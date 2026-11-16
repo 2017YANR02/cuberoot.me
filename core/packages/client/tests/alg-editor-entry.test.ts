@@ -1,10 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import { editedAlgEntry } from '@/lib/alg_editor';
-import { algHtmlText } from '@/lib/alg_html';
+import { algHtmlText, consistentAlgEntry } from '@/lib/alg_html';
 import { displayCaseAlg, displayCaseAlgHtml } from '@/lib/alg_display';
 import type { AlgEntry } from '@cuberoot/shared/alg';
 
 describe('editing displayed algorithms without losing canonical moves or marks', () => {
+  it('uses the same legacy fallback for reading, editing and an unchanged save', () => {
+    const legacy = { alg: "U F U' F'", algHtml: "U R U' R'<u></u>", altId: 'eo-fl' };
+    const shown = consistentAlgEntry(legacy);
+    expect(shown).toEqual({ alg: legacy.alg, altId: legacy.altId });
+    expect(editedAlgEntry(legacy, shown.alg, shown.algHtml, shown.alg, shown.alg)).toEqual(shown);
+    expect(legacy.algHtml).toBe("U R U' R'<u></u>");
+  });
+  it('does not treat half-turn direction, grouping or grip notation as formatting', () => {
+    for (const algHtml of ["R U2' R'", "(R U2 R')2", "=y R U2 R'"]) {
+      expect(consistentAlgEntry({ alg: "R U2 R'", algHtml })).toEqual({ alg: "R U2 R'" });
+    }
+    expect(() => editedAlgEntry({ alg: 'R' }, 'R', undefined, 'R', '<u>L</u>')).toThrow('do not match');
+  });
+  it('retains real annotations and typography, allowing only whitespace differences', () => {
+    const entry = { alg: "R U R'", algHtml: "<strong> R <s>U</s> R' </strong>" };
+    expect(consistentAlgEntry(entry)).toBe(entry);
+    expect(consistentAlgEntry({ alg: 'R', algHtml: 'R<u></u>' })).toEqual({ alg: 'R' });
+  });
   const original: AlgEntry = { alg: "R U R' U' y2", algHtml: "R <u>U</u> R' U' y2", tags: ['oh'], altId: '123', setup: "R U' R'" };
   const shown = displayCaseAlg('3x3', 'pll', original.alg);
   const shownHtml = displayCaseAlgHtml('3x3', 'pll', original.algHtml!);

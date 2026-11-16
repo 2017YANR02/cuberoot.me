@@ -3,8 +3,7 @@ import { duplicateAlgKey } from '@cuberoot/shared/alg-notation';
 import { adjacentUEdits, applyAlgTextEdits, displayCaseAlg, displayCaseScramble, oriAdjustSetup, playbackCaseAlg, uTurnOrder } from '@/lib/alg_display';
 import { CUBE_ORIENTATIONS } from '@/lib/alg_goals';
 import { orientCaseSetup, setupForCase, validateAlgCase, validateStoredAlgCase } from '@/lib/alg_validation';
-import { algHtmlText, editAlgHtmlText } from '@/lib/alg_html';
-import { normalizeAlg } from '@/lib/alg_normalize';
+import { algHtmlText, consistentAlgEntry, editAlgHtmlText } from '@/lib/alg_html';
 import { tr } from '@/i18n/tr';
 import { cacheAlignedOhEntries, ohAlgsForCase, supportsOhHands } from '@/lib/alg_oh_hand';
 
@@ -111,14 +110,7 @@ export async function alignCaseEntry(
 ): Promise<AlgEntry> {
   const setup = commonCaseSetup(puzzle, set, c, ori);
   const validation = { fixedOrientation: ['2x2', '3x3', '4x4', '5x5', '6x6'].includes(puzzle) };
-  let html = entry.algHtml;
-  if (html) {
-    try {
-      // Stale rich text must not override the verified move sequence. Preserve
-      // the original markup in SOURCE for editing; render plain moves instead.
-      if (normalizeAlg(puzzle, algHtmlText(html)) !== normalizeAlg(puzzle, entry.alg)) html = undefined;
-    } catch { html = undefined; }
-  }
+  const html = consistentAlgEntry(entry).algHtml;
   let reason = '';
   for (const prefix of adjustments(puzzle)) {
     const alg = [prefix, entry.alg].filter(Boolean).join(' ');
