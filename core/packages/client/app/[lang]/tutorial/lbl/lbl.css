@@ -208,8 +208,8 @@
   .lbl-demonstration, .lbl-complete .lbl-cube { height: clamp(280px, 80vw, 390px); }
   .lbl-explanation { padding: 12px 4px; }
   .lbl-content-example:is(:has(.lbl-demo-stage:nth-child(2)), .lbl-content-corner-ejection), .lbl-complete .lbl-demo.lbl-demo-split {
-    height: 100%; min-height: 280px;
-    grid-template-rows: clamp(150px, 46%, 300px) minmax(0, 1fr);
+    height: auto; min-height: 0;
+    grid-template-rows: auto auto;
     align-items: stretch;
   }
   .lbl-complete, .lbl-complete .lbl-complete-demo, .lbl-complete .lbl-cube { height: 100%; }
@@ -305,4 +305,35 @@
   .lbl-walkthrough .lbl-complete .lbl-demo.lbl-demo-split { height: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; gap: 12px; }
   .lbl-walkthrough .lbl-complete .lbl-cube { height: clamp(260px, 74vw, 370px); }
   .lbl-walkthrough .lbl-complete-thought { min-height: 8rem; padding: 0 4px 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) { .lbl-content { animation: none; } }
+
+/* Piece lessons share stable mobile anchors regardless of paragraph wrapping. */
+@media (max-width: 760px) {
+  .lbl-lesson-scroll:has(> .lbl-content-pieces)::before { flex: 0 0 16px; }
+  .lbl-content-pieces { align-content: start; }
+  .lbl-content-pieces > .lbl-explanation > .lbl-lead { min-height: 2lh; }
+}
+
+
+/* Single-cube teaching pages share one mobile canvas size, independent of copy and controls. */
+@media (max-width: 760px) {
+  .lbl-lesson-scroll > .lbl-daisy-lift-content { position: relative; }
+  .lbl-lesson-scroll { --lbl-mobile-cube-height: clamp(280px, 90vw, 390px); }
+  .lbl-lesson-scroll :is(.lbl-content, .lbl-complete) {
+    --lbl-text-small: .9375rem;
+    --lbl-text-body: 1.125rem;
+    --lbl-text-emphasis: 1.25rem;
+    --lbl-text-display: 1.5rem;
+  }
+  .lbl-lesson-scroll .lbl-content > .lbl-demonstration,
+  .lbl-lesson-scroll .lbl-complete .lbl-cube { height: auto; }
+  .lbl-lesson-scroll :is(.lbl-demonstration, .lbl-cube) > .lbl-auto-player,
+  .lbl-lesson-scroll .lbl-notation-demonstration > .lbl-notation-player,
+  .lbl-lesson-scroll .lbl-complete-playback { height: auto; flex: none; }
+  .lbl-lesson-scroll :is(.lbl-demonstration, .lbl-complete .lbl-cube) .alg-sim-player.is-fill { height: auto; flex: none; padding: 0; }
+  .lbl-lesson-scroll :is(.lbl-demonstration, .lbl-complete .lbl-cube) .alg-sim-player.is-fill .sim-stage {
+    flex: none; height: var(--lbl-mobile-cube-height);
+  }
 }
