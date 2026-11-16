@@ -96,7 +96,9 @@ describe('CubeVirtualKeyboard formula marks', () => {
       dispatchPointer(trigger!, 'pointerdown');
       dispatchPointer(trigger!, 'pointerup');
     });
-    const item = host.querySelector<HTMLButtonElement>(`[data-mk="${key}"]`);
+    const popup = document.body.querySelector('.vkb-marks-popup');
+    expect(popup?.parentElement).toBe(document.body);
+    const item = popup?.querySelector<HTMLButtonElement>(`[data-mk="${key}"]`);
     expect(item).not.toBeNull();
     await act(async () => item!.click());
   }
@@ -160,7 +162,9 @@ describe('CubeVirtualKeyboard formula marks', () => {
     const trigger = host.querySelector<HTMLButtonElement>(`[data-key="${key}"]`)!;
     await act(async () => dispatchPointer(trigger, 'pointerdown'));
     await act(async () => vi.advanceTimersByTime(250));
-    const item = [...host.querySelectorAll<HTMLElement>('.vkb-popup-item')]
+    const popup = document.body.querySelector('.vkb-popup');
+    expect(popup?.parentElement).toBe(document.body);
+    const item = [...popup!.querySelectorAll<HTMLElement>('.vkb-popup-item')]
       .find(el => el.dataset.val === variant)!;
     expect(item).toBeDefined();
     vi.spyOn(item, 'getBoundingClientRect').mockReturnValue({

@@ -18,6 +18,7 @@
  *   ↑/↓/· 直接插字符。样式项仅在 contenteditable target 上生效。
  */
 import { useState, useRef, useCallback, useEffect, type RefObject, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { cleanAlgText } from '@/lib/alg-autospace';
 import { tr } from '@/i18n/tr';
@@ -1025,8 +1026,8 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
         <span><em>{t('recon.gestureBracket', '() up')}</em> {'{ }'}</span>
       </p>
 
-      {/* 长按弹出气泡(portal 到 body) */}
-      {popupVisible && (
+      {/* 按视口坐标定位，挂到 body 避免祖先 backdrop-filter 改变 fixed 包含块或裁剪浮层。 */}
+      {popupVisible && createPortal(
         <div
           ref={popupRef}
           className="vkb-popup"
@@ -1042,11 +1043,12 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
               {v}
             </span>
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
 
       {/* 记号弹层 */}
-      {marksPopupVisible && (
+      {marksPopupVisible && createPortal(
         <div
           ref={marksPopupRef}
           className="vkb-popup vkb-marks-popup"
@@ -1071,7 +1073,8 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
               {it.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
