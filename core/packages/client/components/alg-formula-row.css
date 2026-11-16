@@ -6,6 +6,17 @@
 .compact-select-popup.alg-tag-menu {
   --alg-ui-size: 14px;
 }
+/* Compact category cards share one size for setup and all tag icons. */
+.alg-case-info {
+  --alg-ui-size: 13px;
+}
+.alg-case-info :is(.alg-case-icon, .alg-tag-symbol) {
+  font-size: var(--alg-ui-size);
+}
+.alg-case-info .alg-case-icon {
+  width: 1em;
+  height: 1em;
+}
 .alg-formula-row.alg-formula-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 40px;

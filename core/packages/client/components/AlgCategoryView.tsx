@@ -5,6 +5,7 @@ import { requires3x3AlgCaseSetup } from '@cuberoot/shared/alg';
 import PageHeading from '@/components/PageHeading';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 import '@cuberoot/timer-ui/compact-select.css';
+import './alg-formula-row.css';
 
 /**
  * AlgCategoryView — full port of packages/client-vite/src/pages/alg/AlgCategoryPage.tsx.
@@ -232,7 +233,7 @@ function SetupLine({ puzzle, setup, notationStyle, sq1NotationMode = 'compact' }
       onClick={event => { event.stopPropagation(); copy(text); }}
       title={tr({ zh: '点击复制打乱', en: 'Click to copy setup' })}
     >
-      <Shuffle size={13} className="alg-case-icon" aria-label={tr({ zh: '打乱', en: 'Setup' })} />
+      <Shuffle size="1em" className="alg-case-icon" aria-label={tr({ zh: '打乱', en: 'Setup' })} />
       <code>{text}</code>
     </button>
   );
