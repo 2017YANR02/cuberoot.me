@@ -1,6 +1,6 @@
 # CubeRoot site assistant
 
-## Regional OpenAI option (2026-11-15, local implementation)
+## Regional OpenAI option (2026-11-15, production)
 
 The website defaults to Alibaba Cloud Bailian. `/v1/site-assistant/providers`
 returns visitor-specific options without caching; POST admission independently
@@ -37,8 +37,29 @@ does not silently send those requests to another provider.
 Validation: shared build and API/client typechecks passed; 215 focused API,
 relay, request, presentation and endpoint-catalog tests passed. The full docs
 checker still reports existing missing local artifact links outside this change.
-Status: restricted Chat Completions key and shared relay secret configured in
-Vercel production; rollout and real OpenAI end-to-end acceptance are pending.
+Production acceptance for feature commit `a1c0ef70a`:
+
+- The restricted Chat Completions key and shared relay secret are sensitive
+  production variables in Vercel. The API has only the relay secret; its OpenAI
+  switch is enabled. No browser bundle or repository contains the credentials.
+- [Deploy Core](https://github.com/2017YANR02/cuberoot.me/actions/runs/43788450280)
+  and [Deploy Next](https://github.com/2017YANR02/cuberoot.me/actions/runs/43788450267)
+  passed. Vercel production deployment `dpl_B5ea32F4gCmAJHwQcamgzC9WKV3Y` is READY
+  in `iad1`; API health reports a connected database.
+- The live relay rejects missing proofs and correctly signed unsupported-country
+  fixtures with 403. A synthetic supported-country fixture exercised the real
+  OpenAI native navigation tool call, tool-result continuation and final JSON
+  answer, streamed in 26 chunks. This is service integration acceptance, not
+  evidence that an overseas visitor's entire browser flow was tested.
+- The actual browser is classified CN. Its logged-in chat returned a normal
+  answer and a verified PLL library link using Bailian. Provider discovery
+  remains Bailian-only, even with spoofed client country/IP headers. OpenAI is
+  intentionally absent from this browser's selector.
+- Follow-up verification covers 135 hook, hydration, catalog and authentication
+  documentation tests. Provider discovery is isolated from existing chat-response
+  fixtures; dedicated hook tests cover region changes, network failure and stale
+  responses. The authentication review documents unchanged identity/ownership
+  gates and the additional region/signature boundary.
 
 ## Local RAG and memory implementation (2026-11-12)
 

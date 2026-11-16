@@ -29,6 +29,11 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/hooks/useSpeechToText', () => ({
   useSpeechToText: () => speechState,
 }));
+// Provider discovery has its own hook tests; these transport fixtures describe
+// chat replies and must not be consumed by the independent metadata request.
+vi.mock('@/hooks/useAssistantProvider', () => ({
+  useAssistantProvider: () => ({ provider: 'bailian', setProvider: vi.fn(), openaiAvailable: false }),
+}));
 vi.mock('@/lib/site-search', () => ({
   INITIAL_RENDER_CAP: 10,
   METRIC_LABEL_OVERRIDE: {},
@@ -241,7 +246,7 @@ describe('LandingSearch placeholder hydration', () => {
     await act(async () => { input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer session-test');
-    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ conversationId: '00000000-0000-4000-8000-000000000066', question: '视频怎么数帧', lang: 'zh', thinking: 'auto', timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone, history: [] });
+    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ conversationId: '00000000-0000-4000-8000-000000000066', question: '视频怎么数帧', lang: 'zh', provider: 'bailian', thinking: 'auto', timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone, history: [] });
     // The dialog and its controls render immediately; formatting arrives in its own chunk.
     await act(async () => { await import('react-markdown'); });
     expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('打开数帧页面。数帧');
@@ -352,13 +357,13 @@ describe('LandingSearch placeholder hydration', () => {
       await act(async()=>root.render(createElement(LandingSearch,{cards:[],lang:'zh',query:'第一问',persistentResults:true})));
       await click('button[aria-label="提问"]');
       await click('button[aria-label="重试"]');
-      expect(JSON.parse(fetcher.mock.calls[1][1].body)).toEqual({conversationId:'00000000-0000-4000-8000-000000000066',question:'第一问',lang:'zh',thinking:'auto',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
+      expect(JSON.parse(fetcher.mock.calls[1][1].body)).toEqual({conversationId:'00000000-0000-4000-8000-000000000066',question:'第一问',lang:'zh',provider:'bailian',thinking:'auto',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
       expect(document.querySelectorAll('.site-assistant-turn')).toHaveLength(1);
       await click('button[title="编辑问题"]');
       const textarea=document.querySelector('textarea[aria-label="编辑问题"]') as HTMLTextAreaElement;
       await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(textarea,'改过的问题');textarea.dispatchEvent(new Event('input',{bubbles:true}));});
       await act(async()=>{document.querySelector('.site-assistant-edit')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));});
-      expect(JSON.parse(fetcher.mock.calls[2][1].body)).toEqual({conversationId:'00000000-0000-4000-8000-000000000066',question:'改过的问题',lang:'zh',thinking:'auto',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
+      expect(JSON.parse(fetcher.mock.calls[2][1].body)).toEqual({conversationId:'00000000-0000-4000-8000-000000000066',question:'改过的问题',lang:'zh',provider:'bailian',thinking:'auto',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
       expect(document.querySelector('.site-assistant-question h3')?.textContent).toBe('改过的问题');
       expect(document.querySelectorAll('.site-assistant-turn')).toHaveLength(1);
     } finally {await act(async()=>root.unmount());host.remove();}
