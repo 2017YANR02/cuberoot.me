@@ -102,4 +102,10 @@ SSE 每 15 秒发送一次不可见的协议保活注释，避免深入思考期
 
 成本/生成/更新问题优先预读全目录，补充实现资料使用 developer 范围。维护主张允许引用元数据；页面操作仍需页面正文，引用 ID 和最终证据复核保持有效。统一拒答原因写入已有请求 metrics.answerRejections。
 
-运行状态暂未接入：lastRun.status、failedStage、lastSuccessAt、lastPublishedAt、publishedDataVersion、sourceDataCutoff 均为 unknown。配置频率、实际运行、成功执行与线上发布是独立事实；不得把源文件版本哈希当作统计数据版本。源码链接指向 main，可能先于已部署目录变化，以随包目录的内容哈希识别本次读取版本。
+配置视图默认不读取运行状态。`view:runtime` 通过固定公开地址独立读取 GitHub Actions、当前静态快照清单、历史排名 PG 导入时间、WCA 二进制数据截点及双底 ZBLL 清单。实际状态问题先读配置再读 runtime；引用运行事实必须选 runtime 的来源 ID。响应包含 observedAt，缓存最长 15 分钟；过期后读取失败不使用旧成功结果冒充当前状态。
+
+WCA 最近运行只比较 main 的 schedule/workflow_dispatch，各取最近 10 次；代码 push 的语法检查不参与。最近成功在成功候选中最多核查 5 次的实际 attempt/job/steps，排除跳过生成或发布步骤的局部任务。较新候选读取失败时不把更老结果标为“最近成功”；找不到时明确 bounded-history 缺口。允许 stats_filter 的任务只证明选定范围的流程成功，不等于全部统计重算。
+
+当前静态版本取实际服务中的文件清单 SHA-256，涵盖多个发布 owner，不能当成 WCA 专属更新时间、源码版本或数据库版本。独立的数据库导入时间可能晚于最近完整流程成功。发布结束由 [snapshot-deploy.ts](../../../scripts/wca-data/snapshot-deploy.ts) 在 active inventory 旁原子写 publication.json；读取端核对版本/commit 后才采用 publication-finalized 时间。恢复确认可能晚于初次激活；重复 finalize 保留原时间；旧快照无回执则发布时间未知，不回填猜测。
+
+本地求解运行记录尚未上传；LSLL、精确数据集和求解表尚无独立公开版本状态适配，仍逐项标为未知。双底题库可读线上清单版本，但 generatedAt 不等于上线时间。源码链接指向 main，配置快照以随包目录内容哈希识别；运行证据使用独立真实来源与观察时间。

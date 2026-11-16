@@ -12,6 +12,7 @@ it.each([
   '目前站内有哪些统计是计算量很大的？分别以什么方式更新？',
   '哪些统计最耗 CPU？', '平均榜怎样更新？', 'LSLL 的最优解如何生成？',
   '统计是不是打开页面才计算？', '统计最近成功更新了吗？',
+  'WCA 统计最近运行成功了吗？', '统计线上版本是什么？',
   'Which statistics are computationally expensive and how are they updated?',
 ])('routes maintenance questions to the complete metadata catalog: %s', question => {
   expect(requestedAssistantEvidence(question)).toBe('statistics_metadata');
@@ -45,8 +46,8 @@ it('returns every registered family within the actual prefetch budget, without n
   expect(data.entries.map((entry: any) => entry.id)).toEqual(['wca-heavy', 'wca-history', 'scramble', 'exact-distributions', 'lsll', 'double-zbll', 'solver-tables']);
   expect(new Set(result.sources.map(source => source.id)).size).toBe(7);
   expect(read).not.toHaveBeenCalled();
-  expect(data.runtime).toEqual({ lastRun: { status: 'unknown', failedStage: 'unknown' }, lastSuccessAt: 'unknown', lastPublishedAt: 'unknown', publishedDataVersion: 'unknown', sourceDataCutoff: 'unknown' });
-  expect(data.coverage.gaps).toContain('Live Actions runs');
+  expect(data.runtime.status).toBe('not_loaded');
+  expect(data.coverage.gaps).toContain('Local run receipts not uploaded');
   expect(data.entries.find((entry: any) => entry.id === 'wca-heavy').cost).toContain('NOT a CPU ranking');
   expect(data.entries.find((entry: any) => entry.id === 'double-zbll').cost).toContain('without loading solver tables');
 });
@@ -58,7 +59,7 @@ it('distinguishes configuration from runtime and supplies real provenance on a f
   expect(data.entries[0].workflow.jobConditions.build).toBe("github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'");
   expect(data.entries[0].heavyStatIds).toContain('round_top3_sum');
   expect(data.entries[0].provenance.every((source: any) => /^[0-9a-f]{64}$/.test(source.sha256))).toBe(true);
-  expect(data.runtime.lastRun.status).toBe('unknown');
+  expect(data.runtime.status).toBe('not_loaded');
 });
 it('rejects arbitrary paths, writes and invented family IDs without fabricating evidence', () => {
   for (const call of [{ tool: 'statistics_metadata', id: '../../private' }, { tool: 'statistics_metadata', run: true }, { tool: 'statistics_metadata', scope: 'all', id: 'lsll' }]) expect(toolCallSchema.safeParse(call).success).toBe(false);

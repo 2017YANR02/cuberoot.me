@@ -13,6 +13,7 @@ import { findAssistantPeople } from './site_assistant_people.js';
 import { analysisSchemaCall, analysisQueryCall } from './site_assistant_analysis.js';
 import { readAssistantNews } from './site_assistant_news.js';
 import { readStatisticsMetadata } from './site_assistant_statistics_metadata.js';
+import { readStatisticsRuntime } from './site_assistant_statistics_runtime.js';
 import { algorithmCards } from './site_assistant_algorithms.js';
 
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
@@ -47,7 +48,7 @@ export const toolCallSchema = z.discriminatedUnion('tool', [
     sets: z.union([z.literal('auto'), z.array(z.enum([...PHOTO_ALG_SETS, ...POCKET_PHOTO_ALG_SETS, ...FOUR_PHOTO_ALG_SETS])).min(1).max(PHOTO_ALG_SETS.length + POCKET_PHOTO_ALG_SETS.length + FOUR_PHOTO_ALG_SETS.length)]).default('auto'),
   }).strict(),
   z.object({ tool: z.literal('statistics'), id: id.optional(), tableKey: z.string().regex(/^[0-9.]{1,40}$/).optional(), offset: z.number().int().min(0).max(50000).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict().refine(value=>!value.tableKey || !!value.id, {path:['id'],message:'A tableKey requires its statistic id. Repeat the id from the previous result; table keys are not global.'}),
-  z.object({ tool: z.literal('statistics_metadata'), scope: z.literal('all').optional(), id: id.optional() }).strict().refine(value => !(value.scope && value.id), { message: 'Choose scope all or one id.' }),
+  z.object({ tool: z.literal('statistics_metadata'), scope: z.literal('all').optional(), id: id.optional(), view: z.enum(['configuration','runtime']).optional() }).strict().refine(value => !(value.scope && value.id), { message: 'Choose scope all or one id.' }),
   z.object({ tool: z.literal('pages'), query, pageIds: z.array(z.string().max(120)).max(3).default([]), audience: z.enum(['user','developer']).default('user') }).strict(),
   z.object({ tool: z.literal('navigation'), query, kind: z.enum(['all','algorithms','training','solver']).default('all'), pageIds: z.array(z.string().max(200)).max(3).default([]) }).strict(),
 ]);
@@ -141,7 +142,7 @@ function selectAttendance(data: {results: Array<{competition_id: string; event_i
 
 /** Only fixed public origins/endpoints. Never forwards cookies or credentials. */
 export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'navigation'|'analysis_schema'|'analysis_query'|'web_search'|'deliberate'|'lookup_cube_photo'}>, lang: 'zh'|'en', read: JsonReader, findPeople = findAssistantPeople,today=new Date().toISOString().slice(0,10),timeZone='UTC'): Promise<ToolResult> {
-  if (call.tool === 'statistics_metadata') return readStatisticsMetadata(call, lang);
+  if (call.tool === 'statistics_metadata') return call.view === 'runtime' ? readStatisticsRuntime(call, lang, read) : readStatisticsMetadata(call, lang);
   if (call.tool === 'news') return readAssistantNews(call, lang, read, timeZone);
   const label = (zh: string, en: string) => ({ zh, en })[lang];
   const name = (raw: string) => displayCuberName(raw, lang === 'zh');

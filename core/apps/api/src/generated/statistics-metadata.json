@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "e677408ed4734ad14741af49d3838ffac53d54f79553c1c31098901b7a330d3a",
+  "version": "ec13cd2b958cb0961ff13bc3d213e027dc42226ea39fb7b061cf2178b40d74fb",
   "coverage": {
     "level": "registered-families",
     "statement": "Returns all registered main families including dependencies, not proof that every costly statistic or experimental solver has been enumerated.",
@@ -25,9 +25,8 @@
     "gaps": [
       "Per-target exact-enumeration costs",
       "Comparable CPU/memory measurements",
-      "Live Actions runs",
-      "Local progress",
-      "Current publication receipts/data cutoff",
+      "Local run receipts not uploaded",
+      "Per-family publication times without receipts",
       "Unregistered experimental jobs"
     ]
   },
@@ -89,7 +88,7 @@
     },
     {
       "path": "scripts/assistant/statistics-metadata-definitions.ts",
-      "sha256": "1dac4bc9ae4693fe3d09d12aca4602f1ce9edc3b177185bc277be691b88ae90d",
+      "sha256": "c0dbbf0f62c733a2e2f443a47534072b4ed862f5986a6c33e914823df42bc11b",
       "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/scripts/assistant/statistics-metadata-definitions.ts"
     },
     {

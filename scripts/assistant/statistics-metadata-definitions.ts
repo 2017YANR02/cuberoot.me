@@ -80,5 +80,5 @@ export const coverage = {
     { artifact: 'stats.world-bests', reason: 'External scraping; no heavy-cost evidence.' },
     { artifact: 'client.code-language-history', reason: 'Manual Git-history snapshot; cost not measured here. CI/page reads reuse it.' }
   ],
-  gaps: ['Per-target exact-enumeration costs', 'Comparable CPU/memory measurements', 'Live Actions runs', 'Local progress', 'Current publication receipts/data cutoff', 'Unregistered experimental jobs']
+  gaps: ['Per-target exact-enumeration costs', 'Comparable CPU/memory measurements', 'Local run receipts not uploaded', 'Per-family publication times without receipts', 'Unregistered experimental jobs']
 };
