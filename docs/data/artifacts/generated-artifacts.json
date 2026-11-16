@@ -1957,7 +1957,7 @@
       "verification": [
         "pnpm --filter @cuberoot/client typecheck"
       ],
-      "driftPolicy": "Manual snapshot refresh only; keep raw Linguist byte counts and source commits. CI and page rendering do not rerun history analysis."
+      "driftPolicy": "Explicit or scheduled maintenance through the existing incremental generator; keep raw Linguist byte counts and source commits. Reuse .local-data/code-language-history/checkpoint.json. CI, builds and page rendering do not rerun history analysis."
     },
     {
       "id": "client.wenkai-heading-fonts",
