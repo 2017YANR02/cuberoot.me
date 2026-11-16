@@ -241,9 +241,9 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
 .f2l-intro-players { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 24px; margin-top: 20px; }
 .f2l-intro-players > .f2l-demo > h3, .f2l-extraction > h3 { text-align: center; }
 .f2l-intro-progress { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 12px; }
-.f2l-intro-progress > .f2l-video-controls { order: -1; flex: 0 0 auto; margin-top: 0; }
+.f2l-intro-progress > .tutorial-video-controls { order: -1; flex: 0 0 auto; margin-top: 0; }
 .f2l-intro-progress > .progress-slider { flex: 1 1 0; min-width: 0; }
-.f2l-video-controls { margin-top: 12px; }
+.tutorial-video-controls { margin-top: 12px; }
 .f2l-video-viewport, .f2l-video-stage { display: contents; }
 .f2l-intro-progress .progress-slider { display: block; width: 100%; margin: 0; touch-action: none; }
 .f2l-intro-methods { --f2l-intro-gap: 24px; --f2l-intro-scale: 1.4; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--f2l-intro-gap); margin-top: 20px; padding-top: 48px; }

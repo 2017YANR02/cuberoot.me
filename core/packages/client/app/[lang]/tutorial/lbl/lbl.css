@@ -165,7 +165,7 @@
 .lbl-opposite-color-diagram { display: grid; gap: 16px; width: min(100%, 136px); }
 .lbl-opposite-color-pair { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px; }
 .lbl-opposite-color-pair span { aspect-ratio: 1; border-radius: 5px; }
-.lbl-page .playback-bar-controls { border: 1px solid var(--border-default); border-radius: 999px; padding: 5px; width: fit-content; max-width: 100%; align-self: center; flex-wrap: nowrap; }
+.lbl-page .playback-bar-controls:not(.tutorial-video-controls) { border: 1px solid var(--border-default); border-radius: 999px; padding: 5px; width: fit-content; max-width: 100%; align-self: center; flex-wrap: nowrap; }
 .lbl-layers .lbl-guide-floor-grid > figure:nth-child(1) { order: 3; }
 .lbl-layers .lbl-guide-floor-grid > figure:nth-child(2) { order: 2; }
 .lbl-layers .lbl-guide-floor-grid > figure:nth-child(3) { order: 1; }

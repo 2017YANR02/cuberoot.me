@@ -1,7 +1,7 @@
 'use client';
 
 import ChatBubble from '@/components/ChatBubble';
-import ProgressSlider from '@/components/ProgressSlider';
+import VideoProgress from '../components/VideoProgress';
 import { useEffect, useId, useMemo, useRef, useState, type ComponentProps, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { Alg } from 'cubing/alg';
@@ -356,11 +356,8 @@ function DaisyBlockedPrelude({ setup, onDone }: { setup: string; onDone: () => v
       <p hidden={stage < 2}>{tr({ zh: '白棱上去了，原来的白花瓣却被转走了。', en: 'The white edge moves up, but the existing white petal moves away.' })}</p>
     </section>
     {toolbar && createPortal(<div className="lbl-cross-animation-progress">
-      <ProgressSlider value={time} max={daisyBlockedDuration} keyboardStep={500}
-        onChange={value => { clock.current = value; setTime(value); setSeekVersion(version => version + 1); }}
-        onInteractionStart={() => setPaused(true)} onInteractionEnd={() => setPaused(false)}
-        formatValue={value => tr({ zh: `${(value / 1000).toFixed(1)} 秒`, en: `${(value / 1000).toFixed(1)} seconds` })}
-        ariaLabel={tr({ zh: '演示进度', en: 'Animation progress' })} />
+      <VideoProgress time={time} duration={daisyBlockedDuration} playing={!paused}
+      onPlayingChange={playing => setPaused(!playing)} onSeek={value => { clock.current = value; setTime(value); setSeekVersion(version => version + 1); }} onReplay={() => { clock.current = 0; setTime(0); setSeekVersion(version => version + 1); }} />
     </div>, toolbar)}
   </div>;
 }

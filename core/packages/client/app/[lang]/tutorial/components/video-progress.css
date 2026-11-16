@@ -1,0 +1,3 @@
+.tutorial-video-progress { display: flex; align-items: center; gap: 12px; width: 100%; min-width: 0; }
+.tutorial-video-progress > .tutorial-video-controls { flex: 0 0 auto; margin: 0; }
+.tutorial-video-progress > .progress-slider { flex: 1 1 0; min-width: 0; margin: 0; }

@@ -6,7 +6,7 @@ import { Color } from 'three';
 import { FM_FIXED_COLOR, FM_IGNORED } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import ChatBubble from '@/components/ChatBubble';
-import ProgressSlider from '@/components/ProgressSlider';
+import VideoProgress from '../components/VideoProgress';
 import { type CubeFace } from '@/lib/cube-colors';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import { tr } from '@/i18n/tr';
@@ -98,11 +98,8 @@ export default function SpecialCasePrelude({ scenes, piece, finalAlg, onDone }: 
       {index === scenes.length - 1 && <AlgSteps step={piece === 'corner' ? 'trigger-learning' : 'middle'} alg={finalAlg} />}
     </section>
     {toolbar && createPortal(<div className="lbl-cross-animation-progress">
-      <ProgressSlider value={time} max={duration} keyboardStep={500}
-        onChange={value => { clock.current = value; setTime(value); }}
-        onInteractionStart={() => setPaused(true)} onInteractionEnd={() => setPaused(false)}
-        formatValue={value => tr({ zh: `${(value / 1000).toFixed(1)} 秒`, en: `${(value / 1000).toFixed(1)} seconds` })}
-        ariaLabel={tr({ zh: '演示进度', en: 'Animation progress' })} />
+      <VideoProgress time={time} duration={duration} playing={!paused}
+      onPlayingChange={playing => setPaused(!playing)} onSeek={value => { clock.current = value; setTime(value); }} onReplay={() => { clock.current = 0; setTime(0); }} />
     </div>, toolbar)}
   </div>;
 }

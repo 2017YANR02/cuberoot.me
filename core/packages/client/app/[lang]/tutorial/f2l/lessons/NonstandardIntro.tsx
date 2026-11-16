@@ -9,7 +9,7 @@ import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlaye
 import { resolveSimPreviewMoves } from '@/components/AlgPlayer/player-setup';
 import { FM_FIXED_COLOR, FM_IGNORED, stickeringMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
 import ProgressSlider from '@/components/ProgressSlider';
-import VideoControls from '../components/VideoControls';
+import VideoControls from '../../components/VideoControls';
 import VideoStage from '../components/VideoStage';
 import TerminologySummary from '../components/TerminologySummary';
 import NonstandardSummary from '../components/NonstandardSummary';

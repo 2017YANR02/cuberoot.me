@@ -823,6 +823,20 @@ export const CATALOG: ComponentEntry[] = [
     Demo: ChatBubbleDemo,
   },
   {
+    name: 'VideoControls',
+    import: "import VideoControls from '@/app/[lang]/tutorial/components/VideoControls';",
+    category: 'more',
+    zh: '教程编排演示共用的播放、暂停和重播按钮。',
+    en: 'Shared play, pause, and replay buttons for staged tutorial videos.',
+  },
+  {
+    name: 'VideoProgress',
+    import: "import VideoProgress from '@/app/[lang]/tutorial/components/VideoProgress';",
+    category: 'more',
+    zh: '编排演示的时间进度条，左侧带播放与重播按钮，拖动后保留暂停状态。',
+    en: 'Teaching video timeline with play and replay controls on the left and pause-preserving seeking.',
+  },
+  {
     name: 'SectionMenu',
     import: "import SectionMenu from '@/app/[lang]/tutorial/components/SectionMenu';",
     category: 'more',

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import ProgressSlider from '@/components/ProgressSlider';
+import VideoProgress from '../components/VideoProgress';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import TrainingFeedbackOverlay from '@/components/TrainingFeedbackOverlay';
 import { tr } from '@/i18n/tr';
@@ -39,7 +39,7 @@ const phases: readonly {
 const noStickers: readonly string[] = [];
 
 // Use the animation's own clock, including its pauses and reset, rather than a second timer.
-function updateLoopProgress(progress: (time: number) => void, timeline: readonly { duration: number }[], index: number, elapsed: number, scale: number, offset: number) {
+function updateTimelineProgress(progress: (time: number) => void, timeline: readonly { duration: number }[], index: number, elapsed: number, scale: number, offset: number) {
   const completed = timeline.slice(0, index).reduce((sum, phase) => sum + phase.duration, 0);
   progress(offset + (completed + elapsed) * scale);
 }
@@ -113,7 +113,7 @@ function CrossPlayback({ progress, clock, seekVersion, paused, onComplete, onFad
       }
       if (!paused && elapsed === phase.duration && !player.current?.isUserMovePending?.()) {
         if (index === phases.length - 1) {
-          updateLoopProgress(progress, phases, index, elapsed, timingScale, 0);
+          updateTimelineProgress(progress, phases, index, elapsed, timingScale, 0);
           onComplete();
           return;
         }
@@ -123,7 +123,7 @@ function CrossPlayback({ progress, clock, seekVersion, paused, onComplete, onFad
         if (next.fadeOut) onFade(true);
         setPhaseIndex(index);
       }
-      updateLoopProgress(progress, phases, index, elapsed, timingScale, 0);
+      updateTimelineProgress(progress, phases, index, elapsed, timingScale, 0);
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
@@ -215,14 +215,14 @@ function CrossComparison({ reducedMotion, progress, clock, seekVersion, paused, 
       if (!paused && elapsed === duration && !left.current?.isUserMovePending?.() && !right.current?.isUserMovePending?.()) {
         if (reducedMotion && phase.feedback) return;
         if (index === comparisonPhases.length - 1) {
-          updateLoopProgress(progress, comparisonPhases, index, elapsed, 1, overviewDuration);
+          updateTimelineProgress(progress, comparisonPhases, index, elapsed, 1, overviewDuration);
           return;
         }
         index += 1;
         elapsed = 0;
         setPhaseIndex(index);
       }
-      if (!reducedMotion) updateLoopProgress(progress, comparisonPhases, index, elapsed, 1, overviewDuration);
+      if (!reducedMotion) updateTimelineProgress(progress, comparisonPhases, index, elapsed, 1, overviewDuration);
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
@@ -255,7 +255,7 @@ export default function CrossOverviewAnimation({ daisy, cross }: { daisy: ReactN
   const [time, setTime] = useState(0);
   const [seekVersion, setSeekVersion] = useState(0);
   const [paused, setPaused] = useState(false);
-  const progress = useCallback((value: number) => { clock.current = value; setTime(value); }, []);
+  const progress = useCallback((value: number) => { clock.current = value; setTime(value); if (value >= animationDuration) setPaused(true); }, []);
   const [toolbar, setToolbar] = useState<Element | null>(null);
   const showComparison = useCallback(() => { progress(overviewDuration); setContinued(true); setFading(false); }, [progress]);
   const restart = useCallback(() => {
@@ -296,10 +296,8 @@ export default function CrossOverviewAnimation({ daisy, cross }: { daisy: ReactN
     </>}
   </div>
   {animate && toolbar && createPortal(<div className="lbl-cross-animation-progress">
-    <ProgressSlider value={time} max={animationDuration} onChange={seek} keyboardStep={500}
-      onInteractionStart={() => setPaused(true)} onInteractionEnd={() => setPaused(false)}
-      formatValue={value => tr({ zh: `${(value / 1000).toFixed(1)} 秒`, en: `${(value / 1000).toFixed(1)} seconds` })}
-      ariaLabel={tr({ zh: '演示进度', en: 'Animation progress' })} />
+    <VideoProgress time={time} duration={animationDuration} playing={!paused}
+      onPlayingChange={playing => setPaused(!playing)} onSeek={seek} onReplay={restart} />
   </div>, toolbar)}
   {continued ? <p className="lbl-lead">{tr({
     zh: '不但要看底面图形，还要对齐侧面颜色',

@@ -7,7 +7,7 @@ import { parseAsString, useQueryState } from 'nuqs';
 import { Alg } from 'cubing/alg';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import ProgressSlider from '@/components/ProgressSlider';
-import VideoControls from '../components/VideoControls';
+import VideoControls from '../../components/VideoControls';
 import VideoStage from '../components/VideoStage';
 import { VisualCube } from '@/components/VisualCube';
 import { tr, T } from '@/i18n/tr';

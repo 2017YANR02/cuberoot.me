@@ -6,7 +6,7 @@ import { Tooltip } from '@/components/Tooltip';
 import ProgressSlider from '@/components/ProgressSlider';
 import { tr, T } from '@/i18n/tr';
 import PairEditor from '../components/PairEditor';
-import VideoControls from '../components/VideoControls';
+import VideoControls from '../../components/VideoControls';
 import VideoStage from '../components/VideoStage';
 import { freePlacementKey, placeFreePiece, SOLVED_FREE_PLACEMENT, type FreePracticeCase } from '../lib/free-practice';
 import './free-practice-guide.css';
