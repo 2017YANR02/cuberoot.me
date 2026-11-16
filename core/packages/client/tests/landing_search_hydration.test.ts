@@ -12,7 +12,7 @@ import type { ReconHit } from '@/lib/site-search';
 const searchState = vi.hoisted(() => ({ recons: [] as ReconHit[] }));
 
 const authState = vi.hoisted(() => ({ user: { uid: 66, wcaId: '2017YANR02' } as { uid: number; wcaId: string } | null, login: vi.fn() }));
-vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => authState.user, getAuthUser: () => authState.user, useAuthStore: { getState: () => authState } }));
+vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => authState.user, getAuthUser: () => authState.user, authActions: { login: authState.login }, useAuthStore: { getState: () => authState } }));
 vi.mock('@/lib/admin-api', async original => ({ ...await original<object>(), authHeaders: () => ({ 'Content-Type': 'application/json', Authorization: 'Bearer session-test' }) }));
 
 const routeState = vi.hoisted(() => ({ lang: 'zh' as 'zh' | 'en' }));
@@ -78,6 +78,7 @@ import { changeAppLanguage } from '@/i18n/i18n-client';
 
 describe('LandingSearch placeholder hydration', () => {
   beforeEach(() => {
+    authState.login.mockClear();
     searchState.recons = [];
     localStorage.clear();
     routeState.lang = 'zh';
@@ -300,7 +301,18 @@ describe('LandingSearch placeholder hydration', () => {
 
   it('keeps anonymous questions out of the API',async()=>{
     authState.user=null;const server=queueServer();const chat=await mountChat('世界纪录');
-    try{await chat.submit();expect(server.fetcher).not.toHaveBeenCalled();expect(document.body.textContent).toContain('请先登录并绑定 WCA 账号');expect(chat.host.querySelector('input')?.value).toBe('世界纪录');}finally{await chat.close();}
+    try {
+      const send = chat.host.querySelector<HTMLButtonElement>('button[aria-label="登录并发送"]');
+      expect(send).not.toBeNull();
+      await act(async () => send!.click());
+      await settle();
+      expect(authState.login).toHaveBeenCalledOnce();
+      expect(server.fetcher).not.toHaveBeenCalled();
+      expect(chat.host.querySelector('input')?.value).toBe('世界纪录');
+      const { assistantAuthContinuation } = await import('@/lib/assistant-auth-continuation');
+      expect(assistantAuthContinuation.read()).toMatchObject({ text: '世界纪录', uid: null, send: true, phase: 'auth' });
+      assistantAuthContinuation.clear();
+    } finally { await chat.close(); }
   });
   it.each([['daily_limit',429,'全站今日 1000 次提问额度已用完'],['model_unavailable',503,'暂时无法回答']] as const)('preserves the search query on %s rejection',async(error,status,text)=>{
     const server=queueServer();server.reject(error,status);const chat=await mountChat('世界纪录');

@@ -9,7 +9,7 @@ import { AccountChoiceRequired, clearIdentityChoice, getIdentityChoice, remember
 
 const mocks = vi.hoisted(() => ({ loginWca: vi.fn(), linkWca: vi.fn(), getSessionToken: vi.fn(), applySession: vi.fn(), replace: vi.fn() }));
 vi.mock('@/lib/account-api', () => ({ loginWca: mocks.loginWca, linkWca: mocks.linkWca }));
-vi.mock('@/lib/auth-store', () => ({ applySession: mocks.applySession, getRolePreview: () => null, getSessionToken: mocks.getSessionToken }));
+vi.mock('@/lib/auth-store', () => ({ applySession: mocks.applySession, getAuthUser: () => ({ uid: 42 }), getRolePreview: () => null, getSessionToken: mocks.getSessionToken }));
 vi.mock('@/components/AppLink', () => ({ default: ({ children }: { children: React.ReactNode }) => createElement('a', { href: '/account' }, children) }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: mocks.replace }) }));
 vi.mock('@/i18n/tr', () => ({ tr: ({ en }: { en: string }) => en }));
@@ -55,7 +55,7 @@ describe('WCA canonical-only first identity callback', () => {
       expect(mocks.replace).not.toHaveBeenCalled();
       expect(host.textContent).toContain('Link failed: No WCA ID');
       expect(host.querySelector('a')?.getAttribute('href')).toBe('/account');
-    } else expect(mocks.replace).toHaveBeenCalledExactlyOnceWith('/account?auth=mobile&next=original');
+    } else expect(mocks.replace).toHaveBeenCalledExactlyOnceWith('/account?auth=mobile&next=original', undefined);
   });
 
   it('leaves no background login iframe after returning to the account page', async () => {

@@ -2,6 +2,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { readFileSync } from 'node:fs';
+import { URL as NodeURL } from 'node:url';
 import { expect, it, vi } from 'vitest';
 import AlgRow, { AlgFormulaReadRow } from '@/components/AlgFormulaRow';
 
@@ -29,12 +30,17 @@ it('renders combined and repeated tags once in their assigned positions', () => 
 
 it('keeps page and grouped callers from reintroducing a second tag renderer', () => {
   for (const file of [
-    '../app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx',
+    '../components/AlgCaseRows.tsx',
     '../components/F2lSolutionGroups.tsx',
   ]) {
-    const source = readFileSync(new URL(file, import.meta.url), 'utf8');
-    expect(source, file).toContain('<AlgFormulaReadRow tags={entry.tags}');
+    const source = readFileSync(new NodeURL(file, import.meta.url), 'utf8');
+    expect(source, file).toMatch(/<AlgFormulaReadRow\s[^>]*\btags=\{entry\.tags\}/);
     expect(source, 'The row owns all display tags; callers pass raw tags only.').not.toContain('AlgTagLabel');
     expect(source).not.toMatch(/entry\.tags\?*\.(?:filter|map)/);
   }
+  const page = readFileSync(new NodeURL('../app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx', import.meta.url), 'utf8');
+  expect(page).toContain("AlgCaseReadRow as PlayableAlgRow");
+  expect(page).toContain('<PlayableAlgRow');
+  expect(page).not.toContain('AlgTagLabel');
+  expect(page).not.toMatch(/entry\.tags\?*\.(?:filter|map)/);
 });

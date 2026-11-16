@@ -19,9 +19,11 @@ describe('algorithm group headings', () => {
   });
 
   it('renders imported formula emphasis at the surrounding text weight', () => {
-    const weightRule = styles.match(
-      /\.alg-alg-text strong,\s*\.alg-mirror-alg strong,\s*\.alg-meta-algline-code strong,\s*\.alg-editor-input strong\s*\{([^}]*)\}/,
-    )?.[1] ?? '';
-    expect(weightRule).toContain('font-weight: inherit');
+    // Check each current rendering surface independently of selector ordering.
+    const rules = [...styles.matchAll(/([^{}]+)\{([^{}]*)\}/g)];
+    for (const selector of ['.alg-alg-text strong', '.alg-mirror-alg strong', '.alg-editor-input strong']) {
+      const rule = rules.find(([, selectors]) => selectors.split(',').some(value => value.trim() === selector));
+      expect(rule?.[2], selector).toContain('font-weight: inherit');
+    }
   });
 });
