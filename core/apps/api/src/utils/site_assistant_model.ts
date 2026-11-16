@@ -32,6 +32,13 @@ function parseAssistantAnswer(text: string, finishReason?: string) {
   let parsed: unknown;
   try { parsed = JSON.parse(json); }
   catch { throw new AssistantOutputError('invalid_json', finishReason); }
+  // Normalize only lossless provider shape variations. IDs still pass the
+  // evidence validator; never infer a source or accept incomplete prose.
+  if(parsed && typeof parsed==='object' && !Array.isArray(parsed)) {
+    const value=parsed as Record<string,unknown>;
+    if(typeof value.sourceIds==='string')value.sourceIds=value.sourceIds.trim()?[value.sourceIds]:[];
+    else if(value.answerKind==='general' && value.sourceIds==null)value.sourceIds=[];
+  }
   const final = answerSchema.safeParse(parsed);
   if (!final.success) {
     // Only schema-owned keys/array positions, never values or Zod messages.
@@ -73,7 +80,8 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       }
       throw error;
     }
-    checkAssistantResponse(response, 'model');
+    try { checkAssistantResponse(response, 'model'); }
+    catch(error) { await response.body?.cancel().catch(()=>{});throw error; }
     if (!response.body) throw new AssistantFailure('model_unavailable', undefined, { reason: 'empty_body' });
     let bytes = 0;
     const reader = response.body.getReader();
@@ -173,7 +181,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
           ? { thinking: { type: thinking ? 'enabled' : 'disabled' }, ...(thinking ? { reasoningEffort: options.effort } : {}) }
           // Keep JSON mode on the wire, then validate the compatible response
           // below. SDK eager JSON parsing cannot handle the provider's fences.
-          : { enable_thinking: thinking, ...(!nativeQwenTools || structured ? { response_format: { type: 'json_object' } } : {}), ...(qwenThinking ? { preserve_thinking: false, ...(thinking ? { thinking_budget: 4096, max_completion_tokens: 8192 } : {}) } : {}) } },
+          : { enable_thinking: thinking, ...(!nativeQwenTools || structured ? { response_format: { type: 'json_object' } } : {}), ...(qwenThinking ? { preserve_thinking: false, ...(thinking ? { thinking_budget: options.effort==='low'?1024:4096, max_completion_tokens: 8192 } : {}) } : {}) } },
       };
       const recordUsage = recordAssistantModel(config.model, thinking, openai ? 'https://api.openai.com' : origin, { round: options.round, attempt: options.attempt });
       try {

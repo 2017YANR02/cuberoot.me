@@ -27,9 +27,11 @@ it('enables bounded reasoning for supported Qwen while unknown compatible provid
   const qwen={...config,model:'qwen3.8-flash',baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1'};
   await createAssistantModel(qwen,fetcher,AbortSignal.timeout(2000),'').complete({...options,maxTokens:16384});
   const request=JSON.parse(String(fetcher.mock.calls[0][1]?.body));
-  expect(request).toMatchObject({enable_thinking:true,preserve_thinking:false,thinking_budget:4096,max_completion_tokens:8192,response_format:{type:'json_object'}});
+  expect(request).toMatchObject({enable_thinking:true,preserve_thinking:false,thinking_budget:1024,max_completion_tokens:8192,response_format:{type:'json_object'}});
   await createAssistantModel({...qwen,baseUrl:'https://other.invalid/v1'},fetcher,AbortSignal.timeout(2000),'').complete({...options,maxTokens:16384});
   expect(JSON.parse(String(fetcher.mock.calls[1][1]?.body))).toMatchObject({enable_thinking:false,max_tokens:4096});
+  await createAssistantModel(qwen,fetcher,AbortSignal.timeout(2000),'').complete({...options,effort:'high'});
+  expect(JSON.parse(String(fetcher.mock.calls[2][1]?.body))).toMatchObject({enable_thinking:true,thinking_budget:4096});
 });
 it('sends actual image parts in their original turns through the compatible provider',async()=>{
   const image={mediaType:'image/png' as const,data:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a0u8AAAAASUVORK5CYII='};
@@ -52,7 +54,7 @@ it.each([false,true])('classifies output failures and logs only safe validation 
   const cases=[
     {content:'   ',reason:'empty_output'},
     {content:'private-output-not-json',reason:'invalid_json'},
-    {content:JSON.stringify({answer:{private:'private-output'},sourceIds:'private-source'}),reason:'invalid_schema'},
+    {content:JSON.stringify({answer:{private:'private-output'},sourceIds:{private:'private-source'}}),reason:'invalid_schema'},
     {content:JSON.stringify({answer:' \n ',sourceIds:[]}),reason:'invalid_schema'},
     {content:JSON.stringify({answer:'Done',sourceIds:[]}),finish:'length',reason:'output_truncated'},
   ];
@@ -164,4 +166,19 @@ it('keeps a malformed streamed final for a new repair turn and requests the answ
   expect(request.messages.some((message:any)=>message.role==='assistant'&&message.content==='A plain answer instead of JSON.')).toBe(true);
   expect(request.messages.at(-1)).toMatchObject({role:'user',content:'Repair the previous final response as the required JSON object.'});
   expect(request.messages.some((message:any)=>message.role==='system'&&message.content.includes('"sourceIds"'))).toBe(true);
+});
+
+it.each([
+  [{answer:'Verified.',sourceIds:'person:2019LIUZ14'},['person:2019LIUZ14']],
+  [{answerKind:'general',answer:'Hello.',sourceIds:null},[]],
+  [{answerKind:'general',answer:'Hello.'},[]],
+])('normalizes lossless source ID shapes without another model call: %j',async(value,expected)=>{
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValue(response({content:JSON.stringify(value)}));
+  const result=await createAssistantModel({...config,baseUrl:'https://model.example/v1'},fetcher,AbortSignal.timeout(2000),'').complete({...options,thinking:false});
+  expect(result.sourceIds).toEqual(expected);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});
+it('still rejects a grounded answer with missing source IDs',async()=>{
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValue(response({content:JSON.stringify({answerKind:'grounded',answer:'A claim.'})}));
+  await expect(createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'').complete(options)).rejects.toMatchObject({code:'model_output_invalid'});
 });

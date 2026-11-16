@@ -77,7 +77,7 @@ it('keeps a personal-results review on the current question and repairs only its
     expect(url.origin).toBe('https://dashscope.aliyuncs.com');
     const body=JSON.parse(String(init?.body));requests.push(body);
     if(requests.length===1)return modelResponse([{tool:'person',wcaId:'2017YANR02',event:'all',progress:false}]);
-    return modelResponse({answerKind:'grounded',answer:'个人最佳成绩见下表。 [[person:2017YANR02]]',sourceIds:requests.length===2?'person:2017YANR02':['person:2017YANR02']});
+    return modelResponse({answerKind:'grounded',answer:'个人最佳成绩见下表。 [[person:2017YANR02]]',sourceIds:requests.length===2?{id:'person:2017YANR02'}:['person:2017YANR02']});
   });
   const result=await answerSiteQuestion(question,'zh',provider,AbortSignal.timeout(5000),fetcher,history,'2017YANR02',undefined,'UTC',[],'deep');
   expect(requests).toHaveLength(3);

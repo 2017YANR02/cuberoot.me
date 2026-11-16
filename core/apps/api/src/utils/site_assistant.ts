@@ -575,14 +575,15 @@ export async function answerSiteQuestion(
       : '\nIndependently review the draft against the ORIGINAL question, actual query predicates and returned cells. Every requested calculated measure (rates, differences, ranks, denominators, etc.) must be present in the query result, not mentally filled into prose. Server countMeasure metadata describes what is actually counted; model labels/descriptions are not proof. Check granularity, filtering, zero vs NULL and predecessor ordering. Reject conflicting or wrongly scoped tables. Return reviewedSourceIds containing ONLY the exact analysis source IDs whose entire displayed table is correct and relevant; omit rejected/superseded IDs from both sourceIds and the answer. Empty reviewedSourceIds means no calculation was verified. If a specific expression/scope is wrong, call analysis_query for a corrected table when reads remain. Do not repeat a successful aggregate solely because its detail list was truncated. Do not retrieve unrequested details or additional measures. If no reads remain, state the missing calculation briefly. Introduce correct tables without repeating rows. Never silently correct numbers in prose while displaying a wrong table. Review is for correctness and relevance, not elaboration. Keep only the requested facts and the shortest material scope qualifier; do not add dates, rankings, tutorials or alternative-scope offers merely because evidence contains them. Keep the full methodology in evidence, not final prose.';
     let formatRepair = '';
     let outputRepair = false;
-    for(let attempt=0;attempt<2;attempt++) {
+    let transportRetries=0,formatRepairs=0;
+    for(let attempt=0;attempt<4;attempt++) {
     try {
     // A retry is a new model step; apply queued corrections before spending another call.
     await assistantExecutionBoundary();
     // Route by the work actually selected, rather than a language-specific
     // complexity keyword list. Deterministic lookups above need no model.
     const selectedTools=evidence.map(item=>item.tool && typeof item.tool==='object' && 'tool' in item.tool ? item.tool.tool : undefined);
-    const needsRepair=attempt>0 || evidence.some(item=>/^(?:invalid|unresolved):/.test(item.id) || (!item.id.startsWith('failed:') && item.data && typeof item.data==='object' && ('error' in item.data || 'notEvidence' in item.data)));
+    const needsRepair=outputRepair || evidence.some(item=>/^(?:invalid|unresolved):/.test(item.id) || (!item.id.startsWith('failed:') && item.data && typeof item.data==='object' && ('error' in item.data || 'notEvidence' in item.data)));
     const {thinking,effort,maxTokens}=assistantReasoningPolicy(thinkingMode,{tools:selectedTools,repair:needsRepair,review:draftAnswer!==undefined && !metadataPrefetchComplete,criticalReview:[...sources.keys()].some(id=>id.startsWith('wca:regulations:'))});
     let previous = '';
     const completion=await model.complete({
@@ -617,17 +618,18 @@ export async function answerSiteQuestion(
     return completion;
     } catch(error) {
       signal.throwIfAborted();
-      // One recovery under the same deadline/reservation. Format failures only
-      // regenerate the answer; transport retries retain the original task.
+      // Separate short transport recovery from the one format repair, under
+      // the same request deadline and quota reservation.
       const transient = error instanceof AssistantFailure && (error.diagnostic?.reason === 'network_error'
         || error.upstreamStatus === 429 || (error.upstreamStatus ?? 0) >= 500);
       const retryAfterMs = error instanceof AssistantFailure ? error.retryAfterMs : undefined;
-      if(attempt===0 && (error instanceof AssistantOutputError || (transient && (retryAfterMs ?? 0) <= 2000))) {
-        outputRepair=error instanceof AssistantOutputError;
+      const repair=error instanceof AssistantOutputError && formatRepairs<1;
+      const retry=transient && transportRetries<2 && (retryAfterMs ?? 0)<=5000;
+      if(repair || retry) {
         await emit?.({type:'answer',answer:'',sources:[...sources.values()]});
         await emit?.({type:'status',status:{phase:'planning'}});
-        if (error instanceof AssistantOutputError) formatRepair='\n'+error.repairInstruction()+' '+ASSISTANT_OUTPUT_BUDGET;
-        else await retryDelay(Math.max(retryAfterMs ?? 0, 350 + Math.floor(Math.random() * 150)), undefined, { signal });
+        if (repair) {formatRepairs++;outputRepair=true;formatRepair='\n'+error.repairInstruction()+' '+ASSISTANT_OUTPUT_BUDGET;}
+        else {transportRetries++;await retryDelay(Math.max(retryAfterMs ?? 0, 350*2**(transportRetries-1) + Math.floor(Math.random() * 150)), undefined, { signal });}
         continue;
       }
       throw error instanceof AssistantFailure ? error : new AssistantFailure('model_unavailable');

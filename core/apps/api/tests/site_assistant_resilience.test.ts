@@ -81,6 +81,30 @@ describe('assistant resilience',()=>{
     await expect(answerSiteQuestion('Explain rain.','en',config,AbortSignal.timeout(5000),withCatalog(fetcher))).rejects.toMatchObject({code:'model_rate_limited',upstreamStatus:429,retryAfterMs:60000});
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
+  it('recovers after two transient failures without enabling thinking on a simple retry',async()=>{
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response('',{status:502}))
+      .mockResolvedValueOnce(new Response('',{status:503}))
+      .mockResolvedValueOnce(model({answerKind:'general',answer:'Recovered.',sourceIds:[]}));
+    const qwen={...config,model:'qwen3.8-flash',baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1'};
+    expect((await answerSiteQuestion('Explain rain.','en',qwen,AbortSignal.timeout(5000),withCatalog(fetcher))).answer).toBe('Recovered.');
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(fetcher.mock.calls.map(([,init])=>JSON.parse(String(init?.body)).enable_thinking)).toEqual([false,false,false]);
+  });
+  it('preserves one format repair after a transport retry',async()=>{
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response('',{status:502}))
+      .mockResolvedValueOnce(model({answer:' '}))
+      .mockResolvedValueOnce(model({answerKind:'general',answer:'Repaired.',sourceIds:[]}));
+    expect((await answerSiteQuestion('Explain rain.','en',config,AbortSignal.timeout(5000),withCatalog(fetcher))).answer).toBe('Repaired.');
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(JSON.parse(String(fetcher.mock.calls[2][1]?.body)).tools).toBeUndefined();
+  });
+  it('bounds persistent upstream failures to three calls',async()=>{
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>new Response('',{status:502}));
+    await expect(answerSiteQuestion('Explain rain.','en',config,AbortSignal.timeout(5000),withCatalog(fetcher))).rejects.toMatchObject({code:'model_unavailable'});
+    expect(fetcher).toHaveBeenCalledTimes(3);
+  });
   it('does not start a retry when the original request is aborted during backoff',async()=>{
     const controller=new AbortController();
     const fetcher=vi.fn<typeof fetch>().mockResolvedValue(new Response('',{status:503,headers:{'retry-after':'1'}}));
