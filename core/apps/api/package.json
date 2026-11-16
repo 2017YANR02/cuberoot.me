@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@ai-sdk/deepseek": "3.0.63",
+    "@ai-sdk/openai": "4.0.91",
     "@ai-sdk/openai-compatible": "^3.0.67",
     "@app-foundation/account-policy": "https://github.com/2017YANR02/app-foundation/releases/download/v0.4.0/app-foundation-account-policy-0.1.0.tgz",
     "@app-foundation/face-verification": "https://github.com/2017YANR02/app-foundation/releases/download/v0.5.0/app-foundation-face-verification-0.1.0.tgz",

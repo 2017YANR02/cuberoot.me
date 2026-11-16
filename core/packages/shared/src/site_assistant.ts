@@ -8,6 +8,7 @@ export const SITE_ASSISTANT_QUESTION_MAX_LENGTH = 8000;
 export const SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH = 12000;
 export const SITE_ASSISTANT_ANSWER_MAX_LENGTH = 12000;
 export type AssistantThinkingMode = 'auto' | 'fast' | 'deep';
+export type AssistantProvider = 'bailian' | 'openai';
 export function assistantTimeoutMs(mode: AssistantThinkingMode = 'auto'): number {
   return mode === 'fast' ? 30_000 : mode === 'deep' ? 90_000 : SITE_ASSISTANT_TIMEOUT_MS;
 }
@@ -16,7 +17,7 @@ export const SITE_ASSISTANT_IMAGE_BYTES = 768 * 1024;
 export const SITE_ASSISTANT_BODY_BYTES = 3_300_000;
 /** Saved attachments use an opaque ID and empty data; bytes are resolved only after owner authentication. */
 export interface AssistantImage { mediaType: 'image/png' | 'image/jpeg' | 'image/webp'; data: string; attachmentId?: string }
-export type AssistantErrorCode = 'request_too_large' | 'invalid_image' | 'vision_unavailable' | 'login_required' | 'wca_link_required' | 'account_forbidden' | 'daily_limit' | 'busy' | 'verification_required' | 'source_verification_required' | 'timeout' | 'network' | 'model_unavailable' | 'model_output_invalid' | 'model_rate_limited' | 'source_unavailable' | 'unavailable';
+export type AssistantErrorCode = 'provider_unavailable' | 'provider_region_unavailable' | 'request_too_large' | 'invalid_image' | 'vision_unavailable' | 'login_required' | 'wca_link_required' | 'account_forbidden' | 'daily_limit' | 'busy' | 'verification_required' | 'source_verification_required' | 'timeout' | 'network' | 'model_unavailable' | 'model_output_invalid' | 'model_rate_limited' | 'source_unavailable' | 'unavailable';
 export interface AssistantSource { id: string; title: string; href: string; read: boolean }
 /** Render only adapter-verified source metadata. Never apply this to model-authored links. */
 export function isAssistantSourceHref(href: string): boolean {
@@ -161,6 +162,8 @@ export async function* readAssistantEvents(body: ReadableStream<Uint8Array>): As
 export { assistantAnswerText, assistantAnswerHistory, assistantSpokenText } from './site_assistant_export';
 
 export const ASSISTANT_ERROR_TEXT: Record<AssistantErrorCode, { zh: string; en: string }> = {
+  provider_unavailable: { zh: '所选模型暂不可用，请切换到阿里云。', en: 'The selected provider is unavailable. Please switch to Alibaba Cloud.' },
+  provider_region_unavailable: { zh: '当前地区无法使用 OpenAI，请切换到阿里云。', en: 'OpenAI is unavailable in your current region. Please switch to Alibaba Cloud.' },
   request_too_large: { zh: '内容超过发送上限。请缩小图片或缩短本条消息后重试。', en: 'This message exceeds the sending limit. Reduce image sizes or shorten this message and retry.' },
   invalid_image: { zh: '图片无法发送。请使用 JPG、PNG 或 WebP，每次最多 3 张，并尝试缩小图片。', en: 'Images could not be sent. Use up to 3 JPG, PNG or WebP images and try reducing their size.' },
   vision_unavailable: { zh: '图片识别暂时不可用，请稍后重试。', en: 'Image understanding is temporarily unavailable. Please try again later.' },

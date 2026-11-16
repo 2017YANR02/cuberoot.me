@@ -23,7 +23,7 @@ it.each([false, true])('passes image-only questions through authenticated JSON/S
   const response = await ask({}, stream);
   expect(response.status).toBe(200);
   expect(await response.text()).toContain('A screenshot.');
-  expect(config).toHaveBeenCalledWith(true);
+  expect(config).toHaveBeenCalledWith(true, 'bailian');
   expect(reserve).toHaveBeenCalledTimes(1);
   expect(answer.mock.calls[0][6]).toBe('2017YANR02');
   expect(answer.mock.calls[0][9]).toEqual([image]);
@@ -32,7 +32,7 @@ it('routes a text follow-up with earlier images to vision', async () => {
   const { ask, answer, config } = setup();
   const history = [{ role: 'user', content: '看看这个', images: [image] }, { role: 'assistant', content: '截图' }];
   expect((await ask({ question: '图上写什么？', images: [], history })).status).toBe(200);
-  expect(config).toHaveBeenCalledWith(true);
+  expect(config).toHaveBeenCalledWith(true, 'bailian');
   expect(answer.mock.calls[0][5]).toEqual(history);
 });
 it('rejects malformed, remote, forged, oversized and misplaced images before quota/model work', async () => {

@@ -9,7 +9,7 @@ const WrHistoryChart = lazy(() => import('@/components/wca-stats/WrHistoryChart'
 import { useCopy } from '@/hooks/useCopy';
 import { createPortal } from 'react-dom';
 import { ArrowUp, ArrowDown, ArrowRight, Check, Copy, Pencil, Maximize2, Minimize2, MessageSquarePlus, ImagePlus, Plus, Mic, Square, X } from '@app-foundation/icons/lucide';
-import { SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_QUESTION_MAX_LENGTH, isAssistantSourceHref, type AssistantImage, type AssistantAnswer, type AssistantChart, type AssistantStatus, type AssistantErrorCode, type AssistantThinkingMode } from '@cuberoot/shared/site-assistant';
+import { SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_QUESTION_MAX_LENGTH, isAssistantSourceHref, type AssistantImage, type AssistantAnswer, type AssistantChart, type AssistantStatus, type AssistantErrorCode, type AssistantThinkingMode, type AssistantProvider } from '@cuberoot/shared/site-assistant';
 import { ASSISTANT_ERROR_TEXT } from '@/lib/site-assistant-errors';
 import { authActions } from '@/lib/auth-store';
 import { formatWcaResult } from '@/lib/wca-format-result';
@@ -45,6 +45,7 @@ interface Props {
   turns:AssistantTurn[]; status?:AssistantStatus; busy:boolean; error:AssistantErrorCode|null; lang:'zh'|'en';
   images:AssistantImage[]; onImagesChange:(images:AssistantImage[])=>void;
   draft:string; onDraftChange:(draft:string)=>void;
+  provider?:AssistantProvider; onProviderChange?:(provider:AssistantProvider)=>void; openaiAvailable?:boolean;
   thinking:AssistantThinkingMode; onThinkingChange:(mode:AssistantThinkingMode)=>void;
   onFeedback:(id:string,value:AssistantFeedback|null)=>void;
   onAsk:(question:string,replaceLast?:boolean,images?:AssistantImage[])=>void; onStop:()=>void; onClose:()=>void; onNew:()=>void;
@@ -219,7 +220,7 @@ function AssistantModal({ children, onClose, motionRef }: { children: ReactNode;
   return createPortal(<div ref={motionRef} className="site-assistant-backdrop" {...backdrop}>{children}</div>, document.body);
 }
 
-export default function SiteAssistantDialog({onAlgorithmChange,onAnswerRevealed,turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,thinking,onThinkingChange,status={phase:'planning'},busy,error,lang,onAsk,onStop,onClose:onClosed,onNew,onFeedback,embedded=false,active=true,searchResults,onBranch}:Props) {
+export default function SiteAssistantDialog({onAlgorithmChange,onAnswerRevealed,turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,provider='bailian',onProviderChange,openaiAvailable=false,thinking,onThinkingChange,status={phase:'planning'},busy,error,lang,onAsk,onStop,onClose:onClosed,onNew,onFeedback,embedded=false,active=true,searchResults,onBranch}:Props) {
   const { motionRef, close: onClose } = useDialogMotion(onClosed, { enabled: !embedded });
   const [initialAnswers] = useState(() => new Set(turns.filter(turn => turn.result && !turn.partial).map(turn => turn.requestId)));
   const onRevealComplete = useCallback((id:string, text:string) => {
@@ -375,6 +376,10 @@ export default function SiteAssistantDialog({onAlgorithmChange,onAnswerRevealed,
             label={<Plus size={20}/>} ariaLabel={tr({zh:'添加附件',en:'Add attachments'})}
             items={[{value:'images',label:<span className="site-assistant-attachment-option"><ImagePlus size={19}/>{tr({zh:'添加图片',en:'Add images'})}</span>}]}
             onChange={()=>imageInput.current?.click()} disabled={busy||editing!==null||processingImages||images.length>=SITE_ASSISTANT_MAX_IMAGES}/>
+          {openaiAvailable && onProviderChange && <CompactSelect className="site-assistant-thinking site-assistant-provider" popupClassName="site-assistant-menu"
+            items={[{value:'bailian' as const,label:tr({zh:'阿里云',en:'Alibaba Cloud'})},{value:'openai' as const,label:'OpenAI'}]}
+            value={provider} onChange={onProviderChange} label={provider==='openai'?'OpenAI':tr({zh:'阿里云',en:'Alibaba Cloud'})}
+            ariaLabel={tr({zh:'AI 服务',en:'AI provider'})} disabled={busy} variant="plain" showArrow preserveFocus/>}
           <CompactSelect className="site-assistant-thinking" popupClassName="site-assistant-menu" items={thinkingItems} value={thinking} onChange={onThinkingChange} label={thinkingItems.find(item=>item.value===thinking)!.label} ariaLabel={tr({zh:'思考模式',en:'Thinking mode'})} disabled={busy} variant="plain" showArrow preserveFocus/>
           <button className="site-assistant-action site-assistant-mic" type="button" disabled={busy||editing!==null} onClick={()=>listening?stop():void start()} title={tr({zh:'语音输入',en:'Voice input'})} aria-pressed={listening}><Mic size={19}/></button>
           {busy?<button className="site-assistant-action site-assistant-send" type="button" onClick={onStop} title={tr({zh:'停止',en:'Stop'})}><Square size={16} fill="currentColor"/></button>:<button className="site-assistant-action site-assistant-send" type="submit" disabled={(!draft.trim()&&!images.length)||draft.trim().length>SITE_ASSISTANT_QUESTION_MAX_LENGTH||editing!==null||processingImages} title={tr({zh:'发送',en:'Send'})}><ArrowUp size={20}/></button>}
@@ -383,6 +388,7 @@ export default function SiteAssistantDialog({onAlgorithmChange,onAnswerRevealed,
       {imageError && <p role="alert">{imageError}</p>}
       {!!images.length && <p className="site-assistant-note">{tr({zh:'发送后，图片会保存为私有会话附件并交给 AI 识别。追问可参考最近 3 张图片。',en:'Sent images are saved as private chat attachments and processed by AI. Follow-ups can reference the latest 3 images.'})}</p>}
       {micError && <p className="site-assistant-voice-error" role="status">{tr({zh:'语音未能识别，请检查麦克风权限，或使用键盘听写。',en:'Voice recognition failed. Check microphone permissions or use keyboard dictation.'})}</p>}
+      {provider==='openai' && <p className="site-assistant-note">{tr({zh:'发送后，本次问题、最近对话和附件将交由 OpenAI 处理。',en:'Sending shares this question, recent conversation and attachments with OpenAI.'})}</p>}
       <p className="site-assistant-note">{tr({zh:'AI 回答可能有误，请核对来源。WCA 数据以最近导入为准。',en:'AI can make mistakes. Check sources. WCA data reflects the latest import.'})}</p></form>
     </div>;
   return embedded ? content : <AssistantModal onClose={onClose} motionRef={motionRef}>{content}</AssistantModal>;

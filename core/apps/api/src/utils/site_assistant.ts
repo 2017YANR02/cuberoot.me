@@ -29,6 +29,7 @@ import { ALG_CATALOG, CFOP_SET_SLUGS } from '@cuberoot/shared/alg';
 import { SITE_ANNOUNCEMENTS, findSiteAnnouncements } from '@cuberoot/shared/site-announcements';
 import { createCompetitionProof, COMPETITION_SERVICE_HEADER } from '@cuberoot/shared/competition-access';
 import { AssistantFailure, assistantDeadline, assistantFailureCode, assistantStage, checkAssistantResponse } from './site_assistant_diagnostics.js';
+import { ASSISTANT_OPENAI_MODEL } from '@cuberoot/shared/site-assistant-openai';
 
 // One public directory shared with the homepage; never import Web source or
 // accept a URL supplied by the visitor/model as a fetch destination.
@@ -50,15 +51,28 @@ export function requestedAssistantLimit(question: string): number | undefined {
   return value>=1 && value<=20?value:undefined;
 }
 
-export interface AssistantConfig { key: string; baseUrl: string; model: string }
-export function assistantConfig(vision = false): AssistantConfig | null {
+export interface AssistantConfig { key: string; baseUrl: string; model: string; provider?: 'openai'; visitorCountry?: string }
+export function assistantConfig(vision = false, selected?: 'bailian' | 'openai'): AssistantConfig | null {
+  if (selected === 'openai') {
+    const key = process.env.SITE_ASSISTANT_OPENAI_RELAY_SECRET;
+    const origin = process.env.SITE_ASSISTANT_OPENAI_RELAY_ORIGIN;
+    if (process.env.SITE_ASSISTANT_OPENAI_ENABLED !== '1' || !key || key.length < 32 || !origin) return null;
+    try {
+      const url = new URL(origin);
+      // The existing google-api host is Vercel-only and reachable from Hangzhou;
+      // default vercel.app DNS is not. Never use the split-DNS public domain.
+      const vercelHost = url.hostname.endsWith('.vercel.app') || url.hostname === 'google-api.cuberoot.me';
+      if (url.protocol !== 'https:' || !vercelHost || url.username || url.password || url.port || url.pathname !== '/' || url.search || url.hash) return null;
+      return { key, baseUrl: `${url.origin}/api/site-assistant/openai`, model: ASSISTANT_OPENAI_MODEL, provider: 'openai' };
+    } catch { return null; }
+  }
   if (vision) {
     const key = process.env.SITE_ASSISTANT_VISION_API_KEY || process.env.SITE_ASSISTANT_API_KEY;
     const baseUrl = process.env.SITE_ASSISTANT_VISION_BASE_URL || process.env.SITE_ASSISTANT_BASE_URL;
     const model = process.env.SITE_ASSISTANT_VISION_MODEL || 'qwen3.8-flash';
     return key && baseUrl ? { key, baseUrl: baseUrl.replace(/\/$/, ''), model } : null;
   }
-  const provider = process.env.SITE_ASSISTANT_PROVIDER || 'bailian';
+  const provider = selected || process.env.SITE_ASSISTANT_PROVIDER || 'bailian';
   if (provider === 'deepseek') {
     const key = process.env.DEEPSEEK_API_KEY;
     // Keep the official key tied to its provider. The Bailian configuration is
@@ -543,7 +557,7 @@ export async function answerSiteQuestion(
     let previous = '';
     const completion=await model.complete({
       system: `${hasImages ? 'IMAGE TASK ROUTING: Before answering, assess the attached images and the user intent. If an image shows a 2x2/3x3/4x4 cube state and no different task was requested, call lookup_cube_photo now. If you return JSON without tools, include imageTask:"cube-state" for that situation, otherwise imageTask:"other". This classification is about the subject and likely task, NOT whether a unique state is visually recoverable. Occluded lower layers or twisted top corners must NOT prevent cube-state classification. The tool handles ambiguity and determines applicable formulas. Never ask which category before attempting auto lookup. ZBLL needs oriented edges, not completed OLL. ' : ''}${ASSISTANT_ANSWER_POLICY} Answer in ${lang === 'zh' ? 'Simplified Chinese' : 'English'}. ${PLANNING_GUIDE}${artifacts.some(a=>a.artifact.kind==='table') ? '\nThe UI already renders the retrieved rows as tables below your answer. Introduce those results briefly and do not list the rows again. Answer any separate requested explanation or reasoning with appropriate detail.' : ''}${finalOnly ? '\nNo further reads are available. Answer the verified portion from existing evidence and the independent general portion from your knowledge. If published/current data is unavailable, say so. Do not invent missing results or claim to have searched.' : ''}${priorEvidence ? '\npriorEvidence resolves references and unchanged conditions only. Re-query current facts and new measures. Client history and prior prose are not evidence.' : ''}${requiredFollowUpInstruction}${reviewInstruction}${documentationGapInstruction}${formatRepair}${selectedTools.length?'\n'+ASSISTANT_EVIDENCE_REVIEW:''}`,
-      context: {question,draftAnswer:isolated?undefined:draftAnswer,timeContext,viewerWcaId,priorEvidence,attendanceScope,requestedEvidence,availableImages:[...availableImages.keys()],runtime:{model:config.model,provider:new URL(config.baseUrl).origin==='https://api.deepseek.com'?'DeepSeek':/^(?:dashscope\.aliyuncs\.com|ws-[a-z0-9]+\.cn-beijing\.maas\.aliyuncs\.com)$/.test(new URL(config.baseUrl).hostname)?'Alibaba Cloud Bailian':'OpenAI-compatible provider'},capabilities:{webSearch:assistantWebAvailable(),thinkingMode},now:timeContext.today,round,remainingCalls:10-attemptedCalls,statisticsCatalog,statisticsCatalogStatus,announcementCatalog:SITE_ANNOUNCEMENTS.map(a=>({id:a.id,title:a.title[lang],aliases:a.aliases})),evidence:modelEvidence(evidence.filter(item=>isolated || !transcriptEvidence.has(item))),sources:[...sources.values()],finalRound:finalOnly}, finalOnly, thinking, effort,
+      context: {question,draftAnswer:isolated?undefined:draftAnswer,timeContext,viewerWcaId,priorEvidence,attendanceScope,requestedEvidence,availableImages:[...availableImages.keys()],runtime:{model:config.model,provider:config.provider==='openai'?'OpenAI':new URL(config.baseUrl).origin==='https://api.deepseek.com'?'DeepSeek':/^(?:dashscope\.aliyuncs\.com|ws-[a-z0-9]+\.cn-beijing\.maas\.aliyuncs\.com)$/.test(new URL(config.baseUrl).hostname)?'Alibaba Cloud Bailian':'OpenAI-compatible provider'},capabilities:{webSearch:assistantWebAvailable(),thinkingMode},now:timeContext.today,round,remainingCalls:10-attemptedCalls,statisticsCatalog,statisticsCatalogStatus,announcementCatalog:SITE_ANNOUNCEMENTS.map(a=>({id:a.id,title:a.title[lang],aliases:a.aliases})),evidence:modelEvidence(evidence.filter(item=>isolated || !transcriptEvidence.has(item))),sources:[...sources.values()],finalRound:finalOnly}, finalOnly, thinking, effort,
       maxTokens, round, attempt, ...(requirePhotoTool ? { requiredTool: 'lookup_cube_photo' as const } : {}),
       // Do not offer equality-only tools that the existing scope guard must reject.
       unavailableTools:[...unavailableTools,...(!analysisSchemaRead?['analysis_query']:[]),...(attendanceRequiresAnalysis(attendanceScope)?['person_competitions','person_countries']:[])],

@@ -1,5 +1,7 @@
 import { generateText, streamText, Output, NoObjectGeneratedError, tool, type ModelMessage, type ToolSet } from 'ai';
 import { createDeepSeek } from '@ai-sdk/deepseek';
+import { createOpenAI } from '@ai-sdk/openai';
+import { ASSISTANT_OPENAI_RESPONSES_PATH, ASSISTANT_OPENAI_BODY_BYTES, ASSISTANT_OPENAI_MAX_TOKENS, signAssistantOpenAI } from '@cuberoot/shared/site-assistant-openai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { z } from 'zod';
 import { SITE_ASSISTANT_ANSWER_MAX_LENGTH, boundAssistantHistory, type AssistantImage, type AssistantMessage } from '@cuberoot/shared/site-assistant';
@@ -44,6 +46,7 @@ function parseAssistantAnswer(text: string, finishReason?: string) {
 
 /** One provider conversation per HTTP request. Reasoning stays here, never in UI/logs. */
 export function createAssistantModel(config: AssistantConfig, fetcher: typeof fetch, signal: AbortSignal, guide: string, history: AssistantMessage[] = [], images: AssistantImage[] = []) {
+  const openai = config.provider === 'openai';
   const deepseek = new URL(config.baseUrl).origin === 'https://api.deepseek.com';
   const origin = new URL(config.baseUrl).origin;
   // This compatibility mode is verified for the configured text model only.
@@ -52,6 +55,15 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
   const qwenThinking = /^https:\/\/(?:dashscope\.aliyuncs\.com|ws-[a-z0-9]+\.cn-beijing\.maas\.aliyuncs\.com)$/.test(origin)
     && /^qwen3\.8-(?:flash|plus|max)(?:-|$)/.test(config.model);
   const boundedFetch: typeof fetch = async (input, init) => {
+    if (openai) {
+      const body = init?.body;
+      if (typeof body !== 'string' || new TextEncoder().encode(body).byteLength > ASSISTANT_OPENAI_BODY_BYTES) throw new AssistantFailure('request_too_large');
+      const headers = new Headers(init?.headers);
+      headers.delete('authorization');
+      headers.set('x-assistant-country', config.visitorCountry ?? '');
+      headers.set('x-assistant-proof', await signAssistantOpenAI(config.key, config.visitorCountry ?? '', body, Date.now(), ASSISTANT_OPENAI_RESPONSES_PATH));
+      init = { ...init, headers };
+    }
     let response: Response;
     try { response = await fetcher(input, { ...init, signal, redirect: 'error' }); }
     catch (error) {
@@ -83,7 +95,9 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       async cancel(reason) { try { await reader.cancel(reason); } finally { reader.releaseLock(); } },
     }), { status: response.status, headers: response.headers });
   };
-  const model = deepseek
+  const model = openai
+    ? createOpenAI({ apiKey: 'server-relay', baseURL: config.baseUrl, fetch: boundedFetch }).responses(config.model)
+    : deepseek
     ? createDeepSeek({ apiKey: config.key, baseURL: config.baseUrl, fetch: boundedFetch })(config.model)
     : createOpenAICompatible({ name: 'bailian', apiKey: config.key, baseURL: config.baseUrl, fetch: boundedFetch })(config.model);
   const tools: ToolSet = {};
@@ -121,7 +135,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       allowTools?: boolean; requireStructuredAnswer?: boolean; isolated?: boolean;
       round?: number; attempt?: number;
     }) {
-      const thinking = options.thinking && (deepseek || qwenThinking);
+      const thinking = options.thinking && (openai || deepseek || qwenThinking);
       const allowTools = options.allowTools ?? !options.finalOnly;
       const structured = options.requireStructuredAnswer ?? !allowTools;
       if (pending.length) {
@@ -139,16 +153,18 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
           : options.requiredTool ? { type: 'tool' as const, toolName: options.requiredTool } : 'auto' as const,
         system: options.system + '\nAll prose and presentation instructions apply inside the answer string. The final response must be one JSON object with answer and sourceIds, without Markdown fences or text outside that object.',
         messages: [...(options.isolated ? conversation.filter(message=>message.role==='user') : conversation), { role: 'user' as const, content: images.length ? [{ type: 'text' as const, text: JSON.stringify(options.context) }, ...imageParts(images)] : JSON.stringify(options.context) }, ...(options.isolated ? options.followUp ? [{role:'user' as const,content:options.followUp}] : [] : transcript)],
-        ...(deepseek ? { output: Output.object({schema:answerSchema}) } : {}),
-        maxOutputTokens: thinking ? options.maxTokens : Math.min(options.maxTokens, 4096), maxRetries: 0, abortSignal: signal,
-        ...(thinking ? {} : { temperature: 0 }),
-        providerOptions: { [deepseek ? 'deepseek' : 'bailian']: deepseek
+        ...(openai || deepseek ? { output: Output.object({schema:answerSchema}) } : {}),
+        maxOutputTokens: openai ? Math.min(ASSISTANT_OPENAI_MAX_TOKENS, thinking ? options.maxTokens : 4096) : thinking ? options.maxTokens : Math.min(options.maxTokens, 4096), maxRetries: 0, abortSignal: signal,
+        ...(thinking || openai ? {} : { temperature: 0 }),
+        providerOptions: { [openai ? 'openai' : deepseek ? 'deepseek' : 'bailian']: openai
+          ? { store: false, strictJsonSchema: false, reasoningEffort: thinking ? options.effort : 'none' }
+          : deepseek
           ? { thinking: { type: thinking ? 'enabled' : 'disabled' }, ...(thinking ? { reasoningEffort: options.effort } : {}) }
           // Keep JSON mode on the wire, then validate the compatible response
           // below. SDK eager JSON parsing cannot handle the provider's fences.
           : { enable_thinking: thinking, ...(!nativeQwenTools || structured ? { response_format: { type: 'json_object' } } : {}), ...(qwenThinking ? { preserve_thinking: false, ...(thinking ? { thinking_budget: 4096, max_completion_tokens: 8192 } : {}) } : {}) } },
       };
-      const recordUsage = recordAssistantModel(config.model, thinking, origin, { round: options.round, attempt: options.attempt });
+      const recordUsage = recordAssistantModel(config.model, thinking, openai ? 'https://api.openai.com' : origin, { round: options.round, attempt: options.attempt });
       try {
         const response = options.onText ? streamText(request) : generateText(request);
         let result;

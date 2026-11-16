@@ -4,6 +4,12 @@ import { assistantResponseError } from '@/lib/site-assistant-errors';
 import { SITE_ASSISTANT_BODY_BYTES, SITE_ASSISTANT_IMAGE_BYTES, SITE_ASSISTANT_QUESTION_MAX_LENGTH, SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH, type AssistantImage, type AssistantMessage } from '@cuberoot/shared/site-assistant';
 
 const request={question:'明年世锦赛在哪里办',lang:'zh' as const,timeZone:'America/Los_Angeles',history:[]};
+it('does not silently downgrade an explicit OpenAI request on an older server',async()=>{
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValue(Response.json({error:'invalid_question'},{status:400}));
+  const response=await requestSiteAssistant('/v1/site-assistant',{...request,provider:'openai'},{},fetcher);
+  expect(await response.json()).toEqual({error:'provider_unavailable'});
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});
 const image:AssistantImage={mediaType:'image/png',data:'fixture'};
 it('retains complete recent image groups and marks older omitted images',()=>{
   const history=assistantImageHistory([
