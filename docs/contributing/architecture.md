@@ -21,7 +21,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | `core/packages/shared` | 稳定契约、纯规则与跨端数据模型；公式数据以 PG `alg_sets/alg_cases` 为准 |
 | `core/packages/visualcube` 等 | 有明确构建或运行时边界的共享 package |
 | `core/jobs/*` | 离线 job，输出统计、数据或迁移生成物，不是在线 app |
-| `core/packages/platform` | workspace 外的退役历史归档，不测试、不构建、不部署、不引入新功能 |
+| `core/packages/platform` | workspace 外的退役历史归档，不测试、不构建、不部署、不新增依赖或功能 |
 | `solver/` | workspace 外 Rust 求解引擎，产 native 分析器和 WASM；`target/`、`tables/`、`pkg-*` 仅本机有 |
 | `research/reconer/` | workspace 外速拧视频自动复盘研发；进入前读 `research/reconer/AGENTS.md`、`roadmap.md`、`plan.md` 和 `human.md` |
 | `tools/` / `stats/` | `static.cuberoot.me` 的 upstream/教学资源与本地生成数据；统计快照由 `wca-data-latest` Release 管理，不再提交 Git |

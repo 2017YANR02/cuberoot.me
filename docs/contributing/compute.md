@@ -6,6 +6,8 @@
 
 先通读本文件再运行计算。下文保留授权日期与替代关系：日常统计默认引擎以上述 2026-11-10 Egg 更新为准；显式选择旧 Opt10 时保留末尾两项专用规则，其他任务不得套用。建表命令说明本身不授予运行权限。
 
+日常 `pnpm stats:scramble` 包含计算后的线上 PG、Release 和分片发布，要求运行该入口即授权本轮统计发布；仅本地用 `stats:scramble:local`，只读计划加 `--plan`。命令范围与恢复流程见[常用工作流](development.md#常用工作流)。
+
 Egg 性能优化接手前先读 [已完成的性能分析](../data/solvers/egg-solver-performance-analysis.md) 和 [32G 独立优化跟踪](../data/solvers/egg-h10-optimization-tracker.md)。后者按维护者 2026-11-12 要求保留当前 egg，只测试独立实验程序；不得将实验成绩自动转为默认引擎或覆盖已有程序、主表及结果。
 
 ## 本地计算内存与交换保护（维护者更新，2026-10-13）

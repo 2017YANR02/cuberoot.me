@@ -2,6 +2,12 @@
 
 本文件承接根 [AGENTS.md](../../AGENTS.md) 中的对应细则（2026-11-05 整理），是当前维护规则，不是历史归档。涉及本主题时先读；当次用户指令优先。代码路径除明确标注外均相对仓库根目录，core 命令在 `core/` 执行。发布授权统一见[发布规则](release.md)。
 
+## 实现与验收
+
+- 新功能先搜索并复用已有组件、数据、工具、资源和契约；可共用内嵌逻辑先抽到职责合适的公共模块，禁止复制改名或增加无必要的层/package。
+- 先定位根因再做最小实现；性能、502、OOM 先取证。无实证不宣称修好，未证实标为假设；本地验证、提交、推送、部署和真机验收分别报告。
+- 新建或调整源码归属、依赖及 upstream/fork 前读[架构边界](architecture.md)；创建、移动或清理本地产物前读[本地文件生命周期](../data/artifacts/local-artifact-lifecycle.md)。
+
 ## 常用工作流
 
 打乱统计的日常一键入口在 `core/` 运行 `pnpm stats:scramble`：默认增量运行全部作业，成功后自动灌线上 PG、通过同一个 `wca-data-latest` Release 发布最新统计，并增量上传独立在线分片；统计产物不再提交 Git。明确只想本地计算时用 `pnpm stats:scramble:local`；仅跑指定作业用 `--jobs stages|333opt|puzzles`，只读查看路径与计划用 `pnpm stats:scramble:local --plan`。新 checkout 先运行 `pnpm stats:hydrate` 恢复校验后的数据及发布基线。运行日常一键命令即明确授权本轮统计发布；其他代码 push 仍遵守部署章节。
@@ -10,6 +16,7 @@
 
 改 `core/apps/miniprogram/src/` 后必须在 `core/` 运行 `pnpm --filter @cuberoot/miniprogram build` 刷新开发者工具读取的 `dist/`；该命令不跑测试。
 WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过小程序 build 并在微信开发者工具关闭项目后重开做干净编译。
+“不用检查”不跳过上述小程序构建或下述 shared 必要构建。
 
 ## 开发预览域名接入
 
@@ -26,6 +33,7 @@ Mac mini 复用既有常驻 FRP；MacBook Pro 的 preview runner 管理独立 SS
 流量异常排查先读 [`docs/operations/observability/traffic-monitor.md`](../operations/observability/traffic-monitor.md) 与 [`docs/operations/observability/traffic-defense.md`](../operations/observability/traffic-defense.md)（当前防护、费用保护、暂停及恢复步骤），2026-09-22 `/zh/calc` 峰值的证据见 [`docs/operations/history/traffic-incident-2026-09-22.md`](../operations/history/traffic-incident-2026-09-22.md)。先核对报表的 `coverage`：自动来源分析目前只覆盖自有服务器 nginx；Vercel 请求在现有 Firewall 和 Logs 中按时间与路径核查。Analytics 是浏览器事件，自有线路也可能上报，不能等同于 Vercel 页面线路；停用时不得为了监控自行重新开启。User-Agent 和浏览器名称不能证明是真人；不要把 nginx 请求数当作全站访客数，也不要为监控启用额外收费项。
 
 使用 pnpm 12.6.0；运行 core 命令前核实 CWD，在仓库根时先进入 `core/`；`ERR_PNPM_NO_PKG_MANIFEST` 时先检查执行目录。
+Cargo 命令在所属模块目录执行。
 改 `core/packages/shared/src/**` 后完成前必须在 `core/` 运行 `pnpm --filter @cuberoot/shared build` 刷新 `dist`;“不用检查”只跳过测试/校验,不跳过该构建。
 
 - shell 路径相对 `core/` 写(`packages/...`),禁加 `core/` 前缀(会变 `core/core/`)。含 `[lang]` 等方括号的路径一律单引号,必要时 `git add ':(literal)packages/.../[lang]/x.tsx'`。
