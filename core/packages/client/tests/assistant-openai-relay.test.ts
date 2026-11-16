@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { POST as responsesPOST } from '@/app/api/site-assistant/openai/responses/route';
 import { POST } from '@/app/api/site-assistant/openai/chat/completions/route';
-import { ASSISTANT_OPENAI_MODEL, assistantOpenAICountrySupported, signAssistantOpenAI, verifyAssistantOpenAI } from '@cuberoot/shared/site-assistant-openai';
+import { ASSISTANT_OPENAI_RESPONSES_PATH, ASSISTANT_OPENAI_MODEL, assistantOpenAICountrySupported, signAssistantOpenAI, verifyAssistantOpenAI } from '@cuberoot/shared/site-assistant-openai';
 
 const secret = 'fixture-server-relay-secret-at-least-32-chars';
 const body = JSON.stringify({ model: ASSISTANT_OPENAI_MODEL, store: false, max_completion_tokens: 4096, messages: [{ role: 'user', content: 'hi' }], stream: true });
@@ -48,4 +49,17 @@ it('rejects unapproved models and unbounded token requests even with a valid sig
 });
 it.each([null, '', 'CN', 'HK', 'MO', 'RU', 'IR', 'KP', 'UA', 'ZZ', 'US, CN'])('does not infer eligibility for %s', country => {
   expect(assistantOpenAICountrySupported(country)).toBe(false);
+});
+
+it('relays reasoning plus tools through Responses and binds signatures to the endpoint', async () => {
+  const text = JSON.stringify({ model: ASSISTANT_OPENAI_MODEL, store: false, max_output_tokens: 8192, input: [{ role: 'user', content: 'hi' }], reasoning: { effort: 'high' }, tools: [], stream: true });
+  const proof = await signAssistantOpenAI(secret, 'US', text, Date.now(), ASSISTANT_OPENAI_RESPONSES_PATH);
+  const signedRequest = () => new Request('https://fixture' + ASSISTANT_OPENAI_RESPONSES_PATH, { method: 'POST', body: text, headers: { 'x-assistant-country': 'US', 'x-assistant-proof': proof } });
+  const fetcher = vi.fn().mockResolvedValue(new Response('data: {}\n\n')); vi.stubGlobal('fetch', fetcher);
+  expect((await POST(signedRequest())).status).toBe(403);
+  expect((await responsesPOST(await request(text))).status).toBe(403);
+  expect((await responsesPOST(signedRequest())).status).toBe(200);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(fetcher.mock.calls[0][0]).toBe('https://api.openai.com/v1/responses');
+  expect(fetcher.mock.calls[0][1].body).toBe(text);
 });

@@ -1,6 +1,8 @@
 /** Server-to-server contract. No keys or region decisions come from the browser. */
 export const ASSISTANT_OPENAI_MODEL = 'gpt-5.4-mini';
 export const ASSISTANT_OPENAI_RELAY_PATH = '/api/site-assistant/openai/chat/completions';
+export const ASSISTANT_OPENAI_RESPONSES_PATH = '/api/site-assistant/openai/responses';
+export type AssistantOpenAIRelayPath = typeof ASSISTANT_OPENAI_RELAY_PATH | typeof ASSISTANT_OPENAI_RESPONSES_PATH;
 export const ASSISTANT_OPENAI_BODY_BYTES = 4_000_000;
 export const ASSISTANT_OPENAI_MAX_TOKENS = 16_384;
 
@@ -19,21 +21,21 @@ async function signingKey(secret: string) {
   if (secret.length < 32) throw new Error('Assistant relay is not configured');
   return crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
 }
-async function payload(country: string, body: string, expires: number) {
+async function payload(country: string, body: string, expires: number, path: AssistantOpenAIRelayPath) {
   const hash = hex(await crypto.subtle.digest('SHA-256', encoder.encode(body)));
-  return `assistant-openai-v1\n${ASSISTANT_OPENAI_RELAY_PATH}\n${country}\n${expires}\n${hash}`;
+  return `assistant-openai-v1\n${path}\n${country}\n${expires}\n${hash}`;
 }
-export async function signAssistantOpenAI(secret: string, country: string, body: string, now = Date.now()) {
+export async function signAssistantOpenAI(secret: string, country: string, body: string, now = Date.now(), path: AssistantOpenAIRelayPath = ASSISTANT_OPENAI_RELAY_PATH) {
   if (!assistantOpenAICountrySupported(country)) throw new Error('Unsupported assistant region');
   const expires = Math.floor(now / 1000) + 60;
-  const signature = hex(await crypto.subtle.sign('HMAC', await signingKey(secret), encoder.encode(await payload(country, body, expires))));
+  const signature = hex(await crypto.subtle.sign('HMAC', await signingKey(secret), encoder.encode(await payload(country, body, expires, path))));
   return `${expires}.${signature}`;
 }
-export async function verifyAssistantOpenAI(secret: string, country: string, body: string, proof: string, now = Date.now()) {
+export async function verifyAssistantOpenAI(secret: string, country: string, body: string, proof: string, now = Date.now(), path: AssistantOpenAIRelayPath = ASSISTANT_OPENAI_RELAY_PATH) {
   if (secret.length < 32 || !assistantOpenAICountrySupported(country)) return false;
   const match = /^(\d{10})\.([a-f0-9]{64})$/.exec(proof);
   if (!match) return false;
   const remaining = Number(match[1]) - Math.floor(now / 1000);
   if (remaining <= 0 || remaining > 60) return false;
-  return crypto.subtle.verify('HMAC', await signingKey(secret), Uint8Array.from(match[2].match(/../g)!, b => parseInt(b, 16)), encoder.encode(await payload(country, body, Number(match[1]))));
+  return crypto.subtle.verify('HMAC', await signingKey(secret), Uint8Array.from(match[2].match(/../g)!, b => parseInt(b, 16)), encoder.encode(await payload(country, body, Number(match[1]), path)));
 }
