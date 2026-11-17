@@ -56,8 +56,9 @@ export default function TimerFontPicker({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  usePanelClamp(open, panelRef);
+  usePanelClamp(open, panelRef, triggerRef);
 
   useEffect(() => {
     if (!open) return;
@@ -74,13 +75,19 @@ export default function TimerFontPicker({
   return (
     <div ref={ref} className="tfp">
       <button
+        ref={triggerRef}
         type="button"
         className="tfp-trigger"
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel ?? { zh: '计时器字体', en: 'Timer font' }[language]}
         onClick={() => setOpen(o => !o)}
-        onKeyDown={event => { if (event.key === 'Escape') setOpen(false); }}
+        onKeyDown={event => {
+          if (event.key === 'Escape' && open) {
+            event.stopPropagation();
+            setOpen(false);
+          }
+        }}
       >
         <span className="tfp-digits" style={timerFontPreviewStyle(current.id, previewWeight)}>
           {preview}
@@ -94,7 +101,7 @@ export default function TimerFontPicker({
             if (event.key === 'Escape') {
               event.stopPropagation();
               setOpen(false);
-              ref.current?.querySelector('button')?.focus();
+              triggerRef.current?.focus();
             }
           }}>
           {shown.map(o => (
