@@ -661,10 +661,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         {SECTIONS.map((sec) => {
           const grid = renderCardGrid(sec.id, sec.cards.filter((card) => card.id !== 'calendar'), 'cards-container');
           return (
-            <section key={sec.id} id={`section-${sec.id}`} className="cards-section" hidden={activeSection !== sec.id}>
-              <div className="section-header">
-                <h1 className="home-section-title">{tr(sec.title)}</h1>
-              </div>
+            <section key={sec.id} id={`section-${sec.id}`} className="cards-section" aria-label={tr(sec.title)} hidden={activeSection !== sec.id}>
               {sec.id === 'other' && activeSection === 'other' && locksLoaded && !isCardLocked(sec.cards.find(card => card.id === 'forum')!) && (
                 <LazyVisible className="landing-widget landing-widget--forum" minHeight={0} rootMargin="120px 0px"
                   initiallyVisible={visibleWidgets.forum} onVisible={() => rememberWidget('forum')}>
@@ -679,9 +676,8 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       </div>
 
       {isAdmin && (
-        <section id="landing-admin-content" hidden={activeSection !== 'admin'} className="cards-sections" aria-labelledby="landing-admin-title">
+        <section id="landing-admin-content" hidden={activeSection !== 'admin'} className="cards-sections" aria-label={tr({ zh: '管理', en: 'Admin' })}>
           <div className="cards-section">
-            <h1 id="landing-admin-title" className="home-section-title">{tr({ zh: '管理', en: 'Admin' })}</h1>
             <div className="cards-container">
               {renderCardGrid('main', PRIMARY_CARDS, 'landing-admin-card-group', true)}
               {renderCardGrid('wca', WCA_CARDS, 'landing-admin-card-group', true)}

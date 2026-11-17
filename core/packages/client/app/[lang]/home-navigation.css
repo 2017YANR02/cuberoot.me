@@ -29,7 +29,8 @@ body .landing-page.landing-page--navigation {
 }
 .home-navigation-desktop { flex: 1; min-width: 0; }
 .home-navigation .af-nav-menu { display: flex; justify-content: center; gap: 2px; }
-.home-navigation .af-nav-link { padding-inline: 10px; font-size: 14px; height: 44px; }
+.home-navigation .af-nav-link { padding-inline: 10px; font-size: 14px; font-weight: 500; line-height: 1.4; height: 44px; }
+.home-navigation .af-nav-link[aria-current] { font-weight: 600; }
 .home-navigation .af-nav-icon, .home-navigation-drawer .af-nav-icon { display: none; }
 .home-navigation, .home-navigation-drawer {
   --af-nav-text: var(--foreground);
@@ -38,6 +39,21 @@ body .landing-page.landing-page--navigation {
   --af-nav-selected: var(--accent-soft);
 }
 .landing-page--navigation .home-navigation .landing-auth { flex: 0 0 auto; margin-inline-start: auto; }
+.landing-page--navigation .home-navigation .brand-line { gap: 8px; font-size: 16px; font-weight: 600; line-height: 1.4; letter-spacing: normal; }
+.landing-page--navigation .home-navigation .brand-logo { width: 24px; height: 24px; }
+/* Keep optical icon sizes separate from the existing touch targets. */
+.landing-page--navigation .home-navigation .landing-auth-icon > svg,
+.landing-page--navigation .home-navigation .landing-auth-btn.is-login > svg,
+.landing-page--navigation .home-navigation .landing-calendar-link .landing-card-icon > svg,
+.home-navigation-toggle > svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.75;
+}
+.landing-page--navigation .home-navigation .landing-calendar-link .landing-card { width: 44px; height: 44px; padding: 0; }
+.landing-page--navigation .home-navigation .landing-calendar-link .landing-card-icon { width: 20px; height: 20px; line-height: 1; }
+.landing-page--navigation .home-navigation .landing-auth-btn.is-avatar .landing-auth-avatar,
+.landing-page--navigation .home-navigation .landing-auth-btn.is-avatar > svg { width: 28px; height: 28px; }
 .home-navigation-toggle {
   display: none;
   align-items: center;
@@ -99,14 +115,6 @@ body .landing-page.landing-page--navigation[data-home-section="home"] {
   display: none;
 }
 
-.landing-page--navigation .home-section-title {
-  margin: 0;
-  font-family: var(--font-sans);
-  font-size: 24px;
-  line-height: 1.3;
-  font-weight: 600;
-  color: var(--foreground);
-}
 .landing-page--navigation .forum-feed-preview-header h2,
 .landing-page--navigation .landing-community-members .section-title-serif,
 .landing-page--navigation #landing-admin-content .landing-member-heading .section-title-serif {
