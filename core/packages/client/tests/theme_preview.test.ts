@@ -5,11 +5,13 @@ import {
   CONTRAST_KEY,
   THEME_KEY,
   applyPalette,
+  applyTheme,
   beginAppearancePreview,
   endAppearancePreview,
   previewContrast,
   previewPalette,
   previewTheme,
+  readPalette,
   restorePersistedAppearance,
 } from '@/lib/theme';
 import { PALETTE_KEY } from '@/lib/palettes';
@@ -80,6 +82,28 @@ describe('appearance preview', () => {
 
     endAppearancePreview();
     expect(document.documentElement.hasAttribute('data-appearance-preview')).toBe(false);
+  });
+
+  it.each(['light', 'dark', 'system'] as const)('clears the saved palette before the deferred %s transition', theme => {
+    applyPalette('claude');
+    let update: (() => void) | undefined;
+    Object.defineProperty(document, 'startViewTransition', {
+      configurable: true,
+      value: (callback: () => void) => {
+        update = callback;
+        return { ready: Promise.resolve(), finished: Promise.resolve() };
+      },
+    });
+
+    applyTheme(theme, true, true);
+
+    // The select reads this immediately on theme-change, before the snapshot callback.
+    expect(readPalette()).toBeNull();
+    expect(document.documentElement.dataset.palette).toBe('claude');
+    expect(update).toBeTypeOf('function');
+    update!();
+    expect(document.documentElement.dataset.palette).toBeUndefined();
+    expect(document.documentElement.dataset.theme).toBe(theme === 'system' ? undefined : theme);
   });
 
   it('previews a palette without changing the saved appearance', () => {

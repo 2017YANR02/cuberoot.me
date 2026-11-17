@@ -130,13 +130,15 @@ function applyContrastRoot(level: ContrastLevel) { applyAppearanceContrastRoot(l
 
 // clearPalette: 用户点 light/dark 开关时退出配色主题,回到经典明暗。
 export function applyTheme(theme: Theme, animate = false, clearPalette = false) {
+  // Selection subscribers read storage before the asynchronous snapshot update.
+  // Commit the preference now; only the visible document waits for the animation.
+  if (clearPalette) {
+    try { localStorage.removeItem(PALETTE_KEY); } catch { /* ignore */ }
+  }
   const commit = () => {
-    if (clearPalette) {
-      try { localStorage.removeItem(PALETTE_KEY); } catch { /* ignore */ }
-    }
     applyThemeRoot(theme, clearPalette);
   };
-  runTransition(commit, animate);
+  runTransition(commit, animate, 'appearance');
 }
 
 // 选 / 清配色主题。id=null → 回到经典(移除 data-palette,恢复 theme 的 color-scheme)。
@@ -149,7 +151,7 @@ export function applyPalette(id: string | null, animate = false) {
   const commit = () => {
     applyPaletteRoot(id);
   };
-  runTransition(commit, animate);
+  runTransition(commit, animate, 'appearance');
   window.dispatchEvent(new Event('theme-change'));
 }
 

@@ -167,10 +167,11 @@ body[data-site-scenery] .wca-stats-table th {
   backdrop-filter: var(--glass-filter);
 }
 
-/* The shared popover tint keeps overlapping text readable on scenery and photos. */
+/* The shared popover tint keeps overlapping text readable on scenery and photos.
+   Embedded appearance controls share their enclosing settings card's surface. */
 body[data-site-scenery] :is(
-  .appearance-menu,
-  .lang-menu,
+  .appearance-menu:not(:where(.appearance-menu-embedded)),
+  .lang-menu:not(:where(.appearance-menu-embedded)),
   .chx-axis-menu,
   .col-filter-pop,
   .collab-share,

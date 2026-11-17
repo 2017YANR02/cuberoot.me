@@ -11,9 +11,6 @@ import {
   applyContrast,
   beginAppearancePreview,
   endAppearancePreview,
-  previewTheme,
-  previewPalette,
-  restorePersistedAppearance,
   readTheme,
   readContrast,
   readPalette,
@@ -56,7 +53,6 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
   const ref = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   usePanelClamp(open && !column && !embedded, panelRef);
-  const previewingRef = useRef(false);
   const hoverCloseTimerRef = useRef<number | null>(null);
   const pointerTypeRef = useRef('mouse');
   const eff = useEffectiveTheme();
@@ -69,15 +65,8 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
     hoverCloseTimerRef.current = null;
   };
 
-  const endPreview = () => {
-    if (!previewingRef.current) return;
-    previewingRef.current = false;
-    restorePersistedAppearance();
-  };
-
   const closeMenu = () => {
     cancelHoverClose();
-    endPreview();
     endAppearancePreview(true);
     setOpen(false);
   };
@@ -90,16 +79,6 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
       if (document.querySelector('.accent-color-menu')) return;
       closeMenu();
     }, HOVER_CLOSE_DELAY_MS);
-  };
-
-  const showThemePreview = (choice: Theme) => {
-    previewingRef.current = true;
-    previewTheme(choice === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : choice);
-  };
-
-  const showPalettePreview = (id: PaletteId) => {
-    previewingRef.current = true;
-    previewPalette(id);
   };
 
   useEffect(() => {
@@ -148,13 +127,11 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
 
   useEffect(() => () => {
     cancelHoverClose();
-    if (previewingRef.current) restorePersistedAppearance();
     endAppearancePreview(true);
   }, []);
 
-  // 选明暗:清掉配色回经典明暗(在同一次淡出里清),并持久化 theme。
+  // 选明暗:清掉配色回经典明暗(在同一次圆形过渡里清),并持久化 theme。
   const pickTheme = (choice: Theme) => {
-    previewingRef.current = false;
     endAppearancePreview();
     if (!column) setOpen(false);
     persistItem(THEME_KEY, choice);
@@ -164,7 +141,6 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
 
   // 选配色:覆盖明暗(applyPalette 内部已 dispatch theme-change)。
   const pickPalette = (id: PaletteId) => {
-    previewingRef.current = false;
     endAppearancePreview();
     if (!column) setOpen(false);
     applyPalette(id, true);
@@ -172,7 +148,6 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
 
   // 低对比度正交于明暗 / 配色,切换时菜单不关。
   const pickContrast = (level: ContrastLevel) => {
-    previewingRef.current = false;
     setContrast(level);
     applyContrast(level);
   };
@@ -227,17 +202,11 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
         <div
           className={`lang-menu palette-menu appearance-menu settings-typography${column ? ' af-nav-panel' : ''}${embedded ? ' appearance-menu-embedded' : ''}`}
           ref={panelRef}
-          data-site-surface={embedded ? 'panel' : 'popover'}
+          data-site-surface={embedded ? undefined : 'popover'}
           data-backgrounds={showBackgrounds}
           role={embedded ? undefined : "menu"}
           onPointerEnter={cancelHoverClose}
-          onPointerLeave={(event) => {
-            endPreview();
-            scheduleHoverClose(event.pointerType);
-          }}
-          onBlur={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) endPreview();
-          }}
+          onPointerLeave={(event) => scheduleHoverClose(event.pointerType)}
           >
           <div className="appearance-settings">
             <div className="appearance-sec-label appearance-setting-rows">
@@ -246,11 +215,6 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
                 onChange={patch => {
                   if (patch.theme) pickTheme(patch.theme);
                   else if (patch.palette) pickPalette(patch.palette);
-                }}
-                onPreview={patch => {
-                  if (!patch) endPreview();
-                  else if (patch.theme) showThemePreview(patch.theme);
-                  else if (patch.palette) showPalettePreview(patch.palette);
                 }} />
                 <AccentColorSelect /></>}
               {section !== 'appearance' && <BoolToggle
@@ -274,8 +238,6 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
           {section !== 'general' && <AppLink
             href="/appearance"
             className="palette-menu-more"
-            onPointerEnter={endPreview}
-            onFocus={endPreview}
             onClick={closeMenu}
           >
             {L.more} →
@@ -283,8 +245,6 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
 
           {<div
             className="appearance-extra"
-            onPointerEnter={endPreview}
-            onFocus={endPreview}
           >{section !== 'general' && showBackgrounds && <SiteBackgroundControl />}{menuContent}</div>}
         </div>
       )}

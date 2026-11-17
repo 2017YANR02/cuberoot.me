@@ -116,10 +116,7 @@ a {
   text-decoration: none;
 }
 
-/* 主题切换晕染:走 View Transitions API。lib/theme.ts 的 applyTheme() 用
-   document.startViewTransition 包住 data-theme 切换,浏览器对整页旧→新做交叉
-   淡出。这里把默认 0.25s 放慢到 0.42s,贴近"中国色"的慢过渡气质;不支持的
-   浏览器(无 startViewTransition)自动瞬切,reduced-motion 由 JS 跳过。 */
+/* Discrete non-theme changes retain the shared snapshot crossfade. */
 html[data-discrete-transition]::view-transition-old(root),
 html[data-discrete-transition]::view-transition-new(root) {
   animation-duration: 0.42s;
@@ -130,8 +127,31 @@ html:not([data-discrete-transition])::view-transition-new(root) {
   animation-duration: 180ms;
 }
 
-/* Hover 预览不能用整页 View Transition:快照层会短暂接管 hit testing,快速扫过
-   菜单时可能误触发离开/恢复。注册后的颜色 token 在根层直接插值,页面保持可交互。 */
+/* Clicked themes reveal the new page from the bottom-left corner. */
+html[data-discrete-transition="appearance"]::view-transition-group(root) {
+  animation: none;
+}
+
+html[data-discrete-transition="appearance"]::view-transition-old(root),
+html[data-discrete-transition="appearance"]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html[data-discrete-transition="appearance"]::view-transition-new(root) {
+  /* Accelerate, slow through the middle, accelerate out. 142% of the
+     normalized diagonal covers the opposite corner at every aspect ratio. */
+  animation: appearance-circle-reveal 900ms linear both;
+}
+
+@keyframes appearance-circle-reveal {
+  0% { clip-path: circle(0% at 0% 100%); animation-timing-function: cubic-bezier(.42, 0, 1, 1); }
+  38% { clip-path: circle(54% at 0% 100%); animation-timing-function: cubic-bezier(0, 0, .35, 1); }
+  70% { clip-path: circle(83% at 0% 100%); animation-timing-function: cubic-bezier(.42, 0, 1, 1); }
+  100% { clip-path: circle(142% at 0% 100%); }
+}
+
+/* Token interpolation for previews that do not use a snapshot. */
 html[data-appearance-preview],
 html[data-appearance-preview] body {
   transition-property:
@@ -145,7 +165,16 @@ html[data-appearance-preview] body {
   transition-timing-function: ease;
 }
 
+html[data-discrete-transition="appearance"],
+html[data-discrete-transition="appearance"] body {
+  transition: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  html[data-discrete-transition="appearance"]::view-transition-new(root) {
+    animation-duration: 0s;
+  }
+
   html[data-appearance-preview],
   html[data-appearance-preview] body {
     transition-duration: 0s;

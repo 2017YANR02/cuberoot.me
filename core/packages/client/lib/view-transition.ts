@@ -1,4 +1,4 @@
-// Shared snapshot crossfade for discrete UI changes; rapid changes cancel the old animation.
+// Shared snapshot transitions; rapid selections cancel the old animation.
 type ViewTransitionHandle = {
   ready?: Promise<unknown>;
   finished?: Promise<unknown>;
@@ -11,12 +11,12 @@ type DocumentWithViewTransition = Document & {
 
 let activeTransition: ViewTransitionHandle | null = null;
 
-export function runViewTransition(commit: () => void, animate: boolean) {
+export function runViewTransition(commit: () => void, animate: boolean, effect: 'crossfade' | 'appearance' = 'crossfade') {
   const doc = document as DocumentWithViewTransition;
   const reducedMotion = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (animate && typeof doc.startViewTransition === 'function' && !reducedMotion) {
     activeTransition?.skipTransition?.();
-    document.documentElement.dataset.discreteTransition = 'true';
+    document.documentElement.dataset.discreteTransition = effect;
     const transition = doc.startViewTransition(commit);
     activeTransition = transition;
     // skipTransition() 会按规范拒绝 ready；快速扫过选项时这是预期取消，不应冒泡到错误层。
