@@ -2,7 +2,9 @@ import { SITE_DIRECTORY_GROUPS } from './site_directory';
 import { PAGE_META } from './page_catalog';
 
 /** Versioned, bounded vocabulary shared by the browser and ingestion API. */
-export const HOME_ANALYTICS_LAYOUT = 'home-2026-11-03';
+export const HOME_ANALYTICS_LAYOUT = 'home-2026-11-17';
+// Accept the previous layout while already-open pages finish their sessions.
+const HOME_ANALYTICS_LAYOUTS = ['home-2026-11-03', HOME_ANALYTICS_LAYOUT] as const;
 export const ANALYTICS_RETENTION_DAYS = 30;
 export const ANALYTICS_BATCH_SIZE = 20;
 export const ANALYTICS_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -90,7 +92,7 @@ export interface ProductAnalyticsEvent {
   entryId?: string;
   placement?: typeof ANALYTICS_PLACEMENTS[number];
   position?: number;
-  layoutVersion?: typeof HOME_ANALYTICS_LAYOUT;
+  layoutVersion?: (typeof HOME_ANALYTICS_LAYOUTS)[number];
   action?: AnalyticsAction;
 }
 
@@ -113,7 +115,7 @@ export function validAnalyticsEvent(value: unknown, now = Date.now()): value is 
   const entryEvent = e.name === 'web.entry_impression' || e.name === 'web.entry_click';
   if (entryEvent) {
     if (!e.entryId || !ANALYTICS_ENTRY_IDS.includes(e.entryId) || !e.placement || !ANALYTICS_PLACEMENTS.includes(e.placement)
-      || e.layoutVersion !== HOME_ANALYTICS_LAYOUT || !Number.isInteger(e.position) || e.position! < 0 || e.position! > 200
+      || !e.layoutVersion || !HOME_ANALYTICS_LAYOUTS.includes(e.layoutVersion) || !Number.isInteger(e.position) || e.position! < 0 || e.position! > 200
       || (e.placement !== 'search' && e.route !== '/')) return false;
   } else if (e.entryId !== undefined || e.placement !== undefined || e.position !== undefined || e.layoutVersion !== undefined) return false;
   if (e.name === 'web.feature_use') return !!e.action && ANALYTICS_ACTIONS.includes(e.action) && ANALYTICS_ACTION_FEATURES[e.action] === e.feature;

@@ -9,6 +9,18 @@ vi.mock('@/lib/api-base', () => ({ apiUrl: (path: string) => path }));
 vi.mock('next/navigation', () => ({ usePathname: () => '/' }));
 import { analyticsEntryTarget, analyticsNavigate, analyticsSnapshot, flushAnalytics, initializeAnalytics, trackAnalytics, trackPageInteraction, stopAnalytics, trackFeatureUse } from '@/lib/product-analytics';
 import { observeAnalyticsEntries } from '@/components/ProductAnalytics';
+import { HOME_ANALYTICS_LAYOUT, validAnalyticsEvent } from '@cuberoot/shared/product-analytics';
+
+it('accepts old open-page and current layout events during a rollout, but rejects unknown layouts', () => {
+  const event = {
+    id: '00000000-0000-4000-8000-000000000001', viewId: '00000000-0000-4000-8000-000000000002',
+    name: 'web.entry_click', occurredAt: new Date().toISOString(), route: '/', feature: 'home',
+    language: 'zh', deviceClass: 'desktop', entryPoint: 'direct', entryId: 'memo', placement: 'train', position: 3,
+  };
+  expect(validAnalyticsEvent({ ...event, layoutVersion: HOME_ANALYTICS_LAYOUT })).toBe(true);
+  expect(validAnalyticsEvent({ ...event, layoutVersion: 'home-2026-11-03' })).toBe(true);
+  expect(validAnalyticsEvent({ ...event, layoutVersion: 'unknown' })).toBe(false);
+});
 
 describe('default browser analytics', () => {
   beforeEach(() => {
