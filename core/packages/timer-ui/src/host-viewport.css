@@ -36,9 +36,28 @@
     max(40px, var(--host-safe-bottom)) max(16px, var(--host-safe-left));
 }
 :root[data-host-viewport] .solver-sheet {
-  inset: var(--host-safe-top) var(--host-safe-right) var(--host-safe-bottom) var(--host-safe-left);
+  inset: 0;
   width: auto;
   height: auto;
+}
+:root[data-host-viewport] .solver-sheet-head {
+  padding: calc(var(--host-safe-top) + 10px)
+    max(var(--solver-sheet-padding), var(--host-safe-right)) 10px
+    max(var(--solver-sheet-padding), var(--host-safe-left));
+}
+:root[data-host-viewport] .solver-sheet .solver-sheet-body {
+  padding-left: max(var(--solver-sheet-padding), var(--host-safe-left));
+  padding-right: max(var(--solver-sheet-padding), var(--host-safe-right));
+  padding-bottom: calc(var(--host-safe-bottom) + 16px);
+}
+/* Compact settings are a full page. Keep safe insets inside that page instead
+ * of combining an inset overlay with an already safe-area-padded header. */
+@media (max-width: 720px) {
+  :root[data-host-viewport] .timer-settings-overlay.timer-settings-overlay { padding: 0; }
+  :root[data-host-viewport] .settings-modal-head {
+    padding: max(14px, var(--host-safe-top)) max(16px, var(--host-safe-right)) 12px
+      max(16px, var(--host-safe-left));
+  }
 }
 :root[data-host-viewport] .timer-info-toast {
   left: calc(var(--host-safe-left) + (100% - var(--host-safe-left) - var(--host-safe-right)) / 2);

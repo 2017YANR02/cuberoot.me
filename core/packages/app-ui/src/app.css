@@ -385,6 +385,23 @@ button {
 
 .surface-chrome { transition: opacity 120ms ease; }
 
+.smart-cube-abort {
+  position: fixed;
+  top: calc(max(var(--host-safe-top, 0px), env(safe-area-inset-top, 0px)) + 8px);
+  right: calc(max(var(--host-safe-right, 0px), env(safe-area-inset-right, 0px)) + 8px);
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.smart-cube-abort:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
 .recovery-screen {
   width: min(100%, 620px);
   margin: 0 auto;

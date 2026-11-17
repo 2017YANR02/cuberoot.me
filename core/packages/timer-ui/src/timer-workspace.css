@@ -81,6 +81,10 @@
   color: var(--muted-foreground);
   font-size: 12px;
 }
+.timer-live-solution > :is(.shell-recap-head, .shell-recap-body) {
+  padding-left: 16px;
+  padding-right: 16px;
+}
 .timer-workspace[data-live-reconstruction] .shell-recap-rail {
   opacity: 1;
   visibility: visible;

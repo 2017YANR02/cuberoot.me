@@ -31,6 +31,7 @@ interface TimerControllerOptions {
 }
 
 export interface TimerController {
+  abortRun(): boolean;
   armFromCube(atMs?: number, clock?: MoveClockSample): boolean;
   cancelArm(): boolean;
   machine: TimerMachineState;
@@ -210,7 +211,12 @@ export function useTimerController({
     return true;
   }, [apply, clearHoldTimeout]);
 
+  const abortRun = useCallback((): boolean => (
+    apply({ type: 'abort-run', nowMs: performance.now() }).accepted === true
+  ), [apply]);
+
   return {
+    abortRun,
     armFromCube,
     cancelPress,
     cancelArm,

@@ -1,4 +1,5 @@
 'use client';
+import './reconstruct/solve-recap.css';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Solve } from '@cuberoot/shared/timer';
 import type { SmartCubeAttemptProducer } from '@cuberoot/shared/timer/smart-cube-attempt';

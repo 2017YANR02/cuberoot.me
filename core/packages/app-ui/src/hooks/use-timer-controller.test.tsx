@@ -14,6 +14,7 @@ function Probe({
   enabled,
   inspectionSec,
   onStart,
+  onComplete,
   smartCubeActive,
   trainingStartMode,
   canManualArmTraining,
@@ -23,6 +24,7 @@ function Probe({
   enabled: boolean;
   inspectionSec: number;
   onStart?(startedAtMs: number): void;
+  onComplete?: Parameters<typeof useTimerController>[0]['onComplete'];
   smartCubeActive?: () => boolean;
   trainingStartMode?: () => 'first-turn' | 'scrambled' | 'manual' | undefined;
   canManualArmTraining?: () => boolean;
@@ -33,7 +35,7 @@ function Probe({
     enabled,
     holdMs: 10,
     inspectionSec,
-    onComplete: () => undefined,
+    onComplete: onComplete ?? (() => undefined),
     onStart,
     smartCubeActive,
     trainingStartMode,
@@ -104,6 +106,26 @@ describe('mobile timer controller source invalidation', () => {
     expect(controller.machine.phase).toBe('running');
     await act(async () => { expect(controller.stopFromCube()).toBe(true); });
     expect(controller.machine.phase).toBe('stopped');
+  });
+
+  it('explicitly aborts a smart-cube run once as DNF even after the cube disconnects', async () => {
+    const onComplete = vi.fn();
+    let connected = true;
+    await act(async () => root.render(<Probe canStart enabled inspectionSec={0}
+      smartCubeActive={() => connected} onComplete={onComplete}
+      onController={value => { controller = value; }} />));
+    await act(async () => { controller.armFromCube(); controller.startFromCube(); });
+    await act(async () => { vi.advanceTimersByTime(1500); });
+    connected = false;
+    await act(async () => { expect(controller.abortRun()).toBe(true); });
+    expect(controller.machine.phase).toBe('stopped');
+    expect(onComplete).toHaveBeenCalledOnce();
+    expect(onComplete.mock.calls[0][0]).toMatchObject({ autoPenalty: 'DNF', timeMs: 1500 });
+    await act(async () => {
+      expect(controller.abortRun()).toBe(false);
+      expect(controller.stopFromCube()).toBe(false);
+    });
+    expect(onComplete).toHaveBeenCalledOnce();
   });
 
   it.each(['first-turn', 'scrambled', 'manual'] as const)('uses shared %s training timing without WCA penalties', async mode => {

@@ -150,6 +150,32 @@ afterEach(async () => {
 });
 
 describe('installed App GAN lifecycle integration', () => {
+  it.each([false, true])('stops from the visible button and saves one DNF (disconnected: %s)', async (disconnected) => {
+    const stopButton = () => [...container.querySelectorAll<HTMLButtonElement>('button')]
+      .find(button => button.getAttribute('aria-label') === 'Stop (DNF)');
+    expect(stopButton()).toBeUndefined();
+    await act(async () => move('R', 1_000));
+    await act(async () => move('U', 2_000));
+    expect(phase).toBe('running');
+    if (disconnected) await act(async () => setRadio({ ...radio, phase: 'idle', deviceName: '', facelets: '' }));
+    const button = stopButton()!;
+    expect(button).toBeDefined();
+    expect(button.textContent).toBe('');
+    expect(button.querySelector('svg')).not.toBeNull();
+    expect(button.hasAttribute('data-no-timer')).toBe(true);
+    expect(button.closest('.surface-chrome')).toBeNull();
+    now = 3_000;
+    await act(async () => button.click());
+    await settle();
+    expect(phase).toBe('stopped');
+    expect(stopButton()).toBeUndefined();
+    expect(saved()).toHaveLength(1);
+    expect(saved()[0]).toMatchObject({ penalty: 'DNF', timeMs: 1000 });
+    await act(async () => { button.click(); options.onSolved?.(3_100); });
+    await settle();
+    expect(saved()).toHaveLength(1);
+  });
+
   it('routes embedded timer links to the existing shell tab and rejects foreign or hidden frames', async () => {
     const onlineHost = { ...host, getNetworkStatus: async () => true };
     await act(async () => root.render(<App host={onlineHost} />));

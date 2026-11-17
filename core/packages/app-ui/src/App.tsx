@@ -4111,6 +4111,14 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         choice={resolveAppearanceScheme(appearance, systemDark) === 'dark' ? appearance.darkBackground : appearance.lightBackground}
         scheme={resolveAppearanceScheme(appearance, systemDark)} assetRoot={`${SITE_ORIGIN}/assets/home-backgrounds/v1`} />}
       <SiteCorners exclude=".site-glass-engine, .maplibregl-map" containers=".cg-card, .rc-card, .recon-card, .sortable-card, .timer-workspace-panel" />
+      {view === 'timer' && timerMode === 1 && timer.machine.phase === 'running' && smartCubeAttemptDeviceRef.current && (
+        <button type="button" className="smart-cube-abort" data-no-timer aria-label={copy.stopSmartCube}
+          onClick={() => {
+            if (timer.abortRun()) smartCubeSoloController.setRunning(false);
+          }}>
+          <X size={24} aria-hidden="true" />
+        </button>
+      )}
       <TimerPrintController
         currentResult={timerText}
         currentScramble={formatScrambleForEvent(activeEvent, scramble)}
