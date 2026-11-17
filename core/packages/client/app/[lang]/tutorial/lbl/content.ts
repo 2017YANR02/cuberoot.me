@@ -126,11 +126,11 @@ export const LBL_STEPS: Step[] = [
   {
     id: 'cross', title: text('底面十字', 'Bottom cross'), goal: text('白十字在底面，四条侧面颜色也对齐中心。', 'Make a bottom white cross with all four side colors matching their centers.'),
     paragraphs: [
-      text("同时转下面两层，让白棱侧面的颜色对齐同色中心。做“上上”。用同样的方法处理其余三条白棱，完成白十字。", "Turn the lower two layers together to match the white edge’s side color with its center. Turn the right face twice. Use the same method for the remaining three white edges to complete the white cross."),
+      text('转下面两层，在前面对齐白棱与中心。转体，把白棱放到右侧。做“上上”归位。用同样的方法处理其余三条白棱，完成白十字。', 'Turn the lower two layers to align the white edge with the front center. Rotate the cube to put the edge on the right. Turn the right face twice to insert it. Use the same method for the remaining three white edges to complete the white cross.'),
     ],
     // Both demo and practice complete all four petals. d turns the lower two layers while keeping U fixed;
     // y' puts the aligned front edge on the right, then R2 sends it to the bottom.
-    examples: [example('完整演示', 'Complete demonstration', "d R2 y' R2 d y' R2 d2 y' R2", '每条白棱都先对齐，在右手边就直接做“上上”；不在右手边再转体。', 'Match each white edge to its center. If it is already on the right, turn the right face twice; otherwise rotate it to the right first.', "F2 U R2 U2 B2 U L2 U'")],
+    examples: [example('完整演示', 'Complete demonstration', "d y' R2 d y' R2 d2 y' R2 d y' R2", '优先处理前上方的白棱；没有白棱时才转顶层。转下面两层，在前面对齐，再转体到右侧做“上上”。', 'Use the white edge at top-front first; turn the top only if there is none there. Turn the lower two layers to align it at the front, then rotate it to the right and turn the right face twice.', "F2 U R2 U2 B2 U L2 U'")],
   },
   {
     id: 'corners', title: text('底层角块', 'Bottom corners'), goal: text('复原白色底层和侧面第一行。', 'Solve the white layer and the bottom row of each side.'),

@@ -18,7 +18,7 @@ import AlgSteps from './AlgSteps';
 import { usePlayerVisible } from './use-player-visible';
 import { getLblAlgGroups, sideTurn } from './alg-cues';
 import { SIDE_VIEW_PAUSE_MS, SIDE_VIEW_TURN_MS } from './schedule-demo-play';
-import { buildEdgePositionExample, buildFishDemo, completeDemoPool, yellowFaceTouchSticker, type CompleteDemoStage, type DemoContent, type DemoPhase, type DemoView, type CompleteDemo as Demo, walkthroughCompletionStickers } from './complete-demo-state';
+import { buildBottomCrossFromDaisy, buildEdgePositionExample, buildFishDemo, completeDemoPool, yellowFaceTouchSticker, type CompleteDemoStage, type DemoContent, type DemoPhase, type DemoView, type CompleteDemo as Demo, walkthroughCompletionStickers } from './complete-demo-state';
 
 const CAPTION_FADE_MS = 450;
 const CAPTION_DURATION_MS = 3200;
@@ -73,16 +73,16 @@ export function WhiteCrossCompleteDemo() {
   const demo = useMemo<Demo>(() => {
     const example = LBL_STEPS.find(step => step.id === 'cross')!.examples[0];
     const setup = index === 0 ? example.setup! : `${example.setup!} U2`;
-    const alg = index === 0 ? example.alg : "R2 y d' R2 y R2 y d' R2";
+    const alg = buildBottomCrossFromDaisy(setup);
     const moves = alg.split(/\s+/);
     return { setup, alg,
       done: { zh: '白十字完成，四条侧面颜色也对齐中心。', en: 'The white cross is solved and all four side colors match their centers.' },
       phases: moves.map((move, index) => ({ start: index, end: index + 1,
         act: { text: /^d/.test(move)
-          ? { zh: '同时转下面两层，让白棱侧面的颜色对齐同色中心。', en: 'Turn the lower two layers together to match the white edge’s side color with its center.' }
-          : /^y/.test(move) ? (index > 0 && /^d/.test(moves[index + 1] ?? '')
-            ? { zh: '转体，把下一条白棱放到右手边观察。', en: 'Rotate the cube to inspect the next white edge on the right.' }
-            : { zh: '转体，把已经对齐的白棱放到右手边。', en: 'Rotate the cube to put the aligned white edge on the right.' })
+          ? { zh: '转下面两层，在前面对齐白棱与中心', en: 'Turn the lower two layers to align the white edge with the front center' }
+          : /^U/.test(move) ? { zh: '转顶层，把白棱放到前方', en: 'Turn the top to bring a white edge to the front' }
+          : /^y/.test(move)
+            ? { zh: '转体，把已经对齐的白棱放到右侧', en: 'Rotate the cube to put the aligned white edge on the right' }
             : { zh: '做“上上”，让这条白棱归位。', en: 'Turn the right face twice to insert this white edge.' }, alg: move } })),
     };
   }, [index]);
@@ -193,7 +193,13 @@ export function Demonstration({ stage, demo, guidedFish = false, onCaseCueChange
   const remaining = useRef({ position: -1, revision: -1, ms: 0 });
   const frame = timeline[position];
   const total = timeline[timeline.length - 1].step;
-  const boundaries = useMemo(() => [...new Set(demo.phases.map(item => item.end))].filter(step => step > 0 && step < total), [demo, total]);
+  const boundaries = useMemo(() => {
+    // Each R2 finishes one white edge; its preparation moves share the same segment.
+    const ends = stage === 'cross'
+      ? demo.alg.split(/\s+/).flatMap((move, index) => move === 'R2' ? [index + 1] : [])
+      : demo.phases.map(item => item.end);
+    return [...new Set(ends)].filter(step => step > 0 && (stage === 'cross' ? step <= total : step < total));
+  }, [demo, stage, total]);
 
   useEffect(() => {
     if (!guidedFish && !walkthrough) return;
@@ -339,6 +345,7 @@ export function Demonstration({ stage, demo, guidedFish = false, onCaseCueChange
   return <div className="lbl-demo lbl-demo-split lbl-complete-player" data-tutorial-mode="teaching" data-tutorial-layout={layout} data-player-ready={playerVisible} aria-busy={!playerVisible}>
     <div className="lbl-cube" data-player-ready={playerVisible} aria-busy={!playerVisible}><div className="lbl-complete-playback"><AlgPlayer ref={player} puzzle="3x3" engine="sim" controlMode="none" hideResetView
       highlightDaisyAlignment={stage === 'cross'}
+      daisyAlignmentFace={demo.alg.split(/\s+/)[frame.step] === 'R2' ? 'R' : 'F'}
       set={walkthrough ? '' : LESSON_STICKERING[stage]} additionalStickering={!walkthrough && (stage.startsWith('yellow-') || stage.endsWith('-position')) ? 'F2L' : undefined} orientation="z2"
       highlightedStickers={walkthrough ? (hiddenOutlines === recognitionOutlines ? NO_OUTLINES : (content.outlines ?? visibleOutlines)) : stage === 'yellow-face' ? touchHighlight ?? visibleOutlines : undefined}
       frontFaceArrow={frame.caption === 'recognize' ? frame.phase?.frontFaceArrow : undefined}

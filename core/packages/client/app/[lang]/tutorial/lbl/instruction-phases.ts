@@ -16,12 +16,14 @@ export const INSTRUCTION_PHASES: Record<string, InstructionPhase[][]> = {
     [phase('把这条白棱放到右层', 'Put this edge in the right layer', 1), phase('做“上上”', 'turn the right face twice', 2)],
   ],
   cross: [[
-    phase('同时转下面两层，让白棱侧面的颜色对齐同色中心', 'Turn the lower two layers together to match the white edge’s side color with its center', 1),
-    phase('做“上上”', 'Turn the right face twice', 2),
-    phase('用同样的方法处理其余三条白棱，完成白十字', 'Use the same method for the remaining three white edges to complete the white cross', 3, 10),
+    phase('转下面两层，在前面对齐白棱与中心', 'Turn the lower two layers to align the white edge with the front center', 1),
+    phase('转体，把白棱放到右侧', 'Rotate the cube to put the edge on the right', 2),
+    phase('做“上上”归位', 'Turn the right face twice to insert it', 3),
+    phase('用同样的方法处理其余三条白棱，完成白十字', 'Use the same method for the remaining three white edges to complete the white cross', 4, 12),
   ], [
-    phase('转顶层，让白棱侧面的颜色对齐同色中心', 'Turn the top to match the white edge’s side color with its center', 1),
-    phase('做“上上”归位', 'Turn the right face twice to insert it', 2),
+    phase('转下面两层，在前面对齐白棱与中心', 'Turn the lower two layers to align the white edge with the front center', 1),
+    phase('转体，把白棱放到右侧', 'Rotate the cube to put the edge on the right', 2),
+    phase('做“上上”归位', 'Turn the right face twice to insert it', 3),
   ]],
   corners: [
     [phase('白朝右，放右前', 'White faces right. Place the corner at front-right', 1), phase('转下面两层，让目标位置处于正下方', 'Turn the lower two layers to put the target slot directly below the corner', 2), phase('做右公式', 'do the right trigger', 3, 6)],

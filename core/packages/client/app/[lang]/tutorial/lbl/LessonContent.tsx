@@ -427,6 +427,7 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
         fishLeft={chapter.id === 'sune-learning' ? lesson.id.endsWith('-0') : undefined}
         outlinedStickers={chapter.id === 'daisy' ? [['D5'], ['D3'], ['D5'], ['D5'], ['D5'], ['D5']][chapter.examples.indexOf(example)] : undefined}
         highlightDaisyAlignment={chapter.id === 'cross'}
+        daisyAlignmentFace={example.alg.split(/\s+/)[move] === 'R2' ? 'R' : 'F'}
         showHands={triggerHandsDemo}
         hiddenStickers={middleHiddenStickers ?? (chapter.id === 'yellow-face' && lesson.id === 'case-3' ? ['U8'] : undefined)}
         additionalStickering={chapter.id.startsWith('yellow-') || chapter.id.endsWith('-position') ? 'F2L' : hostChapterId === 'corners' ? 'centers-only' : undefined}

@@ -560,20 +560,17 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string, follo
   return { setup, alg: moves.join(' '), phases, done: done[stage] };
 }
 
-/** Use the same insertions as the bottom-cross lesson: align, bring right, insert. */
-function buildBottomCrossFromDaisy(setup: string): string {
+/** Keep an existing UF petal; otherwise bring one to UF, then align the lower layers. */
+export function buildBottomCrossFromDaisy(setup: string): string {
   const moves: string[] = [];
   for (let edge = 0; edge < 4; edge++) {
     const current = join(setup, ...moves);
     if (demoGoalReached('cross', current)) break;
-    const alignment = lowerTurns.flatMap(d => rotations.map(y => join(d, y)))
-      .sort((a, b) => movesOf(a).length - movesOf(b).length)
-      .find(preparation => {
-        const cube = state(join(current, preparation));
-        return color(cube, Face.U, 5) === 'D' && matches(cube, Face.R, 1);
-      });
+    const u = turns.find(turn => color(state(join(current, turn)), Face.U, 7) === 'D');
+    if (u === undefined) throw new Error('No white daisy petal to bring to UF');
+    const alignment = lowerTurns.find(d => matches(state(join(current, u, d)), Face.F, 1));
     if (alignment === undefined) throw new Error('No aligned daisy petal to insert');
-    moves.push(...movesOf(alignment), 'R2');
+    moves.push(...movesOf(join(u, alignment)), "y'", 'R2');
   }
   return moves.join(' ');
 }
