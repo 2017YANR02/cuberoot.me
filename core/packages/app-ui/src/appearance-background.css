@@ -1,0 +1,57 @@
+.site-scenery {
+  /* Stay behind the viewport throughout the page's full scroll length. */
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.site-scenery img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--site-scene-position) top;
+}
+
+.site-scenery::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--background);
+  opacity: .48;
+}
+
+@supports (color: color-mix(in srgb, black, white)) {
+  .site-scenery::after {
+    opacity: 1;
+    background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--background) 72%, transparent),
+    color-mix(in srgb, var(--background) 16%, transparent) 18%,
+    color-mix(in srgb, var(--background) 48%, transparent) 42%,
+      color-mix(in srgb, var(--background) 48%, transparent) 100%);
+  }
+}
+
+html[data-contrast='soft'] .site-scenery img {
+  filter: saturate(.65) contrast(.85);
+}
+
+@media print { .site-scenery { display: none; } }
+
+
+
+/* A document stacking context keeps the negative scenery above the html canvas.
+   Isolation leaves fixed and sticky positioning intact. */
+body[data-site-scenery] {
+  isolation: isolate;
+  background: transparent;
+
+}
+
+@supports (color: color-mix(in srgb, black, white)) {
+  body[data-site-scenery] {
+    --muted-foreground: color-mix(in srgb, var(--foreground) 72%, var(--background));
+    --faint-foreground: color-mix(in srgb, var(--foreground) 65%, var(--background));
+  }
+}

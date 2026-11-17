@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url';
 import { prospectiveWritesFromHookPayload } from './hook-detect-nested-links.mjs';
 import { unframedSurfaces } from './site-surface-policy.mts';
 
-const MATERIAL_FILE = 'components/glass-material.css';
 const REPO_ROOT = fileURLToPath(new URL('../../../../', import.meta.url));
 const LEGACY_OVERRIDES = {
   'app/[lang]/home-background.css': new Set(['--glass-background:var(--card)', '--glass-filter:none']), // Existing print/accessibility fallback.
@@ -78,7 +77,7 @@ function unframedKind(selector) {
 
 export function scanSiteMaterial(source, filePath) {
   const path = String(filePath).replaceAll('\\', '/').replace(/^.*packages\/client\//, '');
-  if (!/^(app|components)\/.+\.css$/.test(path) || path === MATERIAL_FILE) return [];
+  if (!/^(app|components)\/.+\.css$/.test(path)) return [];
   const clean = source.replace(/\/\*[\s\S]*?\*\//g, (comment) => ' '.repeat(comment.length));
   const hits = [];
   for (const rule of clean.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {

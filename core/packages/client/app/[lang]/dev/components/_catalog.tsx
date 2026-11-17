@@ -2225,11 +2225,18 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `折叠展开统一复用；不要使用原生三角形、字符箭头或重复实现。`, en: `Reuse for disclosures; do not use native triangles, character arrows, or separate implementations.` },
   },
   {
+    name: 'AppearanceSettings',
+    import: "import { AppearanceSettings, AppAppearanceSettings } from '@cuberoot/app-ui/appearance';",
+    category: 'toggle',
+    zh: `Web 与 App 共用的受控外观控件：跟随系统/浅色/深色、配色、强调色与 HEX、对比度及背景缩略图。AppAppearanceSettings 提供独立页面与返回入口；持久化与导航由宿主注入。`,
+    en: `Controlled Web/App appearance controls: system/light/dark, palettes, accent and HEX, contrast, and background thumbnails. AppAppearanceSettings adds a page and back action; hosts inject persistence and navigation.`,
+  },
+  {
     name: 'AppearanceToggle',
     import: "import AppearanceToggle from '@/components/AppearanceToggle';",
     category: 'toggle',
-    zh: `右上角统一的「外观」菜单,把明暗(浅 / 深)和中国色配色合并成一份互斥单选下拉,外加一档正交的柔和度(降对比护眼),切换走 lib/theme 并持久化。`,
-    en: `Unified top-bar Appearance menu merging light/dark and color palettes into one mutually-exclusive radio dropdown, plus an orthogonal softness (lower-contrast) switch; persists via lib/theme.`,
+    zh: `右上角统一的「外观」菜单,把明暗(系统 / 浅 / 深)和中国色配色合并成一份互斥单选下拉,外加一档正交的柔和度(降对比护眼),切换走 lib/theme 并持久化。`,
+    en: `Unified top-bar Appearance menu merging system/light/dark and color palettes into one mutually-exclusive radio dropdown, plus an orthogonal softness (lower-contrast) switch; persists via lib/theme.`,
     note: { zh: `全站外观入口,合并了旧的 ThemeToggle 和 PaletteToggle,新代码用它而非那两个。`, en: `Site-wide appearance entry; replaces the separate ThemeToggle + PaletteToggle — prefer this.` },
   },
   {

@@ -1,89 +1,25 @@
 @import '@cuberoot/timer-ui/typography.css';
+@import './appearance.css';
 
 :root {
-  color-scheme: light;
   font-family: var(--font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --background: #faf9f7;
-  --foreground: #191817;
-  --muted-foreground: #716d68;
-  --faint-foreground: #9b9690;
-  --popover: #ffffff;
-  --subtle: #eeebe7;
-  /* Shared timer/reconstruction surfaces use the same host palette. */
-  --card: var(--popover);
-  --muted: var(--subtle);
-  --signal-info: #4a9eff; /* Same semantic information color as the Web host. */
-  --accent: #bd5d3d;
-  --accent-foreground: #ffffff;
-  --accent-soft: rgb(189 93 61 / 13%);
-  --destructive-foreground: #ffffff;
-  --toggle-on: #34c759;
-  --border-default: rgb(25 24 23 / 13%);
-  --border-strong: rgb(25 24 23 / 24%);
-  --input: var(--border-default);
-  --ring: var(--accent);
+  --subtle: var(--muted);
   --modal-overlay: rgb(0 0 0 / 70%);
-  --shell-foreground-rgb: 25 24 23;
-  --shell-divider: rgb(var(--shell-foreground-rgb) / 8%);
-  --shell-chip: rgb(var(--shell-foreground-rgb) / 5%);
-  --shell-hover: rgb(var(--shell-foreground-rgb) / 6%);
-  --success: #39724f;
-  --success-soft: rgb(57 114 79 / 14%);
-  --danger: #a13f36;
-  --destructive: var(--danger);
-  --signal-success: var(--success);
-  --signal-warning: var(--accent);
-  --timer-dnf: var(--danger);
-  --timer-holding: var(--accent);
-  --timer-idle: var(--foreground);
-  --timer-plus2: var(--accent);
-  --timer-ready: var(--success);
-  --timer-running: var(--foreground);
-  --timer-warn8: var(--accent);
-  --timer-warn12: var(--danger);
+  --shell-divider: var(--border-default);
+  --shell-chip: var(--muted);
+  --shell-hover: var(--secondary);
+  --success: var(--signal-success);
+  --success-soft: var(--muted);
+  --danger: var(--destructive);
 }
-
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --background: #181716;
-  --foreground: #f0eeeb;
-  --muted-foreground: #aaa49e;
-  --faint-foreground: #7f7974;
-  --popover: #262321;
-  --subtle: #262321;
-  --accent: #df7958;
-  --accent-foreground: #181716;
-  --toggle-on: #30d158;
-  --accent-soft: rgb(223 121 88 / 17%);
-  --border-default: rgb(240 238 235 / 14%);
-  --border-strong: rgb(240 238 235 / 24%);
-  --shell-foreground-rgb: 240 238 235;
-  --success: #77ad89;
-  --success-soft: rgb(119 173 137 / 14%);
-  --danger: #e07a70;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) {
-    color-scheme: dark;
-    --background: #181716;
-    --foreground: #f0eeeb;
-    --muted-foreground: #aaa49e;
-    --faint-foreground: #7f7974;
-    --popover: #262321;
-    --subtle: #262321;
-    --accent: #df7958;
-    --accent-foreground: #181716;
-    --toggle-on: #30d158;
-    --accent-soft: rgb(223 121 88 / 17%);
-    --border-default: rgb(240 238 235 / 14%);
-    --border-strong: rgb(240 238 235 / 24%);
-    --shell-foreground-rgb: 240 238 235;
-    --success: #77ad89;
-    --success-soft: rgb(119 173 137 / 14%);
-    --danger: #e07a70;
+@supports (color: color-mix(in srgb, black, white)) {
+  :root {
+    --shell-divider: color-mix(in srgb, var(--foreground) 8%, transparent);
+    --shell-chip: color-mix(in srgb, var(--foreground) 5%, transparent);
+    --shell-hover: color-mix(in srgb, var(--foreground) 6%, transparent);
+    --success-soft: color-mix(in srgb, var(--signal-success) 14%, transparent);
   }
 }
 
@@ -107,6 +43,15 @@ body {
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
   text-size-adjust: 100%;
+}
+
+/* The document background remains the solid fallback when an image fails. */
+body[data-site-scenery] #root { background: transparent; }
+
+body[data-site-scenery] .primary-nav {
+  background: var(--glass-popover-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
 }
 
 button,
@@ -249,6 +194,20 @@ button {
 
 .web-surface.web-surface--account:not([hidden]) { display: flex; flex-direction: column; }
 .web-surface.web-surface--account iframe { flex: 1; min-height: 0; }
+.app-account-toolbar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 4px 16px;
+  border-bottom: 1px solid var(--shell-divider);
+  background: var(--background);
+}
+.web-surface--account .web-surface-state { padding-top: 56px; }
 .android-update-notice { flex: 0 1 auto; max-height: 45%; overflow: auto; padding: 8px 12px; border-bottom: 1px solid var(--shell-divider); }
 .android-update-notice .action-row { flex-wrap: wrap; }
 .android-update-notice p { margin: 6px 0; font-size: 0.85rem; }

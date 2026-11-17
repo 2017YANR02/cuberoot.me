@@ -9,7 +9,8 @@
       "lucide-react": "react-dom",
       "react": "react-dom",
       "@emoji-mart/data": "runtime-neutral",
-      "@2017yanr02/continuous-corners": "react-dom"
+      "@2017yanr02/continuous-corners": "react-dom",
+      "react-colorful": "react-dom"
     },
     "runtime": {
       ".": "react-dom",
@@ -21,7 +22,10 @@
       "./watch-replay": "mixed",
       "./loading-brand": "react-dom",
       "./loading-brand.css": "asset",
-      "./notification-navigation": "runtime-neutral"
+      "./notification-navigation": "runtime-neutral",
+      "./appearance": "react-dom",
+      "./appearance.css": "asset",
+      "./settings-typography.css": "asset"
     }
   },
   "exports": {
@@ -34,7 +38,10 @@
     "./watch-replay": "./src/watch-replay.ts",
     "./loading-brand": "./src/LoadingBrandMark.tsx",
     "./loading-brand.css": "./src/loading-brand.css",
-    "./notification-navigation": "./src/notification-navigation.ts"
+    "./notification-navigation": "./src/notification-navigation.ts",
+    "./appearance": "./src/appearance.ts",
+    "./appearance.css": "./src/appearance.css",
+    "./settings-typography.css": "./src/settings-typography.css"
   },
   "sideEffects": true,
   "scripts": {
@@ -46,7 +53,8 @@
     "@cuberoot/shared": "workspace:*",
     "@cuberoot/timer-ui": "workspace:*",
     "@emoji-mart/data": "1.2.1",
-    "@2017yanr02/continuous-corners": "file:../../vendor/continuous-corners-0.3.2.tgz"
+    "@2017yanr02/continuous-corners": "file:../../vendor/continuous-corners-0.3.2.tgz",
+    "react-colorful": "^5.8.0"
   },
   "peerDependencies": {
     "lucide-react": "1.8.0",

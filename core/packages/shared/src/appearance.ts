@@ -1,3 +1,53 @@
+import { isPaletteId, paletteScheme, type PaletteId } from './appearance-palette';
+import { findAccentColor, type AccentId } from './appearance-accent';
+import { isHomeBackgroundChoice, type HomeBackgroundChoice } from './appearance-background';
+
+export * from './appearance-palette';
+export * from './appearance-accent';
+export * from './appearance-background';
+export { HOME_BACKGROUND_ASSETS as NATIVE_BACKGROUND_ASSETS } from './appearance-background';
+
+export interface AppearancePreferences {
+  locale: 'en' | 'zh';
+  theme: 'system' | 'light' | 'dark';
+  palette: PaletteId | null;
+  contrast: 'normal' | 'soft';
+  accent: AccentId | null;
+  lightBackground: HomeBackgroundChoice;
+  darkBackground: HomeBackgroundChoice;
+}
+
+export const DEFAULT_APPEARANCE_PREFERENCES: Readonly<AppearancePreferences> = {
+  locale: 'en', theme: 'system', palette: null, contrast: 'normal', accent: null,
+  lightBackground: 'transparent', darkBackground: 'transparent',
+};
+
+export function normalizeAppearancePreferences(value?: Partial<AppearancePreferences> | null): AppearancePreferences {
+  return {
+    locale: value?.locale === 'zh' ? 'zh' : 'en',
+    theme: value?.theme === 'light' || value?.theme === 'dark' ? value.theme : 'system',
+    palette: isPaletteId(value?.palette) ? value.palette : null,
+    contrast: value?.contrast === 'soft' ? 'soft' : 'normal',
+    accent: findAccentColor(value?.accent)?.id ?? null,
+    lightBackground: isHomeBackgroundChoice(value?.lightBackground) ? value.lightBackground : 'transparent',
+    darkBackground: isHomeBackgroundChoice(value?.darkBackground) ? value.darkBackground : 'transparent',
+  };
+}
+
+export function decodeAppearancePreferences(value: unknown): AppearancePreferences | null {
+  if (!value || typeof value !== 'object') return null;
+  const p = value as AppearancePreferences;
+  if (!['en', 'zh'].includes(p.locale) || !['system', 'light', 'dark'].includes(p.theme)
+    || !(p.palette === null || isPaletteId(p.palette)) || !['normal', 'soft'].includes(p.contrast)
+    || !(p.accent === null || findAccentColor(p.accent))
+    || !isHomeBackgroundChoice(p.lightBackground) || !isHomeBackgroundChoice(p.darkBackground)) return null;
+  return normalizeAppearancePreferences(p);
+}
+
+export function resolveAppearanceScheme(preferences: Pick<AppearancePreferences, 'theme' | 'palette'>, systemDark = false): 'light' | 'dark' {
+  return paletteScheme(preferences.palette) ?? (preferences.theme === 'system' ? systemDark ? 'dark' : 'light' : preferences.theme);
+}
+
 /** Web token -> native token boundary. CSS remains the color source of truth. */
 export const NATIVE_APPEARANCE_TOKENS = {
   '--cr-bg': '--background',
@@ -16,7 +66,6 @@ export interface NativeBackgroundScene {
   id: string;
   position: string;
 }
-export const NATIVE_BACKGROUND_ASSETS = '/assets/home-backgrounds/v1';
 export interface NativeAppearance {
   type: 'cuberoot:appearance';
   scheme: 'light' | 'dark';

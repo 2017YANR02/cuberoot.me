@@ -1,35 +1,3 @@
-.site-scenery {
-  /* Stay behind the viewport throughout the page's full scroll length. */
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: -1;
-}
-
-.site-scenery img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: var(--site-scene-position) top;
-}
-
-.site-scenery::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom,
-    color-mix(in srgb, var(--background) 72%, transparent),
-    color-mix(in srgb, var(--background) 16%, transparent) 18%,
-    color-mix(in srgb, var(--background) 48%, transparent) 42%,
-    color-mix(in srgb, var(--background) 48%, transparent) 100%);
-}
-
-html[data-contrast='soft'] .site-scenery img {
-  filter: saturate(.65) contrast(.85);
-}
-
-
 /* anchored-panel: clamped (usePanelClamp follows the trigger and expanded gallery width) */
 .appearance-menu[data-backgrounds] {
   position: absolute;
@@ -44,7 +12,8 @@ html[data-contrast='soft'] .site-scenery img {
   width: max-content;
   max-width: calc(100vw - 16px);
   min-width: 0;
-  max-height: calc(100dvh - 92px - var(--sat));
+  max-height: calc(100vh - 92px - var(--sat, 0px));
+  max-height: calc(100dvh - 92px - var(--sat, 0px));
   padding: 8px;
 }
 
@@ -63,25 +32,6 @@ html[data-contrast='soft'] .site-scenery img {
   grid-row: 1;
 }
 
-.appearance-setting-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.appearance-setting-rows > * + * {
-  padding-top: 8px;
-  box-shadow: 0 -0.5px 0 var(--border-default);
-}
-
-.appearance-background-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-}
-
 .appearance-settings .lang-menu-language {
   justify-content: space-between;
   padding: 7px 0;
@@ -90,17 +40,6 @@ html[data-contrast='soft'] .site-scenery img {
 
 .appearance-settings .lang-menu-language .toolbar-label {
   font: inherit;
-}
-
-.appearance-background-row .appearance-background-select {
-  width: fit-content;
-  padding: 3px 6px;
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  background: var(--popover);
-  color: var(--foreground);
-  font: inherit;
-  cursor: pointer;
 }
 
 .appearance-menu[data-backgrounds] .palette-menu-more {
@@ -116,65 +55,6 @@ html[data-contrast='soft'] .site-scenery img {
   grid-column: 2;
   grid-row: 1 / span 2;
 }
-
-.site-background-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px 6px;
-}
-
-.site-background-option {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  padding: 4px;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--foreground);
-  font: inherit;
-  cursor: pointer;
-  text-align: left;
-}
-
-.site-background-option img {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 9;
-  border-radius: 4px;
-  object-fit: cover;
-}
-
-.site-background-caption {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px 0 1px;
-  font-size: .75rem;
-  line-height: 1.35;
-}
-
-.site-background-check {
-  display: inline-flex;
-  width: 13px;
-  flex-shrink: 0;
-}
-
-.site-background-option:hover {
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
-}
-
-.site-background-option[aria-checked='true'] {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-.site-background-option:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 1px;
-}
-
 @media (max-width: 600px) {
   .appearance-menu[data-backgrounds] {
     grid-template-columns: minmax(0, 1fr);
@@ -194,19 +74,7 @@ html[data-contrast='soft'] .site-scenery img {
     grid-row: auto;
   }
 
-  .site-background-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
-/* A document stacking context keeps the negative scenery above the html canvas.
-   Isolation leaves fixed and sticky positioning intact. */
-body[data-site-scenery] {
-  isolation: isolate;
-  background: transparent;
-  /* Secondary labels remain readable over every scene in either color scheme. */
-  --muted-foreground: color-mix(in srgb, var(--foreground) 72%, var(--background));
-  --faint-foreground: color-mix(in srgb, var(--foreground) 65%, var(--background));
-}
 .site-glass-engine { position: fixed; width: 1px; height: 1px; overflow: hidden; pointer-events: none; clip-path: inset(100%); }
 @media print { .site-scenery, .site-glass-engine { display: none; } }

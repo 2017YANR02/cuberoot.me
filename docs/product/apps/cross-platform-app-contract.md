@@ -116,3 +116,9 @@
 手表原生层只承载腕上交互、本地连续时钟、震动、缓存、WatchConnectivity 与 BLE 传输。手机继续消费共享打乱生成器、成绩库和统计；同一 repository 队列处理手表导入，稳定 UUID 与事务 receipt 防止重投。两端 DTO 和必要的 Swift 原生数值展示由边界 fixture 核对，不移植重型生成器或另建账号/统计体系。当前实现与各层验收证据仍统一记入 `mobile-app-roadmap.md`。
 
 2026-10-15 用户追加授权手表直连智能魔方、离开手机使用，并要求默认以 GAN 16 UI 验收。手表 CoreBluetooth 仅实现 transport；用嵌入的官方 QuickJS 核心执行现有 app-ui GAN driver 与 shared 状态/自动计时模块，手动起停同样消费 shared timer machine，不另写协议或自动计时规则。首个连接范围为 GAN v4；缓存打乱耗尽仍需手机补充，走偏修正 Worker、逐手复盘、其他品牌与后台连接能力不得从前台接线推断已完成。
+
+### App 级外观事实源
+
+配色、强调色与背景元数据以及完整偏好校验统一在 `@cuberoot/shared/appearance`；Web 和安装端通过独立的 `@cuberoot/app-ui/appearance` 入口复用存储、DOM 应用、背景渲染和受控设置组件，不导入 App 根组件或复制账号页。主题及材质 CSS 从 `@cuberoot/app-ui/appearance.css` 消费，保留不支持 `color-mix` 的宿主回退。
+
+安装端首次从旧计时设置迁移主题和语言，随后 App 偏好是事实源，并镜像旧计时字段以兼容已有消费者。持久化沿用 Web 键名，写入失败回滚并向调用方抛错；可信嵌入桥同步完整偏好快照，WebView 存储不可用时仍可应用宿主外观。Web 背景保持同源资源路径，安装端使用规范站点的绝对图片资源路径。

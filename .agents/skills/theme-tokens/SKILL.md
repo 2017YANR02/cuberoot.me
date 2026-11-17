@@ -5,7 +5,7 @@ description: "Use whenever editing 颜色、background、border、text color、d
 
 # Theme tokens — Codex 风 hex + color-mix
 
-token 定义在 `core/packages/client/app/globals.css :root`。完整色值表 + 决策树见下方表格 + 决策树小节(原 `client-vite/DESIGN.md` / `client-vite/src/pages/THEMING.md` 未随 Vite 退役迁过来)。
+Web 与安装端共用的 token 定义在 `core/packages/app-ui/src/appearance.css :root`，公开入口为 `@cuberoot/app-ui/appearance.css`；Web 的 `globals.css` 只保留页面暗锁等站点策略。完整色值表 + 决策树见下方表格 + 决策树小节(原 `client-vite/DESIGN.md` / `client-vite/src/pages/THEMING.md` 未随 Vite 退役迁过来)。
 
 ## 写新 CSS 必查 token 表
 
@@ -63,7 +63,7 @@ background: color-mix(in srgb, var(--accent) 12%, transparent); /* tag 弱化 */
 | `/calc` | **palette-inert light** | `html:root:has(.calc-page)`(0,2,1 outrank 配色块)钉 light + `--background/--foreground`,所有配色都不渗入(art-directed 奶油纸) |
 
 ### 配色主题 × 锁页(2026-06-16)
-- 选配色 → `<html data-palette=x data-palette-scheme=light|dark>`(scheme 由 lib/theme.ts + theme-bootstrap.ts 写,源在 lib/palettes.ts 的 `scheme` 字段)。
+- 选配色 → `<html data-palette=x data-palette-scheme=light|dark>`(scheme 由 lib/theme.ts + theme-bootstrap.ts 写,元数据源在 `@cuberoot/shared/appearance` 的 `scheme` 字段，Web `lib/palettes.ts` 仅转导出)。
 - 暗锁页用 `:not([data-palette-scheme=dark])` 只放行暗配色(暗页暗配色、低风险);浅配色回退经典暗。新增暗配色自动生效,**无需改 globals.css**。
 - 仍保留暗锁的本地 pin token 组件要 scheme-aware:`html:not([data-palette-scheme=dark]) .xxx { --background:...; }`(别裸 `.xxx{--background}`,否则暗配色被它盖回经典暗)。
 - 想让某 art-directed 页对所有配色免疫:用 `html:root:has(.xxx-page)`(0,2,1)钉 token,outrank 配色块 `:root[data-palette]`(0,2,0)。
@@ -74,7 +74,7 @@ background: color-mix(in srgb, var(--accent) 12%, transparent); /* tag 弱化 */
 - 已迁移首页听写、WcaEventSelector 图标提示、LessonVideoPlayer 按钮提示和复盘列表截断文本提示；后者使用 `onlyWhenOverflow`，播放器全屏由组件自动选择 Portal 容器。写入 Hook 与 CI `site-material-guard.test.ts` 共用 `scanSiteMaterial`，禁止重新引入 `content: attr(data-tooltip/data-tip/title)` 气泡。原生 title、图表坐标提示与点击说明属于不同用途，不做机械替换。
 - 按钮/链接的短悬停提示统一使用 `components/Tooltip`（`<Tooltip content={tr({zh,en})}>{(tip) => <button {...tip}>…</button>}</Tooltip>`），禁止另写页面级提示气泡或用 native `title` 代替需要设计样式的提示。触发属性放在实际按钮上；已有同名事件须组合调用。组件负责 hover/focus、Escape、可移入提示、Portal 和视口钳制，页面不再定义 blur/透明度。可交互内容不放 Tooltip，点击展开的说明继续用 InfoTooltip。Portal 继承全站主题；局部配色预览须单独核验。
 
-- 唯一材质源 `core/packages/client/components/glass-material.css`；场景开关由 `SiteBackground` 管理 `body[data-site-scenery]`，旧样式集中接入 `site-surfaces.css`。
+- 唯一材质源 `core/packages/app-ui/src/appearance-material.css`（由公开 `@cuberoot/app-ui/appearance.css` 引入；Web `components/glass-material.css` 仅兼容转接）；场景开关由 `SiteBackground` 管理 `body[data-site-scenery]`，旧样式集中接入 `site-surfaces.css`。
 - 新面板/菜单/吸顶头在实际表面声明 `data-site-surface="panel|popover|heading"`（选一个值）；复用已有元素，不加包装组件、不标遮罩、不用内联实底盖它。
 - ListSelect、CompactSelect、成绩浮层已接材质；标准表格沿用 `<table className="sticky-thead">`，非标准表头声明 `heading`，禁止页面重复定义玻璃色值、透明度或 blur。
 - 浮层和表头共用 `--glass-popover-bg` + `--glass-filter` 保可读；普通面板用 `--glass-surface-bg`；只在唯一材质源调整浓度。

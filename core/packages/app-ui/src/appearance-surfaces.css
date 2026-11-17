@@ -1,0 +1,25 @@
+/* Shared roles consume one material; host adapters retain their own geometry. */
+[data-site-surface='panel'] { background: var(--card); }
+[data-site-surface='popover'],
+[data-site-surface='heading'] { background: var(--popover); }
+
+body[data-site-scenery] [data-site-surface='panel'] {
+  background: var(--glass-surface-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+body[data-site-scenery] [data-site-surface='heading'] {
+  background: var(--sticky-thead-background, var(--glass-popover-bg));
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+body[data-site-scenery] [data-site-surface='popover'] {
+  background: var(--glass-popover-bg);
+  border-color: var(--glass-border);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  box-shadow: var(--glass-shadow);
+}
+body[data-site-scenery] .timer-modal.settings-modal {
+  background: var(--glass-dialog-bg);
+}

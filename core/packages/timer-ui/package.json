@@ -161,7 +161,8 @@
       "./reconstruct/report-notation": "mixed",
       "./reconstruct/report-player": "mixed",
       "./tooltip": "react-dom",
-      "./live-watch": "react-dom"
+      "./live-watch": "react-dom",
+      "./bool-toggle": "react-dom"
     }
   },
   "exports": {
@@ -309,7 +310,8 @@
     "./reconstruct/report-notation": "./src/reconstruct/report-notation.ts",
     "./reconstruct/report-player": "./src/reconstruct/report-player.ts",
     "./tooltip": "./src/Tooltip.tsx",
-    "./live-watch": "./src/TimerLiveWatch.tsx"
+    "./live-watch": "./src/TimerLiveWatch.tsx",
+    "./bool-toggle": "./src/BoolToggle.tsx"
   },
   "sideEffects": [
     "./src/index.ts",

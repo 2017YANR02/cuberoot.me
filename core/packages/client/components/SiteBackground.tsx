@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState, type CSSProperties } from 'react';
-import { Check } from '@app-foundation/icons/lucide';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { AppearanceBackground, AppearanceBackgroundControl } from '@cuberoot/app-ui/appearance';
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
-import { HOME_BACKGROUND_ASSETS as ASSET_ROOT, HOME_BACKGROUNDS as SCENES, resolveHomeBackground, type HomeBackgroundChoice } from '@/lib/home-backgrounds';
-import { tr } from '@/i18n/tr';
+import { HOME_BACKGROUND_ASSETS as ASSET_ROOT, type HomeBackgroundChoice } from '@/lib/home-backgrounds';
+import { useLang } from '@/i18n/tr';
 import { useEffectiveTheme } from '@/lib/theme';
 import './site-background.css';
 
@@ -23,7 +23,6 @@ export default function SiteBackground({ manageDocument = true }: { manageDocume
   const [savedChoice] = useHomeBackgroundChoice(theme);
   const [preview, setPreview] = useState<BackgroundPreview>(null);
   const choice = preview?.theme === theme ? preview.choice : savedChoice;
-  const [failedScene, setFailedScene] = useState<string | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -63,60 +62,16 @@ export default function SiteBackground({ manageDocument = true }: { manageDocume
     };
   }, [pathname]);
 
-  const scene = resolveHomeBackground(choice, theme);
-  // A different choice permits retrying a previously unavailable image.
-  useEffect(() => setFailedScene(null), [choice]);
-  const enabled = ready && !pathname?.startsWith('/auth/');
-  const active = enabled && scene && failedScene !== scene.id;
-  // All site surfaces use the shared material, with or without a background image.
-  const material = active ? scene.id : enabled ? 'transparent' : null;
-  useEffect(() => {
-    // Native fullscreen needs its own scenery layer, without owning document state.
-    if (!manageDocument) return;
-    if (material) document.body.dataset.siteScenery = material;
-    else delete document.body.dataset.siteScenery;
-    return () => {
-      delete document.body.dataset.siteScenery;
-    };
-  }, [material, manageDocument]);
-
-  // Auth callbacks own their full-screen status surface; no scenery is needed.
-  if (!active) return null;
-  return <div className="site-scenery" aria-hidden="true"
-    style={{ '--site-scene-position': scene.position } as CSSProperties}>
-    {/* eslint-disable-next-line @next/next/no-img-element -- One local precompressed decorative image. */}
-    <img key={scene.id} src={`${ASSET_ROOT}/${scene.id}.webp`} alt="" onError={() => setFailedScene(scene.id)} />
-  </div>;
+  return <AppearanceBackground choice={choice} scheme={theme} enabled={ready && !pathname?.startsWith('/auth/')} manageDocument={manageDocument} />;
 }
 
 /** The same expanded selector is available in every appearance menu. */
 export function SiteBackgroundControl() {
   const theme = useEffectiveTheme();
   const [choice, selectBackground] = useHomeBackgroundChoice(theme);
-  const activeScene = resolveHomeBackground(choice, theme);
+  const language = useLang();
   useEffect(() => endBackgroundPreview, [theme]);
-  const select = (value: HomeBackgroundChoice) => {
-    selectBackground(value);
-    endBackgroundPreview();
-  };
-  return <div className="site-background-control" role="group" aria-label={tr({ zh: '全站背景', en: 'Site background' })}>
-      <div className="site-background-grid">
-        {SCENES.map(item => (
-          <button key={item.id} type="button" role="menuitemradio" aria-checked={activeScene?.id === item.id}
-            className="site-background-option"
-            onPointerEnter={event => { if (event.pointerType !== 'touch') previewBackground({ theme, choice: item.id }); }}
-            onPointerLeave={endBackgroundPreview}
-            onFocus={() => previewBackground({ theme, choice: item.id })}
-            onBlur={endBackgroundPreview}
-            onClick={() => select(item.id)}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- Tiny local WebP thumbnails. */}
-            <img src={`${ASSET_ROOT}/${item.id}-thumb.webp`} alt="" width={128} height={72} />
-            <span className="site-background-caption"><span>{tr(item)}</span>
-              <span className="site-background-check">{activeScene?.id === item.id && <Check size={13} />}</span>
-            </span>
-          </button>
-        ))}
-      </div>
-    </div>;
-
+  return <AppearanceBackgroundControl language={language} choice={choice} scheme={theme} assetRoot={ASSET_ROOT}
+    onChange={value => { selectBackground(value); endBackgroundPreview(); }}
+    onPreview={value => previewBackground(value === null ? null : { theme, choice: value })} />;
 }

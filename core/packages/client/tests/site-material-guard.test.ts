@@ -1,11 +1,13 @@
 // guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, expect, it } from 'vitest';
+import { createRequire } from 'node:module';
 import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { scanSiteMaterial, violationsFromHookPayload } from '../scripts/hook-detect-site-material.mjs';
 import { unframedSurfaces } from '../scripts/site-surface-policy.mts';
 
+const require = createRequire(import.meta.url);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PAGE = 'app/[lang]/example/example.css';
 
@@ -125,7 +127,8 @@ describe('site materials have one definition and shared scenery tokens', () => {
 
   it('rejects duplicate material definitions even outside scenery selectors', () => {
     expect(scanSiteMaterial('.page { --glass-popover-bg: transparent; --glass-new-material: red; }', PAGE)).toHaveLength(2);
-    expect(scanSiteMaterial(':root { --glass-popover-bg: transparent; }', 'components/glass-material.css')).toEqual([]);
+    expect(scanSiteMaterial(':root { --glass-popover-bg: transparent; }', 'components/glass-material.css')).toHaveLength(1);
+    expect(readFileSync(join(ROOT, 'components/glass-material.css'), 'utf8')).toContain('@cuberoot/app-ui/appearance.css');
   });
 
   it('allows token consumers, semantic accents, unframed content, and regular non-scenery fills', () => {
@@ -145,7 +148,7 @@ describe('site materials have one definition and shared scenery tokens', () => {
   });
 
   it('keeps timer dialogs on the shared high-opacity reading layer', () => {
-    const material = readFileSync(join(ROOT, 'components/glass-material.css'), 'utf8');
+    const material = readFileSync(join(dirname(require.resolve('@cuberoot/app-ui/appearance.css')), 'appearance-material.css'), 'utf8');
     const surfaces = readFileSync(join(ROOT, 'components/site-surfaces.css'), 'utf8');
     const timer = readFileSync(join(ROOT, 'app/[lang]/timer/timer.css'), 'utf8');
     const battle = readFileSync(join(ROOT, 'app/[lang]/timer/_battle/battle.css'), 'utf8');

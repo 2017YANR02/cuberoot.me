@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,11 +8,12 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import WrHistoryChart from '@/components/wca-stats/WrHistoryChart';
 
+const require = createRequire(import.meta.url);
 const css = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8');
 
 describe('WCA statistics inherit site appearance', () => {
   it('does not override site tokens at the root or in nested statistics pages', () => {
-    const globalCss = css('app/globals.css');
+    const globalCss = css('app/globals.css') + readFileSync(require.resolve('@cuberoot/app-ui/appearance.css'), 'utf8');
     for (const name of ['wca-stats-page', 'wse-page', 'records-page', 'fun-stats', 'result-watch-page', 'cs-page']) {
       expect(globalCss).not.toContain(`:has(.${name})`);
     }

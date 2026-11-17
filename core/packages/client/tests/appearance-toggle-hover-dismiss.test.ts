@@ -19,6 +19,7 @@ vi.mock('@/lib/theme', () => ({
   previewTheme: vi.fn(),
   previewPalette: vi.fn(),
   restorePersistedAppearance: vi.fn(),
+  readTheme: () => 'system',
   readContrast: () => 'normal',
   readAccent: () => null,
   readPalette: () => null,
@@ -35,9 +36,11 @@ vi.mock('@/components/BoolToggle', () => ({
   default: ({ label }: { label: string }) => createElement('button', { type: 'button' }, label),
 }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (_zh: string, en: string) => en }));
-vi.mock('@/i18n/tr', () => ({ tr: (value: { en: string }) => value.en }));
+vi.mock('@/i18n/tr', () => ({ useLang: () => 'en', tr: (value: { en: string }) => value.en }));
 
 import AppearanceToggle from '@/components/AppearanceToggle';
+import { setInstalledShellNavigation } from '@/lib/installed-shell-navigation';
+import { beginAppearancePreview, endAppearancePreview } from '@/lib/theme';
 
 let host: HTMLDivElement;
 let root: Root;
@@ -59,6 +62,8 @@ async function openMenu() {
 beforeEach(async () => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
   vi.useFakeTimers();
+  setInstalledShellNavigation(null);
+  vi.clearAllMocks();
   host = document.createElement('div');
   document.body.append(host);
   root = createRoot(host);
@@ -68,6 +73,7 @@ beforeEach(async () => {
 afterEach(async () => {
   await act(async () => root.unmount());
   host.remove();
+  setInstalledShellNavigation(null);
   vi.useRealTimers();
 });
 
@@ -99,4 +105,60 @@ it('does not apply hover dismissal to touch pointers', async () => {
   await pointer(trigger, 'pointerout', 'touch');
   await act(async () => vi.advanceTimersByTime(200));
   expect(menu()).not.toBeNull();
+});
+
+it('delegates the appearance trigger and keeps outer settings open for nested Escape', async () => {
+  const trigger = await openMenu();
+  expect(trigger.getAttribute('data-mobile-open-settings')).toBe('appearance');
+  await act(async () => host.querySelector<HTMLButtonElement>('.accent-color-select [aria-label="Appearance"]')!.click());
+  expect(document.querySelector('.accent-color-menu')).not.toBeNull();
+  await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })));
+  expect(document.querySelector('.accent-color-menu')).toBeNull();
+  expect(menu()).not.toBeNull();
+  await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })));
+  expect(menu()).toBeNull();
+});
+
+it('never opens or previews a local hover menu with trusted shell navigation', async () => {
+  const delegate = vi.fn();
+  await act(async () => setInstalledShellNavigation(delegate, 'tools'));
+  vi.mocked(beginAppearancePreview).mockClear();
+  const trigger = host.querySelector<HTMLButtonElement>('[data-mobile-open-settings="appearance"]')!;
+  await pointer(trigger, 'pointerover');
+  expect(menu()).toBeNull();
+  expect(beginAppearancePreview).not.toHaveBeenCalled();
+  await act(async () => trigger.click());
+  expect(delegate).toHaveBeenCalledOnce();
+  expect(menu()).toBeNull();
+});
+
+it('cleans an already open menu and nested portal when trusted capability arrives', async () => {
+  const trigger = await openMenu();
+  await act(async () => host.querySelector<HTMLButtonElement>('.accent-color-select [aria-label="Appearance"]')!.click());
+  expect(document.querySelector('.accent-color-menu')).not.toBeNull();
+  await pointer(trigger, 'pointerout');
+  const delegate = vi.fn();
+  await act(async () => setInstalledShellNavigation(delegate, 'tools'));
+  expect(menu()).toBeNull();
+  expect(document.querySelector('.accent-color-menu')).toBeNull();
+  expect(endAppearancePreview).toHaveBeenCalledWith(true);
+  await act(async () => vi.advanceTimersByTime(200));
+  expect(delegate).not.toHaveBeenCalled();
+  await act(async () => setInstalledShellNavigation(null));
+  expect(menu()).toBeNull();
+  await pointer(trigger, 'pointerover');
+  expect(menu()).not.toBeNull();
+});
+
+it('shows only the delegated trigger instead of embedded settings in a trusted shell', async () => {
+  const delegate = vi.fn();
+  await act(async () => {
+    setInstalledShellNavigation(delegate, 'account');
+    root.render(createElement(AppearanceToggle, { embedded: true, section: 'appearance', triggerLabel: 'Appearance' }));
+  });
+  expect(host.querySelector('.appearance-menu')).toBeNull();
+  const trigger = host.querySelector<HTMLButtonElement>('[data-mobile-open-settings="appearance"]')!;
+  expect(trigger.getAttribute('aria-label')).toBe('Appearance');
+  await act(async () => trigger.click());
+  expect(delegate).toHaveBeenCalledOnce();
 });

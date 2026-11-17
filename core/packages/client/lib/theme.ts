@@ -6,6 +6,7 @@
 //     so no FOUC between SSR document arrival and React hydration.
 
 import { useEffect, useState } from 'react';
+import { applyAppearanceThemeRoot, applyAppearancePaletteRoot, applyAppearanceContrastRoot } from '@cuberoot/app-ui/appearance';
 import { PALETTE_KEY, isPaletteId, paletteScheme, type PaletteId } from './palettes';
 import { runViewTransition as runTransition } from './view-transition';
 import { persistItem } from './safe-storage';
@@ -114,7 +115,7 @@ function prefersReducedMotion(): boolean {
   return typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-function readTheme(): Theme {
+export function readTheme(): Theme {
   try {
     const value = localStorage.getItem(THEME_KEY);
     return value === 'light' || value === 'dark' || value === 'system' ? value : 'system';
@@ -123,39 +124,9 @@ function readTheme(): Theme {
   }
 }
 
-function applyThemeRoot(theme: Theme, clearPalette: boolean) {
-  const root = document.documentElement;
-  if (clearPalette) {
-    root.removeAttribute('data-palette');
-    root.removeAttribute('data-palette-scheme');
-  }
-  if (theme === 'light' || theme === 'dark') {
-    root.setAttribute('data-theme', theme);
-    root.style.colorScheme = theme;
-  } else {
-    root.removeAttribute('data-theme');
-    root.style.colorScheme = '';
-  }
-}
-
-function applyPaletteRoot(id: string | null) {
-  const root = document.documentElement;
-  const scheme = paletteScheme(id);
-  if (isPaletteId(id) && scheme) {
-    root.setAttribute('data-palette', id);
-    root.setAttribute('data-palette-scheme', scheme);
-    root.setAttribute('data-theme', scheme);
-    root.style.colorScheme = scheme;
-  } else {
-    applyThemeRoot(readTheme(), true);
-  }
-}
-
-function applyContrastRoot(level: ContrastLevel) {
-  const root = document.documentElement;
-  if (level === 'normal') root.removeAttribute('data-contrast');
-  else root.setAttribute('data-contrast', level);
-}
+function applyThemeRoot(theme: Theme, clearPalette: boolean) { applyAppearanceThemeRoot(theme, clearPalette); }
+function applyPaletteRoot(id: string | null) { applyAppearancePaletteRoot(id, readTheme()); }
+function applyContrastRoot(level: ContrastLevel) { applyAppearanceContrastRoot(level); }
 
 // clearPalette: 用户点 light/dark 开关时退出配色主题,回到经典明暗。
 export function applyTheme(theme: Theme, animate = false, clearPalette = false) {

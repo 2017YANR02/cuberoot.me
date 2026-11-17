@@ -1,18 +1,8 @@
 'use client';
 import './settings-typography.css';
 
-// 统一的「外观」菜单 — 合并原 ThemeToggle(明暗)+ PaletteToggle(配色)成单一单选。
-// 明暗(浅色 / 深色)和配色(中国色)在同一份列表里互斥单选:
-//   选明暗 → 清掉配色回经典明暗;选配色 → 覆盖明暗。
-// 彻底消除「两个控件偷偷打架、点了没反应 / 悄悄被踢出」的困惑。
-// 入口挂 HeaderToggles(桌宠工具栏 = 全站外观入口);切换走 lib/theme 的
-// applyTheme / applyPalette(View Transitions 淡出 + localStorage 持久化)。
-//
-// 没有单独的「经典 / 跟随系统」项:明暗区本身就是经典(无 palette),浅 / 深两项
-// 通过太阳 / 月亮图标选择,选中态跟随当前实际明暗。
-
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Sun, Moon, Settings, Check } from '@app-foundation/icons/lucide';
+import { Settings } from '@app-foundation/icons/lucide';
 import { persistItem } from '@/lib/safe-storage';
 import {
   THEME_KEY,
@@ -24,41 +14,44 @@ import {
   previewTheme,
   previewPalette,
   restorePersistedAppearance,
+  readTheme,
   readContrast,
   readPalette,
   useEffectiveTheme,
   type ContrastLevel,
+  type Theme,
 } from '@/lib/theme';
-import { PALETTES, type PaletteId } from '@/lib/palettes';
+import type { PaletteId } from '@/lib/palettes';
+import { AppearanceThemeControl, AppearanceBackdropControls } from '@cuberoot/app-ui/appearance';
 import { SiteBackgroundControl } from '@/components/SiteBackground';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import LangToggle from '@/components/LangToggle';
 import AccentColorSelect from '@/components/AccentColorSelect';
-import { CompactSelect } from '@/components/CompactSelect';
 import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { useT } from '@/hooks/useT';
-import { tr } from '@/i18n/tr';
+import { useLang } from '@/i18n/tr';
+import { openInstalledAppearance, useInstalledShellNavigation } from '@/lib/installed-shell-navigation';
 
 const HOVER_CLOSE_DELAY_MS = 120;
 
 export default function AppearanceToggle({ className, triggerClassName, triggerLabel, labelClassName = 'toolbar-label', showLabel = false, menuContent, column = false, embedded = false, section = 'all', open: controlledOpen, onOpenChange }: { className?: string; triggerClassName?: string; triggerLabel?: string; labelClassName?: string; showLabel?: boolean; menuContent?: ReactNode; column?: boolean; embedded?: boolean; section?: 'all' | 'general' | 'appearance'; open?: boolean; onOpenChange?: (open: boolean) => void }) {
   const t = useT();
+  const language = useLang();
+  const shellNavigation = useInstalledShellNavigation();
   const L = {
     title: triggerLabel ?? t('设置', 'Settings'),
-    light: t('浅色', 'Light'),
-    dark: t('深色', 'Dark'),
-    lowContrast: t('低对比度', 'Low contrast'),
     more: t('比较全部', 'Compare all'),
   };
 
   const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<Theme>('system');
   const [palette, setPalette] = useState<PaletteId | null>(null);
   const [contrast, setContrast] = useState<ContrastLevel>('normal');
   const [internalOpen, setInternalOpen] = useState(false);
-  const open = embedded || (controlledOpen ?? internalOpen);
+  const open = !shellNavigation && (embedded || (controlledOpen ?? internalOpen));
   const setOpen = (next: boolean) => { setInternalOpen(next); onOpenChange?.(next); };
   const ref = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -90,7 +83,7 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
   };
 
   const scheduleHoverClose = (pointerType: string) => {
-    if (embedded || column || pointerType === 'touch') return;
+    if (shellNavigation || embedded || column || pointerType === 'touch') return;
     cancelHoverClose();
     hoverCloseTimerRef.current = window.setTimeout(() => {
       hoverCloseTimerRef.current = null;
@@ -99,9 +92,9 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
     }, HOVER_CLOSE_DELAY_MS);
   };
 
-  const showThemePreview = (choice: 'light' | 'dark') => {
+  const showThemePreview = (choice: Theme) => {
     previewingRef.current = true;
-    previewTheme(choice);
+    previewTheme(choice === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : choice);
   };
 
   const showPalettePreview = (id: PaletteId) => {
@@ -110,7 +103,14 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
   };
 
   useEffect(() => {
+    // A trusted init can arrive after a pointer has opened the Web menu.
+    // Unmount its portaled controls immediately and discard that local state.
+    if (shellNavigation) closeMenu();
+  }, [shellNavigation]);
+
+  useEffect(() => {
     const readState = () => {
+      setTheme(readTheme());
       setPalette(readPalette() as PaletteId | null);
       setContrast(readContrast());
     };
@@ -136,7 +136,7 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
       if (ref.current && !ref.current.contains(e.target as Node)) closeMenu();
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeMenu();
+      if (e.key === 'Escape' && !e.defaultPrevented && !document.querySelector('.accent-color-menu')) closeMenu();
     };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
@@ -153,7 +153,7 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
   }, []);
 
   // 选明暗:清掉配色回经典明暗(在同一次淡出里清),并持久化 theme。
-  const pickTheme = (choice: 'light' | 'dark') => {
+  const pickTheme = (choice: Theme) => {
     previewingRef.current = false;
     endAppearancePreview();
     if (!column) setOpen(false);
@@ -182,29 +182,20 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
   if (!mounted) {
     if (embedded) return null;
     return (
-      <button type="button" className={cls} aria-label={L.title} suppressHydrationWarning>
+      <button type="button" className={cls} data-mobile-open-settings={shellNavigation || section !== 'general' ? 'appearance' : undefined} aria-label={L.title} suppressHydrationWarning>
         <Settings size={20} aria-hidden="true" />
       </button>
     );
   }
 
-  const appearanceOptions = [
-    { value: 'dark', label: <span className="accent-color-label"><Moon size={18} />{L.dark}</span> },
-    { value: 'light', label: <span className="accent-color-label"><Sun size={18} />{L.light}</span> },
-    ...PALETTES.map(p => ({ value: p.id, label: <span className="accent-color-label">
-      <i className="accent-color-select-swatch" style={{ background: p.swatch[1] }} aria-hidden="true" />{tr(p)}
-    </span> })),
-  ];
-  const appearanceValue = palette ?? eff;
-  const appearanceLabel = appearanceOptions.find(option => option.value === appearanceValue)?.label;
-
   return (
     <div className="lang-toggle-wrap" ref={ref}>
-      {!embedded && <button
+      {(!embedded || shellNavigation) && <button
         type="button"
         className={cls}
+        data-mobile-open-settings={shellNavigation || section !== 'general' ? 'appearance' : undefined}
         onPointerEnter={(event) => {
-          if (!column && event.pointerType !== 'touch') {
+          if (!shellNavigation && !column && event.pointerType !== 'touch') {
             cancelHoverClose();
             beginAppearancePreview();
             setOpen(true);
@@ -213,6 +204,10 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
         onPointerLeave={(event) => scheduleHoverClose(event.pointerType)}
         onPointerDown={(event) => { pointerTypeRef.current = event.pointerType; }}
         onClick={(event) => {
+          if (shellNavigation) {
+            openInstalledAppearance();
+            return;
+          }
           // Mouse hover already opens the menu; touch and keyboard toggle it.
           if (open && (column || event.detail === 0 || pointerTypeRef.current !== 'mouse')) closeMenu();
           else {
@@ -222,8 +217,8 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
         }}
         title={L.title}
         aria-label={L.title}
-        aria-haspopup="menu"
-        aria-expanded={open}
+        aria-haspopup={shellNavigation ? undefined : "menu"}
+        aria-expanded={shellNavigation ? undefined : open}
       >
         <Settings size={20} aria-hidden="true" />
         {showLabel && <span className={labelClassName}>{L.title}</span>}
@@ -247,46 +242,24 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
           <div className="appearance-settings">
             <div className="appearance-sec-label appearance-setting-rows">
               {section !== 'appearance' && <LangToggle variant={embedded ? 'row' : 'menu'} showLabel />}
-              {section !== 'general' && <><div className="accent-color-select">
-                <span>{t('外观', 'Appearance')}</span>
-                <CompactSelect className="accent-color-select-value" popupClassName="settings-typography accent-color-menu"
-                  ariaLabel={t('外观', 'Appearance')} value={appearanceValue} label={appearanceLabel}
-                  items={appearanceOptions.map(option => ({ value: option.value, label: <span className="accent-color-option">
-                    <Check className="accent-color-check" aria-hidden="true" />{option.label}
-                  </span> }))}
-                  onPreview={value => {
-                    if (value === null) endPreview();
-                    else if (value === 'light' || value === 'dark') showThemePreview(value);
-                    else showPalettePreview(value as PaletteId);
-                  }}
-                  onOpenChange={open => { if (!open) endPreview(); }}
-                  onChange={value => {
-                    if (value === 'light' || value === 'dark') pickTheme(value);
-                    else pickPalette(value as PaletteId);
-                  }} />
-              </div>
-              <AccentColorSelect /></>}
+              {section !== 'general' && <><AppearanceThemeControl language={language} theme={theme} palette={palette}
+                onChange={patch => {
+                  if (patch.theme) pickTheme(patch.theme);
+                  else if (patch.palette) pickPalette(patch.palette);
+                }}
+                onPreview={patch => {
+                  if (!patch) endPreview();
+                  else if (patch.theme) showThemePreview(patch.theme);
+                  else if (patch.palette) showPalettePreview(patch.palette);
+                }} />
+                <AccentColorSelect /></>}
               {section !== 'appearance' && <BoolToggle
                 value={petVisible}
                 onChange={setPetVisible}
                 label={t('桌宠', 'Desk pet')}
               />}
-              {section !== 'general' && <><label className="appearance-background-row">
-                <span>{t('底图', 'Backdrop')}</span>
-                <select
-                  className="appearance-background-select"
-                  value={showBackgrounds ? 'image' : 'solid'}
-                  onChange={(event) => setBackgroundEnabled(event.target.value === 'image')}
-                >
-                  <option value="solid">{t('纯色', 'Solid color')}</option>
-                  <option value="image">{t('背景', 'Image')}</option>
-                </select>
-              </label>
-              <BoolToggle
-                value={contrast === 'soft'}
-                onChange={(enabled) => pickContrast(enabled ? 'soft' : 'normal')}
-                label={L.lowContrast}
-              /></>}
+              {section !== 'general' && <AppearanceBackdropControls language={language} enabled={showBackgrounds}
+                contrast={contrast} onEnabledChange={setBackgroundEnabled} onContrastChange={pickContrast} />}
               {section !== 'appearance' && <button type="button" role={embedded ? undefined : "menuitem"} className="lang-menu-item"
                 onClick={() => {
                   closeMenu();
