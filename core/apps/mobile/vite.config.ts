@@ -7,7 +7,8 @@ const startupMark = readFileSync(new URL('../../assets/brand/CubeRoot-mark.svg',
 
 export default defineConfig({
   build: {
-    cssTarget: 'chrome103',
+    // Keep older Android syntax and iOS WebKit prefixes (notably user-select).
+    cssTarget: ['chrome103', 'safari15'],
     target: 'chrome103',
   },
   plugins: [react(), {

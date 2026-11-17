@@ -7,11 +7,12 @@ const scrambleCss = readFileSync(
   'utf8',
 );
 const appCss = readFileSync(new URL(import.meta.resolve('@cuberoot/app-ui/app.css')), 'utf8');
+const appearanceCss = readFileSync(new URL(import.meta.resolve('@cuberoot/app-ui/appearance.css')), 'utf8');
 
-describe('installed Android WebView build target', () => {
-  it('keeps JS and CSS compatible with the tested OPPO WebView 103', () => {
+describe('installed mobile WebView build targets', () => {
+  it('keeps OPPO WebView 103 syntax and iOS selection prefixes', () => {
     expect(viteConfig).toContain("target: 'chrome103'");
-    expect(viteConfig).toContain("cssTarget: 'chrome103'");
+    expect(viteConfig).toContain("cssTarget: ['chrome103', 'safari15']");
   });
 
   it('keeps the loading spinner visible when color-mix is unsupported', () => {
@@ -20,6 +21,7 @@ describe('installed Android WebView build target', () => {
     expect(spinner).not.toContain('color-mix(');
     expect(spinner).toContain('border-top-color: var(--accent);');
     expect(scrambleCss).toMatch(/@supports \(color: color-mix\([^)]+\)\)\s*\{[\s\S]*?\.scramble-status-spinner\s*\{[\s\S]*?border-color: color-mix\(/);
-    expect(appCss).toMatch(/--border-default:\s*rgb\(/);
+    expect(appCss).toContain("@import './appearance.css';");
+    expect(appearanceCss).toMatch(/--border-default:\s*#[0-9a-f]{6};/);
   });
 });

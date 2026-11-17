@@ -1,3 +1,5 @@
+@import './range-input.css';
+
 .progress-slider { flex: 1; min-width: 60px; touch-action: pan-y; }
 
 input[type='range'].progress-slider.progress-slider::-webkit-slider-runnable-track {

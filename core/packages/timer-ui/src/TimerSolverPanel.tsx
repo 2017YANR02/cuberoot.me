@@ -156,7 +156,7 @@ function SolverSheet({ view, onViewChange, scramble, onScrambleChange, language,
   const swipe = useScrambleSwipe(nestedBlocking ? {} : { onPrevScramble, onNextScramble });
   const title = tr(PANEL_TITLE);
   return (
-    <div className="solver-sheet" data-no-timer role="dialog" aria-modal="true" aria-label={title} ref={dialog} tabIndex={-1} {...swipe}
+    <div className="solver-sheet timer-no-selection" data-no-timer role="dialog" aria-modal="true" aria-label={title} ref={dialog} tabIndex={-1} {...swipe}
       onKeyDown={event => {
         if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); dismiss(); }
         if (event.key !== 'Tab' || !dialog.current) return;
@@ -326,7 +326,7 @@ export default function TimerSolverPanel({
           onClick={() => { if (sheetOpen) closeSheet(); else toggle(); }}>
           <Lightbulb size={18} aria-hidden="true" />
         </button>, triggerSlot)}
-      {((isDesktopRail && open) || !triggerSlot) && <aside className={`solver-panel${isDesktopRail ? '' : ' surface-chrome'}`} data-open={open} data-layout={isDesktopRail ? 'rail' : 'trigger'} data-no-timer>
+      {((isDesktopRail && open) || !triggerSlot) && <aside className={`solver-panel timer-no-selection${isDesktopRail ? '' : ' surface-chrome'}`} data-open={open} data-layout={isDesktopRail ? 'rail' : 'trigger'} data-no-timer>
         {/* display:contents 兜底(见 shell.css):除「桌面左栏已展开」外,头部仍是
             单独一颗 pill,加这层不改任何现有形态。 */}
         <div className="solver-panel-headrow">

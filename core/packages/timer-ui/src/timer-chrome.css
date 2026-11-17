@@ -1,3 +1,5 @@
+@import './range-input.css';
+
 .shell-topbar {
   display: grid;
   min-height: 48px;
@@ -446,7 +448,7 @@
 }
 
 /* Timer labels use explicit copy actions. Editors retain native selection. */
-.timer-no-selection.timer-no-selection :is(input, textarea, [contenteditable]:not([contenteditable="false"])),
+.timer-no-selection.timer-no-selection :is(input:not([type]), input[type="text"], input[type="search"], input[type="email"], input[type="url"], input[type="tel"], input[type="password"], input[type="number"], textarea, [contenteditable]:not([contenteditable="false"])),
 .timer-no-selection.timer-no-selection [contenteditable]:not([contenteditable="false"]) * {
   -webkit-user-select: text;
   user-select: text;
