@@ -1261,7 +1261,9 @@ jobs:
 
   # Production web deployments depend only on web-relevant checks for this SHA.
   web-checks:
-    name: Web checks
+    # GitHub-backed deployment checks are keyed by name, not workflow event.
+    # A later scheduled/live-data or manual audit must not overwrite a release result.
+    name: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'Web checks' || 'Web audit' }}
     if: ${{ always() && inputs.scope != 'core' }}
     needs: [changes, test, client-tests, analyzer-worker, client-selection-audit]
     runs-on: ubuntu-latest

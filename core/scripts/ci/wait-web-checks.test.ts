@@ -9,7 +9,7 @@ const passed = { name: 'Web checks', status: 'completed', conclusion: 'success' 
 
 test('accepts only the latest Test push run for the exact main SHA', () => {
   const invalid = [
-    { head_sha: 'b'.repeat(40) }, { event: 'pull_request' }, { event: 'workflow_dispatch' },
+    { head_sha: 'b'.repeat(40) }, { event: 'pull_request' }, { event: 'workflow_dispatch' }, { event: 'schedule' },
     { head_branch: 'other' }, { path: '.github/workflows/other.yml' },
   ].map((change, index) => ({ ...run, id: 100 + index, ...change }));
   assert.equal(selectWebRun(invalid, sha), undefined);

@@ -783,6 +783,18 @@ describe('deployment workflow path contracts', () => {
     expect(deploy.indexOf('Require successful Web checks for this commit')).toBeLessThan(deploy.indexOf('rsync standalone + systemd unit'));
   });
 
+  it('reserves the production check name for main pushes so later audits cannot overwrite it', () => {
+    const gate = readWorkflow('test.yml').split('\n  web-checks:\n')[1].split('\n  pr-checks:\n')[0];
+    const expression = gate.match(/^\s+name: \$\{\{ (.+) \}\}$/m)?.[1];
+    expect(expression).toBeDefined();
+    const name = (event_name: string, ref = 'refs/heads/main') => runInNewContext(expression!, { github: { event_name, ref } });
+    expect(name('push')).toBe('Web checks');
+    for (const event of ['schedule', 'workflow_dispatch', 'pull_request']) {
+      expect(name(event), event).toBe('Web audit');
+    }
+    expect(name('push', 'refs/heads/feature')).toBe('Web audit');
+  });
+
   it('runs desktop UI checks when its dependency closure or workflow changes', () => {
     const workflow = readWorkflow('test.yml');
     const desktopPaths = readStepFilterPaths('test.yml', 'Detect affected inputs', 'desktop');
