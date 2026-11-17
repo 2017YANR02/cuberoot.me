@@ -177,7 +177,6 @@ export function TimerSolveDetailModal({
   const entryPaintedRef = useRef(false);
   const onCloseRef = useRef(onClose);
   const onEnteredRef = useRef(onEntered);
-  const penaltyRef = useRef<HTMLSelectElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   onCloseRef.current = onClose;
   onEnteredRef.current = onEntered;
@@ -270,7 +269,8 @@ export function TimerSolveDetailModal({
     previousFocusRef.current = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
-    (autoFocusComment ? commentRef.current : penaltyRef.current)?.focus({ preventScroll: true });
+    // Opening a report must not summon an iOS select picker or keyboard.
+    (autoFocusComment ? commentRef.current : dialogRef.current)?.focus({ preventScroll: true });
     return () => {
       const previousFocus = previousFocusRef.current;
       if (previousFocus?.isConnected) previousFocus.focus();
@@ -295,7 +295,7 @@ export function TimerSolveDetailModal({
     }
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
+    if (event.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) {
       event.preventDefault();
       last.focus();
     } else if (!event.shiftKey && document.activeElement === last) {
@@ -311,7 +311,6 @@ export function TimerSolveDetailModal({
         data-history-action-id="solve.detail.penalty"
         disabled={action('solve.detail.penalty').disabled}
         onChange={(event) => onChangePenalty?.(event.target.value as Penalty)}
-        ref={penaltyRef}
         title={localize(COPY.penaltyHelp)}
         value={solve.penalty}
       >

@@ -1,7 +1,7 @@
 /* Keep the backdrop over the entire window (including navigation), while its
  * interactive content fits the host's usable rectangle. Web defaults are unchanged. */
 :root[data-host-viewport] :is(
-  .timer-settings-overlay, .timer-modal-overlay, .timer-solve-detail-overlay,
+  .timer-settings-overlay, .timer-modal-overlay, .timer-solve-detail-overlay:not(.timer-solve-detail-overlay--full),
   .timer-smart-cube-device__overlay, .timer-manual-entry__overlay,
   .timer-history-compare-backdrop, .timer-history-quick-backdrop,
   .timer-room-overlay, .timer-drill-picker__backdrop, .room-qr-backdrop,
@@ -21,6 +21,19 @@
   min-height: 0;
   max-width: 100%;
   max-height: 100%;
+}
+/* Full-page solve reports paint edge to edge. Apply native safe insets once,
+ * inside the page, instead of turning the square page into a floating dialog. */
+:root[data-host-viewport] .timer-solve-detail-overlay.timer-solve-detail-overlay--full {
+  padding: 0;
+}
+:root[data-host-viewport] .timer-solve-detail-full-head {
+  padding: max(10px, var(--host-safe-top)) max(16px, var(--host-safe-right)) 10px
+    max(16px, var(--host-safe-left));
+}
+:root[data-host-viewport] .timer-solve-detail-full-body {
+  padding: 16px max(16px, var(--host-safe-right))
+    max(40px, var(--host-safe-bottom)) max(16px, var(--host-safe-left));
 }
 :root[data-host-viewport] .solver-sheet {
   inset: var(--host-safe-top) var(--host-safe-right) var(--host-safe-bottom) var(--host-safe-left);

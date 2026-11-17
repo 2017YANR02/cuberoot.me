@@ -434,6 +434,11 @@
   }
 }
 
+/* iOS zooms focused controls below 16px, displacing the full-page header. */
+@media (hover: none) and (pointer: coarse) {
+  .timer-solve-detail-modal :is(select, textarea) { font-size: 16px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .timer-solve-detail-overlay--full,
   .timer-solve-detail-modal--full,

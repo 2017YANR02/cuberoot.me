@@ -73,7 +73,7 @@ describe('shared timer solve detail UI', () => {
       '0.55sLongest pause1 × >0.5s',
     ]);
     expect(document.body.textContent).toContain('0.33 tps');
-    expect(document.activeElement).toBe(document.body.querySelector('[data-history-action-id="solve.detail.penalty"]'));
+    expect(document.activeElement).toBe(document.body.querySelector('[role="dialog"]'));
 
     const penalty = document.body.querySelector<HTMLSelectElement>('[data-history-action-id="solve.detail.penalty"]')!;
     await act(async () => {
@@ -176,6 +176,7 @@ describe('shared timer solve detail UI', () => {
     });
 
     await act(async () => root.render(renderDetail(false)));
+    expect(document.activeElement).toBe(document.body.querySelector('[role="dialog"]'));
     await act(async () => vi.advanceTimersByTime(40));
     expect(onEntered).not.toHaveBeenCalled();
 
@@ -226,7 +227,9 @@ describe('shared timer solve detail UI', () => {
     const dialog = document.body.querySelector<HTMLElement>('[role="dialog"]')!;
     const first = dialog.querySelector<HTMLSelectElement>('[data-history-action-id="solve.detail.penalty"]')!;
     const last = dialog.querySelector<HTMLButtonElement>('[data-history-action-id="solve.detail.close"]')!;
-    last.focus();
+    expect(document.activeElement).toBe(dialog);
+    dialog.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Tab', shiftKey: true }));
+    expect(document.activeElement).toBe(last);
     last.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Tab' }));
     expect(document.activeElement).toBe(first);
     first.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Tab', shiftKey: true }));
