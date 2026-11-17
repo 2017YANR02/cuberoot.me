@@ -167,7 +167,10 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       const question = options.context && typeof options.context === 'object' && 'question' in options.context && typeof options.context.question === 'string' ? options.context.question : '';
       const configuredWindow = config.contextWindowTokens ?? Number(process.env.SITE_ASSISTANT_CONTEXT_WINDOW_TOKENS || 64_000);
       const windowTokens = Number.isSafeInteger(configuredWindow) && configuredWindow >= 16_384 && configuredWindow <= 1_000_000 ? configuredWindow : 64_000;
-      const inputBudget = windowTokens - Math.max(options.maxTokens, qwenThinking ? 8192 : 0) - 2048;
+      // Reserve the same bounded output allowance that is sent to the provider.
+      const maxOutputTokens = openai ? Math.min(ASSISTANT_OPENAI_MAX_TOKENS, thinking ? options.maxTokens : 4096)
+        : thinking ? options.maxTokens : Math.min(options.maxTokens, 4096);
+      const inputBudget = windowTokens - Math.max(maxOutputTokens, qwenThinking ? 8192 : 0) - 2048;
       let selection;
       try {
         selection = composeAssistantContext({ question, history, memory, hasImages: images.length > 0 || history.some(message => !!message.images?.length), inputBudget,
@@ -208,7 +211,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
         system,
         messages: [...memoryMessages, ...(options.isolated ? reviewConversation : conversation), { role: 'user' as const, content: images.length ? [{ type: 'text' as const, text: JSON.stringify(options.context) }, ...imageParts(images)] : JSON.stringify(options.context) }, ...currentTranscript],
         ...(openai || deepseek ? { output: Output.object({schema:answerSchema}) } : {}),
-        maxOutputTokens: openai ? Math.min(ASSISTANT_OPENAI_MAX_TOKENS, thinking ? options.maxTokens : 4096) : thinking ? options.maxTokens : Math.min(options.maxTokens, 4096), maxRetries: 0, abortSignal: signal,
+        maxOutputTokens, maxRetries: 0, abortSignal: signal,
         ...(thinking || openai ? {} : { temperature: 0 }),
         providerOptions: { [openai ? 'openai' : deepseek ? 'deepseek' : 'bailian']: openai
           ? { store: false, strictJsonSchema: false, reasoningEffort: thinking ? options.effort : 'none' }
