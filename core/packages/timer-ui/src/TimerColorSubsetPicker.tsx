@@ -48,16 +48,19 @@ export function fillColorsForSubset(letters: ColorLetter[]): string[] {
 }
 // 一个子集色块的内层 tile:单色实底,多色像切蛋糕一样从正方形中点等分扇形(所有颜色共用中点)。
 // picker 选项、六色 tile、RecentScrambles hero 圆点共用;外层尺寸/形状/边框由调用方的容器决定(配 overflow:hidden 裁切)。
+// 环形显示顺序使蓝绿、橙红、黄白各自相对；仅影响绘制，不改变子集 key 或菜单顺序。
+const SWATCH_COLOR_ORDER: readonly ColorLetter[] = ['B', 'O', 'Y', 'G', 'R', 'W'];
 export function SubsetSwatch({ colors, highlight }: { colors: ColorLetter[]; highlight?: ColorLetter }) {
   if (colors.length <= 1) {
     return <span className="subset-swatch-tile" style={colors[0] ? { background: COLOR_HEX[colors[0]] } : undefined} />;
   }
   // highlight = 多色档里「实际胜出/使用的那个底色」→ 走 SVG 分片,给该片描边;
   // 否则用廉价 conic-gradient(picker / hero 等全部现有调用方不变)。
-  const hi = highlight ? colors.indexOf(highlight) : -1;
-  if (hi >= 0) return <SubsetSwatchPie colors={colors} hiIndex={hi} />;
-  const seg = 360 / colors.length; // 等分扇形角度(6→60°, 4→90°, 2→180°)
-  const stops = colors
+  const orderedColors = SWATCH_COLOR_ORDER.filter((color) => colors.includes(color));
+  const hi = highlight ? orderedColors.indexOf(highlight) : -1;
+  if (hi >= 0) return <SubsetSwatchPie colors={orderedColors} hiIndex={hi} />;
+  const seg = 360 / orderedColors.length; // 等分扇形角度(6→60°, 4→90°, 2→180°)
+  const stops = orderedColors
     .map((c, i) => `${COLOR_HEX[c]} ${(i * seg).toFixed(3)}deg ${((i + 1) * seg).toFixed(3)}deg`)
     .join(', ');
   return <span className="subset-swatch-tile" style={{ background: `conic-gradient(from -90deg, ${stops})` }} />;

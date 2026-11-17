@@ -636,11 +636,6 @@ function RecentScramblesBrowser({ data, dist, eventsJson, isZh, lp, groups, date
   };
   const loadingEvent = event !== '333' && !eventsJson;
   const shown = entries.slice(0, count);
-  const viewLabels = {
-    featured: { zh: '近期精选', en: 'Recent picks' },
-    rare: { zh: '按稀有度', en: 'By rarity' },
-    custom: { zh: '自选条件', en: 'Custom selection' },
-  };
   const distributionQuery = new URLSearchParams({ variant: ref.variant, stage: ref.stage, colors: subset });
 
   return <section className="rs-browser">
@@ -672,8 +667,8 @@ function RecentScramblesBrowser({ data, dist, eventsJson, isZh, lp, groups, date
       </div>}
     </div>
     <div className="rs-browser-summary" aria-live="polite">
-      <h2>{custom ? (archive ? tr({ zh: '历史打乱', en: 'Archived scrambles' }) : tr({ zh: '近期样例', en: 'Recent examples' })) : tr(viewLabels[view])}</h2>
-      {!archive && <span>{tr({ zh: `${entries.length} 条样例`, en: `${entries.length} examples` })}</span>}
+      {custom && archive && <h2>{tr({ zh: '历史打乱', en: 'Archived scrambles' })}</h2>}
+      {!custom && !archive && <span>{tr({ zh: `${entries.length} 条样例`, en: `${entries.length} examples` })}</span>}
       {custom && event === '333' && <AppLink href={`/scramble/stats?${distributionQuery}`} prefetch={false}>{tr({ zh: '查看分布', en: 'View distribution' })}</AppLink>}
     </div>
     {custom && event === '333' && moves !== null && <div className="rs-browser-source">
