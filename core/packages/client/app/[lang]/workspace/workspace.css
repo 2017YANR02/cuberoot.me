@@ -333,6 +333,7 @@
 .workspace-add-task:disabled { opacity: .5; cursor: default; }
 .workspace-task-list .workspace-inline-form { flex: 1; min-width: 0; margin: 4px 0; }
 .workspace-task-list .workspace-add-item { max-width: none; margin: 0; }
+.workspace-task-list .workspace-add-item:focus-within { outline: none; border-color: var(--ring); }
 .workspace-task-list .workspace-add-item input { flex: 1; min-width: 0; border: 0; background: transparent; }
 .workspace-check-bulk { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
 .workspace-check-filters { display: flex; flex-direction: column; gap: 12px; padding: 8px; }
