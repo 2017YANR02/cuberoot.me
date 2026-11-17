@@ -43,6 +43,7 @@ export default function DevPreview(){
     return `${stage} · ${p.state==='waiting'?t('等待发布结果','Waiting for deployment results'):t('进行中','In progress')}`;
   };
   return <section className="staff-start-development"><h3>{t('申请开发网址','Request a development URL')}</h3>
+    <p>{t('同事提交申请，只有负责人能批准开通；普通管理员不能审批。','Employees may submit requests. Only the lead can approve provisioning; other administrators cannot approve.')}</p>
     {!user?<p>{t('请先注册或登录。','Register or sign in first.')}</p>:<>
       {loadFailed&&<p role="alert">{t('无法刷新申请列表，正在重试。','Unable to refresh requests. Retrying.')}</p>}
       {actionError&&<p role="alert">{({
@@ -64,7 +65,7 @@ export default function DevPreview(){
         <label>{t('电脑标识','Computer identifier')} <input className="staff-start-preview-control" required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={25} value={device} onChange={e=>setDevice(e.target.value)}/>{device&&<ClearButton variant="standalone" onClick={()=>setDevice('')}/>}</label>{' '}
         <label>{t('系统','System')} <select className="staff-start-preview-control" value={os} onChange={e=>setOs(e.target.value)}><option value="windows">Windows</option><option value="mac">macOS</option></select></label>
         <p>{t('小写字母、数字或连字符。','Lowercase letters, numbers or hyphens.')}</p>
-        <button type="submit" className="staff-start-action" disabled={busy}>{t('申请开发网址','Apply')}</button>
+        <button type="submit" className="staff-start-action" disabled={busy}>{t('提交申请','Submit request')}</button>
       </form>}
       {ticket&&<p><button type="button" className="staff-start-action" onClick={()=>copy(prompt,'preview-setup')}>{copiedKey==='preview-setup'?t('已复制','Copied'):t('复制给 AI，自动接入','Copy for AI setup')}</button></p>}
       <ul className="staff-start-steps">{data?.requests.map(r=><li key={r.id}><div className="staff-start-device-label"><strong>{r.user_name}</strong><span className="staff-start-device-detail">dev-{r.owner_slug}-{r.device_slug}.cuberoot.me</span></div><p role="status">{statusLabel(r)}</p>
