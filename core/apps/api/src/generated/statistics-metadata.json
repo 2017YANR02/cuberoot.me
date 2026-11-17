@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "d8ea4100921e787df2fc8a203d37a10eb3d83ebbd9f5002d3b7512f4669218ee",
+  "version": "14626560aa4e0e28d80f9079337537bbc338f11177aa4be450e1c75f8b368c91",
   "coverage": {
     "level": "registered-families",
     "statement": "Returns all registered main families including dependencies, not proof that every costly statistic or experimental solver has been enumerated.",
@@ -78,7 +78,7 @@
     },
     {
       "path": "docs/data/artifacts/generated-artifacts.json",
-      "sha256": "790f726cce0668724f2b6398b5aeeacfff556d4c3766909bd3e2a692e8f7e71c",
+      "sha256": "77248e99886d00a4d60265de300882bda9267c2440bebcc23f24c6f8c26b0f2c",
       "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/docs/data/artifacts/generated-artifacts.json"
     },
     {
