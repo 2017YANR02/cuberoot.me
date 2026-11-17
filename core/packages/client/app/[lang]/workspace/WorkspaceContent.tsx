@@ -53,15 +53,17 @@ function WorkspaceContent() {
   return user ? <SignedInWorkspace key={user.uid} /> : <WorkspaceLoginFrame brand="CubeRoot"><h1>{t('Workspace','Workspace')}</h1><Button onClick={()=>authActions.login()}>{t('登录 CubeRoot','Sign in to CubeRoot')}</Button></WorkspaceLoginFrame>;
 }
 function SignedInWorkspace() {
-  const t=useT();const [section]=useQueryState('section',parseAsString.withDefault('mine'));
+  const t=useT();const [section,setSection]=useQueryState('section',parseAsString.withDefault('mine'));
   const [id]=useQueryState('id',parseAsString.withDefault(''));
   const session=useResource<{actor:StaffActor;employee:StaffActor;directory:MemberDirectory}>('session');const actor=session.data?.actor;const employee=session.data?.employee;
   if (!(sections as readonly string[]).includes(section)) notFound();
   const items=[{key:'mine',label:t('我的工作','My work')},{key:'updates',label:t('团队动态','Team updates')},{key:'checklists',label:t('清单','Checklists')},{key:'schedule',label:t('总排期','Schedule')},...(actor?.kind==='admin'?[{key:'work-calendar',label:t('工作日历','Work calendar')},{key:'members',label:t('成员与权限','Members and access')}]:[])];
-  const handbookItems = [{ key: 'onboarding', label: t('入职','Onboarding') }, { key: 'sop', label: t('开发规范','Development standards') }, { key: 'offboarding', label: t('离职','Offboarding') }];
+  const lifecycle = section === 'onboarding' || section === 'offboarding';
+  const handbookItems = [{ key: 'onboarding', label: t('入/离职','Onboarding / Offboarding') }, { key: 'sop', label: t('开发规范','Development standards') }, { key: 'offboarding', label: t('入/离职','Onboarding / Offboarding') }];
   const handbook = handbookItems.some(item => item.key === section);
   return <main className={handbook ? 'staff-handbook-main' : undefined}>
     <div className="staff-page-heading page-back-heading"><PageBackLink contextOnly /><h1>{[...items,...handbookItems].find(i=>i.key===section)?.label??t('工作记录','Work report')}</h1></div>
+    {lifecycle&&<div className="staff-actions workspace-toolbar"><select className="staff-input workspace-toolbar-select" aria-label={t('入/离职','Onboarding / Offboarding')} value={section} onChange={event=>void setSection(event.target.value)}><option value="onboarding">{t('入职','Onboarding')}</option><option value="offboarding">{t('离职','Offboarding')}</option></select></div>}
     {!handbook&&<ErrorNotice error={session.error} retry={session.reload} />}
     {session.error?.status===401&&<Button onClick={()=>authActions.login()}>{t('重新登录','Sign in again')}</Button>}
     {!handbook&&session.loading&&<p role="status"><LoadingIndicator>{t('正在加载…','Loading…')}</LoadingIndicator></p>}

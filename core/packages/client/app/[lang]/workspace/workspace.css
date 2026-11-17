@@ -12,6 +12,7 @@
 
 .workspace-toolbar { flex-wrap: wrap; align-items: end; gap: 12px; margin: 0 0 32px; }
 .workspace-toolbar .staff-field { width: auto; flex: 0 1 auto; }
+.workspace-toolbar > .staff-input.workspace-toolbar-select { width: fit-content; flex: 0 0 auto; align-self: flex-start; }
 .workspace-list-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .workspace-list-heading :is(h2, h3) { margin: 0; }
 .workspace-list-heading > .workspace-action:last-child { margin-left: auto; }

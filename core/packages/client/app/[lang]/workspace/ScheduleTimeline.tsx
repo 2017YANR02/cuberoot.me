@@ -109,7 +109,8 @@ export default function ScheduleTimeline({ tasks, scale: requestedScale, editabl
               const name = phase.tasks.length === 1 ? scheduleTaskLabel(phase.tasks[0].name) : t(`${phase.tasks.length} 项任务`, `${phase.tasks.length} tasks`);
               const done = phase.tasks.every(task => task.progress === 100);
               const status = done ? t('完成', 'Complete') : t('未完成', 'Incomplete');
-              const label = `${phase.tasks.map(task => task.name).join(' · ')} · ${phase.start} – ${phase.end} · ${status}`;
+              const taskNames = phase.tasks.map((task, index) => phase.tasks.length === 1 ? task.name : `${index < 20 ? String.fromCodePoint(0x2460 + index) : `(${index + 1})`} ${task.name}`).join('\n');
+              const label = `${taskNames}\n${phase.start} – ${phase.end} · ${status}`;
               return <Fragment key={phase.tasks[0].id}><Tooltip content={label}>{tip => <button {...tip} type="button" aria-label={label} className={`workspace-gantt-bar workspace-gantt-phase${done ? ' is-done' : ''}`} onClick={() => toggle(group)} style={{ left: percent(offset), width: `max(2px, ${percent(duration)})` }}>
                 {duration * dayWidth >= 60 && <span className="workspace-gantt-bar-name">{name}</span>}
               </button>}</Tooltip>{done && completionMarker(offset)}</Fragment>;
