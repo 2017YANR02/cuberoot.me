@@ -325,6 +325,40 @@ describe('shared timer manual-entry modal', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  it('preserves the draft on drag-out/cancel and only dismisses a complete backdrop click', async () => {
+    const onClose = vi.fn();
+    const onSubmit = vi.fn();
+    const previousOverflow = document.body.style.overflow;
+    await act(async () => root.render(createElement(TimerManualEntryModal, {
+      currentScramble: 'R U', event: '333', labels, onClose, onSubmit,
+    })));
+    const overlay = host.querySelector<HTMLElement>('.timer-manual-entry__overlay')!;
+    const comment = host.querySelector<HTMLTextAreaElement>('textarea[placeholder="Optional notes"]')!;
+    await act(async () => setValue(comment, 'Keep this draft'));
+    expect(document.body.style.overflow).toBe('hidden');
+
+    // A mouse release outside synthesizes click on the shared ancestor (backdrop).
+    await act(async () => {
+      comment.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 }));
+      overlay.click();
+      overlay.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 }));
+      overlay.dispatchEvent(new Event('pointercancel', { bubbles: true }));
+      overlay.click();
+    });
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(comment.value).toBe('Keep this draft');
+
+    await act(async () => {
+      overlay.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 }));
+      overlay.click();
+    });
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onSubmit).not.toHaveBeenCalled();
+    await act(async () => root.render(null));
+    expect(document.body.style.overflow).toBe(previousOverflow);
+  });
+
   it('keeps IME-composed text and Space inside the modal instead of the host timer', async () => {
     const onSubmit = vi.fn();
     await act(async () => root.render(createElement(TimerManualEntryModal, {
@@ -380,6 +414,9 @@ describe('website manual-entry adapter', () => {
     const css = readFileSync(new URL('./manual-entry.css', timerUiEntry), 'utf8');
     expect(css).toMatch(/\.timer-manual-entry__dialog \{[\s\S]*?min-width: 0;[\s\S]*?overflow-x: hidden;[\s\S]*?overflow-y: auto;/);
     expect(css).toContain('env(safe-area-inset-bottom)');
+    expect(css).toContain('max-height: min(80vh, calc(100% - 40px));');
+    expect(css).toMatch(/@supports \(height: 100dvh\)[\s\S]*?max-height: min\(80dvh, calc\(100% - 40px\)\);/);
+    expect(css).toMatch(/@media \(max-width: 480px\)[\s\S]*?max-height: min\(95vh, 100%\);/);
     expect(css).toMatch(/@media \(max-width: 480px\)[\s\S]*?max-height: min\(95dvh, 100%\);/);
     expect(css).toMatch(/\.timer-manual-entry__input,[\s\S]*?\.timer-manual-entry__textarea \{[\s\S]*?min-height: 44px;[\s\S]*?font-size: 16px;/);
     expect(css).toMatch(/@media \(max-width: 340px\)[\s\S]*?grid-template-columns: minmax\(0, 1fr\);/);

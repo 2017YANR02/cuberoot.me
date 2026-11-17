@@ -10,6 +10,7 @@ import {
   type TimerManualEntryValue,
 } from '@cuberoot/shared/timer';
 import {
+  useCallback,
   useEffect,
   useId,
   useMemo,
@@ -19,6 +20,7 @@ import {
 } from 'react';
 
 import { modalFocusableElements } from './modal-focus';
+import { useModalDismiss } from './useModalDismiss';
 
 export type TimerManualEntryLabels = TimerManualEntryCopy;
 
@@ -50,6 +52,8 @@ export function TimerManualEntryModal({
   const errorId = useId();
   const penaltyName = useId();
   onCloseRef.current = onClose;
+  const dismiss = useCallback(() => onCloseRef.current(), []);
+  const backdrop = useModalDismiss(dismiss);
 
   useEffect(() => {
     setDraft((current) => ({ ...current, currentScramble, event }));
@@ -131,9 +135,8 @@ export function TimerManualEntryModal({
   return (
     <div
       className="timer-manual-entry__overlay"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
+      data-no-timer
+      {...backdrop}
     >
       <div
         aria-labelledby={titleId}
