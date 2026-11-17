@@ -4,7 +4,7 @@ import postgres from 'postgres';
 import {beforeAll,afterAll,describe,it,expect} from 'vitest';
 import type {QueryRunner} from '../src/db/connection.js';
 import {createSiteAssistantRoutes} from '../src/routes/site_assistant.js';
-import {rememberAssistantContext,restoreAssistantContext,type AssistantContext} from '../src/utils/site_assistant_context.js';
+import {rememberAssistantContext,rememberAssistantConversation,assistantAnswerContext,restoreAssistantContext,restoreAssistantHistory,type AssistantContext} from '../src/utils/site_assistant_context.js';
 import {startAssistantMonitor,cleanAssistantMonitoring} from '../src/utils/site_assistant_monitor.js';
 import {applyAssistantCompletion} from '../src/utils/site_assistant_outbox.js';
 
@@ -58,6 +58,43 @@ describe.skipIf(!enabled)('private context PostgreSQL and route lifecycle',()=>{
     expect(await restoreAssistantContext(run,7,conversationId,parentId)).toBeUndefined();
     await cleanAssistantMonitoring(run);
     expect((await db`SELECT assistant_context FROM site_assistant_requests WHERE id=${parentId}`)[0].assistant_context).toBeNull();
+  });
+  it('restores five complete ancestor pairs and keeps graph memory within owner, branch and TTL',async()=>{
+    const conversationId=randomUUID();
+    let parentId:string|undefined, prior:AssistantContext|undefined;
+    const ids:string[]=[];
+    for(let index=0;index<7;index++) {
+      const question=`F2L training ${index}`;
+      const monitor=await startAssistantMonitor({uid:7,question,lang:'en',model:'fixture',streaming:false,imageCount:0,historyCount:0,conversationId,parentId},run);
+      const result=rememberAssistantConversation({answer:`Step ${index}`,sources:[]},question,[],prior);
+      await monitor.finish('success',undefined,result);
+      prior=assistantAnswerContext(result);parentId=monitor.id;ids.push(monitor.id);
+    }
+    const sibling=await startAssistantMonitor({uid:7,question:'SIBLING_PRIVATE',lang:'en',model:'fixture',streaming:false,imageCount:0,historyCount:0,conversationId,parentId:ids[3]},run);
+    await sibling.finish('success',undefined,rememberAssistantConversation({answer:'Sibling answer',sources:[]},'SIBLING_PRIVATE',[]));
+    const restored=await restoreAssistantHistory(run,7,conversationId,parentId!,[]);
+    expect(restored).toHaveLength(10);
+    expect(restored[0].content).toBe('F2L training 2');expect(restored.at(-1)?.content).toBe('Step 6');
+    expect(JSON.stringify(restored)).not.toContain('SIBLING_PRIVATE');
+    const graph=await restoreAssistantContext(run,7,conversationId,parentId);
+    expect(graph?.memory?.episodes).toHaveLength(7);
+    expect(JSON.stringify(graph)).not.toContain('SIBLING_PRIVATE');
+    // A fresh row must not physically retain a copied graph past its own TTL.
+    await db`UPDATE site_assistant_requests SET assistant_context=jsonb_set(assistant_context,'{expiresAt}',to_jsonb(${new Date(Date.now()-1000).toISOString()}::text)) WHERE id=${ids[2]}`;
+    await cleanAssistantMonitoring(run);
+    expect((await db`SELECT assistant_context,question FROM site_assistant_requests WHERE id=${ids[2]}`)[0]).toEqual({assistant_context:null,question:'F2L training 2'});
+    expect(await restoreAssistantHistory(run,8,conversationId,parentId!,[])).toEqual([]);
+    expect(await restoreAssistantHistory(run,7,randomUUID(),parentId!,[])).toEqual([]);
+    // Even a corrupted cross-account parent cannot cross the recursive boundary.
+    const foreign=await startAssistantMonitor({uid:8,question:'FOREIGN_PRIVATE',lang:'en',model:'fixture',streaming:false,imageCount:0,historyCount:0,conversationId},run);
+    await foreign.finish('success',undefined,{answer:'Foreign answer',sources:[]});
+    await db`UPDATE site_assistant_requests SET parent_id=${foreign.id} WHERE id=${ids[5]}`;
+    const isolated=await restoreAssistantHistory(run,7,conversationId,parentId!,[]);
+    expect(isolated).toHaveLength(4);expect(JSON.stringify(isolated)).not.toContain('FOREIGN_PRIVATE');
+    await db`UPDATE site_assistant_requests SET started_at=NOW()-INTERVAL '31 days' WHERE id=${parentId!}`;
+    await cleanAssistantMonitoring(run);
+    expect(await restoreAssistantContext(run,7,conversationId,parentId)).toBeUndefined();
+    expect((await db`SELECT assistant_context FROM site_assistant_requests WHERE id=${parentId!}`)[0].assistant_context).toBeNull();
   });
   it('cascades account deletion and does not resurrect memory from a delayed completion',async()=>{
     const monitor=await startAssistantMonitor({uid:8,question:'Fixture',lang:'en',model:'fixture',streaming:false,imageCount:0,historyCount:0},run);

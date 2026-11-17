@@ -17,6 +17,12 @@ function history(file=pll,selection:Parameters<typeof algorithmCards>[1]={puzzle
 }
 
 describe('natural-language formula requests',()=>{
+  it.each(['用中文给番茄炒蛋写三条简短步骤，不加标题。','现在只用一句中文解释 F2L，不要展开步骤。'])('does not prefetch a library for a general request after a formula topic: %s',async question=>{
+    const read=vi.fn(load);
+    const previous:AssistantMessage[]=[{role:'user',content:'继续讨论PLL训练。'},{role:'assistant',content:'训练安排如下。'}];
+    expect(await resolveAssistantAlgorithmRequest(question,previous,'zh',read)).toBeUndefined();
+    expect(read).not.toHaveBeenCalled();
+  });
   it.each(['PLL 的 T 怎么拧？','PLL T','给我一条 T 公式','T公式是什么','只展示公式T','T怎么拧','有没有 Tperm 的公式？',"What's the algorithm for T perm?",'我想学 T perm'])('resolves an actual case without a fixed display verb: %s',async question=>{
     expect(await resolveAssistantAlgorithmRequest(question,[],'zh',load)).toMatchObject({selection:{puzzle:'3x3',set:'pll',caseId:902,display:'both'}});
   });

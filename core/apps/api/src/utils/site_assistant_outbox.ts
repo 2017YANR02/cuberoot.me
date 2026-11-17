@@ -6,15 +6,22 @@ import type { QueryRunner } from '../db/connection.js';
 // Linux shares the systemd-managed state directory with the sandboxed indexer.
 export const assistantOutboxDirectory = () => process.env.SITE_ASSISTANT_OUTBOX_DIR || (process.platform === 'linux' ? '/var/lib/cuberoot-assistant/outbox' : join(homedir(), '.local/state/cuberoot/assistant-outbox'));
 export interface AssistantCompletion { id: string; createdAt: string; params: unknown[] }
+function expiredContext(params: unknown[]) {
+  const context = params.length === 10 ? params[8] : undefined;
+  return context != null && typeof context === 'object' && 'expiresAt' in context
+    && typeof context.expiresAt === 'string' && Date.parse(context.expiresAt) <= Date.now();
+}
 const update = `UPDATE site_assistant_requests SET status=?,error_code=?,finished_at=?,duration_ms=?,first_answer_ms=?,answer=?,response=?,metrics=?,assistant_context=?
   WHERE id=? AND status IN ('running','interrupted')`;
 export async function applyAssistantCompletion(item: AssistantCompletion, run: QueryRunner) {
   // Replay only updates existing records: deletion of an account cannot resurrect its chats.
   const params = item.params.length === 9 ? [...item.params.slice(0, 8), null, item.params[8]] : [...item.params];
   if (Date.now() - Date.parse(item.createdAt) > 30 * 86400_000) { params[5] = null; params[6] = null; params[8] = null; }
+  if (expiredContext(params)) params[8] = null;
   await run(update, params);
 }
 export async function saveAssistantCompletion(item: AssistantCompletion, directory = assistantOutboxDirectory()) {
+  if (expiredContext(item.params)) { item = { ...item, params: [...item.params] }; item.params[8] = null; }
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const files = (await readdir(directory)).filter(name => name.endsWith('.json'));
   if (files.length >= 256 && !files.includes(`${item.id}.json`)) throw new Error('Assistant outbox capacity reached');
@@ -41,8 +48,13 @@ export async function replayAssistantCompletions(run: QueryRunner, directory = a
     const path=join(directory,name);
     try {
       const item=JSON.parse(await readFile(path,'utf8')) as AssistantCompletion;
-      if (Array.isArray(item.params) && Date.now()-Date.parse(item.createdAt)>30*86400_000 && (item.params[5]!=null || item.params[6]!=null || (item.params.length===10 && item.params[8]!=null))) {
-        item.params[5]=null;item.params[6]=null;if(item.params.length===10)item.params[8]=null;await saveAssistantCompletion(item,directory);
+      if (Array.isArray(item.params)) {
+        const expired = Date.now()-Date.parse(item.createdAt)>30*86400_000;
+        if (expiredContext(item.params) || (expired && (item.params[5]!=null || item.params[6]!=null || (item.params.length===10 && item.params[8]!=null)))) {
+          if (expired) { item.params[5]=null;item.params[6]=null; }
+          if(item.params.length===10)item.params[8]=null;
+          await saveAssistantCompletion(item,directory);
+        }
       }
     } catch(error) { if((error as NodeJS.ErrnoException).code!=='ENOENT') throw error; }
   }

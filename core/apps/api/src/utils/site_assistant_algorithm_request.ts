@@ -121,9 +121,10 @@ export async function resolveAssistantAlgorithmRequest(question:string,history:A
     new RegExp(`^${escape(name)}\\s*(?:的\\s*)?[a-z0-9][a-z0-9+\\-\\s]{0,11}[?？]?$`,'i').test(text));
   // Mentioning a set in a page, glossary or reconstruction question is not a
   // request to fetch its formulas. Keep concise case names such as "PLL T".
-  if(!formula && !want && !contextual && !perm && !namedCase && !implicitCase)return;
+  const execution=/(?:怎么|如何)(?:拧|转|做)|\bhow\b.*\b(?:do|solve|execute)\b/i.test(text);
+  if(!formula && !execution && !contextual && !perm && !namedCase && !implicitCase)return;
   // A display verb alone does not carry the last formula subject into a new request.
-  if(inheritedTarget && !formula && !contextual && !implicitCase)return;
+  if(inheritedTarget && !formula && !execution && !contextual && !implicitCase)return;
   if(!explicit && !perm && previous && !previous.immediate && !formula && !refer)return;
 
   const data=await load(target.puzzle,target.set);

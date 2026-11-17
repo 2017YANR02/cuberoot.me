@@ -29,6 +29,14 @@ export function boundAssistantEvidence(input:unknown,budget:number):unknown {
     if(size(base)>budget){(base[key] as unknown[]).pop();break;}
   }
   if(arrayKeys.every(key=>!(base[key] as unknown[]).length))return missing;
+  if(Array.isArray(base.entries)) {
+    const retained=new Set(base.entries.map(item=>item?.sourceId));
+    base.entries=base.entries.map(item=>{
+      if(!item || !Array.isArray(item.expansionSourceIds) || item.expansionSourceIds.every((id:unknown)=>retained.has(id)))return item;
+      const {expandedEnglish,expansionSourceIds,...quoted}=item;
+      return quoted;
+    });
+  }
   if(Array.isArray(base.originals) && Array.isArray(base.verifiedSourceIds)) {
     const retained=new Set(base.originals.flatMap(item=>item && typeof item==='object' && 'id' in item?[item.id]:[]));
     base.verifiedSourceIds=base.verifiedSourceIds.filter(id=>retained.has(id));

@@ -19,3 +19,11 @@ it('scrubs private context and answer payloads when an outbox completion is past
   expect(run.mock.calls[0][1][6]).toBeNull();
   expect(run.mock.calls[0][1][8]).toBeNull();
 });
+
+it('does not renew inherited memory through a newly created completion',async()=>{
+  const run=vi.fn().mockResolvedValue([]);
+  await applyAssistantCompletion({id,createdAt:now,params:['success',null,now,10,null,'new answer',{sources:[]},{},
+    {version:1,expiresAt:new Date(Date.now()-1000).toISOString(),memory:{private:'old conversation'}},id]},run);
+  expect(run.mock.calls[0][1][5]).toBe('new answer');
+  expect(run.mock.calls[0][1][8]).toBeNull();
+});

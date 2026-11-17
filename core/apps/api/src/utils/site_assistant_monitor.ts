@@ -1,3 +1,5 @@
+import { redactAssistantText } from './site_assistant_privacy.js';
+export { redactAssistantText } from './site_assistant_privacy.js';
 import { mkdirSync, openSync, writeFileSync, fsyncSync, closeSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -23,6 +25,7 @@ const write: QueryRunner = async <T>(statement: string, params: unknown[] = []) 
 };
 export interface AssistantMetrics {
   answerRejections?: Array<{ reason: string }>;
+  contexts?: Array<{ relevance: 'strong' | 'weak'; recentTurns: number; estimatedTokens: number; inputBudget: number; compressed: string[]; layers: Record<string, number> }>;
   stages: Record<string, { calls: number; ms: number; errors: number }>;
   models: Array<{ model: string; thinking: boolean; input: number | null; output: number | null; cached: number | null; reasoning: number | null; durationMs?: number; firstActivityMs?: number; firstTextMs?: number; grossCny?: number | null; cacheAdjustedCny?: {min:number;max:number}|null; tariff?: unknown; round?: number; attempt?: number; failure?: AssistantModelDiagnostic & { upstreamStatus?: number } }>;
   timing?: { version: 1; requestReadyMs?: number; firstProgressMs?: number; responseReadyMs?: number };
@@ -41,6 +44,10 @@ export function recordAssistantAnswerRejection(reason: string) {
   const metrics = scope.getStore();
   if (metrics && (metrics.answerRejections?.length ?? 0) < 8) (metrics.answerRejections ??= []).push({ reason });
   diagnosticLog('site_assistant_answer_rejected', { requestId: currentDiagnosticRequestId(), reason }, true);
+}
+export function recordAssistantContextSelection(value: NonNullable<AssistantMetrics['contexts']>[number]) {
+  const metrics = scope.getStore();
+  if (metrics && (metrics.contexts?.length ?? 0) < 24) (metrics.contexts ??= []).push(value);
 }
 export function recordAssistantStage(name: string, ms: number, failed: boolean, tool?: string) {
   const metrics = scope.getStore();
@@ -125,14 +132,6 @@ export function recordAssistantRerank(model: string, candidates: number, origin 
   };
 }
 
-/** Best-effort credential redaction, not a claim that arbitrary prose is anonymous. */
-export function redactAssistantText(value: string): string {
-  return value.replace(/\u0000/g, '')
-    .replace(/\bBearer\s+[A-Za-z0-9._~+\/-]+=*/gi, 'Bearer [redacted]')
-    .replace(/\bsk-[A-Za-z0-9_-]{12,}/g, '[redacted]')
-    .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, '[redacted]')
-    .replace(/((?:password|passwd|api[_-]?key|access[_-]?token|secret|密码)\s*[=:：]\s*)[^\s&,;"']+/gi, '$1[redacted]');
-}
 function safeResponse(result: AssistantAnswer) {
   // Explicit allowlist; never serialize a request, history, image or provider object.
   const value = JSON.stringify({ sources: result.sources, actions: result.actions, artifacts: result.artifacts }, (_key, item) => typeof item === 'string' ? redactAssistantText(item) : item);
@@ -224,6 +223,11 @@ export async function cleanAssistantMonitoring(run: QueryRunner = write) {
   await run(`UPDATE site_assistant_requests SET question=NULL,answer=NULL,response=NULL,assistant_context=NULL,review_note=NULL WHERE id IN (
     SELECT id FROM site_assistant_requests WHERE started_at < NOW() - INTERVAL '30 days'
     AND (question IS NOT NULL OR answer IS NOT NULL OR response IS NOT NULL OR assistant_context IS NOT NULL OR review_note IS NOT NULL) ORDER BY started_at LIMIT 1000)`);
+  // A new request may carry an older graph. Its inherited expiry, not the new
+  // row's creation date, bounds retention of that copied private content.
+  await run(`UPDATE site_assistant_requests SET assistant_context=NULL WHERE id IN (
+    SELECT id FROM site_assistant_requests WHERE assistant_context->>'expiresAt' <= ?
+    ORDER BY started_at LIMIT 1000)`, [new Date().toISOString()]);
   await run(`DELETE FROM site_assistant_requests WHERE id IN (
     SELECT id FROM site_assistant_requests WHERE started_at < NOW() - INTERVAL '90 days' ORDER BY started_at LIMIT 1000)`);
   await run("DELETE FROM site_assistant_audit WHERE at < NOW() - INTERVAL '90 days'");

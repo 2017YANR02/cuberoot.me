@@ -1,5 +1,6 @@
 import {describe,it,expect,vi} from 'vitest';
 import {runDataTool,toolCallSchema} from '../src/utils/site_assistant_tools.js';
+import {boundAssistantToolResult} from '../src/utils/site_assistant_evidence.js';
 
 describe('assistant glossary retrieval',()=>{
   const entries=[
@@ -13,6 +14,44 @@ describe('assistant glossary retrieval',()=>{
     {id:204,headEn:'EO (Edge Orientation)',bodyEn:'Edge orientation.'},
   ];
   const read=async()=>({sections:[{entries}]});
+  it('expands linked abbreviations once with original quotes and both sources, without another read',async()=>{
+    const linkedRead=vi.fn(async()=>({sections:[{entries:[...entries,{id:348,headEn:'LL (Last Layer)',headZh:'顶层',ownerName:'private owner'}]}]}));
+    const result=await runDataTool({tool:'glossary',query:'OLL PLL'},'zh',linkedRead);
+    expect(linkedRead).toHaveBeenCalledTimes(1);
+    expect(result.sources.map(source=>source.id)).toEqual(['wiki:439','wiki:482','wiki:348']);
+    expect(result.evidence).toMatchObject({total:2,truncated:false,entries:[
+      {id:439,headEn:'OLL (Orientation of LL)',expandedEnglish:'Orientation of Last Layer',expansionSourceIds:['wiki:439','wiki:348']},
+      {id:482,expandedEnglish:'Permutation of Last Layer',expansionSourceIds:['wiki:482','wiki:348']},
+      {id:348,headEn:'LL (Last Layer)'},
+    ]});
+    expect(JSON.stringify(result.evidence)).not.toContain('private owner');
+  });
+  it.each([
+    [],
+    [{id:348,headEn:'LL (Last Layer)'},{id:349,headEn:'LL (Lower Layer)'}],
+    [{id:348,headEn:'LL (Last Layer)'},{id:349,headEn:'LL',bodyEn:'Other meaning'}],
+    [{id:348,headEn:'LL (OLL)'}],
+    [{id:-1,headEn:'LL (Last Layer)'}],
+  ].map(linked=>[linked]))('leaves absent, ambiguous or recursive abbreviation definitions unresolved: %j',async linked=>{
+    const result=await runDataTool({tool:'glossary',query:'OLL'},'en',async()=>({sections:[{entries:[...entries,...linked]}]}));
+    expect(result.sources.map(source=>source.id)).toEqual(['wiki:439']);
+    expect(JSON.stringify(result.evidence)).not.toContain('"expandedEnglish"');
+  });
+  it('removes a derived expansion if its supporting entry falls outside the evidence budget',async()=>{
+    const result=await runDataTool({tool:'glossary',query:'OLL'},'en',async()=>({sections:[{entries:[...entries,{id:348,headEn:'LL (Last Layer)',body:'large definition '.repeat(1000)}]}]}));
+    const bounded=boundAssistantToolResult(result,2000);
+    expect(bounded.sources.map(source=>source.id)).toEqual(['wiki:439']);
+    expect(bounded.evidence).toMatchObject({contextIncomplete:true,entries:[{headEn:'OLL (Orientation of LL)'}]});
+    expect(JSON.stringify(bounded.evidence)).not.toContain('"expandedEnglish"');
+    expect(JSON.stringify(bounded.evidence)).not.toContain('"expansionSourceIds"');
+  });
+  it('caps linked evidence at four entries while preserving all eight direct matches',async()=>{
+    const direct=Array.from({length:8},(_,i)=>({id:1+i,headEn:`A${i} (Expansion B${i})`,body:'linked'}));
+    const linked=Array.from({length:8},(_,i)=>({id:20+i,headEn:`B${i} (Base ${i})`}));
+    const result=await runDataTool({tool:'glossary',query:'linked'},'en',async()=>({sections:[{entries:[...direct,...linked]}]}));
+    expect(result.sources.map(source=>source.id)).toEqual([...direct,...linked.slice(0,4)].map(entry=>`wiki:${entry.id}`));
+    expect(result.evidence).toMatchObject({total:8,truncated:false});
+  });
   it.each([['OLL',[439]],['oll',[439]],['EO',[204]],['OLL Skip',[440]]])('prioritizes the exact term over substrings and body mentions: %s',async(query,ids)=>{
     const result=await runDataTool({tool:'glossary',query:query as string},'en',read);
     expect(result.sources.map(source=>source.id)).toEqual((ids as number[]).map(id=>`wiki:${id}`));

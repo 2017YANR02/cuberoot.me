@@ -182,3 +182,16 @@ it('still rejects a grounded answer with missing source IDs',async()=>{
   const fetcher=vi.fn<typeof fetch>().mockResolvedValue(response({content:JSON.stringify({answerKind:'grounded',answer:'A claim.'})}));
   await expect(createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'').complete(options)).rejects.toMatchObject({code:'model_output_invalid'});
 });
+it.each([
+  [true,{answerKind:'general',answer:'Two activities.'},true],
+  [false,{answerKind:'general',answer:'Two activities.'},false],
+  [true,{answerKind:'grounded',answer:'Verified fact.'},false],
+  [true,{answerKind:'general',answer:'Use this [[wiki:1]].'},false],
+  [true,{answerKind:'general',answer:'Read [the source](/wiki).'},false],
+  [true,{answerKind:'general',answer:'Two activities.',sourceIds:123},false],
+])('normalizes only an absent empty source list when explicitly permitted (%s)',async(allowed,payload,valid)=>{
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValue(response({content:JSON.stringify(payload)}));
+  const request=createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'').complete({...options,allowEmptySourceIds:allowed,thinking:false});
+  if(valid)expect((await request).sourceIds).toEqual([]);
+  else await expect(request).rejects.toMatchObject({code:'model_output_invalid'});
+});

@@ -19,7 +19,7 @@ import { assistantImageSchema, inlineAssistantImageSchema, readAssistantAttachme
 import { verifySession } from '../utils/session.js';
 import { query, type QueryRunner } from '../db/connection.js';
 import { startAssistantMonitor, recordAssistantEntry } from '../utils/site_assistant_monitor.js';
-import { restoreAssistantContext, type AssistantContext } from '../utils/site_assistant_context.js';
+import { restoreAssistantContext, restoreAssistantHistory, type AssistantContext } from '../utils/site_assistant_context.js';
 import { withAssistantProgress } from '../utils/site_assistant_progress.js';
 import { assistantRunStore, watchAssistantRun } from '../utils/site_assistant_runs.js';
 import { SITE_ASSISTANT_REFERENCE_MAX_LENGTH } from '@cuberoot/shared/site-assistant';
@@ -218,6 +218,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
       if (monitor?.id) c.header('X-Assistant-Request-Id', monitor.id);
       if(parsed.data.conversationId && parsed.data.parentId) {
         priorContext=await restoreAssistantContext(deps.contextQuery ?? query,user.uid,parsed.data.conversationId,parsed.data.parentId).catch(()=>undefined);
+        if (priorContext?.memory) history=await restoreAssistantHistory(deps.contextQuery ?? query,user.uid,parsed.data.conversationId,parsed.data.parentId,history).catch(()=>history);
       }
       signal.throwIfAborted();
       const now = deps.now();

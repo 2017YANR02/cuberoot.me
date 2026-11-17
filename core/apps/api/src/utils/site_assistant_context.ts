@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { isAssistantSourceHref, type AssistantAnswer, type AssistantMessage, type AssistantSource, type AssistantTable } from '@cuberoot/shared/site-assistant';
 import type { QueryRunner } from '../db/connection.js';
 import { toolCallSchema, type AssistantToolCall, type ToolResult } from './site_assistant_tools.js';
+import { assistantMemorySchema, updateAssistantMemory } from './site_assistant_memory.js';
 
 export const ASSISTANT_CONTEXT_VERSION = 1;
 export const ASSISTANT_CONTEXT_TTL_MS = 30 * 86400_000;
@@ -19,13 +20,35 @@ const observationSchema = z.object({ call: z.lazy(()=>toolCallSchema), sourceIds
   dataVersion: z.string().max(120).nullable(), facts: factSchema, tables: z.array(tableSchema).max(3),
 }).strict();
 const contextSchema = z.object({ version: z.literal(ASSISTANT_CONTEXT_VERSION), createdAt: z.string().datetime(), expiresAt: z.string().datetime(),
-  sources: z.array(sourceSchema).max(12), observations: z.array(observationSchema).max(6),
+  sources: z.array(sourceSchema).max(12), observations: z.array(observationSchema).max(6), memory: assistantMemorySchema.optional(),
 }).strict();
 export type AssistantContext = z.infer<typeof contextSchema>;
 export interface AssistantObservation { call: AssistantToolCall; result: ToolResult }
 // Internal metadata never enters JSON/SSE, public shares or model-authored answers.
 const answerContexts = new WeakMap<AssistantAnswer, AssistantContext>();
 export const assistantAnswerContext = (answer: AssistantAnswer) => answerContexts.get(answer);
+
+/** Extend the existing private JSON snapshot; never expose memory in answers,
+ * shares or accept a client-provided graph. Ordinary chat now retains context too. */
+export function rememberAssistantConversation(answer: AssistantAnswer, question: string, history: AssistantMessage[], prior?: AssistantContext, now = Date.now()) {
+  const validPrior = prior ? parseAssistantContext(prior, now) : undefined;
+  const evidence = answerContexts.get(answer);
+  const context: AssistantContext = { ...(evidence ?? { version: ASSISTANT_CONTEXT_VERSION,
+    createdAt: new Date(now).toISOString(), expiresAt: new Date(now + ASSISTANT_CONTEXT_TTL_MS).toISOString(), sources: [], observations: [] }),
+    // Carrying a graph must not keep its old private content alive indefinitely.
+    ...(validPrior ? { createdAt: validPrior.createdAt, expiresAt: validPrior.expiresAt } : {}),
+    memory: updateAssistantMemory(validPrior?.memory, history, question, answer.answer, answer.sources.map(source => source.id)),
+  };
+  while (Buffer.byteLength(JSON.stringify(context)) > ASSISTANT_CONTEXT_MAX_BYTES && context.memory!.episodes.length > 1) {
+    const removed = context.memory!.episodes.shift()!;
+    context.memory!.edges = context.memory!.edges.filter(edge => edge.from !== removed.id && edge.to !== removed.id);
+  }
+  // Source-backed snapshots keep priority over optional derived memory at the
+  // persistence boundary. Neither the journal nor the 30-day retention expands.
+  if (Buffer.byteLength(JSON.stringify(context)) > ASSISTANT_CONTEXT_MAX_BYTES) delete context.memory;
+  answerContexts.set(answer, context);
+  return answer;
+}
 
 function tableSnapshot(table: AssistantTable): z.infer<typeof tableSchema> | undefined {
   if (table.columns.length > 20) return;
@@ -123,6 +146,34 @@ export async function restoreAssistantContext(run: QueryRunner, uid: number, con
     WHERE id=? AND user_id=? AND conversation_id=? AND scope='chat' AND status='success'
       AND started_at>NOW()-INTERVAL '30 days' AND assistant_context IS NOT NULL`, [parentId, uid, conversationId]);
   return parseAssistantContext(rows[0]?.assistant_context, now);
+}
+
+/** Recover up to five complete pairs even when the client's transport budget
+ * omitted older messages. Walk parent links, never the latest rows of a chat:
+ * regeneration/edit branches must not inherit a sibling's answers. */
+export async function restoreAssistantHistory(run: QueryRunner, uid: number, conversationId: string, parentId: string, client: AssistantMessage[]) {
+  const rows = await run<{ question: string; answer: string; depth: number }>(`WITH RECURSIVE ancestors AS (
+    SELECT id,parent_id,question,answer,1 AS depth FROM site_assistant_requests
+      WHERE id=? AND user_id=? AND conversation_id=? AND scope='chat' AND status='success'
+        AND started_at>NOW()-INTERVAL '30 days' AND question IS NOT NULL AND answer IS NOT NULL
+    UNION ALL
+    SELECT r.id,r.parent_id,r.question,r.answer,a.depth+1 FROM site_assistant_requests r
+      JOIN ancestors a ON r.id=a.parent_id
+      WHERE a.depth<5 AND r.user_id=? AND r.conversation_id=? AND r.scope='chat' AND r.status='success'
+        AND r.started_at>NOW()-INTERVAL '30 days' AND r.question IS NOT NULL AND r.answer IS NOT NULL
+  ) SELECT question,answer,depth FROM ancestors ORDER BY depth DESC`, [parentId, uid, conversationId, uid, conversationId]);
+  if (!rows.length) return client;
+  // Keep the client's recent presentation/images verbatim, adding only an exact
+  // matching ancestor prefix. A mismatched/edited payload is never spliced into
+  // an unrelated server branch. Empty clients can restore the canonical pairs.
+  const questions = client.filter(message => message.role === 'user').map(message => message.content);
+  const prefix = rows.length - questions.length;
+  if (prefix < 0 || (client.length && (client[0].role !== 'user' || !questions.length))
+    || questions.some((question, index) => rows[prefix + index].question !== question)) return client;
+  const older: AssistantMessage[] = rows.slice(0, prefix).flatMap(row => [
+    { role: 'user' as const, content: row.question }, { role: 'assistant' as const, content: row.answer },
+  ]);
+  return [...older, ...client];
 }
 
 /** Cached cells answer only explicit references to the earlier displayed table.

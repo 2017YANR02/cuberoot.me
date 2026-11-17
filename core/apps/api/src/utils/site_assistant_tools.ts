@@ -8,7 +8,7 @@ import { localizeCompName } from '@cuberoot/shared/comp-localize';
 import { formatDateRangeIso, isValidIsoDate } from '@cuberoot/shared/iso-date';
 import { roundChronologicalOrder } from '@cuberoot/shared/wca-round';
 import { mergeCompetitionIndexes } from '@cuberoot/shared/competition-index';
-import type { AssistantArtifact, AssistantSource, AssistantTable } from '@cuberoot/shared/site-assistant';
+import type { AssistantAnswer, AssistantArtifact, AssistantSource, AssistantTable } from '@cuberoot/shared/site-assistant';
 import { PHOTO_ALG_SETS, POCKET_PHOTO_ALG_SETS, FOUR_PHOTO_ALG_SETS } from '@cuberoot/shared/cube-photo/lookup';
 import { findAssistantPeople } from './site_assistant_people.js';
 import { analysisSchemaCall, analysisQueryCall } from './site_assistant_analysis.js';
@@ -82,6 +82,31 @@ interface GlossaryEntry {
   source?: string;
 }
 const glossaryText = (value: string) => value.normalize('NFKC').trim().toLowerCase().replace(/\s+/g,' ');
+/** Resolve a bounded, unambiguous one-hop abbreviation from the same public read.
+ * Preserve quoted headings; derived expansions carry both source identities. */
+function glossaryExpansions(entries: GlossaryEntry[], selected: GlossaryEntry[]) {
+  const parse=(entry:GlossaryEntry)=>(entry.headEn || entry.head || '').normalize('NFKC').match(/^([A-Z][A-Z0-9-]{1,12})\s*\(([^()]{1,160})\)/);
+  const records=entries.filter(entry=>Number.isSafeInteger(entry.id) && entry.id>0).map(entry=>{
+    const match=parse(entry);return {entry,term:match?.[1] ?? (entry.headEn || entry.head || '').normalize('NFKC').split('(',1)[0].trim(),expansion:match?.[2]};
+  });
+  const related=new Map<number,GlossaryEntry>();
+  const expansions=new Map<number,{expandedEnglish:string;expansionSourceIds:string[]}>();
+  for(const entry of selected) {
+    const match=parse(entry);if(!match)continue;
+    const terms=[...new Set(match[2].match(/\b[A-Z][A-Z0-9-]{1,12}\b/g) ?? [])];
+    if(!terms.length || terms.length>4)continue;
+    const dependencies=terms.map(term=>records.filter(record=>record.term===term));
+    // Missing, ambiguous, recursive and self-referencing definitions are not proof.
+    if(dependencies.some(group=>group.length!==1 || group[0].entry.id===entry.id || !group[0].expansion || /\b[A-Z][A-Z0-9-]{1,12}\b/.test(group[0].expansion)))continue;
+    const resolved=dependencies.map(group=>group[0]);
+    const extra=resolved.filter(record=>!selected.some(item=>item.id===record.entry.id));
+    if(new Set([...related.keys(),...extra.map(record=>record.entry.id)]).size>4)continue;
+    for(const record of extra)related.set(record.entry.id,record.entry);
+    expansions.set(entry.id,{expandedEnglish:match[2].replace(/\b[A-Z][A-Z0-9-]{1,12}\b/g,term=>resolved.find(record=>record.term===term)!.expansion!),
+      expansionSourceIds:[`wiki:${entry.id}`,...new Set(resolved.map(record=>`wiki:${record.entry.id}`))]});
+  }
+  return {entries:[...selected,...related.values()],expansions};
+}
 function glossaryMatches(entries: GlossaryEntry[], query: string) {
   const records=entries.filter(entry=>Number.isSafeInteger(entry.id) && entry.id>0).map(entry=>{
     const heads=[entry.headEn,entry.headZh,entry.head].filter((value):value is string=>typeof value==='string' && !!value.trim()).map(glossaryText);
@@ -121,6 +146,81 @@ function glossaryMatches(entries: GlossaryEntry[], query: string) {
   }
   const total=new Set(matches.flatMap(group=>group.map(record=>record.entry.id))).size;
   return {entries:selected,total,truncated:total>selected.length,unmatchedTerms:terms.filter((_,index)=>!matches[index].length)};
+}
+
+/** Closed field lookup only: no generated factual prose can expand the source's scope.
+ * Caller excludes history, quoted messages, images and independent requested reads. */
+export function glossaryFieldAnswer(question:string,query:string,result:ToolResult,lang:'zh'|'en'):AssistantAnswer|undefined {
+  if(!/英文(?:全称|名称)|\bEnglish (?:full )?name\b/i.test(question) || !/中文[^。；;\n]{0,12}(?:含义|意思|释义)|\bChinese meaning\b/i.test(question))return;
+  if(!/一句话|一句|one sentence/i.test(question))return;
+  if(/为什么|为何|怎么|如何|原理|前提|条件|保留|保持|步骤|算法|公式|比较|区别|对比|举例|用途|是否|能否|页面|计时器|论坛|规则|正文|标题|原文|表格|字数|\b(?:why|how|compare|difference|prerequisite|condition|algorithm|example|page|timer|forum|rules?|body|quote|title|table|JSON|words?|explain)\b|不要[^。]{0,12}(?:来源|引用)|without[^.]{0,20}(?:sources|citations)/i.test(question))return;
+  const data=result.evidence as {entries?:Array<{sourceId:string;headEn?:string;headZh?:string;expandedEnglish?:string;expansionSourceIds?:string[]}>;truncated?:boolean;contextIncomplete?:boolean;unmatchedTerms?:string[]};
+  if(!data?.entries?.length || data.truncated || data.contextIncomplete || data.unmatchedTerms?.length)return;
+  const terms=query.split(/\s+/);if(!terms.length || terms.length>4 || terms.some(term=>!/^([A-Z][A-Z0-9]{1,8})$/.test(term)))return;
+  // Closed vocabulary, not a broad intent guess: any additional instruction falls back.
+  const words=new Set('look up in the site glossary give its fully expanded english full complete name expand every all abbreviation abbreviations and chinese meaning one sentence with source sources citations each respectively please answer respond write'.split(' '));
+  let rest=question.normalize('NFKC');
+  for(const term of terms)rest=rest.replace(new RegExp(`\\b${term}\\b`,'g'),'');
+  rest=rest.replace(/英文|中文|完整|全称|名称|含义|意思|释义|是什么|站内|本站|百科|词条|根据|依据|查询|核对|分别|一句话|一句|每句|给出|并给|附上|来源|引用|展开|所有|缩写|只写|请|查|和|及|的|用|都|并|附/g,'')
+    .replace(/\b[a-z]+\b/gi,word=>words.has(word.toLowerCase())?'':word).replace(/[^\p{L}\p{N}]/gu,'');
+  if(rest)return;
+  const sources=new Map(result.sources.filter(source=>source.read).map(source=>[source.id,source]));
+  const available=new Set(data.entries.map(entry=>entry.sourceId));
+  const used=new Set<string>(),clauses:string[]=[];
+  const english=lang==='en' || /\b(?:answer|respond|write) in English\b/i.test(question);
+  for(const term of terms) {
+    const matches=data.entries.filter(entry=>entry.headEn?.split('(',1)[0].trim()===term);
+    if(matches.length!==1)return;
+    const entry=matches[0],expanded=entry.expandedEnglish || entry.headEn?.match(/\(([^()]+)\)/)?.[1];
+    if(!expanded || !entry.headZh?.trim() || /\b[A-Z][A-Z0-9]{1,8}\b/.test(expanded))return;
+    const ids=entry.expandedEnglish?entry.expansionSourceIds:[entry.sourceId];
+    if(!ids?.length || !ids.includes(entry.sourceId) || ids.some(id=>!sources.has(id)||!available.has(id)))return;
+    ids.forEach(id=>used.add(id));const citations=ids.map(id=>`[[${id}]]`).join('');
+    clauses.push(english?`${term} stands for ${expanded}; its Chinese meaning is “${entry.headZh.trim()}” ${citations}`:`${term} 的英文全称是 ${expanded}，中文含义为“${entry.headZh.trim()}”${citations}`);
+  }
+  const perTerm=/分别|每句|\beach\b|respectively/i.test(question);
+  const period=english?'.':'。';
+  return {answer:perTerm?clauses.map(clause=>clause+period).join('\n'):clauses.join(english?'; ':'；')+period,sources:[...used].map(id=>sources.get(id)!),artifacts:[]};
+}
+
+/** Close only explicitly used derived names over their already-read sources. */
+export function completeGlossaryExpansionCitations(answer:string,observations:Array<{call:{tool:string};result:ToolResult}>):{answer:string;sourceIds:string[]} {
+  const used=new Set<string>();
+  for(const {call,result} of observations) {
+    if(call.tool!=='glossary')continue;
+    const data=result.evidence as {entries?:Array<{sourceId:string;expandedEnglish?:string;expansionSourceIds?:string[]}>;truncated?:boolean;contextIncomplete?:boolean};
+    if(!data?.entries || data.truncated || data.contextIncomplete)continue;
+    const available=new Set(result.sources.filter(s=>s.read).map(s=>s.id));
+    for(const entry of data.entries) {
+      const name=entry.expandedEnglish,ids=entry.expansionSourceIds;
+      if(!name || !ids?.includes(entry.sourceId) || ids.some(id=>!available.has(id)))continue;
+      const at=answer.toLowerCase().indexOf(name.toLowerCase());if(at<0)continue;
+      ids.forEach(id=>used.add(id));
+      const missing=ids.filter(id=>!answer.includes(`[[${id}]]`));
+      if(missing.length)answer=answer.slice(0,at+name.length)+missing.map(id=>`[[${id}]]`).join('')+answer.slice(at+name.length);
+    }
+  }
+  return {answer,sourceIds:[...used]};
+}
+
+/** A narrow scope check, not sentence-level entailment. In an empty-body
+ * definition lookup, an extra acronym cannot be explained without a source.
+ * Mixed requests and body-backed explanations remain on the normal path. */
+export function glossaryDefinitionScopeViolation(question:string,answer:string,observations:Array<{call:{tool:string};result:ToolResult}>):string|undefined {
+  if(!/含义|意思|全称|定义|\b(?:meaning|definition|name|stand for)\b/i.test(question)
+    || /另外|顺便|同时|再写|再根据|\b(?:also|in addition|additionally)\b/i.test(question)
+    || !observations.length || observations.some(o=>o.call.tool!=='glossary'))return;
+  const texts:string[]=[question];
+  for(const {result} of observations) {
+    const data=result.evidence as {entries?:Array<{head?:string;headEn?:string;headZh?:string;expandedEnglish?:string;claimScope?:string}>;truncated?:boolean;contextIncomplete?:boolean};
+    if(!data?.entries?.length || data.truncated || data.contextIncomplete || data.entries.some(e=>e.claimScope!=='name_and_translation_only'))return;
+    texts.push(...data.entries.flatMap(e=>[e.head??'',e.headEn??'',e.headZh??'',e.expandedEnglish??'']));
+  }
+  const acronyms=(text:string)=>text.match(/\b[A-Z][A-Z0-9]{1,8}\b/g)??[];
+  const allowed=new Set([...texts.flatMap(acronyms),...'A AN THE IS ARE NOT NO AND OR IN OF TO FOR IT YES NOTE ONLY'.split(' ')]);
+  // Citation syntax is validated separately, and is not generated terminology.
+  const extra=acronyms(answer.replace(/\[\[[^\]]+\]\]/g,'')).find(term=>!allowed.has(term));
+  return extra?`glossary_unread_term:${extra}`:undefined;
 }
 
 /** Shared attendance set: select actual result rows before deduplicating competitions. */
@@ -381,12 +481,16 @@ async function executeDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'n
     out.sources.push(source(`recon:${call.id}`,label('复盘','Reconstruction'),`/recon/${call.id}`));
   } else if (call.tool === 'glossary') {
     const data=await read(`${api}/wiki/terms`);
-    const matches=glossaryMatches(data.sections.flatMap((section:{entries:GlossaryEntry[]})=>section.entries),call.query);
-    out.evidence={entries:matches.entries.map(entry=>({id:entry.id,sourceId:`wiki:${entry.id}`,head:entry.head,body:entry.body,headEn:entry.headEn,headZh:entry.headZh,bodyEn:entry.bodyEn,bodyZh:entry.bodyZh,source:entry.source,
+    const allEntries:GlossaryEntry[]=data.sections.flatMap((section:{entries:GlossaryEntry[]})=>section.entries);
+    const matches=glossaryMatches(allEntries,call.query);
+    const resolved=glossaryExpansions(allEntries,matches.entries);
+    out.evidence={entries:resolved.entries.map(entry=>({id:entry.id,sourceId:`wiki:${entry.id}`,head:entry.head,body:entry.body,headEn:entry.headEn,headZh:entry.headZh,bodyEn:entry.bodyEn,bodyZh:entry.bodyZh,source:entry.source,
+      ...resolved.expansions.get(entry.id),
       hasDescription:!![entry.body,entry.bodyEn,entry.bodyZh].some(value=>value?.trim()),
-    })),total:matches.total,truncated:matches.truncated,unmatchedTerms:matches.unmatchedTerms,instruction:'These are quoted glossary entries, not independently verified or complete definitions. Cite the sourceId of the actual entry used. A short heading or empty body does not establish extra prerequisites, preserved properties, or algorithm behavior; do not infer those restrictions from a brief definition.'};
+      claimScope:[entry.body,entry.bodyEn,entry.bodyZh].some(value=>value?.trim())?'entry_text':'name_and_translation_only',
+    })),total:matches.total,truncated:matches.truncated,unmatchedTerms:matches.unmatchedTerms,instruction:'These are quoted glossary entries, not independently verified or complete definitions. total counts query matches, excluding linked abbreviation entries. For a full English name, use expandedEnglish when supplied: it is derived from the quoted headings, not itself a quotation; cite ALL expansionSourceIds. Do not leave an abbreviation unexpanded when its linked definition is provided. Cite the sourceId of each other entry used. When claimScope is name_and_translation_only, the entry supports only its name, translation and supplied linked expansion. It cannot verify prerequisites, preserved properties or algorithm behavior, even if these are familiar from general knowledge. For an evidence-only request for such a property, say that the retrieved entry does not establish it; do not fill the gap from memory.'};
     // The page owns its title-derived anchors; do not duplicate its slug algorithm here.
-    out.sources=matches.entries.map(entry=>source(`wiki:${entry.id}`,(lang==='zh'?entry.headZh:entry.headEn)?.trim() || entry.head?.trim() || entry.headEn?.trim() || entry.headZh?.trim() || label('魔方百科','Cubing glossary'),'/wiki'));
+    out.sources=resolved.entries.map(entry=>source(`wiki:${entry.id}`,(lang==='zh'?entry.headZh:entry.headEn)?.trim() || entry.head?.trim() || entry.headEn?.trim() || entry.headZh?.trim() || label('魔方百科','Cubing glossary'),'/wiki'));
   } else if (call.tool === 'forum') {
     const data=await read(url(`${api}/forum/search`,{q:call.query,size:6}));
     out.evidence=data.threads.map((r:any)=>({id:r.id,title:r.title,snippet:r.snippet}));

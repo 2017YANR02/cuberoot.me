@@ -14,6 +14,13 @@ it.each([
   ['Based on the site example, explain the counting method.','pages'],
   ['按我给的例子：120减90再除以30，结果多少？','auto'],
   ['Read the documentation and explain the steps.','pages'],
+  ['请查站内百科核对 F2L 的含义，一句话并附来源；不要沿用之前的说法。','auto'],
+  ['根据站内百科解释 OLL 的定义。','auto'],
+  ['Check the glossary definition of F2L.','auto'],
+  ['What does the glossary say about CFOP?','auto'],
+  ['查百科定义；根据计时器页面说明怎么使用。','pages'],
+  ['根据站内百科和 WCA 规则核对处罚。','pages'],
+  ['站内百科怎么用？','pages'],
   ['只给我计时器入口，不要教程。','navigation'],
   ['打开 Max Park 的选手页面','navigation'],
   ['计时器是否支持云同步？','pages'],
@@ -84,8 +91,12 @@ it('keeps a personal-results review on the current question and repairs only its
   for(const review of requests.slice(1)) {
     expect(review.messages.some((message:any)=>message.role==='user' && previousQuestions.includes(message.content))).toBe(false);
     expect(JSON.stringify(review.messages)).not.toContain('EARLIER_ASSISTANT_CLAIM');
-    const historyContext=JSON.parse(review.messages[1].content);
-    expect(historyContext.previousUserMessages).toEqual(previousQuestions);
+    const historyContext=review.messages.filter((message:any)=>message.role==='user' && typeof message.content==='string').flatMap((message:any)=>{
+      try { const context=JSON.parse(message.content); return Array.isArray(context.previousUserMessages)?[context]:[]; } catch { return []; }
+    });
+    expect(historyContext).toHaveLength(1);
+    // Weakly related reviews retain one recent turn; older context is budgeted separately.
+    expect(historyContext[0].previousUserMessages).toEqual(previousQuestions.slice(-1));
     expect(review.messages.at(-1).content).toContain(JSON.stringify({currentQuestion:question,instruction:'Answer only this current question; earlier questions are context, not additional pending requests.'}));
     expect(wireEvidence(review)[0].tool).toMatchObject({tool:'person',wcaId:'2017YANR02'});
   }
@@ -346,4 +357,35 @@ it('does not substitute navigation for an explicitly required but unavailable pa
   });
   const result=await answerSiteQuestion('请根据页面资料说明计时器。','zh',config,AbortSignal.timeout(3000),fetcher);
   expect(result.answer).toContain('无法确认');expect(calls).toBe(2);expect(fetcher).toHaveBeenCalledTimes(3);
+});
+
+it('accepts a retrieved glossary title with an empty body without demanding unrelated page evidence',async()=>{
+  const fetcher=vi.fn<typeof fetch>(async input=>{
+    if(String(input).endsWith('/wiki/terms'))return Response.json({sections:[{entries:[{id:219,head:'F2L (First Two Layers) 前两层',headEn:'F2L (First Two Layers)',headZh:'前两层',body:''}]}]});
+    if(String(input).startsWith(config.baseUrl)) {
+      const count=fetcher.mock.calls.filter(([url])=>String(url).startsWith(config.baseUrl)).length;
+      return count===1 ? modelResponse([{tool:'glossary',query:'F2L'}]) : modelResponse({answerKind:'grounded',answer:'F2L 指前两层。 [[wiki:219]]',sourceIds:['wiki:219']});
+    }
+    throw new Error('Unexpected resource '+String(input));
+  });
+  const result=await answerSiteQuestion('请查站内百科核对 F2L 的含义，一句话并附来源；不要沿用之前的说法。','zh',config,AbortSignal.timeout(5000),fetcher);
+  expect(result.answer).toContain('前两层');
+  expect(result.sources).toMatchObject([{id:'wiki:219',read:true}]);
+  expect(fetcher.mock.calls.filter(([url])=>String(url).startsWith(config.baseUrl))).toHaveLength(2);
+  expect(fetcher.mock.calls.some(([url])=>String(url).includes('/assistant/pages'))).toBe(false);
+});
+
+it.each([false,true])('buffers a bounded plan and repairs an over-budget allocation only once: %s',async stillInvalid=>{
+  const bad='1. 静态观察（6分钟）：只看角块。\n2. 观察复盘（6分钟）：只看棱块。';
+  const good='1. 静态观察（3分钟）：只看角块。\n2. 观察复盘（3分钟）：只看棱块。';
+  const streamed=(answer:string)=>new Response('data: '+JSON.stringify({id:'test',object:'chat.completion.chunk',created:1,model:'test',choices:[{index:0,delta:{role:'assistant',content:JSON.stringify({answerKind:'general',answer,sourceIds:[]})},finish_reason:'stop'}]})+'\n\ndata: [DONE]\n\n',{headers:{'content-type':'text/event-stream'}});
+  const fetcher=vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(streamed(bad))
+    .mockResolvedValueOnce(streamed(stillInvalid?bad:good));
+  const emit=vi.fn();
+  const task=answerSiteQuestion('安排两项静态观察练习，总时长最多6分钟。','zh',config,AbortSignal.timeout(5000),fetcher,[],undefined,emit);
+  if(stillInvalid)await expect(task).rejects.toMatchObject({code:'model_output_invalid'});
+  else expect((await task).answer).toBe(good);
+  expect(fetcher).toHaveBeenCalledTimes(2);
+  expect(emit.mock.calls.some(([event])=>event.type==='answer'&&event.answer?.includes('6分钟'))).toBe(false);
 });
