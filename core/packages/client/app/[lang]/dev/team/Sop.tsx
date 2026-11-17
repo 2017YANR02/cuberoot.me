@@ -18,7 +18,7 @@ export default function StaffSopPage() {
   return <section className="development-standards">
     <h2>{t('开发规范', 'Development standards')}</h2>
     <div className="development-standards-tabs" role="tablist" aria-label={t('开发规范分类', 'Development standards sections')}>
-      {visible.map((key, index) => <button key={key} id={`standard-${key}`} type="button" role="tab" aria-controls="standard-panel" aria-selected={active === key} tabIndex={active === key ? 0 : -1} onClick={() => setTab(key)} onKeyDown={event => {
+      {visible.map((key, index) => <button className="development-standards-tab" key={key} id={`standard-${key}`} type="button" role="tab" aria-controls="standard-panel" aria-selected={active === key} tabIndex={active === key ? 0 : -1} onClick={() => setTab(key)} onKeyDown={event => {
         const next = event.key === 'ArrowRight' ? (index + 1) % visible.length : event.key === 'ArrowLeft' ? (index + visible.length - 1) % visible.length : event.key === 'Home' ? 0 : event.key === 'End' ? visible.length - 1 : -1;
         if (next < 0) return;
         event.preventDefault(); void setTab(visible[next]); document.getElementById(`standard-${visible[next]}`)?.focus();

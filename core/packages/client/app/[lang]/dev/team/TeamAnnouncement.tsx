@@ -42,11 +42,11 @@ export default function TeamAnnouncement() {
     {draft && <WorkspaceDialog title={t('编辑团队公告', 'Edit team announcements')} onClose={() => { if (!busy) { setDraft(undefined); setError(''); } }} wide><form className="team-announcement-editor" aria-busy={busy} onSubmit={event => { event.preventDefault(); void save(); }}>
       <label htmlFor="team-announcement-input">{t('公告内容', 'Announcement content')}</label>
       <p>{t('每行一条，换行自动编号。所有管理员均可查看和编辑。', 'One item per line, numbered automatically. All administrators can view and edit.')}</p>
-      <textarea name="announcement" id="team-announcement-input" value={draft.text} rows={7} maxLength={16000} disabled={busy} placeholder={t('输入第一条公告，换行自动编号', 'Write the first announcement. New lines are numbered automatically.')} onChange={event => {
+      <textarea className="team-announcement-input" name="announcement" id="team-announcement-input" value={draft.text} rows={7} maxLength={16000} disabled={busy} placeholder={t('输入第一条公告，换行自动编号', 'Write the first announcement. New lines are numbered automatically.')} onChange={event => {
         if (composing.current) setDraft({ ...draft, text: event.target.value }); else normalize(event.target);
       }} onCompositionStart={() => { composing.current = true; }} onCompositionEnd={event => { composing.current = false; normalize(event.currentTarget); }} />
       {error && <p role="alert">{error}</p>}
-      <div className="staff-actions"><Button type="submit" disabled={busy}><Save size={18} aria-hidden />{busy ? t('保存中…', 'Saving…') : t('保存公告', 'Save announcements')}</Button><Button type="button" variant="secondary" disabled={busy} onClick={() => { setDraft(undefined); setError(''); }}>{t('取消', 'Cancel')}</Button></div>
+      <div className="staff-actions"><Button className="team-announcement-action" type="submit" disabled={busy}><Save size={18} aria-hidden />{busy ? t('保存中…', 'Saving…') : t('保存公告', 'Save announcements')}</Button><Button className="team-announcement-action" type="button" variant="secondary" disabled={busy} onClick={() => { setDraft(undefined); setError(''); }}>{t('取消', 'Cancel')}</Button></div>
     </form></WorkspaceDialog>}
     {notice && <>
       {notice.lines.length ? <ol start={page * 4 + 1}>{notice.lines.slice(page * 4, page * 4 + 4).map((line, index) => <li key={`${page}-${index}`}>{line}</li>)}</ol> : <p className="team-announcement-empty">{t('暂无公告', 'No announcements yet')}</p>}

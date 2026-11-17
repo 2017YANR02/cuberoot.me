@@ -18,7 +18,7 @@
 .offboarding-more > .team-lifecycle-handoff { margin-block: 16px 24px; padding: 20px; }
 .offboarding-compact :is(.team-lifecycle-access-flow, .team-lifecycle-link) { font-size: 16px; }
 .offboarding-prompt-window { display: grid; gap: 16px; }
-.offboarding-prompt-window > button { justify-self: start; font-size: 17px; min-height: 44px; }
+.offboarding-prompt-window > .staff-start-action { justify-self: start; font-size: 17px; min-height: 44px; }
 .offboarding-prompt-window pre { margin: 0; max-height: calc(100dvh - 240px); overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 16px; line-height: 1.6; }
 @media (max-width: 600px) {
   .cuberoot-workspace-navigation .staff-main:has(.offboarding-compact) { padding: 16px 18px; }

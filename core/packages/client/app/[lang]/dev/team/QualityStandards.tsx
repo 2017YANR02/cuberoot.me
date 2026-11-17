@@ -142,7 +142,7 @@ export default function QualityStandards() {
     </div>
     <div id="quality-panel" className="quality-panel" role="tabpanel" aria-labelledby={`quality-tab-${category}`} tabIndex={0}>
       {category === 'ui' ? <SopUiStandards /> : selected && <section className="quality-category" aria-labelledby={`quality-heading-${category}`}>
-        <label className="standard-rule-select"><span id={`quality-heading-${category}`}>{selected.title}</span><select aria-label={t('选择规范', 'Choose a principle')} value={current} onChange={event => setRuleIndex(Number(event.target.value))}>{selected.rules.map((rule, index) => <option key={rule.kind} value={index}>{rule.title}</option>)}</select></label>
+        <label className="standard-rule-select"><span id={`quality-heading-${category}`}>{selected.title}</span><select className="standard-rule-picker" aria-label={t('选择规范', 'Choose a principle')} value={current} onChange={event => setRuleIndex(Number(event.target.value))}>{selected.rules.map((rule, index) => <option key={rule.kind} value={index}>{rule.title}</option>)}</select></label>
         <div className="quality-rule-grid">{selected.rules.slice(current, current + 1).map(rule => <article className="quality-rule" data-site-surface="panel" key={rule.kind}>
           <p className="quality-rule-description">{rule.text}</p>
           <div className="quality-pair">{[false, true].map(good => <figure key={String(good)}>

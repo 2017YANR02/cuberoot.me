@@ -55,6 +55,6 @@ body:has(.onboarding-compact) .site-tooltip { font-size: 16px; line-height: 1.6;
 
 .onboarding-prompt-open { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0; border: 0; background: transparent; color: var(--muted-foreground); font: inherit; font-size: 16px; cursor: pointer; }
 .onboarding-prompt-window { display: grid; gap: 16px; }
-.onboarding-prompt-window > button { justify-self: start; }
+.onboarding-prompt-window > .onboarding-prompt-copy { justify-self: start; }
 .staff-start .onboarding-prompt-text { margin: 0; max-height: calc(100dvh - 240px); overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 16px; line-height: 1.6; }
 @media (max-width: 900px) { .onboarding-step > .onboarding-prompt-open { grid-column: 1 / -1; } }

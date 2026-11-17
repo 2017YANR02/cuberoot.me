@@ -125,7 +125,7 @@ export default function LetteringPage() {
             <form id="lettering-generate-form" className="lettering-input-group" onSubmit={event => { event.preventDefault(); generate(); }}>
               <label htmlFor="lettering-character-input">{tr({ zh: '单个字符', en: 'Single character' })}</label>
               <div className="lettering-input-wrap">
-                <input id="lettering-character-input" value={input} autoComplete="off" spellCheck={false}
+                <input className="lettering-character-input" id="lettering-character-input" value={input} autoComplete="off" spellCheck={false}
                   aria-invalid={error?.code === 'input'}
                   onChange={event => { setInput(event.target.value); setPending(true); setError(null); }} />
                 {input && <ClearButton onClick={() => { setInput(''); setPending(true); setError(null); }} />}

@@ -124,7 +124,7 @@ export default function GetStartedPage() {
     </MoreTogglePanel>
     {promptOpen && <WorkspaceDialog wide title={promptOpen === 'setup' ? t('配置开发环境', 'Development setup') : t('AI 带练指令', 'AI coaching prompt')} onClose={() => setPromptOpen(null)}>
       <div className="onboarding-prompt-window">
-        <WorkspaceButton action="copy" iconOnly={false} variant="secondary" onClick={() => copy(promptOpen === 'setup' ? aiPrompt : learningPrompt, `ai-${promptOpen}`)}>{copiedKey === `ai-${promptOpen}` ? t('已复制', 'Copied') : t('复制完整指令', 'Copy full prompt')}</WorkspaceButton>
+        <WorkspaceButton className="onboarding-prompt-copy" action="copy" iconOnly={false} variant="secondary" onClick={() => copy(promptOpen === 'setup' ? aiPrompt : learningPrompt, `ai-${promptOpen}`)}>{copiedKey === `ai-${promptOpen}` ? t('已复制', 'Copied') : t('复制完整指令', 'Copy full prompt')}</WorkspaceButton>
         <pre tabIndex={0} className="onboarding-prompt-text">{promptOpen === 'setup' ? aiPrompt : learningPrompt}</pre>
       </div>
     </WorkspaceDialog>}
