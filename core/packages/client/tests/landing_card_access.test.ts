@@ -285,8 +285,8 @@ describe('homepage development cards', () => {
           expect(cards).toHaveLength(1);
           expect(adminArea?.contains(cards[0])).toBe(Boolean(config.adminOnly || config.lockedForNonAdmin || config.comingSoon));
         }
-        expect(adminArea?.querySelector('#enterprise-members-title')).not.toBeNull();
-        expect(adminArea?.querySelector('#individual-members-title')).not.toBeNull();
+        expect(adminArea?.querySelector('[aria-labelledby="enterprise-members-title"]')).toBeNull();
+        expect(adminArea?.querySelector('[aria-labelledby="individual-members-title"]')).toBeNull();
       } else {
         expect(adminArea).toBeNull();
       }
@@ -378,6 +378,10 @@ describe('homepage development cards', () => {
   it('locks member sections independently and restores saved visitor visibility', async () => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
     auth.user = { wcaId: ADMIN_WCA_IDS[0] };
+    memberApi.listPublicMembers.mockResolvedValueOnce([
+      { wcaId: 'ORG', name: 'Enterprise', planSlug: 'enterprise_yearly' },
+      { wcaId: 'ONE', name: 'Individual', planSlug: 'individual_yearly' },
+    ]);
     const host = document.createElement('div');
     const root = createRoot(host);
     const section = (id: string) => host.querySelector(`[aria-labelledby="${id}-members-title"]`);

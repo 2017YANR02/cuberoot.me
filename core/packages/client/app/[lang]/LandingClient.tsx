@@ -446,14 +446,15 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
   };
 
   const renderMemberSections = (adminArea = false) => ([
-    { id: 'enterprise', enterprise: true, eyebrow: tr({ zh: '企业', en: 'Enterprise' }), title: tr({ zh: '企业会员', en: 'Enterprise members' }), empty: tr({ zh: '暂无企业会员', en: 'No enterprise members yet' }) },
-    { id: 'individual', enterprise: false, eyebrow: tr({ zh: '个人', en: 'Individual' }), title: tr({ zh: '个人会员', en: 'Individual members' }), empty: tr({ zh: '暂无个人会员', en: 'No individual members yet' }) },
+    { id: 'enterprise', enterprise: true, eyebrow: tr({ zh: '企业', en: 'Enterprise' }), title: tr({ zh: '企业会员', en: 'Enterprise members' }) },
+    { id: 'individual', enterprise: false, eyebrow: tr({ zh: '个人', en: 'Individual' }), title: tr({ zh: '个人会员', en: 'Individual members' }) },
   ] as const).map((section) => {
     const lockId = HOME_MEMBER_SECTION_IDS[section.id];
     const locked = cardLocks[lockId] ?? true;
     if ((!isAdmin && !locksLoaded) || (adminArea ? !isAdmin || !locked : locked)) return null;
     const query = memberQueries[section.id].trim().toLowerCase();
     const sectionMembers = orderedMembers.filter((member) => member.planSlug.startsWith('enterprise_') === section.enterprise);
+    if (sectionMembers.length === 0) return null;
     const members = sectionMembers.filter((member) => !query || [
       member.name, member.wcaId, member.vipId ?? '', fmtVipId(member.vipId ?? ''),
     ].some((value) => value.toLowerCase().includes(query)));
@@ -471,7 +472,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
             placeholder={tr({ zh: '搜索姓名、WCA ID 或 VIP 编号', en: 'Search name, WCA ID or VIP number' })}
             ariaLabel={tr({ zh: `搜索${section.title}`, en: `Search ${section.title.toLowerCase()}` })}
           />
-          {publicMembers && members.length === 0 && <div className="section-sub" role="status">{sectionMembers.length === 0 ? section.empty : tr({ zh: '没有匹配的会员', en: 'No matching members' })}</div>}
+          {members.length === 0 && <div className="section-sub" role="status">{tr({ zh: '没有匹配的会员', en: 'No matching members' })}</div>}
         </div>
         {members.length > 0 && (
           <div className="landing-members">
