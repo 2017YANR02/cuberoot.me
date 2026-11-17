@@ -8,6 +8,7 @@ import { wallPartsIn } from '@cuberoot/shared/tz';
 import CalendarGrid, { type GridHandle, type GridRange } from '@/components/calendar/CalendarGrid';
 import { DateInput } from '@/components/DateInput';
 import { ListSelect } from '@/components/ListSelect';
+import { CompactSelect } from '@/components/CompactSelect';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useT } from '@/hooks/useT';
@@ -100,10 +101,19 @@ function WorkCalendarBoard({ now }: { now: number }) {
   const from = shiftWorkDate(workDate(tz, range.start), -2), to = shiftWorkDate(workDate(tz, range.end), 2);
   const resource = useResource<WorkCalendarData>(`work-calendar?${new URLSearchParams({ from, to })}`);
   const data = resource.data;
+  // A successful working-hours submission increments the member's version.
+  const submittedMembers = data?.members.filter(member => member.version > 0) ?? [];
+  const selectedPeople = person === 'all' ? [] : person === 'mine' ? [String(data?.me)] : person.split(',');
+  const peopleLabel = person === 'all' ? t('全部人员', 'Everyone') : person === 'mine' ? t('只看自己', 'Only me') : submittedMembers.filter(m => selectedPeople.includes(String(m.userId))).map(m => formatName(m.name)).join(', ') || t('人员', 'People');
+  function togglePerson(value: string) {
+    if (value === 'all' || value === 'mine') { void setPerson(value); return; }
+    const next = selectedPeople.includes(value) ? selectedPeople.filter(id => id !== value) : [...selectedPeople, value];
+    void setPerson(next.length ? next.join(',') : 'all');
+  }
   const [editing, setEditing] = useState<{ kind: 'weekly'; date: string; data: WorkCalendarData } | { kind: 'day'; draft: DayDraft; data: WorkCalendarData } | null>(null);
   const [message, setMessage] = useState<Error>();
   const occurrences = useMemo(() => data ? expandWorkCalendar(data, range.start, range.end) : [], [data, range.start, range.end]);
-  const filtered = occurrences.filter(o => person === 'all' || o.userId === (person === 'mine' ? data?.me : Number(person)));
+  const filtered = occurrences.filter(o => person === 'all' || selectedPeople.includes(String(o.userId)));
   const events: EventInput[] = filtered.map(o => {
     const color = colorHex(workCalendarColor(o.userId), theme);
     return { id: o.id, title: formatName(data!.members.find(m => m.userId === o.userId)?.name ?? ''), start: new Date(o.start).toISOString(), end: new Date(o.end).toISOString(), backgroundColor: color, borderColor: color, textColor: readableInk(color), editable: o.userId === data?.me && !resource.loading && !resource.error, extendedProps: { location: o.adjusted ? t('临时调整', 'Adjusted') : '' } };
@@ -131,12 +141,15 @@ function WorkCalendarBoard({ now }: { now: number }) {
       </div>
       <div className="work-calendar-filters">
         <label className="staff-field"><span className="sr-only">{t('视图', 'View')}</span><select className="staff-input" value={view} onChange={e => void setView(e.target.value as typeof viewParam)}><option value="timeGridWeek">{t('周', 'Week')}</option><option value="timeGridDay">{t('日', 'Day')}</option><option value="listMonth">{t('日程', 'Agenda')}</option></select></label>
-        <label className="staff-field work-calendar-person"><span className="sr-only">{t('人员', 'People')}</span><select className="staff-input" value={person} onChange={e => void setPerson(e.target.value)}><option value="all">{t('全部人员', 'Everyone')}</option><option value="mine">{t('只看自己', 'Only me')}</option>{data?.members.map(m => <option key={m.userId} value={m.userId}>{formatName(m.name)}</option>)}</select></label>
+        <div className="staff-field work-calendar-person"><CompactSelect label={peopleLabel} ariaLabel={t('人员', 'People')} showArrow triggerClassName="staff-input"
+          selectedValues={person === 'all' ? ['all'] : person === 'mine' ? ['mine', ...selectedPeople] : selectedPeople}
+          items={[{ value: 'all', label: t('全部人员', 'Everyone') }, { value: 'mine', label: t('只看自己', 'Only me') }, ...submittedMembers.map(m => ({ value: String(m.userId), label: formatName(m.name) }))]}
+          onChange={togglePerson} /></div>
         <ZonePicker compact value={tz} onChange={setTz} label={t('显示时区', 'Display time zone')} />
       </div>
       <div className="work-calendar-actions"><Button action="edit" disabled={!ready} onClick={() => data && setEditing({ kind: 'weekly', date: focusDate, data })}>{t('我的工作时间', 'My working hours')}</Button><Button action="settings" variant="secondary" disabled={!ready} onClick={() => openDay(focusDate)}>{t('调整当天', 'Adjust day')}</Button><Button action="reload" variant="secondary" onClick={resource.reload}>{t('重新加载', 'Reload')}</Button></div>
     </div>
-    <div className="work-calendar-legend">{data?.members.map(m => <span key={m.userId}><i aria-hidden style={{ backgroundColor: colorHex(workCalendarColor(m.userId), theme) }} />{formatName(m.name)}</span>)}</div>
+    <div className="work-calendar-legend">{submittedMembers.map(m => <span key={m.userId}><i aria-hidden style={{ backgroundColor: colorHex(workCalendarColor(m.userId), theme) }} />{formatName(m.name)}</span>)}</div>
     <ErrorNotice error={resource.error} /><ErrorNotice error={message} />
     {resource.loading && <p role="status"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p>}
     {!resource.loading && !resource.error && !filtered.length && <p className="staff-muted">{t('此范围暂无工作时间', 'No working hours in this range')}</p>}
