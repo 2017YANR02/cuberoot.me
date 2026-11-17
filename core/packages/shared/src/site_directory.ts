@@ -263,7 +263,7 @@ export const SITE_DIRECTORY_GROUPS = [
       { id: 'support', href: '/support', internal: true, tier: 'utility', nameKey: 'acknowledgments' },
       {
         id: 'github',
-        href: 'https://github.com/RuiminYan/cuberoot.me',
+        href: 'https://github.com/2017YANR02/cuberoot.me',
         internal: false,
         tier: 'utility',
         nameKey: 'github',
