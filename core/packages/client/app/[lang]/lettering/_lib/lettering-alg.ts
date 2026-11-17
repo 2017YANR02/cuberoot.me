@@ -165,7 +165,11 @@ function centerBlockAlg(
   ].join(' ');
 }
 
-function buildPatternSegments(pattern: readonly string[], order: LetteringOrder): string[] {
+export function buildPatternSegments(pattern: readonly string[], order: LetteringOrder): string[] {
+  if (!pattern.length || pattern.length > order || (order - pattern.length) % 2 !== 0
+    || pattern.some(row => row.length !== pattern.length || /[^01]/.test(row))) {
+    throw new Error('Invalid lettering pattern');
+  }
   const segments: string[] = [];
   const offset = (order - pattern.length) / 2;
   const remaining = new Set<string>();
