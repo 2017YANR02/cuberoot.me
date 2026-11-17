@@ -721,10 +721,12 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
 
       <div className="beian company-contact">
         <span>{tr({ zh: '上海魔方根科技有限公司', en: 'Shanghai CubeRoot Technology Co., Ltd.' })}</span>
-        <span>{tr({
-          zh: '联系地址：上海市徐汇区龙耀路8号阿里巴巴徐汇滨江园区X区X5-406',
-          en: 'Contact address: X5-406, Zone X, Alibaba Xuhui Riverside Campus, 8 Longyao Road, Xuhui District, Shanghai',
-        })}</span>
+        <Tooltip openOnClick content={tr({
+          zh: '上海市徐汇区龙耀路8号阿里巴巴徐汇滨江园区X区X5-406',
+          en: 'X5-406, Zone X, Alibaba Xuhui Riverside Campus, 8 Longyao Road, Xuhui District, Shanghai',
+        })}>
+          {(tip) => <button {...tip} type="button" className="company-contact-address">{tr({ zh: '联系地址', en: 'Contact address' })}</button>}
+        </Tooltip>
       </div>
 
       {showBeian && (

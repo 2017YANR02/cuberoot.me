@@ -902,8 +902,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 
 .landing-page .beian.company-contact {
-    flex-direction: column;
-    gap: 0.25rem;
+    flex-direction: row;
     white-space: normal;
     text-align: center;
     overflow-wrap: anywhere;
@@ -964,14 +963,20 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 
 .landing-page .landing-footer-info .company-contact {
-    display: contents;
     text-align: left;
 }
 
-.landing-footer-info .company-contact > span {
-    display: flex;
-    align-items: center;
-    min-height: var(--footer-row-height);
+.landing-footer-info .company-contact-address {
+    appearance: none;
+    border: 0;
+    padding: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-underline-offset: 0.2em;
 }
 
 .landing-page .landing-contact-details {
