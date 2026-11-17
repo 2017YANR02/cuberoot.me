@@ -6,10 +6,11 @@ import { randomUUID } from 'node:crypto';
 import { slug, publicKey, validate, type Registry } from './model.ts';
 import { commandRunner, publishArtifacts, writeArtifacts } from './worker-runtime.ts';
 import { artifacts } from './checkout.ts';
-import { deploymentState } from './deployments.ts';
-import { retryable, retryDelay, RetryableError } from './retry.ts';
+import { deploymentState, deploymentProgress } from './deployments.ts';
+import { retryable, retryDelay } from './retry.ts';
 
-type Checkpoint={requestId?:string;baseSha?:string;registry?:Registry;commits?:{http?:string;https?:string};retryAt?:number;attempt?:number};
+type Stage='checkout'|'identity'|'authorization'|'dns'|'http'|'certificate'|'https'|'finalizing';
+type Checkpoint={requestId?:string;baseSha?:string;registry?:Registry;commits?:{http?:string;https?:string};retryAt?:number;attempt?:number;progress?:{stage:Stage;state:'running'|'waiting'|'retrying';updatedAt:string;jobs:ReturnType<typeof deploymentProgress>}};
 type Request={id:string;owner_slug:string;device_slug:string;os:string;public_key:string;status:string};
 const root=resolve(import.meta.dirname,'../../..');
 const state=join(homedir(),'.config/cuberoot-preview');
@@ -23,7 +24,7 @@ process.once('SIGTERM',()=>abort.abort());process.once('SIGINT',()=>abort.abort(
 const run=commandRunner(root,abort.signal);
 const git=(...args:string[])=>run('git',args);
 const workspace=join(root,'.local-data/dev-preview-worker',randomUUID());
-let lease='',checkpoint:Checkpoint={},failureStage='checkout';
+let lease='',checkpoint:Checkpoint={},failureStage='checkout',progressSupported=false;
 async function api(path:string,body?:unknown){
   if(abort.signal.aborted)throw Error('Worker lease lost');
   const response=await fetch(`https://api.cuberoot.me/v1/dev-preview/host/${path}`,{
@@ -33,7 +34,16 @@ async function api(path:string,body?:unknown){
   if(!response.ok)throw Object.assign(Error(`Queue HTTP ${response.status}`),{status:response.status});
   return response.json();
 }
-const save=()=>api('lease/checkpoint',checkpoint);
+const save=()=>{
+  // Safe rolling upgrade: older API versions reject unknown checkpoint fields.
+  const {progress:reported,...legacy}=checkpoint;
+  return api('lease/checkpoint',progressSupported?{...legacy,progress:reported}:legacy);
+};
+async function progress(stage:Stage,state:'running'|'waiting'|'retrying'='running',jobs:ReturnType<typeof deploymentProgress>=[]){
+  checkpoint.progress={stage,state,jobs,updatedAt:new Date().toISOString()};
+  if(state!=='retrying')delete checkpoint.retryAt;
+  await save();
+}
 const renew=async()=>{try{await api('lease/renew',{});}catch{abort.abort();throw Error('Worker lease lost');}};
 const wait=async(ms:number)=>{await new Promise<void>((done,reject)=>{
   const cancel=()=>{clearTimeout(timer);reject(Error('Worker lease lost'));};
@@ -52,21 +62,24 @@ async function ensureDns(id:string){
   await renew();
   await dns('AddDomainRecord',['--DomainName','cuberoot.me','--RR',rr,'--Type','A','--Value','47.97.30.181','--Line','default','--TTL','600']);
 }
-async function deployments(sha:string,names:string[]){
+async function deployments(sha:string,names:string[],stage:'http'|'https'){
   for(let i=0;i<120;i++){
     await git('fetch','origin','main');
-    const runs=JSON.parse(await run('gh',['run','list','--branch','main','--limit','60','--json','name,status,conclusion,headSha']));
+    const runs=JSON.parse(await run('gh',['run','list','--branch','main','--limit','60','--json','name,status,conclusion,headSha,databaseId']));
     const equivalents=new Set<string>([sha]);
     for(const candidate of new Set<string>(runs.filter((r:{name:string})=>names.includes(r.name)).map((r:{headSha:string})=>r.headSha))){
       try{await git('merge-base','--is-ancestor',sha,candidate);if(!await git('diff','--name-only',sha,candidate,'--',...artifacts))equivalents.add(candidate);}catch{/* unrelated run */}
     }
     const status=deploymentState(sha,names,runs,candidate=>equivalents.has(candidate));
+    await progress(stage,'waiting',deploymentProgress(sha,names,runs,candidate=>equivalents.has(candidate)));
     if(status==='success')return;
     if(status==='failure')throw Error('Deployment failed; inspect GitHub Actions before retry');
     await wait(15000);
   }
-  throw new RetryableError('Deployment still pending');
+  // A queued/running deployment is not a failure. Resume polling next worker turn.
+  throw new DeploymentPending();
 }
+class DeploymentPending extends Error {}
 async function publish(id:string,phase:'http'|'https'){
   const sha=await publishArtifacts({run,workspace,baseSha:checkpoint.baseSha!,previousSha:checkpoint.commits?.[phase],
     message:`ops: provision development preview ${id} (${phase})`,assertLease:renew,
@@ -86,19 +99,22 @@ async function provision(r:Request){
   await writeArtifacts(workspace,validate(checkpoint.registry!));
   const request=join(workspace,'request.json'),profile=join(workspace,'connection.json');
   await writeFile(request,JSON.stringify({version:1,id,publicKey:r.public_key}),{mode:0o600});
-  failureStage='identity';await renew();
+  failureStage='identity';await progress('identity');await renew();
   await cli('register','--owner',r.owner_slug,'--device',r.device_slug,'--os',r.os);
   checkpoint.registry=validate(JSON.parse(await readFile(join(workspace,artifacts[0]),'utf8')));await save();
-  failureStage='authorization';await renew();
+  failureStage='authorization';await progress('authorization');await renew();
   await cli('authorize','--id',id,'--request',request,'--out',profile);
-  failureStage='dns';await ensureDns(id);
+  failureStage='dns';await progress('dns');await ensureDns(id);
   const machine=checkpoint.registry.machines.find(m=>`${m.owner}-${m.device}`===id)!;
   if(machine.status==='pending'){
-    failureStage='deployment';await deployments(await publish(id,'http'),['Deploy Web Ops Config']);
-    failureStage='certificate';await renew();await cli('certificate','--id',id);await cli('activate','--id',id);
+    failureStage='deployment';await progress('http');await deployments(await publish(id,'http'),['Deploy Web Ops Config'],'http');
+    failureStage='certificate';await progress('certificate');await renew();await cli('certificate','--id',id);await cli('activate','--id',id);
     checkpoint.registry=validate(JSON.parse(await readFile(join(workspace,artifacts[0]),'utf8')));await save();
   }
-  failureStage='deployment';await deployments(await publish(id,'https'),['Deploy Web Ops Config','Deploy Core','Deploy Next']);
+  // The preview page runs on the employee's computer. Production Next does not
+  // serve it; only nginx routing and the API's exact CORS allowlist gate access.
+  failureStage='deployment';await progress('https');await deployments(await publish(id,'https'),['Deploy Web Ops Config','Deploy Core'],'https');
+  await progress('finalizing');
   await cli('render','--check');
   await api(r.id,{status:'ready',profile:JSON.parse(await readFile(profile,'utf8'))});
   checkpoint={};await save();console.log(`Provisioned ${id}`);
@@ -111,7 +127,7 @@ try{
   try{claimed=await api('lease',{worker:hostname().replace(/[^a-zA-Z0-9._-]/g,'-').slice(0,100)});}catch(error){
     if((error as {status?:number}).status===409){console.log('Another operator is handling the queue.');process.exit(0);}throw error;
   }
-  lease=claimed.lease;checkpoint=claimed.checkpoint;
+  lease=claimed.lease;checkpoint=claimed.checkpoint;progressSupported=claimed.progressVersion===1;
   let renewing=false;
   heartbeat=setInterval(()=>{if(!renewing){renewing=true;void renew().catch(()=>{}).finally(()=>{renewing=false;});}},30000);
   // One-time handover preserves the pending registry/ports from the legacy worker.
@@ -132,8 +148,11 @@ try{
     await api(request.id,{status:'provisioning'});
     try{await provision(request);}catch(error){
       if(abort.signal.aborted)throw error;
-      if(retryable(error)||(error as {retryable?:boolean}).retryable||/DNS login expired/.test(String(error))){
+      if(error instanceof DeploymentPending){
+        console.log('Deployment still queued/running; continuing next worker turn.');
+      }else if(retryable(error)||(error as {retryable?:boolean}).retryable){
         checkpoint.attempt=(checkpoint.attempt??0)+1;checkpoint.retryAt=Date.now()+retryDelay(checkpoint.attempt-1);await save();
+        await progress(checkpoint.progress?.stage??'checkout','retrying',checkpoint.progress?.jobs??[]);
         console.log(`Temporary ${failureStage} failure; progress saved for either computer.`);
       }else{await api(request.id,{status:'failed',failureCode:failureStage});throw error;}
     }

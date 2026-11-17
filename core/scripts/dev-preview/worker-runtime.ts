@@ -25,7 +25,7 @@ export function commandRunner(cwd: string, signal: AbortSignal): Command {
     child.on('error',error=>{clearTimeout(timer);signal.removeEventListener('abort',stop);reject(error);});
     child.on('close',code=>{
       clearTimeout(timer);clearTimeout(killTimer);signal.removeEventListener('abort',stop);
-      if(stopped)reject(Error(signal.aborted?'Worker lease lost':'Command timed out'));
+      if(stopped)reject(Object.assign(Error(signal.aborted?'Worker lease lost':'Command timed out'),{code:signal.aborted?'LEASE_LOST':'ETIMEDOUT'}));
       else if(code!==0){
         // CLI errors can contain expired OAuth tokens: classify in memory, never echo.
         const error=Error(/invalid_grant|refresh token|credential/i.test(stderr)?'DNS login expired; renew this computer’s authorization':`${command.split('/').at(-1)} failed (exit ${code})`);

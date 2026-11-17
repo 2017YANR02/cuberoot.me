@@ -33,10 +33,29 @@ jobs:
       DEPLOY_STAGE: /tmp/cuberoot-web-ops-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v4
+      - name: Detect preview-only configuration
+        id: scope
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          preview_only=false
+          # Dispatches, first pushes and mixed infrastructure changes retain the full path.
+          if [[ "$GITHUB_EVENT_NAME" = push && "$BEFORE" =~ ^[0-9a-f]{40}$ && "$BEFORE" != 0000000000000000000000000000000000000000 ]]; then
+            git fetch --no-tags --depth=1 origin "$BEFORE"
+            changed=$(git diff --name-only "$BEFORE" "$GITHUB_SHA")
+            if printf '%s\n' "$changed" | grep -qx 'ops/nginx/dev-machines.conf' &&
+               ! printf '%s\n' "$changed" | grep -qvE '^(ops/dev-preview/machines\.json|ops/nginx/dev-machines\.conf|core/packages/shared/src/dev-preview\.ts)$'; then
+              preview_only=true
+            fi
+          fi
+          echo "preview_only=$preview_only" >> "$GITHUB_OUTPUT"
+
       - uses: actions/setup-node@v4
+        if: steps.scope.outputs.preview_only != 'true'
         with:
           node-version-file: '.node-version'
       - name: Validate and generate China IP ranges
+        if: steps.scope.outputs.preview_only != 'true'
         run: |
           node --experimental-strip-types --test ops/geoip/update-cn-ranges.test.mjs
           node --experimental-strip-types --test ops/vercel-ban-relay/relay.test.mjs
@@ -68,6 +87,11 @@ jobs:
           mkdir -- "$DEPLOY_STAGE"
           REMOTE
           echo 'created=true' >> "$GITHUB_OUTPUT"
+          if [ "${{ steps.scope.outputs.preview_only }}" = true ]; then
+            scp -i ~/.ssh/id ops/nginx/dev-machines.conf \
+              "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/dev-machines.conf.new"
+            exit 0
+          fi
           scp -i ~/.ssh/id /tmp/cuberoot-cn-ranges.generated \
             "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/cuberoot-cn-ranges.conf.new"
           scp -i ~/.ssh/id ops/nginx/competition-access.inc \
@@ -99,6 +123,7 @@ jobs:
             "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/"
 
       - name: Verify scanner bans in isolated nginx
+        if: steps.scope.outputs.preview_only != 'true'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -117,6 +142,7 @@ jobs:
           REMOTE
 
       - name: Install Vercel ban relay (activate only when credentials are configured)
+        if: steps.scope.outputs.preview_only != 'true'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -277,6 +303,7 @@ jobs:
           REMOTE
 
       - name: Apply logrotate policy (with validation and rollback)
+        if: steps.scope.outputs.preview_only != 'true'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -333,6 +360,7 @@ jobs:
           REMOTE
 
       - name: Apply journald disk cap (with validation and rollback)
+        if: steps.scope.outputs.preview_only != 'true'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -380,6 +408,7 @@ jobs:
           REMOTE
 
       - name: Install automatic log compression and package cache cleanup
+        if: steps.scope.outputs.preview_only != 'true'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -437,6 +466,7 @@ jobs:
           REMOTE
 
       - name: Install monthly country database refresh
+        if: steps.scope.outputs.preview_only != 'true'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
