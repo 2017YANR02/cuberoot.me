@@ -608,7 +608,7 @@ export default function SimAppearancePanel({
             {caps.supports.thickness && (<Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} disabled={!caps.supports.thickness} title={hint(caps.supports.thickness)} />)}
             {caps.supports.hollow && (<Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} disabled={!caps.supports.hollow} title={hint(caps.supports.hollow)} />)}
             {/* 提示贴片(hint)两条路径都支持(引擎 hint / cubing.js hintFacelets)→ 不灰。 */}
-            {caps.supports.hint && (<Toggle label={t('显示背面颜色', 'Show back-face colors')} value={settings.hint} onChange={(v) => set('hint', v)} disabled={!caps.supports.hint} title={hint(caps.supports.hint)} />)}
+            {caps.supports.hint && (<Toggle label={t('提示贴片', 'Hint facelets')} value={settings.hint} onChange={(v) => set('hint', v)} disabled={!caps.supports.hint} title={hint(caps.supports.hint)} />)}
             {/* 箭头贴片仅 NxN 引擎生效(cube.arrow),非 NxN 拼图无此属性 → 仅 NxN 显示。
                 用户指定的唯一例外。 */}
             {caps.supports.arrow && (
