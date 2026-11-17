@@ -69,7 +69,7 @@
       "device": "mac-mini",
       "os": "mac",
       "transport": "ssh",
-      "status": "pending",
+      "status": "active",
       "localPort": 3000,
       "remotePort": 7108,
       "certificate": "dev-mzx-mac-mini",
