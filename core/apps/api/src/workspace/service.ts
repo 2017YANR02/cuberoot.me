@@ -115,6 +115,11 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
       const a = await actor(query,identity);
       switch(action) {
         case 'work-calendar': return workCalendar(query, a, identity).list(search);
+        case 'announcement': {
+          admin(a);
+          const [notice] = await query<{ lines: string[]; version: number; updatedAt: number }>('SELECT lines,version,updated_at AS "updatedAt" FROM workspace_announcement WHERE id=1');
+          return { ...notice, canEdit: true };
+        }
         case 'session': return {actor:a,employee:employee(a),directory:await directory(query)};
         case 'members': admin(a); return {members:await query(`SELECT id,user_id::int AS "userId",name,role,(active OR admin_access) AS active,admin_access AS "adminAccess" FROM ${memberSource} m WHERE user_id IS NOT NULL ORDER BY id`)};
         case 'detail': return detail(query,a,search.get('id')??'');
@@ -144,6 +149,14 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
           case 'checklist-delete': return planning(q, a).deleteChecklist(input);
           case 'schedule': return planning(q, a).saveSchedule(input);
           case 'schedule-delete': return planning(q, a).deleteSchedule(input);
+          case 'announcement': {
+            admin(a);
+            const data = z.object({ lines: z.array(z.string().trim().min(1).max(500)).max(100), version }).parse(input);
+            const [saved] = await q<{ lines: string[]; version: number; updatedAt: number }>('UPDATE workspace_announcement SET lines=?,version=version+1,updated_at=? WHERE id=1 AND version=? RETURNING lines,version,updated_at AS "updatedAt"', [data.lines, now(), data.version]);
+            if (!saved) throw new WorkspaceError('公告已被其他管理员更新；请保留草稿，刷新后合并 / Another administrator updated this announcement. Keep your draft and reload to merge.', 409);
+            await audit(q, a, 'announcement.save', '1');
+            return { ...saved, canEdit: true };
+          }
           case 'member': {
             admin(a);const data=memberInput.parse(input);
             const [user]=await q('SELECT id FROM app_users WHERE id=? AND merged_into_user_id IS NULL AND NOT forum_banned',[data.userId]);if(!user)throw new WorkspaceError('CubeRoot 用户不存在 / User unavailable',404);

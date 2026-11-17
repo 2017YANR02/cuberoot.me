@@ -1,17 +1,20 @@
 'use client';
 
 import MoreToggle from '@/components/MoreToggle';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowRight, Check, ClipboardCheck, FileCheck2, FolderOpen, KeyRound, Laptop, ShieldCheck, Sparkles, Unplug, UserRound, X } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { useCopy } from '@/hooks/useCopy';
 import { useT } from '@/hooks/useT';
 import { useAuthUser, authActions, getAuthUser } from '@/lib/auth-store';
+import { WorkspaceDialog } from '../../workspace/WorkspaceControls';
 import './team-lifecycle.css';
+import './offboarding.css';
 
 export default function OffboardingPage() {
   const t = useT();
   const user = useAuthUser();
+  const [promptOpen, setPromptOpen] = useState<string | null>(null);
   const { copiedKey, copy } = useCopy();
   useEffect(() => {
     if (!getAuthUser()) authActions.login();
@@ -39,7 +42,8 @@ export default function OffboardingPage() {
   );
 
   if (!user) return null;
-  return <section className="team-lifecycle">
+  const activePrompt = promptOpen === 'lead' ? { title: t('负责人：撤销权限', 'Lead: revoke access'), prompt: leadPrompt, id: 'lead' } : tasks.find(task => task.id === promptOpen);
+  return <section className="team-lifecycle offboarding-compact">
     <header className="team-lifecycle-intro">
       <h2>{t('工作有人接，权限有记录', 'Hand over the work. Account for every access grant.')}</h2>
       <p>{t('先确认交接，再撤销权限，最后清理设备。每一步都留下可核查的结果。', 'Confirm the handoff, revoke access, then clean up the device. Keep evidence for each step.')}</p>
@@ -49,15 +53,6 @@ export default function OffboardingPage() {
       <li><span className="team-lifecycle-path-icon"><ShieldCheck size={22} aria-hidden="true" /></span><div><span className="team-lifecycle-step">02</span><h3>{t('负责人撤权', 'Lead revokes access')}</h3><p>{t('收回授权，确认旧连接已结束。', 'Remove grants and confirm existing sessions have ended.')}</p></div><ArrowRight className="team-lifecycle-path-arrow" size={18} aria-hidden="true" /></li>
       <li><span className="team-lifecycle-path-icon"><Laptop size={22} aria-hidden="true" /></span><div><span className="team-lifecycle-step">03</span><h3>{t('本人清理', 'Employee cleans up')}</h3><p>{t('只清理已确认的组织配置与副本。', 'Remove only approved organizational configuration and copies.')}</p></div></li>
     </ol>
-    <section className="team-lifecycle-handoff" data-site-surface="panel" aria-labelledby="offboarding-handoff">
-      <div className="team-lifecycle-section-heading"><FolderOpen size={22} aria-hidden="true" /><h2 id="offboarding-handoff">{t('一份能接着做的交接', 'A handoff someone can continue')}</h2></div>
-      <div className="team-lifecycle-handoff-grid">
-        <div><span className="team-lifecycle-step">01</span><h3>{t('找到成果', 'Find the work')}</h3><p>{t('项目、文件、分支和成果链接。', 'Projects, files, branches and result links.')}</p></div>
-        <div><span className="team-lifecycle-step">02</span><h3>{t('知道进度', 'Understand its status')}</h3><p>{t('已完成、未完成和已知问题。', 'Completed work, open tasks and known issues.')}</p></div>
-        <div><span className="team-lifecycle-step">03</span><h3>{t('能够继续', 'Continue the task')}</h3><p>{t('启动方式、验证结果和下一步。', 'Startup steps, verification evidence and the next action.')}</p></div>
-        <div><span className="team-lifecycle-step">04</span><h3>{t('确认接收', 'Confirm receipt')}</h3><p>{t('接收人核对内容与资源归属。', 'The recipient checks the work and resource ownership.')}</p></div>
-      </div>
-    </section>
     <div className="staff-start-modules">
       <article className="staff-start-module" data-site-surface="panel" aria-labelledby="offboarding-ai">
         <div className="staff-start-module-heading">
@@ -68,7 +63,7 @@ export default function OffboardingPage() {
           <div className="staff-start-row"><h3>{task.title}</h3>
             <button type="button" className="staff-start-action" onClick={() => copy(task.prompt, task.id)}>{copiedKey === task.id ? t('已复制', 'Copied') : t('复制指令', 'Copy prompt')}</button>
           </div>
-          <details className="staff-start-instructions"><MoreToggle as="summary">{t('查看指令', 'View instructions')}</MoreToggle><pre className="staff-start-prompt">{task.prompt}</pre></details>
+          <button type="button" className="offboarding-prompt-open" aria-haspopup="dialog" aria-label={`${t('查看指令', 'View instructions')}：${task.title}`} onClick={() => setPromptOpen(task.id)}>{t('查看指令', 'View instructions')}</button>
         </section>)}
       </article>
       <article className="staff-start-module" data-site-surface="panel" aria-labelledby="offboarding-self">
@@ -85,10 +80,20 @@ export default function OffboardingPage() {
           <MoreToggle as="summary">{t('负责人：撤销权限', 'Lead: revoke access')}</MoreToggle>
           <p className="staff-start-note">{t('核对全部设备与组织授权，确认旧连接已断开。', 'Check all devices and organizational grants; confirm existing connections have ended.')}</p>
           <button type="button" className="staff-start-action" onClick={() => copy(leadPrompt, 'lead')}>{copiedKey === 'lead' ? t('已复制', 'Copied') : t('复制指令', 'Copy prompt')}</button>
-          <pre className="staff-start-prompt">{leadPrompt}</pre>
+          <button type="button" className="offboarding-prompt-open" aria-haspopup="dialog" onClick={() => setPromptOpen('lead')}>{t('查看指令', 'View instructions')}</button>
         </details>
       </article>
     </div>
+    <details className="offboarding-more"><MoreToggle as="summary">{t('交接清单与撤权核验', 'Handoff checklist and access verification')}</MoreToggle>
+    <section className="team-lifecycle-handoff" data-site-surface="panel" aria-labelledby="offboarding-handoff">
+      <div className="team-lifecycle-section-heading"><FolderOpen size={22} aria-hidden="true" /><h2 id="offboarding-handoff">{t('一份能接着做的交接', 'A handoff someone can continue')}</h2></div>
+      <div className="team-lifecycle-handoff-grid">
+        <div><span className="team-lifecycle-step">01</span><h3>{t('找到成果', 'Find the work')}</h3><p>{t('项目、文件、分支和成果链接。', 'Projects, files, branches and result links.')}</p></div>
+        <div><span className="team-lifecycle-step">02</span><h3>{t('知道进度', 'Understand its status')}</h3><p>{t('已完成、未完成和已知问题。', 'Completed work, open tasks and known issues.')}</p></div>
+        <div><span className="team-lifecycle-step">03</span><h3>{t('能够继续', 'Continue the task')}</h3><p>{t('启动方式、验证结果和下一步。', 'Startup steps, verification evidence and the next action.')}</p></div>
+        <div><span className="team-lifecycle-step">04</span><h3>{t('确认接收', 'Confirm receipt')}</h3><p>{t('接收人核对内容与资源归属。', 'The recipient checks the work and resource ownership.')}</p></div>
+      </div>
+    </section>
     <section className="team-lifecycle-boundaries" aria-labelledby="offboarding-evidence">
       <div className="team-lifecycle-section-heading"><ClipboardCheck size={22} aria-hidden="true" /><h2 id="offboarding-evidence">{t('撤权看结果，不看按钮', 'Verify the outcome of revocation')}</h2></div>
       <div className="team-lifecycle-comparison">
@@ -107,5 +112,7 @@ export default function OffboardingPage() {
       </div>
       <div className="team-lifecycle-next"><AppLink className="team-lifecycle-link" href="/admin/team?section=onboarding" prefetch={false}>{t('核对远程连接与开发网址', 'Review remote access and development URLs')}<ArrowRight size={16} aria-hidden="true" /></AppLink></div>
     </section>
+    </details>
+    {activePrompt && <WorkspaceDialog title={activePrompt.title} onClose={() => setPromptOpen(null)} wide><div className="offboarding-prompt-window"><button type="button" className="staff-start-action" onClick={() => copy(activePrompt.prompt, activePrompt.id)}>{copiedKey === activePrompt.id ? t('已复制', 'Copied') : t('复制指令', 'Copy prompt')}</button><pre tabIndex={0}>{activePrompt.prompt}</pre></div></WorkspaceDialog>}
   </section>;
 }

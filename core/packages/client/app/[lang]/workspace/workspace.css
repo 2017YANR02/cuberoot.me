@@ -358,3 +358,5 @@
 .workspace-check-menu-panel .workspace-danger-action { color: var(--destructive); }
 .workspace-task-list .workspace-list-heading > .more-toggle,
 .workspace-category-heading > .more-toggle { color: var(--foreground); }
+
+.workspace-software-group > .more-toggle { min-height: 44px; font-size: 16px; }

@@ -9911,3 +9911,11 @@ CREATE TABLE site_assistant_messages (
 );
 CREATE INDEX idx_assistant_messages_conversation ON site_assistant_messages(conversation_id,sequence);
 CREATE INDEX idx_assistant_messages_pending ON site_assistant_messages(conversation_id,sequence) WHERE state IN ('queued','running');
+
+-- Administrator-only team announcement
+CREATE TABLE workspace_announcement (
+  id SMALLINT PRIMARY KEY CHECK (id = 1),
+  lines JSONB NOT NULL DEFAULT '[]'::jsonb CHECK (jsonb_typeof(lines) = 'array'),
+  version INTEGER NOT NULL DEFAULT 0 CHECK (version >= 0),
+  updated_at BIGINT NOT NULL DEFAULT 0
+);

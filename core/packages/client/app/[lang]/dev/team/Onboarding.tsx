@@ -1,20 +1,26 @@
 'use client';
 
-import MoreToggle from '@/components/MoreToggle';
-import { useEffect } from 'react';
+import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
+import { useEffect, useState } from 'react';
 import { ArrowRight, Check, ClipboardCheck, FileText, KeyRound, Laptop, ShieldCheck, Sparkles, UserRound, X } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { UserIdLabel } from '@/components/UserIdLabel';
 import { useCopy } from '@/hooks/useCopy';
 import { useT } from '@/hooks/useT';
 import { useAuthUser, authActions, getAuthUser } from '@/lib/auth-store';
+import { WorkspaceDialog, WorkspaceButton } from '../../workspace/WorkspaceControls';
 import MacSetupChecklist from '@/components/workspace/MacSetupChecklist';
 import RemoteAccess from './RemoteAccess';
 import DevPreview from './DevPreview';
 import './team-lifecycle.css';
+import './onboarding.css';
 
 export default function GetStartedPage() {
   const t = useT();
+  const [materialsOpen, setMaterialsOpen] = useState(false);
+  const [promptOpen, setPromptOpen] = useState<'setup' | 'learning' | null>(null);
+  const [optionalOpen, setOptionalOpen] = useState(false);
   const user = useAuthUser();
   const { copiedKey, copy } = useCopy();
   useEffect(() => {
@@ -32,66 +38,35 @@ export default function GetStartedPage() {
 
   if (!user) return null;
 
-  return <section className="team-lifecycle">
-    <header className="team-lifecycle-intro">
-      <h2>{t('在自己的电脑上开始开发', 'Start developing on your own computer')}</h2>
-      <p>{t('先确认账号，再让 AI 配置本地环境。在自己的电脑上运行、修改和验证项目，无需申请连接负责人的 Mac。', 'Confirm your account, then let AI set up your local environment. Run, edit and verify the project on your own computer; access to the lead’s Mac is not required.')}</p>
+  return <section className="team-lifecycle onboarding-compact">
+    <header className="onboarding-heading">
+      <h2>{t('入职', 'Onboarding')}</h2>
+      <div><p>{t('确认身份 → 配置电脑 → 完成练习', 'Identify yourself → Set up → Practice')}</p><InfoTooltip iconSize={18} ariaLabel={t('入职方式说明', 'About onboarding')} content={t('在自己的电脑上运行、修改和验证项目，无需连接负责人的 Mac。登录与系统授权由本人完成。', 'Run, edit and verify the project on your own computer. Remote access is not required. Handle sign-in and system permissions yourself.')} /></div>
     </header>
-    <ol className="team-lifecycle-path" aria-label={t('入职顺序', 'Onboarding sequence')}>
-      <li><span className="team-lifecycle-path-icon"><UserRound size={22} aria-hidden="true" /></span><div><span className="team-lifecycle-step">01</span><h3>{t('确认身份', 'Identify yourself')}</h3><p>{t('发送账号 ID，由负责人分配权限。', 'Share your account ID so your lead can assign access.')}</p></div><ArrowRight className="team-lifecycle-path-arrow" size={18} aria-hidden="true" /></li>
-      <li><span className="team-lifecycle-path-icon"><Laptop size={22} aria-hidden="true" /></span><div><span className="team-lifecycle-step">02</span><h3>{t('配置自己的电脑', 'Set up your computer')}</h3><p>{t('复制本地配置指令给 AI，启动并打开本地网页。', 'Give AI the local setup prompt, then start and open the local site.')}</p></div><ArrowRight className="team-lifecycle-path-arrow" size={18} aria-hidden="true" /></li>
-      <li><span className="team-lifecycle-path-icon"><ClipboardCheck size={22} aria-hidden="true" /></span><div><span className="team-lifecycle-step">03</span><h3>{t('完成练习', 'Complete a small task')}</h3><p>{t('说明需求，核验结果，留下交接。', 'Write the brief, verify the result and leave a handoff.')}</p></div></li>
-    </ol>
-    <div className="staff-start-modules">
-      <article className="staff-start-module" data-site-surface="panel" aria-labelledby="staff-ai-title">
-        <div className="staff-start-module-heading">
-          <Sparkles className="staff-start-module-icon" size={28} strokeWidth={1.5} aria-hidden="true" />
-          <div><span className="team-lifecycle-role">{t('执行与整理', 'Execution and preparation')}</span><h2 id="staff-ai-title" className="staff-start-module-title">{t('交给 AI', 'Delegate to AI')}</h2></div>
-        </div>
-        <section className="staff-start-task">
-          <div className="staff-start-row">
-            <h3>{t('在本机配置开发环境', 'Set up development on this computer')}</h3>
-            <button type="button" className="staff-start-action" onClick={() => copy(aiPrompt, 'ai-setup')}>
-              {copiedKey === 'ai-setup' ? t('已复制', 'Copied') : t('复制指令', 'Copy prompt')}
-            </button>
-          </div>
-          <details className="staff-start-instructions">
-            <MoreToggle as="summary">{t('查看指令', 'View instructions')}</MoreToggle>
-            <p>{t('输入 cuberoot 启动，Ctrl+C 停止。', 'Run cuberoot to start; Ctrl+C to stop.')}</p>
-            <pre className="staff-start-prompt">{aiPrompt}</pre>
-          </details>
-        </section>
-        <section className="staff-start-task">
-          <div className="staff-start-row">
-            <h3>{t('AI 带练', 'AI coaching')}</h3>
-            <button type="button" className="staff-start-action" onClick={() => copy(learningPrompt, 'ai-learning')}>
-              {copiedKey === 'ai-learning' ? t('已复制', 'Copied') : t('复制指令', 'Copy prompt')}
-            </button>
-          </div>
-          <details className="staff-start-instructions">
-            <MoreToggle as="summary">{t('查看指令', 'View instructions')}</MoreToggle>
-            <pre className="staff-start-prompt">{learningPrompt}</pre>
-          </details>
-        </section>
+    <div className="onboarding-steps">
+      <article className="onboarding-step" data-site-surface="panel" aria-labelledby="onboarding-identity">
+        <div className="onboarding-step-heading"><UserRound size={24} aria-hidden /><h3 id="onboarding-identity">{t('确认身份', 'Identify yourself')}</h3><InfoTooltip iconSize={18} ariaLabel={t('账号权限说明', 'About account access')} content={t('登录已完成。把 CubeRoot ID 发给负责人，由管理员开通员工权限；查看手册不会自动获得开发或发布权限。', 'You are signed in. Share your CubeRoot ID with your lead so an administrator can grant employee access. Reading the handbook does not grant development or release permissions.')} /></div>
+        <p>{t('把账号 ID 发给负责人。', 'Share your account ID with your lead.')}</p>
+        {hasId ? <><div className="onboarding-id"><UserIdLabel userId={user.uid} full /></div><button type="button" className="staff-start-action" onClick={() => copy(String(user.uid), String(user.uid))}>{copiedKey === String(user.uid) ? t('已复制', 'Copied') : t('复制 ID', 'Copy ID')}</button></> : <p>{t('请重新登录以获取 ID。', 'Sign in again to retrieve your ID.')}</p>}
+        <AppLink className="onboarding-account" href="/account" prefetch={false}>{t('我的账号', 'My account')}<ArrowRight size={16} aria-hidden /></AppLink>
       </article>
-      <article className="staff-start-module" data-site-surface="panel" aria-labelledby="staff-self-title">
-        <div className="staff-start-module-heading">
-          <UserRound className="staff-start-module-icon" size={28} strokeWidth={1.5} aria-hidden="true" />
-          <div><span className="team-lifecycle-role">{t('判断与确认', 'Judgment and approval')}</span><h2 id="staff-self-title" className="staff-start-module-title">{t('由自己完成', 'Do yourself')}</h2></div>
-        </div>
-        <div className="staff-start-row staff-start-account">
-          <h3>{t('登录账号', 'Sign in')}</h3>
-          <span className="staff-start-complete" role="status"><Check size={15} aria-hidden="true" />{t('已完成', 'Done')}</span>
-        </div>
-        <section className="staff-start-identity">
-          <h3>{t('把 ID 发给负责人', 'Send your ID to your lead')}</h3>
-          {hasId ? <div className="staff-start-row">
-            <div className="staff-start-id"><UserIdLabel userId={user.uid} full /></div>
-            <button type="button" className="staff-start-action" onClick={() => copy(String(user.uid), String(user.uid))}>
-              {copiedKey === String(user.uid) ? t('已复制', 'Copied') : t('复制 ID', 'Copy ID')}
-            </button>
-          </div> : <p>{t('请到账号页重新登录以获取 ID。', 'Sign in again on the account page to retrieve your ID.')}</p>}
-        </section>
+      <article className="onboarding-step" data-site-surface="panel" aria-labelledby="onboarding-setup">
+        <div className="onboarding-step-heading"><Laptop size={24} aria-hidden /><h3 id="onboarding-setup">{t('配置电脑', 'Set up your computer')}</h3><InfoTooltip iconSize={18} ariaLabel={t('本地配置说明', 'About local setup')} content={t('复制指令给能操作本机的 AI，按仓库规范检查并安装所需工具。只配置本机，不推送或部署；默认 API 连接线上，验证时不修改线上数据。', 'Give the prompt to an AI app that can operate this computer. Follow repository guidance and install only needed tools. Setup does not authorize push or deployment. The default API is production; do not write live data during checks.')} /></div>
+        <p>{t('让 AI 配置本机开发环境。', 'Let AI set up local development.')}</p>
+        <div className="onboarding-command"><code>cuberoot</code><InfoTooltip iconSize={18} ariaLabel={t('启动与停止', 'Start and stop')} content={t('配置完成后，在终端输入 cuberoot 启动并打开网页；按 Ctrl+C 停止。', 'After setup, run cuberoot in a terminal to start and open the site. Press Ctrl+C to stop.')} /></div>
+        <button type="button" className="staff-start-action" onClick={() => copy(aiPrompt, 'ai-setup')}>{copiedKey === 'ai-setup' ? t('已复制', 'Copied') : t('复制配置指令', 'Copy setup prompt')}</button>
+        <button type="button" className="onboarding-prompt-open" aria-haspopup="dialog" aria-label={t('查看配置指令', 'View setup prompt')} onClick={() => setPromptOpen('setup')}>{t('查看指令', 'View prompt')}<ArrowRight size={16} aria-hidden /></button>
+      </article>
+      <article className="onboarding-step" data-site-surface="panel" aria-labelledby="onboarding-practice">
+        <div className="onboarding-step-heading"><ClipboardCheck size={24} aria-hidden /><h3 id="onboarding-practice">{t('完成练习', 'Practice')}</h3><InfoTooltip iconSize={18} ariaLabel={t('练习与验收说明', 'About practice and review')} content={t('AI 按岗位逐项带练：需求、核验、上下文、工具、权限与协作。选一个不写入线上数据的小任务，用实际结果验收，并留下成果链接和未完成项。', 'AI coaches you by role through briefs, verification, context, tools, permissions and collaboration. Complete a small task without production writes, verify the actual result and leave a result link and open items.')} /></div>
+        <p>{t('说明需求，核验结果，留下交接。', 'Brief, verify and hand off a small task.')}</p>
+        <AppLink className="onboarding-account" href="/admin/team?section=sop" prefetch={false}>{t('开发规范', 'Development standards')}<ArrowRight size={16} aria-hidden /></AppLink>
+        <button type="button" className="staff-start-action" onClick={() => copy(learningPrompt, 'ai-learning')}>{copiedKey === 'ai-learning' ? t('已复制', 'Copied') : t('复制带练指令', 'Copy coaching prompt')}</button>
+        <button type="button" className="onboarding-prompt-open" aria-haspopup="dialog" aria-label={t('查看带练指令', 'View coaching prompt')} onClick={() => setPromptOpen('learning')}>{t('查看指令', 'View prompt')}<ArrowRight size={16} aria-hidden /></button>
+      </article>
+    </div>
+    <div className="onboarding-more"><MoreToggle expanded={materialsOpen} aria-controls="onboarding-materials" onToggle={() => { setMaterialsOpen(!materialsOpen); setOptionalOpen(false); }}>{t('学习资料', 'Learning resources')}</MoreToggle><MoreToggle expanded={optionalOpen} aria-controls="onboarding-options" onToggle={() => { setOptionalOpen(!optionalOpen); setMaterialsOpen(false); }}>{t('可选设置', 'Optional setup')}</MoreToggle></div>
+    <MoreTogglePanel id="onboarding-materials" expanded={materialsOpen} contentClassName="onboarding-extra">
         <details className="staff-start-disclosure">
           <MoreToggle as="summary">{t('学习 AI 与代码基础', 'Learn AI and coding basics')}</MoreToggle>
           <p className="staff-start-note">{t('自行查资料或问 AI。', 'Research online or ask AI.')}</p>
@@ -107,22 +82,6 @@ export default function GetStartedPage() {
           <li><strong>{t('多线程协作', 'Parallel chats')}</strong><p>{t('独立任务分开做，同一文件不同时改，最后统一验收。', 'Split independent tasks, avoid editing the same file concurrently, then verify together.')}</p></li>
         </ul>
         </details>
-        <AppLink className="staff-start-account-link" href="/account" prefetch={false}>{t('我的账号', 'My account')}</AppLink>
-      </article>
-    </div>
-    <section className="staff-start-optional" aria-labelledby="onboarding-optional-title">
-      <h3 id="onboarding-optional-title">{t('可选设置', 'Optional setup')}</h3>
-      <details className="staff-start-disclosure">
-        <MoreToggle as="summary">{t('分享本机开发预览', 'Share a preview from your computer')}</MoreToggle>
-        <p className="staff-start-note">{t('需要让同事查看你本机运行的网页时，再申请开发网址。', 'Request a development URL when colleagues need to view the site running on your computer.')}</p>
-        <DevPreview />
-      </details>
-      <details className="staff-start-disclosure">
-        <MoreToggle as="summary">{t('使用负责人的 Mac 开发（远程连接）', 'Develop on the lead’s Mac (remote access)')}</MoreToggle>
-        <RemoteAccess />
-      </details>
-    </section>
-    <MacSetupChecklist />
     <section className="team-lifecycle-boundaries" aria-labelledby="onboarding-boundaries">
       <div className="team-lifecycle-section-heading"><ShieldCheck size={22} aria-hidden="true" /><h2 id="onboarding-boundaries">{t('把工作交给 AI，把授权留给自己', 'Delegate work. Keep control of access.')}</h2></div>
       <div className="team-lifecycle-comparison">
@@ -148,7 +107,30 @@ export default function GetStartedPage() {
         <ArrowRight className="team-lifecycle-delivery-arrow" size={24} aria-hidden="true" />
         <div className="team-lifecycle-delivery-card"><span className="team-lifecycle-role">{t('由你核验', 'Your acceptance')}</span><strong>{t('打开实际页面', 'Open the actual page')}</strong><span>{t('文字是否清楚，按钮是否可用', 'Check the copy and use the buttons')}</span><span>{t('交接：成果链接与未完成项', 'Handoff: result link and open items')}</span></div>
       </div>
-      <div className="team-lifecycle-next"><AppLink className="team-lifecycle-link" href="/admin/team?section=sop" prefetch={false}>{t('查看工作流程', 'Open the workflow')}<ArrowRight size={16} aria-hidden="true" /></AppLink><AppLink className="team-lifecycle-link" href="/admin/team?section=quality" prefetch={false}>{t('对照质量标准', 'Check quality standards')}<ArrowRight size={16} aria-hidden="true" /></AppLink></div>
+      <div className="team-lifecycle-next"><AppLink className="team-lifecycle-link" href="/admin/team?section=sop" prefetch={false}>{t('查看开发规范', 'Read development standards')}<ArrowRight size={16} aria-hidden="true" /></AppLink></div>
     </section>
+    </MoreTogglePanel>
+    <MoreTogglePanel id="onboarding-options" expanded={optionalOpen} contentClassName="onboarding-extra">
+    <section className="staff-start-optional" aria-labelledby="onboarding-optional-title">
+      <h3 id="onboarding-optional-title">{t('可选设置', 'Optional setup')}</h3>
+      <details className="staff-start-disclosure">
+        <MoreToggle as="summary">{t('分享本机开发预览', 'Share a preview from your computer')}</MoreToggle>
+        <p className="staff-start-note">{t('需要让同事查看你本机运行的网页时，再申请开发网址。', 'Request a development URL when colleagues need to view the site running on your computer.')}</p>
+        <DevPreview />
+      </details>
+      <details className="staff-start-disclosure">
+        <MoreToggle as="summary">{t('使用负责人的 Mac 开发（远程连接）', 'Develop on the lead’s Mac (remote access)')}</MoreToggle>
+        <RemoteAccess />
+      </details>
+    </section>
+    <MacSetupChecklist />
+
+    </MoreTogglePanel>
+    {promptOpen && <WorkspaceDialog wide title={promptOpen === 'setup' ? t('配置开发环境', 'Development setup') : t('AI 带练指令', 'AI coaching prompt')} onClose={() => setPromptOpen(null)}>
+      <div className="onboarding-prompt-window">
+        <WorkspaceButton action="copy" iconOnly={false} variant="secondary" onClick={() => copy(promptOpen === 'setup' ? aiPrompt : learningPrompt, `ai-${promptOpen}`)}>{copiedKey === `ai-${promptOpen}` ? t('已复制', 'Copied') : t('复制完整指令', 'Copy full prompt')}</WorkspaceButton>
+        <pre tabIndex={0} className="onboarding-prompt-text">{promptOpen === 'setup' ? aiPrompt : learningPrompt}</pre>
+      </div>
+    </WorkspaceDialog>}
   </section>;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Check, LoaderCircle, Repeat2, ScanLine, X } from 'lucide-react';
+import { Check, LoaderCircle, Repeat2, X } from 'lucide-react';
 import { useT } from '@/hooks/useT';
 
 export default function SopLoadingDemo() {
@@ -44,12 +44,8 @@ export default function SopLoadingDemo() {
 
   // A still loading frame preserves the comparison for reduced-motion users.
   const showingLoading = reducedMotion || loading;
-  return <article ref={ref} className="staff-sop-card sop-loading-rule" data-site-surface="panel" data-playing={playing} aria-labelledby="sop-loading-title">
-    <div className="sop-loading-heading">
-      <h4 id="sop-loading-title">{t('加载时保持布局稳定', 'Keep layouts stable while loading')}</h4>
-      <span className="quality-loading-priority"><ScanLine size={13} aria-hidden="true" />{t('重点检查', 'Priority check')}</span>
-    </div>
-    <p className="sop-ui-description">{t('点击下一步、继续或刷新时，保留内容区域和按钮的尺寸，在原位显示加载状态；新内容就绪后再替换，避免页面闪空、元素跳动后回弹。', 'When proceeding or refreshing, preserve content and button dimensions and show loading in place. Replace content when ready, without blank flashes or elements jumping and snapping back.')}</p>
+  return <article ref={ref} className="staff-sop-card sop-loading-rule" data-site-surface="panel" data-playing={playing} aria-label={t('加载时保持布局稳定', 'Keep layouts stable while loading')}>
+    <p className="sop-ui-description">{t('原位显示加载状态，保留内容和按钮尺寸；就绪后替换，避免闪空与跳动。', 'Show loading in place. Preserve content and button sizes until ready; avoid blank flashes and jumps.')}</p>
     <div className="sop-ui-comparison sop-loading-comparison">
       {[false, true].map(stable => <figure key={String(stable)}>
         <div className={`quality-verdict ${stable ? 'is-good' : 'is-bad'}`}>{stable ? <Check size={14} aria-hidden="true" /> : <X size={14} aria-hidden="true" />}{stable ? t('原位加载', 'Loads in place') : t('加载时跳动', 'Jumps while loading')}</div>

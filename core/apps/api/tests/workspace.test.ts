@@ -29,13 +29,34 @@ suite('independent CubeRoot workspace',()=>{
     await sql.unsafe(readFileSync(new URL('../migrations/0281_workspace.sql',import.meta.url),'utf8'));
     await sql.unsafe(readFileSync(new URL('../migrations/0282_workspace_account_deletion.sql',import.meta.url),'utf8'));
     await sql.unsafe(readFileSync(new URL('../migrations/0284_workspace_admin_access.sql',import.meta.url),'utf8'));
-    for (const file of ['0291_workspace_checklists','0292_workspace_schedules','0293_workspace_remove_checklist_categories','0332_workspace_remove_projects','0337_workspace_checklist_sections']) await sql.unsafe(readFileSync(new URL('../migrations/'+file+'.sql',import.meta.url),'utf8'));
+    for (const file of ['0291_workspace_checklists','0292_workspace_schedules','0293_workspace_remove_checklist_categories','0332_workspace_remove_projects','0337_workspace_checklist_sections','0338_workspace_announcement']) await sql.unsafe(readFileSync(new URL('../migrations/'+file+'.sql',import.meta.url),'utf8'));
     // A separate application's account record is not in CubeRoot app_users.
     await q('CREATE SCHEMA other_application');await q('CREATE TABLE other_application.employees(id INT PRIMARY KEY,name TEXT)');await q("INSERT INTO other_application.employees VALUES (99,'External employee')");
     aliceId=(await service.post(admin,'member',{userId:2,name:'Alice',role:'member',active:true})).id as number;
     bobId=(await service.post(admin,'member',{userId:3,name:'Bob',role:'member',active:true})).id as number;
   });
   afterAll(async()=>{await q('DROP SCHEMA workspace_fixture CASCADE');await q('DROP SCHEMA other_application CASCADE');await sql.end();});
+  it('shares announcements between administrators and rejects other readers, stale writes and invalid input', async () => {
+    await q("INSERT INTO app_users(id,display_name,is_admin) VALUES (88001,'Second admin',TRUE)");
+    const second = { uid: 88001, isAdmin: true, name: 'Second admin' };
+    expect(await service.get(admin, 'announcement', new URLSearchParams())).toMatchObject({ lines: [], version: 0, canEdit: true });
+    await expect(service.get(alice, 'announcement', new URLSearchParams())).rejects.toMatchObject({ status: 403 });
+    await expect(service.post(alice, 'announcement', { lines: ['not allowed'], version: 0 })).rejects.toMatchObject({ status: 403 });
+    const first = await service.post(admin, 'announcement', { lines: ['First reminder', 'Second reminder'], version: 0 });
+    expect(first).toMatchObject({ lines: ['First reminder', 'Second reminder'], version: 1 });
+    expect(await service.get(second, 'announcement', new URLSearchParams())).toMatchObject(first);
+    await service.post(second, 'announcement', { lines: ['Updated by another admin'], version: 1 });
+    await expect(service.post(admin, 'announcement', { lines: ['Stale draft'], version: 1 })).rejects.toMatchObject({ status: 409 });
+    expect(await service.get(admin, 'announcement', new URLSearchParams())).toMatchObject({ lines: ['Updated by another admin'], version: 2 });
+    await expect(service.post(admin, 'announcement', { lines: ['x'.repeat(501)], version: 2 })).rejects.toThrow();
+    const writes = await Promise.allSettled([service.post(admin, 'announcement', { lines: ['A'], version: 2 }), service.post(second, 'announcement', { lines: ['B'], version: 2 })]);
+    expect(writes.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+    expect(writes.filter(result => result.status === 'rejected')).toHaveLength(1);
+    expect(await service.post(admin, 'announcement', { lines: [], version: 3 })).toMatchObject({ lines: [], version: 4 });
+    expect(await q("SELECT action FROM workspace_audit WHERE action='announcement.save'")).toHaveLength(4);
+    await q('DELETE FROM workspace_members WHERE user_id=88001');
+    await q('DELETE FROM app_users WHERE id=88001');
+  });
   it('keeps existing WCA administrator access without a duplicate employee grant',async()=>{
     await q('UPDATE app_users SET wca_id=?,is_admin=FALSE WHERE id=1',[[...ADMIN_WCA_IDS][0]]);
     expect(await service.get(admin,'session',new URLSearchParams())).toHaveProperty('actor.kind','admin');

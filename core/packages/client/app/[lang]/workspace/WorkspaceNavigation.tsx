@@ -4,7 +4,7 @@ import { Suspense, type ReactNode, type MouseEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
 import { NavigationShell } from '@app-foundation/navigation-ui';
-import { Activity, BookOpen, CalendarDays, ClipboardList, FolderKanban, LayoutDashboard, LogOut, ScanEye, ShieldCheck, UserRoundPlus, Users, Workflow, Wrench } from '@app-foundation/icons/lucide';
+import { Activity, BookOpen, CalendarDays, ClipboardList, FolderKanban, LayoutDashboard, LogOut, ShieldCheck, UserRoundPlus, Users, Workflow, Wrench } from '@app-foundation/icons/lucide';
 import '@app-foundation/navigation-ui/navigation.css';
 import '@app-foundation/workspace-ui/workspace.css';
 import AppLink from '@/components/AppLink';
@@ -30,8 +30,7 @@ function Navigation({ children }: { children: ReactNode }) {
     { id: 'schedule', label: t('排期', 'Schedule'), Icon: FolderKanban },
     ...(admin ? [{ id: 'work-calendar', label: t('工作日历', 'Work calendar'), Icon: CalendarDays }, { id: 'members', label: t('成员与权限', 'Members and access'), Icon: ShieldCheck }] : []),
     { id: 'onboarding', label: t('入职', 'Onboarding'), Icon: UserRoundPlus },
-    { id: 'sop', label: 'SOP', Icon: Workflow },
-    { id: 'quality', label: t('质量标准', 'Quality standards'), Icon: ScanEye },
+    { id: 'sop', label: t('开发规范', 'Development standards'), Icon: Workflow },
     { id: 'offboarding', label: t('离职', 'Offboarding'), Icon: LogOut },
   ].map(({ id, label, Icon }) => ({ id, label, href: `/admin/team?section=${id}`, icon: <Icon size={18} aria-hidden />, active: !inAdmin && (section ?? 'mine') === id }));
   const adminItems = [

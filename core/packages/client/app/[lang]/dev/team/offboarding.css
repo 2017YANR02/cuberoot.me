@@ -1,0 +1,27 @@
+.team-lifecycle.offboarding-compact { gap: 16px; }
+.cuberoot-workspace-navigation .staff-main:has(.offboarding-compact) { padding-block: 24px; }
+.staff-start .offboarding-compact .team-lifecycle-intro h2 { margin: 0; font-size: 28px; line-height: 1.3; }
+.staff-start .offboarding-compact .team-lifecycle-intro p { margin-top: 8px; font-size: 18px; line-height: 1.5; }
+.offboarding-compact .team-lifecycle-step, .offboarding-compact .team-lifecycle-role { font-size: 16px; }
+.staff-start .offboarding-compact :is(.team-lifecycle-path h3, .staff-start-task h3, .staff-start-knowledge strong, .team-lifecycle-handoff-grid h3, .team-lifecycle-example h3) { font-size: 18px; line-height: 1.4; }
+.staff-start .offboarding-compact :is(.team-lifecycle-path p, .staff-start-knowledge p, .staff-start-note, .team-lifecycle-handoff-grid p, .team-lifecycle-example p) { font-size: 17px; line-height: 1.5; }
+.offboarding-compact .staff-start-module { padding: 20px; border-radius: 16px; }
+.offboarding-compact .staff-start-module-heading { margin-bottom: 16px; }
+.offboarding-compact .staff-start-module-title, .staff-start .offboarding-compact .team-lifecycle-section-heading h2 { font-size: 22px; }
+.offboarding-compact .staff-start-task { padding: 12px 0; }
+.offboarding-compact .staff-start-knowledge { gap: 12px; }
+.offboarding-compact .staff-start-knowledge p { margin-top: 4px; }
+.offboarding-compact :is(.staff-start-action, .more-toggle) { font-size: 17px; min-height: 44px; }
+.offboarding-compact .staff-start-disclosure { margin-top: 12px; }
+.offboarding-prompt-open { display: inline-flex; align-items: center; min-height: 36px; margin-top: 6px; padding: 0; border: 0; background: transparent; color: var(--muted-foreground); font: inherit; font-size: 16px; cursor: pointer; }
+.offboarding-compact .staff-start-disclosure .offboarding-prompt-open { margin-left: 16px; }
+.offboarding-more > .team-lifecycle-handoff { margin-block: 16px 24px; padding: 20px; }
+.offboarding-compact :is(.team-lifecycle-access-flow, .team-lifecycle-link) { font-size: 16px; }
+.offboarding-prompt-window { display: grid; gap: 16px; }
+.offboarding-prompt-window > button { justify-self: start; font-size: 17px; min-height: 44px; }
+.offboarding-prompt-window pre { margin: 0; max-height: calc(100dvh - 240px); overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 16px; line-height: 1.6; }
+@media (max-width: 600px) {
+  .cuberoot-workspace-navigation .staff-main:has(.offboarding-compact) { padding: 16px 18px; }
+  .staff-start .offboarding-compact .team-lifecycle-intro p, .staff-start .offboarding-compact :is(.team-lifecycle-path p, .staff-start-knowledge p, .team-lifecycle-handoff-grid p, .team-lifecycle-example p) { font-size: 16px; }
+  .offboarding-compact .staff-start-module { padding: 16px; }
+}

@@ -1,6 +1,7 @@
 'use client';
 import SortableList, { replaceSortableItems } from '@/components/SortableList';
 import SortableCard from '@/components/SortableCard';
+import MoreToggle from '@/components/MoreToggle';
 import ChecklistTasks from './ChecklistTasks';
 import { useRef, useState } from 'react';
 import { ErrorNotice, Field, Form, EditorDialog, useWorkspace, value } from '@app-foundation/workspace-ui';
@@ -9,6 +10,8 @@ import { useCopy } from '@/hooks/useCopy';
 import { useT } from '@/hooks/useT';
 import { Tooltip } from '@/components/Tooltip';
 import { Archive, ArchiveRestore, ArrowLeftRight } from '@app-foundation/icons/lucide';
+
+const SOFTWARE_PREVIEW_LIMIT = 4;
 
 export type ChecklistPanelProps = {
   presentation?: 'tasks' | 'software'; allowItemDelete?: boolean; defaultExpanded?: boolean;
@@ -29,6 +32,7 @@ function SoftwareChecklistPanel({ list, allowItemDelete = false, itemStatus, arc
   const [error, setError] = useState<Error>();
   const [editing, setEditing] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [text, setText] = useState('');
   const editable = list.canEdit && list.active;
   async function save(items: ChecklistItem[], name = list.name) {
@@ -50,7 +54,9 @@ function SoftwareChecklistPanel({ list, allowItemDelete = false, itemStatus, arc
     const text = isOptional(item)
       ? item.text.replace(/[，,]?\s*(可选|按需|optional)/gi, '').trim()
       : `${item.text}，${t('可选', 'optional')}`;
-    void save([...list.items.filter(row => row.id !== item.id), { ...item, text }]).catch(() => {});
+    void save([...list.items.filter(row => row.id !== item.id), { ...item, text }]).then(() => {
+      setExpandedGroups(previous => ({ ...previous, [isOptional(item) ? 'required' : 'optional']: true }));
+    }).catch(() => {});
   }
   const softwareGroups = [
     { key: 'required', title: t('必装', 'Required'), optional: false },
@@ -65,11 +71,14 @@ function SoftwareChecklistPanel({ list, allowItemDelete = false, itemStatus, arc
     ].join('\n\n'), 'software-install')}>{copiedKey === 'software-install' ? t('已复制', 'Copied') : t('复制安装指令', 'Copy installation prompt')}</Button></div>
     <ErrorNotice error={error} retry={reload} />
     <div className="workspace-software-groups">{softwareGroups.map(group => {
-      const rows = visibleItems.filter(item => isOptional(item) === group.optional);
+      const allRows = visibleItems.filter(item => isOptional(item) === group.optional);
+      const expanded = expandedGroups[group.key] ?? false;
+      const rows = expanded ? allRows : allRows.slice(0, SOFTWARE_PREVIEW_LIMIT);
+      const tableId = `software-${list.id}-${group.key}`;
       return <section key={group.key} className="workspace-software-group" aria-label={group.title}>
         <h3>{group.title}</h3>
         <SortableList items={rows} disabled={!editable || busy} onReorder={reordered => { void save(replaceSortableItems(list.items, reordered)).catch(() => {}); }}>
-        <table className="workspace-software-table">
+        <table id={tableId} className="workspace-software-table">
           <thead><tr><th scope="col"><span className="sr-only">{t('排序', 'Reorder')}</span></th><th scope="col">{t('软件', 'Software')}</th><th scope="col">{t('简介', 'Description')}</th><th scope="col"><span className="sr-only">{t('操作', 'Actions')}</span></th></tr></thead>
           <tbody>{rows.map(item => {
             const separator = item.text.search(/[:：]/);
@@ -89,11 +98,12 @@ function SoftwareChecklistPanel({ list, allowItemDelete = false, itemStatus, arc
           })}</tbody>
         </table>
         </SortableList>
+        {allRows.length > SOFTWARE_PREVIEW_LIMIT && <MoreToggle expanded={expanded} aria-controls={tableId} aria-label={expanded ? t(`收起${group.title}软件`, `Show fewer ${group.title.toLowerCase()} apps`) : t(`展开全部${group.title}软件`, `Show all ${group.title.toLowerCase()} apps`)} onToggle={() => setExpandedGroups(previous => ({ ...previous, [group.key]: !expanded }))}>{expanded ? t('收起', 'Show less') : t('更多', 'Show more')}</MoreToggle>}
         {!rows.length && <p className="staff-muted">{t('暂无软件', 'No software')}</p>}
       </section>;
     })}</div>
 
-    {editable && <Form submit={async () => { if (!text.trim()) return; await save([...list.items, { id: crypto.randomUUID(), text: text.trim(), done: false }]); setText(''); }}><div className="workspace-add-item"><input className="workspace-add-input" aria-label={t('新增事项', 'New task')} placeholder={t('新增事项…', 'Add a task…')} value={text} onChange={event => setText(event.target.value)} required maxLength={160} /><Button action="add" type="submit" disabled={!text.trim() || busy || list.items.length >= 200}>{t('添加', 'Add')}</Button></div></Form>}
+    {editable && <Form submit={async () => { if (!text.trim()) return; const item = { id: crypto.randomUUID(), text: text.trim(), done: false }; await save([...list.items, item]); setExpandedGroups(previous => ({ ...previous, [isOptional(item) ? 'optional' : 'required']: true })); setText(''); }}><div className="workspace-add-item"><input className="workspace-add-input" aria-label={t('新增事项', 'New task')} placeholder={t('新增事项…', 'Add a task…')} value={text} onChange={event => setText(event.target.value)} required maxLength={160} /><Button action="add" type="submit" disabled={!text.trim() || busy || list.items.length >= 200}>{t('添加', 'Add')}</Button></div></Form>}
     {renaming && list.canEdit && <EditorDialog title={t('修改清单名称', 'Rename checklist')} onClose={() => setRenaming(false)}>
       <Form submit={async data => { await save(list.items, value(data, 'name').trim()); setRenaming(false); }}>
         <Field label={t('名称', 'Name')}><input name="name" required maxLength={80} defaultValue={list.name} /></Field>

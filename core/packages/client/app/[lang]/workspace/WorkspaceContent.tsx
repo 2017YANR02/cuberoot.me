@@ -19,7 +19,6 @@ import './workspace.css';
 import Onboarding from '../dev/team/Onboarding';
 import Offboarding from '../dev/team/Offboarding';
 import Sop from '../dev/team/Sop';
-import QualityStandards from '../dev/team/QualityStandards';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Checklists from './Checklists';
 import Schedules from './Schedules';
@@ -43,7 +42,7 @@ export function workspaceHref(href: string) {
   return parts[1] ? `/admin/team?section=${encodeURIComponent(parts[1])}` : '/admin/team';
 }
 function Link({href,...props}:AnchorHTMLAttributes<HTMLAnchorElement>&{href:string}) { return <AppLink {...props} href={workspaceHref(href)} prefetch={false} />; }
-const sections=['mine','updates','checklists','schedule','work-calendar','members','detail','onboarding','offboarding','sop','quality'] as const;
+const sections=['mine','updates','checklists','schedule','work-calendar','members','detail','onboarding','offboarding','sop'] as const;
 function Workspace() {
   const lang=useLang();const router=useRouter();
   const host=useMemo(()=>({api,Link,Button,Dialog:WorkspaceDialog,DateInput,formatName:(name:string)=>displayCuberName(name,lang==='zh'),t:(text:string)=>workspaceText(lang,text),navigate:(href:string)=>router.push(`${lang==='zh'?'/zh':''}${workspaceHref(href)}`)}),[lang,router]);
@@ -59,14 +58,14 @@ function SignedInWorkspace() {
   const session=useResource<{actor:StaffActor;employee:StaffActor;directory:MemberDirectory}>('session');const actor=session.data?.actor;const employee=session.data?.employee;
   if (!(sections as readonly string[]).includes(section)) notFound();
   const items=[{key:'mine',label:t('我的工作','My work')},{key:'updates',label:t('团队动态','Team updates')},{key:'checklists',label:t('清单','Checklists')},{key:'schedule',label:t('总排期','Schedule')},...(actor?.kind==='admin'?[{key:'work-calendar',label:t('工作日历','Work calendar')},{key:'members',label:t('成员与权限','Members and access')}]:[])];
-  const handbookItems = [{ key: 'onboarding', label: t('入职','Onboarding') }, { key: 'sop', label: 'SOP' }, { key: 'quality', label: t('质量标准','Quality standards') }, { key: 'offboarding', label: t('离职','Offboarding') }];
+  const handbookItems = [{ key: 'onboarding', label: t('入职','Onboarding') }, { key: 'sop', label: t('开发规范','Development standards') }, { key: 'offboarding', label: t('离职','Offboarding') }];
   const handbook = handbookItems.some(item => item.key === section);
   return <main className={handbook ? 'staff-handbook-main' : undefined}>
     <div className="staff-page-heading page-back-heading"><PageBackLink contextOnly /><h1>{[...items,...handbookItems].find(i=>i.key===section)?.label??t('工作记录','Work report')}</h1></div>
     {!handbook&&<ErrorNotice error={session.error} retry={session.reload} />}
     {session.error?.status===401&&<Button onClick={()=>authActions.login()}>{t('重新登录','Sign in again')}</Button>}
     {!handbook&&session.loading&&<p role="status"><LoadingIndicator>{t('正在加载…','Loading…')}</LoadingIndicator></p>}
-    {handbook&&<div className="staff-start staff-workspace-handbook">{section==='offboarding'?<Offboarding />:section==='sop'?<Sop />:section==='quality'?<QualityStandards />:<Onboarding />}</div>}
+    {handbook&&<div className="staff-start staff-workspace-handbook">{section==='offboarding'?<Offboarding />:section==='sop'?<Sop />:<Onboarding />}</div>}
     {actor&&<>
       {section==='mine'&&employee&&<WorkReports actor={employee} directory={session.data!.directory} mine />}
       {section==='updates'&&employee&&<WorkReports actor={employee} directory={session.data!.directory} />}

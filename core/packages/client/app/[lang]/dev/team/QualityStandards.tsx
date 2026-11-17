@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowDown, ArrowRight, Check, Component, Database, FileCode2, Keyboard, LockKeyhole, Monitor, RotateCcw, Search, ShieldCheck, Smartphone, X } from 'lucide-react';
-import { parseAsStringEnum, useQueryState } from 'nuqs';
+import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
 import { useT } from '@/hooks/useT';
 import SopUiStandards from './SopUiStandards';
 import './sop.css';
@@ -95,6 +95,7 @@ function QualityExample({ kind, good }: { kind: Example; good: boolean }) {
 export default function QualityStandards() {
   const t = useT();
   const [category, setCategory] = useQueryState('category', parseAsStringEnum(CATEGORY_KEYS).withDefault('ui').withOptions({ scroll: false }));
+  const [ruleIndex, setRuleIndex] = useQueryState('rule', parseAsInteger.withDefault(0).withOptions({ scroll: false }));
   const tabs = [t('界面 UI', 'UI'), t('交互 UX', 'UX'), t('内容文案', 'Content'), t('前端', 'Frontend'), t('后端', 'Backend')];
   const standards: Record<string, { title: string; summary: string; review: string; rules: Rule[] }> = {
     ux: { title: t('交互体验', 'Interaction design'), summary: t('用户每完成一步，都知道发生了什么、接下来做什么。', 'After each action, users know what happened and what to do next.'), review: t('走一遍成功、失败和重试：用户不需要猜，也不用重复劳动。', 'Check success, failure and retry: no guessing and no repeated work.'), rules: [
@@ -115,18 +116,19 @@ export default function QualityStandards() {
       { kind: 'accessible', title: t('鼠标、键盘、读屏都能用', 'Support pointer, keyboard and screen readers'), text: t('使用正确的按钮和表单语义，保留清晰焦点与可访问名称，并确认目标浏览器中的关键流程。', 'Use semantic controls, visible focus and accessible names. Verify key flows in supported browsers.'), bad: t('外观像按钮，实际无法访问。', 'It looks like a button but cannot be accessed.'), good: t('同一操作支持不同输入方式。', 'The same action works with different input methods.') },
       { kind: 'assets', title: t('只加载当前需要的内容', 'Load what is needed now'), text: t('避免重复请求；图片匹配展示尺寸，提前预留空间，屏外内容按需加载。', 'Avoid duplicate requests. Match images to their display size, reserve their space and load offscreen content when needed.'), bad: t('文件过大，还把已显示的内容挤走。', 'An oversized asset also shifts visible content.'), good: t('资源轻，位置稳，当前内容优先。', 'Right-sized assets, stable layout and visible content first.') },
     ] },
-    backend: { title: t('后端与数据', 'Backend and data'), summary: t('权限在服务端确认，数据在失败和重试后仍然可靠。', 'Enforce permissions on the server and keep data reliable through failures and retries.'), review: t('至少考虑无权限、重复请求和中途失败；按实际风险保留验证与恢复证据。', 'Consider unauthorized access, duplicate requests and partial failure. Keep verification and recovery evidence proportionate to the risk.'), rules: [
+    backend: { title: t('后端与数据', 'Backend and data'), summary: t('权限在服务端确认，数据在失败和重试后仍然可靠。', 'Enforce permissions on the server and keep data reliable through failures and retries.'), review: t('至少考虑无权限、重复请求和中途失败；按实际风险保留验证与恢复证据。', 'Check permissions, retries and partial failure; keep verification and recovery evidence.'), rules: [
       { kind: 'permission', title: t('前端隐藏不等于权限控制', 'Hidden controls are not authorization'), text: t('服务端校验身份、权限和输入。AI 或浏览器发来的内容同样需要校验。', 'Validate identity, permissions and input on the server. Requests from AI tools or browsers need the same checks.'), bad: t('隐藏按钮后，直接请求仍能执行。', 'Hiding a button does not stop a direct request.'), good: t('每次请求都在服务端检查权限。', 'Check permissions on the server for every request.') },
-      { kind: 'retry', title: t('重试不会重复写入', 'Retries must not duplicate writes'), text: t('重复提交和重试使用同一操作标识，由服务端原子去重；并发操作按明确规则保持数据一致。', 'Use the same operation key for repeated submissions and retries, with atomic deduplication on the server. Define concurrency rules that keep data consistent.'), bad: t('网络抖动，一次操作变成三次。', 'Network trouble turns one action into three writes.'), good: t('重复请求识别为同一操作。', 'Repeated requests are recognized as one operation.') },
+      { kind: 'retry', title: t('重试不会重复写入', 'Retries must not duplicate writes'), text: t('重试沿用操作标识，由服务端原子去重；明确并发规则，保持数据一致。', 'Reuse the operation key; deduplicate atomically on the server and define concurrency rules.'), bad: t('网络抖动，一次操作变成三次。', 'Network trouble turns one action into three writes.'), good: t('重复请求识别为同一操作。', 'Repeated requests are recognized as one operation.') },
       { kind: 'errors', title: t('用户能处理，开发者能定位', 'Make errors actionable and traceable'), text: t('接口给出清楚的错误和处理办法；日志保留定位线索，不记录密码、令牌等敏感信息。', 'Return clear errors and recovery steps. Keep diagnostic clues in logs without passwords, tokens or other secrets.'), bad: t('只有错误码，没有原因与后续办法。', 'An error code alone offers no recovery path.'), good: t('用户知道下一步，日志可关联到请求。', 'Users know what to do and logs identify the request.') },
-      { kind: 'recovery', title: t('先想好失败后怎么恢复', 'Plan recovery before making changes'), text: t('重要数据有备份且能恢复；迁移和发布前明确失败处理方式，线上写入按已确认授权执行。', 'Keep restorable backups of important data. Plan failure handling before migrations and releases, and follow the confirmed authorization for production writes.'), bad: t('直接改线上，出错后再想办法。', 'Production changes happen before recovery is considered.'), good: t('按预案执行，失败有恢复路径。', 'Follow a plan with a clear recovery path.') },
+      { kind: 'recovery', title: t('先想好失败后怎么恢复', 'Plan recovery before making changes'), text: t('重要数据可备份、可恢复；迁移和发布前准备恢复方案，线上写入须有授权。', 'Keep restorable backups and plan recovery before releases or migrations. Authorize production writes.'), bad: t('直接改线上，出错后再想办法。', 'Production changes happen before recovery is considered.'), good: t('按预案执行，失败有恢复路径。', 'Follow a plan with a clear recovery path.') },
     ] },
   };
   const selected = standards[category];
-  return <section className="staff-sop quality-guide" aria-labelledby="sop-standards">
-    <header className="quality-guide-header"><h2 id="sop-standards" className="staff-start-module-title">{t('质量标准', 'Quality standards')}</h2><p>{t('用正反例对齐做法，用实际结果验收。', 'Align on examples. Accept work based on actual results.')}</p></header>
+  const current = Math.max(0, Math.min(ruleIndex, (selected?.rules.length ?? 1) - 1));
+  return <section className="staff-sop quality-guide" aria-label={t('质量标准', 'Quality standards')}>
+
     <div className="quality-tabs" role="tablist" aria-label={t('标准分类', 'Standards categories')}>
-      {CATEGORY_KEYS.map((key, index) => <button key={key} className="quality-tab" type="button" role="tab" id={`quality-tab-${key}`} aria-controls="quality-panel" aria-selected={category === key} tabIndex={category === key ? 0 : -1} onClick={() => setCategory(key)} onKeyDown={event => {
+      {CATEGORY_KEYS.map((key, index) => <button key={key} className="quality-tab" type="button" role="tab" id={`quality-tab-${key}`} aria-controls="quality-panel" aria-selected={category === key} tabIndex={category === key ? 0 : -1} onClick={() => { void setCategory(key); void setRuleIndex(0); }} onKeyDown={event => {
         let next = index;
         if (event.key === 'ArrowRight') next = (index + 1) % CATEGORY_KEYS.length;
         else if (event.key === 'ArrowLeft') next = (index + CATEGORY_KEYS.length - 1) % CATEGORY_KEYS.length;
@@ -134,15 +136,14 @@ export default function QualityStandards() {
         else if (event.key === 'End') next = CATEGORY_KEYS.length - 1;
         else return;
         event.preventDefault();
-        void setCategory(CATEGORY_KEYS[next]);
+        void setCategory(CATEGORY_KEYS[next]); void setRuleIndex(0);
         document.getElementById(`quality-tab-${CATEGORY_KEYS[next]}`)?.focus();
       }}>{tabs[index]}</button>)}
     </div>
     <div id="quality-panel" className="quality-panel" role="tabpanel" aria-labelledby={`quality-tab-${category}`} tabIndex={0}>
       {category === 'ui' ? <SopUiStandards /> : selected && <section className="quality-category" aria-labelledby={`quality-heading-${category}`}>
-        <div className="quality-category-heading"><h3 id={`quality-heading-${category}`}>{selected.title}</h3><p>{selected.summary}</p></div>
-        <div className="quality-rule-grid">{selected.rules.map(rule => <article className="quality-rule" data-site-surface="panel" key={rule.kind}>
-          <div className="quality-rule-heading"><h4>{rule.title}</h4></div>
+        <label className="standard-rule-select"><span id={`quality-heading-${category}`}>{selected.title}</span><select aria-label={t('选择规范', 'Choose a principle')} value={current} onChange={event => setRuleIndex(Number(event.target.value))}>{selected.rules.map((rule, index) => <option key={rule.kind} value={index}>{rule.title}</option>)}</select></label>
+        <div className="quality-rule-grid">{selected.rules.slice(current, current + 1).map(rule => <article className="quality-rule" data-site-surface="panel" key={rule.kind}>
           <p className="quality-rule-description">{rule.text}</p>
           <div className="quality-pair">{[false, true].map(good => <figure key={String(good)}>
             <div className={`quality-verdict ${good ? 'is-good' : 'is-bad'}`}>{good ? <Check size={14} aria-hidden="true" /> : <X size={14} aria-hidden="true" />}{good ? t('推荐', 'Do') : t('避免', 'Avoid')}</div>

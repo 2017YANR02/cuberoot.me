@@ -97,7 +97,7 @@ export default function MacSetupChecklist() {
     <p className="staff-muted">{t('公司共享清单，修改自动保存。开发工具按任务安装，版本以项目配置为准。', 'Company checklist; edits save automatically. Install development tools as needed, using project versions.')}</p>
     <ErrorNotice error={error} retry={reload} />
     {!ready && !error && <p role="status">{t('正在加载…', 'Loading…')}</p>}
-    {ready && <ChecklistPanel key={`${revision}:${list?.id ?? 'new'}`} list={list ?? initial} presentation="software" defaultExpanded allowItemDelete itemStatus="all" archiveSupported={false} reload={reload} onSaved={setList} />}
+    {ready && <ChecklistPanel key={`${revision}:${CHECKLIST_ID}`} list={list ?? initial} presentation="software" defaultExpanded allowItemDelete itemStatus="all" archiveSupported={false} reload={reload} onSaved={setList} />}
     <details className="staff-start-disclosure">
       <MoreToggle as="summary">{t('安装与迁移备注', 'Installation and migration notes')}</MoreToggle>
       <p>{t('Office：在 Microsoft「服务和订阅」下载，安装后用同一授权账号登录 Word。', 'Office: download from Microsoft Services & subscriptions, then sign in to Word with the licensed account.')}</p>

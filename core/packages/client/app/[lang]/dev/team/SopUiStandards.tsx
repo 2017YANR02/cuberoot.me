@@ -2,6 +2,7 @@
 
 import { useT } from '@/hooks/useT';
 import { ArrowRight, Check, Search, X } from 'lucide-react';
+import { parseAsInteger, useQueryState } from 'nuqs';
 import SopLoadingDemo from './SopLoadingDemo';
 
 type Example = 'simple' | 'sequence' | 'focus' | 'action' | 'group' | 'secondary' | 'consistent';
@@ -27,8 +28,9 @@ function ExampleView({ kind, good }: { kind: Example; good: boolean }) {
 
 export default function SopUiStandards() {
   const t = useT();
+  const [ruleIndex, setRuleIndex] = useQueryState('uiRule', parseAsInteger.withDefault(0).withOptions({ scroll: false }));
   const rules: { kind: Example; title: string; text: string; bad: string; good: string }[] = [
-    { kind: 'simple', title: t('界面简洁', 'Keep the interface simple'), text: t('参考苹果的简洁风格，用排版和留白区分层级，去掉多余的线条、方框和装饰；尽量不用中点分隔和圆点列表，优先用间距与分组。', 'Take cues from Apple’s simple style: use typography and spacing for hierarchy, without unnecessary lines, boxes or decoration; avoid middle-dot separators and bullet markers, using spacing and grouping instead.'), bad: t('每条信息都加框，边界抢眼。', 'A box around every item competes with the content.'), good: t('留白区分内容，重点更清楚。', 'Spacing separates content and makes the main point clearer.') },
+    { kind: 'simple', title: t('界面简洁', 'Keep the interface simple'), text: t('参考苹果的简洁风格：用排版、留白与分组区分层级，少用框线、装饰和分隔符。', 'Use Apple-like simplicity: clear typography, spacing and groups, with fewer borders, decorations and separators.'), bad: t('每条信息都加框，边界抢眼。', 'A box around every item competes with the content.'), good: t('留白区分内容，重点更清楚。', 'Spacing separates content and makes the main point clearer.') },
     { kind: 'sequence', title: t('先确定阅读顺序', 'Plan the reading order'), text: t('排版前明确用户先看什么、再了解什么、最后做什么；顺序由页面任务决定。', 'Before laying out a page, decide what users should notice, understand and do, based on their task.'), bad: t('操作在前，必要信息在后。', 'The action appears before the information needed to decide.'), good: t('认识比赛 → 了解时间地点 → 报名。', 'Identify the event → check when and where → register.') },
     { kind: 'focus', title: t('突出主要内容', 'Emphasize the main content'), text: t('用大小、字重和对比突出当前重点，避免装饰和次要内容抢走注意力。', 'Use size, weight and contrast to highlight what matters; keep decoration and secondary content from competing.'), bad: t('社区横幅比比赛信息更醒目。', 'The community banner overshadows the event.'), good: t('比赛名称最突出，辅助内容退后。', 'The event name stands out; supporting content recedes.') },
     { kind: 'action', title: t('操作紧跟内容', 'Keep actions close to content'), text: t('把主要操作放在相关信息附近，让用户看完就知道下一步怎么做。', 'Place primary actions near the relevant information so the next step is easy to find.'), bad: t('报名入口与比赛信息分离。', 'The registration action is separated from the event.'), good: t('看完比赛信息，紧接着报名。', 'The registration action follows the event details.') },
@@ -36,23 +38,24 @@ export default function SopUiStandards() {
     { kind: 'secondary', title: t('弱化次要信息', 'Reduce secondary emphasis'), text: t('补充说明、更新时间和低频操作降低视觉权重，但仍须清楚可读。', 'Reduce the emphasis of supporting notes, timestamps and infrequent actions while keeping them readable.'), bad: t('更新时间与报名信息争夺注意力。', 'The update timestamp competes with registration information.'), good: t('报名信息优先，更新时间作为补充。', 'Registration information comes first; the timestamp stays secondary.') },
     { kind: 'consistent', title: t('同类元素一致', 'Keep similar elements consistent'), text: t('同类元素使用一致的字体、颜色、间距和样式，避免无意义的视觉差异。', 'Use consistent typography, colors, spacing and styling for similar elements; avoid arbitrary visual differences.'), bad: t('相同的查看操作使用三种样式。', 'The same view action uses three different styles.'), good: t('同类操作保持一致，便于识别。', 'Consistent actions are easier to recognize.') },
   ];
+  const current = Math.max(0, Math.min(ruleIndex, rules.length));
   return <section className="sop-ui-standards" aria-labelledby="sop-ui-title">
-    <h3 id="sop-ui-title">{t('界面设计', 'Visual design')}</h3>
-    <p className="quality-ui-summary">{t('让用户第一眼看到重点，看完就知道下一步。', 'Make the main point visible at a glance and the next action easy to find.')}</p>
+    <div className="quality-selection"><label className="standard-rule-select"><span id="sop-ui-title">{t('界面设计', 'Visual design')}</span><select aria-label={t('选择界面规范', 'Choose a visual principle')} value={current} onChange={event => setRuleIndex(Number(event.target.value))}>{rules.map((rule, index) => <option key={rule.kind} value={index}>{rule.title}</option>)}<option value={rules.length}>{t('加载反馈', 'Loading feedback')}</option></select></label>
     <div className="quality-reading-order" aria-label={t('阅读顺序', 'Reading order')}>
       <span><b>1</b>{t('看到重点', 'Notice')}</span><ArrowRight size={14} aria-hidden="true" />
       <span><b>2</b>{t('理解信息', 'Understand')}</span><ArrowRight size={14} aria-hidden="true" />
       <span><b>3</b>{t('完成操作', 'Act')}</span>
     </div>
-    <SopLoadingDemo />
-    <div className="sop-ui-rules">{rules.map(rule => <article key={rule.kind} className="staff-sop-card sop-ui-rule" data-site-surface="panel">
-      <div className="quality-rule-heading"><h4>{rule.title}</h4></div><p className="sop-ui-description">{rule.text}</p>
+    </div>
+    {current === rules.length && <SopLoadingDemo />}
+    <div className="sop-ui-rules">{rules.slice(current, current + 1).map(rule => <article key={rule.kind} className="staff-sop-card sop-ui-rule" data-site-surface="panel">
+      <p className="sop-ui-description">{rule.text}</p>
       <div className="sop-ui-comparison">{[false, true].map(good => <figure key={String(good)}>
         <div className={`quality-verdict ${good ? 'is-good' : 'is-bad'}`}>{good ? <Check size={14} aria-hidden="true" /> : <X size={14} aria-hidden="true" />}{good ? t('推荐', 'Do') : t('避免', 'Avoid')}</div>
         <ExampleView kind={rule.kind} good={good} />
         <figcaption>{good ? rule.good : rule.bad}</figcaption>
       </figure>)}</div>
     </article>)}</div>
-    <aside className="quality-review"><Search size={18} aria-hidden="true" /><div><strong>{t('验收时看什么', 'What to check')}</strong><p>{t('请未参与设计的人看一眼：先注意到什么？页面能做什么？下一步点哪里？答案应与设计目标一致。', 'Ask someone uninvolved in the design what they noticed first, what the page does and where they would click next. Their answers should match the intended task.')}</p></div></aside>
+    <aside className="quality-review"><Search size={18} aria-hidden="true" /><div><strong>{t('验收时看什么', 'What to check')}</strong><p>{t('请他人确认：重点是什么，下一步点哪里？', 'Ask a fresh reader: what matters, and where would you click next?')}</p></div></aside>
   </section>;
 }
