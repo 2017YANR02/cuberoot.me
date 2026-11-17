@@ -100,6 +100,7 @@ suite('workspace shared planning persistence', () => {
       await q('INSERT INTO workspace_revisions(report_id,version,snapshot,created_at) VALUES (?,1,?,1)',[id,{projectId,projectName:'Retired project',projectActive:true,progress:'Keep original revision'}]);
     }
     await exec(readFileSync(new URL('../migrations/0332_workspace_remove_projects.sql', import.meta.url), 'utf8'));
+    await exec(readFileSync(new URL('../migrations/0337_workspace_checklist_sections.sql', import.meta.url), 'utf8'));
     service = createWorkspaceService(q, transaction);
     aliceId = (await service.post(admin, 'member', { userId: 2, name: 'Alice', role: 'manager', active: true })).id as number;
     bobId = (await service.post(admin, 'member', { userId: 3, name: 'Bob', role: 'member', active: true })).id as number;
@@ -135,6 +136,44 @@ suite('workspace shared planning persistence', () => {
     expect(response).not.toHaveProperty('categories');
     expect(response).not.toHaveProperty('checklists.0.category');
     expect(await service.get(alice, 'checklists', new URLSearchParams())).toMatchObject({ checklists: [{ version: 2, items: [{ done: true }] }] });
+  });
+
+  it('stores empty explicit categories and never classifies text prefixes', async () => {
+    const category = { id: randomUUID(), name: '/recon' };
+    const input = { ...checklist(), categories: [category] };
+    input.items[0].text = '/recon literal text';
+    await service.post(alice, 'checklist', input);
+    expect((await q('SELECT items,categories FROM workspace_checklists WHERE id=?', [input.id]))[0]).toEqual({ items: input.items, categories: [category] });
+    await expect(service.post(alice, 'checklist', { ...input, version: 1, categories: undefined })).rejects.toMatchObject({ status: 409 });
+    await expect(service.post(alice, 'checklist', { ...input, version: 1, items: [{ ...input.items[0], categoryId: randomUUID() }] })).rejects.toThrow();
+    await expect(service.post(alice, 'checklist', { ...input, version: 1, categories: [category, category] })).rejects.toThrow();
+    await service.post(alice, 'checklist-delete', { id: input.id, version: 1 });
+  });
+
+  it('moves across lists atomically with stale version and identity protection', async () => {
+    const category = { id: randomUUID(), name: 'Destination' };
+    const source = { ...checklist(), categories: [], items: [
+      { id: randomUUID(), text: '/recon keep literal', done: false },
+      { id: randomUUID(), text: 'Hidden archived', done: true, archived: true },
+    ] };
+    const target = { ...checklist(), categories: [category], items: [] };
+    await service.post(alice, 'checklist', source);
+    await service.post(alice, 'checklist', target);
+    const move = { id: source.id, version: 1, targetId: target.id, targetVersion: 1, itemIds: source.items.map(item => item.id), categoryId: category.id };
+    await expect(service.post(bob, 'checklist-move', { ...move, targetVersion: 0 })).rejects.toMatchObject({ status: 409 });
+    await expect(service.post(bob, 'checklist-move', { ...move, categoryId: randomUUID() })).rejects.toMatchObject({ status: 400 });
+    await expect(service.post(bob, 'checklist-move', { ...move, itemIds: [randomUUID()] })).rejects.toMatchObject({ status: 400 });
+    expect((await q<{ items: unknown }>('SELECT items FROM workspace_checklists WHERE id=?', [source.id]))[0].items).toEqual(source.items);
+    await service.post(bob, 'checklist-move', move);
+    expect((await q<{ items: unknown }>('SELECT items FROM workspace_checklists WHERE id=?', [source.id]))[0].items).toEqual([]);
+    const moved = source.items.map(item => ({ ...item, categoryId: category.id }));
+    expect((await q<{ items: unknown }>('SELECT items FROM workspace_checklists WHERE id=?', [target.id]))[0].items).toEqual(moved);
+    await expect(service.post(alice, 'checklist', { ...target, version: 2, categories: [], items: moved })).rejects.toThrow();
+    await service.post(alice, 'checklist', { ...target, version: 2, categories: [], items: [] });
+    expect((await q('SELECT items,categories FROM workspace_checklists WHERE id=?', [target.id]))[0]).toEqual({ items: [], categories: [] });
+    await expect(service.post(bob, 'checklist-move', move)).rejects.toMatchObject({ status: 409 });
+    await service.post(alice, 'checklist-delete', { id: source.id, version: 2 });
+    await service.post(alice, 'checklist-delete', { id: target.id, version: 3 });
   });
 
   it('deletes entire checklists with access, version and audit checks', async () => {

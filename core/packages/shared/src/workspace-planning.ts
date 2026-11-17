@@ -1,11 +1,12 @@
 /** @module Shared workspace checklist and schedule contracts and calendar arithmetic. */
-export type ChecklistItem = { id: string; text: string; done: boolean; archived?: boolean };
+export type ChecklistItem = { id: string; text: string; done: boolean; archived?: boolean; categoryId?: string };
 export type WorkspaceBoard = {
   id: string; name: string; version: number;
   active: boolean;
   canEdit: boolean;
 };
-export type Checklist = WorkspaceBoard & { items: ChecklistItem[] };
+export type ChecklistCategory = { id: string; name: string };
+export type Checklist = WorkspaceBoard & { items: ChecklistItem[]; categories?: ChecklistCategory[] };
 
 /** Stable partition: restoring an item returns it to its original position. */
 export function orderChecklistItems(items: readonly ChecklistItem[]): ChecklistItem[] {

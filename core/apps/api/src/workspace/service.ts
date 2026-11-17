@@ -140,6 +140,7 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
           case 'work-pattern': return workCalendar(q, a, identity).savePattern(input);
           case 'work-exception': return workCalendar(q, a, identity).saveException(input);
           case 'checklist': return planning(q, a).saveChecklist(input);
+          case 'checklist-move': return planning(q, a).moveChecklistItems(input);
           case 'checklist-delete': return planning(q, a).deleteChecklist(input);
           case 'schedule': return planning(q, a).saveSchedule(input);
           case 'schedule-delete': return planning(q, a).deleteSchedule(input);

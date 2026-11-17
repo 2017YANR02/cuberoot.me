@@ -599,6 +599,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 337, slug: 'workspace_checklist_sections', desc: { zh: '清单内独立分类，保留原事项正文与状态', en: 'Explicit checklist sections, preserving existing task text and states' } },
   { n: 336, slug: 'dev_preview_worker_lease', desc: { zh: '开发网址双机协调、到期接管及共享恢复进度，不授予审批权限', en: 'Coordinate preview workers with lease expiry and shared recovery; no approval permission' } },
   { n: 335, slug: 'assistant_durable_queue', desc: { zh: '持久聊天收件、执行租约、工具检查点与恢复', en: 'Durable chat inbox, execution leases, tool checkpoints and recovery' } },
   { n: 334, slug: 'assistant_run_control', desc: { zh: '聊天执行状态、跨进程停止与会话串行约束', en: 'Chat run state, cross-worker cancellation and serialized conversations' } },

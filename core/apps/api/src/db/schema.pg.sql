@@ -9538,6 +9538,7 @@ CREATE TABLE recon_intake_revisions (
 
 -- Workspace-wide checklists; archived lists remain readable.
 CREATE TABLE workspace_checklists (
+  categories JSONB NOT NULL DEFAULT '[]'::jsonb CHECK (jsonb_typeof(categories) = 'array'),
   id UUID PRIMARY KEY,
   name TEXT NOT NULL CHECK (length(name) BETWEEN 1 AND 80),
   items JSONB NOT NULL CHECK (jsonb_typeof(items) = 'array'),
