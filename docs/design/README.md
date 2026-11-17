@@ -14,6 +14,8 @@
 
 ## 文档与登记
 
+- [网站主导航与子页面接入](site-navigation.md)
+
 - [BP generated artwork](bp-generated-artwork.md)
 - [CubeRoot 连续圆角接入跟踪](continuous-corners.md)
 - [设备图片来源](equipment-images.md)
