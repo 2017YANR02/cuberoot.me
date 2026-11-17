@@ -12,6 +12,21 @@
 
 ## Partner Center 配置
 
+### 公司账号核验材料（2026-11-16 补件）
+
+本次补件用于公司账号的 `Employment verification`（申请人与公司的关联核验），不是应用包送审。当前状态与下一步统一见[App 路线图](../product/apps/mobile-app-roadmap.md#2026-11-15-windows-microsoft-store-基础本地未送审)。
+
+- 提交时间：2026-11-16 18:27（America/Los_Angeles，UTC−08:00），即北京时间 2026-11-17 10:27；Store Developer 对话中已出现本次说明、附件及微软接收回执。
+- 提交附件：`cuberoot-domain-verification.pdf`，共两页。第一页为阿里云域名证书原图转 PDF，保留完整正文和印章；第二页为阿里云原始「已付款业务清单」直接打印为 PDF。未用自行撰写的证明替换官方材料。
+- 证书记录：域名 `cuberoot.me`，持有人「颜瑞民 / yan rui min」，注册商 Alibaba Cloud Computing (Beijing) Co., Ltd.，注册日期 2018-12-13，到期日期 2028-12-13。
+- 付款记录：2025-06-05 转入阿里云，金额 CNY 110，到期日期 2028-12-13；这是域名转入付款，不是 2018 年首次注册的付款记录。两份官方材料的出具日期均保留为 2026-11-17。
+- 在表单评论中已明确说明：Ruimin Yan（颜瑞民）是申请公司 Shanghai CubeRoot Technology Co.,Ltd.（上海魔方根科技有限公司）的法定代表人；证书中的 `yan rui min` 是同一人；域名仍登记在其个人名下，未声称已过户给公司。
+- 提交后的微软回执提示通常需 5–7 个工作日，并会通过邮件通知结果或补件要求；此时仅证明材料已接收，不代表核验通过。
+
+原始证书、两份独立 PDF、合并提交 PDF 和 `microsoft-submission-result.jpg` 保存在维护者本机的 `.local-data/windows-store/verification-2026-11-16/`。这些私有材料及微软附件临时签名链接不进入 Git；本节只保留材料摘要和证据定位。
+
+### 正式应用包身份
+
 公司主体完成 Microsoft Store 开发者验证后，新建 **MSIX/PWA 类型**应用，预留 `CubeRoot`（名称可用性待后台核验）。不要新建 EXE/MSI 类型条目来接收此 MSIX。
 
 从应用 Product identity 原样取得以下值，保存为 GitHub 仓库 Actions variables，或者在本地执行命令时通过同名环境变量注入。这些是公开包身份，不是商户或微软账号凭据；不要根据品牌、域名或组织名称猜值。
