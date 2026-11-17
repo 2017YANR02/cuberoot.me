@@ -59,6 +59,22 @@ CFOP、Roux、ZZ 的分步文字统一经过 `buildReconText`，共享中层、�
 
 Roux、ZZ 仍沿用现有阶段粒度，不新增 CMLL/ZBLL case 或参考解法分析；CFOP 的早期 Z 转体抑制和 Cross AUF 边界规则不应用于它们。不同方法、语言的异步分析缓存隔离，CFOP 手工文字覆盖不套用到其他方法。验证包括 `recon-method-gestures`、`recon-wide-timing`、`recon-waste-coll`、`reconstruct-worker` 测试及复盘 ground-truth 门禁。
 
+## 新增文件与包导出的自动恢复
+
+`dev:serve` 使用 `core/scripts/next-dev.mts` 启动 Next。启动器按 workspace 依赖关系监听 Web 及共享包的源码结构和 `package.json`：新增、删除或移动源码文件、修改包导出时，等待 700ms 安静期后合并重启自己的 Next 子进程；退出完成后只清理对应 `NEXT_DEV_DIST_DIR`（默认 `.next`）下的 `dev/`，保留生产输出。普通内容修改和编辑器原子保存仍走 Fast Refresh；`node_modules`、`dist`、隐藏缓存目录不触发重启。
+
+这是对 Tailwind/PostCSS 缺失文件与导出解析缓存、失败编译依赖追踪不完整的开发侧恢复措施，不掩盖真正缺失的模块。文件尚未补齐时仍显示编译错误，补齐后自动重试；批量编辑可能短暂断开并重新连接开发服务。`cuberoot`、普通 `dev`、`dev:clean`、`dev:safe` 及预览入口均复用该包装器，Ctrl+C 同时关闭监听与本会话的 Next 子进程。直接运行裸 `next dev` 不包含此保护。
+
+从 `core/` 运行 `node --test scripts/dev-preview/structure.test.ts` 验证监听边界与批量合并。Tailwind 缓存机制见 [上游 #20638](https://github.com/tailwindlabs/tailwindcss/issues/20638)。
+
+## Next 开发清单并发写入修复
+
+Next 16.4.6 的开发服务器在多个 `generateStaticParams` 请求同时完成时，异步读改写同一份 `prerender-manifest.json`，可能丢失路由或留下非法 JSON 尾部，进而持续返回 500。根 `[lang]` 布局的多语言静态参数使多个页面都触发该路径；仅清缓存不能预防复发。
+
+`core/patches/next@16.4.6.patch` 回移 [Next 上游修复 #100521](https://github.com/vercel/next.js/pull/100521)，在 CJS/ESM 开发实现中连续同步读取、合并和写回，并同步初始化清单。补丁由 `core/pnpm-workspace.yaml` 和锁文件登记，正常安装依赖自动应用，不修改生产请求处理逻辑。升级 Next 时核对上游是否已包含修复，再删除旧版本补丁；不要静默跳过失败的补丁。
+
+从 `core/` 运行 `node --test scripts/dev-preview/prerender-manifest.test.ts`，验证已安装 Next 的实际更新代码在并发下保留全部页面和语言，并以原异步实现作为失败对照。恢复现有损坏清单仍须保存证据后重启 `cuberoot`；不要在服务运行期间手工改写清单。
+
 ## Turbopack 开发缓存恢复
 
 若 `next dev` 显示 Ready，但访问页面后持续出现 `conflicting effects for the same key`，先保存 panic 日志并停止该项目的开发服务。将 `core/packages/client/.next/dev/cache/turbopack` 改名备份，再从 `core/` 运行 `pnpm --filter @cuberoot/client dev`，让 Turbopack 重建开发缓存；使用自定义 `NEXT_DEV_DIST_DIR` 时，对应调整缓存路径。

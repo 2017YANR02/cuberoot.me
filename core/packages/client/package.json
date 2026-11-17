@@ -43,7 +43,7 @@
     "build:account-avatars": "node --import tsx scripts/build-account-avatars.ts",
     "build:cube-history": "node --import tsx scripts/build-cube-history.ts",
     "check:cube-history": "node --import tsx scripts/build-cube-history.ts --check",
-    "dev:serve": "next dev -H 127.0.0.1 -p 3000",
+    "dev:serve": "node ../../scripts/next-dev.mts",
     "dev:serve:safe": "node scripts/dev-safe.mjs",
     "test:ci": "vitest run --exclude tests/cross_trainer_reach.test.ts"
   },

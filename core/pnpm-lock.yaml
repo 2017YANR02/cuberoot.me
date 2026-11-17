@@ -24,6 +24,7 @@ patchedDependencies:
   '@app-foundation/workspace-ui@0.1.0': b4551044f29598c330657b7084311fb2fffebda1dba4556695d44ba43b4d5430
   '@ffmpeg/ffmpeg@0.12.15': d090b58375aee305ddf5682a64c6ff2ea4397b71a6469fc4f7156fa2863b8d1d
   cubing@0.63.3: 026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6
+  next@16.4.6: f875e221f7f5ee62851d1067a4459518c2b46a681f248d6d0654fcc54bce4a1b
   wx-to-tt@0.3.0-beta.3: 111e6a7835324d3221f89b15b1bf005abbaaa6e95272e1c3ba4ad75a80baf537
 
 importers:
@@ -861,10 +862,10 @@ importers:
         version: 2.3.0
       next:
         specifier: 16.4.6
-        version: 16.4.6(@playwright/test@1.65.1)(@types/node@20.19.41)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 16.4.6(patch_hash=f875e221f7f5ee62851d1067a4459518c2b46a681f248d6d0654fcc54bce4a1b)(@playwright/test@1.65.1)(@types/node@20.19.41)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       nuqs:
         specifier: ^2.8.9
-        version: 2.8.9(next@16.4.6(@playwright/test@1.65.1)(@types/node@20.19.41)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        version: 2.8.9(next@16.4.6(patch_hash=f875e221f7f5ee62851d1067a4459518c2b46a681f248d6d0654fcc54bce4a1b)(@playwright/test@1.65.1)(@types/node@20.19.41)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       opencc-js:
         specifier: ^1.0.5
         version: 1.0.5
@@ -10993,7 +10994,7 @@ snapshots:
     dependencies:
       content-type: 2.1.0
 
-  next@16.4.6(@playwright/test@1.65.1)(@types/node@20.19.41)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  next@16.4.6(patch_hash=f875e221f7f5ee62851d1067a4459518c2b46a681f248d6d0654fcc54bce4a1b)(@playwright/test@1.65.1)(@types/node@20.19.41)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       '@next/env': 16.4.6
       '@swc/helpers': 0.5.23
@@ -11039,12 +11040,12 @@ snapshots:
     dependencies:
       boolbase: 1.0.0
 
-  nuqs@2.8.9(next@16.4.6(@playwright/test@1.65.1)(@types/node@20.19.41)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4):
+  nuqs@2.8.9(next@16.4.6(patch_hash=f875e221f7f5ee62851d1067a4459518c2b46a681f248d6d0654fcc54bce4a1b)(@playwright/test@1.65.1)(@types/node@20.19.41)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4):
     dependencies:
       '@standard-schema/spec': 1.0.0
       react: 19.2.4
     optionalDependencies:
-      next: 16.4.6(@playwright/test@1.65.1)(@types/node@20.19.41)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      next: 16.4.6(patch_hash=f875e221f7f5ee62851d1067a4459518c2b46a681f248d6d0654fcc54bce4a1b)(@playwright/test@1.65.1)(@types/node@20.19.41)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
   object-assign@4.1.1: {}
 

@@ -31,8 +31,8 @@ const STATUS_LOG = path.join(TMP, 'dev-safe-status.log');
 const RAM_CAP_MB = 2500;
 const SAMPLE_MS = 2000;
 
-const nextBin = path.join(ROOT, 'node_modules', 'next', 'dist', 'bin', 'next');
-const child = spawn(process.execPath, [nextBin, 'dev', '-H', '127.0.0.1', '-p', '3000'], {
+const nextBin = path.resolve(ROOT, '../../scripts/next-dev.mts');
+const child = spawn(process.execPath, [nextBin, '-H', '127.0.0.1', '-p', '3000'], {
   cwd: ROOT,
   stdio: 'inherit',
   env: {
