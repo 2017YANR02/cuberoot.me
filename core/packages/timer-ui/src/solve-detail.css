@@ -39,13 +39,17 @@
   justify-content: center;
   padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
     max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
-  background: color-mix(in srgb, var(--foreground) 70%, transparent);
+  background: var(--modal-overlay, var(--foreground));
+}
+
+@supports (color: color-mix(in srgb, black, white)) {
+  .timer-solve-detail-overlay { background: color-mix(in srgb, var(--foreground) 70%, transparent); }
 }
 
 .timer-solve-detail-modal {
   width: 100%;
   max-width: 480px;
-  max-height: min(80dvh, calc(100dvh - 40px));
+  max-height: min(80vh, calc(100vh - 40px));
   min-width: 0;
   overflow-x: hidden;
   overflow-y: auto;
@@ -54,6 +58,10 @@
   border-radius: 8px;
   background: var(--popover);
   color: var(--foreground);
+}
+
+@supports (height: 100dvh) {
+  .timer-solve-detail-modal { max-height: min(80dvh, calc(100dvh - 40px)); }
 }
 
 .timer-solve-detail-modal h2 {
@@ -148,7 +156,11 @@
 }
 
 .timer-solve-detail-split-row:nth-child(odd) {
-  background: color-mix(in srgb, var(--foreground) 2%, transparent);
+  background: var(--muted);
+}
+
+@supports (color: color-mix(in srgb, black, white)) {
+  .timer-solve-detail-split-row:nth-child(odd) { background: color-mix(in srgb, var(--foreground) 2%, transparent); }
 }
 
 .timer-solve-detail-split-row > span {
@@ -267,11 +279,15 @@
 .timer-solve-detail-action:disabled,
 .timer-solve-detail-close:disabled { cursor: not-allowed; opacity: 0.55; }
 .timer-solve-detail-danger {
-  border-color: color-mix(in srgb, var(--destructive) 45%, transparent);
+  border-color: var(--destructive);
   color: var(--destructive);
 }
 .timer-solve-detail-danger:hover {
-  background: color-mix(in srgb, var(--destructive) 14%, transparent);
+  background: var(--shell-hover, var(--muted));
+}
+@supports (color: color-mix(in srgb, black, white)) {
+  .timer-solve-detail-danger { border-color: color-mix(in srgb, var(--destructive) 45%, transparent); }
+  .timer-solve-detail-danger:hover { background: color-mix(in srgb, var(--destructive) 14%, transparent); }
 }
 
 .timer-solve-detail-close {
@@ -291,14 +307,18 @@
   display: flex;
   animation: timer-solve-detail-page-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
   width: 100%;
-  height: 100dvh;
+  height: 100vh;
   max-width: none;
-  max-height: 100dvh;
+  max-height: 100vh;
   flex-direction: column;
   overflow: hidden;
   padding: 0;
   border: 0;
   border-radius: 0;
+}
+
+@supports (height: 100dvh) {
+  .timer-solve-detail-modal--full { height: 100dvh; max-height: 100dvh; }
 }
 
 .timer-solve-detail-overlay--full.timer-solve-detail-overlay--closing {
@@ -389,15 +409,19 @@
   .timer-solve-detail-overlay--full { padding: 0; }
   .timer-solve-detail-modal {
     max-width: 100%;
-    max-height: calc(100dvh - 16px);
+    max-height: calc(100vh - 16px);
     padding: 14px;
     border-radius: 6px;
   }
   .timer-solve-detail-modal--full {
-    height: 100dvh;
-    max-height: 100dvh;
+    height: 100vh;
+    max-height: 100vh;
     padding: 0;
     border-radius: 0;
+  }
+  @supports (height: 100dvh) {
+    .timer-solve-detail-modal { max-height: calc(100dvh - 16px); }
+    .timer-solve-detail-modal--full { height: 100dvh; max-height: 100dvh; }
   }
   .timer-solve-detail-action,
   .timer-solve-detail-close,
