@@ -79,14 +79,6 @@ body .landing-page.landing-page--navigation {
   padding-top: 32px;
 }
 .landing-page--navigation .cards-sections { margin-bottom: 24px; }
-.landing-page--navigation .cards-section > .cards-container {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-@media (max-width: 640px) {
-  .landing-page--navigation .cards-section > .cards-container {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 .landing-community-members { display: contents; }
 
 
