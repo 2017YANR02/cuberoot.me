@@ -416,7 +416,12 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
     padding: 0 max(12px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
     background: var(--background);
   }
-  .f2l-study-dock .f2l-study-actions { position: static; inset: auto; gap: 4px; padding-top: 8px; }
+  .f2l-study-dock .f2l-study-actions { position: static; inset: auto; display: grid; grid-template-columns: 96px minmax(0, 1fr) 96px; gap: 4px; padding-top: 8px; }
+  .f2l-study-actions > .f2l-footer-button:first-child { grid-column: 1; grid-row: 2; }
+  .f2l-study-actions > .tutorial-section-menu-host { grid-column: 2; grid-row: 2; }
+  .f2l-study-actions > .f2l-footer-button:last-child { grid-column: 3; grid-row: 2; }
+  .f2l-study-actions > .f2l-study-secondary-actions { grid-column: 1 / -1; grid-row: 1; justify-content: center; margin-inline-start: 0; }
+  .f2l-study-actions > .f2l-study-secondary-actions:empty { display: none; }
   .f2l-study-dock .f2l-footer-button { width: auto; min-width: 0; height: auto; gap: 4px; padding: 8px 6px; font-size: .8rem; }
   .tutorial-section-menu-host { display: block; min-width: 0; }
   .tutorial-section-menu-host:empty { display: none; }
