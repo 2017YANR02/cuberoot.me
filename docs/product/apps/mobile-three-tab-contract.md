@@ -2,7 +2,7 @@
 
 状态：`ACTIVE`
 
-最后更新：2026-09-01
+最后更新：2026-11-16
 
 所有者决定：Android、iOS、HarmonyOS NEXT、Windows 和 macOS 共用“计时 / 工具 / 我的”三个产品 surface；紧凑窗口使用底栏，桌面窗口仍消费同一个 React 导航与三栏状态，不得建立平台专用功能树。三栏的内容、视觉、交互、状态和功能完整一致是验收目标，第一原则是不复制网站页面形成多端维护。五端宿主与单一来源的最高优先级边界见 [cross-platform-app-contract.md](./cross-platform-app-contract.md)。
 
@@ -15,7 +15,7 @@
 | 底栏 | 权威内容 | App 行为 | 完成标准 |
 | --- | --- | --- | --- |
 | 计时 | 网站 `/timer` 的完整 UI/UX；原生 BLE 等只替换 transport | 使用打包进 App 的共享 React 计时器，离线可用 | 按 [mobile-timer-parity-tracker.md](./mobile-timer-parity-tracker.md) 全矩阵验收 |
-| 工具 | 当前语言的网站首页 `/` 或 `/zh`，以及从其中进入的所有子页面 | 直接显示网站真实页面；站内卡片和链接继续在同一 Web browsing context 导航 | 首页内容、卡片、路由和子页面不复制；真实点击 smoke 通过 |
+| 工具 | 当前语言的网站首页 `/` 或 `/zh`，以及从其中进入的所有子页面 | 直接显示网站真实页面；一般站内链接留在同一 Web browsing context，计时根入口及 App 外观入口按下述 bridge 合同交给壳 | 首页内容、卡片、路由和子页面不复制；真实点击 smoke 通过 |
 | 我的 | 当前语言的网站 `/account` 或 `/zh/account` | 直接显示网站真实账号页和现有登录/账号管理能力 | 使用网站唯一账号系统；不建设 Mobile 第二套账号页 |
 
 “完整网站”在这里是内容事实源，不意味着把 Next 源码复制进任一宿主，也不意味着把整个 App 启动地址改成远程 URL。计时仍保留本地优先和原生能力；工具与我的是明确的在线 Web surface。
@@ -60,7 +60,7 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（同一 Tauri 工程�
 - 工具和我的各自拥有持久 browsing context，切换底栏不丢失当前子页面。
 - iframe 直接访问 `https://cuberoot.me` 的真实路由，站内卡片与子页面无需客户端路由表。
 - 底栏由打包的 `@cuberoot/app-ui` 持有，不进入网站源码。
-- 网站与原生壳只通过 `@cuberoot/shared/mobile-embed` 的导航消息契约协作：网站报告当前栏的历史深度，宿主把系统返回动作送给当前 iframe；不维护客户端页面路由副本。
+- 网站与原生壳通过 `@cuberoot/shared/mobile-embed` 协作：网站报告当前栏的历史深度，宿主把系统返回动作送给当前 iframe；产品栏切换和 App 外观使用明确消息，不维护客户端页面路由副本。
 - 工具/我的需要网络；离线时计时仍可用，Web surface 显示明确网络状态。
 - 两个 surface 复用同一加载/离线/错误/重试 UI；宿主在线且 iframe 发出可见加载事件即可展示页面，同时有界重试 init（当前最多约 10 秒），同源且来自该 iframe 的导航 ACK 可提前停止。ACK 用于返回栈、外链和账号桥能力，不能在生产 bridge 尚未部署时被错误地当作页面可见性的前置条件。
 - 跨域 iframe 的初始空白、弱网挂起、HTTP 5xx 和 frame 拒绝不能仅靠父页面 `load/error` 可靠区分；不得用假定时器冒充检测成功。共享层先可靠处理宿主 Network 离线，其他故障以生产 bridge ACK 或已授权的通用宿主能力补齐，不为五个平台各造 WebView 回调。
@@ -70,6 +70,20 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（同一 Tauri 工程�
 登录入口与网站同样由 `/v1/auth/providers` 的当前配置决定；网站显示邮箱、手机、WCA、Google、微信、QQ 或支付宝中的哪些方式，App 就必须显示并最终支持同一组，不建 Mobile provider 白名单。
 
 `auth=mobile` 是另一条“系统浏览器登录 → 90 秒 PKCE 单次票据 → 原生安全存储”交接流程的参数。未指定 provider 时它会把 `LoginForm` 切成 `firstPartyOnly`；由 Account bridge 明确传入第三方 provider 时，系统浏览器可显示网站 canonical SSO 列表并继续同一条 PKCE 流。把该参数用于“我的”iframe 仍是明确的 parity 回归，不是合规优化。
+
+#### 产品栏导航与 App 外观（2026-11-16）
+
+所有者本轮明确要求导航及外观在 App 内统一，以下条款替代安装端此前由网站外观弹层分别保存、以及所有站内链接一律留在 iframe 的入口行为；普通独立网站仍保持原行为。
+
+- 可信宿主 `init.shellNavigation` 开启后，同站普通计时根入口 `/timer`（含 `/en`、`/zh` 前缀，无业务参数与 hash，仅允许 `utm_*`、`gclid`、`fbclid`、`msclkid` 跟踪参数）通过 `select-tab` 切换现有计时栏，不在工具或我的内部再打开一套计时页与导航。含 `content`、`source`、`training`、`event`、`share`、`replay` 等业务参数、未知参数或 hash 的计时根链接暂通过现有外链 bridge 把完整 URL 交系统浏览器，不静默丢失参数，也不把此回退算作原生专项训练路由已完成。计时子页面、静态资源、认证/API 地址及普通外链不套用根入口切栏规则。
+- 工具中的普通 `/account` 根链接切换我的栏；仅带同站普通返回地址 `next` 的登录入口同样切栏。`view`、删除、账号安全、认证交接或其他业务参数仍由原有网站流程处理，外观设置委托优先于账号根入口判断。
+- “我的”根页没有网站首页父级时不显示“返回首页”；账号子页缺少有效来源时返回 `/account`，已有明确来源按来源返回。iframe 历史深度为零时不继续执行浏览器后退。切换底栏保留各自 browsing context。
+- 配色、背景、深浅色、对比度和语言属于同一 App 级偏好，由 `@cuberoot/app-ui` 的独立外观设置页编辑和保存，计时、工具、我的共用。我的壳设置入口、网站外观按钮及账号外观/通用设置入口通过 `open-settings` 委托该页，关闭或系统返回回到原来的栏/设置页；不新增平台专用设置树。可信能力启用后，网站外观按钮不再 hover 展示或预览本地菜单；我的账号内容隐藏重复的设置标题及通用/外观分类，保留我的空间和账号安全。直接访问全局设置 query 时也委托宿主，不渲染第二套编辑器或隐式启动无关认证续接。
+- 偏好模型及严格 decoder 位于 `@cuberoot/shared/appearance`，存储与 DOM 适配复用 `@cuberoot/app-ui/appearance` 的独立入口，不 import App 根组件。旧计时主题/语言只用于首次迁移；计时备份或后续快照不得覆盖已保存的 App 外观。
+- 宿主在可信 `init.appearance`、iframe ready 及偏好变更时发送最新值；`cuberoot:mobile:appearance` 同时核对 origin、实际 iframe source 与 surface。仅完整合法偏好可应用，网站不反向覆盖宿主。重复消息不产生事件回环，网站未提交的预览也须恢复宿主外观；iframe 禁止持久存储时仍应用 DOM 并继续初始化。
+- 语言仍沿用现有显式入口和路由合同，外观消息不通过导航 ACK 改写静态、认证或后续导航 URL。旧宿主未声明 `shellNavigation` 时，不拦截网站的计时/外观入口。
+
+这些是共享实现与验收要求，不是部署或全平台真机完成声明。网站 bridge 与新版 App 独立发布，必须分别记录双方版本、实际点击/返回、重开偏好恢复及各平台验收证据。
 
 ### 3.2 账号功能与会话一致性
 
@@ -154,12 +168,12 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（同一 Tauri 工程�
 | ID | 验收合同 |
 | --- | --- |
 | NAV-01 | 五端消费同一份“计时 / 工具 / 我的”React 导航；紧凑窗口默认三等分底栏，宿主提供系统安全竖栏时，同一三个按钮可移入竖栏，仅显示图标并保留可访问名称与 44px 点击区 |
-| NAV-02 | 切换栏保留计时状态及工具/我的两个 browsing context |
+| NAV-02 | 切换栏保留计时状态及工具/我的两个 browsing context；Web 计时根入口切到现有计时栏，App 外观由三栏共用的独立设置页保存 |
 | WEB-01 | 工具栏加载当前语言的网站 canonical 首页 |
 | WEB-02 | 首页全部真实卡片可进入正确子页面，页内核心功能可用 |
 | WEB-03 | 站内返回、外链、下载、分享、文件和全屏按统一策略工作 |
 | WEB-04 | iframe 受限能力使用同一 URL 的 Browser 或原生 adapter 回退，并明确告知状态 |
-| ACC-01 | 我的栏加载未改写的当前语言 `/account` |
+| ACC-01 | 我的栏加载未改写的当前语言 `/account`；根页无网站首页返回，账号子页无有效来源时回到账号根页 |
 | ACC-02 | 网站当前全部登录、注册、绑定和解绑 provider 在 App 可用 |
 | ACC-03 | Account iframe、系统浏览器和安全会话的登录、退出、注销状态一致 |
 | IOS-01 | iOS 复用同一三栏和 Web surface，不出现 SwiftUI 或第二套 React 业务树 |

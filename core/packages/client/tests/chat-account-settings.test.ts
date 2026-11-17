@@ -5,6 +5,7 @@ import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import SettingsPanel from '@/components/account/SettingsPanel';
 import ChatPage from '@/app/[lang]/chat/page';
+import { setInstalledShellNavigation } from '@/lib/installed-shell-navigation';
 
 const mocks = vi.hoisted(() => ({ mounted: vi.fn(), unmounted: vi.fn(), url: vi.fn() }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
@@ -33,7 +34,7 @@ beforeEach(() => {
   HTMLDialogElement.prototype.close = function () { this.open = false; };
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
 });
-afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
+afterEach(async () => { await act(async () => root.unmount()); setInstalledShellNavigation(null); host.remove(); });
 
 it('preserves account drafts and auth continuation parameters when visiting General', async () => {
   await render('?view=signin&next=%2Fauth%2Fmobile&link_provider=apple&expected_uid=66');
@@ -87,4 +88,33 @@ it('closes the chat settings on native Escape cancellation', async () => {
   await act(async () => host.querySelector('dialog')!.dispatchEvent(cancel));
   expect(cancel.defaultPrevented).toBe(true);
   expect(host.querySelector('dialog')).toBeNull();
+});
+
+it('removes the duplicate Account settings header and global categories only for a capable account shell', async () => {
+  await render('');
+  expect(host.querySelector('h1')).not.toBeNull();
+  expect(nav('通用')).toBeTruthy();
+  await act(async () => setInstalledShellNavigation(vi.fn(), 'tools'));
+  expect(host.querySelector('h1')).not.toBeNull();
+  await act(async () => setInstalledShellNavigation(vi.fn(), 'account'));
+  expect(host.querySelector('h1')).toBeNull();
+  expect(nav('通用')).toBeUndefined();
+  expect(nav('外观')).toBeUndefined();
+  expect(nav('我的空间')).toBeTruthy();
+  expect(nav('账号与安全')).toBeTruthy();
+  await act(async () => setInstalledShellNavigation(null));
+  expect(host.querySelector('h1')).not.toBeNull();
+  expect(nav('通用')).toBeTruthy();
+});
+
+it.each(['general', 'appearance'])('delegates a direct %s query without showing local controls or starting auth', async section => {
+  const open = vi.fn();
+  setInstalledShellNavigation(open, 'account');
+  await render(`?settings=${section}&next=%2Fauth%2Fmobile`);
+  expect(open).toHaveBeenCalledTimes(1);
+  expect(host.querySelector('[data-general]')).toBeNull();
+  expect(mocks.mounted).not.toHaveBeenCalled();
+  expect(mocks.url).not.toHaveBeenCalled();
+  await click(nav('我的空间'));
+  expect(mocks.mounted).toHaveBeenCalledTimes(1);
 });

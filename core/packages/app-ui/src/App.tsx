@@ -1,3 +1,5 @@
+import { AppearanceBackground, AppAppearanceSettings, applyAppearancePreferences, persistAppearancePreferences, readAppearancePreferences } from './appearance';
+import { resolveAppearanceScheme, type AppearancePreferences } from '@cuberoot/shared/appearance';
 import { NotificationOpenQueue } from './notification-navigation';
 import { TimerResultsSessionBar } from '@cuberoot/timer-ui';
 import { AutoRecapDismissGesture } from '@cuberoot/shared/timer/reconstruct/recap';
@@ -70,6 +72,9 @@ import {
   decodeMobileEmbedAuthRequest,
   decodeMobileEmbedExternal,
   decodeMobileEmbedNavigation,
+  decodeMobileEmbedSelectTab,
+  decodeMobileEmbedOpenSettings,
+  mobileEmbedAppearanceMessage,
   decodeMobileEmbedWebSessionResult,
   MOBILE_EMBED_FRAME_NAMES,
   mobileEmbedAuthClearMessage,
@@ -367,7 +372,7 @@ const MOBILE_EMBED_AUTH_TIMEOUT_MS = 10_000;
 const repository = new TimerRepository(new IndexedDbTimerStoreDriver());
 const netRecordingOutbox = new NetRecordingOutbox(({ context, solve }) => repository.saveNetSolve(context.sessionId, solve), createNetOutboxStorage());
 
-type AppView = 'timer' | 'tools' | 'account' | 'history' | 'settings';
+type AppView = 'timer' | 'tools' | 'account' | 'history' | 'settings' | 'appearance';
 type PrimaryView = Extract<AppView, 'timer' | 'tools' | 'account'>;
 type ConnectionState = 'checking' | 'offline' | 'online';
 type WebSurfaceStatus = 'loading' | 'ready' | 'error';
@@ -389,13 +394,6 @@ function accountUrl(language: SupportedLanguage, view?: 'delete'): string {
   const path = language === 'zh' ? `${SITE_ORIGIN}/zh/account` : `${SITE_ORIGIN}/account`;
   return view ? `${path}?view=${view}` : path;
 }
-
-function applyPreferences(settings: TimerStoreSettings): void {
-  if (settings.theme === 'system') delete document.documentElement.dataset.theme;
-  else document.documentElement.dataset.theme = settings.theme;
-  document.documentElement.lang = settings.language === 'zh' ? 'zh-Hans' : 'en';
-}
-
 
 export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark?: ReactNode }) {
   const [toolsBlePicker, setToolsBlePicker] = useState<InstalledBlePicker | null>(null);
@@ -426,6 +424,15 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     registrations: TIMER_DEVICE_REGISTRATIONS,
   }), [host]);
   const [store, setStore] = useState<TimerStoreData | null>(null);
+  const [appearance, setAppearance] = useState<AppearancePreferences | null>(null);
+  const appearanceRef = useRef(appearance);
+  const [systemDark, setSystemDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => setSystemDark(query.matches);
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
   const storeRef = useRef(store);
   storeRef.current = store;
   const timerSound = useMemo(() => createTimerSound(() => ({
@@ -456,6 +463,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const recapAttemptRevisionRef = useRef(0);
   const [loadError, setLoadError] = useState<Error | null>(null);
   const [view, setView] = useState<AppView>('timer');
+  const appearanceReturnRef = useRef<Exclude<AppView, 'appearance'>>('account');
+  const selectedView = view === 'appearance' ? appearanceReturnRef.current : view;
   const [settingsCategory, setSettingsCategory] = useState<TimerSettingCategoryId>('timer');
   const [timerMode, setTimerMode] = useState<TimerPlayersValue>(1);
   const wideLayout = useTimerWideLayout({ useHostContent: true });
@@ -618,7 +627,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const gestureActionsRef = useRef<Partial<Record<TimerGestureActionId, () => void>>>({});
   const keymapRef = useRef(resolveKeymap(undefined));
   const fallbackLanguage = preferredLanguage();
-  const language = store?.settings.language ?? fallbackLanguage;
+  const language = appearance?.locale ?? store?.settings.language ?? fallbackLanguage;
   const copy = COPY[language];
   const toolsWebUrl = installedWebEntryUrl(toolsEntryRoute
     ? siteRouteUrl(language, toolsEntryRoute)
@@ -1008,7 +1017,17 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     manualScramblesRef.current = data.settings.manualScrambles;
     wcaSourceSettingsRef.current = data.settings;
     setStore(data);
-    applyPreferences(data.settings);
+    // Migrate old timer preferences once; subsequent timer snapshots cannot
+    // overwrite the App-level appearance (including after imports/sign-in).
+    if (!appearanceRef.current) {
+      const next = readAppearancePreferences({ theme: data.settings.theme, locale: data.settings.language });
+      // Persist the migration before a timer backup can change its legacy fields.
+      // A restricted storage context must still be able to open the timer.
+      try { persistAppearancePreferences(next); } catch { /* This visit keeps the recovered preferences. */ }
+      appearanceRef.current = next;
+      setAppearance(next);
+      applyAppearancePreferences(next);
+    }
   }, []);
 
   const realSpecFor = useCallback((event: EventId): RealScrambleSourceSpec => ({
@@ -1800,7 +1819,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     clearWebSurfaceHandshake(surface);
     if (connection !== 'online') return;
     const postInit = () => webFrameRefs.current[surface]?.contentWindow?.postMessage(
-      mobileEmbedInitMessage(surface, { authProviders: MOBILE_AUTH_PROVIDERS, accountManagement: true, appleMembership: Boolean(host.appleMembership), googleMembership: Boolean(host.googleMembership), webMembership: Boolean(host.webMembership), bluetooth: surface === 'tools' && Boolean(host.createBleTransport) }),
+      mobileEmbedInitMessage(surface, { authProviders: MOBILE_AUTH_PROVIDERS, accountManagement: true, shellNavigation: true, appearance: appearanceRef.current ?? undefined, appleMembership: Boolean(host.appleMembership), googleMembership: Boolean(host.googleMembership), webMembership: Boolean(host.webMembership), bluetooth: surface === 'tools' && Boolean(host.createBleTransport) }),
       SITE_ORIGIN,
     );
     webHandshakeRetryRef.current[surface] = startWebSurfaceHandshake(
@@ -1820,6 +1839,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const finishWebSurfaceHandshake = useCallback((surface: MobileEmbedSurface) => {
     clearWebSurfaceHandshake(surface);
     webBridgeReadyRef.current[surface] = true;
+    if (appearanceRef.current) webFrameRefs.current[surface]?.contentWindow?.postMessage(
+      mobileEmbedAppearanceMessage(surface, appearanceRef.current), SITE_ORIGIN,
+    );
     webSurfaceLoadedRef.current[surface] = true;
     setWebSurfaceStatus((current) => (
       current[surface] === 'ready' ? current : { ...current, [surface]: 'ready' }
@@ -2006,10 +2028,39 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     setView(next);
   }, [announce, copy.finishAttemptFirst]);
 
+  const openAppAppearance = useCallback(() => {
+    if (timingRunningRef.current || battleModeActiveRef.current || timerContextMutationBusyRef.current) {
+      announce(copy.finishAttemptFirst);
+      return;
+    }
+    if (viewRef.current !== 'appearance') appearanceReturnRef.current = viewRef.current;
+    cancelTimerArmRef.current();
+    setView('appearance');
+  }, [announce, copy.finishAttemptFirst]);
+
+  const closeAppAppearance = useCallback(() => setView(appearanceReturnRef.current), []);
+  useEffect(() => {
+    if (view !== 'appearance') return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      if (event.target instanceof HTMLSelectElement) return;
+      event.preventDefault();
+      closeAppAppearance();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [view, closeAppAppearance]);
+
   const openToolsRoute = useCallback((route: string) => {
+    const destination = new URL(route, SITE_ORIGIN);
+    if (destination.pathname.replace(/^\/(en|zh)(?=\/|$)/, '').replace(/\/$/, '') === '/timer') {
+      if (!destination.search && !destination.hash) selectPrimaryView('timer');
+      else void host.openExternal(destination.href).catch(() => announce(copy.actionFailed));
+      return;
+    }
     setToolsEntryRoute(route);
     selectPrimaryView('tools');
-  }, [selectPrimaryView]);
+  }, [announce, copy.actionFailed, host, selectPrimaryView]);
 
   const remoteReturnRef = useRef(0);
   useEffect(() => {
@@ -2057,6 +2108,16 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== SITE_ORIGIN) return;
+      const selectTab = decodeMobileEmbedSelectTab(event.data);
+      const openSettings = decodeMobileEmbedOpenSettings(event.data);
+      const shellAction = selectTab ?? openSettings;
+      if (shellAction) {
+        const frame = webFrameRefs.current[shellAction.surface];
+        if (!frame || event.source !== frame.contentWindow || viewRef.current !== shellAction.surface) return;
+        if (selectTab) selectPrimaryView(selectTab.tab);
+        else openAppAppearance();
+        return;
+      }
       const accountFrame = webFrameRefs.current.account;
       const accountSource = Boolean(accountFrame && event.source === accountFrame.contentWindow);
 
@@ -2159,6 +2220,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     copy.actionFailed,
     copy.authError,
     finishWebSurfaceHandshake,
+    selectPrimaryView,
+    openAppAppearance,
     host,
     syncAccountWebSession,
   ]);
@@ -2190,6 +2253,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     void host.addBackButtonListener(() => {
       if (toolsBlePickerRef.current) { toolsBlePickerRef.current.cancel(); return; }
       const current = viewRef.current;
+      if (current === 'appearance') { setView(appearanceReturnRef.current); return; }
       if (layoutEditingRef.current) { finishLayoutEditing(); return; }
       if (trainerSubsetOpenRef.current) { trainerSubsetOpenRef.current = null; setTrainerSubsetOpen(null); return; }
       if (replayBlockingRef.current) { setReplayImportOpen(false); setReplaySolve(null); return; }
@@ -3110,6 +3174,25 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     });
   }, [announce, applyStoreSnapshot, copy.actionFailed, recoverLatestStoreSnapshot]);
 
+  const updateAppAppearance = useCallback((changes: Partial<AppearancePreferences>) => {
+    if (!appearanceRef.current) return;
+    const next = { ...appearanceRef.current, ...changes };
+    try {
+      persistAppearancePreferences(next);
+      applyAppearancePreferences(next);
+      appearanceRef.current = next;
+      setAppearance(next);
+      for (const surface of MOBILE_EMBED_SURFACES) {
+        if (webBridgeReadyRef.current[surface]) webFrameRefs.current[surface]?.contentWindow?.postMessage(
+          mobileEmbedAppearanceMessage(surface, next), SITE_ORIGIN,
+        );
+      }
+      if (storeRef.current?.settings.theme !== next.theme || storeRef.current?.settings.language !== next.locale) {
+        updateSettings({ theme: next.theme, language: next.locale });
+      }
+    } catch { announce(copy.actionFailed); }
+  }, [announce, copy.actionFailed, updateSettings]);
+
   const updateWcaSourceSettings = useCallback((
     patch: Partial<TimerWcaSourceSettings>,
   ) => {
@@ -3654,8 +3737,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const toggleMoreLanguage = useCallback(() => {
     let next: SupportedLanguage = 'zh';
     if (language === 'zh') next = 'en';
-    updateSettings({ language: next });
-  }, [language, updateSettings]);
+    if (appearanceRef.current) updateAppAppearance({ ...appearanceRef.current, locale: next });
+  }, [language, updateAppAppearance]);
 
   const toggleTimerFullscreen = useCallback(() => {
     void (async () => {
@@ -4024,6 +4107,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         '--solo-cube-scale': store?.settings.soloLayout.cubeScale ?? 1,
       } as CSSProperties}
     >
+      {appearance && <AppearanceBackground
+        choice={resolveAppearanceScheme(appearance, systemDark) === 'dark' ? appearance.darkBackground : appearance.lightBackground}
+        scheme={resolveAppearanceScheme(appearance, systemDark)} assetRoot={`${SITE_ORIGIN}/assets/home-backgrounds/v1`} />}
       <SiteCorners exclude=".site-glass-engine, .maplibregl-map" containers=".cg-card, .rc-card, .recon-card, .sortable-card, .timer-workspace-panel" />
       <TimerPrintController
         currentResult={timerText}
@@ -4059,6 +4145,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       <TimerWorkspace className="view-container" soloLayout={store?.settings.soloLayout} active={timerMode === 1 && timerVisible}
         data-live-reconstruction={liveSolutionPanel ? '' : undefined}
         panelOpen={dockHistory && !liveSolutionPanel} recap={liveSolutionPanel ?? solveRecap}>
+        {view === 'appearance' && appearance && <AppAppearanceSettings value={appearance}
+          effectiveTheme={resolveAppearanceScheme(appearance, systemDark)} backgroundAssetRoot={`${SITE_ORIGIN}/assets/home-backgrounds/v1`}
+          onChange={updateAppAppearance} onClose={closeAppAppearance} />}
         {timerVisible && timerMode === 1 && (
           <TimerSoloPage tools={{
           tool: openOverlay === TIMER_OVERLAY_IDS.bulkTool ? 'bulk' : openOverlay === TIMER_OVERLAY_IDS.bldTool ? 'bld-helper' : openOverlay === TIMER_OVERLAY_IDS.solverTool ? 'solver' : null,
@@ -4649,6 +4738,11 @@ children: <>
               hidden={view !== surface}
               key={surface}
             >
+              {surface === 'account' && <header className="app-account-toolbar" data-site-surface="heading">
+                <strong>{copy.my}</strong>
+                <button type="button" className="timer-toolbar-icon" onClick={openAppAppearance}
+                  aria-label={copy.appAppearance} title={copy.appAppearance}><SettingsIcon size={20} aria-hidden="true" /></button>
+              </header>}
               {showState && (
                 <div className="web-surface-state" role={status === 'error' ? 'alert' : 'status'}>
                   <p>{stateLabel}</p>
@@ -4821,27 +4915,10 @@ children: <>
             ]}>
             {settingsCategory === 'appearance' && <>
             <div className="settings-group">
-              <label className="settings-row">
-                <span className="settings-row-label">{copy.language}</span>
-                <select className="settings-row-control-select"
-                  onChange={(event) => updateSettings({ language: event.target.value as SupportedLanguage })}
-                  value={store!.settings.language}
-                >
-                  <option value="en">English</option>
-                  <option value="zh">简体中文</option>
-                </select>
-              </label>
-              <label className="settings-row">
-                <span className="settings-row-label">{copy.theme}</span>
-                <select className="settings-row-control-select"
-                  onChange={(event) => updateSettings({ theme: event.target.value as TimerStoreSettings['theme'] })}
-                  value={store!.settings.theme}
-                >
-                  <option value="system">{copy.system}</option>
-                  <option value="light">{copy.light}</option>
-                  <option value="dark">{copy.dark}</option>
-                </select>
-              </label>
+              <button type="button" className="settings-row" onClick={openAppAppearance}>
+                <span className="settings-row-label">{copy.appAppearance}</span>
+                <SettingsIcon aria-hidden="true" size={20} />
+              </button>
             </div>
 
             <TimerRankSettings language={language} scopes={store!.settings.rankScopes} country={store!.settings.rankCountry} accountCountry={rankAccountCountry} onScopes={rankScopes => updateSettings({ rankScopes })} onCountry={rankCountry => updateSettings({ rankCountry })} login={!activeAuthSession ? () => void auth.login() : undefined} />
@@ -5176,7 +5253,7 @@ children: <>
         style={sideNavigation && hostViewport?.bar ? { left: hostViewport.bar.x, top: hostViewport.bar.y,
           width: hostViewport.bar.width, height: Math.min(hostViewport.bar.height, Math.max(0, viewportHeight - hostViewport.bar.y)) } : undefined}>
         <button
-          aria-current={view === 'timer' || view === 'history' || view === 'settings' ? 'page' : undefined}
+          aria-current={selectedView === 'timer' || selectedView === 'history' || selectedView === 'settings' ? 'page' : undefined}
           data-no-timer
           disabled={timerContextMutationBusy}
           onClick={() => selectPrimaryView('timer')}
@@ -5186,7 +5263,7 @@ children: <>
           <span>{copy.timer}</span>
         </button>
         <button
-          aria-current={view === 'tools' ? 'page' : undefined}
+          aria-current={selectedView === 'tools' ? 'page' : undefined}
           data-no-timer
           disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
           onClick={() => selectPrimaryView('tools')}
@@ -5196,7 +5273,7 @@ children: <>
           <span>{copy.tools}</span>
         </button>
         <button
-          aria-current={view === 'account' ? 'page' : undefined}
+          aria-current={selectedView === 'account' ? 'page' : undefined}
           data-no-timer
           disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
           onClick={() => selectPrimaryView('account')}

@@ -7,12 +7,15 @@ import {
   decodeMobileEmbedAccountManageResult,
   decodeMobileEmbedBack,
   decodeMobileEmbedInit,
+  decodeMobileEmbedAppearance,
   decodeMobileEmbedWebSession,
   isMobileEmbedExternalHref,
   mobileEmbedAuthClearMessage,
   mobileEmbedAccountManageMessage,
   mobileEmbedExternalMessage,
   mobileEmbedNavigationMessage,
+  mobileEmbedSelectTabMessage,
+  mobileEmbedOpenSettingsMessage,
   mobileEmbedSurfaceFromFrameName,
   mobileEmbedWebSessionResultMessage,
   type MobileEmbedInitMessage,
@@ -26,6 +29,9 @@ import { setAppleMembershipBridge, receiveAppleMembershipResult } from '@/lib/ap
 import { setStoreMembershipBridge } from '@/lib/store-membership-bridge';
 import { setWebMembershipBridge, receiveWebMembershipResult } from '@/lib/web-membership-bridge';
 import { setInstalledBleBridge } from '@/lib/installed-ble-bridge';
+import { applyAppearancePreferences, persistAppearancePreferences, readAppearancePreferences, APPEARANCE_CHANGE_EVENT } from '@cuberoot/app-ui/appearance';
+import type { AppearancePreferences } from '@cuberoot/shared/appearance';
+import { setInstalledShellNavigation } from '@/lib/installed-shell-navigation';
 
 const MOBILE_PARENT_ORIGINS = new Set([
   'capacitor://localhost',
@@ -63,6 +69,29 @@ export default function MobileEmbedBridge() {
     let hadWebsiteSession = Boolean(getSessionToken());
     let parentOrigin: string | null = null;
     let capabilities: MobileEmbedInitMessage | null = null;
+    let hostAppearance: AppearancePreferences | null = null;
+    let applyingAppearance = false;
+    const applyHostAppearance = (preferences: AppearancePreferences) => {
+      if (applyingAppearance) return;
+      const changed = JSON.stringify(readAppearancePreferences()) !== JSON.stringify(preferences);
+      if (!changed && JSON.stringify(hostAppearance) === JSON.stringify(preferences)) {
+        // Web previews may alter the DOM without committing storage.
+        applyAppearancePreferences(preferences);
+        return;
+      }
+      hostAppearance = preferences;
+      applyingAppearance = true;
+      try {
+        if (changed) {
+          try { persistAppearancePreferences(preferences); }
+          catch { /* Restricted iframe storage must not block host appearance or bridge initialization. */ }
+        }
+        applyAppearancePreferences(preferences);
+        window.dispatchEvent(new Event('theme-change'));
+        window.dispatchEvent(new Event('home-background-change'));
+      } finally { applyingAppearance = false; }
+    };
+    const restoreHostAppearance = () => { if (hostAppearance) applyHostAppearance(hostAppearance); };
     let pendingManagement: { requestId: string; timeout: number } | null = null;
 
     const managementFailed = () => window.alert(tr({
@@ -138,6 +167,37 @@ export default function MobileEmbedBridge() {
       const target = event.target;
       if (delegateAccountInteraction(event)) return;
       const anchor = target instanceof Element ? target.closest<HTMLAnchorElement>('a[href]') : null;
+      if (parentOrigin && capabilities?.shellNavigation && event.button === 0
+        && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+        let destination: 'timer' | 'account' | 'appearance' | 'timer-external' | null = target instanceof Element
+          && target.closest('[data-mobile-open-settings="appearance"]') ? 'appearance' : null;
+        if (!destination && anchor && !anchor.hasAttribute('download') && (!anchor.target || anchor.target === '_self')) {
+          const next = new URL(anchor.href, window.location.href);
+          const path = next.pathname.replace(/^\/(en|zh)(?=\/|$)/, '').replace(/\/$/, '') || '/';
+          if (next.origin === window.location.origin) {
+            if (path === '/timer') {
+              const onlyTracking = [...next.searchParams.keys()].every(key => /^utm_/.test(key) || ['gclid', 'fbclid', 'msclkid'].includes(key));
+              destination = onlyTracking && !next.hash ? 'timer' : 'timer-external';
+            }
+            else if (path === '/appearance' || path === '/account'
+              && ['appearance', 'general'].includes(next.searchParams.get('settings') ?? next.searchParams.get('view') ?? '')) destination = 'appearance';
+            else if (surface === 'tools' && path === '/account' && !next.hash
+              && [...next.searchParams.keys()].every(key => key === 'next')) {
+              try {
+                const returnTo = new URL(next.searchParams.get('next') || '/', window.location.origin);
+                if (returnTo.origin === window.location.origin && !/^\/(?:en\/|zh\/)?(?:auth|api)(?:\/|$)/.test(returnTo.pathname)) destination = 'account';
+              } catch { /* Invalid return targets remain owned by the canonical Account route. */ }
+            }
+          }
+        }
+        if (destination) {
+          event.preventDefault(); event.stopImmediatePropagation();
+          postToParent(destination === 'appearance' ? mobileEmbedOpenSettingsMessage(surface)
+            : destination === 'timer-external' ? mobileEmbedExternalMessage(surface, anchor!.href)
+              : mobileEmbedSelectTabMessage(surface, destination));
+          return;
+        }
+      }
       if (!anchor || anchor.hasAttribute('download')) return;
       const next = new URL(anchor.href, window.location.href);
       if (installedContentUnavailable(next.href)) {
@@ -166,6 +226,9 @@ export default function MobileEmbedBridge() {
       if (init?.surface === surface) {
         parentOrigin = event.origin;
         capabilities = init;
+        setInstalledShellNavigation(init.shellNavigation === true
+          ? () => postToParent(mobileEmbedOpenSettingsMessage(surface)) : null, surface);
+        if (init.appearance) applyHostAppearance(init.appearance);
         setInstalledBleBridge(surface === 'tools' && init.bluetooth === true ? event.origin : null);
         setAppleMembershipBridge(init.appleMembership === true, postToParent);
         setStoreMembershipBridge('google', init.googleMembership === true, postToParent);
@@ -174,6 +237,8 @@ export default function MobileEmbedBridge() {
         return;
       }
       if (event.origin !== parentOrigin) return;
+      const appearance = decodeMobileEmbedAppearance(event.data);
+      if (appearance?.surface === surface) { applyHostAppearance(appearance.preferences); return; }
       receiveAppleMembershipResult(event.data);
       receiveWebMembershipResult(event.data);
       const managementResult = decodeMobileEmbedAccountManageResult(event.data);
@@ -186,6 +251,7 @@ export default function MobileEmbedBridge() {
       }
       const back = decodeMobileEmbedBack(event.data);
       if (back?.surface === surface) {
+        if (index === 0) { postNavigation(); return; }
         index = Math.max(0, index - 1);
         postNavigation();
         window.history.back();
@@ -234,8 +300,13 @@ export default function MobileEmbedBridge() {
     document.addEventListener('click', onClick, true);
     document.addEventListener('keydown', onKeyDown, true);
     window.addEventListener('message', onMessage);
+    window.addEventListener(APPEARANCE_CHANGE_EVENT, restoreHostAppearance);
+    window.addEventListener('theme-change', restoreHostAppearance);
+    window.addEventListener('home-background-change', restoreHostAppearance);
+    window.addEventListener('storage', restoreHostAppearance);
     return () => {
       active = false;
+      setInstalledShellNavigation(null);
       setInstalledBleBridge(null);
       setAppleMembershipBridge(false);
       setStoreMembershipBridge('google', false);
@@ -246,6 +317,10 @@ export default function MobileEmbedBridge() {
       document.removeEventListener('click', onClick, true);
       document.removeEventListener('keydown', onKeyDown, true);
       window.removeEventListener('message', onMessage);
+      window.removeEventListener(APPEARANCE_CHANGE_EVENT, restoreHostAppearance);
+      window.removeEventListener('theme-change', restoreHostAppearance);
+      window.removeEventListener('home-background-change', restoreHostAppearance);
+      window.removeEventListener('storage', restoreHostAppearance);
       unsubscribeAuth();
     };
   }, []);

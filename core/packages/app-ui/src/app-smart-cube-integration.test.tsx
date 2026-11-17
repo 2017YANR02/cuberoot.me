@@ -150,6 +150,53 @@ afterEach(async () => {
 });
 
 describe('installed App GAN lifecycle integration', () => {
+  it('routes embedded timer links to the existing shell tab and rejects foreign or hidden frames', async () => {
+    const onlineHost = { ...host, getNetworkStatus: async () => true };
+    await act(async () => root.render(<App host={onlineHost} />));
+    const select = async (name: string) => {
+      const button = [...container.querySelectorAll<HTMLButtonElement>('.primary-nav button')]
+        .find(item => item.textContent?.trim() === name)!;
+      await act(async () => button.click());
+    };
+    await select('Tools');
+    const frame = container.querySelector<HTMLIFrameElement>('iframe')!;
+    const message = { type: 'cuberoot:mobile:select-tab', surface: 'tools', tab: 'timer' };
+    const send = async (origin: string, source: MessageEventSource | null) => {
+      await act(async () => window.dispatchEvent(new MessageEvent('message', { origin, source, data: message })));
+    };
+    await send('https://foreign.example', frame.contentWindow);
+    expect(frame.closest<HTMLElement>('.web-surface')?.hidden).toBe(false);
+    await send('https://cuberoot.me', window);
+    expect(frame.closest<HTMLElement>('.web-surface')?.hidden).toBe(false);
+    await send('https://cuberoot.me', frame.contentWindow);
+    expect(frame.closest<HTMLElement>('.web-surface')?.hidden).toBe(true);
+    expect(container.querySelector('.primary-nav [aria-current="page"]')?.textContent).toBe('Timer');
+    expect(container.querySelectorAll('iframe')).toHaveLength(1);
+    await select('Me');
+    await send('https://cuberoot.me', frame.contentWindow);
+    expect(container.querySelector('.primary-nav [aria-current="page"]')?.textContent).toBe('Me');
+  });
+
+  it('opens App appearance offline, blocks timer input and returns to the original account surface', async () => {
+    expect(localStorage.getItem('theme')).toBe((memory.data as TimerStoreData).settings.theme);
+    expect(localStorage.getItem('trainer-lang')).toBe('en');
+    const account = [...container.querySelectorAll<HTMLButtonElement>('.primary-nav button')]
+      .find(button => button.textContent?.trim() === 'Me')!;
+    await act(async () => account.click());
+    const frame = container.querySelector<HTMLIFrameElement>('.web-surface--account iframe')!;
+    await act(async () => container.querySelector<HTMLButtonElement>('.app-account-toolbar button')!.click());
+    expect(container.querySelector('.app-shell--appearance')).not.toBeNull();
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true }));
+      window.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', code: 'Space', bubbles: true }));
+    });
+    expect(phase).not.toBe('running');
+    await act(async () => backListener?.());
+    expect(container.querySelector('.app-shell--account')).not.toBeNull();
+    expect(container.querySelector('.web-surface--account iframe')).toBe(frame);
+    expect(frame.closest<HTMLElement>('.web-surface')?.hidden).toBe(false);
+  });
+
   it('keeps a loaded account form visible when native sign-in fails', async () => {
     let authError = false;
     const accountHost: InstalledAppHost = { ...host,
@@ -207,7 +254,8 @@ describe('installed App GAN lifecycle integration', () => {
     expect(saved()).toHaveLength(0);
   });
 
-  it('keeps the selected content when changing source and opens recall in the shared training surface', async () => {
+  it('keeps selected content and preserves recall parameters without nesting another timer', async () => {
+    const openExternal = vi.spyOn(host, 'openExternal');
     const clickText = async (selector: string, text: string) => {
       const button = [...document.querySelectorAll<HTMLButtonElement>(selector)].find(node => node.textContent?.trim() === text)!;
       expect(button).toBeDefined();
@@ -223,8 +271,8 @@ describe('installed App GAN lifecycle integration', () => {
     expect((memory.data as TimerStoreData).settings.event).toBe('pll');
     await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Practice method"]')!.click());
     await clickText('[role="option"]', 'Recall');
-    const frame = container.querySelector<HTMLIFrameElement>('iframe')!;
-    const url = new URL(frame.src);
+    expect(container.querySelector('iframe')).toBeNull();
+    const url = new URL(openExternal.mock.lastCall![0]);
     expect(url.pathname).toContain('/timer');
     expect(url.searchParams.get('event')).toBe('pll');
     expect(url.searchParams.get('training')).toBe('/alg/3x3/pll/run');

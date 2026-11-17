@@ -8,6 +8,7 @@ import AppearanceToggle from '@/components/AppearanceToggle';
 import BackHome from '@/components/BackHome';
 import { ClientLoadStatus } from '@/components/StartupStatus';
 import { useT } from '@/hooks/useT';
+import { openInstalledAppearance, useInstalledShellNavigation, useInstalledShellSurface } from '@/lib/installed-shell-navigation';
 import './settings-panel.css';
 
 // Account forms depend on the browser session and render an empty shell on the
@@ -25,6 +26,11 @@ export default function SettingsPanel({ embedded = false, onClose }: { embedded?
   });
   const general = settings === 'general' || settings === 'appearance';
   const appearance = settings === 'appearance';
+  const shellNavigation = useInstalledShellNavigation();
+  const accountShell = useInstalledShellSurface() === 'account';
+  useEffect(() => {
+    if (general && shellNavigation) openInstalledAppearance();
+  }, [general, shellNavigation]);
   const security = !general && (view === 'signin' || view === 'delete' || view === 'user');
   // Direct appearance links must not start unrelated auth continuations.
   // Retain an opened account form while browsing General settings.
@@ -40,22 +46,23 @@ export default function SettingsPanel({ embedded = false, onClose }: { embedded?
     }
   };
 
-  return <section className={`settings-panel${embedded ? ' settings-panel-embedded' : ' settings-panel-page'}`} data-site-surface="panel" aria-labelledby={titleId}>
-    <header className="settings-panel-header">
+  return <section className={`settings-panel${embedded ? ' settings-panel-embedded' : ' settings-panel-page'}`} data-site-surface="panel" aria-labelledby={accountShell ? undefined : titleId} aria-label={accountShell ? t('设置', 'Settings') : undefined}>
+    {!accountShell && <header className="settings-panel-header">
       <div className="settings-panel-heading">
         {!embedded && <BackHome prefetch={false} miniProgramTarget="account" />}
         <h1 id={titleId}>{t('设置', 'Settings')}</h1>
       </div>
       {onClose && <button type="button" className="settings-panel-close" aria-label={t('关闭设置', 'Close settings')} onClick={onClose}><X size={20} aria-hidden="true" /></button>}
-    </header>
+    </header>}
     <nav className="settings-panel-nav" aria-label={t('设置分类', 'Settings categories')}>
-      <button type="button" className="settings-panel-nav-item" aria-current={general && !appearance ? 'page' : undefined} onClick={() => select('general')}><Settings size={18} aria-hidden="true" /><span>{t('通用', 'General')}</span></button>
-      <button type="button" className="settings-panel-nav-item" aria-current={appearance ? 'page' : undefined} onClick={() => select('appearance')}><Sun size={18} aria-hidden="true" /><span>{t('外观', 'Appearance')}</span></button>
+      {!accountShell && <><button type="button" data-mobile-open-settings="appearance" className="settings-panel-nav-item" aria-current={general && !appearance ? 'page' : undefined} onClick={() => select('general')}><Settings size={18} aria-hidden="true" /><span>{t('通用', 'General')}</span></button>
+      <button type="button" data-mobile-open-settings="appearance" className="settings-panel-nav-item" aria-current={appearance ? 'page' : undefined} onClick={() => select('appearance')}><Sun size={18} aria-hidden="true" /><span>{t('外观', 'Appearance')}</span></button></>}
       <button type="button" className="settings-panel-nav-item" aria-current={!general && !security ? 'page' : undefined} onClick={() => select('space')}><UserRound size={18} aria-hidden="true" /><span>{t('我的空间', 'My space')}</span></button>
       <button type="button" className="settings-panel-nav-item" aria-current={security ? 'page' : undefined} onClick={() => select('security')}><ShieldCheck size={18} aria-hidden="true" /><span>{t('账号与安全', 'Account & security')}</span></button>
     </nav>
     <div className="settings-panel-content" ref={contentRef}>
-      {general && <section aria-label={appearance ? t('外观', 'Appearance') : t('通用', 'General')} className="settings-general"><h2>{appearance ? t('外观', 'Appearance') : t('通用', 'General')}</h2><AppearanceToggle embedded section={appearance ? 'appearance' : 'general'} /></section>}
+      {general && !shellNavigation && <section aria-label={appearance ? t('外观', 'Appearance') : t('通用', 'General')} className="settings-general"><h2>{appearance ? t('外观', 'Appearance') : t('通用', 'General')}</h2><AppearanceToggle embedded section={appearance ? 'appearance' : 'general'} /></section>}
+      {general && shellNavigation && <button type="button" className="settings-panel-nav-item" data-mobile-open-settings="appearance"><Sun size={18} aria-hidden="true" /><span>{t('外观', 'Appearance')}</span></button>}
       {(accountVisited || !general) && <div hidden={general}><AccountSettings embedded={embedded} /></div>}
     </div>
   </section>;

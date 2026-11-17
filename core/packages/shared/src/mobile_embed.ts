@@ -3,6 +3,7 @@ import {
   isWebSessionTicket,
   type MobileAuthProvider,
 } from './auth/web_session';
+import { decodeAppearancePreferences, type AppearancePreferences } from './appearance';
 
 export * from './installed_ble';
 export * from './web_membership';
@@ -23,6 +24,65 @@ export interface MobileEmbedInitMessage {
   googleMembership?: boolean;
   webMembership?: boolean;
   bluetooth?: boolean;
+  shellNavigation?: boolean;
+  appearance?: AppearancePreferences;
+}
+
+export interface MobileEmbedAppearanceMessage {
+  surface: MobileEmbedSurface;
+  type: 'cuberoot:mobile:appearance';
+  preferences: AppearancePreferences;
+}
+
+export function mobileEmbedAppearanceMessage(surface: MobileEmbedSurface, preferences: AppearancePreferences): MobileEmbedAppearanceMessage {
+  return { surface, type: 'cuberoot:mobile:appearance', preferences };
+}
+
+export function decodeMobileEmbedAppearance(value: unknown): MobileEmbedAppearanceMessage | null {
+  if (!value || typeof value !== 'object') return null;
+  const candidate = value as Partial<MobileEmbedAppearanceMessage>;
+  const preferences = decodeAppearancePreferences(candidate.preferences);
+  if (candidate.type !== 'cuberoot:mobile:appearance'
+    || (candidate.surface !== 'tools' && candidate.surface !== 'account') || !preferences) return null;
+  return mobileEmbedAppearanceMessage(candidate.surface, preferences);
+}
+
+export interface MobileEmbedSelectTabMessage {
+  surface: MobileEmbedSurface;
+  type: 'cuberoot:mobile:select-tab';
+  tab: 'timer' | 'tools' | 'account';
+}
+
+export interface MobileEmbedOpenSettingsMessage {
+  surface: MobileEmbedSurface;
+  type: 'cuberoot:mobile:open-settings';
+  category: 'appearance';
+}
+
+export function mobileEmbedSelectTabMessage(surface: MobileEmbedSurface, tab: MobileEmbedSelectTabMessage['tab']): MobileEmbedSelectTabMessage {
+  return { surface, type: 'cuberoot:mobile:select-tab', tab };
+}
+
+export function mobileEmbedOpenSettingsMessage(surface: MobileEmbedSurface): MobileEmbedOpenSettingsMessage {
+  return { surface, type: 'cuberoot:mobile:open-settings', category: 'appearance' };
+}
+
+export function decodeMobileEmbedSelectTab(value: unknown): MobileEmbedSelectTabMessage | null {
+  if (!value || typeof value !== 'object') return null;
+  const candidate = value as Partial<MobileEmbedSelectTabMessage>;
+  if (candidate.type !== 'cuberoot:mobile:select-tab'
+    || (candidate.surface !== 'tools' && candidate.surface !== 'account')
+    || (candidate.tab !== 'timer' && candidate.tab !== 'tools' && candidate.tab !== 'account')) return null;
+  return mobileEmbedSelectTabMessage(candidate.surface, candidate.tab);
+}
+
+export function decodeMobileEmbedOpenSettings(value: unknown): MobileEmbedOpenSettingsMessage | null {
+  if (!value || typeof value !== 'object') return null;
+  const candidate = value as Partial<MobileEmbedOpenSettingsMessage>;
+  if (candidate.type !== 'cuberoot:mobile:open-settings'
+    || (candidate.surface !== 'tools' && candidate.surface !== 'account')
+    || candidate.category !== 'appearance') return null;
+  return mobileEmbedOpenSettingsMessage(candidate.surface);
 }
 
 export interface MobileEmbedAccountManageMessage {
@@ -109,7 +169,7 @@ export function mobileEmbedBackMessage(surface: MobileEmbedSurface): MobileEmbed
 
 export function mobileEmbedInitMessage(
   surface: MobileEmbedSurface,
-  capabilities?: Pick<MobileEmbedInitMessage, 'authProviders' | 'accountManagement' | 'appleMembership' | 'googleMembership' | 'webMembership' | 'bluetooth'>,
+  capabilities?: Pick<MobileEmbedInitMessage, 'authProviders' | 'accountManagement' | 'appleMembership' | 'googleMembership' | 'webMembership' | 'bluetooth' | 'shellNavigation' | 'appearance'>,
 ): MobileEmbedInitMessage {
   return { surface, type: 'cuberoot:mobile:init', ...capabilities };
 }
@@ -202,10 +262,12 @@ export function decodeMobileEmbedInit(value: unknown): MobileEmbedInitMessage | 
     || (candidate.googleMembership !== undefined && typeof candidate.googleMembership !== 'boolean')
     || (candidate.webMembership !== undefined && typeof candidate.webMembership !== 'boolean')
     || (candidate.bluetooth !== undefined && typeof candidate.bluetooth !== 'boolean')
+    || (candidate.shellNavigation !== undefined && typeof candidate.shellNavigation !== 'boolean')
+    || (candidate.appearance !== undefined && !decodeAppearancePreferences(candidate.appearance))
     || (candidate.accountManagement !== undefined && typeof candidate.accountManagement !== 'boolean')) {
     return null;
   }
-  return candidate as MobileEmbedInitMessage;
+  return { ...candidate, ...(candidate.appearance ? { appearance: decodeAppearancePreferences(candidate.appearance)! } : {}) } as MobileEmbedInitMessage;
 }
 
 export function decodeMobileEmbedAccountManage(value: unknown): MobileEmbedAccountManageMessage | null {
