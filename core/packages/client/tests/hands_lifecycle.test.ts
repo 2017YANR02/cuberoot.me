@@ -6,6 +6,7 @@ import { bakeHandTextures } from '@/app/[lang]/sim/engine/hands/bakeHandTexture'
 import type { FingerJoints, FingerName, HandModel } from '@/app/[lang]/sim/engine/hands/handModel';
 import World from '@/app/[lang]/sim/engine/world';
 import { SIZE } from '@/app/[lang]/sim/engine/define';
+import { homeLeft, homeRight } from '@/app/[lang]/sim/engine/hands/handPoses';
 
 // Keep the real animation lifecycle; substitute only asset IO / browser texture creation.
 vi.mock('@/app/[lang]/sim/engine/hands/handModelMano', () => ({ loadManoHand: vi.fn() }));
@@ -63,6 +64,38 @@ afterEach(() => {
 });
 
 describe('hand playback and loading lifecycle', () => {
+  it.each((['R', 'L'] as const).flatMap(side =>
+    ([false, true] as const).flatMap(wide =>
+      ([-1, 1] as const).flatMap(dir => [1, 2].map(quarters => ({ side, wide, dir, quarters }))),
+    ),
+  ))('keeps $side wrist attached through the full turn (wide=$wide, dir=$dir, quarters=$quarters)', async ({ side, wide, dir, quarters }) => {
+    const { rig, cube } = createRig();
+    await ready(rig);
+    const models = await Promise.all(vi.mocked(loadManoHand).mock.results.slice(-2).map(result => result.value as Promise<HandModel>));
+    const model = models.find(m => m.side === (side === 'R' ? -1 : 1))!;
+    const home = side === 'R' ? homeRight() : homeLeft();
+    const layers = side === 'R' ? (wide ? [1, 2] : [2]) : (wide ? [0, 1] : [0]);
+    const axis = new THREE.Vector3(-1, 0, 0);
+    for (const grip of ['home', 'up', 'down', 'half'] as const) {
+      rig.setGrips(gripQuat(side === 'R' ? grip : 'home'), gripQuat(side === 'L' ? grip : 'home'));
+      expect(rig.prepareTwist('x', layers, dir, quarters)).toBe(false);
+      const assertAttached = (degrees: number) => {
+        const rotation = new THREE.Quaternion().setFromAxisAngle(axis, dir * degrees * Math.PI / 180).multiply(gripQuat(grip));
+        expect(model.group.quaternion.clone().normalize().angleTo(rotation.clone().multiply(home.quat).normalize())).toBeCloseTo(0, 6);
+        expect(model.group.position.distanceTo(home.pos.clone().applyQuaternion(rotation))).toBeCloseTo(0, 6);
+      };
+      // Include the old 93-degree clamp boundary and the entire second quadrant.
+      for (const degrees of [5, 45, 90, 93, 94, 120, 150, 180].filter(d => d <= quarters * 90)) {
+        for (const layer of layers) cube.table.groups.x[layer].angle = dir * degrees * Math.PI / 180;
+        rig.tick(16);
+        assertAttached(degrees);
+      }
+      // Committing must not create a compensating outward recovery arc.
+      for (const layer of layers) cube.table.groups.x[layer].angle = 0;
+      for (let i = 0; i < 12; i++) { rig.tick(16); assertAttached(quarters * 90); }
+    }
+  });
+
   it('keeps close framing until the body exists and restores cube framing when hands are off', async () => {
     const { rig } = createRig();
     await ready(rig);

@@ -163,7 +163,7 @@ export function classifyLayers(layers: number[], order: number): LayerClass {
   return "mid";
 }
 
-/** 90° 精确跟手;180°(U2 等)超过 SOFT_LIMIT 的部分压缩 — 手腕不拧断。 */
+/** 遗留指弹的幅度限制；weld 腕转必须与层角一致，不能使用此压缩。 */
 function softClampAngle(a: number): number {
   const LIMIT = 1.62; // ≈93°
   const abs = Math.abs(a);
@@ -1906,7 +1906,9 @@ export default class HandsRig extends THREE.Group {
         }
         weldAngle = angle - act.quarters * HALF_PI;
       } else {
-        weldAngle = softClampAngle(angle);
+        // R/L（含宽层）整手贴住转动层，超过 90° 也必须等角度跟随。
+        // 压缩角度会让手落后于层，提交时又生成外拱松手的补转。
+        weldAngle = angle;
       }
       for (const s of g.hands) {
         const h = hands[s];
