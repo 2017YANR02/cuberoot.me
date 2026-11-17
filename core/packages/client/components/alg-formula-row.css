@@ -120,18 +120,19 @@
   .alg-editor-tools[data-tools-open='false'] .alg-editor-tools-toggle {
   visibility: hidden;
 }
-/* anchored-panel: safe (right-aligned within the row, width capped to viewport). */
+/* anchored-panel: safe (opens left of the 40px trigger, width capped to viewport). */
 .alg-formula-row .alg-editor-tools-group {
   position: absolute;
-  inset-block-end: calc(100% + 6px);
-  inset-inline-end: 0;
+  inset-block-start: 50%;
+  inset-inline-end: calc(100% + 6px);
+  transform: translateY(-50%);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   box-sizing: border-box;
   width: max-content;
-  max-width: min(320px, calc(100vw - 32px));
+  max-width: min(320px, calc(100vw - 78px));
   min-height: 32px;
   padding: 3px;
   border: 0;
@@ -148,3 +149,6 @@
 .f2l-edit-source-row[data-grouped='true'] .alg-formula-row { --alg-formula-row-inset: 0px; }
 .compact-select-popup.alg-tag-menu { scrollbar-width: none; }
 .compact-select-popup.alg-tag-menu::-webkit-scrollbar { display: none; }
+
+.alg-editor-tools .alg-editor-drag-handle { cursor: grab; touch-action: none; }
+.alg-editor-tools .alg-editor-drag-handle:active { cursor: grabbing; }

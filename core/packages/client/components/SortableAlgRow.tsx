@@ -15,29 +15,31 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 
-export default function SortableAlgRow({ id, draggable, children }: { id: string; draggable: boolean; children: React.ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !draggable });
+export default function SortableAlgRow({ id, draggable, children }: { id: string; draggable: boolean; children: React.ReactNode | ((handle: React.ReactNode) => React.ReactNode) }) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !draggable });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
     position: 'relative',
   };
-  return (
-    <div ref={setNodeRef} style={style} className={draggable ? 'alg-alg-sortable' : undefined}>
-      {draggable && (
+  const inline = typeof children === 'function';
+  const handle = draggable ? (
         <button
           type="button"
-          className="alg-alg-drag-handle"
+          ref={setActivatorNodeRef}
+          className={inline ? 'alg-editor-del alg-editor-drag-handle' : 'alg-alg-drag-handle'}
           {...attributes}
           {...listeners}
           onClick={(e) => e.stopPropagation()}
           title={tr({ zh: '拖动调整公式顺序', en: 'Drag to reorder algs' })}
         >
-          <GripVertical size={12} />
+          <GripVertical size={inline ? '1em' : 12} />
         </button>
-      )}
-      {children}
+      ) : null;
+  return (
+    <div ref={setNodeRef} style={style} className={draggable ? 'alg-alg-sortable' : undefined}>
+      {typeof children === 'function' ? children(handle) : <>{handle}{children}</>}
     </div>
   );
 }

@@ -312,7 +312,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
             const initialText = formatInitialAlg?.(row.alg || '') ?? (row.alg || '');
             const currentText = editedText[row.uid] ?? initialText;
             return (
-              <SortableAlgRow key={row.uid} id={row.uid} draggable={!!caseContext}>
+              <SortableAlgRow key={row.uid} id={row.uid} draggable={!!caseContext}>{dragHandle => <>
               <AlgFormulaRow tags={row.tags} selected={selectedAlgorithms?.[oi] === row.alg} actions={
                 <div className="alg-editor-tools" role="toolbar" aria-label={tr({ zh: '公式操作', en: 'Algorithm actions' })}
                   data-tools-open={toolsUid === row.uid} ref={toolsUid === row.uid ? toolsPanelRef : undefined}>
@@ -327,7 +327,6 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
                   variant="plain"
                   className="alg-tag-select"
                   popupClassName="alg-tag-menu"
-                  openOnHover
                   showArrow={false}
                   label={row.tags?.length ? <span className="alg-tag-list">{row.tags.map(tag => <AlgTagLabel key={tag} tag={tag} label={algTagLabel(tag)} />)}</span> : <Tags size="1em" />}
                   ariaLabel={tr({ zh: '公式标签', en: 'Algorithm tags' })}
@@ -358,6 +357,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
                     <Trash2 size="1em" />
                   </button>
                 )}
+                {dragHandle}
                 </div>
                 </div>
               } className={`alg-editor-row${bad ? ' is-invalid' : ''}`}>
@@ -427,7 +427,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
                     onActivate={() => handles.current.get(row.uid)?.focus()}
                   />
                 )}
-              </SortableAlgRow>
+              </>}</SortableAlgRow>
             );
           }))}
           {renderBeforeAdd?.(oi)}

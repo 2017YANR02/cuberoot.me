@@ -2801,7 +2801,6 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 .alg-mirror-line { display: contents; }
 a.alg-mirror-line { text-decoration: none; }
 button.alg-mirror-line { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: inherit; cursor: pointer; }
-:is(a, button).alg-mirror-line:hover > *,
 :is(a, button).alg-mirror-line:focus-visible > * { text-decoration: underline; }
 .alg-mirror-label {
   flex: none;

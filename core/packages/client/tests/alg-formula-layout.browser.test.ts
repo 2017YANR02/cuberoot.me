@@ -68,7 +68,7 @@ it('opens legacy mismatched markup as the visible algorithm and saves that same 
   } finally { await act(async () => root.unmount()); host.remove(); }
 });
 
-async function markup(editing: boolean, grouped: boolean, selected: boolean, toolsOpen = false, menuOpen = false, toolsRow = 0) {
+async function markup(editing: boolean, grouped: boolean, selected: boolean, menuOpen = false, toolsOpen = false, toolsRow = 0) {
   const host = document.createElement('div');
   document.body.append(host);
   const root = createRoot(host);
@@ -85,14 +85,20 @@ async function markup(editing: boolean, grouped: boolean, selected: boolean, too
     await act(async () => root.render(h('div', {
       className: `alg-root is-f2l-orientation-grid${editing ? ' alg-case-inline-editor' : ''}`,
     }, editing ? h(AlgEditor, {
-      initialValue: [entries], selectedAlgorithms, oriNames: ['FR'],
+      initialValue: [entries], caseContext: { puzzle: '3x3', set: 'f2l', caseObj: { name: 'A+', algs: [entries] } as AlgCase }, selectedAlgorithms, oriNames: ['FR'],
       renderRows: grouped ? editable => group(null, editable) : undefined,
       renderOrientation: children => h('div', { className: 'alg-case-detail-ori-algs' }, children),
     }) : h('div', { className: 'alg-case-detail-ori-algs' }, grouped ? group(rows) : rows, add))));
     if (!editing && grouped && selected) await act(async () => host.querySelector<HTMLElement>('.f2l-solution-play')!.click());
     if (editing) expect(host.querySelector('.alg-formula-generator, .alg-editor-gen')).toBeNull();
-    if (toolsOpen) await act(async () => host.querySelectorAll<HTMLButtonElement>('.alg-editor-tools-toggle')[toolsRow].click());
-    if (menuOpen) await act(async () => host.querySelector<HTMLButtonElement>('.alg-tag-select button')!.click());
+    if (toolsOpen || menuOpen) await act(async () => host.querySelectorAll<HTMLButtonElement>('.alg-editor-tools-toggle')[toolsRow].click());
+    if (menuOpen) {
+      const trigger = host.querySelector<HTMLButtonElement>('.alg-tag-select button')!;
+      const enter = new MouseEvent('pointerover', { bubbles: true });
+      Object.defineProperty(enter, 'pointerType', { value: 'mouse' });
+      await act(async () => trigger.dispatchEvent(enter));
+      await act(async () => trigger.click());
+    }
     return host.innerHTML + (menuOpen ? document.querySelector('.alg-tag-menu')?.outerHTML ?? '' : '');
   } finally { await act(async () => root.unmount()); host.remove(); }
 }
@@ -121,14 +127,14 @@ async function measure(page: Page) {
   });
 }
 
-for (const { width, touch } of [{ width: 390, touch: true }, { width: 390, touch: false }, { width: 688, touch: false }, { width: 1280, touch: false }]) for (const grouped of [false, true]) for (const selected of [false, true]) {
+for (const { width, touch } of [{ width: 260, touch: true }, { width: 390, touch: true }, { width: 390, touch: false }, { width: 688, touch: false }, { width: 1280, touch: false }]) for (const grouped of [false, true]) for (const selected of [false, true]) {
   it(`keeps read/edit geometry: ${width}px, touch=${touch}, grouped=${grouped}, selected=${selected}`, async () => {
     const page = await browser.newPage({ viewport: { width, height: 1000 }, hasTouch: touch, isMobile: touch });
     // These fixtures must never reach production, including accidental future fetches.
     await page.route('**/*', route => route.abort());
     try {
-      const show = async (editing: boolean, toolsOpen = false, toolsRow = 0) => {
-        const html = await markup(editing, grouped, selected, toolsOpen, false, toolsRow);
+      const show = async (editing: boolean, toolsOpen = false) => {
+        const html = await markup(editing, grouped, selected, false, toolsOpen);
         await page.setContent(`<meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style><style>
           body { margin: 16px; font-family: Arial, sans-serif; }
           .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
@@ -147,36 +153,29 @@ for (const { width, touch } of [{ width: 390, touch: true }, { width: 390, touch
       expect(reading.rows.map(row => [row.flames, row.books]).sort()).toEqual([[0, 0], [1, 0], [1, 1]]);
       expect(reading.braces).toHaveLength(grouped ? 1 : 0);
       if (width === 390) expect(reading.rows.some(row => row.value![3] > 27)).toBe(true);
-      if (!touch) {
-        await page.locator('.alg-editor-tools').first().hover();
-        expect(await measure(page)).toEqual(editing);
-        expect(await page.locator('.alg-editor-tools-group').first().isVisible()).toBe(false);
+      expect(await page.locator('.alg-editor-tools-toggle').count()).toBe(3);
+      for (const toolbar of await page.locator('.alg-editor-tools-group').all()) {
+        expect(await toolbar.isVisible()).toBe(false);
       }
       expect(await show(true, true)).toEqual(editing);
       expect(await page.locator('.alg-editor-tools-group').first().isVisible()).toBe(true);
-      const separation = await page.locator('.alg-formula-row').first().evaluate(row => {
-        const input = row.querySelector('.alg-editor-input')!.getBoundingClientRect();
-        const toolbar = row.querySelector('.alg-editor-tools-group')!.getBoundingClientRect();
-        return input.top - toolbar.bottom;
+      const menuPosition = await page.locator('.alg-editor-tools').first().evaluate(tools => {
+        const trigger = tools.querySelector('.alg-editor-tools-toggle')!.getBoundingClientRect();
+        const menu = tools.querySelector('.alg-editor-tools-group')!.getBoundingClientRect();
+        return { gap: trigger.left - menu.right, offset: menu.top + menu.height / 2 - trigger.top - trigger.height / 2 };
       });
-      expect(separation).toBeGreaterThanOrEqual(6);
-      // Focusing the real contenteditable must not add a border to the box model.
+      expect(menuPosition.gap).toBe(6);
+      expect(menuPosition.offset).toBeCloseTo(0);
+      const dragGap = await page.locator('.alg-formula-row').first().evaluate(row => {
+        const remove = row.querySelector('.alg-editor-remove')!.getBoundingClientRect();
+        const drag = row.querySelector('.alg-editor-drag-handle')!.getBoundingClientRect();
+        return { gap: drag.left - remove.right, sameLine: drag.top === remove.top };
+      });
+      expect(dragGap.gap).toBeGreaterThanOrEqual(4);
+      expect(dragGap.sameLine).toBe(true);
+      if (!touch) await page.locator('.alg-editor-tools').first().hover();
       await page.locator('.alg-editor-input').first().focus();
       expect(await measure(page)).toEqual(editing);
-      const dotsOffsets = await page.locator('.alg-formula-row').evaluateAll(rows => rows.map(row => {
-        const box = row.getBoundingClientRect();
-        const dots = row.querySelector('.alg-editor-tools-toggle svg')!.getBoundingClientRect();
-        return dots.y + dots.height / 2 - (box.y + box.height / 2);
-      }));
-      expect(dotsOffsets).toEqual([-1, -1, -1]);
-      // A later row's translucent toolbar must not blend with preceding dots.
-      expect(await show(true, true, 1)).toEqual(editing);
-      const toggles = page.locator('.alg-editor-tools-toggle');
-      expect(await toggles.nth(0).isVisible()).toBe(false);
-      expect(await toggles.nth(1).isVisible()).toBe(true);
-      expect(await toggles.nth(2).isVisible()).toBe(false);
-      expect(await show(true)).toEqual(editing);
-      for (const toggle of await toggles.all()) expect(await toggle.isVisible()).toBe(true);
     } finally { await page.close(); }
   });
 }
@@ -185,7 +184,7 @@ for (const width of [390, 1280]) it(`shares icon and text sizes between the port
   const page = await browser.newPage({ viewport: { width, height: 1000 } });
   await page.route('**/*', route => route.abort());
   try {
-    await page.setContent(`<style>${css}</style>${await markup(true, false, false, true, true)}`);
+    await page.setContent(`<style>${css}</style>${await markup(true, false, false, true)}`);
     const sizes = await page.evaluate(() => {
       const dimensions = (selector: string) => [...document.querySelectorAll(selector)].map(el => {
         const box = el.getBoundingClientRect();
@@ -248,4 +247,19 @@ for (const width of [390, 1280]) it(`keeps PLL read/edit row geometry and icons 
     expect(reading).toHaveLength(3);
     expect(await show(true)).toEqual(reading);
   } finally { await act(async () => root.unmount()); host.remove(); await page.close(); }
+});
+
+it('keeps an open toolbar clickable when the pointer crosses the preceding row', async () => {
+  const page = await browser.newPage({ viewport: { width: 688, height: 1000 } });
+  await page.route('**/*', route => route.abort());
+  try {
+    await page.setContent(`<style>${css}</style><div style="width:560px;margin:80px 16px">${await markup(true, false, false, false, true, 1)}</div>`);
+    await page.locator('.alg-editor-input').first().hover();
+    const hits = await page.locator('.alg-editor-tools-group').nth(1).locator('button').evaluateAll(buttons => buttons.map(button => {
+      const rect = button.getBoundingClientRect();
+      return button.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+    }));
+    expect(hits.length).toBeGreaterThanOrEqual(4);
+    expect(hits.every(Boolean)).toBe(true);
+  } finally { await page.close(); }
 });
