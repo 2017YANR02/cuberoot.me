@@ -43,8 +43,8 @@ export default function Checklists() {
         <div className="workspace-check-filter-group"><span>{t('完成状态', 'Completion')}</span><LiquidGlassChips ariaLabel={t('完成状态', 'Completion')} items={['all', 'todo', 'done'] as const} value={completionStatus} onChange={setCompletionStatus} getLabel={item => item === 'all' ? t('全部', 'All') : item === 'todo' ? t('未完成', 'Incomplete') : t('已完成', 'Completed')} /></div>
         <Button variant="secondary" onClick={() => { void setStatus('active'); void setPage(1); setItemStatus('active'); setCompletionStatus('all'); }}>{t('重置筛选', 'Reset filters')}</Button>
       </div>} />
-      <div className="staff-toolbar-actions">
-        <Button action="add" iconOnly={false} onClick={() => { newId.current = crypto.randomUUID(); setEditing(true); }}>{t('新建清单', 'New checklist')}</Button>
+      <div className="staff-actions">
+        <Button action="add" variant="secondary" onClick={() => { newId.current = crypto.randomUUID(); setEditing(true); }}>{t('新建清单', 'New checklist')}</Button>
         <ChecklistMenu label={t('清单显示选项', 'Checklist display options')} actions={[
           { label: t('全部展开', 'Expand all'), run: () => setExpansion(previous => ({ open: true, sequence: (previous?.sequence ?? 0) + 1 })) },
           { label: t('全部收起', 'Collapse all'), run: () => setExpansion(previous => ({ open: false, sequence: (previous?.sequence ?? 0) + 1 })) },
