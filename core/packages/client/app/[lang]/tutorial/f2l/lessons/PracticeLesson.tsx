@@ -1,5 +1,7 @@
 'use client';
 
+import ReadingFit from '../../components/ReadingFit';
+
 import useTeachingFollow from '../../components/useTeachingFollow';
 import TutorialNavigationShell from '../../components/TutorialNavigationShell';
 
@@ -46,14 +48,14 @@ export default function PracticeLesson({ orientation, pauseBetween, onNextChapte
   return <TutorialNavigationShell className="f2l-study-layout">
         <SectionNavigation label={lesson.name} items={ORDERED_BASIC_CASES.map((item, index) => ({ id: String(item.id), label: item.name, active: lesson.id === item.id, onSelect: () => onCaseChange(item.id), icon: <VisualCube view="iso" size={36} faceletColors={diagrams[index]} alt=""/> }))} />
         <div className="f2l-study-main">
-          <div className="f2l-lesson f2l-study-lesson">
+          <div className="f2l-lesson f2l-study-lesson" data-tutorial-layout="B">
             <section {...playbackProps} className="f2l-demo" aria-label={tr({ zh: '三步基态练习演示', en: 'Three-move case practice demonstration' })}>
               <div className="f2l-cube"><AlgPlayer key={orientation} ref={player} puzzle="3x3" set="f2l-overview" engine="sim"
                 setup={practice.setup} alg={practice.alg} orientation={orientation} fillPane moveDurationMs={850}
                 onStepChange={setPlaybackStep} sectionPauseMs={2000} pauseAfterSteps={pauseBetween ? practice.boundaries : NO_STOPS} /></div>
               <code className="f2l-alg f2l-player-alg" data-site-surface="panel">{practice.alg}</code>
             </section>
-            <section {...paneProps} className="f2l-guidance tutorial-follow-pane">
+            <section {...paneProps} className="f2l-guidance tutorial-follow-pane"><ReadingFit pane>
               <ol className="f2l-stage-list">
                 <li><button type="button" className="f2l-stage-button" aria-current={playbackStep === 0 ? 'step' : undefined} onClick={() => seek(0)}>
                   <span className="f2l-stage-content">
@@ -70,7 +72,7 @@ export default function PracticeLesson({ orientation, pauseBetween, onNextChapte
                   </button>
                 </li>)}
               </ol>
-            </section>
+            </ReadingFit></section>
           </div>
           <StudyActions onPrevious={ORDERED_BASIC_CASES.indexOf(lesson) > 0
             ? () => onCaseChange(ORDERED_BASIC_CASES[ORDERED_BASIC_CASES.indexOf(lesson) - 1].id) : undefined}

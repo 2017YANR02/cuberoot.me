@@ -4,6 +4,7 @@ import {
   availableLetteringGlyphs,
   buildLetteringAlg,
   buildLetteringSegments,
+  buildPatternSegments,
   buildLetteringWordAlg,
   getLetteringPattern,
   getLetteringWordPattern,
@@ -13,6 +14,7 @@ import {
   type LetteringGlyph,
   type LetteringOrder,
 } from '@/app/[lang]/lettering/_lib/lettering-alg';
+import { validateCharacter, requiredPatternSize, preservesCharacter } from '@/app/[lang]/lettering/_lib/character-pattern';
 
 function frontFace(alg: string, order: LetteringOrder): string[] {
   const cube = new Cube(order);
@@ -57,6 +59,37 @@ function expectedPatternFront(pattern: readonly string[], order: LetteringOrder)
 }
 
 describe('cube lettering construction', () => {
+  it('validates single characters and the preview resolution policy', () => {
+    for (const input of ['', 'AB', '你好', '1', '♥★', '👨‍👩‍👧']) expect(validateCharacter(input, 21)).toEqual({ code: 'input' });
+    for (const input of ['♥', '♥️', '★']) expect(validateCharacter(input, 7)).toBeNull();
+    expect(validateCharacter('A', 7)).toBeNull();
+    expect(validateCharacter('a', 9)).toBeNull();
+    expect(validateCharacter('福', 15)).toBeNull();
+    expect(validateCharacter('福', 17)).toBeNull();
+    expect(validateCharacter('工', 5)).toBeNull();
+  });
+
+  it('distinguishes simple strokes from dense patterns and rejects lost holes', () => {
+    const simple = ['11111', '00000', '00000', '00000', '11111'];
+    expect(requiredPatternSize(simple)).toBe(5);
+    expect(preservesCharacter(simple, simple)).toBe(true);
+    expect(preservesCharacter(simple, ['11111', '00000', '00000', '00000', '00000'])).toBe(false);
+    const dense = Array.from({ length: 11 }, () => '10101010101');
+    expect(requiredPatternSize(dense)).toBe(11);
+    expect(preservesCharacter(dense, ['10101', '10101', '10101', '10101', '10101'])).toBe(false);
+    const enclosed = ['11111', '10001', '10001', '10001', '11111'];
+    expect(preservesCharacter(enclosed, Array(5).fill('11111'))).toBe(false);
+  });
+
+  it('builds asymmetric arbitrary grids including centre holes from legal moves', () => {
+    for (const order of [9, 17, 21] as const) {
+      const size = order - 2;
+      const pattern = Array.from({ length: size }, (_, row) => Array.from({ length: size }, (_, col) =>
+        (row * 7 + col * 3) % 11 < 4 ? '1' : '0').join(''));
+      const alg = buildPatternSegments(pattern, order).join(' ');
+      expect(frontFace(alg, order)).toEqual(expectedPatternFront(pattern, order));
+    }
+  });
   it('can batch parallel centre columns into one row commutator', () => {
     const rowAlg = [
       '6-6R', '5-5R', '4-4R', '3-3R', '2-2R',

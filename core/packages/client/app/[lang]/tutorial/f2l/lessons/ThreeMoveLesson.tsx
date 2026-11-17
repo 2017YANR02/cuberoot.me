@@ -2,6 +2,7 @@
 
 import useTeachingFollow from '../../components/useTeachingFollow';
 import TutorialNavigationShell from '../../components/TutorialNavigationShell';
+import ReadingFit from '../../components/ReadingFit';
 
 import { useMemo, useRef, useState } from 'react';
 import { Alg } from 'cubing/alg';
@@ -38,14 +39,14 @@ function ThreeMoveFilm({ lesson, orientation, pauseBetween, alignment }: {
       ? { zh: `这就是教材中的 ${lesson.name} 起始朝向。`, en: `This is the reference orientation for ${lesson.name}.` }
       : { zh: `图案转到了另一个位置，但它仍然是 ${lesson.name}。`, en: `The pattern has moved around the top, but it is still ${lesson.name}.` })
     : tr(lesson.stageTitles[current]);
-  return <div className="f2l-lesson f2l-study-lesson">
+  return <div className="f2l-lesson f2l-study-lesson" data-tutorial-layout={alignment ? 'C' : 'B'}>
     <section {...playbackProps} className="f2l-demo" aria-label={tr({ zh: '三步基态短片', en: 'Three-move walkthrough' })}>
       <div className="f2l-cube"><AlgPlayer ref={player} puzzle="3x3" engine="sim" set="f2l-tutorial"
         setup={setup} alg={alg} orientation={orientation} fillPane moveDurationMs={1100}
         onStepChange={setStep} pauseAfterSteps={pauseBetween ? boundaries : NO_STOPS} sectionPauseMs={2000} /></div>
       <p className="f2l-film-caption" aria-live="polite">{caption}</p>
     </section>
-    <section {...paneProps} className={`f2l-guidance${alignment ? '' : ' tutorial-follow-pane'}`}>
+    <section {...paneProps} className={`f2l-guidance${alignment ? '' : ' tutorial-follow-pane'}`}><ReadingFit pane>
       {alignment ? <figure className="f2l-merged-reference">
         <VisualCube local view="iso" size={200} faceletColors={f2lDiagramFacelets(setup, orientation)} alt={lesson.name} />
         <figcaption><T zh="教材图形" en="Reference pattern" /> · {lesson.name}</figcaption>
@@ -59,7 +60,7 @@ function ThreeMoveFilm({ lesson, orientation, pauseBetween, alignment }: {
           </button>
         </li>)}
       </ol>}
-    </section>
+    </ReadingFit></section>
   </div>;
 }
 
@@ -97,7 +98,7 @@ function AlignmentExercise({ lesson, orientation, adjustment, onRestart }: {
       </div>}
       {demonstrating && <code className="f2l-alg f2l-player-alg">{lesson.alg}</code>}
     </section>
-    <section className="f2l-guidance">
+    <section className="f2l-guidance"><ReadingFit pane>
       <figure className="f2l-merged-reference">
         <VisualCube local view="iso" size={200} faceletColors={reference} alt={lesson.name} />
         <figcaption><T zh="对齐这个图形" en="Match this pattern" /> · {lesson.name}</figcaption>
@@ -108,7 +109,7 @@ function AlignmentExercise({ lesson, orientation, adjustment, onRestart }: {
         {result === 'correct' && !demonstrating && <button type="button" className="f2l-restart" onClick={() => setDemonstrating(true)}><T zh="接上三步还原" en="Finish in three moves" /></button>}
         <button type="button" className="f2l-restart" onClick={onRestart}><T zh="再试一次" en="Try again" /></button>
       </div>
-    </section>
+    </ReadingFit></section>
   </div>;
 }
 
@@ -139,13 +140,15 @@ export default function ThreeMoveLesson({ orientation, pauseBetween, caseId, onC
         {THREE_MOVE_PARTS.map((item, index) => <button type="button" key={index} className="f2l-section-button"
           aria-pressed={part === index} onClick={() => selectPart(index)}>{tr(item.title)}</button>)}
       </div>
-      <p>{tr(THREE_MOVE_PARTS[part].copy)}</p>
-      {part === 0 ? <div className="f2l-recognition">
+      {part !== 0 && <p>{tr(THREE_MOVE_PARTS[part].copy)}</p>}
+      {part === 0 ? <ReadingFit><div data-tutorial-layout="F">
+        <p>{tr(THREE_MOVE_PARTS[part].copy)}</p>
+        <div className="f2l-recognition">
         {ORDERED_BASIC_CASES.map((item, index) => <figure key={item.id}>
           <VisualCube local view="iso" size={190} faceletColors={diagrams[index]} interactive enlargeable alt={item.name} />
           <figcaption>{item.name}</figcaption>
         </figure>)}
-      </div> : exercise ? <AlignmentExercise key={`${lesson.id}:${orientation}:${exercise.generation}`} lesson={lesson} orientation={orientation}
+      </div></div></ReadingFit> : exercise ? <AlignmentExercise key={`${lesson.id}:${orientation}:${exercise.generation}`} lesson={lesson} orientation={orientation}
         adjustment={exercise.adjustment} onRestart={startExercise} />
         : <ThreeMoveFilm key={`${lesson.id}:${orientation}:${part}`} lesson={lesson} orientation={orientation} pauseBetween={pauseBetween} alignment={part === 2} />}
       <StudyActions onPrevious={exercise ? () => setExercise(null) : part > 0 ? () => selectPart(part - 1) : undefined} onContinue={next}>

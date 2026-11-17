@@ -1,3 +1,4 @@
+import ReadingFit from '../components/ReadingFit';
 import ChatBubble from '@/components/ChatBubble';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -118,10 +119,9 @@ export default function EdgeObservation({ example, caseIndex, onDone }: {
       : ready ? caseIndex === 0 ? { zh: '找“对色”，观察到对色在左边', en: 'Find the opposite color. It is on the left.' }
         : { zh: '找“对色”，观察到对色在右边', en: 'Find the opposite color. It is on the right.' }
         : { zh: '观察对色位置。', en: 'Observe the opposite color’s position.' };
-  const learningArea = visible ? wrapper.current?.closest('.lbl-lesson-scroll') : null;
   const bubbleStage = visible && step === 2 && ready && caseIndex !== 2
     ? wrapper.current?.querySelector('.sim-stage') : null;
-  return <div className="lbl-content lbl-content-example lbl-content-middle-ejection">
+  return <div className="lbl-content lbl-content-example lbl-content-middle-ejection" data-tutorial-layout="B">
     <section className="lbl-demonstration">
       <div ref={wrapper} className="lbl-auto-player lbl-notation-player" data-visible={visible}>
         <AlgPlayer ref={player} puzzle="3x3" engine="sim" alg={plan.moves.join(' ')} setup={plan.setup}
@@ -131,7 +131,9 @@ export default function EdgeObservation({ example, caseIndex, onDone }: {
           controlMode="none" hideResetView lockView interactionMode="none" fillPane />
       </div>
     </section>
-    <section className="lbl-explanation"><p className="lbl-lead" aria-live="polite">{tr(caption)}</p></section>
+    <section className="lbl-explanation"><ReadingFit pane><p className="lbl-lead" aria-live="polite">{tr(caption)}</p>
+      {ready && <button type="button" className="lbl-guide-continue lbl-guide-continue-hint" onClick={advance}>{tr({ zh: '点击继续', en: 'Click to continue' })}</button>}
+</ReadingFit></section>
     {bubbleStage && createPortal(
       <div className="lbl-left-thumb-overlay">
         <ChatBubble tail={caseIndex === 1 ? 'right' : 'left'} className={`lbl-cube-callout${caseIndex === 1 ? ' lbl-edge-right-bubble' : ''}`} role="status">
@@ -139,9 +141,5 @@ export default function EdgeObservation({ example, caseIndex, onDone }: {
         </ChatBubble>
       </div>, bubbleStage,
     )}
-    {learningArea && createPortal(<>
-      <button type="button" className="lbl-guide-continue" onClick={advance} aria-disabled={!ready} aria-label={tr({ zh: '点击学习区继续', en: 'Click the lesson area to continue' })} />
-      {ready && <span className="lbl-guide-continue-hint">{tr({ zh: '点击学习区继续', en: 'Click the lesson area to continue' })}</span>}
-    </>, learningArea)}
   </div>;
 }

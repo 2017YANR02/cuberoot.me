@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "14626560aa4e0e28d80f9079337537bbc338f11177aa4be450e1c75f8b368c91",
+  "version": "df8303346656f4c1d0e0edc36b9d7ca16f0afa6eea794e531edd4ad7e847c65f",
   "coverage": {
     "level": "registered-families",
     "statement": "Returns all registered main families including dependencies, not proof that every costly statistic or experimental solver has been enumerated.",
@@ -19,7 +19,7 @@
       },
       {
         "artifact": "client.code-language-history",
-        "reason": "Manual Git-history snapshot; cost not measured here. CI/page reads reuse it."
+        "reason": "Daily incremental Git-history snapshot using official Linguist; cost not measured here. Ordinary CI/page reads reuse the published snapshot."
       }
     ],
     "gaps": [
@@ -78,7 +78,7 @@
     },
     {
       "path": "docs/data/artifacts/generated-artifacts.json",
-      "sha256": "77248e99886d00a4d60265de300882bda9267c2440bebcc23f24c6f8c26b0f2c",
+      "sha256": "8008c606413ecea25724e89a14c9e096e2809b4055bfaeb90c436b8999aed98a",
       "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/docs/data/artifacts/generated-artifacts.json"
     },
     {
@@ -88,7 +88,7 @@
     },
     {
       "path": "scripts/assistant/statistics-metadata-definitions.ts",
-      "sha256": "c0dbbf0f62c733a2e2f443a47534072b4ed862f5986a6c33e914823df42bc11b",
+      "sha256": "4649b178bd70dd79c6b59511aa53ef0d46e5a14fab96f5c887cb5e00636cdd60",
       "href": "https://github.com/2017YANR02/cuberoot.me/blob/main/scripts/assistant/statistics-metadata-definitions.ts"
     },
     {

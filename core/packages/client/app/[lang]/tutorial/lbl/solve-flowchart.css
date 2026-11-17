@@ -1,6 +1,14 @@
-.lbl-content.lbl-solve-flow { display: block; }
+.lbl-page .lbl-lesson-scroll:has(> .lbl-solve-flow) { overflow: hidden; }
+.lbl-lesson-scroll:has(> .lbl-solve-flow)::before,
+.lbl-lesson-scroll:has(> .lbl-solve-flow)::after { display: none; }
+.lbl-page .lbl-lesson-scroll > .lbl-content.lbl-solve-flow { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .lbl-solve-flow h2 { font-size: var(--lbl-text-emphasis); }
-.lbl-flow-canvas { overflow-x: auto; max-width: 100%; padding-block: 8px; }
+.lbl-flow-canvas {
+  flex: 1; min-height: 0; overflow: auto; max-width: 100%; padding-block: 8px;
+  overscroll-behavior: contain; touch-action: pinch-zoom; cursor: grab;
+  user-select: none; -webkit-user-select: none;
+}
+.lbl-flow-canvas[data-panning], .lbl-flow-canvas[data-panning] * { cursor: grabbing; }
 /* Animate the shared color so native and WebKit scrollbar thumbs fade together. */
 @property --flow-scroll-thumb {
   syntax: '<color>';

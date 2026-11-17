@@ -1,5 +1,7 @@
 'use client';
 
+import ReadingFit from '../components/ReadingFit';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Color } from 'three';
@@ -13,7 +15,6 @@ import { tr } from '@/i18n/tr';
 import { BLUE_RED_BOTTOM_CORNER_SETUP, bottomCornerPreview, middleEdgePreview } from './complete-demo-state';
 import { RIGHT, LESSON_STICKERING, lblDemoView } from './content';
 import { usePlayerVisible } from './use-player-visible';
-import AlgSteps from './AlgSteps';
 
 type PreludeScene = {
   setup: string;
@@ -35,9 +36,9 @@ export const cornerPreviews: PreludeScene[] = [
 const fadeDuration = 450;
 const colors = orientedCubeFaceColors('z2');
 
-export default function SpecialCasePrelude({ scenes, piece, finalAlg, onDone }: {
+export default function SpecialCasePrelude({ scenes, piece, waitForContinue = false, onDone }: {
   scenes: PreludeScene[];
-  piece: 'corner' | 'edge'; finalAlg: string; onDone: () => void;
+  piece: 'corner' | 'edge'; waitForContinue?: boolean; onDone: () => void;
 }) {
   const duration = scenes.reduce((sum, scene) => sum + scene.duration + 2 * fadeDuration, 0);
   const player = useRef<AlgPlayerHandle>(null);
@@ -55,7 +56,8 @@ export default function SpecialCasePrelude({ scenes, piece, finalAlg, onDone }: 
   const preview = useMemo(() => scene.purpleStickers
     ? { highlights: scene.purpleStickers }
     : piece === 'corner' ? bottomCornerPreview(scene.setup) : middleEdgePreview(scene.setup), [scene.setup, scene.purpleStickers, piece]);
-  const visibility = Math.max(0, Math.min(1, elapsed / fadeDuration, (scene.duration + 2 * fadeDuration - elapsed) / fadeDuration));
+  const finished = time >= duration;
+  const visibility = waitForContinue && index === scenes.length - 1 ? Math.min(1, elapsed / fadeDuration) : Math.max(0, Math.min(1, elapsed / fadeDuration, (scene.duration + 2 * fadeDuration - elapsed) / fadeDuration));
   const eased = visibility * visibility * (3 - 2 * visibility);
   const purple = !!(scene.purple || scene.purpleStickers);
   // Color overrides update in place; changing hiddenStickers would remount the renderer.
@@ -75,14 +77,14 @@ export default function SpecialCasePrelude({ scenes, piece, finalAlg, onDone }: 
       if (!document.hidden && !player.current?.isUserMovePending?.(false)) clock.current = Math.min(duration, clock.current + Math.min(now - (previous ?? now), 50));
       previous = now;
       setTime(clock.current);
-      if (clock.current >= duration) { onDone(); return; }
+      if (clock.current >= duration) { setPaused(true); if (!waitForContinue) onDone(); return; }
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [ready, paused, onDone, duration]);
+  }, [ready, paused, onDone, duration, waitForContinue]);
   const bubbleStage = ready ? wrapper.current?.querySelector('.sim-stage') : null;
-  return <div ref={wrapper} className="lbl-content lbl-content-example lbl-special-case-prelude">
+  return <div ref={wrapper} className="lbl-content lbl-content-example lbl-special-case-prelude" data-tutorial-mode="timeline" data-tutorial-layout="A">
     <section className="lbl-demonstration">
       <div className="lbl-auto-player" data-visible={ready}>
         <AlgPlayer ref={player} puzzle="3x3" engine="sim" set={piece === 'corner' ? LESSON_STICKERING.corners : LESSON_STICKERING.middle} additionalStickering="centers-only"
@@ -93,10 +95,10 @@ export default function SpecialCasePrelude({ scenes, piece, finalAlg, onDone }: 
         <ChatBubble tail={piece === 'edge' && scene.targetLayer === 'top' ? 'bottom' : 'left'} className="lbl-cube-callout lbl-special-case-bubble" data-piece={piece} data-layer={scene.targetLayer ?? 'bottom'} role="status">{tr(scene.observation ?? scene.caption)}</ChatBubble>
       </div>, bubbleStage)}
     </section>
-    <section className={`lbl-explanation${index < scenes.length - 1 ? ' tutorial-single-caption' : ''}`}>
+    <section className="lbl-explanation tutorial-single-caption"><ReadingFit pane>
       <p className="lbl-lead lbl-corner-case-caption" style={{ whiteSpace: 'pre-line', textAlign: 'center', opacity: eased }}>{tr(scene.caption)}</p>
-      {index === scenes.length - 1 && <AlgSteps step={piece === 'corner' ? 'trigger-learning' : 'middle'} alg={finalAlg} />}
-    </section>
+    {waitForContinue && finished && <button type="button" className="lbl-guide-continue lbl-guide-continue-hint" onClick={onDone}>{tr({ zh: '点击继续', en: 'Click to continue' })}</button>}
+    </ReadingFit></section>
     {toolbar && createPortal(<div className="lbl-cross-animation-progress">
       <VideoProgress time={time} duration={duration} playing={!paused}
       onPlayingChange={playing => setPaused(!playing)} onSeek={value => { clock.current = value; setTime(value); }} onReplay={() => { clock.current = 0; setTime(0); }} />

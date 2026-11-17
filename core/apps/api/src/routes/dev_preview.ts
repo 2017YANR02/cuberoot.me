@@ -7,6 +7,7 @@ import { normalizeRemoteKey } from '@cuberoot/shared/remote-access';
 import { query, withTransaction } from '../db/connection.js';
 import { requireAuth, checkRateLimit, type WcaUser } from '../utils/recon_helpers.js';
 import { devPreviewLeaseRoutes, leaseHash } from './dev_preview_lease.js';
+import { previewProgress, type PreviewWorkerProgress } from './dev_preview_progress.js';
 
 export const devPreviewRoutes = new Hono();
 const owner = (u: WcaUser) => u.isAdmin && u.realWcaId === '2017YANR02';
@@ -25,7 +26,9 @@ devPreviewRoutes.use('/dev-preview/requests*', async (c,next) => {
 });
 devPreviewRoutes.get('/dev-preview/requests', async c => {
   const u = await requireAuth(c), canApprove = owner(u);
-  return c.json({enabled:enabled(),canApprove,requests:await query(`SELECT ${fields} FROM dev_preview_requests ${canApprove?'':'WHERE user_id=?'} ORDER BY created_at DESC LIMIT 100`,canApprove?[]:[u.uid])});
+  const requests=await query<Request>(`SELECT ${fields} FROM dev_preview_requests ${canApprove?'':'WHERE user_id=?'} ORDER BY created_at DESC LIMIT 100`,canApprove?[]:[u.uid]);
+  const [worker]=await query<PreviewWorkerProgress>("SELECT checkpoint->>'requestId' AS request_id,checkpoint->'progress' AS progress,checkpoint->'retryAt' AS retry_at,checkpoint->'attempt' AS attempt,checkpoint->'commits'->>'http' AS http_sha,checkpoint->'commits'->>'https' AS https_sha,expires_at,updated_at FROM dev_preview_worker WHERE singleton");
+  return c.json({enabled:enabled(),canApprove,requests:requests.map(r=>({...r,progress:previewProgress(r.id,r.status,worker)}))});
 });
 devPreviewRoutes.post('/dev-preview/requests', async c => {
   const u = await requireAuth(c);

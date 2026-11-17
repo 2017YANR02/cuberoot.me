@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import VideoProgress from '../components/VideoProgress';
+import ReadingFit from '../components/ReadingFit';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import TrainingFeedbackOverlay from '@/components/TrainingFeedbackOverlay';
 import { tr } from '@/i18n/tr';
@@ -103,9 +104,11 @@ function CrossPlayback({ progress, clock, seekVersion, paused, onComplete, onFad
         const target = row.lastElementChild as HTMLElement | null;
         if (target && focus > 0) {
           // Untransformed layout coordinates keep the move centered on resize too.
-          const shift = row.clientWidth / 2 - target.offsetLeft - target.offsetWidth / 2;
+          const desktop = window.matchMedia('(min-width: 761px)').matches;
+          const shift = row.clientWidth * (desktop ? .25 : .5) - target.offsetLeft - target.offsetWidth / 2;
           row.style.setProperty('--cross-focus-shift', `${shift * focus}px`);
-          row.style.setProperty('--cross-focus-scale', String(1 + .45 * focus));
+          const targetScale = desktop ? Math.min(350, row.clientWidth * .45, row.clientHeight * .85) / target.offsetWidth : 1.45;
+          row.style.setProperty('--cross-focus-scale', String(1 + (targetScale - 1) * focus));
         }
       }
       if (phase.tilt !== undefined) {
@@ -281,7 +284,14 @@ export default function CrossOverviewAnimation({ daisy, cross }: { daisy: ReactN
     motion.addEventListener('change', update);
     return () => motion.removeEventListener('change', update);
   }, [restart]);
-  return <><div ref={wrapper} className="lbl-cross-animation-scene" data-fading={fading}>
+  const focusIndex = phases.findIndex(phase => phase.focusIntro);
+  const focusStart = phases.slice(0, focusIndex).reduce((sum, phase) => sum + phase.duration, 0) * timingScale;
+  const focusEnd = focusStart + phases[focusIndex].duration * timingScale;
+  const layout = animate && !continued && time >= focusStart ? 'A' : 'F';
+  // Use the cube's clock so paused seeks and replay preserve the same ordering.
+  const captionOpacity = layout === 'A' ? Math.max(0, Math.min(1, (time - focusEnd) / 200)) : 1;
+  return <ReadingFit layout={layout}><div className="lbl-content lbl-content-reading lbl-cross-video-content">
+  <section className="lbl-explanation"><div ref={wrapper} className="lbl-cross-animation-scene" data-tutorial-mode="timeline" data-tutorial-layout={layout} data-fading={fading}>
   <div key={`${continued}/${animate}`} ref={opening} data-opening={animate && !continued}
     className={`lbl-stage-overview lbl-cross-overview${continued ? ' lbl-cross-comparison' : ''}`}>
     {continued ? <CrossComparison reducedMotion={false} {...playback} /> : <>
@@ -299,18 +309,18 @@ export default function CrossOverviewAnimation({ daisy, cross }: { daisy: ReactN
     <VideoProgress time={time} duration={animationDuration} playing={!paused}
       onPlayingChange={playing => setPaused(!playing)} onSeek={seek} onReplay={restart} />
   </div>, toolbar)}
-  {continued ? <p className="lbl-lead">{tr({
+  <div className="lbl-cross-video-caption" data-entering={captionOpacity === 0} style={{ opacity: captionOpacity }}>{continued ? <p className="lbl-lead">{tr({
     zh: '不但要看底面图形，还要对齐侧面颜色',
     en: 'Check the bottom pattern and align the side colors too.',
   })}</p> : <>
     <p className="lbl-lead">{tr(LBL_STAGE_GOALS.cross.summary!)}</p>
     <p>{tr(LBL_LEARNING_FOCUS.cross)}</p>
-  </>}
+  </>}</div>
   {!animate && <>
     <div className="lbl-stage-overview lbl-cross-comparison">
       <CrossComparison reducedMotion {...playback} />
     </div>
     <p className="lbl-lead">{tr({ zh: '不但要看底面图形，还要对齐侧面颜色', en: 'Check the bottom pattern and align the side colors too.' })}</p>
   </>}
-  </div></>;
+  </div></section></div></ReadingFit>;
 }

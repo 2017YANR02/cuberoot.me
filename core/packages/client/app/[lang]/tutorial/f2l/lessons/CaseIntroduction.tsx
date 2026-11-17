@@ -27,9 +27,9 @@ const NO_HIGHLIGHTS: readonly string[] = [];
 function casePlayerLayout(container: HTMLDivElement) {
   const bounds = container.getBoundingClientRect();
   const desktop = window.matchMedia('(min-width: 761px)').matches;
-  const leftWidth = window.matchMedia('(max-width: 700px)').matches ? bounds.width : bounds.width * .48;
-  const top = desktop ? 40 : 60;
-  const size = Math.min(390, leftWidth, desktop ? Math.max(100, bounds.height - 180) : Infinity);
+  const leftWidth = desktop ? bounds.width * .48 : bounds.width;
+  const top = desktop ? 40 : 16;
+  const size = Math.min(390, leftWidth, desktop ? Math.max(100, bounds.height - 180) : Math.max(80, (bounds.height - 120) * .5));
   return { bounds, leftWidth, top, size };
 }
 
@@ -217,7 +217,7 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
   };
   return <TutorialNavigationShell className="f2l-study-layout">
     <SectionNavigation label={tr({ zh: '三步基态', en: 'Three-move cases' })} items={[{ id: 'section-0', label: tr({ zh: "三步基态", en: "Three-move cases" }), active: true, onSelect: () => { } }]} />
-    <div className="f2l-study-main"><div ref={root} className="f2l-case-introduction" data-phase={phase}>
+    <div className="f2l-study-main"><div ref={root} className="f2l-case-introduction" data-tutorial-layout="C" data-phase={phase}>
     <div {...playbackProps} className="f2l-case-grid">{ORDERED_BASIC_CASES.map((item, index) => <div key={item.id} className="f2l-case-item" data-selected={selected === index} data-hidden={selected !== null && selected !== index}>
       <div className="f2l-case-model" ref={element => { cubes.current[index] = element; }}
         onPointerDownCapture={event => {
@@ -273,14 +273,15 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
           </div>}
         </li>)}
       </ol>
+    {returnReady && <><button type="button" className="f2l-case-return-text tutorial-inline-action" disabled={!returnReady} onClick={() => {
+      if (selected !== null && !players.current[selected]?.isUserMovePending?.()) setPhase('return');
+    }}><T zh="点击返回选择" en="Click to return to case selection" /></button></>}
       </>}
     </div>}
     {phase === 'learn' && !controlsVisible && <p className="f2l-case-alignment-caption" data-fading={referenceFading} aria-live="polite">
       <span><T zh="调整顶层" en="Adjust the top layer" /></span>
       <span><T zh="使魔方和公式的初始状态一样" en="Match the cube to the algorithm’s starting state" /></span>
     </p>}
-    {phase === 'learn' && controlsVisible && <div className="f2l-case-return-row" style={{ visibility: returnReady ? 'visible' : 'hidden' }}><button type="button" className="f2l-case-return-text" disabled={!returnReady} onClick={() => {
-      if (selected !== null && !players.current[selected]?.isUserMovePending?.()) setPhase('return');
-    }}><T zh="点击返回选择" en="Click to return to case selection" /></button></div>}
+
   </div><StudyActions /></div></TutorialNavigationShell>;
 }

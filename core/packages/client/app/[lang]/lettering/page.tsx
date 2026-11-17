@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Copy } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
 import AlgPlayer from '@/components/AlgPlayer';
+import { ClearButton } from '@/components/ClearButton';
+import { createCharacterPlan, type CharacterPlan, type CharacterError } from './_lib/character-pattern';
 import { tr, useLang } from '@/i18n/tr';
 import {
   availableLetteringGlyphs,
@@ -26,23 +28,39 @@ export default function LetteringPage() {
   const [order, setOrder] = useState<LetteringOrder>(7);
   const [glyph, setGlyph] = useState<LetteringGlyph>('王');
   const [word, setWord] = useState<LetteringWord | null>(null);
+  const [input, setInput] = useState('王');
+  const [custom, setCustom] = useState<CharacterPlan | null>(null);
+  const [error, setError] = useState<CharacterError | null>(null);
+  const [pending, setPending] = useState(false);
   const [copied, setCopied] = useState(false);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const glyphOptions = useMemo(() => availableLetteringGlyphs(order), [order]);
   const pattern = useMemo(
-    () => word ? getLetteringWordPattern(word, order) : getLetteringPattern(glyph, order),
-    [glyph, order, word],
+    () => custom?.pattern ?? (word ? getLetteringWordPattern(word, order) : getLetteringPattern(glyph, order)),
+    [custom, glyph, order, word],
   );
   const segments = useMemo(
-    () => word ? buildLetteringWordSegments(word, order) : buildLetteringSegments(glyph, order),
-    [glyph, order, word],
+    () => custom?.segments ?? (word ? buildLetteringWordSegments(word, order) : buildLetteringSegments(glyph, order)),
+    [custom, glyph, order, word],
   );
   const alg = useMemo(() => segments.join(' '), [segments]);
-  const contentLabel = word ?? glyph;
+  const contentLabel = custom?.character ?? word ?? glyph;
   const patternSize = pattern.length;
   const moveCount = alg.split(/\s+/).filter(Boolean).length;
   const moveDurationMs = Math.max(48, Math.min(360, Math.round(28_000 / moveCount)));
-  const usesOuterPieces = word === null && (glyph === '生' || glyph === '世') && order === 7;
+  const usesOuterPieces = word === null && (contentLabel === '生' || contentLabel === '世') && order === 7;
+
+  const generate = () => {
+    setCopied(false);
+    try {
+      const next = createCharacterPlan(input, order);
+      if ('code' in next) { setError(next); setPending(true); return; }
+      setCustom(next);
+      setWord(null);
+      setError(null);
+      setPending(false);
+    } catch { setError({ code: 'font' }); setPending(true); }
+  };
 
   useEffect(() => () => {
     if (copyTimer.current) clearTimeout(copyTimer.current);
@@ -56,6 +74,9 @@ export default function LetteringPage() {
   };
 
   const selectOrder = (nextOrder: LetteringOrder) => {
+    setCustom(null);
+    setPending(true);
+    setError(null);
     const nextGlyphs = availableLetteringGlyphs(nextOrder);
     setOrder(nextOrder);
     if (word && nextOrder < LETTERING_WORD_MIN_ORDER) setWord(null);
@@ -63,11 +84,18 @@ export default function LetteringPage() {
   };
 
   const selectGlyph = (nextGlyph: LetteringGlyph) => {
+    setInput(nextGlyph);
+    setCustom(null);
+    setPending(false);
+    setError(null);
     setWord(null);
     setGlyph(nextGlyph);
   };
 
   const selectWord = () => {
+    setCustom(null);
+    setPending(false);
+    setError(null);
     setWord(LETTERING_WORD);
     if (order < LETTERING_WORD_MIN_ORDER) setOrder(LETTERING_WORD_MIN_ORDER);
   };
@@ -87,13 +115,28 @@ export default function LetteringPage() {
       <main className="lettering-shell lettering-main">
         <p className="lettering-intro">
           {tr({
-            zh: '选择阶数、汉字或“一生一世”，模拟器会从复原状态执行中心块换位子。',
-            en: 'Choose a cube order, character, or the four-character phrase. The simulator executes centre commutators from the solved state.',
+            zh: '单字预览版：输入一个汉字、英文字母或符号（如 ♥、★），选择阶数，生成从复原状态开始的拼法。',
+            en: 'Single-character preview: enter a Chinese character, English letter or symbol (such as ♥ or ★), choose a cube order and generate an algorithm starting from solved.',
           })}
         </p>
 
         <div className="lettering-workspace">
           <section className="lettering-controls" data-site-surface="panel" aria-label={tr({ zh: '拼字设置', en: 'Lettering settings' })}>
+            <form id="lettering-generate-form" className="lettering-input-group" onSubmit={event => { event.preventDefault(); generate(); }}>
+              <label htmlFor="lettering-character-input">{tr({ zh: '单个字符', en: 'Single character' })}</label>
+              <div className="lettering-input-wrap">
+                <input id="lettering-character-input" value={input} autoComplete="off" spellCheck={false}
+                  aria-invalid={error?.code === 'input'}
+                  onChange={event => { setInput(event.target.value); setPending(true); setError(null); }} />
+                {input && <ClearButton onClick={() => { setInput(''); setPending(true); setError(null); }} />}
+              </div>
+            </form>
+            {error && <p className="lettering-error" role="alert">
+              {error.code === 'input' ? tr({ zh: '请输入单个汉字、英文字母或符号（如 ♥、★），不支持多个字符、数字或组合表情。', en: 'Enter one Chinese character, English letter or symbol (such as ♥ or ★). Multiple characters, numbers and compound emoji are not supported.' })
+                : error.code === 'order' ? tr({ zh: `当前阶数无法保留这个字形的细节，建议选择 ${error.minimum} 阶后生成。`, en: `This grid cannot preserve the glyph details. Try order ${error.minimum}.` })
+                  : error.code === 'detail' ? tr({ zh: '当前字体在这个阶数下无法保留字形细节，请尝试其他阶数或字符。', en: 'This font cannot preserve the glyph details at this order. Try a different order or character.' })
+                  : tr({ zh: '无法绘制这个字符，设备可能缺少对应字体。请尝试其他字符。', en: 'Unable to draw this character. A suitable font may be missing. Try another character.' })}
+            </p>}
             <fieldset>
               <legend>{tr({ zh: '魔方阶数', en: 'Cube order' })}</legend>
               <div className="lettering-order-grid">
@@ -110,15 +153,17 @@ export default function LetteringPage() {
                 ))}
               </div>
             </fieldset>
+            <button type="submit" form="lettering-generate-form" className="lettering-generate">{tr({ zh: '生成拼法', en: 'Generate algorithm' })}</button>
+            <p className="lettering-method">{tr({ zh: '按字形的笔画、间隙和封闭区域估计所需阶数；自动字形从 7 阶起尝试。生成后请检查点阵是否清晰。', en: 'Required size is estimated from strokes, gaps and enclosed spaces, starting at 7×7 for automatic glyphs. Check the resulting grid for legibility.' })}</p>
             <fieldset>
-              <legend>{tr({ zh: '汉字', en: 'Character' })}</legend>
+              <legend>{tr({ zh: '内置字形', en: 'Built-in glyphs' })}</legend>
               <div className="lettering-character-grid">
                 {glyphOptions.map(option => (
                   <button
                     key={option}
                     type="button"
                     className="lettering-character"
-                    aria-pressed={word === null && glyph === option}
+                    aria-pressed={!pending && word === null && contentLabel === option}
                     onClick={() => selectGlyph(option)}
                   >
                     {option}
@@ -137,7 +182,7 @@ export default function LetteringPage() {
                 {LETTERING_WORD}
               </button>
             </fieldset>
-            <p className="lettering-method">
+            {!pending && <p className="lettering-method">
               {usesOuterPieces
                 ? tr({
                   zh: `字形使用完整 7×7 正面点阵，外圈棱块也参与转动，共 ${moveCount} 步。`,
@@ -147,10 +192,11 @@ export default function LetteringPage() {
                   zh: `${word ? '词语' : '字形'}使用 ${patternSize}×${patternSize} 中心点阵；相邻层合并成块转动，再补不能合并的部分，共 ${moveCount} 步。棱角保持复原。`,
                   en: `The ${word ? 'phrase' : 'glyph'} uses a ${patternSize}×${patternSize} centre grid. Adjacent layers turn as blocks before the remaining parts are filled, for ${moveCount} moves; edges and corners stay solved.`,
                 })}
-            </p>
+            </p>}
           </section>
 
           <section className="lettering-preview" data-site-surface="panel" aria-labelledby="lettering-preview-title">
+            {pending ? <p className="lettering-empty" id="lettering-preview-title" role="status">{tr({ zh: '选择阶数后，点击“生成拼法”查看结果。', en: 'Choose a cube order and generate an algorithm to see the result.' })}</p> : <>
             <div className="lettering-preview-heading">
               <div>
                 <p>{order}×{order}</p>
@@ -158,6 +204,15 @@ export default function LetteringPage() {
               </div>
             </div>
 
+            <div className="lettering-pattern-summary">
+              <div className="lettering-pixel-grid" role="img" aria-label={tr({ zh: `${contentLabel}的目标点阵`, en: `Target grid for ${contentLabel}` })}
+                style={{ gridTemplateColumns: `repeat(${patternSize}, 1fr)` }}>
+                {pattern.flatMap((row, y) => [...row].map((pixel, x) => <span key={`${y}-${x}`} data-ink={pixel === '1'} />))}
+              </div>
+              <p className="lettering-method">{tr({ zh: `${patternSize}×${patternSize} 目标点阵 · ${moveCount} 步`, en: `${patternSize}×${patternSize} target grid · ${moveCount} moves` })}<br />
+                {custom?.source === 'font' ? tr({ zh: '字体自动采样；大小写保留，字形随设备字体略有差异。', en: 'Sampled from a local font. Case is preserved; appearance may vary by device.' }) : tr({ zh: '使用内置手工点阵。', en: 'Uses a hand-designed glyph.' })}
+              </p>
+            </div>
             <div className="lettering-cube-card">
               <AlgPlayer
                 alg={alg}
@@ -172,6 +227,7 @@ export default function LetteringPage() {
               />
             </div>
 
+            <p className="lettering-method lettering-result-note">{tr({ zh: '从复原状态开始，绿色面朝前、白色面朝上；其他面的中心颜色也会改变。', en: 'Start solved with green in front and white on top. Centres on other faces also change.' })}</p>
             <div className="lettering-alg-heading">
               <h3>{tr({ zh: '拼字公式', en: 'Lettering alg' })}</h3>
               <button type="button" className="lettering-copy-button" onClick={() => void copyAlg()}>
@@ -180,6 +236,7 @@ export default function LetteringPage() {
               </button>
             </div>
             <pre className="lettering-alg"><code>{segments.join('\n')}</code></pre>
+            </>}
           </section>
         </div>
       </main>

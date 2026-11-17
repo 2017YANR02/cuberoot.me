@@ -28,48 +28,62 @@ jobs:
           # both deployment pipelines. GITHUB_TOKEN pushes would suppress CI.
           ssh-key: ${{ secrets.AUTOMATION_PUSH_SSH_KEY }}
 
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/setup-node@v4
         with:
-          ruby-version: '3.3'
+          node-version-file: .node-version
 
       - name: Check incremental planning and publication loop protection
         working-directory: core
-        run: ruby packages/client/scripts/check-code-history.rb
+        run: node packages/client/scripts/check-code-history.ts
 
       - name: Restore Linguist checkpoint
         uses: actions/cache/restore@v4
         with:
           path: .local-data/code-language-history/checkpoint.json
-          key: code-history-linux-ruby33-${{ hashFiles('core/packages/client/scripts/build-code-history.rb') }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: code-history-linux-ruby33-${{ hashFiles('core/packages/client/scripts/build-code-history.rb') }}-
+          key: code-history-linux-ruby33-${{ hashFiles('core/packages/client/scripts/build-code-history.ts', 'core/packages/client/scripts/linguist-engine.rb', 'scripts/wca-data/local-lock.ts') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          # The TS orchestrator preserves the existing official-engine cache.
+          # Metadata validation in the planner rejects incompatible versions.
+          restore-keys: |
+            code-history-linux-ruby33-${{ hashFiles('core/packages/client/scripts/build-code-history.ts', 'core/packages/client/scripts/linguist-engine.rb', 'scripts/wca-data/local-lock.ts') }}-
+            code-history-linux-ruby33-
 
       - name: Plan incremental update
         id: plan
         run: |
           mkdir -p .tmp/scratch
-          ruby core/packages/client/scripts/build-code-history.rb --plan > .tmp/scratch/code-history-plan.json
+          node core/packages/client/scripts/build-code-history.ts --plan > .tmp/scratch/code-history-plan.json
           cat .tmp/scratch/code-history-plan.json
-          ruby -rjson -e 'p = JSON.parse(File.read(ARGV[0])); puts "changed=#{p.fetch("sourceChanged")}"' .tmp/scratch/code-history-plan.json >> "$GITHUB_OUTPUT"
+          node --input-type=module -e 'import { readFileSync } from "node:fs"; const plan = JSON.parse(readFileSync(process.argv[1], "utf8")); console.log(`changed=${plan.sourceChanged}`)' .tmp/scratch/code-history-plan.json >> "$GITHUB_OUTPUT"
+
+      - uses: ruby/setup-ruby@v1
+        if: steps.plan.outputs.changed == 'true'
+        with:
+          ruby-version: '3.3'
 
       - name: Install official Linguist engine
         if: steps.plan.outputs.changed == 'true'
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends cmake pkg-config libicu-dev
-          ENGINE=$(ruby -r ./core/packages/client/scripts/build-code-history.rb -e 'puts CodeLanguageHistory::ENGINE.split.last')
-          gem install github-linguist --version "$ENGINE" --no-document
+          LINGUIST_VERSION=$(node core/packages/client/scripts/build-code-history.ts --engine-version)
+          gem install github-linguist --version "$LINGUIST_VERSION" --no-document
+
+      - name: Verify official engine and persisted cache integration
+        if: steps.plan.outputs.changed == 'true'
+        working-directory: core
+        run: node packages/client/scripts/check-code-history.ts --engine
 
       - name: Refresh language snapshot
         if: steps.plan.outputs.changed == 'true'
         working-directory: core
-        run: ruby packages/client/scripts/build-code-history.rb
+        run: node packages/client/scripts/build-code-history.ts
 
       - name: Save completed incremental progress
         if: always() && steps.plan.outputs.changed == 'true'
         uses: actions/cache/save@v4
         with:
           path: .local-data/code-language-history/checkpoint.json
-          key: code-history-linux-ruby33-${{ hashFiles('core/packages/client/scripts/build-code-history.rb') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: code-history-linux-ruby33-${{ hashFiles('core/packages/client/scripts/build-code-history.ts', 'core/packages/client/scripts/linguist-engine.rb', 'scripts/wca-data/local-lock.ts') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Publish only the generated chart snapshot
         if: steps.plan.outputs.changed == 'true'

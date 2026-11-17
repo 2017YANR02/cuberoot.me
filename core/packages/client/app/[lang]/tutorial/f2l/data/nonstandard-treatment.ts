@@ -29,7 +29,7 @@ const normalReference = {
 /** Fixed, editable shots: recognize the relative pattern, transform, align, insert. */
 const scenes: NonstandardIntroScene[] = [
   {
-    caption: { zh: 'F2L · T\n标态 F2L 与公式完全一致', en: 'F2L · T\nThe standard F2L case matches the algorithm exactly' },
+    caption: { zh: 'F2L · T\n标态 F2L 与公式完全一致', en: 'F2L · T\nThe standard F2L case\nmatches the algorithm exactly' },
     setup: t.setup, alg: '', duration: 6500, highlight: [],
     bubble: { zh: '和公式库中的状态完全一样', en: 'Exactly the same case as in the algorithm library' },
   },
@@ -75,7 +75,7 @@ const scenes: NonstandardIntroScene[] = [
     moveStart: 1800,
   },
   {
-    caption: { zh: '再用熟悉的三步，把棱角送回自己的 FR 槽', en: 'Use the familiar three moves to insert the pair into its own FR slot' },
+    caption: { zh: '再用熟悉的三步，把棱角送回自己的 FR 槽', en: 'Use the familiar three moves\nto insert the pair into its own FR slot' },
     setup: `${adjacentEnd} U'`, alg: insertion, duration: 6000, highlight: [], continuePrevious: true,
     moveStart: 1800, moveGap: 500, activeReferenceSegment: 1,
   },

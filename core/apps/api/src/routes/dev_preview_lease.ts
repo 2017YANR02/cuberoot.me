@@ -15,7 +15,7 @@ devPreviewLeaseRoutes.post('/', async c => {
   const [row] = await query<{checkpoint: unknown}>(
     "UPDATE dev_preview_worker SET lease_hash=?,worker_name=?,expires_at=NOW()+INTERVAL '120 seconds',updated_at=NOW() WHERE singleton AND (expires_at IS NULL OR expires_at<=NOW()) RETURNING checkpoint",
     [leaseHash(lease),body.worker]);
-  return row ? c.json({lease,checkpoint:row.checkpoint}) : c.json({error:'Another worker is active'},409);
+  return row ? c.json({lease,checkpoint:row.checkpoint,progressVersion:1}) : c.json({error:'Another worker is active'},409);
 });
 devPreviewLeaseRoutes.post('/renew',async c=>{
   const lease=c.req.header(header)??'';
@@ -26,7 +26,7 @@ devPreviewLeaseRoutes.post('/renew',async c=>{
 devPreviewLeaseRoutes.post('/checkpoint',async c=>{
   const lease=c.req.header(header)??'',body=await c.req.json().catch(()=>null);
   if(!validLease(lease))return c.json({error:'Lease required'},409);
-  if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(k=>!['requestId','baseSha','registry','commits','retryAt','attempt'].includes(k)))return c.json({error:'Invalid checkpoint'},400);
+  if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(k=>!['requestId','baseSha','registry','commits','retryAt','attempt','progress'].includes(k)))return c.json({error:'Invalid checkpoint'},400);
   const rows=await query('UPDATE dev_preview_worker SET checkpoint=?,updated_at=NOW() WHERE singleton AND lease_hash=? AND expires_at>NOW() RETURNING singleton',[body,leaseHash(lease)]);
   return rows.length?c.json({ok:true}):c.json({error:'Lease expired'},409);
 });

@@ -74,7 +74,7 @@ export default function FreePracticeGuide({ table, orientation, onClose }: {
   const seek = (value: number) => { clock.current = value; setTime(value); };
   return <div className="f2l-free-guide" data-playing={playing} ref={root}>
     <VideoStage>
-    <div className="f2l-lesson f2l-study-lesson">
+    <div className="f2l-lesson f2l-study-lesson" data-tutorial-mode="timeline" data-tutorial-layout={index >= 6 ? 'C' : 'A'}>
       <section className="f2l-demo" aria-label={tr({ zh: '使用方法演示', en: 'How to use free practice' })}>
         <div className="f2l-cube f2l-free-guide-cube">
           <PairEditor setup={exercise?.setup ?? ''} orientation={orientation} onPiece={ignorePiece} onReady={() => setReady(true)}

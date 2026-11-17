@@ -40,7 +40,7 @@ function roundedRect(path: THREE.Path, width: number, height: number, radius: nu
 }
 
 /** One continuous frame per aligned edge/center pair, using the prediction trainer's outline style. */
-export function attachDaisyAlignment(cube: Cube) {
+export function attachDaisyAlignment(cube: Cube, focusFace?: () => 'F' | 'R' | undefined) {
   const shape = new THREE.Shape();
   roundedRect(shape, STICKER_INNER, STICKER_INNER + SIZE, STICKER_CORNER_RADIUS);
   const hole = new THREE.Path();
@@ -66,9 +66,10 @@ export function attachDaisyAlignment(cube: Cube) {
     hasMatch: () => frames.some(({ mesh }) => mesh.visible),
     update() {
       const aligned = alignedDaisyFaces(cube);
+      const focus = focusFace?.();
       let changed = false;
       for (const { mesh, face } of frames) {
-        const visible = aligned.includes(face);
+        const visible = aligned.includes(face) && (!focus || FACE[face] === focus);
         if (mesh.visible !== visible) { mesh.visible = visible; changed = true; }
       }
       return changed;

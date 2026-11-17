@@ -128,6 +128,7 @@ interface Props {
   stickeringAtStep?: (step: number) => import('@cuberoot/puzzle-render-core/engine/nxn/stickering').StickeringMaskFn;
   /** Sim 3x3: frame each daisy petal whose side matches the center below it. */
   highlightDaisyAlignment?: boolean;
+  daisyAlignmentFace?: 'F' | 'R';
   /** Sim engine, 3×3 only: render the simulator's animated hands. */
   showHands?: boolean;
   /** 每个 STM 的动画时长(ms)，默认 1000。 */
@@ -207,6 +208,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         stickerColorOverrides={props.stickerColorOverrides}
         onStepChange={props.onStepChange}
         highlightDaisyAlignment={props.highlightDaisyAlignment}
+        daisyAlignmentFace={props.daisyAlignmentFace}
         showHands={props.showHands}
         startSolved={props.startSolved} autoPlay={props.autoPlay} loop={props.loop}
         resetAfterPlayback={props.resetAfterPlayback}

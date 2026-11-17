@@ -93,7 +93,7 @@ function FlowPlayback({ path, orientation, pauseBetween, onPathChange }: {
     if (instance) instance.timestamp = target;
   };
 
-  return <div className="f2l-flow-layout">
+  return <div className="f2l-flow-layout" data-tutorial-layout="C">
     <section className="f2l-flow-player">
       <div className="f2l-flow-cube"><AlgPlayer ref={player} puzzle="3x3" set="f2l-overview" engine="sim"
         setup={snapshot.setup} alg={path.alg} orientation={orientation} fillPane moveDurationMs={850}

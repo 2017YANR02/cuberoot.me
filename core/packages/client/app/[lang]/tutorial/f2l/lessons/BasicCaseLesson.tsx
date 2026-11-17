@@ -1,5 +1,7 @@
 'use client';
 
+import ReadingFit from '../../components/ReadingFit';
+
 import useTeachingFollow from '../../components/useTeachingFollow';
 import TutorialNavigationShell from '../../components/TutorialNavigationShell';
 
@@ -49,7 +51,7 @@ export default function BasicCaseLesson({ orientation, pauseBetween, caseId, onC
         <TutorialNavigationShell className="f2l-study-layout">
           <SectionNavigation label={lesson.name} items={chapterCases.map((item, index) => ({ id: String(item.id), label: item.name, active: lesson.id === item.id, onSelect: () => selectCase(item.id), icon: <VisualCube view="iso" size={36} faceletColors={diagrams[index]} alt=""/> }))} />
           <div className="f2l-study-main">
-            <div className="f2l-lesson f2l-study-lesson">
+            <div className="f2l-lesson f2l-study-lesson" data-tutorial-layout="B">
               <section {...playbackProps} className="f2l-demo" aria-label={tr({ zh: '魔方演示', en: 'Cube demonstration' })}>
                 <div className="f2l-cube">
                   <AlgPlayer key={orientation} ref={player} puzzle="3x3" set="f2l-tutorial" engine="sim"
@@ -59,7 +61,7 @@ export default function BasicCaseLesson({ orientation, pauseBetween, caseId, onC
                 <code className="f2l-alg f2l-player-alg" data-site-surface="panel">{lesson.alg}</code>
 
               </section>
-              <section {...paneProps} className="f2l-guidance tutorial-follow-pane">
+              <section {...paneProps} className="f2l-guidance tutorial-follow-pane"><ReadingFit pane>
 
                 <ol className="f2l-stage-list">
                   <li><button type="button" className="f2l-stage-button" aria-current={playbackStep === 0 ? 'step' : undefined} onClick={() => seek(0)}>
@@ -71,7 +73,7 @@ export default function BasicCaseLesson({ orientation, pauseBetween, caseId, onC
                     </button>
                   </li>)}
                 </ol>
-              </section>
+              </ReadingFit></section>
             </div>
             <StudyActions onPrevious={chapterCases.indexOf(lesson) > 0
               ? () => selectCase(chapterCases[chapterCases.indexOf(lesson) - 1].id) : undefined} onContinue={nextCase} />

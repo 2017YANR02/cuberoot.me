@@ -1972,21 +1972,23 @@
       "source": {
         "locator": "Retained main first-parent Git history, analyzed by github-linguist 9.7.0",
         "paths": [
-          "core/packages/client/scripts/build-code-history.rb"
+          "core/packages/client/scripts/build-code-history.ts",
+          "core/packages/client/scripts/linguist-engine.rb"
         ]
       },
       "license": {
         "spdx": "LicenseRef-CubeRoot",
         "evidence": "Aggregated byte counts derived from repository snapshots using MIT-licensed GitHub Linguist"
       },
-      "owner": "core/packages/client/scripts/build-code-history.rb",
+      "owner": "core/packages/client/scripts/build-code-history.ts",
       "workingDirectory": "core",
-      "command": "ruby packages/client/scripts/build-code-history.rb",
+      "command": "node packages/client/scripts/build-code-history.ts",
       "outputs": [
         "core/packages/client/app/[lang]/dev/architecture/_components/code-history/history.json"
       ],
       "verification": [
-        "ruby packages/client/scripts/check-code-history.rb"
+        "node packages/client/scripts/check-code-history.ts",
+        "node packages/client/scripts/check-code-history.ts --engine"
       ],
       "driftPolicy": "Daily code_language_history.yml or explicit maintenance uses the same incremental generator; keep raw Linguist byte counts and source commits. Reuse .local-data/code-language-history/checkpoint.json, with the checked-in snapshot as the cold-cache baseline. Skip snapshot-only publication commits. The dedicated workflow pushes only this output using the existing automation deploy key, then normal Web checks and deployment gates apply. Ordinary test CI, builds and page rendering do not rerun history analysis. No AI or local computer is required."
     },

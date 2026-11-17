@@ -130,6 +130,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   onStepChange?: (step: number) => void;
   stickeringAtStep?: (step: number) => import('@cuberoot/puzzle-render-core/engine/nxn/stickering').StickeringMaskFn;
   highlightDaisyAlignment?: boolean;
+  daisyAlignmentFace?: 'F' | 'R';
   showHands?: boolean;
   moveDurationMs?: number;
   size?: number;
@@ -137,7 +138,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   fillPane?: boolean;
 }>(function AlgSimPlayer({
   alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, highlightedStickers, frontFaceArrow, moveHint, moveHintRecovery = false, stickerColorOverrides, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, resetAfterPlayback = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, onUserMove, pauseAfterSteps, sectionPauseMs, onStepChange, stickeringAtStep, highlightDaisyAlignment = false, showHands = false, moveDurationMs, size = 260, fillPane = false,
-  stageOverlay,
+  stageOverlay, daisyAlignmentFace,
 }, ref) {
   const t = useT();
   const [handsUnavailable, setHandsUnavailable] = useState(false);
@@ -267,6 +268,8 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   const handsRef = useRef<HandsRig | null>(null);
   const restoreGripsRef = useRef<((prefix: string[]) => void) | null>(null);
   const alignmentRef = useRef<ReturnType<typeof import('./daisy-alignment').attachDaisyAlignment> | null>(null);
+  const daisyAlignmentFaceRef = useRef(daisyAlignmentFace);
+  daisyAlignmentFaceRef.current = daisyAlignmentFace;
   const resetViewRef = useRef<((durationMs?: number) => void | Promise<void>) | null>(null);
   const clockUserMoveRef = useRef<((action: string) => void) | null>(null);
   const interactionOptionsRef = useRef({ interactionMode, lockView });
@@ -319,7 +322,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     mountRef.current = m;
     const world = m.world;
     const cube = world.cube;
-    if (alignmentModule) alignment = alignmentModule.attachDaisyAlignment(cube as Cube);
+    if (alignmentModule) alignment = alignmentModule.attachDaisyAlignment(cube as Cube, () => daisyAlignmentFaceRef.current);
     alignmentRef.current = alignment ?? null;
     let cancelViewReset: (() => void) | undefined;
     resetViewRef.current = (durationMs = 0) => {

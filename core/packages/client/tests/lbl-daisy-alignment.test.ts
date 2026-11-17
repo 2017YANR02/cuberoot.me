@@ -4,6 +4,26 @@ import { FACE } from '@cuberoot/puzzle-render-core/engine/define';
 import { alignedDaisyFaces, attachDaisyAlignment } from '@/components/AlgPlayer/daisy-alignment';
 
 describe('white-cross color alignment', () => {
+  it('outlines only the watched pair as it moves from front to right', () => {
+    const cube = new Cube(3);
+    let focus: 'F' | 'R' = 'F';
+    const alignment = attachDaisyAlignment(cube, () => focus);
+    const visible = () => ['F', 'R', 'B', 'L'].filter(face => cube.getObjectByName(`daisy-alignment-${face}`)?.visible);
+    const setup = "F2 U R2 U2 B2 U L2 U' d";
+    try {
+      cube.twister.setup(setup);
+      alignment.update();
+      expect(visible()).toEqual(['F']);
+      cube.twister.setup(`${setup} y'`);
+      focus = 'R';
+      alignment.update();
+      expect(visible()).toEqual(['R']);
+      cube.twister.setup(`${setup} y' R2`);
+      alignment.update();
+      expect(visible()).toEqual([]);
+    } finally { alignment.dispose(); cube.dispose(); }
+  });
+
   it('recognizes petals on all four sides, but not solved top edges', () => {
     const cube = new Cube(3);
     try {

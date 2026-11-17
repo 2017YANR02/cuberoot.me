@@ -2,6 +2,7 @@
 
 import useTeachingFollow from '../../components/useTeachingFollow';
 import TutorialNavigationShell from '../../components/TutorialNavigationShell';
+import ReadingFit from '../../components/ReadingFit';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsString, useQueryState, useQueryStates } from 'nuqs';
@@ -113,14 +114,17 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
         {classified && activeCategory ? <ClassifiedSectionNavigation active={activeCategory} orientation={orientation}
           onSelect={id => void setSelection({ algGroup: id, algCase: null })} /> : chapter === 4 ? <SectionNavigation label={tr(f2lGroupName(activeGroup))} items={lessonGroups.map((group) => ({ id: String(group), icon: sectionIcon(lessons.find(c => c.group === group)!.name), label: tr(f2lGroupName(group)), active: activeGroup === group, onSelect: () => void setSelection({ algGroup: group, algCase: null }) }))} /> : <SectionNavigation label={lesson.name} items={visibleLessons.map((c) => ({ id: String(c.name), icon: sectionIcon(c.name), label: c.name, active: lesson.name === c.name, onSelect: () => setCaseName(c.name) }))} />}
         <div className="f2l-study-main">
-          {activeCategory?.recognition && <p>{tr(activeCategory.recognition)}</p>}
+          {!showGallery && activeCategory?.recognition && <p>{tr(activeCategory.recognition)}</p>}
           {showGallery ? <>
+            <ReadingFit><div data-tutorial-layout="F">
+            {activeCategory?.recognition && <p>{tr(activeCategory.recognition)}</p>}
             <div className="f2l-recognition f2l-teaching-cases" role="group" aria-label={tr({ zh: '选择教学情况', en: 'Choose a teaching case' })}>
               {visibleLessons.map(c => <button type="button" key={c.name} className="f2l-section-button" onClick={() => void setCaseName(c.name)}>
                 <VisualCube local loading="lazy" view="iso" size={120} faceletColors={diagrams.find(item => item.name === c.name)!.facelets} alt="" />
                 <span>{c.name}</span>
               </button>)}
             </div>
+            </div></ReadingFit>
             <StudyActions onPrevious={previousSection} onContinue={nextSection} />
           </> : <>
           <div className="f2l-teaching-alg-summary">
@@ -137,7 +141,7 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
               <code aria-label={tr({ zh: '复原公式', en: 'Solution' })}>{lesson.alg}</code>
             </div>
           </div>
-          <div className={`f2l-lesson f2l-study-lesson f2l-algorithm-columns${flowTeaching ? ' f2l-integrated-example' : ''}`}
+          <div data-tutorial-layout={flowTeaching ? 'C' : 'B'} className={`f2l-lesson f2l-study-lesson f2l-algorithm-columns${flowTeaching ? ' f2l-integrated-example' : ''}`}
             onPointerDownCapture={event => { if ((event.target as Element).closest('.alg-sim-player, .f2l-flow-node')) cancelSegment(); }}
             onKeyDownCapture={event => { if ((event.target as Element).closest('.alg-sim-player, .f2l-flow-node')) cancelSegment(); }}>
             <section {...playbackProps} className="f2l-demo">
@@ -146,7 +150,7 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
                 onStepChange={step => { actualStep.current = step; setPlayback({ key: playbackKey, step }); }}
                 sectionPauseMs={2000} pauseAfterSteps={pauseBetween ? lesson.sections.slice(0, -1).map(section => section.end) : NO_STOPS} /></div>
             </section>
-            <div {...paneProps} className="f2l-path-explanation tutorial-follow-pane">
+            <div {...paneProps} className="f2l-path-explanation tutorial-follow-pane"><ReadingFit pane>
             <section className="f2l-guidance f2l-teaching-guidance">
 
               <ol className="f2l-stage-list" aria-label={tr({ zh: '转化阶段', en: 'Transformation stages' })}>
@@ -173,13 +177,14 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
                 </li>)}</ol>
             </section>
             {flowTeaching && <TeachingFlowGraph key={playbackKey} lesson={lesson} orientation={orientation} step={playbackStep} player={player} />}
-            </div>
-          </div>
-          {chapter === 4 && <div className="f2l-alg-return-row">
-            <button type="button" className="f2l-case-return-text" onClick={() => void setSelection({ algGroup: activeGroup, algCase: null })}>
+          {chapter === 4 && <>
+            <button type="button" className="f2l-case-return-text tutorial-inline-action" onClick={() => void setSelection({ algGroup: activeGroup, algCase: null })}>
               <T zh="点击返回选择" en="Click to return to case selection" />
             </button>
-          </div>}
+          </>}
+            </ReadingFit></div>
+          </div>
+
           <StudyActions onPrevious={previousSection} onContinue={nextSection}>
             <button type="button" className="f2l-footer-button f2l-footer-next tutorial-practice-button" onClick={() => {
               void setPracticeRoute({ view: 'practice', algCase: lesson.name }, { history: 'push' });

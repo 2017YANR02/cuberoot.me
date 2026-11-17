@@ -103,7 +103,6 @@
 .f2l-recognition { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 28px 0; }
 .f2l-recognition figure { margin: 0; min-width: 0; text-align: center; }
 .f2l-teaching-cases > .f2l-section-button { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
-.f2l-alg-return-row { padding: 24px 0; text-align: center; }
 .f2l-teaching-flow { width: 140px; max-width: 100%; justify-self: center; }
 .f2l-teaching-flow > svg { display: block; width: 100%; height: auto; }
 .f2l-flow-graph.f2l-teaching-flow { --flow-signal: var(--accent); }
@@ -361,16 +360,7 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
     min-height: 0;
   }
   .f2l-page .f2l-video-viewport { display: block; position: relative; flex: 1 1 0; min-height: 0; }
-  .f2l-page .f2l-video-stage {
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    top: 50%;
-    width: 100%;
-    height: 496px;
-    transform: translateY(-50%) scale(var(--f2l-video-scale, 1));
-    transform-origin: center;
-  }
+
   .f2l-page .f2l-video-stage > :is(.f2l-concept-scene, .f2l-study-lesson, .f2l-intro-methods) {
     flex: 1 1 0;
     min-height: 0;
@@ -407,7 +397,7 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
   .f2l-page .f2l-chapter-body { min-height: 0; padding-bottom: 0; }
   .f2l-page .f2l-study-layout { grid-template-columns: minmax(0, 1fr); }
   .f2l-page .f2l-study-layout > .tutorial-section-navigation { display: none; }
-  .f2l-page .f2l-chapter-body:has(.f2l-study-dock) { padding-bottom: calc(128px + env(safe-area-inset-bottom)); }
+  .f2l-page .f2l-chapter-body:has(.f2l-study-dock) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   .f2l-page .f2l-study-dock {
     display: block;
     position: fixed;
@@ -416,13 +406,43 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
     padding: 0 max(12px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
     background: var(--background);
   }
-  .f2l-study-dock .f2l-study-actions { position: static; inset: auto; display: grid; grid-template-columns: 96px minmax(0, 1fr) 96px; gap: 4px; padding-top: 8px; }
-  .f2l-study-actions > .f2l-footer-button:first-child { grid-column: 1; grid-row: 2; }
-  .f2l-study-actions > .tutorial-section-menu-host { grid-column: 2; grid-row: 2; }
-  .f2l-study-actions > .f2l-footer-button:last-child { grid-column: 3; grid-row: 2; }
-  .f2l-study-actions > .f2l-study-secondary-actions { grid-column: 1 / -1; grid-row: 1; justify-content: center; margin-inline-start: 0; }
-  .f2l-study-actions > .f2l-study-secondary-actions:empty { display: none; }
+  .f2l-study-dock .f2l-study-actions { position: static; inset: auto; padding-top: 8px; }
   .f2l-study-dock .f2l-footer-button { width: auto; min-width: 0; height: auto; gap: 4px; padding: 8px 6px; font-size: .8rem; }
   .tutorial-section-menu-host { display: block; min-width: 0; }
   .tutorial-section-menu-host:empty { display: none; }
+  /* Single-cube lessons reserve a stationary demo above one reading pane. */
+  .f2l-page:has(.f2l-study-main > .f2l-study-lesson, .f2l-terminology-stage) {
+    height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); padding-bottom: 0;
+  }
+  .f2l-page:has(.f2l-study-main > .f2l-study-lesson, .f2l-terminology-stage) .f2l-chapter { min-height: 0; margin-top: 8px; }
+  .f2l-page:has(.f2l-study-main > .f2l-study-lesson, .f2l-terminology-stage) :is(.f2l-chapter-body, .f2l-lesson-scroll, .f2l-study-layout) { height: 100%; min-height: 0; }
+  .f2l-page .f2l-study-main:has(> .f2l-study-lesson) { min-height: 0; overflow: clip; container-type: size; }
+  .f2l-page .f2l-study-main > .f2l-study-lesson {
+    flex: 1; min-height: 0; margin-top: 8px; gap: 8px;
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); align-items: stretch;
+  }
+  .f2l-page .f2l-study-main > .f2l-study-lesson > :last-child {
+    min-height: 0; max-height: 100%; overflow-y: auto; overscroll-behavior-y: contain;
+  }
+  .f2l-page .f2l-study-main > .f2l-study-lesson .f2l-cube {
+    height: auto; aspect-ratio: auto; max-width: none;
+  }
+  .f2l-page .f2l-study-main > .f2l-study-lesson .f2l-cube > .alg-sim-player.is-fill {
+    position: relative; inset: auto; height: auto;
+  }
+  .f2l-page .f2l-study-main > .f2l-study-lesson .sim-stage {
+    flex: none; height: min(350px, 100cqw, max(0px, calc((100cqh - 140px) * .6)));
+  }
+}
+
+@media (max-width: 760px) {
+  .f2l-page .f2l-study-main:has(.f2l-terminology-stage) { min-height: 0; overflow: clip; container-type: size; }
+  .f2l-page .f2l-concept-video:has(.f2l-terminology-stage) { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+  .f2l-page .f2l-video-viewport:has(.f2l-terminology-stage) { flex: 1; min-height: 0; }
+  .f2l-page .f2l-video-stage:has(.f2l-terminology-stage) { height: 100%; min-height: 0; }
+  .f2l-page .f2l-terminology-stage { height: 100%; min-height: 0; grid-template-rows: auto minmax(0, 1fr); align-items: stretch; }
+  .f2l-page .f2l-terminology-stage > .f2l-concept-cube { height: min(350px, 100cqw, max(0px, calc((100cqh - 140px) * .6))); aspect-ratio: auto; max-width: none; }
+  .f2l-page .f2l-terminology-stage > .f2l-concept-caption { min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; }
+  .f2l-page .f2l-terminology-stage[data-summary='true'] { display: block; overflow-y: auto; }
+  .f2l-page .f2l-concept-video:has(.f2l-terminology-stage) > .f2l-intro-progress { flex-shrink: 0; }
 }

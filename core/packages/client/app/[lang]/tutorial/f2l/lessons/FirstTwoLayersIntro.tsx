@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import ReadingFit from '../../components/ReadingFit';
+
+import { Fragment, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { Color } from 'three';
 import { RotateCcw } from 'lucide-react';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import PlaybackBar from '@/components/PlaybackBar';
-import ChatBubble from '@/components/ChatBubble';
 import { FM_FIXED_COLOR, FM_IGNORED } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import type { CubeFace } from '@/lib/cube-colors';
@@ -13,6 +14,7 @@ import { tr } from '@/i18n/tr';
 import { syncPlayerToMoveCount } from '@/lib/recon-alg-utils';
 import { createIntroTimeline, introFrame, INTRO_CROSS_MS, INTRO_INSPECTION_RETURN_MS } from '../lib/intro-timeline';
 import { LBL_INTRO_SEGMENTS, F2L_INTRO_SEGMENTS, F2L_INTRO_VIDEO_ALG, LBL_INTRO_VIDEO_ALG, LBL_INTRO_VIDEO_SETUP, LBL_INTRO_CORNER_STICKERS, LBL_INTRO_EDGE_STICKERS } from '../data/lbl-intro';
+import VideoStage from '../components/VideoStage';
 import './nonstandard-intro.css';
 import './algorithm-practice.css';
 import './lbl-intro.css';
@@ -116,20 +118,22 @@ export default function FirstTwoLayersIntro({ orientation, method, comparisonSta
     : pairs && phase === 1 ? { zh: '每次一起复原一组棱角', en: 'Solve one corner–edge pair at a time' }
     : pairs && phase === 4 ? { zh: '四组棱角归位，前两层完成', en: 'All four pairs are in place — the first two layers are complete' } : captions[phase];
   const progressSegments = pairs ? [...segments, ...segments] : [...segments.slice(4), ...segments.slice(0, 4)];
+  const Stage = comparison ? Fragment : VideoStage;
   return <section className="f2l-concept-video f2l-lbl-intro" data-continuous="true" aria-label={pairs ? 'F2L' : tr({ zh: '层先法的前两层', en: 'The first two layers with LBL' })}>
-    <div className="f2l-concept-scene">
+    <Stage><div className="f2l-concept-scene" data-tutorial-mode="timeline" data-tutorial-layout={comparison ? 'D' : 'B'}>
       <div className="f2l-cube">
         <AlgPlayer ref={player} puzzle="3x3" engine="sim" set="f2l-overview"
           setup={LBL_INTRO_VIDEO_SETUP} alg={pairs ? F2L_INTRO_VIDEO_ALG : LBL_INTRO_VIDEO_ALG} orientation={orientation} sceneRot={view}
           fillPane controlMode="none" hideResetView interactionMode="none"
           moveDurationMs={timeline.moveMs}
           stickerColorOverrides={overrides} />
-        {comparisonStage === 'compare' && pairs && phase === 4 && <ChatBubble tail="bottom" className="f2l-intro-result" role="status">
-          {tr({ zh: '同时复原前2层，更高效', en: 'Solve the first two layers together, more efficiently' })}
-        </ChatBubble>}
+
       </div>
-      <div className="f2l-concept-caption tutorial-single-caption" aria-live="polite">
+      <div className="f2l-concept-caption tutorial-single-caption" aria-live="polite"><ReadingFit pane>
         <p>{tr(caption)}</p>
+        {comparison && <div className="f2l-intro-result-slot">{comparisonStage === 'compare' && pairs && phase === 4 && <span className="f2l-intro-result-text" role="status">
+          {tr({ zh: '同时复原前2层，更高效', en: 'Solve the first two layers together, more efficiently' })}
+        </span>}</div>}
         <div className="f2l-practice-segments" aria-hidden={comparison && comparisonStage !== 'compare'} aria-label={tr({ zh: '逐块还原进度', en: 'Piece-by-piece progress' })}>
           {progressSegments.map((segment, index) => {
             const fraction = Math.max(0, Math.min(1, (completed - segment.start) / (segment.end - segment.start)));
@@ -141,8 +145,9 @@ export default function FirstTwoLayersIntro({ orientation, method, comparisonSta
             </div>;
           })}
         </div>
-      </div>
+      </ReadingFit></div>
     </div>
+    </Stage>
     {!comparison && <PlaybackBar step={frame.time} total={timeline.duration} playing={playing}
       onScrub={() => {}} onSkipStart={reset} onStepBack={() => {}} onStepForward={() => {}} onSkipEnd={() => {}}
       onTogglePlay={() => frame.time >= timeline.duration ? reset() : setPlaying(value => !value)}

@@ -78,7 +78,7 @@ export const coverage = {
     { artifact: 'stats.upcoming', reason: 'Separate lightweight feed synchronization.' },
     { artifact: 'stats.competition-calendar', reason: 'Derived index; no heavy-cost evidence.' },
     { artifact: 'stats.world-bests', reason: 'External scraping; no heavy-cost evidence.' },
-    { artifact: 'client.code-language-history', reason: 'Manual Git-history snapshot; cost not measured here. CI/page reads reuse it.' }
+    { artifact: 'client.code-language-history', reason: 'Daily incremental Git-history snapshot using official Linguist; cost not measured here. Ordinary CI/page reads reuse the published snapshot.' }
   ],
   gaps: ['Per-target exact-enumeration costs', 'Comparable CPU/memory measurements', 'Local run receipts not uploaded', 'Per-family publication times without receipts', 'Unregistered experimental jobs']
 };
