@@ -1,7 +1,7 @@
 'use client';
 /** @module Calendar-aligned timeline shared by all workspace schedules. */
 import MoreToggle from '@/components/MoreToggle';
-import { Circle, CircleCheck, Flag } from 'lucide-react';
+import { CircleCheck, Flag } from 'lucide-react';
 import { Fragment, useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 
 import { planningDay, planningDate, scheduleRange, type ScheduleTask } from '@cuberoot/shared/workspace-planning';
@@ -55,6 +55,7 @@ export default function ScheduleTimeline({ tasks, scale: requestedScale, editabl
   const dayWidth = fit ? trackWidth / visibleDays : { day: 36, week: 10, month: 4 }[scale];
   const percent = (days: number) => `${days / visibleDays * 100}%`;
   const days = Array.from({ length: visibleDays }, (_, offset) => ({ date: planningDate(start + offset), offset, weekday: (start + offset + 4) % 7 }));
+  const completionMarker = (offset: number) => <CircleCheck className="workspace-gantt-complete" size={20} aria-hidden="true" style={{ left: `calc(${percent(offset)} - 26px)` }} />;
   const groups = [...new Set(tasks.map(task => task.group))];
   const colors = ['var(--accent)', 'var(--signal-info)', 'var(--signal-success)', 'var(--signal-warning)'];
   let lastTick = -Infinity;
@@ -109,9 +110,9 @@ export default function ScheduleTimeline({ tasks, scale: requestedScale, editabl
               const done = phase.tasks.every(task => task.progress === 100);
               const status = done ? t('完成', 'Complete') : t('未完成', 'Incomplete');
               const label = `${phase.tasks.map(task => task.name).join(' · ')} · ${phase.start} – ${phase.end} · ${status}`;
-              return <Tooltip key={phase.tasks[0].id} content={label}>{tip => <button {...tip} type="button" aria-label={label} className={`workspace-gantt-bar workspace-gantt-phase${done ? ' is-done' : ''}`} onClick={() => toggle(group)} style={{ left: percent(offset), width: `max(2px, ${percent(duration)})` }}>
-                {duration * dayWidth >= 60 && <span className="workspace-gantt-bar-name">{name} · {status}</span>}
-              </button>}</Tooltip>;
+              return <Fragment key={phase.tasks[0].id}><Tooltip content={label}>{tip => <button {...tip} type="button" aria-label={label} className={`workspace-gantt-bar workspace-gantt-phase${done ? ' is-done' : ''}`} onClick={() => toggle(group)} style={{ left: percent(offset), width: `max(2px, ${percent(duration)})` }}>
+                {duration * dayWidth >= 60 && <span className="workspace-gantt-bar-name">{name}</span>}
+              </button>}</Tooltip>{done && completionMarker(offset)}</Fragment>;
             })}
           </div>
         </div>
@@ -122,16 +123,16 @@ export default function ScheduleTimeline({ tasks, scale: requestedScale, editabl
           const milestone = task.kind === 'milestone';
           const done = task.progress === 100;
           const status = done ? t('完成', 'Complete') : t('未完成', 'Incomplete');
-          const StatusIcon = done ? CircleCheck : Circle;
           const label = `${task.name}${task.owner ? ` · ${task.owner}` : ''} · ${task.start}${milestone ? '' : ` – ${task.end}`} · ${status}`;
           return <div key={task.id} className={`workspace-gantt-row workspace-gantt-task${done ? ' is-done' : ''}`} style={{ '--gantt-color': colors[groupIndex % colors.length] } as CSSProperties}>
-            <div className="workspace-gantt-label"><span className="workspace-gantt-status"><StatusIcon size={16} aria-hidden="true" />{status}</span></div>
+            <div className="workspace-gantt-label" />
             <div className="workspace-gantt-track">
               {todayLine}
               <Tooltip content={label}>{tip => <button {...tip} type="button" aria-disabled={!editable} onClick={() => { if (editable) onEdit(task); }} aria-label={label} className={milestone ? 'workspace-gantt-milestone' : 'workspace-gantt-bar'} style={{ left: milestone ? percent(offset + 0.5) : percent(offset), ...(milestone ? {} : { width: `max(2px, ${percent(duration)})` }) }}>
                 {milestone && done ? <CircleCheck size={20} aria-hidden="true" /> : milestone && <Flag size={20} strokeWidth={1.8} aria-hidden="true" />}
                 {!milestone && <span className="workspace-gantt-bar-name">{scheduleTaskLabel(task.name)}</span>}
               </button>}</Tooltip>
+              {!milestone && done && completionMarker(offset)}
               {milestone && <span className={`workspace-gantt-key-label${offset > visibleDays / 2 ? ' is-end' : ''}`} style={{ left: percent(offset + 0.5) }}>{task.start.slice(5)} · {scheduleTaskLabel(task.name)}</span>}
             </div>
           </div>;

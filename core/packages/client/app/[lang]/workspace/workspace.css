@@ -54,7 +54,7 @@
 .workspace-gantt.workspace-gantt-fit { min-width: 0; }
 .workspace-gantt-row { display: flex; min-height: 44px; }
 .workspace-gantt-label { position: sticky; left: 0; z-index: 2; flex: 0 0 var(--gantt-label-width); width: var(--gantt-label-width); box-sizing: border-box; padding: 0 12px; background: var(--background); border-right: 1px solid var(--border-default); min-width: 0; }
-.workspace-gantt-track { position: relative; flex: 1 1 0; min-width: 0; background-image: var(--gantt-grid), var(--gantt-weekends); }
+.workspace-gantt-track { position: relative; margin-inline-start: 28px; flex: 1 1 0; min-width: 0; background-image: var(--gantt-grid), var(--gantt-weekends); }
 .workspace-gantt-header { position: sticky; top: 0; z-index: 3; height: 64px; background: var(--background); font-size: 14px; border-bottom: 1px solid var(--border-default); }
 .workspace-gantt-header .workspace-gantt-label { display: flex; flex-direction: column; justify-content: center; gap: 4px; }
 .workspace-gantt-header small { font-size: 14px; color: var(--muted-foreground); }
@@ -92,9 +92,9 @@
 .workspace-gantt-bar { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 5px; overflow: hidden; }
 .workspace-gantt-bar-name { position: relative; z-index: 1; min-width: 0; padding-left: 8px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .workspace-gantt-bar:is(:hover, :focus-visible):not(:disabled) { background: color-mix(in srgb, var(--gantt-color) 28%, var(--background)); }
-.workspace-gantt-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; color: var(--muted-foreground); background: var(--muted); }
-.workspace-gantt-status svg { flex-shrink: 0; }
-.workspace-gantt-row.is-done .workspace-gantt-status { color: var(--signal-success); background: color-mix(in srgb, var(--signal-success) 12%, var(--background)); }
+.workspace-gantt-complete { position: absolute; top: 50%; transform: translateY(-50%); color: var(--signal-success); pointer-events: none; }
+.staff-field > .workspace-schedule-completion { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 16px; color: var(--foreground); cursor: pointer; }
+.workspace-schedule-completion > input[type="checkbox"] { width: 20px; height: 20px; margin: 0; flex-shrink: 0; accent-color: var(--toggle-on); cursor: pointer; }
 .workspace-gantt-row.is-done .workspace-gantt-bar,
 .workspace-gantt-bar.workspace-gantt-phase.is-done { border: 2px solid var(--signal-success); background: color-mix(in srgb, var(--signal-success) 25%, var(--background)); }
 .workspace-gantt-row.is-done .workspace-gantt-milestone,
