@@ -5,6 +5,7 @@ import './settings-typography.css';
 import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import { Info } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
+import { tr } from '@/i18n/tr';
 import { installedMembershipStore } from '@/lib/store-membership-bridge';
 import './donate-modal.css';
 
@@ -53,6 +54,7 @@ export default function DonateModal({ lang, onClose: onClosed, embedded = false 
         </div>
 
         <div className="donate-credits">
+          <AppLink href="/support" onClick={onClose}>{tr({ zh: '查看致谢名单 →', en: 'See supporters →' })}</AppLink>
           <AppLink href="/contact" onClick={onClose}>{t('联系我 →', 'Contact me →')}</AppLink>
         </div>
       </div>

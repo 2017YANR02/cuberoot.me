@@ -93,6 +93,10 @@
 }
 
 .donate-credits {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px 20px;
     margin-top: 0.9rem;
     text-align: center;
 }

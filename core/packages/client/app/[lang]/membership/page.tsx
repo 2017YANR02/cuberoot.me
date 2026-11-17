@@ -8,7 +8,7 @@ import PageBackLink from '@/components/PageBackLink';
  * admin 登录后见管理面板。
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, RefreshCw, AlertTriangle } from '@app-foundation/icons/lucide';
+import { Check, RefreshCw, AlertTriangle, Heart } from '@app-foundation/icons/lucide';
 import { useQueryState } from 'nuqs';
 import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { clearMembershipReturn, membershipReturnRequiresActive, membershipReturnPath, readMembershipReturn, rememberMembershipReturn } from '@/lib/membership-return';
@@ -23,6 +23,7 @@ import AppLink from '@/components/AppLink';
 import { MEMBERSHIP_COPY } from '@/lib/membership-copy';
 import { CompactSelect } from '@/components/CompactSelect';
 import CubeRootLogo from '@/components/CubeRootLogo';
+import DonateModal from '@/components/DonateModal';
 import { Spinner } from '@/components/Spinner/Spinner';
 import {
   listPlans, getMyMembership, getOrderStatus, membershipExpiry,
@@ -93,6 +94,7 @@ export default function MembershipPage() {
   const [payEnabled, setPayEnabled] = useState(false);
   const [channels, setChannels] = useState<PayChannels>();
   const [buyPlan, setBuyPlan] = useState<MembershipPlan | null>(null);
+  const [donateOpen, setDonateOpen] = useState(false);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
   const [enterpriseBuyer, setEnterpriseBuyer] = useState<{ owner: typeof user; eligible: boolean } | null>(null);
@@ -334,6 +336,13 @@ export default function MembershipPage() {
           {tr({ zh: 'CubeRoot 会员', en: 'CubeRoot membership'
         })}
         </h1></div>
+        <button type="button" className="mem-donate" onClick={() => {
+          if (!loggedIn) { login(); return; }
+          setDonateOpen(true);
+        }}>
+          <Heart size={18} aria-hidden="true" />
+          {tr({ zh: '赞赏支持', en: 'Support this site' })}
+        </button>
       </header>
 
       {directApp && <p className="mem-sub" role="status">
@@ -441,6 +450,7 @@ export default function MembershipPage() {
       {/* admin 面板 */}
       {admin && <AdminPanel key={user?.wcaId} plans={plans ?? []} isZh={isZh} onPlanUpdated={handlePlanUpdated} onViewRenewal={setSelectedAutoRenewPlan} />}
 
+      {loggedIn && donateOpen && <DonateModal lang={lang} onClose={() => setDonateOpen(false)} />}
       {buyPlan && <PayModal plan={buyPlan} channels={channels} isZh={isZh}
         onClose={() => setBuyPlan(null)} onPaid={() => { setBuyPlan(null); setJustPaid(true); refreshMembership(); }} />}
       {selectedAutoRenewPlan && (selectedAutoRenewPlan.period === 'month' || selectedAutoRenewPlan.period === 'year') && (

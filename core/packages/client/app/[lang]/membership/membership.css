@@ -5,7 +5,16 @@
 }
 
 /* ── header ── */
-.mem-head { margin-bottom: 24px; }
+.mem-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.mem-donate {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 10px 16px; margin-inline-start: auto;
+  border: 1px solid var(--accent); border-radius: 10px;
+  background: var(--accent-soft); color: var(--accent);
+  font: inherit; font-weight: 600; cursor: pointer;
+}
+.mem-donate:hover { background: var(--accent); color: var(--accent-foreground); }
+.mem-donate:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
 .mem-title {
   display: flex;
   align-items: center;
