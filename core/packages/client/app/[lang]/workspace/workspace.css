@@ -336,7 +336,10 @@
 .workspace-task-list .workspace-add-item:focus-within { outline: none; border-color: var(--ring); }
 .workspace-task-list .workspace-add-item input { flex: 1; min-width: 0; border: 0; background: transparent; }
 .workspace-check-bulk { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
-.workspace-check-filters { display: flex; flex-direction: column; gap: 12px; padding: 8px; }
+.workspace-check-filters { display: flex; flex-direction: column; gap: 16px; padding: 8px; width: min(320px, calc(100vw - 64px)); }
+.workspace-check-filter-group { display: flex; flex-direction: column; gap: 8px; }
+.workspace-check-filter-group > span { font-size: .85rem; color: var(--muted-foreground); }
+.workspace-check-filter-group .lg-chips-chip { flex: 1; padding-inline: 8px; min-height: 36px; }
 .workspace-task-list .workspace-list-heading h2 { overflow-wrap: anywhere; }
 @media (max-width: 600px) {
   .workspace-task-list .workspace-check-items { padding-inline-start: 8px; }

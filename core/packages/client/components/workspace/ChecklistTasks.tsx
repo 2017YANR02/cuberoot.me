@@ -183,6 +183,8 @@ export default function ChecklistTasks({ list, itemStatus, completionStatus = 'a
       </div>}
       <div className="workspace-check-tree">{groups.map((group, index) => {
         const allItems = list.items.filter(item => (item.categoryId ?? '') === group.id);
+        const activeItems = allItems.filter(item => !item.archived);
+        const completedCount = activeItems.filter(item => item.done).length;
         const items = orderChecklistItems(visible.filter(item => (item.categoryId ?? '') === group.id));
         const open = expanded[group.id] ?? groups.length === 1;
         return <section key={group.id} className="workspace-check-category">
@@ -191,7 +193,7 @@ export default function ChecklistTasks({ list, itemStatus, completionStatus = 'a
               await save({ categories: categories.map(category => category.id === group.id ? { ...category, name } : category) }); setEditing(null);
             }} /> : <MoreToggle expanded={open} onClick={() => storeExpanded({ ...expanded, [group.id]: !open })}>
               <span className="workspace-check-folder-name">{group.name}</span>
-              <span className="workspace-check-count" aria-label={`${t('已完成', 'Completed')}: ${allItems.filter(item => item.done).length} / ${allItems.length}`}>{allItems.filter(item => item.done).length}/{allItems.length}</span>
+              <span className="workspace-check-count" aria-label={`${t('已完成', 'Completed')}: ${completedCount} / ${activeItems.length}`}>{completedCount}/{activeItems.length}</span>
             </MoreToggle>}
             {editable && group.id && <ChecklistMenu label={`${t('分类操作', 'Category actions')}: ${group.name}`} disabled={busy} actions={[
               { label: t('重命名', 'Rename'), disabled: !!editing, run: () => setEditing({ kind: 'category', id: group.id }) },

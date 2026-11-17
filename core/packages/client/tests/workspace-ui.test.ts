@@ -380,6 +380,36 @@ it('uses explicit categories and preserves literal prefixes when editing', async
   expect([...container.querySelectorAll('.workspace-check-folder-name')].map(node => node.textContent)).toEqual(['Development']);
 });
 
+it('applies checklist filters directly and excludes archived tasks from progress in every view', async () => {
+  lists[0].items = [
+    { id: 'a', text: 'Active incomplete', done: false },
+    { id: 'b', text: 'Active completed', done: true },
+    { id: 'c', text: 'Archived completed', done: true, archived: true },
+    { id: 'd', text: 'Archived incomplete', done: false, archived: true },
+  ];
+  await mount(h(Checklists));
+  const texts = () => [...container.querySelectorAll('.workspace-check-text')].map(node => node.textContent);
+  const progress = () => container.querySelector('.workspace-check-count')?.textContent;
+  expect(progress()).toBe('1/2');
+  await click('Filters');
+  expect(document.querySelector('.workspace-check-filters select')).toBeNull();
+  expect(document.querySelectorAll('.workspace-check-filters [role="tablist"]')).toHaveLength(3);
+  await click('Archived');
+  expect(texts()).toEqual(['Archived incomplete', 'Archived completed']);
+  expect(progress()).toBe('1/2');
+  await click('Completed');
+  expect(texts()).toEqual(['Archived completed']);
+  expect(progress()).toBe('1/2');
+  const archiveFilters = document.querySelector('[role="tablist"][aria-label="Task archive"]')!;
+  await act(async () => [...archiveFilters.querySelectorAll('button')].find(button => button.textContent === 'All')!.click());
+  expect(texts()).toEqual(['Active completed', 'Archived completed']);
+  expect(progress()).toBe('1/2');
+  await click('Reset filters');
+  expect(texts()).toEqual(['Active incomplete', 'Active completed']);
+  expect(progress()).toBe('1/2');
+  expect(calls).toHaveLength(0);
+});
+
 it('creates an empty category, adds tasks in it, and deletes its hidden archived contents', async () => {
   await mount(h(Checklists));
   await click('Checklist actions: Launch'); await click('New category');

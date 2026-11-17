@@ -3,6 +3,7 @@
 import ChecklistPanel from '@/components/workspace/ChecklistPanel';
 import { ChecklistMenu } from '@/components/workspace/ChecklistTasks';
 import { CompactSelect } from '@/components/CompactSelect';
+import LiquidGlassChips from '@/components/LiquidGlassChips';
 import { useEffect, useRef, useState } from 'react';
 import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
 import { ErrorNotice, Field, Form, EditorDialog, useResource, useWorkspace, value } from '@app-foundation/workspace-ui';
@@ -37,9 +38,9 @@ export default function Checklists() {
   return <>
     <div className="staff-actions workspace-toolbar">
       <CompactSelect ariaLabel={t('筛选', 'Filters')} label={status !== 'active' || itemStatus !== 'active' || completionStatus !== 'all' ? t('筛选 · 已启用', 'Filters · Active') : t('筛选', 'Filters')} items={[]} onChange={() => {}} panelContent={<div className="workspace-check-filters">
-        <Field label={t('清单', 'Checklists')}><select value={status} onChange={event => { void setStatus(event.target.value as typeof status); void setPage(1); setEditing(false); }}><option value="active">{t('未归档', 'Not archived')}</option><option value="all">{t('含已归档', 'Include archived')}</option></select></Field>
-        <Field label={t('事项归档', 'Task archive')}><select value={itemStatus} onChange={event => setItemStatus(event.target.value as typeof itemStatus)}><option value="active">{t('未归档', 'Not archived')}</option><option value="archived">{t('已归档', 'Archived')}</option><option value="all">{t('全部', 'All')}</option></select></Field>
-        <Field label={t('完成状态', 'Completion')}><select value={completionStatus} onChange={event => setCompletionStatus(event.target.value as typeof completionStatus)}><option value="all">{t('全部', 'All')}</option><option value="todo">{t('未完成', 'Incomplete')}</option><option value="done">{t('已完成', 'Completed')}</option></select></Field>
+        <div className="workspace-check-filter-group"><span>{t('清单', 'Checklists')}</span><LiquidGlassChips ariaLabel={t('清单', 'Checklists')} items={['active', 'all'] as const} value={status} onChange={next => { void setStatus(next); void setPage(1); setEditing(false); }} getLabel={item => item === 'active' ? t('未归档', 'Not archived') : t('含已归档', 'Include archived')} /></div>
+        <div className="workspace-check-filter-group"><span>{t('事项归档', 'Task archive')}</span><LiquidGlassChips ariaLabel={t('事项归档', 'Task archive')} items={['active', 'archived', 'all'] as const} value={itemStatus} onChange={setItemStatus} getLabel={item => item === 'active' ? t('未归档', 'Not archived') : item === 'archived' ? t('已归档', 'Archived') : t('全部', 'All')} /></div>
+        <div className="workspace-check-filter-group"><span>{t('完成状态', 'Completion')}</span><LiquidGlassChips ariaLabel={t('完成状态', 'Completion')} items={['all', 'todo', 'done'] as const} value={completionStatus} onChange={setCompletionStatus} getLabel={item => item === 'all' ? t('全部', 'All') : item === 'todo' ? t('未完成', 'Incomplete') : t('已完成', 'Completed')} /></div>
         <Button variant="secondary" onClick={() => { void setStatus('active'); void setPage(1); setItemStatus('active'); setCompletionStatus('all'); }}>{t('重置筛选', 'Reset filters')}</Button>
       </div>} />
       <div className="staff-toolbar-actions">
