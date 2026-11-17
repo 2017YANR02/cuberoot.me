@@ -614,8 +614,8 @@ it('does not expose schedule settings or deletion to read-only members', async (
 it('opens the same editor from a timeline task and copies a schedule with shifted dates', async () => {
   await mount(h(Schedules, { actor: { kind: 'staff', id: 1, role: 'manager', name: 'Manager' } }));
   await act(async () => container.querySelector<HTMLButtonElement>('.workspace-gantt-bar')!.click());
-  const progress = container.querySelector<HTMLInputElement>('[name="progress"]')!;
-  await setInput(progress, '100'); await click('Save');
+  await act(async () => container.querySelector<HTMLButtonElement>('[role="switch"][aria-label="Complete"]')!.click());
+  await click('Save');
   expect(calls.at(-1)).toMatchObject({ action: 'schedule', body: { version: 1, tasks: [{ progress: 100 }] } });
   await click('Copy schedule');
   await setInput(container.querySelector<HTMLInputElement>('[name="start"]')!, '2028-02-28');

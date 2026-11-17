@@ -1,5 +1,7 @@
 'use client';
+
 /** @module Reusable schedules with grouped tasks, milestones and shifted copies. */
+import BoolToggle from '@/components/BoolToggle';
 import { useEffect, useRef, useState } from 'react';
 import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import { ErrorNotice, Field, Form, EditorDialog, useResource, useWorkspace, value, today, type StaffActor } from '@app-foundation/workspace-ui';
@@ -109,17 +111,18 @@ function TaskEditor({ task, groups, existing, onSave, onCancel }: { task: Schedu
   const t = useT();
   const { Button } = useWorkspace();
   const [kind, setKind] = useState(task.kind);
+  const [completed, setCompleted] = useState(task.progress === 100);
   const [start, setStart] = useState(task.start);
   const [removing, setRemoving] = useState(false);
   return <EditorDialog title={existing ? t('编辑任务', 'Edit task') : t('新增任务', 'New task')} onClose={onCancel}><Form submit={async (data, action) => {
     if (action === 'remove') { await onSave(null); return; }
     const end = kind === 'milestone' ? start : value(data, 'end');
     if (start > end) throw new Error(t('结束日期须不早于开始日期', 'End date must not precede start date'));
-    await onSave({ id: task.id, name: value(data, 'name'), group: value(data, 'group'), owner: value(data, 'owner'), start, end, kind, progress: value(data, 'completed') === 'true' ? 100 : 0 });
+    await onSave({ id: task.id, name: value(data, 'name'), group: value(data, 'group'), owner: value(data, 'owner'), start, end, kind, progress: completed ? 100 : 0 });
   }}>
     <Field label={t('名称', 'Name')}><input name="name" required maxLength={120} defaultValue={task.name} /></Field>
     <div className="staff-form-row"><Field label={t('分组', 'Group')}><input name="group" required maxLength={60} defaultValue={task.group} list="workspace-schedule-groups" /><datalist id="workspace-schedule-groups">{groups.map(group => <option key={group} value={group} />)}</datalist></Field><Field label={t('负责人（选填）', 'Owner (optional)')}><input name="owner" maxLength={60} defaultValue={task.owner} /></Field></div>
-    <div className="staff-form-row"><Field label={t('类型', 'Type')}><select value={kind} onChange={event => setKind(event.target.value as ScheduleTask['kind'])}><option value="task">{t('任务', 'Task')}</option><option value="milestone">{t('里程碑', 'Milestone')}</option></select></Field><Field width="short" label={t('状态', 'Status')}><span className="workspace-schedule-completion"><input type="checkbox" name="completed" value="true" defaultChecked={task.progress === 100} /> {t('完成', 'Complete')}</span></Field></div>
+    <div className="staff-form-row"><Field label={t('类型', 'Type')}><select value={kind} onChange={event => setKind(event.target.value as ScheduleTask['kind'])}><option value="task">{t('任务', 'Task')}</option><option value="milestone">{t('里程碑', 'Milestone')}</option></select></Field><Field width="short" label={t('状态', 'Status')}><BoolToggle value={completed} onChange={setCompleted} label={t('完成', 'Complete')} /></Field></div>
     <div className="staff-form-row"><Field width="date" label={t('开始日期', 'Start date')}><DateInput name="start" required value={start} onChange={setStart} /></Field>{kind === 'task' && <Field width="date" label={t('结束日期', 'End date')}><DateInput name="end" required min={start} defaultValue={task.end} /></Field>}</div>
     {removing && <p role="alert">{t('移除这个任务？保存后将不再显示在排期中。', 'Remove this task from the schedule?')}</p>}
     <div className="staff-actions staff-form-actions">{existing && (removing ? <><Button variant="secondary" onClick={() => setRemoving(false)}>{t('保留任务', 'Keep task')}</Button><Button action="delete" iconOnly={false} type="submit" variant="secondary" value="remove" formNoValidate>{t('确认移除', 'Remove task')}</Button></> : <Button action="delete" variant="secondary" onClick={() => setRemoving(true)}>{t('移除任务', 'Remove task')}</Button>)}<Button action="save" type="submit">{t('保存', 'Save')}</Button></div>

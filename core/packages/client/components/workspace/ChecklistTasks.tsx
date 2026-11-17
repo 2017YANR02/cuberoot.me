@@ -1,5 +1,7 @@
 'use client';
+
 /** Explicit checklist sections. Text, completion and classification are independent. */
+import { persistItem } from '@/lib/safe-storage';
 import { useEffect, useRef, useState } from 'react';
 import { ErrorNotice, Field, Form, EditorDialog, useWorkspace } from '@app-foundation/workspace-ui';
 import { orderChecklistItems, type Checklist, type ChecklistCategory } from '@cuberoot/shared/workspace-planning';
@@ -112,7 +114,7 @@ export default function ChecklistTasks({ list, itemStatus, completionStatus = 'a
   }, [storageKey]);
   const storeExpanded = (next: Record<string, boolean>) => {
     setExpanded(next);
-    try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch { /* Storage is optional. */ }
+    persistItem(storageKey, JSON.stringify(next));
   };
   useEffect(() => {
     if (expansion) storeExpanded(Object.fromEntries(['list', '', ...categories.map(category => category.id)].map(id => [id, expansion.open])));
