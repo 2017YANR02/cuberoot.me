@@ -149,8 +149,8 @@ export default function WcaSourceConfig({
         wcaEventId={wcaEventId}
       />
   );
-  return (
-    <div className="wca-src-config">
+  const controls = (
+    <>
       {sourceSlot === undefined ? sourceControls : sourceSlot && createPortal(sourceControls, sourceSlot)}
       <TimerWcaDifficultyConfig
         adapter={webTimerWcaDifficultyAdapter}
@@ -184,6 +184,9 @@ export default function WcaSourceConfig({
         mergeSlot={mergeSlot}
         wcaEventId={wcaEventId}
       />
-    </div>
+    </>
   );
+  // A source menu owns portaled controls. Leaving an empty inline wrapper
+  // defeats ScrambleSourceBar's :empty rule and wastes 16px on short screens.
+  return sourceSlot === undefined ? <div className="wca-src-config">{controls}</div> : controls;
 }

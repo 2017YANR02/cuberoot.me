@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   DEFAULT_TIMER_WCA_SOURCE_CORE_SETTINGS,
+  DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
   type TimerWcaSourceCoreSettings,
 } from '@cuberoot/shared/timer';
 import {
@@ -13,6 +14,14 @@ import {
   TimerWcaSourceConfig,
   type TimerWcaSourceDataAdapter,
 } from '@cuberoot/timer-ui';
+import WebWcaSourceConfig from '@/components/WcaSourceConfig';
+
+vi.mock('@/lib/comp-search', () => ({ loadComps: async () => [] }));
+vi.mock('@/lib/timer-wca-difficulty-adapter', () => ({
+  webTimerWcaDifficultyAdapter: {
+    loadCatalog: async () => ({ distribution: null, eventLengths: null, layout: null }),
+  },
+}));
 
 const adapter: TimerWcaSourceDataAdapter = {
   loadCompetitions: vi.fn(async () => [{
@@ -147,6 +156,28 @@ describe('shared controlled WCA source UI', () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     host.remove();
+  });
+
+  it.each(['333', '777'] as const)('leaves no inline spacer when %s source/difficulty controls live in menus, and preserves inline hosts', async (event) => {
+    const portal = document.createElement('div');
+    const toggleSlot = document.createElement('div'), mergeSlot = document.createElement('div');
+    document.body.append(portal, toggleSlot, mergeSlot);
+    const render = (sourceSlot?: HTMLElement | null) => act(async () => root.render(
+      createElement('fieldset', { className: 'scramble-src-bar' }, createElement(WebWcaSourceConfig, {
+        event, isZh: false, settings: DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
+        updateSettings: vi.fn(), sourceSlot, toggleSlot, mergeSlot,
+      })),
+    ));
+    try {
+      await render(null);
+      expect(host.querySelector('.scramble-src-bar:empty')).not.toBeNull();
+      await render(portal);
+      expect(host.querySelector('.scramble-src-bar:empty')).not.toBeNull();
+      expect(portal.querySelector('[role="combobox"]')).not.toBeNull();
+      await render(undefined);
+      expect(portal.childElementCount).toBe(0);
+      expect(host.querySelector('.wca-src-config [role="combobox"]')).not.toBeNull();
+    } finally { portal.remove(); toggleSlot.remove(); mergeSlot.remove(); }
   });
 
   it('browses recent competitions by country before searching, including overlapping dates', async () => {

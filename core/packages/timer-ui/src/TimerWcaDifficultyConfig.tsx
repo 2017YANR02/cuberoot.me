@@ -185,15 +185,15 @@ export function TimerWcaDifficultyConfig({
       </span>
     </span>
   ) : null;
-  const localControls: ReactNode = (
+  const localControls: ReactNode = (!toggleSlot || (mergeSlot === undefined && mergeControl)) ? (
     <div className="timer-wca-difficulty-top-row">
       {mergeSlot === undefined && mergeControl}
       {!toggleSlot && difficultyToggle}
     </div>
-  );
+  ) : null;
 
   return (
-    <div className="timer-wca-difficulty-config">
+    <>
       {topControlsSlot ? createPortal(<>{mergeSlot === undefined && mergeControl}{!toggleSlot && difficultyToggle}</>, topControlsSlot) : localControls}
       {toggleSlot && createPortal(difficultyToggle, toggleSlot)}
       {mergeSlot && createPortal(mergeControl, mergeSlot)}
@@ -253,6 +253,6 @@ export function TimerWcaDifficultyConfig({
           )}
         </TimerDifficultyDialog>
       )}
-    </div>
+    </>
   );
 }
