@@ -15,7 +15,7 @@ import { WorkspaceButton, WorkspaceDialog } from '@/app/[lang]/workspace/Workspa
 import { DateInput } from '@/components/DateInput';
 import ScheduleTimeline from '@/app/[lang]/workspace/ScheduleTimeline';
 
-vi.mock('@/hooks/useT', () => ({ useT: () => (_zh: string, en: string) => en }));
+vi.mock('@/hooks/useT', () => { const t = (_zh: string, en: string) => en; return { useT: () => t }; });
 let container: HTMLDivElement;
 let root: Root;
 let calls: { action: string; body: unknown }[];
@@ -57,6 +57,7 @@ beforeEach(() => {
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
   HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  localStorage.clear();
   container = document.createElement('div'); document.body.append(container); root = createRoot(container); calls = []; rejectSave = false; pendingSave = undefined; pendingRead = undefined;
   lists = [{ id: 'list', name: 'Launch', version: 1, active: true, canEdit: true, items: [{ id: 'a', text: 'First', done: false }, { id: 'b', text: 'Second', done: false }] }];
 
@@ -65,7 +66,7 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
 async function mount(node: ReactNode) { await act(async () => root.render(h(NuqsTestingAdapter, { hasMemory: true, children: h(WorkspaceProvider, { host, children: node }) }))); }
 async function click(label: string) {
-  const button = [...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === label || button.getAttribute('aria-label') === label);
+  const button = [...document.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === label || button.getAttribute('aria-label') === label);
   expect(button, `Missing button: ${label}`).toBeDefined();
   await act(async () => button!.click());
 }
@@ -367,36 +368,68 @@ it('preserves rows during same-path reloads but clears them when the query scope
   await act(async () => resolveRead());
 });
 
-it('groups route-prefixed tasks without changing their saved text or folder expansion', async () => {
-  lists[0].items = [
-    { id: 'a', text: '/timer Connection', done: false },
-    { id: 'b', text: '/recon Thumbnails', done: false },
-    { id: 'c', text: '/timer/practice Timing', done: true },
-    { id: 'd', text: 'General task', done: false },
-    { id: 'e', text: 'https://example.com/timer Reference', done: false },
-  ];
-  const original = lists[0].items.map(item => ({ ...item }));
+it('uses explicit categories and preserves literal prefixes when editing', async () => {
+  lists[0].categories = [{ id: 'category', name: 'Development' }];
+  lists[0].items = [{ id: 'a', text: '/timer Connection', done: false, categoryId: 'category' }];
   await mount(h(Checklists));
-  expect([...container.querySelectorAll('.workspace-check-folder-name')].map(node => node.textContent)).toEqual(['/timer', '/recon', 'Other']);
-  const folder = container.querySelector<HTMLDetailsElement>('.workspace-check-folder')!;
-  expect(folder.open).toBe(false);
-  await act(async () => folder.querySelector('summary')!.click());
-  expect(folder.open).toBe(true);
-  expect(folder.querySelector('.workspace-check-count')?.textContent).toBe('1/2');
-  expect([...folder.querySelectorAll('.workspace-check-text')].map(node => node.textContent)).toEqual(['Connection', '/practice Timing']);
-  await act(async () => folder.querySelector<HTMLInputElement>('input')!.click());
-  expect(calls.at(-1)).toMatchObject({ action: 'checklist', body: { items: original.map(item => item.id === 'a' ? { ...item, done: true } : item) } });
-  expect(folder.open).toBe(true);
-  expect(folder.querySelector('.workspace-check-count')?.textContent).toBe('2/2');
-  await act(async () => folder.querySelector<HTMLButtonElement>('button')!.click());
-  const input = container.querySelector<HTMLInputElement>('dialog [name="text"]')!;
-  expect(input.value).toBe('/timer Connection');
-  await setInput(input, '/recon Connection');
+  expect([...container.querySelectorAll('.workspace-check-folder-name')].map(node => node.textContent)).toEqual(['Development']);
+  await click('/timer Connection');
+  await setInput(container.querySelector<HTMLInputElement>('[name="text"]')!, '/recon Connection');
   await click('Save');
-  expect(folder.querySelector('.workspace-check-count')?.textContent).toBe('1/1');
-  expect([...container.querySelectorAll('.workspace-check-folder-name')].map(node => node.textContent)).toEqual(['/recon', '/timer', 'Other']);
-  expect([...container.querySelector('.workspace-check-folder')!.querySelectorAll('.workspace-check-text')].map(node => node.textContent)).toEqual(['Thumbnails', 'Connection']);
-  expect(calls.at(-1)).toMatchObject({ body: { items: original.map(item => item.id === 'a' ? { ...item, text: '/recon Connection', done: true } : item) } });
+  expect(calls.at(-1)).toMatchObject({ body: { categories: [{ id: 'category', name: 'Development' }], items: [{ id: 'a', text: '/recon Connection', categoryId: 'category' }] } });
+  expect([...container.querySelectorAll('.workspace-check-folder-name')].map(node => node.textContent)).toEqual(['Development']);
+});
+
+it('creates an empty category, adds tasks in it, and deletes its hidden archived contents', async () => {
+  await mount(h(Checklists));
+  await click('Checklist actions: Launch'); await click('New category');
+  await setInput(container.querySelector<HTMLInputElement>('[aria-label="Category name"]')!, 'Development');
+  await click('Save');
+  const category = lists[0].categories![0];
+  expect(category.name).toBe('Development');
+  await setInput(container.querySelector<HTMLInputElement>('[aria-label="New task"]')!, '/any literal');
+  await click('Save');
+  expect(lists[0].items.at(-1)).toMatchObject({ text: '/any literal', categoryId: category.id });
+  expect(container.querySelector<HTMLInputElement>('[aria-label="New task"]')!.value).toBe('');
+  await click('Cancel');
+  // Archived task is absent from the current filter, but belongs to the category.
+  lists[0].items.push({ id: 'hidden', text: 'Archived', categoryId: category.id, done: true, archived: true });
+  await mount(h(Checklists));
+  await click('Category actions: Development'); await click('Delete category');
+  expect(container.querySelector('dialog')?.textContent).toContain('2 tasks');
+  await click('Delete all');
+  expect(lists[0].categories).toEqual([]);
+  expect(lists[0].items.map(item => item.id)).toEqual(['a', 'b']);
+});
+
+it('keeps a failed inline edit and cancels it without changing the saved task', async () => {
+  await mount(h(Checklists));
+  await click('First');
+  const input = container.querySelector<HTMLInputElement>('[aria-label="Task"]')!;
+  await setInput(input, 'Unsaved edit');
+  rejectSave = true;
+  await click('Save');
+  expect(input.value).toBe('Unsaved edit');
+  expect(lists[0].items[0].text).toBe('First');
+  await click('Cancel');
+  expect(container.querySelector('[aria-label="Task"]')).toBeNull();
+  expect(container.textContent).toContain('First');
+});
+
+it('keeps separate drafts when switching the category used for task entry', async () => {
+  lists[0].categories = [{ id: 'one', name: 'One' }, { id: 'two', name: 'Two' }];
+  lists[0].items = [];
+  await mount(h(Checklists));
+  await click('Checklist display options'); await click('Expand all');
+  const groups = container.querySelectorAll<HTMLElement>('.workspace-check-category');
+  await act(async () => groups[0].querySelector<HTMLButtonElement>('.workspace-add-task')!.click());
+  await setInput(container.querySelector<HTMLInputElement>('[aria-label="New task"]')!, 'Draft one');
+  await act(async () => groups[1].querySelector<HTMLButtonElement>('.workspace-add-task')!.click());
+  await setInput(container.querySelector<HTMLInputElement>('[aria-label="New task"]')!, 'Draft two');
+  await act(async () => groups[0].querySelector<HTMLButtonElement>('.workspace-add-task')!.click());
+  expect(container.querySelector<HTMLInputElement>('[aria-label="New task"]')!.value).toBe('Draft one');
+  await click('Save');
+  expect(lists[0].items[0]).toMatchObject({ text: 'Draft one', categoryId: 'one' });
 });
 
 it('persists checkbox completion and restores original order when unchecked', async () => {
@@ -429,6 +462,7 @@ it('keeps the checkbox unchanged when saving conflicts', async () => {
 it('preserves unsaved task text when another checklist item is completed', async () => {
   lists.push({ ...lists[0], id: 'other', name: 'Other', items: [{ id: 'c', text: 'Third', done: false }] });
   await mount(h(Checklists));
+  await click('+ Add task');
   const draft = container.querySelector<HTMLInputElement>('.workspace-add-item input')!;
   await setInput(draft, 'Keep this draft');
   const other = container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')[2];
@@ -458,20 +492,20 @@ it('confirms whole-checklist deletion, supports cancellation and retains failed 
   await mount(h(Checklists));
   expect(container.querySelector('.workspace-toolbar [aria-label="Reload"]')).toBeNull();
   expect(container.querySelector('.workspace-check-items [aria-label*="Delete"]')).toBeNull();
-  await click('Delete checklist: Launch');
+  await click('Checklist actions: Launch'); await click('Delete checklist');
   expect(container.querySelector('dialog')?.textContent).toContain('Launch');
   expect(container.querySelector('dialog')?.textContent).toContain('2 tasks');
   expect(calls).toHaveLength(0);
   await click('Cancel');
   expect(container.querySelector('dialog')).toBeNull();
   expect(container.querySelector('.workspace-checklist')).not.toBeNull();
-  await click('Delete checklist: Launch');
+  await click('Checklist actions: Launch'); await click('Delete checklist');
   rejectSave = true;
-  await click('Delete checklist');
+  await click('Delete all');
   expect(container.querySelector('dialog')?.textContent).toContain('Reload before saving');
   expect(container.querySelector('.workspace-checklist')).not.toBeNull();
   rejectSave = false;
-  await click('Delete checklist');
+  await click('Delete all');
   expect(calls.at(-1)).toEqual({ action: 'checklist-delete', body: { id: 'list', version: 1 } });
   expect(container.querySelector('.workspace-checklist')).toBeNull();
 });
@@ -484,8 +518,8 @@ it('does not restore a deleted checklist from an older pending read', async () =
   let resolveRead!: () => void;
   pendingRead = new Promise<void>(resolve => { resolveRead = resolve; });
   await click('Reload');
-  await click('Delete checklist: Launch');
-  await click('Delete checklist');
+  await click('Checklist actions: Launch'); await click('Delete checklist');
+  await click('Delete all');
   expect(container.querySelector('.workspace-checklist')).toBeNull();
   await act(async () => resolveRead());
   expect(container.querySelector('.workspace-checklist')).toBeNull();

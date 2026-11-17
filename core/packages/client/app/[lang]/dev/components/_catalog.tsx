@@ -3408,6 +3408,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Workspace Gantt timeline with grouped tasks, milestones, day/week/month scales and keyboard editing, using workspace theme tokens.',
   },
   {
+    name: 'ChecklistPanel / ChecklistMenu',
+    import: "import ChecklistPanel from '@/components/workspace/ChecklistPanel'; import { ChecklistMenu } from '@/components/workspace/ChecklistTasks';",
+    category: 'more',
+    zh: '清单独立分类、行内编辑、分类内新增和批量移动；操作菜单复用 CompactSelect，安装软件视图沿用同一清单数据。',
+    en: 'Explicit checklist categories, inline editing, contextual creation and bulk moves; action menus reuse CompactSelect, with a software view over the same checklist data.',
+  },
+  {
     name: 'WorkspaceButton / WorkspaceDialog',
     import: "import { WorkspaceButton, WorkspaceDialog } from '@/app/[lang]/workspace/WorkspaceControls';",
     category: 'more',

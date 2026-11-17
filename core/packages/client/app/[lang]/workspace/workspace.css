@@ -315,3 +315,34 @@
 
 .workspace-software-table .sortable-card-drag-handle { position: static; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 32px; padding: 0; border: 0; background: none; color: var(--accent); cursor: grab; touch-action: none; }
 .workspace-software-table .sortable-card-drag-handle:active { cursor: grabbing; }
+
+/* Explicit checklist categories share the site's disclosure and portal menu primitives. */
+.workspace-task-list .workspace-list-heading { flex-wrap: nowrap; gap: 8px; }
+.workspace-task-list .workspace-list-heading > .more-toggle,
+.workspace-category-heading > .more-toggle { flex: 1; min-width: 0; justify-content: flex-start; text-align: start; }
+.workspace-category-heading { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.workspace-task-list .workspace-check-tree { margin: 8px 0; }
+.workspace-check-category + .workspace-check-category { margin-top: 12px; }
+.workspace-task-list .workspace-check-items { margin: 0; padding-inline-start: 24px; }
+.workspace-task-list .workspace-check-count { margin-inline-start: auto; padding-inline-start: 12px; }
+.workspace-task-text { appearance: none; border: 0; background: transparent; color: inherit; font: inherit; text-align: start; padding: 8px 0; cursor: text; }
+.workspace-task-text:disabled { opacity: 1; cursor: default; }
+.workspace-task-text:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.workspace-add-task { appearance: none; border: 0; background: transparent; color: var(--muted-foreground); font: inherit; padding: 10px 0; margin-inline-start: 24px; cursor: pointer; }
+.workspace-add-task:hover { color: var(--accent); }
+.workspace-add-task:disabled { opacity: .5; cursor: default; }
+.workspace-task-list .workspace-inline-form { flex: 1; min-width: 0; margin: 4px 0; }
+.workspace-task-list .workspace-add-item { max-width: none; margin: 0; }
+.workspace-task-list .workspace-add-item input { flex: 1; min-width: 0; border: 0; background: transparent; }
+.workspace-check-bulk { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.workspace-check-filters { display: flex; flex-direction: column; gap: 12px; padding: 8px; }
+.workspace-task-list .workspace-list-heading h2 { overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .workspace-task-list .workspace-check-items { padding-inline-start: 8px; }
+  .workspace-task-list .workspace-check-item { gap: 8px; }
+}
+.workspace-action.workspace-check-menu { color: var(--muted-foreground); }
+
+.workspace-check-menu-panel .workspace-danger-action { color: var(--destructive); }
+.workspace-task-list .workspace-list-heading > .more-toggle,
+.workspace-category-heading > .more-toggle { color: var(--foreground); }
