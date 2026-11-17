@@ -1,5 +1,8 @@
 .cal-grid { height: 100%; touch-action: pan-y pinch-zoom; overflow: hidden; position: relative; isolation: isolate; }
 .cal-grid > .cal-swipe-content { height: 100%; }
+.cal-zone-axes { display: inline-flex; gap: 8px; }
+.cal-zone-axes > span { width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; font-size: 12px; }
+.cal-grid .fc .fc-timegrid-axis-cushion:has(.cal-zone-axes) { max-width: none; padding-inline: 6px; }
 /* ── FullCalendar 皮肤 ────────────────────────────────────────────────── */
 
 .cal-grid .fc {

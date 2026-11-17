@@ -228,5 +228,20 @@ export function zoneSearchTerms(z: ZoneEntry): string {
 
 /** Shared calendar and registration menu options. */
 export function zoneSelectItems(isZh: boolean, at: Date) {
-  return zoneOptions().map(z => ({ value: z.tz, label: zoneLabel(z.tz, isZh) + " " + formatOffset(zoneOffsetMinutes(z.tz, at)), searchTerms: zoneSearchTerms(z) }));
+  const locale = isZh ? 'zh-CN' : 'en';
+  const regions = new Intl.DisplayNames([locale], { type: 'region' });
+  return zoneOptions().map(z => {
+    const city = zoneLabel(z.tz, isZh);
+    const country = z.iso2 ? regions.of(z.iso2) : undefined;
+    const offset = formatOffset(zoneOffsetMinutes(z.tz, at));
+    const name = new Intl.DateTimeFormat(locale, { timeZone: z.tz, timeZoneName: 'long' })
+      .formatToParts(at).find(part => part.type === 'timeZoneName')?.value ?? z.tz;
+    return {
+      value: z.tz,
+      label: `${city} (${offset})`,
+      menuLabel: country && country !== city ? `${city}, ${country}` : city,
+      description: `${name} (${offset})`,
+      searchTerms: `${zoneSearchTerms(z)} ${country ?? ''}`,
+    };
+  });
 }

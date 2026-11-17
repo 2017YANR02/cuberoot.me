@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import AppLink from '@/components/AppLink';
 import { ArrowLeft } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
+import { ClearButton } from '@/components/ClearButton';
 import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
 import type { CalendarPrefs } from '@/lib/calendar-store';
 import { tr } from '@/i18n/tr';
@@ -53,10 +54,34 @@ export default function CalendarSettings({ section, onSection, prefs, onPrefs, d
                 <ListSelect items={[{ value: '24', label: '13:00' }, { value: '12', label: '1:00 PM' }]} value={prefs.hour24 ? '24' : '12'} allLabel="" clearable={false} onChange={(v) => onPrefs({ hour24: v === '24' })} />
               </div>
               <BoolToggle value={!prefs.tz} label={tr({ zh: '使用设备时区', en: 'Use device time zone' })} onChange={(v) => onPrefs({ tz: v ? '' : displayTz })} />
+              <div className="cal-zone-setting">
               <div className="cal-settings-field">
-                <span>{tr({ zh: '显示时区', en: 'Display time zone' })}</span>
-                <ListSelect items={zoneItems} value={displayTz} allLabel="" clearable={false} searchable maxVisible={80} searchPlaceholder={tr({ zh: '搜城市 / 时区', en: 'Search city or zone' })} onChange={(tz) => onPrefs({ tz })} />
+                <span>{tr({ zh: '主要时区', en: 'Primary time zone' })}</span>
+                <ListSelect items={zoneItems} value={displayTz} allLabel="" clearable={false} searchable searchPlaceholder={tr({ zh: '搜城市 / 时区', en: 'Search city or zone' })} onChange={(tz) => onPrefs({ tz })} />
               </div>
+              <label className="cal-settings-field">
+                <span>{tr({ zh: '主要时区标签', en: 'Primary time zone label' })}</span>
+                <span className="cal-zone-label-wrap"><input className="cal-zone-label" value={prefs.tzLabel} maxLength={20} placeholder={tr({ zh: '标签（可选）', en: 'Label (optional)' })} onChange={e => onPrefs({ tzLabel: e.target.value })} />{prefs.tzLabel && <ClearButton onClick={() => onPrefs({ tzLabel: '' })} />}</span>
+              </label>
+              </div>
+              <BoolToggle value={prefs.showOtherZones} label={tr({ zh: '显示其他时区', en: 'Show other time zones' })} onChange={showOtherZones => onPrefs({ showOtherZones })} />
+              {prefs.showOtherZones && <div className="cal-extra-zones">
+                {(['secondary', 'third'] as const).map((key) => {
+                  const zoneKey = key === 'secondary' ? 'secondaryTz' : 'thirdTz';
+                  const labelKey = key === 'secondary' ? 'secondaryTzLabel' : 'thirdTzLabel';
+                  const title = tr(key === 'secondary' ? { zh: '次要时区', en: 'Secondary time zone' } : { zh: '第三时区', en: 'Third time zone' });
+                  return <div className="cal-zone-setting" key={key}>
+                    <div className="cal-settings-field">
+                      <span>{title}</span>
+                      <ListSelect items={[{ value: '', label: tr({ zh: '不显示', en: 'Not shown' }) }, ...zoneItems.filter(item => item.value !== displayTz && item.value !== (key === 'secondary' ? prefs.thirdTz : prefs.secondaryTz))]} value={prefs[zoneKey]} allLabel={title} ariaLabel={title} clearable={false} searchable disabled={key === 'third' && !prefs.secondaryTz} searchPlaceholder={tr({ zh: '搜索城市 / 国家 / 时区', en: 'Search city, country or time zone' })} onChange={tz => onPrefs({ [zoneKey]: tz })} />
+                    </div>
+                    <label className="cal-settings-field">
+                      <span>{tr({ zh: '标签', en: 'Label' })}</span>
+                      <span className="cal-zone-label-wrap"><input className="cal-zone-label" aria-label={`${title} ${tr({ zh: '标签', en: 'label' })}`} value={prefs[labelKey]} disabled={!prefs[zoneKey]} maxLength={20} onChange={e => onPrefs({ [labelKey]: e.target.value })} />{prefs[labelKey] && <ClearButton onClick={() => onPrefs({ [labelKey]: '' })} />}</span>
+                    </label>
+                  </div>;
+                })}
+              </div>}
               <p className="cal-hint">{tr({ zh: '日程按这个时区显示，原来的时间和时区保持不变。', en: 'Events are displayed in this time zone. Their original times and time zones stay the same.' })}</p>
               <AppLink className="cal-link-btn" href="/timezone" prefetch={false}>
                 {tr({ zh: '打开时区换算', en: 'Open the time zone converter' })}

@@ -37,7 +37,7 @@ import {
   wallToUtc, zoneAbbrev, zoneOffsetMinutes,
   type WallParts,
 } from '@cuberoot/shared/tz';
-import { isPopularZone, zoneIso2, zoneLabel, zoneOptions, zoneSearchTerms } from '@/lib/tz-zones';
+import { zoneIso2, zoneLabel, zoneSelectItems } from '@/lib/tz-zones';
 import DiscordStamps from './_components/DiscordStamps';
 import AvailabilityPlanner from './_components/AvailabilityPlanner';
 import './timezone.css';
@@ -200,14 +200,7 @@ function TimezonePage() {
   }, [setDateParam, setTimeParam]);
 
   // ── 时区选择器的候选项 ────────────────────────────────────────────────────
-  // 偏移列只给常用表里的城市算:全量 IANA 有 400+ 条,每条都建一个 Intl 格式化器会卡住首帧。
-  const zoneItems = useMemo<ListSelectItem[]>(() => zoneOptions().map((z) => ({
-    value: z.tz,
-    label: isZh ? z.zh : z.en,
-    hint: isPopularZone(z.tz) ? formatOffset(zoneOffsetMinutes(z.tz, dayAnchor)) : undefined,
-    searchTerms: zoneSearchTerms(z),
-    country: z.iso2 ? z.iso2.toLowerCase() : undefined,
-  })), [isZh, dayAnchor]);
+  const zoneItems = useMemo<ListSelectItem[]>(() => zoneSelectItems(isZh, dayAnchor), [isZh, dayAnchor]);
 
   // ── 24 小时对照 ──────────────────────────────────────────────────────────
   const grid = useMemo(() => hourGrid(home, day, allTz), [home, day, allTz]);
@@ -264,7 +257,6 @@ function TimezonePage() {
             searchPlaceholder={searchPlaceholder}
             searchable
             clearable={false}
-            maxVisible={60}
           />
         </div>
 
@@ -333,7 +325,6 @@ function TimezonePage() {
               searchPlaceholder={searchPlaceholder}
               searchable
               clearable={false}
-              maxVisible={60}
             />
           </div>
         )}

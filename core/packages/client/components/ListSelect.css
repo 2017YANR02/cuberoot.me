@@ -123,6 +123,13 @@ img.list-select-flag { object-fit: cover; }
 }
 .list-select-search-row { display: flex; align-items: center; gap: 4px; }
 .list-select-search-row .list-select-search { min-width: 0; }
+.list-select-search-row > svg { flex-shrink: 0; color: var(--muted-foreground); margin-inline-start: 10px; }
+.list-select-item-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.list-select-item-text .list-select-label { font-size: 1rem; white-space: normal; }
+.list-select-description { font-size: 0.85rem; color: var(--muted-foreground); white-space: normal; }
+.list-select-item:has(.list-select-item-text) { padding: 12px; min-height: 64px; }
+.list-select-popup:has(.list-select-search-row > svg),
+.wca-relation-filter-popup:has(.list-select-search-row > svg) { width: min(440px, calc(100vw - 24px)); }
 .list-select-search:focus { border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
 
 .list-select-list {

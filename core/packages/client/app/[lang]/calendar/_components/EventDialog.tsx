@@ -19,9 +19,9 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { useEffectiveTheme } from '@/lib/theme';
 import { colorHex } from '@/lib/calendar-colors';
 import { tr, useLang } from '@/i18n/tr';
-import { wallPartsIn, wallToUtc, localZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
+import { wallPartsIn, wallToUtc, localZone } from '@cuberoot/shared/tz';
 import { calendarCompetitionId, competitionCalendarUrl, REMINDER_CHOICES, type CalendarMeta, type EventGuest } from '@cuberoot/shared/calendar';
-import { zoneLabel, zoneOptions, zoneSearchTerms } from '@/lib/tz-zones';
+import { zoneLabel, zoneSelectItems } from '@/lib/tz-zones';
 import RepeatEditor from './RepeatEditor';
 import GuestPicker from './GuestPicker';
 
@@ -137,11 +137,7 @@ export default function EventDialog(props: Props) {
     patch({ end: Math.max(ms, d.start + 60_000) });
   };
 
-  const zoneItems = useMemo(() => zoneOptions().map((z) => ({
-    value: z.tz,
-    label: `${zoneLabel(z.tz, isZh)} ${formatOffset(zoneOffsetMinutes(z.tz, new Date(d.start)))}`,
-    searchTerms: zoneSearchTerms(z),
-  })), [d.start, isZh]);
+  const zoneItems = useMemo(() => zoneSelectItems(isZh, new Date(d.start)), [d.start, isZh]);
 
   const calItems = calendars.map((c) => ({
     value: String(c.id),
@@ -276,7 +272,6 @@ export default function EventDialog(props: Props) {
                     allLabel={tr({ zh: '时区', en: 'Time zone' })}
                     clearable={false}
                     searchable
-                    maxVisible={80}
                     searchPlaceholder={tr({ zh: '搜城市 / 时区', en: 'Search city or zone' })}
                     onChange={(tzNext) => {
                       // 换时区保持**墙上时间**:21:00 的会改成东京时区,就是东京 21:00。

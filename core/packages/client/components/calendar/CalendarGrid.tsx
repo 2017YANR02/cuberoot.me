@@ -22,6 +22,8 @@ import luxonPlugin from '@fullcalendar/luxon3';
 import zhCn from '@fullcalendar/core/locales/zh-cn';
 import type { ViewKey } from '@/lib/calendar-format';
 import { useCalendarSwipe } from '@/hooks/useCalendarSwipe';
+import { DateTime } from 'luxon';
+import { formatClock } from '@/lib/calendar-format';
 
 export interface GridRange {
   start: number;
@@ -45,6 +47,8 @@ interface Props {
   tz: string;
   /** 全天行左槽那个「GMT+08」 */
   tzLabel: string;
+  /** Optional comparison axes, supplied only by the personal calendar. */
+  timeZones?: { tz: string; label: string }[];
   isZh: boolean;
   hour24: boolean;
   weekStart: 0 | 1;
@@ -149,7 +153,15 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
           slotEventOverlap={props.slotEventOverlap ?? true}
           // Google 在全天那行的左槽写的是网格所在时区的偏移(GMT+08),不是「全天」——
           // 一屏之内唯一说明「这些时间按哪儿算」的地方,而我们还带时区选择器,更该有。
-          allDayContent={() => props.tzLabel}
+          allDayContent={() => props.timeZones?.length ? <span className="cal-zone-axes">{props.timeZones.map(zone => <span key={zone.tz} title={zone.tz}>{zone.label}</span>)}</span> : props.tzLabel}
+          slotLabelContent={props.timeZones?.length ? arg => {
+            // FullCalendar's slot dates are in 1970. Rebuild the wall time on
+            // the displayed range's first day so current DST offsets apply.
+            const minutes = arg.time.milliseconds / 60000;
+            const at = DateTime.fromJSDate(arg.view.currentStart, { zone: props.tz })
+              .startOf('day').set({ hour: Math.floor(minutes / 60), minute: minutes % 60 });
+            return <span className="cal-zone-axes">{props.timeZones!.map(zone => <span key={zone.tz} title={at.setZone(zone.tz).toISO() ?? undefined}>{formatClock(at.toMillis(), zone.tz, props.hour24, props.isZh)}</span>)}</span>;
+          } : undefined}
           slotLabelFormat={{ hour: props.hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !props.hour24, omitZeroMinute: !props.hour24 }}
           // 24 小时制不能省整点的分钟:中文 locale 会把 12:00 缩成「12时」,Google 那里写的是 12:00。
           // 12 小时制照 Google 省掉(12 PM)。

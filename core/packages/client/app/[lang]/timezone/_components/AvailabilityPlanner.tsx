@@ -153,7 +153,7 @@ function AvailabilityPlanner({ today, zoneItems }: { today: string; zoneItems: L
       <div className="tz-planner-controls">
         <div className="tz-field">
           <span className="tz-field-label">{tr({ zh: '对方所在时区', en: 'Their time zone' })}</span>
-          <ListSelect items={sourceItems} value={source} searchable clearable={false} maxVisible={60}
+          <ListSelect items={sourceItems} value={source} searchable clearable={false}
             allLabel={tr({ zh: '选择时区', en: 'Choose time zone' })}
             searchPlaceholder={tr({ zh: '搜索国家 / 城市', en: 'Search country / city' })}
             onChange={(value) => { if (value) { void setSource(value); void setConverted(false); setError(''); } }} />

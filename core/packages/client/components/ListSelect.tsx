@@ -7,7 +7,7 @@
  */
 import MoreToggle from '@/components/MoreToggle';
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ChevronDown, X } from '@app-foundation/icons/lucide';
+import { ChevronDown, Search, X } from '@app-foundation/icons/lucide';
 import { CompactSelect } from '@/components/CompactSelect';
 import { ClearButton } from '@/components/ClearButton';
 import { Flag } from '@/components/Flag';
@@ -23,6 +23,9 @@ export interface ListSelectItem {
   value: string;
   /** 已本地化的显示文本 */
   label: string;
+  /** Optional two-line menu presentation; label remains the compact trigger text. */
+  menuLabel?: string;
+  description?: string;
   /** 次要文字 (如 count) — 显示在 label 后,带括号自己写好 */
   hint?: string;
   /** 用于搜索过滤的额外文本 (如中文模式下也想被英文名命中) */
@@ -131,6 +134,8 @@ export function ListSelect({ portal = false, showArrow = true, hideSelectedLabel
     return items.filter(i =>
       i.label.toLowerCase().includes(q) ||
       i.value.toLowerCase().includes(q) ||
+      (i.menuLabel ?? '').toLowerCase().includes(q) ||
+      (i.description ?? '').toLowerCase().includes(q) ||
       (i.searchTerms ?? '').toLowerCase().includes(q) ||
       (i.group?.label ?? '').toLowerCase().includes(q),
     );
@@ -157,7 +162,10 @@ export function ListSelect({ portal = false, showArrow = true, hideSelectedLabel
       onClick={() => { if (!item.disabled) select(item.value); }}>
       {item.country && <Flag iso2={item.country} className="list-select-flag" />}
       {item.icon && <span className="list-select-icon" aria-hidden>{item.icon}</span>}
-      <span className={item.hideLabel ? 'sr-only' : 'list-select-label'}>{item.label}</span>
+      {item.description ? <span className="list-select-item-text">
+        <span className="list-select-label">{item.menuLabel ?? item.label}</span>
+        <span className="list-select-description">{item.description}</span>
+      </span> : <span className={item.hideLabel ? 'sr-only' : 'list-select-label'}>{item.label}</span>}
       {item.hint && <span className="list-select-hint">{item.hint}</span>}
     </button>;
     return <Fragment key={`item:${item.value}`}>
@@ -169,12 +177,15 @@ export function ListSelect({ portal = false, showArrow = true, hideSelectedLabel
   };
   const menuContent = <>
     {searchable && <div className="list-select-search-row">
+      {items.some(item => item.description) && <Search size={20} aria-hidden="true" />}
       <input ref={inputRef} type="text" className="list-select-search" value={query} placeholder={searchPlaceholder}
+        aria-label={searchPlaceholder ?? tr({ zh: '搜索', en: 'Search' })}
         onChange={e => setQuery(e.target.value)} autoFocus />
-      {query && <ClearButton onClick={() => { setQuery(''); inputRef.current?.focus(); }} />}
+      {query && <ClearButton variant="standalone" onClick={() => { setQuery(''); inputRef.current?.focus(); }} />}
     </div>}
     <div className="list-select-columns">
       <div className="list-select-list">
+        {shown.length === 0 && <div className="list-select-more">{tr({ zh: '没有匹配结果', en: 'No matching results' })}</div>}
         {shown.map((item, index) => {
           const group = item.group;
           if (!group || searching) return renderItem(item);

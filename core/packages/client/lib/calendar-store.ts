@@ -32,6 +32,12 @@ export interface CalendarPrefs {
   view: string;
   /** 显示时区(空 = 跟随本机) */
   tz: string;
+  tzLabel: string;
+  showOtherZones: boolean;
+  secondaryTz: string;
+  secondaryTzLabel: string;
+  thirdTz: string;
+  thirdTzLabel: string;
   /** 周起始:0=周日,1=周一 */
   weekStart: 0 | 1;
   /** 24 小时制 */
@@ -48,6 +54,7 @@ export interface CalendarPrefs {
 }
 
 export const DEFAULT_PREFS: CalendarPrefs = {
+  tzLabel: '', showOtherZones: false, secondaryTz: '', secondaryTzLabel: '', thirdTz: '', thirdTzLabel: '',
   view: 'timeGridWeek', tz: '', weekStart: 1, hour24: true, weekends: true, showDeclined: false,
   defaultDuration: 60, weekNumbers: false, keyboardShortcuts: true, sidebarCollapsed: false,
 };

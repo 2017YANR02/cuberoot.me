@@ -31,7 +31,7 @@ import { localZone, isValidZone, formatOffset, zoneOffsetMinutes } from '@cubero
 import { calendarCompetitionId, eventsToIcs, type CalEvent, type CalendarImport, type EditScope } from '@cuberoot/shared/calendar';
 import { colorHex, readableInk } from '@/lib/calendar-colors';
 import { useEffectiveTheme } from '@/lib/theme';
-import { zoneSelectItems } from '@/lib/tz-zones';
+import { zoneLabel, zoneSelectItems } from '@/lib/tz-zones';
 import { expandRange, parseOccurrenceKey, useCalendarStore } from '@/lib/calendar-store';
 import { exportIcs, fetchEvents, listImports, undoImport } from '@/lib/calendar-api';
 import { importCalendarFile, type ImportProgress } from './_lib/import';
@@ -549,6 +549,17 @@ export default function CalendarClient() {
   }, [dialog, shareOpen, scopeAsk, sidebarOpen, settingsOpen, prefs.keyboardShortcuts, setSettingsSection, setViewParam, openCreateNow, mobileSearch, desktopSearch, closeSearch, monthExpanded, isMobile]);
 
   const zoneItems = useMemo(() => zoneSelectItems(isZh, new Date()), [isZh]);
+  const timeZones = useMemo(() => {
+    if (!prefs.showOtherZones || !prefs.secondaryTz) return undefined;
+    const candidates = [
+      { tz: prefs.thirdTz, label: prefs.thirdTzLabel },
+      { tz: prefs.secondaryTz, label: prefs.secondaryTzLabel },
+    ].filter(zone => zone.tz && isValidZone(zone.tz) && zone.tz !== displayTz);
+    const seen = new Set<string>();
+    return [...candidates, { tz: displayTz, label: prefs.tzLabel }]
+      .filter(zone => { if (seen.has(zone.tz)) return false; seen.add(zone.tz); return true; })
+      .map(zone => ({ tz: zone.tz, label: zone.label.trim() || zoneLabel(zone.tz, isZh) }));
+  }, [prefs.showOtherZones, prefs.secondaryTz, prefs.secondaryTzLabel, prefs.thirdTz, prefs.thirdTzLabel, prefs.tzLabel, displayTz, isZh]);
 
   // ── 未登录 ──────────────────────────────────────────────────────────────
   const loginHref = `/account${nextQuery(`${lang === 'zh' ? '/zh' : ''}/calendar`)}`;
@@ -830,8 +841,9 @@ export default function CalendarClient() {
               view={view}
               tzLabel={
                 // Google 那里写 GMT+08;站内一律 UTC+8(时区选择器就在上面一行,别两种写法)
-                formatOffset(zoneOffsetMinutes(displayTz, new Date(range.anchor)))
+                prefs.tzLabel.trim() || formatOffset(zoneOffsetMinutes(displayTz, new Date(range.anchor)))
               }
+              timeZones={timeZones}
               initialDate={initialDate}
               events={fcEvents}
               tz={displayTz}
