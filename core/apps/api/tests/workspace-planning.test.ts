@@ -176,6 +176,27 @@ suite('workspace shared planning persistence', () => {
     await service.post(alice, 'checklist-delete', { id: target.id, version: 3 });
   });
 
+  it('rejects full or archived targets and rolls back when the second list write fails', async () => {
+    const source = checklist();
+    const target = { ...checklist(), items: Array.from({ length: 200 }, () => ({ id: randomUUID(), text: 'Task', done: false })) };
+    await service.post(alice, 'checklist', source);
+    await service.post(alice, 'checklist', target);
+    const move = { id: source.id, version: 1, targetId: target.id, targetVersion: 1, itemIds: [source.items[0].id] };
+    await expect(service.post(bob, 'checklist-move', move)).rejects.toMatchObject({ status: 400 });
+    await service.post(alice, 'checklist', { ...target, items: [], active: false, version: 1 });
+    await expect(service.post(bob, 'checklist-move', { ...move, targetVersion: 2 })).rejects.toMatchObject({ status: 409 });
+    await service.post(alice, 'checklist', { ...target, items: [], version: 2 });
+    const failing = createWorkspaceService(q, run => transaction(tx => run(async <T>(text: string, params: unknown[] = []) => {
+      if (text.startsWith('UPDATE workspace_checklists SET items=') && params.at(-1) === target.id) throw new Error('Injected destination write failure');
+      return tx<T>(text, params);
+    })));
+    await expect(failing.post(bob, 'checklist-move', { ...move, targetVersion: 3 })).rejects.toThrow('Injected destination write failure');
+    expect((await q('SELECT items,version FROM workspace_checklists WHERE id=?', [source.id]))[0]).toEqual({ items: source.items, version: 1 });
+    expect((await q('SELECT items,version FROM workspace_checklists WHERE id=?', [target.id]))[0]).toEqual({ items: [], version: 3 });
+    await service.post(alice, 'checklist-delete', { id: source.id, version: 1 });
+    await service.post(alice, 'checklist-delete', { id: target.id, version: 3 });
+  });
+
   it('deletes entire checklists with access, version and audit checks', async () => {
     const input = checklist();
     await service.post(alice, 'checklist', input);

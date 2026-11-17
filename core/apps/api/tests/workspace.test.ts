@@ -29,7 +29,7 @@ suite('independent CubeRoot workspace',()=>{
     await sql.unsafe(readFileSync(new URL('../migrations/0281_workspace.sql',import.meta.url),'utf8'));
     await sql.unsafe(readFileSync(new URL('../migrations/0282_workspace_account_deletion.sql',import.meta.url),'utf8'));
     await sql.unsafe(readFileSync(new URL('../migrations/0284_workspace_admin_access.sql',import.meta.url),'utf8'));
-    for (const file of ['0291_workspace_checklists','0292_workspace_schedules','0293_workspace_remove_checklist_categories','0332_workspace_remove_projects']) await sql.unsafe(readFileSync(new URL('../migrations/'+file+'.sql',import.meta.url),'utf8'));
+    for (const file of ['0291_workspace_checklists','0292_workspace_schedules','0293_workspace_remove_checklist_categories','0332_workspace_remove_projects','0337_workspace_checklist_sections']) await sql.unsafe(readFileSync(new URL('../migrations/'+file+'.sql',import.meta.url),'utf8'));
     // A separate application's account record is not in CubeRoot app_users.
     await q('CREATE SCHEMA other_application');await q('CREATE TABLE other_application.employees(id INT PRIMARY KEY,name TEXT)');await q("INSERT INTO other_application.employees VALUES (99,'External employee')");
     aliceId=(await service.post(admin,'member',{userId:2,name:'Alice',role:'member',active:true})).id as number;
