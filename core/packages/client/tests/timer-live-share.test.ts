@@ -59,9 +59,9 @@ it('ignores other viewers’ details and recovers from a missing delta', async (
   await act(async () => socket.close(4001));
   expect(live.connection).toBe('ended'); expect(live.snapshot).toBeNull(); expect(live.detail).toBeNull();
 });
-it('can create a new share after ending one and keeps credentials out of viewer tokens', async () => {
+it.each(['v'.repeat(43), 'AQIDBAUGBwgJCgsMDQ4PEA'])('can restart sharing with viewer token %s', async viewerToken => {
   const fetcher = vi.fn(async (_path: unknown, init?: RequestInit) => ({ ok: true, status: 200, json: async () => init?.method === 'POST'
-    ? { ...credential, viewerToken: 'v'.repeat(43), expiresAt: Date.now() + 60_000 } : { ok: true } }) as Response);
+    ? { ...credential, viewerToken, expiresAt: Date.now() + 60_000 } : { ok: true } }) as Response);
   let share!: ReturnType<typeof useTimerLiveShare>;
   function View() { share = useTimerLiveShare({ ...transport, fetcher }, { snapshot: () => snapshot, detail: () => null }); return null; }
   await act(async () => root.render(createElement(View)));

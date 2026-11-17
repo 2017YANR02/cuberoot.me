@@ -44,6 +44,7 @@ export interface TimerScrambleSourceSelectProps<
   onTrainingChange?: (value: string) => void;
   className?: string;
   disabled?: boolean;
+  readOnly?: boolean;
   labels: TimerScrambleSourceLabels;
   onChange: (value: TimerScrambleSourceValue<TReal>) => void;
   popupClassName?: string;
@@ -77,6 +78,7 @@ export function TimerScrambleSourceSelect<
   onTrainingChange,
   className,
   disabled = false,
+  readOnly = false,
   labels,
   onChange,
   onOpenChange,
@@ -238,6 +240,10 @@ export function TimerScrambleSourceSelect<
     };
   }, [disabled, open, groupId]);
 
+  if (readOnly) return <span className={['timer-scramble-source-select', className].filter(Boolean).join(' ')} data-no-timer>
+    <span className={['timer-scramble-source-trigger', triggerClassName].filter(Boolean).join(' ')}
+      style={{ cursor: 'default' }} aria-label={labels.ariaLabel}><span className="timer-scramble-source-current">{currentLabel}</span></span>
+  </span>;
   return (
     <div
       className={['timer-scramble-source-select', className].filter(Boolean).join(' ')}

@@ -16,12 +16,19 @@ export default function TimerWatchPage() {
   const language = tr({ en: 'en' as const, zh: 'zh' as const });
   const [credential, setCredential] = useState<TimerLiveCredential | null>(null);
   useEffect(() => {
-    const read = () => setCredential(parseTimerLiveWatchHash(window.location.hash));
+    let revision = 0;
+    const read = () => {
+      const current = ++revision;
+      setCredential(null);
+      void parseTimerLiveWatchHash(window.location.hash).then(value => {
+        if (current === revision) setCredential(value);
+      }).catch(() => { if (current === revision) setCredential(null); });
+    };
     read(); window.addEventListener('hashchange', read);
-    return () => window.removeEventListener('hashchange', read);
+    return () => { revision++; window.removeEventListener('hashchange', read); };
   }, []);
   const host = useMemo<ReconstructHost>(() => ({ localize: v => v[language], writeClipboardText: browserClipboardTransport,
     recordGyro: true, replayUrl: solve => encodeReplayUrl(solve, `${window.location.origin}${language === 'zh' ? '/zh' : ''}/timer`) }), [language]);
-  return <main className="timer-shell"><TimerLiveWatch language={language} credential={credential} host={host}
+  return <main><TimerLiveWatch className="timer-shell" language={language} credential={credential} host={host}
     transport={{ apiUrl, websocketUrl: websocketApiUrl('/v1/timer/live-shares/socket') }} /></main>;
 }

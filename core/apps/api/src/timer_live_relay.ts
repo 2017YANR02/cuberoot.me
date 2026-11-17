@@ -1,4 +1,4 @@
-import { applyTimerLivePatch, diffTimerLiveSnapshot, isTimerLiveId, isTimerLiveToken, parseTimerLiveDetail, parseTimerLiveSnapshot,
+import { applyTimerLivePatch, diffTimerLiveSnapshot, isTimerLiveId, isTimerLiveToken, isTimerLiveViewerToken, parseTimerLiveDetail, parseTimerLiveSnapshot,
   TIMER_LIVE_MAX_BYTES, TIMER_LIVE_STALE_MS, TIMER_LIVE_TTL_MS, type TimerLiveSnapshot } from '@cuberoot/shared/timer/live-share';
 
 export interface TimerLiveSocket { readonly bufferedAmount?: number; send(data: string): void; close(code: number, reason: string): void }
@@ -72,7 +72,8 @@ export class TimerLiveRelay {
         try { m = JSON.parse(data); if (!m || typeof m !== 'object' || Array.isArray(m)) throw new Error(); }
         catch { reject(1008, 'invalid json'); return; }
         if (!peer) {
-          if (authenticating || m.type !== 'hello' || m.version !== 1 || !isTimerLiveId(m.id) || !isTimerLiveToken(m.token)
+          if (authenticating || m.type !== 'hello' || m.version !== 1 || !isTimerLiveId(m.id)
+            || !isTimerLiveViewerToken(m.token) || (m.role === 'host' && !isTimerLiveToken(m.token))
             || (m.role !== 'host' && m.role !== 'viewer')) { reject(1008, 'invalid hello'); return; }
           authenticating = true;
           const { id, token, role } = m;

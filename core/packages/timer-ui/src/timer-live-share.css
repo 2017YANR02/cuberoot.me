@@ -2,8 +2,7 @@
 .settings-modal .settings-main .timer-live-share-actions .hint-btn { min-height: 44px; }
 .timer-live-share .room-qr-code { width: 200px; max-width: 100%; margin-top: 12px; }
 .timer-live-share .room-qr-code svg { display: block; width: 100%; height: auto; }
-.timer-live-watch { min-height: 70vh; }
 .timer-live-watch-status { color: var(--muted-foreground); font-size: 13px; }
 .timer-live-watch-history { width: 100%; overflow: auto; padding: 12px; box-sizing: border-box; }
 .timer-live-watch-report { min-width: 0; padding: 12px; }
-.timer-live-watch-report button { min-height: 44px; }
+.timer-live-watch-report > .hint-btn { min-height: 44px; }

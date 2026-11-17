@@ -4,6 +4,9 @@ import type { TimerPhase } from './machine';
 import type { Quat } from '../smart_cube/orientation';
 import type { GyroSample } from '../smart_cube/gyro_track';
 import type { SmartCubeAttemptProducer } from './smart-cube-attempt';
+import { normalizeTimerTypography, type TimerTypographySettings } from './typography';
+import { normalizeSoloLayout, type SoloLayout } from './solo-layout';
+import type { SmartCubeScrambleHint } from '../smart_cube/scramble_hint';
 
 export const TIMER_LIVE_PATH = '/v1/timer/live-shares';
 export const TIMER_LIVE_MAX_BYTES = 2 * 1024 * 1024;
@@ -13,6 +16,10 @@ export interface TimerLiveCredential { id: string; token: string }
 export interface TimerLiveSession extends TimerLiveCredential { viewerToken: string; expiresAt: number }
 export interface TimerLiveAttempt { solve: Solve; gyro: readonly GyroSample[] }
 export interface TimerLiveState {
+  controls?: { contentId: string; source: 'wca' | 'random' | 'manual' };
+  guidance?: { hint: SmartCubeScrambleHint | null; correctionActive: boolean; match: boolean | null };
+  /** Presentation only; older publishers use the normal timer defaults. */
+  appearance?: TimerTypographySettings & { soloLayout: SoloLayout };
   context: string;
   sessionName: string;
   event: EventId;
@@ -54,12 +61,36 @@ export type TimerLivePublication = { type: 'snapshot'; snapshot: TimerLiveSnapsh
 
 export const isTimerLiveId = (v: unknown): v is string => typeof v === 'string' && /^[A-Za-z0-9_-]{22}$/.test(v);
 export const isTimerLiveToken = (v: unknown): v is string => typeof v === 'string' && /^[A-Za-z0-9_-]{43}$/.test(v);
+export const isTimerLiveShortToken = (v: unknown): boolean => typeof v === 'string' && /^[A-Za-z0-9_-]{21}[AQgw]$/.test(v);
+export const isTimerLiveViewerToken = (v: unknown): v is string => isTimerLiveToken(v) || isTimerLiveShortToken(v);
+/** A one-way room locator: knowing the room ID does not grant viewer access. */
+export async function timerLiveShortId(token: string): Promise<string> {
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(`timer-live:${token}`));
+  return btoa(String.fromCharCode(...new Uint8Array(digest).slice(0, 16)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
 const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const text = (v: unknown, max: number): v is string => typeof v === 'string' && v.length <= max;
 const number = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 9e15;
 const eventIds = new Set<string>(EVENTS.map(e => e.id));
 const eventId = (v: unknown): v is EventId => typeof v === 'string' && eventIds.has(v);
 const phases = new Set(['idle', 'holding', 'ready', 'inspecting', 'running', 'stopped']);
+function parseGuidance(v: unknown): TimerLiveState['guidance'] {
+  if (!record(v) || typeof v.correctionActive !== 'boolean' || !(v.match === null || typeof v.match === 'boolean')) return;
+  if (v.hint === null) return { hint: null, correctionActive: v.correctionActive, match: v.match };
+  const h = v.hint;
+  const moves = (value: unknown): value is string[] => Array.isArray(value) && value.length <= 1000 && value.every(m => text(m, 32));
+  if (!record(h) || !moves(h.done) || !moves(h.pending) || !(h.current === null || text(h.current, 32))
+    || typeof h.complete !== 'boolean' || (h.corrections !== undefined && !moves(h.corrections))) return;
+  if (h.displayMoves !== undefined && (!Array.isArray(h.displayMoves) || h.displayMoves.length > 2000
+    || !h.displayMoves.every(m => record(m) && Number.isSafeInteger(m.id) && Number(m.id) >= 0
+      && text(m.move, 32) && text(m.token, 32) && ['done', 'current', 'pending', 'correction'].includes(String(m.state))))) return;
+  return { correctionActive: v.correctionActive, match: v.match, hint: {
+    done: h.done, pending: h.pending, current: h.current, complete: h.complete,
+    ...(h.corrections !== undefined && { corrections: h.corrections as string[] }),
+    ...(Array.isArray(h.displayMoves) && { displayMoves: h.displayMoves.map(m => ({ id: m.id, move: m.move, token: m.token, state: m.state })) }),
+  } };
+}
 function quat(v: unknown): v is Quat | null {
   return v === null || record(v) && [v.w, v.x, v.y, v.z].every(n => typeof n === 'number' && Number.isFinite(n))
     && Math.abs(Math.hypot(v.w as number, v.x as number, v.y as number, v.z as number) - 1) < .02;
@@ -113,7 +144,11 @@ function parseSnapshot(v: unknown, previous?: TimerLiveSnapshot): TimerLiveSnaps
     phase: s.phase as TimerPhase, elapsedMs: s.elapsedMs as number, inspectionMs: s.inspectionMs as number,
     inspectionSec: s.inspectionSec as number, sampledAt: s.sampledAt as number,
     lastPenalty: s.lastPenalty as Penalty | null, trainingObservation: s.trainingObservation, timingEnabled: s.timingEnabled, hideTime: s.hideTime,
-    precision: s.precision as TimerLiveState['precision'], runningPrecision: s.runningPrecision as TimerLiveState['runningPrecision'] },
+    precision: s.precision as TimerLiveState['precision'], runningPrecision: s.runningPrecision as TimerLiveState['runningPrecision'],
+    ...(record(s.appearance) && { appearance: { ...normalizeTimerTypography(s.appearance), soloLayout: normalizeSoloLayout(s.appearance.soloLayout) } }),
+    ...(record(s.controls) && text(s.controls.contentId, 100) && ['wca', 'random', 'manual'].includes(String(s.controls.source))
+      && { controls: { contentId: s.controls.contentId, source: s.controls.source as 'wca' | 'random' | 'manual' } }),
+    ...(s.guidance !== undefined && { guidance: parseGuidance(s.guidance) }) },
   cube: previous && Object.is(v.cube, previous.cube) ? previous.cube : { connected: c.connected, facelets: c.facelets, quaternion: c.quaternion, moves: c.moves, algAnchored: c.algAnchored }, attempt, history };
 }
 
@@ -197,9 +232,14 @@ export function applyTimerLivePatch(previous: TimerLiveSnapshot, raw: unknown): 
   return parseSnapshot({ ...previous, ...raw, attempt }, previous);
 }
 export function timerLiveWatchUrl(base: string, session: TimerLiveSession): string {
-  const url = new URL(base); url.hash = `${session.id}.${session.viewerToken}`; return url.toString();
+  const url = new URL(base);
+  url.hash = isTimerLiveShortToken(session.viewerToken) ? session.viewerToken : `${session.id}.${session.viewerToken}`;
+  return url.toString();
 }
-export function parseTimerLiveWatchHash(hash: string): TimerLiveCredential | null {
-  const [id, token, extra] = hash.replace(/^#/, '').split('.');
-  return !extra && isTimerLiveId(id) && isTimerLiveToken(token) ? { id, token } : null;
+export async function parseTimerLiveWatchHash(hash: string): Promise<TimerLiveCredential | null> {
+  const value = hash.replace(/^#/, '');
+  if (isTimerLiveShortToken(value)) return { id: await timerLiveShortId(value), token: value };
+  const parts = value.split('.');
+  const [id, token] = parts;
+  return parts.length === 2 && isTimerLiveId(id) && isTimerLiveToken(token) ? { id, token } : null;
 }

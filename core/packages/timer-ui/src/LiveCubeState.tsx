@@ -97,6 +97,8 @@ function useSyntheticQuat(enabled: boolean): Quat | null {
 }
 
 export interface LiveCubeStateProps {
+  /** Viewer-only temporary orbit; release resumes the live view. */
+  resetViewOnRelease?: boolean;
   /** Fixed training grip, applied to presentation only. */
   displayOrientation?: string;
   language?: 'en' | 'zh';
@@ -162,6 +164,7 @@ export interface LiveCubeStateProps {
 
 export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
   const {
+    resetViewOnRelease = false,
     language = 'en',
     enableDevSource = false,
     useGyro = true,
@@ -224,6 +227,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
         key={`${useGyro ? 'gyro' : 'no-gyro'}:${displayOrientation}`}
         language={language}
         allowViewDrag
+        resetViewOnRelease={resetViewOnRelease}
         ariaLabel={tr({ zh: '智能魔方实时三维状态', en: 'Live 3D smart-cube state' })}
         moves={displayMoves!}
         liveSource={liveSource}

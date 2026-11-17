@@ -33,6 +33,7 @@ export interface TimerPuzzlePickerGroup {
 }
 
 export interface TimerPuzzlePickerProps extends TimerOverlayControlProps {
+  readOnly?: boolean;
   /** Optional catalog discovery; shared behavior, labels and storage scope supplied by host. */
   discovery?: {
     storageKey: string;
@@ -72,6 +73,7 @@ export interface TimerPuzzlePickerProps extends TimerOverlayControlProps {
  * component owns the identical trigger, menu, focus, and viewport behavior.
  */
 export function TimerPuzzlePicker({
+  readOnly = false,
   dataNoTimer,
   discovery,
   disabled = false,
@@ -249,6 +251,15 @@ export function TimerPuzzlePicker({
     return <span className={`${className} pp-item-tag`}>{item.textLabel ?? item.id}</span>;
   };
 
+  const triggerContent = triggerText ? <span className="pp-trigger-label">{triggerText}</span> : <>
+    {selectedChoice ? renderIcon(selectedChoice, true) : <Boxes className="pp-trigger-icon" size={15} />}
+    {!selectedChoice && <span className="pp-trigger-label">{puzzleLabel}</span>}
+  </>;
+  if (readOnly) return <span className="pp" data-no-timer>
+    <span className={`pp-trigger${selectedItem ? ' pp-trigger--active' : ''}`} style={{ cursor: 'default' }}
+      aria-label={triggerLabel ?? selectedChoice?.label ?? puzzleLabel}>{triggerContent}</span>
+  </span>;
+
   return (
     <>
     <div className={`pp${compact ? ' pp--compact' : ''}`} data-no-timer={dataNoTimer ? '' : undefined} ref={rootRef}
@@ -295,10 +306,7 @@ export function TimerPuzzlePicker({
         ref={triggerRef}
         type="button"
       >
-        {triggerText ? <span className="pp-trigger-label">{triggerText}</span> : <>
-          {selectedChoice ? renderIcon(selectedChoice, true) : <Boxes className="pp-trigger-icon" size={15} />}
-          {!selectedChoice && <span className="pp-trigger-label">{puzzleLabel}</span>}
-        </>}
+        {triggerContent}
         {showArrow && <ChevronDown className="pp-trigger-chevron" size={14} />}
       </button>
       {open && (

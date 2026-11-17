@@ -3,17 +3,18 @@ import { TimerPuzzlePicker } from './TimerPuzzlePicker';
 import { TIMER_OVERLAY_IDS, type TimerOverlayControlProps } from './timer-overlay-control';
 import './timer-practice-controls.css';
 
-export function TimerPracticeContentPicker({ entries, selectedId, label, disabled, language, onSelect, open, onOpenChange }: TimerOverlayControlProps & {
+export function TimerPracticeContentPicker({ entries, selectedId, label, disabled, readOnly, language, onSelect, open, onOpenChange }: TimerOverlayControlProps & {
   entries: readonly TimerPracticeContent[];
   selectedId?: string;
   label: string;
   disabled?: boolean;
+  readOnly?: boolean;
   language: 'en' | 'zh';
   onSelect(id: string): void;
 }) {
   const groups = [...new Map(entries.filter(item => item.group).map(item => [item.group!.id, item.group!])).values()];
   return <span className="timer-practice-control timer-practice-control--content">
-    <TimerPuzzlePicker showArrow={false} disabled={disabled} dataNoTimer
+    <TimerPuzzlePicker showArrow={false} disabled={disabled} readOnly={readOnly} dataNoTimer
       puzzleLabel={language === 'zh' ? '内容' : 'Content'} triggerLabel={label}
       selectedEvent={selectedId ?? ''} showSubmenuHeading={false} showItemIcons={false}
       open={open} onOpenChange={(next, details) => onOpenChange?.(next, { ...details, id: TIMER_OVERLAY_IDS.practiceContent })}

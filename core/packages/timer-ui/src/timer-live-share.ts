@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { applyTimerLivePatch, diffTimerLiveSnapshot, isTimerLiveId, isTimerLiveToken, parseTimerLiveDetail,
+import { applyTimerLivePatch, diffTimerLiveSnapshot, isTimerLiveId, isTimerLiveToken, isTimerLiveViewerToken, parseTimerLiveDetail,
   parseTimerLiveSnapshot, TIMER_LIVE_MAX_BYTES, TIMER_LIVE_PATH, TIMER_LIVE_STALE_MS,
   type TimerLiveCredential, type TimerLiveSession, type TimerLiveSnapshot } from '@cuberoot/shared/timer/live-share';
 import type { Solve } from '@cuberoot/shared/timer';
@@ -16,7 +16,7 @@ const STORAGE_KEY = 'cuberoot.timer.live-share.v1';
 function parseSession(v: unknown): TimerLiveSession | null {
   if (!v || typeof v !== 'object') return null;
   const s = v as TimerLiveSession;
-  return isTimerLiveId(s.id) && isTimerLiveToken(s.token) && isTimerLiveToken(s.viewerToken)
+  return isTimerLiveId(s.id) && isTimerLiveToken(s.token) && isTimerLiveViewerToken(s.viewerToken)
     && Number.isFinite(s.expiresAt) && s.expiresAt > Date.now() ? s : null;
 }
 function saveSession(session: TimerLiveSession | null, paused = false) {

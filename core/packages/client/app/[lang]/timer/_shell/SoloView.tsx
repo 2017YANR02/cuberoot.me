@@ -121,6 +121,8 @@ import {
   timerGestureActionAt,
   timerGestureActionStates,
   formatTimerTimingDisplay,
+  timerPracticeContents,
+  selectedTimerPracticeContent,
   generateTimerDrillScramble,
   timerShouldStopFromExternalPointer,
   timerPrintScrambleSource,
@@ -3011,11 +3013,17 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       const machine = timer.snapshot();
       const now = performance.now();
       return {
-        state: { context: getActiveSessionId(), sessionName: activePrintSessionName ?? '', event, scramble,
+        state: { context: getActiveSessionId(), sessionName: activePrintSessionName ?? '', event, scramble: displayScramble,
+          controls: { contentId: selectedTimerPracticeContent(timerPracticeContents(event, { pllChain: true }), event, type222, null)?.id ?? 'solve',
+            source: effectiveScrambleSource },
+          guidance: { hint: displayedGuidance?.hint ?? null, correctionActive: displayedGuidance?.correctionActive ?? false,
+            match: displayedGuidance?.match ?? null },
           phase: machine.phase, elapsedMs: machine.phase === 'running' ? Math.max(0, now - (machine.startedAtMs ?? now)) : machine.lastMs ?? 0,
           inspectionMs: machine.inspectionStartedAtMs === null ? 0 : Math.max(0, now - machine.inspectionStartedAtMs),
           inspectionSec: inspectionLimit, sampledAt: Date.now(), lastPenalty, trainingObservation: trainingTimingActive, timingEnabled: settings.timingEnabled, hideTime: settings.hideTime,
-          precision: settings.precision, runningPrecision: settings.runningPrecision },
+          precision: settings.precision, runningPrecision: settings.runningPrecision,
+          appearance: { timerFont: settings.timerFont, timerFontScale: settings.timerFontScale,
+            scrambleFont: settings.scrambleFont, scrambleFontScale: settings.scrambleFontScale, soloLayout: settings.soloLayout } },
         cube: { connected: cubeConnected, facelets: bluetoothCube.facelets, moves: liveMoves, algAnchored,
           quaternion: cubeConnected && settings.gyroEnabled && gyroQuatRef.current ? applyOrientation(gyroQuatRef.current, calibrationReferenceRef.current,
             { basis: sensorBasisForBrand(bluetoothCube.status.brand), mirror: mirrorForBrand(bluetoothCube.status.brand) }) : null },
@@ -3358,14 +3366,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       data-mini-program-fullscreen={fullscreen && miniProgramFullscreen ? '' : undefined}
       data-live-reconstruction={liveSolutionPanel ? '' : undefined}
       data-pll-chain={isPllChain ? '' : undefined}
-      style={{
-        '--solo-scramble-gap': `${settings.soloLayout.scrambleGap}px`,
-        '--solo-source-gap': `${settings.soloLayout.sourceGap}px`,
-        '--solo-timer-gap': `${settings.soloLayout.timerGap}px`,
-        '--solo-cube-gap': `${settings.soloLayout.cubeGap}px`,
-        '--solo-source-scale': settings.soloLayout.sourceScale,
-        '--solo-cube-scale': settings.soloLayout.cubeScale,
-      } as React.CSSProperties}
     >
       {trainingCubes.connections}
       {pllChain.orderOpen && <PllChainOrderDialog order={pllChain.order} cases={pllChain.cases} defaults={pllChain.defaults}

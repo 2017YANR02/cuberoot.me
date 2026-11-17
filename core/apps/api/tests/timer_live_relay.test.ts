@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createHash } from 'node:crypto';
 import { TimerLiveRelay, type TimerLiveAuthorize } from '../src/timer_live_relay.js';
 import { applyTimerLivePatch, diffTimerLiveSnapshot, parseTimerLiveSnapshot, timerLiveCompletedAttempt,
-  timerLiveHistory, type TimerLiveSnapshot } from '@cuberoot/shared/timer/live-share';
+  timerLiveHistory, timerLiveWatchUrl, parseTimerLiveWatchHash, type TimerLiveSnapshot } from '@cuberoot/shared/timer/live-share';
 
 const id = 's'.repeat(22), hostToken = 'h'.repeat(43), viewerToken = 'v'.repeat(43);
 function state(): TimerLiveSnapshot {
@@ -20,6 +21,64 @@ async function join(relay: TimerLiveRelay, role: 'host' | 'viewer', token = role
   return { socket, send, close: c.handleClose, messages: () => socket.send.mock.calls.map(([s]) => JSON.parse(s)) };
 }
 describe('timer live sharing', () => {
+  it('relays read-only controls and scramble progress immediately, including corrections and completion', () => {
+    const original = state();
+    const hint = { done: ['R'], current: 'U', pending: ['F2'], corrections: ["L'"], complete: false,
+      displayMoves: [{ id: 1, move: 'R', token: 'R', state: 'done' }, { id: 2, move: "L'", token: "L'", state: 'correction' }] };
+    const next = parseTimerLiveSnapshot({ ...original, state: { ...original.state,
+      controls: { contentId: 'solve', source: 'wca', secret: 'private' },
+      guidance: { hint, correctionActive: true, match: false, secret: 'private' } } })!;
+    expect(next.state.controls).toEqual({ contentId: 'solve', source: 'wca' });
+    expect(next.state.guidance).toEqual({ hint, correctionActive: true, match: false });
+    expect(applyTimerLivePatch(original, diffTimerLiveSnapshot(original, next))?.state.guidance).toEqual(next.state.guidance);
+    const complete = { ...next, state: { ...next.state, guidance: { hint: null, correctionActive: false, match: true } } };
+    expect(applyTimerLivePatch(next, diffTimerLiveSnapshot(next, complete))?.state.guidance?.match).toBe(true);
+    expect(parseTimerLiveSnapshot({ ...original, state: { ...original.state,
+      guidance: { hint: { ...hint, pending: Array(1001).fill('R') }, correctionActive: false, match: false } } })?.state.guidance).toBeUndefined();
+  });
+  it('syncs bounded presentation settings through snapshots and deltas without private settings', () => {
+    const original = state();
+    const appearance = { timerFont: 'sans', timerFontScale: 1.2, scrambleFont: 'mono', scrambleFontScale: 0.8,
+      soloLayout: { scrambleGap: 24, sourceGap: 12, timerGap: 28, cubeGap: 16, sourceScale: 1, cubeScale: 1.2 } };
+    const next = parseTimerLiveSnapshot({ ...original, state: { ...original.state,
+      appearance: { ...appearance, privateNote: 'do not share' } } })!;
+    expect(next.state.appearance).toEqual(appearance);
+    expect(applyTimerLivePatch(original, diffTimerLiveSnapshot(original, next))?.state.appearance).toEqual(appearance);
+    const bounded = parseTimerLiveSnapshot({ ...original, state: { ...original.state,
+      appearance: { timerFont: 'invalid', timerFontScale: 100, soloLayout: { timerGap: -10 } } } })!;
+    expect(bounded.state.appearance?.timerFont).toBe('lcd');
+    expect(bounded.state.appearance?.timerFontScale).toBe(2);
+    expect(bounded.state.appearance?.soloLayout.timerGap).toBe(0);
+    expect(parseTimerLiveSnapshot(original)?.state.appearance).toBeUndefined();
+  });
+  it('round-trips short links with a one-way room ID and preserves legacy links', async () => {
+    const token = 'AQIDBAUGBwgJCgsMDQ4PEA';
+    const expectedId = createHash('sha256').update(`timer-live:${token}`).digest().subarray(0, 16).toString('base64url');
+    const session = { id: expectedId, token: hostToken, viewerToken: token, expiresAt: Date.now() + 60_000 };
+    const url = new URL(timerLiveWatchUrl('https://cuberoot.me/zh/timer/watch', session));
+    expect(url.hash).toBe(`#${token}`);
+    expect(url.toString()).toHaveLength(57);
+    expect(await parseTimerLiveWatchHash(url.hash)).toEqual({ id: expectedId, token });
+    expect(expectedId).not.toBe(token);
+    const legacy = new URL(timerLiveWatchUrl(url.origin + url.pathname, { ...session, id, viewerToken }));
+    expect(await parseTimerLiveWatchHash(legacy.hash)).toEqual({ id, token: viewerToken });
+    for (const invalid of ['', '#abc', `#${token}.`, `#${id}.${viewerToken}.`, `#${token.slice(0, -1)}B`]) {
+      expect(await parseTimerLiveWatchHash(invalid)).toBeNull();
+    }
+  });
+  it('accepts short viewing credentials, rejects them for hosting and revokes them', async () => {
+    const token = 'AQIDBAUGBwgJCgsMDQ4PEA';
+    const authorize = vi.fn<TimerLiveAuthorize>(async (_id, value, role) => value === token && role === 'viewer'
+      ? { expiresAt: Date.now() + 60_000 } : null);
+    const relay = new TimerLiveRelay(authorize);
+    const viewer = await join(relay, 'viewer', token);
+    expect(viewer.messages()[0].type).toBe('ready');
+    const host = await join(relay, 'host', token);
+    expect(host.socket.close).toHaveBeenCalledWith(1008, 'invalid hello');
+    expect(authorize).toHaveBeenCalledTimes(1);
+    relay.revoke(id);
+    expect(viewer.socket.close).toHaveBeenCalledWith(4001, 'share ended');
+  });
   it('replays the latest snapshot, orders patches and prevents viewer writes', async () => {
     const relay = new TimerLiveRelay(auth), host = await join(relay, 'host');
     host.send({ type: 'snapshot', snapshot: state() });

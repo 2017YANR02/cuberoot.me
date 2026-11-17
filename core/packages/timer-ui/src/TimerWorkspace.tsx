@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useSyncExternalStore, type HTMLAttributes, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useSyncExternalStore, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 import './timer-workspace.css';
 import { ResizeDivider } from '@app-foundation/navigation-ui/resize-divider';
 import '@app-foundation/navigation-ui/resize-divider.css';
@@ -24,7 +24,7 @@ export function useTimerWideLayout({ useHostContent = true }: { useHostContent?:
   return useHostContent && host ? host.content.width >= 800 && host.content.height >= 560 : desktop;
 }
 
-export function TimerWorkspace({ active = true, panelOpen = false, recap, soloLayout, resizeLabel = 'Resize panel', children, className = '', ...props }: HTMLAttributes<HTMLDivElement> & {
+export function TimerWorkspace({ active = true, panelOpen = false, recap, soloLayout, resizeLabel = 'Resize panel', children, className = '', style, ...props }: HTMLAttributes<HTMLDivElement> & {
   active?: boolean; panelOpen?: boolean; recap?: ReactNode; resizeLabel?: string;
   /** Opt into the same bounded Solo canvas on Web and installed hosts. */
   soloLayout?: SoloLayout;
@@ -52,6 +52,14 @@ export function TimerWorkspace({ active = true, panelOpen = false, recap, soloLa
     return () => observer.disconnect();
   }, [active, wide, panelOpen, recapOpen]);
   return <div {...props} ref={workspaceRef} className={`${className}${active ? ' timer-workspace timer-no-selection' : ''}`}
+    style={{ ...style, ...(soloLayout && {
+      '--solo-scramble-gap': `${soloLayout.scrambleGap}px`,
+      '--solo-source-gap': `${soloLayout.sourceGap}px`,
+      '--solo-timer-gap': `${soloLayout.timerGap}px`,
+      '--solo-cube-gap': `${soloLayout.cubeGap}px`,
+      '--solo-source-scale': soloLayout.sourceScale,
+      '--solo-cube-scale': soloLayout.cubeScale,
+    }) } as CSSProperties}
     data-fit-viewport={soloLayout ? '' : undefined} data-spacing-flow={expandedSpacing ? '' : undefined}
     data-wide-layout={wide ? '' : undefined}
     data-panel-open={active && (panelOpen || recapOpen) ? '' : undefined} data-recap-open={recapOpen ? '' : undefined}>

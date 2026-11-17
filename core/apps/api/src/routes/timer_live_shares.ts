@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { query } from '../db/connection.js';
 import { getIp } from '../utils/analytics_helpers.js';
 import { checkRateLimit } from '../utils/rate_limit.js';
-import { isTimerLiveId, isTimerLiveToken, TIMER_LIVE_TTL_MS } from '@cuberoot/shared/timer/live-share';
+import { isTimerLiveId, isTimerLiveToken, timerLiveShortId, TIMER_LIVE_TTL_MS } from '@cuberoot/shared/timer/live-share';
 import { TimerLiveRelay } from '../timer_live_relay.js';
 
 const hash = (s: string) => createHash('sha256').update(s).digest('hex');
@@ -17,8 +17,9 @@ export const timerLiveSharesRoutes = new Hono();
 timerLiveSharesRoutes.use('/timer/live-shares*', async (c, next) => { c.header('Cache-Control', 'no-store'); await next(); });
 timerLiveSharesRoutes.post('/timer/live-shares', async c => {
   checkRateLimit(getIp(c), { bucket: 'timer-live-create', max: 60 });
-  const id = randomBytes(16).toString('base64url'), token = randomBytes(32).toString('base64url');
-  const viewerToken = randomBytes(32).toString('base64url'), expiresAt = Date.now() + TIMER_LIVE_TTL_MS;
+  const token = randomBytes(32).toString('base64url');
+  const viewerToken = randomBytes(16).toString('base64url'), expiresAt = Date.now() + TIMER_LIVE_TTL_MS;
+  const id = await timerLiveShortId(viewerToken);
   await query('INSERT INTO timer_live_shares (id, host_hash, viewer_hash, created_at, expires_at) VALUES (?, ?, ?, ?, ?)',
     [id, hash(token), hash(viewerToken), Date.now(), expiresAt]);
   return c.json({ id, token, viewerToken, expiresAt }, 201);

@@ -1,16 +1,20 @@
 'use client';
 import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { formatTimerTimingDisplay, summarize, timerEventPickerName, type Solve } from '@cuberoot/shared/timer';
+import { DEFAULT_SOLO_LAYOUT, DEFAULT_TIMER_TYPOGRAPHY, TIMER_EVENT_PICKER_GROUPS, timerPracticeContents,
+  formatTimerTimingDisplay, summarize, type Solve } from '@cuberoot/shared/timer';
 import type { TimerLiveCredential, TimerLiveState } from '@cuberoot/shared/timer/live-share';
 import { useTimerLiveConnection, type TimerLiveTransport } from './timer-live-share';
 import { TimerSoloPage } from './TimerSoloPage';
 import { TimerWorkspace, useTimerWideLayout } from './TimerWorkspace';
 import { TimerStatRail } from './TimerChrome';
 import { TimerScrambleStrip } from './TimerScrambleStrip';
-import { TimerCubePreview } from './TimerCubePreview';
+import { TimerCubePreview, timerCubePreviewAspect } from './TimerCubePreview';
 import LiveCubeState from './LiveCubeState';
 import { SegmentTime } from './SegmentTime';
 import { TimerHistoryRow } from './TimerHistoryRow';
+import { TimerPuzzlePicker } from './TimerPuzzlePicker';
+import { TimerPracticeContentPicker } from './TimerPracticeContentPicker';
+import { TimerScrambleSourceSelect } from './TimerScrambleSourceSelect';
 import type { ReconstructHost } from './reconstruct/ReconstructHost';
 import './timer-live-share.css';
 import './timer-chrome.css';
@@ -36,8 +40,9 @@ const LiveDigits = memo(function LiveDigits({ state, online, clockOffset }: { st
 });
 
 /** No timer controller, device connection, or persistence is mounted by this view. */
-export function TimerLiveWatch({ transport, credential, language, host }: {
+export function TimerLiveWatch({ transport, credential, language, host, className = '' }: {
   transport: TimerLiveTransport; credential: TimerLiveCredential | null; language: 'en' | 'zh'; host: ReconstructHost;
+  className?: string;
 }) {
   const live = useTimerLiveConnection(transport, credential, 'viewer');
   const tr = <T,>(v: { en: T; zh: T }) => v[language];
@@ -51,6 +56,10 @@ export function TimerLiveWatch({ transport, credential, language, host }: {
   const [liveStageTarget, setLiveStageTarget] = useState<HTMLDivElement | null>(null);
   const snapshot = live.snapshot;
   const state = snapshot?.state;
+  const appearance = state?.appearance ?? DEFAULT_TIMER_TYPOGRAPHY;
+  const soloLayout = state?.appearance?.soloLayout ?? DEFAULT_SOLO_LAYOUT;
+  const contents = useMemo(() => timerPracticeContents(state?.event ?? '333', { pllChain: true }), [state?.event]);
+  const content = contents.find(item => item.id === state?.controls?.contentId);
   const online = live.online && live.connection === 'connected';
   const identity = `${credential?.id}:${state?.context}:${state?.event}`;
   useEffect(() => { setSelected(null); }, [identity]);
@@ -99,16 +108,33 @@ export function TimerLiveWatch({ transport, credential, language, host }: {
         <p>{tr({ en: 'Current session · up to 200 recent solves', zh: '当前分组 · 最近最多 200 条成绩' })}</p>
         <div>{history.slice().reverse().map((solve, i) => <SharedHistoryRow key={solve.id} solve={solve} index={history.length - i - 1} onActivate={openDetail} />)}</div>
       </div>;
-  return <TimerWorkspace className="timer-live-watch" panelOpen={historyOpen} recap={!historyOpen && (reportSolve || activeSelected) ? report : undefined}>
+  return <TimerWorkspace className={`timer-live-watch ${className}`} soloLayout={soloLayout}
+    panelOpen={historyOpen} recap={!historyOpen && (reportSolve || activeSelected) ? report : undefined}>
     <TimerSoloPage title={tr({ en: 'Live timer', zh: '计时器实况' })}
-      topbar={{ controls: <span>{state?.sessionName} {state && timerEventPickerName(state.event, language)}</span>,
+      topbar={{ controls: <>
+        <TimerPuzzlePicker readOnly selectedEvent={state?.event ?? ''} puzzleLabel={tr({ zh: '项目', en: 'Puzzle' })}
+          groups={TIMER_EVENT_PICKER_GROUPS.map(group => ({ id: group.id, label: tr({ zh: group.nameZh, en: group.nameEn }),
+            items: group.items.map(item => ({ id: item.id, label: tr({ zh: item.nameZh, en: item.nameEn }), iconClass: item.iconClass, textLabel: item.textLabel })) }))}
+          onSelect={() => {}} />
+        <TimerPracticeContentPicker readOnly entries={contents} selectedId={content?.id} label={content ? tr(content.title) : '—'}
+          language={language} onSelect={() => {}} />
+        <span className="timer-practice-control"><TimerScrambleSourceSelect readOnly value={state?.controls?.source ?? 'wca'} realValue="wca"
+          triggerClassName="shell-players-select" labels={{ ariaLabel: tr({ zh: '出题来源', en: 'Question source' }),
+            real: state?.controls ? tr({ zh: '真题', en: 'Real' }) : '—', realOption: tr({ zh: 'WCA 真题', en: 'WCA real' }),
+            random: tr({ zh: '随机', en: 'Random' }), randomOption: tr({ zh: '随机', en: 'Random' }),
+            manual: tr({ zh: '手动', en: 'Manual' }), manualOption: tr({ zh: '手动输入', en: 'Manual input' }) }} onChange={() => {}} /></span>
+      </>,
         actions: <span role="status" className="timer-live-watch-status">{status}</span> }}
       stage={{ statistics: <TimerStatRail language={language} summary={stats} ariaExpanded={historyOpen} onClick={() => setHistoryOpen(v => !v)} /> }}
-      timing={{ surfaceRef: surface, phase: state?.phase ?? 'idle', colorClass: 'tf-mono', digits: <LiveDigits state={state} online={online} clockOffset={live.clockOffset} />, interactive: false,
+      timing={{ surfaceRef: surface, phase: state?.phase ?? 'idle', colorClass: `tf-${appearance.timerFont}`, fontScale: appearance.timerFontScale,
+        digits: <LiveDigits state={state} online={online} clockOffset={live.clockOffset} />, interactive: false,
         ariaLabel: tr({ en: 'Shared timer', zh: '共享计时器' }),
-        scrambleSlot: <TimerScrambleStrip scramble={state?.scramble ?? ''} copiedLabel={tr({ en: 'Copied', zh: '已复制' })} verificationLabels={{ copiedCorrection: '' }} />,
+        scrambleSlot: <TimerScrambleStrip scramble={state?.scramble ?? ''} font={appearance.scrambleFont} fontScale={appearance.scrambleFontScale}
+          hint={state?.guidance?.hint} correctionActive={state?.guidance?.correctionActive} match={state?.guidance?.match}
+          copiedLabel={tr({ en: 'Copied', zh: '已复制' })} verificationLabels={{ copiedCorrection: '' }} />,
+        cornerAspect: !snapshot?.cube.facelets && state ? timerCubePreviewAspect(state.event, state.scramble) : undefined,
         cornerSlot: snapshot?.cube.facelets ? <div className="timer-live-cube"><LiveCubeState facelets={snapshot.cube.facelets}
-          language={language} mode={snapshot.cube.algAnchored ? '3d' : 'net'} useGyro={!!snapshot.cube.quaternion} quatRef={quatRef}
+          language={language} mode={snapshot.cube.algAnchored ? '3d' : 'net'} resetViewOnRelease useGyro={!!snapshot.cube.quaternion} quatRef={quatRef}
           moves={[...snapshot.cube.moves]} algAnchored={snapshot.cube.algAnchored}
           sensorBasis="identity" mirror={false} /></div>
           : state && state.scramble ? <TimerCubePreview event={state.event} scramble={state.scramble} fill /> : undefined,
