@@ -21,6 +21,38 @@
   },
   "manualContracts": [
     {
+      "id": "code-language-history-offline-engine",
+      "from": "packages/client/scripts/build-code-history.ts",
+      "to": "read-only git history and the fixed linguist-engine.rb adapter",
+      "phase": "subprocess-native",
+      "mechanism": "Shell-free Git queries and one persistent Ruby JSON-lines process invoking official Linguist; never imported by product runtime.",
+      "owner": "architecture history",
+      "rationale": "TypeScript owns planning, checkpoints and publication data while the upstream Ruby engine retains language detection and incremental analysis.",
+      "replacement": "Keep engine version pinned, adapter path fixed, Git calls read-only and subprocesses confined to this explicit offline CLI.",
+      "subprocessCalls": [
+        { "file": "packages/client/scripts/build-code-history.ts", "mechanism": "execFileSync", "target": "git", "count": 1 },
+        { "file": "packages/client/scripts/build-code-history.ts", "mechanism": "spawn", "target": "<dynamic>", "count": 1 }
+      ],
+      "evidence": [
+        { "file": "core/packages/client/scripts/build-code-history.ts", "contains": "./linguist-engine.rb" },
+        { "file": "core/packages/client/scripts/linguist-engine.rb", "contains": "Linguist::Repository.incremental" }
+      ]
+    },
+    {
+      "id": "code-language-history-regression-fixtures",
+      "from": "packages/client/scripts/check-code-history.ts",
+      "to": "Git and Node operating on temporary regression fixtures",
+      "phase": "subprocess-native",
+      "mechanism": "A shell-free test adapter creates isolated Git fixture histories and exercises the CLI; optional real-engine checks reuse the registered Linguist bridge.",
+      "owner": "architecture history",
+      "rationale": "Verify same-day refresh, retained checkpoints, date boundaries and snapshot-only loop protection without touching the real repository history or chart.",
+      "replacement": "Keep fixtures disposable and actual Linguist checks explicit; never push or modify real history from tests.",
+      "subprocessCalls": [
+        { "file": "packages/client/scripts/check-code-history.ts", "mechanism": "execFileSync", "target": "<dynamic>", "count": 1 }
+      ],
+      "evidence": [{ "file": "core/packages/client/scripts/check-code-history.ts", "contains": "mkdtempSync" }]
+    },
+    {
       "id": "assistant-durable-process-restart-regression",
       "from": "apps/api/tests/fixtures/site_assistant_restart_pg.ts",
       "to": "apps/api/tests/fixtures/site_assistant_restart_worker_pg.ts",
