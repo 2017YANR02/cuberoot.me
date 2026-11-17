@@ -51,8 +51,9 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
   const open = !shellNavigation && (embedded || (controlledOpen ?? internalOpen));
   const setOpen = (next: boolean) => { setInternalOpen(next); onOpenChange?.(next); };
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  usePanelClamp(open && !column && !embedded, panelRef);
+  usePanelClamp(open && !column && !embedded, panelRef, triggerRef);
   const hoverCloseTimerRef = useRef<number | null>(null);
   const pointerTypeRef = useRef('mouse');
   const eff = useEffectiveTheme();
@@ -166,6 +167,7 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
   return (
     <div className="lang-toggle-wrap" ref={ref}>
       {(!embedded || shellNavigation) && <button
+        ref={triggerRef}
         type="button"
         className={cls}
         data-mobile-open-settings={shellNavigation || section !== 'general' ? 'appearance' : undefined}

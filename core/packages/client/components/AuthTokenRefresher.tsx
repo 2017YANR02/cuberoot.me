@@ -11,6 +11,7 @@ import { CompactSelect } from './CompactSelect';
 import { useT } from '@/hooks/useT';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { adminEnvironment } from '@/lib/admin-environment';
+import AppearanceToggle from './AppearanceToggle';
 import './glass-material.css';
 
 /**
@@ -30,6 +31,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [actionsWidth, setActionsWidth] = useState(0);
   const [toggleLeft, setToggleLeft] = useState(0);
   const actionsRef = useRef<HTMLDivElement>(null);
@@ -40,8 +42,9 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     if (closeTimer.current) clearTimeout(closeTimer.current);
     closeTimer.current = null;
   }, []);
-  const collapse = () => { cancelCollapse(); setExpanded(false); };
-  usePopoverDismiss(expanded, reason => {
+  const collapse = () => { cancelCollapse(); setSettingsOpen(false); setExpanded(false); };
+  // The settings window owns outside presses and Escape while it is open.
+  usePopoverDismiss(expanded && !settingsOpen, reason => {
     // The role list is a body portal; let its own dismissal finish first.
     if (reason === 'outside' && document.querySelector('.admin-tools-role-popup')) return;
     collapse();
@@ -66,7 +69,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     const onMove = (event: PointerEvent) => {
       if (event.pointerType !== 'mouse') return;
       const target = event.target as Element;
-      if (toolbarRef.current?.contains(target) || target.closest('.admin-tools-role-popup')) {
+      if (toolbarRef.current?.contains(target) || target.closest('.admin-tools-role-popup, .accent-color-menu')) {
         cancelCollapse();
         return;
       }
@@ -122,12 +125,13 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     }}
     onBlur={event => {
       if (!event.currentTarget.contains(event.relatedTarget as Node | null)
-        && !(event.relatedTarget as Element | null)?.closest?.('.admin-tools-role-popup')) collapse();
+        && !(event.relatedTarget as Element | null)?.closest?.('.admin-tools-role-popup, .accent-color-menu')) collapse();
     }}
     // This 42px anchor and its icon never animate. Only the separate surface grows.
     style={{ position: 'absolute', top: '100%', left: `${centerX * 100}%`, transform: 'translateX(-21px)', marginTop: 8, width: 42, pointerEvents: 'auto', color: 'var(--foreground)', display: 'flex', alignItems: 'center' }}>
     <style>{`
       .admin-tools{box-sizing:border-box;height:42px;}
+      body:has(.admin-tools .appearance-menu) .accent-color-menu{z-index:100030;}
       .admin-tools-surface{position:absolute;top:0;height:42px;box-sizing:border-box;border-radius:24px;
         border:1px solid var(--glass-edge);background:var(--glass-background);
         backdrop-filter:var(--glass-filter);-webkit-backdrop-filter:var(--glass-filter);
@@ -176,6 +180,8 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       {local ? <Globe size={17} aria-hidden /> : <Laptop size={17} aria-hidden />}
     </a>
     <div className="admin-tools-group" inert={!expanded}>
+      {admin && <AppearanceToggle triggerClassName="admin-tool-action" triggerLabel={t('设置', 'Settings')}
+        open={expanded && settingsOpen} onOpenChange={setSettingsOpen} />}
       {admin && <AppLink href="/admin" className="admin-tool-action" prefetch={false}
         title={t('管理后台', 'Administration')} aria-label={t('管理后台', 'Administration')}>
         <UserCog size={13} aria-hidden />
