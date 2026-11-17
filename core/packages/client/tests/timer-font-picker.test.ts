@@ -17,7 +17,7 @@ afterEach(async () => {
   vi.restoreAllMocks(); vi.unstubAllGlobals();
 });
 
-it.each(['trigger', 'option'])('Escape from the open font %s closes only the menu, then settings', async focus => {
+it.each(['trigger', 'option', 'dialog'])('Escape from the open font %s closes only the menu, then settings', async focus => {
   const close = vi.fn();
   const change = vi.fn();
   function Settings() {
@@ -30,9 +30,12 @@ it.each(['trigger', 'option'])('Escape from the open font %s closes only the men
   }
   await act(async () => root.render(createElement(Settings)));
   const trigger = document.querySelector<HTMLButtonElement>('.tfp-trigger')!;
-  trigger.focus();
+  // Safari and accessibility clicks can open a button without moving focus.
+  if (focus !== 'dialog') trigger.focus();
   await act(async () => trigger.click());
-  const target = focus === 'trigger' ? trigger : document.querySelector<HTMLButtonElement>('[role="option"]')!;
+  const target = focus === 'trigger' ? trigger : document.querySelector<HTMLElement>(
+    focus === 'option' ? '[role="option"]' : '[role="dialog"]',
+  )!;
   target.focus();
   await act(async () => target.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
   expect(document.querySelector('[role="listbox"]')).toBeNull();

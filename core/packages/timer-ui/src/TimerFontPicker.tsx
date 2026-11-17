@@ -65,8 +65,21 @@ export default function TimerFontPicker({
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
+    // Safari and accessibility activation need not focus the clicked button.
+    // The open menu owns Escape even when focus remains in its parent dialog.
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      setOpen(false);
+      triggerRef.current?.focus({ preventScroll: true });
+    };
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('keydown', onEscape, true);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('keydown', onEscape, true);
+    };
   }, [open]);
 
   const shown = options ? OPTIONS.filter(o => options.includes(o.id)) : OPTIONS;
@@ -82,12 +95,6 @@ export default function TimerFontPicker({
         aria-expanded={open}
         aria-label={ariaLabel ?? { zh: '计时器字体', en: 'Timer font' }[language]}
         onClick={() => setOpen(o => !o)}
-        onKeyDown={event => {
-          if (event.key === 'Escape' && open) {
-            event.stopPropagation();
-            setOpen(false);
-          }
-        }}
       >
         <span className="tfp-digits" style={timerFontPreviewStyle(current.id, previewWeight)}>
           {preview}
@@ -96,14 +103,7 @@ export default function TimerFontPicker({
         <ChevronDown size={14} className="tfp-chevron" />
       </button>
       {open && (
-        <div ref={panelRef} className="tfp-popup" role="listbox" aria-label={ariaLabel}
-          onKeyDown={event => {
-            if (event.key === 'Escape') {
-              event.stopPropagation();
-              setOpen(false);
-              triggerRef.current?.focus();
-            }
-          }}>
+        <div ref={panelRef} className="tfp-popup" role="listbox" aria-label={ariaLabel}>
           {shown.map(o => (
             <button
               key={o.id}
