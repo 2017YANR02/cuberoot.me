@@ -31,7 +31,8 @@ export function TimerStatisticsWorkspace({ compact = false, language, view, sess
   const tr = (text: {en: string; zh: string}) => text[language];
   const chartProps = { solves: stats.solves, isZh, width: 300, height: 170 };
   return <TimerWorkspaceLanguage.Provider value={language}>
-    <section className="timer-statistics-workspace" data-no-timer>
+    <section className={`timer-statistics-workspace${compact ? ' timer-statistics-workspace--compact' : ''}`} data-no-timer>
+      <div className="timer-statistics-layout">
       {view === 'stats' ? <>
         <TimerStatsPanel renderPrBadge={compact ? undefined : () => <RecordBadge record="PR" variant="inline" />} {...stats} summaryOnly={compact} />
         {!compact && <CaseStatsPanel event={stats.event} solves={stats.solves} isZh={isZh} />}
@@ -41,7 +42,7 @@ export function TimerStatisticsWorkspace({ compact = false, language, view, sess
         </div>}
         {!compact && crossSession && <CrossSessionStats event={stats.event} isZh={isZh} data={sessionData} activeId={activeSessionId} />}
       </> : null}
-      {(compact || view === 'chart') && <>
+      {(compact || view === 'chart') && <div className="timer-statistics-visualization">
         <select className="timer-statistics-chart-select" aria-label={tr({en:'Chart',zh:'图表'})} value={chart} onChange={event => setChart(event.target.value)}>
           {Object.entries({histogram:{en:'Histogram',zh:'分布'},trend:{en:'Trend',zh:'趋势'},scatter:{en:'Scatter',zh:'散点'},hour:{en:'Hour',zh:'时段'},heatmap:{en:'Heatmap',zh:'日历'}}).map(([id,copy]) => <option key={id} value={id}>{tr(copy)}</option>)}
         </select>
@@ -52,13 +53,14 @@ export function TimerStatisticsWorkspace({ compact = false, language, view, sess
           {chart === 'hour' && <HourChart {...chartProps} />}
           {chart === 'heatmap' && <PracticeHeatmap solves={stats.solves} isZh={isZh} cellSize={11} />}
         </div>
-      </>}
+      </div>}
       {compact && <div className="timer-statistics-actions timer-statistics-actions--report">
         <button type="button" className="timer-statistics-report" onClick={onOpenFull}>
           <FileChartColumn size={16} aria-hidden="true" />
           {tr({en:'Full stats',zh:'完整统计'})}
         </button>
       </div>}
+      </div>
     </section>
   </TimerWorkspaceLanguage.Provider>;
 }

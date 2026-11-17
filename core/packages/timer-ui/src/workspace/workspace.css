@@ -125,6 +125,38 @@
 .timer-statistics-actions button { background: var(--background); color: var(--foreground); border: 1px solid var(--border-default); padding: 6px 10px; border-radius: 4px; cursor: pointer; }
 .timer-statistics-chart { overflow-x: auto; max-width: 100%; }
 .timer-statistics-chart svg { max-width: 100%; height: auto; }
+
+/* Use the available panel width, including full-screen landscape sheets,
+   without turning the SVG's labels into oversized display text. */
+.timer-statistics-workspace--compact { container-type: inline-size; }
+.timer-statistics-visualization { min-width: 0; }
+.timer-statistics-workspace--compact .timer-statistics-chart {
+  width: 100%;
+  max-width: 420px;
+  margin-inline: auto;
+}
+
+@container (min-width: 600px) {
+  .timer-statistics-workspace--compact .timer-statistics-layout {
+    display: grid;
+    grid-template-columns: minmax(240px, 0.85fr) minmax(0, 1.15fr);
+    align-items: start;
+    gap: 8px 24px;
+    max-width: 960px;
+    margin-inline: auto;
+  }
+
+  .timer-statistics-workspace--compact .stats-panel {
+    min-width: 0;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .timer-statistics-workspace--compact .timer-statistics-actions--report {
+    grid-column: 2;
+    padding: 0;
+  }
+}
 .timer-room-dialog.stats-modal { width: min(600px, calc(100vw - 24px)); box-sizing: border-box; }
 .stats-modal .modal-section { min-width: 0; margin-block: 12px; overflow-x: auto; }
 .stats-modal .modal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
