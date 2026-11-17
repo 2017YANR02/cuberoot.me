@@ -57,6 +57,10 @@ export default function MobileEmbedBridge() {
     const surface = mobileEmbedSurfaceFromFrameName(window.name);
     if (!surface) return;
 
+    const rootStyle = document.documentElement.style;
+    const previousSafeTop = rootStyle.getPropertyValue('--sat');
+    const previousSafeTopPriority = rootStyle.getPropertyPriority('--sat');
+    let hostOwnsSafeTop = false;
     const stack = [window.location.href];
     let index = 0;
     let pendingWebTicket: string | null = null;
@@ -224,6 +228,10 @@ export default function MobileEmbedBridge() {
       if (event.source !== window.parent || !MOBILE_PARENT_ORIGINS.has(event.origin)) return;
       const init = decodeMobileEmbedInit(event.data);
       if (init?.surface === surface) {
+        // The installed shell already positions this iframe below the status bar.
+        // WKWebView still exposes its top inset inside the frame; don't apply it twice.
+        rootStyle.setProperty('--sat', '0px');
+        hostOwnsSafeTop = true;
         parentOrigin = event.origin;
         capabilities = init;
         setInstalledShellNavigation(init.shellNavigation === true
@@ -306,6 +314,7 @@ export default function MobileEmbedBridge() {
     window.addEventListener('storage', restoreHostAppearance);
     return () => {
       active = false;
+      if (hostOwnsSafeTop) rootStyle.setProperty('--sat', previousSafeTop, previousSafeTopPriority);
       setInstalledShellNavigation(null);
       setInstalledBleBridge(null);
       setAppleMembershipBridge(false);

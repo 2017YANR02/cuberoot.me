@@ -45,6 +45,23 @@ afterEach(async () => {
   vi.restoreAllMocks(); vi.unstubAllGlobals(); vi.useRealTimers();
   document.documentElement.removeAttribute('data-theme');
 });
+it.each(['tools', 'account'] as const)('uses the host top safe area only after trusted %s init and restores it on cleanup', async surface => {
+  window.name = `cuberoot-mobile-${surface}`;
+  const style = document.documentElement.style;
+  style.setProperty('--sat', '59px');
+  await act(async () => root.render(createElement(MobileEmbedBridge)));
+  const init = mobileEmbedInitMessage(surface);
+  send(init, parent, 'https://example.org');
+  send(init, {});
+  send(mobileEmbedInitMessage(surface === 'tools' ? 'account' : 'tools'));
+  expect(style.getPropertyValue('--sat')).toBe('59px');
+  send(init);
+  expect(style.getPropertyValue('--sat')).toBe('0px');
+  send(init);
+  await act(async () => root.render(null));
+  expect(style.getPropertyValue('--sat')).toBe('59px');
+  style.removeProperty('--sat');
+});
 it.each(['tools', 'account'] as const)('delegates locale timer links in %s without invoking Web navigation', async surface => {
   window.name = `cuberoot-mobile-${surface}`;
   await act(async () => root.render(createElement(MobileEmbedBridge)));
