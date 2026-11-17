@@ -243,7 +243,7 @@ describe('homepage development cards', () => {
         expect(card.tagName).toBe('A');
         expect(card.getAttribute('href')).toBe(href);
         expect(card.getAttribute('aria-disabled')).toBeNull();
-        expect(card.classList.contains('is-disabled')).toBe(true);
+        expect(card.classList.contains('is-disabled')).toBe(false);
         expect(card.querySelector('.coming-soon-badge')).toBeNull();
         expect(card.querySelector('.lucide-lock')).toBeNull();
       }
@@ -251,7 +251,7 @@ describe('homepage development cards', () => {
       const partnership = host.querySelector('#card-partnership');
       if (admin) {
         expect(partnership?.getAttribute('href')).toBe('/zh/bp');
-        expect(partnership?.classList.contains('is-disabled')).toBe(true);
+        expect(partnership?.classList.contains('is-disabled')).toBe(false);
         const lock = partnership?.parentElement?.querySelector<HTMLButtonElement>('.landing-card-lock');
         expect(lock?.disabled).toBe(false);
         expect(lock?.getAttribute('aria-pressed')).toBe('true');
@@ -304,7 +304,7 @@ describe('homepage development cards', () => {
         await act(async () => edit.click());
         expect(edit.getAttribute('aria-pressed')).toBe('true');
       }
-      expect(card().classList.contains('is-disabled')).toBe(true);
+      expect(card().classList.contains('is-disabled')).toBe(false);
       expect(card().closest('#landing-admin-content')).not.toBeNull();
       expect(button().disabled).toBe(false);
       await act(async () => button().click());
@@ -346,7 +346,7 @@ describe('homepage development cards', () => {
       expect(card().closest('#landing-admin-content')).not.toBeNull();
       expect(host.querySelectorAll('#card-teaching')).toHaveLength(1);
       expect(lockApi.setHomeCardLock).toHaveBeenLastCalledWith('teaching', true);
-      expect(card().classList.contains('is-disabled')).toBe(true);
+      expect(card().classList.contains('is-disabled')).toBe(false);
       expect(card().getAttribute('href')).toBe('/zh/courses');
       expect(button().getAttribute('aria-pressed')).toBe('true');
       lockApi.setHomeCardLock.mockRejectedValueOnce(new Error('offline'));

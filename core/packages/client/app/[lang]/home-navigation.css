@@ -29,8 +29,8 @@ body .landing-page.landing-page--navigation {
 }
 .home-navigation-desktop { flex: 1; min-width: 0; }
 .home-navigation .af-nav-menu { display: flex; justify-content: center; gap: 2px; }
-.home-navigation .af-nav-link { padding-inline: 10px; font-size: 14px; font-weight: 500; line-height: 1.4; height: 44px; }
-.home-navigation .af-nav-link[aria-current] { font-weight: 600; }
+.home-navigation .af-nav-link { padding-inline: 10px; font-size: 16px; font-weight: 600; line-height: 1.4; height: 44px; }
+.home-navigation .af-nav-link[aria-current] { font-weight: 700; }
 .home-navigation .af-nav-icon, .home-navigation-drawer .af-nav-icon { display: none; }
 .home-navigation, .home-navigation-drawer {
   --af-nav-text: var(--foreground);
@@ -79,6 +79,14 @@ body .landing-page.landing-page--navigation {
   padding-top: 32px;
 }
 .landing-page--navigation .cards-sections { margin-bottom: 24px; }
+.landing-page--navigation .cards-section > .cards-container {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 640px) {
+  .landing-page--navigation .cards-section > .cards-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .landing-community-members { display: contents; }
 
 

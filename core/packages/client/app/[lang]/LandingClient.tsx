@@ -372,7 +372,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       </>
     );
     const isDisabled = isLocked;
-    const className = `landing-card tier-${card.tier}${isDevelopment ? ' is-disabled' : ''}`;
+    const className = `landing-card tier-${card.tier}${isDevelopment && !isAdmin ? ' is-disabled' : ''}`;
     let cardElement;
     if (isDisabled) {
       cardElement = (
