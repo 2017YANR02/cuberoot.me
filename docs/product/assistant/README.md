@@ -18,6 +18,14 @@
 - [Assistant on-demand analysis](site-assistant-analysis.md)
 - [站内问答响应时间目标](site-assistant-performance.md)
 - [AI 高频问题与性能验收题库](site-assistant-questions.md)
+- [Agent 分层上下文真实模型对照（2026-11-15）](benchmarks/assistant-context-evaluation-2026-11-15.md)
+- [Agent 约束、百科核验与耗时优化复测（2026-11-15）](benchmarks/assistant-context-followup-2026-11-15.md)
+- [Agent 缩写展开与首次答案复测（2026-11-15）](benchmarks/assistant-context-expansion-latency-2026-11-15.md)
+- [百科核验与详细计划耗时复测（2026-11-15）](benchmarks/assistant-glossary-plan-latency-2026-11-15.md)
+- [复杂计划与百科来源边界复测（2026-11-15）](benchmarks/assistant-plan-source-contracts-2026-11-15.md)
+- [Agent 语义、来源范围与子项时长复测（2026-11-16 UTC）](benchmarks/assistant-semantic-duration-2026-11-16.md)
+- [Agent 剩余语义问题与两项退步复测（2026-11-15）](benchmarks/assistant-semantic-eight-2026-11-15.md)
+- [Agent 十条剩余问题与七条退步复测（2026-11-15）](benchmarks/assistant-ten-issues-2026-11-15.md)
 - [CubeRoot site assistant](site-assistant-tracker.md)
 
 ## 历史依据
