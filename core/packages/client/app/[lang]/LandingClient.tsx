@@ -7,6 +7,7 @@ import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
 import { useRetainedState } from '@/hooks/useRetainedState';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 import { useHomeScrollRestoration } from '@/hooks/useHomeScrollRestoration';
+import { applyHomeSectionOrder } from '@/lib/home-section-order';
 import { SkeletonBlock } from '@/components/ContentSkeleton';
 
 /** Site entrypoint — Landing page. */
@@ -413,7 +414,9 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
   };
 
   const renderCardGrid = (groupId: string, cards: CardConfig[], className: string, adminArea = false) => {
-    const orderedCards = applyLandingCardOrder(cards, cardOrders[groupId] ?? []);
+    const orderedCards = adminArea
+      ? applyLandingCardOrder(cards, cardOrders[groupId] ?? [])
+      : applyHomeSectionOrder(groupId, cards, cardOrders[groupId] ?? []);
     // The community's aggregate forum entry stays first; preserve stored order for the rest.
     if (groupId === 'other' && !adminArea) orderedCards.sort((a, b) => Number(b.id === 'forum') - Number(a.id === 'forum'));
     // Split the same full group by access; keep all IDs when saving its order.

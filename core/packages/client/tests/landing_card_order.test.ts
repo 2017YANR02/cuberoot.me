@@ -1,8 +1,26 @@
 import { describe, expect, it } from 'vitest';
 import { PRIMARY_CARDS, SEARCH_CARDS, SECTIONS, applyLandingCardOrder, isLandingSearchCardVisible } from '@/lib/landing-sections';
 import { CREATOR_PROFILE } from '@/lib/creator-profile';
+import { applyHomeSectionOrder } from '@/lib/home-section-order';
 
 describe('homepage card order', () => {
+  it('ranks measured entries without dropping unknown entries or changing the input', () => {
+    const cards = [{ id: 'unknown-a' }, { id: 'memo' }, { id: 'unknown-b' }, { id: 'cstimer' }];
+    expect(applyHomeSectionOrder('train', cards, []).map(card => card.id)).toEqual(['cstimer', 'memo', 'unknown-a', 'unknown-b']);
+    expect(cards.map(card => card.id)).toEqual(['unknown-a', 'memo', 'unknown-b', 'cstimer']);
+    expect(applyHomeSectionOrder('main', cards, [])).toEqual(cards);
+  });
+
+  it('migrates only the exact previous saved section order and preserves new manual choices', () => {
+    const cards = SECTIONS.find(section => section.id === 'tool')!.cards;
+    const previous = ['contests', 'online-competitions', 'comp-sim', 'frame-count', 'solver', 'mosaic', 'space', 'paper-odyssey', 'paint', 'icon', 'timezone', 'calendar'];
+    const ranked = applyHomeSectionOrder('tool', cards, previous);
+    expect(ranked.slice(0, 4).map(card => card.id)).toEqual(['contests', 'calendar', 'mosaic', 'solver']);
+    expect(new Set(ranked.map(card => card.id))).toEqual(new Set(cards.map(card => card.id)));
+    const manual = ['timezone', ...previous.filter(id => id !== 'timezone')];
+    expect(applyHomeSectionOrder('tool', cards, manual)[0]?.id).toBe('timezone');
+  });
+
   it.each(['platform', 'teaching-management', 'learning-center'])('keeps %s visible but locked for non-admins and searchable only by admins', (id) => {
     const card = SECTIONS.find((section) => section.id === 'learn')?.cards.find((entry) => entry.id === id);
     const searchCard = SEARCH_CARDS.find((entry) => entry.id === id)!;
