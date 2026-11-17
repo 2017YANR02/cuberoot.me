@@ -5,10 +5,10 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { useDialogMotion } from '@cuberoot/timer-ui/dialog-motion';
 let host: HTMLDivElement, root: Root;
 let reduced: boolean, finishes: (() => void)[], frames: Keyframe[][], cancels: ReturnType<typeof vi.fn>[];
-function Dialog({ onClose, drawer = false }: { onClose(): void; drawer?: boolean }) {
-  const { motionRef, close } = useDialogMotion(onClose, { drawer });
+function Dialog({ onClose, drawer = false, curtain = false, duration, onCloseStart }: { onClose(): void; drawer?: boolean; curtain?: boolean; duration?: number; onCloseStart?: () => void }) {
+  const { motionRef, close, isClosing } = useDialogMotion(onClose, { drawer, curtain, duration, onCloseStart });
   return createElement('div', { ref: motionRef }, createElement('section', null,
-    createElement('button', { onClick: close }, 'close')));
+    createElement('button', { onClick: close, 'data-closing': isClosing }, 'close')));
 }
 beforeEach(() => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
@@ -79,4 +79,32 @@ it('cancels a pending exit on unmount without invoking stale callbacks', async (
   await act(async () => root.render(null));
   await act(async () => finishes.forEach(finish => finish()));
   expect(close).not.toHaveBeenCalled();
+});
+
+it('reveals a curtain downwards and preserves its full custom exit for the icon morph', async () => {
+  vi.useFakeTimers();
+  try {
+    const close = vi.fn();
+    await act(async () => root.render(createElement(Dialog, { onClose: close, curtain: true, duration: 420 })));
+    expect(frames[0]).toEqual([{ clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0 0)' }]);
+    await act(async () => host.querySelector('button')!.click());
+    expect(host.querySelector('button')!.dataset.closing).toBe('true');
+    expect(frames[2]).toEqual([...frames[0]].reverse());
+    await act(async () => vi.advanceTimersByTime(420));
+    expect(close).not.toHaveBeenCalled();
+    await act(async () => finishes.forEach(finish => finish()));
+    expect(close).toHaveBeenCalledTimes(1);
+  } finally { vi.useRealTimers(); }
+});
+
+it('notifies the owner once at exit start so toolbar restoration does not restart at unmount', async () => {
+  const close = vi.fn(), start = vi.fn();
+  await act(async () => root.render(createElement(Dialog, { onClose: close, onCloseStart: start, curtain: true, duration: 650 })));
+  expect(start).not.toHaveBeenCalled();
+  await act(async () => { host.querySelector('button')!.click(); host.querySelector('button')!.click(); });
+  expect(start).toHaveBeenCalledTimes(1);
+  expect(close).not.toHaveBeenCalled();
+  await act(async () => finishes.forEach(finish => finish()));
+  expect(close).toHaveBeenCalledTimes(1);
+  expect(start).toHaveBeenCalledTimes(1);
 });

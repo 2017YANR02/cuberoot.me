@@ -380,9 +380,11 @@ body[data-site-scenery] .solver-sheet {
   backdrop-filter: var(--glass-filter);
 }
 
-/* The navigation drawer sits over a dimming backdrop, like other dialogs. */
+/* The homepage navigation stays opaque, including over scenery. */
 body[data-site-scenery] .home-navigation-drawer[data-site-surface='popover'] {
-  background: var(--glass-dialog-bg);
+  background: var(--background);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* Keep toolbar glass on a sibling paint layer: filtering the toolbar itself

@@ -2,13 +2,17 @@
 
 import { Children, useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { NavigationMenu } from '@app-foundation/navigation-ui';
-import { Menu } from '@app-foundation/icons/lucide';
+import { ChevronLeft, ChevronRight } from '@app-foundation/icons/lucide';
 import SettingsDialog from '@/components/SettingsDialog';
-import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
-import CubeRootLogo from '@/components/CubeRootLogo';
 import { tr } from '@/i18n/tr';
 import type { Section } from '@/lib/landing-sections';
 import '@app-foundation/navigation-ui/navigation.css';
+
+function MenuGlyph({ expanded = false }: { expanded?: boolean }) {
+  return <span className="home-navigation-glyph" data-expanded={expanded || undefined} aria-hidden="true">
+    <span /><span />
+  </span>;
+}
 
 /** Home sections deliberately keep the current URL, as requested by the maintainer. */
 export default function HomeNavigation({ selected, onSelect, isAdmin, sections, brand, actions, flyouts }: {
@@ -21,11 +25,45 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
   flyouts: Record<string, ReactNode>;
 }) {
   const [open, setOpen] = useState(false);
+  const [drawerClosing, setDrawerClosing] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState({ top: 0, left: 0, right: 0 });
   const [drawerSection, setDrawerSection] = useState<string | null>(null);
+  const [drawerDirection, setDrawerDirection] = useState<'forward' | 'back' | null>(null);
+  const drawerExit = useRef<Animation | null>(null);
   // Keep the last content mounted while the panel and curtain finish closing.
   const [flyout, setFlyout] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [geometry, setGeometry] = useState({ top: 0, height: 0 });
+  const drawerContentRef = useRef<HTMLDivElement>(null);
+  const drawerFocusTarget = useRef<string | null>(null);
+  useEffect(() => () => {
+    drawerExit.current?.cancel();
+    drawerExit.current = null;
+  }, [open]);
+  const switchDrawerSection = async (section: string | null) => {
+    if (drawerExit.current) return;
+    const direction = section ? 'forward' : 'back';
+    const page = drawerContentRef.current?.firstElementChild;
+    if (page instanceof HTMLElement && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const animation = page.animate([
+        { opacity: 1, transform: 'translateX(0)' },
+        { opacity: 0, transform: `translateX(${section ? -16 : 16}px)` },
+      ], { duration: 180, easing: 'ease-in', fill: 'forwards' });
+      drawerExit.current = animation;
+      try { await animation.finished; } catch { return; }
+      if (drawerExit.current !== animation) return;
+      drawerExit.current = null;
+    }
+    drawerFocusTarget.current = section ? 'button' : `#home-drawer-${drawerSection}`;
+    setDrawerDirection(direction);
+    setDrawerSection(section);
+  };
+  useEffect(() => {
+    if (!open || !drawerFocusTarget.current) return;
+    drawerContentRef.current?.querySelector<HTMLElement>(drawerFocusTarget.current)?.focus();
+    drawerContentRef.current?.closest('.settings-dialog-panel')?.scrollTo({ top: 0 });
+    drawerFocusTarget.current = null;
+  }, [open, drawerSection]);
   const headerRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -80,35 +118,17 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
   }, [shown, allowedFlyout]);
   const label = tr({ zh: '网站导航', en: 'Site navigation' });
   const items = [
-    { id: 'home', label: tr({ zh: '首页', en: 'Home' }) },
     ...sections.map(section => ({ id: section.id, label: tr(section.title) })),
     ...(isAdmin ? [{ id: 'admin', label: tr({ zh: '管理', en: 'Admin' }) }] : []),
   ].map(item => ({ ...item, href: item.id, active: selected === item.id, icon: null }));
   const menu = (close?: () => void) => <NavigationMenu items={items} collapsed={false} label={label}
     renderLink={({ href, className, children, 'aria-current': current, 'aria-label': itemLabel }) => {
-      if (close) {
-        if (href === 'home') return <button id="home-drawer-home" className={className}
-          aria-current={current} aria-label={itemLabel} type="button" data-home-section={href}
-          onClick={() => { onSelect(href); close(); }}>{children}</button>;
-        const drawerExpanded = drawerSection === href;
-        return <>
-          <MoreToggle id={`home-drawer-${href}`} className={`${className} home-navigation-submenu-toggle`}
-            expanded={drawerExpanded} aria-current={current} aria-label={itemLabel} aria-controls={`home-submenu-${href}`}
-            data-home-section={href} data-tour={href === 'other' ? 'forum' : undefined}
-            onToggle={() => setDrawerSection(value => value === href ? null : href)}>{children}</MoreToggle>
-          <MoreTogglePanel expanded={drawerExpanded} id={`home-submenu-${href}`}
-            className="home-navigation-submenu" role="region" aria-labelledby={`home-drawer-${href}`}>
-            <div className="home-navigation-submenu-links" onClickCapture={event => {
-              if ((event.target as Element).closest('a')) close();
-            }}>
-              <button type="button" className="home-navigation-card" onClick={() => { onSelect(href); close(); }}>
-                <span className="landing-card-name">{tr({ zh: '总览', en: 'Overview' })}</span>
-              </button>
-              {flyouts[href]}
-            </div>
-          </MoreTogglePanel>
-        </>;
-      }
+      if (close) return <button id={`home-drawer-${href}`} className={className}
+        style={{ '--home-menu-index': items.findIndex(item => item.id === href) } as CSSProperties}
+        aria-current={current} aria-label={itemLabel} type="button" data-home-section={href}
+        onClick={() => { void switchDrawerSection(href); }}>
+        {children}<ChevronRight className="home-navigation-next" size={28} strokeWidth={1.5} aria-hidden="true" />
+      </button>;
       return <button className={className} aria-current={current} aria-label={itemLabel} type="button"
       id={`home-nav-${href}`}
       aria-expanded={shown && allowedFlyout === href}
@@ -127,6 +147,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
     }} />;
 
   return <header ref={headerRef} className="home-navigation" data-admin={isAdmin || undefined}
+    data-drawer-open={open || undefined} data-drawer-closing={open && drawerClosing || undefined} inert={open}
     data-flyout-open={shown || undefined}
     style={{ '--home-nav-bottom': `${geometry.top}px`, '--home-flyout-height': `${geometry.height}px` } as CSSProperties}
     onPointerEnter={cancelLeave} onPointerLeave={scheduleClose}
@@ -137,12 +158,16 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
       headerRef.current?.querySelector<HTMLButtonElement>(`#home-nav-${allowedFlyout}`)?.focus();
       closeFlyout();
     }}>
-    <button type="button" className="home-navigation-toggle" aria-label={label} aria-expanded={open}
-      aria-haspopup="dialog" onClick={() => { closeFlyout(); setDrawerSection(null); setOpen(true); }}><Menu size={22} aria-hidden="true" /></button>
     <button type="button" className="home-navigation-brand" aria-label={tr({ zh: '首页', en: 'Home' })}
       onPointerEnter={closeFlyout} onClick={() => { closeFlyout(); onSelect('home'); }}>{brand}</button>
     <div className="home-navigation-desktop">{menu()}</div>
-    {!open && actions}
+    {actions}
+    <button type="button" className="home-navigation-toggle" aria-label={label} aria-expanded={open}
+      aria-haspopup="dialog" onClick={event => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        setMenuAnchor({ top: rect.top, left: rect.left, right: document.documentElement.clientWidth - rect.right });
+        closeFlyout(); setDrawerSection(null); setDrawerDirection(null); setDrawerClosing(false); setOpen(true);
+      }}><MenuGlyph /></button>
     <div className="home-navigation-curtain" aria-hidden="true" onPointerEnter={scheduleClose} onClick={closeFlyout} />
     <div id="home-navigation-flyout" className="home-navigation-flyout" role="region"
       aria-labelledby={allowedFlyout ? `home-nav-${allowedFlyout}` : undefined} aria-hidden={!shown} inert={!shown}
@@ -153,11 +178,37 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
         }}>{allowedFlyout ? flyouts[allowedFlyout] : null}</div>
       </div>
     </div>
-    {open && <SettingsDialog drawer label={label} heading={<CubeRootLogo className="home-navigation-drawer-logo" height={48} />} panelClassName="home-navigation-drawer" onClose={() => setOpen(false)}>
-      {close => <>{menu(close)}<div className="home-navigation-drawer-actions"
-        onClickCapture={event => { if ((event.target as Element).closest('a, button')) close(); }}>
-        {actions}
-      </div></>}
+    {open && <SettingsDialog curtain motionDuration={650} portalContainer={headerRef.current?.parentElement}
+      renderCloseButton={(close, closing) => <button type="button" className="home-navigation-close"
+        style={{ top: menuAnchor.top, left: menuAnchor.left }}
+        aria-label={tr({ zh: '关闭', en: 'Close' })} aria-expanded={!closing} onClick={close}>
+        <MenuGlyph expanded={!closing} />
+      </button>} label={label} heading={drawerSection ?
+      <button type="button" className="home-navigation-back" aria-label={tr({ zh: '返回主菜单', en: 'Back to main menu' })}
+        onClick={() => { void switchDrawerSection(null); }}>
+        <ChevronLeft size={22} strokeWidth={1.5} aria-hidden="true" />
+      </button> : <span />}
+      panelClassName="home-navigation-drawer" onCloseStart={() => setDrawerClosing(true)} onClose={() => setOpen(false)}>
+      {close => <>
+        <div ref={drawerContentRef} className="home-navigation-drawer-content" style={{ paddingInlineEnd: menuAnchor.right + 10 }}>
+          <div key={drawerSection ?? 'main'} className="home-navigation-drawer-page" data-level={drawerSection ? 'submenu' : 'main'} data-direction={drawerDirection ?? undefined}>
+            {drawerSection ? <nav className="home-navigation-submenu" aria-label={items.find(item => item.id === drawerSection)?.label}>
+              <div className="home-navigation-submenu-links" onClickCapture={event => {
+                if ((event.target as Element).closest('a')) close();
+              }}>
+                <button type="button" className="home-navigation-card" onClick={() => { onSelect(drawerSection); close(); }}>
+                  <span className="landing-card-name">{tr({ zh: '总览', en: 'Overview' })}</span>
+                </button>
+                {flyouts[drawerSection]}
+              </div>
+            </nav> : menu(close)}
+          </div>
+        </div>
+        {!drawerSection && <div className="home-navigation-drawer-actions"
+          onClickCapture={event => { if ((event.target as Element).closest('a, button')) close(); }}>
+          {actions}
+        </div>}
+      </>}
     </SettingsDialog>}
   </header>;
 }

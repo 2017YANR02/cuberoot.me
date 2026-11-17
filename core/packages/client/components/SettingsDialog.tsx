@@ -7,15 +7,20 @@ import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import { tr } from '@/i18n/tr';
 import './training-settings.css';
 
-export default function SettingsDialog({ label, heading = false, panelClassName, drawer = false, onClose: onClosed, children }: {
+export default function SettingsDialog({ label, heading = false, panelClassName, drawer = false, curtain = false, renderCloseButton, motionDuration, portalContainer, onCloseStart, onClose: onClosed, children }: {
   label: string;
   heading?: ReactNode;
   panelClassName?: string;
   drawer?: boolean;
+  curtain?: boolean;
+  renderCloseButton?: (close: () => void, closing: boolean) => ReactNode;
+  motionDuration?: number;
+  portalContainer?: HTMLElement | null;
+  onCloseStart?: () => void;
   onClose: () => void;
   children: ReactNode | ((close: () => void) => ReactNode);
 }) {
-  const { motionRef, close: onClose } = useDialogMotion(onClosed, { drawer });
+  const { motionRef, close: onClose, isClosing } = useDialogMotion(onClosed, { drawer, curtain, duration: motionDuration, onCloseStart });
   const backdropProps = useModalDismiss(onClose);
   const dialogRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -42,11 +47,11 @@ export default function SettingsDialog({ label, heading = false, panelClassName,
         }}>
         <div className={`settings-popover-panel settings-dialog-panel${panelClassName ? ` ${panelClassName}` : ''}`} data-site-surface="popover">
           {heading ? <header className="settings-dialog-heading">{heading === true ? <h2>{label}</h2> : heading}
-            <ClearButton variant="standalone" ariaLabel={tr({ zh: '关闭', en: 'Close' })} onClick={onClose} />
+            {renderCloseButton ? renderCloseButton(onClose, isClosing) : <ClearButton variant="standalone" ariaLabel={tr({ zh: '关闭', en: 'Close' })} onClick={onClose} />}
           </header> : <ClearButton variant="standalone" className="settings-dialog-close" ariaLabel={tr({ zh: '关闭', en: 'Close' })} onClick={onClose} />}
           {typeof children === 'function' ? children(onClose) : children}
         </div>
       </div>
-    </div>, document.body,
+    </div>, portalContainer ?? document.body,
   );
 }

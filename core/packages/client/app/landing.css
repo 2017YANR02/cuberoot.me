@@ -436,16 +436,31 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     border-radius: 16px;
     text-decoration: none;
     color: var(--text);
-    transition: border-color 0.18s ease, transform 0.18s ease;
     overflow: hidden;
     box-sizing: border-box;
 }
 .landing-page .sortable-card > .landing-card {
     height: 100%;
 }
-.landing-page .landing-card:hover {
+.landing-page .landing-card,
+:is(.home-navigation, .home-navigation-drawer) .landing-auth :is(.landing-auth-icon, .landing-auth-btn.is-avatar, .landing-calendar-link .landing-card) {
+    transition: border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+.landing-page .landing-card:hover,
+:is(.home-navigation, .home-navigation-drawer) .landing-auth :is(.landing-auth-icon, .landing-auth-btn.is-avatar, .landing-calendar-link .landing-card):hover {
     border-color: var(--accent);
     transform: translateY(-1px);
+}
+:is(.home-navigation, .home-navigation-drawer) .landing-auth :is(.landing-auth-icon, .landing-auth-btn.is-avatar, .landing-calendar-link .landing-card):is(:hover, :focus-visible) {
+    background: transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+    :is(.home-navigation, .home-navigation-drawer) .landing-auth :is(.landing-auth-icon, .landing-auth-btn.is-avatar, .landing-calendar-link .landing-card) {
+        transition: none;
+    }
+    :is(.home-navigation, .home-navigation-drawer) .landing-auth :is(.landing-auth-icon, .landing-auth-btn.is-avatar, .landing-calendar-link .landing-card):hover {
+        transform: none;
+    }
 }
 .landing-page .landing-card:focus-visible {
     outline: 2px solid var(--ring);
