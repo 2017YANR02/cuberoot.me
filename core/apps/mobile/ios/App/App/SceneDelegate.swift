@@ -97,6 +97,7 @@ final class CubeRootBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(AppleMembershipPlugin())
         bridge?.registerPluginInstance(RecordPushPlugin())
         bridge?.registerPluginInstance(WatchTimerPlugin())
+        bridge?.registerPluginInstance(SmartCubePickerPlugin())
     }
 
     override func viewDidLoad() {

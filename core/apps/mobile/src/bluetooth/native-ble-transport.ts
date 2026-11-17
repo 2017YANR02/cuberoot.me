@@ -17,6 +17,7 @@ import type { BleDeviceRef, BleRequestOptions, BleServiceRef, BleTransport } fro
 export interface NativeBleClientPort {
   connect(deviceId: string, onDisconnect?: (deviceId: string) => void, options?: ConnectClientOptions): Promise<void>;
   disconnect(deviceId: string): Promise<void>;
+  getDevices(deviceIds: string[]): Promise<BleDevice[]>;
   getMtu(deviceId: string): Promise<number>;
   getServices(deviceId: string): Promise<BleService[]>;
   initialize(options?: InitializeOptions): Promise<void>;
@@ -110,7 +111,7 @@ export class NativeBleTransport implements BleTransport {
       ? options.namePrefixes
       : [options.namePrefix];
     const requiresMultiplePrefixes = namePrefixes.length > 1;
-    const device = this.platform === 'android' && requiresMultiplePrefixes
+    const device = (this.platform === 'ios' || this.platform === 'android') && requiresMultiplePrefixes
       ? await this.smartCubePicker.requestDevice({
           namePrefixes: [...namePrefixes],
           ...options.pickerLabels,
@@ -126,6 +127,14 @@ export class NativeBleTransport implements BleTransport {
             : {}),
           optionalServices: options.optionalServices,
         });
+    if (this.platform === 'ios' && requiresMultiplePrefixes) {
+      // The picker owns a separate CBCentralManager. Register its UUID with the
+      // connection plugin even when no further advertisement is received.
+      const devices = await this.client.getDevices([device.deviceId]);
+      if (!devices.some(candidate => candidate.deviceId === device.deviceId)) {
+        throw new Error('Selected Bluetooth device is unavailable');
+      }
+    }
     const selected = { id: device.deviceId, name: device.name || options.namePrefix };
     if (!options.captureManufacturerData || isMacAddress(selected.id)) return selected;
 

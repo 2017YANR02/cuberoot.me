@@ -1,4 +1,3 @@
-import { ScanMode } from '@capacitor-community/bluetooth-le';
 import { describe, expect, it, vi } from 'vitest';
 
 import { NativeBleTransport, type NativeBleClientPort } from './native-ble-transport';
@@ -7,6 +6,7 @@ function fakeClient(): NativeBleClientPort {
   return {
     connect: vi.fn(async () => undefined),
     disconnect: vi.fn(async () => undefined),
+    getDevices: vi.fn(async (deviceIds: string[]) => deviceIds.map(deviceId => ({ deviceId }))),
     getMtu: vi.fn(async () => 517),
     getServices: vi.fn(async () => [{
       uuid: 'service',
@@ -82,7 +82,7 @@ describe('NativeBleTransport', () => {
     expect(client.stopNotifications).toHaveBeenCalledOnce();
   });
 
-  it('uses the Android smart-cube picker to filter multiple name prefixes', async () => {
+  it.each(['android', 'ios'])('uses the %s smart-cube picker to filter multiple name prefixes', async (platform) => {
     const client = fakeClient();
     const picker = {
       requestDevice: vi.fn(async () => ({
@@ -90,7 +90,7 @@ describe('NativeBleTransport', () => {
         name: 'WCU_MY32_A1B2',
       })),
     };
-    const transport = new NativeBleTransport(client, picker, 'android');
+    const transport = new NativeBleTransport(client, picker, platform);
     const pickerLabels = {
       availableDevices: 'Available',
       cancel: 'Cancel',
@@ -111,42 +111,19 @@ describe('NativeBleTransport', () => {
       ...pickerLabels,
     });
     expect(client.requestDevice).not.toHaveBeenCalled();
-  });
-
-  it('uses an unfiltered low-latency community scan outside Android', async () => {
-    const client = fakeClient();
-    const picker = { requestDevice: vi.fn() };
-    const transport = new NativeBleTransport(client, picker, 'ios');
-    const pickerLabels = {
-      availableDevices: 'Available',
-      cancel: 'Cancel',
-      noDeviceFound: 'None',
-      scanning: 'Scanning',
-    };
-
-    await transport.requestDevice({
-      namePrefix: 'GAN',
-      namePrefixes: ['GAN', 'WCU_MY3'],
-      services: ['gan-service', 'moyu32-service'],
-      optionalServices: ['gan-service', 'moyu32-service'],
-      pickerLabels,
-    });
-
-    expect(client.requestDevice).toHaveBeenCalledWith({
-      optionalServices: ['gan-service', 'moyu32-service'],
-      scanMode: ScanMode.SCAN_MODE_LOW_LATENCY,
-    });
-    const request = vi.mocked(client.requestDevice).mock.calls[0]?.[0];
-    expect(request).not.toHaveProperty('namePrefix');
-    expect(request).not.toHaveProperty('services');
+    if (platform === 'ios') {
+      expect(client.getDevices).toHaveBeenCalledWith(['CF:30:16:00:A1:B2']);
+    } else {
+      expect(client.getDevices).not.toHaveBeenCalled();
+    }
   });
 
   it('captures manufacturer data for an iOS UUID after the native picker returns', async () => {
     const client = fakeClient();
-    vi.mocked(client.requestDevice).mockResolvedValue({
+    const picker = { requestDevice: vi.fn(async () => ({
       deviceId: '93F18F53-A6E8-4A6A-91B4-836AB85BC247',
       name: 'GAN16ui',
-    });
+    })) };
     vi.mocked(client.requestLEScan).mockImplementation(async (_options, callback) => {
       const payload = Uint8Array.of(0xa3, 0xb4, 0xc5, 6, 5, 4, 3, 2, 1);
       callback({
@@ -158,10 +135,11 @@ describe('NativeBleTransport', () => {
       });
     });
 
-    const transport = new NativeBleTransport(client);
+    const transport = new NativeBleTransport(client, picker, 'ios');
     const device = await transport.requestDevice({
       captureManufacturerData: true,
       namePrefix: 'GAN',
+      namePrefixes: ['GAN', 'WCU_MY3'],
       pickerLabels: {
         availableDevices: 'Available',
         cancel: 'Cancel',
