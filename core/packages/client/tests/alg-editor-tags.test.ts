@@ -61,11 +61,8 @@ describe('formula tag editor with the shared menu and fixed tags', () => {
     await render();
     expect(host.querySelectorAll('.alg-editor-row .alg-tag-select')).toHaveLength(3);
     expect(host.querySelector('.alg-tag-select .compact-select-arrow')).toBeNull();
-    await act(async () => {
-      const event = new MouseEvent('pointerover', { bubbles: true });
-      Object.defineProperty(event, 'pointerType', { value: 'mouse' });
-      host.querySelector('.alg-tag-select button')!.dispatchEvent(event);
-    });
+    await act(async () => host.querySelector<HTMLButtonElement>('.alg-editor-tools-toggle')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('.alg-tag-select button')!.click());
     expect(document.querySelector('[role="listbox"]')?.getAttribute('aria-multiselectable')).toBe('true');
     expect(document.querySelectorAll('[role="listbox"] button:not([role="option"])')).toHaveLength(0);
     expect(host.querySelector('.alg-tag-manager')).toBeNull();

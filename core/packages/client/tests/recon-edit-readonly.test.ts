@@ -15,7 +15,7 @@ vi.mock('@cuberoot/shared/recon-completion', async original => ({
   ...await original<typeof import('@cuberoot/shared/recon-completion')>(),
   checkReconCompletion: vi.fn(async () => ({ status: 'unchecked' })),
 }));
-vi.mock('next/navigation', () => ({ useParams: () => ({ lang: 'zh' }), useSearchParams: () => new URLSearchParams(), useRouter: () => ({ push: vi.fn() }) }));
+vi.mock('next/navigation', () => ({ usePathname: () => '/zh/recon/edit', useParams: () => ({ lang: 'zh' }), useSearchParams: () => new URLSearchParams(), useRouter: () => ({ push: vi.fn() }) }));
 vi.mock('@/lib/auth-store', async original => ({
   ...await original<typeof import('@/lib/auth-store')>(),
   getAuthUser: () => fixture.user, authActions: { login: vi.fn() },
