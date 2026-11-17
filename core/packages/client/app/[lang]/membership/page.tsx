@@ -26,12 +26,13 @@ import CubeRootLogo from '@/components/CubeRootLogo';
 import { Spinner } from '@/components/Spinner/Spinner';
 import {
   listPlans, getMyMembership, getOrderStatus, membershipExpiry,
-  reconcileVisiblePlan, isAutoRenewPlanSlug,
+  reconcileVisiblePlan, isAutoRenewPlanSlug, renewalAvailability,
   type MembershipPlan, type Membership, type PayChannels,
 } from '@/lib/membership-api';
 import AdminPanel from './AdminPanel';
 import MemberContact from './MemberContact';
 import MemberProfileEditor from '@/components/MemberProfileEditor';
+import MoreToggle from '@/components/MoreToggle';
 import AutoRenewModal from './AutoRenewModal';
 import PayModal from './PayModal';
 import './membership.css';
@@ -99,6 +100,17 @@ export default function MembershipPage() {
   const [paid, setPaid] = useQueryState('paid');
   const [renew, setRenew] = useQueryState('renew');
   const [selectedAutoRenewPlan, setSelectedAutoRenewPlan] = useState<MembershipPlan | null>(null);
+  const [renewalSetup, setRenewalSetup] = useState<{ owner: typeof user; value: Awaited<ReturnType<typeof renewalAvailability>> } | null>(null);
+
+  // Resolve the signing channel while browsing, before mounting its checkout UI.
+  useEffect(() => {
+    if (!loggedIn || commerceRestricted !== false) return;
+    let cancelled = false;
+    void renewalAvailability().then(value => {
+      if (!cancelled) setRenewalSetup({ owner: user, value });
+    }).catch(() => {}); // The modal can retry if preloading fails.
+    return () => { cancelled = true; };
+  }, [loggedIn, commerceRestricted, user]);
 
   const refreshMembership = useCallback(() => {
     if (typeof window === 'undefined') return;
@@ -306,6 +318,14 @@ export default function MembershipPage() {
     );
   }
 
+  const personalSettings = activeMember && membership && (
+    <>
+      <MemberProfileEditor profile={membership}
+        onSaved={(profileIntro, profileImageIds) => setMembership({ ...membership, profileIntro, profileImageIds })} />
+      <MemberContact membership={membership} onSaved={setMembership} isZh={isZh} />
+    </>
+  );
+
   return (
     <div className="mem-page">
       <header className="mem-head">
@@ -413,15 +433,10 @@ export default function MembershipPage() {
       </p>
 
       {/* 会员联系方式(续费提醒 / 账号找回) */}
-      {activeMember && membership && (
-        <>
-          <MemberProfileEditor
-            profile={membership}
-            onSaved={(profileIntro, profileImageIds) => setMembership({ ...membership, profileIntro, profileImageIds })}
-          />
-          <MemberContact membership={membership} onSaved={setMembership} isZh={isZh} />
-        </>
-      )}
+      {personalSettings && (admin ? <details className="mem-personal-settings mem-admin-fold">
+        <MoreToggle as="summary">{tr({ zh: '个人资料与续费提醒', en: 'Personal profile and renewal reminders' })}</MoreToggle>
+        {personalSettings}
+      </details> : personalSettings)}
 
       {/* admin 面板 */}
       {admin && <AdminPanel key={user?.wcaId} plans={plans ?? []} isZh={isZh} onPlanUpdated={handlePlanUpdated} onViewRenewal={setSelectedAutoRenewPlan} />}
@@ -432,6 +447,7 @@ export default function MembershipPage() {
         <AutoRenewModal
           key={user?.uid}
           plan={selectedAutoRenewPlan}
+          initialAvailability={renewalSetup && renewalSetup.owner === user ? renewalSetup.value : undefined}
           isZh={isZh}
           onPaid={refreshMembership}
           planSlug={selectedAutoRenewPlan.slug}

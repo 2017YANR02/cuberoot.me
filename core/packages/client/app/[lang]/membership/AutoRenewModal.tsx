@@ -5,6 +5,7 @@ import { renewalAvailability, enrollMembershipSubscription, createMembershipMini
 import PayModal from './PayModal';
 import { SiWechat } from 'react-icons/si';
 import { ClearButton } from '@/components/ClearButton';
+import { Spinner } from '@/components/Spinner/Spinner';
 import AppLink from '@/components/AppLink';
 import { MEMBERSHIP_COPY } from '@/lib/membership-copy';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
@@ -19,11 +20,13 @@ interface Props {
   plan?: MembershipPlan;
   isZh?: boolean;
   onPaid?: () => void;
+  initialAvailability?: Awaited<ReturnType<typeof renewalAvailability>>;
 }
 
-export default function AutoRenewModal({ price, period, planSlug, priceCents, onClose, plan, isZh = false, onPaid }: Props) {
+export default function AutoRenewModal({ price, period, planSlug, priceCents, onClose, plan, isZh = false, onPaid, initialAvailability }: Props) {
   const [agreed, setAgreed] = useState(false);
-  const [availability, setAvailability] = useState<Awaited<ReturnType<typeof renewalAvailability>> | null>(null);
+  const [availability, setAvailability] = useState<Awaited<ReturnType<typeof renewalAvailability>> | null>(initialAvailability ?? null);
+  const [availabilityFailed, setAvailabilityFailed] = useState(false);
   const [miniLink, setMiniLink] = useState<Awaited<ReturnType<typeof createMembershipMiniLink>> | null>(null);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -32,9 +35,11 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
   const available = Boolean(availability?.available && planSlug && priceCents && (planSlug.startsWith('enterprise_') ? availability.plans?.[planSlug] === true : availability.plans?.[planSlug] !== false));
   useEffect(() => {
     let cancelled = false;
-    if (planSlug) void renewalAvailability().then(value => { if (!cancelled) setAvailability(value); }).catch(() => {});
+    if (initialAvailability) { setAvailability(initialAvailability); return; }
+    if (planSlug) void renewalAvailability().then(value => { if (!cancelled) setAvailability(value); })
+      .catch(() => { if (!cancelled) setAvailabilityFailed(true); });
     return () => { cancelled = true; };
-  }, [planSlug]);
+  }, [planSlug, initialAvailability]);
   async function sign() {
     if (!available || !agreed || busy || !planSlug || !priceCents || !availability) return;
     setBusy(true);
@@ -63,6 +68,7 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
       };
 
   const backdropProps = useModalDismiss(onClose);
+  const loading = Boolean(planSlug && !availability && !availabilityFailed);
 
   if (availability?.channel === 'payment' && available && plan) return <PayModal
     plan={plan} isZh={isZh} onClose={onClose} onPaid={onPaid ?? (() => {})} renewalTermsVersion={availability.termsVersion}
@@ -71,7 +77,7 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
 
   return (
     <div className="mem-pay-backdrop" {...backdropProps}>
-      <section className="mem-pay mem-autorenew-modal" role="dialog" aria-modal="true" aria-labelledby="mem-autorenew-title">
+      <section className={`mem-pay ${loading ? 'mem-pay-renewal' : 'mem-autorenew-modal'}`} role="dialog" aria-modal="true" aria-labelledby="mem-autorenew-title" aria-busy={loading}>
         <ClearButton
           variant="standalone"
           className="mem-pay-close"
@@ -79,9 +85,11 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
           onClick={onClose}
         />
 
-        <h2 id="mem-autorenew-title" className="mem-pay-title">{tr(copy.title)} · {tr(MEMBERSHIP_COPY.renewal)}</h2>
+        <h2 id="mem-autorenew-title" className="mem-pay-title">{loading && plan ? tr({ zh: plan.nameZh, en: plan.nameEn }) : <>{tr(copy.title)} · {tr(MEMBERSHIP_COPY.renewal)}</>}</h2>
         <div className="mem-pay-price">{price}<span className="mem-autorenew-price-unit">/{tr(copy.unit)}</span></div>
 
+        {/* Never show the legacy form until its signing channel is known. */}
+        {loading ? <p role="status"><Spinner size={18} /> {tr({ zh: '正在加载支付方式…', en: 'Loading payment options…' })}</p> : <>
         <div className="mem-autorenew-consent">
           {/* allow-checkbox: explicit legal consent must be actively selected by the user */}
           <input
@@ -111,6 +119,7 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
         <p className="mem-autorenew-caption">
           <AppLink href="/membership/subscription" prefetch={false}>{tr(MEMBERSHIP_COPY.manage)}</AppLink>
         </p>
+        </>}
       </section>
     </div>
   );

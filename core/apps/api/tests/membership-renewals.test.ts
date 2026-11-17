@@ -131,6 +131,40 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
     vi.stubEnv('WECHAT_PAPAY_PAYMENT_NATIVE_ENABLED', 'true');
     return { ...consent, clientType: 'pc', language: 'zh' };
   }
+  it('continues an untouched pure enrollment with the same contract and serial when switching to payment', async () => {
+    await enrollMembership('2017TEST01', consent, '127.0.0.1');
+    const [before] = await db.unsafe('SELECT * FROM membership_contracts');
+    const input = paymentMode();
+    state.checkout.mockImplementationOnce(async () => {
+      const rows = await db.unsafe('SELECT * FROM membership_contracts');
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({ id: before.id, contract_code: before.contract_code,
+        enrollment_serial: before.enrollment_serial, signing_method: 'payment', contract_id: null });
+      expect(await db.unsafe('SELECT cycle FROM membership_renewal_debits')).toEqual([{ cycle: 0 }]);
+      return 'weixin://wxpay/s/fixture';
+    });
+    await createMembershipCheckout('2017TEST01', input, '127.0.0.1');
+    // The old mini link may still deliver a signing notification for this same contract.
+    await db.unsafe("UPDATE membership_contracts SET state='active',contract_id='late-mini-contract'");
+    await runMembershipRenewalsOnce();
+    expect(state.apply).not.toHaveBeenCalled();
+  });
+
+  it.each(['signed', 'cancelling', 'attempted', 'advanced'] as const)('does not convert a %s pure enrollment', async condition => {
+    await enrollMembership('2017TEST01', consent, '127.0.0.1');
+    if (condition === 'signed') await db.unsafe("UPDATE membership_contracts SET contract_id='known-contract'");
+    if (condition === 'cancelling') await db.unsafe('UPDATE membership_contracts SET cancellation_requested_at=now()');
+    if (condition === 'advanced') await db.unsafe('UPDATE membership_contracts SET debit_cycle=1');
+    if (condition === 'attempted') {
+      await db.unsafe(`INSERT INTO membership_orders (out_trade_no,wca_id,name,plan_slug,amount_cents,currency,provider,pay_channel,status)
+        VALUES ('Rprior','2017TEST01','Fixture','monthly_auto_renew',2999,'CNY','wechat','wechat_papay','pending')`);
+      await db.unsafe("INSERT INTO membership_renewal_debits (out_trade_no,contract_id,cycle,status) SELECT 'Rprior',id,0,'submitted' FROM membership_contracts");
+    }
+    await expect(createMembershipCheckout('2017TEST01', paymentMode(), '127.0.0.1')).rejects.toThrow('existing subscription');
+    expect(state.checkout).not.toHaveBeenCalled();
+    expect((await db.unsafe('SELECT signing_method FROM membership_contracts'))[0].signing_method).toBe('pure');
+  });
+
   it('reserves the first checkout before provider I/O and never auto-debits it when signing arrives first', async () => {
     const input = paymentMode();
     state.checkout.mockImplementationOnce(async () => {

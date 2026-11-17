@@ -28,13 +28,26 @@ export async function reserveMembershipContract(tx: QueryRunner, owner: string, 
   if (slug.startsWith('enterprise_') && !await canPurchaseEnterpriseMembership(owner, tx)) {
     throw new Error('verified enterprise management access required');
   }
-  const [existing] = await tx<MembershipContractRow & { enrollment_serial: string; signing_method: string; terms_version: string }>(
+  const [existing] = await tx<MembershipContractRow & { enrollment_serial: string; signing_method: string; terms_version: string; debit_cycle: number }>(
     `SELECT * FROM membership_contracts WHERE wca_id = ? AND state <> 'terminated' FOR UPDATE`, [owner]);
   if (existing) {
-    if (existing.signing_method !== method || existing.state !== 'pending' || existing.cancellation_requested_at || existing.plan_slug !== slug
+    if (existing.state !== 'pending' || existing.cancellation_requested_at || existing.plan_slug !== slug
       || !existing.enrollment_serial || existing.appid !== appid || existing.mch_id !== mchId
       || existing.plan_id !== template.id || existing.price_cents !== template.cents
       || existing.terms_version !== RENEWAL_TERMS_VERSION) throw new Error('existing subscription requires management');
+    if (existing.signing_method !== method) {
+      if (method !== 'payment' || existing.signing_method !== 'pure' || existing.contract_id || existing.debit_cycle !== 0) {
+        throw new Error('existing subscription requires management');
+      }
+      const attempts = await tx('SELECT out_trade_no FROM membership_renewal_debits WHERE contract_id = ? LIMIT 1', [existing.id]);
+      if (attempts.length) throw new Error('existing subscription requires management');
+      // Continue the SAME authorization, never infer cancellation from an absent/unsigned
+      // provider reply. The caller saves cycle zero in this transaction, so a late mini
+      // signing notification cannot cause the worker to charge the first period as well.
+      const [continued] = await tx<MembershipContractRow & { enrollment_serial: string }>(
+        "UPDATE membership_contracts SET signing_method = 'payment', consented_at = now(), updated_at = now() WHERE id = ? RETURNING *", [existing.id]);
+      return continued;
+    }
     if (method === 'payment') return existing;
     const [retried] = await tx<MembershipContractRow & { enrollment_serial: string }>(
       "UPDATE membership_contracts SET enrollment_serial = nextval('membership_enrollment_serial') WHERE id = ? RETURNING *", [existing.id]);

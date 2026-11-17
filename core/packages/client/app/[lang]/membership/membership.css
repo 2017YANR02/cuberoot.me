@@ -316,6 +316,7 @@
   background: var(--popover);
   text-align: center;
 }
+.mem-pay.mem-pay-renewal { max-width: 400px; }
 .clear-btn.mem-pay-close {
   position: absolute;
   top: 12px;
@@ -346,10 +347,15 @@
   border: none;
   font-size: 15px;
   font-weight: 600;
-  white-space: nowrap;
+  min-width: 0;
+  min-height: 46px;
+  line-height: 1.5;
+  white-space: normal;
   color: #fff;
   cursor: pointer;
 }
+.mem-pay-ch:only-child { grid-column: 1 / -1; }
+.mem-pay-ch > svg { flex-shrink: 0; }
 .mem-pay-ch:disabled { opacity: 0.6; cursor: default; }
 /* 支付宝 / 微信 品牌色(同打赏弹窗,固定品牌识别色) */
 .mem-pay-ch-alipay { background: #1677ff; }
@@ -360,7 +366,10 @@
   margin-top: 12px;
   font-size: 13px;
   color: var(--destructive);
+  line-height: 1.6;
+  text-align: left;
 }
+.mem-pay-manage { display: block; width: fit-content; margin-top: 6px; color: var(--accent); text-decoration: underline; }
 .mem-pay-qr {
   display: flex;
   flex-direction: column;
@@ -449,7 +458,7 @@
   color: var(--foreground);
   cursor: pointer;
 }
-.mem-autorenew-consent-input { margin: 3px 0 0; accent-color: var(--signal-success); }
+.mem-autorenew-consent-input { flex-shrink: 0; margin: 3px 0 0; accent-color: var(--signal-success); }
 .mem-autorenew-consent a, .mem-autorenew-caption a { color: var(--accent); text-decoration: underline; }
 .mem-autorenew-caption + .mem-autorenew-consent { margin-top: 16px; }
 .mem-autorenew-sign {
@@ -521,13 +530,19 @@
 
 /* ── admin ── */
 .mem-admin {
-  margin-top: 40px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border-default);
+  margin-top: 20px;
 }
-.mem-admin-title { font-size: 16px; font-weight: 700; color: var(--foreground); margin: 0 0 16px; }
-.mem-admin-block { margin-bottom: 22px; }
-.mem-admin-subtitle { font-size: 13px; font-weight: 600; color: var(--muted-foreground); margin-bottom: 10px; }
+.mem-admin-title { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; color: var(--foreground); margin: 0 0 12px; }
+.mem-admin-block { margin-bottom: 14px; }
+.mem-admin-subtitle { font-size: 13px; font-weight: 600; color: var(--muted-foreground); margin: 0 0 8px; }
+.mem-admin-fold { margin: 4px 0; }
+.mem-admin-fold > summary { padding: 8px 0; font-size: 14px; font-weight: 600; }
+.mem-admin-fold-status { margin-inline-start: 8px; font-size: 12px; font-weight: 400; color: var(--muted-foreground); }
+.mem-personal-settings.mem-admin-fold { margin-top: 20px; }
+.mem-personal-settings .member-profile-editor, .mem-personal-settings .mem-contact { margin-top: 12px; }
+.mem-admin-setup-tools { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+.mem-admin-checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 20px; padding: 0; list-style: none; font-size: 13px; }
+.mem-admin .mem-service-links { margin: 10px 0; gap: 6px 16px; font-size: 13px; }
 .mem-admin-grant { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .mem-admin-picker { flex: 1; min-width: 200px; }
 .mem-admin-plansel, .mem-admin-priceinput {
@@ -559,11 +574,11 @@
 .mem-admin-grant-btn:disabled, .mem-admin-plansave:disabled { opacity: 0.5; cursor: default; }
 .mem-admin-planrows {
   display: grid;
-  grid-template-columns: max-content 100px max-content max-content;
+  grid-template-columns: minmax(0, 1fr) 100px max-content max-content;
   align-items: center;
   column-gap: 10px;
   row-gap: 8px;
-  width: max-content;
+  width: 100%;
   max-width: 100%;
 }
 .mem-admin-planrow { display: contents; }
@@ -599,18 +614,8 @@
   .mem-page { padding: 24px 14px 64px; }
   .mem-title { font-size: 22px; }
   .mem-plans { grid-template-columns: 1fr; }
-  .mem-admin-planrows {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    width: 100%;
-  }
-  .mem-admin-planrow {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) max-content max-content;
-    align-items: center;
-    gap: 8px 10px;
-  }
-  .mem-admin-planname { grid-column: 1 / -1; }
+  .mem-admin-planrows { grid-template-columns: minmax(0, 1fr) 84px max-content max-content; column-gap: 6px; }
+  .mem-admin-planname { white-space: normal; font-size: 12px; }
+  .mem-admin-priceinput, .mem-admin-plansave { padding: 6px; font-size: 12px; }
+  .mem-admin-checks { grid-template-columns: 1fr; }
 }

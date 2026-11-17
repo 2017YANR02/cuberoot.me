@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, createElement, type AnchorHTMLAttributes } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { flushSync } from 'react-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 const state = vi.hoisted(() => ({ uid: 1, mobile: false, inWechat: false,
@@ -38,6 +39,38 @@ beforeEach(() => {
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
+it('opens the preloaded checkout on its first render without the legacy form or another request', async () => {
+  await act(async () => {
+    flushSync(() => root.render(createElement(AutoRenewModal, { plan, planSlug: plan.slug, priceCents: 2999,
+      price: '¥29.99', period: 'month', onClose: vi.fn(), initialAvailability: { available: true,
+        channel: 'payment', termsVersion: '2026-10-14', paymentChannels: { wechatNative: true, wechatH5: true } } })));
+    expect(host.querySelector('.mem-pay-ch-wechat')).not.toBeNull();
+    expect(host.querySelector('.mem-autorenew-sign')).toBeNull();
+    expect(host.querySelector('[aria-busy="true"]')).toBeNull();
+  });
+  expect(state.availability).not.toHaveBeenCalled();
+  expect(state.checkout).not.toHaveBeenCalled();
+});
+it('does not flash the legacy form or unavailable message while the signing channel is unresolved', async () => {
+  let resolve!: (value: unknown) => void;
+  state.availability.mockReturnValue(new Promise(r => { resolve = r; }));
+  await render();
+  expect(host.querySelector('[aria-busy="true"]')).not.toBeNull();
+  expect(host.querySelector('.mem-autorenew-sign')).toBeNull();
+  expect(host.querySelector('input')).toBeNull();
+  expect(host.textContent).not.toContain('暂不可用');
+  await act(async () => resolve({ available: true, channel: 'payment', termsVersion: '2026-10-14',
+    paymentChannels: { wechatNative: true, wechatH5: true } }));
+  expect(host.querySelector('.mem-pay-ch-wechat')).not.toBeNull();
+  expect(host.querySelector('[aria-busy="true"]')).toBeNull();
+  expect(state.checkout).not.toHaveBeenCalled();
+});
+it('leaves the loading state when the configuration request fails', async () => {
+  state.availability.mockRejectedValue(new Error('offline'));
+  await render();
+  expect(host.querySelector('[aria-busy="true"]')).toBeNull();
+  expect(host.querySelector<HTMLButtonElement>('.mem-autorenew-sign')?.disabled).toBe(true);
+});
 it('reuses the normal payment modal, requires consent and creates only the combined checkout', async () => {
   await render();
   expect(host.querySelector<HTMLInputElement>('input')!.checked).toBe(false);

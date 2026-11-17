@@ -223,11 +223,13 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid, renewa
   );
   return (
     <div className="mem-pay-backdrop" {...backdropProps}>
-      <div className="mem-pay">
+      <div className={`mem-pay${renewalTermsVersion ? ' mem-pay-renewal' : ''}`} role="dialog" aria-modal="true" aria-labelledby="mem-pay-title">
         <ClearButton variant="standalone" className="mem-pay-close" onClick={onClose}
           ariaLabel={tr({ zh: '关闭', en: 'Close' })} />
-        <h2 className="mem-pay-title">{isZh ? plan.nameZh : plan.nameEn}</h2>
-        <div className="mem-pay-price">{fmtPrice(plan.priceCents, plan.currency)}</div>
+        <h2 className="mem-pay-title" id="mem-pay-title">{tr({ zh: plan.nameZh, en: plan.nameEn })}</h2>
+        <div className="mem-pay-price">{fmtPrice(plan.priceCents, plan.currency)}
+          {renewalTermsVersion && <span className="mem-autorenew-price-unit">{plan.period === 'year' ? tr({ zh: '/年', en: '/year' }) : tr({ zh: '/月', en: '/month' })}</span>}
+        </div>
 
         {!order ? (
           <>
@@ -281,7 +283,9 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid, renewa
                 {tr({ zh: '请点击微信右上角「···」，选择「在浏览器打开」，再使用微信支付。也可以复制链接到 Safari 或其他浏览器打开；如提示登录，请登录同一个 CubeRoot 账号。', en: 'Tap the top-right WeChat menu and choose Open in Browser, then select WeChat Pay. You can also copy the link into Safari or another browser. If asked, sign in to the same CubeRoot account.' })}
               </p>
             )}
-            {err && <div className="mem-pay-err">{err}</div>}
+            {err && <div className="mem-pay-err" role="alert">{err}
+              {renewalTermsVersion && <AppLink className="mem-pay-manage" href="/membership/subscription" prefetch={false}>{tr({ zh: '管理自动续费', en: 'Manage auto-renewal' })}</AppLink>}
+            </div>}
           </>
         ) : renewalResult?.status === 'paid' ? (
           <div role="status">
