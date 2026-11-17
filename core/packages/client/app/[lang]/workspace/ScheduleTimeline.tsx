@@ -1,7 +1,7 @@
 'use client';
 /** @module Calendar-aligned timeline shared by all workspace schedules. */
 import MoreToggle from '@/components/MoreToggle';
-import { Flag } from 'lucide-react';
+import { Circle, CircleCheck, Flag } from 'lucide-react';
 import { Fragment, useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 
 import { planningDay, planningDate, scheduleRange, type ScheduleTask } from '@cuberoot/shared/workspace-planning';
@@ -95,19 +95,22 @@ export default function ScheduleTimeline({ tasks, scale: requestedScale, editabl
         const collapsible = fit && groupTasks.length > 1;
         const collapsed = collapsible && !expanded.has(group);
         const phases = schedulePhases(groupTasks);
+        const completedCount = groupTasks.filter(task => task.progress === 100).length;
         const contentId = `${regionId}-${groupIndex}`;
         return <Fragment key={group}>
         <div className={`workspace-gantt-row workspace-gantt-group${collapsed ? ' workspace-gantt-lane' : ''}`} style={{ '--gantt-color': colors[groupIndex % colors.length] } as CSSProperties}>
-          <div className="workspace-gantt-label">{collapsible ? <MoreToggle type="button" className="workspace-lane-toggle" aria-label={group} expanded={!collapsed} aria-controls={contentId} onClick={() => toggle(group)}><span>{scheduleTaskLabel(group)}</span></MoreToggle> : <strong>{scheduleTaskLabel(group)}</strong>}</div>
+          <div className="workspace-gantt-label">{collapsible ? <MoreToggle type="button" className="workspace-lane-toggle" aria-label={group} expanded={!collapsed} aria-controls={contentId} onClick={() => toggle(group)}><span>{scheduleTaskLabel(group)}</span></MoreToggle> : <strong>{scheduleTaskLabel(group)}</strong>}{collapsed && <small>{t(`完成 ${completedCount}/${groupTasks.length}`, `Complete ${completedCount}/${groupTasks.length}`)}</small>}</div>
           <div className="workspace-gantt-track">
             {todayLine}
             {collapsed && phases.map(phase => {
               const offset = planningDay(phase.start) - start;
               const duration = planningDay(phase.end) - planningDay(phase.start) + 1;
               const name = phase.tasks.length === 1 ? scheduleTaskLabel(phase.tasks[0].name) : t(`${phase.tasks.length} 项任务`, `${phase.tasks.length} tasks`);
-              const label = `${phase.tasks.map(task => task.name).join(' · ')} · ${phase.start} – ${phase.end}`;
-              return <Tooltip key={phase.tasks[0].id} content={label}>{tip => <button {...tip} type="button" aria-label={label} className="workspace-gantt-bar workspace-gantt-phase" onClick={() => toggle(group)} style={{ left: percent(offset), width: `max(2px, ${percent(duration)})` }}>
-                {duration * dayWidth >= 60 && <span className="workspace-gantt-bar-name">{name}</span>}
+              const done = phase.tasks.every(task => task.progress === 100);
+              const status = done ? t('完成', 'Complete') : t('未完成', 'Incomplete');
+              const label = `${phase.tasks.map(task => task.name).join(' · ')} · ${phase.start} – ${phase.end} · ${status}`;
+              return <Tooltip key={phase.tasks[0].id} content={label}>{tip => <button {...tip} type="button" aria-label={label} className={`workspace-gantt-bar workspace-gantt-phase${done ? ' is-done' : ''}`} onClick={() => toggle(group)} style={{ left: percent(offset), width: `max(2px, ${percent(duration)})` }}>
+                {duration * dayWidth >= 60 && <span className="workspace-gantt-bar-name">{name} · {status}</span>}
               </button>}</Tooltip>;
             })}
           </div>
@@ -117,14 +120,17 @@ export default function ScheduleTimeline({ tasks, scale: requestedScale, editabl
           const offset = planningDay(task.start) - start;
           const duration = planningDay(task.end) - planningDay(task.start) + 1;
           const milestone = task.kind === 'milestone';
-          const label = `${task.name}${task.owner ? ` · ${task.owner}` : ''} · ${task.start}${milestone ? '' : ` – ${task.end}`} · ${task.progress}%`;
-          return <div key={task.id} className={`workspace-gantt-row workspace-gantt-task${task.progress === 100 ? ' is-done' : ''}`} style={{ '--gantt-color': colors[groupIndex % colors.length] } as CSSProperties}>
-            <div className="workspace-gantt-label" />
+          const done = task.progress === 100;
+          const status = done ? t('完成', 'Complete') : t('未完成', 'Incomplete');
+          const StatusIcon = done ? CircleCheck : Circle;
+          const label = `${task.name}${task.owner ? ` · ${task.owner}` : ''} · ${task.start}${milestone ? '' : ` – ${task.end}`} · ${status}`;
+          return <div key={task.id} className={`workspace-gantt-row workspace-gantt-task${done ? ' is-done' : ''}`} style={{ '--gantt-color': colors[groupIndex % colors.length] } as CSSProperties}>
+            <div className="workspace-gantt-label"><span className="workspace-gantt-status"><StatusIcon size={16} aria-hidden="true" />{status}</span></div>
             <div className="workspace-gantt-track">
               {todayLine}
               <Tooltip content={label}>{tip => <button {...tip} type="button" aria-disabled={!editable} onClick={() => { if (editable) onEdit(task); }} aria-label={label} className={milestone ? 'workspace-gantt-milestone' : 'workspace-gantt-bar'} style={{ left: milestone ? percent(offset + 0.5) : percent(offset), ...(milestone ? {} : { width: `max(2px, ${percent(duration)})` }) }}>
-                {milestone && <Flag size={20} strokeWidth={1.8} aria-hidden="true" />}
-                {!milestone && <><span className="workspace-gantt-progress" style={{ width: `${task.progress}%` }} /><span className="workspace-gantt-bar-name">{scheduleTaskLabel(task.name)}</span></>}
+                {milestone && done ? <CircleCheck size={20} aria-hidden="true" /> : milestone && <Flag size={20} strokeWidth={1.8} aria-hidden="true" />}
+                {!milestone && <span className="workspace-gantt-bar-name">{scheduleTaskLabel(task.name)}</span>}
               </button>}</Tooltip>
               {milestone && <span className={`workspace-gantt-key-label${offset > visibleDays / 2 ? ' is-end' : ''}`} style={{ left: percent(offset + 0.5) }}>{task.start.slice(5)} · {scheduleTaskLabel(task.name)}</span>}
             </div>

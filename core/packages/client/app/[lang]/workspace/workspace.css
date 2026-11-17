@@ -65,9 +65,11 @@
 .workspace-gantt-group { min-height: 32px; color: var(--gantt-color); border-top: 1px solid var(--border-default); }
 .workspace-gantt-group .workspace-gantt-label { display: flex; align-items: center; padding-block: 4px; font-size: 14px; background: color-mix(in srgb, var(--gantt-color) 9%, var(--background)); }
 .workspace-gantt-group strong { overflow: hidden; white-space: nowrap; }
-.workspace-gantt-group small { font-size: 14px; color: var(--muted-foreground); }
+.workspace-gantt-group small { white-space: nowrap; font-size: 14px; color: var(--muted-foreground); }
 .workspace-gantt-group .workspace-gantt-track { background-color: color-mix(in srgb, var(--gantt-color) 9%, var(--background)); }
 .workspace-gantt-group.workspace-gantt-lane { min-height: 56px; }
+.workspace-gantt-group.workspace-gantt-lane .workspace-gantt-label { flex-direction: column; align-items: flex-start; justify-content: center; }
+.workspace-gantt-lane .workspace-lane-toggle { min-height: 28px; }
 .workspace-gantt-group.workspace-gantt-lane .workspace-gantt-label,
 .workspace-gantt-group.workspace-gantt-lane .workspace-gantt-track { background-color: var(--background); }
 .workspace-lane-toggle { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 600; text-align: start; cursor: pointer; }
@@ -79,7 +81,7 @@
 .workspace-gantt-phase:active { transform: translateY(-50%) scaleY(.92); }
 .workspace-gantt-key-label { position: absolute; top: 50%; transform: translate(12px, -50%); max-width: min(280px, 45%); overflow: hidden; white-space: nowrap; font-size: 14px; font-weight: 600; color: var(--gantt-color); pointer-events: none; }
 .workspace-gantt-key-label.is-end { transform: translate(calc(-100% - 12px), -50%); }
-.workspace-gantt-task .workspace-gantt-label { padding-inline-start: 48px; background: var(--background); }
+.workspace-gantt-task .workspace-gantt-label { display: flex; align-items: center; padding-inline-start: 12px; background: var(--background); }
 .workspace-gantt-task .workspace-gantt-track { background-color: var(--background); }
 .workspace-task-label { display: flex; align-items: center; width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--foreground); text-align: start; font: inherit; font-size: 14px; line-height: 1.4; cursor: pointer; }
 .workspace-task-label > span { overflow: hidden; white-space: nowrap; }
@@ -90,7 +92,13 @@
 .workspace-gantt-bar { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 5px; overflow: hidden; }
 .workspace-gantt-bar-name { position: relative; z-index: 1; min-width: 0; padding-left: 8px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .workspace-gantt-bar:is(:hover, :focus-visible):not(:disabled) { background: color-mix(in srgb, var(--gantt-color) 28%, var(--background)); }
-.workspace-gantt-progress { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--gantt-color) 38%, transparent); }
+.workspace-gantt-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; color: var(--muted-foreground); background: var(--muted); }
+.workspace-gantt-status svg { flex-shrink: 0; }
+.workspace-gantt-row.is-done .workspace-gantt-status { color: var(--signal-success); background: color-mix(in srgb, var(--signal-success) 12%, var(--background)); }
+.workspace-gantt-row.is-done .workspace-gantt-bar,
+.workspace-gantt-bar.workspace-gantt-phase.is-done { border: 2px solid var(--signal-success); background: color-mix(in srgb, var(--signal-success) 25%, var(--background)); }
+.workspace-gantt-row.is-done .workspace-gantt-milestone,
+.workspace-gantt-row.is-done .workspace-gantt-key-label { color: var(--signal-success); }
 .workspace-gantt-percent { position: relative; z-index: 1; flex-shrink: 0; padding-inline: 4px; font-size: 14px; }
 .workspace-gantt-milestone { display: grid; place-items: center; width: 32px; height: 32px; transform: translate(-50%, -50%); border: 0; border-radius: 6px; background: transparent; color: var(--gantt-color); }
 .workspace-gantt-milestone:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--gantt-color) 12%, transparent); }
