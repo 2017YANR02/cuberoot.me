@@ -41,24 +41,27 @@ export default function TeacherSignatureEditor({ uid, name }: { uid: number; nam
     finally { setSaving(false); }
   };
   const changed = draft?.mode !== savedValue?.mode || draft?.organization !== savedValue?.organization;
-  return <form className="account-basic-profile" onSubmit={event => { event.preventDefault(); void save(); }}>
-    <h3 className="account-creds-title">{t('对外署名', 'Public teacher signature')}</h3>
+  return <form className="account-basic-profile account-signature-form" onSubmit={event => { event.preventDefault(); void save(); }}>
+    <h3 className="account-creds-title">{t('教师署名', 'Teacher display name')}</h3>
+    <p className="auth-hint">{t('你作为老师时，在师生关系中显示的名称。', 'The name shown for you as a teacher in teacher–student relationships.')}</p>
     {!draft && !error && <p className="auth-hint">{t('加载中…', 'Loading…')}</p>}
     {draft && <>
-      <CompactSelect label={{ name: t('姓名', 'Name'), organization: t('机构', 'Organization'), both: t('姓名＋机构', 'Name + organization') }[draft.mode]} ariaLabel={t('署名方式', 'Signature format')} value={draft.mode} disabled={saving}
+      <div className="account-signature-controls">
+      <CompactSelect label={{ name: t('仅姓名', 'Name only'), organization: t('仅机构名', 'Organization only'), both: t('姓名＋机构', 'Name + organization') }[draft.mode]} ariaLabel={t('署名方式', 'Signature format')} value={draft.mode} disabled={saving}
         onChange={value => update({ ...draft, mode: value as TeacherSignature['mode'] })}
         items={[
-          { value: 'name', label: t('姓名', 'Name') },
-          { value: 'organization', label: t('机构', 'Organization') },
+          { value: 'name', label: t('仅姓名', 'Name only') },
+          { value: 'organization', label: t('仅机构名', 'Organization only') },
           { value: 'both', label: t('姓名＋机构', 'Name + organization') },
         ]} />
+      <button type="submit" className="auth-primary account-basic-profile-save" disabled={saving || !changed}>{saving ? t('保存中…', 'Saving…') : t('保存', 'Save')}</button>
+      </div>
       {draft.mode !== 'name' && <div className="account-basic-profile-field">
         <label className="auth-label" htmlFor={id}>{t('机构简称', 'Organization short name')}</label>
         <input id={id} className="auth-input" value={draft.organization} maxLength={40} disabled={saving}
           onChange={event => update({ ...draft, organization: event.target.value })} />
       </div>}
-      <p className="auth-hint">{t('展示为：', 'Shown as: ')}{formatTeacherSignature(displayCuberName(name, lang === 'zh'), draft)}</p>
-      <button type="submit" className="auth-primary account-basic-profile-save" disabled={saving || !changed}>{saving ? t('保存中…', 'Saving…') : t('保存', 'Save')}</button>
+      <p className="auth-hint">{t('显示预览：', 'Preview: ')}{formatTeacherSignature(displayCuberName(name, lang === 'zh'), draft)}</p>
       {saved && <p className="auth-hint" role="status">{t('已保存', 'Saved')}</p>}
     </>}
     {error && <p className="auth-error" role="alert">{error}</p>}

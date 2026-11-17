@@ -72,6 +72,7 @@ import TeacherSignatureEditor from './TeacherSignatureEditor';
 import AdminAccountDelete from './AdminAccountDelete';
 import './account.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 
 function AccountName({ name, wcaId }: { name: string; wcaId?: string | null }) {
   const t = useT();
@@ -387,7 +388,11 @@ function DisplayNameEditor() {
   };
   return (
     <div className="account-profile-editor">
-      <h2 className="account-creds-title">{t('个人资料', 'Profile')}</h2>
+      <div className="account-profile-heading">
+        <h2 className="account-creds-title">{t('个人资料', 'Profile')}</h2>
+        {user.wcaId && <InfoTooltip iconSize={16} ariaLabel={t('资料来源', 'Profile source')}
+          content={t('性别和国家来自 WCA 资料。', 'Gender and country come from your WCA profile.')} />}
+      </div>
       <DisplayNameField
         profile={{ name: user.name, wcaId: user.wcaId || null }}
         onSave={save}
@@ -583,7 +588,6 @@ function BasicProfileEditor() {
           <option value="" hidden>{t('未填写', 'Not set')}</option>
           {genderOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
-        {profile.genderSource === 'wca' && draft.gender === profile.gender && <p className="auth-hint">{t('取自 WCA', 'From WCA')}</p>}
       </div>
       </div>
       <div className="account-basic-profile-field account-location-field">
@@ -617,11 +621,6 @@ function BasicProfileEditor() {
               cityName: null,
             })}
           />
-        )}
-        {countryLocked && (
-          <p className="auth-hint account-basic-profile-lock">
-            {t('取自 WCA', 'From WCA')}
-          </p>
         )}
       </div>
       {draft.countryIso2 && (
@@ -689,7 +688,7 @@ function BasicProfileEditor() {
       {saved && <p className="auth-hint" role="status">{t('基本资料已保存。', 'Basic profile saved.')}</p>}
       <button type="submit" className="auth-primary account-basic-profile-save" disabled={saving || !dirty}>
         {saving && <Loader2 size={14} className="auth-spin" />}
-        {t('保存基本资料', 'Save basic profile')}
+        {t('保存', 'Save')}
       </button>
     </form>
   );

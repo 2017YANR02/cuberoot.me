@@ -9,7 +9,10 @@
   overflow: hidden;
   color: var(--foreground);
   background: var(--background);
+  font: 400 16px/1.5 var(--font-sans);
 }
+/* Match timer settings, including appearance options rendered in a portal. */
+body:has(.settings-panel) .settings-typography { font-size: 16px !important; }
 .settings-panel-page { height: 100dvh; }
 .settings-panel-header {
   grid-column: 1;
@@ -63,7 +66,7 @@
   background: transparent;
   color: var(--muted-foreground);
   font: inherit;
-  font-size: .9rem;
+  font-size: 16px;
   text-align: left;
   cursor: pointer;
 }
@@ -89,7 +92,7 @@
 .settings-panel-content > * { width: 100%; max-width: 800px; margin-inline: auto; }
 .settings-panel-content > [hidden] { display: none; }
 .settings-general h2 { margin: 0 0 28px; font-size: 1.65rem; font-weight: 600; letter-spacing: -.02em; }
-.settings-general > .lang-toggle-wrap { display: block; width: 100%; }
+.settings-general .lang-toggle-wrap { display: block; width: 100%; }
 .settings-panel-content .appearance-menu-embedded {
   position: static;
   inset: auto;
@@ -103,29 +106,57 @@
   max-height: none;
   box-sizing: border-box;
   margin: 0;
-  padding: 4px 20px;
+  padding: 0;
   border: 0;
-  border-radius: 18px;
+  border-radius: 0;
   box-shadow: none;
-  background: var(--card);
+  background: transparent;
 }
 .settings-panel-content .appearance-settings { padding: 0; }
 .settings-panel-content .appearance-setting-rows { gap: 0; padding: 0; overflow: visible; }
 .settings-panel-content .appearance-setting-rows > * {
-  min-height: 64px;
+  min-height: 48px;
   box-sizing: border-box;
   margin: 0;
-  padding-block: 16px;
-  border-bottom: 1px solid var(--border-default);
+  padding-block: 12px;
   box-shadow: none;
 }
-.settings-panel-content .appearance-setting-rows > :last-child { border-bottom: 0; }
 .settings-panel-content .appearance-menu-embedded .palette-menu-more { margin: 16px 0 0; padding-inline: 0; border: 0; box-shadow: none; }
 .settings-panel-content .account-page { width: 100%; max-width: none; margin: 0; padding: 0; box-sizing: border-box; }
 .settings-panel-content .account-header { margin-bottom: 16px; }
 .settings-panel-content .account-name { font-family: var(--font-sans); font-size: 1.5rem; font-weight: 600; }
 .settings-panel-content .account-identity-heading { gap: 16px; margin-bottom: 28px; }
-.settings-panel-content .account-settings-layout { grid-template-columns: minmax(0, 1fr); max-width: 680px; }
+.settings-panel-content .account-settings-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+.settings-panel-content .account-settings-layout > .account-creds { margin-top: 0; max-width: none; min-width: 0; }
+.settings-panel-content .account-profile-editor { margin-bottom: 16px; }
+.settings-panel-content .account-creds-title { font-size: 18px; margin-bottom: 12px; }
+.account-profile-heading { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+.account-profile-heading > .account-creds-title { margin: 0; }
+.settings-panel-content .account-settings-profile .account-basic-profile { margin-top: 12px; gap: 12px 16px; }
+.settings-panel-content .account-basic-profile .auth-hint { margin: 0; }
+.settings-panel-content .account-profile-demographics { gap: 16px; }
+.settings-panel-content .account-basic-profile-field.account-birth-date-field { flex: 0 1 220px; max-width: 220px; }
+.settings-panel-content .account-location-controls { gap: 8px 16px; }
+.settings-panel-content .account-settings-profile > .account-card { width: fit-content; max-width: 100%; box-sizing: border-box; margin: 0; padding: 12px 16px; }
+.settings-panel-content .account-basic-profile.account-signature-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 16px;
+  gap: 8px;
+}
+.settings-panel-content .account-signature-form > .account-creds-title { margin: 0; }
+.account-signature-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 100%; }
+.account-signature-controls > .account-basic-profile-save { align-self: center; }
+.settings-panel-content .account-signature-form > .account-basic-profile-field { max-width: 320px; }
+@media (min-width: 1200px) {
+  .settings-panel-content .account-settings-layout { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 32px; }
+}
 .chat-settings-dialog {
   position: fixed;
   inset: 0;
@@ -147,13 +178,12 @@
   .settings-panel-header { min-height: 64px; padding: max(10px, env(safe-area-inset-top)) 8px 10px max(12px, env(safe-area-inset-left)); }
   .settings-panel-heading { gap: 6px; white-space: nowrap; }
   .settings-panel-close { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); }
-  .settings-panel-nav { grid-column: 2; grid-row: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: center; padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 10px 0; overflow: visible; }
+  .settings-panel-nav { grid-column: 2; grid-row: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 10px 0; overflow: visible; }
   .settings-panel-embedded:has(.settings-panel-close) .settings-panel-nav { padding-right: max(56px, env(safe-area-inset-right)); }
   .settings-panel-nav-item { justify-content: center; min-width: 0; min-height: 44px; padding: 10px 4px; }
   .settings-panel-nav-item > span { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
   .settings-panel-nav-item svg { width: 18px; height: 18px; }
   .settings-panel-content { grid-column: 1 / -1; grid-row: 2; padding: 24px max(20px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
   .settings-general h2 { font-size: 1.4rem; margin-bottom: 16px; }
-  .settings-panel-content .appearance-menu-embedded { padding: 4px 16px; border-radius: 16px; }
   .settings-panel-content .account-name { font-size: 1.25rem; }
 }

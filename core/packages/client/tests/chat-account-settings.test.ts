@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({ mounted: vi.fn(), unmounted: vi.fn(), url: vi.
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
 vi.mock('@/components/BackHome', () => ({ default: () => null }));
 vi.mock('@/components/StartupStatus', () => ({ ClientLoadStatus: () => null }));
-vi.mock('@/components/AppearanceToggle', () => ({ default: () => createElement('div', { 'data-general': true }, '外观') }));
+vi.mock('@/components/AppearanceToggle', () => ({ default: ({ section }: { section: string }) => createElement('div', { 'data-general': true, 'data-section': section }, '外观') }));
 vi.mock('next/dynamic', () => ({ default: () => AccountFixture }));
 function AccountFixture({ embedded }: { embedded: boolean }) {
   useEffect(() => { mocks.mounted(); return () => { mocks.unmounted(); }; }, []);
@@ -41,7 +41,7 @@ it('preserves account drafts and auth continuation parameters when visiting Gene
   expect(host.querySelector('[aria-current="page"]')?.textContent).toBe('账号与安全');
   const input = host.querySelector('input')!;
   input.value = '未保存';
-  await click(nav('通用'));
+  await click(nav('设置'));
   expect(host.querySelector('[data-general]')).not.toBeNull();
   expect(input.parentElement?.hidden).toBe(true);
   expect(mocks.unmounted).not.toHaveBeenCalled();
@@ -60,6 +60,16 @@ it('does not start an account continuation for a direct General link', async () 
   expect(mocks.mounted).not.toHaveBeenCalled();
   await click(nav('我的空间'));
   expect(mocks.mounted).toHaveBeenCalledTimes(1);
+});
+
+it.each(['general', 'appearance'])('combines General and Appearance for the %s entry', async section => {
+  await render(`?settings=${section}`);
+  expect(host.querySelector('[aria-current="page"]')?.textContent).toBe('设置');
+  expect(nav('外观')).toBeUndefined();
+  expect(host.querySelectorAll('.settings-section')).toHaveLength(2);
+  expect(host.querySelector('[data-section="general"]')).not.toBeNull();
+  expect(host.querySelector('[data-section="appearance"]')).not.toBeNull();
+  expect(mocks.mounted).not.toHaveBeenCalled();
 });
 
 it('opens chat settings as a modal and ignores nested cancellation and drag-out gestures', async () => {
@@ -93,18 +103,18 @@ it('closes the chat settings on native Escape cancellation', async () => {
 it('removes the duplicate Account settings header and global categories only for a capable account shell', async () => {
   await render('');
   expect(host.querySelector('h1')).not.toBeNull();
-  expect(nav('通用')).toBeTruthy();
+  expect(nav('设置')).toBeTruthy();
   await act(async () => setInstalledShellNavigation(vi.fn(), 'tools'));
   expect(host.querySelector('h1')).not.toBeNull();
   await act(async () => setInstalledShellNavigation(vi.fn(), 'account'));
   expect(host.querySelector('h1')).toBeNull();
-  expect(nav('通用')).toBeUndefined();
+  expect(nav('设置')).toBeUndefined();
   expect(nav('外观')).toBeUndefined();
   expect(nav('我的空间')).toBeTruthy();
   expect(nav('账号与安全')).toBeTruthy();
   await act(async () => setInstalledShellNavigation(null));
   expect(host.querySelector('h1')).not.toBeNull();
-  expect(nav('通用')).toBeTruthy();
+  expect(nav('设置')).toBeTruthy();
 });
 
 it.each(['general', 'appearance'])('delegates a direct %s query without showing local controls or starting auth', async section => {
