@@ -60,6 +60,7 @@ const EXACT = new Set([
   'apps/api/migrations/0334_assistant_run_control.sql', 'apps/api/migrations/0335_assistant_durable_queue.sql',
   'packages/client/lib/assistant-queue.ts', 'packages/client/lib/assistant-conversations.ts',
   'apps/api/src/utils/site_assistant_context.ts',
+  'apps/api/src/utils/site_assistant_memory.ts', 'apps/api/src/utils/site_assistant_privacy.ts',
   'apps/miniprogram/src/pages/assistant/index.ts',
   'apps/api/src/routes/admin_assistant.ts', 'apps/api/src/utils/site_assistant_monitor.ts',
   'apps/api/migrations/0277_assistant_monitoring.sql',

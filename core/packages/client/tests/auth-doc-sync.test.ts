@@ -12,7 +12,9 @@ const page = (sources = entries, reason = 'Reviewed sign-in, linking, merging an
 
 describe('/dev/auth source-review drift', () => {
   it('tracks restored assistant context ownership', () => {
-    expect(isAuthDocSource('apps/api/src/utils/site_assistant_context.ts')).toBe(true);
+    for (const file of ['site_assistant_context.ts', 'site_assistant_memory.ts', 'site_assistant_privacy.ts']) {
+      expect(isAuthDocSource(`apps/api/src/utils/${file}`)).toBe(true);
+    }
   });
   it('tracks notification destinations and account isolation', () => {
     for (const path of ['apps/mobile/src/native/notification-open.ts', 'packages/app-ui/src/notification-navigation.ts',
