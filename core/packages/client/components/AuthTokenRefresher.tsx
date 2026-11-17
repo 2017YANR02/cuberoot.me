@@ -133,7 +133,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       .admin-tools{box-sizing:border-box;height:42px;}
       body:has(.admin-tools .appearance-menu) .accent-color-menu{z-index:100030;}
       .admin-tools-surface{position:absolute;top:0;height:42px;box-sizing:border-box;border-radius:24px;
-        border:1px solid var(--glass-edge);background:var(--glass-background);
+        border:1px solid var(--glass-edge);background:var(--glass-popover-bg);
         backdrop-filter:var(--glass-filter);-webkit-backdrop-filter:var(--glass-filter);
         box-shadow:var(--glass-shadow);
         transition:width 420ms cubic-bezier(.22,1,.36,1),left 420ms cubic-bezier(.22,1,.36,1);}
@@ -159,7 +159,7 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       .admin-tool-impersonation span{overflow:hidden;text-overflow:ellipsis;}
       @media(prefers-reduced-motion:reduce){.admin-tools-surface,.admin-tools-group > *{transition:none;}}
     `}</style>
-    <span aria-hidden="true" className="admin-tools-surface"
+    <span aria-hidden="true" className="admin-tools-surface" data-site-surface="popover"
       style={{ left: expanded ? -toggleLeft : 0, width: expanded ? actionsWidth + 10 : 42 }} />
     <div ref={actionsRef} className="admin-tools-actions" style={{ left: 5 - toggleLeft }}>
     {admin && <div className="admin-tools-group" inert={!expanded}>
