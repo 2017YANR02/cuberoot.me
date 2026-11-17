@@ -8,7 +8,6 @@ import { unframedSurfaces } from './site-surface-policy.mts';
 const REPO_ROOT = fileURLToPath(new URL('../../../../', import.meta.url));
 const LEGACY_OVERRIDES = {
   'app/[lang]/home-background.css': new Set(['--glass-background:var(--card)', '--glass-filter:none']), // Existing print/accessibility fallback.
-  'components/scroll-diagnostics.css': new Set(['--glass-filter:blur(6px)!important']), // Deliberate opt-in A/B diagnostic.
 };
 
 // These containers host non-portaled menus. Their glass belongs on ::before,

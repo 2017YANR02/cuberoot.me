@@ -34,10 +34,9 @@
 }
 
 /* Homepage cards move over a fixed landscape. Native blur avoids applying the
-   SVG displacement pipeline to every card on every scroll frame. Keep the old
-   material available only during an explicitly requested diagnostic recording.
-   :where keeps the no-scenery fallback below at equal specificity. */
-body:where(:has(.landing-page)):not([data-scroll-diagnostic='original']) {
+   SVG displacement pipeline to every card on every scroll frame.
+   :where lets the no-scenery fallback below take priority. */
+body:where(:has(.landing-page)) {
   --site-glass-refraction: var(--glass-scroll-filter) !important;
 }
 /* A solid backdrop has nothing to refract. SVG displacement can pull the

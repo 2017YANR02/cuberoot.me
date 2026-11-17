@@ -226,14 +226,6 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
               />}
               {section !== 'general' && <AppearanceBackdropControls language={language} enabled={showBackgrounds}
                 contrast={contrast} onEnabledChange={setBackgroundEnabled} onContrastChange={pickContrast} />}
-              {section !== 'appearance' && <button type="button" role={embedded ? undefined : "menuitem"} className="lang-menu-item"
-                onClick={() => {
-                  closeMenu();
-                  void import('@/components/ScrollDiagnostics').then(({ openScrollDiagnostics }) => openScrollDiagnostics())
-                    .catch(() => alert(t('诊断工具加载失败，请重试。', 'Could not load diagnostics. Please try again.')));
-                }}>
-                {t('滚动诊断', 'Scroll diagnostics')}
-              </button>}
             </div>
           </div>
 

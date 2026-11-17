@@ -934,13 +934,7 @@ export const CATALOG: ComponentEntry[] = [
     zh: '全站唯一风景层与共享外观选择器，跟随页面实际明暗。外观页与菜单复用 previewBackground / endBackgroundPreview 临时预览，不改已保存的背景。',
     en: 'One site landscape and shared appearance picker following the rendered page scheme. The appearance page and menu share previewBackground / endBackgroundPreview without changing the saved background.',
   },
-  {
-    name: 'ScrollDiagnostics',
-    import: "const { openScrollDiagnostics } = await import('@/components/ScrollDiagnostics');",
-    category: 'more',
-    zh: '外观菜单按需加载的滚动诊断工具，限时采集手势和性能线索，支持临时毛玻璃对照与本地报告导出。',
-    en: 'On-demand scroll diagnostics from the appearance menu, with bounded gesture/timing capture, temporary glass comparisons and local report export.',
-  },
+
   {
     name: 'ContinuousCorners',
     import: "import { Surface, SiteCorners } from '@2017yanr02/continuous-corners/react';",

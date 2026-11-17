@@ -141,9 +141,7 @@ describe('site materials have one definition and shared scenery tokens', () => {
     `, PAGE)).toEqual([]);
   });
 
-  it('keeps the existing diagnostic and homepage accessibility exceptions narrow', () => {
-    expect(scanSiteMaterial('.page { --glass-filter: blur(6px) !important; }', 'components/scroll-diagnostics.css')).toEqual([]);
-    expect(scanSiteMaterial('.page { --glass-filter: blur(8px) !important; }', 'components/scroll-diagnostics.css')).toHaveLength(1);
+  it('keeps the homepage accessibility exception narrow', () => {
     expect(scanSiteMaterial('.page { --glass-filter: none; --glass-background: var(--card); }', 'app/[lang]/home-background.css')).toEqual([]);
   });
 
