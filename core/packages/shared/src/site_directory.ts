@@ -140,6 +140,7 @@ export const SITE_DIRECTORY_GROUPS = [
       { id: 'sim', href: '/sim', internal: true, tier: 'medium', nameKey: 'sim' },
       { id: 'recon', href: '/recon', internal: true, tier: 'medium', nameKey: 'recon' },
       { id: 'scramble', href: '/scramble', internal: true, tier: 'medium', nameKey: 'scramble' },
+      { id: 'alg', href: '/tutorial', internal: true, tier: 'medium', nameKey: 'alg' },
     ],
   },
   {
@@ -200,13 +201,6 @@ export const SITE_DIRECTORY_GROUPS = [
     title: { en: 'Learning', zh: '学习' },
     sub: { en: '', zh: '' },
     entries: [
-      {
-        id: 'alg',
-        href: '/tutorial',
-        internal: true,
-        tier: 'medium',
-        nameKey: 'alg',
-      },
       { id: 'quiz', href: '/quiz', internal: true, tier: 'medium', nameKey: 'quiz' },
       { id: 'wiki', href: '/wiki', internal: true, tier: 'medium', nameKey: 'wiki' },
       { id: 'cube-history', href: '/cube-history', internal: true, tier: 'medium', nameKey: 'cubeHistory' },
