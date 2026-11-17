@@ -1,0 +1,90 @@
+name: Update Code Language History
+
+on:
+  schedule:
+    # Daily 10:23 PST / 11:23 PDT. Independent of Codex and local computers.
+    - cron: '23 18 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: code-language-history
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          # Linguist reads historical blobs through libgit2, not git checkout.
+          fetch-depth: 0
+          # Reuse the existing automation key so pushes trigger Web checks and
+          # both deployment pipelines. GITHUB_TOKEN pushes would suppress CI.
+          ssh-key: ${{ secrets.AUTOMATION_PUSH_SSH_KEY }}
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+
+      - name: Check incremental planning and publication loop protection
+        working-directory: core
+        run: ruby packages/client/scripts/check-code-history.rb
+
+      - name: Restore Linguist checkpoint
+        uses: actions/cache/restore@v4
+        with:
+          path: .local-data/code-language-history/checkpoint.json
+          key: code-history-linux-ruby33-${{ hashFiles('core/packages/client/scripts/build-code-history.rb') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: code-history-linux-ruby33-${{ hashFiles('core/packages/client/scripts/build-code-history.rb') }}-
+
+      - name: Plan incremental update
+        id: plan
+        run: |
+          mkdir -p .tmp/scratch
+          ruby core/packages/client/scripts/build-code-history.rb --plan > .tmp/scratch/code-history-plan.json
+          cat .tmp/scratch/code-history-plan.json
+          ruby -rjson -e 'p = JSON.parse(File.read(ARGV[0])); puts "changed=#{p.fetch("sourceChanged")}"' .tmp/scratch/code-history-plan.json >> "$GITHUB_OUTPUT"
+
+      - name: Install official Linguist engine
+        if: steps.plan.outputs.changed == 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends cmake pkg-config libicu-dev
+          ENGINE=$(ruby -r ./core/packages/client/scripts/build-code-history.rb -e 'puts CodeLanguageHistory::ENGINE.split.last')
+          gem install github-linguist --version "$ENGINE" --no-document
+
+      - name: Refresh language snapshot
+        if: steps.plan.outputs.changed == 'true'
+        working-directory: core
+        run: ruby packages/client/scripts/build-code-history.rb
+
+      - name: Save completed incremental progress
+        if: always() && steps.plan.outputs.changed == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .local-data/code-language-history/checkpoint.json
+          key: code-history-linux-ruby33-${{ hashFiles('core/packages/client/scripts/build-code-history.rb') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Publish only the generated chart snapshot
+        if: steps.plan.outputs.changed == 'true'
+        run: |
+          SNAPSHOT='core/packages/client/app/[lang]/dev/architecture/_components/code-history/history.json'
+          git add -- ":(literal)$SNAPSHOT"
+          if git diff --cached --quiet; then
+            echo 'No snapshot changes.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(architecture): refresh code language history'
+          # Preserve concurrent main commits; a conflicting snapshot stops here.
+          git pull --rebase origin main
+          git push origin HEAD:main
+          echo "Published snapshot: $(git rev-parse HEAD). Normal Web checks and deployment gates apply." >> "$GITHUB_STEP_SUMMARY"

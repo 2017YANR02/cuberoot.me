@@ -73,6 +73,30 @@ Dir.mktmpdir('code-history-check-', scratch) do |directory|
   CodeLanguageHistory.atomic_json(path, { 'rows' => filled })
   assert.call('Changed data must be replaced completely without a leftover partial file',
     JSON.parse(File.read(path)) == { 'rows' => filled } && !File.exist?(path + '.next'))
+
+  git = lambda do |*args|
+    result = IO.popen(['git', '-C', directory, *args], err: File::NULL, &:read)
+    raise "Fixture git #{args.first} failed" unless $?.success?
+    result.strip
+  end
+  git.call('init', '-b', 'main')
+  git.call('config', 'user.name', 'Language history test')
+  git.call('config', 'user.email', 'test@example.invalid')
+  File.write(File.join(directory, 'source.rb'), 'puts 1')
+  git.call('add', 'source.rb')
+  git.call('commit', '-m', 'Initial source')
+  baseline = git.call('rev-parse', 'HEAD')
+  snapshot = File.join(directory, CodeLanguageHistory::OUTPUT)
+  CodeLanguageHistory.atomic_json(snapshot, { 'rows' => rows })
+  git.call('add', '--', ":(literal)#{CodeLanguageHistory::OUTPUT}")
+  git.call('commit', '-m', 'Publish chart')
+  assert.call('A snapshot-only publication must not start a daily commit loop',
+    !CodeLanguageHistory.source_changed?(directory, baseline, 'HEAD'))
+  File.write(File.join(directory, 'source.rb'), 'puts 2')
+  git.call('add', 'source.rb')
+  git.call('commit', '-m', 'Publish chart')
+  assert.call('Real source changes must count even with the same bot commit subject',
+    CodeLanguageHistory.source_changed?(directory, baseline, 'HEAD'))
 end
 
 puts "#{checks} code-language-history checks passed (Ruby standard library only)"

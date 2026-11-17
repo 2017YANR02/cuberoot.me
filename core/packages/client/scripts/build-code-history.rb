@@ -10,6 +10,17 @@ module CodeLanguageHistory
   ENGINE = 'github-linguist 9.7.0'.freeze
   TIMEZONE = 'America/Los_Angeles'.freeze
   METADATA = { 'engine' => ENGINE, 'timezone' => TIMEZONE, 'branch' => 'main' }.freeze
+  OUTPUT = 'core/packages/client/app/[lang]/dev/architecture/_components/code-history/history.json'.freeze
+
+  # Publishing the snapshot must not cause another snapshot-only commit tomorrow.
+  # Inspect paths, not author/subject: real edits by a bot still count.
+  def self.source_changed?(root, previous, head)
+    return true unless previous
+    commits = IO.popen(['git', '-C', root, 'log', '--first-parent', '--format=%H',
+      '-1', "#{previous}..#{head}", '--', '.', ":(top,exclude)#{OUTPUT}"], &:read)
+    raise 'Cannot check language-history source changes' unless $?.success?
+    !commits.strip.empty?
+  end
 
   # Calendar carry-forward rows are display data, not additional Git snapshots.
   def self.commit_rows(rows)
@@ -64,7 +75,7 @@ module CodeLanguageHistory
     ENV['TZ'] = TIMEZONE
     $stdout.sync = true
     root = File.expand_path('../../../..', __dir__)
-    output = File.expand_path('../app/[lang]/dev/architecture/_components/code-history/history.json', __dir__)
+    output = File.join(root, OUTPUT)
     checkpoint = File.join(root, '.local-data/code-language-history/checkpoint.json')
     git = lambda do |*args|
       result = IO.popen(['git', '-C', root, *args], &:read)
@@ -94,6 +105,7 @@ module CodeLanguageHistory
     plan = METADATA.merge('head' => head, 'source' => source, 'checkpoint' => checkpoint,
       'reusedDays' => rows.size, 'analyzedDays' => pending.size,
       'cacheBootstrap' => prepared[:bootstrap],
+      'sourceChanged' => source_changed?(root, File.file?(output) ? JSON.parse(File.read(output))['rows'].last&.fetch('sha') : nil, head),
       'lastDate' => expected.last.first)
     if plan_only
       puts JSON.pretty_generate(plan)

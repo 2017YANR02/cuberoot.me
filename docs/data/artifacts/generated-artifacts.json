@@ -1955,9 +1955,9 @@
         "core/packages/client/app/[lang]/dev/architecture/_components/code-history/history.json"
       ],
       "verification": [
-        "pnpm --filter @cuberoot/client typecheck"
+        "ruby packages/client/scripts/check-code-history.rb"
       ],
-      "driftPolicy": "Explicit or scheduled maintenance through the existing incremental generator; keep raw Linguist byte counts and source commits. Reuse .local-data/code-language-history/checkpoint.json. CI, builds and page rendering do not rerun history analysis."
+      "driftPolicy": "Daily code_language_history.yml or explicit maintenance uses the same incremental generator; keep raw Linguist byte counts and source commits. Reuse .local-data/code-language-history/checkpoint.json, with the checked-in snapshot as the cold-cache baseline. Skip snapshot-only publication commits. The dedicated workflow pushes only this output using the existing automation deploy key, then normal Web checks and deployment gates apply. Ordinary test CI, builds and page rendering do not rerun history analysis. No AI or local computer is required."
     },
     {
       "id": "client.wenkai-heading-fonts",
