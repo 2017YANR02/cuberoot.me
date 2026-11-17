@@ -5,8 +5,8 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { useDialogMotion } from '@cuberoot/timer-ui/dialog-motion';
 let host: HTMLDivElement, root: Root;
 let reduced: boolean, finishes: (() => void)[], frames: Keyframe[][], cancels: ReturnType<typeof vi.fn>[];
-function Dialog({ onClose }: { onClose(): void }) {
-  const { motionRef, close } = useDialogMotion(onClose);
+function Dialog({ onClose, drawer = false }: { onClose(): void; drawer?: boolean }) {
+  const { motionRef, close } = useDialogMotion(onClose, { drawer });
   return createElement('div', { ref: motionRef }, createElement('section', null,
     createElement('button', { onClick: close }, 'close')));
 }
@@ -44,6 +44,20 @@ it('dismisses immediately for reduced motion', async () => {
   await act(async () => root.render(createElement(Dialog, { onClose: close })));
   await act(async () => host.querySelector('button')!.click());
   expect(close).toHaveBeenCalledTimes(1); expect(frames).toHaveLength(0);
+});
+it('slides drawers horizontally and keeps them mounted through the longer exit', async () => {
+  vi.useFakeTimers();
+  try {
+    const close = vi.fn();
+    await act(async () => root.render(createElement(Dialog, { onClose: close, drawer: true })));
+    expect(frames[0]).toEqual([{ translate: '-100% 0', scale: '1' }, { translate: '0 0', scale: '1' }]);
+    await act(async () => host.querySelector('button')!.click());
+    expect(frames[2]).toEqual([...frames[0]].reverse());
+    await act(async () => vi.advanceTimersByTime(240));
+    expect(close).not.toHaveBeenCalled();
+    await act(async () => finishes.forEach(finish => finish()));
+    expect(close).toHaveBeenCalledTimes(1);
+  } finally { vi.useRealTimers(); }
 });
 it('holds the final exit frame until the owner removes the dialog', async () => {
   const close = vi.fn();

@@ -5,11 +5,11 @@ import { useCallback, useEffect, useRef } from 'react';
 /** Keep dismissal/focus/scroll owners mounted through exit. Never fade a glass
  * ancestor: animate the scrim's color and the panel's geometry independently. */
 export function useDialogMotion(onClose: () => void, {
-  enabled = true, surface = false, sheet = false,
-}: { enabled?: boolean; surface?: boolean; sheet?: boolean } = {}) {
+  enabled = true, surface = false, sheet = false, drawer = false,
+}: { enabled?: boolean; surface?: boolean; sheet?: boolean; drawer?: boolean } = {}) {
   const motionRef = useRef<HTMLDivElement>(null);
-  const latest = useRef({ onClose, enabled, surface, sheet });
-  latest.current = { onClose, enabled, surface, sheet };
+  const latest = useRef({ onClose, enabled, surface, sheet, drawer });
+  latest.current = { onClose, enabled, surface, sheet, drawer };
   const animations = useRef<Animation[]>([]);
   const closing = useRef(false);
   const mounted = useRef(false);
@@ -28,9 +28,10 @@ export function useDialogMotion(onClose: () => void, {
     if (!(panel instanceof HTMLElement)) return [];
     const sheetMotion = latest.current.sheet && window.matchMedia('(max-width: 900px)').matches;
     const rest = { translate: '0 0', scale: '1' };
-    const offset = { translate: sheetMotion ? '0 100%' : '0 8px', scale: sheetMotion ? '1' : '.985' };
-    const options: KeyframeAnimationOptions = { duration: exit ? 160 : 180,
-      easing: exit ? 'ease-in' : 'cubic-bezier(.2,.8,.2,1)', fill: exit ? 'forwards' : 'none' };
+    const offset = { translate: latest.current.drawer ? '-100% 0' : sheetMotion ? '0 100%' : '0 8px', scale: latest.current.drawer || sheetMotion ? '1' : '.985' };
+    // Match the navigation shell's horizontal transition cadence.
+    const options: KeyframeAnimationOptions = { duration: latest.current.drawer ? 240 : exit ? 160 : 180,
+      easing: latest.current.drawer ? 'ease' : exit ? 'ease-in' : 'cubic-bezier(.2,.8,.2,1)', fill: exit ? 'forwards' : 'none' };
     const running = [panel.animate(exit ? [rest, offset] : [offset, rest], options)];
     if (panel !== root) {
       const backgroundColor = getComputedStyle(root).backgroundColor;
@@ -71,7 +72,7 @@ export function useDialogMotion(onClose: () => void, {
     };
     if (!running.length) { finish(); return; }
     // A bounded fallback also covers a background tab with suspended animations.
-    fallback.current = setTimeout(finish, 220);
+    fallback.current = setTimeout(finish, latest.current.drawer ? 300 : 220);
     void Promise.allSettled(running.map(animation => animation.finished)).then(finish);
   }, [cancel, play]);
   return { motionRef, close };

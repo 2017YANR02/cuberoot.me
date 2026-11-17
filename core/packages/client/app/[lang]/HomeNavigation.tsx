@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { NavigationMenu } from '@app-foundation/navigation-ui';
 import { Menu } from '@app-foundation/icons/lucide';
 import SettingsDialog from '@/components/SettingsDialog';
+import CubeRootLogo from '@/components/CubeRootLogo';
 import { tr } from '@/i18n/tr';
 import type { Section } from '@/lib/landing-sections';
 import '@app-foundation/navigation-ui/navigation.css';
@@ -34,9 +35,12 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
     <button type="button" className="home-navigation-brand" aria-label={tr({ zh: '首页', en: 'Home' })}
       onClick={() => onSelect('home')}>{brand}</button>
     <div className="home-navigation-desktop">{menu()}</div>
-    {actions}
-    {open && <SettingsDialog label={label} heading panelClassName="home-navigation-drawer" onClose={() => setOpen(false)}>
-      {close => menu(close)}
+    {!open && actions}
+    {open && <SettingsDialog drawer label={label} heading={<CubeRootLogo className="home-navigation-drawer-logo" height={48} />} panelClassName="home-navigation-drawer" onClose={() => setOpen(false)}>
+      {close => <>{menu(close)}<div className="home-navigation-drawer-actions"
+        onClickCapture={event => { if ((event.target as Element).closest('a, button')) close(); }}>
+        {actions}
+      </div></>}
     </SettingsDialog>}
   </header>;
 }

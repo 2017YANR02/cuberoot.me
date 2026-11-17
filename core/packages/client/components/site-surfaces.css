@@ -380,6 +380,11 @@ body[data-site-scenery] .solver-sheet {
   backdrop-filter: var(--glass-filter);
 }
 
+/* The navigation drawer sits over a dimming backdrop, like other dialogs. */
+body[data-site-scenery] .home-navigation-drawer[data-site-surface='popover'] {
+  background: var(--glass-dialog-bg);
+}
+
 /* Keep toolbar glass on a sibling paint layer: filtering the toolbar itself
    creates a backdrop root that prevents its dropdowns from blurring the page. */
 body[data-site-scenery] .timer-shell .shell-topbar,

@@ -524,7 +524,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       </span>} actions={<div className="landing-auth">
         {isAdmin && <>
         <Tooltip content={editingCards ? tr({ zh: '完成编辑', en: 'Finish editing' }) : tr({ zh: '编辑', en: 'Edit' })}>
-          {(tip) => <button {...tip} type="button" className="landing-auth-icon" aria-pressed={editingCards}
+          {(tip) => <button {...tip} type="button" className="landing-auth-icon landing-edit-cards" aria-pressed={editingCards}
             aria-label={editingCards ? tr({ zh: '完成编辑', en: 'Finish editing' }) : tr({ zh: '编辑', en: 'Edit' })}
             onClick={() => setEditingCards(current => !current)}>
             {editingCards ? <Check size={16} aria-hidden="true" /> : <Pencil size={16} aria-hidden="true" />}
@@ -696,6 +696,9 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       )}
 
       <footer className="landing-footer-layout">
+      {activeSection === 'home' && <div className="landing-contact-details">
+        <ContactDetails />
+      </div>}
       <div className="landing-footer-info">
       <div className="footer">
         {/* allow-nested-link: footer entries are sibling links with text-only contents. */}
@@ -724,8 +727,12 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
           </svg>
           <span>{t(GITHUB_FOOTER_ENTRY.nameKey)}</span>
         </a>
+        <Link href="/privacy" prefetch={false}>
+          {tr({ zh: '隐私政策', en: 'Privacy policy' })}
+        </Link>
       </div>
 
+      <div className="landing-footer-legal">
       <div className="beian company-contact">
         <span>{tr({ zh: '上海魔方根科技有限公司', en: 'Shanghai CubeRoot Technology Co., Ltd.' })}</span>
         <Tooltip openOnClick content={tr({
@@ -749,8 +756,6 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         </div>
       )}
       </div>
-      <div className="landing-contact-details">
-        <ContactDetails />
       </div>
       </footer>
       {activeSection === 'home' && <Suspense fallback={null}><LandingOnboarding mounted={mounted} personalLoading={personalLoading} /></Suspense>}

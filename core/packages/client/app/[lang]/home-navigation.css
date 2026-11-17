@@ -85,14 +85,43 @@ body .landing-page.landing-page--navigation {
 /* Reuse the site's modal focus, Escape, outside-click and motion contracts. */
 .settings-dialog-backdrop:has(.home-navigation-drawer) { justify-content: flex-start; align-items: stretch; padding: 0; }
 .settings-dialog:has(.home-navigation-drawer) { width: min(320px, 85vw); }
-.settings-dialog .settings-popover-panel.home-navigation-drawer {
+.settings-dialog .settings-popover-panel.settings-dialog-panel.home-navigation-drawer {
   height: 100dvh;
   max-height: 100dvh;
+  border: 0;
   border-radius: 0;
+  box-shadow: none;
   padding: max(20px, var(--sat)) 16px max(20px, var(--sab));
 }
 .home-navigation-drawer .af-nav-menu { width: 100%; margin-top: 16px; }
+.home-navigation-drawer-logo { display: flex; align-items: center; justify-content: center; width: 48px; }
+.home-navigation-drawer-logo img { display: block; height: 48px; width: auto; }
 .home-navigation-drawer .af-nav-link { height: 48px; font-size: 16px; }
+.home-navigation-drawer-actions { margin-top: auto; width: 100%; padding-top: 24px; }
+.home-navigation-drawer .home-navigation-drawer-actions .landing-auth {
+  position: static;
+  inset: auto;
+  transform: none;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  gap: 0;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+.home-navigation-drawer-actions .landing-auth-icon.landing-edit-cards { display: none; }
+.home-navigation-drawer-actions .landing-auth-btn { order: 1; margin: 0; }
+.home-navigation-drawer-actions .landing-auth-btn.is-login { width: 44px; padding: 0; }
+.home-navigation-drawer-actions .landing-auth-btn.is-login > span { display: none; }
+.home-navigation-drawer-actions .landing-calendar-link .landing-card {
+  display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; padding: 0; border: 0;
+  background: transparent; color: var(--muted-foreground);
+}
+.home-navigation-drawer-actions .landing-calendar-link .landing-card-icon { display: flex; }
+.home-navigation-drawer-actions .landing-calendar-link .landing-card-icon > svg { width: 24px; height: 24px; }
 
 @media (max-width: 1200px) {
   .home-navigation { gap: 8px; }

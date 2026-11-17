@@ -41,7 +41,7 @@
 /* ── 右上角 语言 / 外观 / 致谢 + 登录 / 我的主页 入口 ── */
 /* 对齐内容列右沿(内容列 max-width 1100px,见 .cards-sections / .recent-scrambles),
    宽屏不贴浏览器最右侧;窄屏退回页面自身的 padding 地板。 */
-.landing-page .landing-auth {
+:is(.landing-page, .home-navigation-drawer) .landing-auth {
     position: absolute;
     /* 基准位(页面顶部没有通知条时):页首 1.1rem。 */
     top: calc(1.1rem + var(--sat));
@@ -52,9 +52,9 @@
     flex-wrap: nowrap;
     gap: 0.5rem;
 }
-.landing-page .landing-auth .lang-toggle,
-.landing-page .landing-auth .theme-toggle-inline,
-.landing-page .landing-auth-icon {
+:is(.landing-page, .home-navigation-drawer) .landing-auth .lang-toggle,
+:is(.landing-page, .home-navigation-drawer) .landing-auth .theme-toggle-inline,
+:is(.landing-page, .home-navigation-drawer) .landing-auth-icon {
     width: 44px;
     height: 44px;
     flex-shrink: 0;
@@ -70,20 +70,20 @@
     transition: color 0.15s, background 0.15s;
 }
 /* Size only the entry icons, never icons inside the appearance menu. */
-.landing-page .landing-auth .lang-toggle > svg,
-.landing-page .landing-auth .theme-toggle-inline > svg,
-.landing-page .landing-auth-icon > svg,
-.landing-page .landing-auth-btn.is-login > svg {
+:is(.landing-page, .home-navigation-drawer) .landing-auth .lang-toggle > svg,
+:is(.landing-page, .home-navigation-drawer) .landing-auth .theme-toggle-inline > svg,
+:is(.landing-page, .home-navigation-drawer) .landing-auth-icon > svg,
+:is(.landing-page, .home-navigation-drawer) .landing-auth-btn.is-login > svg {
     width: 24px;
     height: 24px;
     flex-shrink: 0;
 }
-.landing-page .landing-auth .lang-toggle:hover,
-.landing-page .landing-auth .lang-toggle:focus-visible,
-.landing-page .landing-auth .theme-toggle-inline:hover,
-.landing-page .landing-auth .theme-toggle-inline:focus-visible,
-.landing-page .landing-auth-icon:hover,
-.landing-page .landing-auth-icon:focus-visible {
+:is(.landing-page, .home-navigation-drawer) .landing-auth .lang-toggle:hover,
+:is(.landing-page, .home-navigation-drawer) .landing-auth .lang-toggle:focus-visible,
+:is(.landing-page, .home-navigation-drawer) .landing-auth .theme-toggle-inline:hover,
+:is(.landing-page, .home-navigation-drawer) .landing-auth .theme-toggle-inline:focus-visible,
+:is(.landing-page, .home-navigation-drawer) .landing-auth-icon:hover,
+:is(.landing-page, .home-navigation-drawer) .landing-auth-icon:focus-visible {
     background: var(--muted);
     color: var(--foreground);
 }
@@ -95,11 +95,11 @@
    :has 不支持的浏览器整条规则失效,退回上面的基准位(通知条下方),同样完整可见。
    通知条那一行右端要给这块悬浮让位(padding-right / 管理员条锚点),见 PageNoticeBar.css
    的 .page-notice-wrap:has(+ .landing-page) 两条 —— 改这里的宽度要同步改那边的预留。 */
-body:has(.page-notice-wrap) .landing-page .landing-auth {
+body:has(.page-notice-wrap) :is(.landing-page, .home-navigation-drawer) .landing-auth {
     top: calc(var(--sat) - var(--page-notice-h, 0px));
     min-height: var(--page-notice-h, 0px);
 }
-.landing-page .landing-auth-btn {
+:is(.landing-page, .home-navigation-drawer) .landing-auth-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -119,20 +119,20 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     text-decoration: none;
     transition: background 0.15s, border-color 0.15s;
 }
-.landing-page .landing-auth-btn:hover {
+:is(.landing-page, .home-navigation-drawer) .landing-auth-btn:hover {
     background: var(--accent-soft);
     border-color: var(--accent);
 }
 /* 未登录时更显著:实心 accent 底(配对 accent-foreground,随主题走) */
-.landing-page .landing-auth-btn.is-login {
+:is(.landing-page, .home-navigation-drawer) .landing-auth-btn.is-login {
     background: var(--accent);
     border-color: var(--accent);
     color: var(--accent-foreground);
 }
-.landing-page .landing-auth-btn.is-login:hover {
+:is(.landing-page, .home-navigation-drawer) .landing-auth-btn.is-login:hover {
     filter: brightness(1.08);
 }
-.landing-page .landing-auth-avatar {
+:is(.landing-page, .home-navigation-drawer) .landing-auth-avatar {
     width: 22px;
     height: 22px;
     border-radius: 999px;
@@ -140,7 +140,7 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     background: var(--accent-soft);
 }
 /* 已登录:仅头像,按钮收成圆形贴合头像(去掉胶囊边框/内边距) */
-.landing-page .landing-auth-btn.is-avatar {
+:is(.landing-page, .home-navigation-drawer) .landing-auth-btn.is-avatar {
     width: 44px;
     height: 44px;
     padding: 0;
@@ -148,20 +148,20 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     background: transparent;
     gap: 0;
 }
-.landing-page .landing-auth-btn.is-avatar:hover {
+:is(.landing-page, .home-navigation-drawer) .landing-auth-btn.is-avatar:hover {
     background: transparent;
 }
-.landing-page .landing-auth-btn.is-avatar .landing-auth-avatar {
+:is(.landing-page, .home-navigation-drawer) .landing-auth-btn.is-avatar .landing-auth-avatar {
     width: 32px;
     height: 32px;
     border: 1px solid var(--border);
     transition: border-color 0.15s;
 }
-.landing-page .landing-auth-btn.is-avatar:hover .landing-auth-avatar {
+:is(.landing-page, .home-navigation-drawer) .landing-auth-btn.is-avatar:hover .landing-auth-avatar {
     border-color: var(--accent);
 }
 /* 无头像的兜底 User 图标同尺寸圆形 */
-.landing-page .landing-auth-btn.is-avatar > svg {
+:is(.landing-page, .home-navigation-drawer) .landing-auth-btn.is-avatar > svg {
     width: 32px;
     height: 32px;
     padding: 5px;
@@ -171,7 +171,7 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     color: var(--text);
     transition: border-color 0.15s;
 }
-.landing-page .landing-auth-btn.is-avatar:hover > svg {
+:is(.landing-page, .home-navigation-drawer) .landing-auth-btn.is-avatar:hover > svg {
     border-color: var(--accent);
 }
 
@@ -265,14 +265,14 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     letter-spacing: normal;
     white-space: nowrap;
 }
-.landing-page .landing-calendar-link .landing-card {
+:is(.landing-page, .home-navigation-drawer) .landing-calendar-link .landing-card {
     min-width: 44px;
     min-height: 44px;
     padding: 5px;
     border: 0;
     background: none;
 }
-.landing-page .landing-calendar-link .landing-card-name { display: none; }
+:is(.landing-page, .home-navigation-drawer) .landing-calendar-link .landing-card-name { display: none; }
 .landing-pinned-recons .recon-card,
 .landing-pinned-recons .recon-curated-card {
     height: 100%;
@@ -577,14 +577,14 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     body:has(.page-notice-wrap) .landing-page {
         padding-top: calc(4rem + var(--sat));
     }
-    .landing-page .landing-auth,
-    body:has(.page-notice-wrap) .landing-page .landing-auth {
+    :is(.landing-page, .home-navigation-drawer) .landing-auth,
+    body:has(.page-notice-wrap) :is(.landing-page, .home-navigation-drawer) .landing-auth {
         top: calc(0.5rem + var(--sat));
         right: max(1rem, var(--sar));
         min-height: 44px;
     }
-    .landing-page .landing-auth,
-    .landing-page .landing-auth .header-toggles {
+    :is(.landing-page, .home-navigation-drawer) .landing-auth,
+    :is(.landing-page, .home-navigation-drawer) .landing-auth .header-toggles {
         gap: clamp(0px, calc((100vw - 288px) / 16), 8px);
     }
     .landing-page .brand-line,
@@ -597,10 +597,10 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
         white-space: nowrap;
     }
     .landing-page .brand-name,
-    .landing-page .landing-auth-btn.is-login > span {
+    :is(.landing-page, .home-navigation-drawer) .landing-auth-btn.is-login > span {
         display: none;
     }
-    .landing-page .landing-auth-btn.is-login {
+    :is(.landing-page, .home-navigation-drawer) .landing-auth-btn.is-login {
         width: 44px;
         gap: 0;
         padding: 0;
@@ -933,7 +933,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     --footer-row-height: 32px;
     --footer-row-gap: 2px;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(440px, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     align-items: start;
     gap: 2rem;
     width: min(100%, 1100px);
@@ -945,6 +945,32 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     display: grid;
     gap: var(--footer-row-gap);
     text-align: left;
+}
+
+@media (min-width: 901px) {
+    .landing-page .landing-footer-layout:has(.landing-contact-details) {
+        grid-template-columns: minmax(0, 1fr) minmax(440px, 1fr);
+    }
+    .landing-footer-layout:has(.landing-contact-details) .landing-footer-info {
+        order: -1;
+    }
+}
+
+.landing-footer-legal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 1rem;
+}
+
+.landing-footer-layout:has(.landing-contact-details) .landing-footer-legal {
+    display: grid;
+    gap: var(--footer-row-gap);
+}
+
+.landing-page .landing-footer-legal .beian {
+    font-size: 0.6875rem;
+    color: var(--muted-foreground);
 }
 
 .landing-page .landing-footer-info .beian {
@@ -1101,7 +1127,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 
 /* 致谢链接的爱心:站内统一爱心红(DeskPet .heart-icon 同款),hover 时仍保持红色 */
-.landing-page .landing-auth-icon.landing-support-icon svg,
+:is(.landing-page, .home-navigation-drawer) .landing-auth-icon.landing-support-icon svg,
 .landing-page .footer-credits svg {
     color: #ff5a5f;
     fill: #ff5a5f;
