@@ -726,9 +726,9 @@ jobs:
     name: Client tests (${{ matrix.shard }}/2)
     needs: changes
     if: ${{ inputs.scope != 'core' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.client == 'true') }}
-    # Playwright 1.60 supports Ubuntu 24.04, not the 26.04 ubuntu-latest image.
+    # Keep the runner explicit: Playwright >= 1.61 supports Ubuntu 26.04.
     # Upgrade this image together with Playwright's supported browser platform.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     strategy:
       fail-fast: false
