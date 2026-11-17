@@ -107,6 +107,24 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
     return () => cancelAnimationFrame(frame);
   }, [props.headerExpanded]);
 
+  // Sidebar width animates without a window resize. Observe only width to
+  // avoid feeding FullCalendar's own height writes back into the observer.
+  useEffect(() => {
+    const node = gridRef.current;
+    if (!node) return;
+    let width = node.getBoundingClientRect().width;
+    let frame = 0;
+    const observer = new ResizeObserver(([entry]) => {
+      const next = entry.contentRect.width;
+      if (Math.abs(next - width) < 0.5) return;
+      width = next;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => api.current?.getApi().updateSize());
+    });
+    observer.observe(node);
+    return () => { observer.disconnect(); cancelAnimationFrame(frame); };
+  }, []);
+
   // 多天视图复用同一个时间网格，只改变 duration。
   const views = useMemo<CalendarOptions['views']>(() => ({
     threeDay: { type: 'timeGrid', duration: { days: 3 } },

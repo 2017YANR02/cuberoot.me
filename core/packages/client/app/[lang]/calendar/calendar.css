@@ -185,8 +185,7 @@ html:root[data-theme=dark]:has(.cal-page) {
 .cal-search-option-actions .cal-link-btn { min-height: 36px; padding: 4px 8px; font-size: 16px; }
 
 .cal-menu-btn { display: inline-flex; }
-/* 侧栏在宽屏是常驻栏,没有抽屉也就没有遮罩;只有 900px 以下那档才亮出来 */
-.cal-scrim { display: none; }
+
 
 /* ── 通用控件 ─────────────────────────────────────────────────────────── */
 
@@ -290,8 +289,17 @@ html:root[data-theme=dark]:has(.cal-page) {
 
 /* ── 左栏 ─────────────────────────────────────────────────────────────── */
 
+.cal-sidebar-slot {
+  flex: 0 0 var(--cal-sidebar-width, 264px);
+  min-width: 0;
+  overflow: hidden;
+  transition: flex-basis 240ms ease;
+}
+.cal-sidebar-slot[data-expanded="false"] { flex-basis: 0; }
+@media (prefers-reduced-motion: reduce) { .cal-sidebar-slot { transition: none; } }
 .cal-sidebar {
-  width: 264px;
+  width: var(--cal-sidebar-width, 264px);
+  height: 100%;
   flex: 0 0 auto;
   padding: 10px 12px 20px;
   overflow-y: auto;
@@ -542,7 +550,6 @@ html:root[data-theme=dark]:has(.cal-page) {
 .cal-travel-origin:focus-within { outline: 2px solid var(--ring); outline-offset: 2px; }
 
 @media (min-width: 901px) {
-  .cal-page.sidebar-collapsed .cal-sidebar { display: none; }
   .cal-page.sidebar-collapsed .cal-fab { display: flex; }
 }
 
@@ -1078,31 +1085,6 @@ html:root[data-theme=dark]:has(.cal-page) {
   /* 左栏收进抽屉了,「创建」得有个够得着的入口 */
   .cal-fab { display: flex; }
 
-  .cal-sidebar {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 40;
-    width: 260px;
-    background: var(--background);
-    transform: translateX(-100%);
-    transition: transform 0.18s ease;
-  }
-
-  .cal-page.sidebar-open .cal-sidebar { transform: translateX(0); box-shadow: 0 0 40px color-mix(in srgb, var(--foreground) 22%, transparent); }
-
-  /* 抽屉遮罩,压在抽屉(z-index 40)下面一层 */
-  .cal-scrim {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 39;
-    padding: 0;
-    border: none;
-    background: color-mix(in srgb, var(--foreground) 26%, transparent);
-  }
-
   .cal-brand { font-size: 15px; }
   .cal-range-title { font-size: 14px; order: 5; flex-basis: 100%; }
   .cal-search { margin-left: auto; }
@@ -1328,8 +1310,8 @@ html:root[data-theme=dark]:has(.cal-page) {
   .cal-page .cal-grid .fc .fc-timegrid-event .fc-event-main { padding: 2px; }
   .cal-page .cal-grid .cal-chip { font-size: 13px; line-height: 1.2; }
   .cal-page .cal-grid .fc-timegrid-axis .fc-timegrid-axis-cushion { font-size: 11px; }
-  .cal-sidebar { width: min(340px, 75vw); padding: calc(20px + env(safe-area-inset-top)) 16px 24px; border: none; }
-  .cal-scrim { background: color-mix(in srgb, var(--background) 45%, transparent); }
+  .cal-body { --cal-sidebar-width: min(264px, 55vw); }
+  .cal-sidebar { padding: 20px 12px 24px; border: none; }
   .cal-sidebar > :is(.cal-create-btn, .cal-mini) { display: none; }
   .cal-mobile-sidebar-head, .cal-mobile-sidebar-foot { display: block; }
   .cal-mobile-sidebar-head h2 { margin: 12px 0 20px; font-size: 22px; font-weight: 500; }

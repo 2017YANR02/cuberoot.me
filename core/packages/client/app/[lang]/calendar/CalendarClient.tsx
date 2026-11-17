@@ -24,7 +24,6 @@ import { ListSelect } from '@/components/ListSelect';
 import { ClearButton } from '@/components/ClearButton';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { DateTime } from 'luxon';
 import { tr, useLang } from '@/i18n/tr';
 import { localZone, isValidZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
@@ -123,7 +122,6 @@ export default function CalendarClient() {
   const [range, setRange] = useState<GridRange>({ start: Date.UTC(2000, 0, 1), end: Date.UTC(2000, 0, 2), anchor: Date.UTC(2000, 0, 1) });
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const sidebarBackdrop = useModalBackdrop(() => setSidebarOpen(false));
   const [mobileSearch, setMobileSearch] = useState(false);
   const mobileSearchRef = useRef<HTMLInputElement>(null);
   const [pickerMonth, setPickerMonth] = useState<string | null>(null);
@@ -594,7 +592,7 @@ export default function CalendarClient() {
 
   return (
     <div className={`cal-page${settingsOpen ? ' cal-page--settings' : ''}${sidebarOpen ? ' sidebar-open' : ''}${prefs.sidebarCollapsed ? ' sidebar-collapsed' : ''}${mobileSearch && isMobile ? ' cal-page--search' : ''}${monthExpanded ? ' cal-page--month-expanded' : ''}`}>
-      <div className="cal-mobile-topbar" inert={isMobile && sidebarOpen}>
+      <div className="cal-mobile-topbar">
         {mobileSearch ? <>
           {/* allow-manual-search: 仅关闭搜索页面，结果已由输入实时更新。 */}
           <button type="button" className="cal-mobile-action cal-mobile-glass cal-mobile-back" aria-label={tr({ zh: '关闭搜索', en: 'Close search' })} onClick={closeSearch}><ChevronLeft size={26} aria-hidden /></button>
@@ -602,7 +600,7 @@ export default function CalendarClient() {
           {query && <ClearButton onClick={() => setQuery('')} />}
         </> : <>
           <BackHome className="cal-mobile-action" />
-          <button type="button" className="cal-mobile-action cal-mobile-glass cal-mobile-menu" aria-label={tr({ zh: '侧栏', en: 'Sidebar' })} aria-expanded={sidebarOpen} onClick={() => setSidebarOpen(true)}><Menu size={25} aria-hidden /></button>
+          <button type="button" className="cal-mobile-action cal-mobile-glass cal-mobile-menu" aria-label={tr({ zh: '侧栏', en: 'Sidebar' })} aria-expanded={sidebarOpen} onClick={() => setSidebarOpen(open => !open)}><Menu size={25} aria-hidden /></button>
           <MoreToggle type="button" className="cal-mobile-action cal-mobile-month-toggle" expanded={monthExpanded} aria-controls="cal-mobile-month" onClick={() => setPickerMonth(monthExpanded ? null : `${focusKey.slice(0, 7)}-01`)}>
             <span>{mounted ? mobileMonthLabel : ''}</span>
           </MoreToggle>
@@ -616,7 +614,7 @@ export default function CalendarClient() {
           </AppLink>
         </>}
       </div>
-      {monthExpanded && <MobileMonthPicker inert={sidebarOpen} monthKey={pickerMonth} selectedKey={focusKey} todayKey={todayKey} tz={displayTz} weekStart={prefs.weekStart} events={fcEvents} onMonth={setPickerMonth}
+      {monthExpanded && <MobileMonthPicker inert={false} monthKey={pickerMonth} selectedKey={focusKey} todayKey={todayKey} tz={displayTz} weekStart={prefs.weekStart} events={fcEvents} onMonth={setPickerMonth}
         onPick={(key) => { gotoDate(dayStart(displayTz, key)); setPickerMonth(null); }} />}
       <div className={`cal-topbar cal-desktop-topbar${desktopSearch ? ' is-searching' : ''}`}>
         <BackHome />
@@ -784,6 +782,7 @@ export default function CalendarClient() {
       />
 
       <div className="cal-body">
+        <div className="cal-sidebar-slot" data-expanded={isMobile ? sidebarOpen : !prefs.sidebarCollapsed} inert={isMobile ? !sidebarOpen : prefs.sidebarCollapsed}>
         <Sidebar
           mobile={isMobile}
           open={sidebarOpen}
@@ -824,16 +823,9 @@ export default function CalendarClient() {
           onOpenInvite={openInvite}
         />
 
-        {/* 统一遮罩手势：从侧栏内部拖到遮罩不会误关闭。 */}
-        {sidebarOpen && (
-          <div
-            className="cal-scrim"
-            aria-hidden
-            {...sidebarBackdrop}
-          />
-        )}
+        </div>
 
-        <main className="cal-main" inert={isMobile && sidebarOpen}>
+        <main className="cal-main">
           <ContinuousInsetCorner className="cal-sidebar-corner" />
           {mounted && (
             <CalendarGrid
@@ -908,7 +900,6 @@ export default function CalendarClient() {
       <button
         type="button"
         className="cal-fab"
-        inert={isMobile && sidebarOpen}
         aria-label={tr({ zh: '新建日程', en: 'New event' })}
         onClick={openCreateNow}
       >
