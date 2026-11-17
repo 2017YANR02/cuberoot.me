@@ -364,7 +364,9 @@
 .settings-global-reset { position: absolute; left: 12px; bottom: 16px; }
 .settings-modal .settings-global-reset .settings-reset-row { margin: 0; padding: 0; border: 0; }
 .settings-modal .settings-global-reset .reset-defaults-btn { border: 0; }
-.settings-category-rail { padding-bottom: 76px; }
+/* Keep the scroll viewport above the 44px reset button and its 16px bottom
+   inset. Padding only extends scrollable content, which can pass behind it. */
+.settings-category-rail { margin-bottom: 60px; }
 @media (max-width: 720px) {
   .settings-modal-head { flex-wrap: nowrap; gap: 8px; }
   .settings-modal-head > h2 { flex: none; }
