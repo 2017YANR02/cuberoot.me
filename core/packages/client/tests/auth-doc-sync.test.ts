@@ -41,8 +41,8 @@ describe('/dev/auth source-review drift', () => {
       'packages/client/lib/onboarding.ts', 'packages/client/components/OnboardingGuideModal.tsx',
       'packages/client/app/[lang]/LandingClient.tsx']) expect(isAuthDocSource(path)).toBe(true);
   });
-  it('tracks the complete remote SSH enrollment boundary', () => {
-    for (const path of [...['src/routes/remote_access.ts', 'migrations/0272_remote_access.sql', 'scripts/remote-access-host.ts'].map(file => relative(CORE_ROOT, workspaceFixturePath('@cuberoot/server', file))), relative(CORE_ROOT, workspaceFixturePath('@cuberoot/shared', 'src/remote-access.ts')), 'packages/client/lib/remote-access-key.ts']) expect(isAuthDocSource(path)).toBe(true);
+  it('tracks existing remote SSH authorization and revocation', () => {
+    for (const path of [...['src/routes/remote_access.ts', 'migrations/0272_remote_access.sql', 'scripts/remote-access-host.ts'].map(file => relative(CORE_ROOT, workspaceFixturePath('@cuberoot/server', file))), relative(CORE_ROOT, workspaceFixturePath('@cuberoot/shared', 'src/remote-access.ts'))]) expect(isAuthDocSource(path)).toBe(true);
   });
   it('tracks membership signing identity and handoff boundaries', () => {
     for (const path of [...['src/payment/membership-handoff.ts', 'src/routes/membership_subscriptions.ts'].map(file => relative(CORE_ROOT, workspaceFixturePath('@cuberoot/server', file))), relative(CORE_ROOT, workspaceFixturePath('@cuberoot/miniprogram', 'src/pages/membership/index.ts')), 'packages/client/lib/membership-api.ts', 'packages/client/app/[lang]/membership/AutoRenewModal.tsx']) expect(isAuthDocSource(path)).toBe(true);

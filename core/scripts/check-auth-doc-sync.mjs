@@ -50,7 +50,6 @@ const EXACT = new Set([
   'packages/client/app/[lang]/workspace/WorkspaceContent.tsx', 'packages/client/app/[lang]/workspace/WorkspaceNavigation.tsx', 'packages/client/app/[lang]/admin/team/page.tsx',
   'apps/api/src/routes/remote_access.ts', 'apps/api/migrations/0272_remote_access.sql',
   'apps/api/scripts/remote-access-host.ts', 'packages/shared/src/remote-access.ts',
-  'packages/client/lib/remote-access-key.ts',
   'apps/api/src/routes/onboarding.ts', 'apps/api/migrations/0265_home_onboarding.sql',
   'packages/client/lib/onboarding.ts', 'packages/client/components/OnboardingGuideModal.tsx',
   'packages/client/app/[lang]/LandingClient.tsx',
