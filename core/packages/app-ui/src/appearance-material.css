@@ -10,6 +10,9 @@
   --glass-filter: none;
   --glass-scroll-filter: none;
   --glass-shadow: none;
+  /* Full-width navigation curtain, matching the reference's 20px diffusion. */
+  --navigation-curtain-bg: color-mix(in srgb, var(--background) 40%, transparent);
+  --navigation-curtain-filter: blur(20px);
 }
 
 @supports (color: color-mix(in srgb, black, white)) {
@@ -58,6 +61,7 @@ body[data-site-scenery='transparent'] {
 }
 @media (prefers-reduced-transparency: reduce) {
   :root, body, .palette-scope, .contrast-scope {
+    --navigation-curtain-filter: none;
     --glass-surface-bg: var(--card);
     --glass-popover-bg: var(--popover);
     --glass-menu-bg: var(--popover);

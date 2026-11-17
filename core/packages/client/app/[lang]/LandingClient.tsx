@@ -413,7 +413,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
     );
   };
 
-  const renderCardGrid = (groupId: string, cards: CardConfig[], className: string, adminArea = false) => {
+  const getCardGroup = (groupId: string, cards: CardConfig[], adminArea = false) => {
     const orderedCards = adminArea
       ? applyLandingCardOrder(cards, cardOrders[groupId] ?? [])
       : applyHomeSectionOrder(groupId, cards, cardOrders[groupId] ?? []);
@@ -422,6 +422,11 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
     // Split the same full group by access; keep all IDs when saving its order.
     const visibleCards = orderedCards.filter((card) => (!douyin || douyinContentAvailable(card.href)) && (isAdmin || locksLoaded)
       && (adminArea ? isAdmin && isCardLocked(card) : !isCardLocked(card)));
+    return { orderedCards, visibleCards };
+  };
+
+  const renderCardGrid = (groupId: string, cards: CardConfig[], className: string, adminArea = false) => {
+    const { orderedCards, visibleCards } = getCardGroup(groupId, cards, adminArea);
     if (visibleCards.length === 0) return null;
     const handleDragEnd = (event: DragEndEvent) => {
       const { active, over } = event;
@@ -446,6 +451,34 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         </SortableContext>
       </DndContext>
     );
+  };
+
+  const renderNavigationCards = (cards: CardConfig[], offset = 0) => cards.map((card, index) => {
+    const content = <LandingCardContent label={t(card.nameKey)} Icon={card.Icon} iconImg={card.iconImg}
+      iconText={card.iconText} puzzleIcon={card.puzzleIcon} record={card.record} />;
+    const style = { '--nav-item-index': index + offset } as CSSProperties;
+    return card.internal
+      ? <Link key={card.id} href={card.href} className="home-navigation-card" style={style} prefetch={false}>{content}</Link>
+      : <a key={card.id} href={card.href} className="home-navigation-card" style={style} target="_blank" rel="noopener noreferrer">{content}</a>;
+  });
+  const navigationFlyouts: Record<string, React.ReactNode> = {
+    home: renderNavigationCards([
+      ...getCardGroup('main', PRIMARY_CARDS).visibleCards,
+      ...getCardGroup('wca', WCA_CARDS).visibleCards,
+    ]),
+    ...Object.fromEntries(SECTIONS.map(section => [section.id,
+      renderNavigationCards(getCardGroup(section.id, section.cards.filter(card => card.id !== 'calendar')).visibleCards),
+    ])),
+    ...(isAdmin ? { admin: <>
+      <Link href="/admin" className="home-navigation-card" prefetch={false}>
+        <LandingCardContent label={tr({ zh: '管理后台', en: 'Admin dashboard' })} Icon={LayoutDashboard} />
+      </Link>
+      {renderNavigationCards([
+        ...getCardGroup('main', PRIMARY_CARDS, true).visibleCards,
+        ...getCardGroup('wca', WCA_CARDS, true).visibleCards,
+        ...SECTIONS.flatMap(section => getCardGroup(section.id, section.cards, true).visibleCards),
+      ], 1)}
+    </> } : {}),
   };
 
   const renderMemberSections = (adminArea = false) => ([
@@ -517,7 +550,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
   return (
     <>
     <div className="landing-page landing-page--navigation" data-home-section={activeSection}>
-      <HomeNavigation selected={activeSection} onSelect={selectSection} isAdmin={isAdmin}
+      <HomeNavigation selected={activeSection} onSelect={selectSection} isAdmin={isAdmin} flyouts={navigationFlyouts}
         sections={SECTIONS} brand={<span className="brand-line">
         <img src={mounted && effectiveTheme === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png'} alt="" className="brand-logo" />
         <span className="brand-name">{t('brand')}</span>
