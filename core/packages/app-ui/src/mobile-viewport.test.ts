@@ -167,6 +167,14 @@ describe('mobile visible viewport layout', () => {
     expect(expanded).toContain('data-spacing-flow=""');
     expect(renderToStaticMarkup(createElement(TimerWorkspace))).not.toContain('data-fit-viewport');
     expect(surfaceCss).toContain('@supports not (container-type: size)');
+    // Long sequences can spend less whitespace at short heights, but retain
+    // the shared font floor and whole-stage overflow instead of an inner clip.
+    const compactDensity = 'line-height: clamp(1.25, calc(1.5 * var(--scramble-length-scale, 1)), 1.5)';
+    const compactWords = 'word-spacing: clamp(0.1em, calc(0.25em * var(--scramble-length-scale, 1)), 0.25em)';
+    expect(surfaceCss.split(compactDensity)).toHaveLength(3);
+    expect(surfaceCss.split(compactWords)).toHaveLength(3);
+    expect(surfaceCss).toContain('@media (max-height: 650px)');
+    expect(surfaceCss).toContain('@container timer-stage (max-height: 650px)');
     expect(surfaceCss).toContain('@media (min-width: 520px) and (max-height: 650px) and (orientation: landscape)');
     expect(surfaceCss).toContain('@container timer-stage (min-width: 520px) and (max-height: 650px) and (min-aspect-ratio: 1/1)');
     // Scramble and readout stay vertically arranged. Footer/statistic grids

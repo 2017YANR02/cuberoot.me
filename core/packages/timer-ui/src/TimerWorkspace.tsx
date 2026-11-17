@@ -36,9 +36,11 @@ export function TimerWorkspace({ active = true, panelOpen = false, recap, soloLa
   const workspaceRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const stage = workspaceRef.current?.querySelector<HTMLElement>('.timer-solo-main');
-    if (!active || !expandedSpacing || !soloLayout || !stage || typeof ResizeObserver === 'undefined') return;
+    // Default gaps also consume scarce space when a long scramble arrives.
+    // Fit only rendered whitespace; keep the saved layout and font sizes.
+    if (!active || !soloLayout || !stage || typeof ResizeObserver === 'undefined') return;
     return observeSoloSpacing(stage, soloLayout);
-  }, [active, expandedSpacing, soloLayout]);
+  }, [active, soloLayout]);
   useLayoutEffect(() => {
     const workspace = workspaceRef.current;
     if (!workspace || !active || !wide || typeof ResizeObserver === 'undefined') return;

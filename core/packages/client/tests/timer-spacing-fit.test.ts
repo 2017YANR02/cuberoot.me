@@ -7,7 +7,10 @@ import { DEFAULT_SOLO_LAYOUT } from '@cuberoot/shared/timer';
 
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
-it('fits saved whitespace across rotation/resizing, restores it when room returns and ignores its own observer feedback', async () => {
+it.each([
+  ['default', DEFAULT_SOLO_LAYOUT],
+  ['expanded', { ...DEFAULT_SOLO_LAYOUT, scrambleGap: 150, sourceGap: 16, timerGap: 119, cubeGap: 175 }],
+] as const)('fits %s whitespace across rotation/resizing, restores it when room returns and ignores its own observer feedback', async (_name, input) => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   let height = 900, content = 500;
   const callbacks: ResizeObserverCallback[] = [], frames: FrameRequestCallback[] = [];
@@ -26,7 +29,8 @@ it('fits saved whitespace across rotation/resizing, restores it when room return
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => ({ width: 440, height }) as DOMRect);
   const host = document.createElement('div'); document.body.append(host);
   const root = createRoot(host);
-  const layout = Object.freeze({ ...DEFAULT_SOLO_LAYOUT, scrambleGap: 150, sourceGap: 16, timerGap: 119, cubeGap: 175 });
+  const layout = Object.freeze({ ...input });
+  const savedWhitespace = layout.scrambleGap + layout.sourceGap + layout.timerGap + layout.cubeGap;
   const draw = (active: boolean) => act(async () => root.render(h(TimerWorkspace, { soloLayout: layout, active }, h('div', { className: 'timer-solo-main' }))));
   const resize = () => act(async () => {
     callbacks.forEach(callback => callback([], {} as ResizeObserver));
@@ -36,11 +40,12 @@ it('fits saved whitespace across rotation/resizing, restores it when room return
     await draw(true);
     const stage = host.querySelector<HTMLElement>('.timer-solo-main')!;
     expect(stage.scrollHeight).toBe(height);
-    expect(whitespace(stage)).toBeLessThan(460);
-    height = 640; await resize();
-    expect(stage.scrollHeight).toBe(640);
+    expect(whitespace(stage)).toBeLessThanOrEqual(savedWhitespace);
+    height = content + Math.floor(savedWhitespace / 2); await resize();
+    expect(stage.scrollHeight).toBe(height);
+    expect(whitespace(stage)).toBeLessThan(savedWhitespace);
     height = 1100; await resize();
-    expect(whitespace(stage)).toBe(460);
+    expect(whitespace(stage)).toBe(savedWhitespace);
     const writes = vi.spyOn(stage.style, 'setProperty');
     for (let i = 0; i < 5; i++) await resize();
     expect(writes).not.toHaveBeenCalled();
@@ -51,6 +56,6 @@ it('fits saved whitespace across rotation/resizing, restores it when room return
     await draw(false);
     expect(properties.every(key => stage.style.getPropertyValue(key) === '')).toBe(true);
     expect(disconnect).toHaveBeenCalledTimes(1);
-    expect(layout.scrambleGap).toBe(150);
+    expect(layout).toEqual(input);
   } finally { await act(async () => root.unmount()); host.remove(); }
 });

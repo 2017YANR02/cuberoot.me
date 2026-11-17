@@ -434,6 +434,12 @@
 .timer-workspace[data-fit-viewport][data-spacing-flow] .timing-surface-sub { height: auto; max-height: none; }
 
 @supports not (container-type: size) {
+  @media (max-height: 650px) {
+    /* At the existing readable font floor, save whitespace between long
+       sequences instead of clipping moves or shrinking the timer/preview. */
+    .timer-workspace[data-fit-viewport] .scramble-strip { line-height: clamp(1.25, calc(1.5 * var(--scramble-length-scale, 1)), 1.5); }
+    .timer-workspace[data-fit-viewport] .scramble-strip .scramble-moves { word-spacing: clamp(0.1em, calc(0.25em * var(--scramble-length-scale, 1)), 0.25em); }
+  }
   @media (max-height: 460px) {
     .timer-workspace[data-fit-viewport] .timer-stage-footer { padding-block: 4px; }
     .timer-workspace[data-fit-viewport] .shell-stat { font-size: 14px; line-height: 1.2; }
@@ -482,6 +488,10 @@
   .timer-workspace[data-fit-viewport] .timing-surface--solo { --timer-scramble-fs: clamp(16px, 4cqw, 28px); }
   .timer-workspace[data-fit-viewport] .timing-surface-core { --timer-readout-max-size: min(24cqh, 22cqw); }
   .timer-workspace[data-fit-viewport] .timing-surface-cube-frame { --timer-cube-h: min(30cqw, 26cqh); }
+  @container timer-stage (max-height: 650px) {
+    .timer-workspace[data-fit-viewport] .scramble-strip { line-height: clamp(1.25, calc(1.5 * var(--scramble-length-scale, 1)), 1.5); }
+    .timer-workspace[data-fit-viewport] .scramble-strip .scramble-moves { word-spacing: clamp(0.1em, calc(0.25em * var(--scramble-length-scale, 1)), 0.25em); }
+  }
   @container timer-stage (max-height: 350px) {
     .timer-workspace[data-fit-viewport] .timer-stage-footer { padding-block: 4px; }
     .timer-workspace[data-fit-viewport] .shell-stat { font-size: 14px; line-height: 1.2; }
