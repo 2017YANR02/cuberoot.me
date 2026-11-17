@@ -47,6 +47,7 @@ const ZERO_WIDTH_1_RE = /[​‌‍﻿]/;
 const APOSTROPHE_RE = /[`´ʹʻʼʽˈˊˋ‘’‚‛“”„′″‵ꞌ"]/;
 
 function cleanChar(ch: string): string {
+  if (ch === '｜') return ch; // 双手换握分隔符保留原写法。
   const code = ch.codePointAt(0)!;
   if (code === 0x3000) return ' ';                                    // 全角空格
   // 全角 ASCII 先折半角(＇→ ' 、｀→ ` ),折完再往下判 —— 否则全角反引号会漏网

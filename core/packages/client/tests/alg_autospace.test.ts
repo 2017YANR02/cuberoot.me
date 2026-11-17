@@ -2,6 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { autoSpaceMoves, autoSpaceMovesSimple, autoSpaceAfterComment, autoCloseBracket, cleanAlgText } from '@/lib/alg-autospace';
 
 describe('autoSpaceMoves — 相邻转动自动加空格', () => {
+  it('preserves grip separator, hand-selecting spaces and caret', () => {
+    const value = '↑↑R ↑↑ U ↑｜↑F';
+    expect(cleanAlgText(value, value.length)).toEqual({ value, cursor: value.length });
+    expect(autoSpaceMoves(value, value.length, 'insertText')).toEqual({ value, cursor: value.length });
+  });
   // 模拟「刚输入第二步那个面字母」后的一次 onInput 调用
   const typed = (value: string) => autoSpaceMoves(value, value.length, 'insertText');
 

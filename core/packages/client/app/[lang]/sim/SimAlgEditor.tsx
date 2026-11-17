@@ -169,7 +169,7 @@ export default function SimAlgEditor({
             autoResize
             className={alg.showOverlay ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
             placeholder={t('解法', 'Solution')}
-            title={is3x3 ? t('支持换握记号:↑ 上手(拇指起手 U 面)、↓ 下手(D 面)、· 回 home 握', 'Grip marks supported: ↑ thumb-up grip, ↓ thumb-down grip, · back to home grip') : undefined}
+            title={is3x3 ? t('换握：↑ 上起手、↓ 下起手、↑↑ 半转握姿（中起手完成 R2／L2 后的姿态）、· 中起手。↑↑ 后无空格为右手、有空格为左手（含串尾）；↑／↓／· 沿用紧贴为右手、空白或串尾为左手；↑｜↑ 为右、左依次上起手。', 'Grips: ↑ up, ↓ down, ↑↑ half-turn grip (home after R2/L2), · home. ↑↑: no following space means right, whitespace means left, including at the end. ↑/↓/·: glued means right; whitespace or end means left. ↑｜↑ sets right then left hand up.') : undefined}
             onFocus={alg.onFocus}
             onClick={alg.onClick}
             onChange={alg.onChange}

@@ -121,6 +121,9 @@ describe('CubeVirtualKeyboard formula marks', () => {
   it.each([
     ['mark-up', '↑'],
     ['mark-down', '↓'],
+    ['mark-up-double', '↑↑'],
+    ['mark-both-up', '↑｜↑'],
+    ['mark-both-down', '↓｜↓'],
     ['mark-mid', '·'],
   ])('inserts %s as visible formula text', async (key, inserted) => {
     editor.textContent = 'R ';
@@ -131,7 +134,11 @@ describe('CubeVirtualKeyboard formula marks', () => {
     expect(editor.textContent).toBe(`R ${inserted}`);
   });
 
-  it.each([['mark-up', '↑'], ['mark-down', '↓'], ['mark-mid', '·']])('uses the same mark entry for plain text: %s', async (key, inserted) => {
+  it.each([
+    ['mark-up', '↑'], ['mark-down', '↓'], ['mark-mid', '·'],
+    ['mark-up-double', '↑↑'],
+    ['mark-both-up', '↑｜↑'], ['mark-both-down', '↓｜↓'],
+  ])('uses the same mark entry for plain text: %s', async (key, inserted) => {
     const textarea = document.createElement('textarea');
     document.body.appendChild(textarea);
     await act(async () => root.render(createElement(CubeVirtualKeyboard, { target: { current: textarea } })));

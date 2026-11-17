@@ -299,6 +299,9 @@ const MARK_ITEMS: Array<{ key: string; label: ReactNode; tip: { zh: string; en: 
   { key: 'mark-s',     label: <s>U</s>,                  tip: { zh: '删除线', en: 'Strikethrough' } },
   { key: 'mark-up',    label: '↑',   tip: { zh: '上箭头', en: 'Up arrow' } },
   { key: 'mark-down',  label: '↓',   tip: { zh: '下箭头', en: 'Down arrow' } },
+  { key: 'mark-up-double', label: '↑↑', tip: { zh: '半转握姿', en: 'Half-turn grip' } },
+  { key: 'mark-both-up', label: '↑｜↑', tip: { zh: '双手上起手', en: 'Both hands up' } },
+  { key: 'mark-both-down', label: '↓｜↓', tip: { zh: '双手下起手', en: 'Both hands down' } },
   { key: 'mark-mid',   label: '·',   tip: { zh: '间隔号', en: 'Middle dot' } },
 ];
 
@@ -534,6 +537,9 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
     }
     if (mk === 'mark-up')   { vkbInsert('↑'); return; }
     if (mk === 'mark-down') { vkbInsert('↓'); return; }
+    if (mk === 'mark-up-double') { vkbInsert('↑↑'); return; }
+    if (mk === 'mark-both-up') { vkbInsert('↑｜↑'); return; }
+    if (mk === 'mark-both-down') { vkbInsert('↓｜↓'); return; }
     if (mk === 'mark-mid')  { vkbInsert('·'); return; }
   }, [target, onInput, vkbInsert]);
 
@@ -1055,7 +1061,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
           data-site-surface="popover"
           style={{ left: marksPopupPos.left, top: marksPopupPos.top }}
         >
-          {MARK_ITEMS.filter(it => enableMarks || ['mark-up', 'mark-down', 'mark-mid'].includes(it.key)).map(it => (
+          {MARK_ITEMS.filter(it => enableMarks || typeof it.label === 'string').map(it => (
             <button
               type="button"
               key={it.key}
