@@ -97,6 +97,11 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
 
   const taRef = useRef<HTMLTextAreaElement | null>(null);
   const ceRef = useRef<HTMLDivElement | null>(null);
+  const pendingInputFrame = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (pendingInputFrame.current !== null) cancelAnimationFrame(pendingInputFrame.current);
+  }, []);
 
   const attachEl = (el: HTMLTextAreaElement | HTMLDivElement | null) => {
     if (markable) ceRef.current = el as HTMLDivElement | null;
@@ -209,6 +214,27 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
     onCaretChange?.(text, getTextBeforeCaret(el).length);
   };
 
+  const runInput = (el: HTMLTextAreaElement | HTMLDivElement, inputType: string, data?: string | null, isComposing = false) => {
+    if (pendingInputFrame.current !== null) {
+      cancelAnimationFrame(pendingInputFrame.current);
+      pendingInputFrame.current = null;
+    }
+    if (isComposing) return;
+    const apply = () => {
+      if (el instanceof HTMLTextAreaElement) runTextareaInput(el, inputType);
+      else runCeInput(el, inputType);
+    };
+    // WeChat IME inserts both quotes, then moves the native caret between them.
+    // Collapsing them during input makes that later move land before the prime.
+    // Wait for the native selection, then map it through the existing cleanup.
+    if (data === '‘’' || data === '“”') {
+      pendingInputFrame.current = requestAnimationFrame(() => {
+        pendingInputFrame.current = null;
+        apply();
+      });
+    } else apply();
+  };
+
   if (!markable) {
     return (
       <textarea
@@ -230,10 +256,9 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
           const native = e.nativeEvent as InputEvent;
           // 组字中(IME 缓冲区还开着):**别碰 value** —— 一改缓冲区就错乱、字会重复。
           // 等 compositionend,那时候字落地了再洗。
-          if (native.isComposing) return;
-          runTextareaInput(el, native.inputType ?? '');
+          runInput(el, native.inputType ?? '', native.data, native.isComposing);
         }}
-        onCompositionEnd={e => runTextareaInput(e.currentTarget, 'insertText')}
+        onCompositionEnd={e => runInput(e.currentTarget, 'insertText', e.data)}
         onClick={e => {
           onClick?.(e);
           const el = e.target as HTMLTextAreaElement;
@@ -270,10 +295,9 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
       onInput={e => {
         const el = e.target as HTMLDivElement;
         const native = e.nativeEvent as InputEvent;
-        if (native.isComposing) return; // 见 textarea 分支:组字中别碰内容
-        runCeInput(el, native.inputType ?? '');
+        runInput(el, native.inputType ?? '', native.data, native.isComposing);
       }}
-      onCompositionEnd={e => runCeInput(e.currentTarget as HTMLDivElement, 'insertText')}
+      onCompositionEnd={e => runInput(e.currentTarget, 'insertText', e.data)}
       onClick={e => {
         onClick?.(e);
         const el = e.currentTarget as HTMLDivElement;

@@ -49,3 +49,39 @@ it('preserves backward selections across cleaned rich-text nodes', () => {
     expect(selection.focusOffset).toBe(1);
   } finally { el.remove(); selection.removeAllRanges(); }
 });
+
+it.each(['‘’', '“”'].flatMap(pair => [false, true].map(markable => ({ pair, markable }))))(
+  'waits for the IME to place its caret inside $pair (contenteditable: $markable)', async ({ pair, markable }) => {
+    vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+    let frame: FrameRequestCallback | undefined;
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { frame = callback; return 1; });
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+    const host = document.createElement('div'); document.body.append(host);
+    const root = createRoot(host), ref = createRef<AlgInputHandle>();
+    const onCaretChange = vi.fn();
+    try {
+      await act(async () => root.render(createElement(AlgInput, {
+        ref, markable, initialText: "U2 R U2 R'", onCaretChange,
+      })));
+      const el = ref.current!.getElement()!;
+      el.focus();
+      const setCaret = (offset: number) => {
+        if (el instanceof HTMLTextAreaElement) el.setSelectionRange(offset, offset);
+        else document.getSelection()!.setBaseAndExtent(el.firstChild!, offset, el.firstChild!, offset);
+      };
+      const inserted = `U2 R U2${pair} R'`;
+      if (el instanceof HTMLTextAreaElement) el.value = inserted;
+      else (el.firstChild as Text).data = inserted;
+      setCaret(9);
+      await act(async () => el.dispatchEvent(new InputEvent('input', {
+        bubbles: true, inputType: 'insertText', data: pair,
+      })));
+      // Recorded WeChat IME sequence: insert the pair, then move left once.
+      setCaret(ref.current!.getCaretIndex() - 1);
+      await act(async () => frame?.(0));
+      expect(ref.current!.getText()).toBe("U2 R U2' R'");
+      expect(ref.current!.getCaretIndex()).toBe(8);
+      expect(onCaretChange).toHaveBeenLastCalledWith("U2 R U2' R'", 8);
+    } finally { await act(async () => root.unmount()); host.remove(); vi.unstubAllGlobals(); }
+  },
+);
