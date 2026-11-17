@@ -14,7 +14,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState, type CSSProperties
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { parseAsBoolean, useQueryState } from 'nuqs';
-import { ArrowRight, Check, Crown, Download, Heart, Lock, LockOpen, LogIn, Pencil, ShoppingBag, User, type LucideIcon } from '@app-foundation/icons/lucide';
+import { ArrowRight, Check, Crown, Download, Heart, LayoutDashboard, Lock, LockOpen, LogIn, Pencil, ShoppingBag, User, type LucideIcon } from '@app-foundation/icons/lucide';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
@@ -679,6 +679,9 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         <section id="landing-admin-content" hidden={activeSection !== 'admin'} className="cards-sections" aria-label={tr({ zh: '管理', en: 'Admin' })}>
           <div className="cards-section">
             <div className="cards-container">
+              <Link href="/admin" id="card-admin" className="landing-card tier-utility" prefetch={false}>
+                <LandingCardContent label={tr({ zh: '管理后台', en: 'Admin dashboard' })} Icon={LayoutDashboard} />
+              </Link>
               {renderCardGrid('main', PRIMARY_CARDS, 'landing-admin-card-group', true)}
               {renderCardGrid('wca', WCA_CARDS, 'landing-admin-card-group', true)}
               {SECTIONS.map((sec) => renderCardGrid(sec.id, sec.cards, 'landing-admin-card-group', true))}

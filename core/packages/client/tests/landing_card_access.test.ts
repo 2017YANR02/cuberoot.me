@@ -268,7 +268,12 @@ describe('homepage development cards', () => {
       }
       expect(host.querySelectorAll('.landing-card-lock').length > 0).toBe(admin);
       const adminArea = host.querySelector('#landing-admin-content');
+      expect(host.querySelector('#card-admin') !== null).toBe(admin);
       if (admin) {
+        const dashboard = adminArea?.querySelector('#card-admin');
+        expect(dashboard?.getAttribute('href')).toBe('/zh/admin');
+        expect(dashboard?.textContent).toContain('管理后台');
+        expect(adminArea?.querySelector('.cards-container')?.firstElementChild).toBe(dashboard);
         const contactDetails = host.querySelector('.landing-contact-details');
         expect(contactDetails).not.toBeNull();
         const footer = host.querySelector('.landing-footer-layout');
