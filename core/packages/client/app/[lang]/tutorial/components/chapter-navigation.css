@@ -1,4 +1,4 @@
-.tutorial-chapters { overflow: hidden; padding: 8px 0 20px; }
+.tutorial-chapters { overflow: hidden; padding: 0; }
 .tutorial-chapter-track { position: relative; display: grid; grid-template-columns: repeat(var(--chapter-count), minmax(0, 1fr)); }
 .tutorial-chapter-track > .tutorial-chapter-button { position: relative; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; border: 0; background: transparent; padding: 0 4px 12px; color: var(--muted-foreground); font: inherit; font-size: .8rem; line-height: 1.5; cursor: pointer; }
 .tutorial-chapter-button:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }

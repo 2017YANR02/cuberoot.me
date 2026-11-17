@@ -72,7 +72,7 @@ export function nonstandardIntroScenes(edgeSetup: string, cornerSetup: string, o
   const right = CUBE_COLOR_NAMES[colors.R];
   const targetSlotCaption = {
     zh: `不管${front.zh}${right.zh}棱角在哪，目标槽指的都是${front.zh}${right.zh}中心块和底面夹起来的位置`,
-    en: `Wherever the ${front.en}-${right.en} edge and its matching corner are, their target slot is always the space between the ${front.en} and ${right.en} centers and the bottom face`,
+    en: `Wherever the ${front.en}-${right.en} edge and its matching corner are,\ntheir target slot is always the space between the ${front.en} and ${right.en} centers and the bottom face`,
   };
   const scenes: NonstandardIntroScene[] = [
     {

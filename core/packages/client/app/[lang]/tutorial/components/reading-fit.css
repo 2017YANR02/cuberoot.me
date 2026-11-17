@@ -1,0 +1,112 @@
+.tutorial-reading-fit, .tutorial-reading-fit-content { display: contents; }
+.tutorial-video-reading { display: contents; }
+.lbl-cross-video-caption[data-entering='true'] { visibility: hidden; }
+
+@media (min-width: 761px) {
+  .tutorial-reading-fit[data-fit-layout='A'] > .tutorial-reading-fit-content {
+    height: 100%;
+  }
+  .tutorial-reading-fit[data-fit-layout='A'] .lbl-cross-video-content,
+  .tutorial-reading-fit[data-fit-layout='A'] .lbl-cross-video-content > .lbl-explanation,
+  .lbl-cross-animation-scene[data-tutorial-layout='A'] {
+    height: 100%;
+    min-height: 0;
+    box-sizing: border-box;
+  }
+  .lbl-cross-video-content > .lbl-explanation { line-height: 1.6; }
+  .lbl-cross-animation-scene[data-tutorial-layout='A'] { position: relative; }
+  .lbl-cross-animation-scene[data-tutorial-layout='A'] > .lbl-cross-overview {
+    height: 100%;
+    grid-template-rows: minmax(0, 1fr);
+    box-sizing: border-box;
+    padding-block: 0;
+    margin-bottom: 0;
+  }
+  .lbl-cross-animation-scene[data-tutorial-layout='A'] .lbl-cross-video-caption {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    width: 48%;
+    transform: translateY(-50%);
+    text-align: center;
+  }
+  .f2l-page .f2l-video-stage:has(> .f2l-concept-scene[data-tutorial-layout='F']) {
+    min-height: 0;
+    height: 100%;
+  }
+  .f2l-page .f2l-video-stage > .f2l-concept-scene[data-tutorial-layout='F'] {
+    min-height: 0;
+    height: 100%;
+  }
+  .tutorial-video-reading {
+    display: flex;
+    position: absolute;
+    inset: 0;
+    min-width: 0;
+    min-height: 0;
+  }
+  .f2l-page .tutorial-video-reading .f2l-terminology-summary {
+    position: static;
+    box-sizing: border-box;
+  }
+  .f2l-page .tutorial-video-reading .tutorial-reading-fit-content .f2l-treatment-summary {
+    height: auto;
+    box-sizing: border-box;
+  }
+  .f2l-page .tutorial-video-reading .tutorial-reading-fit-content .f2l-treatment-summary > p { display: block; }
+  .f2l-page .tutorial-video-reading .tutorial-reading-fit-content .f2l-treatment-paths { display: grid; }
+  .f2l-concept-scene:has(> .f2l-concept-scene-number) > .tutorial-video-reading { top: 32px; }
+  .tutorial-reading-fit {
+    display: block;
+    position: relative;
+    flex: 1 1 0 !important;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: clip;
+  }
+  .tutorial-reading-fit-content {
+    display: flow-root;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    transform-origin: top left;
+  }
+  .tutorial-reading-fit-content > .lbl-content {
+    width: 100%;
+    min-height: 0;
+  }
+  .lbl-lesson-scroll:has(> .tutorial-reading-fit)::before,
+  .lbl-lesson-scroll:has(> .tutorial-reading-fit)::after,
+  .lbl-lesson-scroll:has(> .lbl-daisy-overview-content > .tutorial-reading-fit)::before,
+  .lbl-lesson-scroll:has(> .lbl-daisy-overview-content > .tutorial-reading-fit)::after { display: none; }
+  .lbl-daisy-overview-content:has(> .tutorial-reading-fit) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    padding-bottom: 0;
+  }
+  .lbl-daisy-overview-content:has(> .tutorial-reading-fit):has(> .lbl-guide-continue) {
+    padding-bottom: 0;
+  }
+  .lbl-lesson-scroll:has(> .tutorial-reading-fit),
+  .f2l-page .f2l-study-main:has(> .tutorial-reading-fit) { overflow: clip; }
+}
+
+/* Fit only the copy composition; the sibling cube and transport are independent. */
+.tutorial-reading-fit.tutorial-pane-fit,
+.tutorial-pane-fit > .tutorial-reading-fit-content { display: contents; }
+.tutorial-reading-fit.tutorial-pane-fit[data-fit-active='true'] {
+  display: block; position: relative; width: 100%; height: 100%; min-height: 0; min-width: 0; overflow: clip;
+}
+.tutorial-pane-fit[data-fit-active='true'] > .tutorial-reading-fit-content {
+  display: flow-root; position: absolute; inset: 0 auto auto 0; width: 100%; height: auto; transform-origin: top left;
+}
+:is(.lbl-page, .f2l-page) [data-tutorial-layout] [data-copy-fitting][data-copy-fitting] {
+  height: 100%; min-height: 0; max-height: 100%; box-sizing: border-box; overflow: clip;
+}
+.lbl-page .tutorial-single-caption .tutorial-pane-fit > .tutorial-reading-fit-content > p {
+  display: grid; grid-template-rows: auto; text-align: center;
+}

@@ -837,6 +837,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared play, pause, and replay buttons for staged tutorial videos.',
   },
   {
+    name: 'ReadingFit',
+    import: "import ReadingFit from '@/app/[lang]/tutorial/components/ReadingFit';",
+    category: 'more',
+    zh: '教程图文适配；pane 模式独立缩放 A/B 说明区，手机 B 类保留滚动。',
+    en: 'Tutorial content fitting; pane mode fits A/B copy independently and keeps mobile B copy scrollable.',
+  },
+  {
     name: 'VideoProgress',
     import: "import VideoProgress from '@/app/[lang]/tutorial/components/VideoProgress';",
     category: 'more',

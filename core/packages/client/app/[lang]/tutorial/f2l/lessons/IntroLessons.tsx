@@ -1,6 +1,7 @@
 'use client';
 
 import TutorialNavigationShell from '../../components/TutorialNavigationShell';
+import ReadingFit from '../../components/ReadingFit';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
@@ -134,7 +135,7 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
         {showTerminology ? <NonstandardIntro orientation={orientation} terminologyOnly /> :
         <div className="f2l-intro-film f2l-concept-video">
         <VideoStage>
-        <div ref={scene} className="f2l-intro-methods" data-stage={comparisonStage} data-playing={playing}>
+        <div ref={scene} className="f2l-intro-methods" data-tutorial-mode="timeline" data-tutorial-layout={comparisonStage === 'cross' ? 'A' : 'D'} data-stage={comparisonStage} data-playing={playing}>
           <div className="f2l-intro-method">
             <FirstTwoLayersIntro key={orientation} orientation={orientation} method="lbl"
               comparisonStage={comparisonStage} comparisonClock={clock} seekVersion={seekVersion}
@@ -215,12 +216,12 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
         <SectionNavigation label={tr({ zh: '认识四种三步基态', en: 'Meet the four three-move cases' })} items={[{ id: 'section-5', label: tr({ zh: "认识四种三步基态", en: "Meet the four three-move cases" }), active: true, onSelect: () => { } }]} />
         <div className="f2l-study-main">
 
-        <div className="f2l-recognition">
+        <ReadingFit><div className="f2l-recognition" data-tutorial-layout="F">
           {chapterCases.map((item, index) => <figure key={item.id}>
             <VisualCube view="iso" size={190} faceletColors={diagrams[index]} interactive enlargeable alt={item.name} />
             <figcaption>{item.name}</figcaption>
           </figure>)}
-        </div>
+        </div></ReadingFit>
 
         <StudyActions onContinue={onNextChapter} />
         </div>

@@ -1,9 +1,10 @@
 'use client';
 
 import useTeachingFollow from '../components/useTeachingFollow';
+import ReadingFit from '../components/ReadingFit';
 import ChatBubble from '@/components/ChatBubble';
 import VideoProgress from '../components/VideoProgress';
-import { useEffect, useId, useMemo, useRef, useState, type ComponentProps, type RefObject } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode, type ComponentProps, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { Alg } from 'cubing/alg';
 import { resolvePlayerSetup } from '@/components/AlgPlayer/player-setup';
@@ -14,7 +15,7 @@ import { LBL_STEPS, lblDemoView, LESSON_STICKERING, LBL_STAGE_GOALS, LBL_LEARNIN
 import SegmentedInstructions from './SegmentedInstructions';
 import { getLblAlgGroups } from './alg-cues';
 import CompleteDemo, { FishExample, WhiteCrossCompleteDemo } from './CompleteDemo';
-import { daisyBlockedStickers, bottomCornerPreview, middleLessonHiddenStickers, middleDirectionStickers, middleEdgePreview, middleAlignmentStickers, yellowFaceNonYellowStickers, yellowFaceTouchSticker, yellowFishRecognitionStickers, type CompleteDemoStage } from './complete-demo-state';
+import { daisyBlockedStickers, middleLessonHiddenStickers, middleDirectionStickers, middleAlignmentStickers, yellowFaceNonYellowStickers, yellowFaceTouchSticker, yellowFishRecognitionStickers, type CompleteDemoStage } from './complete-demo-state';
 import BasicsGuide from './BasicsGuide';
 import IntroLesson from './IntroLesson';
 import MiddleCases from './MiddleCases';
@@ -29,7 +30,6 @@ import { FishOverview, FishRecognition } from './FishLessons';
 import { DaisyTerms } from './DaisyTerms';
 import CrossOverviewAnimation from './CrossOverviewAnimation';
 import { crossStickering } from './cross-display';
-import AlgSteps from './AlgSteps';
 import SolveFlowchart from './SolveFlowchart';
 import { StageImage } from './StageImage';
 export { StageImage } from './StageImage';
@@ -38,101 +38,63 @@ import SpecialCasePrelude, { cornerPreviews } from './SpecialCasePrelude';
 
 const ignoreCaseCue = () => {};
 
-function CornerCasePrelude({ index, onAdvance, previews = cornerPreviews, middle = false, observation = false, left = false }: {
-  index: number; onAdvance: (index: number) => void; previews?: { setup: string; caption: { zh: string; en: string } }[]; middle?: boolean; observation?: boolean; left?: boolean;
-}) {
+/** A timed observation film; completion never advances into the algorithm on its own. */
+function MiddleAlignmentVideo({ setup, left, onDone }: { setup: string; left: boolean; onDone: () => void }) {
+  const duration = 15000;
   const player = useRef<AlgPlayerHandle>(null);
   const wrapper = useRef<HTMLDivElement>(null);
-  const visible = usePlayerVisible(player, String(index));
-  const { setup } = previews[index];
-  const sceneRot = useMemo(() => {
-    const view = lblDemoView();
-    return observation && left ? { ...view, y: -view.y } : view;
-  }, [observation, left]);
-  const alignmentMove = left ? "U'" : 'U';
-  const [alignmentSettled, setAlignmentSettled] = useState(false);
+  const visible = usePlayerVisible(player, setup);
+  const clock = useRef(0);
+  const [time, setTime] = useState(0);
+  const [playing, setPlaying] = useState(true);
+  const [seekVersion, setSeekVersion] = useState(0);
+  const [toolbar, setToolbar] = useState<Element | null>(null);
+  const index = time < 4000 ? 0 : time < 9000 ? 1 : 2;
+  const aligned = time >= 4000;
+  const finished = time >= duration;
+  const sceneRot = useMemo(() => { const view = lblDemoView(); return left ? { ...view, y: -view.y } : view; }, [left]);
+  const hidden = useMemo(() => middleLessonHiddenStickers(setup), [setup]);
+  const outlined = useMemo(() => index === 0 ? middleAlignmentStickers(setup).slice(0, 2)
+    : index === 1 ? middleAlignmentStickers(setup) : middleDirectionStickers(setup, left), [setup, index, left]);
+  const caption = index === 0
+    ? { zh: '转顶层，让棱块侧面与中心同色', en: 'Turn the top layer to match the edge’s side color to the center.' }
+    : index === 1 ? { zh: '棱块侧面与中心同色，形成“倒T”', en: 'The edge’s side color matches the center, forming an upside-down T.' }
+    : left ? { zh: '观察棱块，该放入左边', en: 'Observe the edge. It belongs on the left.' }
+    : { zh: '观察棱块，该放入右边', en: 'Observe the edge. It belongs on the right.' };
+  useEffect(() => { setToolbar(wrapper.current?.closest('.lbl-learning')?.querySelector('.lbl-demo-toolbar') ?? null); }, []);
   useEffect(() => {
-    if (!observation || index !== 1 || !visible) return;
-    setAlignmentSettled(false);
-    player.current?.playMove?.(0);
-    let frame = 0;
-    const wait = () => {
-      if (player.current?.isUserMovePending?.()) frame = requestAnimationFrame(wait);
-      else setAlignmentSettled(true);
-    };
-    frame = requestAnimationFrame(wait);
-    return () => cancelAnimationFrame(frame);
-  }, [observation, index, visible]);
+    if (!visible) return;
+    const adapter = player.current?.getPlayer();
+    if (!adapter) return;
+    if (aligned && playing && clock.current < 4500) { adapter.timestamp = 0; player.current?.playMove?.(0); }
+    else adapter.timestamp = aligned ? 1 : 0;
+  }, [visible, aligned, seekVersion, playing]);
   useEffect(() => {
-    if (!middle || index !== 2 || !visible || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    let frame = 0;
-    let started: number | undefined;
-    let yaw = 0;
+    if (!visible || !playing || finished) return;
+    let frame = 0, previous: number | undefined;
     const tick = (now: number) => {
-      started ??= now;
-      const amplitude = observation ? (left ? -LBL_LEFT_VIEW_YAW : LBL_LEFT_VIEW_YAW) : -.45;
-      const nextYaw = amplitude * (1 - Math.cos((now - started) / 8000 * Math.PI * 2)) / 2;
-      player.current?.orbitView?.(nextYaw - yaw, 0);
-      yaw = nextYaw;
+      if (!document.hidden) clock.current = Math.min(duration, clock.current + Math.min(now - (previous ?? now), 50));
+      previous = now;
+      setTime(clock.current);
+      if (clock.current >= duration) { setPlaying(false); return; }
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [middle, observation, left, index, visible]);
-  const purpleCorner = !observation && (index === 0 || index === previews.length - 1);
-  const [outlineVisible, setOutlineVisible] = useState(true);
-  useEffect(() => {
-    setOutlineVisible(true);
-    if (!visible || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const timer = window.setInterval(() => setOutlineVisible(value => !value), 650);
-    return () => window.clearInterval(timer);
-  }, [visible, index]);
-  const { highlights, hiddenStickers, centers } = useMemo(() => middle ? middleEdgePreview(setup) : bottomCornerPreview(setup), [setup, middle]);
-  const observationHiddenStickers = useMemo(() => observation ? middleLessonHiddenStickers(setup) : hiddenStickers, [observation, setup, hiddenStickers]);
-  const outlined = useMemo(() => {
-    if (observation) {
-      if (index === 0) return middleAlignmentStickers(setup).slice(0, 2);
-      return index === 2 ? middleDirectionStickers(setup, left) : middleAlignmentStickers(setup);
-    }
-    return index === (middle ? 2 : 3) ? [...highlights, ...centers] : highlights;
-  }, [index, middle, observation, setup, left, highlights, centers]);
-  const stickerColors = useMemo(() => purpleCorner
-    ? Object.fromEntries(highlights.map(sticker => [sticker, '#a855f7'])) : undefined, [purpleCorner, highlights]);
-  const learningArea = visible ? wrapper.current?.closest('.lbl-lesson-scroll') : null;
-  const advanced = useRef(false);
-  useEffect(() => { advanced.current = false; }, [index]);
-  function advance() {
-    if (!visible || advanced.current || (observation && index === 1 && !alignmentSettled)) return;
-    advanced.current = true;
-    onAdvance(index + 1);
-  }
-  useEffect(() => {
-    if (!visible) return;
-    const continueWithSpace = (event: KeyboardEvent) => {
-      if (event.code !== 'Space' || event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
-      if (event.target instanceof Element && event.target.closest('input, textarea, select, button, a, [contenteditable="true"], [role="dialog"]')) return;
-      event.preventDefault();
-      if (advanced.current || (observation && index === 1 && !alignmentSettled)) return;
-      advanced.current = true;
-      onAdvance(index + 1);
-    };
-    document.addEventListener('keydown', continueWithSpace);
-    return () => document.removeEventListener('keydown', continueWithSpace);
-  }, [visible, index, onAdvance, observation, alignmentSettled]);
-  return <div ref={wrapper} className="lbl-auto-player lbl-notation-player" data-visible={visible}>
-    <AlgPlayer key={observation ? 'observation' : index} ref={player} puzzle="3x3" engine="sim" additionalStickering={middle ? undefined : 'centers-only'} set={middle ? LESSON_STICKERING.middle : LESSON_STICKERING.corners}
-      alg={observation ? alignmentMove : ''} setup={observation ? `${previews[0].setup} ${left ? 'U' : "U'"}` : setup} orientation="z2" sceneRot={sceneRot} highlightedStickers={outlineVisible && (!observation || index === 0 || alignmentSettled) ? outlined : []} hiddenStickers={observationHiddenStickers}
-      stickerColorOverrides={stickerColors}
-      frontFaceArrow={observation && index === 2 ? { from: 1, to: left ? 3 : 5 } : undefined}
-      controlMode="none" hideResetView lockView interactionMode="none" fillPane />
-    {learningArea && createPortal(
-      <>
-        <button type="button" className="lbl-guide-continue" onClick={advance}
-          aria-label={tr({ zh: '点击继续', en: 'Click to continue' })} />
-        <span className="lbl-guide-continue-hint">{tr({ zh: '点击学习区继续', en: 'Click the lesson area to continue' })}</span>
-      </>,
-      learningArea,
-    )}
+  }, [visible, playing, finished]);
+  const seek = (value: number) => { clock.current = value; setTime(value); setSeekVersion(version => version + 1); if (value >= duration) setPlaying(false); };
+  return <div ref={wrapper} className="lbl-content lbl-content-example lbl-content-middle-ejection" data-tutorial-mode="timeline" data-tutorial-layout="A">
+    <section className="lbl-demonstration"><div className="lbl-auto-player" data-visible={visible}>
+      <AlgPlayer ref={player} puzzle="3x3" engine="sim" set={LESSON_STICKERING.middle}
+        alg={left ? "U'" : 'U'} setup={setup + (left ? ' U' : " U'")} orientation="z2" sceneRot={sceneRot}
+        highlightedStickers={outlined} hiddenStickers={hidden} frontFaceArrow={index === 2 ? { from: 1, to: left ? 3 : 5 } : undefined}
+        controlMode="none" hideResetView lockView interactionMode="none" fillPane />
+    </div></section>
+    <section className="lbl-explanation tutorial-single-caption"><ReadingFit pane><p className="lbl-lead" aria-live="polite">{tr(caption)}</p>
+    {finished && <button type="button" className="lbl-guide-continue lbl-guide-continue-hint" onClick={onDone}>{tr({ zh: '点击继续', en: 'Click to continue' })}</button>}
+</ReadingFit></section>
+    {toolbar && createPortal(<div className="lbl-cross-animation-progress"><VideoProgress time={time} duration={duration} playing={playing}
+      onPlayingChange={setPlaying} onSeek={seek} onReplay={() => seek(0)} /></div>, toolbar)}
   </div>;
 }
 
@@ -338,7 +300,7 @@ function DaisyBlockedPrelude({ setup, onDone }: { setup: string; onDone: () => v
     return () => cancelAnimationFrame(frame);
   }, [visible, paused, seekVersion, onDone]);
   const bubbleStage = visible ? wrapper.current?.querySelector('.sim-stage') : null;
-  return <div ref={wrapper} className="lbl-content lbl-content-example lbl-daisy-blocked-prelude">
+  return <div ref={wrapper} className="lbl-content lbl-content-example lbl-daisy-blocked-prelude" data-tutorial-mode="timeline" data-tutorial-layout="A">
     <section className="lbl-demonstration lbl-daisy-blocked-player">
       <div className="lbl-auto-player" data-visible={visible}>
         <AlgPlayer ref={player} puzzle="3x3" engine="sim"
@@ -352,10 +314,10 @@ function DaisyBlockedPrelude({ setup, onDone }: { setup: string; onDone: () => v
           : { zh: '有其他棱块挡住', en: 'Another edge is in the way' })}
       </ChatBubble></div>, bubbleStage)}
     </section>
-    <section className="lbl-explanation">
+    <section className="lbl-explanation"><ReadingFit pane>
       <p className="lbl-lead">{tr({ zh: '顶面挡住时，直接右手上会怎样？', en: 'What happens if you lift right while the top slot is occupied?' })}</p>
       <p hidden={stage < 2}>{tr({ zh: '白棱上去了，原来的白花瓣却被转走了。', en: 'The white edge moves up, but the existing white petal moves away.' })}</p>
-    </section>
+    </ReadingFit></section>
     {toolbar && createPortal(<div className="lbl-cross-animation-progress">
       <VideoProgress time={time} duration={daisyBlockedDuration} playing={!paused}
       onPlayingChange={playing => setPaused(!playing)} onSeek={value => { clock.current = value; setTime(value); setSeekVersion(version => version + 1); }} onReplay={() => { clock.current = 0; setTime(0); setSeekVersion(version => version + 1); }} />
@@ -363,8 +325,8 @@ function DaisyBlockedPrelude({ setup, onDone }: { setup: string; onDone: () => v
   </div>;
 }
 
-export default function LessonContent({ chapter, lesson, hostChapterId, onSelectLesson }: {
-  chapter: typeof chapters[number]; lesson: Lesson; hostChapterId: string; onSelectLesson?: (id: string) => void;
+export default function LessonContent({ chapter, lesson, hostChapterId, onSelectLesson, inlineAction }: {
+  chapter: typeof chapters[number]; lesson: Lesson; hostChapterId: string; onSelectLesson?: (id: string) => void; inlineAction?: ReactNode;
 }) {
   const player = useRef<AlgPlayerHandle>(null);
   const interacted = useRef(false);
@@ -372,7 +334,7 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   const [selectedStepStart, setSelectedStepStart] = useState<number | null>(null);
   const [finalMoveSettled, setFinalMoveSettled] = useState(false);
   const [moveReplay, setMoveReplay] = useState(0);
-  const [cornerPreview, setCornerPreview] = useState(0);
+  const [middleVideoDone, setMiddleVideoDone] = useState(false);
   const [edgeObservationDone, setEdgeObservationDone] = useState(false);
   const [daisyBlockedPreludeDone, setDaisyBlockedPreludeDone] = useState(false);
   const [specialPreludeDone, setSpecialPreludeDone] = useState(false);
@@ -423,7 +385,7 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
       { setup: `${chapter.examples[3].setup!} y`, caption: { zh: '棱在中层时\n位置也可能不对', en: 'When the edge is in the middle layer\nit may also be in the wrong slot' }, observation: { zh: '看侧面颜色', en: 'Check the side colors' }, duration: 6500 },
       { setup: `${chapter.examples[3].setup!} y`, purple: true, caption: { zh: '无论哪种情况\n直接做「去右」公式', en: 'In either case\nuse the right insertion' }, duration: 5000 },
     ] : cornerPreviews;
-    return <SpecialCasePrelude scenes={scenes} piece={middle ? 'edge' : 'corner'} finalAlg={middle ? chapter.examples[0].alg : RIGHT} onDone={() => setSpecialPreludeDone(true)} />;
+    return <SpecialCasePrelude scenes={scenes} piece={middle ? 'edge' : 'corner'} waitForContinue onDone={() => setSpecialPreludeDone(true)} />;
   }
   if (lesson.kind === 'flowchart') return <SolveFlowchart stageId={chapter.id} onSelectLesson={onSelectLesson} />;
   if (lesson.kind === 'notation') return <NotationLesson />;
@@ -432,9 +394,9 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   }
   if (chapter.id === 'trigger-learning' && lesson.kind === 'overview') return <TriggerOverview />;
   if (chapter.id === 'l-alg-learning' && lesson.kind === 'overview') return <JOverview />;
-  if (chapter.id === 'sune-learning' && ['overview', 'recognition'].includes(lesson.kind)) return <div className="lbl-content lbl-content-reading">
-    <section className="lbl-explanation">{lesson.kind === 'overview' ? <FishOverview /> : <FishRecognition />}</section>
-  </div>;
+  if (chapter.id === 'sune-learning' && ['overview', 'recognition'].includes(lesson.kind)) return <ReadingFit><div className="lbl-content lbl-content-reading" data-tutorial-layout="F">
+    <section className="lbl-explanation"><ReadingFit pane>{lesson.kind === 'overview' ? <FishOverview /> : <FishRecognition />}</ReadingFit></section>
+  </div></ReadingFit>;
   if (lesson.kind === 'complete' && chapter.id === 'cross') return <div className="lbl-complete"><WhiteCrossCompleteDemo /></div>;
   if (hostChapterId === 'yellow-face' && chapter.id === 'sune-learning' && lesson.kind === 'example') {
     return <div className="lbl-complete"><FishExample left={lesson.id === 'sune-learning-0'} /></div>;
@@ -443,21 +405,9 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   const triggerHandsDemo = chapter.id === 'trigger-learning' && (example?.alg === RIGHT || example?.alg === LEFT);
   const cornerEjection = chapter.id === 'corners' && lesson.id === 'case-1';
   const middleEjection = chapter.id === 'middle' && lesson.id === 'case-2';
-  const previews = middleEjection ? [
-    { setup: chapter.examples[2].setup!, caption: { zh: '棱块在中层，是特殊情况', en: 'An unsolved edge in the middle layer is a special case.' } },
-    { setup: chapter.examples[2].setup!, caption: { zh: '情况1：朝向反了', en: 'Case 1: Flipped orientation.' } },
-    { setup: `${chapter.examples[3].setup!} y`, caption: { zh: '情况2：颜色不对', en: 'Case 2: The colors do not match.' } },
-    { setup: chapter.examples[2].setup!, caption: { zh: '无论哪种特殊情况，都做“去右”', en: 'For either special case, use the right insertion.' } },
-  ] : middleAlignment ? [
-    { setup: example!.setup!, caption: { zh: '转顶层，让棱块侧面与中心同色', en: 'Turn the top layer to match the edge’s side color to the center.' } },
-    { setup: example!.setup!, caption: { zh: '棱块侧面与中心同色，形成“倒T”', en: 'The edge’s side color matches the center, forming an upside-down T.' } },
-    { setup: example!.setup!, caption: lesson.id === 'case-1'
-      ? { zh: '观察棱块，该放入左边', en: 'Observe the edge. It belongs on the left.' }
-      : { zh: '观察棱块，该放入右边', en: 'Observe the edge. It belongs on the right.' } },
-  ] : cornerPreviews;
-  const previewCaption = middleAlignment ? previews[cornerPreview]?.caption : undefined;
+  if (middleAlignment && example?.setup && !middleVideoDone) return <MiddleAlignmentVideo setup={example.setup} left={lesson.id === 'case-1'} onDone={() => setMiddleVideoDone(true)} />;
   const stackTrigger = hostChapterId === 'corners' && triggerHandsDemo;
-  if (example) return <div className={`lbl-content lbl-content-example${stackTrigger ? ' lbl-content-trigger' : ''}${cornerEjection ? ' lbl-content-corner-ejection' : ''}${middleEjection || middleAlignment ? ' lbl-content-middle-ejection' : ''}`}>
+  if (example) return <div data-tutorial-layout="B" className={`lbl-content lbl-content-example${stackTrigger ? ' lbl-content-trigger' : ''}${cornerEjection ? ' lbl-content-corner-ejection' : ''}${middleEjection || middleAlignment ? ' lbl-content-middle-ejection' : ''}`}>
     <section {...playbackProps} className="lbl-demonstration" aria-label={tr({ zh: '魔方演示', en: 'Cube demonstration' })}
       onInputCapture={event => {
         if (event.target instanceof Element && event.target.closest('.playback-bar-scrub')) {
@@ -465,8 +415,7 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
           resumeFollowing();
         }
       }}>
-      {previewCaption ? <CornerCasePrelude observation={middleAlignment} left={lesson.id === 'case-1'} middle={middleEjection || middleAlignment} previews={previews} index={cornerPreview} onAdvance={setCornerPreview} />
-        : <LessonPlayer player={player} interacted={interacted} puzzle="3x3" engine="sim" set={lesson.id === 'white-edge' ? '' : lesson.mask ?? LESSON_STICKERING[chapter.id] ?? ''}
+      {<LessonPlayer player={player} interacted={interacted} puzzle="3x3" engine="sim" set={lesson.id === 'white-edge' ? '' : lesson.mask ?? LESSON_STICKERING[chapter.id] ?? ''}
         middleAlignment={false}
         pauseAfterObservation={chapter.id === 'edge-position' && ['case-0', 'case-1', 'case-2'].includes(lesson.id)}
         showCornerResult={cornerEjection && finalMoveSettled}
@@ -488,14 +437,8 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
           setMove(step);
         }} />}
     </section>
-    <section {...paneProps} className="lbl-explanation tutorial-follow-pane" aria-label={tr({ zh: '公式、口诀与解释', en: 'Algorithm, cues and explanation' })}>
-      {previewCaption ? <>
-        <p className="lbl-lead lbl-corner-case-caption" aria-live="polite">{middleAlignment && cornerPreview === 2
-          ? tr(previewCaption).split(/(左|右|\bleft\b|\bright\b)/i).map((part, index) => index % 2 ? <span className="lbl-direction-emphasis" key={index}>{part}</span> : part)
-          : tr(previewCaption)}</p>
-        {cornerEjection && cornerPreview === cornerPreviews.length - 1 && <AlgSteps step="trigger-learning" alg={RIGHT} />}
-      </>
-        : <SegmentedInstructions onHeadlights={onSelectLesson ? () => onSelectLesson('case-0') : undefined} onMiddleRight={onSelectLesson ? () => onSelectLesson('case-0') : undefined} onWhiteRight={onSelectLesson ? () => onSelectLesson('case-0') : undefined} step={instructionStep} alg={example.alg} playbackStep={move} finalMoveSettled={finalMoveSettled}
+    <section {...paneProps} className="lbl-explanation tutorial-follow-pane" aria-label={tr({ zh: '公式、口诀与解释', en: 'Algorithm, cues and explanation' })}><ReadingFit pane>
+      {<SegmentedInstructions onHeadlights={onSelectLesson ? () => onSelectLesson('case-0') : undefined} onMiddleRight={onSelectLesson ? () => onSelectLesson('case-0') : undefined} onWhiteRight={onSelectLesson ? () => onSelectLesson('case-0') : undefined} step={instructionStep} alg={example.alg} playbackStep={move} finalMoveSettled={finalMoveSettled}
         selectedStepStart={selectedStepStart}
         onLine={onSelectLesson ? () => onSelectLesson('case-0') : undefined}
         onFish={onSelectLesson ? () => onSelectLesson(chapter.examples.indexOf(example) === 2 ? 'sune-learning-0' : 'sune-learning-1') : undefined}
@@ -516,26 +459,27 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
           }
           player.current?.playMove?.(index);
         }} />}
+      {inlineAction}
       {lesson.paragraphs?.map((text, index) => <p key={index}>{tr(text)}</p>)}
       {!['structure', 'corners', 'cross', 'middle', 'corner-position'].includes(chapter.id) && !lesson.paragraphs && chapter.paragraphs.map((text, index) => text.zh !== example.hint.zh && <p key={index}>{tr(text)}</p>)}
-    </section>
+    </ReadingFit></section>
   </div>;
   if (lesson.kind === 'complete') return <div className="lbl-complete">
     <CompleteDemo stage={chapter.id as CompleteDemoStage} onCaseCueChange={ignoreCaseCue} />
   </div>;
+  if (lesson.kind === 'overview' && chapter.id === 'cross') return <CrossOverviewAnimation
+    daisy={<StageImage stage="daisy" size={280} brightCenters />}
+    cross={<StageImage stage="cross" size={280} />} />;
   const goal = LBL_STAGE_GOALS[chapter.id];
   const previous = LBL_STEPS[Math.max(0, LBL_STEPS.findIndex(item => item.id === chapter.id) - 1)];
-  return <div className="lbl-content lbl-content-reading">
-    <section className="lbl-explanation" aria-label={tr({ zh: '教学说明', en: 'Instructions' })}>
+  const content = <div className="lbl-content lbl-content-reading" data-tutorial-layout="F">
+    <section className="lbl-explanation" aria-label={tr({ zh: '教学说明', en: 'Instructions' })}><ReadingFit pane>
       {lesson.kind === 'overview' && (chapter.id === 'structure' ? <IntroLesson /> : <>
-        {chapter.id === 'cross' ? <CrossOverviewAnimation
-          daisy={<StageImage stage="daisy" size={280} brightCenters />}
-          cross={<StageImage stage="cross" size={280} />} />
-        : <div className="lbl-stage-overview">
+        <div className="lbl-stage-overview">
           <figure><StageImage stage={previous.id} size={280} /></figure>
           <span className="lbl-stage-arrow" aria-hidden="true">⇒</span>
           <figure><StageImage stage={chapter.id} size={280} /></figure>
-        </div>}
+        </div>
         {chapter.id !== 'cross' && <><p className="lbl-lead">{tr(goal.summary ?? chapter.goal)}</p>
         {LBL_LEARNING_FOCUS[chapter.id] && <p>{tr(LBL_LEARNING_FOCUS[chapter.id])}</p>}</>}
       </>)}
@@ -543,8 +487,10 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
         <div className="lbl-layers"><BasicsGuide section="layers" /></div>
         <p style={{ fontSize: 'var(--lbl-text-small)' }}>{tr({ zh: '处理优先级二楼>一楼和三楼>地下室', en: 'Priority: middle floor > bottom and top floors > basement' })}</p>
       </>}
+      {inlineAction}
       {lesson.kind === 'terms' && (chapter.id === 'daisy' ? <DaisyTerms />
         : chapter.id === 'middle' ? <MiddleCases /> : <LastLayerTerms wall={chapter.id === 'edge-position'} />)}
-    </section>
+    </ReadingFit></section>
   </div>;
+  return <ReadingFit>{content}</ReadingFit>;
 }

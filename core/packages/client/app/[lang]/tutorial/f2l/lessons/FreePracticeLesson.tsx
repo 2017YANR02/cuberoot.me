@@ -38,7 +38,7 @@ export default function FreePracticeLesson({ orientation, pauseBetween }: { orie
       <SectionNavigation label={tr({ zh: '自由练习', en: 'Free practice' })} items={[{ id: 'section-0', label: tr({ zh: "自由练习", en: "Free practice" }), active: true, onSelect: () => { } }]} />
       <div className="f2l-study-main">
 {!exercise && <p role="status"><T zh="暂未收录这个情况的教学解法。" en="A teaching solution for this case is not available yet." /></p>}
-        {guide ? <FreePracticeGuide table={table} orientation={orientation} onClose={() => setGuide(false)} /> : <div className="f2l-lesson f2l-study-lesson">
+        {guide ? <FreePracticeGuide table={table} orientation={orientation} onClose={() => setGuide(false)} /> : <div className="f2l-lesson f2l-study-lesson" data-tutorial-layout="G">
         <section {...playbackProps} className="f2l-demo" aria-label={tr({ zh: '自由练习魔方', en: 'Free practice cube' })}>
           <div className="f2l-cube">
             {preview && exercise ? <AlgPlayer puzzle="3x3" set="f2l-tutorial" engine="sim" setup={exercise.setup} alg={exercise.alg}

@@ -1,5 +1,7 @@
 'use client';
 
+import ReadingFit from '../components/ReadingFit';
+
 import { useEffect, useRef, useState } from 'react';
 import { FM_IGNORED, FM_REGULAR } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
 import { engineHomeSid } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex';
@@ -24,16 +26,16 @@ export function PieceLesson({ id }: { id: string }) {
   const stopOrbit = useCubeOrbit(player, id);
   const visible = usePlayerVisible(player, id);
   const card = LBL_BASICS.find(item => item.id === id);
-  return <div className="lbl-content lbl-content-pieces">
+  return <div className="lbl-content lbl-content-pieces" data-tutorial-layout="A">
     <section className="lbl-demonstration lbl-piece-player" data-visible={visible} onPointerDownCapture={stopOrbit} aria-label={tr({ zh: '观察魔方', en: 'Explore the cube' })}>
       <AlgPlayer ref={player} puzzle="3x3" engine="sim" set={card?.mask ?? ''} alg="" startSolved orientation="z2" sceneRot={LBL_INITIAL_VIEW}
         stickeringAtStep={id === 'facelet' ? faceletMask : undefined}
         controlMode="none" hideResetView fillPane />
     </section>
-    <section className="lbl-explanation">
+    <section className="lbl-explanation"><ReadingFit pane>
       <p className="lbl-lead">{card ? tr(card.headline) : <T zh="表面一个彩色小方格，就是“一格”。" en="Each colored square on the surface is a facelet." />}</p>
       <p>{card ? tr(card.hint) : <T zh="图中亮着的绿色小方格，叫“绿格”。" en="The highlighted green square is a green facelet." />}</p>
-    </section>
+    </ReadingFit></section>
   </div>;
 }
 
@@ -130,7 +132,7 @@ function CyclingLesson({ mode }: { mode: 'notation' | 'triggers' | 'j' }) {
     }, 300);
     return () => clearTimeout(timer);
   }, [fading, running, moves.length, j]);
-  return <div className="lbl-content">
+  return <div className="lbl-content" data-tutorial-mode="teaching" data-tutorial-layout={j || triggers ? 'B' : 'A'}>
     <section className="lbl-demonstration lbl-notation-demonstration" aria-label={tr(j ? { zh: 'J公式轮播演示', en: 'J algorithm demonstration' } : triggers ? { zh: '左右公式轮播演示', en: 'Left and right trigger demonstration' } : { zh: '转动记号轮播演示', en: 'Move notation demonstration' })}>
       <div className="lbl-notation-player" data-visible={visible && !fading}>
       <AlgPlayer ref={player} key={identity} puzzle="3x3" engine="sim" set={j ? J_LESSON_MASK : ''} alg={moves[index]} startSolved={!j} orientation="z2"
@@ -158,7 +160,7 @@ function CyclingLesson({ mode }: { mode: 'notation' | 'triggers' | 'j' }) {
             scrub: tr({ zh: '选择转法', en: 'Choose a turn' }) }} />
       </div>}
     </section>
-    <section className={`lbl-explanation lbl-notation-copy${j ? ' lbl-j-overview-copy' : ''}`} aria-live="polite">
+    <section className={`lbl-explanation lbl-notation-copy${j ? ' lbl-j-overview-copy' : ''}`} aria-live="polite"><ReadingFit pane>
       {j ? <AlgSteps step="corner-position" alg={J_ALG} /> : triggers ? <>
         <p className="lbl-lead"><T zh="左公式和右公式是简短的手法。" en="The left and right triggers are short move sequences." /></p>
         <p><T zh="在后面章节会反复出现，组合成其他长公式。" en="They appear throughout later chapters as parts of longer algorithms." /></p>
@@ -170,6 +172,6 @@ function CyclingLesson({ mode }: { mode: 'notation' | 'triggers' | 'j' }) {
           : <>{tr(faces[index % 4])} · {tr(variants[Math.floor(index / 4)])}</>}</p>
         <p className="lbl-notation-guide"><AppLink href="/notation" prefetch={false}><T zh="查看完整转动记号" en="View the full move notation guide" /></AppLink></p>
       </>}
-    </section>
+    </ReadingFit></section>
   </div>;
 }

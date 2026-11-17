@@ -1,5 +1,7 @@
 'use client';
 
+import ReadingFit from '../../components/ReadingFit';
+
 import ChatBubble from '@/components/ChatBubble';
 import { AlgFormulaReadRow } from '@/components/AlgFormulaRow';
 import { VisualCube } from '@/components/VisualCube';
@@ -324,11 +326,15 @@ export default function NonstandardIntro({ orientation, edgeSetup = '', cornerSe
   const emphasis = beat?.highlight ?? scene.highlight;
   const pulse = beat ? beat.pulse : true;
   const highlights = scene.flashPair ? noHighlights : !pulse || reducedMotion || Math.floor((elapsed - (beat?.at ?? 0)) / 900) % 2 === 0 ? emphasis : noHighlights;
+  const captionLines = tr(beat?.caption ?? scene.caption).split('\n');
+  const captionStart = beat?.at ?? 0;
+  const captionEnd = scene.beats?.find(item => item.at > captionStart)?.at ?? scene.duration;
+  const compactCaption = captionLines[Math.min(captionLines.length - 1, Math.floor(Math.max(0, elapsed - captionStart) / Math.max(1, captionEnd - captionStart) * captionLines.length))];
   return <section className="f2l-concept-video" data-playing={playing} data-continuous={continuous} aria-label={tr(title ?? (terminologyOnly
     ? { zh: '术语介绍', en: 'Terminology' }
     : { zh: '标态与非标概念演示', en: 'Standard and non-standard cases: concept demonstration' }))}>
     <VideoStage>
-    <div className="f2l-concept-scene f2l-terminology-stage" data-summary={!!scene.comparisonSummary} style={{ opacity: stageVisibility }}>
+    <div className="f2l-concept-scene f2l-terminology-stage" data-tutorial-mode="timeline" data-tutorial-layout={scene.comparisonSummary || summaryOpacity > 0 ? 'F' : scene.reference ? 'C' : scene.displayAlg ? 'B' : 'A'} data-note-visible={!!scene.bubble && elapsed >= (scene.bubbleAt ?? 0) && elapsed < (scene.bubbleAt ?? 0) + 2400} data-summary-part={elapsed < scene.duration / 2 ? 'paths' : 'caption'} data-summary={!!scene.comparisonSummary} style={{ opacity: stageVisibility }}>
       {showSceneNumber && <span className="f2l-concept-scene-number"><T zh="画面" en="Scene" /> {index + 1}/{scenes.length}</span>}
       <div className="f2l-cube f2l-concept-cube" style={{ opacity: sceneOpacity * cubeVisibility }} aria-hidden={sceneOpacity === 0} data-visible={ready || continuous}><AlgPlayer key={`${orientation}:${generation}`} ref={player} puzzle="3x3" engine="sim" set="f2l-tutorial"
         setup={scene.setup} startSolved={!scene.setup.trim()} alg={scene.alg} orientation={orientation} sceneRot={initialView}
@@ -347,9 +353,10 @@ export default function NonstandardIntro({ orientation, edgeSetup = '', cornerSe
           </> : beat?.label && tr(beat.label)}
         </ChatBubble>}
       </div>
-      <div className={`f2l-concept-caption${!scene.displayAlg && !scene.reference ? ' tutorial-single-caption' : ''}`} style={{ opacity: sceneOpacity }} aria-hidden={sceneOpacity === 0} aria-live="polite" aria-atomic="true">
+      <div className={`f2l-concept-caption${!scene.displayAlg && !scene.reference ? ' tutorial-single-caption' : ''}`} style={{ opacity: sceneOpacity }} aria-hidden={sceneOpacity === 0} aria-live="polite" aria-atomic="true"><ReadingFit pane>
         <div className="f2l-concept-explanation">
-          <p key={tr(beat?.caption ?? scene.caption)} className="f2l-concept-line">{tr(beat?.caption ?? scene.caption)}</p>
+          {scene.reference && ready && !pairTransition && elapsed >= (scene.bubbleAt ?? 0) && scene.bubble && <p className="f2l-reference-note">{tr(scene.bubble)}</p>}
+          <p key={tr(beat?.caption ?? scene.caption)} className="f2l-concept-line"><span className="f2l-shot-full-caption">{tr(beat?.caption ?? scene.caption)}</span><span className="f2l-shot-compact-caption">{compactCaption}</span></p>
           {scene.displayAlg && <code>{scene.displayAlg}</code>}
         </div>
         {scene.reference && referenceFacelets && <figure className="f2l-concept-reference" data-site-surface="panel">
@@ -364,11 +371,13 @@ export default function NonstandardIntro({ orientation, edgeSetup = '', cornerSe
               : scene.reference.alg}</AlgFormulaReadRow>}
           </figcaption>
         </figure>}
-      </div>
-      {scene.comparisonSummary && <NonstandardSummary states={scene.comparisonSummary} orientation={orientation} caption={scene.caption} />}
-      {summaryOpacity > 0 && <div className="f2l-terminology-summary" style={{ opacity: summaryOpacity }} role="status">
+      </ReadingFit></div>
+      {scene.comparisonSummary && <div className="tutorial-video-reading" data-tutorial-layout="F"><ReadingFit>
+        <NonstandardSummary states={scene.comparisonSummary} orientation={orientation} caption={scene.caption} />
+      </ReadingFit></div>}
+      {summaryOpacity > 0 && <div className="tutorial-video-reading" data-tutorial-layout="F"><ReadingFit><div className="f2l-terminology-summary" style={{ opacity: summaryOpacity }} role="status">
         <TerminologySummary orientation={orientation} />
-      </div>}
+      </div></ReadingFit></div>}
     </div>
     </VideoStage>
     <div className="f2l-intro-progress">

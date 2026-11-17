@@ -7,7 +7,7 @@
     flex-direction: column;
     justify-content: safe center;
     align-self: stretch;
-    min-height: 160px;
+    min-height: 0;
     box-sizing: border-box;
     padding: 16px 8px;
     text-align: center;
@@ -25,13 +25,17 @@
   .lbl-page .tutorial-single-caption > p { display: block; }
   .lbl-page .tutorial-single-caption .lbl-complete-detail:empty { display: none; }
   .lbl-page .lbl-complete .lbl-demo.lbl-demo-split {
-    min-height: 100%;
-    grid-template-rows: auto minmax(160px, 1fr);
+    min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr);
   }
   .lbl-page .lbl-content:has(> .lbl-demonstration):has(> .lbl-explanation > p:only-child) {
-    min-height: 100%;
-    grid-template-rows: auto minmax(160px, 1fr);
+    min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr);
   }
   .f2l-page .f2l-intro-methods .tutorial-single-caption { min-height: 160px; }
   .f2l-page .f2l-intro-methods .tutorial-single-caption p { font-size: 1.5rem; height: auto; }
 }
+
+/* A short complete-demo caption may include a second line or a short formula. */
+.lbl-page .lbl-complete-player .tutorial-single-caption > p { display: grid; grid-template-rows: auto; text-align: center; }
+.lbl-page .lbl-complete-player .tutorial-single-caption .lbl-complete-alg { justify-content: center; }

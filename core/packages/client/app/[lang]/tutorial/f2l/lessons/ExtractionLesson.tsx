@@ -48,7 +48,7 @@ export default function ExtractionLesson({ orientation, pauseBetween, onNextChap
         : video === 'intro' ? <NonstandardIntro key={orientation} orientation={orientation}
           edgeSetup={examples.find(item => item.kind === 'edge')!.setup}
           cornerSetup={examples.find(item => item.kind === 'corner')!.setup} /> : extraction && <>
-          <div className="f2l-extraction-comparison">{[
+          <div className="f2l-extraction-comparison" data-tutorial-layout="D">{[
             { id: 'mechanical', title: tr({ zh: '基础解法', en: 'Basic method' }), alg: extraction.alg },
             { id: 'smart', title: tr({ zh: '优化解法', en: 'Optimized method' }), alg: smartExtraction },
           ].map(method => <section className="f2l-extraction" key={method.id} aria-label={method.title}>

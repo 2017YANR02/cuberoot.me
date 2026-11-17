@@ -18,6 +18,7 @@ import './lesson-support.css';
 import '@app-foundation/navigation-ui/navigation.css';
 import './lbl.css';
 import '../components/single-caption.css';
+import '../components/responsive-layout.css';
 
 const lessonStorageKey = 'lbl:current-lesson';
 const legacyLessonStorageKey = 'lbl2:current-lesson';
@@ -189,17 +190,14 @@ function LblLessonView({ archive }: { archive: boolean }) {
         <div className="lbl-lesson-scroll" key={`${currentChapter.id}/${currentLesson.id}/${revision}`}>
           {isDaisyOverview ? <div className="lbl-daisy-overview-content">
             <LessonContent key={String(showDaisyTerms)} chapter={sourceChapter}
-              lesson={showDaisyTerms ? { ...currentLesson, kind: 'terms' } : currentLesson} hostChapterId={currentChapter.id} />
-            {!showDaisyTerms && <><button type="button" className="lbl-guide-continue" onClick={() => setShowDaisyTerms(true)}
-              aria-label={tr({ zh: '点击学习区继续', en: 'Click the lesson area to continue' })} />
-            <span className="lbl-guide-continue-hint">{tr({ zh: '点击学习区继续', en: 'Click the lesson area to continue' })}</span></>}
+              lesson={showDaisyTerms ? { ...currentLesson, kind: 'terms' } : currentLesson} hostChapterId={currentChapter.id} inlineAction={!showDaisyTerms && <button type="button" className="lbl-guide-continue lbl-guide-continue-hint" onClick={() => setShowDaisyTerms(true)}>{tr({ zh: '点击继续', en: 'Click to continue' })}</button>} />
           </div> : isDaisyLift ? <div className="lbl-daisy-lift-content">
             <LessonContent key={daisyLiftIndex} chapter={sourceChapter}
-              lesson={{ ...currentLesson, example: currentChapter.examples[daisyLiftIndex] }} hostChapterId={currentChapter.id} />
-            <button type="button" className="lbl-guide-continue-hint lbl-daisy-lift-switch"
+              lesson={{ ...currentLesson, example: currentChapter.examples[daisyLiftIndex] }} hostChapterId={currentChapter.id} inlineAction={<button type="button" className="lbl-guide-continue lbl-guide-continue-hint lbl-daisy-lift-switch"
               onClick={() => setDaisyLiftIndex(index => 1 - index)}>{tr(daisyLiftIndex === 0
               ? { zh: '点击切换为左手', en: 'Click to switch to the left hand' }
-              : { zh: '点击切换为右手', en: 'Click to switch to the right hand' })}</button>
+              : { zh: '点击切换为右手', en: 'Click to switch to the right hand' })}</button>} />
+
           </div> : <LessonContent chapter={sourceChapter} lesson={currentLesson} hostChapterId={currentChapter.id} onSelectLesson={id => {
             const target = sections.findIndex(item => item.id === id);
             if (target >= 0) chooseSection(target);

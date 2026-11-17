@@ -656,26 +656,34 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
   right: max(0.5rem, calc(50% - 40cqmin));
 }
 
-.lbl-lesson-scroll:has(.lbl-content-corner-ejection, .lbl-content-middle-ejection, .lbl-daisy-blocked-prelude) { position: relative; }
-.lbl-guide-continue {
-  position: absolute;
-  inset: 0;
+.lbl-lesson-scroll:has(.lbl-content-corner-ejection, .lbl-content-middle-ejection, .lbl-daisy-blocked-prelude, .lbl-special-case-prelude) { position: relative; }
+.lbl-guide-continue.lbl-guide-continue-hint {
+  position: static;
+  inset: auto;
+  transform: none;
+  width: max-content;
+  max-width: 100%;
+  min-height: 44px;
+  pointer-events: auto;
+  font-family: inherit;
   z-index: 2;
-  padding: 0;
+  padding: 8px 12px;
   border: 0;
   background: none;
   cursor: pointer;
 }
 .lbl-guide-continue-hint {
-  position: absolute;
-  bottom: 0.5rem;
-  left: 0;
-  width: 100%;
+  position: static;
+  inset: auto;
+  transform: none;
+  width: auto;
   text-align: center;
   color: var(--accent);
   font-size: var(--lbl-text-small);
-  pointer-events: none;
+  pointer-events: auto;
 }
+
+.lbl-guide-continue-hint { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; margin-top: 8px; }
 
 .lbl-auto-player:has(.lbl-middle-direction-preview) {
   position: relative;
