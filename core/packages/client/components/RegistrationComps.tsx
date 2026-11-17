@@ -133,7 +133,7 @@ export function RegistrationView({ comps, isZh, lang, loggedIn, follows, toggle 
   useEffect(() => setDeviceZone(localZone()), []);
   const tz = zone || deviceZone;
   const zoneDay = Math.floor(now / 86400_000);
-  const zoneItems = useMemo(() => [{ value: '', label: tr({ zh: '时区', en: 'Time zone' }) }, ...zoneSelectItems(isZh, new Date(zoneDay * 86400_000))], [isZh, zoneDay]);
+  const zoneItems = useMemo(() => zoneSelectItems(isZh, new Date(zoneDay * 86400_000)), [isZh, zoneDay]);
   const [cn, setCn] = useState<CubingRegistrations>({});
   const [sourceFailed, setSourceFailed] = useState(false);
   useEffect(() => {
@@ -194,7 +194,7 @@ export function RegistrationView({ comps, isZh, lang, loggedIn, follows, toggle 
           items={[{ value: '', label: allLabel }, ...countries.map(iso2 => ({ value: iso2, label: countryName(iso2, isZh), country: iso2, searchTerms: [iso2, countryName(iso2, true), countryName(iso2, false)].join(' ') }))]}
           onChange={value => setChoice({ owner, country: value })}
         />
-        <ListSelect className="reg-filter reg-zone-filter" showArrow={false} maxVisible={50} selectedLabel={<span className="reg-filter-label"><Clock3 size={15} aria-hidden="true" /><span>{zoneLabel(tz, isZh)}</span></span>} searchPlaceholder={tr({ zh: '搜索时区', en: 'Search time zones' })} items={zoneItems} value={zone} onChange={setZone} allLabel={tr({ zh: '时区', en: 'Time zone' })} searchable portal ariaLabel={tr({ zh: '时区', en: 'Time zone' })} />
+        <ListSelect className="reg-filter reg-zone-filter" showArrow={false} clearable={false} maxVisible={50} selectedLabel={<span className="reg-filter-label"><Clock3 size={15} aria-hidden="true" /><span>{zoneLabel(tz, isZh)}</span></span>} searchPlaceholder={tr({ zh: '搜索时区', en: 'Search time zones' })} items={zoneItems} value={tz} onChange={setZone} allLabel={tr({ zh: '时区', en: 'Time zone' })} searchable portal ariaLabel={tr({ zh: '时区', en: 'Time zone' })} />
       </div>
       {sourceFailed && (!country || country === 'cn') && <p className="reg-source-note" role="status">{tr({ zh: '粗饼报名状态暂不可用', en: 'Cubing China registration status is unavailable' })}</p>}
       {now > 0 && view.total === 0 && <p className="reg-source-note">{tr({ zh: '暂无符合条件的比赛', en: 'No matching competitions' })}</p>}
