@@ -54,7 +54,9 @@ jobs:
       - name: Validate Store configuration before building
         working-directory: core/apps/desktop
         shell: bash
-        run: node scripts/windows-store.ts check
+        run: |
+          node scripts/windows-store.ts check
+          node scripts/windows-store-materials.ts check
       - uses: pnpm/action-setup@v6
         with:
           package_json_file: core/package.json

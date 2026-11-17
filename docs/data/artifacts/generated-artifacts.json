@@ -1461,6 +1461,37 @@
       "driftPolicy": "Versioned APK/EXE artifacts and per-platform manifests live on static.cuberoot.me/downloads, never in Git. Daily push builds do not publish them; an administrator release allocates a monotonically increasing sequence."
     },
     {
+      "id": "desktop.store-materials",
+      "kind": "build-output",
+      "source": {
+        "locator": "Authored bilingual Store listing draft, reviewer notes and blank identity template",
+        "paths": [
+          "core/apps/desktop/store/**",
+          "core/apps/desktop/scripts/windows-store-materials.ts"
+        ]
+      },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "CubeRoot-authored Store copy; official field references are in docs/compliance/windows-store-submission.md"
+      },
+      "owner": "core/apps/desktop/scripts/windows-store-materials.ts",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/desktop store:materials --online",
+      "outputs": [
+        ".local-data/windows-store/materials-*/listing.json",
+        ".local-data/windows-store/materials-*/reviewer-notes.md",
+        ".local-data/windows-store/materials-*/identity.env.example",
+        ".local-data/windows-store/materials-*/en-US.txt",
+        ".local-data/windows-store/materials-*/zh-CN.txt",
+        ".local-data/windows-store/materials-*/receipt.json"
+      ],
+      "verification": [
+        "pnpm --filter @cuberoot/desktop store:materials:check",
+        "--online additionally checks public URLs and live membership prices and availability"
+      ],
+      "driftPolicy": "Edit authored sources, then export a new directory with source hashes. Exports remain drafts, not native screenshots, official Partner Center CSVs, package identities or submission evidence. Recheck prices and Windows behavior before submission."
+    },
+    {
       "id": "desktop.tauri-build",
       "kind": "build-output",
       "source": {

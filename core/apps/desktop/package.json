@@ -16,7 +16,9 @@
     "tauri:build": "tauri build",
     "store:check": "node scripts/windows-store.ts check",
     "build:store": "node scripts/windows-store.ts build",
-    "store:test": "node --test scripts/windows-store.node-test.ts"
+    "store:test": "node --test scripts/windows-store.node-test.ts",
+    "store:materials": "node scripts/windows-store-materials.ts prepare",
+    "store:materials:check": "node scripts/windows-store-materials.ts check"
   },
   "dependencies": {
     "@cuberoot/app-ui": "workspace:*",

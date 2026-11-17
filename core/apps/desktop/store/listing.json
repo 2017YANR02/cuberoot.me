@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "status": "draft-not-submission-ready",
+  "checkedAt": "2026-11-16",
+  "productName": "CubeRoot",
+  "configuration": {
+    "productType": "MSIX/PWA",
+    "categoryProposal": "Utilities & tools",
+    "price": "Free",
+    "deviceFamily": "Windows.Desktop",
+    "architecture": "x64",
+    "payment": "existing-membership-third-party",
+    "microsoftIapProducts": [],
+    "publishingHold": "manual",
+    "markets": "pending-review",
+    "ageRating": "pending-IARC-questionnaire",
+    "packageIdentity": "pending-Partner-Center"
+  },
+  "membershipSnapshot": {
+    "source": "https://api.cuberoot.me/v1/membership/plans",
+    "checkedAt": "2026-11-16",
+    "currency": "CNY",
+    "individualMonthly": 39.99,
+    "individualAnnual": 399,
+    "enterpriseMonthly": 399,
+    "activePaymentMethods": [
+      "Alipay",
+      "WeChat Pay"
+    ],
+    "autoRenewalAvailable": false,
+    "mustRecheckBeforeSubmission": true
+  },
+  "locales": {
+    "en-US": {
+      "shortDescription": "Keep your cube practice, solve history and training tools together.",
+      "description": "CubeRoot brings a speedcubing timer, solve history and training tools to your Windows desktop. Generate scrambles, record solves, review statistics and organize your practice.\n\nCore timing works without an account. Local timing and saved results are available offline; online tools, sign-in, membership and community pages require an internet connection. Keep backups of your local results before changing computers or uninstalling the app.\n\nConnect a compatible Bluetooth smart cube or use a supported Stackmat audio input for additional timing options. These optional features require compatible hardware; keyboard timing does not.\n\nThe app is free to download, and core timing is free. Optional CubeRoot membership uses your existing CubeRoot account and third-party checkout. Current prices are CNY {{individualMonthly}} for one month or CNY {{individualAnnual}} for one year for individuals, and CNY {{enterpriseMonthly}} for one month for enterprises. Review the selected plan, price, payment method and terms before paying. Purchases are processed outside Microsoft billing; contact CubeRoot support for website purchase and refund enquiries. Existing Apple or Google subscriptions remain managed through their original store.",
+      "features": [
+        "Speedcubing timer and scramble generation",
+        "Solve history, statistics and practice sessions",
+        "Local result backup and import",
+        "Online cubing tools through your CubeRoot account",
+        "Optional Bluetooth smart cube and Stackmat audio input",
+        "English and Simplified Chinese interfaces"
+      ],
+      "releaseNotes": "",
+      "website": "https://cuberoot.me",
+      "support": "https://cuberoot.me/contact",
+      "privacy": "https://cuberoot.me/privacy",
+      "minimumHardware": [
+        "x64 PC; Windows 10 build 19041 or later",
+        "Microsoft Edge WebView2 Runtime",
+        "Internet connection for online features"
+      ],
+      "recommendedHardware": [
+        "Bluetooth adapter and compatible smart cube for smart cube input",
+        "Compatible Stackmat timer, audio cable and audio input for Stackmat timing"
+      ],
+      "screenshotCaptions": [
+        "Time your solves and follow the current scramble.",
+        "Review solve history and practice statistics.",
+        "Explore CubeRoot’s online cubing tools.",
+        "Manage your CubeRoot account and existing membership."
+      ]
+    },
+    "zh-CN": {
+      "shortDescription": "把魔方计时、成绩记录和训练工具放在一起。",
+      "description": "CubeRoot 魔方根为 Windows 桌面提供魔方计时、成绩记录和训练工具。生成打乱、记录还原成绩、查看统计，整理日常练习。\n\n基础计时无需账号。本地计时和已保存成绩可离线使用；在线工具、登录、会员及社区页面需要联网。更换电脑或卸载应用前，请先备份本地成绩。\n\n连接兼容的蓝牙智能魔方，或通过受支持的 Stackmat 音频输入使用更多计时方式。这些可选功能需要相应设备；键盘计时不需要额外硬件。\n\n应用免费下载，基础计时免费。可选的 CubeRoot 会员复用现有账号，通过第三方收银付款。目前个人会员为人民币 {{individualMonthly}} 元一个月或 {{individualAnnual}} 元一年，企业会员为 {{enterpriseMonthly}} 元一个月。付款前请核对所选套餐、价格、支付方式及条款。购买不由微软计费处理；网站订单和退款问题请联系 CubeRoot 客服。已有 Apple 或 Google 订阅仍由原商店管理。",
+      "features": [
+        "魔方计时与打乱生成",
+        "成绩记录、统计与练习分组",
+        "本地成绩备份与导入",
+        "通过 CubeRoot 账号使用在线魔方工具",
+        "可选蓝牙智能魔方与 Stackmat 音频输入",
+        "支持简体中文与英文界面"
+      ],
+      "releaseNotes": "",
+      "website": "https://cuberoot.me/zh",
+      "support": "https://cuberoot.me/zh/contact",
+      "privacy": "https://cuberoot.me/zh/privacy",
+      "minimumHardware": [
+        "x64 电脑；Windows 10 build 19041 或更新版本",
+        "Microsoft Edge WebView2 Runtime",
+        "在线功能需要互联网连接"
+      ],
+      "recommendedHardware": [
+        "智能魔方输入需要蓝牙适配器及兼容的智能魔方",
+        "Stackmat 计时需要兼容计时器、音频线及音频输入设备"
+      ],
+      "screenshotCaptions": [
+        "查看当前打乱，记录还原成绩。",
+        "回顾成绩记录与练习统计。",
+        "使用 CubeRoot 在线魔方工具。",
+        "管理 CubeRoot 账号与已有会员权益。"
+      ]
+    }
+  }
+}

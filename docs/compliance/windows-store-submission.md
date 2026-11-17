@@ -86,6 +86,55 @@ Android `webMembership` 桥目前会选择 H5/wap 并标记 `android-direct`，�
 
 ## 提交资料与验收顺序
 
+### 核验期间可准备的资料
+
+商店文案唯一来源为 [store/listing.json](../../core/apps/desktop/store/listing.json)，包含 `en-US`、`zh-CN` 的描述、短描述、功能、支持/隐私链接、硬件说明和四张截图的配文。这是首发草稿，`releaseNotes` 留空；不承诺所有平台成绩自动同步、全部工具离线可用或所有蓝牙型号兼容。会员价格及支付渠道是 2026-11-16 公开 API 快照，送审前必须复核。
+
+从 `core/` 运行，无需包身份、Windows 或生产凭据：
+
+```sh
+pnpm --filter @cuberoot/desktop store:materials:check
+pnpm --filter @cuberoot/desktop store:materials --online
+```
+
+第一条离线检查语言、字段长度、首发留空字段和配置边界；第二条另核对公开页面 HTTP/标题及线上套餐、价格、付款开关，再导出 `.local-data/windows-store/materials-<unique>/`。双语描述中的价格占位符统一从 `membershipSnapshot` 填入，避免只改价格快照却漏改文案。资料包包含两种语言可复制的 `.txt`、填好价格的 JSON、英文审核说明、空白身份模板和源文件 SHA-256 收据。检查通过仅代表这些静态/公开接口检查，不证明页面交互、支付或 Windows 包可送审。构建 CI 只做离线检查，避免生产网络暂态阻断打包。
+
+Partner Center CSV 的 `Field`、`ID`、`Type` 必须来自该应用导出模板，不能猜造。应用创建后可直接逐字段填入，或先导出官方 CSV 再把本资料映射进去；本地 JSON/文本不是 Microsoft API 请求体或可直接导入的官方 CSV。
+
+| 后台配置 | 准备值 / 送审边界 |
+| --- | --- |
+| 应用类型 / 名称 | MSIX/PWA；预留 `CubeRoot` 后再核对名称可用性 |
+| 类别 | 建议 `Utilities & tools`，按实际后台选项及工具定位确认，不填游戏 |
+| 下载价格 / 会员 | 免费下载；可选现有账号会员、第三方付款，不创建 Microsoft IAP 商品；后台若询问是否存在购买，按真实第三方购买回答 |
+| 设备 / 架构 | Windows Desktop / x64；不勾选 Xbox、Holographic 或未构建的 ARM64 原生包 |
+| 系统要求 | 当前 manifest 为 Windows 10 build 19041 起；保留该范围前须取得 Windows 10 与 Windows 11 实测，WebView2 缺失路径仍为阻塞项 |
+| 语言 | 英文 `en-US`、简体中文 `zh-CN`，与 MSIX Resources 对齐 |
+| 支持 / 用户协议与隐私 | 各语言复用 `listing.json` 的官网链接；公开客服邮箱从网站维护，不在资料包复制个人电话号码 |
+| 发布方式 | 预设人工发布暂停，核验及认证通过后再安排正式公开发布；不因默认设置自动上线 |
+| 市场 / 日期 | 暂不指定全球覆盖或上线日期；创建应用后核对地区服务、支付及资料要求 |
+| 评级 / 产品声明 | 等实际 IARC 问卷；计时工具定位不等于低龄评级。核对在线工具/社区可达的用户内容、交流、购买及数据功能，不把问卷全部回答为“否” |
+| 内容权利 / 无障碍 | 按最终包和可达内容核验；不作未验证的完整授权或无障碍声明 |
+
+### 审核备注、截图与候选包证据
+
+英文 [reviewer-notes.md](../../core/apps/desktop/store/reviewer-notes.md) 已准备产品路径、`runFullTrust`、蓝牙、Stackmat 音频、协议回跳、第三方会员支付及客服说明。先按最终 Windows 候选包逐步实测再复制至认证备注；测试账号只填后台受限字段，不提交 Git，不要求审核员真实付款，不复用管理员或客户账号。备注中的 WebView2、共存等未完成项必须先关闭，不能靠向审核员解释代替修复。
+
+截图从最终 Windows 候选包采集，建议每种语言四张：计时、成绩/统计、在线工具、账号/会员。采用 PNG、至少 1366×768、单张不超过 50 MB；账号页用专用测试资料，避免显示真实订单、电话或凭据。不要把 macOS、浏览器预览或 iPhone 截图标作 Windows 实机；不叠加营销字样。配文已放在 JSON，对应截图变化时一起修改。商店目前至少要求一张截图；没有真机截图时资料包继续保留 `not-captured`。
+
+包内图标继续复用 Desktop 的 `StoreLogo.png`、`Square44x44Logo.png`、`Square150x150Logo.png`。可选的商店 300×300 图标与包内尺寸不同，不把现有 50×50 StoreLogo 直接当成 300×300 素材；首轮可使用包内图标，暂不增加宣传图或预告片。
+
+取得正式身份后，将 [identity.env.example](../../core/apps/desktop/store/identity.env.example) 复制到仓库根 `.local-data/windows-store/identity.env`，只填写后台原值及明确选定的版本。在 `core/apps/desktop/` 验证：
+
+```sh
+node --env-file=../../../.local-data/windows-store/identity.env scripts/windows-store.ts check
+```
+
+CI 对应三个 Actions variables 仍按前文设置；版本通过 workflow 输入。空模板会被拒绝，不包含临时身份或正式版本猜值。
+
+每个最终候选版本单独保留 MSIX、manifest、构建收据、WACK 报告、Windows/硬件环境、安装升级记录与截图。WACK 通过与人工功能验收分别记账。若产品声明、在线文案、价格或候选包发生变化，重新核对受影响项目后再送审。
+
+### 送审顺序
+
 1. 核对公司账号、包身份和名称；按真实计时/训练工具定位填写非游戏分类，最终以 Store 审核为准。
 2. 保存中英文商店描述、真实 Windows 截图、隐私政策和支持链接；核对账号、购买记录、蓝牙及麦克风披露。评分问卷按真实功能回答。
 3. 使用确切提交构建候选包，审阅 manifest/receipt；运行 Windows App Certification Kit，保存结果和例外原因。
@@ -102,3 +151,5 @@ Android `webMembership` 桥目前会选择 H5/wap 并标记 `android-direct`，�
 - [桌面协议扩展](https://learn.microsoft.com/en-us/windows/apps/desktop/modernize/desktop-to-uwp-extensions)：`windows.protocol` 参数。
 - [WebView2 分发](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/distribution)：Evergreen 与运行库部署。
 - [Tauri Microsoft Store](https://v2.tauri.app/distribute/microsoft-store/)：官方页面当前描述 EXE/MSI 路线，不应把它当作原生 MSIX 输出支持。
+
+资料字段补充核对（2026-11-16）：[商店文案字段](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/add-and-edit-store-listing-info)、[截图与图标](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/screenshots-and-images)、[CSV 导入导出](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/import-and-export-store-listings)、[认证备注与发布暂停](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/manage-submission-options)。

@@ -33,6 +33,7 @@
 - 合成身份的 `store:check` 通过，仅验证代码和现有图标；Partner Center 包身份及 Windows CI 尚未核验/运行。独立审查发现并修复浏览器预览依赖原生 IPC 的回归，保留 WebView2 与跨渠道共存为正式发行门槛。基础代码已按所有者要求本地提交 `b5237695d0`，本任务未推送。
 - 公司注册：Store Developer 已通过 D-U-N-S 匹配 `Shanghai CubeRoot Technology Co.,Ltd.`（上海魔方根科技有限公司），填写注册号、官网及公司公开地址，验证 `ruiminyan@cuberoot.me`；联系人与客服号码按所有者确认填写，不存入 Git。所有者在协议弹窗处明确授权接受 Microsoft Developer Agreement，已提交。2026-11-15 提交时 `Mandatory due diligence` 为 `Checking`，当时提示最长可能需要 2 个工作日；该状态已由下方补件后的实际状态覆盖。
 - 公司核验补件（2026-11-16 18:27，America/Los_Angeles）：邮箱与企业信息均为 `Verified`；申请人与公司的关联核验此前未通过，微软要求原始已付款域名凭证。已提交阿里云域名证书及付款清单合并 PDF，并在评论说明颜瑞民是公司法定代表人、域名仍在其个人名下；材料及回执定位见[核验材料](../../compliance/windows-store-submission.md#公司账号核验材料2026-11-16-补件)。提交后 `Employment verification` 为 `Under review`，回执提示通常需 5–7 个工作日并邮件通知。`Finish account setup` 仍禁用；公司账号尚未完成核验，应用尚未创建，正式包身份尚未取得。
+- 核验期间资料准备（2026-11-16，本地）：已准备中英文商店描述/功能/硬件说明及截图配文、英文认证备注、后台配置表和空白正式身份模板；[准备入口](../../compliance/windows-store-submission.md#核验期间可准备的资料)可独立于包身份导出草稿，双语价格从同一快照生成。7 个公开网址/接口及线上套餐核对通过；资料检查、脚本定向类型检查、4 项既有打包测试、actionlint 和文档链接检查通过。生成物登记检查与 HEAD 同有 3 项既有错误（助手页面产物缺失、头像许可证据缺失、打乱产物归属重叠），本轮未新增错误。资料尚未填入微软后台，Windows 截图、WACK、真实会员付款和原生运行环境验收仍待最终候选包完成；不把资料导出当作应用送审。
 - 待完成：微软公司账号及 Product identity 核验、Windows 原生 MSIX/认证工具检查、测试签名或商店测试分发、WebView2 缺失处理、安装升级与数据保留、登录冷/热回跳、GAN 16 UI/Stackmat、真实付款退款。旧 EXE 与 MSIX 共享 single-instance 身份，先退出另一渠道再测试；迁移/共存方案未验收。未提交应用审核或公开发布，不将 Windows 或五端总体标为完成。
 
 ### 2026-11-15 计时器实时分享第一版（本地，未发布）
