@@ -23,6 +23,7 @@ import SortableCard from '@/components/SortableCard';
 import { RecordBadge } from '@/components/RecordBadge';
 import { CubingIcon } from '@cuberoot/event-icon';
 import HeaderToggles from '@/components/HeaderToggles';
+import HomeNavigation from './HomeNavigation';
 import { Tooltip } from '@/components/Tooltip';
 import OnboardingGuideModal from '@/components/OnboardingGuideModal';
 import { isOnboardingGuided, markOnboardingGuided } from '@/lib/onboarding';
@@ -65,6 +66,7 @@ const ForumFeedPreview = dynamic(() => import('@/components/forum/ForumFeedPrevi
 });
 import { useEffectiveTheme } from '@/lib/theme';
 import '../landing.css';
+import './home-navigation.css';
 import { tr } from '@/i18n/tr';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { fetchPageNotices, type PageNotice } from '@/lib/page-notices-api';
@@ -172,8 +174,16 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
   const personalKey = user ? `${user.uid ?? ''}:${user.wcaId}` : null;
   const [personalReadyKey, setPersonalReadyKey] = useRetainedState<string | null>('home:personalReadyKey', null);
   const onPersonalReady = useCallback(() => setPersonalReadyKey(personalKey), [personalKey, setPersonalReadyKey]);
+  // Maintainer requested URL-stable home sections; retain only within this session.
+  const [selectedSection, setSelectedSection] = useRetainedState('home:section', 'home');
   const personalLoading = Boolean(user && (!compFollows.loaded || personalReadyKey !== personalKey));
-  useHomeScrollRestoration(!personalLoading);
+  const isAdmin = Boolean(user?.isAdmin || isAdminWcaId(user?.wcaId));
+  const activeSection = selectedSection === 'admin' && !isAdmin ? 'home' : selectedSection;
+  useHomeScrollRestoration(activeSection !== 'home' || !personalLoading, activeSection);
+  const selectSection = (section: string) => {
+    if (section === 'admin' && !isAdmin) return;
+    setSelectedSection(section);
+  };
   const [featuredNotices, setFeaturedNotices] = useRetainedState<PageNotice[]>('home:featuredNotices', []);
   const [publicMembers, setPublicMembers] = useRetainedState<PublicMember[] | null>('home:publicMembers', null);
   const [visibleWidgets, setVisibleWidgets] = useRetainedState<Record<string, boolean>>('home:visibleWidgets', {});
@@ -220,7 +230,6 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
   // 右上角 登录 / 我的 入口,两态都是真链接、都指 /account(全站无登录弹层)。useAuthUser
   // 是 hydration-safe(SSG 首帧按未登录渲染,挂载后才切到已登录),避免 SSG/CSR 错配。
 
-  const isAdmin = Boolean(user?.isAdmin || isAdminWcaId(user?.wcaId));
   const [editingCards, setEditingCards] = useState(false);
   const canEditCards = isAdmin && editingCards;
   const [pinnedRecons, setPinnedRecons] = useRetainedState<ReconSolve[] | null>('home:pinnedRecons', null);
@@ -405,6 +414,8 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
 
   const renderCardGrid = (groupId: string, cards: CardConfig[], className: string, adminArea = false) => {
     const orderedCards = applyLandingCardOrder(cards, cardOrders[groupId] ?? []);
+    // The community's aggregate forum entry stays first; preserve stored order for the rest.
+    if (groupId === 'other' && !adminArea) orderedCards.sort((a, b) => Number(b.id === 'forum') - Number(a.id === 'forum'));
     // Split the same full group by access; keep all IDs when saving its order.
     const visibleCards = orderedCards.filter((card) => (!douyin || douyinContentAvailable(card.href)) && (isAdmin || locksLoaded)
       && (adminArea ? isAdmin && isCardLocked(card) : !isCardLocked(card)));
@@ -501,43 +512,40 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
 
   return (
     <>
-    <div className="landing-page">
-      <div className="landing-auth">
-        {isAdmin && <Tooltip content={editingCards ? tr({ zh: '完成编辑', en: 'Finish editing' }) : tr({ zh: '编辑', en: 'Edit' })}>
+    <div className="landing-page landing-page--navigation" data-home-section={activeSection}>
+      <HomeNavigation selected={activeSection} onSelect={selectSection} isAdmin={isAdmin}
+        sections={SECTIONS} brand={<span className="brand-line">
+        <img src={mounted && effectiveTheme === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png'} alt="" className="brand-logo" />
+        <span className="brand-name">{t('brand')}</span>
+      </span>} actions={<div className="landing-auth">
+        {isAdmin && <>
+        <Tooltip content={editingCards ? tr({ zh: '完成编辑', en: 'Finish editing' }) : tr({ zh: '编辑', en: 'Edit' })}>
           {(tip) => <button {...tip} type="button" className="landing-auth-icon" aria-pressed={editingCards}
             aria-label={editingCards ? tr({ zh: '完成编辑', en: 'Finish editing' }) : tr({ zh: '编辑', en: 'Edit' })}
             onClick={() => setEditingCards(current => !current)}>
             {editingCards ? <Check size={16} aria-hidden="true" /> : <Pencil size={16} aria-hidden="true" />}
           </button>}
-        </Tooltip>}
-        {isAdmin && <Tooltip content={tr({ zh: '商店', en: 'Shop' })}>
+        </Tooltip>
+        <Tooltip content={tr({ zh: '商店', en: 'Shop' })}>
           {(tip) => <Link {...tip} href={SHOP_ROOT} className="landing-auth-icon"
             aria-label={tr({ zh: '商店', en: 'Shop' })} prefetch={false}>
             <ShoppingBag size={16} aria-hidden="true" />
           </Link>}
-        </Tooltip>}
-        {isAdmin && <Tooltip content={tr({ zh: '下载', en: 'Download' })}>
+        </Tooltip>
+        <Tooltip content={tr({ zh: '下载', en: 'Download' })}>
           {(tip) => <Link {...tip} href="/download" className="landing-auth-icon"
             aria-label={tr({ zh: '下载', en: 'Download' })} prefetch={false}>
             <Download size={16} aria-hidden="true" />
           </Link>}
-        </Tooltip>}
+        </Tooltip>
+        </>}
+
         <Link href="/membership" className="landing-auth-icon landing-membership-icon"
           title={tr({ zh: '会员', en: 'Membership' })}
           aria-label={tr({ zh: '会员', en: 'Membership' })} prefetch={false}>
           <Crown size={16} aria-hidden="true" />
         </Link>
-        <Link
-          href={SUPPORT_FOOTER_ENTRY.href}
-          className="landing-auth-icon landing-support-icon"
-          title={t(SUPPORT_FOOTER_ENTRY.nameKey)}
-          aria-label={t(SUPPORT_FOOTER_ENTRY.nameKey)}
-          prefetch={false}
-        >
-          <Heart size={14} aria-hidden="true" />
-        </Link>
         {renderCardGrid('calendar', SECTIONS.flatMap((section) => section.cards).filter((card) => card.id === 'calendar'), 'landing-calendar-link')}
-        <HeaderToggles />
         {!user ? (
           <Link href={`/account${nextQuery(pathname)}`} className="landing-auth-btn is-login" prefetch={false}
             onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); authActions.login(); } }}
@@ -548,19 +556,16 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         ) : (
           <Link
             href="/account"
+            aria-label={tr({ zh: '个人页面', en: 'Account' })}
             className="landing-auth-btn is-avatar"
             prefetch={false}
           >
             {authInner}
           </Link>
         )}
-      </div>
-
-      <div className="brand-line">
-        <img src={mounted && effectiveTheme === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png'} alt="" className="brand-logo" />
-        <span className="brand-name">{t('brand')}</span>
-      </div>
+      </div>} />
       <LandingSearch cards={searchCards} lang={lang} workspaceEntry />
+      <div className="landing-home-content" hidden={activeSection !== 'home'}>
       <div className="landing-personal-row">
       {user && compFollows.loaded && <div className="landing-personal-comps">
         <PersonUpcomingComps key={personalKey} wcaId={user.wcaId || undefined} isZh={lang === 'zh'}
@@ -649,29 +654,34 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         <OngoingComps lang={lang} compFollows={compFollows} />
       </LazyVisible>
 
-      <LazyVisible className="landing-widget landing-widget--forum" minHeight={0} rootMargin="120px 0px" initiallyVisible={visibleWidgets.forum} onVisible={() => rememberWidget('forum')}>
-        <ForumFeedPreview />
-      </LazyVisible>
+      </div>
 
-      <div className="cards-sections">
+      <div className="cards-sections" hidden={activeSection === 'home' || activeSection === 'admin'}>
+        {activeSection !== 'home' && entryStatus}
         {SECTIONS.map((sec) => {
           const grid = renderCardGrid(sec.id, sec.cards.filter((card) => card.id !== 'calendar'), 'cards-container');
-          return grid && (
-            <section key={sec.id} id={`section-${sec.id}`} className="cards-section">
+          return (
+            <section key={sec.id} id={`section-${sec.id}`} className="cards-section" hidden={activeSection !== sec.id}>
               <div className="section-header">
-                <h2 className="section-title-serif">{tr(sec.title)}</h2>
+                <h1 className="home-section-title">{tr(sec.title)}</h1>
               </div>
+              {sec.id === 'other' && activeSection === 'other' && locksLoaded && !isCardLocked(sec.cards.find(card => card.id === 'forum')!) && (
+                <LazyVisible className="landing-widget landing-widget--forum" minHeight={0} rootMargin="120px 0px"
+                  initiallyVisible={visibleWidgets.forum} onVisible={() => rememberWidget('forum')}>
+                  <ForumFeedPreview />
+                </LazyVisible>
+              )}
               {grid}
             </section>
           );
         })}
-        {renderMemberSections()}
+        <div className="landing-community-members" hidden={activeSection !== 'other'}>{renderMemberSections()}</div>
       </div>
 
       {isAdmin && (
-        <section id="landing-admin-content" className="cards-sections" aria-labelledby="landing-admin-title">
+        <section id="landing-admin-content" hidden={activeSection !== 'admin'} className="cards-sections" aria-labelledby="landing-admin-title">
           <div className="cards-section">
-            <h2 id="landing-admin-title" className="section-title-serif">{tr({ zh: '仅管理员可见', en: 'Administrators only' })}</h2>
+            <h1 id="landing-admin-title" className="home-section-title">{tr({ zh: '管理', en: 'Admin' })}</h1>
             <div className="cards-container">
               {renderCardGrid('main', PRIMARY_CARDS, 'landing-admin-card-group', true)}
               {renderCardGrid('wca', WCA_CARDS, 'landing-admin-card-group', true)}
@@ -738,7 +748,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         <ContactDetails />
       </div>
       </footer>
-      <Suspense fallback={null}><LandingOnboarding mounted={mounted} personalLoading={personalLoading} /></Suspense>
+      {activeSection === 'home' && <Suspense fallback={null}><LandingOnboarding mounted={mounted} personalLoading={personalLoading} /></Suspense>}
     </div>
     </>
   );

@@ -81,7 +81,7 @@ describe('homepage development cards', () => {
     try {
       const html = renderToString(renderLanding({ locks: {}, orders: {} }));
       expect(html).toContain('id="card-timer"');
-      expect(html).toContain('class="landing-page"');
+      expect(html).toContain('class="landing-page landing-page--navigation"');
     } finally {
       queryRendering.suspend = false;
     }
@@ -111,6 +111,38 @@ describe('homepage development cards', () => {
       expect(host.querySelector('#card-timer')).not.toBeNull();
       expect(host.querySelector<HTMLElement>('.landing-page')?.style.display).not.toBe('none');
       expect(host.querySelector('.app-startup-page')).toBeNull();
+    } finally {
+      await act(async () => root.unmount());
+    }
+  });
+
+  it('switches sections without changing the URL and restricts the admin section after role loss', async () => {
+    auth.user = { wcaId: ADMIN_WCA_IDS[0] };
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    const select = async (id: string) => {
+      const button = host.querySelector<HTMLButtonElement>(`button[data-home-section="${id}"]`)!;
+      await act(async () => button.click());
+    };
+    const url = window.location.href;
+    try {
+      await act(async () => root.render(renderLanding({ locks: {}, orders: {} })));
+      expect(host.querySelector('.landing-home-content')?.hasAttribute('hidden')).toBe(false);
+      expect(host.querySelector('#landing-admin-content')?.hasAttribute('hidden')).toBe(true);
+      for (const id of ['train', 'tool', 'learn', 'other']) {
+        await select(id);
+        expect(window.location.href).toBe(url);
+        expect(host.querySelector('.landing-home-content')?.hasAttribute('hidden')).toBe(true);
+        expect(host.querySelector(`#section-${id}`)?.hasAttribute('hidden')).toBe(false);
+        expect(host.querySelectorAll('.cards-section[id]:not([hidden])')).toHaveLength(1);
+      }
+      await select('admin');
+      expect(host.querySelector('#landing-admin-content')?.hasAttribute('hidden')).toBe(false);
+      auth.user = null;
+      await act(async () => root.render(renderLanding({ locks: {}, orders: {} })));
+      expect(host.querySelector('button[data-home-section="admin"]')).toBeNull();
+      expect(host.querySelector('#landing-admin-content')).toBeNull();
+      expect(host.querySelector('.landing-home-content')?.hasAttribute('hidden')).toBe(false);
     } finally {
       await act(async () => root.unmount());
     }

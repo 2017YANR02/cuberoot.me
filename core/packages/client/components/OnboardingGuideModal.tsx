@@ -3,12 +3,9 @@
 // 新手功能引导（Element Highlighting Tooltip Tour，Driver.js / Intro.js 风格）。
 //
 // 打开后直接进入第 1 步；12 步通过 getBoundingClientRect() 定位高亮与气泡。
-// 位置说明：站内没有全局 SiteHeader / TopNav，首页头部就是
-// `app/[lang]/LandingClient.tsx` 里的 `.landing-auth`，主导航是首页两排 hero
-// 卡片（`renderCard` / `renderCardGrid`，经 `SortableCard[tourKey]` 透传
-// `data-tour`），下方挂件（近期打乱 / 今日复盘 / 论坛）由外层包裹 div 提供
-// `data-tour` 锚点。本组件用 `document.querySelector('[data-tour="…"]')`
-// + `getBoundingClientRect()` 做高亮与气泡定位。
+// 首页主入口卡片与挂件提供 data-tour；论坛已移到「社区与探索」，
+// 由 HomeNavigation 的对应栏目按钮提供导览锚点。
+// 本组件用 document.querySelector + getBoundingClientRect 定位。
 //
 // 视觉：只复用站内 Design System 的 Tailwind 类名与 CSS 变量
 // （`--popover` / `--foreground` / `--border-default` / `--muted` /
