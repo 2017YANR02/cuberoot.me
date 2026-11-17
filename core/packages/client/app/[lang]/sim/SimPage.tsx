@@ -785,12 +785,18 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
       // Only NxN / SQ1 puzzles instantiate the renderer; twisty puzzles
       // (pyraminx/skewb/megaminx) skip this effect via the `twisty` guard.
       const THREE = await import('three');
+      const diagnosticsModule = process.env.NODE_ENV !== 'production'
+        ? await import('./engine/hands/uContactRecorder') : null;
       if (cancelled) return;
 
     const world = new World();
+    const handRecorder = diagnosticsModule ? new diagnosticsModule.UContactRecorder(() =>
+      world.puzzleKind === 3 ? world.cube as import('./engine/nxn/cube').default : null) : null;
+    if (handRecorder) window.__simHandRecorder = handRecorder.api;
     attachInteraction(world); // 指针控制器 client 注入(engine 核心已 headless 化)
     world.handsFactory = () => {
       const rig = new HandsRig();
+      handRecorder?.bind(rig);
       let bodyVisible = false;
       rig.subscribeLoadState(() => {
         if (bodyVisible !== rig.fullBodyOn) {
@@ -1426,6 +1432,8 @@ function SimEditor({ scope = '', active, seed, snapshotRef, onModeChange, onNew,
 
       cleanup = () => {
         cancelAnimationFrame(raf);
+        handRecorder?.dispose();
+        if (handRecorder && window.__simHandRecorder === handRecorder.api) delete window.__simHandRecorder;
         world.disposeSquareFamilyCubes();
         world.disposeGhostCube();
         world.disposeDuoCube();

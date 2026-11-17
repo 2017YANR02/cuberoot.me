@@ -277,6 +277,38 @@ r2(2026-07-09)各族迁移后播放 oracle:本族步全部零坏帧(D/E/S 全零
 
 r3 复核三教训(2026-07-09,标定方法论,后续重解必守):① **端点禁硬钉 3D 点** —— r1 的 (109,66,66) 钉点姿本身肉侵入 12.6U,solver 在「端点 vs 走廊」间永远解不开;改 M-touch 接触目标(pad 贴贴纸间隙带 + tip y/z 松钉)。② **穿透罚必须全顶点** —— r2 的「骨端扩壳箱余量 10U」低估肉厚,hook_middle2「走廊达标 ≤0.1U」全顶点复测实为 23.6U。③ **采样网格必须显式含提交点本尊** —— `for(th=step; th<=HP+1e-6; th+=step)` 步长不整除时永远采不到 HP,solver 会把未采样的提交姿当垃圾场牺牲掉。
 
+### 5.2 U 只读接触记录器（2026-11-16）
+
+开发模式 `/sim` 挂载 `window.__simHandRecorder`，默认关闭。打开双手、等待 MANO 加载完成，然后在浏览器控制台执行（接触检查点覆盖不同握姿下的右食指单步 U）：
+
+```js
+window.__simHandRecorder.start();
+// 用现有公式播放器播放换握记号和单步 U，等待收指结束。
+window.__simHandRecorder.read(); // 返回独立数据快照，ready 表示手模型已就绪
+window.__simHandRecorder.read().gripEvents; // 换握请求、左右手标签/阶段改变及生命周期事件
+window.__simHandRecorder.read().stateFrames; // 独立于 U 动作的最近逐帧状态
+window.__simHandRecorder.json(); // JSON 字符串；可在 DevTools 用 copy(...) 复制
+window.__simHandRecorder.stop(); // 停止订阅；保留已有记录
+window.__simHandRecorder.clear(); // 清空记录；不改变是否开启
+```
+
+状态记录覆盖所有已加载手模型的实际握姿，包括 `half` 半转握；接触检查点覆盖**三阶、播放器准备的右食指单步 U**，包括左右手 home/up/down/half 的 16 种组合。`↑↑U`、`↑↑ U`、`↑｜↑U`、`↑|↓U`、`↑↑｜↑↑U` 都会在换握完成后的 U 记录四个检查点。拖拽、U′、U2、宽层、push/pin 注解不创建此接触实验。它读取现有换握和 `prepareTwist → tick → endGesture → 收指完成`，不改 fit、时间步、骨骼姿态或魔方状态，不补插值帧，也不暂停动画。生产模式不加载记录模块。
+
+每条 `records[]` 保存 `startGrips` 和 `preparedGesture`：双中手仍为 hook，其余握姿当前为无 style 的既有食指扫动。记录范围扩大不代表新增握姿动画已标定。接触块面逐次从当前蒙皮和全部块体中测得，不预设起手必须位于 U 层或 B0；离面或穿模也照实保留。采样刷新 SkinnedMesh 的当前绑定逆矩阵，避免换握后使用上一显示帧的缓存而重复施加旋转。
+
+- `stateFrames`：独立于 U 实验，滚动保存最近 1200 次帧/事件快照；`gripEvents` 保留最近 200 次标签/阶段变化、换握请求及生命周期事件，稳定状态不会每帧重复追加事件。各自有 `droppedStateFrames / droppedGripEvents` 淘汰计数。`clear()` 同时清空这些数据和 U 记录，`stop()` 保留数据并停止订阅。
+- `gripRequest`：保存运行时收到的目标 `name` 与 `sides`，复用播放器解析结果。`↑↑U`/裸串尾 `↑↑` → R half；`↑↑ U`/串尾 `↑↑ ` → L half；`↑｜↑`、`↑|↓`、`↑↑｜↑↑` 按右、左顺序分别记录请求。它保存解析后的请求，不是原公式文本的逐字备份。
+- `grips` 的 home/up/down/half 是逻辑基座或目标，未归类方向为 null；**换握开始时标签已经变成目标，不代表已到位**。结合 `hands.R/L.phase` 中的 regripping → stable 与实际手根变换判断。`grip-request` / `grip-set` 在状态赋值后发出，手根变换到下一 `frame` 才反映新应用的姿态。U 接触实验中途换握会以 `grip-changed` 中断。
+- `records[].frames`：U 动作内的左右手标签、握姿四元数、实际手根位置/旋转、动作阶段（stable/preparing/turning/returning/regripping）、拨指角与 decay。每次动作保留最多 600 帧，最多 20 次动作，溢出计数可查。
+- `checkpoints.start / 45deg / 90deg / after-return`：起手、首次越过 45° 的实际帧、90° 提交、收指结束。`targetAngleDeg / cubeAngleDeg / handDriverAngleDeg` 分列目标角、实际块体角、当前手姿驱动角；45° 可有偏差，90° 提交时手可能仍是上一显示帧。被跳过的点列在 `missingCheckpoints`；切换动作、重置或关闭记录会中断并给出 `reason`。
+- `measurement.nearest / contacts`：最近块面及所有满足诊断接触带的块面；`pieceInitial / homePiece / localFace / stickerId` 跟踪实体身份，`currentFace / currentSlot` 表示当前空间位置。斜转时没有六面槽位则记 null。还原态 U 后，原 UBR 的 B0 贴纸到了 R0；回到原 B0 空间位置处的是原 UBL 的 **L0** 贴纸，不能把空间位置或原角块名当成贴纸身份。
+- `gapU` 为有符号面间隙，`edgeMarginU` 检查有限贴纸边界；单位为魔方局部 U（块间距 64 U）。接触带暂定 0–2.5 U。`state` 区分 contact/separated/penetrating/unavailable；接触与其他顶点穿入可同时存在，须同时看 `contacts` 和 `penetration`。
+- `slip`：固定起手皮肤顶点相对同一实体块面的**净切向位移**，排除块体刚体转动；记录起手接触标志 `startedInContact`、当前参考面接触标志 `contactOnReference` 及锚点间隙。`anchorInContact / anchorEdgeMarginU` 单独检查同一个锚点，防止别的顶点接触造成误判。`contactAtBothCheckpoints` 仅表示起手与本检查点的锚点都满足接触带，不保证中间连续接触；起手悬空或当前离面时仍保留位移，但不能称为贴面摩擦滑移。它也不能仅凭两个检查点区分滑动、滚动或中间离面。
+
+几何基准是当前渲染块体变换下的理想 64 U 方块与标称贴纸矩形，不含圆角、贴纸厚度或材质细节。接触用食指远节掌侧顶点代理，穿模用所有主要蒙皮权重归属食指的顶点对所有块体的最大侵入深度；**没有侵入顶点不等于三角面绝不相交**。只在四个检查点计算几何，不是全轨迹碰撞验收。`measurementMs` 和 `maxFrameGapMs` 用于查看观测开销和采样疏密。
+
+入口：`uContactRecorder.ts`（生命周期、边界与导出）、`uContactGeometry.ts`（蒙皮采样、块面、间隙、位移）；测试 `tests/u_contact_recorder.test.ts` 和 `tests/hands_lifecycle.test.ts`。本地需现有 MANO 资产可加载，否则 `ready: false`，不会用假模型生成实测记录。
+
 ## 6. 未定规格(待用户补充,当前按「推定」列实现或回落默认)
 
 - ~~180° 回落单指的 Q2 扫掠缺口族~~(2026-07-10 全部清零:D2 随 L 侧 hook 连拨标定、B2/B2' 随 backHook 连拨标定,§4.2 + §5.1)。

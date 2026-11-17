@@ -82,6 +82,25 @@ export interface TwistHint { quarters?: number; push?: boolean }
  *  钉指 —— 转动开始前指尖先到贴纸,weld 段随手刚体转,提交后收指。 */
 export interface PinSpec { hand: HandSide; finger: FingerName; sticker: string }
 
+/** Read-only instrumentation. Models are borrowed only while the callback runs. */
+export interface HandDiagnosticFrame {
+  atMs: number;
+  event: 'prepare-u' | 'frame' | 'end-u' | 'reset' | 'disabled' | 'dispose' | 'grip-request' | 'grip-set';
+  gripRequest?: { name: GripName; sides: HandSide[] };
+  preparedGesture?: HandGesture;
+  grips: HandGripNames;
+  hands: Record<HandSide, {
+    phase: 'stable' | 'regripping' | 'turning' | 'preparing' | 'returning';
+    grip: number[];
+    position: number[];
+    quaternion: number[];
+    flickAngle: number;
+    decay: number;
+  }>;
+  active: { axis: Axis; cls: LayerClass; angle: number; gesture: HandGesture | null } | null;
+  models: Record<HandSide, HandModel>;
+}
+
 /**
  * (轴, 层类别, 转向, 握姿, 提示) → 手势。dir = sign(group.angle)(angle 绕 AXIS_VEC)。
  * 权威规格表在 FINGERTRICKS.md(改指法先改那里);直觉映射(标准配色正视 F 绿 U 白):
@@ -975,6 +994,43 @@ function disposeHandModel(model: HandModel): void {
 }
 
 export default class HandsRig extends THREE.Group {
+  private diagnosticListeners = new Set<(frame: HandDiagnosticFrame) => void>();
+
+  subscribeDiagnostics(listener: (frame: HandDiagnosticFrame) => void): () => void {
+    this.diagnosticListeners.add(listener);
+    return () => { this.diagnosticListeners.delete(listener); };
+  }
+
+  private emitDiagnostic(event: HandDiagnosticFrame['event'], gripRequest?: HandDiagnosticFrame['gripRequest'], preparedGesture?: HandGesture): void {
+    const hands = this.hands;
+    if (!hands || !this.diagnosticListeners.size) return;
+    const state = (side: HandSide): HandDiagnosticFrame['hands'][HandSide] => {
+      const h = hands[side];
+      return {
+        phase: this.regripFlag && h.recoverT < 1 ? 'regripping'
+          : h.flickDecay > 0 || (h.reachT > 0 && h.reachTarget === 0) || h.recoverT < 1 ? 'returning'
+          : h.reachTarget > h.reachT || h.pinReachTarget > h.pinReachT ? 'preparing'
+          : h.weldAxis || (this.active?.gesture?.kind === 'flick' && this.active.gesture.hand === side) ? 'turning'
+          : 'stable',
+        grip: h.grip.toArray(), position: h.model.group.position.toArray(),
+        quaternion: h.model.group.quaternion.toArray(), flickAngle: h.flickAmount, decay: h.flickDecay,
+      };
+    };
+    const frame: HandDiagnosticFrame = {
+      atMs: performance.now(), event, gripRequest, preparedGesture, grips: this.gripNames(),
+      hands: { R: state('R'), L: state('L') },
+      active: this.active ? { axis: this.active.axis, cls: this.active.cls,
+        angle: this.active.lastAngle, gesture: this.active.gesture } : null,
+      models: { R: hands.R.model, L: hands.L.model },
+    };
+    for (const listener of this.diagnosticListeners) {
+      try { listener(frame); } catch (error) {
+        // A broken observer must never prevent a turn or leave the rig half-updated.
+        this.diagnosticListeners.delete(listener);
+        console.warn('[sim hands] diagnostic observer detached:', error);
+      }
+    }
+  }
   private disposed = false;
   private readonly abort = new AbortController();
   private readonly loadListeners = new Set<() => void>();
@@ -1403,10 +1459,12 @@ export default class HandsRig extends THREE.Group {
       this.regripFlag = true;
       this.lastActivityAt = performance.now();
     }
+    this.emitDiagnostic('grip-request', { name, sides: only ? [only] : ['R', 'L'] });
   }
 
   /** 瞬时设定两手握姿基座(跳步 / 拖进度条的静态摆位,配 simulateGrips)。 */
   setGrips(qR: THREE.Quaternion, qL: THREE.Quaternion): void {
+    this.emitDiagnostic('reset');
     this.pendingGrips.R.copy(qR);
     this.pendingGrips.L.copy(qL);
     this.active = null;
@@ -1451,6 +1509,7 @@ export default class HandsRig extends THREE.Group {
       h.sEvadeTarget = 0;
     }
     this.regripFlag = false;
+    this.emitDiagnostic('grip-set');
   }
 
   /** 换握动画进行中(播放循环用它闸住下一步;普通 weld 回位不算)。 */
@@ -1547,7 +1606,13 @@ export default class HandsRig extends THREE.Group {
       this.lastActivityAt = performance.now();
       return h.pinReachT < 1;
     }
-    if (!HandsRig.needsReach(g) || g.kind !== "flick") return false;
+    if (!HandsRig.needsReach(g) || g.kind !== "flick") {
+      if (cube.order === 3 && axis === 'y' && layers.length === 1 && layers[0] === 2 && dir === 1 && quarters === 1
+        && !push && !pin && g.kind === 'flick' && g.hand === 'R' && !g.finger2 && g.finger === 'index') {
+        this.emitDiagnostic('prepare-u', undefined, g);
+      }
+      return false;
+    }
     const h = hands[g.hand];
     if (h.flickDecay > 0 && h.reachT > 0) {
       // 上一转的退场未完:清 flickAmount 会让手指从弧中段瞬移。轮询重入
@@ -1623,6 +1688,7 @@ export default class HandsRig extends THREE.Group {
 
   setEnabled(on: boolean): void {
     if (this.disposed) return;
+    if (!on && this.enabled) this.emitDiagnostic('disabled');
     // visible 无条件跟 on 拉起(不能挂在 enabled-diff 后面:dt=0 帧曾把
     // visible 误置 false,若 enabled 未变就再也拉不起来)。
     if (on) this.visible = true;
@@ -1856,6 +1922,7 @@ export default class HandsRig extends THREE.Group {
       this.regripFlag = false;
     }
     if (keepalive) animating = true;
+    this.emitDiagnostic('frame');
     return animating;
   }
 
@@ -2029,6 +2096,9 @@ export default class HandsRig extends THREE.Group {
     const hands = this.hands;
     const gesture = this.active?.gesture;
     if (!hands || !gesture) return;
+    if (this.active?.axis === 'y' && this.active.cls === 'high' && this.active.dir === 1
+      && gesture.kind === 'flick' && gesture.hand === 'R' && gesture.finger === 'index'
+      && !gesture.finger2) this.emitDiagnostic('end-u');
     for (const side of ["R", "L"] as const) {
       const h = hands[side];
       if (h.weldAxis) {
@@ -2701,6 +2771,8 @@ export default class HandsRig extends THREE.Group {
   /** 页面卸载时取消未完成加载，并释放本 rig 拥有的 GPU 资源。 */
   dispose(): void {
     if (this.disposed) return;
+    this.emitDiagnostic('dispose');
+    this.diagnosticListeners.clear();
     this.disposed = true;
     this.abort.abort();
     this.loadListeners.clear();
