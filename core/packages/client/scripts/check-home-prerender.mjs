@@ -18,7 +18,9 @@ export function checkHomePrerender(outputDir = new URL('../.next/', import.meta.
       artifact = candidates[0];
     }
     const html = readFileSync(artifact, 'utf8');
-    if (!html.includes('class="landing-page"') || !/id="card-[^"]+"/.test(html)) {
+    const hasLandingPage = [...html.matchAll(/\bclass="([^"]*)"/g)]
+      .some(([, classes]) => classes.split(/\s+/).includes('landing-page'));
+    if (!hasLandingPage || !/id="card-[^"]+"/.test(html)) {
       throw new Error(`${lang}: homepage navigation is missing from production HTML`);
     }
     console.log(`${lang}: homepage navigation is prerendered`);
