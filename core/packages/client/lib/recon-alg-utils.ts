@@ -5,7 +5,7 @@
 import { parsePyraMoves } from '@cuberoot/shared/pyra-notation';
 import { parseSkewbAlgorithm } from '@cuberoot/shared/skewb-notation';
 import { cleanFtoReconAlgForPlayer, parseClockAlgorithm } from '@cuberoot/shared/recon-completion';
-import { etm } from '@cuberoot/shared/alg-notation';
+import { etm, stripGripMarks } from '@cuberoot/shared/alg-notation';
 import { detectWastedWork, wastedDisplaySpans } from '@cuberoot/shared/timer/reconstruct/error-detect';
 import { simplifyAlg } from '@/lib/cube3';
 import { getPuzzleId } from '@/lib/recon-utils';
@@ -362,7 +362,7 @@ export function findIllegalNotationChars(text: string): NotationViolation[] {
     const commentIdx = lines[i].indexOf('//');
     const instr = commentIdx >= 0 ? lines[i].slice(0, commentIdx) : lines[i];
     const bad = new Set<string>();
-    for (const ch of instr) {
+    for (const ch of stripGripMarks(instr)) {
       if ((ch.codePointAt(0) ?? 0) > 0x7f && !COSMETIC_ANNOTATION_CHARS.includes(ch)) bad.add(ch);
     }
     if (bad.size > 0) {

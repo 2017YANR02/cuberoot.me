@@ -105,7 +105,7 @@ import StickeringSelect from './StickeringSelect';
 
 import type { PickGrain, CustomTreatment, CustomBrush } from '@/components/sim-embed/customStickering';
 import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
-import { flattenAlg, stm, stripGripMarks } from '@cuberoot/shared/alg-notation';
+import { flattenAlg, stm, stripGripMarks, GRIP_MARK_SPLIT, parseGripMark, findGripMarks } from '@cuberoot/shared/alg-notation';
 import { canonicalFtoEifAlgorithm, invertFtoEifAlgorithm, reduceFtoEifAlgorithm } from '@cuberoot/shared/fto-notation';
 import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from './engine/hands/ftn';
 export { SIM_FIXED_PUZZLE_OPTIONS } from './puzzleOptions';
@@ -149,26 +149,8 @@ function parseScramblePreview(text: string): Alg {
  * 换握记号(仅 NxN 解法框):↑ 上手(拇指起手在 U 面)、↓ 下手(D 面)、· 回 home 握。
  * 记号是播放步(占一步、驱动手部换握动画),对魔方状态零作用;手没开时照常跳过。
  * 手别由空白定(FINGERTRICKS §2,2026-07-10 用户规格):记号**紧贴**后续字符
- * (`↑U`)= 右手;后随空白/串尾(`↑ U`)= 左手。双手 = 紧贴链尾随空白(`↑↑ U`)。
+ * (`↑U`)= 右手;后随空白/串尾(`↑ U`)= 左手。↑↑ = 半转握;↑｜↑ = 右、左依次换握。
  */
-const GRIP_MARKS: Record<string, GripName> = { '↑': 'up', '↓': 'down', '·': 'home' };
-const GRIP_MARK_SPLIT = /([↑↓·])/;
-
-/** Char offsets of grip marks in `text` (line comments excluded — mirrors the
- *  `noComments` pass parseNxnItems does before splitting on GRIP_MARK_SPLIT). */
-function findGripMarkPositions(text: string): number[] {
-  const positions: number[] = [];
-  let offset = 0;
-  for (const line of text.split(/\r?\n/)) {
-    const commentIdx = line.indexOf('//');
-    const instr = commentIdx >= 0 ? line.slice(0, commentIdx) : line;
-    for (let i = 0; i < instr.length; i++) {
-      if (GRIP_MARKS[instr[i]]) positions.push(offset + i);
-    }
-    offset += line.length + 1;
-  }
-  return positions;
-}
 
 /** 指法后缀 `p`(推法,FINGERTRICKS.md §2):空白分隔的单招 token 尾接 p,如
  *  `U'p` = 右食指推 U'。喂 cubing.js / 变换工具前必须剥(Alg 解析不了)。 */
@@ -214,14 +196,14 @@ function parseNxnItems(text: string): NxnPlayItem[] {
   const segs = noComments.split(GRIP_MARK_SPLIT);
   for (let si = 0; si < segs.length; si++) {
     const seg = segs[si];
-    const grip = GRIP_MARKS[seg];
-    if (grip) {
+    const next = segs[si + 1] ?? '';
+    const glued = next ? !/^\s/.test(next) : si + 2 < segs.length;
+    const marks = parseGripMark(seg, glued, !next && si + 2 >= segs.length);
+    if (marks.length) {
       // 手别空格规则(FINGERTRICKS §2):紧贴后续字符 = 右手;后随空白/串尾 = 左手。
       // split-capture 交替 [文本,记号,文本,…]:后继文本段空 ⇒ 要么紧贴下一记号
       // (还有后续段,右手),要么串尾(左手)。
-      const next = segs[si + 1] ?? '';
-      const glued = next ? !/^\s/.test(next) : si + 2 < segs.length;
-      items.push({ kind: 'grip', grip, side: glued ? 'R' : 'L' });
+      for (const { grip, side } of marks) items.push({ kind: 'grip', grip, side });
       continue;
     }
     if (!seg.trim()) continue;
@@ -1401,7 +1383,7 @@ export default function PlayerControls({
     }
     // NxN: WCA move tokens + grip marks (↑↓·), merged back into text order.
     const moves = findTokenPositions(algDraft);
-    const grips = findGripMarkPositions(algDraft).map((p) => ({ start: p, end: p + 1, text: algDraft[p] }));
+    const grips = findGripMarks(algDraft);
     return [...moves, ...grips].sort((a, b) => a.start - b.start);
   }, [algDraft, isSquarePuzzle, isTwistyMode, isIvy, ivyCanPlay, corner]);
 
@@ -1989,9 +1971,12 @@ export default function PlayerControls({
     // 换握记号是分段边界:各段独立消步(跨记号抵消 = 手都换了,不该并),记号原位保留。
     if (GRIP_MARK_SPLIT.test(s)) {
       return s.split(GRIP_MARK_SPLIT)
-        .map((seg) => (GRIP_MARKS[seg] ? seg : seg.trim() ? fold(seg) : ''))
-        .filter((seg) => seg !== '')
-        .join(' ');
+        .map((seg) => {
+          if (parseGripMark(seg, false).length || !seg.trim()) return seg;
+          // Whitespace after a mark selects the hand; preserve both boundaries.
+          return (seg.match(/^\s*/)?.[0] ?? '') + fold(seg.trim()) + (seg.match(/\s*$/)?.[0] ?? '');
+        })
+        .join('');
     }
     return fold(s);
   }, [isSq1, squareFamilySpec, isIvy, corner, isTwistyMode, squareFormat, order, puzzleKind]);

@@ -174,7 +174,7 @@ function softClampAngle(a: number): number {
 const HALF_PI = Math.PI / 2;
 
 /** 换握目标 */
-export type GripName = "home" | "up" | "down";
+export type GripName = "home" | "up" | "down" | "half";
 
 /**
  * 换握基座四元数:up=上手(拇指起手在 U 面,恰等于 home 被 R/L' 提交后的腕姿),
@@ -184,6 +184,8 @@ export function gripQuat(name: GripName): THREE.Quaternion {
   const q = new THREE.Quaternion();
   if (name === "up") q.setFromAxisAngle(AXIS_VEC.x, HALF_PI);
   else if (name === "down") q.setFromAxisAngle(AXIS_VEC.x, -HALF_PI);
+  // ↑↑ uses the settled home + R2 / L2 orientation.
+  else if (name === "half") q.setFromAxisAngle(AXIS_VEC.x, Math.PI);
   return q;
 }
 
@@ -1483,6 +1485,7 @@ export default class HandsRig extends THREE.Group {
       if (q.angleTo(HandsRig._qIdent) < 0.01) return "home";
       if (q.angleTo(gripQuat("up")) < 0.01) return "up";
       if (q.angleTo(gripQuat("down")) < 0.01) return "down";
+      if (q.angleTo(gripQuat("half")) < 0.01) return "half";
       return null;
     };
     if (!hands) return { R: null, L: null };

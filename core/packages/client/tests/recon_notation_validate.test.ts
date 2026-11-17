@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { findIllegalNotationChars } from '@/lib/recon-alg-utils';
 
 describe('findIllegalNotationChars', () => {
+  it('accepts paired grips from the shared keyboard, but not a bare fullwidth separator', () => {
+    expect(findIllegalNotationChars('↑↑R ↑↑ U ↑｜↑F')).toEqual([]);
+    expect(findIllegalNotationChars('R ｜ U')).toHaveLength(1);
+  });
   it('passes pure ASCII notation', () => {
     expect(findIllegalNotationChars("R U R' U' R' F R2 U' R' U' F' R U")).toEqual([]);
   });

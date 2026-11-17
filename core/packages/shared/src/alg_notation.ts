@@ -219,6 +219,51 @@ export function tokenizeMoves(alg: string): TokenizeResult {
 
 // ---------------------------------------------------------------- 剥离
 
+/** Longest mark first; a paired mark explicitly names right then left hand. */
+export const GRIP_MARK_SPLIT = /((?:↑↑|[↑↓·])(?:[｜|](?:↑↑|[↑↓·]))?)/;
+export type GripPose = 'home' | 'up' | 'down' | 'half';
+export interface GripMark {
+  grip: GripPose;
+  side: 'R' | 'L';
+  start: number;
+  end: number;
+  text: string;
+}
+const GRIP_POSES: Record<string, GripPose> = { '↑': 'up', '↓': 'down', '·': 'home', '↑↑': 'half' };
+
+/** Offsets are relative to the mark; bare terminal ↑↑ selects right, like a glued mark. */
+export function parseGripMark(text: string, glued: boolean, atEnd = false): GripMark[] {
+  const parts = text.split(/[｜|]/);
+  if (parts.length > 2 || parts.some((part) => !Object.hasOwn(GRIP_POSES, part))) return [];
+  let start = 0;
+  return parts.map((part, index) => {
+    const mark: GripMark = {
+      grip: GRIP_POSES[part], side: parts.length === 2 ? (index === 0 ? 'R' : 'L') : (glued || (atEnd && part === '↑↑') ? 'R' : 'L'),
+      start, end: start + part.length, text: part,
+    };
+    start += part.length + 1;
+    return mark;
+  });
+}
+
+/** Playback/highlight source spans, excluding line comments and preserving CRLF offsets. */
+export function findGripMarks(text: string): GripMark[] {
+  const result: GripMark[] = [];
+  for (const line of text.matchAll(/[^\r\n]+/g)) {
+    const instr = line[0].split('//')[0];
+    for (const match of instr.matchAll(new RegExp(GRIP_MARK_SPLIT.source, 'g'))) {
+      const end = match.index + match[0].length;
+      const glued = end < instr.length && !/\s/.test(instr[end]);
+      const offset = line.index + match.index;
+      const atEnd = end === instr.length && line.index + line[0].length === text.length;
+      for (const mark of parseGripMark(match[0], glued, atEnd)) {
+        result.push({ ...mark, start: offset + mark.start, end: offset + mark.end });
+      }
+    }
+  }
+  return result;
+}
+
 /**
  * 换握记号 `↑ ↓ ·` → **一个空格**,不是空串。
  *
@@ -226,7 +271,7 @@ export function tokenizeMoves(alg: string): TokenizeResult {
  * 而 `new Alg("RU")` **不报错** —— cubing.js 把它当成一个 family 叫 `RU` 的招式静默吃掉。
  */
 export function stripGripMarks(s: string): string {
-  return s.replace(/[↑↓·]/g, ' ');
+  return s.replace(new RegExp(GRIP_MARK_SPLIT.source, 'g'), ' ');
 }
 
 /** FTN 注解块 `[R2:@C>Q]`(紧贴招式) */

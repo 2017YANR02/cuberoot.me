@@ -5,7 +5,7 @@ import {
   tokenizeMoves, flattenAlg, expandGroups, cubeOnly, stripGripMarks, deleteAuf,
   stripUpstreamMarks, invertMoveString, toMoveString, toMoveStringStrict,
   canonicalize3x3WideMoves, findIllegalGluedCubeMoves, spaceIllegalGluedCubeMoves,
-  stm, sqtm, htm, qtm, etm, gen,
+  stm, sqtm, htm, qtm, etm, gen, findGripMarks, parseGripMark,
 } from '@cuberoot/shared/alg-notation';
 import { cleanForPlayer, countMovesExpanded } from '@/lib/recon-alg-utils';
 
@@ -203,6 +203,11 @@ describe('deleteAuf', () => {
 });
 
 describe('stripGripMarks', () => {
+  it('strips double and paired grips without changing cube moves', () => {
+    expect(cubeOnly('↑↑R ↑↑ U ↑｜↑F ↓|↓B ↑↑｜↑↑D')).toBe('R U F B D');
+    expect(cleanForPlayer('↑↑R ↑↑ U ↑｜↑F ↓|↓B ↑↑｜↑↑D')).toBe('R U F B D');
+    expect(sameState(cubeOnly('↑↑R ↑↑ U ↑｜↑F'), 'R U F')).toBe(true);
+  });
   /**
    * FINGERTRICKS §7.3: grip marks become a SPACE, never an empty string. Deleting
    * them outright glues `R·U` into `RU`, and `new Alg("RU")` does not throw — cubing.js
@@ -216,6 +221,35 @@ describe('stripGripMarks', () => {
   it('cubing.js really does swallow a fused pair — this is why the space matters', () => {
     expect(() => new Alg('RU')).not.toThrow();
     expect([...new Alg('RU').experimentalLeafMoves()]).toHaveLength(1);
+  });
+});
+
+describe('grip notation source spans and hands', () => {
+  it('does not recognize double-down as a half-turn grip', () => {
+    expect(parseGripMark('↓↓', true)).toEqual([]);
+    expect(findGripMarks('↓↓U').map(({ grip }) => grip)).toEqual(['down', 'down']);
+  });
+  it.each(['↑↑'])('%s is one half-turn grip with whitespace hand selection', (mark) => {
+    expect(findGripMarks(`${mark}U ${mark} U ${mark}`).map(({ grip, side }) => [grip, side]))
+      .toEqual([['half', 'R'], ['half', 'L'], ['half', 'R']]);
+    expect(findGripMarks(`${mark} `).map(({ grip, side }) => [grip, side])).toEqual([['half', 'L']]);
+    expect(findGripMarks(`${mark}\nU`)[0].side).toBe('L');
+    expect(findGripMarks(`${mark}// comment`)[0].side).toBe('R');
+  });
+
+  it('explicit pairs retain right then left even when glued to a move', () => {
+    expect(findGripMarks('↑｜↑U ↓|↓ U ↑↑｜↑↑R').map(({ grip, side }) => [grip, side]))
+      .toEqual([['up', 'R'], ['up', 'L'], ['down', 'R'], ['down', 'L'], ['half', 'R'], ['half', 'L']]);
+    expect(findGripMarks('↑｜↓').map(({ grip, side }) => [grip, side]))
+      .toEqual([['up', 'R'], ['down', 'L']]);
+  });
+
+  it('highlights complete marks, skips comments, and keeps CRLF source offsets', () => {
+    const text = '↑↑R // ↑↑\r\n↑｜↓U ·';
+    const marks = findGripMarks(text);
+    expect(marks.map(({ start, end }) => [start, end])).toEqual([[0, 2], [11, 12], [13, 14], [16, 17]]);
+    expect(marks.map(({ start, end, text: raw }) => text.slice(start, end) === raw)).toEqual([true, true, true, true]);
+    expect(parseGripMark('toString', false)).toEqual([]);
   });
 });
 

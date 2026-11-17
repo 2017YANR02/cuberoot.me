@@ -114,6 +114,20 @@ describe('classifyHandGesture', () => {
 describe('simulateGrips(握姿持久化静态推演,quarters 符号 = 引擎 convert 的 twist)', () => {
   const near = (a: THREE.Quaternion, b: THREE.Quaternion) => a.angleTo(b) < 1e-9;
 
+  it('half grip matches home after R2 and L2, with subsequent turns matching seek', () => {
+    const turned = simulateGrips([
+      { axis: 'x', layers: [2], quarters: 2 },
+      { axis: 'x', layers: [0], quarters: -2 },
+    ], 3);
+    expect(near(turned.R, gripQuat('half'))).toBe(true);
+    expect(near(turned.L, gripQuat('half'))).toBe(true);
+    const marked = simulateGrips([{ grip: 'half', side: 'R' }], 3);
+    expect(near(marked.R, turned.R)).toBe(true);
+    expect(near(marked.L, gripQuat('home'))).toBe(true);
+    const after = simulateGrips([{ grip: 'half', side: 'R' }, { axis: 'x', layers: [2], quarters: -1 }], 3);
+    expect(near(after.R, gripQuat('up'))).toBe(true);
+  });
+
   it("R 提交 → 右手上手、左手不动;R R' 抵消回 home", () => {
     const g1 = simulateGrips([{ axis: 'x', layers: [2], quarters: 1 }], 3);
     expect(near(g1.R, gripQuat('up'))).toBe(true);

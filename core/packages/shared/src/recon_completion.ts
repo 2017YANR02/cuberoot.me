@@ -9,7 +9,7 @@ import { parseClockAlgorithm } from './clock_notation';
 export { parseClockAlgorithm } from './clock_notation';
 import { parsePyraAlgorithm, rotateLetterMap, VERTEX_NAMES } from './pyra_notation';
 import { parseSkewbAlgorithm, rotateGripMap, SKEWB_WCA_TOKENS } from './skewb_notation';
-import { MOVE_RE } from './alg_notation';
+import { MOVE_RE, stripGripMarks } from './alg_notation';
 import type { KPattern } from 'cubing/kpuzzle';
 import type { StickerDat } from 'cubing/puzzle-geometry';
 import { isFtoEifSolved, parseFtoEifAlgorithm } from './fto_notation';
@@ -116,7 +116,7 @@ export function cleanReconAlgText(text: string): string {
     const commentIdx = trimmed.indexOf('//');
     const effective = commentIdx >= 0 ? trimmed.slice(0, commentIdx).trim() : trimmed;
     if (!effective) continue;
-    const tokens = effective.split(/\s+/).filter((token) => !STRIP_TOKENS.has(token));
+    const tokens = stripGripMarks(effective).trim().split(/\s+/).filter((token) => !STRIP_TOKENS.has(token));
     if (tokens.length > 0) cleaned.push(tokens.join(' '));
   }
   return expandReconGroupRepeats(cleaned.join('\n').replace(COSMETIC_ANNOTATION_STRIP_RE, ''));
