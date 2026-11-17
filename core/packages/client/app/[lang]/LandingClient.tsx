@@ -628,7 +628,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
             ? <><SkeletonBlock className="landing-widget-skeleton" /><SkeletonBlock className="landing-widget-skeleton" /></>
             : pinnedRecons?.length
               ? <TodayRecon {...reconProps} pinnedOnly />
-              : <p className="landing-slot-message" role="status">{pinError ?? tr({ zh: '暂无置顶复盘', en: 'No pinned recons yet' })}</p>}
+              : pinError ? <p className="landing-slot-message" role="status">{pinError}</p> : null}
         </div>
       </div>
 
