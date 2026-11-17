@@ -24,6 +24,7 @@
 
 按需追溯决策、失败及验收限制；旧待办、状态和授权只适用于记录时点。
 
+- [登录取消与计时弹层 AI 验收（2026-11-16）](history/mobile-ai-acceptance-2026-11-16.md)
 - [下载页对标与本地优化（2026-10-30）](history/download-page-benchmark.md)
 - [五端 App 迭代与决策历史](history/mobile-app-history.md)
 
