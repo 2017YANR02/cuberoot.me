@@ -1,6 +1,7 @@
 import { apiUrl } from './api-base';
 import { authHeaders } from './admin-api';
 import { sessionFetch } from './session-fetch';
+import { persistItem } from './safe-storage';
 
 export const speechRates = [0.75, 1, 1.25, 1.5, 2] as const;
 type Preferences = { voice: string; rate: number };
@@ -28,7 +29,7 @@ export function setSpeechPreferences(update: Partial<Preferences>) {
   if (voice && !/^[a-zA-Z0-9_.-]{1,100}$/.test(voice) || !speechRates.some(value => value === rate)) return;
   if (voice === current.voice && rate === current.rate) return;
   snapshot = { voice, rate };
-  try { localStorage.setItem(key, JSON.stringify(snapshot)); } catch { /* In-memory settings still work. */ }
+  persistItem(key, JSON.stringify(snapshot));
   listeners.forEach(notify => notify());
 }
 function onStorage(event: StorageEvent) {
