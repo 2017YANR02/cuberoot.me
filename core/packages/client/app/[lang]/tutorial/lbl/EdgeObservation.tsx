@@ -1,5 +1,5 @@
 import ReadingFit from '../components/ReadingFit';
-import ChatBubble from '@/components/ChatBubble';
+import TutorialCubeCallout from '../components/TutorialCubeCallout';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Alg } from 'cubing/alg';
@@ -136,9 +136,9 @@ export default function EdgeObservation({ example, caseIndex, onDone }: {
 </ReadingFit></section>
     {bubbleStage && createPortal(
       <div className="lbl-left-thumb-overlay">
-        <ChatBubble tail={caseIndex === 1 ? 'right' : 'left'} className={`lbl-cube-callout${caseIndex === 1 ? ' lbl-edge-right-bubble' : ''}`} role="status">
+        <TutorialCubeCallout side={caseIndex === 1 ? 'left' : 'right'} className="lbl-cube-callout" role="status">
           {tr({ zh: '红色和橙色是对色', en: 'Red and orange are opposite colors' })}
-        </ChatBubble>
+        </TutorialCubeCallout>
       </div>, bubbleStage,
     )}
   </div>;

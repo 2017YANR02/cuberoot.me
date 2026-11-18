@@ -2,7 +2,7 @@
 
 import ReadingFit from '../../components/ReadingFit';
 
-import ChatBubble from '@/components/ChatBubble';
+import TutorialCubeCallout from '../../components/TutorialCubeCallout';
 import { AlgFormulaReadRow } from '@/components/AlgFormulaRow';
 import { VisualCube } from '@/components/VisualCube';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -330,28 +330,30 @@ export default function NonstandardIntro({ orientation, edgeSetup = '', cornerSe
   const captionStart = beat?.at ?? 0;
   const captionEnd = scene.beats?.find(item => item.at > captionStart)?.at ?? scene.duration;
   const compactCaption = captionLines[Math.min(captionLines.length - 1, Math.floor(Math.max(0, elapsed - captionStart) / Math.max(1, captionEnd - captionStart) * captionLines.length))];
+  const showComparisonBubble = ready && !pairTransition && elapsed >= (scene.bubbleAt ?? 0);
   return <section className={`f2l-concept-video${compactReference ? ' f2l-treatment-video' : ''}`} data-playing={playing} data-continuous={continuous} aria-label={tr(title ?? (terminologyOnly
     ? { zh: '术语介绍', en: 'Terminology' }
     : { zh: '标态与非标概念演示', en: 'Standard and non-standard cases: concept demonstration' }))}>
     <VideoStage>
-    <div className="f2l-concept-scene f2l-terminology-stage" data-tutorial-mode="timeline" data-tutorial-layout={scene.comparisonSummary || summaryOpacity > 0 ? 'E' : scene.reference ? 'C' : scene.displayAlg ? 'B' : 'A'} data-note-visible={!!scene.bubble && elapsed >= (scene.bubbleAt ?? 0) && elapsed < (scene.bubbleAt ?? 0) + 2400} data-summary-part={elapsed < scene.duration / 2 ? 'paths' : 'caption'} data-summary={!!scene.comparisonSummary} style={{ opacity: stageVisibility }}>
+    <div className="f2l-concept-scene f2l-terminology-stage" data-tutorial-mode="timeline" data-tutorial-layout={scene.comparisonSummary || summaryOpacity > 0 ? 'E' : scene.reference ? 'C' : scene.displayAlg ? 'B' : 'A'} data-summary-part={elapsed < scene.duration / 2 ? 'paths' : 'caption'} data-summary={!!scene.comparisonSummary} style={{ opacity: stageVisibility }}>
       {showSceneNumber && <span className="f2l-concept-scene-number"><T zh="画面" en="Scene" /> {index + 1}/{scenes.length}</span>}
-      <div className="f2l-cube f2l-concept-cube" style={{ opacity: sceneOpacity * cubeVisibility }} aria-hidden={sceneOpacity === 0} data-visible={ready || continuous}><AlgPlayer key={`${orientation}:${generation}`} ref={player} puzzle="3x3" engine="sim" set="f2l-tutorial"
+      <div className="f2l-cube f2l-concept-cube" style={{ opacity: sceneOpacity * cubeVisibility }} aria-hidden={sceneOpacity === 0}
+        data-visible={ready || continuous} data-bubble-target={scene.bubbleTarget}><AlgPlayer key={`${orientation}:${generation}`} ref={player} puzzle="3x3" engine="sim" set="f2l-tutorial"
         setup={scene.setup} startSolved={!scene.setup.trim()} alg={scene.alg} orientation={orientation} sceneRot={initialView}
         stickerColorOverrides={pairColors}
         highlightedStickers={highlights} stickeringAtStep={scene.hidePair || scene.crossOnly ? crossMask : beat?.hideCorner ? edgeStickering : beat?.hideEdge ? cornerStickering : pairStickering}
         onStepChange={step => { playerStep.current = step; }}
         moveDurationMs={scene.moveDuration ?? 220} controlMode="none" hideResetView interactionMode="none" fillPane />
-        {ready && !pairTransition && elapsed >= (scene.bubbleAt ?? 0) && scene.bubble && <ChatBubble
-          tail={scene.bubbleTarget === 'edge' ? 'left' : 'bottom'} className="f2l-concept-comparison"
-          data-target={scene.bubbleTarget} role="status">{tr(scene.bubble)}</ChatBubble>}
-        {ready && !fadingOut && (scene.result ? elapsed >= 1000 : beat?.label) && <ChatBubble tail={scene.flashPair ? 'bottom' : beat?.label ? 'top' : 'left'} className="f2l-concept-result" data-target={scene.flashPair ? beat?.hideEdge ? 'corner' : beat?.hideCorner ? 'edge' : 'pair' : beat?.label ? 'slot' : undefined} role="status">
+        {showComparisonBubble && scene.bubble && <TutorialCubeCallout key={`cue:${index}`}
+          className="f2l-concept-comparison" role="status">{tr(scene.bubble)}</TutorialCubeCallout>}
+        {ready && !fadingOut && (scene.result ? elapsed >= 1000 : beat?.label) && <TutorialCubeCallout key={`result:${index}`}
+          className="f2l-concept-result" anchorY={beat?.label ? .35 : .5} role="status">
           {scene.result ? <>
             <div className="f2l-concept-signal" aria-hidden="true"><TrainingFeedbackOverlay
               kind={scene.result === 'standard' ? 'correct' : 'wrong'} correctLabel="" wrongLabel="" /></div>
             {scene.result === 'standard' ? <T zh="标态" en="Standard" /> : <T zh="非标" en="Non-standard" />}
           </> : beat?.label && tr(beat.label)}
-        </ChatBubble>}
+        </TutorialCubeCallout>}
       </div>
       <div className={`f2l-concept-caption${!scene.displayAlg && !scene.reference ? ' tutorial-single-caption' : ''}`} style={{ opacity: sceneOpacity }} aria-hidden={sceneOpacity === 0} aria-live="polite" aria-atomic="true"><ReadingFit pane>
         <div className="f2l-concept-explanation">

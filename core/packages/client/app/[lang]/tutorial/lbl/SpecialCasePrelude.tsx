@@ -7,7 +7,7 @@ import { createPortal } from 'react-dom';
 import { Color } from 'three';
 import { FM_FIXED_COLOR, FM_IGNORED } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
-import ChatBubble from '@/components/ChatBubble';
+import TutorialCubeCallout from '../components/TutorialCubeCallout';
 import VideoProgress from '../components/VideoProgress';
 import { type CubeFace } from '@/lib/cube-colors';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
@@ -92,7 +92,7 @@ export default function SpecialCasePrelude({ scenes, piece, waitForContinue = fa
           stickerColorOverrides={overrides} controlMode="none" hideResetView lockView interactionMode="none" fillPane />
       </div>
       {bubbleStage && (scene.observation || piece === 'edge' && index < scenes.length - 1) && createPortal(<div className="lbl-left-thumb-overlay" style={{ opacity: eased }}>
-        <ChatBubble tail={piece === 'edge' && scene.targetLayer === 'top' ? 'bottom' : 'left'} className="lbl-cube-callout lbl-special-case-bubble" data-piece={piece} data-layer={scene.targetLayer ?? 'bottom'} role="status">{tr(scene.observation ?? scene.caption)}</ChatBubble>
+        <TutorialCubeCallout anchorY={scene.targetLayer === 'top' ? .3 : .65} className="lbl-cube-callout" role="status">{tr(scene.observation ?? scene.caption)}</TutorialCubeCallout>
       </div>, bubbleStage)}
     </section>
     <section className="lbl-explanation tutorial-single-caption"><ReadingFit pane>

@@ -28,7 +28,7 @@
 .f2l-case-narration { position: absolute; top: 60px; left: 53%; right: 0; font-size: 1.25rem; line-height: 1.65; }
 .f2l-case-narration { transition: opacity 500ms ease; animation: f2l-case-explanation-in 500ms ease; }
 .f2l-case-narration[data-fading='true'] { opacity: 0; }
-.chat-bubble.f2l-case-alignment-status { position: absolute; top: 16px; left: 24%; max-width: calc(48% - 16px); transform: translateX(-50%); display: flex; align-items: center; gap: 8px; font-size: 1rem; pointer-events: none; transition: opacity 500ms ease; }
+.chat-bubble.f2l-case-alignment-status { display: flex; align-items: center; gap: 8px; font-size: 1rem; transition: opacity 500ms ease; }
 .f2l-case-alignment-status[data-fading='true'] { opacity: 0; }
 .f2l-case-alignment-signal { position: relative; width: 24px; height: 24px; flex-shrink: 0; }
 .f2l-case-alignment-signal svg { width: 24px; height: 24px; }
@@ -59,7 +59,6 @@
   .f2l-case-introduction { min-height: 1100px; }
   .f2l-case-narration { top: 580px; left: 0; font-size: 1.25rem; }
   .f2l-case-alignment-caption { top: 950px; }
-  .chat-bubble.f2l-case-alignment-status { left: 50%; max-width: calc(100% - 16px); }
   .f2l-case-prompt { top: 1020px; }
   .f2l-case-reference { justify-content: center; }
 }

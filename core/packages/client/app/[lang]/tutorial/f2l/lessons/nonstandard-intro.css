@@ -45,8 +45,7 @@
 @media (prefers-reduced-motion: reduce) {
   .f2l-reference-segment[data-active='true'] { animation: none; }
 }
-.chat-bubble.f2l-concept-comparison { position: absolute; top: 8%; left: 50%; transform: translateX(-50%); width: max-content; max-width: 90%; font-size: 1.125rem; pointer-events: none; }
-.chat-bubble.f2l-concept-comparison[data-target='edge'] { top: 50%; left: 66%; right: auto; bottom: auto; transform: translateY(-50%); max-width: 34%; }
+.chat-bubble.f2l-concept-comparison { font-size: 1.125rem; }
 @media (min-width: 761px) {
   .f2l-concept-caption:has(.f2l-concept-reference) { display: flex; flex-direction: column; align-self: stretch; padding-block: 16px; }
   .f2l-concept-caption:has(.f2l-concept-reference) .f2l-concept-explanation { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
@@ -62,12 +61,7 @@
   .f2l-concept-cube > .alg-sim-player { transition: none; }
   .f2l-concept-line { animation: none; }
 }
-.chat-bubble.f2l-concept-result { position: absolute; display: flex; align-items: center; gap: 6px; top: 15%; left: auto; right: 8px; max-width: 36%; font-size: 1rem; pointer-events: none; }
-.chat-bubble.f2l-concept-result[data-target] { right: auto; bottom: auto; transform: translate(-50%, -100%); }
-.chat-bubble.f2l-concept-result[data-target='corner'] { left: 24%; top: 24%; }
-.chat-bubble.f2l-concept-result[data-target='edge'] { left: 35%; top: 27%; }
-.chat-bubble.f2l-concept-result[data-target='pair'] { left: 30%; top: 24%; }
-.chat-bubble.f2l-concept-result[data-target='slot'] { left: 54%; top: 90%; transform: translateX(-50%); }
+.chat-bubble.f2l-concept-result { display: flex; align-items: center; gap: 6px; font-size: 1rem; }
 .f2l-concept-signal { display: flex; flex-shrink: 0; }
 .f2l-concept-result .f2l-concept-signal > div { position: static; inset: auto; }
 .f2l-concept-signal svg { width: 24px; height: 24px; }

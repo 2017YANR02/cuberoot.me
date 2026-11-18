@@ -1,0 +1,12 @@
+.tutorial-cube-callout {
+  position: absolute;
+  inset: 0 auto auto 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.tutorial-cube-callout[data-placement='hidden'] { height: 0; overflow: clip; visibility: hidden; }
+.tutorial-cube-callout > .chat-bubble {
+  width: max-content;
+  max-width: 100%;
+  margin: 0;
+}
