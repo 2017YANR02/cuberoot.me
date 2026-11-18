@@ -39,7 +39,7 @@
 .tr-all:hover { color: var(--accent); }
 
 /* 卡片网格:宽屏一行四卡(1100px 容器 → 每卡约 260px),≤1080px 三卡、
-   ≤900px 退回两卡(手机端沿用两卡,见 issue #41)。超出固定高度走右侧滚动条
+   ≤900px 退回两卡(手机端沿用两卡,见 issue #41)。第三行起走右侧滚动条
    (.scroll-panel)。minmax(0,…) 让列缩到容器、不被卡片内容顶宽。 */
 .tr-cards {
   display: grid;
@@ -54,5 +54,8 @@
 @media (max-width: 900px) {
   .tr-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-/* 无打乱缩略图后卡片只剩文字两行(有视频封面的卡仍带缩略图),面板相应压低 */
-.tr-cards.scroll-panel { max-height: clamp(14rem, 45vh, 24rem); }
+/* Let up to two rows expand naturally. TodayRecon caps longer grids. */
+.tr-cards.scroll-panel {
+  max-height: none;
+  padding-bottom: 0.4rem;
+}

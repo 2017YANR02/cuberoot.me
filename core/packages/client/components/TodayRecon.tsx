@@ -6,9 +6,9 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 // Landing「今日复盘」— /recon 最新录入那天的全部复盘。每次加载自动取最新一天。
 // 宽屏一行四卡、≤1080px 三卡、≤900px 两卡(复用 /recon?view=grid 的 ReconCard 竖排卡,
 // 但不显示打乱公式:showScrambleFallback={false},只有视频封面才出媒体区);
-// 超出固定高度的部分走右侧滚动条(.scroll-panel,与「比赛中心」同一套)。点卡进 /recon/[id] 看完整回放。
+// 从第三行起使用右侧滚动条(.scroll-panel,与「比赛中心」同一套)。点卡进 /recon/[id] 看完整回放。
 // 数据:lib/recon-api getTodayRecons()(主用 /v1/recon/today,回退 /latest 单条)。
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import Link from '@/components/AppLink';
 import { ArrowRight } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
@@ -33,6 +33,7 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
   const isZh = lang === 'zh';
   const refreshKey = useContentRefreshKey(!pinnedOnly);
   const [recons, setRecons] = useRetainedState<ReconSolve[] | null>('home:todayRecons', null);
+  const cardsRef = useRef<HTMLDivElement>(null);
 
   // idle-defer fetch(同 RecentScrambles / OngoingComps,不阻塞首屏)
   useEffect(() => {
@@ -58,6 +59,36 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
   }, [pinnedOnly, refreshKey, setRecons]);
 
   const visibleRecons = pinnedOnly ? pinnedRecons : recons;
+  useLayoutEffect(() => {
+    const panel = cardsRef.current;
+    if (!panel) return;
+    const cards = Array.from(panel.children);
+
+    const measure = () => {
+      if (!panel.clientWidth) return;
+      // Resolved grid tracks include the implicit rows and their actual heights.
+      const { gridTemplateRows, rowGap, paddingTop, paddingBottom } = getComputedStyle(panel);
+      const rows = gridTemplateRows.split(' ').map(Number.parseFloat);
+      let maxHeight = '';
+      if (rows.length > 2) {
+        const firstTwo = rows[0] + rows[1] + Number.parseFloat(rowGap);
+        const padding = Number.parseFloat(paddingTop) + Number.parseFloat(paddingBottom);
+        maxHeight = `${Math.ceil(Math.max(firstTwo, ...rows) + padding)}px`;
+      }
+      if (panel.style.maxHeight !== maxHeight) panel.style.maxHeight = maxHeight;
+      if (maxHeight) {
+        if (panel.tabIndex !== 0) panel.tabIndex = 0;
+      } else {
+        panel.removeAttribute('tabindex');
+      }
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(panel);
+    cards.forEach(card => observer.observe(card));
+    return () => observer.disconnect();
+  }, [isAdmin, visibleRecons]);
+
   if (pinnedOnly && !visibleRecons?.length) return null;
   if (visibleRecons === null) return <div className="today-recon today-recon--loading" data-tour="today-replay" aria-hidden="true" />;
   if (visibleRecons.length === 0) return <p className="landing-slot-message">{tr({ zh: '暂无复盘', en: 'No recons available' })}</p>;
@@ -79,7 +110,8 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
       </div>
 
       {isAdmin && pinError && <p role="alert">{pinError}</p>}
-      <div className="tr-cards scroll-panel scroll-panel--hover-lift">
+      <div ref={cardsRef} className="tr-cards scroll-panel scroll-panel--hover-lift"
+        role="region" aria-label={tr({ zh: '复盘', en: 'Reconstructions' })}>
         {visibleRecons.map(renderCard)}
       </div>
     </div>
