@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 vi.mock('../src/db/connection.js', () => ({ query: vi.fn() }));
 import { createAssistantSpeechRoutes } from '../src/routes/site_assistant_speech.js';
-import { createSpeechSynthesizer, speechChunks, speechConfig } from '../src/utils/site_assistant_speech.js';
+import { createSpeechSynthesizer, speechAudioType, speechChunks, speechConfig } from '../src/utils/site_assistant_speech.js';
 const run = vi.fn(), authenticate = vi.fn(), synthesize = vi.fn();
 const app = createAssistantSpeechRoutes({ run, authenticate, synthesize });
 const body = { messageId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa', answer: 'Hello.', lang: 'en', chunk: 0 };
@@ -21,18 +21,51 @@ it('rejects changed answers and invalid chunks then returns private audio', asyn
   expect(synthesize).not.toHaveBeenCalled();
   const response = await post();
   expect(response.headers.get('cache-control')).toBe('private, no-store');
-  expect(await response.json()).toEqual({ audio: Buffer.from('audio').toString('base64'), total: 1 });
+  expect(await response.json()).toEqual({ audio: Buffer.from('audio').toString('base64'), mime: 'audio/mpeg', total: 1 });
 });
 it('preserves all text while bounding chunks and total work', () => {
   const text = '😀你好，hello. '.repeat(100);
   expect(speechChunks(text).join('')).toBe(text);
-  expect(speechChunks(text).every(chunk => [...chunk].length <= 501)).toBe(true);
+  expect([...speechChunks(text)[0]].length).toBeLessThanOrEqual(80);
+  expect([...speechChunks(text)[1]].length).toBeLessThanOrEqual(160);
+  expect(speechChunks(text).every(chunk => [...chunk].length <= 320)).toBe(true);
+  expect(speechChunks('x'.repeat(30_000))).toHaveLength(95);
+  expect(speechChunks('你好。短回答。')).toEqual(['你好。短回答。']);
+  expect(speechChunks('甲'.repeat(21) + '。' + '乙'.repeat(500))[0]).toBe('甲'.repeat(21) + '。');
   expect(() => speechChunks('x'.repeat(30_001))).toThrow();
 });
 function enabled() {
   vi.stubEnv('SITE_ASSISTANT_TTS_ENABLED', '1'); vi.stubEnv('SITE_ASSISTANT_TTS_API_KEY', 'test-key');
   vi.stubEnv('SITE_ASSISTANT_TTS_BASE_URL', 'https://ws-test.cn-beijing.maas.aliyuncs.com');
 }
+it('reuses the existing Bailian chat key and Beijing workspace origin', () => {
+  const existing = { SITE_ASSISTANT_TTS_ENABLED: '1', SITE_ASSISTANT_API_KEY: 'existing-key', SITE_ASSISTANT_BASE_URL: 'https://ws-test.cn-beijing.maas.aliyuncs.com/compatible-mode/v1' };
+  expect(speechConfig(existing)).toMatchObject({ key: 'existing-key', origin: 'https://ws-test.cn-beijing.maas.aliyuncs.com' });
+  expect(speechConfig({ ...existing, SITE_ASSISTANT_BASE_URL: 'https://api.deepseek.com' })).toBeNull();
+  expect(speechConfig({ ...existing, SITE_ASSISTANT_BASE_URL: 'https://dashscope.aliyuncs.com/compatible-mode/v1' })).toMatchObject({ key: 'existing-key', origin: 'https://dashscope.aliyuncs.com', model: 'qwen3-tts-flash', voice: 'Cherry' });
+  expect(speechConfig({ ...existing, SITE_ASSISTANT_TTS_BASE_URL: 'invalid' })).toBeNull();
+});
+it('supports a standard DashScope key and preserves explicit TTS overrides', () => {
+  const env = { SITE_ASSISTANT_TTS_ENABLED: '1', DASHSCOPE_API_KEY: 'standard-key' };
+  expect(speechConfig(env)).toMatchObject({ key: 'standard-key', model: 'qwen3-tts-flash' });
+  expect(speechConfig({ ...env, SITE_ASSISTANT_API_KEY: 'chat-key', SITE_ASSISTANT_TTS_API_KEY: 'speech-key', SITE_ASSISTANT_TTS_VOICE: 'Serena' })).toMatchObject({ key: 'speech-key', voice: 'Serena' });
+  expect(speechConfig({ ...env, SITE_ASSISTANT_TTS_MODEL: 'qwen-audio-3.1-tts-flash' })).toBeNull();
+});
+it('uses the standard TTS protocol and downloads WAV over HTTPS without forwarding the key', async () => {
+  enabled();
+  vi.stubEnv('SITE_ASSISTANT_TTS_BASE_URL', 'https://dashscope.aliyuncs.com');
+  const wav = Buffer.from('RIFF1234WAVEaudio');
+  const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ output: { audio: { url: 'http://dashscope-result-bj.oss-cn-beijing.aliyuncs.com/audio.wav?signature=fixture' } } })).mockResolvedValueOnce(new Response(wav));
+  const audio = await createSpeechSynthesizer(fetcher)(1, '你好，CubeRoot', 'zh', new AbortController().signal);
+  expect(fetcher.mock.calls[0][0]).toBe('https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation');
+  expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ model: 'qwen3-tts-flash', input: { text: '你好，CubeRoot', voice: 'Cherry', language_type: 'Auto' } });
+  expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer test-key');
+  expect(String(fetcher.mock.calls[1][0])).toBe('https://dashscope-result-bj.oss-cn-beijing.aliyuncs.com/audio.wav?signature=fixture');
+  expect(fetcher.mock.calls[1][1].headers).toBeUndefined();
+  expect(fetcher.mock.calls[1][1].redirect).toBe('error');
+  expect(audio).toEqual(wav);
+  expect(speechAudioType(audio)).toBe('audio/wav');
+});
 it('requires opt-in and rejects untrusted origins', () => {
   vi.stubEnv('SITE_ASSISTANT_TTS_ENABLED', '0'); expect(speechConfig()).toBeNull();
   enabled(); vi.stubEnv('SITE_ASSISTANT_TTS_BASE_URL', 'https://example.com'); expect(speechConfig()).toBeNull();
@@ -59,4 +92,85 @@ it('bounds concurrent calls and forwards cancellation', async () => {
   const first = speak(1, 'Hello', 'en', controller.signal);
   await expect(speak(1, 'Another', 'en', controller.signal)).rejects.toThrow('speech_limit');
   controller.abort(); await expect(first).rejects.toThrow('aborted');
+});
+function audioEvent(data: string, finish: string | null = null) {
+  return `data: ${JSON.stringify({ output: { audio: { data }, finish_reason: finish } })}\r\n\r\n`;
+}
+function sseResponse(text: string) {
+  const bytes = new TextEncoder().encode(text);
+  return new Response(new ReadableStream({ start(controller) {
+    for (let index = 0; index < bytes.length; index += 17) controller.enqueue(bytes.slice(index, index + 17));
+    controller.close();
+  } }), { headers: { 'Content-Type': 'text/event-stream' } });
+}
+it('assembles fragmented inline audio without an OSS download and caches the complete audio', async () => {
+  enabled();
+  const fetcher = vi.fn().mockImplementation(async () => sseResponse(audioEvent('SUQz') + audioEvent('YXVkaW8=') + audioEvent('', 'stop')));
+  const speak = createSpeechSynthesizer(fetcher), signal = new AbortController().signal;
+  expect(await speak(1, 'Hello', 'en', signal)).toEqual(Buffer.from('ID3audio'));
+  expect(await speak(1, 'Hello', 'en', signal)).toEqual(Buffer.from('ID3audio'));
+  expect(fetcher).toHaveBeenCalledOnce();
+  expect(fetcher.mock.calls[0][1].headers['X-DashScope-SSE']).toBe('enable');
+});
+it.each([
+  audioEvent('YXVkaW8='),
+  audioEvent('', 'stop'),
+  audioEvent('%%%=', 'stop'),
+  audioEvent('YXVkaW8=') + 'data: {"code":"ProviderError"}\n\n',
+])('rejects failed or incomplete inline audio without caching partial results', async text => {
+  enabled();
+  const fetcher = vi.fn().mockImplementation(async () => sseResponse(text));
+  const speak = createSpeechSynthesizer(fetcher), signal = new AbortController().signal;
+  await expect(speak(1, 'Hello', 'en', signal)).rejects.toThrow();
+  await expect(speak(1, 'Hello', 'en', signal)).rejects.toThrow();
+  expect(fetcher).toHaveBeenCalledTimes(2);
+});
+it('rejects oversized decoded inline audio', async () => {
+  enabled();
+  const data = audioEvent(Buffer.alloc(4 * 1024 * 1024 + 1).toString('base64'), 'stop');
+  const fetcher = vi.fn().mockResolvedValue(new Response(data, { headers: { 'Content-Type': 'text/event-stream' } }));
+  await expect(createSpeechSynthesizer(fetcher)(1, 'Hello', 'en', new AbortController().signal)).rejects.toThrow('speech_too_large');
+});
+it('delivers inline audio before synthesis ends and caches only the finished result', async () => {
+  enabled();
+  let upstream!: ReadableStreamDefaultController<Uint8Array>;
+  const response = new Response(new ReadableStream<Uint8Array>({ start(c) { upstream = c; } }), { headers: { 'Content-Type': 'text/event-stream' } });
+  const fetcher = vi.fn().mockResolvedValue(response), delivered = vi.fn(async () => {});
+  const speak = createSpeechSynthesizer(fetcher), signal = new AbortController().signal;
+  let finished = false;
+  const pending = speak(42, 'Streaming', 'en', signal, delivered).then(audio => { finished = true; return audio; });
+  upstream.enqueue(new TextEncoder().encode(audioEvent('SUQz')));
+  await vi.waitFor(() => expect(delivered).toHaveBeenCalledWith(Buffer.from('ID3')));
+  expect(finished).toBe(false);
+  upstream.enqueue(new TextEncoder().encode(audioEvent('YXVkaW8=', 'stop'))); upstream.close();
+  expect(await pending).toEqual(Buffer.from('ID3audio'));
+  delivered.mockClear();
+  await speak(42, 'Streaming', 'en', signal, delivered);
+  expect(delivered).toHaveBeenCalledWith(Buffer.from('ID3audio'));
+  expect(fetcher).toHaveBeenCalledOnce();
+});
+it('streams authenticated audio privately and marks partial failures explicitly', async () => {
+  enabled();
+  synthesize.mockImplementationOnce(async (_uid, _text, _lang, _signal, send) => { await send(Buffer.from('ID3')); throw new Error('upstream failed'); });
+  const response = await post({ ...body, stream: true } as typeof body);
+  expect(response.headers.get('content-type')).toContain('text/event-stream');
+  expect(response.headers.get('cache-control')).toBe('private, no-store');
+  const frames = (await response.text()).split('\n\n').filter(Boolean).map(line => JSON.parse(line.slice(6)));
+  expect(frames).toEqual([{ type: 'meta', mime: 'audio/mpeg', total: 1 }, { type: 'audio', audio: 'SUQz' }, { type: 'error', error: 'speech_unavailable' }]);
+});
+it('cancels upstream synthesis when the downstream stream is closed', async () => {
+  enabled();
+  let upstreamSignal: AbortSignal | undefined;
+  synthesize.mockImplementationOnce(async (_uid, _text, _lang, signal) => { upstreamSignal = signal; await new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason))); });
+  const response = await post({ ...body, stream: true } as typeof body);
+  const reader = response.body!.getReader(); await reader.read();
+  await vi.waitFor(() => expect(upstreamSignal).toBeDefined());
+  await reader.cancel();
+  await vi.waitFor(() => expect(upstreamSignal!.aborted).toBe(true));
+});
+it('uses the complete WAV response for the standard model even when streaming is requested', async () => {
+  enabled(); vi.stubEnv('SITE_ASSISTANT_TTS_BASE_URL', 'https://dashscope.aliyuncs.com');
+  const response = await post({ ...body, stream: true } as typeof body);
+  expect(response.headers.get('content-type')).toContain('application/json');
+  expect((await response.json()).total).toBe(1);
 });
