@@ -168,6 +168,8 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
       const a = await actor(query,identity);
       switch(action) {
         case 'contracts': return contracts(query, identity).list();
+        case 'contract-drafts': return contracts(query, identity).drafts();
+        case 'contract-draft': return contracts(query, identity).draft(search);
         case 'contract-versions': return contracts(query, identity).versions(search);
         case 'work-calendar': return workCalendar(query, a, identity).list(search);
         case 'announcement': {
@@ -204,6 +206,10 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
       }
       return write(identity,async(q,a)=>{
         switch(action){
+          case 'contract-draft-create': return contracts(q, identity).createDraft(input);
+          case 'contract-draft-save': return contracts(q, identity).saveDraft(input);
+          case 'contract-draft-delete': return contracts(q, identity).deleteDraft(input);
+          case 'contract-draft-publish': return contracts(q, identity).publishDraft(input);
           case 'contract-upload': return contracts(q, identity).upload(input);
           case 'work-pattern': return workCalendar(q, a, identity).savePattern(input);
           case 'work-exception': return workCalendar(q, a, identity).saveException(input);

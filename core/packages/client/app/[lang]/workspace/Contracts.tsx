@@ -1,11 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { ErrorNotice, Field, useResource, RequestError } from '@app-foundation/workspace-ui';
 import { useT } from '@/hooks/useT';
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders } from '@/lib/admin-api';
 import { sessionFetch } from '@/lib/session-fetch';
 import { WorkspaceButton as Button, WorkspaceDialog } from './WorkspaceControls';
+
+const ContractDrafts = dynamic(() => import('./ContractDrafts'));
 
 type Revision = { version: number; filename: string; mime: string; createdAt: number };
 type Contract = Revision & { id: string; userId: number; title: string; name: string };
@@ -29,7 +32,7 @@ export default function Contracts() {
   const [viewing, setViewing] = useState<Contract | null>(null);
   return <>
     <ErrorNotice error={resource.error} retry={resource.reload} />
-    {resource.data?.canManage && <div className="staff-actions workspace-toolbar"><Button action="add" iconOnly={false} onClick={() => setEditing('new')}>{t('上传合同', 'Upload contract')}</Button></div>}
+    {resource.data?.canManage && <ContractDrafts members={resource.data.members} onUpload={() => setEditing('new')} onPublished={resource.reload} />}
     {resource.loading && <p role="status">{t('正在加载…', 'Loading…')}</p>}
     {resource.data?.contracts.length === 0 && <p className="staff-empty">{t('暂无合同', 'No contracts yet')}</p>}
     <div className="staff-feed">{resource.data?.contracts.map(contract => <article className="workspace-member-row" key={contract.id}>

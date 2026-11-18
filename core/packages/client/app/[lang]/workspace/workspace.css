@@ -390,3 +390,10 @@
 .workspace-category-heading > .more-toggle { color: var(--foreground); }
 
 .workspace-software-group > .more-toggle { min-height: 44px; font-size: 16px; }
+
+.workspace-contract-editor {
+  min-height: 16rem;
+  max-height: 48dvh;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}

@@ -10,7 +10,10 @@ import { createWorkspaceService, WorkspaceError } from '../workspace/service.js'
 export const workspaceRoutes = new Hono();
 const service = createWorkspaceService(query, withTransaction);
 workspaceRoutes.use('/workspace/*', async (c, next) => { c.header('Cache-Control', 'private, no-store'); await next(); });
-workspaceRoutes.use('/workspace/*', (c, next) => bodyLimit({ maxSize: c.req.path.endsWith('/contract-upload') ? 8 * 1024 * 1024 : 262144 })(c, next));
+workspaceRoutes.use('/workspace/*', (c, next) => {
+  const acceptsContractFile = /\/(contract-upload|contract-draft-publish)$/.test(c.req.path);
+  return bodyLimit({ maxSize: acceptsContractFile ? 8 * 1024 * 1024 : 262144 })(c, next);
+});
 workspaceRoutes.all('/workspace/:action', async c => {
   const decoded = jwt.decode((c.req.header('Authorization') ?? '').replace(/^Bearer /, ''));
   if (decoded && typeof decoded === 'object' && decoded.previewId) return c.json({error:'请使用本人账号 / Use your own account'},403);
