@@ -94,7 +94,7 @@ export function PlatformClassroom({ courseId, lessonId, lessons: initialLessons 
     <nav className="platform-learning-directory" data-site-surface="panel"><h2>{t('课程目录','Course lessons')}</h2>{lessons.map(item=>{
       const done=state?.lessons.find(row=>row.id===item.id)?.status==='completed';
       const label=<><span>{title(item)}</span>{done||item.accessScope==='public'||item.durationSeconds?<small>{done?t('已完成','Completed'):item.accessScope==='public'?t('试看','Preview'):learningTime(item.durationSeconds??0)}</small>:null}</>;
-      if (item.locked) return <button type="button" key={item.id} disabled>
+      if (item.locked) return <button className="platform-learning-directory-locked" type="button" key={item.id} disabled>
         <span>{title(item)}</span><LockKeyhole size={14} aria-hidden /><span className="sr-only">{t('需要解锁','Unlock required')}</span>
       </button>;
       return onSelectLesson||initialLessons.length?<button type="button" key={item.id} aria-current={item.id===lessonId?'step':undefined} onClick={()=>onSelectLesson?.(item.id)}>{label}</button>:<AppLink key={item.id} href={`/platform/courses/${courseId}/learn/${item.id}`} prefetch={false} aria-current={item.id===lessonId?'step':undefined}>{label}</AppLink>;
