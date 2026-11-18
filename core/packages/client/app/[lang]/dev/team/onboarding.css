@@ -12,7 +12,7 @@
 .onboarding-step-heading .info-tooltip { margin-left: auto; }
 .onboarding-compact .info-tooltip-trigger { min-width: 32px; min-height: 32px; justify-content: center; }
 .onboarding-compact .onboarding-step p { margin: 0; font-size: 18px; line-height: 1.5; color: var(--muted-foreground); }
-.onboarding-id, .onboarding-command { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 20px; }
+.onboarding-command { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 20px; }
 .onboarding-compact .onboarding-step .staff-start-action { min-height: 44px; font-size: 17px; }
 .onboarding-command code { font-size: 18px; }
 .onboarding-account { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; font-size: 16px; color: var(--foreground); text-decoration: none; }
@@ -43,7 +43,6 @@
   .onboarding-more { gap: 4px 16px; margin-top: 12px; }
   .onboarding-more .more-toggle { font-size: 16px; }
 }
-.onboarding-compact .onboarding-id .user-id-label { font-size: 18px; }
 
 body:has(.onboarding-compact) .site-tooltip { font-size: 16px; line-height: 1.6; }
 @media (max-width: 600px) {

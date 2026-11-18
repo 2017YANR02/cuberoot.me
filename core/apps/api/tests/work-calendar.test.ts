@@ -32,7 +32,7 @@ suite('work calendar PostgreSQL permissions and persistence', () => {
   beforeAll(async () => {
     await sql.unsafe(`CREATE SCHEMA ${schema}; SET search_path TO ${schema}`);
     await sql.unsafe("CREATE TABLE app_users(id BIGINT PRIMARY KEY, display_name TEXT, is_admin BOOLEAN, wca_id TEXT, merged_into_user_id BIGINT, forum_banned BOOLEAN DEFAULT FALSE); INSERT INTO app_users(id,display_name,is_admin,wca_id) VALUES(1,'Root',FALSE,'2017YANR02'),(2,'Alice',TRUE,NULL),(3,'Staff',FALSE,NULL)");
-    for (const migration of ['0281_workspace', '0282_workspace_account_deletion', '0284_workspace_admin_access', '0291_workspace_checklists', '0292_workspace_schedules', '0293_workspace_remove_checklist_categories', '0331_workspace_work_calendar', '0332_workspace_remove_projects']) await sql.unsafe(readFileSync(new URL(`../migrations/${migration}.sql`, import.meta.url), 'utf8'));
+    for (const migration of ['0281_workspace', '0282_workspace_account_deletion', '0284_workspace_admin_access', '0291_workspace_checklists', '0292_workspace_schedules', '0293_workspace_remove_checklist_categories', '0331_workspace_work_calendar', '0332_workspace_remove_projects', '0340_workspace_member_requests']) await sql.unsafe(readFileSync(new URL(`../migrations/${migration}.sql`, import.meta.url), 'utf8'));
     await service.post(root, 'member', { userId: 3, name: 'Staff', role: 'manager', active: true });
   });
   afterAll(async () => { await sql.unsafe(`DROP SCHEMA ${schema} CASCADE`); await sql.end(); });

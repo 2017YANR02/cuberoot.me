@@ -29,6 +29,7 @@ function Navigation({ children }: { children: ReactNode }) {
     { id: 'checklists', label: t('清单', 'Checklists'), Icon: ClipboardList },
     { id: 'schedule', label: t('排期', 'Schedule'), Icon: FolderKanban },
     ...(admin ? [{ id: 'work-calendar', label: t('工作日历', 'Work calendar'), Icon: CalendarDays }, { id: 'members', label: t('成员与权限', 'Members and access'), Icon: ShieldCheck }] : []),
+    { id: 'contracts', label: t('合同与协议', 'Contracts & agreements'), Icon: BookOpen },
     { id: 'onboarding', label: t('入/离职', 'Onboarding / Offboarding'), Icon: UserRoundPlus },
     { id: 'sop', label: t('开发规范', 'Development standards'), Icon: Workflow },
   ].map(({ id, label, Icon }) => ({ id, label, href: `/admin/team?section=${id}`, icon: <Icon size={18} aria-hidden />, active: !inAdmin && (section === 'offboarding' ? 'onboarding' : section ?? 'mine') === id }));

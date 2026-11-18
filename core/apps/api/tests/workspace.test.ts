@@ -29,13 +29,46 @@ suite('independent CubeRoot workspace',()=>{
     await sql.unsafe(readFileSync(new URL('../migrations/0281_workspace.sql',import.meta.url),'utf8'));
     await sql.unsafe(readFileSync(new URL('../migrations/0282_workspace_account_deletion.sql',import.meta.url),'utf8'));
     await sql.unsafe(readFileSync(new URL('../migrations/0284_workspace_admin_access.sql',import.meta.url),'utf8'));
-    for (const file of ['0291_workspace_checklists','0292_workspace_schedules','0293_workspace_remove_checklist_categories','0332_workspace_remove_projects','0337_workspace_checklist_sections','0338_workspace_announcement']) await sql.unsafe(readFileSync(new URL('../migrations/'+file+'.sql',import.meta.url),'utf8'));
+    for (const file of ['0291_workspace_checklists','0292_workspace_schedules','0293_workspace_remove_checklist_categories','0332_workspace_remove_projects','0337_workspace_checklist_sections','0338_workspace_announcement', '0340_workspace_member_requests']) await sql.unsafe(readFileSync(new URL('../migrations/'+file+'.sql',import.meta.url),'utf8'));
     // A separate application's account record is not in CubeRoot app_users.
     await q('CREATE SCHEMA other_application');await q('CREATE TABLE other_application.employees(id INT PRIMARY KEY,name TEXT)');await q("INSERT INTO other_application.employees VALUES (99,'External employee')");
     aliceId=(await service.post(admin,'member',{userId:2,name:'Alice',role:'member',active:true})).id as number;
     bobId=(await service.post(admin,'member',{userId:3,name:'Bob',role:'member',active:true})).id as number;
   });
   afterAll(async()=>{await q('DROP SCHEMA workspace_fixture CASCADE');await q('DROP SCHEMA other_application CASCADE');await sql.end();});
+  it('lets signed-in applicants request access and only administrators review it', async () => {
+    const applicant: Identity = {uid: 88002, isAdmin: false, name: 'Untrusted token name'};
+    const reviewer: Identity = {uid: 88003, isAdmin: true, name: 'Reviewer'};
+    await q("INSERT INTO app_users(id,display_name,is_admin) VALUES (88002,'New colleague',FALSE),(88003,'Reviewer',TRUE)");
+    const get = (identity: Identity, action: string) => service.get(identity, action, new URLSearchParams());
+    const pending = async () => (await get(reviewer, 'member-requests') as {requests: {id: string; userId: string; name: string}[]}).requests;
+    expect(await get(applicant, 'member-request')).toEqual({status:'none'});
+    await expect(get({...applicant, uid:99}, 'member-request')).rejects.toMatchObject({status:401});
+    await expect(get(applicant, 'session')).rejects.toMatchObject({status:403});
+    expect(await service.post(applicant, 'member-request', {userId: unassigned.uid, role:'manager'})).toEqual({status:'pending'});
+    expect(await get(unassigned, 'member-request')).toEqual({status:'none'});
+    const [request] = await pending();
+    expect(request).toMatchObject({userId:String(applicant.uid), name:'New colleague'});
+    await service.post(applicant, 'member-request', {});
+    expect(await pending()).toEqual([request]);
+    await expect(get(applicant, 'session')).rejects.toMatchObject({status:403});
+    await expect(get(alice, 'member-requests')).rejects.toMatchObject({status:403});
+    await expect(service.post(alice, 'member-request-decision', {id:request.id, decision:'approved'})).rejects.toMatchObject({status:403});
+    await service.post(reviewer, 'member-request-decision', {id:request.id, decision:'rejected'});
+    expect(await get(applicant, 'member-request')).toEqual({status:'rejected'});
+    await service.post(applicant, 'member-request', {});
+    const [retry] = await pending();
+    expect(retry.id).not.toBe(request.id);
+    await expect(service.post(reviewer, 'member-request-decision', {id:request.id, decision:'approved'})).rejects.toMatchObject({status:409});
+    await service.post(reviewer, 'member-request-decision', {id:retry.id, decision:'approved', role:'manager'});
+    expect(await get(applicant, 'session')).toMatchObject({actor:{kind:'staff', role:'member', name:'New colleague'}});
+    expect(await get(applicant, 'member-request')).toEqual({status:'enabled'});
+    expect(await pending()).toEqual([]);
+    expect(await q('SELECT action FROM workspace_audit WHERE target=?', [retry.id])).toEqual([{action:'member-request.approved'}]);
+    await q('DELETE FROM app_users WHERE id=?', [applicant.uid]);
+    expect(await q('SELECT id FROM workspace_member_requests WHERE user_id=?', [applicant.uid])).toEqual([]);
+    await q('DELETE FROM app_users WHERE id=?', [reviewer.uid]);
+  });
   it('shares announcements between administrators and rejects other readers, stale writes and invalid input', async () => {
     await q("INSERT INTO app_users(id,display_name,is_admin) VALUES (88001,'Second admin',TRUE)");
     const second = { uid: 88001, isAdmin: true, name: 'Second admin' };

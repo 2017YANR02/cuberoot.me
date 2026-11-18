@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 import { canReadReport, reportReadScope, decideReportChange, isWorkDate, isResultUrl, type WorkspaceActor, type ReportState } from '@app-foundation/workspace-policy';
@@ -5,6 +6,7 @@ import type { QueryRunner } from '../db/connection.js';
 import { reportHoursInput } from './report-hours.js';
 import { planningService } from './planning.js';
 import { workCalendarService } from './work-calendar.js';
+import { contractsService } from './contracts.js';
 
 export type Actor = WorkspaceActor & { name: string; memberId?: number; canManageReports?: boolean };
 export type Identity = { uid: number; isAdmin: boolean; name: string };
@@ -16,6 +18,7 @@ const version = z.number().int().nonnegative();
 const name = z.string().trim().min(1).max(60);
 const role = z.enum(['member', 'manager']);
 const url = z.string().max(2000).refine(isResultUrl, 'HTTPS URL required');
+const memberDecision = z.object({ id: uuid, decision: z.enum(['approved', 'rejected']) });
 const memberInput = z.object({ userId: positive, name, role, active: z.boolean() });
 const reportInput = z.object({ id: uuid, memberId: positive.optional(), version, workDate: z.string().refine(isWorkDate), status: z.enum(['draft', 'submitted']), visibility: z.enum(['company', 'managers']), progress: z.string().trim().max(5000), resultUrl: url, help: z.string().trim().max(2000), next: z.string().trim().max(2000) });
 const reportDeleteInput = z.object({ id: uuid, version });
@@ -55,17 +58,56 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
     if (!a.memberId) throw new WorkspaceError('员工权限暂不可用 / Employee access unavailable',403);
     return {kind:'staff',id:a.memberId,role:'manager',name:a.name,canManageReports:a.canManageReports};
   }
-  async function actor(q: QueryRunner, identity: Identity): Promise<Actor> {
-    const [user] = await q<{ is_admin: boolean; display_name: string; wca_id: string | null }>('SELECT is_admin, display_name, wca_id FROM app_users WHERE id=? AND merged_into_user_id IS NULL AND NOT forum_banned', [identity.uid]);
+  async function activeAccount(q: QueryRunner, uid: number) {
+    const [user] = await q<{ is_admin: boolean; wca_id: string | null }>('SELECT is_admin, wca_id FROM app_users WHERE id=? AND merged_into_user_id IS NULL AND NOT forum_banned', [uid]);
     if (!user) throw new WorkspaceError('登录已失效 / Sign in again', 401);
+    return user;
+  }
+  async function actor(q: QueryRunner, identity: Identity): Promise<Actor> {
+    const user = await activeAccount(q, identity.uid);
     await syncAdminMembers(q);
     const [member] = await q<{id: number; name: string; role: 'member'|'manager'}>(`SELECT id,name,role FROM ${memberSource} m WHERE user_id=? AND (active OR admin_access)`, [identity.uid]);
-    if (!member) throw new WorkspaceError('请将 CubeRoot ID 交给负责人开通员工权限 / Ask your administrator to enable your CubeRoot ID', 403);
+    if (!member) throw new WorkspaceError('请在入职页申请员工权限 / Request employee access on the onboarding page', 403);
     if (identity.isAdmin && (user.is_admin || isAdminWcaId(user.wca_id))) return { kind: 'admin', role: 'admin', id: identity.uid, name: member.name, memberId:member.id, canManageReports:isAdminWcaId(user.wca_id) };
     return { ...member, kind: 'staff' };
   }
   function admin(a: Actor) { if (a.kind !== 'admin') throw new WorkspaceError('需要管理员权限 / Administrator required', 403); }
   async function audit(q: QueryRunner, a: Actor, action: string, target: string) { await q('INSERT INTO workspace_audit(actor,action,target,created_at) VALUES (?,?,?,?)', [key(a),action,target,now()]); }
+  async function memberRequestStatus(q: QueryRunner, uid: number) {
+    const user = await activeAccount(q, uid);
+    const [member] = await q('SELECT id FROM workspace_members WHERE user_id=? AND active', [uid]);
+    if (member || user.is_admin || isAdminWcaId(user.wca_id)) return {status: 'enabled'} as const;
+    const [request] = await q<{status: 'pending' | 'approved' | 'rejected'}>('SELECT status FROM workspace_member_requests WHERE user_id=?', [uid]);
+    return {status: request?.status === 'approved' ? 'none' : request?.status ?? 'none'} as const;
+  }
+  async function requestMemberAccess(q: QueryRunner, uid: number) {
+    const state = await memberRequestStatus(q, uid);
+    if (state.status === 'enabled' || state.status === 'pending') return state;
+    await q(`INSERT INTO workspace_member_requests(user_id,id,status) VALUES (?,?,'pending')
+      ON CONFLICT(user_id) DO UPDATE SET id=EXCLUDED.id,status=EXCLUDED.status,requested_at=NOW()`, [uid, randomUUID()]);
+    return {status: 'pending'} as const;
+  }
+  async function pendingMemberRequests(q: QueryRunner) {
+    return q(`SELECT r.id, u.id::text AS "userId", COALESCE(NULLIF(BTRIM(u.display_name),''),u.id::text) AS name
+      FROM workspace_member_requests r JOIN app_users u ON u.id=r.user_id
+      WHERE r.status='pending' AND u.merged_into_user_id IS NULL AND NOT u.forum_banned
+        AND NOT u.is_admin AND NOT (COALESCE(u.wca_id,'')=ANY(?::text[]))
+      ORDER BY r.requested_at,r.id`, [[...ADMIN_WCA_IDS]]);
+  }
+  async function reviewMemberRequest(q: QueryRunner, a: Actor, input: unknown) {
+    const {id, decision} = memberDecision.parse(input);
+    const [request] = await q<{userId: string; name: string}>(`UPDATE workspace_member_requests r SET status=? FROM app_users u
+      WHERE r.id=? AND r.status='pending' AND u.id=r.user_id AND u.merged_into_user_id IS NULL AND NOT u.forum_banned
+        AND NOT u.is_admin AND NOT (COALESCE(u.wca_id,'')=ANY(?::text[]))
+      RETURNING u.id::text AS "userId", LEFT(COALESCE(NULLIF(BTRIM(u.display_name),''),u.id::text),60) AS name`, [decision, id, [...ADMIN_WCA_IDS]]);
+    if (!request) throw new WorkspaceError('申请已处理或不可用 / Request already reviewed or unavailable',409);
+    if (decision === 'approved') {
+      await q(`INSERT INTO workspace_members(user_id,name,role,active) VALUES (?,?,'member',TRUE)
+        ON CONFLICT(user_id) DO UPDATE SET role='member',active=TRUE WHERE NOT workspace_members.active`, [request.userId, request.name]);
+    }
+    await audit(q, a, `member-request.${decision}`, id);
+    return {status: decision};
+  }
   function scope(a: Actor) {
     return {...reportReadScope(a),ownMemberId:employee(a).id};
   }
@@ -108,12 +150,25 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
       audit: (action, id) => audit(q, a, action, id),
       fail: (message, status) => { throw new WorkspaceError(message, status); } });
   }
+  function contracts(q: QueryRunner, identity: Identity) {
+    return contractsService(q, identity.uid, (message, status) => { throw new WorkspaceError(message, status); });
+  }
   return {
+    async contractFile(identity: Identity, search: URLSearchParams) {
+      return transact(async q => {
+        await q("SELECT pg_advisory_xact_lock(2812026)");
+        await actor(q, identity);
+        return contracts(q, identity).file(search);
+      });
+    },
     async get(identity: Identity, action: string, search: URLSearchParams) {
       return transact(async query => {
       await query("SELECT pg_advisory_xact_lock(2812026)");
+      if (action === 'member-request') return memberRequestStatus(query, identity.uid);
       const a = await actor(query,identity);
       switch(action) {
+        case 'contracts': return contracts(query, identity).list();
+        case 'contract-versions': return contracts(query, identity).versions(search);
         case 'work-calendar': return workCalendar(query, a, identity).list(search);
         case 'announcement': {
           admin(a);
@@ -121,6 +176,7 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
           return { ...notice, canEdit: true };
         }
         case 'session': return {actor:a,employee:employee(a),directory:await directory(query)};
+        case 'member-requests': admin(a); return {requests: await pendingMemberRequests(query)};
         case 'members': admin(a); return {members:await query(`SELECT id,user_id::int AS "userId",name,role,(active OR admin_access) AS active,admin_access AS "adminAccess" FROM ${memberSource} m WHERE user_id IS NOT NULL ORDER BY id`)};
         case 'detail': return detail(query,a,search.get('id')??'');
         case 'checklists': return planning(query, a).checklists(search);
@@ -140,8 +196,15 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
       });
     },
     async post(identity: Identity, action: string, input: unknown) {
+      if (action === 'member-request') {
+        return transact(async q => {
+          await q('SELECT pg_advisory_xact_lock(2812026)');
+          return requestMemberAccess(q, identity.uid);
+        });
+      }
       return write(identity,async(q,a)=>{
         switch(action){
+          case 'contract-upload': return contracts(q, identity).upload(input);
           case 'work-pattern': return workCalendar(q, a, identity).savePattern(input);
           case 'work-exception': return workCalendar(q, a, identity).saveException(input);
           case 'checklist': return planning(q, a).saveChecklist(input);
@@ -157,10 +220,12 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
             await audit(q, a, 'announcement.save', '1');
             return { ...saved, canEdit: true };
           }
+          case 'member-request-decision': admin(a); return reviewMemberRequest(q, a, input);
           case 'member': {
             admin(a);const data=memberInput.parse(input);
             const [user]=await q('SELECT id FROM app_users WHERE id=? AND merged_into_user_id IS NULL AND NOT forum_banned',[data.userId]);if(!user)throw new WorkspaceError('CubeRoot 用户不存在 / User unavailable',404);
             const [saved]=await q<{id:number}>('INSERT INTO workspace_members(user_id,name,role,active) VALUES (?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET name=EXCLUDED.name,role=EXCLUDED.role,active=EXCLUDED.active RETURNING id',[data.userId,data.name,data.role,data.active]);
+            if(data.active) await q("UPDATE workspace_member_requests SET status='approved' WHERE user_id=? AND status='pending'", [data.userId]);
             await audit(q,a,'member.save',String(saved.id));return {id:saved.id};
           }
           case 'report': {

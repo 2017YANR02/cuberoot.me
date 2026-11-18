@@ -26,6 +26,9 @@ import { WorkspaceButton as Button, WorkspaceDialog } from './WorkspaceControls'
 import { DateInput } from '@/components/DateInput';
 import { displayCuberName } from '@/lib/cuber-name-display';
 
+import { MemberAccessApprovals } from './MemberAccess';
+
+const Contracts = dynamic(() => import('./Contracts'));
 const WorkCalendar = dynamic(() => import('./WorkCalendar'));
 
 // Product adapter: only CubeRoot auth headers and CubeRoot API are used here.
@@ -42,7 +45,7 @@ export function workspaceHref(href: string) {
   return parts[1] ? `/admin/team?section=${encodeURIComponent(parts[1])}` : '/admin/team';
 }
 function Link({href,...props}:AnchorHTMLAttributes<HTMLAnchorElement>&{href:string}) { return <AppLink {...props} href={workspaceHref(href)} prefetch={false} />; }
-const sections=['mine','updates','checklists','schedule','work-calendar','members','detail','onboarding','offboarding','sop'] as const;
+const sections=['mine','updates','checklists','schedule','work-calendar','members','contracts','detail','onboarding','offboarding','sop'] as const;
 function Workspace() {
   const lang=useLang();const router=useRouter();
   const host=useMemo(()=>({api,Link,Button,Dialog:WorkspaceDialog,DateInput,formatName:(name:string)=>displayCuberName(name,lang==='zh'),t:(text:string)=>workspaceText(lang,text),navigate:(href:string)=>router.push(`${lang==='zh'?'/zh':''}${workspaceHref(href)}`)}),[lang,router]);
@@ -50,27 +53,29 @@ function Workspace() {
 }
 function WorkspaceContent() {
   const t=useT();const user=useAuthUser();
-  return user ? <SignedInWorkspace key={user.uid} /> : <WorkspaceLoginFrame brand="CubeRoot"><h1>{t('Workspace','Workspace')}</h1><Button onClick={()=>authActions.login()}>{t('登录 CubeRoot','Sign in to CubeRoot')}</Button></WorkspaceLoginFrame>;
+  return user ? <SignedInWorkspace key={user.uid ?? user.wcaId} /> : <WorkspaceLoginFrame brand="CubeRoot"><h1>{t('Workspace','Workspace')}</h1><Button onClick={()=>authActions.login()}>{t('登录 CubeRoot','Sign in to CubeRoot')}</Button></WorkspaceLoginFrame>;
 }
 function SignedInWorkspace() {
   const t=useT();const [section,setSection]=useQueryState('section',parseAsString.withDefault('mine'));
   const [id]=useQueryState('id',parseAsString.withDefault(''));
   const session=useResource<{actor:StaffActor;employee:StaffActor;directory:MemberDirectory}>('session');const actor=session.data?.actor;const employee=session.data?.employee;
   if (!(sections as readonly string[]).includes(section)) notFound();
-  const items=[{key:'mine',label:t('我的工作','My work')},{key:'updates',label:t('团队动态','Team updates')},{key:'checklists',label:t('清单','Checklists')},{key:'schedule',label:t('总排期','Schedule')},...(actor?.kind==='admin'?[{key:'work-calendar',label:t('工作日历','Work calendar')},{key:'members',label:t('成员与权限','Members and access')}]:[])];
+  const items=[{key:'mine',label:t('我的工作','My work')},{key:'updates',label:t('团队动态','Team updates')},{key:'checklists',label:t('清单','Checklists')},{key:'contracts',label:t('合同与协议','Contracts & agreements')},{key:'schedule',label:t('总排期','Schedule')},...(actor?.kind==='admin'?[{key:'work-calendar',label:t('工作日历','Work calendar')},{key:'members',label:t('成员与权限','Members and access')}]:[])];
   const lifecycle = section === 'onboarding' || section === 'offboarding';
   const handbookItems = [{ key: 'onboarding', label: t('入/离职','Onboarding / Offboarding') }, { key: 'sop', label: t('开发规范','Development standards') }, { key: 'offboarding', label: t('入/离职','Onboarding / Offboarding') }];
   const handbook = handbookItems.some(item => item.key === section);
   return <main className={handbook ? 'staff-handbook-main' : undefined}>
     <div className="staff-page-heading page-back-heading"><PageBackLink contextOnly /><h1>{[...items,...handbookItems].find(i=>i.key===section)?.label??t('工作记录','Work report')}</h1></div>
-    {lifecycle&&<div className="staff-actions workspace-toolbar"><select className="staff-input workspace-toolbar-select" aria-label={t('入/离职','Onboarding / Offboarding')} value={section} onChange={event=>void setSection(event.target.value)}><option value="onboarding">{t('入职','Onboarding')}</option><option value="offboarding">{t('离职','Offboarding')}</option></select></div>}
+    {lifecycle&&<div className="staff-actions workspace-toolbar"><select className="staff-input workspace-toolbar-select" aria-label={t('入/离职','Onboarding / Offboarding')} value={section} onChange={event=>void setSection(event.target.value)}><option value="onboarding">{t('入职','Onboarding')}</option><option value="offboarding">{t('离职','Offboarding')}</option></select><AppLink href="/admin/team?section=contracts" prefetch={false}>{t('合同与协议','Contracts & agreements')}</AppLink></div>}
     {!handbook&&<ErrorNotice error={session.error} retry={session.reload} />}
+    {!handbook&&session.error?.status===403&&<AppLink href="/admin/team?section=onboarding" prefetch={false}>{t('前往入职页','Go to onboarding')}</AppLink>}
     {session.error?.status===401&&<Button onClick={()=>authActions.login()}>{t('重新登录','Sign in again')}</Button>}
     {!handbook&&session.loading&&<p role="status"><LoadingIndicator>{t('正在加载…','Loading…')}</LoadingIndicator></p>}
     {handbook&&<div className="staff-start staff-workspace-handbook">{section==='offboarding'?<Offboarding />:section==='sop'?<Sop />:<Onboarding />}</div>}
     {actor&&<>
       {section==='mine'&&employee&&<WorkReports actor={employee} directory={session.data!.directory} mine />}
       {section==='updates'&&employee&&<WorkReports actor={employee} directory={session.data!.directory} />}
+      {section==='contracts'&&<Contracts />}
       {section==='checklists'&&<Checklists />}
       {section==='schedule'&&<Schedules actor={actor} />}
       {section==='work-calendar'&&(actor.kind==='admin'?<WorkCalendar />:<p>{t('需要管理员权限','Administrator access required')}</p>)}
@@ -102,7 +107,7 @@ function Members({onSaved}:{onSaved:()=>void}) {
     <div className="staff-actions staff-form-actions"><Button action="save" type="submit">{member?t('保存','Save'):t('开通','Enable')}</Button></div>
   </Form>;
   const members = resource.data?.members.filter(member => `${member.name} ${member.userId}`.toLowerCase().includes(search.trim().toLowerCase()));
-  return <><div className="workspace-toolbar staff-actions"><Field width="medium" label={t('搜索成员','Find a member')}><input value={search} onChange={event => setSearch(event.target.value)} placeholder={t('姓名或 CubeRoot ID','Name or CubeRoot ID')} /></Field><div className="staff-toolbar-actions"><Button action="add" onClick={() => setEditing('new')}>{t('开通员工权限','Enable employee access')}</Button></div></div>
+  return <><MemberAccessApprovals onReviewed={reload} /><div className="workspace-toolbar staff-actions"><Field width="medium" label={t('搜索成员','Find a member')}><input value={search} onChange={event => setSearch(event.target.value)} placeholder={t('姓名或 CubeRoot ID','Name or CubeRoot ID')} /></Field><div className="staff-toolbar-actions"><Button action="add" onClick={() => setEditing('new')}>{t('开通员工权限','Enable employee access')}</Button></div></div>
     <ErrorNotice error={resource.error} retry={resource.reload} />
     {resource.loading && <p role="status">{t('正在加载…','Loading…')}</p>}
     {members?.length === 0 && <p className="staff-empty">{t('暂无匹配成员','No matching members')}</p>}
