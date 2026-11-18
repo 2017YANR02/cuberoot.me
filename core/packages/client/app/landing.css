@@ -18,6 +18,7 @@
 }
 
 .landing-page {
+    --landing-inline-gutter: 2rem;
     color-scheme: light dark;
     font-family: var(--font-sans);
     background-color: var(--bg);
@@ -28,7 +29,7 @@
     flex-direction: column;
     align-items: center;
     /* PWA standalone 下顶/左/右让位刘海/灵动岛,见 index.css 的 --sat/--sar/--sal */
-    padding: calc(4rem + var(--sat)) max(2rem, var(--sar)) calc(7rem + var(--sab)) max(2rem, var(--sal));
+    padding: calc(4rem + var(--sat)) max(var(--landing-inline-gutter), var(--sar)) calc(7rem + var(--sab)) max(var(--landing-inline-gutter), var(--sal));
     box-sizing: border-box;
     position: relative;   /* 锚定右上角 auth 入口 */
 }
@@ -881,7 +882,8 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 
 @media (max-width: 640px) {
     .landing-page {
-        padding: 3rem max(1rem, var(--sar)) calc(7rem + var(--sab)) max(1rem, var(--sal));
+        --landing-inline-gutter: 1rem;
+        padding-top: 3rem;
     }
     .landing-page .cards-container {
         grid-template-columns: repeat(2, 1fr);
@@ -947,25 +949,26 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 .landing-page .landing-footer-layout {
     --footer-row-height: 32px;
     --footer-row-gap: 2px;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    align-items: start;
-    gap: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.75rem 2rem;
     width: min(100%, 1100px);
     margin: 2rem auto 1rem;
 }
 
-.landing-footer-info {
+.landing-footer-layout > :is(.landing-footer-info, .landing-contact-details) {
+    flex: 1 1 max-content;
     min-width: 0;
+}
+
+.landing-footer-info {
     display: grid;
     gap: var(--footer-row-gap);
     text-align: left;
 }
 
 @media (min-width: 901px) {
-    .landing-page .landing-footer-layout:has(.landing-contact-details) {
-        grid-template-columns: minmax(0, 1fr) minmax(440px, 1fr);
-    }
     .landing-footer-layout:has(.landing-contact-details) .landing-footer-info {
         order: -1;
     }
@@ -1021,7 +1024,6 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 
 .landing-page .landing-contact-details {
-    min-width: 0;
     margin: 0;
 }
 
@@ -1095,13 +1097,8 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 
 @media (max-width: 900px) {
-    .landing-page .landing-footer-layout {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 0.75rem;
-    }
-    .landing-page .landing-contact-details {
-        width: min(100%, 440px);
-        justify-self: start;
+    .landing-footer-layout > :is(.landing-footer-info, .landing-contact-details) {
+        flex-basis: 100%;
     }
 }
 
@@ -1139,13 +1136,6 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-}
-
-/* 致谢链接的爱心:站内统一爱心红(DeskPet .heart-icon 同款),hover 时仍保持红色 */
-:is(.landing-page, .home-navigation-drawer) .landing-auth-icon.landing-support-icon svg,
-.landing-page .footer-credits svg {
-    color: #ff5a5f;
-    fill: #ff5a5f;
 }
 
 /* footer 内 ThemeToggle / WcaAuth 裸样式(去边框 / 圆框,与 LangToggle 文字风对齐) */
@@ -1206,12 +1196,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     flex: 0 1 auto;
     min-width: 0;
     max-width: 100%;
-    max-height: 12rem;
     margin: 0;
-    overflow-y: auto;
-    /* Leave room inside the scroll clip for the cards' 1px hover lift. */
-    padding-top: 2px;
-    margin-top: -2px;
 }
 .landing-page .landing-personal-comps:empty { display: none; }
 .landing-page .landing-personal-comps .wp-upcoming-card { padding-inline: 0; }

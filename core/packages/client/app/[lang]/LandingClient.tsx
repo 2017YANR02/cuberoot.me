@@ -556,37 +556,30 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         <span className="brand-name">{t('brand')}</span>
       </span>} actions={<div className="landing-auth">
         {isAdmin && <>
-        <Tooltip content={editingCards ? tr({ zh: '完成编辑', en: 'Finish editing' }) : tr({ zh: '编辑', en: 'Edit' })}>
-          {(tip) => <button {...tip} type="button" className="landing-auth-icon landing-edit-cards" aria-pressed={editingCards}
-            aria-label={editingCards ? tr({ zh: '完成编辑', en: 'Finish editing' }) : tr({ zh: '编辑', en: 'Edit' })}
-            onClick={() => setEditingCards(current => !current)}>
-            {editingCards ? <Check size={16} aria-hidden="true" /> : <Pencil size={16} aria-hidden="true" />}
-          </button>}
-        </Tooltip>
-        <Tooltip content={tr({ zh: '商店', en: 'Shop' })}>
-          {(tip) => <Link {...tip} href={SHOP_ROOT} className="landing-auth-icon"
-            aria-label={tr({ zh: '商店', en: 'Shop' })} prefetch={false}>
-            <ShoppingBag size={16} aria-hidden="true" />
-          </Link>}
-        </Tooltip>
-        <Tooltip content={tr({ zh: '下载', en: 'Download' })}>
-          {(tip) => <Link {...tip} href="/download" className="landing-auth-icon"
-            aria-label={tr({ zh: '下载', en: 'Download' })} prefetch={false}>
-            <Download size={16} aria-hidden="true" />
-          </Link>}
-        </Tooltip>
+        <button type="button" className="landing-auth-icon landing-edit-cards" aria-pressed={editingCards}
+          aria-label={editingCards ? tr({ zh: '完成编辑', en: 'Finish editing' }) : tr({ zh: '编辑', en: 'Edit' })}
+          onClick={() => setEditingCards(current => !current)}>
+          {editingCards ? <Check size={16} aria-hidden="true" /> : <Pencil size={16} aria-hidden="true" />}
+        </button>
+        <Link href={SHOP_ROOT} className="landing-auth-icon"
+          aria-label={tr({ zh: '商店', en: 'Shop' })} prefetch={false}>
+          <ShoppingBag size={16} aria-hidden="true" />
+        </Link>
+        <Link href="/download" className="landing-auth-icon"
+          aria-label={tr({ zh: '下载', en: 'Download' })} prefetch={false}>
+          <Download size={16} aria-hidden="true" />
+        </Link>
         </>}
 
         <Link href="/membership" className="landing-auth-icon landing-membership-icon"
-          title={tr({ zh: '会员', en: 'Membership' })}
           aria-label={tr({ zh: '会员', en: 'Membership' })} prefetch={false}>
-          <Crown size={16} aria-hidden="true" />
+          <Heart className="site-support-heart" size={16} aria-hidden="true" />
         </Link>
         {renderCardGrid('calendar', SECTIONS.flatMap((section) => section.cards).filter((card) => card.id === 'calendar'), 'landing-calendar-link')}
         {!user ? (
           <Link href={`/account${nextQuery(pathname)}`} className="landing-auth-btn is-login" prefetch={false}
             onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); authActions.login(); } }}
-            aria-label={tr({ zh: '登录', en: 'Log in' })} title={tr({ zh: '登录', en: 'Log in' })}>
+            aria-label={tr({ zh: '登录', en: 'Log in' })}>
             <LogIn size={16} aria-hidden />
             <span>{tr({ zh: '登录', en: 'Log in' })}</span>
           </Link>
@@ -742,7 +735,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
           {tr({ zh: '加入我们', en: 'Careers' })}
         </Link>
         <Link href={SUPPORT_FOOTER_ENTRY.href} className="footer-credits" prefetch={false}>
-          <Heart size={12} aria-hidden="true" />
+          <Heart className="site-support-heart" size={12} aria-hidden="true" />
           <span>{t(SUPPORT_FOOTER_ENTRY.nameKey)}</span>
         </Link>
         <Link href="/membership" className="footer-membership" prefetch={false}>

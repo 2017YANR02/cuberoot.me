@@ -1,0 +1,31 @@
+/* Apply to a grid button. The button owns its label and expanded state. */
+.menu-toggle-icon::before,
+.menu-toggle-icon::after {
+  content: '';
+  grid-area: 1 / 1;
+  width: 18px;
+  height: 1.25px;
+  background: currentColor;
+  translate: 0 -5px;
+  rotate: 0deg;
+  /* Flatten the cross before separating the lines. */
+  transition: rotate 210ms ease-in, translate 210ms ease-out 210ms;
+}
+
+.menu-toggle-icon::after { translate: 0 5px; }
+
+.menu-toggle-icon[aria-expanded='true']:not([data-menu-closing])::before,
+.menu-toggle-icon[aria-expanded='true']:not([data-menu-closing])::after {
+  translate: 0 0;
+  rotate: 45deg;
+  transition: translate 210ms ease-in, rotate 210ms ease-out 210ms;
+}
+
+.menu-toggle-icon[aria-expanded='true']:not([data-menu-closing])::after { rotate: -45deg; }
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-toggle-icon::before,
+  .menu-toggle-icon::after,
+  .menu-toggle-icon[aria-expanded='true']:not([data-menu-closing])::before,
+  .menu-toggle-icon[aria-expanded='true']:not([data-menu-closing])::after { transition: none; }
+}

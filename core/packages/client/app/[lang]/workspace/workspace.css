@@ -10,6 +10,8 @@
   --workspace-control-height: 44px;
 }
 
+.staff-workspace .staff-brand > img { width: 24px; height: 24px; }
+
 .workspace-toolbar { flex-wrap: wrap; align-items: end; gap: 12px; margin: 0 0 32px; }
 .workspace-toolbar .staff-field { width: auto; flex: 0 1 auto; }
 .workspace-toolbar > .staff-input.workspace-toolbar-select { width: fit-content; flex: 0 0 auto; align-self: flex-start; }
@@ -203,6 +205,33 @@
   .cuberoot-workspace-navigation .staff-header {
     gap: 12px;
     padding-inline: 16px;
+  }
+
+  .cuberoot-workspace-navigation.af-navigation .staff-header > .af-nav-mobile-toggle {
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+    color: var(--foreground);
+  }
+
+  /* Keep the shared drawer mounted while its reveal runs in both directions. */
+  .cuberoot-workspace-navigation.af-navigation[data-mobile-layout="drawer"] > .af-nav-body > .af-nav-sidebar {
+    display: block;
+    visibility: hidden;
+    pointer-events: none;
+    clip-path: inset(0 100% 0 0);
+  }
+
+  .cuberoot-workspace-navigation.af-navigation[data-mobile-layout="drawer"][data-mobile-open="true"] > .af-nav-body > .af-nav-sidebar {
+    visibility: visible;
+    pointer-events: auto;
+    clip-path: inset(0);
+  }
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+  .cuberoot-workspace-navigation.af-navigation[data-mobile-layout="drawer"] > .af-nav-body > .af-nav-sidebar {
+    transition: clip-path 260ms ease, visibility 260ms;
   }
 }
 

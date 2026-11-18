@@ -1,6 +1,6 @@
 /* Scoped to the homepage: existing subpage shells keep their own geometry. */
 body .landing-page.landing-page--navigation {
-  padding-top: max(12px, var(--sat));
+  padding-top: var(--sat);
   padding-bottom: max(16px, var(--sab));
   min-height: calc(100dvh - var(--page-notice-h, 0px));
 }
@@ -9,9 +9,11 @@ body .landing-page.landing-page--navigation {
   z-index: 100;
   width: auto;
   align-self: stretch;
-  margin-inline: calc(max(16px, var(--sal)) - max(2rem, var(--sal))) calc(max(16px, var(--sar)) - max(2rem, var(--sar)));
+  margin-inline: calc(max(16px, var(--sal)) - max(var(--landing-inline-gutter), var(--sal)))
+    calc(max(var(--home-nav-end-gutter, 16px), var(--sar)) - max(var(--landing-inline-gutter), var(--sar)));
   display: flex;
   align-items: center;
+  min-height: 48px;
   gap: 16px;
   margin-bottom: 20px;
 }
@@ -33,7 +35,7 @@ body .landing-page.landing-page--navigation {
 }
 .home-navigation-desktop { flex: 1; min-width: 0; }
 .home-navigation .af-nav-menu { display: flex; justify-content: center; gap: 2px; }
-.home-navigation .af-nav-link { padding-inline: 10px; font-size: 16px; font-weight: 300; line-height: 1.4; height: 44px; }
+.home-navigation .af-nav-link { margin-block: 0; padding-inline: 10px; font-size: 16px; font-weight: 300; line-height: 1.4; height: 44px; }
 .home-navigation .af-nav-row[data-active="true"] .af-nav-link,
 .home-navigation .af-nav-link[aria-current] { font-weight: 400; }
 .home-navigation-desktop .af-nav-link:hover { background: transparent; }
@@ -55,8 +57,7 @@ body .landing-page.landing-page--navigation {
 /* Keep optical icon sizes separate from the existing touch targets. */
 .landing-page--navigation .home-navigation .landing-auth-icon > svg,
 .landing-page--navigation .home-navigation .landing-auth-btn.is-login > svg,
-.landing-page--navigation .home-navigation .landing-calendar-link .landing-card-icon > svg,
-.home-navigation-toggle > svg {
+.landing-page--navigation .home-navigation .landing-calendar-link .landing-card-icon > svg {
   width: 20px;
   height: 20px;
   stroke-width: 1.75;
@@ -67,8 +68,7 @@ body .landing-page.landing-page--navigation {
 .landing-page--navigation .home-navigation .landing-auth-btn.is-avatar > svg { width: 28px; height: 28px; }
 .home-navigation-toggle {
   display: none;
-  align-items: center;
-  justify-content: center;
+  place-items: center;
   width: 44px;
   height: 44px;
   flex-shrink: 0;
@@ -130,10 +130,12 @@ body .landing-page.landing-page--navigation {
   max-height: max(0px, calc(100dvh - var(--home-nav-bottom, 0px) - 40px));
   overflow: hidden auto;
   overscroll-behavior: contain;
+  scrollbar-width: none;
   background: var(--background);
   visibility: hidden;
   transition: height 240ms var(--home-nav-ease) 120ms, visibility 360ms step-end;
 }
+.home-navigation-flyout::-webkit-scrollbar { display: none; }
 .home-navigation-flyout-content {
   width: min(100%, 1164px);
   margin-inline: auto;
@@ -207,14 +209,33 @@ body .landing-page.landing-page--navigation {
 
 /* Reuse the site's modal focus, Escape, outside-click and motion contracts. */
 .settings-dialog-backdrop:has(.home-navigation-drawer) { justify-content: flex-start; align-items: stretch; padding: 0; }
-.settings-dialog:has(.home-navigation-drawer) { width: 100%; }
+.settings-dialog:has(.home-navigation-drawer) {
+  width: 100%;
+  background: var(--background);
+}
+@media (prefers-reduced-motion: no-preference) and (prefers-reduced-transparency: no-preference) {
+  /* Paint the glass on the same element that the curtain animation clips. */
+  .settings-dialog:has(.home-navigation-drawer) { animation: home-navigation-glass-in 650ms ease-out; }
+}
+@keyframes home-navigation-glass-in {
+  0%, 20% {
+    background-color: var(--glass-popover-bg);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+  100% {
+    background-color: var(--background);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
 .settings-dialog .settings-popover-panel.settings-dialog-panel.home-navigation-drawer {
   height: 100dvh;
   max-height: 100dvh;
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  background: var(--background);
+  background: transparent;
   padding: var(--sat) var(--sar) max(20px, var(--sab)) var(--sal);
   gap: 0;
 
@@ -236,7 +257,7 @@ body .landing-page.landing-page--navigation {
   width: 48px; height: 48px; padding: 0; border: 0;
   background: transparent; color: var(--foreground); cursor: pointer;
 }
-/* Keep the existing toolbar above the curtain while its icons fade out. */
+/* Keep the glyph above the curtain so it stays visible until the drawer unmounts. */
 .home-navigation[data-drawer-open] { z-index: 1001; pointer-events: none; }
 .home-navigation > .landing-auth,
 .home-navigation > .home-navigation-brand,
@@ -244,37 +265,12 @@ body .landing-page.landing-page--navigation {
 .home-navigation[data-drawer-open]:not([data-drawer-closing]) > .landing-auth,
 .home-navigation[data-drawer-open]:not([data-drawer-closing]) > .home-navigation-brand,
 .home-navigation[data-drawer-open]:not([data-drawer-closing]) > .home-navigation-desktop { opacity: 0; }
-.home-navigation-toggle[aria-expanded='true'] { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .home-navigation > .landing-auth,
   .home-navigation > .home-navigation-brand,
   .home-navigation > .home-navigation-desktop { transition: none; }
 }
 .home-navigation-close:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
-.home-navigation-glyph { display: grid; width: 20px; height: 20px; place-items: center; }
-.home-navigation-glyph > span {
-  grid-area: 1 / 1; width: 18px; height: 1.25px; background: currentColor;
-  translate: 0 -5px;
-  rotate: 0deg;
-  /* Closing: flatten first, then separate the two lines. */
-  transition: rotate 210ms ease-in, translate 210ms ease-out 210ms;
-}
-.home-navigation-glyph > span + span { translate: 0 5px; }
-.home-navigation-glyph[data-expanded] > span {
-  translate: 0 0;
-  rotate: 45deg;
-  /* Opening: meet at the center before rotating in opposite directions. */
-  transition: translate 210ms ease-in, rotate 210ms ease-out 210ms;
-}
-.home-navigation-glyph[data-expanded] > span + span { translate: 0 0; rotate: -45deg; }
-@starting-style {
-  .home-navigation-glyph[data-expanded] > span { translate: 0 -5px; rotate: 0deg; }
-  .home-navigation-glyph[data-expanded] > span + span { translate: 0 5px; rotate: 0deg; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .home-navigation-glyph > span,
-  .home-navigation-glyph[data-expanded] > span { transition: none; }
-}
 /* Apple reference: 28px type, 46px row pitch, first row at y=47px. */
 .home-navigation-drawer-content { width: 100%; margin-top: -1px; padding: 0 10px 32px 48px; box-sizing: border-box; }
 .home-navigation-drawer .af-nav-menu { width: 100%; margin: 0; gap: 0; }
@@ -372,16 +368,17 @@ body .landing-page.landing-page--navigation {
 .home-navigation-drawer-actions .landing-calendar-link .landing-card-icon { display: flex; }
 .home-navigation-drawer-actions .landing-calendar-link .landing-card-icon > svg { width: 24px; height: 24px; }
 
-@media (max-width: 1200px) {
-  body .landing-page.landing-page--navigation { padding-top: var(--sat); }
-  .home-navigation { gap: 8px; margin-inline-end: calc(var(--sar) - max(2rem, var(--sar))); }
-  .home-navigation-toggle { display: flex; width: 48px; height: 48px; }
+/* Duo's inner display is 951 CSS px wide in landscape; keep full navigation
+   while narrower viewports retain the drawer. Match HomeNavigation's flyouts. */
+@media (max-width: 900px) {
+  .home-navigation { --home-nav-end-gutter: 0px; gap: 8px; }
+  .home-navigation-toggle { display: grid; width: 48px; height: 48px; }
   .home-navigation-desktop { display: none; }
   .home-navigation::before, .home-navigation-curtain, .home-navigation-flyout { display: none; }
 }
 @media (max-width: 420px) {
-  body .landing-page.landing-page--navigation { padding-inline: max(12px, var(--sal)) max(12px, var(--sar)); }
-  .home-navigation { gap: 4px; margin-inline: 0 calc(var(--sar) - max(12px, var(--sar))); }
+  body .landing-page.landing-page--navigation { --landing-inline-gutter: 12px; }
+  .home-navigation { gap: 4px; margin-inline-start: 0; }
   .home-navigation .brand-name { display: none; }
   .home-navigation .landing-auth { gap: 4px; }
 }

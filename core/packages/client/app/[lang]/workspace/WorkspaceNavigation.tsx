@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, type ReactNode, type MouseEvent } from 'react';
+import { Suspense, cloneElement, isValidElement, type ReactNode, type MouseEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
 import { NavigationShell } from '@app-foundation/navigation-ui';
@@ -8,8 +8,10 @@ import { Activity, BookOpen, CalendarDays, ClipboardList, FolderKanban, LayoutDa
 import '@app-foundation/navigation-ui/navigation.css';
 import '@app-foundation/workspace-ui/workspace.css';
 import AppLink from '@/components/AppLink';
+import CubeRootLogo from '@/components/CubeRootLogo';
 import { useT } from '@/hooks/useT';
 import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
+import '@/components/menu-toggle-icon.css';
 import './workspace.css';
 import '../admin/admin.css';
 
@@ -69,7 +71,13 @@ function Navigation({ children }: { children: ReactNode }) {
     ]}
     labels={{ navigation: t('工作台导航', 'Workspace navigation'), show: t('显示侧边栏', 'Show sidebar'), hide: t('隐藏侧边栏', 'Hide sidebar'), openMobile: t('打开导航', 'Open navigation'), closeMobile: t('关闭导航', 'Close navigation') }}
     renderLink={props => <AppLink {...props} prefetch={false} />}
-    header={toggle => <header className="staff-header">{toggle}<AppLink href="/" className="staff-brand" prefetch={false}>CubeRoot</AppLink><div className="staff-header-actions"><AppLink href="/account" prefetch={false}>{user.name || t('我的账号', 'My account')}</AppLink></div></header>}>
+    header={toggle => <header className="staff-header">
+      <CubeRootLogo className="staff-brand" />
+      <div className="staff-header-actions"><AppLink href="/account" prefetch={false}>{user.name || t('我的账号', 'My account')}</AppLink></div>
+      {isValidElement<{ className?: string }>(toggle)
+        ? cloneElement(toggle, { className: `${toggle.props.className ?? ''} menu-toggle-icon` }, null)
+        : toggle}
+    </header>}>
     {inAdmin ? <div className="admin-navigation__page" key={pathname === '/admin' ? `${pathname}:${section ?? 'overview'}:${section === 'system' ? view ?? 'tools' : ''}` : pathname}>{children}</div> : children}
   </NavigationShell></div>;
 }

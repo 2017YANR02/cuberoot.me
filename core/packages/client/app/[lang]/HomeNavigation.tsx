@@ -7,12 +7,7 @@ import SettingsDialog from '@/components/SettingsDialog';
 import { tr } from '@/i18n/tr';
 import type { Section } from '@/lib/landing-sections';
 import '@app-foundation/navigation-ui/navigation.css';
-
-function MenuGlyph({ expanded = false }: { expanded?: boolean }) {
-  return <span className="home-navigation-glyph" data-expanded={expanded || undefined} aria-hidden="true">
-    <span /><span />
-  </span>;
-}
+import '@/components/menu-toggle-icon.css';
 
 /** Home sections deliberately keep the current URL, as requested by the maintainer. */
 export default function HomeNavigation({ selected, onSelect, isAdmin, sections, brand, actions, flyouts }: {
@@ -81,7 +76,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
   const shown = expanded && !!allowedFlyout && !open;
   const showFlyout = (id: string) => {
     cancelLeave();
-    if (!window.matchMedia('(min-width: 1201px)').matches || !Children.count(flyouts[id])) {
+    if (!window.matchMedia('(min-width: 901px)').matches || !Children.count(flyouts[id])) {
       closeFlyout();
       return;
     }
@@ -162,12 +157,13 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
       onPointerEnter={closeFlyout} onClick={() => { closeFlyout(); onSelect('home'); }}>{brand}</button>
     <div className="home-navigation-desktop">{menu()}</div>
     {actions}
-    <button type="button" className="home-navigation-toggle" aria-label={label} aria-expanded={open}
+    <button type="button" className="home-navigation-toggle menu-toggle-icon" aria-label={label} aria-expanded={open}
+      data-menu-closing={open && drawerClosing || undefined}
       aria-haspopup="dialog" onClick={event => {
         const rect = event.currentTarget.getBoundingClientRect();
         setMenuAnchor({ top: rect.top, left: rect.left, right: document.documentElement.clientWidth - rect.right });
         closeFlyout(); setDrawerSection(null); setDrawerDirection(null); setDrawerClosing(false); setOpen(true);
-      }}><MenuGlyph /></button>
+      }} />
     <div className="home-navigation-curtain" aria-hidden="true" onPointerEnter={scheduleClose} onClick={closeFlyout} />
     <div id="home-navigation-flyout" className="home-navigation-flyout" role="region"
       aria-labelledby={allowedFlyout ? `home-nav-${allowedFlyout}` : undefined} aria-hidden={!shown} inert={!shown}
@@ -181,9 +177,8 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
     {open && <SettingsDialog curtain motionDuration={650} portalContainer={headerRef.current?.parentElement}
       renderCloseButton={(close, closing) => <button type="button" className="home-navigation-close"
         style={{ top: menuAnchor.top, left: menuAnchor.left }}
-        aria-label={tr({ zh: '关闭', en: 'Close' })} aria-expanded={!closing} onClick={close}>
-        <MenuGlyph expanded={!closing} />
-      </button>} label={label} heading={drawerSection ?
+        aria-label={tr({ zh: '关闭', en: 'Close' })} aria-disabled={closing || undefined} onClick={close} />}
+      label={label} heading={drawerSection ?
       <button type="button" className="home-navigation-back" aria-label={tr({ zh: '返回主菜单', en: 'Back to main menu' })}
         onClick={() => { void switchDrawerSection(null); }}>
         <ChevronLeft size={22} strokeWidth={1.5} aria-hidden="true" />

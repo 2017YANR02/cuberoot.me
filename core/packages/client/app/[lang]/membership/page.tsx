@@ -340,8 +340,8 @@ export default function MembershipPage() {
           if (!loggedIn) { login(); return; }
           setDonateOpen(true);
         }}>
-          <Heart size={18} aria-hidden="true" />
-          {tr({ zh: '赞赏支持', en: 'Support this site' })}
+          <Heart className="site-support-heart" size={18} aria-hidden="true" />
+          {tr({ zh: '赞赏', en: 'Donate' })}
         </button>
       </header>
 
@@ -353,7 +353,7 @@ export default function MembershipPage() {
         {' '}<a href="https://play.google.com/store/account/subscriptions?package=me.cuberoot.app" target="_blank" rel="noopener noreferrer">{tr({ zh: '管理 Google Play 订阅', en: 'Manage Google Play subscriptions' })}</a>
       </p>}
 
-      <nav className="mem-service-links" aria-label={tr({ zh: '会员服务', en: 'Membership services' })}>
+      <nav className="mem-service-links mem-service-links--main" aria-label={tr({ zh: '会员服务', en: 'Membership services' })}>
         <AppLink href="/membership/subscription" prefetch={false}>{tr(MEMBERSHIP_COPY.manage)}</AppLink>
         <AppLink href="/membership/renewal-terms" prefetch={false}>{tr(MEMBERSHIP_COPY.agreement)}</AppLink>
         <AppLink href="/contact" prefetch={false}>{tr({ zh: '会员客服', en: 'Membership support' })}</AppLink>

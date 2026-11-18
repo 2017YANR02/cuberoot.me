@@ -500,6 +500,7 @@
 
 .mem-service-links { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 18px; margin: 18px 0 24px; }
 .mem-service-links a, .mem-service-document a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.mem-service-links.mem-service-links--main a { text-decoration: none; }
 .mem-service-document { max-width: 760px; line-height: 1.8; overflow-wrap: anywhere; }
 .mem-service-document h1 { font-size: 26px; line-height: 1.4; margin: 0 0 20px; }
 .mem-service-document h2 { font-size: 18px; line-height: 1.5; margin: 32px 0 10px; }
