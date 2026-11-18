@@ -19,26 +19,32 @@ import { usePlayerVisible } from './use-player-visible';
 type PreludeScene = {
   setup: string;
   caption: { zh: string; en: string };
-  duration: number;
   purpleStickers?: readonly string[];
   purple?: boolean;
   observation?: { zh: string; en: string };
   targetLayer?: 'top' | 'bottom';
 };
-export const cornerPreviews: PreludeScene[] = [
+type TimedPreludeScene = PreludeScene & { duration: number };
+
+const cornerScenes: TimedPreludeScene[] = [
   { setup: '', purpleStickers: ['F2', 'R0', 'U8'], targetLayer: 'top', caption: { zh: '角块在顶层的三种状态我们已经学会', en: 'We’ve learned the three cases with the corner in the top layer' }, observation: { zh: '角在顶层', en: 'Corner in the top layer' }, duration: 5000 },
   { setup: '', purpleStickers: ['F8', 'R6', 'D2'], caption: { zh: '有时角块会出现在底层', en: 'Sometimes the corner is in the bottom layer' }, observation: { zh: '角在底层', en: 'Corner in the bottom layer' }, duration: 5000 },
   { setup: `(${RIGHT})2`, caption: { zh: '角在底层时\n朝向可能不对', en: 'When the corner is in the bottom layer\nit may be twisted' }, observation: { zh: '白色朝左', en: 'White faces left' }, duration: 5000 },
   { setup: `(${RIGHT})4`, caption: { zh: '角在底层时\n朝向可能不对', en: 'When the corner is in the bottom layer\nit may be twisted' }, observation: { zh: '白色朝右', en: 'White faces right' }, duration: 5000 },
   { setup: BLUE_RED_BOTTOM_CORNER_SETUP, caption: { zh: '角在底层时\n位置也可能不对', en: 'When the corner is in the bottom layer\nit may also be in the wrong slot' }, observation: { zh: '看侧面颜色', en: 'Check the side colors' }, duration: 5000 },
-  { setup: BLUE_RED_BOTTOM_CORNER_SETUP, purple: true, caption: { zh: '无论哪种情况\n直接做右公式', en: 'In any of these cases\nuse the right trigger' }, duration: 5000 },
 ];
+export const cornerPrelude = {
+  scenes: cornerScenes,
+  ending: { setup: BLUE_RED_BOTTOM_CORNER_SETUP, purple: true,
+    caption: { zh: '无论哪种情况\n直接做右公式', en: 'In any of these cases\nuse the right trigger' } },
+} satisfies { scenes: TimedPreludeScene[]; ending: PreludeScene };
 const fadeDuration = 450;
 const colors = orientedCubeFaceColors('z2');
 
-export default function SpecialCasePrelude({ scenes, piece, waitForContinue = false, onDone }: {
-  scenes: PreludeScene[];
-  piece: 'corner' | 'edge'; waitForContinue?: boolean; onDone: () => void;
+export default function SpecialCasePrelude({ scenes, ending, piece, onDone }: {
+  scenes: TimedPreludeScene[];
+  ending: PreludeScene;
+  piece: 'corner' | 'edge'; onDone: () => void;
 }) {
   const duration = scenes.reduce((sum, scene) => sum + scene.duration + 2 * fadeDuration, 0);
   const player = useRef<AlgPlayerHandle>(null);
@@ -51,13 +57,14 @@ export default function SpecialCasePrelude({ scenes, piece, waitForContinue = fa
   while (index < scenes.length - 1 && elapsed >= scenes[index].duration + 2 * fadeDuration) {
     elapsed -= scenes[index++].duration + 2 * fadeDuration;
   }
-  const scene = scenes[index];
+  const finished = time >= duration;
+  const scene = finished ? ending : scenes[index];
   const ready = usePlayerVisible(player, 'special-case-prelude');
   const preview = useMemo(() => scene.purpleStickers
     ? { highlights: scene.purpleStickers }
     : piece === 'corner' ? bottomCornerPreview(scene.setup) : middleEdgePreview(scene.setup), [scene.setup, scene.purpleStickers, piece]);
-  const finished = time >= duration;
-  const visibility = waitForContinue && index === scenes.length - 1 ? Math.min(1, elapsed / fadeDuration) : Math.max(0, Math.min(1, elapsed / fadeDuration, (scene.duration + 2 * fadeDuration - elapsed) / fadeDuration));
+  const visibility = finished ? 1
+    : Math.max(0, Math.min(1, elapsed / fadeDuration, (scenes[index].duration + 2 * fadeDuration - elapsed) / fadeDuration));
   const eased = visibility * visibility * (3 - 2 * visibility);
   const purple = !!(scene.purple || scene.purpleStickers);
   // Color overrides update in place; changing hiddenStickers would remount the renderer.
@@ -71,18 +78,24 @@ export default function SpecialCasePrelude({ scenes, piece, waitForContinue = fa
   ]), [hidden, preview, purple, eased]);
   useEffect(() => { setToolbar(wrapper.current?.closest('.lbl-learning')?.querySelector('.lbl-demo-toolbar') ?? null); }, []);
   useEffect(() => {
-    if (!ready || paused) return;
+    if (!ready || paused || finished) return;
     let frame = 0, previous: number | undefined;
     const tick = (now: number) => {
       if (!document.hidden && !player.current?.isUserMovePending?.(false)) clock.current = Math.min(duration, clock.current + Math.min(now - (previous ?? now), 50));
       previous = now;
       setTime(clock.current);
-      if (clock.current >= duration) { setPaused(true); if (!waitForContinue) onDone(); return; }
+      if (clock.current >= duration) { setPaused(true); return; }
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [ready, paused, onDone, duration, waitForContinue]);
+  }, [ready, paused, finished, duration]);
+  const seek = (value: number) => {
+    if (!ready) return;
+    clock.current = value;
+    setTime(value);
+    if (value >= duration) setPaused(true);
+  };
   const bubbleStage = ready ? wrapper.current?.querySelector('.sim-stage') : null;
   return <div ref={wrapper} className="lbl-content lbl-content-example lbl-special-case-prelude" data-tutorial-mode="timeline" data-tutorial-layout="A">
     <section className="lbl-demonstration">
@@ -91,17 +104,17 @@ export default function SpecialCasePrelude({ scenes, piece, waitForContinue = fa
           setup={scene.setup} alg="" orientation="z2" sceneRot={lblDemoView()}
           stickerColorOverrides={overrides} controlMode="none" hideResetView lockView interactionMode="none" fillPane />
       </div>
-      {bubbleStage && (scene.observation || piece === 'edge' && index < scenes.length - 1) && createPortal(<div className="lbl-left-thumb-overlay" style={{ opacity: eased }}>
+      {bubbleStage && !finished && (scene.observation || piece === 'edge') && createPortal(<div className="lbl-left-thumb-overlay" style={{ opacity: eased }}>
         <TutorialCubeCallout anchorY={scene.targetLayer === 'top' ? .3 : .65} className="lbl-cube-callout" role="status">{tr(scene.observation ?? scene.caption)}</TutorialCubeCallout>
       </div>, bubbleStage)}
     </section>
     <section className="lbl-explanation tutorial-single-caption"><ReadingFit pane>
       <p className="lbl-lead lbl-corner-case-caption" style={{ whiteSpace: 'pre-line', textAlign: 'center', opacity: eased }}>{tr(scene.caption)}</p>
-    {waitForContinue && finished && <button type="button" className="lbl-guide-continue lbl-guide-continue-hint" onClick={onDone}>{tr({ zh: '点击继续', en: 'Click to continue' })}</button>}
+      {finished && <button type="button" className="lbl-guide-continue lbl-guide-continue-hint" onClick={onDone}>{tr({ zh: '点击继续', en: 'Click to continue' })}</button>}
     </ReadingFit></section>
     {toolbar && createPortal(<div className="lbl-cross-animation-progress">
       <VideoProgress time={time} duration={duration} playing={!paused}
-      onPlayingChange={playing => setPaused(!playing)} onSeek={value => { clock.current = value; setTime(value); }} onReplay={() => { clock.current = 0; setTime(0); }} />
+      onPlayingChange={playing => setPaused(!playing)} onSeek={seek} onReplay={() => seek(0)} />
     </div>, toolbar)}
   </div>;
 }

@@ -18,7 +18,6 @@ export default function EdgeObservation({ example, caseIndex, onDone }: {
   const [step, setStep] = useState(0);
   const [readyStep, setReadyStep] = useState<number | null>(null);
   const ready = readyStep === step;
-  const [found, setFound] = useState(false);
   const [outlines, setOutlines] = useState<string[]>([]);
   const player = useRef<AlgPlayerHandle>(null);
   const wrapper = useRef<HTMLDivElement>(null);
@@ -38,7 +37,6 @@ export default function EdgeObservation({ example, caseIndex, onDone }: {
   useEffect(() => {
     if (!visible) return;
     setReadyStep(null);
-    setFound(false);
     advanced.current = false;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let frame = 0;
@@ -65,7 +63,6 @@ export default function EdgeObservation({ example, caseIndex, onDone }: {
           setYaw(from + (to - from) * progress * progress * (3 - 2 * progress));
           setOutlines(NO_OUTLINES);
         } else {
-          setFound(true);
           setOutlines(reduced || Math.floor((elapsed - scanEnd) / 250) % 2 === 0 ? plan.wall : NO_OUTLINES);
           setReadyStep(step);
           if (caseIndex === 2) return;
@@ -112,13 +109,19 @@ export default function EdgeObservation({ example, caseIndex, onDone }: {
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   });
-  const caption = step === 0 ? caseIndex === 2 && found
-    ? { zh: '四面都没有墙，先做公式造墙。', en: 'No wall on any side. Create one with the algorithm.' }
-    : { zh: '找“墙”：侧面顶层三个格同色。', en: 'Find a wall, three matching stickers in a side’s top row.' }
-    : step === 1 ? { zh: '把“墙”放后面。', en: 'Put the wall at the back.' }
-      : ready ? caseIndex === 0 ? { zh: '找“对色”，观察到对色在左边', en: 'Find the opposite color. It is on the left.' }
-        : { zh: '找“对色”，观察到对色在右边', en: 'Find the opposite color. It is on the right.' }
-        : { zh: '观察对色位置。', en: 'Observe the opposite color’s position.' };
+  const caption = step === 0
+    ? ready
+      ? caseIndex === 2
+        ? { zh: '四面都没有墙\n先做公式造墙', en: 'No wall on any side\nUse the algorithm to make one' }
+        : { zh: '找到墙了', en: 'Found a wall' }
+      : { zh: '找“墙”\n侧面顶层三个格同色', en: 'Find a wall\nLook for three matching stickers in a top row' }
+    : step === 1
+      ? ready ? { zh: '墙已经放在后面', en: 'The wall is at the back' }
+        : { zh: '把“墙”放后面', en: 'Put the wall at the back' }
+      : ready
+        ? caseIndex === 0 ? { zh: '对色在左边', en: 'The opposite color is on the left' }
+          : { zh: '对色在右边', en: 'The opposite color is on the right' }
+        : { zh: '观察对色位置', en: 'Observe the opposite color’s position' };
   const bubbleStage = visible && step === 2 && ready && caseIndex !== 2
     ? wrapper.current?.querySelector('.sim-stage') : null;
   return <div className="lbl-content lbl-content-example lbl-content-middle-ejection" data-tutorial-layout="B">

@@ -34,13 +34,13 @@ import SolveFlowchart from './SolveFlowchart';
 import { StageImage } from './StageImage';
 export { StageImage } from './StageImage';
 import EdgeObservation from './EdgeObservation';
-import SpecialCasePrelude, { cornerPreviews } from './SpecialCasePrelude';
+import SpecialCasePrelude, { cornerPrelude } from './SpecialCasePrelude';
 
 const ignoreCaseCue = () => {};
 
 /** A timed observation film; completion never advances into the algorithm on its own. */
 function MiddleAlignmentVideo({ setup, left, onDone }: { setup: string; left: boolean; onDone: () => void }) {
-  const duration = 15000;
+  const duration = 9000;
   const player = useRef<AlgPlayerHandle>(null);
   const wrapper = useRef<HTMLDivElement>(null);
   const visible = usePlayerVisible(player, setup);
@@ -49,9 +49,9 @@ function MiddleAlignmentVideo({ setup, left, onDone }: { setup: string; left: bo
   const [playing, setPlaying] = useState(true);
   const [seekVersion, setSeekVersion] = useState(0);
   const [toolbar, setToolbar] = useState<Element | null>(null);
-  const index = time < 4000 ? 0 : time < 9000 ? 1 : 2;
   const aligned = time >= 4000;
   const finished = time >= duration;
+  const index = finished ? 2 : aligned ? 1 : 0;
   const sceneRot = useMemo(() => { const view = lblDemoView(); return left ? { ...view, y: -view.y } : view; }, [left]);
   const hidden = useMemo(() => middleLessonHiddenStickers(setup), [setup]);
   const outlined = useMemo(() => index === 0 ? middleAlignmentStickers(setup).slice(0, 2)
@@ -99,8 +99,13 @@ function MiddleAlignmentVideo({ setup, left, onDone }: { setup: string; left: bo
 }
 
 
-function LessonPlayer({ player, interacted, yellowCase, fishLeft, middleAlignment, cornerAlignment, showCornerResult = false, showMiddleResult = false, initialLeftView = false, pauseAfterObservation = false, ...props }: ComponentProps<typeof AlgPlayer> & { player: RefObject<AlgPlayerHandle | null>; interacted: RefObject<boolean>; yellowCase?: number; fishLeft?: boolean; middleAlignment?: boolean; cornerAlignment?: 'left' | 'right'; showCornerResult?: boolean; showMiddleResult?: boolean; initialLeftView?: boolean; pauseAfterObservation?: boolean }) {
+function LessonPlayer({ player, interacted, yellowCase, fishLeft, middleAlignment, cornerAlignment, showCornerResult = false, showMiddleResult = false, initialLeftView = false, pauseAfterObservation = false, onBasementObservation, ...props }: ComponentProps<typeof AlgPlayer> & {
+  player: RefObject<AlgPlayerHandle | null>; interacted: RefObject<boolean>; yellowCase?: number; fishLeft?: boolean;
+  middleAlignment?: boolean; cornerAlignment?: 'left' | 'right'; showCornerResult?: boolean; showMiddleResult?: boolean; initialLeftView?: boolean;
+  pauseAfterObservation?: boolean; onBasementObservation?: (observing: boolean) => void;
+}) {
   const wrapper = useRef<HTMLDivElement>(null);
+  const cancelBasementObservation = useRef<(() => void) | null>(null);
   const thumbShadingId = useId();
   const visible = usePlayerVisible(player, props.alg);
   const [playRequest, setPlayRequest] = useState(0);
@@ -133,6 +138,40 @@ function LessonPlayer({ player, interacted, yellowCase, fishLeft, middleAlignmen
   useEffect(() => {
     if (!visible || middleAlignment || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     let frame = 0;
+    if (onBasementObservation && !interacted.current) {
+      const tiltMs = 600;
+      const returnAt = tiltMs + 1500;
+      const targetPitch = -Math.PI / 7 - lblDemoView().x;
+      let started: number | undefined;
+      let pitch = 0;
+      const observe = (now: number) => {
+        started ??= now;
+        const elapsed = now - started;
+        const progress = Math.min(elapsed / tiltMs, 1, Math.max(0, 1 - (elapsed - returnAt) / tiltMs));
+        const nextPitch = targetPitch * progress * progress * (3 - 2 * progress);
+        player.current?.orbitView?.(0, nextPitch - pitch);
+        pitch = nextPitch;
+        if (elapsed < returnAt + tiltMs) {
+          frame = requestAnimationFrame(observe);
+          return;
+        }
+        cancelBasementObservation.current = null;
+        onBasementObservation(false);
+        if (!interacted.current && !document.hidden) setPlayRequest(1);
+      };
+      onBasementObservation(true);
+      cancelBasementObservation.current = () => {
+        cancelAnimationFrame(frame);
+        cancelBasementObservation.current = null;
+        player.current?.orbitView?.(0, -pitch);
+        onBasementObservation(false);
+      };
+      frame = requestAnimationFrame(observe);
+      return () => {
+        cancelAnimationFrame(frame);
+        cancelBasementObservation.current = null;
+      };
+    }
     let timer = 0;
     let started: number | undefined;
     let returnStarted: number | undefined;
@@ -180,12 +219,16 @@ function LessonPlayer({ player, interacted, yellowCase, fishLeft, middleAlignmen
       cancelAnimationFrame(frame);
       clearTimeout(timer);
     };
-  }, [visible, recognizesFish, middleAlignment, interacted, player, props.alg, props.showHands, pauseAfterObservation]);
+  }, [visible, recognizesFish, middleAlignment, interacted, player, props.alg, props.showHands, pauseAfterObservation, onBasementObservation]);
   const thumbStage = visible && touchCase && step === 1 && alignmentReady
     ? wrapper.current?.querySelector('.sim-stage')
     : null;
   const resultStage = visible && (showCornerResult || showMiddleResult) ? wrapper.current?.querySelector('.sim-stage') : null;
-  return <div ref={wrapper} className="lbl-auto-player" data-visible={visible} onPointerDownCapture={() => { interacted.current = true; }} onKeyDownCapture={() => { interacted.current = true; }}>
+  const takeControl = () => {
+    interacted.current = true;
+    cancelBasementObservation.current?.();
+  };
+  return <div ref={wrapper} className="lbl-auto-player" data-visible={visible} onPointerDownCapture={takeControl} onKeyDownCapture={takeControl}>
     <AlgPlayer {...props} ref={player} playRequest={playRequest}
       highlightedStickers={(step === 0 || ((touchCase || yellowCase === 1) && step === 1)) ? highlights : undefined}
       frontFaceArrow={observingCorner && alignmentReady ? { from: cornerAlignment === 'left' ? 0 : 2, to: cornerAlignment === 'left' ? 6 : 8 } : props.frontFaceArrow}
@@ -338,6 +381,8 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   const [edgeObservationDone, setEdgeObservationDone] = useState(false);
   const [daisyBlockedPreludeDone, setDaisyBlockedPreludeDone] = useState(false);
   const [specialPreludeDone, setSpecialPreludeDone] = useState(false);
+  const [observingBasement, setObservingBasement] = useState(false);
+  const basementLesson = chapter.id === 'daisy' && lesson.id === 'case-5';
   const example = useMemo(() => {
     const original = lesson.example;
     if (!edgeObservationDone || chapter.id !== 'edge-position' || !original) return original;
@@ -378,14 +423,16 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   }
   if (example && !specialPreludeDone && ((chapter.id === 'corners' && lesson.id === 'case-1') || (chapter.id === 'middle' && lesson.id === 'case-2'))) {
     const middle = chapter.id === 'middle';
-    const scenes = middle ? [
+    const preview = middle ? { scenes: [
       { setup: '', purpleStickers: ['U7', 'F1'], targetLayer: 'top' as const, caption: { zh: '棱块在顶层时\n两种状态都已学会', en: 'With the edge in the top layer\nwe’ve learned both cases' }, observation: { zh: '棱在顶层', en: 'Edge in the top layer' }, duration: 4500 },
       { setup: '', purpleStickers: ['F5', 'R3'], caption: { zh: '有时目标棱块会出现在中层', en: 'Sometimes the target edge is in the middle layer' }, observation: { zh: '棱在中层', en: 'Edge in the middle layer' }, duration: 4500 },
       { setup: chapter.examples[2].setup!, caption: { zh: '棱在中层时\n朝向可能不对', en: 'When the edge is in the middle layer\nit may be flipped' }, observation: { zh: '朝向反了', en: 'Flipped orientation' }, duration: 5000 },
       { setup: `${chapter.examples[3].setup!} y`, caption: { zh: '棱在中层时\n位置也可能不对', en: 'When the edge is in the middle layer\nit may also be in the wrong slot' }, observation: { zh: '看侧面颜色', en: 'Check the side colors' }, duration: 6500 },
-      { setup: `${chapter.examples[3].setup!} y`, purple: true, caption: { zh: '无论哪种情况\n直接做「去右」公式', en: 'In either case\nuse the right insertion' }, duration: 5000 },
-    ] : cornerPreviews;
-    return <SpecialCasePrelude scenes={scenes} piece={middle ? 'edge' : 'corner'} waitForContinue onDone={() => setSpecialPreludeDone(true)} />;
+    ], ending: {
+      setup: `${chapter.examples[3].setup!} y`, purple: true,
+      caption: { zh: '无论哪种情况\n直接做「去右」公式', en: 'In either case\nuse the right insertion' },
+    } } : cornerPrelude;
+    return <SpecialCasePrelude {...preview} piece={middle ? 'edge' : 'corner'} onDone={() => setSpecialPreludeDone(true)} />;
   }
   if (lesson.kind === 'flowchart') return <SolveFlowchart stageId={chapter.id} onSelectLesson={onSelectLesson} />;
   if (lesson.kind === 'notation') return <NotationLesson />;
@@ -416,6 +463,7 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
         }
       }}>
       {<LessonPlayer player={player} interacted={interacted} puzzle="3x3" engine="sim" set={lesson.id === 'white-edge' ? '' : lesson.mask ?? LESSON_STICKERING[chapter.id] ?? ''}
+        onBasementObservation={basementLesson ? setObservingBasement : undefined}
         middleAlignment={false}
         pauseAfterObservation={chapter.id === 'edge-position' && ['case-0', 'case-1', 'case-2'].includes(lesson.id)}
         showCornerResult={cornerEjection && finalMoveSettled}
@@ -439,7 +487,8 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
         }} />}
     </section>
     <section {...paneProps} className="lbl-explanation tutorial-follow-pane" aria-label={tr({ zh: '公式、口诀与解释', en: 'Algorithm, cues and explanation' })}><ReadingFit pane>
-      {<SegmentedInstructions onHeadlights={onSelectLesson ? () => onSelectLesson('case-0') : undefined} onMiddleRight={onSelectLesson ? () => onSelectLesson('case-0') : undefined} onWhiteRight={onSelectLesson ? () => onSelectLesson('case-0') : undefined} step={instructionStep} alg={example.alg} playbackStep={move} finalMoveSettled={finalMoveSettled}
+      {basementLesson && observingBasement ? <p className="lbl-lead" role="status">{tr({ zh: '看底面这条白棱', en: 'Look at the white edge on the bottom' })}</p>
+        : <SegmentedInstructions onHeadlights={onSelectLesson ? () => onSelectLesson('case-0') : undefined} onMiddleRight={onSelectLesson ? () => onSelectLesson('case-0') : undefined} onWhiteRight={onSelectLesson ? () => onSelectLesson('case-0') : undefined} step={instructionStep} alg={example.alg} playbackStep={move} finalMoveSettled={finalMoveSettled}
         selectedStepStart={selectedStepStart}
         onLine={onSelectLesson ? () => onSelectLesson('case-0') : undefined}
         onFish={onSelectLesson ? () => onSelectLesson(chapter.examples.indexOf(example) === 2 ? 'sune-learning-0' : 'sune-learning-1') : undefined}

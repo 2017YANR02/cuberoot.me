@@ -142,7 +142,7 @@ export function demoGoalReached(stage: string, alg: string): boolean {
 }
 
 const observe: Record<CompleteDemoStage, Text> = {
-  daisy: t('先找二楼的白棱。', 'Look for white edges on the middle floor first.'),
+  daisy: t('先找二楼的白棱', 'Look for white edges on the middle floor first.'),
   corners: t('先在顶层找白角。', 'Look for white corners in the top layer first.'),
   middle: t('先在顶层找不带黄色的棱。', 'Look on top for an edge without yellow.'),
   'yellow-cross': t('先看顶层四条棱。', 'Look at the four top edges.'),
@@ -322,7 +322,7 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string, follo
         [3, 5].some(index => cube.faces[face][index].startsWith('D')));
       if (!visibleMiddleWhite && middleScanPetalCount !== existing.length) {
         middleScanPetalCount = existing.length;
-        action('y2', t('这两面二楼没有白棱，转体看看另外两面。', 'No middle-floor white edges on these two faces. Rotate to check the other two.'), 0, undefined, false);
+        action('y2', t('这两面二楼没有白棱，转体看看另外两面', 'No middle-floor white edges on these two faces. Rotate to check the other two.'), 0, undefined, false);
         continue;
       }
       const candidates: { y: string; u: string; alg: string; id: string; index: number; rank: number }[] = [];
@@ -350,50 +350,50 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string, follo
       const choice = candidates.sort((a, b) => a.rank - b.rank)[0];
       if (!choice) throw new Error('No taught daisy move found');
       if (!continuingSearch && choice.index >= 3) {
-        look(t('二楼没有白棱，再找一楼和三楼。', 'No white edges on the middle floor. Check the bottom and top floors next.'));
-        if (choice.index === 5) look(t('一楼和三楼也没有，再看地下室。', 'None on those floors either. Check the basement last.'));
+        look(t('二楼没有白棱，再找一楼和三楼', 'No white edges on the middle floor. Check the bottom and top floors next.'));
+        if (choice.index === 5) look(t('一楼和三楼也没有，再看地下室', 'None on those floors either. Check the basement last.'));
       }
       const hiddenFace = [visibleSide === Face.R ? Face.L : Face.R, Face.B].find(face => cube.faces[face].includes(choice.id));
       if (hiddenFace !== undefined) {
         // Inspect with a real rotation, then plan again from the newly visible state.
         const inspection = rotations.find(y => state(join(base, y)).faces[Face.F].includes(choice.id))!;
         action(inspection, hiddenFace === Face.B
-          ? t('转过来，看看背面。', 'Rotate the cube to check the back.')
-          : hiddenFace === Face.L ? t('转过来，看看左面。', 'Rotate the cube to check the left side.')
-            : t('转过来，看看右面。', 'Rotate the cube to check the right side.'), choice.index, undefined, false);
+          ? t('转过来，看看背面', 'Rotate the cube to check the back.')
+          : hiddenFace === Face.L ? t('转过来，看看左面', 'Rotate the cube to check the left side.')
+            : t('转过来，看看右面', 'Rotate the cube to check the right side.'), choice.index, undefined, false);
         inspectingHiddenPiece = true;
         continue;
       }
-      const labels = [t('白棱在二楼，可以右手上。', 'A white edge is in the middle: lift right.'), t('白棱在二楼，可以左手上。', 'A white edge is in the middle: lift left.'), t('白棱在二楼，顶面的花瓣挡住了。', 'A middle white edge has a petal in its way.'), t('白棱在三楼，先送到二楼。', 'A white edge is on the top floor: bring it to the middle.'), t('白棱在一楼，先送到二楼。', 'A white edge is on the bottom floor: bring it to the middle.'), t('白格朝下，在“地下室”。', 'The white sticker faces down, in the basement.')];
+      const labels = [t('白棱在二楼，可以右手上', 'A white edge is in the middle: lift right.'), t('白棱在二楼，可以左手上', 'A white edge is in the middle: lift left.'), t('白棱在二楼，顶面的花瓣挡住了', 'A middle white edge has a petal in its way.'), t('白棱在三楼，先送到二楼', 'A white edge is on the top floor: bring it to the middle.'), t('白棱在一楼，先送到二楼', 'A white edge is on the bottom floor: bring it to the middle.'), t('白格朝下，在“地下室”', 'The white sticker faces down, in the basement.')];
       const placement = choice.alg.startsWith('F')
-        ? t('转体，把这条白棱放到前层。', 'Rotate the cube to bring this white edge to the front layer.')
+        ? t('转体，把这条白棱放到前层', 'Rotate the cube to bring this white edge to the front layer.')
         : choice.alg.startsWith('L')
-          ? t('转体，把这条白棱放到左层。', 'Rotate the cube to bring this white edge to the left layer.')
-          : t('转体，把这条白棱放到右层。', 'Rotate the cube to bring this white edge to the right layer.');
+          ? t('转体，把这条白棱放到左层', 'Rotate the cube to bring this white edge to the left layer.')
+          : t('转体，把这条白棱放到右层', 'Rotate the cube to bring this white edge to the right layer.');
       let rec: DemoContent | undefined = recognize(choice.index < 3
-        ? t('找到二楼白棱。', 'Found a middle-floor white edge.')
-        : labels[choice.index], choice.index, [choice.id, cube.faces[Face.U][4]]);
+        ? t('找到二楼白棱', 'Found a middle-floor white edge.')
+        : labels[choice.index], choice.index, [choice.id]);
       rec = inspectPiece([choice.id], choice.index, rec);
       rec = prepare(choice.y, placement, choice.index, rec);
-      const clearingText = t('转顶层，移开挡住位置的花瓣。', 'Turn the top to move the petal out of the way.');
-      const positioningText = t('转顶层，把白棱转到操作位置。', 'Turn the top to position the white edge.');
+      const clearingText = t('转顶层，移开挡住位置的花瓣', 'Turn the top to move the petal out of the way.');
+      const positioningText = t('转顶层，把白棱转到操作位置', 'Turn the top to position the white edge.');
       const withoutTopTurn = petals(state(join(currentAlg(), choice.alg)));
       const blocked = petals(current()).some(id => !withoutTopTurn.includes(id));
       rec = prepare(choice.u, blocked ? clearingText : positioningText, choice.index, rec);
       if (choice.alg.startsWith('F ')) {
-        action('F', t('压前层，把白棱送到二楼。', 'Lower the front to bring the edge to the middle.'), choice.index, rec, false);
+        action('F', t('压前层，把白棱送到二楼', 'Lower the front to bring the edge to the middle.'), choice.index, rec, false);
         const rest = movesOf(choice.alg).slice(1);
         if (rest.length > 1) {
           const withoutTopTurn = petals(state(join(currentAlg(), rest[rest.length - 1])));
           const blocked = petals(current()).some(id => !withoutTopTurn.includes(id));
           action(rest[0], blocked ? clearingText : positioningText, choice.index, undefined, false);
         }
-        action(rest[rest.length - 1], choice.alg.endsWith('R') ? t('右手上，送到黄心旁。', 'Lift right to bring it beside the yellow center.') : t('左手上，送到黄心旁。', 'Lift left to bring it beside the yellow center.'), choice.index, undefined, false);
+        action(rest[rest.length - 1], choice.alg.endsWith('R') ? t('右手上，送到黄心旁', 'Lift right to bring it beside the yellow center.') : t('左手上，送到黄心旁', 'Lift left to bring it beside the yellow center.'), choice.index, undefined, false);
       } else {
-        const liftText = choice.alg === 'R2' ? t('右层转半圈，送到黄心旁。', 'Turn the right face halfway to make a petal.')
-          : choice.alg === 'L2' ? t('左层转半圈，送到黄心旁。', 'Turn the left face halfway to make a petal.')
-            : choice.alg === 'F2' ? t('前层转半圈，送到黄心旁。', 'Turn the front face halfway to make a petal.')
-              : choice.alg === 'R' ? t('右手上，送到黄心旁。', 'Lift right to make a petal.') : t('左手上，送到黄心旁。', 'Lift left to make a petal.');
+        const liftText = choice.alg === 'R2' ? t('右层转半圈，送到黄心旁', 'Turn the right face halfway to make a petal.')
+          : choice.alg === 'L2' ? t('左层转半圈，送到黄心旁', 'Turn the left face halfway to make a petal.')
+            : choice.alg === 'F2' ? t('前层转半圈，送到黄心旁', 'Turn the front face halfway to make a petal.')
+              : choice.alg === 'R' ? t('右手上，送到黄心旁', 'Lift right to make a petal.') : t('左手上，送到黄心旁', 'Lift left to make a petal.');
         action(choice.alg, liftText, choice.index, rec, false);
       }
     } else if (stage === 'corners' || stage === 'middle') {
@@ -624,17 +624,24 @@ export function buildWalkthroughRun(scramble: string, followEjectedCorner = fals
   return { scramble, stages };
 }
 
+const DAISY_DEMO_SETUPS = [
+  LBL_LESSON_RUNS[0].scramble, // Direct middle-floor lifts on both sides.
+  LBL_LESSON_RUNS[2].scramble, // Clear an occupied petal position before lifting.
+  'F R F U2', // Bring an edge up from the first floor.
+  "F R F'", // Bring an edge down from the third floor, then inspect the basement.
+];
 const pools = new Map<CompleteDemoStage, CompleteDemo[]>();
 /** Small, prepared legal states; solve with the algorithms taught in this chapter. */
 export function completeDemoPool(stage: CompleteDemoStage): CompleteDemo[] {
   const cached = pools.get(stage);
   if (cached) return cached;
   const chapter = LBL_STEPS.find(step => step.id === stage)!;
-  const setups = stage === 'yellow-cross' ? YELLOW_CROSS_DEMO_SETUPS
+  const setups = stage === 'daisy' ? DAISY_DEMO_SETUPS
+    : stage === 'yellow-cross' ? YELLOW_CROSS_DEMO_SETUPS
     : stage === 'corners' ? [...LBL_LESSON_RUNS.flatMap((run, index) =>
       turns.slice(0, [2, 1, 2][index]).map(turn => join(lessonFrame(run, 'corners').setup, turn))), ...cornerExtremeSetups]
     : [...(stage === 'middle' ? [] : chapter.examples.flatMap(example => turns.map(turn => join(resolvePlayerSetup('3x3', example.alg, example.setup, example.startSolved ?? false), turn)))),
-      ...LBL_LESSON_RUNS.map(run => stage === 'daisy' ? run.scramble : lessonFrame(run, stage as LblLessonStageId).setup),
+      ...LBL_LESSON_RUNS.map(run => lessonFrame(run, stage as LblLessonStageId).setup),
       ...(stage === 'middle' ? [MIDDLE_DEMO_EXTREME_SETUP] : [])];
   if (stage === 'yellow-face') {
     setups.push(...turns.flatMap(u => turns.map(v => join(RIGHT_SUNE, u, RIGHT_SUNE, v))));
