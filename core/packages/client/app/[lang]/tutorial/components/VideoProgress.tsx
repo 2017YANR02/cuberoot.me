@@ -19,7 +19,7 @@ export default function VideoProgress({ time, duration, playing, onPlayingChange
   return <div className="tutorial-video-progress">
     <VideoControls playing={playing && !finished}
       onTogglePlay={() => { if (finished) replay(); else onPlayingChange(!playing); }} onReplay={replay} />
-    <ProgressSlider value={time} max={duration} keyboardStep={500}
+    <ProgressSlider value={time} max={duration} step="any" keyboardStep={500}
       onChange={value => { scrubTime.current = value; onSeek(value); }}
       onInteractionStart={() => { scrubTime.current = time; resumeAfterScrub.current = playing && !finished; onPlayingChange(false); }}
       onInteractionEnd={() => onPlayingChange(resumeAfterScrub.current && scrubTime.current < duration)}
