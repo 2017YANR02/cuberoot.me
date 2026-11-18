@@ -77,12 +77,17 @@ function TeamsDirectory() {
     const brand = wcaTeamBrand(item.name);
     groups.set(brand, [...(groups.get(brand) ?? []), item]);
   }
+  const sortedGroups = [...groups]
+    .filter(([, teams]) => teams.length > 0)
+    .map(([brand, teams]) => ({ brand, teams, count: teams.reduce((sum, item) => sum + item.count, 0), isBrand: WCA_TEAM_BRANDS.some(item => item.name === brand) }))
+    .sort((a, b) => b.count - a.count);
+  const memberCount = (count: number) => tr({ zh: `${count} 位选手`, en: count === 1 ? '1 member' : `${count} members` });
   const renderTeamChoice = (item: Team) => <Tooltip key={item.id} content={item.name}>
     {tip => <button {...tip} type="button" className="wca-team-choice"
       aria-label={`${item.name} · ${item.count}`} aria-pressed={team === String(item.id)}
       onClick={() => chooseTeam(team === String(item.id) ? '' : String(item.id))}>
       <span className="wca-team-choice-logo"><CubingBrandLabel name={item.name} logoOnly fallbackToName /></span>
-      <span className="wca-team-count">{item.count}</span>
+      <span className="wca-team-count">{memberCount(item.count)}</span>
     </button>}
   </Tooltip>;
   return <main className="wca-teams-page">
@@ -90,10 +95,10 @@ function TeamsDirectory() {
       <AppLink href="/wca/results" prefetch={false}>{tr({ zh: '排名', en: 'Rankings' })}</AppLink>
     </header>
     <div className="wca-team-groups">
-      {[...groups].filter(([, teams]) => teams.length > 0).map(([brand, teams]) => <section key={brand} className="wca-team-group" aria-label={brand}>
-        {WCA_TEAM_BRANDS.some(item => item.name === brand) ? <>
+      {sortedGroups.map(({ brand, teams, count, isBrand }) => <section key={brand} className={`wca-team-group${isBrand ? '' : ' wca-team-group--standalone'}`} aria-label={brand}>
+        {isBrand ? <>
           <div className="wca-team-brand-heading"><CubingBrandLabel name={brand} logoOnly fallbackToName />
-            <span className="wca-team-count">{teams.reduce((sum, item) => sum + item.count, 0)}</span>
+            <span className="wca-team-count">{memberCount(count)}</span>
           </div>
           <div className="wca-team-children">{[...teams].sort((a, b) => {
             const order: readonly string[] = WCA_TEAM_BRANDS.find(item => item.name === brand)?.teams ?? [];
