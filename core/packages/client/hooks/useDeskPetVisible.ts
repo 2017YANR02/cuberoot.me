@@ -15,6 +15,7 @@ export function deskPetQuietPage(pathname: string): string | null {
   if (/^\/(calc|frame-count|mosaic|paint|wb|notation|recon)(\/|$)/.test(path)
     || /^\/wca\/(results|records|comp)(\/|$)/.test(path)
     || /^\/scramble\/(solver|analyzer)(\/|$)/.test(path)
+    || /^\/tutorial\/(lbl|f2l)(\/|$)/.test(path)
     || /^\/recognize\/[^/]+$/.test(path)
     || /^\/alg\/3bld\/lookup(\/|$)/.test(path)
     || /^\/(timer|alg-trainers|algTrainer)(\/|$)/.test(path)
