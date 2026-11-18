@@ -1,12 +1,15 @@
 .tutorial-section-popover { --af-nav-text: var(--muted-foreground); --af-nav-active: var(--foreground); --af-nav-hover: var(--card); --af-nav-selected: var(--card); }
-.tutorial-section-menu { display: none; }
-@media (max-width: 760px) {
-  .tutorial-section-menu { display: block; position: relative; min-width: 0; }
-  .tutorial-section-menu > summary { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 44px; color: var(--muted-foreground); font-size: .8rem; }
-  .tutorial-section-menu > summary > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .tutorial-section-menu > summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
-  /* anchored-panel: safe (picker centered in footer; width capped to viewport). */
-  .tutorial-section-popover { box-sizing: border-box; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: min(260px, calc(100vw - 48px)); max-height: min(480px, 65dvh); overflow-y: auto; overscroll-behavior: contain; padding: 8px; z-index: 5; border: 1px solid var(--border-default); border-radius: 12px; }
+.tutorial-section-popover .af-nav-link .af-nav-icon { display: none; }
+.tutorial-section-menu { display: var(--tutorial-section-menu-display, none); position: relative; min-width: 0; }
+.tutorial-section-menu > summary { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 44px; color: var(--muted-foreground); font-size: .8rem; }
+.tutorial-section-menu > summary > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tutorial-section-menu > summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+/* anchored-panel: safe (picker centered in footer; width capped to viewport). */
+.tutorial-section-popover { box-sizing: border-box; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: min(260px, calc(100vw - 48px)); max-height: min(480px, 65dvh); overflow-y: auto; overscroll-behavior: contain; padding: 8px; z-index: 5; border: 1px solid var(--border-default); border-radius: 12px; }
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
+  .tutorial-section-menu { --tutorial-section-menu-display: block; }
+}
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
   :is(.lbl-page .lbl-footer, .f2l-study-dock .f2l-study-actions) { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 4px; }
   :is(.lbl-footer .lbl-footer-actions, .f2l-study-actions .f2l-study-secondary-actions) { grid-row: 1; grid-column: 3; justify-self: end; margin-inline-start: 0; flex-wrap: nowrap; align-items: center; }
   :is(.lbl-footer .lbl-footer-actions, .f2l-study-actions .f2l-study-secondary-actions):empty { display: none; }
@@ -24,12 +27,14 @@
 
 .lbl-page .lbl-footer .tutorial-example-button { width: auto; padding-inline: 10px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 
-/* Keep tutorial footer actions colored, including touch browsers' sticky hover. */
-:is(.lbl-page .lbl-footer, .f2l-page .f2l-study-actions) :is(.tutorial-page-button, .tutorial-practice-button, .tutorial-example-button) {
+/* Keep footer button appearance stable during hover, including on touch browsers. */
+:is(.lbl-page .lbl-footer, .f2l-page .f2l-study-actions) > .tutorial-page-button,
+:is(.lbl-page .lbl-footer, .f2l-page .f2l-study-actions) > .tutorial-page-button:hover:not(:disabled) {
   color: var(--accent);
-  background: var(--accent-soft);
+  background: transparent;
 }
-:is(.lbl-page .lbl-footer, .f2l-page .f2l-study-actions) :is(.tutorial-page-button, .tutorial-practice-button, .tutorial-example-button):hover:not(:disabled) {
+:is(.lbl-page .lbl-footer, .f2l-page .f2l-study-actions) :is(.tutorial-practice-button, .tutorial-example-button),
+:is(.lbl-page .lbl-footer, .f2l-page .f2l-study-actions) :is(.tutorial-practice-button, .tutorial-example-button):hover:not(:disabled) {
   color: var(--accent);
   background: var(--accent-soft);
 }
