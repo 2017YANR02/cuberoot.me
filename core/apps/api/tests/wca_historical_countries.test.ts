@@ -33,6 +33,10 @@ describe.skipIf(!url)('historical country buckets (PostgreSQL)', () => {
       INSERT INTO wca_persons VALUES ('p', 'Transferred person', 'USA'), ('q', 'Hong Kong person', 'Hong Kong');
       INSERT INTO wca_countries VALUES ('China', 'CN', 'China', '_Asia'), ('Hong Kong', 'HK', 'Hong Kong', '_Asia'), ('USA', 'US', 'USA', '_North America');
       INSERT INTO wca_fs_medals VALUES ('p','China','__all__',10,2,1), ('p','Hong Kong','__all__',3,1,0), ('p','USA','__all__',1,0,0), ('q','Hong Kong','__all__',4,0,0);
+      INSERT INTO wca_persons VALUES ('a','Alpha','China'), ('b','Bravo','China'), ('c','Charlie','USA'), ('d','Delta','China');
+      INSERT INTO wca_fs_medals VALUES ('a','China','333',9,1,0), ('b','China','333',1,7,2),
+        ('c','USA','333',2,7,9), ('d','China','333',0,0,1),
+        ('p','China','333',3,1,2), ('p','Hong Kong','333',1,0,3), ('p','USA','333',1,0,1);
       INSERT INTO wca_fs_person_comps VALUES ('p','China',10), ('p','Hong Kong',3), ('p','USA',1), ('q','Hong Kong',4);
       INSERT INTO wca_fs_person_solves VALUES ('p','China',100,120), ('p','Hong Kong',30,40), ('p','USA',10,15), ('q','Hong Kong',40,50);
       INSERT INTO wca_fs_person_year_solves VALUES ('p','China',2024,100,120), ('p','Hong Kong',2024,30,40), ('p','USA',2024,10,15), ('q','Hong Kong',2024,40,50);
@@ -52,6 +56,41 @@ describe.skipIf(!url)('historical country buckets (PostgreSQL)', () => {
     expect(response.status).toBe(200);
     return response.json();
   };
+  it.each([
+    ['gold', ['a', 'p', 'c', 'b'], [9, 5, 2, 1], [1, 2, 3, 4]],
+    ['silver', ['b', 'c', 'a', 'p'], [7, 7, 1, 1], [1, 1, 3, 3]],
+    ['bronze', ['c', 'p', 'b', 'd'], [9, 6, 2, 1], [1, 2, 3, 4]],
+  ] as const)('ranks %s independently, aggregates country buckets, and excludes zero counts', async (medal, ids, counts, ranks) => {
+    const response = await wcaFunStatsRoutes.request(`/wca/fun/medals?type=event&event=333&medal=${medal}&v=2`);
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.medal).toBe(medal);
+    expect(body.total).toBe(4);
+    expect(body.rows.map((r: { wcaId: string }) => r.wcaId)).toEqual(ids);
+    expect(body.rows.map((r: Record<string, number>) => r[medal])).toEqual(counts);
+    expect(body.rows.map((r: { rank: number }) => r.rank)).toEqual(ranks);
+  });
+  it('retains tied medal ranks across page boundaries', async () => {
+    for (const [page, id, rank] of [[1, 'b', 1], [2, 'c', 1], [3, 'a', 3], [4, 'p', 3]] as const) {
+      const response = await wcaFunStatsRoutes.request(`/wca/fun/medals?type=event&event=333&medal=silver&size=1&page=${page}`);
+      const body = await response.json();
+      expect(body.rows).toHaveLength(1);
+      expect(body.rows[0]).toMatchObject({ wcaId: id, rank });
+      expect(body.total).toBe(4);
+    }
+  });
+  it('filters historical representation before ranking selected medals', async () => {
+    for (const [region, bronze, iso2] of [['CN', 2, 'CN'], ['asia', 5, 'CN'], ['US', 1, 'US']] as const) {
+      const response = await wcaFunStatsRoutes.request(`/wca/fun/medals?type=event&event=333&medal=bronze&region=${region}`);
+      const body = await response.json();
+      expect(body.rows.find((r: { wcaId: string }) => r.wcaId === 'p')).toMatchObject({ bronze, iso2 });
+      if (region === 'CN') expect(body.rows.map((r: { rank: number }) => r.rank)).toEqual([1, 1, 3]);
+    }
+  });
+  it('rejects unknown medal columns before querying', async () => {
+    const response = await wcaFunStatsRoutes.request('/wca/fun/medals?medal=gold%20DESC');
+    expect(response.status).toBe(400);
+  });
   for (const [route, field, cn, hk, world] of [
     ['medals', 'gold', 10, 3, 14], ['most-comps-person', 'count', 10, 3, 14],
     ['most-solves-person', 'solve', 100, 30, 140], ['most-solves-person-year', 'solve', 100, 30, 140],

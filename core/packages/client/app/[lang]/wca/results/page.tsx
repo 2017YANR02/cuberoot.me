@@ -17,7 +17,7 @@ import PageHeading from '@/components/PageHeading';
 import { UnofficialMark } from '@/components/UnofficialMark';
 import dynamic from 'next/dynamic';
 import { WcaPersonRelationCells, useWcaTeams } from './_components/WcaTeamCell';
-import { useQueryStates, parseAsString } from 'nuqs';
+import { useQueryStates, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { HelpCircle, Search, ChevronDown } from '@app-foundation/icons/lucide';
 import Paginator from '@/components/wca-stats/Paginator';
@@ -76,6 +76,9 @@ const SorRace = dynamic(() => import('@/components/wca-stats/SorRace'), { ssr: f
 // 单项视图(单次 / 平均)排名表上方常显的「纪录走势」bar chart race —— 复用 wr_metric 的同款组件(受控:
 // controlledEventId=当前单项, controlledMetric=single/average)。组件较重(含视频导出/canvas),懒挂 + 仅客户端.
 const Top10HistoryPage = dynamic(() => import('@/components/wca-stats/Top10HistoryPage'), { ssr: false });
+const MedalRankings = dynamic(() => import('./_components/MedalRankings'), {
+  loading: () => <ContentSkeleton variant="table" />,
+});
 
 const ACTIVE_EVENTS = [
   '333','222','444','555','666','777',
@@ -141,7 +144,9 @@ function AllResultsPageInner() {
       rgender: parseAsString,
       mevent: parseAsString,
       mtype: parseAsString,
-      tab: parseAsString,       // records = 纪录;rank = 排名;无参数时默认纪录,兼容旧排名深链
+      tab: parseAsString,       // records = 纪录;rank = 排名;medals = 获奖;无参数默认纪录
+      medal: parseAsStringEnum(['gold', 'silver', 'bronze']),
+      medalEvent: parseAsString,
       view: parseAsString,      // 'metric' = 嵌入 wr_metric 指标视图;其余/null = 排名
       mmetric: parseAsString,   // 指标视图选中的指标 id(WcaStatView 的 scoped 'm'+'metric');顶层下拉驱动
       events: parseAsString,    // 逗号串;null=默认 333;'__none__'=空
@@ -174,7 +179,7 @@ function AllResultsPageInner() {
   // ---- 顶层视图:排名(本页原功能) / 指标(嵌入退役 wr_metric 的某个派生指标视图) ----
   // 统一在「排名」标题下:单次 / 平均 = 排名表;派生指标 = wr_metric 记录视图。不再出现「指标」字样。
   // Legacy metric-history links now open Records with the same metric/event.
-  const legacyMetricHistory = query.tab !== 'records' && query.view === 'metric' && query.mtype === 'history';
+  const legacyMetricHistory = query.tab !== 'records' && query.tab !== 'medals' && query.view === 'metric' && query.mtype === 'history';
   const recordsActive = query.tab === 'records' || legacyMetricHistory || Object.values(query).every(value => value === null);
   useEffect(() => {
     if (legacyMetricHistory) {
@@ -183,7 +188,7 @@ function AllResultsPageInner() {
         rdetails: RANK_TYPE_IDS.has(query.mmetric || '') ? '1' : null });
     } else if (recordsActive && query.tab === null) void setQuery({ tab: 'records' });
   }, [recordsActive, legacyMetricHistory, query.tab, query.mmetric, query.mevent, setQuery]);
-  const view: 'rank' | 'metric' | 'records' = recordsActive ? 'records' : query.view === 'metric' ? 'metric' : 'rank';
+  const view = query.tab === 'medals' ? 'medals' : recordsActive ? 'records' : query.view === 'metric' ? 'metric' : 'rank';
 
   // ---- 选中项目 → 模式 ----
   const selectedSet: Set<string> = useMemo(() => {
@@ -545,7 +550,12 @@ function AllResultsPageInner() {
       <WcaGenderSelect value={gender} onChange={value => update('gender', value)} />
     </div>
   );
-  const changeTab = (target: 'rank' | 'records') => {
+  const changeTab = (target: 'rank' | 'records' | 'medals') => {
+    if (target === query.tab) return;
+    if (target === 'medals' || view === 'medals') {
+      void setQuery({ tab: target, page: null }, { history: 'push' });
+      return;
+    }
     if ((target === 'records') === recordsActive) return;
     if (target === 'records') {
       const metricView = view === 'metric';
@@ -577,13 +587,17 @@ function AllResultsPageInner() {
 
   const viewTabs = (
     <nav className="wca-stats-tab-bar wca-stats-tab-bar-connected" aria-label={tr({ zh: '排名视图', en: 'Ranking views' })}>
-      <button type="button" className={`wca-stats-tab${!recordsActive ? ' active' : ''}`}
-        aria-pressed={!recordsActive} onClick={() => changeTab('rank')}>
+      <button type="button" className={`wca-stats-tab${!recordsActive && view !== 'medals' ? ' active' : ''}`}
+        aria-pressed={!recordsActive && view !== 'medals'} onClick={() => changeTab('rank')}>
         {tr({ zh: '排名', en: 'Rankings' })}
       </button>
       <button type="button" className={`wca-stats-tab${recordsActive ? ' active' : ''}`}
         aria-pressed={recordsActive} onClick={() => changeTab('records')}>
         {tr({ zh: '纪录', en: 'Records' })}
+      </button>
+      <button type="button" className={`wca-stats-tab${view === 'medals' ? ' active' : ''}`}
+        aria-pressed={view === 'medals'} onClick={() => changeTab('medals')}>
+        {tr({ zh: '获奖', en: 'Medals' })}
       </button>
     </nav>
   );
@@ -611,6 +625,17 @@ function AllResultsPageInner() {
       </header>
 
       {recordsActive && !legacyMetricHistory && <RecordsView embedded leadingControls={viewTabs} />}
+
+      {view === 'medals' && <MedalRankings
+        medal={query.medal ?? 'gold'} eventId={query.medalEvent ?? (mode === 'single' ? singleEvent : '')}
+        country={country} countries={countries} isZh={isZh} page={page} size={size}
+        leadingControls={viewTabs}
+        onMedalChange={medal => { void setQuery({ medal, page: null }); }}
+        onEventChange={medalEvent => { void setQuery({ medalEvent, page: null }); }}
+        onCountryChange={value => update('country', value)}
+        onPageChange={value => update('page', String(value), false)}
+        onSizeChange={value => update('size', String(value))}
+      />}
 
       {/* ============ 指标视图:嵌入退役的 wr_metric;指标由「类型」下拉受控(隐藏其内置选择器)。
           顶层「类型」下拉作为 afterEventSelector 插在 WcaStatView 的项目选择器之后，与类型同行 ============ */}

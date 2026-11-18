@@ -1,0 +1,29 @@
+.medal-rankings { min-width: 0; }
+.medal-rankings > .wse-table-wrapper {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+.medal-rankings .medal-rankings-table { width: 100%; }
+.medal-rankings .medal-rankings-chart {
+  --row-h: 44px;
+  margin-bottom: 24px;
+  background: transparent;
+}
+.medal-rankings-chart .t10h-bar .wca-person-identity { min-width: 0; }
+.medal-rankings-chart .t10h-bar .wca-person-identity-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.medal-rankings-table th:nth-child(n + 3),
+.medal-rankings-table td:nth-child(n + 3) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.medal-rankings-table .medal-selected {
+  background: var(--accent-soft);
+  font-weight: 600;
+}

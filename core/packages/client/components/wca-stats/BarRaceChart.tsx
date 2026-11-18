@@ -19,6 +19,7 @@ export interface BarRaceRow {
   value: number;          // 真实值(决定条长)
   valueLabel: string;     // 行尾显示文案
   rankLabel: ReactNode;   // 名次显示(slot 由数组顺序定,这里只管文字)
+  label?: ReactNode;      // 自定义身份展示,如奖牌榜复用选手徽标 + 国旗 + 姓名
   trailing?: ReactNode;   // 行尾附加件(wr_metric 的比赛链接;SOR 无)
 }
 
@@ -60,8 +61,10 @@ export default function BarRaceChart({
             <div className="t10h-rank">{row.rankLabel}</div>
             <a className="t10h-bar" href={row.href} target="_blank" rel="noopener"
               style={{ width: left(row.value), background: colorForRow(row.colorKey ?? row.key, row.country) }} title={row.name}>
-              {row.iso2 && <Flag iso2={row.iso2} className="t10h-bar-flag" />}
-              <span className="t10h-bar-name">{row.name}</span>
+              {row.label ?? <>
+                {row.iso2 && <Flag iso2={row.iso2} className="t10h-bar-flag" />}
+                <span className="t10h-bar-name">{row.name}</span>
+              </>}
             </a>
             <span className="t10h-value">{row.valueLabel}</span>
             {row.trailing}

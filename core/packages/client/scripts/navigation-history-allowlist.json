@@ -276,6 +276,11 @@
   },
   {
     "path": "app/[lang]/wca/results/page.tsx",
+    "call": "setQuery({tab,page}) history='push'",
+    "reason": "进入或离开奖牌排行这一主要内容视图；奖牌、地区、项目和分页筛选仍使用 replace"
+  },
+  {
+    "path": "app/[lang]/wca/results/page.tsx",
     "call": "setQuery({tab,rtype,revent,rshow,scancelled,rregion,rgender,mtype}) history='push'",
     "reason": "排名与纪录两个主要内容页之间导航，同步适用筛选；页内筛选仍使用 replace"
   },
