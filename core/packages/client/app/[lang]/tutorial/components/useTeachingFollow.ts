@@ -17,9 +17,12 @@ export default function useTeachingFollow(position: number | string, lessonKey: 
   }, [lessonKey]);
   useEffect(() => {
     const container = pane.current;
-    if (!container || !matchMedia('(max-width: 760px)').matches) return;
+    if (!container) return;
+    const compact = getComputedStyle(container).getPropertyValue('--tutorial-compact-split').trim();
+    const stacked = compact ? compact === '0' : matchMedia('(max-width: 760px)').matches;
+    if (!stacked && container.closest('[data-tutorial-layout]')?.getAttribute('data-tutorial-layout') !== 'B') return;
     // Keep the scroll viewport above the mobile footer, including taller translated copy.
-    const footer = container.closest('.f2l-page')?.querySelector('.f2l-study-dock');
+    const footer = stacked && container.closest('.f2l-page')?.querySelector('.f2l-study-dock');
     if (footer) {
       const available = `${Math.max(140, Math.floor(footer.getBoundingClientRect().top - container.getBoundingClientRect().top - 8))}px`;
       if (container.style.getPropertyValue('--tutorial-pane-available-height') !== available) {

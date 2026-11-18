@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import ReadingFit from '../../components/ReadingFit';
 import { stickeringMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import { CompactSelect } from '@/components/CompactSelect';
@@ -46,7 +47,7 @@ export default function FlowchartLesson({ pathId, onPathChange, ...props }: {
         items={snapshot.paths.map(item => ({ value: item.id, label: pathLabel(item) }))} onChange={onPathChange} />
       <Link href="/alg/3x3/f2l/x+" prefetch={false}><T zh="X+ 公式库" en="X+ algorithms" /></Link>
     </div>
-    <FlowPlayback key={`${pathId}:${props.orientation}`} path={path} onPathChange={onPathChange} {...props} />
+    <div className="f2l-flow-stage"><FlowPlayback key={`${pathId}:${props.orientation}`} path={path} onPathChange={onPathChange} {...props} /></div>
   </div>;
 }
 
@@ -112,7 +113,7 @@ function FlowPlayback({ path, orientation, pauseBetween, onPathChange }: {
       <p className="f2l-flow-scramble"><T zh="打乱:" en="Scramble:" /> <code>{snapshot.setup}</code></p>
     </section>
     <section className="f2l-flow-graph" aria-label={tr({ zh: 'X+ case 转化流程图', en: 'X+ case transformation flowchart' })}>
-      <CaseFlowGraph viewBox="0 -8 470 594" edges={EDGES.map(edge => {
+      <ReadingFit pane><CaseFlowGraph viewBox="0 -8 470 594" edges={EDGES.map(edge => {
           const section = sections.find(item => item.from === edge.from && item.to === edge.to);
           const active = !!section && section === activeSection;
           const progress = section ? Math.max(0, Math.min(1, (position - section.start) / (section.end - section.start))) : 0;
@@ -129,7 +130,7 @@ function FlowPlayback({ path, orientation, pauseBetween, onPathChange }: {
           const current = currentPoint?.name === node.name;
           return { ...node, facelets: diagrams[index], selected: !!point, current, visited: !!point && position > point.step,
             receiving: activeSection?.to === node.name && moving, onSelect: point ? () => seek(point.step) : undefined };
-        })} />
+        })} /></ReadingFit>
     </section>
   </div>;
 }

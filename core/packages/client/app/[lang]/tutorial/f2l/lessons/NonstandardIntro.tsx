@@ -334,7 +334,7 @@ export default function NonstandardIntro({ orientation, edgeSetup = '', cornerSe
     ? { zh: '术语介绍', en: 'Terminology' }
     : { zh: '标态与非标概念演示', en: 'Standard and non-standard cases: concept demonstration' }))}>
     <VideoStage>
-    <div className="f2l-concept-scene f2l-terminology-stage" data-tutorial-mode="timeline" data-tutorial-layout={scene.comparisonSummary || summaryOpacity > 0 ? 'F' : scene.reference ? 'C' : scene.displayAlg ? 'B' : 'A'} data-note-visible={!!scene.bubble && elapsed >= (scene.bubbleAt ?? 0) && elapsed < (scene.bubbleAt ?? 0) + 2400} data-summary-part={elapsed < scene.duration / 2 ? 'paths' : 'caption'} data-summary={!!scene.comparisonSummary} style={{ opacity: stageVisibility }}>
+    <div className="f2l-concept-scene f2l-terminology-stage" data-tutorial-mode="timeline" data-tutorial-layout={scene.comparisonSummary || summaryOpacity > 0 ? 'E' : scene.reference ? 'C' : scene.displayAlg ? 'B' : 'A'} data-note-visible={!!scene.bubble && elapsed >= (scene.bubbleAt ?? 0) && elapsed < (scene.bubbleAt ?? 0) + 2400} data-summary-part={elapsed < scene.duration / 2 ? 'paths' : 'caption'} data-summary={!!scene.comparisonSummary} style={{ opacity: stageVisibility }}>
       {showSceneNumber && <span className="f2l-concept-scene-number"><T zh="画面" en="Scene" /> {index + 1}/{scenes.length}</span>}
       <div className="f2l-cube f2l-concept-cube" style={{ opacity: sceneOpacity * cubeVisibility }} aria-hidden={sceneOpacity === 0} data-visible={ready || continuous}><AlgPlayer key={`${orientation}:${generation}`} ref={player} puzzle="3x3" engine="sim" set="f2l-tutorial"
         setup={scene.setup} startSolved={!scene.setup.trim()} alg={scene.alg} orientation={orientation} sceneRot={initialView}
@@ -371,10 +371,10 @@ export default function NonstandardIntro({ orientation, edgeSetup = '', cornerSe
           </figcaption>
         </figure>}
       </ReadingFit></div>
-      {scene.comparisonSummary && <div className="tutorial-video-reading" data-tutorial-layout="F"><ReadingFit>
+      {scene.comparisonSummary && <div className="tutorial-video-reading" data-tutorial-layout="E"><ReadingFit>
         <NonstandardSummary states={scene.comparisonSummary} orientation={orientation} caption={scene.caption} />
       </ReadingFit></div>}
-      {summaryOpacity > 0 && <div className="tutorial-video-reading" data-tutorial-layout="F"><ReadingFit><div className="f2l-terminology-summary" style={{ opacity: summaryOpacity }} role="status">
+      {summaryOpacity > 0 && <div className="tutorial-video-reading" data-tutorial-layout="E"><ReadingFit><div className="f2l-terminology-summary" style={{ opacity: summaryOpacity }} role="status">
         <TerminologySummary orientation={orientation} />
       </div></ReadingFit></div>}
     </div>

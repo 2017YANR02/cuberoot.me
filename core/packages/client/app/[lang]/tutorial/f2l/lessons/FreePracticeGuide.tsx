@@ -6,6 +6,7 @@ import { Tooltip } from '@/components/Tooltip';
 import ProgressSlider from '@/components/ProgressSlider';
 import { tr, T } from '@/i18n/tr';
 import PairEditor from '../components/PairEditor';
+import ReadingFit from '../../components/ReadingFit';
 import VideoControls from '../../components/VideoControls';
 import VideoStage from '../components/VideoStage';
 import { freePlacementKey, placeFreePiece, SOLVED_FREE_PLACEMENT, type FreePracticeCase } from '../lib/free-practice';
@@ -83,15 +84,15 @@ export default function FreePracticeGuide({ table, orientation, onClose }: {
       </section>
       <section className="f2l-guidance f2l-free-guide-copy">
         <p className="f2l-caption"><T zh="使用方法" en="How to use" /></p>
-        <div className="f2l-free-guide-copy-body" key={index}>
-        <p aria-live="polite">{tr(scene.text)}</p>
+        <div className="f2l-free-guide-copy-body"><ReadingFit pane>
+        <p key={index} aria-live="polite">{tr(scene.text)}</p>
         {index >= 6 && exercise?.alg && <div className="f2l-free-guide-algs">
           <p className="f2l-free-guide-scramble"><Tooltip content={tr({ zh: '打乱', en: 'Scramble' })}>{tip =>
             <span {...tip} className="f2l-teaching-alg-icon" tabIndex={0} role="img" aria-label={tr({ zh: '打乱', en: 'Scramble' })}><Shuffle size={19} aria-hidden="true" /></span>
           }</Tooltip><code>{exercise.setup}</code></p>
           <p><T zh="公式" en="Algorithm" /> · {exercise.name}</p><code>{exercise.alg}</code>
         </div>}
-        </div>
+        </ReadingFit></div>
         <button type="button" className="f2l-restart" onClick={onClose}><T zh="开始练习" en="Start practicing" /></button>
       </section>
     </div>

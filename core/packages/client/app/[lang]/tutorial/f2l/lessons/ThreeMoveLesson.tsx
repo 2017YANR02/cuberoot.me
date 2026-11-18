@@ -141,7 +141,7 @@ export default function ThreeMoveLesson({ orientation, pauseBetween, caseId, onC
           aria-pressed={part === index} onClick={() => selectPart(index)}>{tr(item.title)}</button>)}
       </div>
       {part !== 0 && <p>{tr(THREE_MOVE_PARTS[part].copy)}</p>}
-      {part === 0 ? <ReadingFit><div data-tutorial-layout="F">
+      {part === 0 ? <ReadingFit><div data-tutorial-layout="E">
         <p>{tr(THREE_MOVE_PARTS[part].copy)}</p>
         <div className="f2l-recognition">
         {ORDERED_BASIC_CASES.map((item, index) => <figure key={item.id}>

@@ -26,7 +26,7 @@ export default function CaseCatalogLesson({ orientation, onNextChapter }: { orie
 
       <ClassifiedSectionNavigation active={selected} orientation={orientation} onSelect={select} />
       <section className="f2l-catalog-group f2l-study-main">
-        <ReadingFit><div className="f2l-recognition" data-tutorial-layout="F">{diagrams.filter(c => selected.cases.includes(c.name)).map(c => <figure key={c.name}>
+        <ReadingFit><div className="f2l-recognition" data-tutorial-layout="E">{diagrams.filter(c => selected.cases.includes(c.name)).map(c => <figure key={c.name}>
           <VisualCube view="iso" size={100} faceletColors={c.facelets} interactive enlargeable alt={c.name} />
           <figcaption>{c.name}</figcaption>
         </figure>)}</div></ReadingFit>

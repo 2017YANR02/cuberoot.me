@@ -216,7 +216,7 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
         <SectionNavigation label={tr({ zh: '认识四种三步基态', en: 'Meet the four three-move cases' })} items={[{ id: 'section-5', label: tr({ zh: "认识四种三步基态", en: "Meet the four three-move cases" }), active: true, onSelect: () => { } }]} />
         <div className="f2l-study-main">
 
-        <ReadingFit><div className="f2l-recognition" data-tutorial-layout="F">
+        <ReadingFit><div className="f2l-recognition" data-tutorial-layout="E">
           {chapterCases.map((item, index) => <figure key={item.id}>
             <VisualCube view="iso" size={190} faceletColors={diagrams[index]} interactive enlargeable alt={item.name} />
             <figcaption>{item.name}</figcaption>

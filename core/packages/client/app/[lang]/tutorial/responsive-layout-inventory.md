@@ -2,7 +2,9 @@
 
 状态：REFERENCE。按当前源码中的内容关系分类，覆盖正式、隐藏章节及时间线分支。规则见 [多端排版](./responsive-design.md)。这是一份实现清单，不将源码分析等同于逐设备、逐镜头的目测验收。
 
-A＝主魔方＋短说明；B＝主魔方＋当前阶段；C＝主魔方＋完整图文（含流程图）；D＝同等重要的比较单元；F＝图文阅读；G＝交互练习。
+分类使用[多端排版的 A–G 总览](./responsive-design.md#分类总览)。
+
+A、B、C 共用[视口及紧凑横屏切换规则](./responsive-design.md#2-尺寸与布局切换)。三类分别保留短说明、分阶段教学和完整参考。
 
 ## LBL 小节
 
@@ -10,26 +12,26 @@ A＝主魔方＋短说明；B＝主魔方＋当前阶段；C＝主魔方＋完�
 
 | 章节 / 小节 ID | 内容 | 类型 / 呈现方式 |
 | --- | --- | --- |
-| structure/overview | 引言 · 概览 | F · 阅读 |
+| structure/overview | 引言 · 概览 | E · 阅读 |
 | structure/facelet | 引言 · 格 | A · 观察 |
 | structure/centers | 引言 · 中心块 | A · 观察 |
 | structure/corners | 引言 · 角块 | A · 观察 |
 | structure/edges | 引言 · 棱块 | A · 观察 |
 | structure/notation | 引言 · 转动记号 | A · 轮播（记号＋短说明） |
-| daisy/overview | 做小花 · 概览 | F · 静态图文，电脑端等比例缩放 |
-| daisy/layers | 做小花 · 认识楼层 | F · 阅读 |
+| daisy/overview | 做小花 · 概览 | E · 静态图文 |
+| daisy/layers | 做小花 · 认识楼层 | E · 阅读 |
 | daisy/case-0 | 做小花 · 二楼 | B · 教学 |
 | daisy/case-2 | 做小花 · 二楼：顶面挡住 | 视频 A → 教学 B |
 | daisy/case-3 | 做小花 · 三楼：压到二楼 | B · 教学 |
 | daisy/case-4 | 做小花 · 一楼：压到二楼 | B · 教学 |
 | daisy/case-5 | 做小花 · 地下室：上上 | B · 教学 |
 | daisy/complete | 做小花 · 完整演示 | A · 非视频教学 |
-| daisy/flowchart | 做小花 · 流程图 | F · 阅读 |
-| cross/overview | 底面十字 · 概览 | F → A → F · 连续演示 |
+| daisy/flowchart | 做小花 · 流程图 | G · 独立画布 |
+| cross/overview | 底面十字 · 概览 | E → A → E · 连续演示 |
 | cross/white-edge | 底面十字 · 白棱归位 | B · 教学 |
 | cross/case-0 | 底面十字 · 完整演示 | A · 非视频教学 |
-| cross/flowchart | 底面十字 · 流程图 | F · 阅读 |
-| corners/overview | 底层角块 · 概览 | F · 静态图文，电脑端等比例缩放 |
+| cross/flowchart | 底面十字 · 流程图 | G · 独立画布 |
+| corners/overview | 底层角块 · 概览 | E · 静态图文 |
 | corners/trigger-learning-1 | 底层角块 · 右公式 | B · 教学 |
 | corners/trigger-learning-0 | 底层角块 · 左公式 | B · 教学 |
 | corners/case-0 | 底层角块 · 白朝右 | B · 教学 |
@@ -37,56 +39,56 @@ A＝主魔方＋短说明；B＝主魔方＋当前阶段；C＝主魔方＋完�
 | corners/case-3 | 底层角块 · 白朝上 | B · 教学 |
 | corners/case-1 | 底层角块 · 角块在底层 | 视频 A → 点击继续 → 教学 B |
 | corners/complete | 底层角块 · 完整演示 | A · 非视频教学 |
-| corners/flowchart | 底层角块 · 流程图 | F · 阅读 |
-| middle/overview | 中层 · 概览 | F · 静态图文，电脑端等比例缩放 |
-| middle/terms | 中层 · 术语介绍 | F · 阅读 |
+| corners/flowchart | 底层角块 · 流程图 | G · 独立画布 |
+| middle/overview | 中层 · 概览 | E · 静态图文 |
+| middle/terms | 中层 · 术语介绍 | E · 阅读 |
 | middle/case-0 | 中层 · 去右 | 视频 A → 点击继续 → 教学 B |
 | middle/case-1 | 中层 · 去左 | 视频 A → 点击继续 → 教学 B |
 | middle/case-2 | 中层 · 棱块在中层 | 视频 A → 点击继续 → 教学 B |
 | middle/complete | 中层 · 完整演示 | B · 非视频教学 |
-| middle/flowchart | 中层 · 流程图 | F · 阅读 |
-| yellow-cross/overview | 顶面十字 · 概览 | F · 静态图文，电脑端等比例缩放 |
+| middle/flowchart | 中层 · 流程图 | G · 独立画布 |
+| yellow-cross/overview | 顶面十字 · 概览 | E · 静态图文 |
 | yellow-cross/case-0 | 顶面十字 · 横线 | B · 教学 |
 | yellow-cross/case-1 | 顶面十字 · 三点半 | B · 教学 |
 | yellow-cross/case-2 | 顶面十字 · 点 | B · 教学 |
 | yellow-cross/complete | 顶面十字 · 完整演示 | A · 非视频教学 |
-| yellow-cross/flowchart | 顶面十字 · 流程图 | F · 阅读 |
-| yellow-face/overview | 顶面朝向 · 概览 | F · 静态图文，电脑端等比例缩放 |
-| yellow-face/sune-overview | 顶面朝向 · 小鱼 | F · 阅读 |
-| yellow-face/recognition | 顶面朝向 · 状态辨识 | F · 阅读 |
+| yellow-cross/flowchart | 顶面十字 · 流程图 | G · 独立画布 |
+| yellow-face/overview | 顶面朝向 · 概览 | E · 静态图文 |
+| yellow-face/sune-overview | 顶面朝向 · 小鱼 | E · 阅读 |
+| yellow-face/recognition | 顶面朝向 · 状态辨识 | E · 阅读 |
 | yellow-face/sune-learning-1 | 顶面朝向 · 3灰：右鱼 | B · 非视频教学 |
 | yellow-face/sune-learning-0 | 顶面朝向 · 3灰：左鱼 | B · 非视频教学 |
 | yellow-face/case-2 | 顶面朝向 · 2灰：二碰 | B · 教学 |
 | yellow-face/case-3 | 顶面朝向 · 4灰：四不碰 | B · 教学 |
 | yellow-face/complete | 顶面朝向 · 完整演示 | A · 非视频教学 |
-| yellow-face/flowchart | 顶面朝向 · 流程图 | F · 阅读 |
-| corner-position/overview | 角位置 · 概览 | F · 静态图文，电脑端等比例缩放 |
-| corner-position/terms | 角位置 · 术语介绍 | F · 阅读 |
+| yellow-face/flowchart | 顶面朝向 · 流程图 | G · 独立画布 |
+| corner-position/overview | 角位置 · 概览 | E · 静态图文 |
+| corner-position/terms | 角位置 · 术语介绍 | E · 阅读 |
 | corner-position/l-alg-learning-0 | 角位置 · J公式 | B · 教学 |
 | corner-position/case-0 | 角位置 · 有眼：眼放左 | B · 教学 |
 | corner-position/case-1 | 角位置 · 无眼：先造眼 | B · 教学 |
 | corner-position/complete | 角位置 · 完整演示 | B · 非视频教学 |
-| corner-position/flowchart | 角位置 · 流程图 | F · 阅读 |
-| edge-position/overview | 棱位置 · 概览 | F · 静态图文，电脑端等比例缩放 |
-| edge-position/terms | 棱位置 · 术语介绍 | F · 阅读 |
+| corner-position/flowchart | 角位置 · 流程图 | G · 独立画布 |
+| edge-position/overview | 棱位置 · 概览 | E · 静态图文 |
+| edge-position/terms | 棱位置 · 术语介绍 | E · 阅读 |
 | edge-position/case-0 | 棱位置 · 对色在左 | B · 固定教学 |
 | edge-position/case-1 | 棱位置 · 对色在右 | B · 固定教学 |
 | edge-position/case-2 | 棱位置 · 无墙：先造墙 | B · 固定教学 |
 | edge-position/complete | 棱位置 · 完整演示 | A · 非视频教学 |
-| edge-position/flowchart | 棱位置 · 流程图 | F · 阅读 |
+| edge-position/flowchart | 棱位置 · 流程图 | G · 独立画布 |
 | trigger-learning/overview | 隐藏公式章 · 概览 | B · 公式轮播 |
 | trigger-learning/trigger-learning-0 | 隐藏公式章 · 左公式 | B · 教学 |
 | trigger-learning/trigger-learning-1 | 隐藏公式章 · 右公式 | B · 教学 |
-| sune-learning/overview | 隐藏公式章 · 概览 | F · 阅读 |
-| sune-learning/recognition | 隐藏公式章 · 状态辨识 | F · 阅读 |
+| sune-learning/overview | 隐藏公式章 · 概览 | E · 阅读 |
+| sune-learning/recognition | 隐藏公式章 · 状态辨识 | E · 阅读 |
 | sune-learning/sune-learning-0 | 隐藏公式章 · 左鱼公式 | B · 教学 |
 | sune-learning/sune-learning-1 | 隐藏公式章 · 右鱼公式 | B · 教学 |
 | l-alg-learning/overview | 隐藏公式章 · 概览 | B · 公式轮播 |
 | l-alg-learning/l-alg-learning-0 | 隐藏公式章 · J公式 | B · 教学 |
 
-所有可练习小节的练习入口为 G；完整复原 Walkthrough 按当前阶段复用 A/B。图文流程图自身没有常驻主魔方，归 F，不能仅凭名称“流程图”归 C。
+各小节的独立练习入口归 F，无主魔方的独立流程图归 G。
 
-电脑端静态概览统一由 `ReadingFit` 缩放；底面十字概览按 F → A → F：开场／结尾图文整体缩放，中间单魔方段在电脑端左魔方、右文案，魔方沿时间线平滑移向左侧；保留外置播放控件。隐藏左右公式／J 公式概览是动态公式轮播，继续保持 B 类，不当作静态图文。
+底面十字概览按 E → A → E。中间单魔方段在电脑端左魔方、右文案，魔方沿时间线移向左侧。说明在移位完成后按同一播放时钟淡入，暂停、拖动和重播按时间点还原。播放控件位于舞台外。
 
 ## LBL 连续画面的内部规则
 
@@ -103,9 +105,10 @@ A＝主魔方＋短说明；B＝主魔方＋当前阶段；C＝主魔方＋完�
 | EdgeObservation：找墙、墙放后、找对色／无墙 | B | 属于后续公式教学的观察步骤，整体固定 B |
 | 转动记号：所有基础记号、撇号与两次转动 | A | 记号为强调文字，解释自然换行 |
 | 左右公式轮播、J 公式轮播：所有动作 | B | 保留当前公式及口诀 |
-| CrossOverview：小花→十字总览 | F | 两个状态及箭头同屏 |
+| CrossOverview：小花→十字总览 | E | 两个状态及箭头同屏 |
 | CrossOverview：淡出小花、聚焦十字、倾斜和高亮 | A | 聚焦时平滑移向左侧，电脑端左魔方、右文案；正常文字尺寸，魔方适配剩余高度 |
-| CrossOverview：正确与错误两例、侧色反馈、转体 | F | 两个魔方同等重要，不能藏掉一侧 |
+| CrossOverview：正确与错误两例、侧色反馈、转体 | E | 两个魔方同等重要，不能藏掉一侧 |
+
 
 生成的完整演示不是有限固定视频文件；其全部合法帧由上述 observe / recognize / act / done 分支覆盖。分类依据整个教学单元的结构，不读取当前帧 detail / alg 字段决定类型；换例子与播放进度均不改变类型。
 
@@ -115,19 +118,21 @@ A＝主魔方＋短说明；B＝主魔方＋当前阶段；C＝主魔方＋完�
 | --- | --- | --- |
 | lesson-1 初识 | 单魔方十字开场；分裂；LBL/F2L 同步比较；术语短片与总结 | A → D；术语见逐镜头表 |
 | lesson-2 三步基态 | 四个基态选择；选中并移动；与公式参考比对；三步教学；返回选择 | C · 非视频完整参考教学（含选择与返回） |
-| lesson-3 其他标态 | 所有分类组、案例缩略图与名称 | F |
-| lesson-4 标态公式 | 每个分类选择；每条公式的全部阶段；流程图开／关；练习 | F → C / B → G |
+| lesson-3 其他标态 | 所有分类组、案例缩略图与名称 | E |
+| lesson-4 标态公式 | 每个分类选择；每条公式的全部阶段；流程图开／关；练习 | E → C / B → F |
 | lesson-5 非标态 | 认识非标；处理非标 | 见逐镜头表 |
-| lesson-6 自由练习 | 摆放；解法；使用方法各镜头 | G · 摆放与解法固定；时间线指南见下表 |
+| lesson-6 自由练习 | 摆放；解法；使用方法各镜头 | F · 摆放与解法固定；时间线指南见下表 |
 | lesson-10 动态流程图实验 | 每条路径的所有状态、公式与节点 | C |
-| lesson-11 合并预览 | 四基态识别；三步短片；顶层调整参考；自主调整／解法 | F、B、C、G |
+| lesson-11 合并预览 | 四基态识别；三步短片；顶层调整参考；自主调整／解法 | E、B、C、F |
 | lesson-12 逐步教学 | B+、A+、B−、A− 各四阶段（初态、第一转、第二转、第三转） | B |
-| lesson-13 三步练习 | 上述四基态及全部顶层朝向；当前阶段提示 | B（引导）／G（操作） |
-| lesson-14 隐藏初识 | 比较图文；LBL 单独短片；F2L 单独短片 | D / F；A / B |
-| lesson-15、lesson-16 隐藏公式 | 所有公式选择、阶段、动态路径和练习入口 | F → C / B → G |
+| lesson-13 三步练习 | 上述四基态及全部顶层朝向；当前阶段提示 | B（引导）／F（操作） |
+| lesson-14 隐藏初识 | LBL/F2L 并列比较；LBL 单独短片；F2L 单独短片 | D；A / B |
+| lesson-15、lesson-16 隐藏公式 | 所有公式选择、阶段、动态路径和练习入口 | E → C / B → F |
 | lesson-17 隐藏非标 | 两段非标短片；棱／角提取的所有案例，两种解法比较 | 见逐镜头表；D |
 
 公式列表与原始公式唯一来源仍为 data/alg-snapshot.json 及教学数据；各案例复用相同的分阶段／路径模板，不能为了排版改写算法。每个阶段的完整动作说明与公式算一个单元。
+
+F2L 标态公式的阶段视图归 B，用户选择的完整路径视图归 C。三步教学的逐步视图归 B，独立朝向参考归 C。
 
 静态图文入口共用 `ReadingFit`：lesson-3 案例总览、lesson-4／lesson-15／lesson-16 中实际显示的案例选择分支、lesson-11 四基态总览，以及 IntroLessons 保留的四基态静态分支。说明文字与图片整体缩放，导航和底部操作保持原尺寸。lesson-1／lesson-5／lesson-17 的短片、lesson-14 动态比较与单独短片、lesson-2 连续交互教学均保持原实现；未提供静态概览的章节不新增概览。
 
@@ -197,31 +202,20 @@ A＝主魔方＋短说明；B＝主魔方＋当前阶段；C＝主魔方＋完�
 | 8 | 和 A+ 相比 / 只差一步顶面调整 | C |
 | 9 | 转动 U′，对准 A+ 的起始朝向 | C |
 | 10 | 再用熟悉的三步，把棱角送回自己的 FR 槽 | C |
-| 11 | 识别 case，主要看目标棱块与角块的相对位置 / 记忆公式，重点记住状态的转化过程 / 中间灵活插入顶层调整，应对非标 | F |
+| 11 | 识别 case，主要看目标棱块与角块的相对位置 / 记忆公式，重点记住状态的转化过程 / 中间灵活插入顶层调整，应对非标 | E |
 
-术语片尾的 pair / slot / standard 三个关联图，以及处理非标片尾的两条转化路径与结论，均为 F 类纯图文镜头。电脑端由 ReadingFit 将完整图文整体等比例缩放到舞台，两条路径与结论同屏；播放控件不缩放，原时间线不变。手机端暂保留原布局及路径／结论分段呈现。
+“处理非标”的 C 类镜头在手机上下排时，完整正文和公式参考卡从魔方下方开始排列，播放条位于舞台外.
+
+术语片尾的 pair / slot / standard 三个关联图，以及处理非标片尾的两条转化路径与结论，均为 E 类纯图文镜头。电脑端由 ReadingFit 将完整图文整体等比例缩放到舞台，两条路径与结论同屏；播放控件不缩放，原时间线不变。短横屏按剩余舞台缩放，路径与结论分段呈现。手机竖屏保留原布局与分段。
 
 ### LBL 与 F2L 对比短片
 
-底十字开场与观察底面为 A；复制／分开过渡为 D；LBL 的四角→四棱各阶段和 F2L 的四组棱角各阶段均为 D。每侧魔方、方法名称、八项棱角进度是一个整体，两侧共享时间线，结束仍为 D。隐藏章单独播放 LBL / F2L 时为 A＋当前进度（B），保留所有进度标签。
+底十字开场与观察底面为 A，按共用视口与紧凑横屏规则排列单魔方与短说明。复制／分开过渡为 D；LBL 的四角→四棱各阶段和 F2L 的四组棱角各阶段均为 D。每侧魔方、方法名称、八项棱角进度是一个整体，两侧共享时间线，结束仍为 D。隐藏章单独播放 LBL / F2L 时为 A＋当前进度（B），保留所有进度标签。
 
 ### 自由练习使用方法
 
-镜头 1～6 的选块、摆放、切换角／棱为 A；镜头 7 展示打乱与解法、镜头 8 说明播放与返回为 C。长公式自然换行，指南与真正练习 G 分开；不能为指南布局修改摆放逻辑。
+镜头 1～6 的选块、摆放、切换角／棱为 A；镜头 7 展示打乱与解法、镜头 8 说明播放与返回为 C。长公式自然换行，指南与真正练习 F 分开；不能为指南布局修改摆放逻辑。
 
 ## 验收边界
 
 本清单区分源码分类与浏览器验收。布局共用模板调整不等于每个生成案例都经过真机检查。浏览器验收覆盖小屏、常见手机和桌面以及中英文；真机 Safari 与折叠屏仍需另行确认。
-
-## 非视频固定类型审计（2026-11-16）
-
-- LBL CompleteDemo 已按上述单元固定 A/B；`data-tutorial-mode="teaching"`，字幕区样式同源使用固定类型，不随短句／公式出现改变。
-- LBL 中层左右插入的正式公式教学及 EdgeObservation 固定 B；中层左右插入前的三幕观察现为独立 A 类视频，结束后须点击继续；先播放的 SpecialCasePrelude、白花被挡住短片是独立时间线视频，其后进入固定类型的正式教学。
-- F2L CaseIntroduction（三步基态完整参考教学）固定 C，选择、对齐、执行、返回不切类型；自由练习与播放解法固定 G，打开使用方法是进入独立时间线视频。
-- F2L BasicCaseLesson、PracticeLesson 固定 B；ThreeMoveLesson 的逐步教学固定 B、独立朝向参考小节固定 C；AlgorithmLessons 普通阶段视图固定 B、用户选择的完整路径视图固定 C。这些分类取决于明确选择的教学视图，不取决于转动进度。
-- F2L 时间线视频保留逐镜头分类：NonstandardIntro、IntroLessons 比较短片、FirstTwoLayersIntro、FreePracticeGuide。LBL SpecialCasePrelude、DaisyBlockedPrelude、CrossOverviewAnimation 保留视频分类；记号与公式轮播按小节固定 A/B。
-- 旧 E 已合入 C，本次不另恢复 E。以上为源码分支审计，不代表所有真机、语言、打乱案例已逐一验收。
-
-## A/B 独立区域适配（2026-11-16 最新规则）
-
-类型不变，区域策略更新：A 两端的主魔方与说明分别适配、不滚动；B 魔方不滚动，桌面说明独立缩放、手机说明独立滚动。说明区复用 ReadingFit pane，不将魔方或播放控件放入文字缩放层。替代先前桌面 B 右侧独立滚动的实现；F 类既有整体图文缩放不变。

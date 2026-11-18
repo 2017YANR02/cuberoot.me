@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import VideoProgress from '../components/VideoProgress';
+import { tutorialCubeSizer } from '../lib/cube-layout';
 import ReadingFit from '../components/ReadingFit';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import TrainingFeedbackOverlay from '@/components/TrainingFeedbackOverlay';
@@ -69,7 +70,8 @@ function CrossPlayback({ progress, clock, seekVersion, paused, onComplete, onFad
   const phase = phases[phaseIndex];
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || !opening.current) return;
+    const cubeSize = tutorialCubeSizer(opening.current);
     let frame = 0;
     let { index, elapsed } = locatePhase(phases, clock.current / timingScale);
     let previousTime: number | undefined;
@@ -102,12 +104,15 @@ function CrossPlayback({ progress, clock, seekVersion, paused, onComplete, onFad
         if (phase.fadeIntro) row.style.setProperty('--cross-intro-opacity', String(1 - ease(elapsed / phase.duration)));
         if (phase.focusIntro) focus = ease(elapsed / phase.duration);
         const target = row.lastElementChild as HTMLElement | null;
-        if (target && focus > 0) {
+        if (target?.offsetWidth && focus > 0) {
           // Untransformed layout coordinates keep the move centered on resize too.
-          const desktop = window.matchMedia('(min-width: 761px)').matches;
+          const split = getComputedStyle(row).getPropertyValue('--tutorial-compact-split').trim();
+          const desktop = split ? split === '1' : window.matchMedia('(min-width: 761px)').matches;
           const shift = row.clientWidth * (desktop ? .25 : .5) - target.offsetLeft - target.offsetWidth / 2;
           row.style.setProperty('--cross-focus-shift', `${shift * focus}px`);
-          const targetScale = desktop ? Math.min(350, row.clientWidth * .45, row.clientHeight * .85) / target.offsetWidth : 1.45;
+          const stageHeight = row.closest('.lbl-lesson-scroll')?.clientHeight ?? row.clientHeight;
+          const width = row.clientWidth * (desktop ? .45 : 1);
+          const targetScale = cubeSize(width, stageHeight) / target.offsetWidth;
           row.style.setProperty('--cross-focus-scale', String(1 + (targetScale - 1) * focus));
         }
       }
@@ -287,7 +292,7 @@ export default function CrossOverviewAnimation({ daisy, cross }: { daisy: ReactN
   const focusIndex = phases.findIndex(phase => phase.focusIntro);
   const focusStart = phases.slice(0, focusIndex).reduce((sum, phase) => sum + phase.duration, 0) * timingScale;
   const focusEnd = focusStart + phases[focusIndex].duration * timingScale;
-  const layout = animate && !continued && time >= focusStart ? 'A' : 'F';
+  const layout = animate && !continued && time >= focusStart ? 'A' : 'E';
   // Use the cube's clock so paused seeks and replay preserve the same ordering.
   const captionOpacity = layout === 'A' ? Math.max(0, Math.min(1, (time - focusEnd) / 200)) : 1;
   return <ReadingFit layout={layout}><div className="lbl-content lbl-content-reading lbl-cross-video-content">

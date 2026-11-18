@@ -23,7 +23,7 @@ const stages = [
 
 export default function IntroLesson() {
   return <div className="lbl-chapter-overview lbl-method-intro" aria-label={tr({ zh: '层先法整体介绍', en: 'About layer-by-layer solving' })}>
-        <p><T zh="层先法（Layer-By-Layer），就是从下往上，一层一层复原魔方。" en="Layer-by-layer solving (LBL) solves the cube one layer at a time, from bottom to top." /></p>
+        <p><T zh="层先法（Layer-By-Layer），就是从下往上，一层一层复原魔方" en="Layer-by-layer solving (LBL) solves the cube one layer at a time, from bottom to top." /></p>
         <div className="lbl-intro-route">
           {stages.map((stage, index) => <div className="lbl-intro-route-step" key={stage.title.en}>
             {index > 0 && <span className="lbl-stage-arrow" aria-hidden="true" style={{ gridColumn: index * 2, gridRow: 1 }}>⇒</span>}

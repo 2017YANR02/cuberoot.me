@@ -394,7 +394,7 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   }
   if (chapter.id === 'trigger-learning' && lesson.kind === 'overview') return <TriggerOverview />;
   if (chapter.id === 'l-alg-learning' && lesson.kind === 'overview') return <JOverview />;
-  if (chapter.id === 'sune-learning' && ['overview', 'recognition'].includes(lesson.kind)) return <ReadingFit><div className="lbl-content lbl-content-reading" data-tutorial-layout="F">
+  if (chapter.id === 'sune-learning' && ['overview', 'recognition'].includes(lesson.kind)) return <ReadingFit><div className="lbl-content lbl-content-reading" data-tutorial-layout="E">
     <section className="lbl-explanation"><ReadingFit pane>{lesson.kind === 'overview' ? <FishOverview /> : <FishRecognition />}</ReadingFit></section>
   </div></ReadingFit>;
   if (lesson.kind === 'complete' && chapter.id === 'cross') return <div className="lbl-complete"><WhiteCrossCompleteDemo /></div>;
@@ -473,7 +473,7 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
     cross={<StageImage stage="cross" size={280} />} />;
   const goal = LBL_STAGE_GOALS[chapter.id];
   const previous = LBL_STEPS[Math.max(0, LBL_STEPS.findIndex(item => item.id === chapter.id) - 1)];
-  const content = <div className="lbl-content lbl-content-reading" data-tutorial-layout="F">
+  const content = <div className="lbl-content lbl-content-reading" data-tutorial-layout="E">
     <section className="lbl-explanation" aria-label={tr({ zh: '教学说明', en: 'Instructions' })}><ReadingFit pane>
       {lesson.kind === 'overview' && (chapter.id === 'structure' ? <IntroLesson /> : <>
         <div className="lbl-stage-overview">

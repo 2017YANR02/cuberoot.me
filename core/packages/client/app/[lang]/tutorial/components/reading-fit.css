@@ -30,11 +30,25 @@
     transform: translateY(-50%);
     text-align: center;
   }
-  .f2l-page .f2l-video-stage:has(> .f2l-concept-scene[data-tutorial-layout='F']) {
+  .tutorial-reading-fit[data-fit-layout='A'] {
+    display: block; position: relative; flex: 1 1 0; min-width: 0; min-height: 0; overflow: clip;
+  }
+  .tutorial-reading-fit[data-fit-layout='A'] > .tutorial-reading-fit-content {
+    display: flow-root; position: absolute; inset: 0;
+  }
+  .lbl-lesson-scroll:has(> .tutorial-reading-fit[data-fit-layout='A']) { overflow: clip; }
+  .lbl-lesson-scroll:has(> .tutorial-reading-fit[data-fit-layout='A'])::before,
+  .lbl-lesson-scroll:has(> .tutorial-reading-fit[data-fit-layout='A'])::after { display: none; }
+  .f2l-page .tutorial-video-reading .tutorial-reading-fit-content .f2l-treatment-summary > p { display: block; }
+  .f2l-page .tutorial-video-reading .tutorial-reading-fit-content .f2l-treatment-paths { display: grid; }
+}
+
+@media (min-width: 761px), (orientation: landscape) and (max-height: 500px) {
+  .f2l-page .f2l-video-stage:has(> .f2l-concept-scene[data-tutorial-layout='E']) {
     min-height: 0;
     height: 100%;
   }
-  .f2l-page .f2l-video-stage > .f2l-concept-scene[data-tutorial-layout='F'] {
+  .f2l-page .f2l-video-stage > .f2l-concept-scene[data-tutorial-layout='E'] {
     min-height: 0;
     height: 100%;
   }
@@ -53,10 +67,8 @@
     height: auto;
     box-sizing: border-box;
   }
-  .f2l-page .tutorial-video-reading .tutorial-reading-fit-content .f2l-treatment-summary > p { display: block; }
-  .f2l-page .tutorial-video-reading .tutorial-reading-fit-content .f2l-treatment-paths { display: grid; }
   .f2l-concept-scene:has(> .f2l-concept-scene-number) > .tutorial-video-reading { top: 32px; }
-  .tutorial-reading-fit {
+  .tutorial-reading-fit:not(.tutorial-pane-fit, [data-fit-layout='A']) {
     display: block;
     position: relative;
     flex: 1 1 0 !important;
@@ -65,7 +77,7 @@
     min-height: 0;
     overflow: clip;
   }
-  .tutorial-reading-fit-content {
+  .tutorial-reading-fit:not(.tutorial-pane-fit, [data-fit-layout='A']) > .tutorial-reading-fit-content {
     display: flow-root;
     position: absolute;
     top: 0;
@@ -77,23 +89,112 @@
     width: 100%;
     min-height: 0;
   }
-  .lbl-lesson-scroll:has(> .tutorial-reading-fit)::before,
-  .lbl-lesson-scroll:has(> .tutorial-reading-fit)::after,
-  .lbl-lesson-scroll:has(> .lbl-daisy-overview-content > .tutorial-reading-fit)::before,
-  .lbl-lesson-scroll:has(> .lbl-daisy-overview-content > .tutorial-reading-fit)::after { display: none; }
-  .lbl-daisy-overview-content:has(> .tutorial-reading-fit) {
+  .lbl-lesson-scroll:has(> .tutorial-reading-fit[data-fit-layout='E'])::before,
+  .lbl-lesson-scroll:has(> .tutorial-reading-fit[data-fit-layout='E'])::after,
+  .lbl-lesson-scroll:has(> .lbl-daisy-overview-content > .tutorial-reading-fit[data-fit-layout='E'])::before,
+  .lbl-lesson-scroll:has(> .lbl-daisy-overview-content > .tutorial-reading-fit[data-fit-layout='E'])::after { display: none; }
+  .lbl-daisy-overview-content:has(> .tutorial-reading-fit[data-fit-layout='E']) {
     display: flex;
     flex-direction: column;
     flex: 1 1 0;
     min-height: 0;
     padding-bottom: 0;
   }
-  .lbl-daisy-overview-content:has(> .tutorial-reading-fit):has(> .lbl-guide-continue) {
+  .lbl-daisy-overview-content:has(> .tutorial-reading-fit[data-fit-layout='E']):has(> .lbl-guide-continue) {
     padding-bottom: 0;
   }
-  .lbl-lesson-scroll:has(> .tutorial-reading-fit),
-  .f2l-page .f2l-study-main:has(> .tutorial-reading-fit) { overflow: clip; }
+  .lbl-lesson-scroll:has(> .tutorial-reading-fit[data-fit-layout='E']),
+  .f2l-page .f2l-study-main:has(> .tutorial-reading-fit[data-fit-layout='E']) { overflow: clip; }
 }
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-content-reading .lbl-method-intro {
+    gap: 4px; padding: 0;
+  }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-explanation:has(.lbl-method-intro) { padding-block: 0; }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-method-intro > p {
+    font-size: var(--lbl-text-body); line-height: 1.3;
+  }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-intro-route .puzzle-art,
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-stage-overview .puzzle-art {
+    max-width: min(100%, max(72px, 40cqh));
+  }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-cross-overview[data-opening='true'] {
+    padding-block: 0;
+  }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-cross-overview-cube { max-width: max(72px, 55cqh); }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-intro-route { row-gap: 4px; }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-intro-route .puzzle-art { display: flex; margin-inline: auto; }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-intro-route figcaption { margin-top: 0; }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-intro-substeps { gap: 2px; }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-intro-substeps > svg { height: 16px; }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-intro-substeps ol {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 8px;
+    font-size: var(--lbl-text-small); line-height: 1.3;
+  }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] :is(.lbl-middle-core, .lbl-guide-content) { padding-block: 0; }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] :is(.lbl-middle-core-cases, .lbl-fish-recognition) { gap: 8px; }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-guide-floor-grid { margin-block: 4px; }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-guide-floor-grid figure { gap: 4px; }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] :is(.lbl-middle-core, .lbl-guide-floor-grid, .lbl-fish-views) .puzzle-art {
+    max-width: min(100%, max(64px, 42cqh));
+  }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-daisy-cycle { width: min(100%, max(72px, 48cqh)); }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-edge-term-art { width: min(100%, max(64px, 42cqh)); }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-middle-core figcaption { line-height: 1.45; gap: 4px; }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-fish-recognition figcaption { margin-top: 4px; }
+  .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-fish-recognition figcaption p { margin: 4px 0 0; }
+  @container lbl-lesson (min-width: 480px) {
+    .lbl-page .lbl-cross-animation-scene[data-tutorial-layout='E']:has(> .lbl-stage-overview ~ .lbl-stage-overview) {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px;
+    }
+    .lbl-page .lbl-cross-animation-scene[data-tutorial-layout='E']:has(> .lbl-stage-overview ~ .lbl-stage-overview) > .lbl-stage-overview {
+      grid-row: 1; gap: 6px; margin: 0;
+    }
+    .lbl-page .lbl-cross-animation-scene[data-tutorial-layout='E']:has(> .lbl-stage-overview ~ .lbl-stage-overview) > p { margin: 0; }
+
+    .lbl-page .tutorial-reading-fit[data-fit-layout='E'] :is(.lbl-middle-core-cases, .lbl-fish-recognition) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .lbl-page .tutorial-reading-fit[data-fit-layout='E'] .lbl-middle-core-cases.lbl-fish-parts {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .f2l-page .tutorial-reading-fit[data-fit-layout='E'] .f2l-recognition {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 88px), 1fr));
+    gap: 8px; margin-block: 0;
+  }
+  .f2l-page .tutorial-reading-fit[data-fit-layout='E'] .f2l-recognition .puzzle-art {
+    max-width: min(100%, max(68px, 48cqh));
+  }
+  .f2l-page .tutorial-video-reading .f2l-terminology-summary { padding: 4px 0; }
+  .f2l-page .tutorial-video-reading .f2l-terminology-triangle {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; height: auto;
+  }
+  .f2l-page .tutorial-video-reading .f2l-terminology-term {
+    position: relative; inset: auto; width: auto; margin: 0; transform: none;
+  }
+  .f2l-page .tutorial-video-reading .f2l-terminology-thumbnail { width: min(68px, 16cqw); margin: 0; }
+  .f2l-page .tutorial-video-reading .f2l-terminology-term[data-active='true'] .f2l-terminology-thumbnail { transform: scale(1.1); }
+  .f2l-page .tutorial-video-reading .f2l-terminology-term h3 { margin-top: 0; }
+  .f2l-page .tutorial-video-reading .f2l-terminology-description {
+    position: static; grid-area: auto / 1 / auto / -1; height: auto;
+  }
+  .f2l-page .tutorial-video-reading .f2l-terminology-description p { display: none; }
+  .f2l-page .tutorial-video-reading .f2l-terminology-description p[data-visible='true'] {
+    display: block; position: static; margin: 0;
+  }
+  .f2l-page .tutorial-video-reading .f2l-treatment-summary {
+    --f2l-summary-art: clamp(44px, 34cqh, 80px);
+    padding: 0;
+  }
+  .f2l-page .tutorial-video-reading .f2l-treatment-paths { gap: 6px; }
+  .f2l-page [data-summary-part='paths'] .tutorial-video-reading .f2l-treatment-summary > p,
+  .f2l-page [data-summary-part='caption'] .tutorial-video-reading .f2l-treatment-paths { display: none; }
+}
+
+.tutorial-reading-fit[data-fit-fallback] { overflow-y: auto; overscroll-behavior-y: contain; }
+.tutorial-reading-fit[data-fit-fallback] > .tutorial-reading-fit-content { position: relative; inset: auto; }
 
 /* Fit only the copy composition; the sibling cube and transport are independent. */
 .tutorial-reading-fit.tutorial-pane-fit,
@@ -104,6 +205,8 @@
 .tutorial-pane-fit[data-fit-active='true'] > .tutorial-reading-fit-content {
   display: flow-root; position: absolute; inset: 0 auto auto 0; width: 100%; height: auto; transform-origin: top left;
 }
+.tutorial-reading-fit.tutorial-pane-fit[data-fit-active='true'][data-fit-fallback] { overflow-y: auto; overscroll-behavior-y: contain; }
+.tutorial-pane-fit[data-fit-active='true'][data-fit-fallback] > .tutorial-reading-fit-content { position: relative; inset: auto; }
 :is(.lbl-page, .f2l-page) [data-tutorial-layout] [data-copy-fitting][data-copy-fitting] {
   height: 100%; min-height: 0; max-height: 100%; box-sizing: border-box; overflow: clip;
 }

@@ -29,6 +29,9 @@
 .f2l-page .chat-bubble:not(.f2l-chapter-dialogue *) {
   --chat-bubble-color: color-mix(in srgb, var(--signal-info) var(--chat-bubble-accent-share), var(--card));
 }
+@media (max-width: 760px), (max-height: 600px) {
+  .f2l-chapter-dialogue { display: none; }
+}
 /* Retained styles for the commented chapter 1 comparison diagram. */
 .f2l-goal { max-width: 800px; margin: 20px auto 28px; }
 .f2l-goal-diagrams { display: grid; grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr) 48px minmax(0, 1fr); align-items: center; gap: 12px; }
@@ -111,6 +114,7 @@
 .f2l-path-explanation { display: contents; }
 .f2l-study-layout .f2l-study-lesson.f2l-algorithm-columns.f2l-integrated-example { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); }
 .f2l-integrated-example .f2l-path-explanation { position: relative; display: block; }
+.f2l-algorithm-stage { display: contents; }
 .f2l-teaching-alg-summary { display: grid; gap: 4px; margin-top: 4px; text-align: left; }
 .f2l-teaching-alg-row { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
 .f2l-teaching-alg-icon { display: inline-flex; flex-shrink: 0; align-self: center; color: var(--muted-foreground); }
@@ -129,9 +133,6 @@
 .f2l-teaching-flow .f2l-flow-edge .f2l-flow-glow,
 .f2l-teaching-flow .f2l-flow-pulse { transition: none; }
 .f2l-integrated-example .f2l-stage-content code { font-size: .95rem; }
-@media (max-width: 900px) {
-  .f2l-study-layout .f2l-study-lesson.f2l-algorithm-columns.f2l-integrated-example { grid-template-columns: minmax(0, 1fr); }
-}
 @media (min-width: 1100px) {
   .f2l-study-layout .f2l-study-lesson.f2l-algorithm-columns { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; }
 }
@@ -296,7 +297,7 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
 @media (max-width: 900px) {
   .f2l-chapter-body { min-height: 88rem; }
   .f2l-chapter-dialogue { min-height: 11rem; }
-  .f2l-study-layout .f2l-study-lesson { grid-template-columns: minmax(0, 1fr); }
+  .f2l-study-layout .f2l-study-lesson:not([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']) { grid-template-columns: minmax(0, 1fr); }
   .f2l-intro-players, .f2l-study-layout .f2l-extraction-comparison { grid-template-columns: minmax(0, 1fr); row-gap: 56px; }
 }
 @media (max-width: 700px) {
@@ -393,7 +394,6 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
 @media (max-width: 760px) {
   /* Reserve the opening cube's clearance throughout the split animation. */
   .f2l-intro-methods .f2l-cube { margin-bottom: 48px; }
-  .f2l-chapter-dialogue { display: none; }
   .f2l-page .f2l-chapter-body { min-height: 0; padding-bottom: 0; }
   .f2l-page .f2l-study-layout { grid-template-columns: minmax(0, 1fr); }
   .f2l-page .f2l-study-layout > .tutorial-section-navigation { display: none; }
@@ -411,26 +411,27 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
   .tutorial-section-menu-host { display: block; min-width: 0; }
   .tutorial-section-menu-host:empty { display: none; }
   /* Single-cube lessons reserve a stationary demo above one reading pane. */
-  .f2l-page:has(.f2l-study-main > .f2l-study-lesson, .f2l-terminology-stage) {
+  .f2l-page:has(:is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson, .f2l-terminology-stage) {
     height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); padding-bottom: 0;
   }
-  .f2l-page:has(.f2l-study-main > .f2l-study-lesson, .f2l-terminology-stage) .f2l-chapter { min-height: 0; margin-top: 8px; }
-  .f2l-page:has(.f2l-study-main > .f2l-study-lesson, .f2l-terminology-stage) :is(.f2l-chapter-body, .f2l-lesson-scroll, .f2l-study-layout) { height: 100%; min-height: 0; }
-  .f2l-page .f2l-study-main:has(> .f2l-study-lesson) { min-height: 0; overflow: clip; container-type: size; }
-  .f2l-page .f2l-study-main > .f2l-study-lesson {
+  .f2l-page:has(:is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson, .f2l-terminology-stage) .f2l-chapter { min-height: 0; margin-top: 8px; }
+  .f2l-page:has(:is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson, .f2l-terminology-stage) :is(.f2l-chapter-body, .f2l-lesson-scroll, .f2l-study-layout) { height: 100%; min-height: 0; }
+  .f2l-page .f2l-study-main:has(> .f2l-study-lesson, .f2l-algorithm-stage) { min-height: 0; overflow: clip; container-type: size; }
+  .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson {
     flex: 1; min-height: 0; margin-top: 8px; gap: 8px;
     grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); align-items: stretch;
   }
-  .f2l-page .f2l-study-main > .f2l-study-lesson > :last-child {
+  .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson.f2l-integrated-example { grid-template-columns: minmax(0, 1fr); }
+  .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson > :last-child {
     min-height: 0; max-height: 100%; overflow-y: auto; overscroll-behavior-y: contain;
   }
-  .f2l-page .f2l-study-main > .f2l-study-lesson .f2l-cube {
+  .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson .f2l-cube {
     height: auto; aspect-ratio: auto; max-width: none;
   }
-  .f2l-page .f2l-study-main > .f2l-study-lesson .f2l-cube > .alg-sim-player.is-fill {
+  .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson .f2l-cube > .alg-sim-player.is-fill {
     position: relative; inset: auto; height: auto;
   }
-  .f2l-page .f2l-study-main > .f2l-study-lesson .sim-stage {
+  .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson:not([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']) .sim-stage {
     flex: none; height: min(350px, 100cqw, max(0px, calc((100cqh - 140px) * .6)));
   }
 }
@@ -441,7 +442,6 @@ body:has(.f2l-page) .visualcube-preview-body .puzzle-art svg { display: block; w
   .f2l-page .f2l-video-viewport:has(.f2l-terminology-stage) { flex: 1; min-height: 0; }
   .f2l-page .f2l-video-stage:has(.f2l-terminology-stage) { height: 100%; min-height: 0; }
   .f2l-page .f2l-terminology-stage { height: 100%; min-height: 0; grid-template-rows: auto minmax(0, 1fr); align-items: stretch; }
-  .f2l-page .f2l-terminology-stage > .f2l-concept-cube { height: min(350px, 100cqw, max(0px, calc((100cqh - 140px) * .6))); aspect-ratio: auto; max-width: none; }
   .f2l-page .f2l-terminology-stage > .f2l-concept-caption { min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; }
   .f2l-page .f2l-terminology-stage[data-summary='true'] { display: block; overflow-y: auto; }
   .f2l-page .f2l-concept-video:has(.f2l-terminology-stage) > .f2l-intro-progress { flex-shrink: 0; }

@@ -116,7 +116,7 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
         <div className="f2l-study-main">
           {!showGallery && activeCategory?.recognition && <p>{tr(activeCategory.recognition)}</p>}
           {showGallery ? <>
-            <ReadingFit><div data-tutorial-layout="F">
+            <ReadingFit><div data-tutorial-layout="E">
             {activeCategory?.recognition && <p>{tr(activeCategory.recognition)}</p>}
             <div className="f2l-recognition f2l-teaching-cases" role="group" aria-label={tr({ zh: '选择教学情况', en: 'Choose a teaching case' })}>
               {visibleLessons.map(c => <button type="button" key={c.name} className="f2l-section-button" onClick={() => void setCaseName(c.name)}>
@@ -141,7 +141,7 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
               <code aria-label={tr({ zh: '复原公式', en: 'Solution' })}>{lesson.alg}</code>
             </div>
           </div>
-          <div data-tutorial-layout={flowTeaching ? 'C' : 'B'} className={`f2l-lesson f2l-study-lesson f2l-algorithm-columns${flowTeaching ? ' f2l-integrated-example' : ''}`}
+          <div className="f2l-algorithm-stage"><div data-tutorial-layout={flowTeaching ? 'C' : 'B'} className={`f2l-lesson f2l-study-lesson f2l-algorithm-columns${flowTeaching ? ' f2l-integrated-example' : ''}`}
             onPointerDownCapture={event => { if ((event.target as Element).closest('.alg-sim-player, .f2l-flow-node')) cancelSegment(); }}
             onKeyDownCapture={event => { if ((event.target as Element).closest('.alg-sim-player, .f2l-flow-node')) cancelSegment(); }}>
             <section {...playbackProps} className="f2l-demo">
@@ -183,7 +183,7 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
             </button>
           </>}
             </ReadingFit></div>
-          </div>
+          </div></div>
 
           <StudyActions onPrevious={previousSection} onContinue={nextSection}>
             <button type="button" className="f2l-footer-button f2l-footer-next tutorial-practice-button" onClick={() => {

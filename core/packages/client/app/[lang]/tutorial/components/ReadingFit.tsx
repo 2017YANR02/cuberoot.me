@@ -3,8 +3,8 @@
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import './reading-fit.css';
 
-/** Desktop preview: fit the entire reading composition without changing its proportions. */
-export default function ReadingFit({ children, layout = 'F', pane = false }: { children: ReactNode; layout?: 'F' | 'A'; pane?: boolean }) {
+/** Fit a reading composition within its available space while preserving proportions. */
+export default function ReadingFit({ children, layout = 'E', pane = false }: { children: ReactNode; layout?: 'E' | 'A'; pane?: boolean }) {
   const viewport = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -12,16 +12,23 @@ export default function ReadingFit({ children, layout = 'F', pane = false }: { c
     const inner = content.current;
     if (!outer || !inner) return;
     const desktop = window.matchMedia('(min-width: 761px)');
+    const shortLandscape = window.matchMedia('(orientation: landscape) and (max-height: 500px)');
     let frame = 0;
     const fit = () => {
       frame = 0;
       const type = outer.closest('[data-tutorial-layout]')?.getAttribute('data-tutorial-layout');
-      const enabled = pane ? type === 'A' || type === 'B' && desktop.matches : desktop.matches && layout !== 'A';
+      const compact = pane && shortLandscape.matches ? getComputedStyle(outer) : null;
+      const compactReference = type === 'C' && compact?.getPropertyValue('--tutorial-compact-reference').trim() === '1';
+      const compactReading = !pane && layout === 'E' && shortLandscape.matches;
+      const enabled = pane
+        ? type === 'A' || compactReference
+        : layout === 'E' && (desktop.matches || compactReading);
       if (pane) {
         outer.dataset.fitActive = String(enabled);
         outer.parentElement?.toggleAttribute('data-copy-fitting', enabled);
       }
       if (!enabled) {
+        outer.removeAttribute('data-fit-fallback');
         inner.style.removeProperty('transform');
         return;
       }
@@ -30,6 +37,12 @@ export default function ReadingFit({ children, layout = 'F', pane = false }: { c
       if (!width || !height) return;
       // DOM layout sizes are rounded to integer pixels; leave one pixel for fractions.
       const scale = Math.min(1, outer.clientWidth / width, outer.clientHeight / (height + 1));
+      const fallback = (compactReference || compactReading) && scale < .72;
+      if (outer.hasAttribute('data-fit-fallback') !== fallback) outer.toggleAttribute('data-fit-fallback', fallback);
+      if (fallback) {
+        inner.style.removeProperty('transform');
+        return;
+      }
       const transform = `translate(${(outer.clientWidth - width * scale) / 2}px, ${(outer.clientHeight - height * scale) / 2}px) scale(${scale})`;
       // Transforms do not change the observed layout dimensions.
       if (inner.style.transform !== transform) inner.style.transform = transform;
@@ -42,15 +55,21 @@ export default function ReadingFit({ children, layout = 'F', pane = false }: { c
     if (pane) {
       changes.observe(inner, { childList: true, subtree: true, characterData: true });
       const scene = outer.closest('[data-tutorial-layout]');
-      if (scene) changes.observe(scene, { attributes: true, attributeFilter: ['data-tutorial-layout'] });
+      if (scene) {
+        // A disabled pane has no box, so observe the scene across layout changes.
+        observer.observe(scene);
+        changes.observe(scene, { attributes: true, attributeFilter: ['data-tutorial-layout'] });
+      }
     }
     desktop.addEventListener('change', schedule);
+    shortLandscape.addEventListener('change', schedule);
     fit();
     return () => {
       observer.disconnect();
       changes.disconnect();
       if (pane) outer.parentElement?.removeAttribute('data-copy-fitting');
       desktop.removeEventListener('change', schedule);
+      shortLandscape.removeEventListener('change', schedule);
       cancelAnimationFrame(frame);
     };
   }, [layout, pane]);

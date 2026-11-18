@@ -19,17 +19,20 @@ import { ORDERED_BASIC_CASES } from '../data/basic-cases';
 import { f2lDiagramFacelets, f2lPlaybackSections } from '../lib/cube-preview';
 import StudyActions from '../components/StudyActions';
 import SectionNavigation from '../components/SectionNavigation';
+import { tutorialCubeSizer } from '../../lib/cube-layout';
+import ReadingFit from '../../components/ReadingFit';
 import './case-introduction.css';
 
 const TARGET_PAIR_STICKERS = ['F5', 'R3', 'D2', 'F8', 'R6'] as const;
 const NO_HIGHLIGHTS: readonly string[] = [];
 
-function casePlayerLayout(container: HTMLDivElement) {
+function casePlayerLayout(container: HTMLDivElement, controlsHeight = 0) {
   const bounds = container.getBoundingClientRect();
-  const desktop = window.matchMedia('(min-width: 761px)').matches;
+  const compactSplit = getComputedStyle(container).getPropertyValue('--tutorial-compact-split').trim();
+  const desktop = compactSplit ? compactSplit === '1' : window.matchMedia('(min-width: 761px)').matches;
   const leftWidth = desktop ? bounds.width * .48 : bounds.width;
-  const top = desktop ? 40 : 16;
-  const size = Math.min(390, leftWidth, desktop ? Math.max(100, bounds.height - 180) : Math.max(80, (bounds.height - 120) * .5));
+  const size = Math.max(1, tutorialCubeSizer(container)(leftWidth, bounds.height - (desktop ? 80 : 120)));
+  const top = desktop ? Math.max(0, (bounds.height - size - controlsHeight) / 2) : 16;
   return { bounds, leftWidth, top, size };
 }
 
@@ -83,15 +86,16 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
     const element = cubes.current[selected]!;
     const container = root.current!;
     const place = () => {
-      const { bounds, leftWidth, top, size } = casePlayerLayout(container);
+      const playbackBar = element.querySelector<HTMLElement>('.playback-bar');
+      const { bounds, leftWidth, top, size } = casePlayerLayout(container, playbackBar?.offsetHeight);
       const origin = element.parentElement!.getBoundingClientRect();
       container.style.setProperty('--case-player-size', `${size}px`);
+      container.style.setProperty('--case-player-top', `${top}px`);
       const transform = `translate(${bounds.x + (leftWidth - size) / 2 - origin.x}px, ${bounds.y + top - origin.y - element.offsetTop}px) scale(${size / element.offsetWidth})`;
       motion.current?.cancel(); motion.current = null;
       if (element.style.transform !== transform) element.style.transform = transform;
       element.style.setProperty('--case-controls-width', `${Math.min(260, leftWidth)}px`);
       element.style.setProperty('--case-controls-scale', `${element.offsetWidth / size}`);
-      const playbackBar = element.querySelector('.playback-bar');
       const contentHeight = `${playbackBar ? Math.max(size, playbackBar.getBoundingClientRect().bottom - (bounds.y + top)) : size}px`;
       if (container.style.getPropertyValue('--case-player-content-height') !== contentHeight) container.style.setProperty('--case-player-content-height', contentHeight);
     };
@@ -247,7 +251,7 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
       <T zh="组合好目标棱和角" en="Pair up the target edge and corner" />
     </ChatBubble>}
     {phase === 'learn' && lesson && reference && <div key={controlsVisible ? 'stages' : 'alignment'} {...paneProps} className={`f2l-case-narration${controlsVisible ? ' tutorial-follow-pane' : ''}`} data-alignment={!controlsVisible} data-fading={referenceFading}>
-      {!controlsVisible ? <><div className="f2l-case-reference">
+      {!controlsVisible ? <ReadingFit pane><div className="f2l-case-reference">
         <ArrowLeftRight className="f2l-case-reference-arrow" size={40} strokeWidth={1.5} aria-hidden="true" />
         <figure className="f2l-case-reference-sheet">
           <figcaption><BookOpen size={18} aria-hidden="true" /><T zh="公式库" en="Algorithms" /><span>{lesson.name}</span></figcaption>
@@ -255,7 +259,7 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
           <code>{new Alg(lesson.alg).expand().toString().replaceAll("'", '′')}</code>
         </figure>
       </div>
-      </> : <><ol className="f2l-stage-list f2l-case-stages">
+      </ReadingFit> : <><ol className="f2l-stage-list f2l-case-stages">
         {lesson.stageTitles.map((title, index) => <li key={index}>
           <button type="button" className="f2l-stage-button" aria-current={step === index ? 'step' : undefined}
             onClick={() => seekStage(index)}>

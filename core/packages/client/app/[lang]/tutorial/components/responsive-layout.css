@@ -1,28 +1,58 @@
 /* Content types: A caption, B stages, C complete reference, D comparison,
-   F reading, G practice. Playback mode is independent of content type. */
+   E reading, F practice, G standalone flowchart. Playback mode is independent of content type. */
+.lbl-page, .f2l-page {
+  --tutorial-cube-target: 350px;
+  --tutorial-cube-height-share: .6;
+  --tutorial-cube-available-height: 100cqh;
+  --tutorial-cube-chrome: 0px;
+}
+.lbl-page [data-tutorial-layout] > :is(.lbl-demonstration, .lbl-cube),
+.f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson,
+.f2l-page .f2l-video-stage > :is(.f2l-concept-scene, .f2l-study-lesson, .f2l-intro-methods),
+.f2l-page .f2l-flow-layout {
+  --tutorial-cube-budget: min(var(--tutorial-cube-target), max(0px, calc((var(--tutorial-cube-available-height) - var(--tutorial-cube-chrome)) * var(--tutorial-cube-height-share))));
+}
+.lbl-page .lbl-learning { container-type: size; --tutorial-cube-chrome: 140px; }
+.f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson { --tutorial-cube-chrome: 76px; }
+.f2l-page .f2l-flow-layout { --tutorial-cube-chrome: 120px; --tutorial-cube-available-height: 100dvh; }
+
+.lbl-page [data-tutorial-layout]:is([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']) > :is(.lbl-demonstration, .lbl-cube) .alg-sim-player.is-fill .sim-stage,
+.f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson:is([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']) .alg-sim-player.is-fill .sim-stage,
+.f2l-page .f2l-flow-player .alg-sim-player.is-fill .sim-stage {
+  flex: none; width: min(100%, var(--tutorial-cube-budget)); height: auto;
+  aspect-ratio: 1; margin-inline: auto;
+}
+.f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson:is([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']) .f2l-cube,
+.f2l-page .f2l-flow-cube {
+  flex: none; width: 100%; height: auto; max-width: none; aspect-ratio: auto;
+}
+.f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson:is([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']) .f2l-cube > .alg-sim-player.is-fill,
+.f2l-page .f2l-flow-cube > .alg-sim-player.is-fill {
+  position: relative; inset: auto; height: auto; padding: 0;
+}
+:is(.lbl-content p, .lbl-content .lbl-step-start, .f2l-study-main p, .f2l-stage-title, .f2l-free-guide-copy-body > p, .f2l-tip) {
+  white-space: pre-line;
+}
+
 /* Treatment keeps the cube, its bubble and reference together above the transport. */
 @media (max-width: 760px) {
   .f2l-page .f2l-treatment-video .f2l-video-stage > .f2l-concept-scene[data-tutorial-layout='C'] {
-    grid-template-rows: auto minmax(0, min(350px, 100cqw)) max-content;
+    --tutorial-cube-chrome: 72px;
+    grid-template-rows: auto auto minmax(0, 1fr);
     align-content: start;
     gap: 8px;
   }
   .f2l-page .f2l-treatment-video .f2l-video-stage > .f2l-concept-scene[data-tutorial-layout='C'] > .f2l-concept-cube {
     display: flex; flex-direction: column; align-items: center;
-    width: 100%; height: 100%; aspect-ratio: auto; max-width: none;
+    width: 100%; height: auto; aspect-ratio: auto; max-width: none;
   }
   .f2l-page .f2l-treatment-video .f2l-concept-cube > .alg-sim-player.is-fill {
-    position: relative; inset: auto; flex: 1 1 0; padding: 0; min-height: 0;
-    width: 100%; height: 0;
-  }
-  .f2l-page .f2l-treatment-video .f2l-concept-cube > .chat-bubble.f2l-concept-comparison {
-    position: relative; inset: auto; transform: none; order: -1;
-    width: fit-content; max-width: calc(100% - 24px); box-sizing: border-box;
-    margin: 0 auto 8px; font-size: 1rem; flex-shrink: 0;
+    position: relative; inset: auto; flex: none; padding: 0; min-height: 0;
+    width: min(100%, var(--tutorial-cube-budget)); height: auto; aspect-ratio: 1;
   }
   .f2l-page .f2l-treatment-video .f2l-video-stage [data-tutorial-layout='C'] > .f2l-concept-caption {
     display: block; justify-content: start; align-self: stretch; padding: 0;
-    min-height: min-content; overflow: visible;
+    min-height: 0; overflow-y: auto;
   }
   .f2l-page .f2l-treatment-video .f2l-concept-reference { flex-shrink: 0; }
   .f2l-page .f2l-treatment-video .f2l-concept-caption .f2l-concept-explanation {
@@ -34,6 +64,7 @@
   container: tutorial-shot / size;
   flex: 1 1 0;
   min-height: 0;
+  --tutorial-cube-chrome: 0px;
 }
 .f2l-page .f2l-video-stage {
   display: flex;
@@ -54,6 +85,13 @@
   width: min(100%, 350px, 65cqh); height: auto; aspect-ratio: 1;
   max-width: none; margin: 0; justify-self: center;
 }
+.f2l-page .f2l-video-stage > .f2l-concept-scene:is([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']) > .f2l-cube,
+.f2l-page .f2l-video-stage > .f2l-study-lesson .f2l-free-guide-cube {
+  width: min(100%, var(--tutorial-cube-budget)); height: auto; aspect-ratio: 1;
+}
+.f2l-page .f2l-video-stage > .f2l-concept-scene:is([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']) > .f2l-cube > .alg-sim-player.is-fill {
+  padding: 0;
+}
 .f2l-page .f2l-video-stage .f2l-concept-caption p { height: auto; margin: 0; line-height: 1.5; }
 .f2l-page .f2l-video-stage .f2l-concept-reference {
   grid-template-columns: 80px minmax(0, 1fr); gap: 8px; padding: 8px; margin-top: 8px;
@@ -62,6 +100,25 @@
 .f2l-page .f2l-video-stage .f2l-concept-reference figcaption { font-size: 1rem; }
 .f2l-page .f2l-video-stage [data-tutorial-layout='C'] .f2l-concept-caption p { font-size: 1.25rem; }
 .f2l-page .f2l-video-stage .f2l-free-guide-copy { min-height: 0; overflow-y: auto; }
+.f2l-page .f2l-video-stage .f2l-intro-methods[data-stage='cross'] .f2l-cube {
+  width: min(100%, calc(var(--tutorial-cube-budget) / var(--f2l-intro-scale)));
+}
+.f2l-page .f2l-video-stage .f2l-intro-methods[data-stage='cross'] :is(.f2l-intro-result-slot, .f2l-practice-segments) { display: none; }
+
+@container tutorial-shot (max-width: 400px) and (max-height: 365px) {
+  .f2l-page .f2l-treatment-video .f2l-video-stage > .f2l-concept-scene:has(> [data-bubble-target='edge']) {
+    gap: 4px;
+  }
+  .f2l-page .f2l-treatment-video .f2l-video-stage .chat-bubble.f2l-concept-comparison {
+    font-size: .9375rem; line-height: 1.4;
+  }
+  .f2l-page .f2l-treatment-video .f2l-video-stage [data-bubble-target='edge'] + .f2l-concept-caption p {
+    font-size: 1rem; line-height: 1.4;
+  }
+  .f2l-page .f2l-treatment-video .f2l-video-stage [data-bubble-target='edge'] + .f2l-concept-caption .f2l-concept-reference {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+}
 
 @media (max-width: 760px) {
   .f2l-page:has(.f2l-video-viewport) {
@@ -74,6 +131,15 @@
   .f2l-page .f2l-study-main > :is(.f2l-concept-video, .f2l-free-guide) { display: flex; flex-direction: column; height: 100%; min-height: 0; }
   .f2l-page .f2l-study-main > :is(.f2l-concept-video, .f2l-free-guide) > :is(.f2l-intro-progress, .f2l-free-guide-progress) { flex: 0 0 auto; margin: 0; padding-top: 8px; }
 
+  .f2l-page .f2l-video-stage > :is(.f2l-concept-scene, .f2l-study-lesson):is([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']) {
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
+    align-items: stretch; gap: 8px;
+  }
+  .f2l-page .f2l-video-stage > .f2l-concept-scene[data-tutorial-layout='C'] .f2l-concept-scene-number {
+    position: static; inset: auto; grid-column: 1 / -1; text-align: end;
+  }
+  .f2l-page .f2l-video-stage > .f2l-study-lesson .f2l-demo { min-height: 0; }
+
   .lbl-page [data-tutorial-layout='A'] > .lbl-explanation {
     display: flex; flex-direction: column; justify-content: safe center; text-align: center;
   }
@@ -81,15 +147,8 @@
   .lbl-page [data-tutorial-layout='B'] .lbl-complete-thought p { font-size: var(--lbl-text-body); }
 }
 
-/* Use the actual stage width, including desktop sidebars and split windows. */
+/* Stage size adjusts the contents within the selected layout. */
 @container tutorial-shot (max-width: 560px) {
-  .f2l-page .f2l-video-stage > :is(.f2l-concept-scene, .f2l-study-lesson) {
-    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
-    align-items: stretch; gap: 8px;
-  }
-  .f2l-page .f2l-video-stage .f2l-concept-cube,
-  .f2l-page .f2l-video-stage .f2l-free-guide-cube { width: min(100%, 350px, 46cqh); height: auto; }
-  .f2l-page .f2l-video-stage [data-tutorial-layout='C'] .f2l-cube { width: min(100%, 280px, 34cqh); }
   .f2l-page .f2l-video-stage .f2l-concept-caption { overflow-y: auto; overscroll-behavior-y: contain; }
   .f2l-page .f2l-video-stage .f2l-concept-caption:has(.f2l-concept-reference) { display: flex; flex-direction: column; justify-content: safe center; }
   .f2l-page .f2l-video-stage .f2l-intro-methods { --f2l-intro-gap: 8px; --f2l-intro-scale: 1.5; padding-top: 8px; align-items: stretch; }
@@ -142,8 +201,7 @@
 .f2l-page .f2l-video-stage > .f2l-concept-scene[data-summary='true'] > :is(.f2l-concept-cube, .f2l-concept-caption) { display: none; }
 .f2l-page .f2l-intro-result-slot { display: grid; place-items: center; min-height: 3lh; font-size: .875rem; line-height: 1.5; }
 @container tutorial-shot (max-width: 560px) {
-  .f2l-page .f2l-video-stage .f2l-concept-scene-number { position: static; inset: auto; grid-column: 1 / -1; text-align: end; }
-  .f2l-page .f2l-video-stage > .f2l-concept-scene:has(.f2l-concept-scene-number) { grid-template-rows: auto auto minmax(0, 1fr); }
+  .f2l-page .f2l-video-stage > .f2l-concept-scene[data-summary='true'] .f2l-concept-scene-number { position: static; inset: auto; grid-column: 1 / -1; text-align: end; }
   .f2l-page .f2l-video-stage > .f2l-concept-scene[data-summary='true']:has(.f2l-concept-scene-number) { grid-template-rows: auto minmax(0, 1fr); }
 }
 
@@ -160,8 +218,6 @@
 }
 
 @container tutorial-shot (max-width: 560px) and (max-height: 450px) {
-  .f2l-page .f2l-video-stage [data-tutorial-layout='A'] > .f2l-concept-cube { width: min(100%, 30cqh); }
-  .f2l-page .f2l-video-stage [data-tutorial-layout='C'] > .f2l-concept-cube { width: min(100%, 90px, 30cqh); }
   .f2l-page .f2l-video-stage .f2l-concept-caption { padding: 4px; }
   .f2l-page .f2l-video-stage .f2l-concept-reference { grid-template-columns: 64px minmax(0, 1fr); padding: 4px; }
   .f2l-page .f2l-video-stage .f2l-concept-cube .chat-bubble.f2l-concept-result { max-width: min(250px, 85cqw); width: max-content; left: 50%; top: 0; right: auto; bottom: auto; transform: translateX(-50%); }
@@ -173,13 +229,11 @@
 /* Very short landscape windows cannot contain the full lesson chrome and a
    readable reference. Keep transport reachable and allow the stage to scroll. */
 @media (max-height: 500px) and (min-width: 761px) {
-  .f2l-page:not(.f2l-practice-page) .f2l-chapter-dialogue { display: none; }
   .f2l-page:not(.f2l-practice-page) .f2l-video-viewport { overflow-y: auto; overscroll-behavior-y: contain; }
   .f2l-page .f2l-video-stage { min-height: 300px; }
   .f2l-page .f2l-video-stage > :is(.f2l-concept-scene, .f2l-study-lesson) { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); }
   .f2l-page .f2l-video-stage > .f2l-concept-scene:has(.f2l-concept-scene-number) { grid-template-rows: auto minmax(0, 1fr); }
   .f2l-page .f2l-video-stage > .f2l-concept-scene[data-summary='true'] { grid-template-columns: minmax(0, 1fr); }
-  .f2l-page .f2l-video-stage [data-tutorial-layout] > .f2l-concept-cube { width: min(100%, 180px); align-self: center; }
 }
 
 /* B-type teaching copy may step down on phones; desktop typography is unchanged. */
@@ -197,7 +251,7 @@
 
 /* Desktop films fit the space left after navigation and transport. */
 @media (min-width: 761px) and (min-height: 501px) {
-  .lbl-page .lbl-lesson-scroll:has(> .lbl-content[data-tutorial-mode='timeline']) { container: lbl-film / size; }
+  .lbl-page .lbl-lesson-scroll:has(> .lbl-content[data-tutorial-mode='timeline']) { container: lbl-film / size; --tutorial-cube-chrome: 0px; }
   .lbl-page .lbl-lesson-scroll:has(> .lbl-content[data-tutorial-mode='timeline'])::before,
   .lbl-page .lbl-lesson-scroll:has(> .lbl-content[data-tutorial-mode='timeline'])::after { display: none; }
   .lbl-page .lbl-lesson-scroll > .lbl-content[data-tutorial-mode='timeline'] {
@@ -213,19 +267,37 @@
 }
 
 /* Center B copy as a group; long copy starts at the top of its scrolling pane. */
-:is(.lbl-page, .f2l-page) [data-tutorial-layout='B'] > :is(.lbl-explanation, .lbl-complete-thought, .f2l-guidance, .f2l-path-explanation):not([data-copy-fitting]) {
+:is(.lbl-page, .f2l-page) [data-tutorial-layout='B'] > :is(.lbl-explanation, .lbl-complete-thought, .f2l-guidance, .f2l-path-explanation) {
   display: flex;
   flex-direction: column;
   justify-content: safe center;
   align-self: stretch;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
 }
-:is(.lbl-page, .f2l-page) [data-tutorial-layout='B'] > :is(.lbl-explanation, .lbl-complete-thought, .f2l-guidance, .f2l-path-explanation):not([data-copy-fitting]) > *,
-:is(.lbl-page, .f2l-page) [data-tutorial-layout='B'] > :is(.lbl-explanation, .lbl-complete-thought, .f2l-guidance, .f2l-path-explanation) > .tutorial-pane-fit > .tutorial-reading-fit-content > * {
+:is(.lbl-page, .f2l-page) [data-tutorial-layout='B'] > :is(.lbl-explanation, .lbl-complete-thought, .f2l-guidance, .f2l-path-explanation) > * {
   flex-shrink: 0;
 }
 
-/* A/B regions each receive the available desktop height; copy is fitted independently. */
+/* A/B regions each receive the available desktop height. */
 @media (min-width: 761px) {
+  .f2l-page .f2l-video-stage .f2l-intro-methods { --f2l-intro-gap: 12px; column-gap: var(--f2l-intro-gap); }
+  .f2l-page .f2l-video-stage .f2l-intro-methods:is([data-stage='cross'], [data-stage='split']) > .f2l-intro-method:first-child {
+    position: relative; transform: none;
+  }
+  .f2l-page .f2l-video-stage .f2l-intro-methods[data-stage='split'] > .f2l-intro-method:last-child {
+    transform: translateX(calc((-100% - var(--f2l-intro-gap)) * var(--f2l-intro-joined, 1)));
+  }
+  .f2l-page .f2l-video-stage .f2l-intro-methods:is([data-stage='cross'], [data-stage='split']) .f2l-concept-scene {
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .f2l-page .f2l-video-stage .f2l-intro-methods[data-stage='cross'] .f2l-concept-caption {
+    position: absolute; top: 50%; left: calc(100% + var(--f2l-intro-gap));
+    width: 100%; height: auto; transform: translateY(-50%);
+  }
+  .f2l-page .f2l-video-stage .f2l-intro-methods[data-stage='cross'] .f2l-concept-caption p {
+    height: auto; margin: 0; transform: none;
+  }
   .lbl-page .lbl-lesson-scroll:has(:is([data-tutorial-layout='A'], [data-tutorial-layout='B'])) { overflow: clip; }
   .lbl-page .lbl-lesson-scroll:has(:is([data-tutorial-layout='A'], [data-tutorial-layout='B']))::before,
   .lbl-page .lbl-lesson-scroll:has(:is([data-tutorial-layout='A'], [data-tutorial-layout='B']))::after { display: none; }
@@ -236,18 +308,31 @@
     grid-template-rows: minmax(0, 1fr); align-items: stretch; align-content: stretch;
   }
   .lbl-page .lbl-lesson-scroll :is([data-tutorial-layout='A'], [data-tutorial-layout='B']) > :is(.lbl-demonstration, .lbl-cube) { height: 100%; min-height: 0; }
+  .lbl-page [data-tutorial-layout]:is([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']) > :is(.lbl-demonstration, .lbl-cube) .alg-sim-player.is-fill,
+  .lbl-page [data-tutorial-layout='A'] > .lbl-notation-demonstration,
+  .lbl-page .lbl-complete-playback {
+    justify-content: safe center;
+  }
+  .lbl-page [data-tutorial-layout='A'] > .lbl-notation-demonstration > .lbl-notation-player,
+  .lbl-page .lbl-complete-playback > .alg-sim-player.is-fill { flex: none; height: auto; }
+  .lbl-page [data-tutorial-layout='A'] > .lbl-notation-demonstration .alg-sim-player.is-fill { height: auto; padding: 0; }
   .lbl-page .lbl-lesson-scroll :is([data-tutorial-layout='A'], [data-tutorial-layout='B']) > :is(.lbl-explanation, .lbl-complete-thought) {
     min-height: 0; max-height: 100%; box-sizing: border-box; overflow-y: auto;
     overscroll-behavior-y: contain; align-self: stretch; justify-self: stretch;
   }
-  .f2l-page:not(.f2l-practice-page) .f2l-lesson-scroll:has(.f2l-study-main > :is([data-tutorial-layout='A'], [data-tutorial-layout='B'])),
-  .f2l-page:not(.f2l-practice-page) .f2l-study-main:has(> :is([data-tutorial-layout='A'], [data-tutorial-layout='B'])) { overflow: clip; }
-  .f2l-page .f2l-study-main > .f2l-study-lesson:is([data-tutorial-layout='A'], [data-tutorial-layout='B']) {
+  .f2l-page:not(.f2l-practice-page) .f2l-lesson-scroll:has(:is(.f2l-study-main, .f2l-algorithm-stage) > :is([data-tutorial-layout='A'], [data-tutorial-layout='B'])),
+  .f2l-page:not(.f2l-practice-page) .f2l-study-main:has(:is([data-tutorial-layout='A'], [data-tutorial-layout='B']) > .f2l-demo) { overflow: clip; }
+  .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson:is([data-tutorial-layout='A'], [data-tutorial-layout='B']) {
     flex: 1 1 0; min-height: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); align-items: stretch;
   }
-  .f2l-page .f2l-study-main > :is([data-tutorial-layout='A'], [data-tutorial-layout='B']) > .f2l-demo { display: flex; flex-direction: column; height: 100%; min-height: 0; box-sizing: border-box; }
-  .f2l-page .f2l-study-main > :is([data-tutorial-layout='A'], [data-tutorial-layout='B']) .f2l-cube { flex: 1 1 0; height: auto; max-height: 100%; aspect-ratio: auto; }
-  .f2l-page .f2l-study-main > :is([data-tutorial-layout='A'], [data-tutorial-layout='B']) > :is(.f2l-guidance, .f2l-path-explanation) {
+  .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > :is([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']) > .f2l-demo {
+    align-self: safe center;
+  }
+  .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > :is([data-tutorial-layout='A'], [data-tutorial-layout='B']) > .f2l-demo {
+    display: flex; flex-direction: column; justify-content: safe center;
+    height: 100%; min-height: 0; box-sizing: border-box;
+  }
+  .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > :is([data-tutorial-layout='A'], [data-tutorial-layout='B']) > :is(.f2l-guidance, .f2l-path-explanation) {
     min-height: 0; max-height: 100%; box-sizing: border-box; overflow-y: auto; overscroll-behavior-y: contain;
   }
 }
@@ -256,4 +341,280 @@
 .lbl-page .lbl-lesson-scroll [data-tutorial-layout] [data-copy-fitting][data-copy-fitting],
 .f2l-page .f2l-study-main [data-tutorial-layout] [data-copy-fitting][data-copy-fitting] { overflow: clip; }
 
-.tutorial-inline-action { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 12px; margin-top: 8px; }
+.tutorial-inline-action { align-items: center; justify-content: center; min-height: 44px; padding: 8px 12px; margin-top: 8px; }
+.lbl-page .lbl-explanation .lbl-guide-continue-hint,
+.f2l-page .tutorial-inline-action,
+.f2l-page .f2l-free-guide-copy > .f2l-restart {
+  display: flex; width: max-content; max-width: 100%;
+  margin-inline: auto; align-self: center;
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  :is(.lbl-page, .f2l-page:has(.f2l-chapter-body)) {
+    --tutorial-compact-split: 0;
+    padding: max(4px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+      max(4px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+  .lbl-page .lbl-footer { padding-top: 0; }
+  .lbl-page .lbl-body { padding-top: 0; }
+  .lbl-page .lbl-lesson-scroll .lbl-complete-legend-space { display: none; }
+  .lbl-page .lbl-lesson-scroll :is(.lbl-complete, .lbl-complete-demo, .lbl-daisy-lift-content) { height: 100%; min-height: 0; }
+  .lbl-page .lbl-lesson-scroll .lbl-complete-player { flex: 1 1 auto; }
+  .lbl-page .lbl-lesson-scroll :is(.lbl-demonstration, .lbl-cube) :is(.lbl-auto-player, .lbl-notation-player, .lbl-complete-playback, .alg-sim-player.is-fill) {
+    height: auto; flex: none; padding: 0;
+  }
+  .lbl-page .lbl-lesson-scroll :is(.lbl-demonstration, .lbl-cube) { display: flex; flex-direction: column; justify-content: safe center; }
+  .lbl-page .lbl-lesson-scroll :has(> .lbl-content-pieces)::before { flex-basis: 0; }
+  .lbl-page .lbl-learning { grid-template-rows: minmax(0, 1fr) auto auto; }
+  .lbl-page .lbl-demo-toolbar { padding-bottom: 0; }
+  /* Size the teaching region after navigation and transport take their space. */
+  .lbl-page .lbl-lesson-scroll,
+  .lbl-page .lbl-lesson-scroll:has(.lbl-content > .lbl-demonstration, .lbl-complete-playback) {
+    container: lbl-lesson / size;
+    --tutorial-cube-chrome: 0px;
+    overflow-y: auto;
+  }
+  .lbl-page .lbl-lesson-scroll :is(.lbl-content, .lbl-complete-player):is([data-tutorial-layout='A'], [data-tutorial-layout='B']) {
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(88px, 1fr);
+    height: 100%; min-height: min-content; align-content: stretch; gap: 8px;
+  }
+  .lbl-page .lbl-lesson-scroll :is(.lbl-content, .lbl-complete-player):is([data-tutorial-layout='A'], [data-tutorial-layout='B']) > :is(.lbl-demonstration, .lbl-cube) {
+    --tutorial-cube-budget: min(350px, max(80px, 42cqh));
+    height: auto; min-height: 0;
+  }
+  .lbl-page .lbl-lesson-scroll :is(.lbl-content, .lbl-complete-player):is([data-tutorial-layout='A'], [data-tutorial-layout='B']) > :is(.lbl-explanation, .lbl-complete-thought) {
+    min-height: 88px; padding-block: 0;
+  }
+  .f2l-page:not(.f2l-practice-page) {
+    box-sizing: border-box; height: 100dvh; display: grid;
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr);
+  }
+  .f2l-page .f2l-chapter { min-height: 0; }
+  .f2l-page :is(.f2l-toolbar, .f2l-chapter) { margin-top: 0; }
+  .f2l-page .f2l-chapter .f2l-chapter-body:has(.f2l-study-dock) {
+    display: grid; grid-template-rows: minmax(0, 1fr) auto;
+    height: 100%; min-height: 0; padding: 0;
+  }
+  .f2l-page .f2l-lesson-scroll {
+    display: flex; flex-direction: column; height: 100%; min-height: 0;
+    overflow: auto; padding-bottom: 0;
+  }
+  .f2l-page .f2l-study-layout { flex: 1 1 0; height: 100%; min-height: 0; align-items: stretch; }
+  .f2l-page .f2l-study-main {
+    container: f2l-lesson / size;
+    height: 100%; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain;
+  }
+  .f2l-page .f2l-study-main > .f2l-algorithm-stage {
+    display: block; container: f2l-lesson / size; flex: 1 1 0; min-height: 0; overflow-y: auto;
+  }
+  .f2l-page .f2l-study-main:has(.f2l-algorithm-stage) > :is(p, .f2l-teaching-alg-summary) { margin-block: 0; }
+  .f2l-page .f2l-flow-lab {
+    display: flex; flex-direction: column; height: 100%; min-height: 0;
+  }
+  .f2l-page .f2l-flow-toolbar { flex: none; margin-bottom: 4px; }
+  .f2l-page .f2l-flow-stage { container: f2l-lesson / size; flex: 1 1 0; min-height: 0; overflow-y: auto; }
+  .f2l-page .f2l-flow-layout { --tutorial-cube-available-height: 100cqh; --tutorial-cube-chrome: 0px; }
+  .f2l-page .f2l-flow-player { min-height: 0; padding-top: 0; overflow-y: auto; }
+  .f2l-page .f2l-flow-player .sim-stage {
+    width: min(100%, max(80px, 45cqh)); margin-inline: auto;
+  }
+  .f2l-page .f2l-study-main > [data-tutorial-layout='F'] {
+    height: auto; grid-template-rows: auto; min-height: 100%; flex: none;
+  }
+  .f2l-page .f2l-study-main > [data-tutorial-layout='F'] .f2l-cube {
+    width: min(100%, max(120px, 70cqh)); aspect-ratio: 1; height: auto;
+  }
+  .f2l-page .f2l-study-main > [data-tutorial-layout='F'] .sim-stage {
+    height: 100%;
+  }
+  .f2l-page .f2l-study-main > :is(.f2l-concept-video, .f2l-free-guide) {
+    display: flex; flex-direction: column; height: 100%; min-height: 0;
+  }
+  .f2l-page .f2l-study-main > :is(.f2l-concept-video, .f2l-free-guide) > :is(.f2l-intro-progress, .f2l-free-guide-progress) {
+    flex: 0 0 40px; height: 40px; margin: 0; padding: 0;
+  }
+  .f2l-page .f2l-study-main .f2l-video-viewport { overflow-y: auto; overscroll-behavior-y: contain; }
+  .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson:is([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']),
+  .f2l-page .f2l-flow-layout[data-tutorial-layout='C'] {
+    display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(88px, 1fr);
+    min-height: 0; height: 100%; margin: 0; gap: 8px;
+  }
+  .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > :is([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']) > .f2l-demo {
+    height: auto; min-height: 0; gap: 4px;
+  }
+  .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson:is([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']) {
+    --tutorial-cube-budget: min(350px, max(72px, calc(100cqh - 120px)));
+  }
+  .f2l-page :is(:is(.f2l-study-main, .f2l-algorithm-stage) > [data-tutorial-layout], .f2l-flow-layout) > :is(.f2l-guidance, .f2l-path-explanation, .f2l-flow-graph) {
+    min-width: 0; min-height: 0; max-height: 100%; overflow-y: auto; overscroll-behavior-y: contain;
+  }
+  .f2l-page .f2l-video-stage { min-height: 0; }
+  .f2l-page .f2l-video-stage > :is(.f2l-concept-scene, .f2l-study-lesson):is([data-tutorial-layout='A'], [data-tutorial-layout='B']),
+  .f2l-page .f2l-video-stage > .f2l-study-lesson[data-tutorial-layout='C'] {
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(60px, 1fr);
+    gap: 4px; align-items: stretch;
+  }
+  .f2l-page .f2l-video-stage > .f2l-concept-scene[data-tutorial-layout='E'] { grid-template-columns: minmax(0, 1fr); }
+  .f2l-page .f2l-video-stage > :is(.f2l-concept-scene, .f2l-study-lesson) { --tutorial-cube-budget: min(350px, 42cqh); }
+  .f2l-page .f2l-video-stage .f2l-free-guide-copy { gap: 4px; align-self: stretch; block-size: auto; }
+  .f2l-page .f2l-video-stage .f2l-free-guide-copy > .f2l-caption { margin: 0; }
+  .f2l-page .f2l-video-stage .f2l-free-guide-copy-body[data-copy-fitting] { min-height: 0; }
+  .f2l-page .f2l-case-introduction { min-height: 0; height: 100%; }
+  .f2l-page .f2l-case-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;
+    width: min(100%, max(160px, calc(200cqh - 100px))); margin-inline: auto;
+  }
+  .f2l-page .f2l-case-introduction .f2l-case-prompt { top: auto; bottom: 0; }
+  .f2l-page .f2l-case-introduction .f2l-case-narration {
+    top: calc(var(--case-player-top, 16px) + var(--case-player-content-height, 96px) + 4px);
+    bottom: 0; left: 0; right: 0; transform: none; overflow-y: auto;
+  }
+  .f2l-page .f2l-case-introduction .f2l-case-narration[data-alignment='true'] { bottom: 48px; }
+  .f2l-page .f2l-case-introduction .f2l-case-alignment-caption { inset: auto 0 0; font-size: 1rem; }
+  .f2l-page .f2l-case-introduction .f2l-case-reference-sheet { transform: none; padding: 4px; gap: 4px; }
+  .f2l-page .f2l-case-introduction .f2l-case-reference-arrow { position: static; inset: auto; transform: none; }
+  .f2l-page .f2l-case-introduction .f2l-case-reference-sheet .puzzle-art { width: 72px !important; height: 72px !important; }
+  .f2l-page .f2l-study-dock { position: relative; inset: auto; padding: 0; }
+  .f2l-page .f2l-study-dock .f2l-study-actions { position: static; inset: auto; padding-top: 0; }
+  .f2l-page .tutorial-section-menu-host { display: block; }
+  .f2l-page .f2l-video-stage > .f2l-concept-scene[data-tutorial-layout='C'] {
+    --tutorial-cube-budget: min(350px, max(56px, 38cqh));
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(56px, .8fr) minmax(88px, 1fr);
+    align-items: stretch; align-content: stretch; gap: 4px;
+  }
+  .f2l-page .f2l-video-stage > [data-tutorial-layout='C'] > .f2l-concept-scene-number {
+    position: static; inset: auto; grid-column: 1; text-align: end;
+  }
+  .f2l-page .f2l-video-stage > [data-tutorial-layout='C'] > .f2l-concept-cube {
+    display: flex; flex-direction: column; align-items: center; justify-content: safe center;
+    width: 100%; height: 100%; min-height: 0; max-height: 100%; aspect-ratio: auto;
+  }
+  .f2l-page .f2l-video-stage > [data-tutorial-layout='C'] > .f2l-concept-cube > .alg-sim-player.is-fill {
+    position: relative; inset: auto; flex: none; padding: 0;
+    width: min(100%, var(--tutorial-cube-budget)); height: auto; aspect-ratio: 1;
+  }
+  .f2l-page .f2l-video-stage > [data-tutorial-layout='C'] > .f2l-concept-caption {
+    display: block; overflow-y: auto; overscroll-behavior-y: contain; min-height: 0;
+  }
+
+  .lbl-page .lbl-cross-animation-scene[data-tutorial-layout='A'] { position: relative; }
+  .lbl-page .lbl-cross-animation-scene[data-tutorial-layout='A'] .lbl-cross-video-caption {
+    position: static; width: auto; transform: none;
+  }
+  @container lbl-lesson (min-width: 480px) and (min-height: 120px) {
+    .lbl-page .lbl-cross-animation-scene[data-tutorial-layout='A'] { --tutorial-compact-split: 1; height: 100cqh; }
+    .lbl-page .lbl-cross-animation-scene[data-tutorial-layout='A'] > .lbl-cross-overview {
+      height: 100%; grid-template-rows: minmax(0, 1fr); padding-block: 0; margin: 0; box-sizing: border-box;
+    }
+    .lbl-page .lbl-cross-animation-scene[data-tutorial-layout='A'] .lbl-cross-video-caption {
+      position: absolute; right: 0; top: 50%; width: 48%; transform: translateY(-50%);
+    }
+    .lbl-page .lbl-lesson-scroll :is(.lbl-content, .lbl-complete-player):is([data-tutorial-layout='A'], [data-tutorial-layout='B']) {
+      --tutorial-compact-split: 1;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+      grid-template-rows: minmax(0, 1fr); align-items: stretch; height: 100%; min-height: 0; gap: 12px;
+    }
+    .lbl-page .lbl-lesson-scroll :is(.lbl-content, .lbl-complete-player):is([data-tutorial-layout='A'], [data-tutorial-layout='B']) > :is(.lbl-demonstration, .lbl-cube) {
+      --tutorial-cube-budget: min(350px, 100cqh);
+      height: 100%; min-height: 0;
+    }
+    .lbl-page .lbl-lesson-scroll :is(.lbl-content[data-tutorial-layout='B'], .lbl-complete-player[data-tutorial-layout]) > :is(.lbl-demonstration, .lbl-cube) {
+      --tutorial-cube-budget: min(350px, max(0px, calc(100cqh - 72px)));
+    }
+    .lbl-page .lbl-lesson-scroll:has(> [data-tutorial-layout='A'] .lbl-notation-controls) { overflow: clip; }
+    /* Reserve the transport's actual height before sizing the notation canvas. */
+    .lbl-page .lbl-lesson-scroll [data-tutorial-layout='A'] > .lbl-notation-demonstration > .lbl-notation-player {
+      flex: 1 1 0;
+      container-type: size;
+    }
+    .lbl-page .lbl-lesson-scroll [data-tutorial-layout='A'] > .lbl-notation-demonstration .alg-sim-player.is-fill {
+      height: 100%;
+    }
+    .lbl-page .lbl-lesson-scroll .lbl-notation-controls { flex: none; }
+    .lbl-page .lbl-lesson-scroll :is(.lbl-content, .lbl-complete-player):is([data-tutorial-layout='A'], [data-tutorial-layout='B']) > :is(.lbl-explanation, .lbl-complete-thought) {
+      min-height: 0; padding-block: 0; overflow-y: auto; overscroll-behavior-y: contain;
+    }
+  }
+
+  @container f2l-lesson (min-width: 480px) and (min-height: 120px) {
+    .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson:is([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']),
+    .f2l-page .f2l-flow-layout[data-tutorial-layout='C'] {
+      --tutorial-compact-split: 1;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); grid-template-rows: minmax(0, 1fr);
+      align-items: stretch; min-height: 0; gap: 12px;
+    }
+    .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > :is([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']) > .f2l-demo {
+      align-self: stretch; overflow-y: auto; justify-content: safe center;
+    }
+    .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > [data-tutorial-layout='C'] > :is(.f2l-guidance, .f2l-path-explanation),
+    .f2l-page .f2l-flow-layout > .f2l-flow-graph { --tutorial-compact-reference: 1; }
+    .f2l-page .f2l-case-introduction { --tutorial-compact-split: 1; }
+    .f2l-page .f2l-case-introduction .f2l-case-narration { inset: 0 0 0 50%; max-height: none; }
+    .f2l-page .f2l-case-introduction .f2l-case-narration[data-alignment='true'] {
+      --tutorial-compact-reference: 1;
+      bottom: 48px; height: auto;
+    }
+    .f2l-page .f2l-case-introduction .f2l-case-alignment-caption { left: 50%; }
+  }
+
+  @container tutorial-shot (min-width: 480px) and (min-height: 104px) {
+    .f2l-page .f2l-video-stage > :is(.f2l-concept-scene, .f2l-study-lesson):is([data-tutorial-layout='A'], [data-tutorial-layout='B']),
+    .f2l-page .f2l-video-stage > .f2l-study-lesson[data-tutorial-layout='C'] {
+      --tutorial-compact-split: 1;
+      --tutorial-cube-budget: min(350px, 75cqh);
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); grid-template-rows: minmax(0, 1fr);
+      gap: 12px; align-items: stretch;
+    }
+    .f2l-page .f2l-video-stage > .f2l-study-lesson[data-tutorial-layout='C'] .f2l-free-guide-copy-body { --tutorial-compact-reference: 1; }
+    .f2l-page .f2l-video-stage > .f2l-concept-scene:is([data-tutorial-layout='A'], [data-tutorial-layout='B']) > .f2l-cube,
+    .f2l-page .f2l-video-stage > .f2l-study-lesson > .f2l-demo { align-self: safe center; }
+    .f2l-page .f2l-video-stage > .f2l-intro-methods[data-stage='cross'] {
+      --tutorial-compact-split: 1;
+      --f2l-intro-gap: 12px;
+      padding-top: 0;
+    }
+    .f2l-page .f2l-video-stage > .f2l-intro-methods[data-stage='cross'] > .f2l-intro-method:first-child {
+      position: relative; transform: none;
+    }
+    .f2l-page .f2l-video-stage > .f2l-intro-methods[data-stage='cross'] .f2l-concept-scene { grid-template-rows: minmax(0, 1fr); }
+    .f2l-page .f2l-video-stage > .f2l-intro-methods[data-stage='cross'] .f2l-cube { margin: 0; }
+    .f2l-page .f2l-video-stage > .f2l-intro-methods[data-stage='cross'] .f2l-concept-caption {
+      position: absolute; top: 50%; left: calc(100% + var(--f2l-intro-gap));
+      width: 100%; height: auto; transform: translateY(-50%); padding: 0;
+    }
+    .f2l-page .f2l-video-stage > .f2l-intro-methods[data-stage='cross'] .f2l-concept-caption p { transform: none; margin: 0; }
+
+    .f2l-page .f2l-video-stage > .f2l-concept-scene[data-tutorial-layout='C'] {
+      --tutorial-compact-split: 1;
+      --tutorial-cube-budget: min(350px, 75cqh, max(0px, calc(100cqh - 56px)));
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+      grid-template-rows: auto minmax(0, 1fr);
+      align-items: stretch; align-content: stretch; gap: 0 12px;
+    }
+    .f2l-page .f2l-video-stage > [data-tutorial-layout='C'] > .f2l-concept-scene-number {
+      grid-column: 1; grid-row: 1; text-align: start;
+    }
+    .f2l-page .f2l-video-stage > [data-tutorial-layout='C'] > .f2l-concept-cube {
+      grid-column: 1; grid-row: 2;
+    }
+    .f2l-page .f2l-video-stage > [data-tutorial-layout='C'] > .f2l-concept-caption {
+      --tutorial-compact-reference: 1;
+      grid-column: 2; grid-row: 1 / -1; display: block; align-self: stretch; width: 100%; height: 100%; padding: 0;
+    }
+  }
+}
+
+@media (orientation: landscape) and (max-height: 350px) {
+  .f2l-page:not(.f2l-practice-page) {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .f2l-page:not(.f2l-practice-page) > .f2l-header {
+    padding: 0 12px 0 0; margin: 0;
+  }
+  .f2l-page:not(.f2l-practice-page) > .f2l-toolbar { min-width: 0; align-self: center; }
+  .f2l-page:not(.f2l-practice-page) .tutorial-chapter-track > .tutorial-chapter-button { padding-bottom: 4px; }
+  .f2l-page:not(.f2l-practice-page) .tutorial-chapter-line { margin-bottom: 4px; }
+  .f2l-page:not(.f2l-practice-page) > .f2l-chapter { grid-column: 1 / -1; }
+}
