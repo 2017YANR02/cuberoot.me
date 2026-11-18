@@ -646,13 +646,13 @@ export default function LandingSearch({
   // top-to-bottom order the dropdown renders its sections in.
   const pushInternal = (href: string) => { closeAfter(); router.push(href); };
   const goFirstResult = () => {
+    if (!yearMatch && cardMatches.length > 0) { goCard(cardMatches[0]); return; }
     if (personMatches.length > 0) { pushInternal(langHref(`/wca/persons/${personMatches[0].wcaId}`)); return; }
     if (yearMatch) { pushInternal(langHref('/wca/comp', `year=${yearMatch}`)); return; }
     if (pasteIntent) { goPasteIntent(pasteIntent); return; }
     if (translationMatches.length > 0) { pushInternal(langHref('/regulation/translation/search', `q=${encodeURIComponent(query.trim())}`)); return; }
     if (forumMatches.length > 0) { pushInternal(langHref(`/forum/t/${forumMatches[0].id}`)); return; }
     if (platformMatches.length > 0) { pushInternal(langHref(platformMatches[0].href)); return; }
-    if (cardMatches.length > 0) { goCard(cardMatches[0]); return; }
     if (toolMatches.length > 0) { pushInternal(langHref(toolMatches[0].path)); return; }
     if (lookupMatches.length > 0) { pushInternal(langHref(lookupMatches[0].path, lookupMatches[0].extraQuery)); return; }
     if (statMatches.length > 0 && statMatches[0].items.length > 0) {
@@ -739,6 +739,32 @@ export default function LandingSearch({
 
   const searchResults = (
 <div className={conversation ? "site-assistant-search-results" : "landing-search-panel"}>
+          {!yearMatch && cardMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <LayoutGrid size={14} strokeWidth={1.75} />
+                <h3>{tr({ zh: '页面', en: 'Pages'
+                })}</h3>
+              </div>
+              <div className="landing-search-grid">
+                {cardMatches.map(c => (
+                  <Link
+                    key={c.id}
+                    data-analytics-entry={c.id}
+                    data-analytics-placement="search"
+                    href={c.href}
+                    prefetch={false}
+                    className="landing-search-item"
+                    onClick={closeAfter}
+                  >
+                    <span className="landing-search-item-name">{(isZh ? c.nameZh : c.nameEn)}</span>
+                    <span className="landing-search-item-meta">{(isZh ? c.sectionTitleZh : c.sectionTitleEn)}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
           {personsSection}
           {!conversation && (assistantBusy || assistantError || assistantAnswer || query.trim().length > SITE_ASSISTANT_QUESTION_MAX_LENGTH) && (
           <section className="landing-search-section landing-search-answer" aria-live="polite" aria-busy={assistantBusy}>
@@ -881,32 +907,6 @@ export default function LandingSearch({
                       <AlgSetResultThumb hit={a} />
                     </div>
                     <span className="landing-search-item-name">{tr({ zh: a.nameZh, en: a.nameEn })}</span>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {cardMatches.length > 0 && (
-            <section className="landing-search-section">
-              <div className="landing-search-section-header">
-                <LayoutGrid size={14} strokeWidth={1.75} />
-                <h3>{tr({ zh: '页面', en: 'Pages'
-                })}</h3>
-              </div>
-              <div className="landing-search-grid">
-                {cardMatches.map(c => (
-                  <Link
-                    key={c.id}
-                    data-analytics-entry={c.id}
-                    data-analytics-placement="search"
-                    href={c.href}
-                    prefetch={false}
-                    className="landing-search-item"
-                    onClick={closeAfter}
-                  >
-                    <span className="landing-search-item-name">{(isZh ? c.nameZh : c.nameEn)}</span>
-                    <span className="landing-search-item-meta">{(isZh ? c.sectionTitleZh : c.sectionTitleEn)}</span>
                   </Link>
                 ))}
               </div>
