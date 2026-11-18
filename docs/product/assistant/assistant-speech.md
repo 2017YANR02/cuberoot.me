@@ -1,6 +1,6 @@
 # 回答朗读
 
-入口为回答工具栏的「朗读」。标准 DashScope 协议兼容及浏览器逐帧播放已在本地完成，尚未发布；北京 workspace 模型已通过真实聊天页朗读全链路验收，使用独立本地测试账号、已完成回答和 PostgreSQL 测试库。主观音色偏好仍由试听判断。
+入口为回答工具栏的「朗读」。支持标准 DashScope 协议、浏览器逐帧播放、音色与语速选择。北京 workspace 模型已通过本地真实聊天页全链路验收，使用独立本地测试账号、已完成回答和 PostgreSQL 测试库；生产部署与真实播放验收分别记录，主观音色偏好仍由试听判断。
 
 ## 调用与播放
 
@@ -40,6 +40,8 @@
 - `SITE_ASSISTANT_TTS_API_KEY`：可独立配置；留空依次复用 `SITE_ASSISTANT_API_KEY`、`DASHSCOPE_API_KEY`，须具有同地域的语音模型权限。
 - `SITE_ASSISTANT_TTS_MODEL` 留空自动选择：标准接口为 `qwen3-tts-flash`，业务空间为 `qwen-audio-3.1-tts-flash`。
 - `SITE_ASSISTANT_TTS_VOICE` 留空自动选择：前者为 `Cherry`，后者为 `longanhuan_v3.1`，自定义音色需与模型匹配。
+
+若聊天 Key 没有语音模型权限，可在仓库 Actions Secrets 配置 `SITE_ASSISTANT_TTS_CONFIG`，内容为上述五个 TTS 字段的私有 env 文本（必须包含独立 Key 与北京 origin，不接受聊天、数据库或其他字段）。`Deploy Core` 通过 SSH 标准输入同步，仅替换这五项，原配置私有备份为 `.env.before-assistant-speech-secret`；保留运行环境的显式 `0` 停用开关。密钥不得写进源码或日志。`Assistant speech diagnostics` 可只读查看最近 20 条语音状态码与耗时，不输出密钥、正文或音频地址。
 
 标准 `qwen3-tts-flash`（含日期快照名）使用 `/api/v1/services/aigc/multimodal-generation/generation`，发送 `text`、`voice` 和 `language_type`；中文回答使用 `Auto` 支持中英混读，英文回答使用 `English`。原业务空间模型继续使用 `/api/v1/services/audio/tts/SpeechSynthesizer`。标准域名下不接受业务空间专用模型，避免发送不匹配的协议。
 

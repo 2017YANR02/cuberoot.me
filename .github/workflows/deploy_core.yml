@@ -206,6 +206,27 @@ jobs:
               "root@${{ secrets.DEPLOY_HOST }}" \
               'sh /root/core-api/.sync-platform-private-secrets.sh /root/core-api/.env'
 
+      - name: Sync optional independent assistant speech credentials
+        env:
+          API_DIR: core/${{ steps.workspace.outputs.api }}
+          ASSISTANT_SPEECH_CONFIG: ${{ secrets.SITE_ASSISTANT_TTS_CONFIG }}
+        run: |
+          if [ -z "$ASSISTANT_SPEECH_CONFIG" ]; then
+            echo 'Independent speech secret not configured; keeping runtime configuration'
+            exit 0
+          fi
+          cd core
+          pnpm --filter @cuberoot/server exec esbuild scripts/sync-assistant-speech.ts --bundle --platform=node --format=esm --outfile=dist/sync-assistant-speech.mjs
+          cd ..
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "$API_DIR/dist/sync-assistant-speech.mjs" \
+            "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/.sync-assistant-speech.mjs"
+          printf '%s' "$ASSISTANT_SPEECH_CONFIG" | \
+            ssh -T -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
+              -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+              "root@${{ secrets.DEPLOY_HOST }}" \
+              'node /root/core-api/.sync-assistant-speech.mjs /root/core-api/.env'
+
       # Production read-aloud is enabled once when existing Bailian credentials
       # are reusable. An explicit runtime opt-out always survives later deploys.
       - name: Initialize assistant speech runtime configuration
