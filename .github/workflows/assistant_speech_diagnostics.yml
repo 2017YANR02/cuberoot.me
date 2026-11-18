@@ -1,0 +1,59 @@
+name: Assistant speech diagnostics
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/assistant_speech_diagnostics.yml']
+
+permissions:
+  contents: read
+concurrency:
+  group: assistant-speech-diagnostics
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Read bounded speech diagnostics without credentials or answer text
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id
+          chmod 600 ~/.ssh/id
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -T -o ConnectTimeout=15 -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" \
+            'node --input-type=module' <<'SPEECH_DIAGNOSTICS'
+          import { readFileSync, openSync, fstatSync, readSync, closeSync } from 'node:fs';
+          import { parseEnv } from 'node:util';
+          const env = parseEnv(readFileSync('/root/core-api/.env', 'utf8'));
+          const keySource = ['SITE_ASSISTANT_TTS_API_KEY', 'SITE_ASSISTANT_API_KEY', 'DASHSCOPE_API_KEY'].find(name => env[name]);
+          let host = 'invalid';
+          try { host = new URL(env.SITE_ASSISTANT_TTS_BASE_URL || env.SITE_ASSISTANT_BASE_URL || 'https://dashscope.aliyuncs.com').hostname; } catch {}
+          console.log(JSON.stringify({ enabled: env.SITE_ASSISTANT_TTS_ENABLED === '1', keySource: keySource || 'missing', standardHost: host === 'dashscope.aliyuncs.com', workspaceHost: /^ws-[a-z0-9]+\.cn-beijing\.maas\.aliyuncs\.com$/.test(host), explicitModel: !!env.SITE_ASSISTANT_TTS_MODEL }));
+          const records = [];
+          for (const file of ['/root/.pm2/logs/core-api-out.log', '/root/.pm2/logs/core-api-error.log']) {
+            let fd;
+            try {
+              fd = openSync(file, 'r');
+              const size = fstatSync(fd).size, length = Math.min(size, 256 * 1024), buffer = Buffer.alloc(length);
+              readSync(fd, buffer, 0, length, size - length);
+              for (const line of buffer.toString('utf8').split('\n')) {
+                let entry;
+                try { entry = JSON.parse(line.slice(line.indexOf('{'))); } catch { continue; }
+                if (entry?.event !== 'assistant_tts') continue;
+                const safe = { event: 'assistant_tts', success: entry.success === true };
+                for (const key of ['characters', 'durationMs', 'firstAudioMs', 'upstreamStatus']) if (Number.isFinite(entry[key])) safe[key] = entry[key];
+                for (const key of ['model', 'phase', 'failureCode']) if (typeof entry[key] === 'string' && /^[A-Za-z0-9_.-]{1,100}$/.test(entry[key])) safe[key] = entry[key];
+                records.push(safe);
+              }
+            } catch (error) { if (error.code !== 'ENOENT') throw new Error('Speech diagnostic log could not be read'); }
+            finally { if (fd !== undefined) closeSync(fd); }
+          }
+          console.log(JSON.stringify({ recentSpeech: records.slice(-20) }));
+          SPEECH_DIAGNOSTICS
