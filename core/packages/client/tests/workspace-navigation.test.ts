@@ -4,7 +4,12 @@ import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
 
 const state = vi.hoisted(() => ({ admin: false, pathname: '/admin/team', section: 'mine', view: '' }));
-vi.mock('next/navigation', () => ({ usePathname: () => state.pathname }));
+vi.mock('next/navigation', () => ({ usePathname: () => state.pathname, useRouter: () => ({push: vi.fn()}) }));
+vi.mock('react-i18next', async importOriginal => ({
+  ...await importOriginal<typeof import('react-i18next')>(),
+  useTranslation: () => ({ i18n: { language: state.pathname.startsWith('/zh/') ? 'zh' : 'en' } }),
+}));
+vi.mock('@/lib/theme', () => ({ useEffectiveTheme: () => 'light' }));
 vi.mock('nuqs', () => ({ parseAsString: {}, useQueryState: (key: string) => [key === 'view' ? state.view : state.section] }));
 vi.mock('@/lib/auth-store', () => ({ useIsAdmin: () => state.admin, useAuthUser: () => ({ name: 'Admin' }) }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (_zh: string, en: string) => en }));
@@ -27,6 +32,7 @@ it('separates team and administrator navigation and follows localized management
   await act(async () => root.render(createElement(WorkspaceNavigation, null, 'Content')));
   expect(node.textContent).toContain('Site management');
   expect(node.textContent).toContain('Work calendar');
+  expect(node.querySelector<HTMLAnchorElement>('.staff-brand')?.getAttribute('href')).toBe('/zh');
   expect(node.querySelector('a[href*="projects"]')).toBeNull();
   expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('Operations');
   expect(node.querySelector<HTMLAnchorElement>('a[href="/account"]')?.textContent).toBe('Admin');
