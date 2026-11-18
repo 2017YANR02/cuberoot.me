@@ -18,15 +18,15 @@ export default function Walkthrough() {
   const [runIndex, setRunIndex] = useState(0);
   const [selected, setSelected] = useState(0);
   const scramble = LBL_LESSON_RUNS[runIndex].scramble;
-  const run = useMemo(() => buildWalkthroughRun(scramble, true), [scramble]);
+  const run = useMemo(() => buildWalkthroughRun(scramble), [scramble]);
   const stages = useMemo(() => {
     let setup = run.scramble;
     return LBL_LESSON_STAGE_IDS.map(id => {
       const lesson = LBL_STEPS.find(item => item.id === id)!;
       const alg = run.stages[id];
       const demo = id === 'cross' ? { setup, alg, phases: walkthroughCrossPhases(setup, alg),
-        done: { zh: '底面十字完成，四条侧色对齐中心。', en: 'Bottom cross complete. All four side colors match their centers.' } }
-        : buildCompleteDemo(id, setup, true);
+        done: { zh: '底面十字完成，四条侧色对齐中心', en: 'Bottom cross complete. All four side colors match their centers.' } }
+        : buildCompleteDemo(id, setup);
       setup += ' ' + alg;
       return { id, lesson, demo };
     });

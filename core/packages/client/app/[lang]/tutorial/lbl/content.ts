@@ -21,6 +21,13 @@ export const LESSON_STICKERING: Record<string, string> = {
 const example = (zh: string, en: string, alg: string, hintZh: string, hintEn: string, setup?: string): LblExample => ({ title: text(zh, en), hint: text(hintZh, hintEn), alg, setup });
 export const RIGHT = "R U R' U'";
 export const LEFT = "L' U' L U";
+export const CORNER_ALIGNMENT_COPY = {
+  find: text('找顶层的白角', 'Find a white corner in the top layer'),
+  placeSide: text('转顶层\n白格朝侧面\n非白格朝前面', 'Turn the top layer\nWhite faces sideways\nThe other side sticker faces front'),
+  placeUp: text('转顶层\n把白角转到右前方', 'Turn the top layer\nBring the white corner to the front right'),
+  crossAlign: text('转下两层\n让两组颜色交叉对齐', 'Turn the lower two layers\nMatch each color to the center on the other face'),
+  crossAligned: text('两组颜色交叉对齐了', 'Both colors match across the two faces'),
+};
 export const MIDDLE_RIGHT = `U ${RIGHT} y ${LEFT}`;
 export const MIDDLE_LEFT = `U' ${LEFT} y' ${RIGHT}`;
 export const MIDDLE_RIGHT_SETUP = `y (${MIDDLE_RIGHT})'`;

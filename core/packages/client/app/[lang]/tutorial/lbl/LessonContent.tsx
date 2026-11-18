@@ -35,6 +35,7 @@ import { StageImage } from './StageImage';
 export { StageImage } from './StageImage';
 import EdgeObservation from './EdgeObservation';
 import SpecialCasePrelude, { cornerPrelude } from './SpecialCasePrelude';
+import CornerAlignmentPrelude, { CORNER_ALIGNMENTS } from './CornerAlignmentPrelude';
 
 const ignoreCaseCue = () => {};
 
@@ -99,9 +100,9 @@ function MiddleAlignmentVideo({ setup, left, onDone }: { setup: string; left: bo
 }
 
 
-function LessonPlayer({ player, interacted, yellowCase, fishLeft, middleAlignment, cornerAlignment, showCornerResult = false, showMiddleResult = false, initialLeftView = false, pauseAfterObservation = false, onBasementObservation, ...props }: ComponentProps<typeof AlgPlayer> & {
+function LessonPlayer({ player, interacted, yellowCase, fishLeft, middleAlignment, showCornerResult = false, showMiddleResult = false, initialLeftView = false, pauseAfterObservation = false, onBasementObservation, ...props }: ComponentProps<typeof AlgPlayer> & {
   player: RefObject<AlgPlayerHandle | null>; interacted: RefObject<boolean>; yellowCase?: number; fishLeft?: boolean;
-  middleAlignment?: boolean; cornerAlignment?: 'left' | 'right'; showCornerResult?: boolean; showMiddleResult?: boolean; initialLeftView?: boolean;
+  middleAlignment?: boolean; showCornerResult?: boolean; showMiddleResult?: boolean; initialLeftView?: boolean;
   pauseAfterObservation?: boolean; onBasementObservation?: (observing: boolean) => void;
 }) {
   const wrapper = useRef<HTMLDivElement>(null);
@@ -112,12 +113,11 @@ function LessonPlayer({ player, interacted, yellowCase, fishLeft, middleAlignmen
   const [step, setStep] = useState(0);
   const sidePauseSteps = useSideTurnView(player, props.alg, step, visible && !props.showHands, initialLeftView ? LBL_LEFT_VIEW_YAW : 0, props.moveDurationMs);
   const [alignmentReady, setAlignmentReady] = useState(false);
-  const observingCorner = cornerAlignment !== undefined && step === 2;
   const touchCase = yellowCase !== undefined && yellowCase >= 2;
   const recognizesFish = yellowCase !== undefined || fishLeft !== undefined;
   useEffect(() => {
     setAlignmentReady(false);
-    if (!(touchCase && step === 1) && !observingCorner) return;
+    if (!touchCase || step !== 1) return;
     let frame = 0;
     const wait = () => {
       if (player.current?.isUserMovePending?.()) frame = requestAnimationFrame(wait);
@@ -125,7 +125,7 @@ function LessonPlayer({ player, interacted, yellowCase, fishLeft, middleAlignmen
     };
     frame = requestAnimationFrame(wait);
     return () => cancelAnimationFrame(frame);
-  }, [touchCase, observingCorner, step, player]);
+  }, [touchCase, step, player]);
   const highlights = useMemo(() => {
     if (middleAlignment) return middleAlignmentStickers(resolvePlayerSetup('3x3', props.alg, props.setup, props.startSolved ?? false));
     if (!recognizesFish) return undefined;
@@ -231,11 +231,10 @@ function LessonPlayer({ player, interacted, yellowCase, fishLeft, middleAlignmen
   return <div ref={wrapper} className="lbl-auto-player" data-visible={visible} onPointerDownCapture={takeControl} onKeyDownCapture={takeControl}>
     <AlgPlayer {...props} ref={player} playRequest={playRequest}
       highlightedStickers={(step === 0 || ((touchCase || yellowCase === 1) && step === 1)) ? highlights : undefined}
-      frontFaceArrow={observingCorner && alignmentReady ? { from: cornerAlignment === 'left' ? 0 : 2, to: cornerAlignment === 'left' ? 6 : 8 } : props.frontFaceArrow}
       lockView={touchCase || props.lockView}
       hideResetView={touchCase || props.hideResetView}
-      pauseAfterSteps={cornerAlignment ? [2, ...sidePauseSteps] : touchCase ? [1, ...sidePauseSteps] : sidePauseSteps}
-      sectionPauseMs={cornerAlignment || touchCase ? 2000 : sidePauseSteps.length ? SIDE_VIEW_PAUSE_MS : undefined}
+      pauseAfterSteps={touchCase ? [1, ...sidePauseSteps] : sidePauseSteps}
+      sectionPauseMs={touchCase ? 2000 : sidePauseSteps.length ? SIDE_VIEW_PAUSE_MS : undefined}
       onStepChange={value => { setStep(value); props.onStepChange?.(value); }} />
     {resultStage && createPortal(
       <div className="lbl-left-thumb-overlay">
@@ -381,10 +380,15 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   const [edgeObservationDone, setEdgeObservationDone] = useState(false);
   const [daisyBlockedPreludeDone, setDaisyBlockedPreludeDone] = useState(false);
   const [specialPreludeDone, setSpecialPreludeDone] = useState(false);
+  const [cornerAlignmentDone, setCornerAlignmentDone] = useState(false);
   const [observingBasement, setObservingBasement] = useState(false);
   const basementLesson = chapter.id === 'daisy' && lesson.id === 'case-5';
+  const cornerLesson = chapter.id === 'corners' ? CORNER_ALIGNMENTS[lesson.id] : undefined;
   const example = useMemo(() => {
     const original = lesson.example;
+    if (cornerLesson && original) return {
+      ...original, alg: cornerLesson.alg, setup: cornerLesson.alignedSetup, hint: cornerLesson.hint,
+    };
     if (!edgeObservationDone || chapter.id !== 'edge-position' || !original) return original;
     const moves = new Alg(original.alg).expand().toString().split(/\s+/);
     const preparation: string[] = [];
@@ -393,9 +397,9 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
     return { ...original, alg: moves.join(' '), startSolved: false,
       setup: `${resolvePlayerSetup('3x3', original.alg, original.setup, original.startSolved ?? false)} ${preparation.join(' ')}`,
       hint: { zh: original.hint.zh.split(' → ').slice(1).join(' → '), en: original.hint.en.split(' → ').slice(1).join(' → ') } };
-  }, [lesson.example, chapter.id, edgeObservationDone]);
+  }, [lesson.example, chapter.id, edgeObservationDone, cornerLesson]);
   const middleHiddenStickers = useMemo(() => chapter.id === 'middle' && ['case-0', 'case-1'].includes(lesson.id) && example?.setup ? middleLessonHiddenStickers(example.setup) : undefined, [chapter.id, lesson.id, example?.setup]);
-  const initialLeftView = chapter.id === 'middle' && lesson.id === 'case-1';
+  const initialLeftView = Boolean(cornerLesson?.left) || chapter.id === 'middle' && lesson.id === 'case-1';
   const sceneRot = useMemo(() => {
     const view = lblDemoView();
     return initialLeftView ? { ...view, y: -view.y } : view;
@@ -420,6 +424,9 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   if (chapter.id === 'structure' && ['facelet', 'centers', 'corners', 'edges'].includes(lesson.id)) return <PieceLesson id={lesson.id} />;
   if (chapter.id === 'daisy' && lesson.id === 'case-2' && example?.setup && !daisyBlockedPreludeDone) {
     return <DaisyBlockedPrelude setup={example.setup} onDone={() => setDaisyBlockedPreludeDone(true)} />;
+  }
+  if (cornerLesson && !cornerAlignmentDone) {
+    return <CornerAlignmentPrelude lesson={cornerLesson} sceneRot={sceneRot} onContinue={() => setCornerAlignmentDone(true)} />;
   }
   if (example && !specialPreludeDone && ((chapter.id === 'corners' && lesson.id === 'case-1') || (chapter.id === 'middle' && lesson.id === 'case-2'))) {
     const middle = chapter.id === 'middle';
@@ -468,7 +475,6 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
         pauseAfterObservation={chapter.id === 'edge-position' && ['case-0', 'case-1', 'case-2'].includes(lesson.id)}
         showCornerResult={cornerEjection && finalMoveSettled}
         showMiddleResult={middleEjection && finalMoveSettled}
-        cornerAlignment={chapter.id === 'corners' && ['case-0', 'case-3'].includes(lesson.id) ? 'right' : chapter.id === 'corners' && lesson.id === 'case-2' ? 'left' : undefined}
         initialLeftView={initialLeftView}
         stickeringAtStep={lesson.id === 'white-edge' ? whiteEdgeStickering : chapter.id === 'cross' ? crossStickering : undefined}
         yellowCase={chapter.id === 'yellow-face' ? chapter.examples.indexOf(example) : undefined}
@@ -492,7 +498,7 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
         selectedStepStart={selectedStepStart}
         onLine={onSelectLesson ? () => onSelectLesson('case-0') : undefined}
         onFish={onSelectLesson ? () => onSelectLesson(chapter.examples.indexOf(example) === 2 ? 'sune-learning-0' : 'sune-learning-1') : undefined}
-        exampleIndex={lesson.id === 'white-edge' ? 1 : chapter.examples.indexOf(lesson.example!)} instruction={tr(lesson.id !== 'white-edge' && ['corners', 'cross'].includes(chapter.id) ? chapter.paragraphs[0] ?? example.hint : example.hint)}
+        exampleIndex={cornerLesson ? -1 : lesson.id === 'white-edge' ? 1 : chapter.examples.indexOf(lesson.example!)} instruction={tr(lesson.id !== 'white-edge' && ['corners', 'cross'].includes(chapter.id) ? chapter.paragraphs[0] ?? example.hint : example.hint)}
         onStepClick={moveCount => {
           interacted.current = true;
           resumeFollowing();

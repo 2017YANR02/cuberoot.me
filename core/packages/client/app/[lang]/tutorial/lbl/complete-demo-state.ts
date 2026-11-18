@@ -1,7 +1,7 @@
 import { Alg } from 'cubing/alg';
 import { AllFaces, CubeData, Face, parseAlgorithm } from '@cuberoot/visualcube';
 import { resolvePlayerSetup } from '@/components/AlgPlayer/player-setup';
-import { CORNER_POSITION, EDGE_POSITION_LEFT, EDGE_POSITION_RIGHT, LEFT, LEFT_SUNE, LBL_STEPS, MIDDLE_LEFT, MIDDLE_RIGHT, MIDDLE_MISPLACED_SETUP, RIGHT, RIGHT_SUNE } from './content';
+import { CORNER_ALIGNMENT_COPY, CORNER_POSITION, EDGE_POSITION_LEFT, EDGE_POSITION_RIGHT, LEFT, LEFT_SUNE, LBL_STEPS, MIDDLE_LEFT, MIDDLE_RIGHT, MIDDLE_MISPLACED_SETUP, RIGHT, RIGHT_SUNE } from './content';
 import { LBL_LESSON_RUNS, LBL_LESSON_STAGE_IDS, lessonFrame, type LblLessonRun, type LblLessonStageId } from './lesson-runs';
 import { buildYellowCrossDemo, YELLOW_CROSS_DEMO_SETUPS, yellowCrossRecognitionStickers } from './yellow-cross-demo-state';
 import { getLblAlgGroups } from './alg-cues';
@@ -11,7 +11,7 @@ type Text = { zh: string; en: string };
 const t = (zh: string, en: string): Text => ({ zh, en });
 export type DemoContent = { text: Text; detail?: Text; alg?: string; caseIndex?: number; outlines?: string[]; touchSticker?: boolean };
 export type DemoView = 'home' | 'bottom' | 'left' | 'right' | 'back' | 'slight-left';
-export type DemoPhase = { start: number; end: number; observe?: Text; recognize?: DemoContent; act: DemoContent; view?: DemoView; moveView?: DemoView; returnView?: DemoView; frontFaceArrow?: { from: number; to: number }; recognitionDurationMs?: number; recognizeOnly?: boolean };
+export type DemoPhase = { start: number; end: number; observe?: Text; recognize?: DemoContent; act: DemoContent; view?: DemoView; moveView?: DemoView; returnView?: DemoView; recognizeOnly?: boolean };
 export type CompleteDemo = { setup: string; alg: string; phases: DemoPhase[]; done: Text };
 export const COMPLETE_DEMO_STAGES = ['daisy', 'corners', 'middle', 'yellow-cross', 'yellow-face', 'corner-position', 'edge-position'] as const;
 export type CompleteDemoStage = typeof COMPLETE_DEMO_STAGES[number];
@@ -25,16 +25,9 @@ const expand = (alg: string) => new Alg(alg).expand().toString();
 const movesOf = (alg: string) => expand(alg).split(/\s+/).filter(Boolean);
 const join = (...algs: string[]) => algs.filter(Boolean).join(' ');
 
-// Two bottom-corner cycles leave the cross untouched and all four white corners
-// in the bottom layer, but in the wrong slots. This setup is never taught as a move.
 const cornerCycle = "x R' U R' D2 R U' R' D2 R2 x'";
 // Keep the blue/red corner at DFR while DBR stays solved and visible.
 export const BLUE_RED_BOTTOM_CORNER_SETUP = `x2 y (${cornerCycle})' y' x2`;
-export const CORNER_DEMO_EXTREME_SETUP = `x2 ${cornerCycle} y ${cornerCycle} y' x2`;
-// Twist two bottom corners without changing their slots or the solved cross.
-const cornerTwist = "R' D' R D";
-const cornerExtremeSetups = ['U', "U'"].map(u =>
-  `${CORNER_DEMO_EXTREME_SETUP} x2 (${cornerTwist})2 ${u} (${cornerTwist})4 ${new Alg(u).invert()} x2`);
 // Swap each opposite pair of middle slots; all four middle edges are misplaced.
 export const MIDDLE_DEMO_EXTREME_SETUP = `${MIDDLE_MISPLACED_SETUP} y2 ${MIDDLE_MISPLACED_SETUP} y2`;
 
@@ -143,12 +136,12 @@ export function demoGoalReached(stage: string, alg: string): boolean {
 
 const observe: Record<CompleteDemoStage, Text> = {
   daisy: t('先找二楼的白棱', 'Look for white edges on the middle floor first.'),
-  corners: t('先在顶层找白角。', 'Look for white corners in the top layer first.'),
-  middle: t('先在顶层找不带黄色的棱。', 'Look on top for an edge without yellow.'),
-  'yellow-cross': t('先看顶层四条棱。', 'Look at the four top edges.'),
-  'yellow-face': t('数一数顶面的非黄角格。', 'Count the non-yellow top corner stickers.'),
-  'corner-position': t('看侧面，找两端同色的“眼”。', 'Look for matching corner stickers: headlights.'),
-  'edge-position': t('看侧面，找三个同色格组成的墙。', 'Look for a wall of three matching stickers.'),
+  corners: CORNER_ALIGNMENT_COPY.find,
+  middle: t('先在顶层找不带黄色的棱', 'Look on top for an edge without yellow.'),
+  'yellow-cross': t('先看顶层四条棱', 'Look at the four top edges.'),
+  'yellow-face': t('数一数顶面的非黄角格', 'Count the non-yellow top corner stickers.'),
+  'corner-position': t('看侧面，找两端同色的“眼”', 'Look for matching corner stickers: headlights.'),
+  'edge-position': t('看侧面，找三个同色格组成的墙', 'Look for a wall of three matching stickers.'),
 };
 const done: Record<CompleteDemoStage, Text> = {
   daisy: t('四片白花瓣，小花完成。', 'Four white petals: the daisy is complete.'),
@@ -264,14 +257,14 @@ function yellowCrossDemo(setup: string): CompleteDemo {
   }) };
 }
 
-export function buildCompleteDemo(stage: CompleteDemoStage, setup: string, followEjectedCorner = false): CompleteDemo {
+export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): CompleteDemo {
   if (stage === 'yellow-cross') return yellowCrossDemo(setup);
   const moves: string[] = [];
   const phases: DemoPhase[] = [];
   const currentAlg = () => join(setup, moves.join(' '));
   const current = () => state(currentAlg());
-  const look = (text: Text) => phases.push({
-    start: moves.length, end: moves.length, observe: text, act: { text }, recognizeOnly: true,
+  const look = (text: Text, view?: DemoView) => phases.push({
+    start: moves.length, end: moves.length, observe: text, act: { text }, recognizeOnly: true, view,
   });
   const add = (alg: string, act: DemoContent, recognize?: DemoContent, view?: DemoView) => {
     const start = moves.length;
@@ -282,6 +275,9 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string, follo
   const action = (alg: string, text: Text, caseIndex: number, recognize?: DemoContent, showAlg = true) =>
     add(alg, { text, alg: showAlg ? alg : undefined, caseIndex }, recognize);
   const recognize = (text: Text, caseIndex: number, outlines: string[] = []): DemoContent => ({ text, caseIndex, outlines });
+  const inspect = (recognition: DemoContent) => phases.push({
+    start: moves.length, end: moves.length, recognize: recognition, act: recognition, recognizeOnly: true,
+  });
   const prepare = (alg: string, text: Text, caseIndex: number, recognition?: DemoContent) => {
     if (alg) action(alg, text, caseIndex, recognition, false);
     return alg ? undefined : recognition;
@@ -310,7 +306,7 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string, follo
   for (let round = 0; round < 24 && !demoGoalReached(stage, currentAlg()); round++) {
     const cube = current();
     const base = currentAlg();
-    if (!inspectingHiddenPiece && !ejectedCornerWhite && (stage === 'daisy' ? round === 0 : ['corners', 'yellow-face'].includes(stage))) look(observe[stage]);
+    if (!inspectingHiddenPiece && !ejectedCornerWhite && (stage === 'daisy' ? round === 0 : ['corners', 'yellow-face'].includes(stage))) look(observe[stage], stage === 'corners' ? 'home' : undefined);
     const continuingSearch = inspectingHiddenPiece;
     inspectingHiddenPiece = false;
     if (stage === 'daisy') {
@@ -426,41 +422,52 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string, follo
           inspectingHiddenPiece = true;
           continue;
         }
-        const text = isCorner ? ejectedCornerWhite ? t('白角已到顶层，观察白格朝向。', 'The corner is now on top. Check which way its white sticker faces.') : choice.index === 3 ? t('找到顶层朝上的白格。', 'Found a white sticker facing up on a top-layer corner.') : t('找到顶层侧面的白格。', 'Found a white sticker on the side of a top-layer corner.')
-          : t('找到一条不带黄色的顶层棱。', 'Found a top-layer edge without yellow.');
-        let rec: DemoContent | undefined = recognize(text, choice.index, choice.outlines);
-        if (isCorner) rec = inspectPiece(choice.outlines, choice.index, rec);
-        rec = prepare(choice.u, isCorner ? choice.index === 2
-          ? t('转顶层，把白角放到左前上方。', 'Turn the top to put the white corner at top-front-left.')
-          : t('转顶层，把白角放到右前上方。', 'Turn the top to put the white corner at top-front-right.')
-          : t('转顶层，把这条棱放前。', 'Turn the top to bring the edge to the front.'), choice.index, rec);
-        rec = prepare(choice.d, isCorner ? t('转下面两层，让目标位置处于正下方。', 'Turn the lower two layers to put the target slot directly below the corner.') : t('转下面两层，侧色对齐中心，形成倒 T。', 'Turn the lower two layers to match the side color and form an upside-down T.'), choice.index, rec);
         if (isCorner) {
-          const alignment = recognize(t('转下面两层，让目标位置处于正下方。', 'Turn the lower two layers to put the target slot directly below the corner.'), choice.index);
-          phases.push({ start: moves.length, end: moves.length, recognize: alignment, act: alignment, recognizeOnly: true,
-            recognitionDurationMs: 2000, frontFaceArrow: choice.index === 2 ? { from: 0, to: 6 } : { from: 2, to: 8 } });
-          rec = undefined;
+          const { index, u, d, alg } = choice;
+          const left = index === 2;
+          const up = index === 3;
+          const orientation = up ? t('白格朝上', 'White faces up') : t('白格在侧面', 'White is on a side face');
+          inspect({ ...recognize(orientation, index, white ? [white] : []),
+            detail: ejectedCornerWhite ? t('白角已取到顶层', 'The corner is now in the top layer') : undefined });
+          const placement = u ? (up ? CORNER_ALIGNMENT_COPY.placeUp : CORNER_ALIGNMENT_COPY.placeSide)
+            : t('白格朝左，非白格朝前面', 'White faces left and the other side sticker faces front');
+          const aligned = state(join(base, u, d));
+          const frontSticker = aligned.faces[Face.F][left ? 0 : 2];
+          if (u || left) {
+            add(u, recognize(placement, index, up && white ? [white] : [frontSticker]), undefined, left ? 'slight-left' : 'home');
+          }
+          const frontPair = [frontSticker, aligned.faces[up ? Face.R : Face.F][4]];
+          const rightPair = up ? [aligned.faces[Face.R][0], aligned.faces[Face.F][4]] : [];
+          if (d) {
+            const align = up ? CORNER_ALIGNMENT_COPY.crossAlign
+              : t('转下两层，让前面的色格与同色中心对齐', 'Turn the lower two layers to match the front sticker with its center');
+            add(d, recognize(align, index, up ? [frontPair[0], rightPair[0]] : frontPair));
+          }
+          if (up) {
+            inspect(recognize(t('前面的色格对右侧的同色中心', 'The front sticker matches the center on the right'), index, frontPair));
+            inspect(recognize(t('右侧的色格对前面的同色中心', 'The right sticker matches the center at the front'), index, rightPair));
+            inspect(recognize(CORNER_ALIGNMENT_COPY.crossAligned, index, [...frontPair, ...rightPair]));
+          } else {
+            inspect(recognize(t('前面的色格和同色中心已对齐', 'The front sticker and its center line up'), index, frontPair));
+          }
+          action(alg, up ? t('做三遍右公式', 'Do the right trigger three times') : left ? t('做左公式', 'Do the left trigger') : t('做右公式', 'Do the right trigger'), index);
+          ejectedCornerWhite = undefined;
+          continue;
         }
-        if (isCorner && choice.index === 3) {
-          rec = recognize(t('白格朝上，用三遍右公式。', 'White faces up. Use the right trigger three times.'), choice.index, choice.outlines);
-        }
-        if (!isCorner) {
-          // Decide left/right only after the visible edge and center form an inverted T.
-          if (rec) phases.push({ start: moves.length, end: moves.length, recognize: rec, act: rec, recognizeOnly: true });
-          const alignment = recognize(t('侧色对齐中心，形成倒 T。', 'The side color matches its center, forming an upside-down T.'), choice.index, middleAlignmentStickers(currentAlg()));
-          phases.push({ start: moves.length, end: moves.length, recognize: alignment, act: alignment, recognizeOnly: true });
-          const direction = recognize(choice.index === 0
-            ? t('顶面颜色与右侧中心同色，去右。', 'The top sticker matches the right center: insert right.')
-            : t('顶面颜色与左侧中心同色，去左。', 'The top sticker matches the left center: insert left.'), choice.index, choice.outlines);
-          phases.push({ start: moves.length, end: moves.length, recognize: direction, act: direction, recognizeOnly: true });
-          rec = undefined;
-        }
-        action(choice.alg, isCorner ? choice.index === 3 ? t('做三遍右公式。', 'Do the right trigger three times.') : choice.index === 2 ? t('做左公式。', 'Do the left trigger.') : t('做右公式。', 'Do the right trigger.')
-          : choice.index === 0 ? t('右手拨、右公式、左转体、左公式。', 'U, right trigger, rotate left, left trigger.') : t('左手拨、左公式、右转体、右公式。', 'U′, left trigger, rotate right, right trigger.'), choice.index, rec);
-        ejectedCornerWhite = undefined;
+        let rec = prepare(choice.u, t('转顶层，把这条棱放前', 'Turn the top to bring the edge to the front.'), choice.index,
+          recognize(t('找到一条不带黄色的顶层棱', 'Found a top-layer edge without yellow.'), choice.index, choice.outlines));
+        rec = prepare(choice.d, t('转下面两层，侧色对齐中心，形成倒 T', 'Turn the lower two layers to match the side color and form an upside-down T.'), choice.index, rec);
+        // Decide left/right only after the visible edge and center form an inverted T.
+        if (rec) inspect(rec);
+        inspect(recognize(t('侧色对齐中心，形成倒 T', 'The side color matches its center, forming an upside-down T.'), choice.index, middleAlignmentStickers(currentAlg())));
+        inspect(recognize(choice.index === 0
+          ? t('顶面颜色与右侧中心同色，去右', 'The top sticker matches the right center: insert right.')
+          : t('顶面颜色与左侧中心同色，去左', 'The top sticker matches the left center: insert left.'), choice.index, choice.outlines));
+        action(choice.alg, choice.index === 0 ? t('右手拨、右公式、左转体、左公式', 'U, right trigger, rotate left, left trigger.')
+          : t('左手拨、左公式、右转体、右公式', 'U′, left trigger, rotate right, right trigger.'), choice.index);
       } else {
         // No insertable top piece: eject a misplaced piece with the taught action, then reassess.
-        if (isCorner) look(t('顶层没有白角，再找底层没归位的白角。', 'No white corners in the top layer. Look for an unsolved white corner in the bottom layer.'));
+        if (isCorner) look(t('顶层没有白角，再找底层没归位的白角', 'No white corners in the top layer. Look for an unsolved white corner in the bottom layer.'));
         const y = rotations.find(y => {
           const c = state(join(base, y));
           return isCorner ? !(matches(c, Face.D, 2) && matches(c, Face.F, 8) && matches(c, Face.R, 6))
@@ -468,18 +475,25 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string, follo
         });
         if (y === undefined) throw new Error('No misplaced piece to eject');
         const c = state(join(base, y));
-        const flipped = color(c, Face.F, 5) === center(c, Face.R) && color(c, Face.R, 3) === center(c, Face.F);
-        const index = isCorner ? 1 : flipped ? 2 : 3;
-        const outlines = isCorner ? [c.faces[Face.D][2], c.faces[Face.F][8], c.faces[Face.R][6]] : [c.faces[Face.F][5], c.faces[Face.R][3]];
-        let rec: DemoContent | undefined = recognize(isCorner ? t('底层有白角放错，先把它拿出来。', 'A bottom white corner is misplaced. Eject it first.') : flipped ? t('棱在原来的槽里，但朝向反了。', 'The edge is in the right slot, but flipped.') : t('棱放进了别的槽，先把它拿出来。', 'The edge is in the wrong slot. Eject it first.'), index, outlines);
-        if (isCorner && cornerIndices.every(i => color(cube, Face.D, i) === 'D')) {
-          rec.detail = t('白面虽同色，角的侧色还没对齐中心。', 'The white face is one color, but the corner side stickers do not match the centers.');
+        if (isCorner) {
+          const outlines = [c.faces[Face.D][2], c.faces[Face.F][8], c.faces[Face.R][6]];
+          const slotColors = [Face.D, Face.F, Face.R].map(face => center(c, face));
+          const rightSlot = outlines.every(id => slotColors.includes(id[0]));
+          prepare(y, t('转体，把没归位的白角放到右前下方', 'Rotate the cube to put the unsolved white corner at bottom-front-right'), 1);
+          const issue = recognize(rightSlot ? t('角块位置对了，但朝向不对', 'The corner is in the right slot, but twisted')
+            : t('看侧面颜色，这个白角放错了位置', 'Check the side stickers: this corner is in the wrong slot'), 1, outlines);
+          const rec = inspectPiece(outlines, 1, issue);
+          if (rec) inspect(rec);
+          action(RIGHT, t('做右公式，把白角取到顶层', 'Use the right trigger to eject the corner to the top'), 1);
+          ejectedCornerWhite = outlines.find(id => id[0] === 'D');
+          continue;
         }
-        if (isCorner && followEjectedCorner) ejectedCornerWhite = outlines.find(id => id.startsWith('D'));
-        if (isCorner) rec = inspectPiece(outlines, index, rec);
-        rec = prepare(y, t('转体，把放错的块放右前方。', 'Rotate the cube to put the misplaced piece at front-right.'), index, rec);
-        action(actions[0], isCorner ? t('做右公式，把白角拿到顶层。', 'Use the right trigger to eject the corner to the top.') : t('假想放入一条顶层棱，原来的棱就会出来。', 'Imagine inserting a top edge. The original edge comes out.'), index, rec);
-        if (isCorner) ejectedCornerWhite = outlines.find(id => id[0] === 'D');
+        const flipped = color(c, Face.F, 5) === center(c, Face.R) && color(c, Face.R, 3) === center(c, Face.F);
+        const index = flipped ? 2 : 3;
+        const outlines = [c.faces[Face.F][5], c.faces[Face.R][3]];
+        const rec = recognize(flipped ? t('棱在原来的槽里，但朝向反了', 'The edge is in the right slot, but flipped.') : t('棱放进了别的槽，先把它拿出来', 'The edge is in the wrong slot. Eject it first.'), index, outlines);
+        action(actions[0], t('假想放入一条顶层棱，原来的棱就会出来', 'Imagine inserting a top edge. The original edge comes out.'), index,
+          prepare(y, t('转体，把放错的块放右前方', 'Rotate the cube to put the misplaced piece at front-right.'), index, rec));
       }
     } else if (stage === 'yellow-face') {
       const gray = grayCount(cube);
@@ -613,10 +627,10 @@ export function walkthroughCrossPhases(setup: string, alg: string): DemoPhase[] 
   return phases;
 }
 
-export function buildWalkthroughRun(scramble: string, followEjectedCorner = false): LblLessonRun {
+export function buildWalkthroughRun(scramble: string): LblLessonRun {
   let setup = scramble;
   const stages = Object.fromEntries(LBL_LESSON_STAGE_IDS.map(stage => {
-    const alg = stage === 'cross' ? buildBottomCrossFromDaisy(setup) : buildCompleteDemo(stage, setup, followEjectedCorner).alg;
+    const alg = stage === 'cross' ? buildBottomCrossFromDaisy(setup) : buildCompleteDemo(stage, setup).alg;
     setup = join(setup, alg);
     if (!demoGoalReached(stage, setup)) throw new Error(`Walkthrough did not complete ${stage}`);
     return [stage, alg];
@@ -630,6 +644,13 @@ const DAISY_DEMO_SETUPS = [
   'F R F U2', // Bring an edge up from the first floor.
   "F R F'", // Bring an edge down from the third floor, then inspect the basement.
 ];
+const CORNER_DEMO_SETUPS = [
+  join(lessonFrame(LBL_LESSON_RUNS[0], 'corners').setup, 'U2'), // White faces right first.
+  `y2 (${LEFT})' y2 (${LEFT})' (U d)'`, // Two white-left corners.
+  join(lessonFrame(LBL_LESSON_RUNS[2], 'corners').setup, 'y', 'U'), // White faces up first.
+  // Wrong-slot and twisted bottom corners, with the white cross still solved.
+  `${BLUE_RED_BOTTOM_CORNER_SETUP} x2 (R' D' R D)2 U2 (R' D' R D)4 U2 x2`,
+];
 const pools = new Map<CompleteDemoStage, CompleteDemo[]>();
 /** Small, prepared legal states; solve with the algorithms taught in this chapter. */
 export function completeDemoPool(stage: CompleteDemoStage): CompleteDemo[] {
@@ -638,8 +659,7 @@ export function completeDemoPool(stage: CompleteDemoStage): CompleteDemo[] {
   const chapter = LBL_STEPS.find(step => step.id === stage)!;
   const setups = stage === 'daisy' ? DAISY_DEMO_SETUPS
     : stage === 'yellow-cross' ? YELLOW_CROSS_DEMO_SETUPS
-    : stage === 'corners' ? [...LBL_LESSON_RUNS.flatMap((run, index) =>
-      turns.slice(0, [2, 1, 2][index]).map(turn => join(lessonFrame(run, 'corners').setup, turn))), ...cornerExtremeSetups]
+    : stage === 'corners' ? CORNER_DEMO_SETUPS
     : [...(stage === 'middle' ? [] : chapter.examples.flatMap(example => turns.map(turn => join(resolvePlayerSetup('3x3', example.alg, example.setup, example.startSolved ?? false), turn)))),
       ...LBL_LESSON_RUNS.map(run => lessonFrame(run, stage as LblLessonStageId).setup),
       ...(stage === 'middle' ? [MIDDLE_DEMO_EXTREME_SETUP] : [])];

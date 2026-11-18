@@ -146,10 +146,10 @@ export function Demonstration({ stage, demo, guidedFish = false, onCaseCueChange
     const moves = demo.alg.split(/\s+/).filter(Boolean);
     demo.phases.forEach(phase => {
       if (phase.observe) {
-        frames.push({ step: phase.start, duration: CAPTION_DURATION_MS, caption: 'observe', phase });
+        frames.push({ step: phase.start, duration: CAPTION_DURATION_MS, caption: 'observe', phase, view: phase.view });
       }
       if (phase.recognize) {
-        frames.push({ step: phase.start, duration: phase.recognitionDurationMs ?? CAPTION_DURATION_MS, caption: 'recognize', phase });
+        frames.push({ step: phase.start, duration: CAPTION_DURATION_MS, caption: 'recognize', phase });
       }
       if (phase.returnView) {
         frames.push({ step: phase.start, duration: 900, caption: 'recognize', phase, view: phase.returnView });
@@ -358,7 +358,6 @@ export function Demonstration({ stage, demo, guidedFish = false, onCaseCueChange
       daisyAlignmentFace={demo.alg.split(/\s+/)[frame.step] === 'R2' ? 'R' : 'F'}
       set={walkthrough ? '' : LESSON_STICKERING[stage]} additionalStickering={!walkthrough && (stage.startsWith('yellow-') || stage.endsWith('-position')) ? 'F2L' : undefined} orientation="z2"
       highlightedStickers={walkthrough ? (hiddenOutlines === recognitionOutlines ? NO_OUTLINES : (content.outlines ?? visibleOutlines)) : stage === 'yellow-face' ? touchHighlight ?? visibleOutlines : undefined}
-      frontFaceArrow={frame.caption === 'recognize' ? frame.phase?.frontFaceArrow : undefined}
       sceneRot={lblDemoView()} setup={demo.setup} alg={demo.alg} stickeringAtStep={stickeringAtStep}
       onStepChange={step => { playerStep.current = step; }} fillPane moveDurationMs={walkthrough ? 1100 : 850} />
       <AlgPlaybackControls step={frame.step} count={total} playing={playing} stepMarkers={boundaries}
