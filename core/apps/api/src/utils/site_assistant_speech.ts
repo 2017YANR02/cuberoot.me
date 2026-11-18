@@ -20,6 +20,22 @@ export function speechConfig(env = process.env) {
 export function speechAudioType(audio: Buffer): 'audio/wav' | 'audio/mpeg' {
   return audio.toString('ascii', 0, 4) === 'RIFF' && audio.toString('ascii', 8, 12) === 'WAVE' ? 'audio/wav' : 'audio/mpeg';
 }
+/** Curated, model-specific system voices. Never accept arbitrary client voice IDs. */
+export function speechVoices(config = speechConfig()) {
+  if (!config) return [];
+  const voices = config.qwenTts ? [
+    { id: 'Cherry', name: { zh: '明亮女声', en: 'Bright female voice' } },
+    { id: 'Serena', name: { zh: '温柔女声', en: 'Gentle female voice' } },
+    { id: 'Ethan', name: { zh: '阳光男声', en: 'Upbeat male voice' } },
+  ] : /^qwen-audio-3\.1-tts-(flash|plus)$/.test(config.model) ? [
+    { id: 'longanhuan_v3.1', name: { zh: '活泼女声', en: 'Lively female voice' } },
+    { id: 'longanlingxin_v3.1', name: { zh: '温柔女声', en: 'Gentle female voice' } },
+    { id: 'longanfengyue_v3.1', name: { zh: '知性女声', en: 'Composed female voice' } },
+    { id: 'xunanchuan_v3.1', name: { zh: '磁性男声', en: 'Resonant male voice' } },
+  ] : [];
+  if (!voices.some(voice => voice.id === config.voice)) voices.unshift({ id: config.voice, name: { zh: '已配置音色', en: 'Configured voice' } });
+  return voices;
+}
 export function speechChunks(text: string): string[] {
   if (!text.trim() || text.length > 30_000) throw new Error('invalid_text');
   const characters = Array.from(text), chunks: string[] = [];
@@ -91,10 +107,14 @@ export function createSpeechSynthesizer(fetcher: typeof fetch = fetch, now = Dat
   const active = new Set<number>();
   const usage = new Map<number, { day: number; characters: number }>();
   let bytes = 0;
-  return async (uid: number, text: string, lang: 'zh' | 'en', signal: AbortSignal, onAudio?: (audio: Buffer) => Promise<void>) => {
+  return async (uid: number, text: string, lang: 'zh' | 'en', signal: AbortSignal, onAudio?: (audio: Buffer) => Promise<void>, options?: { voice?: string }) => {
     signal.throwIfAborted();
     const config = speechConfig();
     if (!config) throw new Error('speech_unavailable');
+    if (options?.voice) {
+      if (!speechVoices(config).some(voice => voice.id === options.voice)) throw new Error('invalid_voice');
+      config.voice = options.voice;
+    }
     const hash = createHash('sha256').update(JSON.stringify([uid, config.origin, config.model, config.voice, lang, text])).digest('hex');
     for (const [key, item] of cache) if (item.expires <= now()) { bytes -= item.audio.length; cache.delete(key); }
     const hit = cache.get(hash);

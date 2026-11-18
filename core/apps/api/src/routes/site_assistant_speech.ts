@@ -5,19 +5,27 @@ import { z } from 'zod';
 import { assistantAnswerText, assistantSpokenText, type AssistantAnswer } from '@cuberoot/shared/site-assistant';
 import { query, type QueryRunner } from '../db/connection.js';
 import { checkRateLimit, RateLimitError } from '../utils/rate_limit.js';
-import { speechAudioType, speechChunks, speechConfig, synthesizeAssistantSpeech } from '../utils/site_assistant_speech.js';
+import { speechAudioType, speechChunks, speechConfig, speechVoices, synthesizeAssistantSpeech } from '../utils/site_assistant_speech.js';
 
-const input = z.object({ messageId: z.string().uuid().optional(), requestId: z.string().uuid().optional(), answer: z.string().max(50_000), chunk: z.number().int().min(0).max(199), lang: z.enum(['zh', 'en']), stream: z.boolean().optional() }).strict().refine(v => !!v.messageId || !!v.requestId);
+const input = z.object({ messageId: z.string().uuid().optional(), requestId: z.string().uuid().optional(), answer: z.string().max(50_000), chunk: z.number().int().min(0).max(199), lang: z.enum(['zh', 'en']), stream: z.boolean().optional(), voice: z.string().min(1).max(100).optional() }).strict().refine(v => !!v.messageId || !!v.requestId);
 export function createAssistantSpeechRoutes(deps: { authenticate: (c: Context) => Promise<{ uid: number }>; run?: QueryRunner; synthesize?: typeof synthesizeAssistantSpeech }) {
   const routes = new Hono(), run = deps.run ?? query, synthesize = deps.synthesize ?? synthesizeAssistantSpeech;
   routes.use('/site-assistant/speech', async (c, next) => { c.header('Cache-Control', 'private, no-store'); await next(); });
   routes.use('/site-assistant/speech', bodyLimit({ maxSize: 320_000 }));
+  routes.get('/site-assistant/speech/options', async c => {
+    c.header('Cache-Control', 'private, no-store');
+    try { await deps.authenticate(c); } catch { return c.json({ error: 'login_required' }, 401); }
+    const config = speechConfig();
+    if (!config) return c.json({ error: 'speech_unavailable' }, 503);
+    return c.json({ defaultVoice: config.voice, voices: speechVoices(config) });
+  });
   routes.post('/site-assistant/speech', async c => {
     let user;
     try { user = await deps.authenticate(c); } catch { return c.json({ error: 'login_required' }, 401); }
     const parsed = input.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: 'invalid_speech' }, 400);
     const data = parsed.data;
+    if (data.voice && !speechVoices().some(voice => voice.id === data.voice)) return c.json({ error: 'invalid_voice' }, 400);
     try {
       checkRateLimit(String(user.uid), { bucket: 'assistant-speech', max: 30 });
       const rows = data.messageId
@@ -49,7 +57,7 @@ export function createAssistantSpeechRoutes(deps: { authenticate: (c: Context) =
               await synthesize(user.uid, chunks[data.chunk], data.lang, signal, async audio => {
                 if (speechAudioType(audio) !== 'audio/mpeg') throw new Error('invalid_audio');
                 await send({ type: 'audio', audio: audio.toString('base64') });
-              });
+              }, { voice: data.voice });
               await send({ type: 'done' });
             } catch {
               if (!signal.aborted) await send({ type: 'error', error: 'speech_unavailable' });
@@ -60,7 +68,7 @@ export function createAssistantSpeechRoutes(deps: { authenticate: (c: Context) =
           return response;
         }
       }
-      const audio = await synthesize(user.uid, chunks[data.chunk], data.lang, c.req.raw.signal);
+      const audio = await synthesize(user.uid, chunks[data.chunk], data.lang, c.req.raw.signal, undefined, { voice: data.voice });
       return c.json({ audio: audio.toString('base64'), mime: speechAudioType(audio), total: chunks.length });
     } catch (error) {
       if (error instanceof RateLimitError || error instanceof Error && error.message === 'speech_limit') return c.json({ error: 'speech_limit' }, 429);

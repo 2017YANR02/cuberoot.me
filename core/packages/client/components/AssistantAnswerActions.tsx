@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, Copy, ThumbsUp, ThumbsDown, Volume2, Square, Share, RefreshCw, Ellipsis, GitBranch, ChevronRight, FileText, Quote } from '@app-foundation/icons/lucide';
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { Check, Copy, ThumbsUp, ThumbsDown, Volume2, Square, Share, RefreshCw, Ellipsis, GitBranch, ChevronRight, FileText, Quote, SlidersHorizontal } from '@app-foundation/icons/lucide';
 import { CompactSelect } from '@/components/CompactSelect';
 import { Tooltip } from '@/components/Tooltip';
 import { useCopy } from '@/hooks/useCopy';
@@ -10,6 +10,7 @@ import { assistantAnswerText, assistantSpokenText, downloadAssistantPdf } from '
 import type { AssistantTurn } from './SiteAssistantDialog';
 import { AssistantShareDialog } from './AssistantShareDialog';
 import { playAssistantSpeech } from '@/lib/assistant-speech';
+import { getSpeechPreferences, getServerSpeechPreferences, subscribeSpeechPreferences, setSpeechPreferences, loadSpeechVoices, speechRates, type SpeechVoiceOptions } from '@/lib/assistant-speech-preferences';
 
 function Action({ label, children, onClick, disabled, pressed }: { label: string; children: ReactNode; onClick: () => void; disabled?: boolean; pressed?: boolean }) {
   return <Tooltip content={label}>{tip => <button {...tip} type="button" className="site-assistant-action" aria-label={label} aria-pressed={pressed} disabled={disabled} onClick={onClick}>{children}</button>}</Tooltip>;
@@ -27,6 +28,10 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
   const [speechLoading, setSpeechLoading] = useState(false);
   const [speechFallback, setSpeechFallback] = useState(false);
   const speechController = useRef<AbortController | null>(null);
+  const speechPreferences = useSyncExternalStore(subscribeSpeechPreferences, getSpeechPreferences, getServerSpeechPreferences);
+  const [voiceOptions, setVoiceOptions] = useState<SpeechVoiceOptions | null>(null);
+  const [voiceError, setVoiceError] = useState(false);
+  const refreshVoices = () => { setVoiceError(false); void loadSpeechVoices().then(setVoiceOptions, () => setVoiceError(true)); };
   const [shareOpen, setShareOpen] = useState(false);
   const [shared, setShared] = useState<{result: AssistantTurn['result']; id: string} | null>(null);
   const shareId = shared && shared.result === turn.result ? shared.id : null;
@@ -46,6 +51,9 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
     return () => { window.removeEventListener('assistant-speech-start', cancel); speechJob.current++; speechController.current?.abort(); if (utterance.current && 'speechSynthesis' in window) window.speechSynthesis.cancel(); };
   }, []);
   useEffect(() => { stop(); setSpeechFallback(false); }, [turn.result, turn.messageId]);
+  useEffect(() => { stop(); }, [speechPreferences.voice]);
+  // System speech cannot change an utterance's rate after it starts.
+  useEffect(() => { if (utterance.current) stop(); }, [speechPreferences.rate]);
   const exportText = () => assistantAnswerText(turn.result!, window.location.origin);
   const readBrowser = () => {
     if (speaking) { stop(); return; }
@@ -62,6 +70,7 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
       if (index >= chunks.length) { utterance.current = null; setSpeaking(false); return; }
       const item = new SpeechSynthesisUtterance(chunks[index]);
       item.lang = lang === 'zh' ? 'zh-CN' : 'en-US';
+      item.rate = getSpeechPreferences().rate;
       item.onend = () => next(index + 1);
       item.onerror = event => { if (speechJob.current !== job) return; utterance.current = null; setSpeaking(false); if (event.error !== 'canceled' && event.error !== 'interrupted') setFailure(tr({ zh: '朗读失败，请重试。', en: 'Read aloud failed. Please retry.' })); };
       utterance.current = item; window.speechSynthesis.speak(item);
@@ -76,7 +85,11 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
     setSpeaking(true); setSpeechLoading(true);
     const validId = (id?: string) => id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) ? id : undefined;
     try {
-      await playAssistantSpeech({ messageId: validId(turn.messageId), requestId: validId(turn.requestId), answer: assistantSpokenText(exportText()), lang }, controller.signal, () => setSpeechLoading(false));
+      const preferences = getSpeechPreferences();
+      const voices = preferences.voice ? await loadSpeechVoices() : null;
+      controller.signal.throwIfAborted();
+      const voice = voices?.voices.some(item => item.id === preferences.voice) ? preferences.voice : undefined;
+      await playAssistantSpeech({ messageId: validId(turn.messageId), requestId: validId(turn.requestId), answer: assistantSpokenText(exportText()), lang, voice }, controller.signal, () => setSpeechLoading(false));
     } catch {
       if (!controller.signal.aborted) {
         setFailure(tr({ zh: '语音合成暂不可用，可使用浏览器朗读。', en: 'Voice generation is unavailable. You can use browser read aloud.' }));
@@ -110,6 +123,11 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
         { value: 'other' as const, label: <span className="assistant-menu-label"><ThumbsDown size={19}/>{tr({ zh: '回复不佳', en: 'Bad response' })}</span> },
       ]}/>}
       <Action label={tr(speaking ? { zh: '停止朗读', en: 'Stop reading' } : { zh: '朗读', en: 'Read aloud' })} onClick={() => void read()} pressed={speaking}>{speaking ? <Square size={16} fill="currentColor"/> : <Volume2 size={19}/>}</Action>
+      <CompactSelect side="top" unstyledTrigger triggerClassName="site-assistant-action" popupClassName="assistant-action-menu" className="assistant-toolbar-menu" ariaLabel={tr({ zh: '选择音色', en: 'Choose voice' })} label={<SlidersHorizontal size={17}/>} onOpenChange={open => { if (open) refreshVoices(); }} value={voiceOptions?.voices.some(item => item.id === speechPreferences.voice) ? speechPreferences.voice : ''} items={voiceError ? [{ value: '__retry', label: tr({ zh: '加载失败，重试', en: 'Loading failed. Retry' }) }] : voiceOptions ? [
+        { value: '', label: tr({ zh: '默认音色', en: 'Default voice' }) },
+        ...voiceOptions.voices.map(voice => ({ value: voice.id, label: tr(voice.name) })),
+      ] : [{ value: '__loading', label: tr({ zh: '正在加载…', en: 'Loading…' }), disabled: true }]} onChange={voice => { if (voice === '__retry') refreshVoices(); else setSpeechPreferences({ voice }); }}/>
+      <CompactSelect side="top" unstyledTrigger triggerClassName="site-assistant-action" popupClassName="assistant-action-menu" className="assistant-toolbar-menu" ariaLabel={tr({ zh: '选择语速', en: 'Choose speed' })} label={<span style={{ fontSize: 12 }}>{speechPreferences.rate}×</span>} value={speechPreferences.rate} items={speechRates.map(rate => ({ value: rate, label: `${rate}×` }))} onChange={rate => setSpeechPreferences({ rate })}/>
       {!turn.partial && <Action label={tr({ zh: '分享', en: 'Share' })} onClick={() => setShareOpen(true)}><Share size={18}/></Action>}
       {onRetry && <Action label={tr({ zh: '重试', en: 'Retry' })} onClick={() => { stop(); onRetry(); }}><RefreshCw size={18}/></Action>}
       {(timestamp || onBranch) && <CompactSelect side="top" unstyledTrigger triggerClassName="site-assistant-action" popupClassName="assistant-action-menu" className="assistant-toolbar-menu" ariaLabel={tr({ zh: '更多', en: 'More' })} label={<Ellipsis size={20}/>} items={[

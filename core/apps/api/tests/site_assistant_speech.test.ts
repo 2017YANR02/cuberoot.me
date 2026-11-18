@@ -174,3 +174,36 @@ it('uses the complete WAV response for the standard model even when streaming is
   expect(response.headers.get('content-type')).toContain('application/json');
   expect((await response.json()).total).toBe(1);
 });
+it('lists only model-compatible voices privately and authenticates the options endpoint', async () => {
+  enabled();
+  const response = await app.request('/site-assistant/speech/options');
+  expect(response.headers.get('cache-control')).toBe('private, no-store');
+  expect((await response.json()).voices.map((voice: { id: string }) => voice.id)).toEqual(['longanhuan_v3.1', 'longanlingxin_v3.1', 'longanfengyue_v3.1', 'xunanchuan_v3.1']);
+  authenticate.mockRejectedValueOnce(new Error());
+  expect((await app.request('/site-assistant/speech/options')).status).toBe(401);
+  vi.stubEnv('SITE_ASSISTANT_TTS_BASE_URL', 'https://dashscope.aliyuncs.com');
+  expect((await (await app.request('/site-assistant/speech/options')).json()).voices.map((voice: { id: string }) => voice.id)).toEqual(['Cherry', 'Serena', 'Ethan']);
+});
+it('rejects unsupported voice IDs before synthesis and passes the selected voice through both transports', async () => {
+  enabled();
+  expect((await post({ ...body, voice: 'Cherry' } as typeof body)).status).toBe(400);
+  expect(synthesize).not.toHaveBeenCalled();
+  await post({ ...body, voice: 'xunanchuan_v3.1' } as typeof body);
+  expect(synthesize.mock.calls[0][5]).toEqual({ voice: 'xunanchuan_v3.1' });
+  synthesize.mockImplementationOnce(async (_uid, _text, _lang, _signal, send) => { await send(Buffer.from('ID3')); return Buffer.from('ID3'); });
+  const response = await post({ ...body, stream: true, voice: 'longanlingxin_v3.1' } as typeof body);
+  expect(await response.text()).toContain('"type":"done"');
+  expect(synthesize.mock.calls[1][5]).toEqual({ voice: 'longanlingxin_v3.1' });
+});
+it('uses the chosen provider voice and separates its audio cache from the default voice', async () => {
+  enabled();
+  const fetcher = vi.fn().mockImplementation(async () => sseResponse(audioEvent('SUQz', 'stop')));
+  const speak = createSpeechSynthesizer(fetcher), signal = new AbortController().signal;
+  await speak(61, 'Hello', 'en', signal);
+  await speak(61, 'Hello', 'en', signal, undefined, { voice: 'xunanchuan_v3.1' });
+  await speak(61, 'Hello', 'en', signal, undefined, { voice: 'xunanchuan_v3.1' });
+  expect(fetcher).toHaveBeenCalledTimes(2);
+  expect(JSON.parse(fetcher.mock.calls[1][1].body).input.voice).toBe('xunanchuan_v3.1');
+  await expect(speak(61, 'Hello', 'en', signal, undefined, { voice: 'invalid' })).rejects.toThrow('invalid_voice');
+  expect(fetcher).toHaveBeenCalledTimes(2);
+});

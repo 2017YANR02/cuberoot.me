@@ -126,3 +126,20 @@ it.each(['truncated', 'error'])('stops a %s stream without silently retrying or 
   await expect(playback).rejects.toThrow(failure === 'error' ? 'speech_unavailable' : 'speech_incomplete');
   expect(sessionFetch).toHaveBeenCalledOnce(); expect(audio.pause).toHaveBeenCalled();
 });
+it('sends the selected voice and changes speed without another synthesis request', async () => {
+  const { setSpeechPreferences } = await import('@/lib/assistant-speech-preferences');
+  const audio = audioFixture() as ReturnType<typeof audioFixture> & { playbackRate: number; defaultPlaybackRate: number; preservesPitch: boolean };
+  setSpeechPreferences({ rate: 1.25 });
+  vi.mocked(sessionFetch).mockResolvedValue(Response.json({ audio: btoa('audio'), total: 1 }));
+  const controller = new AbortController();
+  const playback = playAssistantSpeech({ ...input, voice: 'xunanchuan_v3.1' }, controller.signal, vi.fn());
+  await vi.waitFor(() => expect(audio.play).toHaveBeenCalledOnce());
+  expect(JSON.parse(vi.mocked(sessionFetch).mock.calls[0][1]!.body as string).voice).toBe('xunanchuan_v3.1');
+  expect(audio.playbackRate).toBe(1.25);
+  setSpeechPreferences({ rate: 2 });
+  expect(audio.playbackRate).toBe(2); expect(audio.defaultPlaybackRate).toBe(2); expect(audio.preservesPitch).toBe(true);
+  expect(sessionFetch).toHaveBeenCalledOnce();
+  controller.abort(); await expect(playback).rejects.toThrow();
+  setSpeechPreferences({ rate: 1 });
+  expect(audio.playbackRate).toBe(2); // Listener released after stop.
+});

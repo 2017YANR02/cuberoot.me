@@ -2,6 +2,7 @@ import { readAssistantEvents } from '@cuberoot/shared/site-assistant';
 import { apiUrl } from './api-base';
 import { authHeaders } from './admin-api';
 import { sessionFetch } from './session-fetch';
+import { getSpeechPreferences, subscribeSpeechPreferences } from './assistant-speech-preferences';
 
 const invalidAudio = () => new Error('invalid_audio');
 function audioBytes(encoded: unknown): Uint8Array<ArrayBuffer> {
@@ -27,8 +28,11 @@ function mediaEvent(target: EventTarget, event: string, signal: AbortSignal, act
   });
 }
 
-export async function playAssistantSpeech(input: { messageId?: string; requestId?: string; answer: string; lang: 'zh' | 'en' }, signal: AbortSignal, onPlaying: () => void) {
+export async function playAssistantSpeech(input: { messageId?: string; requestId?: string; answer: string; lang: 'zh' | 'en'; voice?: string }, signal: AbortSignal, onPlaying: () => void) {
   const audio = new Audio();
+  const applyRate = () => { audio.playbackRate = getSpeechPreferences().rate; audio.defaultPlaybackRate = audio.playbackRate; audio.preservesPitch = true; };
+  applyRate();
+  const unsubscribeRate = subscribeSpeechPreferences(applyRate);
   const controller = new AbortController();
   const cancel = () => controller.abort(signal.reason);
   signal.addEventListener('abort', cancel, { once: true });
@@ -123,6 +127,7 @@ export async function playAssistantSpeech(input: { messageId?: string; requestId
       URL.revokeObjectURL(url!); url = undefined;
     }
   } finally {
+    unsubscribeRate();
     signal.removeEventListener('abort', cancel);
     controller.abort(); playbackSignal.removeEventListener('abort', stop); stop();
     if (url) URL.revokeObjectURL(url);
