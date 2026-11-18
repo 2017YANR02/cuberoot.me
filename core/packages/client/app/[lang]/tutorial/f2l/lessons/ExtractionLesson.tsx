@@ -44,7 +44,7 @@ export default function ExtractionLesson({ orientation, pauseBetween, onNextChap
         : video === 'treatment' ? NONSTANDARD_TREATMENT_TITLE : EXTRACTION_TITLES[extractionKind])} items={[{ id: 'section-0', label: tr({ zh: "认识非标", en: "Recognizing non-standard cases" }), active: video === 'intro', onSelect: () => setVideo('intro') }, { id: 'section-1', label: tr(NONSTANDARD_TREATMENT_TITLE), active: video === 'treatment', onSelect: () => setVideo('treatment') }, ...(includeExamples ? kinds.map((kind) => ({ id: String(kind), label: tr(EXTRACTION_TITLES[kind]), active: !video && extractionKind === kind, onSelect: () => { setVideo(null); setExtractionKind(kind); }, icon: <VisualCube view="iso" size={36} faceletColors={f2lDiagramFacelets(examples.find(item => item.kind === kind)!.setup, orientation)} alt=""/> })) : [])]} />
       <div className="f2l-study-main">
         {video === 'treatment' ? <NonstandardIntro key={`treatment:${orientation}`} orientation={orientation}
-          scenes={treatmentScenes} title={NONSTANDARD_TREATMENT_TITLE} showSceneNumber />
+          scenes={treatmentScenes} title={NONSTANDARD_TREATMENT_TITLE} showSceneNumber compactReference />
         : video === 'intro' ? <NonstandardIntro key={orientation} orientation={orientation}
           edgeSetup={examples.find(item => item.kind === 'edge')!.setup}
           cornerSetup={examples.find(item => item.kind === 'corner')!.setup} /> : extraction && <>

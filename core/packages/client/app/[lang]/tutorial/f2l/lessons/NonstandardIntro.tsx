@@ -43,9 +43,9 @@ const edgeStickering = () => (initial: number, face: number) => initial === 20 ?
 const cornerStickering = () => (initial: number, face: number) => initial === 23 ? FM_IGNORED : pairMask(initial, face);
 const crossMask = () => (initial: number, face: number) => initial === 20 || initial === 23 ? FM_IGNORED : pairMask(initial, face);
 
-export default function NonstandardIntro({ orientation, edgeSetup = '', cornerSetup = '', onComplete, terminologyOnly = false, scenes: suppliedScenes, title, showSceneNumber = false }: {
+export default function NonstandardIntro({ orientation, edgeSetup = '', cornerSetup = '', onComplete, terminologyOnly = false, scenes: suppliedScenes, title, showSceneNumber = false, compactReference = false }: {
   orientation: string; edgeSetup?: string; cornerSetup?: string; onComplete?: (complete: boolean) => void; terminologyOnly?: boolean;
-  scenes?: readonly NonstandardIntroScene[]; title?: LocalizedText; showSceneNumber?: boolean;
+  scenes?: readonly NonstandardIntroScene[]; title?: LocalizedText; showSceneNumber?: boolean; compactReference?: boolean;
 }) {
   const scenes = useMemo(() => suppliedScenes ?? nonstandardIntroScenes(edgeSetup, cornerSetup, orientation, terminologyOnly),
     [suppliedScenes, edgeSetup, cornerSetup, orientation, terminologyOnly]);
@@ -330,7 +330,7 @@ export default function NonstandardIntro({ orientation, edgeSetup = '', cornerSe
   const captionStart = beat?.at ?? 0;
   const captionEnd = scene.beats?.find(item => item.at > captionStart)?.at ?? scene.duration;
   const compactCaption = captionLines[Math.min(captionLines.length - 1, Math.floor(Math.max(0, elapsed - captionStart) / Math.max(1, captionEnd - captionStart) * captionLines.length))];
-  return <section className="f2l-concept-video" data-playing={playing} data-continuous={continuous} aria-label={tr(title ?? (terminologyOnly
+  return <section className={`f2l-concept-video${compactReference ? ' f2l-treatment-video' : ''}`} data-playing={playing} data-continuous={continuous} aria-label={tr(title ?? (terminologyOnly
     ? { zh: '术语介绍', en: 'Terminology' }
     : { zh: '标态与非标概念演示', en: 'Standard and non-standard cases: concept demonstration' }))}>
     <VideoStage>
@@ -355,7 +355,6 @@ export default function NonstandardIntro({ orientation, edgeSetup = '', cornerSe
       </div>
       <div className={`f2l-concept-caption${!scene.displayAlg && !scene.reference ? ' tutorial-single-caption' : ''}`} style={{ opacity: sceneOpacity }} aria-hidden={sceneOpacity === 0} aria-live="polite" aria-atomic="true"><ReadingFit pane>
         <div className="f2l-concept-explanation">
-          {scene.reference && ready && !pairTransition && elapsed >= (scene.bubbleAt ?? 0) && scene.bubble && <p className="f2l-reference-note">{tr(scene.bubble)}</p>}
           <p key={tr(beat?.caption ?? scene.caption)} className="f2l-concept-line"><span className="f2l-shot-full-caption">{tr(beat?.caption ?? scene.caption)}</span><span className="f2l-shot-compact-caption">{compactCaption}</span></p>
           {scene.displayAlg && <code>{scene.displayAlg}</code>}
         </div>
