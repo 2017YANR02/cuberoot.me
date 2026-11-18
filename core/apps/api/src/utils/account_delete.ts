@@ -151,6 +151,8 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   recon_capture_revisions: '随 capture_id 级联删除采集修订；其他采集上的 actor_user_id 随账号删除置空',
   workspace_work_calendars: '个人工作日历版本通过 user_id 外键随 app_users 级联删除',
   workspace_work_periods: '个人每周工作安排通过 user_id 外键随 app_users 级联删除，单日调整随安排级联删除',
+  workspace_contracts: '私有合同随账号外键级联删除，原文件及历史版本随合同级联删除（0339）',
+  workspace_member_requests: '员工权限申请随账号外键级联删除（0340）',
   workspace_members: '0282/0332 数据库注销守卫清理私人草稿与修订、匿名化成员和评论；保留已提交团队记录，账号外键置空',
   remote_access_requests: '远程接入申请通过 user_id 外键随账号级联删除，申请事件随申请删除；已授权设备仍须由负责人独立撤销',
   dev_preview_requests: '开发网址申请通过 user_id 外键随账号级联删除，申请事件随申请删除；已开通隧道仍须由负责人独立撤销',

@@ -303,6 +303,8 @@
 }
 .workspace-dialog .staff-field-date .date-input { width: 100%; }
 .workspace-dialog .staff-field-short[data-control="select"] { flex-basis: 8rem; width: 8rem; }
+.workspace-discard { margin: 20px 24px 0; padding: 16px; border: 1px solid var(--border-strong); border-radius: 8px; }
+.workspace-discard p { margin: 0 0 12px; }
 .staff-workspace-handbook .staff-start-apps, .staff-workspace-handbook .staff-start-knowledge > li, .staff-workspace-handbook .staff-start-development { font-size: 16px; }
 .staff-workspace-handbook .staff-start-note, .staff-workspace-handbook .staff-start-knowledge p, .staff-workspace-handbook .staff-start-device-detail, .staff-workspace-handbook .staff-start-action, .staff-workspace-handbook .staff-start-instructions > summary { font-size: 14px; }
 .staff-workspace-handbook .staff-start-module-title { font-size: 24px; letter-spacing: normal; }
@@ -320,6 +322,7 @@
   .workspace-dialog-body { padding: 20px 16px; }
   .workspace-dialog .staff-field-medium, .workspace-dialog .staff-field-wide { flex-basis: 100%; width: 100%; }
   .workspace-member-row { gap: 8px 16px; }
+  .workspace-discard { margin-inline: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .workspace-action:active:not(:disabled) { transform: none; }
