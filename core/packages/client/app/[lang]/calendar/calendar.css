@@ -297,6 +297,7 @@ html:root[data-theme=dark]:has(.cal-page) {
 }
 .cal-sidebar-slot[data-expanded="false"] { flex-basis: 0; }
 @media (prefers-reduced-motion: reduce) { .cal-sidebar-slot { transition: none; } }
+.cal-scrim { display: none; }
 .cal-sidebar {
   width: var(--cal-sidebar-width, 264px);
   height: 100%;
@@ -1184,7 +1185,10 @@ html:root[data-theme=dark]:has(.cal-page) {
 }
 
 @media (max-width: 900px) {
-  .cal-page { background: var(--cal-mobile-canvas); }
+  .cal-page {
+    position: relative;
+    background: var(--cal-mobile-canvas);
+  }
   body[data-site-scenery=transparent] .cal-page { background: var(--cal-mobile-canvas); }
   .cal-desktop-topbar { display: none; }
   .cal-mobile-topbar {
@@ -1310,8 +1314,38 @@ html:root[data-theme=dark]:has(.cal-page) {
   .cal-page .cal-grid .fc .fc-timegrid-event .fc-event-main { padding: 2px; }
   .cal-page .cal-grid .cal-chip { font-size: 13px; line-height: 1.2; }
   .cal-page .cal-grid .fc-timegrid-axis .fc-timegrid-axis-cushion { font-size: 11px; }
-  .cal-body { --cal-sidebar-width: min(264px, 55vw); }
-  .cal-sidebar { padding: 20px 12px 24px; border: none; }
+  /* 让抽屉和遮罩沿页面边缘定位，覆盖顶栏和日历主体。 */
+  .cal-body {
+    position: static;
+    isolation: auto;
+    --cal-sidebar-width: min(340px, 75vw);
+  }
+  .cal-sidebar-slot {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    width: var(--cal-sidebar-width);
+    background: var(--background);
+    transform: translateX(-100%);
+    transition: transform 180ms ease;
+  }
+  .cal-sidebar-slot[data-expanded="true"] {
+    transform: translateX(0);
+    box-shadow: 0 0 40px color-mix(in srgb, var(--foreground) 22%, transparent);
+  }
+  @media (prefers-reduced-motion: reduce) { .cal-sidebar-slot { transition: none; } }
+  .cal-scrim {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 39;
+    background: color-mix(in srgb, var(--background) 45%, transparent);
+  }
+  .cal-sidebar {
+    padding: calc(20px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+    border: none;
+    overscroll-behavior-y: contain;
+  }
   .cal-sidebar > :is(.cal-create-btn, .cal-mini) { display: none; }
   .cal-mobile-sidebar-head, .cal-mobile-sidebar-foot { display: block; }
   .cal-mobile-sidebar-head h2 { margin: 12px 0 20px; font-size: 22px; font-weight: 500; }
