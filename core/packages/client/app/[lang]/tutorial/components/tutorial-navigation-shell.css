@@ -25,11 +25,47 @@
 .tutorial-navigation-shell .af-nav-icon { width: var(--tutorial-nav-column-size); height: var(--tutorial-nav-column-size); flex-basis: var(--tutorial-nav-column-size); display: grid; place-items: center; }
 .tutorial-navigation-shell .af-nav-icon :is(svg, .lbl-thumbnail, .puzzle-art) { width: var(--tutorial-nav-icon-size); height: var(--tutorial-nav-icon-size); max-width: var(--tutorial-nav-icon-size); max-height: var(--tutorial-nav-icon-size); }
 /* Keep the icon column fixed; the collapsed rail includes both row and sidebar padding. */
-.tutorial-navigation-shell.af-navigation[data-collapsed='true'] { --af-nav-width: 76px; }
+.tutorial-navigation-shell.af-navigation[data-collapsed='true'] { --af-nav-width: calc(var(--tutorial-nav-column-size) + 40px); }
 .tutorial-navigation-shell[data-collapsed='true'] .af-nav-link { gap: 0; }
 .tutorial-navigation-shell .af-nav-icon .lbl-thumbnail-play { display: none; }
 @media (min-width: 761px) {
+  .tutorial-navigation-shell > .af-nav-body > .af-nav-sidebar {
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .tutorial-navigation-shell .af-nav-toggle { flex-shrink: 0; }
+  .tutorial-navigation-shell > .af-nav-body > .af-nav-sidebar > div {
+    flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: hidden;
+    box-sizing: border-box; padding-block: 28px; scrollbar-width: none;
+    overscroll-behavior-y: contain; overflow-anchor: none;
+  }
+  .tutorial-navigation-shell > .af-nav-body > .af-nav-sidebar > div::-webkit-scrollbar { display: none; }
+  .tutorial-navigation-shell .tutorial-nav-scroll-arrow:not([hidden]) {
+    position: absolute; inset-inline: 10px; height: 28px; z-index: 2;
+    display: grid; place-items: center; padding: 0; border: 0;
+    background: var(--af-nav-sidebar-bg); color: var(--af-nav-text); cursor: pointer;
+  }
+  .tutorial-navigation-shell .tutorial-nav-scroll-arrow[data-direction='up'] { top: 56px; }
+  .tutorial-navigation-shell .tutorial-nav-scroll-arrow[data-direction='down'] { bottom: 8px; }
+  .tutorial-navigation-shell .tutorial-nav-scroll-arrow:hover { background: var(--af-nav-hover); }
+  .tutorial-navigation-shell .tutorial-nav-scroll-arrow:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+  .tutorial-navigation-shell.af-navigation { --tutorial-nav-icon-size: 36px; --tutorial-nav-column-size: 36px; }
+  .tutorial-navigation-shell .af-nav-toggle {
+    width: 44px; height: 44px;
+    margin-inline-start: calc(10px + var(--tutorial-nav-column-size) / 2 - 22px);
+  }
+  .tutorial-navigation-shell .af-nav-toggle > svg {
+    width: var(--tutorial-nav-icon-size); height: var(--tutorial-nav-icon-size);
+  }
+  /* Cube thumbnails supply inline dimensions; the shared navigation owns their display size. */
+  .tutorial-navigation-shell .af-nav-icon .puzzle-art {
+    width: var(--tutorial-nav-icon-size) !important;
+    height: var(--tutorial-nav-icon-size) !important;
+  }
   .f2l-chapter-body:has(.tutorial-navigation-shell[data-collapsed='true']) .f2l-study-actions { left: calc(76px + var(--f2l-layout-gap)); }
+}
+.tutorial-nav-scroll-arrow[hidden] { display: none; }
+@media (min-width: 761px) and (max-height: 650px) {
+  .tutorial-navigation-shell .af-nav-link { height: 56px; }
 }
 @media (max-width: 760px) {
   .tutorial-navigation-shell.af-navigation > .af-nav-body { grid-template-columns: minmax(0, 1fr); }
