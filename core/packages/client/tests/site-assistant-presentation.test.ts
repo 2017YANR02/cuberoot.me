@@ -9,6 +9,7 @@ vi.mock('next/navigation',()=>({useParams:()=>({lang:'zh'})}));
 vi.mock('@/hooks/useSpeechToText',()=>({useSpeechToText:()=>({listening:false,start:vi.fn(),stop:vi.fn()})}));
 vi.mock('@/lib/site-assistant-request',()=>({sendAssistantEvent:vi.fn().mockResolvedValue({ok:true})}));
 vi.mock('@/lib/site-assistant-images',()=>({prepareAssistantImage:vi.fn()}));
+vi.mock('@/lib/assistant-speech',()=>({playAssistantSpeech:vi.fn().mockRejectedValue(new Error('unavailable'))}));
 vi.mock('@/lib/country-flags',()=>({
   loadFlagData:vi.fn(async()=>1),compFlagIso2:(id:string)=>id==='WC2025'?'us':'tw',
   compNameZh:()=>null,compNameEnFromZh:()=>null,
@@ -18,6 +19,7 @@ import { loadFlagData } from '@/lib/country-flags';
 import { changeAppLanguage } from '@/i18n/i18n-client';
 import { sendAssistantEvent } from '@/lib/site-assistant-request';
 import { prepareAssistantImage } from '@/lib/site-assistant-images';
+import { playAssistantSpeech } from '@/lib/assistant-speech';
 
 const sources=[
   {id:'comp:WC2025',title:'World Championship',href:'/wca/comp/WC2025',read:true},
@@ -104,7 +106,7 @@ describe('assistant general conversation controls',()=>{
   it('queues a follow-up explicitly and keeps active progress on the running task',async()=>{
     const onAsk=vi.fn().mockResolvedValue(true);
     const props=await render({answer:'',sources:[]},{busy:true,activeMessageId:'root',draft:'next task',onAsk,turns:[{messageId:'root',question:'running',deliveryState:'running',progress:[{id:1,phase:'tool',tool:'statistics',state:'running',elapsedMs:10}]},{messageId:'next',question:'queued',deliveryState:'queued'}]});
-    expect(document.querySelectorAll('.site-assistant-turn')[0].textContent).toContain('处理过程');
+    expect(document.querySelectorAll('.site-assistant-turn')[0].textContent).toContain('正在查询统计数据');
     expect(document.querySelectorAll('.site-assistant-turn')[1].textContent).toContain('已排队');
     await act(async()=>document.querySelector<HTMLButtonElement>('[aria-label="发送方式"]')!.click());
     await act(async()=>Array.from(document.querySelectorAll<HTMLElement>('[role="option"]')).find(option=>option.textContent?.includes('加入队列'))!.click());
@@ -139,7 +141,11 @@ describe('assistant general conversation controls',()=>{
     ]}];
     const props=await render({answer:'',sources:[]},{turns,busy:true});
     expect(document.querySelector('.site-assistant-progress-heading')?.textContent).toContain('正在核对证据与回答');
-    expect(document.querySelector('.site-assistant-progress-steps')?.textContent).toContain('已读取 2 条来源');
+    expect(document.querySelector('.site-assistant-progress-steps')).toBeNull();
+    expect(document.querySelector('.site-assistant-progress .more-toggle')).toBeNull();
+    await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,status:{phase:'writing'},turns:[{...turns[0],progress:turns[0].progress.map(p=>({...p,state:'complete' as const}))}]})));
+    expect(document.querySelector('.site-assistant-progress-heading')?.textContent).toContain('正在生成回答');
+    expect(document.querySelector('.site-assistant-progress-steps')).toBeNull();
     const longAnswer='完整回答，不需要等待逐字播放。'.repeat(150);
     await act(async()=>roots.at(-1)!.render(createElement(SiteAssistantDialog,{...props,busy:false,turns:[{...turns[0],result:{answer:longAnswer,sources:[],artifacts:[{kind:'table',title:'结果',columns:['成绩'],rows:[['12.34']]}]},partial:false,endState:'complete',finishedAt:Date.now(),progress:turns[0].progress.map(p=>({...p,state:'complete' as const,durationMs:100}))}]})));
     expect(document.querySelector('.site-assistant-prose')?.textContent).toContain(longAnswer);
@@ -148,6 +154,8 @@ describe('assistant general conversation controls',()=>{
     expect(document.querySelectorAll('.site-assistant-letter')).toHaveLength(0);
     await act(async()=>document.querySelector<HTMLButtonElement>('.site-assistant-progress .more-toggle')!.click());
     expect(document.querySelector('.site-assistant-progress .more-toggle')?.getAttribute('aria-expanded')).toBe('true');
+    expect(document.querySelectorAll('.site-assistant-progress-steps li')).toHaveLength(2);
+    expect(document.querySelector('.site-assistant-progress-steps')?.textContent).toContain('已读取 2 条来源');
   });
   it('marks a cancelled running step as interrupted, never completed',async()=>{
     await render({answer:'',sources:[]},{busy:false,turns:[{question:'查询',createdAt:Date.now()-1000,finishedAt:Date.now(),endState:'stopped',progress:[{id:1,phase:'tool',tool:'pages',state:'running',elapsedMs:20}]}]});
@@ -339,6 +347,21 @@ it('opens a single-message share preview without publishing it and offers branch
   fetcher.mockRestore();
 });
 
+it('cancels cloud generation without showing a failure or starting browser speech',async()=>{
+  let signal:AbortSignal|undefined;
+  vi.mocked(playAssistantSpeech).mockImplementationOnce(async(_input,current)=>{
+    signal=current;
+    await new Promise<void>((_resolve,reject)=>current.addEventListener('abort',()=>reject(current.reason),{once:true}));
+  });
+  await render({answer:'回答',sources:[]});
+  await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="朗读"]')!.click());
+  expect(document.body.textContent).toContain('正在生成语音');
+  await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="停止朗读"]')!.click());
+  expect(signal?.aborted).toBe(true);
+  expect(document.body.textContent).not.toContain('使用浏览器朗读');
+  expect(document.querySelector('button[aria-label="朗读"]')).not.toBeNull();
+});
+
 it('switches read aloud to stop and ignores queued speech after stopping',async()=>{
   const speak = vi.fn(), cancel = vi.fn();
   vi.stubGlobal('speechSynthesis', { speak, cancel });
@@ -346,6 +369,8 @@ it('switches read aloud to stop and ignores queued speech after stopping',async(
   try {
     await render({ answer: '这是用于验证朗读停止的长回答。'.repeat(50), sources: [] });
     await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="朗读"]')!.click());
+    expect(speak).not.toHaveBeenCalled();
+    await act(async()=>Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find(button=>button.textContent==='使用浏览器朗读')!.click());
     expect(speak).toHaveBeenCalledTimes(1);
     const first = speak.mock.calls[0][0];
     await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="停止朗读"]')!.click());

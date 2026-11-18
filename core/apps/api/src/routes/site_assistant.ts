@@ -1,4 +1,5 @@
 import { RateLimitError } from '../utils/rate_limit.js';
+import { createAssistantSpeechRoutes } from './site_assistant_speech.js';
 import { durableAssistantStore, durableAssistantWorker } from '../utils/site_assistant_worker.js';
 import { AssistantQueueConflict } from '../utils/site_assistant_queue.js';
 import { Hono, type Context } from 'hono';
@@ -71,6 +72,7 @@ const inputSchema = z.object({
 // Burst limits are per process; the daily shared limit is atomic and durable.
 export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuestion; config: typeof assistantConfig; country?: typeof resolveIpCountry; now: () => number; reserve: typeof reserveAssistantQuestion; authenticate: typeof requireAssistantUser; monitor?: typeof startAssistantMonitor; queue?: {store:typeof durableAssistantStore;worker:Pick<typeof durableAssistantWorker,'kick'>}; runs?: ReturnType<typeof assistantRunStore>; eventsQuery?: QueryRunner; contextQuery?: QueryRunner; entry?: typeof recordAssistantEntry; readAttachment?: typeof readAssistantAttachment; saveAttachment?: typeof saveAssistantAttachment } = { answer: answerSiteQuestion, config: assistantConfig, now: Date.now, reserve: reserveAssistantQuestion, authenticate: requireAssistantUser, monitor: startAssistantMonitor, entry: recordAssistantEntry, readAttachment: readAssistantAttachment, saveAttachment: saveAssistantAttachment }) {
   const routes = new Hono();
+  routes.route('/', createAssistantSpeechRoutes({ authenticate: deps.authenticate, run: deps.eventsQuery }));
   const runs = deps.runs ?? assistantRunStore();
   const inbox=deps.queue?.store ?? durableAssistantStore,worker=deps.queue?.worker ?? durableAssistantWorker;
   let minute = 0;

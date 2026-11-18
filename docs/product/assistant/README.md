@@ -12,6 +12,8 @@
 
 ## 文档与登记
 
+- [回答朗读与百炼语音配置](assistant-speech.md)
+
 - [聊天助手的回答与工具设计](assistant-design.md)
 - [聊天助手质量改进跟踪](assistant-quality-tracker.md)
 - [AI 二阶魔方实验](cube-agents.md)

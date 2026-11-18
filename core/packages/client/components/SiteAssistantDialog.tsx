@@ -147,7 +147,7 @@ function openSolverDocument(event:MouseEvent<HTMLAnchorElement>) {
   }
 }
 function AssistantExecutionProgress({turn,busy,status,stopping}:{turn:AssistantTurn;busy:boolean;status:AssistantStatus;stopping?:boolean}) {
-  const [expanded,setExpanded]=useState(busy);
+  const [expanded,setExpanded]=useState(false);
   const [now,setNow]=useState(Date.now);
   const panelId=useId();
   useEffect(()=>{ if(!busy){setExpanded(false);return;} const timer=window.setInterval(()=>setNow(Date.now()),1000);return()=>window.clearInterval(timer); },[busy]);
@@ -162,9 +162,9 @@ function AssistantExecutionProgress({turn,busy,status,stopping}:{turn:AssistantT
     <div className="site-assistant-progress-heading">
       <span className="site-assistant-progress-active-text" role="status" aria-live="polite">{busy && !stopping && status.phase==='writing' && current?.phase==='model' ? statusLabel(status) : summary}</span>
       <span className="site-assistant-progress-time" aria-hidden="true">{elapsed.toFixed(0)} s</span>
-      {!!steps.length && <MoreToggle expanded={expanded} onToggle={()=>setExpanded(!expanded)} aria-controls={panelId}><span className="site-assistant-progress-active-text">{tr({zh:'处理过程',en:'Activity'})}</span></MoreToggle>}
+      {!busy && !!steps.length && <MoreToggle expanded={expanded} onToggle={()=>setExpanded(!expanded)} aria-controls={panelId}><span className="site-assistant-progress-active-text">{tr({zh:'处理过程',en:'Activity'})}</span></MoreToggle>}
     </div>
-    {!!steps.length && <MoreTogglePanel id={panelId} expanded={expanded}>
+    {!busy && !!steps.length && <MoreTogglePanel id={panelId} expanded={expanded}>
       <ol className="site-assistant-progress-steps">{steps.map(step=>{
         const state=step.state==='running' && !busy ? 'stopped' : step.state;
         const label=tr(state==='complete' ? {zh:'完成',en:'Finished'} : state==='partial' ? {zh:'信息不完整',en:'Partial information'} : state==='error' ? {zh:'未成功',en:'Failed'} : state==='stopped' ? {zh:'已中断',en:'Interrupted'} : {zh:'进行中',en:'In progress'});

@@ -9,6 +9,7 @@ import { sendAssistantEvent, type AssistantFeedback } from '@/lib/site-assistant
 import { assistantAnswerText, assistantSpokenText, downloadAssistantPdf } from '@/lib/assistant-answer-export';
 import type { AssistantTurn } from './SiteAssistantDialog';
 import { AssistantShareDialog } from './AssistantShareDialog';
+import { playAssistantSpeech } from '@/lib/assistant-speech';
 
 function Action({ label, children, onClick, disabled, pressed }: { label: string; children: ReactNode; onClick: () => void; disabled?: boolean; pressed?: boolean }) {
   return <Tooltip content={label}>{tip => <button {...tip} type="button" className="site-assistant-action" aria-label={label} aria-pressed={pressed} disabled={disabled} onClick={onClick}>{children}</button>}</Tooltip>;
@@ -23,6 +24,9 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
   const [pending, setPending] = useState(false);
   const [failure, setFailure] = useState('');
   const [speaking, setSpeaking] = useState(false);
+  const [speechLoading, setSpeechLoading] = useState(false);
+  const [speechFallback, setSpeechFallback] = useState(false);
+  const speechController = useRef<AbortController | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [shared, setShared] = useState<{result: AssistantTurn['result']; id: string} | null>(null);
   const shareId = shared && shared.result === turn.result ? shared.id : null;
@@ -31,15 +35,22 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
   const speechJob = useRef(0);
   const stop = () => {
     speechJob.current++;
+    speechController.current?.abort(); speechController.current = null; setSpeechLoading(false);
     if (utterance.current && 'speechSynthesis' in window) window.speechSynthesis.cancel();
     utterance.current = null; setSpeaking(false);
   };
   useEffect(() => { if (!active) { stop(); setShareOpen(false); } }, [active]);
-  useEffect(() => () => { speechJob.current++; if (utterance.current && 'speechSynthesis' in window) window.speechSynthesis.cancel(); }, []);
+  useEffect(() => {
+    const cancel = () => stop();
+    window.addEventListener('assistant-speech-start', cancel);
+    return () => { window.removeEventListener('assistant-speech-start', cancel); speechJob.current++; speechController.current?.abort(); if (utterance.current && 'speechSynthesis' in window) window.speechSynthesis.cancel(); };
+  }, []);
+  useEffect(() => { stop(); setSpeechFallback(false); }, [turn.result, turn.messageId]);
   const exportText = () => assistantAnswerText(turn.result!, window.location.origin);
-  const read = () => {
+  const readBrowser = () => {
     if (speaking) { stop(); return; }
-    setFailure('');
+    window.dispatchEvent(new Event('assistant-speech-start'));
+    setFailure(''); setSpeechFallback(false);
     if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
       setFailure(tr({ zh: '此浏览器暂不支持朗读。', en: 'Read aloud is unavailable in this browser.' })); return;
     }
@@ -56,6 +67,24 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
       utterance.current = item; window.speechSynthesis.speak(item);
     };
     setSpeaking(true); next(0);
+  };
+  const read = async () => {
+    if (speaking) { stop(); return; }
+    window.dispatchEvent(new Event('assistant-speech-start'));
+    setFailure(''); setSpeechFallback(false);
+    const controller = new AbortController(); speechController.current = controller;
+    setSpeaking(true); setSpeechLoading(true);
+    const validId = (id?: string) => id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) ? id : undefined;
+    try {
+      await playAssistantSpeech({ messageId: validId(turn.messageId), requestId: validId(turn.requestId), answer: assistantSpokenText(exportText()), lang }, controller.signal, () => setSpeechLoading(false));
+    } catch {
+      if (!controller.signal.aborted) {
+        setFailure(tr({ zh: '语音合成暂不可用，可使用浏览器朗读。', en: 'Voice generation is unavailable. You can use browser read aloud.' }));
+        setSpeechFallback(true);
+      }
+    } finally {
+      if (speechController.current === controller) { speechController.current = null; setSpeaking(false); setSpeechLoading(false); }
+    }
   };
   const saveFeedback = async (next: AssistantFeedback) => {
     if (!turn.requestId || pending) return;
@@ -80,7 +109,7 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
         { value: 'helpful' as const, label: <span className="assistant-menu-label"><ThumbsUp size={19}/>{tr({ zh: '回复优秀', en: 'Good response' })}</span> },
         { value: 'other' as const, label: <span className="assistant-menu-label"><ThumbsDown size={19}/>{tr({ zh: '回复不佳', en: 'Bad response' })}</span> },
       ]}/>}
-      <Action label={tr(speaking ? { zh: '停止朗读', en: 'Stop reading' } : { zh: '朗读', en: 'Read aloud' })} onClick={read} pressed={speaking}>{speaking ? <Square size={16} fill="currentColor"/> : <Volume2 size={19}/>}</Action>
+      <Action label={tr(speaking ? { zh: '停止朗读', en: 'Stop reading' } : { zh: '朗读', en: 'Read aloud' })} onClick={() => void read()} pressed={speaking}>{speaking ? <Square size={16} fill="currentColor"/> : <Volume2 size={19}/>}</Action>
       {!turn.partial && <Action label={tr({ zh: '分享', en: 'Share' })} onClick={() => setShareOpen(true)}><Share size={18}/></Action>}
       {onRetry && <Action label={tr({ zh: '重试', en: 'Retry' })} onClick={() => { stop(); onRetry(); }}><RefreshCw size={18}/></Action>}
       {(timestamp || onBranch) && <CompactSelect side="top" unstyledTrigger triggerClassName="site-assistant-action" popupClassName="assistant-action-menu" className="assistant-toolbar-menu" ariaLabel={tr({ zh: '更多', en: 'More' })} label={<Ellipsis size={20}/>} items={[
@@ -90,6 +119,8 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
       <span className="assistant-toolbar-divider" aria-hidden="true"/>
       <Tooltip content={tr({ zh: '转换为 PDF', en: 'Export as PDF' })}>{tip => <button {...tip} className="site-assistant-action assistant-pdf-action" aria-label={tr({ zh: '转换为 PDF', en: 'Export as PDF' })} type="button" disabled={pdfBusy} onClick={() => void pdf()}><FileText size={18}/><span>PDF</span></button>}</Tooltip>
     </div>
+    {speechLoading && <div className="site-assistant-progress-heading" role="status">{tr({ zh: '正在生成语音…', en: 'Generating audio…' })}</div>}
+    {speechFallback && <button type="button" className="site-assistant-action" onClick={readBrowser}>{tr({ zh: '使用浏览器朗读', en: 'Use browser read aloud' })}</button>}
     {failure && <p className="site-assistant-voice-error" role="status">{failure}</p>}
     {shareOpen && <AssistantShareDialog turn={turn} lang={lang} preview={preview} text={exportText()} shareId={shareId} onShareId={id=>setShared(id ? {result:turn.result,id} : null)} onClose={() => setShareOpen(false)}/>}
   </>;
