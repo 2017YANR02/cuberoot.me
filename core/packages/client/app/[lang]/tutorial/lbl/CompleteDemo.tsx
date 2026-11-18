@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'reac
 import { createPortal } from 'react-dom';
 import { persistItem } from '@/lib/safe-storage';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
+import { resolveSimMoveDurationScale } from '@/components/AlgPlayer/player-setup';
 import AlgPlaybackControls from '@/components/AlgPlayer/AlgPlaybackControls';
 import { pickStickering } from '@/components/AlgPlayer/stickering';
 import { FM_OUTLINE, FM_REGULAR, mergeStickeringMaskFns, stickeringMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
@@ -162,7 +163,15 @@ export function Demonstration({ stage, demo, guidedFish = false, onCaseCueChange
         const previousView = frames.findLast(item => item.view)?.view;
         const view = side === 'L' && previousView !== 'slight-left' ? 'slight-left'
           : side === 'R' && previousView === 'slight-left' ? 'home' : undefined;
-        if (view) frames.push({ step: move, duration: SIDE_VIEW_PAUSE_MS, caption: 'act', phase, view, orbitDuration: SIDE_VIEW_TURN_MS });
+        if (view) {
+          const precedingIndex = frames.findLastIndex(item => item.move !== undefined);
+          const preceding = frames[precedingIndex];
+          const onlyActionCaption = frames.slice(precedingIndex + 1).every(item => item.caption === 'act' && !item.view);
+          if (preceding?.move === move - 1 && onlyActionCaption && /^y(?:2)?'?$/.test(moves[move - 1])) {
+            preceding.view = view;
+            preceding.orbitDuration = (walkthrough ? 1100 : 850) * resolveSimMoveDurationScale('3x3', moves[move - 1]);
+          } else frames.push({ step: move, duration: SIDE_VIEW_PAUSE_MS, caption: 'act', phase, view, orbitDuration: SIDE_VIEW_TURN_MS });
+        }
         frames.push({ step: move + 1, duration: 0, caption: 'act', phase, move, view: move === phase.start ? phase.moveView : undefined });
       }
     });
@@ -257,9 +266,10 @@ export function Demonstration({ stage, demo, guidedFish = false, onCaseCueChange
       const orbit = (now: number) => {
         motion.elapsed += now - last;
         last = now;
-        const orbitDuration = frame.orbitDuration ?? (frame.move === undefined ? 900 : 850);
+        const orbitDuration = frame.orbitDuration ?? (frame.move === undefined ? 900
+          : (walkthrough ? 1100 : 850) * resolveSimMoveDurationScale('3x3', demo.alg.split(/\s+/)[frame.move]));
         const progress = reducedMotion ? 1 : Math.min(motion.elapsed / orbitDuration, 1);
-        const eased = progress * progress * (3 - 2 * progress);
+        const eased = frame.move === undefined ? progress * progress * (3 - 2 * progress) : 1 - (1 - progress) ** 2;
         const desired = { x: motion.from.x + (motion.to.x - motion.from.x) * eased,
           y: motion.from.y + (motion.to.y - motion.from.y) * eased };
         // Same free-orbit operation as dragging empty space; no puzzle moves or setup changes.

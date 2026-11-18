@@ -105,7 +105,7 @@ function LessonPlayer({ player, interacted, yellowCase, fishLeft, middleAlignmen
   const visible = usePlayerVisible(player, props.alg);
   const [playRequest, setPlayRequest] = useState(0);
   const [step, setStep] = useState(0);
-  const sidePauseSteps = useSideTurnView(player, props.alg, step, visible && !props.showHands, initialLeftView ? LBL_LEFT_VIEW_YAW : 0);
+  const sidePauseSteps = useSideTurnView(player, props.alg, step, visible && !props.showHands, initialLeftView ? LBL_LEFT_VIEW_YAW : 0, props.moveDurationMs);
   const [alignmentReady, setAlignmentReady] = useState(false);
   const observingCorner = cornerAlignment !== undefined && step === 2;
   const touchCase = yellowCase !== undefined && yellowCase >= 2;
