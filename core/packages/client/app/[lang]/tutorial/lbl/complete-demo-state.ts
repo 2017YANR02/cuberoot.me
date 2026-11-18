@@ -144,13 +144,13 @@ const observe: Record<CompleteDemoStage, Text> = {
   'edge-position': t('看侧面，找三个同色格组成的墙', 'Look for a wall of three matching stickers.'),
 };
 const done: Record<CompleteDemoStage, Text> = {
-  daisy: t('四片白花瓣，小花完成。', 'Four white petals: the daisy is complete.'),
-  corners: t('四个白角归位，底层完成。', 'All four white corners are in place. First layer complete.'),
-  middle: t('四条中层棱归位，前两层完成。', 'All four middle edges are in place. First two layers complete.'),
-  'yellow-cross': t('四条棱朝黄，黄十字完成。', 'Four yellow edges: the cross is complete.'),
-  'yellow-face': t('所有黄色朝上，黄面完成。', 'All yellow stickers face up. Yellow face complete.'),
-  'corner-position': t('四个顶角与侧面中心对齐。', 'All four top corners match the side centers.'),
-  'edge-position': t('六面同色，魔方复原。', 'Every face has one color. Cube solved.'),
+  daisy: t('四片白花瓣，小花完成', 'Four white petals: the daisy is complete.'),
+  corners: t('四个白角归位，底层完成', 'All four white corners are in place. First layer complete.'),
+  middle: t('四条中层棱归位，前两层完成', 'All four middle edges are in place. First two layers complete.'),
+  'yellow-cross': t('四条棱朝黄，黄十字完成', 'Four yellow edges: the cross is complete.'),
+  'yellow-face': t('所有黄色朝上，黄面完成', 'All yellow stickers face up. Yellow face complete.'),
+  'corner-position': t('四个顶角与侧面中心对齐', 'All four top corners match the side centers.'),
+  'edge-position': t('六面同色，魔方复原', 'Every face has one color. Cube solved.'),
 };
 
 export function buildFishDemo(left: boolean): CompleteDemo {
@@ -160,27 +160,27 @@ export function buildFishDemo(left: boolean): CompleteDemo {
   const setup = join(new Alg(formula).invert().toString(), left ? "U'" : 'U2');
   const alg = join(adjustment, formula);
   const count: DemoContent = {
-    text: t('顶面有 3 个非黄角格，是小鱼，继续观察。', 'Three non-yellow corner stickers on top. It is a fish shape. Look closer.'),
+    text: t('顶面有 3 个非黄角格，是小鱼，继续观察', 'Three non-yellow corner stickers on top. It is a fish shape. Look closer.'),
     outlines: yellowFaceNonYellowStickers(setup),
   };
   const start = state(setup);
   const head = cornerIndices.map(index => start.faces[Face.U][index]).find(id => id[0] === 'U')!;
   const fish: DemoContent = {
     text: left
-      ? t('鱼头朝前，前面左上角有鱼鳍，是左鱼。', 'The head is at the front and the fin is at the top-left of the front face. This is a left fish.')
-      : t('鱼头朝前，前面右上角有鱼鳍，是右鱼。', 'The head is at the front and the fin is at the top-right of the front face. This is a right fish.'),
+      ? t('鱼头朝前，前面左上角有鱼鳍，是左鱼', 'The head is at the front and the fin is at the top-left of the front face. This is a left fish.')
+      : t('鱼头朝前，前面右上角有鱼鳍，是右鱼', 'The head is at the front and the fin is at the top-right of the front face. This is a right fish.'),
     outlines: yellowFishRecognitionStickers(join(setup, adjustment), left),
   };
   const phases: DemoPhase[] = [
     { start: 0, end: 0, recognize: count, act: count, recognizeOnly: true },
-    { start: 0, end: 1, act: { text: t('鱼头朝后，需要调整。', 'The head is at the back. Turn the top layer.'), alg: 'U', outlines: [head] } },
+    { start: 0, end: 1, act: { text: t('鱼头朝后，需要调整', 'The head is at the back. Turn the top layer.'), alg: 'U', outlines: [head] } },
   ];
-  if (!left) phases.push({ start: 1, end: 2, act: { text: t('鱼头朝前，但前面没有鱼鳍，继续调整。', 'The head is at the front, but there is no fin on the front face. Turn the top layer again.'), alg: 'U', outlines: [head] } });
+  if (!left) phases.push({ start: 1, end: 2, act: { text: t('鱼头朝前，但前面没有鱼鳍，继续调整', 'The head is at the front, but there is no fin on the front face. Turn the top layer again.'), alg: 'U', outlines: [head] } });
   phases.push(
     { start: formulaStart, end: formulaStart, recognize: fish, act: fish, recognizeOnly: true },
     { start: formulaStart, end: movesOf(alg).length, view: left ? 'slight-left' : undefined, act: {
-      text: left ? t('左鱼用左手做公式。', 'Do left Sune with your left hand.')
-        : t('右鱼用右手做公式。', 'Do right Sune with your right hand.'),
+      text: left ? t('左鱼用左手做公式', 'Do left Sune with your left hand.')
+        : t('右鱼用右手做公式', 'Do right Sune with your right hand.'),
       alg: formula,
     } },
   );
@@ -194,15 +194,15 @@ export function wallScanPhases(alg: string, start: number, caseIndex: number): D
   const cube = state(alg);
   const found = walls(cube);
   const views: DemoView[] = ['home', 'right', 'back', 'left'];
-  const labels = [t('看前面，找三个同色格。', 'Check the front for three matching stickers.'), t('转视角，看右面有没有墙。', 'Turn the view to check the right side for a wall.'), t('继续转视角，看背面有没有墙。', 'Keep turning the view to check the back.'), t('再看左面有没有墙。', 'Check the left side as well.')];
+  const labels = [t('看前面，找三个同色格', 'Check the front for three matching stickers.'), t('转视角，看右面有没有墙', 'Turn the view to check the right side for a wall.'), t('继续转视角，看背面有没有墙', 'Keep turning the view to check the back.'), t('再看左面有没有墙', 'Check the left side as well.')];
   const phases: DemoPhase[] = [];
   let wall: Face | undefined;
   for (const [i, face] of sides.entries()) {
     phases.push({ start, end: start, view: views[i], act: { text: labels[i] } });
     if (found.includes(face)) { wall = face; break; }
   }
-  const recognition = wall === undefined ? { text: t('四面都没有墙，先做公式造墙。', 'No wall on any side. Use an algorithm to create one.'), caseIndex }
-    : { text: t('找到墙：这三个格颜色相同。', 'Found a wall: these three stickers match.'), caseIndex, outlines: [0, 1, 2].map(i => cube.faces[wall!][i]) };
+  const recognition = wall === undefined ? { text: t('四面都没有墙，先做公式造墙', 'No wall on any side. Use an algorithm to create one.'), caseIndex }
+    : { text: t('找到墙：这三个格颜色相同', 'Found a wall: these three stickers match.'), caseIndex, outlines: [0, 1, 2].map(i => cube.faces[wall!][i]) };
   phases.push({ start, end: start, recognize: recognition, act: recognition, recognizeOnly: true });
   return phases;
 }
@@ -211,9 +211,9 @@ function edgeAlgorithmPhases(alg: string, start: number, caseIndex: number): Dem
   return getLblAlgGroups('edge-position', alg).map(group => {
     const first = group[0];
     const body = group.map(move => move.notation).join(' ');
-    const text = /^y/.test(first.notation) ? caseIndex === 2 ? t('沿当前朝向起手，先造墙。', 'Start from this orientation and create a wall.') : t('把墙直接放到后面。', 'Move the wall directly to the back.')
-      : group.length === 7 ? (first.notation.startsWith('R') ? t('做右鱼公式。', 'Do right Sune.') : t('做左鱼公式。', 'Do left Sune.'))
-        : group[group.length - 1].index === movesOf(alg).length - 1 ? t('转顶层对齐。', 'Align the top layer.') : t('转顶层调整。', 'Adjust the top layer.');
+    const text = /^y/.test(first.notation) ? caseIndex === 2 ? t('沿当前朝向起手，先造墙', 'Start from this orientation and create a wall.') : t('把墙直接放到后面', 'Move the wall directly to the back.')
+      : group.length === 7 ? (first.notation.startsWith('R') ? t('做右鱼公式', 'Do right Sune.') : t('做左鱼公式', 'Do left Sune.'))
+        : group[group.length - 1].index === movesOf(alg).length - 1 ? t('转顶层对齐', 'Align the top layer.') : t('转顶层调整', 'Adjust the top layer.');
     return { start: start + first.index, end: start + group[group.length - 1].index + 1,
       act: { text, alg: /^y/.test(first.notation) ? undefined : body, caseIndex }, moveView: /^y/.test(first.notation) ? 'home' : undefined };
   });
@@ -226,7 +226,7 @@ export function buildEdgePositionExample(example: LblExample, index: number): Co
   const finished = demoGoalReached('edge-position', join(setup, alg));
   if (!finished) phases.push(...wallScanPhases(join(setup, alg), movesOf(alg).length, index));
   return { setup, alg, phases, done: finished ? done['edge-position']
-    : t('已造出墙，选择对应情况继续。', 'A wall is ready. Choose the matching case to continue.') };
+    : t('已造出墙，选择对应情况继续', 'A wall is ready. Choose the matching case to continue.') };
 }
 
 export function edgeDirectionObservation(setup: string, left: boolean) {
@@ -239,20 +239,20 @@ function yellowCrossDemo(setup: string): CompleteDemo {
   const demo = buildYellowCrossDemo(setup);
   return { setup, alg: demo.alg, done: done['yellow-cross'], phases: demo.phases.map((phase, index) => {
     const caseIndex = { line: 0, elbow: 1, dot: 2 }[phase.kind];
-    const recognition = phase.kind === 'dot' ? t('没有黄棱朝上。', 'No yellow edges face up.')
-      : phase.kind === 'line' ? t('两条黄棱成直线。', 'Two yellow edges form a line.')
-        : t('两条黄棱相邻。', 'Two adjacent yellow edges face up.');
-    const next = phase.alignment ? t('需要调整顶面朝向。', 'The top layer needs to be reoriented.')
-      : phase.actionKind === 'line' ? t('做横线公式。', 'Do the line algorithm.') : t('做三点半公式。', 'Do the L-shape algorithm.');
+    const recognition = phase.kind === 'dot' ? t('没有黄棱朝上', 'No yellow edges face up.')
+      : phase.kind === 'line' ? t('两条黄棱成直线', 'Two yellow edges form a line.')
+        : t('两条黄棱相邻', 'Two adjacent yellow edges face up.');
+    const next = phase.alignment ? t('需要调整顶面朝向', 'The top layer needs to be reoriented.')
+      : phase.actionKind === 'line' ? t('做横线公式', 'Do the line algorithm.') : t('做三点半公式', 'Do the L-shape algorithm.');
     return {
       start: phase.start, end: phase.end,
-      observe: !demo.phases[index - 1]?.alignment ? (index === 0 ? observe['yellow-cross'] : t('还没完成，再观察四条棱。', 'Not finished. Check the four edges again.')) : undefined,
+      observe: !demo.phases[index - 1]?.alignment ? (index === 0 ? observe['yellow-cross'] : t('还没完成，再观察四条棱', 'Not finished. Check the four edges again.')) : undefined,
       recognize: !demo.phases[index - 1]?.alignment ? { text: recognition, detail: next, caseIndex,
         outlines: yellowCrossRecognitionStickers(join(setup, demo.alg.split(' ').slice(0, phase.start).join(' '))) } : undefined,
       act: phase.alignment ? {
-        text: phase.kind === 'line' ? t('转顶层，把线横着放。', 'Turn the top to make the line horizontal.') : t('转顶层，黄棱放前和右。', 'Turn the top: yellow edges at front and right.'),
-        detail: phase.kind === 'line' ? t('形成横线。', 'Form a horizontal line.') : t('形成“三点半”。', 'Form the L-shape.'), caseIndex,
-      } : { text: phase.actionKind === 'line' ? t('做“压、右公式、提”。', 'Do F, the right trigger, then F′.') : t('做“双压、右公式、双提”。', 'Do f, the right trigger, then f′.'), alg: phase.alg, caseIndex },
+        text: phase.kind === 'line' ? t('转顶层，把线横着放', 'Turn the top to make the line horizontal.') : t('转顶层，黄棱放前和右', 'Turn the top: yellow edges at front and right.'),
+        detail: phase.kind === 'line' ? t('形成横线', 'Form a horizontal line.') : t('形成“三点半”', 'Form the L-shape.'), caseIndex,
+      } : { text: phase.actionKind === 'line' ? t('做“压、右公式、提”', 'Do F, the right trigger, then F′.') : t('做“双压、右公式、双提”', 'Do f, the right trigger, then f′.'), alg: phase.alg, caseIndex },
     };
   }) };
 }
@@ -291,9 +291,9 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
     // Daisy side inspection uses the real working rotation below.
     if (stage === 'daisy' && view !== 'bottom') return recognition;
     const text = stage === 'daisy'
-      ? t('翻到能看见底面的角度。', 'Tilt the cube to see the bottom.')
-      : view === 'bottom' ? t('看看底层白角的位置和朝向。', 'Check the position and orientation of the bottom white corners.')
-        : view === 'left' ? t('换个角度，看看左侧的白角。', 'Change the view to inspect the white corner on the left.') : t('换个角度，看看背面的白角。', 'Change the view to inspect the white corner at the back.');
+      ? t('翻到能看见底面的角度', 'Tilt the cube to see the bottom.')
+      : view === 'bottom' ? t('看看底层白角的位置和朝向', 'Check the position and orientation of the bottom white corners.')
+        : view === 'left' ? t('换个角度，看看左侧的白角', 'Change the view to inspect the white corner on the left.') : t('换个角度，看看背面的白角', 'Change the view to inspect the white corner at the back.');
     add('', { text, caseIndex }, undefined, view);
     phases.push({ start: moves.length, end: moves.length, recognize: recognition, act: recognition, recognizeOnly: true,
       returnView: 'home' });
@@ -418,7 +418,7 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
         const white = choice.outlines.find(id => id[0] === 'D');
         if (isCorner && white !== undefined && [Face.L, Face.B].some(face => cube.faces[face].includes(white))) {
           const y = rotations.find(y => state(join(base, y)).faces[Face.F].includes(white))!;
-          action(y, t('转体，看看刚才看不到的侧面。', 'Rotate the cube to check the sides that were out of view.'), choice.index, undefined, false);
+          action(y, t('转体，看看刚才看不到的侧面', 'Rotate the cube to check the sides that were out of view.'), choice.index, undefined, false);
           inspectingHiddenPiece = true;
           continue;
         }
@@ -505,9 +505,9 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
         choice ??= { u, alg, index: gray === 3 ? index : gray === 2 ? 2 : 3 };
       }
       if (!choice) throw new Error('No taught yellow-face action found');
-      let rec: DemoContent | undefined = recognize(gray === 3 ? t('3个非黄格，观察鱼头和侧面鱼鳍。', 'Three non-yellow corners: check the head and side fins.') : gray === 2 ? t('2个非黄格，左拇指放前面左上角，要碰黄。', 'Two non-yellow corners: place your left thumb at front-top-left, touching yellow.') : t('4个非黄格，左拇指放前面左上角，不碰黄。', 'Four non-yellow corners: place your left thumb at front-top-left, away from yellow.'), choice.index,
+      let rec: DemoContent | undefined = recognize(gray === 3 ? t('3个非黄格，观察鱼头和侧面鱼鳍', 'Three non-yellow corners: check the head and side fins.') : gray === 2 ? t('2个非黄格，左拇指放前面左上角，要碰黄', 'Two non-yellow corners: place your left thumb at front-top-left, touching yellow.') : t('4个非黄格，左拇指放前面左上角，不碰黄', 'Four non-yellow corners: place your left thumb at front-top-left, away from yellow.'), choice.index,
         cornerIndices.filter(i => color(cube, Face.U, i) !== 'U').map(i => cube.faces[Face.U][i]));
-      const alignment = choice.index === 0 ? t('转顶层，把鱼头放左前。', 'Turn the top to put the head at front-left.') : choice.index === 1 ? t('转顶层，把鱼头放右前。', 'Turn the top to put the head at front-right.') : choice.index === 2 ? t('转顶层，让左拇指位置碰黄。', 'Turn the top so yellow reaches the left thumb position.') : t('转顶层，让左拇指位置不碰黄。', 'Turn the top so the left thumb position does not touch yellow.');
+      const alignment = choice.index === 0 ? t('转顶层，把鱼头放左前', 'Turn the top to put the head at front-left.') : choice.index === 1 ? t('转顶层，把鱼头放右前', 'Turn the top to put the head at front-right.') : choice.index === 2 ? t('转顶层，让左拇指位置碰黄', 'Turn the top so yellow reaches the left thumb position.') : t('转顶层，让左拇指位置不碰黄', 'Turn the top so the left thumb position does not touch yellow.');
       if (gray !== 3) rec.touchSticker = true;
       rec = prepare(choice.u, alignment, choice.index, rec);
       if (gray !== 3 && choice.u) phases[phases.length - 1].act.touchSticker = true;
@@ -516,38 +516,38 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
         const aligned = current();
         const left = choice.index === 1;
         const recognition = recognize(left
-          ? t('鱼头在右前，F 面左上有鱼鳍，是左鱼。', 'Head at front-right, fin at front-top-left: left fish.')
-          : t('鱼头在左前，F 面右上有鱼鳍，是右鱼。', 'Head at front-left, fin at front-top-right: right fish.'), choice.index,
+          ? t('鱼头在右前，F 面左上有鱼鳍，是左鱼', 'Head at front-right, fin at front-top-left: left fish.')
+          : t('鱼头在左前，F 面右上有鱼鳍，是右鱼', 'Head at front-left, fin at front-top-right: right fish.'), choice.index,
           [aligned.faces[Face.U][left ? 8 : 6], aligned.faces[Face.F][left ? 0 : 2]]);
         phases.push({ start: moves.length, end: moves.length, recognize: recognition, act: recognition, recognizeOnly: true });
         rec = undefined;
       }
-      action(choice.alg, choice.index === 1 ? t('做左鱼公式。', 'Do left Sune.') : t('做右鱼公式。', 'Do right Sune.'), choice.index, rec);
+      action(choice.alg, choice.index === 1 ? t('做左鱼公式', 'Do left Sune.') : t('做右鱼公式', 'Do right Sune.'), choice.index, rec);
     } else if (stage === 'corner-position') {
       const align = turns.find(u => topCorners(state(join(base, u))));
       if (align !== undefined) {
-        add(align, { text: t('顶角位置已对，转顶层对齐侧面中心。', 'The corners are in the right relative positions. Turn the top to match the side centers.') });
+        add(align, { text: t('顶角位置已对，转顶层对齐侧面中心', 'The corners are in the right relative positions. Turn the top to match the side centers.') });
       } else {
         // F and R are visible; two quarter-turn inspections expose the other sides.
         let inspected = current();
         let visibleEyes = eyes(inspected).filter(face => face === Face.F || face === Face.R);
         for (let scan = 0; !visibleEyes.length && scan < 2; scan++) {
-          action('y', t('转体观察另一侧，找两端同色的眼。', 'Rotate to inspect the next side for matching corner stickers.'), eyes(cube).length ? 0 : 1, undefined, false);
+          action('y', t('转体观察另一侧，找两端同色的眼', 'Rotate to inspect the next side for matching corner stickers.'), eyes(cube).length ? 0 : 1, undefined, false);
           inspected = current();
           visibleEyes = eyes(inspected).filter(face => face === Face.F || face === Face.R);
         }
         const eyeFaces = eyes(inspected);
         const index = eyeFaces.length ? 0 : 1;
         const outlines = visibleEyes.slice(0, 1).flatMap(face => [inspected.faces[face][0], inspected.faces[face][2]]);
-        let rec: DemoContent | undefined = recognize(index === 0 ? t('找到一对眼：两端角格同色。', 'Found headlights: the two corner stickers match.') : t('四面都没有眼，先做一遍J公式造眼。', 'No headlights on any side. Use the J algorithm once to create a pair.'), index, outlines);
+        let rec: DemoContent | undefined = recognize(index === 0 ? t('找到一对眼：两端角格同色', 'Found headlights: the two corner stickers match.') : t('四面都没有眼，先做一遍J公式造眼', 'No headlights on any side. Use the J algorithm once to create a pair.'), index, outlines);
         const y = index === 0 ? rotations.find(y => eyes(state(join(currentAlg(), y))).includes(Face.L))! : '';
-        rec = prepare(y, t('转体，把眼放左。', 'Rotate the cube to hold the headlights on the left.'), index, rec);
-        action(CORNER_POSITION, t('做J公式。', 'Do the J algorithm.'), index, rec);
+        rec = prepare(y, t('转体，把眼放左', 'Rotate the cube to hold the headlights on the left.'), index, rec);
+        action(CORNER_POSITION, t('做J公式', 'Do the J algorithm.'), index, rec);
       }
     } else if (stage === 'edge-position') {
       const align = turns.find(u => topCorners(state(join(base, u))));
       if (align) {
-        add(align, { text: t('转顶层，让顶角先对齐侧面中心。', 'Turn the top to match the corners with the side centers.') });
+        add(align, { text: t('转顶层，让顶角先对齐侧面中心', 'Turn the top to match the corners with the side centers.') });
         continue;
       }
       const wallFaces = walls(cube);
@@ -558,12 +558,12 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
       const caseIndex = index === 2 ? 2 : left ? 0 : 1;
       phases.push(...wallScanPhases(base, moves.length, caseIndex));
       if (y) {
-        action(y, index === 2 ? t('沿当前朝向起手，先造墙。', 'Start from this orientation and create a wall.') : t('把墙直接放到后面。', 'Move the wall directly to the back.'), caseIndex, undefined, false);
+        action(y, index === 2 ? t('沿当前朝向起手，先造墙', 'Start from this orientation and create a wall.') : t('把墙直接放到后面', 'Move the wall directly to the back.'), caseIndex, undefined, false);
         phases[phases.length - 1].moveView = 'home';
-      } else add('', { text: t('把墙直接放到后面。', 'Move the wall directly to the back.'), caseIndex }, undefined, 'home');
+      } else add('', { text: t('把墙直接放到后面', 'Move the wall directly to the back.'), caseIndex }, undefined, 'home');
       if (index !== 2) {
         // A separate observation explains the direction only after the wall is actually at the back.
-        add('', { text: left ? t('前棱颜色对齐左侧，先右鱼再左鱼。', 'The front edge matches the left: right Sune first.') : t('前棱颜色对齐右侧，先左鱼再右鱼。', 'The front edge matches the right: left Sune first.'), caseIndex });
+        add('', { text: left ? t('前棱颜色对齐左侧，先右鱼再左鱼', 'The front edge matches the left: right Sune first.') : t('前棱颜色对齐右侧，先左鱼再右鱼', 'The front edge matches the right: left Sune first.'), caseIndex });
       }
       const alg = caseIndex === 1 ? EDGE_POSITION_RIGHT : EDGE_POSITION_LEFT;
       phases.push(...edgeAlgorithmPhases(alg, moves.length, caseIndex));
@@ -615,11 +615,11 @@ export function walkthroughCrossPhases(setup: string, alg: string): DemoPhase[] 
     const aligned = state(join(setup, ...moves.slice(0, index)));
     const outlines = [aligned.faces[Face.U][5], aligned.faces[Face.R][1], aligned.faces[Face.R][4]];
     if (index > start) phases.push({ start, end: index, act: {
-      text: t('对齐：让当前白棱的侧色对齐同色中心。', 'Align the current white edge’s side color with its matching center.'),
+      text: t('对齐：让当前白棱的侧色对齐同色中心', 'Align the current white edge’s side color with its matching center.'),
       alg: moves.slice(start, index).join(' '), outlines,
     } });
     phases.push({ start: index, end: index + 1, act: {
-      text: t('右面转两次，把这条白棱送到底面。', 'Turn the right face twice to insert this white edge into the bottom.'),
+      text: t('右面转两次，把这条白棱送到底面', 'Turn the right face twice to insert this white edge into the bottom.'),
       alg: 'R2', outlines,
     } });
     start = index + 1;

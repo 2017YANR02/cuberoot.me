@@ -110,7 +110,7 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, fl
   return <>
     <TutorialNavigationShell className="f2l-study-layout">
 
-      {!lesson ? <p><T zh="本节教学案例待补充。" en="Teaching examples for this chapter are being prepared." /></p> : <>
+      {!lesson ? <p><T zh="本节教学案例待补充" en="Teaching examples for this chapter are being prepared." /></p> : <>
         {classified && activeCategory ? <ClassifiedSectionNavigation active={activeCategory} orientation={orientation}
           onSelect={id => void setSelection({ algGroup: id, algCase: null })} /> : chapter === 4 ? <SectionNavigation label={tr(f2lGroupName(activeGroup))} items={lessonGroups.map((group) => ({ id: String(group), icon: sectionIcon(lessons.find(c => c.group === group)!.name), label: tr(f2lGroupName(group)), active: activeGroup === group, onSelect: () => void setSelection({ algGroup: group, algCase: null }) }))} /> : <SectionNavigation label={lesson.name} items={visibleLessons.map((c) => ({ id: String(c.name), icon: sectionIcon(c.name), label: c.name, active: lesson.name === c.name, onSelect: () => setCaseName(c.name) }))} />}
         <div className="f2l-study-main">

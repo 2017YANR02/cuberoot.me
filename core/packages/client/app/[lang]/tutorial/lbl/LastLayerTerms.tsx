@@ -42,8 +42,8 @@ export default function LastLayerTerms({ wall }: { wall: boolean }) {
         </div>
         <figcaption>
           <strong><T zh="对色" en="Opposite colors" /></strong>
-          <span><T zh="复原后，相对两面的颜色互为对色。" en="On a solved cube, the colors on opposite faces are opposite colors." /></span>
-          <span><T zh="标准配色中，蓝和绿、红和橙互为对色。" en="In the standard color scheme, blue is opposite green, and red is opposite orange." /></span>
+          <span><T zh="复原后，相对两面的颜色互为对色" en="On a solved cube, the colors on opposite faces are opposite colors." /></span>
+          <span><T zh="标准配色中，蓝和绿、红和橙互为对色" en="In the standard color scheme, blue is opposite green, and red is opposite orange." /></span>
         </figcaption>
       </figure>}
     </div>

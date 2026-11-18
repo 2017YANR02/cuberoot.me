@@ -26,7 +26,7 @@ export function MiddleCaseDiagram({ left = false, size = 248 }: { left?: boolean
 }
 
 export default function MiddleCases() {
-  return <div className="lbl-middle-core">
+  return <div className="lbl-middle-core lbl-middle-terms">
     <div className="lbl-middle-core-cases">
       {[false, true].map(left => <figure key={String(left)}>
         <MiddleCaseDiagram left={left} />

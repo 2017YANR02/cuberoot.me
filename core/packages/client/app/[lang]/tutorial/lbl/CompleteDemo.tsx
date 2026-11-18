@@ -77,14 +77,14 @@ export function WhiteCrossCompleteDemo() {
     const alg = buildBottomCrossFromDaisy(setup);
     const moves = alg.split(/\s+/);
     return { setup, alg,
-      done: { zh: '白十字完成，四条侧面颜色也对齐中心。', en: 'The white cross is solved and all four side colors match their centers.' },
+      done: { zh: '白十字完成，四条侧面颜色也对齐中心', en: 'The white cross is solved and all four side colors match their centers.' },
       phases: moves.map((move, index) => ({ start: index, end: index + 1,
         act: { text: /^d/.test(move)
           ? { zh: '转下面两层，在前面对齐白棱与中心', en: 'Turn the lower two layers to align the white edge with the front center' }
           : /^U/.test(move) ? { zh: '转顶层，把白棱放到前方', en: 'Turn the top to bring a white edge to the front' }
           : /^y/.test(move)
             ? { zh: '转体，把已经对齐的白棱放到右侧', en: 'Rotate the cube to put the aligned white edge on the right' }
-            : { zh: '做“上上”，让这条白棱归位。', en: 'Turn the right face twice to insert this white edge.' }, alg: move } })),
+            : { zh: '做“上上”，让这条白棱归位', en: 'Turn the right face twice to insert this white edge.' }, alg: move } })),
     };
   }, [index]);
   return <div className="lbl-complete-demo">
@@ -177,7 +177,7 @@ export function Demonstration({ stage, demo, guidedFish = false, onCaseCueChange
     });
     const finalStep = moves.length;
     if (stage === 'cross' && !walkthrough) {
-      const reveal: DemoPhase = { start: finalStep, end: finalStep, act: { text: { zh: '看看底面，白十字已经完成。', en: 'Look underneath: the white cross is complete.' } } };
+      const reveal: DemoPhase = { start: finalStep, end: finalStep, act: { text: { zh: '看看底面，白十字已经完成', en: 'Look underneath: the white cross is complete.' } } };
       frames.push({ step: finalStep, duration: 2700, caption: 'act', phase: reveal, view: 'bottom' });
       const alignedSides = { ...reveal, act: { text: demo.done } };
       for (const view of ['home', 'right', 'back', 'left', 'home'] as const) {

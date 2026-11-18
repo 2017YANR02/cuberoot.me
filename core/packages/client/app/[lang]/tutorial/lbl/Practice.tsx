@@ -196,7 +196,7 @@ function Exercise({ step, example, index, total, onNext, onClose, onPrevious, ca
         */}
         <div className="lbl-exercise-tools">{beginner && <button className="lbl-button" type="button" onClick={undo} disabled={!history}><T zh="撤销一步" en="Undo" /></button>}<button className="lbl-button" type="button" onClick={reset}><RotateCcw size={16} aria-hidden="true" />{beginner ? <T zh="重新开始" en="Restart" /> : <T zh="重来" en="Restart" />}</button></div>
       </div>
-      <div className="lbl-basic-copy"><div className="lbl-practice-goal"><h3>{wallGoal ? <T zh="造出一面墙，保留完整底下两层；对色在左或右均可。" en="Create a wall while keeping the first two layers solved; either edge-cycle direction is accepted." /> : fishGoal ? <T zh="变成左小鱼或右小鱼，保持下两层复原。" en="Form either a left or right fish, keeping the first two layers solved." /> : edgeGoal ? <T zh="把目标中棱移到顶层，保留完整底层；顶层位置和朝向不限。" en="Move the target middle edge to the top layer in any position or orientation, keeping the entire bottom layer intact." /> : cornerGoal ? <T zh="把目标角块移到顶层，保留底十字和其他已复原的底层角块。" en="Move the target corner to the top layer, keeping the bottom cross and the other solved bottom corners intact." /> : tr(practiceObjective(step, example))}</h3>
+      <div className="lbl-basic-copy"><div className="lbl-practice-goal"><h3>{wallGoal ? <T zh="造出一面墙，保留完整底下两层；对色在左或右均可" en="Create a wall while keeping the first two layers solved; either edge-cycle direction is accepted." /> : fishGoal ? <T zh="变成左小鱼或右小鱼，保持下两层复原" en="Form either a left or right fish, keeping the first two layers solved." /> : edgeGoal ? <T zh="把目标中棱移到顶层，保留完整底层；顶层位置和朝向不限" en="Move the target middle edge to the top layer in any position or orientation, keeping the entire bottom layer intact." /> : cornerGoal ? <T zh="把目标角块移到顶层，保留底十字和其他已复原的底层角块" en="Move the target corner to the top layer, keeping the bottom cross and the other solved bottom corners intact." /> : tr(practiceObjective(step, example))}</h3>
         <div className="lbl-exercise-target"><VisualCube local view="iso" size={140} setup={target} stickerColors={pieceGoal?.targetColors ?? colors} stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]} alt={tr({ zh: '本题目标状态', en: 'Target state' })} /></div>
         </div>
         <div className="lbl-exercise-reference">
@@ -239,10 +239,10 @@ function CompletionDialog({ onClose, onReview }: { onClose: () => void; onReview
       <div className="lbl-completion-art" aria-hidden="true"><span>✦</span><Trophy size={42} /><span>✧</span></div>
       <p className="lbl-completion-tag"><T zh="层先法 · 学习完成" en="Layer by layer · Complete" /></p>
       <h2 id="lbl-completion-title"><T zh="恭喜你！" en="Congratulations!" /><br /><T zh="完成三阶层先法学习" en="You’ve completed the 3×3 LBL course" /></h2>
-      <p className="lbl-completion-copy"><T zh="从第一朵小花，到六面还原。" en="From your first daisy to all six faces solved." /><br /><T zh="接下来，试着独立完成一次，记录你的进步。" en="Now try a solve on your own and track your progress." /></p>
+      <p className="lbl-completion-copy"><T zh="从第一朵小花，到六面还原" en="From your first daisy to all six faces solved." /><br /><T zh="接下来，试着独立完成一次，记录你的进步" en="Now try a solve on your own and track your progress." /></p>
       <Link className="lbl-completion-primary" href="/timer" prefetch={false}><T zh="开始计时练习" en="Start timed practice" /><ArrowRight size={20} /></Link>
       <button type="button" className="lbl-completion-review" onClick={onReview}><T zh="回看本节教程" en="Review this lesson" /></button>
-      <p className="lbl-completion-footnote"><T zh="不急着拼速度，先把每一步练熟。" en="Build confidence with each step before chasing speed." /></p>
+      <p className="lbl-completion-footnote"><T zh="不急着拼速度，先把每一步练熟" en="Build confidence with each step before chasing speed." /></p>
     </section>
   </dialog>;
 }

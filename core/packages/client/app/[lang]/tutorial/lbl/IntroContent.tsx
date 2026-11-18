@@ -33,8 +33,8 @@ export function PieceLesson({ id }: { id: string }) {
         controlMode="none" hideResetView fillPane />
     </section>
     <section className="lbl-explanation"><ReadingFit pane>
-      <p className="lbl-lead">{card ? tr(card.headline) : <T zh="表面一个彩色小方格，就是“一格”。" en="Each colored square on the surface is a facelet." />}</p>
-      <p>{card ? tr(card.hint) : <T zh="图中亮着的绿色小方格，叫“绿格”。" en="The highlighted green square is a green facelet." />}</p>
+      <p className="lbl-lead">{card ? tr(card.headline) : <T zh="表面一个彩色小方格，就是“一格”" en="Each colored square on the surface is a facelet." />}</p>
+      <p>{card ? tr(card.hint) : <T zh="图中亮着的绿色小方格，叫“绿格”" en="The highlighted green square is a green facelet." />}</p>
     </ReadingFit></section>
   </div>;
 }
@@ -162,9 +162,9 @@ function CyclingLesson({ mode }: { mode: 'notation' | 'triggers' | 'j' }) {
     </section>
     <section className={`lbl-explanation lbl-notation-copy${j ? ' lbl-j-overview-copy' : ''}`} aria-live="polite"><ReadingFit pane>
       {j ? <AlgSteps step="corner-position" alg={J_ALG} /> : triggers ? <>
-        <p className="lbl-lead"><T zh="左公式和右公式是简短的手法。" en="The left and right triggers are short move sequences." /></p>
-        <p><T zh="在后面章节会反复出现，组合成其他长公式。" en="They appear throughout later chapters as parts of longer algorithms." /></p>
-        <p><T zh="反复练习，形成肌肉记忆。" en="Practise until the moves become muscle memory." /></p>
+        <p className="lbl-lead"><T zh="左公式和右公式是简短的手法" en="The left and right triggers are short move sequences." /></p>
+        <p><T zh="在后面章节会反复出现，组合成其他长公式" en="They appear throughout later chapters as parts of longer algorithms." /></p>
+        <p><T zh="反复练习，形成肌肉记忆" en="Practise until the moves become muscle memory." /></p>
       </> : <>
         <div className="lbl-notation-label"><code>{notation.replaceAll("'", '′')}</code>{base !== 'd' && <span>{'\u3000\u3000'}{tr(operation)}</span>}</div>
         <p className="lbl-lead">{base === 'd'

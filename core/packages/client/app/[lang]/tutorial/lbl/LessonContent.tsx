@@ -358,7 +358,7 @@ function DaisyBlockedPrelude({ setup, onDone }: { setup: string; onDone: () => v
     </section>
     <section className="lbl-explanation"><ReadingFit pane>
       <p className="lbl-lead">{tr({ zh: '顶面挡住时，直接右手上会怎样？', en: 'What happens if you lift right while the top slot is occupied?' })}</p>
-      <p hidden={stage < 2}>{tr({ zh: '白棱上去了，原来的白花瓣却被转走了。', en: 'The white edge moves up, but the existing white petal moves away.' })}</p>
+      <p hidden={stage < 2}>{tr({ zh: '白棱上去了，原来的白花瓣却被转走了', en: 'The white edge moves up, but the existing white petal moves away.' })}</p>
     </ReadingFit></section>
     {toolbar && createPortal(<div className="lbl-cross-animation-progress">
       <VideoProgress time={time} duration={daisyBlockedDuration} playing={!paused}

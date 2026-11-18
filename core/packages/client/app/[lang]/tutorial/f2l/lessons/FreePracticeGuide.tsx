@@ -13,14 +13,14 @@ import { freePlacementKey, placeFreePiece, SOLVED_FREE_PLACEMENT, type FreePract
 import './free-practice-guide.css';
 
 const scenes = [
-  { position: 25, click: false, text: { zh: '先选择棱块的位置。可以选择顶层或 FR 槽；非标态先按“非标态”一章处理。', en: 'First choose the edge position, on the top layer or in the FR slot. For other slots, follow the nonstandard-case lesson first.' } },
-  { position: 25, click: true, text: { zh: '点击一个棱位，目标棱块就会放到这里。', en: 'Click an edge position to place the target edge there.' } },
-  { position: 25, click: true, text: { zh: '再次点击同一个棱位，棱块翻转，切换到另一种朝向。', en: 'Click the same edge again to flip it to its other orientation.' } },
-  { position: 26, click: true, text: { zh: '再点击一个角位，放入与它对应的角块。', en: 'Next, click a corner position to place the matching corner.' } },
-  { position: 26, click: true, text: { zh: '再次点击同一个角位，角块切换朝向。', en: 'Click the same corner again to change its orientation.' } },
-  { position: 26, click: true, text: { zh: '角块共有三种朝向。继续点击，可以循环切换，直到与手中的魔方一致。', en: 'A corner has three orientations. Keep clicking to cycle through them until it matches your cube.' } },
-  { position: 26, click: false, text: { zh: '摆好棱角后，右侧显示对应的打乱和复原公式。按打乱公式，可以在手中的魔方上摆出相同情况。', en: 'The matching scramble and solution appear on the right. Use the scramble to recreate this case on your own cube.' } },
-  { position: 26, click: false, text: { zh: '点击“演示复原”观看解法；点击“重新摆放”回到点选。拖动魔方旁的空白区域可以调整视角。', en: 'Choose “Play the solution” to watch the moves, or “Edit the case” to return to picking pieces. Drag the background beside the cube to adjust the view.' } },
+  { position: 25, click: false, text: { zh: '先选棱块的位置：顶层或 FR 槽\n非标态请先按“非标态”一章处理', en: 'First choose the edge position, on the top layer or in the FR slot. For other slots, follow the nonstandard-case lesson first.' } },
+  { position: 25, click: true, text: { zh: '点击一个棱位，目标棱块就会放到这里', en: 'Click an edge position to place the target edge there.' } },
+  { position: 25, click: true, text: { zh: '再次点击同一个棱位，棱块翻转，切换到另一种朝向', en: 'Click the same edge again to flip it to its other orientation.' } },
+  { position: 26, click: true, text: { zh: '再点击一个角位，放入与它对应的角块', en: 'Next, click a corner position to place the matching corner.' } },
+  { position: 26, click: true, text: { zh: '再次点击同一个角位，角块切换朝向', en: 'Click the same corner again to change its orientation.' } },
+  { position: 26, click: true, text: { zh: '角块共有三种朝向\n继续点击，可以循环切换，直到与手中的魔方一致', en: 'A corner has three orientations. Keep clicking to cycle through them until it matches your cube.' } },
+  { position: 26, click: false, text: { zh: '摆好棱角后，右侧显示对应的打乱和复原公式\n按打乱公式，可以在手中的魔方上摆出相同情况', en: 'The matching scramble and solution appear on the right. Use the scramble to recreate this case on your own cube.' } },
+  { position: 26, click: false, text: { zh: '点击“演示复原”观看解法\n点击“重新摆放”回到点选\n拖动魔方旁的空白处调整视角', en: 'Choose “Play the solution” to watch the moves, or “Edit the case” to return to picking pieces. Drag the background beside the cube to adjust the view.' } },
 ];
 const sceneDuration = 6000;
 const clickAt = 1800;

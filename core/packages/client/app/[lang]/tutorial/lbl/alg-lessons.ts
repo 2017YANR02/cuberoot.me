@@ -12,7 +12,7 @@ export const ALG_LESSONS: AlgLesson[] = [
       naming: { zh: '简单的四步公式，右手起手，称为右公式', en: 'A simple four-move algorithm starting with the right hand, called the right trigger.' } },
   ] },
   { id: 'sune-learning', after: 'yellow-cross', title: { zh: '公式学习：左鱼和右鱼', en: 'Learn left and right Sune' },
-    usage: { zh: '复原顶层会多次用到，请牢记。', en: 'It is used many times to finish the top layer — learn it well.' },
+    usage: { zh: '复原顶层会多次用到，请牢记', en: 'It is used many times to finish the top layer — learn it well.' },
     algs: [
     { title: { zh: '左鱼公式', en: 'Left Sune' }, alg: LEFT_SUNE, left: true,
       naming: { zh: '左鱼：鱼头放右前，前（F）面左上角有鱼鳍，左手起手', en: 'Left fish: head at front-right, a fin at the top-left corner of the front (F) face; start with the left hand.' } },

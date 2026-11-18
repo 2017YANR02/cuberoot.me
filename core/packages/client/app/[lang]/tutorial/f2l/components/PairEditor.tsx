@@ -113,6 +113,6 @@ export default function PairEditor({ setup, orientation, onPiece, guide, onReady
     <SimStage size={size} mount={mount} onReady={() => { setReady(true); latest.current.onReady?.(); }}
       onResetView={hideResetView ? undefined : () => resetView.current?.()} busyLabel={tr({ zh: '正在加载练习魔方', en: 'Loading the practice cube' })} />
     {guide && <div ref={pointer} className="f2l-guide-pointer" data-clicking={guide.clicking} aria-hidden="true"><span /><MousePointer2 size={60} /></div>}
-    {loadFailed && <p role="alert"><T zh="魔方加载失败，请刷新页面重试。" en="The cube could not be loaded. Please refresh the page to try again." /></p>}
+    {loadFailed && <p role="alert"><T zh="魔方加载失败，请刷新页面重试" en="The cube could not be loaded. Please refresh the page to try again." /></p>}
   </div>;
 }

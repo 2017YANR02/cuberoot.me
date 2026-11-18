@@ -36,8 +36,8 @@ function ThreeMoveFilm({ lesson, orientation, pauseBetween, alignment }: {
   const current = Math.min(sections.length, Math.ceil(step));
   const caption = alignment
     ? tr(current === 0 || current === 4
-      ? { zh: `这就是教材中的 ${lesson.name} 起始朝向。`, en: `This is the reference orientation for ${lesson.name}.` }
-      : { zh: `图案转到了另一个位置，但它仍然是 ${lesson.name}。`, en: `The pattern has moved around the top, but it is still ${lesson.name}.` })
+      ? { zh: `这就是教材中的 ${lesson.name} 起始朝向`, en: `This is the reference orientation for ${lesson.name}.` }
+      : { zh: `图案转到了另一个位置，但它仍然是 ${lesson.name}`, en: `The pattern has moved around the top, but it is still ${lesson.name}.` })
     : tr(lesson.stageTitles[current]);
   return <div className="f2l-lesson f2l-study-lesson" data-tutorial-layout={alignment ? 'C' : 'B'}>
     <section {...playbackProps} className="f2l-demo" aria-label={tr({ zh: '三步基态短片', en: 'Three-move walkthrough' })}>
@@ -103,7 +103,7 @@ function AlignmentExercise({ lesson, orientation, adjustment, onRestart }: {
         <VisualCube local view="iso" size={200} faceletColors={reference} alt={lesson.name} />
         <figcaption><T zh="对齐这个图形" en="Match this pattern" /> · {lesson.name}</figcaption>
       </figure>
-      <p><T zh="保持底色和前面不变，只调整顶层。也可以拿手中的魔方一起练习。" en="Keep the bottom and front fixed; adjust only the top. You can also practise on your own cube." /></p>
+      <p><T zh={"保持底色和前面不变，只调整顶层\n也可以拿手中的魔方一起练习"} en="Keep the bottom and front fixed; adjust only the top. You can also practise on your own cube." /></p>
       <p className="f2l-stage-scramble"><span><T zh="打乱:" en="Scramble:" /></span><code>{practice.setup}</code></p>
       <div className="f2l-merged-controls">
         {result === 'correct' && !demonstrating && <button type="button" className="f2l-restart" onClick={() => setDemonstrating(true)}><T zh="接上三步还原" en="Finish in three moves" /></button>}

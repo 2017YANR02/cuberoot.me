@@ -26,7 +26,7 @@ export const chapters: Chapter[] = LBL_STEPS.flatMap(step => {
   if (['middle', 'corner-position', 'edge-position'].includes(step.id)) lessons.push({ id: 'terms', title: { zh: '术语介绍', en: 'Terminology' }, kind: 'terms' });
   if (step.id === 'cross') lessons.push({ id: 'white-edge', title: { zh: '白棱归位', en: 'Solve one white edge' }, kind: 'example',
     example: { title: { zh: '白棱归位', en: 'Solve one white edge' }, alg: "d' y' R2", setup: 'R2 U',
-      hint: { zh: '转下面两层，在前面对齐白棱与中心。转体，把白棱放到右侧。做“上上”归位。', en: 'Turn the lower two layers to align the white edge with the front center. Rotate the cube to put the edge on the right. Turn the right face twice to insert it.' } } });
+      hint: { zh: '转下面两层，在前面对齐白棱与中心\n转体，把白棱放到右侧\n做“上上”归位', en: 'Turn the lower two layers to align the white edge with the front center. Rotate the cube to put the edge on the right. Turn the right face twice to insert it.' } } });
   if (step.id !== 'structure') {
     const cases: Lesson[] = step.examples.map((example, index) => ({ id: `case-${index}`, title: example.title,
       kind: step.id === 'cross' ? 'complete' : 'example', example: step.id === 'cross' ? undefined : example, practiceIndices: [index] }));
