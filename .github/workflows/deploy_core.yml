@@ -206,6 +206,42 @@ jobs:
               "root@${{ secrets.DEPLOY_HOST }}" \
               'sh /root/core-api/.sync-platform-private-secrets.sh /root/core-api/.env'
 
+      # Production read-aloud is enabled once when existing Bailian credentials
+      # are reusable. An explicit runtime opt-out always survives later deploys.
+      - name: Initialize assistant speech runtime configuration
+        run: |
+          ssh -T -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
+            -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "root@${{ secrets.DEPLOY_HOST }}" \
+            'node --input-type=module - /root/core-api/.env' <<'SPEECH_ENV'
+          import { readFileSync, writeFileSync, renameSync } from 'node:fs';
+          import { parseEnv } from 'node:util';
+          const file = process.argv[2], original = readFileSync(file, 'utf8'), env = parseEnv(original);
+          if (env.SITE_ASSISTANT_TTS_ENABLED?.trim()) {
+            console.log(`Assistant speech explicit setting preserved: ${env.SITE_ASSISTANT_TTS_ENABLED === '1' ? 'enabled' : 'disabled'}`);
+            process.exit(0);
+          }
+          const key = env.SITE_ASSISTANT_TTS_API_KEY || env.SITE_ASSISTANT_API_KEY || env.DASHSCOPE_API_KEY;
+          const explicit = env.SITE_ASSISTANT_TTS_BASE_URL;
+          let url;
+          try { url = new URL(explicit || env.SITE_ASSISTANT_BASE_URL || 'https://dashscope.aliyuncs.com'); } catch {}
+          const valid = key && url?.protocol === 'https:' && !url.username && !url.password && !url.port && !url.search && !url.hash
+            && (url.hostname === 'dashscope.aliyuncs.com' || /^ws-[a-z0-9]+\.cn-beijing\.maas\.aliyuncs\.com$/.test(url.hostname))
+            && (explicit ? url.pathname === '/' : ['/', '/compatible-mode/v1', '/compatible-mode/v1/'].includes(url.pathname));
+          if (!valid) {
+            console.log('Assistant speech remains disabled: reusable Beijing Bailian configuration unavailable');
+            process.exit(0);
+          }
+          // Preserve the exact original bytes privately, and replace atomically.
+          const backup = `${file}.before-assistant-speech`;
+          try { writeFileSync(backup, original, { mode: 0o600, flag: 'wx' }); }
+          catch (error) { if (error.code !== 'EEXIST') throw error; }
+          const pending = `${file}.assistant-speech.pending`;
+          writeFileSync(pending, `${original}\n# Assistant speech production rollout\nSITE_ASSISTANT_TTS_ENABLED=1\n`, { mode: 0o600, flag: 'wx' });
+          renameSync(pending, file);
+          console.log('Assistant speech initialized with existing Bailian credentials; no credentials copied or logged');
+          SPEECH_ENV
+
       - name: Deploy server
         env:
           API_DIR: core/${{ steps.workspace.outputs.api }}

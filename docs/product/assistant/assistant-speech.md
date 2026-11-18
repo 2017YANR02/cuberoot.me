@@ -35,6 +35,7 @@
 在 API 运行环境配置（模板见 `core/apps/api/.env.example`）：
 
 - `SITE_ASSISTANT_TTS_ENABLED=1` 开启，默认关闭。
+- 生产部署在该开关尚未配置、且已有可复用的北京百炼密钥与地址时自动初始化为 `1`；显式 `0` 始终保留。初始化仅追加开关，原 `.env` 私有备份为 `.env.before-assistant-speech`，不复制或输出密钥；模型权限仍由线上真实朗读验证。已有独立 TTS 配置优先，后续部署不覆盖。
 - `SITE_ASSISTANT_TTS_BASE_URL`：北京标准接口 `https://dashscope.aliyuncs.com` 或北京业务空间 HTTPS origin，不含 API 路径。留空复用 `SITE_ASSISTANT_BASE_URL`（支持 `/compatible-mode/v1` 路径）；两者均空时使用标准接口。非百炼聊天地址不能自动复用。
 - `SITE_ASSISTANT_TTS_API_KEY`：可独立配置；留空依次复用 `SITE_ASSISTANT_API_KEY`、`DASHSCOPE_API_KEY`，须具有同地域的语音模型权限。
 - `SITE_ASSISTANT_TTS_MODEL` 留空自动选择：标准接口为 `qwen3-tts-flash`，业务空间为 `qwen-audio-3.1-tts-flash`。
