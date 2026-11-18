@@ -184,18 +184,11 @@ export async function requireCourseOwner(
   return instructorId;
 }
 
-export async function requireCourseEntitlement(
-  db: PlatformDb,
-  actor: PlatformActor,
-  courseId: string,
-  lessonId?: string,
-): Promise<void> {
-  if (actor.isAdmin) return;
-  if (actor.userId == null) forbidden('A user-backed account is required');
-  const rows = await platformQuery<{ allowed: boolean }>(db, `
-    SELECT EXISTS (
+/** Shared with the course directory. Arguments are fixed SQL expressions from our queries. */
+export function courseEntitlementPredicate(courseId: '$2::uuid' | 'lesson.course_id', lessonId: '$3::uuid' | 'lesson.id'): string {
+  return `EXISTS (
       SELECT 1 FROM platform_course_entitlements entitlement
-      WHERE user_id = $1 AND course_id = $2::uuid AND status = 'active'
+      WHERE user_id = $1 AND course_id = ${courseId} AND status = 'active'
         AND valid_from <= NOW() AND (valid_until IS NULL OR valid_until > NOW())
         AND (
           NOT EXISTS (SELECT 1 FROM platform_entitlement_ledger WHERE entitlement_id = entitlement.id)
@@ -204,7 +197,7 @@ export async function requireCourseEntitlement(
             WHERE grant_entry.entitlement_id = entitlement.id AND grant_entry.delta_access = 1
               AND grant_entry.valid_from <= NOW()
               AND (grant_entry.valid_until IS NULL OR grant_entry.valid_until > NOW())
-              AND (grant_entry.lesson_ids IS NULL OR $3::uuid = ANY(grant_entry.lesson_ids))
+              AND (grant_entry.lesson_ids IS NULL OR ${lessonId} = ANY(grant_entry.lesson_ids))
               AND NOT EXISTS (
                 SELECT 1 FROM platform_entitlement_ledger reversal
                 WHERE reversal.reversal_of_ledger_id = grant_entry.id
@@ -215,10 +208,31 @@ export async function requireCourseEntitlement(
       SELECT 1
       FROM platform_course_owners co
       JOIN platform_instructors i ON i.id = co.instructor_id
-      WHERE i.user_id = $1 AND i.status = 'active' AND co.course_id = $2::uuid AND co.status = 'active'
-    ) AS allowed
-  `, [actor.userId, courseId, lessonId ?? null]);
+      WHERE i.user_id = $1 AND i.status = 'active' AND co.course_id = ${courseId} AND co.status = 'active'
+    )`;
+}
+
+export async function requireCourseEntitlement(
+  db: PlatformDb,
+  actor: PlatformActor,
+  courseId: string,
+  lessonId?: string,
+): Promise<void> {
+  if (actor.isAdmin) return;
+  if (actor.userId == null) forbidden('A user-backed account is required');
+  const rows = await platformQuery<{ allowed: boolean }>(db,
+    `SELECT (${courseEntitlementPredicate('$2::uuid', '$3::uuid')}) AS allowed`,
+    [actor.userId, courseId, lessonId ?? null]);
   if (!rows[0]?.allowed) forbidden('An active course entitlement is required');
+}
+
+export async function findCourseReviewEntitlement(db: PlatformDb, userId: number | null, courseId: string): Promise<string | undefined> {
+  const [entitlement] = await platformQuery<{ id: string }>(db, `
+    SELECT id::text FROM platform_course_entitlements
+    WHERE user_id = $1 AND course_id = $2::uuid AND status = 'active'
+      AND valid_from <= NOW() AND (valid_until IS NULL OR valid_until > NOW())
+  `, [userId, courseId]);
+  return entitlement?.id;
 }
 
 export function isPostgresConflict(error: unknown): boolean {

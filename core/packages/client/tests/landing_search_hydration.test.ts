@@ -319,6 +319,29 @@ describe('LandingSearch placeholder hydration', () => {
     try{await chat.submit();expect(document.body.textContent).toContain(text);expect(chat.host.querySelector('input')?.value).toBe('世界纪录');expect(server.posts).toHaveLength(1);}finally{await chat.close();}
   });
 
+  it('hydrates when iOS Chromium adds its autofill node ID before React starts', async () => {
+    const host = document.createElement('div');
+    host.innerHTML = renderToStaticMarkup(createElement(LandingSearch, { cards: [], lang: 'zh' }));
+    document.body.appendChild(host);
+    const input = host.querySelector<HTMLInputElement>('.landing-search-field')!;
+    input.setAttribute('__gcruniqueid', '1');
+    const errors: unknown[][] = [];
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => { errors.push(args); });
+    let root: ReturnType<typeof hydrateRoot> | undefined;
+    try {
+      await act(async () => {
+        root = hydrateRoot(host, createElement(LandingSearch, { cards: [], lang: 'zh' }));
+      });
+      expect(errors.filter(entry => String(entry[0]).toLowerCase().includes('hydrat'))).toEqual([]);
+      expect(host.querySelector('.landing-search-field')).toBe(input);
+      expect(input.getAttribute('__gcruniqueid')).toBe('1');
+    } finally {
+      await act(async () => root?.unmount());
+      errorSpy.mockRestore();
+      host.remove();
+    }
+  });
+
   it('服务器与客户端跨 UTC 日期时首帧仍一致,挂载后再显示当天文案', async () => {
     vi.setSystemTime(new Date('2026-08-19T12:00:00Z'));
     const html = renderToStaticMarkup(createElement(LandingSearch, { cards: [], lang: 'zh' }));

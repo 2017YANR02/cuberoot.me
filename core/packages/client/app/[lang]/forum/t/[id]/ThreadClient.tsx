@@ -29,6 +29,7 @@ import '@/components/hash-highlight.css';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
 import { ForumIconButton } from '@/components/forum/ForumIconButton';
 import PageBackLink from '@/components/PageBackLink';
+import { platformSharedPathname } from '@/lib/platform-navigation';
 
 const SIZE_DEFAULT = 20;
 
@@ -42,7 +43,7 @@ export default function ThreadClient() {
 
   const [threadId, setThreadId] = useState(0);
   useEffect(() => {
-    const m = window.location.pathname.match(/\/forum\/t\/(\d+)/);
+    const m = platformSharedPathname(window.location.pathname).match(/\/forum\/t\/(\d+)/);
     setThreadId(m ? Number(m[1]) : 0);
   }, [pathname]);
 

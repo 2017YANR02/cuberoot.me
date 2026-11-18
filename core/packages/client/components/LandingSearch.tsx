@@ -1233,6 +1233,8 @@ export default function LandingSearch({
           <input
             ref={textInputRef}
             type="text"
+            // iOS Chromium autofill adds __gcruniqueid before hydration; tolerate it on this control only.
+            suppressHydrationWarning
             autoFocus={autoFocus}
             className="landing-search-field"
             value={query}

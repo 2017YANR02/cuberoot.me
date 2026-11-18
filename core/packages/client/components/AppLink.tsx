@@ -3,7 +3,9 @@ import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
 import NextLink from 'next/link';
 import { useParams } from 'next/navigation';
-import { useRef, useSyncExternalStore, type ComponentProps } from 'react';
+import { useContext, useRef, useSyncExternalStore, type ComponentProps } from 'react';
+import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
+import { platformNavigationHref } from '@/lib/platform-navigation';
 import { useTrainingHref } from '@/lib/training-host';
 import { currentEntryHref, entryNavigationHref, type EntryNavigationMode } from '@/lib/entry-navigation';
 import { LinkPendingIndicator } from '@/components/StartupStatus';
@@ -34,6 +36,7 @@ function isInstalledProductHref(href: string): boolean {
 // away first.
 export default function AppLink({ href, navigation = 'push', prefetch = false, loadingOverlay = true, ...props }: Props) {
   const params = useParams();
+  const platform = useContext(PlatformNavigationContext);
   const clickedHref = useRef('');
   const trainingHref = useTrainingHref();
   const douyin = useDouyinToolSurface();
@@ -51,7 +54,7 @@ export default function AppLink({ href, navigation = 'push', prefetch = false, l
     const bare = href.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
     h = prefix ? `${prefix}${bare === '/' ? '' : bare}` : bare;
   }
-  if (typeof h === 'string') h = entryNavigationHref(trainingHref(h), '');
+  if (typeof h === 'string') h = entryNavigationHref(trainingHref(platform && navigation === 'push' ? platformNavigationHref(h) : h), '');
   // Embedded requests cannot rely on accepting a SameSite=Lax language cookie.
   // Apply after navigation cleanup, which can canonicalize an old /en URL.
   if (installed && (lang === 'en' || lang === 'zh') && typeof h === 'string' && isInstalledProductHref(h)) {

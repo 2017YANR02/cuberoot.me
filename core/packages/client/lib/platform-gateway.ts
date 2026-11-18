@@ -26,6 +26,8 @@ export interface PlatformLoadOptions {
   pageSize?: number;
   category?: string;
   days?: number;
+  includeCourseAccess?: boolean;
+  reviewPage?: number;
   signal?: AbortSignal;
 }
 
@@ -96,9 +98,10 @@ function queryString(options: PlatformLoadOptions): string {
 function readPath(resource: PlatformResource, options: PlatformLoadOptions): string {
   const id = encodedId(options);
   const rawQuery = queryString(options);
-  const query = ['courses', 'paths', 'events', 'news', 'products', 'search'].includes(resource)
-    ? rawQuery + (rawQuery ? '&' : '?') + 'v=3'
-    : ['orders', 'admin-orders'].includes(resource) ? rawQuery + (rawQuery ? '&' : '?') + 'v=2' : rawQuery;
+  const version = resource === 'courses' ? (id ? 5 : 4)
+    : ['paths', 'events', 'news', 'products', 'search'].includes(resource) ? 3
+    : ['orders', 'admin-orders'].includes(resource) ? 2 : null;
+  const query = version ? rawQuery + (rawQuery ? '&' : '?') + 'v=' + version : rawQuery;
   switch (resource) {
     case 'search': return `/v1/platform/search${query}`;
     case 'leaderboard': return `/v1/platform/leaderboard${query}`;
@@ -110,7 +113,7 @@ function readPath(resource: PlatformResource, options: PlatformLoadOptions): str
     case 'membership-plans': return '/v1/platform/membership-plans';
     case 'account-memberships': return '/v1/platform/me/memberships';
     case 'entitlements': return `/v1/platform/entitlements${query}`;
-    case 'courses': return `/v1/platform/courses${id ? `/${id}` : ''}${query}`;
+    case 'courses': return `/v1/platform/courses${id ? `/${id}` : ''}${query}${id && options.includeCourseAccess ? '&includeAccess=1' : ''}${id && options.reviewPage ? `&reviewPage=${options.reviewPage}` : ''}`;
     case 'course-lesson': return `/v1/platform/courses/${encodeURIComponent(options.params.id ?? '')}/lessons/${encodeURIComponent(options.params.lessonId ?? '')}`;
     case 'paths': return `/v1/platform/paths${id ? `/${id}` : ''}${query}`;
     case 'events': return `/v1/platform/events${id ? `/${id}` : ''}${query}`;

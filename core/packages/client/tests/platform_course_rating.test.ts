@@ -4,7 +4,14 @@ import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
 import type { PlatformRouteDefinition } from '@/lib/platform-types';
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
-vi.mock('@/components/AppLink', () => ({ default: ({ children }: { children: ReactNode }) => children }));
+const state = vi.hoisted(() => ({ user: null as { uid: number } | null, load: vi.fn() }));
+vi.mock('@/lib/auth-store', () => ({
+  useAuthUser: () => state.user, nextQuery: (path: string) => '?next=' + encodeURIComponent(path),
+}));
+vi.mock('@/components/AppLink', () => ({ default: ({ href, children }: { href: string; children: ReactNode }) => createElement('a', { href }, children) }));
+vi.mock('@/components/platform/PlatformFavoriteButton', () => ({ PlatformFavoriteButton: () => null }));
+vi.mock('@/lib/platform-gateway', async original => ({ ...await original<object>(), loadPlatformResource: state.load }));
+
 import { PlatformLearningActions } from '@/components/platform/PlatformDomainActions';
 
 it('requires a star rating and allows an optional title without using the course title', async () => {
@@ -12,12 +19,15 @@ it('requires a star rating and allows an optional title without using the course
   const host = document.createElement('div');
   const root = createRoot(host);
   const runAction = vi.fn().mockResolvedValue(undefined);
+  state.user = { uid: 1 };
   try {
     await act(async () => root.render(createElement(PlatformLearningActions, {
       definition: { id: 'course-detail' } as PlatformRouteDefinition,
       entity: { id: 'course', title: '课程标题', data: { title: '课程标题' } },
       params: { id: 'course' }, busy: null, runAction,
     })));
+    expect(host.querySelector('form')).toBeNull();
+    await act(async () => (host.querySelector('.platform-review-actions button') as HTMLButtonElement).click());
     const form = host.querySelector('form')!;
     expect(form.querySelectorAll('input[type="radio"]')).toHaveLength(5);
     expect(form.querySelector('input[type="number"]')).toBeNull();
@@ -38,12 +48,12 @@ it('requires a star rating and allows an optional title without using the course
       // Editable copy uses an explicit empty string so saving can clear a previous title.
       expect(runAction).toHaveBeenLastCalledWith('submit-review', 'course', { rating, title: '', body: null });
     }
-  } finally { await act(async () => root.unmount()); }
+  } finally { state.user = null; await act(async () => root.unmount()); }
 });
 
 it.each([
   { summary: { count: 5, average: 4.8 }, score: '4.8', message: '5 个评分' },
-  { summary: { count: 0, average: null }, score: '—', message: '还没有评价' },
+  { summary: { count: 0, average: null }, score: undefined, message: '还没有文字评价' },
   { summary: undefined, score: undefined, message: '评分暂未加载' },
 ])('renders real rating totals or an honest empty state: $message', async ({ summary, score, message }) => {
   const host = document.createElement('div');
@@ -68,7 +78,7 @@ it('shows review titles, stars, public names and dates with a fractional aggrega
       definition: { id: 'course-detail' } as PlatformRouteDefinition,
       params: { id: 'course' }, busy: null, runAction: vi.fn(),
       entity: { id: 'course', title: '课程', data: {
-        reviewSummary: { count: 5, average: 4.8 },
+        reviewSummary: { count: 5, average: 4.8, distribution: [0, 0, 0, 1, 4] },
         reviews: [{ id: 'review', title: '讲得清楚', rating: 5, authorName: null, createdAt: '2026-09-08T10:00:00Z', body: '跟着练习学会了。' }],
       } },
     })));
@@ -78,7 +88,60 @@ it('shows review titles, stars, public names and dates with a fractional aggrega
     expect(card.textContent).toContain('跟着练习学会了。');
     expect(card.querySelector('time')?.textContent).toBe('2026-09-08');
     expect(card.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe('5 分，满分 5 分');
+    expect(host.querySelectorAll('.platform-review-distribution li')).toHaveLength(5);
+    expect(host.querySelector('.platform-review-distribution li')?.textContent).toContain('80%');
     const last = host.querySelector('.platform-review-total .platform-review-star:last-child > span') as HTMLElement;
     expect(parseFloat(last.style.width)).toBeCloseTo(80);
   } finally { await act(async () => root.unmount()); }
+});
+
+
+it('offers a login return link to guests and loads further reviews without replacing the first page', async () => {
+  const host = document.createElement('div');
+  const root = createRoot(host);
+  state.load.mockResolvedValueOnce({ items: [{ data: {
+    reviews: [{ id: 'next', rating: 4, body: '第二条评价' }], reviewsHasMore: false,
+  } }] });
+  try {
+    await act(async () => root.render(createElement(PlatformLearningActions, {
+      definition: { id: 'course-detail' } as PlatformRouteDefinition,
+      params: { id: 'course' }, busy: null, runAction: vi.fn(),
+      entity: { id: 'course', title: '课程', data: {
+        reviewSummary: { count: 2, average: 4.5 },
+        reviews: [{ id: 'first', rating: 5, body: '第一条评价' }], reviewsHasMore: true,
+      } },
+    })));
+    expect(host.querySelector('form')).toBeNull();
+    const login = host.querySelector('.platform-review-actions a')!;
+    expect(decodeURIComponent(login.getAttribute('href')!)).toContain('/platform/courses/course#platform-course-reviews');
+    await act(async () => (host.querySelector('.platform-review-more') as HTMLButtonElement).click());
+    expect(state.load).toHaveBeenCalledWith('courses', expect.objectContaining({ params: { id: 'course' }, reviewPage: 2 }));
+    expect([...host.querySelectorAll('.platform-review-card p')].map(row => row.textContent)).toEqual(['第一条评价', '第二条评价']);
+    expect(host.querySelector('.platform-review-more')).toBeNull();
+  } finally { await act(async () => root.unmount()); }
+});
+
+it('shows an editor with the existing review only to an eligible signed-in viewer', async () => {
+  const host = document.createElement('div');
+  const root = createRoot(host);
+  const render = (canReview: boolean) => act(async () => root.render(createElement(PlatformLearningActions, {
+    definition: { id: 'course-detail' } as PlatformRouteDefinition,
+    params: { id: 'course' }, busy: null, runAction: vi.fn(),
+    entity: { id: 'course', title: '课程', data: {
+      reviewSummary: { count: 0 }, canReview, myReview: { id: 'own', rating: 4, title: '已有标题', body: '已有评价' },
+    } },
+  })));
+  state.user = { uid: 1 };
+  try {
+    await render(false);
+    expect(host.querySelector('form')).toBeNull();
+    expect(host.textContent).toContain('解锁课程后可评价');
+    await render(true);
+    const edit = host.querySelector('.platform-review-actions button') as HTMLButtonElement;
+    expect(edit.textContent).toBe('编辑评价');
+    await act(async () => edit.click());
+    expect(host.querySelector<HTMLInputElement>('form input[type="radio"]:checked')?.value).toBe('4');
+    expect(host.querySelector<HTMLInputElement>('form input[type="text"]')?.value).toBe('已有标题');
+    expect(host.querySelector<HTMLTextAreaElement>('form textarea')?.value).toBe('已有评价');
+  } finally { state.user = null; await act(async () => root.unmount()); }
 });

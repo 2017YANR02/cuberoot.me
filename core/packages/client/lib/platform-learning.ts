@@ -10,7 +10,7 @@ export async function platformLearningRequest<T>(path: string, body?: Record<str
   }));
 }
 export interface LearningNote { id: string; body: string; positionSeconds: number | null; updatedAt?: string; lessonId?: string; courseId?: string; title?: string; courseTitleZh?: string; courseTitleEn?: string }
-export interface LearningLesson { id: string; titleZh?: string; titleEn?: string; ordinal?: number; status?: string; progressBps?: number; durationSeconds?: number; accessScope?: string }
+export interface LearningLesson { id: string; titleZh?: string; titleEn?: string; ordinal?: number; status?: string; progressBps?: number; durationSeconds?: number; accessScope?: string; locked?: boolean }
 export interface QuizFeedback { questionId: string; selected: unknown; expected: unknown; correct: boolean; explanation?: string }
 export interface LearningAttempt { id: string; quizId: string; quizRevision?: number; attemptNumber: number; scoreBps: number; passed: boolean; gradedAt?: string; feedback?: QuizFeedback[]; awardedPoints?: boolean }
 export interface LessonLearningState { progress: { status: string; progressBps: number; positionSeconds: number } | null; notes: LearningNote[]; lessons: LearningLesson[]; attempts: LearningAttempt[] }

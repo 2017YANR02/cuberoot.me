@@ -1,5 +1,6 @@
 'use client';
 
+import { LockKeyhole } from '@app-foundation/icons/lucide';
 import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import AppLink from '@/components/AppLink';
@@ -79,7 +80,8 @@ export function PlatformClassroom({ courseId, lessonId, lessons: initialLessons 
   },[video,user,lessonId,Boolean(state)]);
   const lessons=initialLessons.length?initialLessons:state?.lessons??publicLessons;
   const index=lessons.findIndex(item=>item.id===lessonId);
-  const select=(offset:number)=>{const item=lessons[index+offset];if(item&&onSelectLesson)onSelectLesson(item.id);};
+  const previous = index > 0 ? lessons.slice(0, index).findLast(item => !item.locked) : undefined;
+  const next = index >= 0 ? lessons.slice(index + 1).find(item => !item.locked) : undefined;
   const title=(item:LearningLesson)=>String(item[english?'titleEn':'titleZh']||item.titleZh||item.titleEn||'');
   const seek=(seconds:number)=>{if(video){video.currentTime=Math.min(seconds,Number.isFinite(video.duration)?video.duration:seconds);void video.play().catch(()=>{});}};
   const saveNote=async()=>{setBusy(true);try{await platformLearningRequest(`/me/notes/${encodeURIComponent(lessonId)}`,{...(editing?{noteId:editing.id}:{}),contentMarkdown:draft,positionSeconds:draftPosition},'PUT');setNoteOpen(false);setEditing(null);setDraft('');await refresh();}catch(reason){setSaveError(String(reason));}finally{setBusy(false);}};
@@ -92,9 +94,12 @@ export function PlatformClassroom({ courseId, lessonId, lessons: initialLessons 
     <nav className="platform-learning-directory" data-site-surface="panel"><h2>{t('课程目录','Course lessons')}</h2>{lessons.map(item=>{
       const done=state?.lessons.find(row=>row.id===item.id)?.status==='completed';
       const label=<><span>{title(item)}</span>{done||item.accessScope==='public'||item.durationSeconds?<small>{done?t('已完成','Completed'):item.accessScope==='public'?t('试看','Preview'):learningTime(item.durationSeconds??0)}</small>:null}</>;
+      if (item.locked) return <button type="button" key={item.id} disabled>
+        <span>{title(item)}</span><LockKeyhole size={14} aria-hidden /><span className="sr-only">{t('需要解锁','Unlock required')}</span>
+      </button>;
       return onSelectLesson||initialLessons.length?<button type="button" key={item.id} aria-current={item.id===lessonId?'step':undefined} onClick={()=>onSelectLesson?.(item.id)}>{label}</button>:<AppLink key={item.id} href={`/platform/courses/${courseId}/learn/${item.id}`} prefetch={false} aria-current={item.id===lessonId?'step':undefined}>{label}</AppLink>;
     })}</nav>
-    <div className="platform-learning-stage">{renderMedia({lessonId,startTime:initialPosition,onVideoElement:setVideo,onPrevious:index>0&&onSelectLesson?()=>select(-1):undefined,onNext:index<lessons.length-1&&onSelectLesson?()=>select(1):undefined})}
+    <div className="platform-learning-stage">{renderMedia({lessonId,startTime:initialPosition,onVideoElement:setVideo,onPrevious:previous&&onSelectLesson?()=>onSelectLesson(previous.id):undefined,onNext:next&&onSelectLesson?()=>onSelectLesson(next.id):undefined})}
       {saveError?<p role="status">{saveError}</p>:null}{markdown?<div className="platform-prose">{renderArticleMarkdown(markdown)}</div>:null}
       {!user?<p>{t('登录后同步进度、笔记和测验。','Sign in to sync progress, notes and quizzes.')}</p>:<>
       <section className="platform-learning-panel" data-site-surface="panel"><h3>{t('课程笔记','Lesson notes')}</h3>

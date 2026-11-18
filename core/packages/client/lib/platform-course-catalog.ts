@@ -1,0 +1,115 @@
+import { ALL_EVENT_IDS } from './event-constants';
+import { CSTIMER_SOLVABLE_IDS } from './cstimer-scramble';
+import { commerceRecord } from './platform-commerce-format';
+import { loadPlatformResource } from './platform-gateway';
+import { platformCourseLessonSection } from './platform-routes';
+import type { PlatformEntity, PlatformResourceResult } from './platform-types';
+import { eventDisplayName } from './wca-events';
+
+export const COURSE_TOPICS = {
+  beginner: { zh: '入门复原', en: 'Beginner solving' },
+  speed: { zh: '速度提升', en: 'Speed improvement' },
+  practice: { zh: '专项训练', en: 'Focused practice' },
+  theory: { zh: '理论知识', en: 'Theory' },
+} as const;
+
+export type CourseTopic = keyof typeof COURSE_TOPICS;
+export const COURSE_TOPIC_IDS = Object.keys(COURSE_TOPICS) as CourseTopic[];
+const PUZZLE_IDS = new Set([...ALL_EVENT_IDS, ...CSTIMER_SOLVABLE_IDS]);
+
+export function isCourseCatalogTag(tag: string): boolean {
+  const value = tag.trim();
+  return value.startsWith('puzzle:') && PUZZLE_IDS.has(value.slice(7))
+    || COURSE_TOPIC_IDS.some(topic => value === `topic:${topic}`);
+}
+
+function nonEmptyText(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function courseCoverUrl(value: unknown): string | undefined {
+  const url = nonEmptyText(value);
+  return /^(?:\/(?![/\\])|https?:\/\/)/i.test(url) ? url : undefined;
+}
+
+export function courseCatalogDetails(course: PlatformEntity) {
+  const data = course.data ?? {};
+  const presentation = commerceRecord(data.presentation);
+  // Use the catalog's existing editable tags, with one entry per puzzle or topic.
+  const tags = Array.isArray(presentation.tags) ? presentation.tags.map(nonEmptyText) : [];
+  const puzzles = tags.filter(tag => tag.startsWith('puzzle:')).map(tag => tag.slice(7)).filter(id => PUZZLE_IDS.has(id));
+  const topics = COURSE_TOPIC_IDS.filter(topic => tags.includes(`topic:${topic}`));
+  const ruiminCourse = data.slug === 'yan-ruimin-3x3-beginner';
+  const coverUrl = courseCoverUrl(presentation.coverUrl);
+  const mobileCoverUrl = courseCoverUrl(presentation.mobileCoverUrl);
+  const instructors = Array.isArray(data.instructors)
+    ? data.instructors.map(instructor => nonEmptyText(commerceRecord(instructor).displayName)).filter(Boolean)
+    : [];
+  const lessonCount = Number(data.lessonCount);
+  return {
+    puzzles: ruiminCourse && !puzzles.length ? ['333'] : puzzles,
+    topics: ruiminCourse && !topics.length ? ['beginner' as const] : topics,
+    coverUrl: coverUrl ?? (ruiminCourse ? '/images/ruimin/gallery/photo-03.webp' : mobileCoverUrl),
+    mobileCoverUrl: mobileCoverUrl ?? (ruiminCourse && !coverUrl ? '/images/ruimin/gallery/course-cover-portrait.webp' : undefined),
+    instructors: instructors.length || !ruiminCourse ? instructors : ['颜瑞民'],
+    fallbackInstructorEn: ruiminCourse && !instructors.length ? 'Yan Ruimin' : undefined,
+    lessonCount: Number.isInteger(lessonCount) && lessonCount > 0 ? lessonCount : undefined,
+    level: nonEmptyText(presentation.level),
+    tags,
+  };
+}
+
+export function matchesCourseCatalog(
+  course: PlatformEntity,
+  details: ReturnType<typeof courseCatalogDetails>,
+  filters: { q: string; puzzle: string; category: string },
+): boolean {
+  if (filters.puzzle && !details.puzzles.includes(filters.puzzle)) return false;
+  if (filters.category && !details.topics.some(topic => topic === filters.category)) return false;
+  const terms = filters.q.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  if (!terms.length) return true;
+  const data = course.data ?? {};
+  const searchable = [
+    course.title, course.summary, data.titleZh, data.titleEn, data.summaryZh, data.summaryEn,
+    ...details.instructors, details.level, ...details.tags,
+    ...details.topics.flatMap(topic => [COURSE_TOPICS[topic].zh, COURSE_TOPICS[topic].en]),
+    ...details.puzzles.flatMap(id => [eventDisplayName(id, true), eventDisplayName(id, false)]),
+  ].join(' ').toLowerCase();
+  return terms.every(term => searchable.includes(term));
+}
+
+/** The public endpoint paginates at 60 courses. Filters and facets need the entire snapshot. */
+export async function loadCourseCatalog(signal: AbortSignal): Promise<PlatformEntity[]> {
+  const items = new Map<string, PlatformEntity>();
+  let count = 0;
+  for (let page = 1; ; page++) {
+    const batch = await loadPlatformResource('courses', { params: {}, page, pageSize: 60, sort: 'updated', signal });
+    if (signal.aborted) return [];
+    for (const item of batch.items) items.set(item.id, item);
+    count += batch.items.length;
+    if (!batch.items.length || (batch.total === undefined ? batch.items.length < (batch.pageSize ?? 60) : count >= batch.total)) break;
+  }
+  return [...items.values()];
+}
+
+/** Older API versions can authorize a preview lesson, but omit the course access list. */
+export async function loadLegacyCoursePreviewAccess(result: PlatformResourceResult, signal: AbortSignal): Promise<PlatformResourceResult> {
+  const course = result.items[0];
+  const data = course?.data;
+  if (!data || Array.isArray(data.lessonAccess) || !Array.isArray(data.lessons)) return result;
+
+  const previewIds = data.lessons.map(commerceRecord)
+    .filter(lesson => lesson.accessScope === 'entitled' && platformCourseLessonSection(lesson) === 'trial')
+    .flatMap(lesson => typeof lesson.id === 'string' ? [lesson.id] : []);
+  if (!previewIds.length) return result;
+
+  const checks = await Promise.allSettled(previewIds.map(lessonId => loadPlatformResource('course-lesson', {
+    params: { id: course.id, lessonId },
+    signal,
+  })));
+  const legacyPreviewIds = previewIds.filter((id, index) => {
+    const check = checks[index];
+    return check.status === 'fulfilled' && check.value.items.some(lesson => lesson.id === id);
+  });
+  return { ...result, items: [{ ...course, data: { ...data, legacyPreviewIds: legacyPreviewIds } }, ...result.items.slice(1)] };
+}

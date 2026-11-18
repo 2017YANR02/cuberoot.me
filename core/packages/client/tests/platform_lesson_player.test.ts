@@ -302,55 +302,96 @@ it.each([[42, 42], [999, 120], [-1, 0], [NaN, 0], [Infinity, 0]])('seeks shared 
   } finally { await act(async () => root.unmount()); }
 });
 
-it('links section cards to separate lesson pages without losing lessons or changing other courses', async () => {
-  (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+it('shows public and locked rows in two groups while preserving existing classroom links', async () => {
   const lessons = ['先导课', '试听课', '正式课'].flatMap((prefix, group) =>
     Array.from({ length: [2, 2, 19][group] }, (_, index) => ({
-      id: `${group}-${index}`, titleZh: `${prefix} ${index + 1}`, titleEn: `Lesson ${group}-${index}`, status: 'published',
+      id: `${group}-${index}`, titleZh: `${prefix} ${index + 1}：课时 ${index + 1}`, titleEn: `Lesson ${group}-${index}`,
+      status: 'published', accessScope: group === 2 ? 'entitled' : 'public',
     })));
   const host = document.createElement('div'), root = createRoot(host);
-  const render = (items: unknown[], id = 'course-detail', courseRedeemed = false) => act(async () => root.render(createElement(PlatformDomainContent, {
-    definition: { id } as PlatformRouteDefinition,
-    entity: { id: 'course', title: 'Course', data: { lessons: items } } as PlatformEntity, params: {}, courseRedeemed,
-  })));
+  const render = (items: unknown[], id = 'course-detail', lessonAccess: { id: string; status: string }[] = [], selectedLessonId?: string) =>
+    act(async () => root.render(createElement(PlatformDomainContent, {
+      definition: { id } as PlatformRouteDefinition,
+      entity: { id: 'course', title: 'Course', data: { lessons: items, lessonAccess, enrollmentMode: 'invite' } } as PlatformEntity,
+      params: {}, selectedLessonId,
+    })));
   try {
     await render(lessons);
-    expect(host.querySelector('.platform-lesson-grid')).not.toBeNull();
-    expect(host.querySelectorAll('.platform-lesson-cover')).toHaveLength(3);
-    expect([...host.querySelectorAll('.platform-lesson-card-title')].map(node => node.textContent)).toEqual(['引言', '试听课', '正式课']);
-    expect(host.querySelector('details')).toBeNull();
-    expect([...host.querySelectorAll('a')].map(node => node.getAttribute('href'))).toEqual(
-      ['introduction', 'trial', 'core'].map(section => `/platform/courses/course/sections/${section}`));
-    expect(host.querySelector('.platform-course-redeemed')).toBeNull();
-    await render(lessons, 'course-detail', true);
-    const redeemedBadge = host.querySelector('.platform-course-redeemed');
-    expect(redeemedBadge?.textContent).toBe('已兑换');
-    expect(redeemedBadge?.closest('a')?.getAttribute('href')).toBe('/platform/courses/course/sections/core');
+    expect([...host.querySelectorAll('.platform-course-chapter-summary > span:first-child')].map(node => node.textContent)).toEqual(['引言', '正式课']);
+    expect(host.querySelectorAll('details[open]')).toHaveLength(1);
+    expect(host.querySelector('video')).toBeNull();
+    expect(load).not.toHaveBeenCalled();
+    expect(host.querySelectorAll('details li')).toHaveLength(23);
+    expect(host.querySelectorAll('.platform-course-lesson-locked')).toHaveLength(19);
+    const formerTrial = host.querySelector('details:nth-of-type(2) a[href$="/sections/core?lesson=1-0"]');
+    expect(formerTrial?.textContent).toBe('课时 1');
+    expect(host.querySelector('details a[href$="/sections/core?lesson=2-0"]')).toBeNull();
+    expect(host.querySelector('.platform-course-lesson-locked svg')).not.toBeNull();
+
+    await render(lessons, 'course-detail', [{ id: '2-0', status: 'in_progress' }]);
+    expect(host.querySelectorAll('.platform-course-lesson-locked')).toHaveLength(18);
+    expect(host.querySelector('details a[href$="/sections/core?lesson=2-0"]')).not.toBeNull();
+    const continueLink = host.querySelector('.platform-course-overview .platform-button-primary');
+    expect(continueLink?.getAttribute('href')).toBe('/platform/courses/course/sections/core?lesson=2-0');
+    expect(continueLink?.textContent).toBe('继续学习');
+
+    await render(lessons, 'course-section-core', [], '1-0');
+    expect(host.querySelector('.platform-classroom-stage video')).not.toBeNull();
+    expect(host.querySelectorAll('nav button:disabled')).toHaveLength(19);
+    expect(host.querySelector('[aria-current="step"]')?.textContent).toContain('课时 1');
+
+    const mediaCalls = load.mock.calls.length;
+    await render(lessons, 'course-section-core', [], '2-0');
+    expect(host.querySelector('video')).toBeNull();
+    expect(host.textContent).toContain('这个课时需要解锁');
+    expect(load.mock.calls).toHaveLength(mediaCalls);
+
     for (const [index, section] of ['introduction', 'trial', 'core'].entries()) {
-      await render(lessons, `course-section-${section}`);
-      expect(host.textContent).not.toContain('published');
-      const expectedTitles = index === 2
-        ? ['1', '2', ...Array.from({ length: 19 }, (_, lessonIndex) => String(lessonIndex + 1))]
-        : ['1', '2'];
-      expect([...host.querySelectorAll('nav button')].map(node => node.textContent)).toEqual(expectedTitles);
-      expect(host.querySelector('.platform-classroom-stage h2')?.textContent).toBe('1');
+      const legacyLessons = lessons.map(lesson => ({ ...lesson, titleZh: lesson.titleZh.split('：')[0] }));
+      await render(legacyLessons, `course-section-${section}`, lessons.map(lesson => ({ id: lesson.id, status: 'not_started' })));
+      const expected = index === 2 ? ['1', '2', ...Array.from({ length: 19 }, (_, n) => String(n + 1))] : ['1', '2'];
+      expect([...host.querySelectorAll('nav button')].map(node => node.textContent)).toEqual(expected);
       expect(host.querySelectorAll('video')).toHaveLength(1);
-      expect(host.querySelector('a')).toBeNull();
     }
     locale.english = true;
     await render(lessons);
-    expect([...host.querySelectorAll('.platform-lesson-card-title')].map(node => node.textContent)).toEqual(['Introduction', 'Trial lessons', 'Core lessons']);
-    await render(lessons, 'course-section-introduction');
-    expect(host.querySelector('nav button')?.textContent).toBe('Lesson 0-0');
-    await render([...lessons, { id: 'extra', titleZh: '附加内容' }]);
-    expect(host.querySelector('details')).toBeNull();
-    expect(host.querySelectorAll('a')).toHaveLength(24);
-    await render([lessons[0]]);
-    expect(host.querySelectorAll('.platform-lesson-card')).toHaveLength(1);
+    expect([...host.querySelectorAll('.platform-course-chapter-summary > span:first-child')].map(node => node.textContent)).toEqual(['Introduction', 'Core lessons']);
+    await render([...lessons, { id: 'extra', titleZh: '附加内容', accessScope: 'public' }]);
+    expect(host.querySelector('details a[href$="/sections/core?lesson=extra"]')).not.toBeNull();
     await render([]);
     expect(host.querySelector('details')).toBeNull();
-    expect(host.querySelector('a')).toBeNull();
   } finally { locale.english = false; await act(async () => root.unmount()); }
+});
+
+it('restores the legacy preview link only when the signed-in viewer can access the lesson', async () => {
+  const lessons = [
+    { id: 'preview', slug: 'trial-01', titleZh: '试听课 01：做小花', accessScope: 'entitled' },
+    { id: 'locked', slug: 'trial-02', titleZh: '试听课 02：小花实例', accessScope: 'entitled' },
+    { id: 'core', slug: 'lesson-01', titleZh: '正式课 01：十字', accessScope: 'entitled' },
+  ];
+  const host = document.createElement('div');
+  const root = createRoot(host);
+  const render = (legacyPreviewIds?: string[]) => act(async () => root.render(createElement(PlatformDomainContent, {
+    definition: { id: 'course-detail' } as PlatformRouteDefinition,
+    entity: { id: 'course', title: 'Course', data: { lessons, legacyPreviewIds } },
+    params: {},
+  })));
+  try {
+    await render();
+    const signIn = Array.from(host.querySelectorAll('a')).find(link => link.textContent === '登录查看试看');
+    expect(signIn).toBeDefined();
+    expect(decodeURIComponent(signIn!.getAttribute('href')!)).toContain('/sections/core?lesson=preview');
+    const signInRows = [...host.querySelectorAll('.platform-course-lesson-sign-in')];
+    expect(signInRows.map(link => link.textContent)).toEqual(['登录解锁', '登录解锁']);
+    expect(decodeURIComponent(signInRows[1].getAttribute('href')!)).toContain('/sections/core?lesson=locked');
+    expect(signInRows[1].nextElementSibling?.tagName.toLowerCase()).toBe('svg');
+    access.user = { id: 42 };
+    await render(['preview']);
+    expect(host.querySelector('.platform-course-lesson-sign-in')).toBeNull();
+    expect(host.querySelector('details a[href$="sections/core?lesson=preview"]')?.textContent).toBe('做小花');
+    expect(host.querySelectorAll('details .platform-course-lesson-locked')).toHaveLength(2);
+    expect(host.querySelector('video')).toBeNull();
+  } finally { await act(async () => root.unmount()); }
 });
 
 it.each([

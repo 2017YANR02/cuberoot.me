@@ -8,7 +8,8 @@ async function detailMetadata(id: string, resourceId: string | undefined) {
   const resources: Record<string, string> = { 'course-detail': 'courses', 'path-detail': 'paths', 'event-detail': 'events', 'news-detail': 'news', 'product-detail': 'products' };
   if (!resources[id] || !resourceId) return null;
   try {
-    const response = await fetch(apiUrl('/v1/platform/' + resources[id] + '/' + encodeURIComponent(resourceId) + '?v=3'), { next: { revalidate: 60 }, signal: AbortSignal.timeout(4000) });
+    const version = resources[id] === 'courses' ? 5 : 3;
+    const response = await fetch(apiUrl('/v1/platform/' + resources[id] + '/' + encodeURIComponent(resourceId) + '?v=' + version), { next: { revalidate: 60 }, signal: AbortSignal.timeout(4000) });
     if (!response.ok) return null;
     const payload = await response.json() as Record<string, unknown>;
     const record = (payload.course ?? payload.path ?? payload.event ?? payload.article ?? payload.product ?? payload.item ?? payload) as Record<string, unknown>;

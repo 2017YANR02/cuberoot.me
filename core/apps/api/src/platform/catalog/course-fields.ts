@@ -18,9 +18,12 @@ function coursePresentation(value: unknown): Record<string, unknown> | undefined
   if (value === undefined) return undefined;
   if (!isObject(value)) badRequest('presentation must be an object');
   const result: Record<string, unknown> = {};
-  for (const key of ['level','format','coverUrl','previewUrl','nextLiveAt']) {
+  for (const key of ['level','format','coverUrl','mobileCoverUrl','previewUrl','nextLiveAt']) {
     const text = stringField(value,key,{max:2048});
-    if (text && ['coverUrl','previewUrl'].includes(key) && !text.startsWith('/') && !/^https?:\/\//.test(text)) badRequest(`${key} must be a site path or HTTP URL`);
+    if (text && ['coverUrl','mobileCoverUrl','previewUrl'].includes(key)) {
+      const sitePath = key === 'mobileCoverUrl' ? /^\/(?![/\\])/.test(text) : text.startsWith('/');
+      if (!sitePath && !/^https?:\/\//i.test(text)) badRequest(`${key} must be a site path or HTTP URL`);
+    }
     if (text) result[key]=text;
   }
   for (const key of ['tags','highlights']) {

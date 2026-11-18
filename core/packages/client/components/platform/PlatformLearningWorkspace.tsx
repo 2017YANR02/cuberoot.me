@@ -1,4 +1,5 @@
 'use client';
+import { isCourseCatalogTag } from '@/lib/platform-course-catalog';
 
 import { useEffect, useState } from 'react';
 import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
@@ -68,14 +69,29 @@ export function PlatformLearningWorkspace({definition}:{definition:PlatformRoute
   </div>;
 }
 
-export function PlatformCoursePresentation({entity}:{entity:PlatformEntity}){
-  const t=useT();const english=t('zh','en')==='en';const data=entity.data??{};const details=(data.presentation??{}) as Row;const amount=Number(data.baseAmountMinor);return <section className="platform-learning-course-intro">
-    {details.coverUrl?<img className="platform-learning-cover" src={text(details.coverUrl)} alt=""/>:null}<p>{localized(data,'summary',english)}</p><p>{[text(details.level),text(details.format),...(Array.isArray(details.tags)?details.tags.map(String):[])].filter(Boolean).join(' · ')}</p><p className="platform-learning-price">{Number.isFinite(amount)?amount===0?t('免费','Free'):money(amount,data.currency):null}</p>
-    {localized(data,'description',english)?<div className="platform-prose">{renderArticleMarkdown(localized(data,'description',english))}</div>:null}
-    {details.nextLiveAt?<p>{t('下次直播','Next live session')} {new Date(text(details.nextLiveAt)).toLocaleString()}</p>:null}
-    {details.previewUrl?<video controls playsInline preload="metadata" className="platform-learning-cover" src={text(details.previewUrl)} poster={text(details.coverUrl)||undefined}/>:null}
-    {Array.isArray(details.highlights)&&details.highlights.length?<><h2>{t('课程亮点','Highlights')}</h2><ul>{details.highlights.map((item,index)=><li key={index}>{String(item)}</li>)}</ul></>:null}
-    {rows(details.outline).length?<><h2>{t('课程大纲','Course outline')}</h2><ol>{rows(details.outline).map((item,index)=><li key={index}><strong>{text(item.label)}</strong> {text(item.topic)}</li>)}</ol></>:null}
+export function PlatformCoursePresentation({ entity }: { entity: PlatformEntity }) {
+  const t = useT();
+  const english = t('zh', 'en') === 'en';
+  const data = entity.data ?? {};
+  const details = (data.presentation ?? {}) as Row;
+  const description = localized(data, 'description', english);
+  const highlights = Array.isArray(details.highlights) ? details.highlights.filter(value => typeof value === 'string' && value.trim()) : [];
+  const outline = rows(details.outline);
+  const tags = Array.isArray(details.tags) ? details.tags.map(String).filter(tag => !isCourseCatalogTag(tag)) : [];
+  if (!description && !highlights.length && !outline.length && !tags.length && !details.format && !details.nextLiveAt) return null;
+  return <section className="platform-learning-course-intro">
+    <h2>{t('课程介绍', 'About this course')}</h2>
+    {(details.format || tags.length) ? <p>{[text(details.format), ...tags].filter(Boolean).join(' · ')}</p> : null}
+    {description && <div className="platform-prose">{renderArticleMarkdown(description)}</div>}
+    {details.nextLiveAt ? <p>{t('下次直播', 'Next live session')} {new Date(text(details.nextLiveAt)).toLocaleString()}</p> : null}
+    {highlights.length > 0 && <>
+      <h3>{t('课程亮点', 'Highlights')}</h3>
+      <ul>{highlights.map((item, index) => <li key={index}>{item}</li>)}</ul>
+    </>}
+    {outline.length > 0 && <>
+      <h3>{t('课程大纲', 'Course outline')}</h3>
+      <ol>{outline.map((item, index) => <li key={index}><strong>{text(item.label)}</strong> {text(item.topic)}</li>)}</ol>
+    </>}
   </section>;
 }
 

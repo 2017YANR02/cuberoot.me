@@ -37,7 +37,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(view).not.toContain('setRedeemed(true)');
   });
 
-  it('marks active redeemed courses and exposes their learning entry', () => {
+  it('marks active redeemed courses in the catalog', () => {
     const view = read('components/platform/PlatformResourceRouteView.tsx') + read('components/platform/PlatformEntityList.tsx');
     const styles = read('components/platform/platform.css');
 
@@ -45,7 +45,6 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(view).toContain("item.status === 'active'");
     expect(view).toContain('redeemedCourseIds.has(item.id)');
     expect(view).toContain("t('已兑换', 'Redeemed')");
-    expect(view).toContain("courseRedeemed ? t('开始学习', 'Start learning')");
     expect(styles).toMatch(/\.platform-course-redeemed\s*\{[^}]*var\(--signal-success\)/s);
   });
 
@@ -145,7 +144,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(home).not.toMatch(/\bPLATFORM_ROUTES\b|\bexecutePlatformAction\b|<PlatformDomainActions\b/);
     expect(routeView).toContain('const permissionDenied = error instanceof PlatformPermissionError;');
     expect(routeView).toMatch(/!permissionDenied && !orderUnavailable \? <PlatformDomainContent/);
-    expect(routeView).toMatch(/permissionDenied \|\| orderUnavailable \|\| definition\.id === 'qr' \|\| \(\['membership', 'me-membership'\]/);
+    expect(routeView).toContain("permissionDenied || orderUnavailable || definition.id === 'qr' || (courseDetail && !course)");
   });
 
   it('keeps glass progressive without a duplicate course hero or summary', () => {

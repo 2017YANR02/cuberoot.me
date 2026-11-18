@@ -1,8 +1,8 @@
 import { requirePlatformActor } from '../auth.js';
-import { platformQuery, platformDb } from '../db.js';
-import { notFound } from '../errors.js';
+import { platformQuery, platformDb, courseEntitlementPredicate, findCourseReviewEntitlement } from '../db.js';
+import { badRequest, notFound } from '../errors.js';
 import { publicCache, privateNoStore } from '../http.js';
-import { pagination, resourceId, integerField } from '../validation.js';
+import { pagination, resourceId, integerField, positiveIntegerParam } from '../validation.js';
 import { courseKey } from './course-access.js';
 import { COURSE_PROJECTION } from './course-fields.js';
 import { type Hono } from 'hono';
@@ -35,6 +35,10 @@ export function registerPublicRoutes(platformCatalogRoutes: Hono): void {
 
   platformCatalogRoutes.get('/platform/courses/:id', async (c) => {
     const key = resourceId(c.req.param('id'));
+    const actor = c.req.query('includeAccess') === '1' ? await requirePlatformActor(c) : null;
+    const reviewPage = positiveIntegerParam(c.req.query('reviewPage') ?? '1', 'reviewPage');
+    if (reviewPage > 10000) badRequest('reviewPage is out of range');
+    const reviewPageSize = 10;
     const rows = await platformQuery(platformDb(), `
       SELECT ${COURSE_PROJECTION},
         COALESCE((SELECT jsonb_agg(jsonb_build_object(
@@ -56,9 +60,16 @@ export function registerPublicRoutes(platformCatalogRoutes: Hono): void {
       WHERE (c.id::text = $1 OR c.slug = $1) AND c.status IN ('published', 'unlisted')
     `, [key]);
     if (!rows[0]) notFound('Course');
-    const [summary, reviews] = await Promise.all([
+    const [summary, reviews, lessonAccess, reviewEntitlement, personalReview] = await Promise.all([
       platformQuery(platformDb(), `
-        SELECT COUNT(*)::int AS count, AVG(rating)::float8 AS average
+        SELECT COUNT(*)::int AS count, AVG(rating)::float8 AS average,
+          ARRAY[
+            COUNT(*) FILTER (WHERE rating = 1)::int,
+            COUNT(*) FILTER (WHERE rating = 2)::int,
+            COUNT(*) FILTER (WHERE rating = 3)::int,
+            COUNT(*) FILTER (WHERE rating = 4)::int,
+            COUNT(*) FILTER (WHERE rating = 5)::int
+          ] AS distribution
         FROM platform_course_reviews WHERE course_id = $1::uuid AND status = 'published'
       `, [rows[0].id]),
       platformQuery(platformDb(), `
@@ -67,11 +78,30 @@ export function registerPublicRoutes(platformCatalogRoutes: Hono): void {
         FROM platform_course_reviews review LEFT JOIN app_users author ON author.id = review.user_id
         WHERE review.course_id = $1::uuid AND review.status = 'published'
           AND (review.title <> '' OR review.body <> '')
-        ORDER BY review.created_at DESC, review.id DESC LIMIT 10
-      `, [rows[0].id]),
+        ORDER BY review.created_at DESC, review.id DESC LIMIT $2 OFFSET $3
+      `, [rows[0].id, reviewPageSize + 1, (reviewPage - 1) * reviewPageSize]),
+      actor ? platformQuery(platformDb(), `
+        SELECT lesson.id::text AS id, progress.status AS status
+        FROM platform_lessons lesson
+        LEFT JOIN platform_lesson_progress progress ON progress.lesson_id = lesson.id AND progress.user_id = $1
+        WHERE lesson.course_id = $2::uuid AND lesson.status = 'published' AND lesson.current_revision IS NOT NULL
+          AND (lesson.access_scope = 'public' OR $3::boolean OR ${courseEntitlementPredicate('lesson.course_id', 'lesson.id')})
+        ORDER BY (progress.status = 'in_progress') DESC NULLS LAST, progress.updated_at DESC NULLS LAST, lesson.ordinal
+      `, [actor.userId, rows[0].id, actor.isAdmin]) : Promise.resolve(null),
+      actor ? findCourseReviewEntitlement(platformDb(), actor.userId, String(rows[0].id)) : undefined,
+      actor ? platformQuery(platformDb(), `
+        SELECT id::text, rating, title, body
+        FROM platform_course_reviews WHERE user_id = $1 AND course_id = $2::uuid
+      `, [actor.userId, rows[0].id]) : null,
     ]);
     rows[0].reviewSummary = summary[0];
-    rows[0].reviews = reviews;
+    rows[0].reviews = reviews.slice(0, reviewPageSize);
+    rows[0].reviewsHasMore = reviewPage < 10000 && reviews.length > reviewPageSize;
+    if (lessonAccess) rows[0].lessonAccess = lessonAccess;
+    if (actor) {
+      rows[0].canReview = Boolean(reviewEntitlement);
+      rows[0].myReview = personalReview?.[0] ?? null;
+    }
     // A successful review write is immediately followed by a fresh course read.
     c.header('Cache-Control', 'no-store');
     return c.json({ course: rows[0] });

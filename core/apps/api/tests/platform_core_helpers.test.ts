@@ -4,8 +4,17 @@ import { PlatformApiError, badRequest } from '../src/platform/errors.js';
 import { platformRouter } from '../src/platform/http.js';
 import { addMembershipPeriod } from '../src/platform/membership-period.js';
 import { safeMoney, safeSignedMoney } from '../src/platform/commerce/amounts.js';
+import { courseFields } from '../src/platform/catalog/course-fields.js';
 
 describe('Platform boundary helpers', () => {
+  it('preserves separate course covers and allows the mobile cover to be cleared', () => {
+    const coverUrl = '/images/course-wide.webp';
+    const mobileCoverUrl = 'https://static.cuberoot.me/course-portrait.webp';
+    expect(courseFields({ presentation: { coverUrl, mobileCoverUrl } }, false).presentation).toEqual({ coverUrl, mobileCoverUrl });
+    expect(courseFields({ presentation: { coverUrl, mobileCoverUrl: ' ' } }, false).presentation).toEqual({ coverUrl });
+    expect(() => courseFields({ presentation: { mobileCoverUrl: 'data:image/png;base64,abc' } }, false)).toThrow(PlatformApiError);
+  });
+
   it('preserves signed ledger adjustments and rejects unsafe monetary values', () => {
     expect(safeSignedMoney('-125')).toBe(-125);
     expect(safeMoney('125')).toBe(125);

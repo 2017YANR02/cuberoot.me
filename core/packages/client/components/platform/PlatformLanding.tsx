@@ -120,7 +120,7 @@ export function PlatformLanding() {
           <AppLink className="platform-button platform-button-primary" href={signedIn ? continueHref : '/platform/courses'} prefetch={false}>
             {primaryLabel}<ArrowRight aria-hidden />
           </AppLink>
-          <AppLink className="platform-home-secondary" href="/platform/account/invites" prefetch={false}>{t('已有兑换码？解锁课程', 'Have a code? Unlock your course')}<ArrowRight aria-hidden /></AppLink>
+          <AppLink className="platform-button" href="/platform/account/invites" prefetch={false}>{t('已有兑换码？解锁课程', 'Have a code? Unlock your course')}<ArrowRight aria-hidden /></AppLink>
         </div>
       </header>
 
@@ -151,7 +151,7 @@ export function PlatformLanding() {
           </article>)}
         </div>
         {teachersError && <p role="status">{t('讲师资料暂时无法加载。', 'Teacher profiles are temporarily unavailable.')}</p>}
-        <AppLink href="/teachers" prefetch={false}>{t('浏览完整讲师名录', 'Browse the teacher directory')}<ArrowRight aria-hidden /></AppLink>
+        <AppLink className="platform-button" href="/teachers" prefetch={false}>{t('浏览完整讲师名录', 'Browse the teacher directory')}<ArrowRight aria-hidden /></AppLink>
       </section>
 
       {signedIn ? (
@@ -163,7 +163,7 @@ export function PlatformLanding() {
           {loading ? (
             <p className="platform-home-status" role="status" aria-busy="true" aria-live="polite"><LoadingIndicator>{t('正在读取学习进度与工作区…', 'Loading your learning and workspaces…')}</LoadingIndicator></p>
           ) : currentCourse ? (
-            <AppLink className="platform-home-resume" href={continueHref} prefetch={false}>
+            <AppLink className="platform-home-resume platform-entry-link" data-site-surface="panel" href={continueHref} prefetch={false}>
               <span>
                 <small>{t('继续课程', 'Continue course')}</small>
                 <strong>{currentCourse.title}</strong>
@@ -175,7 +175,7 @@ export function PlatformLanding() {
               </span>
             </AppLink>
           ) : firstLearningContext ? (
-            <AppLink className="platform-home-resume" href="/learn" prefetch={false}>
+            <AppLink className="platform-home-resume platform-entry-link" data-site-surface="panel" href="/learn" prefetch={false}>
               <span>
                 <small>{firstLearningContext.organization.name}</small>
                 <strong>{firstLearningContext.student.displayName}</strong>
@@ -186,13 +186,13 @@ export function PlatformLanding() {
           ) : (
             <div className="platform-home-empty">
               <p>{t('还没有进行中的课程。先选一门真正想学的内容。', 'No course is in progress yet. Start with something you genuinely want to learn.')}</p>
-              <AppLink href="/platform/courses" prefetch={false}>{t('查看全部课程', 'See all courses')}<ArrowRight aria-hidden /></AppLink>
+              <AppLink className="platform-button" href="/platform/courses" prefetch={false}>{t('查看全部课程', 'See all courses')}<ArrowRight aria-hidden /></AppLink>
             </div>
           )}
           <div className="platform-home-quick-links">
-            <AppLink href="/platform/progress" prefetch={false}>{t('学习进度', 'Learning progress')}</AppLink>
-            <AppLink href="/platform/notifications" prefetch={false}>{t('消息', 'Messages')}</AppLink>
-            <AppLink href="/platform/account/courses" prefetch={false}>{t('我的课程', 'My courses')}</AppLink>
+            <AppLink className="platform-button" href="/platform/progress" prefetch={false}>{t('学习进度', 'Learning progress')}</AppLink>
+            <AppLink className="platform-button" href="/platform/notifications" prefetch={false}>{t('消息', 'Messages')}</AppLink>
+            <AppLink className="platform-button" href="/platform/account/courses" prefetch={false}>{t('我的课程', 'My courses')}</AppLink>
           </div>
           {partialFailure ? <p className="platform-home-note">{t('部分个人入口暂时未能加载，公开内容仍可正常使用。', 'Some personal entries could not load; public content is still available.')}</p> : null}
         </section>
@@ -205,7 +205,7 @@ export function PlatformLanding() {
         </div>
         <div className="platform-home-action-list">
           {discovery.map((item) => (
-            <AppLink key={item.href} href={item.href} prefetch={false}>
+            <AppLink key={item.href} className="platform-entry-link" data-site-surface="panel" href={item.href} prefetch={false}>
               <span><strong>{item.title}</strong><small>{item.description}</small></span>
               <ArrowRight aria-hidden />
             </AppLink>
@@ -221,19 +221,19 @@ export function PlatformLanding() {
           </div>
           <div className="platform-home-workspace-list">
             {instructor ? (
-              <AppLink href="/platform/instructor" prefetch={false}>
+              <AppLink className="platform-entry-link" data-site-surface="panel" href="/platform/instructor" prefetch={false}>
                 <span><strong>{t('讲师工作台', 'Instructor workspace')}</strong><small>{t('管理课程、学员与收入', 'Manage courses, students, and earnings')}</small></span>
                 <ArrowRight aria-hidden />
               </AppLink>
             ) : null}
             {firstOrganization ? (
-              <AppLink href={`/platform/org/${encodeURIComponent(firstOrganization.slug)}`} prefetch={false}>
+              <AppLink className="platform-entry-link" data-site-surface="panel" href={`/platform/org/${encodeURIComponent(firstOrganization.slug)}`} prefetch={false}>
                 <span><strong>{firstOrganization.name}</strong><small>{organizations.length > 1 ? t(`另有 ${organizations.length - 1} 个机构`, `${organizations.length - 1} more organizations`) : t('机构工作台', 'Organization workspace')}</small></span>
                 <ArrowRight aria-hidden />
               </AppLink>
             ) : null}
             {mounted && isAdmin ? (
-              <AppLink href="/platform/admin" prefetch={false}>
+              <AppLink className="platform-entry-link" data-site-surface="panel" href="/platform/admin" prefetch={false}>
                 <span><strong>{t('Platform 管理', 'Platform administration')}</strong><small>{t('进入统一管理工作区', 'Open the unified administration workspace')}</small></span>
                 <ArrowRight aria-hidden />
               </AppLink>

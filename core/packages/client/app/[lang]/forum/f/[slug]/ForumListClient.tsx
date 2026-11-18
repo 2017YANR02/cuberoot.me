@@ -20,6 +20,7 @@ import { ThreadRowList } from '../../_components/ThreadRowList';
 import '../../forum.css';
 import './forum_list.css';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
+import { platformSharedPathname } from '@/lib/platform-navigation';
 
 type Sort = 'activity' | 'created';
 const SORTS: Sort[] = ['activity', 'created'];
@@ -34,7 +35,7 @@ export default function ForumListClient() {
   useEffect(() => {
     // Sentinel route: derive the real slug from the browser URL; usePathname()
     // as dep so soft navigation between forums re-resolves it.
-    const m = window.location.pathname.match(/\/forum\/f\/([^/?#]+)/);
+    const m = platformSharedPathname(window.location.pathname).match(/\/forum\/f\/([^/?#]+)/);
     setSlug(m ? decodeURIComponent(m[1]) : '');
   }, [pathname]);
 

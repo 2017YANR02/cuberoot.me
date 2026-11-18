@@ -11,6 +11,7 @@ import { getSessionToken, nextQuery, useAuthUser } from '@/lib/auth-store';
 import { getTeachingOrganization, type TeachingOrganizationAccess } from '@/lib/teaching-saas-api';
 import { teachingErrorMessage, teachingRoleLabel } from './OrgUi';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { platformSharedPathname } from '@/lib/platform-navigation';
 
 interface Props {
   orgSlug: string;
@@ -24,7 +25,7 @@ export default function OrgWorkspace(props: Props) {
 
 function OrgAccountWorkspace({ orgSlug, children, user }: Props & { user: ReturnType<typeof useAuthUser> }) {
   const t = useT();
-  const pathname = usePathname().replace(/^\/zh(?=\/|$)/, '');
+  const pathname = platformSharedPathname(usePathname());
   const [mounted, setMounted] = useState(false);
   const [organization, setOrganization] = useState<TeachingOrganizationAccess | null>(null);
   const [error, setError] = useState('');

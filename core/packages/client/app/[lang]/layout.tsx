@@ -6,6 +6,7 @@ import SiteChrome from '@/components/SiteChrome';
 import WeChatShareSync from '@/components/WeChatShareSync';
 import PageTransition from '@/components/PageTransition';
 import { ClientLoadStatus, NavigationLoadingHost } from '@/components/StartupStatus';
+import { PlatformSharedSurface } from '@/components/platform/PlatformSharedSurface';
 
 const SUPPORTED = ['en', 'zh'] as const;
 type Locale = typeof SUPPORTED[number];
@@ -31,7 +32,7 @@ export default async function LangLayout({
     <I18nProvider initialLang={lang as Locale}>
       <Suspense fallback={<ClientLoadStatus />}>
         <SiteChrome><PageNoticeBar /></SiteChrome>
-        <PageTransition>{children}</PageTransition>
+        <PageTransition><PlatformSharedSurface>{children}</PlatformSharedSurface></PageTransition>
       </Suspense>
       <WeChatShareSync />
       <NavigationLoadingHost />

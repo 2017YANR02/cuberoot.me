@@ -599,6 +599,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 341, slug: 'platform_ruimin_public_practice', desc: { zh: '公开颜瑞民课程原有的两节试听课。', en: 'Make the two former trial lessons in Yan Ruimin’s course public.' } },
   { n: 340, slug: 'workspace_member_requests', desc: { zh: '登录账号申请员工权限及管理员审批状态', en: 'Account-bound employee access requests and administrator review state' } },
   { n: 339, slug: 'workspace_contracts', desc: { zh: '员工私有合同与不可覆盖的文件版本，仅本人和超级管理员可读', en: 'Private employee contracts with immutable file versions, readable by the owner and super administrators' } },
   { n: 338, slug: 'workspace_announcement', desc: { zh: '管理员共享团队公告，带版本冲突保护', en: 'Administrator team announcements with version conflict protection' } },

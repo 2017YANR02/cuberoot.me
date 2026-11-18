@@ -1,15 +1,21 @@
 'use client';
 
-import PageBackLink from '@/components/PageBackLink';
+import { useContext, useMemo, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { BookOpen, Building2, Compass, GraduationCap, UsersRound } from '@app-foundation/icons/lucide';
+import PageBackLink from '@/components/PageBackLink';
 import AppLink from '@/components/AppLink';
+import LandingSearch from '@/components/LandingSearch';
+import { CompactSelect } from '@/components/CompactSelect';
 import { useT } from '@/hooks/useT';
+import { useLang } from '@/i18n/tr';
 import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
-import { matchPlatformRoute, platformParentHref, PLATFORM_PUBLIC_NAV, PLATFORM_ROUTES } from '@/lib/platform-routes';
-import type { PlatformRouteDefinition } from '@/lib/platform-types';
-import './platform.css';
+import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
+import { platformParentHref, PLATFORM_PUBLIC_NAV, PLATFORM_ROUTES } from '@/lib/platform-routes';
+import { PLATFORM_SECTION_NAV, platformNavigationState, platformPathname } from '@/lib/platform-navigation';
+import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
 import { SHOP_ROOT } from '@/lib/shop';
+import './platform.css';
 
 const AREA_ICONS = {
   discover: Compass,
@@ -19,98 +25,85 @@ const AREA_ICONS = {
   organizations: Building2,
 } satisfies Record<(typeof PLATFORM_PUBLIC_NAV)[number]['id'], typeof Compass>;
 
-function platformSegments(pathname: string): string[] {
-  const bare = pathname.replace(/^\/(en|zh)(?=\/|$)/, '');
-  const rest = bare.replace(/^\/platform\/?/, '');
-  return rest ? rest.split('/').map((part) => decodeURIComponent(part)) : [];
+const PERSONAL_IDS = new Set(['account-courses', 'progress', 'orders', 'account-invites', 'account-favorites', 'account-notes', 'account-badges', 'me-membership', 'account-shipping', 'community-mine']);
+
+export function PlatformShell({ children, shared = false }: { children: ReactNode; shared?: boolean }) {
+  const hasShell = useContext(PlatformNavigationContext);
+  // Shared rewrites can retain the previous route layout while the destination loads.
+  // The nearest existing frame owns chrome; retained layouts contribute content only.
+  return hasShell ? children : <PlatformShellContent shared={shared}>{children}</PlatformShellContent>;
 }
 
-function publicNavId(definition: PlatformRouteDefinition | undefined): (typeof PLATFORM_PUBLIC_NAV)[number]['id'] | null {
-  if (!definition) return 'discover';
-  if (definition.id === 'teachers' || definition.id === 'teacher-detail') return 'teachers';
-  if (definition.area === 'learning') return 'courses';
-  if (definition.area === 'community') return 'community';
-  if (definition.area === 'organization') return 'organizations';
-  if (definition.area === 'discover' || definition.area === 'commerce') return 'discover';
-  return null;
-}
-
-export function PlatformShell({ children }: { children: React.ReactNode }) {
+function PlatformShellContent({ children, shared }: { children: ReactNode; shared: boolean }) {
   const pathname = usePathname();
   const t = useT();
+  const lang = useLang() === 'en' ? 'en' : 'zh';
   const user = useAuthUser();
   const isAdmin = useIsAdmin();
-  const definition = matchPlatformRoute(platformSegments(pathname))?.definition;
-  const activeId = publicNavId(definition);
-  const competitionPage = definition?.id === 'online-competitions' || definition?.id === 'online-competition';
-  const orderPage = definition?.id === 'orders' || definition?.id === 'order-detail';
-  const compactPage = competitionPage || orderPage;
-  const personalPage = definition?.area === 'account' || definition?.id === 'progress' || orderPage;
+  const [accountOpen, setAccountOpen] = useState(false);
+  const { primary, secondary, definition } = platformNavigationState(pathname);
+  const sections = primary ? PLATFORM_SECTION_NAV[primary] : [];
+  const segments = platformPathname(pathname).replace(/^\/platform\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
+  const personalPage = definition?.area === 'account' || definition?.id === 'progress' || definition?.id === 'orders' || definition?.id === 'order-detail';
+  const personalRoutes = PLATFORM_ROUTES.filter(item => PERSONAL_IDS.has(item.id));
   const workspaceRoutes = PLATFORM_ROUTES.filter(item => !item.pattern.includes(':') && item.kind !== 'form'
     && (definition?.area === 'admin' ? isAdmin && item.area === 'admin'
-      : definition?.area === 'instructor' ? user && item.access === 'instructor'
-        : personalPage ? user && (item.area === 'account' && item.id !== 'login' || item.id === 'progress' || item.id === 'orders') : false));
+      : definition?.area === 'instructor' && definition.id !== 'teacher-apply' ? user && item.access === 'instructor'
+        : personalPage ? user && PERSONAL_IDS.has(item.id) : false));
+  const cards = useMemo(() => SEARCH_CARDS.filter(card => isLandingSearchCardVisible(card, isAdmin)), [isAdmin]);
+  const Content = shared ? 'div' : 'main';
 
-  return (
-    <div className={`platform-shell${compactPage ? ' platform-shell--competitions' : ''}`}>
+  return <PlatformNavigationContext value={true}>
+    <div className={`platform-shell${shared ? ' platform-shell--shared' : ''}`}>
       <header className="platform-masthead">
-        <div className="page-back-heading"><PageBackLink fallback={platformParentHref(platformSegments(pathname))} />
-        <AppLink href={competitionPage ? '/platform/events/online' : orderPage ? '/platform/orders' : '/platform'} className="platform-wordmark" aria-label={competitionPage ? t('比赛首页', 'Competitions home') : orderPage ? t('我的订单', 'My orders') : t('Platform 首页', 'Platform home')}>
-          <span className="platform-wordmark-mark" aria-hidden>CR</span>
-          <span>{competitionPage ? t('比赛', 'Competitions') : orderPage ? t('订单', 'Orders') : t('学习空间', 'Learning')}</span>
-        </AppLink>
+        <div className="page-back-heading">
+          <PageBackLink fallback={platformParentHref(segments)} />
+          <AppLink href="/platform" className="platform-wordmark" aria-label={t('Platform 首页', 'Platform home')}>
+            <span className="platform-wordmark-mark" aria-hidden>CR</span>
+            <span>{t('学习空间', 'Learning')}</span>
+          </AppLink>
         </div>
         <p>CubeRoot</p>
-        <AppLink
-          href={user ? (compactPage ? '/platform/orders' : '/platform/account/courses') : '/account'}
-          className="platform-account-link"
-          prefetch={false}
-        >
-          {user ? (compactPage ? t('我的订单', 'My orders') : t('我的学习', 'My learning')) : t('登录', 'Sign in')}
-        </AppLink>
+        {user ? <CompactSelect open={accountOpen} onOpenChange={setAccountOpen} unstyledTrigger className="platform-account-control"
+          triggerClassName="platform-account-link" popupClassName="platform-account-menu"
+          ariaLabel={t('我的学习与账号', 'My learning and account')} label={t('我的学习', 'My learning')}
+          items={[]} onChange={() => {}} panelContent={<>
+            {personalRoutes.map(item => <AppLink key={item.id} href={`/platform/${item.pattern}`} prefetch={false}
+              onClick={() => setAccountOpen(false)}>{t(item.title.zh, item.title.en)}</AppLink>)}
+            {(isAdmin || definition?.area === 'instructor' && definition.id !== 'teacher-apply') && <AppLink href="/platform/instructor" prefetch={false} onClick={() => setAccountOpen(false)}>{t('讲师工作台', 'Instructor workspace')}</AppLink>}
+            {isAdmin && <>
+              <AppLink href="/platform/admin" prefetch={false} onClick={() => setAccountOpen(false)}>{t('管理', 'Administration')}</AppLink>
+              <AppLink href={SHOP_ROOT} prefetch={false} onClick={() => setAccountOpen(false)}>{t('商店', 'Shop')}</AppLink>
+            </>}
+            <AppLink href="/account" prefetch={false} onClick={() => setAccountOpen(false)}>{t('账号设置', 'Account settings')}</AppLink>
+          </>} /> : <AppLink href="/account" className="platform-account-link" prefetch={false}>{t('登录', 'Sign in')}</AppLink>}
       </header>
 
-      {!compactPage && <nav className="platform-nav platform-glass" aria-label={t('Platform 功能区', 'Platform sections')}>
-        {PLATFORM_PUBLIC_NAV.map((item) => {
+      <div className="platform-site-search">
+        <LandingSearch cards={cards} lang={lang} workspaceEntry />
+      </div>
+
+      <nav className="platform-nav platform-glass" aria-label={t('Platform 功能区', 'Platform sections')}>
+        {PLATFORM_PUBLIC_NAV.map(item => {
           const Icon = AREA_ICONS[item.id];
-          const active = item.id === activeId;
-          return (
-            <AppLink
-              key={item.id}
-              href={item.href}
-              className={`platform-nav-link${active ? ' is-active' : ''}`}
-              aria-current={active && pathname.replace(/^\/(en|zh)(?=\/|$)/, '') === item.href ? 'page' : undefined}
-              prefetch={false}
-            >
-              <Icon aria-hidden />
-              <span>{t(item.label.zh, item.label.en)}</span>
-            </AppLink>
-          );
+          const active = item.id === primary;
+          return <AppLink key={item.id} href={item.href}
+            className={`platform-nav-link${active ? ' is-active' : ''}`}
+            aria-current={active ? 'location' : undefined} prefetch={false}>
+            <Icon aria-hidden /><span>{t(item.label.zh, item.label.en)}</span>
+          </AppLink>;
         })}
+      </nav>
+      {sections.length > 0 && <nav className="platform-context-nav" data-site-surface="heading" aria-label={t('当前栏目功能', 'Current section navigation')}>
+        {sections.map(item => <AppLink key={item.id} href={item.href} prefetch={false}
+          aria-current={item.id === secondary ? 'page' : undefined}>{t(item.label.zh, item.label.en)}</AppLink>)}
       </nav>}
 
-      {!compactPage && <nav className="platform-context-nav" aria-label={t('更多学习与服务', 'More learning and services')}>
-        <AppLink href="/search" prefetch={false}>{t('搜索', 'Search')}</AppLink>
-        <AppLink href="/platform/paths" prefetch={false}>{t('学习路径', 'Learning paths')}</AppLink>
-        <AppLink href="/platform/events" prefetch={false}>{t('活动', 'Events')}</AppLink>
-        <AppLink href="/platform/news" prefetch={false}>{t('资讯', 'News')}</AppLink>
-        <AppLink href="/platform/leaderboard" prefetch={false}>{t('学习榜', 'Learning leaderboard')}</AppLink>
-        {isAdmin && <AppLink href={SHOP_ROOT} prefetch={false}>{t('商店', 'Shop')}</AppLink>}
-        <AppLink href="/platform/membership" prefetch={false}>{t('课程会员', 'Course membership')}</AppLink>
-        <AppLink href="/platform/teachers/apply" prefetch={false}>{t('讲师入驻', 'Teach with us')}</AppLink>
-        {user && <AppLink href="/platform/account/courses" prefetch={false}>{t('学习工作台', 'My learning')}</AppLink>}
-        {isAdmin && <AppLink href="/platform/admin" prefetch={false}>{t('管理', 'Administration')}</AppLink>}
-      </nav>}
-      {orderPage && <nav className="platform-context-nav" aria-label={t('订单导航', 'Order navigation')}>
-        {isAdmin && <AppLink href={SHOP_ROOT} prefetch={false}>{t('继续购物', 'Continue shopping')}</AppLink>}
-        <AppLink href="/platform/account/shipping" prefetch={false}>{t('收货地址', 'Shipping addresses')}</AppLink>
-        <AppLink href="/contact" prefetch={false}>{t('联系商家', 'Contact us')}</AppLink>
-      </nav>}
-      {!orderPage && workspaceRoutes.length > 0 && <nav className="platform-workspace-nav" aria-label={t('工作台功能', 'Workspace sections')} data-site-surface="panel">
+      {workspaceRoutes.length > 0 && <nav className="platform-workspace-nav" aria-label={t('工作台功能', 'Workspace sections')} data-site-surface="panel">
         {workspaceRoutes.map(item => <AppLink key={item.id} href={`/platform/${item.pattern}`} prefetch={false}
           aria-current={definition?.id === item.id ? 'page' : undefined}>{t(item.title.zh, item.title.en)}</AppLink>)}
       </nav>}
-      <main className="platform-main">{children}</main>
+      <Content className="platform-main">{children}</Content>
     </div>
-  );
+  </PlatformNavigationContext>;
 }

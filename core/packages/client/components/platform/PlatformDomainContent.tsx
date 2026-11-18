@@ -4,14 +4,15 @@ import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from 'r
 import AppLink from '@/components/AppLink';
 import { VisualCube } from '@/components/VisualCube';
 import { useT } from '@/hooks/useT';
-import { nextQuery, useIsAdmin } from '@/lib/auth-store';
+import { nextQuery, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { loadPlatformLessonMedia, platformMediaBrowserUrl, PlatformPermissionError, type PlatformLessonMedia } from '@/lib/platform-gateway';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
-import { PLATFORM_COURSE_SECTIONS, platformCourseSectionsIncludedBy } from '@/lib/platform-routes';
+import { PLATFORM_COURSE_SECTIONS, platformCourseLessonSection, platformCourseSectionsIncludedBy } from '@/lib/platform-routes';
 import { PlatformQrLanding } from './PlatformQrLanding';
 import { PlatformLessonCoverEditor } from './PlatformLessonCoverEditor';
 import { PlatformClassroom } from './PlatformClassroom';
-import { PlatformCoursePresentation, PlatformLearningPath, PlatformCertificate } from './PlatformLearningWorkspace';
+import { PlatformCourseDetail } from './PlatformCourseDetail';
+import { PlatformLearningPath, PlatformCertificate } from './PlatformLearningWorkspace';
 import { PlatformCommerceContent } from './PlatformCommerceContent';
 import { LessonVideoPlayer } from '@/components/video/LessonVideoPlayer';
 
@@ -252,18 +253,18 @@ function ClassroomLessonStage({ title, courseId, lessonId, courseSlug, canEditCo
   </section>;
 }
 
-export function PlatformDomainContent({ definition, entity, params, previewRedirect, selectedLessonId, onSelectLesson, lessonStartTime, courseRedeemed }: {
+export function PlatformDomainContent({ definition, entity, params, previewRedirect, selectedLessonId, onSelectLesson, lessonStartTime }: {
   definition: PlatformRouteDefinition;
   entity?: PlatformEntity;
   params: Record<string, string>;
   previewRedirect?: boolean;
   selectedLessonId?: string | null;
   lessonStartTime?: number;
-  courseRedeemed?: boolean;
   onSelectLesson?: (id: string) => void;
 }) {
   const t = useT();
   const isAdmin = useIsAdmin();
+  const user = useAuthUser();
   const [autoContinue, setAutoContinue] = useState(false);
   const [autoPlayLessonId, setAutoPlayLessonId] = useState<string | null>(null);
   if (['product-detail', 'event-detail', 'news-detail', 'admin', 'admin-event-analytics'].includes(definition.id)) return <PlatformCommerceContent definition={definition} entity={entity} />;
@@ -293,73 +294,51 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
       // Keep existing lesson data readable after the introduction label change.
       return lesson && titleZh ? { ...lesson, titleZh: titleZh.replace(/^先导课/, PLATFORM_COURSE_SECTIONS[0].title.zh) } : raw;
     }) : [];
-    const instructors = Array.isArray(data.instructors) ? data.instructors : [];
-    // Group explicitly numbered sections only; unrelated course outlines stay unchanged.
-    const sections = PLATFORM_COURSE_SECTIONS.map(section => section.title.zh);
-    const grouped = sections.map(() => [] as unknown[]);
-    const canGroup = lessons.length > 0 && lessons.every((lesson) => {
-      const title = string(record(lesson)?.titleZh) ?? '';
-      const section = sections.findIndex(prefix => title.startsWith(prefix));
-      if (section < 0) return false;
-      grouped[section].push(lesson);
-      return true;
-    });
-    const lessonHref = (item: Record<string, unknown>) => {
-      const lessonId = string(item.id) ?? string(item.slug);
-      return lessonId ? `/platform/courses/${encodeURIComponent(entity.id)}/learn/${encodeURIComponent(lessonId)}` : null;
-    };
     if (selectedSection) {
+      const allowedLessonIds = Array.isArray(data.lessonAccess)
+        ? new Set(data.lessonAccess.map(item => record(item)?.id))
+        : null;
+      const checkedPreviews = Array.isArray(data.legacyPreviewIds) ? new Set(data.legacyPreviewIds) : null;
       // Invalid or stale query IDs fall back to the first lesson in this section.
       const sectionLessons = platformCourseSectionsIncludedBy(selectedSection.slug).flatMap(section => lessons.flatMap(raw => {
         const lesson = record(raw);
-        const id = string(lesson?.id);
-        return lesson && id && (string(lesson.titleZh) ?? '').startsWith(section.title.zh)
-          ? [{ id, title: sectionLessonTitle(localized(lesson, 'title', english) ?? t('未命名课时', 'Untitled lesson'), section) }] : [];
+        const id = string(lesson?.id) ?? string(lesson?.slug);
+        if (!lesson || !id || platformCourseLessonSection(lesson) !== section.slug) return [];
+        return [{
+          id,
+          title: sectionLessonTitle(localized(lesson, 'title', english) ?? t('未命名课时', 'Untitled lesson'), section),
+          locked: lesson.accessScope === 'entitled' && (allowedLessonIds
+            ? !allowedLessonIds.has(id)
+            : !user || (section.slug === 'trial' && checkedPreviews !== null && !checkedPreviews.has(id))),
+        }];
       }));
-      const active = sectionLessons.find(lesson => lesson.id === selectedLessonId) ?? sectionLessons[0];
+      const active = sectionLessons.find(lesson => lesson.id === selectedLessonId)
+        ?? sectionLessons.find(lesson => !lesson.locked)
+        ?? sectionLessons[0];
       if (!active) return <p className="platform-domain-note">{t('暂无课时。', 'No lessons yet.')}</p>;
+      if (active.locked) return <div className="platform-domain-note">
+        <p>{t('这个课时需要解锁。', 'This lesson requires access.')}</p>
+        <AppLink className="platform-button" href={`/platform/courses/${encodeURIComponent(entity.id)}`} prefetch={false}>
+          {t('查看课程与解锁方式', 'View course and access options')}
+        </AppLink>
+      </div>;
       return <PlatformClassroom key={active.id} courseId={entity.id} lessonId={active.id}
-        lessons={sectionLessons.map(item=>({id:item.id,titleZh:item.title,titleEn:item.title}))}
+        lessons={sectionLessons.map(item => ({ id: item.id, titleZh: item.title, titleEn: item.title, locked: item.locked }))}
         startTime={lessonStartTime} onSelectLesson={onSelectLesson ? id=>{setAutoPlayLessonId(null);onSelectLesson(id);} : undefined}
         renderMedia={mediaProps=><ClassroomLessonStage {...mediaProps} title={active.title} courseId={entity.id} courseSlug={string(data.slug)??undefined}
           canEditCover={isAdmin} autoContinue={autoContinue} onAutoContinueChange={setAutoContinue} autoPlay={autoPlayLessonId===active.id}
-          onNext={mediaProps.onNext?()=>{const next=sectionLessons[sectionLessons.findIndex(item=>item.id===active.id)+1];if(next){setAutoPlayLessonId(next.id);onSelectLesson?.(next.id);}}:undefined} />} />;
+          onNext={mediaProps.onNext ? () => {
+            const activeIndex = sectionLessons.findIndex(item => item.id === active.id);
+            const next = sectionLessons.slice(activeIndex + 1).find(item => !item.locked);
+            if (!next) return;
+            setAutoPlayLessonId(next.id);
+            onSelectLesson?.(next.id);
+          } : undefined} />} />;
     }
-    return (
-      <div className="platform-domain-stack platform-course-outline" id="platform-course-outline">
-        <PlatformCoursePresentation entity={entity} />
-        {canGroup ? <section className="platform-domain-content">
-          <h2>{t('课程课时', 'Course lessons')}</h2>
-          <div className="platform-lesson-grid">{grouped.map((items, index) => items.length > 0 ? <AppLink
-            key={sections[index]}
-            className="platform-lesson-card"
-            href={`/platform/courses/${encodeURIComponent(entity.id)}/sections/${PLATFORM_COURSE_SECTIONS[index].slug}`} prefetch={false}
-          >
-            <span className={`platform-lesson-cover platform-lesson-cover-${index}`} aria-hidden="true">
-              {index === 0 && data.slug === 'yan-ruimin-3x3-beginner'
-                ? <img className="platform-lesson-cover-photo" src="/images/ruimin/gallery/photo-03.webp" alt="" loading="lazy" />
-                : <VisualCube view={index === 1 ? 'f2l' : 'iso'} size={144} local alt="" />}
-              <span className="platform-lesson-cover-number">0{index + 1}</span>
-            </span>
-            <span className="platform-lesson-card-title">
-              {t(PLATFORM_COURSE_SECTIONS[index].title.zh, PLATFORM_COURSE_SECTIONS[index].title.en)}
-              {courseRedeemed && PLATFORM_COURSE_SECTIONS[index].slug === 'core'
-                ? <> <span className="platform-course-redeemed">{t('已兑换', 'Redeemed')}</span></>
-                : null}
-            </span>
-          </AppLink> : null)}</div>
-        </section> : <DomainList
-          title={t('课程课时', 'Course lessons')}
-          items={lessons}
-          href={lessonHref}
-          showStatus={false}
-        />}
-        <DomainList title={t('授课讲师', 'Instructors')} items={instructors} href={(item) => {
-          const teacherId = string(item.teacherEntryId);
-          return teacherId ? `/platform/teachers/${encodeURIComponent(teacherId)}` : null;
-        }} />
-      </div>
-    );
+    return <PlatformCourseDetail course={entity} lessons={lessons.flatMap(item => {
+      const lesson = record(item);
+      return lesson ? [lesson] : [];
+    })} />;
   }
 
   if (definition.id === 'course-lesson') {

@@ -18,6 +18,7 @@
 
 按需追溯决策、失败及验收限制；旧待办、状态和授权只适用于记录时点。
 
+- [两级导航本地预览设计与验收](history/platform-navigation-preview-2026-11-17.md)
 - [Platform 完整移植与复用跟踪](history/platform-completion-tracker.md)
 - [Cube Platform 迁移跟踪](history/platform-migration.md)
 - [Platform 主站完整迁移跟踪](history/platform-product-migration-tracker.md)

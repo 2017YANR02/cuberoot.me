@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
+import { loadLegacyCoursePreviewAccess } from '@/lib/platform-course-catalog';
 import {
   executePlatformAction,
   loadPlatformLessonMedia,
@@ -135,10 +136,10 @@ describe('Platform route conservation', () => {
     expect(matchPlatformRoute(['events', 'preview', 'extra'])).toBeNull();
   });
 
-  it('keeps only the course introduction public', () => {
+  it('allows guests to enter both current sections, leaving lesson permissions to the player', () => {
     expect(matchPlatformRoute(['courses', 'course-1', 'sections', 'introduction'])?.definition.access).toBe('public');
     expect(matchPlatformRoute(['courses', 'course-1', 'sections', 'trial'])?.definition.access).toBe('account');
-    expect(matchPlatformRoute(['courses', 'course-1', 'sections', 'core'])?.definition.access).toBe('account');
+    expect(matchPlatformRoute(['courses', 'course-1', 'sections', 'core'])?.definition.access).toBe('public');
   });
 
   it('matches all 95 legacy page mappings while allowing required new target routes', () => {
@@ -292,6 +293,29 @@ describe('Platform route conservation', () => {
 });
 
 describe('Platform gateway contracts', () => {
+  it('checks only the old restricted previews when course access metadata is unavailable', async () => {
+    const result = { items: [{ id: 'course-1', title: 'Course', data: { lessons: [
+      { id: 'intro', slug: 'intro-01', accessScope: 'public' },
+      { id: 'preview-1', slug: 'trial-01', accessScope: 'entitled' },
+      { id: 'preview-2', slug: 'trial-02', accessScope: 'entitled' },
+      { id: 'core', slug: 'lesson-01', accessScope: 'entitled' },
+    ] } }] };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => requestPath(input).endsWith('/preview-1')
+      ? response({ lesson: { id: 'preview-1' } })
+      : new Response(null, { status: 403 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const withAccess = await loadLegacyCoursePreviewAccess(result, new AbortController().signal);
+    expect(withAccess.items[0].data).toMatchObject({ legacyPreviewIds: ['preview-1'] });
+    expect(fetchMock.mock.calls.map(([input]) => requestPath(input))).toEqual([
+      '/v1/platform/courses/course-1/lessons/preview-1', '/v1/platform/courses/course-1/lessons/preview-2',
+    ]);
+
+    fetchMock.mockClear();
+    const current = { items: [{ ...result.items[0], data: { ...result.items[0].data, lessonAccess: [] } }] };
+    expect(await loadLegacyCoursePreviewAccess(current, new AbortController().signal)).toBe(current);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it.each([['admin-teachers', 'instructor'], ['admin-applications', 'application']] as const)('retains the %s detail envelope for editing and decisions', async (resource, key) => {
     const record = { id: 'record-1', displayName: 'Teacher', pitch: 'Experience', status: 'pending' };
     vi.stubGlobal('fetch', vi.fn(async () => response({ [key]: record })));
@@ -305,7 +329,7 @@ describe('Platform gateway contracts', () => {
     const fetchMock = vi.fn(async (_input: RequestInfo | URL) => response({ categories: ['beginner'], courses: [course], total: 61, page: 3, pageSize: 20 }));
     vi.stubGlobal('fetch', fetchMock);
     const result = await loadPlatformResource('courses', { routeId: 'courses', params: {}, page: 3, pageSize: 20, query: ' cube ', category: 'beginner', sort: 'title' });
-    expect(requestPath(fetchMock.mock.calls[0][0])).toBe('/v1/platform/courses?q=cube&sort=title&page=3&pageSize=20&category=beginner&v=3');
+    expect(requestPath(fetchMock.mock.calls[0][0])).toBe('/v1/platform/courses?q=cube&sort=title&page=3&pageSize=20&category=beginner&v=4');
     expect(result).toMatchObject({ total: 61, page: 3, pageSize: 20, categories: ['beginner'] });
     expect(localizePlatformEntity(result.items[0], 'en')).toMatchObject({ title: 'Course', summary: 'English', data: course });
     fetchMock.mockImplementation(async () => response({ items: [course], page: 1, pageSize: 20 }));

@@ -15,6 +15,14 @@ export function platformCourseSectionsIncludedBy(slug: string): readonly (typeof
   return PLATFORM_COURSE_SECTIONS.filter(section => section.slug === slug || (slug === 'core' && section.slug === 'trial'));
 }
 
+export function platformCourseLessonSection(lesson: Readonly<Record<string, unknown>>): (typeof PLATFORM_COURSE_SECTIONS)[number]['slug'] {
+  const slug = String(lesson.slug ?? '');
+  const title = String(lesson.titleZh || lesson.titleEn || '');
+  if (/^intro(?:duction)?-/i.test(slug) || /^(?:引言|先导课|Introduction)/i.test(title)) return 'introduction';
+  if (/^trial-/i.test(slug) || /^(?:试听课|Trial lessons?)/i.test(title)) return 'trial';
+  return 'core';
+}
+
 const PUBLIC = text('浏览可公开访问的内容与服务。', 'Browse content and services available to everyone.');
 const ACCOUNT = text('查看并管理与你的账号关联的数据。', 'Review and manage data connected to your account.');
 const INSTRUCTOR = text('面向讲师的课程、学员和结算工作区。', 'Workspace for instructor courses, learners, and payouts.');
@@ -72,12 +80,20 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   route({ id: 'algorithm-detail', pattern: 'algorithms/:id', area: 'learning', access: 'public', kind: 'canonical', title: text('旧公式详情', 'Legacy algorithm details'), canonicalHref: '/alg/3x3', canonicalLabel: text('在主站公式库中查找', 'Find it in the main-site library'), description: text('旧 Platform 的公式 ID 来自自动播种的演示数据，未作为稳定产品标识迁移；请在主站公式库按公式或分类查找。', 'Legacy Platform algorithm IDs came from auto-seeded demo data and were not migrated as stable product identifiers. Find the algorithm by notation or category in the main-site library.') }),
   route({ id: 'courses', pattern: 'courses', area: 'learning', access: 'public', kind: 'collection', title: text('课程', 'Courses'), resource: 'courses' }),
   route({ id: 'course-detail', pattern: 'courses/:id', area: 'learning', access: 'public', kind: 'detail', title: text('课程详情', 'Course details'), resource: 'courses', actions: ['enroll', 'favorite', 'submit-review'] }),
-  ...PLATFORM_COURSE_SECTIONS.map(section => route({ id: `course-section-${section.slug}`, pattern: `courses/:id/sections/${section.slug}`, area: 'learning', access: section.slug === 'introduction' ? 'public' : 'account', kind: 'detail', title: section.title, resource: 'courses', description: text('选择课时，开始学习。', 'Choose a lesson and start learning.') })),
+  ...PLATFORM_COURSE_SECTIONS.map(section => route({ id: `course-section-${section.slug}`, pattern: `courses/:id/sections/${section.slug}`, area: 'learning', access: section.slug === 'trial' ? 'account' : 'public', kind: 'detail', title: section.title, resource: 'courses', description: text('选择课时，开始学习。', 'Choose a lesson and start learning.') })),
   route({ id: 'course-lesson', pattern: 'courses/:id/learn/:lessonId', area: 'learning', access: 'public', kind: 'detail', title: text('课程学习', 'Course lesson'), resource: 'course-lesson', actions: ['update-progress', 'save-note', 'submit-quiz'] }),
   route({ id: 'teachers', pattern: 'teachers', area: 'discover', access: 'public', kind: 'canonical', title: text('讲师', 'Teachers'), resource: 'teachers', canonicalHref: '/teachers', canonicalLabel: text('打开讲师名录', 'Open the teacher directory') }),
+  canonical('teacher-edit', 'teachers/edit', 'discover', 'account', text('教学主页', 'Teaching profile'), '/teachers/edit'),
+  canonical('teacher-scripts', 'teachers/scripts', 'discover', 'public', text('直播话术', 'Livestream scripts'), '/teachers/scripts'),
+  canonical('teacher-script-page', 'teachers/scripts/:rest*', 'discover', 'public', text('直播话术', 'Livestream scripts'), '/teachers/scripts/:rest*'),
+  canonical('teacher-live-guide', 'teachers/live-guide', 'discover', 'public', text('直播指南', 'Livestream guide'), '/teachers/live-guide'),
   route({ id: 'teacher-detail', pattern: 'teachers/:id', area: 'discover', access: 'public', kind: 'canonical', title: text('讲师详情', 'Teacher details'), resource: 'teachers', canonicalHref: '/teachers?teacher=:id', canonicalLabel: text('打开讲师名录', 'Open the teacher directory'), description: text('直接读取主站讲师名录；旧 Platform 自动播种的演示讲师未导入，找不到时请返回主站名录。', 'This reads the main-site teacher directory directly. Auto-seeded demo teachers from the legacy Platform were not imported; use the main-site directory when an entry is not found.') }),
   route({ id: 'teacher-apply', pattern: 'teachers/apply', area: 'instructor', access: 'account', kind: 'form', title: text('申请成为讲师', 'Apply as an instructor'), resource: 'instructor-application', actions: ['apply-instructor'], description: text('提交教学经历、擅长方向和联系方式，申请进度与主站账号绑定。', 'Submit teaching experience, specialties, and contact details; application status follows the main-site account.') }),
   route({ id: 'community', pattern: 'community', area: 'community', access: 'public', kind: 'canonical', title: text('社区', 'Community'), resource: 'community', canonicalHref: '/forum', canonicalLabel: text('打开完整论坛', 'Open the full forum') }),
+  canonical('community-feed', 'community/feed', 'community', 'public', text('动态', 'Feed'), '/forum/feed'),
+  canonical('community-mine', 'community/mine', 'community', 'account', text('我的讨论', 'My discussions'), '/forum/mine'),
+  canonical('community-search', 'community/search', 'community', 'public', text('搜索讨论', 'Search discussions'), '/forum/search'),
+  canonical('community-review', 'community/review', 'community', 'admin', text('社区审核', 'Community review'), '/forum/review'),
   route({ id: 'community-circle', pattern: 'community/circles/:id', area: 'community', access: 'public', kind: 'canonical', title: text('圈子', 'Circle'), resource: 'community-circle', canonicalHref: '/forum/f/:id', canonicalLabel: text('打开完整圈子', 'Open the full circle') }),
   canonical('community-post-new', 'community/posts/new', 'community', 'account', text('发布帖子', 'Create post'), '/forum/new'),
   route({ id: 'community-post', pattern: 'community/posts/:id', area: 'community', access: 'public', kind: 'canonical', title: text('帖子', 'Post'), resource: 'community-post', canonicalHref: '/forum/t/:id', canonicalLabel: text('参与完整讨论', 'Join the full discussion') }),
@@ -131,6 +147,7 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   canonical('org-students', 'org/:orgSlug/students', 'organization', 'account', text('学员管理', 'Student management'), '/org/:orgSlug/students'),
   canonical('org-student-credits', 'org/:orgSlug/students/:studentId/credits', 'organization', 'account', text('学员课时', 'Student credits'), '/org/:orgSlug/students/:studentId/packages'),
   canonical('org-student-responsibilities', 'org/:orgSlug/students/:studentId/responsibilities', 'organization', 'account', text('学员责任关系', 'Student responsibilities'), '/org/:orgSlug/students/:studentId'),
+  canonical('org-shared-page', 'org/:orgSlug/:rest*', 'organization', 'account', text('机构工作台', 'Organization workspace'), '/org/:orgSlug/:rest*'),
 
   route({ id: 'admin', pattern: 'admin', area: 'admin', access: 'admin', kind: 'dashboard', title: text('Platform 管理', 'Platform administration'), resource: 'admin-analytics' }),
   canonical('admin-algorithms', 'admin/algorithms', 'admin', 'admin', text('公式内容管理', 'Algorithm content'), '/alg/3x3'),
@@ -176,12 +193,14 @@ function patternParts(pattern: string): string[] {
 
 function matchDefinition(definition: PlatformRouteDefinition, segments: readonly string[]): PlatformRouteMatch | null {
   const parts = patternParts(definition.pattern);
-  if (parts.length !== segments.length) return null;
+  const catchAll = parts.at(-1)?.endsWith('*');
+  if (catchAll ? segments.length < parts.length : parts.length !== segments.length) return null;
   const params: Record<string, string> = {};
   for (let i = 0; i < parts.length; i += 1) {
     const part = parts[i];
     const segment = segments[i];
-    if (part.startsWith(':')) params[part.slice(1)] = segment;
+    if (part.startsWith(':') && part.endsWith('*')) params[part.slice(1, -1)] = segments.slice(i).join('/');
+    else if (part.startsWith(':')) params[part.slice(1)] = segment;
     else if (part !== segment) return null;
   }
   return { definition, params };
@@ -209,7 +228,9 @@ export function platformParentHref(segments: readonly string[]): string {
 }
 
 export function fillPlatformParams(template: string, params: Record<string, string>): string {
-  return template.replace(/:([A-Za-z][A-Za-z0-9]*)/g, (_, name: string) => encodeURIComponent(params[name] ?? ''));
+  return template.replace(/:([A-Za-z][A-Za-z0-9]*)(\*)?/g, (_, name: string, catchAll?: string) => catchAll
+    ? (params[name] ?? '').split('/').map(encodeURIComponent).join('/')
+    : encodeURIComponent(params[name] ?? ''));
 }
 
 export function resolvePlatformCanonicalPath(segments: readonly string[]): {
@@ -231,7 +252,8 @@ export function resolvePlatformCanonicalPath(segments: readonly string[]): {
 export const PLATFORM_CANONICAL_REWRITES = PLATFORM_ROUTES
   .filter((definition) => definition.kind === 'canonical' && definition.canonicalHref)
   .map((definition) => ({
-    source: `/:lang(en|zh)/platform/${definition.pattern}`,
+    // The native application form must not be consumed as a public teacher ID.
+    source: `/:lang(en|zh)/platform/${definition.id === 'teacher-detail' ? 'teachers/:id((?!apply(?:/|$))[^/]+)' : definition.pattern}`,
     destination: `/:lang${definition.canonicalHref}`,
   }));
 

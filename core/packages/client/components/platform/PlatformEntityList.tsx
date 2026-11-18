@@ -117,7 +117,7 @@ export function PlatformEntityList({
                 ))}
               </dl>
             ) : null}
-            {learnerCourses && href ? <AppLink className="platform-home-secondary" href={href} prefetch={false}>{t('查看课程', 'View course')}<ArrowRight aria-hidden /></AppLink> : null}
+            {learnerCourses && href ? <AppLink className="platform-button" href={href} prefetch={false}>{t('查看课程', 'View course')}<ArrowRight aria-hidden /></AppLink> : null}
             {quickActions.length ? (
               <div className="platform-row-actions">
                 {quickActions.map((action) => (
