@@ -18,6 +18,7 @@ A、B、C 共用[视口及紧凑横屏切换规则](./responsive-design.md#2-尺
 | structure/corners | 引言 · 角块 | A · 观察 |
 | structure/edges | 引言 · 棱块 | A · 观察 |
 | structure/notation | 引言 · 转动记号 | A · 轮播（记号＋短说明） |
+| structure/flowchart | 引言 · 总流程图（按顺序链接后续各章的流程图） | G · 独立画布 |
 | daisy/overview | 做小花 · 概览 | E · 静态图文 |
 | daisy/layers | 做小花 · 认识楼层 | E · 阅读 |
 | daisy/case-0 | 做小花 · 二楼 | B · 教学 |

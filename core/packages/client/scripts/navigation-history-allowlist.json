@@ -1,7 +1,7 @@
 [
   {
     "path": "app/[lang]/tutorial/lbl/page.tsx",
-    "call": "setPracticeRoute({step,case}) history=chapterIndex !== chapter ? 'push' : 'replace'",
+    "call": "setPracticeRoute({step,case,section}) history=chapterIndex !== chapter ? 'push' : 'replace'",
     "reason": "LBL 大章内容导航进入历史记录；同章小节切换只替换状态"
   },
   {

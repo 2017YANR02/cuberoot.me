@@ -56,6 +56,21 @@ function Label({ x, y, value, branch = false }: { x: number; y: number; value: T
   </text>;
 }
 
+function FlowArrowMarker({ id }: { id: string }) {
+  return <defs><marker id={id} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" className="lbl-flow-arrowhead" />
+  </marker></defs>;
+}
+
+function FlowTerminal({ x, y, label, width = 240, height = 64, complete = false }: {
+  x: number; y: number; label: Text; width?: number; height?: number; complete?: boolean;
+}) {
+  return <>
+    <rect x={x} y={y} width={width} height={height} rx={height / 2} className={complete ? 'lbl-flow-terminal lbl-flow-complete' : 'lbl-flow-terminal'} />
+    <Label x={x + width / 2} y={y + height / 2} value={label} />
+  </>;
+}
+
 const caseExamples = [
   // The occupied-top example already exposes its middle white edge at the front.
   [2, 3, 5], [0], [0, 1], [0, 2],
@@ -117,10 +132,10 @@ function ImagePreview({ label, children, onClose }: { label: string; children: R
   </dialog>;
 }
 
-export default function SolveFlowchart({ stageId, onSelectLesson }: { stageId: string; onSelectLesson?: (id: string) => void }) {
-  const flowRef = useRef<HTMLElement>(null);
+function FlowCanvas({ label, children }: { label: string; children: ReactNode }) {
+  const canvasRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const canvas = flowRef.current?.querySelector<HTMLElement>('.lbl-flow-canvas');
+    const canvas = canvasRef.current;
     if (!canvas) return;
     let gesture: { id: number; x: number; y: number; left: number; top: number; dragging: boolean } | null = null;
     let suppressClick = false;
@@ -188,27 +203,80 @@ export default function SolveFlowchart({ stageId, onSelectLesson }: { stageId: s
       canvas.removeEventListener('click', click, true);
       canvas.removeEventListener('keydown', keydown);
     };
-  }, [stageId]);
+  }, []);
   useEffect(() => {
-    const flow = flowRef.current;
-    const containers = [flow?.querySelector<HTMLElement>('.lbl-flow-canvas')]
-      .filter((element): element is HTMLElement => !!element);
-    const cleanups = containers.map(element => {
-      let timeout: ReturnType<typeof setTimeout> | undefined;
-      const showScrollbar = () => {
-        if (!element.hasAttribute('data-flow-scrolling')) element.setAttribute('data-flow-scrolling', '');
-        clearTimeout(timeout);
-        timeout = setTimeout(() => element.removeAttribute('data-flow-scrolling'), 1000);
-      };
-      element.addEventListener('scroll', showScrollbar, { passive: true });
-      return () => {
-        element.removeEventListener('scroll', showScrollbar);
-        clearTimeout(timeout);
-        element.removeAttribute('data-flow-scrolling');
-      };
-    });
-    return () => cleanups.forEach(cleanup => cleanup());
-  }, [stageId]);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const showScrollbar = () => {
+      if (!canvas.hasAttribute('data-flow-scrolling')) canvas.setAttribute('data-flow-scrolling', '');
+      clearTimeout(timeout);
+      timeout = setTimeout(() => canvas.removeAttribute('data-flow-scrolling'), 1000);
+    };
+    canvas.addEventListener('scroll', showScrollbar, { passive: true });
+    return () => {
+      canvas.removeEventListener('scroll', showScrollbar);
+      clearTimeout(timeout);
+      canvas.removeAttribute('data-flow-scrolling');
+    };
+  }, []);
+  return <section className="lbl-content lbl-solve-flow" data-tutorial-layout="G">
+    <div ref={canvasRef} className="lbl-flow-canvas" tabIndex={0} role="region" aria-label={label}>
+      {children}
+    </div>
+  </section>;
+}
+
+export function SolveOverviewFlowchart({ label, stages, onSelectStage }: {
+  label: string; stages: readonly { id: string; title: Text }[]; onSelectStage: (id: string) => void;
+}) {
+  const markerId = useId().replace(/:/g, '');
+  const arrow = `url(#${markerId})`;
+  const nodes = [{ id: 'start', title: text('开始', 'Start') }, ...stages, { id: 'complete', title: text('复原完成', 'Cube solved') }];
+  const nodeWidth = 168;
+  const nodeHeight = 72;
+  const columnGap = 40;
+  const rowGap = 24;
+  const padding = 12;
+  const width = 2 * (padding + nodeWidth) + columnGap;
+  const rows = Math.ceil(nodes.length / 2);
+  const height = 2 * padding + rows * nodeHeight + (rows - 1) * rowGap;
+  return <FlowCanvas label={label}>
+    <svg className="lbl-flow-graph lbl-flow-overview" width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="group" aria-label={label}>
+      <FlowArrowMarker id={markerId} />
+      {nodes.map((node, index) => {
+        const row = Math.floor(index / 2);
+        const firstInRow = index % 2 === 0;
+        // Alternate reading direction so adjacent rows connect on the same side.
+        const onLeft = (row % 2 === 0) === firstInRow;
+        const x = padding + (onLeft ? 0 : nodeWidth + columnGap);
+        const y = padding + row * (nodeHeight + rowGap);
+        const entryX = onLeft ? x + nodeWidth : x;
+        const middleY = y + nodeHeight / 2;
+        const connector = firstInRow
+          ? `M${x + nodeWidth / 2} ${y - rowGap} V${y}`
+          : `M${entryX + (onLeft ? columnGap : -columnGap)} ${middleY} H${entryX}`;
+        const complete = index === nodes.length - 1;
+        return <g key={node.id}>
+          {index > 0 && <path d={connector} markerEnd={arrow} />}
+          {index === 0 || complete
+            ? <FlowTerminal x={x} y={y} width={nodeWidth} height={nodeHeight} label={node.title} complete={complete} />
+            : <>
+              <rect x={x} y={y} width={nodeWidth} height={nodeHeight} rx={16} className="lbl-flow-operation" />
+              <foreignObject x={x} y={y} width={nodeWidth} height={nodeHeight}>
+                <button type="button" className="lbl-flow-action lbl-flow-stage" onClick={() => onSelectStage(node.id)}>
+                  <StageImage stage={node.id} size={46} />
+                  <span>{tr(node.title)}</span>
+                </button>
+              </foreignObject>
+            </>}
+        </g>;
+      })}
+    </svg>
+  </FlowCanvas>;
+}
+
+export default function SolveFlowchart({ stageId, onSelectLesson }: { stageId: string; onSelectLesson?: (id: string) => void }) {
   const [preview, setPreview] = useState<'start' | 'done' | number | null>(null);
   const markerId = useId().replace(/:/g, '');
   const chapter = chapters.find(item => item.id === stageId)!;
@@ -223,16 +291,15 @@ export default function SolveFlowchart({ stageId, onSelectLesson }: { stageId: s
   const arrow = `url(#${markerId})`;
   const view = stageId === 'yellow-face' || stageId === 'corner-position' ? 'plan' : 'iso';
   const previewLabel = typeof preview === 'number' ? tr(stage.paths[preview][0]) : tr(preview === 'start' ? text('开始', 'Start') : chapter.goal);
-  return <section ref={flowRef} className="lbl-content lbl-solve-flow">
-    <div className="lbl-flow-canvas" tabIndex={0} role="region" aria-label={tr(text(`${chapter.title.zh}流程图`, `${chapter.title.en} flowchart`))}>
+  return <>
+    <FlowCanvas key={stageId} label={tr(text(`${chapter.title.zh}流程图`, `${chapter.title.en} flowchart`))}>
       <svg className="lbl-flow-graph" width="1000" height={endY + 88} viewBox={`0 0 1000 ${endY + 88}`} role="group" aria-label={tr(text(`${chapter.title.zh}，判断与操作`, `${chapter.title.en}, decisions and actions`))}>
-        <defs><marker id={markerId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" className="lbl-flow-arrowhead" /></marker></defs>
+        <FlowArrowMarker id={markerId} />
         <path className="lbl-flow-return" d={`M950 ${returnY} V140 Q950 128 938 128 H276 Q264 128 264 140 V168`} markerEnd={arrow} />
         <path d="M264 88 V128" />
         <path d={`M114 ${goalY} H46 Q34 ${goalY} 34 ${goalY + 12} V${endY + 20} Q34 ${endY + 32} 46 ${endY + 32} H144`} markerEnd={arrow} />
         <path d={`M264 ${goalY + 100} V${firstCaseY - 100}`} markerEnd={arrow} />
-        <rect x="144" y="24" width="240" height="64" rx="32" className="lbl-flow-terminal" />
-        <Label x={264} y={56} value={text('开始', 'Start')} />
+        <FlowTerminal x={144} y={24} label={text('开始', 'Start')} />
         <PreviewTarget x={144} y={24} width={240} height={64} label={tr(text('开始', 'Start'))} onClick={() => setPreview('start')} />
         <g>
           <polygon points={`264,${goalY - 100} 414,${goalY} 264,${goalY + 100} 114,${goalY}`} className="lbl-flow-decision" />
@@ -268,15 +335,14 @@ export default function SolveFlowchart({ stageId, onSelectLesson }: { stageId: s
             </g>;
           })}
         </g>
-        <rect x="144" y={endY} width="240" height="64" rx="32" className="lbl-flow-terminal lbl-flow-complete" />
-        <Label x={264} y={endY + 32} value={text('本步完成', 'Stage complete')} />
+        <FlowTerminal x={144} y={endY} label={text('本步完成', 'Stage complete')} complete />
         <PreviewTarget x={144} y={endY} width={240} height={64} label={tr(text('本步完成', 'Stage complete'))} onClick={() => setPreview('done')} />
       </svg>
-    </div>
+    </FlowCanvas>
     {preview !== null && <ImagePreview label={previewLabel} onClose={() => setPreview(null)}>
       {typeof preview === 'number' ? <CaseImage chapter={chapter} stageIndex={stageIndex} row={preview} size={320} />
         : preview === 'start' ? <StageImage stage={LBL_STEPS[stageIndex].id} size={320} brightCenters={stageId === 'cross'} />
         : <StageImage stage={stageId} size={320} />}
     </ImagePreview>}
-  </section>;
+  </>;
 }

@@ -1,7 +1,7 @@
 .lbl-page .lbl-lesson-scroll:has(> .lbl-solve-flow) { overflow: hidden; }
 .lbl-lesson-scroll:has(> .lbl-solve-flow)::before,
 .lbl-lesson-scroll:has(> .lbl-solve-flow)::after { display: none; }
-.lbl-page .lbl-lesson-scroll > .lbl-content.lbl-solve-flow { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.lbl-page .lbl-lesson-scroll > .lbl-content.lbl-solve-flow { display: flex; flex-direction: column; align-items: stretch; height: 100%; min-height: 0; }
 .lbl-solve-flow h2 { font-size: var(--lbl-text-emphasis); }
 .lbl-flow-canvas {
   flex: 1; min-height: 0; overflow: auto; max-width: 100%; padding-block: 8px;
@@ -68,6 +68,20 @@
 .lbl-flow-actions { display: flex; flex-direction: column; height: 100%; padding: 8px 16px; }
 .lbl-flow-actions > .lbl-flow-action { appearance: none; width: 100%; flex: 1; min-height: 0; height: auto; margin: 0; padding: 0; border: 0; background: none; cursor: pointer; }
 .lbl-flow-action:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+
+.lbl-flow-canvas > .lbl-flow-graph.lbl-flow-overview { width: auto; max-width: 100%; min-width: 0; margin-inline: auto; }
+.lbl-flow-action.lbl-flow-stage {
+  appearance: none;
+  width: 100%;
+  gap: 8px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 16px;
+  background: none;
+  cursor: pointer;
+}
+.lbl-flow-stage > span:last-child { min-width: 0; line-height: 1.15; }
+.lbl-flow-overview > g:has(.lbl-flow-stage:hover) > .lbl-flow-operation { stroke: var(--accent); }
 
 .lbl-flow-preview-target { appearance: none; display: block; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
 .lbl-flow-preview-target:focus-visible { outline: 2px solid var(--ring); outline-offset: -4px; }

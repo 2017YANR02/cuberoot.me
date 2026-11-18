@@ -48,7 +48,9 @@ export const chapters: Chapter[] = LBL_STEPS.flatMap(step => {
     lessons.push(...cases);
   }
   if (COMPLETE_DEMO_STAGES.includes(step.id as CompleteDemoStage)) lessons.push({ id: 'complete', title: { zh: '完整演示', en: 'Complete demonstration' }, kind: 'complete' });
-  if (step.id !== 'structure') lessons.push({ id: 'flowchart', title: { zh: '流程图', en: 'Flowchart' }, kind: 'flowchart' });
+  lessons.push({ id: 'flowchart', title: step.id === 'structure'
+    ? { zh: '总流程图', en: 'Solve flowchart' }
+    : { zh: '流程图', en: 'Flowchart' }, kind: 'flowchart' });
   const interludes: Chapter[] = ALG_LESSONS.filter(lesson => lesson.after === step.id).map(interlude => ({
     archived: true,
     id: interlude.id, title: {

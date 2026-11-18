@@ -9,6 +9,7 @@ import { T, tr } from '@/i18n/tr';
 import { activeChapters, chapters as allChapters, lessonSourceChapter, practiceExampleOrder, practiceReviewLocation } from './curriculum';
 import LessonContent from './LessonContent';
 import LessonThumbnail from './LessonThumbnail';
+import { SolveOverviewFlowchart } from './SolveFlowchart';
 import PracticeRoute from './PracticeRoute';
 import Walkthrough from './Walkthrough';
 import SectionMenu from '../components/SectionMenu';
@@ -22,6 +23,8 @@ import '../components/responsive-layout.css';
 
 const lessonStorageKey = 'lbl:current-lesson';
 const legacyLessonStorageKey = 'lbl2:current-lesson';
+const solveStages = activeChapters.filter(chapter =>
+  chapter.id !== 'structure' && chapter.lessons.some(lesson => lesson.kind === 'flowchart'));
 
 function chapterStep(id: string) {
   const index = activeChapters.findIndex(chapter => chapter.id === id);
@@ -45,15 +48,14 @@ function LblLessonView({ archive }: { archive: boolean }) {
   const storageSuffix = archive ? ':archive' : '';
   const storageKey = `${lessonStorageKey}${storageSuffix}`;
   const legacyStorageKey = `${legacyLessonStorageKey}${storageSuffix}`;
-  const [linkedStep] = useQueryState('step');
-  const [linkedCase] = useQueryState('case');
+  const [{ step: linkedStep, case: linkedCase, section: linkedSection }, setPracticeRoute] = useQueryStates({
+    view: parseAsString, step: parseAsString, case: parseAsString, section: parseAsString,
+  });
   const [chapter, setChapter] = useState(0);
   const [section, setSection] = useState(0);
   const [revision, setRevision] = useState(0);
   const observedRoute = useRef<string | null>(null);
-  const appliedRoute = useRef<{ step: string; case: string | null } | null>(null);
-
-  const [, setPracticeRoute] = useQueryStates({ view: parseAsString, step: parseAsString, case: parseAsString });
+  const appliedRoute = useRef<{ step: string; case: string | null; section: string | null } | null>(null);
 
   const [daisyLiftIndex, setDaisyLiftIndex] = useState(0);
   const [showDaisyTerms, setShowDaisyTerms] = useState(false);
@@ -79,12 +81,13 @@ function LblLessonView({ archive }: { archive: boolean }) {
     return () => document.removeEventListener('keydown', switchHandWithSpace);
   }, [isDaisyLift, isDaisyOverview, showDaisyTerms]);
   useEffect(() => {
-    const routeKey = JSON.stringify([linkedStep, linkedCase]);
+    const routeKey = JSON.stringify([linkedStep, linkedCase, linkedSection]);
     if (observedRoute.current === routeKey) return;
     const initial = observedRoute.current === null;
     observedRoute.current = routeKey;
     // Ignore the URL update from our own navigation: it already selected the section.
-    if (appliedRoute.current?.step === linkedStep && appliedRoute.current.case === linkedCase) return;
+    if (appliedRoute.current?.step === linkedStep && appliedRoute.current.case === linkedCase &&
+        appliedRoute.current.section === linkedSection) return;
     let saved: string | null = null;
     try {
       if (initial) saved = sessionStorage.getItem(storageKey) ?? sessionStorage.getItem(legacyStorageKey);
@@ -97,13 +100,16 @@ function LblLessonView({ archive }: { archive: boolean }) {
     const chapterIndex = linkedStep ? Math.max(0, linkedChapter)
       : Math.max(0, chapters.findIndex(item => item.id === savedChapter));
     const target = chapters[chapterIndex];
+    const linkedSectionIndex = linkedSection === 'flowchart'
+      ? target.lessons.findIndex(lesson => lesson.id === linkedSection) : -1;
     const savedLeftLift = target.id === 'daisy' && savedLesson === 'case-1';
     const sectionIndex = initial && savedChapter === target.id
       ? Math.max(0, target.lessons.findIndex(item => item.id === (savedLeftLift ? 'case-0' : savedLesson))) : 0;
-    const review = linkedChapter >= 0 && linkedCase ? practiceReviewLocation(target, linkedCase)
-      : { section: sectionIndex, daisyLiftIndex: savedLeftLift ? 1 : 0 };
+    const review = linkedSectionIndex >= 0 ? { section: linkedSectionIndex, daisyLiftIndex: 0 }
+      : linkedChapter >= 0 && linkedCase ? practiceReviewLocation(target, linkedCase)
+        : { section: sectionIndex, daisyLiftIndex: savedLeftLift ? 1 : 0 };
     const step = chapterStep(target.id);
-    appliedRoute.current = { step, case: linkedCase };
+    appliedRoute.current = { step, case: linkedCase, section: linkedSection };
     setChapter(chapterIndex);
     setSection(review.section);
     setDaisyLiftIndex(review.daisyLiftIndex);
@@ -114,7 +120,7 @@ function LblLessonView({ archive }: { archive: boolean }) {
     } catch {
       // Navigation still works when browser storage is unavailable.
     }
-  }, [chapters, linkedStep, linkedCase, storageKey, legacyStorageKey, setPracticeRoute]);
+  }, [chapters, linkedStep, linkedCase, linkedSection, storageKey, legacyStorageKey, setPracticeRoute]);
   const goToLesson = useCallback((chapterIndex: number, sectionIndex: number) => {
     setChapter(chapterIndex);
     setSection(sectionIndex);
@@ -123,10 +129,12 @@ function LblLessonView({ archive }: { archive: boolean }) {
     setRevision(value => value + 1);
     const target = chapters[chapterIndex];
     const step = chapterStep(target.id);
-    appliedRoute.current = { step, case: null };
-    void setPracticeRoute({ step, case: null }, { history: chapterIndex !== chapter ? 'push' : 'replace' });
+    const lesson = target.lessons[sectionIndex];
+    const linkedSection = lesson.kind === 'flowchart' ? lesson.id : null;
+    appliedRoute.current = { step, case: null, section: linkedSection };
+    void setPracticeRoute({ step, case: null, section: linkedSection }, { history: chapterIndex !== chapter ? 'push' : 'replace' });
     try {
-      sessionStorage.setItem(storageKey, `${target.id}/${target.lessons[sectionIndex].id}`);
+      sessionStorage.setItem(storageKey, `${target.id}/${lesson.id}`);
     } catch {
       // Navigation still works when browser storage is unavailable.
     }
@@ -188,7 +196,13 @@ function LblLessonView({ archive }: { archive: boolean }) {
     <TutorialNavigationShell className="lbl-body" sections={{ items }}>
       <div className="lbl-learning">
         <div className="lbl-lesson-scroll" key={`${currentChapter.id}/${currentLesson.id}/${revision}`}>
-          {isDaisyOverview ? <div className="lbl-daisy-overview-content">
+          {currentChapter.id === 'structure' && currentLesson.kind === 'flowchart' ?
+            <SolveOverviewFlowchart label={tr(currentLesson.title)} stages={solveStages} onSelectStage={id => {
+              const chapterIndex = chapters.findIndex(item => item.id === id);
+              const sectionIndex = chapters[chapterIndex]?.lessons.findIndex(item => item.kind === 'flowchart') ?? -1;
+              if (sectionIndex >= 0) goToLesson(chapterIndex, sectionIndex);
+            }} />
+          : isDaisyOverview ? <div className="lbl-daisy-overview-content">
             <LessonContent key={String(showDaisyTerms)} chapter={sourceChapter}
               lesson={showDaisyTerms ? { ...currentLesson, kind: 'terms' } : currentLesson} hostChapterId={currentChapter.id} inlineAction={!showDaisyTerms && <button type="button" className="lbl-guide-continue lbl-guide-continue-hint" onClick={() => setShowDaisyTerms(true)}>{tr({ zh: '点击继续', en: 'Click to continue' })}</button>} />
           </div> : isDaisyLift ? <div className="lbl-daisy-lift-content">
