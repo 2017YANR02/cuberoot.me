@@ -31,7 +31,7 @@ export default function PageBackLink({ fallback = '/', className, label, acceptE
   );
   const props = { ...rest, className: ['back-home', className].filter(Boolean).join(' '), prefetch,
     'aria-label': ariaLabel };
-  const content = label ? <><ArrowLeft size={16} aria-hidden="true" />{label}</> : <ChevronLeft size={16} aria-hidden="true" />;
+  const content = label ? <><ArrowLeft size={16} aria-hidden="true" /><span className="sr-only">{label}</span></> : <ChevronLeft size={16} aria-hidden="true" />;
   return !back && target === '/' ? <HomeLink {...props} miniProgramTarget={miniProgramTarget}>{content}</HomeLink>
     : <AppLink {...props} href={target} navigation="return">{content}</AppLink>;
 }

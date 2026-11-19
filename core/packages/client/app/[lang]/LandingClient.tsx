@@ -33,7 +33,6 @@ import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery, authActions } from '@/lib/auth-store';
 import { fmtVipId } from '@/lib/membership-format';
 import LandingSearch from '@/components/LandingSearch';
-import ContactDetails from '@/components/ContactDetails';
 import PersonUpcomingComps from '@/components/persons/sections/PersonUpcomingComps';
 import { useCompFollows } from '@/components/CompFollow';
 import SearchInput from '@/components/SearchInput';
@@ -65,6 +64,7 @@ const TodayRecon = dynamic(() => import('@/components/TodayRecon'), {
 const ForumFeedPreview = dynamic(() => import('@/components/forum/ForumFeedPreview'), {
   loading: () => <SkeletonBlock className="landing-widget-skeleton" />,
 });
+const ContactDetails = dynamic(() => import('@/components/ContactDetails'), { ssr: false });
 import { useEffectiveTheme } from '@/lib/theme';
 import '../landing.css';
 import './home-navigation.css';
@@ -723,7 +723,9 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
 
       <footer className="landing-footer-layout">
       {activeSection === 'home' && <div className="landing-contact-details">
-        <ContactDetails />
+        <LazyVisible minHeight={180} rootMargin="300px 0px" unwrapWhenVisible>
+          <ContactDetails />
+        </LazyVisible>
       </div>}
       <div className="landing-footer-info">
       <div className="footer">

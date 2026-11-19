@@ -461,6 +461,15 @@ export const CATALOG: UtilEntry[] = [
     en: 'Viewport clamp for anchored dropdown panels: on open, measures the panel and shifts it left (negative margin-left, transform untouched) if its right edge crosses the viewport. Required for panels anchored below a trigger (absolute + top:100%); declare anchored-panel: clamped in the CSS rule (CI ratchet).',
   },
   {
+    name: 'usePlatformSearchBinding',
+    sig: 'usePlatformSearchBinding(scope, query, submit, enabled?, options?): boolean',
+    imp: "import { usePlatformSearchBinding } from '@/lib/platform-navigation-context';",
+    usage: "usePlatformSearchBinding('courses', query, onQuery, true, { routeId: 'courses' });",
+    category: 'hook',
+    zh: '将页面自己的搜索和筛选接入学习空间页头，保留页面对 URL 状态的管理和卸载清理。',
+    en: 'Binds page-owned search and filters to the learning-space header, retaining page URL ownership and unmount cleanup.',
+  },
+  {
     name: 'usePopoverDismiss',
     sig: "usePopoverDismiss(open: boolean, close: (reason: 'outside' | 'escape') => void, panel: RefObject<HTMLElement | null>, trigger?: RefObject<HTMLElement | null>): void",
     imp: "import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';",

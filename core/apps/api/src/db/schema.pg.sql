@@ -1153,6 +1153,15 @@ CREATE INDEX idx_platform_courses_public ON platform_courses(status, published_a
 CREATE TRIGGER platform_courses_set_updated_at BEFORE UPDATE ON platform_courses
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
+CREATE TABLE platform_homepage_settings (
+  singleton BOOLEAN PRIMARY KEY DEFAULT TRUE CHECK (singleton),
+  featured_items JSONB NOT NULL DEFAULT '[]'::jsonb
+    CHECK (jsonb_typeof(featured_items) = 'array' AND jsonb_array_length(featured_items) <= 12),
+  sections JSONB NOT NULL DEFAULT '["popular", "weekly", "latest", "teacher", "organization", "event"]'::jsonb
+    CHECK (jsonb_typeof(sections) = 'array' AND jsonb_array_length(sections) <= 6),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE platform_course_owners (
   course_id UUID NOT NULL REFERENCES platform_courses(id) ON DELETE RESTRICT,
   instructor_id UUID NOT NULL REFERENCES platform_instructors(id) ON DELETE RESTRICT,
@@ -1804,6 +1813,8 @@ CREATE TABLE platform_course_entitlements (
   CHECK (valid_until IS NULL OR valid_until > valid_from)
 );
 CREATE INDEX idx_platform_course_entitlements_user ON platform_course_entitlements(user_id, status, valid_until);
+CREATE INDEX idx_platform_course_entitlements_course ON platform_course_entitlements(course_id, created_at)
+  WHERE status = 'active' AND user_id IS NOT NULL;
 CREATE TRIGGER platform_course_entitlements_set_updated_at BEFORE UPDATE ON platform_course_entitlements
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 

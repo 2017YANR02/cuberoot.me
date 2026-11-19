@@ -581,6 +581,9 @@ const ENDPOINTS: Ep[] = [
   { d: 'platform', m: 'GET', p: '/v1/platform/instructor/dashboard', g: 'login', c: 'no-store', zh: '讲师课程、学员、月度分成与结算概览', en: 'Instructor courses, learners, monthly revenue shares and payouts' },
 
   // ---- platform: public catalog ----
+  { d: 'platform', m: 'GET', p: '/v1/platform/homepage', g: 'public', c: 'short', zh: '按展示时间和有效学员统计读取公开首页推荐', en: 'Public homepage recommendations from display schedules and active learner counts' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/admin/homepage', g: 'admin', c: 'no-store', zh: '读取首页推荐配置与可选公开内容', en: 'Read homepage recommendation settings and eligible public content' },
+  { d: 'platform', m: 'PUT', p: '/v1/platform/admin/homepage', g: 'admin', c: 'no-store', zh: '幂等保存精选内容、时间和自动栏目顺序', en: 'Idempotently save featured content, schedules and automatic section order' },
   { d: 'platform', m: 'GET', p: '/v1/platform/competitions', g: 'public', c: 'no-store', zh: '公开线上比赛', en: 'List published online competitions' },
   { d: 'platform', m: 'GET', p: '/v1/platform/competitions/manage', g: 'login', c: 'no-store', zh: '本人可管理的赛事', en: 'List managed competitions' },
   { d: 'platform', m: 'GET', p: '/v1/platform/competitions/:id', g: 'public', c: 'no-store', zh: '赛事、项目与监督场次', en: 'Read competition, projects and supervised sessions' },

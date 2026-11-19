@@ -5,6 +5,41 @@ export const PLATFORM_EVENT_STATUSES = ['draft', 'published', 'cancelled', 'comp
 export const PLATFORM_PRODUCT_STATUSES = ['draft', 'active', 'archived'] as const;
 export const PLATFORM_NEWS_STATUSES = ['draft', 'published', 'archived'] as const;
 export const PLATFORM_PATH_STATUSES = ['draft', 'published', 'archived'] as const;
+export const PLATFORM_HOME_AUTO_SECTIONS = ['popular', 'weekly', 'latest', 'teacher', 'organization', 'event'] as const;
+export type PlatformHomeAutoSection = typeof PLATFORM_HOME_AUTO_SECTIONS[number];
+export type PlatformHomeSection = 'featured' | PlatformHomeAutoSection;
+export const PLATFORM_HOME_CONTENT_TYPES = ['course', 'teacher', 'organization', 'event'] as const;
+export type PlatformHomeContentType = typeof PLATFORM_HOME_CONTENT_TYPES[number];
+export interface PlatformHomeReference { type: PlatformHomeContentType; id: string }
+export interface PlatformHomeFeaturedItem extends PlatformHomeReference {
+  coverUrl: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+}
+
+/** Featured content always precedes the enabled automatic sections. */
+export interface PlatformHomepageSettings {
+  featuredItems: PlatformHomeFeaturedItem[];
+  sections: PlatformHomeAutoSection[];
+}
+export interface PlatformHomeContent extends PlatformHomeReference {
+  titleZh: string;
+  titleEn: string;
+  summaryZh: string;
+  summaryEn: string;
+  coverUrl: string | null;
+  instructorNames?: string | null;
+}
+export interface PlatformHomeSlide extends PlatformHomeContent { section: PlatformHomeSection | 'catalog' }
+
+export function isPlatformHomepageCover(value: string): boolean {
+  if (!value || /[\s\\\u0000-\u001f\u007f]/.test(value)) return false;
+  if (value.startsWith('/')) return !value.startsWith('//');
+  try {
+    const url = new URL(value);
+    return (url.protocol === 'https:' || url.protocol === 'http:') && Boolean(url.hostname) && !url.username && !url.password;
+  } catch { return false; }
+}
 
 export type PlatformCurrency = typeof PLATFORM_CURRENCIES[number];
 export type PlatformCourseStatus = typeof PLATFORM_COURSE_STATUSES[number];

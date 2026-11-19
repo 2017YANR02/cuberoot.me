@@ -5,7 +5,7 @@ import NextLink from 'next/link';
 import { useParams } from 'next/navigation';
 import { useContext, useRef, useSyncExternalStore, type ComponentProps } from 'react';
 import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
-import { platformNavigationHref } from '@/lib/platform-navigation';
+import { platformNavigationHref, platformPathname } from '@/lib/platform-navigation';
 import { useTrainingHref } from '@/lib/training-host';
 import { currentEntryHref, entryNavigationHref, type EntryNavigationMode } from '@/lib/entry-navigation';
 import { LinkPendingIndicator } from '@/components/StartupStatus';
@@ -34,7 +34,7 @@ function isInstalledProductHref(href: string): boolean {
 // tree behind a proxy rewrite), so English links stay bare; on Chinese pages we
 // re-prefix with /zh. Any stray /en or /zh already in the href is normalized
 // away first.
-export default function AppLink({ href, navigation = 'push', prefetch = false, loadingOverlay = true, ...props }: Props) {
+export default function AppLink({ href, navigation = 'push', prefetch = false, loadingOverlay, ...props }: Props) {
   const params = useParams();
   const platform = useContext(PlatformNavigationContext);
   const clickedHref = useRef('');
@@ -63,6 +63,10 @@ export default function AppLink({ href, navigation = 'push', prefetch = false, l
     h = `/${lang}${bare === '/' ? '' : bare}${h.slice(pathname.length)}`;
   }
   if (douyin && !douyinContentAvailable(typeof h === 'string' ? h : String(h.pathname ?? '/'))) return null;
+  // The Platform layout owns its local loading state. Internal links should
+  // not replace the persistent workspace chrome with the site-wide overlay.
+  const targetPath = typeof h === 'string' ? platformPathname(h) : '';
+  const showLoadingOverlay = loadingOverlay ?? !(platform && (targetPath === '/platform' || targetPath.startsWith('/platform/')));
   return <NextLink href={h} prefetch={prefetch} data-entry-navigation={navigation} {...props}
     onClick={(event) => {
       props.onClick?.(event);
@@ -75,6 +79,6 @@ export default function AppLink({ href, navigation = 'push', prefetch = false, l
     }}>
     {props.children}
     {/* allow-nested-link: LinkPendingIndicator only subscribes to pending state and returns null, never an anchor. */}
-    {loadingOverlay && <LinkPendingIndicator />}
+    {showLoadingOverlay && <LinkPendingIndicator />}
   </NextLink>;
 }

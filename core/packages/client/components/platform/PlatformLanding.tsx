@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { ArrowRight, Bell, BookOpen, ChartNoAxesColumnIncreasing, IdCard, Layers, MessagesSquare, Play, Timer, UserRound } from '@app-foundation/icons/lucide';
+import { ArrowRight, Bell, BookOpen, ChartNoAxesColumnIncreasing, IdCard, Layers, MessagesSquare, Timer, UserRound } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { SHOP_ROOT } from '@/lib/shop';
 import { fetchTeacherDirectory, type TeacherDirectoryEntry } from '@/lib/teacher-directory-api';
@@ -15,6 +15,7 @@ import type { TeachingOrganizationAccess } from '@/lib/teaching-saas-api';
 import type { PlatformEntity } from '@/lib/platform-types';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { courseCatalogDetails } from '@/lib/platform-course-catalog';
+import { PlatformHomepageCarousel } from './PlatformHomepageCarousel';
 
 export function PlatformLanding() {
   const t = useT();
@@ -142,16 +143,7 @@ export function PlatformLanding() {
         </div>
       </header>
 
-      <section className="platform-teacher-feature" aria-labelledby="platform-feature-title">
-        <Image className="platform-feature-photo" src="/images/ruimin/gallery/photo-03.webp" width={3200} height={2400} sizes="(max-width: 1160px) 100vw, 1120px" priority alt={t('颜瑞民在魔方比赛现场展示复原结果', 'Yan Ruimin demonstrating a solve at a cubing competition')} />
-        <span className="platform-feature-caption platform-glass">{t('热爱，在这里发生。', 'This is where it begins.')}</span>
-        <div className="platform-feature-copy platform-glass">
-
-          <h2 id="platform-feature-title">{t('颜瑞民课程', 'Yan Ruimin Courses')}</h2>
-          <p>{t('认识魔方，也认识每一步的道理。引言、试听课与正式课，循序渐进地学。', 'Understand the cube, and the reason behind every move. Explore the introduction, trial lessons, and full course at your own pace.')}</p>
-          <AppLink className="platform-home-secondary" href="/platform/courses/yan-ruimin-3x3-beginner" prefetch={false}><span className="platform-play-orb" aria-hidden><Play /></span>{t('了解课程', 'Explore the course')}<ArrowRight aria-hidden /></AppLink>
-        </div>
-      </section>
+      <PlatformHomepageCarousel />
 
       <section className="platform-instructors" aria-labelledby="platform-instructors-title">
         <div className="platform-instructors-header">

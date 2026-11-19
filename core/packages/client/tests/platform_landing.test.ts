@@ -8,6 +8,9 @@ const mocks = vi.hoisted(() => ({
   user: { uid: 1, name: '学员' },
   teachers: vi.fn(),
   load: vi.fn(),
+  slides: vi.fn(),
+  settings: vi.fn(),
+  saveSettings: vi.fn(),
 }));
 
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
@@ -15,16 +18,21 @@ vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => mocks.user, useIsAdmin: 
 vi.mock('@/lib/teacher-directory-api', () => ({ fetchTeacherDirectory: mocks.teachers }));
 vi.mock('@/lib/teaching-saas-api', () => ({ listTeachingLearningContexts: vi.fn(), listTeachingOrganizations: vi.fn() }));
 vi.mock('@/lib/platform-gateway', () => ({ loadPlatformResource: mocks.load, PlatformPermissionError: class extends Error {} }));
+vi.mock('@/lib/platform-homepage', async importOriginal => ({ ...await importOriginal<typeof import('@/lib/platform-homepage')>(), loadHomepageSlides: mocks.slides, loadHomepageSettings: mocks.settings, saveHomepageSettings: mocks.saveSettings }));
 vi.mock('@/components/AppLink', () => ({ default: ({ className, href, children }: { className?: string; href: string; children: ReactNode }) => createElement('a', { className, href }, children) }));
 vi.mock('next/image', () => ({ default: ({ src, alt, className }: { src: string; alt: string; className?: string }) => createElement('img', { src, alt, className }) }));
 
 import { PlatformLanding } from '@/components/platform/PlatformLanding';
+import { PlatformHomepageAdmin } from '@/components/platform/PlatformHomepageAdmin';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 beforeEach(() => {
   mocks.teachers.mockReset().mockResolvedValue([]);
   mocks.load.mockReset().mockResolvedValue({ items: [] });
+  mocks.slides.mockReset().mockResolvedValue([]);
+  mocks.settings.mockReset().mockResolvedValue({ settings: { featuredItems: [], sections: [] }, content: [] });
+  mocks.saveSettings.mockReset().mockImplementation(async settings => ({ settings }));
 });
 
 it('uses the course catalog link and a genuine empty teacher state when the backend returns no records', async () => {
@@ -82,4 +90,50 @@ it('displays the real teacher name, specialty and photo from the directory respo
     expect(card?.querySelector('img')?.getAttribute('src')).toBe('/test-teaching.webp');
     expect(host.querySelectorAll('.platform-instructor-card')).toHaveLength(1);
   } finally { await act(async () => root.unmount()); }
+});
+
+it('rotates real mixed-content recommendations and removes navigation when only one remains', async () => {
+  const course = { id: 'course1', type: 'course', section: 'featured', titleZh: '真实课程', titleEn: 'Course', summaryZh: '课程介绍', summaryEn: '', coverUrl: '/real.webp' };
+  const school = { id: '42', type: 'organization', section: 'organization', titleZh: '公开机构', titleEn: 'School', summaryZh: '', summaryEn: '', coverUrl: null };
+  mocks.slides.mockResolvedValue([course, school]);
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(PlatformLanding)));
+    const carousel = host.querySelector('.platform-home-carousel')!;
+    expect(carousel.querySelector('h2')?.textContent).toBe(course.titleZh);
+    expect(carousel.querySelector('a')?.getAttribute('href')).toBe('/platform/courses/course1');
+    await act(async () => (carousel.querySelector('[aria-label="下一张"]') as HTMLButtonElement).click());
+    expect(carousel.querySelector('h2')?.textContent).toBe(school.titleZh);
+    expect(carousel.querySelector('a')?.getAttribute('href')).toBe('/platform/teachers/42');
+    expect(carousel.querySelector('img')).toBeNull();
+  } finally { await act(async () => root.unmount()); }
+  mocks.slides.mockResolvedValue([course]);
+  const singleHost = document.createElement('div'), singleRoot = createRoot(singleHost);
+  try {
+    await act(async () => singleRoot.render(createElement(PlatformLanding)));
+    expect(singleHost.querySelector('.platform-home-carousel h2')?.textContent).toBe(course.titleZh);
+    expect(singleHost.querySelector('.platform-carousel-controls')).toBeNull();
+    expect(singleHost.querySelector('.platform-carousel-arrows')).toBeNull();
+  } finally { await act(async () => singleRoot.unmount()); }
+});
+
+it('lets administrators select a real public organization and save the ordered feature list', async () => {
+  mocks.settings.mockResolvedValue({ settings: { featuredItems: [], sections: ['latest'] }, content: [{
+    type: 'organization', id: '42', titleZh: '真实机构', titleEn: 'School', summaryZh: '', summaryEn: '', coverUrl: null,
+  }] });
+  const host = document.createElement('div'), root = createRoot(host);
+  document.body.append(host);
+  try {
+    await act(async () => root.render(createElement(PlatformHomepageAdmin)));
+    const [type, content] = host.querySelectorAll('select');
+    const change = (select: HTMLSelectElement, value: string) => act(() => { select.value = value; select.dispatchEvent(new Event('change', { bubbles: true })); });
+    change(type, 'organization');
+    expect([...content.options].map(option => option.text)).toContain('真实机构');
+    change(content, '42');
+    const add = [...host.querySelectorAll('button')].find(button => button.textContent?.includes('添加推荐'))!;
+    act(() => add.click());
+    expect(host.querySelector('.platform-homepage-featured-row')?.textContent).toContain('真实机构');
+    await act(async () => host.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+    expect(mocks.saveSettings).toHaveBeenCalledWith({ featuredItems: [{ type: 'organization', id: '42', coverUrl: null, startsAt: null, endsAt: null }], sections: ['latest'] });
+  } finally { await act(async () => root.unmount()); host.remove(); }
 });

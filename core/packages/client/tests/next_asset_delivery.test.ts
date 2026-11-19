@@ -1,4 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
+import { getPathMatch } from 'next/dist/shared/lib/router/utils/path-match';
 
 afterEach(() => { vi.unstubAllEnvs(); vi.resetModules(); });
 
@@ -20,4 +21,22 @@ it.each([
     destination: enabled ? 'https://next.cuberoot.me/_next/static/:path*' : '/_next/static/:path*',
   }] : []);
   expect(config.assetPrefix).toBe(mode === 'production' && !enabled ? '/_origin' : undefined);
+});
+
+it('serves conventional Apple touch icon probes from the canonical brand asset only', async () => {
+  const { default: config } = await import('../next.config');
+  const rewrites = await config.rewrites!();
+  if (Array.isArray(rewrites)) throw new Error('Expected phased rewrites');
+  const alias = rewrites.afterFiles?.find(rule => rule.destination === '/icons/apple-touch-icon.png');
+  expect(alias).toBeDefined();
+  const match = getPathMatch(alias!.source);
+  for (const name of ['apple-touch-icon.png', 'apple-touch-icon-precomposed.png', 'apple-touch-icon-240x240.png',
+    'apple-touch-icon-240x240-precomposed.png', 'apple-touch-icon-120x120.png']) {
+    expect(match('/' + name)).toBeTruthy();
+  }
+  for (const path of ['/apple-touch-icon-other.png', '/assets/apple-touch-icon.png', '/apple-touch-icon.svg']) {
+    expect(match(path)).toBe(false);
+  }
+  const headers = await config.headers!();
+  expect(headers.find(rule => rule.source === alias!.source)?.headers).toContainEqual({ key: 'Cache-Control', value: 'public, max-age=2592000' });
 });

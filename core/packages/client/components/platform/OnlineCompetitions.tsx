@@ -24,7 +24,11 @@ import {
   listOrganizerApplications, listOrganizerReviewQueue, submitOrganizerApplication, reviewOrganizerApplication, type OrganizerApplication,
   type OnlineCompetitionSummary,
 } from '@/lib/online-competition-api';
-import { CompetitionVideoRoom } from './CompetitionVideoRoom';
+import dynamic from 'next/dynamic';
+import { PlatformState } from './PlatformState';
+
+const CompetitionVideoRoom = dynamic(() => import('./CompetitionVideoRoom').then(module => module.CompetitionVideoRoom),
+  { ssr: false, loading: () => <PlatformState kind="loading" /> });
 import './online-competitions.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 

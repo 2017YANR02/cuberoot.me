@@ -5,6 +5,11 @@
   display: inline-flex;
 }
 
+.pp.pp--pill {
+  align-self: flex-start;
+  width: fit-content;
+}
+
 .pp-trigger {
   appearance: none;
   display: inline-flex;

@@ -11,6 +11,10 @@ export const PLATFORM_COURSE_SECTIONS = [
   { slug: 'core', title: text('正式课', 'Core lessons') },
 ] as const;
 
+const LEARNING_WORKSPACE_IDS = new Set(['account-courses', 'account-notes', 'account-badges', 'progress', 'account-progress',
+  'instructor', 'instructor-students', 'instructor-earnings', 'leaderboard']);
+export function isPlatformLearningWorkspace(id: string): boolean { return LEARNING_WORKSPACE_IDS.has(id); }
+
 export function platformCourseSectionsIncludedBy(slug: string): readonly (typeof PLATFORM_COURSE_SECTIONS)[number][] {
   return PLATFORM_COURSE_SECTIONS.filter(section => section.slug === slug || (slug === 'core' && section.slug === 'trial'));
 }
@@ -150,6 +154,7 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   canonical('org-shared-page', 'org/:orgSlug/:rest*', 'organization', 'account', text('机构工作台', 'Organization workspace'), '/org/:orgSlug/:rest*'),
 
   route({ id: 'admin', pattern: 'admin', area: 'admin', access: 'admin', kind: 'dashboard', title: text('Platform 管理', 'Platform administration'), resource: 'admin-analytics' }),
+  route({ id: 'admin-homepage', pattern: 'admin/homepage', area: 'admin', access: 'admin', kind: 'dashboard', title: text('首页推荐', 'Homepage recommendations') }),
   canonical('admin-algorithms', 'admin/algorithms', 'admin', 'admin', text('公式内容管理', 'Algorithm content'), '/alg/3x3'),
   canonical('admin-algorithm-new', 'admin/algorithms/new', 'admin', 'admin', text('新建公式内容', 'Create algorithm content'), '/alg/3x3'),
   canonical('admin-algorithm-detail', 'admin/algorithms/:id', 'admin', 'admin', text('编辑公式内容', 'Edit algorithm content'), '/alg/3x3'),

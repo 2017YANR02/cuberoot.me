@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import dynamic from 'next/dynamic';
 import { Check, Copy, ThumbsUp, ThumbsDown, Volume2, Square, Share, RefreshCw, Ellipsis, GitBranch, ChevronRight, FileText, Quote, SlidersHorizontal } from '@app-foundation/icons/lucide';
 import { CompactSelect } from '@/components/CompactSelect';
 import { Tooltip } from '@/components/Tooltip';
@@ -8,9 +9,10 @@ import { tr } from '@/i18n/tr';
 import { sendAssistantEvent, type AssistantFeedback } from '@/lib/site-assistant-request';
 import { assistantAnswerText, assistantSpokenText, downloadAssistantPdf } from '@/lib/assistant-answer-export';
 import type { AssistantTurn } from './SiteAssistantDialog';
-import { AssistantShareDialog } from './AssistantShareDialog';
 import { playAssistantSpeech } from '@/lib/assistant-speech';
 import { getSpeechPreferences, getServerSpeechPreferences, subscribeSpeechPreferences, setSpeechPreferences, loadSpeechVoices, speechRates, type SpeechVoiceOptions } from '@/lib/assistant-speech-preferences';
+
+const AssistantShareDialog = dynamic(() => import('./AssistantShareDialog').then(module => module.AssistantShareDialog), { ssr: false });
 
 function Action({ label, children, onClick, disabled, pressed }: { label: string; children: ReactNode; onClick: () => void; disabled?: boolean; pressed?: boolean }) {
   return <Tooltip content={label}>{tip => <button {...tip} type="button" className="site-assistant-action" aria-label={label} aria-pressed={pressed} disabled={disabled} onClick={onClick}>{children}</button>}</Tooltip>;
@@ -128,7 +130,7 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
         ...voiceOptions.voices.map(voice => ({ value: voice.id, label: tr(voice.name) })),
       ] : [{ value: '__loading', label: tr({ zh: '正在加载…', en: 'Loading…' }), disabled: true }]} onChange={voice => { if (voice === '__retry') refreshVoices(); else setSpeechPreferences({ voice }); }}/>
       <CompactSelect side="top" unstyledTrigger triggerClassName="site-assistant-action" popupClassName="assistant-action-menu" className="assistant-toolbar-menu" ariaLabel={tr({ zh: '选择语速', en: 'Choose speed' })} label={<span style={{ fontSize: 12 }}>{speechPreferences.rate}×</span>} value={speechPreferences.rate} items={speechRates.map(rate => ({ value: rate, label: `${rate}×` }))} onChange={rate => setSpeechPreferences({ rate })}/>
-      {!turn.partial && <Action label={tr({ zh: '分享', en: 'Share' })} onClick={() => setShareOpen(true)}><Share size={18}/></Action>}
+      {!turn.partial && <Action label={tr({ zh: '分享', en: 'Share' })} pressed={shareOpen} onClick={() => setShareOpen(true)}><Share size={18}/></Action>}
       {onRetry && <Action label={tr({ zh: '重试', en: 'Retry' })} onClick={() => { stop(); onRetry(); }}><RefreshCw size={18}/></Action>}
       {(timestamp || onBranch) && <CompactSelect side="top" unstyledTrigger triggerClassName="site-assistant-action" popupClassName="assistant-action-menu" className="assistant-toolbar-menu" ariaLabel={tr({ zh: '更多', en: 'More' })} label={<Ellipsis size={20}/>} items={[
         ...(timestamp ? [{ value: 'time', disabled: true, label: <span className="assistant-menu-time">{timestamp}</span> }] : []),

@@ -16,14 +16,7 @@ import '@/components/sticky-table.css';
 
 type Mode = 'manage' | 'stats' | 'prompts';
 export function PlatformQrAdmin({ mode }: { mode: Mode }) {
-  const t = useT();
   return <div className={styles.root}>
-    <nav className={styles.actions} aria-label={t('二维码管理功能', 'QR administration')}>
-      <AppLink href="/platform/admin/qr" prefetch={false}>{t('二维码列表', 'QR codes')}</AppLink>
-      <AppLink href="/platform/admin/qr/cards" prefetch={false}>{t('设计与批量打印', 'Design and print')}</AppLink>
-      <AppLink href="/platform/admin/qr/prompts" prefetch={false}>{t('提示词工坊', 'Prompt library')}</AppLink>
-      <AppLink href="/platform/admin/qr/stats" prefetch={false}>{t('扫码统计', 'Scan analytics')}</AppLink>
-    </nav>
     {mode === 'manage' ? <QrManager /> : mode === 'stats' ? <QrAnalytics /> : <QrPrompts />}
   </div>;
 }

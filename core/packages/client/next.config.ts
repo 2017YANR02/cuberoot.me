@@ -7,6 +7,10 @@ import { RETIRED_ROUTES, RETIRED_COMP_VIEWS, RETIRED_WORKSPACE_SECTIONS } from "
 import { usesLocalStats, PUBLISHED_STATS_ORIGIN } from "@cuberoot/shared/stats-base";
 import { WCA_STAT_PAGE_IDS } from "@cuberoot/shared/wca-stat-catalog";
 
+// Browsers may probe the conventional root icon names (including sized and
+// precomposed variants) even when the HTML declares the canonical asset.
+const APPLE_TOUCH_ICON_ALIAS = '/apple-touch-icon:variant(-[0-9]+x[0-9]+|-precomposed|-[0-9]+x[0-9]+-precomposed)?.png';
+
 // Force IPv4 first for upstream rewrites — node fetch's default IPv6-first
 // order causes intermittent `getaddrinfo ENOTFOUND` on api.cuberoot.me proxy
 // when AAAA lookup hangs and fails before A is tried. Set at module load so
@@ -133,6 +137,10 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/icons/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
+      },
+      {
+        source: APPLE_TOUCH_ICON_ALIAS,
         headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
       },
       {
@@ -325,6 +333,8 @@ const nextConfig: NextConfig = {
         { source: "/:lang(en|zh)/alg/:puzzle/:set/:seg((?!run$|select$|simple$)[^/]+)", destination: "/:lang/alg/_/_/_" },
       ],
       afterFiles: [
+        // Serve the existing brand asset without redirecting or duplicating it.
+        { source: APPLE_TOUCH_ICON_ALIAS, destination: '/icons/apple-touch-icon.png' },
         // Reject unknown stats before streaming starts; notFound() inside a
         // streamed shell otherwise renders a 404 screen with HTTP 200.
         { source: `/:lang(en|zh)?/wca/:statId((?!(?:${wcaPagePattern})(?:/|$))[^/]+)`, destination: '/404' },

@@ -338,6 +338,7 @@ it('opens a single-message share preview without publishing it and offers branch
   const labels=Array.from(document.querySelectorAll('.assistant-answer-toolbar button')).map(el=>el.getAttribute('aria-label'));
   expect(labels.slice(0,6)).toEqual(['引用回答','复制','朗读','选择音色','选择语速','分享']);
   await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="分享"]')!.click());
+  await act(async()=>{ await vi.dynamicImportSettled(); });
   expect(document.querySelector('.assistant-share-dialog')?.textContent).toContain('分享这条消息的公开链接');
   expect(fetcher.mock.calls.some(([url])=>String(url).includes('/site-assistant/shares'))).toBe(false);
   await act(async()=>document.querySelector<HTMLButtonElement>('.assistant-share-dialog button[aria-label="关闭"]')!.click());

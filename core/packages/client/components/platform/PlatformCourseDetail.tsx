@@ -102,7 +102,7 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
           {directory.length > 0 && <span>{t(`${directory.length} 课时`, `${directory.length} lessons`)}</span>}
         </div>
       </div>
-      {details.coverUrl && <PlatformCourseCover {...details} />}
+      {details.coverUrl && <PlatformCourseCover {...details} eager />}
       <div className="platform-course-overview-copy">
         {summary && <p>{summary}</p>}
         <div className="platform-home-actions">

@@ -185,7 +185,7 @@ it('uses the compact filter trigger, searches only available projects and clears
     onSelect,
   };
   act(() => root.render(createElement(PuzzlePicker, props)));
-  const trigger = host.querySelector<HTMLButtonElement>('.compact-select > .compact-select-trigger')!;
+  const trigger = host.querySelector<HTMLButtonElement>('.compact-select-trigger')!;
   expect(trigger.querySelector('.compact-select-current')?.textContent).toBe('三阶');
   expect(trigger.querySelector('.compact-select-arrow')).not.toBeNull();
   act(() => trigger.click());

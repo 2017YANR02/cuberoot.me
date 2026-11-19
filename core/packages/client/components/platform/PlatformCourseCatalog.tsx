@@ -12,22 +12,25 @@ import { COURSE_TOPICS, type CourseTopic, type courseCatalogDetails } from '@/li
 import { commerceMoney } from '@/lib/platform-commerce-format';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 import { eventDisplayName } from '@/lib/wca-events';
+import { usePlatformSearchBinding, type PlatformFilterGroup } from '@/lib/platform-navigation-context';
 import { localDetailHref } from './PlatformRouteHelpers';
 
 const mobileCoverSizes = '(max-width: 307px) 80px, (max-width: 430px) 26vw, 112px';
 const courseCoverSizes = '(max-width: 307px) 80px, (max-width: 430px) 26vw, (max-width: 600px) 112px, (max-width: 960px) 50vw, 370px';
 
-export function PlatformCourseToolbar({ query, puzzle, topic, sort, puzzles, topics, onQuery, onPuzzle, onTopic, onSort }: {
+export function PlatformCourseToolbar({ query, puzzle, topic, sort, puzzles, topics, topicPuzzles, onQuery, onPuzzle, onTopic, onSort, onApplyFilters }: {
   query: string;
   puzzle: string;
   topic: string;
   sort: 'title' | 'updated';
   puzzles: ReadonlySet<string>;
   topics: readonly CourseTopic[];
+  topicPuzzles: ReadonlyMap<CourseTopic, readonly string[]>;
   onQuery: (value: string) => void;
   onPuzzle: (value: string) => void;
   onTopic: (value: string) => void;
   onSort: (value: 'title' | 'updated') => void;
+  onApplyFilters: (puzzle: string, topic: string, sort: 'title' | 'updated') => void;
 }) {
   const t = useT();
   const isZh = useLang() === 'zh';
@@ -40,6 +43,26 @@ export function PlatformCourseToolbar({ query, puzzle, topic, sort, puzzles, top
     { value: 'updated', label: t('最近更新', 'Recently updated') },
     { value: 'title', label: t('课程名称', 'Course title') },
   ] as const;
+  const groups: PlatformFilterGroup[] = [];
+  if (puzzles.size || puzzle) groups.push({
+    id: 'puzzle', label: t('项目', 'Puzzle'), value: puzzle || '', defaultValue: '',
+    searchPlaceholder: t('搜索项目', 'Search puzzles'),
+    options: [{ value: '', label: t('全部项目', 'All puzzles') }, ...[...puzzles].map(value => ({
+      value, label: eventDisplayName(value, isZh), searchText: `${eventDisplayName(value, true)} ${eventDisplayName(value, false)}`,
+    }))],
+  });
+  if (topicPuzzles.size || topic) groups.push({
+    id: 'topic', label: t('学习方向', 'Learning topic'), value: topic || '', defaultValue: '', presentation: 'chips',
+    options: [{ value: '', label: allTopics }, ...[...topicPuzzles].map(([value, compatible]) => ({
+      value, label: t(COURSE_TOPICS[value].zh, COURSE_TOPICS[value].en), dependsOn: { group: 'puzzle', values: compatible },
+    }))],
+  });
+  groups.push({ id: 'sort', label: t('排序', 'Sort'), value: sort, defaultValue: 'updated', options: sortItems });
+  const searchInMasthead = usePlatformSearchBinding('courses', query, onQuery, true, {
+    routeId: 'courses', filters: { title: t('筛选课程', 'Filter courses'), groups,
+      apply: values => onApplyFilters(values.puzzle ?? '', values.topic ?? '', values.sort === 'title' ? 'title' : 'updated') },
+  });
+  if (searchInMasthead) return null;
   return <div className="platform-toolbar platform-course-toolbar">
     <SearchInput value={query} onChange={onQuery} placeholder={searchLabel} ariaLabel={searchLabel}
       className="platform-search" inputClassName="platform-search-input" />
@@ -62,7 +85,7 @@ export function PlatformCourseToolbar({ query, puzzle, topic, sort, puzzles, top
 
 type CourseDetails = ReturnType<typeof courseCatalogDetails>;
 
-export function PlatformCourseCover({ coverUrl, mobileCoverUrl }: Pick<CourseDetails, 'coverUrl' | 'mobileCoverUrl'>) {
+export function PlatformCourseCover({ coverUrl, mobileCoverUrl, eager = false }: Pick<CourseDetails, 'coverUrl' | 'mobileCoverUrl'> & { eager?: boolean }) {
   const mobile = mobileCoverUrl
     ? getImageProps({ src: mobileCoverUrl, alt: '', fill: true, sizes: mobileCoverSizes, unoptimized: !mobileCoverUrl.startsWith('/') }).props
     : null;
@@ -70,7 +93,7 @@ export function PlatformCourseCover({ coverUrl, mobileCoverUrl }: Pick<CourseDet
     <BookOpen size={32} />
     {coverUrl && <picture>
       {mobile && <source media="(max-width: 600px)" srcSet={mobile.srcSet ?? mobile.src} sizes={mobile.sizes} />}
-      <Image src={coverUrl} alt="" fill sizes={courseCoverSizes}
+      <Image src={coverUrl} alt="" fill sizes={courseCoverSizes} loading={eager ? 'eager' : 'lazy'}
         unoptimized={!coverUrl.startsWith('/')} onError={event => { event.currentTarget.hidden = true; }} />
     </picture>}
   </div>;
@@ -96,7 +119,7 @@ export function PlatformCourseCards({ courses, definition, redeemedCourseIds }: 
 }) {
   const t = useT();
   return <div className="platform-course-grid">
-    {courses.map(({ course, details }) => {
+    {courses.map(({ course, details }, index) => {
       const data = course.data ?? {};
       const href = course.href?.startsWith('/') ? course.href : localDetailHref(definition, course);
       if (!href) return null;
@@ -106,7 +129,7 @@ export function PlatformCourseCards({ courses, definition, redeemedCourseIds }: 
       const instructors = details.fallbackInstructorEn ? t(details.instructors[0], details.fallbackInstructorEn) : details.instructors.join(t('、', ', '));
       return <article className="platform-course-card" data-site-surface="panel" key={course.id}>
         <AppLink className="platform-course-card-link" href={href} prefetch={false}>
-          <PlatformCourseCover {...details} />
+          <PlatformCourseCover {...details} eager={index === 0} />
           <div className="platform-course-card-body">
             <div className="platform-course-card-title"><h2>{course.title}</h2><ArrowRight size={16} aria-hidden /></div>
             {instructors && <p>{instructors}</p>}

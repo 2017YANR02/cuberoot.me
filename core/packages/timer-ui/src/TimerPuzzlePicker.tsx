@@ -273,7 +273,7 @@ export function TimerPuzzlePicker({
 
   return (
     <>
-    <div className={`pp${compact ? ' pp--compact' : ''}${pill ? ' compact-select' : ''}`} data-no-timer={dataNoTimer ? '' : undefined} ref={rootRef}
+    <div className={`pp${compact ? ' pp--compact' : ''}${pill ? ' pp--pill' : ''}`} data-no-timer={dataNoTimer ? '' : undefined} ref={rootRef}
       onPointerEnter={cancelHoverClose}
       onPointerLeave={event => {
         if (!openOnHover || event.pointerType !== 'mouse') return;

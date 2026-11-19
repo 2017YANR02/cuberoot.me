@@ -4,14 +4,23 @@ import { useSyncExternalStore, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { isPlatformSharedRoute, platformNavigationState } from '@/lib/platform-navigation';
+import { useIsAdmin } from '@/lib/auth-store';
+import { PlatformState } from './PlatformState';
 const PlatformShell = dynamic(() => import('./PlatformShell').then(module => module.PlatformShell));
 
 const subscribe = () => () => {};
 
-/** Rewritten routes use the original page, with Platform chrome added after hydration. */
+/** Shared layouts own the frame across administrative rewrites as well as native pages. */
 export function PlatformSharedSurface({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const mounted = useSyncExternalStore(subscribe, () => true, () => false);
-  const shared = mounted && isPlatformSharedRoute(platformNavigationState(pathname).definition);
-  return shared ? <PlatformShell shared>{children}</PlatformShell> : children;
+  const isAdmin = useIsAdmin();
+  const { definition } = platformNavigationState(pathname);
+  const admin = definition?.area === 'admin';
+  // Native routes already render their static layout during SSR. Transfer
+  // ownership after hydration, as with public rewrites: rendering this dynamic
+  // shell on the server can emit stale Turbopack preload URLs during HMR.
+  const shared = mounted && (admin || isPlatformSharedRoute(definition));
+  const denied = admin && definition.kind === 'canonical' && !isAdmin;
+  return shared ? <PlatformShell shared>{denied ? <PlatformState kind="permission" /> : children}</PlatformShell> : children;
 }

@@ -8,6 +8,8 @@
 
 ## 文档与登记
 
+- [学习空间首页推荐与栏目搜索](platform-homepage.md)
+
 - [platform-capability-manifest.json](platform-capability-manifest.json)
 - [platform-data-audit-sidecar.json](platform-data-audit-sidecar.json)
 - [Platform 权威数据与处置账本](platform-data-disposition-ledger.md)

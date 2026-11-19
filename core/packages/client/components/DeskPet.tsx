@@ -69,6 +69,7 @@ const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffe
 // its own 168KB at click time (measured).
 const loadDeskPetSearch = () => import('@/components/DeskPetSearch');
 const DeskPetSearch = dynamic(loadDeskPetSearch, { ssr: false });
+const warmDeskPetSearch = () => { void loadDeskPetSearch().catch(() => {}); };
 // Lazy: admin-only new-submission dropdown, only loads when an admin opens it.
 const AdminSubmissionsPanel = dynamic(() => import('@/components/AdminSubmissionsPanel'), { ssr: false });
 // Lazy: the floating metronome, only loads once the user opens it from the toolbar.
@@ -303,7 +304,7 @@ function CompactPet({ lang, onCompose }: {
     onResult: (text, final) => { if (final && text.trim()) onCompose(text.trim()); },
   });
   const voiceLabel = speech.listening ? tr({ zh: '停止听写', en: 'Stop dictation' }) : tr({ zh: '语音输入', en: 'Voice input' });
-  return <div className="deskpet-compact" role="group" aria-label={tr({ zh: '轻量助手', en: 'Compact assistant' })}>
+  return <div className="deskpet-compact" role="group" aria-label={tr({ zh: '轻量助手', en: 'Compact assistant' })} onPointerEnter={warmDeskPetSearch} onFocusCapture={warmDeskPetSearch}>
     <div className="deskpet-compact-bar">
       <span className="deskpet-compact-surface" data-site-surface="popover" aria-hidden />
       <Tooltip content={tr({ zh: '新聊天', en: 'New chat' })}>{tip =>
@@ -515,11 +516,12 @@ export default function DeskPet() {
       exitStyleRef.current = exit;
       setExitStyle(exit);
     } catch {}
-    // Warm the search overlay chunk so the first tap mounts it without an async
-    // gap — on touch that gap drops focus out of the gesture and the mobile
-    // keyboard won't open.
+    // Touch devices still need the warmed overlay so the first tap can focus
+    // its input in the gesture. Desktop users warm it on pointer/focus intent
+    // instead of downloading the Agent workspace on every page's first load.
+    if (typeof window.matchMedia === 'function' && !window.matchMedia('(any-pointer: coarse)').matches) return;
     let active = true;
-    const warm = () => { if (active) loadDeskPetSearch().catch(() => {}); };
+    const warm = () => { if (active) warmDeskPetSearch(); };
     let idle: number | undefined;
     let timer: ReturnType<typeof setTimeout> | undefined;
     if (typeof requestIdleCallback === 'function') idle = requestIdleCallback(warm);
@@ -2250,6 +2252,7 @@ export default function DeskPet() {
           ref={hitRef}
           aria-hidden
           title={t('点我搜索 / 拖动', 'click to search · drag')}
+          onPointerEnter={warmDeskPetSearch}
           onContextMenu={(e) => e.preventDefault()}
         />
       </div>

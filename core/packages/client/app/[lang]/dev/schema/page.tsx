@@ -392,6 +392,9 @@ const TABLES: Table[] = [
   ] },
 
   // ── main-site Platform ─────────────────────────────────
+  { name: 'platform_homepage_settings', domain: 'platform', origin: '0343', naturalKey: true, purpose: { zh: '学习空间首页的精选内容、展示时间和自动推荐栏目顺序', en: 'Learning homepage featured content, display schedules and automatic recommendation order' }, cols: [
+    { name: 'singleton BOOLEAN (PK), featured_items JSONB, sections JSONB, updated_at' },
+  ] },
   { name: 'platform_*', domain: 'platform', origin: '0167', evolved: [203, 244, 258, 259, 260], purpose: { zh: '主站 Platform 的 PostgreSQL 底座：统一账号下的目录、学习、交易、内容、讲师、QR、隐私、审计、outbox 与幂等；不恢复旧 SQLite 双写，也不迁移少量 demo / 计时器历史数据', en: 'The PostgreSQL foundation for main-site Platform catalog, learning, commerce, content, instructors, QR, privacy, audit, outbox, and idempotency under canonical accounts; no legacy SQLite dual-write or small demo/timer-history migration' }, family: [
     'platform_instructors', 'platform_instructor_applications', 'platform_media_assets', 'platform_courses',
     'platform_course_owners', 'platform_course_revisions', 'platform_lessons', 'platform_lesson_revisions',
@@ -599,6 +602,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 343, slug: 'platform_homepage_recommendations', desc: { zh: '首页精选推荐与自动栏目配置，以及课程有效学员统计索引', en: 'Homepage featured and automatic recommendations, with an active-course-learner index' } },
   { n: 342, slug: 'workspace_contract_drafts', desc: { zh: '超级管理员从模板复制合同草稿，发布后归档到员工名下', en: 'Super administrator contract drafts copied from templates and filed under an employee on publication' } },
   { n: 341, slug: 'platform_ruimin_public_practice', desc: { zh: '公开颜瑞民课程原有的两节试听课。', en: 'Make the two former trial lessons in Yan Ruimin’s course public.' } },
   { n: 340, slug: 'workspace_member_requests', desc: { zh: '登录账号申请员工权限及管理员审批状态', en: 'Account-bound employee access requests and administrator review state' } },

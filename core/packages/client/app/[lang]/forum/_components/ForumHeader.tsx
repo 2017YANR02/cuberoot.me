@@ -22,10 +22,10 @@ export function ForumHeader({ activeView, children }: { activeView: 'feed' | 'bo
           <h1><T zh="论坛" en="Forum" /></h1>
         </div>}
         <div className="forum-header-actions">
-          <Link href="/forum/search" prefetch={false} className="forum-btn-ghost">
+          {!inPlatformShell && <Link href="/forum/search" prefetch={false} className="forum-btn-ghost">
             <Search size={15} aria-hidden="true" />
             <T zh="搜索" en="Search" />
-          </Link>
+          </Link>}
           <Link href="/forum/new" prefetch={false} className="forum-btn-primary">
             <Plus size={15} aria-hidden="true" />
             <T zh="发帖" en="Post thread" />

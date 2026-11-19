@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getPathMatch } from 'next/dist/shared/lib/router/utils/path-match';
-import { platformNavigationState, platformNavigationHref, platformSharedPathname } from '@/lib/platform-navigation';
-import { matchPlatformRoute, resolvePlatformCanonicalPath, PLATFORM_CANONICAL_REWRITES } from '@/lib/platform-routes';
+import { PLATFORM_ADMIN_NAV, platformAdminNavigationState, platformNavigationState, platformNavigationHref, platformSharedPathname, platformWorkspaceRoutes } from '@/lib/platform-navigation';
+import { matchPlatformRoute, resolvePlatformCanonicalPath, PLATFORM_CANONICAL_REWRITES, PLATFORM_ROUTES } from '@/lib/platform-routes';
 
 describe('Platform navigation context', () => {
   it('keeps learning paths and memberships under courses with distinct secondary selections', () => {
@@ -12,6 +12,28 @@ describe('Platform navigation context', () => {
     expect(platformNavigationState('/platform/teachers/apply')).toMatchObject({ primary: 'teachers', secondary: 'teacher-apply' });
     expect(platformNavigationState('/platform/orders')).toMatchObject({ primary: null, secondary: null });
     expect(platformNavigationState('/platform/progress')).toMatchObject({ primary: null, secondary: null });
+  });
+
+  it('groups every admin entry exactly once and keeps detail pages selected under their parent', () => {
+    const ids = PLATFORM_ADMIN_NAV.flatMap(group => group.items.map(item => item.id));
+    const roots = PLATFORM_ROUTES.filter(route => route.area === 'admin' && !route.pattern.includes(':') && route.kind !== 'form' && !route.pattern.endsWith('/new'));
+    expect(new Set(ids).size).toBe(ids.length);
+    expect([...ids].sort()).toEqual(roots.map(route => route.id).sort());
+    for (const [path, group, secondary] of [
+      ['/platform/admin/courses/new', 'learning', 'admin-courses'],
+      ['/platform/admin/algorithms/new', 'learning', 'admin-algorithms'],
+      ['/zh/platform/admin/courses/example', 'learning', 'admin-courses'],
+      ['/platform/admin/homepage', 'overview', 'admin-homepage'],
+      ['/platform/admin/teachers/example', 'teaching', 'admin-teachers'],
+      ['/platform/admin/qr/cards', 'qr', 'admin-qr-cards'],
+      ['/platform/admin/qr/my-code', 'qr', 'admin-qr'],
+      ['/platform/admin/community', 'operations', 'admin-community'],
+    ] as const) {
+      const definition = platformNavigationState(path).definition;
+      expect(platformAdminNavigationState(definition)).toMatchObject({ group: { id: group }, secondary });
+      expect(platformWorkspaceRoutes(definition, true, false)).toEqual([]);
+      expect(platformWorkspaceRoutes(definition, true, true).map(item => item.id)).toContain(secondary);
+    }
   });
 
   it('preserves language, filters and fragments for shared content links', () => {

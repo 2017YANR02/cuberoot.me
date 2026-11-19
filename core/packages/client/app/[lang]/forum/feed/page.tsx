@@ -10,6 +10,7 @@ import { fetchForumFeed, fetchForumIndex, type ForumFeedData, type ForumFeedSort
 import { ForumHeader } from '../_components/ForumHeader';
 import '../forum.css';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
+import { usePlatformSearchBinding } from '@/lib/platform-navigation-context';
 
 const SORTS: ForumFeedSort[] = ['active', 'latest'];
 const PAGE_SIZES = [10, 20, 40];
@@ -29,6 +30,28 @@ export default function ForumFeedPage() {
   const [index, setIndex] = useState<ForumIndexData | null>(null);
   const [indexError, setIndexError] = useState(false);
   const [indexRetry, setIndexRetry] = useState(0);
+  const availableBoards = index?.categories.flatMap(category => category.forums.map(board => ({
+    value: board.slug, label: tr({ zh: board.nameZh, en: board.nameEn }),
+    searchText: `${category.nameZh} ${category.nameEn} ${board.nameZh} ${board.nameEn}`,
+  }))) ?? [];
+  const filterInMasthead = usePlatformSearchBinding('forum', '', undefined, true, {
+    routeId: 'community-feed',
+    filters: {
+      title: tr({ zh: '筛选动态', en: 'Filter activity' }),
+      groups: [
+        { id: 'forum', label: tr({ zh: '板块', en: 'Board' }), value: forum, defaultValue: '',
+          searchPlaceholder: tr({ zh: '搜索板块', en: 'Search boards' }),
+          options: [{ value: '', label: tr({ zh: '全部板块', en: 'All boards' }) },
+            ...(forum && !availableBoards.some(board => board.value === forum)
+              ? [{ value: forum, label: tr({ zh: '所选板块', en: 'Selected board' }) }] : []),
+            ...availableBoards] },
+        { id: 'sort', label: tr({ zh: '排序', en: 'Sort' }), value: sort, defaultValue: 'active',
+          options: [{ value: 'active', label: tr({ zh: '最近活跃', en: 'Recently active' }) },
+            { value: 'latest', label: tr({ zh: '最新发布', en: 'Newest posts' }) }] },
+      ],
+      apply: values => { void setFilters({ forum: values.forum || '', sort: values.sort === 'latest' ? 'latest' : 'active', page: 1 }); },
+    },
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -54,10 +77,13 @@ export default function ForumFeedPage() {
   useEffect(() => {
     if (data && data.total > 0 && safePage > totalPages) void setFilters({ page: totalPages });
   }, [data, safePage, setFilters, totalPages]);
+  const retryBoardFilter = indexError ? <button type="button" className="forum-btn-ghost" onClick={() => setIndexRetry(value => value + 1)}>
+    <T zh="重试板块筛选" en="Retry board filter" />
+  </button> : null;
 
   return (
     <div className="forum-page forum-feed-page">
-      <ForumHeader activeView="feed">
+      <ForumHeader activeView="feed">{filterInMasthead ? retryBoardFilter : <>
         <select
           value={forum}
           onChange={event => { void setFilters({ forum: event.currentTarget.value, page: 1 }); }}
@@ -77,9 +103,7 @@ export default function ForumFeedPage() {
             </optgroup>
           ))}
         </select>
-        {indexError && <button type="button" className="forum-btn-ghost" onClick={() => setIndexRetry(value => value + 1)}>
-          <T zh="重试板块筛选" en="Retry board filter" />
-        </button>}
+        {retryBoardFilter}
         <select
           value={sort}
           onChange={event => { void setFilters({ sort: event.currentTarget.value as ForumFeedSort, page: 1 }); }}
@@ -89,7 +113,7 @@ export default function ForumFeedPage() {
           <option value="active">{tr({ zh: '最近活跃', en: 'Recently active' })}</option>
           <option value="latest">{tr({ zh: '最新发布', en: 'Newest posts' })}</option>
         </select>
-      </ForumHeader>
+      </>}</ForumHeader>
 
       {error && <div className="forum-error">{error}</div>}
       {!data && !error && <ContentSkeleton variant="feed" />}

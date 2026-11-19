@@ -14,24 +14,34 @@ import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { nextQuery, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { executePlatformAction, loadPlatformResource, localizePlatformEntity, PlatformPermissionError } from '@/lib/platform-gateway';
-import { fillPlatformParams, PLATFORM_ROUTES } from '@/lib/platform-routes';
+import { fillPlatformParams, isPlatformLearningWorkspace, PLATFORM_ROUTES } from '@/lib/platform-routes';
 import { platformNavigationState, platformWorkspaceRoutes } from '@/lib/platform-navigation';
-import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
+import { PlatformNavigationContext, usePlatformSearchBinding, type PlatformFilterGroup } from '@/lib/platform-navigation-context';
 import type { PlatformActionId, PlatformActionResult, PlatformEntity, PlatformResourceResult, PlatformRouteDefinition } from '@/lib/platform-types';
 import { PlatformState } from './PlatformState';
-import { PlatformDomainActions } from './PlatformDomainActions';
-import { PlatformOrderPayment } from './PlatformOrderPayment';
-import { PlatformDomainContent } from './PlatformDomainContent';
-import { PlatformPrivacySettings } from './PlatformPrivacySettings';
 import dynamic from 'next/dynamic';
-import { PlatformLearningWorkspace, isPlatformLearningWorkspace } from './PlatformLearningWorkspace';
-import { PlatformQrAdmin } from './PlatformQrAdmin';
 import { titleFor } from './PlatformRouteHelpers';
-import { PlatformLanding } from './PlatformLanding';
 import { PlatformAboutView, PlatformOfflineView, PlatformAccountView, PlatformCanonicalView } from './PlatformInfoViews';
 import { COURSE_TOPIC_IDS, courseCatalogDetails, loadCourseCatalog, loadLegacyCourseLessonAccess, matchesCourseCatalog } from '@/lib/platform-course-catalog';
 import { PlatformCourseCards, PlatformCourseToolbar } from './PlatformCourseCatalog';
 import { PlatformEntityList } from './PlatformEntityList';
+
+const PlatformDomainActions = dynamic(() => import('./PlatformDomainActions').then(module => module.PlatformDomainActions),
+  { ssr: false, loading: () => <PlatformState kind="loading" /> });
+const PlatformDomainContent = dynamic(() => import('./PlatformDomainContent').then(module => module.PlatformDomainContent),
+  { ssr: false });
+const PlatformOrderPayment = dynamic(() => import('./PlatformOrderPayment').then(module => module.PlatformOrderPayment),
+  { ssr: false, loading: () => <PlatformState kind="loading" /> });
+const PlatformPrivacySettings = dynamic(() => import('./PlatformPrivacySettings').then(module => module.PlatformPrivacySettings),
+  { ssr: false, loading: () => <PlatformState kind="loading" /> });
+const PlatformQrAdmin = dynamic(() => import('./PlatformQrAdmin').then(module => module.PlatformQrAdmin),
+  { ssr: false, loading: () => <PlatformState kind="loading" /> });
+const PlatformHomepageAdmin = dynamic(() => import('./PlatformHomepageAdmin').then(module => module.PlatformHomepageAdmin),
+  { ssr: false, loading: () => <PlatformState kind="loading" /> });
+const PlatformLearningWorkspace = dynamic(() => import('./PlatformLearningWorkspace').then(module => module.PlatformLearningWorkspace),
+  { ssr: false, loading: () => <PlatformState kind="loading" /> });
+const PlatformLanding = dynamic(() => import('./PlatformLanding').then(module => module.PlatformLanding),
+  { loading: () => <PlatformState kind="loading" /> });
 
 const PlatformQrCardStudio = dynamic(
   () => import('./PlatformQrCardStudio').then(module => module.PlatformQrCardStudio),
@@ -55,6 +65,7 @@ export function PlatformResourceRouteView({
   const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useQueryState('q', parseAsString.withDefault(''));
   const [rawPage, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const updateQuery = (value: string) => { void setPage(null); void setQuery(value || null); };
   const [rawPageSize, setPageSize] = useQueryState('pageSize', parseAsInteger.withDefault(20));
   const [category, setCategory] = useQueryState('category', parseAsString.withDefault(''));
   const [puzzle, setPuzzle] = useQueryState('puzzle', parseAsString.withDefault(''));
@@ -66,6 +77,31 @@ export function PlatformResourceRouteView({
   const [owned] = useQueryState('owned', parseAsStringEnum(['0', '1'] as const).withDefault('0'));
   const [stay] = useQueryState('stay', parseAsStringEnum(['0', '1'] as const).withDefault('0'));
   const [result, setResult] = useState<PlatformResourceResult | null>(null);
+  const collectionSearchScope = definition.id === 'paths' || definition.id === 'events' || definition.id === 'news' ? definition.id : null;
+  // These four public lists have no domain-detail content or domain actions.
+  const catalogOnly = Boolean(collectionSearchScope) || definition.id === 'courses';
+  const [collectionCategories, setCollectionCategories] = useState<readonly string[]>([]);
+  useEffect(() => {
+    if (collectionSearchScope && result) setCollectionCategories(result.categories ?? []);
+    else if (!collectionSearchScope) setCollectionCategories([]);
+  }, [collectionSearchScope, result]);
+  const collectionFilterGroups: PlatformFilterGroup[] = [];
+  if (collectionCategories.length || category) collectionFilterGroups.push({
+    id: 'category', label: t('分类', 'Category'), value: category || '', defaultValue: '',
+    presentation: collectionCategories.length > 8 ? 'list' : 'chips',
+    searchPlaceholder: collectionCategories.length > 8 ? t('搜索分类', 'Search categories') : undefined,
+    options: [{ value: '', label: t('全部', 'All') },
+      ...[...new Set([...collectionCategories, ...(category ? [category] : [])])].map(value => ({ value, label: value }))],
+  });
+  collectionFilterGroups.push({ id: 'sort', label: t('排序', 'Sort'), value: sort, defaultValue: 'updated',
+    options: [{ value: 'updated', label: t('最近更新', 'Updated') }, { value: 'title', label: t('标题', 'Title') }] });
+  const collectionSearchInMasthead = usePlatformSearchBinding(collectionSearchScope ?? 'paths', query, updateQuery, Boolean(collectionSearchScope), {
+    routeId: definition.id, filters: {
+      title: collectionSearchScope === 'events' ? t('筛选活动', 'Filter events')
+        : collectionSearchScope === 'news' ? t('筛选资讯', 'Filter news') : t('筛选学习路径', 'Filter learning paths'),
+      groups: collectionFilterGroups,
+      apply: values => { void setPage(null); void setCategory(values.category || null); void setSort(values.sort === 'title' ? 'title' : 'updated'); } },
+  });
   const [error, setError] = useState<Error | null>(null);
   const [days, setDays] = useQueryState('days', parseAsInteger.withDefault(30));
   const [retry, setRetry] = useState(0);
@@ -178,6 +214,10 @@ export function PlatformResourceRouteView({
   const coursePuzzles = useMemo(() => new Set(courseEntries.flatMap(entry => entry.details.puzzles)), [courseEntries]);
   const courseTopics = COURSE_TOPIC_IDS.filter(topic => courseEntries.some(entry =>
     (!puzzle || entry.details.puzzles.includes(puzzle)) && entry.details.topics.includes(topic)));
+  const courseTopicPuzzles = useMemo(() => new Map(COURSE_TOPIC_IDS.flatMap(topic => {
+    const matches = courseEntries.filter(entry => entry.details.topics.includes(topic));
+    return matches.length ? [[topic, [...new Set(matches.flatMap(entry => entry.details.puzzles))]] as const] : [];
+  })), [courseEntries]);
   const filteredCourses = useMemo(() => {
     const matches = courseEntries.filter(({ course, details }) => matchesCourseCatalog(course, details, { q: query, puzzle, category }));
     return sort === 'title' ? matches.toSorted((a, b) => a.course.title.localeCompare(b.course.title, lang)) : matches;
@@ -343,6 +383,8 @@ export function PlatformResourceRouteView({
         />
       ) : isQrCardStudio ? (
         <PlatformQrCardStudio entities={EMPTY_PLATFORM_ENTITIES} query={query} onQueryChange={value => { void setQuery(value || null); }} />
+      ) : definition.id === 'admin-homepage' ? (
+        <PlatformHomepageAdmin />
       ) : learningWorkspace ? (
         <PlatformLearningWorkspace definition={definition} params={params} />
       ) : qrAdminMode ? (
@@ -350,22 +392,26 @@ export function PlatformResourceRouteView({
       ) : definition.resource ? (
         <>
           {courseCatalog ? <PlatformCourseToolbar
-            query={query} puzzle={puzzle} topic={category} sort={sort} puzzles={coursePuzzles} topics={courseTopics}
+            query={query} puzzle={puzzle} topic={category} sort={sort} puzzles={coursePuzzles} topics={courseTopics} topicPuzzles={courseTopicPuzzles}
             onQuery={value => { void setPage(null); void setQuery(value || null); }}
             onPuzzle={value => { void setPage(null); void setPuzzle(value || null); void setCategory(null); }}
             onTopic={value => { void setPage(null); void setCategory(value || null); }}
             onSort={value => { void setPage(null); void setSort(value); }}
+            onApplyFilters={(nextPuzzle, nextTopic, nextSort) => {
+              void setPage(null); void setPuzzle(nextPuzzle || null); void setCategory(nextTopic || null); void setSort(nextSort);
+            }}
           /> : (definition.kind === 'collection' || definition.kind === 'dashboard')
             && definition.id !== 'membership'
             && definition.id !== 'me-membership'
             && !isQrCardStudio
             && !inviteManager
             && searchable
+            && !collectionSearchInMasthead
             && !permissionDenied ? (
             <div className="platform-toolbar">
               <SearchInput
                 value={query}
-                onChange={(value) => { void setPage(null); void setQuery(value || null); }}
+                onChange={updateQuery}
                 placeholder={t('搜索当前内容', 'Search this view')}
                 ariaLabel={t('搜索当前内容', 'Search this view')}
                 className="platform-search"
@@ -450,9 +496,9 @@ export function PlatformResourceRouteView({
             </AppLink>
           ) : null}
 
-          {!permissionDenied && !orderUnavailable ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} previewRedirect={stay === '1'} selectedLessonId={selectedLessonId} lessonStartTime={lessonStartTime ?? undefined} onSelectLesson={id => { void setLessonStartTime(null); void setSelectedLessonId(id); }} /> : null}
+          {!catalogOnly && !permissionDenied && !orderUnavailable ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} previewRedirect={stay === '1'} selectedLessonId={selectedLessonId} lessonStartTime={lessonStartTime ?? undefined} onSelectLesson={id => { void setLessonStartTime(null); void setSelectedLessonId(id); }} /> : null}
 
-          {permissionDenied || orderUnavailable || definition.id === 'qr' || (courseDetail && !course) || (['membership', 'me-membership'].includes(definition.id) && !result) ? null : (
+          {catalogOnly || permissionDenied || orderUnavailable || definition.id === 'qr' || (courseDetail && !course) || (['membership', 'me-membership'].includes(definition.id) && !result) ? null : (
             <PlatformDomainActions
               definition={definition}
               params={params}

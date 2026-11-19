@@ -18,11 +18,41 @@ export const PLATFORM_PERSONAL_ROUTES = PLATFORM_ROUTES.filter(item => [
   'account-badges', 'me-membership', 'account-shipping', 'community-mine',
 ].includes(item.id));
 
+/** Admin workspaces use the same two-tier navigation as the public Platform. */
+const ADMIN_GROUPS = [
+  { id: 'overview', label: { zh: '概览', en: 'Overview' }, routes: ['admin', 'admin-homepage', 'admin-event-analytics', 'admin-logs'] },
+  { id: 'learning', label: { zh: '课程', en: 'Courses' }, routes: ['admin-courses', 'admin-paths', 'admin-invites', 'admin-algorithms'] },
+  { id: 'teaching', label: { zh: '讲师', en: 'Instructors' }, routes: ['admin-teachers', 'admin-applications', 'admin-payouts'] },
+  { id: 'operations', label: { zh: '运营', en: 'Operations' }, routes: ['admin-events', 'admin-news', 'admin-community'] },
+  { id: 'commerce', label: { zh: '交易', en: 'Commerce' }, routes: ['admin-orders', 'admin-products', 'admin-coupons', 'admin-reconcile'] },
+  { id: 'qr', label: { zh: '二维码', en: 'QR codes' }, routes: ['admin-qr', 'admin-qr-cards', 'admin-qr-prompts', 'admin-qr-stats'] },
+] as const;
+
+export const PLATFORM_ADMIN_NAV = ADMIN_GROUPS.map(group => ({
+  id: group.id,
+  label: group.label,
+  items: group.routes.map(id => {
+    const route = PLATFORM_ROUTES.find(candidate => candidate.id === id)!;
+    return { id: route.id, href: `/platform/${route.pattern}`, label: route.title, route };
+  }),
+}));
+
+export function platformAdminNavigationState(definition?: PlatformRouteDefinition) {
+  if (definition?.area !== 'admin') return null;
+  // Editing/creating an entity keeps its parent list selected; the longest
+  // matching path is important for QR cards, prompts and detail pages.
+  const selected = PLATFORM_ADMIN_NAV.flatMap(group => group.items.map(item => ({ group, item })))
+    .filter(({ item }) => definition.pattern === item.route.pattern || definition.pattern.startsWith(`${item.route.pattern}/`))
+    .sort((a, b) => b.item.route.pattern.length - a.item.route.pattern.length)[0];
+  return selected ? { group: selected.group, secondary: selected.item.id } : null;
+}
+
 export function platformWorkspaceRoutes(definition: PlatformRouteDefinition | undefined, signedIn: boolean, isAdmin: boolean) {
+  if (definition?.area === 'admin') return isAdmin
+    ? platformAdminNavigationState(definition)?.group.items.map(entry => entry.route) ?? [] : [];
   const personalPage = definition?.area === 'account' || definition?.id === 'progress' || definition?.id === 'orders' || definition?.id === 'order-detail';
   return PLATFORM_ROUTES.filter(item => !item.pattern.includes(':') && item.kind !== 'form'
-    && (definition?.area === 'admin' ? isAdmin && item.area === 'admin'
-      : definition?.area === 'instructor' && definition.id !== 'teacher-apply' ? signedIn && item.access === 'instructor'
+    && (definition?.area === 'instructor' && definition.id !== 'teacher-apply' ? signedIn && item.access === 'instructor'
         : personalPage ? signedIn && PLATFORM_PERSONAL_ROUTES.includes(item) : false));
 }
 

@@ -21,6 +21,7 @@ import '../../forum.css';
 import './forum_list.css';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
 import { platformSharedPathname } from '@/lib/platform-navigation';
+import { usePlatformSearchBinding } from '@/lib/platform-navigation-context';
 
 type Sort = 'activity' | 'created';
 const SORTS: Sort[] = ['activity', 'created'];
@@ -44,6 +45,15 @@ export default function ForumListClient() {
   const [size, setSize] = useQueryState('size', parseAsInteger.withDefault(25));
   const [sort, setSort] = useQueryState(
     'sort', parseAsStringEnum<Sort>(SORTS).withDefault('activity'));
+  const filterInMasthead = usePlatformSearchBinding('forum', '', undefined, true, {
+    routeId: 'community-circle',
+    filters: { title: tr({ zh: '筛选板块帖子', en: 'Filter board threads' }),
+      groups: [{ id: 'sort', label: tr({ zh: '排序', en: 'Sort' }), value: sort, defaultValue: 'activity',
+        options: [{ value: 'activity', label: tr({ zh: '最新回复', en: 'Latest reply' }) },
+          { value: 'created', label: tr({ zh: '最新发布', en: 'Newest thread' }) }] }],
+      apply: values => { void setSort(values.sort === 'created' ? 'created' : 'activity'); void setPage(1); },
+    },
+  });
 
   const [data, setData] = useState<ForumListData | null>(null);
   const [error, setError] = useState('');
@@ -90,7 +100,7 @@ export default function ForumListClient() {
               </div>
             </div>
             <div className="forum-header-actions">
-              <label className="forum-sort-label">
+              {!filterInMasthead && <label className="forum-sort-label">
                 <span className="forum-sort-caption"><T zh="排序" en="Sort" /></span>
                 <select
                   className="forum-sort-select"
@@ -100,7 +110,7 @@ export default function ForumListClient() {
                   <option value="activity">{tr({ zh: '最新回复', en: 'Latest reply' })}</option>
                   <option value="created">{tr({ zh: '最新发布', en: 'Newest thread' })}</option>
                 </select>
-              </label>
+              </label>}
               {canPost && (
                 <Link
                   href={`/forum/new?f=${encodeURIComponent(data.forum.slug)}`}

@@ -19,8 +19,7 @@ const rows=(value:unknown):Row[]=>Array.isArray(value)?value.filter((item):item 
 const text=(value:unknown)=>typeof value==='string'?value:'';
 const localized=(row:Row,key:string,english:boolean)=>text(row[`${key}${english?'En':'Zh'}`])||text(row[`${key}Zh`])||text(row[`${key}En`])||text(row[key]);
 function money(value:unknown,currency:unknown){return new Intl.NumberFormat(undefined,{style:'currency',currency:/^[A-Z]{3}$/.test(String(currency))?String(currency):'CNY'}).format(Number(value??0)/100);}
-const WORKSPACE_IDS=new Set(['account-courses','account-notes','account-badges','progress','account-progress','instructor','instructor-students','instructor-earnings','leaderboard']);
-export function isPlatformLearningWorkspace(id:string){return WORKSPACE_IDS.has(id);}
+export { isPlatformLearningWorkspace } from '@/lib/platform-routes';
 
 export function PlatformLearningWorkspace({definition}:{definition:PlatformRouteDefinition;params?:Record<string,string>;entity?:PlatformEntity;entities?:PlatformEntity[]}){
   const t=useT();const english=t('zh','en')==='en';const [data,setData]=useState<Row|null>(null);const [error,setError]=useState('');const [revision,setRevision]=useState(0);const [busy,setBusy]=useState(false);

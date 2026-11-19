@@ -9,8 +9,9 @@ vi.mock('next/navigation', () => ({ useParams: () => ({ lang: state.lang }) }));
 vi.mock('next/link', () => ({ default: ({ prefetch: _prefetch, onNavigate: _onNavigate, ...props }: ComponentProps<'a'> & { prefetch?: boolean; onNavigate?: unknown }) => createElement('a', props) }));
 vi.mock('@/lib/training-host', () => ({ useTrainingHref: () => (href: string) => href }));
 vi.mock('@/lib/douyin-content', () => ({ useDouyinToolSurface: () => false }));
-vi.mock('@/components/StartupStatus', () => ({ LinkPendingIndicator: () => null }));
+vi.mock('@/components/StartupStatus', () => ({ LinkPendingIndicator: () => createElement('span', { 'data-test-pending': true }) }));
 import AppLink from '@/components/AppLink';
+import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
 
 const originalParent = window.parent;
 let root: Root | undefined;
@@ -56,6 +57,17 @@ it('keeps ordinary top-level website English links bare and Chinese links prefix
   expect(await renderedHref('/en/wca/persons/2017TEST01')).toBe('/wca/persons/2017TEST01');
   state.lang = 'zh';
   expect(await renderedHref('/wca/persons/2017TEST01')).toBe('/zh/wca/persons/2017TEST01');
+});
+
+it('uses local content loading for internal Platform links without suppressing external navigation feedback', async () => {
+  root = createRoot(container);
+  const render = (href: string, loadingOverlay?: boolean) => act(async () => root!.render(createElement(PlatformNavigationContext, { value: true }, createElement(AppLink, { href, loadingOverlay }, 'Link'))));
+  await render('/platform/admin/courses');
+  expect(container.querySelector('[data-test-pending]')).toBeNull();
+  await render('/platform/admin/courses', true);
+  expect(container.querySelector('[data-test-pending]')).not.toBeNull();
+  await render('/account');
+  expect(container.querySelector('[data-test-pending]')).not.toBeNull();
 });
 
 it('does not change ordinary embedded pages without an installed surface name', async () => {

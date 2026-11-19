@@ -11,6 +11,7 @@ import { searchForum, type SearchData } from '@/lib/forum-api';
 import { ForumBreadcrumbs } from '../_components/ForumBreadcrumbs';
 import { ThreadRowList } from '../_components/ThreadRowList';
 import { formatCount } from '@/lib/forum-format';
+import { usePlatformSearchBinding } from '@/lib/platform-navigation-context';
 import '../forum.css';
 import './forum_search.css';
 
@@ -23,6 +24,7 @@ export default function ForumSearchPage() {
   const [q, setQ] = useQueryState('q', parseAsString.withDefault(''));
   const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
   const [size, setSize] = useQueryState('size', parseAsInteger.withDefault(25));
+  const bindPlatformSearch = usePlatformSearchBinding('forum', q, value => { void setQ(value || null); void setPage(1); }, true, { routeId: 'community-search' });
 
   const [data, setData] = useState<SearchData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -53,7 +55,7 @@ export default function ForumSearchPage() {
         </div>
       </div>
 
-      <SearchInput
+      {!bindPlatformSearch && <SearchInput
         value={q}
         debounceMs={300}
         onChange={v => { setQ(v || null); setPage(1); }}
@@ -61,7 +63,7 @@ export default function ForumSearchPage() {
         className="forum-search-box"
         inputClassName="forum-search-input"
         autoFocus
-      />
+      />}
 
       {error && <div className="forum-error">{error}</div>}
 

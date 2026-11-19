@@ -3,12 +3,18 @@
 import { useEffect, useState } from 'react';
 import { ExternalLink } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
-import { AccountPanel, LoginForm } from '@/components/AuthPanel';
+import dynamic from 'next/dynamic';
 import { useT } from '@/hooks/useT';
 import { useAuthUser } from '@/lib/auth-store';
 import { fillPlatformParams, PLATFORM_ROUTES } from '@/lib/platform-routes';
 import type { PlatformRouteDefinition } from '@/lib/platform-types';
 import { titleFor } from './PlatformRouteHelpers';
+import { PlatformState } from './PlatformState';
+
+const LoginForm = dynamic(() => import('@/components/AuthPanel').then(module => module.LoginForm),
+  { loading: () => <PlatformState kind="loading" /> });
+const AccountPanel = dynamic(() => import('@/components/AuthPanel').then(module => module.AccountPanel),
+  { loading: () => <PlatformState kind="loading" /> });
 
 export function PlatformAboutView() {
   const t = useT();
