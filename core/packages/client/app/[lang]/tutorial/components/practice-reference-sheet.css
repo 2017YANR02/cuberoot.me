@@ -30,4 +30,4 @@
 }
 .tutorial-practice-reference-panel > header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .tutorial-practice-reference-panel > header h2 { margin: 0; font-size: 1rem; }
-.tutorial-practice-reference-panel > header button { min-height: 44px; border: 0; background: transparent; color: var(--foreground); cursor: pointer; }
+.tutorial-practice-reference-panel > header .tutorial-practice-reference-close { min-height: 44px; border: 0; background: transparent; color: var(--foreground); cursor: pointer; }

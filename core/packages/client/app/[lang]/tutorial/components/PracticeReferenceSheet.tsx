@@ -20,7 +20,7 @@ export default function PracticeReferenceSheet({ children, title, onClose }: { c
       <section className="tutorial-practice-reference-panel" data-site-surface="popover">
         <header>
           <h2 id={titleId}>{title}</h2>
-          <button type="button" onClick={close}><T zh="收起面板" en="Close panel" /></button>
+          <button type="button" className="tutorial-practice-reference-close" onClick={close}><T zh="收起面板" en="Close panel" /></button>
         </header>
         {children}
       </section>

@@ -43,9 +43,11 @@ export function PlatformScopedSearch({ lang, scope, binding }: { lang: 'zh' | 'e
     : t('搜索课程、讲师或学习内容', 'Search courses, instructors or topics');
   return <div className="landing-search">
     <div className="landing-search-controls">
+      {/* allow-manual-search: Bound result pages search onChange; submit navigates from detail or forum pages to their results. */}
       <form className="landing-search-input platform-scoped-search" data-search-scope={scope} role="search" aria-label={placeholder}
         onSubmit={event => { event.preventDefault(); submit(String(new FormData(event.currentTarget).get('q') ?? '')); }}>
         <span className="landing-search-plus platform-scoped-search-icon" aria-hidden="true"><Search size={18} strokeWidth={1.75} /></span>
+        {/* allow-manual-search: onChange performs live bound search; Enter additionally opens the result page when there is no page binding. */}
         <SearchInput value={draft} name="q" className="platform-scoped-search-field" inputClassName="landing-search-field"
           placeholder={placeholder} ariaLabel={placeholder} debounceMs={submitBoundQuery && scope !== 'courses' ? 300 : 0}
           onChange={value => { setDraft(value); submitBoundQuery?.(value); }}

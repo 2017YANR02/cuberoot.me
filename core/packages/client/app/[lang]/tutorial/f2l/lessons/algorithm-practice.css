@@ -134,7 +134,7 @@
 .f2l-alg-practice[data-practice-layout] .f2l-practice-segment code { gap: 6px; font-size: 1rem; }
 .f2l-alg-practice[data-practice-layout] .f2l-practice-segment > span { font-size: .8rem; }
 .f2l-alg-practice[data-practice-layout] .f2l-practice-footer { gap: 8px; padding-top: 12px; }
-.f2l-page .f2l-alg-practice[data-practice-layout] .f2l-practice-footer > button {
+.f2l-page .f2l-alg-practice[data-practice-layout] .f2l-practice-footer > :is(.f2l-footer-button, .f2l-practice-review) {
   box-sizing: border-box; width: auto; min-height: var(--tutorial-footer-button-height);
   height: auto; padding: 0 4px; font-size: .8rem; line-height: 1.2; overflow-wrap: anywhere;
 }

@@ -5,6 +5,7 @@ import { Check, Search, SlidersHorizontal, X } from '@app-foundation/icons/lucid
 import { SearchInput } from '@/components/SearchInput';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
+import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useT } from '@/hooks/useT';
 import type { PlatformFilterGroup, PlatformSearchFilters } from '@/lib/platform-navigation-context';
@@ -63,6 +64,7 @@ export function PlatformSearchFilter({ filters }: { filters: PlatformSearchFilte
   const count = filters.groups.filter(group => group.value !== group.defaultValue).length;
   const close = () => { setOpen(false); setDraft({}); };
   const closeAndFocus = () => { close(); trigger.current?.focus(); };
+  const backdropProps = useModalBackdrop(close);
   usePopoverDismiss(open, close, panel, trigger);
   usePanelClamp(open && !mobile, panel, trigger);
   useEffect(() => { if (open) panel.current?.focus(); }, [open]);
@@ -86,7 +88,7 @@ export function PlatformSearchFilter({ filters }: { filters: PlatformSearchFilte
       {count > 0 && <span className="platform-filter-count" aria-hidden="true">{count}</span>}
     </button>
     {open && <>
-      <div className="platform-filter-backdrop" aria-hidden="true" />
+      <div className="platform-filter-backdrop" aria-hidden="true" {...backdropProps} />
       <div ref={panel} id={id} role="dialog" aria-modal={mobile || undefined} aria-label={filters.title} tabIndex={-1} className="platform-filter-panel" data-site-surface="popover"
         onKeyDown={event => {
           if (event.key === 'Enter' && event.target instanceof HTMLInputElement) { event.preventDefault(); return; }

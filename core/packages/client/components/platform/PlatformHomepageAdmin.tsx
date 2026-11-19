@@ -59,7 +59,9 @@ export function PlatformHomepageAdmin() {
     finally { setBusy(false); }
   };
   const orderedSections = [...settings.sections, ...PLATFORM_HOME_AUTO_SECTIONS.filter(section => !settings.sections.includes(section))];
-  return <form className="platform-homepage-admin" onSubmit={event => { void save(event); }}>
+  return (
+  // allow-manual-search: Candidate filtering already updates onChange; this form submits recommendation settings to persist an explicit Save.
+  <form className="platform-homepage-admin" onSubmit={event => { void save(event); }}>
     <fieldset disabled={busy} className="platform-homepage-admin-section">
       <legend>{t('精选内容', 'Featured content')}</legend>
       <p>{t('按顺序置顶显示。只可推荐已发布课程、公开讲师或机构，以及尚未结束的已发布活动。', 'Featured items appear first in order. Only published courses, public instructors or schools, and upcoming or ongoing published events are eligible.')}</p>
@@ -111,5 +113,5 @@ export function PlatformHomepageAdmin() {
     </fieldset>
     <div className="platform-homepage-row-actions"><button className="platform-button platform-button-primary" type="submit" disabled={busy}>{busy ? t('保存中…', 'Saving…') : t('保存推荐设置', 'Save recommendations')}</button><AppLink className="platform-button" href="/platform" prefetch={false}>{t('查看首页', 'View homepage')}</AppLink></div>
     {error && <p role="alert">{error}</p>}{message && <p role="status">{message}</p>}
-  </form>;
+  </form>);
 }
