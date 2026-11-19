@@ -11,7 +11,7 @@ import { usePlayerVisible } from './use-player-visible';
 
 type Text = { zh: string; en: string };
 type Beat = { at: number; caption: Text; stickers: readonly string[]; flash?: boolean };
-type CornerAlignment = {
+type AlignmentLesson = {
   alignment: string;
   alg: string;
   alignedSetup: string;
@@ -25,7 +25,7 @@ const flashInterval = 650;
 const noStickers: readonly string[] = [];
 const alignedSetup = (alg: string) => `(${alg})'`;
 
-function sideAlignment(left: boolean): CornerAlignment {
+function sideAlignment(left: boolean): AlignmentLesson {
   const alg = left ? LEFT : RIGHT;
   const white = left ? 'D0' : 'D2';
   const front = left ? 'F6' : 'F8';
@@ -47,7 +47,7 @@ function sideAlignment(left: boolean): CornerAlignment {
 const whiteUpAlg = `(${RIGHT})3`;
 const orangePair = ['R6', 'R4'];
 const greenPair = ['F8', 'F4'];
-export const CORNER_ALIGNMENTS: Readonly<Record<string, CornerAlignment | undefined>> = {
+export const CORNER_ALIGNMENTS: Readonly<Record<string, AlignmentLesson | undefined>> = {
   'case-0': sideAlignment(false),
   'case-2': sideAlignment(true),
   'case-3': {
@@ -67,9 +67,10 @@ export const CORNER_ALIGNMENTS: Readonly<Record<string, CornerAlignment | undefi
   },
 };
 
-export default function CornerAlignmentPrelude({ lesson, sceneRot, onContinue }: {
-  lesson: CornerAlignment;
+export default function AlignmentPrelude({ lesson, sceneRot, stage = 'corners', onContinue }: {
+  lesson: AlignmentLesson;
   sceneRot: ReturnType<typeof lblDemoView>;
+  stage?: 'corners' | 'yellow-face';
   onContinue: () => void;
 }) {
   const { alignment, alignedSetup, turnTimes, beats } = lesson;
@@ -140,8 +141,8 @@ export default function CornerAlignmentPrelude({ lesson, sceneRot, onContinue }:
   return <div ref={root} className="lbl-content lbl-content-example lbl-special-case-prelude" data-tutorial-mode="timeline" data-tutorial-layout="A">
     <section className="lbl-demonstration">
       <div className="lbl-auto-player" data-visible={ready}>
-        <AlgPlayer ref={player} puzzle="3x3" engine="sim" set={LESSON_STICKERING.corners}
-          additionalStickering="centers-only" setup={setup} alg={alignment} orientation="z2" sceneRot={sceneRot}
+        <AlgPlayer ref={player} puzzle="3x3" engine="sim" set={LESSON_STICKERING[stage]}
+          additionalStickering={stage === 'corners' ? 'centers-only' : 'F2L'} setup={setup} alg={alignment} orientation="z2" sceneRot={sceneRot}
           highlightedStickers={hideOutline ? noStickers : beat.stickers} controlMode="none" hideResetView lockView interactionMode="none" fillPane />
       </div>
     </section>

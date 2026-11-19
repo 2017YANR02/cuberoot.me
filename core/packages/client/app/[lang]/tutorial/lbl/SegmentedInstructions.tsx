@@ -60,7 +60,7 @@ export default function SegmentedInstructions({ step, alg, instruction, exampleI
     }
   }
   if (!rows.length) {
-    const lead = step === 'trigger-learning' ? emphasizeDirection(instruction) : instruction;
+    const lead = step === 'trigger-learning' || step === 'sune-learning' ? emphasizeDirection(instruction) : instruction;
     if (groups.length === 1 && !introduction) return <>
       {instruction && <p className="lbl-lead lbl-instruction-phase" aria-current={selectedStepStart === 0 ? 'step' : undefined}><button type="button" className="lbl-step-start" onClick={() => onStepClick(0)}>{lead}</button></p>}
       <AlgSteps step={step} alg={alg} activeMove={selectedStepStart === null ? playbackStep - 1 : undefined} onMoveClick={onMoveClick} />

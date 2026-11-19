@@ -153,40 +153,27 @@ const done: Record<CompleteDemoStage, Text> = {
   'edge-position': t('六面同色，魔方复原', 'Every face has one color. Cube solved.'),
 };
 
-export function buildFishDemo(left: boolean): CompleteDemo {
-  const formula = left ? LEFT_SUNE : RIGHT_SUNE;
-  const adjustment = left ? 'U' : 'U U';
-  const formulaStart = left ? 1 : 2;
-  const setup = join(new Alg(formula).invert().toString(), left ? "U'" : 'U2');
-  const alg = join(adjustment, formula);
-  const count: DemoContent = {
-    text: t('顶面有 3 个非黄角格，是小鱼，继续观察', 'Three non-yellow corner stickers on top. It is a fish shape. Look closer.'),
-    outlines: yellowFaceNonYellowStickers(setup),
-  };
+export function buildFishAlignment(left: boolean) {
+  const alg = left ? LEFT_SUNE : RIGHT_SUNE;
+  const alignment = left ? 'U' : 'U U';
+  const alignedSetup = new Alg(alg).invert().toString();
+  const setup = join(alignedSetup, new Alg(alignment).invert().toString());
   const start = state(setup);
   const head = cornerIndices.map(index => start.faces[Face.U][index]).find(id => id[0] === 'U')!;
-  const fish: DemoContent = {
-    text: left
-      ? t('鱼头朝前，前面左上角有鱼鳍，是左鱼', 'The head is at the front and the fin is at the top-left of the front face. This is a left fish.')
-      : t('鱼头朝前，前面右上角有鱼鳍，是右鱼', 'The head is at the front and the fin is at the top-right of the front face. This is a right fish.'),
-    outlines: yellowFishRecognitionStickers(join(setup, adjustment), left),
-  };
-  const phases: DemoPhase[] = [
-    { start: 0, end: 0, recognize: count, act: count, recognizeOnly: true },
-    { start: 0, end: 1, act: { text: t('鱼头朝后，需要调整', 'The head is at the back. Turn the top layer.'), alg: 'U', outlines: [head] } },
+  const beats = [
+    { at: 0, caption: t('顶面有 3 个非黄角格\n是小鱼', 'Three non-yellow corners on top\nThat’s a fish shape'), stickers: yellowFaceNonYellowStickers(setup), flash: true },
+    { at: 4800, caption: t('转顶层\n让鱼头朝前', 'Turn the top layer\nBring the fish head to the front'), stickers: [head], flash: true },
+    ...(left ? [] : [
+      { at: 9900, caption: t('正面还看不到鱼鳍\n再转一次顶层', 'No fin on the front yet\nTurn the top layer once more'), stickers: [head], flash: true },
+    ]),
+    { at: left ? 10400 : 15500, caption: left
+      ? t('鱼头朝前\n鱼鳍在正面左上角', 'The head faces front\nThe fin is at the top left of the front face')
+      : t('鱼头朝前\n鱼鳍在正面右上角', 'The head faces front\nThe fin is at the top right of the front face'),
+      stickers: yellowFishRecognitionStickers(alignedSetup, left) },
   ];
-  if (!left) phases.push({ start: 1, end: 2, act: { text: t('鱼头朝前，但前面没有鱼鳍，继续调整', 'The head is at the front, but there is no fin on the front face. Turn the top layer again.'), alg: 'U', outlines: [head] } });
-  phases.push(
-    { start: formulaStart, end: formulaStart, recognize: fish, act: fish, recognizeOnly: true },
-    { start: formulaStart, end: movesOf(alg).length, view: left ? 'slight-left' : undefined, act: {
-      text: left ? t('左鱼用左手做公式', 'Do left Sune with your left hand.')
-        : t('右鱼用右手做公式', 'Do right Sune with your right hand.'),
-      alg: formula,
-    } },
-  );
-  return {
-    setup, alg, phases, done: done['yellow-face'],
-  };
+  return { alignment, alg, alignedSetup, left, turnTimes: left ? [6900] : [6900, 12100], beats,
+    hint: left ? t('左鱼用左手做公式', 'Do left Sune with your left hand')
+      : t('右鱼用右手做公式', 'Do right Sune with your right hand') };
 }
 
 /** Inspect actual side faces in order, stopping at a visible wall before outlining it. */

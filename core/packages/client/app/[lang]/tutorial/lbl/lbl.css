@@ -325,7 +325,6 @@
 }
 .lbl-complete-alg { display: flex; flex-wrap: wrap; gap: 10px 20px; }
 .lbl-complete-alg > span { white-space: nowrap; }
-.lbl-complete-thought .lbl-fish-alg-caption { grid-template-rows: auto; }
 .lbl-facelet { text-align: center; }
 .lbl-fish-recognition { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 .lbl-fish-recognition figure { margin: 0; min-width: 0; }

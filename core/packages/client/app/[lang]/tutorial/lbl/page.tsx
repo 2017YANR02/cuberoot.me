@@ -224,7 +224,7 @@ function LblLessonView({ archive }: { archive: boolean }) {
           <div className="lbl-footer-actions" id="lbl-footer-actions">
             {currentLesson.kind !== 'overview' && currentLesson.kind !== 'complete' && currentLesson.kind !== 'flowchart' && currentLesson.kind !== 'layers' &&
             !(currentLesson.kind === 'terms' && ['daisy', 'middle'].includes(sourceChapter.id)) &&
-            sourceChapter.id !== 'structure' && sourceChapter.examples.length > 0 && <button className="lbl-footer-button lbl-footer-next lbl-practice-button tutorial-practice-button" type="button" onClick={() => { const order = practiceExampleOrder(currentChapter); const index = isDaisyLift ? daisyLiftIndex : (currentLesson.practiceIndices?.[0] ?? order[0]); void setPracticeRoute({ view: 'practice', step: currentChapter.id, case: currentLesson.id === 'white-edge' ? 'white-edge' : String(Math.max(0, order.indexOf(index)) + 1) }, { history: 'push' }); }}>
+            sourceChapter.id !== 'structure' && (sourceChapter.examples.length > 0 || currentLesson.practiceIndices?.some(index => currentChapter.examples[index])) && <button className="lbl-footer-button lbl-footer-next lbl-practice-button tutorial-practice-button" type="button" onClick={() => { const order = practiceExampleOrder(currentChapter); const index = isDaisyLift ? daisyLiftIndex : (currentLesson.practiceIndices?.[0] ?? order[0]); void setPracticeRoute({ view: 'practice', step: currentChapter.id, case: currentLesson.id === 'white-edge' ? 'white-edge' : String(Math.max(0, order.indexOf(index)) + 1) }, { history: 'push' }); }}>
             <T zh="练习" en="Practice" />
           </button>}
           </div>

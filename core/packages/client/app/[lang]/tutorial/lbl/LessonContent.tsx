@@ -14,8 +14,8 @@ import { tr } from '@/i18n/tr';
 import { LBL_STEPS, lblDemoView, LESSON_STICKERING, LBL_STAGE_GOALS, LBL_LEARNING_FOCUS, RIGHT, LEFT, LBL_LEFT_VIEW_YAW } from './content';
 import SegmentedInstructions from './SegmentedInstructions';
 import { getLblAlgGroups } from './alg-cues';
-import CompleteDemo, { FishExample, WhiteCrossCompleteDemo } from './CompleteDemo';
-import { daisyBlockedStickers, middleLessonHiddenStickers, middleDirectionStickers, middleAlignmentStickers, yellowFaceNonYellowStickers, yellowFaceTouchSticker, yellowFishRecognitionStickers, type CompleteDemoStage } from './complete-demo-state';
+import CompleteDemo, { WhiteCrossCompleteDemo } from './CompleteDemo';
+import { buildFishAlignment, daisyBlockedStickers, middleLessonHiddenStickers, middleDirectionStickers, middleAlignmentStickers, yellowFaceNonYellowStickers, yellowFaceTouchSticker, yellowFishRecognitionStickers, type CompleteDemoStage } from './complete-demo-state';
 import BasicsGuide from './BasicsGuide';
 import IntroLesson from './IntroLesson';
 import MiddleCases from './MiddleCases';
@@ -35,7 +35,7 @@ import { StageImage } from './StageImage';
 export { StageImage } from './StageImage';
 import EdgeObservation from './EdgeObservation';
 import SpecialCasePrelude, { cornerPrelude } from './SpecialCasePrelude';
-import CornerAlignmentPrelude, { CORNER_ALIGNMENTS } from './CornerAlignmentPrelude';
+import AlignmentPrelude, { CORNER_ALIGNMENTS } from './CornerAlignmentPrelude';
 
 const ignoreCaseCue = () => {};
 
@@ -380,14 +380,17 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   const [edgeObservationDone, setEdgeObservationDone] = useState(false);
   const [daisyBlockedPreludeDone, setDaisyBlockedPreludeDone] = useState(false);
   const [specialPreludeDone, setSpecialPreludeDone] = useState(false);
-  const [cornerAlignmentDone, setCornerAlignmentDone] = useState(false);
+  const [alignmentDone, setAlignmentDone] = useState(false);
   const [observingBasement, setObservingBasement] = useState(false);
   const basementLesson = chapter.id === 'daisy' && lesson.id === 'case-5';
   const cornerLesson = chapter.id === 'corners' ? CORNER_ALIGNMENTS[lesson.id] : undefined;
+  const fishLesson = useMemo(() => hostChapterId === 'yellow-face' && chapter.id === 'sune-learning' && lesson.kind === 'example'
+    ? buildFishAlignment(lesson.id === 'sune-learning-0') : undefined, [hostChapterId, chapter.id, lesson.kind, lesson.id]);
+  const alignmentLesson = cornerLesson ?? fishLesson;
   const example = useMemo(() => {
     const original = lesson.example;
-    if (cornerLesson && original) return {
-      ...original, alg: cornerLesson.alg, setup: cornerLesson.alignedSetup, hint: cornerLesson.hint,
+    if (alignmentLesson && original) return {
+      ...original, alg: alignmentLesson.alg, setup: alignmentLesson.alignedSetup, hint: alignmentLesson.hint,
     };
     if (!edgeObservationDone || chapter.id !== 'edge-position' || !original) return original;
     const moves = new Alg(original.alg).expand().toString().split(/\s+/);
@@ -397,9 +400,9 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
     return { ...original, alg: moves.join(' '), startSolved: false,
       setup: `${resolvePlayerSetup('3x3', original.alg, original.setup, original.startSolved ?? false)} ${preparation.join(' ')}`,
       hint: { zh: original.hint.zh.split(' → ').slice(1).join(' → '), en: original.hint.en.split(' → ').slice(1).join(' → ') } };
-  }, [lesson.example, chapter.id, edgeObservationDone, cornerLesson]);
+  }, [lesson.example, chapter.id, edgeObservationDone, alignmentLesson]);
   const middleHiddenStickers = useMemo(() => chapter.id === 'middle' && ['case-0', 'case-1'].includes(lesson.id) && example?.setup ? middleLessonHiddenStickers(example.setup) : undefined, [chapter.id, lesson.id, example?.setup]);
-  const initialLeftView = Boolean(cornerLesson?.left) || chapter.id === 'middle' && lesson.id === 'case-1';
+  const initialLeftView = Boolean(alignmentLesson?.left) || chapter.id === 'middle' && lesson.id === 'case-1';
   const sceneRot = useMemo(() => {
     const view = lblDemoView();
     return initialLeftView ? { ...view, y: -view.y } : view;
@@ -425,8 +428,8 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   if (chapter.id === 'daisy' && lesson.id === 'case-2' && example?.setup && !daisyBlockedPreludeDone) {
     return <DaisyBlockedPrelude setup={example.setup} onDone={() => setDaisyBlockedPreludeDone(true)} />;
   }
-  if (cornerLesson && !cornerAlignmentDone) {
-    return <CornerAlignmentPrelude lesson={cornerLesson} sceneRot={sceneRot} onContinue={() => setCornerAlignmentDone(true)} />;
+  if (alignmentLesson && !alignmentDone) {
+    return <AlignmentPrelude lesson={alignmentLesson} sceneRot={sceneRot} stage={fishLesson ? 'yellow-face' : 'corners'} onContinue={() => setAlignmentDone(true)} />;
   }
   if (example && !specialPreludeDone && ((chapter.id === 'corners' && lesson.id === 'case-1') || (chapter.id === 'middle' && lesson.id === 'case-2'))) {
     const middle = chapter.id === 'middle';
@@ -452,9 +455,6 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
     <section className="lbl-explanation"><ReadingFit pane>{lesson.kind === 'overview' ? <FishOverview /> : <FishRecognition />}</ReadingFit></section>
   </div></ReadingFit>;
   if (lesson.kind === 'complete' && chapter.id === 'cross') return <div className="lbl-complete"><WhiteCrossCompleteDemo /></div>;
-  if (hostChapterId === 'yellow-face' && chapter.id === 'sune-learning' && lesson.kind === 'example') {
-    return <div className="lbl-complete"><FishExample left={lesson.id === 'sune-learning-0'} /></div>;
-  }
   const middleAlignment = chapter.id === 'middle' && ['case-0', 'case-1'].includes(lesson.id);
   const triggerHandsDemo = chapter.id === 'trigger-learning' && (example?.alg === RIGHT || example?.alg === LEFT);
   const cornerEjection = chapter.id === 'corners' && lesson.id === 'case-1';
@@ -484,7 +484,7 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
         daisyAlignmentFace={example.alg.split(/\s+/)[move] === 'R2' ? 'R' : 'F'}
         showHands={triggerHandsDemo}
         hiddenStickers={middleHiddenStickers ?? (chapter.id === 'yellow-face' && lesson.id === 'case-3' ? ['U8'] : undefined)}
-        additionalStickering={chapter.id.startsWith('yellow-') || chapter.id.endsWith('-position') ? 'F2L' : hostChapterId === 'corners' ? 'centers-only' : undefined}
+        additionalStickering={fishLesson || chapter.id.startsWith('yellow-') || chapter.id.endsWith('-position') ? 'F2L' : hostChapterId === 'corners' ? 'centers-only' : undefined}
         alg={example.alg} setup={example.setup} startSolved={example.startSolved} orientation="z2" sceneRot={sceneRot} stepMarkers={stepMarkers}
         fillPane onStepChange={step => {
           setSelectedStepStart(start => start === step ? start : null);
@@ -516,7 +516,7 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
           player.current?.playMove?.(index);
         }} />}
       {inlineAction}
-      {lesson.paragraphs?.map((text, index) => <p key={index}>{tr(text)}</p>)}
+      {!fishLesson && lesson.paragraphs?.map((text, index) => <p key={index}>{tr(text)}</p>)}
       {!['structure', 'corners', 'cross', 'middle', 'corner-position'].includes(chapter.id) && !lesson.paragraphs && chapter.paragraphs.map((text, index) => text.zh !== example.hint.zh && <p key={index}>{tr(text)}</p>)}
     </ReadingFit></section>
   </div>;

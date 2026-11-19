@@ -15,11 +15,10 @@ import { resolveStageMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/vcSt
 import { engineHomeSid } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex';
 import { T, tr } from '@/i18n/tr';
 import { LBL_LEFT_VIEW_YAW, LBL_STEPS, LESSON_STICKERING, MIDDLE_LEFT, MIDDLE_RIGHT, lblDemoView, type LblExample } from './content';
-import AlgSteps from './AlgSteps';
 import { usePlayerVisible } from './use-player-visible';
 import { getLblAlgGroups, sideTurn } from './alg-cues';
 import { SIDE_VIEW_PAUSE_MS, SIDE_VIEW_TURN_MS } from './schedule-demo-play';
-import { buildBottomCrossFromDaisy, buildEdgePositionExample, buildFishDemo, completeDemoPool, yellowFaceTouchSticker, type CompleteDemoStage, type DemoContent, type DemoPhase, type DemoView, type CompleteDemo as Demo, walkthroughCompletionStickers } from './complete-demo-state';
+import { buildBottomCrossFromDaisy, buildEdgePositionExample, completeDemoPool, yellowFaceTouchSticker, type CompleteDemoStage, type DemoContent, type DemoPhase, type DemoView, type CompleteDemo as Demo, walkthroughCompletionStickers } from './complete-demo-state';
 
 const CAPTION_FADE_MS = 450;
 const CAPTION_DURATION_MS = 3200;
@@ -56,11 +55,6 @@ function subscribeExamples(notify: () => void) {
 export function EdgePositionExample({ example, index }: { example: LblExample; index: number }) {
   const demo = useMemo(() => buildEdgePositionExample(example, index), [example, index]);
   return <Demonstration stage="edge-position" demo={demo} onCaseCueChange={IGNORE_CASE_CUE} />;
-}
-
-export function FishExample({ left }: { left: boolean }) {
-  const demo = useMemo(() => buildFishDemo(left), [left]);
-  return <Demonstration stage="yellow-face" demo={demo} guidedFish onCaseCueChange={IGNORE_CASE_CUE} />;
 }
 
 function DemoToolbar({ onNext, index, total }: { onNext: () => void; index: number; total: number }) {
@@ -120,9 +114,9 @@ type DemoFrame = {
   orbitDuration?: number;
 };
 
-export function Demonstration({ stage, demo, guidedFish = false, onCaseCueChange, walkthrough, onComplete }: {
+export function Demonstration({ stage, demo, onCaseCueChange, walkthrough, onComplete }: {
   walkthrough?: boolean; onComplete?: () => void;
-  stage: CompleteDemoStage | 'cross'; demo: Demo; guidedFish?: boolean;
+  stage: CompleteDemoStage | 'cross'; demo: Demo;
 } & CueProps) {
   const [recognitionOutlines, setRecognitionOutlines] = useState<string[]>(NO_OUTLINES);
   const maskOutlines = stage === 'yellow-face' ? NO_OUTLINES : recognitionOutlines;
@@ -211,7 +205,7 @@ export function Demonstration({ stage, demo, guidedFish = false, onCaseCueChange
   }, [demo, stage, total]);
 
   useEffect(() => {
-    if (!guidedFish && !walkthrough) return;
+    if (!walkthrough) return;
     setHiddenOutlines(null);
     if (!playing || !recognitionOutlines.length || lastBlinkedOutlines.current === recognitionOutlines
       || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -220,7 +214,7 @@ export function Demonstration({ stage, demo, guidedFish = false, onCaseCueChange
       setHiddenOutlines(index % 2 === 0 ? recognitionOutlines : null);
     }, delay));
     return () => timers.forEach(timer => window.clearTimeout(timer));
-  }, [guidedFish, walkthrough, playing, recognitionOutlines]);
+  }, [walkthrough, playing, recognitionOutlines]);
 
   useEffect(() => {
     let id = 0;
@@ -327,25 +321,12 @@ export function Demonstration({ stage, demo, guidedFish = false, onCaseCueChange
     setPosition(index);
     setRevision(current => current + 1);
   };
-  const formulaPhase = demo.phases.at(-1);
-  const formulaStart = formulaPhase?.start ?? 0;
-  const fishAlg = guidedFish ? formulaPhase?.act.alg : undefined;
-  const replayFormulaMove = (index: number) => {
-    const move = formulaStart + index;
-    const frameIndex = timeline.findIndex(item => item.move === move);
-    if (!ready || frameIndex < 0) return;
-    setPlaying(false);
-    appliedFrame.current = frameIndex;
-    player.current?.playMove?.(move);
-    setPosition(frameIndex);
-    setRevision(current => current + 1);
-  };
   const completionFocus = useMemo(() => walkthroughCompletionStickers(stage, demo.setup + ' ' + demo.alg), [stage, demo]);
-  const content: DemoContent = frame.caption === 'done' ? { text: demo.done, alg: fishAlg, outlines: walkthrough ? completionFocus : undefined }
+  const content: DemoContent = frame.caption === 'done' ? { text: demo.done, outlines: walkthrough ? completionFocus : undefined }
     : frame.caption === 'observe' ? { text: frame.phase!.observe! }
       : frame.caption === 'recognize' ? frame.phase!.recognize! : frame.phase!.act;
   // Classify the whole lesson, never the current caption or move.
-  const layout = walkthrough || guidedFish || stage === 'middle' || stage === 'corner-position' ? 'B' : 'A';
+  const layout = walkthrough || stage === 'middle' || stage === 'corner-position' ? 'B' : 'A';
   const message: ThoughtContent = { ...content, text: tr(content.text), detail: content.detail ? tr(content.detail) : undefined };
   const touchHighlight = useMemo(() => content.touchSticker
     ? [yellowFaceTouchSticker(`${demo.setup} ${demo.alg.split(' ').slice(0, frame.step).join(' ')}`)]
@@ -373,15 +354,13 @@ export function Demonstration({ stage, demo, guidedFish = false, onCaseCueChange
         }} />
     </div></div>
     <Thought {...message} layout={layout} stage={stage} playing={playing} revision={revision} onCaseCueChange={onCaseCueChange}
-      onRecognitionOutlinesChange={setRecognitionOutlines}
-      fishMoves={fishAlg ? { alg: fishAlg, activeMove: frame.move === undefined ? undefined : frame.move - formulaStart, onClick: replayFormulaMove } : undefined} />
+      onRecognitionOutlinesChange={setRecognitionOutlines} />
     {['corners', 'yellow-cross', 'yellow-face', 'edge-position'].includes(stage) && <div className="lbl-complete-legend-space" aria-hidden="true" />}
   </div>;
 }
 
-function Thought({ text, detail, alg, caseIndex, outlines, playing, revision, onCaseCueChange, onRecognitionOutlinesChange, stage, fishMoves, layout }: ThoughtContent & {
+function Thought({ text, detail, alg, caseIndex, outlines, playing, revision, onCaseCueChange, onRecognitionOutlinesChange, stage, layout }: ThoughtContent & {
   layout: 'A' | 'B'; stage: string; playing: boolean; revision: number; onRecognitionOutlinesChange: (outlines: string[]) => void;
-  fishMoves?: { alg: string; activeMove?: number; onClick: (index: number) => void };
 } & CueProps) {
   const key = `${text}\n${detail ?? ''}\n${alg ?? ''}\n${caseIndex ?? ''}\n${outlines?.join(',') ?? ''}`;
   const [displayed, setDisplayed] = useState({ key, text, detail, alg, caseIndex, outlines, revision });
@@ -401,14 +380,11 @@ function Thought({ text, detail, alg, caseIndex, outlines, playing, revision, on
     const timer = window.setTimeout(() => setDisplayed({ key, text, detail, alg, caseIndex, outlines, revision }), delay);
     return () => window.clearTimeout(timer);
   }, [key, text, detail, alg, caseIndex, outlines, playing, revision, displayed.key, displayed.revision]);
-  const showMoveCues = fishMoves && displayed.alg === fishMoves.alg;
   return <div className={`lbl-complete-thought${layout === 'A' ? ' tutorial-single-caption' : ''}`} aria-live="polite"><ReadingFit pane>
-    <p data-fading={fading} className={showMoveCues ? 'lbl-fish-alg-caption' : undefined}>
-      <span>{fishMoves ? displayed.text.split(/(左|右|\bleft\b|\bright\b)/i).map((part, index) =>
-        index % 2 ? <span className="lbl-direction-emphasis" key={index}>{part}</span> : part) : displayed.text}</span>
-      {showMoveCues ? null : displayed.alg ? <code className="lbl-complete-detail lbl-complete-alg">{getLblAlgGroups(stage, displayed.alg).map((group, index) => <span key={index}>{group.map(move => move.notation).join(' ')}</span>)}</code>
+    <p data-fading={fading}>
+      <span>{displayed.text}</span>
+      {displayed.alg ? <code className="lbl-complete-detail lbl-complete-alg">{getLblAlgGroups(stage, displayed.alg).map((group, index) => <span key={index}>{group.map(move => move.notation).join(' ')}</span>)}</code>
         : <span className="lbl-complete-detail">{displayed.detail}</span>}
     </p>
-    {showMoveCues && <AlgSteps step={stage} alg={fishMoves.alg} activeMove={fishMoves.activeMove} onMoveClick={fishMoves.onClick} />}
   </ReadingFit></div>;
 }

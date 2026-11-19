@@ -57,8 +57,8 @@ A、B、C 共用[视口及紧凑横屏切换规则](./responsive-design.md#2-尺
 | yellow-face/overview | 顶面朝向 · 概览 | E · 静态图文 |
 | yellow-face/sune-overview | 顶面朝向 · 小鱼 | E · 阅读 |
 | yellow-face/recognition | 顶面朝向 · 状态辨识 | E · 阅读 |
-| yellow-face/sune-learning-1 | 顶面朝向 · 3灰：右鱼 | B · 非视频教学 |
-| yellow-face/sune-learning-0 | 顶面朝向 · 3灰：左鱼 | B · 非视频教学 |
+| yellow-face/sune-learning-1 | 顶面朝向 · 3灰：右鱼 | A · 时间线视频 → B · 公式教学 |
+| yellow-face/sune-learning-0 | 顶面朝向 · 3灰：左鱼 | A · 时间线视频 → B · 公式教学 |
 | yellow-face/case-2 | 顶面朝向 · 2灰：二碰 | B · 教学 |
 | yellow-face/case-3 | 顶面朝向 · 4灰：四不碰 | B · 教学 |
 | yellow-face/complete | 顶面朝向 · 完整演示 | A · 非视频教学 |
@@ -98,7 +98,7 @@ A、B、C 共用[视口及紧凑横屏切换规则](./responsive-design.md#2-尺
 | CompleteDemo：小花、底面十字、底层角块、顶面十字、顶面朝向、棱位置 | A | 全部 observe / recognize / act / done 固定 A；当前短句、补充说明或单条短公式不构成阶段列表 |
 | CompleteDemo：中层、角位置 | B | 完整插入／J 公式按教学分组呈现，整个单元含观察和结束固定 B |
 | 全程还原 walkthrough：跨阶段操作与公式 | B | 整个全程还原固定 B，不随当前还原阶段切换布局类型 |
-| FishExample：左右鱼公式教学 | B | 保留可点击公式与口诀，观察、执行、结束固定 B |
+| 左右鱼：数非黄角格、转顶层、看鱼鳍 | A → B | 观察短片播完时同步显示结论与「点击继续」，从对齐后的状态和视角进入可点击的公式与口诀 |
 | 小花顶面挡住：提问、抬起、发现挡住、撤回 | A | 单魔方＋当前提示；进入正式公式后 B |
 | 底层角块 SpecialCasePrelude：每个位置与朝向观察镜头 | A | 同一魔方预算；结尾仅保留短说明，仍为 A；播完停留，点击继续后进入 B 类公式教学 |
 | 底层角块白朝右、白朝左：找白角、看侧色、同色对齐 | A · 时间线视频 | 左右共用镜像脚本，将同色中心转至前面 |
