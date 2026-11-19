@@ -6,7 +6,7 @@ import { parseAsInteger, useQueryState } from 'nuqs';
 import { hasTeachingPermission, type TeachingOrganizationRole } from '@cuberoot/shared/teaching';
 import { useT } from '@/hooks/useT';
 import { createTeachingMember, listTeachingMembers } from '@/lib/teaching-saas-api';
-import OrgWorkspace from '../../_components/OrgWorkspace';
+import OrgWorkspace, { OrgSectionTitle } from '../../_components/OrgWorkspace';
 import {
   entityStatusLabel,
   MutationMessage,
@@ -69,7 +69,7 @@ function MembersContent({ orgSlug, page, role }: { orgSlug: string; page: number
 
   return (
     <>
-      <h2>{t('机构成员', 'Organization members')}</h2>
+      <OrgSectionTitle>{t('机构成员', 'Organization members')}</OrgSectionTitle>
       <p className="org-lead">{t('成员身份属于当前机构；老师和助教的学员范围还需要在班级或学员详情中分配。', 'Membership belongs to this organization. Teacher and assistant scopes are assigned from class or student details.')}</p>
       {members.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : members.error ? (
         <MutationMessage message={members.error} error />

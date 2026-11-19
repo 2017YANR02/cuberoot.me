@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useContext, useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import { BadgeCheck, ExternalLink, EyeOff, GraduationCap, MapPin, Mic2, Pencil, Plus, UserRound } from '@app-foundation/icons/lucide';
@@ -16,6 +16,7 @@ import { fetchTeacherLiveScripts, type TeacherLiveScript } from '@/lib/teacher-l
 import { creatorProfileHrefForWcaId } from '@/lib/creator-profile';
 import { CONTACT_FIELDS, DIRECTORY_KINDS, URL_CONTACT_KEYS, directoryContactHref, directoryKindLabel, directoryModeLabel, directoryWebsiteLabel, localDirectoryTags, localDirectoryText } from './directory-data';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
 
 function DirectoryEntry({ entry, canEdit, scripts }: { entry: TeacherDirectoryEntry; canEdit: boolean; scripts: TeacherLiveScript[] }) {
   const name = localDirectoryText(entry.nameZh, entry.nameEn);
@@ -59,6 +60,7 @@ function DirectoryEntry({ entry, canEdit, scripts }: { entry: TeacherDirectoryEn
 
 function TeachersDirectoryClient() {
   const pathname = usePathname();
+  const inPlatformShell = useContext(PlatformNavigationContext);
   const user = useAuthUser();
   const ownerKey = useOwnerKey();
   const isAdmin = useIsAdmin();
@@ -112,7 +114,7 @@ function TeachersDirectoryClient() {
       <div className="teachers-back-row"><BackHome /></div>
       <header className="teachers-hero">
 
-        <h1>{tr({ zh: '魔方老师与机构', en: 'Cube Teachers & Schools' })}</h1>
+        <h1 className={inPlatformShell ? 'sr-only' : undefined}>{tr({ zh: '魔方老师与机构', en: 'Cube Teachers & Schools' })}</h1>
         <p className="teachers-intro">{tr({ zh: '寻找适合自己的魔方老师、线上课程或本地培训机构，也可以把自己的教学服务加入名录。', en: 'Find a cube teacher, online lesson, or local training school—or add your own teaching service.' })}</p>
         <p className="teachers-trust">{tr({ zh: '资料由站方或用户提交。联系、付费或报名之前，请自行核实教学内容与身份。', en: 'Entries are submitted by CubeRoot or its users. Verify identity and course details before contacting, paying, or enrolling.' })}</p>
         <div className="teachers-hero-actions">{user ? <AppLink href="/teachers/edit" prefetch={false} className="directory-primary-button teachers-add-button"><Plus size={17} />{tr({ zh: '建立教学主页', en: 'Build a profile' })}</AppLink> : <AppLink href={`/account${nextQuery(pathname)}`} prefetch={false} className="directory-primary-button teachers-add-button"><Plus size={17} />{tr({ zh: '登录后添加', en: 'Sign in to add' })}</AppLink>}<AppLink href="/teachers/scripts" className="directory-edit-button teachers-script-library"><Mic2 size={15} />{tr({ zh: '浏览直播话术', en: 'Browse scripts' })}</AppLink></div>

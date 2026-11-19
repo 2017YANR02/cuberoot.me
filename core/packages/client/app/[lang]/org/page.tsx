@@ -3,7 +3,7 @@ import BackHome from '@/components/BackHome';
 import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
 
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useContext, useEffect, useState, type FormEvent } from 'react';
 import { Building2, ArrowRight, Plus } from '@app-foundation/icons/lucide';
 import EnterpriseVerificationAdmin from './_components/EnterpriseVerificationAdmin';
 import AppLink from '@/components/AppLink';
@@ -16,6 +16,7 @@ import {
 } from '@/lib/teaching-saas-api';
 import { MutationMessage, teachingErrorMessage, teachingRoleLabel, useOperationKey } from './_components/OrgUi';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
 
 export default function OrganizationsPage() {
   const user = useAuthUser();
@@ -24,6 +25,7 @@ export default function OrganizationsPage() {
 
 function OrganizationsAccountPage({ user }: { user: ReturnType<typeof useAuthUser> }) {
   const t = useT();
+  const inPlatformShell = useContext(PlatformNavigationContext);
   const operationKey = useOperationKey();
   const [mounted, setMounted] = useState(false);
   const [organizations, setOrganizations] = useState<TeachingOrganizationAccess[]>([]);
@@ -86,7 +88,7 @@ function OrganizationsAccountPage({ user }: { user: ReturnType<typeof useAuthUse
 
   return (
     <main className="org-page org-directory">
-      <header className="org-directory-header"><BackHome /><span className="org-feature-icon"><Building2 size={28} aria-hidden="true" /></span><div><p className="org-eyebrow">{t('企业工作台', 'Enterprise workspace')}</p><h1>{t('我的企业', 'My enterprises')}</h1></div></header>
+      <header className="org-directory-header">{!inPlatformShell && <BackHome />}<span className="org-feature-icon"><Building2 size={28} aria-hidden="true" /></span><div>{!inPlatformShell && <p className="org-eyebrow">{t('企业工作台', 'Enterprise workspace')}</p>}<h1>{t('我的企业', 'My enterprises')}</h1></div></header>
       <p className="org-lead">{t('选择已有企业，继续认证或管理。只有添加另一家企业时，才需要新增企业。', 'Select an existing enterprise to continue verification or management. Add an enterprise only for a different business.')}</p>
 
       <section className="org-section">

@@ -185,6 +185,22 @@
 .pp-item-path { display: block; margin-top: 4px; color: var(--muted-foreground); white-space: normal; }
 .pp-empty { padding: 8px; color: var(--muted-foreground); }
 .pp-popup--discovery .pp-group-items { grid-template-columns: 1fr; }
+.pp-popup.pp-popup--search-only {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: fit-content;
+}
+.pp-search-column { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.pp-popup--search-only .pp-discovery { flex: 0 0 auto; }
+.pp-popup--search-only .pp-discovery .search-input { flex: 0 1 auto; width: min(18rem, calc(100vw - 48px)); }
+.pp-search-results {
+  min-height: 0;
+  max-height: min(360px, 50dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.pp-popup--search-only .pp-item-label { white-space: normal; overflow-wrap: anywhere; }
 @media (max-width: 767px) {
   .pp-popup--discovery .pp-item,
   .pp-favorite { min-height: 44px; }

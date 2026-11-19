@@ -44,9 +44,11 @@ export function PlatformCourseToolbar({ query, puzzle, topic, sort, puzzles, top
     <SearchInput value={query} onChange={onQuery} placeholder={searchLabel} ariaLabel={searchLabel}
       className="platform-search" inputClassName="platform-search-input" />
     {(puzzles.size > 0 || puzzle) && <PuzzlePicker
-      isZh={isZh} selectedEvent={puzzle || undefined} wcaEvents={puzzles} availableEvents={puzzles}
-      additionalGroups={[{ id: 'all', label: t('项目', 'Puzzle'), items: [{ id: '', label: t('全部项目', 'All puzzles') }] }]}
-      placeholderLabel={t('全部项目', 'All puzzles')} showTriggerLabel showArrow onSelect={onPuzzle}
+      isZh={isZh} selectedEvent={puzzle} wcaEvents={puzzles} availableEvents={puzzles}
+      leadingGroups={[{ id: 'all', label: '', items: [{ id: '', label: t('全部项目', 'All puzzles') }] }]}
+      discovery={{ searchLabel: t('搜索项目', 'Search puzzles'), clearLabel: t('清除搜索', 'Clear search'),
+        emptyLabel: t('没有匹配项目', 'No matching puzzles'), resultsLabel: '' }}
+      placeholderLabel={t('全部项目', 'All puzzles')} triggerVariant="pill" showTriggerLabel showArrow onSelect={onPuzzle}
     />}
     {(topics.length > 0 || topic) && <CompactSelect
       label={topicItems.find(item => item.value === topic)?.label ?? allTopics}

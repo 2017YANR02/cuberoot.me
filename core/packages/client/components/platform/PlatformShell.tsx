@@ -11,8 +11,8 @@ import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
-import { platformParentHref, PLATFORM_PUBLIC_NAV, PLATFORM_ROUTES } from '@/lib/platform-routes';
-import { PLATFORM_SECTION_NAV, platformNavigationState, platformPathname } from '@/lib/platform-navigation';
+import { platformParentHref, PLATFORM_PUBLIC_NAV } from '@/lib/platform-routes';
+import { PLATFORM_PERSONAL_ROUTES, PLATFORM_SECTION_NAV, platformNavigationState, platformPathname, platformWorkspaceRoutes } from '@/lib/platform-navigation';
 import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
 import { SHOP_ROOT } from '@/lib/shop';
 import './platform.css';
@@ -24,8 +24,6 @@ const AREA_ICONS = {
   teachers: GraduationCap,
   organizations: Building2,
 } satisfies Record<(typeof PLATFORM_PUBLIC_NAV)[number]['id'], typeof Compass>;
-
-const PERSONAL_IDS = new Set(['account-courses', 'progress', 'orders', 'account-invites', 'account-favorites', 'account-notes', 'account-badges', 'me-membership', 'account-shipping', 'community-mine']);
 
 export function PlatformShell({ children, shared = false }: { children: ReactNode; shared?: boolean }) {
   const hasShell = useContext(PlatformNavigationContext);
@@ -45,12 +43,7 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
   const showNavigation = definition?.id !== 'course-detail';
   const sections = primary ? PLATFORM_SECTION_NAV[primary] : [];
   const segments = platformPathname(pathname).replace(/^\/platform\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
-  const personalPage = definition?.area === 'account' || definition?.id === 'progress' || definition?.id === 'orders' || definition?.id === 'order-detail';
-  const personalRoutes = PLATFORM_ROUTES.filter(item => PERSONAL_IDS.has(item.id));
-  const workspaceRoutes = PLATFORM_ROUTES.filter(item => !item.pattern.includes(':') && item.kind !== 'form'
-    && (definition?.area === 'admin' ? isAdmin && item.area === 'admin'
-      : definition?.area === 'instructor' && definition.id !== 'teacher-apply' ? user && item.access === 'instructor'
-        : personalPage ? user && PERSONAL_IDS.has(item.id) : false));
+  const workspaceRoutes = platformWorkspaceRoutes(definition, Boolean(user), isAdmin);
   const cards = useMemo(() => SEARCH_CARDS.filter(card => isLandingSearchCardVisible(card, isAdmin)), [isAdmin]);
   const Content = shared ? 'div' : 'main';
 
@@ -70,7 +63,7 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
             triggerClassName="platform-account-link" popupClassName="platform-account-menu"
             ariaLabel={t('我的学习与账号', 'My learning and account')} label={t('我的学习', 'My learning')}
             items={[]} onChange={() => {}} panelContent={<>
-              {personalRoutes.map(item => <AppLink key={item.id} href={`/platform/${item.pattern}`} prefetch={false}
+              {PLATFORM_PERSONAL_ROUTES.map(item => <AppLink key={item.id} href={`/platform/${item.pattern}`} prefetch={false}
                 onClick={() => setAccountOpen(false)}>{t(item.title.zh, item.title.en)}</AppLink>)}
               {(isAdmin || definition?.area === 'instructor' && definition.id !== 'teacher-apply') && <AppLink href="/platform/instructor" prefetch={false} onClick={() => setAccountOpen(false)}>{t('讲师工作台', 'Instructor workspace')}</AppLink>}
               {isAdmin && <>

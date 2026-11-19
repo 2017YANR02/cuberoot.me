@@ -17,7 +17,7 @@ import {
   listTeachingWeeklyReports,
   type TeachingStudent,
 } from '@/lib/teaching-saas-api';
-import OrgWorkspace from '../../_components/OrgWorkspace';
+import OrgWorkspace, { OrgSectionTitle } from '../../_components/OrgWorkspace';
 import {
   entityStatusLabel,
   MutationMessage,
@@ -116,7 +116,7 @@ function ReportsContent({ orgSlug, page, role }: { orgSlug: string; page: number
 
   return (
     <>
-      <h2>{t('每周教学报告', 'Weekly teaching reports')}</h2>
+      <OrgSectionTitle>{t('每周教学报告', 'Weekly teaching reports')}</OrgSectionTitle>
       <p className="org-lead">{t('按学员和自然周汇总主站内的课次、出勤、反馈与训练证据。当前只供机构教职员工查看。', 'Summarize main-site sessions, attendance, feedback, and training evidence by student and week. Reports are currently visible only to organization staff.')}</p>
 
       {reports.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : reports.error ? (

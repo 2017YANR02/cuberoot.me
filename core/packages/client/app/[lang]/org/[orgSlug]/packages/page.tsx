@@ -6,7 +6,7 @@ import { parseAsInteger, useQueryState } from 'nuqs';
 import { hasTeachingPermission, type TeachingOrganizationRole } from '@cuberoot/shared/teaching';
 import { useT } from '@/hooks/useT';
 import { createTeachingPackageProduct, listTeachingPackageProducts } from '@/lib/teaching-saas-api';
-import OrgWorkspace from '../../_components/OrgWorkspace';
+import OrgWorkspace, { OrgSectionTitle } from '../../_components/OrgWorkspace';
 import {
   entityStatusLabel,
   MutationMessage,
@@ -95,7 +95,7 @@ function PackagesContent({ orgSlug, page, role }: { orgSlug: string; page: numbe
 
   return (
     <>
-      <h2>{t('课包', 'Packages')}</h2>
+      <OrgSectionTitle>{t('课包', 'Packages')}</OrgSectionTitle>
       <p className="org-lead">{t('在这里定义可发放给学员的课时产品。实际余额以学员课包和服务端流水为准。', 'Define credit products here. Student balances and the server ledger remain authoritative.')}</p>
 
       {products.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : products.error ? (

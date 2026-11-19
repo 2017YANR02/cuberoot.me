@@ -7,7 +7,7 @@ import { hasTeachingPermission, type TeachingOrganizationRole } from '@cuberoot/
 import { useT } from '@/hooks/useT';
 import AppLink from '@/components/AppLink';
 import { createTeachingStudent, listTeachingStudents } from '@/lib/teaching-saas-api';
-import OrgWorkspace from '../../_components/OrgWorkspace';
+import OrgWorkspace, { OrgSectionTitle } from '../../_components/OrgWorkspace';
 import {
   entityStatusLabel,
   MutationMessage,
@@ -63,7 +63,7 @@ function StudentsContent({ orgSlug, page, role }: { orgSlug: string; page: numbe
   const canManage = hasTeachingPermission(role, 'student:manage');
   return (
     <>
-          <h2>{t('学员', 'Students')}</h2>
+          <OrgSectionTitle>{t('学员', 'Students')}</OrgSectionTitle>
           <p className="org-lead">{t('学员资料按机构隔离，老师只会看到自己负责范围内的学员。', 'Student profiles are isolated by organization. Teachers only see students in their assigned scope.')}</p>
 
           {students.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : students.error ? (

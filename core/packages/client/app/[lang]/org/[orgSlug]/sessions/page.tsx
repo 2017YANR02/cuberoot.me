@@ -16,7 +16,7 @@ import {
   type TeachingStudent,
   type TeachingStudentPackage,
 } from '@/lib/teaching-saas-api';
-import OrgWorkspace from '../../_components/OrgWorkspace';
+import OrgWorkspace, { OrgSectionTitle } from '../../_components/OrgWorkspace';
 import {
   entityStatusLabel,
   MutationMessage,
@@ -199,7 +199,7 @@ function SessionsContent({ orgSlug, page, role, timezone }: { orgSlug: string; p
 
   return (
     <>
-      <h2>{t('课次', 'Sessions')}</h2>
+      <OrgSectionTitle>{t('课次', 'Sessions')}</OrgSectionTitle>
       <p className="org-lead">{t('老师和助教只会看到自己被安排的课次。完课后由服务端一次性扣减课时。', 'Teachers and assistants only see assigned sessions. Credits are consumed atomically by the server on completion.')}</p>
 
       {sessions.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : sessions.error ? (

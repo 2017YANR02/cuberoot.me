@@ -32,9 +32,10 @@ import {
   type CstimerEvent,
 } from '@/lib/cstimer-scramble';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
-import { eventDisplayName } from '@/lib/wca-events';
+import { eventDisplayName, eventProseName } from '@/lib/wca-events';
 import { tr } from '@/i18n/tr';
 import '@cuberoot/timer-ui/puzzle-picker.css';
+import '@cuberoot/timer-ui/compact-select.css';
 import './puzzle_picker.css';
 import '../country-pins.css';
 
@@ -75,11 +76,14 @@ interface Props {
   groups?: readonly PuzzlePickerGroup[];
   /** Extend the default catalog without duplicating its WCA and csTimer grouping. */
   additionalGroups?: readonly PuzzlePickerGroup[];
+  /** Options that must appear before the catalog, such as clearing a filter. */
+  leadingGroups?: readonly PuzzlePickerGroup[];
   /** 自定义 catalog 的收起态名称;省略时保持项目选择器原有名称。 */
   placeholderLabel?: string;
   /** 是否显示收起态图标;纯文本触发器可关闭。 */
   showTriggerIcon?: boolean;
   showTriggerLabel?: boolean;
+  triggerVariant?: TimerPuzzlePickerProps['triggerVariant'];
   showArrow?: boolean;
   /** 是否显示每项的图标/文字徽标;纯文本 catalog 可关闭。 */
   showItemIcons?: boolean;
@@ -98,7 +102,7 @@ const menuLabel = (label: string): string => label.replaceAll('魔方', '').repl
 
 export default function PuzzlePicker({
   isZh = false, selectedEvent, selectedEvents, wcaEvents, availableEvents, onSelect, onToggle, linkFor,
-  discovery, groups: suppliedGroups, additionalGroups, placeholderLabel, showArrow = false, showTriggerIcon = true, showTriggerLabel = false, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
+  discovery, groups: suppliedGroups, additionalGroups, leadingGroups, placeholderLabel, showArrow = false, showTriggerIcon = true, showTriggerLabel = false, triggerVariant, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
 }: Props) {
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
@@ -122,7 +126,8 @@ export default function PuzzlePicker({
       out.push({
         id: 'wca',
         label: tr({ zh: 'WCA 项目', en: 'WCA events' }),
-        items: wcaIds.map((id) => ({ id, label: eventDisplayName(id, isZh), iconClass: `event-${id}` })),
+        items: wcaIds.map((id) => ({ id, label: eventDisplayName(id, isZh), iconClass: `event-${id}`,
+          searchText: `${eventDisplayName(id, true)} ${eventDisplayName(id, false)} ${eventProseName(id, false)}` })),
       });
     }
     for (const { family, events } of cstimerGroups) {
@@ -132,13 +137,14 @@ export default function PuzzlePicker({
         items: events.map((event) => ({
           id: event.id,
           label: nameOf(event, isZh),
+          searchText: `${event.zh} ${event.en}`,
           iconClass: event.iconClass || undefined,
           textLabel: event.textLabel,
         })),
       });
     }
-    return [...out, ...(additionalGroups ?? [])].filter(group => group.items.length > 0);
-  }, [suppliedGroups, additionalGroups, wcaIds, cstimerGroups, isZh]);
+    return [...(leadingGroups ?? []), ...out, ...(additionalGroups ?? [])].filter(group => group.items.length > 0);
+  }, [suppliedGroups, additionalGroups, leadingGroups, wcaIds, cstimerGroups, isZh]);
 
   const isMulti = selectedEvents !== undefined && onToggle !== undefined;
   const selectedItems = groups
@@ -181,7 +187,7 @@ export default function PuzzlePicker({
   // Keep one implementation of submenu navigation, focus restoration, touch
   // layout and viewport clamping. Flat/link/multiselect catalogs retain their
   // existing renderer; the simulator supplies the same lossless leaf IDs here.
-  if ((discovery || groups.some(group => group.items.some(item => item.children?.length)))
+  if ((discovery || triggerVariant === 'pill' || groups.some(group => group.items.some(item => item.children?.length)))
     && onSelect && !isMulti && !linkFor && !itemAction && !popupFooter) {
     const normalize = (item: Omit<PuzzlePickerItem, 'children'>) => ({
       id: item.id,
@@ -201,6 +207,7 @@ export default function PuzzlePicker({
         })),
       }))}
       showArrow={showArrow}
+      triggerVariant={triggerVariant}
       selectedEvent={selectedEvent ?? ''}
       onSelect={onSelect}
       puzzleLabel={menuLabel(placeholderLabel ?? tr({ zh: '项目', en: 'Puzzle' }))}

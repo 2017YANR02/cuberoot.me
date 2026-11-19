@@ -6,7 +6,7 @@ import { parseAsInteger, useQueryState } from 'nuqs';
 import { hasTeachingPermission, type TeachingOrganizationRole } from '@cuberoot/shared/teaching';
 import { useT } from '@/hooks/useT';
 import { createTeachingCampus, listTeachingCampuses } from '@/lib/teaching-saas-api';
-import OrgWorkspace from '../../_components/OrgWorkspace';
+import OrgWorkspace, { OrgSectionTitle } from '../../_components/OrgWorkspace';
 import {
   entityStatusLabel,
   MutationMessage,
@@ -67,7 +67,7 @@ function CampusesContent({ orgSlug, page, organization }: {
   const canManage = hasTeachingPermission(organization.role, 'campus:manage');
   return (
     <>
-          <h2>{t('校区', 'Campuses')}</h2>
+          <OrgSectionTitle>{t('校区', 'Campuses')}</OrgSectionTitle>
           <p className="org-lead">{t('校区时区留空时继承机构时区。', 'A campus inherits the organization time zone when left blank.')}</p>
 
           {campuses.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : campuses.error ? (

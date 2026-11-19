@@ -1,7 +1,7 @@
 'use client';
 
 import PageBackLink from '@/components/PageBackLink';
-import { useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { Building2, ChevronRight } from '@app-foundation/icons/lucide';
 import { hasTeachingPermission, type TeachingPermission } from '@cuberoot/shared/teaching';
@@ -12,6 +12,13 @@ import { getTeachingOrganization, type TeachingOrganizationAccess } from '@/lib/
 import { teachingErrorMessage, teachingRoleLabel } from './OrgUi';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { platformSharedPathname } from '@/lib/platform-navigation';
+import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
+
+const OrgNavigationTitleContext = createContext(false);
+
+export function OrgSectionTitle({ children }: { children: ReactNode }) {
+  return <h2 className={useContext(OrgNavigationTitleContext) ? 'sr-only' : undefined}>{children}</h2>;
+}
 
 interface Props {
   orgSlug: string;
@@ -25,6 +32,7 @@ export default function OrgWorkspace(props: Props) {
 
 function OrgAccountWorkspace({ orgSlug, children, user }: Props & { user: ReturnType<typeof useAuthUser> }) {
   const t = useT();
+  const inPlatformShell = useContext(PlatformNavigationContext);
   const pathname = platformSharedPathname(usePathname());
   const [mounted, setMounted] = useState(false);
   const [organization, setOrganization] = useState<TeachingOrganizationAccess | null>(null);
@@ -69,6 +77,8 @@ function OrgAccountWorkspace({ orgSlug, children, user }: Props & { user: Return
     { href: `/org/${organization.slug}/operations`, label: t('经营', 'Operations'), permission: 'operations:read' },
     { href: `/org/${organization.slug}/audit`, label: t('审计', 'Audit'), permission: 'audit:read' },
   ];
+  const visibleLinks = links.filter(link => !link.permission || hasTeachingPermission(organization.role, link.permission));
+  const headingInNavigation = inPlatformShell && visibleLinks.some(link => link.href === pathname && link.href !== `/org/${organization.slug}`);
 
   return (
     <main className="org-page">
@@ -81,11 +91,11 @@ function OrgAccountWorkspace({ orgSlug, children, user }: Props & { user: Return
         <p className="org-lead">{t('企业认证、学员与教学事务，在这里统一管理。', 'Manage verification, students and teaching in one place.')}</p>
       </header>
       <nav className="org-nav" aria-label={t('机构导航', 'Organization navigation')}>
-        {links.filter((link) => !link.permission || hasTeachingPermission(organization.role, link.permission)).map((link) => (
+        {visibleLinks.map((link) => (
           <AppLink key={link.href} href={link.href} aria-current={(link.href === `/org/${organization.slug}` ? pathname === link.href : pathname === link.href || pathname.startsWith(`${link.href}/`)) ? 'page' : undefined} prefetch={false}>{link.label}</AppLink>
         ))}
       </nav>
-      <div className="org-content">{children(organization)}</div>
+      <div className="org-content"><OrgNavigationTitleContext value={headingInNavigation}>{children(organization)}</OrgNavigationTitleContext></div>
     </main>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { ArrowRight, Play } from '@app-foundation/icons/lucide';
+import { ArrowRight, Bell, BookOpen, ChartNoAxesColumnIncreasing, IdCard, Layers, MessagesSquare, Play, Timer, UserRound } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { SHOP_ROOT } from '@/lib/shop';
 import { fetchTeacherDirectory, type TeacherDirectoryEntry } from '@/lib/teacher-directory-api';
@@ -14,12 +14,21 @@ import type { TeachingLearningContext } from '@cuberoot/shared/teaching';
 import type { TeachingOrganizationAccess } from '@/lib/teaching-saas-api';
 import type { PlatformEntity } from '@/lib/platform-types';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { courseCatalogDetails } from '@/lib/platform-course-catalog';
 
 export function PlatformLanding() {
   const t = useT();
   const [teachers, setTeachers] = useState<TeacherDirectoryEntry[]>([]);
+  const [teachersLoading, setTeachersLoading] = useState(true);
   const [teachersError, setTeachersError] = useState(false);
-  useEffect(() => { let active = true; void fetchTeacherDirectory().then(items => { if (active) setTeachers(items.filter(item => item.kind === 'teacher').slice(0, 6)); }).catch(() => { if (active) setTeachersError(true); }); return () => { active = false; }; }, []);
+  useEffect(() => {
+    let active = true;
+    void fetchTeacherDirectory()
+      .then(items => { if (active) setTeachers(items.filter(item => item.kind === 'teacher').slice(0, 3)); })
+      .catch(() => { if (active) setTeachersError(true); })
+      .finally(() => { if (active) setTeachersLoading(false); });
+    return () => { active = false; };
+  }, []);
   const user = useAuthUser();
   const isAdmin = useIsAdmin();
   const [mounted, setMounted] = useState(false);
@@ -102,12 +111,21 @@ export function PlatformLanding() {
   const firstLearningContext = learningContexts[0];
   const firstOrganization = organizations[0];
   const hasWorkspaces = instructor || Boolean(firstOrganization) || (mounted && isAdmin);
+  const learningTitle = currentCourse?.title ?? firstLearningContext?.student.displayName
+    ?? (partialFailure ? t('浏览课程', 'Browse courses') : t('开始你的第一门课', 'Start your first course'));
+  const learningDescription = currentCourse
+    ? nextProgress?.title
+    : firstLearningContext?.organization.name ?? t('选择适合自己的课程', 'Choose a course for your level');
+  const learningHref = currentCourse ? continueHref : firstLearningContext ? '/learn' : '/platform/courses';
+  const learningAction = currentCourse ? t('继续学习', 'Continue learning')
+    : firstLearningContext ? t('查看学习档案', 'View learning record') : t('查看全部课程', 'View all courses');
+  const learningCover = currentCourse && courseCatalogDetails(currentCourse).coverUrl;
 
   const discovery = [
-    { href: '/platform/courses', title: t('系统课程', 'Structured courses'), description: t('按主题找到课程、课时与学习路径。', 'Find courses, lessons, and paths by topic.') },
-    { href: '/platform/teachers', title: t('讲师名录', 'Teacher directory'), description: t('查看主站中的真实讲师资料与教学方向。', 'Meet teachers and explore their specialties.') },
-    { href: '/platform/community', title: t('学习社区', 'Learning community'), description: t('把问题、经验与学习成果带到讨论中。', 'Bring questions, experience, and progress into the discussion.') },
-    { href: '/platform/events', title: t('活动与实践', 'Events and practice'), description: t('参加活动，并继续使用主站计时器与公式库练习。', 'Join events and keep practicing with the main-site tools.') },
+    { href: '/platform/courses', title: t('系统课程', 'Structured courses'), description: t('按主题与学习阶段选课', 'Courses by topic and skill level'), icon: BookOpen },
+    { href: '/platform/teachers', title: t('讲师名录', 'Teacher directory'), description: t('认识讲师与他们的教学方向', 'Meet teachers and explore their specialties'), icon: IdCard },
+    { href: '/platform/community', title: t('学习社区', 'Learning community'), description: t('分享练习、心得与学习成果', 'Share practice, insights, and progress'), icon: MessagesSquare },
+    { href: '/platform/events', title: t('活动与实践', 'Events and practice'), description: t('参加活动与专项练习', 'Join events and practice your skills'), icon: Timer },
   ];
 
   return (
@@ -136,63 +154,70 @@ export function PlatformLanding() {
       </section>
 
       <section className="platform-instructors" aria-labelledby="platform-instructors-title">
-        <div className="platform-instructors-heading">
-
-          <h2 id="platform-instructors-title">{t('找到合拍的老师。', 'Find your kind of teacher.')}</h2>
-          <p>{t('一个项目，不止一位老师。一位老师，也不止一种可能。', 'More than one teacher for every puzzle. More than one path with every teacher.')}</p>
+        <div className="platform-instructors-header">
+          <div className="platform-instructors-heading">
+            <h2 id="platform-instructors-title">{t('找到合拍的老师。', 'Find your kind of teacher.')}</h2>
+            <p>{t('一个项目，不止一位老师。一位老师，也不止一种可能。', 'More than one teacher for every puzzle. More than one path with every teacher.')}</p>
+          </div>
+          <AppLink className="platform-home-secondary" href="/teachers" prefetch={false}>{t('查看全部讲师', 'View all teachers')}<ArrowRight aria-hidden /></AppLink>
         </div>
-        <div className="platform-instructor-grid">
-          {teachers.map(teacher => <article key={teacher.id} className="platform-instructor-card" data-site-surface="panel">
-            {teacher.images[0] && <img className="platform-entity-cover" src={teacher.images[0].url} alt="" loading="lazy" />}
-            <div className="platform-instructor-info">
-              <h3><AppLink href={`/teachers?teacher=${teacher.id}`} prefetch={false}>{t(teacher.nameZh || teacher.nameEn, teacher.nameEn || teacher.nameZh)}</AppLink></h3>
-              <p>{t(teacher.descriptionZh || teacher.descriptionEn, teacher.descriptionEn || teacher.descriptionZh)}</p>
-            </div>
-          </article>)}
-        </div>
-        {teachersError && <p role="status">{t('讲师资料暂时无法加载。', 'Teacher profiles are temporarily unavailable.')}</p>}
-        <AppLink className="platform-button" href="/teachers" prefetch={false}>{t('浏览完整讲师名录', 'Browse the teacher directory')}<ArrowRight aria-hidden /></AppLink>
+        {teachers.length > 0 ? (
+          <div className="platform-instructor-grid">
+            {teachers.map(teacher => {
+              const photo = teacher.images.find(item => item.kind === 'teaching')
+                ?? teacher.images.find(item => item.kind === 'portrait') ?? teacher.images[0];
+              const specialties = t(
+                teacher.specialtiesZh.join(' · ') || teacher.specialtiesEn.join(' · '),
+                teacher.specialtiesEn.join(' · ') || teacher.specialtiesZh.join(' · '),
+              );
+              return <AppLink key={teacher.id} className="platform-instructor-card" href={`/teachers?teacher=${teacher.id}`} prefetch={false}>
+                <div className="platform-instructor-cover">
+                  <UserRound aria-hidden />
+                  {photo && <img src={photo.url} alt="" loading="lazy" onError={event => { event.currentTarget.hidden = true; }} />}
+                </div>
+                <div className="platform-instructor-info">
+                  <h3>{t(teacher.nameZh || teacher.nameEn, teacher.nameEn || teacher.nameZh)}</h3>
+                  <p>{specialties || t(teacher.descriptionZh || teacher.descriptionEn, teacher.descriptionEn || teacher.descriptionZh)}</p>
+                </div>
+              </AppLink>;
+            })}
+          </div>
+        ) : (
+          <div className="platform-instructors-empty" role="status">
+            {teachersLoading ? <LoadingIndicator>{t('正在读取讲师资料…', 'Loading teachers…')}</LoadingIndicator>
+              : teachersError ? t('讲师资料暂时无法加载。', 'Teacher profiles are temporarily unavailable.')
+                : t('暂无公开讲师资料。', 'No public teacher profiles yet.')}
+          </div>
+        )}
       </section>
 
       {signedIn ? (
         <section className="platform-home-learning" aria-labelledby="platform-home-learning-title">
           <div className="platform-home-section-heading">
-            <span>{t('你的下一步', 'Your next step')}</span>
-            <h2 id="platform-home-learning-title">{t(`${user?.name ?? ''}，继续上次的学习。`, `Continue where you left off, ${user?.name ?? ''}.`)}</h2>
+            <h2 id="platform-home-learning-title">{t('你的下一步', 'Your next step')}</h2>
           </div>
           {loading ? (
             <p className="platform-home-status" role="status" aria-busy="true" aria-live="polite"><LoadingIndicator>{t('正在读取学习进度与工作区…', 'Loading your learning and workspaces…')}</LoadingIndicator></p>
-          ) : currentCourse ? (
-            <AppLink className="platform-home-resume platform-entry-link" data-site-surface="panel" href={continueHref} prefetch={false}>
-              <span>
-                <small>{t('继续课程', 'Continue course')}</small>
-                <strong>{currentCourse.title}</strong>
-                {nextProgress ? <span>{nextProgress.title}</span> : null}
-              </span>
-              <span className="platform-home-progress">
-                {progressBps === null ? t('打开', 'Open') : `${Math.round(progressBps / 100)}%`}
-                <ArrowRight aria-hidden />
-              </span>
-            </AppLink>
-          ) : firstLearningContext ? (
-            <AppLink className="platform-home-resume platform-entry-link" data-site-surface="panel" href="/learn" prefetch={false}>
-              <span>
-                <small>{firstLearningContext.organization.name}</small>
-                <strong>{firstLearningContext.student.displayName}</strong>
-                <span>{t('打开主站学习档案', 'Open the main-site learning record')}</span>
-              </span>
-              <span className="platform-home-progress">{t('查看', 'View')}<ArrowRight aria-hidden /></span>
-            </AppLink>
           ) : (
-            <div className="platform-home-empty">
-              <p>{t('还没有进行中的课程。先选一门真正想学的内容。', 'No course is in progress yet. Start with something you genuinely want to learn.')}</p>
-              <AppLink className="platform-button" href="/platform/courses" prefetch={false}>{t('查看全部课程', 'See all courses')}<ArrowRight aria-hidden /></AppLink>
-            </div>
+            <AppLink className="platform-home-resume platform-entry-link" data-has-cover={Boolean(learningCover)} data-site-surface="panel" href={learningHref} prefetch={false}>
+              {learningCover && <span className="platform-home-learning-cover">
+                <Image src={learningCover} alt="" fill sizes="(max-width: 479px) 112px, 224px" unoptimized={!learningCover.startsWith('/')} onError={event => { event.currentTarget.hidden = true; }} />
+              </span>}
+              <span className="platform-home-learning-copy">
+                <strong>{learningTitle}</strong>
+                {learningDescription && <small>{learningDescription}</small>}
+                {currentCourse && progressBps !== null && <span className="platform-home-progress">
+                  <progress max={10_000} value={progressBps} aria-label={t('课程进度', 'Course progress')} />
+                  <span>{Math.round(progressBps / 100)}%</span>
+                </span>}
+              </span>
+              <span className="platform-button platform-button-primary platform-home-learning-action">{learningAction}<ArrowRight aria-hidden /></span>
+            </AppLink>
           )}
           <div className="platform-home-quick-links">
-            <AppLink className="platform-button" href="/platform/progress" prefetch={false}>{t('学习进度', 'Learning progress')}</AppLink>
-            <AppLink className="platform-button" href="/platform/notifications" prefetch={false}>{t('消息', 'Messages')}</AppLink>
-            <AppLink className="platform-button" href="/platform/account/courses" prefetch={false}>{t('我的课程', 'My courses')}</AppLink>
+            <AppLink className="platform-home-quick-link" href="/platform/progress" prefetch={false}><ChartNoAxesColumnIncreasing aria-hidden />{t('学习进度', 'Learning progress')}</AppLink>
+            <AppLink className="platform-home-quick-link" href="/platform/notifications" prefetch={false}><Bell aria-hidden />{t('消息', 'Messages')}</AppLink>
+            <AppLink className="platform-home-quick-link" href="/platform/account/courses" prefetch={false}><Layers aria-hidden />{t('我的课程', 'My courses')}</AppLink>
           </div>
           {partialFailure ? <p className="platform-home-note">{t('部分个人入口暂时未能加载，公开内容仍可正常使用。', 'Some personal entries could not load; public content is still available.')}</p> : null}
         </section>
@@ -200,14 +225,16 @@ export function PlatformLanding() {
 
       <section className="platform-home-discovery" aria-labelledby="platform-home-discovery-title">
         <div className="platform-home-section-heading">
-          <span>{t('从需求出发', 'Start with the need')}</span>
           <h2 id="platform-home-discovery-title">{t('现在想做什么？', 'What do you want to do now?')}</h2>
         </div>
         <div className="platform-home-action-list">
           {discovery.map((item) => (
-            <AppLink key={item.href} className="platform-entry-link" data-site-surface="panel" href={item.href} prefetch={false}>
-              <span><strong>{item.title}</strong><small>{item.description}</small></span>
-              <ArrowRight aria-hidden />
+            <AppLink key={item.href} className="platform-home-tile" data-site-surface="panel" href={item.href} prefetch={false}>
+              <item.icon className="platform-home-tile-icon" aria-hidden strokeWidth={1.7} />
+              <span className="platform-home-tile-copy">
+                <strong>{item.title}</strong><ArrowRight aria-hidden />
+                <small>{item.description}</small>
+              </span>
             </AppLink>
           ))}
         </div>
@@ -216,7 +243,6 @@ export function PlatformLanding() {
       {signedIn && hasWorkspaces ? (
         <section className="platform-home-workspaces" aria-labelledby="platform-home-workspaces-title">
           <div className="platform-home-section-heading">
-            <span>{t('身份与协作', 'Roles and collaboration')}</span>
             <h2 id="platform-home-workspaces-title">{t('你的工作区', 'Your workspaces')}</h2>
           </div>
           <div className="platform-home-workspace-list">

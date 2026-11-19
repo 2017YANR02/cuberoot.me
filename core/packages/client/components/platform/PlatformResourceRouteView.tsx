@@ -2,7 +2,7 @@
 
 import PageBackLink from '@/components/PageBackLink';
 import { currentEntryHref } from '@/lib/entry-navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, ExternalLink, Search } from '@app-foundation/icons/lucide';
 import { parseAsFloat, parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
@@ -15,6 +15,8 @@ import { useLang } from '@/i18n/tr';
 import { nextQuery, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { executePlatformAction, loadPlatformResource, localizePlatformEntity, PlatformPermissionError } from '@/lib/platform-gateway';
 import { fillPlatformParams, PLATFORM_ROUTES } from '@/lib/platform-routes';
+import { platformNavigationState, platformWorkspaceRoutes } from '@/lib/platform-navigation';
+import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
 import type { PlatformActionId, PlatformActionResult, PlatformEntity, PlatformResourceResult, PlatformRouteDefinition } from '@/lib/platform-types';
 import { PlatformState } from './PlatformState';
 import { PlatformDomainActions } from './PlatformDomainActions';
@@ -49,6 +51,7 @@ export function PlatformResourceRouteView({
   const lang = useLang();
   const user = useAuthUser();
   const isAdmin = useIsAdmin();
+  const inPlatformShell = useContext(PlatformNavigationContext);
   const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useQueryState('q', parseAsString.withDefault(''));
   const [rawPage, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
@@ -293,25 +296,33 @@ export function PlatformResourceRouteView({
     ? t('课程会员用于解锁课程，与网站支持会员分开购买。', 'Course memberships unlock lessons and are purchased separately from site supporter memberships.')
     : '');
   const orderUnavailable = ['order-detail', 'admin-order'].includes(definition.id) && (!!error || !result || !sortedItems[0]);
+  const navigation = inPlatformShell && !courseDetail
+    ? platformNavigationState(`/platform/${fillPlatformParams(definition.pattern, params)}`) : null;
+  const workspaceRoutes = navigation ? platformWorkspaceRoutes(definition, Boolean(user), isAdmin) : [];
+  const headingInNavigation = navigation?.secondary === definition.id || workspaceRoutes.some(item => item.id === definition.id);
+  const showAreaTitle = !inviteManager && !orderPage && !courseCatalog && areaTitle !== pageTitle
+    && !navigation?.primary && workspaceRoutes.length === 0;
+  const showDescription = !courseSection && !courseDetail && !inviteManager && !orderPage && Boolean(pageDescription);
+  const showCourseBack = courseSection && Boolean(params.id);
+  const heading = <h1 className={headingInNavigation ? 'sr-only' : undefined}>{pageTitle}</h1>;
+  const showHeader = !headingInNavigation || showAreaTitle || showDescription || showCourseBack;
 
   return (
     <div className={`platform-route${courseDetail ? ' platform-course-detail' : ''}${courseSection ? ' platform-course-classroom' : ''}${inviteManager ? ' platform-invite-page' : ''}`}>
-      {!course && <header className="platform-route-header">
+      {!course && (showHeader ? <header className="platform-route-header">
         <div className="platform-route-heading">
-          {courseSection && params.id ? <div>
+          {showCourseBack ? <div>
             <PageBackLink className="platform-home-secondary" fallback={`/platform/courses/${encodeURIComponent(params.id)}`} prefetch={false} />
           </div> : null}
-          {!inviteManager && !orderPage ? <div className="platform-route-labels">
-            {!courseCatalog && areaTitle !== pageTitle ? <span className="platform-route-area">{areaTitle}</span> : null}
-          </div> : null}
-          <h1>{pageTitle}</h1>
-          {!courseSection && !courseDetail && !inviteManager && !orderPage && pageDescription ? <p>{pageDescription}</p> : null}
+          {showAreaTitle && <div className="platform-route-labels"><span className="platform-route-area">{areaTitle}</span></div>}
+          {heading}
+          {showDescription && <p>{pageDescription}</p>}
         </div>
-      </header>}
+      </header> : heading)}
 
-      {newRoute ? <p><AppLink className="platform-button platform-button-primary" href={`/platform/${newRoute.pattern}`} prefetch={false}>{titleFor(t, newRoute)}</AppLink></p> : null}
+      {newRoute ? <div className="platform-route-actions"><AppLink className="platform-button platform-button-primary" href={`/platform/${newRoute.pattern}`} prefetch={false}>{titleFor(t, newRoute)}</AppLink></div> : null}
       {['admin', 'admin-event-analytics'].includes(definition.id) && allowed ? <CompactSelect label={t('统计范围', 'Period')} ariaLabel={t('统计范围', 'Period')} value={String(days)} items={[{ value: '7', label: t('最近 7 天', 'Last 7 days') }, { value: '30', label: t('最近 30 天', 'Last 30 days') }, { value: '90', label: t('最近 90 天', 'Last 90 days') }]} onChange={value => { void setDays(Number(value)); }} /> : null}
-      {definition.id === 'events' ? <p><AppLink href="/platform/events/preview" prefetch={false} className="platform-button">{t('体验线上赛事流程', 'Explore online competitions')}<ArrowRight aria-hidden /></AppLink></p> : null}
+      {definition.id === 'events' ? <div className="platform-route-actions"><AppLink href="/platform/events/preview" prefetch={false} className="platform-button">{t('体验线上赛事流程', 'Explore online competitions')}<ArrowRight aria-hidden /></AppLink></div> : null}
 
       {definition.id === 'about' ? (
         <PlatformAboutView />

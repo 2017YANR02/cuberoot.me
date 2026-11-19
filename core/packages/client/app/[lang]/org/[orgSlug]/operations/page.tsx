@@ -11,7 +11,7 @@ import {
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { getTeachingOperationsOverview, listTeachingCreditAdjustments } from '@/lib/teaching-saas-api';
-import OrgWorkspace from '../../_components/OrgWorkspace';
+import OrgWorkspace, { OrgSectionTitle } from '../../_components/OrgWorkspace';
 import {
   creditLedgerEntryLabel,
   TeachingPagination,
@@ -88,7 +88,7 @@ function OperationsContent({
 
   return (
     <>
-      <h2>{t('经营概览', 'Operations overview')}</h2>
+      <OrgSectionTitle>{t('经营概览', 'Operations overview')}</OrgSectionTitle>
       <p className="org-lead">
         {overview.range.fromDate} – {overview.range.throughDate} ({overview.range.timezone})
       </p>

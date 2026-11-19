@@ -13,6 +13,19 @@ export const PLATFORM_SECTION_NAV: Record<PlatformPrimary, readonly NavItem[]> =
   organizations: [item('org', '/platform/org', '机构工作台', 'Organization workspace')],
 };
 
+export const PLATFORM_PERSONAL_ROUTES = PLATFORM_ROUTES.filter(item => [
+  'account-courses', 'progress', 'orders', 'account-invites', 'account-favorites', 'account-notes',
+  'account-badges', 'me-membership', 'account-shipping', 'community-mine',
+].includes(item.id));
+
+export function platformWorkspaceRoutes(definition: PlatformRouteDefinition | undefined, signedIn: boolean, isAdmin: boolean) {
+  const personalPage = definition?.area === 'account' || definition?.id === 'progress' || definition?.id === 'orders' || definition?.id === 'order-detail';
+  return PLATFORM_ROUTES.filter(item => !item.pattern.includes(':') && item.kind !== 'form'
+    && (definition?.area === 'admin' ? isAdmin && item.area === 'admin'
+      : definition?.area === 'instructor' && definition.id !== 'teacher-apply' ? signedIn && item.access === 'instructor'
+        : personalPage ? signedIn && PLATFORM_PERSONAL_ROUTES.includes(item) : false));
+}
+
 export function platformPathname(pathname: string): string {
   return pathname.replace(/^\/(en|zh)(?=\/|$)/, '').split(/[?#]/, 1)[0].replace(/\/$/, '') || '/';
 }

@@ -20,7 +20,7 @@ import { useT } from '@/hooks/useT';
 import { listTeachingAuditEvents } from '@/lib/teaching-saas-api';
 import { cellAddress, type SpreadsheetSheet } from '@/lib/spreadsheet-model';
 import { escapeSpreadsheetTextCell, exportSpreadsheetCsv } from '@/lib/spreadsheet-export';
-import OrgWorkspace from '../../_components/OrgWorkspace';
+import OrgWorkspace, { OrgSectionTitle } from '../../_components/OrgWorkspace';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 30;
@@ -137,7 +137,7 @@ function AuditContent({
 
   return (
     <>
-      <h2>{t('审计日志', 'Audit log')}</h2>
+      <OrgSectionTitle>{t('审计日志', 'Audit log')}</OrgSectionTitle>
       <p className="org-lead">{t('查看机构内的重要读取、写入与拒绝记录。搜索匹配操作人、操作、对象和请求编号。', 'Review important reads, writes, and denied actions in this organization. Search matches actors, actions, entities, and request IDs.')}</p>
 
       <div className="org-form">

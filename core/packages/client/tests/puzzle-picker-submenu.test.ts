@@ -173,3 +173,42 @@ it('searches bilingual leaves without changing IDs and keeps shortcuts after WCA
   expect(document.activeElement).toBe(host.querySelector('.pp-trigger'));
   localStorage.removeItem(discovery.storageKey);
 });
+
+it('uses the compact filter trigger, searches only available projects and clears the filter from the first menu row', () => {
+  const onSelect = vi.fn();
+  const available = new Set(['333', 'minx', '222', '444']);
+  const props = {
+    isZh: true, selectedEvent: '333', wcaEvents: available, availableEvents: available,
+    leadingGroups: [{ id: 'all', label: '', items: [{ id: '', label: '全部项目' }] }],
+    placeholderLabel: '全部项目', showTriggerLabel: true, showArrow: true, triggerVariant: 'pill' as const,
+    discovery: { searchLabel: 'Search puzzles', clearLabel: 'Clear search', emptyLabel: 'No results', resultsLabel: '' },
+    onSelect,
+  };
+  act(() => root.render(createElement(PuzzlePicker, props)));
+  const trigger = host.querySelector<HTMLButtonElement>('.compact-select > .compact-select-trigger')!;
+  expect(trigger.querySelector('.compact-select-current')?.textContent).toBe('三阶');
+  expect(trigger.querySelector('.compact-select-arrow')).not.toBeNull();
+  act(() => trigger.click());
+  expect(host.querySelector('.pp-favorite')).toBeNull();
+  const rows = () => [...host.querySelectorAll<HTMLButtonElement>('.pp-search-results .pp-item')];
+  expect(rows()[0].textContent).toBe('全部项目');
+  expect(rows().length).toBe(available.size + 1);
+  const input = host.querySelector<HTMLInputElement>('.pp-discovery input')!;
+  const search = (value: string) => act(() => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  search('not an available puzzle');
+  expect(rows()).toHaveLength(0);
+  expect(host.querySelector('.pp-empty')?.textContent).toBe('No results');
+  search('三阶');
+  expect(rows()).toHaveLength(1);
+  search('Megaminx');
+  expect(rows()).toHaveLength(1);
+  act(() => rows()[0].click());
+  expect(onSelect).toHaveBeenLastCalledWith('minx');
+  act(() => trigger.click());
+  expect(rows()[0].textContent).toBe('全部项目');
+  act(() => rows()[0].click());
+  expect(onSelect).toHaveBeenLastCalledWith('');
+});

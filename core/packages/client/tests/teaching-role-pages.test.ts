@@ -4,11 +4,11 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { TeachingLearningContext } from '@cuberoot/shared/teaching';
 
-const mocks = vi.hoisted(() => ({ user: null as null | { uid: number }, contexts: vi.fn(), orgContexts: vi.fn(), organization: vi.fn(), organizations: vi.fn(), createOrganization: vi.fn(), t: (zh: string) => zh }));
+const mocks = vi.hoisted(() => ({ user: null as null | { uid: number }, contexts: vi.fn(), orgContexts: vi.fn(), organization: vi.fn(), organizations: vi.fn(), createOrganization: vi.fn(), t: (zh: string) => zh, pathname: '/org/fixture' }));
 vi.mock('@/hooks/useT', () => ({ useT: () => mocks.t }));
 vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => mocks.user, getSessionToken: () => mocks.user ? `fixture-${mocks.user.uid}` : '', nextQuery: () => '', hasAdminAccess: () => false }));
 vi.mock('@/lib/teaching-saas-api', () => ({ listTeachingLearningContexts: mocks.contexts, listTeachingOrganizationLearningContexts: mocks.orgContexts, getTeachingOrganization: mocks.organization, listTeachingOrganizations: mocks.organizations, createTeachingOrganization: mocks.createOrganization }));
-vi.mock('next/navigation', () => ({ usePathname: () => '/org/fixture' }));
+vi.mock('next/navigation', () => ({ usePathname: () => mocks.pathname }));
 vi.mock('@/components/AppLink', () => ({ default: ({ children, href }: { children: ReactNode; href: string }) => createElement('a', { href }, children) }));
 vi.mock('@/components/PageHeading', () => ({ default: ({ children }: { children: ReactNode }) => createElement('h1', {}, children) }));
 vi.mock('@/components/BackHome', () => ({ default: () => null }));
@@ -18,18 +18,35 @@ vi.mock('@/app/[lang]/org/_components/OrgUi', () => ({ MutationMessage: ({ messa
 vi.mock('@/app/[lang]/org/_components/EnterpriseVerificationAdmin', () => ({ default: () => null }));
 import LearningCenterPage from '@/app/[lang]/learn/page';
 import OrganizationsPage from '@/app/[lang]/org/page';
-import OrgWorkspace from '@/app/[lang]/org/_components/OrgWorkspace';
+import OrgWorkspace, { OrgSectionTitle } from '@/app/[lang]/org/_components/OrgWorkspace';
+import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
 import LearnerWorkspace from '@/components/teaching/LearnerWorkspace';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root, host: HTMLDivElement;
-beforeEach(() => { vi.clearAllMocks(); mocks.user = { uid: 1 }; host = document.createElement('div'); root = createRoot(host); });
+beforeEach(() => { vi.clearAllMocks(); mocks.user = { uid: 1 }; mocks.pathname = '/org/fixture'; host = document.createElement('div'); root = createRoot(host); });
 afterEach(async () => { await act(async () => root.unmount()); });
 const context = (kind: 'student' | 'guardian', name: string): TeachingLearningContext => ({
   organization: { id: `org-${name}`, slug: name, name: `机构 ${name}`, timezone: 'Asia/Shanghai', status: 'active' },
   student: { id: `student-${name}`, displayName: `学员 ${name}`, status: 'active' },
   relationships: kind === 'student' ? [{ kind: 'student' }] : [{ kind: 'guardian', guardianLinkId: 'guardian', relationship: '家长' }],
 } as TeachingLearningContext);
+
+it('hides a repeated organization section title only when its visible navigation represents it inside Platform', async () => {
+  mocks.organization.mockResolvedValue({ id: 'org', slug: 'fixture', name: '测试机构', role: 'owner', status: 'active' });
+  const render = async (path: string, inPlatform: boolean) => {
+    mocks.pathname = path;
+    await act(async () => root.render(createElement(PlatformNavigationContext, { value: inPlatform },
+      createElement(OrgWorkspace, { orgSlug: 'fixture', children: () => createElement(OrgSectionTitle, null, '学员') }))));
+  };
+  await render('/zh/platform/org/fixture/students', true);
+  expect(host.querySelector('h1')?.textContent).toBe('测试机构');
+  expect(host.querySelector('h2')?.classList.contains('sr-only')).toBe(true);
+  await render('/zh/org/fixture/students', false);
+  expect(host.querySelector('h2')?.classList.contains('sr-only')).toBe(false);
+  await render('/zh/platform/org/fixture/students/example', true);
+  expect(host.querySelector('h2')?.classList.contains('sr-only')).toBe(false);
+});
 
 it('renders student training access and guardian learner links from their own contexts', async () => {
   mocks.contexts.mockResolvedValueOnce([context('student', 'self')]).mockResolvedValueOnce([context('guardian', 'child')]);

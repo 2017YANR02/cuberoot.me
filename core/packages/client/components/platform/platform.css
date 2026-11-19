@@ -379,12 +379,11 @@ body[data-site-scenery] :is(
 .platform-home-discovery,
 .platform-home-workspaces {
   display: grid;
-  grid-template-columns: minmax(180px, 0.3fr) minmax(0, 1fr);
-  gap: 16px 32px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
   padding-top: 0;
 }
 
-.platform-home-section-heading span,
 .platform-home-more > span {
   color: var(--faint-foreground);
   font-size: 0.8125rem;
@@ -394,42 +393,53 @@ body[data-site-scenery] :is(
 }
 
 .platform-home-section-heading h2 {
-  max-width: none;
-  margin: 8px 0 0;
-  font-size: 1.125rem;
+  margin: 0;
+  font-size: 1.25rem;
   line-height: 1.5;
   letter-spacing: normal;
   font-weight: 600;
 }
 
-.platform-home-status,
-.platform-home-empty,
-.platform-home-resume,
-.platform-home-action-list,
-.platform-home-workspace-list,
-.platform-home-quick-links,
-.platform-home-note {
-  grid-column: 2;
-}
-
-.platform-home-section-heading { grid-column: 1; grid-row: 1; }
-.platform-home-section-heading + * { grid-row: 1; }
-
 .platform-home-status {
   margin: 0;
+  padding: 20px 0;
   color: var(--muted-foreground);
   font-size: 0.875rem;
 }
 
-.platform-home-resume > span:first-child {
+.platform-home-learning .platform-home-resume {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  padding: 20px 24px;
+  min-height: 104px;
+}
+
+.platform-home-learning .platform-home-resume[data-has-cover='true'] {
+  grid-template-columns: minmax(120px, 0.27fr) minmax(0, 1fr) auto;
+  padding: 12px 20px 12px 12px;
+}
+
+.platform-home-learning-cover {
+  position: relative;
   display: grid;
-  gap: 5px;
+  place-items: center;
+  aspect-ratio: 2;
+  min-height: 88px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+
+.platform-home-learning-cover img { object-fit: cover; }
+
+.platform-home-learning-copy {
+  display: grid;
+  gap: 6px;
   min-width: 0;
 }
 
-.platform-home-resume small,
-.platform-home-resume > span:first-child > span,
-.platform-home-action-list small,
+.platform-home-learning-copy small,
 .platform-home-workspace-list small {
   color: var(--muted-foreground);
   font-size: 0.8125rem;
@@ -437,11 +447,9 @@ body[data-site-scenery] :is(
   line-height: 1.5;
 }
 
-.platform-home-resume strong {
-  overflow: hidden;
-  font-size: 1rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.platform-home-learning-copy strong {
+  font-size: 1.2rem;
+  overflow-wrap: anywhere;
 }
 
 .platform-home-resume:hover strong,
@@ -455,41 +463,48 @@ body[data-site-scenery] :is(
   align-items: center;
   gap: 8px;
   color: var(--primary);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
 }
 
-.platform-home-progress svg,
-.platform-home-empty svg,
-.platform-home-action-list svg,
+.platform-home-progress progress {
+  width: min(100%, 180px);
+  min-width: 0;
+  height: 7px;
+  accent-color: var(--accent);
+}
+
+.platform-home-learning-action { justify-self: end; }
+
+.platform-home-learning-action svg,
+.platform-home-quick-links svg,
+.platform-home-tile-copy svg,
 .platform-home-workspace-list svg {
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
 }
 
-.platform-home-empty {
-  padding-block: 8px;
-}
-
-.platform-home-empty p {
-  margin: 0 0 10px;
-  color: var(--muted-foreground);
-  font-size: 0.875rem;
-  line-height: 1.65;
-}
-
 .platform-home-quick-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  align-items: center;
+  gap: 8px 22px;
   margin-top: 0;
 }
 
-.platform-home-quick-links .platform-button {
+.platform-home-quick-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  color: var(--muted-foreground);
   font-size: 0.8125rem;
+  font-weight: 550;
+  text-decoration: none;
 }
+.platform-home-quick-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: 3px; }
 
 .platform-home-note {
   margin: 0;
@@ -497,11 +512,16 @@ body[data-site-scenery] :is(
   font-size: 0.8125rem;
 }
 
-.platform-home-action-list,
+.platform-home-action-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
 .platform-home-workspace-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 10px;
 }
 
 .platform-entry-link {
@@ -539,14 +559,58 @@ body[data-site-scenery] :is(
   }
 }
 
-.platform-home-action-list a > span,
+.platform-home-tile {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  min-width: 0;
+  min-height: 134px;
+  padding: 18px 20px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+  text-decoration: none;
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
+.platform-home-tile:hover { background: var(--muted); border-color: var(--border-strong); }
+.platform-home-tile-icon { width: 32px; height: 32px; color: var(--foreground); }
+
+.platform-home-tile-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+.platform-home-tile-copy small {
+  grid-column: 1 / -1;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.platform-home-tile:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+
+.platform-home-workspace-list .platform-entry-link {
+  min-height: 60px;
+  padding: 10px 14px;
+}
+
 .platform-home-workspace-list a > span {
   display: grid;
   gap: 5px;
   min-width: 0;
 }
 
-.platform-home-action-list strong,
+.platform-home-tile strong {
+  overflow-wrap: anywhere;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
 .platform-home-workspace-list strong {
   overflow-wrap: anywhere;
   font-size: 0.875rem;
@@ -621,6 +685,13 @@ body[data-site-scenery] :is(
 
 .platform-route-header {
   margin-bottom: 24px;
+}
+
+.platform-route-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .platform-toolbar {
@@ -1345,6 +1416,12 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
 
 .platform-review-heading h2 { margin: 0; font-size: 1.125rem; font-weight: 600; }
 .platform-review-actions .platform-button { min-height: 44px; }
+.platform-review-actions > .platform-domain-stack {
+  margin-top: 0;
+  gap: 8px;
+  align-self: flex-start;
+}
+.platform-review-actions > .platform-button { align-self: flex-start; }
 .platform-review-eligibility, .platform-review-empty { color: var(--muted-foreground); }
 .platform-review-empty { margin: 0; padding-block: 8px; }
 .platform-review-layout { display: grid; gap: 20px; align-items: start; min-width: 0; }
@@ -1814,13 +1891,14 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
   isolation: isolate;
   padding-block: 0;
 }
-.platform-instructors > a {
-  display: inline-flex;
+.platform-instructors-header {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
+  flex-wrap: wrap;
+  gap: 8px 20px;
 }
-.platform-instructors > a svg { width: 16px; height: 16px; }
+.platform-instructors-header > a { flex-shrink: 0; }
 
 .platform-instructors-heading h2 {
   margin: 0 0 8px;
@@ -1832,10 +1910,46 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
 .platform-instructors-heading p { color: var(--muted-foreground); line-height: 1.7; margin: 0; }
 .platform-instructors-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 16px 24px; margin-block: 30px; }
 .platform-instructors-toolbar p { color: var(--muted-foreground); font-size: 0.8125rem; line-height: 1.7; margin: 0; }
-.platform-instructor-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px;
-  margin-top: 16px;
+.platform-instructor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 14px;
 }
-.platform-instructor-card { min-width: 0; display: flex; flex-direction: column; transition: transform 250ms ease; }
+.platform-instructor-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: var(--foreground);
+}
+.platform-instructor-cover {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+.platform-instructor-cover > svg { width: 40px; height: 40px; }
+.platform-instructor-cover img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+  transition: transform 200ms ease;
+}
+.platform-instructors-empty {
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
 .platform-instructor-portrait {
   aspect-ratio: 1;
   border-radius: 30px;
@@ -1847,30 +1961,33 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
 .platform-instructor-info {
   position: relative;
   margin: 0;
-  padding: 16px 0;
+  padding: 8px 2px 0;
   border-radius: 0;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
 }
 .platform-instructor-focus { font-size: 0.8125rem; color: var(--muted-foreground); line-height: 1.5; }
-.platform-instructor-info h3 { margin: 0 0 8px; font-size: 1.125rem; letter-spacing: normal; line-height: 1.5; }
-.platform-instructor-info p { color: var(--muted-foreground); font-size: 0.875rem; line-height: 1.7; margin: 0; }
+.platform-instructor-info h3 { margin: 0 0 2px; font-size: 1rem; letter-spacing: normal; line-height: 1.5; overflow-wrap: anywhere; }
+.platform-instructor-info p { color: var(--muted-foreground); font-size: 0.8125rem; line-height: 1.5; margin: 0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .platform-instructor-events { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: auto; }
 .platform-instructor-events > span { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 30px; background: color-mix(in srgb, var(--foreground) 6%, transparent); white-space: nowrap; font-size: 0.8125rem; }
 .platform-instructor-events svg { width: 16px; height: 16px; }
 .platform-instructor-availability { margin-top: 20px; color: var(--muted-foreground); font-size: 0.8125rem; }
-@media (hover: hover) {
-  .platform-instructor-card:hover { transform: translateY(-6px); }
-  .platform-instructor-card:hover .platform-instructor-info { border-color: color-mix(in srgb, var(--foreground) 25%, transparent); }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .platform-instructor-card:hover .platform-instructor-cover img { transform: scale(1.035); }
 }
+.platform-instructor-card:hover h3 { text-decoration: underline; text-underline-offset: 3px; }
 @media (max-width: 960px) {
-  .platform-instructor-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .platform-home-action-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 559px) {
-  .platform-instructor-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
-  .platform-instructor-info { margin-inline: 0; }
+  .platform-instructor-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .platform-instructors { padding-block: 0; }
+  .platform-home-action-list { gap: 12px; }
+  .platform-home-tile { gap: 12px; min-height: 124px; padding: 14px; }
+  .platform-home-tile-icon { width: 28px; height: 28px; }
+  .platform-home-tile-copy small { font-size: 0.75rem; }
 }
 
 @media (max-width: 760px) {
@@ -1885,27 +2002,16 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
   .platform-home-learning,
   .platform-home-discovery,
   .platform-home-workspaces {
+    gap: 12px;
+  }
+
+  .platform-home-learning .platform-home-resume {
     grid-template-columns: minmax(0, 1fr);
-    gap: 18px;
+    gap: 10px 14px;
   }
-
-  .platform-home-section-heading { grid-column: 1; grid-row: auto; }
-  .platform-home-section-heading + * { grid-row: auto; }
-
-  .platform-home-status,
-  .platform-home-empty,
-  .platform-home-resume,
-  .platform-home-action-list,
-  .platform-home-workspace-list,
-  .platform-home-quick-links,
-  .platform-home-note {
-    grid-column: 1;
-  }
-
-  .platform-home-action-list,
-  .platform-home-workspace-list {
-    grid-template-columns: minmax(0, 1fr);
-  }
+  .platform-home-learning .platform-home-resume[data-has-cover='true'] { grid-template-columns: minmax(90px, 0.32fr) minmax(0, 1fr); }
+  .platform-home-learning-action { grid-column: 1; justify-self: start; }
+  .platform-home-resume[data-has-cover='true'] .platform-home-learning-action { grid-column: 2; }
 
 }
 
@@ -1959,16 +2065,9 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
   .platform-portrait-link small { line-height: 1.5; }
   .platform-portrait-link .platform-play-orb { margin-right: 4px; }
 
-  .platform-home-resume {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
-  }
-
-  .platform-home-resume strong {
-    overflow: visible;
-    text-overflow: clip;
-    white-space: normal;
-  }
+  .platform-home-learning .platform-home-resume { padding: 10px; }
+  .platform-home-learning-copy strong { font-size: 1rem; }
+  .platform-home-learning-action { font-size: 0.8125rem; }
 
   .platform-toolbar,
   .platform-search {
@@ -2052,8 +2151,9 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
 .platform-account-menu a { display: block; padding: 8px 12px; border-radius: 8px; color: var(--foreground); text-decoration: none; }
 .platform-account-menu a:hover { background: var(--accent-soft); }
 .platform-shell--shared .platform-main > main { width: 100%; max-width: none; margin: 0; padding: 0; min-height: 0; }
-.platform-shell--shared :is(.teachers-back-row, .org-back-row, .forum-view-nav) { display: none; }
-.platform-shell--shared .teachers-hero h1 { font-family: var(--font-sans); font-size: clamp(1.5rem, 3vw, 2rem); }
+.platform-shell--shared :is(.teachers-back-row, .org-back-row) { display: none; }
+.platform-shell--shared .teachers-hero { padding-block: 0 24px; }
+.platform-shell--shared .teachers-intro { margin-top: 0; }
 .platform-entity-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; color: var(--muted-foreground); }
 .platform-entity-cover { width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px; }
 .platform-pagination { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; margin-block: 24px; }

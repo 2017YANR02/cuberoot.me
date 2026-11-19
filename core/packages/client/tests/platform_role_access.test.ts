@@ -33,13 +33,38 @@ vi.mock('@/components/platform/OnlineCompetitionPreview', () => ({ OnlineCompeti
 import { PlatformRouteView } from '@/components/platform/PlatformRouteView';
 import { PlatformLearningPath } from '@/components/platform/PlatformLearningWorkspace';
 import { PLATFORM_ROUTES } from '@/lib/platform-routes';
+import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let host: HTMLDivElement, root: Root;
 const params = {};
 const render = async (id: string) => act(async () => root.render(createElement(PlatformRouteView, { definition: PLATFORM_ROUTES.find(route => route.id === id)!, params })));
+const renderInShell = async (id: string, routeParams = params) => act(async () => root.render(createElement(PlatformNavigationContext, { value: true },
+  createElement(PlatformRouteView, { definition: PLATFORM_ROUTES.find(route => route.id === id)!, params: routeParams }))));
 beforeEach(() => { vi.clearAllMocks(); state.user = { uid: 1 }; state.admin = false; state.action = null; state.load.mockResolvedValue({ items: [] }); host = document.createElement('div'); root = createRoot(host); });
 afterEach(async () => { await act(async () => root.unmount()); });
+
+it.each(['events', 'news', 'paths', 'membership', 'leaderboard', 'teacher-apply'])('keeps the selected navigation as the visible section heading on %s', async id => {
+  await renderInShell(id);
+  expect(host.querySelector('h1')?.classList.contains('sr-only')).toBe(true);
+  expect(host.querySelector('.platform-route-labels')).toBeNull();
+  if (id === 'events') expect(host.querySelector('.platform-route-actions a[href="/platform/events/preview"]')).not.toBeNull();
+  if (id === 'membership') expect(host.querySelector('.platform-route-header p')?.textContent).toContain('课程会员用于解锁课程');
+});
+
+it('preserves detail titles and visible headings when the corresponding workspace navigation is unavailable', async () => {
+  state.admin = false;
+  await renderInShell('admin-courses');
+  expect(host.querySelector('h1')?.classList.contains('sr-only')).toBe(false);
+  state.admin = true;
+  await renderInShell('admin-courses');
+  expect(host.querySelector('h1')?.classList.contains('sr-only')).toBe(true);
+  state.load.mockResolvedValue({ items: [{ id: 'example', title: '实际活动名称', summary: '活动说明' }] });
+  await renderInShell('event-detail', { id: 'example' });
+  expect(host.querySelector('h1')?.textContent).toBe('实际活动名称');
+  expect(host.querySelector('h1')?.classList.contains('sr-only')).toBe(false);
+  expect(host.querySelector('.platform-route-labels')).toBeNull();
+});
 
 it('blocks guests and ordinary accounts before requesting admin resources, then permits admin loading', async () => {
   state.user = null;

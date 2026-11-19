@@ -1,22 +1,26 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useContext, type ReactNode } from 'react';
 import { Plus, Search, ShieldCheck } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import PageBackLink from '@/components/PageBackLink';
 import WcaAuth from '@/components/WcaAuth';
 import { T, tr } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
+import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
 
 export function ForumHeader({ activeView, children }: { activeView: 'feed' | 'boards' | 'mine'; children?: ReactNode }) {
   const isAdmin = useIsAdmin();
+  const inPlatformShell = useContext(PlatformNavigationContext);
   return (
     <>
       <div className="forum-page-header forum-overview-header">
-        <div className="forum-overview-title">
+        {inPlatformShell ? (activeView === 'mine'
+          ? <h1><T zh="我的讨论" en="My discussions" /></h1>
+          : <h1 className="sr-only"><T zh="论坛" en="Forum" /></h1>) : <div className="forum-overview-title">
           <PageBackLink fallback={activeView === 'feed' ? '/forum' : '/'} />
           <h1><T zh="论坛" en="Forum" /></h1>
-        </div>
+        </div>}
         <div className="forum-header-actions">
           <Link href="/forum/search" prefetch={false} className="forum-btn-ghost">
             <Search size={15} aria-hidden="true" />
@@ -29,9 +33,9 @@ export function ForumHeader({ activeView, children }: { activeView: 'feed' | 'bo
           <WcaAuth />
         </div>
       </div>
-      <div className="forum-view-toolbar">
-        <div className="forum-view-primary">
-          <nav className="forum-view-nav" aria-label={tr({ zh: '论坛视图', en: 'Forum views' })}>
+      {(!inPlatformShell || isAdmin || children) && <div className="forum-view-toolbar">
+        {(!inPlatformShell || isAdmin) && <div className="forum-view-primary">
+          {!inPlatformShell && <nav className="forum-view-nav" aria-label={tr({ zh: '论坛视图', en: 'Forum views' })}>
             <Link href="/forum/feed" prefetch={false} aria-current={activeView === 'feed' ? 'page' : undefined}>
               <T zh="动态" en="Feed" />
             </Link>
@@ -41,16 +45,16 @@ export function ForumHeader({ activeView, children }: { activeView: 'feed' | 'bo
             <Link href="/forum/mine" prefetch={false} aria-current={activeView === 'mine' ? 'page' : undefined}>
               <T zh="我的" en="Mine" />
             </Link>
-          </nav>
+          </nav>}
           {isAdmin && (
             <Link href="/forum/review" prefetch={false} className="forum-review-link">
               <ShieldCheck size={15} aria-hidden="true" />
               <T zh="审核" en="Review" />
             </Link>
           )}
-        </div>
+        </div>}
         {children && <div className="forum-view-tools">{children}</div>}
-      </div>
+      </div>}
     </>
   );
 }

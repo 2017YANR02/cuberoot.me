@@ -2,7 +2,7 @@ import { variantLabel, stageLabel } from '@cuberoot/shared/timer/scramble-varian
 import { CubingIcon } from '@cuberoot/event-icon';
 import { TIMER_333_SCRAMBLE_TYPES, timerEventIdFromSelector, timerPuzzleSelection } from '@cuberoot/shared/timer';
 import { Boxes, ChevronDown, ChevronRight, Star } from 'lucide-react';
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 import {
   TIMER_OVERLAY_IDS,
@@ -36,16 +36,17 @@ export interface TimerPuzzlePickerProps extends TimerOverlayControlProps {
   readOnly?: boolean;
   /** Optional catalog discovery; shared behavior, labels and storage scope supplied by host. */
   discovery?: {
-    storageKey: string;
     searchLabel: string;
     clearLabel: string;
     emptyLabel: string;
     resultsLabel: string;
+  } & ({
+    storageKey: string;
     recentLabel: string;
     favoritesLabel: string;
     favoriteLabel: string;
     unfavoriteLabel: string;
-  };
+  } | { storageKey?: never });
   disabled?: boolean;
   groups: readonly TimerPuzzlePickerGroup[];
   onSelect: (id: string) => void;
@@ -58,6 +59,7 @@ export interface TimerPuzzlePickerProps extends TimerOverlayControlProps {
   combineScrambleTypes?: boolean;
   /** Text-only trigger for directories such as training. */
   triggerLabel?: string;
+  triggerVariant?: 'icon' | 'pill';
   showArrow?: boolean;
   showItemIcons?: boolean;
   showMenuHeadings?: boolean;
@@ -86,6 +88,7 @@ export function TimerPuzzlePicker({
   scrambleTypeLabel,
   combineScrambleTypes = false,
   triggerLabel,
+  triggerVariant = 'icon',
   showArrow = false,
   showItemIcons = true,
   showMenuHeadings = true,
@@ -94,23 +97,26 @@ export function TimerPuzzlePicker({
   openOnHover = false,
 }: TimerPuzzlePickerProps) {
   const [query, setQuery] = useState('');
+  const shortcutsConfig = discovery?.storageKey ? discovery : undefined;
+  const searchOnly = Boolean(discovery && !shortcutsConfig);
+  const pill = triggerVariant === 'pill';
   const [preferences, setPreferences] = useState<{ recent: string[]; favorites: string[] }>({ recent: [], favorites: [] });
   useEffect(() => {
-    if (!discovery) return;
+    if (!shortcutsConfig) return;
     try {
-      const saved = JSON.parse(localStorage.getItem(discovery.storageKey) ?? '{}');
+      const saved = JSON.parse(localStorage.getItem(shortcutsConfig.storageKey) ?? '{}');
       const ids = (value: unknown): string[] => Array.isArray(value) ? [...new Set(value.filter((id): id is string => typeof id === 'string'))].slice(0, 100) : [];
       setPreferences({ recent: ids(saved.recent).slice(0, 8), favorites: ids(saved.favorites) });
     } catch { setPreferences({ recent: [], favorites: [] }); }
-  }, [discovery?.storageKey]);
+  }, [shortcutsConfig?.storageKey]);
   const savePreferences = (next: typeof preferences) => {
     setPreferences(next);
-    if (discovery) {
-      try { localStorage.setItem(discovery.storageKey, JSON.stringify(next)); } catch { /* Session preferences still work. */ }
+    if (shortcutsConfig) {
+      try { localStorage.setItem(shortcutsConfig.storageKey, JSON.stringify(next)); } catch { /* Session preferences still work. */ }
     }
   };
   const select = (id: string) => {
-    if (discovery) savePreferences({ ...preferences, recent: [id, ...preferences.recent.filter(value => value !== id)].slice(0, 8) });
+    if (shortcutsConfig) savePreferences({ ...preferences, recent: [id, ...preferences.recent.filter(value => value !== id)].slice(0, 8) });
     onSelect(id);
   };
   const availableItems = suppliedGroups.flatMap((group) => group.items);
@@ -138,6 +144,10 @@ export function TimerPuzzlePicker({
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const searchResultsRef = useRef<HTMLDivElement>(null);
+  const wrapResults = (children: ReactNode) => searchOnly
+    ? <div ref={searchResultsRef} className="pp-search-results">{children}</div>
+    : children;
   const previousOpenRef = useRef(open);
   const popupId = useId();
   const [submenuId, setSubmenuId] = useState<string | null>(null);
@@ -156,9 +166,9 @@ export function TimerPuzzlePicker({
     : [{ ...item, detail: group.label }]));
   const uniqueLeaves = [...new Map(leaves.map(item => [item.id, item])).values()];
   const shortcutItems = (ids: string[]) => ids.flatMap(id => { const item = uniqueLeaves.find(item => item.id === id); return item ? [item] : []; });
-  const shortcuts: TimerPuzzlePickerGroup[] = discovery ? [
-    { id: 'picker-favorites', label: discovery.favoritesLabel, items: shortcutItems(preferences.favorites) },
-    { id: 'picker-recent', label: discovery.recentLabel, items: shortcutItems(preferences.recent) },
+  const shortcuts: TimerPuzzlePickerGroup[] = shortcutsConfig ? [
+    { id: 'picker-favorites', label: shortcutsConfig.favoritesLabel, items: shortcutItems(preferences.favorites) },
+    { id: 'picker-recent', label: shortcutsConfig.recentLabel, items: shortcutItems(preferences.recent) },
   ].filter(group => group.items.length) : [];
   const normalizeSearch = (value: string) => value.normalize('NFKC').toLocaleLowerCase().replace(/[\s×_-]+/g, '');
   const needle = normalizeSearch(query);
@@ -251,7 +261,8 @@ export function TimerPuzzlePicker({
     return <span className={`${className} pp-item-tag`}>{item.textLabel ?? item.id}</span>;
   };
 
-  const triggerContent = triggerText ? <span className="pp-trigger-label">{triggerText}</span> : <>
+  const triggerContent = pill ? <span className="compact-select-current">{triggerText ?? selectedChoice?.label ?? puzzleLabel}</span>
+    : triggerText ? <span className="pp-trigger-label">{triggerText}</span> : <>
     {selectedChoice ? renderIcon(selectedChoice, true) : <Boxes className="pp-trigger-icon" size={15} />}
     {!selectedChoice && <span className="pp-trigger-label">{puzzleLabel}</span>}
   </>;
@@ -262,7 +273,7 @@ export function TimerPuzzlePicker({
 
   return (
     <>
-    <div className={`pp${compact ? ' pp--compact' : ''}`} data-no-timer={dataNoTimer ? '' : undefined} ref={rootRef}
+    <div className={`pp${compact ? ' pp--compact' : ''}${pill ? ' compact-select' : ''}`} data-no-timer={dataNoTimer ? '' : undefined} ref={rootRef}
       onPointerEnter={cancelHoverClose}
       onPointerLeave={event => {
         if (!openOnHover || event.pointerType !== 'mouse') return;
@@ -281,7 +292,7 @@ export function TimerPuzzlePicker({
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={triggerLabel ?? selectedChoice?.label ?? puzzleLabel}
-        className={`pp-trigger${selectedItem ? ' pp-trigger--active' : ''}`}
+        className={pill ? 'compact-select-trigger' : `pp-trigger${selectedItem ? ' pp-trigger--active' : ''}`}
         disabled={disabled}
         onPointerEnter={event => {
           if (!openOnHover || disabled || event.pointerType !== 'mouse' || open) return;
@@ -301,18 +312,19 @@ export function TimerPuzzlePicker({
           focusSubmenu.current = true;
           setActiveMenu('puzzle');
           setSubmenuId(!open && openOnHover && selectedItem?.children?.length ? selectedItem.id : null);
-          changeOpen(!open, 'trigger');
+          if (open) close('trigger');
+          else changeOpen(true, 'trigger');
         }}
         ref={triggerRef}
         type="button"
       >
         {triggerContent}
-        {showArrow && <ChevronDown className="pp-trigger-chevron" size={14} />}
+        {showArrow && <ChevronDown className={pill ? `compact-select-arrow${open ? ' open' : ''}` : 'pp-trigger-chevron'} size={14} aria-hidden="true" />}
       </button>
       {open && (
-        <div className={`pp-popup${hasSubmenus ? ' pp-popup--nested' : ''}${discovery ? ' pp-popup--discovery' : ''}`} id={popupId} ref={panelRef} role="menu"
+        <div className={`pp-popup${hasSubmenus ? ' pp-popup--nested' : ''}${discovery ? ' pp-popup--discovery' : ''}${searchOnly ? ' pp-popup--search-only' : ''}`} id={popupId} ref={panelRef} role="menu"
           popover="manual" style={panelStyle}
-          data-site-surface={hasSubmenus ? 'popover' : undefined}
+          data-site-surface={hasSubmenus || searchOnly ? 'popover' : undefined}
           onKeyDown={event => {
             if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
             if (event.target instanceof HTMLInputElement && event.key !== 'ArrowDown') return;
@@ -327,17 +339,21 @@ export function TimerPuzzlePicker({
             items[next].focus();
           }}>
 
-          <div className={hasSubmenus ? 'pp-cascade-column' : undefined}>
+          <div className={hasSubmenus ? 'pp-cascade-column' : searchOnly ? 'pp-search-column' : undefined}>
           {discovery && <div className="pp-discovery">
-            <SearchInput value={query} onChange={value => { setQuery(value); setSubmenuId(null); }}
+            <SearchInput value={query} onChange={value => {
+              setQuery(value); setSubmenuId(null);
+              if (searchResultsRef.current) searchResultsRef.current.scrollTop = 0;
+            }}
               placeholder={discovery.searchLabel} clearLabel={discovery.clearLabel} />
-            {selectedChoice && <button type="button" className="pp-favorite" aria-pressed={preferences.favorites.includes(selectedPuzzle)}
-              aria-label={preferences.favorites.includes(selectedPuzzle) ? discovery.unfavoriteLabel : discovery.favoriteLabel}
+            {shortcutsConfig && selectedChoice && <button type="button" className="pp-favorite" aria-pressed={preferences.favorites.includes(selectedPuzzle)}
+              aria-label={preferences.favorites.includes(selectedPuzzle) ? shortcutsConfig.unfavoriteLabel : shortcutsConfig.favoriteLabel}
               onClick={() => savePreferences({ ...preferences, favorites: preferences.favorites.includes(selectedPuzzle)
                 ? preferences.favorites.filter(id => id !== selectedPuzzle) : [...preferences.favorites, selectedPuzzle] })}>
               <Star size={16} aria-hidden="true" />
             </button>}
           </div>}
+          {wrapResults(<>
           {needle && !menuGroups[0]?.items.length && <p className="pp-empty" role="status">{discovery?.emptyLabel}</p>}
           {menuGroups.map((group) => (
             <div className="pp-group" key={group.id}>
@@ -375,7 +391,7 @@ export function TimerPuzzlePicker({
                       role="menuitem"
                       type="button"
                     >
-                      {showItemIcons && (!hasSubmenus || item.iconClass || item.textLabel) && renderIcon(item)}
+                      {showItemIcons && item.id && (!hasSubmenus || item.iconClass || item.textLabel) && renderIcon(item)}
                       <span className="pp-item-label">{item.label}{needle && item.detail && <small className="pp-item-path">{item.detail}</small>}</span>
                       {hasChildren && <ChevronRight className="pp-submenu-arrow" size={14} aria-hidden="true" />}
                     </button>
@@ -384,6 +400,7 @@ export function TimerPuzzlePicker({
               </div>
             </div>
           ))}
+          </>)}
           </div>
           {submenu && <div className="pp-cascade-column pp-cascade-options" ref={submenuRef}
             id={`${popupId}-submenu`} role="menu" aria-label={submenuLabel ?? submenu.label}

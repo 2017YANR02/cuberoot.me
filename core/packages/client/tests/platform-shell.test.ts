@@ -6,17 +6,20 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({ usePathname: vi.fn(() => '/zh/platform/teachers') }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
-vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh' }));
+vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh', tr: ({ zh }: { zh: string }) => zh, T: ({ zh }: { zh: string }) => zh }));
 vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => null, useIsAdmin: () => false }));
 vi.mock('@/lib/landing-sections', () => ({ SEARCH_CARDS: [], isLandingSearchCardVisible: () => true }));
 vi.mock('@/components/LandingSearch', () => ({ default: () => createElement('input', { 'aria-label': '搜索' }) }));
 vi.mock('@/components/PageBackLink', () => ({ default: () => createElement('a', { href: '/platform' }, '返回') }));
 vi.mock('@/components/CompactSelect', () => ({ CompactSelect: () => null }));
+vi.mock('@/components/WcaAuth', () => ({ default: () => null }));
 vi.mock('@/components/AppLink', () => ({
   default: ({ prefetch: _prefetch, ...props }: React.ComponentProps<'a'> & { prefetch?: boolean }) => createElement('a', props),
 }));
 
 import { PlatformShell } from '@/components/platform/PlatformShell';
+import { ForumHeader } from '@/app/[lang]/forum/_components/ForumHeader';
+import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
@@ -34,6 +37,25 @@ describe('Platform shell ownership during shared-page navigation', () => {
       expect(host.querySelectorAll('.platform-site-search')).toHaveLength(1);
       expect(host.querySelectorAll('.platform-nav')).toHaveLength(1);
       expect(host.querySelector('article')?.textContent).toBe('讲师内容');
+    } finally {
+      await act(async () => root.unmount());
+    }
+  });
+
+  it('keeps forum actions, removes duplicate views in Platform and preserves the standalone forum header', async () => {
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    try {
+      const render = (inPlatform: boolean) => act(async () => root.render(createElement(PlatformNavigationContext, { value: inPlatform },
+        createElement(ForumHeader, { activeView: 'boards' }))));
+      await render(true);
+      expect(host.querySelector('h1')?.classList.contains('sr-only')).toBe(true);
+      expect(host.querySelector('.forum-view-nav')).toBeNull();
+      expect(host.querySelector('.forum-view-toolbar')).toBeNull();
+      expect(host.querySelector('a[href="/forum/new"]')).not.toBeNull();
+      await render(false);
+      expect(host.querySelector('h1')?.classList.contains('sr-only')).toBe(false);
+      expect(host.querySelectorAll('.forum-view-nav a')).toHaveLength(3);
     } finally {
       await act(async () => root.unmount());
     }

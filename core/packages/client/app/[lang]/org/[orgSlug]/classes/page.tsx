@@ -7,7 +7,7 @@ import { hasTeachingPermission, type TeachingCampus, type TeachingOrganizationRo
 import { useT } from '@/hooks/useT';
 import AppLink from '@/components/AppLink';
 import { createTeachingGroup, listTeachingCampuses, listTeachingGroups } from '@/lib/teaching-saas-api';
-import OrgWorkspace from '../../_components/OrgWorkspace';
+import OrgWorkspace, { OrgSectionTitle } from '../../_components/OrgWorkspace';
 import {
   entityStatusLabel,
   MutationMessage,
@@ -83,7 +83,7 @@ function ClassesContent({ orgSlug, page, role }: { orgSlug: string; page: number
 
   return (
     <>
-          <h2>{t('班级', 'Classes')}</h2>
+          <OrgSectionTitle>{t('班级', 'Classes')}</OrgSectionTitle>
           <p className="org-lead">{t('老师只会看到自己当前负责的班级。', 'Teachers only see classes currently assigned to them.')}</p>
 
           {groups.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : groups.error ? (
