@@ -259,7 +259,7 @@ function LessonPlayer({ player, interacted, yellowCase, fishLeft, middleAlignmen
           <path className="lbl-left-thumb-nail" d="M12.9 10.5c2.6-2.6 6.5-4.8 9.8-5 2.8-.2 4.5 1.3 4.7 3.7.2 2.5-1.3 5-3.3 7.1-2 2-4.7 3.9-7.1 4.1-2.1.2-4.2-1.3-5.3-3.3-1.2-2.1-.7-4.7 1.2-6.6Z" />
           <path className="lbl-left-thumb-lunula" d="M11 15.1q4.7-.9 7.4 4.9c-.5.2-1 .4-1.4.4-2.1.2-4.2-1.3-5.3-3.3-.4-.6-.6-1.3-.7-2Z" />
         </svg>
-        <TutorialCubeCallout className="lbl-cube-callout">
+        <TutorialCubeCallout className="lbl-cube-callout" player={player} targetStickers={highlights}>
           {yellowCase === 2
             ? tr({ zh: '顶面有 2 格非黄，左拇指碰黄', en: 'Two non-yellow corners on top. Left thumb touches yellow.' })
             : tr({ zh: '顶面有 4 格非黄，左拇指不碰黄', en: 'Four non-yellow corners on top. Left thumb stays off yellow.' })}
@@ -351,7 +351,7 @@ function DaisyBlockedPrelude({ setup, onDone }: { setup: string; onDone: () => v
           controlMode="none" hideResetView lockView interactionMode="none" fillPane />
       </div>
       {bubbleStage && stage < 2 && createPortal(<div className="lbl-left-thumb-overlay">
-        <TutorialCubeCallout className="lbl-cube-callout" anchorY={stage === 0 ? .55 : .3} role="status">
+        <TutorialCubeCallout className="lbl-cube-callout" anchorY={stage === 0 ? .55 : .3} player={player} targetStickers={[stickers[stage]]} role="status">
         {tr(stage === 0 ? { zh: '二楼棱块', en: 'Middle-floor edge' }
           : { zh: '有其他棱块挡住', en: 'Another edge is in the way' })}
       </TutorialCubeCallout></div>, bubbleStage)}

@@ -32,6 +32,9 @@ export interface AlgPlayerHandle {
   setAnimationPaused?: (paused: boolean) => void;
   /** Move only the embedded simulator view, without turning any puzzle layers. */
   orbitView?: (dx: number, dy: number) => void;
+  /** Screen coordinates of the most visible target sticker on a simulated 3×3. */
+  getStickerAnchor?: (stickers: readonly string[]) => { x: number; y: number } | null;
+  subscribeRenderedView?: (callback: () => void) => () => void;
   resetView?: (durationMs?: number) => void | Promise<void>;
   /** Manual NxN practice input, available with turn interaction and no playback controls. */
   applyUserMove?: (move: string) => boolean;

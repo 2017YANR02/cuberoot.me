@@ -3,7 +3,7 @@
 import useTeachingFollow from '../../components/useTeachingFollow';
 import TutorialNavigationShell from '../../components/TutorialNavigationShell';
 import TutorialCubeCallout from '../../components/TutorialCubeCallout';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alg } from 'cubing/alg';
 import { Color } from 'three';
 import { FM_FIXED_COLOR, FM_IGNORED } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
@@ -60,6 +60,7 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
     return Object.fromEntries(TARGET_PAIR_STICKERS.map(sticker => [sticker,
       new Color(FM_FIXED_COLOR[FM_IGNORED]!).lerp(new Color(colors[sticker[0] as CubeFace]), pairVisibility).getStyle()]));
   }, [orientation, pairVisibility]);
+  const getSelectedPlayer = useCallback(() => selected === null ? null : players.current[selected], [selected]);
   const caseName = selected === null ? undefined : ORDERED_BASIC_CASES[selected].name;
   const hasPairHint = caseName === 'B+' || caseName === 'B-';
   const showPairHint = phase === 'learn' && controlsVisible && hasPairHint && step === 1 && pairHintReady;
@@ -247,7 +248,7 @@ export default function CaseIntroduction({ orientation }: { orientation: string 
       <span className="f2l-case-alignment-signal" aria-hidden="true"><TrainingFeedbackOverlay kind={alignmentComplete ? 'correct' : 'wrong'} correctLabel="" wrongLabel="" /></span>
       {alignmentComplete ? <T zh="顶层已对齐" en="Top layer aligned" /> : <T zh="顶层朝向需要调整" en="Adjust the top layer" />}
     </TutorialCubeCallout>}
-    {showPairHint && <TutorialCubeCallout className="f2l-case-alignment-status" role="status">
+    {showPairHint && <TutorialCubeCallout className="f2l-case-alignment-status" player={getSelectedPlayer} targetStickers={TARGET_PAIR_STICKERS} role="status">
       <T zh="组合好目标棱和角" en="Pair up the target edge and corner" />
     </TutorialCubeCallout>}
     {phase === 'learn' && lesson && reference && <div key={controlsVisible ? 'stages' : 'alignment'} {...paneProps} className={`f2l-case-narration${controlsVisible ? ' tutorial-follow-pane' : ''}`} data-alignment={!controlsVisible} data-fading={referenceFading}>

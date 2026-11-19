@@ -50,7 +50,7 @@ export interface NonstandardIntroScene {
 const edge = ['F5', 'R3'];
 const corner = ['D2', 'F8', 'R6'];
 const pair = [...edge, ...corner];
-export { pair as NONSTANDARD_INTRO_PAIR_STICKERS };
+export { edge as NONSTANDARD_INTRO_EDGE_STICKERS, pair as NONSTANDARD_INTRO_PAIR_STICKERS };
 export const TERMINOLOGY_OUTRO_MS = 3400;
 const topSetup = "R U R'";
 const setupOf = (name: string) => catalog.cases.find(item => item.name === name)!.setup;

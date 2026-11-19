@@ -105,7 +105,7 @@ export default function SpecialCasePrelude({ scenes, ending, piece, onDone }: {
           stickerColorOverrides={overrides} controlMode="none" hideResetView lockView interactionMode="none" fillPane />
       </div>
       {bubbleStage && !finished && (scene.observation || piece === 'edge') && createPortal(<div className="lbl-left-thumb-overlay" style={{ opacity: eased }}>
-        <TutorialCubeCallout anchorY={scene.targetLayer === 'top' ? .3 : .65} className="lbl-cube-callout" role="status">{tr(scene.observation ?? scene.caption)}</TutorialCubeCallout>
+        <TutorialCubeCallout anchorY={scene.targetLayer === 'top' ? .3 : .65} player={player} targetStickers={preview.highlights} className="lbl-cube-callout" role="status">{tr(scene.observation ?? scene.caption)}</TutorialCubeCallout>
       </div>, bubbleStage)}
     </section>
     <section className="lbl-explanation tutorial-single-caption"><ReadingFit pane>

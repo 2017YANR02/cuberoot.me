@@ -19,7 +19,7 @@ import TrainingFeedbackOverlay from '@/components/TrainingFeedbackOverlay';
 import { tr, T } from '@/i18n/tr';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import type { CubeFace } from '@/lib/cube-colors';
-import { nonstandardIntroScenes, NONSTANDARD_INTRO_PAIR_STICKERS, TERMINOLOGY_OUTRO_MS, type NonstandardIntroScene } from '../data/nonstandard-intro';
+import { nonstandardIntroScenes, NONSTANDARD_INTRO_EDGE_STICKERS, NONSTANDARD_INTRO_PAIR_STICKERS, TERMINOLOGY_OUTRO_MS, type NonstandardIntroScene } from '../data/nonstandard-intro';
 import type { LocalizedText } from '../data/chapters';
 import { f2lDiagramFacelets } from '../lib/cube-preview';
 import './nonstandard-intro.css';
@@ -127,7 +127,7 @@ export default function NonstandardIntro({ orientation, edgeSetup = '', cornerSe
       : (1 + Math.cos((elapsed - (beat?.at ?? 0)) * Math.PI / 350)) / 2;
     return Object.fromEntries(NONSTANDARD_INTRO_PAIR_STICKERS.map(sticker => [sticker,
       new Color(FM_FIXED_COLOR[FM_IGNORED]!).lerp(new Color(colors[sticker[0] as CubeFace]),
-        (beat?.hideCorner && ['D2', 'F8', 'R6'].includes(sticker)) || (beat?.hideEdge && ['F5', 'R3'].includes(sticker)) ? 0 : visibility).getStyle(),
+        (beat?.hideCorner && ['D2', 'F8', 'R6'].includes(sticker)) || (beat?.hideEdge && NONSTANDARD_INTRO_EDGE_STICKERS.includes(sticker)) ? 0 : visibility).getStyle(),
     ]));
   }, [orientation, pairTransition, pairVisibility, scene.flashPair, scene.fadeInPair, reducedMotion, playing, elapsed, beat]);
   const fade = useCallback((from: number, to: number, update: (value: number) => void, done: () => void) => {
@@ -345,9 +345,10 @@ export default function NonstandardIntro({ orientation, edgeSetup = '', cornerSe
         onStepChange={step => { playerStep.current = step; }}
         moveDurationMs={scene.moveDuration ?? 220} controlMode="none" hideResetView interactionMode="none" fillPane />
         {showComparisonBubble && scene.bubble && <TutorialCubeCallout key={`cue:${index}`}
-          className="f2l-concept-comparison" role="status">{tr(scene.bubble)}</TutorialCubeCallout>}
+          className="f2l-concept-comparison" player={player}
+          targetStickers={scene.bubbleTarget === 'edge' ? NONSTANDARD_INTRO_EDGE_STICKERS : emphasis} role="status">{tr(scene.bubble)}</TutorialCubeCallout>}
         {ready && !fadingOut && (scene.result ? elapsed >= 1000 : beat?.label) && <TutorialCubeCallout key={`result:${index}`}
-          className="f2l-concept-result" anchorY={beat?.label ? .35 : .5} role="status">
+          className="f2l-concept-result" anchorY={beat?.label ? .35 : .5} player={player} targetStickers={emphasis} role="status">
           {scene.result ? <>
             <div className="f2l-concept-signal" aria-hidden="true"><TrainingFeedbackOverlay
               kind={scene.result === 'standard' ? 'correct' : 'wrong'} correctLabel="" wrongLabel="" /></div>

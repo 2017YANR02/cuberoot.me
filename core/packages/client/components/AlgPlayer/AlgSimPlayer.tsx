@@ -49,7 +49,7 @@ import { orbitSceneFree } from '@cuberoot/puzzle-render-core/engine/viewControls
 import { engineHomeSid } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex';
 import { FM_IGNORED, FM_REGULAR, FM_OUTLINE } from '@cuberoot/puzzle-render-core/support/sticker-mask';
 import { SIZE } from '@cuberoot/puzzle-render-core/engine/define';
-import { DoubleSide, Mesh, MeshBasicMaterial, Shape, ShapeGeometry, Vector3 } from 'three';
+import { DoubleSide, Matrix4, Mesh, MeshBasicMaterial, Shape, ShapeGeometry, Vector3 } from 'three';
 
 const LOOP_PAUSE_MS = 900;
 const ALIGNMENT_PAUSE_MS = 1200;
@@ -220,6 +220,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     () => createStepSeekPlayer(moves.length, next => { setPlaying(false); jumpToStep(next); }),
     [moves.length, jumpToStep],
   );
+  const viewListeners = useRef(new Set<() => void>());
   useImperativeHandle(ref, () => ({
     getPlayer: () => seekPlayer,
     setAnimationPaused: (paused: boolean) => {
@@ -242,6 +243,40 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       if (!mount || !ready) return;
       orbitSceneFree(mount.world, dx, dy, 1);
       mount.invalidate();
+    },
+    getStickerAnchor: (stickers) => {
+      const mount = mountRef.current;
+      if (!mount || !ready || puzzleKind !== 3) return null;
+      const { camera, cube } = mount.world;
+      const nxn = cube as Cube;
+      const renderer = nxn.instancedRenderer;
+      nxn.updateWorldMatrix(true, false);
+      const matrix = new Matrix4();
+      const point = new Vector3();
+      const normal = new Vector3();
+      const towardCamera = new Vector3();
+      const eye = camera.getWorldPosition(new Vector3());
+      let bestFacing = 0.02;
+      let anchor: { x: number; y: number } | null = null;
+      const canvas = mount.renderer.domElement.getBoundingClientRect();
+      for (const slot of renderer.stickerSlots) {
+        if (!slot.visible || !stickers.includes(engineHomeSid(slot.cubeletInitial, slot.face, 3))) continue;
+        if (!renderer.getCubeletRenderMatrix(slot.cubeletInitial, matrix)) continue;
+        matrix.multiply(slot.localMat).premultiply(nxn.matrixWorld);
+        point.setFromMatrixPosition(matrix);
+        normal.set(0, 0, 1).transformDirection(matrix);
+        const facing = normal.dot(towardCamera.subVectors(eye, point).normalize());
+        if (facing <= bestFacing) continue;
+        point.project(camera);
+        if (Math.abs(point.x) > 1 || Math.abs(point.y) > 1 || Math.abs(point.z) > 1) continue;
+        bestFacing = facing;
+        anchor = { x: canvas.left + (point.x + 1) * canvas.width / 2, y: canvas.top + (1 - point.y) * canvas.height / 2 };
+      }
+      return anchor;
+    },
+    subscribeRenderedView: callback => {
+      viewListeners.current.add(callback);
+      return () => { viewListeners.current.delete(callback); };
     },
     isUserMovePending: (includeHands = true) => {
       const mount = mountRef.current;
@@ -318,7 +353,9 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
         const handsChanged = hands?.tick(dt);
         const hintChanged = updateMoveHintRef.current?.() ?? false;
         return (alignment?.update() ?? false) || (handsChanged ?? false) || hintChanged;
-      } });
+      },
+      onRendered: () => { for (const listener of viewListeners.current) listener(); },
+    });
     mountRef.current = m;
     const world = m.world;
     const cube = world.cube;
