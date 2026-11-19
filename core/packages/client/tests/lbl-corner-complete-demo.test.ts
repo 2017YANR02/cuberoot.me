@@ -1,8 +1,8 @@
 import { Alg } from 'cubing/alg';
 import { AllFaces, CubeData, Face, parseAlgorithm } from '@cuberoot/visualcube';
 import { describe, expect, it } from 'vitest';
-import { buildWalkthroughRun, completeDemoPool, demoGoalReached } from '@/app/[lang]/tutorial/lbl/complete-demo-state';
-import { LBL_LESSON_RUNS, LBL_LESSON_STAGE_IDS, lessonFrame } from '@/app/[lang]/tutorial/lbl/lesson-runs';
+import { buildWalkthroughDemo, completeDemoPool, demoGoalReached } from '@/app/[lang]/tutorial/lbl/complete-demo-state';
+import { LBL_LESSON_RUNS, LBL_LESSON_STAGE_IDS } from '@/app/[lang]/tutorial/lbl/lesson-runs';
 import { CORNER_ALIGNMENT_COPY, CORNER_POSITION_COPY, J_ALG, LBL_STEPS, RIGHT } from '@/app/[lang]/tutorial/lbl/content';
 
 const demos = completeDemoPool('corners');
@@ -67,13 +67,21 @@ describe('LBL bottom-corner complete demos', () => {
     expect(wrongSlots).toEqual(new Set([true, false]));
   });
 
-  it('keeps the shared full-solve traces valid', () => {
+  it('plays one continuous trace with markers only between the major stages', () => {
     for (const { scramble } of LBL_LESSON_RUNS) {
-      const run = buildWalkthroughRun(scramble);
-      for (const stage of LBL_LESSON_STAGE_IDS) {
-        const { setup, alg } = lessonFrame(run, stage);
-        expect(demoGoalReached(stage, `${setup} ${alg}`)).toBe(true);
+      const demo = buildWalkthroughDemo(scramble);
+      const moves = demo.alg.split(' ');
+      const starts = demo.phases.filter(phase => phase.holdMs === 2000);
+      expect(demo.setup).toBe(scramble);
+      expect(starts.map(phase => phase.stage)).toEqual(LBL_LESSON_STAGE_IDS);
+      const markers = starts.map(phase => phase.start).filter(step => step > 0 && step < moves.length);
+      expect(demo.stageMarkers).toEqual([...new Set(markers)]);
+      for (const [index, stage] of LBL_LESSON_STAGE_IDS.entries()) {
+        const end = starts[index + 1]?.start ?? moves.length;
+        expect(demoGoalReached(stage, `${scramble} ${moves.slice(0, end).join(' ')}`)).toBe(true);
       }
+      const playedMoves = demo.phases.flatMap(({ start, end }) => Array.from({ length: end - start }, (_, index) => start + index));
+      expect(playedMoves).toEqual(moves.map((_, index) => index));
     }
   });
 });

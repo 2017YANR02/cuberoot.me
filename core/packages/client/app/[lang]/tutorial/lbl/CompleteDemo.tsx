@@ -2,7 +2,7 @@
 
 import ReadingFit from '../components/ReadingFit';
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { persistItem } from '@/lib/safe-storage';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
@@ -114,10 +114,10 @@ type DemoFrame = {
   orbitDuration?: number;
 };
 
-export function Demonstration({ stage, demo, onCaseCueChange, walkthrough, onComplete }: {
-  walkthrough?: boolean; onComplete?: () => void;
-  stage: CompleteDemoStage | 'cross'; demo: Demo;
+export function Demonstration({ stage, demo, onCaseCueChange, opening }: {
+  stage: CompleteDemoStage | 'cross' | 'walkthrough'; demo: Demo; opening?: ReactNode;
 } & CueProps) {
+  const walkthrough = stage === 'walkthrough';
   const [recognitionOutlines, setRecognitionOutlines] = useState<string[]>(NO_OUTLINES);
   const maskOutlines = stage === 'yellow-face' ? NO_OUTLINES : recognitionOutlines;
   const stickeringAtStep = useMemo(() => {
@@ -134,9 +134,6 @@ export function Demonstration({ stage, demo, onCaseCueChange, walkthrough, onCom
   }, [stage, maskOutlines, walkthrough]);
   const timeline = useMemo(() => {
     const frames: DemoFrame[] = [];
-    if (walkthrough) frames.push({ step: 0, duration: 2000, caption: 'act', phase: { start: 0, end: 0,
-      act: { text: { zh: '下面开始' + LBL_STEPS.find(item => item.id === stage)!.title.zh,
-        en: 'Next: ' + LBL_STEPS.find(item => item.id === stage)!.title.en } } } });
     const moves = demo.alg.split(/\s+/).filter(Boolean);
     demo.phases.forEach(phase => {
       if (phase.observe) {
@@ -149,8 +146,8 @@ export function Demonstration({ stage, demo, onCaseCueChange, walkthrough, onCom
         frames.push({ step: phase.start, duration: 900, caption: 'recognize', phase, view: phase.returnView });
       }
       if (phase.recognizeOnly) return;
-      frames.push({ step: phase.start, duration: CAPTION_DURATION_MS, caption: 'act', phase, view: phase.view });
-      const insertionSide = stage === 'middle' && (phase.act.alg === MIDDLE_RIGHT || phase.act.alg === MIDDLE_LEFT)
+      frames.push({ step: phase.start, duration: phase.holdMs ?? CAPTION_DURATION_MS, caption: 'act', phase, view: phase.view });
+      const insertionSide = (phase.stage ?? stage) === 'middle' && (phase.act.alg === MIDDLE_RIGHT || phase.act.alg === MIDDLE_LEFT)
         ? sideTurn(moves[phase.start + 1]) : undefined;
       for (let move = phase.start; move < phase.end; move++) {
         const side = move === phase.start && insertionSide ? insertionSide : sideTurn(moves[move]);
@@ -170,7 +167,7 @@ export function Demonstration({ stage, demo, onCaseCueChange, walkthrough, onCom
       }
     });
     const finalStep = moves.length;
-    if (stage === 'cross' && !walkthrough) {
+    if (stage === 'cross') {
       const reveal: DemoPhase = { start: finalStep, end: finalStep, act: { text: { zh: '看看底面，白十字已经完成', en: 'Look underneath: the white cross is complete.' } } };
       frames.push({ step: finalStep, duration: 2700, caption: 'act', phase: reveal, view: 'bottom' });
       const alignedSides = { ...reveal, act: { text: demo.done } };
@@ -185,6 +182,8 @@ export function Demonstration({ stage, demo, onCaseCueChange, walkthrough, onCom
   const playerVisible = usePlayerVisible(player, demo.setup);
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [openingDismissed, setOpeningDismissed] = useState(false);
+  const waitForPlay = Boolean(opening);
   const [hiddenOutlines, setHiddenOutlines] = useState<string[] | null>(null);
   const lastBlinkedOutlines = useRef<string[] | null>(null);
   const [position, setPosition] = useState(0);
@@ -195,8 +194,10 @@ export function Demonstration({ stage, demo, onCaseCueChange, walkthrough, onCom
   const viewMotion = useRef<{ position: number; revision: number; elapsed: number; from: { x: number; y: number }; to: { x: number; y: number } } | null>(null);
   const remaining = useRef({ position: -1, revision: -1, ms: 0 });
   const frame = timeline[position];
+  const currentStage = frame.phase?.stage ?? stage;
   const total = timeline[timeline.length - 1].step;
   const boundaries = useMemo(() => {
+    if (demo.stageMarkers) return demo.stageMarkers;
     // Each R2 finishes one white edge; its preparation moves share the same segment.
     const ends = stage === 'cross'
       ? demo.alg.split(/\s+/).flatMap((move, index) => move === 'R2' ? [index + 1] : [])
@@ -223,19 +224,19 @@ export function Demonstration({ stage, demo, onCaseCueChange, walkthrough, onCom
       if (!player.current || player.current.isUserMovePending?.()) id = requestAnimationFrame(loaded);
       else {
         setReady(true);
-        timer = window.setTimeout(() => setPlaying(!window.matchMedia('(prefers-reduced-motion: reduce)').matches && !document.hidden), 1000);
+        if (!waitForPlay) timer = window.setTimeout(() => setPlaying(!window.matchMedia('(prefers-reduced-motion: reduce)').matches && !document.hidden), 1000);
       }
     };
     id = requestAnimationFrame(loaded);
     return () => { cancelAnimationFrame(id); clearTimeout(timer); };
-  }, []);
+  }, [waitForPlay]);
 
   // One paused/resumable timeline owns both captions and turns. A result is
   // described only after the preceding turn has actually finished.
   useEffect(() => {
     if (!ready || !playing) return;
     if (frame.caption === 'done') {
-      const timer = window.setTimeout(() => { setPlaying(false); onComplete?.(); }, walkthrough ? 3200 : CAPTION_FADE_MS * 2);
+      const timer = window.setTimeout(() => setPlaying(false), walkthrough ? 3200 : CAPTION_FADE_MS * 2);
       return () => window.clearTimeout(timer);
     }
     let animationFrame = 0;
@@ -272,7 +273,7 @@ export function Demonstration({ stage, demo, onCaseCueChange, walkthrough, onCom
         if (motion.elapsed < (frame.move === undefined ? frame.duration : orbitDuration) || turnPending()) animationFrame = requestAnimationFrame(orbit);
         else {
           if (frame.view === 'home') {
-            if (stage !== 'edge-position') player.current?.resetView?.();
+            if (!walkthrough && stage !== 'edge-position') player.current?.resetView?.();
             viewOffset.current = { x: 0, y: 0 };
           }
           setPosition(current => current + 1);
@@ -301,11 +302,12 @@ export function Demonstration({ stage, demo, onCaseCueChange, walkthrough, onCom
       window.clearTimeout(timer);
       remaining.current = { position, revision, ms: Math.max(0, duration - (performance.now() - started)) };
     };
-  }, [ready, playing, frame, position, revision, stage, walkthrough, onComplete]);
+  }, [ready, playing, frame, position, revision, stage, walkthrough, demo.alg]);
 
   const seek = (step: number) => {
     setPlaying(false);
     const target = Math.max(0, Math.min(total, step));
+    if (waitForPlay && target > 0) setOpeningDismissed(true);
     const next = target === 0 ? 0 : target === total ? timeline.length - 1
       : timeline.findIndex(item => item.step === target && item.move === undefined);
     const index = next >= 0 ? next : timeline.findIndex(item => item.step === target);
@@ -321,8 +323,8 @@ export function Demonstration({ stage, demo, onCaseCueChange, walkthrough, onCom
     setPosition(index);
     setRevision(current => current + 1);
   };
-  const completionFocus = useMemo(() => walkthroughCompletionStickers(stage, demo.setup + ' ' + demo.alg), [stage, demo]);
-  const content: DemoContent = frame.caption === 'done' ? { text: demo.done, outlines: walkthrough ? completionFocus : undefined }
+  const completionFocus = useMemo(() => walkthrough ? walkthroughCompletionStickers('edge-position', demo.setup + ' ' + demo.alg) : undefined, [walkthrough, demo]);
+  const content: DemoContent = frame.caption === 'done' ? { text: demo.done, outlines: completionFocus }
     : frame.caption === 'observe' ? { text: frame.phase!.observe! }
       : frame.caption === 'recognize' ? frame.phase!.recognize! : frame.phase!.act;
   // Classify the whole lesson, never the current caption or move.
@@ -344,6 +346,7 @@ export function Demonstration({ stage, demo, onCaseCueChange, walkthrough, onCom
       <AlgPlaybackControls step={frame.step} count={total} playing={playing} stepMarkers={boundaries}
         onScrub={seek} onStepBack={() => seek(frame.step - 1)} onStepForward={() => seek(frame.step + 1)}
         onTogglePlay={() => {
+          if (waitForPlay) setOpeningDismissed(true);
           if (frame.caption === 'done') seek(0);
           setPlaying(current => frame.caption === 'done' || !current);
         }} onResetView={() => {
@@ -353,14 +356,15 @@ export function Demonstration({ stage, demo, onCaseCueChange, walkthrough, onCom
           viewMotion.current = null;
         }} />
     </div></div>
-    <Thought {...message} layout={layout} stage={stage} playing={playing} revision={revision} onCaseCueChange={onCaseCueChange}
+    <Thought {...message} layout={layout} stage={currentStage} playing={playing} revision={revision} onCaseCueChange={onCaseCueChange} opening={openingDismissed ? undefined : opening}
       onRecognitionOutlinesChange={setRecognitionOutlines} />
     {['corners', 'yellow-cross', 'yellow-face', 'edge-position'].includes(stage) && <div className="lbl-complete-legend-space" aria-hidden="true" />}
   </div>;
 }
 
-function Thought({ text, detail, alg, caseIndex, outlines, playing, revision, onCaseCueChange, onRecognitionOutlinesChange, stage, layout }: ThoughtContent & {
+function Thought({ text, detail, alg, caseIndex, outlines, playing, revision, onCaseCueChange, onRecognitionOutlinesChange, stage, layout, opening }: ThoughtContent & {
   layout: 'A' | 'B'; stage: string; playing: boolean; revision: number; onRecognitionOutlinesChange: (outlines: string[]) => void;
+  opening?: ReactNode;
 } & CueProps) {
   const key = `${text}\n${detail ?? ''}\n${alg ?? ''}\n${caseIndex ?? ''}\n${outlines?.join(',') ?? ''}`;
   const [displayed, setDisplayed] = useState({ key, text, detail, alg, caseIndex, outlines, revision });
@@ -381,7 +385,8 @@ function Thought({ text, detail, alg, caseIndex, outlines, playing, revision, on
     return () => window.clearTimeout(timer);
   }, [key, text, detail, alg, caseIndex, outlines, playing, revision, displayed.key, displayed.revision]);
   const bracketJFormula = stage === 'corner-position' && displayed.alg === J_ALG;
-  return <div className={`lbl-complete-thought${layout === 'A' ? ' tutorial-single-caption' : ''}`} aria-live="polite"><ReadingFit pane>
+  return <div className={`lbl-complete-thought${layout === 'A' ? ' tutorial-single-caption' : ''}`} aria-live="polite">
+    {opening ?? <ReadingFit pane>
     <p data-fading={fading}>
       <span>{displayed.text}</span>
       {displayed.alg ? <code className="lbl-complete-detail lbl-complete-alg">{getLblAlgGroups(stage, displayed.alg).map((group, index) => {
@@ -390,5 +395,5 @@ function Thought({ text, detail, alg, caseIndex, outlines, playing, revision, on
       })}</code>
         : <span className="lbl-complete-detail">{displayed.detail}</span>}
     </p>
-  </ReadingFit></div>;
+  </ReadingFit>}</div>;
 }

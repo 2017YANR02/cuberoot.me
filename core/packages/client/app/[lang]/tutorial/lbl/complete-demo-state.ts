@@ -2,7 +2,7 @@ import { Alg } from 'cubing/alg';
 import { AllFaces, CubeData, Face, parseAlgorithm } from '@cuberoot/visualcube';
 import { resolvePlayerSetup } from '@/components/AlgPlayer/player-setup';
 import { CORNER_ALIGNMENT_COPY, CORNER_POSITION_COPY, EDGE_POSITION_LEFT, EDGE_POSITION_RIGHT, J_ALG, LEFT, LEFT_SUNE, LBL_STEPS, MIDDLE_LEFT, MIDDLE_RIGHT, MIDDLE_MISPLACED_SETUP, RIGHT, RIGHT_SUNE } from './content';
-import { LBL_LESSON_RUNS, LBL_LESSON_STAGE_IDS, lessonFrame, type LblLessonRun, type LblLessonStageId } from './lesson-runs';
+import { LBL_LESSON_RUNS, LBL_LESSON_STAGE_IDS, lessonFrame, type LblLessonStageId } from './lesson-runs';
 import { buildYellowCrossDemo, YELLOW_CROSS_DEMO_SETUPS, yellowCrossRecognitionStickers } from './yellow-cross-demo-state';
 import { getLblAlgGroups } from './alg-cues';
 import type { LblExample } from './content';
@@ -11,8 +11,8 @@ type Text = { zh: string; en: string };
 const t = (zh: string, en: string): Text => ({ zh, en });
 export type DemoContent = { text: Text; detail?: Text; alg?: string; caseIndex?: number; outlines?: string[]; touchSticker?: boolean };
 export type DemoView = 'home' | 'bottom' | 'left' | 'right' | 'back' | 'slight-left';
-export type DemoPhase = { start: number; end: number; observe?: Text; recognize?: DemoContent; act: DemoContent; view?: DemoView; moveView?: DemoView; returnView?: DemoView; recognizeOnly?: boolean };
-export type CompleteDemo = { setup: string; alg: string; phases: DemoPhase[]; done: Text };
+export type DemoPhase = { start: number; end: number; observe?: Text; recognize?: DemoContent; act: DemoContent; view?: DemoView; moveView?: DemoView; returnView?: DemoView; recognizeOnly?: boolean; stage?: LblLessonStageId; holdMs?: number };
+export type CompleteDemo = { setup: string; alg: string; phases: DemoPhase[]; done: Text; stageMarkers?: number[] };
 export const COMPLETE_DEMO_STAGES = ['daisy', 'corners', 'middle', 'yellow-cross', 'yellow-face', 'corner-position', 'edge-position'] as const;
 export type CompleteDemoStage = typeof COMPLETE_DEMO_STAGES[number];
 const turns = ['', 'U', 'U2', "U'"];
@@ -594,7 +594,8 @@ export function walkthroughCompletionStickers(stage: LblLessonStageId, alg: stri
 }
 
 /** Track the same edge and matching center throughout alignment and insertion. */
-export function walkthroughCrossPhases(setup: string, alg: string): DemoPhase[] {
+function buildWalkthroughCrossDemo(setup: string): CompleteDemo {
+  const alg = buildBottomCrossFromDaisy(setup);
   const moves = movesOf(alg);
   const phases: DemoPhase[] = [];
   let start = 0;
@@ -612,18 +613,30 @@ export function walkthroughCrossPhases(setup: string, alg: string): DemoPhase[] 
     } });
     start = index + 1;
   }
-  return phases;
+  return { setup, alg, phases,
+    done: t('底面十字完成，四条侧色对齐中心', 'Bottom cross complete. All four side colors match their centers.') };
 }
 
-export function buildWalkthroughRun(scramble: string): LblLessonRun {
+export function buildWalkthroughDemo(scramble: string): CompleteDemo {
+  const moves: string[] = [];
+  const phases: DemoPhase[] = [];
+  const stageMarkers: number[] = [];
   let setup = scramble;
-  const stages = Object.fromEntries(LBL_LESSON_STAGE_IDS.map(stage => {
-    const alg = stage === 'cross' ? buildBottomCrossFromDaisy(setup) : buildCompleteDemo(stage, setup).alg;
-    setup = join(setup, alg);
+  for (const stage of LBL_LESSON_STAGE_IDS) {
+    const demo = stage === 'cross' ? buildWalkthroughCrossDemo(setup) : buildCompleteDemo(stage, setup);
+    const offset = moves.length;
+    const title = LBL_STEPS.find(step => step.id === stage)!.title;
+    phases.push({ start: offset, end: offset, stage, holdMs: 2000, act: { text: t(`下面开始${title.zh}`, `Next: ${title.en}`) } });
+    phases.push(...demo.phases.map(phase => ({ ...phase, stage, start: phase.start + offset, end: phase.end + offset })));
+    moves.push(...movesOf(demo.alg));
+    setup = join(setup, demo.alg);
     if (!demoGoalReached(stage, setup)) throw new Error(`Walkthrough did not complete ${stage}`);
-    return [stage, alg];
-  })) as LblLessonRun['stages'];
-  return { scramble, stages };
+    if (stage === 'edge-position') break;
+    const end = moves.length;
+    if (end > 0 && stageMarkers.at(-1) !== end) stageMarkers.push(end);
+    phases.push({ start: end, end, stage, act: { text: demo.done, outlines: walkthroughCompletionStickers(stage, setup) } });
+  }
+  return { setup: scramble, alg: moves.join(' '), phases, done: done['edge-position'], stageMarkers: stageMarkers.filter(step => step < moves.length) };
 }
 
 const DAISY_DEMO_SETUPS = [
