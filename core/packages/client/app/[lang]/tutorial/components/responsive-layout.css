@@ -1,6 +1,7 @@
 /* Content types: A caption, B stages, C complete reference, D comparison,
    E reading, F practice, G standalone flowchart. Playback mode is independent of content type. */
 .lbl-page, .f2l-page {
+  --tutorial-footer-button-height: 44px;
   --tutorial-cube-target: 350px;
   --tutorial-cube-height-share: .6;
   --tutorial-cube-available-height: 100cqh;

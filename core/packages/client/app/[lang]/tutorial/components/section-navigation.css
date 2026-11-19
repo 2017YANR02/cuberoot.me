@@ -1,7 +1,7 @@
 .tutorial-section-popover { --af-nav-text: var(--muted-foreground); --af-nav-active: var(--foreground); --af-nav-hover: var(--card); --af-nav-selected: var(--card); }
 .tutorial-section-popover .af-nav-link .af-nav-icon { display: none; }
 .tutorial-section-menu { display: var(--tutorial-section-menu-display, none); position: relative; min-width: 0; }
-.tutorial-section-menu > summary { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 44px; color: var(--muted-foreground); font-size: .8rem; }
+.tutorial-section-menu > summary { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: var(--tutorial-footer-button-height, 44px); color: var(--muted-foreground); font-size: .8rem; }
 .tutorial-section-menu > summary > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tutorial-section-menu > summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
 /* anchored-panel: safe (picker centered in footer; width capped to viewport). */
@@ -18,7 +18,7 @@
   :is(.lbl-footer, .f2l-study-actions) > .tutorial-page-button:last-child { grid-column: 4; grid-row: 1; }
 }
 
-:is(.lbl-page .lbl-footer, .f2l-page .f2l-study-actions) :is(.tutorial-page-button, .tutorial-practice-button, .tutorial-example-button) { height: 44px; min-height: 44px; }
+:is(.lbl-page .lbl-footer, .f2l-page .f2l-study-actions) :is(.tutorial-page-button, .tutorial-practice-button, .tutorial-example-button) { height: var(--tutorial-footer-button-height, 44px); min-height: var(--tutorial-footer-button-height, 44px); }
 :is(.lbl-page .lbl-footer, .f2l-page .f2l-study-actions) > .tutorial-page-button { width: 44px; min-width: 44px; padding: 0; }
 
 @media (max-width: 760px) {
