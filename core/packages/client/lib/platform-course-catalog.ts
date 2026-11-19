@@ -2,7 +2,6 @@ import { ALL_EVENT_IDS } from './event-constants';
 import { CSTIMER_SOLVABLE_IDS } from './cstimer-scramble';
 import { commerceRecord } from './platform-commerce-format';
 import { loadPlatformResource } from './platform-gateway';
-import { platformCourseLessonSection } from './platform-routes';
 import type { PlatformEntity, PlatformResourceResult } from './platform-types';
 import { eventDisplayName } from './wca-events';
 
@@ -92,24 +91,39 @@ export async function loadCourseCatalog(signal: AbortSignal): Promise<PlatformEn
   return [...items.values()];
 }
 
-/** Older API versions can authorize a preview lesson, but omit the course access list. */
-export async function loadLegacyCoursePreviewAccess(result: PlatformResourceResult, signal: AbortSignal): Promise<PlatformResourceResult> {
+export function courseLessonAccess(data: Record<string, unknown>) {
+  const entries = Array.isArray(data.lessonAccess) ? data.lessonAccess.map(commerceRecord) : [];
+  const allowed = new Set(entries.map(lesson => lesson.id));
+  return {
+    entries,
+    canWatch: (id: string, scope: unknown) => scope == null || scope === 'public' || allowed.has(id),
+  };
+}
+
+/** Older API versions check access at the lesson endpoint and omit the course access list. */
+export async function loadLegacyCourseLessonAccess(result: PlatformResourceResult, signal: AbortSignal): Promise<PlatformResourceResult> {
   const course = result.items[0];
   const data = course?.data;
   if (!data || Array.isArray(data.lessonAccess) || !Array.isArray(data.lessons)) return result;
 
-  const previewIds = data.lessons.map(commerceRecord)
-    .filter(lesson => lesson.accessScope === 'entitled' && platformCourseLessonSection(lesson) === 'trial')
+  const entitledIds = data.lessons.map(commerceRecord)
+    .filter(lesson => lesson.accessScope === 'entitled')
     .flatMap(lesson => typeof lesson.id === 'string' ? [lesson.id] : []);
-  if (!previewIds.length) return result;
-
-  const checks = await Promise.allSettled(previewIds.map(lessonId => loadPlatformResource('course-lesson', {
-    params: { id: course.id, lessonId },
-    signal,
-  })));
-  const legacyPreviewIds = previewIds.filter((id, index) => {
-    const check = checks[index];
-    return check.status === 'fulfilled' && check.value.items.some(lesson => lesson.id === id);
-  });
-  return { ...result, items: [{ ...course, data: { ...data, legacyPreviewIds: legacyPreviewIds } }, ...result.items.slice(1)] };
+  const lessonAccess: { id: string }[] = [];
+  const batchSize = 6;
+  for (let offset = 0; offset < entitledIds.length && !signal.aborted; offset += batchSize) {
+    const ids = entitledIds.slice(offset, offset + batchSize);
+    const checks = await Promise.allSettled(ids.map(lessonId => loadPlatformResource('course-lesson', {
+      params: { id: course.id, lessonId },
+      signal,
+    })));
+    for (const [index, check] of checks.entries()) {
+      const id = ids[index]!;
+      if (check.status === 'fulfilled' && check.value.items.some(lesson => lesson.id === id)) {
+        lessonAccess.push({ id });
+      }
+    }
+  }
+  if (signal.aborted) return result;
+  return { ...result, items: [{ ...course, data: { ...data, lessonAccess } }, ...result.items.slice(1)] };
 }

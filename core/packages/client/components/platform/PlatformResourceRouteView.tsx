@@ -27,7 +27,7 @@ import { PlatformQrAdmin } from './PlatformQrAdmin';
 import { titleFor } from './PlatformRouteHelpers';
 import { PlatformLanding } from './PlatformLanding';
 import { PlatformAboutView, PlatformOfflineView, PlatformAccountView, PlatformCanonicalView } from './PlatformInfoViews';
-import { COURSE_TOPIC_IDS, courseCatalogDetails, loadCourseCatalog, loadLegacyCoursePreviewAccess, matchesCourseCatalog } from '@/lib/platform-course-catalog';
+import { COURSE_TOPIC_IDS, courseCatalogDetails, loadCourseCatalog, loadLegacyCourseLessonAccess, matchesCourseCatalog } from '@/lib/platform-course-catalog';
 import { PlatformCourseCards, PlatformCourseToolbar } from './PlatformCourseCatalog';
 import { PlatformEntityList } from './PlatformEntityList';
 
@@ -120,7 +120,7 @@ export function PlatformResourceRouteView({
     const request: Promise<PlatformResourceResult> = courseCatalog
       ? loadCourseCatalog(controller.signal).then(items => ({ items }))
       : load(includeCourseAccess).then(value => includeCourseAccess && !controller.signal.aborted
-          ? loadLegacyCoursePreviewAccess(value, controller.signal)
+          ? loadLegacyCourseLessonAccess(value, controller.signal)
           : value).catch((reason: unknown) => {
           if (includeCourseAccess && !controller.signal.aborted && reason instanceof PlatformPermissionError) return load(false);
           throw reason;

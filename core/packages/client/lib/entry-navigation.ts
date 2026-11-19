@@ -29,13 +29,15 @@ function samePage(a: URL, b: URL) {
 
 /** Store only navigation state. Auth, payments, private document/share tokens and nested continuations never enter the trail. */
 function snapshot(url: URL): string | null {
-  if (/^\/(?:calendar\/s|docs\/s|sheets\/s|share|q)(?:\/|$)/.test(bare(url.pathname))) return null;
+  const pathname = bare(url.pathname);
+  if (/^\/(?:calendar\/s|docs\/s|sheets\/s|share|q)(?:\/|$)/.test(pathname)) return null;
   const clean = new URL(url.pathname, BASE);
-  if (bare(url.pathname) === '/chat' && url.searchParams.has('settings')) clean.pathname = url.pathname.startsWith('/zh/') ? '/zh/account' : '/account';
+  if (pathname === '/chat' && url.searchParams.has('settings')) clean.pathname = url.pathname.startsWith('/zh/') ? '/zh/account' : '/account';
   for (const [key, value] of url.searchParams) {
-    const recentFilter = bare(url.pathname) === '/scramble/recent' && RECENT_SCRAMBLE_KEYS.has(key);
-    const algFilter = bare(url.pathname).startsWith('/alg/') && ALG_LIBRARY_KEYS.has(key);
-    if ((STATE_KEYS.has(key) || recentFilter || algFilter) && value.length <= 200) clean.searchParams.append(key, value);
+    const recentFilter = pathname === '/scramble/recent' && RECENT_SCRAMBLE_KEYS.has(key);
+    const algFilter = pathname.startsWith('/alg/') && ALG_LIBRARY_KEYS.has(key);
+    const coursePageSize = key === 'pageSize' && pathname.replace(/\/$/, '') === '/platform/courses';
+    if ((STATE_KEYS.has(key) || recentFilter || algFilter || coursePageSize) && value.length <= 200) clean.searchParams.append(key, value);
   }
   if (/^#[a-zA-Z0-9_%:/.-]{1,160}$/.test(url.hash)) clean.hash = url.hash;
   return pathOf(clean);

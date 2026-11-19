@@ -3,16 +3,23 @@
 import { ArrowRight, LockKeyhole, Play } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import MoreToggle from '@/components/MoreToggle';
+import PageBackLink from '@/components/PageBackLink';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { nextQuery, useAuthUser } from '@/lib/auth-store';
 import { commerceMoney, commerceRecord, commerceText } from '@/lib/platform-commerce-format';
-import { courseCatalogDetails } from '@/lib/platform-course-catalog';
+import { courseCatalogDetails, courseLessonAccess } from '@/lib/platform-course-catalog';
 import { learningTime } from '@/lib/platform-learning';
+import { platformPathname } from '@/lib/platform-navigation';
 import { platformCourseLessonSection } from '@/lib/platform-routes';
 import type { PlatformEntity } from '@/lib/platform-types';
 import { PlatformCourseCover, PlatformCourseLabels } from './PlatformCourseCatalog';
 import { PlatformCoursePresentation } from './PlatformLearningWorkspace';
+
+function isLearningSpaceEntry(href: string): boolean {
+  const path = platformPathname(href);
+  return path === '/platform' || path.startsWith('/platform/');
+}
 
 export function PlatformCourseDetail({ course, lessons }: { course: PlatformEntity; lessons: Record<string, unknown>[] }) {
   const t = useT();
@@ -20,11 +27,7 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
   const user = useAuthUser();
   const data = course.data ?? {};
   const details = courseCatalogDetails(course);
-  const access = Array.isArray(data.lessonAccess) ? data.lessonAccess.map(commerceRecord) : [];
-  const allowed = new Set(access.map(lesson => lesson.id));
-  if (!Array.isArray(data.lessonAccess) && Array.isArray(data.legacyPreviewIds)) {
-    for (const id of data.legacyPreviewIds) allowed.add(id);
-  }
+  const { entries, canWatch } = courseLessonAccess(data);
   const root = `/platform/courses/${encodeURIComponent(course.id)}`;
   const lessonHref = ({ id, introduction }: { id: string; introduction: boolean }) =>
     `${root}/sections/${introduction ? 'introduction' : 'core'}?lesson=${encodeURIComponent(id)}`;
@@ -40,7 +43,7 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
       id, title, duration: Number(lesson.durationSeconds),
       introduction: section === 'introduction',
       preview: section === 'trial',
-      locked: lesson.accessScope !== 'public' && !allowed.has(id),
+      locked: !canWatch(id, lesson.accessScope),
     }];
   });
   const groups = [
@@ -49,7 +52,7 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
   ].filter(group => group.lessons.length > 0);
   const locked = directory.some(lesson => lesson.locked);
   const originalLessons = new Map(directory.map(lesson => [lesson.id, lesson]));
-  const ongoing = access.find(lesson => lesson.status === 'in_progress' && typeof lesson.id === 'string' && originalLessons.get(lesson.id)?.locked === false);
+  const ongoing = entries.find(lesson => lesson.status === 'in_progress' && typeof lesson.id === 'string' && originalLessons.get(lesson.id)?.locked === false);
   const firstUnlocked = directory.find(lesson => !lesson.locked);
   const firstCore = directory.find(lesson => !lesson.introduction && !lesson.locked);
   const nextLesson = ongoing && typeof ongoing.id === 'string' && originalLessons.has(ongoing.id)
@@ -80,6 +83,7 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
 
   return <div className="platform-course-detail-content">
     <header className="platform-course-overview">
+      <PageBackLink fallback="/platform" label={t('返回学习空间', 'Back to Learning')} acceptEntry={isLearningSpaceEntry} />
       <div className="platform-course-overview-title">
         <h1>{course.title}</h1>
         {instructors.length > 0 ? <div className="platform-course-instructors">

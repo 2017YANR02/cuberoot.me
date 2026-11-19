@@ -1,5 +1,5 @@
 'use client';
-import { ChevronLeft } from '@app-foundation/icons/lucide';
+import { ArrowLeft, ChevronLeft } from '@app-foundation/icons/lucide';
 import AppLink from './AppLink';
 import HomeLink from './HomeLink';
 import { readEntryNavigationBack, subscribeEntryNavigation } from '@/lib/entry-navigation';
@@ -13,10 +13,12 @@ const subscribeSurface = () => () => undefined;
 const serverSurface = () => null;
 const isHome = (href: string) => /^\/(en|zh)?\/?(?:[?#]|$)/.test(href);
 
-export default function PageBackLink({ fallback = '/', className, contextOnly = false, miniProgramTarget, prefetch = false, ...rest }: Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
-  fallback?: string; className?: string; contextOnly?: boolean; miniProgramTarget?: 'tools' | 'account'; prefetch?: false;
+export default function PageBackLink({ fallback = '/', className, label, acceptEntry, contextOnly = false, miniProgramTarget, prefetch = false, ...rest }: Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
+  fallback?: string; className?: string; label?: string; acceptEntry?: (target: string) => boolean;
+  contextOnly?: boolean; miniProgramTarget?: 'tools' | 'account'; prefetch?: false;
 }) {
-  const back = useSyncExternalStore(subscribeEntryNavigation, readEntryNavigationBack, () => null);
+  const entry = useSyncExternalStore(subscribeEntryNavigation, readEntryNavigationBack, () => null);
+  const back = entry && (acceptEntry?.(entry) ?? true) ? entry : null;
   const surface = useSyncExternalStore(subscribeSurface, installedWebsiteSurface, serverSurface);
   const pathname = usePathname();
   // Account has its own persistent tab. Its root has no website-home parent.
@@ -24,9 +26,12 @@ export default function PageBackLink({ fallback = '/', className, contextOnly = 
   if (accountFallback && /^\/(?:en\/|zh\/)?account\/?$/.test(pathname ?? '')) return null;
   if (contextOnly && !back) return null;
   const target = accountFallback && isHome(fallback) ? '/account' : back ?? fallback;
+  const ariaLabel = label ?? (back ? undefined : rest['aria-label']) ?? (
+    !back && target === '/' ? tr({ zh: '返回首页', en: 'Back to home' }) : tr({ zh: '返回上一层', en: 'Back to previous page' })
+  );
   const props = { ...rest, className: ['back-home', className].filter(Boolean).join(' '), prefetch,
-    'aria-label': back ? tr({ zh: '返回上一层', en: 'Back to previous page' }) : rest['aria-label'] ?? (target === '/' ? tr({ zh: '返回首页', en: 'Back to home' }) : tr({ zh: '返回上一层', en: 'Back to previous page' })) };
-  const icon = <ChevronLeft size={16} aria-hidden="true" />;
-  return !back && target === '/' ? <HomeLink {...props} miniProgramTarget={miniProgramTarget}>{icon}</HomeLink>
-    : <AppLink {...props} href={target} navigation="return">{icon}</AppLink>;
+    'aria-label': ariaLabel };
+  const content = label ? <><ArrowLeft size={16} aria-hidden="true" />{label}</> : <ChevronLeft size={16} aria-hidden="true" />;
+  return !back && target === '/' ? <HomeLink {...props} miniProgramTarget={miniProgramTarget}>{content}</HomeLink>
+    : <AppLink {...props} href={target} navigation="return">{content}</AppLink>;
 }

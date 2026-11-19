@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from 'r
 import AppLink from '@/components/AppLink';
 import { VisualCube } from '@/components/VisualCube';
 import { useT } from '@/hooks/useT';
-import { nextQuery, useAuthUser, useIsAdmin } from '@/lib/auth-store';
+import { nextQuery, useIsAdmin } from '@/lib/auth-store';
+import { courseLessonAccess } from '@/lib/platform-course-catalog';
 import { loadPlatformLessonMedia, platformMediaBrowserUrl, PlatformPermissionError, type PlatformLessonMedia } from '@/lib/platform-gateway';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 import { PLATFORM_COURSE_SECTIONS, platformCourseLessonSection, platformCourseSectionsIncludedBy } from '@/lib/platform-routes';
@@ -264,7 +265,6 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
 }) {
   const t = useT();
   const isAdmin = useIsAdmin();
-  const user = useAuthUser();
   const [autoContinue, setAutoContinue] = useState(false);
   const [autoPlayLessonId, setAutoPlayLessonId] = useState<string | null>(null);
   if (['product-detail', 'event-detail', 'news-detail', 'admin', 'admin-event-analytics'].includes(definition.id)) return <PlatformCommerceContent definition={definition} entity={entity} />;
@@ -295,10 +295,7 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
       return lesson && titleZh ? { ...lesson, titleZh: titleZh.replace(/^先导课/, PLATFORM_COURSE_SECTIONS[0].title.zh) } : raw;
     }) : [];
     if (selectedSection) {
-      const allowedLessonIds = Array.isArray(data.lessonAccess)
-        ? new Set(data.lessonAccess.map(item => record(item)?.id))
-        : null;
-      const checkedPreviews = Array.isArray(data.legacyPreviewIds) ? new Set(data.legacyPreviewIds) : null;
+      const { canWatch } = courseLessonAccess(data);
       // Invalid or stale query IDs fall back to the first lesson in this section.
       const sectionLessons = platformCourseSectionsIncludedBy(selectedSection.slug).flatMap(section => lessons.flatMap(raw => {
         const lesson = record(raw);
@@ -307,9 +304,7 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
         return [{
           id,
           title: sectionLessonTitle(localized(lesson, 'title', english) ?? t('未命名课时', 'Untitled lesson'), section),
-          locked: lesson.accessScope === 'entitled' && (allowedLessonIds
-            ? !allowedLessonIds.has(id)
-            : !user || (section.slug === 'trial' && checkedPreviews !== null && !checkedPreviews.has(id))),
+          locked: !canWatch(id, lesson.accessScope),
         }];
       }));
       const active = sectionLessons.find(lesson => lesson.id === selectedLessonId)

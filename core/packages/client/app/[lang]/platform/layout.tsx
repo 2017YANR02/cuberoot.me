@@ -23,6 +23,5 @@ export async function generateMetadata({ params }: {
 
 export default function PlatformLayout({ children }: { children: ReactNode }) {
   // Shared main-site rewrites receive the same shell from PlatformSharedSurface.
-  // The Discover/Courses row sticks; the title and section links stay in normal flow.
   return <PlatformShell shared={false}>{children}</PlatformShell>;
 }

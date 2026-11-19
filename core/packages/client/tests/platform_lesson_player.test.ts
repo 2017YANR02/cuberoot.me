@@ -371,10 +371,10 @@ it('restores the legacy preview link only when the signed-in viewer can access t
   ];
   const host = document.createElement('div');
   const root = createRoot(host);
-  const render = (legacyPreviewIds?: string[]) => act(async () => root.render(createElement(PlatformDomainContent, {
-    definition: { id: 'course-detail' } as PlatformRouteDefinition,
-    entity: { id: 'course', title: 'Course', data: { lessons, legacyPreviewIds } },
-    params: {},
+  const render = (lessonAccess?: { id: string }[], id = 'course-detail', selectedLessonId?: string) => act(async () => root.render(createElement(PlatformDomainContent, {
+    definition: { id } as PlatformRouteDefinition,
+    entity: { id: 'course', title: 'Course', data: { lessons, lessonAccess } },
+    params: {}, selectedLessonId,
   })));
   try {
     await render();
@@ -386,11 +386,17 @@ it('restores the legacy preview link only when the signed-in viewer can access t
     expect(decodeURIComponent(signInRows[1].getAttribute('href')!)).toContain('/sections/core?lesson=locked');
     expect(signInRows[1].nextElementSibling?.tagName.toLowerCase()).toBe('svg');
     access.user = { id: 42 };
-    await render(['preview']);
+    await render([{ id: 'preview' }]);
     expect(host.querySelector('.platform-course-lesson-sign-in')).toBeNull();
     expect(host.querySelector('details a[href$="sections/core?lesson=preview"]')?.textContent).toBe('做小花');
     expect(host.querySelectorAll('details .platform-course-lesson-locked')).toHaveLength(2);
     expect(host.querySelector('video')).toBeNull();
+    await render([{ id: 'preview' }], 'course-section-core', 'preview');
+    expect(host.querySelector('video')).not.toBeNull();
+    expect(host.querySelectorAll('nav button:disabled')).toHaveLength(2);
+    await render(undefined, 'course-section-core', 'core');
+    expect(host.querySelector('video')).toBeNull();
+    expect(host.textContent).toContain('这个课时需要解锁');
   } finally { await act(async () => root.unmount()); }
 });
 
@@ -472,8 +478,10 @@ it('shows instructor display names and only links an actual teacher directory en
     expect(host.textContent).toContain('颜瑞民');
     expect(host.textContent).not.toContain('internal-id');
     expect(host.textContent).not.toContain('internal-instructor-id');
-    expect(host.querySelectorAll('a')).toHaveLength(1);
-    expect(host.querySelector('a')?.getAttribute('href')).toBe('/platform/teachers/public-teacher');
+    const instructors = host.querySelector('.platform-course-instructors')!;
+    expect(instructors.querySelectorAll('a')).toHaveLength(1);
+    expect(instructors.querySelector('a')?.getAttribute('href')).toBe('/platform/teachers/public-teacher');
+    expect(host.querySelector('.platform-course-overview > .back-home')?.getAttribute('href')).toBe('/platform');
   } finally { await act(async () => root.unmount()); }
 });
 

@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { loadLegacyCoursePreviewAccess } from '@/lib/platform-course-catalog';
+import { loadLegacyCourseLessonAccess } from '@/lib/platform-course-catalog';
 import {
   executePlatformAction,
   loadPlatformLessonMedia,
@@ -293,27 +293,41 @@ describe('Platform route conservation', () => {
 });
 
 describe('Platform gateway contracts', () => {
-  it('checks only the old restricted previews when course access metadata is unavailable', async () => {
+  it('checks restricted previews and regular lessons when course access metadata is unavailable', async () => {
     const result = { items: [{ id: 'course-1', title: 'Course', data: { lessons: [
       { id: 'intro', slug: 'intro-01', accessScope: 'public' },
       { id: 'preview-1', slug: 'trial-01', accessScope: 'entitled' },
       { id: 'preview-2', slug: 'trial-02', accessScope: 'entitled' },
       { id: 'core', slug: 'lesson-01', accessScope: 'entitled' },
     ] } }] };
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => requestPath(input).endsWith('/preview-1')
-      ? response({ lesson: { id: 'preview-1' } })
-      : new Response(null, { status: 403 }));
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const lesson = requestPath(input).split('/').at(-1);
+      return lesson === 'preview-2' ? new Response(null, { status: 403 }) : response({ lesson: { id: lesson } });
+    });
     vi.stubGlobal('fetch', fetchMock);
-    const withAccess = await loadLegacyCoursePreviewAccess(result, new AbortController().signal);
-    expect(withAccess.items[0].data).toMatchObject({ legacyPreviewIds: ['preview-1'] });
+    const withAccess = await loadLegacyCourseLessonAccess(result, new AbortController().signal);
+    expect(withAccess.items[0].data).toMatchObject({ lessonAccess: [{ id: 'preview-1' }, { id: 'core' }] });
     expect(fetchMock.mock.calls.map(([input]) => requestPath(input))).toEqual([
       '/v1/platform/courses/course-1/lessons/preview-1', '/v1/platform/courses/course-1/lessons/preview-2',
+      '/v1/platform/courses/course-1/lessons/core',
     ]);
 
     fetchMock.mockClear();
     const current = { items: [{ ...result.items[0], data: { ...result.items[0].data, lessonAccess: [] } }] };
-    expect(await loadLegacyCoursePreviewAccess(current, new AbortController().signal)).toBe(current);
+    expect(await loadLegacyCourseLessonAccess(current, new AbortController().signal)).toBe(current);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('requests the compact review page and accepts the same fields from older API versions', async () => {
+    const page = { id: 'course-1', reviews: [{ id: 'review-11' }], reviewsHasMore: false };
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL) => response({ course: page }));
+    vi.stubGlobal('fetch', fetchMock);
+    const options = { params: { id: 'course-1' }, reviewPage: 2 };
+    const compact = await loadPlatformResource('courses', options);
+    expect(requestPath(fetchMock.mock.calls[0][0])).toBe('/v1/platform/courses/course-1?v=6&reviewPage=2&reviewsOnly=1');
+    expect(compact.items[0]?.data).toEqual(page);
+    fetchMock.mockImplementation(async () => response({ course: { ...page, title: 'Course', lessons: [] } }));
+    expect((await loadPlatformResource('courses', options)).items[0]?.data).toMatchObject(page);
   });
 
   it.each([['admin-teachers', 'instructor'], ['admin-applications', 'application']] as const)('retains the %s detail envelope for editing and decisions', async (resource, key) => {

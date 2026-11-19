@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
+import { usePathname } from 'next/navigation';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('next/navigation', () => ({ usePathname: () => '/zh/platform/teachers' }));
+vi.mock('next/navigation', () => ({ usePathname: vi.fn(() => '/zh/platform/teachers') }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
 vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh' }));
 vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => null, useIsAdmin: () => false }));
@@ -34,6 +35,37 @@ describe('Platform shell ownership during shared-page navigation', () => {
       expect(host.querySelectorAll('.platform-nav')).toHaveLength(1);
       expect(host.querySelector('article')?.textContent).toBe('讲师内容');
     } finally {
+      await act(async () => root.unmount());
+    }
+  });
+
+  it('omits shared navigation only while displaying course details', async () => {
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    const pathname = vi.mocked(usePathname);
+    const render = (path: string, heading: string) => {
+      pathname.mockReturnValue(path);
+      return act(async () => root.render(createElement(PlatformShell, {
+        children: createElement('h1', null, heading),
+      })));
+    };
+    const chrome = '.platform-masthead, .platform-site-search, .platform-nav, .platform-context-nav';
+
+    try {
+      await render('/zh/platform/courses', '全部课程');
+      expect(host.querySelectorAll(chrome)).toHaveLength(4);
+
+      await render('/zh/platform/courses/example', '课程名称');
+      expect(host.querySelector(chrome)).toBeNull();
+      expect(host.querySelector('main h1')?.textContent).toBe('课程名称');
+
+      await render('/zh/platform/courses/example/sections/core', '正式课');
+      expect(host.querySelectorAll(chrome)).toHaveLength(4);
+
+      await render('/zh/platform/courses', '全部课程');
+      expect(host.querySelectorAll(chrome)).toHaveLength(4);
+    } finally {
+      pathname.mockReset();
       await act(async () => root.unmount());
     }
   });

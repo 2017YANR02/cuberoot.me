@@ -105,9 +105,14 @@ it('indicates another review page without duplicating the lookahead item', async
   state.writtenReviews = 12;
   const path = '/platform/courses/yan-ruimin-3x3-beginner';
   const first = (await (await platformCatalogRoutes.request(path)).json()).course;
-  const second = (await (await platformCatalogRoutes.request(path + '?reviewPage=2')).json()).course;
+  state.queries = [];
+  const second = (await (await platformCatalogRoutes.request(path + '?reviewPage=2&reviewsOnly=1&v=6')).json()).course;
   expect(first.reviews).toHaveLength(10);
   expect(first.reviewsHasMore).toBe(true);
   expect(second.reviews.map((review: { id: string }) => review.id)).toEqual(['review-11', 'review-12']);
   expect(second.reviewsHasMore).toBe(false);
+  expect(Object.keys(second).sort()).toEqual(['id', 'reviews', 'reviewsHasMore']);
+  expect(state.queries).toHaveLength(2);
+  expect(state.queries[0]?.statement).toContain("c.status IN ('published', 'unlisted')");
+  expect(state.queries[1]?.parameters).toEqual([COURSE, 11, 10]);
 });

@@ -58,6 +58,7 @@ describe('local entry navigation', () => {
     ['/wca/persons/2017TEST01', '/wca/results?tab=records'],
     ['/timer', '/alg/3x3/oll'],
     ['/teachers?teacher=42', '/platform/courses'],
+    ['/zh/platform/courses/beginner', '/zh/platform/courses?pageSize=50&sort=title&puzzle=333&page=2'],
     ['/membership', '/account?settings=account'],
     ['/recon/123', '/recon?q=OLL&page=3'],
     ['/forum/t/12', '/forum/feed?forum=general&sort=latest&page=2'],
