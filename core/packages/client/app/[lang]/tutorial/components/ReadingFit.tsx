@@ -4,7 +4,7 @@ import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import './reading-fit.css';
 
 /** Fit a reading composition within its available space while preserving proportions. */
-export default function ReadingFit({ children, layout = 'E', pane = false, onFit }: { children: ReactNode; layout?: 'E' | 'A'; pane?: boolean; onFit?: (scale: number) => void }) {
+export default function ReadingFit({ children, layout = 'E', pane = false, onFit }: { children: ReactNode; layout?: 'E' | 'A' | 'F'; pane?: boolean; onFit?: (scale: number) => void }) {
   const viewport = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -22,7 +22,7 @@ export default function ReadingFit({ children, layout = 'E', pane = false, onFit
       const compactReading = !pane && layout === 'E' && shortLandscape.matches;
       const enabled = pane
         ? type === 'A' || compactReference
-        : layout === 'E' && (desktop.matches || compactReading);
+        : layout === 'F' || (layout === 'E' && (desktop.matches || compactReading));
       if (pane) {
         outer.dataset.fitActive = String(enabled);
         outer.parentElement?.toggleAttribute('data-copy-fitting', enabled);

@@ -1,7 +1,12 @@
+:is(.lbl-page, .lbl-practice-page) {
+  --lbl-mobile-page-inset: 12px;
+  --lbl-mobile-footer-padding: 12px;
+  --lbl-mobile-footer-inset: max(12px, env(safe-area-inset-bottom));
+}
 .lbl-page { --af-nav-text: var(--muted-foreground); --af-nav-active: var(--accent); --af-nav-hover: var(--muted); --af-nav-selected: var(--accent-soft); box-sizing: border-box; height: 100dvh; display: grid; grid-template-rows: auto auto minmax(0, 1fr); max-width: 1180px; margin: 0 auto; padding: 12px 20px 16px; color: var(--foreground); }
 .lbl-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 6px; margin-bottom: 4px; }
-.lbl-header a { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; color: var(--muted-foreground); text-decoration: none; }
-.lbl-header a:hover { color: var(--foreground); }
+.lbl-header a, .lbl-single-heading-back { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; color: var(--muted-foreground); text-decoration: none; }
+.lbl-header a:hover, .lbl-single-heading-back:hover { color: var(--foreground); }
 .lbl-header h1 { margin: 0; font-size: 1rem; }
 .lbl-header-title { display: flex; align-items: center; gap: 12px; }
 .lbl-page :is(.lbl-section-button, .lbl-footer-button, .lbl-practice-button, .lbl-alg-move) { font: inherit; cursor: pointer; }
@@ -32,6 +37,191 @@
 .lbl-practice-page .lbl-exercise .lbl-exercise-navigation:disabled { color: var(--faint-foreground); background: var(--muted); cursor: default; }
 .lbl-practice-page .lbl-practice-back, .lbl-practice-page .lbl-completion-review { border: 0; background: transparent; color: inherit; cursor: pointer; }
 .lbl-practice-page .lbl-exercise .lbl-basic-footer > .lbl-practice-review { grid-column: 2; justify-self: center; }
+.lbl-practice-page .lbl-exercise[data-compact-reference] { grid-template-rows: minmax(44px, auto) minmax(0, 1fr) auto; }
+.lbl-support-page.lbl-practice-page:has(.lbl-exercise[data-compact-reference='portrait']) { padding-bottom: var(--lbl-mobile-footer-inset); }
+.lbl-practice-page .lbl-exercise[data-compact-reference='portrait'] { padding-bottom: 0; }
+.lbl-practice-page .lbl-exercise[data-compact-reference='portrait'] .lbl-basic-footer { padding-top: var(--lbl-mobile-footer-padding); }
+.lbl-practice-page .lbl-exercise:is([data-compact-reference='portrait'], [data-compact-reference='landscape']) .lbl-basic-footer > .lbl-button {
+  box-sizing: border-box;
+  min-height: var(--tutorial-footer-button-height);
+  justify-content: center;
+  padding: 0 2px;
+  line-height: 1.2;
+}
+.lbl-practice-page .lbl-exercise[data-compact-reference] .lbl-basic-content { container-type: size; padding-block: 8px; }
+.lbl-practice-page .lbl-exercise[data-compact-reference] .lbl-basic-demo {
+  align-self: stretch;
+  min-height: 0;
+  justify-content: center;
+  gap: 8px;
+}
+.lbl-practice-page .lbl-exercise[data-compact-reference] .lbl-basic-demo > .lbl-cube {
+  --lbl-compact-cube-size: min(100cqw, 380px, max(0px, calc(100cqh - var(--lbl-practice-controls-height, 52px))));
+  width: var(--lbl-compact-cube-size);
+  height: var(--lbl-compact-cube-size);
+  flex: none;
+}
+@container (max-width: 339px) {
+  .lbl-practice-page .lbl-exercise[data-compact-reference='portrait'] .lbl-basic-demo:has(.lbl-exercise-tools[data-extra-tool]) {
+    --lbl-practice-controls-height: 102px;
+  }
+}
+.lbl-practice-page .lbl-exercise-tools[data-extra-tool] { flex-wrap: wrap; justify-content: center; }
+.lbl-practice-page .lbl-exercise[data-compact-reference='portrait'] .lbl-basic-content[data-portrait-reference] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 8px;
+}
+.lbl-practice-portrait-content {
+  display: grid;
+  align-self: stretch;
+  align-content: safe center;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+.lbl-practice-page .lbl-exercise[data-compact-reference] .lbl-exercise-tools .lbl-button { min-height: 44px; }
+.lbl-practice-page .lbl-exercise-tools[data-direct-hint] { gap: 6px; max-width: 100%; }
+.lbl-practice-page .lbl-exercise-tools[data-direct-hint] .lbl-button {
+  box-sizing: border-box;
+  min-width: 44px;
+  padding-inline: 8px;
+}
+.lbl-practice-page .lbl-exercise-tools[data-direct-hint] .lbl-button[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.lbl-practice-page .lbl-exercise .tutorial-practice-reference-panel .lbl-basic-copy { padding-top: 0; }
+.tutorial-practice-reference-panel .lbl-practice-goal { grid-template-columns: min(38%, 140px) minmax(0, 1fr); height: auto; min-height: 120px; margin-top: 0; }
+.tutorial-practice-reference-panel .lbl-exercise-target .puzzle-art { max-width: 100%; height: auto !important; aspect-ratio: 1; }
+.tutorial-practice-reference-panel .lbl-exercise-target .puzzle-art svg { width: 100%; height: auto; }
+.lbl-support-page.lbl-practice-page:has(.lbl-exercise[data-single-heading]) {
+  grid-template-rows: minmax(0, 1fr);
+  padding-top: max(8px, env(safe-area-inset-top));
+}
+.lbl-practice-page:has(.lbl-exercise[data-single-heading]) > .lbl-header { display: none; }
+.lbl-practice-page .lbl-exercise[data-single-heading] {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  padding-top: 0;
+}
+.lbl-practice-page .lbl-exercise[data-single-heading] .lbl-exercise-heading {
+  align-items: start;
+  min-height: 44px;
+  overflow: visible;
+}
+.lbl-practice-page .lbl-exercise[data-compact-reference='portrait'] .lbl-exercise-heading {
+  /* The practice body has a 20px page inset plus 16px section padding. */
+  margin-inline: calc(var(--lbl-mobile-page-inset) - 36px);
+}
+.lbl-practice-page .lbl-exercise[data-single-heading] .lbl-exercise-heading h1 {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  margin: 0;
+  font: inherit;
+}
+.lbl-single-heading-back {
+  min-height: 44px;
+  margin-block: -6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.lbl-single-heading-back svg { flex-shrink: 0; }
+.lbl-practice-page .lbl-exercise[data-single-heading] .lbl-basic-progress {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+}
+.lbl-support-page.lbl-practice-page:has(.lbl-exercise[data-compact-reference='landscape']) {
+  padding: max(4px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+    max(4px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+}
+.lbl-practice-page .lbl-exercise[data-compact-reference='landscape'] { padding: 0; }
+.lbl-practice-page .lbl-exercise[data-compact-reference='landscape'] .lbl-basic-content {
+  grid-template-columns: minmax(0, 1fr) minmax(min(230px, 47%), .85fr);
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 12px;
+  overflow: clip;
+  padding-block: 4px;
+}
+.lbl-practice-page .lbl-exercise[data-compact-reference='landscape'] .lbl-basic-demo { container-type: size; }
+.lbl-practice-page .lbl-exercise[data-compact-reference='landscape'] .lbl-basic-demo > .lbl-cube {
+  --lbl-landscape-cube-size: min(100cqw, 100cqh);
+  width: var(--lbl-landscape-cube-size);
+  height: var(--lbl-landscape-cube-size);
+  max-width: none;
+  max-height: none;
+}
+.lbl-practice-page .lbl-exercise[data-compact-reference='landscape'] .lbl-cube .alg-sim-player.is-fill { padding: 0; }
+.lbl-practice-side {
+  container: lbl-practice-side / size;
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+}
+.lbl-practice-side .lbl-exercise-tools { flex: none; flex-wrap: wrap; justify-content: center; }
+.lbl-practice-side-content {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-inline: 4px;
+}
+.lbl-practice-page .lbl-exercise :is(.lbl-practice-side-content, .lbl-practice-portrait-content) .lbl-basic-copy { padding-top: 0; }
+:is(.lbl-practice-side-content, .lbl-practice-portrait-content) .lbl-practice-goal {
+  grid-template-columns: min(36%, 112px) minmax(0, 1fr);
+  height: auto;
+  margin-top: 0;
+  gap: 12px;
+}
+:is(.lbl-practice-side-content, .lbl-practice-portrait-content) .lbl-practice-goal > h3 { overflow: visible; font-size: .95rem; }
+:is(.lbl-practice-side-content, .lbl-practice-portrait-content) .lbl-exercise-target .puzzle-art { max-width: 100%; height: auto !important; aspect-ratio: 1; }
+:is(.lbl-practice-side-content, .lbl-practice-portrait-content) .lbl-exercise-target .puzzle-art svg { width: 100%; height: auto; }
+/* Keep the full goal visible before allocating height to the formula. */
+.lbl-practice-page .lbl-practice-side-content .lbl-exercise-reference { display: none; }
+@container lbl-practice-side (min-height: 320px) and (min-width: 308px) {
+  .lbl-practice-page .lbl-practice-side-content .lbl-exercise-reference { display: grid; }
+  .lbl-practice-page .lbl-practice-side .lbl-practice-turn-hint { display: none; }
+}
+.lbl-practice-page :is(.lbl-practice-side-content, .lbl-practice-portrait-content) .lbl-exercise-hint { margin-top: 8px; padding: 8px 10px; }
+:is(.lbl-practice-side-content, .lbl-practice-portrait-content) .lbl-practice-karaoke { --lbl-text-emphasis: 1.125rem; --lbl-text-small: .8125rem; gap: 4px 6px; }
+:is(.lbl-practice-side-content, .lbl-practice-portrait-content) .lbl-practice-karaoke > .lbl-alg-move { gap: 4px; }
+.lbl-practice-portrait-content .lbl-practice-karaoke { column-gap: 4px; }
+.lbl-practice-portrait-content .lbl-practice-karaoke > .lbl-alg-move { padding-inline: 2px; }
+.lbl-practice-page .lbl-exercise[data-compact-reference='landscape'] .lbl-basic-footer { padding-top: 0; }
+.lbl-practice-page .lbl-exercise:not([data-compact-reference]) .lbl-basic-content {
+  container-type: size; align-items: stretch; grid-template-rows: minmax(0, 1fr); overflow: clip;
+}
+.lbl-practice-page .lbl-exercise:not([data-compact-reference]) .lbl-basic-demo {
+  justify-content: safe center; min-height: 0;
+}
+.lbl-practice-page .lbl-exercise:not([data-compact-reference]) .lbl-basic-demo > .lbl-cube {
+  max-height: max(0px, calc(100cqh - 52px));
+}
+.lbl-practice-page .tutorial-reading-fit[data-fit-layout='F'] :is(.lbl-practice-karaoke, .lbl-practice-goal > h3) {
+  overflow: visible;
+}
+@container (max-height: 400px) {
+  .lbl-practice-page .lbl-exercise:not([data-compact-reference]) .lbl-basic-copy { padding-top: 0; }
+  .lbl-practice-page .lbl-exercise:not([data-compact-reference]) .lbl-practice-goal { height: 140px; margin-top: 0; }
+}
+@media (min-width: 761px) {
+  .lbl-practice-page .lbl-exercise .lbl-basic-content { container-type: size; }
+  .lbl-practice-page .lbl-exercise .lbl-basic-demo > .lbl-cube {
+    max-width: 440px;
+    height: var(--tutorial-practice-cube-height);
+    /* Leave room for the controls beneath the cube in a short desktop window. */
+    max-height: max(0px, calc(100cqh - 52px));
+  }
+}
 .lbl-lesson-scroll { min-height: 0; overflow: auto; overscroll-behavior: contain; display: flex; flex-direction: column; }
 /* Only spare vertical space is shared 40/60; overflowing content starts at the top. */
 .lbl-lesson-scroll::before, .lbl-lesson-scroll::after { content: ''; flex: 2 0 0; }
@@ -196,7 +386,7 @@
 }
 @media (max-width: 1050px) { .lbl-body { gap: 24px; } .lbl-demonstration, .lbl-complete .lbl-cube { height: 360px; } }
 @media (max-width: 760px) {
-  .lbl-page { padding: 8px 12px max(12px, env(safe-area-inset-bottom)); }
+  .lbl-page { padding: 8px var(--lbl-mobile-page-inset) var(--lbl-mobile-footer-inset); }
   .lbl-learning { grid-template-rows: minmax(0, 1fr) auto auto; }
   .lbl-body { grid-template-columns: minmax(0, 1fr); padding-top: 8px; }
   .lbl-lesson-scroll { scrollbar-width: none; }
@@ -218,7 +408,7 @@
   .lbl-content-example > .lbl-explanation::-webkit-scrollbar { display: none; }
   .lbl-explanation > img { float: right; width: 80px; height: 80px; margin: 0 0 12px 16px; }
   .lbl-explanation::after { content: ''; display: block; clear: both; }
-  .lbl-footer { padding-top: 12px; }
+  .lbl-footer { padding-top: var(--lbl-mobile-footer-padding); }
   .lbl-walkthrough .lbl-walkthrough-footer { display: flex; justify-content: center; }
   .lbl-page .lbl-footer-button { gap: 4px; padding: 8px 6px; font-size: .8rem; }
   .lbl-page .lbl-footer-button { width: 96px; }

@@ -38,6 +38,43 @@ function roundedPath(points: { x: number; y: number }[]): string {
   return `${d} L ${end.x} ${end.y}`;
 }
 
+export function LinearPracticeFlow({ route, progress, orientation }: {
+  route: PracticeFlowRoute; progress: FlowProgress; orientation: string;
+}) {
+  const spacing = 124;
+  const left = 50;
+  const nodes = useMemo(() => route.points.map((point, index) => ({
+    id: String(point.step),
+    name: point.name,
+    x: left + index * spacing,
+    y: 4,
+    facelets: f2lDiagramFacelets(`${point.setup} ${route.states[point.step].rotation}`, orientation, mask),
+  })), [route, orientation]);
+  const matchedStep = progress.match?.route === route ? progress.match.step : undefined;
+  const current = matchedStep === undefined
+    ? route.points.findLastIndex(point => point.name === progress.current)
+    : route.points.findLastIndex(point => point.step <= matchedStep);
+  return <div className="f2l-flow-graph f2l-practice-linear-flow">
+    <CaseFlowGraph viewBox={`0 0 ${(nodes.length - 1) * spacing + left * 2} 114`}
+      nodes={nodes.map((node, index) => ({
+        ...node, current: index === current, selected: true, visited: progress.visitedNodes.has(node.name),
+      }))}
+      edges={nodes.slice(1).map((node, index) => {
+        const previous = nodes[index];
+        const start = route.points[index].step;
+        const end = route.points[index + 1].step;
+        const active = matchedStep !== undefined && matchedStep > start && matchedStep < end;
+        const complete = matchedStep !== undefined ? matchedStep >= end : progress.visitedEdges.has(flowEdgeId(previous.name, node.name));
+        return {
+          id: node.id, from: previous.name, to: node.name,
+          d: `M ${previous.x + 45} 57 H ${node.x - 47}`,
+          selected: true, complete, current: active,
+          progress: complete ? 1 : active ? (matchedStep - start) / (end - start) : 0,
+        };
+      })} />
+  </div>;
+}
+
 export default function PracticeFlowGraph({ flow, progress, orientation, selectedRoute, onSelectEdge }: {
   flow: PracticeFlow; progress: FlowProgress; orientation: string;
   selectedRoute?: PracticeFlowRoute; onSelectEdge?: (id: string) => void;

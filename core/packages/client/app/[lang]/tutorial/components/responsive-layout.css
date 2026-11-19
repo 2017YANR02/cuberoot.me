@@ -7,6 +7,10 @@
   --tutorial-cube-available-height: 100cqh;
   --tutorial-cube-chrome: 0px;
 }
+.lbl-practice-page, .f2l-practice-page {
+  --tutorial-footer-button-height: 44px;
+  --tutorial-practice-cube-height: clamp(280px, 48dvh, 460px);
+}
 .lbl-page [data-tutorial-layout] > :is(.lbl-demonstration, .lbl-cube),
 .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson,
 .f2l-page .f2l-video-stage > :is(.f2l-concept-scene, .f2l-study-lesson, .f2l-intro-methods),
@@ -732,4 +736,69 @@
 }
 .f2l-page .f2l-algorithm-stage > [data-tutorial-layout='C'] > .f2l-path-explanation {
   --tutorial-compact-reference: 1;
+}
+
+/* Free placement stays inside the lesson shell and shares its chapter navigation. */
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
+  .f2l-page .f2l-study-main:has(> [data-tutorial-layout='F']) { overflow: clip; }
+  .f2l-page .f2l-study-main > [data-tutorial-layout='F'] {
+    flex: 1;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+    grid-template-rows: auto minmax(0, 1fr);
+    align-items: stretch;
+    gap: 8px;
+  }
+  .f2l-page .f2l-study-main > [data-tutorial-layout='F'] > .f2l-demo { min-height: 0; gap: 8px; }
+  .f2l-page .f2l-study-main > [data-tutorial-layout='F'] .f2l-cube {
+    --f2l-free-cube-size: min(100cqw, 380px, max(0px, calc(100cqh - 56px)));
+    width: var(--f2l-free-cube-size);
+    height: var(--f2l-free-cube-size);
+  }
+  .f2l-page .f2l-study-main > [data-tutorial-layout='F'] .f2l-cube > .alg-sim-player.is-fill {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    padding: 0;
+  }
+  .f2l-page .f2l-study-main > [data-tutorial-layout='F'] .alg-sim-player.is-fill .sim-stage { flex: 1; min-height: 0; }
+  .f2l-page .f2l-study-main > [data-tutorial-layout='F'] .f2l-free-formulas { overflow-y: auto; overscroll-behavior-y: contain; }
+}
+
+@media (orientation: portrait) and (max-width: 760px) {
+  .f2l-page .f2l-study-main > [data-tutorial-layout='F'] .f2l-free-formulas { justify-content: safe center; padding-top: 0; }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .f2l-page .f2l-chapter-body:has([data-tutorial-layout='F']) {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    height: 100%;
+    min-height: 0;
+    padding-bottom: 0;
+  }
+  .f2l-page .f2l-chapter-body:has([data-tutorial-layout='F']) .f2l-study-dock { display: block; position: static; padding: 0; }
+  .f2l-page .f2l-chapter-body:has([data-tutorial-layout='F']) .f2l-study-actions { position: static; padding-top: 0; }
+  .f2l-page .f2l-study-main > [data-tutorial-layout='F'] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, .85fr);
+    grid-template-rows: minmax(44px, 1fr) minmax(0, 1fr);
+    gap: 8px 12px;
+  }
+  .f2l-page .f2l-study-main > [data-tutorial-layout='F'] > .f2l-demo { display: contents; }
+  .f2l-page .f2l-study-main > [data-tutorial-layout='F'] .f2l-cube {
+    grid-area: 1 / 1 / span 2;
+    place-self: center;
+    width: min(100%, 380px, 100cqh);
+    height: auto;
+    aspect-ratio: 1;
+  }
+  .f2l-page .f2l-study-main > [data-tutorial-layout='F'] .f2l-free-cube-actions {
+    grid-area: 1 / 2;
+    align-self: end;
+  }
+  .f2l-page .f2l-study-main > [data-tutorial-layout='F'] .f2l-free-formulas {
+    grid-area: 2 / 2;
+    padding-top: 0;
+  }
 }
