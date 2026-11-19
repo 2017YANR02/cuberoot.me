@@ -3,6 +3,13 @@ import { tr } from '@/i18n/tr';
 import AlgSteps from './AlgSteps';
 import { getLblAlgGroups } from './alg-cues';
 import { INSTRUCTION_PHASES, splitInstruction } from './instruction-phases';
+import { J_ALG } from './content';
+
+const jSegmentLabels = [
+  { zh: '开头', en: 'Opening' },
+  { zh: '右公式', en: 'Right trigger' },
+  { zh: '收尾', en: 'Finish' },
+];
 
 function emphasizeDirection(text: string) {
   return text.split(/(左|右|\bleft\b|\bright\b)/i).map((part, index) =>
@@ -30,6 +37,7 @@ export default function SegmentedInstructions({ step, alg, instruction, exampleI
     : originalPhases;
   const rows: { text: string; moves: number[]; note: string; onSelect?: () => void }[] = [];
   const edgeFormulaLesson = step === 'edge-position' && [0, 1, 2].includes(exampleIndex) && !alg.startsWith('y');
+  const cornerFormulaLesson = step === 'corner-position' && (exampleIndex === 0 || exampleIndex === 1);
   if (edgeFormulaLesson) {
     rows.push({ text: tr(exampleIndex === 2 ? { zh: '右鱼', en: 'Right Sune' } : exampleIndex === 0
       ? { zh: '对色在左做右鱼', en: 'Opposite color on the left, do right Sune' }
@@ -65,7 +73,8 @@ export default function SegmentedInstructions({ step, alg, instruction, exampleI
       {instruction && <p className="lbl-lead lbl-instruction-phase" aria-current={selectedStepStart === 0 ? 'step' : undefined}><button type="button" className="lbl-step-start" onClick={() => onStepClick(0)}>{lead}</button></p>}
       <AlgSteps step={step} alg={alg} activeMove={selectedStepStart === null ? playbackStep - 1 : undefined} onMoveClick={onMoveClick} />
     </>;
-    groups.forEach((group, index) => rows.push({ text: index === 0 ? instruction : '', moves: group.map(move => move.index + 1), note: '' }));
+    const labels = step === 'corner-position' && alg === J_ALG ? jSegmentLabels.map(label => tr(label)) : [instruction];
+    groups.forEach((group, index) => rows.push({ text: labels[index] ?? '', moves: group.map(move => move.index + 1), note: '' }));
   }
   // Keep all moves reachable, even if a legacy prose excerpt no longer matches.
   const covered = new Set(rows.flatMap(row => row.moves));
@@ -108,7 +117,7 @@ export default function SegmentedInstructions({ step, alg, instruction, exampleI
           {row.text && <p className="lbl-instruction-phase" aria-current={active ? 'step' : undefined}>
             {row.onSelect ? <button type="button" className="lbl-step-start lbl-direction-emphasis" onClick={row.onSelect}>{label}</button> : row.moves.length > 0 ? <button type="button" className="lbl-step-start" onClick={() => onStepClick(row.moves[0] - 1)}>{label}</button> : label}
           </p>}
-          {row.moves.length > 0 && <AlgSteps step={step} alg={alg} bracketFormula={edgeFormulaLesson && index === 1} activeMove={showClosingStep || selectedStepStart !== null ? undefined : playbackStep - 1} moveIndices={row.moves.map(move => move - 1)} onMoveClick={onMoveClick} />}
+          {row.moves.length > 0 && <AlgSteps step={step} alg={alg} bracketFormula={(edgeFormulaLesson && index === 1) || (cornerFormulaLesson && row.moves.length > 1)} activeMove={showClosingStep || selectedStepStart !== null ? undefined : playbackStep - 1} moveIndices={row.moves.map(move => move - 1)} onMoveClick={onMoveClick} />}
           {clean(row.note) && <p className="lbl-demo-stage-note">{clean(row.note)}</p>}
         </div>
       </li>;

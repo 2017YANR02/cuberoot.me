@@ -11,7 +11,7 @@ import { resolvePlayerSetup } from '@/components/AlgPlayer/player-setup';
 import { syncPlayerToMoveCount } from '@/lib/recon-alg-utils';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import { tr } from '@/i18n/tr';
-import { LBL_STEPS, lblDemoView, LESSON_STICKERING, LBL_STAGE_GOALS, LBL_LEARNING_FOCUS, RIGHT, LEFT, LBL_LEFT_VIEW_YAW } from './content';
+import { LBL_STEPS, lblDemoView, LESSON_STICKERING, LBL_STAGE_GOALS, LBL_LEARNING_FOCUS, RIGHT, LEFT, LBL_LEFT_VIEW_YAW, CORNER_POSITION } from './content';
 import SegmentedInstructions from './SegmentedInstructions';
 import { getLblAlgGroups } from './alg-cues';
 import CompleteDemo, { WhiteCrossCompleteDemo } from './CompleteDemo';
@@ -19,7 +19,7 @@ import { buildFishAlignment, daisyBlockedStickers, middleLessonHiddenStickers, m
 import BasicsGuide from './BasicsGuide';
 import IntroLesson from './IntroLesson';
 import MiddleCases from './MiddleCases';
-import LastLayerTerms from './LastLayerTerms';
+import LastLayerTerms, { HeadlightsTerms } from './LastLayerTerms';
 import { chapters, type Lesson } from './curriculum';
 import { PieceLesson, NotationLesson, TriggerOverview, JOverview } from './IntroContent';
 import { usePlayerVisible } from './use-player-visible';
@@ -36,6 +36,10 @@ export { StageImage } from './StageImage';
 import EdgeObservation from './EdgeObservation';
 import SpecialCasePrelude, { cornerPrelude } from './SpecialCasePrelude';
 import AlignmentPrelude, { CORNER_ALIGNMENTS } from './CornerAlignmentPrelude';
+import JFormulaPrelude from './JFormulaPrelude';
+
+// Put the green face on the left, then create the matching pair for both the film and practice.
+const jLessonSetup = `y ${new Alg(CORNER_POSITION).invert()}`;
 
 const ignoreCaseCue = () => {};
 
@@ -381,14 +385,17 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   const [daisyBlockedPreludeDone, setDaisyBlockedPreludeDone] = useState(false);
   const [specialPreludeDone, setSpecialPreludeDone] = useState(false);
   const [alignmentDone, setAlignmentDone] = useState(false);
+  const [jPreludeDone, setJPreludeDone] = useState(false);
   const [observingBasement, setObservingBasement] = useState(false);
   const basementLesson = chapter.id === 'daisy' && lesson.id === 'case-5';
   const cornerLesson = chapter.id === 'corners' ? CORNER_ALIGNMENTS[lesson.id] : undefined;
   const fishLesson = useMemo(() => hostChapterId === 'yellow-face' && chapter.id === 'sune-learning' && lesson.kind === 'example'
     ? buildFishAlignment(lesson.id === 'sune-learning-0') : undefined, [hostChapterId, chapter.id, lesson.kind, lesson.id]);
   const alignmentLesson = cornerLesson ?? fishLesson;
+  const jLesson = hostChapterId === 'corner-position' && lesson.id === 'l-alg-learning-0';
   const example = useMemo(() => {
     const original = lesson.example;
+    if (jLesson && original) return { ...original, setup: jLessonSetup };
     if (alignmentLesson && original) return {
       ...original, alg: alignmentLesson.alg, setup: alignmentLesson.alignedSetup, hint: alignmentLesson.hint,
     };
@@ -400,7 +407,7 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
     return { ...original, alg: moves.join(' '), startSolved: false,
       setup: `${resolvePlayerSetup('3x3', original.alg, original.setup, original.startSolved ?? false)} ${preparation.join(' ')}`,
       hint: { zh: original.hint.zh.split(' → ').slice(1).join(' → '), en: original.hint.en.split(' → ').slice(1).join(' → ') } };
-  }, [lesson.example, chapter.id, edgeObservationDone, alignmentLesson]);
+  }, [lesson.example, chapter.id, edgeObservationDone, alignmentLesson, jLesson]);
   const middleHiddenStickers = useMemo(() => chapter.id === 'middle' && ['case-0', 'case-1'].includes(lesson.id) && example?.setup ? middleLessonHiddenStickers(example.setup) : undefined, [chapter.id, lesson.id, example?.setup]);
   const initialLeftView = Boolean(alignmentLesson?.left) || chapter.id === 'middle' && lesson.id === 'case-1';
   const sceneRot = useMemo(() => {
@@ -425,6 +432,8 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
   const { paneProps, playbackProps, resume: resumeFollowing } = useTeachingFollow(
     `${move}:${finalMoveSettled}:${selectedStepStart}`, `${chapter.id}:${lesson.id}`);
   if (chapter.id === 'structure' && ['facelet', 'centers', 'corners', 'edges'].includes(lesson.id)) return <PieceLesson id={lesson.id} />;
+  if (chapter.id === 'corner-position' && lesson.kind === 'terms') return <HeadlightsTerms />;
+  if (jLesson && !jPreludeDone) return <JFormulaPrelude setup={jLessonSetup} onContinue={() => setJPreludeDone(true)} />;
   if (chapter.id === 'daisy' && lesson.id === 'case-2' && example?.setup && !daisyBlockedPreludeDone) {
     return <DaisyBlockedPrelude setup={example.setup} onDone={() => setDaisyBlockedPreludeDone(true)} />;
   }
@@ -545,7 +554,7 @@ export default function LessonContent({ chapter, lesson, hostChapterId, onSelect
       </>}
       {inlineAction}
       {lesson.kind === 'terms' && (chapter.id === 'daisy' ? <DaisyTerms />
-        : chapter.id === 'middle' ? <MiddleCases /> : <LastLayerTerms wall={chapter.id === 'edge-position'} />)}
+        : chapter.id === 'middle' ? <MiddleCases /> : <LastLayerTerms />)}
     </ReadingFit></section>
   </div>;
   return <ReadingFit>{content}</ReadingFit>;

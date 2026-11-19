@@ -1,7 +1,7 @@
 import { Alg } from 'cubing/alg';
 import { AllFaces, CubeData, Face, parseAlgorithm } from '@cuberoot/visualcube';
 import { resolvePlayerSetup } from '@/components/AlgPlayer/player-setup';
-import { CORNER_ALIGNMENT_COPY, CORNER_POSITION, EDGE_POSITION_LEFT, EDGE_POSITION_RIGHT, LEFT, LEFT_SUNE, LBL_STEPS, MIDDLE_LEFT, MIDDLE_RIGHT, MIDDLE_MISPLACED_SETUP, RIGHT, RIGHT_SUNE } from './content';
+import { CORNER_ALIGNMENT_COPY, CORNER_POSITION_COPY, EDGE_POSITION_LEFT, EDGE_POSITION_RIGHT, J_ALG, LEFT, LEFT_SUNE, LBL_STEPS, MIDDLE_LEFT, MIDDLE_RIGHT, MIDDLE_MISPLACED_SETUP, RIGHT, RIGHT_SUNE } from './content';
 import { LBL_LESSON_RUNS, LBL_LESSON_STAGE_IDS, lessonFrame, type LblLessonRun, type LblLessonStageId } from './lesson-runs';
 import { buildYellowCrossDemo, YELLOW_CROSS_DEMO_SETUPS, yellowCrossRecognitionStickers } from './yellow-cross-demo-state';
 import { getLblAlgGroups } from './alg-cues';
@@ -512,8 +512,8 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
       action(choice.alg, choice.index === 1 ? t('做左鱼公式', 'Do left Sune.') : t('做右鱼公式', 'Do right Sune.'), choice.index, rec);
     } else if (stage === 'corner-position') {
       const align = turns.find(u => topCorners(state(join(base, u))));
-      if (align !== undefined) {
-        add(align, { text: t('顶角位置已对，转顶层对齐侧面中心', 'The corners are in the right relative positions. Turn the top to match the side centers.') });
+      if (align) {
+        add(align, { text: CORNER_POSITION_COPY.align, alg: align });
       } else {
         // F and R are visible; two quarter-turn inspections expose the other sides.
         let inspected = current();
@@ -526,10 +526,11 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
         const eyeFaces = eyes(inspected);
         const index = eyeFaces.length ? 0 : 1;
         const outlines = visibleEyes.slice(0, 1).flatMap(face => [inspected.faces[face][0], inspected.faces[face][2]]);
-        let rec: DemoContent | undefined = recognize(index === 0 ? t('找到一对眼：两端角格同色', 'Found headlights: the two corner stickers match.') : t('四面都没有眼，先做一遍J公式造眼', 'No headlights on any side. Use the J algorithm once to create a pair.'), index, outlines);
+        let rec: DemoContent | undefined = recognize(index === 0 ? t('找到一对眼：两端角格同色', 'Found headlights: the two corner stickers match') : t('四面都没有眼', 'No headlights on any side'), index, outlines);
         const y = index === 0 ? rotations.find(y => eyes(state(join(currentAlg(), y))).includes(Face.L))! : '';
-        rec = prepare(y, t('转体，把眼放左', 'Rotate the cube to hold the headlights on the left.'), index, rec);
-        action(CORNER_POSITION, t('做J公式', 'Do the J algorithm.'), index, rec);
+        rec = prepare(y, CORNER_POSITION_COPY.headlightsLeft, index, rec);
+        action(J_ALG, index === 0 ? CORNER_POSITION_COPY.applyJ : CORNER_POSITION_COPY.makeHeadlights, index, rec);
+        if (index === 1) look(t('造出一对眼\n接下来按有眼的情况处理', 'One pair of headlights has appeared\nContinue with the headlights case'));
       }
     } else if (stage === 'edge-position') {
       const align = turns.find(u => topCorners(state(join(base, u))));

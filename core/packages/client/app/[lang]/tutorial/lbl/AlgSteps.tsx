@@ -52,7 +52,7 @@ export default function AlgSteps({ step, alg, activeMove, completedMoves = 0, mo
     {groups.map((group, i) => <div className="lbl-alg-group" data-mobile-current={i === activeGroup} style={{ flexGrow: group.length }} key={i}>
       {group.map(move => { const Tag = onMoveClick ? 'button' : 'span'; return <Tag type={onMoveClick ? 'button' : undefined} onClick={onMoveClick ? () => onMoveClick(move.index) : undefined} className="lbl-alg-move" data-completed={move.index < completedMoves || undefined} key={move.index} aria-current={activeMove === move.index ? 'step' : undefined}>
         <code>{bracketFormula && group.length > 1 && move === group[0] && '('}{move.notation}{bracketFormula && group.length > 1 && move === group.at(-1) && ')'}</code>
-        <span className="lbl-alg-cue">{tr(bracketFormula && group.length === 1 && (i === 0 || i === groups.length - 1)
+        <span className="lbl-alg-cue">{tr(step === 'edge-position' && bracketFormula && group.length === 1 && (i === 0 || i === groups.length - 1)
           ? { zh: '顶层调整', en: 'Adjust top' } : move.cue)}</span>
       </Tag>; })}
     </div>)}

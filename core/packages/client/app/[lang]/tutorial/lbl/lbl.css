@@ -349,7 +349,11 @@
 .lbl-j-lesson-intro .lbl-j-swap-diagram { margin-inline: 0; }
 .lbl-j-swap-diagram svg { display: block; width: 100%; height: auto; }
 .lbl-edge-terms { align-items: start; }
-.lbl-edge-term-art { width: min(100%, 248px); aspect-ratio: 1; margin-inline: auto; display: grid; place-items: center; }
+.lbl-headlights-demonstration { display: flex; align-items: center; justify-content: center; }
+.lbl-headlights-diagram { position: relative; width: min(100%, var(--tutorial-cube-budget), 320px); aspect-ratio: 1; margin-inline: auto; }
+.lbl-headlights-diagram .puzzle-art { position: absolute; inset: 0; max-width: 100%; max-height: 100%; }
+.lbl-headlights-diagram svg { width: 100%; height: 100%; }
+.lbl-edge-term-art { width: min(100%, 248px); aspect-ratio: 1; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; }
 .lbl-opposite-color-diagram { display: grid; gap: 16px; width: min(100%, 136px); }
 .lbl-opposite-color-pair { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px; }
 .lbl-opposite-color-pair span { aspect-ratio: 1; border-radius: 5px; }
@@ -435,6 +439,41 @@
 .lbl-content-pieces > .lbl-explanation > p:first-child { margin-top: 0; }
 
 @media (orientation: portrait) and (max-width: 760px) {
+  .lbl-lesson-scroll:has(.lbl-edge-terms) { container: lbl-edge-reading / size; }
+  .lbl-content-reading:has(.lbl-edge-terms) {
+    --lbl-edge-copy-padding: 12px;
+    --lbl-edge-art-padding: 24px;
+    --lbl-edge-terms-gap: 16px;
+    width: 100%;
+  }
+  .lbl-content-reading > .lbl-explanation:has(.lbl-edge-terms) { padding-block: var(--lbl-edge-copy-padding); }
+  .lbl-content-reading .lbl-middle-core:has(> .lbl-edge-terms) { padding-block: var(--lbl-edge-art-padding); }
+  .lbl-content-reading .lbl-edge-terms {
+    --lbl-edge-art-row: minmax(80px, 176px);
+    height: max(0px, calc(100cqh - 2 * (var(--lbl-edge-copy-padding) + var(--lbl-edge-art-padding))));
+    grid-template-rows: var(--lbl-edge-art-row) auto var(--lbl-edge-terms-gap) var(--lbl-edge-art-row) auto;
+    align-content: safe center;
+    gap: 0;
+  }
+  .lbl-edge-terms > figure { display: grid; grid-row: span 2; grid-template-rows: subgrid; }
+  .lbl-edge-terms > figure + figure { grid-row: 4 / span 2; }
+  .lbl-edge-terms .lbl-edge-term-art { width: auto; height: 100%; max-width: 100%; }
+  @container lbl-edge-reading (max-height: 640px) {
+    .lbl-content-reading:has(.lbl-edge-terms) {
+      --lbl-edge-copy-padding: 0px;
+      --lbl-edge-art-padding: 6px;
+      --lbl-edge-terms-gap: 12px;
+    }
+    .lbl-content-reading .lbl-edge-terms figcaption { gap: 4px; line-height: 1.4; }
+    .lbl-edge-terms .lbl-opposite-color-diagram { gap: 8px; width: min(136px, 84%); }
+    .lbl-edge-terms .lbl-opposite-color-pair { gap: 6px; }
+    .lbl-edge-terms .lbl-opposite-color-pair svg { width: 18px; height: 18px; }
+  }
+  @container lbl-edge-reading (max-height: 450px) {
+    .lbl-content-reading .lbl-edge-terms { --lbl-edge-art-row: minmax(68px, 176px); --lbl-edge-terms-gap: 8px; }
+    .lbl-lesson-scroll .lbl-content-reading .lbl-edge-terms figcaption > span { font-size: var(--lbl-text-small); }
+  }
+
   .lbl-lesson-scroll:has(.lbl-middle-terms) { container-type: size; }
   .lbl-content-reading > .lbl-explanation:has(.lbl-middle-terms) { padding-block: 0; }
   .lbl-content-reading .lbl-middle-terms { padding-block: 6px; }

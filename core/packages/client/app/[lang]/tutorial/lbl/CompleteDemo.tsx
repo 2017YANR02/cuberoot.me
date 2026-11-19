@@ -14,7 +14,7 @@ import { withBrightCenters } from './cross-display';
 import { resolveStageMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/vcStageMask';
 import { engineHomeSid } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex';
 import { T, tr } from '@/i18n/tr';
-import { LBL_LEFT_VIEW_YAW, LBL_STEPS, LESSON_STICKERING, MIDDLE_LEFT, MIDDLE_RIGHT, lblDemoView, type LblExample } from './content';
+import { J_ALG, LBL_LEFT_VIEW_YAW, LBL_STEPS, LESSON_STICKERING, MIDDLE_LEFT, MIDDLE_RIGHT, lblDemoView, type LblExample } from './content';
 import { usePlayerVisible } from './use-player-visible';
 import { getLblAlgGroups, sideTurn } from './alg-cues';
 import { SIDE_VIEW_PAUSE_MS, SIDE_VIEW_TURN_MS } from './schedule-demo-play';
@@ -380,10 +380,14 @@ function Thought({ text, detail, alg, caseIndex, outlines, playing, revision, on
     const timer = window.setTimeout(() => setDisplayed({ key, text, detail, alg, caseIndex, outlines, revision }), delay);
     return () => window.clearTimeout(timer);
   }, [key, text, detail, alg, caseIndex, outlines, playing, revision, displayed.key, displayed.revision]);
+  const bracketJFormula = stage === 'corner-position' && displayed.alg === J_ALG;
   return <div className={`lbl-complete-thought${layout === 'A' ? ' tutorial-single-caption' : ''}`} aria-live="polite"><ReadingFit pane>
     <p data-fading={fading}>
       <span>{displayed.text}</span>
-      {displayed.alg ? <code className="lbl-complete-detail lbl-complete-alg">{getLblAlgGroups(stage, displayed.alg).map((group, index) => <span key={index}>{group.map(move => move.notation).join(' ')}</span>)}</code>
+      {displayed.alg ? <code className="lbl-complete-detail lbl-complete-alg">{getLblAlgGroups(stage, displayed.alg).map((group, index) => {
+        const notation = group.map(move => move.notation).join(' ');
+        return <span key={index}>{bracketJFormula && group.length > 1 ? `(${notation})` : notation}</span>;
+      })}</code>
         : <span className="lbl-complete-detail">{displayed.detail}</span>}
     </p>
   </ReadingFit></div>;

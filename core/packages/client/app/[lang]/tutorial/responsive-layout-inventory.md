@@ -64,8 +64,8 @@ A、B、C 共用[视口及紧凑横屏切换规则](./responsive-design.md#2-尺
 | yellow-face/complete | 顶面朝向 · 完整演示 | A · 非视频教学 |
 | yellow-face/flowchart | 顶面朝向 · 流程图 | G · 独立画布 |
 | corner-position/overview | 角位置 · 概览 | E · 静态图文 |
-| corner-position/terms | 角位置 · 术语介绍 | E · 阅读 |
-| corner-position/l-alg-learning-0 | 角位置 · J公式 | B · 教学 |
+| corner-position/terms | 角位置 · 术语介绍 | A · 观察 |
+| corner-position/l-alg-learning-0 | 角位置 · J公式 | 视频 A → 点击继续 → 教学 B |
 | corner-position/case-0 | 角位置 · 有眼：眼放左 | B · 教学 |
 | corner-position/case-1 | 角位置 · 无眼：先造眼 | B · 教学 |
 | corner-position/complete | 角位置 · 完整演示 | B · 非视频教学 |
@@ -105,6 +105,7 @@ A、B、C 共用[视口及紧凑横屏切换规则](./responsive-design.md#2-尺
 | 底层角块白朝上：交叉对齐 | A · 时间线视频 | 分别圈出前方色格与右侧中心、右侧色格与前方中心 |
 | 中层 SpecialCasePrelude：顶层、出现在中层、翻转、错槽及结尾 | A | 结尾只显示说明，不列公式；播放结束停留，点击继续后进入 B 类公式教学 |
 | 中层去左／去右：对齐侧色、倒 T、判断方向 | A · 时间线视频 | 自动播放三幕，支持暂停、拖动和重播；播完停留，点击“点击继续”才进入固定 B 类公式教学 |
+| J 公式：认识三段、把眼放左、观察完成态 | A · 时间线视频 | 起手只圈左侧绿眼，完成图无圈注；结尾字幕与“点击继续”在进度终点一起出现，随后进入 B 类三段跟练 |
 | EdgeObservation：找墙、墙放后、找对色／无墙 | B | 属于后续公式教学的观察步骤，整体固定 B |
 | 转动记号：所有基础记号、撇号与两次转动 | A | 记号为强调文字，解释自然换行 |
 | 左右公式轮播、J 公式轮播：所有动作 | B | 保留当前公式及口诀 |

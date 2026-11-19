@@ -3,7 +3,7 @@ import { AllFaces, CubeData, Face, parseAlgorithm } from '@cuberoot/visualcube';
 import { describe, expect, it } from 'vitest';
 import { buildWalkthroughRun, completeDemoPool, demoGoalReached } from '@/app/[lang]/tutorial/lbl/complete-demo-state';
 import { LBL_LESSON_RUNS, LBL_LESSON_STAGE_IDS, lessonFrame } from '@/app/[lang]/tutorial/lbl/lesson-runs';
-import { CORNER_ALIGNMENT_COPY, RIGHT } from '@/app/[lang]/tutorial/lbl/content';
+import { CORNER_ALIGNMENT_COPY, CORNER_POSITION_COPY, J_ALG, LBL_STEPS, RIGHT } from '@/app/[lang]/tutorial/lbl/content';
 
 const demos = completeDemoPool('corners');
 const state = (alg: string) => {
@@ -74,6 +74,50 @@ describe('LBL bottom-corner complete demos', () => {
         const { setup, alg } = lessonFrame(run, stage);
         expect(demoGoalReached(stage, `${setup} ${alg}`)).toBe(true);
       }
+    }
+  });
+});
+
+describe('LBL top-corner placement', () => {
+  const stage = 'corner-position';
+  const sides = [Face.F, Face.R, Face.B, Face.L];
+  const eyeCount = (alg: string) => {
+    const faces = state(alg);
+    return sides.filter(face => faces[face][0][0] === faces[face][2][0]).length;
+  };
+
+  it('uses one J for the no-headlights case and a separate top turn for the headlights case', () => {
+    const [withEyes, withoutEyes] = LBL_STEPS.find(step => step.id === stage)!.examples;
+    expect(eyeCount(withoutEyes.setup!)).toBe(0);
+    expect(withoutEyes.alg).toBe(J_ALG);
+    expect(eyeCount(`${withoutEyes.setup} ${withoutEyes.alg}`)).toBe(1);
+    const beforeAlignment = `${withEyes.setup} y ${J_ALG}`;
+    expect(eyeCount(beforeAlignment)).toBe(4);
+    expect(demoGoalReached(stage, beforeAlignment)).toBe(false);
+    expect(demoGoalReached(stage, `${withEyes.setup} ${withEyes.alg}`)).toBe(true);
+  });
+
+  it('stops each J at the final R prime and shows a distinct top turn only when necessary', () => {
+    for (const demo of completeDemoPool(stage)) {
+      const moves = demo.alg.split(' ');
+      const phases = demo.phases.filter(phase => phase.end > phase.start);
+      const jPhases = phases.filter(phase => phase.act.alg === J_ALG);
+      expect(jPhases).toHaveLength(eyeCount(demo.setup) === 0 ? 2 : 1);
+      for (const phase of jPhases) {
+        expect(moves.slice(phase.start, phase.end).join(' ')).toBe(J_ALG);
+        if (phase.act.caseIndex === 1) {
+          expect(eyeCount(`${demo.setup} ${moves.slice(0, phase.end).join(' ')}`)).toBe(1);
+        }
+      }
+      const afterJ = jPhases.at(-1)!.end;
+      const prefix = `${demo.setup} ${moves.slice(0, afterJ).join(' ')}`;
+      const alignments = phases.filter(phase => phase.act.text === CORNER_POSITION_COPY.align);
+      expect(alignments).toHaveLength(demoGoalReached(stage, prefix) ? 0 : 1);
+      for (const phase of alignments) {
+        expect(phase.start).toBe(afterJ);
+        expect(phase.act.alg).toMatch(/^U(?:2|')?$/);
+      }
+      expect(demoGoalReached(stage, `${demo.setup} ${demo.alg}`)).toBe(true);
     }
   });
 });

@@ -1,5 +1,5 @@
 import { Alg } from 'cubing/alg';
-import { CORNER_POSITION, J_ALG, LEFT, LEFT_SUNE, MIDDLE_LEFT, MIDDLE_RIGHT, RIGHT, RIGHT_SUNE } from './content';
+import { J_ALG, LEFT, LEFT_SUNE, MIDDLE_LEFT, MIDDLE_RIGHT, RIGHT, RIGHT_SUNE } from './content';
 
 export function opensOnLeft(alg: string): boolean {
   return sideTurn(new Alg(alg).expand().toString().split(/\s+/)[0]) === 'L';
@@ -51,10 +51,9 @@ export function getLblAlgGroups(step: string, alg: string): LblAlgMove[][] {
       notation, index: start + offset, cue: cues?.[offset] ?? singleMoves[notation] ?? cue(notation, notation),
     }));
 
-  // Keep both the taught J algorithm and its aligned variant in three groups. It is not the
-  // alternate R2 D2 algorithm, so do not borrow that version's mnemonic.
+  // Group the taught J algorithm into three phrases, followed by a separate top alignment.
   if (step === 'corner-position') {
-    const body = (alg === J_ALG ? J_ALG : CORNER_POSITION).split(' ');
+    const body = J_ALG.split(' ');
     const groups: LblAlgMove[][] = [];
     for (let start = 0; start < moves.length;) {
       if (body.every((move, offset) => moves[start + offset] === move)) {
@@ -93,7 +92,7 @@ export function getLblAlgGroups(step: string, alg: string): LblAlgMove[][] {
 /** Only complete taught algorithms label the third practice row. */
 export function getLblPracticeSegments(moves: LblAlgMove[]) {
   const named = [
-    { alg: CORNER_POSITION, name: cue('J公式', 'J algorithm') },
+    { alg: J_ALG, name: cue('J公式', 'J algorithm') },
     { alg: RIGHT_SUNE, name: cue('右小鱼', 'Right Sune') },
     { alg: LEFT_SUNE, name: cue('左小鱼', 'Left Sune') },
     { alg: RIGHT, name: cue('右公式', 'Right trigger') },

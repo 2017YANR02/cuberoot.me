@@ -38,6 +38,12 @@ export const RIGHT_SUNE = "R U R' U R U2' R'";
 export const LEFT_SUNE = "L' U' L U' L' U2 L";
 export const J_ALG = "R U R' F' R U R' U' R' F R2 U' R'";
 export const CORNER_POSITION = `${J_ALG} U'`;
+export const CORNER_POSITION_COPY = {
+  headlightsLeft: text('转体把眼放左', 'Rotate the cube to put the headlights on the left'),
+  applyJ: text('做 J 公式', 'Do the J algorithm'),
+  makeHeadlights: text('做一遍 J 公式造眼', 'Do the J algorithm once to create headlights'),
+  align: text('转顶层让角格与侧面中心同色', 'Turn the top until the corner stickers match the side centers'),
+};
 export const EDGE_POSITION_LEFT = `${RIGHT_SUNE} U ${LEFT_SUNE} U'`;
 export const EDGE_POSITION_RIGHT = `${LEFT_SUNE} U' ${RIGHT_SUNE} U`;
 export const LBL_LEARNING_FOCUS: Record<string, Text> = {
@@ -46,7 +52,7 @@ export const LBL_LEARNING_FOCUS: Record<string, Text> = {
   middle: text('2条核心公式去右或去左，以记忆公式为主', 'Learn the two core algorithms: insert right or insert left.'),
   'yellow-cross': text('共2条公式，3种情况', '2 algorithms, 3 cases'),
   'yellow-face': text('数非黄角格，认鱼头和鱼鳍，再选择鱼公式', 'Count non-yellow corners, identify the head and fins, then choose the Sune algorithm.'),
-  'corner-position': text('一条J公式，结合状态学习', 'Learn the J algorithm in context.'),
+  'corner-position': text('一条J公式，调整角块位置', 'Use one J algorithm to position the corners.'),
   'edge-position': text('左右鱼公式叠加可以调整顶棱位置', 'Combine the left and right fish algorithms to reposition the top edges.'),
 };
 export const LBL_STAGE_GOALS: Record<string, { before: Text; after: Text; summary?: Text }> = {
@@ -186,8 +192,11 @@ export const LBL_STEPS: Step[] = [
       text("先找眼", "First look for headlights"),
     ],
     examples: [
-      example('有眼：眼放左', 'Headlights: Hold on the left', `y ${CORNER_POSITION}`, '先转体把眼放左，再做J公式', 'Rotate the whole cube to put the headlights on the left, then do the J algorithm.', `(y ${CORNER_POSITION} U)' d`),
-      example('无眼：先造眼', 'No headlights: Create a pair', CORNER_POSITION, '做一遍J公式', 'Do the J algorithm once', `(${CORNER_POSITION} U2 ${CORNER_POSITION} U2)'`),
+      example('有眼：眼放左', 'Headlights: Hold on the left', `y ${J_ALG} U'`,
+        [CORNER_POSITION_COPY.headlightsLeft.zh, CORNER_POSITION_COPY.applyJ.zh, CORNER_POSITION_COPY.align.zh].join(' → '),
+        [CORNER_POSITION_COPY.headlightsLeft.en, CORNER_POSITION_COPY.applyJ.en, CORNER_POSITION_COPY.align.en].join(' → '), `(y ${J_ALG})' d`),
+      example('无眼：先造眼', 'No headlights: Create a pair', J_ALG,
+        CORNER_POSITION_COPY.makeHeadlights.zh, CORNER_POSITION_COPY.makeHeadlights.en, `(${CORNER_POSITION} U2 ${CORNER_POSITION} U2)'`),
     ],
   },
   {
