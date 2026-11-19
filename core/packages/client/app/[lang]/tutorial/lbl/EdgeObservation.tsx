@@ -1,145 +1,211 @@
-import ReadingFit from '../components/ReadingFit';
-import TutorialCubeCallout from '../components/TutorialCubeCallout';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Alg } from 'cubing/alg';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import { resolvePlayerSetup } from '@/components/AlgPlayer/player-setup';
 import { tr } from '@/i18n/tr';
-import { edgeDirectionObservation, wallScanPhases } from './complete-demo-state';
+import ReadingFit from '../components/ReadingFit';
+import TutorialCubeCallout from '../components/TutorialCubeCallout';
+import VideoProgress from '../components/VideoProgress';
+import { edgeDirectionObservation, wallScanPhases, type DemoView } from './complete-demo-state';
 import { lblDemoView, LESSON_STICKERING, type LblExample } from './content';
 import { usePlayerVisible } from './use-player-visible';
 
 const NO_OUTLINES: string[] = [];
+const VIEW_YAW: Partial<Record<DemoView, number>> = { home: 0, right: -Math.PI / 2, back: -Math.PI, left: Math.PI / 2 };
+const TURN_DURATION = 2200;
+const FLASH_INTERVAL = 650;
+
+function observationPlan(example: LblExample, caseIndex: number) {
+  const setup = resolvePlayerSetup('3x3', example.alg, example.setup, example.startSolved ?? false);
+  const scans = wallScanPhases(setup, 0, caseIndex);
+  const hasWall = caseIndex !== 2;
+  const left = caseIndex === 0;
+  const preparation = new Alg(example.alg).expand().toString().split(/\s+/).find(move => /^y/.test(move)) ?? '';
+  const scanDuration = 2600;
+  const foundAt = (scans.length - 1) * scanDuration;
+  const placeWallAt = foundAt + 3500;
+  const turnAt = placeWallAt + 1200;
+  const observeAt = turnAt + TURN_DURATION + 1400;
+  const targetAt = observeAt + 4900;
+  const returnAt = targetAt + 4200;
+  const duration = hasWall ? returnAt + 1400 : foundAt + TURN_DURATION;
+  const camera = scans.slice(0, -1).map((scan, index) => ({
+    at: index * scanDuration,
+    duration: scanDuration * .65,
+    yaw: !hasWall && scan.view === 'left' ? -3 * Math.PI / 2 : VIEW_YAW[scan.view ?? 'home'] ?? 0,
+  }));
+  if (hasWall) {
+    camera.push(
+      { at: turnAt, duration: TURN_DURATION, yaw: 0 },
+      { at: observeAt, duration: 1700, yaw: left ? -.6 : .85 },
+      { at: observeAt + 2400, duration: 2500, yaw: left ? 1.05 : -.3 },
+      // Return to the same front view used by the formula player.
+      { at: returnAt, duration: duration - returnAt, yaw: 0 },
+    );
+  } else {
+    // Finish the full orbit at the formula player's front view.
+    camera.push({ at: foundAt, duration: TURN_DURATION, yaw: -2 * Math.PI });
+  }
+
+  return { setup, preparation, camera, hasWall, foundAt, placeWallAt, turnAt, observeAt, targetAt, returnAt, duration,
+    wall: scans.at(-1)?.act.outlines ?? NO_OUTLINES,
+    direction: hasWall ? edgeDirectionObservation(`${setup} ${preparation}`, left) : NO_OUTLINES };
+}
 
 export default function EdgeObservation({ example, caseIndex, onDone }: {
   example: LblExample; caseIndex: number; onDone: () => void;
 }) {
-  const [step, setStep] = useState(0);
-  const [readyStep, setReadyStep] = useState<number | null>(null);
-  const ready = readyStep === step;
-  const [outlines, setOutlines] = useState<string[]>([]);
   const player = useRef<AlgPlayerHandle>(null);
-  const wrapper = useRef<HTMLDivElement>(null);
+  const root = useRef<HTMLDivElement>(null);
   const visible = usePlayerVisible(player, example.alg);
   const yaw = useRef(0);
-  const advanced = useRef(false);
-  const plan = useMemo(() => {
-    const setup = resolvePlayerSetup('3x3', example.alg, example.setup, example.startSolved ?? false);
-    const scans = wallScanPhases(setup, 0, caseIndex);
-    const preparation = new Alg(example.alg).expand().toString().split(/\s+/).filter(move => /^y/.test(move)).join(' ');
-    const moves = preparation.split(/\s+/).filter(Boolean);
-    const views: Record<string, number> = { home: 0, right: -Math.PI / 2, back: -Math.PI, left: Math.PI / 2 };
-    return { setup, scans, moves, views, wall: scans.at(-1)!.act.outlines ?? [],
-      direction: edgeDirectionObservation(`${setup} ${preparation}`, caseIndex === 0) };
-  }, [example, caseIndex]);
+  const clock = useRef(0);
+  const turnApplied = useRef(false);
+  const seekFrame = useRef(0);
+  const [time, setTime] = useState(0);
+  const [playing, setPlaying] = useState(true);
+  const [reduced, setReduced] = useState(false);
+  const [toolbar, setToolbar] = useState<Element | null>(null);
+  const plan = useMemo(() => observationPlan(example, caseIndex), [example, caseIndex]);
+  const { hasWall } = plan;
+  const finished = visible && time >= plan.duration;
+  const lookingAtTarget = time >= plan.targetAt && time < plan.returnAt;
 
   useEffect(() => {
-    if (!visible) return;
-    setReadyStep(null);
-    advanced.current = false;
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let frame = 0;
-    let started: number | undefined;
-    let moveIndex = 0;
-    let pending = false;
-    const initialYaw = yaw.current;
-    const setYaw = (value: number) => {
-      player.current?.orbitView?.(value - yaw.current, 0);
-      yaw.current = value;
+    setToolbar(root.current?.closest('.lbl-learning')?.querySelector('.lbl-demo-toolbar') ?? null);
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduced(preference.matches);
+    update();
+    preference.addEventListener('change', update);
+    return () => {
+      preference.removeEventListener('change', update);
+      cancelAnimationFrame(seekFrame.current);
     };
+  }, []);
+
+  const updateView = useCallback((at: number) => {
+    const index = plan.camera.findLastIndex(view => at >= view.at);
+    const view = plan.camera[index];
+    if (!view) return;
+    const from = plan.camera[index - 1]?.yaw ?? 0;
+    const progress = reduced ? 1 : Math.min((at - view.at) / view.duration, 1);
+    const eased = progress * progress * (3 - 2 * progress);
+    const nextYaw = from + (view.yaw - from) * eased;
+    if (nextYaw !== yaw.current) player.current?.orbitView?.(nextYaw - yaw.current, 0);
+    yaw.current = nextYaw;
+  }, [plan, reduced]);
+
+  useEffect(() => {
+    if (!visible || !playing || finished) return;
+    let frame = 0;
+    let previous: number | undefined;
     const tick = (now: number) => {
-      started ??= now;
-      const elapsed = now - started;
-      if (step === 0) {
-        const scanCount = plan.scans.length - 1;
-        const scanDuration = reduced ? 300 : 1600;
-        const scanEnd = scanCount * scanDuration;
-        if (elapsed < scanEnd) {
-          const index = Math.min(scanCount - 1, Math.floor(elapsed / scanDuration));
-          const from = index === 0 ? initialYaw : plan.views[plan.scans[index - 1].view ?? 'home'];
-          const to = plan.views[plan.scans[index].view ?? 'home'];
-          const progress = Math.min((elapsed % scanDuration) / (scanDuration * .7), 1);
-          setYaw(from + (to - from) * progress * progress * (3 - 2 * progress));
-          setOutlines(NO_OUTLINES);
-        } else {
-          setOutlines(reduced || Math.floor((elapsed - scanEnd) / 250) % 2 === 0 ? plan.wall : NO_OUTLINES);
-          setReadyStep(step);
-          if (caseIndex === 2) return;
-        }
-      } else if (step === 1) {
-        setOutlines(plan.wall);
-        const progress = Math.min(elapsed / 2200, 1);
-        setYaw(initialYaw * (1 - progress * progress * (3 - 2 * progress)));
-        if (pending && !player.current?.isUserMovePending?.()) { pending = false; moveIndex++; }
-        if (!pending && moveIndex < plan.moves.length) { player.current?.playMove?.(moveIndex); pending = true; }
-        if (moveIndex === plan.moves.length && !pending && elapsed >= 2200) { setOutlines(NO_OUTLINES); setReadyStep(step); return; }
-      } else {
-        // Inspect the other side first, then hold the target side in view.
-        const lookingAtTarget = elapsed >= 2400;
-        const progress = Math.min(lookingAtTarget ? (elapsed - 2400) / 3000 : elapsed / 1800, 1);
-        const eased = progress * progress * (3 - 2 * progress);
-        const direction = caseIndex === 0 ? 1 : -1;
-        const firstYaw = caseIndex === 0 ? .6 : .85;
-        const targetYaw = caseIndex === 0 ? 1.05 : .3;
-        setYaw(reduced ? 0 : direction * (lookingAtTarget ? -firstYaw + (firstYaw + targetYaw) * eased : -firstYaw * eased));
-        const arrived = elapsed >= 5400;
-        setOutlines(arrived && (reduced || Math.floor((elapsed - 5400) / 300) % 2 === 0) ? plan.direction : NO_OUTLINES);
-        if (arrived) setReadyStep(step);
+      const elapsed = previous === undefined || document.hidden ? 0 : Math.min(now - previous, 50);
+      previous = now;
+      if (seekFrame.current) {
+        frame = requestAnimationFrame(tick);
+        return;
       }
-      frame = requestAnimationFrame(tick);
+      const next = Math.min(plan.duration, clock.current + elapsed);
+      if (!turnApplied.current && plan.preparation && next >= plan.turnAt) {
+        const handle = player.current;
+        if (reduced) {
+          const adapter = handle?.getPlayer();
+          if (adapter) adapter.timestamp = 1;
+        } else handle?.playMove?.(0);
+        turnApplied.current = true;
+      }
+      const turning = turnApplied.current && player.current?.isUserMovePending?.(false);
+      clock.current = turning ? Math.min(next, plan.observeAt - 1) : next;
+      updateView(clock.current);
+      setTime(clock.current);
+      if (clock.current < plan.duration) frame = requestAnimationFrame(tick);
+      else setPlaying(false);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [visible, step, plan, caseIndex]);
+  }, [visible, playing, finished, plan, reduced, updateView]);
 
-  function advance() {
-    if (!ready || advanced.current) return;
-    advanced.current = true;
-    if (caseIndex === 2 || step === 2) onDone();
-    else setStep(value => value + 1);
-  }
+  const seek = (value: number) => {
+    if (!visible) return;
+    const handle = player.current;
+    const adapter = handle?.getPlayer();
+    const turned = Boolean(plan.preparation) && value >= plan.turnAt;
+    const waitForTurn = turned && turnApplied.current && handle?.isUserMovePending?.(false);
+    cancelAnimationFrame(seekFrame.current);
+    seekFrame.current = 0;
+    // The sim steps by whole turns when seeking, while normal playback animates the turn.
+    handle?.setAnimationPaused?.(false);
+    if (adapter) adapter.timestamp = turned ? 1 : 0;
+    turnApplied.current = turned;
+    const apply = () => {
+      if (waitForTurn && handle?.isUserMovePending?.(false)) {
+        seekFrame.current = requestAnimationFrame(apply);
+        return;
+      }
+      seekFrame.current = 0;
+      updateView(value);
+      clock.current = value;
+      setTime(value);
+      if (value >= plan.duration) setPlaying(false);
+    };
+    apply();
+  };
+
   useEffect(() => {
+    if (!finished) return;
     function onKey(event: KeyboardEvent) {
-      if (!ready || event.code !== 'Space' || event.repeat || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.isComposing) return;
+      if (event.code !== 'Space' || event.repeat || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.isComposing) return;
       if (event.target instanceof Element && event.target.closest('button, a, input, textarea, select, [contenteditable], [role="slider"]')) return;
       event.preventDefault();
-      advance();
+      onDone();
     }
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  });
-  const caption = step === 0
-    ? ready
-      ? caseIndex === 2
-        ? { zh: '四面都没有墙\n先做公式造墙', en: 'No wall on any side\nUse the algorithm to make one' }
-        : { zh: '找到墙了', en: 'Found a wall' }
-      : { zh: '找“墙”\n侧面顶层三个格同色', en: 'Find a wall\nLook for three matching stickers in a top row' }
-    : step === 1
-      ? ready ? { zh: '墙已经放在后面', en: 'The wall is at the back' }
-        : { zh: '把“墙”放后面', en: 'Put the wall at the back' }
-      : ready
-        ? caseIndex === 0 ? { zh: '对色在左边', en: 'The opposite color is on the left' }
-          : { zh: '对色在右边', en: 'The opposite color is on the right' }
-        : { zh: '观察对色位置', en: 'Observe the opposite color’s position' };
-  const bubbleStage = visible && step === 2 && ready && caseIndex !== 2
-    ? wrapper.current?.querySelector('.sim-stage') : null;
-  return <div className="lbl-content lbl-content-example lbl-content-middle-ejection" data-tutorial-layout="B">
+  }, [finished, onDone]);
+
+  const flashHidden = (start: number) => {
+    const beat = Math.floor((time - start) / FLASH_INTERVAL);
+    return !reduced && beat < 4 && beat % 2 === 1;
+  };
+  const outlines = time >= plan.foundAt && time < plan.observeAt && !flashHidden(plan.foundAt)
+    ? plan.wall
+    : lookingAtTarget && !flashHidden(plan.targetAt) ? plan.direction : NO_OUTLINES;
+
+  const caption = finished
+    ? !hasWall ? { zh: '四面都没有墙\n先做公式造墙', en: 'No wall on any side\nUse the algorithm to make one' }
+      : caseIndex === 0 ? { zh: '对色在左边', en: 'The opposite color is on the left' }
+        : { zh: '对色在右边', en: 'The opposite color is on the right' }
+    : !hasWall || time < plan.foundAt ? { zh: '找“墙”\n侧面顶层三个格同色', en: 'Find a wall\nLook for three matching stickers in a top row' }
+      : time < plan.placeWallAt ? { zh: '找到墙了', en: 'Found a wall' }
+        : time < plan.observeAt ? { zh: '把墙转到后面', en: 'Turn the cube to put the wall at the back' }
+          : { zh: '观察对色在哪一边', en: 'Look for the opposite color on either side' };
+  const bubbleStage = visible && hasWall && lookingAtTarget ? root.current?.querySelector('.sim-stage') : null;
+
+  return <div ref={root} className="lbl-content lbl-content-example lbl-special-case-prelude" data-tutorial-mode="timeline" data-tutorial-layout="A">
     <section className="lbl-demonstration">
-      <div ref={wrapper} className="lbl-auto-player lbl-notation-player" data-visible={visible}>
-        <AlgPlayer ref={player} puzzle="3x3" engine="sim" alg={plan.moves.join(' ')} setup={plan.setup}
-          moveDurationMs={2200}
-          set={LESSON_STICKERING['edge-position']} additionalStickering="F2L" orientation="z2"
+      <div className="lbl-auto-player lbl-notation-player" data-visible={visible}>
+        <AlgPlayer ref={player} puzzle="3x3" engine="sim" alg={plan.preparation} setup={plan.setup}
+          moveDurationMs={TURN_DURATION} set={LESSON_STICKERING['edge-position']} additionalStickering="F2L" orientation="z2"
           sceneRot={lblDemoView()} highlightedStickers={outlines}
           controlMode="none" hideResetView lockView interactionMode="none" fillPane />
       </div>
     </section>
-    <section className="lbl-explanation"><ReadingFit pane><p className="lbl-lead" aria-live="polite">{tr(caption)}</p>
-      {ready && <button type="button" className="lbl-guide-continue lbl-guide-continue-hint" onClick={advance}>{tr({ zh: '点击继续', en: 'Click to continue' })}</button>}
-</ReadingFit></section>
+    <section className="lbl-explanation tutorial-single-caption"><ReadingFit pane>
+      <p className="lbl-lead" aria-live="polite">{tr(caption)}</p>
+      {finished && <button type="button" className="lbl-guide-continue lbl-guide-continue-hint" onClick={onDone}>{tr({ zh: '点击继续', en: 'Click to continue' })}</button>}
+    </ReadingFit></section>
+    {toolbar && createPortal(<div className="lbl-cross-animation-progress">
+      <VideoProgress time={time} duration={plan.duration} playing={playing} onSeek={seek}
+        onPlayingChange={next => {
+          if (!seekFrame.current) player.current?.setAnimationPaused?.(!next);
+          setPlaying(next);
+        }} onReplay={() => seek(0)} />
+    </div>, toolbar)}
     {bubbleStage && createPortal(
       <div className="lbl-left-thumb-overlay">
-        <TutorialCubeCallout side={caseIndex === 1 ? 'left' : 'right'} className="lbl-cube-callout" role="status">
+        <TutorialCubeCallout side={caseIndex === 1 ? 'left' : 'right'} player={player} targetStickers={plan.direction} className="lbl-cube-callout" role="status">
           {tr({ zh: '红色和橙色是对色', en: 'Red and orange are opposite colors' })}
         </TutorialCubeCallout>
       </div>, bubbleStage,
