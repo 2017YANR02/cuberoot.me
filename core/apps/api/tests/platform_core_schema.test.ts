@@ -189,6 +189,7 @@ describe('main-site Platform PostgreSQL schema', () => {
       '0227_competition_device_reports.sql',
       '0229_organizer_applications.sql',
       '0258_platform_qr_daily_scans.sql',
+      '0343_platform_homepage_recommendations.sql',
     ].map((filename) => read(`../migrations/${filename}`)));
     const laterTables = laterMigrations.flatMap((source) =>
       [...source.matchAll(/^CREATE TABLE (platform_[a-z0-9_]+) \(/gm)].map((match) => match[1]));
@@ -197,8 +198,8 @@ describe('main-site Platform PostgreSQL schema', () => {
     // The snapshot groups related tables; later migration tables need not appear in migration order.
     expect(schemaTables.filter((table) => laterTables.includes(table)).sort()).toEqual([...laterTables].sort());
     expect(new Set(migrationTables).size).toBe(62);
-    expect(laterTables).toHaveLength(10);
-    expect(new Set(schemaTables).size).toBe(72);
+    expect(laterTables).toHaveLength(11);
+    expect(new Set(schemaTables).size).toBe(73);
     expect(schemaTables).toContain('platform_qr_scan_daily');
     expect(schemaTables).toContain('platform_qr_card_designs');
     expect(schema.indexOf('CREATE TABLE app_users')).toBeLessThan(schema.indexOf('CREATE TABLE platform_instructors'));
