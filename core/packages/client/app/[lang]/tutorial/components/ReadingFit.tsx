@@ -4,7 +4,7 @@ import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import './reading-fit.css';
 
 /** Fit a reading composition within its available space while preserving proportions. */
-export default function ReadingFit({ children, layout = 'E', pane = false }: { children: ReactNode; layout?: 'E' | 'A'; pane?: boolean }) {
+export default function ReadingFit({ children, layout = 'E', pane = false, onFit }: { children: ReactNode; layout?: 'E' | 'A'; pane?: boolean; onFit?: (scale: number) => void }) {
   const viewport = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -17,8 +17,8 @@ export default function ReadingFit({ children, layout = 'E', pane = false }: { c
     const fit = () => {
       frame = 0;
       const type = outer.closest('[data-tutorial-layout]')?.getAttribute('data-tutorial-layout');
-      const compact = pane && shortLandscape.matches ? getComputedStyle(outer) : null;
-      const compactReference = type === 'C' && compact?.getPropertyValue('--tutorial-compact-reference').trim() === '1';
+      const compactReference = pane && type === 'C'
+        && getComputedStyle(outer).getPropertyValue('--tutorial-compact-reference').trim() === '1';
       const compactReading = !pane && layout === 'E' && shortLandscape.matches;
       const enabled = pane
         ? type === 'A' || compactReference
@@ -37,6 +37,7 @@ export default function ReadingFit({ children, layout = 'E', pane = false }: { c
       if (!width || !height) return;
       // DOM layout sizes are rounded to integer pixels; leave one pixel for fractions.
       const scale = Math.min(1, outer.clientWidth / width, outer.clientHeight / (height + 1));
+      onFit?.(scale);
       const fallback = (compactReference || compactReading) && scale < .72;
       if (outer.hasAttribute('data-fit-fallback') !== fallback) outer.toggleAttribute('data-fit-fallback', fallback);
       if (fallback) {
@@ -72,7 +73,7 @@ export default function ReadingFit({ children, layout = 'E', pane = false }: { c
       shortLandscape.removeEventListener('change', schedule);
       cancelAnimationFrame(frame);
     };
-  }, [layout, pane]);
+  }, [layout, pane, onFit]);
   return <div className={`tutorial-reading-fit${pane ? ' tutorial-pane-fit' : ''}`} data-fit-layout={layout} ref={viewport}>
     <div className="tutorial-reading-fit-content" ref={content}>{children}</div>
   </div>;

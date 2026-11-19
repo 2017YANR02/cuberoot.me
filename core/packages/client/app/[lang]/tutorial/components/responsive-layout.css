@@ -114,7 +114,10 @@
     font-size: .9375rem; line-height: 1.4;
   }
   .f2l-page .f2l-treatment-video .f2l-video-stage [data-bubble-target='edge'] + .f2l-concept-caption p {
-    font-size: 1rem; line-height: 1.4;
+    line-height: 1.4;
+  }
+  .f2l-page .f2l-treatment-video .f2l-video-stage .f2l-concept-scene:not([data-tutorial-layout='A'], [data-tutorial-layout='B']) [data-bubble-target='edge'] + .f2l-concept-caption p {
+    font-size: 1rem;
   }
   .f2l-page .f2l-treatment-video .f2l-video-stage [data-bubble-target='edge'] + .f2l-concept-caption .f2l-concept-reference {
     grid-template-columns: 48px minmax(0, 1fr);
@@ -145,7 +148,6 @@
     display: flex; flex-direction: column; justify-content: safe center; text-align: center;
   }
   .lbl-page [data-tutorial-mode='timeline'] .lbl-complete-thought { padding-block: 8px; }
-  .lbl-page [data-tutorial-layout='B'] .lbl-complete-thought p { font-size: var(--lbl-text-body); }
 }
 
 /* Stage size adjusts the contents within the selected layout. */
@@ -208,12 +210,35 @@
 
 .f2l-page .f2l-video-stage .f2l-intro-methods { box-sizing: border-box; }
 .f2l-page .f2l-video-stage .f2l-intro-methods .f2l-concept-scene { grid-template-rows: minmax(0, 1fr) auto; }
+.f2l-page .f2l-video-stage .f2l-intro-methods[data-stage='cross'] .f2l-intro-cube-slot { display: contents; }
+.f2l-page .f2l-video-stage .f2l-intro-methods[data-tutorial-layout='D'] .f2l-intro-cube-slot {
+  display: grid; place-items: center; align-self: stretch; min-height: 0; container-type: size;
+}
+.f2l-page .f2l-video-stage .f2l-intro-methods[data-tutorial-layout='D'] .f2l-intro-cube-slot > .f2l-cube {
+  width: min(100cqw, 350px, calc(100cqh / var(--f2l-intro-zoom)));
+  margin: 0;
+}
+.f2l-page .f2l-intro-film > .f2l-video-viewport:has(.f2l-intro-methods[data-stage='compare']) {
+  overflow: hidden auto; overscroll-behavior-y: contain;
+}
+.f2l-page .f2l-video-stage .f2l-intro-methods[data-tutorial-layout='D'] .f2l-concept-scene {
+  grid-template-rows: minmax(112px, 1fr) minmax(min-content, auto);
+}
+.f2l-page .f2l-video-stage .f2l-intro-methods[data-tutorial-layout='D'] .f2l-concept-caption { align-self: start; }
+@container tutorial-shot (max-height: 380px) {
+  .f2l-page .f2l-video-stage .f2l-intro-methods[data-tutorial-layout='D'] { padding-top: 8px; }
+  .f2l-page .f2l-video-stage .f2l-intro-methods[data-tutorial-layout='D'] .f2l-concept-caption { padding-block: 0; }
+  .f2l-page .f2l-video-stage .f2l-intro-methods[data-tutorial-layout='D'] .f2l-concept-caption p { margin-bottom: 4px; }
+  .f2l-page .f2l-video-stage .f2l-intro-methods[data-tutorial-layout='D'] .f2l-practice-segment > span { padding-block: 4px; }
+}
+@container tutorial-shot (min-width: 561px) and (max-height: 380px) {
+  .f2l-page .f2l-video-stage .f2l-intro-methods[data-tutorial-layout='D'] .f2l-intro-result-slot { min-height: 2lh; }
+}
 .f2l-page .f2l-shot-compact-caption { display: none; }
 @container tutorial-shot (max-width: 560px) {
   .f2l-page .f2l-video-stage .f2l-intro-methods .f2l-practice-segments { gap: 2px; }
   .f2l-page .f2l-video-stage .f2l-intro-methods .f2l-practice-segment > span { font-size: .75rem; padding: 0 2px; }
   .f2l-page .f2l-video-stage .f2l-intro-result-slot { line-height: 1.3; }
-  .f2l-page .f2l-video-stage .f2l-intro-methods[data-stage='compare'] .f2l-cube { width: min(100%, max(60px, calc(100cqh - 210px))); }
 }
 @container tutorial-shot (max-width: 560px) and (max-height: 450px) {
 }
@@ -236,17 +261,68 @@
   .f2l-page .f2l-video-stage > .f2l-concept-scene[data-summary='true'] { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* B-type teaching copy may step down on phones; desktop typography is unchanged. */
+/* A/B teaching text shares the same roles in both tutorials. */
+:is(.lbl-page, .f2l-page) :is([data-tutorial-layout='A'], [data-tutorial-layout='B']) {
+  --tutorial-text-cue: 1rem;
+  --tutorial-text-body: 1.25rem;
+  --tutorial-text-emphasis: 1.5rem;
+  --tutorial-text-notation: 1.75rem;
+}
+.lbl-page .lbl-lesson-scroll :is([data-tutorial-layout='A'], [data-tutorial-layout='B']) {
+  --lbl-text-small: var(--tutorial-text-cue);
+  --lbl-text-body: var(--tutorial-text-body);
+  --lbl-text-emphasis: var(--tutorial-text-emphasis);
+  --lbl-text-display: var(--tutorial-text-notation);
+}
 @media (max-width: 760px) {
-  .lbl-page .lbl-lesson-scroll [data-tutorial-layout='B'] {
-    --lbl-text-small: .875rem;
-    --lbl-text-body: 1rem;
-    --lbl-text-emphasis: 1.125rem;
-    --lbl-text-display: 1.375rem;
+  :is(.lbl-page, .f2l-page) [data-tutorial-layout='B'] {
+    --tutorial-text-cue: .875rem;
+    --tutorial-text-body: 1rem;
+    --tutorial-text-emphasis: 1.125rem;
+    --tutorial-text-notation: 1.375rem;
   }
-  .f2l-page [data-tutorial-layout='B'] :is(.f2l-stage-button, .f2l-stage-content > code, .f2l-player-alg) { font-size: .9375rem; }
-  .f2l-page [data-tutorial-layout='B'] .f2l-case-narration { font-size: 1.125rem; }
-  .f2l-page .f2l-video-stage .f2l-concept-scene[data-tutorial-layout='B'] .f2l-concept-caption p { font-size: 1.125rem; }
+}
+.lbl-page .lbl-lesson-scroll [data-tutorial-layout='B'] .lbl-complete-thought p {
+  font-size: var(--tutorial-text-body);
+}
+.lbl-page .lbl-lesson-scroll [data-tutorial-layout='B'] .lbl-complete-alg {
+  font-size: var(--tutorial-text-emphasis);
+}
+.f2l-page .f2l-video-stage [data-tutorial-layout='A'] .f2l-concept-caption p,
+.f2l-page .f2l-video-stage [data-tutorial-layout='A'].f2l-intro-methods .f2l-concept-caption p,
+.f2l-page .f2l-video-stage [data-tutorial-layout='A'] .f2l-free-guide-copy-body p {
+  font-size: var(--tutorial-text-emphasis);
+}
+.f2l-page [data-tutorial-layout='A'] .f2l-free-guide-copy > .f2l-caption {
+  font-size: var(--tutorial-text-body);
+}
+.f2l-page [data-tutorial-layout='B'] :is(.f2l-stage-button, .f2l-stage-content > code, .f2l-player-alg, .f2l-concept-explanation > code) {
+  font-size: var(--tutorial-text-emphasis);
+}
+.f2l-page [data-tutorial-layout='B'] :is(.f2l-film-caption, .f2l-caption),
+.f2l-page .f2l-video-stage [data-tutorial-layout='B'] .f2l-concept-caption p {
+  font-size: var(--tutorial-text-body);
+}
+.f2l-page [data-tutorial-layout='B'] .f2l-stage-content :is(small, .f2l-stage-scramble, .f2l-stage-scramble code) {
+  font-size: var(--tutorial-text-cue);
+}
+.f2l-page .f2l-video-stage [data-tutorial-layout='B'] > .f2l-concept-caption {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+@media (max-width: 760px) and (orientation: portrait) {
+  .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson[data-tutorial-layout='B'] {
+    container-type: size;
+  }
+  .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > [data-tutorial-layout='B'] > .f2l-demo {
+    --tutorial-cube-budget: min(var(--tutorial-cube-target), 42cqh, max(0px, calc(100cqh - 190px)));
+    gap: 8px;
+  }
+  .f2l-page [data-tutorial-layout='B'] .f2l-film-caption {
+    min-height: 0;
+    margin: 0;
+  }
 }
 
 /* Desktop films fit the space left after navigation and transport. */
@@ -288,7 +364,7 @@
   .f2l-page .f2l-video-stage .f2l-intro-methods[data-stage='split'] > .f2l-intro-method:last-child {
     transform: translateX(calc((-100% - var(--f2l-intro-gap)) * var(--f2l-intro-joined, 1)));
   }
-  .f2l-page .f2l-video-stage .f2l-intro-methods:is([data-stage='cross'], [data-stage='split']) .f2l-concept-scene {
+  .f2l-page .f2l-video-stage .f2l-intro-methods[data-stage='cross'] .f2l-concept-scene {
     grid-template-rows: minmax(0, 1fr);
   }
   .f2l-page .f2l-video-stage .f2l-intro-methods[data-stage='cross'] .f2l-concept-caption {
@@ -441,6 +517,11 @@
   }
   .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > :is([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']) > .f2l-demo {
     height: auto; min-height: 0; gap: 4px;
+  }
+  .f2l-page [data-tutorial-layout='B'] .f2l-demo > .f2l-player-alg {
+    min-height: 0;
+    padding-block: 0;
+    line-height: 1.4;
   }
   .f2l-page :is(.f2l-study-main, .f2l-algorithm-stage) > .f2l-study-lesson:is([data-tutorial-layout='A'], [data-tutorial-layout='B'], [data-tutorial-layout='C']) {
     --tutorial-cube-budget: min(350px, max(72px, calc(100cqh - 120px)));
@@ -617,4 +698,38 @@
   .f2l-page:not(.f2l-practice-page) .tutorial-chapter-track > .tutorial-chapter-button { padding-bottom: 4px; }
   .f2l-page:not(.f2l-practice-page) .tutorial-chapter-line { margin-bottom: 4px; }
   .f2l-page:not(.f2l-practice-page) > .f2l-chapter { grid-column: 1 / -1; }
+}
+
+/* Formula lessons share one fixed stage in both the flow and stage views. */
+.f2l-page:not(.f2l-practice-page) :is(.f2l-lesson-scroll, .f2l-study-main):has(.f2l-algorithm-columns) {
+  overflow: clip;
+}
+.f2l-page .f2l-study-main > .f2l-algorithm-stage {
+  display: block;
+  container: f2l-lesson / size;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: clip;
+}
+.f2l-page .f2l-algorithm-stage > .f2l-algorithm-columns {
+  height: 100%;
+  min-height: 0;
+  margin-block: 0;
+  align-items: stretch;
+}
+.f2l-page .f2l-algorithm-stage > .f2l-algorithm-columns > .f2l-demo {
+  align-self: stretch;
+  justify-content: safe center;
+  height: 100%;
+  min-height: 0;
+  overflow: clip;
+}
+.f2l-page .f2l-algorithm-stage > .f2l-algorithm-columns > .f2l-path-explanation {
+  display: block;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+.f2l-page .f2l-algorithm-stage > [data-tutorial-layout='C'] > .f2l-path-explanation {
+  --tutorial-compact-reference: 1;
 }

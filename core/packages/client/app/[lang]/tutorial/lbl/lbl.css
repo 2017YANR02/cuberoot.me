@@ -298,7 +298,6 @@
 }
 .lbl-lesson-scroll .lbl-demo-stage { --lbl-phase-size: var(--lbl-text-emphasis); }
 .lbl-lesson-scroll .lbl-notation-label > code { font-size: var(--lbl-text-display); }
-.lbl-lesson-scroll .lbl-corner-case-caption { font-size: var(--lbl-text-display); }
 .lbl-lesson-scroll .lbl-fish-intro figcaption > strong,
 .lbl-lesson-scroll .lbl-fish-recognition figcaption > strong {
   font-size: var(--lbl-text-emphasis);

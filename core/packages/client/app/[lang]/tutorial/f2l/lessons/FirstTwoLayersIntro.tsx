@@ -119,16 +119,15 @@ export default function FirstTwoLayersIntro({ orientation, method, comparisonSta
     : pairs && phase === 4 ? { zh: '四组棱角归位，前两层完成', en: 'All four pairs are in place — the first two layers are complete' } : captions[phase];
   const progressSegments = pairs ? [...segments, ...segments] : [...segments.slice(4), ...segments.slice(0, 4)];
   const Stage = comparison ? Fragment : VideoStage;
+  const cube = <div className="f2l-cube">
+    <AlgPlayer ref={player} puzzle="3x3" engine="sim" set="f2l-overview"
+      setup={LBL_INTRO_VIDEO_SETUP} alg={pairs ? F2L_INTRO_VIDEO_ALG : LBL_INTRO_VIDEO_ALG} orientation={orientation} sceneRot={view}
+      fillPane controlMode="none" hideResetView interactionMode="none"
+      moveDurationMs={timeline.moveMs} stickerColorOverrides={overrides} />
+  </div>;
   return <section className="f2l-concept-video f2l-lbl-intro" data-continuous="true" aria-label={pairs ? 'F2L' : tr({ zh: '层先法的前两层', en: 'The first two layers with LBL' })}>
     <Stage><div className="f2l-concept-scene" data-tutorial-mode="timeline" data-tutorial-layout={comparison ? 'D' : 'B'}>
-      <div className="f2l-cube">
-        <AlgPlayer ref={player} puzzle="3x3" engine="sim" set="f2l-overview"
-          setup={LBL_INTRO_VIDEO_SETUP} alg={pairs ? F2L_INTRO_VIDEO_ALG : LBL_INTRO_VIDEO_ALG} orientation={orientation} sceneRot={view}
-          fillPane controlMode="none" hideResetView interactionMode="none"
-          moveDurationMs={timeline.moveMs}
-          stickerColorOverrides={overrides} />
-
-      </div>
+      {comparison ? <div className="f2l-intro-cube-slot">{cube}</div> : cube}
       <div className="f2l-concept-caption tutorial-single-caption" aria-live="polite"><ReadingFit pane>
         <p>{tr(caption)}</p>
         {comparison && <div className="f2l-intro-result-slot">{comparisonStage === 'compare' && pairs && phase === 4 && <span className="f2l-intro-result-text" role="status">

@@ -1,16 +1,18 @@
 'use client';
 
-import { useId } from 'react';
+import { useId, type ReactNode } from 'react';
 import { VisualCube } from '@/components/VisualCube';
 import { tr } from '@/i18n/tr';
 import '../lessons/flowchart.css';
 
 export interface CaseFlowNode {
+  id?: string;
   name: string; x: number; y: number; facelets: string;
   selected?: boolean; current?: boolean; visited?: boolean; receiving?: boolean;
   onSelect?: () => void;
 }
 export interface CaseFlowEdge {
+  id?: string;
   from: string; to: string; d: string;
   selected?: boolean; complete?: boolean; current?: boolean; moving?: boolean; progress?: number;
   onSelect?: () => void;
@@ -18,12 +20,12 @@ export interface CaseFlowEdge {
 export const flowLabel = (name: string) => name === 'solved' ? tr({ zh: '还原', en: 'Solved' }) : name;
 
 /** One renderer for the lesson-10 playback and the live practice state graph. */
-export default function CaseFlowGraph({ nodes, edges, viewBox }: {
-  nodes: CaseFlowNode[]; edges: CaseFlowEdge[]; viewBox: string;
+export default function CaseFlowGraph({ nodes, edges, viewBox, children }: {
+  nodes: CaseFlowNode[]; edges: CaseFlowEdge[]; viewBox: string; children?: ReactNode;
 }) {
   const markerId = useId().replace(/:/g, '');
   return <svg viewBox={viewBox} role="group" aria-label={tr({ zh: '转化路径', en: 'Transformation paths' })}>
-    {edges.map((edge, index) => <g key={`${edge.from}:${edge.to}`}
+    {edges.map((edge, index) => <g key={edge.id ?? `${edge.from}:${edge.to}`}
       className={`f2l-flow-edge${edge.selected ? ' is-selected' : ''}${edge.complete ? ' is-complete' : ''}${edge.current ? ' is-current' : ''}${edge.moving ? ' is-moving' : ''}`}
       data-interactive={!!edge.onSelect} role={edge.onSelect ? 'button' : undefined} tabIndex={edge.onSelect ? 0 : undefined}
       aria-pressed={edge.onSelect ? !!edge.selected : undefined}
@@ -42,10 +44,11 @@ export default function CaseFlowGraph({ nodes, edges, viewBox }: {
         style={{ offsetPath: `path('${edge.d}')`, offsetDistance: `${(edge.progress ?? 0) * 100}%` }} />}
       {edge.onSelect && <path className="f2l-flow-edge-hit" d={edge.d} />}
     </g>)}
+    {children}
     {nodes.map(node => {
       const className = `f2l-flow-node${node.selected ? ' is-selected' : ''}${node.visited ? ' is-visited' : ''}${node.receiving ? ' is-receiving' : ''}`;
       const content = <><VisualCube local view="iso" size={68} faceletColors={node.facelets} alt="" /><span>{flowLabel(node.name)}</span></>;
-      return <foreignObject key={node.name} x={node.x - 45} y={node.y} width="90" height="106">
+      return <foreignObject key={node.id ?? node.name} x={node.x - 45} y={node.y} width="90" height="106">
         {node.onSelect ? <button type="button" className={className} onClick={node.onSelect}
           aria-current={node.current ? 'step' : undefined}
           aria-label={tr({ zh: `查看 ${flowLabel(node.name)} 状态`, en: `View ${flowLabel(node.name)} state` })}>{content}</button>
