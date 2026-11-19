@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { VisualCube } from '@/components/VisualCube';
+import { cubeThumbParams } from '@/lib/alg_thumb_plan';
 import { T, tr } from '@/i18n/tr';
 import ReadingFit from '../components/ReadingFit';
 import VideoProgress from '../components/VideoProgress';
@@ -12,6 +13,9 @@ const purposeEnd = 5500;
 const openingEnd = purposeEnd + 7000;
 const duration = openingEnd + 6000;
 const leftCorners = [36, 38];
+// Reuse the canonical corner mask and grey-side filtering while retaining the
+// tutorial's exact state and animated facelet outlines.
+const cornerDiagram = cubeThumbParams('3x3', 'coll', { kind: 'raw', tag: '', attrs: {} });
 const purpose = { zh: 'J 公式用来调整顶角位置', en: 'The J algorithm repositions the top corners' };
 const segments = { zh: '开头 → 右公式（学过） → 收尾', en: 'Opening → Right trigger (already learned) → Finish' };
 const alignment = { zh: '做公式前若有眼，把眼放左', en: 'Before the J algorithm, put any headlights on the left' };
@@ -52,7 +56,7 @@ export default function JFormulaPrelude({ setup, onContinue }: { setup: string; 
   return <div ref={root} className="lbl-content" data-tutorial-mode="timeline" data-tutorial-layout="A">
     <section className="lbl-demonstration lbl-headlights-demonstration">
       <div className="lbl-headlights-diagram">
-        <VisualCube local view="plan" mask="coll" scheme="yogwrb" size={320}
+        <VisualCube {...cornerDiagram} local view="plan" scheme="yogwrb" size={320}
           setup={finished ? `${setup} ${J_ALG}` : setup}
           outlinePlanSides outlinedFacelets={showingHeadlights ? leftCorners : undefined}
           alt={caption} />
