@@ -225,14 +225,15 @@ describe('stripGripMarks', () => {
 });
 
 describe('grip notation source spans and hands', () => {
-  it('does not recognize double-down as a half-turn grip', () => {
-    expect(parseGripMark('↓↓', true)).toEqual([]);
-    expect(findGripMarks('↓↓U').map(({ grip }) => grip)).toEqual(['down', 'down']);
+  it('preserves opposite half-turn routes, including mixed hand pairs', () => {
+    expect(findGripMarks('↑↑｜↓↓U').map(({ grip, side, halfDirection }) => [grip, side, halfDirection]))
+      .toEqual([['half', 'R', 'up'], ['halfDown', 'L', 'down']]);
+    expect(cubeOnly('↓↓R ↓↓ U ↑↑｜↓↓F')).toBe('R U F');
   });
-  it.each(['↑↑'])('%s is one half-turn grip with whitespace hand selection', (mark) => {
+  it.each(['↑↑', '↓↓'])('%s is one half-turn grip with whitespace hand selection', (mark) => {
     expect(findGripMarks(`${mark}U ${mark} U ${mark}`).map(({ grip, side }) => [grip, side]))
-      .toEqual([['half', 'R'], ['half', 'L'], ['half', 'R']]);
-    expect(findGripMarks(`${mark} `).map(({ grip, side }) => [grip, side])).toEqual([['half', 'L']]);
+      .toEqual([[mark === '↓↓' ? 'halfDown' : 'half', 'R'], [mark === '↓↓' ? 'halfDown' : 'half', 'L'], [mark === '↓↓' ? 'halfDown' : 'half', 'R']]);
+    expect(findGripMarks(`${mark} `).map(({ grip, side }) => [grip, side])).toEqual([[mark === '↓↓' ? 'halfDown' : 'half', 'L']]);
     expect(findGripMarks(`${mark}\nU`)[0].side).toBe('L');
     expect(findGripMarks(`${mark}// comment`)[0].side).toBe('R');
   });

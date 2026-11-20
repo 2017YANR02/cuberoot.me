@@ -220,27 +220,30 @@ export function tokenizeMoves(alg: string): TokenizeResult {
 // ---------------------------------------------------------------- 剥离
 
 /** Longest mark first; a paired mark explicitly names right then left hand. */
-export const GRIP_MARK_SPLIT = /((?:↑↑|[↑↓·])(?:[｜|](?:↑↑|[↑↓·]))?)/;
-export type GripPose = 'home' | 'up' | 'down' | 'half';
+export const GRIP_MARK_SPLIT = /((?:↑↑|↓↓|[↑↓·])(?:[｜|](?:↑↑|↓↓|[↑↓·]))?)/;
+export type GripPose = 'home' | 'up' | 'down' | 'half' | 'halfDown';
 export interface GripMark {
   grip: GripPose;
   side: 'R' | 'L';
+  /** Half-turn route; omitted for non-half grips. */
+  halfDirection?: 'up' | 'down';
   start: number;
   end: number;
   text: string;
 }
-const GRIP_POSES: Record<string, GripPose> = { '↑': 'up', '↓': 'down', '·': 'home', '↑↑': 'half' };
+const GRIP_POSES: Record<string, GripPose> = { '↑': 'up', '↓': 'down', '·': 'home', '↑↑': 'half', '↓↓': 'halfDown' };
 
-/** Offsets are relative to the mark; bare terminal ↑↑ selects right, like a glued mark. */
+/** Offsets are relative to the mark; bare terminal ↑↑ / ↓↓ selects right, like a glued mark. */
 export function parseGripMark(text: string, glued: boolean, atEnd = false): GripMark[] {
   const parts = text.split(/[｜|]/);
   if (parts.length > 2 || parts.some((part) => !Object.hasOwn(GRIP_POSES, part))) return [];
   let start = 0;
   return parts.map((part, index) => {
     const mark: GripMark = {
-      grip: GRIP_POSES[part], side: parts.length === 2 ? (index === 0 ? 'R' : 'L') : (glued || (atEnd && part === '↑↑') ? 'R' : 'L'),
+      grip: GRIP_POSES[part], side: parts.length === 2 ? (index === 0 ? 'R' : 'L') : (glued || (atEnd && (part === '↑↑' || part === '↓↓')) ? 'R' : 'L'),
       start, end: start + part.length, text: part,
     };
+    if (mark.grip === 'half' || mark.grip === 'halfDown') mark.halfDirection = part === '↓↓' ? 'down' : 'up';
     start += part.length + 1;
     return mark;
   });
