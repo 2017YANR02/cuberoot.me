@@ -23,8 +23,10 @@ type Props = { group: 'operations'; active: 'disk' | 'releases' } | { group: 'wo
 export default function AdminSectionNavigation({ group, active }: Props) {
   const t = useT();
   const config = sections[group];
-  return <><header className="admin-hub__heading"><h1>{t(config.title[0], config.title[1])}</h1></header>
-    <div className="admin-section-toolbar"><nav className="admin-section-switch" aria-label={t(config.title[0], config.title[1])}>
+  const groupTitle = t(config.title[0], config.title[1]);
+  const heading = active === 'disk' ? t('磁盘', 'Disk') : groupTitle;
+  return <><header className="admin-hub__heading"><h1>{heading}</h1></header>
+    <div className="admin-section-toolbar"><nav className="admin-section-switch" aria-label={groupTitle}>
       {config.tabs.map(tab => <AppLink key={tab.id} href={tab.href} prefetch={false} aria-current={active === tab.id ? 'page' : undefined}>{t(tab.label[0], tab.label[1])}</AppLink>)}
     </nav><AppLink href={config.link.href} prefetch={false}>{t(config.link.label[0], config.link.label[1])} ↗</AppLink></div></>;
 }

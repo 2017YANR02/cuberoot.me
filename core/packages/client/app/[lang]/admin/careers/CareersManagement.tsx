@@ -8,6 +8,7 @@ import { ContentSkeleton } from '@/components/ContentSkeleton';
 import { useT } from '@/hooks/useT';
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
+import { renderDocxPreview } from '@/lib/docx-preview';
 import { sessionFetch } from '@/lib/session-fetch';
 import { useIsAdmin } from '@/lib/auth-store';
 import '../admin.css';
@@ -31,10 +32,8 @@ function ResumePreview({ application }: { application: Application }) {
         const blob = await response.blob();
         if (controller.signal.aborted) return;
         if (extension === 'docx') {
-          const { renderAsync } = await import('docx-preview');
-          const container = document.createElement('div');
-          await renderAsync(await blob.arrayBuffer(), container, undefined, { useBase64URL: true, renderAltChunks: false, ignoreWidth: true });
-          if (!controller.signal.aborted) setContent({ html: `<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:">${container.innerHTML}` });
+          const html = await renderDocxPreview(blob);
+          if (!controller.signal.aborted) setContent({ html });
         } else if (extension === 'txt') {
           const text = await blob.text();
           if (!controller.signal.aborted) setContent({ text });

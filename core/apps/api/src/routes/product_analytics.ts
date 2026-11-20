@@ -57,10 +57,11 @@ productAnalyticsRoutes.get('/admin/product-analytics', async c => {
       await platformQuery(db, 'SET TRANSACTION READ ONLY');
       await platformQuery(db, "SET LOCAL statement_timeout = '2s'");
       // Reports deliberately contain no subject IDs, account IDs or event payloads.
-      const base = `WITH events AS (
+      // Compare opaque IDs bytewise to keep distinct counts out of locale collation.
+      const base = `WITH events AS NOT MATERIALIZED (
         SELECT event_name, occurred_at, dimensions,
-          CASE WHEN user_id IS NULL THEN 'session:' || (dimensions->>'sessionId') ELSE 'user:' || user_id::text END AS subject,
-          dimensions->>'sessionId' AS session
+          (CASE WHEN user_id IS NULL THEN 'session:' || (dimensions->>'sessionId') ELSE 'user:' || user_id::text END) COLLATE "C" AS subject,
+          (dimensions->>'sessionId') COLLATE "C" AS session
         FROM platform_analytics_events WHERE surface = 'web' AND dimensions->>'schemaVersion' = '1'
           AND occurred_at >= NOW() - make_interval(days => $1) AND expires_at > NOW()
           AND (($2 = 'public' AND dimensions->>'audience' IN ('anonymous', 'member')) OR dimensions->>'audience' = $2)
@@ -81,29 +82,31 @@ productAnalyticsRoutes.get('/admin/product-analytics', async c => {
           COUNT(*) FILTER (WHERE event_name = 'web.feature_use')::int AS uses
           FROM events WHERE event_name IN ('web.page_view', 'web.page_engaged', 'web.feature_interaction', 'web.feature_use')
           GROUP BY 1,2,3,4 ORDER BY views DESC LIMIT 1000`, [days, audience]),
-        // Aggregate impressions and clicks together: joining their grouped CTEs made
-        // PG 13 repeatedly aggregate clicks for every exposure when estimates were low.
-        // Materialize only attributed uses for the existence check, not all web events.
+        // Join each touch to its attributed use times once. A correlated scan of
+        // all uses per click gets expensive as the report window grows.
         platformQuery(db, `${base}, touches AS (
-          SELECT session, dimensions->>'viewId' AS view, dimensions->>'entryId' AS entry,
+          SELECT session, (dimensions->>'viewId') COLLATE "C" AS view, dimensions->>'entryId' AS entry,
             dimensions->>'placement' AS placement, dimensions->>'layoutVersion' AS layout,
             dimensions->>'position' AS position, dimensions->>'deviceClass' AS device,
             MIN(occurred_at) FILTER (WHERE event_name = 'web.entry_impression') AS exposed_at,
             MIN(occurred_at) FILTER (WHERE event_name = 'web.entry_click') AS clicked_at
           FROM events WHERE event_name IN ('web.entry_impression', 'web.entry_click') GROUP BY 1,2,3,4,5,6,7
-        ), uses AS MATERIALIZED (
-          SELECT session, occurred_at, dimensions->>'feature' AS feature,
-            dimensions->>'sourceViewId' AS view, dimensions->>'sourcePlacement' AS placement,
-            dimensions->>'sourcePosition' AS position
+        ), uses AS (
+          SELECT session, dimensions->>'feature' AS feature,
+            (dimensions->>'sourceViewId') COLLATE "C" AS view, dimensions->>'sourcePlacement' AS placement,
+            dimensions->>'sourcePosition' AS position, ARRAY_AGG(occurred_at) AS used_at
           FROM events WHERE event_name = 'web.feature_use' AND dimensions->>'entryPoint' IN ('home', 'search')
+          GROUP BY 1,2,3,4,5
         ) SELECT e.entry, e.placement, e.layout, e.position, e.device, COUNT(*)::int AS impressions,
           COUNT(*) FILTER (WHERE e.clicked_at >= e.exposed_at)::int AS clicks,
-          COUNT(*) FILTER (WHERE CASE WHEN e.clicked_at >= e.exposed_at THEN EXISTS (
-            SELECT 1 FROM uses u WHERE u.session = e.session AND u.feature = e.entry
-              AND u.view = e.view AND u.placement = e.placement AND u.position = e.position
-              AND u.occurred_at >= e.clicked_at AND u.occurred_at < e.clicked_at + INTERVAL '30 minutes'
+          COUNT(*) FILTER (WHERE CASE WHEN u.used_at IS NOT NULL THEN EXISTS (
+            SELECT 1 FROM unnest(u.used_at) AS usage(at)
+            WHERE usage.at >= e.clicked_at AND usage.at < e.clicked_at + INTERVAL '30 minutes'
           ) ELSE FALSE END)::int AS "usedAfterClick"
-          FROM touches e WHERE e.exposed_at IS NOT NULL
+          FROM touches e LEFT JOIN uses u ON e.clicked_at >= e.exposed_at
+            AND u.session = e.session AND u.feature = e.entry AND u.view = e.view
+            AND u.placement = e.placement AND u.position = e.position
+          WHERE e.exposed_at IS NOT NULL
           GROUP BY 1,2,3,4,5 ORDER BY impressions DESC LIMIT 1000`, [days, audience]),
         platformQuery(db, `${base}, per_user AS (
           SELECT subject, dimensions->>'feature' AS feature,

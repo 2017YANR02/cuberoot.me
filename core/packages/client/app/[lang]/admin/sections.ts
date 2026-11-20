@@ -1,4 +1,6 @@
 /** Navigation and destination groups shared by the admin shell and overview. */
+import { ADMIN_USERS_TITLE } from '@cuberoot/shared/page-catalog';
+
 export const ADMIN_SECTIONS = ['overview', 'users', 'content', 'commerce', 'system'] as const;
 export type AdminSection = typeof ADMIN_SECTIONS[number];
 export const SYSTEM_VIEWS = ['tools', 'workspace', 'monitoring', 'tax'] as const;
@@ -16,7 +18,7 @@ export const SYSTEM_DESTINATION_VIEWS: Record<string, SystemView> = {
 
 export const ADMIN_SECTION_LABELS: Record<AdminSection, [string, string]> = {
   overview: ['总览', 'Overview'],
-  users: ['用户 / 会员', 'Users / Memberships'],
+  users: [ADMIN_USERS_TITLE.zh, ADMIN_USERS_TITLE.en],
   content: ['内容 / 社区', 'Content / Community'],
   commerce: ['课程 / 商业', 'Courses / Commerce'],
   system: ['运营与系统', 'Operations and system'],

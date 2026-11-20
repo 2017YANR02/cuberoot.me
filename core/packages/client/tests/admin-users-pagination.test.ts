@@ -31,13 +31,17 @@ const onUrlUpdate = vi.fn();
 beforeEach(async () => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
+  const administrators = [
+    { id: 1, displayName: 'Root', wcaId: '2017YANR02', isAdmin: true, isRootAdmin: true },
+    { id: 42, displayName: 'Admin', wcaId: null, isAdmin: true, isRootAdmin: false },
+  ];
   fetchAdminUsers.mockResolvedValue({
     canManageAdmins: true, canImpersonateUsers: false,
-    administrators: [
-      { id: 1, displayName: 'Root', wcaId: '2017YANR02', isAdmin: true, isRootAdmin: true },
-      { id: 42, displayName: 'Admin', wcaId: null, isAdmin: true, isRootAdmin: false },
-    ],
-    users: [], daily: [], providerCounts: [], summary: {}, pagination: { total: 1425 },
+    administrators,
+    users: administrators.map(record => ({
+      ...record, identities: [], createdAt: '2026-09-20T00:00:00.000Z', updatedAt: '2026-09-20T00:00:00.000Z',
+    })),
+    daily: [], providerCounts: [], summary: {}, pagination: { total: 1425 },
   });
   host = document.createElement('div');
   document.body.append(host);
@@ -49,26 +53,27 @@ beforeEach(async () => {
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
 
-it('lists administrators before metrics even when the filtered user page is empty, and revokes from that list', async () => {
-  const section = host.querySelector<HTMLElement>('.admin-users-administrators')!;
-  expect(host.querySelector('section')).toBe(section);
-  expect(section.textContent).toContain('UID 1');
-  expect(section.textContent).toContain('UID 42');
-  expect(section.querySelectorAll('button')).toHaveLength(1);
+it('starts with the overview and keeps administrator role changes in the user table', async () => {
+  expect(host.querySelector('section')?.getAttribute('aria-labelledby')).toBe('admin-users-overview-title');
+  expect(host.querySelector('.admin-users-administrators')).toBeNull();
+  const [rootRow, adminRow] = host.querySelectorAll('tbody tr');
+  expect(rootRow.querySelector('.admin-users-role')?.textContent).toBe('超级管理员');
+  const revoke = adminRow.querySelector<HTMLButtonElement>('.admin-users-role-button')!;
+  expect(revoke.textContent).toBe('取消管理员');
   const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
   try {
-    await act(async () => section.querySelector<HTMLButtonElement>('button')!.click());
+    await act(async () => revoke.click());
     expect(updateAdminRole).not.toHaveBeenCalled();
     confirm.mockReturnValue(true);
     updateAdminRole.mockRejectedValueOnce(new Error('offline'));
-    await act(async () => section.querySelector<HTMLButtonElement>('button')!.click());
-    expect(section.textContent).toContain('UID 42');
+    await act(async () => revoke.click());
+    expect(revoke.textContent).toBe('取消管理员');
     expect(host.textContent).toContain('管理员权限更新失败');
     updateAdminRole.mockResolvedValueOnce({ isAdmin: false, isRootAdmin: false });
-    await act(async () => section.querySelector<HTMLButtonElement>('button')!.click());
+    await act(async () => revoke.click());
     expect(updateAdminRole).toHaveBeenLastCalledWith(42, false);
-    expect(section.textContent).not.toContain('UID 42');
-    expect(section.textContent).toContain('UID 1');
+    expect(adminRow.querySelector('.admin-users-role')?.textContent).toContain('普通用户');
+    expect(revoke.textContent).toBe('设为管理员');
   } finally { confirm.mockRestore(); }
 });
 

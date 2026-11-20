@@ -11,7 +11,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState, useQueryStates } from 'nuqs';
 import { ChevronLeft, ChevronRight, Monitor, Search, Smartphone, Tablet } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
-import { WcaPersonIdentity } from '@/components/WcaPersonIdentity';
 import { CompactSelect } from '@/components/CompactSelect';
 import { DailyActivityChart, type DailyActivityPoint } from '@/components/DailyActivityChart';
 import { DateRangeInput } from '@/components/DateRangeInput';
@@ -25,8 +24,9 @@ import { useLang } from '@/i18n/tr';
 import { hasAdminAccess, startUserImpersonation, useAuthUser } from '@/lib/auth-store';
 import { countryName } from '@/lib/country-name';
 import { displayCuberName } from '@/lib/cuber-name-display';
-import { fetchAdminUsers, updateAdminRole, type AdminAdministrator, type AdminUserRecord, type AdminUsersResponse } from '@/lib/account-api';
+import { fetchAdminUsers, updateAdminRole, type AdminUserRecord, type AdminUsersResponse } from '@/lib/account-api';
 import { isValidIsoDate } from '@/lib/iso-date';
+import { ADMIN_SECTION_LABELS } from '../sections';
 import MembershipList from './MembershipList';
 import './users.css';
 
@@ -294,7 +294,7 @@ export default function UsersManagement() {
     void setRange({ from: nextFrom || null, to: nextTo || null });
   };
   const selectPreset = (days: number) => changeRange(rangeFromDays(days, today), today);
-  const changeAdminRole = async (record: AdminAdministrator, nextIsAdmin: boolean) => {
+  const changeAdminRole = async (record: AdminUserRecord, nextIsAdmin: boolean) => {
     const name = record.displayName || `UID ${record.id}`;
     const confirmed = window.confirm(nextIsAdmin
       ? t(`确认将“${name}”设为管理员吗？管理员可以查看用户资料并使用后台工具，但不能管理其他管理员。`, `Make “${name}” an administrator? Administrators can view user data and use administration tools, but cannot manage other administrators.`)
@@ -307,9 +307,6 @@ export default function UsersManagement() {
       const updated = await updateAdminRole(record.id, nextIsAdmin);
       setData((current) => current ? {
         ...current,
-        administrators: current.administrators && (updated.isAdmin
-          ? [...current.administrators.filter(item => item.id !== record.id), { ...record, isAdmin: updated.isAdmin, isRootAdmin: updated.isRootAdmin }]
-          : current.administrators.filter(item => item.id !== record.id)),
         users: current.users.map((item) => item.id === record.id ? {
           ...item,
           isAdmin: updated.isAdmin,
@@ -323,17 +320,16 @@ export default function UsersManagement() {
     }
   };
 
-  const renderAdminRole = (record: AdminAdministrator, compact = false) => (
-    <div className={compact ? 'admin-users-role admin-users-role-compact' : 'admin-users-role'}>
-      {(!compact || record.isRootAdmin) && <span>{record.isRootAdmin ? t('超级管理员', 'Super administrator') : record.isAdmin ? t('管理员', 'Administrator') : t('普通用户', 'User')}</span>}
+  const renderAdminRole = (record: AdminUserRecord) => (
+    <>
+      <span>{record.isRootAdmin ? t('超级管理员', 'Super administrator') : record.isAdmin ? t('管理员', 'Administrator') : t('普通用户', 'User')}</span>
       {data?.canManageAdmins && !record.isRootAdmin && (
         <button className="admin-users-page-button admin-users-role-button" type="button"
-          aria-label={compact ? t(`取消“${record.displayName || `UID ${record.id}`}”的管理员权限`, `Remove administrator access from “${record.displayName || `UID ${record.id}`}”`) : undefined}
           disabled={roleUpdatingId !== null} onClick={() => void changeAdminRole(record, !record.isAdmin)}>
-          {roleUpdatingId === record.id ? t('处理中…', 'Updating…') : record.isAdmin ? compact ? t('撤销', 'Revoke') : t('取消管理员', 'Remove admin') : t('设为管理员', 'Make admin')}
+          {roleUpdatingId === record.id ? t('处理中…', 'Updating…') : record.isAdmin ? t('取消管理员', 'Remove admin') : t('设为管理员', 'Make admin')}
         </button>
       )}
-    </div>
+    </>
   );
   const closeImpersonation = useCallback(() => {
     setImpersonationTarget(null);
@@ -367,7 +363,7 @@ export default function UsersManagement() {
     return (
       <main className="admin-hub admin-hub--dashboard admin-users-page">
         <PageBackLink fallback="/admin" className="admin-users-back" prefetch={false} />
-        <h1>{t('用户与增长', 'Users and growth')}</h1>
+        <h1>{t(...ADMIN_SECTION_LABELS.users)}</h1>
         <p className="admin-users-status">{t('只有管理员可以查看注册用户资料。', 'Only administrators can view registered user data.')}</p>
       </main>
     );
@@ -377,12 +373,12 @@ export default function UsersManagement() {
     <main className="admin-hub admin-hub--dashboard admin-users-page">
       <header className="admin-hub__heading admin-users-heading">
         <div>
-          <h1>{t('用户 / 会员', 'Users / Memberships')}</h1>
+          <h1>{t(...ADMIN_SECTION_LABELS.users)}</h1>
         </div>
       </header>
 
         <nav className="admin-section-switch" aria-label={t('用户管理视图', 'User management views')}>
-        {([['users', t('用户', 'Users')], ['memberships', t('会员', 'Memberships')], ['sponsors', t('赞助', 'Sponsors')]]).map(([value, label]) => <AppLink key={value} href={value === 'users' ? '/admin/users' : '/admin/users?tab=' + value} prefetch={false} aria-current={tab === value ? 'page' : undefined}>{label}</AppLink>)}
+        {([['users', t(...ADMIN_SECTION_LABELS.users)], ['memberships', t('会员', 'Memberships')], ['sponsors', t('赞助', 'Sponsors')]]).map(([value, label]) => <AppLink key={value} href={value === 'users' ? '/admin/users' : '/admin/users?tab=' + value} prefetch={false} aria-current={tab === value ? 'page' : undefined}>{label}</AppLink>)}
       </nav>
       {tab === 'users' && <div aria-busy={loading}>
       {error && <p className="admin-users-error" role="alert">{errorLabel(error, t)}</p>}
@@ -390,22 +386,6 @@ export default function UsersManagement() {
 
       {data && (
         <>
-          <section className="admin-users-administrators" aria-labelledby="admin-users-administrators-title">
-            <h2 id="admin-users-administrators-title">{t('管理员', 'Administrators')}</h2>
-            {data.administrators ? <ul className="admin-users-administrator-list">
-              {data.administrators.map(record => <li key={record.id}>
-                <div className="admin-users-administrator-identity">
-                  <AppLink href={`/account?view=user&user=${record.id}`} prefetch={false} className="admin-users-name">
-                    <WcaPersonIdentity wcaId={record.wcaId} linked={false}>
-                      {record.wcaId ? displayCuberName(record.displayName, isZh) : record.displayName || t('未命名', 'Unnamed')}
-                    </WcaPersonIdentity>
-                  </AppLink>
-                  <span className="admin-users-id">UID {record.id}{record.wcaId ? ` / ${record.wcaId}` : ''}</span>
-                </div>
-                {renderAdminRole(record, true)}
-              </li>)}
-            </ul> : <p className="admin-users-error" role="status">{t('管理员列表暂不可用', 'Administrator list unavailable')}</p>}
-          </section>
           <section aria-labelledby="admin-users-overview-title">
             <h2 id="admin-users-overview-title">{t('总览', 'Overview')}</h2>
             <dl className="admin-users-metrics">

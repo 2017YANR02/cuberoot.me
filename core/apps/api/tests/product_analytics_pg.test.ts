@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import postgres from 'postgres';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { HOME_ANALYTICS_LAYOUT, analyticsPage, validAnalyticsEvent, type ProductAnalyticsEvent } from '@cuberoot/shared/product-analytics';
+import { ANALYTICS_BATCH_SIZE, HOME_ANALYTICS_LAYOUT, analyticsPage, validAnalyticsEvent, type ProductAnalyticsEvent } from '@cuberoot/shared/product-analytics';
 const state = vi.hoisted(() => ({ db: null as unknown, userId: 1, admin: false }));
 vi.mock('../src/db/connection.js', () => ({ get sql() { return state.db; } }));
 vi.mock('../src/platform/auth.js', () => ({
@@ -112,17 +112,27 @@ describe.skipIf(!url)('default product analytics with real PostgreSQL', () => {
       sourceViewId, sourcePlacement: 'main', sourcePosition: 0, ...extra,
     });
     const matched = randomUUID(), early = randomUUID(), wrong = randomUUID(), unseen = randomUUID(), idle = randomUUID();
+    const boundary = randomUUID(), otherSession = randomUUID();
+    const boundaryImpression = make(boundary, 'web.entry_impression', -5000);
+    const boundaryClick = make(boundary, 'web.entry_click', -3000);
     const events = [
       make(matched, 'web.entry_impression', -5000), make(matched, 'web.entry_impression', -4000),
-      make(matched, 'web.entry_click', -3000), make(matched, 'web.entry_click', -2000), use(matched), use(matched),
+      make(matched, 'web.entry_click', -3000), make(matched, 'web.entry_click', -2000), use(matched, -4000), use(matched), use(matched),
       make(early, 'web.entry_click', -5000), make(early, 'web.entry_impression', -4000),
       make(early, 'web.entry_click', -2000), use(early),
       make(wrong, 'web.entry_impression', -5000), make(wrong, 'web.entry_click', -3000),
       use(wrong, -1000, { sourcePosition: 1 }), use(wrong, -4000),
       make(unseen, 'web.entry_click', -3000), use(unseen),
       make(idle, 'web.entry_impression', -5000), use(idle),
+      boundaryImpression, boundaryClick, use(boundary),
+      make(otherSession, 'web.entry_impression', -5000), make(otherSession, 'web.entry_click', -3000),
     ];
-    expect((await write('/analytics/events', { sessionId: randomUUID(), events }, true)).status).toBe(202);
+    expect((await write('/analytics/events', { sessionId, events: events.slice(0, ANALYTICS_BATCH_SIZE) }, true)).status).toBe(202);
+    expect((await write('/analytics/events', { sessionId, events: events.slice(ANALYTICS_BATCH_SIZE) }, true)).status).toBe(202);
+    expect((await write('/analytics/events', { sessionId: randomUUID(), events: [use(otherSession)] }, true)).status).toBe(202);
+    // The ingestion freshness window is shorter than the conversion window.
+    await db.unsafe('UPDATE platform_analytics_events SET occurred_at = $1 WHERE id = $2', [at(-1_802_000), boundaryImpression.id]);
+    await db.unsafe('UPDATE platform_analytics_events SET occurred_at = $1 WHERE id = $2', [at(-1_801_000), boundaryClick.id]);
     state.admin = true;
     for (const audience of ['public', 'member', 'anonymous', 'admin']) {
       const response = await app.request('/admin/product-analytics?days=28&audience=' + audience);
@@ -130,7 +140,7 @@ describe.skipIf(!url)('default product analytics with real PostgreSQL', () => {
       expect(response.status, JSON.stringify(report)).toBe(200);
       if (audience === 'public' || audience === 'member') {
         expect(report.entries).toHaveLength(1);
-        expect(report.entries[0]).toMatchObject({ impressions: 4, clicks: 2, usedAfterClick: 1 });
+        expect(report.entries[0]).toMatchObject({ impressions: 6, clicks: 4, usedAfterClick: 1 });
       } else expect(report.entries).toEqual([]);
     }
     state.admin = false;

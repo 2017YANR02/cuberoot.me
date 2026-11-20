@@ -32,7 +32,7 @@ it('shows navigation only for administrators and follows the active page', async
   expect(group.open).toBe(false);
   state.pathname = '/zh/admin/users';
   await act(async () => root.render(createElement(AdminShell, null, 'Page content')));
-  expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('Users / Memberships');
+  expect(node.querySelector('[aria-current="page"]')?.textContent).toBe('Users');
   state.pathname = '/admin'; state.section = 'system'; state.view = 'monitoring';
   await act(async () => root.render(createElement(AdminShell, null, 'Page content')));
   expect(node.querySelector('details')?.open).toBe(true);

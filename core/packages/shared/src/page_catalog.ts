@@ -8,6 +8,8 @@ export interface PageMetaEntry {
   description?: Msg;
 }
 
+export const ADMIN_USERS_TITLE = { zh: '用户', en: 'Users' } as const;
+
 export const PAGE_META: Record<string, PageMetaEntry> = {
   'admin/product-analytics': { title: { zh: '产品使用分析', en: 'Product Usage Analytics' } },
   'admin/careers': { title: { zh: '招聘申请', en: 'Career applications' } },
@@ -104,6 +106,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'account': { title: { zh: '账号', en: 'Account' } },
   'team': { title: { zh: '团队手册', en: 'Team Handbook' }, description: { zh: '入职、离职与 AI 协作 SOP。', en: 'Onboarding, offboarding and AI collaboration SOP.' } },
   'workspace': { title: { zh: 'Workspace', en: 'Workspace' }, description: { zh: 'CubeRoot 员工工作台。', en: 'CubeRoot employee workspace.' } },
+  'admin/team/contract': { title: { zh: '合同详情', en: 'Contract details' } },
   'dev/team': { title: { zh: '团队手册', en: 'Team Handbook' }, description: { zh: '入职、离职与 AI 协作 SOP。', en: 'Onboarding, offboarding and AI collaboration SOP.' } },
   'account/sop': { title: { zh: 'AI 协作 SOP', en: 'AI Collaboration SOP' }, description: { zh: '团队 AI 协作的工作流程、质量标准与交接规范。', en: 'Workflow, quality standards and handoff guidelines for team AI collaboration.' } },
   'account/offboarding': { title: { zh: '离职', en: 'Offboarding' }, description: { zh: '工作交接、设备归还与组织权限撤销。', en: 'Work handoff, equipment return and organizational access revocation.' } },
@@ -122,7 +125,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     description: { zh: '管理员专属采访准备。', en: 'Private interview preparation for administrators.' },
   },
   'admin/users': {
-    title: { zh: '用户与增长', en: 'Users and Growth' },
+    title: ADMIN_USERS_TITLE,
     description: {
       zh: 'CubeRoot 管理员查看注册统计、登录绑定和用户账号资料的后台。',
       en: 'CubeRoot administrator dashboard for registration statistics, sign-in methods, and account records.',
@@ -944,7 +947,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'wca/records': { title: { zh: '纪录', en: 'Records' } },
   'wca/result-watch': { title: { zh: '成绩变更监控', en: 'Result Change Monitor' } },
   'wca/results': { title: { zh: '成绩', en: 'Results' } },
-  'wca/teams': { title: { zh: '厂商与战队', en: 'Brands & Teams' }, description: { zh: '查看已登记厂商、旗下战队与选手名单。', en: 'Browse registered brands, teams and their members.' } },
+  'wca/teams': { title: { zh: '战队', en: 'Teams' }, description: { zh: '查看已登记厂商、旗下战队与选手名单。', en: 'Browse registered brands, teams and their members.' } },
   'wca/success-rate': { title: { zh: '完成率', en: 'Success Rate' } },
   'why-cube': {
     title: { zh: '玩魔方的好处', en: 'Why Learn the Cube' },
