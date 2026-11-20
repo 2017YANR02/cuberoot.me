@@ -562,7 +562,7 @@ export default function AlgCaseMetaContent({
 
       {m.sdbNo && (
         <div className="alg-meta-section alg-meta-refs">
-          <Row label="speedcubedb">{m.sdbNo}</Row>
+          <Row label={tr({ zh: '参考编号', en: 'Reference number' })}>{m.sdbNo}</Row>
         </div>
       )}
       </>, <AlgCaseRelationCards items={relationCards} puzzle={puzzle} set={set} training={playable && !editing} viewAngle={viewAngle} orientation={orientation} />, playingScramble === null ? selectedAlg?.playbackAlg : undefined)}

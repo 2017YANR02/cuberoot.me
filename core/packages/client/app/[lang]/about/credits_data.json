@@ -734,13 +734,6 @@
     "long_en": "3×3 solver & trainer pages, PWA scaffolding"
   },
   {
-    "name": "WACWCA/two-tool + Best 2x2 Algs",
-    "url": "https://github.com/WACWCA/two-tool",
-    "zh": "二阶实战解法查找器的双向搜索、手感排序与方法结构；公式数据合并自 Best 2x2 Algs 表格，状态计算和 3D 展示改用本站引擎",
-    "en": "Two-Tools bidirectional search, ergonomic ranking, and method structure; Best 2x2 Algs sheet data is merged into the library, with state math and 3D rendering moved to the site's own engines",
-    "long_en": "Will Callan's practical 2×2 solution finder provides the bidirectional face/layer search design, method filters, and measured three-move timing table. Its Best 2x2 Algs spreadsheet is normalized and merged into CubeRoot's algorithm database; the port replaces the upstream sticker mapper and twisty-player with CubeRoot's existing pocket-state solver and /sim engine."
-  },
-  {
     "name": "mikavilpas/squanmate",
     "url": "https://github.com/mikavilpas/squanmate",
     "zh": "Square-1 形状训练、奇偶分析、数位与学习工具的功能和算法参考；移植页面复用本站 SQ1 状态、公式库、SVG 与 /sim 绘图引擎（EPL-1.0）",
@@ -901,25 +894,11 @@
     "long_en": "PHP VisualCube (Cride5 / Yan / Kira lineage); source of the URL query API (`pzl`/`alg`/`arw`/`ac`/`view=trans`/`stage` etc), extended mask shapes, and PHP `fcs_format_alg` notation extensions ported into our `@cuberoot/visualcube`"
   },
   {
-    "name": "speedcubedb.com",
-    "url": "https://speedcubedb.com/",
-    "zh": "公式库(/algdb 数据源,2x2/3x3/4x4/5x5 alg sets,scraped)",
-    "en": "Algorithm database powering /algdb",
-    "long_en": "algorithm database powering `/algdb` (2x2/3x3/4x4/5x5 alg sets — F2L, OLL, PLL, COLL, ZBLL, 1LLL, OLLCP, VLS, parity, L2E, L2C, …; scraped via `scramble-stats-build/bin/scrape_speedcubedb.ts`)"
-  },
-  {
     "name": "Spencer Chubb / CubingApp",
     "url": "https://cubingapp.com/",
     "zh": "Square-1、3x3 入门顶层与桥式、4x4 PLL Parity、Pyraminx 公式数据，以及 WCA Kinch 排名、姓名排名、个人纪录连续场次工具逻辑 (MIT)",
     "en": "Square-1, 3x3 beginner last layer and Roux, 4x4 PLL Parity, Pyraminx algorithms, plus WCA Kinch ranks, name ranks, and personal-record streak tool logic (MIT)",
     "long_en": "Selected CubingApp data and calculator semantics ported from commit 613a49885dc618023368e5f0c2a25024b8c7e9a5 under the MIT License: Square-1 CS, CSP, CP, EO, EP and OBL; 2 Look OLL, PLL and CMLL; CMLL and OH CMLL supplements; Roux LSE EO and EOLR; 4x4 PLL Parity alternatives; Pyraminx last-layer and L4E supplements; Kinch rankings; name matching; and personal-record streaks"
-  },
-  {
-    "name": "speedcubedb.com/analyze",
-    "url": "https://speedcubedb.com/analyze",
-    "zh": "打乱分析器算法来源(/scramble/analyzer 的 CFOP 解法枚举)",
-    "en": "Scramble analyzer algorithm (CFOP solution enumerator for /scramble/analyzer)",
-    "long_en": "CFOP solution-enumeration algorithm (cross + F2L + OLL + PLL) ported into the `/scramble/analyzer` page"
   },
   {
     "name": "Jobarion/cubelib + joba.me/mallard",

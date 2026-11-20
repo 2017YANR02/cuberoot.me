@@ -586,37 +586,18 @@ export default function AlgPuzzleClient({ initialCatalog = null }: { initialCata
         </div>
       )}
 
-      {/* 出处行原在 /alg 落地页页尾,落地页取消后跟到每个魔方页 */}
-      <p className="alg-index-credit">
-        {tr({ zh: '部分数据来源: ', en: 'Some data from: ' })}
-        <a href="https://speedcubedb.com" target="_blank" rel="noopener noreferrer">
-          speedcubedb.com
-        </a>
-        {puzzle === '2x2' && (
-          <>
-            {', '}
-            <a
-              href="https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Best 2x2 Algs (Google Sheets)
-            </a>
-          </>
-        )}
-        {(puzzle === 'fto' || puzzle === 'megaminx') && (
-          <>
-            {', '}
-            <a
-              href={puzzle === 'fto' ? 'https://www.lowcubes.com/fto' : 'https://www.lowcubes.com/megaminx/full-pll'}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              LowCubes
-            </a>
-          </>
-        )}
-      </p>
+      {(puzzle === 'fto' || puzzle === 'megaminx') && (
+        <p className="alg-index-credit">
+          {tr({ zh: '部分数据来源：', en: 'Some data from: ' })}
+          <a
+            href={puzzle === 'fto' ? 'https://www.lowcubes.com/fto' : 'https://www.lowcubes.com/megaminx/full-pll'}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            LowCubes
+          </a>
+        </p>
+      )}
     </div>
   );
 }

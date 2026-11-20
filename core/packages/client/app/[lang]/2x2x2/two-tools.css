@@ -24,8 +24,6 @@
   color: var(--muted-foreground);
   line-height: 1.65;
 }
-.tt-source-links { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 0.8rem; }
-.tt-source-links a,
 .tt-cube-heading a {
   display: inline-flex;
   align-items: center;
@@ -34,7 +32,6 @@
   font-size: 0.78rem;
   text-decoration: none;
 }
-.tt-source-links a:hover,
 .tt-cube-heading a:hover { color: var(--accent); }
 
 .tt-search { max-width: 54rem; margin-bottom: 2rem; }

@@ -166,9 +166,14 @@ Keep these boundaries:
 
 ## iOS release with asc
 
-Install the App Store Connect CLI with `brew install asc` (integration checked against 5.14.0).
+Use [rorkai/App-Store-Connect-CLI](https://github.com/rorkai/App-Store-Connect-CLI) (`asc`) for CubeRoot iOS release work. Install it with `brew install asc` and check the installed command's `--help` before using release flags. Start with a read-only status check and reuse the existing CubeRoot app record, version draft, and uploaded build where applicable.
 Authenticate with `asc auth login --name CubeRoot --key-id "$ASC_KEY_ID" --issuer-id "$ASC_ISSUER_ID" --private-key "$ASC_PRIVATE_KEY_PATH" --network`.
 Use an App Store Connect API key, not the Sign in with Apple or APNs key. Store it outside the repository with mode `600`; asc uses the system Keychain by default. For an individual API key, use `--key-type individual` and omit `--issuer-id`.
+Verify the profile with `asc --profile CubeRoot --read-only status --app me.cuberoot.app --platform IOS`. If a saved profile on another Mac is visible over SSH but cannot resolve its Keychain credentials, have the account holder verify it in that Mac's logged-in session or configure an authorized key on the release Mac.
+
+**Mac mini and MacBook Pro.** Set up and verify the local `CubeRoot` profile on each Mac independently. Keep each Mac's App Store Connect API credential in its own system Keychain. When provisioning new team keys, prefer a separately named key per Mac with the App Manager role so either key can be revoked independently. An authorized individual account can use its own individual key with the necessary app access. Verify the read-only status from the actual terminal session that will run the release, including over SSH if used. Check the Apple Developer team in Xcode separately before archiving. Use one Mac per release operation, and recheck App Store Connect before switching machines so both Macs continue from the same build and draft.
+
+The Mac mini's existing profile was verified from its logged-in desktop on 2026-11-20. Plain SSH could not resolve it. With the owner's authorization, a one-shot job in the logged-in user's `launchctl` GUI domain ran the read-only preflight using the existing Keychain entry. Remove the job and temporary files after it exits.
 
 From `core/`:
 
@@ -185,6 +190,8 @@ pnpm --filter @cuberoot/mobile ios:release upload --dir "$RELEASE_DIR" --profile
 `plan` is offline and is the default. `status` is read-only. `archive` reuses `cap:sync:ios` and the existing toolchain doctor, then runs asc archive/export against the same `App` scheme, including its Watch target. It passes the build number to all targets, disables export-time renumbering, and saves the archive, IPA, source commit/dirty-file list and IPA SHA-256 under `~/Library/Developer/CubeRootReleases/`. Existing directories are never replaced. The dirty-file list is provenance context, not a complete reproducible source snapshot.
 
 `upload` verifies the recorded IPA hash, uploads it and waits for Apple processing; the successful response is saved as `upload.json`. If interrupted after upload starts, inspect Apple status before retrying: the upload may already have succeeded. This command does not assign test groups, answer export-compliance questions or submit App Review. API authentication, Xcode signing, successful upload, TestFlight device acceptance and public release remain separate checks; see the [roadmap](../../../docs/product/apps/mobile-app-roadmap.md).
+
+For a build already in App Store Connect, use `asc builds list` and `asc versions list` to resolve the exact processed iOS build and existing draft. Reconcile the draft's version string with the build, then use `asc versions attach-build --version-id "$ASC_VERSION_ID" --build-id "$ASC_BUILD_ID"` followed by `asc validate --app me.cuberoot.app --version-id "$ASC_VERSION_ID"`. Check the selected territories, release mode, and review materials against the authorized release before running `asc review submit --app me.cuberoot.app --version-id "$ASC_VERSION_ID" --build-id "$ASC_BUILD_ID" --dry-run`. With release authorization and validation complete, submit with `--confirm` in place of `--dry-run` and read back the result with `asc review submissions list --app me.cuberoot.app`. The App Store Connect account holder handles any outstanding agreements and unsupported compliance forms in Apple's console.
 
 ## Android release build
 

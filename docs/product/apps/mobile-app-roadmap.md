@@ -319,6 +319,10 @@
 
 ### 阶段 9：iOS 移植与 TestFlight
 
+- 2026-11-20 PDT：阿里云已核实 CubeRoot iOS App 备案号 `沪ICP备2025130431号-2A`，App Store Connect 已保存。首发构建 `1.0.0 (4)`（`3b383d226`）在 iOS 内嵌工具和账号页停用生成式 AI 与公开答案分享，保留普通站内搜索，并在 App 设置中展示备案号。Client 定向检查、App UI / Mobile 类型与测试、Xcode 模拟器构建、安装和启动通过。正式归档及签名导出通过，Xcode 显示 Apple 已收包并开始处理。TestFlight 真机、App Review、大陆安全评估申报与实际商店上架仍需分别核实。
+
+- 2026-11-20 PDT：App Store Connect 已将构建 `1.0.0 (4)` 标为 `VALID`，出口问卷已完成，中国大陆暂不参与首发。Mac mini 桌面会话的 `asc` 已将构建 4 关联至现有 `1.0` 草稿并回读确认。送审预检列出一项阻塞，内容版权声明待核对使用范围后填写。版本仍为 `PREPARE_FOR_SUBMISSION`。
+
 2026-10-15 本地发布工具接入：Mac 已安装 asc 5.14.0；`@cuberoot/mobile ios:release` 提供离线 plan、只读 status、复用既有 Capacitor 同步的 archive/export，以及核对 IPA SHA-256 后上传并等待处理的 upload。导出后核对 IPA bundle ID、version、build number，禁用导出时自动改号。plan 与缺参数/非法参数拒绝检查通过；Xcode toolchain doctor 通过。维护者确认创建 App 管理权限 API 密钥并授权保存后，`CubeRoot` profile 已存入 System Keychain，网络认证、CubeRoot app 查询和 `ios:release status --profile CubeRoot` 均通过；私钥备份位于仓库外且权限为 600，凭据不入 Git。新入口尚未实际归档、签名或上传；不改变下列 TestFlight/审核验收状态。使用方式见 Mobile README 的 iOS release with asc。
 
 - [x] 已准备 Mac、Xcode 26.6 正式版和 iPhone 真机。（2026-09-11：Xcode 26.6 build 17F113；iPhone 15 Pro Max / iOS 26.6.1 已实际连接、安装并运行 App）

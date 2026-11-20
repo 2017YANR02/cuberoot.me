@@ -195,10 +195,6 @@ export default function TwoToolsPage() {
           '输入任意二阶打乱，比较不同底色、建面路径和 CLL / EG / TCLL / LS 收尾，并按预期手速排序。',
           'Enter any 2×2 scramble, compare bottom colors and CLL / EG / TCLL / LS finishes, then rank them by expected speed.',
         )}</p>
-        <div className="tt-source-links">
-          <a href="https://github.com/WACWCA/two-tool" target="_blank" rel="noreferrer">{t('上游源码', 'Upstream source')} <ExternalLink size={13} /></a>
-          <a href="https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/" target="_blank" rel="noreferrer">{t('公式表', 'Algorithm sheet')} <ExternalLink size={13} /></a>
-        </div>
       </header>
 
       <form className="tt-search" onSubmit={submit}>

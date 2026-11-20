@@ -352,6 +352,8 @@ Apple `form_post` 回调通过 303 返回网站既有 `/auth/social/callback`。
 
 首版授权排除包括微信表情、Clawd、音乐、SQ1 PBL/finder/衍生记号表；不据此作所有第三方内容均已授权的声明。尚需核实 two-tool、SpeedCubeDB 内容许可及 Best 2x2 已授权合并的范围，内容版权声明保持待确认。
 
+2026-11-20 补充：维护者确认当前公式为本人创作，Best 2x2 Algs 的使用已获授权。[二阶工具移植记录](../product/cubing/ports/best-2x2-algs-port.md)与 [App 发布历史](../product/apps/history/mobile-app-history.md#2026-10-06google-play-首发送审收口待最终确认)记录了维护者此前对 App 展示权限的确认。按维护者要求移除公式页、二阶工具和致谢页的公开来源名称。线上 6×6 L2E 与 L2C 接口仍分别有 7 条和 33 条带旧来源标识的记录，与 0316 迁移中的情况名、备选 ID 和公式一致。底层数据与历史记录保留。Apple 内容版权声明按 App 整体填报，依据维护者确认及仓库现有的授权记录。
+
 2026-09-11 所有者确认 App 内购买会员，全球发行包含中国大陆。本节仅记录源码/公开 API 盘点和待决策范围，没有创建商品、接 StoreKit、修改会员或发起付款。
 
 | 单一来源 | 当前责任 |

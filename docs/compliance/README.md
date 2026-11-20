@@ -15,5 +15,6 @@
 - [CubeRoot 网站实名认证](face-verification.md)
 - [Google Play membership release setup](google-play-billing-setup.md)
 - [CubeRoot 移动端商店提交资料](mobile-store-submission.md)
+- [CubeRoot iOS 构建、上传与 `asc` 送审流程](../../core/apps/mobile/README.md#ios-release-with-asc)
 - [Windows Microsoft Store 上架基础](windows-store-submission.md)
 - [微信自动续费申请准备](wechat-autorenew-application.md)
