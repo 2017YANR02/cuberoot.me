@@ -49,9 +49,14 @@ async function listening(port: number) {
     socket.once('error', () => resolve(false)); socket.once('timeout', () => { socket.destroy(); resolve(false); });
   });
 }
-async function localCheck(p: Profile) {
-  const r = await fetch(`http://127.0.0.1:${p.localPort}/zh`, { signal: AbortSignal.timeout(45_000) });
-  if (r.status !== 200 || !(await r.text()).includes('CubeRoot')) throw Error('Port 3000 is not serving a healthy CubeRoot page; existing service was not touched');
+async function localCheck(p: Profile, startedFrontend = false) {
+  const url = `http://127.0.0.1:${p.localPort}/zh`;
+  const response = await fetch(url, { signal: AbortSignal.timeout(45_000) });
+  if (response.status === 200 && (await response.text()).includes('CubeRoot')) return;
+
+  const detail = `Expected the CubeRoot page at ${url} (HTTP status ${response.status}).`;
+  const hint = startedFrontend ? 'Check the Next.js startup output or service.log.' : 'The existing service was left running.';
+  throw Error(`${detail} ${hint}`);
 }
 function child(command: string, args: string[], cwd?: string, captureErrors = false) {
   const fd = openSync(logPath, 'a', 0o600);
@@ -107,7 +112,7 @@ async function run() {
       }
       dev.once('exit', () => { if (!stopped) { log('Managed frontend exited; stopping tunnel'); cleanup(); process.exit(1); } });
     }
-    await localCheck(p); log(`Local service ready. Connecting ${p.url}`);
+    await localCheck(p, dev !== undefined); log(`Local service ready. Connecting ${p.url}`);
     if (v.open) void (async () => {
       while (!stopped && !tunnelPaused) {
         try {
