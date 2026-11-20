@@ -54,7 +54,7 @@ async function localCheck(p: Profile, startedFrontend = false) {
   const response = await fetch(url, { signal: AbortSignal.timeout(45_000) });
   if (response.status === 200 && (await response.text()).includes('CubeRoot')) return;
 
-  const detail = `Expected the CubeRoot page at ${url} (HTTP status ${response.status}).`;
+  const detail = `The service at ${url} is not serving a healthy CubeRoot page (HTTP status ${response.status}).`;
   const hint = startedFrontend ? 'Check the Next.js startup output or service.log.' : 'The existing service was left running.';
   throw Error(`${detail} ${hint}`);
 }
