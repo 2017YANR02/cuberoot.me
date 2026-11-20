@@ -76,7 +76,8 @@ A reference for translating regulations, competition announcements and incident 
 | WST | WCA Software Team | WCA 软件组 |
 | WSOT | WCA Sports Organization Team | WCA 体育组织团队 |
 
-- WIC 统一译“廉政委员会”，不译“诚信委员会”；WCT 用“通讯组”，WCAT 用“比赛公示组”，WMT 用“市场营销组”。此约定适用于公告标题、正文、新闻摘要、索引和新译稿。 / Apply these names consistently to titles, bodies, summaries, indexes and new translations.
+- CubeRoot 中英文公告标题（含首页推荐、列表和文章页）提到 WCA 委员会时，直接使用该委员会在原文语境中的正式简称，如 WIC、WRC、WFC。历史公告用当时的简称。正文首次提及时可写全称并附简称。 / Use the committee's official acronym for the source period in English and Chinese announcement titles across CubeRoot, including homepage features, lists, and article pages. The full name may be introduced with the acronym on first mention in the body.
+- 需要写全称时，WIC 用“廉政委员会”，不译“诚信委员会”；WCT 用“通讯组”，WCAT 用“比赛公示组”，WMT 用“市场营销组”。 / Use these established translations whenever a full name is needed.
 - Team 不统一直译“团队”：上述专名分别使用“组”或“团队”；committee 是“委员会”，council 是“理事会”，Board 是“董事会”，officer 是“干事”。普通组织团队不套用某个 WCA 专名。 / Preserve established proper names and distinguish teams, committees, councils, the Board and officers.
 - 历史 WCA Disciplinary Committee（WDC）保留“WCA 纪律委员会”；旧公告中的 WCA Appeals Committee（WAC）保留 WAC，不替换成今天页面的 WAPC。官方当前职责说明本身仍有 WAC，不能把名称一致误当作缩写已同步。 / Keep historical WDC and WAC names and acronyms; do not rewrite them as current organizations or acronyms.
 - **WAC 须先核对英文全称**：历史 Advisory Council 在本站统一译为“顾问理事会”，与 Appeals Committee（申诉委员会）不是同一机构；此处“顾问理事会”是本站历史译文约定，不冒充当前官方专名。Advisory Committee 仍按“咨询／顾问委员会”处理，不凭缩写改名。历史 WEC = 道德委员会，依据[官方 2023 年中文文件](https://github.com/thewca/worldcubeassociation.org/blob/6949d9aeb92d53a834ff29471e9c7eeb9baa8b6b/WcaOnRails/config/locales/zh-CN.yml)。 / Resolve WAC by its full English name: historical Advisory Council and Appeals Committee are distinct. 顾问理事会 is CubeRoot's historical rendering, not a claimed current official name; retain Advisory Committee where the source says committee. Historical WEC uses 道德委员会.

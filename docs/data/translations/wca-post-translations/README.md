@@ -17,6 +17,8 @@ node core/packages/client/scripts/build-wca-posts.mts
 
 本地展示：/zh/regulation/post，按日期倒序，只显示日期标题，支持标题搜索、年份筛选及分页；点击进入 /zh/regulation/post/<slug>。英文正文随全站语言切换展示；保留官方来源与匿名，不将历史条目改写成当前状态。不展开文章外链的论坛、附件、申请材料等正文。
 
+生成站内中英文公告标题时按[委员会简称规则](../../../../core/packages/client/public/regulation/wca-translation-reference.md#官方机构名称--official-organization-names)使用原文语境中的正式简称。原始标题及审校绑定仍保存在译文账本中。
+
 ## 每日监测与翻译
 
 GitHub .github/workflows/wca_news_drift.yml 每日 08:23 UTC 和手动运行 check.mts --posts --publish。扩展提交 5573dfbc3aa3f43a8e89f930fb4deca57b1e1da0，仅包含监测工作流、脚本、测试、README 和 Posts 基线。验证运行：https://github.com/2017YANR02/cuberoot.me/actions/runs/39746617954 ，成功。

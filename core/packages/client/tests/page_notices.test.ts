@@ -28,8 +28,8 @@ describe('public notice request sharing', () => {
     ];
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(rows)));
     const resolved = await read();
-    expect(resolved[0]).toEqual({ ...rows[0], href: '/zh/regulation/post/wic-investigation-2026', bodyZh: 'WCA 廉政委员会关于近期调查的声明', bodyEn: 'Statement from the WCA Integrity Committee Regarding a Recent Investigation' });
-    expect(resolved[1]).toEqual({ ...rows[1], bodyZh: '廉政委员会简报：2026 年第三季度', bodyEn: 'Integrity Committee Digest - 2026 Q3' });
+    expect(resolved[0]).toEqual({ ...rows[0], href: '/zh/regulation/post/wic-investigation-2026', bodyZh: 'WIC 关于近期调查的声明', bodyEn: 'Statement from the WIC Regarding a Recent Investigation' });
+    expect(resolved[1]).toEqual({ ...rows[1], bodyZh: 'WIC 简报：2026 年第三季度', bodyEn: 'WIC Digest - 2026 Q3' });
     expect(resolved.slice(2)).toEqual(rows.slice(2));
   });
 
@@ -125,7 +125,7 @@ describe('homepage article feature', () => {
     expect(request.method).toBe('PUT');
     expect(JSON.parse(request.body)).toEqual({
       path: '/', placement: 'home_featured', level: 'info', icon: 'megaphone', color: 'terracotta',
-      bodyZh: 'WCA 廉政委员会关于近期调查的声明', bodyEn: 'Statement from the WCA Integrity Committee Regarding a Recent Investigation', href: '/regulation/post/wic-investigation-2026',
+      bodyZh: 'WIC 关于近期调查的声明', bodyEn: 'Statement from the WIC Regarding a Recent Investigation', href: '/regulation/post/wic-investigation-2026',
       enabled: true, dismissible: false, startsAt: null, endsAt: null,
     });
   });

@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { shortenWcaPostTitle } from '../../../../core/packages/client/scripts/wca-post-title.mts';
 const dir = dirname(fileURLToPath(import.meta.url));
 const root = resolve(dir, '../../../..');
 const read = (p: string): any => JSON.parse(readFileSync(p, 'utf8'));
@@ -15,6 +16,10 @@ const dataDir = resolve(root, 'core/packages/client/app/[lang]/regulation/_data'
 const posts = read(resolve(dataDir, 'posts.json'));
 const logs = read(resolve(dataDir, 'logs.json'));
 const index = read(resolve(dataDir, 'posts-index.json'));
+const linkedPosts = new Map<string, string>();
+for (const row of read(resolve(dir, '../wca-post-translations/progress.json')).entries) {
+  if (row.status === 'linked_existing_disciplinary') linkedPosts.set(row.key, row.existingKey);
+}
 const remainingEventNames: any[] = [];
 check(report.entries.length === baseline.length, 'Review coverage count');
 check(new Set(report.entries.map((r: any) => r.key)).size === baseline.length, 'Duplicate review key');
@@ -27,7 +32,9 @@ for (const b of baseline) {
   check(r?.reviewedContentHash === hash({ title: record.translation.title, content: record.translation.content }), 'Reviewed content: ' + b.key);
   const isPost = b.path.includes('/wca-post-translations/');
   const article = isPost ? posts.find((p: any) => p.sourceKey === b.key) : logs.find((p: any) => p.id === b.key);
-  check(article?.title.zh === record.translation.title, 'Generated title: ' + b.key);
+  const originalTitle = { zh: record.translation.title, en: record.source.title };
+  const expectedTitle = isPost ? shortenWcaPostTitle(originalTitle, record.source.content) : originalTitle;
+  check(article?.title.zh === expectedTitle.zh && article?.title.en === expectedTitle.en, 'Generated title: ' + b.key);
   if (isPost) check(article?.translationHash === r?.reviewedTranslationHash, 'Generated article hash: ' + b.key);
   const text = (record.translation.title + '\n' + record.translation.content)
     .replace(/(?:https?:\/\/|mailto:)[^\s)<>\]"']+/g, '')
@@ -38,10 +45,14 @@ for (const b of baseline) {
   }
 }
 for (const post of posts) {
-  check(index.find((p: any) => p.id === post.id)?.title.zh === post.title.zh, 'Index/detail title mismatch: ' + post.id);
-  if (post.sourceKey?.startsWith('posts:') && !baseline.some((b: any) => b.key === post.sourceKey)) {
-    const log = logs.find((l: any) => l.sourceUrl === post.sourceUrl);
-    check(log && log.title.zh === post.title.zh && log.html.zh === post.html.zh, 'Reused disciplinary content mismatch: ' + post.id);
+  const indexedTitle = index.find((p: any) => p.id === post.id)?.title;
+  check(indexedTitle?.zh === post.title.zh && indexedTitle?.en === post.title.en, 'Index/detail title mismatch: ' + post.id);
+  const logKey = linkedPosts.get(post.sourceKey);
+  if (logKey) {
+    const log = logs.find((l: any) => l.id === logKey);
+    const title = log && shortenWcaPostTitle(log.title, log.html.en);
+    check(title?.zh === post.title.zh && title?.en === post.title.en && log.html.zh === post.html.zh && log.html.en === post.html.en,
+      'Reused disciplinary content mismatch: ' + post.id);
   }
 }
 for (const article of [...posts, ...logs]) {

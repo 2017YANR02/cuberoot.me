@@ -4,6 +4,7 @@ import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {markdown} from './wca-content.mts';
+import {shortenWcaPostTitle} from './wca-post-title.mts';
 import {buildRegulationLinkIndex} from './build-regulation-link-index.mts';
 const client=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const root=resolve(client,'../../..');
@@ -19,12 +20,13 @@ const articles=progress.entries.flatMap((row:any)=>{
   const old=logs.find((entry:any)=>entry.id===row.existingKey);
   const record=logProgress.entries.find((entry:any)=>entry.key===row.existingKey);
   if(!old||!record)throw Error('Missing linked disciplinary entry: '+row.key);
-  return [{...old,id,kind:'posts',sourceKey:row.key,sourceHash:row.sourceHash,translationHash:record.translationHash}];
+  return [{...old,id,kind:'posts',title:shortenWcaPostTitle(old.title,old.html.en),sourceKey:row.key,sourceHash:row.sourceHash,translationHash:record.translationHash}];
  }
  if(row.status!=='translated')return [];
  const e=read(resolve(ledger,row.path));
  if(e.source.hash!==row.sourceHash||e.translation.sourceHash!==row.sourceHash||digest(e.translation)!==row.translationHash)throw Error('Ledger mismatch: '+row.key);
- return [{id,kind:'posts',sourceKey:e.key,sourceHash:e.source.hash,translationHash:row.translationHash,date:e.source.date.slice(0,10),title:{zh:e.translation.title,en:e.source.title},sourceUrl:e.source.url,html:{zh:markdown(e.translation.content),en:markdown(e.source.content)},supplements:[]}];
+ const title=shortenWcaPostTitle({zh:e.translation.title,en:e.source.title},e.source.content);
+ return [{id,kind:'posts',sourceKey:e.key,sourceHash:e.source.hash,translationHash:row.translationHash,date:e.source.date.slice(0,10),title,sourceUrl:e.source.url,html:{zh:markdown(e.translation.content),en:markdown(e.source.content)},supplements:[]}];
 }).sort((a:any,b:any)=>b.date.localeCompare(a.date)||a.id.localeCompare(b.id));
 const out=resolve(client,'app/[lang]/regulation/_data');
 writeFileSync(resolve(out,'posts.json'),JSON.stringify(articles)+'\n');
