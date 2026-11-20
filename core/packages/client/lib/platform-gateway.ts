@@ -1,4 +1,4 @@
-import { sessionFetch } from '@/lib/session-fetch';
+import { optionalSessionGet, sessionFetch } from '@/lib/session-fetch';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { apiUrl } from '@/lib/api-base';
 import { createPlatformOrder } from './platform-checkout';
@@ -248,15 +248,26 @@ export function localizePlatformEntity(item: PlatformEntity, lang: string): Plat
     summary: pick(['summary', 'excerpt', 'description']) ?? item.summary };
 }
 
+const PUBLIC_PLATFORM_RESOURCES = new Set<PlatformResource>([
+  'search', 'leaderboard', 'teachers', 'community', 'community-circle', 'membership-plans',
+  'paths', 'events', 'news', 'products', 'certificate', 'qr',
+]);
+
 export async function loadPlatformResource(
   resource: PlatformResource,
   options: PlatformLoadOptions,
 ): Promise<PlatformResourceResult> {
-  const response = await sessionFetch(apiUrl(readPath(resource, options)), {
-    headers: authHeaders(false),
+  const publicCourse = resource === 'courses' && (!idFrom(options) || !options.includeCourseAccess || !!options.reviewPage);
+  const url = apiUrl(readPath(resource, options));
+  const init = {
     ...(resource === 'membership-plans' ? {} : { cache: 'no-store' as const }),
     signal: options.signal,
-  });
+  };
+  const response = PUBLIC_PLATFORM_RESOURCES.has(resource) || publicCourse
+    ? await fetch(url, { ...init, credentials: 'omit' })
+    : await (resource === 'community-post' || resource === 'course-lesson' ? optionalSessionGet : sessionFetch)(url, {
+        ...init, headers: authHeaders(false),
+      });
   if (response.status === 401 || response.status === 403) throw new PlatformPermissionError(response.status);
   // A known artwork can have a public preview before a sellable product exists.
   // Only an explicit 404 is absence; transport and server errors still reject.
@@ -297,8 +308,8 @@ export async function loadPlatformShippingAddresses(signal?: AbortSignal): Promi
 }
 
 export async function loadPlatformMembershipPlans(signal?: AbortSignal): Promise<PlatformMembershipPlan[]> {
-  const response = await sessionFetch(apiUrl('/v1/platform/membership-plans'), {
-    headers: authHeaders(false),
+  const response = await fetch(apiUrl('/v1/platform/membership-plans'), {
+    credentials: 'omit',
     signal,
   });
   if (response.status === 401 || response.status === 403) throw new PlatformPermissionError(response.status);
@@ -318,7 +329,7 @@ export async function loadPlatformMemberships(signal?: AbortSignal): Promise<Pla
 }
 
 export async function loadPlatformLessonMedia(lessonId: string, signal?: AbortSignal): Promise<PlatformLessonMedia> {
-  const response = await sessionFetch(apiUrl(`/v1/platform/lessons/${encodeURIComponent(lessonId)}/media`), {
+  const response = await optionalSessionGet(apiUrl(`/v1/platform/lessons/${encodeURIComponent(lessonId)}/media`), {
     headers: authHeaders(false),
     cache: 'no-store',
     signal,

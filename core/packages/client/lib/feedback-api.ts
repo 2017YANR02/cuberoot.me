@@ -1,4 +1,4 @@
-import { sessionFetch } from '@/lib/session-fetch';
+import { optionalSessionGet, sessionFetch } from '@/lib/session-fetch';
 /**
  * /v1/feedback 客户端封装。提交 + 传附件走 WCA OAuth Bearer(authHeaders);
  * admin 列表 / 改状态 / 删 / 取媒体也走 Bearer(后端 requireAdmin)。
@@ -177,7 +177,7 @@ export function feedbackMediaUrl(id: number): string {
 export async function fetchPublicFeedback(page = 1, size = 20, status?: FeedbackStatus): Promise<PublicFeedbackPage> {
   const qs = new URLSearchParams({ page: String(page), size: String(size) });
   if (status) qs.set('status', status);
-  const r = await sessionFetch(apiUrl(`/v1/feedback/public?${qs}`), { headers: authHeaders(false), cache: 'no-store' });
+  const r = await fetch(apiUrl(`/v1/feedback/public?${qs}`), { credentials: 'omit', cache: 'no-store' });
   return handle<PublicFeedbackPage>(r);
 }
 
@@ -197,7 +197,7 @@ export async function fetchMyFeedbackUnread(): Promise<number> {
 
 /** 单条反馈的公开完整对话;作者 / admin 取阅时标记已读。 */
 export async function fetchFeedbackThread(id: number): Promise<FeedbackThread> {
-  const r = await sessionFetch(apiUrl(`/v1/feedback/${id}/thread`), { headers: authHeaders(false), cache: 'no-store' });
+  const r = await optionalSessionGet(apiUrl(`/v1/feedback/${id}/thread`), { headers: authHeaders(false), cache: 'no-store' });
   return handle<FeedbackThread>(r);
 }
 

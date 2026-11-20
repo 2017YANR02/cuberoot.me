@@ -31,6 +31,15 @@ function removeLegacy(): void {
     try { localStorage.removeItem(key); } catch { /* no new credentials are persisted */ }
   }
 }
+function forgetLocalWebSession(): void {
+  revision++;
+  cached = null;
+  pending = null;
+  legacyRead = true;
+  removeLegacy();
+  try { localStorage.removeItem(WEB_SESSION_MARKER_KEY); } catch { /* unavailable storage */ }
+  notify(null);
+}
 export function isWebSessionMarker(token: string): boolean { return token.startsWith(PREFIX); }
 
 /** Synchronous identity marker for existing UI; it is never an API credential. */
@@ -130,7 +139,14 @@ export async function getWebAccessToken(token: string): Promise<string> {
     headers: { ...embeddedHeader(), 'X-Web-Session': token.slice(PREFIX.length), ...(oldToken ? { 'Content-Type': 'application/json' } : {}) },
     ...(oldToken ? { body: JSON.stringify({ token: oldToken, generation: token.slice(PREFIX.length) }) } : {}),
   });
-  const promise = (oldToken ? enqueue(request) : request()).then(response => accept(response, token, expectedRevision));
+  const promise = (oldToken ? enqueue(request) : request()).then(response => {
+    // A rejected cookie restore leaves no usable session for this marker. Do not
+    // clear cookies or touch a newer login, and keep transient failures retryable.
+    if (!oldToken && response.status === 401 && expectedRevision === revision && markerFromStorage() === token) {
+      forgetLocalWebSession();
+    }
+    return accept(response, token, expectedRevision);
+  });
   pending = { marker: token, promise };
   try { return await promise; }
   finally { if (pending?.promise === promise) pending = null; }
@@ -139,13 +155,7 @@ export async function getWebAccessToken(token: string): Promise<string> {
 /** Invalidate locally before the asynchronous cookie deletion can finish. */
 export function clearWebSession(): Promise<void> {
   const marker = markerFromStorage();
-  revision++;
-  cached = null;
-  pending = null;
-  legacyRead = true;
-  removeLegacy();
-  try { localStorage.removeItem(WEB_SESSION_MARKER_KEY); } catch { /* unavailable storage */ }
-  notify(null);
+  forgetLocalWebSession();
   return enqueue(async () => {
     const response = await fetch(ENDPOINT, {
       method: 'DELETE', credentials: 'same-origin', cache: 'no-store', keepalive: true,

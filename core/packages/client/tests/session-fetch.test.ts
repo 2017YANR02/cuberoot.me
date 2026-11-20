@@ -3,11 +3,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ exchange: vi.fn(), fetch: vi.fn() }));
 vi.mock('@/lib/web-session', () => ({ getWebAccessToken: mocks.exchange }));
 vi.mock('@/lib/api-base', () => ({
+  API_ORIGIN: 'https://api.cuberoot.me',
   apiUrl: (path: string) => `https://api.cuberoot.me${path}`,
   directApiUrl: (path: string) => `https://api.cuberoot.me${path}`,
   assistantStreamApiUrl: () => 'http://localhost:3002/v1/site-assistant',
 }));
-import { sessionFetch } from '@/lib/session-fetch';
+vi.mock('@/lib/auth-store', () => ({
+  getSessionToken: () => 'web-session:account-a',
+  getWcaToken: () => '',
+}));
+import { optionalSessionGet, sessionFetch, WebSessionRestoreError } from '@/lib/session-fetch';
+import { getFeaturedRecons, getPinnedRecons, getReconFavorites, getTodayRecons } from '@/lib/recon-api';
+import { fetchForumMine, fetchThread } from '@/lib/forum-api';
 
 beforeEach(() => {
   mocks.exchange.mockReset().mockResolvedValue('short-access');
@@ -45,6 +52,43 @@ describe('web session fetch boundary', () => {
     await sessionFetch('https://api.cuberoot.me/v1/auth/me', nativeInit);
     expect(mocks.fetch).toHaveBeenLastCalledWith('https://api.cuberoot.me/v1/auth/me', nativeInit);
     expect(mocks.exchange).not.toHaveBeenCalled();
+  });
+
+  it('reads pinned, featured and today’s public reconstructions without restoring a stale session', async () => {
+    mocks.exchange.mockRejectedValue(new Error('Session unavailable'));
+    mocks.fetch.mockImplementation(async (url: string) =>
+      Response.json(new URL(url).pathname.endsWith('/today') ? [{ id: 1 }] : []));
+    expect(await Promise.all([getPinnedRecons(), getFeaturedRecons(), getTodayRecons()])).toEqual([[], [], [{ id: 1 }]]);
+    expect(mocks.exchange).not.toHaveBeenCalled();
+    expect(mocks.fetch.mock.calls.map(([url]) => new URL(url).pathname)).toEqual(['/v1/recon/pinned', '/v1/recon/featured', '/v1/recon/today']);
+    for (const [, init] of mocks.fetch.mock.calls) {
+      expect(init.credentials).toBe('omit');
+      expect(new Headers(init.headers).has('Authorization')).toBe(false);
+    }
+  });
+
+  it('falls back to an anonymous forum thread without sending a private list request', async () => {
+    mocks.exchange.mockRejectedValue(new Error('Session unavailable'));
+    mocks.fetch.mockResolvedValueOnce(Response.json({ posts: [] }));
+    expect(await fetchThread(1, 1, 20)).toEqual({ posts: [] });
+    const [url, init] = mocks.fetch.mock.calls[0];
+    expect(new URL(url).pathname).toBe('/v1/forum/t/1');
+    expect(init).toMatchObject({ credentials: 'omit', redirect: 'error' });
+    expect(init.method ?? 'GET').toBe('GET');
+    expect(new Headers(init.headers).has('Authorization')).toBe(false);
+    await expect(fetchForumMine('threads', 1, 20)).rejects.toBeInstanceOf(WebSessionRestoreError);
+    await expect(getReconFavorites()).rejects.toBeInstanceOf(WebSessionRestoreError);
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends valid credentials for optional viewer details and preserves the server denial', async () => {
+    const url = 'https://api.cuberoot.me/v1/recon/1';
+    const headers = { Authorization: 'Bearer web-session:account-a' };
+    mocks.fetch.mockResolvedValueOnce(new Response(null, { status: 403 }));
+    expect((await optionalSessionGet(url, { headers })).status).toBe(403);
+    expect(new Headers(mocks.fetch.mock.calls[0][1].headers).get('Authorization')).toBe('Bearer short-access');
+    await expect(optionalSessionGet(url, { headers, signal: AbortSignal.abort() })).rejects.toMatchObject({ name: 'AbortError' });
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
   });
 
   it('exchanges the captured generation and preserves Request body, headers and signal', async () => {

@@ -1,4 +1,4 @@
-import { sessionFetch } from '@/lib/session-fetch';
+import { optionalSessionGet, sessionFetch } from '@/lib/session-fetch';
 // /forum API client — typed fetch helpers for /v1/forum/*.
 // Same shape as lib/recon-api.ts: API_BASE + authHeaders/handleApi.
 
@@ -233,19 +233,19 @@ function originForUrl(): string {
 async function apiGet<T>(
   path: string,
   params: Record<string, string> = {},
-  options: { public?: boolean; signal?: AbortSignal } = {},
+  options: { viewer?: 'public' | 'optional'; signal?: AbortSignal } = {},
 ): Promise<T> {
   const url = new URL(`${API_BASE}${path}`, originForUrl());
   url.searchParams.set('v', '2');
   for (const [k, v] of Object.entries(params)) {
     if (v) url.searchParams.set(k, v);
   }
-  // Public search has no viewer-dependent fields: do not wait for a web-session
-  // token or add an Authorization header that requires a cross-origin preflight.
-  const init: RequestInit = options.public
-    ? { credentials: 'omit', signal: options.signal }
-    : { headers: authHeaders(false), signal: options.signal };
-  return handleApi<T>(await sessionFetch(url.toString(), init));
+  const response = options.viewer === 'public'
+    ? await fetch(url.toString(), { credentials: 'omit', signal: options.signal })
+    : await (options.viewer === 'optional' ? optionalSessionGet : sessionFetch)(url.toString(), {
+        headers: authHeaders(false), signal: options.signal,
+      });
+  return handleApi<T>(response);
 }
 
 async function apiSend<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -262,7 +262,7 @@ async function apiSend<T>(method: string, path: string, body?: unknown): Promise
 }
 
 export async function fetchForumIndex(): Promise<ForumIndexData> {
-  return apiGet<ForumIndexData>('/index');
+  return apiGet<ForumIndexData>('/index', {}, { viewer: 'public' });
 }
 
 export async function fetchForumList(
@@ -270,21 +270,21 @@ export async function fetchForumList(
 ): Promise<ForumListData> {
   return apiGet<ForumListData>(`/f/${encodeURIComponent(slug)}`, {
     page: String(page), size: String(size), sort,
-  });
+  }, { viewer: 'public' });
 }
 
 export async function fetchThread(id: number, page: number, size: number, signal?: AbortSignal): Promise<ThreadPageData> {
-  return apiGet<ThreadPageData>(`/t/${id}`, { page: String(page), size: String(size) }, { signal });
+  return apiGet<ThreadPageData>(`/t/${id}`, { page: String(page), size: String(size) }, { viewer: 'optional', signal });
 }
 
 export async function fetchLatestThreads(limit: number): Promise<{ threads: LatestThread[] }> {
-  return apiGet<{ threads: LatestThread[] }>('/latest', { limit: String(limit) });
+  return apiGet<{ threads: LatestThread[] }>('/latest', { limit: String(limit) }, { viewer: 'public' });
 }
 
 export async function fetchForumFeed(
   sort: ForumFeedSort, page: number, size: number, forum = '',
 ): Promise<ForumFeedData> {
-  return apiGet<ForumFeedData>('/feed', { sort, page: String(page), size: String(size), ...(forum ? { forum } : {}) });
+  return apiGet<ForumFeedData>('/feed', { sort, page: String(page), size: String(size), ...(forum ? { forum } : {}) }, { viewer: 'optional' });
 }
 
 export function fetchForumMine(kind: ForumMineKind, page: number, size: number, signal?: AbortSignal): Promise<ForumMineData> {
@@ -292,7 +292,7 @@ export function fetchForumMine(kind: ForumMineKind, page: number, size: number, 
 }
 
 export async function searchForum(q: string, page: number, size: number, signal?: AbortSignal): Promise<SearchData> {
-  return apiGet<SearchData>('/search', { q, page: String(page), size: String(size) }, { public: true, signal });
+  return apiGet<SearchData>('/search', { q, page: String(page), size: String(size) }, { viewer: 'public', signal });
 }
 
 export async function createThread(

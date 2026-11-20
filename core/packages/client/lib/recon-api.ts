@@ -1,4 +1,4 @@
-import { sessionFetch } from '@/lib/session-fetch';
+import { optionalSessionGet, sessionFetch } from '@/lib/session-fetch';
 // Full port of packages/client-vite/src/utils/recon_api.ts to client.
 // Auth + write endpoints included.
 
@@ -16,13 +16,18 @@ function originForUrl(): string {
   return typeof window === 'undefined' ? 'http://localhost' : window.location.origin;
 }
 
-async function apiGet<T>(path: string, params: Record<string, string> = {}, cache?: RequestCache): Promise<T> {
+async function apiGet<T>(
+  path: string, params: Record<string, string> = {},
+  { cache, viewer }: { cache?: RequestCache; viewer?: 'optional' | 'required' } = {},
+): Promise<T> {
   const url = new URL(`${API_BASE}${path}`, originForUrl());
   url.searchParams.set('v', '2');
   for (const [k, v] of Object.entries(params)) {
     if (v) url.searchParams.set(k, v);
   }
-  const response = await sessionFetch(url.toString(), { headers: authHeaders(false), cache });
+  const response = viewer === undefined
+    ? await fetch(url.toString(), { credentials: 'omit', cache })
+    : await (viewer === 'optional' ? optionalSessionGet : sessionFetch)(url.toString(), { headers: authHeaders(false), cache });
   try {
     return await handleApi<T>(response);
   } catch (error) {
@@ -52,25 +57,25 @@ async function apiDelete<T>(path: string, body?: unknown): Promise<T> {
 // ── Recon CRUD ──
 
 export async function listRecons(wcaId?: string): Promise<ReconSolve[]> {
-  return apiGet<ReconSolve[]>('/list', wcaId ? { wcaId } : {});
+  return apiGet<ReconSolve[]>('/list', wcaId ? { wcaId } : {}, { viewer: 'optional' });
 }
 
 // 某场比赛的全部 recon(/wca/comp 逐把成绩→复盘跳转用)。
 // 服务端按 comp_wca_id 过滤;旧后端(尚未部署 comp 参数)会忽略它返回全量,
 // 故客户端再防御性按 compWcaId 过滤,保证部署前后都只拿本场数据。
 export async function listReconsByComp(compWcaId: string): Promise<ReconSolve[]> {
-  const rows = await apiGet<ReconSolve[]>('/list', { comp: compWcaId });
+  const rows = await apiGet<ReconSolve[]>('/list', { comp: compWcaId }, { viewer: 'optional' });
   return rows.filter(r => r.compWcaId === compWcaId);
 }
 
 export async function getRecon(id: number): Promise<ReconSolve> {
-  return apiGet<ReconSolve>(`/${id}`, {}, 'no-store');
+  return apiGet<ReconSolve>(`/${id}`, {}, { viewer: 'optional', cache: 'no-store' });
 }
 
 // 同一打乱串的其它复盘(轻量,只回匹配行)。详情页「相同打乱的复盘」用,
 // 替代旧的「拉全量 /list 再客户端过滤」。
 export async function getSameScramble(id: number): Promise<ReconSolve[]> {
-  return apiGet<ReconSolve[]>(`/${id}/same-scramble`, { v: '2' }, 'no-cache');
+  return apiGet<ReconSolve[]>(`/${id}/same-scramble`, { v: '2' }, { cache: 'no-cache' });
 }
 
 // 个人复盘主页:某选手参与的全部 recon(作为选手 / 合作者 / 复盘者 / 添加者)。
@@ -79,7 +84,7 @@ export async function getSameScramble(id: number): Promise<ReconSolve[]> {
 // 过滤(added_by_id 不在 LIST_COLUMNS,降级模式下「添加者」角色暂缺)。
 export async function listPersonRecons(wcaId: string): Promise<ReconSolve[]> {
   try {
-    return await apiGet<ReconSolve[]>(`/person/${encodeURIComponent(wcaId)}`);
+    return await apiGet<ReconSolve[]>(`/person/${encodeURIComponent(wcaId)}`, {}, { viewer: 'optional' });
   } catch {
     const all = await listRecons();
     return all.filter(s =>
@@ -94,12 +99,12 @@ export async function listPersonRecons(wcaId: string): Promise<ReconSolve[]> {
 // (list 已按 id DESC 排序), 保证旧后端 / dev 代理也能渲染。
 export async function getLatestRecon(): Promise<ReconSolve | null> {
   try {
-    const r = await apiGet<ReconSolve | null>('/latest', {}, 'no-cache');
+    const r = await apiGet<ReconSolve | null>('/latest', {}, { cache: 'no-cache' });
     if (r && r.id) return r;
   } catch {
     // fall through to list fallback
   }
-  const list = await listRecons();
+  const list = await apiGet<ReconSolve[]>('/list');
   return list.length > 0 ? list[0] : null;
 }
 
@@ -107,7 +112,7 @@ export async function getLatestRecon(): Promise<ReconSolve | null> {
 // 保证旧后端 / dev 代理也能渲染。
 export async function getTodayRecons(): Promise<ReconSolve[]> {
   try {
-    const r = await apiGet<ReconSolve[]>('/today', {}, 'no-cache');
+    const r = await apiGet<ReconSolve[]>('/today', {}, { cache: 'no-cache' });
     if (Array.isArray(r) && r.length > 0) return r;
   } catch {
     // fall through to latest fallback
@@ -174,7 +179,7 @@ export async function deleteAlternative(reconId: number, idx: number, expected: 
 // ── Edit overlay ──
 
 export async function loadEdits(): Promise<Record<string, Record<string, unknown>>> {
-  return apiGet('/edits');
+  return apiGet('/edits', {}, { viewer: 'optional' });
 }
 
 export async function saveEdit(solveId: string, fields: Record<string, unknown>): Promise<{ ok: boolean }> {
@@ -201,12 +206,12 @@ export async function saveEditHistory(
 }
 
 export async function getEditHistory(solveId: string): Promise<EditHistoryItem[]> {
-  return apiGet<EditHistoryItem[]>('/history', { id: solveId });
+  return apiGet<EditHistoryItem[]>('/history', { id: solveId }, { viewer: 'optional' });
 }
 
 // alias used by detail pages
 export async function listEditHistory(reconId: number): Promise<EditHistoryItem[]> {
-  return apiGet<EditHistoryItem[]>(`/${reconId}/edits`);
+  return apiGet<EditHistoryItem[]>(`/${reconId}/edits`, {}, { viewer: 'required' });
 }
 
 // ── Comments ──
@@ -214,7 +219,7 @@ export async function listEditHistory(reconId: number): Promise<EditHistoryItem[
 export interface CommentsResponse { comments: ReconComment[] }
 
 export async function listComments(reconId: number): Promise<ReconComment[]> {
-  return apiGet<ReconComment[]>('/comments', { reconId: String(reconId), v: '3' });
+  return apiGet<ReconComment[]>('/comments', { reconId: String(reconId), v: '3' }, { viewer: 'optional' });
 }
 
 export async function setCommentVote(commentId: number, vote: 'like' | 'dislike' | null): Promise<Pick<ReconComment, 'likeCount' | 'myVote'>> {
@@ -281,7 +286,7 @@ export async function listPersons(): Promise<PersonRecord[]> {
 }
 
 export async function getUserStats(wcaId: string): Promise<{ reconCount: number; addedCount: number }> {
-  return apiGet('/user-stats', { wcaId });
+  return apiGet('/user-stats', { wcaId }, { viewer: 'optional' });
 }
 
 // 某选手在某项目下过往复盘用过的方法 / 魔方(去重,最近一次在前)。
@@ -329,7 +334,7 @@ export async function setReconFeatured(id: number, featured: boolean): Promise<{
 
 /** Personal favorites, scoped by the authenticated account. */
 export function getReconFavorites(): Promise<ReconSolve[]> {
-  return apiGet('/favorites', {}, 'no-store');
+  return apiGet('/favorites', {}, { viewer: 'required', cache: 'no-store' });
 }
 export function setReconFavorite(id: number, active: boolean): Promise<{ ok: boolean }> {
   return apiPut(`/${id}/favorite`, { active });

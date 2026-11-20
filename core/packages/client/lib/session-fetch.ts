@@ -33,8 +33,25 @@ export async function getWebAccessTokenBeforeAbort(marker: string, signal?: Abor
   });
 }
 
+export class WebSessionRestoreError extends Error {
+  constructor(cause: unknown) {
+    super(cause instanceof Error ? cause.message : String(cause), { cause });
+  }
+}
+
 /** Resolve the web-only session marker without changing public or native Bearer requests. */
-export async function sessionFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+export function sessionFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  return fetchWithSession(input, init, false);
+}
+
+/** Use only on reads whose server route independently supports anonymous viewers. */
+export function optionalSessionGet(
+  input: string | URL, { headers, cache, signal }: Pick<RequestInit, 'headers' | 'cache' | 'signal'> = {},
+): Promise<Response> {
+  return fetchWithSession(input, { headers, cache, signal, credentials: 'omit' }, true);
+}
+
+async function fetchWithSession(input: RequestInfo | URL, init: RequestInit | undefined, allowGuest: boolean): Promise<Response> {
   const request = input instanceof Request ? input : null;
   const headers = new Headers(request?.headers);
   new Headers(init?.headers).forEach((value, key) => headers.set(key, value));
@@ -47,11 +64,21 @@ export async function sessionFetch(input: RequestInfo | URL, init?: RequestInit)
   const destination = trustedSessionTarget(target);
   if (!destination) throw new Error('Refusing to send session credentials outside the configured API.');
   const signal = init?.signal ?? request?.signal;
-  const accessToken = await getWebAccessTokenBeforeAbort(token, signal);
-  signal?.throwIfAborted();
-  if (!accessToken || accessToken.startsWith(WEB_SESSION_PREFIX)) throw new Error('Web session did not provide an access token.');
   const identityChoice = typeof window !== 'undefined'
     && destination.url.origin === window.location.origin && destination.url.pathname === '/api/identity-choice';
+  let accessToken: string;
+  try {
+    accessToken = await getWebAccessTokenBeforeAbort(token, signal);
+  } catch (error) {
+    signal?.throwIfAborted();
+    if (!allowGuest || destination.authSuffix !== undefined || PRIVATE_PAGE_ENDPOINTS.has(destination.url.pathname)) {
+      throw new WebSessionRestoreError(error);
+    }
+    headers.delete('Authorization');
+    return fetch(target, { ...init, headers, redirect: 'error' });
+  }
+  signal?.throwIfAborted();
+  if (!accessToken || accessToken.startsWith(WEB_SESSION_PREFIX)) throw new Error('Web session did not provide an access token.');
   if (destination.authSuffix !== undefined || identityChoice) {
     if (typeof window === 'undefined') throw new Error('Web session account requests require a browser origin.');
     headers.set('X-Web-Session', token.slice(WEB_SESSION_PREFIX.length));

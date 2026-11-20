@@ -84,6 +84,37 @@ describe('HttpOnly web session client', () => {
     await expect(session.getWebAccessToken(session.getWebSessionMarker())).rejects.toThrow();
     expect(localStorage.getItem('cuberoot_jwt')).toBe('legacy-login-credential');
   });
+
+  it('keeps the marker on a temporary failure, then clears only local state on a rejected cookie restore', async () => {
+    const marker = `web-session:${crypto.randomUUID()}`;
+    localStorage.setItem(session.WEB_SESSION_MARKER_KEY, marker);
+    const onSession = vi.fn();
+    session.subscribeWebSession(onSession);
+    const fetcher = vi.fn().mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(new Response(null, { status: 401 }));
+    vi.stubGlobal('fetch', fetcher);
+    await expect(session.getWebAccessToken(marker)).rejects.toThrow();
+    expect(session.getWebSessionMarker()).toBe(marker);
+    expect(onSession).not.toHaveBeenCalled();
+    await expect(session.getWebAccessToken(marker)).rejects.toThrow();
+    expect(session.getWebSessionMarker()).toBe('');
+    expect(onSession).toHaveBeenCalledExactlyOnceWith(null);
+    expect(fetcher.mock.calls.map(([, init]) => init.method)).toEqual(['GET', 'GET']);
+  });
+
+  it('does not clear a newer sign-in on a late rejected restore', async () => {
+    const marker = `web-session:${crypto.randomUUID()}`;
+    localStorage.setItem(session.WEB_SESSION_MARKER_KEY, marker);
+    let completeRestore!: (result: Response) => void;
+    vi.stubGlobal('fetch', vi.fn((_: unknown, init: RequestInit) => init.method === 'GET'
+      ? new Promise<Response>(resolve => { completeRestore = resolve; }) : Promise.resolve(response(body(init).generation))));
+    const rejected = expect(session.getWebAccessToken(marker)).rejects.toThrow();
+    const nextMarker = await session.establishWebSession('next-login');
+    completeRestore(new Response(null, { status: 401 }));
+    await rejected;
+    expect(session.getWebSessionMarker()).toBe(nextMarker);
+    expect(await session.getWebAccessToken(nextMarker)).toBe(access);
+  });
 });
 
 it('rotates a short account response using only its existing cookie generation', async () => {

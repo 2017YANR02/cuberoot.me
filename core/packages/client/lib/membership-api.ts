@@ -1,4 +1,4 @@
-import { sessionFetch } from '@/lib/session-fetch';
+import { optionalSessionGet, sessionFetch } from '@/lib/session-fetch';
 /**
  * /v1/membership — 会员订阅 API。
  * server 实现 routes/membership.ts。公开 GET 套餐;其余走 WCA OAuth Bearer(authHeaders)。
@@ -79,7 +79,7 @@ export interface MembershipSubscriptions {
   managementAvailable: boolean;
 }
 export async function renewalAvailability(): Promise<{ available: boolean; plans?: Record<string, boolean>; pilot?: boolean; pilotPayment?: boolean; termsVersion: string; channel?: 'h5' | 'miniprogram' | 'payment'; paymentChannels?: { wechatNative: boolean; wechatH5: boolean } }> {
-  return handleApi(await sessionFetch(apiUrl('/v1/membership/subscriptions/availability'), { headers: authHeaders(), cache: 'no-store' }));
+  return handleApi(await optionalSessionGet(apiUrl('/v1/membership/subscriptions/availability'), { headers: authHeaders(false), cache: 'no-store' }));
 }
 export async function createMembershipCheckout(planSlug: string, priceCents: number, termsVersion: string,
   clientType: 'pc' | 'wap', language: 'zh' | 'en'): Promise<OrderInfo> {

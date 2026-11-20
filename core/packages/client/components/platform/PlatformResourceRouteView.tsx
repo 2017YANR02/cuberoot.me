@@ -14,6 +14,7 @@ import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { nextQuery, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { executePlatformAction, loadPlatformResource, localizePlatformEntity, PlatformPermissionError } from '@/lib/platform-gateway';
+import { WebSessionRestoreError } from '@/lib/session-fetch';
 import { fillPlatformParams, isPlatformLearningWorkspace, PLATFORM_ROUTES } from '@/lib/platform-routes';
 import { platformNavigationState, platformWorkspaceRoutes } from '@/lib/platform-navigation';
 import { PlatformNavigationContext, usePlatformSearchBinding, type PlatformFilterGroup } from '@/lib/platform-navigation-context';
@@ -161,7 +162,8 @@ export function PlatformResourceRouteView({
       : load(includeCourseAccess).then(value => includeCourseAccess && !controller.signal.aborted
           ? loadLegacyCourseLessonAccess(value, controller.signal)
           : value).catch((reason: unknown) => {
-          if (includeCourseAccess && !controller.signal.aborted && reason instanceof PlatformPermissionError) return load(false);
+          if (includeCourseAccess && !controller.signal.aborted
+            && (reason instanceof PlatformPermissionError || reason instanceof WebSessionRestoreError)) return load(false);
           throw reason;
         });
     void request.then(value => {

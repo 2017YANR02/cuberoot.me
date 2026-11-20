@@ -1,4 +1,4 @@
-import { sessionFetch } from '@/lib/session-fetch';
+import { optionalSessionGet, sessionFetch } from '@/lib/session-fetch';
 /**
  * /memo/colpi backend API client. All word data lives in PG (colpi_words / colpi_votes).
  * Ported from packages/client-vite/src/utils/colpi_api.ts.
@@ -40,11 +40,11 @@ export interface ColpiWord {
 }
 
 export async function fetchWords(lang: string = 'all'): Promise<Record<string, ColpiWord[]>> {
-  return handleApi(await sessionFetch(`${BASE}/words?lang=${encodeURIComponent(lang)}`, { headers: authHeaders(false) }));
+  return handleApi(await optionalSessionGet(`${BASE}/words?lang=${encodeURIComponent(lang)}`, { headers: authHeaders(false) }));
 }
 
 export async function fetchRecent(limit = 20): Promise<ColpiWord[]> {
-  return handleApi(await sessionFetch(`${BASE}/recent?limit=${limit}`, { headers: authHeaders(false) }));
+  return handleApi(await optionalSessionGet(`${BASE}/recent?limit=${limit}`, { headers: authHeaders(false) }));
 }
 
 export interface SubmitInput {

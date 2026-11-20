@@ -1,4 +1,4 @@
-import { sessionFetch } from '@/lib/session-fetch';
+import { optionalSessionGet, sessionFetch } from '@/lib/session-fetch';
 import { authHeaders, handleApi } from './admin-api';
 import { apiUrl } from './api-base';
 
@@ -91,8 +91,16 @@ async function request<T>(url: string, method = 'GET', body?: unknown): Promise<
   }));
 }
 
-export const listOnlineCompetitions = (managed = false) => request<{ competitions: OnlineCompetitionSummary[] }>(`${base}${managed ? '/manage' : ''}`);
-export const getOnlineCompetition = (id: string) => request<{ competition: OnlineCompetition }>(path(id));
+function publicGet<T>(url: string): Promise<T> {
+  return fetch(apiUrl(url), { cache: 'no-store', credentials: 'omit' }).then(handleApi<T>);
+}
+
+export const listOnlineCompetitions = (managed = false) => managed
+  ? request<{ competitions: OnlineCompetitionSummary[] }>(`${base}/manage`)
+  : publicGet<{ competitions: OnlineCompetitionSummary[] }>(base);
+export const getOnlineCompetition = (id: string) => optionalSessionGet(apiUrl(path(id)), {
+  headers: authHeaders(false), cache: 'no-store',
+}).then(handleApi<{ competition: OnlineCompetition }>);
 export const createOnlineCompetition = (body: Record<string, unknown>) => request<{ id: string; status: string }>(base, 'POST', body);
 export const configureOnlineCompetition = (id: string, body: Record<string, unknown>) => request<{ id: string; status: string }>(`${path(id)}/config`, 'PUT', body);
 export const addCompetitionSession = (id: string, body: Record<string, unknown>) => request(`${path(id)}/sessions`, 'POST', body);
@@ -105,7 +113,7 @@ export const getCompetitionAttempts = (id: string) => request<{ attempts: Compet
 export const nextCompetitionAttempt = (id: string) => request(`${registrationPath(id)}/attempts/next`, 'POST', {});
 export const recordCompetitionAttempt = (id: string, attempt: number, body: { centiseconds: number | null; penalty: 'none' | '+2' | 'DNF' | 'DNS' }) => request(`${registrationPath(id)}/attempts/${attempt}/result`, 'POST', body);
 export const finalizeCompetitionRegistration = (id: string) => request(`${registrationPath(id)}/result`, 'POST', {});
-export const listCompetitionResults = (id: string) => request<{ results: CompetitionResult[] }>(`${path(id)}/results`);
+export const listCompetitionResults = (id: string) => publicGet<{ results: CompetitionResult[] }>(`${path(id)}/results`);
 export const raiseCompetitionDispute = (id: string, reason: string) => request(`${registrationPath(id)}/disputes`, 'POST', { reason });
 export interface CompetitionDispute { id: string; registrationId: string; reason: string; resolution: string | null; createdAt: string; resolvedAt: string | null }
 export interface CompetitionSettlement { commissionBps: number | null; settlementDays: number | null; settlementAnchor: string | null; finalizedAt: string | null; eligibleAt: string | null; netCollectedMinor: string; platformFeeMinor: string; organizerAmountMinor: string; refundedMinor: string; eligible: boolean; currency: string; transferStatus: string; transferredMinor?: string; outstandingMinor?: string; reconciliationRequired?: boolean; transfers?: Array<{id: string; amountMinor: number; transferredAt: string | null; createdAt: string; entryType: 'payout' | 'recovery' | 'adjustment'}> }
