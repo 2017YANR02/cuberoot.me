@@ -23,10 +23,9 @@ it('leaves both pet position axes under DeskPet control', () => {
   expect(toolbar).toContain('max-width:calc(100vw - 42px)');
 });
 
-it('applies homepage glass and hover clipping to the surface, not the fixed anchor', () => {
+it('uses the shared popover surface independently of homepage glass', () => {
   const css = readFileSync('app/[lang]/home-background.css', 'utf8');
-  expect(css).not.toMatch(/\.admin-tools\)(?::hover)?/);
-  expect(css).not.toContain('.admin-tools::before');
-  expect(css).toContain('.admin-tools-surface)::before');
-  expect(css).toContain('.admin-tools-surface:hover { position: absolute; }');
+  expect(css).not.toMatch(/\.admin-tools\b/);
+  expect(source).toContain('className="admin-tools-surface" data-site-surface="popover"');
+  expect(source).toMatch(/\.admin-tools-surface\s*\{\s*position:\s*absolute\b/);
 });

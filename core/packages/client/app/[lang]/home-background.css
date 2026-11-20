@@ -8,6 +8,7 @@
   body[data-site-scenery] .landing-page { background: transparent; }
 }
 
+/* Floating admin tools use the shared popover material. */
 :root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip),
 :root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip):hover,
 :root .landing-page :is(.landing-card, .card).is-disabled,
