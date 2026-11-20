@@ -19,6 +19,11 @@
 Both timers are persistent across reboot and log results to the system journal.
 The deployer validates the units, runs each service once and enables the timers.
 
+The [nginx API response cache](../nginx/www.cuberoot.me.conf) has a 256 MiB target
+limit. Below 9 GiB of free space, the nginx cache manager also evicts least
+recently used entries in batches. The stats admission checks still measure
+available space independently.
+
 `deploy_core.yml` ships `prune-api-releases.ts` with each API release. After
 health, solver smoke, compression service checks and `pm2 save` succeed, it
 removes old managed releases. It retains the active release, two newest
