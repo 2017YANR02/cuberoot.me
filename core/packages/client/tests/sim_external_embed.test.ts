@@ -42,6 +42,23 @@ describe('embedded pointer policy', () => {
     expect(world.controller.userTwist).toEqual([]);
   });
 
+  it('routes ordinary view drags to the camera and releases its pointer handler', () => {
+    const scene = { rotation: { x: 0, y: 0 }, updateMatrix: vi.fn() };
+    const world = Object.assign(makeWorld(), { scene });
+    const dom = {} as HTMLElement;
+    const detach = attachEmbeddedSimInteraction({ world, dom, mode: 'view' });
+    expect(toucher.init).toHaveBeenCalledWith(dom, world.controller.touch);
+    expect(world.controller.dragEmpty).toBe('view');
+    expect(world.controller.paintMode).toBe(true);
+    world.controller.onOrbit?.(10, 5);
+    expect(scene.rotation.x).not.toBe(0);
+    expect(scene.rotation.y).not.toBe(0);
+    expect(scene.updateMatrix).toHaveBeenCalledOnce();
+    detach();
+    expect(toucher.destroy).toHaveBeenCalled();
+    expect(world.controller.onOrbit).toBeNull();
+  });
+
   it('locks orbit while retaining manual layer turns and cleans up callbacks', () => {
     const world = makeWorld();
     const onUserMove = vi.fn();

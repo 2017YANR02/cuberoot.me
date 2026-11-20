@@ -174,9 +174,8 @@ describe('algorithm player placement', () => {
     expect(route).toContain('return <AlgCaseView puzzle={puzzle as AlgPuzzle} set={set} caseObj={caseObj} data={data} />;');
   });
 
-  it('binds the shared sim pointer bridge so dragging the cube changes only the view', () => {
+  it('binds and releases the shared simulator pointer bridge', () => {
     const player = read('components/AlgPlayer/AlgSimPlayer.tsx');
-    const interaction = read('components/sim-embed/attachEmbeddedSimInteraction.ts');
 
     expect(player).toContain("import('@/components/sim-embed/attachEmbeddedSimInteraction')");
     expect(player).toContain('detachInteraction = attachEmbeddedSimInteraction({');
@@ -186,11 +185,6 @@ describe('algorithm player placement', () => {
     expect(player).toContain('updateInteractionRef.current = updateInteraction');
     expect(player).toContain('updateInteraction()');
     expect(player).toContain('detachInteraction?.()');
-    expect(interaction).toContain("import Toucher from '@/app/[lang]/sim/Toucher'");
-    expect(interaction).toContain('toucher.init(dom, world.controller.touch)');
-    expect(interaction).toContain("world.controller.dragEmpty = 'view'");
-    expect(interaction).toContain('world.controller.onOrbit = orbit');
-    expect(interaction).toContain('toucher.destroy()');
   });
 
   it('routes every /alg animation surface through the shared /sim-backed AlgPlayer', () => {
