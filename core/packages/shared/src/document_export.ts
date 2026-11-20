@@ -8,7 +8,7 @@ export interface RichTextNode {
   type?: string;
   text?: string;
   attrs?: Record<string, unknown>;
-  marks?: Array<{ type?: string }>;
+  marks?: Array<{ type?: string; attrs?: Record<string, unknown> }>;
   content?: RichTextNode[];
 }
 
@@ -18,6 +18,11 @@ export interface ExportSegment {
   italic: boolean;
   strike: boolean;
   code: boolean;
+  underline?: boolean;
+  color?: string;
+  highlight?: string;
+  fontFamily?: string;
+  fontSize?: number;
 }
 
 export interface ExportBlock {
@@ -25,6 +30,7 @@ export interface ExportBlock {
   segments: ExportSegment[];
   level: number;
   quote: boolean;
+  alignment?: 'left' | 'center' | 'right' | 'justify';
   list?: { type: 'bullet' | 'ordered'; depth: number; index: number };
 }
 
@@ -35,13 +41,33 @@ const EMPTY_SEGMENT: Omit<ExportSegment, 'text'> = {
   code: false,
 };
 
+function wordColor(value: unknown): string | undefined {
+  return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value.slice(1).toUpperCase() : undefined;
+}
+
+function wordFontSize(value: unknown): number | undefined {
+  const match = typeof value === 'string' ? /^(\d+(?:\.\d+)?)(px|pt)$/i.exec(value) : null;
+  if (!match) return undefined;
+  const size = Math.round(Number(match[1]) * (match[2].toLowerCase() === 'px' ? 1.5 : 2));
+  return size >= 2 && size <= 400 ? size : undefined;
+}
+
 function segmentsFrom(node: RichTextNode, inherited: Omit<ExportSegment, 'text'> = EMPTY_SEGMENT): ExportSegment[] {
   const marks = new Set(node.marks?.map((mark) => mark.type).filter(Boolean));
-  const style = {
+  const textStyle = node.marks?.find(mark => mark.type === 'textStyle')?.attrs;
+  const highlight = node.marks?.find(mark => mark.type === 'highlight');
+  const fontFamily = typeof textStyle?.fontFamily === 'string'
+    ? textStyle.fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g, '') : undefined;
+  const style: Omit<ExportSegment, 'text'> = {
     bold: inherited.bold || marks.has('bold'),
     italic: inherited.italic || marks.has('italic'),
     strike: inherited.strike || marks.has('strike'),
     code: inherited.code || marks.has('code'),
+    underline: inherited.underline || marks.has('underline') || undefined,
+    color: wordColor(textStyle?.color) ?? inherited.color,
+    highlight: highlight ? wordColor(highlight.attrs?.color) ?? 'FFFF00' : inherited.highlight,
+    fontFamily: fontFamily || inherited.fontFamily,
+    fontSize: wordFontSize(textStyle?.fontSize) ?? inherited.fontSize,
   };
   if (node.type === 'hardBreak') return [{ text: '\n', ...style }];
   if (typeof node.text === 'string') return [{ text: node.text, ...style }];
@@ -54,11 +80,13 @@ function blockFromNode(node: RichTextNode, quote: boolean): ExportBlock | null {
   }
   if (!['paragraph', 'heading', 'codeBlock'].includes(node.type || '')) return null;
   const rawLevel = Number(node.attrs?.level);
+  const align = node.attrs?.textAlign;
   return {
     kind: node.type === 'heading' ? 'heading' : node.type === 'codeBlock' ? 'code' : 'paragraph',
     segments: segmentsFrom(node),
     level: node.type === 'heading' && Number.isFinite(rawLevel) ? Math.min(6, Math.max(1, rawLevel)) : 0,
     quote,
+    alignment: align === 'left' || align === 'center' || align === 'right' || align === 'justify' ? align : undefined,
   };
 }
 

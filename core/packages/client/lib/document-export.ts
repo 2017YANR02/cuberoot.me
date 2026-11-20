@@ -14,7 +14,7 @@ export function saveBlob(blob: Blob, filename: string): void {
 
 export async function buildDocumentDocx(title: string, document: RichTextNode): Promise<Blob> {
   const {
-    AlignmentType, BorderStyle, Document, HeadingLevel, LevelFormat, Packer, Paragraph, TextRun,
+    AlignmentType, BorderStyle, Document, HeadingLevel, LevelFormat, Packer, Paragraph, TextRun, UnderlineType,
   } = await import('docx');
   const blocks = documentExportBlocks(document);
   const font = { ascii: 'Arial', hAnsi: 'Arial', eastAsia: 'Microsoft YaHei', cs: 'Arial' };
@@ -37,16 +37,20 @@ export async function buildDocumentDocx(title: string, document: RichTextNode): 
         bold: segment.bold || block.kind === 'heading',
         italics: segment.italic,
         strike: segment.strike,
+        underline: segment.underline ? { type: UnderlineType.SINGLE } : undefined,
+        color: segment.color,
+        shading: segment.highlight ? { fill: segment.highlight } : undefined,
         font: segment.code || block.kind === 'code'
           ? { ascii: 'Consolas', hAnsi: 'Consolas', eastAsia: 'Microsoft YaHei', cs: 'Consolas' }
-          : font,
-        size: block.kind === 'heading' ? headingSizes[block.level - 1] : 21,
+          : segment.fontFamily ?? font,
+        size: segment.fontSize ?? (block.kind === 'heading' ? headingSizes[block.level - 1] : 21),
       })))
       : [new TextRun({ text: '', font, size: 21 })];
     const listDepth = Math.min(8, block.list?.depth || 0);
     return new Paragraph({
       children: runs,
       heading: block.kind === 'heading' ? headingLevels[block.level - 1] : undefined,
+      alignment: block.alignment === 'justify' ? AlignmentType.JUSTIFIED : block.alignment,
       bullet: block.list?.type === 'bullet' ? { level: listDepth } : undefined,
       numbering: block.list?.type === 'ordered'
         ? { reference: 'document-numbering', level: listDepth }

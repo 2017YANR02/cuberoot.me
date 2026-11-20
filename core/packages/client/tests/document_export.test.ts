@@ -56,4 +56,21 @@ describe('collaborative document export', () => {
     expect(xml).toContain('<w:br/>');
     expect(xml).toContain('共同确认');
   });
+
+  it('keeps the draft editor formatting in the archived Word file', async () => {
+    const blob = await buildDocumentDocx('格式检查', {type: 'doc', content: [{
+      type: 'paragraph', attrs: {textAlign: 'center'}, content: [{
+        type: 'text', text: '合同条款', marks: [
+          {type: 'underline'}, {type: 'highlight'}, {type: 'textStyle', attrs: {color: '#123456', fontFamily: 'Georgia', fontSize: '16px'}},
+        ],
+      }],
+    }]});
+    const xml = strFromU8(unzipSync(new Uint8Array(await blob.arrayBuffer()))['word/document.xml']);
+    expect(xml).toContain('<w:jc w:val="center"');
+    expect(xml).toContain('<w:u w:val="single"');
+    expect(xml).toContain('w:fill="FFFF00"');
+    expect(xml).toContain('<w:color w:val="123456"');
+    expect(xml).toContain('w:ascii="Georgia"');
+    expect(xml).toContain('<w:sz w:val="24"');
+  });
 });
