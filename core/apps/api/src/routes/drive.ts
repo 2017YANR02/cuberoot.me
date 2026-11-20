@@ -603,6 +603,12 @@ driveRoutes.post('/drive/uploads', createUpload);
 
 async function headUpload(c: Context): Promise<Response> {
   noStore(c);
+  // Hono dispatches HEAD through GET. The fallback must not turn progress into
+  // an additional readable GET endpoint.
+  if (c.req.method !== 'HEAD') {
+    c.header('Allow', 'HEAD');
+    return c.body(null, 405);
+  }
   const current = await requireDrive(c);
   const uploadId = uuid(c.req.param('id'));
   if (!uploadId) return c.body(null, 400);
@@ -613,7 +619,7 @@ async function headUpload(c: Context): Promise<Response> {
   c.header('Upload-Expires', asIso(upload.expires_at));
   return c.body(null, 204);
 }
-driveRoutes.on('HEAD', '/drive/uploads/:id', headUpload);
+driveRoutes.on(['GET', 'HEAD'], '/drive/uploads/:id', headUpload);
 
 async function patchUpload(c: Context): Promise<Response> {
   noStore(c);

@@ -135,7 +135,8 @@ async function archiveLesson(c: Context, admin: boolean): Promise<Response> {
 
 export function registerLessonRoutes(platformCatalogRoutes: Hono): void {
   platformCatalogRoutes.post('/platform/instructor/courses/:courseId/lesson-uploads', courseDriveUploadHandlers.create);
-  platformCatalogRoutes.on('HEAD', '/platform/instructor/courses/:courseId/lesson-uploads/:id', courseDriveUploadHandlers.head);
+  // HEAD uses Hono's GET dispatch; the shared handler rejects ordinary GET.
+  platformCatalogRoutes.on(['GET', 'HEAD'], '/platform/instructor/courses/:courseId/lesson-uploads/:id', courseDriveUploadHandlers.head);
   platformCatalogRoutes.patch('/platform/instructor/courses/:courseId/lesson-uploads/:id', courseDriveUploadHandlers.patch);
   platformCatalogRoutes.delete('/platform/instructor/courses/:courseId/lesson-uploads/:id', courseDriveUploadHandlers.cancel);
 

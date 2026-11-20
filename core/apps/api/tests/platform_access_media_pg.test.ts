@@ -39,6 +39,13 @@ authApp.get('/actor', async c => c.json(await requirePlatformActor(c)));
 authApp.get('/admin', async c => c.json(await requirePlatformAdmin(c)));
 
 describe('Platform authentication adapter', () => {
+  it('routes upload HEAD requests through authentication before touching storage', async () => {
+    const app = platformRouter();
+    registerLessonRoutes(app);
+    const path = '/platform/instructor/courses/00000000-0000-4000-8000-000000000001/lesson-uploads/00000000-0000-4000-8000-000000000002';
+    expect((await app.request(path, { method: 'HEAD' })).status).toBe(401);
+  });
+
   it('keeps guest, suspended, and unregistered identities out of user-backed features', async () => {
     expect((await authApp.request('/actor')).status).toBe(401);
     expect((await authApp.request('/actor', { headers: { 'X-Fixture-Actor': 'suspended' } })).status).toBe(403);
@@ -165,6 +172,9 @@ describe.skipIf(!databaseUrl)('course access and signed media with PostgreSQL an
       const response = await app.request(url, { method: 'HEAD', headers: headers(3) });
       expect(response.status).toBe(204);
       expect(response.headers.get('Upload-Offset')).toBe('50');
+      const get = await app.request(url, { headers: headers(3) });
+      expect(get.status).toBe(405);
+      expect(get.headers.get('Allow')).toBe('HEAD');
       expect((await app.request(url, { method: 'HEAD', headers: headers(4) })).status).toBe(404);
       expect((await app.request(url, { method: 'HEAD' })).status).toBe(401);
       await db.unsafe('UPDATE drive_nodes SET parent_id=NULL WHERE id=$1', [node]);

@@ -108,7 +108,7 @@ describe('Drive contract', () => {
     expect(route).toContain("createHash('sha256')");
     expect(route).toContain('pg_advisory_xact_lock');
     expect(route).toContain('cancel active uploads before trashing this item');
-    expect(route).toContain("driveRoutes.on('HEAD', '/drive/uploads/:id'");
+    expect(route).toContain("driveRoutes.on(['GET', 'HEAD'], '/drive/uploads/:id'");
     expect(route).toContain("driveRoutes.on('HEAD', '/drive/content/:id'");
     expect(route).toContain("driveRoutes.on('HEAD', '/drive/shared/:id'");
     expect(route).toContain('DELETE FROM drive_shares WHERE node_id IN (SELECT id FROM subtree)');
