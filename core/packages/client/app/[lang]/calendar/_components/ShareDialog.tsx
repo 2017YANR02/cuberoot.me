@@ -11,7 +11,8 @@ import '@cuberoot/timer-ui/compact-select.css';
 // 同一个 token 还提供 .ics 订阅源,Google / Apple 日历能直接订上。
 
 import { useId, useState } from 'react';
-import { Check, Copy, Link2, RefreshCw, X, ExternalLink } from '@app-foundation/icons/lucide';
+import { Check, Copy, Link2, RefreshCw, ExternalLink } from '@app-foundation/icons/lucide';
+import { ClearButton } from '@cuberoot/timer-ui/clear-button';
 import { useDialogMotion, useModalDismiss } from '@/hooks/useModalDismiss';
 import BoolToggle from '@/components/BoolToggle';
 import { useCopy } from '@/hooks/useCopy';
@@ -67,9 +68,7 @@ export default function ShareDialog({ share, calendars, lang, onSave, onRotate, 
       <div className="cal-modal is-narrow cal-share-dialog" role="dialog" aria-modal="true" aria-label={tr({ zh: '对外展示', en: 'Share' })}>
         <div className="cal-modal-head">
           <h2>{tr({ zh: '对外展示我的日历', en: 'Share my calendar' })}</h2>
-          <button type="button" className="cal-icon-btn" onClick={close} aria-label={tr({ zh: '关闭', en: 'Close' })}>
-            <X size={18} aria-hidden />
-          </button>
+          <ClearButton variant="standalone" className="cal-icon-btn" onClick={close} ariaLabel={tr({ zh: '关闭', en: 'Close' })} />
         </div>
 
         <div className="cal-modal-body">

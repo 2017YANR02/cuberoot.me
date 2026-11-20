@@ -99,7 +99,7 @@ describe('Mobile timer settings parity ledger', () => {
     expect(app).toContain("'timer', 'smart-cube', 'scramble', 'training', 'appearance', 'sound', 'data', 'advanced'");
     expect(app).toContain('applyOrientationPrefix(scramble, preScrambleFor(activeEvent, store!.settings.preScr, store!.settings.preScrT))');
     expect(app).toContain('<TimerBooleanSettingRow');
-    expect(app).toContain('store!.settings.showCubePreview && scrambleReady');
+    expect(app).toContain('store!.settings.showCubePreview && !store!.settings.soloLayout.hideCubePreview && scrambleReady');
     expect(app).toContain("visualization={store!.settings.prefer3D ? '3D' : '2D'}");
     expect(app).toContain('onChange={updateSettings}');
     expect(app).toContain('value={store!.settings}');

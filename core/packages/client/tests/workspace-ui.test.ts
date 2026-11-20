@@ -446,11 +446,12 @@ it('uses explicit categories and preserves literal prefixes when editing', async
 });
 
 it('applies checklist filters directly and excludes archived tasks from progress in every view', async () => {
+  lists[0].categories = [{ id: 'release', name: 'Release' }];
   lists[0].items = [
-    { id: 'a', text: 'Active incomplete', done: false },
-    { id: 'b', text: 'Active completed', done: true },
-    { id: 'c', text: 'Archived completed', done: true, archived: true },
-    { id: 'd', text: 'Archived incomplete', done: false, archived: true },
+    { id: 'a', text: 'Active incomplete', categoryId: 'release', done: false },
+    { id: 'b', text: 'Active completed', categoryId: 'release', done: true },
+    { id: 'c', text: 'Archived completed', categoryId: 'release', done: true, archived: true },
+    { id: 'd', text: 'Archived incomplete', categoryId: 'release', done: false, archived: true },
   ];
   await mount(h(Checklists));
   const texts = () => [...container.querySelectorAll('.workspace-check-text')].map(node => node.textContent);

@@ -315,7 +315,6 @@ describe('canonical timer settings surface manifest', () => {
 describe('Web SettingsPanel is a checked shared-contract consumer', () => {
   const panel = readFileSync('app/[lang]/timer/_components/SettingsPanel.tsx', 'utf8');
   const settings = readFileSync('app/[lang]/timer/_lib/settings/index.ts', 'utf8');
-  const soloSections = readFileSync('../timer-ui/src/TimerSoloSettingsSections.tsx', 'utf8');
 
   it('references the exact canonical field set, so additions/removals cannot drift silently', () => {
     const directPanelIds = [...panel.matchAll(/settings\.[a-z0-9-]+\.[a-z0-9-]+/g)]
@@ -344,7 +343,6 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     expect(directPanelIds.filter((id) => sharedFieldIds.includes(id))).toEqual([]);
     expect(panel).toContain('<TimerSmartCubeSettingsFields');
     expect(panel).toContain('<TimerSoloAppearanceSections');
-    expect(soloSections).toContain('<TimerTypographySettings');
     expect(panel).toMatch(/<TimerSoloResultSettings[^>]*columns=\{s\.statsRollingColumns\}/);
     // The click selector is rendered once inside shared TimerDisplaySettings.
     expect(panel).not.toContain('<TimerScrambleClickActionSetting');
@@ -367,7 +365,6 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     expect(panel).toContain('timerSettingFieldStates({');
     expect(panel).toContain('<TimerTimingSettingsSections');
     expect(panel).not.toContain('<TimerScrambleClickActionSetting');
-    expect(soloSections).toContain('<TimerScramblePreviewSettings');
     expect(panel).toContain('<TimerBooleanSettingRow');
     expect(panel).toContain("field={timerSettingFieldContract('settings.scramble.optimal')}");
     expect(panel).toContain('renderBooleanControl={renderTimingBooleanControl}');

@@ -351,7 +351,7 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('<TimerSolveDetailModal');
     expect(app).toContain('<TimerCubePreview');
     expect(app).toContain("cornerSlot: smartCube.phase === 'connected'");
-    expect(app).toContain(') : store!.settings.showCubePreview && scrambleReady');
+    expect(app).toContain(') : store!.settings.showCubePreview && !store!.settings.soloLayout.hideCubePreview && scrambleReady');
     expect(app).toContain('<LiveCubeState');
     expect(app).toContain('<TimerSoloPage'); // Shared TimingSurface owns the input-safe preview frame.
     const stripStart = app.indexOf('<TimerScrambleStrip');
