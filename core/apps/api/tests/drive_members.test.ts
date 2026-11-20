@@ -38,6 +38,7 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('Drive member folders (Postgr
     await sql.unsafe(`CREATE SCHEMA "${schema}"`);
     await sql.unsafe(`
       CREATE TABLE app_users (id BIGINT PRIMARY KEY, display_name TEXT, wca_id TEXT, is_admin BOOLEAN DEFAULT FALSE);
+      CREATE TABLE platform_media_assets (storage_key TEXT PRIMARY KEY, size_bytes BIGINT NOT NULL, metadata JSONB NOT NULL);
       CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END $$;
     `);
     for (const migration of ['0184_drive', '0189_drive_shares', '0216_drive_member_folders', '0218_drive_compressions']) {
@@ -56,6 +57,24 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('Drive member folders (Postgr
       await sql.end();
     }
     vi.restoreAllMocks();
+  });
+
+  it('keeps retained course media in the shared quota without counting the original twice', async () => {
+    const id = randomUUID();
+    const key = `${id.slice(0, 2)}/${id}`;
+    const mediaKey = `lesson-videos/${id}`;
+    const usedBytes = async () => (await (await app.request('/drive', { headers: { 'X-Test-User': '1' } })).json()).quota.usedBytes as number;
+    const before = await usedBytes();
+    try {
+      await sql`INSERT INTO drive_nodes (id, owner_user_id, kind, name, size_bytes, storage_key, mime_type) VALUES (${id}, 1, 'file', 'lesson-quota.mp4', 4096, ${key}, 'video/mp4')`;
+      await sql`INSERT INTO platform_media_assets (storage_key, size_bytes, metadata) VALUES (${mediaKey}, 4096, ${sql.json({ driveNodeId: id })})`;
+      expect(await usedBytes()).toBe(before + 4096);
+      await sql`DELETE FROM drive_nodes WHERE id = ${id}`;
+      expect(await usedBytes()).toBe(before + 4096);
+    } finally {
+      await sql`DELETE FROM platform_media_assets WHERE storage_key = ${mediaKey}`;
+      await sql`DELETE FROM drive_nodes WHERE id = ${id}`;
+    }
   });
 
   it('inherits read access, preserves private ownership, and revokes existing download tickets', async () => {

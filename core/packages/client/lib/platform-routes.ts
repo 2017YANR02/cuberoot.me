@@ -3,6 +3,7 @@ import type {
   PlatformRouteDefinition,
   PlatformRouteMatch,
 } from './platform-types';
+import { isPlatformIntroductionLesson } from '@cuberoot/shared/platform';
 
 const text = (zh: string, en: string) => ({ zh, en } as const);
 export const PLATFORM_COURSE_SECTIONS = [
@@ -20,17 +21,18 @@ export function isPlatformCourseClassroom(id?: string): boolean {
 }
 
 export function isPlatformInstructorCourseEditor(id?: string): boolean {
-  return id === 'instructor-course-new' || id === 'instructor-course';
+  return id === 'instructor-course-new' || id === 'instructor-course' || id === 'instructor-lesson-new';
 }
 
 export function platformCourseSectionsIncludedBy(slug: string): readonly (typeof PLATFORM_COURSE_SECTIONS)[number][] {
   return PLATFORM_COURSE_SECTIONS.filter(section => section.slug === slug || (slug === 'core' && section.slug === 'trial'));
 }
 
-export function platformCourseLessonSection(lesson: Readonly<Record<string, unknown>>): (typeof PLATFORM_COURSE_SECTIONS)[number]['slug'] {
+export function platformCourseLessonSection(lesson: Readonly<Record<string, unknown>>, trialLessonIds?: readonly string[]): (typeof PLATFORM_COURSE_SECTIONS)[number]['slug'] {
   const slug = String(lesson.slug ?? '');
   const title = String(lesson.titleZh || lesson.titleEn || '');
-  if (/^intro(?:duction)?-/i.test(slug) || /^(?:引言|先导课|Introduction)/i.test(title)) return 'introduction';
+  if (isPlatformIntroductionLesson(lesson)) return 'introduction';
+  if (trialLessonIds !== undefined) return typeof lesson.id === 'string' && trialLessonIds.includes(lesson.id) ? 'trial' : 'core';
   if (/^trial-/i.test(slug) || /^(?:试听课|Trial lessons?)/i.test(title)) return 'trial';
   return 'core';
 }
@@ -142,6 +144,7 @@ export const PLATFORM_ROUTES: readonly PlatformRouteDefinition[] = [
   route({ id: 'instructor-courses', pattern: 'instructor/courses', area: 'instructor', access: 'instructor', kind: 'collection', title: text('讲师课程', 'Instructor courses'), resource: 'instructor-courses', actions: ['delete-course'] }),
   route({ id: 'instructor-course-new', pattern: 'instructor/courses/new', area: 'instructor', access: 'instructor', kind: 'form', title: text('创建课程', 'Create course'), resource: 'instructor-application', actions: ['save-instructor-course'] }),
   route({ id: 'instructor-course', pattern: 'instructor/courses/:id', area: 'instructor', access: 'instructor', kind: 'detail', title: text('管理课程', 'Manage course'), resource: 'instructor-courses', actions: ['save-instructor-course', 'delete-course', 'save-course-lesson', 'delete-course-lesson', 'save-course-quiz', 'delete-course-quiz'] }),
+  route({ id: 'instructor-lesson-new', pattern: 'instructor/courses/:id/lessons/new', area: 'instructor', access: 'instructor', kind: 'form', title: text('新增课时', 'Add lesson'), resource: 'instructor-courses', actions: ['save-course-lesson'] }),
   route({ id: 'instructor-students', pattern: 'instructor/students', area: 'instructor', access: 'instructor', kind: 'collection', title: text('学员', 'Learners'), resource: 'instructor-students', actions: ['issue-certificate'] }),
   route({ id: 'instructor-earnings', pattern: 'instructor/earnings', area: 'instructor', access: 'instructor', kind: 'dashboard', title: text('讲师收入', 'Instructor earnings'), resource: 'instructor-earnings' }),
   route({ id: 'instructor-profile', pattern: 'instructor/profile', area: 'instructor', access: 'instructor', kind: 'detail', title: text('讲师资料', 'Instructor profile'), resource: 'instructor-application' }),
@@ -277,7 +280,7 @@ export const PLATFORM_PUBLIC_NAV: ReadonlyArray<{
   label: PlatformRouteDefinition['title'];
   href: string;
 }> = [
-  { id: 'discover', label: text('发现', 'Discover'), href: '/platform' },
+  { id: 'discover', label: text('学习空间', 'Learning'), href: '/platform' },
   { id: 'courses', label: text('课程', 'Courses'), href: '/platform/courses' },
   { id: 'community', label: text('社区', 'Community'), href: '/platform/community' },
   { id: 'teachers', label: text('讲师', 'Teachers'), href: '/platform/teachers' },

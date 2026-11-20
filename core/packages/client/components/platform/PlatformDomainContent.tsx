@@ -9,6 +9,7 @@ import { courseLessonAccess } from '@/lib/platform-course-catalog';
 import { loadPlatformLessonMedia, platformMediaBrowserUrl, PlatformPermissionError, type PlatformLessonMedia } from '@/lib/platform-gateway';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 import { PLATFORM_COURSE_SECTIONS, platformCourseLessonSection, platformCourseSectionsIncludedBy } from '@/lib/platform-routes';
+import { platformTrialLessonIds } from '@cuberoot/shared/platform';
 import { PlatformQrLanding } from './PlatformQrLanding';
 import { PlatformLessonCoverEditor } from './PlatformLessonCoverEditor';
 import { PlatformClassroom } from './PlatformClassroom';
@@ -287,11 +288,12 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
     }) : [];
     if (selectedSection) {
       const { canWatch } = courseLessonAccess(data);
+      const trialLessonIds = platformTrialLessonIds(data.presentation);
       // Invalid or stale query IDs fall back to the first lesson in this section.
       const sectionLessons = platformCourseSectionsIncludedBy(selectedSection.slug).flatMap(section => lessons.flatMap(raw => {
         const lesson = record(raw);
         const id = string(lesson?.id) ?? string(lesson?.slug);
-        if (!lesson || !id || platformCourseLessonSection(lesson) !== section.slug) return [];
+        if (!lesson || !id || platformCourseLessonSection(lesson, trialLessonIds) !== section.slug) return [];
         return [{
           id,
           title: sectionLessonTitle(localized(lesson, 'title', english) ?? t('未命名课时', 'Untitled lesson'), section),

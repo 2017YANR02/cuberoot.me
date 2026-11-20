@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight } from '@app-foundation/icons/lucide';
+import { ArrowRight, Plus } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { entityStatusLabel } from '@/components/teaching/TeachingUi';
 import { useT } from '@/hooks/useT';
@@ -159,8 +159,8 @@ export function PlatformEntityList({
               </div>
             </AppLink>
             <div className="platform-instructor-course-card-actions">
+              <AppLink className="platform-button platform-button-primary" href={`${href}/lessons/new`} prefetch={false}>{t('新增课时', 'Add lesson')}<Plus aria-hidden /></AppLink>
               <AppLink className="platform-button" href={href} prefetch={false}>{t('管理课程', 'Manage course')}<ArrowRight aria-hidden /></AppLink>
-              {renderActions(item)}
             </div>
           </article>;
         }

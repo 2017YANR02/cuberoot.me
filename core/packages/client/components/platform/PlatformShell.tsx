@@ -2,7 +2,7 @@
 
 import { useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { ArrowRight, BookOpen, Building2, CalendarDays, Compass, GraduationCap, LayoutDashboard, QrCode, ShoppingBag, UsersRound } from '@app-foundation/icons/lucide';
+import { BookOpen, Building2, CalendarDays, Compass, GraduationCap, LayoutDashboard, QrCode, ShoppingBag, Upload, UsersRound } from '@app-foundation/icons/lucide';
 import PageBackLink from '@/components/PageBackLink';
 import AppLink from '@/components/AppLink';
 import dynamic from 'next/dynamic';
@@ -54,8 +54,12 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
   const [instructorAccess, setInstructorAccess] = useState<{ owner: string; active: boolean } | null>(null);
   const owner = user ? String(user.uid ?? user.wcaId) : '';
   const { primary, secondary, definition } = platformNavigationState(pathname);
-  const showInstructorEntry = primary === 'teachers' && definition?.id !== 'teacher-apply';
-  const checkInstructor = Boolean(owner && (accountOpen || showInstructorEntry));
+  const admin = isAdmin ? platformAdminNavigationState(definition) : null;
+  const instructorWorkspace = definition?.area === 'instructor' && definition.id !== 'teacher-apply';
+  const instructorCourseEditor = isPlatformInstructorCourseEditor(definition?.id);
+  const showNavigation = !instructorWorkspace && definition?.id !== 'course-detail' && !isPlatformCourseClassroom(definition?.id);
+  // The approval screen supplies its own single follow-up action.
+  const checkInstructor = Boolean(owner && showNavigation && !admin && definition?.id !== 'teacher-apply');
   useEffect(() => {
     if (!checkInstructor) return;
     const controller = new AbortController();
@@ -64,13 +68,9 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
       .then(result => { if (!controller.signal.aborted) setInstructorAccess({ owner, active: result.items[0]?.data?.instructorStatus === 'active' }); })
       .catch(() => { if (!controller.signal.aborted) setInstructorAccess({ owner, active: false }); });
     return () => controller.abort();
-  }, [owner, checkInstructor, pathname]);
-  const isInstructor = instructorAccess?.owner === owner && instructorAccess.active;
+  }, [owner, checkInstructor]);
+  const isInstructor = checkInstructor && instructorAccess?.owner === owner && instructorAccess.active;
   const [searchBinding, setSearchBinding] = useState<PlatformSearchBinding | null>(null);
-  const admin = isAdmin ? platformAdminNavigationState(definition) : null;
-  const instructorWorkspace = definition?.area === 'instructor' && definition.id !== 'teacher-apply';
-  const instructorCourseEditor = isPlatformInstructorCourseEditor(definition?.id);
-  const showNavigation = !instructorWorkspace && definition?.id !== 'course-detail' && !isPlatformCourseClassroom(definition?.id);
   const searchScope: PlatformSearchScope | null = definition?.id === 'instructor-courses' ? 'instructor-courses' : !showNavigation ? null : primary === 'community' ? 'forum'
     : primary === 'courses' ? (secondary === 'paths' ? 'paths' : 'courses')
     : primary === 'discover' && (secondary === 'events' || secondary === 'news') ? secondary : null;
@@ -110,7 +110,7 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
     <div className={`platform-shell${shared ? ' platform-shell--shared' : ''}`}>
       {instructorWorkspace && !instructorCourseEditor && <header className="platform-instructor-navigation">
         <div className="platform-instructor-masthead">
-          <PageBackLink fallback="/platform" label={t('返回学习空间', 'Back to Learning Space')} showLabel acceptEntry={isLearningSpaceOutsideWorkspace} />
+          <PageBackLink fallback="/platform" label={t('返回学习空间', 'Back to Learning Space')} acceptEntry={isLearningSpaceOutsideWorkspace} />
           <div className="platform-site-search">{searchScope ? <PlatformScopedSearch key={searchScope} lang={lang} scope={searchScope} binding={currentSearchBinding} />
             : <LandingSearch cards={cards} lang={lang} workspaceEntry />}</div>
         </div>
@@ -120,11 +120,6 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
         <header className="platform-masthead">
           <div className="page-back-heading platform-masthead-brand">
             <PageBackLink fallback={platformParentHref(segments)} />
-            <AppLink href="/platform" className="platform-wordmark" aria-label={t('Platform 首页', 'Platform home')}>
-              <span className="platform-wordmark-mark" aria-hidden>CR</span>
-              <span>{t('学习空间', 'Learning')}</span>
-            </AppLink>
-            <p>CubeRoot</p>
           </div>
           {user ? <CompactSelect open={accountOpen} onOpenChange={setAccountOpen} unstyledTrigger className="platform-account-control"
             triggerClassName="platform-account-link" popupClassName="platform-account-menu"
@@ -132,7 +127,6 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
             items={[]} onChange={() => {}} panelContent={<>
               {PLATFORM_PERSONAL_ROUTES.map(item => <AppLink key={item.id} href={`/platform/${item.pattern}`} prefetch={false}
                 onClick={() => setAccountOpen(false)}>{t(item.title.zh, item.title.en)}</AppLink>)}
-              {isInstructor && <AppLink href="/platform/instructor" prefetch={false} onClick={() => setAccountOpen(false)}>{t('讲师工作台', 'Instructor workspace')}</AppLink>}
               {isAdmin && <>
                 <AppLink href="/platform/admin" prefetch={false} onClick={() => setAccountOpen(false)}>{t('管理', 'Administration')}</AppLink>
                 <AppLink href={SHOP_ROOT} prefetch={false} onClick={() => setAccountOpen(false)}>{t('商店', 'Shop')}</AppLink>
@@ -145,6 +139,7 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
           </div>
         </header>
 
+        <div className={`platform-nav-actions${isInstructor ? ' platform-nav-actions-with-publish' : ''}`}>
         <nav className={`platform-nav platform-glass${admin ? ' platform-admin-nav' : ''}`} aria-label={admin ? t('管理工作台功能区', 'Administration sections') : t('Platform 功能区', 'Platform sections')}>
           {primaryLinks.map(item => {
             const Icon = item.Icon;
@@ -156,10 +151,9 @@ function PlatformShellContent({ children, shared }: { children: ReactNode; share
             </AppLink>;
           })}
         </nav>
-        {showInstructorEntry ? <div className="platform-teacher-context">
-          {contextNav}
-          {isInstructor && <AppLink href="/platform/instructor" className="platform-button platform-button-primary platform-instructor-entry" prefetch={false}><LayoutDashboard aria-hidden />{t('进入讲师工作台', 'Open instructor workspace')}<ArrowRight aria-hidden /></AppLink>}
-        </div> : contextNav}
+        {isInstructor && <AppLink href="/platform/instructor/courses" className="platform-button platform-button-primary platform-instructor-entry" prefetch={false}>{t('发布课程', 'Publish course')}<Upload aria-hidden /></AppLink>}
+        </div>
+        {contextNav}
 
         {!admin && workspaceNav}
       </>}

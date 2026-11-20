@@ -17,6 +17,7 @@ import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { platformLocalDateTime, platformMajorToMinor, platformMinorToMajor } from '@/lib/platform-commerce-fields';
 import { commerceRecord, commerceText } from './PlatformCommerceContent';
+import { isPlatformIntroductionLesson, platformTrialLessonIds } from '@cuberoot/shared/platform';
 import './platform-commerce.css';
 
 type Entry=Record<string,unknown>;
@@ -116,7 +117,30 @@ function Question({row,onChange}:{row:Entry;onChange:(row:Entry)=>void}) {
 
 export type CoursePresentationPart = 'positioning' | 'introduction' | 'cover' | 'outline';
 
-export function PlatformStructuredField({fieldKey,label,value,onChange,routeId,onUploadPending,coursePart,compactOutline=false}:{fieldKey:string;label:string;value:string;onChange:(value:string)=>void;routeId:string;onUploadPending?:(key:string,pending:boolean)=>void;coursePart?:CoursePresentationPart;compactOutline?:boolean}) {
+function CourseTrialSelection({ lessons, presentation, onChange }: { lessons: unknown[]; presentation: Entry; onChange: (ids: string[]) => void }) {
+  const t = useT();
+  const eligible = lessons.map(commerceRecord).filter(lesson => typeof lesson.id === 'string' && lesson.status !== 'archived' && !isPlatformIntroductionLesson(lesson));
+  const selected = new Set(platformTrialLessonIds(presentation) ?? eligible.filter(lesson => lesson.accessScope === 'public').map(lesson => String(lesson.id)));
+  return <section className="platform-course-trial-settings" aria-label={t('试听课选择', 'Trial lesson selection')}>
+    <h3>{t('试听课', 'Trial lessons')}</h3>
+    {eligible.length ? <>
+      <p>{t('选中的课时发布后可免费试听，其余课时仍需课程权益。', 'Selected lessons are free to preview when published. Other lessons require course access.')}</p>
+      <div className="platform-course-trial-options">
+        {eligible.map(lesson => {
+          const id = String(lesson.id);
+          const title = t(String(lesson.titleZh || lesson.titleEn || id), String(lesson.titleEn || lesson.titleZh || id));
+          return <BoolToggle key={id} label={title} ariaLabel={t(`设为试听课：${title}`, `Make ${title} a trial lesson`)} value={selected.has(id)} onChange={enabled => {
+            const next = new Set(selected);
+            if (enabled) next.add(id); else next.delete(id);
+            onChange(eligible.map(item => String(item.id)).filter(item => next.has(item)));
+          }} />;
+        })}
+      </div>
+    </> : <p>{t('暂无可选课时，上传课时后可在这里设置试听。', 'Upload lessons before choosing which ones to offer as previews.')}</p>}
+  </section>;
+}
+
+export function PlatformStructuredField({fieldKey,label,value,onChange,routeId,onUploadPending,coursePart,compactOutline=false,courseLessons}:{fieldKey:string;label:string;value:string;onChange:(value:string)=>void;routeId:string;onUploadPending?:(key:string,pending:boolean)=>void;coursePart?:CoursePresentationPart;compactOutline?:boolean;courseLessons?:unknown[]}) {
   const t=useT();let parsed:unknown;try{parsed=JSON.parse(value||(['venue','presentation','eligibility'].includes(fieldKey)?'{}':'[]'));}catch{parsed={};}
   const rows=Array.isArray(parsed)?parsed.map(commerceRecord):[];const object=commerceRecord(parsed);
   const currentObject = useRef(object);
@@ -137,6 +161,7 @@ export function PlatformStructuredField({fieldKey,label,value,onChange,routeId,o
     {(!coursePart || coursePart === 'positioning') && <CourseTags value={object.tags} onChange={next=>updateCourseField('tags',next)} />}
     {(!coursePart || coursePart === 'positioning' || coursePart === 'introduction') && <div className="platform-structured-fields">{coursePresentation.filter(column=>!coursePart || (coursePart === 'introduction' ? column.key === 'highlights' : column.key !== 'highlights')).map(column=><Scalar key={column.key} column={coursePart === 'introduction' ? {...column,rows:2} : column} value={object[column.key]} onChange={next=>updateCourseField(column.key,next)} />)}</div>}
     {(!coursePart || coursePart === 'outline') && <PlatformStructuredField fieldKey="outline" label={t('课程大纲','Course outline')} value={JSON.stringify(object.outline??[])} routeId={routeId} onChange={next=>updateCourseField('outline',JSON.parse(next))} compactOutline={Boolean(coursePart)} />}
+    {courseLessons && <CourseTrialSelection lessons={courseLessons} presentation={object} onChange={ids=>updateCourseField('trialLessonIds',ids)} />}
   </fieldset>;
   if(objectColumns)return <fieldset className="platform-structured-editor"><legend>{label}</legend><Fields columns={objectColumns} row={object} onChange={save}/></fieldset>;
   if(fieldKey==='eligibility')return <fieldset className="platform-structured-editor"><legend>{label}</legend><BoolToggle label={t('仅限会员使用','Members only')} value={object.memberOnly===true} onChange={value=>save({...object,memberOnly:value})}/>{['courseIds','productIds','productVariantIds','eventIds','eventTicketTypeIds','membershipPlanIds'].map(key=><PlatformReferenceField key={key} source={key} label={t(({courseIds:'适用课程',productIds:'适用商品',productVariantIds:'适用规格',eventIds:'适用活动',eventTicketTypeIds:'适用票种',membershipPlanIds:'适用会员套餐'} as Record<string,string>)[key],({courseIds:'Courses',productIds:'Products',productVariantIds:'Variants',eventIds:'Events',eventTicketTypeIds:'Ticket types',membershipPlanIds:'Membership plans'} as Record<string,string>)[key])} selected={Array.isArray(object[key])?(object[key] as unknown[]).map(String):[]} onChange={values=>save({...object,[key]:values})}/>)}</fieldset>;

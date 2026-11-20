@@ -29,8 +29,10 @@ import { requirePlatformActor, requirePlatformAdmin } from '../src/platform/auth
 import { platformRouter } from '../src/platform/http.js';
 import { createPlatformMediaToken } from '../src/platform/media_access.js';
 import { authorizeCourseWrite } from '../src/platform/catalog/course-access.js';
+import { saveCourseTrialLessonSelection } from '../src/platform/catalog/course-routes.js';
+import { registerLessonRoutes } from '../src/platform/catalog/lesson-routes.js';
 import { registerMediaRoutes } from '../src/platform/learning/media-routes.js';
-import { platformDb } from '../src/platform/db.js';
+import { platformDb, type PlatformDb } from '../src/platform/db.js';
 
 const authApp = platformRouter();
 authApp.get('/actor', async c => c.json(await requirePlatformActor(c)));
@@ -74,6 +76,7 @@ describe.skipIf(!databaseUrl)('course access and signed media with PostgreSQL an
   let mediaDirectory: string;
   const app = platformRouter();
   registerMediaRoutes(app);
+  registerLessonRoutes(app);
   app.get('/course/:id/write-access', async c => c.json({
     id: await authorizeCourseWrite(platformDb(), await requirePlatformActor(c), c.req.param('id')),
   }));
@@ -100,7 +103,7 @@ describe.skipIf(!databaseUrl)('course access and signed media with PostgreSQL an
     await db.unsafe(`CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at=NOW(); RETURN NEW; END $$;
       CREATE TABLE app_users(id BIGINT PRIMARY KEY);
       CREATE TABLE teacher_directory_entries(id BIGINT PRIMARY KEY);`);
-    for (const migration of ['0167_platform_core.sql', '0219_platform_lesson_grants.sql', '0244_platform_lesson_covers.sql']) {
+    for (const migration of ['0167_platform_core.sql', '0184_drive.sql', '0189_drive_shares.sql', '0216_drive_member_folders.sql', '0218_drive_compressions.sql', '0219_platform_lesson_grants.sql', '0244_platform_lesson_covers.sql']) {
       await db.unsafe(await readFile(new URL(`../migrations/${migration}`, import.meta.url), 'utf8'));
     }
     await db.unsafe('INSERT INTO app_users VALUES (1),(2),(3),(4),(5)');
@@ -150,6 +153,45 @@ describe.skipIf(!databaseUrl)('course access and signed media with PostgreSQL an
     for (const [actor, status] of [[1, 403], [2, 403], [3, 200], [4, 404], [5, 200]]) {
       expect((await app.request(`/course/${courseId}/write-access`, { headers: headers(actor) })).status).toBe(status);
     }
+  });
+
+  it('restricts course upload progress to the owner and the course folder', async () => {
+    const folder = randomUUID(), node = randomUUID(), upload = randomUUID();
+    await db.unsafe(`INSERT INTO drive_nodes(id,owner_user_id,kind,name) VALUES($1,3,'folder',$2)`, [folder, `course-media-${courseId}`]);
+    await db.unsafe(`INSERT INTO drive_nodes(id,owner_user_id,parent_id,kind,name,mime_type,status) VALUES($1,3,$2,'file','lesson.mp4','video/mp4','uploading')`, [node, folder]);
+    await db.unsafe(`INSERT INTO drive_uploads(id,node_id,owner_user_id,expected_bytes,received_bytes,expires_at) VALUES($1,$2,3,100,50,NOW()+INTERVAL '1 hour')`, [upload, node]);
+    try {
+      const url = `/platform/instructor/courses/${courseId}/lesson-uploads/${upload}`;
+      const response = await app.request(url, { method: 'HEAD', headers: headers(3) });
+      expect(response.status).toBe(204);
+      expect(response.headers.get('Upload-Offset')).toBe('50');
+      expect((await app.request(url, { method: 'HEAD', headers: headers(4) })).status).toBe(404);
+      expect((await app.request(url, { method: 'HEAD' })).status).toBe(401);
+      await db.unsafe('UPDATE drive_nodes SET parent_id=NULL WHERE id=$1', [node]);
+      expect((await app.request(url, { method: 'HEAD', headers: headers(3) })).status).toBe(404);
+    } finally {
+      await db.unsafe('DELETE FROM drive_nodes WHERE id=$1 OR id=$2', [node, folder]);
+    }
+  });
+
+  it('updates trial access against actual stored lessons and restores entitlement checks', async () => {
+    const select = (ids: string[]) => db.begin(tx => saveCourseTrialLessonSelection(tx as unknown as PlatformDb, courseId, ids));
+    try {
+      await select([lessons[1]]);
+      expect((await descriptor(1)).status).toBe(200);
+      expect((await descriptor(2)).status).toBe(401);
+    } finally { await select([lessons[2]]); }
+  });
+
+  it('serializes simultaneous lesson appends to distinct consecutive positions', async () => {
+    const create = (suffix: string) => app.request(`/platform/instructor/courses/${courseId}/lessons`, {
+      method: 'POST', headers: { ...headers(3), 'Content-Type': 'application/json', 'Idempotency-Key': `append-lesson-fixture-${suffix}` },
+      body: JSON.stringify({ slug: `append-${suffix}`, ordinal: 3, appendToCourse: true, titleEn: `Append ${suffix}`, status: 'draft' }),
+    });
+    const results = await Promise.all([create('one'), create('two')]);
+    expect(results.map(response => response.status)).toEqual([201, 201]);
+    const rows = await db.unsafe(`SELECT ordinal FROM platform_lessons WHERE course_id=$1 AND slug LIKE 'append-%' ORDER BY ordinal`, [courseId]);
+    expect(rows.map(row => Number(row.ordinal))).toEqual([3, 4]);
   });
 
   it('denies new media access when an entitlement expires or is revoked', async () => {

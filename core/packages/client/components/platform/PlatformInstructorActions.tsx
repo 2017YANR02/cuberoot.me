@@ -6,10 +6,11 @@ import { useAuthUser } from '@/lib/auth-store';
 import { useEntryRouter } from '@/hooks/useEntryRouter';
 import { useLang } from '@/i18n/tr';
 import { text, INSTRUCTOR_COURSE_FIELDS, INSTRUCTOR_COURSE_CREATE_FIELDS } from './PlatformFormDefinitions';
-import { DomainForm } from './PlatformForm';
+import { ActionButton, DomainForm } from './PlatformForm';
 import { PlatformCourseContentManager } from './PlatformCourseManager';
 import { type CommonProps } from './PlatformActionTypes';
 import { PlatformInstructorApplication } from './PlatformInstructorApplication';
+import { PlatformInstructorLessonCreate } from './PlatformInstructorLessonCreate';
 
 function InstructorCourseCreateForm({ definition, busy, runAction }: CommonProps) {
   const user = useAuthUser();
@@ -42,14 +43,20 @@ export function PlatformInstructorActions(props: CommonProps) {
   }
   if (definition.id === 'instructor-course') {
     return (
-      <div className="platform-domain-stack">
-        <DomainForm definition={definition} entity={entity} resourceId={params.id} busy={busy} runAction={runAction} spec={{ title: text('讲师课程资料', 'Instructor course details'), titleHidden: true, action: 'save-instructor-course', fields: INSTRUCTOR_COURSE_FIELDS }} />
+      <div className="platform-domain-stack platform-instructor-course-management">
         <PlatformCourseContentManager {...props} />
+        <section className="platform-instructor-course-info">
+          <DomainForm definition={definition} entity={entity} resourceId={params.id} busy={busy} runAction={runAction}
+            spec={{ title: text('课程信息', 'Course information'), action: 'save-instructor-course', fields: INSTRUCTOR_COURSE_FIELDS, submit: text('保存课程信息', 'Save course information') }}
+            secondaryAction={<ActionButton action="delete-course" resourceId={entity?.id ?? params.id} label={text('归档课程', 'Archive course')}
+              confirm={text('确定归档整门课程吗？', 'Archive this entire course?')} secondary busy={busy} runAction={runAction} />} />
+        </section>
       </div>
     );
   }
   if (definition.id === 'instructor-course-new') {
     return <InstructorCourseCreateForm {...props} />;
   }
+  if (definition.id === 'instructor-lesson-new') return <PlatformInstructorLessonCreate {...props} />;
   return null;
 }

@@ -43,6 +43,18 @@ export function isPlatformHomepageCover(value: string): boolean {
 
 export type PlatformCurrency = typeof PLATFORM_CURRENCIES[number];
 export type PlatformCourseStatus = typeof PLATFORM_COURSE_STATUSES[number];
+
+/** Existing introduction lessons keep their distinct section and access policy. */
+export function isPlatformIntroductionLesson(lesson: Readonly<Record<string, unknown>>): boolean {
+  return /^intro(?:duction)?-/i.test(String(lesson.slug ?? ''))
+    || /^(?:引言|先导课|Introduction)/i.test(String(lesson.titleZh || lesson.titleEn || ''));
+}
+
+export function platformTrialLessonIds(presentation: unknown): string[] | undefined {
+  if (!presentation || typeof presentation !== 'object' || Array.isArray(presentation)) return undefined;
+  const ids = (presentation as Record<string, unknown>).trialLessonIds;
+  return Array.isArray(ids) ? ids.filter((id): id is string => typeof id === 'string') : undefined;
+}
 export type PlatformEventStatus = typeof PLATFORM_EVENT_STATUSES[number];
 export type PlatformProductStatus = typeof PLATFORM_PRODUCT_STATUSES[number];
 export type PlatformNewsStatus = typeof PLATFORM_NEWS_STATUSES[number];

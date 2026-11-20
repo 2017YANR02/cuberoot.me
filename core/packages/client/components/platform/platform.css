@@ -52,8 +52,8 @@ body[data-site-scenery] :is(
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas: "brand account" "search search";
   align-items: center;
-  gap: 24px 12px;
-  padding-block: 16px 24px;
+  gap: 12px;
+  padding-block: 12px 16px;
 }
 
 .platform-masthead-brand { grid-area: brand; }
@@ -64,44 +64,24 @@ body[data-site-scenery] :is(
   align-self: center;
 }
 
+@media (min-width: 700px) {
+  .platform-masthead {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "brand search account";
+    column-gap: 12px;
+    reading-flow: grid-rows;
+  }
+}
+@media (min-width: 1000px) {
+  .platform-masthead { grid-template-columns: minmax(0, 1fr) minmax(0, 720px) minmax(0, 1fr); column-gap: 24px; }
+}
 @media (min-width: 840px) {
-  .platform-masthead, .platform-instructor-masthead {
-    /* The same side columns keep the search width and horizontal position
-       identical in public, administrative and instructor workspaces. */
+  .platform-instructor-masthead {
     grid-template-columns: minmax(0, 220px) minmax(0, 1fr) minmax(0, 104px);
     grid-template-areas: "brand search account";
     column-gap: 24px;
     reading-flow: grid-rows;
   }
-}
-
-.platform-wordmark {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--foreground);
-  font-size: 1.125rem;
-  font-weight: 600;
-  letter-spacing: normal;
-  text-decoration: none;
-}
-
-.platform-wordmark-mark {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border-radius: 10px;
-  color: var(--primary-foreground);
-  background: var(--primary);
-  font-size: 0.67rem;
-  letter-spacing: 0.08em;
-}
-
-.platform-masthead-brand > p {
-  margin: 0;
-  color: var(--muted-foreground);
-  font-size: 0.875rem;
 }
 
 .platform-account-link {
@@ -292,6 +272,18 @@ body[data-site-scenery] :is(
   margin-left: max(16px, calc((100% - var(--platform-measure)) / 2));
   margin-right: auto;
 }
+
+.platform-nav-actions { display: contents; }
+.platform-nav-actions.platform-nav-actions-with-publish {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  width: min(calc(100% - 32px), var(--platform-measure));
+  margin-inline: auto;
+}
+.platform-nav-actions-with-publish > .platform-nav { margin: 0; max-width: 100%; flex: none; }
+.platform-nav-actions-with-publish > .platform-instructor-entry { margin-inline-start: auto; flex: none; white-space: nowrap; }
 
 .platform-nav-link {
   position: relative;
@@ -624,21 +616,39 @@ body[data-site-scenery] :is(
 }
 
 .platform-home-learning .platform-home-resume {
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: 20px;
   padding: 20px 24px;
   min-height: 104px;
 }
 
 .platform-home-learning .platform-home-resume[data-has-cover='true'] {
-  grid-template-columns: minmax(120px, 0.27fr) minmax(0, 1fr) auto;
   padding: 12px 20px 12px 12px;
+}
+
+.platform-home-learning-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+  flex: 1 1 min(100%, 180px);
+  min-width: 0;
+}
+
+.platform-home-resume[data-has-cover='true'] .platform-home-learning-main {
+  /* Reserve readable space for the cover and copy; the action wraps only if it cannot fit beside them. */
+  flex-basis: min(100%, 264px);
+  grid-template-columns: minmax(120px, 0.27fr) minmax(0, 1fr);
 }
 
 .platform-home-learning-cover {
   position: relative;
   display: grid;
   place-items: center;
+  /* Clamp the ratio-projected minimum width to the grid track on narrow cards. */
+  width: 100%;
+  min-width: 0;
   aspect-ratio: 2;
   min-height: 88px;
   overflow: hidden;
@@ -691,7 +701,7 @@ body[data-site-scenery] :is(
   accent-color: var(--accent);
 }
 
-.platform-home-learning-action { justify-self: end; }
+.platform-home-learning-action { flex: 0 0 auto; margin-inline-start: auto; white-space: nowrap; }
 
 .platform-home-learning-action svg,
 .platform-home-quick-links svg,
@@ -922,7 +932,7 @@ body[data-site-scenery] :is(
 .platform-instructor-course-count strong { font-size: .9375rem; font-weight: 600; overflow-wrap: anywhere; }
 .platform-instructor-course-count-icon { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 10px; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .platform-instructor-course-count-icon svg { width: 19px; height: 19px; }
-.platform-instructor-course-list { display: grid; gap: 12px; }
+.platform-instructor-course-list { display: grid; gap: 12px; container-type: inline-size; container-name: instructor-course-list; }
 .platform-instructor-course-card {
   display: flex;
   align-items: center;
@@ -958,16 +968,18 @@ body[data-site-scenery] :is(
 .platform-instructor-course-card-info dl > div { display: inline-flex; gap: 5px; min-width: 0; }
 .platform-instructor-course-card-info dt { color: var(--muted-foreground); }
 .platform-instructor-course-card-info dd { font-weight: 500; }
-.platform-instructor-course-card-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex: none; }
-.platform-instructor-course-card-actions .platform-row-actions { margin-top: 0; }
+.platform-instructor-course-card-actions { display: grid; gap: 8px; flex: none; }
+.platform-instructor-course-card-actions .platform-button { justify-content: center; }
 .platform-instructor-course-list-page > .platform-state-empty { display: flex; align-items: center; justify-content: center; gap: 14px; min-height: 156px; margin-block: 6px; border: 1px dashed var(--border-default); border-radius: 14px; }
 .platform-instructor-course-list-page > .platform-state-empty > svg { width: 34px; height: 34px; color: var(--accent); }
 @media (max-width: 640px) {
   .platform-route-actions.platform-instructor-course-create-actions { padding: 10px 12px; }
+}
+@container instructor-course-list (max-width: 540px) {
   .platform-instructor-course-card { display: grid; grid-template-columns: minmax(0, 1fr); justify-content: stretch; gap: 10px; padding: 12px; }
-  .platform-instructor-course-card-main { grid-template-columns: clamp(82px, 24vw, 112px) minmax(0, 1fr); gap: 12px; }
+  .platform-instructor-course-card-main { grid-template-columns: clamp(82px, 24cqw, 112px) minmax(0, 1fr); gap: 12px; }
   .platform-instructor-course-card-main .platform-course-card-cover { aspect-ratio: 2 / 3; }
-  .platform-instructor-course-card-actions { flex-direction: row-reverse; justify-content: space-between; align-items: center; }
+  .platform-instructor-course-card-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--border-default); padding-top: 10px; }
 }
 
 .platform-toolbar {
@@ -2187,6 +2199,71 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
   margin-bottom: 0;
 }
 
+.platform-instructor-course-management.platform-domain-stack { gap: 36px; }
+.platform-instructor-lesson-manager.platform-course-editor { display: grid; gap: 14px; margin: 0; padding: 0; min-width: 0; }
+.platform-instructor-lesson-manager .platform-course-editor-heading { justify-content: space-between; gap: 10px 16px; }
+.platform-instructor-editor-title { display: grid; gap: 3px; }
+.platform-instructor-editor-title h2 { font-size: 1.25rem; }
+.platform-instructor-editor-title > span { color: var(--muted-foreground); font-size: 0.8125rem; }
+.platform-instructor-lesson-list { list-style: none; margin: 0; padding: 0; min-width: 0; }
+.platform-instructor-lesson-row + .platform-instructor-lesson-row { border-top: 1px solid var(--border-default); }
+.platform-instructor-lesson-toggle.more-toggle {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 0;
+  font-size: inherit;
+  color: var(--foreground);
+  text-align: start;
+}
+.platform-instructor-lesson-index { color: var(--muted-foreground); font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+.platform-instructor-lesson-title { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.platform-instructor-lesson-title strong { font-size: 0.9375rem; font-weight: 600; }
+.platform-instructor-lesson-title small { color: var(--muted-foreground); font-size: 0.75rem; }
+.platform-instructor-lesson-toggle .platform-status { margin: 0; align-self: center; }
+.platform-instructor-lesson-toggle .more-toggle-chevron { grid-column: -2; color: var(--muted-foreground); }
+.platform-instructor-lesson-toggle:is(:hover, :focus-visible) .platform-instructor-lesson-title strong { color: var(--accent); }
+.platform-lesson-route-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.platform-lesson-create { display: grid; gap: 22px; min-width: 0; }
+.platform-lesson-create-heading { display: flex; align-items: start; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; }
+.platform-lesson-create-heading h1 { margin: 0; font-size: 1.4rem; }
+.platform-lesson-create-heading p { margin: 6px 0 0; color: var(--muted-foreground); }
+.platform-lesson-draft-status { font-size: .8rem; color: var(--muted-foreground); }
+.platform-lesson-create-modes, .platform-lesson-upload-actions, .platform-lesson-create-footer > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.platform-lesson-upload { min-width: 0; }
+.platform-lesson-dropzone { display: grid; justify-items: center; gap: 12px; padding: 38px 20px; border: 1px dashed var(--border-default); border-radius: 14px; text-align: center; }
+.platform-lesson-dropzone[data-dragging='true'] { border-color: var(--accent); background: var(--card); }
+.platform-lesson-dropzone > svg { width: 40px; height: 40px; color: var(--muted-foreground); }
+.platform-lesson-dropzone strong { font-size: 1.13rem; }
+.platform-lesson-dropzone p, .platform-lesson-dropzone small { margin: 0; color: var(--muted-foreground); font-size: .85rem; }
+.platform-lesson-upload-selected { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); align-items: center; gap: 18px; border: 1px solid var(--border-default); padding: 14px; border-radius: 12px; }
+.platform-lesson-upload-selected video, .platform-lesson-upload-placeholder { width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; background: var(--card); }
+.platform-lesson-upload-placeholder { display: grid; place-items: center; color: var(--muted-foreground); }
+.platform-lesson-upload-placeholder svg { width: 32px; height: 32px; }
+.platform-lesson-upload-detail { display: grid; gap: 8px; min-width: 0; }
+.platform-lesson-upload-detail strong { overflow-wrap: anywhere; }
+.platform-lesson-upload-detail small { color: var(--muted-foreground); }
+.platform-lesson-upload-progress { display: flex; align-items: center; gap: 12px; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.platform-lesson-upload-progress progress { flex: 1; min-width: 0; height: 8px; accent-color: var(--accent); }
+.platform-lesson-create-details h2 { margin: 0 0 14px; font-size: 1.08rem; }
+.platform-lesson-create-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--border-default); padding-top: 16px; }
+.platform-lesson-create-footer p { margin: 0; color: var(--muted-foreground); font-size: .85rem; }
+@media (max-width: 540px) { .platform-lesson-upload-selected { grid-template-columns: minmax(0, 1fr); } .platform-lesson-create-footer > div { margin-inline-start: auto; } }
+.platform-instructor-lesson-editor.platform-course-editor-section { padding: 12px 0 20px; }
+.platform-instructor-lesson-editor > .platform-domain-form { padding-top: 0; }
+.platform-instructor-course-info { min-width: 0; }
+.platform-instructor-lesson-manager + .platform-instructor-course-info { padding-top: 24px; border-top: 1px solid var(--border-default); }
+.platform-instructor-course-info > .platform-domain-form { padding-top: 0; }
+.platform-instructor-course-info > .platform-domain-form > h2 { font-size: 1.25rem; }
+@media (max-width: 640px) {
+  .platform-instructor-course-management.platform-domain-stack { gap: 26px; }
+  .platform-instructor-lesson-toggle.more-toggle { grid-template-columns: 24px minmax(0, 1fr) auto auto; gap: 8px; }
+  .platform-instructor-lesson-toggle .platform-status { font-size: 0.75rem; padding-inline: 6px; }
+}
+
 .platform-course-editor-section,
 .platform-course-editor-item {
   padding-top: 22px;
@@ -2426,25 +2503,14 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
   }
 
   .platform-home-learning .platform-home-resume {
-    grid-template-columns: minmax(0, 1fr);
     gap: 10px 14px;
   }
-  .platform-home-learning .platform-home-resume[data-has-cover='true'] { grid-template-columns: minmax(90px, 0.32fr) minmax(0, 1fr); }
-  .platform-home-learning-action { grid-column: 1; justify-self: start; }
-  .platform-home-resume[data-has-cover='true'] .platform-home-learning-action { grid-column: 2; }
+  .platform-home-learning-main { gap: 14px; }
+  .platform-home-resume[data-has-cover='true'] .platform-home-learning-main { grid-template-columns: minmax(90px, 0.32fr) minmax(0, 1fr); }
 
 }
 
 @media (max-width: 479px) {
-  .platform-masthead {
-    padding-block-start: 18px;
-    row-gap: 20px;
-  }
-
-  .platform-masthead-brand > p {
-    display: none;
-  }
-
   .platform-nav {
     width: calc(100% - 32px);
     display: grid;
@@ -2452,6 +2518,7 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
     gap: 0;
     padding: 5px;
   }
+  .platform-nav-actions-with-publish > .platform-nav { width: 100%; }
 
   .platform-nav.platform-admin-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
@@ -2584,16 +2651,6 @@ a.platform-course-lesson-row:hover { color: var(--accent); }
 .platform-workspace-nav a[aria-current='page'] { color: var(--foreground); background: var(--accent-soft); }
 .platform-context-nav a[aria-current='page'] { color: var(--accent); background: var(--accent-soft); font-weight: 600; }
 .platform-context-nav a:hover { color: var(--foreground); background: var(--muted); }
-.platform-teacher-context {
-  width: min(calc(100% - 32px), var(--platform-measure));
-  margin: 8px auto 0;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-}
-.platform-teacher-context .platform-context-nav { flex: 1 1 180px; width: auto; min-width: 0; margin: 0; }
-.platform-teacher-context .platform-instructor-entry { flex: none; white-space: nowrap; }
 .platform-context-nav.platform-admin-context-nav {
   flex-wrap: nowrap;
   overflow-x: auto;

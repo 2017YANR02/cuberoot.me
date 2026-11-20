@@ -1,12 +1,33 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { approvedQrTarget, idempotencyKey, requestHash } from '../src/platform/validation.js';
 import { PlatformApiError, badRequest } from '../src/platform/errors.js';
 import { platformRouter } from '../src/platform/http.js';
 import { addMembershipPeriod } from '../src/platform/membership-period.js';
 import { safeMoney, safeSignedMoney } from '../src/platform/commerce/amounts.js';
 import { courseFields } from '../src/platform/catalog/course-fields.js';
+import { saveCourseTrialLessonSelection } from '../src/platform/catalog/course-routes.js';
 
 describe('Platform boundary helpers', () => {
+  it('validates and persists explicit trial selections without changing other courses or introductions', async () => {
+    const first = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const second = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const intro = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    const course = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+    expect(courseFields({ presentation: { trialLessonIds: [second, first, first] } }, false).presentation).toEqual({ trialLessonIds: [first, second] });
+    expect(() => courseFields({ presentation: { trialLessonIds: ['not-an-id'] } }, false)).toThrow(PlatformApiError);
+    const unsafe = vi.fn(async (statement: string, _parameters?: readonly unknown[]) => statement.includes('SELECT l.id') ? [
+      { id: first, slug: 'lesson-1' }, { id: second, slug: 'lesson-2' }, { id: intro, slug: 'intro-1' },
+    ] : []);
+    await saveCourseTrialLessonSelection({ unsafe }, course, [second]);
+    expect(unsafe.mock.calls[1]?.[0]).toContain('WHERE course_id = $1::uuid');
+    expect(unsafe.mock.calls[1]?.[1]).toEqual([course, [second], [first, second]]);
+    unsafe.mockClear();
+    await expect(saveCourseTrialLessonSelection({ unsafe }, course, [intro])).rejects.toThrow(PlatformApiError);
+    expect(unsafe).toHaveBeenCalledTimes(1);
+    unsafe.mockClear();
+    await saveCourseTrialLessonSelection({ unsafe }, course, []);
+    expect(unsafe.mock.calls[1]?.[1]).toEqual([course, [], [first, second]]);
+  });
   it('preserves separate course covers and allows the mobile cover to be cleared', () => {
     const coverUrl = '/images/course-wide.webp';
     const mobileCoverUrl = 'https://static.cuberoot.me/course-portrait.webp';

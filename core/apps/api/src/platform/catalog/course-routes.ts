@@ -7,7 +7,9 @@ import {
   enqueuePlatformEvent,
   isPostgresConflict,
   sendMutation,
+  type PlatformDb,
 } from '../db.js';
+import { isPlatformIntroductionLesson, platformTrialLessonIds } from '@cuberoot/shared/platform';
 import { notFound, badRequest, conflict } from '../errors.js';
 import { privateNoStore } from '../http.js';
 import { pagination, readJsonObject } from '../validation.js';
@@ -49,6 +51,7 @@ async function createCourse(c: Context, admin: boolean): Promise<Response> {
   const actor = admin ? await requirePlatformAdmin(c) : await requirePlatformActor(c);
   const body = await readJsonObject(c);
   const input = courseFields(body, true);
+  if (platformTrialLessonIds(input.presentation)?.length) badRequest('Select trial lessons after creating the course');
   requireBilingualTitle(input.titleZh, input.titleEn);
   const status = input.status ?? 'draft';
   const revisionStatus = status === 'published' || status === 'unlisted' ? 'published' : 'draft';
@@ -100,6 +103,24 @@ async function createCourse(c: Context, admin: boolean): Promise<Response> {
   return sendMutation(c, result);
 }
 
+/** Run inside the authorized course update transaction. Introduction access is unchanged. */
+export async function saveCourseTrialLessonSelection(db: PlatformDb, courseId: string, selectedIds: readonly string[]): Promise<void> {
+  const lessons = await platformQuery<{ id: string } & Record<string, unknown>>(db, `
+    SELECT l.id::text AS id, l.slug, r.title_zh AS "titleZh", r.title_en AS "titleEn"
+    FROM platform_lessons l JOIN platform_lesson_revisions r ON r.lesson_id = l.id AND r.revision = l.current_revision
+    WHERE l.course_id = $1::uuid AND l.status <> 'archived' FOR UPDATE OF l
+  `, [courseId]);
+  const eligible = lessons.filter(lesson => !isPlatformIntroductionLesson(lesson)).map(lesson => lesson.id);
+  const eligibleSet = new Set(eligible);
+  if (selectedIds.some(id => !eligibleSet.has(id))) badRequest('Select available lessons in this course');
+  if (eligible.length === 0) return;
+  await platformQuery(db, `
+    UPDATE platform_lessons SET access_scope = CASE WHEN id::text = ANY($2::text[]) THEN 'public' ELSE 'entitled' END
+    WHERE course_id = $1::uuid AND id::text = ANY($3::text[])
+      AND access_scope IS DISTINCT FROM CASE WHEN id::text = ANY($2::text[]) THEN 'public' ELSE 'entitled' END
+  `, [courseId, selectedIds, eligible]);
+}
+
 async function updateCourse(c: Context, admin: boolean): Promise<Response> {
   const actor = admin ? await requirePlatformAdmin(c) : await requirePlatformActor(c);
   const key = requiredParam(c, 'id');
@@ -117,10 +138,20 @@ async function updateCourse(c: Context, admin: boolean): Promise<Response> {
     `, [id]);
     const old = existing[0];
     if (!old) notFound('Course');
+    const previousSelection = platformTrialLessonIds(old.presentation);
+    const selection = platformTrialLessonIds(input.presentation);
+    const presentation = input.presentation ? { ...input.presentation } : old.presentation ?? {};
+    // Older editors may omit the new key when changing unrelated presentation fields.
+    if (input.presentation && selection === undefined && previousSelection !== undefined) {
+      (presentation as Record<string, unknown>).trialLessonIds = previousSelection;
+    }
+    if (selection !== undefined && (previousSelection === undefined || JSON.stringify(selection) !== JSON.stringify([...previousSelection].sort()))) {
+      await saveCourseTrialLessonSelection(db, id, selection);
+    }
     const revision = {
       titleZh: input.titleZh ?? String(old.titleZh), titleEn: input.titleEn ?? String(old.titleEn),
       summaryZh: input.summaryZh ?? String(old.summaryZh), summaryEn: input.summaryEn ?? String(old.summaryEn),
-      descriptionZh: input.descriptionZh ?? String(old.descriptionZh), descriptionEn: input.descriptionEn ?? String(old.descriptionEn), presentation: input.presentation ?? old.presentation ?? {},
+      descriptionZh: input.descriptionZh ?? String(old.descriptionZh), descriptionEn: input.descriptionEn ?? String(old.descriptionEn), presentation,
     };
     requireBilingualTitle(revision.titleZh, revision.titleEn);
     const status = input.status ?? String(old.status);

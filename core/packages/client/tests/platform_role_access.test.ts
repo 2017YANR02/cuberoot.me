@@ -6,7 +6,7 @@ import type { PlatformActionId, PlatformActionResult } from '@/lib/platform-type
 
 const state = vi.hoisted(() => ({
   user: null as null | { uid: number }, admin: false, load: vi.fn(), execute: vi.fn(), learning: vi.fn(), entry: vi.fn((path: string) => path), t: (zh: string) => zh,
-  myDirectory: vi.fn(), replace: vi.fn(), prepareImage: vi.fn(), uploadImage: vi.fn(),
+  myDirectory: vi.fn(), replace: vi.fn(), prepareImage: vi.fn(), uploadImage: vi.fn(), managedQuizzes: vi.fn(), createUpload: vi.fn(), chunk: vi.fn(),
   action: null as null | ((action: PlatformActionId, id?: string, payload?: Record<string, unknown>) => Promise<PlatformActionResult | undefined>),
 }));
 vi.mock('@/hooks/useT', () => ({ useT: () => state.t }));
@@ -14,17 +14,18 @@ vi.mock('@/hooks/useIsMobile', () => ({ useIsMobile: () => false }));
 vi.mock('@/hooks/useEntryRouter', () => ({ useEntryRouter: () => ({ push: vi.fn(), replace: state.replace }) }));
 vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh', tr: ({ zh }: { zh: string }) => zh }));
 vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => state.user, useIsAdmin: () => state.admin, nextQuery: () => '' }));
-vi.mock('@/lib/entry-navigation', () => ({ currentEntryHref: state.entry }));
+vi.mock('@/lib/entry-navigation', () => ({ currentEntryHref: state.entry, readEntryNavigationBack: () => null }));
 vi.mock('nuqs', async original => {
   const { useState } = await import('react');
   return { ...await original<object>(), useQueryState: (_key: string, parser: { defaultValue?: unknown }) => useState(parser.defaultValue ?? null) };
 });
-vi.mock('@/lib/platform-gateway', async original => ({ ...await original<object>(), loadPlatformResource: state.load, executePlatformAction: state.execute }));
+vi.mock('@/lib/platform-gateway', async original => ({ ...await original<object>(), loadPlatformResource: state.load, executePlatformAction: state.execute, loadPlatformManagedQuizzes: state.managedQuizzes }));
 vi.mock('@/lib/platform-learning', async original => ({ ...await original<object>(), platformLearningRequest: state.learning }));
 vi.mock('@/lib/teacher-directory-api', () => ({ fetchMyTeacherDirectory: state.myDirectory }));
 vi.mock('@/lib/image-upload', () => ({ prepareImageUpload: state.prepareImage, uploadImageBlob: state.uploadImage }));
+vi.mock('@/lib/drive-api', async original => ({ ...await original<object>(), createDriveUpload: state.createUpload, uploadDriveChunk: state.chunk }));
 vi.mock('@/components/AppLink', () => ({ default: ({ children, href }: { children: ReactNode; href: string }) => createElement('a', { href }, children) }));
-vi.mock('@/components/PageBackLink', () => ({ default: ({ fallback, label, showLabel }: { fallback: string; label?: string; showLabel?: boolean }) => createElement('a', { href: fallback, className: 'back-home' }, showLabel ? label : null) }));
+vi.mock('@/components/PageBackLink', () => ({ default: ({ fallback, label }: { fallback: string; label?: string }) => createElement('a', { href: fallback, className: 'back-home', 'aria-label': label }) }));
 vi.mock('@/components/LangToggle', () => ({ default: () => createElement('button', { type: 'button' }, 'Language') }));
 vi.mock('@/components/platform/PlatformDomainActions', async () => {
   const { PlatformInstructorApplication, PlatformInstructorReview } = await import('@/components/platform/PlatformInstructorApplication');
@@ -33,7 +34,7 @@ vi.mock('@/components/platform/PlatformDomainActions', async () => {
     state.action = props.runAction;
     if (props.definition.id === 'teacher-apply') return createElement(PlatformInstructorApplication, props);
     if (props.definition.id === 'admin-application') return createElement(PlatformInstructorReview, props);
-    if (props.definition.id === 'instructor-course-new' || props.definition.id === 'instructor-course') return createElement(PlatformInstructorActions, props);
+    if (['instructor-course-new', 'instructor-course', 'instructor-lesson-new'].includes(props.definition.id)) return createElement(PlatformInstructorActions, props);
     return createElement('button', {}, '操作');
   } };
 });
@@ -220,7 +221,7 @@ it('opens the dedicated creation form only for an active instructor and navigate
   await render('instructor-course-new');
   expect(host.querySelector('form.platform-domain-form')).not.toBeNull();
   const back = host.querySelector('.platform-route-header .back-home');
-  expect(back?.textContent).toBe('返回讲师工作台');
+  expect(back?.getAttribute('aria-label')).toBe('返回讲师工作台');
   expect(back?.getAttribute('href')).toBe('/platform/instructor');
   expect(host.querySelectorAll('.platform-wizard-progress li')).toHaveLength(7);
   expect(currentCourseStep()).toBe('基本信息');
@@ -331,18 +332,103 @@ it('restores the current step and both course introduction languages from an acc
 });
 
 it('renders the managed course as a standalone editor without a redundant entity overview', async () => {
+  state.managedQuizzes.mockResolvedValue({ items: [] });
   state.load.mockResolvedValue({ items: [{ id: 'course-test', title: '正在编辑的课程', data: {
-    titleZh: '正在编辑的课程', titleEn: 'Editing course', slug: 'editing-course', currency: 'CNY', lessons: [],
+    titleZh: '正在编辑的课程', titleEn: 'Editing course', slug: 'editing-course', currency: 'CNY', lessons: [
+      { id: 'lesson-1', titleZh: '第一课', titleEn: 'First lesson', ordinal: 1, status: 'published', accessScope: 'public', slug: 'first-lesson' },
+      { id: 'lesson-2', titleZh: '第二课', titleEn: 'Second lesson', ordinal: 2, status: 'draft', accessScope: 'entitled', slug: 'second-lesson' },
+    ],
   } }] });
   await renderInShell('instructor-course', { id: 'course-test' });
   await act(async () => { await vi.dynamicImportSettled(); });
   const header = host.querySelector('.platform-instructor-course-editor-page .platform-route-header');
-  expect(header?.querySelector('.back-home')?.textContent).toBe('返回讲师工作台');
-  expect(header?.querySelector('.back-home')?.getAttribute('href')).toBe('/platform/instructor');
+  expect(header?.querySelector('.back-home')?.getAttribute('aria-label')).toBe('返回讲师课程');
+  expect(header?.querySelector('.back-home')?.getAttribute('href')).toBe('/platform/instructor/courses');
   expect(header?.querySelector('h1')?.classList.contains('sr-only')).toBe(true);
   expect(host.textContent).not.toContain('正在编辑的课程');
   expect([...host.querySelectorAll<HTMLInputElement>('form input')].some(input => input.value === '正在编辑的课程')).toBe(true);
   expect(host.querySelector('.platform-course-editor-heading')?.textContent).toContain('课时与测验');
+  const manager = host.querySelector('.platform-instructor-lesson-manager')!;
+  const courseInfo = host.querySelector('.platform-instructor-course-info')!;
+  expect(manager.compareDocumentPosition(courseInfo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(manager.querySelector('.platform-course-editor-heading a')).toBeNull();
+  expect(manager.textContent).not.toContain('新增课时');
+  expect(manager.querySelector('form')).toBeNull();
+  const lessonRows = [...manager.querySelectorAll('.platform-instructor-lesson-row')];
+  expect(lessonRows).toHaveLength(2);
+  expect(lessonRows[0].textContent).toContain('已发布');
+  expect(state.managedQuizzes).not.toHaveBeenCalled();
+  await act(async () => lessonRows[0].querySelector<HTMLButtonElement>('.platform-instructor-lesson-toggle')!.click());
+  expect(lessonRows[0].querySelector('form')).not.toBeNull();
+  expect(lessonRows[1].querySelector('form')).toBeNull();
+  expect(state.managedQuizzes).toHaveBeenCalledTimes(1);
+  expect(state.managedQuizzes).toHaveBeenCalledWith(expect.objectContaining({ lessonId: 'lesson-1' }));
+  expect(courseInfo.textContent).toContain('归档课程');
+  expect(state.execute).not.toHaveBeenCalled();
+});
+
+it('shows only course information when the managed course has no lessons', async () => {
+  state.load.mockResolvedValue({ items: [{ id: 'empty-course', title: '空课程', data: { titleZh: '空课程', titleEn: 'Empty course', lessons: [] } }] });
+  await renderInShell('instructor-course', { id: 'empty-course' });
+  await act(async () => { await vi.dynamicImportSettled(); });
+  expect(host.querySelector('.platform-instructor-lesson-manager')).toBeNull();
+  expect(host.querySelector('.platform-instructor-course-info form')).not.toBeNull();
+  expect(host.textContent).not.toContain('新增课时');
+});
+
+it('selects trial lessons from course information and saves the selection with the course', async () => {
+  state.load.mockResolvedValue({ items: [{ id: 'trial-course', title: '课程', data: { titleZh: '课程', titleEn: 'Course', slug: 'trial-course', status: 'published', baseAmountMinor: 100, currency: 'CNY', enrollmentMode: 'purchase', presentation: { level: 'beginner' }, lessons: [
+    { id: 'intro', slug: 'intro-1', titleZh: '引言', accessScope: 'public', status: 'published' },
+    { id: 'first', slug: 'lesson-1', titleZh: '第一课', accessScope: 'entitled', status: 'published' },
+    { id: 'second', slug: 'lesson-2', titleZh: '第二课', accessScope: 'public', status: 'published' },
+    { id: 'archived', titleZh: '已归档课时', accessScope: 'entitled', status: 'archived' },
+  ] } }] });
+  state.execute.mockResolvedValue({ course: { id: 'trial-course' } });
+  await renderInShell('instructor-course', { id: 'trial-course' });
+  await act(async () => { await vi.dynamicImportSettled(); });
+  const settings = host.querySelector('.platform-course-trial-settings')!;
+  const switches = [...settings.querySelectorAll<HTMLButtonElement>('[role="switch"]')];
+  expect(switches).toHaveLength(2);
+  expect(switches.map(button => button.getAttribute('aria-checked'))).toEqual(['false', 'true']);
+  await act(async () => switches[0].click());
+  await act(async () => switches[1].click());
+  expect(state.execute).not.toHaveBeenCalled();
+  await act(async () => host.querySelector('.platform-instructor-course-info form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+  expect(state.execute).toHaveBeenCalledWith(expect.objectContaining({ id: 'instructor-course' }), expect.objectContaining({ action: 'save-instructor-course', resourceId: 'trial-course', payload: expect.objectContaining({ presentation: expect.objectContaining({ level: 'beginner', trialLessonIds: ['first'] }) }) }));
+});
+
+it('uploads a video before publishing an independent lesson and keeps its course scope', async () => {
+  const key = 'cuberoot:platform:lesson-create:v1:1:course-upload-test';
+  localStorage.setItem(key, JSON.stringify({ slug: 'lesson-draft', ordinal: 1, accessScope: 'public', titleZh: '', titleEn: '', bodyZh: '', bodyEn: '', mode: 'video' }));
+  state.load.mockResolvedValue({ items: [{ id: 'course-upload-test', title: '测试课程', data: { enrollmentMode: 'purchase', lessons: [{ ordinal: 2 }, { ordinal: 9 }, { ordinal: 4 }] } }] });
+  state.createUpload.mockResolvedValue({ id: 'upload-fixture', nodeId: 'node-fixture', receivedBytes: 0, chunkBytes: 4 });
+  state.chunk.mockResolvedValue({ offset: 4, complete: true, nodeId: 'node-fixture' });
+  state.execute.mockResolvedValue({ lesson: { id: 'new-lesson' } });
+  await renderInShell('instructor-lesson-new', { id: 'course-upload-test' });
+  await act(async () => { await vi.dynamicImportSettled(); });
+  expect(host.querySelector('.back-home')?.getAttribute('aria-label')).toBe('返回讲师课程');
+  expect(host.querySelector('.back-home')?.getAttribute('href')).toBe('/platform/instructor/courses');
+  expect([...host.querySelectorAll('.platform-lesson-create-details label span')].map(label => label.textContent)).toEqual(['中文标题', '英文标题']);
+  expect(host.querySelector('.platform-lesson-create-details select')).toBeNull();
+  expect(host.querySelector('.platform-lesson-create-details input[type=number]')).toBeNull();
+  const publish = [...host.querySelectorAll('button')].find(button => button.textContent === '发布课时')!;
+  expect(publish.disabled).toBe(true);
+  const input = host.querySelector<HTMLInputElement>('input[type=file]')!;
+  await act(async () => {
+    Object.defineProperty(input, 'files', { configurable: true, value: [new File(['mock'], 'lesson.mp4', { type: 'video/mp4', lastModified: 1 })] });
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  expect(state.createUpload).toHaveBeenCalledWith(expect.objectContaining({ size: 4, type: 'video/mp4' }), null, expect.any(AbortSignal), expect.any(Object));
+  expect(state.chunk).toHaveBeenCalledWith('upload-fixture', 0, expect.any(Blob), expect.any(AbortSignal), expect.any(Function), expect.any(Object));
+  expect(publish.disabled).toBe(false);
+  expect(state.execute).not.toHaveBeenCalled();
+  await fillCourseField('中文标题', '新课时');
+  expect(JSON.parse(localStorage.getItem(key)!).titleZh).toBe('新课时');
+  await act(async () => publish.click());
+  expect(state.execute).toHaveBeenCalledWith(expect.objectContaining({ id: 'instructor-lesson-new' }), expect.objectContaining({ action: 'save-course-lesson', resourceId: 'course-upload-test', payload: expect.objectContaining({ titleZh: '新课时', titleEn: '新课时', ordinal: 10, appendToCourse: true, driveVideo: 'node-fixture', status: 'published' }) }));
+  expect(state.execute.mock.calls.at(-1)?.[1].payload).not.toHaveProperty('accessScope');
+  expect(state.replace).toHaveBeenCalledWith('/zh/platform/instructor/courses');
+  expect(localStorage.getItem(key)).toBeNull();
 });
 
 it.each([
@@ -424,7 +510,7 @@ it.each(['course-section-introduction', 'course-section-trial', 'course-section-
   expect(heading?.textContent).toBe(id === 'course-lesson' ? '十字' : '三阶入门课程');
   expect(heading?.classList.contains('sr-only')).toBe(true);
   const back = host.querySelector('.platform-course-classroom .platform-route-header .back-home');
-  expect(back?.textContent).toBe('返回课程详情');
+  expect(back?.getAttribute('aria-label')).toBe('返回课程详情');
   expect(back?.getAttribute('href')).toBe('/platform/courses/course-1');
 });
 
@@ -458,7 +544,7 @@ it('locks pending applications, restores rejected drafts and opens the approved 
   await act(async () => [...host.querySelectorAll('button')].find(button => button.textContent === '修改并重新申请')!.click());
   expect([...host.querySelectorAll('textarea')].some(textarea => textarea.value === '教学经历样例')).toBe(true);
   await show('approved', { instructorStatus: 'active', teacherEntryId: 42, profileVisible: false });
-  expect(host.querySelector('a[href="/platform/instructor"]')?.textContent).toBe('进入讲师工作台');
+  expect(host.querySelector('a[href="/platform/instructor/courses"]')?.textContent).toBe('发布课程');
   expect(host.textContent).toContain('当前资料已隐藏');
   expect(host.querySelector('form')).toBeNull();
 });
@@ -482,7 +568,7 @@ it('lets archived instructors apply again, preserves pending review and blocks s
   expect(host.textContent).toContain('讲师权限已暂停');
   expect(host.querySelector('form')).toBeNull();
   await show('approved', 'active');
-  expect(host.querySelector('a[href="/platform/instructor"]')?.textContent).toBe('进入讲师工作台');
+  expect(host.querySelector('a[href="/platform/instructor/courses"]')?.textContent).toBe('发布课程');
 });
 
 it('shows the actual owned teaching profile within the instructor workspace and denies inactive accounts', async () => {

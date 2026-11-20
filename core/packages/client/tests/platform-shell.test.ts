@@ -15,7 +15,7 @@ vi.mock('@/lib/platform-gateway', async original => ({ ...await original<object>
 vi.mock('@/hooks/useEntryRouter', () => ({ useEntryRouter: () => ({ push: navigate }) }));
 vi.mock('@/lib/landing-sections', () => ({ SEARCH_CARDS: [], isLandingSearchCardVisible: () => true }));
 vi.mock('@/components/LandingSearch', () => ({ default: () => createElement('input', { 'aria-label': '搜索' }) }));
-vi.mock('@/components/PageBackLink', () => ({ default: ({ fallback = '/platform', label, showLabel }: { fallback?: string; label?: string; showLabel?: boolean }) => createElement('a', { href: fallback, className: 'back-home' }, showLabel ? label : '返回') }));
+vi.mock('@/components/PageBackLink', () => ({ default: ({ fallback = '/platform', label }: { fallback?: string; label?: string }) => createElement('a', { href: fallback, className: 'back-home', 'aria-label': label }) }));
 vi.mock('@/components/CompactSelect', () => ({ CompactSelect: () => null }));
 vi.mock('@/components/WcaAuth', () => ({ default: () => null }));
 vi.mock('@/components/AppLink', () => ({
@@ -30,7 +30,7 @@ import { PlatformNavigationContext } from '@/lib/platform-navigation-context';
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
 describe('Platform shell ownership during shared-page navigation', () => {
-  it('shows a prominent directory entry only for actual active instructors, including admins who teach', async () => {
+  it('shows one persistent publishing entry for active instructors, including admins who teach', async () => {
     const host = document.createElement('div'), root = createRoot(host);
     const pathname = vi.mocked(usePathname);
     pathname.mockReturnValue('/zh/platform/teachers');
@@ -48,8 +48,18 @@ describe('Platform shell ownership during shared-page navigation', () => {
         auth.loadInstructor.mockResolvedValue({ items: [{ data: { instructorStatus: role } }] });
         await render();
         await vi.waitFor(() => expect(auth.loadInstructor).toHaveBeenCalledWith('instructor-application', expect.objectContaining({ params: {} })));
-        expect(host.querySelector('.platform-instructor-entry')?.getAttribute('href') ?? null).toBe(role === 'active' ? '/platform/instructor' : null);
+        expect(host.querySelector('.platform-nav-actions .platform-instructor-entry')?.getAttribute('href') ?? null).toBe(role === 'active' ? '/platform/instructor/courses' : null);
+        expect(host.querySelector('.platform-masthead .platform-instructor-entry')).toBeNull();
       }
+      const lookupCount = auth.loadInstructor.mock.calls.length;
+      for (const path of ['/zh/platform', '/zh/platform/courses', '/zh/platform/community']) {
+        pathname.mockReturnValue(path); await render();
+        expect(host.querySelectorAll('.platform-instructor-entry')).toHaveLength(1);
+        expect(host.querySelector('.platform-instructor-entry')?.textContent).toBe('发布课程');
+      }
+      expect(auth.loadInstructor).toHaveBeenCalledTimes(lookupCount);
+      pathname.mockReturnValue('/zh/platform/teachers/apply'); await render();
+      expect(host.querySelector('.platform-instructor-entry')).toBeNull();
       pathname.mockReturnValue('/zh/platform/instructor'); await render();
       expect(host.querySelector('.platform-instructor-entry')).toBeNull();
     } finally { auth.user = null; auth.admin = false; auth.loadInstructor.mockReset(); pathname.mockReturnValue('/zh/platform/teachers'); await act(async () => root.unmount()); }
@@ -65,7 +75,7 @@ describe('Platform shell ownership during shared-page navigation', () => {
         expect(host.querySelector('.platform-masthead')).toBeNull();
         expect(host.querySelector('.platform-nav')).toBeNull();
         expect(host.querySelector('.platform-instructor-masthead .platform-site-search')).not.toBeNull();
-        expect(host.querySelector('.platform-instructor-masthead .back-home')?.textContent).toBe('返回学习空间');
+        expect(host.querySelector('.platform-instructor-masthead .back-home')?.getAttribute('aria-label')).toBe('返回学习空间');
         expect(host.querySelector('.platform-instructor-masthead .back-home')?.getAttribute('href')).toBe('/platform');
         expect(host.querySelector('[data-search-scope="instructor-courses"]') !== null).toBe(path === 'instructor/courses');
         expect([...host.querySelectorAll('.platform-workspace-nav a')].map(link => link.getAttribute('href'))).toEqual(['instructor','instructor/courses','instructor/students','instructor/earnings','instructor/profile'].map(href => `/platform/${href}`));

@@ -34,6 +34,10 @@ import {
 } from '../utils/drive_storage.js';
 import { checkRateLimit, requireAdmin, requireAuth } from '../utils/recon_helpers.js';
 import { JWT_SECRET, isRolePreviewActive } from '../utils/session.js';
+import { requirePlatformActor } from '../platform/auth.js';
+import { platformDb } from '../platform/db.js';
+import { authorizeCourseWrite, courseKey } from '../platform/catalog/course-access.js';
+import { badRequest, notFound } from '../platform/errors.js';
 
 export const driveRoutes = new Hono();
 
@@ -50,6 +54,8 @@ export interface DriveIdentity {
 
 // Request-scoped injection for the isolated capture helper; production uses normal account auth.
 const scopedIdentities = new WeakMap<Context, Promise<DriveIdentity>>();
+const scopedCourseFolders = new WeakMap<Context, string>();
+const COURSE_VIDEO_MAX_BYTES = 1024 * 1024 * 1024;
 
 interface NodeRow {
   id: string;
@@ -182,7 +188,12 @@ async function requireDrive(c: Context): Promise<DriveIdentity> {
 async function quota(db: postgres.Sql | postgres.TransactionSql = sql): Promise<DriveQuota> {
   const rows = await db<{ used_bytes: number | string; reserved_bytes: number | string }[]>`
     SELECT
-      COALESCE((SELECT SUM(size_bytes) FROM drive_nodes WHERE kind = 'file' AND status = 'ready'), 0) AS used_bytes,
+      COALESCE((SELECT SUM(size_bytes) FROM drive_nodes WHERE kind = 'file' AND status = 'ready'), 0)
+      + COALESCE((SELECT SUM(media.size_bytes) FROM platform_media_assets media
+        WHERE media.storage_key LIKE 'lesson-videos/%' AND NOT EXISTS (
+          SELECT 1 FROM drive_nodes source WHERE source.kind = 'file' AND source.status = 'ready'
+            AND source.storage_key = LEFT(media.metadata->>'driveNodeId', 2) || '/' || (media.metadata->>'driveNodeId')
+        )), 0) AS used_bytes,
       COALESCE((SELECT SUM(expected_bytes) FROM drive_uploads WHERE expires_at > NOW()), 0)
       + COALESCE((SELECT SUM(reserved_bytes) FROM drive_compressions WHERE status IN ('queued', 'encoding', 'validating')), 0) AS reserved_bytes`;
   return {
@@ -274,13 +285,14 @@ function isUniqueViolation(error: unknown): boolean {
   return !!error && typeof error === 'object' && 'code' in error && error.code === '23505';
 }
 
-async function uploadById(uploadId: string, userId: number): Promise<UploadRow | null> {
+async function uploadById(uploadId: string, userId: number, courseFolder?: string): Promise<UploadRow | null> {
   const rows = await sql<UploadRow[]>`
     SELECT u.id, u.node_id, u.owner_user_id, n.parent_id, n.name, n.mime_type,
            u.expected_bytes, u.received_bytes, u.chunk_bytes, u.client_last_modified, u.expires_at
       FROM drive_uploads u
       JOIN drive_nodes n ON n.id = u.node_id
      WHERE u.id = ${uploadId} AND u.owner_user_id = ${userId}
+       AND (${courseFolder == null} OR n.parent_id = ${courseFolder ?? null}::uuid)
      LIMIT 1`;
   return rows[0] ?? null;
 }
@@ -490,22 +502,27 @@ driveRoutes.post('/drive/folders', async (c) => {
   }
 });
 
-driveRoutes.post('/drive/uploads', async (c) => {
+async function createUpload(c: Context): Promise<Response> {
   noStore(c);
   checkRateLimit(getIp(c), { bucket: 'drive-upload-create', max: 60 });
   const current = await requireDrive(c);
   await cleanupExpiredUploads(current.userId);
   const body: Record<string, unknown> = await c.req.json<Record<string, unknown>>().catch(() => ({}));
   const name = normalizeDriveName(body.name);
-  const parentId = body.parentId == null ? null : uuid(body.parentId);
+  const courseFolder = scopedCourseFolders.get(c);
+  const parentId = courseFolder ?? (body.parentId == null ? null : uuid(body.parentId));
   const expectedBytes = safeInteger(body.sizeBytes);
   const lastModified = body.lastModified == null ? null : safeInteger(body.lastModified);
   const declaredMime = mimeType(body.mimeType);
   if (!name) return c.json({ error: 'valid file name is required' }, 400);
+  if (courseFolder && (body.parentId != null || !['video/mp4', 'video/webm', 'video/quicktime'].includes(declaredMime))) {
+    return c.json({ error: 'Choose an MP4, WebM or MOV course video' }, 400);
+  }
   if (body.parentId != null && !parentId) return c.json({ error: 'valid parentId is required' }, 400);
   if (expectedBytes == null || expectedBytes <= 0 || expectedBytes > DRIVE_TOTAL_BYTES) {
     return c.json({ error: 'file size must be between 1 byte and 20 GB' }, 413);
   }
+  if (courseFolder && expectedBytes > COURSE_VIDEO_MAX_BYTES) return c.json({ error: 'Course videos must not exceed 1 GiB' }, 413);
   if (body.lastModified != null && lastModified == null) return c.json({ error: 'valid lastModified is required' }, 400);
   if (!(await validFolder(current.userId, parentId))) return c.json({ error: 'parent folder not found' }, 404);
 
@@ -522,6 +539,17 @@ driveRoutes.post('/drive/uploads', async (c) => {
        AND u.expires_at > NOW()
      LIMIT 1`;
   if (existing[0]) return c.json({ upload: uploadJson(existing[0]) });
+
+  // A lost reply after the final chunk must not force the same course video to upload again.
+  if (courseFolder) {
+    const ready = await sql<{ id: string }[]>`
+      SELECT id FROM drive_nodes WHERE owner_user_id = ${current.userId} AND parent_id = ${courseFolder}
+        AND LOWER(name) = LOWER(${name}) AND kind = 'file' AND status = 'ready' AND trashed_at IS NULL
+        AND size_bytes = ${expectedBytes} AND mime_type = ${declaredMime} LIMIT 1`;
+    if (ready[0]) return c.json({ upload: { id: ready[0].id, nodeId: ready[0].id, parentId: courseFolder,
+      name, mimeType: declaredMime, expectedBytes, receivedBytes: expectedBytes, chunkBytes: DRIVE_CHUNK_BYTES,
+      lastModified, expiresAt: new Date(Date.now() + DRIVE_UPLOAD_TTL_MS).toISOString() } });
+  }
 
   let created: UploadRow | 'folder-missing' | null = null;
   try {
@@ -570,22 +598,24 @@ driveRoutes.post('/drive/uploads', async (c) => {
     throw error;
   }
   return c.json({ upload: uploadJson(created) }, 201);
-});
+}
+driveRoutes.post('/drive/uploads', createUpload);
 
-driveRoutes.on('HEAD', '/drive/uploads/:id', async (c) => {
+async function headUpload(c: Context): Promise<Response> {
   noStore(c);
   const current = await requireDrive(c);
   const uploadId = uuid(c.req.param('id'));
   if (!uploadId) return c.body(null, 400);
-  const upload = await uploadById(uploadId, current.userId);
+  const upload = await uploadById(uploadId, current.userId, scopedCourseFolders.get(c));
   if (!upload || new Date(upload.expires_at).getTime() <= Date.now()) return c.body(null, 404);
   c.header('Upload-Offset', String(upload.received_bytes));
   c.header('Upload-Length', String(upload.expected_bytes));
   c.header('Upload-Expires', asIso(upload.expires_at));
   return c.body(null, 204);
-});
+}
+driveRoutes.on('HEAD', '/drive/uploads/:id', headUpload);
 
-driveRoutes.patch('/drive/uploads/:id', async (c) => {
+async function patchUpload(c: Context): Promise<Response> {
   noStore(c);
   checkRateLimit(getIp(c), { bucket: 'drive-upload-chunk', max: 900 });
   const current = await requireDrive(c);
@@ -598,12 +628,13 @@ driveRoutes.patch('/drive/uploads/:id', async (c) => {
   if (!checksumMatch) return c.json({ error: 'Upload-Checksum sha256 is required' }, 400);
 
   return withUploadLock(uploadId, async () => {
-    const upload = await uploadById(uploadId, current.userId);
+    const upload = await uploadById(uploadId, current.userId, scopedCourseFolders.get(c));
     if (!upload || new Date(upload.expires_at).getTime() <= Date.now()) {
       return c.json({ error: 'upload session not found or expired' }, 404);
     }
     const received = Number(upload.received_bytes);
     const expected = Number(upload.expected_bytes);
+    if (scopedCourseFolders.has(c) && expected > COURSE_VIDEO_MAX_BYTES) return c.json({ error: 'Course videos must not exceed 1 GiB' }, 413);
     if (requestOffset !== received) return c.json({ error: 'upload offset mismatch', offset: received }, 409);
     const remaining = expected - received;
     if (remaining <= 0) return c.json({ offset: received, complete: true });
@@ -715,14 +746,17 @@ driveRoutes.patch('/drive/uploads/:id', async (c) => {
     c.header('Upload-Offset', String(nextOffset));
     return c.json({ offset: nextOffset, complete: true, nodeId: upload.node_id });
   });
-});
+}
+driveRoutes.patch('/drive/uploads/:id', patchUpload);
 
-driveRoutes.delete('/drive/uploads/:id', async (c) => {
+async function cancelUpload(c: Context): Promise<Response> {
   noStore(c);
   const current = await requireDrive(c);
   const uploadId = uuid(c.req.param('id'));
   if (!uploadId) return c.json({ error: 'valid upload id is required' }, 400);
   return withUploadLock(uploadId, async () => {
+    const courseFolder = scopedCourseFolders.get(c);
+    if (courseFolder && !(await uploadById(uploadId, current.userId, courseFolder))) return c.json({ error: 'upload session not found' }, 404);
     const rows = await sql<{ node_id: string }[]>`
       DELETE FROM drive_uploads
        WHERE id = ${uploadId} AND owner_user_id = ${current.userId}
@@ -733,7 +767,37 @@ driveRoutes.delete('/drive/uploads/:id', async (c) => {
     await safeRemoveDriveFile(driveStoredPath(driveStorageKey(rows[0].node_id)));
     return c.json({ ok: true });
   });
-});
+}
+driveRoutes.delete('/drive/uploads/:id', cancelUpload);
+
+/** Instructors may upload only into their own private folder for an authorized course.
+ * This does not grant access to the rest of Drive. Reuse the real chunk/checksum engine. */
+function scopedCourseUpload(handler: (c: Context) => Promise<Response>, creating = false) {
+  return async (c: Context) => {
+    noStore(c);
+    const actor = await requirePlatformActor(c);
+    if (actor.userId == null) badRequest('A signed-in instructor account is required');
+    const courseId = await authorizeCourseWrite(platformDb(), actor, courseKey(c));
+    const name = `course-media-${courseId}`;
+    if (creating) await sql`INSERT INTO drive_nodes (owner_user_id, kind, name)
+      VALUES (${actor.userId}, 'folder', ${name}) ON CONFLICT DO NOTHING`;
+    const folders = await sql<{ id: string }[]>`SELECT id FROM drive_nodes
+      WHERE owner_user_id = ${actor.userId} AND parent_id IS NULL AND LOWER(name) = LOWER(${name})
+        AND kind = 'folder' AND status = 'ready' AND trashed_at IS NULL AND NOT member_shared LIMIT 1`;
+    if (!folders[0]) notFound('Private course upload folder');
+    scopedCourseFolders.set(c, folders[0].id);
+    scopedIdentities.set(c, Promise.resolve({ userId: actor.userId, isAdmin: actor.isAdmin, isSuperAdmin: false, allowed: true }));
+    try { return await handler(c); }
+    finally { scopedCourseFolders.delete(c); scopedIdentities.delete(c); }
+  };
+}
+
+export const courseDriveUploadHandlers = {
+  create: scopedCourseUpload(createUpload, true),
+  head: scopedCourseUpload(headUpload),
+  patch: scopedCourseUpload(patchUpload),
+  cancel: scopedCourseUpload(cancelUpload),
+};
 
 driveRoutes.patch('/drive/nodes/:id', async (c) => {
   noStore(c);

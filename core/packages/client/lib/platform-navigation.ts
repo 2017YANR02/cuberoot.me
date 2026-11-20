@@ -60,6 +60,10 @@ export function platformPathname(pathname: string): string {
   return pathname.replace(/^\/(en|zh)(?=\/|$)/, '').split(/[?#]/, 1)[0].replace(/\/$/, '') || '/';
 }
 
+export function isInstructorCourseListEntry(href: string): boolean {
+  return platformPathname(href) === '/platform/instructor/courses';
+}
+
 export function platformNavigationState(pathname: string): {
   primary: PlatformPrimary | null; secondary: string | null; definition?: PlatformRouteDefinition;
 } {

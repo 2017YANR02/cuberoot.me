@@ -8,7 +8,7 @@ import { SHOP_ROOT } from '@/lib/shop';
 import { fetchTeacherDirectory, type TeacherDirectoryEntry } from '@/lib/teacher-directory-api';
 import { useT } from '@/hooks/useT';
 import { getSessionToken, useAuthUser, useIsAdmin } from '@/lib/auth-store';
-import { loadPlatformResource, PlatformPermissionError } from '@/lib/platform-gateway';
+import { loadPlatformResource } from '@/lib/platform-gateway';
 import { listTeachingLearningContexts, listTeachingOrganizations } from '@/lib/teaching-saas-api';
 import type { TeachingLearningContext } from '@cuberoot/shared/teaching';
 import type { TeachingOrganizationAccess } from '@/lib/teaching-saas-api';
@@ -38,7 +38,6 @@ export function PlatformLanding() {
   const [progress, setProgress] = useState<PlatformEntity[]>([]);
   const [learningContexts, setLearningContexts] = useState<TeachingLearningContext[]>([]);
   const [organizations, setOrganizations] = useState<TeachingOrganizationAccess[]>([]);
-  const [instructor, setInstructor] = useState(false);
   const [partialFailure, setPartialFailure] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -48,7 +47,6 @@ export function PlatformLanding() {
       setProgress([]);
       setLearningContexts([]);
       setOrganizations([]);
-      setInstructor(false);
       setPartialFailure(false);
       setLoading(false);
       return;
@@ -60,31 +58,25 @@ export function PlatformLanding() {
     setProgress([]);
     setLearningContexts([]);
     setOrganizations([]);
-    setInstructor(false);
     setPartialFailure(false);
     const platformOptions = { params: {}, signal: controller.signal };
     const hasTeachingSession = Boolean(getSessionToken());
     void Promise.allSettled([
       loadPlatformResource('account-courses', platformOptions),
       loadPlatformResource('account-progress', platformOptions),
-      loadPlatformResource('instructor-courses', platformOptions),
       hasTeachingSession ? listTeachingOrganizations() : Promise.resolve([]),
       hasTeachingSession ? listTeachingLearningContexts() : Promise.resolve([]),
-    ]).then(([courseResult, progressResult, instructorResult, organizationResult, contextResult]) => {
+    ]).then(([courseResult, progressResult, organizationResult, contextResult]) => {
       if (!active) return;
       setCourses(courseResult.status === 'fulfilled' ? courseResult.value.items : []);
       setProgress(progressResult.status === 'fulfilled' ? progressResult.value.items : []);
-      setInstructor(instructorResult.status === 'fulfilled');
       setOrganizations(organizationResult.status === 'fulfilled' ? organizationResult.value : []);
       setLearningContexts(contextResult.status === 'fulfilled' ? contextResult.value : []);
-      const unexpectedInstructorFailure = instructorResult.status === 'rejected'
-        && !(instructorResult.reason instanceof PlatformPermissionError);
       setPartialFailure(
         courseResult.status === 'rejected'
         || progressResult.status === 'rejected'
         || organizationResult.status === 'rejected'
-        || contextResult.status === 'rejected'
-        || unexpectedInstructorFailure,
+        || contextResult.status === 'rejected',
       );
     }).finally(() => {
       if (active) setLoading(false);
@@ -111,7 +103,7 @@ export function PlatformLanding() {
     : t('浏览课程', 'Browse courses');
   const firstLearningContext = learningContexts[0];
   const firstOrganization = organizations[0];
-  const hasWorkspaces = instructor || Boolean(firstOrganization) || (mounted && isAdmin);
+  const hasWorkspaces = Boolean(firstOrganization) || (mounted && isAdmin);
   const learningTitle = currentCourse?.title ?? firstLearningContext?.student.displayName
     ?? (partialFailure ? t('浏览课程', 'Browse courses') : t('开始你的第一门课', 'Start your first course'));
   const learningDescription = currentCourse
@@ -192,16 +184,18 @@ export function PlatformLanding() {
             <p className="platform-home-status" role="status" aria-busy="true" aria-live="polite"><LoadingIndicator>{t('正在读取学习进度与工作区…', 'Loading your learning and workspaces…')}</LoadingIndicator></p>
           ) : (
             <AppLink className="platform-home-resume platform-entry-link" data-has-cover={Boolean(learningCover)} data-site-surface="panel" href={learningHref} prefetch={false}>
-              {learningCover && <span className="platform-home-learning-cover">
-                <Image src={learningCover} alt="" fill sizes="(max-width: 479px) 112px, 224px" unoptimized={!learningCover.startsWith('/')} onError={event => { event.currentTarget.hidden = true; }} />
-              </span>}
-              <span className="platform-home-learning-copy">
-                <strong>{learningTitle}</strong>
-                {learningDescription && <small>{learningDescription}</small>}
-                {currentCourse && progressBps !== null && <span className="platform-home-progress">
-                  <progress max={10_000} value={progressBps} aria-label={t('课程进度', 'Course progress')} />
-                  <span>{Math.round(progressBps / 100)}%</span>
+              <span className="platform-home-learning-main">
+                {learningCover && <span className="platform-home-learning-cover">
+                  <Image src={learningCover} alt="" fill sizes="(max-width: 479px) 112px, 224px" unoptimized={!learningCover.startsWith('/')} onError={event => { event.currentTarget.hidden = true; }} />
                 </span>}
+                <span className="platform-home-learning-copy">
+                  <strong>{learningTitle}</strong>
+                  {learningDescription && <small>{learningDescription}</small>}
+                  {currentCourse && progressBps !== null && <span className="platform-home-progress">
+                    <progress max={10_000} value={progressBps} aria-label={t('课程进度', 'Course progress')} />
+                    <span>{Math.round(progressBps / 100)}%</span>
+                  </span>}
+                </span>
               </span>
               <span className="platform-button platform-button-primary platform-home-learning-action">{learningAction}<ArrowRight aria-hidden /></span>
             </AppLink>
@@ -238,12 +232,6 @@ export function PlatformLanding() {
             <h2 id="platform-home-workspaces-title">{t('你的工作区', 'Your workspaces')}</h2>
           </div>
           <div className="platform-home-workspace-list">
-            {instructor ? (
-              <AppLink className="platform-entry-link" data-site-surface="panel" href="/platform/instructor" prefetch={false}>
-                <span><strong>{t('讲师工作台', 'Instructor workspace')}</strong><small>{t('管理课程、学员与收入', 'Manage courses, students, and earnings')}</small></span>
-                <ArrowRight aria-hidden />
-              </AppLink>
-            ) : null}
             {firstOrganization ? (
               <AppLink className="platform-entry-link" data-site-surface="panel" href={`/platform/org/${encodeURIComponent(firstOrganization.slug)}`} prefetch={false}>
                 <span><strong>{firstOrganization.name}</strong><small>{organizations.length > 1 ? t(`另有 ${organizations.length - 1} 个机构`, `${organizations.length - 1} more organizations`) : t('机构工作台', 'Organization workspace')}</small></span>

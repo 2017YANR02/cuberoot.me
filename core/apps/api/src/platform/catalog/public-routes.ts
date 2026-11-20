@@ -161,10 +161,9 @@ export function registerPublicRoutes(platformCatalogRoutes: Hono): void {
       const actor = await requirePlatformActor(c);
       const { requireCourseEntitlement } = await import('../db.js');
       await requireCourseEntitlement(db, actor, row.course_id, String(row.id));
-      privateNoStore(c);
-    } else {
-      publicCache(c);
     }
+    // Trial access can be revoked by the instructor at any time.
+    privateNoStore(c);
     return c.json({ lesson: row });
   });
 

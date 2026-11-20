@@ -128,6 +128,7 @@ describe('Platform route conservation', () => {
   it('resolves course creation before the instructor course detail route', () => {
     expect(matchPlatformRoute(['instructor', 'courses', 'new'])?.definition).toMatchObject({ id: 'instructor-course-new', kind: 'form', access: 'instructor' });
     expect(matchPlatformRoute(['instructor', 'courses', 'course-1'])?.definition.id).toBe('instructor-course');
+    expect(matchPlatformRoute(['instructor', 'courses', 'course-1', 'lessons', 'new'])?.definition).toMatchObject({ id: 'instructor-lesson-new', kind: 'form', access: 'instructor' });
   });
   it('reserves real online competition routes independently of generic events and the preview', () => {
     expect(matchPlatformRoute(['events', 'online'])?.definition.id).toBe('online-competitions');
@@ -196,7 +197,7 @@ describe('Platform route conservation', () => {
       'organization',
     ]);
     expect(PLATFORM_PUBLIC_NAV.map((entry) => entry.label.zh)).toEqual([
-      '发现',
+      '学习空间',
       '课程',
       '社区',
       '讲师',

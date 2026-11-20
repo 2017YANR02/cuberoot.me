@@ -139,7 +139,8 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(home).toContain('useIsAdmin()');
     expect(home).toMatch(/loadPlatformResource\(\s*'account-courses'/);
     expect(home).toMatch(/loadPlatformResource\(\s*'account-progress'/);
-    expect(home).toMatch(/loadPlatformResource\(\s*'instructor-courses'/);
+    expect(shell).toMatch(/loadPlatformResource\(\s*'instructor-application'/);
+    expect(home).not.toMatch(/loadPlatformResource\(\s*'instructor-courses'/);
     expect(home).toMatch(/listTeachingOrganizations\(/);
     expect(home).not.toMatch(/\bPLATFORM_ROUTES\b|\bexecutePlatformAction\b|<PlatformDomainActions\b/);
     expect(routeView).toContain('const permissionDenied = error instanceof PlatformPermissionError;');

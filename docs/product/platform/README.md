@@ -24,6 +24,12 @@
 - 归档后的讲师可以重新申请；审批通过恢复原讲师记录及身份，不自动启用此前停用的课程归属。暂停状态只能由管理员解除。历史申请通过不等于当前讲师权限；旧版只返回申请记录时，客户端通过受保护的本人课程列表确认实际 active 权限，不因历史审批授予权限。
 - 审核结果写入现有站内通知；申请及讲师编号仅用于内部查询、关联和链接，不作为用户可见标题。实现入口为 API `platform/catalog/instructor-routes.ts`、Web `components/platform/PlatformInstructorApplication.tsx`。2026-11 本地验证使用隔离前端阶段快照与 API fixture；未执行真实账号登录、实库事务验收或生产部署，不将模拟截图视为线上验收。
 
+## 讲师课程发布与试听
+
+- 唯一常规发布入口位于学习空间功能导航右侧，仅对 active 讲师显示，进入 `/platform/instructor/courses`；创建、管理、上传分别进入 `/platform/instructor/courses/new`、`/platform/instructor/courses/[id]`、`/platform/instructor/courses/[id]/lessons/new`。
+- 课程创建分七步并保存设备本地草稿。上传复用 Drive 分片协议，专用接口 `/v1/platform/instructor/courses/:courseId/lesson-uploads` 仅允许已授权课程的私有目录；单视频限制 1 GiB，使用 Drive 共享配额。课时关联媒体后保留独立存储路径，源文件永久删除时仍占用共享配额；未关联的失败写入清理文件。课时自动追加顺序由服务端在课程事务内确定。
+- 课程信息可选择多个试听课时，保存时在课程事务内更新本课程非引言课时的访问权限。旧课程保留既有标题、slug 分类与引言权限；课程与课时都发布后，通用课程目录和播放器展示公开内容，正式课仍须权益。课时内容不缓存；短期媒体签名在有效期内仍可使用。
+
 ## 历史依据
 
 按需追溯决策、失败及验收限制；旧待办、状态和授权只适用于记录时点。

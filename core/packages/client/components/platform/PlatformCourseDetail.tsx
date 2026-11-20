@@ -12,6 +12,7 @@ import { courseCatalogDetails, courseLessonAccess } from '@/lib/platform-course-
 import { learningTime } from '@/lib/platform-learning';
 import { platformPathname } from '@/lib/platform-navigation';
 import { platformCourseLessonSection } from '@/lib/platform-routes';
+import { platformTrialLessonIds } from '@cuberoot/shared/platform';
 import type { PlatformEntity } from '@/lib/platform-types';
 import { PlatformCourseCover, PlatformCourseLabels } from './PlatformCourseCatalog';
 import { PlatformCoursePresentation } from './PlatformLearningWorkspace';
@@ -26,6 +27,7 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
   const lang = useLang();
   const user = useAuthUser();
   const data = course.data ?? {};
+  const trialLessonIds = platformTrialLessonIds(data.presentation);
   const details = courseCatalogDetails(course);
   const { entries, canWatch } = courseLessonAccess(data);
   const root = `/platform/courses/${encodeURIComponent(course.id)}`;
@@ -38,7 +40,7 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
     if (!id) return [];
     const title = t(String(lesson.titleZh || lesson.titleEn || lesson.title || ''), String(lesson.titleEn || lesson.titleZh || lesson.title || '')).replace(/^(?:试听课|Trial (?:lessons?\s*)?)\s*\d*\s*[：:–-]?\s*/i, '')
       || t('未命名课时', 'Untitled lesson');
-    const section = platformCourseLessonSection(lesson);
+    const section = platformCourseLessonSection(lesson, trialLessonIds);
     return [{
       id, title, duration: Number(lesson.durationSeconds),
       introduction: section === 'introduction',
@@ -59,7 +61,8 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
     ? originalLessons.get(ongoing.id)
     : locked ? firstUnlocked : firstCore ?? firstUnlocked;
   const firstAction = ongoing ? t('继续学习', 'Continue learning')
-    : locked && nextLesson?.introduction ? t('观看引言', 'Watch introduction') : t('开始学习', 'Start learning');
+    : locked && nextLesson?.introduction ? t('观看引言', 'Watch introduction')
+      : locked && nextLesson?.preview ? t('开始试听', 'Start preview') : t('开始学习', 'Start learning');
   const availablePreview = directory.find(lesson => lesson.preview && !lesson.locked);
   const restrictedPreview = !user && directory.find(lesson => lesson.preview && lesson.locked);
   const previewLink = availablePreview
@@ -83,7 +86,7 @@ export function PlatformCourseDetail({ course, lessons }: { course: PlatformEnti
 
   return <div className="platform-course-detail-content">
     <header className="platform-course-overview">
-      <PageBackLink fallback="/platform" label={t('返回学习中心', 'Back to Learning Center')} showLabel acceptEntry={isLearningSpaceEntry} />
+      <PageBackLink fallback="/platform" label={t('返回学习中心', 'Back to Learning Center')} acceptEntry={isLearningSpaceEntry} />
       <div className="platform-course-overview-title">
         <h1>{course.title}</h1>
         {instructors.length > 0 ? <div className="platform-course-instructors">

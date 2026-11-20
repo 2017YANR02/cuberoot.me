@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ArrowRight, CircleAlert, CircleCheck, CircleX, Clock3, Undo2 } from '@app-foundation/icons/lucide';
+import { ArrowRight, CircleAlert, CircleCheck, CircleX, Clock3, Undo2, Upload } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import MoreToggle from '@/components/MoreToggle';
 import { useT } from '@/hooks/useT';
@@ -86,7 +86,7 @@ export function PlatformInstructorApplication(props: CommonProps) {
   if (role === 'suspended') return <div className="platform-application-flow"><ApplicationOverview state="unavailable" title={t('讲师权限已暂停', 'Instructor access is suspended')} description={t('请联系管理员恢复权限。', 'Contact an administrator to restore access.')} /></div>;
   if (role === 'active') return <div className="platform-domain-stack platform-application-flow">
     <ApplicationOverview state="approved" title={t('已成为讲师', 'You are an instructor')} description={t('你可以管理课程、学员及收益。', 'Manage your courses, learners and earnings.')}>
-      <AppLink href="/platform/instructor" className="platform-button platform-button-primary" prefetch={false}>{t('进入讲师工作台', 'Open instructor workspace')}<ArrowRight aria-hidden /></AppLink>
+      <AppLink href="/platform/instructor/courses" className="platform-button platform-button-primary" prefetch={false}>{t('发布课程', 'Publish course')}<Upload aria-hidden /></AppLink>
     </ApplicationOverview>
     {data.instructorProfileKnown !== false && <section className="platform-application-profile-section">
       <h2>{t('公开讲师资料', 'Public teaching profile')}</h2>

@@ -12,6 +12,11 @@
 .platform-commerce-content th,.platform-commerce-content td { text-align: start; padding: .75rem; border-bottom: 1px solid var(--border-default); }
 .platform-structured-editor { display: grid; gap: 1rem; grid-column: 1 / -1; border: 1px solid var(--border-default); border-radius: 12px; padding: 1rem; min-width: 0; }
 .platform-structured-editor legend { padding: 0 .5rem; }
+.platform-course-trial-settings { display: grid; gap: 8px; min-width: 0; }
+.platform-course-trial-settings h3 { margin: 0; font-size: 1rem; }
+.platform-course-trial-settings p { margin: 0; font-size: .82rem; color: var(--muted-foreground); }
+.platform-course-trial-options { display: grid; gap: 8px; min-width: 0; }
+.platform-course-trial-options .bool-toggle { justify-content: space-between; width: 100%; min-width: 0; }
 .platform-structured-row { display: grid; gap: .75rem; border-bottom: 1px solid var(--border-default); padding-bottom: 1rem; }
 .platform-structured-fields { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit,minmax(min(100%,180px),1fr)); }
 .platform-structured-fields label { display: grid; gap: .35rem; min-width: 0; }

@@ -17,7 +17,7 @@ import { nextQuery, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { executePlatformAction, loadPlatformResource, localizePlatformEntity, PlatformPermissionError } from '@/lib/platform-gateway';
 import { WebSessionRestoreError } from '@/lib/session-fetch';
 import { fillPlatformParams, isPlatformCourseClassroom, isPlatformInstructorCourseEditor, isPlatformLearningWorkspace, PLATFORM_ROUTES } from '@/lib/platform-routes';
-import { platformNavigationState, platformWorkspaceRoutes } from '@/lib/platform-navigation';
+import { isInstructorCourseListEntry, platformNavigationState, platformWorkspaceRoutes } from '@/lib/platform-navigation';
 import { PlatformNavigationContext, usePlatformSearchBinding, type PlatformFilterGroup } from '@/lib/platform-navigation-context';
 import type { PlatformActionId, PlatformActionResult, PlatformEntity, PlatformResourceResult, PlatformRouteDefinition } from '@/lib/platform-types';
 import { PlatformState } from './PlatformState';
@@ -122,13 +122,14 @@ export function PlatformResourceRouteView({
   const learningWorkspace = isPlatformLearningWorkspace(definition.id);
   const instructorProfile = definition.id === 'instructor-profile';
   const instructorCourseNew = definition.id === 'instructor-course-new';
+  const instructorLessonNew = definition.id === 'instructor-lesson-new';
   const instructorCourseEditor = isPlatformInstructorCourseEditor(definition.id);
   const canCreateInstructorCourse = instructorCourseNew && result?.items[0]?.data?.instructorStatus === 'active';
   const isQrCardStudio = definition.id === 'admin-qr-cards';
   const loadsResource = !isQrCardStudio && !learningWorkspace && !qrAdminMode && definition.kind !== 'canonical' && Boolean(definition.resource)
     && definition.id !== 'account-invites'
     && definition.id !== 'account-privacy'
-    && (definition.kind !== 'form' || definition.id === 'teacher-apply' || instructorCourseNew);
+    && (definition.kind !== 'form' || definition.id === 'teacher-apply' || instructorCourseNew || instructorLessonNew);
   const permissionDenied = error instanceof PlatformPermissionError;
   const courseCatalog = definition.id === 'courses';
   const includeCourseAccess = Boolean(user) && (definition.id === 'course-detail' || definition.id.startsWith('course-section-'));
@@ -308,7 +309,7 @@ export function PlatformResourceRouteView({
         window.location.replace(url);
         return response;
       }
-      if (definition.id !== 'instructor-course-new' || action !== 'save-instructor-course') setRetry((value) => value + 1);
+      if (!(instructorCourseNew && action === 'save-instructor-course') && !(instructorLessonNew && action === 'save-course-lesson')) setRetry((value) => value + 1);
       return response;
     } catch (reason) {
       if (isCurrent()) {
@@ -376,12 +377,12 @@ export function PlatformResourceRouteView({
   return (
     <div className={`platform-route${courseDetail ? ' platform-course-detail' : ''}${courseClassroom ? ' platform-course-classroom' : ''}${inviteManager ? ' platform-invite-page' : ''}${instructorCourseEditor ? ' platform-instructor-course-editor-page' : ''}${definition.id === 'instructor-courses' ? ' platform-instructor-course-list-page' : ''}`}>
       {courseClassroom ? <header className="platform-route-header">
-        <PageBackLink fallback={`/platform/courses/${encodeURIComponent(params.id)}`} label={t('返回课程详情', 'Back to course details')} showLabel />
+        <PageBackLink fallback={`/platform/courses/${encodeURIComponent(params.id)}`} label={t('返回课程详情', 'Back to course details')} />
         <h1 className="sr-only">{sortedItems[0]?.title ?? pageTitle}</h1>
-      </header> : instructorCourseEditor ? <header className={`platform-route-header${instructorCourseNew ? ' platform-wizard-route-header' : ''}`}>
-        <PageBackLink fallback="/platform/instructor" label={t('返回讲师工作台', 'Back to instructor workspace')} showLabel acceptEntry={() => false} />
-        <h1 className="sr-only">{pageTitle}</h1>
-        {instructorCourseNew && <LangToggle soft showLabel />}
+      </header> : instructorCourseEditor ? <header className={`platform-route-header${instructorCourseNew ? ' platform-wizard-route-header' : instructorLessonNew ? ' platform-lesson-route-header' : ''}`}>
+        <PageBackLink fallback={instructorCourseNew ? '/platform/instructor' : '/platform/instructor/courses'} label={instructorCourseNew ? t('返回讲师工作台', 'Back to instructor workspace') : t('返回讲师课程', 'Back to instructor courses')} acceptEntry={instructorCourseNew ? () => false : isInstructorCourseListEntry} />
+        {!instructorLessonNew && <h1 className="sr-only">{pageTitle}</h1>}
+        {(instructorCourseNew || instructorLessonNew) && <LangToggle soft showLabel />}
       </header> : !course && (showHeader ? <header className="platform-route-header">
         <div className="platform-route-heading">
           {showAreaTitle && <div className="platform-route-labels"><span className="platform-route-area">{areaTitle}</span></div>}
@@ -392,7 +393,7 @@ export function PlatformResourceRouteView({
 
       {newRoute && (definition.id !== 'instructor-courses' || (result && !error)) ? <div className={`platform-route-actions${definition.id === 'instructor-courses' ? ' platform-instructor-course-create-actions' : ''}`}>
         {definition.id === 'instructor-courses' && <div className="platform-instructor-course-count"><span className="platform-instructor-course-count-icon"><BookOpen aria-hidden /></span><strong>{pageTotal === undefined ? t(`本页 ${sortedItems.length} 门课程`, `${sortedItems.length} courses on this page`) : t(query ? `找到 ${pageTotal} 门课程` : `共 ${pageTotal} 门课程`, query ? `${pageTotal} matching courses` : `${pageTotal} courses`)}</strong></div>}
-        <AppLink className="platform-button platform-button-primary" href={`/platform/${newRoute.pattern}`} prefetch={false}>{definition.id === 'instructor-courses' && <Plus aria-hidden />}{titleFor(t, newRoute)}</AppLink>
+        <AppLink className="platform-button platform-button-primary" href={`/platform/${newRoute.pattern}`} prefetch={false}>{titleFor(t, newRoute)}{definition.id === 'instructor-courses' && <Plus aria-hidden />}</AppLink>
       </div> : null}
       {['admin', 'admin-event-analytics'].includes(definition.id) && allowed ? <CompactSelect label={t('统计范围', 'Period')} ariaLabel={t('统计范围', 'Period')} value={String(days)} items={[{ value: '7', label: t('最近 7 天', 'Last 7 days') }, { value: '30', label: t('最近 30 天', 'Last 30 days') }, { value: '90', label: t('最近 90 天', 'Last 90 days') }]} onChange={value => { void setDays(Number(value)); }} /> : null}
       {definition.id === 'events' ? <div className="platform-route-actions"><AppLink href="/platform/events/preview" prefetch={false} className="platform-button">{t('体验线上赛事流程', 'Explore online competitions')}<ArrowRight aria-hidden /></AppLink></div> : null}
@@ -529,7 +530,7 @@ export function PlatformResourceRouteView({
 
           {!instructorProfile && !instructorCourseEditor && !catalogOnly && !permissionDenied && !orderUnavailable ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} previewRedirect={stay === '1'} selectedLessonId={selectedLessonId} lessonStartTime={lessonStartTime ?? undefined} onSelectLesson={id => { void setLessonStartTime(null); void setSelectedLessonId(id); }} /> : null}
 
-          {instructorProfile || (instructorCourseNew && (!canCreateInstructorCourse || error)) || (definition.id === 'instructor-course' && (!sortedItems[0] || error)) || catalogOnly || permissionDenied || orderUnavailable || definition.id === 'qr' || (courseDetail && !course) || (['membership', 'me-membership'].includes(definition.id) && !result) || (['teacher-apply', 'admin-application'].includes(definition.id) && (!result || error)) ? null : (
+          {instructorProfile || (instructorCourseNew && (!canCreateInstructorCourse || error)) || ((definition.id === 'instructor-course' || instructorLessonNew) && (!sortedItems[0] || error)) || catalogOnly || permissionDenied || orderUnavailable || definition.id === 'qr' || (courseDetail && !course) || (['membership', 'me-membership'].includes(definition.id) && !result) || (['teacher-apply', 'admin-application'].includes(definition.id) && (!result || error)) ? null : (
             <PlatformDomainActions
               definition={definition}
               params={params}

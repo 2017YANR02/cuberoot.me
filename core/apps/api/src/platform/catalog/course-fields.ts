@@ -35,6 +35,12 @@ function coursePresentation(value: unknown): Record<string, unknown> | undefined
     if(!Array.isArray(value.outline)||value.outline.length>200||value.outline.some(item=>!isObject(item)||typeof item.label!=='string'||typeof item.topic!=='string'||item.label.length>200||item.topic.length>2000)) badRequest('outline must contain label and topic');
     result.outline=value.outline;
   }
+  if (value.trialLessonIds !== undefined) {
+    if (!Array.isArray(value.trialLessonIds) || value.trialLessonIds.length > 1000 || value.trialLessonIds.some(id => typeof id !== 'string' || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(id))) {
+      badRequest('trialLessonIds must be an array of lesson IDs');
+    }
+    result.trialLessonIds = [...new Set((value.trialLessonIds as string[]).map(id => id.toLowerCase()))].sort();
+  }
   return result;
 }
 

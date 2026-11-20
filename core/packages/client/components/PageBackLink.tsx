@@ -14,8 +14,8 @@ const subscribeSurface = () => () => undefined;
 const serverSurface = () => null;
 const isHome = (href: string) => /^\/(en|zh)?\/?(?:[?#]|$)/.test(href);
 
-export default function PageBackLink({ fallback = '/', className, label, showLabel = false, acceptEntry, contextOnly = false, miniProgramTarget, prefetch = false, ...rest }: Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
-  fallback?: string; className?: string; label?: string; showLabel?: boolean; acceptEntry?: (target: string) => boolean;
+export default function PageBackLink({ fallback = '/', className, label, acceptEntry, contextOnly = false, miniProgramTarget, prefetch = false, ...rest }: Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
+  fallback?: string; className?: string; label?: string; acceptEntry?: (target: string) => boolean;
   contextOnly?: boolean; miniProgramTarget?: 'tools' | 'account'; prefetch?: false;
 }) {
   const entry = useSyncExternalStore(subscribeEntryNavigation, readEntryNavigationBack, () => null);
@@ -33,7 +33,7 @@ export default function PageBackLink({ fallback = '/', className, label, showLab
   );
   const props = { ...rest, className: ['back-home', className].filter(Boolean).join(' '), prefetch,
     'aria-label': ariaLabel };
-  const content = label ? <><ArrowLeft size={16} aria-hidden="true" /><span className={showLabel ? undefined : 'sr-only'}>{label}</span></>
+  const content = label ? <><ArrowLeft size={16} aria-hidden="true" /><span className="sr-only">{label}</span></>
     : goesHome ? <CubeRootLogoImage /> : <ChevronLeft size={16} aria-hidden="true" />;
   return !back && target === '/' ? <HomeLink {...props} miniProgramTarget={miniProgramTarget}>{content}</HomeLink>
     : <AppLink {...props} href={target} navigation="return">{content}</AppLink>;

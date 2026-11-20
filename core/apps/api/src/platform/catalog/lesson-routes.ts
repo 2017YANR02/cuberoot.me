@@ -1,10 +1,11 @@
 import { requirePlatformAdmin, requirePlatformActor } from '../auth.js';
 import { withIdempotency, platformQuery, isPostgresConflict, sendMutation } from '../db.js';
 import { badRequest, conflict, notFound } from '../errors.js';
-import { type JsonObject, isObject, stringField, integerField, enumField, readJsonObject } from '../validation.js';
+import { type JsonObject, isObject, stringField, integerField, enumField, booleanField, readJsonObject } from '../validation.js';
 import { courseKey, requiredParam, authorizeCourseWrite } from './course-access.js';
 import { SLUG, requireBilingualTitle, hashJson } from './course-fields.js';
-import { driveVideoNodeId, driveVideoMediaId } from './drive-media.js';
+import { driveVideoNodeId, driveVideoMediaId, cleanupUnattachedCourseVideo } from './drive-media.js';
+import { courseDriveUploadHandlers } from '../../routes/drive.js';
 import { type Context, type Hono } from 'hono';
 
 const LESSON_STATUSES = ['draft', 'published', 'archived'] as const;
@@ -19,6 +20,7 @@ function lessonFields(body: JsonObject, required: boolean) {
   return {
     slug: stringField(body, 'slug', { required, max: 120, pattern: SLUG }),
     ordinal: integerField(body, 'ordinal', { required, min: 0, max: 1_000_000 }),
+    appendToCourse: booleanField(body, 'appendToCourse'),
     titleZh: stringField(body, 'titleZh', { max: 240 }),
     titleEn: stringField(body, 'titleEn', { max: 240 }),
     bodyZh, bodyEn,
@@ -36,18 +38,26 @@ async function saveLesson(c: Context, admin: boolean, creating: boolean): Promis
   const body = await readJsonObject(c);
   const input = lessonFields(body, creating);
   if (creating) requireBilingualTitle(input.titleZh, input.titleEn);
+  let stagedVideo: string | undefined;
+  const onStage = (nodeId: string) => { stagedVideo = nodeId; };
   const scope = `platform.${admin ? 'admin' : 'instructor'}.lesson.${creating ? 'create' : 'update'}:${courseKeyValue}${lessonKey ? `:${lessonKey}` : ''}`;
   const result = await withIdempotency(c, actor, scope, body, async (db) => {
     const id = await authorizeCourseWrite(db, actor, courseKeyValue);
+    // Serialize creation and reordering within the course.
+    await platformQuery(db, 'SELECT id FROM platform_courses WHERE id = $1::uuid FOR UPDATE', [id]);
     if (creating) {
       const status = input.status ?? 'draft';
       const revisionStatus = status === 'published' ? 'published' : 'draft';
-      const mediaId = input.driveVideo ? await driveVideoMediaId(db, actor, input.driveVideo) : null;
+      const ordinal = input.appendToCourse
+        ? Number((await platformQuery<{ ordinal: number }>(db, 'SELECT COALESCE(MAX(ordinal), 0) + 1 AS ordinal FROM platform_lessons WHERE course_id = $1::uuid', [id]))[0]?.ordinal)
+        : input.ordinal;
+      if (ordinal == null || !Number.isSafeInteger(ordinal) || ordinal > 1_000_000) badRequest('Lesson order is out of range');
+      const mediaId = input.driveVideo ? await driveVideoMediaId(db, actor, input.driveVideo, onStage) : null;
       try {
         const rows = await platformQuery<{ id: string }>(db, `
           INSERT INTO platform_lessons (course_id, slug, ordinal, status, access_scope, current_revision)
           VALUES ($1::uuid, $2, $3, $4, $5, 1) RETURNING id::text AS id
-        `, [id, input.slug, input.ordinal, status, input.accessScope ?? 'entitled']);
+        `, [id, input.slug, ordinal, status, input.accessScope ?? 'entitled']);
         const revision = { titleZh: input.titleZh ?? '', titleEn: input.titleEn ?? '', bodyZh: input.bodyZh ?? {}, bodyEn: input.bodyEn ?? {}, mediaId };
         await platformQuery(db, `
           INSERT INTO platform_lesson_revisions (
@@ -67,6 +77,7 @@ async function saveLesson(c: Context, admin: boolean, creating: boolean): Promis
       SELECT l.id::text AS id, l.slug, l.ordinal, l.status, l.access_scope AS "accessScope", l.current_revision AS "currentRevision",
         r.title_zh AS "titleZh", r.title_en AS "titleEn", r.body_zh AS "bodyZh", r.body_en AS "bodyEn",
         r.media_id::text AS "mediaId", r.cover_media_id::text AS "coverMediaId",
+        (SELECT metadata->>'driveNodeId' FROM platform_media_assets WHERE id = r.media_id) AS "driveNodeId",
         r.duration_seconds AS "durationSeconds"
       FROM platform_lessons l JOIN platform_lesson_revisions r ON r.lesson_id = l.id AND r.revision = l.current_revision
       WHERE l.course_id = $1::uuid AND (l.id::text = $2 OR l.slug = $2) FOR UPDATE
@@ -81,7 +92,7 @@ async function saveLesson(c: Context, admin: boolean, creating: boolean): Promis
     const status = input.status ?? String(old.status);
     const revisionStatus = status === 'published' ? 'published' : 'draft';
     const nextRevision = Number(old.currentRevision) + 1;
-    const mediaId = input.driveVideo ? await driveVideoMediaId(db, actor, input.driveVideo) : old.mediaId ?? null;
+    const mediaId = input.driveVideo && input.driveVideo !== old.driveNodeId ? await driveVideoMediaId(db, actor, input.driveVideo, onStage) : old.mediaId ?? null;
     const coverMediaId = old.coverMediaId ?? null;
     const revisionWithMedia = { ...revision, mediaId, coverMediaId };
     await platformQuery(db, `
@@ -98,6 +109,9 @@ async function saveLesson(c: Context, admin: boolean, creating: boolean): Promis
       WHERE id=$1::uuid
     `, [old.id, input.slug ?? old.slug, input.ordinal ?? old.ordinal, status, input.accessScope ?? old.accessScope, nextRevision]);
     return { status: 200, body: { lesson: { id: old.id, revision: nextRevision, status } }, resourceType: 'lesson', resourceId: String(old.id) };
+  }).catch(async error => {
+    if (stagedVideo) await cleanupUnattachedCourseVideo(stagedVideo).catch(cleanupError => console.error('[platform] failed to clean unattached course media', cleanupError));
+    throw error;
   });
   return sendMutation(c, result);
 }
@@ -120,6 +134,11 @@ async function archiveLesson(c: Context, admin: boolean): Promise<Response> {
 }
 
 export function registerLessonRoutes(platformCatalogRoutes: Hono): void {
+  platformCatalogRoutes.post('/platform/instructor/courses/:courseId/lesson-uploads', courseDriveUploadHandlers.create);
+  platformCatalogRoutes.on('HEAD', '/platform/instructor/courses/:courseId/lesson-uploads/:id', courseDriveUploadHandlers.head);
+  platformCatalogRoutes.patch('/platform/instructor/courses/:courseId/lesson-uploads/:id', courseDriveUploadHandlers.patch);
+  platformCatalogRoutes.delete('/platform/instructor/courses/:courseId/lesson-uploads/:id', courseDriveUploadHandlers.cancel);
+
   platformCatalogRoutes.post('/platform/instructor/courses/:courseId/lessons', (c) => saveLesson(c, false, true));
 
   platformCatalogRoutes.patch('/platform/instructor/courses/:courseId/lessons/:lessonId', (c) => saveLesson(c, false, false));

@@ -36,13 +36,18 @@ interface DriveChunkResponse {
   offset: number;
   complete: boolean;
   nodeId?: string;
-  error?: string;
+  error?: string | { message?: string };
 }
 
 /** A scoped caller may route both metadata and chunks together without changing Drive defaults. */
 export interface DriveApiTransport {
   apiUrl(path: string): string;
   directApiUrl(path: string): string;
+}
+
+export function courseLessonUploadTransport(courseId: string): DriveApiTransport {
+  const scopedPath = (path: string) => path.replace('/v1/drive/uploads', `/v1/platform/instructor/courses/${encodeURIComponent(courseId)}/lesson-uploads`);
+  return { apiUrl: path => apiUrl(scopedPath(path)), directApiUrl: path => directApiUrl(scopedPath(path)) };
 }
 
 async function write<T>(path: string, method: 'POST' | 'PATCH' | 'DELETE', body?: unknown, signal?: AbortSignal, transport?: DriveApiTransport): Promise<T> {
@@ -134,7 +139,8 @@ export async function uploadDriveChunk(
         resolve(payload);
         return;
       }
-      reject(new Error(payload?.error || request.statusText || `API error ${request.status}`));
+      const detail = typeof payload?.error === 'string' ? payload.error : payload?.error?.message;
+      reject(new Error(detail || request.statusText || `API error ${request.status}`));
     });
     request.addEventListener('error', () => {
       cleanup();
@@ -149,8 +155,8 @@ export async function uploadDriveChunk(
   });
 }
 
-export const cancelDriveUpload = (uploadId: string) => (
-  write<{ ok: boolean }>(`/v1/drive/uploads/${encodeURIComponent(uploadId)}`, 'DELETE')
+export const cancelDriveUpload = (uploadId: string, transport?: DriveApiTransport) => (
+  write<{ ok: boolean }>(`/v1/drive/uploads/${encodeURIComponent(uploadId)}`, 'DELETE', undefined, undefined, transport)
 );
 
 export const updateDriveNode = (nodeId: string, changes: { name?: string; parentId?: string | null; memberShared?: boolean }) => (

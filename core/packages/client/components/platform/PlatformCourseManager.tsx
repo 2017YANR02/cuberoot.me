@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+import MoreToggle, { MoreTogglePanel } from '@/components/MoreToggle';
+import { entityStatusLabel } from '@/components/teaching/TeachingUi';
 import { useT } from '@/hooks/useT';
 import { loadPlatformManagedQuizzes } from '@/lib/platform-gateway';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
@@ -9,6 +11,8 @@ import { PlatformState } from './PlatformState';
 import { type RunAction, type CommonProps } from './PlatformActionTypes';
 import { text, LESSON_FIELDS, QUIZ_FIELDS, LESSON_EDIT_FIELDS } from './PlatformFormDefinitions';
 import { DomainForm, ActionButton } from './PlatformForm';
+
+const INSTRUCTOR_LESSON_EDIT_FIELDS = LESSON_EDIT_FIELDS.filter(field => field.key !== 'accessScope');
 
 function entityFromRecord(value: unknown, fallbackId: string): PlatformEntity | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -104,14 +108,57 @@ function PlatformManagedQuizPanel({ definition, courseId, lessonId, busy, runAct
   );
 }
 
+function PlatformManagedLessonEditor({ definition, courseId, lesson, busy, runAction, compact = false }: {
+  definition: PlatformRouteDefinition; courseId: string; lesson: PlatformEntity; busy: string | null; runAction: RunAction; compact?: boolean;
+}) {
+  return <section className={`platform-course-editor-section${compact ? ' platform-instructor-lesson-editor' : ''}`}>
+    <DomainForm definition={definition} entity={lesson} resourceId={courseId} busy={busy} runAction={runAction}
+      spec={{ title: text(`编辑课时：${lesson.title}`, `Edit lesson: ${lesson.title}`), titleHidden: compact, action: 'save-course-lesson', payloadBase: { lessonId: lesson.id }, fields: compact ? INSTRUCTOR_LESSON_EDIT_FIELDS : LESSON_EDIT_FIELDS }} />
+    <PlatformLessonCoverEditor scope={definition.area === 'instructor' ? 'instructor' : 'admin'} courseId={courseId} lessonId={lesson.id} />
+    <ActionButton action="delete-course-lesson" resourceId={courseId} payload={{ lessonId: lesson.id }}
+      label={text('归档课时', 'Archive lesson')} confirm={text('确定归档这个课时吗？', 'Archive this lesson?')}
+      secondary={compact} busy={busy} runAction={runAction} />
+    <PlatformManagedQuizPanel definition={definition} courseId={courseId} lessonId={lesson.id} busy={busy} runAction={runAction} />
+  </section>;
+}
+
 export function PlatformCourseContentManager(props: CommonProps) {
   const { definition, params, entity, busy, runAction } = props;
   const t = useT();
   const courseId = entity?.id ?? params.id;
+  const [expandedLesson, setExpandedLesson] = useState<string | null>(null);
+  const panelId = useId();
   if (!courseId) return null;
   const lessons = (Array.isArray(entity?.data?.lessons) ? entity.data.lessons : [])
     .map((item, index) => entityFromRecord(item, `lesson-${index + 1}`))
     .filter((item): item is PlatformEntity => item !== null);
+  const compact = definition.id === 'instructor-course';
+  if (compact && lessons.length === 0) return null;
+  if (compact) return <section className="platform-course-editor platform-instructor-lesson-manager">
+    <div className="platform-course-editor-heading">
+      <div className="platform-instructor-editor-title"><h2>{t('课时与测验', 'Lessons and quizzes')}</h2><span>{t(`共 ${lessons.length} 个课时`, `${lessons.length} ${lessons.length === 1 ? 'lesson' : 'lessons'}`)}</span></div>
+    </div>
+    <ol className="platform-instructor-lesson-list">
+      {lessons.map((lesson, index) => {
+        const data = lesson.data ?? {};
+        const title = t(String(data.titleZh || data.titleEn || lesson.title), String(data.titleEn || data.titleZh || lesson.title));
+        const expanded = expandedLesson === lesson.id;
+        const controls = `${panelId}-lesson-${index}`;
+        const scope = data.accessScope === 'public' ? t('公开', 'Public') : data.accessScope === 'entitled' ? t('需课程权益', 'Entitled learners') : '';
+        return <li className="platform-instructor-lesson-row" key={lesson.id}>
+          <MoreToggle className="platform-instructor-lesson-toggle" aria-controls={controls} expanded={expanded}
+            onToggle={() => setExpandedLesson(expanded ? null : lesson.id)}>
+            <span className="platform-instructor-lesson-index">{String(index + 1).padStart(2, '0')}</span>
+            <span className="platform-instructor-lesson-title"><strong>{title}</strong>{scope && <small>{scope}</small>}</span>
+            {lesson.status && <span className="platform-status" data-lesson-status={lesson.status}>{entityStatusLabel(lesson.status, t)}</span>}
+          </MoreToggle>
+          <MoreTogglePanel id={controls} expanded={expanded} className="platform-instructor-lesson-panel">
+            <PlatformManagedLessonEditor definition={definition} courseId={courseId} lesson={lesson} busy={busy} runAction={runAction} compact />
+          </MoreTogglePanel>
+        </li>;
+      })}
+    </ol>
+  </section>;
   return (
     <section className="platform-course-editor">
       <div className="platform-course-editor-heading">
@@ -128,38 +175,7 @@ export function PlatformCourseContentManager(props: CommonProps) {
       {lessons.length === 0 ? <PlatformState kind="empty" /> : (
         <div className="platform-domain-stack">
           {lessons.map((lesson) => (
-            <section className="platform-course-editor-section" key={lesson.id}>
-              <DomainForm
-                definition={definition}
-                entity={lesson}
-                resourceId={courseId}
-                busy={busy}
-                runAction={runAction}
-                spec={{
-                  title: text(`编辑课时：${lesson.title}`, `Edit lesson: ${lesson.title}`),
-                  action: 'save-course-lesson',
-                  payloadBase: { lessonId: lesson.id },
-                  fields: LESSON_EDIT_FIELDS,
-                }}
-              />
-              <PlatformLessonCoverEditor scope={definition.area === 'instructor' ? 'instructor' : 'admin'} courseId={courseId} lessonId={lesson.id} />
-              <ActionButton
-                action="delete-course-lesson"
-                resourceId={courseId}
-                payload={{ lessonId: lesson.id }}
-                label={text('归档课时', 'Archive lesson')}
-                confirm={text('确定归档这个课时吗？', 'Archive this lesson?')}
-                busy={busy}
-                runAction={runAction}
-              />
-              <PlatformManagedQuizPanel
-                definition={definition}
-                courseId={courseId}
-                lessonId={lesson.id}
-                busy={busy}
-                runAction={runAction}
-              />
-            </section>
+            <PlatformManagedLessonEditor key={lesson.id} definition={definition} courseId={courseId} lesson={lesson} busy={busy} runAction={runAction} />
           ))}
         </div>
       )}

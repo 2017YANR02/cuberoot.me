@@ -400,6 +400,30 @@ it('restores the legacy preview link only when the signed-in viewer can access t
   } finally { await act(async () => root.unmount()); }
 });
 
+it('opens instructor-selected trial lessons in the same public classroom and keeps the rest locked', async () => {
+  const lessons = [
+    { id: 'new-preview', slug: 'lesson-random-1', titleZh: '第一节立方体', accessScope: 'public' },
+    { id: 'paid', slug: 'lesson-random-2', titleZh: '下一节', accessScope: 'entitled' },
+  ];
+  const host = document.createElement('div'), root = createRoot(host);
+  const render = (id: string, selectedLessonId?: string) => act(async () => root.render(createElement(PlatformDomainContent, {
+    definition: { id } as PlatformRouteDefinition,
+    entity: { id: 'published-course', title: '讲师课程', data: { presentation: { trialLessonIds: ['new-preview'] }, lessons, enrollmentMode: 'purchase' } },
+    params: {}, selectedLessonId,
+  })));
+  try {
+    await render('course-detail');
+    expect(host.querySelector('.platform-course-overview .platform-button-primary')?.textContent).toBe('开始试听');
+    expect(host.querySelector('details a[href$="/sections/core?lesson=new-preview"]')).not.toBeNull();
+    expect(host.querySelectorAll('details .platform-course-lesson-locked')).toHaveLength(1);
+    await render('course-section-core', 'new-preview');
+    expect(host.querySelector('video')).not.toBeNull();
+    await render('course-section-core', 'paid');
+    expect(host.querySelector('video')).toBeNull();
+    expect(host.textContent).toContain('这个课时需要解锁');
+  } finally { await act(async () => root.unmount()); }
+});
+
 it.each([
   ['introduction', '先导课 01：课程介绍', undefined, false, '01：课程介绍'],
   ['introduction', '引言 02：讲师介绍', 'Introduction 02: Instructor', true, '02: Instructor'],
@@ -482,7 +506,8 @@ it('shows instructor display names and only links an actual teacher directory en
     expect(instructors.querySelectorAll('a')).toHaveLength(1);
     expect(instructors.querySelector('a')?.getAttribute('href')).toBe('/platform/teachers/public-teacher');
     expect(host.querySelector('.platform-course-overview > .back-home')?.getAttribute('href')).toBe('/platform');
-    expect(host.querySelector('.platform-course-overview > .back-home span:not(.sr-only)')?.textContent).toBe('返回学习中心');
+    expect(host.querySelector('.platform-course-overview > .back-home span.sr-only')?.textContent).toBe('返回学习中心');
+    expect(host.querySelector('.platform-course-overview > .back-home span:not(.sr-only)')).toBeNull();
   } finally { await act(async () => root.unmount()); }
 });
 

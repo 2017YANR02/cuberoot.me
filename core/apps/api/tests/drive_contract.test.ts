@@ -93,8 +93,15 @@ describe('Drive contract', () => {
     const nginx = await read('../../../../ops/nginx/www.cuberoot.me.conf');
     const route = await read('../src/routes/drive.ts');
 
-    expect(nginx).toContain('location ~ ^/v1/drive/uploads/[0-9a-fA-F-]+$');
-    expect(nginx).toContain('client_max_body_size 9m');
+    const uploadLocations = Array.from(nginx.matchAll(/location ~ (\S+) \{([^}]+)\}/g)).filter(([, pattern]) => pattern.includes('drive/uploads/') || pattern.includes('lesson-uploads/'));
+    const uploadId = '00000000-0000-4000-8000-000000000000';
+    for (const uploadPath of [`/v1/drive/uploads/${uploadId}`, `/v1/platform/instructor/courses/course/lesson-uploads/${uploadId}`]) {
+      const location = uploadLocations.find(([, pattern]) => new RegExp(pattern).test(uploadPath));
+      expect(location, uploadPath).toBeDefined();
+      expect(location?.[2]).toContain('client_max_body_size 9m');
+      expect(location?.[2]).toContain('proxy_request_buffering off');
+      expect(location?.[2]).toContain('proxy_cache off');
+    }
     expect(nginx).toContain('location ^~ /v1/drive/content/');
     expect(nginx).toContain('location ^~ /v1/drive/shared/');
     expect(route).toContain("c.req.header('Upload-Checksum')");
