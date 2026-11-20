@@ -13,6 +13,8 @@ const SERVICE: &str = "me.cuberoot.app";
 fn desktop_distribution() -> &'static str {
     if cfg!(all(target_os = "windows", feature = "microsoft-store")) {
         "microsoft-store"
+    } else if cfg!(all(target_os = "macos", feature = "mac-app-store")) {
+        "mac-app-store"
     } else {
         "direct"
     }

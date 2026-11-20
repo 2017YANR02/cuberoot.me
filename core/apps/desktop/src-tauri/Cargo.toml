@@ -7,6 +7,7 @@ edition = "2021"
 
 [features]
 microsoft-store = []
+mac-app-store = []
 
 [lib]
 name = "cuberoot_desktop_lib"

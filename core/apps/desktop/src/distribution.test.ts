@@ -20,3 +20,12 @@ it('direct installs preserve their update adapter; unknown native channels fail 
   expect(withDesktopDistribution(original, 'direct', '1.2.3').getWindowsUpdateInfo).toBe(original.getWindowsUpdateInfo);
   expect(() => withDesktopDistribution(original, 'unknown', '1.2.3')).toThrow('Unknown desktop distribution');
 });
+
+it('uses the first Apple release content policy on Mac App Store builds', () => {
+  const original = { useAuth: vi.fn(), openExternal: vi.fn() } as unknown as InstalledAppHost;
+  const store = withDesktopDistribution(original, 'mac-app-store', '0.1.0');
+  expect(store.generativeAiDisabled).toBe(true);
+  expect(store.useAuth).toBe(original.useAuth);
+  expect(store.openExternal).toBe(original.openExternal);
+  expect(withDesktopDistribution(original, 'direct', '0.1.0').generativeAiDisabled).toBeUndefined();
+});

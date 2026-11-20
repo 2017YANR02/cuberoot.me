@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { mobileEmbedSurfaceFromFrameName } from '@cuberoot/shared/mobile-embed';
+import { mobileEmbedDisablesGenerativeAi, mobileEmbedSurfaceFromFrameName } from '@cuberoot/shared/mobile-embed';
 import { webMembershipAvailable } from './web-membership-bridge';
 import { decodeAppleMembershipResult, type AppleMembershipRequest, type AppleMembershipResult } from '@cuberoot/shared/apple-membership';
 import { decodeGoogleMembershipResult, type GoogleMembershipRequest, type GoogleMembershipResult } from '@cuberoot/shared/google-membership';
@@ -32,7 +32,8 @@ export function installedMembershipStore(): MembershipStore | null {
   if (bridges.apple.enabled) return 'apple';
   if (webMembershipAvailable()) return null;
   if (/Android/.test(navigator.userAgent)) return 'google';
-  if (bridges.apple.enabled || /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'apple';
+  if (mobileEmbedDisablesGenerativeAi(window.name) || /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'apple';
   return null;
 }
 export function requestStoreMembership(store: MembershipStore, action: Request['action'], expectedUid: number, productId?: Request['productId']): Promise<Result> {

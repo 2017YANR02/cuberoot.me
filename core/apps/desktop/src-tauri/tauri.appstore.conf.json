@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "identifier": "me.cuberoot.app",
+  "bundle": {
+    "targets": ["app"],
+    "category": "Utility",
+    "copyright": "2026 CubeRoot",
+    "macOS": {
+      "bundleVersion": "2",
+      "entitlements": "Entitlements.appstore.plist"
+    }
+  }
+}

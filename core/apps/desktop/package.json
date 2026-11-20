@@ -14,6 +14,7 @@
     "typecheck": "pnpm run build:deps && tsc --noEmit",
     "tauri": "tauri",
     "tauri:build": "tauri build",
+    "build:mac-app-store": "tauri build --features mac-app-store --target universal-apple-darwin --config src-tauri/tauri.appstore.conf.json",
     "store:check": "node scripts/windows-store.ts check",
     "build:store": "node scripts/windows-store.ts build",
     "store:test": "node --test scripts/windows-store.node-test.ts",
