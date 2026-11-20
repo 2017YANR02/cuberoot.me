@@ -25,13 +25,15 @@ import {
   mobileNetBattleSessionStore,
 } from './net-battle/mobile-net-battle';
 
+const isIos = Capacitor.getPlatform() === 'ios';
+
 export const capacitorHost: InstalledAppHost = {
   uuRemote,
   addNotificationOpenListener,
-  watchTimer: Capacitor.getPlatform() === 'ios' ? watchTimerPort : undefined,
+  watchTimer: isIos ? watchTimerPort : undefined,
   createBleTransport: () => new NativeBleTransport(),
   createStackmatSource: createStackmatMicSource,
-  appleMembership: Capacitor.getPlatform() === 'ios' ? handleAppleMembership : undefined,
+  appleMembership: isIos ? handleAppleMembership : undefined,
   get googleMembership() { return usesGooglePayments() ? handleGoogleMembership : undefined; },
   get webMembership() { return usesDirectPayments() ? handleWebMembership : undefined; },
   addBackButtonListener: (listener) => NativeApp.addListener('backButton', listener),
@@ -48,7 +50,7 @@ export const capacitorHost: InstalledAppHost = {
     client: mobileNetBattleClient,
     sessions: mobileNetBattleSessionStore,
   },
-  openExternal: openNativeExternal,
+  openExternal: (href) => openNativeExternal(href, isIos),
   print: printTimerDocument,
   exportFile: exportNativeFile,
   writeClipboardText: (text) => Clipboard.write({ string: text }),
@@ -56,6 +58,8 @@ export const capacitorHost: InstalledAppHost = {
   useSmartCube,
   useTimerEffects: useNativeTimerEffects,
   version: packageInfo.version,
+  icpFilingNumber: isIos ? '沪ICP备2025130431号-2A' : undefined,
+  generativeAiDisabled: isIos,
   getAndroidUpdateInfo: Capacitor.getPlatform() === 'android' ? async () => {
     const info = await NativeApp.getInfo();
     const versionCode = Number(info.build);

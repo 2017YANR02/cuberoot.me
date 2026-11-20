@@ -55,6 +55,21 @@ describe('installed website surfaces', () => {
     expect(app).toMatch(/if \(auth\.busy\) return;\s*if \(auth\.error\) \{[^}]*announce\(copy\.authError\);/);
   });
 
+  it('expires closed web surfaces while allowing a response to the final handshake', () => {
+    vi.useFakeTimers();
+    const exhausted = vi.fn();
+    startWebSurfaceHandshake(vi.fn(), 400, 3, exhausted);
+    vi.advanceTimersByTime(1199);
+    expect(exhausted).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(exhausted).toHaveBeenCalledTimes(1);
+    const cancel = startWebSurfaceHandshake(vi.fn(), 400, 3, exhausted);
+    vi.advanceTimersByTime(1000);
+    cancel();
+    vi.advanceTimersByTime(200);
+    expect(exhausted).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps both browsing contexts mounted and gates Android Back on a live bridge', () => {
     expect(app).toContain('aria-hidden={showState}');
     expect(app).toContain('tabIndex={showState ? -1 : undefined}');

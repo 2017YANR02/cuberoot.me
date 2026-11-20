@@ -2,7 +2,7 @@
 import { assistantAuthContinuation, assistantReturnPath, canUseAssistant } from '@/lib/assistant-auth-continuation';
 import { currentEntryHref } from '@/lib/entry-navigation';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
-import { installedPetAvailable } from '@/lib/installed-content';
+import { installedGenerativeAiDisabled, installedPetAvailable, useInstalledGenerativeAiDisabled } from '@/lib/installed-content';
 
 // Clawd web desk pet — ported interaction engine from clawd-on-desk renderer.js.
 // Idle = inline SVG with cursor eye-tracking; other states = <img> swap.
@@ -322,6 +322,10 @@ function CompactPet({ lang, onCompose }: {
 }
 
 export default function DeskPet() {
+  return useInstalledGenerativeAiDisabled() ? null : <DeskPetOverlay />;
+}
+
+function DeskPetOverlay() {
   const douyin = useDouyinToolSurface();
   const [mounted, setMounted] = useState(false);
   const [size, setSize] = useState<Size>('m');
@@ -359,6 +363,7 @@ export default function DeskPet() {
   useEffect(() => { assistantConversations.setOpen(owner, searchOpen); }, [owner, searchOpen]);
   useEffect(() => {
     if (!user?.uid) return;
+    if (installedGenerativeAiDisabled()) return;
     const saved = assistantAuthContinuation.read();
     const stamp = saved && JSON.stringify([saved.id, user.uid, saved.expiresAt]);
     if (!saved || restoredAuthDraft.current === stamp) return;

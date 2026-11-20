@@ -1,9 +1,10 @@
 /** First App release exclusions approved by the owner; normal website unchanged. */
-export function installedContentUnavailable(href: string): boolean {
+export function installedContentUnavailable(href: string, generativeAiDisabled = false): boolean {
   try {
     const url = new URL(href, 'https://cuberoot.me');
     if (!['cuberoot.me', 'www.cuberoot.me', 'dev.cuberoot.me', 'localhost', '127.0.0.1'].includes(url.hostname)) return false;
-    const path = decodeURIComponent(url.pathname).replace(/^\/zh(?=\/|$)/, '').replace(/\/+$/, '');
+    const path = decodeURIComponent(url.pathname).replace(/^\/(?:en|zh)(?=\/|$)/, '').replace(/\/+$/, '');
+    if (generativeAiDisabled && (path === '/chat' || path.startsWith('/chat/'))) return true;
     return path === '/music' || path.startsWith('/music/')
       || path === '/alg/sq1/pbl' || path.startsWith('/alg/sq1/pbl/')
       || path === '/alg/sq1/pbl-finder' || path.startsWith('/alg/sq1/pbl-finder/')

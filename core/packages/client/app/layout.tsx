@@ -2,7 +2,7 @@ import { SiteCorners } from "@2017yanr02/continuous-corners/react";
 import EntryNavigationBridge from '@/components/EntryNavigationBridge';
 import { DOUYIN_CONTENT_BOOTSTRAP } from '@/lib/douyin-content-bootstrap';
 import InstalledContentBoundary from "@/components/InstalledContentBoundary";
-import { MOBILE_EMBED_FRAME_NAMES } from '@cuberoot/shared/mobile-embed';
+import { MOBILE_EMBED_FRAME_NAMES, MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES } from '@cuberoot/shared/mobile-embed';
 import type { Metadata } from "next";
 import { Suspense } from 'react';
 import ProductAnalytics from '@/components/ProductAnalytics';
@@ -80,7 +80,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: DOUYIN_CONTENT_BOOTSTRAP }} />
         {/* Hide prerendered route content in installed surfaces until their content boundary has checked it. */}
-        <script dangerouslySetInnerHTML={{ __html: `if(window.parent!==window&&${JSON.stringify(Object.values(MOBILE_EMBED_FRAME_NAMES))}.includes(window.name))document.documentElement.dataset.installedSurface='true';` }} />
+        <script dangerouslySetInnerHTML={{ __html: `if(window.parent!==window&&${JSON.stringify([...Object.values(MOBILE_EMBED_FRAME_NAMES), ...Object.values(MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES)])}.includes(window.name))document.documentElement.dataset.installedSurface='true';` }} />
         <style>{`[data-installed-route]{display:contents}html[data-douyin-surface="true"] [data-installed-route]:not([data-douyin-checked="true"]){display:none}html[data-installed-surface="true"] [data-installed-route]:not([data-installed-reviewed="true"]){display:none}`}</style>
         <link rel="icon" href="/icons/CubeRoot.png" />
         <link rel="icon" href="/icons/CubeRoot-dark.png" media="(prefers-color-scheme: dark)" />

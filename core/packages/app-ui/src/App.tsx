@@ -78,6 +78,7 @@ import {
   mobileEmbedAppearanceMessage,
   decodeMobileEmbedWebSessionResult,
   MOBILE_EMBED_FRAME_NAMES,
+  MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES,
   mobileEmbedAuthClearMessage,
   mobileEmbedAccountManageResultMessage,
   mobileEmbedBackMessage,
@@ -1823,8 +1824,12 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       postInit,
       MOBILE_EMBED_INIT_RETRY_MS,
       MOBILE_EMBED_INIT_RETRIES,
+      host.generativeAiDisabled ? () => {
+        setWebSurfaceStatus((current) => current[surface] === 'loading'
+          ? { ...current, [surface]: 'error' } : current);
+      } : undefined,
     );
-  }, [clearWebSurfaceHandshake, connection]);
+  }, [clearWebSurfaceHandshake, connection, host.generativeAiDisabled]);
 
   const markWebSurfaceLoaded = useCallback((surface: MobileEmbedSurface) => {
     webSurfaceLoadedRef.current[surface] = true;
@@ -2050,6 +2055,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
 
   const openToolsRoute = useCallback((route: string) => {
     const destination = new URL(route, SITE_ORIGIN);
+    if (installedContentUnavailable(destination.href, host.generativeAiDisabled)) {
+      announce(copy.actionFailed);
+      return;
+    }
     if (destination.pathname.replace(/^\/(en|zh)(?=\/|$)/, '').replace(/\/$/, '') === '/timer') {
       if (!destination.search && !destination.hash) selectPrimaryView('timer');
       else void host.openExternal(destination.href).catch(() => announce(copy.actionFailed));
@@ -2185,7 +2194,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       if (external) {
         const frame = webFrameRefs.current[external.surface];
         if (!frame || event.source !== frame.contentWindow) return;
-        if (installedContentUnavailable(external.href)) { announce(copy.actionFailed); return; }
+        if (installedContentUnavailable(external.href, host.generativeAiDisabled)) { announce(copy.actionFailed); return; }
         void host.openExternal(external.href).catch(() => announce(copy.actionFailed));
         return;
       }
@@ -4758,8 +4767,9 @@ children: <>
               <iframe
                 allow={surface === 'tools' ? 'clipboard-write; fullscreen; camera; microphone' : 'clipboard-write; fullscreen'}
                 aria-hidden={showState}
+                inert={host.generativeAiDisabled && showState}
                 key={`${surface}-${webSurfaceRevision[surface]}`}
-                name={MOBILE_EMBED_FRAME_NAMES[surface]}
+                name={(host.generativeAiDisabled ? MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES : MOBILE_EMBED_FRAME_NAMES)[surface]}
                 onLoad={() => {
                   if (surface === 'tools') void revokeToolsBle();
                   webBridgeReadyRef.current[surface] = false;
@@ -4771,7 +4781,12 @@ children: <>
                     clearAccountSyncTimeout();
                     accountSyncInFlightRef.current = null;
                   }
-                  markWebSurfaceLoaded(surface);
+                  if (host.generativeAiDisabled) {
+                    webSurfaceLoadedRef.current[surface] = false;
+                    setWebSurfaceStatus((current) => ({ ...current, [surface]: 'loading' }));
+                  } else {
+                    markWebSurfaceLoaded(surface);
+                  }
                   beginWebSurfaceHandshake(surface);
                 }}
                 onError={() => {
@@ -5154,6 +5169,11 @@ children: <>
                 {copy.privacy}<span aria-hidden="true">↗</span>
               </a>
               <a className="site-link" href="mailto:yrmfxc@gmail.com" onClick={openExternal}>{copy.support}</a>
+              {host.icpFilingNumber && (
+                <a className="site-link" href="https://beian.miit.gov.cn/" onClick={openExternal} rel="noreferrer" target="_blank">
+                  {copy.icpFiling} {host.icpFilingNumber}<span aria-hidden="true">↗</span>
+                </a>
+              )}
               <span>{copy.version} {host.version}</span>
             </div>
             </>}

@@ -5,11 +5,13 @@ import { SiteAssistantAnswerText } from '@/components/SiteAssistantDialog';
 import AssistantAlgorithmCards from '@/components/AssistantAlgorithmCards';
 import {isAssistantAlgorithms, type AssistantAlgorithms} from '@cuberoot/shared/site-assistant';
 import { tr } from '@/i18n/tr';
+import { installedGenerativeAiDisabled } from '@/lib/installed-content';
 
 export default function SharedMessagePage() {
   const [message, setMessage] = useState<{ question: string; answer: string; algorithms?:AssistantAlgorithms[] } | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
+    if (installedGenerativeAiDisabled()) return;
     const controller = new AbortController();
     const id = new URLSearchParams(window.location.search).get('id') ?? '';
     if (!/^[A-Za-z0-9_-]{24}$/.test(id)) { setFailed(true); return; }

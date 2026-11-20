@@ -121,6 +121,8 @@ export interface InstalledAppHost {
   useSmartCube(options: InstalledAppSmartCubeOptions): InstalledAppSmartCube;
   useTimerEffects(phase: TimerPhase): void;
   version: string;
+  icpFilingNumber?: string;
+  generativeAiDisabled?: boolean;
   /** Native version/channel; absent on hosts without an Android update channel. */
   getAndroidUpdateInfo?(): Promise<{ versionName: string; versionCode: number; channel: 'direct' | 'play' }>;
   /** Only the Windows host exposes Windows downloads; version comes from the running binary. */

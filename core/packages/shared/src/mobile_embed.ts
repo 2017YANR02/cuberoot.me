@@ -13,6 +13,11 @@ export const MOBILE_EMBED_FRAME_NAMES = {
   tools: 'cuberoot-mobile-tools',
 } as const;
 
+export const MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES = {
+  account: 'cuberoot-mobile-account-no-generative-ai',
+  tools: 'cuberoot-mobile-tools-no-generative-ai',
+} as const;
+
 export type MobileEmbedSurface = keyof typeof MOBILE_EMBED_FRAME_NAMES;
 
 export interface MobileEmbedInitMessage {
@@ -145,9 +150,14 @@ export interface MobileEmbedExternalMessage {
 }
 
 export function mobileEmbedSurfaceFromFrameName(value: string): MobileEmbedSurface | null {
-  if (value === MOBILE_EMBED_FRAME_NAMES.tools) return 'tools';
-  if (value === MOBILE_EMBED_FRAME_NAMES.account) return 'account';
+  if (value === MOBILE_EMBED_FRAME_NAMES.tools || value === MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES.tools) return 'tools';
+  if (value === MOBILE_EMBED_FRAME_NAMES.account || value === MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES.account) return 'account';
   return null;
+}
+
+export function mobileEmbedDisablesGenerativeAi(value: string): boolean {
+  return value === MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES.tools
+    || value === MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES.account;
 }
 
 export function mobileEmbedNavigationMessage(

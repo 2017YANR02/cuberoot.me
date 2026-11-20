@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { installedContentUnavailable } from '@cuberoot/shared/installed-content';
+import { MOBILE_EMBED_FRAME_NAMES, MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES, mobileEmbedSurfaceFromFrameName } from '@cuberoot/shared/mobile-embed';
 import { resolveAccountAvatar } from '@/lib/account-avatar';
-import { installedPetAvailable } from '@/lib/installed-content';
+import { installedGenerativeAiDisabled, installedPetAvailable } from '@/lib/installed-content';
 afterEach(() => vi.unstubAllGlobals());
 describe('first-release installed content exclusions', () => {
   it.each(['/music', '/zh/music/song/123', '/alg/sq1/pbl', '/zh/alg/sq1/pbl/case/1', '/alg/sq1/pbl-finder', '/alg/sq1/karnaukh-notation', '/zh/alg/sq1/karnaukh-notation', '/pets?pet=clawd'])('blocks %s', href => {
@@ -9,6 +10,21 @@ describe('first-release installed content exclusions', () => {
   });
   it.each(['/timer', '/account', '/alg/sq1', '/pets?pet=rootbeast'])('preserves %s', href => {
     expect(installedContentUnavailable(href)).toBe(false);
+  });
+  it.each(['/chat', '/zh/chat/share?id=example', 'https://www.cuberoot.me/en/chat/share', '/zh/%63hat'])(
+    'blocks %s only in the installed release without generative AI', href => {
+      expect(installedContentUnavailable(href, true)).toBe(true);
+      expect(installedContentUnavailable(href)).toBe(false);
+    },
+  );
+  it.each(['tools', 'account'] as const)('retains the %s bridge with generative AI disabled', surface => {
+    const name = MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES[surface];
+    expect(mobileEmbedSurfaceFromFrameName(name)).toBe(surface);
+    vi.stubGlobal('window', { parent: {}, name });
+    expect(installedGenerativeAiDisabled()).toBe(true);
+    expect(installedContentUnavailable(`/${surface}`, true)).toBe(false);
+    vi.stubGlobal('window', { parent: {}, name: MOBILE_EMBED_FRAME_NAMES[surface] });
+    expect(installedGenerativeAiDisabled()).toBe(false);
   });
   it('withholds existing and default Clawd avatars only in installed surfaces', () => {
     vi.stubGlobal('window', { parent: {}, name: 'cuberoot-mobile-account' });

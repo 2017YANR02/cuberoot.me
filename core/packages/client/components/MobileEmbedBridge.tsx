@@ -17,6 +17,7 @@ import {
   mobileEmbedSelectTabMessage,
   mobileEmbedOpenSettingsMessage,
   mobileEmbedSurfaceFromFrameName,
+  mobileEmbedDisablesGenerativeAi,
   mobileEmbedWebSessionResultMessage,
   type MobileEmbedInitMessage,
 } from '@cuberoot/shared/mobile-embed';
@@ -56,6 +57,7 @@ export default function MobileEmbedBridge() {
     if (window.parent === window) return;
     const surface = mobileEmbedSurfaceFromFrameName(window.name);
     if (!surface) return;
+    const generativeAiDisabled = mobileEmbedDisablesGenerativeAi(window.name);
 
     const rootStyle = document.documentElement.style;
     const previousSafeTop = rootStyle.getPropertyValue('--sat');
@@ -204,7 +206,7 @@ export default function MobileEmbedBridge() {
       }
       if (!anchor || anchor.hasAttribute('download')) return;
       const next = new URL(anchor.href, window.location.href);
-      if (installedContentUnavailable(next.href)) {
+      if (installedContentUnavailable(next.href, generativeAiDisabled)) {
         event.preventDefault(); event.stopImmediatePropagation();
         window.alert(tr({ zh: '此内容暂不在 App 中提供。', en: 'This content is not available in the app.' }));
         return;
