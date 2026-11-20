@@ -91,7 +91,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
 
   /** 手部指法 rig(3x3 专属)。惰性建:设置面板首次打开「手指」才实例化。 */
   public hands: HandsRig | null = null;
-  /** 设置里的「手指」意愿;是否实际显示还要 && puzzleKind === 3(见 syncHands)。 */
+  /** 记录「手指」开关，syncHands 只为标准二至四阶挂载手模。 */
   private handsWanted = false;
 
   /** 调试:「SMPL-X 全身」查看 —— 开 = 藏拼图与手,只显示原版 SMPL-X neutral
@@ -506,10 +506,10 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
     this.resize(); // refHalf 随手显隐变化(见 resize)
   }
 
-  /** 手 rig 显隐 = 「想要」 && 3x3(镜面/其它阶/非 NxN 都不上手)。
+  /** 手 rig 显隐 = 「想要」 且为标准二至四阶。
    *  手模 = MANO 独占(2026-07-11 内置 generic-hand 退役)。 */
   private syncHands(): void {
-    const active = this.handsWanted && this.puzzleKind === 3;
+    const active = this.handsWanted && (this.puzzleKind === 2 || this.puzzleKind === 3 || this.puzzleKind === 4);
     if (active && this.hands == null && this.handsFactory) {
       this.hands = this.handsFactory();
       this.hands.setFullBody(this.handsFullBodyWanted); // rig 晚于设置到位的回放
@@ -600,7 +600,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
   panY = 0;
   private _lookAtTarget = new THREE.Vector3();
   resize(): void {
-    const handsOn = this.hands?.isEnabled === true && this.puzzleKind === 3;
+    const handsOn = this.hands?.isEnabled === true;
     const bodyOn = handsOn && this.hands?.fullBodyOn === true;
     // 变焦架构 = 变 FOV,相机 z 恒 refHalf·perspective(≈19.5×SIZE)。全身人物
     // 的身体就站在相机位一带(胸口 z≈19×SIZE,过肩视角),继续开广角只会鱼眼

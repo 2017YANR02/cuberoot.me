@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import { TwistAction } from '@/app/[lang]/sim/engine/nxn/twister';
 import ClockBoard from '@/app/[lang]/sim/engine/clock/clockBoard';
@@ -21,6 +21,27 @@ afterEach(() => {
 });
 
 describe('sim TPS timing', () => {
+  it('keeps both slices of a wide turn at the same angle through the last frame', () => {
+    const cube = new Cube(3);
+    let now = 0;
+    const clock = vi.spyOn(performance, 'now').mockImplementation(() => ++now);
+    try {
+      expect(cube.twister.twist(new TwistAction("l'"), false, false, 60)).toBe(true);
+      expect(tweener.length).toBe(2);
+      const [outside, middle] = cube.table.groups.x;
+      for (const frameMs of [250, 1000, 1001, 1002, 1100]) {
+        for (const tween of [...tweener.tweens]) {
+          if (tween.updateAt(frameMs)) tweener.cancel(tween);
+        }
+        expect(outside.angle).toBe(middle.angle);
+      }
+      expect(cube.busy).toBe(false);
+    } finally {
+      clock.mockRestore();
+      tweener.finish();
+      cube.dispose();
+    }
+  });
   it('freezes a single cube mid-turn and preserves its queued move on resume', () => {
     const pausedCube = new Cube(3), otherCube = new Cube(3);
     try {

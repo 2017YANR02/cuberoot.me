@@ -362,6 +362,9 @@ export class TwistNode {
 }
 
 export default class Twister {
+  /** Both arcs have the same half-turn permutation. An attached hand rig may
+   * choose the animated direction while history retains the input notation. */
+  halfTurnDirection?: (axis: string, layer: number) => 1 | -1 | undefined;
   private cube: Cube;
   private queue: Array<{ action: TwistAction; formulaDurationTicks?: number; easing?: TweenEasing }> = [];
   private pauseTween: Tween | undefined;
@@ -935,13 +938,19 @@ export default class Twister {
     if (list.length == 0) {
       return true;
     }
+    // Slices of one wide turn must start and drop on the same display frame.
+    const startedAtMs = !fast && list.length > 1 ? performance.now() : undefined;
     for (const rotate of list) {
+      const direction = !fast && list.length === 1 && Math.abs(rotate.twist) === 2
+        ? this.halfTurnDirection?.(rotate.group.axis, rotate.group.layer) : undefined;
+      const angle = (Math.PI / 2) * (direction === undefined ? rotate.twist : 2 * direction);
       success = rotate.group.twist(
-        (Math.PI / 2) * rotate.twist,
+        angle,
         fast,
         true,
         formulaDurationTicks,
         easing,
+        startedAtMs,
       );
       // force = instant sync (playback jumpToStep etc.). If the target layer can't lock
       // because a perpendicular layer is stranded holding with no tween (e.g. a drag's
@@ -952,11 +961,12 @@ export default class Twister {
       while (!success && force && guard-- > 0) {
         tweener.finish();
         success = rotate.group.twist(
-          (Math.PI / 2) * rotate.twist,
+          angle,
           fast,
           true,
           formulaDurationTicks,
           easing,
+          startedAtMs,
         );
       }
       if (!success && force) console.warn('[sim] twister.twist(force): layer never locked, skipped');

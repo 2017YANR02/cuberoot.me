@@ -123,7 +123,7 @@ export function createBackView(
       const isSquare = world.puzzleKind === 'sq1'
         || world.puzzleKind === 'sq2'
         || world.puzzleKind === 'sq4';
-      const handsOn = world.hands?.isEnabled === true && world.puzzleKind === 3;
+      const handsOn = world.hands?.isEnabled === true && (world.puzzleKind === 3 || world.puzzleKind === 4);
       const k = world.puzzleKind;
       const refHalfU = handsOn ? 3.9
         : k === 'pyraminx' || k === 'pyraminx_duo' ? 2.45

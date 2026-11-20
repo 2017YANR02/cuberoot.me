@@ -107,8 +107,8 @@ export class Tweener {
   };
 
   tween(begin: number, end: number, duration: number, update: (v: number) => boolean | void,
-    easing: TweenEasing = 'ease-out'): Tween {
-    const tween = new Tween(begin, end, duration, update, easing);
+    easing: TweenEasing = 'ease-out', startedAtMs?: number): Tween {
+    const tween = new Tween(begin, end, duration, update, easing, startedAtMs);
     this.tweens.push(tween);
     this.wake();
     return tween;

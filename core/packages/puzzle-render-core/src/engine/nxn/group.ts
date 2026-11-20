@@ -75,6 +75,10 @@ export default class CubeGroup extends THREE.Group {
     this.cube.dirty = true;
   }
 
+  /** Present for a timed turn. A free drag acquires its target only on release. */
+  get targetAngle(): number | undefined { return this.tween?.end; }
+  get isDragging(): boolean { return this.holding && !this.tween; }
+
   get angle(): number {
     return this._angle;
   }
@@ -264,6 +268,7 @@ export default class CubeGroup extends THREE.Group {
     formulaStep = false,
     formulaDurationTicks = timing.frames,
     easing: TweenEasing = 'ease-out',
+    startedAtMs?: number,
   ): boolean {
     if (!Number.isFinite(angle)) {
       if (this.tween) tweener.cancel(this.tween);
@@ -303,7 +308,7 @@ export default class CubeGroup extends THREE.Group {
           return true;
         }
         return false;
-      }, easing);
+      }, easing, startedAtMs);
       this.tween.setPaused(this.animationPaused);
     }
     return true;
