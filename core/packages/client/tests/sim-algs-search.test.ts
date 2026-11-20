@@ -9,7 +9,7 @@ vi.mock('@/i18n/tr', () => ({ tr: (copy: { en: string }) => copy.en }));
 vi.mock('@/lib/alg_case_alignment', () => ({ loadTrainingAlg: async () => ({
   cases: [
     { name: 'First', setup: 'U', algs: [[{ alg: 'R U R\'' }]] },
-    { name: 'Second', setup: 'D', algs: [[{ alg: 'F R F\'' }]] },
+    { name: 'Second', setup: 'D', algs: [[{ alg: "F R F'" }, { alg: "R' D F2" }], [{ alg: "F2 U'", setup: 'U F2' }]] },
   ],
 }) }));
 
@@ -33,6 +33,13 @@ it('filters by case or formula while preserving the original selected case', asy
     expect(onSelect).toHaveBeenCalledWith('D', "F R F'", 'Second');
     await search("R U R'");
     expect(host.querySelector('.sim-algs-name')?.textContent).toBe('First');
+    await search('F2');
+    const matches = Array.from(host.querySelectorAll<HTMLButtonElement>('.sim-algs-item'));
+    expect(matches.map(row => row.querySelector('.sim-algs-alg')?.textContent)).toEqual(["R' D F2", "F2 U'"]);
+    await act(async () => matches[1].click());
+    expect(onSelect).toHaveBeenLastCalledWith('U F2', "F2 U'", 'Second');
+    expect(matches[1].classList.contains('active')).toBe(true);
+    expect(matches[0].classList.contains('active')).toBe(false);
     await search('missing');
     expect(host.textContent).toContain('No matching algorithms');
   } finally {

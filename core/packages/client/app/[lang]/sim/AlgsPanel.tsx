@@ -6,7 +6,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ALG_CATALOG, type AlgPuzzle, type AlgFile, type AlgCase } from '@cuberoot/shared/alg';
+import { ALG_CATALOG, type AlgPuzzle, type AlgFile } from '@cuberoot/shared/alg';
 import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
 import './algs-panel.css';
 import { displayAlg } from '@/lib/alg_display';
@@ -46,7 +46,7 @@ export default function AlgsPanel({ onSelect, activePuzzle }: Props) {
   const [data, setData] = useState<AlgFile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
   const [query, setQuery] = useState('');
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function AlgsPanel({ onSelect, activePuzzle }: Props) {
     setLoading(true);
     setError(null);
     setData(null);
-    setActiveIdx(null);
+    setActiveKey(null);
     loadAlg(puzzle, setSlug)
       .then((d) => {
         if (!cancelled) setData(d);
@@ -75,22 +75,20 @@ export default function AlgsPanel({ onSelect, activePuzzle }: Props) {
     return () => { cancelled = true; };
   }, [puzzle, setSlug]);
 
-  const cases = useMemo<AlgCase[]>(() => data?.cases ?? [], [data]);
-  const matchingCases = useMemo(() => {
+  const rows = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return cases.map((value, index) => ({ value, index })).filter(({ value }) =>
-      !needle || [value.name, ...value.algs.flat().map(entry => entry.alg)].some(text => text.toLowerCase().includes(needle)));
-  }, [cases, query]);
+    return (data?.cases ?? []).flatMap((c, caseIndex) => {
+      const entries = c.algs.flat().map((entry, index) => ({
+        key: `${caseIndex}-${index}`, c, entry,
+      }));
+      if (needle) {
+        const matches = entries.filter(({ entry }) => entry.alg.toLowerCase().includes(needle));
+        if (matches.length) return matches;
+      }
+      return c.name.toLowerCase().includes(needle) ? entries.slice(0, 1) : [];
+    });
+  }, [data, query]);
   const selectedSet = sets.find(set => set.slug === setSlug);
-
-  const choose = (idx: number) => {
-    const c = cases[idx];
-    if (!c) return;
-    const algEntry = c.algs?.[0]?.[0];
-    if (!algEntry?.alg) return;
-    setActiveIdx(idx);
-    onSelect(c.setup, algEntry.alg, c.name);
-  };
 
   if (!puzzle) {
     return (
@@ -126,24 +124,23 @@ export default function AlgsPanel({ onSelect, activePuzzle }: Props) {
       <div className="sim-algs-list">
         {loading ? <div className="sim-algs-msg"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div> : null}
         {error ? <div className="sim-algs-msg error">{error}</div> : null}
-        {!loading && !error && matchingCases.length === 0 ? (
+        {!loading && !error && rows.length === 0 ? (
           <div className="sim-algs-msg">{query.trim() ? t('没有匹配的公式', 'No matching algorithms') : t('暂无数据', 'No data')}</div>
         ) : null}
-        {matchingCases.map(({ value: c, index: i }) => {
-          const algText = c.algs?.[0]?.[0]?.alg ?? '';
-          return (
-            <button
-              key={i}
-              className={'sim-algs-item' + (i === activeIdx ? ' active' : '')}
-              onClick={() => choose(i)}
-              disabled={!algText}
-            >
-              <span className="sim-algs-name">{c.name}</span>
-              {/* 列表里剥掉收尾 AUF;choose() 送去回放的仍是完整公式,动画才停在还原态。 */}
-              <span className="sim-algs-alg">{displayAlg(algText)}</span>
-            </button>
-          );
-        })}
+        {rows.map(({ key, c, entry }) => (
+          <button
+            key={key}
+            className={'sim-algs-item' + (key === activeKey ? ' active' : '')}
+            onClick={() => {
+              setActiveKey(key);
+              onSelect(entry.setup ?? c.setup, entry.alg, c.name);
+            }}
+            disabled={!entry.alg}
+          >
+            <span className="sim-algs-name">{c.name}</span>
+            <span className="sim-algs-alg">{query.trim() ? entry.alg : displayAlg(entry.alg)}</span>
+          </button>
+        ))}
       </div>
     </div>
   );
