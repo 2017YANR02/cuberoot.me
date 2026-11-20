@@ -2,7 +2,6 @@ import { expect, it } from 'vitest';
 import { Mesh, Vector3 } from 'three';
 import Cube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
 import { attachMoveHintArrows } from '../components/AlgPlayer/move-hint-arrows';
-import { SIZE } from '@cuberoot/puzzle-render-core/engine/define';
 
 it('alternates each fixed arrow color without moving it or changing the cube state', () => {
   const cube = new Cube(3);
@@ -44,6 +43,25 @@ it('hides arrows as soon as a layer is held, then shows them after it is release
   } finally { detach(); cube.dispose(); }
 });
 
+it('keeps the second move of the left trigger on the top layer after the first turn settles', () => {
+  const cube = new Cube(2);
+  const left = cube.table.groups.x[0];
+  expect(left.drag()).toBe(true);
+  left.angle = Math.PI / 4;
+  const detach = attachMoveHintArrows(cube, "U'", '#5aac7e');
+  try {
+    const group = cube.children.at(-1)!;
+    const topLayer = group.children.map(arrow => arrow.matrix.clone());
+    detach.update();
+    expect(group.visible).toBe(false);
+    left.angle = Math.PI / 2;
+    left.drop();
+    detach.update();
+    expect(group.visible).toBe(true);
+    expect(group.children.map(arrow => arrow.matrix.elements)).toEqual(topLayer.map(matrix => matrix.elements));
+  } finally { detach(); cube.dispose(); }
+});
+
 it.each([
   { move: 'R', frontDirection: [0, 1, 0] },
   { move: "R'", frontDirection: [0, -1, 0] },
@@ -72,51 +90,23 @@ it.each([
   }
 });
 
-it('follows both a dragged layer and its completed turn without a jump', () => {
+it.each(['x', 'y'] as const)('keeps a U hint in place across a turn on the %s axis', axis => {
   const cube = new Cube(3);
   const detach = attachMoveHintArrows(cube, 'U', '#C15F3C');
   try {
-    const arrows = cube.children.at(-1)!.children;
+    const group = cube.children.at(-1)!;
+    const arrows = group.children;
     const before = arrows.map(arrow => arrow.matrix.clone());
-    const layer = cube.table.groups.y[2];
+    const layer = cube.table.groups[axis][2];
     expect(layer.drag()).toBe(true);
     layer.angle = Math.PI / 4;
     expect(detach.update()).toBe(true);
-    arrows.forEach((arrow, i) => {
-      const expected = before[i].clone().premultiply(layer.matrix);
-      expect(arrow.matrix.elements).toEqual(expected.elements);
-    });
+    expect(group.visible).toBe(false);
     layer.angle = Math.PI / 2;
-    detach.update();
-    const ending = arrows.map(arrow => arrow.matrix.clone());
     layer.drop();
     detach.update();
-    arrows.forEach((arrow, i) => arrow.matrix.elements.forEach((value, j) => {
-      expect(value).toBeCloseTo(ending[i].elements[j], 6);
-    }));
-  } finally {
-    detach();
-    cube.dispose();
-  }
-});
-
-it('also follows the affected stickers when the user drags a different layer', () => {
-  const cube = new Cube(3);
-  const detach = attachMoveHintArrows(cube, 'U', '#C15F3C');
-  try {
-    const arrows = cube.children.at(-1)!.children;
-    const before = arrows.map(arrow => arrow.matrix.clone());
-    const layer = cube.table.groups.x[2];
-    expect(layer.drag()).toBe(true);
-    layer.angle = -.4;
-    detach.update();
-    arrows.forEach((arrow, i) => {
-      const moved = new Vector3().setFromMatrixPosition(before[i]).x > SIZE / 2;
-      const expected = moved ? before[i].clone().premultiply(layer.matrix) : before[i];
-      arrow.matrix.elements.forEach((value, j) => expect(value).toBeCloseTo(expected.elements[j], 6));
-    });
-    layer.angle = 0;
-    layer.drop();
+    expect(group.visible).toBe(true);
+    expect(arrows.every((arrow, index) => arrow.matrix.equals(before[index]))).toBe(true);
   } finally {
     detach();
     cube.dispose();

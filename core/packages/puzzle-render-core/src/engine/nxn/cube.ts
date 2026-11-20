@@ -396,6 +396,16 @@ export default class Cube extends THREE.Group {
     return result.join("");
   }
 
+  /** A physical sticker's settled slot and face in puzzle coordinates, independent of the view. */
+  getStickerPlacement(homeIndex: number, homeFace: FACE): { positionIndex: number; face: FACE } | null {
+    const cubelet = this.initials.get(homeIndex);
+    if (this.busy || !cubelet?.initialColors[homeFace]) return null;
+    for (const face of [FACE.L, FACE.R, FACE.D, FACE.U, FACE.B, FACE.F]) {
+      if (cubelet.getFace(face) === homeFace) return { positionIndex: cubelet.index, face };
+    }
+    return null;
+  }
+
   /** Flat-net picture fragments in the same URFDLB order as serialize(). Each id is
    * the HOME image tile carried by that physical sticker; rotation keeps artwork
    * upright relative to the piece after face turns. */

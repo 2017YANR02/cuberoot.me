@@ -24,6 +24,7 @@ import { invertMoveString } from '@cuberoot/shared/alg-notation';
 import SimStage from '@/components/sim-embed/SimStage';
 import { useT } from '@/hooks/useT';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
+import type { BlockedLayerTurnHandler, CubeletTap, EmbeddedWholeCubeDrag } from '@/components/sim-embed/attachEmbeddedSimInteraction';
 import type HandsRig from '@/app/[lang]/sim/engine/hands/handsRig';
 import type { GripSimStep } from '@/app/[lang]/sim/engine/hands/handsRig';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
@@ -48,8 +49,10 @@ import { createStepSeekPlayer } from './step-seek-player';
 import { orbitSceneFree } from '@cuberoot/puzzle-render-core/engine/viewControls';
 import { engineHomeSid } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex';
 import { FM_IGNORED, FM_REGULAR, FM_OUTLINE } from '@cuberoot/puzzle-render-core/support/sticker-mask';
-import { SIZE } from '@cuberoot/puzzle-render-core/engine/define';
+import { FACE, SIZE } from '@cuberoot/puzzle-render-core/engine/define';
 import { DoubleSide, Matrix4, Mesh, MeshBasicMaterial, Shape, ShapeGeometry, Vector3 } from 'three';
+import { createStickerHintFade } from './sticker-hint-fade';
+import { attachCornerSlotHint } from './corner-slot-hint';
 
 const LOOP_PAUSE_MS = 900;
 const ALIGNMENT_PAUSE_MS = 1200;
@@ -107,12 +110,15 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   /** Outline home stickers without changing their current mask colors. */
   highlightedStickers?: readonly string[];
   frontFaceArrow?: { from: number; to: number };
+  cornerSlotHint?: { positions: readonly number[]; request: number; color: string; includeBackFacelets?: boolean };
   moveHint?: string;
   moveHintRecovery?: boolean;
   stickerColorOverrides?: Readonly<Record<string, string>>;
   setup?: string;
   orientation?: string;
   sceneRot?: { x: number; y: number; z: number };
+  hintFacelets?: boolean;
+  maxFramingEdge?: number;
   startSolved?: boolean;
   autoPlay?: boolean;
   playRequest?: number;
@@ -124,10 +130,17 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   hideResetView?: boolean;
   interactionMode?: AlgPlayerInteractionMode;
   lockView?: boolean;
+  wholeCubeDrag?: EmbeddedWholeCubeDrag;
   onUserMove?: (move: string) => void;
+  allowUserLayerTurn?: (move: string) => boolean;
+  onBlockedUserLayerTurn?: BlockedLayerTurnHandler;
+  onCubeletTap?: (selection: CubeletTap) => void;
+  orbitSnapDegrees?: number;
+  orbitSnapLocked?: boolean;
   pauseAfterSteps?: readonly number[];
   sectionPauseMs?: number;
   onStepChange?: (step: number) => void;
+  onReady?: () => void;
   stickeringAtStep?: (step: number) => import('@cuberoot/puzzle-render-core/engine/nxn/stickering').StickeringMaskFn;
   highlightDaisyAlignment?: boolean;
   daisyAlignmentFace?: 'F' | 'R';
@@ -137,8 +150,8 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   /** 撑满父容器。给编辑器那种「右半屏放预览」的布局用。 */
   fillPane?: boolean;
 }>(function AlgSimPlayer({
-  alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, highlightedStickers, frontFaceArrow, moveHint, moveHintRecovery = false, stickerColorOverrides, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, resetAfterPlayback = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, onUserMove, pauseAfterSteps, sectionPauseMs, onStepChange, stickeringAtStep, highlightDaisyAlignment = false, showHands = false, moveDurationMs, size = 260, fillPane = false,
-  stageOverlay, daisyAlignmentFace,
+  alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, highlightedStickers, frontFaceArrow, moveHint, moveHintRecovery = false, stickerColorOverrides, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, resetAfterPlayback = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, wholeCubeDrag, onUserMove, onCubeletTap, orbitSnapDegrees, orbitSnapLocked, pauseAfterSteps, sectionPauseMs, onStepChange, onReady, stickeringAtStep, highlightDaisyAlignment = false, showHands = false, moveDurationMs, size = 260, fillPane = false,
+  stageOverlay, daisyAlignmentFace, hintFacelets = false, maxFramingEdge, allowUserLayerTurn, onBlockedUserLayerTurn, cornerSlotHint,
 }, ref) {
   const t = useT();
   const [handsUnavailable, setHandsUnavailable] = useState(false);
@@ -244,9 +257,19 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       orbitSceneFree(mount.world, dx, dy, 1);
       mount.invalidate();
     },
+    setSceneRotation: ({ x, y, z }) => {
+      const mount = mountRef.current;
+      if (!mount || !ready) return;
+      const { scene } = mount.world;
+      const { rotation } = scene;
+      if (rotation.x === x && rotation.y === y && rotation.z === z) return;
+      rotation.set(x, y, z);
+      scene.updateMatrix();
+      mount.invalidate();
+    },
     getStickerAnchor: (stickers) => {
       const mount = mountRef.current;
-      if (!mount || !ready || puzzleKind !== 3) return null;
+      if (!mount || !ready || typeof puzzleKind !== 'number') return null;
       const { camera, cube } = mount.world;
       const nxn = cube as Cube;
       const renderer = nxn.instancedRenderer;
@@ -257,10 +280,11 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       const towardCamera = new Vector3();
       const eye = camera.getWorldPosition(new Vector3());
       let bestFacing = 0.02;
-      let anchor: { x: number; y: number } | null = null;
+      let anchor: { x: number; y: number; sticker: string } | null = null;
       const canvas = mount.renderer.domElement.getBoundingClientRect();
       for (const slot of renderer.stickerSlots) {
-        if (!slot.visible || !stickers.includes(engineHomeSid(slot.cubeletInitial, slot.face, 3))) continue;
+        const sticker = engineHomeSid(slot.cubeletInitial, slot.face, puzzleKind);
+        if (!slot.visible || !stickers.includes(sticker)) continue;
         if (!renderer.getCubeletRenderMatrix(slot.cubeletInitial, matrix)) continue;
         matrix.multiply(slot.localMat).premultiply(nxn.matrixWorld);
         point.setFromMatrixPosition(matrix);
@@ -270,13 +294,30 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
         point.project(camera);
         if (Math.abs(point.x) > 1 || Math.abs(point.y) > 1 || Math.abs(point.z) > 1) continue;
         bestFacing = facing;
-        anchor = { x: canvas.left + (point.x + 1) * canvas.width / 2, y: canvas.top + (1 - point.y) * canvas.height / 2 };
+        anchor = { x: canvas.left + (point.x + 1) * canvas.width / 2, y: canvas.top + (1 - point.y) * canvas.height / 2, sticker };
       }
       return anchor;
     },
     subscribeRenderedView: callback => {
       viewListeners.current.add(callback);
       return () => { viewListeners.current.delete(callback); };
+    },
+    subscribeSettledCube: callback => {
+      const mount = mountRef.current;
+      if (!mount || !ready || typeof puzzleKind !== 'number') return () => {};
+      const { callbacks } = mount.world.cube as Cube;
+      // Observe the settled slots before the twister starts the next queued turn.
+      callbacks.unshift(callback);
+      return () => {
+        const index = callbacks.indexOf(callback);
+        if (index >= 0) callbacks.splice(index, 1);
+      };
+    },
+    getStickerPlacement: (homeIndex, homeFace) => {
+      const mount = mountRef.current;
+      if (!mount || !ready || typeof mount.world.puzzleKind !== 'number') return null;
+      const placement = (mount.world.cube as Cube).getStickerPlacement(homeIndex, FACE[homeFace]);
+      return placement && { positionIndex: placement.positionIndex, face: FACE[placement.face] };
     },
     isUserMovePending: (includeHands = true) => {
       const mount = mountRef.current;
@@ -289,13 +330,34 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       const mount = mountRef.current;
       if (!mount || !ready || interactionMode !== 'turn' || controlMode !== 'none' || typeof mount.world.puzzleKind !== 'number') return false;
       const steps = resolveSimPreviewMoves(puzzle, move);
+      const blocked = steps.find(step => layerTurnGuard.current?.(step) === false);
+      if (blocked) {
+        blockedLayerTurnCallback.current?.(blocked);
+        return false;
+      }
       (mount.world.cube as Cube).twister.push(steps.join(' '));
       for (const step of steps) onUserMoveRef.current?.(step);
       mount.invalidate();
       return true;
     },
+    playSingleTurn: (move: string, durationMs?: number) => {
+      const mount = mountRef.current;
+      if (!mount || !ready || interactionMode !== 'view' || controlMode !== 'none'
+        || typeof mount.world.puzzleKind !== 'number' || !/^[RLUDFBxyz]'?$/.test(move)) return false;
+      const { twister } = mount.world.cube as Cube;
+      if (twister.backlog) return false;
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      twister.push(move, false, 1, reducedMotion ? 0 : resolvePreviewTiming(durationMs).frames);
+      mount.invalidate();
+      return true;
+    },
   }), [seekPlayer, ready, interactionMode, controlMode, puzzle, puzzleKind, moves.length, showHands, handsUnavailable]);
   const mountRef = useRef<SimMount | null>(null);
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!ready || !mount || typeof mount.world.puzzleKind !== 'number') return;
+    (mount.world.cube as Cube).instancedRenderer.hint = hintFacelets;
+  }, [hintFacelets, ready]);
   useEffect(() => {
     const mount = mountRef.current;
     if (ready && animationPaused.current && mount && typeof mount.world.puzzleKind === 'number') (mount.world.cube as Cube).twister.setAnimationPaused(true);
@@ -307,12 +369,21 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   daisyAlignmentFaceRef.current = daisyAlignmentFace;
   const resetViewRef = useRef<((durationMs?: number) => void | Promise<void>) | null>(null);
   const clockUserMoveRef = useRef<((action: string) => void) | null>(null);
-  const interactionOptionsRef = useRef({ interactionMode, lockView });
-  interactionOptionsRef.current = { interactionMode, lockView };
+  const handlesCubeletTaps = !!onCubeletTap;
+  const interactionOptionsRef = useRef({ interactionMode, lockView, wholeCubeDrag, handlesCubeletTaps, orbitSnapDegrees });
+  interactionOptionsRef.current = { interactionMode, lockView, wholeCubeDrag, handlesCubeletTaps, orbitSnapDegrees };
   const updateInteractionRef = useRef<(() => void) | null>(null);
-  useEffect(() => { updateInteractionRef.current?.(); }, [interactionMode, lockView]);
+  useEffect(() => { updateInteractionRef.current?.(); }, [interactionMode, lockView, wholeCubeDrag, handlesCubeletTaps, orbitSnapDegrees]);
   const onUserMoveRef = useRef(onUserMove);
   onUserMoveRef.current = onUserMove;
+  const layerTurnGuard = useRef(allowUserLayerTurn);
+  layerTurnGuard.current = allowUserLayerTurn;
+  const blockedLayerTurnCallback = useRef(onBlockedUserLayerTurn);
+  blockedLayerTurnCallback.current = onBlockedUserLayerTurn;
+  const onCubeletTapRef = useRef(onCubeletTap);
+  onCubeletTapRef.current = onCubeletTap;
+  const orbitSnapLockedRef = useRef(orbitSnapLocked);
+  orbitSnapLockedRef.current = orbitSnapLocked;
   clockUserMoveRef.current = interactionMode === 'turn'
     ? move => onUserMoveRef.current?.(move)
     : null;
@@ -339,6 +410,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   }, [ready, autoPlay, alg, playRequest, setupAlg, moves.length, jumpToStep]);
 
   const updateMoveHintRef = useRef<(() => boolean) | null>(null);
+  const updateCornerSlotHint = useRef<(() => boolean) | null>(null);
   const mount = useCallback(async (host: HTMLElement) => {
     const {
       mountSimWorld, attachEmbeddedSimInteraction, timing, stickeringMaskFn, mergeStickeringMaskFns, resolveStageMaskFn, resetSceneView,
@@ -348,11 +420,12 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       ? await import('./daisy-alignment') : null;
     let hands: HandsRig | null = null;
     let alignment: ReturnType<NonNullable<typeof alignmentModule>['attachDaisyAlignment']> | undefined;
-    const m = mountSimWorld({ host, puzzle: puzzleKind, interactive: true, sceneRot,
+    const m = mountSimWorld({ host, puzzle: puzzleKind, interactive: true, sceneRot, maxFramingEdge,
       onFrame: (_world, dt) => {
         const handsChanged = hands?.tick(dt);
         const hintChanged = updateMoveHintRef.current?.() ?? false;
-        return (alignment?.update() ?? false) || (handsChanged ?? false) || hintChanged;
+        const cornerHintChanged = updateCornerSlotHint.current?.() ?? false;
+        return (alignment?.update() ?? false) || (handsChanged ?? false) || hintChanged || cornerHintChanged;
       },
       onRendered: () => { for (const listener of viewListeners.current) listener(); },
     });
@@ -400,7 +473,13 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       const options = interactionOptionsRef.current;
       detachInteraction = attachEmbeddedSimInteraction({
         world, dom: m.renderer.domElement, mode: options.interactionMode,
-        lockView: options.lockView, onUserMove: move => onUserMoveRef.current?.(move),
+        lockView: options.lockView, wholeCubeDrag: options.wholeCubeDrag,
+        onUserMove: move => onUserMoveRef.current?.(move),
+        allowUserLayerTurn: move => layerTurnGuard.current?.(move) !== false,
+        onBlockedUserLayerTurn: (move, point) => blockedLayerTurnCallback.current?.(move, point),
+        onCubeletTap: options.handlesCubeletTaps ? selection => onCubeletTapRef.current?.(selection) : undefined,
+        orbitSnapDegrees: options.orbitSnapDegrees,
+        isOrbitSnapLocked: () => orbitSnapLockedRef.current === true,
       });
     };
     updateInteractionRef.current = updateInteraction;
@@ -489,7 +568,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       lastRef.current = null;
       instantStepRef.current = null;
     };
-  }, [puzzleKind, puzzle, set, additionalStickering, hiddenStickers, outlinedStickers, previewTiming.frames, sceneRot, highlightDaisyAlignment, showHands]);
+  }, [puzzleKind, puzzle, set, additionalStickering, hiddenStickers, outlinedStickers, previewTiming.frames, sceneRot, maxFramingEdge, highlightDaisyAlignment, showHands]);
 
   const resetView = useCallback(() => resetViewRef.current?.(), []);
 
@@ -564,6 +643,33 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       if (mountRef.current === mount) mount.invalidate();
     };
   }, [frontFaceArrow?.from, frontFaceArrow?.to, puzzleKind, ready]);
+
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount || !ready || typeof puzzleKind !== 'number' || !cornerSlotHint) return;
+    const cube = mount.world.cube as Cube;
+    const hint = attachCornerSlotHint(cube, cornerSlotHint.positions, cornerSlotHint.color,
+      hintFacelets && cornerSlotHint.includeBackFacelets);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const started = performance.now();
+    const fade = createStickerHintFade(started, reducedMotion);
+    let previousOpacity = fade(started).opacity;
+    hint.setOpacity(previousOpacity);
+    updateCornerSlotHint.current = () => {
+      const { opacity, complete } = fade(performance.now(), cube.busy);
+      if (complete) updateCornerSlotHint.current = null;
+      if (opacity === previousOpacity) return false;
+      hint.setOpacity(opacity);
+      previousOpacity = opacity;
+      return true;
+    };
+    mount.invalidate();
+    return () => {
+      updateCornerSlotHint.current = null;
+      hint.dispose();
+      if (mountRef.current === mount) mount.invalidate();
+    };
+  }, [cornerSlotHint, hintFacelets, puzzleKind, ready]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -740,7 +846,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       <SimStage
         size={size}
         mount={mount}
-        onReady={() => setReady(true)}
+        onReady={() => { setReady(true); onReady?.(); }}
         onResetView={controlMode === 'none' && !hideResetView ? resetView : undefined}
         busyLabel={t('正在加载魔方', 'Loading the cube')}
       >

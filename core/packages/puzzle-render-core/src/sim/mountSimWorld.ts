@@ -76,6 +76,8 @@ export interface SimMountOpts<W extends World = World> {
    * 画布尺寸。默认取 host 的 client box;可返回自定义尺寸用于局部画布。
    */
   measure?: (host: HTMLElement) => { width: number; height: number };
+  /** Cap the reference view size in CSS pixels while keeping the full canvas interactive. */
+  maxFramingEdge?: number;
 }
 
 export interface SimMount<W extends World = World> {
@@ -127,6 +129,7 @@ export function mountSimWorld<W extends World = World>(opts: SimMountOpts<W>): S
     onFrame,
     onRendered,
     measure,
+    maxFramingEdge,
   } = opts;
 
   const cleanups: Array<() => void> = [];
@@ -185,6 +188,7 @@ export function mountSimWorld<W extends World = World>(opts: SimMountOpts<W>): S
       if (w <= 0 || h <= 0) return;
       world.width = w;
       world.height = h;
+      if (maxFramingEdge && maxFramingEdge > 0) world.scale = Math.min(1, maxFramingEdge / Math.min(w, h));
       world.resize();
       renderer.setSize(w, h, true);
       world.dirty = true;

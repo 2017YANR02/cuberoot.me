@@ -13,6 +13,8 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef, type CSSProperties, type ReactNode } from 'react';
 import { mountTwistyPlayer, type MountedTwistyPlayer } from '@cuberoot/timer-ui/mount-twisty-player';
 import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
+import type { BlockedLayerTurnHandler, CubeletTap, EmbeddedWholeCubeDrag } from '@/components/sim-embed/attachEmbeddedSimInteraction';
+import type { CubeFace } from '@/lib/cube-colors';
 import { pickStickering } from './stickering';
 import AlgSimPlayer from './AlgSimPlayer';
 import FtoEifAlgPlayer from './FtoEifAlgPlayer';
@@ -25,6 +27,8 @@ import {
 } from './player-setup';
 import './alg-sim-player.css';
 
+export type AlgStickerPlacement = { positionIndex: number; face: CubeFace };
+
 export interface AlgPlayerHandle {
   /** Sim: restore the preceding state, animate this zero-based move, then pause. */
   playMove?: (index: number) => void;
@@ -32,12 +36,19 @@ export interface AlgPlayerHandle {
   setAnimationPaused?: (paused: boolean) => void;
   /** Move only the embedded simulator view, without turning any puzzle layers. */
   orbitView?: (dx: number, dy: number) => void;
-  /** Screen coordinates of the most visible target sticker on a simulated 3×3. */
-  getStickerAnchor?: (stickers: readonly string[]) => { x: number; y: number } | null;
+  /** Set the view for a scripted shot without remounting or changing the puzzle state. */
+  setSceneRotation?: (angles: { x: number; y: number; z: number }) => void;
+  /** Screen coordinates of the most visible target sticker on a simulated NxN. */
+  getStickerAnchor?: (stickers: readonly string[]) => { x: number; y: number; sticker: string } | null;
+  /** Settled puzzle coordinates for a simulated NxN sticker, independent of the camera. */
+  getStickerPlacement?: (homeIndex: number, homeFace: CubeFace) => AlgStickerPlacement | null;
   subscribeRenderedView?: (callback: () => void) => () => void;
+  subscribeSettledCube?: (callback: () => void) => () => void;
   resetView?: (durationMs?: number) => void | Promise<void>;
   /** Manual NxN practice input, available with turn interaction and no playback controls. */
   applyUserMove?: (move: string) => boolean;
+  /** Animate an NxN quarter turn from its current state without emitting user input. */
+  playSingleTurn?: (move: string, durationMs?: number) => boolean;
   isUserMovePending?: (includeHands?: boolean) => boolean;
   /** 拿到底层播放器或兼容 seek adapter,给光标 sync 等高级用法用。 */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -87,6 +98,8 @@ interface Props {
   highlightedStickers?: readonly string[];
   /** Sim NxN: arrow between current front-face slots, using row-major indices. */
   frontFaceArrow?: { from: number; to: number };
+  /** Briefly marks fixed NxN corner slots. Change request to show the hint again. */
+  cornerSlotHint?: { positions: readonly number[]; request: number; color: string; includeBackFacelets?: boolean };
   /** Sim NxN: show surface arrows for the next guided turn. */
   moveHint?: string;
   moveHintRecovery?: boolean;
@@ -97,6 +110,10 @@ interface Props {
   orientation?: string;
   /** Initial scene angles in radians for the sim engine; also used by reset view. */
   sceneRot?: { x: number; y: number; z: number };
+  /** Sim NxN: float hints for faces hidden by the current view. */
+  hintFacelets?: boolean;
+  /** Sim only: cap the reference view size without shrinking the canvas. */
+  maxFramingEdge?: number;
   /** 从还原态演示输入的转动。记号教学用;公式预览默认仍从公式的逆状态开始。 */
   startSolved?: boolean;
   /** 装好后自动播放;尊重 prefers-reduced-motion。 */
@@ -118,8 +135,19 @@ interface Props {
   interactionMode?: AlgPlayerInteractionMode;
   /** Sim engine: keep the initial camera orientation while allowing layer turns. */
   lockView?: boolean;
+  /** Sim NxN practice: commit whole-cube drags as x/y/z moves. */
+  wholeCubeDrag?: EmbeddedWholeCubeDrag;
   /** `interactionMode='turn'` 时返回 `/sim` 产生的标准转动记号。 */
   onUserMove?: (move: string) => void;
+  /** Sim NxN: decide whether a dragged layer or manual layer input can commit. */
+  allowUserLayerTurn?: (move: string) => boolean;
+  onBlockedUserLayerTurn?: BlockedLayerTurnHandler;
+  /** Sim NxN in view mode: report the identity and current slot of a tapped piece. */
+  onCubeletTap?: (selection: CubeletTap) => void;
+  /** Sim NxN: orbit from F up to this angle, then animate a whole-cube turn without losing the tilt. */
+  orbitSnapDegrees?: number;
+  /** Keep orbit inside the snap angles while preventing whole-cube turns. */
+  orbitSnapLocked?: boolean;
   /** Sim 教学预览：在这些完整步数之后暂停；继续播放会越过当前边界。 */
   pauseAfterSteps?: readonly number[];
   /** Sim only: automatically continue after this many ms at section boundaries.
@@ -127,6 +155,8 @@ interface Props {
   sectionPauseMs?: number;
   /** Sim 教学预览的动作位置，用于同步逐步说明。 */
   onStepChange?: (step: number) => void;
+  /** Sim: the embedded scene is ready to receive scripted moves. */
+  onReady?: () => void;
   /** Sim renderer only: update piece visibility without resetting playback. */
   stickeringAtStep?: (step: number) => import('@cuberoot/puzzle-render-core/engine/nxn/stickering').StickeringMaskFn;
   /** Sim 3x3: frame each daisy petal whose side matches the center below it. */
@@ -190,6 +220,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
       moveDurationMs,
       props.size ?? 260,
       props.fillPane ?? false,
+      props.maxFramingEdge,
       props.showHands,
       props.sceneRot?.x, props.sceneRot?.y, props.sceneRot?.z,
     ]);
@@ -202,14 +233,18 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         puzzleOrder={props.puzzleOrder}
         orientation={props.orientation}
         sceneRot={props.sceneRot}
+        hintFacelets={props.hintFacelets}
+        maxFramingEdge={props.maxFramingEdge}
         additionalStickering={props.additionalStickering}
         hiddenStickers={props.hiddenStickers}
         outlinedStickers={props.outlinedStickers}
         highlightedStickers={props.highlightedStickers}
         frontFaceArrow={props.frontFaceArrow}
+        cornerSlotHint={props.cornerSlotHint}
         moveHint={props.moveHint} moveHintRecovery={props.moveHintRecovery}
         stickerColorOverrides={props.stickerColorOverrides}
         onStepChange={props.onStepChange}
+        onReady={props.onReady}
         highlightDaisyAlignment={props.highlightDaisyAlignment}
         daisyAlignmentFace={props.daisyAlignmentFace}
         showHands={props.showHands}
@@ -220,7 +255,13 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         controlMode={props.controlMode}
         interactionMode={props.interactionMode}
         lockView={props.lockView}
+        wholeCubeDrag={props.wholeCubeDrag}
         onUserMove={props.onUserMove}
+        onCubeletTap={props.onCubeletTap}
+        allowUserLayerTurn={props.allowUserLayerTurn}
+        onBlockedUserLayerTurn={props.onBlockedUserLayerTurn}
+        orbitSnapDegrees={props.orbitSnapDegrees}
+        orbitSnapLocked={props.orbitSnapLocked}
         moveDurationMs={moveDurationMs} size={props.size ?? 260} fillPane={props.fillPane}
         pauseAfterSteps={props.pauseAfterSteps}
         sectionPauseMs={props.sectionPauseMs}

@@ -42,6 +42,9 @@ export default class Controller {
   // 拖拽 / 整体旋转完成时 (cube.record 之后) 触发的 user-twist 回调。
   // 用于把 drag 出来的 move 自动追加到上层 (PlayerControls) 的解法输入框。
   public userTwist: ((action: TwistAction) => void)[] = [];
+  /** Optional teaching constraint. Rejected layer gestures still follow the pointer and settle back to zero. */
+  public allowLayerTurn: ((move: string) => boolean) | null = null;
+  public onBlockedLayerTurn: ((move: string) => void) | null = null;
   // mousedown 时记录修饰键,handleUp 单击分支用
   private downShift = false;
   private downButton = 0;
@@ -95,6 +98,8 @@ export default class Controller {
    *  'rotate' — upstream cuber 默认行为:snap 到 x/y/z 单轴 + 90° + 记 TwistAction。
    *  'view'   — 同 orbit 路径但 onOrbit 内不 commit,纯改 scene.rotation。 */
   dragEmpty: 'orbit' | 'rotate' | 'view' = 'orbit';
+  /** Orientation exercises treat every drag as a whole-cube gesture. */
+  wholeCubeOnly = false;
   /** paint 模式:任何拖拽(含贴纸上)都当 orbit 转视角,绝不拧层;单击仍走 taps(→ 涂色)。
    *  仅 /scramble/solver 立体涂色用,默认关 → /sim 行为不变。需配合 dragEmpty='view'。 */
   public paintMode = false;
@@ -243,7 +248,7 @@ export default class Controller {
       this.handleUp();
     }
     this.dragging = true;
-    const hit = this.hitTest(this.down);
+    const hit = this.wholeCubeOnly ? null : this.hitTest(this.down);
     this.holder.index = hit?.index ?? -1;
     if (hit) this.holder.plane = hit.plane;
   }
@@ -474,7 +479,10 @@ export default class Controller {
           ((-(this.vector.x + this.vector.y + this.vector.z) * (vector.x + vector.y + vector.z)) / Cubelet.SIZE) *
           Math.PI *
           this.sensitivity;
-        if (Number.isFinite(angle)) this.angle = angle;
+        if (Number.isFinite(angle)) {
+          const blocked = this.allowLayerTurn?.(new TwistAction(this.wideSign || this.group.name, angle + this.contingle < 0).value) === false;
+          this.angle = blocked ? Math.max(-Math.PI / 6, Math.min(Math.PI / 6, angle)) : angle;
+        }
       } else {
         const dx = this.move.x - this.down.x;
         const dy = this.move.y - this.down.y;
@@ -569,16 +577,16 @@ export default class Controller {
         angle = 0;
       }
       if (this.group) {
-        this.group.twist(angle, this.instantTurns);
+        const sign = this.wideSign || this.group.name;
+        const turns = Math.round(angle / (Math.PI / 2));
+        const action = angle === 0 ? null : new TwistAction(sign, turns < 0, Math.abs(turns));
+        const allowed = !action || this.allowLayerTurn?.(action.value || new TwistAction(sign, angle < 0).value) !== false;
+        const targetAngle = allowed ? angle : 0;
+        this.group.twist(targetAngle, this.instantTurns);
         // 宽层:extras 同步 twist (snap 到 90° 倍数动画)
-        for (const g of this.wideExtras) g.twist(angle, this.instantTurns);
-        if (angle != 0) {
-          let times = Math.round(angle / (Math.PI / 2));
-          const reverse = times < 0;
-          times = Math.abs(times);
-          // wideSign 非空 = 宽层 / 整体转, 用拼好的 notation;否则用 group.name (单层切片现状)
-          const sign = this.wideSign || this.group.name;
-          const action = new TwistAction(sign, reverse, times);
+        for (const g of this.wideExtras) g.twist(targetAngle, this.instantTurns);
+        if (!allowed) this.onBlockedLayerTurn?.(sign);
+        if (action && allowed) {
           (this.world.cube as import('./cube').default).record(action);
           for (const cb of this.userTwist) cb(action);
         }

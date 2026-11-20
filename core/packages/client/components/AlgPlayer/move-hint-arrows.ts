@@ -1,6 +1,5 @@
 import { Group, Matrix4, Mesh, MeshBasicMaterial, Shape, ShapeGeometry, Vector3 } from 'three';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
-import type Cubelet from '@cuberoot/puzzle-render-core/engine/nxn/cubelet';
 import { TwistAction } from '@cuberoot/puzzle-render-core/engine/nxn/twister';
 import { SIZE } from '@cuberoot/puzzle-render-core/engine/define';
 
@@ -34,12 +33,12 @@ export function attachMoveHintArrows(cube: Cube, move: string, accent: string, s
   const ink = new MeshBasicMaterial({ color: accent });
   const secondaryInk = new MeshBasicMaterial({ color: secondary ?? accent });
   const group = new Group();
-  const attached: { arrow: Mesh; cubelet: Cubelet; local: Matrix4; phase: number; colored: boolean }[] = [];
+  group.visible = cube.twister.backlog === 0;
+  const coloredArrows: { arrow: Mesh; phase: number }[] = [];
+  // A hint marks layer positions. The stickers occupying them can change during the previous turn.
   for (let x = 0; x < cube.order; x++) for (let y = 0; y < cube.order; y++) for (let z = 0; z < cube.order; z++) {
     const coords = { x, y, z };
     if (!layers.has(coords[axis])) continue;
-    const cubelet = cube.cubelets.get(x + y * cube.order + z * cube.order * cube.order);
-    if (!cubelet) continue;
     // Whole-cube turns use a single central band rather than covering every sticker.
     if (layers.size === cube.order && coords[axis] !== Math.floor(half)) continue;
     for (const normal of normals) {
@@ -61,7 +60,7 @@ export function attachMoveHintArrows(cube: Cube, move: string, accent: string, s
         chevron.scale.setScalar(scale);
         chevron.updateMatrix();
         chevron.matrixAutoUpdate = false;
-        attached.push({ arrow: chevron, cubelet, local: cubelet.matrix.clone().invert().multiply(chevron.matrix), phase, colored: material === ink });
+        if (material === ink) coloredArrows.push({ arrow: chevron, phase });
         group.add(chevron);
       }
     }
@@ -75,26 +74,16 @@ export function attachMoveHintArrows(cube: Cube, move: string, accent: string, s
     ink.dispose();
     secondaryInk.dispose();
   };
-  const matrix = new Matrix4();
-
   return Object.assign(dispose, { update: (elapsedMs = 0) => {
     let changed = false;
-    const active = Object.values(cube.table.groups).flat().filter(slice => slice.cubelets.length > 0);
-    const turning = active.length > 0 || cube.twister.backlog > 0;
+    const turning = cube.twister.backlog > 0;
     if (group.visible === turning) { group.visible = !turning; changed = true; }
-    for (const { arrow, cubelet, local, phase, colored } of attached) {
-      if (secondary && colored && !turning) {
-        const tick = Math.floor(elapsedMs / 750) * Math.sign(angular[axis]);
+    if (secondary && !turning) {
+      const tick = Math.floor(elapsedMs / 750) * Math.sign(angular[axis]);
+      for (const { arrow, phase } of coloredArrows) {
         const material = ((phase - tick) % 2 + 2) % 2 === 0 ? ink : secondaryInk;
         if (arrow.material !== material) { arrow.material = material; changed = true; }
       }
-      matrix.multiplyMatrices(cubelet.matrix, local);
-      const slice = active.find(slice => slice.cubelets.includes(cubelet));
-      if (slice) matrix.premultiply(slice.matrix);
-      if (arrow.matrix.equals(matrix)) continue;
-      arrow.matrix.copy(matrix);
-      arrow.matrixWorldNeedsUpdate = true;
-      changed = true;
     }
     return !!secondary || changed;
   } });
