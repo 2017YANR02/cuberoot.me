@@ -30,6 +30,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
+import { reportRawMoves } from '@cuberoot/timer-ui/reconstruct/report-content';
 import { playbackMoveDurationTicks } from '@cuberoot/timer-ui/reconstruct/report-player';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
@@ -121,8 +122,13 @@ describe('同一个数不写两遍', () => {
   });
 
   it('废步只在动作序列里标记,不再额外显示汇总说明', () => {
-    expect(read(CONTENT)).toContain('wasted.has(i)');
-    expect(read(CONTENT)).toMatch(/reconstruct-move-row[^\n]*wasted/);
+    const rawList = reportRawMoves({
+      id: 'sample', event: '333', timeMs: 1000, ts: 0, penalty: 'ok', scramble: 'R',
+      moves: [{ m: 'R', ts: 0 }, { m: "R'", ts: 100 }, { m: 'U', ts: 200 }],
+    }, new Set([0, 1]), text => text.en);
+    const rows = rawList.children?.filter(node => node.id !== 'header');
+    expect(rows?.filter(node => node.className?.split(' ').includes('wasted')).map(node => node.id))
+      .toEqual(['0', '1']);
     expect(report).not.toMatch(/reconstruct-waste-line/);
   });
 });

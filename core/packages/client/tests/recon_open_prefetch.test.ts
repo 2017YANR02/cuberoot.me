@@ -129,7 +129,9 @@ describe('复盘打开路径:懒加载的都得先预取', () => {
     expect(modal).not.toMatch(/recon\/(?:oll|pll)-lookup/);
     expect(worker).toMatch(/runReconstructionAnalysis\(data/);
     const runner = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/reconstruct/analysis-runner')));
-    expect(runner).toMatch(/buildReconText\(text\)/);
+    expect(runner).toMatch(/await runReconstructionNotation\(data/);
+    const notation = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/reconstruct/analysis-notation')));
+    expect(notation).toMatch(/buildReconText\(text\)/);
   });
 
   it('预取推到空闲,且有上界 —— 一直不闲也不能干等', () => {
