@@ -40,7 +40,7 @@ html:has(.contract-reader) { scrollbar-gutter: auto; }
   flex: 0 0 auto;
   gap: 12px;
 }
-.contract-reader-actions select { inline-size: fit-content; }
+.contract-reader-version { inline-size: fit-content; }
 .contract-reader-actions time {
   color: var(--muted-foreground);
   font-size: .875rem;

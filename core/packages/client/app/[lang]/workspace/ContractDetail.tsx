@@ -103,7 +103,7 @@ function ContractViewer({contract}: {contract: Contract}) {
   return <>
     <ContractReaderToolbar title={contract.title}>
       <div className="contract-reader-actions">
-        {versions.length > 1 ? <select className="staff-input" aria-label={t('版本', 'Version')} value={version} onChange={event => setVersion(Number(event.target.value))} disabled={busy}>
+        {versions.length > 1 ? <select className="staff-input contract-reader-version" aria-label={t('版本', 'Version')} value={version} onChange={event => setVersion(Number(event.target.value))} disabled={busy}>
           {versions.map(item => <option key={item.version} value={item.version}>{revisionDate(item)}</option>)}
         </select> : revision && <time dateTime={revisionDate(revision)}>{revisionDate(revision)}</time>}
         <Button className="contract-reader-download" variant="secondary" aria-label={downloadLabel} disabled={busy || !revision} onClick={async () => {
