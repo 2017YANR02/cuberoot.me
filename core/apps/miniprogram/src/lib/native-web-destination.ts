@@ -17,7 +17,7 @@ export function nativeWebDestination(path: string): NativeWebDestination | null 
   if (bare === '/timer') return { method: 'switchTab', url: '/pages/timer/index' };
   if (bare === '/') return { method: 'switchTab', url: '/pages/tools/index' };
   const timerLink = parseNativeTimerLink(path);
-  if (timerLink && (timerLink.event || timerLink.scramble)) {
+  if (timerLink && (timerLink.event || timerLink.scramble || timerLink.roomCode || timerLink.replayInput)) {
     return { method: 'switchTab', url: '/pages/timer/index', timerLink };
   }
   return null;

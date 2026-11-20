@@ -1,13 +1,19 @@
 import { watch as watchSource } from 'node:fs';
-import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { appendFile, copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { basename, dirname, extname, join, relative, resolve } from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
+import { build } from 'esbuild';
 
-import { BUILD_ASSETS } from './build-assets.mjs';
+import { BUILD_ASSETS, DOUYIN_TIMER_VOICE_ASSETS } from './build-assets.mjs';
 import { buildWechatBundle } from './build-wechat-bundle.mjs';
 import { nativePdfPlugin } from './build-pdf-runtime.mjs';
-import { buildDouyinTabIcons } from './build-tab-icons.mjs';
+import { buildDouyinTabIcons, TIMER_PROJECT_ICONS } from './build-tab-icons.mjs';
+import { buildDouyinStageSolver } from './build-douyin-stage-solver.mjs';
+import { buildDouyinWcaScramble } from './build-douyin-wca-scramble.mjs';
+import { buildDouyinSq1Hint } from './build-douyin-sq1-hint.mjs';
+import { buildDouyinCountryFlags } from './build-douyin-country-flags.mjs';
 import { resolveProjectConfig } from './build-config.mjs';
 import {
   buildGraphInputFiles,
@@ -37,6 +43,8 @@ const stagingRoot = join(packageRoot, '.tmp', douyin ? 'dist-douyin-next' : 'dis
 const compileRoot = douyin
   ? join(packageRoot, '.tmp', 'dist-douyin-wechat-next')
   : stagingRoot;
+const douyinWorkersDirectory = 'workers';
+const douyinTimerWorker = `${douyinWorkersDirectory}/timer.js`;
 const converterLogRoot = join(packageRoot, '.tmp', 'wx-to-tt-log');
 const backupRoot = join(packageRoot, '.tmp', douyin ? 'dist-douyin-previous' : 'dist-previous');
 const projectConfigPath = join(packageRoot, douyin ? 'project.douyin.config.json' : 'project.config.json');
@@ -74,14 +82,22 @@ async function prepareOutput(sourceFiles) {
     .map(async (file) => {
       const output = join(compileRoot, relative(sourceRoot, file));
       await mkdir(dirname(output), { recursive: true });
-      const page = relative(sourceRoot, file).replaceAll('\\', '/').match(/^pages\/(timer|tools|web)\/index\.wxml$/)?.[1];
+      const path = normalizedRelativePath(sourceRoot, file);
+      if (douyin && path === 'app.json') {
+        const appConfig = JSON.parse(await readFile(file, 'utf8'));
+        appConfig.workers = douyinWorkersDirectory;
+        await writeFile(output, `${JSON.stringify(appConfig, null, 2)}\n`, 'utf8');
+        return;
+      }
+      const page = path.match(/^pages\/(timer|tools|web)\/index\.wxml$/)?.[1];
       if (douyin && page) {
         await writeFile(output, `<include src="../../templates/native-${page}.wxml" />\n`);
         return;
       }
       await copyFile(file, output);
     }));
-  await Promise.all(BUILD_ASSETS.map(async (asset) => {
+  const assets = douyin ? [...BUILD_ASSETS, ...DOUYIN_TIMER_VOICE_ASSETS] : BUILD_ASSETS;
+  await Promise.all(assets.map(async (asset) => {
     const output = join(compileRoot, asset.output);
     await mkdir(dirname(output), { recursive: true });
     await copyFile(asset.source, output);
@@ -94,6 +110,22 @@ function entryPoints(sourceFiles) {
     if (basename(file) === 'app.ts') return true;
     const sourcePath = relative(sourceRoot, file).replaceAll('\\', '/');
     return /^pages\/[^/]+\/index\.ts$/.test(sourcePath);
+  });
+}
+
+/** Worker code cannot require chunks placed outside its declared directory. */
+function buildNativeTimerWorker() {
+  return build({
+    absWorkingDir: packageRoot,
+    entryPoints: [join(sourceRoot, 'workers', 'timer.ts')],
+    outfile: join(compileRoot, douyinTimerWorker),
+    bundle: true,
+    format: 'cjs',
+    external: ['./stage-solver.js', './wca-scramble.js', './sq1-hint.js'],
+    minify: true,
+    metafile: true,
+    platform: 'browser',
+    target: 'chrome91',
   });
 }
 
@@ -130,6 +162,7 @@ async function buildProject() {
   const buildResult = await buildWechatBundle({
     absWorkingDir: packageRoot,
     bundle: true,
+    conditions: ['module', 'cuberoot-miniprogram'],
     inject: [join(sourceRoot, 'lib/native-timer-runtime.ts')],
     entryPoints: entryPoints(sourceFiles),
     format: 'iife',
@@ -151,9 +184,29 @@ async function buildProject() {
     },
     plugins:[nativePdfPlugin(packageRoot)],
   });
-  const graphInputFiles = buildGraphInputFiles(packageRoot, buildResult.metafile);
+  const workerBuild = douyin ? await buildNativeTimerWorker() : undefined;
+  const graphInputFiles = buildGraphInputFiles(packageRoot, {
+    inputs: { ...buildResult.metafile.inputs, ...workerBuild?.metafile.inputs },
+  });
   if (douyin) {
+    graphInputFiles.push(...TIMER_PROJECT_ICONS, ...DOUYIN_TIMER_VOICE_ASSETS.map(asset => asset.source));
     await convertToDouyin();
+    for (const stylesheet of ['segment-font.css', 'solo-stage.css', 'liberation-mono.css', 'classic-appearance.css']) {
+      const source = new URL(import.meta.resolve(`@cuberoot/shared/timer/${stylesheet}`));
+      let css = await readFile(source, 'utf8');
+      if (stylesheet === 'liberation-mono.css') {
+        const font = new URL('./assets/LiberationMono-Regular.ttf', source);
+        const data = await readFile(font);
+        css = css.replace('./assets/LiberationMono-Regular.ttf', `data:font/ttf;base64,${data.toString('base64')}`);
+        graphInputFiles.push(fileURLToPath(font));
+      }
+      await appendFile(join(stagingRoot, 'pages/timer/index.ttss'), `\n${css}`);
+      graphInputFiles.push(fileURLToPath(source));
+    }
+    graphInputFiles.push(...await buildDouyinStageSolver(stagingRoot));
+    graphInputFiles.push(...await buildDouyinWcaScramble(stagingRoot));
+    graphInputFiles.push(...await buildDouyinSq1Hint(stagingRoot));
+    graphInputFiles.push(...await buildDouyinCountryFlags(stagingRoot));
     await normalizeDouyinAppConfig();
     await writeFile(join(stagingRoot, 'project.config.json'), `${JSON.stringify(config, null, 2)}\n`, 'utf8');
     await validateDouyinOutput();
@@ -167,7 +220,7 @@ async function buildProject() {
   });
   {
     await writeBuildState(packageRoot, {
-      bundleInputs: Object.fromEntries(Object.entries(buildResult.metafile.outputs).map(([path, output]) => [
+      bundleInputs: Object.fromEntries(Object.entries({ ...buildResult.metafile.outputs, ...workerBuild?.metafile.outputs }).map(([path, output]) => [
         normalizedRelativePath(compileRoot, resolve(packageRoot, path)),
         Object.keys(output.inputs).map(input => normalizedRelativePath(packageRoot, resolve(packageRoot, input))),
       ])),
@@ -209,12 +262,16 @@ async function normalizeDouyinAppConfig() {
   // Douyin privacy-related capabilities (including Bluetooth) must enter the
   // platform privacy authorization flow before the native API is invoked.
   normalized.usePrivacyCheck = true;
+  normalized.permission = {
+    ...normalized.permission,
+    'scope.record': { desc: '用于在本机解码 Stackmat 计时器的音频信号' },
+  };
   normalized.pages = normalized.pages.filter(page => page !== 'pages/training/index' && page !== 'pages/membership/index');
   normalized.tabBar.list = normalized.tabBar.list.filter(tab => tab.pagePath !== 'pages/training/index');
   await rm(join(stagingRoot, 'pages/training'), { recursive: true, force: true });
   // No Douyin page uses the WeChat-only web container after native routing.
   await rm(join(stagingRoot, 'templates/web-route-view.ttml'), { force: true });
-  normalized.tabBar.list = await buildDouyinTabIcons(stagingRoot, normalized.tabBar);
+  normalized.tabBar.list = (await buildDouyinTabIcons(stagingRoot, normalized.tabBar)).map(tab => ({ ...tab, text: '' }));
   await writeFile(appConfigPath, `${JSON.stringify(normalized, null, 2)}\n`, 'utf8');
   await Promise.all([
     rm(themePath, { force: true }),
@@ -230,6 +287,13 @@ async function validateDouyinOutput() {
     throw new Error(`抖音产物残留微信模板：${normalizedRelativePath(stagingRoot, forbiddenFile)}`);
   }
   const appConfig = JSON.parse(await readFile(join(stagingRoot, 'app.json'), 'utf8'));
+  if (appConfig.workers !== douyinWorkersDirectory || !files.includes(join(stagingRoot, douyinTimerWorker))) {
+    throw new Error('抖音原生计时 Worker 未打包并注册');
+  }
+  const timerWorkerCode = await readFile(join(stagingRoot, douyinTimerWorker), 'utf8');
+  if (/\brequire\(\s*["']\.\.\//.test(timerWorkerCode)) {
+    throw new Error('抖音原生计时 Worker 引用了未注册目录的代码');
+  }
   const nativePages = [
     'pages/timer/index', 'pages/tools/index', 'pages/account/index',
     'pages/smart-cube/index', 'pages/external-timer/index', 'pages/privacy/index', 'pages/contact/index', 'pages/account-link/index', 'pages/account-delete/index', 'pages/account-settings/index',

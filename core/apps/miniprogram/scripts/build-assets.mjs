@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+import { TIMER_INSPECTION_VOICE_COPY, TIMER_INSPECTION_VOICE_PHRASES } from '@cuberoot/shared/timer/sound-feedback';
 
 const contactAssetNames = [
   'author.png',
@@ -44,3 +45,10 @@ export const BUILD_ASSETS = [
     output: `assets/contact/${name}`,
   })),
 ];
+
+export const DOUYIN_TIMER_VOICE_ASSETS = Object.keys(TIMER_INSPECTION_VOICE_COPY)
+  .filter((voice) => voice !== 'none')
+  .flatMap((voice) => Object.keys(TIMER_INSPECTION_VOICE_PHRASES).map((cue) => {
+    const output = `assets/timer-voice/${voice}-${cue}.mp3`;
+    return { source: resolve(import.meta.dirname, '..', output), output };
+  }));

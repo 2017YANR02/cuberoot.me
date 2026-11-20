@@ -213,6 +213,9 @@ describe('mini program build graph state', () => {
 
     expect(() => buildGraphInputFiles(packageRoot, { inputs: { '<stdin>': {} } }))
       .toThrow('not file-backed');
+    expect(buildGraphInputFiles(packageRoot, { inputs: { '(disabled):fs': { bytes: 0, imports: [] } } })).toEqual([]);
+    expect(() => buildGraphInputFiles(packageRoot, { inputs: { '(disabled):fs': { bytes: 1, imports: [] } } }))
+      .toThrow('not file-backed');
     expect(() => buildGraphInputFiles(packageRoot, { inputs: { '../../../AGENTS.md': {} } }))
       .toThrow('outside the core workspace');
     expect(() => buildGraphInputFiles(packageRoot, { inputs: { 'dist/app.js': {} } }))

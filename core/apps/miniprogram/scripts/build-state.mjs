@@ -9,6 +9,8 @@ import {
 } from 'node:path';
 
 import { BUILD_ASSETS } from './build-assets.mjs';
+import { DOUYIN_STAGE_SOLVER_INPUTS } from './build-douyin-stage-solver.mjs';
+import { DOUYIN_SQ1_HINT_INPUTS } from './build-douyin-sq1-hint.mjs';
 
 export const BUILD_STATE_VERSION = 3;
 
@@ -58,6 +60,7 @@ function uniqueFiles(root, files) {
 function assertAllowedBuildGraphInput(packageRoot, file) {
   const workspaceRoot = resolve(packageRoot, '..', '..');
   if (!pathIsWithin(workspaceRoot, file)) {
+    if (DOUYIN_STAGE_SOLVER_INPUTS.includes(file) || DOUYIN_SQ1_HINT_INPUTS.includes(file)) return;
     throw new Error(`Build graph input is outside the core workspace: ${file}`);
   }
   const workspacePath = normalizedRelativePath(workspaceRoot, file);
@@ -75,13 +78,16 @@ export function buildGraphInputFiles(packageRoot, metafile) {
     throw new TypeError('esbuild metafile inputs are required.');
   }
 
-  const files = Object.keys(metafile.inputs).map((input) => {
-    if (input.startsWith('<')) {
+  const files = Object.entries(metafile.inputs).flatMap(([input, metadata]) => {
+    // esbuild records an empty stub for dependencies whose browser map is false.
+    // The importing files and lockfile still fingerprint that resolution.
+    if (input.startsWith('(disabled):') && metadata.bytes === 0 && !metadata.imports?.length) return [];
+    if (input.startsWith('<') || input.startsWith('(disabled):')) {
       throw new Error(`Build graph input is not file-backed: ${input}`);
     }
     const file = resolve(packageRoot, input);
     assertAllowedBuildGraphInput(packageRoot, file);
-    return file;
+    return [file];
   });
   return uniqueFiles(packageRoot, files);
 }

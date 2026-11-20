@@ -1,4 +1,4 @@
-import { miniProgramApi } from './platform';
+import { isDouyinMiniProgram, miniProgramApi } from './platform';
 
 export type MiniProgramLocale = 'en' | 'zh';
 
@@ -57,6 +57,7 @@ export function localizedWebsitePath(href: string): string {
 }
 
 export function applyLocalizedTabBar(): void {
+  if (isDouyinMiniProgram()) return; // The generated native tabs display only their icons.
   const labels = [
     tr({ en: 'Timer', zh: '计时' }),
     tr({ en: 'Tools', zh: '工具' }),

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { NativeTimer } from '../src/lib/native-timer';
+import { isTimedWcaEvent } from '@cuberoot/shared/timer/seeded/wca';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { createTimerStoreData, decodeTimerStoreData } from '@cuberoot/shared/timer/persistence';
 import { nativeTimerPreview } from '../src/lib/native-timer-preview';
@@ -8,6 +9,8 @@ import { renderUnfoldedSvgForEvent } from '@cuberoot/shared/cube-unfolded-svg';
 import { exportTimerCstimerJson } from '@cuberoot/shared/timer/export-cstimer';
 import { createWcaScramblePool } from '@cuberoot/shared/timer/wca-scramble-pool';
 import { createTimerWcaDifficultyDataAdapter } from '@cuberoot/shared/timer/wca-difficulty-data';
+import { timerGoalProgress, timerRoundProgress, timerTargetIndicator } from '@cuberoot/shared/timer/training-view';
+import { timerAttemptSplitChips } from '@cuberoot/shared/timer/attempt-splits';
 
 function fixture() {
   const data = new Map<string, unknown>();
@@ -21,6 +24,91 @@ function fixture() {
 function start(timer: NativeTimer) { timer.down(); timer.dispatch({ type: 'hold-ready' }); timer.up(); }
 
 describe('native timer adapter', () => {
+  it('marks CFOP stages and blind memo on the attempt clock and saves them to history', () => {
+    const { timer, at, storage } = fixture();
+    const chips = () => timerAttemptSplitChips(timer.attemptSplitState, timer.attemptSplitOptions, 2, copy => copy.zh, true);
+    timer.setManualScrambles('R U\nF2\nD2');
+    timer.updateSettings({ multiStage: true });
+    timer.markAttemptSplit('cross');
+    start(timer);
+    expect(chips().stages.map(chip => chip.label)).toEqual(['十字', 'F2L', 'OLL']);
+    at(2000);
+    timer.markAttemptSplit('cross');
+    at(2900);
+    timer.markAttemptSplit('cross');
+    timer.markAttemptSplit('f2l');
+    expect(chips().stages[0]).toMatchObject({ time: '1.00', action: false });
+    at(4500);
+    timer.markAttemptSplit('oll');
+    at(6000);
+    timer.down();
+    expect(timer.records[0].stages).toEqual({ cross: 1000, f2l: 1900, oll: 3500, pll: 5000 });
+
+    timer.selectEvent('333bld');
+    timer.setManualScrambles('R U\nF2');
+    at(10000);
+    start(timer);
+    expect(chips()).toMatchObject({ stages: [], memo: [{ key: 'memo', action: true }] });
+    at(14000);
+    timer.markAttemptSplit('memo');
+    expect(chips().memo).toMatchObject([{ time: '4.00', action: false }, { key: 'executing' }]);
+    at(19000);
+    timer.down();
+    expect(timer.attemptSplitState).toEqual({ stages: {} });
+    const reopened = new NativeTimer(storage);
+    expect(reopened.records.find(solve => solve.event === '333bld')).toMatchObject({ bld: { memoMs: 4000 }, timeMs: 9000 });
+    expect(reopened.records.find(solve => solve.event === '333')).toMatchObject({ stages: { cross: 1000, pll: 5000 } });
+    reopened.dispose();
+    timer.dispose();
+  });
+
+  it('shows target, daily goals and round progress from actual timer history and keeps the new-round boundary', () => {
+    const { timer, at, storage } = fixture();
+    const zh = (copy: { zh: string }) => copy.zh;
+    const panel = () => timerRoundProgress(timer.trainingRoundSolves, timer.settings.round, timer.settings.targetMsByEvent['333'] ?? null, '333', 2, zh);
+    timer.setManualScrambles('R U\nF2\nD2\nL2');
+    timer.updateSettings({ targetMsByEvent: { '333': 9500 }, dailySolveGoal: 2,
+      round: { ...timer.settings.round, on: true, format: 'mo3', cutoffMs: 10000, cutoffAttempts: 1, limitMs: 30000, cumulative: true } });
+    start(timer);
+    at(11000);
+    expect(timerTargetIndicator(9500, timer.displayMilliseconds(), zh)).toMatchObject({ overshot: true, delta: '-0.50s' });
+    timer.down();
+    expect(panel()).toMatchObject({ count: '1/3', status: '未过关', reset: '新一轮' });
+    timer.startTrainingRound();
+    expect(panel()).toMatchObject({ count: '0/3', status: '待开始' });
+    timer.manualEntry('9');
+    expect(panel()).toMatchObject({ count: '1/3', status: '进行中', budget: { label: '累计余额 21.00' } });
+    expect(timerGoalProgress(timer.records, timer.settings.dailySolveGoal)).toMatchObject({ count: 2, reached: true, percent: 100 });
+    const reopened = new NativeTimer(storage);
+    expect(reopened.settings).toMatchObject({ targetMsByEvent: { '333': 9500 }, dailySolveGoal: 2, round: { on: true, format: 'mo3', cumulative: true } });
+    expect(reopened.trainingRoundSolves).toHaveLength(2);
+    reopened.dispose();
+    timer.dispose();
+  });
+
+  it('shares the live clock and current group without exposing private notes', () => {
+    const { timer, at } = fixture();
+    try {
+      timer.setManualScrambles('R U');
+      const empty = timer.liveShareSnapshot();
+      expect(empty).toMatchObject({ state: { scramble: 'R U', phase: 'idle' }, history: [] });
+      start(timer);
+      at(1680);
+      expect(timer.liveShareSnapshot().state).toMatchObject({ phase: 'running', elapsedMs: 680 });
+      timer.down();
+      const completed = timer.liveShareSnapshot();
+      const solve = timer.records[0];
+      expect(completed.history).toMatchObject([{ id: solve.id, timeMs: 680 }]);
+      expect(timer.liveShareSnapshot().history).toBe(completed.history);
+      timer.updateComment(solve.id, 'private');
+      expect(timer.liveShareSnapshot().history[0]).not.toHaveProperty('comment');
+      expect(timer.liveShareDetail(solve.id, completed.state.context)).not.toHaveProperty('comment');
+      timer.createSession('Second group');
+      expect(timer.liveShareSnapshot()).toMatchObject({ state: { sessionName: 'Second group' }, history: [] });
+      expect(timer.liveShareDetail(solve.id, completed.state.context)).toBeNull();
+    } finally { timer.releaseLiveShare(); timer.dispose(); }
+  });
+
   it('uses the same dated solve set for statistics and distribution without counting DNF as finite', () => {
     const { timer } = fixture();
     const now = 1_800_000_000_000;
@@ -76,6 +164,19 @@ describe('native timer adapter', () => {
     expect(timer.records).toHaveLength(1); timer.dispose();
   });
 
+  it('preserves a manual solve when a pending external link drops', () => {
+    const { timer, at } = fixture();
+    timer.setManualScrambles('R U');
+    start(timer);
+    timer.receiveExternal({ type: 'status', phase: 'disconnected' });
+    timer.receiveExternal({ type: 'timer', event: { state: 'DISCONNECT' } });
+    expect(timer.state.phase).toBe('running');
+    at(4000);
+    timer.down();
+    expect(timer.records.map(result => [result.timeMs, result.penalty])).toEqual([[3000, 'ok']]);
+    timer.dispose();
+  });
+
   it('keeps late official responses out of a newly selected manual source', async () => {
     let deliver!: (value: { ok: boolean; status: number; json(): Promise<unknown> }) => void;
     const fetcher = () => new Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>(resolve => { deliver = resolve; });
@@ -89,7 +190,30 @@ describe('native timer adapter', () => {
     expect(timer.scramble).toBe('D2'); expect(timer.currentSource).toBe('manual');
     expect(timer.sourceLine).toBe(''); timer.dispose();
   });
-  it.each(nativeTimerEvents())('draws $id locally', (event) => {
+
+  it('sends the selected cross difficulty to the official scramble pool', async () => {
+    const fetcher = vi.fn(async (_url: string) => ({
+      ok: true, status: 200, json: async () => ({
+        scrambles: [{ scramble: 'R U', ci: 'Fixture2026', cn: 'Fixture', e: '333', r: '1', g: 'A', n: 1, x: 0 }],
+      }),
+    }));
+    const pool = createWcaScramblePool({ apiUrl: path => path, fetcher, loadCompetition: async () => [], loadExamples: async () => null,
+      difficulty: createTimerWcaDifficultyDataAdapter({ apiUrl: path => path, statsUrl: path => path, fetcher }), storage: () => null });
+    const { storage } = fixture();
+    const timer = new NativeTimer(storage, () => 1000, pool);
+    try {
+      timer.updateSettings({ wcaDifficultyOn: true, wcaDiffVariant: 'std', wcaDiffStage: 'cross', wcaDiffSteps: [4, 5, 6] });
+      timer.useWcaScrambles();
+      await vi.waitFor(() => expect(timer.scramble).toBe('R U'));
+      const request = fetcher.mock.calls.find(([url]) => url.startsWith('/v1/wca/scrambles/random?'))?.[0];
+      const query = new URL(request ?? '/', 'https://example.test').searchParams;
+      expect(query.get('variant')).toBe('std');
+      expect(query.get('stage')).toBe('cross');
+      expect(query.get('steps')).toBe('4,5,6');
+    } finally { timer.dispose(); }
+  });
+
+  it.each(nativeTimerEvents().filter(({ id }) => isTimedWcaEvent(id) || id === '333fm'))('draws $id locally', (event) => {
     const { timer } = fixture();
     try {
       timer.selectEvent(event.id);
@@ -221,6 +345,8 @@ describe('native timer adapter', () => {
 
   it('arms only on matching cube state, starts on first move and stops on solved state', () => {
     const { timer, at } = fixture();
+    timer.setManualScrambles('F R U');
+    timer.updateSettings({ multiStage: true });
     timer.receiveCube({ type: 'move', move: 'R', deviceTs: 1000 });
     expect(timer.state.phase).toBe('idle');
     timer.receiveCube({ type: 'status', phase: 'connecting', brand: 'gan-v4' });
@@ -236,6 +362,7 @@ describe('native timer adapter', () => {
     expect(timer.records[0].penalty).toBe('ok');
     expect(timer.records[0].moves?.map(m => m.m)).toEqual(inverse);
     expect(timer.records[0].moves?.[0].ts).toBe(0);
+    expect(timer.records[0].stages).toEqual({ cross: 100, f2l: 100, oll: 100, pll: 200 });
   });
 
   it('uses device move time for batched BLE turns rather than notification arrival time', () => {

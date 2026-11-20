@@ -4,7 +4,7 @@ import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
 import { DOUYIN_CONTENT_BOOTSTRAP } from '@/lib/douyin-content-bootstrap';
 
 describe('Douyin public tool scope', () => {
-  it.each(['/zh', '/timer?event=333&players=1', '/timer?source=manual', '/zh/timer?event=333bld', '/wca/comp/Test', '/account', '/privacy'])('keeps tool destination %s', path => {
+  it.each(['/zh', '/timer?event=333&players=1', '/timer?source=manual', '/zh/timer?event=333bld', '/timer?event=radiofathom', '/wca/comp/Test', '/account', '/privacy'])('keeps tool destination %s', path => {
     expect(douyinContentAvailable(path)).toBe(true);
   });
   it.each(['/alg/3x3/zbll/run', '/zh/learn', '/courses', '/predict', '/timer?training=home', '/timer?train.sets=oll', '/timer?trainingAssignment=1', '/timer?event=oll', '/timer?event=cross', '/timer?players=net', '/timer?hints=true', '/timer?room=123', '/%61lg/3x3/pll', 'https://other.example/learn',

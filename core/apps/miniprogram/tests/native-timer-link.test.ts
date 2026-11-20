@@ -5,7 +5,10 @@ import { NativeTimer } from '../src/lib/native-timer';
 afterEach(() => { vi.unstubAllGlobals(); });
 it('decodes only supported event/scramble parameters, without losing duplicate or unknown options', () => {
   expect(parseNativeTimerLink('/zh/timer?event=222&scramble=R+U%27')).toEqual({ event: '222', scramble: "R U'" });
-  for (const path of ['/timer?event=222&event=333', '/timer?event=333fm', '/timer?x=1', '/timer?event=%', '/timer?event=222#settings', '/timer?scramble=R%0AU', '/timer?scramble=']) {
+  expect(parseNativeTimerLink('/timer?event=333fm&scramble=R+U%27')).toEqual({ event: '333fm', scramble: "R U'" });
+  expect(parseNativeTimerLink('/timer?event=333mbld')).toEqual({ event: '333mbld' });
+  expect(parseNativeTimerLink('/timer?event=radiofathom')).toEqual({ event: 'radiofathom' });
+  for (const path of ['/timer?event=222&event=333', '/timer?event=333mbld&scramble=R', '/timer?event=oll', '/timer?x=1', '/timer?event=%', '/timer?event=222#settings', '/timer?scramble=R%0AU', '/timer?scramble=']) {
     expect(parseNativeTimerLink(path), path).toBeNull();
   }
 });

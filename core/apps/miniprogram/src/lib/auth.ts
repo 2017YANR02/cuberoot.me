@@ -162,6 +162,7 @@ interface JsonRequestOptions {
     body?: WechatMiniprogram.IAnyObject;
     timeoutMs?: number;
     token?: string;
+    headers?: Record<string, string>;
     idempotencyKey?: string;
     signal?: AbortSignal;
     onResponseHeaders?: (headers: Record<string, unknown>) => void;
@@ -183,7 +184,7 @@ function requestNativeJson<T>(url: string, options: JsonRequestOptions): Promise
     let settled = false;
     let hardTimeout: RuntimeTimer | null = null;
     const timeoutMs = options.timeoutMs ?? REQUEST_TIMEOUT_MS;
-    const header: Record<string, string> = { 'Content-Type': 'application/json' };
+    const header: Record<string, string> = { ...options.headers, 'Content-Type': 'application/json' };
     if (options.token) header.Authorization = `Bearer ${options.token}`;
     if (options.idempotencyKey) header['Idempotency-Key'] = options.idempotencyKey;
     const settle = (action: () => void) => {

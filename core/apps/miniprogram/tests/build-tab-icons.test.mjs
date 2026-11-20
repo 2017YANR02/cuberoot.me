@@ -33,7 +33,7 @@ describe('Douyin native tab assets', () => {
       expect(tab).toMatchObject(original.list[index]);
       const buffers = [];
       for (const path of [tab.iconPath, tab.selectedIconPath]) {
-        expect(path).toMatch(/^assets\/tabbar\/[a-z-]+\.png$/);
+        expect(path).toMatch(/^assets\/tabbar\/[a-z\d-]+\.png$/);
         paths.add(path);
         const buffer = await readFile(join(directory, path));
         buffers.push(buffer);
@@ -46,6 +46,10 @@ describe('Douyin native tab assets', () => {
       expect(buffers[0].equals(buffers[1])).toBe(false);
     }
     expect(paths.size).toBe(6);
+    for (const icon of ['project-magic', 'project-unofficial-666bf', 'project-puzzle-radiofathom']) {
+      const path = join(directory, `assets/tabbar/${icon}.png`);
+      expect(await sharp(path).metadata()).toMatchObject({ format: 'png', width: 81, height: 81 });
+    }
     expect(await readFile(join(directory, 'assets/tabbar/LICENSE.txt'), 'utf8')).toContain('ISC');
   });
 

@@ -1,10 +1,8 @@
 import { trimTrailingCharacter } from './string-utils';
+import { TIMER_ORDINARY_EVENT_IDS } from './timer/event-catalog';
 
 /** Public Douyin product scope, applied to every user and every release channel. */
-export const DOUYIN_BASIC_TIMER_EVENTS: readonly string[] = [
-  '222', '333', '444', '555', '666', '777', '333oh', '333bld', '444bld', '555bld',
-  '333fm', '333mbld', 'clock', 'mega', 'pyra', 'skewb', 'sq1',
-];
+export const DOUYIN_BASIC_TIMER_EVENTS: readonly string[] = TIMER_ORDINARY_EVENT_IDS;
 
 /** Keep a small tool surface; teaching and drill routes are not part of this product. */
 export function douyinContentAvailable(href: string): boolean {
