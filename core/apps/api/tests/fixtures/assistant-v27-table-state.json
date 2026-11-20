@@ -1,0 +1,190 @@
+[
+  {
+    "key": "2/after/H06",
+    "case": {
+      "id": "H06",
+      "category": "plan",
+      "lang": "zh",
+      "history": [],
+      "question": "我的词表是 apple=苹果、river=河流。安排三项词汇练习，每项两步，每步给动作、理由和时长，全部最多6分钟。",
+      "expected": "Three genuine practice activities with two children each, total <=360 seconds, existing two pairs, materials/hidden answers and zero errors coherent."
+    },
+    "model": {
+      "answer": "",
+      "sourceIds": [],
+      "answerKind": "general",
+      "plan": {
+        "inputs": [
+          {
+            "id": "word_list",
+            "quote": "我的词表是 apple=苹果、river=河流。"
+          }
+        ],
+        "activities": [
+          {
+            "title": "看词说义",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "在纸上画两列，左列写 apple、river，右列写苹果、河流，做成词义对照表；若已有现成词表则直接沿用。",
+                "reason": "先准备好本次练习要用的词义对照表，后面才能遮住释义自测。",
+                "seconds": 30,
+                "requires": [],
+                "produces": [
+                  "word_list"
+                ]
+              },
+              {
+                "action": "遮住右列释义，逐个看左列单词并口头说出中文意思，说完立刻揭开核对，再重新遮住右列，然后进行下一个单词。",
+                "reason": "先回忆再核对能检验真实记忆，每次核对后重新遮住可避免依赖答案。",
+                "seconds": 90,
+                "requires": [
+                  "word_list"
+                ],
+                "produces": []
+              }
+            ]
+          },
+          {
+            "title": "看义写词",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "把词义对照表翻到释义一侧，遮住左列单词，只露出苹果、河流。",
+                "reason": "遮住单词才能从中文意思主动回忆英文拼写。",
+                "seconds": 20,
+                "requires": [
+                  "word_list"
+                ],
+                "produces": []
+              },
+              {
+                "action": "逐个看中文释义，在纸上写出对应英文单词，写完揭开左列核对拼写，再重新遮住左列，然后进行下一个释义。",
+                "reason": "书写加核对能强化拼写记忆，核对后重新遮住可保证每次都是独立回忆。",
+                "seconds": 100,
+                "requires": [
+                  "word_list"
+                ],
+                "produces": []
+              }
+            ]
+          },
+          {
+            "title": "混合自测",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "把词义对照表的两列都遮住，只留出答题位置，准备按随机顺序自测。",
+                "reason": "两列都遮住可避免任何提示，检验双向记忆。",
+                "seconds": 20,
+                "requires": [
+                  "word_list"
+                ],
+                "produces": []
+              },
+              {
+                "action": "随机选一个单词或释义，看单词时口头说中文、看中文时在纸上写英文，每次作答后揭开对应列核对，再重新遮住两列，然后进行下一题。",
+                "reason": "混合方向自测能巩固词形与词义的双向联结，核对后重新遮住保证独立回忆。",
+                "seconds": 100,
+                "requires": [
+                  "word_list"
+                ],
+                "produces": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "answer": "1. 看词说义 (120 秒)\n  - 30 秒: 在纸上画两列，左列写 apple、river，右列写苹果、河流，做成词义对照表；若已有现成词表则直接沿用。 先准备好本次练习要用的词义对照表，后面才能遮住释义自测。\n  - 90 秒: 遮住右列释义，逐个看左列单词并口头说出中文意思，说完立刻揭开核对，再重新遮住右列，然后进行下一个单词。 先回忆再核对能检验真实记忆，每次核对后重新遮住可避免依赖答案。\n2. 看义写词 (120 秒)\n  - 20 秒: 把词义对照表翻到释义一侧，遮住左列单词，只露出苹果、河流。 遮住单词才能从中文意思主动回忆英文拼写。\n  - 100 秒: 逐个看中文释义，在纸上写出对应英文单词，写完揭开左列核对拼写，再重新遮住左列，然后进行下一个释义。 书写加核对能强化拼写记忆，核对后重新遮住可保证每次都是独立回忆。\n3. 混合自测 (120 秒)\n  - 20 秒: 把词义对照表的两列都遮住，只留出答题位置，准备按随机顺序自测。 两列都遮住可避免任何提示，检验双向记忆。\n  - 100 秒: 随机选一个单词或释义，看单词时口头说中文、看中文时在纸上写英文，每次作答后揭开对应列核对，再重新遮住两列，然后进行下一题。 混合方向自测能巩固词形与词义的双向联结，核对后重新遮住保证独立回忆。"
+  },
+  {
+    "key": "1/before/H10",
+    "case": {
+      "id": "H10",
+      "category": "followup",
+      "lang": "en",
+      "history": [
+        {
+          "role": "user",
+          "content": "Plan two vocabulary activities with two timed substeps each, at most four minutes total. Use my word list."
+        },
+        {
+          "role": "assistant",
+          "content": "1. Recall meanings for two minutes. 2. Recall words for two minutes."
+        }
+      ],
+      "question": "Make it one paragraph instead, keeping the same total time.",
+      "expected": "One paragraph, no numbered headings; inherited 4-minute limit and material/practice constraints remain."
+    },
+    "model": {
+      "answer": "",
+      "sourceIds": [],
+      "answerKind": "general",
+      "plan": {
+        "inputs": [
+          {
+            "id": "word_list",
+            "quote": "Use my word list."
+          }
+        ],
+        "activities": [
+          {
+            "title": "Meaning recall",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "Write each word from your list in the WORD column of a two-column WORD / MEANING list, filling the MEANING column with the meaning you already know; if any word has no known meaning, stop and ask for it rather than inventing one.",
+                "reason": "A complete reference list is needed before the meaning column can be covered for practice.",
+                "seconds": 40,
+                "requires": [
+                  "word_list"
+                ],
+                "produces": [
+                  "word_meaning_list"
+                ]
+              },
+              {
+                "action": "Cover the MEANING column, read each word, say its meaning aloud, uncover to check, then cover the MEANING column again before the next word; if the list is empty, finish this activity.",
+                "reason": "Recalling each meaning before checking strengthens retrieval and re-hiding the column prevents copying.",
+                "seconds": 80,
+                "requires": [
+                  "word_meaning_list"
+                ],
+                "produces": []
+              }
+            ]
+          },
+          {
+            "title": "Word recall",
+            "seconds": 120,
+            "steps": [
+              {
+                "action": "Cover the WORD column of the same list, read each meaning, write the matching word on paper, then uncover to check; if the list is empty, finish this activity.",
+                "reason": "Producing the word from its meaning tests recall in the opposite direction.",
+                "seconds": 80,
+                "requires": [
+                  "word_meaning_list"
+                ],
+                "produces": [
+                  "written_attempts"
+                ]
+              },
+              {
+                "action": "Cover the WORD column again, re-attempt any word you missed on paper, uncover to check, then cover the WORD column again before the next item; if there were zero misses, finish this activity.",
+                "reason": "A second attempt on missed items targets the weakest words while keeping the reference hidden until each attempt is recorded.",
+                "seconds": 40,
+                "requires": [
+                  "word_meaning_list",
+                  "written_attempts"
+                ],
+                "produces": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "answer": "Meaning recall (120 seconds): Step 1 (40 seconds): Write each word from your list in the WORD column of a two-column WORD / MEANING list, filling the MEANING column with the meaning you already know; if any word has no known meaning, stop and ask for it rather than inventing one. A complete reference list is needed before the meaning column can be covered for practice. Step 2 (80 seconds): Cover the MEANING column, read each word, say its meaning aloud, uncover to check, then cover the MEANING column again before the next word; if the list is empty, finish this activity. Recalling each meaning before checking strengthens retrieval and re-hiding the column prevents copying. Word recall (120 seconds): Step 1 (80 seconds): Cover the WORD column of the same list, read each meaning, write the matching word on paper, then uncover to check; if the list is empty, finish this activity. Producing the word from its meaning tests recall in the opposite direction. Step 2 (40 seconds): Cover the WORD column again, re-attempt any word you missed on paper, uncover to check, then cover the WORD column again before the next item; if there were zero misses, finish this activity. A second attempt on missed items targets the weakest words while keeping the reference hidden until each attempt is recorded."
+  }
+]

@@ -1,0 +1,624 @@
+[
+  {
+    "id": "AD01",
+    "question": "刚才先看，现在可以慢转了。给两项各有时长的练习，还是用那个熟悉局面。先用会的逆动作找回局面，目视核对目标槽和两块所在位置，无误后才插入。假如摆不成，两项的备用练法分别用会的转动做不同的事。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "本轮只有两分十七秒。我想重练一个学过的插入局面，但未必能摆出来，暂时不转动魔方。"
+      },
+      {
+        "role": "assistant",
+        "content": "先保持魔方不动。"
+      }
+    ],
+    "calls": [
+      2,
+      3,
+      38,
+      39
+    ],
+    "drafts": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "familiar_case",
+              "quote": "还是用那个熟悉局面。先用会的逆动作找回局面，目视核对目标槽和两块所在位置，无误后才插入。"
+            },
+            {
+              "id": "fallback_rule",
+              "quote": "假如摆不成，两项的备用练法分别用会的转动做不同的事。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "逆动作找回熟悉局面并插入",
+              "seconds": 70,
+              "steps": [
+                {
+                  "action": "选一个自己会的插入动作，用它的逆动作慢速尝试摆出该熟悉局面；停手目视核对目标槽和两块所在位置，确认无误后做一次插入，再用同一逆动作复位同一局面并重复；若无法摆出，则改用自己会的转动慢速练习，每转一步停一下，观察哪些块可见地移动了，不声称完成F2L。",
+                  "reason": "先核对再插入，避免在未确认的局面里误练；摆不成时用慢转观察保持练习。",
+                  "seconds": 70,
+                  "requires": [
+                    "familiar_case",
+                    "fallback_rule"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "预测一步已知转动的变化",
+              "seconds": 67,
+              "steps": [
+                {
+                  "action": "选一个自己会的插入动作，用它的逆动作慢速尝试摆出该熟悉局面；停手目视核对目标槽和两块所在位置，确认无误后做一次插入，再用同一逆动作复位同一局面并重复；若无法摆出，则改用自己会的转动，在做一个已知转动前先预测哪一块会可见地移动，转完后与实际移动对比，不声称完成F2L。",
+                  "reason": "用预测与核对加深对已知转动效果的理解；摆不成时以预测对比替代插入练习。",
+                  "seconds": 67,
+                  "requires": [
+                    "familiar_case",
+                    "fallback_rule"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "familiar_case",
+              "quote": "还是用那个熟悉局面。先用会的逆动作找回局面，目视核对目标槽和两块所在位置，无误后才插入。"
+            },
+            {
+              "id": "fallback_rule",
+              "quote": "假如摆不成，两项的备用练法分别用会的转动做不同的事。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "逆动作找回熟悉局面并插入",
+              "seconds": 70,
+              "steps": [
+                {
+                  "action": "选一个自己会的插入动作，用它的逆动作慢速尝试摆出该熟悉局面；停手目视核对目标槽和两块所在位置：只有确认无误，才做一次插入，再用同一逆动作复位同一局面并重复；否则整项改用自己会的转动慢速练习，每转一步停一下，观察哪些块可见地移动了，到此结束，不声称完成F2L。",
+                  "reason": "先核对再插入，避免在未确认的局面里误练；摆不成时用慢转观察保持练习。",
+                  "seconds": 70,
+                  "requires": [
+                    "familiar_case",
+                    "fallback_rule"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "预测一步已知转动的变化",
+              "seconds": 67,
+              "steps": [
+                {
+                  "action": "选一个自己会的插入动作，用它的逆动作慢速尝试摆出该熟悉局面；停手目视核对目标槽和两块所在位置：只有确认无误，才做一次插入，再用同一逆动作复位同一局面并重复；否则整项改用自己会的转动，在做一个已知转动前先预测哪一块会可见地移动，转完后与实际移动对比，到此结束，不声称完成F2L。",
+                  "reason": "用预测与核对加深对已知转动效果的理解；摆不成时以预测对比替代插入练习。",
+                  "seconds": 67,
+                  "requires": [
+                    "familiar_case",
+                    "fallback_rule"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "familiar_case",
+              "quote": "还是用那个熟悉局面。先用会的逆动作找回局面，目视核对目标槽和两块所在位置，无误后才插入。"
+            },
+            {
+              "id": "fallback_rule",
+              "quote": "假如摆不成，两项的备用练法分别用会的转动做不同的事。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "逆动作找回熟悉局面并插入",
+              "seconds": 69,
+              "steps": [
+                {
+                  "action": "选定一个自己已会的插入动作，用它的逆动作慢速尝试摆出该熟悉局面；摆出后目视核对目标槽和两块所在位置，确认无误才做一次插入，随后用同一逆动作复位同一局面再重复；若无法摆出，则改用自己会的转动慢速练习，每转一步停一下，观察哪些块可见地移动了，不声称完成插入。",
+                  "reason": "先核对再插入可避免在错误局面上重复，备用练法用停顿观察熟悉转动带来的可见变化。",
+                  "seconds": 69,
+                  "requires": [
+                    "familiar_case",
+                    "fallback_rule"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "预测一步已知转动的变化",
+              "seconds": 68,
+              "steps": [
+                {
+                  "action": "仅当熟悉局面已目视核对无误时，用同一逆动作复位后做一次插入；否则用自己会的转动慢速练习，先预测某一步已知转动会让哪一块可见地移动，再转那一步并对照实际移动，不声称完成插入。",
+                  "reason": "分支保证只在核对成功时插入，备用练法用预测与对照加深对已知转动的理解。",
+                  "seconds": 68,
+                  "requires": [
+                    "familiar_case",
+                    "fallback_rule"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "familiar_case",
+              "quote": "还是用那个熟悉局面。先用会的逆动作找回局面，目视核对目标槽和两块所在位置，无误后才插入。"
+            },
+            {
+              "id": "fallback_rule",
+              "quote": "假如摆不成，两项的备用练法分别用会的转动做不同的事。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "逆动作找回熟悉局面并插入",
+              "seconds": 69,
+              "steps": [
+                {
+                  "action": "选定一个自己已会的插入动作，用它的逆动作慢速尝试摆出该熟悉局面；摆出后目视核对目标槽和两块所在位置，确认无误才做一次插入，随后用同一逆动作复位同一局面再重复；若无法摆出，则改用自己会的转动慢速练习，每转一步停一下，观察哪些块可见地移动了，不声称完成插入。",
+                  "reason": "先核对再插入可避免在错误局面上重复，备用练法用停顿观察熟悉转动带来的可见变化。",
+                  "seconds": 69,
+                  "requires": [
+                    "familiar_case",
+                    "fallback_rule"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "预测一步已知转动的变化",
+              "seconds": 68,
+              "steps": [
+                {
+                  "action": "仅当熟悉局面已目视核对无误时，用同一逆动作复位后做一次插入；否则用自己会的转动慢速练习，先预测某一步已知转动会让哪一块可见地移动，再转那一步并对照实际移动，不声称完成插入。",
+                  "reason": "分支保证只在核对成功时插入，备用练法用预测与对照加深对已知转动的理解。",
+                  "seconds": 68,
+                  "requires": [
+                    "familiar_case",
+                    "fallback_rule"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "AD06",
+    "question": "Make a 153–179-word practice plan for my existing Serbian vocabulary list. I have 194 seconds. Use two activities with two timed substeps each and explain each step. In the retry, use the complete list if nothing was wrong; otherwise repeat just the missed words.",
+    "lang": "en",
+    "history": [],
+    "calls": [
+      12,
+      13,
+      52,
+      53
+    ],
+    "drafts": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "serbian_list",
+              "quote": "my existing Serbian vocabulary list"
+            }
+          ],
+          "activities": [
+            {
+              "title": "Word-to-meaning recall",
+              "seconds": 97,
+              "steps": [
+                {
+                  "action": "Write the Serbian words in the WORD column and their known meanings in the MEANING column of a two-column list; if no words are available, stop.",
+                  "reason": "A visible reference list supplies the exact material for every later attempt.",
+                  "seconds": 25,
+                  "requires": [],
+                  "produces": [
+                    "word_meaning_list"
+                  ]
+                },
+                {
+                  "action": "Cover the MEANING column, say each word's meaning aloud, uncover to check, then cover MEANING again before the next word.",
+                  "reason": "Hiding the answer forces genuine recall and immediate correction.",
+                  "seconds": 72,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": [
+                    "recall_results"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Meaning-to-word retry",
+              "seconds": 97,
+              "steps": [
+                {
+                  "action": "Cover the WORD column, write each meaning's Serbian word on paper, uncover to check, then cover WORD again before each attempt.",
+                  "reason": "Producing the word from its meaning strengthens retrieval in the opposite direction.",
+                  "seconds": 72,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": [
+                    "retry_results"
+                  ]
+                },
+                {
+                  "action": "If no words were missed, repeat the complete list; otherwise repeat only the missed words, covering WORD before each attempt.",
+                  "reason": "Targeting errors or reviewing everything when perfect keeps practice efficient.",
+                  "seconds": 25,
+                  "requires": [
+                    "retry_results"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "serbian_list",
+              "quote": "my existing Serbian vocabulary list"
+            }
+          ],
+          "activities": [
+            {
+              "title": "Word-to-meaning recall",
+              "seconds": 97,
+              "steps": [
+                {
+                  "action": "Write the Serbian words in the WORD column and their known meanings in the MEANING column of a two-column list; if no words are available, stop.",
+                  "reason": "A visible reference list supplies the exact material for every later attempt, so each check compares against the learner's own known meanings rather than guesses.",
+                  "seconds": 25,
+                  "requires": [],
+                  "produces": [
+                    "word_meaning_list"
+                  ]
+                },
+                {
+                  "action": "Cover the MEANING column, say each word's meaning aloud, uncover to check, then cover MEANING again before the next word.",
+                  "reason": "Hiding the answer forces genuine recall and immediate correction, and re-covering after each check prevents the next attempt from being read off the page.",
+                  "seconds": 72,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": [
+                    "recall_results"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Meaning-to-word retry",
+              "seconds": 97,
+              "steps": [
+                {
+                  "action": "Cover the WORD column, write each meaning's Serbian word on paper, uncover to check, then cover WORD again before each attempt.",
+                  "reason": "Producing the word from its meaning strengthens retrieval in the opposite direction, and writing it down makes each attempt checkable against the hidden column.",
+                  "seconds": 72,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": [
+                    "retry_results"
+                  ]
+                },
+                {
+                  "action": "If no words were missed, repeat the complete list; otherwise repeat only the missed words, covering WORD before each attempt.",
+                  "reason": "Targeting errors or reviewing everything when perfect keeps practice efficient, since a zero-error subset simply falls back to the full original list.",
+                  "seconds": 25,
+                  "requires": [
+                    "retry_results"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "serbian_list",
+              "quote": "Make a 153–179-word practice plan for my existing Serbian vocabulary list."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Serbian word-to-meaning recall",
+              "seconds": 97,
+              "steps": [
+                {
+                  "action": "Open the existing Serbian WORD / MEANING list and keep both columns visible; if the list is unavailable, stop rather than invent words.",
+                  "reason": "Reusing the supplied list keeps every later attempt tied to material you actually study.",
+                  "seconds": 25,
+                  "requires": [
+                    "serbian_list"
+                  ],
+                  "produces": [
+                    "serbian_list"
+                  ]
+                },
+                {
+                  "action": "Cover the MEANING column, say each Serbian word's meaning, uncover to check, then cover MEANING again before the next word.",
+                  "reason": "Hiding the answer forces genuine recall and immediate checking corrects errors while the word is fresh.",
+                  "seconds": 72,
+                  "requires": [
+                    "serbian_list"
+                  ],
+                  "produces": [
+                    "missed_words"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Serbian meaning-to-word retry",
+              "seconds": 97,
+              "steps": [
+                {
+                  "action": "Cover the WORD column, write each meaning's Serbian word on paper, uncover to check, then cover WORD again before the next item.",
+                  "reason": "Producing the Serbian form from meaning strengthens retrieval in the opposite direction and exposes gaps.",
+                  "seconds": 60,
+                  "requires": [
+                    "serbian_list"
+                  ],
+                  "produces": [
+                    "written_attempts"
+                  ]
+                },
+                {
+                  "action": "If no words were missed, repeat the complete list; otherwise repeat only the missed words, covering WORD before each attempt.",
+                  "reason": "Branching on actual errors targets weak items without demanding mistakes or skipping practice when none occurred.",
+                  "seconds": 37,
+                  "requires": [
+                    "missed_words",
+                    "written_attempts"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "serbian_list",
+              "quote": "Make a 153–179-word practice plan for my existing Serbian vocabulary list."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Serbian word-to-meaning recall",
+              "seconds": 97,
+              "steps": [
+                {
+                  "action": "Open the existing Serbian WORD / MEANING list and keep both columns visible; if the list is unavailable, stop rather than invent words.",
+                  "reason": "Reusing the supplied list keeps every later attempt tied to material you actually study.",
+                  "seconds": 25,
+                  "requires": [
+                    "serbian_list"
+                  ],
+                  "produces": [
+                    "serbian_list"
+                  ]
+                },
+                {
+                  "action": "Cover the MEANING column, say each Serbian word's meaning, uncover to check, then cover MEANING again before the next word.",
+                  "reason": "Hiding the answer forces genuine recall and immediate checking corrects errors while the word is fresh.",
+                  "seconds": 72,
+                  "requires": [
+                    "serbian_list"
+                  ],
+                  "produces": [
+                    "missed_words"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Serbian meaning-to-word retry",
+              "seconds": 97,
+              "steps": [
+                {
+                  "action": "Cover the WORD column, write each meaning's Serbian word on paper, uncover to check, then cover WORD again before each item.",
+                  "reason": "Producing the Serbian form from meaning strengthens retrieval in the opposite direction and exposes gaps.",
+                  "seconds": 60,
+                  "requires": [
+                    "serbian_list"
+                  ],
+                  "produces": [
+                    "written_attempts"
+                  ]
+                },
+                {
+                  "action": "If no words were missed, repeat the complete list; otherwise repeat only the missed words, topping up from the full list if short, covering WORD before each attempt.",
+                  "reason": "Branching on actual errors targets weak items without demanding mistakes or skipping practice when none occurred.",
+                  "seconds": 37,
+                  "requires": [
+                    "missed_words",
+                    "written_attempts"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "AD12",
+    "question": "Give two timed observation activities for noticing gaps between finger tricks, no more than 84 seconds combined. Then, in a separate paragraph, write one sentence inviting Morgan to try these on Sunday.",
+    "lang": "en",
+    "history": [],
+    "calls": [
+      26,
+      64,
+      66,
+      67
+    ],
+    "drafts": [
+      {
+        "answerKind": "general",
+        "answer": "1. **Gap-spotting pause drill — 42 seconds:** Do a slow, deliberate finger-trick sequence (e.g., a repeated R U R' U' trigger) for 30 seconds while watching for any moment your hand stalls or regrips, then spend the remaining 12 seconds noting each gap you noticed and where it occurred.\n\n2. **Metronome gap check — 42 seconds:** Set a metronome or timer ticking at a steady pace and perform a short finger-trick pattern for 30 seconds, listening and feeling for ticks where your fingers hesitate or fall out of rhythm, then use the last 12 seconds to mark the specific transitions that caused the gaps.\n\nMorgan, would you like to try these two gap-spotting drills this Sunday?",
+        "sourceIds": []
+      },
+      {
+        "answerKind": "general",
+        "answer": "1. **Gap-spotting pause drill (40 seconds):** Perform a slow, continuous finger-trick sequence (e.g., repeated R U R' U') for 20 seconds while watching your hands, then spend 20 seconds replaying it in your head and naming each moment where your fingers hesitated or reset before the next turn.\n\n2. **Metronome hesitation hunt (44 seconds):** Set a metronome to a comfortable tempo and turn in time with the clicks for 22 seconds, then stop and spend 22 seconds identifying the specific transitions where your fingers fell behind or rushed the beat, noting which finger pair caused each gap.\n\nMorgan, would you like to try these two gap-spotting drills this Sunday?",
+        "sourceIds": []
+      },
+      {
+        "answerKind": "general",
+        "answer": "Here are two short observation drills for spotting pauses between finger tricks: first, watch a slow solve and mark each moment the turning rhythm stalls; second, repeat one short algorithm and note where the flow breaks.\n\nMorgan, would you like to try these two observation drills this Sunday?",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [],
+          "activities": [
+            {
+              "title": "Slow-solve gap spotting",
+              "seconds": 42,
+              "steps": [
+                {
+                  "action": "Solve one scramble at half speed while watching the turning hand, and mark each moment the rhythm stalls between finger tricks.",
+                  "reason": "Slowing down makes the pauses between tricks visible instead of blurred by speed.",
+                  "seconds": 42,
+                  "requires": [],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "Single-algorithm rhythm check",
+              "seconds": 42,
+              "steps": [
+                {
+                  "action": "Repeat one short familiar algorithm several times and note exactly where the flow breaks between moves.",
+                  "reason": "A repeated short sequence exposes the same gap points consistently for comparison.",
+                  "seconds": 42,
+                  "requires": [],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "Morgan, please try these two observation activities on Sunday.",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "observation_request",
+              "quote": "Give two timed observation activities for noticing gaps between finger tricks, no more than 84 seconds combined."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Slow-motion gap scan",
+              "seconds": 42,
+              "steps": [
+                {
+                  "action": "Choose a short finger-trick sequence you already know, perform it slowly, pause at each transition, and write down every point where the motion stalls or the next turn waits.",
+                  "reason": "Slowing the sequence makes brief gaps between finger tricks visible and creates a written record of each pause.",
+                  "seconds": 42,
+                  "requires": [],
+                  "produces": [
+                    "gap_notes"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Normal-speed gap check",
+              "seconds": 42,
+              "steps": [
+                {
+                  "action": "Reread the written pause points, repeat the same sequence at normal speed, and mark which gaps disappeared and which remained.",
+                  "reason": "Comparing normal speed against the recorded pause points shows which gaps are persistent rather than artifacts of slow motion.",
+                  "seconds": 42,
+                  "requires": [
+                    "gap_notes"
+                  ],
+                  "produces": [
+                    "gap_comparison"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

@@ -1,0 +1,915 @@
+{
+  "AQ03": {
+    "question": "原先说的那次插入今天准许慢拧了。拟两项限时练习，每项先尝试摆位，再用眼睛逐项看边块、角块、目标槽。三处都对上，再做我会的那次插入；摆不成或者有一处不对，就分别改做一种已经列过的慢转，做完这一招就停。两项备用动作不能相同，合计不超过八十四秒。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "那次插入我会做，但不一定摆得回去。我另外会的只有 D2 和 R′；刚才说先别转。"
+      },
+      {
+        "role": "assistant",
+        "content": "可以先只观察棱角和槽位。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 6,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "insert_allowed",
+                "quote": "原先说的那次插入今天准许慢拧了。"
+              },
+              {
+                "id": "known_turns",
+                "quote": "我另外会的只有 D2 和 R′"
+              }
+            ],
+            "activities": [
+              {
+                "title": "慢拧插入尝试与观察备用",
+                "seconds": 42,
+                "steps": [
+                  {
+                    "action": "用你会的慢拧方法尝试把那次插入摆成熟悉情形，然后依次用眼睛看边块、角块、目标槽；三处都对上就慢做那次插入，摆不成或有一处不对就慢做一次 D2，做完停，并在这一转后暂停观察可见变化。",
+                    "reason": "先尝试摆位并逐项核对，只有三处匹配才插入，否则用已知慢转 D2 并观察变化后停止。",
+                    "seconds": 42,
+                    "requires": [
+                      "insert_allowed",
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "慢拧插入尝试与预测备用",
+                "seconds": 42,
+                "steps": [
+                  {
+                    "action": "用你会的慢拧方法尝试把那次插入摆成熟悉情形，然后依次用眼睛看边块、角块、目标槽；三处都对上就慢做那次插入，摆不成或有一处不对就慢做一次 R′，转前先预测一个可见变化，转后对照观察，做完停。",
+                    "reason": "先尝试摆位并逐项核对，只有三处匹配才插入，否则用不同的已知慢转 R′ 并做预测对照后停止。",
+                    "seconds": 42,
+                    "requires": [
+                      "insert_allowed",
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 44,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "insert_allowed",
+                "quote": "原先说的那次插入今天准许慢拧了。"
+              },
+              {
+                "id": "known_turns",
+                "quote": "我另外会的只有 D2 和 R′"
+              }
+            ],
+            "activities": [
+              {
+                "title": "慢拧插入尝试",
+                "seconds": 42,
+                "steps": [
+                  {
+                    "action": "用你会的摆位方法尝试把那次插入的棱块、角块摆到目标槽旁；摆好后依次用眼睛看边块、角块、目标槽三处。三处都对上就慢拧做那次插入；摆不成或有一处不对，就慢拧做一次 D2，做完停手。",
+                    "reason": "先摆位再逐项核对，只有三处都对上才做熟悉的插入，否则用已知慢转收尾。",
+                    "seconds": 42,
+                    "requires": [
+                      "insert_allowed",
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "换向慢拧尝试",
+                "seconds": 42,
+                "steps": [
+                  {
+                    "action": "再用你会的摆位方法尝试把那次插入的棱块、角块摆到目标槽旁；摆好后依次用眼睛看边块、角块、目标槽三处。三处都对上就慢拧做那次插入；摆不成或有一处不对，就慢拧做一次 R′，做完停手。",
+                    "reason": "第二次独立尝试摆位与核对，备用动作换成另一种已知慢转，与第一项不同。",
+                    "seconds": 42,
+                    "requires": [
+                      "insert_allowed",
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 45,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "insert_allowed",
+                "quote": "原先说的那次插入今天准许慢拧了。"
+              },
+              {
+                "id": "known_turns",
+                "quote": "我另外会的只有 D2 和 R′"
+              }
+            ],
+            "activities": [
+              {
+                "title": "慢拧插入尝试",
+                "seconds": 42,
+                "steps": [
+                  {
+                    "action": "用你会的摆位方法尝试把那次插入的棱块、角块摆到目标槽旁；摆好后依次用眼睛看边块、角块、目标槽三处。三处都对上就慢拧做那次插入；摆不成或有一处不对，就慢拧做一次 D2，每转一下停一下看可见变化，做完停手。",
+                    "reason": "先摆位再逐项核对，只有三处都对上才做熟悉的插入，否则用已知慢转收尾。",
+                    "seconds": 42,
+                    "requires": [
+                      "insert_allowed",
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "换向慢拧尝试",
+                "seconds": 42,
+                "steps": [
+                  {
+                    "action": "再用你会的摆位方法尝试把那次插入的棱块、角块摆到目标槽旁；摆好后依次用眼睛看边块、角块、目标槽三处。三处都对上就慢拧做那次插入；摆不成或有一处不对，就慢拧做一次 R′，转前先预测会看到的变化再转并对照，做完停手。",
+                    "reason": "第二次独立尝试摆位与核对，备用动作换成另一种已知慢转，与第一项不同。",
+                    "seconds": 42,
+                    "requires": [
+                      "insert_allowed",
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AQ05": {
+    "question": "我不会任何插入，只会 R2 和 U′。给两种慢转练习，每项不超过三十七秒，合计不超过六十九秒。每项只用已经会的动作，选那一层上的同一块贴纸，每次慢转后停手说它转动前后在什么位置。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 11,
+        "value": {
+          "answerKind": "general",
+          "answer": "慢转练习一（34秒）：先选定R层上同一块贴纸，慢做R2，转完停手，说出这块贴纸转动前在什么位置、转动后在什么位置；再慢做一次R2并同样停手观察和描述。理由：只用已会的R2，在停顿中看清同一贴纸的位置变化。\n\n慢转练习二（34秒）：先选定U层上同一块贴纸，慢做U′，转完停手，说出这块贴纸转动前在什么位置、转动后在什么位置；再慢做一次U′并同样停手观察和描述。理由：只用已会的U′，在停顿中看清同一贴纸的位置变化。\n\n合计68秒，两项均不超过37秒。",
+          "sourceIds": []
+        }
+      },
+      {
+        "call": 49,
+        "value": {
+          "answerKind": "general",
+          "answer": "慢转练习一（18秒）：先选定R层上同一块贴纸，慢做R2，停手说出这块贴纸转动前在什么位置、转动后在什么位置；再慢做一次R2，停手同样说出前后位置。理由：只用已会的R2，在停顿中观察同一贴纸的位置变化。\n\n慢转练习二（18秒）：先选定U层上同一块贴纸，慢做U′，停手说出这块贴纸转动前在什么位置、转动后在什么位置；再慢做一次U′，停手同样说出前后位置。理由：只用已会的U′，在停顿中观察同一贴纸的位置变化。\n\n两项合计36秒，均不超过37秒，总计不超过69秒。",
+          "sourceIds": []
+        }
+      }
+    ]
+  },
+  "AQ09": {
+    "question": "之前的意大利语词卡已经做好，一面是意大利语，另一面是中文提示。给我两项计时练习，最多用九十一秒。两项都看中文手写意大利语后翻面核对，查好一张就把那张翻回中文面。第一项若一次都没写错，第二项把复位后的全套再写查一次。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 21,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "italian_cards",
+                "quote": "之前的意大利语词卡已经做好，一面是意大利语，另一面是中文提示。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "中文面提示写意大利语",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "把全套词卡中文面朝上摊开，逐张看中文提示，在纸上写出对应意大利语单词，写完翻面核对；写对就立刻把这张翻回中文面，写错也记下后翻回中文面，直到时间用完或全套过完。",
+                    "reason": "先按中文提示主动回忆并手写意大利语，再翻面核对，能检验拼写是否准确。",
+                    "seconds": 45,
+                    "requires": [
+                      "italian_cards"
+                    ],
+                    "produces": [
+                      "first_pass_result"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "复位后全套再写查",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "若第一项一次都没写错，先把全套词卡统一复位成中文面朝上，再逐张看中文提示手写意大利语、翻面核对，查好一张就翻回中文面，把全套完整再写查一遍；若第一项出现过错误，则只把写错的卡片复位成中文面朝上，按同样方式重写重查这些卡片。",
+                    "reason": "第一项零错误时用复位后的全套巩固一遍，有错误时集中重练错词，都在剩余时间内完成。",
+                    "seconds": 46,
+                    "requires": [
+                      "italian_cards",
+                      "first_pass_result"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 60,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "italian_cards",
+                "quote": "之前的意大利语词卡已经做好，一面是意大利语，另一面是中文提示。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "中文面写意大利语并核对",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "把全套词卡中文面朝上摆好，逐张看中文提示，在纸上写出对应意大利语，写完翻面核对；写对就立刻把这张翻回中文面，写错也记下后翻回中文面，继续下一张直到时间用完。",
+                    "reason": "按中文提示主动回忆并手写意大利语，翻面核对后立即复位，保持每张卡都从中文面开始。",
+                    "seconds": 45,
+                    "requires": [
+                      "italian_cards"
+                    ],
+                    "produces": [
+                      "first_pass_result"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "复位全套再写查一次",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "先把全套词卡统一翻回中文面朝上，再逐张看中文提示手写意大利语，翻面核对后立刻翻回中文面；若第一项一次都没写错，就把复位后的全套完整再写查一遍，若第一项有写错，则只重写查第一项写错的那些卡。",
+                    "reason": "第一项零错误时按约定用复位后的全套再练一遍，有错误时集中重练错卡，两种情形都保持中文面起手、核对后复位。",
+                    "seconds": 46,
+                    "requires": [
+                      "italian_cards",
+                      "first_pass_result"
+                    ],
+                    "produces": [
+                      "second_pass_result"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AQ10": {
+    "question": "用两张空白卡和词对 birch＝桦树、spruce＝云杉做练习。两项活动各两个定时子步骤，合计不超过九十七秒。第一项先在两面写出词和释义，再看英文口述中文并翻查。第二项看中文先手写英文，再逐卡翻查后把刚检查的卡翻回中文面。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 23,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_pairs",
+                "quote": "词对 birch＝桦树、spruce＝云杉"
+              },
+              {
+                "id": "blank_cards",
+                "quote": "用两张空白卡"
+              }
+            ],
+            "activities": [
+              {
+                "title": "写卡并口述中文",
+                "seconds": 50,
+                "steps": [
+                  {
+                    "action": "在两张空白卡上分别写 birch 与 spruce，翻面各写 桦树 与 云杉，写完把两张卡都摆成英文面朝上",
+                    "reason": "先建立两面齐全的卡片，并让后续口述从英文面开始",
+                    "seconds": 25,
+                    "requires": [
+                      "word_pairs",
+                      "blank_cards"
+                    ],
+                    "produces": [
+                      "written_cards"
+                    ]
+                  },
+                  {
+                    "action": "看英文面口述中文，说完翻卡核对；两张都核对后把卡翻回英文面朝上",
+                    "reason": "从英文回忆中文是接受性词汇练习，翻查确认后复位便于下一项",
+                    "seconds": 25,
+                    "requires": [
+                      "written_cards"
+                    ],
+                    "produces": [
+                      "checked_cards"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "手写英文并翻查复位",
+                "seconds": 47,
+                "steps": [
+                  {
+                    "action": "把两张卡翻成中文面朝上，看中文在纸上写出对应英文，写完先不翻卡",
+                    "reason": "从中文回忆英文是产出性练习，先写下来才能检查拼写",
+                    "seconds": 25,
+                    "requires": [
+                      "checked_cards"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  },
+                  {
+                    "action": "逐卡翻到英文面核对刚写的拼写，核对完把该卡翻回中文面朝上",
+                    "reason": "对照参考拼写找出错误，并把卡复位到中文面以便下次从中文回忆",
+                    "seconds": 22,
+                    "requires": [
+                      "written_attempts"
+                    ],
+                    "produces": [
+                      "reset_cards"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 24,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_pairs",
+                "quote": "词对 birch＝桦树、spruce＝云杉"
+              },
+              {
+                "id": "blank_cards",
+                "quote": "用两张空白卡"
+              }
+            ],
+            "activities": [
+              {
+                "title": "写卡并口述中文",
+                "seconds": 50,
+                "steps": [
+                  {
+                    "action": "在两张空白卡正面分别写 birch 与 spruce，翻到背面各写 桦树 与 云杉，写完把两张卡都摆成英文面朝上",
+                    "reason": "先建立正面英文、背面中文的两面齐全卡片，并让后续口述从英文面开始",
+                    "seconds": 25,
+                    "requires": [
+                      "word_pairs",
+                      "blank_cards"
+                    ],
+                    "produces": [
+                      "written_cards"
+                    ]
+                  },
+                  {
+                    "action": "看英文面口述中文，说完翻卡核对；两张都核对后把卡翻回英文面朝上",
+                    "reason": "从英文回忆中文是接受性词汇练习，翻查确认后复位便于下一项",
+                    "seconds": 25,
+                    "requires": [
+                      "written_cards"
+                    ],
+                    "produces": [
+                      "checked_cards"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "手写英文并翻查复位",
+                "seconds": 47,
+                "steps": [
+                  {
+                    "action": "把两张卡翻成中文面朝上，看中文在纸上写出对应英文，写完先不翻卡",
+                    "reason": "从中文回忆英文是产出性练习，先写下来才能检查拼写",
+                    "seconds": 25,
+                    "requires": [
+                      "checked_cards"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  },
+                  {
+                    "action": "逐卡翻到英文面核对刚写的拼写，核对完把该卡翻回中文面朝上",
+                    "reason": "对照参考拼写找出错误，并把卡复位到中文面以便下次从中文回忆",
+                    "seconds": 22,
+                    "requires": [
+                      "written_attempts"
+                    ],
+                    "produces": [
+                      "reset_cards"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 64,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_pairs",
+                "quote": "词对 birch＝桦树、spruce＝云杉"
+              },
+              {
+                "id": "blank_cards",
+                "quote": "用两张空白卡"
+              }
+            ],
+            "activities": [
+              {
+                "title": "制作双面词卡",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "取两张空白卡，在第一张正面写 birch、背面写 桦树；第二张正面写 spruce、背面写 云杉，写好后把两张卡都正面朝上摆好",
+                    "reason": "先建立词与释义的双面参照，之后才能按英文面口述中文并翻面核对",
+                    "seconds": 45,
+                    "requires": [
+                      "word_pairs",
+                      "blank_cards"
+                    ],
+                    "produces": [
+                      "two_sided_cards"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "英文面口述中文",
+                "seconds": 52,
+                "steps": [
+                  {
+                    "action": "只看两张卡的英文面，依次口述 birch 和 spruce 的中文释义，说完一张翻面核对，两张都核对后把卡翻回英文面朝上",
+                    "reason": "从英文回忆中文是接受性词汇练习，翻面核对能立即发现释义错误",
+                    "seconds": 26,
+                    "requires": [
+                      "two_sided_cards"
+                    ],
+                    "produces": [
+                      "spoken_attempts"
+                    ]
+                  },
+                  {
+                    "action": "把两张卡翻到中文面朝上，逐张看中文先在纸上写出英文，写完一张翻面核对拼写，两张都核对后把刚检查的卡翻回中文面朝上",
+                    "reason": "从中文回忆英文是产出性词汇练习，先写后核对能检验拼写，翻回中文面为下一轮保留同一提示面",
+                    "seconds": 26,
+                    "requires": [
+                      "spoken_attempts",
+                      "two_sided_cards"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 65,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_pairs",
+                "quote": "词对 birch＝桦树、spruce＝云杉"
+              },
+              {
+                "id": "blank_cards",
+                "quote": "用两张空白卡"
+              }
+            ],
+            "activities": [
+              {
+                "title": "制作双面词卡",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "取两张空白卡，第一张正面写 birch、背面写 桦树，第二张正面写 spruce、背面写 云杉，写好后两张卡都英文面朝上摆好",
+                    "reason": "先建立词与释义的双面参照，之后才能按英文面口述中文并翻面核对",
+                    "seconds": 23,
+                    "requires": [
+                      "word_pairs",
+                      "blank_cards"
+                    ],
+                    "produces": [
+                      "two_sided_cards"
+                    ]
+                  },
+                  {
+                    "action": "只看两张卡的英文面，依次口述 birch 和 spruce 的中文释义，说完一张翻面核对，两张都核对后把卡翻回英文面朝上",
+                    "reason": "从英文回忆中文是接受性词汇练习，翻面核对能立即发现释义错误",
+                    "seconds": 22,
+                    "requires": [
+                      "two_sided_cards"
+                    ],
+                    "produces": [
+                      "spoken_attempts"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "中文面手写英文",
+                "seconds": 52,
+                "steps": [
+                  {
+                    "action": "把两张卡翻到中文面朝上，逐张看中文先在纸上写出英文，写完一张翻面核对拼写，两张都核对后把刚检查的卡翻回中文面朝上",
+                    "reason": "从中文回忆英文是产出性词汇练习，先写后核对能检验拼写，翻回中文面为下一轮保留同一提示面",
+                    "seconds": 26,
+                    "requires": [
+                      "spoken_attempts",
+                      "two_sided_cards"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  },
+                  {
+                    "action": "保持两张卡中文面朝上，逐张看中文口述英文，说完一张翻面核对，核对后立即把该卡翻回中文面朝上",
+                    "reason": "再次从中文面回忆英文并即时核对，翻回中文面确保下一张仍以中文为提示",
+                    "seconds": 26,
+                    "requires": [
+                      "written_attempts",
+                      "two_sided_cards"
+                    ],
+                    "produces": [
+                      "checked_cards"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AQ13": {
+    "question": "改成三个计时活动，各两个计时子步骤，子步骤的理由分开写。加起来不能超过一百零四秒。还是用原来的匈牙利语词表，每个活动都要先回忆再揭开核对。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "我有匈牙利语原词和中文解释的双列词表，之前说做两项、每项两个子步骤。"
+      },
+      {
+        "role": "assistant",
+        "content": "从这一张词表练起就好。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 31,
+        "value": {
+          "answer": "",
+          "answerKind": "general",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_list",
+                "quote": "我有匈牙利语原词和中文解释的双列词表"
+              }
+            ],
+            "activities": [
+              {
+                "title": "匈牙利语词到中文解释回忆",
+                "seconds": 36,
+                "steps": [
+                  {
+                    "action": "把词表放在桌上，只露出匈牙利语原词列，用纸盖住中文解释列；逐词看原词，先在心里或小声说出中文解释，再揭开纸核对，然后重新盖住中文解释列，进入下一个词。",
+                    "reason": "先回忆再揭开核对，能检验自己是否真的记住每个词的中文意思。",
+                    "seconds": 18,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "对刚才没想起或想错的词，再按同样方式做一遍：只看匈牙利语原词，说出中文解释，揭开核对后重新盖住中文解释列。",
+                    "reason": "针对薄弱词再练一次，巩固容易忘记的释义。",
+                    "seconds": 18,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "中文解释到匈牙利语原词回忆",
+                "seconds": 34,
+                "steps": [
+                  {
+                    "action": "把词表翻到同一面，只露出中文解释列，用纸盖住匈牙利语原词列；逐条看中文解释，先在纸上写出对应的匈牙利语原词，再揭开纸核对，然后重新盖住匈牙利语原词列。",
+                    "reason": "反向回忆能检验自己能否从意思主动写出匈牙利语原词。",
+                    "seconds": 17,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "对写错或写不出的词，再按同样方式做一遍：只看中文解释，写出匈牙利语原词，揭开核对后重新盖住匈牙利语原词列。",
+                    "reason": "重复出错项，强化从中文解释到匈牙利语原词的提取。",
+                    "seconds": 17,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "混合方向快速回忆",
+                "seconds": 34,
+                "steps": [
+                  {
+                    "action": "把词表放在桌上，随机选一个词，只露出一个方向：若露出匈牙利语原词就盖住中文解释列，若露出中文解释就盖住匈牙利语原词列；先说出或写出答案，再揭开核对，然后重新盖住答案列。",
+                    "reason": "混合方向练习能检验两个方向的提取是否都稳定。",
+                    "seconds": 17,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "继续随机选词，按同样规则先回忆再揭开核对；如果某个词两个方向都答对，就跳过它，只练还没掌握的其余词。",
+                    "reason": "优先练未掌握的词，在有限时间内提高练习效率。",
+                    "seconds": 17,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 70,
+        "value": {
+          "answer": "",
+          "answerKind": "general",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_list",
+                "quote": "我有匈牙利语原词和中文解释的双列词表"
+              }
+            ],
+            "activities": [
+              {
+                "title": "匈牙利语词到中文解释回忆",
+                "seconds": 36,
+                "steps": [
+                  {
+                    "action": "把词表放在桌上，只露出匈牙利语原词列，用纸片盖住中文解释列；若词表尚未列出，先写下你正在学的少量匈牙利语原词及其中文解释，两列写在同一面。",
+                    "reason": "先建立同一面的双列词表并只露出提示列，保证回忆时看不到答案。",
+                    "seconds": 12,
+                    "requires": [],
+                    "produces": [
+                      "word_list"
+                    ]
+                  },
+                  {
+                    "action": "逐个看匈牙利语原词，先说出中文解释并写在纸上，再揭开中文解释列核对，然后重新盖住中文解释列，再进入下一个词。",
+                    "reason": "每次先回忆再揭开核对，并立即恢复遮盖，避免提前看到答案。",
+                    "seconds": 24,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "中文解释到匈牙利语原词回忆",
+                "seconds": 34,
+                "steps": [
+                  {
+                    "action": "保持同一张词表同一面，先盖住匈牙利语原词列，只露出中文解释列。",
+                    "reason": "反向练习前先遮住新的答案列，只保留中文解释作为提示。",
+                    "seconds": 10,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "逐个看中文解释，先在纸上写出匈牙利语原词，再揭开匈牙利语原词列核对，然后重新盖住匈牙利语原词列，再进入下一个词。",
+                    "reason": "先写答案再揭开核对，并在每次核对后恢复遮盖，确保下一词仍靠回忆。",
+                    "seconds": 24,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "双向混合回忆核对",
+                "seconds": 34,
+                "steps": [
+                  {
+                    "action": "保持同一张词表同一面，先只露出匈牙利语原词列并盖住中文解释列，从第一个词开始。",
+                    "reason": "混合练习先明确一个提示方向，避免同时露出两列。",
+                    "seconds": 10,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "对每个词交替进行：露出匈牙利语原词时先说出中文解释再揭开核对并盖回；露出中文解释时先写出匈牙利语原词再揭开核对并盖回；若没有错词就练完整张词表，若有错词就只重复错词。",
+                    "reason": "交替方向并每次核对后恢复遮盖，同时用完整词表或错词分支收尾，不强制错词数量。",
+                    "seconds": 24,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 71,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_list",
+                "quote": "我有匈牙利语原词和中文解释的双列词表"
+              }
+            ],
+            "activities": [
+              {
+                "title": "匈牙利语词到中文解释回忆",
+                "seconds": 36,
+                "steps": [
+                  {
+                    "action": "把词表放在桌上，只露出匈牙利语原词列，用纸片盖住中文解释列；若词表尚未列出，先写下你正在学的少量匈牙利语原词及其中文解释，两列写在同一面。",
+                    "reason": "先建立同一面的双列词表并只露出提示列，保证回忆时看不到答案。",
+                    "seconds": 12,
+                    "requires": [],
+                    "produces": [
+                      "word_list"
+                    ]
+                  },
+                  {
+                    "action": "逐个看匈牙利语原词，先说出中文解释并写在纸上，再揭开中文解释列核对，然后重新盖住中文解释列，再进入下一个词。",
+                    "reason": "每次先回忆再揭开核对，并立即恢复遮盖，避免提前看到答案。",
+                    "seconds": 24,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "中文解释到匈牙利语原词回忆",
+                "seconds": 34,
+                "steps": [
+                  {
+                    "action": "保持同一张词表同一面，先盖住匈牙利语原词列，只露出中文解释列。",
+                    "reason": "反向练习前先遮住新的答案列，只保留中文解释作为提示。",
+                    "seconds": 10,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "逐个看中文解释，先在纸上写出匈牙利语原词，再揭开匈牙利语原词列核对，然后重新盖住匈牙利语原词列，再进入下一个词。",
+                    "reason": "先写答案再揭开核对，并在每次核对后恢复遮盖，确保下一词仍靠回忆。",
+                    "seconds": 24,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "双向混合回忆核对",
+                "seconds": 34,
+                "steps": [
+                  {
+                    "action": "保持同一张词表同一面，先只露出匈牙利语原词列并盖住中文解释列，从第一个词开始。",
+                    "reason": "混合练习先明确一个提示方向，避免同时露出两列。",
+                    "seconds": 10,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "对每个词交替进行：露出匈牙利语原词时先说出中文解释再揭开核对并盖回；露出中文解释时先写出匈牙利语原词再揭开核对并盖回；若没有错词就练完整张词表，若有错词就只重复错词。",
+                    "reason": "交替方向并每次核对后恢复遮盖，同时用完整词表或错词分支收尾，不强制错词数量。",
+                    "seconds": 24,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

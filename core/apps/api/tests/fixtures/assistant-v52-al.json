@@ -1,0 +1,764 @@
+{
+  "AL04": {
+    "question": "现在可以缓慢转。给这个熟悉的插入局面两项练习，注明秒数。每项先尽量摆好，目视核对目标槽、边块和角块，三处对上才做我会的插入。若不能摆出，每项改练一种不同的已会慢转，只允许 D2 和 R′，备用完成就停。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "我本轮只有一分三十七秒，会一条熟悉的插入，也会 D2、R′，但未必能摆回局面，现在先不转动魔方。"
+      },
+      {
+        "role": "assistant",
+        "content": "先不转动，看看现状。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 9,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insert",
+                "quote": "会一条熟悉的插入"
+              },
+              {
+                "id": "known_turns",
+                "quote": "也会 D2、R′"
+              },
+              {
+                "id": "may_not_setup",
+                "quote": "但未必能摆回局面"
+              }
+            ],
+            "activities": [
+              {
+                "title": "熟悉插入练习",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "缓慢尝试用你会的方法把目标槽、边块和角块摆成熟悉的插入局面；目视核对三处是否对上，对上就做一次熟悉的插入并停；若摆不出，改做一次 D2，转后暂停观察可见变化，然后停。",
+                    "reason": "先核对再插入，摆不出时用已会慢转保持练习。",
+                    "seconds": 48,
+                    "requires": [
+                      "known_insert",
+                      "known_turns",
+                      "may_not_setup"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "插入复位练习",
+                "seconds": 49,
+                "steps": [
+                  {
+                    "action": "再次缓慢尝试摆回熟悉的插入局面；目视核对目标槽、边块和角块三处，对上就做一次熟悉的插入并停；若摆不出，改做一次 R′，转前先预测变化，转后与观察比较，然后停。",
+                    "reason": "重复前重新核对，备用时练习预测与观察。",
+                    "seconds": 49,
+                    "requires": [
+                      "known_insert",
+                      "known_turns",
+                      "may_not_setup"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 10,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insert",
+                "quote": "会一条熟悉的插入"
+              },
+              {
+                "id": "known_turns",
+                "quote": "也会 D2、R′"
+              },
+              {
+                "id": "may_not_setup",
+                "quote": "但未必能摆回局面"
+              }
+            ],
+            "activities": [
+              {
+                "title": "熟悉插入练习",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "缓慢尝试用你会的方法把目标槽、边块和角块摆成熟悉的插入局面；目视核对三处是否对上，对上就做一次熟悉的插入并停；若摆不出，改做一次 D2，转后暂停观察可见变化，然后停。",
+                    "reason": "先核对再插入，摆不出时用已会慢转保持练习。",
+                    "seconds": 48,
+                    "requires": [
+                      "known_insert",
+                      "known_turns",
+                      "may_not_setup"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "插入复位练习",
+                "seconds": 49,
+                "steps": [
+                  {
+                    "action": "再次缓慢尝试摆回熟悉的插入局面；目视核对目标槽、边块和角块三处，对上就复位并重新核对后再做一次熟悉的插入并停；若摆不出，改做一次 R′，转前先预测变化，转后与观察比较，然后停。",
+                    "reason": "重复前重新核对，备用时练习预测与观察。",
+                    "seconds": 49,
+                    "requires": [
+                      "known_insert",
+                      "known_turns",
+                      "may_not_setup"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 53,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insert",
+                "quote": "会一条熟悉的插入"
+              },
+              {
+                "id": "known_turns",
+                "quote": "也会 D2、R′"
+              },
+              {
+                "id": "may_not_setup",
+                "quote": "但未必能摆回局面"
+              }
+            ],
+            "activities": [
+              {
+                "title": "熟悉插入核对练习",
+                "seconds": 49,
+                "steps": [
+                  {
+                    "action": "缓慢尝试用你会的方法把目标槽、边块和角块摆成熟悉插入局面；目视核对三处是否对上，对上就做一次熟悉的插入，若摆不出就改做一次 D2，转后停一下观察可见变化，然后结束",
+                    "reason": "先核对三处再插入，摆不出时用已会慢转保持练习",
+                    "seconds": 49,
+                    "requires": [
+                      "known_insert",
+                      "known_turns",
+                      "may_not_setup"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "插入复位与备用预测",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "再次缓慢尝试摆回熟悉插入局面并目视核对目标槽、边块和角块，三处对上就做一次熟悉的插入，若摆不出就改做一次 R′，转前先预测会看到的变化，转后对照观察，然后结束",
+                    "reason": "重复前重新核对，备用时用预测对照加深对转动的观察",
+                    "seconds": 48,
+                    "requires": [
+                      "known_insert",
+                      "known_turns",
+                      "may_not_setup"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 54,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insert",
+                "quote": "会一条熟悉的插入"
+              },
+              {
+                "id": "known_turns",
+                "quote": "也会 D2、R′"
+              },
+              {
+                "id": "may_not_setup",
+                "quote": "但未必能摆回局面"
+              }
+            ],
+            "activities": [
+              {
+                "title": "熟悉插入核对练习",
+                "seconds": 49,
+                "steps": [
+                  {
+                    "action": "缓慢尝试用你会的方法把目标槽、边块和角块摆成熟悉插入局面；目视核对三处是否对上，对上就做一次熟悉的插入，若摆不出就改做一次 D2，转后停一下观察可见变化，然后结束",
+                    "reason": "先核对三处再插入，摆不出时用已会慢转保持练习",
+                    "seconds": 49,
+                    "requires": [
+                      "known_insert",
+                      "known_turns",
+                      "may_not_setup"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "插入复位与备用预测",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "再次缓慢尝试摆回熟悉插入局面并目视核对目标槽、边块和角块；三处对上就复位后重新核对，再重复一次熟悉的插入，若摆不出就改做一次 R′，转前先预测会看到的变化，转后对照观察，然后结束",
+                    "reason": "重复前重新核对，备用时用预测对照加深对转动的观察",
+                    "seconds": 48,
+                    "requires": [
+                      "known_insert",
+                      "known_turns",
+                      "may_not_setup"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AL06": {
+    "question": "我只会 F 和 B′，没有学过插入。安排两项不相依的慢拧练习，分别不超过三十九秒、两项合计最多七十一秒。每项从转动层上选一张贴纸，每转一下都停住并报告它从哪里到哪里。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 15,
+        "value": {
+          "imageTask": "other",
+          "answerKind": "general",
+          "answer": "",
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_turns",
+                "quote": "我只会 F 和 B′，没有学过插入。"
+              },
+              {
+                "id": "sticker_report",
+                "quote": "每项从转动层上选一张贴纸，每转一下都停住并报告它从哪里到哪里。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "F 慢拧贴纸追踪",
+                "seconds": 35,
+                "steps": [
+                  {
+                    "action": "在 F 面上选一张贴纸并记住它的位置，然后只做一次 F，停住并说出这张贴纸从哪个位置到了哪个位置；再慢慢做一次 F，停住并再次报告它的新位置，最后核对两次报告与眼前贴纸的位置一致。",
+                    "reason": "只用已会的 F 慢拧并每转停住报告，能练习观察贴纸移动而不涉及插入。",
+                    "seconds": 35,
+                    "requires": [
+                      "known_turns",
+                      "sticker_report"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "B′ 慢拧贴纸追踪",
+                "seconds": 36,
+                "steps": [
+                  {
+                    "action": "在 B 面上选一张贴纸并记住它的位置，然后只做一次 B′，停住并说出这张贴纸从哪个位置到了哪个位置；再慢慢做一次 B′，停住并再次报告它的新位置，最后核对两次报告与眼前贴纸的位置一致。",
+                    "reason": "只用已会的 B′ 慢拧并每转停住报告，独立练习观察贴纸移动且不涉及插入。",
+                    "seconds": 36,
+                    "requires": [
+                      "known_turns",
+                      "sticker_report"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          },
+          "sourceIds": []
+        }
+      },
+      {
+        "call": 16,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_turns",
+                "quote": "我只会 F 和 B′，没有学过插入。"
+              },
+              {
+                "id": "sticker_report",
+                "quote": "每项从转动层上选一张贴纸，每转一下都停住并报告它从哪里到哪里。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "F 慢拧贴纸追踪",
+                "seconds": 35,
+                "steps": [
+                  {
+                    "action": "在 F 面上选一张贴纸并记住它的位置，然后只做一次 F，停住并说出这张贴纸从哪个位置到了哪个位置；再慢慢做一次 F，停住并再次报告它的新位置，最后核对两次报告与眼前贴纸的位置一致。",
+                    "reason": "只用已会的 F 慢拧并每转停住报告，能练习观察贴纸移动而不涉及插入。",
+                    "seconds": 35,
+                    "requires": [
+                      "known_turns",
+                      "sticker_report"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "B′ 慢拧贴纸追踪",
+                "seconds": 36,
+                "steps": [
+                  {
+                    "action": "在 B 面上选一张贴纸并记住它的位置，然后只做一次 B′，停住并说出这张贴纸从哪个位置到了哪个位置；再慢慢做一次 B′，停住并再次报告它的新位置，最后核对两次报告与眼前贴纸的位置一致。",
+                    "reason": "只用已会的 B′ 慢拧并每转停住报告，独立练习观察贴纸移动且不涉及插入。",
+                    "seconds": 36,
+                    "requires": [
+                      "known_turns",
+                      "sticker_report"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 58,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_turns",
+                "quote": "我只会 F 和 B′，没有学过插入。"
+              },
+              {
+                "id": "sticker_report",
+                "quote": "每项从转动层上选一张贴纸，每转一下都停住并报告它从哪里到哪里。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "慢拧 F 并追踪贴纸",
+                "seconds": 35,
+                "steps": [
+                  {
+                    "action": "在 F 转动层上选一张贴纸，记下它当前的位置；慢慢做一次 F，停住并说出这张贴纸从哪个位置到了哪个位置；再慢慢做一次 F，停住并再次报告它的新位置，最后核对两次报告与眼前贴纸位置一致。",
+                    "reason": "只用已会的 F 慢拧，并在每转一下后停住观察贴纸去向。",
+                    "seconds": 35,
+                    "requires": [
+                      "known_turns",
+                      "sticker_report"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "慢拧 B′ 并追踪贴纸",
+                "seconds": 36,
+                "steps": [
+                  {
+                    "action": "在 B 转动层上选一张贴纸，记下它当前的位置；慢慢做一次 B′，停住并说出这张贴纸从哪个位置到了哪个位置；再慢慢做一次 B′，停住并再次报告它的新位置，最后核对两次报告与眼前贴纸位置一致。",
+                    "reason": "只用已会的 B′ 慢拧，并在每转一下后停住观察贴纸去向。",
+                    "seconds": 36,
+                    "requires": [
+                      "known_turns",
+                      "sticker_report"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 59,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_turns",
+                "quote": "我只会 F 和 B′，没有学过插入。"
+              },
+              {
+                "id": "sticker_report",
+                "quote": "每项从转动层上选一张贴纸，每转一下都停住并报告它从哪里到哪里。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "慢拧 F 并追踪贴纸",
+                "seconds": 35,
+                "steps": [
+                  {
+                    "action": "在 F 转动层上选一张贴纸，记下它当前的位置；慢慢做一次 F，停住并说出这张贴纸从哪个位置到了哪个位置；再慢慢做一次 F，停住并再次报告它的新位置，最后核对两次报告与眼前贴纸位置一致。",
+                    "reason": "只用已会的 F 慢拧，并在每转一下后停住观察贴纸去向。",
+                    "seconds": 35,
+                    "requires": [
+                      "known_turns",
+                      "sticker_report"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "慢拧 B′ 并追踪贴纸",
+                "seconds": 36,
+                "steps": [
+                  {
+                    "action": "在 B 转动层上选一张贴纸，记下它当前的位置；慢慢做一次 B′，停住并说出这张贴纸从哪个位置到了哪个位置；再慢慢做一次 B′，停住并再次报告它的新位置，最后核对两次报告与眼前贴纸位置一致。",
+                    "reason": "只用已会的 B′ 慢拧，并在每转一下后停住观察贴纸去向。",
+                    "seconds": 36,
+                    "requires": [
+                      "known_turns",
+                      "sticker_report"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AL08": {
+    "question": "Give me a 127–151-word plan for my existing two-column Czech word and meaning list. Use two activities with two timed substeps and reasons in each, all within 126 seconds. First say the meanings without looking at them, then write Czech from the meanings before reading the correct spellings.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 21,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "czech_list",
+                "quote": "my existing two-column Czech word and meaning list"
+              }
+            ],
+            "activities": [
+              {
+                "title": "Say meanings from Czech",
+                "seconds": 63,
+                "steps": [
+                  {
+                    "action": "Keep the WORD column visible and cover the MEANING column; say each Czech word's meaning aloud, then uncover to check and recover MEANING before the next word. If none are known, use the whole list.",
+                    "reason": "Saying before checking forces recall, and recovering the answer column keeps every later attempt honest.",
+                    "seconds": 32,
+                    "requires": [
+                      "czech_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "Cover the MEANING column again and repeat the full list, prioritising words you missed; say each meaning, uncover to check, then recover MEANING.",
+                    "reason": "A second hidden attempt strengthens weak items and confirms which meanings still need work.",
+                    "seconds": 31,
+                    "requires": [
+                      "czech_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Write Czech from meanings",
+                "seconds": 63,
+                "steps": [
+                  {
+                    "action": "Cover the WORD column, keep MEANING visible, and write the Czech for each meaning on paper; uncover WORD to check spelling, then cover WORD again.",
+                    "reason": "Writing from the meaning tests productive spelling, and re-covering the prompt column prevents copying on the next item.",
+                    "seconds": 32,
+                    "requires": [
+                      "czech_list"
+                    ],
+                    "produces": [
+                      "written_czech"
+                    ]
+                  },
+                  {
+                    "action": "Read the correct spellings aloud against your written Czech, mark differences, then cover WORD and rewrite missed items from their meanings.",
+                    "reason": "Comparing written attempts with the list exposes spelling gaps, and rewriting fixes them while recall is fresh.",
+                    "seconds": 31,
+                    "requires": [
+                      "czech_list",
+                      "written_czech"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 22,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "czech_list",
+                "quote": "my existing two-column Czech word and meaning list"
+              }
+            ],
+            "activities": [
+              {
+                "title": "Say meanings from Czech",
+                "seconds": 63,
+                "steps": [
+                  {
+                    "action": "Keep the WORD column visible and cover the MEANING column; say each Czech word's meaning aloud, then uncover to check and recover MEANING before the next word. If none are known, use the whole list.",
+                    "reason": "Recall before checking keeps attempts honest.",
+                    "seconds": 32,
+                    "requires": [
+                      "czech_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "Cover the MEANING column again and repeat the full list, prioritising words you missed; say each meaning, uncover to check, then recover MEANING.",
+                    "reason": "A second hidden attempt strengthens weak items.",
+                    "seconds": 31,
+                    "requires": [
+                      "czech_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Write Czech from meanings",
+                "seconds": 63,
+                "steps": [
+                  {
+                    "action": "Cover the WORD column, keep MEANING visible, and write the Czech for each meaning on paper; uncover WORD to check spelling, then cover WORD again.",
+                    "reason": "Writing tests spelling; re-covering prevents copying.",
+                    "seconds": 32,
+                    "requires": [
+                      "czech_list"
+                    ],
+                    "produces": [
+                      "written_czech"
+                    ]
+                  },
+                  {
+                    "action": "Read the correct spellings aloud against your written Czech, mark differences, then cover WORD and rewrite missed items from their meanings.",
+                    "reason": "Comparing written attempts with the list exposes spelling gaps, and rewriting fixes them while recall is fresh.",
+                    "seconds": 31,
+                    "requires": [
+                      "czech_list",
+                      "written_czech"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 64,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_list",
+                "quote": "my existing two-column Czech word and meaning list"
+              }
+            ],
+            "activities": [
+              {
+                "title": "Say meanings from Czech",
+                "seconds": 63,
+                "steps": [
+                  {
+                    "action": "Keep the WORD column visible and cover the MEANING column; say each Czech word's meaning aloud, then uncover to check and recover MEANING before the next word.",
+                    "reason": "Saying before checking forces recall, and recovering the answer column keeps every attempt honest.",
+                    "seconds": 31,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "Repeat the full list the same way, prioritising words you missed; if none were missed, use the complete list once more.",
+                    "reason": "A second attempt strengthens weak items without requiring any errors.",
+                    "seconds": 32,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Write Czech from meanings",
+                "seconds": 63,
+                "steps": [
+                  {
+                    "action": "Cover the WORD column, keep MEANING visible, write each Czech word on paper, then uncover to check spelling and recover WORD before the next item.",
+                    "reason": "Writing from the meaning tests productive spelling, and recovering the word column hides the answer again.",
+                    "seconds": 31,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "Repeat with the whole list, prioritising misspelled words; if none were misspelled, rewrite the complete list once.",
+                    "reason": "Rewriting correct forms consolidates spelling whether or not errors occurred.",
+                    "seconds": 32,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AL09": {
+    "question": "The ready-made German picture cards have a plant image on the front and its German name on the back. Give me two picture-to-word spelling drills within 98 seconds total. For every card write the German name before you flip, then check it and put that same card back picture-side up before moving on.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 25,
+        "value": {
+          "answerKind": "general",
+          "answer": "1. Picture-to-word spelling drill — 49 seconds\n- Shuffle the full plant-card deck picture-side up, then for each card write the German plant name on paper before flipping once to check it, and immediately return that same card picture-side up before moving to the next card, so every attempt is a written recall followed by a self-check and a reset; work through as many cards as fit in 49 seconds, and if the deck is empty or has fewer cards than you expect, just do the pass with whatever cards exist (or note there are none and skip to drill 2).\n\n2. Picture-to-word spelling drill — 49 seconds\n- Reshuffle the whole deck picture-side up, then repeat the same cycle — write the German name, flip once to check, return that card picture-side up — for as many cards as fit in 49 seconds, giving a second full written-recall pass over the same ready-made cards.",
+          "sourceIds": []
+        }
+      },
+      {
+        "call": 26,
+        "value": {
+          "answerKind": "general",
+          "answer": "Picture-to-word spelling drill — 49 seconds\nShuffle the full plant-card deck picture-side up, then for each card write the German plant name on paper before flipping once to check it, and immediately return that same card picture-side up before moving to the next card, so every attempt is a written recall followed by a self-check and a reset; work through as many cards as fit in 49 seconds, and if the deck is empty or has fewer cards than you expect, just do the pass with whatever cards exist (or note there are none and skip to the second drill).\n\nPicture-to-word spelling drill — 49 seconds\nReshuffle the whole deck picture-side up, then repeat the same cycle — write the German name, flip once to check, return that card picture-side up — for as many cards as fit in 49 seconds, giving a second full written-recall pass over the same ready-made cards.",
+          "sourceIds": []
+        }
+      },
+      {
+        "call": 65,
+        "value": {
+          "answerKind": "general",
+          "answer": "1. Picture-to-word spelling drill — 49 seconds\n- Take the full ready-made plant card set, shuffle it, and lay every card picture-side up; then for each card in turn write the German plant name on paper before flipping it once to check, and immediately return that same card picture-side up before moving to the next card, continuing until the 49 seconds end (writing before the flip makes the spelling attempt real, and the reset keeps every card ready for the second drill).\n\n2. Picture-to-word spelling drill — 49 seconds\n- Reshuffle the same full set, lay all cards picture-side up again, and repeat the same cycle for each card — write the German name first, flip once to check, then put that card back picture-side up before the next — using the remaining 49 seconds (a second full pass over the same cards gives fresh spelling recall, and the reset leaves the deck in its original picture-up state).",
+          "sourceIds": []
+        }
+      },
+      {
+        "call": 66,
+        "value": {
+          "answerKind": "general",
+          "answer": "1. Picture-to-word spelling drill — 49 seconds\n- Take the full ready-made plant card set, shuffle it, and lay every card picture-side up; then for each card in turn write the German plant name on paper before flipping it once to check, and immediately return that same card picture-side up before moving to the next card, continuing until the 49 seconds end (writing before the flip makes the spelling attempt real, and the reset keeps every card ready for the second drill).\n\n2. Picture-to-word spelling drill — 49 seconds\n- Reshuffle the same full set, lay all cards picture-side up again, and repeat the same cycle for each card — write the German name first, flip once to check, then put that card back picture-side up before the next — using the remaining 49 seconds (a second full pass over the same cards gives fresh spelling recall, and the reset leaves the deck in its original picture-up state).",
+          "sourceIds": []
+        }
+      }
+    ]
+  },
+  "AL12": {
+    "question": "Put the two directions into one paragraph, keeping the same sheet and cutting the total time to 72 seconds. In each direction name the covered answer column, respond from the visible one, then uncover the reference and check.",
+    "lang": "en",
+    "history": [
+      {
+        "role": "user",
+        "content": "I have an Icelandic word-and-meaning sheet in two columns and 94 seconds set aside for two-way recall."
+      },
+      {
+        "role": "assistant",
+        "content": "Work with the two columns in separate passes."
+      }
+    ],
+    "drafts": [
+      {
+        "call": 31,
+        "value": {
+          "answerKind": "general",
+          "answer": "1. Icelandic two-way recall, 72 seconds total\n- 36 seconds — Cover the meaning column, read each Icelandic word from the visible word column, say its meaning aloud, then uncover the meaning column and check that answer.\n- 36 seconds — Cover the word column, read each meaning from the visible meaning column, say the Icelandic word aloud, then uncover the word column and check that answer.",
+          "sourceIds": []
+        }
+      },
+      {
+        "call": 74,
+        "value": {
+          "answerKind": "general",
+          "answer": "1. Icelandic two-way recall, 72 seconds total\n- 36 seconds — Cover the meaning column, read each Icelandic word from the visible word column, say its meaning aloud, then uncover the meaning column and check that answer.\n- 36 seconds — Cover the word column, read each meaning from the visible meaning column, say the Icelandic word aloud, then uncover the word column and check that answer.",
+          "sourceIds": []
+        }
+      }
+    ]
+  }
+}

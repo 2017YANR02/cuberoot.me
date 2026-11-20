@@ -1,0 +1,895 @@
+{
+  "AM04": {
+    "question": "现在可以慢慢转。给这个插入局面两项练习，每项注明秒数。每项先尝试摆出熟悉局面，肉眼检查棱块、角块和对应槽，三者都对齐才做会的插入。摆不成时分别改做一种不同的慢转，只用 F2 和 U′，做完备用就结束。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "本轮只有九十三秒，认识一个插入局面但可能摆不回去，已会 F2、U′。暂时只静态观察。"
+      },
+      {
+        "role": "assistant",
+        "content": "先静态观察。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 8,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_turns",
+                "quote": "已会 F2、U′。"
+              },
+              {
+                "id": "insert_case",
+                "quote": "认识一个插入局面但可能摆不回去"
+              }
+            ],
+            "activities": [
+              {
+                "title": "摆回熟悉插入局面",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "用已会的 F2、U′ 慢慢尝试把当前插入局面摆回你认识的那个熟悉局面；摆好后肉眼核对棱块、角块和对应槽三者是否都对齐，三者都对齐才做一次会的插入；若摆不成，就改做慢转 F2，转完停一下观察可见变化，做完即结束。",
+                    "reason": "先确认三处对齐再插入，避免在未对齐时凭记忆硬做；摆不成时用一次可观察的慢转收尾。",
+                    "seconds": 45,
+                    "requires": [
+                      "known_turns",
+                      "insert_case"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "预测后再摆一次",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "再用 F2、U′ 尝试摆出熟悉局面，摆好后肉眼检查棱块、角块和对应槽是否三者对齐，对齐才做一次会的插入；若摆不成，就先预测一次 U′ 会带来什么变化再转，转完与观察结果对照，做完即结束。",
+                    "reason": "第二次独立验证能否摆回，并用先预测后对照的慢转替代插入，保持观察习惯。",
+                    "seconds": 48,
+                    "requires": [
+                      "known_turns",
+                      "insert_case"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 9,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_turns",
+                "quote": "已会 F2、U′。"
+              },
+              {
+                "id": "insert_case",
+                "quote": "认识一个插入局面但可能摆不回去"
+              }
+            ],
+            "activities": [
+              {
+                "title": "摆回熟悉插入局面",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "用已会的 F2、U′ 慢慢尝试把当前插入局面摆回你认识的那个熟悉局面；摆好后肉眼核对棱块、角块和对应槽三者是否都对齐，三者都对齐才做一次会的插入；若摆不成，就改做慢转 F2，转完停一下观察可见变化，做完即结束。",
+                    "reason": "先确认三处对齐再插入，避免在未对齐时凭记忆硬做；摆不成时用一次可观察的慢转收尾。",
+                    "seconds": 45,
+                    "requires": [
+                      "known_turns",
+                      "insert_case"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "预测后再摆一次",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "再用 F2、U′ 尝试摆出熟悉局面，摆好后肉眼检查棱块、角块和对应槽是否三者对齐，对齐才做一次会的插入；若摆不成，就先预测一次 U′ 会带来什么变化再转，转完与观察结果对照，做完即结束。",
+                    "reason": "第二次独立验证能否摆回，并用先预测后对照的慢转替代插入，保持观察习惯。",
+                    "seconds": 48,
+                    "requires": [
+                      "known_turns",
+                      "insert_case"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 51,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_turns",
+                "quote": "已会 F2、U′。"
+              },
+              {
+                "id": "insert_case",
+                "quote": "认识一个插入局面但可能摆不回去"
+              }
+            ],
+            "activities": [
+              {
+                "title": "摆出熟悉插入局面",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "用已会的 F2、U′ 慢慢尝试把当前插入局面摆成你认识的那个熟悉局面；摆好后肉眼核对棱块、角块和对应槽三者是否都对齐，三者都对齐才做一次会的插入，任一不对齐就停手不插入。",
+                    "reason": "先确认三要素对齐再插入，避免在没摆对时凭感觉硬做。",
+                    "seconds": 45,
+                    "requires": [
+                      "known_turns",
+                      "insert_case"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "预测式慢转备用",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "若上一项没摆成，改做一种不同的慢转：先说出下一步 F2 或 U′ 会让哪一块可见地变化，再转一次并对照实际观察；若上一项已摆成并插入，则重置后同样做这一种预测式慢转，做完即停。",
+                    "reason": "用预测与观察对照的慢转保持手感，且与第一项的做法不同。",
+                    "seconds": 48,
+                    "requires": [
+                      "known_turns"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 52,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_turns",
+                "quote": "已会 F2、U′。"
+              },
+              {
+                "id": "insert_case",
+                "quote": "认识一个插入局面但可能摆不回去"
+              }
+            ],
+            "activities": [
+              {
+                "title": "摆出熟悉插入局面",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "用已会的 F2、U′ 慢慢尝试把当前插入局面摆成你认识的那个熟悉局面；摆好后肉眼核对棱块、角块和对应槽三者是否都对齐，三者都对齐才做一次会的插入。若摆不成，改做一种慢转：每转一次 F2 或 U′ 就停下来观察哪一块可见地变化，做完即停，不再做插入或槽位检查。",
+                    "reason": "先确认三要素对齐再插入；摆不成时用停顿观察的慢转保持手感。",
+                    "seconds": 45,
+                    "requires": [
+                      "known_turns",
+                      "insert_case"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "预测式慢转备用",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "先尝试用 F2、U′ 把当前局面摆成熟悉的插入局面，肉眼核对棱块、角块和对应槽三者都对齐才做一次会的插入。若摆不成，改做另一种慢转：转之前先说出下一步 F2 或 U′ 会让哪一块可见地变化，再转一次并对照实际观察，做完即停，不再做插入或槽位检查。",
+                    "reason": "用预测与观察对照的慢转，与第一项的停顿观察法不同。",
+                    "seconds": 48,
+                    "requires": [
+                      "known_turns",
+                      "insert_case"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AM05": {
+    "question": "I may now turn the cube slowly. Design two timed drills for that familiar case. For each, attempt setup, look at the pair and the destination slot, and insert only if both visibly match. If I cannot recreate it, give each drill a different practical fallback from my allowed moves, then stop that drill.",
+    "lang": "en",
+    "history": [
+      {
+        "role": "user",
+        "content": "I have 91 seconds, know one insertion and may not reach its starting case. My only allowed basic moves are R2 and L′. For now do not turn the cube."
+      },
+      {
+        "role": "assistant",
+        "content": "Keep the cube still for now."
+      }
+    ],
+    "drafts": [
+      {
+        "call": 12,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insertion",
+                "quote": "I have 91 seconds, know one insertion and may not reach its starting case."
+              },
+              {
+                "id": "allowed_moves",
+                "quote": "My only allowed basic moves are R2 and L′."
+              },
+              {
+                "id": "slow_turning",
+                "quote": "I may now turn the cube slowly."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Setup check and insertion",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "Slowly set up your known insertion case using your own familiar method or the inverse of that insertion, then look at both pieces and the destination slot; only if both visibly match, perform the insertion once, and if you repeat it, reset and check again before the repeat. If setup fails, do R2 once, pause after the turn to observe the visible change, then stop this drill.",
+                    "reason": "Verifying the pair and slot before inserting prevents a blind insertion, and the R2 fallback gives a concrete allowed-move exercise with an observation pause.",
+                    "seconds": 46,
+                    "requires": [
+                      "known_insertion",
+                      "allowed_moves",
+                      "slow_turning"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Setup check and insertion repeat",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "Slowly set up the same familiar insertion case again using your known method or the inverse of the insertion, look at both pieces and the destination slot, and insert only if both visibly match; if you repeat the insertion, reset and check again first. If setup fails, predict what L′ will change, do L′ once, then compare the prediction with what you observe and stop this drill.",
+                    "reason": "A second verified attempt builds consistency, and the L′ fallback practices prediction against observation using only an allowed move.",
+                    "seconds": 45,
+                    "requires": [
+                      "known_insertion",
+                      "allowed_moves",
+                      "slow_turning"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 13,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insertion",
+                "quote": "I have 91 seconds, know one insertion and may not reach its starting case."
+              },
+              {
+                "id": "allowed_moves",
+                "quote": "My only allowed basic moves are R2 and L′."
+              },
+              {
+                "id": "slow_turning",
+                "quote": "I may now turn the cube slowly."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Setup check and insertion",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "Slowly set up your known insertion case using your own familiar method or the inverse of that insertion, then look at both pieces and the destination slot; only if both visibly match, perform the insertion once, and if you repeat it, reset and check again before the repeat. If setup fails, do R2 once, pause after the turn to observe the visible change, then stop this drill.",
+                    "reason": "Verifying the pair and slot before inserting prevents a blind insertion, and the R2 fallback gives a concrete allowed-move exercise with an observation pause.",
+                    "seconds": 46,
+                    "requires": [
+                      "known_insertion",
+                      "allowed_moves",
+                      "slow_turning"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Setup check and insertion repeat",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "Slowly set up the same familiar insertion case again using your known method or the inverse of the insertion, look at both pieces and the destination slot, and insert only if both visibly match; if you repeat the insertion, reset and check again first. If setup fails, predict what L′ will change, do L′ once, then compare the prediction with what you observe and stop this drill.",
+                    "reason": "A second verified attempt builds consistency, and the L′ fallback practices prediction against observation using only an allowed move.",
+                    "seconds": 45,
+                    "requires": [
+                      "known_insertion",
+                      "allowed_moves",
+                      "slow_turning"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 53,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insertion",
+                "quote": "I have 91 seconds, know one insertion and may not reach its starting case."
+              },
+              {
+                "id": "allowed_moves",
+                "quote": "My only allowed basic moves are R2 and L′."
+              },
+              {
+                "id": "may_turn",
+                "quote": "I may now turn the cube slowly."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Setup and insert with observation pause",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "Slowly set up your known insertion case using your own familiar method or the inverse of that insertion; then look at both pieces and the destination slot, and only if they visibly match perform the insertion once, pausing after each turn to observe the visible change; if the setup does not match, stop and instead do one R2 on the current cube, pausing to observe the change, then end the drill without inserting.",
+                    "reason": "This practices the familiar case with a visual match check and gives a concrete allowed-move fallback that trains observation.",
+                    "seconds": 46,
+                    "requires": [
+                      "known_insertion",
+                      "allowed_moves",
+                      "may_turn"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Setup and insert with prediction check",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "Slowly set up your known insertion case again using your own familiar method or the inverse of that insertion; then look at both pieces and the destination slot, and only if they visibly match perform the insertion once, predicting the change before each turn and comparing it with what you observe; if the setup does not match, stop and instead do one L′ on the current cube, predicting the change before turning and comparing it with what you observe, then end the drill without inserting.",
+                    "reason": "This repeats the familiar case with a prediction check and gives a different allowed-move fallback that trains anticipation.",
+                    "seconds": 45,
+                    "requires": [
+                      "known_insertion",
+                      "allowed_moves",
+                      "may_turn"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 54,
+        "value": {
+          "imageTask": "other",
+          "answerKind": "general",
+          "answer": "",
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insertion",
+                "quote": "I have 91 seconds, know one insertion and may not reach its starting case."
+              },
+              {
+                "id": "allowed_moves",
+                "quote": "My only allowed basic moves are R2 and L′."
+              },
+              {
+                "id": "may_turn",
+                "quote": "I may now turn the cube slowly."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Setup and insert with observation pause",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "Slowly set up your known insertion case using your own familiar method or the inverse of that insertion; look at both pieces and the destination slot, and only if they visibly match perform the insertion once, pausing after each turn to observe the visible change; if the setup does not match, stop and instead do one R2 on the current cube, pausing to observe the change, then end the drill without inserting or checking the slot.",
+                    "reason": "This practices the familiar case with a visual match check and gives a concrete allowed-move fallback that trains observation.",
+                    "seconds": 46,
+                    "requires": [
+                      "known_insertion",
+                      "allowed_moves",
+                      "may_turn"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Setup and insert with prediction check",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "Slowly set up your known insertion case again using your own familiar method or the inverse of that insertion; look at both pieces and the destination slot, and only if they visibly match perform the insertion once, predicting the change before each turn and comparing it with what you observe; if the setup does not match, stop and instead do one L′ on the current cube, predicting the change before turning and comparing it with what you observe, then end the drill without inserting or checking the slot.",
+                    "reason": "This repeats the familiar case with a prediction check and gives a different allowed-move fallback that trains anticipation.",
+                    "seconds": 45,
+                    "requires": [
+                      "known_insertion",
+                      "allowed_moves",
+                      "may_turn"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          },
+          "sourceIds": []
+        }
+      }
+    ]
+  },
+  "AM09": {
+    "question": "I have ready-made Spanish cards, a kitchen-tool drawing on one side and the Spanish word on the other. Give me two picture-to-word spelling drills within 96 seconds overall. Every time, write the Spanish before flipping to check; return the same card to drawing-side up before moving on.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 21,
+        "value": {
+          "answerKind": "general",
+          "answer": "1. Picture-to-word spelling drill — 48 seconds\n- Shuffle the full deck and place it drawing-side up; take the top card, write your Spanish attempt on paper without looking, flip once to check it, then return that same card drawing-side up to the bottom of the pile, repeating this write–flip–check–reset cycle through as many cards as the 48 seconds allow (writing first tests spelling from the picture, and resetting keeps every card ready for the next pass).\n\n2. Picture-to-word spelling drill — 48 seconds\n- Reshuffle the whole deck and place it drawing-side up; take the top card, write your Spanish attempt before flipping to check, then return that same card drawing-side up to the bottom, continuing the write–flip–check–reset cycle for the remaining 48 seconds (a fresh full-deck pass gives a second independent spelling attempt on every picture).",
+          "sourceIds": []
+        }
+      },
+      {
+        "call": 22,
+        "value": {
+          "answerKind": "general",
+          "answer": "1. Picture-to-word spelling drill — 48 seconds\n- Shuffle the full deck and place it drawing-side up; take the top card, write your Spanish attempt on paper without looking, flip once to check it, then return that same card drawing-side up to the bottom of the pile, repeating this write–flip–check–reset cycle through as many cards as the 48 seconds allow (writing first tests spelling from the picture, and resetting keeps every card ready for the next pass).\n\n2. Picture-to-word spelling drill — 48 seconds\n- Reshuffle the whole deck and place it drawing-side up; take the top card, write your Spanish attempt before flipping to check, then return that same card drawing-side up to the bottom, continuing the write–flip–check–reset cycle for the remaining 48 seconds (a fresh full-deck pass gives a second independent spelling attempt on every picture).",
+          "sourceIds": []
+        }
+      },
+      {
+        "call": 62,
+        "value": {
+          "answerKind": "general",
+          "answer": "1. Picture-to-word spelling drill — 48 seconds\n- Pick two kitchen-tool cards, lay each drawing-side up, and for each one write the Spanish word on paper before flipping once to check it, then return that same card to drawing-side up before moving to the next card; writing first tests spelling recall, and resetting keeps the deck ready for the second drill.\n\n2. Picture-to-word spelling drill — 48 seconds\n- Pick two different kitchen-tool cards, lay each drawing-side up, and for each one write the Spanish word on paper before flipping once to check it, then return that same card to drawing-side up before moving on; a fresh pair repeats the recall-and-check cycle within the remaining time.",
+          "sourceIds": []
+        }
+      },
+      {
+        "call": 63,
+        "value": {
+          "answerKind": "general",
+          "answer": "1. Picture-to-word spelling drill — 48 seconds\n- Prepare two kitchen-tool cards by placing each drawing-side up with its Spanish word on the back, then for each card write the Spanish word on paper before flipping once to check it, and return that same card to drawing-side up before moving to the next; writing first tests spelling recall, and resetting keeps the deck ready for the second drill.\n\n2. Picture-to-word spelling drill — 48 seconds\n- Prepare two different kitchen-tool cards the same way, drawing-side up with the Spanish word on the back, then for each one write the Spanish word on paper before flipping once to check it, and return that same card to drawing-side up before moving on; a fresh pair repeats the recall-and-check cycle within the remaining time.",
+          "sourceIds": []
+        }
+      }
+    ]
+  },
+  "AM10": {
+    "question": "现有的俄语双面卡一面是俄语、一面是中文。安排两项练习，共不超过九十一秒。每项逐张看中文，在纸上写俄语之后才翻查，查完让刚翻过的那张卡中文面朝上。若上一轮全对，第二项也用整套卡重做。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 23,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "russian_cards",
+                "quote": "现有的俄语双面卡一面是俄语、一面是中文。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "中文面朝上写俄语并翻查",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "把整套俄语双面卡逐张摆成中文面朝上，在纸上写下该卡对应的俄语，写完后才翻到俄语面核对，核对完把这张卡翻回中文面朝上，再处理下一张；若整套卡不足或为零张，则只处理现有卡片，没有卡片时直接结束本项。",
+                    "reason": "先写后翻能检验主动回忆，翻回中文面朝上保证下一张仍从中文提示开始。",
+                    "seconds": 45,
+                    "requires": [
+                      "russian_cards"
+                    ],
+                    "produces": [
+                      "round1_results"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "整套卡重做",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "若上一轮全对，则把整套卡重新逐张摆成中文面朝上，在纸上写俄语后才翻查，查完把该卡翻回中文面朝上；若上一轮有错，则只重做写错的那几张，同样先写后翻、查完翻回中文面朝上；没有卡片时直接结束。",
+                    "reason": "全对时整套重做巩固记忆，有错时集中修正错误卡片，两种分支都保持先写后翻的检验方式。",
+                    "seconds": 46,
+                    "requires": [
+                      "russian_cards",
+                      "round1_results"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 24,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "russian_cards",
+                "quote": "现有的俄语双面卡一面是俄语、一面是中文。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "中文面朝上写俄语并翻查",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "把整套俄语双面卡逐张摆成中文面朝上，在纸上写下该卡对应的俄语，写完后才翻到俄语面核对，核对完把这张卡翻回中文面朝上，再处理下一张；若整套卡不足或为零张，则只处理现有卡片，没有卡片时直接结束本项。",
+                    "reason": "先写后翻能检验主动回忆，翻回中文面朝上保证下一张仍从中文提示开始。",
+                    "seconds": 45,
+                    "requires": [
+                      "russian_cards"
+                    ],
+                    "produces": [
+                      "round1_results"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "整套卡重做",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "若上一轮全对，则把整套卡重新逐张摆成中文面朝上，在纸上写俄语后才翻查，查完把该卡翻回中文面朝上；若上一轮有错，则只重做写错的那几张，同样先写后翻、查完翻回中文面朝上；没有卡片时直接结束。",
+                    "reason": "全对时整套重做巩固记忆，有错时集中修正错误卡片，两种分支都保持先写后翻的检验方式。",
+                    "seconds": 46,
+                    "requires": [
+                      "russian_cards",
+                      "round1_results"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 66,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "russian_cards",
+                "quote": "现有的俄语双面卡一面是俄语、一面是中文。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "中文面朝上写俄语并翻查",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "把整套俄语双面卡逐张摆成中文面朝上，备好纸笔；逐张看中文，在纸上写出对应俄语，写完后才翻到俄语面核对，核对完把这张卡翻回中文面朝上，再处理下一张，直到整套卡走完。",
+                    "reason": "先写后翻能检验主动回忆，翻回中文面朝上保证下一轮起点一致。",
+                    "seconds": 45,
+                    "requires": [
+                      "russian_cards"
+                    ],
+                    "produces": [
+                      "written_attempts",
+                      "cards_chinese_up"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "整套卡重做",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "确认所有卡都是中文面朝上；若上一轮全对，就用整套卡按同样方式重做：逐张看中文、在纸上写俄语、写完才翻查、查完翻回中文面朝上；若上一轮有错，则只重做写错的那几张，同样写后才翻查并翻回中文面朝上，没有错卡时仍用整套卡重做。",
+                    "reason": "全对时整套重做巩固记忆，有错时集中修正，且每张卡都保持中文面朝上的统一起点。",
+                    "seconds": 46,
+                    "requires": [
+                      "russian_cards",
+                      "written_attempts",
+                      "cards_chinese_up"
+                    ],
+                    "produces": [
+                      "written_attempts_round2",
+                      "cards_chinese_up"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 67,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "russian_cards",
+                "quote": "现有的俄语双面卡一面是俄语、一面是中文。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "中文面朝上写俄语并翻查",
+                "seconds": 45,
+                "steps": [
+                  {
+                    "action": "把整套俄语双面卡逐张摆成中文面朝上，备好纸笔；逐张看中文，在纸上写出对应俄语，写完后才翻到俄语面核对，核对完把这张卡翻回中文面朝上，再处理下一张，直到整套卡走完。",
+                    "reason": "先写后翻能检验主动回忆，翻回中文面朝上保证下一轮起点一致。",
+                    "seconds": 45,
+                    "requires": [
+                      "russian_cards"
+                    ],
+                    "produces": [
+                      "written_attempts",
+                      "cards_chinese_up"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "整套卡重做",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "确认所有卡都是中文面朝上；若上一轮全对，就用整套卡按同样方式重做：逐张看中文、在纸上写俄语、写完才翻查、查完翻回中文面朝上；若上一轮有错，则只重做写错的那几张，同样写后才翻查并翻回中文面朝上，没有错卡时仍用整套卡重做。",
+                    "reason": "全对时整套重做巩固记忆，有错时集中修正，且每张卡都保持中文面朝上的统一起点。",
+                    "seconds": 46,
+                    "requires": [
+                      "russian_cards",
+                      "written_attempts",
+                      "cards_chinese_up"
+                    ],
+                    "produces": [
+                      "written_attempts_round2",
+                      "cards_chinese_up"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AM12": {
+    "question": "Combine both directions into one paragraph using that same sheet, with no more than 68 seconds total. In both directions say which column is covered, respond using the other one, then uncover and check before you move on.",
+    "lang": "en",
+    "history": [
+      {
+        "role": "user",
+        "content": "I have an 85-second slot and a Romanian word-and-meaning sheet in two columns for recall in both directions."
+      },
+      {
+        "role": "assistant",
+        "content": "Use one pass per column."
+      }
+    ],
+    "drafts": [
+      {
+        "call": 28,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "romanian_sheet",
+                "quote": "I have an 85-second slot and a Romanian word-and-meaning sheet in two columns for recall in both directions."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Romanian to English recall",
+                "seconds": 34,
+                "steps": [
+                  {
+                    "action": "Cover the meaning column, say that the Romanian column is covered, then for each Romanian word respond with its English meaning from memory; uncover and check each one before moving to the next word.",
+                    "reason": "Recalling from the covered column and checking immediately fixes each item before the direction switch.",
+                    "seconds": 34,
+                    "requires": [
+                      "romanian_sheet"
+                    ],
+                    "produces": [
+                      "checked_ro_to_en"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "English to Romanian recall",
+                "seconds": 34,
+                "steps": [
+                  {
+                    "action": "Cover the Romanian column, say that the meaning column is covered, then for each English meaning respond with its Romanian word from memory; uncover and check each one before moving to the next word.",
+                    "reason": "The reverse direction tests production of the Romanian form and completes both-way recall within the limit.",
+                    "seconds": 34,
+                    "requires": [
+                      "romanian_sheet",
+                      "checked_ro_to_en"
+                    ],
+                    "produces": [
+                      "checked_en_to_ro"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 71,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "romanian_sheet",
+                "quote": "I have an 85-second slot and a Romanian word-and-meaning sheet in two columns for recall in both directions."
+              }
+            ],
+            "activities": [
+              {
+                "title": "Romanian to English recall",
+                "seconds": 34,
+                "steps": [
+                  {
+                    "action": "Cover the meaning column, say that the Romanian column is covered, and for each Romanian word respond with its English meaning from memory.",
+                    "reason": "Recalling the meaning from the word tests the Romanian-to-English direction.",
+                    "seconds": 24,
+                    "requires": [
+                      "romanian_sheet"
+                    ],
+                    "produces": [
+                      "romanian_to_english_attempts"
+                    ]
+                  },
+                  {
+                    "action": "Uncover the meaning column and check each response against it, marking any word you missed before moving on.",
+                    "reason": "Checking against the uncovered column confirms accuracy and flags items needing another pass.",
+                    "seconds": 10,
+                    "requires": [
+                      "romanian_sheet",
+                      "romanian_to_english_attempts"
+                    ],
+                    "produces": [
+                      "romanian_to_english_checked"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "English to Romanian recall",
+                "seconds": 34,
+                "steps": [
+                  {
+                    "action": "Cover the Romanian column, say that the meaning column is covered, and for each English meaning respond with its Romanian word from memory.",
+                    "reason": "Recalling the word from the meaning tests the reverse direction.",
+                    "seconds": 24,
+                    "requires": [
+                      "romanian_sheet"
+                    ],
+                    "produces": [
+                      "english_to_romanian_attempts"
+                    ]
+                  },
+                  {
+                    "action": "Uncover the Romanian column and check each response against it, marking any word you missed before moving on.",
+                    "reason": "Checking against the uncovered column confirms accuracy in the reverse direction.",
+                    "seconds": 10,
+                    "requires": [
+                      "romanian_sheet",
+                      "english_to_romanian_attempts"
+                    ],
+                    "produces": [
+                      "english_to_romanian_checked"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

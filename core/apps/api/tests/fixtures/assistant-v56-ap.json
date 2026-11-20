@@ -1,0 +1,892 @@
+{
+  "AP02": {
+    "question": "Give two hands-on tests to check whether my index fingertip releases its sticker before a slow F turn finishes. Use a title: seconds heading on each test and fit both into 64 seconds. In a separate paragraph, ask Inez in one sentence to film both tests tomorrow.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 3,
+        "value": {
+          "answerKind": "general",
+          "answer": "**Test 1: Sticker-peel check — 30 seconds**\nHold the cube still with your index finger resting on the F-face sticker, then turn F slowly over about 5 seconds while watching only the fingertip. Repeat 3–4 times within the 30 seconds, noting whether the fingertip stays in contact past the halfway point of the turn or slides off early; a clean release means the finger leaves the sticker before the turn completes.\n\n**Test 2: Slow-motion mirror check — 34 seconds**\nDo 3 slow F turns (about 6 seconds each) in front of a mirror or phone camera at close range, then spend the remaining ~16 seconds replaying or re-watching the last turn to see the exact moment the fingertip separates from the sticker. If the fingertip is still touching when the F face is nearly finished, your release is late.\n\nInez, could you film both tests tomorrow?"
+        }
+      },
+      {
+        "call": 4,
+        "value": {
+          "answerKind": "general",
+          "answer": "Counted-contact test: 30 seconds\nPlace your right index fingertip flat on the front-center sticker and do one deliberately slow F turn over 8 seconds while counting aloud from 1 to 8; note the count when the fingertip first loses contact, then reset 3 seconds and repeat twice (8 + 3 + 8 + 3 + 8 = 30). If contact ends before you say 8 in any trial, your fingertip releases before that slow F finishes.\n\nSlow-motion frame check: 34 seconds\nSet a phone to 120 fps or higher so it sees the front face and your index fingertip, record one 10-second slow F, then use 20 seconds to scrub to the last contact frame and the frame where the F face is fully turned; allow 4 seconds for setup (10 + 20 + 4 = 34). If the last contact frame comes before the completed-F frame, release happens early.\n\nInez, please film both tests tomorrow.",
+          "sourceIds": []
+        }
+      },
+      {
+        "call": 45,
+        "value": {
+          "answerKind": "general",
+          "answer": "**Test 1: Sticker-peel check — 30 seconds**\nPut a small paper dot or a piece of low-tack tape on the F-face sticker your index fingertip touches, then do five very slow F turns (about 5 seconds each) while watching only that sticker. If the dot/tape stays put until the turn is nearly complete and only then lifts, your fingertip is holding the sticker through the turn; if it peels away early, the fingertip is releasing too soon.\n\n**Test 2: Fingertip-shadow check — 34 seconds**\nSet a phone camera or a lamp so your fingertip casts a visible shadow on the F face, then do five slow F turns (about 5 seconds each) and watch the shadow's edge against the sticker. If the shadow stays in contact with the sticker until the turn finishes, the fingertip is still pressing; if the shadow separates from the sticker before the turn ends, the fingertip has released early.\n\nInez, could you film both tests tomorrow?"
+        }
+      },
+      {
+        "call": 46,
+        "value": {
+          "answerKind": "general",
+          "answer": "Tape-lift test: 24 seconds\nStick a tiny loop of low-tack tape on your index fingertip, touch the center of the F sticker, and perform one very slow F turn over about 8 seconds; repeat three times. If the tape lifts off the cube before the F face finishes turning, your fingertip is releasing the sticker early; if contact lasts until the turn finishes, release is late.\n\nMarker-drag test: 40 seconds\nPut a small dry-erase dot on a spare F sticker, press your index fingertip on it, and do four 10-second slow F turns, checking after each. If the dot stops smearing or your fingertip leaves the sticker before the face is fully turned, release is early; if the smear continues to the end, release is at the finish.\n\nInez, please film both tests tomorrow.",
+          "sourceIds": []
+        }
+      }
+    ]
+  },
+  "AP03": {
+    "question": "这次可以慢拧了。给那个熟悉的插入场景两项带时长的练习。每项先尝试摆位，用眼睛逐项看棱块、角块和目标槽。三处都对上，再做已会的插入。若核对不吻合或无法摆成，各换成不同的备用慢转，只用 F2 或 B′，做完备用就停，不再检查槽。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "我只有九十二秒，会一个熟悉的插入，还有 F2 和 B′。可能摆不回那个熟悉的局面，先别转。"
+      },
+      {
+        "role": "assistant",
+        "content": "先观察现在的状态。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 7,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insert",
+                "quote": "会一个熟悉的插入"
+              },
+              {
+                "id": "known_turns",
+                "quote": "还有 F2 和 B′"
+              },
+              {
+                "id": "setup_risk",
+                "quote": "可能摆不回那个熟悉的局面，先别转"
+              }
+            ],
+            "activities": [
+              {
+                "title": "摆位核对后做熟悉插入",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "先不转，用眼睛逐项看：棱块位置与朝向、角块位置与朝向、目标槽是否空且形状对得上；三处都对上才做一次已会的插入，若有一处不吻合或摆不成，就改做一次慢速 F2，做完即停，不再检查槽。",
+                    "reason": "先核对再动手，避免在错误局面上重复插入；备用只用一个已知转动并立即收手。",
+                    "seconds": 46,
+                    "requires": [
+                      "known_insert",
+                      "known_turns",
+                      "setup_risk"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "摆位核对后做熟悉插入并预测",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "先不转，用眼睛逐项看棱块、角块和目标槽三处；三处都对上才做一次已会的插入，若核对不吻合或摆不成，就先说出 B′ 会怎样改变眼前一块的位置，再慢速做一次 B′，做完即停，不再检查槽。",
+                    "reason": "用预测对比观察来确认自己看得懂转动效果；备用只用一个已知转动并立即收手。",
+                    "seconds": 46,
+                    "requires": [
+                      "known_insert",
+                      "known_turns",
+                      "setup_risk"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 8,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insert",
+                "quote": "会一个熟悉的插入"
+              },
+              {
+                "id": "known_turns",
+                "quote": "还有 F2 和 B′"
+              },
+              {
+                "id": "setup_risk",
+                "quote": "可能摆不回那个熟悉的局面，先别转"
+              }
+            ],
+            "activities": [
+              {
+                "title": "摆位核对后做熟悉插入",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "先不转，用眼睛逐项看棱块位置与朝向、角块位置与朝向、目标槽是否空且形状对得上；三处都对上才做一次已会的插入，若有一处不吻合或摆不成，就改做一次慢速 F2，做完即停，不再检查槽。",
+                    "reason": "先核对再动手，避免在错误局面上重复插入；备用只用一个已知转动并立即收手。",
+                    "seconds": 46,
+                    "requires": [
+                      "known_insert",
+                      "known_turns",
+                      "setup_risk"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "摆位核对后做熟悉插入并预测",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "先不转，用眼睛逐项看棱块、角块和目标槽三处；三处都对上才做一次已会的插入，若核对不吻合或摆不成，就先说出 B′ 会怎样改变眼前一块的位置，再慢速做一次 B′，做完即停，不再检查槽。",
+                    "reason": "用预测对比观察来确认自己看得懂转动效果；备用只用一个已知转动并立即收手。",
+                    "seconds": 46,
+                    "requires": [
+                      "known_insert",
+                      "known_turns",
+                      "setup_risk"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 47,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insert",
+                "quote": "会一个熟悉的插入"
+              },
+              {
+                "id": "known_turns",
+                "quote": "还有 F2 和 B′"
+              },
+              {
+                "id": "setup_risk",
+                "quote": "可能摆不回那个熟悉的局面，先别转"
+              },
+              {
+                "id": "time_budget",
+                "quote": "我只有九十二秒"
+              }
+            ],
+            "activities": [
+              {
+                "title": "摆位核对后做熟悉插入",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "先不转，用眼睛逐项看：棱块位置与朝向、角块位置与朝向、目标槽是否空且朝向正确；三处都对上才做已会的那个插入，做完停手。若核对不吻合或摆不回，改做一次慢速 F2：转前先说出预期变化，转后对照实际看到的变化，做完即停，不再检查槽。",
+                    "reason": "先核对再动手，避免在错误局面上硬做插入；备用时用预测对照练观察。",
+                    "seconds": 46,
+                    "requires": [
+                      "known_insert",
+                      "known_turns",
+                      "setup_risk"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "再摆位核对后做熟悉插入",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "重新用眼睛逐项看棱块、角块和目标槽，三处都对上才再做一次已会的插入，做完停手。若核对不吻合或摆不成，改做一次慢速 B′：转后停顿观察可见变化，做完即停，不再检查槽。",
+                    "reason": "第二次独立核对，确认摆位判断稳定；备用时用停顿观察练反馈。",
+                    "seconds": 46,
+                    "requires": [
+                      "known_insert",
+                      "known_turns",
+                      "setup_risk"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 48,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "known_insert",
+                "quote": "会一个熟悉的插入"
+              },
+              {
+                "id": "known_turns",
+                "quote": "还有 F2 和 B′"
+              },
+              {
+                "id": "setup_risk",
+                "quote": "可能摆不回那个熟悉的局面，先别转"
+              },
+              {
+                "id": "time_budget",
+                "quote": "我只有九十二秒"
+              }
+            ],
+            "activities": [
+              {
+                "title": "摆位核对后做熟悉插入",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "先不转，用眼睛逐项看棱块、角块和目标槽，三处都对上才做已会的那个插入，做完停手。若核对不吻合或摆不回，改做一次慢速 F2：转前先说出预期变化，转后对照实际看到的变化，做完即停，不再检查槽。",
+                    "reason": "先核对再动手，避免在错误局面上硬做插入；备用时用预测对照练观察。",
+                    "seconds": 46,
+                    "requires": [
+                      "known_insert",
+                      "known_turns",
+                      "setup_risk"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "再摆位核对后做熟悉插入",
+                "seconds": 46,
+                "steps": [
+                  {
+                    "action": "重新用眼睛逐项看棱块、角块和目标槽，三处都对上才再做一次已会的插入，做完停手。若核对不吻合或摆不成，改做一次慢速 B′：转后停顿观察可见变化，做完即停，不再检查槽。",
+                    "reason": "第二次独立核对，确认摆位判断稳定；备用时用停顿观察练反馈。",
+                    "seconds": 46,
+                    "requires": [
+                      "known_insert",
+                      "known_turns",
+                      "setup_risk"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AP06": {
+    "question": "Use the existing Czech word-and-meaning list for a 137–161-word plan: two activities, each with two timed substeps and a separate reason for each. Fit both into 120 seconds. Say meanings from visible words in the first activity, and write Czech from visible meanings before checking in the second.",
+    "lang": "en",
+    "history": [],
+    "drafts": [
+      {
+        "call": 13,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "czech_list",
+                "quote": "Use the existing Czech word-and-meaning list"
+              }
+            ],
+            "activities": [
+              {
+                "title": "Say meanings from visible words",
+                "seconds": 60,
+                "steps": [
+                  {
+                    "action": "Keep the WORD column visible and cover the MEANING column; say each meaning aloud, then uncover to check and recover MEANING before the next word.",
+                    "reason": "Covering the answer forces recall, and uncovering after each attempt gives immediate correction.",
+                    "seconds": 30,
+                    "requires": [
+                      "czech_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "Repeat the list once more with WORD visible and MEANING covered, saying each meaning before uncovering; if no words were missed, finish after one pass.",
+                    "reason": "A second recall pass strengthens weak items while the empty-error branch avoids unnecessary repetition.",
+                    "seconds": 30,
+                    "requires": [
+                      "czech_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Write Czech from visible meanings",
+                "seconds": 60,
+                "steps": [
+                  {
+                    "action": "Keep the MEANING column visible and cover the WORD column; write each Czech word on paper, then uncover to check and recover WORD before the next item.",
+                    "reason": "Writing before checking tests production, and re-covering prevents copying on later attempts.",
+                    "seconds": 30,
+                    "requires": [
+                      "czech_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "Repeat with MEANING visible and WORD covered, writing each Czech word before uncovering; if no errors occurred, finish after one pass.",
+                    "reason": "A second written pass consolidates spelling, while the no-error branch ends practice without a required error pile.",
+                    "seconds": 30,
+                    "requires": [
+                      "czech_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 14,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "czech_list",
+                "quote": "Use the existing Czech word-and-meaning list"
+              }
+            ],
+            "activities": [
+              {
+                "title": "Say meanings from visible words",
+                "seconds": 60,
+                "steps": [
+                  {
+                    "action": "Keep the WORD column visible and cover the MEANING column; say each meaning aloud, then uncover to check and recover MEANING before the next word.",
+                    "reason": "Covering forces recall; uncovering corrects immediately.",
+                    "seconds": 30,
+                    "requires": [
+                      "czech_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "Repeat the list once more with WORD visible and MEANING covered, saying each meaning before uncovering; if no words were missed, finish after one pass.",
+                    "reason": "Second pass strengthens weak items; no-error branch avoids repetition.",
+                    "seconds": 30,
+                    "requires": [
+                      "czech_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "Write Czech from visible meanings",
+                "seconds": 60,
+                "steps": [
+                  {
+                    "action": "Keep the MEANING column visible and cover the WORD column; write each Czech word on paper, then uncover to check and recover WORD before the next item.",
+                    "reason": "Writing tests production; re-covering prevents copying.",
+                    "seconds": 30,
+                    "requires": [
+                      "czech_list"
+                    ],
+                    "produces": []
+                  },
+                  {
+                    "action": "Repeat with MEANING visible and WORD covered, writing each Czech word before uncovering; if no errors occurred, finish after one pass.",
+                    "reason": "A second written pass consolidates spelling, while the no-error branch ends practice without a required error pile.",
+                    "seconds": 30,
+                    "requires": [
+                      "czech_list"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AP13": {
+    "question": "改为三个定时活动，各两个定时子步骤并各写一个理由，合计不超过一百一十一秒。继续用原词表，每项先回忆再揭开核对。",
+    "lang": "zh",
+    "history": [
+      {
+        "role": "user",
+        "content": "我有一张芬兰语单词和中文解释的双列词表，原计划是两项，每项也两个子步骤。"
+      },
+      {
+        "role": "assistant",
+        "content": "做题时先遮住答案。"
+      }
+    ],
+    "drafts": [
+      {
+        "call": 30,
+        "value": {
+          "answer": "",
+          "answerKind": "general",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_list",
+                "quote": "我有一张芬兰语单词和中文解释的双列词表，原计划是两项，每项也两个子步骤。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "芬兰语词义回忆",
+                "seconds": 37,
+                "steps": [
+                  {
+                    "action": "把词表放在同一面上，只露出芬兰语单词列，用纸片遮住中文解释列；若词表为空则停止，不自行编造单词或释义。",
+                    "reason": "先建立只显示芬兰语单词的提示状态，确保回忆时看不到中文答案。",
+                    "seconds": 5,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": [
+                      "covered_meaning"
+                    ]
+                  },
+                  {
+                    "action": "逐个看芬兰语单词，口头说出中文意思并写在纸上，然后只移开纸片核对中文解释列，再重新遮住中文解释列，进入下一个单词。",
+                    "reason": "先回忆再揭开核对，并在每次核对后重新遮住答案，保证每个单词都是独立回忆。",
+                    "seconds": 32,
+                    "requires": [
+                      "covered_meaning"
+                    ],
+                    "produces": [
+                      "meaning_attempts"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "中文释义回忆芬兰语",
+                "seconds": 74,
+                "steps": [
+                  {
+                    "action": "保持同一张词表同一面，改为只露出中文解释列，用纸片遮住芬兰语单词列。",
+                    "reason": "反向练习前先遮住新的答案列，只显示中文提示，避免看到芬兰语拼写。",
+                    "seconds": 6,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": [
+                      "covered_word"
+                    ]
+                  },
+                  {
+                    "action": "逐个看中文解释，在纸上写出对应的芬兰语单词，然后只移开纸片核对芬兰语单词列，再重新遮住芬兰语单词列，进入下一个中文解释。",
+                    "reason": "先写出单词再揭开核对，并在每次核对后重新遮住单词列，巩固从中文到芬兰语的回忆。",
+                    "seconds": 68,
+                    "requires": [
+                      "covered_word"
+                    ],
+                    "produces": [
+                      "word_attempts"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 69,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_list",
+                "quote": "我有一张芬兰语单词和中文解释的双列词表，原计划是两项，每项也两个子步骤。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "芬兰语词义回忆",
+                "seconds": 37,
+                "steps": [
+                  {
+                    "action": "把词表放在同一面上，芬兰语单词列和中文解释列都可见，快速浏览全部词条，标出最不熟的词。",
+                    "reason": "先确认整张词表内容并挑出薄弱词，后续回忆优先练这些词。",
+                    "seconds": 18,
+                    "requires": [
+                      "word_list"
+                    ],
+                    "produces": [
+                      "weak_items"
+                    ]
+                  },
+                  {
+                    "action": "遮住中文解释列，只看芬兰语单词，逐个说出中文意思；每说完一个就揭开中文解释列核对，再重新遮住中文解释列，进入下一个词。",
+                    "reason": "先回忆再核对能检验词义掌握，遮回答案列保证每次都是独立回忆。",
+                    "seconds": 19,
+                    "requires": [
+                      "word_list",
+                      "weak_items"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "中文释义写芬兰语",
+                "seconds": 37,
+                "steps": [
+                  {
+                    "action": "遮住芬兰语单词列，只露出中文解释列，逐个在纸上写出对应的芬兰语单词。",
+                    "reason": "反向回忆能加强从中文到芬兰语的提取，写下来便于核对拼写。",
+                    "seconds": 19,
+                    "requires": [
+                      "word_list",
+                      "weak_items"
+                    ],
+                    "produces": [
+                      "written_words"
+                    ]
+                  },
+                  {
+                    "action": "每写完一个词就揭开芬兰语单词列核对拼写，再重新遮住芬兰语单词列，继续下一个词；全部写完后优先重练写错或写不出的词。",
+                    "reason": "揭开核对能发现拼写错误，遮回单词列保持后续回忆独立，并集中补练薄弱词。",
+                    "seconds": 18,
+                    "requires": [
+                      "word_list",
+                      "written_words",
+                      "weak_items"
+                    ],
+                    "produces": []
+                  }
+                ]
+              },
+              {
+                "title": "双向混合快速回忆",
+                "seconds": 37,
+                "steps": [
+                  {
+                    "action": "从词表中挑出前面出错或最不熟的词，随机决定每个词先看芬兰语单词还是先看中文解释，只露出提示列，遮住答案列。",
+                    "reason": "混合方向能检验两个方向的提取，优先练薄弱词提高效率。",
+                    "seconds": 18,
+                    "requires": [
+                      "word_list",
+                      "weak_items"
+                    ],
+                    "produces": [
+                      "mixed_prompts"
+                    ]
+                  },
+                  {
+                    "action": "逐个词先说出或写出答案，再揭开被遮的答案列核对，然后重新遮住答案列，进入下一个词；若没有薄弱词，就用整张词表按同样方式练习。",
+                    "reason": "先回忆后核对能巩固双向记忆，无薄弱词时用整表保证练习不中断。",
+                    "seconds": 19,
+                    "requires": [
+                      "word_list",
+                      "mixed_prompts"
+                    ],
+                    "produces": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AP01": {
+    "question": "设计两项可操作的检查，看慢转 R 层停止之前右手中指是否抬离起始贴纸。合计不超过五十六秒，各标题用「名称：秒数」。另起一段写一句话直接请明宇周六把两段录像中的提前离面时刻做标记。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 2,
+        "value": {
+          "answerKind": "general",
+          "answer": "1. 慢放逐帧比对：20秒\n用手机以慢动作模式拍一次慢转 R 层，回放时逐帧找出右手中指离开起始贴纸的那一帧和 R 层停住的那一帧，比较两帧先后，确认中指是否在停止前抬起。\n\n2. 贴纸标记目视追踪：36秒\n在起始贴纸旁贴一小块胶带作固定参照，慢转 R 层时眼睛盯住中指指尖与胶带的相对位置，在层停住的瞬间判断指尖是否已离开贴纸，并立刻口头记下“先离”或“同时”。\n\n明宇，周六请把两段录像中提前离面的时刻都标出来。"
+        }
+      }
+    ]
+  },
+  "AP07": {
+    "question": "我用的是葡萄牙语和中文的双列词表。安排两项练习，每项两个定时子步骤，每小步都给理由且最多二十六秒，总计不超过九十八秒。第一项看原词说中文，第二项看中文手写原词，先答再露出另一列核对。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 18,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_list",
+                "quote": "我用的是葡萄牙语和中文的双列词表。"
+              }
+            ],
+            "activities": [
+              {
+                "title": "看葡萄牙语原词说中文",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "把葡萄牙语和中文双列词表放在桌上，用纸片盖住中文列，只露出葡萄牙语原词列；若词表未列出具体词，先写下你正在学的少量葡萄牙语词及其已知中文意思，再盖住中文列。",
+                    "reason": "先准备好词表并只露出提示列，确保每次尝试前答案列被遮住。",
+                    "seconds": 22,
+                    "requires": [],
+                    "produces": [
+                      "covered_meaning_list"
+                    ]
+                  },
+                  {
+                    "action": "逐个看露出的葡萄牙语原词，先说出中文意思，再移开纸片露出中文列核对，然后重新盖住中文列，再进入下一个词。",
+                    "reason": "先答后核对能检验记忆，每次核对后重新遮盖保证下一次仍是真实回忆。",
+                    "seconds": 26,
+                    "requires": [
+                      "covered_meaning_list"
+                    ],
+                    "produces": [
+                      "recalled_words"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "看中文手写葡萄牙语原词",
+                "seconds": 50,
+                "steps": [
+                  {
+                    "action": "把词表翻回同一面，用纸片盖住葡萄牙语原词列，只露出中文列，确认中文提示可见而葡萄牙语被遮住。",
+                    "reason": "反向练习前先遮住新答案列，只露出中文提示列，避免看到答案。",
+                    "seconds": 24,
+                    "requires": [
+                      "recalled_words"
+                    ],
+                    "produces": [
+                      "covered_word_list"
+                    ]
+                  },
+                  {
+                    "action": "逐个看露出的中文，先在纸上手写对应的葡萄牙语原词，再移开纸片露出葡萄牙语列核对，然后重新盖住葡萄牙语列，再进入下一个词。",
+                    "reason": "先手写再核对能强化拼写记忆，每次核对后重新遮盖保证下一次仍是独立回忆。",
+                    "seconds": 26,
+                    "requires": [
+                      "covered_word_list"
+                    ],
+                    "produces": [
+                      "written_words"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "AP10": {
+    "question": "有两张空白卡和词对 elm＝榆树、cedar＝雪松。给两项练习，各两个定时子步骤，合计最多九十八秒。第一项把词对分别写在两面然后猜中文、翻查。第二项看中文手写英文，逐卡翻查后把刚检查的卡翻回中文面。",
+    "lang": "zh",
+    "history": [],
+    "drafts": [
+      {
+        "call": 23,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_pairs",
+                "quote": "词对 elm＝榆树、cedar＝雪松"
+              },
+              {
+                "id": "blank_cards",
+                "quote": "有两张空白卡"
+              }
+            ],
+            "activities": [
+              {
+                "title": "写卡并猜中文",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "在两张空白卡的一面分别写 elm 和 cedar，另一面分别写 榆树 和 雪松，写好后把两张卡都翻到英文面朝上",
+                    "reason": "先建立两面齐全的卡片，并让英文成为本轮的提示面",
+                    "seconds": 24,
+                    "requires": [
+                      "word_pairs",
+                      "blank_cards"
+                    ],
+                    "produces": [
+                      "cards_english_up"
+                    ]
+                  },
+                  {
+                    "action": "逐张看英文面猜中文，猜完翻到中文面核对；两张都核对完后把两张卡都翻回英文面朝上",
+                    "reason": "从英文回忆中文是接受性词汇练习，翻回英文面为下一轮保留统一起点",
+                    "seconds": 24,
+                    "requires": [
+                      "cards_english_up"
+                    ],
+                    "produces": [
+                      "cards_english_up"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "看中文写英文",
+                "seconds": 50,
+                "steps": [
+                  {
+                    "action": "把两张卡都翻到中文面朝上，逐张看中文先在纸上写出英文，写完再翻到英文面核对；若没有写错，就直接进入下一步",
+                    "reason": "从中文回忆英文是产出性词汇练习，先写后翻才能留下真实作答",
+                    "seconds": 30,
+                    "requires": [
+                      "cards_english_up"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  },
+                  {
+                    "action": "把刚核对过的两张卡都翻回中文面朝上；若上一步有写错的词，就再按看中文、写英文、翻查的顺序重做这些卡，没有错则直接结束",
+                    "reason": "恢复中文提示面，并给写错的词一次额外巩固机会",
+                    "seconds": 20,
+                    "requires": [
+                      "written_attempts"
+                    ],
+                    "produces": [
+                      "cards_chinese_up"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "call": 64,
+        "value": {
+          "answerKind": "general",
+          "answer": "",
+          "sourceIds": [],
+          "plan": {
+            "inputs": [
+              {
+                "id": "word_pairs",
+                "quote": "词对 elm＝榆树、cedar＝雪松"
+              },
+              {
+                "id": "blank_cards",
+                "quote": "有两张空白卡"
+              }
+            ],
+            "activities": [
+              {
+                "title": "写卡后猜中文",
+                "seconds": 48,
+                "steps": [
+                  {
+                    "action": "在两张空白卡正面分别写 elm 和 cedar，背面分别写 榆树 和 雪松，写完把两张卡都正面朝上摆好",
+                    "reason": "先建立词形与中文释义的双面参照，正面朝上才能从英文开始回忆",
+                    "seconds": 24,
+                    "requires": [
+                      "word_pairs",
+                      "blank_cards"
+                    ],
+                    "produces": [
+                      "cards_written"
+                    ]
+                  },
+                  {
+                    "action": "逐张看正面英文，先口头猜中文，再翻到背面核对；两张都核对完后把两张卡翻回正面朝上",
+                    "reason": "从英文回忆中文是接受性词汇练习，翻查确认答案，复位为下一项做好准备",
+                    "seconds": 24,
+                    "requires": [
+                      "cards_written"
+                    ],
+                    "produces": [
+                      "cards_english_up"
+                    ]
+                  }
+                ]
+              },
+              {
+                "title": "看中文写英文",
+                "seconds": 50,
+                "steps": [
+                  {
+                    "action": "把两张卡翻到中文面朝上，逐张看中文，在纸上先写下英文拼写，再翻到背面核对；若某张写错或写不出，就在该卡上再写一遍正确拼写，然后继续下一张",
+                    "reason": "从中文产出英文是产出性词汇练习，先写后翻才能留下真实尝试，便于发现拼写错误",
+                    "seconds": 30,
+                    "requires": [
+                      "cards_english_up"
+                    ],
+                    "produces": [
+                      "written_attempts"
+                    ]
+                  },
+                  {
+                    "action": "把刚核对过的两张卡逐张翻回中文面朝上，摆好收尾",
+                    "reason": "按要求把检查过的卡复位到中文提示面，保持下次练习的起始状态一致",
+                    "seconds": 20,
+                    "requires": [
+                      "written_attempts"
+                    ],
+                    "produces": [
+                      "cards_chinese_up"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

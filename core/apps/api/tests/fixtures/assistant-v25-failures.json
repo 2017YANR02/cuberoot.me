@@ -1,0 +1,911 @@
+[
+  {
+    "key": "1/before/H07",
+    "case": {
+      "id": "H07",
+      "category": "plan",
+      "lang": "en",
+      "history": [],
+      "question": "Plan two vocabulary activities with two timed substeps each in 140–180 English words. Total time must be no more than four minutes, including preparation. Give an action and a reason for every substep.",
+      "expected": "Rendered 140–180 whitespace-delimited words, exactly 2x2, total <=240 seconds, executable materials and recall order."
+    },
+    "answer": null,
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "user_request",
+              "quote": "Plan two vocabulary activities with two timed substeps each in 140–180 English words. Total time must be no more than four minutes, including preparation. Give an action and a reason for every substep."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Meaning Recall Practice",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Write a two-column WORD / MEANING list of available study words with known meanings; if none exist, stop.",
+                  "reason": "A reliable reference list prevents invented words and answers.",
+                  "seconds": 30,
+                  "requires": [],
+                  "produces": [
+                    "word_meaning_list"
+                  ]
+                },
+                {
+                  "action": "Cover the MEANING column, say each meaning, uncover to check, then cover it again before the next word.",
+                  "reason": "Hiding the reference forces genuine recall and immediate correction.",
+                  "seconds": 90,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "Word Recall Practice",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Cover the WORD column, write each word on paper from its meaning, uncover to check, then cover the WORD column again.",
+                  "reason": "Producing words in writing strengthens retrieval and reveals spelling gaps.",
+                  "seconds": 90,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": [
+                    "written_attempts"
+                  ]
+                },
+                {
+                  "action": "Review written attempts against the list, mark uncertain items, and reread those entries aloud.",
+                  "reason": "Targeted rereading consolidates weak items without requiring a fixed error count.",
+                  "seconds": 30,
+                  "requires": [
+                    "written_attempts",
+                    "word_meaning_list"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "user_request",
+              "quote": "Plan two vocabulary activities with two timed substeps each in 140–180 English Words. Total time must be no more than four minutes, including preparation. Give an action and a reason for every substep."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Meaning Recall Practice",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Write a two-column WORD / MEANING list of available study words with known meanings; if none exist, stop.",
+                  "reason": "A reliable reference list prevents invented words and answers, because checking against a fixed source keeps every later recall attempt accurate.",
+                  "seconds": 30,
+                  "requires": [],
+                  "produces": [
+                    "word_meaning_list"
+                  ]
+                },
+                {
+                  "action": "Cover the MEANING column, say each meaning, uncover to check, then cover it again before the next word.",
+                  "reason": "Hiding the reference forces genuine recall and immediate correction, so each attempt comes from memory rather than from reading the answer.",
+                  "seconds": 90,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "Word Recall Practice",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Cover the WORD column, write each word on paper from its meaning, uncover to check, then cover the WORD column again.",
+                  "reason": "Producing words in writing strengthens retrieval and reveals spelling gaps, since writing exposes errors that silent recall can hide.",
+                  "seconds": 90,
+                  "requires": [
+                    "word_meaning_list"
+                  ],
+                  "produces": [
+                    "written_attempts"
+                  ]
+                },
+                {
+                  "action": "Review written attempts against the list, mark uncertain items, and reread those entries aloud.",
+                  "reason": "Targeted rereading consolidates weak items without requiring a fixed error count, because attention goes to the entries that actually failed recall.",
+                  "seconds": 30,
+                  "requires": [
+                    "written_attempts",
+                    "word_meaning_list"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "grade": {
+      "key": "1/before/H07",
+      "score": 0,
+      "note": "未返回正常回答：[{'reason': 'plan_unverified_input'}]",
+      "rubric": "Rendered 140–180 whitespace-delimited words, exactly 2x2, total <=240 seconds, executable materials and recall order.",
+      "sourceOverclaim": false
+    }
+  },
+  {
+    "key": "1/before/H09",
+    "case": {
+      "id": "H09",
+      "category": "plan",
+      "lang": "en",
+      "history": [],
+      "question": "I already have double-sided word cards: meanings on the front and the corresponding English words on the back. Plan two vocabulary revision activities, maximum four minutes in total. Include what to do if I make no errors.",
+      "expected": "Use supplied reverse layout coherently; attempt then check; reset before repetition; explicit usable zero-error branch, <=240 seconds."
+    },
+    "answer": "1. Meaning-to-word recall (120 seconds): Shuffle the cards, keep every card meaning-side up, and go through the whole stack one card at a time: read the meaning, say the English word aloud, then flip that card to check the word on the back. If a card is wrong, say the correct word aloud, put it in a separate review pile, and reset it meaning-side up. If you make no errors, deal the cards into two equal piles and run the same meaning-to-word pass once more with the full stack. Meaning-to-word recall is productive vocabulary practice, and checking each flip immediately confirms or corrects the spoken answer. In any step, if this subset is empty or too small, use available words from the original list; repeat available words as needed within that step’s allotted time.\n2. Word-to-meaning check (120 seconds): Take the review pile first, then the rest of the cards, and turn every card word-side up. For each card, say the meaning aloud, flip to check the meaning on the front, and reset the card word-side up before the next one. If you make no errors, shuffle the full stack and repeat one word-to-meaning pass, saying each meaning before flipping. Word-to-meaning recall is receptive vocabulary practice, and starting with the review pile targets the items you just missed.",
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "word_cards",
+              "quote": "I already have double-sided word cards: meanings on the front and the corresponding English words on the back."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Meaning-to-word recall",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Shuffle the cards, keep every card meaning-side up, and go through the whole stack one card at a time: read the meaning, say the English word aloud, then flip that card to check the word on the back. If a card is wrong, say the correct word aloud, put it in a separate review pile, and reset it meaning-side up. If you make no errors, deal the cards into two equal piles and run the same meaning-to-word pass once more with the full stack.",
+                  "reason": "Meaning-to-word recall is productive vocabulary practice, and checking each flip immediately confirms or corrects the spoken answer.",
+                  "seconds": 120,
+                  "requires": [
+                    "word_cards"
+                  ],
+                  "produces": [
+                    "review_pile"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Word-to-meaning check",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Take the review pile first, then the rest of the cards, and turn every card word-side up. For each card, say the meaning aloud, flip to check the meaning on the front, and reset the card word-side up before the next one. If you make no errors, shuffle the full stack and repeat one word-to-meaning pass, saying each meaning before flipping.",
+                  "reason": "Word-to-meaning recall is receptive vocabulary practice, and starting with the review pile targets the items you just missed.",
+                  "seconds": 120,
+                  "requires": [
+                    "word_cards",
+                    "review_pile"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "grade": {
+      "key": "1/before/H09",
+      "score": 1,
+      "note": "零错分支整叠同向重练前只给错卡复位；第二项复位不能补救第一项零错重练。",
+      "rubric": "Use supplied reverse layout coherently; attempt then check; reset before repetition; explicit usable zero-error branch, <=240 seconds.",
+      "sourceOverclaim": false
+    }
+  },
+  {
+    "key": "1/after/H09",
+    "case": {
+      "id": "H09",
+      "category": "plan",
+      "lang": "en",
+      "history": [],
+      "question": "I already have double-sided word cards: meanings on the front and the corresponding English words on the back. Plan two vocabulary revision activities, maximum four minutes in total. Include what to do if I make no errors.",
+      "expected": "Use supplied reverse layout coherently; attempt then check; reset before repetition; explicit usable zero-error branch, <=240 seconds."
+    },
+    "answer": "1. Meaning-to-word recall (120 seconds): Shuffle the cards and lay them meaning-side up in a row; go through the whole set, saying the English word for each meaning aloud, then flip each card to check the back and put it in a 'correct' or 'missed' pile. Meaning-to-word recall is productive vocabulary practice and flipping gives immediate feedback; the two piles record the result for the next activity. In any step, if this subset is empty or too small, use available words from the original list; repeat available words as needed within that step’s allotted time.\n2. Missed-card repeat (120 seconds): Reset every card to meaning-side up, then re-run the full set the same way; if you made no errors, instead re-run the whole set once more meaning-side up, and if that is also clean, shuffle and do a final full pass. Repeating the full deck keeps the practice consistent and the no-errors branch still gives productive recall work rather than stopping early.",
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "meaning_front_cards",
+              "quote": "I already have double-sided word cards: meanings on the front and the corresponding English words on the back."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Meaning-to-word recall",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Shuffle the cards and lay them meaning-side up in a row; go through the whole set, saying the English word for each meaning aloud, then flip each card to check the back and put it in a 'correct' or 'missed' pile.",
+                  "reason": "Meaning-to-word recall is productive vocabulary practice and flipping gives immediate feedback; the two piles record the result for the next activity.",
+                  "seconds": 120,
+                  "requires": [
+                    "meaning_front_cards"
+                  ],
+                  "produces": [
+                    "correct_pile",
+                    "missed_pile"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Missed-card repeat",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Reset every card to meaning-side up, then re-run the full set the same way; if you made no errors, instead re-run the whole set once more meaning-side up, and if that is also clean, shuffle and do a final full pass.",
+                  "reason": "Repeating the full deck keeps the practice consistent and the no-errors branch still gives productive recall work rather than stopping early.",
+                  "seconds": 120,
+                  "requires": [
+                    "meaning_front_cards",
+                    "correct_pile",
+                    "missed_pile"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "grade": {
+      "key": "1/after/H09",
+      "score": 1,
+      "note": "复用第一项未含逐卡复位的同样过程后，再进入零错/最终整叠练习，缺少对应复位。",
+      "rubric": "Use supplied reverse layout coherently; attempt then check; reset before repetition; explicit usable zero-error branch, <=240 seconds.",
+      "sourceOverclaim": false
+    }
+  },
+  {
+    "key": "2/before/H08",
+    "case": {
+      "id": "H08",
+      "category": "plan",
+      "lang": "en",
+      "history": [],
+      "question": "I have a word list but no flashcards. Plan two vocabulary activities using flashcards, each with two timed substeps, maximum four minutes total. Include making the cards and explain why each substep helps.",
+      "expected": "Prepare distinct word/meaning faces before flipping, first activity includes actual practice, each reuse resets prompt face, no unavailable error subset, 2x2 <=240 seconds."
+    },
+    "answer": "1. Make cards and recall meanings (120 seconds)\n  - 60 seconds: Write each word on one side of a blank card and its meaning on the other, using the full word list; if the list is empty, write five words you need from memory instead. Writing both faces creates the two-sided cards the later recall needs, and the empty-list alternative keeps the step executable. In any step, if this subset is empty or too small, use available words from the original list; repeat available words as needed within that step’s allotted time.\n  - 60 seconds: Lay every card word-side up, say each meaning aloud, then flip to check; if no cards remain, stop and note the list is empty. Word-to-meaning recall builds receptive vocabulary and immediate checking corrects wrong guesses.\n2. Recall words from meanings (120 seconds)\n  - 60 seconds: Reset every card to its meaning side up, then say the word for each card and flip to check the spelling; if no cards remain, stop and note the list is empty. Resetting restores the prompt side, and meaning-to-word recall builds productive vocabulary while checking spelling.\n  - 60 seconds: Write your attempted word for each card before flipping, then compare with the card and mark mismatches; if no cards remain, stop and note the list is empty. Recording the attempt before revealing the answer shows genuine spelling errors rather than copied corrections.",
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "word_list",
+              "quote": "I have a word list but no flashcards."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Make cards and recall meanings",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Write each word on one side of a blank card and its meaning on the other, using the full word list; if the list is empty, write five words you need from memory instead.",
+                  "reason": "Writing both faces creates the two-sided cards the later recall needs, and the empty-list alternative keeps the step executable.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_list"
+                  ],
+                  "produces": [
+                    "two_sided_cards"
+                  ]
+                },
+                {
+                  "action": "Lay every card word-side up, say each meaning aloud, then flip to check; if no cards remain, stop and note the list is empty.",
+                  "reason": "Word-to-meaning recall builds receptive vocabulary and immediate checking corrects wrong guesses.",
+                  "seconds": 60,
+                  "requires": [
+                    "two_sided_cards"
+                  ],
+                  "produces": [
+                    "meaning_recall_checked"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Recall words from meanings",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Reset every card to its meaning side up, then say the word for each card and flip to check the spelling; if no cards remain, stop and note the list is empty.",
+                  "reason": "Resetting restores the prompt side, and meaning-to-word recall builds productive vocabulary while checking spelling.",
+                  "seconds": 60,
+                  "requires": [
+                    "two_sided_cards"
+                  ],
+                  "produces": [
+                    "word_recall_checked"
+                  ]
+                },
+                {
+                  "action": "Write your attempted word for each card before flipping, then compare with the card and mark mismatches; if no cards remain, stop and note the list is empty.",
+                  "reason": "Recording the attempt before revealing the answer shows genuine spelling errors rather than copied corrections.",
+                  "seconds": 60,
+                  "requires": [
+                    "word_recall_checked"
+                  ],
+                  "produces": [
+                    "spelling_errors_marked"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "grade": {
+      "key": "2/before/H08",
+      "score": 1,
+      "note": "第二项先从释义面回忆并翻到单词面，下一子步骤又作答再翻卡，但未恢复释义提示面。",
+      "rubric": "Prepare distinct word/meaning faces before flipping, first activity includes actual practice, each reuse resets prompt face, no unavailable error subset, 2x2 <=240 seconds.",
+      "sourceOverclaim": false
+    }
+  },
+  {
+    "key": "2/after/H08",
+    "case": {
+      "id": "H08",
+      "category": "plan",
+      "lang": "en",
+      "history": [],
+      "question": "I have a word list but no flashcards. Plan two vocabulary activities using flashcards, each with two timed substeps, maximum four minutes total. Include making the cards and explain why each substep helps.",
+      "expected": "Prepare distinct word/meaning faces before flipping, first activity includes actual practice, each reuse resets prompt face, no unavailable error subset, 2x2 <=240 seconds."
+    },
+    "answer": "1. Make and check cards (120 seconds)\n  - 70 seconds: Write each word on the front of a blank card and its meaning on the back, using the full word list; if the list is empty, write five words you need from memory instead. Writing both faces creates the two-sided cards the later practice needs, and copying the meaning once already starts the word-to-meaning link. In any step, if this subset is empty or too small, use available words from the original list; repeat available words as needed within that step’s allotted time.\n  - 50 seconds: Lay the cards word-side up, cover the meanings, and say each meaning aloud; then turn each card over to check, and put any missed card back in the pile for a second pass. Recalling before checking tests real memory rather than recognition, and the immediate check corrects wrong guesses while they are fresh.\n2. Flip and recall both ways (120 seconds)\n  - 60 seconds: Shuffle the checked cards, keep them word-side up, say each meaning aloud, flip to check, and set every card back to word-side up before the next round; if no card was missed, do one extra full round instead. Word-to-meaning recall builds receptive vocabulary, and resetting all cards keeps the next round a fair test rather than a memory of positions.\n  - 60 seconds: Turn all reset cards meaning-side up, say the word aloud and write it on paper, then flip to compare spelling; repeat the missed cards once, or do a full extra round if none were missed. Producing the word from its meaning trains productive vocabulary, and writing before flipping checks spelling instead of copying the answer.",
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "word_list",
+              "quote": "I have a word list but no flashcards."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Make and check cards",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Write each word on the front of a blank card and its meaning on the back, using the full word list; if the list is empty, write five words you need from memory instead.",
+                  "reason": "Writing both faces creates the two-sided cards the later practice needs, and copying the meaning once already starts the word-to-meaning link.",
+                  "seconds": 70,
+                  "requires": [
+                    "word_list"
+                  ],
+                  "produces": [
+                    "flashcards"
+                  ]
+                },
+                {
+                  "action": "Lay the cards word-side up, cover the meanings, and say each meaning aloud; then turn each card over to check, and put any missed card back in the pile for a second pass.",
+                  "reason": "Recalling before checking tests real memory rather than recognition, and the immediate check corrects wrong guesses while they are fresh.",
+                  "seconds": 50,
+                  "requires": [
+                    "flashcards"
+                  ],
+                  "produces": [
+                    "checked_cards"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Flip and recall both ways",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Shuffle the checked cards, keep them word-side up, say each meaning aloud, flip to check, and set every card back to word-side up before the next round; if no card was missed, do one extra full round instead.",
+                  "reason": "Word-to-meaning recall builds receptive vocabulary, and resetting all cards keeps the next round a fair test rather than a memory of positions.",
+                  "seconds": 60,
+                  "requires": [
+                    "checked_cards"
+                  ],
+                  "produces": [
+                    "reset_cards"
+                  ]
+                },
+                {
+                  "action": "Turn all reset cards meaning-side up, say the word aloud and write it on paper, then flip to compare spelling; repeat the missed cards once, or do a full extra round if none were missed.",
+                  "reason": "Producing the word from its meaning trains productive vocabulary, and writing before flipping checks spelling instead of copying the answer.",
+                  "seconds": 60,
+                  "requires": [
+                    "reset_cards"
+                  ],
+                  "produces": [
+                    "written_attempts"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "grade": {
+      "key": "2/after/H08",
+      "score": 1,
+      "note": "第一项错卡放回堆作第二遍未复位；最后子步骤翻卡后重练错卡或整叠也未复位。",
+      "rubric": "Prepare distinct word/meaning faces before flipping, first activity includes actual practice, each reuse resets prompt face, no unavailable error subset, 2x2 <=240 seconds.",
+      "sourceOverclaim": false
+    }
+  },
+  {
+    "key": "2/after/H09",
+    "case": {
+      "id": "H09",
+      "category": "plan",
+      "lang": "en",
+      "history": [],
+      "question": "I already have double-sided word cards: meanings on the front and the corresponding English words on the back. Plan two vocabulary revision activities, maximum four minutes in total. Include what to do if I make no errors.",
+      "expected": "Use supplied reverse layout coherently; attempt then check; reset before repetition; explicit usable zero-error branch, <=240 seconds."
+    },
+    "answer": "1. Meaning-to-word recall (120 seconds): Shuffle the cards, then lay them meaning-side up in a row; for each card say the English word aloud, write your attempt on paper, then flip that card to check the word on the back and set it aside. If you make no errors, reshuffle the full deck and repeat the same meaning-side-up recall once more within the remaining time. Starting meaning-side up makes this productive recall, the harder direction, and writing before flipping gives an honest attempt to compare with the back. In any step, if this subset is empty or too small, use available words from the original list; repeat available words as needed within that step’s allotted time.\n2. Error review and word-to-meaning check (120 seconds): Read your written attempts against the cards, note each wrong or missed word, then turn the full deck word-side up and for each card say the meaning before flipping to check; if there were no errors, use the whole deck for this word-to-meaning pass instead of only the missed cards. Reviewing written attempts targets weak items, and the word-side-up pass adds receptive recall in the opposite direction.",
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "word_cards",
+              "quote": "I already have double-sided word cards: meanings on the front and the corresponding English words on the back."
+            }
+          ],
+          "activities": [
+            {
+              "title": "Meaning-to-word recall",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Shuffle the cards, then lay them meaning-side up in a row; for each card say the English word aloud, write your attempt on paper, then flip that card to check the word on the back and set it aside. If you make no errors, reshuffle the full deck and repeat the same meaning-side-up recall once more within the remaining time.",
+                  "reason": "Starting meaning-side up makes this productive recall, the harder direction, and writing before flipping gives an honest attempt to compare with the back.",
+                  "seconds": 120,
+                  "requires": [
+                    "word_cards"
+                  ],
+                  "produces": [
+                    "written_attempts"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Error review and word-to-meaning check",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "Read your written attempts against the cards, note each wrong or missed word, then turn the full deck word-side up and for each card say the meaning before flipping to check; if there were no errors, use the whole deck for this word-to-meaning pass instead of only the missed cards.",
+                  "reason": "Reviewing written attempts targets weak items, and the word-side-up pass adds receptive recall in the opposite direction.",
+                  "seconds": 120,
+                  "requires": [
+                    "word_cards",
+                    "written_attempts"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "grade": {
+      "key": "2/after/H09",
+      "score": 1,
+      "note": "第一项全卡翻至单词面后，零错时只洗牌并重做同名练习，未明确恢复释义面。",
+      "rubric": "Use supplied reverse layout coherently; attempt then check; reset before repetition; explicit usable zero-error branch, <=240 seconds.",
+      "sourceOverclaim": false
+    }
+  },
+  {
+    "key": "2/after/H14",
+    "case": {
+      "id": "H14",
+      "category": "plan",
+      "lang": "zh",
+      "history": [],
+      "question": "我不会任何 F2L 插入，只会几个基本转动。安排两项慢拧活动，总计最多4分钟，不要让我先学公式。",
+      "expected": "Uses only known basic slow turns; no assumed familiar F2L insertion, inverse setup, solved-slot check or learning new formula; <=240 seconds."
+    },
+    "answer": null,
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "user_known_turns",
+              "quote": "我不会任何 F2L 插入，只会几个基本转动。"
+            },
+            {
+              "id": "user_no_formula",
+              "quote": "不要让我先学公式。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "基本转动慢速观察",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "任选一个已会的基本转动，用很慢的速度做一次，停两秒观察魔方当前状态，再继续下一个基本转动，重复至时间结束；最后检查是否全程只用了已会的基本转动且没有尝试插入。",
+                  "reason": "只练已会的基本转动并放慢节奏，便于观察每一步后的状态。",
+                  "seconds": 120,
+                  "requires": [
+                    "user_known_turns",
+                    "user_no_formula"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "基本转动节奏练习",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "用已会的基本转动连续慢做，每做几下就停顿观察当前状态，保持不学新公式、不做插入，直到时间结束；最后检查动作是否始终缓慢且只用基本转动。",
+                  "reason": "在慢速重复中熟悉基本转动带来的状态变化，不引入公式或插入。",
+                  "seconds": 120,
+                  "requires": [
+                    "user_known_turns",
+                    "user_no_formula"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "user_known_turns",
+              "quote": "我不会任何 F2L 插入，只会几个基本转动。"
+            },
+            {
+              "id": "user_no_formula",
+              "quote": "不要让我先学公式。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "基本转动慢速观察",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "任选一个已会的基本转动，用很慢的速度做一次，停两秒观察魔方当前状态，再继续下一个基本转动，重复至时间结束；最后检查是否全程只用了已会的基本转动且没有尝试插入。",
+                  "reason": "只练已会的基本转动并放慢节奏，便于观察每一步后的状态。",
+                  "seconds": 120,
+                  "requires": [
+                    "user_known_turns",
+                    "user_no_formula"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "基本转动节奏练习",
+              "seconds": 120,
+              "steps": [
+                {
+                  "action": "用已会的基本转动连续慢做，每做几下就停顿观察当前状态，保持不学新公式、不做插入，直到时间结束；最后检查动作是否始终缓慢且只用基本转动。",
+                  "reason": "在慢速重复中熟悉基本转动带来的状态变化，不引入公式或插入。",
+                  "seconds": 120,
+                  "requires": [
+                    "user_known_turns",
+                    "user_no_formula"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "grade": {
+      "key": "2/after/H14",
+      "score": 0,
+      "note": "未返回正常回答：[{'reason': 'plan_unlearned_insertion'}]",
+      "rubric": "Uses only known basic slow turns; no assumed familiar F2L insertion, inverse setup, solved-slot check or learning new formula; <=240 seconds.",
+      "sourceOverclaim": false
+    }
+  },
+  {
+    "key": "2/after/H15",
+    "case": {
+      "id": "H15",
+      "category": "followup",
+      "lang": "zh",
+      "history": [
+        {
+          "role": "user",
+          "content": "安排两项静态F2L观察练习，总共最多3分钟，不转魔方。"
+        },
+        {
+          "role": "assistant",
+          "content": "只观察可见信息，未知状态保持未知。"
+        }
+      ],
+      "question": "现在允许转动，请把计划改成两项慢拧练习。",
+      "expected": "Latest permission overrides no-turn; retains inherited 3-minute limit; each activity has an executable alternative if no familiar case is available."
+    },
+    "answer": null,
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "allow_turns",
+              "quote": "现在允许转动，请把计划改成两项慢拧练习。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "慢拧熟悉插入",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作摆出熟悉的F2L情形，先看清情形和目标槽位；仅在确认情形成立后，慢速插入，再用同一逆操作复位同一情形并重复；若无法确认情形，则全程只用自己已会的慢速转动，不做插入、不复位、不检查槽位。",
+                  "reason": "在允许转动下用已知动作慢拧，并以明确分支避免假设插入成功。",
+                  "seconds": 90,
+                  "requires": [
+                    "allow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "慢拧重复巩固",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "仅在上一项已确认熟悉情形时，用同一逆操作复位该情形后慢速插入并重复；否则本项全程只用自己已会的慢速转动，不做插入、不复位、不检查槽位。",
+                  "reason": "延续同一分支慢拧，巩固已知动作而不引入新算法。",
+                  "seconds": 90,
+                  "requires": [
+                    "allow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "allow_turns",
+              "quote": "现在允许转动，请把计划改成两项慢拧练习。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "慢拧熟悉插入",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作摆出熟悉的F2L情形，先看清情形和目标槽位；仅在确认情形成立后，慢速插入，再用同一逆操作复位同一情形并重复；若无法确认情形，则全程只用自己已会的慢速转动，不做插入、不复位、不检查槽位。",
+                  "reason": "在允许转动下用已知动作慢拧，并以明确分支避免假设插入成功。",
+                  "seconds": 90,
+                  "requires": [
+                    "allow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "慢拧重复巩固",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "仅在上一项已确认熟悉情形时，用同一逆操作复位该情形后慢速插入并重复；否则本项全程只用自己已会的慢速转动，不做插入、不复位、不检查槽位。",
+                  "reason": "延续同一分支慢拧，巩固已知动作而不引入新算法。",
+                  "seconds": 90,
+                  "requires": [
+                    "allow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "grade": {
+      "key": "2/after/H15",
+      "score": 0,
+      "note": "未返回正常回答：[{'reason': 'plan_fallback_branch_missing'}]",
+      "rubric": "Latest permission overrides no-turn; retains inherited 3-minute limit; each activity has an executable alternative if no familiar case is available.",
+      "sourceOverclaim": false
+    }
+  },
+  {
+    "key": "2/before/H15",
+    "case": {
+      "id": "H15",
+      "category": "followup",
+      "lang": "zh",
+      "history": [
+        {
+          "role": "user",
+          "content": "安排两项静态F2L观察练习，总共最多3分钟，不转魔方。"
+        },
+        {
+          "role": "assistant",
+          "content": "只观察可见信息，未知状态保持未知。"
+        }
+      ],
+      "question": "现在允许转动，请把计划改成两项慢拧练习。",
+      "expected": "Latest permission overrides no-turn; retains inherited 3-minute limit; each activity has an executable alternative if no familiar case is available."
+    },
+    "answer": null,
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "allow_turns",
+              "quote": "现在允许转动，请把计划改成两项慢拧练习。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "慢拧熟悉插入",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作摆出熟悉的F2L情形，先看清情形和目标槽位；仅在确认情形成立时，慢速插入一次，再用同一逆操作复位同一情形并重复；若无法确认情形，则全程只用自己已会的转动慢拧，不做插入、不复位、不检查槽位。",
+                  "reason": "在允许转动下用已知动作慢速练习，并以明确分支避免假设情形已成立。",
+                  "seconds": 90,
+                  "requires": [
+                    "allow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "慢拧重复巩固",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "仅在上一项已确认熟悉情形时，用同一逆操作复位该情形后慢速插入并重复；否则本项全程只用自己已会的转动慢拧，不做插入、不复位、不检查槽位。",
+                  "reason": "延续同一分支慢速巩固，未确认情形时保持已知转动练习。",
+                  "seconds": 90,
+                  "requires": [
+                    "allow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "allow_turns",
+              "quote": "现在允许转动，请把计划改成两项慢拧练习。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "慢拧熟悉插入",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "选一个你已会的插入，用它的逆操作摆出熟悉的F2L情形，先看清情形和目标槽位；仅在确认情形成立时，慢速插入一次，再用同一逆操作复位同一情形并重复；若无法确认情形，则全程只用自己已会的转动慢拧，不做插入、不复位、不检查槽位。",
+                  "reason": "在允许转动下用已知动作慢速练习，并以明确分支避免假设情形已成立。",
+                  "seconds": 90,
+                  "requires": [
+                    "allow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "慢拧重复巩固",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "仅在上一项已确认熟悉情形时，用同一逆操作复位该情形后慢速插入并重复；否则本项全程只用自己已会的转动慢拧，不做插入、不复位、不检查槽位。",
+                  "reason": "延续同一分支慢速巩固，未确认情形时保持已知转动练习。",
+                  "seconds": 90,
+                  "requires": [
+                    "allow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "grade": {
+      "key": "2/before/H15",
+      "score": 0,
+      "note": "未返回正常回答：[{'reason': 'plan_fallback_branch_missing'}]",
+      "rubric": "Latest permission overrides no-turn; retains inherited 3-minute limit; each activity has an executable alternative if no familiar case is available.",
+      "sourceOverclaim": false
+    }
+  }
+]

@@ -1,0 +1,456 @@
+[
+  {
+    "key": "Z11-1",
+    "case": {
+      "id": "Z11",
+      "category": "card-reuse",
+      "lang": "en",
+      "question": "I use ready-made two-sided vocabulary cards with a drawing and a Korean word. Two card recall drills in 100 seconds total, both from the drawing to the word. After checking, leave each card ready for the next pass.",
+      "expected": "Two timed drills total ≤100s. Drawing prompt makes learner produce Korean first, each card checked then reset drawing-up, no guessed definitions or alternate deck.",
+      "history": []
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "1. Drawing-to-Korean recall, full deck pass (50 seconds): shuffle the ready-made cards, then for each card place it drawing-side up, say the Korean word without looking, flip once to check, and immediately return that card drawing-side up so it is ready for the next pass; if you finish the deck early, stop rather than adding a second round.\n\n2. Drawing-to-Korean recall, second full pass (50 seconds): reshuffle the same cards, then for each card place it drawing-side up, say the Korean word without looking, flip once to check, and immediately return that card drawing-side up so it is ready for the next pass; if you finish early, stop rather than adding extra rounds.",
+        "sourceIds": []
+      },
+      {
+        "answerKind": "general",
+        "answer": "Drawing-to-Korean recall, full deck pass (50 seconds): shuffle the ready-made cards, then for each card place it drawing-side up, say the Korean word without looking, flip once to check, and immediately return that card drawing-side up so it is ready for the next pass; if you finish the deck early, stop rather than adding a second round.\n\nDrawing-to-Korean recall, second full pass (50 seconds): reshuffle the same cards, then for each card place it drawing-side up, say the Korean word without looking, flip once to check, and immediately return that card drawing-side up so it is ready for the next pass; if you finish early, stop rather than adding extra rounds.",
+        "sourceIds": []
+      }
+    ]
+  },
+  {
+    "key": "Z01-2",
+    "case": {
+      "id": "Z01",
+      "category": "slow",
+      "lang": "zh",
+      "question": "可以慢拧魔方了，给两项练习。若复现不了那个熟悉局面，每项给不同的备用练法，都写明各用多久。",
+      "expected": "Two activities with positive allocations combined ≤200s inherited. In each give distinct concrete executable known-turn fallback, separate from verified insertion; no invented algorithm/mandatory slot checks.",
+      "history": [
+        {
+          "role": "user",
+          "content": "我有三分二十秒，暂时不转动魔方。我想从一个学过的插入局面练起，但不一定摆得出它。"
+        },
+        {
+          "role": "assistant",
+          "content": "先观察眼前的状态，保持魔方不动。"
+        }
+      ]
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "known_insert",
+              "quote": "我想从一个学过的插入局面练起，但不一定摆得出它。"
+            },
+            {
+              "id": "slow_turns",
+              "quote": "可以慢拧魔方了，给两项练习。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "熟悉插入局面复现与慢拧",
+              "seconds": 100,
+              "steps": [
+                {
+                  "action": "选定一个自己学过的插入，用它的逆操作在当前魔方上尝试摆出该熟悉局面，并目视确认局面和目标槽位；确认后做一次该插入，再用同一逆操作复位同一局面并重复；若摆不出熟悉局面，则改为慢拧自己已知的转法，每转一步停一下，观察哪一块可见地移动了，不声称完成F2L。",
+                  "reason": "先验证熟悉局面再插入，摆不出时用已知慢拧保持可控练习。",
+                  "seconds": 100,
+                  "requires": [
+                    "known_insert",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "预测一步变化与分支练习",
+              "seconds": 100,
+              "steps": [
+                {
+                  "action": "选定同一个学过的插入，用它的逆操作尝试摆出熟悉局面并目视确认局面和目标槽位；确认后做一次该插入，再用同一逆操作复位同一局面并重复；若摆不出熟悉局面，则改为慢拧已知转法，在转一步之前先预测哪一块会可见地移动，转完后对照实际移动，不声称完成F2L。",
+                  "reason": "用预测对比加深对已知转法的观察，同时保留已验证局面的插入练习。",
+                  "seconds": 100,
+                  "requires": [
+                    "known_insert",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "known_insert",
+              "quote": "我想从一个学过的插入局面练起，但不一定摆得出它。"
+            },
+            {
+              "id": "slow_turns",
+              "quote": "可以慢拧魔方了，给两项练习。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "熟悉插入局面复现与慢拧",
+              "seconds": 100,
+              "steps": [
+                {
+                  "action": "选定一个自己学过的插入，用它的逆操作在当前魔方上尝试摆出该熟悉局面，并目视确认局面和目标槽位；仅在确认后做一次该插入，再用同一逆操作复位同一局面并重复；否则整项改为慢拧自己已知的转法，每转一步停一下，观察哪一块可见地移动了，到此结束，不声称完成F2L。",
+                  "reason": "先验证熟悉局面再插入，摆不出时用已知慢拧保持可控练习。",
+                  "seconds": 100,
+                  "requires": [
+                    "known_insert",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "预测一步变化与分支练习",
+              "seconds": 100,
+              "steps": [
+                {
+                  "action": "选定同一个学过的插入，用它的逆操作尝试摆出熟悉局面并目视确认局面和目标槽位；仅在确认后做一次该插入，再用同一逆操作复位同一局面并重复；否则整项改为慢拧已知转法，在转一步之前先预测哪一块会可见地移动，转完后对照实际移动，到此结束，不声称完成F2L。",
+                  "reason": "用预测对比加深对已知转法的观察，同时保留已验证局面的插入练习。",
+                  "seconds": 100,
+                  "requires": [
+                    "known_insert",
+                    "slow_turns"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "key": "Z04-2",
+    "case": {
+      "id": "Z04",
+      "category": "slow",
+      "lang": "zh",
+      "question": "我只会 L 和 D2，不会插入。两项慢拧训练合计最多一分四十五秒，每项不超过六十秒。每做一步，就停下来指出受影响的一面。",
+      "expected": "Two timed activities ≤105s overall and ≤60s each. L/D2 only, pause and identify a legitimately affected face after every move, no invented setup/insertions.",
+      "history": []
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "known_turns",
+              "quote": "我只会 L 和 D2，不会插入。"
+            },
+            {
+              "id": "pause_rule",
+              "quote": "每做一步，就停下来指出受影响的一面。"
+            },
+            {
+              "id": "time_limit",
+              "quote": "两项慢拧训练合计最多一分四十五秒，每项不超过六十秒。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "慢拧 L 并观察受影响面",
+              "seconds": 50,
+              "steps": [
+                {
+                  "action": "先缓慢做一次 L，停住，指出受影响的一面；再缓慢做一次 L，停住，指出受影响的一面；重复到时间结束，最后检查是否每次都在动作后停下并指出了一面。",
+                  "reason": "只用已会的 L 慢拧并每步停顿观察，符合不会插入且需指出受影响面的要求。",
+                  "seconds": 50,
+                  "requires": [
+                    "known_turns",
+                    "pause_rule"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "慢拧 D2 并观察受影响面",
+              "seconds": 50,
+              "steps": [
+                {
+                  "action": "先缓慢做一次 D2，停住，指出受影响的一面；再缓慢做一次 D2，停住，指出受影响的一面；重复到时间结束，最后检查是否每次都在动作后停下并指出了一面。",
+                  "reason": "只用已会的 D2 慢拧并每步停顿观察，不引入插入或其他公式。",
+                  "seconds": 50,
+                  "requires": [
+                    "known_turns",
+                    "pause_rule"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "known_turns",
+              "quote": "我只会 L 和 D2，不会插入。"
+            },
+            {
+              "id": "pause_rule",
+              "quote": "每做一步，就停下来指出受影响的一面。"
+            },
+            {
+              "id": "time_limit",
+              "quote": "两项慢拧训练合计最多一分四十五秒，每项不超过六十秒。"
+            }
+          ],
+          "activities": [
+            {
+              "title": "慢拧 L 并观察受影响面",
+              "seconds": 50,
+              "steps": [
+                {
+                  "action": "先缓慢做一次 L，停住，指出受影响的一面；再缓慢做一次 L，停住，指出受影响的一面；重复到时间结束，最后检查是否每次都在动作后停下并指出了一面。",
+                  "reason": "只用已会的 L 慢拧并每步停顿观察，符合不会插入且需指出受影响面的要求。",
+                  "seconds": 50,
+                  "requires": [
+                    "known_turns",
+                    "pause_rule"
+                  ],
+                  "produces": []
+                }
+              ]
+            },
+            {
+              "title": "慢拧 D2 并观察受影响面",
+              "seconds": 50,
+              "steps": [
+                {
+                  "action": "先缓慢做一次 D2，停住，指出受影响的一面；再缓慢做一次 D2，停住，指出受影响的一面；重复到时间结束，最后检查是否每次都在动作后停下并指出了一面。",
+                  "reason": "只用已会的 D2 慢拧并每步停顿观察，不引入插入或其他公式。",
+                  "seconds": 50,
+                  "requires": [
+                    "known_turns",
+                    "pause_rule"
+                  ],
+                  "produces": []
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "key": "Z11-2",
+    "case": {
+      "id": "Z11",
+      "category": "card-reuse",
+      "lang": "en",
+      "question": "I use ready-made two-sided vocabulary cards with a drawing and a Korean word. Two card recall drills in 100 seconds total, both from the drawing to the word. After checking, leave each card ready for the next pass.",
+      "expected": "Two timed drills total ≤100s. Drawing prompt makes learner produce Korean first, each card checked then reset drawing-up, no guessed definitions or alternate deck.",
+      "history": []
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "1. Drawing-to-Korean recall, full deck pass (50 seconds): shuffle the ready-made cards, then for each card place it drawing-side up, say the Korean word without looking, flip once to check, and immediately return that card drawing-side up so it is ready for the next pass; if you finish the deck with time left, stop rather than adding a round.\n\n2. Drawing-to-Korean recall, second full pass (50 seconds): reshuffle the whole deck, then repeat the same cycle on each card — drawing-side up, say the Korean word, flip once to check, and return it drawing-side up — so every card ends ready for the next pass; if the deck runs out early, finish there.",
+        "sourceIds": []
+      },
+      {
+        "answerKind": "general",
+        "answer": "Drawing-to-Korean recall, first pass (50 seconds): shuffle the ready-made cards, then for each card place it drawing-side up, say the Korean word without looking, flip once to check, and immediately return that card drawing-side up so it is ready for the next pass; if you finish the deck with time left, stop rather than adding a round.\n\nDrawing-to-Korean recall, second pass (50 seconds): reshuffle the whole deck, then repeat the same cycle on each card — drawing-side up, say the Korean word, flip once to check, and return it drawing-side up — so every card ends ready for the next pass; if the deck runs out early, finish there.",
+        "sourceIds": []
+      }
+    ]
+  },
+  {
+    "key": "Z12-2",
+    "case": {
+      "id": "Z12",
+      "category": "plan",
+      "lang": "en",
+      "question": "Make a 140–170-word English plan to practise with my existing two-column list of Swedish words and meanings. I have 3 minutes. Use two activities with two timed substeps each, including a reason in each substep.",
+      "expected": "140–170 whitespace words, 2×2 child and parent sums ≤180s, reason per substep, reuse table; only current answer column hidden for each attempt and restored after check.",
+      "history": []
+    },
+    "models": [
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "swedish_list",
+              "quote": "my existing two-column list of Swedish words and meanings"
+            }
+          ],
+          "activities": [
+            {
+              "title": "Swedish recall pass",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "Keep the Swedish column visible, cover the meaning column, and recall each meaning in order; if the list has fewer items than expected, work through every item once and stop early rather than inventing entries.",
+                  "reason": "Recalling from the visible Swedish prompt builds receptive vocabulary and uses the full existing list.",
+                  "seconds": 45,
+                  "requires": [
+                    "swedish_list"
+                  ],
+                  "produces": [
+                    "recalled_meanings"
+                  ]
+                },
+                {
+                  "action": "Uncover the meaning column and check each recalled meaning, marking misses; if there are no misses, note that the list was fully correct.",
+                  "reason": "Checking against the reference reveals which meanings need another pass.",
+                  "seconds": 45,
+                  "requires": [
+                    "swedish_list",
+                    "recalled_meanings"
+                  ],
+                  "produces": [
+                    "marked_misses"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Swedish production pass",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "Cover the Swedish column, keep meanings visible, and say the Swedish word for each meaning, prioritising marked misses first; if none were marked, use the whole list.",
+                  "reason": "Producing words from meanings strengthens productive recall and targets weak items.",
+                  "seconds": 45,
+                  "requires": [
+                    "swedish_list",
+                    "marked_misses"
+                  ],
+                  "produces": [
+                    "spoken_attempts"
+                  ]
+                },
+                {
+                  "action": "Uncover the Swedish column and compare each spoken attempt, noting any remaining gaps; if all were correct, finish with a clean pass.",
+                  "reason": "Comparing attempts against the list confirms which words are now secure.",
+                  "seconds": 45,
+                  "requires": [
+                    "swedish_list",
+                    "spoken_attempts"
+                  ],
+                  "produces": [
+                    "remaining_gaps"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "answerKind": "general",
+        "answer": "",
+        "sourceIds": [],
+        "plan": {
+          "inputs": [
+            {
+              "id": "swedish_list",
+              "quote": "my existing two-column list of Swedish words and meanings"
+            }
+          ],
+          "activities": [
+            {
+              "title": "Swedish recall pass",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "Keep the Swedish column visible, cover the meaning column, and recall each meaning in order; if the list has fewer items than expected, work through every item once and stop early rather than inventing entries.",
+                  "reason": "Recalling from the visible Swedish prompt builds receptive vocabulary and uses the full existing list.",
+                  "seconds": 45,
+                  "requires": [
+                    "swedish_list"
+                  ],
+                  "produces": [
+                    "recalled_meanings"
+                  ]
+                },
+                {
+                  "action": "Uncover the meaning column and check each recalled meaning, marking misses; if there are no misses, note that the list was fully correct.",
+                  "reason": "Checking against the reference reveals which meanings need another pass.",
+                  "seconds": 45,
+                  "requires": [
+                    "swedish_list",
+                    "recalled_meanings"
+                  ],
+                  "produces": [
+                    "marked_misses"
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Swedish production pass",
+              "seconds": 90,
+              "steps": [
+                {
+                  "action": "Cover the Swedish column, keep meanings visible, and say the Swedish word for each meaning, prioritising marked misses first; if none were marked, use the whole list.",
+                  "reason": "Producing words from meanings strengthens productive recall and targets weak items.",
+                  "seconds": 45,
+                  "requires": [
+                    "swedish_list",
+                    "marked_misses"
+                  ],
+                  "produces": [
+                    "spoken_attempts"
+                  ]
+                },
+                {
+                  "action": "Uncover the Swedish column and compare each spoken attempt, noting any remaining gaps; if all were correct, finish with a clean pass.",
+                  "reason": "Comparing attempts against the list confirms which words are now secure.",
+                  "seconds": 45,
+                  "requires": [
+                    "swedish_list",
+                    "spoken_attempts"
+                  ],
+                  "produces": [
+                    "remaining_gaps"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+]
