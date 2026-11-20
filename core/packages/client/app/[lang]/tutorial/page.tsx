@@ -4,6 +4,7 @@ import MoreToggle from '@/components/MoreToggle';
 import BackHome from '@/components/BackHome';
 import AlgCard from '@/components/AlgCard';
 import SimCubeView from '@/components/sim-embed/SimCubeView';
+import { VisualCube } from '@/components/VisualCube';
 import AlgPuzzlePicker, {
   TUTORIAL_PUZZLE_PICKER_IDS,
 } from '@/components/AlgPuzzlePicker';
@@ -267,6 +268,12 @@ export default function TutorialPage() {
         </Link>
       </header>
       {puzzle === 'ivy' ? <IvyTutorial /> : null}
+      {puzzle === '2x2' && <div className="tutorial-methods">
+        <AlgCard href="/tutorial/2x2-lbl" prefetch={false}
+          thumb={<VisualCube algorithm="" view="iso" puzzleSize={2} size={112} local />}
+          title={<T zh="层先法" en="Layer by Layer" />}
+          sub={<T zh="底层与黄面样板" en="First-layer and yellow-face preview" />} />
+      </div>}
       {puzzle === '3x3' && <div className="tutorial-methods">
         <AlgCard href="/tutorial/lbl" prefetch={false}
           thumb={<SimCubeView moves={LBL_COVER_MOVES} pose="z2" className="tutorial-lbl-thumb" ariaLabel={tr({ zh: '复原的三阶魔方', en: 'Solved 3×3 cube' })} />}

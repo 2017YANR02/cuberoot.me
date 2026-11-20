@@ -1,5 +1,10 @@
 [
   {
+    "path": "app/[lang]/tutorial/2x2-lbl/page.tsx",
+    "call": "setLocation({step,section}) history=chapterChanged ? 'push' : 'replace'",
+    "reason": "二阶 LBL 大章导航进入历史记录；同章小节、播放跟随和练习切换替换当前地址"
+  },
+  {
     "path": "app/[lang]/tutorial/lbl/page.tsx",
     "call": "setPracticeRoute({step,case,section}) history=chapterIndex !== chapter ? 'push' : 'replace'",
     "reason": "LBL 大章内容导航进入历史记录；同章小节切换只替换状态"

@@ -16,6 +16,7 @@
 - [魔表模拟器 / 魔表求解器 / 四视图铺开(金字塔·斜转·SQ1·魔表)](clock-and-paint-views.md)
 - [比赛分组获奖](competition-group-awards.md)
 - [拍照查公式](cube-photo-lookup.md)
+- [二阶层先法教程需求与模板验收](../../../core/packages/client/app/%5Blang%5D/tutorial/2x2-lbl-tutorial.md)
 - [统一指法记号契约](fingertrick-notation.md)
 - [CubeRoot 线上赛事规划与跟踪](online-competition-tracker.md)
 - [/sim 拼图浏览器验收记录](sim-puzzle-acceptance.md)

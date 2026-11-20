@@ -1,0 +1,329 @@
+import { Alg, Move } from 'cubing/alg';
+import { AllFaces, CubeData, Face, parseAlgorithm } from '@cuberoot/visualcube';
+import { FACE } from '@cuberoot/puzzle-render-core/engine/define';
+import { ENGINE_TO_VC_FACE, netIndexOf } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex';
+import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
+import type { CubeFace } from '@/lib/cube-colors';
+import type { AlgStickerPlacement } from '@/components/AlgPlayer/AlgPlayer';
+import type { CourseChapter, CourseExercise } from '../components/InteractiveTutorial';
+import { getLblAlgGroups } from '../lbl/alg-cues';
+import { LEFT as leftTrigger } from '../lbl/content';
+
+// The source uses yellow up, red front, blue left and orange back.
+export const TWO_BY_TWO_ORIENTATION = "z2 y'";
+const rightTrigger = "R U R' U'";
+const rightFish = "R U R' U R U2' R'";
+const finalCornerAlg = "x' R2 D2 R' U' R D2 R' U R' x";
+const yellowStart = "L' U2' L U L' U L R U2 R' U' R U' R' U";
+const secondSolution = `U ${leftTrigger}`;
+const thirdSolution = `U' ${rightTrigger} ${rightTrigger} ${rightTrigger}`;
+const fourthSolution = `y U ${rightTrigger}`;
+const bottomDone = `${yellowStart} y`;
+const before = (end: string, solution: string) => `${end} ${new Alg(solution).invert()}`;
+const fourthStart = before(bottomDone, fourthSolution);
+const thirdStart = before(fourthStart, thirdSolution);
+const secondStart = before(thirdStart, secondSolution);
+const firstStart = before(secondStart, 'z');
+const supportedColors = ['Y', 'G', 'R', 'W', 'B', 'O'] as const;
+const text = (zh: string, en: string) => ({ zh, en });
+const bottomTitles = [
+  text('白橙蓝角', 'White–orange–blue corner'),
+  text('白蓝红角', 'White–blue–red corner'),
+  text('白红绿角', 'White–red–green corner'),
+  text('白绿橙角', 'White–green–orange corner'),
+];
+
+// Engine corner index order: x (right) + 2*y (up) + 4*z (front).
+const cornerPieces = [
+  bottomTitles[0], bottomTitles[3], text('黄橙蓝角', 'the yellow–orange–blue corner'), text('黄绿橙角', 'the yellow–green–orange corner'),
+  bottomTitles[1], bottomTitles[2], text('黄蓝红角', 'the yellow–blue–red corner'), text('黄红绿角', 'the yellow–red–green corner'),
+];
+const cornerPositions = [
+  text('底层左后', 'the bottom back-left position'), text('底层右后', 'the bottom back-right position'),
+  text('顶层左后', 'the top back-left position'), text('顶层右后', 'the top back-right position'),
+  text('底层左前', 'the bottom front-left position'), text('底层右前', 'the bottom front-right position'),
+  text('顶层左前', 'the top front-left position'), text('顶层右前', 'the top front-right position'),
+];
+const cornerStickers = cornerPositions.map((_, index) => {
+  const x = index % 2;
+  const y = Math.floor(index / 2) % 2;
+  const z = Math.floor(index / 4);
+  const faces = [x ? FACE.R : FACE.L, y ? FACE.U : FACE.D, z ? FACE.F : FACE.B];
+  return faces.map(face => ({ face: ENGINE_TO_VC_FACE[face] as Face, index: netIndexOf(x, y, z, face, 1, 2) }));
+});
+const stickerKeys = cornerStickers.map(stickers => stickers.map(({ face, index }) => `${Face[face]}${index}`));
+const mutedExcept = (...visible: number[]) => stickerKeys.flatMap((stickers, index) => visible.includes(index) ? [] : stickers);
+const otherCornerStickers = mutedExcept(0);
+// The last corner uses the same home stickers, in the room after a y turn.
+const slotsAfterY = [1, 5, 3, 7, 0, 4, 2, 6];
+const facesAfterY: Record<CubeFace, CubeFace> = { U: 'U', D: 'D', F: 'L', R: 'F', B: 'R', L: 'B' };
+const solvedCornerStickers = (corners: readonly number[], afterY = false) =>
+  corners.flatMap(homeIndex => cornerStickers[homeIndex].map(({ face }) => {
+    const homeFace = Face[face] as CubeFace;
+    return { homeIndex, homeFace, placement: {
+      positionIndex: afterY ? slotsAfterY[homeIndex] : homeIndex,
+      face: afterY ? facesAfterY[homeFace] : homeFace,
+    } };
+  }));
+const whiteDirections: Record<CubeFace, ReturnType<typeof text>> = {
+  U: text('白格朝上', 'White faces up.'),
+  D: text('白格朝下', 'White faces down.'),
+  F: text('白格朝前', 'White faces forward.'),
+  B: text('白格朝后', 'White faces the back.'),
+  L: text('白格朝左', 'White faces left.'),
+  R: text('白格朝右', 'White faces right.'),
+};
+
+export const BOTTOM_OVERVIEW = [
+  { title: bottomTitles[0], goal: text('白格朝下，把白橙蓝角摆在左后。', 'Face white down and place this corner at back-left.'), setup: secondStart, corners: [0], yaw: -145 },
+  { title: bottomTitles[1], goal: text('把白蓝红角放在左前，让两个蓝格相邻。', 'Insert at front-left, next to the other blue sticker.'), setup: thirdStart, corners: [0, 4], yaw: -35 },
+  { title: bottomTitles[2], goal: text('把白红绿角放在右前，让两个红格相邻。', 'Insert at front-right, next to the other red sticker.'), setup: fourthStart, corners: [0, 4, 5], yaw: 35 },
+  { title: bottomTitles[3], goal: text('转体把空位放到右前，放入最后一角。', 'Rotate the remaining slot to front-right and insert the last corner.'), setup: bottomDone, corners: [0, 4, 5, 1], yaw: 35 },
+] as const;
+
+export const TWO_BY_TWO_OVERVIEW = [
+  {
+    title: text('底层', 'First layer'),
+    goal: text('四个白角归位。底面全白，四个侧面的底排也各自同色。', 'Solve all four white corners. The bottom is white, and the bottom row on each side matches.'),
+    setup: yellowStart,
+    stickering: 'F2L',
+  },
+  {
+    title: text('黄面', 'Yellow face'),
+    goal: text('保持底层，把顶层的四个黄格都转到上面。', 'Keep the first layer solved and turn all four yellow stickers to face up.'),
+    setup: new Alg(finalCornerAlg).invert().toString(),
+    stickering: 'OLL',
+  },
+  {
+    title: text('角位置', 'Corner placement'),
+    goal: text('保持顶面全黄，让顶层的四个角归位，直到六面各自同色。', 'Keep the top yellow and position the four top corners to solve all six faces.'),
+    setup: '',
+    stickering: 'full',
+  },
+] as const;
+
+/** Read room-relative facelets, including rotations. Color overrides are display-only. */
+export function sampleCubeState(moves: string) {
+  const cube = new CubeData(2, Object.fromEntries(AllFaces.map(face => [face, Array<string>(4).fill(supportedColors[face])])));
+  // A fast drag can commit more than one revolution; normalize before parsing facelets.
+  const quarterTurns = Array.from(new Alg(moves).expand().childAlgNodes()).flatMap(node => {
+    if (!(node instanceof Move)) return [];
+    const turns = ((node.amount % 4) + 4) % 4;
+    return turns ? [node.quantum.toString() + ['', '', '2', "'"][turns]] : [];
+  });
+  for (const move of parseAlgorithm(quarterTurns.join(' '))) cube.turn(move);
+  return cube.faces as Record<Face, string[]>;
+}
+
+function describeWhiteCorner({ positionIndex, face }: AlgStickerPlacement) {
+  const position = cornerPositions[positionIndex];
+  return text(`现在在${position.zh}，${whiteDirections[face].zh}。`,
+    `At ${position.en}. ${whiteDirections[face].en}`);
+}
+
+const firstCorner = (state: ReturnType<typeof sampleCubeState>) =>
+  state[Face.D][2] === 'W' && state[Face.B][3] === 'O' && state[Face.L][2] === 'B';
+
+const secondCorner = (state: ReturnType<typeof sampleCubeState>) => firstCorner(state)
+  && state[Face.D][0] === 'W' && state[Face.L][3] === 'B' && state[Face.F][2] === 'R';
+
+const thirdCorner = (state: ReturnType<typeof sampleCubeState>) => secondCorner(state)
+  && state[Face.D][1] === 'W' && state[Face.F][3] === 'R' && state[Face.R][2] === 'G';
+
+const firstLayer = (state: ReturnType<typeof sampleCubeState>) => state[Face.D].every(color => color === 'W')
+  && [Face.R, Face.F, Face.L, Face.B].every(face => state[face][2] === state[face][3]);
+
+const fish = (state: ReturnType<typeof sampleCubeState>) => firstLayer(state)
+  && state[Face.U].filter(color => color === 'Y').length === 1;
+
+function exercise(setup: string, moves: string, goal: CourseExercise['goal'],
+  complete: (state: ReturnType<typeof sampleCubeState>) => boolean,
+  { rotationOnly = false, fixedOrientation = rotationOnly }: { rotationOnly?: boolean; fixedOrientation?: boolean } = {}): CourseExercise {
+  const orientations = fixedOrientation ? [''] : CUBE_ORIENTATIONS.map(({ value }) => value);
+  return {
+    setup,
+    solution: moves,
+    goal,
+    rotationOnly,
+    stateKey: history => JSON.stringify(sampleCubeState(`${setup} ${history.join(' ')}`)),
+    isComplete: history => {
+      const alg = `${setup} ${history.join(' ')}`;
+      return orientations.some(orientation => complete(sampleCubeState(`${alg} ${orientation}`)));
+    },
+  };
+}
+
+const cornerViewLimit = 30;
+const cornerViewTilt = cornerViewLimit * Math.PI / 180;
+const frontRightView = { x: cornerViewTilt, y: -cornerViewTilt, z: 0 };
+const above = { x: .97, y: .23, z: 0 };
+const topFace = { face: 'U', label: text('顶面', 'Top') } as const;
+const rightFace = { face: 'R', label: text('右面', 'Right') } as const;
+const rightInsertion = (target: ReturnType<typeof text>, demoSetup: string, solvedStickers: ReturnType<typeof solvedCornerStickers>) => ({
+  progressLabel: text('右手上钩下回', 'Right-hand trigger'),
+  heading: text(`用「上钩下回」还原${target.zh}`, `Solve the ${target.en.toLowerCase()} with the right-hand trigger`),
+  prompt: text('照提示做右手「上钩下回」。如果角块还没归位，就重复这四步。',
+    'Follow the hints for the right-hand trigger. Repeat the four moves until the corner is solved.'),
+  steps: getLblAlgGroups('trigger-learning', rightTrigger).flat(),
+  demoSetup,
+  helpLabel: text('看看右手做法', 'Watch the right-hand trigger'),
+  solvedStickers,
+});
+export const TWO_BY_TWO_SAMPLE = [
+  {
+    id: 'bottom', title: TWO_BY_TWO_OVERVIEW[0].title,
+    sections: [
+      {
+        id: 'white-orange-blue', title: bottomTitles[0],
+        interaction: {
+          questions: [
+            { kind: 'piece', targetIndex: 0, choices: cornerPieces,
+              showAnswerHint: true,
+              progressLabel: text('认角块', 'Find the corner'),
+              heading: text('找出白橙蓝角', 'Find the corner'),
+              prompt: text('点选白、橙、蓝三格相连的角块。', 'Select the corner where white, orange, and blue meet.'),
+              hint: text('看不全时，拖动魔方换个角度。', 'Drag the cube to see the other sides.') },
+            { kind: 'position', targetIndex: 0, choices: cornerPositions,
+              showAnswerHint: true,
+              progressLabel: text('找角位', 'Find its spot'),
+              heading: text('找到底层左后角位置', 'Find the bottom back-left spot'),
+              prompt: text('白橙蓝角找到了。接着在魔方上点选底层左后角。', 'You found the corner. Now select the bottom back-left spot on the cube.') },
+            { kind: 'placement', homeIndex: 0, homeFace: 'D', goal: { positionIndex: 0, face: 'D' }, describe: describeWhiteCorner,
+              progressLabel: text('转体摆放', 'Rotate into place'),
+              heading: text('把魔方摆到位', 'Rotate the cube into place'),
+              prompt: text('拖动整颗魔方，把白橙蓝角摆在底层左后，白格朝下。', 'Drag the whole cube to put this corner at bottom back-left with white facing down.') },
+          ],
+          completion: text('下一节，让白蓝红角的蓝格和左侧这个蓝格相接。', 'In the next section, match the white–blue–red corner to this blue sticker on the left.'),
+          view: { x: cornerViewTilt, y: -cornerViewTilt, z: 0 },
+          orbitSnapDegrees: cornerViewLimit,
+          dimStickersAfterFirstQuestion: otherCornerStickers,
+          hintFacelets: true,
+        },
+        exercise: exercise(firstStart, 'z', text('白格朝下，把白橙蓝角摆在底面左后。', 'Point the white sticker down and place the corner at bottom back-left.'), firstCorner, { rotationOnly: true }),
+      },
+      {
+        id: 'white-blue-red', title: bottomTitles[1],
+        interaction: {
+          view: { x: cornerViewTilt, y: cornerViewTilt, z: 0 },
+          fixedOrientation: true,
+          turnExploration: {
+            opening: {
+              kind: 'faces',
+              progressLabel: text('试转三面', 'Try three faces'),
+              heading: text('哪些面可以自由转？', 'Which faces can turn freely?'),
+              prompt: text('白橙蓝角已经摆在左后。试转前面 F、顶面 U、右面 R，观察它是否留在原位。',
+                'The white–orange–blue corner is at the back-left. Try turning the front (F), top (U), and right (R). Watch what happens to that corner.'),
+              done: text('三面都试过了。', 'You tried all three faces.'),
+              inProgress: text('白橙蓝角还在原位。', 'The white–orange–blue corner is still in place.'),
+            },
+            protectedCorners: text('已摆好的白橙蓝角', 'the white–orange–blue corner you placed'),
+            freeFaces: [
+              { face: 'F', label: text('前面', 'Front') },
+              topFace, rightFace,
+            ],
+            mutedStickers: otherCornerStickers,
+            alignment: {
+              progressLabel: text('把角块移到左前', 'Move to front-left'),
+              side: 'left',
+              homeIndex: 4, homeFace: 'D', stickers: stickerKeys[4], goalPositions: [4, 6] as readonly number[], describe: describeWhiteCorner,
+              heading: text('把白蓝红角移到左前方', 'Move the white–blue–red corner to the front-left'),
+              prompt: text('转动顶层 U、右层 R 或前层 F，把白蓝红角移到左前方。顶层和底层的左前角都可以。',
+                'Turn the top (U), right (R), or front (F) to move the corner to the front-left. Either the top or bottom spot is fine.'),
+            },
+            insertion: {
+              progressLabel: text('上钩下回', 'Left-hand trigger'),
+              heading: text('用「上钩下回」还原白蓝红角', 'Solve the corner with the left-hand trigger'),
+              prompt: text('跟着魔方上的箭头转动。四步做完后，白蓝红角还没归位就再做一遍',
+                'Follow the arrows on the cube. If the corner is still out of place after all four moves, repeat the sequence.'),
+              steps: getLblAlgGroups('trigger-learning', leftTrigger).flat(),
+              solvedStickers: solvedCornerStickers([0, 4]),
+              demoSetup: `${secondStart} U`,
+              helpLabel: text('教我上钩下回', 'Teach me the left-hand trigger'),
+            },
+          },
+          completion: text('白橙蓝角和白蓝红角都已归位。', 'Both the white–orange–blue and white–blue–red corners are solved.'),
+          orbitSnapDegrees: cornerViewLimit,
+        },
+        exercise: exercise(secondStart, secondSolution, text('把白蓝红角转到左前角正上方，再用左手「上钩下回」归位。', 'Align the white–blue–red corner above its slot, then insert it with the left-hand trigger.'), secondCorner, { fixedOrientation: true }),
+      },
+      {
+        id: 'white-red-green', title: bottomTitles[2],
+        interaction: {
+          view: frontRightView,
+          orbitSnapDegrees: cornerViewLimit,
+          completion: text('前三个白角都已归位，前面的两个红格接在一起。', 'The first three white corners are solved, and the two red stickers meet at the front.'),
+          turnExploration: {
+            opening: {
+              kind: 'faces',
+              progressLabel: text('试转两面', 'Try two faces'),
+              heading: text('现在还有哪些面可以自由转？', 'Which faces can still turn freely?'),
+              prompt: text('前两个白角都已摆在左侧。试转顶面 U 和右面 R，观察它们是否留在原位。',
+                'The first two white corners are on the left. Try turning the top (U) and right (R) and watch whether those corners stay in place.'),
+              done: text('两面都试过了。', 'You tried both faces.'),
+              inProgress: text('前两个白角还在原位。', 'The first two white corners are still in place.'),
+            },
+            protectedCorners: text('前两个已归位的角块', 'the two corners you have solved'),
+            freeFaces: [topFace, rightFace],
+            mutedStickers: mutedExcept(0, 4),
+            alignment: {
+              progressLabel: text('把角块移到右前', 'Move to front-right'),
+              side: 'right',
+              homeIndex: 5, homeFace: 'D', stickers: stickerKeys[5], goalPositions: [5, 7], describe: describeWhiteCorner,
+              heading: text('把白红绿角移到右前方', 'Move the white–red–green corner to the front-right'),
+              prompt: text('白红绿角和左前角都有红格。转顶层 U 或右层 R，把它移到右前方，顶层和底层都可以。',
+                'The white–red–green corner shares red with the front-left corner. Turn U or R to bring it to either front-right spot.'),
+            },
+            insertion: rightInsertion(bottomTitles[2], `${thirdStart} U'`, solvedCornerStickers([0, 4, 5])),
+          },
+        },
+        exercise: exercise(thirdStart, thirdSolution, text('把白红绿角归位，保留前两个白角。', 'Insert the white–red–green corner. Keep the first two white corners in place.'), thirdCorner),
+      },
+      {
+        id: 'white-green-orange', title: bottomTitles[3],
+        interaction: {
+          view: frontRightView,
+          orbitSnapDegrees: cornerViewLimit,
+          completion: text('底层完成。底面全白，四个侧面的底排也各自同色。', 'The first layer is complete. The bottom is all white, and the bottom row on each side matches.'),
+          turnExploration: {
+            opening: {
+              kind: 'rotation',
+              solvedStickers: solvedCornerStickers([0, 4, 5], true),
+              progressLabel: text('转体换方向', 'Rotate the cube'),
+              heading: text('把右后的空位转到右前', 'Bring the back-right slot to the front-right'),
+              prompt: text('最后一个空位在底层右后。横向拖动整颗魔方，向左转四分之一圈。',
+                'The last slot is at bottom back-right. Drag the whole cube sideways a quarter turn to the left.'),
+              done: text('空位到了右前，接下来就能用右手「上钩下回」。', 'The slot is at front-right, ready for the right-hand trigger.'),
+            },
+            protectedCorners: text('已经归位的角块', 'one or more of the corners you have solved'),
+            freeFaces: [topFace],
+            mutedStickers: mutedExcept(0, 4, 5),
+            alignment: {
+              progressLabel: text('把角块移到右前', 'Move to front-right'),
+              side: 'right',
+              homeIndex: 1, homeFace: 'D', stickers: stickerKeys[1], goalPositions: [7], describe: describeWhiteCorner,
+              heading: text('把白绿橙角移到空位上方', 'Move the white–green–orange corner above its slot'),
+              prompt: text('转顶层 U，把白绿橙角移到右前空位的正上方。',
+                'Turn U to bring the white–green–orange corner directly above the front-right slot.'),
+            },
+            insertion: rightInsertion(bottomTitles[3], `${fourthStart} y U`, solvedCornerStickers([0, 1, 4, 5], true)),
+          },
+        },
+        exercise: exercise(fourthStart, fourthSolution, text('归位白绿橙角，完成白底和四个侧面的底排。', 'Insert the last corner to complete the white bottom and match the bottom rows on all four sides.'), firstLayer),
+      },
+    ],
+  },
+  {
+    id: 'yellow', title: TWO_BY_TWO_OVERVIEW[1].title,
+    sections: [{
+      id: 'two-touch', title: text('二碰', 'Two non-yellow stickers'),
+      observation: {
+        view: above, stickers: ['U2'],
+        steps: [
+          text('顶面有两格不是黄色。找到侧面的黄格，转顶层让它来到前面左上角。', 'Two top stickers are not yellow. Find a yellow sticker on the side and turn the top to bring it to front-left.'),
+          text('做右小鱼，直到顶面只剩一格黄色。核对底层仍然对齐。', 'Apply the right Sune so only one top sticker is yellow. Check that the first layer is still solved.'),
+        ],
+      },
+      exercise: exercise(yellowStart, `U' ${rightFish}`, text('保持底层复原，把二碰变成小鱼。', 'Keep the first layer solved and make a fish.'), fish),
+    }],
+  },
+] as const satisfies readonly CourseChapter[];

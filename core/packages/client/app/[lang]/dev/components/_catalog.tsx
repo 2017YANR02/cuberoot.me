@@ -851,6 +851,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Teaching video timeline with play and replay controls on the left and pause-preserving seeking.',
   },
   {
+    name: 'InteractiveTutorial',
+    import: "import InteractiveTutorial from '@/app/[lang]/tutorial/components/InteractiveTutorial';",
+    category: 'more',
+    zh: '以课程数据驱动连续动画、贴纸标注和练习，按教学区尺寸适配桌面与触屏。',
+    en: 'Data-driven teaching timelines, sticker pointers and exercises with container-based layouts.',
+  },
+  {
     name: 'SectionMenu',
     import: "import SectionMenu from '@/app/[lang]/tutorial/components/SectionMenu';",
     category: 'more',
