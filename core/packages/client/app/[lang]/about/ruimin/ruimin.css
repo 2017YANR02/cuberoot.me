@@ -100,6 +100,7 @@
 }
 
 .ruimin-identity-index a,
+.ruimin-technical-projects a,
 .ruimin-profile-links a {
   color: inherit;
   text-decoration-color: var(--border-default);
@@ -107,6 +108,7 @@
 }
 
 .ruimin-identity-index a:hover,
+.ruimin-technical-projects a:hover,
 .ruimin-profile-links a:hover {
   color: var(--accent);
 }
@@ -128,6 +130,7 @@
 }
 
 .ruimin-story,
+.ruimin-technical,
 .ruimin-education,
 .ruimin-awards-intro {
   display: grid;
@@ -136,6 +139,7 @@
 }
 
 .ruimin-story,
+.ruimin-technical,
 .ruimin-education {
   padding: clamp(64px, 9vw, 104px) 0;
   border-bottom: 1px solid var(--border-default);
@@ -174,6 +178,40 @@
   padding-top: 8px;
   border-top: 1px solid var(--border-default);
   white-space: nowrap;
+}
+
+.ruimin-technical-role {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.ruimin-technical-summary {
+  margin: 8px 0 20px;
+  line-height: 1.7;
+}
+
+.ruimin-technical-projects {
+  margin: 0;
+  padding-inline-start: 1.2em;
+  list-style: disc;
+  color: var(--muted-foreground);
+  line-height: 1.75;
+}
+
+.ruimin-technical-projects li + li {
+  margin-top: 12px;
+}
+
+.ruimin-technical-projects strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.ruimin-technical-projects a {
+  text-decoration-line: underline;
 }
 
 .ruimin-education-list {
@@ -472,6 +510,7 @@
   }
 
   .ruimin-story,
+  .ruimin-technical,
   .ruimin-education,
   .ruimin-awards-intro,
   .ruimin-award-group {
@@ -505,6 +544,7 @@
   }
 
   .ruimin-story,
+  .ruimin-technical,
   .ruimin-education {
     padding: 62px 0;
   }
