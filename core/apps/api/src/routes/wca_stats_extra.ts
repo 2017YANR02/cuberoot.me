@@ -26,7 +26,7 @@
  */
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
-import { wcaRelationFilter } from '../utils/wca_relation_filters.js';
+import { wcaPersonTeamFilter, wcaRelationFilter } from '../utils/wca_relation_filters.js';
 import { hasPersonLiveResult } from '../utils/person_live_result.js';
 import { getOverlayEntries, overlayDeltaPure, type OverlayEntry } from '../utils/wca_live_overlay.js';
 import { inferredOverlayEntries } from './cubing_live.js';
@@ -596,6 +596,8 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
 //   首字母走 wca_persons_name;local/aka 走全表扫(子集小 / 有 nginx 缓存兜底).
 // 长度表达式须与 migration 0052/0053 索引逐字一致才能命中.
 wcaStatsExtraRoutes.get('/wca/persons-directory', async (c) => {
+  const team = c.req.query('team') ?? '';
+  const teamFilter = wcaPersonTeamFilter(team, 'p.wca_id');
   const country = c.req.query('country') ?? '';
   const sort = (c.req.query('sort') ?? 'name').toLowerCase();   // 'name'(首字母) | 'len'(名字长度)
   const dir = (c.req.query('dir') ?? 'asc').toLowerCase();      // 'asc' | 'desc'
@@ -648,7 +650,8 @@ wcaStatsExtraRoutes.get('/wca/persons-directory', async (c) => {
   if (nameMode === 'local') where.push(`p.name ~ '\\([^)]+\\)\\s*$'`);
   if (lenMin != null) { where.push(`${lenExpr} >= ?`); params.push(lenMin); }
   if (lenMax != null) { where.push(`${lenExpr} <= ?`); params.push(lenMax); }
-  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const whereSql = `WHERE ${where.length ? where.join(' AND ') : 'TRUE'}${teamFilter.sql}`;
+  params.push(...teamFilter.params);
 
   const orderSql = sort === 'len'
     ? `${lenExpr} ${dirSql}, p.name ASC, p.wca_id ASC`
@@ -672,9 +675,9 @@ wcaStatsExtraRoutes.get('/wca/persons-directory', async (c) => {
     ),
   ]);
   const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
-  c.header('Cache-Control', CACHE_HEADER);
+  c.header('Cache-Control', team ? 'no-store' : CACHE_HEADER);
   return c.json({
-    country: cn.id, sort, dir, name: nameMode, gender, lenMin, lenMax, page, size, total,
+    country: cn.id, sort, dir, name: nameMode, gender, lenMin, lenMax, page, size, total, team: team || undefined,
     rows: rows.map(r => ({
       wcaId: r.wca_id, name: r.name, countryId: r.country_id, iso2: r.iso2,
       ...(r.former_names && r.former_names.length ? { former: r.former_names } : {}),

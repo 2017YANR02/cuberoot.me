@@ -5,6 +5,7 @@ import { tr } from '@/i18n/tr';
 
 export function wcaTeamSelectItems(teams: WcaTeam[], mode: 'filter' | 'edit' = 'filter', selectedValue = ''): ListSelectItem[] {
   return teams.flatMap((team): ListSelectItem[] => {
+    if (team.name === 'GAN') return [];
     if (team.name === '魔域') {
       // Preserve the current legacy assignment in the editor without offering it for new selections.
       return mode === 'edit' && selectedValue === String(team.id)

@@ -87,6 +87,19 @@ describe.skipIf(!url)('historical country buckets (PostgreSQL)', () => {
       if (region === 'CN') expect(body.rows.map((r: { rank: number }) => r.rank)).toEqual([1, 1, 3]);
     }
   });
+  it('applies the GAN roster union before ranking medals and counting pages', async () => {
+    await state.db!.unsafe(`CREATE TABLE wca_teams(id integer PRIMARY KEY, name text);
+      CREATE TABLE wca_person_teams(wca_id text, team_id integer);
+      INSERT INTO wca_teams VALUES (33, 'GAN GURUS'), (90, '宇宙爆速社-领航队'), (251, 'SpeedAce');
+      INSERT INTO wca_person_teams VALUES ('a', 33), ('a', 90), ('b', 90), ('c', 251);`);
+    const response = await wcaFunStatsRoutes.request('/wca/fun/medals?type=event&event=333&medal=gold&team=gan&size=1');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    const body = await response.json();
+    expect(body.team).toBe('gan');
+    expect(body.total).toBe(2);
+    expect(body.rows[0]).toMatchObject({ wcaId: 'a', gold: 9, rank: 1 });
+  });
   it('rejects unknown medal columns before querying', async () => {
     const response = await wcaFunStatsRoutes.request('/wca/fun/medals?medal=gold%20DESC');
     expect(response.status).toBe(400);

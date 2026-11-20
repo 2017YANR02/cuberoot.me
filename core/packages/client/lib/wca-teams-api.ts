@@ -16,3 +16,11 @@ export async function saveWcaTeams(wcaId: string, names: string[]): Promise<{ te
     method: 'PUT', headers: authHeaders(), body: JSON.stringify({ names }),
   }));
 }
+
+export async function addWcaTeamMember(teamId: number, person: { wcaId: string } | { name: string }): Promise<{
+  member: { memberId: number; teamId: number; wcaId: string | null; name: string };
+}> {
+  return handleApi(await sessionFetch(apiUrl('/v1/wca/teams/members'), {
+    method: 'POST', headers: authHeaders(), body: JSON.stringify({ teamId, ...person }),
+  }));
+}

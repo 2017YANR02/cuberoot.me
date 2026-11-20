@@ -29,21 +29,23 @@ interface MedalRow {
   rank: number; wcaId: string; name: string; countryId: string; iso2: string | null;
   gold: number; silver: number; bronze: number; sum: number;
 }
-interface MedalData { rows: MedalRow[]; total: number; medal: Medal }
+interface MedalData { rows: MedalRow[]; total: number; medal: Medal; team?: string }
 
 interface Props {
   medal: Medal; eventId: string; country: string; countries: CountryOption[]; isZh: boolean;
   page: number; size: number; leadingControls: ReactNode;
+  teamFilter: string; teamControl: ReactNode;
   onMedalChange: (medal: Medal) => void; onEventChange: (event: string) => void;
   onCountryChange: (country: string) => void; onPageChange: (page: number) => void;
   onSizeChange: (size: number) => void;
 }
 
 export default function MedalRankings({ medal, eventId, country, countries, isZh, page, size,
-  leadingControls, onMedalChange, onEventChange, onCountryChange, onPageChange, onSizeChange }: Props) {
+  leadingControls, teamFilter, teamControl, onMedalChange, onEventChange, onCountryChange, onPageChange, onSizeChange }: Props) {
   const event = EVENTS.has(eventId) ? eventId : '';
   const params = new URLSearchParams({ type: event ? 'event' : 'all', event, region: country || 'world',
     medal, page: String(page), size: String(size), v: '2' });
+  if (teamFilter) params.set('team', teamFilter);
   const requestKey = params.toString();
   const [result, setResult] = useState<{ key: string; data: MedalData; leaders: MedalRow[] } | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
@@ -57,6 +59,7 @@ export default function MedalRankings({ medal, eventId, country, countries, isZh
       const data: MedalData = await response.json();
       // An older API ignores medal and still sorts by gold; never present it as a silver/bronze ranking.
       if (data.medal !== query.get('medal')) throw new Error('Medal ranking response mismatch');
+      if ((data.team ?? '') !== (query.get('team') ?? '')) throw new Error('Team filter response mismatch');
       return data;
     }
     const query = new URLSearchParams(requestKey);
@@ -88,6 +91,7 @@ export default function MedalRankings({ medal, eventId, country, countries, isZh
       </div>
       {leadingControls}
       <RegionCountrySelect hideLabel countries={countries} value={country} isZh={isZh} onChange={onCountryChange} />
+      {teamControl}
     </div>
     {failed && <div className="wse-state wse-state-error" role="alert">{tr({ zh: '奖牌排行加载失败', en: 'Could not load medal rankings' })}</div>}
     {!current && !failed && <ContentSkeleton variant="table" />}

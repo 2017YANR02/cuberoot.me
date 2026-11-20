@@ -28,6 +28,9 @@ import '@/components/wca-stats/wca-stats-controls.css';
 import { tr } from '@/i18n/tr';
 import { useWcaTeachers } from '@/components/WcaTeacherCell';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
+import { WcaTeamFilterSelect } from '@/components/wca-stats/WcaTeamFilterSelect';
+import { useWcaTeams } from '@/hooks/useWcaTeams';
+import { wcaTeamFilterNames } from '@cuberoot/shared/wca-team-filters';
 const SorCensus = dynamic(() => import('@/components/wca-stats/SorCensus'), {
   ssr: false,
   loading: () => <ContentSkeleton variant="table" />,
@@ -66,6 +69,7 @@ export default function RecordsView({ embedded = false, leadingControls }: { emb
       gender: parseAsString,
       metric: parseAsString,
       events: parseAsString,
+      team: parseAsString,
     },
     {
       history: 'replace', scroll: false,
@@ -86,7 +90,9 @@ export default function RecordsView({ embedded = false, leadingControls }: { emb
   ));
   const event = q.event === 'all' || q.event === 'sor' || sorScope ? '' : q.event || '';
   const gender: 'all' | 'm' | 'f' = q.gender === 'm' || q.gender === 'f' ? q.gender : 'all';
-  const canShowHistoryDetails = !sorScope && !derived && show !== 'current' && region === 'world' && gender === 'all' && metric !== 'both';
+  const canFilterTeam = !sorScope && !derived;
+  const teamFilter = canFilterTeam ? q.team ?? '' : '';
+  const canShowHistoryDetails = canFilterTeam && !teamFilter && show !== 'current' && region === 'world' && gender === 'all' && metric !== 'both';
 
   const update = (k: string, v: string) => {
     setQ({ [k]: v || null } as Parameters<typeof setQ>[0]);
@@ -171,10 +177,25 @@ export default function RecordsView({ embedded = false, leadingControls }: { emb
     return selectCurrentRecords(visibleRows);
   }, [visibleRows, show]);
 
+  const recordRows = show === 'current' ? currentRows : visibleRows;
+  const teamDirectory = useWcaTeams(teamFilter ? recordRows.map(row => row.p) : []);
+  const filteredRows = useMemo(() => {
+    if (!teamFilter) return recordRows;
+    if (!teamDirectory.ready) return [];
+    const teamNames = wcaTeamFilterNames(teamFilter);
+    const selectedIds = new Set(teamNames
+      ? teamDirectory.teams.filter(team => teamNames.includes(team.name)).map(team => team.id)
+      : [Number(teamFilter)]);
+    const matchingPeople = new Set(teamDirectory.assignments
+      .filter(item => teamFilter === 'none' || selectedIds.has(item.teamId))
+      .map(item => item.wcaId));
+    return recordRows.filter(row => teamFilter === 'none' ? !matchingPeople.has(row.p) : matchingPeople.has(row.p));
+  }, [recordRows, teamFilter, teamDirectory.ready, teamDirectory.teams, teamDirectory.assignments]);
+
   const grouped = useMemo(() => {
     if (show !== 'history') return null;
     const map = new Map<string, Row[]>();
-    for (const r of visibleRows) {
+    for (const r of filteredRows) {
       const arr = map.get(r.e) ?? [];
       arr.push(r);
       map.set(r.e, arr);
@@ -187,15 +208,15 @@ export default function RecordsView({ embedded = false, leadingControls }: { emb
         const averages = rows.filter(r => r.t === 'a');
         return { event: id, rows: [...singles, ...averages] };
       });
-  }, [visibleRows, show]);
+  }, [filteredRows, show]);
 
   const teacherStudentIds = useMemo(
-    () => derived ? [] : (show === 'current' ? currentRows : visibleRows).map((row) => row.p),
-    [derived, show, currentRows, visibleRows],
+    () => derived ? [] : filteredRows.map(row => row.p),
+    [derived, filteredRows],
   );
   const teacherEventIds = useMemo(
-    () => derived ? [] : (show === 'current' ? currentRows : visibleRows).map((row) => row.e),
-    [derived, show, currentRows, visibleRows],
+    () => derived ? [] : filteredRows.map(row => row.e),
+    [derived, filteredRows],
   );
   const teacherDirectory = useWcaTeachers(teacherStudentIds, teacherEventIds);
 
@@ -224,6 +245,7 @@ export default function RecordsView({ embedded = false, leadingControls }: { emb
             onChange={v => update('region', v)} />
           <WcaGenderSelect className="records-toolbar-select" value={gender}
             onChange={v => update('gender', v === 'all' ? '' : v)} />
+          {canFilterTeam && <WcaTeamFilterSelect teams={teamDirectory.teams} value={teamFilter} onChange={value => update('team', value)} />}
           {leadingControls}
           {!sorScope && !derived && <div className="wca-stats-tab-bar wca-stats-tab-bar-connected"
             role="group" aria-label={tr({ zh: '纪录范围', en: 'Record scope' })}>
@@ -280,15 +302,18 @@ export default function RecordsView({ embedded = false, leadingControls }: { emb
       {!sorScope && !derived && !canShowHistoryDetails && <div className="wse-table-wrapper sticky-scroll">
         {loading && <ContentSkeleton variant="table" />}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
-        {bundle && !loading && (
+        {bundle && !loading && teamFilter && !teamDirectory.ready && (teamDirectory.failed
+          ? <button type="button" className="btn-secondary" onClick={teamDirectory.retry}>{tr({ zh: '战队加载失败，重试', en: 'Team lookup failed. Retry' })}</button>
+          : <ContentSkeleton variant="table" />)}
+        {bundle && !loading && (!teamFilter || teamDirectory.ready) && (
           <>
-            {visibleRows.length === 0 && (
-              <div className="wse-state">{tr({ zh: '该区域 / 项目暂无纪录', en: 'No records for this region / event'
+            {filteredRows.length === 0 && (
+              <div className="wse-state">{tr({ zh: '没有符合筛选条件的纪录', en: 'No records match these filters'
             })}</div>
             )}
 
-            {show === 'current' && currentRows.length > 0 && (
-              <WcaRecordRowsTable rows={currentRows} isZh={isZh} showEvent={!event} showRank={false} teacherDirectory={teacherDirectory} />
+            {show === 'current' && filteredRows.length > 0 && (
+              <WcaRecordRowsTable rows={filteredRows} isZh={isZh} showEvent={!event} showRank={false} teacherDirectory={teacherDirectory} />
             )}
 
             {show === 'history' && grouped && grouped.map(g => (
@@ -303,8 +328,8 @@ export default function RecordsView({ embedded = false, leadingControls }: { emb
               </section>
             ))}
 
-            {show === 'mixed' && visibleRows.length > 0 && (
-              <WcaRecordRowsTable rows={visibleRows} isZh={isZh} showEvent={!event} teacherDirectory={teacherDirectory} />
+            {show === 'mixed' && filteredRows.length > 0 && (
+              <WcaRecordRowsTable rows={filteredRows} isZh={isZh} showEvent={!event} teacherDirectory={teacherDirectory} />
             )}
           </>
         )}

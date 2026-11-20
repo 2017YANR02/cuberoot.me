@@ -3474,13 +3474,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                   ><Undo2 size={14} strokeWidth={1.75} /></button>
                 </>
               )}
-              <button
-                className="draw-card-icon-btn"
-                onClick={closeAction}
-                title={tr({ zh: '关闭', en: 'Close'
-                })}
-                aria-label="Close"
-              ><X size={14} strokeWidth={1.75} /></button>
+              <ClearButton variant="standalone" className="draw-card-icon-btn" onClick={closeAction} ariaLabel={tr({ zh: '关闭', en: 'Close' })} />
             </div>
             <div className="draw-card-title">{title}</div>
             <div className="draw-card-subtitle">{subtitle}</div>
@@ -3542,12 +3536,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
               title={tr({ zh: '重新定位', en: 'Re-locate' })}
               aria-label="Re-locate"
             ><RotateCw size={14} strokeWidth={1.75} /></button>
-            <button
-              className="draw-card-icon-btn"
-              onClick={() => setNearbyOpen(false)}
-              title={tr({ zh: '关闭', en: 'Close' })}
-              aria-label="Close"
-            ><X size={14} strokeWidth={1.75} /></button>
+            <ClearButton variant="standalone" className="draw-card-icon-btn" onClick={() => setNearbyOpen(false)} ariaLabel={tr({ zh: '关闭', en: 'Close' })} />
           </div>
           {userPos && (
             <div className="nearby-card-coords">{formatDMS(userPos.lat, userPos.lng)}</div>

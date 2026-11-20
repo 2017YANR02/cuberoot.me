@@ -98,10 +98,26 @@ describe.skipIf(!databaseUrl)('multiple WCA teams against PostgreSQL', () => {
   });
 
   it('serializes concurrent saves without leaving a mix of two edits', async () => {
-    const results = await Promise.all([call('/2019WANY36', ['GAN', 'Cubicle']), call('/2019WANY36', ['魔域'])]);
+    const results = await Promise.all([call('/2019WANY36', ['MFG', 'Cubicle']), call('/2019WANY36', ['魔域'])]);
     expect(results.map(result => result.status)).toEqual([200, 200]);
     const rows = await mocks.db`SELECT t.name FROM wca_person_teams a JOIN wca_teams t ON t.id = a.team_id WHERE a.wca_id = '2019WANY36' ORDER BY t.name`;
-    expect([['魔域'], ['Cubicle', 'GAN']]).toContainEqual(rows.map(row => row.name));
+    expect([['魔域'], ['Cubicle', 'MFG']]).toContainEqual(rows.map(row => row.name));
+  });
+
+  it('adds a registered person without losing affiliations or duplicating a retried addition', async () => {
+    const wcaId = '2023GENG02';
+    const [before] = await mocks.db`SELECT member_id FROM wca_person_teams WHERE wca_id = ${wcaId} AND team_id = 1`;
+    const add = (teamId: number) => wcaTeamRoutes.request('/wca/teams/members', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wcaId, teamId }),
+    });
+    expect((await add(2147483647)).status).toBe(404);
+    const results = await Promise.all([add(2), add(2)]);
+    expect(results.map(result => result.status).sort()).toEqual([200, 201]);
+    const [first, second] = await Promise.all(results.map(result => result.json()));
+    expect(first.member).toMatchObject({ wcaId, teamId: 2, name: 'Xuanyi Geng' });
+    expect(second.member).toEqual(first.member);
+    expect(await mocks.db`SELECT member_id FROM wca_person_teams WHERE wca_id = ${wcaId} AND team_id = 1`).toEqual([before]);
+    await mocks.db`DELETE FROM wca_person_teams WHERE member_id = ${first.member.memberId}`;
   });
 
   it('imports the verified Cubicle roster additively and can be replayed without changing member IDs', async () => {
@@ -121,5 +137,21 @@ describe.skipIf(!databaseUrl)('multiple WCA teams against PostgreSQL', () => {
     expect(guo.members[0].teams.map((team: { name: string }) => team.name).sort()).toEqual(['Cubicle', 'GAN GURUS']);
     await mocks.db.unsafe(await migration('0329_cubicle_roster'));
     expect(await mocks.db`SELECT * FROM wca_person_teams ORDER BY member_id`).toEqual(first);
+  });
+
+  it('removes the legacy GAN team only when empty and keeps both filter URLs working', async () => {
+    const migrationSql = await migration('0346_remove_legacy_gan_team');
+    await expect(mocks.db.unsafe(migrationSql)).rejects.toMatchObject({ code: '23503' });
+    const [gurus] = await mocks.db`SELECT id FROM wca_teams WHERE name = 'GAN GURUS'`;
+    await mocks.db`UPDATE wca_person_teams SET team_id = ${gurus.id} WHERE team_id = 1`;
+    const before = await mocks.db`SELECT * FROM wca_person_teams ORDER BY member_id`;
+    await mocks.db.unsafe(migrationSql);
+    expect(await mocks.db`SELECT id FROM wca_teams WHERE name = 'GAN'`).toHaveLength(0);
+    expect(await mocks.db`SELECT * FROM wca_person_teams ORDER BY member_id`).toEqual(before);
+    await expect(mocks.db`INSERT INTO wca_teams(name) VALUES ('GAN')`).rejects.toMatchObject({ code: '23514' });
+    for (const team of ['gan', '1']) {
+      const data = await (await call('?directory=1&team=' + team)).json();
+      expect(data.members.some((row: { wcaId: string }) => row.wcaId === '2023GENG02')).toBe(true);
+    }
   });
 });

@@ -54,8 +54,8 @@ import {
   WcaTeacherColumnHeader,
   useWcaTeachers,
 } from '@/components/WcaTeacherCell';
-import { WcaRelationColumnHeader, teacherFilterItems } from '@/components/WcaRelationColumnHeader';
-import { wcaTeamSelectItems } from '@/components/wca-team-select-items';
+import { teacherFilterItems } from '@/components/WcaRelationColumnHeader';
+import { WcaTeamFilterSelect } from '@/components/wca-stats/WcaTeamFilterSelect';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { useMembership } from '@/hooks/useMembership';
@@ -414,6 +414,7 @@ function AllResultsPageInner() {
   // 空态「名录」:全选手 A-Z(按 首字母 / 名字长度 排序,可叠加国家)
   useEffect(() => {
     if (view !== 'rank' || mode !== 'empty') return;
+    const controller = new AbortController();
     setLoading(true); setError(null);
     const qs = new URLSearchParams();
     qs.set('sort', psort); qs.set('dir', pdir); qs.set('name', pname);
@@ -422,11 +423,17 @@ function AllResultsPageInner() {
     qs.set('page', String(page)); qs.set('size', String(size));
     if (country) qs.set('country', country);
     if (gender !== 'all') qs.set('gender', gender);
-    fetch(apiUrl(`/v1/wca/persons-directory?${qs.toString()}`))
+    if (teamFilter) qs.set('team', teamFilter);
+    fetch(apiUrl(`/v1/wca/persons-directory?${qs.toString()}`), { signal: controller.signal })
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then((j: { rows: DirRow[]; total: number }) => setDirData({ rows: j.rows, total: j.total }))
-      .catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [view, mode, psort, pdir, pname, plmin, plmax, country, gender, page, size]);
+      .then((j: { rows: DirRow[]; total: number; team?: string }) => {
+        if ((j.team ?? '') !== teamFilter) throw new Error('Team filter response mismatch');
+        if (!controller.signal.aborted) setDirData({ rows: j.rows, total: j.total });
+      })
+      .catch(e => { if (!controller.signal.aborted) { setDirData(null); setError(e.message); } })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [view, mode, psort, pdir, pname, plmin, plmax, country, gender, page, size, teamFilter]);
 
   // 名次和数据
   useEffect(() => {
@@ -517,11 +524,8 @@ function AllResultsPageInner() {
     ],
     selectedLabel: myTeacherId && teacherFilter === myTeacherId ? tr({ zh: '老师：我', en: 'Teacher: me' }) : undefined,
   };
-  const teamColumnFilter = {
-    value: teamFilter, onChange: (value: string) => { void setQuery({ team: value || null, page: null }); },
-    items: [{ value: 'none', label: tr({ zh: '未设置', en: 'Not set' }) }, ...wcaTeamSelectItems(teamDirectory.teams, 'filter')],
-    disabled: !teamDirectory.ready,
-  };
+  const teamSelect = <WcaTeamFilterSelect teams={teamDirectory.teams} value={teamFilter}
+    onChange={value => { void setQuery({ team: value || null, page: null }); }} />;
   const totalPages = (d: { total: number } | null) => d ? Math.max(1, Math.ceil(d.total / size)) : 1;
   const isCountryMode = !!country;
   const showBest = !!sorData && sorData.rows.length > 0 && 'bestRank' in sorData.rows[0]!;
@@ -629,7 +633,7 @@ function AllResultsPageInner() {
       {view === 'medals' && <MedalRankings
         medal={query.medal ?? 'gold'} eventId={query.medalEvent ?? (mode === 'single' ? singleEvent : '')}
         country={country} countries={countries} isZh={isZh} page={page} size={size}
-        leadingControls={viewTabs}
+        leadingControls={viewTabs} teamFilter={teamFilter} teamControl={teamSelect}
         onMedalChange={medal => { void setQuery({ medal, page: null }); }}
         onEventChange={medalEvent => { void setQuery({ medalEvent, page: null }); }}
         onCountryChange={value => update('country', value)}
@@ -664,7 +668,7 @@ function AllResultsPageInner() {
             isZh={isZh}
           />
         </div>
-        {mode === 'empty' && <div className="wca-stats-controls">{renderTypeSelect()}{viewTabs}</div>}
+        {mode === 'empty' && <div className="wca-stats-controls">{renderTypeSelect()}{viewTabs}{teamSelect}</div>}
         {mode === 'single' && (<>
           <div className="wse-filter wse-filter-show">
             <label className="sr-only">{tr({ zh: '显示', en: 'Show' })}</label>
@@ -681,6 +685,7 @@ function AllResultsPageInner() {
           <div className="wca-stats-controls">{renderTypeSelect()}{viewTabs}</div>
           <RegionCountrySelect hideLabel countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
           {genderSelect}
+          {teamSelect}
           <div className="wse-filter wse-filter-show"
             title={mbfAvgPeriodOnly ? tr({ zh: '多盲非官方平均仅支持「当期」口径', en: 'Multi-Blind unofficial average supports the period basis only' }) : undefined}>
             <label className="sr-only">{tr({ zh: '口径', en: 'Basis' })}</label>
@@ -741,6 +746,7 @@ function AllResultsPageInner() {
         {mode === 'sor' && (<>
           <div className="wca-stats-controls">{renderTypeSelect()}{viewTabs}</div>
           <RegionCountrySelect hideLabel countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
+          {teamSelect}
           {/* 单次 / 平均 由「类型」下拉统一控制(单次 / 平均 → 排名,派生指标 → 指标视图);此处仅保留「多盲平均不计入名次和」提示 */}
           {type === 'average' && selectedSet.has('333mbf') && (
             <div className="wse-filter wse-filter-show">
@@ -758,7 +764,7 @@ function AllResultsPageInner() {
       </div>
 
       {/* 排名演化数据固定覆盖 17 个现役项目，仅在选择范围一致时挂载。 */}
-      {isActive17 && (
+      {isActive17 && !teamFilter && (
         <div className="sor-census" style={{ marginBottom: 16 }}>
           <h2 className="wse-section-title">
             {tr({ zh: 'SOR 排名演化(世界 / 大洲 / 国家)', en: 'SOR over time (World / Continent / Country)' })}
@@ -771,7 +777,7 @@ function AllResultsPageInner() {
       {mode === 'empty' && (
         <>
           {/* ── 姓名分布 ── */}
-          <h2 className="wse-section-title">{tr({ zh: '姓名分布', en: 'Name distribution' })}</h2>
+          {!teamFilter && <><h2 className="wse-section-title">{tr({ zh: '姓名分布', en: 'Name distribution' })}</h2>
           <div className="wse-table-wrapper">
             {loading && !nameStats && <ContentSkeleton variant="table" />}
             {error && !nameStats && <div className="wse-state wse-state-error">Error: {error}</div>}
@@ -791,7 +797,7 @@ function AllResultsPageInner() {
                 />
               </>
             )}
-          </div>
+          </div></>}
 
           {/* ── 名录 A–Z ── */}
           <h2 className="wse-section-title">{tr({ zh: '名录 A–Z', en: 'Directory A–Z' })}</h2>
@@ -879,7 +885,7 @@ function AllResultsPageInner() {
           {/* 纪录走势 bar chart race:常显在排名表上方(方案 B)。复用 wr_metric 的 Top10HistoryPage,
               受控到当前单项 + 单次 / 平均;筛选(年份 / 国家 / 选手)只作用于下方表,走势恒为全时段。
               图义跟随「显示」开关:选手 = 历史前 10 选手(按人去重);成绩 = 历史最快前 10 条成绩(同人可多条)。 */}
-          <div className="wse-barrace">
+          {!teamFilter && <div className="wse-barrace">
             <Top10HistoryPage
               controlledEventId={singleEvent}
               controlledMetric={effType}
@@ -889,7 +895,7 @@ function AllResultsPageInner() {
               controlledMetricLabelZh={effMetricMeta.zh}
               controlledMetricLabelEn={effMetricMeta.en}
             />
-          </div>
+          </div>}
 
           <div className="wse-table-wrapper sticky-scroll wse-refresh-region" aria-busy={loading}>
             {loading && (data ? <div className="wse-refresh-status" role="status"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div> : <ContentSkeleton variant="table" />)}
@@ -900,7 +906,7 @@ function AllResultsPageInner() {
                   <thead>
                     <tr>
                       <th className="wse-rank-col">#</th>
-                      <WcaRelationColumnHeader className="wca-person-column" label={tr({ zh: '选手', en: 'Person' })} filterLabel={tr({ zh: '战队', en: 'Team' })} resetLabel={tr({ zh: '不限战队', en: 'Any team' })} filter={teamColumnFilter} />
+                      <th className="wca-person-column">{tr({ zh: '选手', en: 'Person' })}</th>
                       <WcaTeacherColumnHeader filter={teacherColumnFilter} />
                       <th className="wse-value-col">{isZh ? (effType === 'single' ? '单次' : '平均') : (effType === 'single' ? 'Single' : 'Average')}{isMbldAvg && effType === 'average' && <UnofficialMark />}</th>
                       <th>{tr({ zh: '日期', en: 'Date' })}</th>
@@ -941,7 +947,7 @@ function AllResultsPageInner() {
                   <thead>
                     <tr>
                       <th className="wse-rank-col">#</th>
-                      <WcaRelationColumnHeader className="wca-person-column" label={tr({ zh: '选手', en: 'Person' })} filterLabel={tr({ zh: '战队', en: 'Team' })} resetLabel={tr({ zh: '不限战队', en: 'Any team' })} filter={teamColumnFilter} />
+                      <th className="wca-person-column">{tr({ zh: '选手', en: 'Person' })}</th>
                       <WcaTeacherColumnHeader filter={teacherColumnFilter} />
                       <th className="wse-value-col">{isZh ? (effType === 'single' ? '单次' : '平均') : (effType === 'single' ? 'Single' : 'Average')}{isMbldAvg && effType === 'average' && <UnofficialMark />}</th>
                       <th>{tr({ zh: '日期', en: 'Date' })}</th>
@@ -987,7 +993,7 @@ function AllResultsPageInner() {
                   <thead>
                     <tr>
                       <th className="wse-rank-col">#</th>
-                      <WcaRelationColumnHeader className="wca-person-column" label={tr({ zh: '选手', en: 'Person' })} filterLabel={tr({ zh: '战队', en: 'Team' })} resetLabel={tr({ zh: '不限战队', en: 'Any team' })} filter={teamColumnFilter} />
+                      <th className="wca-person-column">{tr({ zh: '选手', en: 'Person' })}</th>
                       <WcaTeacherColumnHeader filter={teacherColumnFilter} />
                       <th className="wse-value-col">
                         <button type="button" className="wse-th-sort" onClick={() => setSorSort('total')}>

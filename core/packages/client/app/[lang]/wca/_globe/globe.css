@@ -326,6 +326,7 @@
     color: #FFFFFF;
 }
 .globe-page .draw-card-icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.draw-card-icon-btn .clear-btn-icon { width: 14px; height: 14px; }
 
 .globe-page .draw-card-title {
     padding: 14px 14px 4px;

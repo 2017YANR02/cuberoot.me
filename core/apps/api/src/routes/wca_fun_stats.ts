@@ -8,6 +8,7 @@
  */
 import { Hono, type Context } from 'hono';
 import { query } from '../db/connection.js';
+import { wcaPersonTeamFilter } from '../utils/wca_relation_filters.js';
 import {
   VALID_EVENTS, ACTIVE_EVENTS, MAX_SIZE, DEFAULT_SIZE, CACHE_HEADER,
   resolveCountryFull,
@@ -209,6 +210,8 @@ wcaFunStatsRoutes.get('/wca/fun/country-sor', async (c) => {
 // B 奖牌榜 — GET /v1/wca/fun/medals?type=all|event&event=&medal=gold|silver|bronze
 // ════════════════════════════════════════════════════════════════
 wcaFunStatsRoutes.get('/wca/fun/medals', async (c) => {
+  const team = c.req.query('team') ?? '';
+  const teamFilter = wcaPersonTeamFilter(team, 't.wca_id');
   const type = (c.req.query('type') ?? 'all').toLowerCase();
   if (type !== 'all' && type !== 'event') return c.json({ error: 'Invalid type' }, 400);
   // Absent medal preserves the existing gold/silver/bronze collection ordering.
@@ -224,13 +227,14 @@ wcaFunStatsRoutes.get('/wca/fun/medals', async (c) => {
   const scope = await resolveScope(scopeInput(c));
   if ('err' in scope) return c.json({ error: scope.err }, 400);
   const { page, size, offset } = pageParams(c);
-  const totals = personTotals('wca_fs_medals', ['gold', 'silver', 'bronze'], scope, 't.event_id = ?');
+  const totals = personTotals('wca_fs_medals', ['gold', 'silver', 'bronze'], scope, `t.event_id = ?${teamFilter.sql}`);
+  const totalsParams = [eventId, ...teamFilter.params, ...totals.params];
   // Only the validated column name is interpolated; filters remain bound parameters.
   const medalWhere = medal ? `WHERE m.${medal} > 0` : '';
   const rankSelect = medal ? `, RANK() OVER (ORDER BY m.${medal} DESC)::int AS medal_rank` : '';
   const order = medal ? `m.${medal} DESC, p.name ASC, m.wca_id ASC`
     : 'm.gold DESC, m.silver DESC, m.bronze DESC, p.name ASC, m.wca_id ASC';
-  c.header('Cache-Control', CACHE_HEADER);
+  c.header('Cache-Control', team ? 'no-store' : CACHE_HEADER);
 
   const rows = await query<{ wca_id: string; country_id: string; iso2: string | null; person_name: string; gold: number; silver: number; bronze: number; total: number; medal_rank?: number }>(
     `${totals.sql}
@@ -238,13 +242,13 @@ wcaFunStatsRoutes.get('/wca/fun/medals', async (c) => {
      FROM totals m JOIN wca_persons p ON p.wca_id = m.wca_id LEFT JOIN wca_countries co ON co.id = m.country_id
      ${medalWhere}
      ORDER BY ${order} LIMIT ? OFFSET ?`,
-    [eventId, ...totals.params, size, offset]);
+    [...totalsParams, size, offset]);
   const totalRow = await query<{ n: string }>(
     `${totals.sql} SELECT COUNT(*) AS n FROM totals m ${medalWhere}`,
-    [eventId, ...totals.params]);
+    totalsParams);
   const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
   return c.json({
-    type, event: type === 'event' ? eventId : undefined, scope: scopeInput(c), medal, page, size, total,
+    type, event: type === 'event' ? eventId : undefined, scope: scopeInput(c), medal, team: team || undefined, page, size, total,
     rows: rows.map((r, i) => ({ rank: r.medal_rank ?? offset + i + 1, wcaId: r.wca_id, name: r.person_name, countryId: r.country_id, iso2: r.iso2, gold: r.gold, silver: r.silver, bronze: r.bronze, sum: r.total })),
   });
 });

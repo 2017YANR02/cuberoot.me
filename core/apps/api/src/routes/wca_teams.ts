@@ -61,11 +61,35 @@ wcaTeamRoutes.get('/wca/teams', async (c) => {
 wcaTeamRoutes.post('/wca/teams/members', async (c) => {
   await requireAdminOrApiKey(c);
   c.header('Cache-Control', 'no-store');
-  const body = await c.req.json<{ name?: unknown; teamId?: unknown }>().catch(() => null);
-  if (!body || typeof body.name !== 'string' || typeof body.teamId !== 'number'
+  const body = await c.req.json<{ name?: unknown; wcaId?: unknown; teamId?: unknown }>().catch(() => null);
+  if (!body || typeof body.teamId !== 'number'
     || !Number.isInteger(body.teamId) || body.teamId < 1 || body.teamId > 2147483647) {
     return c.json({ error: 'invalid member' }, 400);
   }
+  const { teamId } = body;
+  if (body.wcaId !== undefined) {
+    const wcaId = normalizeWcaId(body.wcaId);
+    if (!wcaId || body.name !== undefined) return c.json({ error: 'invalid WCA member' }, 400);
+    const result = await withTransaction(async tx => {
+      // Serialize this addition with edits that replace the person's teams.
+      const [person] = await tx<{ name: string }>('SELECT name FROM wca_persons WHERE wca_id = ? FOR UPDATE', [wcaId]);
+      if (!person) return { error: 'person not found' } as const;
+      const [added] = await tx<{ memberId: number }>(
+        `INSERT INTO wca_person_teams (wca_id, team_id)
+         SELECT ?, id FROM wca_teams WHERE id = ?
+         ON CONFLICT (wca_id, team_id) DO NOTHING
+         RETURNING member_id AS "memberId"`, [wcaId, teamId],
+      );
+      const existing = added ?? (await tx<{ memberId: number }>(
+        'SELECT member_id AS "memberId" FROM wca_person_teams WHERE wca_id = ? AND team_id = ?', [wcaId, teamId],
+      ))[0];
+      if (!existing) return { error: 'team not found' } as const;
+      return { member: { ...existing, wcaId, teamId, name: person.name }, created: !!added };
+    });
+    if ('error' in result) return c.json({ error: result.error }, 404);
+    return c.json({ member: result.member }, result.created ? 201 : 200);
+  }
+  if (typeof body.name !== 'string') return c.json({ error: 'invalid member' }, 400);
   const name = body.name.replace(/\s+/g, ' ').trim();
   if (!name || name.length > 80 || /[\u0000-\u001f\u007f]/.test(name)) return c.json({ error: 'invalid member name' }, 400);
   // Names are not identifiers: two teammates can share a name. Retain the
@@ -73,7 +97,7 @@ wcaTeamRoutes.post('/wca/teams/members', async (c) => {
   const members = await query(
     `INSERT INTO wca_person_teams (name, team_id)
      SELECT ?, id FROM wca_teams WHERE id = ?
-     RETURNING member_id AS "memberId", wca_id AS "wcaId", name, team_id AS "teamId"`, [name, body.teamId],
+     RETURNING member_id AS "memberId", wca_id AS "wcaId", name, team_id AS "teamId"`, [name, teamId],
   );
   if (!members.length) return c.json({ error: 'team not found' }, 404);
   return c.json({ member: members[0] }, 201);
@@ -89,6 +113,9 @@ wcaTeamRoutes.put('/wca/teams/:wcaId', async (c) => {
   if (!body || !Array.isArray(body.names) || body.names.length > 20
     || body.names.some(name => typeof name !== 'string')) return c.json({ error: 'invalid team names' }, 400);
   const names = (body.names as string[]).map(name => name.replace(/\s+/g, ' ').trim());
+  if (names.some(name => name.toLowerCase() === 'gan')) {
+    return c.json({ error: 'Choose a specific GAN team' }, 400);
+  }
   if (names.some(name => !name || name.length > 80 || /[\u0000-\u001f\u007f]/.test(name))) {
     return c.json({ error: 'invalid team name' }, 400);
   }

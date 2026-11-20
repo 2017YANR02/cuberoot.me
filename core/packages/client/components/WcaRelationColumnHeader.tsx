@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
 import type { WcaTeacherDirectory } from '@/components/WcaTeacherCell';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -12,7 +12,7 @@ export interface WcaColumnFilter {
   onChange: (value: string) => void;
   items: ListSelectItem[];
   disabled?: boolean;
-  selectedLabel?: string;
+  selectedLabel?: ReactNode;
 }
 
 export function WcaRelationColumnHeader({ label, resetLabel, filter, className, filterLabel = label }: { label: string; resetLabel: string; filter: WcaColumnFilter; className?: string; filterLabel?: string }) {
