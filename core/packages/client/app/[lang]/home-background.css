@@ -8,8 +8,8 @@
   body[data-site-scenery] .landing-page { background: transparent; }
 }
 
-:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip, .admin-tools-surface),
-:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip, .admin-tools-surface):hover,
+:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip),
+:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip):hover,
 :root .landing-page :is(.landing-card, .card).is-disabled,
 :root .landing-page :is(.landing-card, .card).is-disabled:hover {
   position: relative;
@@ -22,7 +22,7 @@
   box-shadow: var(--glass-shadow);
 }
 
-:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip, .admin-tools-surface)::before {
+:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip)::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -31,7 +31,7 @@
 }
 
 /* Only the scenery bends. Negative stacking keeps every text node and icon crisp. */
-:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip, .admin-tools-surface)::before {
+:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip)::before {
   z-index: -1;
   background: var(--glass-background);
   -webkit-backdrop-filter: var(--site-glass-refraction, var(--glass-filter));
@@ -39,7 +39,7 @@
 }
 
 /* Surface color comes entirely from the backdrop, without a painted highlight. */
-:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip, .admin-tools-surface)::after {
+:root:has(.landing-page) :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip)::after {
   content: none;
 }
 
@@ -78,23 +78,15 @@
   opacity: .5;
 }
 
-/* Glass/clipping belong only to the expanding surface, never the fixed anchor.
-   Include :hover so the shared card hover rule cannot switch it to relative. */
-:root:has(.landing-page) .admin-tools-surface,
-:root:has(.landing-page) .admin-tools-surface:hover { position: absolute; }
-:root:has(.landing-page) .admin-tools-surface::before { clip-path: inset(0 round 24px); }
-
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  :root .landing-page,
-  :root:has(.landing-page) .admin-tools {
+  :root .landing-page {
     --glass-background: var(--card);
     --site-glass-refraction: none;
   }
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  :root .landing-page,
-  :root:has(.landing-page) .admin-tools {
+  :root .landing-page {
     --glass-background: var(--card);
     --glass-filter: none;
     --site-glass-refraction: none;
