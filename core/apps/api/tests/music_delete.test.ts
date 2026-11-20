@@ -1,8 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 
-const mocks = vi.hoisted(() => ({ query: vi.fn(), unlink: vi.fn() }));
+const mocks = vi.hoisted(() => ({ query: vi.fn(), unlink: vi.fn(), purgeStaticMusicTrack: vi.fn() }));
 vi.mock('../src/db/connection.js', () => ({ query: mocks.query }));
+vi.mock('../src/utils/music_static_library.js', async importOriginal => ({
+  ...(await importOriginal<typeof import('../src/utils/music_static_library.js')>()),
+  purgeStaticMusicTrack: mocks.purgeStaticMusicTrack,
+}));
 vi.mock('node:fs', async importOriginal => {
   const original = await importOriginal<typeof import('node:fs')>();
   return { ...original, promises: { ...original.promises, unlink: mocks.unlink } };
@@ -33,6 +37,7 @@ let row: { id: string; owner_user_id: number; status: string; audio_storage_key:
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.purgeStaticMusicTrack.mockResolvedValue(true);
   mocks.unlink.mockResolvedValue(undefined);
   row = { id, owner_user_id: 7, status: 'published', audio_storage_key: `audio/${id}.mp3`, cover_storage_key: `covers/${id}.webp` };
   mocks.query.mockImplementation(async (sql: string, params: unknown[]) => {
@@ -42,6 +47,19 @@ beforeEach(() => {
     row = null;
     return [deleted];
   });
+});
+
+it('allows only administrators to remove a static audio file', async () => {
+  const id = 'a'.repeat(64);
+  const request = (role: string) => app.request(`/v1/music/admin/static-tracks/${id}/file`, {
+    method: 'DELETE', headers: { Authorization: role },
+  });
+  expect((await request('member')).status).toBe(403);
+  expect(mocks.purgeStaticMusicTrack).not.toHaveBeenCalled();
+  const response = await request('admin');
+  expect(response.status).toBe(200);
+  expect(response.headers.get('cache-control')).toBe('no-store');
+  expect(mocks.purgeStaticMusicTrack).toHaveBeenCalledWith(expect.any(String), id);
 });
 
 describe('member music deletion', () => {

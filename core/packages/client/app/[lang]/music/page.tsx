@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
-  ChevronDown, Disc3, Download, ImagePlus, ListMusic, MoreHorizontal, Music2, Pause, Pencil, Play, Repeat, Repeat1,
+  Check, ChevronDown, Disc3, Download, ImagePlus, ListMusic, MoreHorizontal, Music2, Pause, Pencil, Play, Repeat, Repeat1,
   Shuffle, SkipBack, SkipForward, TextQuote, Trash2, Upload, Volume2,
 } from '@app-foundation/icons/lucide';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
@@ -15,7 +15,7 @@ import { useRequireMembership } from '@/hooks/useRequireMembership';
 import { tr, useLang } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
 import {
-  createMusicTrack, deleteAdminMusicTrack, fetchMusicTrackDownload, putMusicTrackCover,
+  createMusicTrack, deleteAdminMusicTrack, fetchMusicTrackDownload, purgeAdminMusicStaticTrack, putMusicTrackCover,
   type MusicApiTrack, type MusicMetadataDraft,
 } from '@/lib/music-api';
 import {
@@ -31,6 +31,25 @@ function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
   const whole = Math.floor(seconds);
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
+}
+
+function formatAudioSize(bytes: number): string {
+  return bytes < 1024 ** 2 ? `${Math.ceil(bytes / 1024)} KiB` : `${(bytes / 1024 ** 2).toFixed(1)} MiB`;
+}
+
+const oldTrackSizes = new Map<string, Promise<number | null>>();
+function readAudioSize(src: string): Promise<number | null> {
+  const existing = oldTrackSizes.get(src);
+  if (existing) return existing;
+  const reading = fetch(musicAssetUrl(src), { method: 'HEAD' }).then((response) => {
+    const bytes = Number(response.headers.get('Content-Length'));
+    return response.ok && Number.isSafeInteger(bytes) && bytes > 0 ? bytes : null;
+  }).catch(() => null).then((bytes) => {
+    if (bytes === null) oldTrackSizes.delete(src);
+    return bytes;
+  });
+  oldTrackSizes.set(src, reading);
+  return reading;
 }
 
 function categoryLabel(value: string): string {
@@ -250,10 +269,13 @@ export default function MusicPage() {
   const [dialog, setDialog] = useState<'upload' | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [selection, setSelection] = useState<Map<string, MusicTrack> | null>(null);
   const [actionMessage, setActionMessage] = useState<'uploaded' | 'uploadedWithoutCover' | 'downloaded' | 'deleted' | 'error' | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const current = player.tracks.find((track) => track.id === player.currentId) ?? null;
   const artworkTouch = useRef<{ x: number; y: number } | null>(null);
+  const trackList = useRef<HTMLDivElement>(null);
+  const [readSizes, setReadSizes] = useState<Record<string, number>>({});
 
   useEffect(() => { void loadMusicLibrary(); }, []);
 
@@ -269,6 +291,51 @@ export default function MusicPage() {
       return `${track.title}\n${track.artist}\n${track.album ?? ''}`.toLocaleLowerCase().includes(needle);
     });
   }, [genre, player.tracks, query]);
+  const selecting = isAdmin && selection !== null;
+  const selectedCount = selection?.size ?? 0;
+  const allVisibleSelected = Boolean(selection && visibleTracks.length && visibleTracks.every((track) => selection.has(track.id)));
+
+  const toggleSelected = (track: MusicTrack) => {
+    setSelection((previous) => {
+      if (!previous) return previous;
+      const next = new Map(previous);
+      if (next.has(track.id)) next.delete(track.id);
+      else next.set(track.id, track);
+      return next;
+    });
+  };
+
+  const toggleVisible = () => {
+    setSelection((previous) => {
+      if (!previous) return previous;
+      const next = new Map(previous);
+      for (const track of visibleTracks) {
+        if (allVisibleSelected) next.delete(track.id);
+        else next.set(track.id, track);
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    const list = trackList.current;
+    if (!list) return;
+    let active = true;
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting || !(entry.target instanceof HTMLElement)) continue;
+        observer.unobserve(entry.target);
+        const src = entry.target.dataset.audioSrc;
+        if (src) void readAudioSize(src).then((bytes) => {
+          if (active && bytes !== null) {
+            setReadSizes((sizes) => sizes[src] === bytes ? sizes : { ...sizes, [src]: bytes });
+          }
+        });
+      }
+    }, { root: list });
+    list.querySelectorAll('[data-audio-src]').forEach((row) => observer.observe(row));
+    return () => { active = false; observer.disconnect(); };
+  }, [visibleTracks, view]);
 
   const RepeatIcon = player.repeat === 'one' ? Repeat1 : Repeat;
   const repeatLabel = player.repeat === 'off'
@@ -322,6 +389,43 @@ export default function MusicPage() {
     }
   };
 
+  const deleteSelection = async () => {
+    if (!isAdmin || !selection?.size || deleting || !window.confirm(tr({
+      zh: `永久删除选中的 ${selectedCount} 首歌曲及其音频文件？此操作无法撤销。`,
+      en: `Permanently delete the ${selectedCount} selected tracks and their audio files? This cannot be undone.`,
+    }))) return;
+
+    setDeleting(true);
+    setActionMessage(null);
+    setActionError(null);
+    const tracks = [...selection.values()];
+    const failed = new Map<string, MusicTrack>();
+    try {
+      for (let offset = 0; offset < tracks.length; offset += 3) {
+        const batch = tracks.slice(offset, offset + 3);
+        const results = await Promise.allSettled(batch.map((track) => track.databaseId
+          ? deleteAdminMusicTrack(track.databaseId) : purgeAdminMusicStaticTrack(track.id)));
+        for (const [index, result] of results.entries()) {
+          if (result.status === 'rejected') failed.set(batch[index].id, batch[index]);
+        }
+      }
+      if (failed.size < tracks.length) await loadMusicLibrary(true);
+      setSelection(failed.size ? failed : null);
+      if (failed.size) {
+        const succeeded = tracks.length - failed.size;
+        setActionError(tr({
+          zh: `已删除 ${succeeded} 首，${failed.size} 首未能删除。失败曲目仍处于选中状态，可重试。`,
+          en: `Deleted ${succeeded} tracks. ${failed.size} could not be deleted and are still selected for retry.`,
+        }));
+        setActionMessage('error');
+      } else {
+        setActionMessage('deleted');
+      }
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <main className="music-page" data-view={view}>
       <header className="music-header">
@@ -338,6 +442,11 @@ export default function MusicPage() {
         <section className="music-library" aria-labelledby="music-library-title">
           <div className="music-section-heading">
             <h2 id="music-library-title">{tr({ zh: '歌曲', en: 'Songs' })}</h2>
+            <div className="music-library-heading-actions">
+            {isAdmin && <button type="button" className="music-text-button" aria-pressed={selecting} disabled={deleting}
+              onClick={() => setSelection(selecting ? null : new Map())}>
+              {selecting ? tr({ zh: '取消选择', en: 'Cancel selection' }) : tr({ zh: '选择', en: 'Select' })}
+            </button>}
             <details className="music-library-more">
               <summary aria-label={tr({ zh: '曲库选项', en: 'Library options' })}><MoreHorizontal size={22} /></summary>
               <div className="music-library-actions">
@@ -352,6 +461,7 @@ export default function MusicPage() {
                 <AppLink href="/about" prefetch={false} className="music-text-button">{tr({ zh: '开源项目与致谢', en: 'Open-source credits' })}</AppLink>
               </div>
             </details>
+            </div>
           </div>
           <div className="music-filters">
             <SearchInput
@@ -374,6 +484,16 @@ export default function MusicPage() {
               </select>
             )}
           </div>
+          {selecting && <div className="music-selection-actions">
+            <button type="button" className="music-text-button" disabled={deleting || !visibleTracks.length} onClick={toggleVisible}>
+              {allVisibleSelected ? tr({ zh: '取消全选当前结果', en: 'Deselect results' }) : tr({ zh: '全选当前结果', en: 'Select results' })}
+            </button>
+            <button type="button" className="music-danger-button" disabled={deleting || selectedCount === 0} onClick={() => { void deleteSelection(); }}>
+              <Trash2 aria-hidden="true" />{deleting
+                ? tr({ zh: '正在删除…', en: 'Deleting…' })
+                : tr({ zh: `删除所选（${selectedCount}）`, en: `Delete selected (${selectedCount})` })}
+            </button>
+          </div>}
           {actionMessage && (
             <p className={actionMessage === 'error' ? 'music-form-error music-action-message' : 'music-form-success music-action-message'} role="status">
               {actionMessage === 'uploaded' && tr({ zh: '已提交审核，可在“我的上传”查看进度。', en: 'Submitted for review. Follow its progress in My uploads.' })}
@@ -383,7 +503,7 @@ export default function MusicPage() {
               {actionMessage === 'error' && (actionError ?? tr({ zh: '操作失败，请稍后重试。', en: 'The action failed. Try again later.' }))}
             </p>
           )}
-          <div className="music-track-list">
+          <div className="music-track-list" ref={trackList}>
             {player.status === 'loading' && <p className="music-state"><LoadingIndicator>{tr({ zh: '正在载入曲库…', en: 'Loading library…' })}</LoadingIndicator></p>}
             {player.status === 'error' && (
               <div className="music-state"><p>{tr({ zh: '曲库载入失败', en: 'Could not load the library' })}</p>
@@ -398,22 +518,43 @@ export default function MusicPage() {
             )}
             {visibleTracks.map((track, index) => {
               const isCurrent = track.id === current?.id;
+              const selected = selecting && Boolean(selection?.has(track.id));
+              const bytes = track.audioSizeBytes ?? readSizes[track.src];
+              const canReadSize = !track.databaseId && bytes == null && track.src.startsWith('/music/library/tracks/');
               return (
-                <button
-                  key={track.id}
-                  type="button"
-                  className={isCurrent ? 'music-track is-current' : 'music-track'}
-                  onClick={() => { void playMusic(track.id); void setView('player'); }}
-                  aria-current={isCurrent ? 'true' : undefined}
-                >
-                  <span className="music-track-index">{isCurrent && player.playing ? <Music2 size={14} /> : index + 1}</span>
-                  <Cover track={track} small />
-                  <span className="music-track-copy">
-                    <strong>{track.title}</strong>
-                    <span>{track.artist || tr({ zh: '未知艺术家', en: 'Unknown artist' })}{track.album ? ` — ${track.album}` : ''}</span>
-                  </span>
-                  <span className="music-track-duration">{track.duration ? formatTime(track.duration) : ''}</span>
-                </button>
+                <div key={track.id} className={`music-track-row${isCurrent ? ' is-current' : ''}${selected ? ' is-selected' : ''}`} data-audio-src={canReadSize ? track.src : undefined}>
+                  <button
+                    type="button"
+                    className="music-track"
+                    onClick={() => {
+                      if (selecting) toggleSelected(track);
+                      else { void playMusic(track.id); void setView('player'); }
+                    }}
+                    role={selecting ? 'checkbox' : undefined}
+                    aria-checked={selecting ? selected : undefined}
+                    aria-current={isCurrent && !selecting ? 'true' : undefined}
+                    disabled={selecting && deleting}
+                  >
+                    {selecting
+                      ? <span className="music-track-check" aria-hidden="true">{selected && <Check size={13} />}</span>
+                      : <span className="music-track-index">{isCurrent && player.playing ? <Music2 size={14} /> : index + 1}</span>}
+                    <Cover track={track} small />
+                    <span className="music-track-copy">
+                      <strong>{track.title}</strong>
+                      <span>{track.artist || tr({ zh: '未知艺术家', en: 'Unknown artist' })}{track.album ? ` — ${track.album}` : ''}</span>
+                    </span>
+                    <span className="music-track-meta">
+                      <span>{track.duration ? formatTime(track.duration) : ''}</span>
+                      <span>{bytes ? formatAudioSize(bytes) : '—'}</span>
+                    </span>
+                  </button>
+                  {isAdmin && !selecting && <AppLink
+                    href={`/music/manage?track=${encodeURIComponent(track.databaseId ?? `static:${track.id}`)}`}
+                    prefetch={false}
+                    className="music-track-edit"
+                    aria-label={tr({ zh: `编辑“${track.title}”`, en: `Edit “${track.title}”` })}
+                  ><Pencil size={16} aria-hidden="true" /></AppLink>}
+                </div>
               );
             })}
           </div>

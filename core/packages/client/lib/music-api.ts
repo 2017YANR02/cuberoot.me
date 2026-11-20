@@ -161,6 +161,13 @@ export async function deleteAdminMusicStaticTrack(id: string): Promise<MusicStat
   return (await handleApi<{ track: MusicStaticOverride }>(response)).track;
 }
 
+export async function purgeAdminMusicStaticTrack(id: string): Promise<void> {
+  await handleApi<{ ok: true }>(await sessionFetch(apiUrl(`${BASE}/admin/static-tracks/${encodeURIComponent(id)}/file`), {
+    method: 'DELETE',
+    headers: authHeaders(false),
+  }));
+}
+
 export async function fetchMusicTrackDownload(id: string, source: 'uploaded' | 'static' = 'uploaded'): Promise<Blob> {
   const collection = source === 'static' ? 'static-tracks' : 'tracks';
   const response = await sessionFetch(directApiUrl(`${BASE}/${collection}/${encodeURIComponent(id)}/download`), {

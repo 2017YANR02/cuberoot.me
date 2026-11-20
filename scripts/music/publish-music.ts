@@ -11,7 +11,7 @@ const EXTENSIONS: Record<AssetKind, ReadonlySet<string>> = {
   lyrics: new Set(['.lrc']),
 };
 type AssetKind = 'tracks' | 'covers' | 'lyrics';
-interface Track { id: string; title: string; duration: number; src: string; cover?: string; lyrics?: string; [key: string]: unknown }
+interface Track { id: string; title: string; duration: number; src: string; audioSizeBytes?: number; cover?: string; lyrics?: string; [key: string]: unknown }
 interface Manifest { version: number; tracks: Track[] }
 interface Asset { kind: AssetKind; publicPath: string; relativePath: string; fullPath: string; sha256: string; bytes: number }
 export interface Library { root: string; manifestPath: string; manifestBytes: number; manifestSha256: string; manifest: Manifest; tracks: Track[]; assets: Asset[] }
@@ -67,6 +67,9 @@ export async function validateMusicLibrary(rootInput: string): Promise<Library> 
       if (!assets.has(publicPath)) assets.set(publicPath, await assetFor(publicPath, kind, root));
       else if (assets.get(publicPath)?.kind !== kind) throw new Error(`Asset is referenced with conflicting kinds: ${publicPath}`);
     }
+    if (track.audioSizeBytes !== undefined && track.audioSizeBytes !== assets.get(track.src)?.bytes) {
+      throw new Error(`Track ${track.id} audio size does not match its asset.`);
+    }
   }
   return {
     root, manifestPath, manifestBytes: statSync(manifestPath).size,
@@ -85,11 +88,32 @@ async function scp(config: RemoteOptions, local: string, remote: string): Promis
   await runAsync('scp', [...sshOptions(config.connectTimeoutSeconds), local, `${config.host}:${remote}`]);
 }
 
+const LOCK_MANIFEST = String.raw`if [ "$(uname -s)" = Linux ]; then
+  exec 9>>"$live/.manifest.lock"
+  flock -x -w 5 9
+fi`;
+
+const CHECK_REMOVED = String.raw`check_removed() {
+  [ -d "$live/.removed-tracks" ] || return 0
+  node --input-type=commonjs - "$live/.removed-tracks" "$1" <<'NODE'
+const { existsSync, readFileSync } = require('node:fs');
+const { join } = require('node:path');
+const [directory, candidate] = process.argv.slice(2);
+const { tracks } = JSON.parse(readFileSync(candidate, 'utf8'));
+for (const { id } of tracks) {
+  if (!/^[a-f0-9]{64}$/.test(id)) throw new Error('Invalid track ID in candidate manifest');
+  if (existsSync(join(directory, id))) throw new Error('Remove permanently deleted track from the publish candidate: ' + id);
+}
+NODE
+}`;
+
 const AUDIT = String.raw`set -eu
 live='__LIVE__'
 stage='__STAGE__'
 inventory="$stage/inventory.v1.tsv"
 missing="$stage/missing.v1.tsv"
+${CHECK_REMOVED}
+check_removed "$stage/manifest.v1.json.part"
 mkdir -p "$live/tracks" "$live/covers" "$live/lyrics" "$stage/files/tracks" "$stage/files/covers" "$stage/files/lyrics"
 live_device="$(stat -c '%d' "$live")"
 stage_device="$(stat -c '%d' "$stage")"
@@ -135,6 +159,8 @@ async function auditRemote(config: RemoteOptions, assets: Asset[], stage: string
 }
 
 const PROMOTE = String.raw`set -eu
+live='__LIVE__'
+stage='__STAGE__'
 part='__PART__'
 final='__FINAL__'
 expected_hash='__HASH__'
@@ -143,6 +169,9 @@ expected_bytes='__BYTES__'
 [ "$(stat -c '%s' "$part")" = "$expected_bytes" ] || { echo 'staged asset size mismatch' >&2; exit 42; }
 [ "$(sha256sum "$part" | awk '{print $1}')" = "$expected_hash" ] || { echo 'staged asset hash mismatch' >&2; exit 43; }
 chmod 0644 "$part"
+${LOCK_MANIFEST}
+${CHECK_REMOVED}
+check_removed "$stage/manifest.v1.json.part"
 if [ -e "$final" ]; then
   [ -f "$final" ] || { echo 'asset target is not a regular file' >&2; exit 44; }
   [ "$(stat -c '%s' "$final")" = "$expected_bytes" ] || { echo 'concurrent asset size conflict' >&2; exit 45; }
@@ -162,6 +191,13 @@ previous_part="$stage/manifest.v1.previous.json.part"
 [ "$(stat -c '%s' "$candidate")" = '__BYTES__' ] || { echo 'manifest candidate size mismatch' >&2; exit 52; }
 [ "$(sha256sum "$candidate" | awk '{print $1}')" = '__HASH__' ] || { echo 'manifest candidate hash mismatch' >&2; exit 53; }
 chmod 0644 "$candidate"
+${LOCK_MANIFEST}
+${CHECK_REMOVED}
+check_removed "$candidate"
+while IFS="$(printf '\t')" read -r expected_hash expected_bytes relative_path; do
+  [ -n "$expected_hash" ] || continue
+  [ -f "$live/$relative_path" ] || { echo 'Candidate asset was removed after verification' >&2; exit 54; }
+done < "$stage/inventory.v1.tsv"
 if [ -f "$current" ]; then
   cp -p "$current" "$previous_part"
   chmod 0644 "$previous_part"
@@ -176,8 +212,15 @@ current="$live/manifest.v1.json"
 previous="$stage/manifest.v1.previous.json"
 failed="$stage/manifest.v1.failed.json"
 rollback="$stage/manifest.v1.rollback.json.part"
+${LOCK_MANIFEST}
+${CHECK_REMOVED}
+[ -f "$current" ] && [ "$(sha256sum "$current" | awk '{print $1}')" = '__HASH__' ] || {
+  echo 'Live manifest changed after activation. Rollback stopped.' >&2
+  exit 55
+}
 if [ -f "$current" ]; then cp -p "$current" "$failed"; fi
 if [ -f "$previous" ]; then
+  check_removed "$previous"
   cp -p "$previous" "$rollback"
   chmod 0644 "$rollback"
   mv -f "$rollback" "$current"
@@ -195,14 +238,13 @@ async function publishAsset(config: RemoteOptions, asset: Asset, stage: string, 
   const final = remoteJoin(live, asset.relativePath);
   console.log(`Uploading ${asset.relativePath} (${(asset.bytes / 1024 ** 2).toFixed(1)} MiB)...`);
   await scp(config, asset.fullPath, part);
-  await ssh(config, replace(PROMOTE, { PART: part, FINAL: final, HASH: asset.sha256, BYTES: String(asset.bytes) }));
+  await ssh(config, replace(PROMOTE, { LIVE: live, STAGE: stage, PART: part, FINAL: final, HASH: asset.sha256, BYTES: String(asset.bytes) }));
 }
 async function publishManifest(config: RemoteOptions, library: Library, stage: string, live: string): Promise<void> {
-  await scp(config, library.manifestPath, remoteJoin(stage, 'manifest.v1.json.part'));
   await ssh(config, replace(CUTOVER, { LIVE: live, STAGE: stage, BYTES: String(library.manifestBytes), HASH: library.manifestSha256 }));
 }
-async function restoreManifest(config: RemoteOptions, stage: string, live: string): Promise<void> {
-  await ssh(config, replace(ROLLBACK, { LIVE: live, STAGE: stage }));
+async function restoreManifest(config: RemoteOptions, stage: string, live: string, manifestSha256: string): Promise<void> {
+  await ssh(config, replace(ROLLBACK, { LIVE: live, STAGE: stage, HASH: manifestSha256 }));
 }
 
 function header(response: Response, name: string): string { return response.headers.get(name) ?? ''; }
@@ -241,6 +283,8 @@ export async function publishMusic(library: Library, config: RemoteOptions): Pro
   const live = remoteJoin(documentRoot, 'music/library');
   const stage = remoteJoin(stagingRoot, `releases/${library.manifestSha256}`);
   const byPath = new Map(library.assets.map(asset => [asset.relativePath, asset]));
+  await ssh(config, `umask 022; mkdir -p ${shellPath(stage)}`);
+  await scp(config, library.manifestPath, remoteJoin(stage, 'manifest.v1.json.part'));
   console.log('Auditing existing remote content and available capacity...');
   const audit = await auditRemote(config, library.assets, stage, live);
   const required = audit.summary.neededBytes + library.manifestBytes + audit.summary.currentManifestBytes + config.reserveGiB * GIB;
@@ -259,7 +303,7 @@ export async function publishMusic(library: Library, config: RemoteOptions): Pro
   try { await verifyPublicContract(library, config.publicBaseUri); }
   catch (error) {
     console.warn('HTTP verification failed; restoring the previous manifest.');
-    try { await restoreManifest(config, stage, live); }
+    try { await restoreManifest(config, stage, live, library.manifestSha256); }
     catch (rollbackError) { throw new Error(`HTTP verification failed and automatic rollback also failed. Verification: ${String(error)} Rollback: ${String(rollbackError)}`); }
     throw error;
   }

@@ -22,6 +22,7 @@ export interface MusicTrack {
   genre?: string;
   mood?: string;
   duration?: number;
+  audioSizeBytes?: number;
   databaseId?: string;
   databaseStatus?: MusicTrackStatus;
   downloadFilename?: string;
@@ -200,7 +201,7 @@ export function normalizeMusicManifest(value: unknown): MusicManifest {
   const seen = new Set<string>();
   const isLocalPath = (path: string) => /^(?:[a-z]:[\\/]|\\\\|file:)/i.test(path);
   const tracks = rows.flatMap((raw): MusicTrack[] => {
-    const row = raw as Partial<MusicTrack>;
+    const row = (raw ?? {}) as Partial<MusicTrack>;
     const id = typeof row.id === 'string' ? row.id.trim() : '';
     const title = typeof row.title === 'string' ? row.title.trim() : '';
     const src = typeof row.src === 'string' ? row.src.trim() : '';
@@ -222,6 +223,8 @@ export function normalizeMusicManifest(value: unknown): MusicManifest {
       ...(typeof row.genre === 'string' && row.genre.trim() ? { genre: row.genre.trim() } : {}),
       ...(typeof row.mood === 'string' && row.mood.trim() ? { mood: row.mood.trim() } : {}),
       ...(typeof duration === 'number' ? { duration } : {}),
+      ...(typeof row.audioSizeBytes === 'number' && Number.isSafeInteger(row.audioSizeBytes) && row.audioSizeBytes > 0
+        ? { audioSizeBytes: row.audioSizeBytes } : {}),
     }];
   });
   return { version: 1, tracks };
@@ -236,6 +239,7 @@ function apiTrackToPlayerTrack(track: MusicApiTrack): MusicTrack {
     databaseId: track.id,
     databaseStatus: track.status,
     downloadFilename: track.audioFilename,
+    audioSizeBytes: track.audioSizeBytes,
     ...(track.album?.trim() ? { album: track.album.trim() } : {}),
     ...(track.genre?.trim() ? { genre: track.genre.trim() } : {}),
     ...(track.coverUrl ? { cover: musicApiAssetUrl(track.coverUrl) } : {}),
@@ -244,7 +248,7 @@ function apiTrackToPlayerTrack(track: MusicApiTrack): MusicTrack {
 }
 
 export async function loadStaticMusicManifest(): Promise<MusicManifest> {
-  const response = await fetch(staticUrl(MANIFEST_URL));
+  const response = await fetch(staticUrl(MANIFEST_URL), { cache: 'no-cache' });
   if (!response.ok) throw new Error(`Music manifest HTTP ${response.status}`);
   return normalizeMusicManifest(await response.json());
 }
@@ -271,7 +275,11 @@ export function applyStaticMusicOverrides(
 
 export async function loadMusicLibrary(force = false): Promise<void> {
   if (state.status === 'ready' && !force) return;
-  if (loadPromise) return loadPromise;
+  if (loadPromise) {
+    await loadPromise;
+    if (force) return loadMusicLibrary(true);
+    return;
+  }
   loadPreferences();
   emit({ status: 'loading', error: null });
   loadPromise = Promise.allSettled([loadStaticMusicManifest(), listMusicStaticOverrides(), listPublicMusicTracks()])

@@ -6,6 +6,7 @@ import { query } from '../db/connection.js';
 import { requireAppUserId } from '../utils/app_user_auth.js';
 import { getIp } from '../utils/analytics_helpers.js';
 import { hasActiveMembership } from '../utils/membership.js';
+import { purgeStaticMusicTrack, StaticMusicLibraryBusy } from '../utils/music_static_library.js';
 import {
   COVER_EXT,
   COVER_MAX_BYTES,
@@ -454,6 +455,20 @@ musicRoutes.delete('/music/admin/static-tracks/:id', async (c) => {
     [id],
   );
   return c.json({ track: staticOverrideJson(rows[0]) });
+});
+
+musicRoutes.delete('/music/admin/static-tracks/:id/file', async (c) => {
+  noStore(c);
+  await requireAdmin(c);
+  const id = staticTrackId(c.req.param('id'));
+  try {
+    return await purgeStaticMusicTrack(MUSIC_LIBRARY_ROOT, id)
+      ? c.json({ ok: true }) : c.json({ error: 'Not found' }, 404);
+  } catch (error) {
+    if (error instanceof StaticMusicLibraryBusy) return c.json({ error: error.message }, 409);
+    console.error('Static music deletion failed:', error);
+    return c.json({ error: 'Could not delete the static audio file' }, 500);
+  }
 });
 
 musicRoutes.patch('/music/admin/tracks/:id', async (c) => {

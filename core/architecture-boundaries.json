@@ -21,6 +21,18 @@
   },
   "manualContracts": [
     {
+      "id": "server-static-music-manifest-lock",
+      "from": "apps/api/src/utils/music_static_library.ts",
+      "to": "Linux advisory lock shared with the music publisher",
+      "phase": "subprocess-native",
+      "mechanism": "A shell-free flock call takes an exclusive lock on a fixed inherited file descriptor with a five-second wait.",
+      "owner": "music library",
+      "rationale": "Serialize administrator removal with publication and release the lock when either writer exits.",
+      "replacement": "Keep the executable and arguments fixed and use the same lock file as the publisher.",
+      "subprocessCalls": [{"file":"apps/api/src/utils/music_static_library.ts","mechanism":"spawn","target":"flock","count":1}],
+      "evidence": [{"file":"core/apps/api/src/utils/music_static_library.ts","contains":"spawn('flock', ['-x', '-w', '5', '3']"}]
+    },
+    {
       "id": "code-language-history-offline-engine",
       "from": "packages/client/scripts/build-code-history.ts",
       "to": "read-only git history and the fixed linguist-engine.rb adapter",

@@ -34,6 +34,7 @@ test('prepare is read-only on source, conservative, resumable, and publish valid
     assert.equal(first.tracks.length, 1);
     assert.equal(first.assets.length, 3);
     assert.equal(first.tracks[0].genre, 'jazz');
+    assert.equal(first.tracks[0].audioSizeBytes, first.assets.find(asset => asset.kind === 'tracks')?.bytes);
     assert.match(first.tracks[0].lyrics ?? '', /\/lyrics\/[a-f0-9]{64}\.lrc$/);
     assert.match(first.tracks[0].cover ?? '', /\/covers\/[a-f0-9]{64}\.jpg$/);
     const manifestBytes = readFileSync(join(library, 'manifest.v1.json'));
@@ -66,11 +67,14 @@ test('remote publish shell fragments parse and rollback restores the previous ma
     mkdirSync(live); mkdirSync(stage);
     writeFileSync(join(live, 'manifest.v1.json'), 'bad candidate');
     writeFileSync(join(stage, 'manifest.v1.previous.json'), 'prior release');
-    const script = REMOTE_SCRIPTS.rollback.replaceAll('__LIVE__', live).replaceAll('__STAGE__', stage);
+    const hash = createHash('sha256').update('bad candidate').digest('hex');
+    const script = REMOTE_SCRIPTS.rollback.replaceAll('__LIVE__', live).replaceAll('__STAGE__', stage).replaceAll('__HASH__', hash);
     const result = spawnSync('sh', ['-c', script], { encoding: 'utf8' });
     assert.equal(result.status, 0, result.stderr);
     assert.equal(readFileSync(join(live, 'manifest.v1.json'), 'utf8'), 'prior release');
     assert.equal(readFileSync(join(stage, 'manifest.v1.failed.json'), 'utf8'), 'bad candidate');
+    assert.notEqual(spawnSync('sh', ['-c', script]).status, 0);
+    assert.equal(readFileSync(join(live, 'manifest.v1.json'), 'utf8'), 'prior release');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 

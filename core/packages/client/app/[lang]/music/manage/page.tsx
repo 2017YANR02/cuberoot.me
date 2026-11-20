@@ -10,7 +10,7 @@ import { tr, useLang } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
 import {
   deleteAdminMusicStaticTrack, deleteAdminMusicTrack, deleteMyMusicTrack, listAdminMusicTracks,
-  listMusicStaticOverrides, listMyMusicTracks, putMusicTrackCover,
+  listMusicStaticOverrides, listMyMusicTracks, purgeAdminMusicStaticTrack, putMusicTrackCover,
   updateAdminMusicStaticTrack, updateAdminMusicTrack, updateMyMusicTrack,
   type MusicApiTrack, type MusicMetadataDraft, type MusicTrackStatus,
 } from '@/lib/music-api';
@@ -157,14 +157,15 @@ export default function MusicManagePage() {
     } finally { setBusy(false); }
   };
 
-  const removeUpload = async () => {
-    if (!selected || selected.source !== 'upload' || !isMember || busy || !window.confirm(tr({
-      zh: `永久删除“${selected.title}”？此操作无法撤销。`,
-      en: `Permanently delete “${selected.title}”? This cannot be undone.`,
+  const removeTrack = async () => {
+    if (!selected || !isMember || busy || (selected.source === 'static' && (!isAdmin || !selected.staticId)) || !window.confirm(tr({
+      zh: `永久删除“${selected.title}”及其音频文件？此操作无法撤销。`,
+      en: `Permanently delete “${selected.title}” and its audio file? This cannot be undone.`,
     }))) return;
     setBusy(true); setError(null);
     try {
-      if (isAdmin) await deleteAdminMusicTrack(selected.id);
+      if (selected.staticId) await purgeAdminMusicStaticTrack(selected.staticId);
+      else if (isAdmin) await deleteAdminMusicTrack(selected.id);
       else await deleteMyMusicTrack(selected.id);
       const next = tracks.filter((track) => track.id !== selected.id);
       setTracks(next);
@@ -201,7 +202,7 @@ export default function MusicManagePage() {
                 <label><span>{tr({ zh: '专辑', en: 'Album' })}</span><input className="music-editor-control" value={draft.album ?? ''} readOnly={!canEdit} onChange={(event) => setDraft({ ...draft, album: event.target.value })} /></label>
                 <label><span>{tr({ zh: '分类', en: 'Category' })}</span><input className="music-editor-control" value={draft.genre ?? ''} readOnly={!canEdit} onChange={(event) => setDraft({ ...draft, genre: event.target.value })} /></label>
               </div>
-              {selected.source === 'static' ? <p className="music-state">{tr({ zh: '静态曲库支持修改信息和可恢复下架；原音频文件不会被删除。', en: 'Library tracks support metadata editing and reversible removal; source audio is retained.' })}</p> : <>
+              {selected.source === 'upload' && <>
                 <label><span>{tr({ zh: 'LRC 歌词', en: 'LRC lyrics' })}</span><textarea className="music-editor-control" rows={5} value={draft.lyricsLrc ?? ''} readOnly={!canEdit} onChange={(event) => setDraft({ ...draft, lyricsLrc: event.target.value })} /></label>
                 {isAdmin && <div className="music-editor-grid">
                   <label><span>{tr({ zh: '审核状态', en: 'Review status' })}</span><select className="music-editor-control" value={status} onChange={(event) => setStatus(event.target.value as MusicTrackStatus)}><option value="pending">{tr({ zh: '待审核', en: 'Pending review' })}</option><option value="published">{tr({ zh: '发布', en: 'Publish' })}</option><option value="rejected">{tr({ zh: '退回修改', en: 'Needs changes' })}</option></select></label>
@@ -213,8 +214,8 @@ export default function MusicManagePage() {
               {error && <p className="music-form-error" role="alert">{error}</p>}
               {saved && <p className="music-form-success" role="status">{tr({ zh: '更改已保存', en: 'Changes saved' })}</p>}
               <div className="music-dialog-actions">
-                {isAdmin && selected.source === 'static' && <button type="button" className={selected.hidden ? 'music-text-button' : 'music-danger-button'} onClick={() => { void toggleStatic(); }} disabled={busy}>{selected.hidden ? <RotateCcw aria-hidden="true" /> : <Trash2 aria-hidden="true" />}{selected.hidden ? tr({ zh: '恢复上架', en: 'Restore' }) : tr({ zh: '从曲库移除', en: 'Remove from library' })}</button>}
-                {isMember && selected.source === 'upload' && <button type="button" className="music-danger-button" onClick={() => { void removeUpload(); }} disabled={busy}><Trash2 aria-hidden="true" />{tr({ zh: '永久删除', en: 'Delete permanently' })}</button>}
+                {isAdmin && selected.source === 'static' && <button type="button" className="music-text-button" onClick={() => { void toggleStatic(); }} disabled={busy}>{selected.hidden && <RotateCcw aria-hidden="true" />}{selected.hidden ? tr({ zh: '恢复上架', en: 'Restore' }) : tr({ zh: '下架', en: 'Unpublish' })}</button>}
+                {(isAdmin || (isMember && selected.source === 'upload')) && <button type="button" className="music-danger-button" onClick={() => { void removeTrack(); }} disabled={busy}><Trash2 aria-hidden="true" />{tr({ zh: '永久删除', en: 'Delete permanently' })}</button>}
                 {canEdit && <button type="submit" className="music-primary-button" disabled={busy}>{busy ? tr({ zh: '正在保存…', en: 'Saving…' }) : tr({ zh: '保存更改', en: 'Save changes' })}</button>}
               </div>
             </form>}

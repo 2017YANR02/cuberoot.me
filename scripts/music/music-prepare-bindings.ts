@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import { basename, join, parse } from 'node:path';
 import { conservativeArtist, conservativeCategory, exactLyricsTitleMatch, TAXONOMY } from './music-classify.js';
 import { fileSha256, readJson, SHA256, writeJsonAtomic, nonempty } from './music-shared.js';
@@ -118,6 +118,7 @@ export async function buildMusicOutputs(ctx: AssetContext, sourceRecords: Source
       id, title: nonempty(record.title) ?? parse(rel(record)).name,
       artist: conservativeArtist(record) ?? '', duration: Math.round((record.duration ?? 0) * 1000) / 1000,
       src: `/music/library/tracks/${basename(output)}`,
+      audioSizeBytes: statSync(output).size,
     };
     if (nonempty(record.album)) track.album = nonempty(record.album);
     track.genre = category.id;
