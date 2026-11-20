@@ -14,7 +14,7 @@ import {
   type LetteringGlyph,
   type LetteringOrder,
 } from '@/app/[lang]/lettering/_lib/lettering-alg';
-import { validateCharacter, requiredPatternSize, preservesCharacter } from '@/app/[lang]/lettering/_lib/character-pattern';
+import { fitsCharacterInput, validateCharacter, requiredPatternSize, preservesCharacter } from '@/app/[lang]/lettering/_lib/character-pattern';
 
 function frontFace(alg: string, order: LetteringOrder): string[] {
   const cube = new Cube(order);
@@ -59,6 +59,10 @@ function expectedPatternFront(pattern: readonly string[], order: LetteringOrder)
 }
 
 describe('cube lettering construction', () => {
+  it('limits committed input by visible characters rather than UTF-16 length', () => {
+    for (const value of ['', '王', 'A', '♥️', '𠮷']) expect(fitsCharacterInput(value)).toBe(true);
+    for (const value of ['王生', 'AB', '♥️★', '𠮷王', '王 ']) expect(fitsCharacterInput(value)).toBe(false);
+  });
   it('validates single characters and the preview resolution policy', () => {
     for (const input of ['', 'AB', '你好', '1', '♥★', '👨‍👩‍👧']) expect(validateCharacter(input, 21)).toEqual({ code: 'input' });
     for (const input of ['♥', '♥️', '★']) expect(validateCharacter(input, 7)).toBeNull();

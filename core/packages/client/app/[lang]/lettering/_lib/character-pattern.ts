@@ -16,6 +16,14 @@ export type CharacterError =
   | { code: 'input' | 'font' | 'detail' }
   | { code: 'order'; minimum: LetteringOrder };
 
+/** Count visible characters, keeping supplementary Han and presentation selectors intact. */
+export function fitsCharacterInput(value: string): boolean {
+  const segments = new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(value);
+  let count = 0;
+  for (const _ of segments) if (++count > 1) return false;
+  return true;
+}
+
 // Text/emoji presentation selectors do not change the monochrome target shape.
 function normalizeCharacter(input: string): string {
   return input.trim().replace(/[\uFE0E\uFE0F]$/u, '');

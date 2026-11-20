@@ -5,7 +5,7 @@ import { Check, Copy } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
 import AlgPlayer from '@/components/AlgPlayer';
 import { ClearButton } from '@/components/ClearButton';
-import { createCharacterPlan, type CharacterPlan, type CharacterError } from './_lib/character-pattern';
+import { createCharacterPlan, fitsCharacterInput, type CharacterPlan, type CharacterError } from './_lib/character-pattern';
 import { tr, useLang } from '@/i18n/tr';
 import {
   availableLetteringGlyphs,
@@ -29,6 +29,9 @@ export default function LetteringPage() {
   const [glyph, setGlyph] = useState<LetteringGlyph>('王');
   const [word, setWord] = useState<LetteringWord | null>(null);
   const [input, setInput] = useState('王');
+  const [compositionDraft, setCompositionDraft] = useState<string | null>(null);
+  const composing = useRef(false);
+  const [inputLimit, setInputLimit] = useState(false);
   const [custom, setCustom] = useState<CharacterPlan | null>(null);
   const [error, setError] = useState<CharacterError | null>(null);
   const [pending, setPending] = useState(false);
@@ -45,12 +48,14 @@ export default function LetteringPage() {
   );
   const alg = useMemo(() => segments.join(' '), [segments]);
   const contentLabel = custom?.character ?? word ?? glyph;
+  const usesOuterPieces = word === null && (contentLabel === '生' || contentLabel === '世') && order === 7;
   const patternSize = pattern.length;
   const moveCount = alg.split(/\s+/).filter(Boolean).length;
   const moveDurationMs = Math.max(48, Math.min(360, Math.round(28_000 / moveCount)));
-  const usesOuterPieces = word === null && (contentLabel === '生' || contentLabel === '世') && order === 7;
 
   const generate = () => {
+    if (composing.current) return;
+    setInputLimit(false);
     setCopied(false);
     try {
       const next = createCharacterPlan(input, order);
@@ -60,6 +65,18 @@ export default function LetteringPage() {
       setError(null);
       setPending(false);
     } catch { setError({ code: 'font' }); setPending(true); }
+  };
+
+  const updateInput = (value: string) => {
+    if (!fitsCharacterInput(value)) {
+      setInputLimit(true);
+      setError(null);
+      return;
+    }
+    setInput(value);
+    setInputLimit(false);
+    setPending(true);
+    setError(null);
   };
 
   useEffect(() => () => {
@@ -84,6 +101,7 @@ export default function LetteringPage() {
   };
 
   const selectGlyph = (nextGlyph: LetteringGlyph) => {
+    setInputLimit(false);
     setInput(nextGlyph);
     setCustom(null);
     setPending(false);
@@ -113,25 +131,28 @@ export default function LetteringPage() {
       </header>
 
       <main className="lettering-shell lettering-main">
-        <p className="lettering-intro">
-          {tr({
-            zh: '单字预览版：输入一个汉字、英文字母或符号（如 ♥、★），选择阶数，生成从复原状态开始的拼法。',
-            en: 'Single-character preview: enter a Chinese character, English letter or symbol (such as ♥ or ★), choose a cube order and generate an algorithm starting from solved.',
-          })}
-        </p>
-
         <div className="lettering-workspace">
           <section className="lettering-controls" data-site-surface="panel" aria-label={tr({ zh: '拼字设置', en: 'Lettering settings' })}>
             <form id="lettering-generate-form" className="lettering-input-group" onSubmit={event => { event.preventDefault(); generate(); }}>
               <label htmlFor="lettering-character-input">{tr({ zh: '单个字符', en: 'Single character' })}</label>
               <div className="lettering-input-wrap">
-                <input className="lettering-character-input" id="lettering-character-input" value={input} autoComplete="off" spellCheck={false}
+                <input className="lettering-character-input" id="lettering-character-input" value={compositionDraft ?? input} autoComplete="off" spellCheck={false}
                   aria-invalid={error?.code === 'input'}
-                  onChange={event => { setInput(event.target.value); setPending(true); setError(null); }} />
-                {input && <ClearButton onClick={() => { setInput(''); setPending(true); setError(null); }} />}
+                  aria-describedby={inputLimit ? 'lettering-input-limit' : error ? 'lettering-input-feedback' : undefined}
+                  onCompositionStart={event => { composing.current = true; setCompositionDraft(event.currentTarget.value); }}
+                  onCompositionEnd={event => { composing.current = false; setCompositionDraft(null); updateInput(event.currentTarget.value); }}
+                  onKeyDown={event => { if (event.key === 'Enter' && (composing.current || event.nativeEvent.isComposing || event.keyCode === 229)) event.preventDefault(); }}
+                  onChange={event => {
+                    if (composing.current) setCompositionDraft(event.target.value);
+                    else updateInput(event.target.value);
+                  }} />
+                {input && <ClearButton onClick={() => { composing.current = false; setCompositionDraft(null); updateInput(''); }} />}
               </div>
+              {inputLimit && <p id="lettering-input-limit" className="lettering-feedback" role="status">{input
+                ? tr({ zh: '只能输入一个字符。更换前请先删除当前字符。', en: 'Only one character is allowed. Delete the current character before entering another.' })
+                : tr({ zh: '一次只能输入一个字符，请只输入一个汉字、字母或符号。', en: 'Enter just one Chinese character, letter or symbol at a time.' })}</p>}
             </form>
-            {error && <p className="lettering-error" role="alert">
+            {error && <p id="lettering-input-feedback" className={`lettering-feedback${error.code === 'input' ? ' lettering-error' : ''}`} role="alert">
               {error.code === 'input' ? tr({ zh: '请输入单个汉字、英文字母或符号（如 ♥、★），不支持多个字符、数字或组合表情。', en: 'Enter one Chinese character, English letter or symbol (such as ♥ or ★). Multiple characters, numbers and compound emoji are not supported.' })
                 : error.code === 'order' ? tr({ zh: `当前阶数无法保留这个字形的细节，建议选择 ${error.minimum} 阶后生成。`, en: `This grid cannot preserve the glyph details. Try order ${error.minimum}.` })
                   : error.code === 'detail' ? tr({ zh: '当前字体在这个阶数下无法保留字形细节，请尝试其他阶数或字符。', en: 'This font cannot preserve the glyph details at this order. Try a different order or character.' })
