@@ -171,6 +171,7 @@
     "@types/three": "^0.183.1",
     "@typescript-eslint/parser": "^8.72.2",
     "@typescript/native-preview": "7.0.0-dev.20260517.1",
+    "assemblyscript": "0.28.9",
     "esbuild": "^0.28.1",
     "eslint": "^9.39.4",
     "fake-indexeddb": "^6.2.5",

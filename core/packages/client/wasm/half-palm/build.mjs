@@ -1,5 +1,5 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import asc from 'assemblyscript/asc';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -29,11 +29,8 @@ export function dataAddress(array: usize): usize {
 }
 `);
   const args = [entry, '-O3', '--runtime', 'stub', '--noAssert', '--uncheckedBehavior', 'always', '-o', join(here, 'math.wasm')];
-  const compiler = process.argv[2];
-  const result = compiler ? spawnSync(compiler, args, { stdio: 'inherit' })
-    : spawnSync('npx', ['--yes', '--package', 'assemblyscript@0.28.9', 'asc', ...args], { stdio: 'inherit' });
-  if (result.error) throw result.error;
-  process.exitCode = result.status ?? 1;
+  const { error } = await asc.main(args, { stdout: process.stdout, stderr: process.stderr });
+  if (error) throw error;
 } finally {
   rmSync(build, { recursive: true, force: true });
 }
