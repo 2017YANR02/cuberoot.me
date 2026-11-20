@@ -11,6 +11,13 @@ const BOTH_HOME: HandGripNames = { R: 'home', L: 'home' };
 const R_DOWN: HandGripNames = { R: 'down', L: 'home' };
 
 describe('classifyLayers', () => {
+  it('二阶单层按外层用指，两层同转用双手抱转', () => {
+    expect(classifyLayers([1], 2)).toBe('high');
+    expect(classifyLayers([0], 2)).toBe('low');
+    const whole = classifyLayers([0, 1], 2);
+    expect(classifyHandGesture('x', whole, 1, BOTH_HOME)).toEqual({ kind: 'weld', hands: ['L', 'R'] });
+  });
+
   it('外层 / 中层 / 宽层 / 整体', () => {
     expect(classifyLayers([2], 3)).toBe('high');   // R/U/F
     expect(classifyLayers([0], 3)).toBe('low');    // L/D/B
@@ -51,15 +58,129 @@ describe('classifyHandGesture', () => {
     expect(classifyHandGesture('x', 'mid', 1)).toEqual({ kind: 'flick', hand: 'R', finger: 'middle' });  // M'
   });
 
+  it('三阶双中握 M 用左无名指甲，M′ 用指腹，M2 用左无名指和小指接力', () => {
+    const ring = { kind: 'flick', hand: 'L', finger: 'ring' };
+    expect(classifyHandGesture('x', 'mid', -1, BOTH_HOME)).toEqual({ ...ring, style: 'middleSliceNail' });
+    expect(classifyHandGesture('x', 'mid', 1, BOTH_HOME)).toEqual({ ...ring, style: 'middleSlicePad' });
+    for (const dir of [-1, 1] as const) {
+      expect(classifyHandGesture('x', 'mid', dir, BOTH_HOME, { quarters: 2 }))
+        .toEqual({ ...ring, style: 'middleSlicePad', finger2: 'pinky' });
+    }
+    for (const g of [classifyHandGesture('x', 'mid', -1, R_DOWN),
+      classifyHandGesture('x', 'mid', -1, BOTH_HOME, undefined, true, 5)]) {
+      expect(g).toEqual({ kind: 'flick', hand: 'L', finger: 'middle' });
+    }
+  });
+
   it('双手 home 握时 F 族 = 食指越顶(F 右食指→UFR,F\' 左食指→UFL)', () => {
     expect(classifyHandGesture('z', 'high', 1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'topPush' });  // F
     expect(classifyHandGesture('z', 'high', -1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'L', finger: 'index', style: 'topPush' }); // F'
     expect(classifyHandGesture('x', 'high', 1, BOTH_HOME)).toEqual({ kind: 'weld', hands: ['R'] }); // R 不受影响
   });
 
+  it.each(['home', 'up', 'down', 'half', null] as const)('右中手 F / F2 从 U8 越顶，按左手 %s 区分下握拇指上推', (left) => {
+    const grips: HandGripNames = { R: 'home', L: left };
+    for (const quarters of [1, 2]) {
+      expect(classifyHandGesture('z', 'high', 1, grips, { quarters }))
+        .toEqual(quarters === 1 && left === 'down' ? { kind: 'flick', hand: 'L', finger: 'thumb', style: 'thumbLift' }
+          : { kind: 'flick', hand: 'R', finger: 'index', style: 'topPush' });
+    }
+  });
+
+  it.each(['home', 'up', 'down', 'half', null] as const)('右中手单步 S 从 U5 下按，不受左手 %s 握姿影响', left => {
+    const grips: HandGripNames = { R: 'home', L: left };
+    expect(classifyHandGesture('z', 'mid', 1, grips))
+      .toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'topPush' });
+    expect(classifyHandGesture('z', 'mid', 1, grips, { quarters: 2 }))
+      .toEqual({ kind: 'flick', hand: 'R', finger: 'middle' });
+    expect(classifyHandGesture('z', 'mid', -1, grips))
+      .toEqual(left === 'home' ? { kind: 'flick', hand: 'L', finger: 'index', style: 'topPush' }
+        : left === 'down' || left === 'up' ? { kind: 'flick', hand: 'R', finger: 'index', style: 'sliceNail' }
+        : { kind: 'flick', hand: 'L', finger: 'middle' });
+    for (const right of ['up', 'down', 'half'] as const) {
+      expect(classifyHandGesture('z', 'mid', 1, { R: right, L: left }))
+        .toEqual(left === 'home' && right !== 'half' ? { kind: 'flick', hand: 'L', finger: 'index', style: 'sliceNail' }
+          : { kind: 'flick', hand: 'R', finger: 'middle' });
+    }
+  });
+
+  it.each(['home', 'up', 'down', 'half', null] as const)('左中手单步 S-prime 从 U3 下按，不受右手 %s 握姿影响', right => {
+    expect(classifyHandGesture('z', 'mid', -1, { R: right, L: 'home' }))
+      .toEqual({ kind: 'flick', hand: 'L', finger: 'index', style: 'topPush' });
+    expect(classifyHandGesture('z', 'mid', -1, { R: right, L: 'home' }, { quarters: 2 }))
+      .toEqual({ kind: 'flick', hand: 'L', finger: 'middle' });
+  });
+
+  it.each(['home', 'up', 'down', 'half', null] as const)('左中手 F\' / F2\' 从 U6 越顶，按右手 %s 区分下握拇指上推', (right) => {
+    for (const quarters of [1, 2]) {
+      expect(classifyHandGesture('z', 'high', -1, { R: right, L: 'home' }, { quarters }))
+        .toEqual(quarters === 1 && right === 'down' ? { kind: 'flick', hand: 'R', finger: 'thumb', style: 'thumbLift' }
+          : { kind: 'flick', hand: 'L', finger: 'index', style: 'topPush' });
+    }
+  });
+
+  it.each(['home', 'up', 'down', 'half', null] as const)('下起手 F / F\' 单拨和双拨只看主动手，对侧为 %s', (other) => {
+    for (const [hand, dir] of [['R', 1], ['L', -1]] as const) {
+      const grips: HandGripNames = hand === 'R' ? { R: 'down', L: other } : { R: other, L: 'down' };
+      expect(classifyHandGesture('z', 'high', dir, grips, { quarters: 1 }))
+        .toEqual({ kind: 'flick', hand, finger: 'index', style: 'downPush' });
+      expect(classifyHandGesture('z', 'high', dir, grips, { quarters: 2 }))
+        .toEqual({ kind: 'flick', hand, finger: 'index', finger2: 'middle', style: 'downPush' });
+    }
+  });
+
+  it.each([1, -1] as const)('双中手可显式用反侧食指甲顶 S，宽层和半转保持原手法 %s', dir => {
+    const hand = dir > 0 ? 'R' : 'L', other = dir > 0 ? 'L' : 'R';
+    expect(classifyHandGesture('z', 'mid', dir, BOTH_HOME, { nail: true }))
+      .toEqual({ kind: 'flick', hand: other, finger: 'index', style: 'sliceNail' });
+    const grips = { ...BOTH_HOME, [other]: 'down' as const };
+    expect(classifyHandGesture('z', 'high', dir, grips, {}, false))
+      .toEqual({ kind: 'flick', hand, finger: 'index', style: 'topPush' });
+  });
+
+  it('keeps the pocket U2 relay when a preceding turn changes either grip', () => {
+    const relay = { kind: 'flick', hand: 'R', finger: 'index', finger2: 'middle' };
+    expect(classifyHandGesture('y', 'high', 1, { R: 'home', L: 'down' }, { quarters: 2 }, true, 2))
+      .toEqual({ ...relay, style: 'hook' });
+    const up = { R: 'up', L: 'home' } as const;
+    expect(classifyHandGesture('y', 'high', 1, up, { quarters: 2 }, true, 2))
+      .toEqual({ ...relay, style: 'topPush' });
+    for (const [order, quarters] of [[3, 2], [2, 1]]) {
+      expect(classifyHandGesture('y', 'high', 1, up, { quarters }, true, order)).not.toHaveProperty('finger2');
+    }
+  });
+
+  it('relays a pocket U2-prime from left index to middle through mixed grips', () => {
+    const halfTurn = { quarters: 2 };
+    const relay = { kind: 'flick', hand: 'L', finger: 'index', finger2: 'middle' };
+    const afterR = { R: 'up', L: 'home' } as const;
+    expect(classifyHandGesture('y', 'high', -1, afterR, halfTurn, true, 2)).toEqual({ ...relay, style: 'hook' });
+    expect(classifyHandGesture('y', 'high', -1, { R: 'home', L: 'down' }, halfTurn, true, 2)).toEqual(relay);
+    expect(classifyHandGesture('y', 'high', -1, afterR, { quarters: 1 }, true, 2)).not.toHaveProperty('finger2');
+    for (const order of [2, 3, 4]) {
+      for (const right of ['up', 'down', 'half', 'halfDown', null] as const) {
+        expect(classifyHandGesture('y', 'high', -1, { R: right, L: 'home' }, halfTurn, true, order))
+          .toEqual({ ...relay, style: 'hook' });
+      }
+    }
+  });
+
+  it('keeps the seated half wrist and drives the opposite pocket layer with the home hand', () => {
+    for (const grip of ['half', 'halfDown'] as const) {
+      const grips = { R: grip, L: 'home' } as const;
+      expect(classifyHandGesture('y', 'high', 1, grips, { quarters: 1 }, true, 2))
+        .toEqual({ kind: 'flick', hand: 'L', finger: 'index', style: 'reverseIndexHook' });
+      expect(classifyHandGesture('y', 'low', 1, grips, { quarters: 1 }, true, 2))
+        .toEqual({ kind: 'flick', hand: 'L', finger: 'ring', style: 'reverseRingHook' });
+      expect(classifyHandGesture('y', 'low', 1, grips, { quarters: 1 }, true, 3)).toMatchObject({ hand: 'R' });
+    }
+    expect(classifyHandGesture('y', 'high', -1, { L: 'up', R: 'home' }, { quarters: 2 }, true, 2))
+      .toEqual({ kind: 'flick', hand: 'L', finger: 'index', finger2: 'middle', style: 'topPush' });
+  });
+
   it('双中手 y 族 = 接触勾拨 hook;180° 提示连拨(FINGERTRICKS §4.2)', () => {
-    expect(classifyHandGesture('y', 'high', 1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'hook' });  // U
-    expect(classifyHandGesture('y', 'high', -1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'L', finger: 'index', style: 'hook' }); // U'
+    expect(classifyHandGesture('y', 'high', 1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'indexHook' });  // U
+    expect(classifyHandGesture('y', 'high', -1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'L', finger: 'index', style: 'indexHook' }); // U'
     expect(classifyHandGesture('y', 'low', 1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'R', finger: 'ring', style: 'hook' });    // D'
     // U2 连拨:先食指后中指;D2' 连拨:先小指后无名指(用户口述顺序)
     expect(classifyHandGesture('y', 'high', 1, BOTH_HOME, { quarters: 2 }))
@@ -90,7 +211,7 @@ describe('classifyHandGesture', () => {
     expect(classifyHandGesture('y', 'high', -1, BOTH_HOME, { push: true }))
       .toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'upPush' }); // U'p
     expect(classifyHandGesture('y', 'high', 1, BOTH_HOME, { push: true }))
-      .toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'hook' });   // Up 未编排 → 回落 U 默认
+      .toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'indexHook' });   // Up 未编排 → 回落 U 默认
     expect(classifyHandGesture('z', 'low', 1)).toEqual({ kind: 'flick', hand: 'R', finger: 'middle' }); // B' 非标准握回落中指
   });
 
@@ -98,8 +219,8 @@ describe('classifyHandGesture', () => {
     expect(classifyHandGesture('z', 'high', 1, R_DOWN)).toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'downPush' }); // F
     expect(classifyHandGesture('z', 'high', 1, R_DOWN, { quarters: 2 }))
       .toEqual({ kind: 'flick', hand: 'R', finger: 'index', finger2: 'middle', style: 'downPush' }); // F2
-    expect(classifyHandGesture('z', 'high', -1, R_DOWN)).toEqual({ kind: 'flick', hand: 'R', finger: 'thumb' }); // F' 未定义 → 回落拇指
-    expect(classifyHandGesture('z', 'high', 1, { R: 'down', L: 'down' })).toEqual({ kind: 'flick', hand: 'L', finger: 'thumb' }); // 双下手未定义 → 回落
+    expect(classifyHandGesture('z', 'high', -1, R_DOWN)).toEqual({ kind: 'flick', hand: 'R', finger: 'thumb', style: 'thumbLift' });
+    expect(classifyHandGesture('z', 'high', 1, { R: 'down', L: 'down' })).toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'downPush' });
   });
 
   it('整体 x/y/z = 双手抱转 weld', () => {
@@ -145,7 +266,7 @@ describe('simulateGrips(握姿持久化静态推演,quarters 符号 = 引擎 con
     expect(near(g.R, gripQuat('home'))).toBe(true);
   });
 
-  it('整体 x/y/z 均不烘(手黏着转+90° 踏移,提交即在 home 频段,#20)', () => {
+  it('整体 x/y/z 均不烘(两手随层转动并依次回握)', () => {
     for (const axis of ['x', 'y', 'z'] as const) {
       const g = simulateGrips([{ axis, layers: [0, 1, 2], quarters: 1 }], 3);
       expect(near(g.R, gripQuat('home'))).toBe(true);

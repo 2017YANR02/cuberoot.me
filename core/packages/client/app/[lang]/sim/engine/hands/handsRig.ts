@@ -1,5 +1,5 @@
 /**
- * /sim 手部指法动画 rig — 3x3 专属(world.puzzleKind === 3 时启用)。
+ * /sim 手部指法动画 rig，供标准二至四阶共用。
  *
  * 同步原理:不挂事件、不改引擎热点文件 —— 每帧轮询 cube.table.groups 里
  * 各层 CubeGroup 的实时 angle(tween 播放与手动拖层都写这里),手跟着当前
@@ -8,45 +8,61 @@
  * 手势两类(**指法权威规格表:同目录 FINGERTRICKS.md,改指法先改那里**):
  *  - weld  腕转:整只手焊在转动层上,绕层轴跟转(R/L 外层、整体 x/y/z 双手)。
  *  - flick 指弹:出一根手指沿转向扫(U/D 食指/无名指、F/B 拇指/中指、M/E/S)。
- *    双中手专项:F 族「食指越顶」topPush;y 族接触勾拨 hook(180° 提示连拨:
+ *    F 右中手、F' 左中手「食指越顶」topPush;y 族双中手接触勾拨 hook(180° 提示连拨:
  *    U2 食指→中指、D2' 小指→无名指,首指保持、双指齐收);B' 右食指 backHook;
- *    U'p 右食指推 upPush。左中右下:F 族右食指 downPush(F2 连拨)。
+ *    U'p 右食指推 upPush。F 层主动手下起手:食指 downPush,半转接中指。
  * 手/指的选择依转向(angle 符号)+ 握姿 + 转前提示分配,映射见
  * classifyHandGesture(纯函数,tests/hands_gestures.test.ts 锁定)。
  *
  * 握姿持久化:x 轴单层 weld(R/L)提交(层角走满 ±90° 倍数后 drop)把该旋转
  * 烘进 per-hand 的 grip 基座 —— 手停在转完的位置,不自动回家(真实指法如此)。
- * 整体转体(x/y/z whole)不烘也不软钳制:手 1:1 黏着魔方刚体同转(零相对运动
- * = 转动全程零穿模;魔方箱体在四分转下不变 → 任意 90° 踏移后的握姿间隙不变),
- * 层角越过 45°(带迟滞)即踏移一个 90°(手瞬跳换握,与「自动转体」跨 ±90° 的
- * scene 快切同款观感,#20),提交时残差≈0 直接落回 home —— 终态 = home 握新
- * 朝向的面,与视角/自动转体一致。回 home / 换握由解法框记号驱动:↑ 上手
+ * 整体转体随层等角度抱转，提交后右手先回握、左手支撑，再交换。
+ * 整体转动不写入 grip。回 home / 换握由解法框记号驱动:↑ 上手
  * (拇指起手在 U 面)、↓ 下手(D 面)、· 回 home 握;手别由空白定(FINGERTRICKS
  * §2:记号紧贴后续字符 = 右手,后随空白/串尾 = 左手),见 regrip() / simulateGrips()。
  *
  * 穿模禁令(用户规格:任何时刻手指不得嵌入魔方,含转动途中)三机制:
  *  1. 静置贴面 = 肉面标定(handPoses,蒙皮顶点距体表 0.7~0.8U 相切);
- *  2. 转层外让 = 非 weld 手整手沿本侧外向 x 平移(DODGE_MAG 幅度表,目标值
- *     是层角纯函数,与层动零延迟同步)—— 径向退出活动层扫掠圆柱,且沿贴面
- *     纯切向滑动不产生新穿透;禁用 per-finger 抬指方案(基节伸展会把骑棱指
- *     沿面上滑并向内推,反钻进角块,oracle 实测自伤);
- *  3. 回位/换握 slerp = 手沿径向外拱(接触半径 117U < 角柱扫掠半径 135.8U,
- *     不拱会削穿棱柱)。呼吸浮动只走切向(y + 本侧外向 x),禁接触法向 z。
+ *  2. 转层避让随层角只驱动手指关节。
+ *  3. 换握沿原握姿的旋转弧行进，靠张指让开棱角。
  */
 import * as THREE from "three";
+import { alignFrontIndex, easeFingerKnuckle } from "./frontKnuckle";
+import type { SkinStroke } from './halfPalmContactSkin';
+import { homeIndexHook } from "./homeIndexHook";
+import { HalfPalmPose } from "./halfPalmPose";
+import { UPPER_U_INDEX_FOLLOW, FRONT_INDEX_FOLLOW, frontIndexReturn } from "./frontIndexFollow";
+import { inspectWideGrip, WideSupport } from './wideSupport';
+import { mixedGripPose, isMixedPush, type MixedPush } from './mixedGripPush';
+import { isMiddleSliceStroke, middleSlicePose, middleSliceSupport, M_RELAY_SHIFT } from "./middleSliceMotion";
+import { sliceIndexPose } from "./sliceIndexMotion";
+import { frontDownPose } from "./frontDownMotion";
+import { FourLayerContact, type FourLayerStroke } from './fourLayerContact';
 import { SIZE } from "../define";
+import { measureFinalHandPose } from './finalHandPose';
+import { ForearmRotation, WRIST_BEND_MAX, WRIST_RADIAL_SIN, WRIST_ULNAR_SIN } from "./armKinematics";
 import { buildForearm, makeSkinDetailTexture, HAND_SCALE, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
 import { loadManoHand } from "./handModelMano";
 import { paintNailPolish, type NailPolishSpec } from "./handModelGltf";
 import { SmplxBody, loadSmplxOnePiece } from "./smplxBody";
 import { applyBakedSkinMaps, bakeHandTextures } from "./bakeHandTexture";
 import { addHandSkeleton, makeHandSkeletonMats, type SkeletonMatKey } from "./handSkeleton";
-import { homeLeft, homeRight, type HandPose } from "./handPoses";
+import { homeLeft, homeRight, POCKET_MIDDLE_CURL, POCKET_MIDDLE_SPLAY, type HandPose } from "./handPoses";
+import type { FingerAnnotation } from '@/lib/alg-finger-marks';
+import { chooseMarkedFingerPlan, fingerChannels, markedStartContact, MarkedFingerMotion, type MarkedTurnRequest } from './markedFingerMotion';
+import {
+  halfDownIndex, halfDownThumb, halfThumb, homeIndex, homeMiddle, homeMiddleClearance, leftDownRing, leftIndex, leftMiddle, rightDownRing,
+  reverseRingApproach, reverseRingContact, reverseRingSupport, seatPocketFinger, upperIndexClearance, upperMiddle, upperRingClearance,
+  upperThumbClearance,
+} from './pocketFingerContact';
+import { applyPocketFaceStroke, pocketBottomRelay, pocketFrontThumb, pocketBackRelay } from './pocketFaceContact';
+import { MARKED_CLEARANCE, MARKED_FINGER_PROFILES } from './markedFingerPoses';
 
 /** 只读 duck-type,避免运行时 import NxN Cube(rig 只碰 groups 的 angle)。 */
 export interface HandsCubeLike {
   order: number;
-  table: { groups: Record<"x" | "y" | "z", { angle: number }[]> };
+  table: { groups: Record<"x" | "y" | "z", { angle: number; targetAngle?: number; isDragging?: boolean }[]> };
+  twister?: { halfTurnDirection?: (axis: string, layer: number) => 1 | -1 | undefined };
 }
 
 /** group.ts CubeGroup.AXIS_VECTOR 的同款轴向(x=(-1,0,0) 等)。这里复制而非
@@ -63,10 +79,10 @@ export type Axis = "x" | "y" | "z";
 export type LayerClass = "high" | "low" | "mid" | "whole";
 
 /** 指弹样式(规格与编排细节见同目录 FINGERTRICKS.md):
- *  topPush 食指越顶(双中手 F 族)/ hook 贴面勾拨(双中手 y 族,含连拨)/
+ *  topPush 手局部食指路径(中起手 F 族 / 右上起手单步 U)/ hook 贴面勾拨(双中手 y 族,含连拨)/
  *  backHook 双中手 B' 右食指背钩 / downPush 左中右下 F 族右食指下拨 /
  *  upPush U' 推法(记号 U'p,右食指 RUB→BLU)。无 style = 遗留扫法(非标准握)。 */
-export type FlickStyle = "topPush" | "hook" | "backHook" | "downPush" | "upPush";
+export type FlickStyle = "indexHook" | "reverseIndexHook" | "reverseRingHook" | "pocketThumbLift" | "topPush" | "hook" | "backHook" | "downPush" | "upPush" | "marked" | "middleSliceNail" | "middleSlicePad" | MixedPush;
 
 export type HandGesture =
   | { kind: "weld"; hands: HandSide[] }
@@ -75,8 +91,14 @@ export type HandGesture =
 /** 两手当前握姿名(null = 非标准握,如 weld 途中/自定义积);由 grip 四元数判读。 */
 export interface HandGripNames { R: GripName | null; L: GripName | null }
 
+function prefersLeftUpperRelay({ R, L }: HandGripNames): boolean {
+  // A home left hand can start immediately. When both wrists are turned,
+  // retain the existing regrip path for a quarter-turned right wrist.
+  return (L === 'home' && R !== 'home') || R === 'up' || R === 'down';
+}
+
 /** 播放/键盘路径的转前提示(prepareTwist 登记):quarters=180° 才连拨;push=U'p。 */
-export interface TwistHint { quarters?: number; push?: boolean }
+export interface TwistHint { quarters?: number; push?: boolean; nail?: boolean }
 
 /** FTN `@pin` 注解(§7,解析层产出;编排目前仅 `R[R2:@C]`):weld 前置贴块
  *  钉指 —— 转动开始前指尖先到贴纸,weld 段随手刚体转,提交后收指。 */
@@ -86,7 +108,7 @@ export interface PinSpec { hand: HandSide; finger: FingerName; sticker: string }
 export interface HandDiagnosticFrame {
   atMs: number;
   event: 'prepare-u' | 'frame' | 'end-u' | 'reset' | 'disabled' | 'dispose' | 'grip-request' | 'grip-set';
-  gripRequest?: { name: GripName; sides: HandSide[] };
+  gripRequest?: { name: GripName; sides: HandSide[]; halfDirection?: 'up' | 'down' };
   preparedGesture?: HandGesture;
   grips: HandGripNames;
   hands: Record<HandSide, {
@@ -94,10 +116,20 @@ export interface HandDiagnosticFrame {
     grip: number[];
     position: number[];
     quaternion: number[];
+    /** Signed wrist winding and persistent forearm pose distinguish ↑↑ from ↓↓. */
+    wristAngle: number;
+    forearmRoll: number;
+    forearmQuaternion: number[] | null;
+    /** Virtual elbow target and wrist deflection, in rig space / radians. */
+    elbowPosition?: number[];
+    wristBend?: number;
+    finalPose?: ReturnType<typeof measureFinalHandPose>;
     flickAngle: number;
     decay: number;
   }>;
-  active: { axis: Axis; cls: LayerClass; angle: number; gesture: HandGesture | null } | null;
+  active: { axis: Axis; cls: LayerClass; layers: readonly number[]; angle: number; gesture: HandGesture | null } | null;
+  wideSupport?: { hand: HandSide; fingers: readonly FingerName[]; shift: number[]; progress: number };
+  marked?: { profile: string; hand: HandSide; finger: FingerName; contact: 'pad' | 'nail'; preparing: boolean; returning: boolean };
   models: Record<HandSide, HandModel>;
 }
 
@@ -108,15 +140,16 @@ export interface HandDiagnosticFrame {
  *  D = 左无名指,D' = 右无名指;F = 右拇指推,F' = 左拇指;
  *  B/B' = 后侧中指(双手指尖本就搭在 B 面);M/E/S 就近借同族手指。
  *  整体 x/y/z = 双手抱转(regrip 回位)。
- * 双中手(grips 全 home)专项:F 族「食指越顶」topPush;y 族走接触勾拨 hook
+ * 中下混握的普通 F / F′ 由下手食指下拨或拇指上顶，左右镜像。
+ * 中手食指可用指腹按 S 或用甲面反向顶 S。半转、宽层分别沿用其原有编排。
+ * 双中手(grips 全 home)专项:y 族走接触勾拨 hook
  * (U/U' 食指、D/D' 无名指,180° 提示时连拨:U2 食指→中指、D2' 小指→无名指);
  * B' 右食指 backHook(B 左食指镜像);U'p 右食指推 upPush。
- * 左中右下(L home + R down):F=右食指 downPush,F2 连拨食指→中指。
- * 非标准握一律回落遗留映射(几何未标定)。
+ * 未命中上述条件时回落遗留映射(几何未标定)。
  */
 export function classifyHandGesture(
   axis: Axis, cls: LayerClass, dir: 1 | -1,
-  grips: HandGripNames = { R: null, L: null }, hint?: TwistHint,
+  grips: HandGripNames = { R: null, L: null }, hint?: TwistHint, singleLayer = true, order = 3,
 ): HandGesture {
   const bothHome = grips.R === "home" && grips.L === "home";
   const double = (hint?.quarters ?? 1) >= 2;
@@ -124,23 +157,52 @@ export function classifyHandGesture(
   if (axis === "x") {
     if (cls === "high") return { kind: "weld", hands: ["R"] };
     if (cls === "low") return { kind: "weld", hands: ["L"] };
-    return { kind: "flick", hand: dir < 0 ? "L" : "R", finger: "middle" }; // M 族
+    if (order === 3 && singleLayer && bothHome) {
+      if (double) return { kind: "flick", hand: "L", finger: "ring", finger2: "pinky", style: "middleSlicePad" };
+      return { kind: "flick", hand: "L", finger: "ring", style: dir < 0 ? "middleSliceNail" : "middleSlicePad" };
+    }
+    return { kind: "flick", hand: dir < 0 ? "L" : "R", finger: "middle" };
   }
   if (axis === "y") {
     if (cls === "high") {
       // U 族食指。U'p 推法:仅 U'(dir<0)方向、双中手、显式 push 提示。
       if (hint?.push && dir < 0 && bothHome) return { kind: "flick", hand: "R", finger: "index", style: "upPush" };
       const hand = dir > 0 ? "R" : "L";
-      if (bothHome) {
+      // R 把 home 的 U8 就位姿转到 B0；上握 U 在手局部坐标中
+      // 等价于 home 的 F，复用同一食指接触路径（不是遗留裸扫）。
+      const upperDouble = singleLayer && hint?.quarters === 2;
+      const leftRelay = hand === 'L' && prefersLeftUpperRelay(grips) && (order === 3 || order === 4);
+      const relayDouble = upperDouble && !hint?.push && (order === 2 || leftRelay);
+      if ((dir > 0 || relayDouble) && (!double || upperDouble) && !hint?.push && grips[hand] === "up") {
+        return relayDouble
+          ? { kind: "flick", hand, finger: "index", finger2: "middle", style: "topPush" }
+          : { kind: "flick", hand, finger: "index", style: "topPush" };
+      }
+      const other = hand === 'R' ? 'L' : 'R';
+      if (order === 2 && singleLayer && !double && !hint?.push
+        && (grips[hand] === 'half' || grips[hand] === 'halfDown') && grips[other] === 'home') {
+        return { kind: 'flick', hand: other, finger: 'index', style: 'reverseIndexHook' };
+      }
+      if (singleLayer && !double && grips[hand] === "home") {
+        return { kind: "flick", hand, finger: "index", style: "indexHook" };
+      }
+      // The driving hand can use its home stroke independently of the support wrist.
+      if (bothHome || (relayDouble && grips[hand] === "home")) {
         // U2 / U2' 双向连拨(2026-07-09 L 侧 hook_index/hook_middle2 镜像标定)。
         return double
           ? { kind: "flick", hand, finger: "index", finger2: "middle", style: "hook" } // U2/U2' 连拨
           : { kind: "flick", hand, finger: "index", style: "hook" };
       }
+      if (relayDouble) return { kind: "flick", hand, finger: "index", finger2: "middle" };
       return { kind: "flick", hand, finger: "index" };
     }
     const hand = dir < 0 ? "L" : "R";
-    if (cls === "low" && bothHome) {
+    const support = hand === 'R' ? 'L' : 'R';
+    if (order === 2 && cls === 'low' && singleLayer && !double
+      && (grips[hand] === 'halfDown' || grips[hand] === 'half') && grips[support] === 'home') {
+      return { kind: 'flick', hand: support, finger: 'ring', style: 'reverseRingHook' };
+    }
+    if (cls === "low" && (bothHome || order === 2 && grips[hand] === 'home')) {
       // D2' / D2 双向连拨(2026-07-10 L 侧 hook_pinky/hook_ring2 镜像标定)。
       return double
         ? { kind: "flick", hand, finger: "pinky", finger2: "ring", style: "hook" } // 先小指后无名指
@@ -151,16 +213,24 @@ export function classifyHandGesture(
   // z 轴。F 族分手依据:拇指伸展 = 沿 F 面向上扫,F(dir>0)使左列上行 → 左拇指,
   // F' 使右列上行 → 右拇指(冻结层角实测过,反着配会出现「层往下、指往上」)。
   if (cls === "high") {
-    if (grips.L === "home" && grips.R === "down" && dir > 0) {
-      // 左中右下 F 族:右食指在 down 握天然压 U 面 UFR 区,下拨;F2 连拨接中指。
-      return double
-        ? { kind: "flick", hand: "R", finger: "index", finger2: "middle", style: "downPush" }
-        : { kind: "flick", hand: "R", finger: "index", style: "downPush" };
+    const hand = dir > 0 ? "R" : "L";
+    const other = hand === 'R' ? 'L' : 'R';
+    if (singleLayer && !double && grips[hand] === 'home' && grips[other] === 'down') {
+      return { kind: 'flick', hand: other, finger: 'thumb', style: 'thumbLift' };
     }
-    if (bothHome) return { kind: "flick", hand: dir > 0 ? "R" : "L", finger: "index", style: "topPush" };
+    if (grips[hand] === "down") {
+      // 主动手下起手:右 U8 / 左 U6 下拨,半转由同手中指接力。
+      return double
+        ? { kind: "flick", hand, finger: "index", finger2: "middle", style: "downPush" }
+        : { kind: "flick", hand, finger: "index", style: "downPush" };
+    }
+    if (grips[hand] === "home") return { kind: "flick", hand, finger: "index", style: "topPush" };
+    if (order === 2 && grips[other] === 'home' && (grips[hand] === 'half' || grips[hand] === 'halfDown')) {
+      return { kind: 'flick', hand: other, finger: 'thumb', style: 'pocketThumbLift' };
+    }
     return { kind: "flick", hand: dir > 0 ? "L" : "R", finger: "thumb" }; // F 族
   }
-  if (cls === "low" && bothHome) {
+  if (cls === "low" && (bothHome || order === 2 && grips[dir > 0 ? "R" : "L"] === "home")) {
     // 双中手 B'(dir>0)= 右食指背钩;B = 左食指镜像(FINGERTRICKS §4.2 推定)。
     // B2 / B2' 双向连拨(2026-07-10 backHook_middle2 标定):先食指后中指,
     // 首指 Q2 极早期沿 BACK_EXIT 退场(同 U2 的 HOOK_EXIT 编排)。
@@ -168,6 +238,14 @@ export function classifyHandGesture(
     return double
       ? { kind: "flick", hand, finger: "index", finger2: "middle", style: "backHook" }
       : { kind: "flick", hand, finger: "index", style: "backHook" };
+  }
+  if (cls === "mid" && !double) {
+    const hand = dir > 0 ? 'R' : 'L';
+    const other = hand === 'R' ? 'L' : 'R';
+    if (singleLayer && grips[other] === 'home' && (hint?.nail || grips[hand] === 'up' || grips[hand] === 'down')) {
+      return { kind: 'flick', hand: other, finger: 'index', style: 'sliceNail' };
+    }
+    if (grips[hand] === 'home') return { kind: "flick", hand, finger: "index", style: "topPush" };
   }
   return { kind: "flick", hand: dir < 0 ? "L" : "R", finger: "middle" }; // B / S 族
 }
@@ -182,6 +260,37 @@ export function classifyLayers(layers: number[], order: number): LayerClass {
   return "mid";
 }
 
+function sameLayers(a: readonly number[], b: readonly number[]): boolean {
+  return a.length === b.length && a.every(layer => b.includes(layer));
+}
+
+function isFourWide(order: number, layers: readonly number[]): boolean {
+  return order === 4 && layers.length === 2 && (layers.includes(0) || layers.includes(3));
+}
+
+/** Resolve physical depths before selecting an existing hand stroke. A half
+ * cube has the same cut plane as the pocket cube. Its two physical layers
+ * must remain separate for contact, hint consumption and turn completion. */
+export function gestureForLayers(axis: Axis, layers: number[], dir: 1 | -1,
+  grips: HandGripNames, hint: TwistHint | undefined, order: number): HandGesture {
+  const cls = classifyLayers(layers, order);
+  if (order === 4 && cls === 'mid' && axis === 'x') {
+    const hand = layers.length === 1 && layers[0] === 2 ? 'R' : 'L';
+    const double = hint?.quarters === 2;
+    return { kind: 'flick', hand, finger: 'ring', finger2: double ? 'pinky' : undefined,
+      style: dir < 0 ? 'middleSliceNail' : 'middleSlicePad' };
+  }
+  if (order === 4 && cls === 'mid' && axis === 'y') {
+    const upper = layers.includes(2);
+    const hand = dir > 0 ? 'R' : 'L';
+    return { kind: 'flick', hand, finger: upper ? 'index' : 'ring',
+      finger2: hint?.quarters === 2 ? (upper ? 'middle' : 'pinky') : undefined,
+      style: upper && hint?.quarters !== 2 && grips[hand] === 'home' ? 'indexHook' : 'hook' };
+  }
+  const half = isFourWide(order, layers);
+  return classifyHandGesture(axis, cls, dir, grips, hint, half || layers.length === 1, half ? 2 : order);
+}
+
 /** 遗留指弹的幅度限制；weld 腕转必须与层角一致，不能使用此压缩。 */
 function softClampAngle(a: number): number {
   const LIMIT = 1.62; // ≈93°
@@ -190,10 +299,19 @@ function softClampAngle(a: number): number {
   return Math.sign(a) * (LIMIT + (abs - LIMIT) * 0.28);
 }
 
+// Extra left middle MCP flexion at the narrower four-layer cut. The corner
+// passes the pad twice as it takes over from the withdrawing index.
+const FOUR_U_RELAY_MIDDLE = [
+  [0, 0, 0, 0], [90, 0, 0, 0], [92, .010, 0, 0], [93, .021, 0, 0],
+  [98, .016, 0, 0], [105, .009, 0, 0], [114, .004, 0, 0], [120, 0, 0, 0],
+  [129, .006, 0, 0], [138, .01, 0, 0], [146, .016, 0, 0], [154, .019, 0, 0],
+  [158, .016, 0, 0], [165, 0, 0, 0], [175, -.003, 0, 0], [180, 0, 0, 0],
+] as const;
+
 const HALF_PI = Math.PI / 2;
 
 /** 换握目标 */
-export type GripName = "home" | "up" | "down" | "half";
+export type GripName = "home" | "up" | "down" | "half" | "halfDown";
 
 /**
  * 换握基座四元数:up=上手(拇指起手在 U 面,恰等于 home 被 R/L' 提交后的腕姿),
@@ -203,9 +321,28 @@ export function gripQuat(name: GripName): THREE.Quaternion {
   const q = new THREE.Quaternion();
   if (name === "up") q.setFromAxisAngle(AXIS_VEC.x, HALF_PI);
   else if (name === "down") q.setFromAxisAngle(AXIS_VEC.x, -HALF_PI);
-  // ↑↑ uses the settled home + R2 / L2 orientation.
+  // ↑↑ uses the settled home + R2 / L′2 orientation (both rotate about -x).
   else if (name === "half") q.setFromAxisAngle(AXIS_VEC.x, Math.PI);
+  else if (name === "halfDown") q.setFromAxisAngle(AXIS_VEC.x, -Math.PI);
   return q;
+}
+
+// A quaternion loses the signed wrist winding at 180°. Keep the angle as well.
+function wrapWristAngle(angle: number): number {
+  const a = angle % (2 * Math.PI);
+  return Math.abs(a) < 1e-8 || Math.abs(Math.abs(a) - 2 * Math.PI) < 1e-8 ? 0 : a;
+}
+function wristAngleOf(q: THREE.Quaternion): number {
+  return wrapWristAngle(2 * Math.atan2(-q.x, q.w));
+}
+function atHalfTurn(angle: number): boolean { return Math.abs(Math.abs(wrapWristAngle(angle)) - Math.PI) < 1e-6; }
+function gripWristAngle(name: GripName): number { return wristAngleOf(gripQuat(name)); }
+/** Preserve quarter-turn grips; let the elbow participate in the second quarter.
+ * Use the displayed hand rotation for this weight, not signed winding: switching
+ * ↑↑ ↔ ↓↓ keeps the palm at 180° while the forearm changes its inward/outward aim. */
+function halfGripWeight(angle: number): number {
+  const t = Math.max(0, Math.min(1, (angle - HALF_PI) / HALF_PI));
+  return t * t * (3 - 2 * t);
 }
 
 export type GripSimStep =
@@ -216,26 +353,40 @@ export type GripSimStep =
  * 静态推演一串(转动 / 换握记号)后的两手握姿基座 — 跳步 / 拖进度条用,
  * 结果与逐步 live 播放的 weld 烘入一致(flick 不改握,weld 按层转烘入)。
  */
-export function simulateGrips(steps: GripSimStep[], order: number): { R: THREE.Quaternion; L: THREE.Quaternion } {
+export function simulateGrips(steps: GripSimStep[], order: number): { R: THREE.Quaternion; L: THREE.Quaternion; wristAngles: Record<HandSide, number> } {
+  const wristAngles = { R: 0, L: 0 };
   const grips = { R: new THREE.Quaternion(), L: new THREE.Quaternion() };
   const q = new THREE.Quaternion();
   for (const s of steps) {
     if ("grip" in s) {
-      for (const side of s.side ? [s.side] : (["R", "L"] as const)) grips[side].copy(gripQuat(s.grip));
+      for (const side of s.side ? [s.side] : (["R", "L"] as const)) {
+        grips[side].copy(gripQuat(s.grip));
+        wristAngles[side] = gripWristAngle(s.grip);
+      }
       continue;
     }
     if (s.quarters === 0 || s.layers.length === 0) continue;
     const cls = classifyLayers(s.layers, order);
-    if (cls === "whole") continue; // 整体转体不烘(live 同款:黏着转+踏移,提交即在 home 频段,#20)
+    if (cls === "whole") continue; // 整体转体不烘(live 同款:双手随层后依次回到原握姿)
     if (s.axis !== "x") continue; // 只有 x 轴单层 weld 烘入(y/z 无 weld 手势)
-    const g = classifyHandGesture(s.axis, cls, s.quarters > 0 ? 1 : -1);
+    const g = gestureForLayers(s.axis, s.layers, s.quarters > 0 ? 1 : -1, { R: null, L: null }, undefined, order);
     if (g.kind !== "weld") continue;
     q.setFromAxisAngle(AXIS_VEC[s.axis], s.quarters * HALF_PI);
-    for (const h of g.hands) grips[h].premultiply(q);
+    for (const h of g.hands) {
+      grips[h].premultiply(q);
+      wristAngles[h] = wrapWristAngle(wristAngles[h] + s.quarters * HALF_PI);
+    }
   }
-  return grips;
+  return { ...grips, wristAngles };
 }
 
+// Engineering envelopes around active motion, including inter-person variation
+// (Ibrahim et al., doi:10.1055/s-0044-1788593). Lower stops retain the rig's
+// pad-contact calibration. Thumb limits are separate model tuning values.
+// Rig guard bands around measured active wrist deviations (PMID 24322647).
+
+const FINGER_HINGES = { middleMin: .03, middleMax: 130 * Math.PI / 180, distalMax: 100 * Math.PI / 180 };
+const THUMB_HINGES = { middleMin: -.5, middleMax: 95 * Math.PI / 180, distalMax: 100 * Math.PI / 180 };
 const FADE_MS = 240;
 const RECOVER_MS = 300;
 const IDLE_KEEPALIVE_MS = 6000;
@@ -243,61 +394,7 @@ const IDLE_KEEPALIVE_MS = 6000;
 const COMMIT_ANGLE = 0.02;
 
 /**
- * 转层外让幅度表(世界单位):非 weld 手在该(轴,层类)转动期间沿本侧外向 x
- * 平移多远。方向学问:±x 同时垂直于 y/z 转轴(平移=纯径向退出扫掠圆柱)且与
- * 各贴面(B/F 的 z 法向)正交(沿面纯切向滑动,不产生新穿透)—— 是唯一对
- * 所有 y/z 招式都安全的单一方向。幅度由穿模 oracle(蒙皮顶点 vs 静止层箱体 +
- * 反旋活动层箱体)标定:活动层角柱扫掠半径 96√2≈135.8U,指腹接触半径 ~134U,
- * 外层转动小让即可;E(赤道)会犁过贴 F 面的拇指整块肉(径向 117U,关节动作
- * 无解),必须大让 =「双手松握让赤道层转」;B 族犁中节侧肉(径向 ~117U)。
- * x 轴:R/L 是 weld,M 层扫掠区(|x|≤32+沿轴余量)碰不到指肉(x≥75),零让。
- */
-const DODGE_MAG: Record<Axis, Record<LayerClass, number>> = {
-  x: { high: 0, low: 0, mid: 0, whole: 0 },
-  // y.high 0(2026-07-09 用户规格「手作为整体任何时候不远离魔方,单指可以」):
-  // U 族静止手不再整手平移(旧 16),改静止手食指单指离面避让,见
-  // HOOK_INDEX_EVADE。
-  // y.low 0(2026-07-09 同规格迁移):D 族静止手改「无名指 + 拇指」单指避让,
-  // 见 LOW_EVADE。dodge=0 且无避让的裸基线(2026-07-09 全顶点冻结扫,双向
-  // + 180°):① 静止手无名指末节肉(骑 B 面下部 BDL/BDR)被 D 层角柱蹭
-  // 3.7~5.4U@θ≈0.05-0.25;② 静止手拇指末节下缘肉(y≈-44..-49 越过 D 界
-  // -32,径向 ~119U < 角柱 135.8U)被犁 11.5~11.7U@θ≈1.0-1.5(旧注释的
-  // 「大鱼际 3.4U」实测主犯是拇指末节肉,拇指单指避让直接可解)。
-  // y.mid 0(2026-07-09 同规格迁移):E 族改双手「拇指 + 中指(+ 弹指无名指)」
-  // 单指避让,见 MID_EVADE。dodge=0 且无避让的裸基线(全顶点冻结扫,双向
-  // + 180°):双手拇指末节肉被 E 带角柱犁 9.2~11.3U、双手中指末节肉
-  // 6.0~7.5U、弹指手无名指自身扫掠探进 4.3~4.8U、弹指手食指被腕借力压进
-  // 静止 U 带 ~3U(借力已随迁移归零,见 driveGesture)。旧注释「E 犁拇指
-  // 整块肉 + 掌体,关节动作无解」实测不成立:受害全是末节单指肉,无掌体命中。
-  y: { high: 0, low: 0, mid: 0, whole: 0 },
-  // z.low 0(2026-07-09 同规格迁移):B 族静止手改「食指 + 中指」单指避让,
-  // 见 B_EVADE。dodge=0 且无避让的裸基线(全顶点冻结扫,双向 + 180°):
-  // ① 静止手食指末节尖肉(BUL/BUR 角,z≈−95)被 B 层角柱蹭
-  // 0.7~1.4U@θ≈1.33-1.42;② 静止手中指中节侧肉(骑 BL/BR 棱,径向 ~132U)
-  // 被犁 2.3U@θ≈0.83(仅 B' 的静止 L 手)。无名指/拇指/掌体全程干净,旧
-  // 「必须让 40U」严重高估。180° 深穿(11.9/19.4U)是**弹指手自身**食指
-  // softClamp 后被 Q2 扫掠 —— 旧 dodge 本就不覆盖弹指手(styled 排除),
-  // 既有残差,见 FINGERTRICKS §6。
-  // z.high 0(2026-07-09 同规格迁移):F 族非 topPush/downPush 分支(非双中手
-  // 握持的遗留拇指上扫)改单指离面避让,见 F_EVADE;弹指腕借力对 z.high 同步
-  // 归零(见 driveGesture)。dodge=0 且借力=0 的裸基线(全顶点冻结扫,双向
-  // + 180°,up/down/home 全部 8 种组合):up 握手拇指末节被 F 层角柱犁
-  // 11.5~11.7U、无名指 3.7~5.4U;down 握手食指 0.7~2.4U;home 握手全程干净
-  // (贴 B/F 面的指肉都在 F 带 z∈[32,96] 外)。另有借力单独贡献的 up 握弹指
-  // 手中指 6.0U/食指 2.8U 静态箱穿(归零借力即清)。双中手 topPush/downPush
-  // 本就整段免让(driveGesture 早退),不受迁移影响。
-  // z.mid 0(2026-07-09 同规格迁移):S 族。home 握全程干净(dodge=0 裸基线,
-  // 全顶点冻结扫 0.94°/步双向 + 180°:贴 B 面指列 z≈−98、拇指 z≈+99 都在
-  // S 带 z∈[−32,32] 外,最近点只有弹指手无名指扫掠瞬时 −1.77U 负值)——
-  // 旧幅度 10 对 home 握纯属保险。up/down 握才有真受害(改 S_EVADE 单指
-  // 避让,见该注释;弹指腕借力对 z.mid 同步归零,见 driveGesture):
-  // 双手拇指末节 9.2~11.2U + 静止手中指末节 5.9~7.3U —— 旧 dodge=10 本就
-  // 兜不住(真实播放 R S R' S' 实测照穿 6.7U,既有暴露)。
-  z: { high: 0, low: 0, mid: 0, whole: 0 },
-};
-
-/**
- * 「食指越顶」(style:"topPush",双手 home 握的 F 族)动作参数:手根不动,
+ * 「食指越顶」(style:"topPush",主动手 home 握的 F 族)动作参数:手根不动,
  * 食指先沿 B 面竖直抬升(splay,越过 U 面 + 间隙),再大幅前卷 MCP(c1)+
  * 拉直中末节,指链从魔方上方横越 U 面,指尖落到 UFR/UFL 角块 U 面贴纸上方。
  * 用户规格:F 转动开始**之前**指尖就要到位 —— 伸指(reach)是时间驱动的前置
@@ -308,13 +405,13 @@ const DODGE_MAG: Record<Axis, Record<LayerClass, number>> = {
  * 倒放,先收卷再落指,路径对称安全。数值浏览器内标定 + 穿模 oracle 验证。
  */
 const TOP_PUSH = {
-  liftIn: 0.5,    // reach 前半段完成抬升
-  sweepStart: 0.15, // 前卷从 reach 15% 起动(抬升先行)
+  liftIn: 0.12,   // 先抬离后上棱,再前卷
+  sweepStart: 0.2,
   c1: 0.66,       // MCP 前卷幅度(rad;过大越过贴纸冲到角外缘,坐标下降定档)
   c2: 0.18,       // 中节加弯(用户规格:按压时弯曲要明显,别伸直戳)
   c3: 0.15,       // 末节加弯
   lift: 0.54,     // 抬升量(splay rad;弯曲平面前斜,前卷伴随下沉,~207U/rad 补偿)
-  backOff: 0.03,  // reach 早段微伸(c1 −,sin 包络):抬升弧面稍向内斜,不退
+  backOff: 0.16,  // reach 早段微伸(c1 −,sin 包络):抬升弧面稍向内斜,不退
                   // 一点指腹会蹭进 B 面上沿(oracle 实测 2.65U)
   // —— 转动物理跟随(用户硬规格:F 转动时**只有食指动**,手根/其余手指/
   // 另一只手一律静止;且四分转**全程**指尖贴住初始 UFR 角块)—— 接触点绕
@@ -329,67 +426,71 @@ const TOP_PUSH = {
   releaseAt: HALF_PI, // 释放起点(rad,原角):四分转全程接触
   releaseLen: 0.28, // 释放行程(~1.85rad 完全弹离;0.5 时倒退太慢,F2 第二象限
                     // 来料棱块在 θ≈1.85 追上手指,oracle 实测 pen +4.8 → 收紧)
-  releaseLift: 0.2, // 弹离额外抬升(splay rad,指腹退出扫掠半径 135.8U)
-  // —— 收指退场(提交后)—— 层已归位,凭空造的退路全被 oracle 毙掉:弧倒退
-  // 指腹犁进已还原方块 U 面内缘 ~25U;弧姿态与收指 reach 并行衰减的合成弦线
-  // 斜穿方块内部(pen +41);splay 抬离在弧末端(指腹贴 R 面)是切向,越抬越
-  // 切进前柱(+14);沿掌轴伸直的 c1 展开扫弧直接穿心(+63)。唯一已验证绿的
-  // 离场编排 = F2 的 release 路径(弧倒退 ×3 速 + releaseLift,F2 全程扫描
-  // 实证):层方块占位 90° 周期(slab(θ)≡slab(θ−90°)),四分转提交后让原角
-  // **虚拟续转**推进走完 release 窗口,姿态与已验证的 release 点对点相同,
-  // 对静止层的占位失配 ≤ releaseLen(0.28rad)且恰在已抬离段。串行:reach 钳
-  // 在 1,decay 段跑虚拟 release,走完才收指(从带 releaseLift 的按压位倒放
-  // reach 路径)。小角度残余(拖拽回弹,提交角 < retreatSplit)按 decay 原地
-  // 缩回按压位(φ 小时弧退对静止层安全)。
-  retreatSplit: 1.2, // 提交原角 ≥ 此值走「虚拟续转 release」离场,否则原地缩回
+  releaseLift: 0.45, // 释放先抬离中指,再沿固定手掌路径收回
+  releaseLiftEnd: 0.2, // 释放段前 20% 完成抬指,避开静止/续转的前层
+  transitLift: 0.15, // 准备/收指中段抬升,首尾为零,不改变贴纸接触姿态
+  // Large home F strokes retire from their last nail pose on a free path.
+  // Short, cancelled drags return along their partial approach; upper U keeps
+  // its calibrated virtual release window around the stationary U5 thumb.
+  retreatSplit: 1.2,
 };
-/**
- * 接触跟随曲线:指尖钉住随层转的角块贴纸一路到终点(用户规格:F 时初始
- * UFR 角块转到哪、指尖跟到哪,终点 DFR)。食指独臂可达域不够(MCP 到终点
- * 269U > 指长 237U,实测差 32U),由「原地腕转」通道 wrist 补:手根绕
- * 「过腕点、平行转轴 z」的轴原地翻转 ψ —— 腕点自身不动 → 前臂(锚在腕点)
- * 全程静止、手掌不离位,视觉 = 真人压腕推 F;其余弧长由食指四关节
- * {c1,c2,c3,splay} 跟随。每 2.5° 层角一个 knot(37 个),线性插值;φ 封顶
- * 90°(F2 第二象限由 release 弹离)。knot0 = 按压姿(φ→0 指腹贴到贴纸
- * ~1.2U,wrist[0]=0)。**两手各一套**:left.glb 镜像资产 ~2U 雕刻不对称,
- * 共用一套 L 手会嵌进贴纸 1.6U(同 LEFT_CURL_OFFSET 先例,必须各解各的)。
- * 数值浏览器内连续化坐标下降标定(2.5° 步、上一 knot 热启动保同一 IK 分支 ——
- * 各 knot 独立解会落进不同零空间盆地,之字形插值段实测嵌 12U;判据:计数
- * 回转 −φ 后指尖钉住按压锚点、末节肉垫距贴纸 ~1.2U、接触点不出本角块贴纸、
- * 食指顶点两域穿模 ≤0)。1° 细扫复核:R gap 0.43~2.44 / L gap 0.43~2.73,
- * 穿模 ≤−0.43,腕转 ψ≤|0.345|(≈20°,~60° 层角前为 0)。改 home 姿 /
- * HAND_SCALE 必须重标(rig.tuning 现场调,烘回此处;工具见 memory
- * project_sim_hands_rig)。
- */
-const TOP_PUSH_FOLLOW = {
-  R: {
-    c1: [-0.19, -0.22, -0.22, -0.213, -0.206, -0.146, -0.139, -0.132, -0.132, -0.169, -0.116, -0.116, -0.116, -0.116, -0.189, -0.188, -0.173, -0.201, -0.192, -0.162, -0.177, -0.177, -0.237, -0.17, -0.125, -0.118, -0.118, -0.118, -0.118, -0.118, -0.118, -0.118, -0.118, -0.118, -0.148, -0.155, -0.148],
-    c2: [-0.17, -0.117, -0.17, -0.17, -0.177, -0.237, -0.237, -0.237, -0.237, -0.237, -0.275, -0.215, -0.155, -0.095, -0.052, 0.007, 0.067, 0.14, 0.161, 0.161, 0.236, 0.236, 0.236, 0.229, 0.236, 0.236, 0.243, 0.243, 0.243, 0.243, 0.25, 0.25, 0.257, 0.264, 0.264, 0.271, 0.264],
-    c3: [-0.105, -0.113, 0.007, 0.106, 0.107, 0.13, 0.265, 0.317, 0.354, 0.466, 0.474, 0.504, 0.489, 0.422, 0.458, 0.375, 0.188, 0.239, 0.238, 0.178, 0.125, 0.162, 0.177, 0.124, 0.042, 0.027, 0.042, 0.065, 0.012, 0.027, -0.033, -0.025, -0.062, -0.144, -0.144, -0.136, -0.129],
-    // splay[0..2] 比标定值抬浅 0.006(锚点在 φ=0.03 倾斜系测 gap 1.2,换算回
-    // θ=0 差 x′·sinφ≈2U,按压位实测下陷 0.78 → 抬 ~1.2U 回到面上)
-    splay: [-0.0603, -0.0603, -0.0603, -0.0533, -0.0603, -0.0603, -0.0763, -0.0923, -0.0923, -0.1373, -0.1443, -0.1743, -0.2043, -0.2043, -0.2573, -0.2873, -0.2873, -0.3623, -0.4073, -0.4073, -0.4823, -0.6023, -0.6923, -0.6623, -0.6323, -0.6323, -0.6323, -0.6253, -0.6253, -0.6253, -0.6323, -0.5803, -0.5883, -0.6183, -0.6333, -0.5813, -0.5283],
-    wrist: [0, 0, 0, -0.007, -0.007, -0.007, -0.007, -0.007, -0.007, -0.007, -0.007, -0.007, -0.007, -0.007, -0.007, -0.007, -0.007, -0.007, -0.007, -0.014, -0.014, -0.014, -0.014, -0.014, -0.029, -0.149, -0.156, -0.156, -0.186, -0.156, -0.186, -0.186, -0.216, -0.231, -0.216, -0.269, -0.299],
-  },
-  L: {
-    c1: [-0.255, -0.255, -0.255, -0.255, -0.255, -0.255, -0.255, -0.255, -0.255, -0.263, -0.263, -0.263, -0.263, -0.24, -0.239, -0.239, -0.224, -0.224, -0.216, -0.201, -0.171, -0.156, -0.14, -0.11, -0.14, -0.155, -0.155, -0.178, -0.178, -0.178, -0.186, -0.163, -0.148, -0.148, -0.111, -0.104, -0.104],
-    c2: [-0.12, -0.24, -0.24, -0.18, -0.18, -0.18, -0.18, -0.21, -0.09, -0.075, 0.015, 0.015, 0.015, -0.008, 0.021, 0.051, 0.051, 0.081, 0.096, 0.066, 0.081, 0.081, 0.095, 0.095, 0.095, 0.11, 0.05, 0.088, 0.088, 0.148, 0.141, 0.148, 0.156, 0.096, 0.029, 0.022, 0.022],
-    c3: [-0.053, 0.194, 0.194, 0.247, 0.277, 0.285, 0.345, 0.405, 0.3, 0.346, 0.286, 0.271, 0.376, 0.413, 0.39, 0.36, 0.39, 0.352, 0.366, 0.396, 0.343, 0.305, 0.23, 0.23, 0.23, 0.223, 0.2, 0.267, 0.109, 0.094, 0.147, 0.02, 0.02, 0.02, 0.013, 0.036, 0.059],
-    // 同 R:抬浅 0.007(L 按压位实测下陷 1.13)
-    splay: [-0.0814, -0.0814, -0.0884, -0.0884, -0.0884, -0.1024, -0.1174, -0.1474, -0.1474, -0.1624, -0.1924, -0.2074, -0.2444, -0.2664, -0.2954, -0.3254, -0.3624, -0.3994, -0.4434, -0.4734, -0.5104, -0.5324, -0.5544, -0.6444, -0.7414, -0.7484, -0.7484, -0.7484, -0.7334, -0.7494, -0.7344, -0.7344, -0.7274, -0.7274, -0.7274, -0.7134, -0.6764],
-    wrist: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.06, 0.06, 0.06, 0.075, 0.112, 0.112, 0.142, 0.142, 0.142, 0.142, 0.179, 0.216],
-  },
-};
-/** knot 线性插值;φ=k×2.5° 恰落第 k 个 knot(标定时单点解耦)。 */
+/** 固定手掌的食指路径：仅食指的屈曲、轴向旋转和掌骨关节参与。
+ *  左右 MANO 资产与 home 姿严格镜像，因此共用作者空间曲线。
+ *  旧曲线借整手腕转补可达范围，会带动未参与手指；已由 2026-11-16 规格替代。
+ *  起拨 U8 / U6，全程留在同一实体贴纸，准备和释放另由 TOP_PUSH 编排。 */
+const TOP_PUSH_FOLLOW = { R: UPPER_U_INDEX_FOLLOW, L: UPPER_U_INDEX_FOLLOW };
+function carriedThumbWeight(winding: number, layerAngle: number): number {
+  const sweep = Math.abs(Math.sin(2 * layerAngle));
+  return Math.sign(winding) * THREE.MathUtils.smoothstep(sweep, 0, .55);
+}
+
+/** Uniform angular knots from the start to the end of the quarter turn. */
 function followAt(arr: number[], phi: number): number {
   const t = Math.min(1, phi / HALF_PI) * (arr.length - 1);
   const i = Math.min(arr.length - 2, Math.floor(t));
-  return arr[i] + (arr[i + 1] - arr[i]) * (t - i);
+  const u = t - i, start = arr[i], end = arr[i + 1];
+  // A cubic B-spline joins neighbouring fitted slopes continuously. Linear
+  // extrapolation beyond the end knots keeps both calibrated endpoints exact.
+  const left = i > 0 ? arr[i - 1] - 2 * start + end : 0;
+  const right = i + 2 < arr.length ? start - 2 * end + arr[i + 2] : 0;
+  return start + (end - start) * u + ((1 - u) ** 3 * left + u ** 3 * right) / 6;
 }
 const REACH_MS = 200;
+const FRONT_INDEX_LIFT_MS = 58;
+
+function advanceFrontIndexReach(progress: number, elapsed: number): number {
+  // The calibrated lift occupies only the first 12% of this path. Give it
+  // time to clear the back edge before the normal-speed approach begins.
+  const liftEnd = TOP_PUSH.liftIn;
+  const time = progress <= liftEnd ? progress * FRONT_INDEX_LIFT_MS / liftEnd
+    : FRONT_INDEX_LIFT_MS + (progress - liftEnd) * REACH_MS;
+  const next = time + elapsed;
+  return next <= FRONT_INDEX_LIFT_MS ? next * liftEnd / FRONT_INDEX_LIFT_MS
+    : liftEnd + (next - FRONT_INDEX_LIFT_MS) / REACH_MS;
+}
+// Spread the extra approach time over the lift and the start of the sweep.
+// Integrating a linearly decreasing delay gives the same speed on both
+// sides of the join. Invert that clock for forward and cancelled reaches.
+function advanceFrontApproach(progress: number, elapsed: number): number {
+  const join = .38, extraMs = 90;
+  const duration = FRONT_INDEX_LIFT_MS + (1 - TOP_PUSH.liftIn) * REACH_MS;
+  const sweepMs = duration - extraMs;
+  const remaining = Math.max(0, 1 - progress / join);
+  const time = progress * sweepMs + extraMs * (1 - remaining * remaining) + elapsed;
+  if (time <= 0) return 0;
+  if (time >= join * sweepMs + extraMs) return (time - extraMs) / sweepMs;
+  const slope = sweepMs + 2 * extraMs / join;
+  return 2 * time / (slope + Math.sqrt(slope * slope - 4 * extraMs * time / (join * join)));
+}
 /** topPush 释放进度(0=按压跟随,1=完全弹离);t = |未钳制层角|。 */
 function topPushRelease(t: number): number {
   const x = Math.min(1, Math.max(0, (t - TOP_PUSH.releaseAt) / TOP_PUSH.releaseLen));
+  return x * x * (3 - 2 * x);
+}
+
+function topPushReleaseLift(t: number, liftEnd = TOP_PUSH.releaseLiftEnd, liftStart = 0): number {
+  const x = Math.min(1, Math.max(0, (t - TOP_PUSH.releaseAt - TOP_PUSH.releaseLen * liftStart)
+    / (TOP_PUSH.releaseLen * (liftEnd - liftStart))));
   return x * x * (3 - 2 * x);
 }
 /**
@@ -595,17 +696,6 @@ const WELD_PIN_TRANSIT = { c1: -0.1125, c2: -0.1781, c3: 0, splay: -0.145 };
  *  同节奏进退。 */
 const WELD_PIN_MID_TUCK = -0.2;
 
-/** D 族接触勾拨的拇指避让:D/D' 前 ~40° D 层 F 面材料扫过拇指下缘扇区
- *  (y<−32 的拇指肉半径 ~110U < 角柱扫掠 135.8U,零跟随 oracle 实测 pen
- *  −7.8@θ=0.35)。旧方案 = 整手外让 44U,接触规格下弹指手不能让 → 改拇指
- *  自己抬避(沿 F 面切向安全)。进度 = sm(min(1,|层角|/0.12)),decay 同乘
- *  回位;窗口过后(θ>0.8)保持避让姿到 drop(斜落回反而重穿窗口)。
- *  数值浏览器标定,两手各一套。 */
-const THUMB_EVADE_D: Record<HandSide, { c1: number; c2: number; c3: number; splay: number }> = {
-  R: { c1: 0, c2: -0.08, c3: 0, splay: -0.2 },
-  L: { c1: 0, c2: -0.08, c3: 0, splay: 0.2 },
-};
-
 /** B 族接触背钩的静止指避让:home 指列(中指/无名指)贴着 B 面 2.7U 停靠,而
  *  backHook 转的就是 B 层 —— 层角 45° 附近方形角部伸出至 √2 半宽(比面多 ~40U),
  *  会扫中静止指腹(oracle 密采样 2026-07-08 现形,粗采样一直漏)。弹指手无 dodge
@@ -627,21 +717,12 @@ const HOOK_INDEX_EVADE: Record<HandSide, { c1: number; c2: number; c3: number; s
   L: { c1: -0.07, c2: -0.04, c3: 0, splay: 0 },
 };
 
-/** D 族(y.low)静止手单指避让(2026-07-09 总原则迁移,替代旧
- *  DODGE_MAG.y.low=44 整手平移):home 静止手上,① 无名指腹贴 B 面下部
- *  (BDL/BDR 角)正处 D 层扫掠带,沿 B 面外法线(−z)微伸离面(基节伸展,
- *  同 BACK_EVADE 方向学;实测指尖 Δ≈(−4,+2,−13)U,主向 −z);② 拇指
- *  末节下缘肉被 D 层角柱(135.8U)犁到,拇指绕根节甩出 F 面(实测指尖
- *  Δ≈(−16,−29,+34)U,径向 137.6→174.9U;数值 = THUMB_EVADE_D 同款 ——
- *  D 族期间两手拇指做同一个避让动作,视觉统一;splay 符号两手镜像已烘入,
- *  applyHand 不再 ×sideSign)。时序同 HOOK_INDEX_EVADE:目标 =
- *  min(1,|层角|/0.09) 即时跟升,drop 后 RECOVER_MS 回落
- *  (HandState.lowEvade,tick 推进)。全顶点冻结扫余量:静止手拇指/无名指
- *  最近点均 ≥5.3U(兜真实播放 ±2.2U 呼吸浮动);真实播放 D/D' 零穿模、
- *  D2' 仅回撤 0.49U 单帧瞬态(≪ 既有 −2.9U 基线)。 */
-const LOW_EVADE: Record<HandSide, { ring: { c1: number; c2: number; c3: number; splay: number }; thumb: { c1: number; c2: number; c3: number; splay: number } }> = {
-  R: { ring: { c1: -0.05, c2: -0.03, c3: 0, splay: 0 }, thumb: { c1: 0, c2: -0.08, c3: 0, splay: -0.2 } },
-  L: { ring: { c1: -0.05, c2: -0.03, c3: 0, splay: 0 }, thumb: { c1: 0, c2: -0.08, c3: 0, splay: 0.2 } },
+/** D 族(y.low)静止手无名指沿 B 面外法线微伸离面。
+ *  2026-11-16:双手拇指固定，取消旧拇指甩出，home 保持 L:F3 / R:F5。
+ *  时序同 HOOK_INDEX_EVADE，drop 后 RECOVER_MS 回落。 */
+const LOW_EVADE: Record<HandSide, { ring: { c1: number; c2: number; c3: number; splay: number } }> = {
+  R: { ring: { c1: -0.05, c2: -0.03, c3: 0, splay: 0 } },
+  L: { ring: { c1: -0.05, c2: -0.03, c3: 0, splay: 0 } },
 };
 
 /** E 族(y.mid)双手单指避让(2026-07-09 总原则迁移,替代旧
@@ -652,14 +733,14 @@ const LOW_EVADE: Record<HandSide, { ring: { c1: number; c2: number; c3: number; 
  *  ② 双手中指末节肉(骑 BR/BL 棱中部 y≈0)被犁 6.0~7.5U(θ 窗口与拇指
  *  互补);③ 弹指手无名指自身的 legacy 勾弯扫掠(标定于旧整手 dodge=62 之下)
  *  中段/回撤探进 E 带 4.3~4.8U。避让方向全为贴面外法线:拇指绕根节甩出
- *  F 面(+z,数值 = THUMB_EVADE_D 同款,与 D 族视觉统一);中指/无名指沿
+ *  F 面(+z,沿用旧 D 拇指避让参数；D 本身现已取消避让);中指/无名指沿
  *  B 面外法线(−z)基节伸展离面。旧注释「E 犁拇指整块肉,关节动作无解」
  *  实测不成立 —— 主犯全是末节单指肉,甩出/离面即清。时序同
  *  HOOK_INDEX_EVADE:目标 = min(1,|层角|/0.09) 即时跟升,drop 后
  *  RECOVER_MS 回落(HandState.midEvade,tick 推进;driveGesture 写**两手**
  *  目标)。splay 两手镜像符号已烘入表内,applyHand 不 ×sideSign。
- *  标定实测(E' 冻结 0.8):拇指尖 Δ≈(±16,−30,+33)U 径向 138→174U(与
- *  THUMB_EVADE_D 同款数值,D/E 两族拇指动作视觉统一);中指尖
+ *  标定实测(E' 冻结 0.8):拇指尖 Δ≈(±16,−30,+33)U 径向 138→174U
+ *  (沿用旧 D 拇指避让数值);中指尖
  *  Δ≈(±4,+4,−16)U 主向 −z;弹指无名指尖 Δ≈(+4,+2,−16)U。避让后全顶点
  *  冻结扫余量:中指 ≥4.4U、拇指 >6U、弹指无名指 ≥4.9U(0.94° 细扫全程
  *  零穿模,decay 0);真实播放 E/E'/E2/E2' 及混序全零。 */
@@ -705,7 +786,7 @@ const B_EVADE: Record<HandSide, { index: { c1: number; c2: number; c3: number; s
  *  被蹭 0.7~2.4U。home 握手全程干净(贴 B/F 面的指肉都在 F 带外)——
  *  旧整手让 10U 是为 up/down 握持兜底的保险。避让方向 = 该指所贴面的外
  *  法线,且全部复用既有单指动作(关节空间随握姿旋转,方向自动跟面):
- *  拇指 = THUMB_EVADE_D 同款甩出(up 握下 = 甩离 U 面,D/E/F 三族拇指
+ *  拇指沿用旧 D 族甩出参数(up 握下 = 甩离 U 面,E/F 两族拇指
  *  同一动作);食指 = HOOK_INDEX_EVADE 同款基节伸展(down 握下 = 离 U 面,
  *  U/B/F 三族同一动作);无名指 = LOW_EVADE.ring 同款(up 握下 = 离 D 面,
  *  幅度按 5.4U 裸穿加深到 c1:-0.07/c2:-0.04)。施加按握姿选指(applyHand:
@@ -737,8 +818,8 @@ const GRIP_Q_DOWN = gripQuat("down");
  *  径向 ~119U < 角柱 135.8U)被犁 9.2~11.2U;② 静止手中指末节肉(up 握下
  *  骑 D 面下缘 (±64..66,∓107,±15..19))被犁 5.9~7.3U(弹指中指自己扫开,
  *  不中);down 握 y/z 镜像同值。避让全部复用既有单指动作(关节空间随握姿
- *  旋转,方向自动跟该指所贴面的外法线):拇指 = THUMB_EVADE_D 同款甩出
- *  (D/E/F/S 四族拇指同一动作);中指 = MID_EVADE.middle 同款基节伸展
+ *  旋转,方向自动跟该指所贴面的外法线):拇指沿用旧 D 族甩出参数
+ *  (E/F/S 三族拇指同一动作);中指 = MID_EVADE.middle 同款基节伸展
  *  (E/B/S 统一,up 握下 = 离 D 面甩出扫掠半径)。施加按握姿选指
  *  (applyHand:up/down = 拇指+中指,home 与非标准握不动),两手都写目标
  *  (受害不分弹指手,driveGesture)。时序同 HOOK_INDEX_EVADE:目标 =
@@ -781,7 +862,9 @@ const RETREAT_LIFT_STYLED: Record<HandSide, Partial<Record<string, { c1: number;
     // 0.02 步 + 尾段 0.005~0.05 + 攻窗 0.88~1):worstSingle 0.05 /
     // worstDouble 0.53(k≈0.01 首指尾段,同 L 侧 0.39 的同族残差)。
     hook_index: { c1: -0.572, c2: 0.409, c3: 0.289, splay: 0.295 },
-    hook_middle2: { c1: -0.132, c2: 0.232, c3: 0.701, splay: 1.419 },
+    // 连拨食指从抬离后的退场姿归位；中指收窄侧摆，避开无名指和小指。
+    hook_indexRelay: { c1: -.55, c2: .55, c3: .289, splay: -.225 },
+    hook_middle2: { c1: -.454, c2: .232, c3: .701, splay: -.339 },
     // F/F2 左中右下(§4.3)2026-07-25:downPush 两键 MANO 重解后端姿换盆地,
     // 默认 RETREAT_LIFT 在退场中段把食指/中指插回 F 层 23~32U;单拨 F + 连拨 F2
     // 两路径联解 + 细网格精修(worstSingle 0.02 / worstDouble 0.26)。
@@ -811,7 +894,9 @@ const RETREAT_LIFT_STYLED: Record<HandSide, Partial<Record<string, { c1: number;
     // 全在 ≤0.5U 瞬态带内。注意**「凸包 splay 两手同号为正」是 generic 时代的
     // 结论,MANO 上不成立** —— L 侧 hook_index 解到 −0.324(端姿换了盆地)。
     hook_index: { c1: -0.71, c2: 0.622, c3: 0, splay: -0.324 },
-    hook_middle2: { c1: -0.2, c2: -0.04, c3: 0.02, splay: 0.4 },
+    // 左手的回撤弧单独标定，避免食指内侧扫过中指指甲。
+    hook_indexRelay: { c1: -.54, c2: .53, c3: 0, splay: .22 },
+    hook_middle2: { c1: -.397, c2: -.04, c3: .02, splay: .307 },
     // D(单拨无名指)2026-07-25:同 R 侧 hook_ring 键,基节伸展 + 甩离
     // (全 k 网格 worst −0.29)。
     hook_ring: { c1: -0.175, c2: 0, c3: 0, splay: 0.325 },
@@ -827,18 +912,9 @@ const RETREAT_LIFT_STYLED: Record<HandSide, Partial<Record<string, { c1: number;
   },
 };
 
-/** U2 连拨首指退场(FINGERTRICKS §4.2):第一个 U 做完食指紧贴角 M(初始
- *  UBR 角块已转到 URF,指尖停其 R 面贴纸);第二个 U 开始的**前 20%**
- *  (sRaw2 ∈ [0,HOOK_EXIT_IN])内食指快速离开角 M,此后保持退场姿给接力
- *  中指让位,U2 提交后与次指一起归 home(见 RETREAT_LIFT_STYLED)。幅度
- *  下限是物理的:贴 M 的任何姿态都在角柱扫掠环带内(半径 ~117 < 96√2),
- *  Q2 中后段(φ≈0.68-1.27)下一个角柱必扫过原地,「+x 一小段(17U)」清不掉
- *  (r2 复测 11.8U)—— 2026-07-09 r3 按「Q2 全程全顶点 pen ≤0 + 最小幅度
- *  正则」重解,指尖 Δ≈(+38,−21,+21) 甩出扫掠环带(radius ~178),观感 =
- *  拨完向右前下方的自然 follow-through。判据:Q2 全程食指 pen ≤ −1U。 */
-const HOOK_EXIT = { c1: 0.139, c2: 0.225, c3: -0.016, splay: -0.1 };
-/** HOOK_EXIT 渐入窗口:Q2 前 20% 内退场到位(连续 180° 层转无时间间隙,
- *  「先退再接」折衷为「极早期快退」)。 */
+/** U2 首指退场：指根稍向外让开，中节和末节舒展，让中指沿原轨迹拨层。侧展按手镜像。 */
+const HOOK_EXIT = { c1: .4, c2: -.32, c3: -.22, splay: .25, window: .125 };
+/** B2 背钩仍在第二段的前 20% 内完成退场。 */
 const HOOK_EXIT_IN = 0.2;
 
 /** B2/B2' 连拨首指退场(HOOK_EXIT 的 backHook 版):backHook Q1 做完食指
@@ -856,16 +932,16 @@ const BACK_EXIT: Record<HandSide, { c1: number; c2: number; c3: number; splay: n
   L: { c1: -0.232, c2: -0.064, c3: 0.006, splay: -0.016 },
 };
 
-/** F2(左中右下,§4.3)连拨首指退场(HOOK_EXIT 的 downPush 版,downPush 只在
- *  R 手发生所以不分手表)。2026-07-25 MANO 重解 downPush_index 后暴露:Q1 做完
+/** F2 / F2'(§4.3)连拨首指退场(HOOK_EXIT 的 downPush 版,参数按右手定义,
+ *  左手复用并镜像 splay)。2026-07-25 MANO 重解 downPush_index 后暴露:Q1 做完
  *  食指停在 F 层前上缘,Q2 中后段(φ≈1.0-1.4)下一个角柱扫过原地 —— 冻结细扫
  *  实测 21.7U(generic 时代靠端姿本身在带外侥幸避开,fit 换盆地后失效)。同
  *  HOOK_EXIT_IN 窗口内退场,判据 = Q2 全程食指全顶点 pen ≤0 + 最小幅度正则。
  *  解:Q2 全程 pen ≤ −1.93,指尖 Δ≈(+30,−31,−8)= 拨完向右前下方的自然收势。 */
 const DOWN_EXIT = { c1: 0.1, c2: 0.1, c3: 0, splay: -0.05 };
 
-/** 左中右下 F 族「食指下拨」(FINGERTRICKS §4.3):食指尖起手压 U 面 UFR 区,
- *  随 F 层角前卷(×φ/90°)把初始 UFR 往前下带;F2 次指中指 Q1 前探 UF 缘接力。
+/** F 层「食指下拨」(FINGERTRICKS §4.3):右手从 U8 / 左手从 U6 起拨,
+ *  随 F 层角前卷;半转时次指中指 Q1 前探 UF 缘接力。参数按右手定义,左手镜像。
  *  数值浏览器标定。 */
 const DOWN_PUSH = {
   c1: 0.5, c2: 0.35, c3: 0.25, splay: 0, // 回退默认(实际走 HOOK_FOLLOW.downPush_*)
@@ -913,6 +989,11 @@ const UP_PUSH = {
 
 interface HandState {
   model: HandModel;
+  halfPalm: HalfPalmPose;
+  idleBlend: number;
+  skinStroke: SkinStroke;
+  halfThumbReturn: number;
+  halfSeatRelease?: { source: number; layerAngle: number };
   home: HandPose;
   /** 独立前臂(肘锚固定,每帧 IK 指向手腕 —— 腕转时肘不绕魔方公转)。
    *  @4 融合资产下为 null:前臂已缝在手网格里,由 model.forearm.bone 驱动
@@ -923,23 +1004,35 @@ interface HandState {
   armBindFrameInv: THREE.Quaternion | null;
   /** 肘锚点(rig 局部,画面外下方)。 */
   elbow: THREE.Vector3;
+  forearmAim: THREE.Vector3;
+  virtualShoulder: THREE.Vector3;
+  forearmRotation: ForearmRotation;
+  virtualRoll: number;
+  appliedForearmRoll: number;
+  appliedArmWeight: number;
+  regripArmWeight: number;
+  wristBend: number;
   /** 持久握姿基座(weld 提交烘入 / 换握记号设定);identity = home 握。 */
   grip: THREE.Quaternion;
+  gripAngle: number;
+  recoverWristAngle: number;
   /** weld 进行中:跟随的轴;null = 未 weld。 */
   weldAxis: Axis | null;
   weldAngle: number;
   /** weld 的未压缩层角(提交烘入判定用;flick 借力通道恒 0,不烘)。 */
   weldRawAngle: number;
-  /** true = 本次 weld 是整体转体(不软钳制、不烘 grip,weldAngle 已含 90° 踏移)。 */
+  /** true = 本次 weld 是整体转体(同步层角、提交后依次回握)。 */
   weldWhole: boolean;
   /** drop 后的回位:从该四元数 slerp 回 identity。 */
   recoverQuat: THREE.Quaternion;
   recoverT: number; // 0..1,1=已回位
   /** flick 残留(手指偏移随时间衰减)。 */
+  strokeLayers: readonly number[];
   flickFinger: FingerName | null;
   /** 连拨次指(180° 接力,FINGERTRICKS §4.1);decay 期间保留(两指一起恢复)。 */
   flickFinger2: FingerName | null;
   flickAxis: Axis | null; // 弹指所属轴(决定扫法:y=勾弯横拉,x/z=竖扫);decay 期间保留
+  flickLayer: LayerClass | null; // 区分 F/F′ 的 U8/U6 与 S/S′ 的 U5/U3；准备和收指期间也保留
   flickStyle: FlickStyle | null; // 特殊扫法(FINGERTRICKS.md);decay 期间保留
   flickAmount: number; // 当前手指扫角(rad,随层角;连拨/接触样式存未钳制原角)
   flickDecay: number;  // drop 后残留衰减
@@ -951,16 +1044,11 @@ interface HandState {
   pinFinger: FingerName | null;
   pinReachT: number;
   pinReachTarget: 0 | 1;
-  /** 转层外让:0..1 进度(目标值是层角纯函数,零延迟同步;回落 RECOVER_MS
-   *  衰减)× dodgeMag = 整手沿本侧外向 x 平移量。 */
-  dodge: number;
-  dodgeTarget: number;
-  dodgeMag: number;
-  /** U 族静止手食指单指避让:0..1 进度,时序语义同 dodge(即时跟升 /
+  /** U 族静止手食指避让（即时跟升 /
    *  RECOVER_MS 回落)× HOOK_INDEX_EVADE = 食指离面姿态偏移。 */
   indexEvade: number;
   indexEvadeTarget: number;
-  /** D 族静止手「无名指 + 拇指」单指避让:同 indexEvade 时序 × LOW_EVADE。 */
+  /** D 族静止手无名指避让:同 indexEvade 时序 × LOW_EVADE。 */
   lowEvade: number;
   lowEvadeTarget: number;
   /** E 族双手「拇指 + 中指(+ 弹指无名指)」单指避让:同上时序 × MID_EVADE。 */
@@ -995,6 +1083,41 @@ function disposeHandModel(model: HandModel): void {
 
 export default class HandsRig extends THREE.Group {
   private diagnosticListeners = new Set<(frame: HandDiagnosticFrame) => void>();
+  private ruPreparation: 'preparing' | 'turning' | 'held' | null = null;
+  private markedMotion: MarkedFingerMotion | null = null;
+  private supportTransition: { motion: MarkedFingerMotion; rightTurnRadians: number; releasing: boolean } | null = null;
+  private readonly fourContacts = new WeakMap<HandModel, FourLayerContact>();
+  private fourSeat: (FourLayerStroke & { gesture: HandGesture; progress: number }) | null = null;
+
+  private seatFour(axis: Axis, layers: readonly number[], dir: number, gesture: HandGesture) {
+    const seat = this.fourSeat;
+    if (seat && seat.axis === axis && sameLayers(seat.layers, layers) && seat.dir === dir && !seat.returning) {
+      seat.gesture = gesture;
+      return seat;
+    }
+    this.fourSeat = { axis, layers, dir, gesture, progress: 0, angle: 0, returning: false };
+    return this.fourSeat;
+  }
+
+  private captureFourHome(): void {
+    if (this.cube?.order !== 4 || !this.hands) return;
+    for (const side of ['R', 'L'] as const) {
+      const { model } = this.hands[side];
+      if (this.fourContacts.has(model)) continue;
+      this.applyHand(side, false);
+      const mesh = model.meshes.find(m => (m as THREE.SkinnedMesh).isSkinnedMesh) as THREE.SkinnedMesh | undefined;
+      if (mesh) this.fourContacts.set(model, new FourLayerContact(model, mesh));
+    }
+  }
+
+  private wideSupport: WideSupport | null = null;
+  private markedProblem: 'unsupported-grip' | 'invalid-start' | null = null;
+  getMarkedMotionProblem(): 'unsupported-grip' | 'invalid-start' | null { return this.markedProblem; }
+
+  private releaseRUPreparation(): void {
+    if (this.ruPreparation && this.hands) this.hands.R.reachTarget = 0;
+    this.ruPreparation = null;
+  }
 
   subscribeDiagnostics(listener: (frame: HandDiagnosticFrame) => void): () => void {
     this.diagnosticListeners.add(listener);
@@ -1007,20 +1130,32 @@ export default class HandsRig extends THREE.Group {
     const state = (side: HandSide): HandDiagnosticFrame['hands'][HandSide] => {
       const h = hands[side];
       return {
-        phase: this.regripFlag && h.recoverT < 1 ? 'regripping'
+        phase: this.markedMotion?.retreating ? 'returning' : this.markedMotion?.preparing ? 'preparing'
+          : this.regripFlag && h.recoverT < 1 ? 'regripping'
           : h.flickDecay > 0 || (h.reachT > 0 && h.reachTarget === 0) || h.recoverT < 1 ? 'returning'
-          : h.reachTarget > h.reachT || h.pinReachTarget > h.pinReachT ? 'preparing'
+          : h.reachTarget > h.reachT || h.pinReachTarget > h.pinReachT || side === 'R' && this.supportTransition?.motion.preparingPinch ? 'preparing'
           : h.weldAxis || (this.active?.gesture?.kind === 'flick' && this.active.gesture.hand === side) ? 'turning'
           : 'stable',
         grip: h.grip.toArray(), position: h.model.group.position.toArray(),
-        quaternion: h.model.group.quaternion.toArray(), flickAngle: h.flickAmount, decay: h.flickDecay,
+        quaternion: h.model.group.quaternion.toArray(),
+        wristAngle: this.currentWristAngle(h), forearmRoll: h.appliedForearmRoll,
+        elbowPosition: h.forearmAim.toArray(), wristBend: h.wristBend,
+        finalPose: event === 'frame' ? measureFinalHandPose(h.model, h.virtualRoll,
+          this.body?.visible ? this.body.measureArm(side) : null) : undefined,
+        forearmQuaternion: (h.model.forearm?.bone.quaternion ?? h.forearm?.quaternion)?.toArray() ?? null,
+        flickAngle: h.flickAmount, decay: h.flickDecay,
       };
     };
     const frame: HandDiagnosticFrame = {
       atMs: performance.now(), event, gripRequest, preparedGesture, grips: this.gripNames(),
       hands: { R: state('R'), L: state('L') },
-      active: this.active ? { axis: this.active.axis, cls: this.active.cls,
+      active: this.active ? { axis: this.active.axis, cls: this.active.cls, layers: this.active.layers,
         angle: this.active.lastAngle, gesture: this.active.gesture } : null,
+      wideSupport: this.wideSupport ? { hand: this.wideSupport.hand, fingers: this.wideSupport.anchors,
+        shift: this.wideSupport.shift.toArray(), progress: this.wideSupport.progress } : undefined,
+      marked: this.markedMotion ? { profile: this.markedMotion.plan.profile.id, hand: this.markedMotion.plan.hand,
+        finger: this.markedMotion.plan.profile.finger, contact: this.markedMotion.contact,
+        preparing: this.markedMotion.preparing, returning: this.markedMotion.retreating } : undefined,
       models: { R: hands.R.model, L: hands.L.model },
     };
     for (const listener of this.diagnosticListeners) {
@@ -1036,6 +1171,7 @@ export default class HandsRig extends THREE.Group {
   private readonly loadListeners = new Set<() => void>();
   private loadState: HandsLoadState = { hands: 'loading', body: 'idle' };
   private readonly pendingGrips = { R: new THREE.Quaternion(), L: new THREE.Quaternion() };
+  private readonly pendingWristAngles = { R: 0, L: 0 };
 
   getLoadState = (): HandsLoadState => this.loadState;
   subscribeLoadState = (listener: () => void): (() => void) => {
@@ -1083,11 +1219,13 @@ export default class HandsRig extends THREE.Group {
   private lastActivityAt = 0;
   private idleClock = 0;
   private regripFlag = false;
+  private leftRelaySeat: { original: GripName; wristAngle: number; returning: boolean } | null = null;
+  private wholeRegrip = false;
 
   /** 当前手势(某一轴上活动层的手势);null = 静止。dir=0 表示方向未提交;
    *  lastAngle 用于识别「同轴同类连发」(U 接 U:角度从 ~π/2 跳回 ~0);
-   *  quarters = 整体转体已踏移的 90° 数(带迟滞,driveGesture 维护)。 */
-  private active: { axis: Axis; cls: LayerClass; dir: 0 | 1 | -1; gesture: HandGesture | null; lastAngle: number; quarters: number } | null = null;
+   *  lastAngle 保存本帧层角。 */
+  private active: { axis: Axis; cls: LayerClass; layers: readonly number[]; dir: 0 | 1 | -1; gesture: HandGesture | null; halfTurn?: boolean; lastAngle: number } | null = null;
 
   constructor() {
     super();
@@ -1218,13 +1356,18 @@ export default class HandsRig extends THREE.Group {
       const back = new THREE.Vector3(-1, 0, 0).applyQuaternion(home.quat);
       return wrist.addScaledVector(back, SIZE * 7.5 * HAND_SCALE);
     };
-    const homeR = homeRight();
-    const homeL = homeLeft();
+    const homeR = homeRight(this.cube?.order);
+    const homeL = homeLeft(this.cube?.order);
     this.hands = {
       R: this.initHandState(right, homeR, rArm ? rArm.group : null, elbowAnchor(homeR)),
       L: this.initHandState(left, homeL, lArm ? lArm.group : null, elbowAnchor(homeL)),
     };
-    this.setGrips(this.pendingGrips.R, this.pendingGrips.L);
+    for (const side of ['R', 'L'] as const) {
+      this.applyHand(side, false);
+      this.hands[side].halfPalm.contactSkin.captureGripKnuckles(side === 'L');
+    }
+    this.captureFourHome();
+    this.setGrips(this.pendingGrips.R, this.pendingGrips.L, this.pendingWristAngles);
     for (const s of ["R", "L"] as const) {
       for (const m of this.hands[s].model.meshes) m.layers.enable(1);
     }
@@ -1265,6 +1408,10 @@ export default class HandsRig extends THREE.Group {
    *  缺失时保留手模并提供重试。依赖手模就位(unitScale / 傀儡常量预算 /
    *  home 放置),手未加载完时由 initAsync 尾部回放。 */
   setFullBody(want: boolean): void {
+    if (this.bodyWanted !== want && this.hands) {
+      for (const hand of Object.values(this.hands)) hand.forearmRotation.reset();
+      this.body?.resetPlacement();
+    }
     this.bodyWanted = want;
     if (want) this.ensureBody();
     if (this.body) this.body.visible = want;
@@ -1284,15 +1431,9 @@ export default class HandsRig extends THREE.Group {
         const hands = this.hands;
         if (this.disposed || !hands) { this.bodyLoading = false; return; }
         const body = new SmplxBody(data, { R: hands.R.model, L: hands.L.model }, this.skinMat);
-        // home 姿一次放置:两侧肘目标 = home 腕点 + 前臂轴向 × 身体前臂长
-        const elbowTarget = (side: HandSide): THREE.Vector3 => {
-          const h = hands[side];
-          const wrist = WRIST_LOCAL.clone().applyQuaternion(h.home.quat).add(h.home.pos);
-          const dir = h.elbow.clone().sub(wrist).normalize();
-          return wrist.addScaledVector(dir, body.foreLen(side));
-        };
-        const eR = elbowTarget("R"), eL = elbowTarget("L");
-        body.place(eR, eL);
+        const homeWrist = (side: HandSide) => WRIST_LOCAL.clone()
+          .applyQuaternion(hands[side].home.quat).add(hands[side].home.pos);
+        body.placeFromWrists(homeWrist("R"), homeWrist("L"));
         body.mesh.layers.enable(1);
         body.visible = this.bodyWanted;
         this.add(body);
@@ -1363,20 +1504,39 @@ export default class HandsRig extends THREE.Group {
     }
     return {
       model,
+      idleBlend: 0,
+      skinStroke: { index: 0, middle: 0, ring: 0 },
+      halfPalm: new HalfPalmPose(model, FINGER_HINGES, THUMB_HINGES),
       home,
       forearm,
       armBindFrameInv,
       elbow,
+      forearmAim: elbow.clone(),
+      // The aiming pole can be far outside the mesh. Place a virtual shoulder
+      // above and behind a forearm-length elbow, in the same rig frame as home.
+      virtualShoulder: WRIST_LOCAL.clone().applyQuaternion(home.quat).add(home.pos)
+        .addScaledVector(new THREE.Vector3(-1, 0, 0).applyQuaternion(home.quat), .25 * model.unitScale)
+        .addScaledVector(new THREE.Vector3(0, .26, .08), model.unitScale),
+      forearmRotation: new ForearmRotation(), virtualRoll: 0,
+      appliedForearmRoll: 0,
+      appliedArmWeight: 0,
+      regripArmWeight: 0,
+      wristBend: 0,
       grip: new THREE.Quaternion(),
+      gripAngle: 0,
+      recoverWristAngle: 0,
       weldAxis: null,
       weldAngle: 0,
       weldRawAngle: 0,
+      halfThumbReturn: 0,
       weldWhole: false,
       recoverQuat: new THREE.Quaternion(),
       recoverT: 1,
+      strokeLayers: [],
       flickFinger: null,
       flickFinger2: null,
       flickAxis: null,
+      flickLayer: null,
       flickStyle: null,
       flickAmount: 0,
       flickDecay: 0,
@@ -1385,9 +1545,6 @@ export default class HandsRig extends THREE.Group {
       pinFinger: null,
       pinReachT: 0,
       pinReachTarget: 0,
-      dodge: 0,
-      dodgeTarget: 0,
-      dodgeMag: 0,
       indexEvade: 0,
       indexEvadeTarget: 0,
       lowEvade: 0,
@@ -1403,12 +1560,19 @@ export default class HandsRig extends THREE.Group {
     };
   }
 
-  /** rig 只在 3x3 上活动;其它拼图/关开关时传 null。 */
+  /** rig 在标准二至四阶上活动;其它拼图/关开关时传 null。 */
   attachCube(cube: HandsCubeLike | null): void {
     if (this.cube === cube) return;
+    if (this.hands && cube && cube.order !== this.cube?.order) {
+      this.hands.R.home = homeRight(cube.order);
+      this.hands.L.home = homeLeft(cube.order);
+    }
+    this.detachHalfTurnDirection();
     this.cube = cube;
+    if (cube?.twister) cube.twister.halfTurnDirection = this.animatedHalfTurnDirection;
     this.active = null;
     this.resetGrips();
+    this.captureFourHome();
   }
 
   /** 握姿全清回 home(挂/摘 cube 或瞬时跳步前的硬复位)。 */
@@ -1421,11 +1585,22 @@ export default class HandsRig extends THREE.Group {
    * side 缺省 = 双手;单手记号(FINGERTRICKS §2 空格规则)只动指定手。
    * 把「当前显示偏移 ∘ 旧 grip」折算成相对新 grip 的回位余量,切换瞬间画面连续。
    */
-  regrip(name: GripName, only?: HandSide): void {
+  regrip(name: GripName, only?: HandSide, wristAngle = gripWristAngle(name)): void {
+    if (only !== 'R') this.leftRelaySeat = null;
+    if (this.fourSeat) this.fourSeat.returning = true;
+    if (this.wideSupport) this.wideSupport.returning = true;
+    this.supportTransition = null;
+    const halfDirection = name === 'halfDown' ? 'down' : 'up';
+    this.markedMotion = null;
+    this.markedProblem = null;
+    this.releaseRUPreparation();
     const target = gripQuat(name);
     const hands = this.hands;
     if (!hands) {
-      for (const side of only ? [only] : (["R", "L"] as const)) this.pendingGrips[side].copy(target);
+      for (const side of only ? [only] : (["R", "L"] as const)) {
+        this.pendingGrips[side].copy(target);
+        this.pendingWristAngles[side] = wristAngle;
+      }
       return;
     }
     this.settleCompletedGesture();
@@ -1433,21 +1608,33 @@ export default class HandsRig extends THREE.Group {
     let any = false;
     for (const side of only ? [only] : (["R", "L"] as const)) {
       const h = hands[side];
+      const wristStart = this.currentWristAngle(h);
+      h.halfThumbReturn = 0;
+      h.halfSeatRelease = undefined;
+      h.regripArmWeight = h.appliedArmWeight;
       if (h.weldAxis) {
         q.setFromAxisAngle(AXIS_VEC[h.weldAxis], h.weldAngle);
       } else if (h.recoverT < 1) {
-        const t = 1 - Math.pow(1 - h.recoverT, 3);
+        const t = this.recoveryProgress(h.recoverT);
         q.copy(h.recoverQuat).slerp(HandsRig._qIdent, t);
       } else {
         q.identity();
       }
       q.multiply(h.grip).multiply(HandsRig._qTmp2.copy(target).invert());
+      // At exactly 180° both slerp arcs are equally short. A full wrist turn
+      // leaves an equivalent -identity with floating-point residue, which can
+      // select the opposite arc. ↑↑ goes via up (R2 / L′2), ↓↓ via down.
+      if ((name === 'half' || name === 'halfDown') && Math.abs(q.w) < 1e-8 && Math.hypot(q.y, q.z) < 1e-8) {
+        q.set(halfDirection === 'down' ? -1 : 1, 0, 0, 0);
+      }
       h.grip.copy(target);
+      h.gripAngle = wristAngle;
+      h.recoverWristAngle = wristStart - h.gripAngle;
       h.weldAxis = null;
       h.weldAngle = 0;
       h.weldRawAngle = 0;
       h.weldWhole = false;
-      if (q.angleTo(HandsRig._qIdent) < 0.01) {
+      if (q.angleTo(HandsRig._qIdent) < 0.01 && Math.abs(h.recoverWristAngle) < 0.01) {
         h.recoverT = 1; // 已在目标握姿,免 300ms 空转(播放循环靠 isRegripping 闸步)
         continue;
       }
@@ -1456,15 +1643,27 @@ export default class HandsRig extends THREE.Group {
       any = true;
     }
     if (any) {
+      this.wholeRegrip = false;
       this.regripFlag = true;
       this.lastActivityAt = performance.now();
     }
-    this.emitDiagnostic('grip-request', { name, sides: only ? [only] : ['R', 'L'] });
+    this.emitDiagnostic('grip-request', { name, sides: only ? [only] : ['R', 'L'], ...((name === 'half' || name === 'halfDown') ? { halfDirection } : {}) });
   }
 
   /** 瞬时设定两手握姿基座(跳步 / 拖进度条的静态摆位,配 simulateGrips)。 */
-  setGrips(qR: THREE.Quaternion, qL: THREE.Quaternion): void {
+  setGrips(qR: THREE.Quaternion, qL: THREE.Quaternion, wristAngles?: Record<HandSide, number>): void {
+    this.fourSeat = null;
+    this.wideSupport = null;
+    this.supportTransition = null;
+    this.body?.resetPlacement();
+    this.wholeRegrip = false;
+    this.markedMotion = null;
+    this.markedProblem = null;
+    this.ruPreparation = null;
     this.emitDiagnostic('reset');
+    this.leftRelaySeat = null;
+    this.pendingWristAngles.R = wristAngles?.R ?? wristAngleOf(qR);
+    this.pendingWristAngles.L = wristAngles?.L ?? wristAngleOf(qL);
     this.pendingGrips.R.copy(qR);
     this.pendingGrips.L.copy(qL);
     this.active = null;
@@ -1478,6 +1677,15 @@ export default class HandsRig extends THREE.Group {
     for (const side of ["R", "L"] as const) {
       const h = hands[side];
       h.recoverT = 1;
+      h.forearmRotation.reset();
+      this.settledHalf[side] = null;
+      h.gripAngle = this.pendingWristAngles[side];
+      h.strokeLayers = [];
+      h.halfThumbReturn = 0;
+      h.halfSeatRelease = undefined;
+      h.recoverWristAngle = 0;
+      h.appliedArmWeight = halfGripWeight(2 * Math.acos(Math.min(1, Math.abs(h.grip.w))));
+      h.regripArmWeight = h.appliedArmWeight;
       h.weldAxis = null;
       h.weldAngle = 0;
       h.weldRawAngle = 0;
@@ -1485,6 +1693,7 @@ export default class HandsRig extends THREE.Group {
       h.flickFinger = null;
       h.flickFinger2 = null;
       h.flickAxis = null;
+      h.flickLayer = null;
       h.flickStyle = null;
       h.flickAmount = 0;
       h.flickDecay = 0;
@@ -1493,8 +1702,6 @@ export default class HandsRig extends THREE.Group {
       h.pinFinger = null;
       h.pinReachT = 0;
       h.pinReachTarget = 0;
-      h.dodge = 0;
-      h.dodgeTarget = 0;
       h.indexEvade = 0;
       h.indexEvadeTarget = 0;
       h.lowEvade = 0;
@@ -1525,37 +1732,74 @@ export default class HandsRig extends THREE.Group {
     this.active = null;
   }
 
+  /** Called after the cube unlocks. Its last layer can already be baked
+   * while the hand rig still has the last displayed pose. */
+  waitForRegrip(): boolean {
+    this.settleCompletedGesture();
+    return this.isRegripping || this.isReachRetreating;
+  }
+
   /** 转前提示(prepareTwist 登记,tick 建手势时按 (axis,cls,dir) 匹配消费):
    *  quarters ≥2 才连拨、push = U'p 推法。3s 过期防陈旧提示污染后续拖拽。 */
-  private pendingHint: { axis: Axis; cls: LayerClass; dir: 1 | -1; quarters: number; push: boolean; at: number } | null = null;
+  private pendingHint: { axis: Axis; cls: LayerClass; layers: readonly number[]; dir: 1 | -1; quarters: number; push: boolean; nail: boolean; explicit: boolean; indexHook: boolean; at: number } | null = null;
 
-  private takeHint(axis: Axis, cls: LayerClass, dir: 1 | -1): TwistHint | undefined {
+  private takeHint(axis: Axis, cls: LayerClass, layers: number[], dir: 1 | -1): TwistHint | undefined {
     const hint = this.pendingHint;
     if (!hint || performance.now() - hint.at > 3000) return undefined;
-    if (hint.axis !== axis || hint.cls !== cls || hint.dir !== dir) return undefined;
+    if (hint.axis !== axis || hint.cls !== cls || !sameLayers(hint.layers, layers) || hint.dir !== dir) return undefined;
     this.pendingHint = null;
-    return { quarters: hint.quarters, push: hint.push };
+    return { quarters: hint.quarters, push: hint.push, nail: hint.nail };
   }
 
   /** 两手握姿名判读(grip 是精确四分转积,阈值只兜浮点;非标准积 = null)。 */
   private gripNames(): HandGripNames {
     const hands = this.hands;
-    const nameOf = (q: THREE.Quaternion): GripName | null => {
+    const nameOf = (h: HandState): GripName | null => {
+      const q = h.grip;
       if (q.angleTo(HandsRig._qIdent) < 0.01) return "home";
       if (q.angleTo(gripQuat("up")) < 0.01) return "up";
       if (q.angleTo(gripQuat("down")) < 0.01) return "down";
-      if (q.angleTo(gripQuat("half")) < 0.01) return "half";
+      if (q.angleTo(gripQuat("half")) < 0.01) return h.gripAngle < 0 ? "halfDown" : "half";
       return null;
     };
     if (!hands) return { R: null, L: null };
-    return { R: nameOf(hands.R.grip), L: nameOf(hands.L.grip) };
+    return { R: nameOf(hands.R), L: nameOf(hands.L) };
   }
 
   /** 该手势是否走「前置伸指」(转动开始前指尖先到位;FINGERTRICKS §4.5/§4.2):
-   *  topPush(F 族越顶)/ upPush(U'p 就位 RUB)/ D2' 首指小指伸至 D 层。 */
+   *  topPush(F 族越顶 / S 族中层下按)/ upPush(U'p 就位 RUB)/ D2' 首指小指伸至 D 层。 */
   private static needsReach(g: HandGesture): boolean {
     if (g.kind !== "flick") return false;
-    return g.style === "topPush" || g.style === "upPush" || (g.style === "hook" && g.finger === "pinky");
+    return g.style === 'pocketThumbLift' || g.style === "reverseIndexHook" || g.style === "reverseRingHook" || isMiddleSliceStroke(g.style) || isMixedPush(g.style) || g.style === "topPush" || g.style === "upPush" || (g.style === "hook" && g.finger === "pinky");
+  }
+
+  private placeWideSupport(axis: Axis, high: boolean, g: HandGesture): WideSupport {
+    const hand = (g.kind === 'weld' ? g.hands[0] : g.hand) === 'R' ? 'L' : 'R';
+    const current = this.wideSupport;
+    if (current?.hand === hand && current.axis === axis && current.high === high && !current.returning) return current;
+    this.updateWorldMatrix(true, true);
+    const h = this.hands![hand];
+    const order = this.cube?.order ?? 3;
+    const { anchors, travel } = inspectWideGrip(h.model, this.matrixWorld.clone().invert(), axis, high ? -1 : 1, order);
+    return this.wideSupport = new WideSupport(axis, high, hand, h.grip, anchors, travel, this.gripNames()[hand], order);
+  }
+
+  private createMarkedMotion(request: MarkedTurnRequest): MarkedFingerMotion | null {
+    const hands = this.hands;
+    if (!hands) return null;
+    const tips = {} as Record<HandSide, Record<FingerName, THREE.Vector3>>;
+    const home = {} as Record<HandSide, Record<FingerName, number[]>>;
+    for (const side of ['L', 'R'] as const) {
+      tips[side] = {} as Record<FingerName, THREE.Vector3>;
+      home[side] = {} as Record<FingerName, number[]>;
+      for (const finger of ['thumb', 'index', 'middle', 'ring', 'pinky'] as const) {
+        tips[side][finger] = this.worldToLocal(hands[side].model.fingers[finger].tip.getWorldPosition(new THREE.Vector3()));
+        home[side][finger] = fingerChannels(hands[side].home.fingers[finger]);
+      }
+    }
+    const plan = chooseMarkedFingerPlan(request, MARKED_FINGER_PROFILES,
+      { L: hands.L.grip, R: hands.R.grip }, tips);
+    return plan ? new MarkedFingerMotion(plan, home, MARKED_CLEARANCE) : null;
   }
 
   /**
@@ -1564,16 +1808,133 @@ export default class HandsRig extends THREE.Group {
    * 调用方本轮不发 twist,等 isReachPreparing 落 false 再转。返回 false =
    * 无需前置或已到位。幂等,播放循环可 16ms 轮询重入。
    */
-  prepareTwist(axis: Axis, layers: number[], dir: 1 | -1, quarters = 1, push = false, pin?: PinSpec): boolean {
+  prepareTwist(axis: Axis, layers: number[], dir: 1 | -1, quarters = 1, push = false, pin?: PinSpec, nextIsU = false, annotation?: FingerAnnotation, nextSupport?: MarkedTurnRequest | 'right-weld', explicitPath = false): boolean {
     const hands = this.hands;
     const cube = this.cube;
     if (!cube || !this.enabled || this.disposed) return false;
     if (!hands) return this.loadState.hands !== 'error';
     this.settleCompletedGesture();
+    const explicit = !!(push || pin || annotation?.finger || annotation?.contact || explicitPath);
+    if (quarters === 2 && layers.length === 1) {
+      if (axis === 'x' || (cube.twister && !explicit)) dir = this.preferredHalfTurnDirection(axis, layers[0]) ?? dir;
+    }
     if (this.isRegripping || this.isReachRetreating) return true;
+    const leftHalfTurn = !explicit && axis === 'y' && layers.length === 1 && layers[0] === cube.order - 1
+      && quarters === 2 && dir === -1;
+    if (cube.twister && leftHalfTurn && this.seatLeftForRelay(this.gripNames())) return true;
+    // Playback can be paused or edited during preparation, before U2 starts.
+    if (this.leftRelaySeat && !leftHalfTurn && !this.active) {
+      this.regrip(this.leftRelaySeat.original, 'L', this.leftRelaySeat.wristAngle);
+      return true;
+    }
+    const rightWeld = axis === 'x' && layers.length === 1 && layers[0] === cube.order - 1;
+    const transition = this.supportTransition;
     const cls = classifyLayers(layers, cube.order);
-    const g = classifyHandGesture(axis, cls, dir, this.gripNames(), { quarters, push });
-    this.pendingHint = { axis, cls, dir, quarters, push, at: performance.now() };
+    if (cube.order === 4 && (annotation?.finger || annotation?.contact || pin || explicitPath || push)) {
+      this.markedProblem = 'unsupported-grip';
+      return true;
+    }
+    const nail = annotation?.contact === 'nail' && !annotation.finger;
+    const grips = this.gripNames();
+    const g = gestureForLayers(axis, layers, dir, grips, { quarters, push, nail }, cube.order);
+    const sliceNailMark = nail && g.kind === 'flick' && g.style === 'sliceNail';
+    const marked = !!(annotation?.finger || annotation?.contact) && !sliceNailMark;
+    const wide = (cube.order === 3 && layers.length === 2 || cube.order === 4 && layers.length === 3) && (cls === 'high' || cls === 'low');
+    // For an unmarked quarter turn try the same grip- and direction-qualified
+    // strokes used by Gc. Keep explicit annotations and their error handling.
+    let request = marked && annotation ? { axis, layers, dir, quarters, annotation } : null;
+    let automatic: MarkedFingerMotion | null = null;
+    if (wide && cube.order === 3 && !marked && !pin && !push && axis !== 'x' && quarters === 1) {
+      for (const fingerMark of [{ finger: 'middle' }, { finger: 'middle', contact: 'nail' }, { finger: 'thumb' }] as const) {
+        const candidate = { axis, layers, dir, quarters, annotation: fingerMark };
+        const current = this.markedMotion;
+        const motion = current?.matches(candidate) ? current : this.createMarkedMotion(candidate);
+        if (!motion || grips[motion.plan.hand] === 'half' || grips[motion.plan.hand] === 'halfDown') continue;
+        automatic = motion;
+        request = candidate;
+        break;
+      }
+    }
+    if (!this.ruPreparation) {
+      for (const side of ['L', 'R'] as const) {
+        const h = hands[side];
+        if (h.reachTarget !== 1 || h.flickAxis !== 'z' || h.flickDecay || this.active?.gesture) continue;
+        if (!request && g.kind === 'flick' && g.hand === side && h.flickStyle === g.style
+          && h.flickAxis === axis && h.flickLayer === cls) continue;
+        h.reachTarget = 0;
+        if (h.reachT > 0) return true;
+      }
+    }
+    const driver = automatic?.plan.hand ?? (g.kind === 'weld' ? g.hands[0] : g.hand);
+    if (this.wideSupport && (!wide || marked || this.wideSupport.hand === driver
+      || this.wideSupport.axis !== axis || this.wideSupport.high !== (cls === 'high'))) {
+      this.wideSupport.returning = true;
+      if (this.wideSupport.moves && this.wideSupport.progress > 0) return true;
+      this.wideSupport = null;
+    }
+    const pinchEntry = rightWeld && dir === -1 && quarters === 2 && !marked
+      && nextSupport && nextSupport !== 'right-weld' && this.gripNames().R === 'home';
+    if (transition && transition.motion.topPinch !== null) {
+      const entering = pinchEntry && transition.motion.matches(nextSupport);
+      const continuing = request && transition.motion.matches(request) && this.gripNames().R === 'halfDown';
+      if (transition.releasing || !entering && !continuing) {
+        transition.motion.finish();
+        transition.releasing = true;
+        return true;
+      }
+    }
+    if (transition && !rightWeld && !marked && !transition.motion.finished) transition.motion.finish();
+    if (transition?.motion.finished && !rightWeld) {
+      transition.releasing = true;
+      return true;
+    }
+    if (cube.order === 3 && rightWeld && !marked && nextSupport && nextSupport !== 'right-weld' && !transition) {
+      const preview = this.createMarkedMotion(nextSupport);
+      if (preview?.plan.hand === 'L' && preview.plan.profile.finger === 'middle') {
+        if (pinchEntry && preview.plan.profile.id === 'middle-pad-wide') preview.topPinch = 0;
+        this.supportTransition = { motion: preview, rightTurnRadians: quarters * HALF_PI, releasing: false };
+      }
+    }
+    if (pinchEntry && this.supportTransition?.motion.preparingPinch) return true;
+    if (request) {
+      this.releaseRUPreparation();
+      if (Object.values(hands).some(h => h.flickDecay > 0 || h.reachT > 0 || h.pinReachT > 0)) return true;
+      const current = this.markedMotion;
+      if (!current?.matches(request)) {
+        if (current) { current.finish(); return true; }
+        const motion = automatic ?? this.createMarkedMotion(request);
+        this.markedProblem = motion ? null : 'unsupported-grip';
+        if (!motion) return true;
+        motion.supportReady = transition?.motion.plan.profile === motion.plan.profile && !transition.motion.finished;
+        if (motion.supportReady) motion.topPinch = transition!.motion.topPinch;
+        motion.holdSupport = nextSupport === 'right-weld' && motion.plan.hand === 'L' && motion.plan.profile.finger === 'middle';
+        this.supportTransition = null;
+        this.pendingHint = null;
+        this.markedMotion = motion;
+      }
+      const motion = this.markedMotion!;
+      this.lastActivityAt = performance.now();
+      if (automatic) {
+        const support = this.placeWideSupport(axis, cls === 'high',
+          { kind: 'flick', hand: motion.plan.hand, finger: motion.plan.profile.finger });
+        if (support.progress < 1) return true;
+      }
+      if (motion.preparing) return true;
+      const contact = markedStartContact(hands[motion.plan.hand].model, this, motion.plan);
+      this.markedProblem = !contact || contact.distance > 3 || contact.facing > -.9 ? 'invalid-start' : null;
+      return this.markedProblem !== null;
+    }
+    this.markedProblem = null;
+    if (this.markedMotion) { this.markedMotion.finish(); return true; }
+    const single = layers.length === 1 && layers[0] === cube.order - 1
+      && dir === 1 && quarters === 1 && !push && !pin;
+    const prepareRU = single && axis === 'x' && nextIsU && this.gripNames().R === 'home';
+    const continueRU = single && axis === 'y' && this.gripNames().R === 'up';
+    if (this.ruPreparation && !prepareRU && !continueRU) {
+      this.releaseRUPreparation();
+      return this.isReachRetreating;
+    }
+    this.pendingHint = { axis, cls, layers, dir, quarters, push, nail, explicit, indexHook: g.kind === "flick" && g.style === "indexHook", at: performance.now() };
     // U 族接续闸(2026-07-09 U2' 镜像连拨):对侧手上一步 U 族 hook(钉角端姿)
     // 的回撤未完时,下一步 y.high 必须等 —— 回撤走廊在 U 带扫掠环带内侧
     // (半径 ~107U < 96√2),层再次转动会犁到回撤中的指链(真实播放 oracle
@@ -1585,9 +1946,21 @@ export default class HandsRig extends THREE.Group {
       this.lastActivityAt = performance.now();
       return true;
     }
+    if (prepareRU) {
+      // 只提前摆指，R 仍使用原有整手随层转动；reach 保持到下一步 U。
+      this.ruPreparation = 'preparing';
+      const h = hands.R;
+      h.flickFinger = 'index'; h.flickFinger2 = null;
+      h.flickStyle = 'topPush'; h.flickAxis = 'y';
+      h.flickLayer = 'high';
+      h.flickAmount = 0; h.flickDecay = 0; h.reachTarget = 1;
+      this.lastActivityAt = performance.now();
+      return h.reachT < 1;
+    }
+    if (continueRU) this.ruPreparation = null;
     if (axis === "y" && cls === "high" && g.kind === "flick") {
       const other = hands[g.hand === "R" ? "L" : "R"];
-      if (other.flickDecay > 0 && other.flickAxis === "y" && other.flickStyle === "hook" && other.flickFinger === "index") {
+      if (other.flickDecay > 0 && other.flickAxis === "y" && (other.flickStyle === "hook" || other.flickStyle === "indexHook") && other.flickFinger === "index") {
         this.lastActivityAt = performance.now();
         return true;
       }
@@ -1606,37 +1979,53 @@ export default class HandsRig extends THREE.Group {
       this.lastActivityAt = performance.now();
       return h.pinReachT < 1;
     }
+    const widePreparing = wide && this.placeWideSupport(axis, cls === 'high', g).progress < 1;
+    const fourPreparing = cube.order === 4 && cls !== 'whole' && this.seatFour(axis, layers, dir, g).progress < 1;
+    const waitingForSupport = widePreparing || fourPreparing;
     if (!HandsRig.needsReach(g) || g.kind !== "flick") {
       if (cube.order === 3 && axis === 'y' && layers.length === 1 && layers[0] === 2 && dir === 1 && quarters === 1
         && !push && !pin && g.kind === 'flick' && g.hand === 'R' && !g.finger2 && g.finger === 'index') {
         this.emitDiagnostic('prepare-u', undefined, g);
       }
-      return false;
+      return waitingForSupport;
     }
     const h = hands[g.hand];
+    // Retract before changing sticker, contact surface, or relay partner.
+    if (h.reachT > 0 && h.reachTarget === 1 && (h.flickStyle === 'topPush' || isMixedPush(h.flickStyle) || isMiddleSliceStroke(h.flickStyle))
+      && (h.flickAxis !== axis || h.flickLayer !== cls || h.flickStyle !== g.style
+        || isMiddleSliceStroke(g.style) && h.flickFinger2 !== (g.finger2 ?? null))) {
+      h.reachTarget = 0;
+      this.lastActivityAt = performance.now();
+      return true;
+    }
     if (h.flickDecay > 0 && h.reachT > 0) {
       // 上一转的退场未完:清 flickAmount 会让手指从弧中段瞬移。轮询重入
       // 等 decay 走完(届时 reachT 仍为 1,下一轮直接从按压位起推)。
       this.lastActivityAt = performance.now();
       return true;
     }
+    h.strokeLayers = layers;
     h.flickFinger = g.finger;
     h.flickFinger2 = g.finger2 ?? null;
     h.flickAxis = axis;
+    h.flickLayer = cls;
     h.flickStyle = g.style ?? null;
     h.flickAmount = 0;
     h.flickDecay = 0;
     h.reachTarget = 1;
     this.lastActivityAt = performance.now();
-    return h.reachT < 1;
+    if (h.reachT === 1 && single && axis === 'y' && g.hand === 'R' && g.finger === 'index') {
+      this.emitDiagnostic('prepare-u', undefined, g);
+    }
+    return waitingForSupport || h.reachT < 1;
   }
 
   /** 标定入口:编排参数的活引用(浏览器坐标下降现场改,数值烘回源码)。 */
   get tuning(): {
-    push: typeof TOP_PUSH; follow: typeof TOP_PUSH_FOLLOW;
+    push: typeof TOP_PUSH; follow: typeof TOP_PUSH_FOLLOW; frontFollow: typeof FRONT_INDEX_FOLLOW;
     hook: typeof HOOK; hookFollow: typeof HOOK_FOLLOW; hookPrep: typeof HOOK_PREP;
     pinkyReach: typeof PINKY_REACH; downPush: typeof DOWN_PUSH; upPush: typeof UP_PUSH;
-    thumbEvadeD: typeof THUMB_EVADE_D; backEvade: typeof BACK_EVADE;
+    backEvade: typeof BACK_EVADE;
     hookIndexEvade: typeof HOOK_INDEX_EVADE; lowEvade: typeof LOW_EVADE;
     midEvade: typeof MID_EVADE; bEvade: typeof B_EVADE; fEvade: typeof F_EVADE;
     sEvade: typeof S_EVADE;
@@ -1645,10 +2034,10 @@ export default class HandsRig extends THREE.Group {
     weldPin: typeof WELD_PIN; weldPinTransit: typeof WELD_PIN_TRANSIT;
   } {
     return {
-      push: TOP_PUSH, follow: TOP_PUSH_FOLLOW,
+      push: TOP_PUSH, follow: TOP_PUSH_FOLLOW, frontFollow: FRONT_INDEX_FOLLOW,
       hook: HOOK, hookFollow: HOOK_FOLLOW, hookPrep: HOOK_PREP,
       pinkyReach: PINKY_REACH, downPush: DOWN_PUSH, upPush: UP_PUSH,
-      thumbEvadeD: THUMB_EVADE_D, backEvade: BACK_EVADE,
+      backEvade: BACK_EVADE,
       hookIndexEvade: HOOK_INDEX_EVADE, lowEvade: LOW_EVADE,
       midEvade: MID_EVADE, bEvade: B_EVADE, fEvade: F_EVADE,
       sEvade: S_EVADE,
@@ -1662,6 +2051,10 @@ export default class HandsRig extends THREE.Group {
   get isReachPreparing(): boolean {
     const hands = this.hands;
     if (!hands || !this.enabled) return false;
+    if (this.fourSeat && !this.fourSeat.returning && this.fourSeat.progress < 1) return true;
+    if (this.supportTransition?.motion.preparingPinch) return true;
+    if (this.wideSupport && !this.wideSupport.returning && this.wideSupport.progress < 1) return true;
+    if (this.markedMotion?.preparing) return true;
     return (["R", "L"] as const).some((s) => {
       const h = hands[s];
       return (h.flickFinger !== null && h.reachTarget === 1 && h.reachT < 1)
@@ -1676,6 +2069,9 @@ export default class HandsRig extends THREE.Group {
   get isReachRetreating(): boolean {
     const hands = this.hands;
     if (!hands || !this.enabled) return false;
+    if (this.fourSeat?.returning && this.fourSeat.progress > 0) return true;
+    if (this.wideSupport?.returning && this.wideSupport.moves && this.wideSupport.progress > 0) return true;
+    if (this.markedMotion?.retreating || this.leftRelaySeat?.returning) return true;
     return (["R", "L"] as const).some((s) => {
       const h = hands[s];
       // decay 段也算「收指未完」:reach 式手势 decay 结束必然接 walk-back,若只
@@ -1689,6 +2085,15 @@ export default class HandsRig extends THREE.Group {
   setEnabled(on: boolean): void {
     if (this.disposed) return;
     if (!on && this.enabled) this.emitDiagnostic('disabled');
+    if (!on) {
+      if (this.leftRelaySeat) this.regrip(this.leftRelaySeat.original, 'L', this.leftRelaySeat.wristAngle);
+      this.fourSeat = null;
+      this.wideSupport = null;
+      this.supportTransition = null;
+      this.releaseRUPreparation();
+      this.markedMotion = null;
+      this.markedProblem = null;
+    }
     // visible 无条件跟 on 拉起(不能挂在 enabled-diff 后面:dt=0 帧曾把
     // visible 误置 false,若 enabled 未变就再也拉不起来)。
     if (on) this.visible = true;
@@ -1698,6 +2103,47 @@ export default class HandsRig extends THREE.Group {
     for (const mat of this.fadeMats()) {
       mat.transparent = true; // 渐变期间开启;fade 达到 1 后关掉(省排序)
     }
+  }
+
+  private seatLeftForRelay(grips: HandGripNames): boolean {
+    const order = this.cube?.order;
+    if (!order || order < 2 || order > 4 || !prefersLeftUpperRelay(grips)
+      || !grips.L || grips.L === 'home' || order === 2 && grips.L === 'up') return false;
+    const wristAngle = this.hands!.L.gripAngle;
+    this.regrip('home', 'L');
+    this.leftRelaySeat = { original: grips.L, wristAngle, returning: false };
+    return true;
+  }
+
+  private preferredHalfTurnDirection(axis: string, layer: number): 1 | -1 | undefined {
+    if (!this.isEnabled || !this.cube) return undefined;
+    const { order } = this.cube;
+    if (axis === 'y' && order >= 2 && order <= 4 && layer === order - 1) {
+      return prefersLeftUpperRelay(this.gripNames()) ? -1 : undefined;
+    }
+    if (axis !== 'x' || layer !== 1 || order !== 3) return undefined;
+    const grips = this.gripNames();
+    return grips.L === 'home' && grips.R === 'home' ? 1 : undefined;
+  }
+
+  private readonly animatedHalfTurnDirection = (axis: string, layer: number): 1 | -1 | undefined => {
+    if (!this.isEnabled) return undefined;
+    // A queued keyboard turn may start between the preceding R/L drop and
+    // the next rig tick. Commit that wrist before selecting the U arc.
+    if (axis === 'y' && layer === (this.cube?.order ?? 0) - 1) {
+      this.settleCompletedGesture();
+      const marked = this.markedMotion?.plan.request;
+      if (marked?.quarters === 2 && marked.axis === axis && marked.layers.length === 1 && marked.layers[0] === layer) return undefined;
+      const hint = this.pendingHint;
+      if (hint?.explicit && hint.quarters === 2 && hint.axis === axis && hint.layers.length === 1 && hint.layers[0] === layer
+        && performance.now() - hint.at < 3000) return undefined;
+    }
+    return this.preferredHalfTurnDirection(axis, layer);
+  };
+
+  private detachHalfTurnDirection(): void {
+    const twister = this.cube?.twister;
+    if (twister?.halfTurnDirection === this.animatedHalfTurnDirection) twister.halfTurnDirection = undefined;
   }
 
   get isEnabled(): boolean {
@@ -1726,13 +2172,29 @@ export default class HandsRig extends THREE.Group {
     if (!this.visible) return true;
     const hands = this.hands;
     if (!hands) return animating; // GLTF 加载中:fade 照走,姿态等模型
+    if (this.wideSupport) {
+      const moving = this.wideSupport.returning || this.wideSupport.progress < 1;
+      this.wideSupport.advance(dt);
+      if (this.wideSupport.returning && !this.wideSupport.progress) this.wideSupport = null;
+      animating ||= moving;
+    }
+    if (this.markedMotion) {
+      this.markedMotion.advance(dt);
+      if (this.markedMotion.done) {
+        const completed = this.markedMotion;
+        this.markedMotion = null;
+        if (completed.holdSupport && completed.started) {
+          completed.restartSupportReturn();
+          this.supportTransition = { motion: completed, rightTurnRadians: 0, releasing: false };
+        }
+      }
+      animating = true;
+    }
 
     // —— 轮询当前转动层 ——
     const now = performance.now();
     const cube = this.cube;
     // 外让/单指避让目标每帧重算(driveGesture 写入);无手势帧目标归零 → 衰减回落。
-    hands.R.dodgeTarget = 0;
-    hands.L.dodgeTarget = 0;
     hands.R.indexEvadeTarget = 0;
     hands.L.indexEvadeTarget = 0;
     hands.R.lowEvadeTarget = 0;
@@ -1760,6 +2222,15 @@ export default class HandsRig extends THREE.Group {
             if (Math.abs(ang) > Math.abs(best)) best = ang;
           }
         }
+        if (cube.order === 4 && ls && ls.length > 1) {
+          // Simultaneous, independent drags may move disjoint layers or turn
+          // adjacent layers in opposite directions. A wide stroke must be rigid.
+          const peak = ls.find(layer => gs[layer].angle === best)!;
+          let lo = peak, hi = peak;
+          while (lo > 0 && gs[lo - 1].angle !== 0 && Math.abs(gs[lo - 1].angle - best) < 1e-5) lo--;
+          while (hi + 1 < gs.length && gs[hi + 1].angle !== 0 && Math.abs(gs[hi + 1].angle - best) < 1e-5) hi++;
+          ls = ls.filter(layer => layer >= lo && layer <= hi);
+        }
         if (ls && (axis === null || Math.abs(best) > Math.abs(repAngle))) {
           axis = a;
           layers = ls;
@@ -1771,22 +2242,45 @@ export default class HandsRig extends THREE.Group {
         this.lastActivityAt = now;
         animating = true;
         const cls = classifyLayers(layers, cube.order);
+        const group = cube.table.groups[axis][layers[0]];
+        const pocketStroke = cube.order === 2 || isFourWide(cube.order, layers);
+        const pocketUpper = pocketStroke && axis === 'y' && cls === 'high';
         // 招式队列是同步接续的(drop → 下一步 twist 在同一 tick),中间可能
         // 没有「零活动帧」—— 所以轴变 / 层类变 / 同类连发 / 方向反转四种切换
         // 都要在这里显式收尾旧手势,否则上一手的 weld 姿态永远悬着(踩过)。
-        if (!this.active || this.active.axis !== axis || this.active.cls !== cls) {
+        if (!this.active || this.active.axis !== axis || this.active.cls !== cls || !sameLayers(this.active.layers, layers)) {
           this.endGesture();
-          this.active = { axis, cls, dir: 0, gesture: null, lastAngle: 0, quarters: 0 };
-        } else if (this.active.gesture && Math.abs(repAngle) < Math.abs(this.active.lastAngle) - 0.8) {
+          this.active = { axis, cls, layers, dir: 0, gesture: null, lastAngle: 0 };
+        } else if (this.active.gesture && !((pocketUpper || cube.order === 4) && group.isDragging) && Math.abs(repAngle) < Math.abs(this.active.lastAngle) - 0.8) {
           // 同轴同类连发(U 接 U):角度从 ~π/2 跳回 ~0 = 新的一步。
           this.endGesture();
           this.active.gesture = null;
           this.active.dir = 0;
         }
         const act = this.active;
-        if (Math.abs(repAngle) >= COMMIT_ANGLE) {
+        // 已就位的 F 食指从第一帧非零层角开始跟随，不能等拖拽判向阈值。
+        const preparedFront = ((axis === "z" && (cls === "high" || cls === "mid")) || (axis === "y" && cls === "high"))
+          && ([hands.R, hands.L].some(h => (h.flickStyle === "topPush" || isMixedPush(h.flickStyle)) && h.reachTarget === 1
+              && h.flickAxis === axis && h.flickLayer === cls)
+            || (this.pendingHint?.axis === "z" && this.pendingHint.cls === "high"));
+        const preparedHook = axis === 'y' && cls === 'high' && layers.length === 1
+          && this.pendingHint?.indexHook && this.pendingHint.dir === Math.sign(repAngle);
+        const preparedR = axis === 'x' && cls === 'high' && (this.ruPreparation === 'preparing'
+          || layers.length === 1 && this.supportTransition?.motion.topPinch === 1);
+        // The half grip already holds the outer column. Its hand is known
+        // before the drag direction is classified, including sub-degree motion.
+        const seatedOuter = axis === 'x' && (cls === 'high' || cls === 'low') && layers.length === 1
+          && atHalfTurn(hands[cls === 'high' ? 'R' : 'L'].gripAngle);
+        const markedPlan = this.markedMotion?.plan;
+        const preparedMarked = markedPlan && markedPlan.request.axis === axis
+          && markedPlan.request.layers.length === layers.length && layers.every(layer => markedPlan.request.layers.includes(layer));
+        const pocketHint = (pocketStroke || cube.order === 4) && this.pendingHint?.axis === axis && this.pendingHint.cls === cls
+          && sameLayers(this.pendingHint.layers, layers) && this.pendingHint.dir === Math.sign(repAngle) && now - this.pendingHint.at < 3000;
+        const preparedM = axis === 'x' && cls === 'mid' && isMiddleSliceStroke(hands.L.flickStyle)
+          && this.pendingHint?.dir === Math.sign(repAngle);
+        if (preparedM || pocketHint || cls === "whole" || Math.abs(repAngle) >= COMMIT_ANGLE || preparedFront || preparedHook || preparedR || seatedOuter || preparedMarked) {
           const dir: 1 | -1 = repAngle > 0 ? 1 : -1;
-          if (act.gesture && act.dir !== 0 && act.dir !== dir) {
+          if (cls !== "whole" && act.gesture && act.dir !== 0 && act.dir !== dir) {
             // 转向反转(拖拽回拉 / U 接 U'):换手重分类。
             this.endGesture();
             act.gesture = null;
@@ -1794,12 +2288,39 @@ export default class HandsRig extends THREE.Group {
           if (!act.gesture) {
             // 握姿感知分类(grip 是精确四分转积,阈值只兜浮点;regrip() 提交即
             // 写 grip,动画途中判定也指向终态)+ 转前提示(连拨 / 推法)消费。
-            act.gesture = classifyHandGesture(axis, cls, dir, this.gripNames(), this.takeHint(axis, cls, dir));
+            const marked = preparedMarked && markedPlan.request.dir === dir;
+            const singleUpper = axis === 'y' && cls === 'high' && layers.length === 1;
+            const middleSlice = axis === 'x' && cls === 'mid' && layers.length === 1;
+            const timedArc = pocketUpper || cube.order === 4 || (cube.order === 3 && singleUpper) || middleSlice
+              ? group.targetAngle : undefined;
+            // A pointer has no target angle yet. Stage the second finger while
+            // the index drives the first quarter so crossing 90° stays continuous.
+            let grips = this.gripNames();
+            if (!marked && !this.pendingHint?.explicit && singleUpper
+              && timedArc !== undefined && Math.abs(timedArc + Math.PI) < 1e-6 && this.seatLeftForRelay(grips)) {
+              grips = this.gripNames();
+            }
+            const dragGrip = grips[dir > 0 ? 'R' : 'L'];
+            const innerUpperRelay = cube.order === 4 && axis === 'y' && layers.length === 1 && layers[0] === 2
+              && grips.R === 'home' && grips.L === 'home';
+            const dragRelay = group.isDragging && (innerUpperRelay
+              || pocketUpper && (dragGrip === 'up' || dragGrip === 'home' || dragGrip === 'down'));
+            const hint = marked ? undefined : this.takeHint(axis, cls, layers, dir)
+              ?? (dragRelay || timedArc !== undefined && Math.abs(Math.abs(timedArc) - Math.PI) < 1e-6 ? { quarters: 2 } : undefined);
+            act.halfTurn = hint?.quarters === 2;
+            act.gesture = marked
+              ? { kind: 'flick', hand: markedPlan.hand, finger: markedPlan.profile.finger, style: 'marked' }
+              : gestureForLayers(axis, layers, dir, grips, hint, cube.order);
+            if (!marked && (cube.order === 3 && layers.length === 2 || cube.order === 4 && layers.length === 3) && cls !== 'whole')
+              this.placeWideSupport(axis, cls === 'high', act.gesture);
             act.dir = dir;
             this.beginGesture(act.gesture, axis);
           }
         }
-        if (act.gesture) this.driveGesture(act.gesture, axis, repAngle);
+        if (act.gesture) {
+          if (cube.order === 4 && cls !== 'whole') this.seatFour(axis, layers, act.dir, act.gesture).angle = repAngle;
+          this.driveGesture(act.gesture, axis, repAngle);
+        }
         act.lastAngle = repAngle;
       } else if (this.active) {
         // 层已 drop(角度归零 & bake)→ 手势进入回位。
@@ -1810,19 +2331,65 @@ export default class HandsRig extends THREE.Group {
       }
     }
 
+    // The finishing frame starts both finger decay and seat withdrawal.
+    // Advancing the seat before observing the drop delays it by one frame.
+    if (this.fourSeat) {
+      const seat = this.fourSeat;
+      const previous = seat.progress;
+      seat.progress = THREE.MathUtils.clamp(previous + (seat.returning ? -dt : dt) / 160, 0, 1);
+      if (!seat.progress && seat.returning) this.fourSeat = null;
+      animating ||= seat.progress !== previous;
+    }
+
+    const transition = this.supportTransition;
+    if (transition) {
+      if (transition.motion.topPinch !== null && !transition.motion.finished)
+        transition.motion.topPinch = Math.min(1, transition.motion.topPinch + dt / 320);
+      const rightTurn = this.active?.axis === 'x' && this.active.cls === 'high';
+      if (transition.motion.finished) {
+        if (rightTurn) transition.releasing = true;
+        if (transition.releasing) transition.motion.advance(dt);
+        if (transition.motion.done) this.supportTransition = null;
+      } else if (rightTurn) {
+        const t = Math.min(1, Math.abs(this.active!.lastAngle) / transition.rightTurnRadians);
+        transition.motion.preparation = t * t * (3 - 2 * t);
+      }
+      animating = true;
+    }
+
     // —— 回位 / 残留衰减 / 待机微动 ——
     this.idleClock += dt;
-    const keepalive = now - this.lastActivityAt < IDLE_KEEPALIVE_MS;
+    // F 层单指/双指动作包含前置与回撤:对侧手也保持握持,不能叠待机呼吸。
+    const fFingerMotion = ([hands.R, hands.L]).some(h => h.flickFinger !== null
+      && (isMixedPush(h.flickStyle) || h.flickStyle === "topPush" || h.flickStyle === "downPush"))
+      || (this.pendingHint?.axis === "z" && this.pendingHint.cls === "high" && now - this.pendingHint.at < 3000);
+    // D 层准备、转动和收指期间，两手拇指不能被支撑手的待机呼吸带动。
+    const dFingerMotion = (this.active?.axis === "y" && this.active.cls === "low")
+      || ([hands.R, hands.L]).some(h => h.flickFinger !== null && h.flickAxis === "y" && h.flickLayer === "low")
+      || (this.pendingHint?.axis === "y" && this.pendingHint.cls === "low" && now - this.pendingHint.at < 3000);
+    // The resting hand still supports the cube while the other seats or
+    // releases a half grip. Keep breathing offsets off both sets of pads.
+    const halfRecovery = [hands.R, hands.L].some(h => h.recoverT < 1 && (h.halfSeatRelease
+      || atHalfTurn(h.gripAngle) || atHalfTurn(h.gripAngle + h.recoverWristAngle)));
+    const middleSliceMotion = isMiddleSliceStroke(hands.L.flickStyle);
+    const keepalive = !middleSliceMotion && !this.markedMotion && !fFingerMotion && !dFingerMotion && now - this.lastActivityAt < IDLE_KEEPALIVE_MS;
     for (const side of ["R", "L"] as const) {
       const h = hands[side];
-      if (h.recoverT < 1) {
-        h.recoverT = Math.min(1, h.recoverT + dt / RECOVER_MS);
+      if (h.recoverT < 1 && !(this.wholeRegrip && side === "L" && hands.R.recoverT < 1)) {
+        h.recoverT = Math.min(1, h.recoverT + dt / (this.isHalfBranchSwitch(h) ? 400 : RECOVER_MS));
+        if (h.recoverT === 1) h.halfSeatRelease = undefined;
         animating = true;
       }
+      const withdrawingFront = h.flickStyle === 'topPush' && h.flickAxis === 'z' && h.flickLayer === 'high'
+        && Math.abs(h.flickAmount) >= TOP_PUSH.retreatSplit;
+      const reachElapsed = withdrawingFront ? Math.max(0, dt - h.flickDecay * RECOVER_MS) : dt;
       if (h.flickDecay > 0) {
         h.flickDecay = Math.max(0, h.flickDecay - dt / RECOVER_MS);
         if (h.flickDecay === 0) {
-          if (h.flickStyle === "topPush" || h.reachT > 0) {
+          if (isMiddleSliceStroke(h.flickStyle) || isMixedPush(h.flickStyle)) {
+            h.reachT = h.reachTarget = 0;
+            h.flickAmount = 0;
+          } else if (h.flickStyle === "topPush" || h.reachT > 0) {
             // 带前置伸指的样式(topPush/upPush/D2' 小指):完全收回(下方
             // reachT=0 清理)才清字段,退场走完才收指(串行)。topPush 的
             // flickAmount 不清(收指段姿态靠它判定终点:release 走满/缩回
@@ -1831,21 +2398,25 @@ export default class HandsRig extends THREE.Group {
             if (h.flickStyle !== "topPush") h.flickAmount = 0;
             h.reachTarget = 0;
           } else {
-            h.flickFinger = null; h.flickFinger2 = null; h.flickAxis = null; h.flickStyle = null;
+            h.flickFinger = null; h.flickFinger2 = null; h.flickAxis = null; h.flickLayer = null; h.flickStyle = null;
           }
         }
         animating = true;
       }
       // 前置伸指/收指(时间驱动);完全收回后才清 flick 状态。
       if (h.reachT !== h.reachTarget) {
-        const step = dt / REACH_MS;
-        h.reachT = h.reachTarget > h.reachT
-          ? Math.min(h.reachTarget, h.reachT + step)
-          : Math.max(h.reachTarget, h.reachT - step);
+        const reaching = h.reachTarget > h.reachT;
+        const elapsed = reaching ? dt : -reachElapsed;
+        const frontApproach = !this.active && h.flickStyle === "topPush" && h.flickAxis === "z" && h.flickLayer !== "mid";
+        const upperDoubleReturn = !reaching && h.flickStyle === 'topPush' && h.flickAxis === 'y' && Math.abs(h.flickAmount) > HALF_PI;
+        let progress = h.reachT + elapsed / REACH_MS;
+        if (frontApproach && !withdrawingFront) progress = advanceFrontApproach(h.reachT, elapsed);
+        if (upperDoubleReturn) progress = advanceFrontIndexReach(h.reachT, elapsed);
+        h.reachT = reaching ? Math.min(h.reachTarget, progress) : Math.max(h.reachTarget, progress);
         animating = true;
       }
       if (h.flickFinger && h.flickStyle && h.reachTarget === 0 && h.reachT === 0 && h.flickDecay === 0 && this.active?.gesture?.kind !== "flick") {
-        h.flickFinger = null; h.flickFinger2 = null; h.flickAxis = null; h.flickStyle = null;
+        h.flickFinger = null; h.flickFinger2 = null; h.flickAxis = null; h.flickLayer = null; h.flickStyle = null;
         h.flickAmount = 0;
       }
       // FTN @pin 钉指就位/收指(时间驱动,同 reachT 节拍);收回后清指名。
@@ -1857,15 +2428,6 @@ export default class HandsRig extends THREE.Group {
         animating = true;
       }
       if (h.pinFinger && h.pinReachTarget === 0 && h.pinReachT === 0) h.pinFinger = null;
-      if (h.dodgeTarget > h.dodge) {
-        // 外让即时跟目标(目标本身随层角从 0 连续爬升,无跳变)
-        h.dodge = h.dodgeTarget;
-        animating = true;
-      } else if (h.dodge > h.dodgeTarget) {
-        h.dodge = Math.max(h.dodgeTarget, h.dodge - dt / RECOVER_MS);
-        animating = true;
-      }
-      // U 族静止手食指单指避让:同 dodge 时序(即时跟升 / RECOVER_MS 回落)。
       if (h.indexEvadeTarget > h.indexEvade) {
         h.indexEvade = h.indexEvadeTarget;
         animating = true;
@@ -1913,27 +2475,39 @@ export default class HandsRig extends THREE.Group {
         h.fEvade = Math.max(h.fEvadeTarget, h.fEvade - dt / RECOVER_MS);
         animating = true;
       }
-      this.applyHand(side, keepalive);
+      this.applyHand(side, keepalive && !halfRecovery, dt);
+      if (this.skelMatMap.line.visible) h.model.updatePalmLinks?.();
     }
     // onepiece 全身傀儡:两手姿态(applyHand 含 poseCorrective)全部落定后,
     // 手骨逐骨解析同步 —— 傀儡手区表面与活手表面逐点重合(见 smplxBody)。
-    if (this.body && this.body.visible) this.body.syncHands();
+    if (this.body && this.body.visible) this.body.syncHands(dt);
     if (this.regripFlag && hands.R.recoverT >= 1 && hands.L.recoverT >= 1) {
       this.regripFlag = false;
+      this.wholeRegrip = false;
+    }
+    // Wait for both digits to leave the top before rotating the palm back.
+    if (this.leftRelaySeat?.returning && !this.active && !hands.L.flickDecay && !hands.L.reachT) {
+      this.regrip(this.leftRelaySeat.original, 'L', this.leftRelaySeat.wristAngle);
+      animating = true;
     }
     if (keepalive) animating = true;
     this.emitDiagnostic('frame');
+    this.markedMotion?.didDisplay();
     return animating;
   }
 
   // ================= 手势生命周期 =================
 
   private beginGesture(g: HandGesture, axis: Axis): void {
+    if (g.kind === 'flick' && g.style === 'marked') return;
     const hands = this.hands;
     if (!hands) return;
     if (g.kind === "weld") {
+      if (this.ruPreparation === 'preparing' && axis === 'x' && g.hands.includes('R')) this.ruPreparation = 'turning';
       for (const s of g.hands) {
         const h = hands[s];
+        h.halfThumbReturn = 0;
+        h.halfSeatRelease = undefined;
         h.weldAxis = null; // driveGesture 里设,先清残留
         h.weldAngle = 0;
         h.weldRawAngle = 0;
@@ -1942,9 +2516,11 @@ export default class HandsRig extends THREE.Group {
       }
     } else {
       const h = hands[g.hand];
+      h.strokeLayers = this.active?.layers ?? [];
       h.flickFinger = g.finger;
       h.flickFinger2 = g.finger2 ?? null;
       h.flickAxis = axis;
+      h.flickLayer = this.active?.cls ?? null;
       h.flickStyle = g.style ?? null;
       h.flickAmount = 0;
       h.flickDecay = 0;
@@ -1956,27 +2532,12 @@ export default class HandsRig extends THREE.Group {
   }
 
   private driveGesture(g: HandGesture, axis: Axis, angle: number): void {
+    if (g.kind === 'flick' && g.style === 'marked') { this.markedMotion?.turn(angle); return; }
     const hands = this.hands;
     if (!hands) return;
     if (g.kind === "weld") {
-      const act = this.active;
-      const whole = act?.cls === "whole";
-      let weldAngle: number;
-      if (whole && act) {
-        // 整步转体(#20):手 1:1 黏着魔方刚体同转,不软钳制(钳制会打破刚体
-        // 同转 → 手相对魔方旋转 = 指穿贴面,拖 260px 层角可达 ~292° 实测穿模)。
-        // 长拖防手臂缠绕:层角越过 45°(+0.06 迟滞防边界抖动)即踏移一个 90°,
-        // 手瞬跳换握 —— 与「自动转体」跨 ±90° 的 scene 快切同款观感;魔方箱体
-        // 在四分转下不变,踏移后的握姿间隙与 home 完全相同,零穿模。
-        if (Math.abs(angle - act.quarters * HALF_PI) > HALF_PI / 2 + 0.06) {
-          act.quarters = Math.round(angle / HALF_PI);
-        }
-        weldAngle = angle - act.quarters * HALF_PI;
-      } else {
-        // R/L（含宽层）整手贴住转动层，超过 90° 也必须等角度跟随。
-        // 压缩角度会让手落后于层，提交时又生成外拱松手的补转。
-        weldAngle = angle;
-      }
+      const whole = this.active?.cls === "whole";
+      const weldAngle = angle;
       for (const s of g.hands) {
         const h = hands[s];
         h.weldAxis = axis;
@@ -1986,7 +2547,7 @@ export default class HandsRig extends THREE.Group {
       }
     } else {
       const h = hands[g.hand];
-      if (g.style) {
+      if (g.style || g.finger2) {
         // 样式化指法(FINGERTRICKS.md):手根不动 —— 禁腕借力(借力绕 y/z 会把
         // 静止的中指/无名指沿 ~130U 弧转进 B 面,dodge 已按接触规格砍掉后
         // oracle 实测 pen −5.7);接触/连拨编排全在 applyHand 随层角展开。
@@ -2013,19 +2574,24 @@ export default class HandsRig extends THREE.Group {
         // 静态扫掠残余受害由 S_EVADE 单指避让兜。
         h.weldAxis = axis;
         h.weldWhole = false;
+        // D 族非双中握也不借腕，保证拇指保持本手原握姿。
+        const pocketSupportGrip = (this.cube?.order === 2 || isFourWide(this.cube?.order ?? 3, h.strokeLayers)) && axis === "y"
+          && (atHalfTurn(h.gripAngle) || h.grip.angleTo(GRIP_Q_DOWN) < .01);
         h.weldAngle = softClampAngle(angle)
-          * (axis === "x" || (axis === "y" && this.active?.cls === "mid")
+          * (pocketSupportGrip || axis === "x" || (axis === "y" && (this.active?.cls === "mid" || this.active?.cls === "low"))
             || (axis === "z" && (this.active?.cls === "high" || this.active?.cls === "mid")) ? 0 : 0.1);
         h.weldRawAngle = 0; // 借力不烘入握姿
       }
     }
-    // —— 转层外让目标(穿模禁令:见 DODGE_MAG 注释)——
-    // 非 weld 手(含指弹手:弹指手指是贴着活动层扫的,整手外让同时也把它
-    // 拉出扫掠区)按幅度表沿本侧外向 x 平移;0.09rad≈5° 内让满,与转动起步
-    // 贴面翻剪 / 角柱越过接触点的窗口同步。weld 手随层整体转,零相对运动不让。
-    // topPush/downPush 整段跳过(z 轴手根不动样式,静止手安全性靠 home 姿
-    // 指腹接触半径 ≥136U > 角柱扫掠 135.8U,oracle 复核)。
-    if (g.kind === "flick" && (g.style === "topPush" || g.style === "downPush")) return;
+    // Drive finger clearance from the displayed layer angle.
+    if (axis === 'z' && this.active?.cls === 'high' && g.kind === "flick"
+      && (g.style === "topPush" || g.style === "downPush")) {
+      const support = hands[g.hand === "R" ? "L" : "R"];
+      if ((this.cube?.order === 2 || isFourWide(this.cube?.order ?? 3, hands[g.hand].strokeLayers)) && support.grip.angleTo(GRIP_Q_DOWN) < .01) {
+        support.fEvadeTarget = Math.min(1, Math.abs(angle) / .09);
+      }
+      return;
+    }
     // U 族(y.high,含 hook 单/连拨与 upPush)静止手改食指单指避让(见
     // HOOK_INDEX_EVADE 注释):静止手食指尖在 B 面上部(BUL/BUR)正处 U 层
     // 扫掠带(upPush 真实播放 oracle 曾测 −1.7U,2026-07-08),整手 dodge 已
@@ -2033,12 +2599,12 @@ export default class HandsRig extends THREE.Group {
     // (指尖要贴面)。
     if (g.kind === "flick" && axis === "y" && this.active?.cls === "high") {
       const other = hands[g.hand === "R" ? "L" : "R"];
+      // In the right half grip the index already rests on the lower row.
+      if (this.rightHalfSupportsUpperRelay()) return;
       const t = Math.min(1, Math.abs(angle) / 0.09);
       if (t > other.indexEvadeTarget) other.indexEvadeTarget = t;
     }
-    // D 族(y.low,含 hook 单/连拨)静止手改「无名指 + 拇指」单指避让(见
-    // LOW_EVADE 注释):整手 dodge 已废(DODGE_MAG.y.low=0),只写另一手目标;
-    // 弹指手自身的拇指避让走 THUMB_EVADE_D(既有通道,保留)。
+    // D 族(y.low,含 hook 单/连拨)只让支撑手无名指避让，双手拇指保持原位。
     if (g.kind === "flick" && axis === "y" && this.active?.cls === "low") {
       const other = hands[g.hand === "R" ? "L" : "R"];
       const t = Math.min(1, Math.abs(angle) / 0.09);
@@ -2077,42 +2643,56 @@ export default class HandsRig extends THREE.Group {
       if (t > hands.R.sEvadeTarget) hands.R.sEvadeTarget = t;
       if (t > hands.L.sEvadeTarget) hands.L.sEvadeTarget = t;
     }
-    const mag = DODGE_MAG[axis][this.active?.cls ?? "whole"];
-    if (mag > 0) {
-      const t = Math.min(1, Math.abs(angle) / 0.09);
-      for (const side of ["R", "L"] as const) {
-        if (g.kind === "weld" && g.hands.includes(side)) continue;
-        // 接触样式(hook/backHook/upPush):弹指手不外让 —— 指尖要贴面,外让
-        // 会拉脱接触;另一手照常外让(穿模保护)。
-        if (g.kind === "flick" && (g.style === "hook" || g.style === "backHook" || g.style === "upPush") && g.hand === side) continue;
-        const h = hands[side];
-        h.dodgeMag = mag;
-        if (t > h.dodgeTarget) h.dodgeTarget = t;
-      }
-    }
+
   }
 
   private endGesture(): void {
     const hands = this.hands;
     const gesture = this.active?.gesture;
     if (!hands || !gesture) return;
+    if (this.leftRelaySeat && gesture.kind === 'flick' && gesture.hand === 'L'
+      && gesture.finger === 'index' && gesture.finger2 === 'middle') this.leftRelaySeat.returning = true;
+    if (this.fourSeat) this.fourSeat.returning = true;
+    if (this.wideSupport) this.wideSupport.returning = true;
+    if (gesture.kind === 'flick' && gesture.style === 'marked') { this.markedMotion?.completeTurn(); return; }
     if (this.active?.axis === 'y' && this.active.cls === 'high' && this.active.dir === 1
       && gesture.kind === 'flick' && gesture.hand === 'R' && gesture.finger === 'index'
       && !gesture.finger2) this.emitDiagnostic('end-u');
     for (const side of ["R", "L"] as const) {
       const h = hands[side];
       if (h.weldAxis) {
-        // weld 提交(未压缩层角走满 ±90° 倍数)→ 只有 x 轴单层(R/L 腕转)把该
-        // 旋转烘进持久握姿基座 —— 腕上下翻是自然持姿。整体转体(x/y/z whole)
-        // 不烘:weldAngle 已是 90° 踏移后的残差(提交时 ≈0),直接 slerp 落回
-        // home —— 终态 = home 握新朝向的面,与视角/自动转体一致(#20)。
-        // 残余(压缩差/采样差)折进回位四元数抹平;未提交(拖拽回弹,snap=0)
-        // 整段 weld 姿态 slerp 回当前握姿。
+        // Outer x turns persist. Whole turns retain the last displayed rotation
+        // as a release offset; one hand supports the cube while the other returns.
+        if (h.weldWhole && Math.abs(h.weldAngle) > .01) {
+          this.wholeRegrip = true;
+          this.regripFlag = true;
+          h.regripArmWeight = h.appliedArmWeight;
+        }
+        // Keep the displayed thumb pose on an interrupted drag, then unwind
+        // it on the recovery clock along with the wrist.
+        h.halfThumbReturn = h.weldAxis === 'x' && !h.weldWhole && atHalfTurn(h.gripAngle)
+          ? carriedThumbWeight(h.gripAngle, h.weldAngle) : 0;
         const snap = Math.round(h.weldRawAngle / HALF_PI);
+        if (side === 'R' && this.ruPreparation === 'turning') {
+          if (snap === 1 && h.weldAxis === 'x' && !h.weldWhole) this.ruPreparation = 'held';
+          else this.releaseRUPreparation();
+        }
         if (snap !== 0 && h.weldAxis === "x" && !h.weldWhole) {
+          const source = h.gripAngle;
+          h.gripAngle = wrapWristAngle(source + snap * HALF_PI);
+          if (atHalfTurn(source) || atHalfTurn(h.gripAngle)) {
+            h.halfSeatRelease = { source, layerAngle: snap * HALF_PI };
+            h.regripArmWeight = h.appliedArmWeight;
+            this.regripFlag = true;
+          }
+          // The cube has baked the exact turn. Suppress sub-pixel residuals
+          // from the last displayed angle before the next stationary contact.
+          const residual = h.weldAngle - snap * HALF_PI;
+          h.recoverWristAngle = Math.abs(residual) < .001 ? 0 : residual;
           h.grip.premultiply(HandsRig._qTmp2.setFromAxisAngle(AXIS_VEC[h.weldAxis], snap * HALF_PI));
-          h.recoverQuat.setFromAxisAngle(AXIS_VEC[h.weldAxis], h.weldAngle - snap * HALF_PI);
+          h.recoverQuat.setFromAxisAngle(AXIS_VEC[h.weldAxis], h.recoverWristAngle);
         } else {
+          h.recoverWristAngle = h.weldAxis === "x" && !h.weldWhole ? h.weldAngle : 0;
           h.recoverQuat.setFromAxisAngle(AXIS_VEC[h.weldAxis], h.weldAngle);
         }
         h.recoverT = 0;
@@ -2125,6 +2705,26 @@ export default class HandsRig extends THREE.Group {
       }
       if (gesture.kind === 'flick' && gesture.hand === side && h.flickFinger) {
         h.flickDecay = 1;
+        if (h.flickStyle === 'reverseIndexHook' || h.flickStyle === 'reverseRingHook') {
+          // Keep the last driven angle through release, including a partial drag.
+          h.flickDecay = h.reachTarget = 0;
+        }
+        if (isMixedPush(h.flickStyle) && Math.abs(h.flickAmount) >= HALF_PI - .001) {
+          h.flickDecay = h.reachTarget = h.reachT = 0;
+        }
+        if (h.flickStyle === 'topPush' && h.flickAxis === 'z' && h.flickLayer === 'mid'
+          && Math.abs(h.flickAmount) >= HALF_PI - .001) {
+          // S has already lifted and unwound during 45..90°. Return immediately
+          // instead of waiting through F's extra release window above the cube.
+          h.flickDecay = 0;
+          h.reachTarget = 0;
+        }
+        if (h.flickStyle === 'topPush' && h.flickAxis === 'y' && Math.abs(h.flickAmount) > HALF_PI) {
+          // Finish just the unplayed part of the withdrawal if the last rendered
+          // frame preceded the snapped half turn. A full turn can retract now.
+          h.flickDecay = Math.max(0, (Math.PI - Math.abs(h.flickAmount)) / HALF_PI);
+          if (h.flickDecay === 0) h.reachTarget = 0;
+        }
         // flickAmount 保留为残留幅度,由 flickDecay 衰减。
         // topPush:flickAmount 保留提交原角(退场姿态由 applyHand 的 effRaw
         // 统一推导,见 TOP_PUSH.retreatSplit 注释)。收指**串行**:reach 钳在 1,
@@ -2144,12 +2744,150 @@ export default class HandsRig extends THREE.Group {
   private static _vTmp3 = new THREE.Vector3();
   private static _vTmp4 = new THREE.Vector3();
   private static _mTmp = new THREE.Matrix4();
+  private static _elbowTarget = new THREE.Vector3();
+  private static _armDirection = new THREE.Vector3();
+  private static _armHome = new THREE.Vector3();
+  private static _armNatural = new THREE.Vector3();
+  private static _armTurn = new THREE.Quaternion();
+  private static readonly WRIST_COMFORT = THREE.MathUtils.degToRad(38);
+  private static readonly HALF_WRIST_COMFORT = THREE.MathUtils.degToRad(24);
 
-  private applyHand(side: HandSide, idle: boolean): void {
+  private recoveryProgress(t: number): number {
+    return this.regripFlag ? t * t * (3 - 2 * t) : 1 - (1 - t) ** 3;
+  }
+
+  private currentWristAngle(h: HandState): number {
+    if (h.weldAxis) return h.gripAngle + (h.weldAxis === 'x' && !h.weldWhole ? h.weldAngle : 0);
+    const residual = 1 - this.recoveryProgress(h.recoverT);
+    return h.gripAngle + h.recoverWristAngle * residual;
+  }
+
+  private isHalfBranchSwitch(h: HandState): boolean {
+    return this.regripFlag && Math.abs(h.recoverWristAngle) > Math.PI
+      && Math.abs(Math.abs(h.gripAngle) - Math.PI) < 1e-6 && Math.abs(h.recoverQuat.w) > 1 - 1e-6;
+  }
+
+  /** Keep the hand and wrist pivot fixed. Only redirect the forearm toward a
+   * neutral continuation of the hand. No inward/outward branch-specific bias. */
+  private aimForearm(h: HandState, wrist: THREE.Vector3, elbow: THREE.Vector3, weight: number, relief: number, halfAim: number): THREE.Vector3 {
+    const g = h.model.group;
+    const turn = HandsRig._armTurn.copy(h.home.quat).invert().premultiply(g.quaternion).normalize();
+    h.appliedArmWeight = weight;
+    const direction = HandsRig._armDirection.copy(elbow).sub(wrist).normalize();
+    if (weight > 0) {
+      // Gradually let the elbow follow the hand's turn. Leaving the home elbow
+      // fixed at 180° bent the wrist by about 135° and folded the skin over itself.
+      const homeBack = HandsRig._armHome.copy(h.model.forearm?.bindDir ?? HandsRig._armNatural.set(-1, 0, 0)).applyQuaternion(h.home.quat);
+      direction.lerp(homeBack, weight).normalize();
+      turn.slerp(HandsRig._qIdent, 1 - weight);
+      direction.applyQuaternion(turn);
+    }
+    const natural = HandsRig._armNatural.copy(h.model.forearm?.bindDir ?? HandsRig._armHome.set(-1, 0, 0))
+      .applyQuaternion(g.quaternion).normalize();
+    if (weight > 0) {
+      // Keep the forearm nearer its home elbow rather than forcing it straight
+      // behind the palm. Cap the flexed wrist at 80° (10° shy of a right angle).
+      const bent = HandsRig._armHome.copy(elbow).sub(wrist).normalize();
+      const bend = bent.angleTo(natural), limit = WRIST_BEND_MAX;
+      if (bend > limit) {
+        turn.setFromUnitVectors(bent, natural).slerp(HandsRig._qIdent, limit / bend);
+        bent.applyQuaternion(turn);
+      }
+      direction.lerp(bent, weight).normalize();
+    }
+    // Enforce the existing wrist bend envelope on the final blended aim,
+    // including single turns and the intermediate frames of a regrip.
+    const bend = direction.angleTo(natural);
+    const maxBend = WRIST_BEND_MAX;
+    if (bend > maxBend) {
+      turn.setFromUnitVectors(natural, direction);
+      turn.slerp(HandsRig._qIdent, 1 - maxBend / bend);
+      direction.copy(natural).applyQuaternion(turn);
+    }
+    if (h.model.radialAxis) {
+      const radial = HandsRig._armHome.copy(h.model.radialAxis).applyQuaternion(g.quaternion).normalize();
+      // direction points from wrist back to elbow, hence a negative projection
+      // corresponds to radial deviation of the hand. Bound that component
+      // independently of forearm roll and preserve the sagittal-plane aim.
+      const lateral = THREE.MathUtils.clamp(direction.dot(radial), -1, 1);
+      const limited = THREE.MathUtils.clamp(lateral, -WRIST_RADIAL_SIN, WRIST_ULNAR_SIN);
+      if (limited !== lateral) {
+        direction.addScaledVector(radial, -lateral).normalize()
+          .multiplyScalar(Math.sqrt(1 - limited * limited)).addScaledVector(radial, limited);
+      }
+    }
+    // Lead with the elbow while keeping the wrist pivot and all finger
+    // contacts fixed. Ease the assistance in only on strongly bent wrists.
+    let wristBend = direction.angleTo(natural);
+    if (relief > 0) {
+      const comfort = THREE.MathUtils.lerp(HandsRig.WRIST_COMFORT, HandsRig.HALF_WRIST_COMFORT, weight);
+      const amount = relief * Math.max(0, wristBend - comfort) * THREE.MathUtils.smoothstep(wristBend, comfort, Math.PI / 3);
+      if (amount > 0) {
+        turn.setFromUnitVectors(direction, natural).slerp(HandsRig._qIdent, 1 - amount / wristBend);
+        direction.applyQuaternion(turn);
+        wristBend -= amount;
+      }
+    }
+    if (halfAim > 0) {
+      const extended = HandsRig._armHome.copy(h.halfPalm.extendedBack).applyQuaternion(g.quaternion).normalize();
+      // Let the elbow follow part of the palm tilt instead of fixing the
+      // seated forearm parallel to the cube edge. Both windings retain their
+      // own extension and the wrist pivot stays on the authored grip.
+      extended.applyQuaternion(turn.setFromUnitVectors(extended, natural).slerp(HandsRig._qIdent, .81));
+      turn.setFromUnitVectors(direction, extended).slerp(HandsRig._qIdent, 1 - halfAim);
+      direction.applyQuaternion(turn);
+      wristBend = direction.angleTo(natural);
+    }
+    h.forearmAim.copy(wrist).addScaledVector(direction, elbow.distanceTo(wrist));
+    h.appliedForearmRoll = 0;
+    h.wristBend = wristBend;
+    return direction;
+  }
+
+  // A settled half grip holds its material contacts while the other hand
+  // plays. Re-evaluate on a signed grip change, a body toggle or any motion.
+  private readonly settledHalf: Record<HandSide, { angle: number; body: SmplxBody | null; holding: MarkedFingerMotion | null } | null> = { L: null, R: null };
+
+  private rightHalfSupportsUpperRelay(): boolean {
+    const turn = this.active, order = this.cube?.order, right = this.hands?.R;
+    return !!(turn && order && order >= 2 && order <= 4 && right && atHalfTurn(right.gripAngle)
+      && turn.axis === 'y' && turn.layers.length === 1 && turn.layers[0] === order - 1 && turn.dir === -1
+      && turn.gesture?.kind === 'flick' && turn.gesture.hand === 'L'
+      && turn.gesture.finger === 'index' && turn.gesture.finger2 === 'middle');
+  }
+
+  private applyHand(side: HandSide, idle: boolean, dtMs = 0): void {
     const hands = this.hands;
     if (!hands) return;
     const h = hands[side];
     const g = h.model.group;
+    const mark = this.markedMotion ?? (this.supportTransition?.motion.plan.hand === side ? this.supportTransition.motion : null);
+    // A signed half grip can pinch the stationary bottom row during a marked
+    // upper-wide turn. Preserve its fingers while sliding the pads along F/B.
+    const wide = this.wideSupport?.hand === side ? this.wideSupport : null;
+    const wideWeight = wide?.poseProgress ?? 0;
+    const lowerSupport = !wide && mark && mark.plan.hand !== side && atHalfTurn(h.gripAngle)
+      && mark.plan.request.axis === 'y' && mark.plan.request.layers.includes(2);
+    const pinchMotion = side === 'R' ? this.markedMotion ?? this.supportTransition?.motion : null;
+    const pinch = pinchMotion?.topPinch != null ? THREE.MathUtils.smoothstep(pinchMotion.topPinch, 0, 1)
+      * (1 - THREE.MathUtils.smoothstep(pinchMotion.returning, .20, 1)) : 0;
+    const clearing = h.indexEvade || h.lowEvade || h.midEvade || h.bEvade || h.fEvade || h.sEvade;
+    if (this.fourSeat || wide || mark || pinchMotion?.topPinch != null || this.active || clearing) idle = false;
+    // During a marked wide turn the other hand finishes clearing the layers
+    // before the turn starts. Its clearance pose is constant until release.
+    const holding = mark && mark.plan.hand !== side && mark.preparation === 1 && !mark.finished ? mark : null;
+    const halfRelaySupport = side === 'R' && this.rightHalfSupportsUpperRelay();
+    const settled = !halfRelaySupport && Math.abs(Math.abs(h.gripAngle) - Math.PI) < 1e-8 && Math.abs(h.grip.x) > 1 - 1e-8
+      && !wide && (!mark || holding) && !pinch && h.recoverT >= 1 && !h.weldAxis && !h.flickFinger && !h.pinFinger
+      && !clearing;
+    if (settled && !this.fourSeat) {
+      idle = false;
+      const body = this.body?.visible ? this.body : null;
+      const cached = this.settledHalf[side];
+      if (!h.forearmRotation.settling && cached && cached.angle === h.gripAngle && cached.body === body && cached.holding === holding) return;
+      this.settledHalf[side] = { angle: h.gripAngle, body, holding };
+    } else this.settledHalf[side] = null;
+    h.halfPalm.contactSkin.restore();
     const sideSign = h.model.side;
     const q = HandsRig._qTmp;
 
@@ -2157,8 +2895,8 @@ export default class HandsRig extends THREE.Group {
     if (h.weldAxis) {
       q.setFromAxisAngle(AXIS_VEC[h.weldAxis], h.weldAngle);
     } else if (h.recoverT < 1) {
-      // easeOutCubic 回位
-      const t = 1 - Math.pow(1 - h.recoverT, 3);
+      // Explicit regrips ease both ends; turn overshoot decays from release.
+      const t = this.recoveryProgress(h.recoverT);
       q.copy(h.recoverQuat).slerp(HandsRig._qIdent, t);
     } else {
       q.identity();
@@ -2182,18 +2920,6 @@ export default class HandsRig extends THREE.Group {
         topEffRaw = amt * h.flickDecay; // 小角度残余原地缩回
       }
     }
-    // topPush 原地腕转(见 TOP_PUSH_FOLLOW 注释):绕「过腕点、平行 z」轴
-    // 翻转 ψ(φ_eff) —— 腕点不动 → 前臂静止、手掌不离位,补足食指 32U 可达缺口。
-    if (h.flickStyle === "topPush" && h.flickFinger && (h.reachT > 0 || h.flickAmount !== 0)) {
-      const smReach = h.reachT * h.reachT * (3 - 2 * h.reachT);
-      const psi = followAt(TOP_PUSH_FOLLOW[side].wrist, topPushArcPhi(topEffRaw)) * smReach;
-      if (psi !== 0) {
-        const W = HandsRig._vTmp.copy(WRIST_LOCAL).applyQuaternion(g.quaternion).add(g.position);
-        const qp = HandsRig._qTmp2.setFromAxisAngle(AXIS_VEC.z, psi);
-        g.quaternion.premultiply(qp);
-        g.position.sub(W).applyQuaternion(qp).add(W);
-      }
-    }
     // upPush 原地腕转(见 UP_PUSH 注释):绕「过腕点、平行 y」轴偏航 ψ(s),
     // 把整手向左带,补足食指推 RUB→BLU 的可达缺口;decay 同乘倒放。
     if (h.flickStyle === "upPush" && h.flickFinger && (h.reachT > 0 || h.flickAmount !== 0)) {
@@ -2212,7 +2938,7 @@ export default class HandsRig extends THREE.Group {
       // 4D 网格 3087 点里「pen ≤0 且 pad 在贴纸足迹内」的解最好也只能悬 3.8U
       // (手比 generic 大 18% + r21~r27 手根重解后指尖内收下沉)。补一个绕
       // 「过腕点、平行 x」轴的俯仰,把指列抬过后上棱躺到 U 面 —— 腕点不动 ⇒
-      // 前臂静止、手掌不离位,同 topPush 的原地腕转先例。reach 倒放天然收回。
+      // 前臂静止、手掌不离位,reach 倒放天然收回。
       if (UP_PUSH.climbPitch !== 0) {
         const W = HandsRig._vTmp.copy(WRIST_LOCAL).applyQuaternion(g.quaternion).add(g.position);
         const qp = HandsRig._qTmp2.setFromAxisAngle(AXIS_VEC.x, UP_PUSH.climbPitch * smReach);
@@ -2221,34 +2947,14 @@ export default class HandsRig extends THREE.Group {
       }
     }
 
-    // 回位 / 换握 slerp 途中手沿径向外拱(sin 峰在行程中段,行程角越大拱越高):
-    // 手绕魔方扫 90°(↑↓ 换握)时指腹接触半径 ~117U 小于角柱扫掠半径 135.8U,
-    // 不外拱会整排手指削穿棱柱区(穿模禁令)。残余小角度(<0.06rad)不拱。
-    // 单靠外拱不够:外拱只沿「手根相位」的径向推,与手根相位错开的指肉
-    // (拇指压 F 面、指列贴 B 面)几乎不受益,oracle 实测换握中段仍 35~41U
-    // 深插 —— 所以叠加「张手」(regripOpen,下方手指环节):像真人换握时
-    // 松开手指,行程中段把 curl 压掉大半,指尖从抓握半径伸展出扫掠区。
+    // The wrist follows the grip rotation itself. Fingers open around the
+    // corners during recovery without adding a translation to that rotation.
     let regripOpen = 0;
     if (!h.weldAxis && h.recoverT < 1) {
-      const ang = 2 * Math.acos(Math.min(1, Math.abs(h.recoverQuat.w)));
-      if (ang > 0.06) {
-        const t = 1 - Math.pow(1 - h.recoverT, 3);
-        const ax = HandsRig._vTmp.set(h.recoverQuat.x, h.recoverQuat.y, h.recoverQuat.z);
-        if (ax.lengthSq() > 1e-9) {
-          ax.normalize();
-          const radial = HandsRig._vTmp2.copy(g.position).addScaledVector(ax, -g.position.dot(ax));
-          if (radial.lengthSq() > 1) {
-            g.position.addScaledVector(radial.normalize(), Math.sin(Math.PI * t) * ang * 26);
-          }
-        }
-        // 张手量:行程角 ≥90° 全开;小残余回位(flick 借力 ~9°)几乎不开。
-        if (ang > 0.3) regripOpen = Math.sin(Math.PI * t) * Math.min(1, ang / HALF_PI);
+      const angle = 2 * Math.acos(Math.min(1, Math.abs(h.recoverQuat.w)));
+      if (angle > .3) {
+        regripOpen = Math.sin(Math.PI * this.recoveryProgress(h.recoverT)) * Math.min(1, angle / HALF_PI);
       }
-    }
-
-    // 转层外让:沿本侧外向 x 平移(见 DODGE_MAG 注释)。
-    if (h.dodge > 0) {
-      g.position.x += h.dodge * h.dodgeMag * (sideSign === -1 ? 1 : -1);
     }
 
     // 待机微动:极轻的呼吸浮动(位移 ±1.0,相位左右手错开)。禁走 z —— 那是
@@ -2259,49 +2965,48 @@ export default class HandsRig extends THREE.Group {
     // 现形,存量 bug);外向 x 在任意绕 x 握姿下都切向安全,保留。指弹进行中
     // (flickFinger)也禁全部 —— topPush 无 weld,呼吸会叠在按压接触上抖
     // (±2U 噪声 > 1.2U 接触间隙,标定/oracle 全被污染,2026-07-07 现形)。
-    if (idle && !h.weldAxis && !h.flickFinger && h.recoverT >= 1) {
+    const canBreathe = idle && !h.weldAxis && !h.flickFinger && h.recoverT >= 1;
+    h.idleBlend = canBreathe ? Math.min(1, h.idleBlend + dtMs / 180) : 0;
+    if (canBreathe) {
+      const blend = THREE.MathUtils.smoothstep(h.idleBlend, 0, 1);
       const t = this.idleClock / 1000;
       const ph = side === "R" ? 0 : 1.7;
       // y 呼吸幅度 0.4(旧 1.0):2026-07-09 拇指 home 抬进 E 层带后可见肉
       // y∈[−30.9,30.9],距 ±32 带界只剩 ~1.1U —— 旧 ±2.2U 呼吸会周期性把
       // 拇指肉推出 E 带(L 相位 1.7 起手即 +2.18,实测 33.2)。
-      if (h.grip.w > 0.9999) g.position.y += Math.sin(t * 1.1 + ph) * 0.4 * HAND_SCALE;
-      g.position.x += Math.cos(t * 0.9 + ph) * 0.8 * HAND_SCALE * (sideSign === -1 ? 1 : -1);
+      if (h.grip.w > 0.9999) g.position.y += Math.sin(t * 1.1 + ph) * 0.4 * HAND_SCALE * blend;
+      g.position.x += Math.cos(t * 0.9 + ph) * 0.8 * HAND_SCALE * blend * (sideSign === -1 ? 1 : -1);
     }
 
-    // 前臂 IK:肘锚固定,腕转/弹指/回位时前臂自然摆动而不是整条手臂绕魔方
-    // 公转。目标正交基 +x=肘→腕、+z≈手系掌法向(setFromUnitVectors 最小旋转
-    // 的滚转会随肘-腕方位漂,扁截面转离腕背 → 现台阶,故锚定掌平面)。
-    // @4 融合前臂:前臂缝在手网格里,摆动 = forearm 骨绕腕的手局部旋转
-    // Δ = 目标基 · 绑定基⁻¹(全程手局部)。
-    const wrist = HandsRig._vTmp.copy(WRIST_LOCAL).applyQuaternion(g.quaternion).add(g.position);
-    if (h.model.forearm && h.armBindFrameInv) {
-      const qInv = HandsRig._qTmp.copy(g.quaternion).invert();
-      const xT = HandsRig._vTmp2.copy(wrist).sub(h.elbow).applyQuaternion(qInv).normalize();
-      const zT = HandsRig._vTmp3.set(0, 0, 1);
-      zT.addScaledVector(xT, -zT.dot(xT));
-      if (zT.lengthSq() < 1e-6) zT.set(0, 0, 1); // 臂轴撞上掌法向的退化兜底
-      zT.normalize();
-      const yT = HandsRig._vTmp4.crossVectors(zT, xT);
-      const dq = HandsRig._qTmp2.setFromRotationMatrix(HandsRig._mTmp.makeBasis(xT, yT, zT)).multiply(h.armBindFrameInv);
-      h.model.forearm.bone.quaternion.copy(dq).multiply(h.model.forearm.bindQuat);
-      // SMPL-X 全身焊臂:体前臂目标世界旋转 = gq·dq·frameQuat(体系→模板系
-      // 的解析刚性对应,推导见 smplxBody.updateArm),体腕点钉在手腕点 ——
-      // 位置/朝向/扭转三者全对齐,体残段与融合前臂表面严格重合(手不再断开)。
-      if (this.body && this.body.visible && h.model.forearm.frameQuat) {
-        const geoQ = HandsRig._qTmp.copy(g.quaternion).multiply(dq).multiply(h.model.forearm.frameQuat);
-        this.body.updateArm(side, wrist, geoQ);
-      }
-    } else if (h.forearm) {
-      h.forearm.position.copy(wrist);
-      const dir = HandsRig._vTmp2.copy(wrist).sub(h.elbow).normalize();
-      const zF = HandsRig._vTmp3.set(0, 0, 1).applyQuaternion(g.quaternion);
-      zF.addScaledVector(dir, -zF.dot(dir));
-      if (zF.lengthSq() < 1e-6) zF.set(0, 0, 1); // 臂轴撞上掌法向的退化兜底
-      zF.normalize();
-      const yF = HandsRig._vTmp4.crossVectors(zF, dir);
-      h.forearm.quaternion.setFromRotationMatrix(HandsRig._mTmp.makeBasis(dir, yF, zF));
+    const elbowTarget = HandsRig._elbowTarget.copy(h.elbow);
+    const middleRelaySeat = h.flickStyle === 'middleSlicePad' && h.flickFinger2 === 'pinky'
+      ? THREE.MathUtils.smoothstep(h.reachT, 0, 1) * THREE.MathUtils.smoothstep(h.flickDecay || 1, 0, 1) : 0;
+    if (middleRelaySeat) {
+      const dx = (side === 'R' ? -1 : 1) * M_RELAY_SHIFT.x * middleRelaySeat, dy = M_RELAY_SHIFT.y * middleRelaySeat;
+      g.position.x += dx; g.position.y += dy;
+      elbowTarget.x += dx; elbowTarget.y += dy;
     }
+    const four = this.fourSeat;
+    if (four?.axis === 'x' && four.gesture.kind === 'weld' && four.gesture.hands.includes(side)) {
+      // Bring the palm over the moving block before the wrist starts turning.
+      // A single face retains its original wrist position.
+      const inside = four.layers.length === 3 ? SIZE * 1.25 : four.layers.length === 2 ? SIZE / 2 : 0;
+      const shift = (side === 'R' ? -1 : 1) * inside * THREE.MathUtils.smoothstep(four.progress, 0, 1);
+      g.position.x += shift;
+      elbowTarget.x += shift;
+    }
+    if (four && four.gesture.kind === 'flick' && four.gesture.hand === side
+      && !four.layers.includes(3) && !four.layers.includes(0)) {
+      const sign = side === 'R' ? 1 : -1;
+      const center = ((Math.min(...four.layers) + Math.max(...four.layers))/2 - 1.5) * SIZE * .75;
+      const seat = THREE.MathUtils.smoothstep(four.progress, 0, 1);
+      let shift = 0;
+      if (four.axis === 'x' && four.layers.length === 1) shift = center - sign * 44;
+      if (four.axis === 'y') shift = center - (four.gesture.finger === 'index' ? 62 : -62);
+      g.position[four.axis] += shift * seat;
+      elbowTarget[four.axis] += shift * seat;
+    }
+    const carryForearm = mark?.applyWrist(side, g, elbowTarget) ?? false;
 
     // 手指姿态 = home 弯曲 + flick 偏移。
     const sm = (t: number): number => t * t * (3 - 2 * t);
@@ -2312,6 +3017,13 @@ export default class HandsRig extends THREE.Group {
     // 一起恢复(用户硬规则)。
     const isDouble = h.flickFinger2 !== null;
     const rawAbs = Math.abs(h.flickAmount);
+    const order = this.cube?.order ?? 3;
+    const pocketPose = order === 2 || (this.active ? isFourWide(order, this.active.layers)
+      : !!h.flickFinger && isFourWide(order, h.strokeLayers));
+    const pocketRelay = pocketPose && isDouble
+      && (h.flickStyle === 'backHook' || h.flickStyle === 'hook' && h.flickFinger === 'pinky');
+    const strokeSide = pocketRelay ? 'L' : side;
+    const strokeMirror = pocketRelay && side === 'R' ? -1 : 1;
     const rawSign = h.flickAmount < 0 ? -1 : 1;
     const amt1 = isDouble ? Math.min(rawAbs, HALF_PI) * decayK : 0;
     const amt2 = isDouble ? Math.max(0, Math.min(rawAbs - HALF_PI, HALF_PI)) * decayK : 0;
@@ -2323,7 +3035,9 @@ export default class HandsRig extends THREE.Group {
     // 不变,沿弧倒放贴面天然安全,保留原 share 语义)。
     const sRaw1 = Math.min(rawAbs, HALF_PI) / HALF_PI;
     const sRaw2 = Math.max(0, Math.min(rawAbs - HALF_PI, HALF_PI)) / HALF_PI;
-    const prep2T = isDouble ? sm(Math.min(1, rawAbs / HALF_PI)) * decayK : 0;
+    const prep = sm(sRaw1);
+    const prep2T = isDouble ? prep * decayK : 0;
+    const indexHookRelay = h.flickStyle === 'hook' && h.flickFinger === 'index' && h.flickFinger2 === 'middle';
     // F 族遗留分支避让按本手握姿选指(见 F_EVADE 注释):up = 拇指+无名指在
     // F 带内 / down = 食指在 F 带内 / home 与非标准握的指肉都在带外,不动。
     let fEvadeGrip: GripName | null = null;
@@ -2338,6 +3052,27 @@ export default class HandsRig extends THREE.Group {
       if (h.grip.angleTo(GRIP_Q_UP) < 0.01) sEvadeGrip = "up";
       else if (h.grip.angleTo(GRIP_Q_DOWN) < 0.01) sEvadeGrip = "down";
     }
+    // A lower 2×2 turn sweeps the corners underneath both front and back
+    // support pads. Open those digits as the square's projected width grows.
+    const pocketTurn = pocketPose ? this.active : null;
+    let lowerClearance = 0, frontClearance = 0, upperPhase: number | undefined;
+    if (pocketTurn && pocketTurn.axis !== 'x' && pocketTurn.cls !== 'whole') {
+      const angle = pocketTurn.lastAngle;
+      const sweep = (Math.abs(Math.cos(angle)) + Math.abs(Math.sin(angle)) - 1) / (Math.SQRT2 - 1);
+      // Convert the moving face normal to the resting hand's frame. A wrist
+      // turn changes which world face borders its thumb and middle pads.
+      const normal = HandsRig._vTmp.copy(AXIS_VEC[pocketTurn.axis])
+        .multiplyScalar(pocketTurn.cls === 'high' ? -1 : 1)
+        .applyQuaternion(HandsRig._qTmp2.copy(h.grip).invert());
+      if (normal.y > .99) {
+        const direction = Math.sign(angle) * (pocketTurn.cls === 'high' ? 1 : -1);
+        const phase = THREE.MathUtils.radToDeg(Math.abs(angle)) % 90;
+        upperPhase = direction === (side === 'R' ? 1 : -1) ? 90 - phase : phase;
+      }
+      if (normal.y < -.99) lowerClearance = sweep * (2 - sweep);
+      if (normal.z > .99) frontClearance = sweep;
+    }
+    let frontPadWeight = 1;
     for (const name of ["thumb", "index", "middle", "ring", "pinky"] as const) {
       const f = h.model.fingers[name];
       const pose = h.home.fingers[name];
@@ -2346,21 +3081,37 @@ export default class HandsRig extends THREE.Group {
       let c3 = pose.curl[2];
       let splay = pose.splay * sideSign;
       // r11 轴向扭转(FingerCurl.twist,Euler x 槽,此前恒 0):拇指 CMC 旋前 /
-      // 四指指柱滚转。目前仅姿态层入参,弹指手势不叠加(twist 不参与扫掠)。
-      const twist = (pose.twist ?? 0) * sideSign;
+      // 四指指柱滚转。topPush 叠加标定的食指 twist，其余动作保持姿态层值。
+      let twist = (pose.twist ?? 0) * sideSign;
+      let metaCurl = 0, metaSplay = 0, metaTwist = 0;
       // topPush 伸指是时间驱动(reachT),层角为零的前置/回收期间也要摆位。
-      const topPush = h.flickStyle === "topPush" && h.flickFinger === name;
+      let hookPose: number[] | undefined;
+      let pm = pose.mid;
+      const secondTopPush = h.flickStyle === 'topPush' && h.flickFinger2 === name;
+      const topPush = h.flickStyle === "topPush" && (h.flickFinger === name || secondTopPush);
       // 本指角色与负担扫角(带符号):单指 = 全量;连拨首指钳 90°、次指接后半。
       const role = h.flickFinger === name ? 1 : h.flickFinger2 === name ? 2 : 0;
-      // D 族拇指避让(见 THUMB_EVADE_D 注释):非弹指角色的拇指在 D/D' 期间抬避。
-      if (name === "thumb" && role === 0 && h.flickStyle === "hook" && h.flickAxis === "y"
-        && (h.flickFinger === "ring" || h.flickFinger === "pinky")) {
-        const ev = THUMB_EVADE_D[side];
-        const tEv = sm(Math.min(1, rawAbs / 0.12)) * decayK;
-        c1 += ev.c1 * tEv;
-        c2 += ev.c2 * tEv;
-        c3 += ev.c3 * tEv;
-        splay += ev.splay * tEv;
+      if (pocketPose) {
+        if (name === 'middle') {
+          c1 -= .18 * lowerClearance;
+          if (secondTopPush) {
+            // The relay is fitted from its raised seat. Interpolate from the
+            // relaxed lower corner without moving its contact in quarter two.
+            c1 += (.03 - POCKET_MIDDLE_CURL) * prep2T * h.reachT;
+            splay += (-.105 - POCKET_MIDDLE_SPLAY) * prep2T * h.reachT * sideSign;
+          }
+          if (role === 2 && !secondTopPush) {
+            // The relay reaches the original upper corner. Blend from the
+            // lower pocket seat into its calibrated second-finger trajectory.
+            c1 -= POCKET_MIDDLE_CURL * prep2T;
+            if (indexHookRelay) c1 -= .003 * Math.sin(Math.PI * sRaw2) * decayK;
+            if (h.flickDecay > 0) c1 -= .048 * Math.sin(Math.PI * prep2T);
+            splay -= POCKET_MIDDLE_SPLAY * prep2T * sideSign;
+          }
+        } else if (name === 'thumb') {
+          splay += .13 * lowerClearance * sideSign;
+          if (role === 0) c2 -= .030 * frontClearance;
+        }
       }
       // U'p 推法本手拇指避让(2026-07-25 MANO):climbPitch 把整手绕腕俯仰过去
       // 时,压着 F 面的拇指被一起送进方块(pitch 0.25 实测 21.8U;其余四指反而
@@ -2414,10 +3165,10 @@ export default class HandsRig extends THREE.Group {
       if (name === "middle" && h.pinFinger === "index" && h.pinReachT > 0) {
         c1 += WELD_PIN_MID_TUCK * sm(h.pinReachT);
       }
-      // D 族静止手「无名指 + 拇指」单指避让(见 LOW_EVADE 注释):弹指发生在
+      // D 族静止手无名指避让(见 LOW_EVADE 注释):弹指发生在
       // 另一只手上,进度走 tick 推进的 lowEvade(role===0 兜重叠帧,同上)。
-      // splay 两手镜像符号已烘入表内,不 ×sideSign(同 THUMB_EVADE_D 先例)。
-      if ((name === "ring" || name === "thumb") && role === 0 && h.lowEvade > 0) {
+      // splay 两手镜像符号已烘入表内,不 ×sideSign。
+      if (name === "ring" && role === 0 && h.lowEvade > 0) {
         const ev = LOW_EVADE[side][name];
         c1 += ev.c1 * h.lowEvade;
         c2 += ev.c2 * h.lowEvade;
@@ -2487,8 +3238,8 @@ export default class HandsRig extends THREE.Group {
       const share = !isDouble ? (role === 1 ? flickA : 0) : (role === 1 ? amt1 : amt2) * rawSign;
       const engaged = role === 1
         ? (h.reachT > 0 || share !== 0)
-        : role === 2 && (prep2T > 0 || share !== 0);
-      if (engaged) {
+        : role === 2 && (prep2T > 0 || share !== 0 || (isMiddleSliceStroke(h.flickStyle) && h.reachT > 0));
+      if (engaged && h.flickStyle !== 'pocketThumbLift') {
         // 弹指(前后钳形握姿)分扫法,匹配接触点处层面的真实运动方向:
         //  拇指(F 族):折叠的中节展开 → 沿 F 面向上大扫幅;
         //  y 轴(U/D/E,食指/无名指)与 hook/backHook:层动水平朝本手掌心 →
@@ -2496,80 +3247,145 @@ export default class HandsRig extends THREE.Group {
         //  downPush/upPush:压面推层(FINGERTRICKS §4.3/§4.5);
         //  x/z 轴中指(M/B/S 族):接触立柱处层动是竖直的 → splay 竖扫为主。
         const open = Math.min(1, Math.abs(share) / HOOK.open);
-        if (topPush) {
-          // 食指越顶(home 握 F 族):reach(时间驱动)先抬(splay 竖直离开
+        if (isMiddleSliceStroke(h.flickStyle)) {
+          const reverseFour = order === 4 && h.flickStyle === 'middleSliceNail' && !isDouble;
+          const degrees = rawAbs * 180 / Math.PI;
+          const p = reverseFour
+            ? middleSlicePose('middleSlicePad', false, false, Math.max(0, 90 - degrees), h.reachT, decayK, fingerChannels(pose), order)
+            : middleSlicePose(h.flickStyle, role === 2, isDouble, degrees, h.reachT, decayK, fingerChannels(pose), order);
+          [c1, c2, c3, splay, twist, metaCurl, metaSplay, metaTwist] = p;
+          if (p.length > 8) pm = [p[8], p[9]];
+          if (side === 'R') { splay = -splay; twist = -twist; }
+        } else if (isMixedPush(h.flickStyle)) {
+          const release = h.flickDecay > 0 ? 1 - h.flickDecay : 0;
+          const p = mixedGripPose(h.flickStyle, h.reachT, THREE.MathUtils.radToDeg(rawAbs), release);
+          [c1, c2, c3] = p;
+          splay = p[3] * sideSign;
+          twist = p[4] * sideSign;
+          pm = [p[5], p[6]];
+        } else if (h.flickStyle === 'reverseRingHook' && name === 'ring') {
+          const fit = HOOK_FOLLOW[side].hook_ring;
+          const travel = 1 - sRaw1;
+          const reach = sm(h.reachT);
+          c1 += fitAt(fit, 'c1', travel) * reach;
+          c2 += fitAt(fit, 'c2', travel) * reach;
+          c3 += fitAt(fit, 'c3', travel) * reach;
+          splay += fitAt(fit, 'splay', travel) * reach;
+        } else if ((h.flickStyle === 'indexHook' || h.flickStyle === 'reverseIndexHook') && name === 'index') {
+          const reverse = h.flickStyle === 'reverseIndexHook';
+          const degrees = reverse ? Math.max(0, 90 - THREE.MathUtils.radToDeg(rawAbs)) : THREE.MathUtils.radToDeg(rawAbs);
+          const release = reverse ? 1 - h.reachT : h.flickDecay > 0 ? 1 - h.flickDecay : 0;
+          hookPose = homeIndexHook(degrees, release);
+          [c1, c2, c3] = hookPose;
+          splay = hookPose[3] * sideSign;
+          if (pocketPose) {
+            // The larger corner sticker has a wider margin at its outer edge.
+            // Keep the pad seated as contact rolls toward the nail.
+            const contact = THREE.MathUtils.smoothstep(degrees, 15, 28)
+              * (1 - THREE.MathUtils.smoothstep(degrees, 37, 47));
+            c1 += .004 * contact * (1 - release);
+            splay -= .015 * contact * (1 - release) * sideSign;
+            const handoff = THREE.MathUtils.smoothstep(degrees, 49, 54)
+              * (1 - THREE.MathUtils.smoothstep(degrees, 56, 62));
+            c1 += .001 * handoff * (1 - release);
+          }
+          twist = hookPose[4] * sideSign;
+          [metaCurl, metaSplay, metaTwist] = hookPose.slice(5, 8);
+        } else if (topPush && h.flickAxis === 'z' && h.flickLayer === 'mid') {
+          // S / S′ presses through 45°, then lifts and unwinds the
+          // index. Keeping the pad attached until 90° would overtwist the MCP.
+          const home = [pose.curl[0], pose.curl[1], pose.curl[2], pose.splay, 0, 0, 0, 0];
+          const returning = h.flickDecay > 0 ? 1 - h.flickDecay
+            : h.reachTarget === 0 && rawAbs > 0 ? 1 : 0;
+          const p = sliceIndexPose(rawAbs * 180 / Math.PI, returning, h.reachT, home, TOP_PUSH);
+          [c1, c2, c3] = p;
+          splay = p[3] * sideSign;
+          twist = ((pose.twist ?? 0) + p[4]) * sideSign;
+          [metaCurl, metaSplay, metaTwist] = p.slice(5);
+        } else if (topPush) {
+          // 食指下按(home 握 F 族及上手 U):reach(时间驱动)先抬(splay 竖直离开
           // B 面)后卷(c1 大幅前卷 + 中末节拉直,指链横越 U 面上方),指尖
-          // 落到 UFR/UFL 角块 U 面贴纸上方。转动段物理跟随:press 从转动
-          // 一开始压满(推动=接触),腕 track 同转(driveGesture);释放段
+          // 落到起拨贴纸上方。转动段物理跟随:press 从转动
+          // 一开始压满(推动=接触),食指关节跟随、手掌固定;释放段
           // (releaseAt 后)press 渐出 + releaseLift 抬离扫掠区,层滑行收尾。
           // 收指 reachT 倒放同路径。
-          const liftT = sm(Math.min(1, h.reachT / TOP_PUSH.liftIn));
-          const sweepT = sm(Math.max(0, (h.reachT - TOP_PUSH.sweepStart) / (1 - TOP_PUSH.sweepStart)));
+          // Upper-grip U has a different supporting thumb and contact plane.
+          const frontStroke = h.flickAxis === 'z';
+          const FW = frontStroke ? FRONT_INDEX_FOLLOW : TOP_PUSH_FOLLOW[side];
+          const strokeAngle = secondTopPush ? sRaw2 * HALF_PI : rawAbs;
+          const frontReturn = strokeAngle >= TOP_PUSH.retreatSplit
+            && (strokeAngle > HALF_PI || h.flickDecay > 0 || h.reachTarget === 0);
+          const pathAngle = frontReturn ? Math.min(strokeAngle, HALF_PI) : secondTopPush ? strokeAngle : topEffRaw;
+          const reach = frontReturn && h.reachTarget === 0 ? 1 : secondTopPush ? prep * h.reachT : h.reachT;
+          // Start the front sweep while the finger is still rising. This keeps
+          // the tip moving over the edge instead of pausing at the top.
+          const initialLift = sm(Math.min(1, reach / TOP_PUSH.liftIn));
+          const liftT = frontStroke ? (initialLift + sm(reach)) / 2 : initialLift;
+          const sweepT = sm(Math.max(0, (reach - TOP_PUSH.sweepStart) / (1 - TOP_PUSH.sweepStart)));
           // reach 早段微伸(sin 包络):抬升弧面稍向内斜,顶着 B 面上沿滑会
           // 蹭进 2.65U(oracle),c1 退一点让指腹离面爬升。
-          const backOff = Math.sin(Math.PI * Math.min(1, h.reachT / 0.35)) * TOP_PUSH.backOff;
-          // 接触跟随:指尖钉住随层转的角块贴纸(全程接触规格),knot 曲线随
+          const backOffPhase = Math.min(1, reach / .35);
+          const backOff = Math.sin(Math.PI * backOffPhase) * TOP_PUSH.backOff
+            * (1 - THREE.MathUtils.smoothstep(backOffPhase, .62, 1));
+          // 接触跟随:指腹跟随起拨处的实体贴纸(全程接触规格),knot 曲线随
           // 弧位置 φ_eff 展开(knot0 即按压姿,reach 到位即贴住);release(F2
           // 第二象限)/ 收指沿同曲线倒放 —— φ_eff 退回 = 手指原路撤离,见
           // topPushArcPhi 注释。
-          const FW = TOP_PUSH_FOLLOW[side];
-          // φ/release 统一从 topEffRaw 推导:活跃段 = 原角(与旧行为一致);
-          // 退场段 = 虚拟续转 release(与 F2 已验证姿态点对点相同)/ 原地缩回。
-          const phi = topPushArcPhi(topEffRaw);
-          const relEff = topPushRelease(topEffRaw);
-          const followGate = sm(h.reachT);
+          const phi = topPushArcPhi(pathAngle);
+          // As the nail rolls down the sticker, leave the web between the
+          // stationary middle and active index room to fold.
+          frontPadWeight = 1 - THREE.MathUtils.smoothstep(phi,
+            THREE.MathUtils.degToRad(50), THREE.MathUtils.degToRad(68));
+
+          // U first withdraws beneath the fixed U5 thumb, then lifts away. An
+          // immediate lift intersects the thumb with the index nail on release.
+          const relLift = topPushReleaseLift(pathAngle, .4);
+          const followGate = sm(reach);
           c1 += sweepT * TOP_PUSH.c1 - backOff + followAt(FW.c1, phi) * followGate;
           c2 += sweepT * TOP_PUSH.c2 + followAt(FW.c2, phi) * followGate;
           c3 += sweepT * TOP_PUSH.c3 + followAt(FW.c3, phi) * followGate;
           // 抬升方向 = 世界 +y;splay 局部符号在镜像资产下左右相反,×sideSign
           // (R 实测 splay 负=抬升;L 反之)。releaseLift 挂 followGate:活跃段
           // 恒 1 无影响,收指段随 reach 渐出(从带抬离的按压位平滑归位)。
-          splay += (liftT * TOP_PUSH.lift + relEff * TOP_PUSH.releaseLift * followGate
+          const releaseLift = .235 - .125 * THREE.MathUtils.smoothstep(topPushRelease(pathAngle), .65, 1);
+          splay += (liftT * TOP_PUSH.lift + relLift * releaseLift * followGate
+            + .075 * Math.sin(Math.PI * reach) ** 2
             + followAt(FW.splay, phi) * followGate) * sideSign;
+          twist += followAt(FW.twist, phi) * followGate * sideSign;
+          metaCurl = followAt(FW.metaCurl, phi) * followGate;
+          metaSplay = followAt(FW.metaSplay, phi) * followGate;
+          metaTwist = followAt(FW.metaTwist, phi) * followGate;
+          metaSplay += .055 * relLift * followGate;
+          if (frontReturn) {
+            // F2 uses the second quadrant for most of its withdrawal. A
+            // quarter starts here on commit; both finish on the recovery clock.
+            const upperDouble = h.flickAxis === 'y' && strokeAngle > HALF_PI;
+            const layerTravel = THREE.MathUtils.clamp((strokeAngle - HALF_PI) / HALF_PI, 0, 1);
+            // Upper U2 only spends the unplayed part of quadrant two on its decay clock.
+            const travel = .8 * (upperDouble && h.flickDecay > 0 ? 1 - h.flickDecay : layerTravel);
+            const retreat = secondTopPush ? 1 - h.reachT
+              : h.reachTarget === 0 ? 1 - (upperDouble ? 1 : .4) * h.reachT
+              : !upperDouble && h.flickDecay > 0 ? .6 * (1 - h.flickDecay) : 0;
+            const t = sm(travel + (1 - travel) * retreat);
+            const departure = [c1, c2, c3, splay * sideSign, twist * sideSign - (pose.twist ?? 0),
+              metaCurl, metaSplay, metaTwist];
+            const p = frontIndexReturn(pose, departure, t);
+            [c1, c2, c3] = p;
+            splay = p[3] * sideSign;
+            twist = ((pose.twist ?? 0) + p[4]) * sideSign;
+            [metaCurl, metaSplay, metaTwist] = p.slice(5);
+            frontPadWeight = THREE.MathUtils.lerp(frontPadWeight, 1, THREE.MathUtils.smoothstep(t, 0, .28));
+          }
         } else if (h.flickStyle === "downPush") {
-          // 左中右下 F 族(FINGERTRICKS §4.3):食指尖起手压 U 面 UFR 区,随层角
-          // 前卷把初始 UFR 往前下带;F2 次指中指 Q1 前探 UF 缘、Q2 接力。
-          const t = role === 2 ? sRaw2 : (isDouble ? sRaw1 : Math.min(rawAbs, HALF_PI) / HALF_PI);
-          if (role === 2) {
-            c1 += DOWN_PUSH.prep2.c1 * prep2T;
-            c2 += DOWN_PUSH.prep2.c2 * prep2T;
-            c3 += DOWN_PUSH.prep2.c3 * prep2T;
-            splay += DOWN_PUSH.prep2.splay * prep2T;
-          }
-          const key = `downPush_${name}${role === 2 ? "2" : ""}`;
-          const fit = HOOK_FOLLOW[side][key];
-          // 攻窗保持 + per-style 回撤覆盖(机制同 hook 分支,见 RETREAT_LIFT_STYLED)
-          const rlS = h.flickDecay > 0 ? RETREAT_LIFT_STYLED[side][key] : undefined;
-          const kFit = rlS ? Math.min(1, decayK / 0.88) : decayK;
-          if (fit) {
-            c1 += fitAt(fit, "c1", t) * kFit;
-            c2 += fitAt(fit, "c2", t) * kFit;
-            c3 += fitAt(fit, "c3", t) * kFit;
-            splay += fitAt(fit, "splay", t) * kFit;
-          } else {
-            c1 += DOWN_PUSH.c1 * t * kFit;
-            c2 += DOWN_PUSH.c2 * t * kFit;
-            c3 += DOWN_PUSH.c3 * t * kFit;
-            splay += DOWN_PUSH.splay * t * kFit;
-          }
-          // F2 连拨首指退场(DOWN_EXIT 注释):同 HOOK_EXIT 窗口与机制。
-          if (role === 1 && isDouble && name === "index") {
-            const ex = sm(Math.min(1, sRaw2 / HOOK_EXIT_IN)) * kFit;
-            c1 += DOWN_EXIT.c1 * ex;
-            c2 += DOWN_EXIT.c2 * ex;
-            c3 += DOWN_EXIT.c3 * ex;
-            splay += DOWN_EXIT.splay * ex;
-          }
-          if (h.flickDecay > 0) {
-            // 快攻-平台-快收包络(非对称正弦):D2' 类深绕缠从 decay 第一帧就开始
-            // 切弦,正弦起攻太慢救不了头段(oracle 实测 −4.7@dec0.89)。
-            const lift = sm(Math.min(1, (1 - decayK) / 0.12)) * sm(Math.min(1, decayK / 0.15)) * t;
-            const rl: { c1: number; c2: number; c3: number; splay?: number } = rlS ?? RETREAT_LIFT;
-            c1 += rl.c1 * lift;
-            c2 += rl.c2 * lift;
-            c3 += rl.c3 * lift;
-            if (rl.splay) splay += rl.splay * lift;
-          }
+          // Absolute author-space finger poses; the other fingers and palm stay fixed.
+          const finger = name === "middle" ? "middle" : "index";
+          const home = [pose.curl[0], pose.curl[1], Math.max(.03, pose.curl[2]), pose.splay, 0, 0, 0, 0];
+          const p = frontDownPose(finger, rawAbs * 180 / Math.PI, isDouble,
+            h.flickDecay > 0 ? 1 - h.flickDecay : 0, home);
+          [c1, c2, c3] = p;
+          splay = p[3] * sideSign;
+          twist = ((pose.twist ?? 0) + p[4]) * sideSign;
+          [metaCurl, metaSplay, metaTwist] = p.slice(5);
         } else if (h.flickStyle === "upPush") {
           // U'p 推法(FINGERTRICKS §4.5):reach 爬上 RUB 角块 U 贴纸,随层角
           // 推初始角块到 BLU;decay 沿弧倒放 + 蜷指抬离(UP_PUSH.retreat —— 弧
@@ -2619,12 +3435,14 @@ export default class HandsRig extends THREE.Group {
           if (role === 2 && prep2T > 0) {
             // 连拨次指就位(U2 中指上探 / D2' 无名指让位 / B2 中指上探顶带);
             // 键按样式区分(hook 与 backHook 的中指就位目标不同)。
-            const p = HOOK_PREP[side][`${h.flickStyle}_${name}`];
+            const p = HOOK_PREP[strokeSide][`${h.flickStyle}_${name}`];
             if (p) {
               c1 += p.c1 * prep2T;
               c2 += p.c2 * prep2T;
               c3 += p.c3 * prep2T;
               splay += p.splay * prep2T * sideSign;
+              // 中指准备时侧让；起点和交接点的附加侧展都为零。
+              if (indexHookRelay) splay -= .85 * prep2T * (1 - prep) * sideSign;
             }
           }
           if (name === "pinky" && h.reachT > 0) {
@@ -2637,25 +3455,28 @@ export default class HandsRig extends THREE.Group {
           }
           // 接触样式且有标定跟随曲线 → 二次型跟随(贴面);否则回退旧勾弯。
           const fit = h.flickStyle
-            ? HOOK_FOLLOW[side][`${h.flickStyle}_${name}${role === 2 ? "2" : ""}`] : undefined;
+            ? HOOK_FOLLOW[strokeSide][`${h.flickStyle}_${name}${role === 2 ? "2" : ""}`] : undefined;
           if (fit) {
             const s = role === 2 ? sRaw2 : (isDouble ? sRaw1 : Math.min(rawAbs, HALF_PI) / HALF_PI);
             // 钉角 M 端姿的 per-style 回撤覆盖(见 RETREAT_LIFT_STYLED):贴块
             // 提交姿 pad 离贴纸只 ~1.4U,fit(1)×decayK 的第一帧就往贴纸里拉
             // (oracle 实测 0.8U)—— 攻窗(decayK ∈ [0.88,1])先钳 kFit=1 保持
             // 提交姿,等回撤凸包升满再沿直线衰减;凸包包络仍走 decayK。
+            const returningLead = indexHookRelay && role === 1 && h.flickDecay > 0;
             const rlS = h.flickDecay > 0
-              ? RETREAT_LIFT_STYLED[side][`${h.flickStyle}_${name}${role === 2 ? "2" : ""}`] : undefined;
-            const kFit = rlS ? Math.min(1, decayK / 0.88) : decayK;
+              ? RETREAT_LIFT_STYLED[side][returningLead ? 'hook_indexRelay'
+                : `${h.flickStyle}_${name}${role === 2 ? "2" : ""}`] : undefined;
+            const fitHold = rlS ? Math.min(1, decayK / .88) : decayK;
+            // 首指已离块，接近中握时平滑收去退场姿，避免指尖沿直线切过块角。
+            const kFit = returningLead ? sm(fitHold) : fitHold;
             c1 += fitAt(fit, "c1", s) * kFit;
             c2 += fitAt(fit, "c2", s) * kFit;
             c3 += fitAt(fit, "c3", s) * kFit;
-            splay += fitAt(fit, "splay", s) * kFit; // 每手独立标定,含侧向符号
-            // U2 首指退场(HOOK_EXIT 注释):Q2 前 20% 内食指快速离开角 M
-            // (走廊在 Q2 中后段被下一个角柱扫过,必须撤出扫掠环带),此后
-            // 保持退场姿到提交(随 kFit 与次指一起归 home)。
+            splay += fitAt(fit, "splay", s) * kFit * strokeMirror; // 每手独立标定,含侧向符号
+            // U2 首指沿较短的弧线提前让开角 M，给接力中指留出空间。
+            // 此后保持到提交，避免来料角块扫过食指。
             if (role === 1 && isDouble && h.flickStyle === "hook" && name === "index") {
-              const ex = sm(Math.min(1, sRaw2 / HOOK_EXIT_IN)) * kFit;
+              const ex = sm(Math.min(1, sRaw2 / HOOK_EXIT.window)) * kFit;
               c1 += HOOK_EXIT.c1 * ex;
               c2 += HOOK_EXIT.c2 * ex;
               c3 += HOOK_EXIT.c3 * ex;
@@ -2664,16 +3485,18 @@ export default class HandsRig extends THREE.Group {
             // B2/B2' 连拨首指退场(BACK_EXIT 注释):Q1 末端姿在角柱扫掠环带
             // 内(径向 ~105U),Q2 前 20% 内沿 −z 拉出;splay 符号已烘入表。
             if (role === 1 && isDouble && h.flickStyle === "backHook" && name === "index") {
-              const bx = BACK_EXIT[side];
+              const bx = BACK_EXIT[strokeSide];
               const ex = sm(Math.min(1, sRaw2 / HOOK_EXIT_IN)) * kFit;
               c1 += bx.c1 * ex;
               c2 += bx.c2 * ex;
               c3 += bx.c3 * ex;
-              splay += bx.splay * ex;
+              splay += bx.splay * ex * strokeMirror;
             }
             if (h.flickDecay > 0) {
               // 包络说明见 downPush 分支同款注释;非钉角样式回落默认 RETREAT_LIFT。
-              const lift = sm(Math.min(1, (1 - decayK) / 0.12)) * sm(Math.min(1, decayK / 0.15)) * s;
+              // 首指已让位，可以放慢抬离；中指仍按贴块端姿的时序退回。
+              const attack = returningLead ? .25 : .12;
+              const lift = sm(Math.min(1, (1 - decayK) / attack)) * sm(Math.min(1, decayK / .15)) * s;
               const rl: { c1: number; c2: number; c3: number; splay?: number } = rlS ?? RETREAT_LIFT;
               c1 += rl.c1 * lift;
               c2 += rl.c2 * lift;
@@ -2707,7 +3530,7 @@ export default class HandsRig extends THREE.Group {
           // 半径,但拇指压的是 F 面、末节大弯(c3≈1.1)—— 同款压 curl 会把
           // 指尖伸直戳进 F 面(regrip oracle 实测 7.6U;旧姿 c3=0.55 时 2.9U
           // 已有暴露)。拇指的「张」= 轻开 curl + 绕根节向贴面外甩
-          // (THUMB_EVADE_D 同款方向,随 open 渐入),yz 径向甩出箱体对角
+          // (沿旧 D 拇指避让方向,随 open 渐入),yz 径向甩出箱体对角
           // 扫掠区。幅度 regrip play oracle 标定。
           const k = 1 - regripOpen * 0.3;
           c1 *= k;
@@ -2725,25 +3548,78 @@ export default class HandsRig extends THREE.Group {
           c3 *= k;
         }
       }
-      // 反弓钳制:extend 类偏移(x/z 竖扫)可能把中/末节压到负值 ——
-      // 手指向手背反弓是解剖学假(用户报障同族问题)。拇指 IP 生理上可轻度
-      // 过伸(拨 F 的推压姿),给 -0.5 下限。
-      if (name === "thumb") {
-        c2 = Math.max(-0.5, c2);
-      } else {
-        c2 = Math.max(0.03, c2);
+      if (pocketTurn?.axis === 'z' && h.flickStyle === 'backHook' && name === 'index' && role === 1) {
+        // Clear the far corner near the end of a back flick.
+        const degrees = THREE.MathUtils.radToDeg(rawAbs);
+        c1 -= .006 * THREE.MathUtils.smoothstep(degrees, 55, 70)
+          * (1 - THREE.MathUtils.smoothstep(degrees, 80, 90));
       }
-      c3 = Math.max(0.03, c3);
+      const markedPose = wide ? undefined : mark?.pose(side, name, !!lowerSupport || pinch > 0);
+      if (wide) {
+        const p = wide.pose(name);
+        if (wide.frontHome && name === 'thumb') {
+          splay += .004 * sideSign * wide.weight;
+        } else if (p) {
+          [c1, c2, c3] = p;
+          splay = p[3] * sideSign;
+          twist = p[4] * sideSign;
+          pm = [p[5], p[6]];
+        } else if (wide.anchors.includes(name)) {
+          [c1, c2, c3] = pose.curl;
+          splay = pose.splay * sideSign;
+          twist = (pose.twist ?? 0) * sideSign;
+        }
+      }
+      if (middleRelaySeat && (name === 'thumb' || name === 'index' || name === 'middle')) {
+        const p = middleSliceSupport(name, middleRelaySeat);
+        [c1, c2, c3, splay, twist, metaCurl, metaSplay, metaTwist] = p;
+        if (name === 'thumb') pm = [p[8], p[9]];
+        if (side === 'R') { splay = -splay; twist = -twist; }
+      }
+      if (markedPose) {
+        [c1, c2, c3] = markedPose;
+        splay = markedPose[3] * sideSign;
+        twist = markedPose[4] * sideSign;
+        metaCurl = markedPose[5] - (pose.meta?.[0] ?? 0);
+        metaSplay = markedPose[6] - (pose.meta?.[1] ?? 0);
+        metaTwist = markedPose[7] - (pose.meta?.[2] ?? 0);
+      }
+      // Give free sweeps a weak distal response to PIP flexion. Contact
+      // trajectories and support fingers keep their individually fitted DIP.
+      if (role && !h.flickStyle && !markedPose && name !== 'thumb') {
+        const coupled = pose.curl[2] + .65 * (c2 - pose.curl[1]);
+        c3 = THREE.MathUtils.lerp(c3, coupled, .2);
+      }
+      // Flexion acts in the binding segment's x/z plane. Use its measured
+      // rest bend when applying these rig envelopes (radians). CMC opposition
+      // and thumb MCP out-of-plane rotation have separate calibrated channels.
+      const limits = name === 'thumb' ? THUMB_HINGES : FINGER_HINGES;
+      const downRing = role === 1 && name === 'ring' && order === 3 && !isDouble && h.flickStyle === 'middleSliceNail';
+      const [middleRest, distalRest] = f.restBend ?? [0, 0];
+      // The D-side roll uses a shallow extension at the PIP and allows a small
+      // nail-first tilt at the DIP. Apply these limits in the bound finger's frame.
+      const middleMin = downRing ? -THREE.MathUtils.degToRad(3) - middleRest : limits.middleMin;
+      const distalMin = downRing ? -THREE.MathUtils.degToRad(10) - distalRest : .03;
+      c2 = THREE.MathUtils.clamp(c2, middleMin, limits.middleMax - middleRest);
+      c3 = THREE.MathUtils.clamp(c3, distalMin, limits.distalMax - distalRest);
+      // Transport the surface only as far as this finger has articulated
+      // away from its resting grip. A wrist rotation alone has zero weight.
+      if (name === 'index' || name === 'middle' || name === 'ring') {
+        const excursion = Math.max(Math.abs(c1 - pose.curl[0]), Math.abs(c2 - pose.curl[1]),
+          Math.abs(splay - pose.splay * sideSign), Math.abs(twist - (pose.twist ?? 0) * sideSign));
+        h.skinStroke[name] = role && !markedPose ? THREE.MathUtils.smoothstep(excursion, .04, .38) : 0;
+      }
       // 指根 = 基座朝向 ∘ (curl/splay/twist)。四指基座为 identity;拇指基座是
       // 对掌位四元数 —— 直接写 rotation 会抹掉它(踩过),必须叠加。
       // Euler 序 'YZX':R = Ry(curl)·Rz(splay)·Rx(twist),twist 最内层 = 先绕
-      // 指长轴旋前、再随 swing 整体带走(真轴向旋前,弯曲平面同转)。'XYZ' 的
+      // 作者系长轴旋转、再随屈曲侧摆带走。最终骨长轴扭转见 finalPose.root.axialTwist。'XYZ' 的
       // twist 是绕**绑定**轴的定轴旋转,大幅 swing 后语义漂成进动,r11 踩过。
       // twist=0 时两序等价(Ry·Rz),历史姿态逐位不变。
       HandsRig._eTmp.set(twist, -c1, splay, "YZX");
       f.root.quaternion.setFromEuler(HandsRig._eTmp).premultiply(f.rootBase);
       // 中节:默认纯铰链;姿态层可给出平面通道(拇指 MCP 外展+旋前,r11)。
-      const pm = pose.mid;
+      const calibrated = markedPose ?? hookPose;
+      if (calibrated) pm = [calibrated[8], calibrated[9]];
       if (pm) {
         f.mid.rotation.set(pm[0] * sideSign, -c2, pm[1] * sideSign, "YZX");
       } else {
@@ -2754,8 +3630,9 @@ export default class HandsRig extends THREE.Group {
       // (meta rest 局部 = identity → 缺省姿态与旧「焊死」行为逐位一致)。
       if (f.meta && f.metaBase) {
         const m = pose.meta;
-        if (m) {
-          HandsRig._eTmp.set((m[2] ?? 0) * sideSign, -m[0], m[1] * sideSign, "YZX");
+        if (m || metaCurl !== 0 || metaSplay !== 0 || metaTwist !== 0) {
+          HandsRig._eTmp.set(((m?.[2] ?? 0) + metaTwist) * sideSign,
+            -((m?.[0] ?? 0) + metaCurl), ((m?.[1] ?? 0) + metaSplay) * sideSign, "YZX");
           f.meta.quaternion.setFromEuler(HandsRig._eTmp).premultiply(f.metaBase)
             .multiply(HandsRig._qTmp2.copy(f.metaBase).invert());
         } else {
@@ -2763,13 +3640,334 @@ export default class HandsRig extends THREE.Group {
         }
       }
     }
+    let indexSkin = 0, middleSkin = 0, indexSkinRoll = 0, gripStretchWeight = 0;
+    const frontPress = h.flickLayer === 'high' && (h.flickStyle === 'topPush'
+      || (h.flickAxis === 'z' && h.flickStyle === 'downPush'));
+    if (frontPress) {
+      const relay = h.flickFinger2 === 'middle';
+      const weight = relay ? 1 - .85 * THREE.MathUtils.smoothstep(rawAbs, HALF_PI, Math.PI) : 1;
+      const surfaceWeight = h.flickStyle === 'topPush' ? sm(h.reachT)
+        : THREE.MathUtils.smoothstep(rawAbs, 0, .26) * (h.flickDecay > 0 ? sm(Math.min(1, 5 * h.flickDecay)) : 1);
+      if (h.flickFinger === 'index') {
+        easeFingerKnuckle(h.model.fingers.index, weight);
+        if (h.flickAxis === 'z') {
+          h.skinStroke.index = surfaceWeight;
+          const edge = h.flickStyle === 'topPush' ? THREE.MathUtils.smoothstep(rawAbs, 1.25, HALF_PI) : 0;
+          indexSkinRoll = alignFrontIndex(h.model.fingers.index, h.home.fingers.index, sideSign, 1 - .8 * edge);
+        }
+        // Both proximal surfaces approach the same web at the relay.
+        const handoff = relay ? .15 + .85 * THREE.MathUtils.smoothstep(Math.abs(rawAbs - HALF_PI), .045, .24) : 1;
+        indexSkin = surfaceWeight * handoff;
+        if (h.flickAxis === 'z' && h.flickStyle === 'topPush')
+          gripStretchWeight = indexSkin * THREE.MathUtils.smoothstep(rawAbs, 1.30, HALF_PI);
+      }
+      if (relay) {
+        easeFingerKnuckle(h.model.fingers.middle, weight);
+        const middleReturn = h.flickDecay > 0 ? THREE.MathUtils.smoothstep(h.flickDecay, .35, .58) : 1;
+        middleSkin = indexSkin * middleReturn * THREE.MathUtils.smoothstep(rawAbs, .7 * HALF_PI, HALF_PI);
+        if (h.flickAxis === 'z') h.skinStroke.middle = middleSkin;
+      }
+    }
+    if ((h.flickStyle === 'indexHook' || h.flickStyle === 'reverseIndexHook') && h.flickFinger === 'index') {
+      const movement = h.flickStyle === 'reverseIndexHook' ? (HALF_PI - rawAbs) * h.reachT : rawAbs;
+      const moving = THREE.MathUtils.smoothstep(movement, .25, .75);
+      // The hook is fitted directly to the online curl and distal contact.
+      // Smooth the proximal skin without counter-rotating the PIP.
+      indexSkin = moving * (h.flickDecay > 0 ? sm(h.flickDecay) : 1);
+      gripStretchWeight = indexSkin;
+    }
+    const palmTurn = HandsRig._armTurn.copy(h.home.quat).invert().premultiply(g.quaternion).normalize();
+    const displayedPalmWeight = halfGripWeight(2 * Math.acos(Math.min(1, Math.abs(palmTurn.w))));
+    const targetPalmWeight = halfGripWeight(2 * Math.acos(Math.min(1, Math.abs(h.grip.w))));
+    // Explicit regrips let the arm join immediately; live layer turns blend
+    // in after 90°. Derive this once, before the corrective palm rotation.
+    // Marked turns already calibrate the wrist and all five fingers together.
+    // Keep the starting grip's correction; treating their wrist delta as a
+    // new half grip applies a second bend and makes the free fingers cross.
+    const palmWeight = h.weldWhole || mark?.plan.hand === side ? targetPalmWeight
+      : this.regripFlag && h.recoverT < 1
+      ? THREE.MathUtils.lerp(h.regripArmWeight, targetPalmWeight, this.recoveryProgress(h.recoverT))
+      : displayedPalmWeight;
+    const wristAngle = this.currentWristAngle(h);
+    const winding = THREE.MathUtils.clamp(wristAngle / Math.PI, -1, 1);
+    // Face turns with calibrated contact paths still use their authored
+    // support. Signed half turns seat the entire gripping hand as one unit.
+    const switching = this.isHalfBranchSwitch(h);
+    const carrying = h.weldAxis && this.active?.gesture?.kind === 'weld' && this.active.gesture.hands.includes(side);
+    const release = h.recoverT < 1 ? h.halfSeatRelease : undefined;
+    const signedHalf = atHalfTurn(h.gripAngle) || !!release
+      || h.recoverT < 1 && atHalfTurn(h.gripAngle + h.recoverWristAngle);
+    let halfAim = signedHalf ? palmWeight : 0, seatWinding = winding;
+    let transport: THREE.Quaternion | undefined;
+    if (carrying) {
+      // Carry the current grip in the moving frame until the turn commits.
+      halfAim = atHalfTurn(h.gripAngle) ? 1 : 0;
+      seatWinding = Math.sign(h.gripAngle);
+      transport = HandsRig._qTmp2.setFromAxisAngle(AXIS_VEC[h.weldAxis!], h.weldAngle);
+    } else if (release) {
+      const leaving = atHalfTurn(release.source), t = this.recoveryProgress(h.recoverT);
+      halfAim = leaving ? 1 - t : t;
+      seatWinding = Math.sign(leaving ? release.source : h.gripAngle);
+      if (leaving) transport = HandsRig._qTmp2.setFromAxisAngle(AXIS_VEC.x, release.layerAngle);
+    } else if (this.wholeRegrip && h.recoverT < 1 && signedHalf) {
+      transport = HandsRig._qTmp2.copy(h.recoverQuat).slerp(HandsRig._qIdent, this.recoveryProgress(h.recoverT));
+    }
+    h.halfPalm.apply(signedHalf || carrying && h.weldAxis === 'x' ? 0 : palmWeight, winding);
+    const thumbRoll = carrying && h.weldAxis === 'x' && !h.weldWhole && atHalfTurn(h.gripAngle)
+      ? carriedThumbWeight(h.gripAngle, h.weldAngle)
+      : h.recoverT < 1 ? h.halfThumbReturn * (1 - this.recoveryProgress(h.recoverT)) : 0;
+    const slide = lowerSupport ? THREE.MathUtils.smoothstep(mark.preparation, 0, .85)
+      * (1 - THREE.MathUtils.smoothstep(mark.returning, 0, .65)) : 0;
+    if (wide?.moves) halfAim *= 1 - wideWeight;
+    halfAim *= 1 - pinch;
+    if (halfAim > 0) {
+      h.halfPalm.placeStandard(halfAim, seatWinding, switching, transport, !!release || pinch > 0, Math.abs(thumbRoll));
+      if (lowerSupport && pinchMotion?.topPinch == null) {
+        h.halfPalm.slideToBottomRow(halfAim * slide, seatWinding);
+      } else if (!wide && !lowerSupport && mark && mark.plan.hand !== side && mark.plan.request.axis === 'y') {
+        // Both front and back pads border the rotating layer. Release the
+        // grip laterally before the turn, then return on the same path.
+        const support = THREE.MathUtils.smoothstep(mark.preparation, 0, .4)
+          * (1 - THREE.MathUtils.smoothstep(mark.returning, 0, .3));
+        g.position.x -= h.model.side * halfAim * support * 1.5 * SIZE;
+      }
+    }
+    if (wide?.moves) {
+      g.position.addScaledVector(wide.shift, wide.slideWeight);
+      elbowTarget.addScaledVector(wide.shift, wide.slideWeight);
+      g.position.x += wide.lateralClearance;
+      elbowTarget.x += wide.lateralClearance;
+    }
+    if (pinch) {
+      const clearance = this.markedMotion ? THREE.MathUtils.smoothstep(this.markedMotion.preparation, 0, .8)
+        * (1 - THREE.MathUtils.smoothstep(this.markedMotion.returning, 0, .35)) : 0;
+      h.halfPalm.liftPinch(pinch, wristAngle, clearance, elbowTarget, halfAim);
+    }
+    if (thumbRoll) {
+      const layerAngle = carrying ? h.weldAngle
+        : (release?.layerAngle ?? 0) + h.recoverWristAngle * (1 - this.recoveryProgress(h.recoverT));
+      h.halfPalm.rollCarriedThumb(thumbRoll, layerAngle);
+    }
+    if (pocketPose && !mark) {
+      const { index, middle, thumb } = h.model.fingers;
+      const faceStroke = h.flickStyle === 'pocketThumbLift' ? pocketFrontThumb
+        : pocketRelay ? (h.flickStyle === 'backHook' ? pocketBackRelay : pocketBottomRelay) : null;
+      if (faceStroke) {
+        const reach = faceStroke === pocketBackRelay ? 1 : THREE.MathUtils.smoothstep(h.reachT, 0, 1);
+        applyPocketFaceStroke(faceStroke, THREE.MathUtils.radToDeg(rawAbs), decayK, reach,
+          side === 'L' ? 1 : -1, h.model.fingers, g.position, elbowTarget);
+      }
+      if (halfAim > 0 && seatWinding > 0) {
+        const turningTop = pocketTurn?.axis === 'y' && pocketTurn.cls === 'high' && pocketTurn.lastAngle * (side === 'R' ? 1 : -1) > 0;
+        const degrees = turningTop ? THREE.MathUtils.radToDeg(Math.abs(pocketTurn.lastAngle)) % 90 : 0;
+        // The thumb follows the passing corner while the opposite pads support the grip.
+        seatPocketFinger(thumb, halfThumb, degrees, halfAim, side === 'R' ? 1 : -1);
+        if (thumbRoll) thumb.root.rotateY(.004 * Math.abs(thumbRoll));
+        middle.root.rotateY(.014 * halfAim);
+        h.model.fingers.ring.root.rotateY(.006 * halfAim);
+        if (pocketTurn?.axis === 'z' && pocketTurn.cls === 'high' && !h.flickFinger) {
+          const phase = THREE.MathUtils.radToDeg(Math.abs(pocketTurn.lastAngle)) % 90;
+          const roll = THREE.MathUtils.smoothstep(phase, 45, 64) * (1 - THREE.MathUtils.smoothstep(phase, 78, 90));
+          index.root.rotateY(.019 * halfAim * roll);
+        }
+        if (turningTop && h.flickFinger === 'index') {
+          const lift = THREE.MathUtils.smoothstep(degrees, 0, 16)
+            * (1 - THREE.MathUtils.smoothstep(degrees, 39, 58));
+          index.root.rotateY(.052 * lift * halfAim);
+        }
+      }
+      if (halfAim > 0 && seatWinding < 0) {
+        const driven = pocketTurn?.axis === 'y' && pocketTurn.cls === 'low'
+          && pocketTurn.gesture?.kind === 'flick' && pocketTurn.gesture.style === 'reverseRingHook';
+        const degrees = driven ? THREE.MathUtils.radToDeg(Math.abs(pocketTurn.lastAngle)) : 0;
+        const mirror = side === 'R' ? 1 : -1;
+        seatPocketFinger(index, halfDownIndex, degrees, halfAim, mirror);
+        seatPocketFinger(thumb, halfDownThumb, degrees, halfAim, mirror);
+        middle.root.rotateY(.013 * halfAim);
+      }
+      if (upperPhase !== undefined && halfAim === 0 && h.flickFinger2 !== 'middle' && h.flickFinger !== 'middle') {
+        // Support the lower row below the moving edge, including F from a down grip.
+        seatPocketFinger(middle, homeMiddleClearance, upperPhase, 1, side === 'R' ? 1 : -1);
+      }
+      if (h.flickStyle === 'hook' && h.flickFinger === 'ring' && !isDouble && h.flickLayer === 'low') {
+        seatPocketFinger(h.model.fingers.ring, side === 'L' ? leftDownRing : rightDownRing,
+          THREE.MathUtils.radToDeg(rawAbs), decayK);
+        if (side === 'R' && h.flickDecay > 0) {
+          const release = 1 - decayK;
+          const lift = THREE.MathUtils.smoothstep(release, 0, .024) * (1 - THREE.MathUtils.smoothstep(release, .032, .07));
+          h.model.fingers.ring.root.rotateY(-.009 * lift);
+        }
+      }
+      if (h.flickStyle === 'reverseRingHook') {
+        const degrees = THREE.MathUtils.radToDeg(rawAbs);
+        const mirror = side === 'L' ? 1 : -1;
+        seatPocketFinger(h.model.fingers.ring, reverseRingContact, degrees, h.reachT, mirror);
+        seatPocketFinger(middle, reverseRingSupport, degrees, h.reachT, mirror);
+        // Curl around the stationary lower corner before making contact.
+        seatPocketFinger(h.model.fingers.ring, reverseRingApproach, h.reachT * 100, 1 - sRaw1, mirror);
+      }
+      if (!isDouble && !h.flickStyle && h.flickFinger === 'index' && h.flickAxis === 'y'
+        && h.flickLayer === 'high' && h.grip.angleTo(GRIP_Q_DOWN) < .01) {
+        const angle = THREE.MathUtils.radToDeg(rawAbs);
+        const lift = THREE.MathUtils.smoothstep(angle, 0, 6) * (1 - THREE.MathUtils.smoothstep(angle, 16, 27));
+        index.root.rotateY(.021 * lift * decayK);
+        index.mid.rotateY(.012 * lift * decayK);
+        if (h.flickDecay > 0) {
+          // Retract around the stationary lower corner after the layer commits.
+          const release = 1 - decayK;
+          const clearance = THREE.MathUtils.smoothstep(release, .20, .45)
+            * (1 - THREE.MathUtils.smoothstep(release, .72, 1));
+          index.root.rotateY(.078 * clearance);
+          index.mid.rotateY(.025 * clearance);
+        }
+      }
+      if (h.flickAxis === 'z' && h.flickLayer === 'low' && !h.flickStyle && h.flickFinger === 'middle') {
+        thumb.mid.rotateY(.012 * Math.min(1, rawAbs / Math.PI) * decayK);
+      }
+    }
+    // All three orders have the same displayed edge length. Keep the pocket
+    // relay's arc, adjusting flexion where the narrower outer cuts pass the pad.
+    const supportGrip = this.hands!.R.grip;
+    const leftTopRelay = indexHookRelay && (order === 3 || order === 4) && side === 'L' && h.strokeLayers.length === 1 && h.strokeLayers[0] === order - 1
+      && supportGrip.angleTo(HandsRig._qIdent) >= .01;
+    if (!mark && (pocketPose || leftTopRelay) && isDouble && h.flickAxis === 'y'
+      && h.flickLayer === 'high' && h.flickFinger2 === 'middle') {
+      const { index, middle, thumb } = h.model.fingers;
+      const degrees = THREE.MathUtils.radToDeg(rawAbs);
+      if (h.flickStyle === 'topPush') {
+        const mirror = side === 'R' ? 1 : -1;
+        seatPocketFinger(middle, upperMiddle, degrees, h.reachT, mirror);
+        seatPocketFinger(index, upperIndexClearance, degrees, h.reachT, mirror);
+        seatPocketFinger(h.model.fingers.ring, upperRingClearance, degrees, h.reachT, mirror);
+        seatPocketFinger(thumb, upperThumbClearance, degrees, h.reachT, mirror);
+      } else if (indexHookRelay) {
+        seatPocketFinger(index, side === 'R' ? homeIndex : leftIndex, degrees, leftTopRelay ? 1.32 * decayK : decayK);
+        if (side === 'R' && h.flickDecay > 0) {
+          const unwind = THREE.MathUtils.smoothstep(decayK, .26, .39)
+            * (1 - THREE.MathUtils.smoothstep(decayK, .44, .56));
+          middle.root.rotateZ(-.013 * unwind);
+          middle.mid.rotateY(-.010 * unwind);
+        }
+        seatPocketFinger(middle, side === 'R' ? homeMiddle : leftMiddle, degrees, leftTopRelay ? 1.18 * decayK : decayK);
+        if (leftTopRelay && order === 4) seatPocketFinger(middle, FOUR_U_RELAY_MIDDLE, degrees, decayK);
+      }
+    }
+    if (halfRelaySupport) h.halfPalm.clearUpperRelay(order, seatWinding, this.active!.lastAngle, halfAim);
+    const halfRelief = palmWeight * THREE.MathUtils.smoothstep(Math.abs(winding), 0, 1);
+    // Establish forearm support as the outer layer reaches upper grip. Once
+    // settled, the thumb can prepare, push and retract with the same wrist bend.
+    const upGripDistance = Math.abs(THREE.MathUtils.euclideanModulo(wristAngle + HALF_PI, 2 * Math.PI) - Math.PI) / Math.PI;
+    const upGripRelief = 1 - THREE.MathUtils.smoothstep(upGripDistance, .06, .36);
+    const thumbRelief = mark?.plan.hand === side && mark.plan.profile.finger === 'thumb'
+      ? THREE.MathUtils.smoothstep(mark.preparation, 0, 1) * (1 - THREE.MathUtils.smoothstep(mark.returning, .5, 1))
+      : 0;
+
+    // 前臂 IK:随手掌自然接顺，不额外设置内收/外拐方向。
+    // 腕转/弹指/回位时前臂自然摆动而不是整条手臂绕魔方
+    // 公转。目标正交基 +x=肘→腕、+z≈手系掌法向(setFromUnitVectors 最小旋转
+    // 的滚转会随肘-腕方位漂,扁截面转离腕背 → 现台阶,故锚定掌平面)。
+    // @4 融合前臂:前臂缝在手网格里,摆动 = forearm 骨绕腕的手局部旋转
+    // Δ = 目标基 · 绑定基⁻¹(全程手局部)。
+    const wrist = HandsRig._vTmp.copy(WRIST_LOCAL).applyQuaternion(g.quaternion).add(g.position);
+    const upperTurnSupport = h.weldAxis === 'x' && !h.weldWhole || h.grip.angleTo(GRIP_Q_UP) < .01;
+    const armDirection = this.aimForearm(h, wrist, elbowTarget, palmWeight,
+      Math.max(halfRelief, upperTurnSupport ? upGripRelief : 0, thumbRelief), halfAim);
+    if (h.model.forearm && h.armBindFrameInv) {
+      const qInv = HandsRig._qTmp.copy(g.quaternion).invert();
+      const xT = HandsRig._vTmp2.copy(armDirection).negate().applyQuaternion(qInv).normalize();
+      // Palm tilt is a wrist motion, not extra forearm axial roll. Keep the
+      // pre-tilt palm reference so a flexed wrist cannot amplify roll near 90°.
+      const zT = HandsRig._vTmp3.set(0, 0, 1).applyQuaternion(h.halfPalm.baseQuaternion).applyQuaternion(qInv);
+      zT.addScaledVector(xT, -zT.dot(xT));
+      if (zT.lengthSq() < 1e-6) zT.set(0, 0, 1); // 臂轴撞上掌法向的退化兜底
+      zT.normalize().applyAxisAngle(xT, h.appliedForearmRoll);
+      const yT = HandsRig._vTmp4.crossVectors(zT, xT);
+      const dq = HandsRig._qTmp2.setFromRotationMatrix(HandsRig._mTmp.makeBasis(xT, yT, zT)).multiply(h.armBindFrameInv);
+      // The elbow direction fixes swing. Near a settled half turn, unwind
+      // the residual roll at the wrist while keeping that same forearm axis.
+      if (palmWeight > 0) {
+        const neutralSwing = HandsRig._armTurn.setFromUnitVectors(h.model.forearm.bindDir, xT.negate());
+        dq.slerp(neutralSwing, palmWeight);
+      }
+      if (!this.body?.visible && h.model.radialAxis) {
+        const fore = HandsRig._vTmp2.copy(armDirection).negate();
+        const towardShoulder = HandsRig._vTmp3.subVectors(h.virtualShoulder, wrist)
+          .addScaledVector(fore, .25 * h.model.unitScale);
+        const rotation = HandsRig._armTurn.copy(g.quaternion).multiply(dq);
+        const thumb = HandsRig._vTmp4.copy(h.model.radialAxis).applyQuaternion(rotation);
+        const angle = h.forearmRotation.angle(fore, towardShoulder, thumb, side);
+        h.virtualRoll = h.forearmRotation.apply(rotation, fore, angle, side, dtMs);
+        dq.copy(qInv).multiply(rotation);
+      }
+      h.model.forearm.bone.quaternion.copy(dq).multiply(h.model.forearm.bindQuat);
+      // SMPL-X 全身焊臂:体前臂目标世界旋转 = gq·dq·frameQuat(体系→模板系
+      // 的解析刚性对应,推导见 smplxBody.updateArm),体腕点钉在手腕点 ——
+      // 位置/朝向/扭转三者全对齐,体残段与融合前臂表面严格重合(手不再断开)。
+      if (this.body && this.body.visible && h.model.forearm.frameQuat) {
+        const geoQ = HandsRig._qTmp.copy(g.quaternion).multiply(dq).multiply(h.model.forearm.frameQuat);
+        const lowerGripSupport = side === 'R' && (mark?.plan.profile.id === 'thumb-pad-wide-down')
+          ? THREE.MathUtils.smoothstep(-wristAngle, 0, HALF_PI) : 0;
+        const fixedSupport = !!clearing || !!mark && (mark.plan.hand !== side
+          || mark.plan.profile.id === 'thumb-pad-wide' || mark.supportReady || mark.started)
+          || !!this.active && !h.weldAxis && !h.flickFinger;
+        // Start freeing the elbow on the way up, before the rotating palm
+        // reaches the high grip. Ease away along the same path on reversal.
+        const bodyHalfSupport = winding > 0
+          ? Math.max(palmWeight, THREE.MathUtils.smoothstep(palmWeight, 0, .12)) : palmWeight;
+        // Playback can prepare a half turn before the quarter mark. A free
+        // drag reveals the same intent gradually as it passes that mark.
+        const outer = carrying && h.weldAxis === 'x' && !h.weldWhole;
+        const turn = Math.abs(wrapWristAngle(wristAngle));
+        const turnShare = signedHalf || (outer && this.active?.halfTurn)
+          ? Math.max(halfAim, THREE.MathUtils.smoothstep(turn, 0, Math.PI / 4))
+          : outer ? halfGripWeight(turn) : 0;
+        this.body.updateArm(side, wrist, geoQ, Math.max(bodyHalfSupport, upGripRelief, thumbRelief, lowerGripSupport),
+          lowerGripSupport, fixedSupport, carryForearm, bodyHalfSupport, halfAim, turnShare);
+      }
+    } else if (h.forearm) {
+      h.forearm.position.copy(wrist);
+      const dir = HandsRig._vTmp2.copy(armDirection).negate();
+      const zF = HandsRig._vTmp3.set(0, 0, 1).applyQuaternion(h.halfPalm.baseQuaternion);
+      zF.addScaledVector(dir, -zF.dot(dir));
+      if (zF.lengthSq() < 1e-6) zF.set(0, 0, 1); // 臂轴撞上掌法向的退化兜底
+      zF.normalize().applyAxisAngle(dir, h.appliedForearmRoll);
+      const yF = HandsRig._vTmp4.crossVectors(zF, dir);
+      h.forearm.quaternion.setFromRotationMatrix(HandsRig._mTmp.makeBasis(dir, yF, zF));
+    }
+
     // MANO posedirs 姿态修正(指关节局部旋转驱动;系数不变时内部早退,待机
     // 呼吸只动手根零开销,只有指弹帧真正重写绑定几何)。
+    const seat = this.fourSeat;
+    const fittedUpperRelay = leftTopRelay && seat?.axis === 'y' && seat.layers.length === 1 && seat.layers[0] === 3
+      && seat.gesture.kind === 'flick' && seat.gesture.hand === side;
+    if (this.cube?.order === 4 && seat && !fittedUpperRelay) {
+      const contact = this.fourContacts.get(h.model);
+      const flick = seat.gesture.kind === 'flick' ? seat.gesture : undefined;
+      // A directly queued half turn can start before fourSeat finishes
+      // preparing. The supporting pads must clear its corners on frame one.
+      const weight = halfRelaySupport ? 1 : THREE.MathUtils.smoothstep(seat.progress, 0, 1);
+      contact?.apply(seat, seat.gesture.kind === 'weld' ? seat.gesture.hands[0] : seat.gesture.hand,
+        flick?.finger, flick?.finger2, weight, side, h.grip.angleTo(HandsRig._qIdent) < .01,
+        this.hands![side === 'R' ? 'L' : 'R'].grip.angleTo(HandsRig._qIdent) < .01);
+    }
+    // The layer is already baked. Let the driving pad clear the stationary
+    // corner throughout its own recovery clock, including after fourSeat ends.
+    if (order === 4 && h.flickDecay > 0 && (h.flickAxis === 'y' || h.flickAxis === 'z') && h.flickFinger === 'index'
+      && h.grip.angleTo(HandsRig._qIdent) < .01 && this.hands![side === 'R' ? 'L' : 'R'].grip.angleTo(HandsRig._qIdent) < .01) {
+      this.fourContacts.get(h.model)?.releaseFlick(h.flickAxis, h.strokeLayers, h.flickFinger2 === 'middle', rawAbs, 1 - h.flickDecay, side);
+    }
     h.model.poseCorrective?.();
+    const relayBlend = .63 + .37 * (h.flickAxis === 'z' && h.flickDecay > 0 ? THREE.MathUtils.smoothstep(1 - h.flickDecay, 0, .55) : 0);
+    const frontBlend = frontPress ? indexSkin * (h.flickFinger2 ? relayBlend : frontPadWeight) : undefined;
+    const foldRegion = frontPress && h.flickAxis === 'z' && h.flickStyle === 'topPush' ? 'proximal'
+      : indexHookRelay ? 'pip' : undefined;
+    h.skinStroke.middleSlice = h.flickStyle === 'middleSlicePad' || (order === 3 && h.flickStyle === 'middleSliceNail');
+    h.halfPalm.contactSkin.apply(indexSkin, middleSkin, frontBlend, indexSkinRoll, gripStretchWeight, h.skinStroke, foldRegion);
   }
 
   /** 页面卸载时取消未完成加载，并释放本 rig 拥有的 GPU 资源。 */
   dispose(): void {
+    this.detachHalfTurnDirection();
     if (this.disposed) return;
     this.emitDiagnostic('dispose');
     this.diagnosticListeners.clear();
