@@ -10,10 +10,6 @@ Solvers, trainers, analytics, and statistics for the Rubik's Cube — all in the
 
 </div>
 
-**新同事先读：[新人入门 / 提交规范](./CONTRIBUTING.md) · [项目开发约定](./AGENTS.md)**
-
-所有有仓库写入权限的成员均可在自查和必要验证后直接推送 `main`，无需 PR 或他人审批；推送后确认 CI 和部署结果。需要预览或讨论时可按需提 PR。
-
 ---
 
 ## Architecture
