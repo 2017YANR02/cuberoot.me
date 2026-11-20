@@ -82,40 +82,45 @@ export function socialLoginConfigured(provider: SocialProvider): boolean {
 // 格式 `<nonce>.<provider>.<intent>.<exp>.<sig>`(全 URL 安全字符,无点冲突)。回调只从 URL
 // 读回、由服务端 HMAC 验签,**不依赖浏览器 sessionStorage** —— 手机唤起支付宝 App 授权后回调常
 // 落到另一个浏览器上下文(系统浏览器 / App 内置浏览器),sessionStorage 会丢,故 CSRF 校验必须无状态。
-// 长度 ~60 字符,满足微信 state ≤128 限制。
+// 国内三方的绑定签名同时覆盖发起账号，账号 ID 不写入 URL。
+// 保持五段格式和微信 state ≤128 字符的限制。
 const STATE_TTL_SEC = 600; // 10 分钟
-function stateSig(payload: string): string {
-  return createHmac('sha256', JWT_SECRET).update(payload).digest('base64url').slice(0, 27);
+function stateSig(payload: string, linkAccountId?: number): string {
+  const message = linkAccountId === undefined ? payload : `account-link:${linkAccountId}:${payload}`;
+  return createHmac('sha256', JWT_SECRET).update(message).digest('base64url').slice(0, 27);
 }
-export function signSocialState(provider: SocialProvider | 'apple', intent: SocialIntent, appleCodeChallenge?: string, appleAccountId?: number): string {
+export function signSocialState(provider: SocialProvider | 'apple', intent: SocialIntent, appleCodeChallenge?: string, accountId?: number): string {
   let nonce = provider === 'apple' && appleCodeChallenge
-    ? appleCodeChallenge : randomBytes(provider === 'apple' ? 32 : 6).toString('base64url');
-  if (provider === 'apple' && intent === 'link' && appleAccountId) nonce += `~${appleAccountId}`;
+    ? appleCodeChallenge : randomBytes(provider === 'apple' ? 32 : 16).toString('base64url');
+  if (provider === 'apple' && intent === 'link' && accountId) nonce += `~${accountId}`;
   const exp = Math.floor(Date.now() / 1000) + STATE_TTL_SEC;
   const payload = `${nonce}.${provider}.${intent}.${exp}`;
-  return `${payload}.${stateSig(payload)}`;
+  const linkAccountId = provider !== 'apple' && intent === 'link' ? accountId : undefined;
+  return `${payload}.${stateSig(payload, linkAccountId)}`;
 }
-/** 验签 state:签名对 + 未过期 + provider 匹配 → 返 {intent};否则 null。 */
-export function verifySocialState(state: string, expectProvider: SocialProvider | 'apple'): { intent: SocialIntent } | null {
-  const parts = (state || '').split('.');
+/** 验签 state。国内三方的绑定还要求当前会话属于发起绑定的账号。 */
+export function verifySocialState(state: string, expectProvider: SocialProvider | 'apple', linkAccountId?: number): { intent: SocialIntent } | null {
+  if (typeof state !== 'string' || state.length > 512) return null;
+  const parts = state.split('.');
   if (parts.length !== 5) return null;
   const [nonce, p, i, expStr, sig] = parts;
-  const expected = stateSig(`${nonce}.${p}.${i}.${expStr}`);
+  if (p !== expectProvider || (i !== 'login' && i !== 'link')) return null;
+  const accountBound = p !== 'apple' && i === 'link';
+  if (accountBound && linkAccountId === undefined) return null;
+  const expected = stateSig(`${nonce}.${p}.${i}.${expStr}`, accountBound ? linkAccountId : undefined);
   const a = Buffer.from(sig);
   const b = Buffer.from(expected);
   if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-  if (p !== expectProvider) return null;
-  if (i !== 'login' && i !== 'link') return null;
   const exp = Number(expStr);
   if (!Number.isFinite(exp) || exp < Math.floor(Date.now() / 1000)) return null;
   return { intent: i };
 }
 
 /** 服务端下发的授权页 URL(内部生成签名 state,redirect_uri 与各平台后台配置逐字一致)。未配返 null。 */
-export function socialAuthorizeUrl(provider: SocialProvider, intent: SocialIntent): string | null {
-  if (!socialLoginConfigured(provider)) return null;
+export function socialAuthorizeUrl(provider: SocialProvider, intent: SocialIntent, accountId?: number): string | null {
+  if (!socialLoginConfigured(provider) || (intent === 'link' && accountId === undefined)) return null;
   const redirect = encodeURIComponent(provider === 'douyin' ? DOUYIN_REDIRECT : SOCIAL_REDIRECT);
-  const st = encodeURIComponent(signSocialState(provider, intent));
+  const st = encodeURIComponent(signSocialState(provider, intent, undefined, accountId));
   if (provider === 'wechat') {
     // 网站应用扫码登录;#wechat_redirect 结尾为微信强制要求。
     return `https://open.weixin.qq.com/connect/qrconnect?appid=${WECHAT_APP_ID}&redirect_uri=${redirect}&response_type=code&scope=snsapi_login&state=${st}#wechat_redirect`;

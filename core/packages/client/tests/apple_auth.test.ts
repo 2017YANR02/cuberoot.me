@@ -106,6 +106,22 @@ describe('Apple API availability and exchange', () => {
     expect(fetcher).toHaveBeenLastCalledWith(expect.stringContaining('/v1/auth/social/wechat'), expect.anything());
   });
 
+  it('authenticates social binding authorization and keeps sign-in authorization public', async () => {
+    const fetcher = vi.fn().mockImplementation(() => Promise.resolve(Response.json({ url: 'https://example.test/oauth' })));
+    vi.stubGlobal('fetch', fetcher);
+    const { fetchSocialAuthorization } = await import('@/lib/account-api');
+    await fetchSocialAuthorization('wechat', 'link');
+    expect(fetcher).toHaveBeenLastCalledWith(
+      expect.stringContaining('/v1/auth/social/authorize?provider=wechat&intent=link'),
+      expect.objectContaining({ headers: { Authorization: 'Bearer existing-session' } }),
+    );
+    await fetchSocialAuthorization('wechat', 'login');
+    expect(fetcher).toHaveBeenLastCalledWith(
+      expect.stringContaining('/v1/auth/social/authorize?provider=wechat&intent=login'),
+      { cache: 'no-store', signal: expect.any(AbortSignal) },
+    );
+  });
+
   it.each(['login', 'link'] as const)('preserves the account boundary before cross-origin %s', async (intent) => {
     const initialHref = 'https://www.cuberoot.me/zh/account?auth=mobile&provider=apple&code_challenge=challenge';
     const location = { href: initialHref };

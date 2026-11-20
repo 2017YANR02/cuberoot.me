@@ -299,14 +299,21 @@ accountAuthRoutes.post('/auth/identity/complete', bodyLimit({ maxSize: 4096 }), 
 });
 
 // ── 国内三方授权页 URL(服务端下发,redirect_uri 固定,state 为服务端签名的自包含 token)──
-// state 内含 provider/intent/exp/签名,回调只从 URL 读回、服务端验签,不依赖浏览器 sessionStorage
+// 绑定时将当前账号纳入 state 签名。回调从 URL 读回、服务端验签，不依赖浏览器 sessionStorage
 // (手机唤起支付宝 App 授权后回调常落到另一浏览器上下文 → sessionStorage 会丢)。
-accountAuthRoutes.get('/auth/social/authorize', (c) => {
+accountAuthRoutes.get('/auth/social/authorize', async (c) => {
   c.header('Cache-Control', 'no-store');
   const provider = c.req.query('provider') ?? '';
-  const intent = c.req.query('intent') === 'link' ? 'link' : 'login';
+  const intent = c.req.query('intent') ?? 'login';
+  if (intent !== 'login' && intent !== 'link') return c.json({ error: 'invalid intent' }, 400);
   if (!isSocialProvider(provider)) return c.json({ error: 'invalid provider' }, 400);
-  const url = socialAuthorizeUrl(provider, intent);
+  let accountId: number | undefined;
+  if (intent === 'link') {
+    const applicant = await ticketApplicant(c);
+    if ('response' in applicant) return applicant.response;
+    accountId = applicant.uid;
+  }
+  const url = socialAuthorizeUrl(provider, intent, accountId);
   if (!url) return c.json({ error: `${provider} not configured` }, 503);
   return c.json({ url });
 });
@@ -337,7 +344,7 @@ accountAuthRoutes.post('/auth/social/:provider', async (c) => {
   if (!socialLoginConfigured(provider)) return c.json({ error: `${provider} not configured` }, 503);
   const { code, state } = await c.req.json<{ code?: string; state?: string }>().catch(() => ({ code: undefined, state: undefined }));
   if (!code) return c.json({ error: 'code required' }, 400);
-  if (!verifySocialState(state ?? '', provider)) return c.json({ error: `invalid ${provider} state` }, 400);
+  if (verifySocialState(state ?? '', provider)?.intent !== 'login') return c.json({ error: `invalid ${provider} state` }, 400);
   let g: SocialUser;
   try {
     g = await exchangeSocialCode(provider, code);
@@ -664,7 +671,7 @@ accountAuthRoutes.post('/auth/link/social/:provider', async (c) => {
   if (!socialLoginConfigured(provider)) return c.json({ error: `${provider} not configured` }, 503);
   const { code, state } = await c.req.json<{ code?: string; state?: string }>().catch(() => ({ code: undefined, state: undefined }));
   if (!code) return c.json({ error: 'code required' }, 400);
-  if (!verifySocialState(state ?? '', provider)) return c.json({ error: `invalid ${provider} state` }, 400);
+  if (verifySocialState(state ?? '', provider, uid)?.intent !== 'link') return c.json({ error: `invalid ${provider} state` }, 400);
   let g: SocialUser;
   try {
     g = await exchangeSocialCode(provider, code);

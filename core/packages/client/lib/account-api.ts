@@ -331,7 +331,7 @@ export async function fetchSocialAuthorization(provider: RedirectAuthProvider, i
   const { response: res, data } = await authJson<{ url?: string; siteOrigin?: string; error?: string }>(path, {
     cache: 'no-store',
     signal,
-    ...(provider === 'apple' && intent === 'link' ? { headers: authHeaders(false) } : {}),
+    ...(intent === 'link' ? { headers: authHeaders(false) } : {}),
   });
   if (!res.ok || !data.url) throw new Error(data.error || `HTTP ${res.status}`);
   return { url: data.url, siteOrigin: data.siteOrigin };
