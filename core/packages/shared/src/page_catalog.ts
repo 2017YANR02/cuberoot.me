@@ -510,6 +510,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'frame-count-about': { title: { zh: '数帧工具说明', en: 'Frame Count Guide' } },
+  'grh': {
+    title: { zh: '黎曼猜想的 Lean 验证', en: 'Checking the Riemann Hypothesis in Lean' },
+    description: {
+      zh: '追踪一个黎曼猜想证明项目的独立复核，查看编译进度、定理与公理检查以及 Lean 内核重检结果。',
+      en: 'Follow an independent check of a proposed Riemann Hypothesis proof, from source compilation to the theorem, its axioms and kernel replay.',
+    },
+  },
   'icon': { title: { zh: '图标', en: 'Icons' } },
   'math': {
     title: { zh: '魔方数学', en: 'Cubing Mathematics' },
