@@ -36,6 +36,19 @@
       "entry": ["hvigorfile.ts", "entry/hvigorfile.ts"],
       "ignoreDependencies": ["@ohos/hvigor-ohos-plugin"]
     },
+    "apps/miniprogram": {
+      "entry": [
+        "scripts/douyin-stage-solver-{runtime,worker}.mjs",
+        "scripts/douyin-wca-scramble-{runtime,worker}.mjs"
+      ],
+      "ignoreDependencies": [
+        "@cuberoot/event-icon",
+        "stage-solver-worker-wasm",
+        "cubing-native-inside",
+        "cubing-native-puzzles",
+        "cubing-native-svg-animator"
+      ]
+    },
     "apps/mobile": {
       "entry": ["src/startup.css", "src/push-acceptance/main.ts", "src/push-acceptance/style.css", "scripts/build-watch-runtime.ts", "scripts/watch-lookup-build.ts", "src/watch-cube-runtime.ts", "src/watch-scene-runtime.ts", "src/watch-replay-runtime.ts", "src/watch-scramble-runtime.ts"],
       "ignoreDependencies": ["watch-cubing-333"],
@@ -70,6 +83,7 @@
       "entry": ["src/index.ts"]
     },
     "{packages/server,apps/api}": {
+      "ignoreBinaries": ["flock"],
       "entry": [
         "scripts/**/*.{ts,mjs}",
         "tests/fixtures/**/*_pg.ts",
