@@ -3,7 +3,7 @@ import { IcpRegistration, PublicSecurityRegistration } from '@app-foundation/reg
 import beianBadge from '@app-foundation/registration-ui/beian-badge.png';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
-import { isInstalledForumHref, useInstalledForumDisabled } from '@/lib/installed-content';
+import { isInstalledCommunityHref, useInstalledCommunityDisabled } from '@/lib/installed-content';
 
 import { useRetainedState } from '@/hooks/useRetainedState';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
@@ -152,7 +152,7 @@ function LandingOnboarding({ mounted, personalLoading }: { mounted: boolean; per
 
 export default function LandingPage({ initialLayout = null }: { initialLayout?: HomeLayoutSnapshot | null }) {
   const douyin = useDouyinToolSurface();
-  const forumDisabled = useInstalledForumDisabled();
+  const communityDisabled = useInstalledCommunityDisabled();
   const contentRefreshKey = useContentRefreshKey();
   // Title is owned by page.tsx's generateMetadata (lib/page-meta.ts, key '').
   // The useDocumentTitle('', '') call that used to live here forced the tab back
@@ -420,7 +420,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
     if (groupId === 'other' && !adminArea) orderedCards.sort((a, b) => Number(b.id === 'forum') - Number(a.id === 'forum'));
     // Split the same full group by access; keep all IDs when saving its order.
     const visibleCards = orderedCards.filter((card) => (!douyin || douyinContentAvailable(card.href))
-      && (!forumDisabled || !isInstalledForumHref(card.href)) && (isAdmin || locksLoaded)
+      && (!communityDisabled || !isInstalledCommunityHref(card.href)) && (isAdmin || locksLoaded)
       && (adminArea ? isAdmin && isCardLocked(card) : !isCardLocked(card)));
     return { orderedCards, visibleCards };
   };
@@ -692,7 +692,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
           const grid = renderCardGrid(sec.id, sec.cards.filter((card) => card.id !== 'calendar'), 'cards-container');
           return (
             <section key={sec.id} id={`section-${sec.id}`} className="cards-section" aria-label={tr(sec.title)} hidden={activeSection !== sec.id}>
-              {!forumDisabled && sec.id === 'other' && activeSection === 'other' && locksLoaded && !isCardLocked(sec.cards.find(card => card.id === 'forum')!) && (
+              {!communityDisabled && sec.id === 'other' && activeSection === 'other' && locksLoaded && !isCardLocked(sec.cards.find(card => card.id === 'forum')!) && (
                 <LazyVisible className="landing-widget landing-widget--forum" minHeight={0} rootMargin="120px 0px"
                   initiallyVisible={visibleWidgets.forum} onVisible={() => rememberWidget('forum')}>
                   <ForumFeedPreview />

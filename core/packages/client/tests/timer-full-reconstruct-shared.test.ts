@@ -26,12 +26,12 @@ const solve: Solve = {
 let root: Root;
 let container: HTMLDivElement;
 const writeClipboardText = vi.fn(async (_text: string) => undefined);
-const host: ReconstructHost = {
+const host = {
   localize: (text) => text.en,
   writeClipboardText,
   replayUrl: (value) => encodeReplayUrl(value, 'https://www.cuberoot.me/timer'),
   recordGyro: true,
-};
+} satisfies ReconstructHost;
 
 beforeEach(() => {
   localStorage.clear();

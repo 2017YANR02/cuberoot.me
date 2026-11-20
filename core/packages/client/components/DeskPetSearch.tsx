@@ -23,6 +23,7 @@ import { assistantConversations, assistantOwner } from '@/lib/assistant-conversa
 import ChatAccountMenu from '@/components/ChatAccountMenu';
 import DonateModal from '@/components/DonateModal';
 import FeedbackModal from '@/components/FeedbackModal';
+import { useInstalledCommunityDisabled } from '@/lib/installed-content';
 import FloatingMetronome from '@/components/FloatingMetronome';
 import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
 import { hasAdminAccess, useAuthUser } from '@/lib/auth-store';
@@ -284,6 +285,7 @@ export default function DeskPetSearch({
   const [petVisible, setPetVisible] = useDeskPetVisible();
   const user = useAuthUser();
   const mobile = useIsMobile(767);
+  const communityDisabled = useInstalledCommunityDisabled();
   const owner = assistantOwner(user);
   const readConversations = useCallback(() => assistantConversations.read(owner), [owner]);
   const chats = useSyncExternalStore(assistantConversations.subscribe, readConversations, assistantConversations.serverSnapshot);
@@ -313,7 +315,7 @@ export default function DeskPetSearch({
     if (activePanel) boxRef.current?.querySelector<HTMLInputElement | HTMLTextAreaElement>('input, textarea')?.blur();
   }, [activePanel]);
   const donateOpen = activePanel === 'donate';
-  const feedbackOpen = activePanel === 'feedback';
+  const feedbackOpen = activePanel === 'feedback' && !communityDisabled;
   const setDonateOpen = (open: boolean) => setActivePanel(open ? 'donate' : null);
   const setFeedbackOpen = (open: boolean) => setActivePanel(open ? 'feedback' : null);
   const fbUnread = useFeedbackUnread();
@@ -451,7 +453,7 @@ export default function DeskPetSearch({
     { id: 'chats', href: '#chats', label: t('聊天', 'Chats'), icon: <span className="deskpet-chat-home"><FaHouse aria-hidden />{unreadReplies.length > 0 && <span className="deskpet-chat-unread" aria-hidden />}</span> },
     { id: 'pet', href: '#pet', label: t('桌宠', 'Pet'), icon: currentCharacter ? <img src={currentCharacter.thumb} alt="" className="deskpet-toolbar-thumb" style={{ transform: `scale(${currentCharacter.thumbScale ?? 1})` }} /> : <PawPrint aria-hidden /> },
     { id: 'music', href: '#music', label: t('音乐', 'Music'), icon: <Music /> },
-    { id: 'feedback', href: '#feedback', label: t('反馈', 'Feedback'), icon: <MessageSquarePlus />, badge: fbUnread || undefined },
+    ...(!communityDisabled ? [{ id: 'feedback', href: '#feedback', label: t('反馈', 'Feedback'), icon: <MessageSquarePlus />, badge: fbUnread || undefined }] : []),
     { id: 'donate', href: '#donate', label: t('赞助', 'Donate'), icon: <Heart className="heart-icon" /> },
     { id: 'account', href: '#account', label: t('账号菜单', 'Account menu'), icon: null },
   ].map(item => ({ ...item, active: item.id === activePanel }));

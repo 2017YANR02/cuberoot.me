@@ -9,6 +9,7 @@ import { Share2 } from '@app-foundation/icons/lucide';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import * as Y from 'yjs';
 import { CollaborativeSharePanel } from '@/components/collaboration/CollaborativeSharePanel';
+import { installedCommunityDisabled, useInstalledCommunityDisabled } from '@/lib/installed-content';
 import WcaAuth from '@/components/WcaAuth';
 import { T, tr } from '@/i18n/tr';
 import { websocketApiUrl } from '@/lib/api-base';
@@ -29,6 +30,8 @@ export default function DocumentEditorPage() {
   const [id] = useQueryState('id', parseAsString.withDefault(''));
   const user = useAuthUser();
   const [details, setDetails] = useState<DocumentDetails | null>(null);
+  const communityDisabled = useInstalledCommunityDisabled();
+  const publicDocumentReadOnly = communityDisabled && details?.sharing?.access === 'anyone';
   const [session, setSession] = useState<EditorSession | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>('connecting');
   const [peopleOnline, setPeopleOnline] = useState<string[]>([]);
@@ -73,6 +76,7 @@ export default function DocumentEditorPage() {
 
   useEffect(() => restrictDocumentOutput('.doc-workspace', details?.canExport === false), [details?.canExport]);
   const saveTitle = async () => {
+    if (installedCommunityDisabled() && details?.sharing?.access === 'anyone') return;
     const cleaned = title.trim();
     if (details?.document.role !== 'owner' || !cleaned || cleaned === details.document.title) {
       if (!cleaned && details) setTitle(details.document.title);
@@ -98,7 +102,7 @@ export default function DocumentEditorPage() {
     <main className="doc-workspace">
       <header className="doc-topbar">
         <PageBackLink fallback="/docs" prefetch={false} className="doc-back" />
-        <input className="doc-title-input" value={title} readOnly={details?.document.role !== 'owner'} onChange={(event) => setTitle(event.target.value)}
+        <input className="doc-title-input" value={title} readOnly={publicDocumentReadOnly || details?.document.role !== 'owner'} onChange={(event) => setTitle(event.target.value)}
           onBlur={() => void saveTitle()} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }}
           aria-label={tr({ zh: '文档标题', en: 'Document title' })} />
         <div className={`doc-sync is-${status}`}><span aria-hidden="true" />
@@ -111,7 +115,8 @@ export default function DocumentEditorPage() {
       {error && <p className="doc-page-error" role="alert">{error}</p>}
       {!user && !details && <div className="doc-auth-needed"><T zh="请先登录，再打开共享给你的文档。" en="Sign in to open a document shared with you." /></div>}
       {!details && !error && <p className="doc-editor-loading"><LoadingIndicator><T zh="正在加载文档…" en="Loading document…" /></LoadingIndicator></p>}
-      {details && session && <CollaborativeDocumentEditor session={session} details={details} title={title} onError={setError}
+      {details && session && <CollaborativeDocumentEditor session={session}
+        details={publicDocumentReadOnly ? { ...details, document: { ...details.document, role: 'viewer' } } : details} title={title} onError={setError}
         onShare={() => setShareOpen(true)} onSubscriptionChange={changeSubscription} />}
       {shareOpen && details && <CollaborativeSharePanel id={id} kind="document" details={details} reload={load} close={() => setShareOpen(false)} />}
     </main>

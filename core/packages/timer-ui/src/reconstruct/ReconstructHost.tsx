@@ -12,7 +12,7 @@ export type { ReconstructLocalize } from './report-content';
 export interface ReconstructHost {
   localize: ReconstructLocalize;
   writeClipboardText: (text: string) => Promise<void>;
-  replayUrl: (solve: Solve) => string | Promise<string>;
+  replayUrl?: (solve: Solve) => string | null | Promise<string | null>;
   renderIntakeAction?: (solve: Solve, snapshot: ReconSnapshot | null) => ReactNode;
   renderAnnotationAction?: (line: ReconTextLine, seek: () => void) => ReactNode;
   renderCaseLink?: (href: string, label: ReactNode, className: string) => ReactNode;
@@ -31,7 +31,6 @@ export interface ReconstructHost {
 export const ReconstructHostContext = createContext<ReconstructHost>({
   localize: (text) => text.en,
   writeClipboardText: async () => { throw new Error('Reconstruction clipboard host is not configured'); },
-  replayUrl: () => { throw new Error('Reconstruction share host is not configured'); },
   recordGyro: false,
   BoolToggle,
 });

@@ -15,7 +15,7 @@
 import './onboarding-guide.css';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { useT } from '@/hooks/useT';
-import { useInstalledForumDisabled } from '@/lib/installed-content';
+import { useInstalledCommunityDisabled } from '@/lib/installed-content';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
   Blocks,
@@ -209,7 +209,7 @@ const TOOLTIP_WIDTH = 360;
 export default function OnboardingGuideModal({ open, onClose }: Props) {
   const t = useT();
   const backdropProps = useModalBackdrop(onClose);
-  const steps = useInstalledForumDisabled() ? STEPS_WITHOUT_FORUM : ONBOARDING_STEPS;
+  const steps = useInstalledCommunityDisabled() ? STEPS_WITHOUT_FORUM : ONBOARDING_STEPS;
   const total = steps.length;
   const [requestedStep, setStep] = useState(0);
   const step = Math.min(requestedStep, total - 1);

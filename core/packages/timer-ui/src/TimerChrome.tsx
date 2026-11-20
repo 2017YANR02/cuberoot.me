@@ -11,6 +11,7 @@ export interface TimerPlayersSelectProps {
   ariaLabel: string;
   className?: string;
   disabled?: boolean;
+  onlineAvailable?: boolean;
   onlineLabel: string;
   onChange?: (value: TimerPlayersValue) => void;
   playerLabel: (count: 1 | 2 | 3 | 4) => string;
@@ -22,6 +23,7 @@ export function TimerPlayersSelect({
   ariaLabel,
   className,
   disabled = false,
+  onlineAvailable = true,
   onlineLabel,
   onChange,
   playerLabel,
@@ -57,7 +59,7 @@ export function TimerPlayersSelect({
       {([1, 2, 3, 4] as const).map((count) => (
         <option key={count} value={count}>{playerLabel(count)}</option>
       ))}
-      <option value="net">{onlineLabel}</option>
+      {onlineAvailable && <option value="net">{onlineLabel}</option>}
     </select>
   );
 }

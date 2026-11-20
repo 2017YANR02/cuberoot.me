@@ -1,6 +1,7 @@
 'use client';
 import { useSearchParams } from 'next/navigation';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
+import { installedCommunityDisabled, isInstalledCommunityHref, useInstalledCommunityDisabled } from '@/lib/installed-content';
 import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
 import AppLink from '@/components/AppLink';
 
@@ -60,6 +61,7 @@ const parseAsPlayers = createParser<PlayersMode>({
 });
 
 export default function TimerShell() {
+  const communityDisabled = useInstalledCommunityDisabled();
   const douyin = useDouyinToolSurface();
   const search = useSearchParams();
   const [training] = useQueryState('training', parseAsString.withOptions({ history: 'push' }));
@@ -81,7 +83,7 @@ export default function TimerShell() {
   );
   // ?room=CODE 邀请链接:没带 players 也进联机模式(链接可能被裁剪只剩 room)
   const [roomParam, setRoomParam] = useQueryState('room');
-  const isNet = !training && (playersParam === 'net' || (!!roomParam && typeof playersParam === 'number' && playersParam === 1));
+  const isNet = !communityDisabled && !training && (playersParam === 'net' || (!!roomParam && typeof playersParam === 'number' && playersParam === 1));
   const playerCount = typeof playersParam === 'number' ? Math.max(1, Math.min(4, playersParam)) : 1;
 
   // 联机模式下 ?event= 没有意义(项目属于房间,各人在房里各自切)—— 清掉 Solo / Battle
@@ -99,6 +101,7 @@ export default function TimerShell() {
       className="timer-practice-players"
       value={(isNet ? 'net' : playerCount) as TimerPlayersValue}
       onChange={(value) => {
+        if (value === 'net' && installedCommunityDisabled()) return;
         // 切离联机模式顺手清 ?room(否则 room 参数会把 players=1 又拽回联机);
         // 服务端玩家条目靠心跳超时标离线、24h TTL 清理,无需显式退房。
         if (value !== 'net') void setRoomParam(null);
@@ -107,6 +110,7 @@ export default function TimerShell() {
       ariaLabel={tr({ zh: '人数', en: 'Players' })}
       playerLabel={(count) => tr({ zh: `${count}人`, en: `${count}P` })}
       onlineLabel={tr({ zh: '联机', en: 'Online' })}
+      onlineAvailable={!communityDisabled}
     />
   );
   const trainingControl = <TimerTrainingMenu />;
@@ -118,6 +122,10 @@ export default function TimerShell() {
   // A training deep link must never briefly mount Solo/Battle: those views own
   // keyboard and device listeners. Training has its own sole input owner.
   if (!mounted) return <ClientLoadStatus />;
+  if (communityDisabled && isInstalledCommunityHref('/timer?' + search.toString())) return <main role="status">
+    <p>{tr({ zh: '此内容暂不在 App 中提供。', en: 'This content is not available in the app.' })}</p>
+    <AppLink href="/timer">{tr({ zh: '计时', en: 'Timer' })}</AppLink>
+  </main>;
   if (douyin && !douyinContentAvailable('/timer?' + search.toString())) return <main role="status">
     <p>{tr({ zh: '抖音小程序提供基础计时，此训练模式暂不提供。', en: 'Douyin offers basic timing; this training mode is unavailable.' })}</p>
     <AppLink href="/timer">{tr({ zh: '基础计时', en: 'Basic timer' })}</AppLink>

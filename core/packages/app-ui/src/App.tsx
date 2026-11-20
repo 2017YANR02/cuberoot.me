@@ -33,7 +33,8 @@ import { NetRecordingOutbox, uploadNetRecordedAttempt } from '@cuberoot/shared/t
 import { createNetOutboxStorage, TimerNetOutboxNotice } from '@cuberoot/timer-ui';
 import { BluetoothTimerModal, StackmatModal } from '@cuberoot/timer-ui/external';
 import { useExternalDevices } from './hooks/use-external-devices';
-import { installedContentUnavailable } from '@cuberoot/shared/installed-content';
+import { installedContentUnavailable, isInstalledCommunityHref } from '@cuberoot/shared/installed-content';
+import { useInstalledCommunityAvailability } from './hooks/use-installed-community-availability';
 import { decodeAppleMembershipRequest } from '@cuberoot/shared/apple-membership';
 import { decodeGoogleMembershipRequest } from '@cuberoot/shared/google-membership';
 import { TimerPreScrambleSettings, TimerColorNeutralSetting, createTimerSound, useTimerSoundFeedback } from '@cuberoot/timer-ui';
@@ -397,6 +398,10 @@ function accountUrl(language: SupportedLanguage, view?: 'delete'): string {
 }
 
 export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark?: ReactNode }) {
+  const communityAvailability = useInstalledCommunityAvailability(host.generativeAiDisabled === true, SITE_ORIGIN);
+  const communityAvailable = communityAvailability === true;
+  const communityAvailableRef = useRef(communityAvailable);
+  communityAvailableRef.current = communityAvailable;
   const [toolsBlePicker, setToolsBlePicker] = useState<InstalledBlePicker | null>(null);
   const toolsBlePickerRef = useRef(toolsBlePicker);
   toolsBlePickerRef.current = toolsBlePicker;
@@ -468,6 +473,12 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const selectedView = view === 'appearance' ? appearanceReturnRef.current : view;
   const [settingsCategory, setSettingsCategory] = useState<TimerSettingCategoryId>('timer');
   const [timerMode, setTimerMode] = useState<TimerPlayersValue>(1);
+  useEffect(() => {
+    if (communityAvailability === false && timerMode === 'net') {
+      setTimerMode(1);
+      setBattleModeActive(false);
+    }
+  }, [communityAvailability, timerMode]);
   const wideLayout = useTimerWideLayout({ useHostContent: true });
   const hostViewport = useHostViewportLayout();
   const wideLayoutRef = useRef(wideLayout);
@@ -2055,7 +2066,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
 
   const openToolsRoute = useCallback((route: string) => {
     const destination = new URL(route, SITE_ORIGIN);
-    if (installedContentUnavailable(destination.href, host.generativeAiDisabled)) {
+    if (installedContentUnavailable(destination.href, host.generativeAiDisabled)
+      || (!communityAvailableRef.current && isInstalledCommunityHref(destination.href))) {
       announce(copy.actionFailed);
       return;
     }
@@ -2194,7 +2206,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       if (external) {
         const frame = webFrameRefs.current[external.surface];
         if (!frame || event.source !== frame.contentWindow) return;
-        if (installedContentUnavailable(external.href, host.generativeAiDisabled)) { announce(copy.actionFailed); return; }
+        if (installedContentUnavailable(external.href, host.generativeAiDisabled)
+          || (!communityAvailableRef.current && isInstalledCommunityHref(external.href))) { announce(copy.actionFailed); return; }
         void host.openExternal(external.href).catch(() => announce(copy.actionFailed));
         return;
       }
@@ -3074,7 +3087,17 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       const solve = allSessionSolves.find(s => s.id === id);
       return solve ? timerLiveSolveDetail(solve) : null;
     },
-  }, !!store && timerMode === 1 && (timerVisible || view === 'history'));
+  }, communityAvailable && !!store && timerMode === 1 && (timerVisible || view === 'history'));
+  const regionRevokedLiveShare = useRef<string | null>(null);
+  useEffect(() => {
+    if (communityAvailability !== false) {
+      regionRevokedLiveShare.current = null;
+      return;
+    }
+    if (liveShare.busy || !liveShare.session || regionRevokedLiveShare.current === liveShare.session.id) return;
+    regionRevokedLiveShare.current = liveShare.session.id;
+    void liveShare.stop();
+  }, [communityAvailability, liveShare.busy, liveShare.session, liveShare.stop]);
   if (timer.machine.phase === 'running') timerInstruction = copy.tapToStop;
   if (timer.machine.phase === 'holding') timerInstruction = copy.keepHolding;
   if (timer.machine.phase === 'ready') timerInstruction = copy.releaseToStart;
@@ -3475,11 +3498,13 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       }}>{label}</a>;
     },
     writeClipboardText: host.writeClipboardText,
-    replayUrl: async (solve: Solve) => {
+    replayUrl: communityAvailable ? async (solve: Solve) => {
+      if (!communityAvailableRef.current) return null;
       const base = SITE_ORIGIN + (language === 'zh' ? '/zh' : '') + '/timer';
       const id = await createTimerReplayShare(solve, activeAuthSession?.token, { apiUrl: mobileApiUrl, fetcher: fetch });
+      if (!communityAvailableRef.current) return null;
       return id ? base + '?share=' + id : encodeReplayUrl(solve, base);
-    },
+    } : undefined,
     recordGyro: store?.settings.recordGyro ?? true,
     onEnableGyro: () => updateSettings({ recordGyro: true }),
   };
@@ -4177,7 +4202,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
           availableTopBar: hostViewport?.topBar,
           controls: (
                 <>
-                  <TimerLiveShareStatus controller={liveShare} language={language} />
+                  {communityAvailable && <TimerLiveShareStatus controller={liveShare} language={language} />}
                   {smartCubeDeviceCenter}
                   <TimerSoloControls
                     project={<TimerPuzzlePicker
@@ -4635,6 +4660,7 @@ children: <>
 
         {view === 'timer' && typeof timerMode === 'number' && timerMode >= 2 && (
           <LocalBattleMode
+            onlineAvailable={communityAvailable}
             scrambleProvider={battleScrambleProvider}
             onExportRounds={rounds => shareOrDownloadBackup(host, buildLocalBattleCsv(rounds, [], timerMode as number), {
               filename: `local-battle_${new Date().toISOString().slice(0, 10)}.csv`, mime: 'text/csv;charset=utf-8',
@@ -4664,6 +4690,7 @@ children: <>
             inputBlocked={timerOverlayBlocking}
             onActivityChange={setBattleModeActive}
             onModeChange={(mode) => {
+              if (mode === 'net' && !communityAvailableRef.current) return;
               timerModeRef.current = mode;
               setTimerMode(mode);
             }}
@@ -4677,7 +4704,7 @@ children: <>
           />
         )}
 
-        {view === 'timer' && timerMode === 'net' && (
+        {view === 'timer' && timerMode === 'net' && communityAvailable && (
           <NetBattleMode
             smartCubeSettings={store!.settings}
             sessionId={store!.database.activeSessionId}
@@ -4910,7 +4937,9 @@ children: <>
                 disabled={timer.machine.phase !== 'idle'
                   && timer.machine.phase !== 'stopped'}
                 onlineLabel={copy.online}
+                onlineAvailable={communityAvailable}
                 onChange={(mode) => {
+                  if (mode === 'net' && !communityAvailableRef.current) return;
                   timerModeRef.current = mode;
                   setTimerMode(mode);
                   setView('timer');
@@ -4939,7 +4968,7 @@ children: <>
 
             </>}
             <TimerTimingSettingsSections active={settingsCategory === 'timer'}
-              liveShare={<TimerLiveShareSettings controller={liveShare} language={language} copy={text => host.writeClipboardText(text)}
+              liveShare={communityAvailable && <TimerLiveShareSettings controller={liveShare} language={language} copy={text => host.writeClipboardText(text)}
                 watchBase={`${SITE_ORIGIN}${language === 'zh' ? '/zh' : ''}/timer/watch`} />}
               localize={(value) => value[language]}
               onChange={updateSettings}

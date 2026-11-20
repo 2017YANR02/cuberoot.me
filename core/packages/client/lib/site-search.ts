@@ -18,7 +18,7 @@ import { WR_METRICS, resultsQueryForMetric } from '@/lib/wr-metrics';
 import { ALG_CATALOG } from '@cuberoot/shared/alg';
 import { searchForum, type SearchData, type SearchThread } from '@/lib/forum-api';
 import { useWcaTranslationSearch, type TranslationMatch } from '@/lib/wca-translation-search';
-import { isInstalledForumHref, useInstalledForumDisabled } from '@/lib/installed-content';
+import { isInstalledCommunityHref, useInstalledCommunityDisabled } from '@/lib/installed-content';
 
 export interface SiteSearchCard {
   id: string;
@@ -388,14 +388,14 @@ export function useSiteSearch(
   const cards = options?.cards ?? [];
   const tools = options?.tools ?? TOOL_ITEMS;
   const lookups = options?.lookups ?? LOOKUP_ITEMS;
-  const forumDisabled = useInstalledForumDisabled();
+  const forumDisabled = useInstalledCommunityDisabled();
 
   const [statIndex, setStatIndex] = useState<StatIndex | null>(null);
   const [personMatches, setPersonMatches] = useState<WcaPerson[]>([]);
   const [compMatches, setCompMatches] = useState<Comp[]>([]);
   const [reconMatches, setReconMatches] = useState<ReconHit[]>([]);
   const [platformHits, setPlatformMatches] = useState<PlatformSearchHit[]>([]);
-  const platformMatches = forumDisabled ? platformHits.filter(item => !isInstalledForumHref(item.href)) : platformHits;
+  const platformMatches = forumDisabled ? platformHits.filter(item => !isInstalledCommunityHref(item.href)) : platformHits;
   const [platformSearchError, setPlatformSearchError] = useState(false);
   const [forumSearch, setForumSearch] = useState<{ query: string; data: SearchData | null; error: boolean } | null>(null);
   const [algSetMatches, setAlgSetMatches] = useState<AlgSetHit[]>([]);
@@ -574,17 +574,17 @@ export function useSiteSearch(
   }, [qRaw, tokens, xSearchEnabled, xLoaded]);
 
   const cardMatches = useMemo(() => {
-    return searchSiteCards(forumDisabled ? cards.filter(card => !isInstalledForumHref(card.href)) : cards, q);
+    return searchSiteCards(forumDisabled ? cards.filter(card => !isInstalledCommunityHref(card.href)) : cards, q);
   }, [cards, forumDisabled, q]);
 
   const toolMatches = useMemo(() => {
     if (q === '' || tokens.length === 0) return [];
-    return tools.filter(t => (!forumDisabled || !isInstalledForumHref(t.path)) && allTokensIn(`${t.zh}\n${t.en}`.toLowerCase(), tokens));
+    return tools.filter(t => (!forumDisabled || !isInstalledCommunityHref(t.path)) && allTokensIn(`${t.zh}\n${t.en}`.toLowerCase(), tokens));
   }, [tools, forumDisabled, q, tokens]);
 
   const lookupMatches = useMemo(() => {
     if (q === '' || tokens.length === 0) return [];
-    return lookups.filter(it => (!forumDisabled || !isInstalledForumHref(it.path)) && allTokensIn(`${it.zh}\n${it.en}`.toLowerCase(), tokens));
+    return lookups.filter(it => (!forumDisabled || !isInstalledCommunityHref(it.path)) && allTokensIn(`${it.zh}\n${it.en}`.toLowerCase(), tokens));
   }, [lookups, forumDisabled, q, tokens]);
 
   const statMatches = useMemo(() => {

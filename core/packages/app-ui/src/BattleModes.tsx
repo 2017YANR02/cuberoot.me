@@ -130,6 +130,7 @@ import type { InstalledAppNetBattle, InstalledAppSmartCube } from './platform';
 type BattleCopy = (typeof COPY)[SupportedLanguage];
 
 interface BattleModeBaseProps {
+  onlineAvailable?: boolean;
   onOverlayCloseChange?(close: (() => void) | null): void;
   copy: BattleCopy;
   deviceControls?: ReactNode;
@@ -245,6 +246,7 @@ export function LocalBattleMode({
   language,
   onActivityChange,
   onModeChange,
+  onlineAvailable,
   onOverlayCloseChange,
   onSmartCubeHandlersChange,
   playerCount,
@@ -664,7 +666,7 @@ export function LocalBattleMode({
           try { window.localStorage.setItem('battle_puzzle', event); } catch { setStorageError(copy.actionFailed); }
         }} />,
       startDisabled: visiblePlayers.some((player) => !player.scramble),
-      controls: <TimerPlayersSelect ariaLabel={copy.onePlayer} disabled={active} onlineLabel={copy.online}
+      controls: <TimerPlayersSelect ariaLabel={copy.onePlayer} disabled={active} onlineLabel={copy.online} onlineAvailable={onlineAvailable}
         onChange={changeMode} playerLabel={copy.players} value={state.playerCount as 2 | 3 | 4} />
     }} layout={{
       playerCount: state.playerCount as 2 | 3 | 4,

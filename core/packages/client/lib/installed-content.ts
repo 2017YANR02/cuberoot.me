@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { mobileEmbedDisablesGenerativeAi, mobileEmbedSurfaceFromFrameName } from '@cuberoot/shared/mobile-embed';
+import { fetchInstalledCommunityAvailability, INSTALLED_COMMUNITY_POLICY_PATH, isInstalledCommunityHref as restrictedCommunityHref } from '@cuberoot/shared/installed-content';
 export function installedWebsiteSurface() {
   return typeof window !== 'undefined' && window.parent !== window ? mobileEmbedSurfaceFromFrameName(window.name) : null;
 }
@@ -22,14 +23,8 @@ export function useInstalledGenerativeAiDisabled(): boolean {
   return useSyncExternalStore(subscribe, installedGenerativeAiDisabled, falseSnapshot);
 }
 
-export function isInstalledForumHref(href: string): boolean {
-  const origin = typeof window === 'undefined' ? 'https://cuberoot.me' : window.location.origin;
-  try {
-    const url = new URL(href, origin);
-    if (url.origin !== origin && !['cuberoot.me', 'www.cuberoot.me', 'next.cuberoot.me', 'dev.cuberoot.me'].includes(url.hostname)) return false;
-    return /^\/(?:forum|platform\/(?:community|admin\/community))(?=\/|$)/
-      .test(decodeURIComponent(url.pathname).replace(/^\/(?:en|zh)(?=\/|$)/, ''));
-  } catch { return false; }
+export function isInstalledCommunityHref(href: string): boolean {
+  return restrictedCommunityHref(href, typeof window === 'undefined' ? undefined : window.location?.origin);
 }
 
 let forumAvailable = false;
@@ -49,11 +44,8 @@ async function refreshForumAvailability() {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 5000);
   try {
-    const response = await fetch('/api/installed-forum', {
-      cache: 'no-store', credentials: 'omit', redirect: 'error', signal: controller.signal,
-    });
-    updateForumAvailability(response.ok && (await response.json())?.available === true);
-  } catch { updateForumAvailability(false); }
+    updateForumAvailability(await fetchInstalledCommunityAvailability(INSTALLED_COMMUNITY_POLICY_PATH, controller.signal) === true);
+  }
   finally {
     window.clearTimeout(timeout);
     regionCheckPending = false;
@@ -68,21 +60,29 @@ function subscribeInstalledForum(listener: () => void) {
     const checkWhenVisible = () => {
       if (!document.hidden) void refreshForumAvailability();
     };
+    const invalidateAvailability = () => updateForumAvailability(false);
+    const onVisibility = () => {
+      if (!document.hidden) {
+        invalidateAvailability();
+        void refreshForumAvailability();
+      }
+    };
     void refreshForumAvailability();
     window.addEventListener('online', refreshForumAvailability);
-    document.addEventListener('visibilitychange', checkWhenVisible);
+    window.addEventListener('offline', invalidateAvailability);
+    document.addEventListener('visibilitychange', onVisibility);
     // An active WebView can move between networks without becoming hidden or offline.
     window.setInterval(checkWhenVisible, 60_000);
   }
   return () => { forumListeners.delete(listener); };
 }
 
-export function installedForumDisabled(): boolean {
+export function installedCommunityDisabled(): boolean {
   // Current Apple Store builds identify their web surfaces by the no-AI frame names.
   return installedGenerativeAiDisabled() && !forumAvailable;
 }
 
-export function useInstalledForumDisabled(relevant = true): boolean {
+export function useInstalledCommunityDisabled(relevant = true): boolean {
   return useSyncExternalStore(relevant ? subscribeInstalledForum : subscribe,
-    relevant ? installedForumDisabled : falseSnapshot, falseSnapshot);
+    relevant ? installedCommunityDisabled : falseSnapshot, falseSnapshot);
 }

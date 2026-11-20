@@ -1,4 +1,6 @@
 'use client';
+
+import { installedCommunityDisabled, useInstalledCommunityDisabled } from '@/lib/installed-content';
 // 点击任意一把成绩 → 统一弹窗(替代旧的「有罚才弹 / 没罚直接跳」+ 铅笔编辑模式)。
 // 分区(自上而下):
 //   ① 复盘 + 动画演示:有复盘→直接内嵌 3D 播放器(ReconPlayerCanvas,画面内播放/暂停浮层)+ 解法文本(SolutionView,点字 scrub),
@@ -242,6 +244,7 @@ function AttemptPopoverBody({
   onClose: () => void;
 }) {
   const popRef = useRef<HTMLDivElement>(null);
+  const communityDisabled = useInstalledCommunityDisabled();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
 
@@ -298,7 +301,7 @@ function AttemptPopoverBody({
   const pendingVideos = splitLines(video?.pending);
   const confirmedVideos = uniq([...reconVideos, ...approvedVideos, ...justAdded]);
   const pendingOnlyVideos = uniq(pendingVideos).filter((u) => !confirmedVideos.includes(u));
-  const canAddVideo = !!canEdit && !!video?.onAdd;
+  const canAddVideo = !communityDisabled && !!canEdit && !!video?.onAdd;
   const showVideoSection = confirmedVideos.length > 0 || pendingOnlyVideos.length > 0 || canAddVideo;
   // 无复盘时「去复盘」带上已知视频(已批准 + 本次刚加)→ /recon/submit 预填。
   const reconLinkHref = hasRecon ? reconHref : withVideoParam(reconHref, uniq([...approvedVideos, ...justAdded]).join('\n'));
@@ -338,7 +341,7 @@ function AttemptPopoverBody({
 
   const addVideo = async () => {
     const u = vidInput.trim();
-    if (!u || !video?.onAdd) return;
+    if (!u || !video?.onAdd || installedCommunityDisabled()) return;
     setVidBusy(true);
     try {
       await video.onAdd(u);
@@ -352,6 +355,7 @@ function AttemptPopoverBody({
   };
 
   const save = async () => {
+    if (installedCommunityDisabled()) return;
     const n = note.trim() || undefined;
     let action: (() => Promise<void> | void) | null = null;
     if (mode === 'orig') {
@@ -487,7 +491,7 @@ function AttemptPopoverBody({
         )}
 
         {/* ④ 编辑(登录用户)— 直接展开,不藏在折叠后 */}
-        {canEdit && (
+        {canEdit && !communityDisabled && (
           <>
             {!isAdmin && <span style={editLabelStyle}>{tr({ zh: '提议修改(需审核;自己的 +2 即时)', en: 'Propose an edit' })}</span>}
             <div style={formStyle}>
@@ -545,7 +549,7 @@ function AttemptPopoverBody({
         )}
 
         {/* ⑤ 编辑变更记录(管理员) */}
-        {isAdmin && onEditRecord && (
+        {isAdmin && onEditRecord && !communityDisabled && (
           <button type="button" style={recordBtnStyle} onClick={() => { onEditRecord(); onClose(); }}>
             {tr({ zh: '编辑变更记录…', en: 'Edit change record…' })}
           </button>

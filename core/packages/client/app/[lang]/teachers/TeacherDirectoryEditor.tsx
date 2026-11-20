@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp, ImagePlus, Trash2 } from '@app-foundation/icons
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { tr } from '@/i18n/tr';
+import { installedCommunityDisabled, useInstalledCommunityDisabled } from '@/lib/installed-content';
 import { prepareImageUpload, uploadImageBlob } from '@/lib/image-upload';
 import {
   createTeacherDirectoryEntry,
@@ -55,6 +56,7 @@ export default function TeacherDirectoryEditor({
   onSaved: (entry: TeacherDirectoryEntry) => void;
   onDeleted: () => void;
 }) {
+  const communityDisabled = useInstalledCommunityDisabled();
   const [draft, setDraft] = useState<TeacherDirectoryDraft>(() => initial
     ? directoryEntryToDraft(initial)
     : { ...EMPTY_DIRECTORY_DRAFT, contacts: {}, images: [], isCurated: isAdmin });
@@ -122,10 +124,14 @@ export default function TeacherDirectoryEditor({
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setError('');
+    const publicationDisabled = installedCommunityDisabled();
+    if (publicationDisabled && initial?.isVisible && draft.isVisible) {
+      return setError(tr({ zh: '关闭公开显示后即可编辑。', en: 'Turn off public visibility to edit.' }));
+    }
     const contacts = Object.fromEntries(
       Object.entries(draft.contacts).map(([key, value]) => [key, value.trim()]).filter(([, value]) => value),
     ) as DirectoryContacts;
-    const payload = { ...draft, contacts, specialtiesZh: splitDirectoryTags(tagsZh), specialtiesEn: splitDirectoryTags(tagsEn) };
+    const payload = { ...draft, isVisible: !publicationDisabled && draft.isVisible, contacts, specialtiesZh: splitDirectoryTags(tagsZh), specialtiesEn: splitDirectoryTags(tagsEn) };
     if (!(payload.nameZh.trim() || payload.nameEn.trim())) return setError(tr({ zh: '请至少填写一个语言的名称。', en: 'Add a name in at least one language.' }));
     if (!(payload.descriptionZh.trim() || payload.descriptionEn.trim())) return setError(tr({ zh: '请至少填写一个语言的介绍。', en: 'Add a description in at least one language.' }));
     if (!(Object.keys(payload.contacts).length || payload.website.trim())) return setError(tr({ zh: '请至少填写一种公开联系方式或网站。', en: 'Add at least one public contact method or website.' }));
@@ -227,7 +233,7 @@ export default function TeacherDirectoryEditor({
           <fieldset className="directory-contact-fields"><legend>{tr({ zh: '公开联系方式', en: 'Public contact methods' })}</legend><div className="directory-form-grid">{CONTACT_FIELDS.map((field) => <label key={field.key}><span>{tr(field.label)}</span><input className="directory-field-control" type={field.key === 'email' ? 'email' : field.key === 'phone' ? 'tel' : 'text'} value={draft.contacts[field.key] ?? ''} onChange={(event) => setContact(field.key, event.target.value)} maxLength={500} /></label>)}</div></fieldset>
           <label><span>{tr({ zh: '个人网站或机构官网', en: 'Personal or organization website' })}</span><input className="directory-field-control" type="url" value={draft.website} onChange={(event) => setField('website', event.target.value)} placeholder="https://" maxLength={2000} /></label>
           <label className="directory-wca-field"><span>WCA ID</span><input className="directory-field-control" value={draft.wcaId} onChange={(event) => setField('wcaId', event.target.value.toUpperCase())} placeholder="2017YANR02" maxLength={10} /></label>
-          <BoolToggle value={draft.isVisible} onChange={(value) => setField('isVisible', value)} label={tr({ zh: '公开显示', en: 'Show publicly' })} />
+          <BoolToggle value={draft.isVisible && (!communityDisabled || initial?.isVisible === true)} disabled={communityDisabled && (!initial?.isVisible || !draft.isVisible)} onChange={(value) => setField('isVisible', value)} label={tr({ zh: '公开显示', en: 'Show publicly' })} />
           {!draft.isVisible && <p className="directory-form-note">{tr({ zh: '隐藏后，只有你登录时能看到这条资料。', en: 'When hidden, only you can see this entry while signed in.' })}</p>}
         </section>
 

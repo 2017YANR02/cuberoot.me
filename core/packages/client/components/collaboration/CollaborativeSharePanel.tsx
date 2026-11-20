@@ -6,6 +6,7 @@ import BoolToggle from '@/components/BoolToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { T, tr } from '@/i18n/tr';
+import { installedCommunityDisabled, useInstalledCommunityDisabled } from '@/lib/installed-content';
 import {
   addDocumentMember, removeDocumentMember, searchDocumentPeople, updateDocumentMember,
   updateDocumentSharing, DEFAULT_DOCUMENT_SHARING,
@@ -22,6 +23,7 @@ export function CollaborativeSharePanel({ id, kind, details, reload, close }: {
   id: string; kind: 'document' | 'spreadsheet'; details: DocumentDetails;
   reload: () => Promise<void>; close: () => void;
 }) {
+  const communityDisabled = useInstalledCommunityDisabled();
   const [query, setQuery] = useState('');
   const [people, setPeople] = useState<DocumentPerson[]>([]);
   const [person, setPerson] = useState<DocumentPerson | null>(null);
@@ -51,12 +53,14 @@ export function CollaborativeSharePanel({ id, kind, details, reload, close }: {
   };
   const finish = async () => {
     if (!dirty) { close(); return; }
+    if (sharing.access === 'anyone' && installedCommunityDisabled()) return;
     setBusy(true); setError('');
     try { await updateDocumentSharing(id, sharing); await reload(); close(); }
     catch (cause) { setError((cause as Error).message); }
     finally { setBusy(false); }
   };
   const copyLink = async () => {
+    if (installedCommunityDisabled() && (sharing.access === 'anyone' || details.sharing?.access === 'anyone')) return;
     try {
       const url = new URL(window.location.href);
       url.pathname = url.pathname.replace(/\/(docs|sheets)\/edit$/, `/${kind === 'document' ? 'docs' : 'sheets'}/edit`);
@@ -103,7 +107,7 @@ export function CollaborativeSharePanel({ id, kind, details, reload, close }: {
           <span className="collab-avatar"><AccessIcon size={22} /></span>
           <div className="collab-access-description">
             <select className="collab-access-select" value={sharing.access} disabled={busy || !details.canManage} onChange={event => setSharing({ ...sharing, access: event.target.value as DocumentSharing['access'] })} aria-label={tr({ zh: '常规访问权限', en: 'General access' })}>
-              <option value="restricted">{tr({ zh: '受限', en: 'Restricted' })}</option><option value="admins">{tr({ zh: '所有管理员', en: 'All administrators' })}</option><option value="anyone">{tr({ zh: '知道链接的任何人', en: 'Anyone with the link' })}</option>
+              <option value="restricted">{tr({ zh: '受限', en: 'Restricted' })}</option><option value="admins">{tr({ zh: '所有管理员', en: 'All administrators' })}</option>{(!communityDisabled || sharing.access === 'anyone') && <option value="anyone" disabled={communityDisabled}>{tr({ zh: '知道链接的任何人', en: 'Anyone with the link' })}</option>}
             </select>
             <p>{sharing.access === 'restricted' ? tr({ zh: '只有已添加的人员可以访问', en: 'Only people with access can open this file' }) : sharing.access === 'admins' ? tr({ zh: '本站所有管理员均可访问', en: 'All site administrators can access this file' }) : tr({ zh: '知道链接的任何人均可访问，无需登录', en: 'Anyone with the link can access this file without signing in' })}</p>
           </div>
@@ -113,8 +117,8 @@ export function CollaborativeSharePanel({ id, kind, details, reload, close }: {
       {error && <p className="collab-error" role="alert">{error}</p>}
       {notice && <p className="collab-member-role" role="status">{notice}</p>}
       <div className="collab-share-footer">
-        <button className="collab-button" type="button" onClick={() => void copyLink()}><Link2 size={17} /><T zh="复制链接" en="Copy link" /></button>
-        <button className="collab-button collab-primary" type="button" disabled={busy} onClick={() => void finish()}>{busy ? tr({ zh: '正在保存…', en: 'Saving…' }) : dirty ? tr({ zh: '保存', en: 'Save' }) : tr({ zh: '完成', en: 'Done' })}</button>
+        {(!communityDisabled || (sharing.access !== 'anyone' && details.sharing?.access !== 'anyone')) && <button className="collab-button" type="button" onClick={() => void copyLink()}><Link2 size={17} /><T zh="复制链接" en="Copy link" /></button>}
+        <button className="collab-button collab-primary" type="button" disabled={busy || (communityDisabled && dirty && sharing.access === 'anyone')} onClick={() => void finish()}>{busy ? tr({ zh: '正在保存…', en: 'Saving…' }) : dirty ? tr({ zh: '保存', en: 'Save' }) : tr({ zh: '完成', en: 'Done' })}</button>
       </div>
     </section>
   </div>;

@@ -1,5 +1,6 @@
 'use client';
 import { useTimerLiveShare, TimerLiveShareSettings, TimerLiveShareStatus } from '@cuberoot/timer-ui/live-share';
+import { useInstalledCommunityDisabled } from '@/lib/installed-content';
 import { captureTimerLiveAttempt, timerLiveHistory, timerLiveCompletedAttempt, timerLiveSolveDetail, type TimerLiveCompletion } from '@cuberoot/shared/timer/live-share';
 import { applyOrientation } from '@cuberoot/shared/smart-cube/orientation';
 import { apiUrl as liveApiUrl, websocketApiUrl } from '@/lib/api-base';
@@ -432,6 +433,7 @@ function submitTimerTrainingEvidence(
 }
 
 export default function SoloView({ playersControl, presenceControl, onPresenceChange }: SoloViewProps) {
+  const communityDisabled = useInstalledCommunityDisabled();
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const timerLanguage = (['en', 'zh'] as const)[Number(isZh)];
@@ -3040,8 +3042,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       const solve = Object.values(byEvent).flat().find(s => s.id === id);
       return solve ? timerLiveSolveDetail(solve) : null;
     },
-  }, !competition.enabled && !multiEnabled);
-  const liveShareSettings = <TimerLiveShareSettings controller={liveShare} language={isZh ? 'zh' : 'en'} copy={browserClipboardTransport}
+  }, !communityDisabled && !competition.enabled && !multiEnabled);
+  const liveShareSettings = !communityDisabled && <TimerLiveShareSettings controller={liveShare} language={isZh ? 'zh' : 'en'} copy={browserClipboardTransport}
     watchBase={typeof window === 'undefined' ? 'https://cuberoot.me/timer/watch' : `${window.location.origin}${isZh ? '/zh' : ''}/timer/watch`} />;
   const colorClass = useMemo(() => {
     if (timer.phase === 'holding') return 'holding';
@@ -3404,7 +3406,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           brand: <PageBackLink fallback="/" className="tb-btn shell-topbar-home" data-no-timer />,
           controls: (
           <>
-          <TimerLiveShareStatus controller={liveShare} language={isZh ? 'zh' : 'en'} />
+          {!communityDisabled && <TimerLiveShareStatus controller={liveShare} language={isZh ? 'zh' : 'en'} />}
           {trainingOrg && trainingAssignment && <AppLink className="tb-btn" data-no-timer prefetch={false} href={`/training/${encodeURIComponent(trainingOrg)}?assignment=${encodeURIComponent(trainingAssignment)}`}>{tr({ zh: '训练打卡进度', en: 'Training check-in progress' })}</AppLink>}
           {showReconTestEntry(isAdmin, cubeConnected, event, competition.enabled) && <ReconTestPicker
             canSelect={cubeConnected && (timer.phase === 'idle' || timer.phase === 'stopped')}

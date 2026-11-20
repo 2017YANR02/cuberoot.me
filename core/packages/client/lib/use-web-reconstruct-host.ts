@@ -7,6 +7,7 @@ import { reconInspectionOrientations, reconWasteBrackets } from '@/lib/recon-alg
 import { createElement, Fragment } from 'react';
 import dynamic from 'next/dynamic';
 import { useIsAdmin } from '@/lib/auth-store';
+import { installedCommunityDisabled, useInstalledCommunityDisabled } from '@/lib/installed-content';
 import { tr } from '@/i18n/tr';
 import { useSettings, updateSettings } from '@/app/[lang]/timer/_lib/settings';
 import { encodeReplayUrl } from '@/app/[lang]/timer/_lib/share/encode';
@@ -17,6 +18,7 @@ const ReconCaptureAction = dynamic(() => import('@/components/recon/ReconCapture
 
 /** Website-only host capabilities for both full details and the inline recap. */
 export function useWebReconstructHost(): ReconstructHost {
+  const communityDisabled = useInstalledCommunityDisabled();
   const settings = useSettings();
   const admin = useIsAdmin();
   const host: ReconstructHost = {
@@ -28,8 +30,10 @@ export function useWebReconstructHost(): ReconstructHost {
     // Keep the timer mounted so visiting a case does not dispose its Bluetooth session.
     renderCaseLink: (href, label, className) => createElement(ReconCaseLink, { href, className, children: label }),
     writeClipboardText: (text) => navigator.clipboard.writeText(text),
-    replayUrl: async (solve) => {
+    replayUrl: communityDisabled ? undefined : async (solve) => {
+      if (installedCommunityDisabled()) return null;
       const id = await createServerReplayShare(solve);
+      if (installedCommunityDisabled()) return null;
       if (!id) return encodeReplayUrl(solve);
       const url = new URL(window.location.href);
       url.search = '';

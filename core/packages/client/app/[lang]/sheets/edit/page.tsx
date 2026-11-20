@@ -11,6 +11,7 @@ import * as Y from 'yjs';
 import { CollaborativeComments } from '@/components/collaboration/CollaborativeComments';
 import AppLink from '@/components/AppLink';
 import { CollaborativeSharePanel } from '@/components/collaboration/CollaborativeSharePanel';
+import { installedCommunityDisabled, useInstalledCommunityDisabled } from '@/lib/installed-content';
 import WcaAuth from '@/components/WcaAuth';
 import { T, tr } from '@/i18n/tr';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
@@ -799,6 +800,8 @@ export default function SpreadsheetEditorPage() {
   const [id] = useQueryState('id', parseAsString.withDefault(''));
   const user = useAuthUser();
   const [details, setDetails] = useState<DocumentDetails | null>(null);
+  const communityDisabled = useInstalledCommunityDisabled();
+  const publicSheetReadOnly = communityDisabled && details?.sharing?.access === 'anyone';
   const [session, setSession] = useState<EditorSession | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>('connecting');
   const [peopleOnline, setPeopleOnline] = useState<string[]>([]);
@@ -830,7 +833,8 @@ export default function SpreadsheetEditorPage() {
       url: websocketApiUrl('/v1/documents/realtime'), name: `document.${id}`, document: ydoc, token: () => getWebAccessToken(sessionToken),
       onStatus: ({ status: next }) => { setStatus(next); if (!disposed && next === 'disconnected') void load(); },
       onSynced: ({ state }) => {
-        if (state && (details.document.role === 'owner' || details.document.role === 'editor')) repairSpreadsheetSheets(ydoc);
+        if (state && !(installedCommunityDisabled() && details.sharing?.access === 'anyone')
+          && (details.document.role === 'owner' || details.document.role === 'editor')) repairSpreadsheetSheets(ydoc);
       },
       onAuthenticationFailed: ({ reason }) => setError(reason || tr({ zh: '表格认证失败', en: 'Spreadsheet authentication failed' })),
       onAwarenessChange: ({ states }) => setPeopleOnline(states.map((state) => typeof state.user === 'object' && state.user && typeof state.user.name === 'string' ? state.user.name : '').filter((name, index, all) => name && all.indexOf(name) === index)),
@@ -838,9 +842,10 @@ export default function SpreadsheetEditorPage() {
     const undo = new Y.UndoManager(ydoc.getArray('sheets'));
     setSession({ ydoc, provider, undo });
     return () => { disposed = true; undo.destroy(); provider.destroy(); ydoc.destroy(); setSession(null); setPeopleOnline([]); };
-  }, [details?.document.role, id, user]);
+  }, [details?.document.role, details?.sharing?.access, id, user]);
   useEffect(() => restrictDocumentOutput('.sheet-workspace', details?.canExport === false), [details?.canExport]);
   const saveTitle = async () => {
+    if (installedCommunityDisabled() && details?.sharing?.access === 'anyone') return;
     const cleaned = title.trim(); if (details?.document.role !== 'owner' || !cleaned || cleaned === details.document.title) { if (!cleaned && details) setTitle(details.document.title); return; }
     try { await updateDocumentTitle(details.document.id, cleaned); setDetails({ ...details, document: { ...details.document, title: cleaned } }); }
     catch (cause) { setError((cause as Error).message); }
@@ -878,12 +883,12 @@ export default function SpreadsheetEditorPage() {
   };
   if (!id) return <main className="sheet-workspace"><p className="docs-error"><T zh="缺少表格 ID。" en="Missing spreadsheet ID." /></p></main>;
   return <main className="sheet-workspace">
-    <header className="sheet-topbar"><PageBackLink fallback="/docs" prefetch={false} className="sheet-back" /><input className="sheet-title-input" value={title} readOnly={details?.document.role !== 'owner'} onChange={(event) => setTitle(event.target.value)} onBlur={() => void saveTitle()} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} aria-label={tr({ zh: '表格标题', en: 'Spreadsheet title' })} /><div className={`sheet-sync is-${status}`}><span />{status === 'connected' ? <T zh="已同步" en="Synced" /> : status === 'connecting' ? <T zh="连接中" en="Connecting" /> : <T zh="离线，等待重连" en="Offline, retrying" />}</div>{peopleOnline.length > 0 && <span className="sheet-presence" title={peopleOnline.join(', ')}>{peopleOnline.length}<T zh=" 人在线" en=" online" /></span>}<div className="sheet-export-wrap"><button type="button" className="sheet-action" onClick={() => setExportOpen((open) => !open)} disabled={exporting || details?.canExport === false}><Download size={16} /><T zh="导出" en="Export" /></button>{exportOpen && <div className="sheet-export-menu"><button type="button" className="sheet-export-option" onClick={() => void exportFile('xlsx')}><Download size={15} />Excel (.xlsx)</button><button type="button" className="sheet-export-option" onClick={() => void exportFile('csv')}><Download size={15} />CSV</button><button type="button" className="sheet-export-option" onClick={() => void exportFile('pdf')}><FileDown size={15} />PDF</button></div>}</div>{details && <button type="button" className="sheet-action" onClick={() => setShareOpen(true)}><Share2 size={16} /><T zh="共享" en="Share" /></button>}<WcaAuth /></header>
+    <header className="sheet-topbar"><PageBackLink fallback="/docs" prefetch={false} className="sheet-back" /><input className="sheet-title-input" value={title} readOnly={publicSheetReadOnly || details?.document.role !== 'owner'} onChange={(event) => setTitle(event.target.value)} onBlur={() => void saveTitle()} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} aria-label={tr({ zh: '表格标题', en: 'Spreadsheet title' })} /><div className={`sheet-sync is-${status}`}><span />{status === 'connected' ? <T zh="已同步" en="Synced" /> : status === 'connecting' ? <T zh="连接中" en="Connecting" /> : <T zh="离线，等待重连" en="Offline, retrying" />}</div>{peopleOnline.length > 0 && <span className="sheet-presence" title={peopleOnline.join(', ')}>{peopleOnline.length}<T zh=" 人在线" en=" online" /></span>}<div className="sheet-export-wrap"><button type="button" className="sheet-action" onClick={() => setExportOpen((open) => !open)} disabled={exporting || details?.canExport === false}><Download size={16} /><T zh="导出" en="Export" /></button>{exportOpen && <div className="sheet-export-menu"><button type="button" className="sheet-export-option" onClick={() => void exportFile('xlsx')}><Download size={15} />Excel (.xlsx)</button><button type="button" className="sheet-export-option" onClick={() => void exportFile('csv')}><Download size={15} />CSV</button><button type="button" className="sheet-export-option" onClick={() => void exportFile('pdf')}><FileDown size={15} />PDF</button></div>}</div>{details && <button type="button" className="sheet-action" onClick={() => setShareOpen(true)}><Share2 size={16} /><T zh="共享" en="Share" /></button>}<WcaAuth /></header>
     {(error || formulaError) && <p className="sheet-page-error" role="alert">{error || formulaError}</p>}
     {!user && !details && <div className="sheet-auth-needed"><T zh="请先登录，再打开共享给你的表格。" en="Sign in to open a spreadsheet shared with you." /></div>}
     {!details && !error && <p className="sheet-loading"><LoadingIndicator><T zh="正在加载表格…" en="Loading spreadsheet…" /></LoadingIndicator></p>}
-    {details && session && <SpreadsheetGrid session={session} readOnly={details.document.role !== 'owner' && details.document.role !== 'editor'} canExport={details.canExport !== false} activeSheetId={activeSheetId} onActiveSheet={setActiveSheetId} onError={setError} onFormulaError={setFormulaError} onExport={(format) => { void exportFile(format); }} onPrint={() => { void printFile(); }} />}
-    {details && session && <section className="sheet-comments" aria-label={tr({ zh: '表格批注', en: 'Spreadsheet comments' })}><CollaborativeComments ydoc={session.ydoc} canComment={details.document.role !== 'viewer'} /></section>}
+    {details && session && <SpreadsheetGrid session={session} readOnly={publicSheetReadOnly || (details.document.role !== 'owner' && details.document.role !== 'editor')} canExport={details.canExport !== false} activeSheetId={activeSheetId} onActiveSheet={setActiveSheetId} onError={setError} onFormulaError={setFormulaError} onExport={(format) => { void exportFile(format); }} onPrint={() => { void printFile(); }} />}
+    {details && session && <section className="sheet-comments" aria-label={tr({ zh: '表格批注', en: 'Spreadsheet comments' })}><CollaborativeComments ydoc={session.ydoc} canComment={!publicSheetReadOnly && details.document.role !== 'viewer'} /></section>}
     {shareOpen && details && <CollaborativeSharePanel id={id} kind="spreadsheet" details={details} reload={load} close={() => setShareOpen(false)} />}
   </main>;
 }

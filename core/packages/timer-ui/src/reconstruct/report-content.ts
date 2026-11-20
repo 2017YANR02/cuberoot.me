@@ -49,12 +49,12 @@ export const groupNode = (id:string,children:(ReportNode|null|false|undefined)[]
 export const buttonNode = (id:string,text:string,action:ReportAction,className?:string,extra:Partial<ReportNode>={}):ReportNode=>({id,kind:'button',text,action,className,...extra});
 const num = (n:number|null|undefined)=>n==null?'–':String(n);
 
-export function reportActions(solve:Solve,tr:ReconstructLocalize,state:ReportUIState,canUse:boolean,placement:'detail'|'report'|'recap'='report',shareMode:'copy'|'system'='copy') {
+export function reportActions(solve:Solve,tr:ReconstructLocalize,state:ReportUIState,canUse:boolean,placement:'detail'|'report'|'recap'='report',shareMode:'copy'|'system'='copy',shareAvailable=true) {
   const shareClass=placement==='recap'?'shell-recap-btn shell-recap-btn--icon':placement==='detail'?'timer-solve-detail-action timer-solve-detail-header-action--icon':'rc-action rc-action--ghost rc-action--icon';
   const useClass=placement==='recap'?'shell-recap-btn shell-recap-btn--primary':placement==='detail'?'timer-solve-detail-action':'rc-action';
   const canShare=Boolean(solve.moves?.length),copied=state.copied==='share';
   return {...groupNode('actions',[
-    buttonNode('share',!canShare?tr({zh:'没有动作记录，无法分享回放',en:'No move log — share unavailable'}):copied?tr({zh:'链接已复制',en:'Link copied'}):shareMode==='system'?tr({zh:'分享回放',en:'Share replay'}):tr({zh:'复制分享链接',en:'Copy share link'}),{type:'share'},shareClass,{disabled:!canShare,icon:copied?'check':'share'}),
+    shareAvailable&&buttonNode('share',!canShare?tr({zh:'没有动作记录，无法分享回放',en:'No move log — share unavailable'}):copied?tr({zh:'链接已复制',en:'Link copied'}):shareMode==='system'?tr({zh:'分享回放',en:'Share replay'}):tr({zh:'复制分享链接',en:'Copy share link'}),{type:'share'},shareClass,{disabled:!canShare,icon:copied?'check':'share'}),
     canUse&&Boolean(solve.scramble?.trim())&&buttonNode('use',tr({zh:'用这条打乱',en:'Use this scramble'}),{type:'use-scramble'},useClass),
   ],placement==='report'?'rc-actions':undefined,'row'),tag:placement==='report'?'div':'fragment'} as ReportNode;
 }

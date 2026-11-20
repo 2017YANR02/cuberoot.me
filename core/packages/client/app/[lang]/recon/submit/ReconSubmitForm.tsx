@@ -1,5 +1,7 @@
 'use client';
 
+import { installedCommunityDisabled, useInstalledCommunityDisabled } from '@/lib/installed-content';
+
 import PageHeading from '@/components/PageHeading';
 import { ResizeDivider } from '@app-foundation/navigation-ui/resize-divider';
 import '@app-foundation/navigation-ui/resize-divider.css';
@@ -166,6 +168,7 @@ function roundsForCount(n: number): string[] {
 }
 
 export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
+  const communityDisabled = useInstalledCommunityDisabled();
   const router = useRouter();
   const params = useParams<{ lang?: string }>();
   const searchParams = useSearchParams();
@@ -417,7 +420,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       ? form.optimalScramble || ''
       : form.scramble || '';
   const activeVisibility = VISIBILITY_OPTIONS.find(
-    option => option.value === (form.visibility ?? 'public'),
+    option => option.value === (communityDisabled ? 'private' : form.visibility ?? 'public'),
   ) ?? VISIBILITY_OPTIONS[0];
 
   const setActiveScrambleValue = useCallback((value: string) => {
@@ -1564,7 +1567,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   };
 
   const handleSubmit = async () => {
-    if (readOnly) return;
+    if (readOnly || (installedCommunityDisabled() && isEditing && loadedSolve?.visibility !== 'private')) return;
     if (groupMatchPending || (matchedGroup && form.groupId !== matchedGroup)) return;
     setSubmitError(null);
     const person = form.person?.trim() ?? '';
@@ -1636,6 +1639,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
       const data: Partial<ReconSolve> = {
         ...form,
+        visibility: installedCommunityDisabled() ? 'private' : form.visibility,
         videoUrl: normalizeReconVideoUrls(form.videoUrl || ''),
         person,
         recordType: timingOnly ? 'timing' : 'reconstruction',
@@ -1674,6 +1678,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         data.crossColor = submissionStats.crossColor;
       }
       if (isEditing && editId) {
+        if (installedCommunityDisabled() && loadedSolve?.visibility !== 'private') return;
         await updateRecon(Number(editId), data);
         // Bust the detail page's 24h ISR/Data cache (server) so it doesn't show
         // stale fields, then router.refresh() drops the client Router Cache.
@@ -1764,6 +1769,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   </div>;
 
   if (loadingEdit || (isEditing && !loadedSolve)) return <div className="recon-page"><div className="recon-loading"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></div></div>;
+  if (communityDisabled && isEditing && loadedSolve?.visibility !== 'private') {
+    return <p role="status">{tr({ zh: 'App 暂时只能编辑私享复盘。', en: 'Only private reconstructions can be edited in the app.' })}</p>;
+  }
 
   // ── Person/reconer pill helpers ──
   const solverLite: WcaPersonLite | null = form.personId
@@ -2621,10 +2629,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               <span className="submit-label">{tr({ zh: '可见性', en: 'Visibility' })}</span>
               <select
                 className="submit-field-select submit-visibility-select"
-                value={form.visibility ?? 'public'}
+                disabled={communityDisabled}
+                value={communityDisabled ? 'private' : form.visibility ?? 'public'}
                 onChange={e => setField('visibility', e.target.value as ReconSolve['visibility'])}
               >
-                {VISIBILITY_OPTIONS.map(opt => (
+                {VISIBILITY_OPTIONS.filter(opt => !communityDisabled || opt.value === 'private').map(opt => (
                   <option key={opt.value} value={opt.value}>{tr(opt.title)}</option>
                 ))}
               </select>

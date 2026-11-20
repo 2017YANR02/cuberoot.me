@@ -6,6 +6,7 @@ import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
 import { prepareImageUpload, uploadImageBlob } from '@/lib/image-upload';
 import { listMyGalleryPhotos, setGalleryVisibility, type GalleryStatus } from '@/lib/gallery-api';
+import { installedCommunityDisabled, useInstalledCommunityDisabled } from '@/lib/installed-content';
 import GalleryImage from '@/components/GalleryImage';
 import { setMyProfileIntro, type EditableMemberProfile } from '@/lib/membership-api';
 import './member-profile-editor.css';
@@ -17,6 +18,7 @@ export default function MemberProfileEditor({ profile, onSaved }: {
   profile: EditableMemberProfile;
   onSaved: (intro: string | undefined, imageIds: number[]) => void;
 }) {
+  const communityDisabled = useInstalledCommunityDisabled();
   const initial = profile.profileIntro ?? '';
   const initialImageIds = profile.profileImageIds ?? [];
   const initialVisibility = profile.showInMemberList !== false;
@@ -46,6 +48,7 @@ export default function MemberProfileEditor({ profile, onSaved }: {
   }, [profile]);
 
   async function changeVisibility(id: number, status: 'private' | 'pending') {
+    if (status === 'pending' && installedCommunityDisabled()) return;
     setChangingVisibility(id);
     setError(null);
     try {
@@ -94,7 +97,12 @@ export default function MemberProfileEditor({ profile, onSaved }: {
     setSaved(false);
     setError(null);
     try {
-      const result = await setMyProfileIntro(intro, imageIds, showInMemberList);
+      const publicationDisabled = installedCommunityDisabled();
+      const result = await setMyProfileIntro(
+        publicationDisabled ? savedValues.intro : intro,
+        imageIds,
+        publicationDisabled ? savedValues.showInMemberList : showInMemberList,
+      );
       const next = result.profileIntro ?? undefined;
       setIntro(next ?? '');
       setImageIds(result.profileImageIds);
@@ -120,6 +128,7 @@ export default function MemberProfileEditor({ profile, onSaved }: {
       </p>
       <BoolToggle
         className="member-profile-visibility"
+        disabled={communityDisabled}
         value={showInMemberList}
         onChange={(value) => { setShowInMemberList(value); setSaved(false); }}
         label={tr({ zh: '在首页会员名单中展示我', en: 'Show me in the homepage member list' })}
@@ -127,6 +136,7 @@ export default function MemberProfileEditor({ profile, onSaved }: {
       <textarea
         className="member-profile-input"
         value={intro}
+        readOnly={communityDisabled}
         onChange={(event) => { setIntro(event.target.value); setSaved(false); }}
         placeholder={tr({ zh: '介绍一下自己', en: 'Introduce yourself' })}
         maxLength={MAX_LENGTH}
@@ -169,7 +179,8 @@ export default function MemberProfileEditor({ profile, onSaved }: {
               <div className="member-profile-photo-visibility">
                 <span>{visibilityReady ? visibilityLabel(visibility[id] ?? 'private') : tr({ zh: '正在加载…', en: 'Loading…' })}</span>
                 <button type="button" className="member-profile-upload"
-                  disabled={!visibilityReady || !savedValues.imageIds.includes(id) || saving || uploading || changingVisibility !== null}
+                  disabled={!visibilityReady || !savedValues.imageIds.includes(id) || saving || uploading || changingVisibility !== null
+                    || (communityDisabled && !['pending', 'public'].includes(visibility[id]))}
                   onClick={() => void changeVisibility(id, ['pending', 'public'].includes(visibility[id]) ? 'private' : 'pending')}>
                   {!savedValues.imageIds.includes(id) ? tr({ zh: '保存后申请公开', en: 'Save before requesting' })
                     : visibility[id] === 'pending' ? tr({ zh: '撤回申请', en: 'Withdraw request' })

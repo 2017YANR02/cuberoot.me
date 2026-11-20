@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { installedContentUnavailable } from '@cuberoot/shared/installed-content';
 import { MOBILE_EMBED_FRAME_NAMES, MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES, mobileEmbedSurfaceFromFrameName } from '@cuberoot/shared/mobile-embed';
 import { resolveAccountAvatar } from '@/lib/account-avatar';
-import { installedForumDisabled, installedGenerativeAiDisabled, installedPetAvailable, isInstalledForumHref } from '@/lib/installed-content';
+import { installedCommunityDisabled, installedGenerativeAiDisabled, installedPetAvailable, isInstalledCommunityHref } from '@/lib/installed-content';
 import { GET as installedForumRegion } from '@/app/api/installed-forum/route';
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 describe('first-release installed content exclusions', () => {
@@ -40,21 +40,28 @@ describe('first-release installed content exclusions', () => {
   });
 });
 
-describe('regional forum availability on iOS', () => {
-  it.each(['/forum', '/zh/forum/t/42', '/forum/new', '/en/%66orum/search', '/platform/community/posts/new', '/zh/platform/admin/community', 'https://www.cuberoot.me/forum/feed'])('recognizes the forum destination %s', href => {
-    expect(isInstalledForumHref(href)).toBe(true);
+describe('regional community availability on Apple App Store clients', () => {
+  it.each([
+    '/forum', '/zh/forum/t/42', '/forum/new', '/en/%66orum/search', '/platform/community/posts/new',
+    '/zh/platform/admin/community', 'https://www.cuberoot.me/forum/feed', '/zh/feedback', '/quiz/new?edit=1',
+    '/zh/recon/42/alt', '/recon/42/alt/new', '/recon/42/alt/1/edit', '/timer/watch#session',
+    '/zh/timer?share=42', '/timer?r=sample', '/timer?replay=sample', '/timer?players=net&room=sample',
+    '/calendar/s/abc',
+  ])('recognizes the restricted destination %s', href => {
+    expect(isInstalledCommunityHref(href)).toBe(true);
   });
 
-  it.each(['/forum-guide', '/platform/courses', 'https://community.example/forum'])('preserves unrelated destinations such as %s', href => {
-    expect(isInstalledForumHref(href)).toBe(false);
+  it.each(['/forum-guide', '/platform/courses', 'https://community.example/forum', '/recon/submit/42',
+    '/recon/42/alt/1', '/timer', '/timer?players=2', '/drive', '/docs/edit?id=123', '/calendar'])('preserves destinations such as %s', href => {
+    expect(isInstalledCommunityHref(href)).toBe(false);
   });
 
-  it('withholds the forum before region verification only inside the current iOS frames', () => {
-    expect(installedForumDisabled()).toBe(false);
+  it('withholds public community features before region verification only in Apple store frames', () => {
+    expect(installedCommunityDisabled()).toBe(false);
     vi.stubGlobal('window', { parent: {}, name: MOBILE_EMBED_FRAME_NAMES.tools });
-    expect(installedForumDisabled()).toBe(false);
+    expect(installedCommunityDisabled()).toBe(false);
     vi.stubGlobal('window', { parent: {}, name: MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES.tools });
-    expect(installedForumDisabled()).toBe(true);
+    expect(installedCommunityDisabled()).toBe(true);
   });
 
   it.each([
@@ -70,6 +77,7 @@ describe('regional forum availability on iOS', () => {
     vi.stubEnv('VERCEL', vercel);
     const response = installedForumRegion(new Request('https://cuberoot.me/api/installed-forum', { headers }));
     expect(response.headers.get('Cache-Control')).toBe('private, no-store');
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
     expect(await response.json()).toEqual({ available });
   });
 });

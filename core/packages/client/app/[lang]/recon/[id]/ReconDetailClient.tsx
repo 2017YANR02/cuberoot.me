@@ -20,6 +20,7 @@ import { useEffect, useState, useCallback, useMemo, useRef, Fragment, type React
 import Link from '@/components/AppLink';
 import { createPortal } from 'react-dom';
 import { copyPageLink } from '@/lib/page-share';
+import { useInstalledCommunityDisabled } from '@/lib/installed-content';
 import { useParams } from 'next/navigation';
 import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useTranslation } from 'react-i18next';
@@ -134,6 +135,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   // (no flash of loading), then check the API: ISR can belong to another
   // deployment or predate an edit made while this tab was closed.
   const { solve, loading, error } = useReconDetailData(id, initialSolve);
+  const communityDisabled = useInstalledCommunityDisabled();
   const [comments, setComments] = useState<ReconComment[]>([]);
   const [commentsRevision, setCommentsRevision] = useState(0);
   const refreshComments = useCallback(() => setCommentsRevision(revision => revision + 1), []);
@@ -143,9 +145,9 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   }, [id, commentViewer?.uid]);
   useEffect(() => {
     let active = true;
-    if (id) listComments(Number(id)).then(rows => { if (active) setComments(rows); }).catch(() => {});
+    if (id && !communityDisabled) listComments(Number(id)).then(rows => { if (active) setComments(rows); }).catch(() => {});
     return () => { active = false; };
-  }, [id, commentViewer?.uid, commentsRevision]);
+  }, [id, commentViewer?.uid, commentsRevision, communityDisabled]);
   // 全屏(隐藏头部/统计栏,player 铺满整页,与 /sim 的「全屏魔方」同款)。
   const [fullscreen, setFullscreen] = useState(false);
   const [shareTarget, setShareTarget] = useState<HTMLSpanElement | null>(null);
@@ -256,11 +258,11 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
             {' '}
             {solve.method && <span className="detail-method-badge" title={t('recon.method')}>{solve.method}</span>}
             {' '}
-            {solutionText && <span className="detail-share-target" ref={setShareTarget} />}
+            {solutionText && !communityDisabled && <span className="detail-share-target" ref={setShareTarget} />}
             {' '}
-            <Link href={`/recon/submit/${solve.id}`} className="detail-title-edit detail-title-edit--accent" title={t('recon.edit')} aria-label={t('recon.edit')}>
+            {(!communityDisabled || solve.visibility === 'private') && <Link href={`/recon/submit/${solve.id}`} className="detail-title-edit detail-title-edit--accent" title={t('recon.edit')} aria-label={t('recon.edit')}>
               <Pencil size={14} />
-            </Link>
+            </Link>}
           </PageHeading>
         </div>
         <div className="detail-meta-bar">
@@ -305,12 +307,13 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
         initialSameScramble={initialSameScramble}
         fullscreenButton={fullscreenButton}
         shareTarget={shareTarget}
+        communityDisabled={communityDisabled}
       />
     </div>
   );
 }
 
-function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, initialSameScramble, fullscreenButton, shareTarget }: {
+function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, initialSameScramble, fullscreenButton, shareTarget, communityDisabled }: {
   scramble: string;
   solutionText: string;
   solve: ReconSolve;
@@ -319,6 +322,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   initialSameScramble?: ReconSolve[];
   fullscreenButton?: ReactNode;
   shareTarget: HTMLSpanElement | null;
+  communityDisabled: boolean;
 }) {
   const [sameCompHasRows, setSameCompHasRows] = useState(false);
   const [sameSessionHasRows, setSameSessionHasRows] = useState(false);
@@ -453,7 +457,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
 
       }
       <div className="detail-content-pane">
-        {solutionText && (
+        {solutionText && !communityDisabled && (
           <ExternalLinks event={solve.event} scramble={playerScramble} alg={sourceView ? solutionText : rawDisplayText} solveId={solve.id} shareTarget={shareTarget} />
         )}
 
@@ -556,15 +560,15 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           <SameSessionTable solve={solve} onHasRows={setSameSessionHasRows} />
         )}
 
-        <AlternativesSection
+        {!communityDisabled && <AlternativesSection
           reconId={solve.id}
           alts={alts}
           setAlts={setAlts}
           solveTime={(isBldEvent(solve.event) ? solve.execTime : solve.rawTime)}
           event={solve.event}
-        />
+        />}
 
-        <CommentsView comments={comments} reconId={solve.id} onUpdate={onUpdate} />
+        {!communityDisabled && <CommentsView comments={comments} reconId={solve.id} onUpdate={onUpdate} />}
       </div>
     </div>
     </>

@@ -12,6 +12,7 @@ import { ImagePlus, Film, X, Check, LogIn, Inbox, MessagesSquare } from '@app-fo
 import { Spinner } from '@/components/Spinner/Spinner';
 import { hasAdminAccess, useAuthUser, authActions } from '@/lib/auth-store';
 import AppLink from '@/components/AppLink';
+import { installedCommunityDisabled, useInstalledCommunityDisabled } from '@/lib/installed-content';
 import { submitFeedback, uploadFeedbackImage, uploadFeedbackVideo } from '@/lib/feedback-api';
 import { prepareImageUpload } from '@/lib/image-upload';
 import './feedback-modal.css';
@@ -44,6 +45,7 @@ function probeDuration(url: string): Promise<number> {
 }
 
 export default function FeedbackModal({ lang, onClose: onClosed, embedded = false }: Props) {
+  const communityDisabled = useInstalledCommunityDisabled();
   const user = useAuthUser();
   const login = authActions.login;
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
@@ -123,7 +125,7 @@ export default function FeedbackModal({ lang, onClose: onClosed, embedded = fals
   const canSubmit = text.trim().length > 0 && !submitting && !imgBusy;
 
   const handleSubmit = async () => {
-    if (!canSubmit) return;
+    if (!canSubmit || installedCommunityDisabled()) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -153,6 +155,7 @@ export default function FeedbackModal({ lang, onClose: onClosed, embedded = fals
     }
   };
 
+  if (communityDisabled) return null;
   return (
     <div ref={motionRef} className={embedded ? undefined : "fb-overlay"} {...(!embedded ? backdropProps : {})}
       role={embedded ? undefined : "dialog"} aria-modal={embedded ? undefined : true}>

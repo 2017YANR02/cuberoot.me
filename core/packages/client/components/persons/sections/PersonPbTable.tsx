@@ -1,5 +1,7 @@
 'use client';
 
+import { installedCommunityDisabled, useInstalledCommunityDisabled } from '@/lib/installed-content';
+
 import { Fragment, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Trash2 } from '@app-foundation/icons/lucide';
 import {
@@ -84,6 +86,8 @@ export default function PersonPbTable({ wcaId, isZh, onVisibilityControlChange }
   const today = toLocalIsoDate();
 
   const [collection, setCollection] = useState<PbCollection | null>(null);
+  const communityDisabled = useInstalledCommunityDisabled();
+  const canEditRecords = canManage && (!communityDisabled || collection?.profile.isPublic === false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -169,7 +173,7 @@ export default function PersonPbTable({ wcaId, isZh, onVisibilityControlChange }
   ), [collection]);
 
   const onVisibilityChange = async (isPublic: boolean) => {
-    if (!collection || saving) return;
+    if (!collection || saving || (isPublic && installedCommunityDisabled())) return;
     setSaving(true);
     setError('');
     setMessage('');
@@ -190,13 +194,13 @@ export default function PersonPbTable({ wcaId, isZh, onVisibilityControlChange }
     }
     onVisibilityControlChange({
       value: collection.profile.isPublic,
-      disabled: saving,
+      disabled: saving || (communityDisabled && !collection.profile.isPublic),
       onChange: (value) => void onVisibilityChange(value),
     });
     return () => onVisibilityControlChange(null);
     // The callback intentionally tracks the current collection and save lock.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canManage, collection, onVisibilityControlChange, saving]);
+  }, [canManage, collection, communityDisabled, onVisibilityControlChange, saving]);
 
   const beginNewPb = (nextEventId: string, option: PbRecordOption, record?: PbRecord) => {
     if (saving) return;
@@ -225,6 +229,7 @@ export default function PersonPbTable({ wcaId, isZh, onVisibilityControlChange }
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
+    if (installedCommunityDisabled() && collection?.profile.isPublic !== false) return;
     const resultValue = parsePbResultInput(resultInput, eventId, selectedOption.recordType);
     if (resultValue == null) {
       setError(t('成绩格式无效。请按输入框示例填写。', 'Invalid result format. Follow the input example.'));
@@ -349,7 +354,7 @@ export default function PersonPbTable({ wcaId, isZh, onVisibilityControlChange }
                       const isActive = activeCellKey === `${currentEventId}:${key}`;
                       return (
                         <td className="wp-cell-result" key={key}>
-                          {canManage && collection && isApplicable ? (
+                          {canEditRecords && collection && isApplicable ? (
                             <button
                               type="button"
                               className={`wp-pb-cell-button${isActive ? ' is-active' : ''}`}
@@ -368,7 +373,7 @@ export default function PersonPbTable({ wcaId, isZh, onVisibilityControlChange }
                       );
                     })}
                   </tr>
-                  {canManage && collection && isEditingEvent && (
+                  {canEditRecords && collection && isEditingEvent && (
                     <tr className="wp-pb-inline-edit-row">
                       <td colSpan={PB_RECORD_OPTIONS.length + 1}>
                         <form className="wp-pb-inline-form" onSubmit={(formEvent) => void onSubmit(formEvent)}>
