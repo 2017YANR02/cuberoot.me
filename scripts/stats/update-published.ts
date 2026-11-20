@@ -6,6 +6,7 @@ import { publishScrambleIncremental } from './publish-static.js';
 import { loadMirrorToPg, loadOptimalToPg, loadStepsToPg } from './publish-pg.js';
 import { existsSync } from 'node:fs';
 import { withStatsResourceMonitor } from './resource-monitor.js';
+import { assertPublicationDate, restoreSharedBaseline, saveSharedBaseline, withSharedPublicationLock, type BaselineGroup } from './shared-publication-baseline.js';
 
 type Options = { jobs: string[]; publishOnly: boolean; push: boolean; localArgs: string[] };
 export function parsePublishedArgs(args: string[]): Options {
@@ -36,21 +37,36 @@ export async function runLocalForPublish(args: string[], execute = runTs): Promi
 }
 
 export async function publishPipeline(options: Options): Promise<void> {
+  await withSharedPublicationLock(assertHeld => publishWithBaseline(options, assertHeld));
+}
+
+async function publishWithBaseline(options: Options, assertHeld: () => void): Promise<void> {
+  const operations: BaselineGroup[] = [
+    ...(options.jobs.includes('stages') ? ['mirror', 'steps'] as const : []),
+    ...(options.jobs.includes('333opt') ? ['optimal-333'] as const : []),
+    ...(options.jobs.includes('puzzles') ? ['optimal-puzzle'] as const : []),
+    'release', 'static',
+  ];
+  if (!options.publishOnly) {
+    taskProgress('publish:baseline-sync', 0, operations.length);
+    for (const [index, group] of operations.entries()) {
+      await restoreSharedBaseline(group, assertHeld);
+      taskProgress('publish:baseline-sync', index + 1, operations.length);
+    }
+  }
   if (!existsSync(join(repoRoot, 'stats/.stats-release-base.json'))) throw new Error('Statistics publication baseline missing; hydrate the latest Release before computing (pnpm stats:hydrate). Existing local files are preserved.');
+  assertHeld();
   if (!options.publishOnly) await runLocalForPublish(options.localArgs);
   // Missing variants or per-bottom results must not become a successful full publication.
   if (options.jobs.includes('stages')) await runTs(join(jobDir, 'src/validate_comp_steps.ts'), [join(repoRoot, 'stats/scramble')]);
   const stampValue = await stamp();
-  const operations = [
-    ...(options.jobs.includes('stages') ? ['mirror', 'steps'] : []),
-    ...(options.jobs.includes('333opt') ? ['optimal-333'] : []),
-    ...(options.jobs.includes('puzzles') ? ['optimal-puzzle'] : []),
-    'release', 'static',
-  ];
+  await assertPublicationDate(operations, stampValue);
   let completed = 0;
-  const publishStep = async (name: string, action: () => Promise<unknown>): Promise<void> => {
+  const publishStep = async (name: BaselineGroup, action: () => Promise<unknown>): Promise<void> => {
+    assertHeld();
     taskProgress(`publish:${name}`, 0, 1);
     await action();
+    await saveSharedBaseline(name, stampValue, assertHeld);
     taskProgress(`publish:${name}`, 1, 1);
     taskProgress('publish', ++completed, operations.length);
   };

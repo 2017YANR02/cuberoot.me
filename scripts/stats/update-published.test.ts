@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { parsePublishedArgs, runLocalForPublish } from './update-published.js';
 import { CommandExitError, coreDir, run, tsx } from './common.js';
+import { baselineArtifactAction, baselineArtifactChanges } from './shared-publication-baseline.js';
 
 test('daily command publishes through Release; local command remains explicit', () => {
   const packageJson = JSON.parse(readFileSync(fileURLToPath(new URL('../../core/package.json', import.meta.url)), 'utf8'));
@@ -56,4 +57,20 @@ test('command failures preserve the actual exit code and script identity', async
     assert.deepEqual(error.args, args);
     return true;
   });
+});
+
+test('cross-machine baseline refresh replaces old published artifacts and protects local work', () => {
+  const before = new Map([['same.json', 'same'], ['replace.json', 'old'], ['retired.json', 'known']]);
+  const after = new Map([['same.json', 'same'], ['replace.json', 'new'], ['added.json', 'present']]);
+  const changes = new Map(baselineArtifactChanges(before, after).map(change => [change.path, change]));
+  assert.equal(changes.size, 3);
+  assert.equal(baselineArtifactAction(changes.get('replace.json')!, 'old'), 'fetch');
+  assert.equal(baselineArtifactAction(changes.get('replace.json')!, 'new'), 'keep');
+  assert.equal(baselineArtifactAction(changes.get('replace.json')!), 'fetch');
+  assert.equal(baselineArtifactAction(changes.get('retired.json')!, 'known'), 'archive');
+  assert.equal(baselineArtifactAction(changes.get('retired.json')!), 'keep');
+  assert.equal(baselineArtifactAction(changes.get('added.json')!), 'fetch');
+  assert.throws(() => baselineArtifactAction(changes.get('replace.json')!, 'unpublished'), /unpublished changes/);
+  assert.throws(() => baselineArtifactAction(changes.get('retired.json')!, 'unpublished'), /unpublished changes/);
+  assert.throws(() => baselineArtifactAction(changes.get('added.json')!, 'unpublished'), /unpublished changes/);
 });
