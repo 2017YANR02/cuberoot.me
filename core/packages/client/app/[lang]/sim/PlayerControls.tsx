@@ -2197,9 +2197,12 @@ export default function PlayerControls({
   const handleCopyLink = useCallback(() => {
     if (typeof window === 'undefined' || !navigator.clipboard?.writeText) return;
     flushAlgCommit(); // request persistence; the owner copies the immediate drafts below
-    const copied = onCopyLink
-      ? onCopyLink(setupElRef.current?.value ?? setupDraft, algElRef.current?.value ?? algDraft, marked ? htmlDraft : undefined)
-      : navigator.clipboard.writeText(window.location.href);
+    const currentSetup = setupElRef.current?.value ?? setupDraft;
+    const currentAlg = algElRef.current?.value ?? algDraft;
+    let copied: Promise<void>;
+    if (!onCopyLink) copied = navigator.clipboard.writeText(window.location.href);
+    else if (marked) copied = onCopyLink(currentSetup, currentAlg, htmlDraft);
+    else copied = onCopyLink(currentSetup, currentAlg);
     copied.then(() => {
       setLinkCopied(true);
       if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current);
